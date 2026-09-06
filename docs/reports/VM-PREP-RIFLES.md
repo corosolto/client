@@ -1,6 +1,81 @@
 # Preparação offline dos rifles
 
-## Continuação atual — revisão de mãos M4 após feedback do dono
+## Handoff para Claude — aprovação visual local da M4
+
+Em 06/09/2026, depois da revisão de mãos, Ruben respondeu:
+**“ficou bom. como continuamos os outros rifles no claude?”**.
+A aparência desta candidata M4 está aprovada pelo dono. Essa aprovação prevalece
+sobre as reprovações estéticas históricas abaixo: não reabrir seu acabamento
+por preferência do agente ou de outro crítico. A aprovação se refere à revisão
+local de pose/mãos E; não é evidência de ações completas, Game/WebGL, outros
+times ou liberação de produção. O objetivo final das seis armas segue aberto.
+
+Snapshot privado aprovado, somente leitura:
+`A/m4-approved-2a4a189d/`, incluindo Blender, GLB, imagens, medições e
+`approval.json` com hashes. Treze arquivos foram copiados e conferidos contra
+`A/m4-candidate/`. GLB SHA-256:
+`2a4a189d89f7c3912e60660d08ab4694dc07886a775e63a265afc1f4ffd197fd`.
+Código produtor: `0f28fbacc69bcebf1a5f3442e3d1e5069d1364df`.
+Esses assets não estão no Git: continuar nesta máquina, ou transportar os
+insumos privados por um canal próprio autorizado; apenas clonar o PR não basta.
+
+### Instrução de retomada para Claude
+
+1. Assuma esta frente sequencialmente, na mesma worktree
+   `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/vm-prep-rifles`,
+   branch `codex/vm-prep-rifles`. Confira worktree, HEAD, status e caminhos reais
+   antes de escrever. Não recrie a branch na base antiga, não use outra lane,
+   não faça reset/clean nem execute outro implementador em paralelo.
+2. Leia este relatório integralmente e o documento original integral em
+   `../vm-astra-pistol/docs/reports/PROMPTS-PARALELOS-VIEWMODELS.md`, aplicando
+   as Instruções comuns e Frente Rifles. Leia também AGENTS, lições, contrato
+   profissional, skills aplicáveis e ledgers integradores indicados ali.
+   A integradora e seus insumos continuam somente leitura.
+3. As instruções posteriores de Ruben ampliaram a tarefa para candidatos locais,
+   teste em servidor separado e PR. Já existe o PR #509, com base congelada
+   `codex/vm-prep-base-961c70d2`; mantenha esse PR. Isso não autoriza alterações
+   em runtime/atlas compartilhados, merge, deploy ou abertura de navegador.
+4. Preserve a M4 aprovada e a AK golden. Crie diretórios próprios por arma em
+   `A/` e scripts `tools/viewmodels/prep/rifles-*.py`/`.mjs`. Não sobrescreva
+   `m4-candidate/` nem o snapshot aprovado para desenvolver outra arma. Use a
+   qualidade e o processo M4 como referência; não copie automaticamente sua
+   pose, escala, câmera, grip vertical ou bind para uma geometria diferente.
+5. Ordem sugerida: **SCAR → MD97 → M92 → FAMAS → carabina**. Comece pela SCAR:
+   leia sua receita medida abaixo, abra o asset próprio e produza uma candidata
+   isolada de pose com apoio no guarda-mão, corpo largo e comando lateral.
+   Apresente comparação CS 1.6 antes de avançar ao próximo rifle. Não substitua
+   implementação pela repetição dos diagnósticos que já estão documentados.
+6. Para cada arma: confirme insumos/hashes, siga a receita específica, produza
+   Blender/GLB, olhe renders 3:2 e 16:9 e compare com **CS 1.6 por categoria**.
+   A M4 aprovada é controle adicional, nunca substitui CS 1.6. As imagens
+   fornecidas estão em `A/cs16-reference/`; referências equivalentes de AK/M92
+   e FAMAS ainda faltam, conforme o pareamento abaixo. Não invente equivalência
+   de câmera, asset, mecanismo ou licença quando houver informação ausente.
+7. Reaproveite os verificadores M4 como instrumento: paridade de vértices no
+   carregador real em CPU, mutação que reintroduz o defeito, hashes HTTP e
+   proteção dos controles. Não afrouxe tolerâncias. Faça crítica independente
+   com imagens; aprovação numérica não substitui aprovação visual do dono.
+8. Servidor exclusivo: `http://127.0.0.1:8160`, diretório
+   `A/local-server-8160`. Verifique o processo/porta atual, sem confiar no PID
+   histórico. O preview M4 usa `vmrifles=m4-c1`; essa opção **só implementa M4**.
+   Trocar apenas `vmweapon` não carrega um candidato novo dos outros rifles.
+   Estenda somente a montagem local sob artefatos com opção e GLB por arma,
+   preservando o caminho M4. Não escreva através dos symlinks em `public/` ou
+   nos privados integradores. Não abra navegador nem pare servidores de mapas.
+9. Entregue os links locais para revisão manual e mantenha o objetivo no Game.
+   Autore peças, saque, disparo e recargas próprias, sem transplante genérico:
+   MD97 precisa do carregador ausente; M92 exige encaixe curvo exclusivo;
+   FAMAS recarrega atrás do punho; carabina depende da alimentação a confirmar.
+   O idle aprovado da M4 continua sem essas ações. A integração compartilhada
+   e a validação visual real no Game permanecem etapas explícitas, não concluídas
+   pelo HTTP/CPU. Registre proposta por símbolo se exigirem sair da faixa autorizada.
+10. Atualize este ledger em cada marco com aceites, rejeições, hashes, artefatos,
+    validação real e próximo passo. Faça checkpoints pequenos com Signed-off-by
+    e Agent verdadeiro do Claude; atualize o PR existente. Não inclua assets
+    privados, dumps ou segredos no Git. Não encerre o objetivo das seis armas
+    porque um novo idle ficou bom.
+
+## Histórico da revisão de mãos M4 antes da aprovação
 
 Ruben disse **“muito melhor mas a mao e o braço ta bem feia ainda”**.
 Isso aceita a melhora da composição, não aprova mãos, braços ou o viewmodel
