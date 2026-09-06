@@ -736,17 +736,23 @@ export function buildVelhoOeste(scene, T) {
       const wheel = new THREE.Mesh(new THREE.TorusGeometry(.72, .09, 6, 16), MAT.dark); wheel.position.set(wx, .75, wz); wheel.rotation.y = Math.PI / 2; g.add(wheel);
       for (let i = 0; i < 8; i++) { const spoke = new THREE.Mesh(boxGeo(.05, 1.2, .05), MAT.dark); spoke.position.set(wx, .75, wz); spoke.rotation.x = i * Math.PI / 4; g.add(spoke); }
     }
-    const hx = Math.abs(Math.cos(ry)) * 2.3 + Math.abs(Math.sin(ry)) * 3.2, hz = Math.abs(Math.sin(ry)) * 2.3 + Math.abs(Math.cos(ry)) * 3.2;
-    colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: 2, minZ: z - hz, maxZ: z + hz });
-    /* lança (tração) tem colisor PRÓPRIO: ela sai ~1,6 m da caixa acima e o MAP1
-       pega corpo sob a ponta (r3b: ponto andável a pen 0,925 m na carroça sul). */
-    const lx = x - 2.3 * Math.sin(ry), lz = z - 2.3 * Math.cos(ry);
-    const shx = Math.abs(Math.cos(ry)) * .14 + Math.abs(Math.sin(ry)) * 2.55;
-    const shz = Math.abs(Math.sin(ry)) * .14 + Math.abs(Math.cos(ry)) * 2.55;
-    colliders.push({ minX: lx - shx, maxX: lx + shx, minY: 0, maxY: 1.1, minZ: lz - shz, maxZ: lz + shz });
+    /* BUG-91: colisor espelha a geometria visível — carroceria 3,8 de largura com
+       rodas até 1,71 em z, e a lança como OBB fino. O AABB 2,3×3,2 de fábrica era
+       parede invisível na traseira e nos cantos (régua: sertao-wagon-check WA1). */
+    const cos = Math.cos(ry), sin = Math.sin(ry);
+    const obb = (tag, hx, hz, cx, cz, maxY) => {
+      const ehx = Math.abs(cos) * hx + Math.abs(sin) * hz, ehz = Math.abs(sin) * hx + Math.abs(cos) * hz;
+      colliders.push({ minX: cx - ehx, maxX: cx + ehx, minY: 0, maxY, minZ: cz - ehz, maxZ: cz + ehz,
+        cx, cz, hx, hz, cos, sin, ry, tag });
+    };
+    obb('carroca-corpo', 1.9, 1.71, x, z, 1.6);
+    obb('carroca-lanca', .09, 2.375, x - 2.425 * sin, z - 2.425 * cos, 1);
     occluders.push(g); return g;
   }
-  wagon(-6, -20, .18); wagon(7, 2, -2.7); wagon(-14.2, 25.4, 2.9);
+  /* BUG-91: a carroça oeste tinha a lança cravada na parede da platibanda-0
+     (ponta ~1 m dentro da planta) e o colisor giant fechava o corredor da praça.
+     Espelhada: lança aponta pro largo, mesma caixa, mesmo ry em espelho. */
+  wagon(-6, -19.6, Math.PI + .18); wagon(7, 2, -2.7); wagon(-14.2, 25.4, 2.9);
 
   function obstacle(name, x, z, ry, hx, hz, height, build) {
     const group = new THREE.Group(); group.name = `obstaculo-${name}`; group.position.set(x, 0, z); group.rotation.y = ry; root.add(group);

@@ -301,4 +301,6 @@ else {
   for (const m of mutations) console.log(`MUTANTE ${m.name} ${m.status} -> ${m.target}${m.reason ? ` (${m.reason})` : ''}${m.unrelated?.length ? ` outras=${m.unrelated}` : ''}`);
 }
 const green = Object.values(baseline).every(r => r.pass);
-process.exit(selected.length ? (mutations.every(m => m.status === 'MORDIDO') ? 0 : mutations.some(m => m.status === 'FALHOU-ISOLAMENTO') ? 1 : 2) : green ? 0 : 1);
+/* exitCode (nunca process.exit): stdout em pipe é assíncrono e o exit truncava
+   o JSON em 8192 bytes no consumidor (sertao-traversal-check, BUG-91). */
+process.exitCode = selected.length ? (mutations.every(m => m.status === 'MORDIDO') ? 0 : mutations.some(m => m.status === 'FALHOU-ISOLAMENTO') ? 1 : 2) : green ? 0 : 1;
