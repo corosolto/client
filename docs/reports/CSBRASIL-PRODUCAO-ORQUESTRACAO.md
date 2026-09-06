@@ -67,7 +67,7 @@ integração e publicação; não declarar pronto somando somente PRs ou gates v
 | Elevar visual do Escadão | 01a073e5-b003-7993-afd6-41d31e25d98d | PAUSADO ada21d8d, codex/escadao-passagens-horizonte limpa; duas divergências do grafo e horizonte pendentes; próximo marco45–90min, R5 estimado2–4h; Astro8148/PID94385 ativo sem captura |
 | Elevar visual de Lajes | 01a073e5-35e9-7312-b6a7-7beecc8df714 | PAUSADO 098a6fc2; candidato c26a40cf/PR517 pronto para revisão, 15–30min estimados se CI verde; sem browser/servidor próprio |
 | Elevar visual da Amazônia | 01a073de-ee16-74a1-8deb-c92763271450 | **FECHADA**: PR439 squash-merged como 0af5e118; alpha.228 bc8ce4e9 e deployment Production6289742804 success. Checks completos verdes; URL requer SSO (302 anônimo esperado). Ledger b077dc4b |
-| Elevar visualmente o mapa Sertão | 01a073c0-b824-7503-b28a-f7522cececcc | PAUSADO0b925981; candidato ca8d569f/PR516 pronto, CI/imagem pendentes;30–60min estimados com publicação se autorizada; sem browser/servidor próprio |
+| Elevar visualmente o mapa Sertão | 01a073c0-b824-7503-b28a-f7522cececcc | DESPACHADA Terra/high: PR516 prioritário; resolver conflito contra main atual e deixar MERGEABLE. Candidato ca8d569f; merge/publicação aguardam reserva depois de Lajes |
 | Revisar e shipar PR Miticos | 01a07485-2ddf-7052-b858-f814cabc30f7 | PAUSADO confirmado, e370c2ff, codex/miticos-visual limpa; Cuca próximo marco2–4h, crouch/grip reprovados; Zumbi textura/integração e outros personagens pendentes; PR481 conflitante |
 | Corrigir modo CTF na home | 01a07540-471d-7a60-9448-2692d52ab8dd | Implementado 4abeaa40; relato build/browser3:2 aprovados; não publicado; três falhas gerais fora do menu |
 | Estabilizar CSBR antes de expandir | 01a069ad-894d-7fb0-80d4-21b00fa1e60d | Último turno interrompido preparando laboratório de áudio na home para escuta; tracer separado do PR; recuperar escopo/ledger antes de produção |
@@ -96,6 +96,14 @@ o solo. Primeiro localizar coordenadas/nós e relações com spawn/linha de vis�
 podem permanecer. Não remover cobertura nem editar geometria por inferência. Auditoria
 inicial sem browser; imagens/validação de gameplay terão reserva exclusiva quando houver
 candidato concreto.
+
+PR516/Sertão foi elevado pelo dono a prioridade explícita. Página pública confirma PR aberto
+de `codex/sertao-main` para `main` e candidato documenta validação local; ela não expôs um
+estado de merge confiável na consulta anônima. A lane deve resolver contra `origin/main`
+atual, registrar os conflitos e as decisões por arquivo, regenerar só derivados necessários
+e validar o head resultante. Remotos locais confirmados: `origin` é corosolto/client e
+`nfvelten` também existe; nenhum push pode ir ao segundo. Após novo head MERGEABLE, manter
+o PR aguardando reserva de integração, sem canário/deploy até Lajes concluir.
 
 ## Viewmodels e substituição Claude
 
