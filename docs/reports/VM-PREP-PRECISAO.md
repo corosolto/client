@@ -1,5 +1,41 @@
 # Pré-produção offline: Mosin, SVD e SKS
 
+## Continuação sequencial de 06/09 — sincronização isolada
+
+Retomada em `e248aaa8`, árvore limpa. O objetivo atual inclui resolver contato,
+manga/pele, sincronização e enquadramento de M4/Mosin/SVD/SKS, com integração
+sequencial e sem navegador ou materiais compartilhados. Ledger transversal:
+`../vm-m4-reload-evidence/docs/reports/VIEWMODEL-SEQUENTIAL-CONTINUATION.md`.
+
+`precisao-retime.py` reproduz a normalização `duration/sample.duration` de
+`assemble_paid_family.mjs::mergeSamples` diretamente em cópias privadas dos GLBs
+observados. Saídas em `artifacts/viewmodels/prep/precisao/timing-c1/`.
+Não executa builders de destino global. Nove ações (cinco Mosin, duas SVD, duas
+SKS) agora têm término coincidente dos canais de braços/arma, diferença <1e-6 s.
+A mutação é o GLB original, que reprova esse mesmo critério nas nove ações.
+Buffers binários originais, outputs de animação, idle, meshes, skin, materiais,
+texturas e câmera são preservados. O patch adiciona somente inputs temporais.
+Isso reproduz a intenção do montador; não certifica correspondência frame a
+frame com o FBX nem sincronismo físico de contatos.
+
+`precisao-blender.py --arma <arma> --tipo native --timing baseline|c1 --render`
+produziu 84 poses antes e 84 depois em execução sequencial, sem sobrescrever a
+inspeção histórica. Renders em `timing-baseline/evidence/` e `timing-c1/evidence/`.
+Erro máximo joint Blender/glTF após retime: Mosin 3,60843e-6, SVD 3,30500e-6,
+SKS 1,63389e-5 unidades. **SKS excede o limite histórico 1e-5; não aceitar
+paridade sem investigar precisão/interpolação.** A régua não foi afrouxada.
+
+Na SVD, o par reload_empty .62 praticamente não muda visualmente; alinhamento
+de endpoints não prova melhora de pegada. Na Mosin, a distância do joint hand_l
+à peça Clip em .62 diminui de 1,02685 para 0,67942 unidades, ainda sem contato
+certificado. Essa métrica de joint não é contato da superfície dos dedos.
+
+Estado: correção de endpoints reproduzida, candidata de timing em avaliação,
+nenhuma das três armas liberada. Próximo passo: identificar canais mecânicos
+estáticos/desconectados e a divergência de reimport SKS antes de promover timing;
+depois montar peças próprias e autorar contato por arma. Silhueta e mecanismos
+das próprias continuam os bloqueios documentados abaixo. Nenhum runtime alterado.
+
 ## Resultado, definição de pronto e continuidade
 
 Preparação investigada, sem produção de piloto: armas próprias, doadores, mecânica,

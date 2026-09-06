@@ -20,11 +20,20 @@ p = argparse.ArgumentParser()
 p.add_argument('--arma', choices=['mosin', 'svd', 'sks'], required=True)
 p.add_argument('--tipo', choices=['own', 'native'], required=True)
 p.add_argument('--render', action='store_true')
+p.add_argument('--timing', choices=['baseline', 'c1'])
 a = p.parse_args(sys.argv[sys.argv.index('--')+1:])
 assert RAIZ.name == 'vm-prep-precisao' and SAIDA.resolve().is_relative_to(RAIZ)
 assert subprocess.check_output(['git', 'branch', '--show-current'], cwd=RAIZ, text=True).strip() == 'codex/vm-prep-precisao'
 inventario = json.loads((SAIDA / 'inventario.json').read_text())
 insumo = inventario['weapons'][a.arma]['assets'][a.tipo]
+if a.timing:
+    assert a.tipo == 'native'
+    if a.timing == 'c1':
+        timing = json.loads((SAIDA / 'timing-c1/timing-report.json').read_text())['weapons'][a.arma]
+        insumo = {**insumo, 'path': timing['output'], 'sha256': timing['output_sha256']}
+        assert Path(insumo['path']).resolve().is_relative_to((SAIDA / 'timing-c1').resolve())
+    SAIDA = SAIDA / ('timing-c1/evidence' if a.timing == 'c1' else 'timing-baseline/evidence')
+    SAIDA.mkdir(parents=True, exist_ok=True)
 assert hashlib.sha256(Path(insumo['path']).read_bytes()).hexdigest() == insumo['sha256']
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=insumo['path'], bone_heuristic='TEMPERANCE', disable_bone_shape=True)
