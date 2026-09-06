@@ -4742,3 +4742,9 @@ A integração encontrou cinco nós isolados junto à Deagle (-10,38). Uma linha
 waypoints no vão x=-8,5 conecta esse fundo de rua: 370/370 nós e oito rotas dos
 spawns à arma. `escadao-graph-check.mjs` reprova o estado anterior;
 `--mutante=sem-conexao-rua` volta a isolar a arma. Nenhuma tolerância foi ampliada.
+
+## Escadão R4 — pisos sem espessura e circulação (06/09/2026)
+
+Relato literal: “ver o chao de cima estando embaixo, lugates que nao da pra passar”. Fotos do usuário04.07–04.09 mostram piso superior invisível por baixo e props aparentando flutuar. O plano FrontSide do topo não fechava o volume. Massa de terreno e degraus sólidos agora bloqueia os raios inferiores; `escadao-structure-check.mjs` preserva RED e mutação sem massa.
+
+A escada mais íngreme solicitada revelou saltos involuntários ao descer: `escadao-descent-check.mjs` mediu0,305m de separação e78frames aéreos. `Game._moveEntity` acompanha somente passos descendentes no opt-in `world.snapDownSteps`, preservando salto e queda maior que um passo. Browser real `r4/runtime-delivery` passou12/12travessias, sem perda de apoio nem interseção corporal. Porta, janela e grafo da casa são cobrados por `escadao-home-check.mjs`; porta fechada por mutação reprova. Crítica independente em `r4/browser-delivery` confirmou fechamento do piso, acesso, janela e continuidade visual do beco. Performance/FPS e orçamento AM7 continuam pendentes.

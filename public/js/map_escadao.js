@@ -10,16 +10,18 @@ import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
+import { buildEscadaoHome, escadaoHomeGround } from './map_escadao_home.js';
+import { buildEscadaoDetails } from './map_escadao_details.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 18, HALF_Z = 40;
-export const ESCADAO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
+export const ESCADAO_AMBIENCE = [...FAVELA_AMBIENCE_ASSETS.filter(id => id !== 'cat'), 'escadaoCat'];
 
 export const ESCADAO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
   'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02',
-  'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_casa_r3'];
+  'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_casa_r3', 'escadao_varanda_r4', 'escadao_eletrica_r4'];
 
 /* bbox dos moldes (GLB em disco): é a razão entre eixos que decide o quanto cada
    instância estica. `eval:escala-casario` relê os arquivos e reprova se derivar. */
@@ -28,8 +30,9 @@ export const CASARIO_MOLDES = Object.freeze({
   casa_favela_tijolo: { larg: 0.943, alt: 0.936, prof: 0.998 },
 });
 
-// ---- parâmetros da escada (NBR 9077 / Blondel: 2h+p = 0,63) ----
-const ESC = { larg: 3.6, espelho: 0.17, piso: 0.29, n: 12 };
+// Escadão íngreme de morro: 35,9°, espelho abaixo do passo máximo do jogador (0,30 m).
+// Conserva o traçado horizontal dos lances e das conexões laterais.
+const ESC = { larg: 3.6, espelho: 0.21, piso: 0.29, n: 12 };
 const RISE = ESC.espelho * ESC.n;
 const RUN  = ESC.piso   * ESC.n;
 const H_TOP = RISE * 3;
@@ -220,6 +223,9 @@ export function buildEscadao(scene, T) {
     // Pavimento superior tem profundidade e laje inteira: não é uma fachada-cenário.
     const casaD = 3.25, altoBase = y + 3.05;
     addBox(casaD+.04, y+h-altoBase, d+.08, paredeMat, face+lado*(casaD/2-.02), altoBase, z, { vao: false, bevel: true });
+    // Margem do acabamento chanfrado: o ombro não pode tangenciar o beiral por dentro.
+    const colAlto = colliders[colliders.length - 1];
+    colAlto.minX -= .02; colAlto.maxX += .02; colAlto.minZ -= .02; colAlto.maxZ += .02;
     addBox(casaD+.14,.14,d+.15,MAT_CIMENTO,face+lado*casaD/2,y+h,z,{collide:false,skirt:false,vao:false});
     if (variante % 3 !== 0) addBox(.025,1.25,d*.43,MAT_TIJOLO,face-lado*.017,y+h-1.3,z-d*.26,{collide:false,cast:false,skirt:false,vao:false});
     const patch = PAREDES[variante % PAREDES.length];
@@ -326,6 +332,11 @@ export function buildEscadao(scene, T) {
   addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, MAT.dirt, -0.01);
   addFloor(HALF_X * 2, 40 - 14, 0, (14 + 40) / 2, MAT.asphalt, 0.01);
   addFloor(HALF_X * 2, 40 - Math.abs(TOP_Z), 0, (TOP_Z + (-40)) / 2, MAT.concrete, H_TOP + 0.02);
+  // O mirante é terreno elevado, não uma folha transparente vista do vale. A contenção
+  // termina na chegada dos lances; não preenche vãos sob os patamares/conexões.
+  const aterro = addBox(HALF_X * 2, H_TOP, HALF_Z + TOP_Z, MAT.concreteDark,
+    0, 0, (TOP_Z - HALF_Z) / 2);
+  aterro.userData.escadaoStructure = 'mirante';
 
   /* ===================== HELPERS DE GEOMETRIA ===================== */
   /* ===== CASARIO DE MOLDE (kit Mint favela_r3) =====
@@ -390,6 +401,13 @@ export function buildEscadao(scene, T) {
   }
 
   // constrói um lance de escada (piso + espelho + muros laterais)
+  function fundacaoDegrau(w, yTop, d, x, z) {
+    // Massa abaixo do revestimento fecha a visão lateral entre espelhos. Seu topo fica
+    // abaixo da superfície de caminhada; a física da rampa continua em groundHeightAt.
+    const m = addBox(w, yTop - .06, d, MAT.concreteDark, x, 0, z, { collide: false });
+    occluders.push(m);
+    m.userData.escadaoStructure = 'degrau';
+  }
   function buildFlight(flight, yBase, mat) {
     const { z0, z1 } = flight;
     for (let k = 1; k <= ESC.n; k++) {
@@ -397,6 +415,7 @@ export function buildEscadao(scene, T) {
       const zc = z1 - (k - 0.5) * ESC.piso;
       const zNariz = z1 - (k - 1) * ESC.piso;
       const pisoMat = MAT_DEGRAU;
+      fundacaoDegrau(ESC.larg, yTop, ESC.piso, 0, zc);
       // degrau é massa visível na faixa do collider do muro: vira occluder (BUG-54)
       occluders.push(addBox(ESC.larg, 0.06, ESC.piso, pisoMat, 0, yTop - 0.06, zc, { collide: false }));
       occluders.push(addBox(ESC.larg, ESC.espelho, 0.04, MAT_DEGRAU, 0, yTop - ESC.espelho, zNariz, { collide: false }));
@@ -435,18 +454,20 @@ export function buildEscadao(scene, T) {
     const w = 3.0, n = Math.round((yTop - yBase) / ESC.espelho), p = (B_STAIR.z1 - B_STAIR.z0) / n;
     for (let k = 1; k <= n; k++) {
       const y = yBase + k * ESC.espelho, z = z1 - (k - 0.5) * p;
+      fundacaoDegrau(w, y, p, xCenter, z);
       occluders.push(addBox(w, 0.06, p, MAT_DEGRAU, xCenter, y - 0.06, z, { collide: false }));
       occluders.push(addBox(w, ESC.espelho, 0.04, MAT_DEGRAU, xCenter, y - ESC.espelho, z1 - (k - 1) * p, { collide: false }));
     }
   }
 
-  // Mesmo perfil Blondel da escada central, mas em viela estreita. As muretas seguem os
+  // Mesmo perfil da escada central, mas em viela estreita. As muretas seguem os
   // degraus em módulos, de modo que a rota alternativa seja geometria real e segura.
   function buildAuxFlight(flight, yBase) {
     for (let k = 1; k <= ESC.n; k++) {
       const yTop = yBase + k * ESC.espelho;
       const zc = flight.z1 - (k - 0.5) * ESC.piso;
       const zNariz = flight.z1 - (k - 1) * ESC.piso;
+      fundacaoDegrau(AUX_W, yTop, ESC.piso, AUX_X, zc);
       occluders.push(addBox(AUX_W, 0.06, ESC.piso, MAT_DEGRAU, AUX_X, yTop - 0.06, zc, { collide: false }));
       occluders.push(addBox(AUX_W, ESC.espelho, 0.04, MAT_DEGRAU, AUX_X, yTop - ESC.espelho, zNariz, { collide: false }));
     }
@@ -529,7 +550,7 @@ export function buildEscadao(scene, T) {
     // Três frentes contíguas por lado: parede alta junto à escada, como nas fotos2/3.
     // O vão físico fica em3.8m (escada3m); a saída z6.1 continua livre.
     for (const lado of [-1, 1]) for (let i=0;i<3;i++) {
-      const face=cx+lado*1.9, z=12.8-i*2.4, y=i===0?0:(i===1?.68:1.7);
+      const face=cx+lado*1.9, z=12.8-i*2.4, y=i===0?0:ESC.espelho*(i===1?4:10);
       frenteMoradia(face,z,2.4,4.7+((i+(lado>0?1:0))%3)*.8,lado,y,i+(dir>0?0:2)+(lado>0?1:0));
     }
 
@@ -623,11 +644,11 @@ export function buildEscadao(scene, T) {
     // larga o bastante para o spawn sair sem funil.
     for (const px of [-8.2, -3.6, 3.6, 8.2])
       marca(addBox(0.5, LAJE_Y, 0.5, MAT.concreteDark, px, 0, LAJE_Z));
-    marca(addBox(LAJE_W, LAJE_H, LAJE_D, MAT.concrete, 0, LAJE_Y, LAJE_Z));
+    marca(addBox(LAJE_W / 2 + 1.35, LAJE_H, LAJE_D, MAT.concrete, (1.35 - LAJE_W / 2) / 2, LAJE_Y, LAJE_Z));
     const piso = LAJE_Y + LAJE_H;
     // As geminadas conservam as duas testas opacas do abrigo; janelas são painéis fechados.
-    for (const [x, w, h, mat] of [[-5.975, 5.25, 3.1, MAT_TIJOLO], [0, 6.7, 2.85, MAT_CIMENTO], [5.975, 5.25, 3.35, PAREDES[1]]]) {
-      const casa = x !== 0 && GLB_ON ? placeProp('escadao_casa_r3', { x, y: piso, z: LAJE_Z, targetH: h }) : null;
+    for (const [x, w, h, mat] of [[-5.975, 5.25, 3.1, MAT_TIJOLO], [-1, 4.7, 2.85, MAT_CIMENTO]]) {
+      const casa = x < -3 && GLB_ON ? placeProp('escadao_casa_r3', { x, y: piso, z: LAJE_Z, targetH: h }) : null;
       if (casa) {
         const box = new THREE.Box3().setFromObject(casa), size = box.getSize(new THREE.Vector3());
         // Mantém as duas fachadas na borda da laje, sem avançar sobre os degraus.
@@ -661,6 +682,11 @@ export function buildEscadao(scene, T) {
       detalhe(w - .2, .23, .14, mat, x, piso + h + .14, LAJE_Z + LAJE_D / 2 - .12);
     }
   }
+  buildEscadaoHome({ addBox, occluders, wall: PAREDES[1], concrete: MAT_CIMENTO, dark: MAT.concreteDark, metal: MAT_FERRO, glass: MAT_VIDRO });
+  buildEscadaoDetails({ root, addBox, occluders, enabled: GLB_ON });
+  // A casa nova fecha a saída sul deste recuo. Sua fundação agora completa o volume
+  // entre moradias; não deixa um bolsão térreo sem saída nem um nó de bot isolado.
+  addBox(3.3, 3.05, 14.2-CONEX.z1, MAT.concreteDark, 7.15, 0, (14.2+CONEX.z1)/2);
   // GLB com cadeiras ocupa 2,124 m; proxy de 1,2 m deixava o corpo atravessar (EV3).
   for (const [mx, mz] of [[-9, 29], [-7, 30]]) propAt('mesa_guardasol', mx, mz, 2.3, 2.13, 2.13, lam({ color: 0xcca060 }));
   // carros
@@ -691,8 +717,9 @@ export function buildEscadao(scene, T) {
       roupa.position.set(x + Math.cos(ry) * dx, y + h * .48, z - Math.sin(ry) * dx); roupa.rotation.y = ry; roupa.userData.nonSolidSurface = true; root.add(roupa);
     }
   };
-  varal('varal_roupas_01', -14, -38, 1.5, .12);
-  varal('varal_roupas_02', 14.5, -38, 1.45, -Math.PI / 2);
+  // Varais apoiados nas lajes das casas: roupas fora da circulação do armário do spawn.
+  varal('varal_roupas_01', -12, -26, 1.5, .12, H_TOP + 3.05);
+  varal('varal_roupas_02', 12, -27, 1.45, -Math.PI / 2, H_TOP + 3.05);
   /* Varal do kit Mint fora do mirante: dois becos e duas lajes baixas, sem colisor
      (roupa é silhueta, nunca cover). Cobrado por `eval:escadao-contract`. */
   varal('varal_roupas', -14.2, 12.6, 1.55, -Math.PI / 2, 0);
@@ -840,6 +867,8 @@ export function buildEscadao(scene, T) {
     return (x >= BW.x1 && x <= X0) || (x >= X1 && x <= BE.x0);
   }
   function groundHeightAt(x, z, yRef) {
+    const houseFloor = escadaoHomeGround(x, z);
+    if (houseFloor !== undefined) return houseFloor;
     if (z <= TOP_Z) return H_TOP;
     if (x >= AUX_X - AUX_W / 2 && x <= AUX_X + AUX_W / 2) {
       if (z >= AUX_F3.z0 && z <= AUX_F3.z1) return rampHeight(z, AUX_F3.z1, RISE * 2);
@@ -907,6 +936,8 @@ export function buildEscadao(scene, T) {
   rotaBeco(12, 6, X1);   // beco leste
   // Liga o fundo da rua pelo vão entre as moradias e o carro.
   linha(-8.5, 26, -8.5, 38, 0.8);
+  linha(9.2, 24, 9.2, 16, .4);
+  linha(9.2, 16, 7, 16, .4);
   // base
   for (const bz of [20, 26, 32, 37]) linha(-15, bz, 15, bz, 3.0);
   // topo
@@ -920,7 +951,18 @@ export function buildEscadao(scene, T) {
   linha(16.5, 20, 16.5, 38, 3.0);
   linha(-16.5, 38, 16.5, 38, 3.0);
 
-  const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t; if (blocked(x, z, 0.25)) return false; } return true; };
+  const segClear = (a, b) => {
+    const nearHome = (p) => p.x > 1 && p.x < 11 && p.z > 13 && p.z < 24;
+    const home = nearHome(a) || nearHome(b);
+    const steps = home ? Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/.15) : 6;
+    let previous = groundHeightAt(a.x,a.z);
+    for (let i=1;i<=steps;i++) {
+      const t=i/steps, x=a.x+(b.x-a.x)*t, z=a.z+(b.z-a.z)*t, y=groundHeightAt(x,z);
+      if (blocked(x,z,home?.42:.25) || (home && Math.abs(y-previous)>.3)) return false;
+      previous=y;
+    }
+    return true;
+  };
   for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
   function nearestWaypoint(x, z) { let b = 0, bd = 1e9; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < bd) { bd = d; b = i; } } return b; }
   const _D = (a, b) => { const dx = nodes[a].x - nodes[b].x, dz = nodes[a].z - nodes[b].z; return Math.sqrt(dx * dx + dz * dz); };
@@ -997,8 +1039,8 @@ export function buildEscadao(scene, T) {
       folhas.add(folhaGeo,folhaMat,pose,null,{cast:false});
     }
   };
-  for (const [x,y,z] of [[-13.65,2.8,8.8],[-13.65,4.2,7.2],[-2.0,4.7,5],
-    [2.0,7.1,-3.7],[-7,H_TOP+2.1,-21.85],[7,H_TOP+2.1,-21.85]]) {
+  for (const [x,y,z] of [[-13.65,2.8,8.8],[-13.65,4.2,7.2],[-2.0,groundHeightAt(0,5)+2.05,5],
+    [2.0,groundHeightAt(0,-3.7)+2.05,-3.7],[-7,H_TOP+2.1,-21.85],[7,H_TOP+2.1,-21.85]]) {
     addBox(.48,.06,.48,MAT_ZINCO,x,y-.2,z,{collide:false,cast:false,skirt:false});
     pose.position.set(x,y,z);pose.rotation.set(0,0,0);pose.scale.set(1,1,1);vasos.add(vasoGeo,vasoMat,pose,null,{cast:false});
     plantar('samambaia',x,y+.16,z,.52,z);
@@ -1121,6 +1163,7 @@ export function buildEscadao(scene, T) {
   const ambience = createFavelaAmbience(root, {
     map: 'escadao', low: LOWQ,
     rats: [
+      { pos: [11.2, groundHeightAt(11.2, 24.2), 24.2], to: [11.8, groundHeightAt(11.8, 23.5), 23.5], phase: .2 },
       { pos: [8.2, groundHeightAt(8.2, 34), 34], to: [9.35, groundHeightAt(9.35, 32.8), 32.8], phase: .45 },
       { pos: [-9.4, groundHeightAt(-9.4, 22.5), 22.5], to: [-8.3, groundHeightAt(-8.3, 21.3), 21.3], phase: 1.7 },
     ],
@@ -1131,7 +1174,7 @@ export function buildEscadao(scene, T) {
     ],
     /* O gato mudou de faixa: a casa de molde do mirante leste ocupou a planta antiga e o
        AR3 do ambience-registry acendeu. Agora anda entre a mureta e a caçamba. */
-    cats: [{ pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
+    cats: [{ assetId: 'escadaoCat', speed: { walk: .55, flee: 1.5 }, pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
     chickens: [{ pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
     /* Duas espécies novas do acervo `models/ambient/`: caramelo na calçada e no mirante,
        barata onde tem lixo (caçamba do topo e beco leste). */
@@ -1140,6 +1183,7 @@ export function buildEscadao(scene, T) {
       { pos: [3.6, groundHeightAt(3.6, -31.4), -31.4], to: [2.1, groundHeightAt(2.1, -29.6), -29.6], phase: 2.2 },
     ],
     cockroaches: [
+      { pos: [11.1, groundHeightAt(11.1, 24.8), 24.8], to: [11.5, groundHeightAt(11.5, 24.3), 24.3], phase: .35 },
       { pos: [12.6, groundHeightAt(12.6, -30.2), -30.2], to: [11.9, groundHeightAt(11.9, -29.5), -29.5], phase: 1.05 },
       { pos: [-13.2, groundHeightAt(-13.2, 13.1), 13.1], to: [-13.8, groundHeightAt(-13.8, 12.4), 12.4], phase: 2.6 },
     ],
@@ -1210,7 +1254,7 @@ export function buildEscadao(scene, T) {
   };
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience, update, casario, casarioMoldes: CASARIO_MOLDES,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, snapDownSteps: true, spawns, sun, hemi, pickups, ctfPoints, ambience, update, casario, casarioMoldes: CASARIO_MOLDES,
     /* Som por cota: duas fontes no centro com raio 70 m tocavam igual no beco e no
        mirante. Agora baile na rua, cidade subindo do vale e passarada no topo. */
     sound: { loops: [
@@ -1219,6 +1263,7 @@ export function buildEscadao(scene, T) {
       { src: AMB_LOOPS.passaros, pos: [0, H_TOP + 3, -30], radius: 45, vol: .22 },
     ], bioma: 'favela' },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
+    tacticalPoints: [{ x: 7, z: 16, label: 'Janela da casa' }],
     stairs: [
       // Inclui um piso da chegada inferior: ele é a superfície antes do primeiro dos 12
       // espelhos e permite que a régua conte a primeira transição, não só as 11 internas.

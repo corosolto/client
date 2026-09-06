@@ -16,7 +16,7 @@ const photos = process.argv.includes('--fotos');
 const expectedClause = { 'varal-na-rota': 'EV1', 'escada-bloqueada': 'EV2', 'sem-abrigo': 'EV7' };
 if (mutante && !expectedClause[mutante]) throw Error('Mutante desconhecido');
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
-const sourceFiles = ['public/js/map_escadao.js', 'public/js/game.js', 'public/js/mapprops.js', 'public/js/ambientlife.js',
+const sourceFiles = ['public/js/map_escadao.js', 'public/js/map_escadao_home.js', 'public/js/map_escadao_details.js', 'public/js/game.js', 'public/js/mapprops.js', 'public/js/ambientlife.js',
   'tools/eval/escadao-visual-check.mjs', 'tools/eval/escadao-runtime-probe.mjs', 'tools/eval/escadao-rota-check.mjs'];
 const sources = Object.fromEntries(sourceFiles.map(file => [file, sha256(fs.readFileSync(path.join(root, file)))]));
 const gameSource = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
@@ -203,6 +203,7 @@ try {
         g.camera.position.set(position[0], position[1] + 1.62, position[2]);
         if (lookAt) g.camera.lookAt(lookAt[0], lookAt[1] + 1.62, lookAt[2]);
         else g.camera.lookAt(position[0], position[1] + 1, position[2] - 4);
+        g.renderer.render(g.scene,g.camera);
       }, sample);
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       const filename = `sample-${index}-${sample.reason}.png`;

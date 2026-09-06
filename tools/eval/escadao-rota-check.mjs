@@ -158,7 +158,7 @@ if (MUT === 'sem-abrigo') {
 }
 
 /* ================================ CLÁUSULA 1 ================================== */
-const destinos = [];
+const destinos = (W.tacticalPoints || []).map(p => ({ nome: p.label, x: p.x, z: p.z }));
 for (const [time, slots] of Object.entries(W.spawns)) slots.forEach((s, n) => destinos.push({ nome: `spawn ${time}#${n}`, x: s.x, z: s.z }));
 for (const p of (W.ctfPoints || [])) destinos.push({ nome: `bandeira ${p.label || p.id}`, x: p.x, z: p.z });
 
