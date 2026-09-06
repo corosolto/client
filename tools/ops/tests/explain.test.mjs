@@ -1,6 +1,7 @@
 /* Regras sintoma → causa, uma a uma, com resultados sintéticos das sondas. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { explicar } from '../lib/explain.mjs';
 import { veredito, codigoDeSaida, renderMarkdown } from '../lib/report.mjs';
 import { classificaChamadas } from '../probes/api.mjs';
@@ -140,4 +141,111 @@ test('http: classificação de erro, percentil, content-range e detecção de HT
   assert.equal(totalDoContentRange({}), null);
   assert.equal(pareceHtml(new TextEncoder().encode('  <!DOCTYPE html>')), true);
   assert.equal(pareceHtml(new TextEncoder().encode('glTF....')), false);
+});
+
+/* ---------- UMA linha por regra: a tabela é o contrato de lib/explain.mjs ----------
+   A guarda de cegueira abaixo lê o fonte e reprova regra sem caso aqui (lei 3) e caso de
+   id que não existe (typo). Cada entrada: a menor sonda sintética que acende o id. */
+const bootOk = () => ({ sonda: 'boot', alvo: 'https://x', html: { status: 200, ms: 100, csp: true, bytes: 10 }, importMap: { './js/main.js': 'a', './js/version.js': 'v' }, versaoHtml: '1', versaoJs: '1', mainJs: { status: 200, ehHtml: false }, coerencia: { exit: 0, problemas: [] }, opsJs: { noHtml: true } });
+const apiOk = () => ({ sonda: 'api', health: { status: 200, url: 'u', ms: 1, corpo: { ok: true, database: true, telemetrySchema: true, fresh: true, stale: [], never: [], operationalFresh: true } }, rotas: [], redeSeguranca: { status: 404 } });
+const rota = (extra) => ({ rota: 'online', total: 5, ok: 5, cincoXx: 0, semResposta: 0, p50: 100, p95: 120, padrao: 'ok', chamadas: [{ status: 200, ms: 100 }], ...extra });
+const rkOk = () => ({ sonda: 'ranking', flagLocal: false, leaderboard: { status: 200, desligado: true, temLista: false }, pagina: { status: 200, bytes: 100 } });
+const asOk = (extra) => ({ sonda: 'assets', total: 2, itens: [{ caminho: 'models/weapons/ak.glb', grupo: 'armas' }, { caminho: 'vendor/three.module.js', grupo: 'vendor' }], faltando: [], semResposta: [], outrosErros: [], conteudoErrado: [], tamanhoDiverge: [], p95ms: 100, cacheHits: 0, ...extra });
+const blOk = () => ({ sonda: 'boot-local', versaoPackage: '1', versaoJs: '1', indexAstro: { temImportMap: true, temMainJs: true, temOpsJs: true, temColetorDeErros: true }, manifesto: { temOps: true }, coerencia: { exit: 0, problemas: [] } });
+const alOk = (extra) => ({ sonda: 'assets-local', total: 1, itens: [{ caminho: 'models/weapons/ak.glb', grupo: 'armas' }, { caminho: 'models/props/x.glb', grupo: 'props' }], faltando: [], conteudoErrado: [], ...extra });
+const ptOk = (extra) => ({ sonda: 'partidas', fatal: null, timeout: false, partidas: [], comErro: [], semLive: [], semBots: [], ...extra });
+const navOk = (extra) => ({ sonda: 'navegador', indisponivel: false, headless: true, mainReady: true, btnJogar: true, webgl2: true, pageErrors: [], consoleErros: [], requestsFalhas: [], ops: null, partida: null, ...extra });
+const partida = (extra) => ({ mapa: 'quebrada', modo: 'rounds', bots: 4, updates: 600, estadoFinal: 'live', tempoJogo: 10, erros: [], ...extra });
+
+const CASOS = [
+  ['alvo-inalcancavel', 'critico', { boot: { ...bootOk(), html: { status: 0, erro: 'conexao', ms: 5 } } }],
+  ['alvo-inalcancavel', 'inconclusivo', { boot: { ...bootOk(), html: { status: 0, erro: 'proxy', ms: 5 } } }],
+  ['html-nao-200', 'critico', { boot: { ...bootOk(), html: { status: 500, ms: 5 } } }],
+  ['html-sem-importmap', 'critico', { boot: { ...bootOk(), importMap: null } }],
+  ['html-sem-main-js', 'critico', { boot: { ...bootOk(), importMap: {}, mainJs: null } }],
+  ['main-js-indisponivel', 'critico', { boot: { ...bootOk(), mainJs: { status: 404 } } }],
+  ['main-js-e-html', 'critico', { boot: { ...bootOk(), mainJs: { status: 200, ehHtml: true } } }],
+  ['versao-divergente', 'alto', { boot: { ...bootOk(), versaoJs: '2' } }],
+  ['grafo-incoerente', 'critico', { boot: { ...bootOk(), coerencia: { exit: 1, problemas: ['HTTP 404 em /js/x.js'] } } }],
+  ['coerencia-nao-medida', 'inconclusivo', { boot: { ...bootOk(), coerencia: { exit: 1, problemas: [], saida: 'fetch failed' } } }],
+  ['coerencia-nao-medida', 'inconclusivo', { boot: { ...bootOk(), coerencia: { exit: null, problemas: [], saida: '' } } }],
+  ['sem-csp', 'aviso', { boot: { ...bootOk(), html: { status: 200, ms: 5, csp: false } } }],
+  ['html-lento', 'aviso', { boot: { ...bootOk(), html: { status: 200, ms: 2600, csp: true } } }],
+  ['ops-runtime-ausente', 'info', { boot: { ...bootOk(), opsJs: { noHtml: false } } }],
+  ['producao-atras-da-arvore', 'info', { contexto: { versaoLocal: '2' }, boot: bootOk() }],
+  ['health-indisponivel', 'critico', { api: { ...apiOk(), health: { status: 503 } } }],
+  ['health-indisponivel', 'inconclusivo', { api: { ...apiOk(), health: { status: 0, erro: 'dns' } } }],
+  ['health-nao-ok', 'critico', { api: { ...apiOk(), health: { status: 200, corpo: { ok: false } } } }],
+  ['banco-fora', 'critico', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, database: false } } } }],
+  ['schema-telemetria', 'alto', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, telemetrySchema: false } } } }],
+  ['mp-sem-heartbeat', 'alto', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, operationalFresh: false, operationalStale: ['eu'] } } } }],
+  ['pipeline-nunca-gravou', 'alto', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, never: ['perf'] } } } }],
+  ['pipelines-parados', 'aviso', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, fresh: false, stale: ['match'] } } } }],
+  ['health-site-vs-backend', 'medio', { api: { ...apiOk(), healthBackend: { status: 200, corpo: { ok: true, database: false, telemetrySchema: true } } } }],
+  ['rota-fora:online', 'alto', { api: { ...apiOk(), rotas: [rota({ padrao: 'sempre-falha', ok: 0, cincoXx: 5, chamadas: [{ status: 503 }] })] } }],
+  ['rota-fora:leaderboard', 'medio', { api: { ...apiOk(), rotas: [rota({ rota: 'leaderboard', padrao: 'sempre-falha', ok: 0, cincoXx: 5, chamadas: [{ status: 503 }] })] } }],
+  ['rota-4xx:map-plays', 'alto', { api: { ...apiOk(), rotas: [rota({ rota: 'map-plays', padrao: 'sempre-4xx', ok: 0, quatroXx: 5, chamadas: [{ status: 404 }] })] } }],
+  ['rota-intermitente:online', 'medio', { api: { ...apiOk(), rotas: [rota({ padrao: 'intermitente', ok: 4, cincoXx: 1, chamadas: [{ status: 503 }, { status: 200 }] })] } }],
+  ['latencia-api:online', 'aviso', { api: { ...apiOk(), rotas: [rota({ p95: 2500, chamadas: [{ status: 200, ms: 2500 }] })] } }],
+  ['rede-seguranca-rota-desconhecida', 'medio', { api: { ...apiOk(), redeSeguranca: { status: 200, corpo: 'html' } } }],
+  ['rede-seguranca-rota-desconhecida', 'aviso', { api: { ...apiOk(), redeSeguranca: { status: 500 } } }],
+  ['ranking-flag-nao-lida', 'alto', { ranking: { ...rkOk(), flagLocal: null, flagErro: 'src/lib/site.ts sem RANKING_ON' } }],
+  ['ranking-ligado-sem-flag', 'medio', { ranking: { ...rkOk(), leaderboard: { status: 200, desligado: false, temLista: true } } }],
+  ['ranking-desligado-com-flag', 'alto', { ranking: { ...rkOk(), flagLocal: true } }],
+  ['pagina-ranking-quebrada', 'alto', { ranking: { ...rkOk(), pagina: { status: 500, ms: 1 } } }],
+  ['pagina-ranking-vazia', 'alto', { ranking: { ...rkOk(), pagina: { status: 200, bytes: 0 } } }],
+  ['assets-inalcancaveis', 'inconclusivo', { assets: asOk({ semResposta: ['a (timeout)', 'b (timeout)'] }) }],
+  ['asset-404', 'alto', { assets: asOk({ faltando: ['models/weapons/ak.glb'] }) }],
+  ['asset-404', 'critico', { assets: asOk({ faltando: ['vendor/three.module.js'] }) }],
+  ['asset-404', 'aviso', { contexto: { versaoLocal: '2' }, boot: bootOk(), assets: asOk({ faltando: ['models/weapons/ak.glb'] }) }],
+  ['asset-conteudo-errado', 'alto', { assets: asOk({ conteudoErrado: ['models/weapons/ak.glb'] }) }],
+  ['asset-tamanho-diverge', 'medio', { assets: asOk({ tamanhoDiverge: ['models/weapons/ak.glb (edge 1 ≠ disco 2)'] }) }],
+  ['asset-erro-http', 'medio', { assets: asOk({ outrosErros: ['models/weapons/ak.glb (503)'] }) }],
+  ['asset-sem-resposta', 'medio', { assets: asOk({ semResposta: ['models/weapons/ak.glb (timeout)'] }) }],
+  ['assets-lentos', 'aviso', { assets: asOk({ p95ms: 3500 }) }],
+  ['versao-local-desincronizada', 'alto', { bootLocal: { ...blOk(), versaoJs: '2' } }],
+  ['index-astro-sem-boot', 'critico', { bootLocal: { ...blOk(), indexAstro: { temImportMap: false, temMainJs: true, temOpsJs: true, temColetorDeErros: true } } }],
+  ['index-astro-sem-coletor', 'alto', { bootLocal: { ...blOk(), indexAstro: { temImportMap: true, temMainJs: true, temOpsJs: true, temColetorDeErros: false } } }],
+  ['ops-runtime-nao-ligado', 'info', { bootLocal: { ...blOk(), indexAstro: { temImportMap: true, temMainJs: true, temOpsJs: false, temColetorDeErros: true } } }],
+  ['grafo-local-incoerente', 'critico', { bootLocal: { ...blOk(), coerencia: { exit: 1, problemas: ['main.js não exporta foo'] } } }],
+  ['coerencia-local-nao-medida', 'inconclusivo', { bootLocal: { ...blOk(), coerencia: { exit: 1, problemas: [], saida: 'boom' } } }],
+  ['asset-local-faltando', 'critico', { assetsLocal: alOk({ faltando: ['models/weapons/ak.glb'] }) }],
+  ['asset-local-faltando', 'alto', { assetsLocal: alOk({ faltando: ['models/props/x.glb'] }) }],
+  ['asset-local-corrompido', 'alto', { assetsLocal: alOk({ conteudoErrado: ['models/weapons/ak.glb'] }) }],
+  ['partida-nao-medida', 'alto', { partidas: ptOk({ fatal: 'harness: x' }) }],
+  ['partida-travou', 'alto', { partidas: ptOk({ timeout: true }) }],
+  ['partida-crash:quebrada:rounds', 'critico', { partidas: ptOk({ comErro: [partida({ erros: [{ update: 3, mensagem: 'TypeError', stack: 'game.js:1' }] })] }) }],
+  ['partida-nao-comeca:quebrada:rounds', 'alto', { partidas: ptOk({ semLive: [partida({ estadoFinal: 'countdown' })] }) }],
+  ['partida-sem-bots:quebrada:rounds', 'medio', { partidas: ptOk({ semBots: [partida({ bots: 0 })] }) }],
+  ['navegador-indisponivel', 'aviso', { navegador: { sonda: 'navegador', indisponivel: true, motivo: 'sem Playwright' } }],
+  ['boot-navegador-morto', 'critico', { navegador: navOk({ mainReady: false, mainLoaded: true, pageErrors: ['TDZ'] }) }],
+  ['excecao-no-navegador', 'alto', { navegador: navOk({ pageErrors: ['ReferenceError'] }) }],
+  ['btn-jogar-inerte', 'critico', { navegador: navOk({ btnJogar: false }) }],
+  ['sem-webgl2', 'aviso', { navegador: navOk({ webgl2: false, webgl1: true }) }],
+  ['sem-webgl2', 'alto', { navegador: navOk({ webgl2: false, webgl1: true, headless: false }) }],
+  ['recursos-falhando-no-boot', 'critico', { navegador: navOk({ requestsFalhas: ['/js/game.js 404'] }) }],
+  ['recursos-falhando-no-boot', 'medio', { navegador: navOk({ requestsFalhas: ['/img/x.png 404'] }) }],
+  ['console-error-no-boot', 'medio', { navegador: navOk({ consoleErros: ['textura'] }) }],
+  ['ops-falhas-de-carga', 'medio', { navegador: navOk({ ops: { recursos: { falhas: [{ caminho: '/models/x.glb', status: 404 }] } } }) }],
+  ['ops-contexto-perdido', 'alto', { navegador: navOk({ ops: { webgl: { perdidos: 1, restaurados: 0 } } }) }],
+  ['fps-baixo', 'medio', { navegador: navOk({ headless: false, ops: { fps: { amostras: 10, p50: 20, p5: 10, travadas: 3 } } }) }],
+  ['partida-navegador-nao-comeca', 'critico', { navegador: navOk({ partida: { chegouLive: false, ms: null, erro: 'timeout' } }) }],
+];
+
+test('tabela: cada regra de explain.mjs acende com o id e a severidade esperados, com os quatro campos', () => {
+  for (const [id, sev, sondas] of CASOS) {
+    const a = explicar(sondas).find((x) => x.id === id);
+    assert.ok(a, `'${id}' não acendeu; achados: ${ids(explicar(sondas)).join(', ') || 'nenhum'}`);
+    assert.equal(a.severidade, sev, `'${id}' saiu ${a.severidade}, esperado ${sev}`);
+    assert.ok(a.causa && a.evidencia && a.impacto && a.proximo, `'${id}' sem causa/evidência/impacto/próximo passo`);
+  }
+});
+
+test('cegueira: toda regra do fonte tem caso na tabela, e todo caso aponta para regra que existe', () => {
+  const src = readFileSync(new URL('../lib/explain.mjs', import.meta.url), 'utf8');
+  const naFonte = new Set([...src.matchAll(/id: ['`]([a-z0-9-]+)/g)].map((m) => m[1]));
+  assert.ok(naFonte.size > 40, `só ${naFonte.size} ids lidos do fonte — a regex da guarda quebrou`);
+  const cobertos = new Set(CASOS.map(([id]) => id.split(':')[0]));
+  assert.deepEqual([...naFonte].filter((id) => !cobertos.has(id)), [], 'regra sem caso na tabela (lei 3: régua sem mutação não existe)');
+  assert.deepEqual([...cobertos].filter((id) => !naFonte.has(id)), [], 'caso de id que não existe no fonte');
 });

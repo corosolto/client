@@ -33,7 +33,8 @@ import { sondaAssetsRemoto, sondaAssetsLocal } from './probes/assets.mjs';
 import { sondaPartidas } from './probes/match.mjs';
 import { sondaNavegador, carregaPlaywright } from './probes/browser.mjs';
 import { explicar } from './lib/explain.mjs';
-import { veredito } from './lib/report.mjs';
+import { veredito, codigoDeSaida, renderMarkdown } from './lib/report.mjs';
+import { diagnosticar, parseArgs } from './diagnose.mjs';
 import { RAIZ_PADRAO } from './lib/repo.mjs';
 import { paralelo } from './lib/http.mjs';
 
@@ -191,8 +192,10 @@ for (const { cenario, esperado, sondas, achados } of rodados) {
   if (VERBOSO) console.log(`  · ${cenario}: ${achados.map((a) => `${a.id}[${a.severidade}]`).join(' ') || 'nenhum achado'}`);
   if (!esperado) {
     const v = veredito(achados, sondas);
-    if (!v.tecnicamenteVerde || graves.length) ruim(`'saudavel' devia sair tecnicamente verde sem achado ≥ médio; saiu: ${graves.map((a) => `${a.id}[${a.severidade}]`).join(' ') || v.motivos.join('; ')}`);
-    else ok(`'saudavel' → tecnicamente verde (${achados.length} achado(s) só info/aviso: ${achados.map((a) => a.id).join(', ') || 'nenhum'})`);
+    // nem AVISO: senão a fixture pode perder o CSP (ou o fresh) e `saudavel` E o mutante seguem verdes (LICOES §8)
+    const foraDeInfo = achados.filter((a) => a.severidade !== 'info');
+    if (!v.tecnicamenteVerde || foraDeInfo.length) ruim(`'saudavel' devia sair tecnicamente verde sem NENHUM achado além de info; saiu: ${foraDeInfo.map((a) => `${a.id}[${a.severidade}]`).join(' ') || v.motivos.join('; ')}`);
+    else ok(`'saudavel' → tecnicamente verde (${achados.length} achado(s), só info: ${achados.map((a) => a.id).join(', ') || 'nenhum'})`);
     continue;
   }
   const [id, sev] = esperado;
@@ -201,6 +204,23 @@ for (const { cenario, esperado, sondas, achados } of rodados) {
   else if (a.severidade !== sev) ruim(`'${cenario}' acendeu '${id}' como ${a.severidade}, esperado ${sev}`);
   else if (!a.causa || !a.evidencia || !a.impacto || !a.proximo) ruim(`'${cenario}' acendeu '${id}' sem causa/evidência/impacto/próximo passo completos`);
   else ok(`'${cenario}' → ${id} [${sev}]`);
+}
+
+/* diagnose.mjs de ponta a ponta (flags → sondas → veredito → relatório → código de saída) contra a
+   produção sintética sadia: é o caminho que `npm run ops:diag` percorre e que as sondas soltas não cobrem. */
+if (!SO || SO === 'diagnose') {
+  const raiz = fixture('saudavel');
+  const s = await servidor('saudavel', raiz);
+  try {
+    const diag = await diagnosticar(parseArgs(['--remoto', `--base=${s.base}`, `--backend=${s.base}`, `--raiz=${raiz}`, '--sem-arquivo', '--repeticoes=2', '--timeout=8000']));
+    const fora = diag.achados.filter((a) => a.severidade !== 'info');
+    const md = renderMarkdown(diag);
+    if (codigoDeSaida(diag.veredito) !== 0 || fora.length) ruim(`diagnosticar() 'saudavel' devia sair 0 sem achado além de info: ${fora.map((a) => a.id).join(', ') || diag.veredito.motivos.join('; ')}`);
+    else if (!diag.sondas.assets?.total || !diag.sondas.assets.itens.every((i) => i.tamanhoBate === true)) ruim(`diagnosticar() na MESMA versão devia comparar o tamanho de todos os assets: ${JSON.stringify(diag.sondas.assets?.itens?.map((i) => i.tamanhoBate))}`);
+    else if (!/Tecnicamente verde:\*\* SIM/.test(md) || !/## Comandos executados/.test(md) || diag.comandos.length < 3) ruim('diagnosticar() não rendeu relatório com veredito e comandos executados');
+    else if (s.escritas.length) ruim(`diagnosticar() ESCREVEU na produção sintética: ${s.escritas.join(', ')}`);
+    else ok(`diagnosticar() 'saudavel' → exit 0, ${diag.sondas.assets.total} assets com tamanho conferido, ${diag.comandos.length} comandos registrados, 0 escritas`);
+  } finally { await s.fechar(); rmSync(raiz, { recursive: true, force: true }); }
 }
 
 /* navegador: só quando há Playwright + Chromium; sem eles, PULADO com aviso (ambiente, não repo) */
