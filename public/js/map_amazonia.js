@@ -42,9 +42,8 @@ const PAT_A = 1.6;
 const ESC_N = 12, ESC_PISO = 0.26;  // espelho ~0,15: 2 espelhos cabem no pé de 0,30 do corpo
 export const AMAZONIA_NAV_STEP = 3.2;
 const ESTACOES = [
-  { x: 14, z: -27, d: [-1, 0], e: -1, rede: true },   // A — pé da bandeira E; a 1 m do
-  // cabeço norte: o pino de canto da casa (st.z+2.6) não pode cair no vão livre entre
-  // a prancha da rede (x≤10.5) e o fim da ponte (x 11.5) — VM14 ilhou a ponte norte.
+  { x: 14, z: -27, d: [-1, 0], e: -1, rede: true },   // A — pé da bandeira E; o pino de canto
+  // (st.z+2.6) não pode cair no vão da cabeça da ponte −24 (VM14)
   { x: 25, z: -18, d: [-1, 0], e: -1 },
   { x: 14, z: -9, d: [-1, 0], e: 0, rede: true },     // C — passagem (sem escada: sobe pela rede)
   { x: 14, z: 6, d: [-1, 0], e: 1, rede: true },      // D — virada pro igarapé

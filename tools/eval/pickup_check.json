@@ -1,5 +1,5 @@
 {
- "gerado": "2026-09-06T23:15:23.858Z",
+ "gerado": "2026-09-06T23:27:09.131Z",
  "criterios": {
   "chaoMinimoM": -0.1,
   "vaoMaximoM": 0.05,
@@ -10,7 +10,7 @@
   }
  },
  "totalPickups": 1034,
- "semAlcance": 1,
+ "semAlcance": 0,
  "abaixoDoPiso": 0,
  "flutuando": 0,
  "mapas": [
@@ -19,11 +19,11 @@
    "waypoints": 638,
    "pickups": 71,
    "spawnPiorDistWaypoint": 2.12,
-   "celulasAlcancadas": 67516,
-   "semAlcance": 1,
+   "celulasAlcancadas": 68186,
+   "semAlcance": 0,
    "semAlcanceWpVelho": 0,
    "semAlcanceRetaVelho": 7,
-   "piorDistAndavel": 1.25,
+   "piorDistAndavel": 0.16,
    "abaixoDoPiso": 0,
    "flutuando": 0,
    "piorDistWaypoint": 2.86,
@@ -383,11 +383,11 @@
      "vaoOrigem": 0.07,
      "baseMesh": 0.19,
      "vao": 0.01,
-     "distAndavel": 1.25,
+     "distAndavel": 0.05,
      "retaDoSpawn": false,
      "okAlcanceWpVelho": true,
      "okAlcanceRetaVelho": false,
-     "okAlcance": false,
+     "okAlcance": true,
      "okNivel": true,
      "okAssentada": true
     },
