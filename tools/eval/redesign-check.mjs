@@ -74,6 +74,7 @@ const alvoPorMutante = {
   'hud-sem-vinheta-baixa': 'UIR24',
   'killfeed-volta-svg': 'UIR25',
   'modo-volta-setup': 'UIR26',
+  'ctf-some-home': 'UIR26',
   'personagem-dificuldade-volta': 'UIR27',
   'punk-avatar-nao-auditado': 'UIR28',
   'perfil-volta-iniciais': 'UIR29',
@@ -355,6 +356,7 @@ css = muta('hud-sem-vinheta-baixa', css,
 game = muta('killfeed-volta-svg', game,
   '${this._killfeedWeaponIcon(weap)}',
   '${this._wpnIcon(weap)}');
+astro = muta('ctf-some-home', astro, 'data-act="ctf"', 'data-act="ctf-removido"');
 main = muta('modo-volta-setup', main,
   "case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;",
   "case 'sp':    openSetup('rounds', 'SINGLE PLAYER', 'sp'); break;");
@@ -838,10 +840,10 @@ const funcAttrs = blocoFuncao(main, 'renderCharAttrs');
    "JOGAR ▸ submenu" de 27/08 morreu; a ordem MULTIPLAYER primeiro (27/08) fica. A ordem é
    cobrada porque ela É a decisão — trocar de lugar reverte o pedido em silêncio; a ausência
    de data-act="jogar" também, senão o degrau volta por cima dos cartões.
-   CAPTURE A BANDEIRA segue como o botão de modo (#map-mode) na tela de mapas, que é
-   onde a escolha de modo sempre morou de verdade; o invariante desta cláusula continua sendo
-   que os DOIS modos entram por lá, e não que exista um item de menu para cada um. */
+   O relato de 06/09 exige também um acesso direto ao CTF na home; o seletor de modo
+   na tela de mapas não substitui esse botão. O mutante ctf-some-home remove o acesso. */
 const modoMapaPadrao = /<button class="cs-item cs-prime" data-act="mp"[^>]*>[\s\S]*?MULTIPLAYER[\s\S]*?<\/button>\s*\n\s*<button class="cs-item cs-prime" data-act="sp"[^>]*>[\s\S]*?SINGLE PLAYER[\s\S]*?<\/button>/.test(astro)
+  && /<button\b[^>]*data-act="ctf"[^>]*>[\s\S]*?CAPTURE A BANDEIRA[\s\S]*?<\/button>/.test(astro.match(/<nav\b[^>]*id="cs-menu"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || '')
   && !/data-act="jogar"/.test(astro)
   && !/>ABATE<\/button>/.test(astro)
   && /function openModeMap\(mode, title, act\) \{[\s\S]{0,180}openSetup\(mode, title, act\);[\s\S]{0,100}renderMapScreen\(\);[\s\S]{0,80}show\('map-screen'\);/.test(main)

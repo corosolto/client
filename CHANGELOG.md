@@ -34,6 +34,7 @@
 - O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
 
 ### Corrigido
+- O acesso direto a CAPTURE A BANDEIRA (CTF) voltou ao menu da home e abre a seleção de mapas com o modo escolhido.
 - `eval:boot` voltou a rodar: a fixture do `boot-check.mjs` ancorava na assinatura antiga de `_startGame` (mudada no #489) e reprovava antes de medir; agora ancora no nome da função.
 - Os contadores do menu (`/api/online` e `/api/map-plays`) tentam de novo no cold start do backend (503 na primeira chamada, medido 06/09) em vez de ficar vazios.
 - O proxy da rede de segurança do site repassa a geo da borda (`x-vercel-ip-*`); a diagnose distingue `city` parado com `presence` viva (ingestão parada, corosolto/backend#22) de "ninguém jogou".
