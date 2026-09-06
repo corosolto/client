@@ -109,3 +109,15 @@ Chrome com janela validou pointer lock e giro10,479rad (~600°) por mouse real, 
 Primeiro check:fast109/112: áudio herdado, sintaxe de guard de mídia e docsautoria durante atualização dos índices. Guard ajustado e testes próximos verdes; regenerar/commitar docs antes de repetir global no estado congelado. Relatório consolidado SERTAO-REVISAO-MENU-FAUNA.md inclui arquivos exatos, contraprovas e pendências. Próximo passo imediato: resultado global final, commit documental, push sem força e PR draft contra map2/velho-oeste. Nenhum merge/deploy.
 
 Rodada final congelada037c48b1: check:fast111/112 em304,0s; apenas audio:check herdado. Mídia/docsautoria e demais globais verdes. Build final e preview baseline+sete mutantes repetidos passaram. Log revision-final-check-fast.log; galeria/relatório atuais incluem prova de giro600°. Não regenerar manifesto de áudio para esconder a falha. Publicação autorizada limita-se à branch própria e PR draft para revisão humana; sem merge/deploy.
+
+## PR de revisão publicado
+
+PR draft **#511**: https://github.com/corosolto/client/pull/511, base map2/velho-oeste,
+head codex/sertao-astra. Commit de entrega c2414c56; PR445 permanece49441895.
+Pré-push passou com Node23.6.0. Primeira tentativa com Node16 bloqueada pelo hook;
+depois houve falha de transporte HTTP400 após gates verdes. Reenvio do mesmo SHA
+com HTTP/1.1 e postBuffer apenas no comando passou; PREPUSH=0 somente nessa
+retransmissão reutilizou a validação concluída, sem bypass de gate reprovado.
+Nenhum force-push, merge ou deploy. Próximo passo: revisão adversarial humana no
+PR511, especialmente cenário, cobertura, áudio/procedência e naturalidade da fauna.
+Servidor Astro desta worktree continua em localhost:8149; abrir em Chrome sem debug.
