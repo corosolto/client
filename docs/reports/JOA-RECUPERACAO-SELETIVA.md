@@ -169,3 +169,19 @@ Verificação nesta rodada (Node 23):
 
 Não verificado: browser/SSR ao vivo, `check:fast` completo (falhas herdadas listadas
 no marco anterior seguem sem leitura nova), revisão visual humana.
+
+### Marco: verificação local final (07/09/2026)
+
+Com o Node empacotado do ambiente local (`.../codex-primary-runtime/dependencies/node/bin/node`):
+
+- `npm run eval:mansao` — verde na suíte completa (runtime 528 nós/7.104 arestas,
+  vãos, CTF por camada, água, jardim, praia/horizonte, oceano, GLB e ambiência).
+- `npm run build` — verde; `/maps/index.html` foi prerenderizado e o pós-processamento
+  concluiu sem alterações pendentes no worktree.
+- `npm run check:fast` — 122/124 verdes. Os únicos vermelhos são `audio:check`
+  (manifest de áudio defasado/pack privado ausente nesta máquina) e
+  `eval:grafitelayout` (F2 do `escadao`, mapa fora desta lane).
+
+O primeiro `eval:mansao` com o `/usr/local/bin/node` (v16.13.0) falhou em
+`import.meta.dirname`; isso é incompatibilidade do runtime local antigo e não uma
+falha do mapa. O teste válido acima usa o Node empacotado.
