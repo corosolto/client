@@ -1,5 +1,24 @@
 # HANDOFF
 
+## CTF no menu da home — 06/09/2026
+
+Objetivo: restaurar o submenu de Single Player com CTF, validar clique e preservação do modo
+ao trocar de mapa. Branch `fix/ctf-home-menu`, base `f7f4402e`, worktree `ctf-home`.
+O submenu foi restaurado sem alterar os caminhos dos modos; traduções acompanham a escolha
+entre mata-mata e CTF. UIR26 reprovou antes e passou depois;
+`ctf-some-home` detectou a remoção. `mode-check.mjs`: 60/60 casos passaram.
+Capturas e logs preservados em `artifacts/ctf-home/` (fora do Git). Navegador em
+1200×800 confirmou o submenu aberto, clique em CTF e seleção de mapas em CTF;
+inglês também conferido. Build e SEO/AEO 6/6 passaram; revisão
+adversarial sem bloqueios. `docs:check` passou após regenerar os contadores de i18n.
+Checkpoint funcional: `2f62741a`. `check:fast` terminou em 289,4 s com 107/111;
+`docs:check` foi corrigido pela regeneração e passou isoladamente. Restam falhas
+fora do diff: `audio:check` (pacote privado ausente), `eval:audiofablocal`
+(`LAB8g` ambiência local do Escadão) e `eval:grafitelayout` (hash do layout do
+Escadão desatualizado). Log completo em `artifacts/ctf-home/ctf-home-check-fast.log`.
+Próximo passo: publicar a correção após autorização e conferir a home publicada.
+Publicação não realizada; depende de autorização do dono.
+
 ## Confiabilidade da telemetria browser → admin — 06/09/2026
 
 **Objetivo e pronto:** toda telemetria do jogo precisa atravessar navegador → Cloud Run →
