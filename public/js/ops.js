@@ -189,6 +189,20 @@ function ultimaSessao() {
   try { const s = localStorage.getItem(CHAVE_ULTIMA); return s ? JSON.parse(s) : null; } catch { return null; }
 }
 function snapshot() { return { ...resumo(), ultimaSessao: ultimaSessao() }; }
+/* Para o beacon de perf (main.js, 1× por sessão em partida): só números e strings curtas,
+   com teto, para caber num payload que o backend lê campo a campo e descarta o que não conhece. */
+function resumoBeacon() {
+  const r = resumo(); const u = ultimaSessao();
+  const n = (x, max) => (Number.isFinite(x) ? Math.max(0, Math.min(max, Math.round(x))) : null);
+  return {
+    v: OPS_VERSAO,
+    readyMs: n(r.marcos.main_ready, 600000), liveMs: n(r.marcos.primeiro_live, 600000),
+    fps50: n(r.fps.p50, 1000), fps5: n(r.fps.p5, 1000), fpsAmostras: n(r.fps.amostras, 10000), travadas: n(r.fps.travadas, 100000), congeladas: n(r.fps.congeladas, 100000),
+    recursos: n(r.recursos.total, 100000), falhas: n(r.recursos.falhas.length, 1000), glPerdidos: n(r.webgl.perdidos, 1000),
+    erros: n(r.erros.total, 100000), promessas: n(r.erros.promessas, 100000),
+    ultimaFase: u ? String(u.fase || '').slice(0, 12) : null, ultimaSaida: u?.abandono ? String(u.abandono.motivo || '').slice(0, 12) : null,
+  };
+}
 function brief() {
   const r = resumo();
   return `fase=${r.fase} ready=${r.marcos.main_ready ?? '-'}ms live=${r.marcos.primeiro_live ?? '-'}ms fps50=${r.fps.p50 ?? '-'} falhas=${r.recursos.falhas.length} gl=${r.webgl.perdidos} err=${r.erros.total}`;
@@ -196,8 +210,11 @@ function brief() {
 
 try {
   vigiaBoot(); vigiaPartida(); vigiaRecursos(); vigiaErros(); vigiaSaida();
+  // a sessão anterior entra no relatório de crash desta: onde ela parou e como saiu
+  const u = ultimaSessao();
+  if (u?.abandono) migalha(`última sessão: fase=${u.fase} saída=${u.abandono.motivo} live=${u.marcos?.primeiro_live ?? '-'}ms fps50=${u.fps?.p50 ?? '-'}`);
   if (new URLSearchParams(location.search).get('ops') === '1') setInterval(() => console.info('[ops]', brief()), 30000);
 } catch { /* diagnóstico nunca derruba o jogo */ }
 
-window.__csbOps = { versao: OPS_VERSAO, snapshot, brief, resumo, _estado: estado, _percentil: percentil };
-export { snapshot, brief, percentil };
+window.__csbOps = { versao: OPS_VERSAO, snapshot, brief, resumo, resumoBeacon, _estado: estado, _percentil: percentil };
+export { snapshot, brief, percentil, resumoBeacon };

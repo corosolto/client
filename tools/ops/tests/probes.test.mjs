@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { sondaPartidas } from '../probes/match.mjs';
 import { servidorEstaticoDePublic, coerenciaDoGrafo } from '../probes/boot.mjs';
+import { modoGpu, executavelChrome } from '../probes/browser.mjs';
 import { RAIZ_PADRAO } from '../lib/repo.mjs';
 
 test('partidas: cwd inexistente (com espaço e acento) vira `fatal`, não exceção sem dono', { timeout: 20_000 }, async () => {
@@ -33,4 +34,16 @@ test('servidor estático local: URL malformada é 400, traversal é 404, módulo
     assert.equal(await status('/js/version.js'), 200);
     assert.equal(await status('/'), 200);
   } finally { await s.fechar(); }
+});
+
+test('navegador: GPU automática só no macOS com Chrome; flags mandam; CI Linux fica no SwiftShader', () => {
+  const chrome = (p) => p.includes('Google Chrome');
+  assert.equal(modoGpu({ plataforma: 'darwin', chromeBin: undefined, existe: chrome }).gpu, true);
+  assert.equal(modoGpu({ plataforma: 'darwin', chromeBin: undefined, existe: () => false }).gpu, false, 'Mac sem Chrome não pode assumir GPU');
+  assert.equal(modoGpu({ plataforma: 'linux', chromeBin: '/opt/pw/chrome', existe: () => true }).gpu, false, 'Linux (CI) fica no SwiftShader');
+  assert.equal(modoGpu({ gpu: true, plataforma: 'linux', existe: () => false }).gpu, true, '--gpu manda');
+  assert.equal(modoGpu({ gpu: false, plataforma: 'darwin', existe: chrome }).gpu, false, '--sem-gpu manda');
+  assert.equal(executavelChrome({ plataforma: 'darwin', chromeBin: undefined, existe: chrome }), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
+  assert.equal(executavelChrome({ plataforma: 'linux', chromeBin: '/x/chrome', existe: () => true }), '/x/chrome');
+  assert.equal(executavelChrome({ plataforma: 'linux', chromeBin: undefined, existe: () => true }), undefined, 'sem CHROME_BIN fora do Mac usa o Chromium do Playwright');
 });
