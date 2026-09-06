@@ -17,6 +17,7 @@ import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 import { FACTIONS } from './factions.js';
+import { bindMapPreview, stopMapPreviews, previewRevision } from './map_preview.js';
 /* Literal exigido pela régua UIR1 (redesign-check lê a declaração, não o uso);
    a fonte dos nomes é factions.js — mantenha os dois em sincronia. */
 const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV' };
@@ -308,46 +309,9 @@ function loadMenuBackdrop() {
 loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 
 /* ---------------- screens ---------------- */
-const CINE_SCREEN_META = Object.freeze({
-  'mobile-warning': { section: 'ACESSO', step: 'DESKTOP RECOMENDADO', progress: 4 },
-  'main-menu': { section: 'ABERTURA', step: 'ESCOLHA A TRETA', progress: 12 },
-  'map-screen': { section: 'PREPARAÇÃO', step: '01 · O PALCO', progress: 26 },
-  'team-select': { section: 'ESCALAÇÃO', step: '02 · O SEU LADO', progress: 44 },
-  'char-select': { section: 'ESCALAÇÃO', step: '03 · O PERSONAGEM', progress: 62 },
-  'settings-panel': { section: 'SISTEMA', step: 'AJUSTE A ARENA', progress: 18 },
-  'howto-panel': { section: 'ARQUIVO', step: 'MANUAL DE CAMPO', progress: 18 },
-  'ranking-panel': { section: 'ARQUIVO', step: 'PLACAR DA RUA', progress: 18 },
-  'feedback-panel': { section: 'CANAL ABERTO', step: 'MANDE O PAPO', progress: 18 },
-  'pause-menu': { section: 'INTERVALO', step: 'A TRETA ESPERA', progress: 76 },
-  'match-end': { section: 'DESFECHO', step: 'FIM DE RODADA', progress: 100 },
-  'support-panel': { section: 'CANAL ABERTO', step: 'APOIE A TRETA', progress: 18 },
-});
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
-function applyCinematicScreen(id) {
-  if (!id || !CINE_SCREEN_META[id]) {
-    delete document.body.dataset.cineScreen;
-    return;
-  }
-  const meta = { ...CINE_SCREEN_META[id] };
-  if (id === 'main-menu' && document.getElementById('menu-setup')?.classList.contains('open')) {
-    const profile = document.getElementById('menu-setup')?.dataset.step === 'profile';
-    meta.section = profile ? 'IDENTIDADE' : 'PREPARAÇÃO';
-    meta.step = profile ? 'SEU PERFIL' : '01 · A PARTIDA';
-    meta.progress = profile ? 20 : 26;
-  }
-  if (id === 'team-select' && document.getElementById('team-select')?.dataset.step === 'enemy') {
-    meta.section = 'CONFRONTO'; meta.step = '04 · O ADVERSÁRIO'; meta.progress = 82;
-  }
-  document.body.dataset.cineScreen = id;
-  const section = document.getElementById('cine-section');
-  const step = document.getElementById('cine-step');
-  const progress = document.getElementById('cine-progress');
-  if (section) section.textContent = meta.section;
-  if (step) step.textContent = meta.step;
-  if (progress) progress.style.width = `${meta.progress}%`;
-}
 function show(id) {
-  applyCinematicScreen(id);
+  stopMapPreviews();
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
   if (id !== 'char-select') pvStopVideo();
@@ -1170,10 +1134,7 @@ async function _startGame(team, charId, enemyFaction) {
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
-  game.onPauseChange = (paused) => {
-    resetConfirms();
-    applyCinematicScreen(paused ? 'pause-menu' : null);
-  };
+  game.onPauseChange = () => { resetConfirms(); };
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -1357,7 +1318,6 @@ function setSetupStep(step) {
     if (st) st.textContent = tr(matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA');
     if (tt) tt.textContent = tr(setupTitle);
   }
-  if (document.body.dataset.cineScreen === 'main-menu') applyCinematicScreen('main-menu');
 }
 const openSetup = (mode, title, act) => {
   if (mode) { matchMode = mode; modoEscolhido = true; }   // veio de SINGLE PLAYER/CAPTURE THE FLAG = escolha explícita
@@ -1373,26 +1333,13 @@ function openModeMap(mode, title, act) {
   renderMapScreen();
   show('map-screen');
 }
-/* JOGAR abre os DOIS modos num submenu em vez de ocupar duas linhas da lista: o
-   redesign fecha o menu principal em 4 itens, e os modos são escolha de segundo
-   nível. `sp` e `ctf` seguem exatamente como estavam — só ganharam um pai. */
-const csJogar = document.querySelector('.cs-item[data-act="jogar"]');
-const csModos = $('cs-modos');
-function abreModos(abrir) {
-  if (!csModos || !csJogar) return;
-  const on = abrir === undefined ? csModos.hidden : abrir;
-  csModos.hidden = !on;
-  csJogar.setAttribute('aria-expanded', String(on));
-  csJogar.classList.toggle('is-open', on);
-}
 csItems.forEach((it) => {
   it.onmouseenter = () => ui.hover();
   it.onclick = () => {
     if (performance.now() - _entradaEm < ENTRADA_MS) return;
     ui.click();
     switch (it.dataset.act) {
-      case 'jogar': abreModos(); markCurrent(csModos && !csModos.hidden ? 'jogar' : null); break;
-      case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;
+      case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;
       case 'ctf':   openModeMap('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
       /* MAPA saiu (mapa se escolhe no fluxo de partida); FEEDBACK entrou (07/08) */
       case 'feedback': markCurrent('feedback'); show('feedback-panel'); break;
@@ -1563,7 +1510,8 @@ if (mapThumb) {
 function setMapThumb() {
   if (!mapThumb) return;
   mapThumb.style.opacity = '0';
-  mapThumb.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
+  mapThumb.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}${previewRevision(currentMap)}`;
+  bindMapPreview(mapThumb.parentElement, currentMap);
 }
 // Badge de modo + pontinhos de posição: o carrossel não dizia onde o jogador estava
 // (quantos mapas existem, qual é este) nem que Havan/Ferro Velho SÃO CTF por natureza.
@@ -1647,7 +1595,7 @@ const MAP_DESC = {
   posto_treta: 'Posto de combustível na beira da BR: loja de conveniência, bombas de cobertura e treta no fluorescente.',
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
-  velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
+  velho_oeste: 'Vila do Sertão: casas de taipa, igreja, poço e praça de forró entre três rotas na caatinga.',
   penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
@@ -1722,6 +1670,7 @@ function visibleMapIds() {
   return MAP_IDS.filter((id) => catsDe(id).includes(mapCategory));
 }
 function renderMapScreen() {
+  stopMapPreviews();
   const img = $('ms-bg-img'); if (!img) return;
   /* O mapa em foco manda na aba: se não pertence à aba atual, troca pra aba que o contém.
      Trocas manuais de aba já re-ancoram o mapa antes, então isto não briga com elas. */
@@ -1731,7 +1680,7 @@ function renderMapScreen() {
   const continuar = $('ms-continue')?.querySelector('span');
   if (continuar) continuar.textContent = frase('continuarSetup');
   img.decoding = 'async';   // decode fora da thread principal — não trava a UI da tela de mapas
-  img.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
+  img.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}${previewRevision(currentMap)}`;
   /* O palco é o MESMO wallpaper do menu principal, não esta preview: a foto do mapa em
      foco já está no card selecionado, e em tela cheia ela brigava com a grade. O `src`
      acima continua sendo escrito porque é dele que a sonda de tela lê o mapa em foco. */
@@ -1763,7 +1712,7 @@ function renderMapScreen() {
   $('ms-strip').style.setProperty('--map-count', shown.length);
   $('ms-strip').innerHTML = shown.map((id) =>
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
-      `<img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
+      `<img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}${previewRevision(id)}" alt="">` +
       `<span class="ms-thumb-copy"><span class="ms-thumb-name">${MAPS[id].name}</span>` +
       `<span class="ms-thumb-sub"><span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span>` +
       (playsDe(id) ? `<span class="ms-thumb-plays">${playsDe(id).toLocaleString('pt-BR')}</span>` : '') +
@@ -1778,6 +1727,7 @@ function renderMapScreen() {
   // de paginação eram falsos — marcavam páginas que não existem. Removidos.
   $('ms-dashes').innerHTML = '';
   $('ms-strip').querySelectorAll('.ms-thumb').forEach(b => {
+    bindMapPreview(b, b.dataset.id);
     b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
   });
@@ -1925,27 +1875,6 @@ $('strip-down').onclick = () => { ui.click(); stripStep(1); };
 // Cards vêm do registro único; facção sem roster aprovado aparece no
 // catálogo, mas não abre o fallback procedural que o dono reprovou como Roblox.
 const factionCards = [...document.querySelectorAll('.team-card[data-faction]')];
-/* BUG-42: o catálogo de pôsteres virou índice + um único hero editorial. A seleção
-   continua vindo dos mesmos botões/registro; esta função só projeta a linha focada no
-   palco, sem duplicar regra de disponibilidade nem de roster. */
-function presentFaction(card) {
-  if (!card || card.classList.contains('faction-excluded')) return;
-  const hero = $('faction-hero'); if (!hero) return;
-  const name = card.querySelector('.team-name')?.textContent?.trim() || '—';
-  const slogan = card.querySelector('.team-slogan')?.textContent?.trim() || '—';
-  const ready = card.dataset.ready === '1';
-  const count = CHARACTERS.filter(c => c.team === card.dataset.faction).length;
-  hero.style.setProperty('--hero-art', card.style.getPropertyValue('--art'));
-  hero.style.setProperty('--hero-color', card.style.getPropertyValue('--tc'));
-  hero.style.setProperty('--hero-rgb', card.style.getPropertyValue('--tc-rgb'));
-  const crest = $('fh-crest'); if (crest) { crest.src = card.querySelector('.team-crest')?.src || ''; crest.alt = `Brasão ${name}`; }
-  $('fh-name').textContent = name;
-  $('fh-slogan').textContent = slogan;
-  $('fh-desc').textContent = card.dataset.description || '';
-  $('fh-status').textContent = ready && count ? `${count} PERSONAGENS // ABRIR ELENCO` : 'ELENCO 3D EM PRODUÇÃO';
-  hero.dataset.ready = ready && count ? '1' : '0';
-  for (const item of factionCards) item.classList.toggle('is-preview', item === card);
-}
 for (const card of factionCards) {
   const fac = card.dataset.faction;
   const n = CHARACTERS.filter(c => c.team === fac).length;
@@ -1956,25 +1885,9 @@ for (const card of factionCards) {
   card.appendChild(chip);
   const ready = card.dataset.ready === '1' && n > 0;
   card.setAttribute('aria-disabled', String(!ready));
-  card.addEventListener('focus', () => { card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); presentFaction(card); });
-  card.addEventListener('mouseenter', () => presentFaction(card));
   card.onclick = () => {
     if (!ready) { ui.back(); return; }
     sfx.uiClick(); pickTeam(fac);
-  };
-}
-presentFaction(factionCards.find(card => card.dataset.ready === '1') || factionCards[0]);
-if ($('fh-status')) $('fh-status').onclick = () => {
-  const card = factionCards.find(item => item.classList.contains('is-preview'));
-  if (card) card.click();
-};
-for (const [id, direction] of [['team-prev', -1], ['team-next', 1]]) {
-  const button = $(id);
-  if (!button) continue;
-  button.onclick = () => {
-    ui.click();
-    const rail = document.querySelector('.team-row');
-    rail?.scrollBy({ top: direction * Math.max(92, rail.clientHeight * .56), behavior: 'smooth' });
   };
 }
 $('btn-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
@@ -2075,8 +1988,6 @@ $('char-confirm').onclick = () => {
 function setEnemyPickMode(on, myFaction) {
   for (const card of factionCards)
     card.classList.toggle('faction-excluded', !!(on && card.dataset.faction === myFaction));
-  presentFaction(factionCards.find(card => !card.classList.contains('faction-excluded') && card.dataset.ready === '1') ||
-    factionCards.find(card => !card.classList.contains('faction-excluded')));
 }
 /* A MESMA tela serve dois passos e precisa DIZER qual é. Antes o único sinal era o
    título trocado por querySelector em 4 lugares diferentes do arquivo — e o 2º passo
@@ -2095,7 +2006,6 @@ function setTeamStep(step, myFaction) {
     if (tt) tt.textContent = tr('ESCOLHA SEU LADO DA TRETA');
     if (hint) hint.textContent = tr('Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.');
   }
-  if (document.body.dataset.cineScreen === 'team-select') applyCinematicScreen('team-select');
 }
 
 const nickEl = $('nick-input');
@@ -2255,7 +2165,6 @@ function loadStats() {
     JSON.parse(localStorage.getItem(STATS_KEY) || '{}'));
 }
 async function recordMatchStats(s) {
-  applyCinematicScreen('match-end');
   submitted = true;
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
