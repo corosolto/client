@@ -34,7 +34,8 @@ padrão; nova inspeção com conferência direta glTF; identificação do desenc
 comparação de UV/skin; revisão independente. Aceitas como evidência técnica as medições
 corrigidas, sem aprovação estética. Capturas da importação padrão são **rejeitadas**.
 Runtime, materiais, atlas, fontes, GLBs servidos, câmera/HUD e ledgers globais intactos.
-Sem navegador, servidor, reinstalação, compra, push, merge ou deploy.
+A preparação até `11975d47` foi local, sem navegador, servidor, reinstalação, compra,
+push, merge ou deploy.
 
 ## Insumos, procedência e reprodução
 
@@ -424,3 +425,29 @@ natives temporalmente antigos, fixar os insumos e autorar primeiro a solução c
 de cada mecanismo. SVD tem carregador visualmente delimitável; Mosin exige acesso sob
 a luneta; SKS permanece bloqueada na decisão de alimentação. Esta frente encerra na
 pré-produção e preserva esses bloqueios, sem promover o arsenal.
+
+## Encaminhamento para PR
+
+Ruben autorizou continuar e abrir um PR desta worktree. A preparação está concluída;
+as pendências acima pertencem à produção sequencial da integradora. Na conferência
+remota, `codex/vm-astra-pistol` e `codex/vm-prep-precisao` ainda não existem no origin
+`https://github.com/corosolto/client.git`. Não há PR anterior desta frente.
+
+O diff contra `961c70d2` contém somente este relatório e os seis scripts próprios.
+Foi solicitada confirmação para publicar uma referência remota dedicada
+`codex/vm-prep-precisao-base` nesse checkpoint: a base também carrega 33 commits
+ancestrais ainda ausentes das referências origin locais verificadas. Abrir contra
+uma branch remota mais antiga acrescentaria trabalho de outras frentes ao diff.
+Estado: conteúdo pronto, publicação dependente da escolha da base remota.
+
+A nova verificação local passou: seis scripts, 63 insumos preservados e 84 poses.
+O hook `pre-push` chama `eval:mapcontrato`, cujo harness (`tools/eval/harness.mjs:116`)
+cria `node_modules/three` fora da faixa de escrita autorizada. Ao publicar este PR de
+preparação, usar a opção documentada `PREPUSH=0`, preservando a faixa e registrando
+que os gates globais não foram executados. Conferir separadamente diff, autoria dos
+commits e integridade offline; não declarar build/Game verdes.
+
+Corpo proposto em `A/pr-body.md`. Próximo passo: com a base definida, publicar somente
+as referências autorizadas e abrir PR em rascunho para revisão da preparação. O
+rascunho evita o preview automático de runtime herdado (`preview-build.yml` ignora
+drafts). Conferir no GitHub base, head, sete arquivos e ausência de auto-merge.
