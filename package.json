@@ -224,7 +224,7 @@
     "eval:escadao-preview": "node tools/eval/escadao-preview-check.mjs",
     "eval:amazonia": "node tools/eval/amazonia-check.mjs && node tools/eval/amazonia-surface-check.mjs && node tools/eval/amazonia-water-movement-check.mjs && node tools/eval/ambience-registry-check.mjs --map=amazonia && node tools/eval/amazonia-bots-check.mjs && node tools/eval/amazonia-audio-pack-check.mjs",
     "eval:lajes-raycast": "node tools/eval/lajes-raycast-check.mjs",
-    "eval:mansao": "node tools/eval/mansao-runtime-check.mjs && node tools/eval/mansao-water-check.mjs && node tools/eval/mansao-garden-check.mjs && node tools/eval/mansao-beach-check.mjs && node tools/eval/mansao-ocean-check.mjs && node tools/eval/mansao-glb-fit.mjs && node tools/eval/mansao-ambience-check.mjs"
+    "eval:mansao": "node tools/eval/mansao-runtime-check.mjs && node tools/eval/mansao-vaos-check.mjs && node tools/eval/mansao-ctf-check.mjs && node tools/eval/mansao-water-check.mjs && node tools/eval/mansao-garden-check.mjs && node tools/eval/mansao-beach-check.mjs && node tools/eval/mansao-ocean-check.mjs && node tools/eval/mansao-glb-fit.mjs && node tools/eval/mansao-ambience-check.mjs"
   },
   "repository": {
     "type": "git",

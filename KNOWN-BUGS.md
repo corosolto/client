@@ -4862,3 +4862,55 @@ O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame comple
 otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 `artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.
+
+## Mansão do Joá — captura entre andares e vãos de parede (06/09/2026)
+
+Dois defeitos achados por revisão independente do PR #533, reproduzidos no Game real
+antes do conserto. Réguas: `tools/eval/mansao-ctf-check.mjs` e
+`tools/eval/mansao-vaos-check.mjs`, ambas dentro de `npm run eval:mansao`.
+
+### BUG-142 · CTF do mezanino capturado, contestado e guardado do térreo · CORRIGIDO 06/09
+
+`Game._updateCTF` só media distância no plano XZ. A bandeira `P` (MEZZO) fica no mezanino
+a 4,5 m; um corpo no hall térreo, 4,5 m ABAIXO dela, caía dentro do raio de 4,5 m e
+capturava. O mesmo valia para contestar e para o bot "guardar" o ponto do andar errado.
+
+Reprodução: `artifacts/joa-recuperacao/ctf-before.log` — jogador em `(8, 0, -11)`,
+`_updateCTF(3)`, `p.owner` virava `'E'` (esperado `null`).
+
+Conserto: `world.ctfLayerContains(point, pos)` (`public/js/map_mansao.js`) exige
+`|pos.y − point.y| < 4,5/2`, e `game.js` consulta a camada nos três caminhos — soma do
+anel, crédito da captura e `_botCtf`. `world.configureCTFPoint` fixa `point.y` pelo
+`groundHeightAt` e apoia anel/zona/mastro na laje certa. Mutante `sem-camada` (apaga
+`ctfLayerContains`) acende a régua.
+
+### BUG-143 · vãos de porta/janela não batiam com a geometria nem com a colisão · CORRIGIDO 06/09
+
+`paredeComVao` só recortava no eixo X. As paredes leste/oeste correm no eixo Z, então as
+chamadas delas caíam no `if (vaoLarg >= w) return` (5,0 ≥ 0,30) e não construíam nada; os
+segmentos eram escritos à mão logo abaixo e não fechavam com a declaração. Medido com
+corpo r=0,38 no Game (`artifacts/joa-recuperacao/vaos-before.log`):
+
+| parede | vão declarado | corredor livre medido | erro |
+|---|---|---|---|
+| leste (janela) | 5,0 m em z=0 | z[-4,62;-2,88] e z[2,88;4,62] | 10 m de buraco em vez de 5, e o pano de vidro cobria só o miolo |
+| oeste (porta) | 3,0 m em z=2 | z[0,88;3,62] | 0,5 m a mais |
+| norte (porta) | 6,0 m em x=0 | ok para o corpo | ripas decorativas `collide:false`+`bala:true` atravessavam a porta: corpo passa, tiro não (BUG-54 na passagem) |
+
+Além disso a janela não tinha peitoril nem verga: sobravam frestas de 0,30 m embaixo e
+0,20 m em cima entre o pano e a alvenaria, fora da banda do corpo (`pé+0,3 .. pé+1,5`) e
+portanto invisíveis para qualquer régua que meça numa altura só.
+
+Conserto: `MANSAO_VAOS` em `public/js/map_mansao.js` é a fonte única; a parede nasce do vão
+nos dois eixos e o vidro nasce do mesmo registro. A régua mede três coisas diferentes —
+V1 corpo (`_collide`), V2 bala (raycast em `occluders`) e V3 perfil (continuidade vertical
+da coluna do vão). Mutantes `vao-largo` e `fresta-janela` acendem V1 e V3.
+
+### BUG-144 · sala sob o mezanino ilhada no grafo de bots · CORRIGIDO 06/09
+
+`eval:mapcontrato` MC3 acusava 8 nós ilhados só no mansao. A divisória da cozinha ia de
+x=-15 a x=-4 e, somada à escada e ao corrimão que desce até z=-7,45, deixava a sala uma
+fresta de 0,86 m — mais estreita que o passo do grafo e apertada para o corpo de 0,76 m de
+diâmetro. A sala existia para o jogador e não para o bot. A divisória agora para em
+x=-5,8 e há uma linha de amostragem no pé da escada; 528 nós, 7.104 arestas dirigidas,
+zero nós ocupados, zero arestas bloqueadas, zero ilhados.

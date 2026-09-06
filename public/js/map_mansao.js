@@ -18,26 +18,8 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 22, HALF_Z = 36;
 const LAJE_H = 4.5;  // pé-direito duplo
 
-/* PLANTA DA CASA e VÃOS DECLARADOS — fonte única de porta/janela.
-   ─────────────────────────────────────────────────────────────────────────────
-   Por que isto virou dado exportado, e não mais literal solto no construtor: a
-   `paredeComVao` histórica só sabia recortar no eixo X. As duas paredes LATERAIS
-   correm no eixo Z, então as chamadas delas caíam no `if (vaoLarg >= w) return`
-   (5,0 ≥ 0,30) e não construíam NADA — o vão declarado era ficção. Os segmentos
-   das laterais eram então escritos à mão logo abaixo, e as contas não fechavam:
-
-     · leste, janela declarada de 5 m em z=0 → segmentos z[-15,-5] e z[5,8]:
-       buraco REAL de 10 m, ou seja dois rasgos de 2,5 m sem parede E sem vidro
-       (o pano de 5 m só cobria z[-2,5;2,5]). Medido com corpo r=0,38 no Game:
-       corredores livres em z[-4,60;-2,90] e z[2,90;4,60].
-     · oeste, porta declarada de 3 m em z=2 → z[0,5;3,5] esperado, mas o segmento
-       escrito à mão começava em z=4: 0,5 m de vão a mais. Medido: z[0,90;3,60].
-
-   Agora a parede NASCE do vão nos dois eixos, e `tools/eval/mansao-vaos-check.mjs`
-   mede o corredor livre real contra esta tabela. `centro` é ABSOLUTO no eixo em
-   que a parede corre (era relativo e ambíguo); `em` é a coordenada fixa da parede.
-   Janela ganha `peitoril`/`verga` para que o vidro preencha exatamente o vão — sem
-   eles sobravam frestas de 0,30 m embaixo e 0,20 m em cima entre pano e alvenaria. */
+/* Fonte única de porta/janela: `centro` é ABSOLUTO no eixo em que a parede corre, `em` é a
+   coordenada fixa. Régua tools/eval/mansao-vaos-check.mjs; história em KNOWN-BUGS BUG-143. */
 export const CASA = { x0: -15, x1: 15, z0: -15, z1: 8 };
 export const PAREDE = { espessura: 0.3, altura: 4.0 };
 export const MANSAO_VAOS = [
@@ -225,13 +207,9 @@ export function buildMansao(scene, T) {
   // contrapiso sólido (bala não atravessa)
   addBox(CASA.x1 - CASA.x0, 0.12, CASA.z1 - CASA.z0, lam({ color: 0x909088 }), (CASA.x0 + CASA.x1) / 2, -0.12, (CASA.z0 + CASA.z1) / 2);
 
-  // paredes externas — recortadas a partir de MANSAO_VAOS (ver o comentário lá em cima)
   const MAT_WALL = lam({ map: TEX.concrete.map || null, color: 0xf5f0e8, roughness: 0.9 });  // branco modernista texturizado
-  /* Recorta UMA parede externa a partir do vão declarado, no eixo que a parede corre.
-     A parede ocupa o vão inteiro da planta (a0..a1); o que sobra dos dois lados do vão
-     vira alvenaria, e peitoril/verga fecham o resto da janela. Cada peça leva a marca
-     `mansaoVao` com a referência do próprio colisor, que é como o mutante da régua
-     consegue derrubar UM trecho sem reeditar o mapa. */
+  /* Recorta a parede externa a partir do vão declarado, no eixo em que ela corre; cada peça
+     leva `mansaoVao` com o próprio colisor, que é por onde o mutante da régua derruba UMA. */
   function paredeComVao(vao) {
     const eixoX = vao.eixo === 'x';
     const a0 = eixoX ? CASA.x0 : CASA.z0, a1 = eixoX ? CASA.x1 : CASA.z1;
@@ -253,8 +231,8 @@ export function buildMansao(scene, T) {
     if (vao.verga) trecho(v0, v1, vao.verga, PAREDE.altura - vao.verga, 'verga');
   }
   for (const vao of MANSAO_VAOS) paredeComVao(vao);
-  /* O vidro é fechamento real: segura corpo/tiro-de-corpo, enquanto as portas continuam
-     vazadas. Nasce do MESMO registro do vão — peitoril, verga e pano não podem divergir. */
+  /* Vidro é fechamento real e nasce do MESMO registro do vão: peitoril, verga e pano não
+     podem divergir. Transparente fica fora de `occluders` por contrato (BUG-54). */
   for (const vao of MANSAO_VAOS.filter(v => v.tipo === 'janela')) {
     const eixoX = vao.eixo === 'x';
     const x = eixoX ? vao.centro : vao.em - 0.02, z = eixoX ? vao.em - 0.02 : vao.centro;
@@ -262,12 +240,18 @@ export function buildMansao(scene, T) {
       lam({ color: 0xa0c8e0, transparent: true, opacity: 0.2 }), x, vao.peitoril, z);
     m.userData.mansaoVao = { id: vao.id, parte: 'vidro', collider: colliders[colliders.length - 1] };
   }
-  // Divisórias deixam cozinha, sala e home theater reconhecíveis sem criar becos cegos.
-  for (const [x, z, w, d] of [[-9.5,-6.5,11,.18],[9.75,-6.5,3.5,.18],[14.5,-6.5,1,.18],[-4,4.5,.18,7],[-4,-4.5,.18,3]])
+  /* Divisórias sem beco cego: a primeira PARA em x=-5,8 e deixa 1,8 m livres da escada para
+     a sala sob o mezanino, que antes ficava ilhada no grafo (KNOWN-BUGS BUG-144). */
+  for (const [x, z, w, d] of [[-10.4,-6.5,9.2,.18],[9.75,-6.5,3.5,.18],[14.5,-6.5,1,.18],[-4,4.5,.18,7],[-4,-4.5,.18,3]])
     addBox(w, 3.1, d, MAT_WALL, x, 0, z);
-  // Vergas e painéis ripados quebram o branco contínuo e enquadram as passagens.
+  /* Ripado ENQUADRA a passagem e não a atravessa: dentro da porta ele era cerca que o corpo
+     cruza e o tiro não (cláusula V2 da régua de vãos; KNOWN-BUGS BUG-143). */
   const ripado = lam({ map: texturaRipado(), roughness: 0.72 });
-  for (let x = -13; x <= 13; x += 0.42) addBox(0.12, 2.7, 0.08, ripado, x, 0.2, CASA.z0 + 0.24, { collide: false, skirt: false, bala: true });
+  const vaoNorte = MANSAO_VAOS.find((v) => v.eixo === 'x' && v.em === CASA.z0);
+  for (let x = -13; x <= 13; x += 0.42) {
+    if (vaoNorte && Math.abs(x - vaoNorte.centro) < vaoNorte.largura / 2 + 0.12) continue;
+    addBox(0.12, 2.7, 0.08, ripado, x, 0.2, CASA.z0 + 0.24, { collide: false, skirt: false, bala: true });
+  }
 
   // Casca modernista: lajes finas em balanço e vidro contínuo fecham a leitura de "planta aberta".
   const glass = lam({ color: 0x9bd0df, transparent: true, opacity: 0.24, metalness: 0.08, roughness: 0.12, side: THREE.DoubleSide });
@@ -1270,6 +1254,9 @@ export function buildMansao(scene, T) {
   linha(13.5, -14.5, 11, -14.5, .55, .2, LAJE_H);
   // interior
   for (const iz of [-12, -6, 0, 6]) linha(-14, iz, 14, iz, 3.0);
+  // Pé da escada: única ligação de chão com a sala sob o mezanino, e as linhas de z=-6 e
+  // z=-12 passavam por fora dela. Passo curto porque a faixa livre tem ~1 m (BUG-144).
+  linha(-13, -7.05, 2, -7.05, 1.2, .35);
   // jardim
   for (const jz of [18, 24, 30]) linha(-20, jz, 20, jz, 3.0);
   // O STEP global (3,4 m) caía exatamente sobre os montantes dos biombos e não

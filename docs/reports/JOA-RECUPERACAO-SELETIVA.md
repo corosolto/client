@@ -93,6 +93,53 @@ Checkpoint de origem/vegetação: `df0a1295`. Mobília e jardim complementares a
 
 Checkpoint de mobília: registrado no histórico da branch; céu corrigido da r2, aves e faixa seguem a mesma origem do inventário. Revisão independente em andamento achou captura entre pisos e dimensões incorretas das paredes com vãos; reprodução em `artifacts/joa-recuperacao/ctf-before.log`. Próximo passo: corrigir esses contratos antes do checkpoint de runtime.
 
+### Marco: os dois defeitos da revisão, com régua e mutante
+
+Ambos foram reproduzidos no Game real antes do conserto e ambos ganharam régua própria
+dentro de `npm run eval:mansao`. História, números e tabela de medição em `KNOWN-BUGS.md`
+(BUG-142, BUG-143, BUG-144).
+
+**Captura entre andares (BUG-142).** `Game._updateCTF` media só XZ, então o hall térreo
+capturava, contestava e guardava a bandeira do mezanino 4,5 m acima. Reprodução em
+`artifacts/joa-recuperacao/ctf-before.log`. O mapa passou a declarar
+`world.ctfLayerContains` e `world.configureCTFPoint`, e o `game.js` consulta a camada nos
+três caminhos: soma do anel, crédito da captura e `_botCtf`. Régua
+`tools/eval/mansao-ctf-check.mjs` — camada, contestação, bot e pintura apoiada no piso;
+mutante `sem-camada` vermelho.
+
+**Vãos de porta e janela (BUG-143).** `paredeComVao` só recortava no eixo X; as paredes
+leste/oeste caíam no early-return e os segmentos eram escritos à mão. Medido com corpo
+r=0,38 (`artifacts/joa-recuperacao/vaos-before.log`): a janela leste de 5 m era um buraco
+de 10 m com dois rasgos de 2,5 m sem parede nem vidro, a porta oeste de 3 m tinha 3,5 m, e
+o ripado decorativo atravessava a porta norte parando bala que o corpo cruzava. Agora
+`MANSAO_VAOS` é fonte única, a parede nasce do vão nos dois eixos e o vidro nasce do mesmo
+registro, com peitoril e verga. Régua `tools/eval/mansao-vaos-check.mjs` com três cláusulas
+independentes — V1 corpo (`_collide`), V2 bala (raycast em `occluders`) e V3 perfil
+(continuidade vertical da coluna, que é a única que enxergava as frestas de 0,30 m e
+0,20 m). Mutantes `vao-largo` e `fresta-janela` vermelhos.
+
+**Consequência achada pelo conserto (BUG-144).** Com as paredes corretas, `eval:mapcontrato`
+MC3 continuou vermelho só no mansao: 8 nós ilhados. A sala sob o mezanino tinha uma única
+fresta de 0,86 m entre a divisória da cozinha e o corrimão da escada — existia para o
+jogador e não para o bot. A divisória passou a parar em x=-5,8. Depois: 528 nós, 7.104
+arestas dirigidas, zero nós ocupados, zero arestas bloqueadas, zero ilhados.
+
+Ambiência local do mapa entrou na tabela curada de `tools/audio/fab-game-local.mjs`
+(mar, vento de encosta e vegetação), e `eval:audiofablocal` voltou ao verde com 17 mapas.
+
+**Verde local:** `eval:mansao` (9 réguas), `eval:mapcontrato`, `eval:mapid`,
+`eval:maprotate`, `eval:mappreview`, `eval:mapjson`, `eval:audiofablocal`,
+`eval:botsim-golden`, `docs:check`, `arch:check`. `botsim 60 s` no mansao: stuck 2,9%,
+entre escadão (2,1%) e amazônia (3,5%).
+
+**Vermelho herdado, não desta lane:** `audio:check` (pack privado ausente na máquina) e
+`eval:grafitelayout` F2 do **escadao** — `map_escadao.js` está intocado por esta branch
+(`git diff origin/main` vazio) e a regeneração pertence à lane do Escadão.
+
+**O que este PR NÃO é:** aprovação visual. Nada foi aberto em navegador; os números acima
+são de arnês em node e de render Blender offline, que não valida shader WebGL. Interior,
+jardim, praia e linhas de tiro seguem pendentes de crítica humana sobre captura real.
+
 ### Marco: correção de teto e CTF entre camadas
 
 O teste de CTF que dependia de `_ctfMoving` foi ajustado para refletir o comportamento real do bot no andar errado. A cobertura sobre o mezanino foi elevada e o contrato de salto passou a medir do olho do jogador no mezanino, não do piso do térreo. O runtime local voltou verde em `mansao-runtime-check` com 515 nós e 6932 arestas dirigidas; `mansao-ctf-check` também passou.
