@@ -4008,6 +4008,17 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   os 36 takes próprios; Palhaços ficam sem fala até nova dublagem aprovada. Voz genérica de
   facção/síntese para `C` e `F` é agora uma regressão coberta por mutante.
 
+  **Reaberto (06/09, ainda local):** *“os audios ingame sumiram, nenhum dos memes que antes
+  tinhamos e nem os inround está”*. A produção carregava o manifesto do runtime por
+  `audio/manifest.json?v=10`, cuja resposta tinha `last-modified: 16/08`, enquanto a mesma
+  produção já expunha o manifesto da release atual por `?v=2.0.0-alpha.228` (06/09). O menu
+  já usava `VERSION`, mas o `Sfx` que abastece memes, callouts e início/fim de round não.
+  **Régua:** `tools/eval/character-select-voice-check.mjs`: antes, as quatro cláusulas de
+  revisão/revalidação estavam ausentes; depois ela exige `sfx.loadManifest(VERSION)`, a query
+  da revisão e `Cache-Control: public, max-age=0, must-revalidate`. O mutante
+  `--mutante=manifest-antigo` acende VOICE13. **Pendente:** deploy e escuta final; os MP3
+  content-addressed continuam `immutable`.
+
 - **BUG-127 · estado de arma/munição/recarga ainda diverge entre cliente e servidor no multiplayer.**
   **Sintoma literal (feedback de 04/09/2026):** *“algumas armas não aparecem quando equipadas”*.
   **Evidência inicial:** `public/js/netgame.js` mantém a arma do jogador local fora da aplicação
