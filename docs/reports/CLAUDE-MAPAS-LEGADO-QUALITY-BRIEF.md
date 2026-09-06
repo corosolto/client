@@ -18,7 +18,15 @@ e sem alterar runtime, materiais ou registros compartilhados antes de uma propos
 3. `parque_treta`: partir do PR #333 já em `main`; pesquisar parques brasileiros e propor uma
    direção única antes de modelar. O candidato preferido deve ter vegetação, mobiliário,
    esporte/lazer e marcos que sustentem combate e orientação, não somente decoração.
-4. Só depois: Gelo, Posto, Obras, Atacadão e demais mapas legados/externos, um por vez.
+4. **Lote Emerson:** `posto_treta`, `obras_prefeitura` e `atacadao_treta` vêm em seguida,
+   nesta ordem de pesquisa e proposta. Os mapas base já estão em `main` pelos PRs #250,
+   #338 e #271; os PRs visuais #457, #458 e #459 estão fechados e são referência seletiva.
+   O Posto já tinha no ramo histórico `bombas_combustivel.glb` e
+   `loja_conveniencia.glb`, ambos do pack Mint `posto_obras_r3`, com contratos de
+   fallback e proveniência. Recuperar esses assets e seus contratos antes de criar outros.
+   Um GLB explicitamente identificado como Ipiranga não foi encontrado na ponta atual do
+   ramo; localizar seu recibo/arquivo antes de alegar que ele está pronto para integração.
+5. Só depois: Gelo e demais mapas legados/externos, um por vez.
 
 ## Regras de produção
 
