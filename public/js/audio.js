@@ -59,13 +59,14 @@ export class Sfx {
     this.reverbOn = false;       // send de reverb leve (opt-in: ?reverb=1) — OFF por padrão
     this.onDuck = null;          // hook externo (main.js: abaixa a música do menu)
   }
-  async loadManifest() {
+  async loadManifest(revision = '') {
     // Local pack first (audio/manifest.json, gitignored — dev's own CS samples);
     // fall back to the committed CC0 pack (real gun recordings, public domain) so
     // production plays real shots instead of the synth. Never throws.
-    // A chave acompanha a release de fetch-audio.sh; se atrasar, a CDN conserva catálogo
-    // antigo mesmo com os MP3 novos presentes no deployment (BUG-109).
-    for (const url of ['audio/manifest.json?v=10', 'audio/manifest.default.json?v=1']) {
+    // O manifesto muda junto com a release, mas seus MP3 por hash permanecem imutáveis.
+    // Receber a revisão do boot impede a CDN de manter um catálogo de pack anterior.
+    const query = revision ? `?v=${encodeURIComponent(revision)}` : '';
+    for (const url of [`audio/manifest.json${query}`, 'audio/manifest.default.json?v=1']) {
       try {
         const r = await fetch(url, { cache: 'no-cache' });
         if (r.ok) { this.pack = await r.json(); return; }

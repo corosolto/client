@@ -13,6 +13,7 @@ if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troc
 let main = readFileSync('public/js/main.js', 'utf8');
 let fetchAudio = readFileSync('scripts/fetch-audio.sh', 'utf8');
 let audio = readFileSync('public/js/audio.js', 'utf8');
+let vercel = readFileSync('vercel.json', 'utf8');
 if (mutante === 'sem-clique') {
   main = main.replace(
     'row.onclick = () => selectCharacterFromAvatar(c, row, chars);',
@@ -23,7 +24,7 @@ if (mutante === 'auto-fala') {
   main = main.replace('if (row) selectChar(character, row);', 'row?.click();');
 }
 if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v8', 'audio-pack-v7');
-if (mutante === 'manifest-antigo') audio = audio.replace('audio/manifest.json?v=10', 'audio/manifest.json?v=9');
+if (mutante === 'manifest-antigo') main = main.replace('sfx.loadManifest(VERSION)', 'sfx.loadManifest()');
 
 const failures = [];
 const expect = (ok, message) => { if (!ok) failures.push(message); };
@@ -46,9 +47,12 @@ expect(!/row\?\.click\(\)/.test(main),
 expect(/releases\/download\/audio-pack-v8\/audio-pack\.zip/.test(fetchAudio),
   'VOICE12 o build não baixa o pacote com as vozes do time Mítico e o upgrade dos funkeiros (v8; inclui o Faria Limer corrigido e o menu Suno do v7)');
 const packVersion = fetchAudio.match(/audio-pack-v(\d+)\/audio-pack\.zip/)?.[1];
-const manifestVersion = audio.match(/audio\/manifest\.json\?v=(\d+)/)?.[1];
-expect(packVersion === '8' && manifestVersion === '10',
-  `VOICE13 fallback público v${packVersion || '?'} e chave privada v${manifestVersion || '?'} não identificam o canal atual; CDN pode servir catálogo antigo`);
+const manifestHeader = JSON.parse(vercel).headers?.find((entry) => entry.source === '/audio/manifest.json');
+expect(packVersion === '8' && main.includes('sfx.loadManifest(VERSION)')
+  && /async loadManifest\(revision = ''\)/.test(audio)
+  && /audio\/manifest\.json\$\{query\}/.test(audio)
+  && manifestHeader?.headers?.some((header) => header.key === 'Cache-Control' && header.value === 'public, max-age=0, must-revalidate'),
+`VOICE13 o carregador ingame não usa a revisão da release com manifesto revalidável; CDN pode servir catálogo antigo (pack v${packVersion || '?'})`);
 
 globalThis.location ||= { search: '' };
 const { Sfx } = await import('../../public/js/audio.js');
