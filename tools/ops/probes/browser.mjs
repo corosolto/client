@@ -23,8 +23,28 @@
    Chromium empacotado do Playwright.
    ============================================================================ */
 import { execSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+
+const CHROME_MAC = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+
+/* GPU ou SwiftShader? Medido em 06/09/2026 contra a produção, no Mac do dono: SwiftShader
+   dá main_ready 21 s e FPS p50 3 (mede o renderizador por software); com GPU, 2,5 s e 108.
+   Então: --gpu/--sem-gpu mandam; sem flag, macOS com Chrome liga a GPU; o resto (CI Linux)
+   fica no SwiftShader e o relatório marca. */
+export function modoGpu({ gpu = null, plataforma = process.platform, chromeBin = process.env.CHROME_BIN, existe = existsSync } = {}) {
+  if (gpu === true) return { gpu: true, motivo: '--gpu' };
+  if (gpu === false) return { gpu: false, motivo: '--sem-gpu' };
+  if (plataforma === 'darwin' && (chromeBin || existe(CHROME_MAC))) return { gpu: true, motivo: 'macOS com Chrome: GPU real' };
+  return { gpu: false, motivo: 'sem GPU conhecida: SwiftShader (FPS não representa jogador)' };
+}
+
+export function executavelChrome({ plataforma = process.platform, chromeBin = process.env.CHROME_BIN, existe = existsSync } = {}) {
+  if (chromeBin) return chromeBin;
+  if (plataforma === 'darwin' && existe(CHROME_MAC)) return CHROME_MAC;
+  return undefined;
+}
 
 export async function carregaPlaywright() {
   const candidatos = [];
@@ -46,15 +66,16 @@ export async function carregaPlaywright() {
   return { chromium: null, tentativas };
 }
 
-export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000, gpu = false, amostraFpsMs = 8000 } = {}) {
-  const r = { sonda: 'navegador', alvo: base, headless: true, indisponivel: false, motivo: null, mainLoaded: null, mainReady: null, btnJogar: null, webgl2: null, webgl1: null, readyMs: null, pageErrors: [], consoleErros: [], requestsFalhas: [], escritasBloqueadas: [], ops: null, partida: null, versaoHtml: null };
+export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000, gpu = null, amostraFpsMs = 8000 } = {}) {
+  const modo = modoGpu({ gpu });
+  const r = { sonda: 'navegador', alvo: base, headless: true, gpu: modo.gpu, gpuMotivo: modo.motivo, executavel: executavelChrome() || 'chromium do Playwright', indisponivel: false, motivo: null, mainLoaded: null, mainReady: null, btnJogar: null, webgl2: null, webgl1: null, readyMs: null, pageErrors: [], consoleErros: [], requestsFalhas: [], escritasBloqueadas: [], ops: null, partida: null, versaoHtml: null };
   const pw = await carregaPlaywright();
   if (!pw.chromium) { r.indisponivel = true; r.motivo = `Playwright não encontrado (${(pw.tentativas || []).join(' · ')})`; return r; }
   let browser;
   try {
     browser = await pw.chromium.launch({
-      headless: true, executablePath: process.env.CHROME_BIN || undefined,
-      args: gpu ? ['--ignore-gpu-blocklist'] : ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--use-angle=swiftshader'],
+      headless: true, executablePath: executavelChrome(),
+      args: modo.gpu ? ['--ignore-gpu-blocklist'] : ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--use-angle=swiftshader'],
     });
   } catch (e) { r.indisponivel = true; r.motivo = `Chromium não abriu: ${String(e.message).split('\n')[0].slice(0, 160)}`; return r; }
   try {

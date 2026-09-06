@@ -25,6 +25,7 @@
     "ops:diag:local": "node tools/ops/diagnose.mjs --local",
     "ops:selftest": "node tools/ops/selftest.mjs",
     "ops:test": "node --test tools/ops/tests/*.test.mjs",
+    "ops:aquecer": "node tools/ops/aquecer.mjs",
     "eval:release": "node tools/eval/release-check.mjs",
     "eval:uuid": "node tools/eval/uuid-compat-check.mjs",
     "eval:drop": "node tools/eval/drop-check.mjs",

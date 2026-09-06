@@ -650,7 +650,7 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /return MAP_IDS\.filter\(\(id\) => catsDe\(id\)\.includes\(mapCategory\)\)/.test(main)
   /* a estatística sai do contador REAL (picks_daily via /api/pick), nunca de número local,
      e a tela tem de abrir sem ela: rede caída não pode derrubar a escolha de mapa. */
-  && /fetch\(apiUrl\('\/api\/map-plays'\)\)/.test(main)
+  && /fetch(?:ComRetry)?\(apiUrl\('\/api\/map-plays'\)\)/.test(main)   // com retry no cold start (06/09), a mesma rota
   && /let mapPlays = \{\};/.test(main)
   && /\.catch\(\(\) => \{ \/\* sem banco\/rede/.test(main)
 

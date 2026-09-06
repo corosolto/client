@@ -100,6 +100,15 @@ anterior. Não publicar resultado parcial nem ignorar falhas.
   merge normal dessa main, preservando retry do menu e novos checks/ops. Não usar
   reconstrução de árvore nesta atualização pequena. Depois CI/preview/mergePR438.
 
+## Marco V7: nova main incorporada
+
+- Merge normal de `d0edc586`: conflitos apenas em documentação gerada, resolvidos
+  a partir dos textos atuais da main e regeneração. Retry/telemetria do menu e
+  novas ferramentas operacionais preservados; hooks de preview continuam locais.
+- Revisão independente LSP1/consumidor sem bloqueante. Áudio e respawn integrados
+  no check:fast e passo Lajes do CI. Próximo: build/checks pós-merge, push normal,
+  revisar preview e checks obrigatórios no SHA final; mergear PR438 sem bypass.
+
 ## Marco anterior: V6 entregue localmente
 
 Pedido de06/09/2026 concluído localmente: ruas no chão muito estreitas, somente

@@ -50,7 +50,8 @@ imports e boot. Evidências em
 `artifacts/lajes-visual/v7/gates/spawn-beco-mutations.json` e logs
 `spawn-beco-{normal,slot-dentro-parede,slots-coincidentes,saida-bloqueada,restaurado}.log`.
 
-Estado: implementação validada localmente sobre `codex/lajes-visual`, sem
-mudanças em produção. Próximo passo: integrar o consumo independente em
-invariants e no CI pelo responsável da integração, preservando a direção
-visual aceita; revisão independente e checks finais da integração pendentes.
+Estado: integração concluída em invariants e no CI, com revisão independente
+sem bloqueante. O consumidor foi executado sobre o relatório geométrico fresco:
+MAP2B original reprova; LSP1 válido permite a travessa; LSP1 inválido reprova;
+o mesmo relatório identificado como loja_h continua reprovando os limites
+originais. Evidência: `v7/gates/spawn-consumer-red-green.json`.
