@@ -164,7 +164,7 @@ sfx.onDuck = (amt, hold) => {
   m.volume = MENU_MUSIC_VOL * amt;
   setTimeout(() => { if (menuMusic && !musicFade && !menuMusic.paused) menuMusic.volume = MENU_MUSIC_VOL; }, hold * 1000 + 220);
 };
-const sfxReady = sfx.loadManifest();
+const sfxReady = sfx.loadManifest(VERSION);
 
 /* ---------------- selected map ---------------- */
 const urlMap = new URLSearchParams(location.search).get('map');
