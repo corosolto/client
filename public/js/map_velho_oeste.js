@@ -11,6 +11,7 @@ import { finishTaipa, finishVenda, crateBattens, settlementGround, untileSertaoS
 import { createSertaoFauna } from './map_sertao_fauna.js';
 import { createSertaoHorizon } from './map_sertao_horizon.js';
 import { createSertaoDistantBirds } from './map_sertao_distant_birds.js';
+import { createSertaoLivestock } from './map_sertao_livestock.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
@@ -18,7 +19,7 @@ const HALF_Z = 46;
 export const VELHO_OESTE_PROPS = ['sertao_macambira', 'sertao_juazeiro',
   'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'caixa_som_baile',
   'casa_pedra', 'casa_geminada', 'igrejinha', 'caminhao_antigo'];
-export const VELHO_OESTE_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'chicken', 'parrot', 'calango', 'lagarto']);
+export const VELHO_OESTE_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'parrot', 'calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick']);
 
 export function buildVelhoOeste(scene, T) {
   const colliders = [];
@@ -823,9 +824,10 @@ export function buildVelhoOeste(scene, T) {
   }
   const faunaFlight = createSertaoFauna(root, { low });
   const distantBirds = createSertaoDistantBirds(root, { low });
+  const livestock = createSertaoLivestock(root, { low, enabled: typeof location === 'undefined' || !new URLSearchParams(location.search).has('semcriacao') });
   function update(dt, elapsed) {
     tecidos.forEach((tecido, i) => { tecido.rotation.x = Math.sin(elapsed * 1.8 + i * .6) * .16; });
-    faunaFlight.update(dt); distantBirds.update(dt);
+    faunaFlight.update(dt); distantBirds.update(dt); livestock.update(dt);
   }
 
   update(0, 0);
@@ -843,10 +845,6 @@ export function buildVelhoOeste(scene, T) {
       { mode: 'ground', pos: [-8, 0, -6], phase: .5 }, { mode: 'ground', pos: [4, 0, 14], phase: 1.4 },
       { mode: 'ground', pos: [-6.8, 0, -5], phase: .9 },
     ],
-    chickens: [
-      { pos: [14.5, 0, 24], to: [16.5, 0, 26], phase: .2 }, { pos: [-11, 0, 31], to: [-9, 0, 33], phase: 1.1 },
-      { pos: [12, 0, 33], to: [14, 0, 35], phase: 2 },
-    ],
     parrots: [
       { pos: [-22, 4.15, 20], phase: .4 }, { pos: [22.5, 2.9, 28.9], phase: 1.8 },
     ],
@@ -859,8 +857,8 @@ export function buildVelhoOeste(scene, T) {
     ],
   });
   const resetFauna = ambience.reset.bind(ambience), disposeFauna = ambience.dispose.bind(ambience);
-  ambience.reset = () => { resetFauna(); faunaFlight.reset(); distantBirds.reset(); };
-  ambience.dispose = () => { disposeFauna(); faunaFlight.dispose(); distantBirds.dispose(); horizon.dispose(); };
+  ambience.reset = () => { resetFauna(); faunaFlight.reset(); distantBirds.reset(); livestock.reset(); };
+  ambience.dispose = () => { disposeFauna(); faunaFlight.dispose(); distantBirds.dispose(); horizon.dispose(); livestock.dispose(); };
   root.traverse(object => {
     if (object.userData.fauna || object.userData.faunaAsset) object.traverse(mesh => { if (mesh.isMesh) mesh.castShadow = false; });
   });
@@ -876,7 +874,7 @@ export function buildVelhoOeste(scene, T) {
   occluders.splice(0, occluders.length, ...solidMeshes);
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22}],bioma:'campo'},
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight, horizon, distantBirds,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight, horizon, distantBirds, livestock,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),

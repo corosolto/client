@@ -46,6 +46,12 @@ jobs:
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
       - name: Todo mapa devolve o que o game.js consome
         run: npm run eval:mapcontrato
+      - name: Sertão (tema, rotas, criação e integração)
+        run: |
+          npm run eval:sertao
+          npm run eval:velhooeste
+          npm run eval:sertao-livestock
+          npm run eval:sertao-integration
       - name: Veículos do estacionamento em escala de fábrica
         run: npm run eval:escala
       - name: Orçamento de shader WebGL1

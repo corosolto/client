@@ -24,8 +24,11 @@ const ASSETS = Object.freeze({
   lagarto: 'models/ambient/lagarto_sertao.glb',
   // Derivado quadrúpede do acervo; postura/clipe: SERTAO-CALANGO-QUADRUPEDE.md.
   calango: 'models/ambient/calango_quadrupede.glb',
+  sertaoGoat: 'models/ambient/sertao_cabra.glb',
+  sertaoHen: 'models/ambient/sertao_galinha.glb',
+  sertaoChick: 'models/ambient/sertao_pintinho.glb',
 });
-export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS).filter(id => !['calango', 'lagarto'].includes(id)));
+export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS).filter(id => !['calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick'].includes(id)));
 const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot', calango: 'calango' });
 const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', calango: 'calango' });
 const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
@@ -46,7 +49,7 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
   if (!ids || !ids.length) ids = FAVELA_AMBIENCE_ASSETS;
   await Promise.all([...new Set(ids)].filter((id) => ASSETS[id] && !templates.has(id)).map(async (id) => {
     try {
-      const revision = id === 'calango' ? '78cc644d948d' : VERSION;
+      const revision = ({ calango: '78cc644d948d', sertaoGoat: 'a89410b7f899', sertaoHen: 'd07aa63bea9d', sertaoChick: 'a2f144c8b9de' })[id] || VERSION;
       const gltf = await loadGLB(`${ASSETS[id]}?v=${revision}`);
       let skinned = false;
       gltf.scene.traverse((object) => {
@@ -208,6 +211,8 @@ function cloneAsset(id) {  const template = templates.get(id);
     clips: template.clips,
   };
 }
+
+export function cloneAmbientLifeAsset(id) { return cloneAsset(id); }
 
 function normalizeModel(id, model) {
   model.updateMatrixWorld(true);

@@ -51,6 +51,8 @@ on:
       - 'tools/eval/graffiti-audit.mjs'
       - 'tools/eval/select-inflate.mjs'
       - 'tools/eval/serve.mjs'
+      - 'tools/eval/sertao-livestock-runtime-check.mjs'
+      - 'public/js/ambientlife.js'
       - '.github/workflows/portao-browser.yml'
   workflow_dispatch:
 
@@ -133,6 +135,18 @@ jobs:
       - name: eval:armas (preload de arma por partida)
         if: ${{ !cancelled() }}
         run: npm run eval:armas
+
+      - name: Criação do Sertão (GLBs servidos, caminhada, percurso e contato)
+        if: ${{ !cancelled() }}
+        run: npm run eval:sertao-livestock-runtime
+
+      - name: Evidência visual da criação do Sertão
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sertao-livestock-runtime
+          path: artifacts/sertao-astra/livestock-runtime/
+          if-no-files-found: warn
 
       # Número diz que caiu; imagem diz por quê. Só quando algum passo acima reprova.
       - name: Fotos das piores células (só em falha)
