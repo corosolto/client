@@ -13,9 +13,8 @@ const GUN_VOL = (() => {
    BufferSources e cobre passos/vozes; vários bots ainda multiplicam o problema. */
 const MAX_SHOT_VOICES_PER_SAMPLE = 4;
 const MAX_SHOT_VOICES = 16;
-// Decisão de escuta (06/09): sem dublagem genérica para Palhaços/Funkeiros.
-// Funkeiros tocam apenas os takes próprios estruturados; Palhaços ficam sem fala
-// até existir um catálogo aprovado. Efeitos físicos e o locutor Fish são separados.
+// Sem dublagem genérica: Funkeiros usam apenas takes próprios estruturados;
+// Palhaços ficam sem fala até existir catálogo aprovado. Fish e SFX são separados.
 const NO_GENERIC_VOICE_FACTIONS = new Set(['C', 'F']);
 
 export const CHARACTER_SELECT_VOICE = Object.freeze({
