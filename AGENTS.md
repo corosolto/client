@@ -127,6 +127,7 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 | a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; `docs/INDICE.md` indexa os `.md` soltos |
 | licença, arte paga e marca | [`docs/LICENCA.md`](docs/LICENCA.md) | as **decisões** e o porquê; quem declara é o `LICENSE`, e a tabela de superfícies vive no `CONTRIBUTING.md` |
 | fronteira de segurança do backend | [`docs/seguranca.md`](docs/seguranca.md) | leia antes de mexer em `/api/*` ou `supabase/` |
+| **diagnosticar produção, recuperar e reverter** | [`docs/runbooks/operacao-autonoma.md`](docs/runbooks/operacao-autonoma.md) | `npm run ops:diag`: causa provável, evidência, impacto e próximo passo; "tecnicamente verde" ≠ "pronto para lançamento" |
 | tarefas boas de primeira contribuição | [`docs/issues/`](docs/issues/) | uma por arquivo, com critério de aceite |
 | por que uma decisão antiga é como é | [`docs/historico/`](docs/historico/) | arquivo morto: **não** descreve o estado atual |
 
