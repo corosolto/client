@@ -79,6 +79,8 @@
     "eval:comentario": "node tools/eval/comentario-check.mjs",
     "eval:posters": "node tools/eval/poster-aspect-check.mjs",
     "eval:ui": "node tools/eval/ui-check.mjs all",
+    "eval:mappreview": "node tools/eval/map-preview-check.mjs",
+    "capture:escadaopreview": "node tools/capture-escadao-preview.mjs",
     "eval:redesign": "node tools/eval/redesign-check.mjs",
     "eval:screenquery": "node tools/eval/screen-query-check.mjs",
     "eval:screenquery:browser": "node tools/eval/screen-query-browser.mjs",
