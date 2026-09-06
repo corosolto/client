@@ -429,25 +429,20 @@ pré-produção e preserva esses bloqueios, sem promover o arsenal.
 ## Encaminhamento para PR
 
 Ruben autorizou continuar e abrir um PR desta worktree. A preparação está concluída;
-as pendências acima pertencem à produção sequencial da integradora. Na conferência
-remota, `codex/vm-astra-pistol` e `codex/vm-prep-precisao` ainda não existem no origin
-`https://github.com/corosolto/client.git`. Não há PR anterior desta frente.
+as pendências de animação e validação no Game pertencem à produção da integradora.
+Em nova conferência de 06/09, a frente de rifles já publicou a base comum
+`codex/vm-prep-base-961c70d2` em `corosolto/client`, exatamente no checkpoint
+`961c70d20a41336a53ba3b9abcc2068d3e7f9eb0`. Isso resolve a pendência anterior:
+não é necessário criar outra referência de base ou publicar a branch integradora.
 
-O diff contra `961c70d2` contém somente este relatório e os seis scripts próprios.
-Foi solicitada confirmação para publicar uma referência remota dedicada
-`codex/vm-prep-precisao-base` nesse checkpoint: a base também carrega 33 commits
-ancestrais ainda ausentes das referências origin locais verificadas. Abrir contra
-uma branch remota mais antiga acrescentaria trabalho de outras frentes ao diff.
-Estado: conteúdo pronto, publicação dependente da escolha da base remota.
+Publicar `codex/vm-prep-precisao` e abrir PR em rascunho contra essa base, com somente
+este relatório e os seis scripts próprios. Conferir base/head, os sete arquivos e
+nenhum auto-merge. Assets e evidências brutas continuam locais em `A/`; o corpo
+preparado fica em `A/pr-body.md`. Registrar número/URL do PR após a criação.
 
-A nova verificação local passou: seis scripts, 63 insumos preservados e 84 poses.
 O hook `pre-push` chama `eval:mapcontrato`, cujo harness (`tools/eval/harness.mjs:116`)
-cria `node_modules/three` fora da faixa de escrita autorizada. Ao publicar este PR de
-preparação, usar a opção documentada `PREPUSH=0`, preservando a faixa e registrando
-que os gates globais não foram executados. Conferir separadamente diff, autoria dos
-commits e integridade offline; não declarar build/Game verdes.
-
-Corpo proposto em `A/pr-body.md`. Próximo passo: com a base definida, publicar somente
-as referências autorizadas e abrir PR em rascunho para revisão da preparação. O
-rascunho evita o preview automático de runtime herdado (`preview-build.yml` ignora
-drafts). Conferir no GitHub base, head, sete arquivos e ausência de auto-merge.
+cria `node_modules/three` fora da faixa de escrita autorizada. Esta publicação de
+preparação usa sua opção documentada `PREPUSH=0`, preservando a faixa. Conferir
+separadamente diff, autoria dos commits e integridade offline; os gates globais,
+build e Game não são declarados aprovados. O rascunho evita o preview automático
+de runtime herdado (`preview-build.yml` ignora drafts).
