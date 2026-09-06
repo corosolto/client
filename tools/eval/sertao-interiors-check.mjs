@@ -3,7 +3,7 @@
 import { THREE, MAPS, initTextures, Game } from './harness.mjs';
 
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.slice(10);
-const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6' };
+const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6', 'bolsao': 'IN7' };
 if (mutant && !targets[mutant]) throw Error(`Mutante desconhecido: ${mutant}`);
 const world = MAPS.velho_oeste.build(new THREE.Scene(), await initTextures());
 const houses = world.interiorHouses || [];
@@ -28,6 +28,9 @@ if (mutant) {
     const hay=world.colliders.filter(c=>c.maxY===1.15&&c.minX>11&&c.maxX<18&&c.minZ>19&&c.maxZ<23);
     if(hay.length!==3) throw Error('Mutante não aplicou: fardos ausentes');
     for(const c of hay){c.minZ=20.85;c.maxZ=22.15;}
+  } else if (mutant === 'bolsao') {
+    for(const w of [{minX:-23.2,maxX:-16.8,minZ:-31.2,maxZ:-30.2},{minX:-23.2,maxX:-16.8,minZ:-25.8,maxZ:-24.8},{minX:-23.2,maxX:-22.2,minZ:-31.2,maxZ:-24.8},{minX:-17.8,maxX:-16.8,minZ:-31.2,maxZ:-24.8}])
+      world.colliders.push({...w,minY:0,maxY:2.6});
   } else if (mutant === 'barril-na-parede') {
     const c=world.colliders.find(c=>Math.abs(c.minX+17.62)<EPS&&Math.abs(c.maxY-1)<EPS);
     if(!c) throw Error('Mutante não aplicou: barril ausente');
@@ -95,6 +98,54 @@ const hayClearance=hay.map(c=>{
   const others=Object.create(Game.prototype);others.world={...world,colliders:world.colliders.filter(other=>!hay.includes(other))};
   others._collide(p,.65);return {x:original.x,z:original.z,displacement:p.distanceTo(original)};
 });
+/* IN7 responde ao relato de área inacessível sem depender da coordenada original:
+   varre todo o mapa com o corpo real e exige que nenhum vão livre fique enclausurado. */
+const SWEEP=.25;
+const sweep=(()=>{
+  const b=world.bounds, nx=Math.round((b.maxX-b.minX)/SWEEP)+1, nz=Math.round((b.maxZ-b.minZ)/SWEEP)+1;
+  const free=new Uint8Array(nx*nz), v=new THREE.Vector3(), at=(i,j)=>i*nz+j;
+  for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){
+    const X=b.minX+i*SWEEP, Z=b.minZ+j*SWEEP;
+    v.set(X,0,Z); probe._collide(v,radius);
+    if(Math.hypot(v.x-X,v.z-Z)<=EPS) free[at(i,j)]=1;
+  }
+  const spawn=world.spawns.E[0];
+  const start=at(Math.round((spawn.x-b.minX)/SWEEP),Math.round((spawn.z-b.minZ)/SWEEP));
+  let freeCells=0; for(const f of free) freeCells+=f;
+  if(!free[start]) return {spawnFree:false,freeCells,reachable:0,pockets:[]};
+  const seen=new Uint8Array(nx*nz), queue=[start]; seen[start]=1;
+  const walk=(from,mark)=>{
+    const stack=[from], cells=[];
+    while(stack.length){
+      const c=stack.pop(); cells.push(c);
+      const i=Math.floor(c/nz), j=c%nz;
+      for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const a=i+di, e=j+dj; if(a<0||e<0||a>=nx||e>=nz) continue;
+        const k=at(a,e); if(free[k]&&!mark[k]){mark[k]=1;stack.push(k);}
+      }
+    }
+    return cells;
+  };
+  for(let h=0;h<queue.length;h++){
+    const i=Math.floor(queue[h]/nz), j=queue[h]%nz;
+    for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const a=i+di, e=j+dj; if(a<0||e<0||a>=nx||e>=nz) continue;
+      const k=at(a,e); if(free[k]&&!seen[k]){seen[k]=1;queue.push(k);}
+    }
+  }
+  const claimed=new Uint8Array(seen), pockets=[];
+  for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){
+    const k=at(i,j); if(!free[k]||claimed[k]) continue;
+    claimed[k]=1;
+    const cells=walk(k,claimed);
+    const span=cells.reduce((acc,c)=>{
+      const X=b.minX+Math.floor(c/nz)*SWEEP, Z=b.minZ+(c%nz)*SWEEP;
+      return [Math.min(acc[0],X),Math.max(acc[1],X),Math.min(acc[2],Z),Math.max(acc[3],Z)];
+    },[Infinity,-Infinity,Infinity,-Infinity]);
+    pockets.push({area:Number((cells.length*SWEEP*SWEEP).toFixed(2)),x:span.slice(0,2),z:span.slice(2)});
+  }
+  return {spawnFree:true,freeCells,reachable:queue.length,pockets};
+})();
 const checks={
   IN1:houses.length===2&&results.every(r=>r.exists&&r.entry.clear),
   IN2:results.every(r=>r.exists&&r.windows.every(Boolean)),
