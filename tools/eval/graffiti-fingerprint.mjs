@@ -31,6 +31,7 @@ import { createHash } from 'node:crypto';
 
 /* id do mapa (o mesmo do `grafitar({ id })` e da chave do GRAFITE) -> fonte. */
 export const MAP_SOURCES = {
+  escadao: 'public/js/map_escadao.js',
   praca_poderes: 'public/js/map_brasilia.js',
   piscina_treta: 'public/js/map_piscina.js',
   loja_h: 'public/js/map_havan.js',

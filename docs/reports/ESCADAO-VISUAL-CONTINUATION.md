@@ -5,6 +5,7 @@
 - Servidor para o usuário: Astro real em `http://127.0.0.1:8148/?map=escadao&lang=pt`; o servidor parcial de avaliação foi encerrado.
 - Menu completo passou com cinco facções, escolha de personagem/adversário, todos os props carregados e movimento real. Corpo 8/8 e anéis 3/3 passaram na main. Grafo corrigido: 370/370 nós, oito rotas para a Deagle; mutação volta a isolá-la.
 - Build aprovado. Recibos em `artifacts/escadao-visual/main-sync/`. A captura automática adicional foi recusada por falhas de rede em endpoints remotos de seleção/online; o teste funcional do menu passou sem erro JS ou asset visual ausente.
+- Checkpoint de assets: `6a02dd1c`. Crítico independente confirmou o grafo, as arestas finais com `_walkReach` real e o registro de grafite.
 - Próximo: concluir documentação/checkpoint desta integração. FPS e AM7 continuam pendentes. Galeria anterior é evidência histórica R3, não certificação da atualização da main.
 
 ## Objetivo e definição de concluído

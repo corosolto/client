@@ -4722,3 +4722,23 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   fixo. O CHR5B contava ARQUIVO, o jogador via CONSTANTE. Corrigido junto.
 - **C10** — `_freeSpot` (`game.js`) ignora colisores com `minY ≥ 1,5`; no mezanino não empurra
   arma para fora de parede. Não mordeu ainda; é armadilha para o próximo mapa com andar de cima.
+
+## Menu local do Escadão — resolvido em 06/09/2026
+
+> "ESTA desatualizada com a main e nao da pra testar"
+
+A porta 8148 usava `tools/eval/serve.mjs`, que entrega o template Astro parcialmente
+processado. O HTML continha `FACTIONS.map` e `String(index + 1)` uma vez cada.
+Substituído pelo Astro real da main 69555790 (alpha.223), com o Escadão integrado
+na branch `codex/escadao-main`. As duas assinaturas passaram a zero.
+
+`tools/eval/escadao-menu-check.mjs` rejeita o HTML anterior com `--html=...` e
+valida o fluxo completo sem `auto`: mapa, nick isolado de teste, facção, personagem,
+adversário, GLBs e movimento. Recibos em `artifacts/escadao-visual/main-sync/`.
+A régua aguarda a retirada da splash antes do primeiro clique, respeitando a
+proteção contra gesto de entrada acionar o menu.
+
+A integração encontrou cinco nós isolados junto à Deagle (-10,38). Uma linha de
+waypoints no vão x=-8,5 conecta esse fundo de rua: 370/370 nós e oito rotas dos
+spawns à arma. `escadao-graph-check.mjs` reprova o estado anterior;
+`--mutante=sem-conexao-rua` volta a isolar a arma. Nenhuma tolerância foi ampliada.

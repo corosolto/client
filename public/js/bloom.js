@@ -72,7 +72,7 @@ const LOOKS = {
   loja_h:        { exposure: 1.50, floor: 0.0060, expAces: 1.59 },
   ferro_velho:   { exposure: 1.66, floor: 0.0041, expAces: 1.76 },
   quebrada:      { exposure: 1.58, floor: 0.0046, expAces: 1.68 },
-  fy_escadao:    { exposure: 1.52, floor: 0.0048, expAces: 1.62 },
+  escadao:    { exposure: 1.52, floor: 0.0048, expAces: 1.62 },
   fy_lajes:      { exposure: 1.55, floor: 0.0047, expAces: 1.65 },
   // os 3 pilotos do RC1 (mansao/corrego/campomorro) saíram daqui: vivem no LOOK (look.js)
 };
@@ -124,7 +124,7 @@ const AERIAL = {
   loja_h:        { d: 0.0088, color: 0xa3c4e5, sun: [18, 55, 20],  dir: 0.80 },
   ferro_velho:   { d: 0.0112, color: 0xa5c5e5, sun: [-46, 20, 32], dir: 1.00 },
   quebrada:      { d: 0.0084, color: 0xb58f78, sun: [38, 30, -22], dir: 0.82 },
-  fy_escadao:    { d: 0.0080, color: 0xb9977f, sun: [25, 40, 20], dir: 0.86 },
+  escadao:    { d: 0.0080, color: 0xb9977f, sun: [25, 40, 20], dir: 0.86 },
   fy_lajes:      { d: 0.0085, color: 0xb18f79, sun: [25, 45, 15], dir: 0.84 },
   // os 3 pilotos do RC1 (mansao/corrego/campomorro) saíram daqui: vivem no LOOK (look.js)
 };
