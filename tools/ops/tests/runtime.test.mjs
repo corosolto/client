@@ -2,6 +2,8 @@
    simulados à mão e o snapshot tem de refletir cada um — sem browser, em ms. */
 import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 function listeners() {
   const ls = {};
@@ -143,5 +145,40 @@ test('sem PerformanceObserver o módulo sobe e ainda vê falha por evento', asyn
     win.emit('error', { target: { href: 'http://jogo/style.css', tagName: 'LINK' } });
     assert.equal(mod.snapshot().recursos.falhas.length, 1);
     assert.equal(typeof globalThis.__csbOps.snapshot, 'function');
+  } finally { mock.timers.reset(); }
+});
+
+/* A chave do abandono é do ops.js e de mais ninguém: varre TODO o JS servido e todo o
+   src/ (não uma lista de arquivos) — um `localStorage.clear()` novo em qualquer módulo
+   apagaria a última sessão sem erro nenhum (LICOES §5). */
+test('storage: cs_ops_last só existe no ops.js e nenhum módulo limpa o localStorage inteiro', () => {
+  const raiz = fileURLToPath(new URL('../../../', import.meta.url));
+  const arquivos = [];
+  for (const dir of ['public/js', 'src']) {
+    for (const f of readdirSync(`${raiz}${dir}`, { recursive: true })) {
+      if (/\.(js|mjs|ts|astro)$/.test(String(f))) arquivos.push(`${dir}/${f}`);
+    }
+  }
+  assert.ok(arquivos.includes('public/js/ops.js') && arquivos.includes('public/js/main.js'), 'a varredura não achou ops.js/main.js');
+  const usam = arquivos.filter((a) => readFileSync(`${raiz}${a}`, 'utf8').includes('cs_ops_last'));
+  assert.deepEqual(usam, ['public/js/ops.js'], `cs_ops_last aparece fora do ops.js: ${usam.join(', ')}`);
+  const limpam = arquivos.filter((a) => /localStorage\.clear\s*\(/.test(readFileSync(`${raiz}${a}`, 'utf8')));
+  assert.deepEqual(limpam, [], `localStorage.clear() em: ${limpam.join(', ')}`);
+});
+
+test('abandono: a ocultação da aba grava UMA vez por sessão; pagehide sempre regrava', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  try {
+    const a = await sobe();
+    let gravacoes = 0;
+    const setItem = globalThis.localStorage.setItem;
+    globalThis.localStorage.setItem = (k, v) => { gravacoes++; setItem(k, v); };
+    a.doc.hidden = true; a.doc.emit('visibilitychange', {});
+    a.doc.hidden = false; a.doc.emit('visibilitychange', {});
+    a.doc.hidden = true; a.doc.emit('visibilitychange', {});
+    assert.equal(gravacoes, 1, 'alternar a aba não pode regravar a cada ocultação');
+    a.win.emit('pagehide', {});
+    assert.equal(gravacoes, 2);
+    assert.equal(JSON.parse(a.storage.cs_ops_last).abandono.motivo, 'pagehide');
   } finally { mock.timers.reset(); }
 });
