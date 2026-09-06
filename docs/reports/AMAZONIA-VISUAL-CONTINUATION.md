@@ -477,3 +477,12 @@ movido para amazonia_map_preview.js e ambos menus preservados. Preparos de
 áudio Lajes/Amazônia executam juntos após fetch, sem alterar outros overrides.
 Pacote/registro/CI combinam os mapas; blocos gerados reconstruídos.
 Próximo: testes de ambos mapas e hover, build, novo CI e merge autorizado.
+
+Marco integrado alpha.226/2786fa48 emedc43011: build-alpha226.log passou.
+Amazônia71/71seeds7/42 e mutante68/71; Lajes7/7integração,3728arestas livres,
+consultas por camada100%,21/21bots no chão com/semcombate. Golden genérico
+passou. Hover real após wrappernovo passa9checks e figura static.png revista.
+Régua de som Lajes passou após fixture incluir os dois preparos; docs/arch/
+docsautoria verdes. Crítica independente final sem bloqueantes emruntime,
+preview, áudio ouregistries. Próximo: push final, marcar PR pronto, aguardar
+checks do SHA atual e preview remoto, merge autorizado. Não afirmar FPS geral.

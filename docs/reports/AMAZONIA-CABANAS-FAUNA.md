@@ -56,3 +56,9 @@ mesmo pacote. Não publica novos bytes de áudio nem altera entradas existentes;
 pack legado conserva world.sound. A régua AMAP reproduz a falha no assets-check
 real, aprova o preparo e reprova o mutante sem preparo; outro mapa ausente
 continua bloqueando. Build local main225 passou e pre-push passou138s.
+
+Integração final com Lajes/main alpha.226: preservados os dois contratos de
+navegação e o controlador de preview da main. Amazônia71/71seeds7/42;
+Lajes7/7integração,3728arestas livres e21/21bots no piso correto com/semcombate.
+Golden dos outros mapas, hover real, preparo conjunto de áudio, docs/arch e
+build passaram. Crítica independente final não encontrou bloqueadores.

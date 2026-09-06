@@ -1,7 +1,7 @@
 # Amazônia: teste local integrado com a main
 
 Abra <http://127.0.0.1:8157/?map=amazonia&perfilauto=0&lang=pt> e atualize com
-Cmd+Shift+R. Esta porta serve a worktree integrada com maina551204f. O snapshot antigo
+Cmd+Shift+R. Esta porta serve a worktree integrada com main alpha.226. O snapshot antigo
 foi substituído;8156 também serve a mesma árvore atual.
 
 No menu, escolha SINGLE PLAYER, facção, personagem e adversário. Para o preview:
