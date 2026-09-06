@@ -4722,3 +4722,13 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   fixo. O CHR5B contava ARQUIVO, o jogador via CONSTANTE. Corrigido junto.
 - **C10** — `_freeSpot` (`game.js`) ignora colisores com `minY ≥ 1,5`; no mezanino não empurra
   arma para fora de parede. Não mordeu ainda; é armadilha para o próximo mapa com andar de cima.
+
+## Relatados, ainda não reproduzidos — Lajes
+
+### BUG-141 · Lajes trava acima de 5×5 no single player
+
+Relato do dono (06/09/2026): “fiz um teste no lajes e acima de 5x5 players mesmo no single player o mapa trava. fiz comparacao com o mapa piscina na treta que funciona numa boa em 8x8...”.
+
+Régua: nenhuma. Reprodução e causa ainda não confirmadas. Investigar carga equivalente
+Lajes/Piscina, separando CPU dos bots/colisões, renderização e bloqueio da thread principal.
+Continuidade: `docs/maps/LAJES-VISUAL-CONTINUIDADE.md`.

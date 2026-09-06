@@ -1,6 +1,6 @@
 # Lajes visual — continuidade
 
-## Estado corrente: V7 integrada e PR438 mergeada
+## Estado corrente: regressão de desempenho relatada após V7
 
 Pedido de 06/09/2026 após revisão V6: manter ruas estreitas e apenas campo amplo;
 remover casas azuis, trazer terra e gramados, ratos e baratas, mais pipas e Santos
@@ -17,6 +17,16 @@ anterior. Não publicar resultado parcial nem ignorar falhas.
 - Próximo passo: integração, régua V7 vermelha, ambiência/14-bis/hover, captura real,
   crítica independente, gates atuais, build, atualização PR e merge condicionado.
 - Evidências V6 ficam em `artifacts/lajes-visual/v6/`. Artefatos V7 em `v7/`.
+
+## Retomada: desempenho acima de 5×5 — 06/09/2026
+
+Relato literal: “fiz um teste no lajes e acima de 5x5 players mesmo no single player o mapa trava. fiz comparacao com o mapa piscina na treta que funciona numa boa em 8x8...”.
+Ainda não reproduzido. Objetivo: medir Lajes/Piscina sob carga equivalente, corrigir a causa
+sem perder o visual/ruas aceitos, provar antes/depois e regressão, validar build e revisão.
+Próximo: branch isolada `codex/lajes-performance` a partir da main alpha.226;
+comparação no Game real e browser, CPU por subsistema e crescimento 5×5/8×8.
+Frente principal: MAPAS/MUNDO e BOTS/JOGABILIDADE, somente após perfil identificar causa.
+Artefatos novos: `artifacts/lajes-performance/`. Régua: nenhuma neste marco.
 
 ## Encerramento V7 — 06/09/2026
 
