@@ -86,3 +86,14 @@ Revisão do dono na bancada, incluindo decisão Boto humano/golfinho e aparênci
 - Movimento ainda REPROVADO: caminhada pé mínimo -9,99 cm; corrida -4,99 cm; idle +1,1 cm; crouch +2,8 cm. Pano central rasga no agachamento. Corrigir clipes/contato e pesos do tecido antes de aceitar. Imagens e amostras `zumbi-refit/motion/`.
 - Textura original extraída para `zumbi-diagnosis/texture-original.webp` (conteúdo JPEG). Pinturas continuam presentes. OpenRouter não configurado na worktree; pergunta ao dono pendente pedindo somente caminho do .env autorizado, nunca a chave em chat. Nenhuma imagem gerada por provedor alternativo.
 - Próxima ação: corrigir pesos do pano e contato dos pés; validar todas as poses, testar grip visualmente, retirar pinturas com textura revisada quando houver configuração. Ainda falta todo o restante da revisão dos Míticos, integração e publicação.
+
+
+## Continuação do candidato Zumbi e build (06/09, 04h15)
+- `npm run build` passou após a remoção dos times; log `artifacts/miticos-review/removal-build.log`. Publicação ainda não realizada.
+- Grounding dos novos clipes passa a ser assado no asset (`ground-zumbi-clips.mjs`); o arnês remove somente o offset antigo de Zumbi via interceptação de `foot-offsets.json`, pois somá-lo novamente enterrava o pé. Última bateria completa: idle 0..0,7 mm, walk -9,2..5,9 mm, run 11,3..101,5 mm (fase aérea), crouch 0..1 mm. Isso não aprova o visual do agachamento.
+- Ajustes posteriores de tecido/pernas ainda NÃO passaram pela régua completa de deformação; o placar 21,5 pertence ao candidato anterior. Nova geometria inclui subdivisão localizada nos joelhos e pesos limitados à cadeia de cada perna. Primeiro seletor de pernas atingiu dedos por y baixo; corrigido com limite abs(x)<=0,30.
+- `rigid-zumbi-cloth.mjs` foi retirado do build experimental: fixar panos ao quadril não resolveu o agachamento. `build-zumbi-candidate.sh` recompõe Blender -> reskin -> pesos de pernas -> retarget -> grounding -> captura, com `set -eu`. `POSES=crouch` permite depurar só a pose reprovada.
+- Diagnóstico sem iluminação em `zumbi-refit/crouch-albedo.png`: as grandes áreas rosadas nos joelhos são fortemente acentuadas pela iluminação/normal; não afirmar que toda mancha é furo. O tecido central ainda estica e a pose ajoelhada continua ruim.
+- Teste atual `crouch-zumbi-clips.mjs`: agachamento e caminhada agachada autorados por IK de duas pernas, pés plantados e joelhos para frente; substitui apenas clipes no diretório de artefatos. Aguarda captura e revisão, sem aprovação. Este script roda DEPOIS do retarget e ANTES do grounding; ainda não incluído no build reproduzível até validar.
+- O browser carrega somente Zumbi nesses experimentos. Aguardar exit 0 antes de ler imagens reutilizando o mesmo nome, senão a imagem pode ser da tentativa anterior.
+- SHA256 do GLB experimental neste checkpoint: `8ffaa9ff96fbf6502bb0e11223865252a2c515602c77df786ee676ce96e2c54b`. Nenhum GLB de produção foi alterado.
