@@ -61,6 +61,19 @@ anterior. Não publicar resultado parcial nem ignorar falhas.
   documentação, limpar histórico com backup, verificar DCO, push/retarget PR438,
   aguardar CI/preview do SHA final e mergear sem bypass se os checks passarem.
 
+## Marco V7: histórico limpo e revisão encerrada
+
+- `4978ff4c` encerrou produção, mídia, réguas e crítica final8/10 sem P1 visual.
+- Histórico integral preservado em `codex/lajes-v7-history-backup` nesse commit.
+  Entrega limpa `3b4eb6de` sobre main `a551204f` tem somente o diff final de Lajes;
+  a reconstrução preservou a árvore, sem assinar commits antigos de terceiros.
+- DCO e trailer Agent passaram no intervalo main→HEAD. Autoria gerada recalculada
+  após a limpeza, conforme contrato da documentação. Build final, SEO6/6, hover9/9,
+  boot low e crítica independente final passaram. Nenhum bloqueante na revisão
+  independente do diff de produção/CI. Piloto é detalhe distante na câmera normal.
+- Próximo: push com lease para map2/lajes e retarget PR438 para main; acompanhar
+  checks do SHA final e mergear se verdes. Invariants/kick locais ainda em execução.
+
 ## Marco anterior: V6 entregue localmente
 
 Pedido de06/09/2026 concluído localmente: ruas no chão muito estreitas, somente
