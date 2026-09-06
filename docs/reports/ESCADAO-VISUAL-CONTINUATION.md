@@ -7,7 +7,8 @@
 - Build aprovado. Recibos em `artifacts/escadao-visual/main-sync/`. A captura automática adicional foi recusada por falhas de rede em endpoints remotos de seleção/online; o teste funcional do menu passou sem erro JS ou asset visual ausente.
 - Checkpoint de assets: `6a02dd1c`. Crítico independente confirmou o grafo, as arestas finais com `_walkReach` real e o registro de grafite.
 - Relatório da integração: `docs/reports/ESCADAO-MAIN-SYNC.md`; runtime e menu em `6ea53653`.
-- Próximo: fechar documentação gerada, manter servidor Astro e entregar link. FPS e AM7 continuam pendentes. Galeria anterior é evidência histórica R3, não certificação da atualização da main.
+- DOCS1, ARCH1 e COMENTARIO passaram; contagens geradas atualizadas. DOCSAUT exige commit da documentação antes da execução final.
+- Próximo após este checkpoint: conferir DOCSAUT e reiniciar Astro; depois, revisão do usuário, FPS/GPU exclusivo, orçamento AM7 e integração do PR. FPS e AM7 continuam pendentes. Galeria anterior é evidência histórica R3, não certificação da atualização da main.
 
 ## Objetivo e definição de concluído
 Elevar Escadão (Morro) do PR #436: subida, becos e patamares de um bairro brasileiro habitado; fachadas variadas, comércio, varais e vegetação legíveis em combate. Preservar três alternativas de rota, objetivos/pickups, spawn protegido e risco/recompensa. Exigir pesquisa real, antes/depois 1536×1024 nas mesmas câmeras, GLBs carregados, corpo/Game._collide, gates e mutantes, crítica independente, medição de todos os passes e performance sem concorrência. Sem merge/deploy/push. Commits locais DCO + Agent.
