@@ -17,7 +17,7 @@ todos iguais à tabela de insumos, e dos controles M4/AK citados abaixo.
 
 | Rifle | Estado / artefatos presentes | Gates e bloqueador atual | Próximo menor passo offline |
 |---|---|---|---|
-| M4 | Bloqueado. `A/m4-approved-2a4a189d/` e `A/m4-actions-fingers-c1/` com Blender, GLB, GIFs, contato, reimport e revisão independente | Idle aprovado pelo dono; melhoria de pega aceita; 409 tracks protegidas e retorno real conferidos no teste registrado. Recarga reprovada: pele f013/f045 e colisão herdada de anelar/mínimo f062. Outras ações e Game pendentes | Ajustar somente as curvas locais de anelar/mínimo perto de f062, preservando trajetória da palma; punho exige medição transversal antes de intervenção |
+| M4 | Bloqueado. `A/m4-approved-2a4a189d/` e `A/m4-actions-fingers-c1/` com Blender, GLB, GIFs, contato, reimport e revisão independente; réguas novas em `A/m4-actions-wrist/` e `A/m4-actions-bolt/` | Idle aprovado pelo dono; 409 tracks protegidas e retorno real conferidos no teste registrado. Recarga reprovada pela medição de 06/09: a mão cruza o carregador em 59 de 73 frames (palma e polegar com 242 cruzamentos constantes em f012–f046, pico 585 em f049) e `bolt_release` nunca é alcançado (mínimo 50,37 mm em f057). A melhora de dedos de C1 foi medida por distância não assinada e não prova pega. Punho reclassificado: 0,00 mm² de pele visível em f013/f045 contra 76,37 mm² da idle aprovada | Reautorar `H_grasp` e `H_bolt` para contato por fora do carregador e alcance real do ferrolho; remedir o clipe inteiro com as duas réguas antes de qualquer export |
 | MD97 | Bloqueado; sem novo candidato. `A/raw-md97.png`, `A/goldsrc-vm-md97-part.png` e `A/goldsrc-vm-md97-reload-half.png` | Inspeção/receita disponíveis; carregador ausente no bruto; split CLIP de 1.148 vértices inclui alça/coronha/punho. Sem gate visual de candidato ou Game | Construir só o carregador em cópia offline, usando a especificação MAG existente e verificando encaixe dianteiro; não transportar recarga bullpup |
 | Carabina | Bloqueado; sem novo candidato. `A/raw-carbine.png`, `A/goldsrc-vm-carbine-part.png` e `A/goldsrc-vm-carbine-reload-half.png` | Inspeção identifica alavanca e tubo; split Bone54 de 1.377 vértices leva alavanca/gatilho/receiver. Porta e gesto de alimentação não confirmados; recarga não pode ser autorada com segurança geométrica | Inspecionar lado oposto e tampa do tubo para localizar a alimentação; registrar ausência se não houver geometria identificável |
 | SCAR | Bloqueado; sem novo candidato. `A/raw-scar.png`, `A/goldsrc-vm-scar-part.png` e `A/goldsrc-vm-scar-reload-half.png` | Receita específica disponível; split Bone25 de 113 vértices é fragmento do pente/receiver. Sem aprovação visual de candidato; comando lateral ainda precisa ser marcado | Selecionar o carregador completo em cópia offline e provar separação sem carregar partes do receiver |
@@ -1057,3 +1057,91 @@ pesos e distância assinada), e decidir se existe uma cobertura de manga
 específica à ação que zera nos endpoints. Se isso não for possível sem mexer
 na malha/rig comum, a recarga M4 permanece bloqueada e o caminho correto é
 novo asset de mão/roupa, não ampliar a rotação do mínimo.
+
+## M4 — réguas de punho e de contato mão/carregador, 06/09/2026 — **C1 e C2 rejeitados**
+
+Rodada somente de medição sobre `A/m4-actions-fingers-c1/m4-actions.blend`
+(`2955150a…`), sem tocar em runtime, idle aprovada, arma, malhas ou rig, e sem
+exportar nenhum GLB. Duas réguas novas, ambas com controle que falha de
+propósito:
+
+- `tools/viewmodels/prep/rifles-m4-actions-wrist.py`: perfil transversal
+  assinado da borda manga/pele ao longo do eixo punho→cotovelo e área de pele
+  realmente visível pela `VIEWMODEL_CAMERA`, com oclusão por tecido, luva, arma,
+  carregador e pelo próprio antebraço, nos 73 frames e na idle, em 3:2 e 16:9.
+- `tools/viewmodels/prep/rifles-m4-actions-bolt.py`: cruzamentos exatos de
+  aresta/triângulo nos dois sentidos, por região da mão, contra o carregador
+  posado, em todos os frames, mais o alcance dos dedos até `bolt_release`.
+
+### O bloqueio "pele exposta em f013/f045" não se sustenta
+
+Pela câmera do jogo, a pele visível é **0,00 mm² em f013 e em f045**, nos dois
+aspectos. A idle aprovada mostra **76,37 mm² em 3:2** (0,00 em 16:9) — mais pele
+do que os frames que estavam bloqueando a recarga. Em 16:9 nenhum frame do clipe
+mostra pele. A faixa verde citada antes vem da câmera de diagnóstico (0,28 m,
+40 mm, lado oposto), que enquadra uma região que a câmera do jogador não vê
+nesses frames; contando pixels nos próprios material-id, a idle tem 2.147 px
+verdes (0,957% do opaco) contra 1.530 em f045 e 910 em f013.
+
+A cobertura de manga autorada existe e funciona: desligá-la recua a borda da
+manga de 2,19 mm para 13,08 mm em f013 e acrescenta 283,9 mm² (f013) e
+316,8 mm² (f045) de pele descoberta, além de colocar 19,35 mm² dentro do quadro
+3:2 em f045. Esse é o mutante da régua.
+
+Fica um item real e novo, que ninguém tinha registrado: **f050–f057 em 3:2**,
+acima da idle, com pico de **216,40 mm² em f053** (2,8× a idle), durante o
+trajeto para o ferrolho. E o perfil transversal em f045 mostra a manga *dentro*
+da pele nas estações 8 mm e 12 mm (folga −4,35 mm e −4,42 mm), que é a origem
+dos pontos verdes isolados sobre o tecido.
+
+### O motivo real da reprovação é muito maior que f062
+
+A mão cruza o carregador em **59 dos 73 frames**. Limpos apenas f000–f008 e
+f068–f072.
+
+| Janela | Regiões | Cruzamentos | Além da superfície |
+|---|---|---|---|
+| f012–f046 | palma + polegar | 242 constantes | até 6,09 mm |
+| f048–f050 | as seis regiões | pico 585 em f049 | até 8,70 mm |
+| f059–f065 | palma, anelar, mínimo | até 274 | até 8,49 mm |
+
+Ou seja, durante toda a fase em que a mão "segura" o carregador (f012–f046) a
+palma e o polegar atravessam a parede dele; f062, o frame que C1 e C2
+disputaram, não é o pior nem é especial (236 cruzamentos). E o ferrolho nunca é
+alcançado: o dedo pressionador mais próximo fica a **50,37 mm em f057** e a
+**67,57 mm em f062**, que é justamente o evento `bolt` do jogo em 2,064 s.
+`H_bolt` põe o *centro da palma* a 20 mm da paleta, então nenhum dedo pressiona
+nada.
+
+Isso explica C2 sem recorrer a anatomia: o otimizador precisou de
+`pinky_01_l = -83°` porque estava compensando uma mão posicionada dentro do
+carregador. Nenhuma curva de dedo conserta isso.
+
+**Consequência para o incremento de dedos aceito em C1:** ele foi medido por
+distância não assinada até a superfície, então uma palma 6 mm além da parede
+lê como contato excelente. A melhora de proximidade é real, mas não prova pega;
+o critério usado era insuficiente.
+
+### Validação das réguas
+
+A primeira versão da régua de contato media profundidade por paridade de raios.
+O autoteste reprovou o método: o carregador separado é uma casca **aberta**
+(313 arestas de borda em 491), então nenhuma afirmação de contenção ou
+profundidade assinada é legítima. A régua foi trocada, e o relatório publica
+apenas cruzamentos exatos e o comprimento além da superfície. Controles da
+régua final: a pose limpa f072 dá 0/0, e a mesma pose com o carregador
+transladado 144,35 mm sobre a palma dá 238/179.
+
+### Veredito
+
+**C1 e C2 rejeitados**, e o bloqueio do punho reclassificado. Nenhum GLB
+candidato foi gerado ou publicado nesta rodada; nada entrou em runtime.
+Evidência fora do Git em `A/m4-actions-wrist/wrist-profile.json` e
+`A/m4-actions-bolt/bolt-press.json`.
+
+Próximo passo mínimo, e não é curva de dedo: reautorar `H_grasp` e `H_bolt` em
+`rifles-m4-actions-build.py` para que a mão toque a superfície do carregador por
+fora e o dedo pressionador alcance `bolt_release`, e só então remedir o clipe
+inteiro com as duas réguas antes de qualquer render ou export. Enquanto a
+recarga estiver reprovada, o item de manga f050–f057 fica atrás dessa correção,
+porque a trajetória que o produz vai mudar.
