@@ -13,6 +13,26 @@ O catálogo completo de armas continua no objetivo; áudio, menus, mapas e perso
 não podem desaparecer da fila. Escopo não especificado deve ser identificado antes de
 implementar. O prazo não transforma trabalhos desconhecidos em concluídos.
 
+### Prioridade refinada pelo dono: primeiro pacote
+
+Em 06/09 Ruben esclareceu: o PRIMEIRO pacote a fechar é **time novo + mapas +
+viewmodels das armas**. Escadão e Lajes incluem fixes, não apenas acabamento visual.
+O pacote compreende Míticos/Lendas, mapas atuais Amazônia/Sertão/Escadão/Lajes com suas
+correções abertas e viewmodels. Armas são prioridade de entrega junto com o time novo;
+não podem ficar indefinidamente atrás da fila de mapas. M4 é marco inicial do catálogo,
+não substitui nem encerra o escopo integral registrado no ledger de viewmodels.
+
+**Depois desse pacote:** Sítio Atibaia e Mansão do Joá têm PRs abertos segundo o dono;
+Campo do Morro e demais mapas em espera também ficam na fila seguinte. Identificadores
+e estado desses PRs ainda não verificados; não despachar revisão ou implementação agora.
+Áudio e menus adicionais permanecem no backlog; correções necessárias para o pacote
+continuam consideradas. Não abrir escopo novo enquanto o primeiro pacote não estiver fechado.
+
+Lajes: BUG141 de performance, candidato PR517. Escadão: passagens/lateral, divergências
+de conectividade e horizonte. São entregas funcionais e devem constar do aceite do pacote.
+Para fechar o pacote, registrar por componente implementação, validação, aprovação humana,
+integração e publicação; não declarar pronto somando somente PRs ou gates verdes.
+
 ## Operação
 
 - Coordenador: tarefa `01a073e4-50fa-7c52-9ac7-729a088fc976`, lane
@@ -54,6 +74,7 @@ implementar. O prazo não transforma trabalhos desconhecidos em concluídos.
 | Corrigir data dos gráficos | 01a073dd-418d-73b1-8583-ce2560742795 | Última resposta relata aplicado em produção, PR508/admin6/backend21; histórico ausente não retropreenchido. Não reabrir sem defeito novo |
 | Corrigir contagem de players online | 01a06d45-7570-7501-b75b-eaffd629ad5b | Último turno completed sem resposta textual; não contar como resolvido sem evidência |
 | Mais áudio, menus e mapas em espera | escopo a consolidar | Não inventar novas entregas; recuperar backlog existente e sinalizar itens ainda indefinidos |
+| Sítio Atibaia, Mansão do Joá, Campo do Morro e outros mapas em espera | PRs a identificar | ETAPA2 por decisão explícita do dono; sem despacho antes do primeiro pacote |
 
 Míticos: ledger `/Users/ruben/csbrasil/worktrees/miticos-visual/docs/reports/MITICOS-VISUAL-CONTINUATION.md`.
 Checkpoint recebido confirma servidores 8191/8192/8193 encerrados, crítico interrompido,
@@ -88,6 +109,13 @@ priorizar Lajes/PR517 e Sertão/PR516 sequencialmente; depois Escadão/R5. Prepa
 Astra delimitada para Cuca antes de repetir tentativas. A fila poderá avançar enquanto
 M4 trabalha offline, sem abrir mais produção concorrente. Atualizar tabela por retorno.
 Registrar modelo configurado separadamente do modelo efetivamente observado quando possível.
+
+Decisão Astra `/root/decisao_cuca_pacote1` despachada em contexto limpo: somente leitura,
+até quatro imagens existentes, uma hipótese/experimento mínimo para Terra, sem browser,
+renders ou alterações. Preparação de decisão não ocupa escritor de produção. Preservar
+parecer em artifacts/viewmodels/prep/precisao/orquestracao/ antes de despachar correção.
+Após fechamento dos mapas prontos, liberar produção de personagens com esse parecer;
+manter uma frente de armas avançando por marcos durante o primeiro pacote.
 
 ## Registro de consumo e limites operacionais
 
