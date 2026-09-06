@@ -121,3 +121,54 @@ retransmissão reutilizou a validação concluída, sem bypass de gate reprovado
 Nenhum force-push, merge ou deploy. Próximo passo: revisão adversarial humana no
 PR511, especialmente cenário, cobertura, áudio/procedência e naturalidade da fauna.
 Servidor Astro desta worktree continua em localhost:8149; abrir em Chrome sem debug.
+
+## Nova revisão do dono — fauna natural e memória regional
+
+Base desta iteração d48d389c, PR511 draft existente, mesma worktree/branch exclusiva.
+Dono aprovou aproximadamente90% do mapa; rejeitou galinha lowpoly e calango bípede.
+Pediu pintinhos, cabras/bodes andando, aves no horizonte, vegetação Caatinga/Agreste,
+placaCanudos e homenagemPadreCícero. Spec plans/16-SERTAO.md preenchido e validado.
+
+Calango derivado local quadrúpede4795tris/608484bytes e clipeRun preparado, fonte
+lagarto_sertao preservada; CQ1–4+contraprovas verdes. Integração/movimento ainda
+em validação. Horizonte inicial4draws/11856tris passouRV12/12,495calls/302916tris,
+mas capturas fauna2-horizon mostraram pouca diferença: resultado VISUAL REJEITADO.
+Versão aproximada das copas está em ajuste, não aprovada. Memorial autoral e aves
+distantes em módulos disjuntos. Não tocar menu/rotas aceitos sem evidência nova.
+
+Mint agora autenticado: projeto exclusivo zd7d9mfmgv0b80ezp3xbykp1ns8dw47r,
+chat ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba, pack th78004y9j8g2kd0mkd45xq65x8dw112.
+Concepts hen/chick/goat examinados e geração3D solicitada com créditos existentes.
+Nenhuma compra/aceite de termos. Mint não forneceu URL de licença verificável;
+solicitada fonte ao dono. Não baixar/integrar novos modelos enquanto a exigência
+original de licença permanecer sem evidência. Prompt/registro em
+SERTAO-FAUNA2-ASSETS.md; não confundir concepts bonitos com modelo real aprovado.
+
+Próximo: concluir calango/fallback/velocidade e testes; capturar horizonte revisado,
+memorial e aves; revisão independente; resolver termos dos três novos animais;
+atualizar preview, gates/mutantes e PR511 com commits pequenos. Sem merge/deploy.
+
+### Checkpoint calango validado — 3eae04ca
+
+Calango quadrúpede integrado e commitado com Agent:Astra. CQ1–10+11mutantes
+Node e CR1–6+4mutantes Chrome passaram: pitch0, velocidade máxima1,2m/s,
+quatro pés apoiados parado/dois em corrida, morph parado no idle. Normalização
+da caixa corrigida por teste real que detectou pés9,17mm acima do chão.
+Artefatos: calango-quadrupede/runtime/report*.json e calango-motion.mp4.
+FA1–4 repetidos depois do commit:14.400 amostras, zero penetração, low1calango.
+
+Canudos usa POP.16.693 • IBGE2025 em dois portais, dado datado da estimativa
+IBGE; LP1–4+3mutantes passaram. Aves distantes SDB1–8+9mutantes passaram
+após ajustar envelope externo para20m além da arena; revisão independente
+aprovou silhueta na captura life-polish-r4/aves.png. HZ4 passou técnico
+(496calls/305718tris), mas árvore próxima foi REPROVADA visualmente como
+vassoura. HZ5 em construção reutiliza seis juazeiros do acervo com copa leve.
+
+Memorial PadreCícero procedural/Blender REJEITADO: não representa bem o rosto
+e postura pretendidos. Protótipos preservados em artifacts/sertao-astra/memorial,
+sem integração de produto. Galinha/pintinho/cabra Mint gerados; metadados e
+inspeção em SERTAO-FAUNA2-ASSETS.md. Ainda sem download, licença verificável
+pendente de fonte do dono; animações animais ainda não recebidas/criadas.
+Próximo: validarHZ5 visual+mutantes, resolver termosMint e integrar fauna real,
+substituir memorial por resultado digno de revisão, recapturar preview e gates
+globais antes da atualizaçãoPR511. Não declarar mapa finalizado.
