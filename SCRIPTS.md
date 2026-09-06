@@ -109,6 +109,18 @@ procedência de DROP_TTL/DROP_MAX: acúmulo de armas no chão em regime
 npm run eval:drop
 ```
 
+## `eval:penetration`
+
+Constrói o `Game` real com uma camada fina controlada e cobra o contrato de
+penetração: apenas AWP, madeira/vidro até 0,28 m, 50% de dano e só um inimigo
+depois de uma única parede. Concreto, AK, segunda parede e cliente online
+permanecem bloqueados. O mutante que remove a saída da parede precisa deixar a
+cláusula de travessia vermelha. Entra no `check:fast`.
+
+```bash
+npm run eval:penetration
+```
+
 ## `eval:deps`
 
 npm audit --omit=dev: alta/crítica fora da lista de isenção reprova (isenções nominais e datadas no deps-check.mjs). Precisa de rede — passo de CI, não do check:deploy.

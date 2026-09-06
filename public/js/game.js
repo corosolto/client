@@ -3184,12 +3184,7 @@ export class Game {
     const hC = hitsChar[0], hW = hitsWorld[0];
     let end;
     if (hC && (!hW || hC.distance < hW.distance)) {
-      let o = hC.object, bot = null, head = false;
-      while (o) {
-        if (o.userData.botOwner && !bot) bot = o.userData.botOwner;
-        if (bot && o === bot.mesh.parts.head) head = true;
-        o = o.parent;
-      }
+      const { bot, head } = this._targetFromHit(hC);
       end = hC.point;
       if (bot) {
         if (bot.team === shooter.team) { /* friendly fire off */ }
@@ -3204,12 +3199,27 @@ export class Game {
     } else if (hW) {
       end = hW.point;
       const n = hW.face ? hW.face.normal : null;
-      const surf = GUNFEEL ? this._surfaceOf(hW.object) : null;
+      const surf = this._surfaceOf(hW.object);
       this._puff(hW.point, n, surf);
       // som de impacto em 100% dos tiros do jogador (era `ricochet()` — um BIP de sine — em
       // 30%: 70% dos tiros na parede eram literalmente mudos).
       if (GUNFEEL) { if (byPlayer || Math.random() < 0.35) this._impactSfx(surf, hW.point, from.distanceTo(hW.point)); }
       else if (Math.random() < 0.3) this.sfx.ricochet();
+      const pen = this._penetrationExit(hW, dir, wid, surf);
+      if (pen) {
+        const nextWorld = hitsWorld.find(hit => hit.distance > pen.exitDistance + 0.005);
+        const hP = hitsChar.find(hit => hit.distance > pen.exitDistance + 0.005
+          && (!nextWorld || hit.distance < nextWorld.distance - 0.005));
+        if (hP) {
+          const { bot, head } = this._targetFromHit(hP);
+          if (bot && bot.team !== shooter.team) {
+            end = hP.point;
+            const penDamage = Math.round(this._shotDamage(dmg, wid, hP.distance, head) * pen.damageMul);
+            if (!this.online) this._damage(bot, penDamage, shooter, weap, head, end);
+            this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer, this._armoredTarget(bot));
+          }
+        }
+      }
     } else {
       end = from.clone().add(dir.clone().multiplyScalar(120));
     }
@@ -3219,6 +3229,32 @@ export class Game {
       this._tracer(muzzle, end);
     }
     return end;
+  }
+  _targetFromHit(hit) {
+    let o = hit.object, bot = null, head = false;
+    while (o) {
+      if (o.userData.botOwner && !bot) bot = o.userData.botOwner;
+      if (bot && o === bot.mesh.parts.head) head = true;
+      o = o.parent;
+    }
+    return { bot, head };
+  }
+  _penetrationExit(hit, dir, wid, surf) {
+    const cfg = WEAPONS[wid]?.penetration;
+    if (!cfg || this.online || !cfg.surfaces.includes(surf)) return null;
+    const box = new THREE.Box3().setFromObject(hit.object);
+    if (box.isEmpty()) return null;
+    const origin = hit.point.clone().addScaledVector(dir, 1e-4);
+    let exit = Infinity;
+    for (const axis of ['x', 'y', 'z']) {
+      const d = dir[axis], p = origin[axis], lo = box.min[axis], hi = box.max[axis];
+      if (Math.abs(d) < 1e-8) { if (p < lo || p > hi) return null; continue; }
+      const t0 = (lo - p) / d, t1 = (hi - p) / d;
+      exit = Math.min(exit, Math.max(t0, t1));
+    }
+    const thickness = exit + 1e-4;
+    if (!(thickness > 0 && thickness <= cfg.maxThickness)) return null;
+    return { exitDistance: hit.distance + thickness, damageMul: cfg.damageMul };
   }
   // MATERIAL da superfície atingida, inferido do material do mesh (os mapas não marcam
   // userData.surf; quando marcarem, ela ganha prioridade). Cache em WeakMap — o raycast roda

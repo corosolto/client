@@ -1,6 +1,6 @@
 // Tabela pura de configuração de gameplay (sem lógica ou dependência do DOM/Three).
 export const WEAPONS = {
-  awp:    { name: 'AWP "DELIBERADOR"', short: 'AWP', dmg: 400, mag: 5, reserve: 25, rate: 1.7, reload: 3.1, spreadHip: 0.075, spreadScope: 0.0008, recoil: 0.055, scope: true },
+  awp:    { name: 'AWP "DELIBERADOR"', short: 'AWP', dmg: 400, mag: 5, reserve: 25, rate: 1.7, reload: 3.1, spreadHip: 0.075, spreadScope: 0.0008, recoil: 0.055, scope: true, penetration: { surfaces: ['madeira', 'vidro'], maxThickness: 0.28, damageMul: 0.5 } },
   // dmg 33→36 (crítico de gunfeel): 33×3=99 deixava a arma-tema 1 HP de matar em 3 tiros —
   // era a 12ª em TTK. Com 36 mata em 3 (TTK 0.200) e volta a ser a régua do arsenal.
   ak:     { name: 'AK-47 "BATE-ESTACA"', short: 'AK', dmg: 36, mag: 30, reserve: 90, rate: 0.1, reload: 2.5, spreadHip: 0.024, recoil: 0.008, auto: true },
