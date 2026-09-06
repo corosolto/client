@@ -377,3 +377,33 @@ Ambience-registry: Sertão AR1/AR2/AR3 passa; AR1 global continua vermelho nos o
 outros mapas listados em `logs/main226-ambience.log`, problema herdado da main.
 Próximo: finalizar gates globais/build/movimento, publicar PR limpo e aguardar
 checks/revisão antes do merge autorizado. Memorial permanece fora/reprovado.
+
+### Portões locais finais e PR516
+
+Submissão publicada: https://github.com/corosolto/client/pull/516,
+`codex/sertao-main` contra main226. Fonte de runtime congelada em
+`87cf863108a7dd727ca75b78faf61f4ec3a94b15`. `check:fast` passou118/118 em418,4s;
+`npm run build` e pre-push/check:deploy passaram. Logs em
+`artifacts/sertao-astra/logs/main226-{check-fast,build,push}.log`.
+PV final7/7, calango CR6/6 e vida regional LP4/4 passaram nesta árvore.
+Movimento30s/7bots:95,24m, p50 10ms/p95 15,1ms, zero pageerrors; relatório em
+`motion-main226-controlled-velho_oeste/`. Crítica visual independente examinou
+15capturas, incluindo calango próximo e Lajes realmente selecionado, sem bloqueador
+inequívoco; não afirma ter assistido vídeo contínuo. Ave sobre o coreto parece
+separada alguns pixels numa captura; sem sequência próxima não foi classificada
+como defeito confirmado. Vídeos da criação continuam disponíveis para revisão.
+
+DCO e preview Vercel passaram no GitHub; checks build/portao ainda em andamento
+neste checkpoint. Dono reiterou autorização para merge assim que estiver pronto.
+Antes do merge, verificar novamente SHA, checks e threads de revisão.
+
+Servidor existente revalidado: três regiões com zero jogadores/partidas ativas,
+serverSha d05c00a e clientSha0090ab82. Nenhum nó alterado. Primeiro build isolado
+72245fb2 falhou no instrumento: construtor Room sorteia rotação mesmo recebendo
+mapId. A prova foi corrigida com subclasse de teste que fixa somente a rotação
+para Sertão; produção não foi modificada. Sala real local passou300ticks,
+6combatentes,112colisores,390waypoints e3objetivos CTF. Repetição de build
+`dd2d4884-7529-46da-ae02-49825f263c21` em andamento. Imagem candidata fixa código
+servidor d05c00a e cliente87cf8631; metadados/secret/startup de nós devem ser
+preservados. Só eventual canário vazio após image gate, seguido de health e
+WebSocket real. Não confundir build de imagem com implantação.
