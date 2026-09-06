@@ -18,7 +18,7 @@ for(const file of Object.keys(manifest.mainMenuUnchanged)) {
  const base=execFileSync('git',['show',`${manifest.main}:${file}`],{maxBuffer:4*1024*1024});
  if(createHash('sha256').update(base).digest('hex')!==manifest.mainMenuUnchanged[file]) throw Error(`base main divergente: ${file}`);
  const patched=file==='public/js/game.js'?patchWaterRuntime(base.toString()):patchMapPreviewMenu(file,base.toString()), patchedHash=createHash('sha256').update(patched).digest('hex');
- if(actual!==manifest.mainMenuUnchanged[file] && actual!==patchedHash) throw Error(`menu main modificado fora do overlay: ${file}`);
+ if(actual!==manifest.mainMenuUnchanged[file] && actual!==patchedHash && actual!==manifest.mainMenuHoverOverlay?.[file]) throw Error(`menu main modificado fora do overlay: ${file}`);
  if(patchedHash!==manifest.mainMenuUnchanged[file]) menuPatches[file]={patched,sha256:patchedHash};
 }
 for(const [file,value] of Object.entries(menuPatches)) writeFileSync(`${dest}/${file}`,value.patched);

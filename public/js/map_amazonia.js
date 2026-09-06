@@ -796,6 +796,11 @@ export function buildAmazonia(scene, T) {
      o MC3 do map-contrato. */
   const blocked = (x, z, inflate = 0.45, yRef = 0) => {
     const g = groundHeightAt(x, z, yRef);
+    // O bot usa o piso mais alto; caminhos baixos sob madeira causam teleporte e prisão na casa.
+    for (const [ox, oz] of [[0, 0], [-inflate, 0], [inflate, 0], [0, -inflate], [0, inflate]]) {
+      const px = x + ox, pz = z + oz, top = groundHeightAt(px, pz);
+      if (top > g + 1.5 && (top > DECK_Y + .35 || CS.cabins.some(c => c.chapa && c.contains(px, pz)))) return true;
+    }
     return colliders.some((c) => c.minY < g + 1.5 && c.maxY > g + 0.3
       && x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate);
   };
@@ -1057,6 +1062,8 @@ export function buildAmazonia(scene, T) {
   const disposeAmbience = ambience.dispose.bind(ambience);
   ambience.dispose = () => { skyLife._disposed = true; faunaMotion.dispose(); disposeAmbience(); };
   return {
+    // Contrato: grafo com camadas, consultas de piso/nó com yRef e curvas precisas no CTF.
+    botLayeredNavigation: true,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, footstepSurfaceAt,     spawns: {
       /* 0,4 m além da face da mata girada: o AABB conservador da copa com yaw
          projeta a quina ~0,5 m para dentro da caixa e a folga do MAP2B mede

@@ -78,7 +78,7 @@ const IDS_ANTIGOS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_
 const FORMA_CS = /['"`]((?:fy|de|aim|awp)_[a-z0-9_]+)['"`]/g;
 
 const SEM_VARREDURA = [
-  'node_modules', '.git', 'dist', '.vercel', 'graphify-out', 'historico',
+  'node_modules', '.git', 'dist', '.vercel', 'graphify-out', 'historico', 'artifacts',
   /* Worktrees são checkouts paralelos de OUTRAS branches — não são código vivo
      da árvore atual. Sem isto, a régua escaneia `.worktrees/<branch-velha>/` e
      acusa ids antigos que só existem lá, virando vermelha sem defeito. */

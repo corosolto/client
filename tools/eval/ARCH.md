@@ -9,8 +9,8 @@
 
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
-| `public/js/game.js` | 7351 | 273 |
-| `public/js/main.js` | 3373 | 271 |
+| `public/js/game.js` | 7366 | 273 |
+| `public/js/main.js` | 3374 | 271 |
 | `public/js/glbchars.js` | 845 | 60 |
 | `public/js/characters.js` | 1069 | 40 |
 | `public/js/vmattach.js` | 629 | 4 |
@@ -19,23 +19,23 @@
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
-Os 15 maiores somam **3109 linhas (42% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
+Os 15 maiores somam **3116 linhas (42% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
 
 | Linhas | Início | Método | |
 |---:|---:|---|---|
-| 809 | 5984 | `_updateBot()` | ⚠️ candidato a extração |
+| 814 | 5992 | `_updateBot()` | ⚠️ candidato a extração |
 | 579 | 591 | `constructor()` | 🔴 append-only |
-| 249 | 5194 | `_updatePlayer()` |  |
+| 249 | 5200 | `_updatePlayer()` |  |
 | 248 | 2239 | `_resetPositions()` |  |
 | 241 | 1268 | `_buildViewModels()` |  |
-| 148 | 5454 | `_updatePickups()` |  |
-| 133 | 4567 | `_botCtf()` |  |
+| 148 | 5462 | `_updatePickups()` |  |
+| 135 | 4571 | `_botCtf()` |  |
 | 115 | 1964 | `_touchControls()` |  |
-| 92 | 5102 | `_moveEntity()` |  |
-| 89 | 7218 | `update()` | 🔴 append-only |
+| 92 | 5108 | `_moveEntity()` |  |
+| 89 | 7233 | `update()` | 🔴 append-only |
 | 84 | 3043 | `_tryShoot()` |  |
 | 84 | 4300 | `_initCTF()` |  |
-| 80 | 7138 | `_updateHud()` |  |
+| 80 | 7153 | `_updateHud()` |  |
 | 79 | 3356 | `_kill()` |  |
 | 79 | 3435 | `_dmgArc()` |  |
 
@@ -48,19 +48,19 @@ faixas disjuntas simultaneamente com zero conflito de conteúdo.
 | Frente | Faixas em `game.js` | Arquivos exclusivos |
 |---|---|---|
 | **ARMAS / VIEWMODEL** | `306–308` `337–431` `458–479` `1268–1667` `2804–2810` `2892–2978` `2997–3198` `3663–3686` `3734–3817` `3889–3905` | `public/js/vmattach.js` `public/js/springs.js` `public/js/weapons.js` `public/js/fparms.js` `public/js/handik.js` `public/js/recoil.js` `public/js/vmlab.js` |
-| **BOTS / JOGABILIDADE** | `160–163` `214–214` `240–251` `521–532` `3309–3434` `4244–4299` `4463–4699` `4782–4804` `5194–5442` `5805–5822` `5932–5962` `5984–6792` | — |
-| **MAPAS / MUNDO** | `1214–1267` `2239–2486` `4300–4439` `5454–5601` | `public/js/maps.js` `public/js/mapprops.js` `public/js/map_brasilia.js` `public/js/map_havan.js` `public/js/map_piscina.js` `public/js/map_piscinao_ramos.js` `public/js/map_ferrovelho.js` |
+| **BOTS / JOGABILIDADE** | `160–163` `214–214` `240–251` `521–532` `3309–3434` `4244–4299` `4463–4705` `4788–4810` `5200–5448` `5813–5830` `5940–5970` `5992–6805` | — |
+| **MAPAS / MUNDO** | `1214–1267` `2239–2486` `4300–4439` `5462–5609` | `public/js/maps.js` `public/js/mapprops.js` `public/js/map_brasilia.js` `public/js/map_havan.js` `public/js/map_piscina.js` `public/js/map_piscinao_ramos.js` `public/js/map_ferrovelho.js` |
 | **GRÁFICOS / FX** | `1682–1691` `1806–1837` `2734–2746` `3687–3725` `3833–3888` | `public/js/bloom.js` `public/js/textures.js` `public/js/vao.js` `public/js/stylize.js` `public/js/gpuparticles.js` |
-| **UI / HUD / MENU** | `1170–1213` `2691–2712` `2728–2733` `2747–2753` `3435–3513` `3530–3583` `3599–3662` `6961–7024` `7055–7102` `7138–7217` | `public/js/main.js` `public/style.css` `src/pages/index.astro` |
+| **UI / HUD / MENU** | `1170–1213` `2691–2712` `2728–2733` `2747–2753` `3435–3513` `3530–3583` `3599–3662` `6976–7039` `7070–7117` `7153–7232` | `public/js/main.js` `public/style.css` `src/pages/index.astro` |
 | **ÁUDIO** | — | `public/js/audio.js` |
 | **PERSONAGENS** | — | `public/js/characters.js` `public/js/glbchars.js` |
 | **SITE / BACKEND** | — | `src/` `supabase/` |
 
-**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 7218–7306 · `_dom()` 1170–1213 · `constructor()` 591–1169
+**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 7233–7321 · `_dom()` 1170–1213 · `constructor()` 591–1169
 
 Nenhuma sobreposição entre frentes — todas as faixas são disjuntas. ✓
 
-Cobertura: **3693 de 7351 linhas (50%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
+Cobertura: **3704 de 7366 linhas (50%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
 
 <details><summary><strong>Índice completo de <code>game.js</code> (todos os símbolos)</strong></summary>
 
@@ -241,65 +241,65 @@ Cobertura: **3693 de 7351 linhas (50%)** do `game.js` têm dono declarado. O res
 | 4440 | `_ctfWin()` | 23 |
 | 4463 | `_freeYaw()` | 25 |
 | 4488 | `_pullString()` | 23 |
-| 4511 | `_walkReach()` | 18 |
-| 4529 | `_wpComp()` | 16 |
-| 4545 | `_findPathLocal()` | 22 |
-| 4567 | `_botCtf()` | 133 |
-| 4700 | `_hideCtfHud()` | 6 |
-| 4706 | `_updateCtfHud()` | 76 |
-| 4782 | `_collide()` | 23 |
-| 4805 | `_collideRot()` | 26 |
-| 4831 | `_freeSpot()` | 30 |
-| 4861 | `_retaAndavel()` | 20 |
-| 4881 | `_walkDepth()` | 16 |
-| 4897 | `_noteHit()` | 17 |
-| 4914 | `_deathFeedback()` | 43 |
-| 4957 | `_updateReplayCam()` | 35 |
-| 4992 | `_toggleCamView()` | 11 |
-| 5003 | `_syncCamViewVis()` | 8 |
-| 5011 | `_ensurePlayerTP()` | 25 |
-| 5036 | `_updatePlayerTP()` | 35 |
-| 5071 | `_tpDeath()` | 18 |
-| 5089 | `_tpRevive()` | 13 |
-| 5102 | `_moveEntity()` | 92 |
-| 5194 | `_updatePlayer()` | 249 |
-| 5443 | `_footstepSurface()` | 11 |
-| 5454 | `_updatePickups()` | 148 |
-| 5602 | `_wpnMode()` | 5 |
-| 5607 | `_botWeapon()` | 10 |
-| 5617 | `_municaoInfinita()` | 1 |
-| 5618 | `_pickupAllowed()` | 7 |
-| 5625 | `_grabPickup()` | 35 |
-| 5660 | `_assentarNoChao()` | 10 |
-| 5670 | `refreshPickupModels()` | 24 |
-| 5694 | `_dropWeapon()` | 20 |
-| 5714 | `_sumirDrop()` | 36 |
-| 5750 | `_spawnY()` | 3 |
-| 5753 | `_pickSpawn()` | 23 |
-| 5776 | `_respawnPlayer()` | 29 |
-| 5805 | `_losClear()` | 18 |
-| 5823 | `_botCall()` | 41 |
-| 5864 | `_teamMarkTex()` | 23 |
-| 5887 | `_makeTeamMark()` | 16 |
-| 5903 | `_syncRemoteWeapon()` | 22 |
-| 5925 | `_updateTeamMark()` | 7 |
-| 5932 | `_botEye()` | 1 |
-| 5933 | `_enemyOf()` | 8 |
-| 5941 | `_duelToken()` | 22 |
-| 5963 | `_respawnEntity()` | 21 |
-| 5984 | `_updateBot()` | 809 |
-| 6793 | `_flushTraining()` | 13 |
-| 6806 | `_updateBotNN()` | 71 |
-| 6877 | `_botShootNN()` | 46 |
-| 6923 | `_radarFoot()` | 38 |
-| 6961 | `_updateRadar()` | 64 |
-| 7025 | `_banner()` | 26 |
-| 7051 | `_resultadoDaRodada()` | 4 |
-| 7055 | `_showScoreboard()` | 48 |
-| 7103 | `_updateWeaponHud()` | 35 |
-| 7138 | `_updateHud()` | 80 |
-| 7218 | `update()` | 89 |
-| 7307 | `dispose()` | 44 |
+| 4511 | `_walkReach()` | 22 |
+| 4533 | `_wpComp()` | 16 |
+| 4549 | `_findPathLocal()` | 22 |
+| 4571 | `_botCtf()` | 135 |
+| 4706 | `_hideCtfHud()` | 6 |
+| 4712 | `_updateCtfHud()` | 76 |
+| 4788 | `_collide()` | 23 |
+| 4811 | `_collideRot()` | 26 |
+| 4837 | `_freeSpot()` | 30 |
+| 4867 | `_retaAndavel()` | 20 |
+| 4887 | `_walkDepth()` | 16 |
+| 4903 | `_noteHit()` | 17 |
+| 4920 | `_deathFeedback()` | 43 |
+| 4963 | `_updateReplayCam()` | 35 |
+| 4998 | `_toggleCamView()` | 11 |
+| 5009 | `_syncCamViewVis()` | 8 |
+| 5017 | `_ensurePlayerTP()` | 25 |
+| 5042 | `_updatePlayerTP()` | 35 |
+| 5077 | `_tpDeath()` | 18 |
+| 5095 | `_tpRevive()` | 13 |
+| 5108 | `_moveEntity()` | 92 |
+| 5200 | `_updatePlayer()` | 249 |
+| 5449 | `_footstepSurface()` | 13 |
+| 5462 | `_updatePickups()` | 148 |
+| 5610 | `_wpnMode()` | 5 |
+| 5615 | `_botWeapon()` | 10 |
+| 5625 | `_municaoInfinita()` | 1 |
+| 5626 | `_pickupAllowed()` | 7 |
+| 5633 | `_grabPickup()` | 35 |
+| 5668 | `_assentarNoChao()` | 10 |
+| 5678 | `refreshPickupModels()` | 24 |
+| 5702 | `_dropWeapon()` | 20 |
+| 5722 | `_sumirDrop()` | 36 |
+| 5758 | `_spawnY()` | 3 |
+| 5761 | `_pickSpawn()` | 23 |
+| 5784 | `_respawnPlayer()` | 29 |
+| 5813 | `_losClear()` | 18 |
+| 5831 | `_botCall()` | 41 |
+| 5872 | `_teamMarkTex()` | 23 |
+| 5895 | `_makeTeamMark()` | 16 |
+| 5911 | `_syncRemoteWeapon()` | 22 |
+| 5933 | `_updateTeamMark()` | 7 |
+| 5940 | `_botEye()` | 1 |
+| 5941 | `_enemyOf()` | 8 |
+| 5949 | `_duelToken()` | 22 |
+| 5971 | `_respawnEntity()` | 21 |
+| 5992 | `_updateBot()` | 814 |
+| 6806 | `_flushTraining()` | 13 |
+| 6819 | `_updateBotNN()` | 73 |
+| 6892 | `_botShootNN()` | 46 |
+| 6938 | `_radarFoot()` | 38 |
+| 6976 | `_updateRadar()` | 64 |
+| 7040 | `_banner()` | 26 |
+| 7066 | `_resultadoDaRodada()` | 4 |
+| 7070 | `_showScoreboard()` | 48 |
+| 7118 | `_updateWeaponHud()` | 35 |
+| 7153 | `_updateHud()` | 80 |
+| 7233 | `update()` | 89 |
+| 7322 | `dispose()` | 44 |
 
 </details>
 

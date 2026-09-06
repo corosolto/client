@@ -1,5 +1,9 @@
 // Mesmo hook de superfície no runtime da branch e no snapshot da main, preservando o fallback de cada um.
 export function patchWaterRuntime(source) {
+  if (source.includes('  _footstepSurface(pos) {')) {
+    if (source.includes('const surface = this.world.footstepSurfaceAt?.(pos.x, pos.z);')) return source;
+    return source.replace('  _footstepSurface(pos) {', '  _footstepSurface(pos) {\n    const surface = this.world.footstepSurfaceAt?.(pos.x, pos.z);\n    if (surface) return surface;');
+  }
   const hook = 'this.world.footstepSurfaceAt?.(p.pos.x, p.pos.z) ?? ';
   if (source.includes(`this.sfx.step(${hook}`)) return source;
   const fallbacks = [

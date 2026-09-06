@@ -4514,7 +4514,11 @@ export class Game {
     if (d < 0.8) return true;
     const sim = { x: b.pos.x, y: b.pos.y, z: b.pos.z };
     const steps = Math.min(24, Math.ceil(d / 0.3));
-    for (let i = 0; i < steps; i++) { sim.x += (dx / d) * 0.3; sim.z += (dz / d) * 0.3; this._collide(sim, 0.38); }
+    for (let i = 0; i < steps; i++) {
+      sim.x += (dx / d) * 0.3; sim.z += (dz / d) * 0.3;
+      this._collide(sim, 0.38);
+      if (this.world.botLayeredNavigation) sim.y = this.world.groundHeightAt(sim.x, sim.z, sim.y);
+    }
     return Math.hypot(n.x - sim.x, n.z - sim.z) < tol;
   }
   /* COMPONENTES CONEXOS DO GRAFO DE WAYPOINTS (uma varredura por mapa, em cache no world).
@@ -4622,7 +4626,7 @@ export class Game {
       if (BOT_MOVE2) {
         // mesmo tratamento do roam: nó de partida FISICAMENTE alcançável + A* que pula os
         // hops que o bot já provou não caber (senão ele serrilha a quina pra sempre).
-        let from = W.nearestWaypoint(b.pos.x, b.pos.z);
+        let from = W.botLayeredNavigation ? W.nearestWaypoint(b.pos.x, b.pos.z, b.pos.y) : W.nearestWaypoint(b.pos.x, b.pos.z);
         if (!this._walkReach(b, W.waypoints.nodes[from])) {
           const cands = W.waypoints.nodes.map((n, i) => ({ i, d: (n.x - b.pos.x) ** 2 + (n.z - b.pos.z) ** 2 })).sort((a, c) => a.d - c.d);
           for (let k = 0; k < Math.min(6, cands.length); k++) if (this._walkReach(b, W.waypoints.nodes[cands[k].i])) { from = cands[k].i; break; }
@@ -4650,15 +4654,17 @@ export class Game {
        em que ele mais joga: trocar de nó teleportava o alvo de rotação, e a menos de 1,2 m
        do nó o atan2 de um vetor quase nulo vira 180° com meio passo. */
     if (b._hdg === undefined) b._hdg = Math.atan2(dx, dz);
-    if (d > 1.2) {
+    if (d > (W.botLayeredNavigation ? 0.05 : 1.2)) {
       let hd = Math.atan2(dx, dz) - b._hdg;
       while (hd > Math.PI) hd -= Math.PI * 2; while (hd < -Math.PI) hd += Math.PI * 2;
-      b._hdg += hd * Math.min(1, dt * 2.2);
+      b._hdg = W.botLayeredNavigation ? Math.atan2(dx, dz) : b._hdg + hd * Math.min(1, dt * 2.2);
     }
     let dy = (BOT_MOVE2 ? b._hdg : Math.atan2(dx, dz)) - b.yaw;
     while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
     const cturn = dy * Math.min(1, dt * 8);
     b.yaw += BOT_MOVE2 ? Math.max(-YAW_CAP * dt, Math.min(YAW_CAP * dt, cturn)) : cturn;
+    // Em passarelas estreitas, conclui a curva antes de avançar; girar não é ficar preso.
+    if (W.botLayeredNavigation && Math.abs(dy) > 0.7) { b._ctfMoving = 0; b._stuckT = 0; return; }
     const bSlow = this.world.slowAt && this.world.slowAt(b.pos.x, b.pos.z) ? 0.5 : 1;
     const px = b.pos.x, pz = b.pos.z;
     b.pos.x += Math.sin(b.yaw) * BOT_SPEED * bSlow * dt;
@@ -5263,7 +5269,7 @@ export class Game {
     if (moving) {
       p.stepPhase += dt * sp * 1.6;
       const prev = Math.sin(p.stepPhase - dt * sp * 1.6), now = Math.sin(p.stepPhase);
-      if (prev >= 0 && now < 0) this.sfx.step(this.world.footstepSurfaceAt?.(p.pos.x, p.pos.z) ?? (this._footstepSurface(p.pos)));
+      if (prev >= 0 && now < 0) this.sfx.step(this._footstepSurface(p.pos));
     }
     // Aim: real scopes (AWP / Mosin / Rem700) hide the gun and show the scope overlay.
     // Every other weapon does light iron-sight ADS — the gun stays on screen and the
@@ -5441,6 +5447,8 @@ export class Game {
   /* O mapa ainda não expõe material sob o pé. Até essa API existir, cada arena
      ganha um piso dominante explícito; água continua tendo precedência espacial. */
   _footstepSurface(pos) {
+    const surface = this.world.footstepSurfaceAt?.(pos.x, pos.z);
+    if (surface) return surface;
     if (this.world.slowAt && this.world.slowAt(pos.x, pos.z)) return 'water';
     return {
       ferro_velho: 'gravel', quebrada: 'dirt', corrego: 'dirt', posto_treta: 'gravel',
@@ -6740,8 +6748,13 @@ export class Game {
 
        5× mais bot travado é regressão que o dono VÊ; o jogador não perde nada, porque
        quem usa o vão é ele. Grafo com camada continua sendo a segunda metade desta
-       frente (BUG-22) — e é exatamente o que falta pra devolver o `yRef` aqui. */
-    b.pos.y = this.world.groundHeightAt(b.pos.x, b.pos.z);
+       frente (BUG-22) — e é exatamente o que falta pra devolver o `yRef` aqui.
+       Exceção opt-in: botLayeredNavigation exige grafo com nós/arestas por camada e
+       groundHeightAt/nearestWaypoint com yRef, como na Amazônia. Demais mapas mantêm
+       a política acima, inclusive a chamada de groundHeightAt com dois argumentos. */
+    b.pos.y = this.world.botLayeredNavigation
+      ? this.world.groundHeightAt(b.pos.x, b.pos.z, b.pos.y)
+      : this.world.groundHeightAt(b.pos.x, b.pos.z);
     g.position.copy(b.pos);
     g.rotation.set(0, b.yaw, 0);
     if (b.mesh.isGLB) {
@@ -6837,7 +6850,9 @@ export class Game {
     b.pos.x += wx * spd * dt; b.pos.z += wz * spd * dt;
     this._collide(b.pos, 0.38);
     this._botSeparation(b, dt);   // reusa a despenetração (evita empilhar bots)
-    b.pos.y = this.world.groundHeightAt(b.pos.x, b.pos.z);
+    b.pos.y = this.world.botLayeredNavigation
+      ? this.world.groundHeightAt(b.pos.x, b.pos.z, b.pos.y)
+      : this.world.groundHeightAt(b.pos.x, b.pos.z);
     const moving = Math.hypot(wx, wz) > 0.15 ? 1 : 0;
 
     // TIRO: a rede decide QUANDO; a resolução reusa as primitivas honestas do jogo
