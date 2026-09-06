@@ -136,3 +136,43 @@ npm run eval:amazonia-rota                  # lote de buscas; com AMAZONIA_BASEL
 ### Limite conhecido
 
 Continua sem navegador, sem captura WebGL e sem medição de FPS. Todo número acima é CPU de `Game.update` em Node, com GLBs, texturas, shaders e áudio fora da conta. Redução de CPU de visão não é promessa de quadros por segundo: falta uma sessão humana no navegador para confirmar frametime e a leitura visual das escadas e da vista para o rio. Sem merge e sem release nesta frente.
+
+## Correção da VM14 — 06/09/2026 (ZCode GLM 5.3)
+
+O check `build` (pr-fast) do PR #527 reprovou em `invariants.mjs`: **VM14 vermelha** com 1 pickup
+sem alcance no mapa amazonia (1034 pickups, os outros 15 mapas verdes). Reproduzido localmente:
+`node tools/eval/pickup-check.mjs` → deagle do mapa em `(0, −24,2)`, `distAndavel 1,25 m`
+(teto 1,0 m).
+
+**Causa raiz** (flood-fill de andabilidade replicado + sonda de `_collide`/`groundHeightAt` em
+grade de 0,25 m): o deck da ponte norte (`ponte(−24)`) estava **ilhado** — não era só a arma:
+
+- O `groundHeightAt` trata a madeira como piso, e a rota alta cruza as duas cabeças da ponte.
+  A leste, a prancha A→C (x 8,3–10,5, DECK_Y 2,30) sela o deck na faixa z da ponte; o único vão
+  livre era x 10,5–11,5 — e o **pino de canto da casa da estação A** (11,24–11,56 ×
+  −23,56..−23,24, pé direito 3,85 m) caía no meio dele: com corpo de raio 0,38, a passagem fecha.
+- A oeste, o patamar da estação (−14, −22) (x −11,2..−7,6 × z −23,6..−20,4) **e** o pé do seu
+  lance de escada (z −27..−23,9, primeiro degrau a 1,28 m com bloco sólido embaixo) selavam a
+  faixa norte do deck.
+
+**Correção** (`public/js/map_amazonia.js`), sem reduzir conteúdo e sem tocar em teto de gate:
+
+- Estação A movida em z: −26 → −27; o início da prancha A→C reancorado na nova borda do
+  patamar (`az −24,4 → −25,4`). O pino sai do vão livre da cabeça leste.
+- Estação (−14, −22) movida em z: −22 → −19. O pé do lance passa a pousar **sobre o deck** da
+  ponte (criando a subida deck→patamar) e a faixa norte do deck fica livre (~0,75 m de corredor).
+  Virar o lance (`e:−1`) foi descartado: quebraria a invariante de orientação pro respawn.
+
+**Verificado:** `pickup-check` amazonia **0 sem alcance** (pior distância andável 0,16 m);
+`amazonia-spawn-stairs-check` 10/10 `facingRespawn` + `climbed` (estação movida subiu em 124
+ticks); `amazonia-raycast-check` AMRP1 válido; `eval:amazonia` completo verde (Node 23.6.0);
+`eval:vm` + `invariants.mjs`: VM14 PASSA, críticas 42/57 — a única vermelha restante é a MAT1
+(cláusula quebrada `croma mão/chão quebrada 1,53×`), **pré-existente e local**: reproduz idêntica
+com `git stash` da correção, só mede nesta máquina porque ela tem GLBs que o CI não tem (no CI a
+cláusula sai vazia e passa). Fora do escopo desta lane (mapa quebrada não foi tocado aqui).
+`npm run build` verde; `npm run docs` regenerado e `docs:check` verde. JSONs de avaliação
+inflados pelo ambiente local (mat_*, char_probe, map_check, timestamps de vm_*) foram revertidos;
+só `pickup_check.json` (evidência da VM14) entrou no commit.
+
+Node local padrão é 16 (sem `structuredClone`); os gates desta sessão rodaram com Node 23.6.0 do
+Homebrew, a mesma família de versão do CI (22).

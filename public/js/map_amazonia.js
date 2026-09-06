@@ -42,7 +42,9 @@ const PAT_A = 1.6;
 const ESC_N = 12, ESC_PISO = 0.26;  // espelho ~0,15: 2 espelhos cabem no pé de 0,30 do corpo
 export const AMAZONIA_NAV_STEP = 3.2;
 const ESTACOES = [
-  { x: 14, z: -26, d: [-1, 0], e: -1, rede: true },   // A — pé da bandeira E
+  { x: 14, z: -27, d: [-1, 0], e: -1, rede: true },   // A — pé da bandeira E; a 1 m do
+  // cabeço norte: o pino de canto da casa (st.z+2.6) não pode cair no vão livre entre
+  // a prancha da rede (x≤10.5) e o fim da ponte (x 11.5) — VM14 ilhou a ponte norte.
   { x: 25, z: -18, d: [-1, 0], e: -1 },
   { x: 14, z: -9, d: [-1, 0], e: 0, rede: true },     // C — passagem (sem escada: sobe pela rede)
   { x: 14, z: 6, d: [-1, 0], e: 1, rede: true },      // D — virada pro igarapé
@@ -51,13 +53,14 @@ const ESTACOES = [
   { x: 17, z: 29, d: [-1, 0], e: 1 },                 // B: lance abre para o respawn norte
   { x: 27, z: -7, d: [-1, 0], e: 1 },
   { x: -14, z: 6, d: [1, 0], e: -1, rede: true },     // F — cabeça oeste da travessia
-  { x: -14, z: -22, d: [1, 0], e: 1, aguaE: -1 },
+  { x: -14, z: -19, d: [1, 0], e: 1, aguaE: -1 },  // a z −22 o pé do lance (z −27..−23,9)
+  // selava a faixa norte da ponte −24 junto com o patamar: deck virava ilha (VM14)
   { x: -27, z: -25, d: [1, 0], e: 1, aguaE: -1 },
 ];
 for (const st of ESTACOES) { st.p = [st.d[1], -st.d[0]]; }   // p = lateral esquerda de d
 /* Pranchas da rota alta (eixos alinhados): patamar→patamar/plataforma a DECK_Y. */
 const PONTES_ALTA = [
-  { ax: 9.4, az: -24.4, bx: 9.4, bz: -10.6 },   // A→C →D →M →F: a travessia alta
+  { ax: 9.4, az: -25.4, bx: 9.4, bz: -10.6 },   // A→C →D →M →F: a travessia alta; az = borda do patamar A
   { ax: 9.4, az: -7.4, bx: 9.4, bz: 4.4 },
   { ax: 7.8, az: 6, bx: 1.6, bz: 6 },
   { ax: -1.6, az: 6, bx: -7.8, bz: 6 },
