@@ -217,3 +217,35 @@ artifacts/amazonia-visual/comparacao.html. Builder congelado nas capturas pelo h
 acima, árvore/guardas validadas, branch com commits locais. Não aprovado para
 integração; próxima ação concreta: revisão humana das imagens e planejamento do
 ajuste de C18/C23/C25, seguido de janela exclusiva de GPU. Nenhum PR/push/deploy.
+
+## Correção do teste local: menu e seleção de facção
+
+O usuário encontrou menu divergente da main e seleção impossível no link8146.
+Causa confirmada: eval/serve.mjs não expande FACTIONS.map do Astro; os cards mantêm
+expressões não resolvidas. Capturas com auto= validaram mapa, não navegação do menu.
+Orientação anterior corrigida em AMAZONIA-TESTE-LOCAL.md e no relatório de revisão.
+
+Astro da própria branch iniciado em8156; HTML real renderiza dez data-faction.
+Fetch read-only encontrou origin/main69555790 (alpha.223), 317 commits exclusivos
+da main frente a HEAD; ela não contém map_amazonia.js. A branch não foi integrada.
+Como opção conservadora para testar o menu atual, preparado snapshot git archive
+dessa main em artifacts/amazonia-visual/main-preview/, dentro da mesma worktree.
+Somente a composição de teste recebe builder/LOOK/registro/16 arquivos de mapa e
+fauna do PR; menu/main.js/style.css/characters.js são idênticos à main por SHA256.
+Node_modules e packs locais usam links dentro da worktree; nenhum outro checkout.
+
+Preview Astro8157 validado no Chrome: abertura por Enter → SINGLE PLAYER → JOGAR
+→ Time B → personagem → adversário → state=live, _mapId=amazonia, mundo presente.
+Zero pageerrors e nenhum aviso de boot. Cinco facções, conforme main. Prova em
+artifacts/amazonia-visual/menu-main.json e três PNGs. Builder preserva SHA256
+2a6e9e5b89e4011fde1747a80040c16de840d0e30ba632de301ce411f85847e7.
+Primeiras tentativas do arnês falharam na splash por interação inadequada; teste
+final usa Enter real e cliques, sem auto= ou remoção programática da tela.
+O mesmo fluxo no Astro8156 também passou até state=live, sem pageerror;
+menu-astro.json registra seis facções prontas e quatro em produção no catálogo
+da branch. Logo, o bloqueio geral vinha do servidor de avaliação, não do pickTeam.
+
+Estado: preview para teste disponível8157, branch e avaliação visual anterior
+preservadas. Nenhum merge/rebase/push/deploy. Próxima ação: revisão humana nesse
+endereço; melhorias C18/C23/C25 e performance continuam pendentes. Não propagar
+aprovação dos gates antigos para o runtime composto da main.

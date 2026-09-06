@@ -4,6 +4,11 @@
 travessia, além de melhoria parcial do cenário. Restam falhas visuais e técnicas;
 performance e mixagem não receberam aprovação humana. Nenhum push, merge ou deploy.
 
+**Teste pelo menu:** use o [preview da main com a Amazônia](AMAZONIA-TESTE-LOCAL.md)
+na porta 8157. A porta 8146 citada nas capturas é apenas de avaliação; não renderiza
+as facções Astro. O preview tem runtime da main e não herda o aceite dos gates desta
+revisão: recebeu somente o smoke de navegação descrito naquele documento.
+
 ## Escopo e origem
 
 Worktree nova: `/Users/ruben/csbrasil/worktrees/amazonia-visual`.
