@@ -35,6 +35,7 @@ import { sondaNavegador, carregaPlaywright } from './probes/browser.mjs';
 import { explicar } from './lib/explain.mjs';
 import { veredito } from './lib/report.mjs';
 import { RAIZ_PADRAO } from './lib/repo.mjs';
+import { paralelo } from './lib/http.mjs';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const SO = (process.argv.find((a) => a.startsWith('--so=')) || '').split('=')[1] || '';
@@ -85,7 +86,7 @@ function servidor(cenario, raiz) {
     const n = chamadas[caminho];
     const envia = (status, corpo, headers = {}) => { res.writeHead(status, headers); res.end(corpo); };
     const csp = cenario === 'sem-csp' ? {} : { 'content-security-policy': "default-src 'self'" };
-    if (caminho === '/') { const f = () => envia(200, cenario === 'html-sem-importmap' ? '<!doctype html><html><body>manutencao</body></html>' : html, { 'content-type': 'text/html', ...csp }); return cenario === 'html-lento' ? setTimeout(f, 2700) : cenario === 'html-nao-200' ? envia(500, 'erro') : f(); }
+    if (caminho === '/') { const f = () => envia(200, cenario === 'html-sem-importmap' ? '<!doctype html><html><body>manutencao</body></html>' : html, { 'content-type': 'text/html', ...csp }); return cenario === 'html-lento' && n === 1 ? setTimeout(f, 2700) : cenario === 'html-nao-200' ? envia(500, 'erro') : f(); }
     if (caminho === '/js/main.js') return cenario === 'main-js-indisponivel' ? envia(404, '') : cenario === 'main-js-e-html' ? envia(200, '<!doctype html><html>404</html>', { 'content-type': 'text/html' }) : envia(200, readFileSync(join(raiz, 'public/js/main.js')), { 'content-type': 'text/javascript', 'access-control-allow-origin': '*' });
     if (caminho === '/js/dep.js') return cenario === 'modulo-404' ? envia(404, '') : envia(200, cenario === 'export-sumido' ? 'export const bar = 1;\n' : readFileSync(join(raiz, 'public/js/dep.js')), { 'content-type': 'text/javascript' });
     if (caminho === '/js/version.js') return envia(200, `export const VERSION = '${cenario === 'versao-divergente' ? '9.9.9-teste.0' : V}';\n`, { 'content-type': 'text/javascript' });
@@ -95,7 +96,8 @@ function servidor(cenario, raiz) {
       if (cenario === 'rota-intermitente' && n % 2 === 1) return envia(503, 'cold');
       if (cenario === 'rota-fora') return envia(503, 'down');
       const f = () => envia(200, JSON.stringify({ online: cenario === 'pipelines-parados' ? 4 : 1, presence: 1, inGame: 0, nodesAvailable: 3, nodesTotal: 3 }), { 'content-type': 'application/json' });
-      return cenario === 'latencia-api' ? setTimeout(f, 2100) : f();
+      // p95 de 4 amostras é o máximo (lib/http percentil): UMA chamada lenta acende a régua
+      return cenario === 'latencia-api' && n === 1 ? setTimeout(f, 2100) : f();
     }
     if (caminho === '/api/map-plays') return envia(200, '{"plays":{}}', { 'content-type': 'application/json' });
     if (caminho === '/api/leaderboard') return envia(200, cenario === 'ranking-ligado-sem-flag' ? JSON.stringify({ players: [{ nick: 'a' }] }) : '{"disabled":true}', { 'content-type': 'application/json' });
@@ -176,9 +178,9 @@ const ok = (msg) => console.log(`  ✓ ${msg}`);
 const ruim = (msg) => { falhas.push(msg); console.error(`  ✗ ${msg}`); };
 const t0 = Date.now();
 
-for (const [cenario, esperado] of Object.entries(CENARIOS)) {
-  if (SO && SO !== cenario) continue;
-  const { sondas, achados } = await rodaCenario(cenario);
+const selecionados = Object.entries(CENARIOS).filter(([cenario]) => !SO || SO === cenario);
+const rodados = await paralelo(selecionados, async ([cenario, esperado]) => ({ cenario, esperado, ...(await rodaCenario(cenario)) }), 4);
+for (const { cenario, esperado, sondas, achados } of rodados) {
   const graves = achados.filter((a) => ['critico', 'alto', 'medio', 'inconclusivo'].includes(a.severidade));
   if (VERBOSO) console.log(`  · ${cenario}: ${achados.map((a) => `${a.id}[${a.severidade}]`).join(' ') || 'nenhum achado'}`);
   if (!esperado) {
@@ -204,7 +206,7 @@ if (!SO || SO === 'navegador') {
       const raiz = fixture(cenario);
       const s = await servidor(cenario, raiz);
       try {
-        const nav = await sondaNavegador(s.base, { timeoutMs: 20_000, partida: false });
+        const nav = await sondaNavegador(s.base, { timeoutMs: esperado ? 6000 : 20_000, partida: false });
         if (nav.indisponivel) { console.log(`  · navegador pulado: ${nav.motivo}`); break; }
         const achados = explicar({ navegador: nav });
         if (!esperado) {
