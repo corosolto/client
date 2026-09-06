@@ -56,6 +56,23 @@ test('rota: constante vira alto, intermitente vira médio com a sequência de st
   assert.match(a.causa, /cold start/);
 });
 
+test('boot: HTML com import map mas sem main.js é crítico', () => {
+  const a = explicar({ boot: { sonda: 'boot', alvo: 'https://x', html: { status: 200, ms: 10, csp: true }, importMap: { three: 'x' }, scriptsModulo: [], mainJs: null } });
+  assert.equal(a[0].id, 'html-sem-main-js');
+  assert.equal(a[0].severidade, 'critico');
+});
+
+test('assets: 404 no edge é alto na mesma versão e só aviso quando a árvore está à frente', () => {
+  const assets = { sonda: 'assets', total: 2, itens: [{ caminho: 'models/weapons/ak.glb', grupo: 'armas' }], faltando: ['models/weapons/ak.glb'], semResposta: [], outrosErros: [], conteudoErrado: [], tamanhoDiverge: [], p95ms: 10, cacheHits: 2 };
+  const mesma = explicar({ contexto: { versaoLocal: '1.0.0' }, boot: { sonda: 'boot', alvo: 'u', html: { status: 200, ms: 1, csp: true }, importMap: { a: 1 }, mainJs: { status: 200 }, versaoHtml: '1.0.0', versaoJs: '1.0.0', opsJs: { noHtml: true } }, assets });
+  assert.equal(mesma.find((a) => a.id === 'asset-404').severidade, 'alto');
+  const atras = explicar({ contexto: { versaoLocal: '1.0.1' }, boot: { sonda: 'boot', alvo: 'u', html: { status: 200, ms: 1, csp: true }, importMap: { a: 1 }, mainJs: { status: 200 }, versaoHtml: '1.0.0', versaoJs: '1.0.0', opsJs: { noHtml: true } }, assets });
+  const a = atras.find((x) => x.id === 'asset-404');
+  assert.equal(a.severidade, 'aviso');
+  assert.match(a.titulo, /produção atrás da árvore/);
+  assert.ok(ids(atras).includes('producao-atras-da-arvore'));
+});
+
 test('partida sintética: crash é crítico e cita mapa, modo e stack', () => {
   const pt = { sonda: 'partidas', fatal: null, timeout: false, partidas: [], comErro: [{ mapa: 'quebrada', modo: 'ctf', erros: [{ update: 3, mensagem: 'TypeError: x', stack: 'game.js:10' }] }], semLive: [], semBots: [] };
   const a = explicar({ partidas: pt })[0];

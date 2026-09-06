@@ -33,7 +33,7 @@ export function explicar(res = {}) {
   explicaBootRemoto(A, res.boot, ctx);
   explicaApi(A, res.api, ctx);
   explicaRanking(A, res.ranking, ctx);
-  explicaAssetsRemoto(A, res.assets, ctx);
+  explicaAssetsRemoto(A, res.assets, { ...ctx, versaoRemota: res.boot?.versaoHtml || null });
   explicaBootLocal(A, res.bootLocal, ctx);
   explicaAssetsLocal(A, res.assetsLocal, ctx);
   explicaPartidas(A, res.partidas, ctx);
@@ -73,7 +73,14 @@ function explicaBootRemoto(A, boot, ctx) {
     });
   }
   const m = boot.mainJs;
-  if (m && m.status !== 200) {
+  if (!m) {
+    ach(A, {
+      id: 'html-sem-main-js', sonda: 'boot', severidade: 'critico', titulo: 'o HTML não referencia /js/main.js',
+      causa: 'index.astro publicado sem a tag do main.js, ou import map sem a entrada dele',
+      evidencia: `scripts de módulo no HTML: ${(boot.scriptsModulo || []).join(', ') || 'nenhum'}`,
+      impacto: 'menu estático sem jogo — botão JOGAR inerte', proximo: 'comparar o HTML servido com src/pages/index.astro da tag publicada; rollback se divergir',
+    });
+  } else if (m.status !== 200) {
     ach(A, {
       id: 'main-js-indisponivel', sonda: 'boot', severidade: 'critico', titulo: `main.js respondeu ${m.status || m.erro}`,
       causa: 'deploy sem o módulo (prune/manifesto) ou edge com HTML novo e JS velho (BUG-39)',
@@ -187,7 +194,16 @@ function explicaAssetsRemoto(A, as, ctx) {
   if (as.faltando.length) {
     const grupos = new Set(as.itens.filter((i) => as.faltando.includes(i.caminho)).map((i) => i.grupo));
     const vital = ['armas', 'personagens', 'anims', 'vendor', 'css'].some((g) => grupos.has(g));
-    ach(A, { id: 'asset-404', sonda: 'assets', severidade: grupos.has('vendor') || grupos.has('css') ? 'critico' : vital ? 'alto' : 'medio', titulo: `${as.faltando.length} asset(s) da amostra em 404 no edge (${[...grupos].join(', ')})`, causa: 'arquivo removido no prune-dist, renomeado sem o consumidor ou deploy incompleto (LICOES §12)', evidencia: as.faltando.slice(0, 6).join(' · '), impacto: grupos.has('armas') ? 'arma sem modelo: viewmodel/pickup somem sem erro no console' : grupos.has('personagens') ? 'personagem cai no fallback ou não aparece' : 'textura/prop em branco chapado', proximo: 'conferir se o caminho existe em `dist/client` do build atual; se existir, purgar o edge; senão, o commit que removeu' });
+    // a amostra vem da ÁRVORE: com produção atrás dela, 404 pode ser só asset ainda não publicado
+    const arvoreAFrente = !!ctx.versaoRemota && !!ctx.versaoLocal && ctx.versaoRemota !== ctx.versaoLocal;
+    ach(A, {
+      id: 'asset-404', sonda: 'assets', severidade: arvoreAFrente ? 'aviso' : grupos.has('vendor') || grupos.has('css') ? 'critico' : vital ? 'alto' : 'medio',
+      titulo: `${as.faltando.length} asset(s) da amostra em 404 no edge (${[...grupos].join(', ')})${arvoreAFrente ? ' — produção atrás da árvore' : ''}`,
+      causa: arvoreAFrente ? `a amostra é da árvore (${ctx.versaoLocal}) e a produção serve ${ctx.versaoRemota}: pode ser asset novo ainda não publicado; se o caminho já existia, é o mesmo caso abaixo` : 'arquivo removido no prune-dist, renomeado sem o consumidor ou deploy incompleto (LICOES §12)',
+      evidencia: as.faltando.slice(0, 6).join(' · '),
+      impacto: grupos.has('armas') ? 'arma sem modelo: viewmodel/pickup somem sem erro no console' : grupos.has('personagens') ? 'personagem cai no fallback ou não aparece' : 'textura/prop em branco chapado',
+      proximo: arvoreAFrente ? 'publicar e re-sondar; se persistir na mesma versão, seguir o caso de deploy incompleto' : 'conferir se o caminho existe em `dist/client` do build atual; se existir, purgar o edge; senão, o commit que removeu',
+    });
   }
   if (as.conteudoErrado.length) ach(A, { id: 'asset-conteudo-errado', sonda: 'assets', severidade: 'alto', titulo: `${as.conteudoErrado.length} asset(s) com corpo que não é o formato esperado`, causa: 'edge/host devolvendo HTML (fallback/erro) ou arquivo truncado no lugar do asset', evidencia: as.conteudoErrado.slice(0, 5).join(' · '), impacto: 'parser do three falha na hora de usar: partida sem o modelo', proximo: 'baixar o arquivo com curl e olhar o começo; comparar com o do repo' });
   if (as.tamanhoDiverge.length) ach(A, { id: 'asset-tamanho-diverge', sonda: 'assets', severidade: 'medio', titulo: `${as.tamanhoDiverge.length} asset(s) com tamanho diferente do disco na MESMA versão`, causa: 'edge segurando arquivo de deploy anterior (immutable + mesmo ?v=) ou build alterando o asset (otimização)', evidencia: as.tamanhoDiverge.slice(0, 4).join(' · '), impacto: 'jogador recebe asset velho até o cache expirar', proximo: 'purge dos caminhos citados; se o build otimiza GLB, registrar isso na régua' });
