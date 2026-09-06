@@ -158,12 +158,15 @@ adulterada não recebe a credencial. `eval:audioprivate`, `eval:assetfetch` e
 retiram autorização, autenticação, hash ou o override de um mapa.
 
 Essa decisão permite Fab e BOOM conforme as licenças de incorporação registradas no ledger;
-não libera qualquer origem marcada apenas para armazenamento. Fish permanece
-`deployPrivado.build: false`: foi preservado no Blob privado, mas não é entregue ao jogador
-porque os direitos da voz pública rotulada “Mortal Kombat” não foram verificados. A
+não libera qualquer origem marcada apenas para armazenamento. Em 06/09/2026 o dono
+reconfirmou a autorização para incorporar os 16 WAVs Fish exatos ao build privado, ciente de
+que os direitos da voz pública rotulada “Mortal Kombat” não foram verificados. A
 [documentação oficial da Fish](https://docs.fish.audio/developer-guide/best-practices/voice-cloning)
-atribui ao usuário a responsabilidade de obter permissão para a voz clonada. Os callouts
-legados permanecem excluídos.
+atribui ao usuário a responsabilidade de obter permissão para a voz clonada. A autorização
+fica restrita ao produto, sem redistribuição standalone ou treino. Os callouts legados
+permanecem excluídos. As 36 falas finais dos nove Funkeiros são um catálogo diferente: os
+recibos registram Gemini TTS via OpenRouter, sem clonagem, e seus hashes foram preservados a
+partir do commit `282ff734`.
 
 ## O legado que esta lane NÃO resolveu
 

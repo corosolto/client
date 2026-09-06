@@ -23,9 +23,14 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
-## Não lançado — 2026-09-05
+## Não lançado — 2026-09-06
 
 ### Corrigido
+- O build privado volta a carregar os 16 anúncios Fish, as 36 falas finais dos nove Funkeiros e somente as oito músicas aprovadas do menu.
+- Palhaços e Funkeiros sem take próprio deixam de tocar dublagem genérica; os Funkeiros preservam somente as 36 falas aprovadas.
+- A primeira fala de kill não é mais bloqueada por uma seleção ou chamada de rádio imediatamente anterior.
+- O empacotador limpa saídas anteriores e reconhece uma AWP CC0 catalogada sem confundi-la com áudio legado pelo nome.
+- Tiros ficam abaixo das vozes e a contingência original restaura falas, rounds e kill streaks em single-player e multiplayer.
 - O multiplayer reconhece inputs por sequência e suaviza correções sem apagar movimento pendente.
 - Arma, slots, pente, reserva e recarga passam a ser autoritativos no protocolo snapshot v4.
 - Trocas de arma remotas remontam a malha visível; clientes lentos não acumulam snapshots obsoletos.

@@ -1,18 +1,21 @@
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
 // Real CS 1.6 samples are NOT bundled (Valve copyright) — drop your own legally-owned
 // files in audio/cs/ and register them under "cs" in audio/manifest.json.
-/* Fator global do tiro — ver shotWeapon(). 0,52 = -5,7 dB, escolhido pra deixar a arma
-   audivelmente à frente da voz e do passo sem cobri-los (era 1,0: o tiro dominava tudo, e
-   o duck de 0,3 em cima ainda derrubava a voz de propósito). Tunável ao vivo: ?gunvol=N */
+/* Fator global do tiro — ver shotWeapon(). 0,42 = -7,5 dB, revisão pedida pelo dono no
+   BUG-140 para a arma não cobrir voz e passo (era 1,0; depois 0,62 e 0,52).
+   O duck continua independente. Tunável ao vivo: ?gunvol=N. */
 const GUN_VOL = (() => {
   const q = +new URLSearchParams(location.search).get('gunvol');
-  return Number.isFinite(q) && q > 0 ? q : 0.52;
+  return Number.isFinite(q) && q > 0 ? q : 0.42;
 })();
 /* Samples de tiro do Fab têm caudas de até 3,5 s, enquanto uma automática chega a
    disparar a cada 65–120 ms. Sem estes tetos, uma única arma acumula dezenas de
    BufferSources e cobre passos/vozes; vários bots ainda multiplicam o problema. */
 const MAX_SHOT_VOICES_PER_SAMPLE = 4;
 const MAX_SHOT_VOICES = 16;
+// Sem dublagem genérica: Funkeiros usam apenas takes próprios estruturados;
+// Palhaços ficam sem fala até existir catálogo aprovado. Fish e SFX são separados.
+const NO_GENERIC_VOICE_FACTIONS = new Set(['C', 'F']);
 
 export const CHARACTER_SELECT_VOICE = Object.freeze({
   gotinha: 'audio/a/cc77ec4f134a71ba.mp3',
@@ -23,12 +26,32 @@ export const CHARACTER_SELECT_VOICE = Object.freeze({
   funkraiz: 'audio/a/d5b87c3d2638e166.mp3',
 });
 
+const VOICE_FALLBACK = Object.freeze({
+  E: ['Boa!', 'Avança!', 'Pegamos!'],
+  B: ['Boa!', 'Vai pra cima!', 'Derrubamos!'],
+  U: ['Bonito tiro!', 'É nossa!', 'Bora pra treta!'],
+  C: ['O circo chegou!', 'Ingresso pago!', 'A praça é nossa!'],
+  F: ['É os cria!', 'Bicho solto!', 'Passou o corre!'],
+});
+const GENERAL_FALLBACK = Object.freeze({
+  headshot: 'Headshot!',
+  doublekill: 'Double kill!',
+  triplekill: 'Triple kill!',
+  multikill: 'Multi kill!',
+  megakill: 'Mega kill!',
+  killingspree: 'Killing spree!',
+  godlike: 'Godlike!',
+});
+const ROUND_FALLBACK = Object.freeze(['', 'Round one!', 'Round two!', 'Round three!',
+  'Round four!', 'Round five!', 'Round six!', 'Round seven!']);
+
 export class Sfx {
   constructor() {
     this.ctx = null; this.master = null; this.vol = 0.7;
     this.pack = null;            // parsed manifest
     this.speechEnabled = true;   // falas dos times (memes) — vitória/UT/arma sempre tocam
     this._lastVoice = 0;
+    this._lastKillVoice = 0;
     this._radioAudio = null;
     this._announcerAudio = null; // locucao prioritaria: um callout por vez
     this._live = new Set();      // samples HTMLAudio tocando (pra duck de vozes)
@@ -42,7 +65,7 @@ export class Sfx {
     // production plays real shots instead of the synth. Never throws.
     // A chave acompanha a release de fetch-audio.sh; se atrasar, a CDN conserva catálogo
     // antigo mesmo com os MP3 novos presentes no deployment (BUG-109).
-    for (const url of ['audio/manifest.json?v=9', 'audio/manifest.default.json?v=1']) {
+    for (const url of ['audio/manifest.json?v=10', 'audio/manifest.default.json?v=1']) {
       try {
         const r = await fetch(url, { cache: 'no-cache' });
         if (r.ok) { this.pack = await r.json(); return; }
@@ -86,35 +109,101 @@ export class Sfx {
   }
   _pick(arr) { return arr && arr.length ? arr[(Math.random() * arr.length) | 0] : null; }
 
+  _speak(text, { lang = 'pt-BR', volume = 0.72, interrupt = false } = {}) {
+    if (!this.speechEnabled || !text || !globalThis.speechSynthesis || !globalThis.SpeechSynthesisUtterance) return false;
+    try {
+      if (interrupt) globalThis.speechSynthesis.cancel();
+      const utterance = new globalThis.SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.volume = Math.max(0, Math.min(1, this.vol * volume));
+      utterance.rate = lang === 'en-US' ? 0.92 : 1;
+      utterance.pitch = lang === 'en-US' ? 0.82 : 0.94;
+      this._spokenUtterance = utterance;
+      globalThis.speechSynthesis.speak(utterance);
+      return true;
+    } catch { return false; }
+  }
+  _voiceFallback(team) { return this._pick(VOICE_FALLBACK[team]) || this._pick(VOICE_FALLBACK.U); }
+
   // team voice line (kill celebration / random), throttled
   voice(team, minGap = 3.5) {
-    if (!this.speechEnabled) return;
+    if (!this.speechEnabled) return false;
+    if (NO_GENERIC_VOICE_FACTIONS.has(team)) return false;
     const now = performance.now();
-    if (now - this._lastVoice < minGap * 1000) return;
+    if (this._lastVoice > 0 && now - this._lastVoice < minGap * 1000) return false;
     const arr = this.pack?.voice?.[team];
-    if (!arr || !arr.length) return;
     // IN-GAME (grito de kill): prioriza clipes CURTOS. O array vem ordenado do mais curto
     // pro mais longo (por tamanho no manifest); random*random puxa o sorteio pro início.
-    const f = arr[Math.floor(Math.random() * Math.random() * arr.length)];
-    if (f) { this._lastVoice = now; this._sample(f); }
+    const f = arr?.length ? arr[Math.floor(Math.random() * Math.random() * arr.length)] : null;
+    const played = f ? !!this._sample(f) : this._speak(this._voiceFallback(team), { volume: 0.72 });
+    if (played) this._lastVoice = now;
+    return played;
   }
   // player-triggered radio line (CS-style) — always plays, stops previous
   radioVoice(team) {
     if (!this.speechEnabled) return false;
+    if (NO_GENERIC_VOICE_FACTIONS.has(team)) return false;
     const f = this._pick(this.pack?.voice?.[team]);
-    if (!f) return false;
-    if (this._radioAudio) this._radioAudio.pause();
-    this._radioAudio = this._sample(f);
+    if (f) {
+      if (this._radioAudio) this._radioAudio.pause();
+      this._radioAudio = this._sample(f);
+    } else if (!this._speak(this._voiceFallback(team), { volume: 0.78, interrupt: true })) return false;
     this._lastVoice = performance.now();
     return true;
+  }
+  // Fala autoral do personagem. Os nove Funkeiros aprovados têm um take próprio por
+  // select/kill/radio/round; só cai na facção/voz sintética quando esse take não existe.
+  characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
+    if (!this.speechEnabled) return false;
+    const now = performance.now();
+    if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
+    const own = this.pack?.characterVoice?.[characterId]?.[event];
+    const genericPool = NO_GENERIC_VOICE_FACTIONS.has(fallbackFaction) ? null : this.pack?.voice?.[fallbackFaction];
+    const file = this._pick(own?.length ? own : genericPool);
+    if (file) {
+      if (interrupt && this._characterAudio) this._characterAudio.pause();
+      const audio = this._sample(file);
+      if (!audio) return false;
+      this._characterAudio = audio; this._lastVoice = now;
+      if (event === 'kill') this._lastKillVoice = now;
+      const text = this.pack?.characterVoiceText?.[file] || null;
+      if (this.onCharacterVoice) {
+        try { this.onCharacterVoice({ characterId, event, text, file }); } catch {}
+      }
+      return true;
+    }
+    if (NO_GENERIC_VOICE_FACTIONS.has(fallbackFaction)) return false;
+    const spoken = this._speak(this._voiceFallback(fallbackFaction), { volume: 0.78, interrupt });
+    if (spoken) {
+      this._lastVoice = now;
+      if (event === 'kill') this._lastKillVoice = now;
+    }
+    return spoken;
   }
   characterSelectVoice(characterId, faction, rosterIds) {
     if (!this.speechEnabled) return false;
     const rosterSlot = rosterIds?.indexOf(characterId) ?? -1;
     if (rosterSlot < 0) return false;
+    const ownSelect = this.pack?.characterVoice?.[characterId]?.select;
+    if (ownSelect?.length) {
+      if (this._characterSelectAudio) this._characterSelectAudio.pause();
+      const file = ownSelect[rosterSlot % ownSelect.length];
+      this._characterSelectAudio = this._sample(file);
+      const text = this.pack?.characterVoiceText?.[file] || null;
+      if (this.onCharacterVoice) {
+        try { this.onCharacterVoice({ characterId, event: 'select', text, file }); } catch {}
+      }
+      return !!this._characterSelectAudio;
+    }
+    if (NO_GENERIC_VOICE_FACTIONS.has(faction)) return false;
     const pool = this.pack?.voice?.[faction];
-    const characterVoice = { ...CHARACTER_SELECT_VOICE, ...this.pack?.characterVoice };
-    let file = characterVoice[characterId];
+    const configuredVoice = this.pack?.characterVoice || {};
+    const flatConfigured = Object.fromEntries(Object.entries(configuredVoice)
+      .filter(([, value]) => typeof value === 'string'));
+    const characterVoice = { ...CHARACTER_SELECT_VOICE, ...flatConfigured };
+    let file = flatConfigured[characterId];
+    const knownFile = CHARACTER_SELECT_VOICE[characterId];
+    if (!file && knownFile && pool?.includes(knownFile)) file = knownFile;
     if (!file) {
       const reserved = new Set(rosterIds
         .map((id) => characterVoice[id])
@@ -124,7 +213,7 @@ export class Sfx {
         .indexOf(characterId);
       file = pool?.filter((candidate) => !reserved.has(candidate))[fallbackSlot];
     }
-    if (!file) return false;
+    if (!file) return this._speak(this._voiceFallback(faction), { volume: 0.78, interrupt: true });
     if (this._characterSelectAudio) this._characterSelectAudio.pause();
     this._characterSelectAudio = this._sample(file);
     return !!this._characterSelectAudio;
@@ -184,8 +273,14 @@ export class Sfx {
     this._announcerAudio = this._sample(f, vol, false);
     return !!this._announcerAudio;
   }
-  general(kind) { return this._announcer(this.pack?.general?.[kind]); }
-  roundNumber(number) { return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72); }
+  general(kind) {
+    return this._announcer(this.pack?.general?.[kind])
+      || this._speak(GENERAL_FALLBACK[kind], { lang: 'en-US', volume: 0.78, interrupt: true });
+  }
+  roundNumber(number) {
+    return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72)
+      || this._speak(ROUND_FALLBACK[number], { lang: 'en-US', volume: 0.72, interrupt: true });
+  }
   captureSound(faction) { const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }   // captura de bandeira (CTF): pool por facção (captureByTeam) c/ fallback global
   _cs(key) { const v = this.pack?.cs?.[key]; return v && v.length ? this._pick(v) : null; }
 

@@ -456,6 +456,7 @@ class Netcode {
         else {
           const mine = winner === game.playerTeam;
           game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
+          game._roundWinnerVoice?.(winner);
           if (!game.sfx.roundSound(game._voiceKey(winner))) mine ? game.sfx.roundWin() : game.sfx.roundLose();
         }
         try { game._ensureDolly(); } catch { /* sem canvas do dollynho */ }
@@ -467,7 +468,7 @@ class Netcode {
         game._banner(frase('round', game.roundNum), game.ctf
           ? frase('alvoBandeiras', game.capsToWin)
           : (game.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
-        if (!game.sfx.csSound('roundstart')) game.sfx.vuvuzela(1.4);
+        if (!game.sfx.roundNumber(game.roundNum) && !game.sfx.csSound('roundstart')) game.sfx.vuvuzela(1.4);
       } else if (depois === 'live' && antes === 'countdown') {
         game._banner(frase('valendo'), 'A treta está liberada');
       } else if (depois === 'matchEnd') {
@@ -496,9 +497,14 @@ class Netcode {
       const tiers = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'megakill' };
       const labels = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
       const kind = mk.count >= 6 ? 'godlike' : (tiers[mk.count] || (mk.life === 5 ? 'killingspree' : null));
-      if (kind) { try { game._mkBanner(labels[kind]); game.sfx.general(kind); } catch { /* HUD */ } }
+      let announced = false;
+      if (kind) { try { game._mkBanner(labels[kind]); announced = game.sfx.general(kind); } catch { /* HUD */ } }
+      if (!announced) announced = game.sfx.characterVoice(att.def?.id, 'kill', { fallbackFaction: game._voiceKey(att.team) });
+      if (!announced && !game.sfx.general('kill')) game.sfx.voice(game._voiceKey(att.team));
     } else if (att && att.team === p.team) {
-      try { game.sfx.voice(game._voiceKey(att.team)); } catch { /* ctx mudo */ }   // o lado comemora (como no _kill)
+      try {
+        game.sfx.characterVoice(att.def?.id, 'kill', { fallbackFaction: game._voiceKey(att.team) });
+      } catch { /* ctx mudo */ }   // o combatente comemora (como no _kill)
     }
     try { if (ent.pos && game._bloodPoolAt) game._bloodPoolAt(ent.pos); } catch { /* sem fx */ }
   }
@@ -597,7 +603,11 @@ class Netcode {
   // "papo" dos personagens ao multiplayer.
   voice(ent, kind) {
     const fac = this.game._voiceKey(ent.team);
-    try { if (kind === 'radio') this.game.sfx.radioVoice(fac); else this.game.sfx.voice(fac); } catch { /* ctx mudo */ }
+    try {
+      this.game.sfx.characterVoice(ent.def?.id, kind, {
+        fallbackFaction: fac, interrupt: kind === 'radio',
+      });
+    } catch { /* ctx mudo */ }
   }
 
   // Tiro posicional de um remoto: som atenuado por distância, com pan pelo lado da câmera, e

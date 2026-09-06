@@ -87,6 +87,38 @@ const used = new Set();
 const take = (files) => { files.forEach(f => used.add(f)); return files.map(toUrl); };
 
 const prev = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : {};
+
+// O pacote privado já chega com todas as folhas reescritas para audio/a/<hash>.
+// Reconstruí-lo pela estrutura do disco apagaria characterVoice e trocaria as músicas
+// hasheadas pelo espelho menu-music/, criando exatamente 44 falsos órfãos. Neste formato
+// o check correto é integridade referencial e ausência de arquivos opacos não usados.
+if (prev?._privateBuild?.format === 'content-addressed-v1') {
+  const refs = [];
+  const collect = (value) => {
+    if (typeof value === 'string' && value.startsWith('audio/')) refs.push(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === 'object') Object.values(value).forEach(collect);
+  };
+  collect(prev);
+  const unique = new Set(refs);
+  const missing = [...unique].filter((ref) => !existsSync(join(PUBLICO, decodeURIComponent(ref))));
+  const opaqueDir = join(AUDIO, 'a');
+  const opaque = existsSync(opaqueDir)
+    ? readdirSync(opaqueDir).filter((name) => AUDIO_EXT.test(name)).map((name) => `audio/a/${name}`)
+    : [];
+  const orphanOpaque = opaque.filter((ref) => !unique.has(ref));
+  const menuExpected = MENU_MUSIC_ACTIVE_IDS.map((id) => `audio/menu-music/${id}.mp3`);
+  const missingMenuMirror = menuExpected.filter((ref) => !existsSync(join(PUBLICO, ref)));
+  console.log(`AUDIO PRIVATE  ${refs.length} referências · ${unique.size} únicas · ${opaque.length} opacas`);
+  if (missing.length || orphanOpaque.length || missingMenuMirror.length) {
+    if (missing.length) console.error(`✗ ${missing.length} referência(s) ausente(s): ${missing.slice(0, 8).join(', ')}`);
+    if (orphanOpaque.length) console.error(`✗ ${orphanOpaque.length} arquivo(s) opaco(s) órfão(s): ${orphanOpaque.slice(0, 8).join(', ')}`);
+    if (missingMenuMirror.length) console.error(`✗ espelho das oito músicas incompleto: ${missingMenuMirror.join(', ')}`);
+    process.exit(1);
+  }
+  console.log(`✓ pacote privado íntegro; menu espelhado: ${MENU_MUSIC_ACTIVE_IDS.join(', ')}`);
+  process.exit(0);
+}
 const out = {};
 
 // ── pools por facção ────────────────────────────────────────────────────────
