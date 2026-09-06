@@ -190,3 +190,16 @@ chat <https://mint.gg/chat/ph7ajexkae9z6baym58jt1ekf18d73ye>.
   (~2,6k tris, 25 instâncias). Registro: `arvore-mata-amazonia` (AMZ6).
 - `palmeira_babacu.glb` — "Palmeira babaçu", sub-bosque (~2,3k tris).
   Registro: `palmeira-babacu-amazonia`.
+
+
+### Derivação local Amazônia visual — 2026-09-06
+
+Sem substituir os GLBs ou criar procedência nova: `map_amazonia.js` clona a
+geometria da árvore para ajustar a seção inferior ao colisor proporcional,
+preserva UV/material e aplica o mesmo ajuste com e sem instancing. Estende
+estacas das nove palafitas herdadas para acompanhar o deck elevado. Duas casas
+procedurais de madeira/chapa usam texturas existentes. Os registros Mint acima
+continuam sendo a origem. Medição atual por índices: árvore 4.334 tri/399.168 bytes,
+palmeira 4.694 tri/529.844 bytes, palafita 3.522 tri/440.420 bytes; substitui apenas
+as estimativas aproximadas anteriores. Referências e limites:
+`docs/reports/AMAZONIA-REFERENCIAS.md`.

@@ -32,7 +32,7 @@ Manter valores de inimigos legíveis em fundo limpo; crítica humana/independent
 
 ## Referências
 
-Pesquisa com procedência e imagem inspecionada: references/amazonia-visual/FONTE.md.
+Pesquisa com procedência e imagem inspecionada: docs/reports/AMAZONIA-REFERENCIAS.md.
 Foto Dayse Ferreira (várzea de Marajó, CC BY-SA4) e estudo Haugaasen/Peres, INPA.
 Acervo local primeiro: arvore_mata, palmeira_babacu e palafita_pro, já versionados.
 Os nomes dos GLBs não comprovam identidade botânica; não afirmar espécies sem validação.
