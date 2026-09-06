@@ -6,7 +6,8 @@
 - Menu completo passou com cinco facções, escolha de personagem/adversário, todos os props carregados e movimento real. Corpo 8/8 e anéis 3/3 passaram na main. Grafo corrigido: 370/370 nós, oito rotas para a Deagle; mutação volta a isolá-la.
 - Build aprovado. Recibos em `artifacts/escadao-visual/main-sync/`. A captura automática adicional foi recusada por falhas de rede em endpoints remotos de seleção/online; o teste funcional do menu passou sem erro JS ou asset visual ausente.
 - Checkpoint de assets: `6a02dd1c`. Crítico independente confirmou o grafo, as arestas finais com `_walkReach` real e o registro de grafite.
-- Próximo: concluir documentação/checkpoint desta integração. FPS e AM7 continuam pendentes. Galeria anterior é evidência histórica R3, não certificação da atualização da main.
+- Relatório da integração: `docs/reports/ESCADAO-MAIN-SYNC.md`; runtime e menu em `6ea53653`.
+- Próximo: fechar documentação gerada, manter servidor Astro e entregar link. FPS e AM7 continuam pendentes. Galeria anterior é evidência histórica R3, não certificação da atualização da main.
 
 ## Objetivo e definição de concluído
 Elevar Escadão (Morro) do PR #436: subida, becos e patamares de um bairro brasileiro habitado; fachadas variadas, comércio, varais e vegetação legíveis em combate. Preservar três alternativas de rota, objetivos/pickups, spawn protegido e risco/recompensa. Exigir pesquisa real, antes/depois 1536×1024 nas mesmas câmeras, GLBs carregados, corpo/Game._collide, gates e mutantes, crítica independente, medição de todos os passes e performance sem concorrência. Sem merge/deploy/push. Commits locais DCO + Agent.
