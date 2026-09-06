@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 44,530 lines in 90 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 44,525 lines in 90 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,390** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,402 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -224,7 +224,7 @@ The maps registered today, and which mode each one opens in:
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
 | `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,134 |
-| `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,371 |
+| `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,367 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,964 |
