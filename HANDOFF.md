@@ -40,6 +40,15 @@ antes do Astro, com estas duas linhas exatas:
 sh: astro: command not found
 ```
 
+Numa segunda execução, depois de o `resvg-wasm` já ter sido resolvido no `node_modules`, o
+primeiro passo passou (`[copy-wasm] ok: …/@resvg/resvg-wasm/index_bg.wasm -> public/wasm/resvg.wasm`)
+e a build parou exatamente no mesmo ponto, com a mesma linha:
+
+```
+sh: astro: command not found
+```
+
+**Em nenhuma das execuções o Astro chegou a compilar — a build NÃO está verde nesta máquina.**
 É ambiente sem dependências instaladas (`node_modules` incompleto), não regressão desta
 mudança: nada aqui toca `/api/badge`, `public/wasm/` ou a build do site. Quem publicar precisa
 rodar `npm install` e repetir `npm run build` antes do merge — o gate de build deste PR só pode

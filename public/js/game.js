@@ -3417,7 +3417,7 @@ export class Game {
           ? this.sfx.general(kind || 'headshot')
           : this.sfx.characterVoice(attacker.def?.id, 'kill', { fallbackFaction: this._voiceKey(attacker.team) });
         if (!announced && !this.sfx.general('kill')) this.sfx.voice(this._voiceKey(attacker.team));
-        /* O feedback do headshot é TODO sonoro/HUD daqui pra cima — ver BUG-116. */
+        /* O feedback do headshot é TODO sonoro/HUD daqui pra cima — ver BUG-142. */
       }
     }
     if (ent.isPlayer) {
@@ -6235,7 +6235,7 @@ export class Game {
          piscinão). Com histerese ele COMPROMETE com um estado e só troca quando a distância
          muda de verdade: entra em avanço acima de 22 m e só sai abaixo de 17; entra em recuo
          abaixo de 6 m e só sai acima de 9,5. */
-      /* A banda acima é de fuzil e nunca chega no alcance de uma faca de 2,4 m (BUG-117):
+      /* A banda acima é de fuzil e nunca chega no alcance de uma faca de 2,4 m (BUG-143):
          arma de corpo a corpo fecha e não recua. Régua: tools/eval/botfaca-check.mjs */
       const alcanceArma = this._meleeRange(b.weapon);
       const corpoACorpo = alcanceArma > 0;
@@ -7260,7 +7260,7 @@ export class Game {
   update(dt, render = true) {
     if (this.paused) return;
     /* O `dt` chega e vai embora inteiro: o hit-stop do headshot saiu com a replay cam,
-       porque escalar o relógio vazava para física, tiro e rede (BUG-116). */
+       porque escalar o relógio vazava para física, tiro e rede (BUG-142). */
     this.time += dt;
     // Snapshot ANTES de mover: aplicar depois renderizaria o frame com o mundo de ontem.
     if (this.online) this._mp?.applySnapshot();
