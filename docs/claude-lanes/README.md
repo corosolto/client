@@ -43,6 +43,9 @@ provedor: a disponibilidade do GLM desta máquina pertence ao ZCode.
 - `ESCADAO-JANELAS-ABRIGO.md`
 - `CAMPINHO-COBERTURA.md`
 - `VIEWMODELS-1P.md`
+- `VIEWMODEL-ZCODE-M4.md` — tarefa de produção ativa; execute sozinha no ZCode.
+- `VIEWMODEL-ZCODE-PRECISAO.md` — próxima tarefa sequencial, depois da M4.
+- `VIEWMODEL-ZCODE-INTEGRACAO.md` — integração final após os dois checkpoints.
 - `AUDIO-FUNKEIROS-URBANAS.md`
 - `JOA-MANSAO.md`
 - `LAJES.md`
