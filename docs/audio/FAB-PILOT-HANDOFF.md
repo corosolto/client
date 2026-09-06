@@ -42,7 +42,11 @@ posterior ao refino C/F fechou 83/83, e o build de produção também passou. A 
 privado foi elevada para `v10`, para impedir que a Cloudflare reutilize o catálogo `v9` sem as
 vozes. `check:deploy` fechou 37/37 sob Node 23 (compatível com o runtime Node 24 da Vercel), e
 12 referências representativas — Fish, round, personagens, menu, AK, Uzi, granada e morte —
-responderam HTTP 200 no build local. Pendentes antes de release: PR/CI, merge e smoke após deploy.
+responderam HTTP 200 no build local. O PR #510 passou todos os checks e foi mergeado em
+`c9e17bc9`; a release `v2.0.0-alpha.223` (`69555790`) ficou `READY` no deployment
+`dpl_FG9SJRGAgUVgdBUkxLs5s73V4kfv`. No domínio público, o manifest `v10` entrega 823
+referências/611 arquivos, 9 callouts, 7 rounds, 36 takes, 8 músicas, 25 armas e 13 mapas; as
+mesmas 12 amostras responderam HTTP 2xx. Próximo passo: somente escuta subjetiva do dono.
 
 Na escuta desse build o dono refinou a decisão: *“ALGumas falas dos funkeiros e dos palhacos
 ainda estao genericas eu nao gosto melhor tirarmos por agora e depois refazer”*. A regra passa
