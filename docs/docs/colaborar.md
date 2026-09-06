@@ -263,7 +263,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 276 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 426 |
-| `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 874 |
+| `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 887 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 264 |
 
 **17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 20 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
