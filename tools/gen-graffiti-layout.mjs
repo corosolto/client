@@ -63,7 +63,7 @@ for (const id of MAPAS) {
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
   page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
   // `grafite=vivo`: manda o mapa RODAR a passada em vez de aplicar o layout assado
-  await page.goto(`${BASE}/mapview.html?map=${id}&grafite=vivo`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/mapview.html?map=${id}&grafite=vivo`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction('window.MAPEVAL && window.MAPEVAL.ready===true', null, { timeout: 300000 });
   const g = await page.evaluate(() => window.__grafite || null);
   await page.close();

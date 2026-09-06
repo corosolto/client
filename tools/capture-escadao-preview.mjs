@@ -60,8 +60,9 @@ try {
   const hash = file => createHash('sha256').update(readFileSync(file)).digest('hex');
   const manifest = { escadao: { poster: `/img/map-previews/escadao.jpg?v=${hash(`${dest}/escadao.jpg`).slice(0, 12)}`,
     video: `/img/map-previews/escadao.webm?v=${hash(`${dest}/escadao.webm`).slice(0, 12)}`, seconds: 6,
-    source: hash('public/js/map_escadao.js'), layout: hash('public/js/graffiti_layout.js') } };
+    assets: Object.fromEntries([...props.map(p => `public/models/props/${p.id}.glb`), 'public/models/props/escadao_cat_r4.glb'].map(file => [file, hash(file)])),
+    source: hash('public/js/map_escadao.js'), home: hash('public/js/map_escadao_home.js'), details: hash('public/js/map_escadao_details.js'), layout: hash('public/js/graffiti_layout.js') } };
   writeFileSync('public/js/map_preview_assets.js', `export const MAP_PREVIEWS = ${JSON.stringify(manifest, null, 2)};\n`);
-  writeFileSync(`${out}/capture.json`, JSON.stringify({ manifest, props, errors, viewport: [960, 720], fov: 65, source: 'mapview: builder e GLBs reais; câmera editorial, sem HUD' }, null, 2));
+  writeFileSync(`${out}/capture.json`, JSON.stringify({ manifest, props, errors, viewport: [960, 720], fov: { stairs: 70, street: 65 }, source: 'mapview: builder e GLBs reais; câmera editorial, sem HUD' }, null, 2));
   console.log(`Preview: ${readFileSync(`${dest}/escadao.jpg`).length} bytes JPG; ${readFileSync(`${dest}/escadao.webm`).length} bytes WebM`);
 } finally { await browser.close(); }

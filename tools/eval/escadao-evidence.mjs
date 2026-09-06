@@ -13,7 +13,7 @@ const revisions = process.env.REVISION ? [process.env.REVISION] : ['baseline', '
 if (revisions.some(r => !['baseline', 'after'].includes(r))) throw Error('REVISION inválida');
 if (revisions.includes('after')) execFileSync(process.execPath, ['tools/eval/graffiti-layout-check.mjs'], { stdio: ['ignore', 'pipe', 'pipe'] });
 const files = ['public/js/map_escadao.js', 'public/js/graffiti_layout.js'];
-const sharedFiles = ['public/js/game.js', 'public/js/mapprops.js', 'public/js/ambientlife.js', 'public/js/glbchars.js'];
+const sharedFiles = ['public/js/game.js', 'public/js/mapprops.js', 'public/js/ambientlife.js', 'public/js/glbchars.js', 'public/js/map_escadao_home.js', 'public/js/map_escadao_details.js'];
 const hash = text => createHash('sha256').update(text).digest('hex');
 const sharedHashes = Object.fromEntries(sharedFiles.map(file => [file, hash(readFileSync(file))]));
 function validateEvidence(errors, failed, menuImages = []) {
@@ -48,6 +48,11 @@ try {
     const context = await browser.newContext({ viewport: { width: 1536, height: 1024 }, deviceScaleFactor: 1,
       ...(motion ? { recordVideo: { dir, size: { width: 1536, height: 1024 } } } : {}) });
     const page = await context.newPage();
+    // Fixture local de contadores: a comparação do mapa não publica escolhas nem
+    // depende da disponibilidade do backend. Assets e erros do jogo seguem reais.
+    await page.route(/\/api\/(map-plays|pick|online)(?:\?|$)/, route => route.fulfill({
+      status: 200, contentType: 'application/json', headers: {'access-control-allow-origin':'*'}, body: '{}',
+    }));
     const errors = [], failed = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('requestfailed', r => failed.push({ status: 'network', url: r.url(), error: r.failure()?.errorText }));

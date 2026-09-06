@@ -1,6 +1,17 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { MAP_PREVIEWS } from '../../public/js/map_preview_assets.js';
+const preview = { ...MAP_PREVIEWS.escadao };
+if(process.argv.includes('--mutante=preview-antigo'))preview.source='desatualizado';
+const hash=file=>createHash('sha256').update(readFileSync(file)).digest('hex');
+for(const [key,file] of Object.entries({source:'map_escadao.js',home:'map_escadao_home.js',details:'map_escadao_details.js',layout:'graffiti_layout.js'}))
+  assert.equal(preview[key],hash(`public/js/${file}`),`Preview desatualizado: ${file}`);
+assert.ok(Object.keys(preview.assets).length>0,'Manifesto inclui modelos capturados');
+for(const [file,expected] of Object.entries(preview.assets))assert.equal(hash(file),expected,`Modelo mudou: ${file}`);
+for(const key of ['poster','video']){const [file,version]=preview[key].split('?v=');assert.equal(hash(`public${file}`).slice(0,12),version,'Mídia corresponde ao cache-bust');}
+if(process.argv.includes('--procedencia')){console.log('PREVIEW SOURCE PASS: fontes, modelos e mídia atuais');process.exit(0);}
 
 const base = process.env.BASE || 'http://127.0.0.1:8148';
 const out = 'artifacts/escadao-visual/hover-preview';
