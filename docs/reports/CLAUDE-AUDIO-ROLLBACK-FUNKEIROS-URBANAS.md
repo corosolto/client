@@ -1,164 +1,188 @@
 # Rollback seletivo das vozes de Funkeiros e Tribos Urbanas — investigação
 
-Data: 2026-09-06
+Data: 2026-09-06 (2ª rodada; a 1ª está preservada na seção "Histórico da 1ª rodada")
 
 Branch: `claude/audio-funkeiros-urbanas-rollback` (base `origin/main` em `42c01175`)
 
-Resultado: **BLOQUEADO — nenhum manifesto foi alterado**
+Resultado: **FONTES ENCONTRADAS E VERIFICADAS — nenhum arquivo foi movido nem manifesto
+alterado, porque o passo que restaura é build/deploy privado, fora do que esta lane pode
+executar.**
 
 ## Pedido
 
 O dono relatou que os áudios de personagem gerados por IA de Funkeiros (facção `F`) e
-Tribos Urbanas (facção `U`) estão ruins, e pediu o rollback seletivo das referências
-para "as vozes antigas aprovadas atribuídas ao **ememe**".
+Tribos Urbanas (facção `U`) estão ruins, e pediu o rollback seletivo para as vozes antigas
+aprovadas. A 1ª rodada parou por não achar a autoria citada ("ememe") no Git e concluiu que
+não havia estado anterior para o qual voltar.
 
-O rollback não foi executado porque a autoria citada não existe no repositório e porque
-não há, no Git, nenhum estado anterior de referência de voz de `F` ou `U` para o qual
-voltar. As duas condições de parada combinadas estão detalhadas abaixo.
+**Essa segunda conclusão estava errada e é corrigida aqui.** A busca da 1ª rodada foi feita
+só dentro do Git; as vozes antigas de `F` e `U` nunca moraram no Git. Elas estão em packs de
+release que existem, íntegros, em disco local — e os bytes conferem por sha-256 entre duas
+fontes independentes.
 
-## Fontes examinadas
+## O que foi encontrado (fontes verificáveis)
 
-Cobertura do histórico: 2753 commits alcançáveis, 568 refs (todas as branches locais e
-remotas presentes na worktree).
+| # | Fonte | Onde | Identificador / integridade |
+| --- | --- | --- | --- |
+| 1 | **Pack v7 descompactado** | `worktrees/escadao-visual/public/audio/` e `worktrees/amazonia-visual/public/audio/` | `manifest.json` com `voice.U` 11 / `voice.F` 45 e `characterVoice` plano de 6; 292 arquivos em `a/`; **0 refs ausentes** nos pools `F` e `U` |
+| 2 | **Pack v8 (zip)** | `/tmp/csbrasil-audio-restore.QZXwty/v8.zip` | sha256 `009e0125820764a231ddf921b4ad865170aec39262ebf18d6cdcaf38394aebf8` |
+| 3 | **Procedência do v8** | `~/Music/PROVENANCE-v8.md` (local, fora do Git — citado por `3abd9072`) | provedor + id de modelo por personagem `F`/`U`, com as decisões do dono |
+| 4 | **Tags de release** | `legacy/game2/.git` | `audio-pack-v7` → `c45bfc74`; `audio-pack-v8` → `79c72696` (v1…v8 presentes) |
+| 5 | **Pack vivo (produção)** | `/tmp/csbrasil-prod-audio-manifest.json` + zip `48a97edb…` | manifesto servido, para o diff contra 1 e 2 |
 
-| Fonte | Comando | Resultado |
-| --- | --- | --- |
-| Mensagens de commit | `git log --all -i --grep='ememe'` | 0 |
-| Conteúdo de diffs | `git log --all -S'ememe' --pickaxe-regex -i` | 0 |
-| Todos os blobs de todos os commits | `git grep -I -l -i 'ememe' $(git rev-list --all)` | 0 |
-| Autores/committers | `git log --all --format='%an <%ae>' \| sort -u` | 0 (nenhum `ememe`) |
-| Árvore de trabalho | `grep -ri 'ememe'` | 0 (único acerto é ruído binário em `public/models/props/construction_rubble.glb`) |
+A string `ememe` continua sem existir como autoria: além dos 2753 commits/568 refs da 1ª
+rodada, a varredura desta rodada em `private-assets/` deu um único acerto, e é ruído binário
+(`emEmemF` dentro de `menu-main-alpha218/m26.mp3`), não metadado. **Nenhuma autoria foi
+inventada para preencher essa lacuna.**
 
-Commits e arquivos lidos na investigação:
+## As três camadas de `F`/`U`, medidas
 
-- `6c667acd` `fix(audio): associa bordoes aos personagens` — cria
-  `CHARACTER_SELECT_VOICE` em `public/js/audio.js`, com os únicos bordões de `F`/`U`
-  versionados.
-- `8b3e3127` `test: inclui pacote local de audio para validacao` — commit não
-  ancestral de `feat/audio-voices-test` que contém 36 MP3s de `F`, incluindo quatro
-  de `funkraiz`. Os bytes são recuperáveis pelo hash do Git, mas a árvore não contém
-  recibo que os associe a `ememe` ou a uma aprovação; o recibo separado em
-  `c79dee67` cobre apenas uma rodada parcial de `round-01` e não pode ser estendido
-  a esse pacote. Não há equivalente de `U` nessa árvore.
-- `9c2900ff` `fix(audio): troca voz do Faria Limer` — única troca posterior no mapa, e é
-  do time `B` (fora de escopo).
-- `0643fc76`, `4c8b3642`, `c79dee67` — pilotos, falas finais e recibos dos Funkeiros
-  (lane `feat/audio-voices-test`; `c79dee67` **não** é ancestral do HEAD).
-- `d9b444a2`, `4921a9d4`, `3abd9072` — elenco Mítico e "upgrade dos funkeiros"; pack v7→v8.
-- `bf6fd5f0`, `40f3481a`, `42d4570a`, `9d2ac2a3`, `5001874b` — lane das vozes Míticas.
-- `ad063029` (não ancestral) e `c9e17bc9` `fix(audio): restaurar vozes aprovadas e remover
-  falas genericas (#510)` — estado atual de `F`.
-- `1a53d0ba` / `7fb0510f` `fix(audio): remover fallback de voz sintetica`.
-- `1284ab42` `fix(factions): remove cancelled additional teams and their assets` — esvazia
-  `content/voice-lines.json`; **não** é ancestral do HEAD (o arquivo não existe no HEAD).
-- Arquivos: `public/js/audio.js`, `scripts/fetch-audio.sh`, `tools/gen-audio-manifest.mjs`,
-  `tools/audio/stage-approved-character-voices.mjs`, `tools/audio/fab-game-local.mjs`,
-  `docs/audio/proveniencia.json`, `docs/audio/PROVENIENCIA.md`, `docs/TRIBOS-URBANAS.md`,
-  `public/audio/manifest.example.json`, `tools/eval/character-select-voice-check.mjs`,
-  `tools/eval/audio-voice-mix-check.mjs`.
+| Camada | v7 (29/08) | v8 (30/08) | vivo hoje |
+| --- | --- | --- | --- |
+| `voice.F` (pool) | 45 | 69 (+24 Fish TTS) | 69 |
+| `voice.U` (pool) | 11 | 15 (+4 Fish TTS) | 15 |
+| `characterVoice` `F` | `funkraiz` plano | `funkraiz` trocada + `mandrake`, `oakley`, `trapfunk` (Fish) | **9 Funkeiros × 4 eventos (Gemini)** |
+| `characterVoice` `U` | `clubber`, `reggae` planos | + `pagodeiro` (Fish) | **nenhum** |
 
-## Onde as vozes de `F` e `U` moram hoje
+Duas medições mudam o diagnóstico da 1ª rodada:
 
-O runtime do `HEAD` não tem bytes de voz no Git, mas há uma exceção histórica que não
-constitui candidato a rollback: a branch não ancestral `feat/audio-voices-test` inclui,
-em `8b3e3127`, um pacote local de 36 MP3s dos Funkeiros. Seu recibo (`c79dee67`,
-`tools/eval/asset-evidence/funkeiros-round-voices-generation.json`) cobre somente uma
-rodada parcial e não prova a procedência ou aprovação dos MP3s adicionados em `8b3e3127`.
-Portanto o pacote não pode ser atribuído a `ememe` nem usado como rollback aprovado; ele
-também não inclui Tribos Urbanas. Fora dessa exceção, o runtime monta as vozes de três
-origens, e só a primeira é versionada:
+1. **Os pools de `F` e `U` não regrediram.** Os 45 refs de `voice.F` e os 11 de `voice.U` do
+   v7 estão, hoje, no pack vivo — com bytes e com referência: `0` sem bytes, `0` fora do
+   pool. Os memes históricos de Funkeiros e Urbanas continuam tocando.
+2. **A regressão está toda em `characterVoice`.** É a camada que o `public/js/audio.js:120`
+   e `:141` consultam ANTES do pool, então ela sombreia o que existe embaixo.
 
-1. `public/js/audio.js:17-24` — `CHARACTER_SELECT_VOICE`, seis bordões por hash. Deles,
-   `F` tem um (`funkraiz`) e `U` tem dois (`clubber`, `reggae`).
-2. Pool por facção do manifesto de runtime (`voice.F`, `voice.U`), gerado **do disco** por
-   `tools/gen-audio-manifest.mjs:51` (`tribos → U`, `funkeiros → F`) a partir de
-   `public/audio/<facção>/ingame/`, que vem do pacote privado baixado por
-   `scripts/fetch-audio.sh` (release `audio-pack-v8`). Nada disso é versionado — o
-   `public/audio/manifest.example.json` versionado só tem `P` e `B`.
-3. `characterVoice.<id>` estruturado dos Funkeiros, espelhado de staging privado por
-   `tools/audio/stage-approved-character-voices.mjs`, fora do repositório.
+Consequências no runtime servido hoje:
 
-## Mapeamento personagem → voz: por que não há candidato
+- `clubber` e `reggae` ainda tocam os bordões antigos — não pelo manifesto (que perdeu as
+  entradas), mas pelo resgate versionado em `public/js/audio.js:159`, que aceita o
+  `CHARACTER_SELECT_VOICE` quando o hash está no pool (`voice.U[0]` e `voice.U[9]`).
+- `funkraiz` **não** toca o bordão antigo: `d5b87c3d2638e166` está em `voice.F[36]`, mas o
+  take estruturado do Gemini vence em `audio.js:141`.
+- `pagodeiro` perdeu o bordão: `b902671ec7cb5cbf` não está no pack vivo. Cai no pool `U`.
+- **Não existe voz sintética de personagem viva em Tribos Urbanas.** O lote Gemini é
+  exclusivamente `F` (`tools/audio/fab-game-local.mjs:163-165`).
 
-| Facção | Personagem | Referência versionada | Última mudança | Candidato "antigo aprovado" |
-| --- | --- | --- | --- | --- |
-| F | `funkraiz` | `audio/a/d5b87c3d2638e166.mp3` (`public/js/audio.js:23`) | `6c667acd` (2026-08-16) | nenhum — valor nunca mudou |
-| F | demais 8 (`mandrake`, `raul`, `oakley`, `criarj`, `chave`, `trapfunk`, `fluxo`, `ostentacao`) | nenhuma | — | nenhum — as falas vivem em staging privado |
-| U | `clubber` | `audio/a/08290068f8d9935f.mp3` (`public/js/audio.js:21`) | `6c667acd` (2026-08-16) | nenhum — valor nunca mudou |
-| U | `reggae` | `audio/a/f180be207d0b440b.mp3` (`public/js/audio.js:22`) | `6c667acd` (2026-08-16) | nenhum — valor nunca mudou |
-| U | demais 7 (`emo`, `blackmetal`, `metaleiro`, `punk`, `skatista`, `rapper`, `pagodeiro`) | nenhuma | — | nenhum — sem catálogo por personagem |
+## Candidatos a restauro, com origem e hash
 
-`git log --all -S'funkraiz' -- public/js/audio.js` e `git log --all -S'clubber' --
-public/js/audio.js` retornam **um único commit cada** (`6c667acd`). Não existe versão
-anterior dessas referências: elas nasceram com o valor atual e nunca foram trocadas.
+sha-256 do conteúdo. Os três compartilhados batem **byte a byte entre o v7 em disco e o zip
+do v8** — duas fontes independentes, mesma verificação.
 
-## Bloqueios
+| Facção | Personagem | Arquivo | sha-256 | Camada de origem | Autorização registrada |
+| --- | --- | --- | --- | --- | --- |
+| F | `funkraiz` | `a/d5b87c3d2638e166.mp3` | `ec346c5706998f081715933e378c63774c0a2afbd932233014445f517c9bfcd6` | v7 (e v8) | release `audio-pack-v7` publicada pelo dono; **procedência do arquivo não reconstituída** |
+| U | `clubber` | `a/08290068f8d9935f.mp3` | `583dbee1e54324a2864a518791d22b0efa33d2ae2a904709feb256f660238339` | v7 (e v8) | idem |
+| U | `reggae` | `a/f180be207d0b440b.mp3` | `013f23ce3b09ec917f6ab270139cf471b8b425a35584974657cdaf033a215e52` | v7 (e v8) | idem |
+| F | `funkraiz` (v8) | `a/d92c5f1644b8a249.mp3` | `a6c3d7d77d8b7e7ea48a05f6918ff7f6e6bd24d3f11a88cd19fdc72ca74b685e` | v8 | `PROVENANCE-v8.md`: Fish Audio TTS, modelo `8ccdb95bd1f3415d8a4004ff13b95c3c` |
+| F | `mandrake` | `a/5a358d37cd9fbb0b.mp3` | `19675b6f0376b3c5eb25e258da7f39b2cffb62fcb2f3bd2ad3251e38329f7c77` | v8 | Fish Audio TTS, `6a27a3ab74af45cb8890a6974e9eeb06` |
+| F | `oakley` | `a/d19d12bf1ccd0ee1.mp3` | `c8aad92239ea71f7ebc067ce93349b0be87ba30b02f55b51411639f9a434b1cf` | v8 | Fish Audio TTS, `0c5d8d65ded6439a8466e3ca8ec73a50` |
+| F | `trapfunk` | `a/d06aa48d289d4fd5.mp3` | `2640c24071a7a3718ace41b4221ba143605ad59f9659d56d6564c67850ef74ff` | v8 | Fish Audio TTS, `b1355c5151eb43d88df3efe2e1bad5c7` |
+| U | `pagodeiro` | `a/b902671ec7cb5cbf.mp3` | `fd9ad2bc5c4f8193c6994927f990f4f7c7e62fe7d0f50364d43d271f22a99507` | v8 | Fish Audio TTS, `c481e5eba6254be49de0f33af6736085` |
 
-**B1 — a autoria "ememe" não existe.** Nenhum commit, blob, autor ou campo de procedência
-menciona `ememe` em toda a história. A procedência das vozes de personagem dos Funkeiros
-está registrada em `docs/audio/proveniencia.json:195-211` como
-`character-voices-openrouter-gemini`, autor `"CS BRASIL / CORO SOLTO via OpenRouter e
-Google Gemini TTS"`, licença `gemini-api-generated-content-...`, autorizada por `"Ruben"`
-em 2026-09-06. O recibo de geração (`c79dee67`) confirma `provider: openrouter`,
-`modelId: google/gemini-3.1-flash-tts-preview`, "nenhuma clonagem". Nenhuma das demais
-entradas de procedência (`PlaceHolder Inc.`, `BOOM Library`, `Ben Jaszczak et al.`,
-`fish-audio-mortal-kombat-public-model`, `menu-main-alpha218`, `legado-nominal-cs-valve-ut`)
-atribui autoria a `ememe`. Sem isso não há como identificar "o asset aprovado" pedido.
+Os 45 arquivos de `voice.F` e os 11 de `voice.U` do v7 não entram nesta tabela porque **não
+precisam ser restaurados**: já estão no pack vivo, íntegros.
 
-**B2 — não há alvo de rollback aprovado e atribuível a `ememe`.** Como as vozes de `F` e
-`U` são pools gerados do disco a partir do pacote privado, um `git revert` de manifesto não
-restaura timbre nenhum. A exceção histórica `8b3e3127` contém somente `F`, sem procedência
-ou aprovação verificável que permita atribuí-la a `ememe`; portanto não é uma alternativa
-autorizada. As três referências versionadas de `F`/`U` são idênticas desde 2026-08-16, então
-"voltar ao estado anterior" nessas referências seria um no-op.
+## Por que nada foi alterado nesta branch
 
-**B3 — o único gatilho de versão disponível é destrutivo e fora de escopo.** A única
-alavanca versionada que muda os pools é `scripts/fetch-audio.sh:14` (`audio-pack-v8`).
-Voltar para `audio-pack-v7` foi descartado por três motivos: (a) o v8 é descrito em
-`3abd9072` como aditivo (`pool F 45→69 e U 11→15`, "nada removido"), então o v7 não contém
-nenhuma voz de `F`/`U` que o v8 tenha perdido; (b) o v7 não tem o pool `voice.M`, o que
-apagaria as vozes do time Mítico — áudio de outra facção, explicitamente fora de escopo;
-(c) `tools/eval/character-select-voice-check.mjs` fixa o v8 em `VOICE12`/`VOICE13` e tem o
-mutante `pack-antigo` justamente para reprovar essa regressão.
+**R1 — o gatilho das vozes rejeitadas não é versionado.** Nenhum script, workflow ou
+`package.json` passa `--character-voices=`. O lote Gemini entra no pack porque o operador
+passa esse flag para `tools/audio/fab-game-local.mjs` na hora do build privado, e sobe o
+Blob. Tirar `F` do pack é, portanto, **rebuild + reupload do pacote privado** — exatamente o
+que esta lane está proibida de fazer ("não publique áudio ou release"). Não há edição de
+arquivo neste repositório que produza o rollback.
 
-## Decisão
+**R2 — escolher entre v7 e v8 seria escolher um substituto no lugar do dono.** Existem dois
+estados anteriores recuperáveis, e eles são incompatíveis entre si:
 
-Nenhum manifesto, referência de áudio ou catálogo foi alterado. Este commit contém apenas
-este relatório.
+- **v7** tira toda a voz de personagem gerada por IA de `F` e `U`. `funkraiz` volta ao
+  bordão antigo e os outros 8 Funkeiros caem no pool de memes históricos. Custo zero de
+  bytes: tudo já está no pack vivo. Mas a procedência desses arquivos nunca foi
+  reconstituída — o cabeçalho de `scripts/build-audio-pack.mjs:4` registra que os originais
+  "carregam NOME de faixa/meme", e a decisão do dono de 20/08 citada em
+  `PROVENANCE-menu-v7.md` foi "gíria é livre, gravação não".
+- **v8** devolve bordões que também são TTS (Fish Audio). Restaurá-los troca um lote
+  sintético por outro — o que colide com o motivo declarado da rejeição.
 
-## Como destravar
+O pedido diz "vozes antigas" sem dizer qual das duas. Decidir aqui seria inventar
+substituto, e a instrução proíbe.
 
-Basta uma das duas informações do dono:
+**R3 — o lote rejeitado está registrado como aprovado pelo próprio dono.**
+`docs/audio/proveniencia.json:195-211` traz `character-voices-openrouter-gemini` com
+`autorizadoPor: "Ruben"`, `data: 2026-09-06`, escopo "9 Funkeiros, com um take final de
+select, kill, radio e round por personagem". Três réguas versionadas foram escritas para
+proteger justamente isso (`MIX9b`, `MIX9c`, `MIX12` em `audio-voice-mix-check.mjs`;
+`VOICE10` do caso `funkraiz` em `character-select-voice-check.mjs`). Revogar uma
+autorização assinada pelo dono, e esvaziar por dentro as réguas que a defendem, não é
+decisão de agente.
 
-1. Quem é `ememe` (pessoa, provedor, modelo ou nome de lote) e onde o lote aprovado está —
-   se for um pacote privado, a versão/URL do release ou o hash dos arquivos; ou
-2. Os hashes/caminhos exatos das falas antigas desejadas por personagem de `F` e `U`, que
-   viram um patch curto em `CHARACTER_SELECT_VOICE` (`public/js/audio.js:17-24`) e/ou um
-   pacote `audio-pack-v9` que preserve `voice.M` intacto.
+## O que o dono precisa decidir (uma linha)
+
+**Qual estado anterior de `F` vale: v7 (sem IA nenhuma) ou v8 (bordões Fish)?**
+
+Com a resposta, o restauro é mecânico e já está verificado:
+
+- **Se v7** — rebuild do pack privado **sem** `--character-voices=`. Nenhum byte novo, nenhum
+  arquivo copiado, nenhuma licença nova: `funkraiz` volta por `audio.js:159` e os outros 8
+  Funkeiros voltam ao pool. `U` não muda (já não tem voz sintética). Depois: revogar a
+  entrada `character-voices-openrouter-gemini` no ledger e reescrever `MIX12` para cobrar o
+  estado novo, em vez de deixá-la verde à toa.
+- **Se v8** — extrair do zip `009e0125…` os cinco arquivos da tabela (hashes acima),
+  reencaixá-los como `characterVoice` plano de `mandrake`, `oakley`, `funkraiz`, `trapfunk`
+  (F) e `pagodeiro` (U), e registrar a fonte Fish Audio no ledger com os ids de modelo do
+  `PROVENANCE-v8.md`.
+
+Em ambos os casos, as demais facções (`E`, `B`, `C`, `M`) ficam idênticas: o lote Gemini é
+só de `F`, e os pools de `E`/`B`/`C`/`M` não são tocados por nenhuma das duas opções.
+
+## Comparação auditiva — PENDENTE
+
+**Nada aqui foi ouvido.** Toda a verificação desta rodada é de bytes, hash, referência e
+estrutura de manifesto. Se o timbre do v7 ou do v8 é o que o dono chama de "voz antiga
+aprovada" é julgamento humano e **fica explicitamente pendente**. Os arquivos das duas
+opções estão íntegros em disco e podem ser tocados lado a lado antes de qualquer build.
 
 ## Validação executada
 
-Réguas de áudio e manifesto rodadas nesta worktree, sem alteração de código de runtime:
+Sem alteração de código de runtime nesta branch — apenas este relatório.
 
 | Comando | Resultado |
 | --- | --- |
 | `npm run eval:charvoice` | verde |
-| `node tools/eval/character-select-voice-check.mjs --mutante=pack-antigo` | mata (2 cláusulas vermelhas) |
-| `node tools/eval/character-select-voice-check.mjs --mutante=manifest-antigo` | mata (1 cláusula vermelha) |
 | `npm run eval:audiovoicemix` | verde |
-| `node tools/eval/audio-voice-mix-check.mjs --mutante=sem-voz-propria` | mata (1 cláusula vermelha) |
-| `node tools/eval/audio-voice-mix-check.mjs --mutante=memes-historicos-silenciados` | mata (1 cláusula vermelha) |
 | `npm run eval:audioproc` | verde (PRV1-PRV14) |
 | `npm run eval:audiocapacidade` | verde (CAP1-CAP5) |
 | `npm run eval:audioprivate` | aprovado |
 | `npm run eval:audiofablocal` | verde (36 vozes próprias, staging privado preservado) |
+| `character-select-voice-check --mutante=pack-antigo` | mata (2 cláusulas) |
+| `character-select-voice-check --mutante=manifest-antigo` | mata (1 cláusula) |
+| `audio-voice-mix-check --mutante=sem-voz-propria` | mata (1 cláusula) |
+| `audio-voice-mix-check --mutante=memes-historicos-silenciados` | mata (1 cláusula) |
+| `audio-voice-mix-check --mutante=fala-sintetica-volta` | mata (1 cláusula) |
 | `npm run audio:check` | vermelho **pré-existente e de ambiente** — ver nota |
 
-O mutante `pack-antigo` é a prova executável do bloqueio **B3**: trocar `audio-pack-v8` por
-`audio-pack-v7` deixa `VOICE12`/`VOICE13` vermelhas.
-
 Nota sobre `audio:check`: esta worktree não tem o pacote privado baixado, então
-`public/audio/` está vazio e o comando reporta `voice E:0 B:0 U:0 C:0 F:0` e
-"manifest.json DEFASADO em relação ao disco". É condição de ambiente, independente deste
-commit (que só adiciona um `.md`), e é também a evidência direta do bloqueio **B2**: os
-pools `voice.F` e `voice.U` não existem no Git — vêm do disco alimentado pelo pacote privado.
+`public/audio/` está vazio e o comando reporta `voice E:0 B:0 U:0 C:0 F:0`. É condição de
+ambiente, independente deste commit (que só toca um `.md`).
+
+## Histórico da 1ª rodada (preservado)
+
+A 1ª rodada varreu o Git e concluiu bloqueio por dois motivos. O primeiro **continua
+válido**: `ememe` não existe como autoria em nenhum commit, blob, autor ou campo de
+procedência (2753 commits, 568 refs; mensagens, diffs, blobs e autores = 0).
+
+O segundo — "não há estado anterior para o qual voltar" — **está corrigido acima**: havia,
+e está em disco. O erro foi restringir a busca ao Git quando o próprio repositório declara,
+em `scripts/fetch-audio.sh:2-3`, que os bytes ficam fora dele.
+
+Também continua válido o descarte do rollback amplo levantado na 1ª rodada: trocar
+`audio-pack-v8` por `audio-pack-v7` em `scripts/fetch-audio.sh` apagaria o pool `voice.M`
+(vozes do time Mítico, fora de escopo) e é reprovado pelo mutante `pack-antigo`. O restauro
+correto é por entrada de `characterVoice`, como descrito acima — nunca por troca de pack.
+
+Fontes lidas nas duas rodadas: `public/js/audio.js`, `scripts/fetch-audio.sh`,
+`scripts/build-audio-pack.mjs`, `tools/gen-audio-manifest.mjs`,
+`tools/audio/fab-game-local.mjs`, `tools/audio/stage-approved-character-voices.mjs`,
+`docs/audio/proveniencia.json`, `tools/eval/character-select-voice-check.mjs`,
+`tools/eval/audio-voice-mix-check.mjs`, `~/Music/PROVENANCE-v8.md`,
+`~/Music/CORO SOLTO Audio/PROVENANCE-menu-v7.md`, e os commits `6c667acd`, `3abd9072`,
+`c9e17bc9`, `c800bc8a`, `1a53d0ba`.
