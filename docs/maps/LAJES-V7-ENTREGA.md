@@ -54,3 +54,23 @@ O gate de separação aérea foi acrescentado depois e passou com mutante vermel
 Há repetição modular e fauna pequena de contraste discreto. As capturas demonstram
 presença/movimento; não medem FPS em GPU exclusiva. Áudio não recebeu aprovação de
 escuta nesta rodada. A PR só deve ser mergeada após os checks remotos do SHA final.
+
+## Fechamento dos bloqueios de integração
+
+A primeira tentativa de Vercel falhou porque o pacote privado cobria os mapas da
+main, mas não Lajes. O instalador agora associa Lajes ausente à ambiência externa
+de Quebrada já presente no pack; referências e procedência preservadas. O fluxo
+real de instalação e o gate foram testados com fixtures: falha13/14, sucesso14/14,
+e falha preservada para outro mapa ausente. Ver [áudio](LAJES-V7-AUDIO.md).
+
+A medição global local excedeu o tempo da sonda de mapas e leu JSON anterior; seu
+exit0 não foi tratado como validação fresca. A medição isolada de Lajes levou
+336,95s e confirmou as cláusulas aplicáveis, exceto a obrigação de pátio MAP2B:
+ela contradiz as travessas estreitas aceitas na V6. LSP1 passa a cobrar corpos
+livres, slots separados e oito saídas físicas até o campo. O consumidor mantém
+os limiares originais para todos os outros mapas e reprova Lajes se LSP1 falhar;
+nenhuma dívida foi acrescentada a KNOWN-RED. Ver [respawn](LAJES-V7-SPAWN.md).
+
+O usuário aprovou o vídeo do 14-bis e pediu arquivo para redes sociais. MP4 H.264
+1536×1024 de aproximadamente8s, sem áudio, salvo em
+`/Users/ruben/Downloads/Santos-Dumont-Lajes.mp4`. Não foi publicado em rede social.

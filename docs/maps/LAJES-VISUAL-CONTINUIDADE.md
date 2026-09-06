@@ -74,6 +74,32 @@ anterior. Não publicar resultado parcial nem ignorar falhas.
 - Próximo: push com lease para map2/lajes e retarget PR438 para main; acompanhar
   checks do SHA final e mergear se verdes. Invariants/kick locais ainda em execução.
 
+## Marco V7: PR atualizada e bloqueios remotos corrigidos
+
+- PR438 agora base main e head `fa5658f0`, sem conflitos. Push inicial falhou no
+  transporte HTTP; repetição com HTTP1.1/buffer maior passou, lease preservado.
+- Primeira Vercel falhou por soundscape Lajes ausente no pack privado13mapas.
+  Adaptação explícita reutiliza somente a entrada externa de Quebrada existente;
+  dez contratos e três mutantes, seis gates de áudio/procedência verdes.
+- Invariants local saiu0, mas MAP usou JSON anterior após timeout; não é evidência
+  válida dessa família. Map-check Lajes isolado fresco336,95s confirmou MAP2/4 e
+  CTF1/2; MAP2B exige pátio incompatível com V6 aceita. Contrato LSP1 mantém
+  slots livres, separados e saída térrea física ao campo. Demais mapas conservam
+  MAP2B; KNOWN-RED intacto. Docs de áudio/respawn explicam evidências e mutantes.
+- Dono aprovou clip do 14-bis e recebeu MP4 em Downloads/Santos-Dumont-Lajes.mp4.
+- Próximo: checkpoint destes ajustes, docs/portões, novo push para disparar CI
+  com base main, conferir builds/preview do SHA final e merge sem bypass.
+
+## Marco V7: contratos finais antes de nova main
+
+- LSP1 normal/restauração8/8 saídas,1.334sondas; três mutantes reprovam nas
+  cláusulas corretas. Consumo MAP2B: baseline fresco vermelho, LSP1 válido verde,
+  LSP1 inválido vermelho; troca do mesmo relatório para loja_h mantém vermelho.
+- Soundscape: dez casos e três mutantes; fetch real de fixture e seis gates verdes.
+- Main avançou para `d0edc586` (PR514 operacional). Próximo checkpoint seguido de
+  merge normal dessa main, preservando retry do menu e novos checks/ops. Não usar
+  reconstrução de árvore nesta atualização pequena. Depois CI/preview/mergePR438.
+
 ## Marco anterior: V6 entregue localmente
 
 Pedido de06/09/2026 concluído localmente: ruas no chão muito estreitas, somente
