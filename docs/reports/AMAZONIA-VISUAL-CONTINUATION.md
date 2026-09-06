@@ -342,3 +342,41 @@ A fonte geométrica permanece igual; artefatos volumosos fora do Git. Próximo p
 usuário testar hover em ?tela=maps&map=amazonia&lang=pt&perfilauto=0, recarregando
 com Cmd+Shift+R. Não há implementação pendente deste pedido de hover. Pendências
 anteriores de FPS/CPU e aceites de publicação continuam no ledger/relatório anterior.
+
+## Feedback — fauna nova, canoas e caminhar na água
+
+Pedido do dono: integrar galinha/pintinhos recém-gerados no Mint, jacaré visível,
+peixes saltando e retirar a sensação de delay na água. Base7153bed4. Fotos da
+rodada anterior mostram canoas retangulares antigas; substituir também esses
+cinco volumes pelo GLB de rabeta já aprovado, mantendo navegação livre.
+
+Diagnóstico validado Game._updatePlayer: o booleano slowAt cortava55% da velocidade.
+Em120ticks, água percorria2,100m vs4,584m no controle sem freio; ambos iniciam no
+primeiro tick, sem colisão nessa rota. Não é prova de FPS/input do navegador.
+Novo mapa mantém waterAt para som e slowAt=false por padrão (amzwaterslow=1 restaura
+baseline). Uma linha do Game aceita footstepSurfaceAt, preservando fallback de
+outros mapas. Hook reaplicável no snapshotmain por amazonia-water-runtime.mjs.
+
+Assets Mint: Adult Hen e Baby Chick, pack th78004y9j8g2kd0mkd45xq65x8dw112, chat
+ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba. Download dos URLs efetivamente exibidos no viewer,
+sem gerar/pagar novamente. Originais e metadados em artifacts/amazonia-visual/fauna-round2/.
+Derivados: galinha4.062tris/370.588bytes e pintinho3.616tris/198.532bytes; ambos
+Khronos0erros/1aviso. Uso local pedido expressamente; termos oficiais de publicação
+não verificados, sem inventar CC0. Registro/FONTE atualizados só nesta worktree.
+
+Implementação em validação: galinha+3pintinhos estáticos no quintal, jacaré do acervo
+na margem, dois peixes saltando alternadamente (um no baixo), cinco canoas GLB sem
+volumes cegos antigos. Não aplicar rig humanoide aos novos animais. Próximo:
+capturas med/low e caminhada51rotas, crítica independente, recibo/thumbnail/vídeo
+regravados, gates/build, checkpoints e entrega local. Nenhum push/merge/deploy.
+
+Marco validado: med e low passam51/51rotas, AMV4, aves4/4 e2/2, composição
+galinha+3pintinhos/5canoas/jacaré/saltos. AMW1–3 verdes; mutantes freio/áudio
+falham AMW1/AMW3 e mutante AMV6 morto, fonte restaurada. AMZ1–7, superfícies,
+MAP1/MAP6 e contrato MC1–3 verdes; build passou. Em seco o callback agora retorna
+undefined para manter materiais da main. Crítica independente detectou casco
+inundado: elevamos quilha para2,5cm abaixo água, nova captura final-med mostra
+piso seco. Fonte7e144533e7f23d22838bf50812afc1f1801adb2933df09792d7db7f667e720fa.
+Imagens/código em revisão final independente; gravação da mídia atual em curso.
+Próximo: recibo/hover, docs gerados e checkpoint de entrega. Desempenho FPS e
+pendências herdadas não foram declarados resolvidos.

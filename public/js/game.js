@@ -5257,7 +5257,7 @@ export class Game {
     if (moving) {
       p.stepPhase += dt * sp * 1.6;
       const prev = Math.sin(p.stepPhase - dt * sp * 1.6), now = Math.sin(p.stepPhase);
-      if (prev >= 0 && now < 0) this.sfx.step(this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 'water' : 'concrete');
+      if (prev >= 0 && now < 0) this.sfx.step(this.world.footstepSurfaceAt?.(p.pos.x, p.pos.z) ?? (this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 'water' : 'concrete'));
     }
     // Aim: real scopes (AWP / Mosin / Rem700) hide the gun and show the scope overlay.
     // Every other weapon does light iron-sight ADS — the gun stays on screen and the

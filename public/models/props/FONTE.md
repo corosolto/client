@@ -222,3 +222,17 @@ Mint acima. Pipeline reproduzível `tools/amazonia-assets.mjs`; hashes e ligaç�
 
 `arara_voo.glb` foi reutilizada sem modificar bytes da main69555790; procedência
 no FONTE de ambient. As aves usam o módulo skylife idêntico àquela main.
+
+## Galinha e pintinho Mint — preview da Amazônia, 06/09/2026
+
+`galinha_mint_amazonia.glb` e `pintinho_mint_amazonia.glb`: Adult Hen / Baby Chick
+no pack Caatinga Village Animals, conta do usuário, prompt original e Tripo P1.
+Chat: https://mint.gg/project/zd7d9mfmgv0b80ezp3xbykp1ns8dw47r?chat=ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba
+Uso local explicitamente solicitado pelo dono. Originais arquivados em
+`artifacts/amazonia-visual/fauna-round2/{hen,chick}-mint.glb`; URLs/hashes no
+`mint-assets.json`. Derivação reprodutível: `tools/amazonia-yard-assets.mjs`.
+Galinha: 5.078→4.062 triângulos, 370.588 bytes, WebP até1024. Pintinho:
+4.910→3.616 triângulos, 198.532 bytes, WebP até512. Malhas estáticas sem rig;
+não representam animações humanoides adaptadas. Originais preservados.
+Apenas procedência, não concessão de licença: a URL oficial de termos/atribuição
+não foi confirmada. Publicação comercial permanece pendente; não declarar CC0.

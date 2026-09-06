@@ -2246,6 +2246,56 @@
     "finalSha256": "60bfb8ed6387a00fb3b863a8b3e9de1343a704cfdf56555a74a1a948252c7fc7",
     "triangles": 3758
    }
+  },
+  "galinha-mint-amazonia": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/galinha_mint_amazonia.glb"
+   ],
+   "source": {
+    "kind": "mint-asset-pack",
+    "frente": "v21-e-models",
+    "chatUrl": "https://mint.gg/project/zd7d9mfmgv0b80ezp3xbykp1ns8dw47r?chat=ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba",
+    "url": "https://cdn.mint.gg/glb/adult-hen-normalized-590a6707883e2378.glb",
+    "displayName": "Adult Hen",
+    "sourceSHA256": "590a6707883e23784ee898dac1535e46ab40b6575e8db132bf13807217a11989",
+    "notes": "Asset gerado por prompt original na conta do usuário; inclusão no preview local explicitamente solicitada em 06/09/2026. Tripo P1, malha estática. Não atribuir Creative Commons nem licença comercial verificada: termos de publicação pendentes."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "Tripo P1",
+    "tools": [
+     "tools/amazonia-yard-assets.mjs"
+    ],
+    "finalSha256": "adce5304fc5adb1fe9fc0c1631b5e4445fd7d5cf5ea6a9c994288dc2ce55e581",
+    "triangles": 4062,
+    "bytes": 370588
+   }
+  },
+  "pintinho-mint-amazonia": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/pintinho_mint_amazonia.glb"
+   ],
+   "source": {
+    "kind": "mint-asset-pack",
+    "frente": "v21-e-models",
+    "chatUrl": "https://mint.gg/project/zd7d9mfmgv0b80ezp3xbykp1ns8dw47r?chat=ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba",
+    "url": "https://cdn.mint.gg/glb/baby-chick-normalized-fb54f1dd25d555e8.glb",
+    "displayName": "Baby Chick",
+    "sourceSHA256": "fb54f1dd25d555e855667ad7742c35d73eb542b6eecb5db8550cd7145dddd5c4",
+    "notes": "Asset gerado por prompt original na conta do usuário; inclusão no preview local explicitamente solicitada em 06/09/2026. Tripo P1, malha estática. Não atribuir Creative Commons nem licença comercial verificada: termos de publicação pendentes."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "Tripo P1",
+    "tools": [
+     "tools/amazonia-yard-assets.mjs"
+    ],
+    "finalSha256": "75e99bd5779c04372bade03745a2816dc83495aa2edae54fbb5acff970726e4d",
+    "triangles": 3616,
+    "bytes": 198532
+   }
   }
  }
 }

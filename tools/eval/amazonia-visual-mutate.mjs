@@ -19,7 +19,7 @@ const cases = process.argv.includes('--browser') ? [
   ['AMV2', 'p.setY(i, margemY(p.getX(i)))', 'p.setY(i, RIO_FUNDO)'],
   ['AMV7', 'const DECK_Y = 2.3', 'const DECK_Y = 1.8'],
   ['AMV5', 'for (const side of [-1, 1]) {\n    const x = side * 15', 'for (const side of []) {\n    const x = side * 15'],
-  ['AMV6', 'Math.abs(x) < aguaMeiaLargura', 'Math.abs(x) <= RIO_MEIA_LARGURA + 0.6'],
+  ['AMV6', "QP.get('amzwaterslow') === '1' && waterAt(x,z)", 'Math.abs(x) <= RIO_MEIA_LARGURA + 0.6'],
   ['AMV3', '  // Copas em duas camadas', '  addBox(6.2, 9, 2.4, matMata, 30, 0, 42);\n  // Copas em duas camadas'],
 ];
 try {

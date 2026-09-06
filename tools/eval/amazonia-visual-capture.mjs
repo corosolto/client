@@ -7,6 +7,7 @@ const chromium = pw.chromium || pw.default?.chromium;
 import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { captureAmazoniaLife, captureAmazoniaThumbnail } from './amazonia-life-capture.mjs';
+import { captureAmazoniaYard } from './amazonia-yard-capture.mjs';
 import { walkAmazonia } from './amazonia-walk.mjs';
 const out = process.argv[2] || 'artifacts/amazonia-visual/baseline';
 const mapSource = process.env.MAP_SOURCE ? readFileSync(process.env.MAP_SOURCE, 'utf8') : null;
@@ -158,6 +159,7 @@ try {
   }
   if (process.env.WALK === '1'  && !await walkAmazonia(page,out)) process.exitCode = 1;
   if (process.env.AMBIENT === '1' && !await captureAmazoniaLife(page,out)) process.exitCode=1;
+  if (process.env.YARD === '1' && !await captureAmazoniaYard(page,out)) process.exitCode=1;
   if (process.env.THUMBNAIL === '1') await captureAmazoniaThumbnail(page,out,sourceSHA256);
   const runtime = await page.evaluate(() => {
     const g = window.__game, w = g.world;

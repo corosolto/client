@@ -27,7 +27,7 @@ const margemY = x => RIO_FUNDO + (Math.abs(x) - RIO_CAMPO) /
 export const AMAZONIA_PROPS = ['samambaia', 'heliconia', 'planta_corrego_taboa',
   'planta_corrego_taioba', 'grama_corrego_01', 'grama_corrego_02', 'stall', 'arara_roupas',
   'caixa_dagua', 'botijao_gas', 'pilha_pneus', 'tires', 'dumpster',
-  'canoa_rabeta_amazonia', 'palafita_pro_amazonia', 'arvore_mata_amazonia', 'palmeira_babacu_amazonia'];
+  'galinha_mint_amazonia', 'pintinho_mint_amazonia', 'canoa_rabeta_amazonia', 'palafita_pro_amazonia', 'arvore_mata_amazonia', 'palmeira_babacu_amazonia'];
 
 /* ── PALAFITAS DE VERDADE (molde palafita_pro.glb): "subir na madeira pra atravessar" —
     cada estação tem patamar e escada andáveis + corrimão `passarela`; rede = rota alta. */
@@ -593,13 +593,17 @@ export function buildAmazonia(scene, T) {
   });
   pontao(pontoes[1], () => { barraca(5.4, 9.2, -0.26, matLona[3]); barraca(7.8, 11.6, 0.2, matLona[0]); });
   pontao(pontoes[2], () => { barraca(5.2, -14.8, 0.15, matLona[2]); barraca(6.6, -12.4, -0.29, matLona[1]); });
-  // canoas amarradas: casco de tábua com banco
-  const canoa = (x, z, ry, cor) => {
-    addBox(3.4, 0.5, 0.9, lam({ map: texDe(TEX.madeira, 3, 1) || T.dirt, color: cor, roughness: 0.9 }), x, RIO_AGUA - 0.2, z, { ry });
-    addBox(0.9, 0.08, 0.8, matPoste, x, RIO_AGUA + 0.3, z, { ry, collide: false, cast: false });
+  const canoasAmarradas = [];
+  const canoa = (x, z, ry) => {
+    const model=placeProp('canoa_rabeta_amazonia',{x,z,ry:ry+1.04,y:RIO_AGUA-.025,targetH:.62});
+    if(model){
+      model.name='canoa-amarrada';
+      model.traverse(o=>{if(o.isMesh){o.castShadow=false;o.userData.nonSolidSurface=true;}});
+      root.add(model); canoasAmarradas.push(model);
+    }
   };
-  canoa(-3.2, -24.5, 0.34, 0xb54a3c); canoa(2.6, 18.5, -0.22, 0x3c6fb0); canoa(-4.5, 15, 1.35, 0xb5892e);
-  canoa(11.8, -4.6, 0.42, 0x4a8a5c); canoa(-2.2, -6.5, 1.52, 0x8a5a2e);
+  canoa(-3.2,-24.5,.34); canoa(2.6,18.5,-.22); canoa(-4.5,15,1.35);
+  canoa(7.8,-4.6,.42); canoa(-2.2,-6.5,1.52);
   // booms de lenha: troncos amarrados boiando — cover no meio do canal
   for (const b of BOOMS) for (let i = 0; i < b.n; i++) {
     addCyl(0.35, 3.6, matTroncoBoiando, b.x0 + i * 1.18, RIO_AGUA - 0.32, b.z + (i % 2) * 0.5, { rx: Math.PI / 2, seg: 7 });
@@ -777,7 +781,7 @@ export function buildAmazonia(scene, T) {
   troncoNoChao(-22, 30, 0.18); troncoNoChao(22, 10, 1.38); troncoNoChao(-20, -30, 0.5); troncoNoChao(20, 32, -0.2);
 
   /* ── FAUNA ESTÁTICA: jacaré no igarapé, capivaras na margem (o sistema do córrego). */
-  const jacare = placeFauna('jacare', { x: 6.8, y: RIO_FUNDO, z: -30.5, ry: 2.8, targetLen: 1.8, submerge: 0.1 });
+  const jacare = placeFauna('jacare', { x: 9.4, y: -0.065, z: 18.8, ry: 2.8, targetLen: 2.1, submerge: 0.02 });
   if (jacare) root.add(jacare);
   const capivara = placeFauna('capivara', { x: -10.8, y: 0.02, z: 14.5, ry: 0.6, targetLen: 1.0 });
   if (capivara) root.add(capivara);
@@ -919,7 +923,7 @@ export function buildAmazonia(scene, T) {
       { mode: 'ground', pos: [-23.9, 0, -5.4], phase: 0.9 },
       { mode: 'ground', pos: [-29.2, 0, -5.6], phase: 2.1 },
     ],
-    chickens: [{ pos: [19.4, 0, 12.1], to: [20.4, 0, 12.6], phase: 1.4 }],
+    chickens: [],
     parrots: [
       { pos: [5.6, 2.62, 0.4], phase: 0.6 },      // poleiro do market
       { pos: [14.1, 0.95, 18.35], phase: 2.4 },   // caixa d'água (21,17)
@@ -1005,13 +1009,41 @@ export function buildAmazonia(scene, T) {
     t = t < 0 ? 0 : t > 1 ? 1 : t;
     return (p.ax + dx * t - x) ** 2 + (p.az + dz * t - z) ** 2 <= 2.9;
   });
-  const slowAt = (x, z) => !naMadeiraAlta(x, z) && Math.abs(x) < aguaMeiaLargura && Math.abs(z) < HALF_Z - 2
+  const waterAt = (x, z) => !naMadeiraAlta(x, z) && Math.abs(x) < aguaMeiaLargura && Math.abs(z) < HALF_Z - 2
     && ![0, -24, 24].some((pz) => Math.abs(z - pz) < (pz === 0 ? PONTE_W : 2.6) / 2 + 0.4);
+
+  const slowAt = (x,z) => QP.get('amzwaterslow') === '1' && waterAt(x,z);
+  const footstepSurfaceAt = (x,z) => waterAt(x,z) ? 'water' : undefined;
+  const quintal = new THREE.Group(); quintal.name='galinha-e-pintinhos'; root.add(quintal);
+  const hen=placeProp('galinha_mint_amazonia',{x:19.4,z:12.1,y:0,targetH:.55,ry:.5});
+  if(hen) quintal.add(hen);
+  for(const [x,z,ry] of [[18.9,12.45,.3],[19.5,12.85,-.6],[20,12.3,-1.2]]){
+    const chick=placeProp('pintinho_mint_amazonia',{x,z,y:0,targetH:.17,ry});
+    if(chick) quintal.add(chick);
+  }
+  quintal.traverse(o=>{if(o.isMesh){o.castShadow=!LOWQ;o.userData.nonSolidSurface=true;}});
+  const peixesSaltando=[];
+  for(const [x,z,phase] of (LOWQ ? [[-3.4,19,.3]] : [[-3.4,19,.3],[4,-16,3.7]])){
+    const fish=placeFauna('piranha',{targetLen:.38});
+    if(!fish) continue;
+    const pivot=new THREE.Group();pivot.name='peixe-saltando';pivot.add(fish);root.add(pivot);
+    fish.traverse(o=>{if(o.isMesh)o.castShadow=false;});
+    peixesSaltando.push({root:pivot,x,z,phase});
+  }
+  function updatePeixes(time){
+    for(const f of peixesSaltando){
+      const t=((time+f.phase)%8)/1.05, airborne=t<1;
+      f.root.visible=airborne;
+      if(!airborne) continue;
+      f.root.position.set(f.x+(t-.5)*1.2,RIO_AGUA-.16+Math.sin(t*Math.PI)*.85,f.z);
+      f.root.rotation.z=Math.atan2(.85*Math.PI*Math.cos(t*Math.PI),1.2);
+    }
+  }
 
   // Rabeta ao fundo: a elipse inteira fica além de HALF_Z, sobre a água existente.
   // Sem colisor móvel/rota de bot: é navegação de paisagem, fora das travessias.
   const barco = new THREE.Group(); barco.name = 'rabeta-navegando';
-  const rabetaModel = QP.get('amzlife') !== '0' && placeProp('canoa_rabeta_amazonia', {targetH:.8,ry:1.04,y:-.15});
+  const rabetaModel = QP.get('amzlife') !== '0' && placeProp('canoa_rabeta_amazonia', {targetH:.8,ry:1.04,y:-.025});
   if (rabetaModel) {
     rabetaModel.traverse(o => {if(o.isMesh){o.castShadow=false;o.userData.nonSolidSurface=true;}});
     barco.add(rabetaModel); root.add(barco);
@@ -1037,7 +1069,7 @@ export function buildAmazonia(scene, T) {
   const disposeAmbience = ambience.dispose.bind(ambience);
   ambience.dispose = () => { skyLife._disposed = true; disposeAmbience(); };
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt,     spawns: {
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, footstepSurfaceAt,     spawns: {
       /* 0,4 m além da face da mata girada: o AABB conservador da copa com yaw
          projeta a quina ~0,5 m para dentro da caixa e a folga do MAP2B mede
          contra o AABB, não contra a malha. */
@@ -1045,7 +1077,7 @@ export function buildAmazonia(scene, T) {
       B: SPAWN_B.map(([x, z]) => ({ x, z, yaw: Math.PI - 0.6 })),
     },
     ctfPoints: CTF_PTS,
-    pickups, sun, hemi, ambience, skyLife, barco,
+    pickups, sun, hemi, ambience, skyLife, barco, quintal, peixesSaltando, canoasAmarradas, jacare,
     amazonia: {
       deckY: DECK_Y,
       estacoes: ESTACOES.map(({ x, z, d, p, e, rede, escada }) => ({
@@ -1067,7 +1099,7 @@ export function buildAmazonia(scene, T) {
       ],
       bioma: 'campo',
     },
-    update(dt, time) { lifeTime = Number.isFinite(time) ? time : lifeTime + dt; agua.update(dt); skyLife.update(dt, lifeTime); updateBarco(lifeTime); },
+    update(dt, time) { lifeTime = Number.isFinite(time) ? time : lifeTime + dt; agua.update(dt); skyLife.update(dt, lifeTime); updateBarco(lifeTime); updatePeixes(lifeTime); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.8, maxX: HALF_X - 0.8, minZ: -HALF_Z + 0.8, maxZ: HALF_Z - 0.8 },
   };
