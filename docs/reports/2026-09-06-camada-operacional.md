@@ -196,12 +196,18 @@ mensagens de commit.
 - Personagens são sondados pela listagem da árvore (`public/models/characters`), não por um
   registro servido como as armas; props e prévias são 24 espalhados, não todos.
 
+## Rebase em alpha.223 (06/09/2026 04:00 UTC, autorizado pelo dono)
+
+Branch rebaseada em `69555790`: `check:fast` da main ganhou `eval:audiovoicemix` e manteve
+`ops:test ops:selftest` no fim; os dois commits de "regenerar blocos" ficaram vazios e
+saíram (23 commits). `npm run audio` rodado no checkout do dono: `audio:check` verde lá.
+Portões repetidos na árvore rebaseada estão na seção seguinte.
+
 ## Próximos passos
 
-1. Rebase em `origin/main` (alpha.223) e `npm run docs` para regenerar os blocos; depois
-   `npm run check:fast` e `npm run ops:selftest` de novo.
-2. `npm run audio` no checkout do dono (manifest defasado; fora desta branch).
-3. Depois do deploy com o `ops.js`: `npm run ops:diag -- --browser --partida` em horário
-   de pico — confirma que `ops-runtime-ausente` some, dá procedência de pico aos limiares
-   e mostra o `registro de armas: registro-servido` na produção real.
-4. Registro servido também para o elenco (`glbchars.js`), no mesmo desenho das armas.
+1. Depois do merge (a Vercel publica a `main`): `npm run ops:diag -- --browser --partida`
+   em produção para confirmar que `ops-runtime-ausente` some e que o `registro de armas`
+   sai como `registro-servido` na produção real.
+2. Em horário de pico, a mesma diagnose: dá procedência de pico aos limiares de latência
+   (hoje AVISO) para decidir se viram MÉDIO.
+3. Registro servido também para o elenco (`glbchars.js`), no mesmo desenho das armas.
