@@ -1,0 +1,401 @@
+{
+  "runtime": {
+    "checks": {
+      "RV1": true,
+      "RV2": true,
+      "RV3": true,
+      "RV4": true,
+      "RV5": true,
+      "RV6": true,
+      "RV7": true,
+      "RV8": true,
+      "RV9": true,
+      "RV10": true,
+      "RV11": true,
+      "RV12": true
+    },
+    "spatial": {
+      "bodies": [
+        {
+          "name": "sertao-casa-platibanda-0",
+          "meshes": 20,
+          "source": "authored",
+          "propId": "casa_platibanda"
+        },
+        {
+          "name": "sertao-casa-platibanda-1",
+          "meshes": 18,
+          "source": "authored",
+          "propId": "casa_platibanda"
+        },
+        {
+          "name": "sertao-casa-paupique-2",
+          "meshes": 18,
+          "source": "authored",
+          "propId": "casa_pau_a_pique"
+        },
+        {
+          "name": "sertao-casa-paupique-3",
+          "meshes": 18,
+          "source": "authored",
+          "propId": "casa_pau_a_pique"
+        },
+        {
+          "name": "sertao-casa-paupique-4",
+          "meshes": 18,
+          "source": "authored",
+          "propId": "casa_pau_a_pique"
+        },
+        {
+          "name": "sertao-casa-paupique-5",
+          "meshes": 18,
+          "source": "authored",
+          "propId": "casa_pau_a_pique"
+        },
+        {
+          "name": "sertao-casa-paupique-6",
+          "meshes": 18,
+          "source": "authored",
+          "propId": "casa_pau_a_pique"
+        },
+        {
+          "name": "sertao-casa-pedra-7",
+          "meshes": 1,
+          "source": "glb",
+          "propId": "casa_pedra"
+        },
+        {
+          "name": "sertao-casa-pedra-8",
+          "meshes": 1,
+          "source": "glb",
+          "propId": "casa_pedra"
+        },
+        {
+          "name": "sertao-casa-geminada-9",
+          "meshes": 1,
+          "source": "glb",
+          "propId": "casa_geminada"
+        }
+      ],
+      "lateralShutters": true,
+      "porches": [
+        {
+          "name": "sertao-casa-paupique-2",
+          "pushed": 0
+        },
+        {
+          "name": "sertao-casa-paupique-3",
+          "pushed": 0
+        },
+        {
+          "name": "sertao-casa-paupique-4",
+          "pushed": 0
+        },
+        {
+          "name": "sertao-casa-paupique-5",
+          "pushed": 0
+        },
+        {
+          "name": "sertao-casa-paupique-6",
+          "pushed": 0
+        }
+      ],
+      "direct": [],
+      "ctfClear": [
+        {
+          "id": "E",
+          "pushed": 0,
+          "penetration": 0
+        },
+        {
+          "id": "MID",
+          "pushed": 0,
+          "penetration": 0
+        },
+        {
+          "id": "B",
+          "pushed": 0,
+          "penetration": 0
+        }
+      ],
+      "churchBlocks": true,
+      "churchHits": 1,
+      "openClear": true,
+      "seamlessSoil": true,
+      "plasterFacades": true,
+      "plainPlaster": true,
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)"
+    },
+    "frames": [
+      {
+        "name": "praca",
+        "frame": 22,
+        "calls": 309,
+        "triangles": 151185,
+        "points": 0,
+        "lines": 0,
+        "geometries": 191,
+        "textures": 84
+      },
+      {
+        "name": "venda",
+        "frame": 73,
+        "calls": 349,
+        "triangles": 175631,
+        "points": 0,
+        "lines": 0,
+        "geometries": 191,
+        "textures": 84
+      },
+      {
+        "name": "poco",
+        "frame": 97,
+        "calls": 412,
+        "triangles": 253566,
+        "points": 0,
+        "lines": 0,
+        "geometries": 191,
+        "textures": 84
+      },
+      {
+        "name": "forro",
+        "frame": 117,
+        "calls": 77,
+        "triangles": 77622,
+        "points": 0,
+        "lines": 0,
+        "geometries": 191,
+        "textures": 84
+      },
+      {
+        "name": "leste",
+        "frame": 137,
+        "calls": 373,
+        "triangles": 246267,
+        "points": 0,
+        "lines": 0,
+        "geometries": 191,
+        "textures": 84
+      },
+      {
+        "name": "sul",
+        "frame": 160,
+        "calls": 378,
+        "triangles": 214972,
+        "points": 0,
+        "lines": 0,
+        "geometries": 191,
+        "textures": 84
+      },
+      {
+        "name": "aerea",
+        "frame": 182,
+        "calls": 491,
+        "triangles": 291060,
+        "points": 0,
+        "lines": 0,
+        "geometries": 191,
+        "textures": 84
+      }
+    ],
+    "groundStd": 13.475252342977893,
+    "groundHighRms": 10.72489623152386,
+    "errors": [],
+    "mutation": null
+  },
+  "flow": {
+    "steps": [
+      "boot",
+      "maps",
+      "character",
+      "game"
+    ],
+    "state": {
+      "state": "live",
+      "map": "velho-oeste-da-treta",
+      "bots": 7,
+      "pointerLocked": false,
+      "team": "B",
+      "yawDelta": 0
+    },
+    "errors": []
+  },
+  "fauna": {
+    "checks": {
+      "FA1": true,
+      "FA2": true,
+      "FA3": true,
+      "FA4": true
+    },
+    "samples": [
+      {
+        "quality": "med",
+        "calangos": 5,
+        "sources": [
+          "gltf",
+          "gltf",
+          "gltf",
+          "gltf",
+          "gltf"
+        ],
+        "birds": {
+          "birds": 3,
+          "meshes": 7,
+          "triangles": 4116,
+          "textures": 0
+        },
+        "flightMoved": 1.003550481718205,
+        "observed": 14400,
+        "blocked": 0,
+        "maxPush": 0,
+        "solid": 0,
+        "casters": 0
+      },
+      {
+        "quality": "low",
+        "calangos": 1,
+        "sources": [
+          "gltf"
+        ],
+        "birds": {
+          "birds": 1,
+          "meshes": 7,
+          "triangles": 1372,
+          "textures": 0
+        },
+        "flightMoved": 1.003550481718205,
+        "observed": 0,
+        "blocked": 0,
+        "maxPush": 0,
+        "solid": 0,
+        "casters": 0
+      }
+    ],
+    "failed": []
+  },
+  "motion": {
+    "phase": "revision-controlled",
+    "map": "velho_oeste",
+    "bootMs": 4811,
+    "errors": [],
+    "result": {
+      "p50ms": 8.399999976158142,
+      "p95ms": 10.600000023841858,
+      "distance": 60.385153503570244,
+      "reached": 13,
+      "pathNodes": 25,
+      "counts": {
+        "calls": 603.3768656716418,
+        "tris": 458256.7672215844,
+        "geometries": 648,
+        "textures": 447
+      },
+      "heap": 95812073,
+      "bots": 7,
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+      "roster": [
+        {
+          "id": "caminhoneiro",
+          "weapon": "awp",
+          "team": "B"
+        },
+        {
+          "id": "coach",
+          "weapon": "awp",
+          "team": "B"
+        },
+        {
+          "id": "farialimer",
+          "weapon": "awp",
+          "team": "B"
+        },
+        {
+          "id": "esquerdomacho",
+          "weapon": "awp",
+          "team": "E"
+        },
+        {
+          "id": "sindicato",
+          "weapon": "awp",
+          "team": "E"
+        },
+        {
+          "id": "mst",
+          "weapon": "awp",
+          "team": "E"
+        },
+        {
+          "id": "doutora",
+          "weapon": "awp",
+          "team": "E"
+        }
+      ]
+    }
+  },
+  "preview": {
+    "checks": [
+      {
+        "id": "PV1",
+        "ok": true,
+        "detail": "Fonte e bytes da captura real precisam corresponder ao recibo."
+      },
+      {
+        "id": "PV2",
+        "ok": true,
+        "detail": {
+          "poster": {
+            "loaded": true,
+            "src": "http://localhost:8149/img/map-previews/velho_oeste.jpg?v=2.0.0-alpha.184-9102503fceee"
+          },
+          "videoRequests": 0
+        }
+      },
+      {
+        "id": "PV3",
+        "ok": true,
+        "detail": {
+          "first": {
+            "time": 0.11422,
+            "muted": true,
+            "width": 960,
+            "paused": false
+          },
+          "second": {
+            "time": 0.522772,
+            "muted": true,
+            "width": 960,
+            "paused": false
+          }
+        }
+      },
+      {
+        "id": "PV4",
+        "ok": true,
+        "detail": {
+          "time": 0.759272,
+          "muted": true,
+          "width": 960,
+          "paused": true
+        }
+      },
+      {
+        "id": "PV5",
+        "ok": true,
+        "detail": {
+          "time": 0.759272,
+          "muted": true,
+          "width": 960,
+          "paused": true
+        }
+      },
+      {
+        "id": "PV6",
+        "ok": true,
+        "detail": {
+          "errors": []
+        }
+      }
+    ],
+    "failed": []
+  }
+}
