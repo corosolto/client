@@ -96,5 +96,39 @@ técnico, sem bloqueio remanescente encontrado. As capturas finais `after/praca.
 `after/interior-oeste.png`, `after/interior-leste.png`, `after/lateral-oeste.png`
 e `after/sunset.png` foram renderizadas e inspecionadas offline; a praça abriu,
 os interiores ficaram livres e o pôr do sol laranja manteve a leitura das silhuetas.
-O estado final atual é `IN1–IN6` verde, `TR1/TR3` verde, `13/13` na suíte
+O estado final atual é `IN1–IN7` verde, `TR1/TR3` verde, `13/13` na suíte
 específica e `260` colocações aprovadas no `spawn-settle-check`.
+
+### Fechamento do relato de área inacessível — `IN7`
+
+O relato original não trazia coordenada, então as entregas anteriores só podiam
+afirmar que a praça deixara de ter fachadas cegas. `IN7` troca essa inferência por
+medida: varre `world.bounds` inteiro em passo de 0,25 m com o corpo real de 0,38 m,
+marca cada célula onde `_collide` não desloca a cápsula, inunda a partir do spawn
+`E[0]` e reprova se sobrar qualquer vão livre enclausurado. Resultado no estado
+atual: 75 230 células livres, 75 230 alcançáveis, zero bolsões. O relevo de
+`velho_oeste` é plano (`groundHeightAt` constante em 0), então a varredura 2D
+cobre o caso; um mapa com desnível exigiria eixo vertical.
+
+Quando falha, `IN7` imprime a caixa envolvente de cada bolsão — exatamente o dado
+que faltava no relato. O oitavo mutante, `bolsao`, ergue quatro paredes em torno
+de `(-20,-28)` e é detectado isolado: só `IN7` fica vermelha, com bolsão de
+14,06 m² em `x∈[-21,7;-18,2]`, `z∈[-29,7;-26,2]`. O mutante `fechar-porta` também
+derruba `IN7`, com bolsão de 32,81 m² sobre a planta da casa oeste, confirmando
+que a régua enxerga o interior recém-aberto como espaço que precisa continuar
+alcançável. Custo: 0,31 s, sem dependência de navegador.
+
+`IN7` prova que hoje não existe vão livre inacessível para a cápsula do jogador.
+Não prova que o relato original descrevia um bolsão: ele pode ter sido uma
+fachada que parecia entrável — classe que esta entrega resolve — ou um ponto de
+outro mapa. Sem reprodução localizada, o relato segue formalmente em aberto.
+
+### Limitações que continuam exigindo revisão humana
+
+Nenhum navegador foi aberto nesta frente. As capturas são geometria Node/proxy
+renderizada no Blender com materiais planos: não reproduzem GLBs assíncronos,
+fog, pós-processamento nem exposição do WebGL. A leitura de silhuetas de inimigos
+sob o novo laranja foi conferida apenas nesses proxies; a validação 3:2 em WebGL
+com jogadores reais permanece fora do escopo executado. `tools/eval/look-check.mjs`
+mantém a falha herdada do assado ausente de `sky_amazonia.webp`, sem relação com
+esta mudança.
