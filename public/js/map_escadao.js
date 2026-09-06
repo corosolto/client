@@ -13,6 +13,7 @@ import { AMB_LOOPS } from './soundscape.js';
 import { buildEscadaoHome, escadaoHomeGround } from './map_escadao_home.js';
 import { buildEscadaoDetails } from './map_escadao_details.js';
 import { buildEscadaoContour, contourHeight, ESCADAO_CONTOUR } from './map_escadao_contour.js';
+import { buildEscadaoHorizon } from './map_escadao_horizon.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -66,6 +67,7 @@ export function buildEscadao(scene, T) {
   const colliders = [], occluders = [], pickups = [];
   const solids = [];
   const root = new THREE.Group(); scene.add(root);
+  buildEscadaoHorizon(root, { low: LOWQ });
 
   const lam = (o) => {
     const m = new THREE.MeshStandardMaterial({ roughness: 0.95, metalness: 0, ...o });

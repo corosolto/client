@@ -39,7 +39,11 @@ if (process.argv.includes('--mutante=parede')) {
 const physicalEdge=(a,b)=>{
   const count=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/.1));let y=a.y??world.groundHeightAt(a.x,a.z);
   for(let k=0;k<=count;k++) {
-    const x=a.x+(b.x-a.x)*k/count,z=a.z+(b.z-a.z)*k/count,ground=world.groundHeightAt(x,z,y);
+    // O último sample precisa ser o nó do grafo, não a aproximação em IEEE-754
+    // dele. Em patamares que encostam no primeiro degrau, -1.96 e
+    // -1.9599999999999995 pertencem a superfícies distintas; validar a
+    // aproximação criava uma aresta impossível que o jogo não percorre.
+    const x=k===count?b.x:a.x+(b.x-a.x)*k/count,z=k===count?b.z:a.z+(b.z-a.z)*k/count,ground=world.groundHeightAt(x,z,y);
     if(Math.abs(ground-y)>.3)return false;
     const p=new THREE.Vector3(x,ground,z);game._collide(p,.38);
     if(Math.hypot(p.x-x,p.z-z)>.001)return false;y=ground;

@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {THREE,bootGame,initTextures} from './harness.mjs';
 const g=bootGame('escadao',{textures:initTextures(),ctf:true,seed:8012}),w=g.world,p=g.player;
+if(process.argv.includes('--mutante=sem-contorno')) {
+ const original=w.groundHeightAt;
+ w.groundHeightAt=(x,z,y)=>Math.abs(Math.abs(x)-16.4)<1.11&&z>=-5.44&&z<=4.5?0:original(x,z,y);
+}
 const out=process.env.OUT||'artifacts/escadao-visual/r5/contour';mkdirSync(out,{recursive:true});g.scene.updateMatrixWorld(true);
 const ray=new THREE.Raycaster(),trace=[];
 const body=()=>{ray.set(p.pos.clone().add(new THREE.Vector3(0,.32,0)),new THREE.Vector3(0,1,0));ray.far=1.3;const hits=ray.intersectObjects([w.root],true).filter(h=>h.object.visible&&h.object.material?.visible!==false&&!h.object.userData.nonCollider&&!h.object.userData.nonSolidSurface);assert.equal(hits.length,0,'Corpo/cabeça não pode entrar no beiral');};
