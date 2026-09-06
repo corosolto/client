@@ -182,3 +182,42 @@ test('abandono: a ocultação da aba grava UMA vez por sessão; pagehide sempre 
     assert.equal(JSON.parse(a.storage.cs_ops_last).abandono.motivo, 'pagehide');
   } finally { mock.timers.reset(); }
 });
+
+test('fps: matchEnd desliga a amostragem (placar e menu não entram); aba de volta não conta congelamento', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  try {
+    const a = await sobe();
+    globalThis.__game = { state: 'live', _mapId: 'quebrada', ctf: true };
+    mock.timers.tick(1000);
+    a.pumpFrames(70, 16);            // 1,12 s a 60 fps → 1 amostra
+    assert.equal(a.mod.snapshot().fps.amostras, 1);
+    // escondeu por 5 s e voltou: o primeiro frame tem dt=5000 e NÃO é congelamento
+    a.doc.hidden = true; a.doc.emit('visibilitychange', {});
+    a.avancar(5000);
+    a.doc.hidden = false; a.doc.emit('visibilitychange', {});
+    a.pumpFrames(1, 16);
+    a.pumpFrames(70, 16);
+    const s1 = a.mod.snapshot();
+    assert.equal(s1.fps.congeladas, 0, 'dt do tempo escondido virou congelamento');
+    assert.equal(s1.fps.travadas, 0);
+    globalThis.__game.state = 'matchEnd';
+    mock.timers.tick(1000);
+    const antes = a.mod.snapshot().fps.amostras;
+    a.pumpFrames(120, 16);
+    assert.equal(a.mod.snapshot().fps.amostras, antes, 'depois de matchEnd o placar/menu não podem entrar nas amostras "só em partida"');
+  } finally { mock.timers.reset(); }
+});
+
+test('migalhas: o ops.js gasta no máximo 5 das 20 do coletor, mesmo com muitas falhas de carga', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  try {
+    const a = await sobe();
+    globalThis.__CS_MAIN_READY__ = true; mock.timers.tick(300);
+    a.observador().emite(Array.from({ length: 12 }, (_, i) => ({ name: `http://jogo/img/decals/${i}.png`, responseStatus: 404, initiatorType: 'img' })));
+    globalThis.__game = { state: 'live', _mapId: 'q', ctf: false }; mock.timers.tick(1000);
+    for (let i = 0; i < 4; i++) a.pumpFrames(1, 1500);
+    globalThis.__game.state = 'matchEnd'; mock.timers.tick(1000);
+    assert.ok(a.migalhas.length <= 5, `ops.js mandou ${a.migalhas.length} migalhas: ${a.migalhas.join(' | ')}`);
+    assert.equal(a.mod.snapshot().recursos.falhas.length, 12, 'o snapshot guarda tudo; só a migalha é racionada');
+  } finally { mock.timers.reset(); }
+});

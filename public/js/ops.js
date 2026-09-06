@@ -3,6 +3,8 @@
 const OPS_VERSAO = 1;
 const TETO_AMOSTRAS = 300;
 const TETO_FALHAS = 50;
+// o coletor de /api/jserror guarda 20 migalhas (index.astro): o ops.js gasta no máximo 5, o resto é do jogador
+const TETO_MIGALHAS = 5;
 const CHAVE_ULTIMA = 'cs_ops_last';
 
 const estado = {
@@ -21,7 +23,7 @@ let gravouUltima = false;
 
 const agora = () => Math.round(performance.now());
 function migalha(txt) {
-  if (migalhasEnviadas >= 12) return;
+  if (migalhasEnviadas >= TETO_MIGALHAS) return;
   migalhasEnviadas++;
   try { window.__migalha?.('ops ' + txt); } catch { /* coletor ausente */ }
 }
@@ -36,7 +38,7 @@ function caminhoDe(url) {
 function registraFalha(caminho, status, tipo) {
   if (/\/favicon\.ico$/.test(caminho)) return;
   estado.recursos.falhas.length < TETO_FALHAS && estado.recursos.falhas.push({ caminho, status, tipo, t: agora() });
-  if (estado.recursos.falhas.length <= 5) migalha(`carga falhou ${status} ${caminho}`);
+  if (estado.recursos.falhas.length <= 2) migalha(`carga falhou ${status} ${caminho}`);
 }
 
 function percentil(v, p) {
@@ -80,6 +82,7 @@ function vigiaPartida() {
             estado.fase = 'fim';
             p.fins++;
             resumoFps();
+            desligaFps();
           }
           p.estado = st;
         }
@@ -102,7 +105,7 @@ function passoFps(t) {
     const dt = t - ultimoFrame;
     if (dt > 100 && dt < 5000 && !document.hidden) {
       estado.fps.travadas++;
-      if (dt > 1000) { estado.fps.congeladas++; if (estado.fps.congeladas <= 3) migalha(`congelou ${Math.round(dt)}ms`); }
+      if (dt > 1000) { estado.fps.congeladas++; if (estado.fps.congeladas <= 1) migalha(`congelou ${Math.round(dt)}ms`); }
     }
   }
   ultimoFrame = t;
@@ -117,6 +120,8 @@ function passoFps(t) {
 }
 function ligaFps() { if (rafAtivo) return; rafAtivo = true; ultimoFrame = 0; framesNoSegundo = 0; inicioSegundo = 0; requestAnimationFrame(passoFps); }
 function desligaFps() { rafAtivo = false; }
+// aba de volta do fundo: o primeiro frame traz o dt do tempo escondido e não é congelamento
+function zeraFrame() { ultimoFrame = 0; framesNoSegundo = 0; inicioSegundo = 0; }
 function resumoFps() {
   const a = estado.fps.amostras;
   if (a.length) migalha(`fps p50=${percentil(a, 50)} p5=${percentil(a, 5)} travadas=${estado.fps.travadas}`);
@@ -165,7 +170,7 @@ function vigiaSaida() {
     try { localStorage.setItem(CHAVE_ULTIMA, JSON.stringify(resumo())); gravouUltima = true; } catch { /* storage bloqueado */ }
   };
   window.addEventListener('pagehide', () => grava('pagehide'));
-  document.addEventListener('visibilitychange', () => { if (document.hidden) grava('hidden'); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) grava('hidden'); else zeraFrame(); });
 }
 
 function resumo() {
