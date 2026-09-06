@@ -47,7 +47,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Scripts do arnês | 299 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 69 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.228` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.229` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
