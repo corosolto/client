@@ -70,6 +70,9 @@ que omitiam faces de materiais únicos foram descartadas e as capturas foram ref
   da base `42c01175` e no final. A varredura alta não lê slots E em nenhum dos dois;
   ela mede **zero pontos para B**, pois exclui a mesma cota. A régua nova do abrigo
   cobre explicitamente esse caso, sem apresentar `0/0` como prova de proteção.
+  Contagem de lances reprovados é **1 nos dois builders**, então o diff não regride a
+  régua. A área de chegada do lance central cai de 1600 m² para 1587 m², compatível
+  com o piso que o abrigo e suas paredes passam a ocupar no mirante.
 - `eval:grafitelayout` exige regenerar o layout do Escadão após a geometria mudar.
   O gerador usa Chromium; não foi executado por restrição do usuário. Hash não foi
   atualizado sem regeneração. Esta é pendência real antes de integrar.
@@ -90,3 +93,17 @@ checks específicos foram reexecutados nessa árvore (`build-final.log`, `map-fi
 A execução ampla anterior aprovou 122/125 passos; `audio:check` e `eval:grafitelayout`
 continuam pendentes pelos motivos acima. A terceira falha era somente a exigência de
 commit de documentação do DOCSAUT.
+
+## Portões de push fechados
+
+Os dois portões que o `pre-push` cobra rodaram nesta árvore, já com a documentação
+commitada: `eval:mapcontrato` verde (MC1 contrato, MC2 índice de nós, MC3 grafo conexo)
+e `check:deploy` **37/37**, incluindo `eval:docsautoria`, que era a falha remanescente
+do DOCSAUT. `npm run build` verde. Os oito checks de aceite passaram e os cinco mutantes
+morreram na cláusula pretendida: `rear-window-sealed` na abertura de tiro, `canto-aberto`
+no fechamento traseiro, `saidas-seladas` na aresta caminhável do abrigo, `sem-ombreiras`
+nas ombreiras da janela e `fundo-aberto` na leitura do spawn superior.
+
+Isto fecha o que era mecânico. O que continua aberto não é: revisão visual humana em 3:2
+com GLBs, regeneração de grafites em frente autorizada a usar navegador e leitura de
+exposição das soleiras em partida real. Nenhum desses foi absorvido aqui.
