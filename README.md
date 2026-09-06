@@ -34,17 +34,17 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 44.494 linhas em 89 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 44.505 linhas em 89 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.390** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.402 linhas | `wc -l public/js/main.js` |
+| `main.js` | 3.403 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
-| GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
+| GLBs de personagem | 46 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 573 | `git ls-files public/models/anims \| wc -l` |
-| Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
+| Personagens jogáveis | 45, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 16 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 329 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 330 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 72 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.235` | `public/js/version.js` e `package.json` (batem) |
@@ -278,7 +278,7 @@ projeto.
 
 | Regra | Valor | Constante |
 |---|---|---|
-| Facções · personagens | 5 · 44 (B 9 · C 9 · E 8 · F 9 · U 9) | `CHARACTERS` |
+| Facções · personagens | 6 · 45 (B 9 · C 9 · E 8 · F 9 · M 1 · U 9) | `CHARACTERS` |
 | Mapas no menu | 16 — 2 abrem em rodadas, **14 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
