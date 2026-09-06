@@ -4526,7 +4526,11 @@ export class Game {
     if (d < 0.8) return true;
     const sim = { x: b.pos.x, y: b.pos.y, z: b.pos.z };
     const steps = Math.min(24, Math.ceil(d / 0.3));
-    for (let i = 0; i < steps; i++) { sim.x += (dx / d) * 0.3; sim.z += (dz / d) * 0.3; this._collide(sim, 0.38); }
+    for (let i = 0; i < steps; i++) {
+      sim.x += (dx / d) * 0.3; sim.z += (dz / d) * 0.3;
+      this._collide(sim, 0.38);
+      if (this.world.botLayeredNavigation) sim.y = this.world.groundHeightAt(sim.x, sim.z, sim.y);
+    }
     return Math.hypot(n.x - sim.x, n.z - sim.z) < tol;
   }
   /* COMPONENTES CONEXOS DO GRAFO DE WAYPOINTS (uma varredura por mapa, em cache no world).
@@ -4662,15 +4666,17 @@ export class Game {
        em que ele mais joga: trocar de nó teleportava o alvo de rotação, e a menos de 1,2 m
        do nó o atan2 de um vetor quase nulo vira 180° com meio passo. */
     if (b._hdg === undefined) b._hdg = Math.atan2(dx, dz);
-    if (d > 1.2) {
+    if (d > (W.botLayeredNavigation ? 0.05 : 1.2)) {
       let hd = Math.atan2(dx, dz) - b._hdg;
       while (hd > Math.PI) hd -= Math.PI * 2; while (hd < -Math.PI) hd += Math.PI * 2;
-      b._hdg += hd * Math.min(1, dt * 2.2);
+      b._hdg = W.botLayeredNavigation ? Math.atan2(dx, dz) : b._hdg + hd * Math.min(1, dt * 2.2);
     }
     let dy = (BOT_MOVE2 ? b._hdg : Math.atan2(dx, dz)) - b.yaw;
     while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
     const cturn = dy * Math.min(1, dt * 8);
     b.yaw += BOT_MOVE2 ? Math.max(-YAW_CAP * dt, Math.min(YAW_CAP * dt, cturn)) : cturn;
+    // Em passarelas estreitas, conclui a curva antes de avançar; girar não é ficar preso.
+    if (W.botLayeredNavigation && Math.abs(dy) > 0.7) { b._ctfMoving = 0; b._stuckT = 0; return; }
     const bSlow = this.world.slowAt && this.world.slowAt(b.pos.x, b.pos.z) ? 0.5 : 1;
     const px = b.pos.x, pz = b.pos.z;
     b.pos.x += Math.sin(b.yaw) * BOT_SPEED * bSlow * dt;
@@ -5459,8 +5465,9 @@ export class Game {
   /* O mapa ainda não expõe material sob o pé. Até essa API existir, cada arena
      ganha um piso dominante explícito; água continua tendo precedência espacial. */
   _footstepSurface(pos) {
+    const surface = this.world.footstepSurfaceAt?.(pos.x, pos.z, pos.y);
+    if (surface) return surface;
     if (this.world.slowAt && this.world.slowAt(pos.x, pos.z)) return 'water';
-    if (this.world.footstepSurfaceAt) return this.world.footstepSurfaceAt(pos.x, pos.z, pos.y);
     return {
       ferro_velho: 'gravel', quebrada: 'dirt', corrego: 'dirt', posto_treta: 'gravel',
       obras_prefeitura: 'dirt', parque_treta: 'grass', velho_oeste: 'wood',
@@ -6764,8 +6771,14 @@ export class Game {
 
        5× mais bot travado é regressão que o dono VÊ; o jogador não perde nada, porque
        quem usa o vão é ele. Grafo com camada continua sendo a segunda metade desta
-       frente (BUG-22) — e é exatamente o que falta pra devolver o `yRef` aqui. */
-    b.pos.y = this.world.groundHeightAt(b.pos.x, b.pos.z, this.world.layeredNavigation ? b.pos.y : undefined);
+       frente (BUG-22) — e é exatamente o que falta pra devolver o `yRef` aqui.
+       Exceções opt-in: layeredNavigation (Lajes) e botLayeredNavigation (Amazônia)
+       exigem grafo com camadas e consultas de piso/nó com yRef. A Amazônia também
+       ajusta o rumo CTF antes de avançar em passarelas estreitas. Demais mapas
+       mantêm a política acima e a consulta de piso sem referência de altura. */
+    b.pos.y = this.world.layeredNavigation || this.world.botLayeredNavigation
+      ? this.world.groundHeightAt(b.pos.x, b.pos.z, b.pos.y)
+      : this.world.groundHeightAt(b.pos.x, b.pos.z);
     g.position.copy(b.pos);
     g.rotation.set(0, b.yaw, 0);
     if (b.mesh.isGLB) {
@@ -6861,7 +6874,9 @@ export class Game {
     b.pos.x += wx * spd * dt; b.pos.z += wz * spd * dt;
     this._collide(b.pos, 0.38);
     this._botSeparation(b, dt);   // reusa a despenetração (evita empilhar bots)
-    b.pos.y = this.world.groundHeightAt(b.pos.x, b.pos.z, this.world.layeredNavigation ? b.pos.y : undefined);
+    b.pos.y = this.world.layeredNavigation || this.world.botLayeredNavigation
+      ? this.world.groundHeightAt(b.pos.x, b.pos.z, b.pos.y)
+      : this.world.groundHeightAt(b.pos.x, b.pos.z);
     const moving = Math.hypot(wx, wz) > 0.15 ? 1 : 0;
 
     // TIRO: a rede decide QUANDO; a resolução reusa as primitivas honestas do jogo

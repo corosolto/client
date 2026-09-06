@@ -21,18 +21,48 @@ const ASSETS = Object.freeze({
   armadillo: 'models/ambient/tatu_campo.glb',
   cockroach: 'models/ambient/barata_urbana.glb',
   parrot: 'models/ambient/papagaio_poleiro.glb',
+  /* map2/amazonia (PR #439, geração Mint 25/08 "CS BRASIL - Time Mítico"):
+     9 espécies estáticas — a vida é procedural aqui embaixo. Só entram no
+     preload de quem as usa (AMAZONIA_FAUNA_ASSETS), não no default. */
+  boto: 'models/ambient/boto_amazonia.glb',
+  onca: 'models/ambient/onca_pintada.glb',
+  tucano: 'models/ambient/tucano.glb',
+  preguica: 'models/ambient/preguica.glb',
+  macaco: 'models/ambient/macaco_prego.glb',
+  anta: 'models/ambient/anta.glb',
+  arara: 'models/ambient/arara_vermelha.glb',
+  piranha: 'models/ambient/piranha.glb',
+  carcara: 'models/ambient/carcara.glb',
 });
-export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS).filter(id => !['escadaoCat', 'pipa'].includes(id)));
-const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
-const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio' });
+/* FAVELA_AMBIENCE_ASSETS era `Object.keys(ASSETS)`; virou lista explícita quando
+   ASSETS passou a abrigar também a fauna da amazonia: mapa sem bicho não baixa
+   bicho (BUG-57) — keys(ASSETS) poria 3 MiB extras no preload de todo mapa. */
+export const FAVELA_AMBIENCE_ASSETS = Object.freeze(['rat', 'pigeonGround', 'dog', 'jacare', 'capivara', 'cat', 'chicken', 'cow', 'armadillo', 'cockroach', 'parrot']);
+export const AMAZONIA_FAUNA_ASSETS = Object.freeze(['boto', 'onca', 'tucano', 'preguica', 'macaco', 'anta', 'arara', 'piranha', 'carcara']);
+const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot', boto: 'boto', onca: 'onca', tucano: 'tucano', preguica: 'preguica', macaco: 'macaco', anta: 'anta', arara: 'arara', piranha: 'piranha', carcara: 'carcara' });
+const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', boto: 'boto', onca: 'onça-pintada', tucano: 'tucano', preguica: 'preguiça', macaco: 'macaco-prego', anta: 'anta', arara: 'arara-vermelha', piranha: 'piranha', carcara: 'carcará' });
 const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
 const SHOT_REACTION_RADIUS = 13;
 const DOG_IDLE_TIME = 3;
 /* por tipo: duração do susto e velocidade de fuga/caminhada (vaca larga, gato rápido) */
-const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3 });
+const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3, boto: 1.5, onca: 2.6, tucano: 1.3, preguica: 4, macaco: 1.6, anta: 2.8, arara: 1.4, piranha: 1.2, carcara: 1.5 });
 const QUAD_SPEED = Object.freeze({
   dog: { walk: 1, flee: 3.2 }, cat: { walk: 1.1, flee: 3.6 }, chicken: { walk: .55, flee: 2.6 }, cow: { walk: .75, flee: 2.4 },
   armadillo: { walk: .4, flee: 1.5 },   // tatu é bicho de passo curto; fuga é um trote rápido
+  anta: { walk: .55, flee: 3 }, carcara: { walk: .35, flee: 2.2 },
+});
+/* map2/amazonia: len/yawFix das 9 espécies Mint (cabeça→−Z), derivados geometricamente
+   e calibrados contra jacare=π/2/capivara=0 — verificação visual 3:2 pendente (PR #439). */
+const AMAZONIA_FAUNA_META = Object.freeze({
+  boto: { len: 2.0, yawFix: Math.PI / 2 },
+  onca: { len: 1.5, yawFix: Math.PI / 2 },
+  tucano: { len: .42, yawFix: Math.PI / 2 },
+  preguica: { len: .65, yawFix: Math.PI / 2 },
+  macaco: { len: .42, yawFix: Math.PI },
+  anta: { len: 1.8, yawFix: Math.PI / 2 },
+  arara: { len: .8, yawFix: Math.PI },
+  piranha: { len: .32, yawFix: Math.PI / 2 },
+  carcara: { len: .5, yawFix: Math.PI / 2 },
 });
 
 const loadGLB = (url) => new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
@@ -178,8 +208,10 @@ function normalizeModel(id, model) {
   const size = box.getSize(new THREE.Vector3());
   /* alvo em metros de mundo: altura para bichos que andam de lado pro jogador,
      comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5. */
-  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, escadaoCat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34 }[id] || .5;
-  const dimension = ['rat', 'armadillo', 'cockroach'].includes(id) ? Math.max(size.x, size.z) : size.y;
+  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, escadaoCat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34, ...Object.fromEntries(AMAZONIA_FAUNA_ASSETS.map((id) => [id, AMAZONIA_FAUNA_META[id].len])) }[id] || .5;
+  // amazonia: bicho deitado (boto/onça/anta/piranha/preguiça) normaliza por comprimento
+  const HORIZONTAIS = new Set(['rat', 'armadillo', 'cockroach', 'boto', 'onca', 'anta', 'piranha', 'preguica']);
+  const dimension = HORIZONTAIS.has(id) ? Math.max(size.x, size.z) : size.y;
   const scale = target / Math.max(.001, dimension);
   // dog: altura 1 m => cernelha ~0,6 (ombro 1,83 de 3,09 de altura no GLB bruto)
   const center = box.getCenter(new THREE.Vector3());
@@ -199,7 +231,7 @@ function distanceToSegment(point, start, end) {
 }
 
 class FavelaAmbience {
-  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [] }) {
+  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [], botos = [], oncas = [], tucanos = [], preguicas = [], macacos = [], antas = [], araras = [], piranhas = [], carcaras = [] }) {
     this.map = map;
     this.low = low;
     this.time = 0;
@@ -218,6 +250,15 @@ class FavelaAmbience {
     const armadilloList = low ? armadillos.slice(0, 1) : armadillos;
     const cockroachList = low ? cockroaches.slice(0, 1) : cockroaches;
     const parrotList = low ? parrots.slice(0, 1) : parrots;
+    const botoList = low ? botos.slice(0, 1) : botos;
+    const oncaList = low ? oncas.slice(0, 1) : oncas;
+    const tucanoList = low ? tucanos.slice(0, 1) : tucanos;
+    const preguicaList = low ? preguicas.slice(0, 1) : preguicas;
+    const macacoList = low ? macacos.slice(0, 1) : macacos;
+    const antaList = low ? antas.slice(0, 1) : antas;
+    const araraList = low ? araras.slice(0, 1) : araras;
+    const piranhaList = low ? piranhas.slice(0, 1) : piranhas;
+    const carcaraList = low ? carcaras.slice(0, 1) : carcaras;
     this.animals = [];
     ratList.forEach((config, index) => this._add('rat', config, index));
     pigeonList.forEach((config, index) => this._add('pigeon', config, index));
@@ -228,6 +269,15 @@ class FavelaAmbience {
     armadilloList.forEach((config, index) => this._add('armadillo', config, index));
     cockroachList.forEach((config, index) => this._add('cockroach', config, index));
     parrotList.forEach((config, index) => this._add('parrot', config, index));
+    botoList.forEach((config, index) => this._add('boto', config, index));
+    oncaList.forEach((config, index) => this._add('onca', config, index));
+    tucanoList.forEach((config, index) => this._add('tucano', config, index));
+    preguicaList.forEach((config, index) => this._add('preguica', config, index));
+    macacoList.forEach((config, index) => this._add('macaco', config, index));
+    antaList.forEach((config, index) => this._add('anta', config, index));
+    araraList.forEach((config, index) => this._add('arara', config, index));
+    piranhaList.forEach((config, index) => this._add('piranha', config, index));
+    carcaraList.forEach((config, index) => this._add('carcara', config, index));
     this.reset();
   }
 
@@ -353,7 +403,12 @@ class FavelaAmbience {
       }
       if (animal.type === 'rat' || animal.type === 'cockroach') this._updateRat(animal, dt);
       else if (animal.type === 'pigeon') this._updatePigeon(animal, dt);
-      else if (animal.type === 'parrot') this._updateParrot(animal, dt);
+      else if (animal.type === 'parrot' || animal.type === 'arara' || animal.type === 'tucano') this._updateParrot(animal, dt);
+      else if (animal.type === 'boto') this._updateBoto(animal);
+      else if (animal.type === 'piranha') this._updatePiranha(animal, dt);
+      else if (animal.type === 'preguica') this._updatePreguica(animal);
+      else if (animal.type === 'macaco') this._updateMacaco(animal);
+      else if (animal.type === 'onca') this._updateOnca(animal);
       else this._updateQuad(animal, dt);
       animal.mixer?.update(dt);
     }
@@ -474,6 +529,95 @@ class FavelaAmbience {
     return false;
   }
 
+  /* ── VIDA PROCEDURAL DA AMAZONIA (PR #439): Mint entrega estático, o
+     comportamento mora aqui. Yaw de locomoção = atan2(dir) + yawFix + π
+     (yawFix aponta a cabeça pra −Z, o atan2 trabalha com +Z de frente). ── */
+
+  _noseYaw(animal, dirX, dirZ) {
+    return Math.atan2(dirX, dirZ) + (AMAZONIA_FAUNA_META[animal.type]?.yawFix || 0) + Math.PI;
+  }
+
+  _updateBoto(animal) {
+    /* boto NADA no igarapé: vai-e-vem lento no canal serpenteando em x; o
+       dorso fura a lâmina no topo da oscilação e afunda de novo. */
+    const t = this.time + animal.phase * 7;
+    const tri = Math.abs(((t / 46) % 2) - 1);            // 0→1→0 em 92 s
+    const zz = THREE.MathUtils.lerp(animal.origin.z, animal.to.z, tri);
+    const dirZ = animal.to.z > animal.origin.z ? 1 : -1;
+    const serp = Math.sin(t * .32 + animal.phase * 2);
+    const xx = animal.origin.x + serp * 2.2;
+    const yy = animal.origin.y + Math.sin(t * .11 + animal.phase) * .2;
+    animal.root.position.set(xx, yy, zz);
+    const dx = Math.cos(t * .32 + animal.phase * 2) * 2.2 * .32;
+    const dz = (this.time < animal.alertUntil ? 1.6 : 1) * (tri < .5 ? dirZ : -dirZ);
+    animal.root.rotation.y = this._noseYaw(animal, dx, dz * .4);
+    animal.root.rotation.x = -Math.cos(t * .11 + animal.phase) * .12;
+    animal.state = this.time < animal.alertUntil ? 'flee' : 'swim';
+  }
+
+  _updatePiranha(animal, dt) {
+    /* CARDUME: cada piranha é um animal do mesmo cardume — centro comum
+       (origin), círculo com raio/fase próprios e mesma rotação; tiro perto
+       aperta o raio (meio metro) e solta devagar. */
+    const t = this.time + animal.phase * 3;
+    const alerta = this.time < animal.alertUntil;
+    const raioAlvo = alerta ? animal.radius[0] * .35 : animal.radius[0];
+    animal.rCur = animal.rCur === undefined ? animal.radius[0] : animal.rCur + (raioAlvo - animal.rCur) * Math.min(1, dt * 1.5);
+    const ang = t * (alerta ? 1.5 : .5);
+    const xx = animal.origin.x + Math.cos(ang) * animal.rCur;
+    const zz = animal.origin.z + Math.sin(ang) * animal.rCur;
+    animal.root.position.set(xx, animal.origin.y + Math.sin(t * 2.3 + animal.phase) * .04, zz);
+    animal.root.rotation.y = this._noseYaw(animal, -Math.sin(ang), Math.cos(ang));
+    animal.state = alerta ? 'flee' : 'school';
+  }
+
+  _updatePreguica(animal) {
+    /* pendurada no beiral: flip de Z (modelo Mint vem em pé), pêndulo
+       lentíssimo — preguiça não foge de tiro, é a piada do bicho. */
+    const t = this.time + animal.phase * 11;
+    animal.root.rotation.z = Math.PI + Math.sin(t * .25) * .04;
+    animal.root.rotation.x = Math.sin(t * .11 + 1) * .02;
+    animal.root.rotation.y = animal.phase + (AMAZONIA_FAUNA_META.preguica.yawFix || 0) + Math.PI + Math.sin(t * .05) * .2;
+    animal.state = 'idle';
+  }
+
+  _updateMacaco(animal) {
+    /* macaco-prego PULA entre dois pontos (config pos/to): idle olhando o
+       alvo, salto parabólico; tiro perto antecipa o salto. */
+    const t = this.time;
+    const mid = animal.origin.clone().add(animal.to).multiplyScalar(.5);
+    if (animal.jumpAt === undefined) {
+      const querSaltar = (t + animal.phase * 5) % 3.5 < .08 && t > (animal.idleUntil || 0);
+      if (this.time < animal.alertUntil || querSaltar) {
+        animal.jumpAt = t;
+        animal.jumpFrom = animal.root.position.clone();
+        animal.jumpTo = (animal.hop ? animal.origin : animal.to).clone();
+      } else {
+        const alvo = (animal.hop ? animal.origin : animal.to).clone().sub(mid).setY(0);
+        animal.root.rotation.y += (this._noseYaw(animal, alvo.x, alvo.z) - animal.root.rotation.y) * .08;
+        animal.state = 'idle';
+      }
+    }
+    if (animal.jumpAt !== undefined) {
+      const u = Math.min(1, (t - animal.jumpAt) / .55);
+      animal.root.position.lerpVectors(animal.jumpFrom, animal.jumpTo, u);
+      animal.root.position.y += Math.sin(u * Math.PI) * 1.35;
+      const dir = animal.jumpTo.clone().sub(animal.jumpFrom);
+      animal.root.rotation.y = this._noseYaw(animal, dir.x, dir.z);
+      animal.state = 'jump';
+      if (u >= 1) { animal.hop = !animal.hop; animal.jumpAt = undefined; animal.idleUntil = t + 2.6; }
+    }
+  }
+
+  _updateOnca(animal) {
+    /* onça DEITADA no tronco: não anda — só respira (escala sutil no root,
+       a base fica no lugar porque o pivô está nos pés). */
+    const breathe = 1 + Math.sin(this.time * 1.9 + animal.phase) * .012;
+    animal.root.scale.setScalar(breathe);
+    animal.root.rotation.y = animal.phase + (AMAZONIA_FAUNA_META.onca.yawFix || 0) + Math.PI;
+    animal.state = 'idle';
+  }
+
   snapshot() {
     return this.animals.map((animal) => ({
       id: animal.id, type: animal.type, state: animal.state,
@@ -499,9 +643,12 @@ class FavelaAmbience {
     const armadillo = this.animals.filter((animal) => animal.type === 'armadillo').length;
     const cockroach = this.animals.filter((animal) => animal.type === 'cockroach').length;
     const parrot = this.animals.filter((animal) => animal.type === 'parrot').length;
+    const porTipo = {};
+    for (const animal of this.animals) porTipo[animal.type] = (porTipo[animal.type] || 0) + 1;
+    const amazonia = Object.fromEntries(AMAZONIA_FAUNA_ASSETS.map((id) => [id, porTipo[id] || 0]));
     return {
       map: this.map, low: this.low, gltf: this.animals.length > 0 && this.animals.every((animal) => animal.source === 'gltf'),
-      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, total: rat + pigeon + dog + cat + chicken + cow + armadillo + cockroach + parrot }, meshes, triangles: Math.round(triangles),
+      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, total: this.animals.length, ...amazonia }, meshes, triangles: Math.round(triangles),
     };
   }
 

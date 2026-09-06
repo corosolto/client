@@ -4723,6 +4723,31 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
 - **C10** — `_freeSpot` (`game.js`) ignora colisores com `minY ≥ 1,5`; no mezanino não empurra
   arma para fora de parede. Não mordeu ainda; é armadilha para o próximo mapa com andar de cima.
 
+## Amazônia — revisão de cabanas/fauna e integração, 06/09/2026
+
+Relato: fauna suspensa e parada, cabanas fechadas, bots perdidos. Baseline e
+contraprovas em `docs/reports/AMAZONIA-CABANAS-FAUNA.md`; andamento do grafo
+em `docs/reports/AMAZONIA-VISUAL-CONTINUATION.md`. Testes browser AMH1–4
+medem apoios, interiores, circulação, tiro/parede e movimento temporal.
+`npm run eval:amazonia` mede materiais, rotas, água e fauna real do quintal.
+
+### Amazônia: bots sob palafitas (2026-09-06)
+
+Rotas misturavam chão e piso elevado. A régua real de _updateBot foi de56/71
+no baseline amplo para71/71 nas sementes7 e42. Mutante sem navegação por
+camadas retorna68/71 e27arestas falhas. Correção opt-in somente Amazônia;
+botsim-golden dos demais mapas verde. Detalhes em
+[AMAZONIA-CABANAS-FAUNA.md](docs/reports/AMAZONIA-CABANAS-FAUNA.md).
+
+### Amazônia — VM14: pickups na tora e na margem (corrigido, 2026-09-06)
+
+Em `public/js/map_amazonia.js`, a MP5 da madeireira nascia dentro da pilha
+de toras; o slot inicial central ancorava quatro armas do rack na margem
+inclinada. `pickup-check.mjs amazonia` mediu 71 armas, uma inalcançável e
+quatro abaixo do piso antes da correção. Trocar a ordem dos spawns já existentes
+e posicionar a MP5 ao lado das toras preserva as 71 armas e mede zero falhas.
+O loader que restaura as três linhas anteriores reproduz 1/4/0 falhas.
+Evidência e próximo passo: [continuação](docs/reports/AMAZONIA-VISUAL-CONTINUATION.md).
 ## Menu local do Escadão — resolvido em 06/09/2026
 
 > "ESTA desatualizada com a main e nao da pra testar"
