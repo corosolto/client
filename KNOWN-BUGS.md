@@ -4818,3 +4818,44 @@ Relato literal: “ver o chao de cima estando embaixo, lugates que nao da pra pa
 A escada mais íngreme solicitada revelou saltos involuntários ao descer: `escadao-descent-check.mjs` mediu0,305m de separação e78frames aéreos. `Game._moveEntity` acompanha somente passos descendentes no opt-in `world.snapDownSteps`, preservando salto e queda maior que um passo. Browser real `r4/runtime-delivery` passou12/12travessias, sem perda de apoio nem interseção corporal. Porta, janela e grafo da casa são cobrados por `escadao-home-check.mjs`; porta fechada por mutação reprova. Crítica independente em `r4/browser-delivery` confirmou fechamento do piso, acesso, janela e continuidade visual do beco. Performance/FPS e orçamento AM7 continuam pendentes.
 
 Na revisão antes do merge, o grafo aceitava142arestas incompatíveis com corpo/degrau. A régua agora percorre todas as arestas com a física real, exige chegada dentro das zonas CTF e testa180frames contra a guarda do piso novo. O filtro global de arestas, amostras da passagem exterior leste, vão oeste/pneus e piso contínuo do PATAMAR2 corrigem os casos. Mutantes parede e sem-guarda-p2 reproduzem respectivamente a ligação impossível e a queda num bolsão. A captura de preview também rejeita fonte HTTP divergente do checkout, e a régua visual aceita main/detachedHEAD.
+
+## Regressão de Lajes — correção validada localmente
+
+### BUG-141 · Lajes trava acima de 5×5 no single player · CORRIGIDO LOCALMENTE 06/09
+
+Relato do dono: “fiz um teste no lajes e acima de 5x5 players mesmo no single player o mapa trava. fiz comparacao com o mapa piscina na treta que funciona numa boa em 8x8...”.
+
+**Reprodução:** Chrome/ANGLE Metal M4 Pro, 1536×1024, qualidade med, jogo real com15bots
+(8×8). Antes:83quadros em12,2s, P95391,6ms; Piscina8×8 P9516,9ms. LOS consumiu
+10,88s dos12,2s no Lajes. O perfil em Node isolou a mesma causa sem render/GPU:
+malhas de alvenaria agrupadas por material testavam milhares de triângulos distantes.
+
+**Correção:** `public/js/lajes_raycast_index.js` indexa faixas de12triângulos, uma
+BoxGeometry original, mantendo os lotes renderizados. `lajes_houses.js` instala e
+remove o índice. `map_lajes_authored.js` oferece `rayOccluded`; `_losClear` em
+`public/js/game.js` encerra a busca no primeiro obstáculo no Lajes e conserva
+fumaça e caminho original nos outros mapas. Tiros continuam obtendo todos os
+impactos na ordem nativa. Sem redução de arquitetura, fauna, céu ou jogadores.
+
+**Régua:** `npm run eval:lajes-raycast`, LRP1 crítica em invariants e CI.189raios,
+166comimpacto,13malhas:6.059.736→22.056testes de triângulos (−99,64%), sequência
+idêntica de impactos/face/UV/normal;189consultas de visão idênticas mais fumaça.
+220casos de near/far, sidedness, origem interna/aresta, transformações, drawRange,
+mutação/substituição de dados e descarte. Zero consultas após o primeiro obstáculo.
+Mutantes `linear`, `sem-parede`, `sem-consulta`, `sem-parada` falham nas cláusulas
+respectivas. Limite de trabalho≤10% do linear é orçamento de redução de uma ordem
+para a etapa que consumia~90% do frame; tempo real é medido separadamente, não é
+asserção de desempenho universal no CI.
+
+**Depois:**60s de8×8,3.393quadros/~56FPS, P9533,3ms, sem erros JS; Piscina nessa
+execução longa P9525,3ms. Houve1intervalo RAF de441,2ms; o maior update medido foi
+80,8ms, portanto a pausa isolada não está atribuída a LOS. Não alegar ausência total
+de hitches,60FPS travados, todos os dispositivos ou multiplayer online. Primeiras
+amostras de render.calls/triangles eram do pós e não servem como custo da cena.
+
+**Custo declarado:** árvore e proxies de consulta em memória, construída uma vez por
+mapa; arrays de vértices/índices compartilhados, nenhum lote de render adicional.
+O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame completo;
+otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
+comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
+`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.

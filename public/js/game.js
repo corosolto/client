@@ -5838,7 +5838,7 @@ export class Game {
     const dir = to.clone().sub(from), dist = dir.length();
     if (dist < 0.5) return true;
     this.ray.set(from, dir.normalize()); this.ray.far = dist - 0.3;
-    if (this.ray.intersectObjects(this.world.occluders, false).length > 0) return false;
+    if (this.world.rayOccluded ? this.world.rayOccluded(this.ray) : this.ray.intersectObjects(this.world.occluders, false).length > 0) return false;
     // fumaça bloqueia a visão dos bots: se o segmento cruza uma nuvem opaca, sem linha de visão.
     for (const s of this._smokes) {
       if (!s._opaque) continue;

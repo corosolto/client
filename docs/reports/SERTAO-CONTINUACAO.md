@@ -407,3 +407,23 @@ para Sertão; produção não foi modificada. Sala real local passou300ticks,
 servidor d05c00a e cliente87cf8631; metadados/secret/startup de nós devem ser
 preservados. Só eventual canário vazio após image gate, seguido de health e
 WebSocket real. Não confundir build de imagem com implantação.
+
+### Rebase contra alpha.232 — 2026-09-06
+
+Integração normal da branch `codex/sertao-main` em `origin/main` `b64aa886`.
+Conflitos limitados ao workflow e aos derivados de documentação; o workflow
+preserva o novo gate de raycast de Lajes e a sequência de gates do Sertão.
+Foi restaurada a união de conteúdo em `ambientlife.js`: a integração anterior
+perdera o tipo `calango` durante rebase, embora `map_velho_oeste.js` ainda
+declarasse cinco instâncias. A régua ST5 detectou o defeito com 0 vivos; após a
+correção mede 5. A mutação `sem-calango` volta a deixar apenas ST5 vermelha.
+
+Os failures remotos do head `d8b7584d` foram reproduzidos por leitura dos logs:
+o CI chamava scripts inexistentes `eval:sertao` e `eval:sertao-livestock-runtime`.
+Os seis scripts do Sertão foram restaurados no `package.json`, e os gates do
+Sertão voltaram ao `check:fast`. Pré-matriz na alpha.232: contratos Sertão,
+Velho Oeste, criação, integração e ciclo do céu passaram; seis mutantes Sertão
+foram mordidos isoladamente; contrato CTF2 da Amazônia passou. `build` passou.
+`check:fast` encontrou LAB8g externo: o gerador local de soundscape não registra
+o mapa Amazônia. Não alterar essa frente nesta lane; reavaliar na alpha.233.
+Nenhum navegador, servidor, merge remoto ou deploy foi usado.

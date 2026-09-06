@@ -10,7 +10,10 @@ async function preload(mutant = '') {
   class GLTFLoader { load(url, done) { requests.push(url); done({ scene: new THREE.Group(), animations: [] }); } }
   let source = read('ambientlife.js').replace(/^import .*;$/mg, '').replace(/^export /mg, '');
   if (mutant === 'preload-global') {
-    const changed = source.replace(/Object\.keys\(ASSETS\)\.filter\(id => !\[[^\]]+\]\.includes\(id\)\)/, 'Object.keys(ASSETS)');
+    const changed = source.replace(
+      /const FAVELA_AMBIENCE_ASSETS = Object\.freeze\(\[[^\]]+\]\);/,
+      'const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));',
+    );
     if (changed === source) throw Error('Mutante de preload não aplicado');
     source = changed;
   }

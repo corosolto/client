@@ -1,6 +1,47 @@
 # Lajes visual — continuidade
 
-## Estado corrente: V7 validada localmente; integração remota em fechamento
+## Estado corrente: PAUSADO por coordenação; correção pronta no PR517
+
+Checkpoint de transição 06/09/2026: coordenação pediu pausa para redistribuir todas
+as frentes e concluir até 07/09 aproximadamente 06:55 Lisboa. Objetivo e aprovações
+anteriores preservados; não iniciar trabalho, merge ou deploy até novo despacho.
+
+- Branch `codex/lajes-performance`; alpha.228 incorporada em
+  `9f07a70f7cd3ff2dfa14ccc28fc23564b90d2b7d`, a partir da main
+  `bc8ce4e9`/alpha.228. Árvore limpa após o merge normal e esta atualização.
+- A atualização trouxe Amazônia e documentação gerada; preservou LRP1 na CI e o
+  script `eval:lajes-raycast`. Docs, autoria, LRP1, integração/respawn Lajes,
+  contrato dos mapas, contratos Escadão e build passaram no head alpha.228.
+- PR517 segue OPEN. O head remoto anterior `c26a40cf` ficou conflitante quando a
+  main avançou; o novo head ainda deve ser enviado e submetido ao CI antes do merge.
+  Sem merge ou deploy neste checkpoint.
+- CI do head `ec40d26b` passou em DCO, ratchet, versão, análises, preview Vercel,
+  smoke, portão de navegador e build curto. O build completo reprovou somente CTF2:
+  Amazônia tem uma rota entre spawn B e as bandeiras E/MID/B, embora Lajes mantenha
+  duas. A diferença desta branch contra `origin/main` não toca Amazônia ou CTF; é
+  regressão da main alpha.228, não mascarada nesta frente.
+- CTF2 foi corrigido pela main alpha.230 (`bee6d13e`/PR521). Integração normal no
+  commit `08415068`; documentos regenerados. LRP1, integração e respawn Lajes,
+  contrato dos mapas, docs/autoria e `check:deploy` 37/37 passaram com Node23.
+  O aviso headless da arara da Amazônia não invalida MC1–MC3, que passaram.
+- O remoto de PR517 recebeu somente merges/autofixes de documentação durante esta
+  validação; foi incorporado sem conflito em `37386b3d`. A matriz de código de
+  Lajes permanece a validada neste mesmo head de produção; próximo envio preserva
+  os dois pais e não altera Amazônia/CTF.
+- Candidato pronto para revisão: correção `c1397d67`, quatro mutantes causais,
+  stress 220/220 e 189 raios sem divergências; revisão independente sem bloqueante.
+  Visual V6/V7 aceito preservado, nenhuma simplificação nesta correção. Protótipo
+  de índice com folhas maiores foi rejeitado pelo orçamento e substituído.
+- Browser real 8×8: cerca de 7 para 56 FPS neste equipamento; amostra final 60 s,
+  P95 33,3 ms, um hitch isolado 441,2 ms, zero erros JS. Não validado online.
+  Build pós-main e seis contratos afetados verdes; demais dívidas detalhadas abaixo.
+- Artefatos: `artifacts/lajes-performance/`; relatório `LAJES-PERFORMANCE.md`.
+  Histórico visual e vídeos preservados em `artifacts/lajes-visual/`.
+- Servidor próprio PID68351/porta8147 encerrado; nenhum browser, worker ou despacho
+  automático próprio ativo. CI remoto já disparado pode terminar autonomamente.
+- Próximo marco após despacho: enviar o head alpha.230 limpo para PR517 e aguardar
+  revisão/CI. Não fazer merge ou deploy até o novo CI concluir verde.
+- Retomar servidor se necessário: `node tools/eval/serve.mjs 8147` neste worktree.
 
 Pedido de 06/09/2026 após revisão V6: manter ruas estreitas e apenas campo amplo;
 remover casas azuis, trazer terra e gramados, ratos e baratas, mais pipas e Santos
@@ -17,6 +58,97 @@ anterior. Não publicar resultado parcial nem ignorar falhas.
 - Próximo passo: integração, régua V7 vermelha, ambiência/14-bis/hover, captura real,
   crítica independente, gates atuais, build, atualização PR e merge condicionado.
 - Evidências V6 ficam em `artifacts/lajes-visual/v6/`. Artefatos V7 em `v7/`.
+
+## Retomada: desempenho acima de 5×5 — 06/09/2026
+
+Relato literal: “fiz um teste no lajes e acima de 5x5 players mesmo no single player o mapa trava. fiz comparacao com o mapa piscina na treta que funciona numa boa em 8x8...”.
+Ainda não reproduzido. Objetivo: medir Lajes/Piscina sob carga equivalente, corrigir a causa
+sem perder o visual/ruas aceitos, provar antes/depois e regressão, validar build e revisão.
+Próximo: branch isolada `codex/lajes-performance` a partir da main alpha.226;
+comparação no Game real e browser, CPU por subsistema e crescimento 5×5/8×8.
+Frente principal: MAPAS/MUNDO e BOTS/JOGABILIDADE, somente após perfil identificar causa.
+Artefatos novos: `artifacts/lajes-performance/`. Régua: nenhuma neste marco.
+
+## BUG-141: reprodução e correção em validação
+
+- Branch `codex/lajes-performance`, main alpha.226; marcos de retomada `90870a07` e `9b1f151f`.
+- Browser Chrome/M4 Pro, 1536×1024, med, single player real: Piscina8×8 RAF P95
+  16,9ms; Lajes5×5 199,3ms e Lajes8×8 391,6ms. Amostras12s em
+  `artifacts/lajes-performance/browser-*.json`; não representam estabilidade longa.
+- Node confirmou CPU LOS dominante; alvenaria agrupada testa milhares de triângulos
+  por consulta. Índice de faixas12tri (uma caixa original), sem alterar render/collider:
+  6.059.736→22.056 testes em189raios,166comimpacto; sequência de impactos idêntica.
+  Mutantes linear e sem-parede vermelhos. Primeiro browser corrigido8×8 P95 58,2ms:
+  melhora real, ainda insuficiente para encerrar investigação.
+- Perfil browser residual: varais GLB, custo alto calculando obstáculos além da
+  primeira parede. Hook opcional só Lajes `rayOccluded` agora encerra consulta no
+  primeiro obstáculo; `_losClear` conserva fumaça e demais mapas.189/189consultas
+  comparadas ao Three linear, sem divergências. Novo browser em execução.
+- Crítica independente inicial sem bloqueante no formato estático atual; desempates
+  passaram a preservar ordem original. Falta: stress near/far/transformações, browser
+  prolongado e refutação visual, integração gates/docs, build e checkpoint final.
+- Métricas render.calls=1/draw.triangles=1 dos primeiros scripts são pós-processamento,
+  não custo da cena; não usar como prova de GPU nem de geometria equivalente.
+
+## BUG-141: comportamento e carga prolongada validados
+
+- LRP1 verde: 189 raios, impactos em sequência idênticos; trabalho 6.059.736 → 22.056
+  triângulos. Hook da visão exercitado em 190 chamadas incluindo fumaça. Nenhuma
+  consulta depois do primeiro obstáculo. Stress ampliado 220/220, inclusive troca
+  de geometry/index, needsUpdate, materiais múltiplos, recorte e descarte.
+- Quatro mutantes vermelhos: linear, sem-parede, sem-consulta e sem-parada.
+- Browser sequencial de 60 s: Lajes 8×8, 3.393 quadros / 60,238 s, cerca de 56 FPS,
+  P95 33,3 ms, zero erros JS. Piscina 8×8 P95 25,3 ms nesta rodada. Um intervalo
+  RAF isolado de 441,2 ms permanece registrado; maior update 80,8 ms, sem atribuir
+  esse evento a LOS. Não declarar FPS constante ou validação online.
+- Revisão independente aprovou o código sem bloqueantes. Detalhes e reprodução
+  em `LAJES-PERFORMANCE.md`. Check:fast em execução; próximo build, VM/invariants,
+  restauração dos dados gerados, docs, checkpoint e integração da correção.
+
+## BUG-141: portões locais concluídos e atualização da main
+
+- Checkpoint de produção/régua `c1397d67`; documentação gerada `48f703a2`.
+- Build passou. Check:fast 105/108 no passe inicial; IDs passaram na visão de todos
+  os arquivos-fonte (falso positivo era artefato histórico V7), autoria passou após
+  checkpoint. Somente audio:check permanece limitado ao pack privado incompleto.
+- VM regenerado antes de invariants; auditoria completa terminou com nenhuma falha
+  crítica nova. Dívidas herdadas permanecem no KNOWN-RED, sem afrouxar portões.
+  Dados JSON/overlays gerados preservados em `artifacts/lajes-performance/generated/`
+  e restaurados na árvore de código. Logs build/check-fast/invariants no mesmo diretório.
+- PR517 aberta: https://github.com/corosolto/client/pull/517. Main avançou para
+  `f7f4402e`/alpha.227 (Escadão). Próximo: merge normal, conflitos de documentos/
+  scripts resolvidos preservando a main, regeneração, checks afetados/build e CI final.
+
+## BUG-141: main alpha.227 incorporada
+
+- Merge normal de `f7f4402e`, preservando Escadão, previews e descida de escadas
+  opt-in. Conflitos de documentos resolvidos a partir da main e regeneração;
+  manifesto preserva todos os scripts novos da main e acrescenta somente LRP1.
+- Pós-merge: LRP1, integração Lajes, respawn físico, contrato de mapas, contrato
+  Escadão e descida de escada passaram (6/6); build passou novamente.
+- Próximo: envio final para PR517, conferir checks remotos e integração. Artefatos
+  `gates-main.log`, `build-main.log` e `merge-plan.txt` em `artifacts/lajes-performance/`.
+
+## Encerramento V7 — 06/09/2026
+
+- PR438 saiu de draft e foi mergeada por squash, sem bypass, às 05:01:53 UTC.
+  Commit na main: `70f524937f428ec242177ffd98892062a9e30049`.
+  Head aprovado: `fce94272deb0e1b0591790cd205f1ad32ca5d7b0`, incorporando
+  main `971342e4`/alpha.225. Worktree permanece em `codex/lajes-visual`.
+- Checks obrigatórios build, dco, versao-bumpada e ratchet verdes; portao-browser,
+  smoke-web, CodeQL e Vercel verdes. pr-fast final `34012603547` concluiu com
+  sucesso, incluindo LSP1 (8/8 saídas físicas, 1.334 sondas), MAP2B e Astro build.
+- Preview final: `dpl_EamoAminoc95PFRsk2NVSiWZdWze`, READY. Browser anônimo
+  redireciona ao login da Vercel; não declarar hover remoto validado. Hover local
+  9/9 já validado. Deploy automático de produção pós-merge não foi validado aqui.
+- Recibos e log CI: `artifacts/lajes-visual/v7/merge-receipt.json`,
+  `checks-before-merge.json` e `gates/pr-fast-final.log`. Histórico original segue
+  preservado em `codex/lajes-v7-history-backup`; artefatos V6/V7 mantidos.
+- Vídeo pedido para redes entregue em `/Users/ruben/Downloads/Santos-Dumont-Lajes.mp4`:
+  H.264, 1536×1024, 7,952 s, 2.723.276 bytes. Nenhuma postagem social realizada.
+- Objetivo autorizado concluído: ambiência, preview, integração, conflitos, build,
+  atualização e merge. Limites de GPU, repetição modular e validação local global
+  com JSON antigo permanecem descritos na entrega; não são alegados como resolvidos.
 
 ## Marco V7: integração e primeira validação
 
