@@ -38,4 +38,14 @@ export const LOOK = {
     neblina: { d: 0.0082, solDir: [28, 38, 18], forca: 0.84 },
     grade: { exposicao: 1.60, piso: 0.0048, expAces: 1.70 },
   },
+  velho_oeste: {   // sertão (map2 retheme): fim de tarde quente, sol baixo raspando, ar seco
+    sky: { kind: 'procedural', model: 'dry-afternoon', horizonHold: 0.10, curve: 0.55,
+      halo: 0xe9d0aa, haloStrength: 0.48, haloFocus: 7 },
+    horizonte: 0xc7b59b,   // eval:look mede a banda da DataTexture usada pelo jogo
+    zenite: 0x7896ad,
+    sol: { cor: 0xffe0b5, i: 1.9, pos: [-30, 14, -18] },
+    hemi: { ceu: 0xdce6ee, chao: 0x7e6a50, i: 1.16 },
+    neblina: { d: 0.0056, solDir: [-30, 14, -18], forca: 0 },
+    grade: { exposicao: 1.48, piso: 0.0050, expAces: 1.58 },
+  },
 };
