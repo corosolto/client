@@ -90,3 +90,5 @@ Assets restaurados: `docs/maps/MANSAO-RECOVERY-ASSETS.json` registra SHA256 e bl
 Capturas em geração: `artifacts/joa-recuperacao/offline/scene.json`, export de 30 GLBs do disco, 826 objetos e 76 texturas. Render Blender não é aprovação de shaders WebGL. Próximo: revisão visual independente, física contínua/CTF, mutações, gates amplos e atualização do PR.
 
 Checkpoint de origem/vegetação: `df0a1295`. Mobília e jardim complementares a seguir, sem alterar os bytes históricos.
+
+Checkpoint de mobília: registrado no histórico da branch; céu corrigido da r2, aves e faixa seguem a mesma origem do inventário. Revisão independente em andamento achou captura entre pisos e dimensões incorretas das paredes com vãos; reprodução em `artifacts/joa-recuperacao/ctf-before.log`. Próximo passo: corrigir esses contratos antes do checkpoint de runtime.
