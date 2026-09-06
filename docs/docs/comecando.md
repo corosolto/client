@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 44.508 linhas em 90 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 44.510 linhas em 90 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.390** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.402 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -50,7 +50,7 @@ esta página envelhecia no primeiro commit — ver
 | Mapas no registro | 16 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
 | Scripts do arnês | 331 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 72 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Scripts de pipeline | 73 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.236` | `public/js/version.js` e `package.json` (batem) |
 
@@ -222,7 +222,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.134 |
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.352 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.354 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |

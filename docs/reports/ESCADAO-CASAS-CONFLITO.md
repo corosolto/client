@@ -54,7 +54,7 @@ node tools/escadao-conflict-offline.mjs artifacts/escadao-casas-conflito/review/
 ```
 
 Cada diretório contém geometria exportada do builder, hashes dos fontes, recibo das câmeras
- e quatro PNGs 1536×1024. A esfera laranja é alvo de diagnóstico, não um objeto do mapa.
+e quatro PNGs 1536×1024. A esfera laranja é alvo de diagnóstico, não um objeto do mapa.
 As imagens finais mostram janela enquadrada e escada lateral livre; no mirante, janela
 central e portas distinguíveis. Há faixas escuras nas quinas e interiores escuros no render.
 Este é um estudo de geometria procedural em Cycles CPU, sem GLBs, texturas, HUD ou renderer
@@ -75,7 +75,17 @@ que omitiam faces de materiais únicos foram descartadas e as capturas foram ref
   atualizado sem regeneração. Esta é pendência real antes de integrar.
 - `audio:check` não passa porque o acervo privado está ausente nesta worktree; não se
   regenerou manifesto vazio. `eval:docsautoria` exige documentação gerada commitada;
-  revalidar após o checkpoint. O script `npm run check` não existe nesta versão.
+  a revalidação após o checkpoint fica em `docsautoria-final.log`. O script `npm run check` não existe nesta versão.
 - Próximo passo de integração: regenerar grafites em uma frente autorizada a usar navegador,
   revisar o resultado em 3:2 com GLBs reais e avaliar exposição nas portas em partida.
   Esta frente entrega refinamento, evidências e PR atualizado, sem merge/release.
+
+## Checkpoint de entrega
+
+Implementação recuperável: `af7d9434`. Durante a revisão o autofix remoto atualizou a
+branch do PR para `751bb359`; o commit local foi reaplicado sobre ela sem conflitos,
+sem merge de PR ou release. Build e os oito checks específicos foram reexecutados
+nessa árvore (`build-final.log`, `map-final.log`). A execução ampla anterior aprovou
+122/125 passos; `audio:check` e `eval:grafitelayout` continuam pendentes pelos motivos
+acima. A terceira falha era somente a exigência de commit de documentação do DOCSAUT.
+Próximo passo desta entrega: publicar os checkpoints e este estado no PR #529.

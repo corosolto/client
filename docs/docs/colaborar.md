@@ -249,7 +249,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.134 |
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.352 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.354 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
