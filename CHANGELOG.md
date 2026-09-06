@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.234`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.235`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -53,6 +53,46 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.235] — 2026-09-06
+
+### Mudado
+- feat(sertao): vila de caatinga com criação animada e preview real (#516)
+- fix(sertao): estabiliza captura da criação no CI
+- chore(docs): regenera bloco derivado (autofix)
+- docs: registra validação alpha.233 do Sertão
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(sertao): restaura loader e índices após rebase
+- fix(sertao): preserva procedência e revisão da criação após rebase
+- fix(maps): regenera grafite e previews após integrar main227
+- fix(audio): inclui Escadão no gerador do laboratório local
+- docs(sertao): registra portões finais e submissão para merge
+- docs(sertao): sincroniza índices e autoria na submissão limpa
+- docs(sertao): registra integração preservada e correção adversarial
+- feat(sertao): preserva menu main e preview real junto ao de Lajes
+- fix(sertao): reutiliza céu procedural por configuração de luz
+- ci(sertao): conecta contratos e evidência de runtime aos portões
+- docs(sertao): registra procedência e pendências explícitas
+- docs(sertao): registra céu horizonte e animação regional
+- docs(sertao): preserva críticas adversariais por rodada
+- docs(sertao): registra referências e régua espacial
+- docs(sertao): registra continuidade e entrega validada
+- docs(sertao): preserva capturas e medições da revisão de mapa
+- docs(sertao): preserva comparações visuais de fauna e horizonte
+- docs(sertao): preserva evidência visual da criação animada
+- build(sertao): preserva derivação reproduzível do calango
+- test(sertao): registra régua de luz e contraste
+- test(sertao): verifica animais e orçamento no jogo servido
+- test(sertao): mede fauna rig e integração sem ampliar preload
+- test(sertao): verifica rotas vegetação e oclusores
+- test(sertao): mede identidade e cobertura competitiva
+- feat(sertao): transforma o arraial preservando rotas e objetivos
+- feat(sertao): integra fauna animada e criação com contato
+- feat(sertao): compõe arquitetura e horizonte de caatinga
+- feat(sertao): adiciona fauna Mint com rig e procedência
+- feat(sertao): adiciona acervo de arquitetura e caatinga
 
 ## [2.0.0-alpha.234] — 2026-09-06
 
