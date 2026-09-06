@@ -86,6 +86,9 @@ for bone in [rig.pose.bones['hand_l'], *rig.pose.bones['hand_l'].children_recurs
     right = bone.name[:-2] + '_r'
     deformation = (rig.matrix_world @ pose[right]) @ (rig.matrix_world @ rig.data.bones[right].matrix_local).inverted()
     desired_left[bone.name] = shift @ mirror @ deformation @ mirror @ rig.matrix_world @ bone.bone.matrix_local
+grip_center = Vector((-.078,-.525,1.485))
+orbit = Matrix.Translation(grip_center) @ Matrix.Rotation(math.radians(-40),4,'Z') @ Matrix.Translation(-grip_center)
+desired_left = {name:orbit @ matrix for name,matrix in desired_left.items()}
 left_matrix = desired_left['hand_l']
 rotation = (left_matrix.to_3x3() @ (rig.matrix_world @ pose['hand_l']).to_3x3().inverted()).to_4x4()
 move_hand('l', left_matrix.translation, rotation)
@@ -123,6 +126,11 @@ bpy.ops.object.mode_set(mode='OBJECT')
 for obj in arm_meshes:
     obj.modifiers.new('M4_POSE_BIND', 'ARMATURE').object = rig
 bpy.context.view_layer.update()
+shape_spec = importlib.util.spec_from_file_location('m4_hands', Path(__file__).with_name('rifles-m4-hands.py'))
+shape = importlib.util.module_from_spec(shape_spec)
+shape_spec.loader.exec_module(shape)
+shape.refine(rig, arm_meshes, OUT)
+bpy.context.view_layer.update()
 
 camera = scene.camera
 camera.data.sensor_fit = 'VERTICAL'
@@ -157,6 +165,14 @@ for obj in scene.objects:
         tex = nodes.new('ShaderNodeTexImage')
         tex.image = bpy.data.images.load(str(texture), check_existing=True)
         mat.node_tree.links.new(tex.outputs['Color'], principled.inputs['Base Color'])
+        height = nodes.new('ShaderNodeTexImage')
+        height.image = bpy.data.images.load(str(texture.with_name(f'{role}-E-height.webp')), check_existing=True)
+        height.image.colorspace_settings.name = 'Non-Color'
+        bump = nodes.new('ShaderNodeBump')
+        bump.inputs['Distance'].default_value = .002
+        bump.inputs['Strength'].default_value = 1
+        mat.node_tree.links.new(height.outputs['Color'], bump.inputs['Height'])
+        mat.node_tree.links.new(bump.outputs['Normal'], principled.inputs['Normal'])
         principled.inputs['Roughness'].default_value = .86
         principled.inputs['Metallic'].default_value = 0
 scene.render.engine = 'CYCLES'

@@ -58,7 +58,10 @@ if destination.is_symlink():
     destination.unlink()
 assert not destination.exists()
 destination.symlink_to(asset)
-for name, source in [('rifles-m4', asset.parent), ('rifles-cs16', inv.OUT / 'cs16-reference')]:
+for name, source in [('rifles-m4', asset.parent), ('rifles-cs16', inv.OUT / 'cs16-reference'),
+                     ('rifles-m4-before-hands', inv.OUT / 'm4-c1-before-hands')]:
+    if not source.is_dir():
+        continue
     link = public / name
     if link.is_symlink():
         assert link.resolve() == source

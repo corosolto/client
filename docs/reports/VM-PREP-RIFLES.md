@@ -1,6 +1,78 @@
 # Preparação offline dos rifles
 
-## Continuação atual — candidata de pose M4, sem aprovação final
+## Continuação atual — revisão de mãos M4 após feedback do dono
+
+Ruben disse **“muito melhor mas a mao e o braço ta bem feia ainda”**.
+Isso aceita a melhora da composição, não aprova mãos, braços ou o viewmodel
+completo. A revisão atual substitui os arquivos de `A/m4-candidate/` no preview
+8160. O estado C1 foi preservado em `A/m4-c1-before-hands/`. A seção C1 abaixo
+é histórica; seus hashes e imagens não representam mais a candidata servida.
+
+- Comparação CS 1.6 e antes/depois: http://127.0.0.1:8160/rifles-m4/review.html.
+- Teste local continua na opção `vmrifles=m4-c1`, com time E e arma M4.
+- GLB atual: `A/m4-candidate/m4-baked-runtime.glb`, SHA-256
+  `2a4a189d89f7c3912e60660d08ab4694dc07886a775e63a265afc1f4ffd197fd`.
+- Próprio Blender: `A/m4-candidate/m4-candidate.blend`; reprodução pelos mesmos
+  scripts C1, agora incluindo `rifles-m4-hands.py`, carregado pela candidata.
+
+### Alteração e medição desta revisão
+
+Apoio girado 40° ao redor do grip vertical, luva afinada no dorso e falanges
+com redução diferenciada por dedo. Vértices a até 4 mm da superfície da arma
+ficam fora dessa escultura local; isso não prova contato fechado ou ausência
+de penetração de triângulos. A manga recebeu ajuste radial e avanço do punho
+esquerdo de 12,98 mm. Mediana de raio no subconjunto medido da manga esquerda:
+49,11 → 35,55 mm; direita: 52,43 → 38,49 mm. São distâncias à linha do antebraço
+num intervalo de projeção que também pode incluir dobras/braço superior, não
+uma medida anatômica de circunferência. Comprimentos ósseos: 269,75 mm por lado.
+
+O primeiro afinamento expôs pele e foi descartado. A comparação por material
+(`trigger-material-id.png`: vermelho=tecido, azul=luva, verde=pele,
+cinza=arma) isolou a pele que atravessava o punho direito. A camada separada
+de pele foi acomodada em direção aos eixos ponderados do esqueleto, conservando
+sua malha/rig; deslocamento máximo de 62,65 mm nessa camada interna do doador.
+Os fragmentos não aparecem mais nos closes examinados. Isso exige nova inspeção
+quando houver movimento e validação dos demais times; o preview desta rodada
+foi composto com E.
+
+UVs de faces do punho foram remapeados para regiões correspondentes dos atlas
+centrais; **UVs das mãos desta revisão não são byte a byte iguais aos C1**.
+Nenhum atlas ou material central foi alterado. O render também passou a ler
+os mapas de relevo centrais com distância 0,002, correspondente ao parâmetro
+existente de `vmhands`; não se declara equivalência de iluminação Blender/Game.
+
+### Evidência validada e pendências preservadas
+
+Comparação estrutural com o GLB C1 confirma geometria/UV/índices da arma,
+transformações da arma e câmera, e parâmetros de câmera **idênticos**.
+A caixa do render passou de `[600,452,1024,768]` para `[585,452,1024,768]`;
+a referência CS permanece `[535,458,1024,768]`. Boca e mira não se moveram.
+`comparison.json` guarda essas verificações e hashes das imagens originais.
+
+Todos os 21.338 vértices exportados conferem com o Blender em CPU, desvio
+máximo 8,37e-7 unidade; a mutação de offsets reprova, com a mesma tolerância
+1e-5. O aumento de vértices exportados inclui seams das UVs. HTTP 200 e hashes
+conferidos para M4, runtime/config locais, mãos centrais e AK; fontes ar/Mint,
+`vmhands.js` e AK golden conferem com o inventário anterior. Sintaxe Python/Node
+e `git diff --check` passaram. `public/` continua sem alterações.
+
+Revisão independente confirmou a limpeza dos fragmentos e a melhora no idle.
+Ainda reprovou conclusão total por dedos arredondados, leitura aberta do punho
+dominante e volume/fenda do braço superior na vista lateral. A região cinza
+no diagnóstico pertence à arma. `boundary-inspection.json` registra apenas
+quatro contornos abertos de sete vértices, extensão máxima 3,49 mm. Após essa
+conferência, o crítico corrigiu o achado: trata-se da empunhadura exposta, não
+de grande buraco na luva. O ajuste restante é de pega/pose, não preenchimento
+indiscriminado da região. Esses achados permanecem pendentes; não se usa a aprovação localizada
+como nota final de mãos/braços. Nenhum navegador foi aberto nesta revisão.
+
+Próximo passo: completar pega/indicador e anatomia da M4, conferir no Game e
+autorar suas ações. Depois executar MD97, carabina, SCAR, FAMAS e M92 pelas
+receitas abaixo. O objetivo completo das seis armas permanece aberto. A revisão
+estática não certifica ações, Game/WebGL ou qualidade final. Continuação a partir
+do checkpoint `17c684d8`, branch `codex/vm-prep-rifles`, mesmo PR #509.
+
+## Histórico C1 — candidata de pose M4, sem aprovação final
 
 Após Ruben dizer “entao vamos lá”, foi produzida uma candidata **própria e
 estática da M4**, disponível por opção de QA no servidor exclusivo 8160.

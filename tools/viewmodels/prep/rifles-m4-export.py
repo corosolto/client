@@ -71,4 +71,16 @@ camera.rotation_euler = (Vector((-.078,-.22,1.51))-camera.location).to_track_qua
 scene.render.resolution_x, scene.render.resolution_y = 768,576
 scene.render.filepath = str(out / 'trigger-close.png')
 bpy.ops.render.render(write_still=True)
+scene.render.engine = 'BLENDER_WORKBENCH'
+scene.display.shading.color_type = 'MATERIAL'
+scene.display.shading.light = 'FLAT'
+for obj in scene.objects:
+    if obj.type != 'MESH':
+        continue
+    for material in obj.data.materials:
+        material.diffuse_color = ((1,0,0,1) if 'Cloth' in material.name else
+                                 (0,0,1,1) if 'Glove' in material.name else
+                                 (0,1,0,1) if obj.name.startswith('GEO_FP_') else (.3,.3,.3,1))
+scene.render.filepath = str(out / 'trigger-material-id.png')
+bpy.ops.render.render(write_still=True)
 print('M4_EXPORT', inv.digest(out / 'm4-baked-runtime.glb'))
