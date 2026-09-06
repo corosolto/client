@@ -147,3 +147,25 @@ O teste de CTF que dependia de `_ctfMoving` foi ajustado para refletir o comport
 Gates verdes nesta rodada: `mansao-runtime-check`, `mansao-ctf-check`, `mansao-beach-check`, `mansao-garden-check`, `mansao-glb-fit`, `mansao-ocean-check`, `mansao-water-check`, `mansao-ambience-check`.
 
 Gate amplo `npm run check:fast` ainda estava em execução quando este marco foi registrado e já sinalizou falhas em `eval:mapcontrato`, `docs:check`, `arch:check`, `audio:check`, `eval:audiofablocal`, `eval:grafitelayout` e `eval:docsautoria`. Esses itens precisam de leitura separada antes de qualquer conclusão de integração total.
+
+### Marco: build de /maps consertado (PR #533, 06/09/2026)
+
+O CI do PR #533 reprovava o build com `TypeError: Cannot read properties of undefined
+(reading 'nome')` em `/maps`. Reproduzido localmente antes do conserto com Node 23
+(`npm run build`): a entrada `mansao` entrou no dataset `MAPAS` de `src/data/jogo.ts`,
+mas o overlay `MAP_EN` de `src/pages/maps.astro` não ganhou a chave — `en(m.id).nome`
+retornava `undefined.nome` no JSON-LD da página. O `/mapas` (PT) não quebra porque lê
+o dataset diretamente.
+
+Correção mínima de catálogo: entrada `mansao` em `MAP_EN` (nome/resumo/detalhe em
+inglês, mesma forma das demais). A prévia `/img/map-previews/mansao.jpg` já existia;
+nenhuma mudança em `public/js/`, CTF por camada, vãos, bot graph ou gates.
+
+Verificação nesta rodada (Node 23):
+
+- `npm run build` — completo, `/maps/index.html` renderiza "Joá's Mansion".
+- `npm run eval:mansao` — verde (suite completa, MA1–MA8 e glb-fit).
+- `npm run docs:check` — DOCS1 verde (26 blocos em 33 marcadores).
+
+Não verificado: browser/SSR ao vivo, `check:fast` completo (falhas herdadas listadas
+no marco anterior seguem sem leitura nova), revisão visual humana.
