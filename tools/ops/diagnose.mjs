@@ -33,7 +33,7 @@
      node tools/ops/diagnose.mjs --json                # saída para máquina
    Flags: --backend=<url> --mapas=all|N|a,b --repeticoes=5 --timeout=ms
           --out=<dir> (padrão artifacts/ops/<data>) --sem-coerencia
-          --aceitar-sem-trafego --gpu --sem-arquivo
+          --aceitar-sem-trafego --gpu|--sem-gpu (padrão: GPU no macOS com Chrome) --sem-arquivo
 
    SAÍDA: 0 tecnicamente verde · 1 vermelho · 3 inconclusivo (alvo inalcançável)
    A prova de que morde: `node tools/ops/selftest.mjs` (mutantes por sintoma).
@@ -46,7 +46,7 @@ import { sondaApi } from './probes/api.mjs';
 import { sondaRanking } from './probes/ranking.mjs';
 import { sondaAssetsRemoto, sondaAssetsLocal } from './probes/assets.mjs';
 import { sondaPartidas } from './probes/match.mjs';
-import { sondaNavegador } from './probes/browser.mjs';
+import { sondaNavegador, modoGpu } from './probes/browser.mjs';
 import { explicar } from './lib/explain.mjs';
 import { veredito, renderMarkdown, renderJson, codigoDeSaida } from './lib/report.mjs';
 import { lerPackage, backendPadrao, RAIZ_PADRAO } from './lib/repo.mjs';
@@ -60,7 +60,7 @@ export function parseArgs(argv) {
   if (!flags.local && !flags.remoto) { flags.local = true; flags.remoto = true; }
   flags.browser = argv.includes('--browser');
   flags.partida = argv.includes('--partida');
-  flags.gpu = argv.includes('--gpu');
+  flags.gpu = argv.includes('--gpu') ? true : argv.includes('--sem-gpu') ? false : null;
   flags.json = argv.includes('--json');
   flags.semArquivo = argv.includes('--sem-arquivo');
   flags.semCoerencia = argv.includes('--sem-coerencia');
@@ -119,7 +119,7 @@ export async function diagnosticar(flags, { log = () => {} } = {}) {
     if (!flags.remoto) limitacoes.push('--browser precisa de um alvo servido pelo Astro/produção (--remoto/--base); pulado');
     else {
       log('▸ navegador (Playwright)');
-      comandos.push(`[${quando}] chromium ${flags.base}/?debug=1${flags.partida ? '&auto=E' : ''} (headless${flags.gpu ? ', gpu' : ', swiftshader'})`);
+      comandos.push(`[${quando}] chromium ${flags.base}/?debug=1${flags.partida ? '&auto=E' : ''} (headless, ${modoGpu({ gpu: flags.gpu }).gpu ? 'gpu' : 'swiftshader'})`);
       sondas.navegador = await sondaNavegador(flags.base, { partida: flags.partida, gpu: flags.gpu, timeoutMs: Math.max(flags.timeout, 45_000) });
     }
   } else {

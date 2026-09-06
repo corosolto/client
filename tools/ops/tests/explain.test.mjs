@@ -154,7 +154,7 @@ const asOk = (extra) => ({ sonda: 'assets', total: 2, itens: [{ caminho: 'models
 const blOk = () => ({ sonda: 'boot-local', versaoPackage: '1', versaoJs: '1', indexAstro: { temImportMap: true, temMainJs: true, temOpsJs: true, temColetorDeErros: true }, manifesto: { temOps: true }, coerencia: { exit: 0, problemas: [] } });
 const alOk = (extra) => ({ sonda: 'assets-local', total: 1, itens: [{ caminho: 'models/weapons/ak.glb', grupo: 'armas' }, { caminho: 'models/props/x.glb', grupo: 'props' }], faltando: [], conteudoErrado: [], ...extra });
 const ptOk = (extra) => ({ sonda: 'partidas', fatal: null, timeout: false, partidas: [], comErro: [], semLive: [], semBots: [], ...extra });
-const navOk = (extra) => ({ sonda: 'navegador', indisponivel: false, headless: true, mainReady: true, btnJogar: true, webgl2: true, pageErrors: [], consoleErros: [], requestsFalhas: [], ops: null, partida: null, ...extra });
+const navOk = (extra) => ({ sonda: 'navegador', indisponivel: false, headless: true, gpu: false, mainReady: true, btnJogar: true, webgl2: true, pageErrors: [], consoleErros: [], requestsFalhas: [], ops: null, partida: null, ...extra });
 const partida = (extra) => ({ mapa: 'quebrada', modo: 'rounds', bots: 4, updates: 600, estadoFinal: 'live', tempoJogo: 10, erros: [], ...extra });
 
 const CASOS = [
@@ -227,13 +227,13 @@ const CASOS = [
   ['excecao-no-navegador', 'alto', { navegador: navOk({ pageErrors: ['ReferenceError'] }) }],
   ['btn-jogar-inerte', 'critico', { navegador: navOk({ btnJogar: false }) }],
   ['sem-webgl2', 'aviso', { navegador: navOk({ webgl2: false, webgl1: true }) }],
-  ['sem-webgl2', 'alto', { navegador: navOk({ webgl2: false, webgl1: true, headless: false }) }],
+  ['sem-webgl2', 'alto', { navegador: navOk({ webgl2: false, webgl1: true, gpu: true }) }],
   ['recursos-falhando-no-boot', 'critico', { navegador: navOk({ requestsFalhas: ['/js/game.js 404'] }) }],
   ['recursos-falhando-no-boot', 'medio', { navegador: navOk({ requestsFalhas: ['/img/x.png 404'] }) }],
   ['console-error-no-boot', 'medio', { navegador: navOk({ consoleErros: ['textura'] }) }],
   ['ops-falhas-de-carga', 'medio', { navegador: navOk({ ops: { recursos: { falhas: [{ caminho: '/models/x.glb', status: 404 }] } } }) }],
   ['ops-contexto-perdido', 'alto', { navegador: navOk({ ops: { webgl: { perdidos: 1, restaurados: 0 } } }) }],
-  ['fps-baixo', 'medio', { navegador: navOk({ headless: false, ops: { fps: { amostras: 10, p50: 20, p5: 10, travadas: 3 } } }) }],
+  ['fps-baixo', 'medio', { navegador: navOk({ gpu: true, ops: { fps: { amostras: 10, p50: 20, p5: 10, travadas: 3 } } }) }],
   ['partida-navegador-nao-comeca', 'critico', { navegador: navOk({ partida: { chegouLive: false, ms: null, erro: 'timeout' } }) }],
 ];
 
