@@ -387,3 +387,11 @@ restrito aos cinco frames. docs:check/arch:check passaram após regenerar invent
 Primeira regravação de vídeo expirou no boot240s sem tocar mídia antiga; captura
 agora reconhece guarda de boot e oferece até duas tentativas pelo botão real.
 Segunda gravação entrou live sem guarda. Próximo: validar mídia e hover, entregar.
+
+Entrega validada: captura144frames concluída, recibo contém fonte7e144533 e hashes
+dos dois novos GLBs, errosJS/HTTP vazios. Hover na main8157 passa HOV1/2/3/4/5/6/7/9/10.
+Inventários/checks em c0a6218a. Reporte completo AMAZONIA-FAUNA-AGUA.md, instruções
+AMAZONIA-TESTE-LOCAL.md. Objetivo desta rodada concluído localmente: fauna, saltos,
+canoas e movimento na água; atualizados thumbnail/vídeo real. Próxima ação do dono:
+Cmd+Shift+R no preview8157 e conferir quintal/margem/canal. FPS, gates genéricos
+herdados e publicação continuam pendências separadas; nenhum push/merge/deploy.

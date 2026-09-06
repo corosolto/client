@@ -20,7 +20,9 @@ registrado em `AMAZONIA-HOVER.md`; não foram trocados pelos da branch antiga. F
 os derivados de palafita/vegetação, canoa-rabeta e fauna. A arara de voo e
 `skylife.js` são cópias exatas desta main. As três texturas de chão/madeira/palha e
 as duas plantas antes ausentes agora estão incluídas no overlay. `ambientlife.js` vem do PR: sua diferença para a main
-adiciona a fauna amazônica. Os demais módulos de runtime são da main. Dependências
+adiciona a fauna amazônica. `game.js` mantém a main com um hook de superfície para
+preservar passos aquáticos sem reduzir a velocidade; em seco conserva o classificador
+original. Os demais módulos de runtime são da main. Dependências
 npm usam o node_modules desta mesma worktree; versões do lock são iguais, salvo o
 validador GLTF adicional da revisão. Packs ausentes são links locais para os packs
 já restaurados nesta worktree, preservando os manifestos rastreados da main.
@@ -74,9 +76,18 @@ cd /Users/ruben/csbrasil/worktrees/amazonia-visual
 ```
 
 Esse comando verifica os hashes do menu da main antes de copiar o overlay.
-O manifesto contém 31 arquivos, incluindo todos os assets que faltavam. O preview
+O manifesto contém 33 arquivos, incluindo galinha e pintinho do Mint. O preview
 continua isolado: não significa que PR439 foi integrado na main.
 
 A thumbnail real também toca um clipe silencioso de 6 segundos no hover.
 [Abrir diretamente a seleção](http://127.0.0.1:8157/?tela=maps&map=amazonia&lang=pt&perfilauto=0).
 Recibo/mídia atuais e testes: [AMAZONIA-HOVER.md](AMAZONIA-HOVER.md).
+
+## Fauna e água — segunda rodada
+
+Galinha com três pintinhos no quintal da margem leste (x19, z12), jacaré visível
+na margem próxima (x9, z19), peixes saltando no canal (um no baixo, dois no médio).
+As cinco canoas antigas usam agora o casco aberto com bancos e motor.
+Galinha, pintinhos e jacaré são estáticos; peixes, araras e rabeta distante têm movimento.
+A água rasa usa a velocidade normal; `&amzwaterslow=1` restaura o freio antigo
+apenas para comparar. Evidência: [AMAZONIA-FAUNA-AGUA.md](AMAZONIA-FAUNA-AGUA.md).

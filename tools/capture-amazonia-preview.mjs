@@ -26,7 +26,16 @@ try {
   await page.route('**/*', r => { const u=new URL(r.request().url()); return u.origin!==new URL(base).origin || u.pathname.startsWith('/api/') ? r.abort() : r.continue(); });
   await page.addInitScript(() => localStorage.setItem('awpbr_settings', JSON.stringify({ quality:'med',bots:4,vol:0,speech:false })));
   await page.goto(`${base}/?debug=1&map=amazonia&auto=B,sertanejo&perfilauto=0`, { waitUntil:'domcontentloaded', timeout:120000 });
-  await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout:240000 });
+  const waitForBoot=()=>page.waitForFunction(() => window.__game?.state === 'live' || !document.getElementById('launch-error')?.classList.contains('hidden'), null, { timeout:240000 });
+  await waitForBoot();
+  for(let attempt=0;attempt<2 && await page.locator('#launch-error').isVisible();attempt++){
+    await page.screenshot({path:`${out}/boot-failure.png`});
+    console.log('BOOT: retry through UI');
+    await page.locator('#launch-error-retry').click();
+    await waitForBoot();
+  }
+  if(await page.locator('#launch-error').isVisible()) throw Error('captura inválida: aviso de falha de boot');
+  console.log('Game live; guard hidden');
   await page.waitForFunction(() => window.__game.world.barco.children.length > 0 && window.__game.world.skyLife.stats().glb === 4, null, { timeout:90000 });
   await page.waitForTimeout(3000);
   await page.evaluate(() => {

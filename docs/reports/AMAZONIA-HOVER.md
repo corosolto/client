@@ -8,7 +8,7 @@ inventários em 9f1d70df.
 ## Entrega
 
 - JPEG é o primeiro frame de um clipe real do Game, 960×640, 6 segundos a 24 fps.
-- Vídeo H.264 silencioso de 473.986 bytes. Câmera em órbita discreta sobre o canal,
+- Vídeo H.264 silencioso de 475.537 bytes na regravação da rodada de fauna/água. Câmera em órbita discreta sobre o canal,
   mesma direção visual da captura anterior, sem HUD/arma. Não usa geração de vídeo.
 - Componente reaproveitado da frente Sertão (b917cce1), com registro somente para
   Amazônia. Carrega ao hover/foco por teclado; sai para o poster ao retirar o mouse,
@@ -22,8 +22,11 @@ inventários em 9f1d70df.
 Fonte e recibo atual: `public/img/map-previews/FONTE.md` e
 `public/img/map-previews/amazonia.capture.json`. O recibo anterior
 `AMAZONIA-THUMBNAIL.json` documenta a imagem da rodada anterior, substituída nesta.
-Fonte do mapa continua SHA256 6435500ab916414271c3f531fa21462680a4895cfebd666cdde14cb412cfb74f.
-Nenhuma geometria, física ou regra de partida foi alterada nesta rodada.
+Na entrega inicial do hover, a fonte era SHA256
+6435500ab916414271c3f531fa21462680a4895cfebd666cdde14cb412cfb74f e a geometria não mudou.
+A regravação atual inclui fauna, canoas e ajuste da água documentados em
+`AMAZONIA-FAUNA-AGUA.md`, fonte SHA256
+7e144533e7f23d22838bf50812afc1f1801adb2933df09792d7db7f667e720fa.
 
 ## Verificação
 
