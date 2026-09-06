@@ -24,6 +24,10 @@ anteriores preservados; não iniciar trabalho, merge ou deploy até novo despach
   commit `08415068`; documentos regenerados. LRP1, integração e respawn Lajes,
   contrato dos mapas, docs/autoria e `check:deploy` 37/37 passaram com Node23.
   O aviso headless da arara da Amazônia não invalida MC1–MC3, que passaram.
+- O remoto de PR517 recebeu somente merges/autofixes de documentação durante esta
+  validação; foi incorporado sem conflito em `37386b3d`. A matriz de código de
+  Lajes permanece a validada neste mesmo head de produção; próximo envio preserva
+  os dois pais e não altera Amazônia/CTF.
 - Candidato pronto para revisão: correção `c1397d67`, quatro mutantes causais,
   stress 220/220 e 189 raios sem divergências; revisão independente sem bloqueante.
   Visual V6/V7 aceito preservado, nenhuma simplificação nesta correção. Protótipo
