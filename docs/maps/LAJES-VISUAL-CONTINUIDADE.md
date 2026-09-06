@@ -1,6 +1,34 @@
 # Lajes visual — continuidade
 
-## Estado corrente: regressão de desempenho relatada após V7
+## Estado corrente: PAUSADO por coordenação; correção pronta no PR517
+
+Checkpoint de transição 06/09/2026: coordenação pediu pausa para redistribuir todas
+as frentes e concluir até 07/09 aproximadamente 06:55 Lisboa. Objetivo e aprovações
+anteriores preservados; não iniciar trabalho, merge ou deploy até novo despacho.
+
+- Branch `codex/lajes-performance`; head de produção e remoto PR517
+  `c26a40cfe0416232c33653de6a189bb843dff6ad`, incorpora main `f7f4402e`/alpha.227.
+  Árvore limpa antes deste registro; somente este ledger alterado no checkpoint.
+- Push final confirmado; hooks locais, docs e autoria passaram. PR517 OPEN e
+  MERGEABLE. Snapshot remoto: dco, ratchet, versão e um build verdes; outro build,
+  portao e smoke ainda em execução. CI não acompanhado após pausa. Sem merge.
+- Candidato pronto para revisão: correção `c1397d67`, quatro mutantes causais,
+  stress 220/220 e 189 raios sem divergências; revisão independente sem bloqueante.
+  Visual V6/V7 aceito preservado, nenhuma simplificação nesta correção. Protótipo
+  de índice com folhas maiores foi rejeitado pelo orçamento e substituído.
+- Browser real 8×8: cerca de 7 para 56 FPS neste equipamento; amostra final 60 s,
+  P95 33,3 ms, um hitch isolado 441,2 ms, zero erros JS. Não validado online.
+  Build pós-main e seis contratos afetados verdes; demais dívidas detalhadas abaixo.
+- Artefatos: `artifacts/lajes-performance/`; relatório `LAJES-PERFORMANCE.md`.
+  Histórico visual e vídeos preservados em `artifacts/lajes-visual/`.
+- Servidor próprio PID68351/porta8147 encerrado; nenhum browser, worker ou despacho
+  automático próprio ativo. CI remoto já disparado pode terminar autonomamente.
+- Próximo marco após despacho: conferir CI/reviews e drift da main, atualizar corpo
+  do PR com integração alpha.227/invariants, integrar com head conferido se verde,
+  registrar recibo. Estimativa 15–30 min se CI verde e main sem novo conflito;
+  falha nova de CI exige diagnóstico antes de estimar. Não há bloqueio de código
+  conhecido; entrega depende de CI final e despacho do coordenador.
+- Retomar servidor se necessário: `node tools/eval/serve.mjs 8147` neste worktree.
 
 Pedido de 06/09/2026 após revisão V6: manter ruas estreitas e apenas campo amplo;
 remover casas azuis, trazer terra e gramados, ratos e baratas, mais pipas e Santos
