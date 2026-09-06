@@ -132,3 +132,91 @@ sob o novo laranja foi conferida apenas nesses proxies; a validação 3:2 em Web
 com jogadores reais permanece fora do escopo executado. `tools/eval/look-check.mjs`
 mantém a falha herdada do assado ausente de `sky_amazonia.webp`, sem relação com
 esta mudança.
+
+## BUG-91 — rejeição humana de 07/09: carroças e casas dos spawns
+
+**Rejeição (runtime 3:2, palavras do dono via PR):** (1) "há trechos em que o
+jogador não passa junto às carroças"; (2) "as casas diante dos spawns continuam
+cenográficas e fechadas — quero entrar nelas e usar janelas como posição tática".
+O quality gate estava verde (IN1–IN7, TR1/TR3, SP1–SP9): o defeito era do gate,
+que não media corredor de carroça nem interior diante de spawn. As seis capturas
+de evidência (`~/Documents/screen/`, 23h52–00h00) não puderam ser abertas por
+modelo algum nesta sessão (sem entrada de imagem) — tratadas como evidência dos
+dois sintomas, confirmados pela inspeção de código.
+
+### Carroças — régua antes do conserto
+
+`tools/eval/sertao-wagon-check.mjs` (WA1–WA4, cápsula real 0,38, `_collide` de
+produção, colocações congeladas do fonte). **Antes (HEAD 62bea8b1):** WA1 media
+19,42 / 29,90 / 23,13 m² de área bloqueada invisível por carroça (AABB 2,3×3,2
+contra carroceria visível 1,9×1,71 + lança 0,09); WA2 nenhum corredor lateral em
+nenhuma das três; WA3 travessia traseira zero. **Conserto:** colisor OBB girado
+para carroceria+rodas e lança (`public/js/map_velho_oeste.js`); a carroça oeste
+estava com a lança cravada ~1 m na parede da platibanda-0 e foi espelhada
+(ry=π+0,18) e afastada 0,4 m (z=-19,6), abrindo corredor de ~1,2 m entre casa e
+carroça. **Depois:** WA1 0 m² nas três; WA2 corredor a 2,35–2,90 m do eixo
+(o flanco bloqueado restante é por obstáculo VISÍVEL: barris, casa); WA3 vão
+4,9/4,9/4,2 m. **Mutantes:** `aabb-conservador` → WA1 vermelha; `barreira-spawn`
+→ WA4 vermelha.
+
+Falha latente encontrada de carona: `sertao-spatial-check.mjs` terminava em
+`process.exit()` e truncava stdout assíncrono em pipe nos 8192 bytes exatos que
+o `sertao-traversal-check` lê — o conserto mudou o tamanho do JSON e expôs o
+bug. Trocado por `process.exitCode`.
+
+### Casas dos spawns — fachadas medidas e conversão
+
+Fachadas voltadas a cada respawn (medidas no fonte, CASAS): E em z=-41 olha +z —
+platibanda-0 (-9,2; -25,5; ry=π+0,12) e platibanda-1 (9,6; -26; ry=π-0,17),
+portas na face local +z; B em z=41 olha −z — pedra-7 (-8,4; 24,2; ry=0,14) e
+pedra-8 (9,1; 24,7), portas na face local +z; a geminada (−0,4; 26,2) vira as
+costas ao spawn B (ry≈π). Convertidas **platibanda-1** (a platibanda-0 tem a
+lança da carroça na planta e a placa da venda) e **pedra-7** (a pedra-8 brigaria
+com os fardos da IN6): porta de 1,9 m na fachada do respawn, janela oposta de
+1,4 m com linha de tiro à praça, janelas laterais, paredes segmentadas com
+colisor OBB por parte, piso contínuo, registro em `interiorHouses` com
+`entrance/inside/farWindow/ry`. Sem caixa monolítica; nome de família e
+`parede-casa-N` preservados (ST4/ST6 verdes, ST2 subiu).
+
+A régua `sertao-interiors-check.mjs` foi estendida ANTES da conversão às 4 casas
+(contrato novo vermelho no estado sem interiores): IN1 entrada E saída, IN2 tiro
+E revide (raio recíproco pela janela em altura de olho), IN3 ocupação
+(circulação pelos cantos + posições de tiro), IN4 frestas, IN5 nós internos
+alcançáveis (interiores fora do alinhamento da grade ganham nó centro+soleira
+no build do grafo), IN6 inventário, IN7 varredura. **Dez mutantes** mordem,
+incluindo os novos `fechar-porta-casa` e `fechar-janela-casa`. Ajustes de
+geometria comprados por vermelha: esteios junto à parede (0,25 m) raspavam
+aresta do grafo (IN5); fardo da fileira (13,-31) raspava a faixa de entrada
+(IN1) → movido a (13,8,-31).
+
+`SP3` do `sertao-spatial-check` aprendeu o ramo de casa interior (≥8 partes com
+a tag da casa, centro coerente, ≥4 paredes de altura total) e os mutantes
+`casa-yaw/casa-tag/casa-obb` passaram a mirar casa clássica; os 17 mutantes do
+`--self-test` mordem. `TR3` percorre os 7 interiores pelo `userData.interior`
+(mutante `porta` vermelho, TR1 verde).
+
+### Evidências executadas (BUG-91)
+
+- `npm run eval:sertao-wagon` → WA1–WA4 verdes; `--mutante=aabb-conservador` e
+  `--mutante=barreira-spawn` vermelhos no alvo.
+- `npm run eval:sertao-interiors` → IN1–IN7 verdes com 4 casas; 10 mutantes.
+- `node tools/eval/sertao-spatial-check.mjs --self-test` → SP1–SP9 + 17 mutantes.
+- `node tools/eval/sertao-traversal-check.mjs --offline` → TR1/TR3 (7 percursos);
+  `--mutante=porta` vermelho em TR3.
+- `npm run eval:sertao`, `eval:velhooeste`, `eval:sertao-occlusion`,
+  `eval:sertao-sky-lifecycle`, `eval:spawn` verdes; 6 mutantes de identidade ST
+  mordidos.
+- Captura: `node tools/eval/sertao-interiors-capture.mjs artifacts/sertao-casas/bug91-after`
+  + `Blender --background --python tools/render-sertao-interiors.py` → 12 PNGs.
+- `node tools/eval/sertao-capture-verify-check.mjs` → CV1–CV3 verdes (vãos de
+  porta/janela abertos no enquadramento, lança sem interseção, pisos visíveis).
+
+### Limitações desta rodada
+
+Nenhum navegador aberto; sem merge/release. As 12 capturas não puderam ser
+OLHADAS por nenhum modelo desta sessão (sem suporte a entrada de imagem — nem o
+juiz, nem o MCP de visão): a inspeção foi substituída por `sertao-capture-verify
+-check.mjs`, que mede os mesmos enquadramentos por raio na lista efetiva de
+oclusores. Continua pendente a revisão humana 3:2 em WebGL: leitura das novas
+casas (materiais planos não provam o paupique real), corredores junto às
+carroças e as seis capturas originais do dono.

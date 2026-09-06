@@ -39,7 +39,7 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## Sertão — casas da praça (PR #526, revisão local 06/09)
 
-### BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas · EM INVESTIGAÇÃO 07/09
+### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO OFFLINE 07/09 — revisão humana 3:2 pendente
 
 **Relato literal do dono (runtime 3:2, capturas de 06→07/09 23h52–00h00)**: (1) há
 trechos em que o jogador não passa junto às carroças; (2) as casas diante dos spawns
@@ -55,9 +55,16 @@ invisível de ~1,5 m na traseira e cantos inflamados pela rotação. O PR #526 a
 duas `casaDaPraca` em z=15; as `CASAS` diante dos spawns (platibanda 0/1 ao norte,
 pedra 7/8 e geminada 9 ao sul) mantêm colisor único fechando a planta.
 
-Régua: `tools/eval/sertao-wagon-check.mjs` (WA1–WA4, em escrita) + extensão do
-`sertao-interiors-check.mjs` às casas dos spawns. Mutantes planejados:
-`aabb-conservador`, `barreira-spawn`, `fechar-porta-casa`, `fechar-janela-casa`.
+Régua: `tools/eval/sertao-wagon-check.mjs` (WA1–WA4) + `sertao-interiors-check.mjs`
+estendido às 4 casas. **Antes:** WA1 19–30 m² de área invisível por carroça,
+WA2/WA3 zero; casas dos spawns sem interior. **Depois:** WA1–WA4 e IN1–IN7
+verdes; mutantes `aabb-conservador`, `barreira-spawn`, `fechar-porta-casa`,
+`fechar-janela-casa` (+8 anteriores, +17 espaciais) mordendo. De carona:
+`sertao-spatial-check` truncava stdout em pipe (`process.exit` → `exitCode`).
+Antes/depois, custos e comandos: [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+**Não verificado:** revisão visual humana 3:2 em WebGL — nenhum modelo desta
+sessão recebe imagem; a inspeção das capturas foi por raio no mesmo
+enquadramento (`sertao-capture-verify-check.mjs`, CV1–CV3).
 
 Frestas laterais, obstáculos internos e uma aresta bloqueada por esteio foram
 reproduzidos e corrigidos. Régua: `tools/eval/sertao-interiors-check.mjs`,
