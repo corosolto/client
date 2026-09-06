@@ -83,66 +83,31 @@ Nenhum gráfico que pareça atual substitui a data da última linha observada.
 | Mapas | Uma lane por mapa | não começar Campinho antes do checkpoint; Joá começa pelo resgate cirúrgico do PR #446 fechado, não por uma reautoria |
 | Coordenação/release | Codex | evidência, CI, merge sequencial, release e rollback |
 
-### 6–8/09 — fechar o núcleo que já está em andamento
+### Sprint de 72 horas — 6–8/09
 
-- **Sertão:** atualizar PR516 para a `main` atual, corrigir gates remotos, CI verde, merge e
-  release observada. Este é o único deploy novo antes de o PR estar limpo.
-- **Viewmodel:** o integrador único fecha M4 como decisão binária: candidato legível e com
-  contato/cobertura/reload/idle aprovados, ou permanece fora. Emerson mantém somente os clips
-  3P correspondentes; não muda mãos, câmera ou HUD de 1P.
-- **Míticos:** Cuca fica no experimento privado de retarget aprovado; não entra por métrica
-  parcial. Definir uma lista curta do que é necessário para um PR substituto ao #481.
-- **Escadão:** fechar grafo/horizonte ou explicitamente rebaixar para o próximo lote; não deixar
-  um candidato sem dono bloquear a rotação principal.
-- **Dados:** reconciliar online, sessões e jogadores por round; publicar a data real de cada
-  métrica e o funil de primeira partida.
+**Dia 1 — integrar o que já existe.** Sertão: atualizar o PR #516, resolver seus gates, CI e
+release. O integrador único do viewmodel fecha a matriz 1P em uma passada, sem separar armas,
+mãos, reload, ADS ou HUD entre pessoas. Míticos 3P já têm roster, GLBs, registry e animações no
+produto; a tarefa agora é aceitar ou rejeitar cada exceção visual, não refazer os personagens.
+Cuca permanece fora: a última crítica rejeitou seu grip privado.
 
-### 9/09 — corte de conteúdo e de escopo
+**Dia 2 — dois mapas, mudanças cirúrgicas.** Campo do Morro/Campinho recebe somente os três
+defeitos que bloqueiam rotação. Joá parte do PR #446 fechado, mas recupera uma série mínima sobre
+`main`: primeiro a correção de horizonte/praia que sobreviver ao merge, depois leitura competitiva
+e custo. Não se faz merge dos 1.707 arquivos do ramo antigo nem se abre escopo de fauna extra.
 
-Criar uma release candidate interna com Sertão e tudo que efetivamente passou. Congelar novas
-facções, armas, mapas e mecânicas. A decisão de Míticos/viewmodels é de aceite ou adiamento,
-nunca de “quase pronto”. Gravar uma sessão de captura para trailer e clipes somente com conteúdo
-aceito.
+**Dia 3 — RC e decisão.** Rodar regressão da rotação, 5x5/8x8, custo, boot, áudio e UI; captura
+humana dos mapas e do viewmodel; CI; merge e release sequenciais dos candidatos aprovados. O
+resultado é um RC público, com uma lista explícita do que ficou fora. Escadão entra somente se o
+candidato atual fechar grafo e horizonte no mesmo prazo.
 
-### 10–12/09 — Campo do Morro (Campinho)
+### Depois do sprint — 9–20/09
 
-- Diagnóstico de entrada: preview 3:2, arte, spawns, rotas, CTF, oclusão, 5x5/8x8 e custo.
-- Corrigir somente os três defeitos que impedem rotação principal; a própria especificação já
-  aponta preview, materiais, mato no campo e bandeirinhas como dívida.
-- Criar mutantes para regressões encontradas, revisão independente e decidir: rotação principal,
-  evento ou laboratório.
-
-### 13–15/09 — Mansão do Joá
-
-- Recuperar do PR fechado #446 (`map2/mansao`, ponta `73cf81c8`), que contém praia, horizonte,
-  interiores e ambiência, mas está 382 commits atrás de `main`, 231 à frente e conflita amplamente.
-  Não tentar merge direto nem repetir as 43 mudanças do PR: separar somente o que sobreviver ao
-  diagnóstico atual e criar uma série pequena sobre `main`.
-- Fazer o diagnóstico de entrada; não começar por fauna/avião/faixa antes de leitura de
-  combate, visada, água, performance e preview.
-- Entregar uma versão competitiva legível; ambiência extra fica apenas se couber no orçamento.
-- Capturar material de trailer apenas após a revisão humana do mapa.
-
-### 16–17/09 — estabilização e mobile gate
-
-- Ruben fecha áudio e UI de alto impacto: boot, escolha de partida, convite, feedback de fim de
-  rodada e erros/reconnect. Sem redesenho grande neste ciclo.
-- Rodar regressão da rotação, dados, assets, áudio e UI; congelar o RC.
-- Executar auditoria mobile em dispositivos reais ou laboratório: tamanho inicial, boot, FPS,
-  memória, toque, reconnect e legibilidade. O resultado é uma decisão de beta, não promessa de
-  lançamento mobile.
-
-### 18–20/09 — lançamento e preparação de campanha
-
-- Teste de carga progressivo GCP/Cloudflare, rollback e limites de salas antes de tráfego pago.
-- Release do RC aprovado; monitorar boot jogável, erro, RTT/FPS e jogadores por round.
-- Produzir um trailer de 30–45 s, seis clipes curtos verticais e screenshots/kit de imprensa;
-  cada peça mostra uma partida real, não render isolado.
-- Agendar duas peças curtas por dia e uma sessão ao vivo por semana. TikTok, Shorts, Reels e X
-  recebem o mesmo material adaptado; LinkedIn fica para engenharia e bastidores.
+Estabilizar o RC, fazer a auditoria mobile e o teste de carga GCP/Cloudflare. Só então produzir
+trailer de 30–45 s, seis clipes verticais e duas peças curtas por dia a partir de partidas reais.
+O material reprovado não entra em campanha.
 
 ### Regra de corte
 
-Em 20/09, só entra na campanha o que tiver build verde, captura real, revisão humana e telemetria
-operacional. O que falhar vira evento/laboratório na próxima janela. Assim o lançamento não herda
-o problema de catálogo desigual nem coloca marketing em cima de um build instável.
+No fim de 8/09, só entra em release o que tiver build verde, captura real, revisão humana e
+telemetria operacional. Essa regra permite velocidade sem repetir o catálogo desigual.
