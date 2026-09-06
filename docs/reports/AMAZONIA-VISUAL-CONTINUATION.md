@@ -446,3 +446,8 @@ Arch e autoria/docs serão regenerados no checkpoint final. Próximo: gates
 finais, revisão independente dos bots e histórico limpo baseado em main.
 A história antiga será preservada em checkpoint/tag; não falsificar trailers
 de commits antigos. AtualizarPR439 por lease após backup, CI e merge autorizado.
+
+Main avançou durante a validação: integrada971342e4 (alpha.225), preservando
+ops/retry novos. Conflitos apenas em blocos gerados, reconstruídos com o gerador.
+Build final anterior e7/7retestes locais passaram; hover integrado verde.
+Próximo checkpoint guarda a história completa antes da integração limpa.
