@@ -1,4 +1,7 @@
-# ZCode GLM 5.3 — Mosin, SVD e SKS após a M4
+# ZCode GLM 5.3 — Mosin, SVD e SKS finais
+
+Leia primeiro `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/claude-lane-prompts/docs/claude-lanes/VIEWMODEL-ZCODE-CORRECAO-FINAL.md`. Entregue as três armas completas,
+com mãos, ações, ADS/enquadramento, integração local e testes; não pare em candidatos.
 
 **Não inicie enquanto a tarefa `VIEWMODEL-ZCODE-M4.md` estiver escrevendo.** Esta
 é a próxima etapa sequencial do catálogo.
@@ -19,7 +22,7 @@ zera o gap das nove ações. Não repita essa arqueologia nem afrouxe a régua.
 
 ## Objetivo desta etapa
 
-Produza candidatos offline separados de Mosin, SVD e SKS a partir da montagem C2,
+Produza versões finais separadas de Mosin, SVD e SKS a partir da montagem C2,
 mantendo cada mecanismo próprio:
 
 - Mosin: ferrolho manual, mão operadora, alimentação suportada e retorno à pega;
@@ -37,14 +40,14 @@ Crie saídas novas dentro de
 `artifacts/viewmodels/prep/precisao/production-zcode/`, uma pasta por arma. Use
 Blender headless, reimporte a GLB e gere folhas 3:2/16:9 por ação e closes externos.
 Preserve hashes e estrutura não relacionados; mantenha mutantes que falhem para
-timing, contato e mecanismo. Não execute builders com `privateRoot` compartilhado,
-não otimize para o runtime e não abra navegador/dev server.
+timing, contato e mecanismo. Integre as três armas e as mãos por time na rota
+autorada da própria branch, com GLBs finais otimizadas e fallbacks. Não execute
+builders com `privateRoot` compartilhado e não abra navegador/dev server.
 
 ## Entrega
 
-Atualize `docs/reports/VM-PREP-PRECISAO.md` com evidência e receita de produção por
+Atualize `docs/reports/VM-PREP-PRECISAO.md` com evidência e resultado final por
 arma. Faça checkpoints pequenos na branch existente, trailers `Agent: ZCode GLM
-5.3` e `Signed-off-by`, push e atualize somente o PR draft #513. Continue usando
-`ready:false` até haver aprovação visual humana e integração. Não faça merge,
-release ou mudança de runtime.
-
+5.3` e `Signed-off-by`, push e atualize somente o PR #513 com implementação, não
+apenas documentação. `ready` só pode mudar quando todos os gates técnicos da arma
+passarem; mantenha o aceite humano como gate separado. Não faça merge ou release.

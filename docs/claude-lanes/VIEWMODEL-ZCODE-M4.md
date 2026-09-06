@@ -1,4 +1,7 @@
-# ZCode GLM 5.3 — M4: fechar recarga e contato offline
+# ZCode GLM 5.3 — M4 final, com mãos e ações completas
+
+Leia primeiro `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/claude-lane-prompts/docs/claude-lanes/VIEWMODEL-ZCODE-CORRECAO-FINAL.md`. A entrega desta tarefa é a M4
+final integrada na própria branch, não apenas candidata ou evidência offline.
 
 Trabalhe exclusivamente em
 `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/vm-prep-rifles`, branch
@@ -20,7 +23,7 @@ interrompida que não pode ser limpa, sobrescrita ou incorporada às cegas.
 
 ## Objetivo desta etapa
 
-Fechar a candidata offline da M4 preservando exatamente o idle/pose aprovado pelo
+Fechar a versão final da M4 preservando exatamente o idle/pose aprovado pelo
 dono, a AK golden, câmera, enquadramento, materiais e identidade de luvas. Corrija
 somente a recarga tática da M4 e o retorno ao idle:
 
@@ -49,17 +52,17 @@ frames do ciclo; os frames 0, 13, 20, 25, 30, 35, 43, 45, 54, 62, 70 e 72 devem
 ter renders 3:2, 16:9 e ângulo oposto. Gere folhas e vídeo offline contínuo se as
 ferramentas locais suportarem, sem abrir navegador ou dev server.
 
-Inspecione visualmente toda a sequência, não apenas os números. Registre como
-pendente tudo que exigir julgamento do Ruben/Astra. Gate verde não é aprovação
-visual. Não altere runtime servido, `game.js`, `authoredvm.js`, `vmhands.js`,
-`vmconfig.js`, HUD, câmera comum, atlas/material compartilhado, assets privados de
-origem ou balanceamento.
+Inspecione visualmente toda a sequência, não apenas os números. Integre a M4 na
+rota autorada da própria branch, com mãos por time, ações completas, ADS e fallback.
+Pode editar os símbolos de runtime/configuração estritamente necessários à M4,
+mantendo commits separados. Não redesenhe atlas/material central, não altere outra
+arma, HUD global, assets privados de origem ou balanceamento.
 
 ## Entrega
 
 Atualize `docs/reports/VM-PREP-RIFLES.md` com entrada, mudanças, hashes, medidas,
 aceites/rejeições, imagens e próximo passo. Faça commit pequeno, com `Agent: ZCode
 GLM 5.3` e `Signed-off-by`, push na branch existente e atualize somente o PR #509.
-Não faça merge, release nem declare os seis rifles prontos. Termine informando os
+Não faça merge ou release. Declare a M4 pronta somente quando arma, mãos, ações,
+ADS, integração e testes estiverem completos. Termine informando os
 arquivos alterados, comandos/resultados, pasta de evidência e limitações.
-

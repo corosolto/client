@@ -36,6 +36,9 @@ provedor: a disponibilidade do GLM desta máquina pertence ao ZCode.
 
 ## Índice
 
+- `VIEWMODEL-ZCODE-CORRECAO-FINAL.md` — escopo posterior do Ruben: arma completa,
+  mãos, ações, ADS, runtime local, testes e PR; prevalece sobre “candidato offline”.
+
 - `COMBATE-HEADSHOT-ABATES-FACA.md`
 - `MITICOS-LOBISOMEM.md`
 - `AMAZONIA-8X8.md`

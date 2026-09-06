@@ -1,4 +1,7 @@
-# ZCode GLM 5.3 — Deagle e revólver .38 offline
+# ZCode GLM 5.3 — Deagle e revólver .38 finais
+
+Leia primeiro `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/claude-lane-prompts/docs/claude-lanes/VIEWMODEL-ZCODE-CORRECAO-FINAL.md`. Entregue as duas armas completas,
+com mãos, ações e integração local; não pare em candidatas offline.
 
 Trabalhe exclusivamente em
 `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/vm-prep-armas-curtas`,
@@ -20,10 +23,10 @@ recarga de carregador da pistola/Deagle para o revólver.
 Meça contato/interseção frame a frame, reimporte cada GLB e gere folhas 3:2/16:9,
 closes e sequência contínua em Blender headless. Escreva
 `docs/reports/VM-PREP-ARMAS-CURTAS.md`, scripts `curtas-*` e artefatos somente em
-`artifacts/viewmodels/prep/armas-curtas/{deagle,revolver38}/`. Não abra browser ou
-dev server. Não altere runtime, pistola aprovada, mãos/atlas/materiais centrais,
-câmera/HUD, balanceamento ou fontes privadas. Mantenha `ready:false`.
+`artifacts/viewmodels/prep/armas-curtas/{deagle,revolver38}/`. Integre GLBs finais,
+mãos por time, ações, ADS/enquadramento, configurações e fallbacks na própria
+branch. Não abra browser/dev server, não altere a pistola aprovada, não redesenhe
+atlas/materiais centrais e não mude HUD global, balanceamento ou fontes privadas.
 
 Faça checkpoints pequenos por arma com `Agent: ZCode GLM 5.3` e `Signed-off-by`,
-push e abra um PR draft próprio para a lane. Não faça merge ou release.
-
+push e abra um PR próprio com implementação e testes completos. Não faça merge ou release.

@@ -1,4 +1,7 @@
-# ZCode GLM 5.3 — AWP offline
+# ZCode GLM 5.3 — AWP final, com mãos e mecanismo
+
+Leia primeiro `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/claude-lane-prompts/docs/claude-lanes/VIEWMODEL-ZCODE-CORRECAO-FINAL.md`. Entregue a AWP completa e
+integrada na própria branch, não apenas candidata offline.
 
 Trabalhe exclusivamente em
 `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/vm-prep-awp`, branch
@@ -14,7 +17,7 @@ Leia integralmente `AGENTS.md`, `docs/LICOES.md`,
 somente leitura.
 
 Faça inventário reproduzível da AWP própria, doadores, rig, câmera, partes móveis,
-clipes e tempos do Game. Produza uma primeira candidata offline somente nesta
+clipes e tempos do Game. Produza a versão final somente nesta
 worktree: pega, apoio, luneta, ferrolho, ejeção, recarga e retorno ao idle devem
 ser tratados separadamente. Não invente carregador, pente ou gesto que o asset
 não suporte. Meça contato frame a frame por superfície e interseção; valide
@@ -22,11 +25,10 @@ reimportação da GLB e preserve estrutura/hashes alheios. Gere folhas 3:2/16:9,
 closes e sequência contínua com Blender headless, sem browser/dev server.
 
 Escreva `docs/reports/VM-PREP-AWP.md`, scripts novos `awp-*` e artefatos somente em
-`artifacts/viewmodels/prep/awp/`. Não altere runtime servido, mãos/atlas/materiais
-compartilhados, câmera/HUD, balanceamento ou assets privados de origem. Mantenha
-`ready:false` e registre o julgamento visual humano como pendente.
+`artifacts/viewmodels/prep/awp/`. Integre GLB final, mãos por time, ações, ADS/luneta
+e configuração da AWP na própria branch. Não redesenhe atlas/materiais centrais,
+não altere HUD global, balanceamento ou assets privados de origem.
 
 Faça commit pequeno com `Agent: ZCode GLM 5.3` e `Signed-off-by`, push e abra um
-PR draft próprio contra a base técnica adequada, explicando que é candidata
-offline e que a integração final será sequencial. Não faça merge ou release.
-
+PR próprio contra a base técnica adequada, com implementação e testes completos;
+a promoção conjunta continua sequencial. Não faça merge ou release.
