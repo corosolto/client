@@ -154,6 +154,7 @@
     "eval:nosgemeos": "node tools/eval/nos-gemeos-check.mjs",
     "eval:netcode": "node tools/eval/netcode-check.mjs",
     "eval:analytics": "node tools/eval/player-analytics-check.mjs",
+    "eval:telemetrytransport": "node tools/eval/telemetry-transport-check.mjs",
     "eval:online": "node tools/eval/online-counter-check.mjs",
     "eval:netcodecbin": "node tools/eval/netcodec-check.mjs",
     "eval:assetfetch": "node tools/eval/asset-fetch-check.mjs",

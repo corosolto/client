@@ -66,6 +66,22 @@ jobs:
       - name: probe do banco e schema de telemetria
         run: |
           node --input-type=module - <<'NODE'
+          const backend = 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
+          const origin = 'https://www.csbrasil.online';
+          const preflight = await fetch(`${backend}/api/telemetry`, {
+            method: 'OPTIONS',
+            headers: {
+              origin,
+              'access-control-request-method': 'POST',
+              'access-control-request-headers': 'content-type',
+            },
+          });
+          const corsBeaconOk = preflight.status === 204
+            && preflight.headers.get('access-control-allow-origin') === origin
+            && preflight.headers.get('access-control-allow-credentials') === 'true';
+          console.log(JSON.stringify({ corsBeaconOk, status: preflight.status }));
+          if (!corsBeaconOk) process.exit(1);
+
           const response = await fetch('https://www.csbrasil.online/api/health');
           const body = await response.json().catch(() => ({}));
           console.log(JSON.stringify(body));
