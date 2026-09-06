@@ -1,0 +1,24 @@
+{
+  "sourceSHA256": "6435500ab916414271c3f531fa21462680a4895cfebd666cdde14cb412cfb74f",
+  "camera": {
+    "pos": [
+      -8,
+      8,
+      31
+    ],
+    "target": [
+      3,
+      2,
+      -5
+    ],
+    "fov": 65
+  },
+  "quality": "med",
+  "url": "http://127.0.0.1:8157/?debug=1&map=amazonia&auto=B,sertanejo&perfilauto=0",
+  "source": "Game.renderer canvas; HUD DOM e viewmodel omitidos",
+  "sha256": "0d113d0900cd90a5a25e54e772f51dd8a8fea145764f47257c30fdcf7ebc8d6b",
+  "size": [
+    960,
+    640
+  ]
+}

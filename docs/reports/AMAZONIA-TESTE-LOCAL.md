@@ -8,14 +8,17 @@ até uma partida real, sem `auto=` nem desvio das telas de seleção.
 ## Origem do preview
 
 Snapshot de `origin/main` em `695557906bcf6a8a3a80e8baf4c434d17d492944`
-(alpha.223), com o builder da revisão local `a829b4b6` e suas dependências de mapa.
+(alpha.223), com o builder atualizado desta rodada e suas dependências de mapa.
+Recibo do código/capturas em `AMAZONIA-FEEDBACK-2026-09-06.md`.
 Está em `artifacts/amazonia-visual/main-preview/`, dentro da worktree autorizada.
 Não é uma nova worktree Git; não houve merge, rebase, push ou alteração da original.
 A branch `codex/amazonia-visual` continua baseada no PR439.
 
 `index.astro`, `main.js`, `style.css` e `characters.js` coincidem byte a byte com
 essa main. Foram acrescentados o registro/LOOK da Amazônia, builder, céu, thumbnail,
-três props e nove animais. `ambientlife.js` vem do PR: sua diferença para a main
+os derivados de palafita/vegetação, canoa-rabeta e fauna. A arara de voo e
+`skylife.js` são cópias exatas desta main. As três texturas de chão/madeira/palha e
+as duas plantas antes ausentes agora estão incluídas no overlay. `ambientlife.js` vem do PR: sua diferença para a main
 adiciona a fauna amazônica. Os demais módulos de runtime são da main. Dependências
 npm usam o node_modules desta mesma worktree; versões do lock são iguais, salvo o
 validador GLTF adicional da revisão. Packs ausentes são links locais para os packs
@@ -39,8 +42,9 @@ ASTRO_DEV_BACKGROUND=0 /opt/homebrew/opt/node/bin/node node_modules/astro/bin/as
 ```
 
 Use a porta apenas se estiver livre; não encerre servidores de outras frentes.
-O snapshot não recebe mudanças futuras da branch automaticamente. Recrie o preview
-em uma rodada posterior e registre os novos hashes antes de comparar resultados.
+O snapshot não recebe mudanças futuras automaticamente. Use a sincronização
+descrita abaixo para o mapa; uma atualização da base main exige novo snapshot
+e novos hashes antes de comparar resultados.
 
 ## Correção da orientação anterior
 
@@ -53,3 +57,21 @@ A porta 8156 usa Astro sobre a branch do PR e renderiza seus dez cards; seu menu
 é o da base do PR, não o da main. O mesmo fluxo até `state=live` também passou
 nessa porta, sem pageerror (`menu-astro.json`). Quatro facções continuam marcadas
 EM PRODUÇÃO conforme o catálogo dessa branch. Para o menu da main, use 8157.
+
+## Rodada de feedback concluída
+
+Atualize a página com Cmd+Shift+R. O thumbnail agora é captura do mapa real.
+Suba pela escada da passarela e pelo novo lance lateral até a varanda da palafita.
+As araras voam acima da mata; a canoa navega ao sul, na continuação do rio além
+da área jogável. Qualidade Baixa conserva duas araras e o barco.
+
+Após novas mudanças do mapa, sincronize o snapshot existente com:
+
+```sh
+cd /Users/ruben/csbrasil/worktrees/amazonia-visual
+/opt/homebrew/opt/node/bin/node tools/amazonia-preview-sync.mjs
+```
+
+Esse comando verifica os hashes do menu da main antes de copiar o overlay.
+O manifesto contém 27 arquivos, incluindo todos os assets que faltavam. O preview
+continua isolado: não significa que PR439 foi integrado na main.

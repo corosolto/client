@@ -198,3 +198,11 @@ Próximo aceite exige resolver/verificar falhas visuais, reconciliar os três ga
 de mapa novo e obter janela exclusiva para performance e escuta humana da ambiência.
 Eventual PR deve partir desta branch isolada contra map2/amazonia, após revisão;
 nenhum PR novo foi aberto nesta execução.
+
+## Atualização após feedback humano — 06/09/2026
+
+A rodada posterior corrigiu os acessos às varandas, acrescentou mata e vida
+ambiente e substituiu o thumbnail por captura real. Resultados e limites atuais:
+[AMAZONIA-FEEDBACK-2026-09-06.md](AMAZONIA-FEEDBACK-2026-09-06.md).
+Este documento preserva a avaliação anterior; a nova revisão visual recebeu 8/10
+no recorte solicitado, sem implicar aprovação integral de performance/publicação.

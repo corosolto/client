@@ -294,3 +294,22 @@ corrigidas e reprovam nos mutantes. Todos os GLBs validados e build passou.
 Relatório consolidado: AMAZONIA-FEEDBACK-2026-09-06.md, recibo do thumbnail adjacente.
 Próximo: commit dos fontes/réguas, regeneração/check dos docs e entrega do link.
 FPS/performance de CPU e ORT1/ALT1/SUP1 continuam sem aceite; não publicar.
+
+Checkpoint de entrega: assets em 5774823c, fontes/réguas em ebfda5c9 e inventários
+regenerados em 070ba900, todos com DCO e Agent: Codex. `docs:check` e `arch:check`
+passaram; `eval:mapid` passou novamente após excluir somente o snapshot local
+arquivado. `eval:docsautoria` passou com mutações e restauração dos arquivos.
+Fonte e thumbnail servidos em 8157 conferidos por
+SHA256 com os recibos; HTTP 200. MAP_check rastreado restaurado ao original para
+não substituir o relatório multi-mapa por medições desta rodada; prova específica
+preservada em artifacts/amazonia-visual/feedback-map-final.json.
+
+Estado final: rodada implementada, validada e pronta para teste humano em 8157.
+Os 101 checks aprovados da execução ampla mais os reruns aprovados de mapid e
+docsautoria deixam somente audio:check pendente nessa lista de 104 (manifest local
+herdado, fora do escopo). Não foi repetida a lista completa após os reruns. Gates
+específicos AMZ/AMV/AMA e MAP1/MAP6 aprovados; ORT1/ALT1/SUP1 do mapa-novo e aceite
+de FPS/CPU permanecem pendentes, conforme relatório. Artefatos ficam locais,
+fora dos commits. Nenhum push/merge/deploy. Próximo passo: feedback humano sobre
+acesso às varandas, fluidez e nova ambiência no link local; para publicar, ainda
+é necessário fechar os aceites pendentes, sem inferir autorização desta rodada.

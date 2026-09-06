@@ -4015,3 +4015,29 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   fixo. O CHR5B contava ARQUIVO, o jogador via CONSTANTE. Corrigido junto.
 - **C10** — `_freeSpot` (`game.js`) ignora colisores com `minY ≥ 1,5`; no mezanino não empurra
   arma para fora de parede. Não mordeu ainda; é armadilha para o próximo mapa com andar de cima.
+
+### Amazônia — relato de navegação, custo e thumbnail · 06/09/2026
+
+Relato literal do dono: “tem varias escadas inatiginveis, mapa lento” e “fora o
+thumbnail que nao reflete o mapa original na selecao de mapas”. Fotos locais:
+`Screenshot 2026-09-06 at 03.16.07.png` e `03.16.21.png`, teste na porta8157.
+Diagnóstico inicial: degraus embutidos em palafita_pro não cobertos por madeiraAt,
+colisor da casa cobre a escada; régua anterior só andava nas escadas procedurais.
+Preview da main também faltava tex_selva/tex_madeira_serragem/tex_palha e os props
+samambaia/heliconia (404 em user-feedback-before/capture.json). Custo observado:
+958542 triângulos de mundo, 478 meshes; não é medição exclusiva de FPS.
+Estado inicial: régua em preparação e defeito aberto, resolvido na validação
+registrada abaixo. Continuidade e critérios de aceite
+em docs/reports/AMAZONIA-VISUAL-CONTINUATION.md; nenhuma aceitação inferida de gates
+anteriores. Pedidos adicionais: mata mais densa, pássaros em voo e barco navegando.
+
+Validação da rodada:51/51percursos reais em cada qualidade med/low, nove varandas
+com acesso contínuo desde o chão, MAP1=0/MAP6=0, dois mutantes de piso/colisor
+reprovam9/9, parede de chapa tem oclusão2/2. O batching perdeu `nonSolidSurface`
+e revelou borda Float32 do pontão durante revisão; ambos corrigidos e mutados.
+Três texturas e duas plantas do preview restauradas; zeroHTTP404. A/B controlado
+compara assets completos: soma de chamadas por sete câmeras−13,8%med/−19,8%low,
+triângulos dos passes−4,8%med/−5,1%low, com30árvores adicionais ao fundo.
+Não equivale a FPS: colisores físicos aumentaram para suportar acessos/guardas,
+e o custo de CPU não foi aceito em sessão exclusiva. Thumb real substituído.
+Relatório: docs/reports/AMAZONIA-FEEDBACK-2026-09-06.md.
