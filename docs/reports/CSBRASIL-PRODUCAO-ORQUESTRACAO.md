@@ -151,6 +151,13 @@ raised, amostra17 (~0,591667s): juntas/palma/alvo L no mundo, clamp R e retornos
 alcance e resíduos do IK. Aceita a hipótese se recorte de alcance e resíduo projetado
 <=1mm; caso contrário investigar convergência/transformações. Esta sonda não aprova Cuca.
 
+Sonda Terra concluída no checkpoint `fa883ed6`: crouch raised/amostra17 aplicou clamp R;
+alvo L pós-clamp pediu 662,193 mm para alcance de 457,494 mm. Resíduo L ficou 241,616 mm
+ao alvo original e 36,917 mm ao projetado após oito iterações. Há recorte de alcance, mas
+o solver ainda não converge no alvo projetado; não atribuir a falha a pesos, contato ou
+`rightGap`. Segunda e última investigação antes de nova decisão: comparar 8/16/32 iterações
+na mesma cadeia/espaço, registrar juntas e rotações. Sem asset/pose/runtime/browser.
+
 ## Registro de consumo e limites operacionais
 
 Snapshot da conta consultado às ~05:52 UTC: janela semanal73% usados, 5.000 créditos,
