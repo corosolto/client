@@ -1,4 +1,4 @@
-import { SERTAO_PREVIEW } from './map_preview_media.js';
+import { SERTAO_PREVIEW } from './sertao_preview_media.js';
 const clips = Object.freeze({ velho_oeste: `/img/map-previews/velho_oeste.mp4?v=${SERTAO_PREVIEW.video}` });
 export const previewRevision = id => id === 'velho_oeste' ? `-${SERTAO_PREVIEW.poster}` : '';
 const bindings = new WeakMap();
