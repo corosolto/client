@@ -435,10 +435,12 @@ Em nova conferência de 06/09, a frente de rifles já publicou a base comum
 `961c70d20a41336a53ba3b9abcc2068d3e7f9eb0`. Isso resolve a pendência anterior:
 não é necessário criar outra referência de base ou publicar a branch integradora.
 
-Publicar `codex/vm-prep-precisao` e abrir PR em rascunho contra essa base, com somente
-este relatório e os seis scripts próprios. Conferir base/head, os sete arquivos e
-nenhum auto-merge. Assets e evidências brutas continuam locais em `A/`; o corpo
-preparado fica em `A/pr-body.md`. Registrar número/URL do PR após a criação.
+PR **#513** aberto em rascunho: https://github.com/corosolto/client/pull/513.
+Head `codex/vm-prep-precisao`, base `codex/vm-prep-base-961c70d2`; somente este
+relatório e os seis scripts próprios. Assets e evidências brutas continuam locais
+em `A/`; o corpo publicado fica em `A/pr-body.md`. Não foi solicitado auto-merge.
+Próximo passo: revisão/incorporação pela integradora; produção por arma segue
+pendente conforme as receitas e os portões registrados acima.
 
 O hook `pre-push` chama `eval:mapcontrato`, cujo harness (`tools/eval/harness.mjs:116`)
 cria `node_modules/three` fora da faixa de escrita autorizada. Esta publicação de
