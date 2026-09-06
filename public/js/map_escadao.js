@@ -911,7 +911,7 @@ export function buildEscadao(scene, T) {
   const blocked = (x, z, inf) => {
     if (insideSolid(x, z, inf)) return true;
     const g = groundHeightAt(x, z);
-    for (const c of colliders) if (x > c.minX - inf && x < c.maxX + inf && z > c.minZ - inf && z < c.maxZ + inf && c.minY < g + 1.6 && c.maxY > g + 0.15) return true;
+    for (const c of colliders) if (x > c.minX - inf && x < c.maxX + inf && z > c.minZ - inf && z < c.maxZ + inf && c.minY < g + 1.5 && c.maxY > g + 0.3) return true;
     return false;
   };
   for (let gx = -HALF_X + 2; gx <= HALF_X - 2; gx += STEP)

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { rotasSeparadas } from './rotas-separadas.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { THREE, bootGame, initTextures } from './harness.mjs';
 
@@ -20,6 +21,17 @@ function measure() {
     passed: reachable.size === nodes.length && routes.every(r => r.reaches) };
 }
 const before = measure();
+for(const x of [-12,12]) {
+  const a=world.nearestWaypoint(x,8.6),b=world.nearestWaypoint(x,7.52);
+  assert.ok(adj[a].includes(b)&&adj[b].includes(a),'Chegada dos becos tem ligação nos dois sentidos');
+}
+const separated=[];
+for(const [team,spawns] of Object.entries(world.spawns))for(const point of world.ctfPoints) {
+  const count=rotasSeparadas(nodes,adj,world.nearestWaypoint(spawns[0].x,spawns[0].z),world.nearestWaypoint(point.x,point.z)).length;
+  separated.push({team,point:point.id,count});
+  assert.ok(count>=2,`CTF2 ${team}→${point.id}: ${count} rotas separadas`);
+}
+writeFileSync(`${out}/separated-routes.json`,JSON.stringify(separated,null,2));
 if (process.argv.includes('--mutante=parede')) {
   const a=world.nearestWaypoint(-16,-4),b=world.nearestWaypoint(-12.6,-4);
   assert.notEqual(a,b);adj[a].push(b);

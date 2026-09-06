@@ -63,3 +63,8 @@ A régua de grafo passou a integrar o CI explicitamente. O gate visual registra 
 Há três ratos e três baratas usando os GLBs do acervo, com um novo trajeto de cada espécie junto ao acesso da casa. `browser-main` confirma carregamento, movimento, piso e ausência de colisão; também registra1100posições de subida/retorno no loop normal em `motion-main`. Essa gravação precede o ajuste final do grafo/patamar. `comparison-delivery` é a comparação anterior ao último ajuste; não deve ser apresentada como captura da geometria final.
 
 O build sobre main e check:deploy37/37 passaram antes das correções finais da revisão. Os recibos posteriores com sufixo release são a referência do fechamento, conforme o ledger.
+
+## Integração final com main alpha.226
+O merge92b68d3f preserva Lajes, seus previews e o adaptador de áudio. A instalação do pack privado agora completa também a ambiência do Escadão com as referências licenciadas já usadas por Quebrada. Testes do helper, fetch em cache/unzip e assets-check real passaram; nenhum áudio novo foi adquirido.
+
+O CI expôs uma divergência entre a tolerância vertical do grafo (15cm) e a física (30cm), que cortava o topo dos dois becos. A correção usa o mesmo intervalo da colisão real:453nós e5012arestas fisicamente válidas, com ao menos duas rotas separadas por6m para todos os pares spawn/bandeira. O mutante com tolerância antiga falha; a revisão independente percorreu subida/descida dos dois becos. Build e integração dos dois mapas passaram.
