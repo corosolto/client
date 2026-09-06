@@ -849,6 +849,13 @@ export function buildVelhoOeste(scene, T) {
 
   settlementGround(root);
   batchSertaoDecor(root, occluders);
+  // Tiros/LOS não recursivos exigem Mesh; copas e tecidos não são cobertura rígida.
+  // Expandir só oclusores existentes, sem proxies: docs/reports/SERTAO-OCLUSAO.md.
+  const solidMeshes = new Set();
+  for (const body of occluders) body.traverse(mesh => {
+    if (mesh.isMesh && mesh.name !== 'copa-juazeiro' && !mesh.name.startsWith('tecido-forro-')) solidMeshes.add(mesh);
+  });
+  occluders.splice(0, occluders.length, ...solidMeshes);
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.sanfona,pos:[-22,2.6,19.6],radius:12,vol:.12}],bioma:'campo'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update,

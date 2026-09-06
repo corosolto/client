@@ -101,9 +101,8 @@ export function settlementGround(root) {
   contacts.computeBoundingSphere(); group.add(contacts);
 }
 
-// Quatro amostras do MESMO albedo, com offsets por célula e transição contínua.
-// Impede a estrada diagonal do tile legado virar listras até o horizonte.
-// Só o solo Sertão usa este shader; ?soil=legacy permite comparação de custo.
+// Quatro amostras do mesmo albedo evitam listras; só afeta o solo do Sertão.
+// Comparação de custo: ?soil=legacy. Evidência em docs/reports/SERTAO-ENTREGA.md.
 export function untileSertaoSoil(material) {
   if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('soil') === 'legacy') return;
   material.onBeforeCompile = shader => {

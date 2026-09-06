@@ -11,7 +11,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 const BASE = process.env.BASE || 'http://localhost:8123';
 const MUT = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
-const EXPECTED = { 'sem-corpo': 'RV1', 'sem-glb': 'RV1', 'varanda-fantasma': 'RV2', 'sem-instancing': 'RV3', 'spawn-exposto': 'RV5', 'emenda-solo': 'RV6', 'venda-madeira': 'RV7', 'trama-repetida': 'RV8', 'solo-chapado': 'RV9', 'laterais-cegas': 'RV10', 'telhado-liso': 'RV10', 'solo-ondulado': 'RV9' };
+const EXPECTED = { 'igreja-sem-oclusao': 'RV11', 'sem-corpo': 'RV1', 'sem-glb': 'RV1', 'varanda-fantasma': 'RV2', 'sem-instancing': 'RV3', 'spawn-exposto': 'RV5', 'emenda-solo': 'RV6', 'venda-madeira': 'RV7', 'trama-repetida': 'RV8', 'solo-chapado': 'RV9', 'laterais-cegas': 'RV10', 'telhado-liso': 'RV10', 'solo-ondulado': 'RV9' };
 if (MUT && !EXPECTED[MUT]) throw Error('Mutante desconhecido');
 const OUT = process.env.ARTIFACT_DIR || `artifacts/sertao-astra/runtime${MUT ? `-${MUT}` : ''}`;
 mkdirSync(OUT, { recursive: true });
@@ -62,11 +62,21 @@ try {
      for (const g of guards) { g.parent.remove(g); w.occluders = w.occluders.filter(o => o !== g); }
    }
    w.root.updateMatrixWorld(true);
+   const church = w.root.getObjectByName('sertao-igrejinha-0');
+   if (!church) throw Error('Igreja não encontrada pelo instrumento');
+   const churchMeshes = new Set(); church.traverse(o=>{if(o.isMesh)churchMeshes.add(o);});
+   if(mutant==='igreja-sem-oclusao') w.occluders=w.occluders.filter(o=>!churchMeshes.has(o));
+   probe.ray=new THREE.Raycaster();probe._smokes=[];
+   const from=new THREE.Vector3(0,1.62,-30),to=new THREE.Vector3(0,1.62,-17);
+   const churchBlocks = !probe._losClear(from,to);
+   const openClear=probe._losClear(new THREE.Vector3(0,1.62,-43),new THREE.Vector3(0,1.62,-42));
+   probe.ray.set(from,to.clone().sub(from).normalize());probe.ray.far=from.distanceTo(to);
+   const churchHits=probe.ray.intersectObjects(w.occluders,false).filter(h=>churchMeshes.has(h.object)).length;
    const direct = [], ray = new THREE.Raycaster();
    for (const [i,a] of w.spawns.E.entries()) for (const [j,b] of w.spawns.B.entries()) {
      const from = new THREE.Vector3(a.x, 1.62, a.z), to = new THREE.Vector3(b.x, 1.62, b.z), distance = from.distanceTo(to);
      ray.set(from, to.clone().sub(from).normalize()); ray.far = distance;
-     if (!ray.intersectObjects(w.occluders, true).length) direct.push([i,j]);
+     if (!ray.intersectObjects(w.occluders, false).length) direct.push([i,j]);
    }
    const soil = w.root.getObjectByName('sertao-solo'), terrain = w.root.getObjectByName('sertao-horizonte');
    if (mutant === 'solo-chapado') { w.root.getObjectByName('sertao-marcas-chao')?.removeFromParent(); soil.material.map = null; soil.material.bumpMap = null; soil.material.needsUpdate = true; }
@@ -86,7 +96,7 @@ try {
    // O tile anterior alternava 128 (trama) e 220–230 (reboco), carimbado 2×2.
    // O dano agora deve ser localizado; o tile de reboco não leva a trama escura.
    const plainPlaster = !!reds?.length && Math.min(...reds) > (128 + 220) / 2;
-   return { bodies, lateralShutters, porches, direct, seamlessSoil, plasterFacades, plainPlaster, gpu: MAPEVAL.renderer.getContext().getParameter(MAPEVAL.renderer.getContext().getExtension('WEBGL_debug_renderer_info').UNMASKED_RENDERER_WEBGL) };
+   return { bodies, lateralShutters, porches, direct, churchBlocks, churchHits, openClear, seamlessSoil, plasterFacades, plainPlaster, gpu: MAPEVAL.renderer.getContext().getParameter(MAPEVAL.renderer.getContext().getExtension('WEBGL_debug_renderer_info').UNMASKED_RENDERER_WEBGL) };
  }, MUT);
  const shots = [['praca',[0,1.62,16],[0,3,-15]],['venda',[-5,1.62,-35],[-10,2,-25]],['poco',[-29,1.62,-21],[-21,2,-13]],['forro',[-13,1.62,15],[-22,2,20]],['leste',[27,1.62,-33],[20,2,-10]],['sul',[0,1.62,38],[1,2,15]],['aerea',[55,65,65],[0,0,0]]];
  const frames = []; let groundStd = null, groundHighRms = null;
@@ -125,6 +135,7 @@ try {
    // não derivado do candidato. Impede manchas suaves passarem só pelo contraste.
    RV9: groundStd > 2.21 * 1.15 && groundHighRms >= 6.31 / 2,
    RV10: spatial.lateralShutters,
+   RV11: spatial.churchBlocks && spatial.churchHits>0 && spatial.openClear,
  };
  const report = { checks, spatial, frames, groundStd, groundHighRms, errors, mutation: MUT || null };
  writeFileSync(`${OUT}/report.json`, JSON.stringify(report, null, 2));
