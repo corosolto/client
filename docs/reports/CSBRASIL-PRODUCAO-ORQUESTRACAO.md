@@ -171,6 +171,20 @@ o solver ainda não converge no alvo projetado; não atribuir a falha a pesos, c
 `rightGap`. Segunda e última investigação antes de nova decisão: comparar 8/16/32 iterações
 na mesma cadeia/espaço, registrar juntas e rotações. Sem asset/pose/runtime/browser.
 
+Segunda sonda Cuca fechada em `814271a7`: reproduzindo escala anatômica 1,06832273 e
+clamp local do runtime, cadeia LeftArm→LeftForeArm→LeftHand gira em todas as rodadas;
+resíduo projetado cai de 37,550 mm (8) para 18,246 (16), 8,335 (32), 3,480 (64), 1,202
+(128) e 0,996 mm (256). É convergência, não espaço/cadeia. Receita ainda NÃO aplicada:
+parametrizar `ik.iterations` e usar256 somente para Cuca candidata, mantendo padrão8;
+antes medir custo por bot/estado e submeter visual+custo a crítica independente.
+
+M4 tactical Terra foi rejeitada no checkpoint `29f07868`, sem tocar idle/runtime/materiais:
+magazine real/readable e reimport/retorno2,4s passam, mas frames13/45 ainda expõem pele
+no punho L e somente polegar fica a<=5mm do pente; indicador/médio/anel/mínimo medem
+13,760/17,434/10,792/6,456mm. Três tentativas cuff sem progresso encerraram a rodada.
+Diagnóstico Astra delimitado foi solicitado para escolher uma única intervenção de
+topologia/skin/pose que resolva cobertura e contato sem maquiar métricas.
+
 ## Registro de consumo e limites operacionais
 
 Snapshot da conta consultado às ~05:52 UTC: janela semanal73% usados, 5.000 créditos,
