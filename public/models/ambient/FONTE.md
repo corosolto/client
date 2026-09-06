@@ -99,3 +99,15 @@ As fotografias de Maranguape e da capela da Fazenda Colônia foram apenas refer�
 - Validação: `node tools/eval/calango-surface-check.mjs` compara a superfície e o hash dos buffers não relacionados ao índice; a mutação `recoloca-triangulo` restaura a face original em memória.
 
 A correção local não resolve nem altera a pendência dos termos específicos de licença e da autoria humana da geração Mint. O snapshot de 05/09 acima identifica o original, enquanto `mint-assets.json` identifica o derivado final.
+
+## Calango quadrúpede — derivado local, 06/09/2026
+
+`calango_quadrupede.glb` deriva exclusivamente do `lagarto_sertao.glb` acima,
+Mint asset`ks7b9n65cxtmvfkxcc8a3rm93d8d4p9j`, mesmo chat/origem. A ferramenta
+`tools/derive-calango-quadruped.mjs` retira a pedra, ajusta quatro apoios, orienta+Z
+e acrescenta morphs e cicloRun autorais. Texturas preservadas byte a byte.
+608.484bytes/4.795tris; SHA256`78cc644d948de4a98da962edf084116c2c124ec5c8284a5cc53075d0e2ef8233`.
+Licença específica e autoria humana herdadas continuam pendentes. Não é CC0 nem
+animação fornecida pelo Mint. Registro `mint-assets.json`, relatório
+`docs/reports/SERTAO-CALANGO-QUADRUPEDE.md`. O calango bípede anterior permanece
+no acervo como evidência, mas foi rejeitado para a fauna em movimento pelo dono.

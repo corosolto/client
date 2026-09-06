@@ -41,7 +41,7 @@
             autoral com material/textura; igreja e caminhão exigem também GLB
             em fonte/disco/preload. O corpo desenhado exige captura de browser.
       ST5  calango registrado: o mapa tem ≥2 calangos vivos na ambiência E o
-            molde calango.glb existe em public/models/ambient/ e está no
+            molde calango_quadrupede.glb existe em public/models/ambient/ e está no
             preload (VELHO_OESTE_AMBIENCE).
       ST6  VARIEDADE DE CASARIO (r3): ≥3 famílias de casa distintas instanciadas
             (`sertao-casa-<familia>-<id>`) e nenhuma família com >60% do total.
@@ -233,7 +233,7 @@ const moldesReais = Object.entries(MOLDES_PROPS).every(([id, file]) =>
   && VELHO_OESTE_PROPS.includes(id));
 
 /* ── ST5: calango registrado (molde + vivos na ambiência) ── */
-const calangoGlb = existsSync(new URL('../../public/models/ambient/calango.glb', import.meta.url));
+const calangoGlb = existsSync(new URL('../../public/models/ambient/calango_quadrupede.glb', import.meta.url));
 const calangoNoPreload = VELHO_OESTE_AMBIENCE.includes('calango');
 let calangos = world.ambience?.animals?.filter((a) => a.type === 'calango') || [];
 if (MUT === 'sem-calango') {
@@ -282,7 +282,7 @@ const clausulas = [
   { id: 'ST4 arraial de pau a pique', ok: casas.length >= PISO_CASAS && igrejaNaPraca && caminhoes.length > 0 && moldesReais && corposAutorais,
     valor: `${casas.length} casas (piso ${PISO_CASAS}) · igrejinha ${igrejaNaPraca ? `na praça (≤${RAIO_PRACA} m)` : igrejinhas.length ? 'FORA da praça' : 'AUSENTE'} · caminhão ${caminhoes.length ? 'presente' : 'AUSENTE'} · autorais ${casasAutorais.length} ${corposAutorais ? 'com parede/material' : 'SEM corpo válido'} · igreja/caminhão GLB ${moldesReais ? 'fonte+disco+preload (visual exige browser)' : 'AUSENTE'}` },
   { id: 'ST5 calango registrado', ok: calangoRegistrado,
-    valor: `${calangos.length} vivos (piso ${PISO_CALANGOS}) · calango.glb ${calangoGlb ? 'existe' : 'AUSENTE'} · preload ${calangoNoPreload ? 'sim' : 'NÃO'}` },
+    valor: `${calangos.length} vivos (piso ${PISO_CALANGOS}) · calango_quadrupede.glb ${calangoGlb ? 'existe' : 'AUSENTE'} · preload ${calangoNoPreload ? 'sim' : 'NÃO'}` },
   { id: 'ST6 variedade de casario',
     ok: familiasDistintas >= PISO_FAMILIAS && totalCasasFam > 0
       && piorDominancia <= TETO_DOMINANCIA * totalCasasFam && moldesFamiliares,

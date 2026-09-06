@@ -2215,6 +2215,30 @@
         ],
         "finalSha256": "bc7a2b9149b4139e9f446b9c5ce44807a64b4a304f28da68808542752e3f4673"
       }
+    },
+    "calango-quadrupede": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/calango_quadrupede.glb"
+      ],
+      "source": {
+        "kind": "mint-chat",
+        "assetId": "ks7b9n65cxtmvfkxcc8a3rm93d8d4p9j",
+        "chatUrl": "https://mint.gg/chat/ph70g5cch8yt9tqm4aj55n2t9d8d59sj",
+        "displayName": "Calango quadrúpede — derivado local do lagarto de pedra",
+        "notes": "Fonte herdada preservada; derivação local remove pedra, orienta +Z, ajusta apoios e acrescenta quatro morph targets e Run. Não é novo rig Mint. Licença específica e autoria humana permanecem pendentes conforme FONTE.md."
+      },
+      "processing": {
+        "provider": "local",
+        "sourceFile": "public/models/ambient/lagarto_sertao.glb",
+        "sourceSha256": "5ef08bdcf2390e44a0e1956568392b2f5885fd450257c077257a50c3b5b4650a",
+        "tools": [
+          "tools/derive-calango-quadruped.mjs"
+        ],
+        "finalSha256": "78cc644d948de4a98da962edf084116c2c124ec5c8284a5cc53075d0e2ef8233",
+        "triangles": 4795,
+        "bytes": 608484
+      }
     }
   }
 }

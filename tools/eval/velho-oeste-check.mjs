@@ -136,31 +136,28 @@ if (mutante === 'colisao-movel' && !collidersMudaram) throw new Error('MUTANTE c
 const motion = tecidos.map((o, i) => Math.abs(o.rotation.x - antes[i]));
 const tecidosMovendo = motion.filter(delta => Number.isFinite(delta) && delta > .01).length;
 const calangosVivos = calangos.length;
-/* Cada calango tem fase própria (0,2/1,6/2,7 s): janela FIXA só pega um na
-   corrida. A janela é calculada POR ANIMAL a partir da sua fase — t com fase
-   0,4 s (meio da rajada) e t+0,4 s ainda em corrida; a parada é a fase 2,4 s. */
-const amostra = (amb, t) => { amb.time = t; amb.update(.05, null); };
-const rajadas = calangos.map(c => {
-  const tRajada = (4.2 - c.phase + .4) % 4.2;
-  amostra(world.ambience, tRajada);
-  const p1 = c.root.position.clone();
-  amostra(world.ambience, tRajada + .4);
-  return c.root.position.distanceTo(p1);
-});
-if (mutante === 'calango-morto') rajadas.length = 0;
-const vidaOk = tecidos.length >= 3 && typeof world.update === 'function'
-  && tecidosMovendo >= 3
-  && calangosVivos >= 2 && rajadas.length >= 2 && Math.min(...rajadas) >= .2;
-/* o outro lado da rajada: em fase de PARADA (≥1,6 s do ciclo) o bicho congela */
-let calangoPara = calangos.length === 0;
-for (const c of calangos) {
-  const tParada = (4.2 - c.phase + 2.4) % 4.2;
-  amostra(world.ambience, tParada);
-  const p1 = c.root.position.clone();
-  amostra(world.ambience, tParada + .4);
-  calangoPara = calangoPara || c.root.position.distanceTo(p1) < .01;
+// Observar movimento contínuo: a duração depende da distância da rota.
+// Janela0,4s mede avanço, e uma pausa real deve manter posição em cada animal.
+world.ambience.reset();
+const histories = calangos.map(() => []);
+const longestRuns = calangos.map(() => 0);
+const pauses = calangos.map(() => false);
+for (let frame = 0; frame < 1800; frame++) {
+  world.ambience.update(1 / 60, null);
+  calangos.forEach((c, i) => {
+    const h = histories[i]; h.push({ position: c.root.position.clone(), state: c.state });
+    if (h.length > 25) h.shift();
+    if (h.length !== 25) return;
+    const distance = h[0].position.distanceTo(h[24].position);
+    if (h.every(s => s.state === 'run')) longestRuns[i] = Math.max(longestRuns[i], distance);
+    if (h.every(s => s.state === 'idle') && distance < .01) pauses[i] = true;
+  });
 }
-if (mutante === 'calango-morto') calangoPara = false;
+const rajadas = mutante === 'calango-morto' ? [] : longestRuns;
+const vidaOk = tecidos.length >= 3 && typeof world.update === 'function'
+  && tecidosMovendo >= 3 && calangosVivos >= 2
+  && rajadas.length >= 2 && Math.min(...rajadas) >= .2;
+const calangoPara = mutante !== 'calango-morto' && pauses.length >= 2 && pauses.every(Boolean);
 
 /* ── OE3: CTF e spawns ── */
 let ctfPoints = world.ctfPoints;

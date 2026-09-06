@@ -56,13 +56,13 @@ if (mutante === 'cache-velho') {
 }
 const urls = [];
 const preload = runInNewContext(`(${preloadSource})`, {
-  ASSETS: { calango: 'models/ambient/calango.glb', rat: 'models/ambient/rat_animated.glb' },
+  ASSETS: { calango: 'models/ambient/calango_quadrupede.glb', rat: 'models/ambient/rat_animated.glb' },
   FAVELA_AMBIENCE_ASSETS: [], templates: new Map(), VERSION: 'version-fixture', console,
   loadGLB: async url => { urls.push(url); return { scene: { traverse() {} }, animations: [] }; },
 });
 await preload(['calango', 'rat']);
-const expectedRevision = createHash('sha256').update(bytes).digest('hex').slice(0, 12);
-const freshCache = urls.includes(`models/ambient/calango.glb?v=${expectedRevision}`) && urls.includes('models/ambient/rat_animated.glb?v=version-fixture');
+const expectedRevision = createHash('sha256').update(readFileSync('public/models/ambient/calango_quadrupede.glb')).digest('hex').slice(0, 12);
+const freshCache = urls.includes(`models/ambient/calango_quadrupede.glb?v=${expectedRevision}`) && urls.includes('models/ambient/rat_animated.glb?v=version-fixture');
 const checks = [{ id: 'CS1', ok: surface, triangles: indices.length / 3, largestArea: Math.max(...areas), indicesSha }, { id: 'CS2', ok: unchanged, retainedSha, structureSha }, { id: 'CS3', ok: freshCache, urls, expectedRevision }];
 for (const check of checks) console.log(`${check.id} ${check.ok ? 'PASSA' : 'FALHA'} ${JSON.stringify(check)}`);
 const failed = checks.filter(check => !check.ok).map(check => check.id);

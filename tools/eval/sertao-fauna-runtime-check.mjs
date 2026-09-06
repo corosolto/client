@@ -14,7 +14,7 @@ try {
   for (const quality of ['med', 'low']) {
     const page = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
     await page.addInitScript(q => localStorage.setItem('awpbr_settings', JSON.stringify({ quality: q })), quality);
-    if (mut === 'glb-ausente') await page.route('**/models/ambient/calango.glb*', route => route.abort());
+    if (mut === 'glb-ausente') await page.route('**/models/ambient/calango_quadrupede.glb*', route => route.abort());
     if (mut === 'low-cheio') await page.route('**/js/map_velho_oeste.js*', async route => {
       const response = await route.fetch(), source = await response.text();
       const body = source.replace("map: 'velho_oeste', low,", "map: 'velho_oeste', low: false,");

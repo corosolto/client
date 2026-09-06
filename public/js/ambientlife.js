@@ -22,10 +22,8 @@ const ASSETS = Object.freeze({
   /* map2/velho-oeste (Sertão da Treta): estático na pedra, escala por
       comprimento como o jacaré/capivara — não entra no preload default. */
   lagarto: 'models/ambient/lagarto_sertao.glb',
-  /* r2: calango de pedreira (Mint, kit sertao) — corre em rajadas empinado.
-     Idem lagarto: escala por comprimento; o tipo `calango` do FavelaAmbience
-     cuida do start-stop procedural (aqui é só o GLB). */
-  calango: 'models/ambient/calango.glb',
+  // Derivado quadrúpede do acervo; postura/clipe: SERTAO-CALANGO-QUADRUPEDE.md.
+  calango: 'models/ambient/calango_quadrupede.glb',
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
 const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot', calango: 'calango' });
@@ -48,7 +46,7 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
   if (!ids || !ids.length) ids = FAVELA_AMBIENCE_ASSETS;
   await Promise.all([...new Set(ids)].filter((id) => ASSETS[id] && !templates.has(id)).map(async (id) => {
     try {
-      const revision = id === 'calango' ? '2088f293ac3e' : VERSION;
+      const revision = id === 'calango' ? '78cc644d948d' : VERSION;
       const gltf = await loadGLB(`${ASSETS[id]}?v=${revision}`);
       let skinned = false;
       gltf.scene.traverse((object) => {
@@ -170,34 +168,35 @@ function fallbackParrot() {
   return group;
 }
 
-  /* r2 (kit sertão): calango EMPINADO de pedreira — pose assinatura, cauda no
-     chão contrabalançando a cabeça erguida. Materiais em cache (SUP1 conta uuid). */
-  const CALANGO_SKIN = [new THREE.MeshStandardMaterial({ color: 0x8a7c5e, roughness: .9 }),
-    new THREE.MeshStandardMaterial({ color: 0x77705a, roughness: .9 })];
-const CALANGO_BELLY = new THREE.MeshStandardMaterial({ color: 0xc9b78d, roughness: .92 });
+const CALANGO_SKIN = [new THREE.MeshStandardMaterial({ color: 0x8a7c5e, roughness: .9 }),
+  new THREE.MeshStandardMaterial({ color: 0x77705a, roughness: .9 })];
 const CALANGO_STRIPE = new THREE.MeshStandardMaterial({ color: 0x4f4636, roughness: .9 });
 function fallbackCalango(index) {
-  const group = new THREE.Group();
-  const pele = CALANGO_SKIN[index % 2], barriga = CALANGO_BELLY;
-  const body = new THREE.Mesh(new THREE.SphereGeometry(.05, 9, 7), pele);
-  body.scale.set(.78, .8, 1.7); body.rotation.x = -.5; body.position.set(0, .075, .02); group.add(body);
-  const belly = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), barriga);
-  belly.scale.set(.66, .66, 1.5); belly.rotation.x = -.5; belly.position.set(0, .066, .028); group.add(belly);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.028, 8, 6), pele);
-  head.position.set(0, .135, .1); group.add(head);
-  const focinho = new THREE.Mesh(new THREE.ConeGeometry(.014, .03, 6), pele);
-  focinho.rotation.x = Math.PI / 2 - .35; focinho.position.set(0, .128, .126); group.add(focinho);
-  for (const side of [-1, 1]) {
-    const perna = new THREE.Mesh(new THREE.CylinderGeometry(.007, .009, .05, 5), pele);
-    perna.rotation.z = side * .3; perna.position.set(side * .021, .028, -.015); group.add(perna);
-    const braco = new THREE.Mesh(new THREE.CylinderGeometry(.004, .005, .03, 5), pele);
-    braco.rotation.set(.4, 0, side * .35); braco.position.set(side * .03, .055, .05); group.add(braco);
+  const group = new THREE.Group(), skin = CALANGO_SKIN[index % 2];
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), skin);
+  body.scale.set(.034, .023, .073); body.position.set(0, .036, .018); group.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), skin);
+  head.scale.set(.026, .022, .036); head.position.set(0, .051, .101); group.add(head);
+  for (let leg = 0; leg < 4; leg++) {
+    const side = leg % 2 ? -1 : 1, front = leg < 2, limb = new THREE.Group();
+    limb.userData.calangoLeg = leg;
+    const points = [new THREE.Vector3(side * .025, .038, front ? .061 : -.031),
+      new THREE.Vector3(side * .051, .014, front ? .045 : -.052),
+      new THREE.Vector3(side * .066, .004, front ? .078 : -.027)];
+    for (let n = 0; n < 2; n++) {
+      const delta = points[n + 1].clone().sub(points[n]);
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(.0035, .0055, delta.length(), 6), skin);
+      mesh.position.copy(points[n]).add(points[n + 1]).multiplyScalar(.5);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize()); limb.add(mesh);
+    }
+    const foot = new THREE.Mesh(new THREE.SphereGeometry(1, 7, 5), skin);
+    foot.scale.set(.015, .003, .012); foot.position.copy(points[2]); limb.add(foot); group.add(limb);
   }
-  const tail = new THREE.Mesh(new THREE.CylinderGeometry(.011, .002, .16, 5), pele);
-  tail.rotation.x = Math.PI / 2 - .18; tail.position.set(0, .012, -.075); group.add(tail);
-  for (let i = 0; i < 3; i++) {
-    const listra = new THREE.Mesh(new THREE.BoxGeometry(.082, .006, .028), CALANGO_STRIPE);
-    listra.rotation.x = -.5; listra.position.set(0, .088 + i * .006, -.02 + i * .035); group.add(listra);
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(.017, .2, 7), skin);
+  tail.rotation.x = -Math.PI / 2; tail.position.set(0, .02, -.135); tail.userData.calangoTail = true; group.add(tail);
+  for (const side of [-1, 1]) {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(.007, .003, .112), CALANGO_STRIPE);
+    stripe.position.set(side * .022, .051, .023); group.add(stripe);
   }
   return group;
 }
@@ -212,7 +211,8 @@ function cloneAsset(id) {  const template = templates.get(id);
 
 function normalizeModel(id, model) {
   model.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(model);
+  // Morph bounds incluem folga aérea; a pose neutra define o apoio (CQ10).
+  const box = new THREE.Box3().setFromObject(model, id === 'calango');
   const size = box.getSize(new THREE.Vector3());
   /* alvo em metros de mundo: altura para bichos que andam de lado pro jogador,
      comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5. */
@@ -328,7 +328,9 @@ class FavelaAmbience {
       const clip = clips.find((item) => item.name === (type === 'rat' ? 'Run' : 'Animation')) || clips[0];
       if (clip) {
         mixer = new THREE.AnimationMixer(model);
-        mixer.clipAction(clip).play();
+        const action = mixer.clipAction(clip);
+        if (type === 'calango') actions = { run: action };
+        else action.play();
       }
     }
     const origin = new THREE.Vector3(...config.pos);
@@ -357,9 +359,10 @@ class FavelaAmbience {
       animal.root.rotation.set(0, animal.phase, 0);
       if (animal.actions) {
         animal.mixer.stopAllAction();
-        animal.actions.idle.reset().play();
+        animal.actions.idle?.reset().play();
         animal.action = 'idle';
       }
+      animal.calangoGait = 0;
       animal.mixer?.setTime(0);
     }
   }
@@ -496,35 +499,43 @@ class FavelaAmbience {
     animal.state = 'idle';
   }
 
-  _updateCalango(animal) {
-    /* r2 (pedido do dono): corre EMPINADO em rajadas e para bruscamente — é o
-       bicho de pedreira termorregulando. Rajada 1,2 s atravessando o vão,
-       parada 2,2 s espreitando, próxima rajada inverte o rumo. */
+  _updateCalango(animal, dt = .016) {
+    const previous = animal.root.position.clone(), speed = .8;
+    animal.root.rotation.x = 0; animal.root.rotation.z = 0;
     if (this.time < animal.alertUntil) {
-      const elapsed = this.time - animal.alertAt;
-      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(3.2, elapsed * 3.2));
-      animal.root.rotation.y = Math.atan2(animal.flee.x, animal.flee.z);
-      animal.root.rotation.x = -.42;
+      const elapsed = Math.max(0, this.time - animal.alertAt);
+      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(3.2, elapsed * 1.2));
       animal.state = 'flee';
-      return;
-    }
-    const ciclo = 4.2, fase = (this.time + animal.phase) % ciclo;
-    const rajada = fase < 1.6;
-    const dir = Math.floor((this.time + animal.phase) / ciclo) % 2 === 0 ? 1 : -1;
-    const from = dir > 0 ? animal.origin : animal.to;
-    const target = dir > 0 ? animal.to : animal.origin;
-    if (rajada) {
-      const t = fase / 1.6;
-      animal.routine.lerpVectors(from, target, t);
-      const heading = target.clone().sub(from);
-      if (heading.lengthSq() > .001) animal.root.rotation.y = Math.atan2(heading.x, heading.z);
-      animal.root.rotation.x = -.42 + Math.sin(fase * 22) * .06;
     } else {
-      animal.root.rotation.x = 0;
-      animal.root.rotation.y += Math.sin((this.time + animal.phase) * .7) * .02;
+      const span = animal.origin.distanceTo(animal.to), leg = Math.max(.05, span / speed), cycle = leg + 2.6;
+      const clock = Math.max(0, this.time + animal.phase), phase = clock % cycle;
+      const forward = Math.floor(clock / cycle) % 2 === 0;
+      const from = forward ? animal.origin : animal.to, to = forward ? animal.to : animal.origin;
+      animal.routine.lerpVectors(from, to, Math.min(1, phase / leg));
+      let recovering = animal.recoverUntil > 0 || animal.alertUntil > 0;
+      if (recovering) {
+        const delta = animal.routine.clone().sub(animal.root.position), distance = delta.length(), step = speed * Math.max(0, Math.min(.05, dt));
+        animal.root.position.addScaledVector(delta, Math.min(1, step / Math.max(distance, .000001)));
+        if (distance <= step + .000001) { animal.alertUntil = 0; animal.recoverUntil = 0; recovering = false; }
+      } else animal.root.position.copy(animal.routine);
+      animal.state = recovering ? 'recover' : phase < leg && span > .01 ? 'run' : 'idle';
     }
-    const recovering = this._recoverToRoute(animal, animal.routine, 1.2);
-    animal.state = recovering ? 'recover' : rajada ? 'run' : 'idle';
+    const displacement = animal.root.position.clone().sub(previous), distance = displacement.length();
+    const moving = distance > .000001, animating = moving && animal.state !== 'idle';
+    if (moving) animal.root.rotation.y = Math.atan2(displacement.x, displacement.z);
+    if (animal.actions?.run) {
+      if (animating) { animal.actions.run.setEffectiveTimeScale(3.2).play(); }
+      else animal.actions.run.stop();
+    }
+    animal.calangoGait = (animal.calangoGait || 0) + distance / .12 * Math.PI * 2;
+    if (animal.source === 'fallback') animal.root.traverse(part => {
+      const leg = part.userData.calangoLeg;
+      if (leg !== undefined) {
+        const angle = animal.calangoGait + (leg === 0 || leg === 3 ? 0 : Math.PI);
+        part.position.set(0, animating ? Math.max(0, Math.sin(angle)) * .008 : 0, animating ? -Math.cos(angle) * .011 : 0);
+      }
+      if (part.userData.calangoTail) part.rotation.z = animating ? Math.sin(animal.calangoGait - .6) * .055 : 0;
+    });
   }
 
   _recoverToRoute(animal, target, duration) {
