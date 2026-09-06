@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.0.0-alpha.232",
+  "version": "2.0.0-alpha.233",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -50,6 +50,13 @@
     "eval:parquewheel": "node tools/eval/parque-wheel-check.mjs",
     "eval:velhooeste": "node tools/eval/velho-oeste-check.mjs",
     "eval:sertao": "node tools/eval/sertao-check.mjs",
+    "eval:sertao-spatial": "node tools/eval/sertao-spatial-check.mjs",
+    "eval:sertao-flora": "node tools/eval/sertao-flora-check.mjs",
+    "eval:sertao-occlusion": "node tools/eval/sertao-occlusion-check.mjs",
+    "eval:sertao-fauna": "node tools/eval/sertao-fauna-check.mjs",
+    "eval:calango-quadruped": "node tools/eval/calango-quadruped-check.mjs",
+    "eval:sertao-horizon": "node tools/eval/sertao-horizon-check.mjs",
+    "eval:sertao-distant-birds": "node tools/eval/sertao-distant-birds-check.mjs",
     "eval:sertao-livestock": "node tools/eval/sertao-livestock-check.mjs",
     "eval:sertao-integration": "node tools/eval/sertao-integration-check.mjs",
     "eval:sertao-sky-lifecycle": "node tools/eval/sertao-sky-lifecycle-check.mjs",

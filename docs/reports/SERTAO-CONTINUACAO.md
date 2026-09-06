@@ -427,3 +427,20 @@ foram mordidos isoladamente; contrato CTF2 da Amazônia passou. `build` passou.
 `check:fast` encontrou LAB8g externo: o gerador local de soundscape não registra
 o mapa Amazônia. Não alterar essa frente nesta lane; reavaliar na alpha.233.
 Nenhum navegador, servidor, merge remoto ou deploy foi usado.
+
+### Rebase contra alpha.233 — 2026-09-06
+
+`origin/main` avançou para `c7302096` (alpha.233) e foi integrado sem conflito.
+O primeiro `check:fast` na árvore de merge revelou mais sete referências órfãs
+do Sertão no próprio `check:fast`; todas tinham arquivos reais, mas perderam as
+entradas de `package.json` no rebase. O portão `eval:portaointeiro` ficou
+vermelho, as sete entradas foram restauradas e a régua voltou a passar com 160
+citações válidas. O LAB8g também revelou que a Amazônia estava ausente do
+manifest local de soundscape; a entrada usa somente loops Fab existentes de
+água e árvores e o laboratório passou com 16 mapas.
+
+As duas falhas remanescentes da primeira matriz alpha.233 foram documentais:
+`docs:check` e `docsautoria` rodaram antes da regeneração posterior ao
+`package.json`. Regenerar, commitar a merge e repetir o `check:fast` com árvore
+limpa é a última validação local antes de publicar. Sem navegador, servidor,
+merge remoto ou deploy.
