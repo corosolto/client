@@ -66,7 +66,7 @@ integração e publicação; não declarar pronto somando somente PRs ou gates v
 | Prepare a frente Rifles do CSBrasil. Leia integralmente: /V… | 01a073e3-1632-73d3-9683-e1394339fa8e | DESPACHADA Terra/high: M4 tactical do checkpoint Claude, somente offline, aguardando início confirmado |
 | Elevar visual do Escadão | 01a073e5-b003-7993-afd6-41d31e25d98d | PAUSADO ada21d8d, codex/escadao-passagens-horizonte limpa; duas divergências do grafo e horizonte pendentes; próximo marco45–90min, R5 estimado2–4h; Astro8148/PID94385 ativo sem captura |
 | Elevar visual de Lajes | 01a073e5-35e9-7312-b6a7-7beecc8df714 | PAUSADO 098a6fc2; candidato c26a40cf/PR517 pronto para revisão, 15–30min estimados se CI verde; sem browser/servidor próprio |
-| Elevar visual da Amazônia | 01a073de-ee16-74a1-8deb-c92763271450 | **FECHADA**: PR439 squash-merged como 0af5e118; alpha.228 bc8ce4e9 e deployment Production6289742804 success. Checks completos verdes; URL requer SSO (302 anônimo esperado). Ledger b077dc4b |
+| Elevar visual da Amazônia | 01a073de-ee16-74a1-8deb-c92763271450 | PR439 já integrado em alpha.228; hotfix CTF2 agora em PR521 draft, commit 24397a04, `check:deploy` 37/37. Aguardar CI antes de merge; sem release/deploy novo |
 | Elevar visualmente o mapa Sertão | 01a073c0-b824-7503-b28a-f7522cececcc | DESPACHADA Terra/high: PR516 prioritário; resolver conflito contra main atual e deixar MERGEABLE. Candidato ca8d569f; merge/publicação aguardam reserva depois de Lajes |
 | Revisar e shipar PR Miticos | 01a07485-2ddf-7052-b858-f814cabc30f7 | Cuca IK candidata reprovada no checkpoint 7c116d97: converge ao alvo projetado, mas não segura a arma e piora o custo; sem mudança pública. Zumbi textura/integração e outros personagens pendentes; PR481 conflitante |
 | Corrigir modo CTF na home | 01a07540-471d-7a60-9448-2692d52ab8dd | Implementado 4abeaa40; relato build/browser3:2 aprovados; não publicado; três falhas gerais fora do menu |
@@ -125,15 +125,16 @@ cada par afetado, com contraprova/mutante. Sertão pode resolver seu conflito, m
 declara checks finais nem entra em merge antes de main corrigida; integração continua
 sequencial Lajes → Sertão → Escadão.
 
-Revisão independente 2 do candidato local `d4b58b71` aceitou o contrato de navegação para
-fechamento local, sem aprovar release: fonte SHA-256
-`d8d43d5dd126826ab06ad883c5868d1701928350cf5cb8f5a70488936aa22e96`, 24 nós/25 ligações,
+Revisão independente final aceitou o contrato de navegação para publicação de branch/PR,
+sem aprovar merge ou release: commit `24397a04`, fonte SHA-256
+`a2996b7268089930e739df99962a40857469fd602714b6a1564b7fa8a39cb1d7`, 24 nós/25 ligações,
 exatamente os conectores `[362,310]` e `[385,250]`, maior segmento 2,263 m e bots 71/71.
 A contraverificação percorreu continuamente os 26 pontos nos dois sentidos, com colisão
-real e sem recuperação. Há degrau de aproximadamente 0,406 m junto ao pontão; a prova
-é de transitabilidade neste modelo, não de suavidade. Antes do commit final, regenerar
-recibos CTF2 fixo/mutante com o hash atual e corrigir referências antigas a 25/26 e
-`lane-fixed.json`. Só então a correção pode ser publicada e integrar a `main`.
+real e sem recuperação. Recibos fixed/mutant foram regenerados contra esta fonte final:
+duas rotas nos seis pares; o mutante reduz B→E/B→MID/B→B a uma. Há degrau de
+aproximadamente 0,406 m junto ao pontão; a prova é de transitabilidade, não suavidade.
+O branch `origin/codex/amazonia-ctf2-hotfix` e PR521 draft foram criados; `check:deploy`
+passou 37/37 com o Node do workspace. Aguardar CI antes de integrar a `main`.
 
 ## Viewmodels e substituição Claude
 
