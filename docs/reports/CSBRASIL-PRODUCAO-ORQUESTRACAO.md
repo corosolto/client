@@ -105,6 +105,13 @@ e validar o head resultante. Remotos locais confirmados: `origin` é corosolto/c
 `nfvelten` também existe; nenhum push pode ir ao segundo. Após novo head MERGEABLE, manter
 o PR aguardando reserva de integração, sem canário/deploy até Lajes concluir.
 
+Em 06/09 a verificação autenticada confirmou `main` em `5b029b64`, enquanto a resolução
+local preservada está em `b9c5e88b` (integra somente alpha.228) e PR516 ainda aparece
+`DIRTY`. O gate `portao-browser` do head público `ca8d569f` também falhou. A próxima
+execução deve atualizar essa resolução com a `main` que já contenha o hotfix CTF2
+independentemente revisado, executar novamente a matriz final e só então publicar o head
+em `origin`. Isso mantém Lajes -> Sertão -> Escadão como ordem de integração.
+
 ### Bloqueio de integração: CTF2 Amazônia
 
 Durante o fechamento de Lajes, CI/shared main reprova CTF2 somente porque Amazônia tem uma
