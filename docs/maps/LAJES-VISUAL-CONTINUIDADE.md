@@ -78,6 +78,16 @@ Artefatos novos: `artifacts/lajes-performance/`. Régua: nenhuma neste marco.
   `f7f4402e`/alpha.227 (Escadão). Próximo: merge normal, conflitos de documentos/
   scripts resolvidos preservando a main, regeneração, checks afetados/build e CI final.
 
+## BUG-141: main alpha.227 incorporada
+
+- Merge normal de `f7f4402e`, preservando Escadão, previews e descida de escadas
+  opt-in. Conflitos de documentos resolvidos a partir da main e regeneração;
+  manifesto preserva todos os scripts novos da main e acrescenta somente LRP1.
+- Pós-merge: LRP1, integração Lajes, respawn físico, contrato de mapas, contrato
+  Escadão e descida de escada passaram (6/6); build passou novamente.
+- Próximo: envio final para PR517, conferir checks remotos e integração. Artefatos
+  `gates-main.log`, `build-main.log` e `merge-plan.txt` em `artifacts/lajes-performance/`.
+
 ## Encerramento V7 — 06/09/2026
 
 - PR438 saiu de draft e foi mergeada por squash, sem bypass, às 05:01:53 UTC.

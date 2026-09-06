@@ -14,6 +14,7 @@ import { preloadWeapons } from './weapons.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
 import { VERSION } from './version.js';
+import { mapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
 import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
@@ -307,6 +308,7 @@ function show(id) {
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
   if (id !== 'char-select') pvStopVideo();
+  if (id !== 'map-screen') stopMapPreview();
   // ao navegar pra qualquer tela, fecha o painel de setup do menu CS (não fica aberto after)
   // EXCEÇÃO: map-screen é EXTENSÃO do setup (abre pelo cartaz do mapa) — o painel fica
   // aberto embaixo e o VOLTAR cai de volta nele, com mapa/modo/bots intactos.
@@ -1694,7 +1696,7 @@ function setMapThumb() {
   if (!mapThumb) return;
   mapPreview?.setMap(currentMap);
   mapThumb.style.opacity = '0';
-  mapThumb.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
+  mapThumb.src = mapPreviewPoster(currentMap, VERSION);
   mapThumb.alt = MAPS[currentMap].name;
 }
 // Badge de modo + pontinhos de posição: o carrossel não dizia onde o jogador estava
@@ -1815,6 +1817,7 @@ function visibleMapIds() {
   return MAP_IDS.filter((id) => catsDe(id).includes(mapCategory));
 }
 function renderMapScreen() {
+  stopMapPreview();
   const img = $('ms-bg-img'); if (!img) return;
   /* O mapa em foco manda na aba: se não pertence à aba atual, troca pra aba que o contém.
      Trocas manuais de aba já re-ancoram o mapa antes, então isto não briga com elas. */
@@ -1824,7 +1827,7 @@ function renderMapScreen() {
   const continuar = $('ms-continue')?.querySelector('span');
   if (continuar) continuar.textContent = frase('continuarSetup');
   img.decoding = 'async';   // decode fora da thread principal — não trava a UI da tela de mapas
-  img.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
+  img.src = mapPreviewPoster(currentMap, VERSION);
   /* O palco é o MESMO wallpaper do menu principal, não esta preview: a foto do mapa em
      foco já está no card selecionado, e em tela cheia ela brigava com a grade. O `src`
      acima continua sendo escrito porque é dele que a sonda de tela lê o mapa em foco. */
@@ -1858,7 +1861,7 @@ function renderMapScreen() {
   $('ms-strip').style.setProperty('--map-count', shown.length);
   $('ms-strip').innerHTML = shown.map((id) =>
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
-      `<span class="ms-thumb-media"><img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt=""></span>` +
+      `<span class="ms-thumb-media"><img class="ms-thumb-img" loading="lazy" decoding="async" src="${mapPreviewPoster(id, VERSION)}" alt=""></span>` +
       `<span class="ms-thumb-copy"><span class="ms-thumb-name">${MAPS[id].name}</span>` +
       `<span class="ms-thumb-sub"><span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span>` +
       (playsDe(id) ? `<span class="ms-thumb-plays">${playsDe(id).toLocaleString('pt-BR')}</span>` : '') +
@@ -1879,6 +1882,7 @@ function renderMapScreen() {
       id: b.dataset.id, version: VERSION, media: b.querySelector('.ms-thumb-media'),
     }));
   });
+  bindMapPreviews($('ms-strip'));
   requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
 }
 mapPreviewHost.title = tr('Ver mapa em tela cheia');
