@@ -22,10 +22,14 @@ npm run ops:diag -- --json       # saída para máquina
 
 Saída: `artifacts/ops/<data>/diagnostico.md` (+ `.json`), também no stdout. Código de
 saída: `0` tecnicamente verde · `1` vermelho · `3` inconclusivo (alvo inalcançável desta
-rede — nem verde nem vermelho, e o relatório diz isso).
+rede, ou régua que não terminou de medir — nem verde nem vermelho, e o relatório diz isso).
 
-A diagnose **só lê**: GET/HEAD/Range, nenhum POST. A sonda de navegador abre `?debug=1`,
-que desliga os beacons — a sonda nunca aparece como jogador no painel.
+A diagnose **só lê**: GET/HEAD/Range, nenhum POST. A sonda de navegador abre `?debug=1`
+(testMode desliga a telemetria) **e barra toda escrita na rede** — `?debug=1` sozinho não
+bastava: `_picks` e o coletor de `/api/jserror` POSTam mesmo em testMode. Todo método fora
+de GET/HEAD/OPTIONS recebe 204 sem sair e `sendBeacon` é substituído; o que a página tentou
+mandar aparece como `escritas bloqueadas` na linha do navegador. A sonda nunca aparece como
+jogador no painel nem abre issue crash-auto.
 
 Atrás de proxy corporativo: `NODE_USE_ENV_PROXY=1 npm run ops:diag` (o `fetch` do Node não
 lê `HTTPS_PROXY` sozinho).
@@ -37,7 +41,7 @@ lê `HTTPS_PROXY` sozinho).
 | boot remoto | o HTML da raiz tem import map? `main.js` é JS e responde 200? `?v=` do HTML = `VERSION` do `version.js`? o grafo de imports fecha (`prod-coherence.mjs`)? | rede |
 | api | `/api/health` campo a campo; `/api/online`, `/api/map-plays`, `/api/leaderboard` **N vezes** (5xx constante ≠ intermitente); rota inexistente devolve 404? | rede |
 | ranking | `RANKING_ON` da árvore × `/api/leaderboard` × `/ranking` | rede + árvore |
-| assets no edge | amostra que o runtime pede (todas as armas, personagens, props, índices de animação, three, CSS, prévias) com `Range: bytes=0-15` e a URL `?v=` real; confere cabeçalho `glTF`/JSON/JS, não só o status | rede |
+| assets no edge | amostra que o runtime pede — **todas as armas do `/js/weapons.js` que o alvo serve** (a URL do import map; sem ele, a árvore, com aviso), todos os personagens, props e prévias espalhados pela lista, índices de animação, three, CSS — com `Range: bytes=0-15` e a URL `?v=` real; confere cabeçalho `glTF`/JSON/JS, não só o status | rede |
 | boot local | `package.json` × `version.js`; `index.astro` com import map, `main.js`, `ops.js` e coletor de erros; grafo de módulos da árvore num servidor estático | árvore |
 | assets na árvore | os mesmos assets existem e têm o cabeçalho certo (ponteiro LFS e checkout truncado reprovam) | árvore |
 | partida sintética | `Game` real em node (`tools/eval/harness.mjs`), todo mapa × rounds/CTF, 600 updates: sai do countdown? tem bots? nenhuma exceção? | árvore |
@@ -48,7 +52,9 @@ lê `HTTPS_PROXY` sozinho).
 Duas linhas no topo, duas perguntas diferentes:
 
 - **Tecnicamente verde** — nenhuma sonda que rodou achou CRÍTICO nem ALTO, e nenhuma
-  ficou INCONCLUSIVA. É o que a máquina mediu.
+  ficou INCONCLUSIVA (alvo inalcançável desta rede, ou régua que não terminou de medir —
+  um `prod-coherence` que explode não é "grafo coerente", é `coerencia-nao-medida`). É o
+  que a máquina mediu.
 - **Pronto para lançamento** — verde **e** retrato completo do candidato certo: sondas
   remotas e locais rodaram, houve prova de boot em navegador, produção e árvore na
   mesma versão, nada MÉDIO em aberto, telemetria com linha recente (ou
@@ -73,6 +79,10 @@ Quando o quality gate está verde e o dono diz que está errado, o defeito é do
 | `mp-sem-heartbeat` | nó regional de multiplayer sem heartbeat | subir o nó (runbook do `csbrasil-backend/game`) e conferir o `/health` do próprio nó |
 | `pipelines-parados` | ou ninguém jogou, ou a ingestão parou | jogar uma partida real (sem `?debug`) e re-sondar em 5 min: `match` continuar `stale` = ingestão quebrada → logs do backend na rota `/api/match` |
 | `rota-intermitente:*` | cold start do Cloud Run (medido em 06/09/2026: `/api/online` 503 na 1ª chamada, 200 nas seguintes) | `min-instances=1` no serviço, ou retry com backoff no cliente; medir em horário de pico antes de decidir |
+| `rota-4xx:*` | a rota respondeu 4xx em todas as chamadas: removida/renomeada no backend publicado, ou bloqueio por origem/chave | comparar as rotas do backend no ar com `apibase.js`; logs do backend |
+| `coerencia-nao-medida`, `coerencia-local-nao-medida` | o `prod-coherence.mjs` explodiu ou não terminou — a diagnose sai `3` | rodar `npm run prod:coherence` à mão e ler o erro antes de confiar em qualquer verde |
+| `ranking-flag-nao-lida`, `registro-armas-nao-lido` | a régua não conseguiu ler `RANKING_ON` da árvore / `WEAPON_IDS` do alvo | ajustar o parser em `tools/ops/lib/repo.mjs` ao formato novo — silêncio aqui é régua cega (LICOES §5) |
+| `html-lento`, `latencia-api:*`, `assets-lentos` | acima do limiar (`LIMIARES` em `lib/explain.mjs`), que só tem procedência de madrugada — por isso AVISO | medir em pico e, com a série, promover a MÉDIO |
 | `asset-404`, `asset-conteudo-errado`, `asset-tamanho-diverge` | o edge não entrega o que o runtime pede | conferir se o caminho existe em `dist/client` do build atual; existe → purgar o caminho; não existe → o commit que removeu/renomeou (LICOES §12/§14) |
 | `partida-crash:*`, `partida-nao-comeca:*` | o `Game` explode ou não sai do countdown naquele mapa/modo | skill `bug-hunt`: régua antes do conserto, registrar em `KNOWN-BUGS.md` com o stack do relatório |
 | `boot-navegador-morto`, `btn-jogar-inerte` | o `main.js` não avaliou até o fim (o caso de 07/08, TDZ) | `npm run eval:boot` com Chrome real; o stack está no achado |
@@ -114,7 +124,8 @@ e lido na visita seguinte).
 
 Ele expõe `window.__csbOps.snapshot()` (a sonda de navegador lê) e manda migalhas para o
 coletor de `/api/jserror` (`window.__migalha`) — assim FPS, congelamentos e 404 de asset
-chegam **dentro** do relatório de erro que já existe, sem endpoint novo. `?ops=1` imprime
+chegam **dentro** do relatório de erro que já existe, sem endpoint novo. O coletor guarda
+20 migalhas; o `ops.js` gasta no máximo 5, o resto é dos cliques do jogador. `?ops=1` imprime
 um resumo no console a cada 30 s. Nada é enviado por conta própria.
 
 ## 6. Provar que a régua morde
@@ -124,16 +135,22 @@ npm run ops:test       # unidades: regras de explicação, veredito, parsers, op
 npm run ops:selftest   # mutantes: uma produção sintética por sintoma; cada um tem de virar o achado esperado
 ```
 
-Os dois entram no `check:fast`. Um mutante que não acende sai `1` (portão cego é vermelho,
-`eval:mutcega`). Cenário novo = regra nova + linha em `CENARIOS` do selftest.
+Os dois entram no `check:fast` (medido em 06/09/2026 no Mac: `ops:test` 0,2 s; `ops:selftest`
+≈20 s com os cenários HTTP em paralelo, 2 Chromiums e 2 partidas sintéticas). Um mutante que
+não acende sai `1` (portão cego é vermelho, `eval:mutcega`). Cenário novo = regra nova + linha
+em `CENARIOS` do selftest + linha na tabela `CASOS` de `tests/explain.test.mjs` — a guarda de
+cegueira lê o `explain.mjs` e reprova regra sem caso.
 
 ## 7. Limites desta versão
 
 - Sem navegador a prova de boot para no **parse**; a avaliação do `main.js` só com
   `--browser` (Playwright) ou `npm run eval:boot`. Em headless sem GPU o FPS medido não
   representa jogador (o relatório marca `headless`).
-- A amostra de assets é a que o runtime pede por registro (armas, elenco, animação, props,
-  prévias); texturas de mapa e o pacote de áudio privado continuam com `assert:assets`.
+- A amostra de assets é a que o runtime pede por registro (armas do `weapons.js` servido,
+  elenco inteiro, animação, props e prévias espalhados); texturas de mapa, decalques e o
+  pacote de áudio privado continuam com `assert:assets`.
+- Os limiares de latência (raiz 2,5 s, API p95 2 s, assets p95 3 s) têm procedência de duas
+  medições de madrugada (06/09/2026); até haver série em pico eles acendem como AVISO.
 - A telemetria agregada (painel, `js_error`) não é lida daqui — o health resume; o
   cruzamento fino continua no `game-admin`.
 - A diagnose não age: não purga, não faz deploy, não abre issue. Quem age é o

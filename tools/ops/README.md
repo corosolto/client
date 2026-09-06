@@ -17,7 +17,8 @@ desempenho e partida, sem tocar em gameplay. Como rodar, como ler e como recuper
 | `lib/explain.mjs` | sintoma → causa provável, evidência, impacto, próximo passo (função pura) |
 | `lib/report.mjs` | veredito (tecnicamente verde × pronto para lançamento) e relatório curto |
 | `lib/http.mjs`, `lib/repo.mjs` | sonda HTTP classificada; leitura da árvore por regex/manifesto |
-| `tests/` | `node --test`: regras, veredito, parsers e `public/js/ops.js` em DOM stubado |
+| `tests/` | `node --test`: uma linha por regra do `explain.mjs` (com guarda de cegueira), veredito, parsers, sondas em caminho hostil e `public/js/ops.js` em DOM stubado |
 
-Contrato: só lê (GET/HEAD/Range). Node puro, sem dependência. Regra nova = cenário novo
-no `selftest.mjs`, senão a régua não existe (lei 3).
+Contrato: só lê (GET/HEAD/Range; o navegador da sonda barra POST e beacon). Node puro, sem
+dependência. Regra nova = cenário novo no `selftest.mjs` + linha em `CASOS` do
+`tests/explain.test.mjs`, senão a régua não existe (lei 3).
