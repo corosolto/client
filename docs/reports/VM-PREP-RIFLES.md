@@ -493,3 +493,29 @@ integradora; quando liberada a etapa, produzir M4 pela receita medida, validar
 no Game e avançar individualmente nas demais. A carabina mantém o bloqueio
 específico de identificação da alimentação. Não marcar a tarefa completa pela
 abertura ou pelo merge deste PR documental.
+
+
+### Servidor local exclusivo para teste manual
+
+Ruben pediu outro servidor local para não disputar os servidores dos mapas.
+Iniciado em `http://127.0.0.1:8160`, PID inicial `70216`, usando o servidor
+existente `tools/eval/serve.mjs`, sem dependências novas. Diretório de execução:
+`A/local-server-8160`; log `server.log`, PID em `server.pid`, fontes em
+`server.json` e respostas verificadas em `http-smoke.json` dentro desse diretório.
+Código público e página vêm desta worktree; somente `public/private-assets`
+é lido da integradora. Os symlinks de montagem estão apenas nos artefatos desta
+frente; nenhuma origem compartilhada foi escrita e nenhum servidor alheio foi
+interrompido. Este é o arnês do Game existente, sem rotas SSR/API do Astro.
+
+Teste padrão M4: `http://127.0.0.1:8160/?debug=1&auto=E&vmweapon=m4&map=brasilia&armaslazy=0`.
+Acrescentar `&vmready=ar` inspeciona o pacote nativo experimental por override
+local de QA, sem alterar a configuração persistida. Para as demais armas, trocar
+`vmweapon` por `md97`, `carbine`, `scar`, `famas` ou `m92`.
+
+HTTP 200 confirmado para página, módulos main/authoredvm/vmhands, Three.js,
+M4 própria, AK golden e pacote ar; os sete arquivos conferem com os hashes das
+fontes. Abertura manual, boot WebGL, contatos e ações não foram verificados nesta
+etapa: nenhum browser automático aberto. O servidor oferece o estado atual,
+não candidatos de rifle finalizados. Para reiniciar após conferir porta livre:
+`cd artifacts/viewmodels/prep/rifles/local-server-8160` e executar Node com o
+caminho absoluto de `R/tools/eval/serve.mjs 8160`.
