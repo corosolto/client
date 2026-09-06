@@ -2175,7 +2175,9 @@ export class Game {
     const cat = RADIO[this.radioOpen];
     const item = cat.items[n - 1];
     if (!item) return;
-    this.sfx.radioVoice(this._voiceKey(this.playerTeam));
+    this.sfx.characterVoice(this.playerCharId, 'radio', {
+      fallbackFaction: this._voiceKey(this.playerTeam), interrupt: true,
+    });
     const log = document.createElement('div');
     log.className = 'radio-line';
     log.textContent = `${this.player.name} (${tr('RÁDIO')}): ${item}`;
@@ -2191,7 +2193,7 @@ export class Game {
     if (ANNOUNCER_LAB) this._startAnnouncerLab(ANNOUNCER_LAB);
   }
   _startAnnouncerLab(mode) {
-    const kills = ['headshot', 'doublekill', 'triplekill', 'multikill', 'megakill', 'killingspree', 'godlike']
+    const kills = ['kill', 'headshot', 'doublekill', 'triplekill', 'multikill', 'ultrakill', 'megakill', 'killingspree', 'godlike']
       .map((key) => () => this.sfx.general(key));
     const rounds = Array.from({ length: 7 }, (_, i) => () => this.sfx.roundNumber(i + 1));
     const sequence = mode === 'kills' ? kills : (mode === 'rounds' ? rounds : [...kills, ...rounds]);
@@ -2536,10 +2538,19 @@ export class Game {
       // fechou no ALVO de abates (antes do tempo) vs ganhou no relógio — informação diferente
       const byTarget = PACE && !this.ctf && Math.max(p, b) >= this.killsToWin;
       this._resultadoDaRodada(`${this._teamName(winner)} LEVARAM O ROUND`, `${placar} ` + (byTarget ? '— fecharam no alvo' : mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche'));
+      this._roundWinnerVoice(winner);
       if (!this.sfx.roundSound(this._voiceKey(winner))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     }
     if (this._fimDaPartida())
       this.stateUntil = this.time + 4.5; // then match end
+  }
+  _roundWinnerVoice(team) {
+    const characterId = team === this.playerTeam
+      ? this.playerCharId
+      : this.bots.find((bot) => bot.team === team)?.def?.id;
+    this.sfx.characterVoice(characterId, 'round', {
+      fallbackFaction: this._voiceKey(team), interrupt: false,
+    });
   }
   /* FIM DA PARTIDA — uma condição só, usada pelo _endRound (pra esticar a pausa) e pelo
      update() (pra chamar o _endMatch). Vale IGUAL nos dois modos: antes o `_endMatch` era
@@ -3370,9 +3381,12 @@ export class Game {
         mk.best = Math.max(mk.best || 0, mk.count);
         const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
         if (kind) this._mkBanner(MK_LABELS[kind]);
-        // Um unico callout por abate: tier > headshot > kill. Sem locucao no
-        // pack, preserva a comemoracao antiga da faccao como fallback.
-        if (!this.sfx.general(kind || (head ? 'headshot' : 'kill'))) this.sfx.voice(this._voiceKey(attacker.team));
+        // Tier/headshot pertence ao locutor Fish; o abate simples pertence ao personagem.
+        // Sem take próprio, preserva a comemoração da facção e por último a contingência.
+        const announced = kind || head
+          ? this.sfx.general(kind || 'headshot')
+          : this.sfx.characterVoice(attacker.def?.id, 'kill', { fallbackFaction: this._voiceKey(attacker.team) });
+        if (!announced && !this.sfx.general('kill')) this.sfx.voice(this._voiceKey(attacker.team));
         if (REPLAY_CAM && head && ent.pos) {
           this._replayCam = {
             t: 0,
@@ -4431,6 +4445,7 @@ export class Game {
     this._ensureDolly();
     const mine = team === this.playerTeam;
     this._resultadoDaRodada(`${this._teamName(team)} DOMINARAM AS BANDEIRAS`, mine ? 'capturou tudo! 🏆' : 'corre pra retomar!');
+    this._roundWinnerVoice(team);
     if (!this.sfx.roundSound(this._voiceKey(team))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     // dominação é vitória INSTANTÂNEA da rodada, mas continua sendo uma RODADA: se ela foi
     // a 3ª vitória (ou a 5ª rodada), a pausa estica pra tela de fim, igual ao _endRound.
@@ -5823,7 +5838,11 @@ export class Game {
     this.el.radioLog.appendChild(log);
     setTimeout(() => log.remove(), 3600);
     while (this.el.radioLog.children.length > 3) this.el.radioLog.firstChild.remove();
-    try { this.sfx.radioVoice(this._voiceKey(b.team)); } catch {}
+    try {
+      this.sfx.characterVoice(b.def?.id, 'radio', {
+        fallbackFaction: this._voiceKey(b.team), interrupt: false,
+      });
+    } catch {}
   }
   /* ===================== MARCADOR DE TIME (halo + chevron) =====================
      Dono: "ia ser legal se tivesse um halo no chão, ou uma seta em cima deles mostrando que

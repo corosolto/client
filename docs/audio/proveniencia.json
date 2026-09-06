@@ -20,6 +20,10 @@
    "fonte": "fish-audio-mortal-kombat-public-model"
   },
   {
+   "prefixo": "audio/character-voices-dev/",
+   "fonte": "character-voices-openrouter-gemini"
+  },
+  {
    "prefixo": "audio/legacy-callouts-dev/",
    "fonte": "legado-nominal-cs-valve-ut"
   },
@@ -179,13 +183,30 @@
    "redistribuicao": "proibida",
    "usoComIA": "sim",
    "stagingPrivado": "private-assets/audio/fish-announcer-mk",
-   "notas": "Geracao TTS feita em 05/09/2026 via API Fish S2.1 Pro usando somente texto, sem enviar WAVs Fab/BOOM. Sao 16 candidatos para kill/headshot/tier e Round 1-7. O dono autorizou armazenamento no Blob privado em 05/09/2026, mas a pagina do provedor rotula a voz como Mortal Kombat e os direitos de voz, personagem ou marca seguem nao verificados; por isso ela nao entra no build entregue ao jogador.",
+   "notas": "Geracao TTS feita em 05/09/2026 via API Fish S2.1 Pro usando somente texto, sem enviar WAVs Fab/BOOM. Sao as 16 locucoes exatas que o dono ouviu: kill, headshot, doublekill, triplekill, multikill, ultrakill, megakill, killingspree, godlike e Round 1-7. A pagina do provedor rotula a voz como Mortal Kombat e os direitos de voz, personagem ou marca seguem nao verificados. Mesmo ciente desse risco, o dono autorizou expressamente a incorporacao dessas locucoes ao build privado em 05/09/2026 e reconfirmou a escolha em 06/09/2026. Nao autoriza redistribuicao standalone nem treino de IA.",
    "deployPrivado": {
     "armazenamento": true,
-    "build": false,
+    "build": true,
     "autorizadoPor": "Ruben",
-    "data": "2026-09-05",
-    "escopo": "somente armazenamento privado; fora do build ate verificacao dos direitos"
+    "data": "2026-09-06",
+    "escopo": "16 WAVs exatos no build privado do jogo; sem redistribuicao standalone e sem treino"
+   }
+  },
+  "character-voices-openrouter-gemini": {
+   "titulo": "Vozes finais dos Funkeiros — select, kill, radio e round",
+   "autor": "CS BRASIL / CORO SOLTO via OpenRouter e Google Gemini TTS",
+   "url": "https://openrouter.ai/google/gemini-3.1-flash-preview",
+   "licenca": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+   "redistribuicao": "proibida-standalone",
+   "usoComIA": "sim",
+   "stagingPrivado": "private-assets/audio/character-voices-gemini-final",
+   "notas": "Lote final copiado com verificacao de hash do commit 282ff734cb2d5da5de363c4efaa234d7b80e65b4 da lane feat/audio-voices-test. Os recibos registram google/gemini-3.1-flash-tts-preview via OpenRouter, sem clonagem de voz. Preserva exatamente os 36 takes ja ouvidos; esta lane nao regenera nem troca timbre.",
+   "deployPrivado": {
+    "armazenamento": true,
+    "build": true,
+    "autorizadoPor": "Ruben",
+    "data": "2026-09-06",
+    "escopo": "9 Funkeiros, com um take final de select, kill, radio e round por personagem"
    }
   },
   "legado-nominal-cs-valve-ut": {

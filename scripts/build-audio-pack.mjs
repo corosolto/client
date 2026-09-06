@@ -16,7 +16,7 @@
 // Uso: node scripts/build-audio-pack.mjs <outDir> [--raiz=<dir>] [--ledger=<json>] [--private-build]
 //   -> <outDir>/pack/  (conteúdo) e <outDir>/audio-pack.zip
 import { createHash } from 'node:crypto';
-import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { carregarPolitica, motivoDeRecusa } from '../tools/audio/politica.mjs';
@@ -35,6 +35,10 @@ const CONTEXTO = process.argv.includes('--private-build') ? 'private-build' : 'p
 // LAYOUT DO ZIP: entradas SEM o prefixo audio/ — o fetch-audio.sh descompacta
 // DENTRO de public/audio/, então 'a/x.mp3' vira public/audio/a/x.mp3, que é o que a
 // string 'audio/a/x.mp3' do manifesto resolve no site. Com o prefixo dobraria o caminho.
+// Uma tentativa recusada pode ter copiado arquivos antes de abortar. Reusar a mesma
+// saída sem limpar fazia o ZIP seguinte carregar órfãos que o manifest não referencia.
+rmSync(PACK, { recursive: true, force: true });
+rmSync(path.join(OUT, 'audio-pack.zip'), { force: true });
 mkdirSync(path.join(PACK, 'a'), { recursive: true });
 
 const manifesto = JSON.parse(readFileSync(path.join(AUDIO, 'manifest.json'), 'utf8'));
@@ -80,6 +84,9 @@ const reescreve = (o) => {
   return o;
 };
 const novoManifesto = reescreve(manifesto);
+if (CONTEXTO === 'private-build') {
+  novoManifesto._privateBuild = { format: 'content-addressed-v1' };
+}
 writeFileSync(path.join(PACK, 'manifest.json'), JSON.stringify(novoManifesto, null, 1));
 
 // menu-music: nomes já opacos; só a curadoria nominal do manifest entra no fallback.

@@ -7,12 +7,13 @@ import {
 } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MENU_MUSIC_ACTIVE_IDS } from '../../public/js/menu-music-selection.js';
 
 const RAIZ_REPO = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const arg = (nome, padrao = '') => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=').slice(1).join('=') || padrao;
 const dir = process.argv.slice(2).find((a) => !a.startsWith('--'));
 if (!dir) {
-  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir] [--boom-guns=dir] [--fish-announcer=dir] [--legacy-callouts=dir]');
+  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir] [--boom-guns=dir] [--fish-announcer=dir] [--legacy-callouts=dir] [--character-voices=dir] [--menu-music=dir]');
   process.exit(2);
 }
 
@@ -33,6 +34,12 @@ const FISH_ANNOUNCER_LINK = join(PUBLICO, 'fish-announcer-dev');
 const LEGACY_CALLOUTS_ARG = arg('legacy-callouts');
 const LEGACY_CALLOUTS = LEGACY_CALLOUTS_ARG ? resolve(LEGACY_CALLOUTS_ARG) : null;
 const LEGACY_CALLOUTS_LINK = join(PUBLICO, 'legacy-callouts-dev');
+const CHARACTER_VOICES_ARG = arg('character-voices');
+const CHARACTER_VOICES = CHARACTER_VOICES_ARG ? resolve(CHARACTER_VOICES_ARG) : null;
+const CHARACTER_VOICES_LINK = join(PUBLICO, 'character-voices-dev');
+const MENU_MUSIC_ARG = arg('menu-music');
+const MENU_MUSIC = MENU_MUSIC_ARG ? resolve(MENU_MUSIC_ARG) : null;
+const MENU_MUSIC_LINK = join(PUBLICO, 'menu-music');
 const MANIFEST = join(PUBLICO, 'manifest.json');
 const MUTANTE_SEM_VETO = process.env.FAB_GAME_LOCAL_MUTANTE === 'sem-veto';
 const VETO = ['blood', 'gore', 'bone', 'scream', 'screaming'];
@@ -146,10 +153,66 @@ if (LEGACY_CALLOUTS) {
   if (missing.length) { console.error(`recusado: callouts legados incompletos: ${missing.join(', ')}`); process.exit(2); }
 }
 
-// O dono preferiu os callouts antigos, mas aprovou os rounds Fish. As duas familias ficam
-// selecionaveis de forma independente para nao obrigar um pacote inteiro por causa de 7 falas.
-const selectedGeneral = legacyCallouts?.general || fishAnnouncer?.general || null;
+// O dono voltou a pedir explicitamente as locuções Fish em 06/09. Elas são a escolha
+// autoritativa quando instaladas; o legado só continua disponível para comparação local.
+const selectedGeneral = fishAnnouncer?.general || legacyCallouts?.general || null;
 const selectedRoundNumbers = fishAnnouncer?.roundNumbers || null;
+
+const FUNKEIROS_VOZ = Object.freeze([
+  'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
+]);
+const CHARACTER_EVENTS = Object.freeze(['select', 'kill', 'radio', 'round']);
+let selectedCharacterVoices = null;
+let selectedCharacterVoiceText = null;
+if (CHARACTER_VOICES) {
+  const sourceManifest = join(CHARACTER_VOICES, 'manifest.json');
+  let source;
+  try { source = JSON.parse(readFileSync(sourceManifest, 'utf8')); }
+  catch (error) { console.error(`manifest de vozes por personagem inválido: ${sourceManifest} (${error.message})`); process.exit(2); }
+  if (source.provider !== 'openrouter' || source.modelId !== 'google/gemini-3.1-flash-tts-preview'
+    || source.noVoiceCloning !== true || source.approval !== 'owner-approved-private-build') {
+    console.error('recusado: vozes por personagem não são o lote Gemini final aprovado pelo dono.');
+    process.exit(2);
+  }
+  const mapPath = (id, event, path) => {
+    if (typeof path !== 'string' || !path.startsWith(`characters/${id}/${event}/`)
+      || !/\.mp3$/i.test(path) || path.startsWith('/') || path.split(/[\\/]/).includes('..')) {
+      console.error(`recusado: caminho de voz inválido: ${path}`); process.exit(2);
+    }
+    const absolute = resolve(CHARACTER_VOICES, path);
+    const rel = relative(CHARACTER_VOICES, absolute);
+    if (!rel || rel.startsWith('..') || !existsSync(absolute)) {
+      console.error(`recusado: voz ausente/fora do staging: ${path}`); process.exit(2);
+    }
+    return `audio/character-voices-dev/${path.split(sep).join('/')}`;
+  };
+  selectedCharacterVoices = {};
+  selectedCharacterVoiceText = {};
+  for (const id of FUNKEIROS_VOZ) {
+    selectedCharacterVoices[id] = {};
+    for (const event of CHARACTER_EVENTS) {
+      const paths = source.characters?.[id]?.[event];
+      if (!Array.isArray(paths) || paths.length !== 1) {
+        console.error(`recusado: lote final precisa de um take para ${id}.${event}.`); process.exit(2);
+      }
+      const runtimePath = mapPath(id, event, paths[0]);
+      selectedCharacterVoices[id][event] = [runtimePath];
+      const text = source.characterVoiceText?.[paths[0]];
+      if (typeof text === 'string' && text) selectedCharacterVoiceText[runtimePath] = text;
+    }
+  }
+}
+
+let selectedMenuMusic = null;
+if (MENU_MUSIC) {
+  selectedMenuMusic = MENU_MUSIC_ACTIVE_IDS.map((id) => {
+    const absolute = join(MENU_MUSIC, `${id}.mp3`);
+    if (!existsSync(absolute)) {
+      console.error(`recusado: faixa aprovada ausente: ${absolute}`); process.exit(2);
+    }
+    return `audio/menu-music/${id}.mp3`;
+  });
+}
 
 let lista;
 try { lista = JSON.parse(readFileSync(SHORTLIST, 'utf8')); }
@@ -449,6 +512,9 @@ const obrigatorios = [
   ...Object.entries(uiByAction).map(([action, pool]) => [`ui.${action}`, pool]),
   ...(selectedGeneral ? Object.entries(selectedGeneral).map(([key, pool]) => [`locucao.${key}`, pool]) : []),
   ...(selectedRoundNumbers ? Object.entries(selectedRoundNumbers).map(([key, pool]) => [`locucao.round.${key}`, pool]) : []),
+  ...(selectedCharacterVoices ? Object.entries(selectedCharacterVoices).flatMap(([id, events]) =>
+    Object.entries(events).map(([event, pool]) => [`voz.${id}.${event}`, pool])) : []),
+  ...(selectedMenuMusic ? [['menu.music', selectedMenuMusic]] : []),
   ...Object.entries(physicalProfiles).flatMap(([profile, cfg]) => [
     [`personagem.${profile}.hurt`, cfg.hurt], [`personagem.${profile}.death`, cfg.death],
   ]),
@@ -482,11 +548,16 @@ const manifest = {
   weaponSamples: true,
   ...(firearmsCc0 ? { weaponSamplesAuthentic: true } : {}),
   ...(boomWeaponPack ? { defaultWeaponPack: 'boom' } : {}),
+  voice: { E: [], B: [], U: [], C: [], F: [] },
+  round: { E: [], B: [], U: [], C: [], F: [] },
   weapons,
   ...(Object.keys(weaponCandidates).length ? { weaponCandidates } : {}),
   ...(boomWeaponPack ? { weaponPacks: { boom: boomWeaponPack } } : {}),
   ...(selectedGeneral ? { general: selectedGeneral } : {}),
   ...(selectedRoundNumbers ? { roundNumbers: selectedRoundNumbers } : {}),
+  ...(selectedCharacterVoices ? { characterVoice: selectedCharacterVoices } : {}),
+  ...(selectedCharacterVoiceText ? { characterVoiceText: selectedCharacterVoiceText } : {}),
+  ...(selectedMenuMusic ? { menuMusic: selectedMenuMusic } : {}),
   cs: {
     reload: magOut, reloadend: magIn, bolt,
     footsteps: footstepsBySurface.concrete,
@@ -523,6 +594,8 @@ if (FIREARMS_CC0) garantirSymlink(FIREARMS_LINK, FIREARMS_CC0);
 if (BOOM_GUNS) garantirSymlink(BOOM_GUNS_LINK, BOOM_GUNS);
 if (FISH_ANNOUNCER) garantirSymlink(FISH_ANNOUNCER_LINK, FISH_ANNOUNCER);
 if (LEGACY_CALLOUTS) garantirSymlink(LEGACY_CALLOUTS_LINK, LEGACY_CALLOUTS);
+if (CHARACTER_VOICES) garantirSymlink(CHARACTER_VOICES_LINK, CHARACTER_VOICES);
+if (MENU_MUSIC) garantirSymlink(MENU_MUSIC_LINK, MENU_MUSIC);
 
 if (existsSync(MANIFEST)) {
   try {
@@ -547,6 +620,8 @@ console.log('AK preservada: Gunshot_1-1. Demais armas/eventos são candidatos pa
 if (firearmsCc0) console.log('Arsenal: 24 armas usam gravações CC0 semanticamente mapeadas; AK preserva o Fab aprovado.');
 if (weaponCandidates.shotgun?.length) console.log('Shotgun: 6 takes reais disponíveis via ?shotguntake=1..6; padrão = Mossberg Model 190.');
 if (boomWeaponPack) console.log(`BOOM GUNS Designed: ${Object.keys(boomWeaponPack.weapons).length} armas a ganho 0,70; ${boomWeaponPack.fallbackWeapons.join(', ')} usam o pack anterior pré-carregado. A/B: ?gunpack=boom&gunstyle=huge|natural|crispy|light&guntake=1..N.`);
-if (fishAnnouncer) console.log('Fish announcer: rounds 1..7 ativos somente para escuta local.');
+if (fishAnnouncer) console.log('Fish announcer: nove callouts e rounds 1..7 ativos no catálogo privado autorizado.');
 if (legacyCallouts) console.log('Callouts legados: headshot e tiers antigos restaurados somente para escuta local; kill simples volta para a voz da faccao.');
+if (selectedCharacterVoices) console.log('Vozes próprias: 9/9 Funkeiros com select, kill, rádio e fim de round.');
+if (selectedMenuMusic) console.log(`Música de menu: somente ${MENU_MUSIC_ACTIVE_IDS.join(', ')}.`);
 console.log('Abra uma partida nova; os WAVs das armas sorteadas são pré-carregados antes do primeiro disparo.');

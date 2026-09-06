@@ -18,18 +18,21 @@
    função, não três cópias que divergem na próxima edição).
 
    ── A REGRA ────────────────────────────────────────────────────────────────
-   1. Caminho que casa um padrão do `legado` bloqueado: RECUSA, por NOME.
-   2. Caminho sob `prefixoDerivado`: só passa se o sha-256 do conteúdo estiver no
+   1. Caminho sob uma raiz de runtime explicitamente catalogada herda a política
+      dessa fonte. A procedência conhecida prevalece sobre coincidências nominais
+      (`awp.wav` CC0 não vira Valve só por conter `awp`).
+   2. Caminho que casa um padrão do `legado` bloqueado FORA dessas raízes: RECUSA.
+   3. Caminho sob `prefixoDerivado`: só passa se o sha-256 do conteúdo estiver no
       ledger, o caminho catalogado for o mesmo, a aprovação for `aprovado`, o
       evento estiver em `derivado` com caminho específico (`arma`, `superficie`
       ou `evento`), e a fonte
       existir. No contexto `pack`, a fonte ainda precisa ser `livre`.
       Qualquer outra coisa — inclusive "não sei o que é isto" — RECUSA.
-   3. Uma raiz de runtime declarada em `raizesRuntime` herda a licença da fonte.
+   4. Uma raiz de runtime declarada em `raizesRuntime` herda a licença da fonte.
       No contexto `pack`, qualquer raiz de fonte não-`livre` é recusada mesmo sem
       hash em `derivados`. Isto cobre os diretórios locais do instalador — Fab,
       BOOM, Fish e callouts legados — que não vivem sob `prefixoDerivado`.
-   4. Fora do prefixo e das raízes: se o conteúdo casar um derivado de fonte
+   5. Fora do prefixo e das raízes: se o conteúdo casar um derivado de fonte
       não-`livre`, recusa no contexto `pack` (derivado escondido fora da pasta
       ainda é redistribuição). Senão passa: está fora deste contrato.
 
@@ -73,9 +76,6 @@ export function carregarPolitica(caminhoLedger) {
    errado. `contexto`: 'pack' (zip público standalone), 'private-build'
    (artefato privado incorporado ao jogo) ou 'manifest' (autoria local). */
 export function motivoDeRecusa(rel, bytes, pol, contexto = 'pack') {
-  const legado = pol.legadoRes.find((p) => p.re.test(rel));
-  if (legado) return `caminho de legado bloqueado por procedência (${legado.porque})`;
-
   const raiz = (pol.raizesRuntime || []).find((r) => r.prefixo && rel.startsWith(r.prefixo));
   if (raiz && contexto === 'private-build') {
     const fonte = pol.fontes[raiz.fonte];
@@ -92,7 +92,11 @@ export function motivoDeRecusa(rel, bytes, pol, contexto = 'pack') {
       return `raiz de runtime \`${raiz.prefixo}\` vem da fonte \`${raiz.fonte}\` `
         + `(\`${fonte.redistribuicao}\`) e não pode entrar num pacote público só de áudio`;
     }
+    return null;
   }
+
+  const legado = pol.legadoRes.find((p) => p.re.test(rel));
+  if (legado) return `caminho de legado bloqueado por procedência (${legado.porque})`;
 
   const sha = createHash('sha256').update(bytes).digest('hex');
   const d = pol.porHash.get(sha);
