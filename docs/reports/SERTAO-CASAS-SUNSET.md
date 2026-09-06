@@ -65,11 +65,6 @@ Artefatos locais, fora do Git: `artifacts/sertao-casas/`. Antes da correção:
 `node tools/eval/sertao-interiors-capture.mjs artifacts/sertao-casas/after`, seguida de
 `Blender --background --threads 4 --python tools/render-sertao-interiors.py -- artifacts/sertao-casas/after`.
 
-Próximo passo deste checkpoint: terminar capturas e gates amplos, inspecionar o A/B,
-revisar adversarialmente o diff final, fazer commit e atualizar o PR. A coordenada
-exata da captura reportada segue não identificada; a correção não fecha esse relato
-por inferência. Revisão humana WebGL 3:2 continua pendente fora desta frente.
-
 ### Milestone técnico validado
 
 A revisão adversarial rejeitou a primeira relocação do barril em `(-17,10.5)`:
@@ -97,4 +92,9 @@ Após as posições finais: suíte específica Sertão/Velho Oeste 13/13, SP1–
 `eval:docsautoria` passaram após os commits de inventário. O último ajuste de
 inventário precisou ocorrer depois de versionar os scripts novos, pois o gerador
 conta arquivos rastreados pelo Git. Revisão adversarial final aprovou o estado
-técnico, sem bloqueio remanescente encontrado; capturas finais ainda em conclusão.
+técnico, sem bloqueio remanescente encontrado. As capturas finais `after/praca.png`,
+`after/interior-oeste.png`, `after/interior-leste.png`, `after/lateral-oeste.png`
+e `after/sunset.png` foram renderizadas e inspecionadas offline; a praça abriu,
+os interiores ficaram livres e o pôr do sol laranja manteve a leitura das silhuetas.
+O estado final atual é `IN1–IN6` verde, `TR1/TR3` verde, `13/13` na suíte
+específica e `260` colocações aprovadas no `spawn-settle-check`.
