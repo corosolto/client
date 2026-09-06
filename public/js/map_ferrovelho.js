@@ -13,9 +13,6 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras, caixaGirada } from './map_decals.js';   // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';                         // cobertura medida, não coordenada à mão
-import { setMapSky } from './map_sky.js';
-import { createFavelaAmbience } from './ambientlife.js';
-import { AMB_LOOPS } from './soundscape.js';
 
 // kill-switches (padrão do projeto): ?nofog=1 sem névoa, ?rays=0 sem god rays,
 // ?dust=0 sem poeira em suspensão, ?mato=0 sem vegetação invasora.
@@ -575,11 +572,7 @@ export function buildFerroVelho(scene, T) {
     return m;
   }
   const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); };
-  const gprop = (id, x, z, h, ry = 0) => {
-    const o = placeProp(id, { x, z, targetH: h, ry });
-    if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
-    return !!o;
-  };
+  const gprop = (id, x, z, h, ry = 0) => { const o = placeProp(id, { x, z, targetH: h, ry }); if (o) root.add(o); return !!o; };
   /* Variação de painel (crítico gauntlet: "mesmo módulo repetido") + ESTÁGIO DE FERRUGEM.
      Os GLB de carcaça já vêm com map próprio, então não dá pra trocar a textura sem perder
      o scan — o que dá é puxar a COR do material para o alvo do estágio (lerp) e mexer em
@@ -616,12 +609,9 @@ export function buildFerroVelho(scene, T) {
     });
     return o;
   };
-  const gpropV = (id, x, z, h, ry = 0) => { const flip = _pv % 2 ? Math.PI : 0; const o = placeProp(id, { x, z, targetH: h, ry: ry + flip }); if (o) { vary(o); root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); } return !!o; };
-  // collider AABB por footprint (props só entram em ry 0 ou π/2, então o AABB é exato).
-  // SÓ corpo: a bala é das malhas visíveis (gprop/gpropV/traverse no call site) — BUG-54.
-  const collide = (x, z, hw, hd, h) => {
-    colliders.push({ minX: x - hw, maxX: x + hw, minY: 0, maxY: h, minZ: z - hd, maxZ: z + hd });
-  };
+  const gpropV = (id, x, z, h, ry = 0) => { const flip = _pv % 2 ? Math.PI : 0; const o = placeProp(id, { x, z, targetH: h, ry: ry + flip }); if (o) { vary(o); root.add(o); } return !!o; };
+  // collider AABB por footprint (props só entram em ry 0 ou π/2, então o AABB é exato)
+  const collide = (x, z, hw, hd, h) => colliders.push({ minX: x - hw, maxX: x + hw, minY: 0, maxY: h, minZ: z - hd, maxZ: z + hd });
 
   /* ===================== DECALQUE DE RUA (public/img/decals) =====================
      Pedido do dono (04/08): aplicar os recortes de `public/img/decals` "na textura de todos
@@ -719,10 +709,12 @@ export function buildFerroVelho(scene, T) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(360, 360), lam({ map: apron, color: 0xc0ab8c }));
     m.rotation.x = -Math.PI / 2; m.position.set(0, -0.08, 0); root.add(m);
   }
-  // ===== chão de terra =====
+  // ===== chão de terra + poças de óleo =====
   addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, MAT.dirt);
-  // As seis poças CircleGeometry antigas liam como discos pretos perfeitos. As manchas
-  // orgânicas texturizadas do passe de sujeira abaixo já cobrem esta função sem repetição.
+  for (const [x, z, r] of [[-8, 12, 2.4], [10, -6, 1.8], [-16, -14, 2.0], [6, 24, 1.5], [18, 12, 2.2], [-24, 26, 1.7]]) {
+    const p = new THREE.Mesh(new THREE.CircleGeometry(r, 20), MAT.oil);
+    p.rotation.x = -Math.PI / 2; p.position.set(x, 0.02, z); root.add(p);
+  }
   // trilhas de pneu na terra (crítico gauntlet: "chão sem vida") — pares de faixas escuras
   {
     const trackMat = new THREE.MeshBasicMaterial({ color: 0x2a241c, transparent: true, opacity: 0.35 });
@@ -990,10 +982,10 @@ export function buildFerroVelho(scene, T) {
     const panel = (x, z) => {
       const ry = Math.PI / 2;
       const base = placeProp('muro_carros', { x, z, targetH: 3.0, ry });
-      if (base) { vary(base); root.add(base); base.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
+      if (base) { vary(base); root.add(base); }
       // topo: leve jitter de z/rotação pra quebrar a linha reta do serrilhado (crítico gauntlet)
       const top = placeProp('muro_carros', { x, z: z + 0.3, y: 2.7, targetH: 2.6, ry: ry + 0.13 });
-      if (top) { vary(top); root.add(top); top.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
+      if (top) { vary(top); root.add(top); }
       if (!base && !top) addBox(1.3, 5.6, 2.8, nextRust(), x, 0, z);   // fallback em peça única
       collide(x, z, 0.7, 1.5, 5.6);
     };
@@ -1007,7 +999,7 @@ export function buildFerroVelho(scene, T) {
     // pórtico da placa na boca sul (z=+29): postes fora do vão + placa dupla-face a 4,7 m
     for (const px of [-27.9, -18.1]) {
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 5.2, 8), MAT.steel);
-      post.position.set(px, 2.6, 29); post.castShadow = true; root.add(post); occluders.push(post);
+      post.position.set(px, 2.6, 29); post.castShadow = true; root.add(post);
       collide(px, 29, 0.15, 0.15, 5.2);
     }
     const becoSignT = handSignTex([{ t: 'BECO OESTE', size: 0.9, color: '#191410', outline: '#f0e6cc', shadow: '#f0e6cc', cond: 0.8, center: true }],
@@ -1055,7 +1047,7 @@ export function buildFerroVelho(scene, T) {
         const m = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.15, 6, 14), tireMat);
         m.rotation.x = Math.PI / 2; m.rotation.z = k * 1.1 + i;
         m.position.set(x + Math.sin(k * 2.1 + i) * 0.06, 0.15 + k * 0.27, z + Math.cos(k * 1.7 + i) * 0.06);
-        m.castShadow = m.receiveShadow = true; root.add(m); occluders.push(m);
+        m.castShadow = m.receiveShadow = true; root.add(m);
       }
     }
     // ÁGUA PARADA no pneu de cima (dengue do ferro velho) — espelha o céu alaranjado
@@ -1085,7 +1077,7 @@ export function buildFerroVelho(scene, T) {
     g.add(lid);
     if (tipped) { g.rotation.z = Math.PI / 2 - 0.06; g.position.set(x, 0.30, z); g.rotation.y = i * 1.3; }
     else g.position.set(x, 0, z);
-    root.add(g); g.traverse((m) => { if (m.isMesh) occluders.push(m); });
+    root.add(g);
     collide(x, z, tipped ? 0.5 : 0.32, tipped ? 0.32 : 0.32, tipped ? 0.6 : 0.95);
   };
   barrel(-4, 4); barrel(20, 22); barrel(-28, -18); barrel(4, -32); barrel(28, 8);
@@ -1128,7 +1120,6 @@ export function buildFerroVelho(scene, T) {
       for (const [wx, wz, wr] of [[-0.55, 0.75, 0.34], [0.55, 0.75, 0.34], [-0.5, -0.85, 0.24], [0.5, -0.85, 0.24]])
         part(g, new THREE.CylinderGeometry(wr, wr, 0.24, 10), tireMat, wx, wr, wz, 0, 0, Math.PI / 2);
       g.position.set(fx, 0, fz); g.rotation.y = ry; root.add(g);
-      g.traverse((m) => { if (m.isMesh) occluders.push(m); });
       collide(fx, fz, 1.1, 1.4, 2.1);
     };
     forklift(20, 9, -1.15);
@@ -1140,9 +1131,6 @@ export function buildFerroVelho(scene, T) {
       for (const sx of [-0.24, 0.24]) part(g, new THREE.BoxGeometry(0.05, 0.05, 1.5), wood, sx, 0.62, -0.45, 0, 0.35);
       part(g, new THREE.CylinderGeometry(0.2, 0.2, 0.1, 10), tireMat, 0, 0.2, 0.62, 0, 0, Math.PI / 2);
       g.position.set(bx, 0, bz); g.rotation.y = ry; root.add(g);
-      g.traverse((m) => { if (m.isMesh) occluders.push(m); });
-      // A cuba chega a 0,89 m: sem pegada o jogador atravessava o carrinho inteiro.
-      collide(bx, bz, 0.72, 0.82, 0.95);
     };
     barrow(3.2, -30.4, 0.6);
     /* BATERIAS empilhadas (terminais esverdeados de sulfato) + ROLOS DE FIO DE COBRE —
@@ -1160,9 +1148,8 @@ export function buildFerroVelho(scene, T) {
     /* CADEIRA MONOBLOCO branca encardida na porta do escritório (BAR §4.4) */
     {
       const pl = lam({ color: 0xd6d2c4, roughness: 0.72 });
-      // assento/encosto são occluders: a ponta da cadeira invade o colisor do carrinho de mão
-      occluders.push(mesh(new THREE.BoxGeometry(0.42, 0.05, 0.42), pl, 4.0, 0.44, -29.6, 0.5));
-      occluders.push(mesh(new THREE.BoxGeometry(0.42, 0.5, 0.05), pl, 4.0 + Math.sin(0.5) * 0.19, 0.7, -29.6 - Math.cos(0.5) * 0.19, 0.5));
+      mesh(new THREE.BoxGeometry(0.42, 0.05, 0.42), pl, 4.0, 0.44, -29.6, 0.5);
+      mesh(new THREE.BoxGeometry(0.42, 0.5, 0.05), pl, 4.0 + Math.sin(0.5) * 0.19, 0.7, -29.6 - Math.cos(0.5) * 0.19, 0.5);
       for (const [lx, lz] of [[-0.17, -0.17], [0.17, -0.17], [-0.17, 0.17], [0.17, 0.17]])
         mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.44, 5), pl, 4.0 + lx, 0.22, -29.6 + lz);
     }
@@ -1275,9 +1262,9 @@ export function buildFerroVelho(scene, T) {
         const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6 + drnd() * 0.5, 8), scrapMat);
         m.rotation.z = Math.PI / 2; m.rotation.y = drnd() * 6.3; m.position.set(x + drnd() - 0.5, 0.06, z + drnd() - 0.5);
         m.castShadow = true; root.add(m);
-      } else {                    // bloco de motor baixo: atravessável como um degrau
-        const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.28, 0.34), lam({ color: 0x1f1d1b, metalness: 0.75, roughness: 0.26, envMapIntensity: 1.8 }));
-        m.position.set(x + drnd() - 0.5, 0.14, z + drnd() - 0.5); m.rotation.y = drnd() * 6.3; m.castShadow = true; root.add(m);
+      } else {                    // bloco de motor
+        const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.32, 0.34), lam({ color: 0x1f1d1b, metalness: 0.75, roughness: 0.26, envMapIntensity: 1.8 }));
+        m.position.set(x + drnd() - 0.5, 0.16, z + drnd() - 0.5); m.rotation.y = drnd() * 6.3; m.castShadow = true; root.add(m);
       }
     }
     // peças grandes: portas/capôs apoiados nas pilhas + parachoques no chão
@@ -1331,7 +1318,6 @@ export function buildFerroVelho(scene, T) {
         im.setColorAt(i, col);
       }
       im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
-      im.userData.nonSolidSurface = true;   // mato atravessável (alphaTest com vãos), não é parede
       root.add(im);
     }
 
@@ -1381,7 +1367,6 @@ export function buildFerroVelho(scene, T) {
         }
       }
       im.count = n; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
-      im.userData.nonSolidSurface = true;   // capim: folhagem atravessável, não é superfície sólida
       root.add(im);
 
       /* TREPADEIRA cobrindo pilha inteira — manta de folhas na FACE das paredes de carcaça
@@ -1389,8 +1374,6 @@ export function buildFerroVelho(scene, T) {
       const vineMat = new THREE.MeshLambertMaterial({ map: vineTex(733), transparent: true, alphaTest: 0.32, side: THREE.DoubleSide });
       const drape = (x, z, ry, w, h) => {
         const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h, 1, 3), vineMat);
-        // folhagem atravessável (alphaTest com vãos): não é superfície sólida pra régua de raios
-        m.userData.nonSolidSurface = true;
         m.position.set(x, h / 2 + 0.05, z); m.rotation.y = ry; m.receiveShadow = true; root.add(m);
       };
       // paredes N-S do labirinto (A -11/-13, B 11/1, C -11/15, D 21/-20): face externa
@@ -1406,7 +1389,6 @@ export function buildFerroVelho(scene, T) {
       for (const [gx, gz, gy] of [[-11, -16, 3.0], [11, 4, 3.0], [-11, 12, 3.0], [21, -17, 3.0], ...(BECO ? [] : [[-22, -24, 2.2]]), [24, 32, 2.2]]) {
         for (let k = 0; k < 3; k++) {
           const m = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.3), grassMat);
-          m.userData.nonSolidSurface = true;
           m.position.set(gx + (drnd() - 0.5) * 1.6, gy + 0.55, gz + (drnd() - 0.5) * 1.6);
           m.rotation.y = drnd() * 3.14; root.add(m);
         }
@@ -1430,7 +1412,7 @@ export function buildFerroVelho(scene, T) {
           const c = new THREE.Mesh(new THREE.PlaneGeometry(5.4 * s, 4.2 * s), canopyMat);
           c.position.set(tx, 4.9 * s, tz); c.rotation.y = k * 1.05; c.castShadow = true; root.add(c);
         }
-        if (collideIt) { occluders.push(tr); collide(tx, tz, 0.4, 0.4, 3.0); }
+        if (collideIt) collide(tx, tz, 0.4, 0.4, 3.0);
       };
       tree(-28.5, -30.5, 1.0, true);            // dentro do pátio (marco do canto NO)
       tree(-42, -34, 1.35, false); tree(44, 26, 1.2, false);   // fora da cerca: skyline vivo
@@ -1721,7 +1703,7 @@ export function buildFerroVelho(scene, T) {
      O sol saiu de (-24,48,30) — ~55° de elevação, sombra curta, meio-dia disfarçado — para
      ~22° de elevação: a sombra fica ~2,5× mais longa e é ELA que desenha os corredores
      entre as pilhas. Cor mais quente e âmbar; o hemi ganha bounce quente do chão de terra. */
-  setMapSky(scene, T, '/img/textures/sky_ferrovelho.webp', 0xc8b49a);
+  scene.background = T.sky || new THREE.Color(0xc8b49a);
   // Sol de FIM DE TARDE (08/2026 — clima da referência BECO OESTE): mais baixo (sombras
   // longas atravessando o pátio) e mais quente; hemi acompanha. Era 0xffd39a em (-46,20,32).
   const hemi = new THREE.HemisphereLight(0xffdfb0, 0x5a4530, 0.95); scene.add(hemi);
@@ -1895,22 +1877,7 @@ export function buildFerroVelho(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 61, separacao: 13 },
   });
 
-  /* BUG-57: ferro velho é território de RATO — e o caramelo guarda o pátio. */
-  const ambience = createFavelaAmbience(root, {
-    map: 'ferro_velho',
-    rats: [
-      { pos: [-11, 0, -4], to: [-8.5, 0, -1.5], phase: .2 }, { pos: [5, 0, 1.5], to: [7.5, 0, 3.5], phase: 1.0 },
-      { pos: [-1, 0, 13.5], to: [1.5, 0, 15.5], phase: 1.9 }, { pos: [-23, 0, 12.5], to: [-20.5, 0, 15], phase: 2.8 },
-    ],
-    pigeons: [
-      { mode: 'ground', pos: [3, 0, -16], phase: .6 },
-      { mode: 'ground', pos: [4.4, 0, -15], phase: 1.5 },
-    ],
-    dogs: [{ pos: [-3, 0, 29], to: [1.5, 0, 29], phase: .4 }],
-  });
-
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:80,vol:.3}],bioma:'urbano'},
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     /* DECLARAÇÃO PRA RÉGUA (tools/eval/decal-probe.mjs): a lista COMPLETA contra a qual o
        `paredeAtras` validou cada decalque = colliders + as duas folhas giradas do portão. */

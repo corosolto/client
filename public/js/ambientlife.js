@@ -25,7 +25,7 @@ const ASSETS = Object.freeze({
   // Derivado quadrúpede do acervo; postura/clipe: SERTAO-CALANGO-QUADRUPEDE.md.
   calango: 'models/ambient/calango_quadrupede.glb',
 });
-export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
+export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS).filter(id => !['calango', 'lagarto'].includes(id)));
 const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot', calango: 'calango' });
 const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', calango: 'calango' });
 const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);

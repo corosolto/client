@@ -19,10 +19,25 @@ dist/
 # Recupere com `npm run fetch-audio`. O manifest de exemplo é versionado.
 public/audio/
 !public/audio/manifest.example.json
-# vida 1: a procedência do áudio ambiente (CC0 Freesound + 1 loop Mint) é
-# versionada como exceção — `public/audio/ambiente/FONTE.md` entra com
-# `git add -f` (o gitignore não consegue re-incluir arquivo sob dir excluído).
-# Os mp3 shipam pelo audio-pack.zip, nunca pelo git.
+
+# ── Staging privado de asset comprado ───────────────────────────────────────
+# Pacote fonte do piloto Fab (Action Game Sounds Pack, PlaceHolder Inc., Fab
+# Standard License). A licença proíbe redistribuição STANDALONE: o som pode ser
+# incorporado ao jogo, e não pode ser republicado como pacote de sons — e um
+# repositório público é publicação. A listagem ainda diz `Allows usage with AI:
+# No`, então os WAVs também não podem ser entrada de modelo.
+#
+# O que fica versionado é o METADADO: `docs/audio/proveniencia.json` (origem,
+# licença, hash, aprovação) e o inventário que `tools/audio/inventariar.mjs`
+# emite — nome, hash, duração, canais, taxa, pico, loudness. Nunca o áudio.
+# Contrato completo: docs/audio/PROVENIENCIA.md. Réguas: `npm run eval:audioproc`
+# (forma do ledger) e `npm run assert:assets` (PRV5, hash contra a build).
+private-assets/
+audio-src/
+# token de OAuth de loja de asset — segredo, mesma regra do .env
+*.epic-token
+.fab-token
+.egs-token
 
 # ── Skills de terceiros ─────────────────────────────────────────────────────
 # 13 MB de skills de terceiros (incluindo 8 GIFs de demonstração, 3,2 MB o
@@ -112,8 +127,6 @@ public/img/decals/*
 # (tools/gen-image.mjs) — sem problema de procedência, então versionam e chegam
 # ao deploy de produção (que builda do git puro e não tem o acervo de references/).
 !public/img/decals/or-*.png
-# Peça autoral do Lajes, gerada no Mint e registrada por hash em public/img/FONTE.md.
-!public/img/decals/pixo-lajes-01.png
 
 # ── Sistema operacional e editor ────────────────────────────────────────────
 .DS_Store
@@ -181,24 +194,14 @@ tools/eval/data/
 # probe de rodada MUTANTE do eval:cena — instrumento de teste da régua, não medição do jogo
 tools/eval/cena_probe.mutante-*.json
 
-# Rascunho de post de divulgação (LinkedIn/X). Texto pessoal, não é doc do projeto:
-# fica na árvore para editar no editor, mas nunca entra no repo público.
-/posts-linkedin-twitter.md
 # Material-FONTE dos retratos (renders do ChatGPT, ~2 MB cada). É insumo do
 # pipeline de arte, não asset do jogo: o que o jogador baixa são os .webp e .webm
 # derivados em public/img/entrada, public/img/resultado e public/video/. Sem esta
 # regra o repo ganharia 97 MB e o deploy publicaria todos eles.
 public/img/chars/molde/
 
-# Artefatos de agente — memória de sessão, não produto (saneamento v2.1.0, 18/08).
-# graphify-out/ é grafo de conhecimento de agente: 323k linhas, 70% do diff da branch.
-graphify-out/
-# Intermediários de pipeline de geração (tmp/ nunca é produto versionado).
-tmp/
-# Cache de verificação de URL de ferramenta de IA.
-url_verification_cache.json
-# Logs de eval/serve do scratchpad (os PROMPT-HANDOFF-*.md são HISTÓRIA e ficam).
-scratchpad/*.log
+# relatórios da camada operacional (npm run ops:diag) — evidência de rodada, não contrato
+artifacts/ops/
 
-# Evidência local 3:2, logs e pacotes baixados da frente isolada Sertão.
+# Capturas e logs locais de validação do Sertão.
 /artifacts/sertao-astra/

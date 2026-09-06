@@ -15,11 +15,10 @@ cd "$(dirname "$0")/.."
 URL="${DECALS_PACK_URL:-https://github.com/corosolto/client/releases/download/decals-pack-v2/decals-pack.zip}"
 DEST="public/img/decals"
 
-# Sentinela por MARCA, não por contagem (regenerada em 25/08): o PR #399 versionou
-# `pixo-lajes-01.png` (obra própria, sem prefixo or-) e a contagem antiga via ">0 PNG
-# não-or" no clone limpo da Vercel — o pack nunca baixava e o assert:assets derrubava
-# o deploy com 196 decalques faltando. A marca só existe depois de um download bom.
-if [ -f "$DEST/.decals-pack-v2" ]; then
+# Sentinela conta só o ACERVO baixável (exclui os `or-*.png`, que são obra própria
+# VERSIONADA e vêm no clone — sem esta exclusão, qualquer clone fresco tem >0 PNG,
+# o early-exit dispara e o pacote do acervo nunca baixa na Vercel).
+if [ -d "$DEST" ] && [ "$(ls -1 "$DEST"/*.png 2>/dev/null | grep -cv '/or-')" -gt 0 ]; then
   echo "decals/ já configurado — nada a fazer."
   exit 0
 fi
@@ -27,5 +26,4 @@ mkdir -p "$DEST"
 echo "Baixando decalques de: $URL"
 curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL "$URL" -o /tmp/csbrasil-decals.zip
 unzip -o -q /tmp/csbrasil-decals.zip -d "$DEST/"
-touch "$DEST/.decals-pack-v2"
 echo "Pronto. $(ls -1 "$DEST"/*.png | wc -l | tr -d ' ') decalques em $DEST/."

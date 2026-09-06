@@ -37,32 +37,12 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 ## As duas zonas
 
-<!-- BEGIN:GERADO:zonas — não edite à mão, rode `npm run docs` -->
-
-| Zona | O que é | Tamanho medido | Regra |
-|---|---|---|---|
-| `public/` | o **jogo** | 45 arquivos `.js`, 36.159 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
-| `src/` | o **site** | 18 páginas `.astro`, 19 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 227 scripts em `tools/eval/`, 63 em `tools/` | node puro: sobe o jogo real sem browser |
-
-**Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
-
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `find src/pages -name '*.astro' | wc -l · find src/pages/api -name '*.ts' | wc -l · ls public/index.html`
-
-<!-- END:GERADO:zonas -->
+Números atuais das zonas e da fronteira `public/` × `src/`: veja [`ARCH.generated.md`](ARCH.generated.md) (gerado — não editar à mão).
 
 **`public/` não pode ganhar dependência de runtime nem passo de build.** Isso não é
 conservadorismo: é o que permite `tools/eval/harness.mjs` subir a classe `Game` real em node
 puro em segundos — que é o que faz o quality gate existir. Um bundler no meio quebraria a régua
 junto com a portabilidade. Three.js é vendorizado em `public/vendor/`; não adicione CDN.
-
-**Roteamento de geração de asset (regra do dono, 19/08/2026; música em 20/08/2026):
-Mint é SÓ para 3D** (models, props, personagens, rig/animação); **toda arte 2D sai pelo
-OpenRouter** (`tools/gen-image.mjs`, chave só do `.env`); **música NÃO é Mint — sai pelo
-OpenRouter** (`/audio/speech` e cia., mesma chave) ou outro provedor dedicado. O pipeline
-de animação do Mint é humanoid-only, o GPT de imagem entrega 2D com mais base no real
-(medido nos lotes da v2.1, pixos SP×RJ) e a música do Mint não agradou. Fauna continua
-preferindo Quaternius/CC0 com procedência em `FONTE.md` antes de qualquer geração paga.
 
 **Mexeu em `public/js/*.js`? Preserve o cache-bust por conteúdo** — o import map de
 `src/pages/index.astro` e o arnês usam o manifesto recursivo de `scripts/module-cache.mjs`.
@@ -143,13 +123,11 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 | o plano de release, degrau a degrau | [`docs/historico/plans/08-RELEASE-PROFISSIONAL.md`](docs/historico/plans/08-RELEASE-PROFISSIONAL.md) | com o corte defendido |
 | como abrir um PR que passa | [`CONTRIBUTING.md`](CONTRIBUTING.md) | linha editorial, higiene, processo |
 | investigar e consertar um defeito | [`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md) | as leis viram passo a passo, com o caso real de cada uma |
-| criar personagem, mapa ou asset novo | [`.claude/skills/csbrasil/SKILL.md`](.claude/skills/csbrasil/SKILL.md) | pipeline com 6 portões; ficha validada por `npm run spec:check` |
-| revisar asset gerado (nota de fora) | [`.claude/skills/asset-review/SKILL.md`](.claude/skills/asset-review/SKILL.md) | crítico adversarial de contexto limpo — quem constrói não dá a nota |
-| skills nativas visíveis pra todo agente | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` no `check:fast` |
 | podar over-engineering de um diff; entrevistar antes de codar | `.agents/skills/` (`ponytail-review`, `grill-me`, `handoff`, `to-spec`) | terceiras, gitignored, fixadas por hash — fontes em `.agents/skills/THIRD-PARTY.md` |
 | a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; `docs/INDICE.md` indexa os `.md` soltos |
 | licença, arte paga e marca | [`docs/LICENCA.md`](docs/LICENCA.md) | as **decisões** e o porquê; quem declara é o `LICENSE`, e a tabela de superfícies vive no `CONTRIBUTING.md` |
 | fronteira de segurança do backend | [`docs/seguranca.md`](docs/seguranca.md) | leia antes de mexer em `/api/*` ou `supabase/` |
+| **diagnosticar produção, recuperar e reverter** | [`docs/runbooks/operacao-autonoma.md`](docs/runbooks/operacao-autonoma.md) | `npm run ops:diag`: causa provável, evidência, impacto e próximo passo; "tecnicamente verde" ≠ "pronto para lançamento" |
 | tarefas boas de primeira contribuição | [`docs/issues/`](docs/issues/) | uma por arquivo, com critério de aceite |
 | por que uma decisão antiga é como é | [`docs/historico/`](docs/historico/) | arquivo morto: **não** descreve o estado atual |
 
@@ -157,18 +135,7 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 
 ## O quality gate, e a ordem que importa
 
-<!-- BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` -->
-
-```bash
-npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:mapcontrato eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check
-```
-
-`package.json` tem **133 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
-
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
-
-<!-- END:GERADO:scripts -->
+Comandos atuais do quality gate: veja [`ARCH.generated.md`](ARCH.generated.md) (gerado — não editar à mão).
 
 > ### `npm run eval:vm` roda ANTES de `invariants.mjs`. Sempre.
 >

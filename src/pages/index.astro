@@ -1,6 +1,5 @@
 ---
 import pkg from '../../package.json';
-import { FACTIONS } from '../../public/js/factions.js';
 import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL } from '../lib/site';
 
 /* ESTÁTICA de propósito: o Stateloop não publica SSR e `prerender = false` aqui
@@ -173,7 +172,12 @@ window.__GEO_LANG__ = (function () {
     var msg = String((r && r.message) || r || '');
     // `name` vale só para o painel de falha; quem decide o balde é a mensagem.
     if (r && r.name === 'AbortError') return true;
-    return /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i.test(msg);
+    return /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted|The play method is not allowed by the user agent or the platform in the current context|play\(\) failed because the user didn't interact with the document first/i.test(msg);
+  }
+  /* MESMA redação do `CONTEXT_LOSS_RE` de `src/lib/error-provenance.mjs` (BUG-82): segura só
+     o painel de launch - o reporta() segue enviando, e a perda persistente escala pelo fatal de 8 s. */
+  function erroDeContexto(m){
+    return /to WebGL2?RenderingContext\.\w+ must be an instance of WebGLShader\b/i.test(String(m || ''));
   }
   /* URL http só prova origem em source/stack; na mensagem ela é payload do
      jogo ("falha ao carregar https://api..."). Esquema de extensão vale em
@@ -186,6 +190,14 @@ window.__GEO_LANG__ = (function () {
     var vendor = /\/_vercel\//i;
     if (extensao.test(sourceText)) return false;
     if (vendor.test(sourceText) || vendor.test(String(stack || ''))) return false;
+    // MESMA redação da `CARTEIRA_RE` de `src/lib/error-provenance.mjs` - se os dois lados
+    // discordarem, a carteira volta a comer cota aqui ou a abrir issue lá (BUG-78).
+    var carteira = /\b(?:window|globalThis|self)\.(?:ethereum|solana|tronWeb|tronLink|phantom|keplr|BinanceChain|coinbaseWalletExtension|web3)\b|\bCannot redefine property:\s*(?:ethereum|solana|web3)\b|\bFailed to connect to MetaMask\b/i;
+    if (carteira.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
+    // MESMA redação da `PONTE_INJETADA_RE` de `src/lib/error-provenance.mjs` - se os dois
+    // lados discordarem, a ponte come cota aqui ou volta a abrir issue lá (BUG-76).
+    var injetado = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|webkit\.messageHandlers)\b/;
+    if (injetado.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
     var propria = location.origin;
     if (sourceText && /^https?:\/\//i.test(sourceText)) {
       try {
@@ -327,7 +339,7 @@ window.__GEO_LANG__ = (function () {
     if (interna) showDebug('error', msg + (loc ? ('  @ ' + loc) : ''), e.error && e.error.stack);
     reporta('error', msg, loc, e.error && e.error.stack, !interna);
     if (!window.__CS_MAIN_READY__ && interna) erroDoBoot = e.error || new Error(String(msg));
-    if (lancamento.ativo && interna) lancamento.fail(e.error || new Error(String(msg)), loc);
+    if (lancamento.ativo && interna && !erroDeContexto(String(msg))) lancamento.fail(e.error || new Error(String(msg)), loc);
   });
   window.addEventListener('unhandledrejection', function(e){
     var r = e.reason;
@@ -534,9 +546,9 @@ window.__GEO_LANG__ = (function () {
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href={`/style.css?v=${V}`}>
-<link rel="stylesheet" href={`/map-preview.css?v=${V}-${JS_REV}`}>
 <!-- Todo módulo local precisa passar pelo import map versionado. -->
 <script type="importmap" is:inline set:html={IMPORTMAP}></script>
+<link rel="stylesheet" href={`/map-preview.css?v=${V}-${JS_REV}`} />
 </head>
 <body>
 <h1 class="sr-only">CORO SOLTO: Treta Suprema (ex-CS BRASIL) - jogo FPS gratuito de navegador, Time E × Time B</h1>
@@ -627,8 +639,21 @@ window.__GEO_LANG__ = (function () {
     <!-- nav com roving tabindex: setas ↑↓ movem, Enter/Espaço confirma (main.js).
          aria-current marca o item que abriu o painel - antes nada dizia de onde
          o setup tinha vindo. -->
+    <!-- Lista de 4 do redesign (JOGAR / RANKING / COMO JOGAR / CONFIGURAÇÕES). Os DOIS
+         modos não cabiam como irmãos sem virar 5 itens, então JOGAR abre um submenu e
+         os data-act `sp`/`ctf` seguem intocados - o switch do main.js:980 não muda.
+         SOBRE O JOGO virou COMO JOGAR só no rótulo: `sobre` já abria o #howto-panel,
+         ou seja, esse item sempre FOI o "como jogar" do handoff.
+         FEEDBACK desceu pro rodapé (segue vivo, ver /api/feedback e migration 013). -->
     <nav class="cs-menu aaa-nav" id="cs-menu" aria-label="Menu principal">
       <div class="cs-menu-label">// ESCOLHA A TRETA</div>
+      <!-- PRIMEIRA INSTÂNCIA (pedido do dono, 30/08): MULTIPLAYER e SINGLE PLAYER são as
+           duas primeiras escolhas do menu, GRANDES, sem o degrau "JOGAR ▸" no meio.
+           A ordem MULTIPLAYER primeiro é a decisão de 27/08, mantida. CAPTURE A BANDEIRA
+           não sumiu: segue como o interruptor de modo (#map-mode) na tela de mapa, que é
+           onde a escolha de modo sempre morou de verdade. `data-act` mp/sp intocados:
+           o switch do main.js roteia igual, só caiu o caso 'jogar'. -->
+      <button class="cs-item cs-prime" data-act="mp" type="button"><span class="cs-tick">▸</span><span class="cs-prime-txt">MULTIPLAYER<small>SALAS ONLINE · CONVIDE PELO LINK</small></span></button>
       <button class="cs-item cs-prime" data-act="sp" type="button"><span class="cs-tick">▸</span><span class="cs-prime-txt">SINGLE PLAYER<small>CONTRA BOTS · MATA-MATA E CTF</small></span></button>
       <button class="cs-item" data-act="ranking" type="button"><span class="cs-tick">▸</span>RANKING</button>
       <button class="cs-item" data-act="sobre" type="button"><span class="cs-tick">▸</span>COMO JOGAR</button>
@@ -867,20 +892,61 @@ window.__GEO_LANG__ = (function () {
     <p class="ts-hint" id="team-hint">Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.</p>
   </header>
   <div class="team-row">
-      {FACTIONS.map((f, index) => (
-        <button class={`team-card team-${f.id.toLowerCase()}`} data-faction={f.id} data-faction-index={index}
-          data-ready={f.ready ? '1' : '0'} data-description={f.description} style={`--tc:${f.color};--tc-rgb:${f.rgb};--tc-bg:${f.bg};--art:url('/img/faccoes/${f.art}.webp')`}>
-          <img class="team-crest" src={`/img/brasoes/${f.crest}.png`} alt="">
-          <span class="team-art" aria-hidden="true"></span>
-          <span class="team-plate">
-            <span class="team-name">{f.name}</span>
-            <span class="team-slogan">“{f.slogan}”</span>
-          </span>
-          <span class="team-chars" aria-hidden="true"></span>
-          <span class="team-cta" aria-hidden="true"></span>
-          {!f.ready && <span class="team-production">EM PRODUÇÃO</span>}
-        </button>
-      ))}
+    <button id="btn-team-e" class="team-card team-e">
+      <img class="team-crest" src="/img/brasoes/e.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">TIME E</span>
+        <span class="team-slogan">"A treta se faz na praça!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Esquerdomacho · Líder do Sindicato · Líder do MST · Doutora do SUS · Jovem Místico</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+    <button id="btn-team-b" class="team-card team-b">
+      <img class="team-crest" src="/img/brasoes/b.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">TIME B</span>
+        <span class="team-slogan">"A treta se faz na rodovia!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Caminhoneiro · Influencer de Dubai · Cantor Sertanejo · Tia Zilá · Coach Quântico</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+    <button id="btn-team-u" class="team-card team-u">
+      <img class="team-crest" src="/img/brasoes/u.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">TRIBOS URBANAS</span>
+        <span class="team-slogan">"A treta se faz na quebrada!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Emo · Black Metal · Metaleiro · Punk · Skatista · Clubber · Rapper · Rasta · Pagodeiro</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+    <button id="btn-team-c" class="team-card team-c">
+      <img class="team-crest" src="/img/brasoes/c.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">PALHAÇOS</span>
+        <span class="team-slogan">"A treta se faz no picadeiro!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Bonzo · Palhaço do Mal · Jozo · Adjim · Esbirro · Titica · Padati · Padata · Cadequinha</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+    <button id="btn-team-f" class="team-card team-f">
+      <img class="team-crest" src="/img/brasoes/f.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">FUNKEIROS</span>
+        <span class="team-slogan">"A treta se faz no bailão!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Mandrake · Raul da Franja · Oakley · Cria RJ · Chave SP · Funk Raiz · Trap Funk · Fluxo · Ostentação</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
   </div>
   <button id="team-back" class="btn btn-back">◀ VOLTAR</button>
 </div>
@@ -905,7 +971,6 @@ window.__GEO_LANG__ = (function () {
         <span id="char-rarity" class="rarity">COMUM</span>
       </div>
       <div id="char-info-blurb"> - </div>
-      <div id="char-voice-caption" role="status" aria-live="polite"></div>
       <div class="char-spec">
         <small>ESPECIALIDADE</small>
         <b id="char-spec-name"> - </b>
@@ -982,7 +1047,6 @@ window.__GEO_LANG__ = (function () {
       <label class="set-row set-extra" data-section="gameplay">AJUDAR A TREINAR OS BOTS
         <span class="set-toggle"><input id="set-training" type="checkbox"><b>LIGADO</b><i>DESLIGADO</i></span>
       </label>
-      <p class="set-note">Com sua autorização, o jogo envia como você anda, mira e atira para treinar os bots. O lote usa seu identificador técnico de jogador; o IP não é armazenado. Você pode desligar quando quiser.</p>
       <p class="set-note">“Padrão ouro” liga sombras e neblina. Em notebook de reunião, escolha “Batata”.</p>
       </div>
       <aside class="set-preview-wrap" aria-hidden="true">
@@ -1000,7 +1064,97 @@ window.__GEO_LANG__ = (function () {
   </div>
 </div>
 
-<!-- Ranking (local + global quando o ranking global estiver ligado) -->
+<!-- Ranking (local + global quando ligado no servidor) -->
+<!-- MULTIPLAYER (tela cheia, redesign 30/08). Coluna esquerda = as DECISÕES na ordem em
+     que a pessoa decide: ONDE jogar (cartão por região com bandeira + ping medido - sem
+     essa coluna quem joga de fora do Brasil nao sabe que existe um no europeu), COMO
+     entrar (jogo rápido / código de convite BR-XXXX) e - se nenhuma sala servir - CRIAR
+     a sua. Coluna direita = as salas abertas, que é o que a tela existe pra mostrar.
+     O chip #mp-estado é o estado de conexão SEMPRE legível (medindo/online/fora do ar/
+     conectando): antes o único sinal era a lista vazia, indistinguível de "travou". -->
+<div id="mp-panel" class="screen hidden">
+  <div class="mp-shell">
+    <header class="mp-head">
+      <div class="mp-head-txt">
+        <div class="mp-kicker">// TRETA ONLINE</div>
+        <h2 class="mp-title">MULTIPLAYER</h2>
+      </div>
+      <div id="mp-estado" class="mp-estado" data-s="off" role="status">···</div>
+      <button id="mp-back" class="btn btn-back" type="button">◀ VOLTAR</button>
+    </header>
+
+    <div class="mp-grid">
+      <aside class="mp-lado">
+        <section class="mp-bloco">
+          <div class="mp-titulo">SERVIDOR <span class="mp-dica">o de menor ping é o seu</span></div>
+          <div id="mp-nos" class="mp-nos" role="radiogroup" aria-label="Região do servidor"></div>
+        </section>
+
+        <section class="mp-bloco">
+          <div class="mp-titulo">ENTRAR NA TRETA</div>
+          <button id="mp-quick" class="btn btn-big mp-quick" type="button">▶ JOGO RÁPIDO</button>
+          <!-- form de verdade: Enter no campo entra, como todo campo de código que se cola -->
+          <form id="mp-convite-form" class="mp-convite">
+            <input id="mp-convite-in" type="text" maxlength="11" placeholder="BR-7K3M"
+                   autocomplete="off" spellcheck="false" aria-label="Código de convite (REGIÃO-CÓDIGO)" />
+            <button class="btn" type="submit">ENTRAR</button>
+          </form>
+          <p class="mp-dica2">Recebeu um convite? Cola o código aqui.</p>
+        </section>
+
+        <details class="mp-bloco mp-criar">
+          <summary class="mp-titulo">CRIAR MINHA SALA</summary>
+          <div class="mp-form">
+            <label>NOME <input id="mp-nome" type="text" maxlength="24" placeholder="SALA DO ZÉ" /></label>
+            <label>MAPAS
+              <select id="mp-rotacao">
+                <option value="todos">TODOS (sorteia a cada partida)</option>
+                <option value="oficiais">SÓ OFICIAIS</option>
+                <option value="comunidade">SÓ DA COMUNIDADE</option>
+              </select>
+            </label>
+            <label>TIME E <select id="mp-fac-e"></select></label>
+            <label>TIME B <select id="mp-fac-b"></select></label>
+            <label>MODO
+              <select id="mp-modo"><option value="rounds">MATA-MATA</option><option value="ctf">CAPTURE A BANDEIRA</option></select>
+            </label>
+            <label class="mp-check"><input id="mp-privada" type="checkbox" /> SALA PRIVADA (só com senha)</label>
+            <label id="mp-senha-wrap" hidden>SENHA <input id="mp-senha" type="text" maxlength="32" /></label>
+            <button id="mp-criar" class="btn" type="button">CRIAR E ENTRAR</button>
+          </div>
+        </details>
+      </aside>
+
+      <main class="mp-corpo">
+        <div class="mp-titulo">SALAS ABERTAS <button id="mp-atualizar" class="mp-mini" type="button">ATUALIZAR</button></div>
+        <div id="mp-salas" class="mp-salas" aria-live="polite"></div>
+        <div id="mp-erro" class="mp-erro" hidden></div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL "SALA CRIADA" (pedido do dono, 31/08: "ao clicar em CRIAR SALA, abrir um MODAL -
+     fica melhor a visualização e ter o copy do id da sala"). Mesmo idioma do #launch-error
+     (overlay + cartão chanfrado com filete no topo), acento ÂMBAR porque convite é
+     OBJETIVO/conquista, não erro. O código BR-XXXX é o protagonista: display grande, os
+     dois copiar embaixo, ENTRAR NA SALA como ação primária. Fechar NÃO desfaz a criação -
+     o microcopy diz isso, senão o jogador acha que cancelou. -->
+<div id="mp-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="mp-modal-title">
+  <div class="mp-modal-card">
+    <div class="mp-modal-kicker">// TRETA ONLINE</div>
+    <h2 id="mp-modal-title">SALA CRIADA</h2>
+    <div id="mp-modal-convite" class="mp-modal-convite" title="O código da sua sala">BR-XXXX</div>
+    <p id="mp-modal-lot" class="mp-modal-lot"></p>
+    <div class="mp-modal-copy">
+      <button id="mp-modal-copiar-codigo" class="btn" type="button">COPIAR CÓDIGO</button>
+      <button id="mp-modal-copiar-link" class="btn" type="button">COPIAR LINK</button>
+    </div>
+    <button id="mp-modal-entrar" class="btn btn-big" type="button">▶ ENTRAR NA SALA</button>
+    <p class="mp-modal-nota">ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.</p>
+  </div>
+</div>
+
 <div id="ranking-panel" class="screen hidden">
   <div class="panel center-panel">
     <h2>RANKING</h2>
@@ -1174,11 +1328,7 @@ window.__GEO_LANG__ = (function () {
 <!-- Match end - veredito, placar e o desempenho DO JOGADOR em três blocos separados.
      Antes era um painel só: o título, uma frase longa e três números soltos que quebravam
      linha no meio ("9 kills de r"). O conteúdo de #match-stats é escrito pelo game.js. -->
-<!-- RESULTADO (tela 09 da referência). A referência NÃO é uma coluna centrada: é uma
-     coluna de conteúdo ANCORADA À ESQUERDA (título, sub, cartão de estatística, ações) com
-     a metade direita reservada pra arte do vencedor. O #me-hero é essa metade - hoje ela é
-     campo atmosférico, porque o retrato do personagem só existe em runtime (glbchars) e
-     quem saberia qual é é o game.js. Ver relatório: falta um gancho lá pra preencher. -->
+<!-- RESULTADO: conteúdo à esquerda e arte estática do personagem escolhido à direita. -->
 <div id="match-end" class="screen hidden">
   <div class="me-wrap">
     <div class="me-col">
@@ -1189,6 +1339,7 @@ window.__GEO_LANG__ = (function () {
       <div id="match-stats"></div>
       <div class="me-actions">
         <button id="btn-again" class="btn btn-big btn-cta">JOGAR NOVAMENTE</button>
+        <p id="match-next" class="hidden">PRÓXIMO MAPA CARREGANDO…</p>
         <button id="btn-menu" class="btn">VOLTAR AO MENU</button>
       </div>
     </div>
@@ -1212,6 +1363,8 @@ window.__GEO_LANG__ = (function () {
   }
 </script>
 
+<!-- Sinais operacionais da sessão (FPS, falhas de carga, abandono); só coleta - docs/runbooks/operacao-autonoma.md -->
+<script type="module" src={`/js/ops.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
 </body>
 </html>

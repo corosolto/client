@@ -500,19 +500,18 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
    uma tira deitada. É por isso que a arte entrava cortada — não havia altura pra ela.
    O header também sobe: `justify-content:center` empurrava o título pra 43% da altura
    e espremia as placas contra o rodapé; na referência o título mora em 16-22%. */
-#team-select{justify-content:flex-start;gap:var(--s-5);padding:clamp(40px,5vh,68px) var(--s-5) var(--s-5);overflow:hidden;
-  --team-band-h:26px}
+#team-select{justify-content:flex-start;gap:var(--s-5);padding:clamp(40px,5vh,68px) var(--s-5) var(--s-5);
+  --team-band-h:28px}
 /* VOLTAR no alto à DIREITA (referência 02 e 03); só o map-screen leva ele pro rodapé */
 #team-select .btn-back,#char-select .btn-back{left:auto;right:26px}
-.team-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));
-  gap:10px;width:min(1280px,96vw);flex:1 1 auto;min-height:0}
-.team-card.faction-excluded{visibility:hidden;pointer-events:none}
+.team-row{display:flex;gap:var(--s-3);flex-wrap:nowrap;justify-content:center;align-items:center;
+  width:min(1280px,96vw);flex:1 1 auto;min-height:0}
 /* Altura POR TETO, não por aspect-ratio: a proporção 47:100 da referência é de uma tela
    com QUATRO placas; com cinco a coluna cai pra ~245px e o mesmo aspect esticaria o
    cartão pra 820px (medido: razão 0,30, um espeto). O teto de 620px dá razão ~0,40 e
    mantém a placa na mesma fatia de altura da referência (~74% da tela) sem sobrar
    buraco embaixo. Em 1280×720 o 72vh (518px) é quem manda e ainda cabe. */
-.team-card{width:100%;height:100%;max-width:none;min-width:0;min-height:0;
+.team-card{flex:1 1 20%;max-width:none;min-width:0;height:min(72vh,620px);
   cursor:pointer;font-family:inherit;color:#fff;
   display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0;
   position:relative;overflow:hidden;border:1px solid var(--line);clip-path:var(--cut);background:var(--tc-bg);
@@ -566,8 +565,6 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
   --tc-bg:linear-gradient(165deg,#d81e8c 0%,#7a1fa0 52%,#e0761a 100%)}
 .team-f{--tc:#ffd23f;--tc-rgb:255,210,63;--art:url('/img/faccoes/funkeiros.webp');
   --tc-bg:linear-gradient(165deg,#c78a12 0%,#8a5a0d 52%,#3d2a05 100%)}
-.team-m{--tc:#9d4edd;--tc-rgb:157,78,221;--art:url('/img/faccoes/mitico.webp');
-  --tc-bg:linear-gradient(165deg,#5e35b1 0%,#3d1b6e 52%,#1a0a3d 100%)}
 /* CABEÇALHO TINGIDO NA COR DA FACÇÃO (referência 02): o topo de cada placa lava de
    vermelho/amarelo/roxo e morre no meio, e é isso que faz "quem é quem" ser legível
    antes de ler o nome. Sem ele o texto branco caía direto na foto e sumia. */
@@ -587,22 +584,16 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 .team-card[aria-pressed="true"]::after{content:"SEU LADO";position:absolute;top:0;right:0;z-index:3;
   font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);color:var(--bg-900);
   background:var(--br-faixa);padding:4px var(--s-3)}
-.team-card[aria-disabled="true"]{cursor:not-allowed;opacity:1;filter:none}
-.team-card[aria-disabled="true"]>.team-art{filter:saturate(.35) brightness(.52)}
-.team-card[aria-disabled="true"]:hover{transform:none;box-shadow:none;border-color:var(--line)}
-.team-production{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) rotate(-3deg);z-index:5;
-  white-space:nowrap;border:2px solid var(--br-faixa);background:rgba(var(--bg-900-rgb),.88);color:var(--br-faixa);
-  padding:5px 8px;font-family:var(--mono);font-weight:800;font-size:11px;letter-spacing:1px}
 /* Bloco de leitura no ALTO da placa (referência: kicker → nome → grito, tudo no primeiro
    terço, sobre o degradê tingido; a foto fica com os dois terços de baixo). */
-.team-elate{display:flex;flex-direction:column;gap:2px;padding:8px 8px 0}
+.team-elate{display:flex;flex-direction:column;gap:3px;padding:var(--s-3) var(--s-3) 0}
 .team-kicker{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-3);color:var(--tc)}
 /* "BOLSONARISTAS" a 32px + tracking 3px estourava a caixa e vazava pro card vizinho —
    o corpo encolhe com a largura disponível e a linha pode quebrar. Com cinco placas em
    pé a coluna caiu pra ~236px, então o teto desce junto: 22px cabe "BOLSONARISTAS". */
-.team-name{font-size:clamp(12px,1.12vw,17px);font-weight:700;letter-spacing:var(--tr-1);
+.team-name{font-size:clamp(15px,1.45vw,22px);font-weight:700;letter-spacing:var(--tr-1);
   text-transform:uppercase;line-height:var(--lh-tight);text-shadow:var(--sh-text)}
-.team-slogan{font-size:11px;font-style:italic;font-weight:500;color:var(--ink-100);
+.team-slogan{font-size:var(--fs-100);font-style:italic;font-weight:500;color:var(--ink-100);
   line-height:var(--lh-snug);text-shadow:var(--sh-text)}
 .team-desc{font-size:var(--fs-100);font-weight:600;letter-spacing:var(--tr-tight);color:var(--ink-200);
   line-height:var(--lh-snug);text-shadow:var(--sh-text)}
@@ -616,10 +607,12 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
   font-family:var(--font);font-weight:700;font-size:var(--fs-50);letter-spacing:var(--tr-2);
   text-transform:uppercase;color:var(--bg-900);background:var(--tc);
   opacity:0;transition:opacity var(--t) var(--ease)}
-.team-card:not([aria-disabled="true"]):hover .team-cta,.team-card:not([aria-disabled="true"]):focus-visible .team-cta{opacity:1}
+.team-card:hover .team-cta,.team-card:focus-visible .team-cta{opacity:1}
 #team-select[data-step="side"] .team-cta::before{content:"ENTRAR NESSE CORO ▸"}
 #team-select[data-step="enemy"] .team-cta::before{content:"CHAMAR PRO CORO ▸"}
-@media(max-height:820px){.team-name{font-size:clamp(11px,1vw,15px)}}
+@media(max-height:820px){
+  .team-name{font-size:clamp(14px,1.3vw,19px)}
+}
 
 /* ---------- character select ----------
    O corpo é elástico; a faixa inferior rola horizontalmente sem cortar o último avatar. */
@@ -664,8 +657,6 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 #char-info-name{font-size:var(--fs-600);font-weight:700;letter-spacing:var(--tr-2);color:var(--ink-100);
   text-transform:uppercase;line-height:var(--lh-tight)}
 #char-info-blurb{font-size:var(--fs-200);font-weight:500;color:var(--ink-200);line-height:var(--lh-base)}
-#char-voice-caption{min-height:1.35em;font-size:var(--fs-100);font-weight:650;color:var(--sys);line-height:1.35;opacity:0;transition:opacity .16s ease}
-#char-voice-caption.show{opacity:1}
 .char-spec small,.char-attrs-block small{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:var(--fs-50);
   letter-spacing:var(--tr-3);color:var(--ink-300);text-transform:uppercase;margin-bottom:var(--s-1)}
 .char-spec small::before,.char-attrs-block small::before{content:"";display:block;flex:0 0 auto;
@@ -1067,6 +1058,9 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    engrossa o poço da barra — não devolve o painel. */
 /* irmão POSTERIOR no DOM: quando a faixa de CTF existe, o killfeed desce. */
 #ctf-hud:not(.hidden) ~ #killfeed{top:136px}
+body.net-overlay #killfeed{right:270px}   /* o painel NET (netgame.js) mora no canto; o feed sai de baixo dele */
+#match-next{margin:14px 0 0;font-weight:700;letter-spacing:.08em;opacity:.85;animation:match-next-pulse 1.2s ease-in-out infinite}
+@keyframes match-next-pulse{0%,100%{opacity:.85}50%{opacity:.35}}
 #killfeed{position:absolute;top:98px;right:48px;display:flex;flex-direction:column;gap:var(--s-1);
   align-items:flex-end;font-size:var(--fs-200);font-weight:600;max-width:min(42vw,460px)}
 .kf-row{display:flex;align-items:center;gap:var(--s-2);background:rgba(var(--bg-900-rgb),.82);padding:5px var(--s-3);
@@ -1495,7 +1489,8 @@ html[data-ui="legacy"] #match-title{font-family:var(--font)}
 /* empilha em telas estreitas */
 @media(max-width:640px){
   .match-opts{grid-template-columns:1fr;gap:var(--s-3)}
-  .team-row{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .team-row{flex-wrap:wrap}
+  .team-card{flex:1 1 240px}
 }
 
 /* ============ MENU (Coro Solto) — wallpaper + lista de texto à esquerda ============ */
@@ -2003,7 +1998,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .team-count{position:absolute;bottom:0;left:0;right:0;z-index:4;text-align:center;
   box-sizing:border-box;height:var(--team-band-h);line-height:calc(var(--team-band-h) - 1px);
   background:rgba(var(--bg-900-rgb),.90);border-top:1px solid rgba(255,255,255,.10);
-  font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--ink-200);
+  font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);color:var(--ink-200);
   text-shadow:none;pointer-events:none}
 
 /* 04 — chrome persistente da map screen: jogador no topo (nível/XP), VOLTAR embaixo */
@@ -2019,11 +2014,8 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 /* Brasão da facção no TOPO do card (pedido do dono, 06/08) + setas do seletor de mapa
    mais ÓBVIAS (mesmo pedido): as de 34px sumiam na moldura — viram alvo de 52px com
    fundo de chip e hover amarelo. */
-.team-crest{width:38px;height:38px;margin:7px auto 1px;display:block;
+.team-crest{width:56px;height:56px;margin:12px auto 2px;display:block;
   object-fit:contain;z-index:2;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));position:relative}
-.team-crest-fallback{box-sizing:border-box;display:grid;place-items:center;border:1px solid var(--tc);
-  border-radius:50%;background:rgba(var(--bg-900-rgb),.72);color:var(--tc);font-family:var(--mono);
-  font-size:14px;font-weight:800;letter-spacing:1px}
 /* Pedido do dono (06/08, com print): sem "FACÇÃO 0N"; brasão no topo, NOME abaixo dele e
    slogan abaixo do nome, tudo CENTRALIZADO. O plate deixa de ser linha no canto e vira
    coluna central no topo do card. */
@@ -2056,6 +2048,36 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .menu-footer .mf-social a{display:inline-flex;width:30px;height:30px;border-bottom:0;
   align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:7px}
 .menu-footer .mf-social svg{width:16px;height:16px;fill:currentColor;display:block}
+
+/* Curadoria local das músicas do menu. Só existe quando main.js recebe
+   ?menumusiclab=1; não ocupa DOM, rede ou layout no jogo normal. */
+#menu-music-review{position:fixed;top:82px;right:min(4vw,42px);z-index:75;width:340px;
+  display:flex;flex-direction:column;gap:10px;padding:16px;background:rgba(9,7,4,.94);
+  border:1px solid var(--line-2);border-left:4px solid var(--am);color:var(--ink-100);
+  box-shadow:0 12px 36px rgba(0,0,0,.45)}
+#menu-music-review .mmr-kicker{font:700 10px/1 var(--aaa-font-body);letter-spacing:3px;color:var(--am)}
+#menu-music-review strong{font:700 25px/1 var(--aaa-font-body);letter-spacing:2px}
+#menu-music-review #mmr-progress{font:600 11px/1.3 var(--font);letter-spacing:.5px;color:var(--ink-300)}
+#menu-music-review .mmr-row{display:flex;gap:6px}
+#menu-music-review button{flex:1;min-height:34px;padding:7px 8px;background:var(--bg-700);
+  border:1px solid var(--line-2);border-radius:0;color:var(--ink-200);cursor:pointer;
+  font:700 11px/1 var(--aaa-font-body);letter-spacing:1px}
+#menu-music-review button:hover,#menu-music-review button:focus-visible{border-color:var(--am);color:var(--ink-100)}
+#menu-music-review[data-verdict="manter"] #mmr-keep{background:var(--ok);border-color:var(--ok);color:#07110b}
+#menu-music-review[data-verdict="remover"] #mmr-reject{background:var(--crit);border-color:var(--crit);color:#190505}
+#menu-music-review .mmr-catalog-title{font:700 9px/1 var(--aaa-font-body);letter-spacing:1.5px;color:var(--ink-400)}
+#menu-music-review .mmr-list{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-height:190px;overflow-y:auto;
+  padding:1px;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+#menu-music-review .mmr-list-item{min-width:0;min-height:29px;padding:5px 6px;display:flex;align-items:center;
+  justify-content:space-between;gap:3px;font-size:10px;letter-spacing:.5px}
+#menu-music-review .mmr-list-item b{font:800 13px/1 var(--font);color:var(--ink-500)}
+#menu-music-review .mmr-list-item.current{outline:2px solid var(--am);outline-offset:-2px;color:var(--ink-100)}
+#menu-music-review .mmr-list-item[data-verdict="manter"] b{color:var(--ok)}
+#menu-music-review .mmr-list-item[data-verdict="remover"] b{color:var(--crit)}
+#menu-music-review .mmr-copy{width:100%}
+@media (max-width:760px),(max-height:620px){
+  #menu-music-review{top:12px;right:12px;width:min(340px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto}
+}
 
 /* ---- MENU EM CELULAR RETRATO (print do dono, 07/08: logo cortado no meio e o
    rodapé atropelando o último item). O logo é PINTADO no wallpaper 16:9; com
@@ -2206,8 +2228,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .dd-ico-all{display:inline-flex;flex-direction:column;gap:1px;margin-right:8px}
 .dd-ico-all .dd-ico{width:36px;height:12px;margin:0}   /* 2×12 + gap 1 = 25px: cabe no .dd-btn de 47px sem estufar (ARMAS = BOTS = botões) */
 
-/* HUD EM RETRATO (vindo da main) — o bloco de 640px do menu já existe lá em cima;
-   este cobre a PARTIDA (mira, HUD, killfeed, scoreboard) no celular em pé. */
+
 @media (max-width:640px) and (orientation:portrait){
   #hud-actions{top:8px;right:8px;gap:6px}
   #hud-actions button{width:30px;height:30px;font-size:14px}
@@ -2408,9 +2429,186 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   #settings-panel .set-head{padding-top:max(14px,env(safe-area-inset-top))}
 }
 
-/* Grade completa do catálogo sobre os cartões da main; SERTAO-MENU-MAIN.md. */
-#team-select .team-row{overflow:hidden}
-.team-card:focus-visible{outline:3px solid var(--sys);outline-offset:-3px}
-@media(prefers-reduced-motion:reduce){
-  .team-card,.char-row,.cs-item{transition:none;animation:none}
-}
+/* ---------- MULTIPLAYER (tela cheia: servidores + entrada + salas) ----------
+   Redesign 30/08 ("a UI de multiplayer está ruim"): de cartão central 760px pra tela
+   cheia no padrão das outras (mesma família do settings/map-screen). Paleta só por
+   token — as bandeiras dos nós são IMAGENS reais (public/img/flags/, FONTE.md lá),
+   não cor de UI. O ping segue sendo a informação de maior peso — cor semântica
+   (--ok / --am / --crit), nunca cinza. */
+.mp-shell{width:min(1180px,94vw);max-height:92vh;display:flex;flex-direction:column;
+  gap:var(--s-5);text-align:left}
+.mp-head{display:flex;align-items:center;gap:var(--s-5);width:100%;
+  border-bottom:1px solid var(--line);padding-bottom:var(--s-4)}
+.mp-head-txt{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.mp-kicker{font:600 var(--fs-100)/1 var(--aaa-font-body);letter-spacing:var(--tr-4);
+  color:var(--ink-300);text-transform:uppercase}
+.mp-title{font-family:var(--aaa-font-display);font-weight:400;font-size:var(--fs-700);
+  line-height:var(--lh-tight);letter-spacing:var(--tr-4);color:var(--ink-100);margin:0}
+/* chip de ESTADO: um lugar só, sempre visível; a cor é o estado (regra "cor=significado") */
+.mp-estado{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-1);
+  padding:7px 12px;border:1px solid var(--line-2);color:var(--ink2);clip-path:var(--cut-sm);
+  display:flex;align-items:center;gap:8px;white-space:nowrap}
+.mp-estado::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--ink-400)}
+.mp-estado[data-s="sondando"]{color:var(--am);border-color:var(--am)}
+.mp-estado[data-s="sondando"]::before{background:var(--am);animation:mp-pulse 1s infinite}
+.mp-estado[data-s="conectando"]{color:var(--sys);border-color:var(--sys)}
+.mp-estado[data-s="conectando"]::before{background:var(--sys);animation:mp-pulse 1s infinite}
+.mp-estado[data-s="on"]{color:var(--ok);border-color:var(--ok)}
+.mp-estado[data-s="on"]::before{background:var(--ok)}
+.mp-estado[data-s="erro"]{color:var(--crit);border-color:var(--crit)}
+.mp-estado[data-s="erro"]::before{background:var(--crit)}
+/* o VOLTAR mora NO cabeçalho (o .btn-back global é absoluto pro canto da tela) */
+.mp-head .btn-back{position:static;top:auto;left:auto}
+@keyframes mp-pulse{50%{opacity:.25}}
+
+/* duas colunas: decisões à esquerda, salas (o acervo) à direita — mesma lógica da
+   tela de mapas: cabeçalho decide, corpo mostra */
+.mp-grid{display:grid;grid-template-columns:minmax(320px,380px) 1fr;gap:var(--s-6);
+  width:100%;min-height:0;flex:1}
+.mp-lado{display:flex;flex-direction:column;gap:var(--s-5);min-width:0;overflow-y:auto}
+.mp-corpo{display:flex;flex-direction:column;gap:var(--s-3);min-width:0;min-height:0}
+@media (max-width:900px){.mp-grid{grid-template-columns:1fr}.mp-shell{max-height:none}}
+
+.mp-bloco{width:100%;display:flex;flex-direction:column;gap:var(--s-3)}
+.mp-titulo{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-2);
+  color:var(--ink3);display:flex;align-items:center;gap:var(--s-3);text-transform:uppercase}
+.mp-dica{color:var(--ink3);opacity:.7;letter-spacing:var(--tr-tight);text-transform:none}
+.mp-dica2{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3);margin:0}
+.mp-mini{margin-left:auto;font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  color:var(--cs);background:transparent;border:1px solid var(--line);padding:3px 9px;
+  clip-path:var(--cut-sm);cursor:pointer}
+.mp-mini:hover,.mp-mini:focus-visible{border-color:var(--cs);color:var(--ink-100)}
+
+/* ---- cartões de região: bandeira | nome | sinal | ping ---- */
+.mp-nos{display:flex;flex-direction:column;gap:var(--s-2)}
+.mp-no{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-4);
+  background:rgba(var(--bg-700-rgb),.7);border:1px solid var(--line);clip-path:var(--cut-sm);
+  cursor:pointer;text-align:left;transition:border-color var(--t) var(--ease),background var(--t) var(--ease)}
+.mp-no:hover,.mp-no:focus-visible{border-color:var(--line-hi)}
+.mp-no[aria-checked="true"]{border-color:var(--cs);background:rgba(var(--bg-600-rgb),.85)}
+.mp-no-info{display:flex;flex-direction:column;gap:2px;min-width:0;margin-right:auto}
+.mp-no-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-200);color:var(--ink-100);letter-spacing:var(--tr-1)}
+.mp-no-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3)}
+.mp-ping{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.mp-ping[data-q="bom"]{color:var(--ok)} .mp-ping[data-q="medio"]{color:var(--am)} .mp-ping[data-q="ruim"]{color:var(--crit)}
+.mp-no[data-online="0"]{opacity:.55}
+/* bandeira REAL (dono, 31/08): <img> WebP local dos SVGs oficiais do Commons — a
+   procedência mora em public/img/flags/FONTE.md. Mesma área da versão CSS (30×20),
+   cantos levemente arredondados; alt com o país (não é mais decoração muda). */
+.mp-flag{flex:0 0 30px;width:30px;height:20px;object-fit:cover;border-radius:var(--r-1);
+  border:1px solid rgba(0,0,0,.5);box-shadow:0 0 0 1px var(--line);background:var(--bg-600)}
+/* medidor de sinal: a leitura de longe do ping (3 barras boas / 2 médias / 1 ruim) */
+.mp-sinal{display:flex;align-items:flex-end;gap:2px;height:14px}
+.mp-sinal i{width:4px;background:var(--bg-500)}
+.mp-sinal i:nth-child(1){height:6px}.mp-sinal i:nth-child(2){height:10px}.mp-sinal i:nth-child(3){height:14px}
+.mp-sinal[data-q="bom"] i.on{background:var(--ok)}
+.mp-sinal[data-q="medio"] i.on{background:var(--am)}
+.mp-sinal[data-q="ruim"] i.on{background:var(--crit)}
+
+/* ---- entrada: jogo rápido + código de convite ---- */
+.mp-quick{width:100%}
+.mp-convite{display:flex;gap:var(--s-2)}
+.mp-convite input{flex:1;min-width:0;font-family:var(--mono);font-size:var(--fs-300);
+  letter-spacing:var(--tr-2);text-transform:uppercase;color:var(--ink-100);
+  background:rgba(var(--bg-900-rgb),.7);border:1px solid var(--line);padding:8px 10px}
+.mp-convite input:focus-visible{border-color:var(--cs);outline:none}
+.mp-convite input::placeholder{color:var(--ink-400);letter-spacing:var(--tr-2)}
+.mp-convite .btn{flex:0 0 auto}
+
+/* ---- cartões de sala ---- */
+.mp-salas{display:flex;flex-direction:column;gap:var(--s-2);min-height:0;flex:1;overflow-y:auto}
+.mp-sala{display:flex;flex-direction:column;gap:var(--s-2);
+  padding:var(--s-3) var(--s-4);background:rgba(var(--bg-700-rgb),.6);border:1px solid var(--line);
+  clip-path:var(--cut-sm);text-align:left;transition:border-color var(--t) var(--ease)}
+.mp-sala:hover{border-color:var(--line-2)}
+.mp-sala-top{display:flex;align-items:center;gap:var(--s-3);justify-content:space-between}
+.mp-sala-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-300);color:var(--ink-100);
+  letter-spacing:var(--tr-1);display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
+.mp-tag{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);padding:1px 6px;
+  border:1px solid var(--line-2);color:var(--ink3)}
+.mp-tag[data-t="oficial"]{border-color:var(--cs);color:var(--cs)}
+.mp-tag[data-t="privada"]{border-color:var(--am);color:var(--am)}
+.mp-sala-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3)}
+.mp-lot{font-family:var(--mono);font-size:var(--fs-200);color:var(--ink2);white-space:nowrap;
+  display:flex;align-items:center;gap:var(--s-2)}
+.mp-lot b{color:var(--ink-100)}
+/* barra de lotação: sala vazia × meio cheia × lotada se distinguem sem ler fração */
+.mp-lot-bar{width:56px;height:6px;background:rgba(var(--bg-900-rgb),.8);border:1px solid var(--line);
+  display:inline-block;overflow:hidden}
+.mp-lot-bar i{display:block;height:100%;background:var(--ok)}
+.mp-lot-spec{font-size:var(--fs-50);color:var(--ink3);margin-left:4px}
+.mp-acoes{display:flex;gap:var(--s-2);flex-wrap:wrap}
+.mp-entrar,.mp-assistir{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:5px 10px;clip-path:var(--cut-sm);cursor:pointer;border:1px solid var(--line-2);
+  background:transparent;color:var(--ink2)}
+.mp-entrar{border-color:var(--cs);color:var(--cs)}
+.mp-entrar:hover,.mp-entrar:focus-visible{background:var(--cs);color:var(--dark)}
+.mp-entrar[disabled]{opacity:var(--op-disabled);cursor:not-allowed;border-color:var(--line);color:var(--ink3)}
+.mp-assistir:hover,.mp-assistir:focus-visible{border-color:var(--ink-100);color:var(--ink-100)}
+/* chip do CONVITE: é um CÓDIGO (mono, âmbar) e um botão de copiar ao mesmo tempo —
+   o clique confirma na própria etiqueta ("COPIADO!") */
+.mp-convite-chip{margin-left:auto;font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);
+  padding:5px 10px;clip-path:var(--cut-sm);cursor:pointer;border:1px solid var(--am);
+  background:transparent;color:var(--am)}
+.mp-convite-chip:hover,.mp-convite-chip:focus-visible{background:var(--am);color:var(--dark)}
+
+.mp-criar summary{cursor:pointer;list-style:none}
+.mp-criar summary::-webkit-details-marker{display:none}
+.mp-criar summary::before{content:'▸ ';color:var(--cs)}
+.mp-criar[open] summary::before{content:'▾ '}
+.mp-form{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-3);margin-top:var(--s-3)}
+.mp-form label{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);
+  font-size:var(--fs-50);letter-spacing:var(--tr-1);color:var(--ink3)}
+.mp-form input[type=text],.mp-form select{font-family:var(--mono);font-size:var(--fs-100);
+  color:var(--ink-100);background:rgba(var(--bg-900-rgb),.7);border:1px solid var(--line);padding:6px 8px}
+.mp-form input:focus-visible,.mp-form select:focus-visible{border-color:var(--cs);outline:none}
+.mp-check{flex-direction:row!important;align-items:center;gap:var(--s-2)!important}
+.mp-form .btn{grid-column:1/-1}
+.mp-erro{width:100%;font-family:var(--mono);font-size:var(--fs-100);color:var(--crit);
+  border:1px solid var(--crit);padding:var(--s-3);clip-path:var(--cut-sm);
+  display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap}
+.mp-erro[hidden]{display:none}   /* display:flex venceria o atributo hidden sem isto */
+.mp-retry{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:5px 10px;border:1px solid var(--crit);color:var(--crit);background:transparent;
+  clip-path:var(--cut-sm);cursor:pointer}
+.mp-retry:hover,.mp-retry:focus-visible{background:var(--crit);color:var(--dark)}
+.mp-vazio{font-family:var(--mono);font-size:var(--fs-100);color:var(--ink3);padding:var(--s-4);text-align:center}
+
+/* ---- modal SALA CRIADA ----
+   Mesmo idioma do #launch-error (overlay escuro + cartão chanfrado com filete no topo),
+   trocando o acento pra ÂMBAR: convite é OBJETIVO/conquista (--am), não erro. O código
+   é o herói do cartão — display Bebas no degrau de número-herói (--fs-800). */
+#mp-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:rgba(var(--bg-900-rgb),.86);backdrop-filter:blur(6px)}
+#mp-modal.hidden{display:none}
+.mp-modal-card{width:min(520px,calc(100vw - 32px));padding:clamp(26px,4vw,44px);text-align:center;
+  background:linear-gradient(155deg,rgba(var(--bg-700-rgb),.98),rgba(var(--bg-900-rgb),.99));
+  border:1px solid var(--line-2);border-top:4px solid var(--am);clip-path:var(--cut);
+  box-shadow:var(--sh-2);display:flex;flex-direction:column;align-items:center;gap:var(--s-3)}
+.mp-modal-kicker{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-4);
+  color:var(--am);text-transform:uppercase}
+.mp-modal-card h2{margin:0;font-family:var(--aaa-font-display);font-weight:400;
+  font-size:var(--fs-600);line-height:var(--lh-tight);letter-spacing:var(--tr-4);color:var(--ink-100)}
+.mp-modal-convite{font-family:var(--aaa-font-display);font-weight:400;font-size:var(--fs-800);
+  line-height:var(--lh-tight);letter-spacing:var(--tr-6);color:var(--am);
+  padding:var(--s-2) var(--s-5);border:1px solid var(--am);clip-path:var(--cut-sm);
+  background:rgba(var(--bg-900-rgb),.7);user-select:all}
+.mp-modal-lot{margin:0;font-family:var(--mono);font-size:var(--fs-100);color:var(--ink-300);letter-spacing:var(--tr-1)}
+.mp-modal-copy{display:flex;gap:var(--s-3);flex-wrap:wrap;justify-content:center}
+.mp-modal-copy .btn{min-width:170px}
+.mp-modal-card .btn-big{min-width:280px;margin-top:var(--s-2)}
+.mp-modal-nota{margin:0;max-width:44ch;font:600 var(--fs-50)/var(--lh-base) var(--font);color:var(--ink-300)}
+@media(max-width:560px){.mp-modal-copy{flex-direction:column;width:100%}.mp-modal-copy .btn,.mp-modal-card .btn-big{width:100%;min-width:0}}
+
+/* Faixa do ESPECTADOR: quem está assistindo precisa saber que está assistindo, de quem é a
+   visão, e como entrar em campo. Sem isso o modo espectador é indistinguível de um bug. */
+#mp-spec-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;
+  display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-5);
+  background:rgba(var(--bg-900-rgb),.88);border:1px solid var(--line-2);clip-path:var(--cut-sm);
+  font-family:var(--mono);font-size:var(--fs-100);color:var(--ink2);letter-spacing:var(--tr-1)}
+#mp-spec-bar b{color:var(--ink-100)}
+#mp-spec-bar button{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:4px 9px;border:1px solid var(--cs);color:var(--cs);background:transparent;
+  clip-path:var(--cut-sm);cursor:pointer}
+#mp-spec-bar button:hover:not([disabled]){background:var(--cs);color:var(--dark)}
+#mp-spec-bar button[disabled]{opacity:var(--op-disabled);cursor:not-allowed;border-color:var(--line);color:var(--ink3)}

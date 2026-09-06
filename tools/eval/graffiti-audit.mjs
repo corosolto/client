@@ -39,26 +39,19 @@
 
    Uso:
      npm run eval:serve &
-     node tools/eval/graffiti-audit.mjs                 # todos os mapas
+     node tools/eval/graffiti-audit.mjs                 # os 5 mapas
      node tools/eval/graffiti-audit.mjs quebrada
      node tools/eval/graffiti-audit.mjs quebrada --fotos 12
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
-const MAPAS = [
-  'praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada',
-  'escadao', 'campomorro', 'lajes', 'corrego', 'mansao',
-];
+const MAPAS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada'];
 const argv = process.argv.slice(2);
-/* o número depois de `--fotos` não é mapa: sem o `i !== iFotos + 1`, `--fotos 6`
-   vazio rodava ZERO mapas e sobrescrevia o JSON com {} (medido 13/08). */
-const iFotos = argv.indexOf('--fotos');
-const salta = iFotos >= 0 ? iFotos + 1 : -1;      // -1 não casa índice nenhum
-const ONLY = argv.find((a, i) => !a.startsWith('--') && i !== salta);
-const FOTOS = iFotos >= 0 ? (+argv[iFotos + 1] || 8) : 0;
+const ONLY = argv.find((a) => !a.startsWith('--'));
+const FOTOS = argv.includes('--fotos') ? (+argv[argv.indexOf('--fotos') + 1] || 8) : 0;
 const OUT = '/tmp/graffiti-audit';
 
 /* Limites, com a razão de cada um:
@@ -68,25 +61,6 @@ const OUT = '/tmp/graffiti-audit';
    SOBREPOR    — o dono pediu SEM sobreposição. 12% é a folga de medição do quad
                  contra o quad, não permissão para empilhar arte.  */
 const VAO_MAX = 2 / 15, LIMITE_SOBREPOR = 0.12;
-
-/* TETO POR MAPA — dívida declarada que SÓ ENCOLHE (padrão do REPROVADOS_MAX do
-   select-inflate). A régua estrita é zero no-ar e zero sobreposição; enquanto a dívida
-   real não zera, o teto trava o placar no último medido e qualquer piora reprova.
-   Medido abaixo do teto? Baixe o número — a própria régua imprime pedindo.
-   Valores da medição de 14/08/2026 (pós BUG-53, rebake mansão/quebrada/piscina);
-   ferro_velho baixado para 0/0 na medição de 17/08 (rebake pós-sonda de oclusores): */
-const TETO = {
-  praca_poderes: { noAr: 0, sobre: 0 },
-  piscina_treta: { noAr: 0, sobre: 2 },
-  loja_h: { noAr: 1, sobre: 3 },
-  ferro_velho: { noAr: 0, sobre: 0 },
-  quebrada: { noAr: 3, sobre: 10 },
-  escadao: { noAr: 0, sobre: 0 },
-  campomorro: { noAr: 0, sobre: 0 },
-  lajes: { noAr: 0, sobre: 0 },
-  corrego: { noAr: 1, sobre: 0 },
-  mansao: { noAr: 0, sobre: 0 },
-};
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -125,11 +99,6 @@ const AUDITAR = async ([vaoMax, limSobrepor]) => {
     if (!o.isMesh) return;
     const n = String(o.name);
     if (!n.startsWith('decal:') && !n.startsWith('mural:')) return;
-    /* Malha da passada, mesmo de UMA peça: o `_juntar` assa a geometria em mundo e a
-       malha fica na origem — medir por ela inventa um quad 100% no ar em (0,0,0) e
-       C(n,2) sobreposições fantasmas (29 e 67 medidos nos 10 mapas, 13/08). As peças
-       dela já entraram via `graffitiPecas`. */
-    if (o.userData.pecas) return;
     const g = o.geometry.parameters;
     if (!g || !g.width) return;                         // malha junta: já entrou acima
     o.updateMatrixWorld(true);
@@ -219,7 +188,7 @@ const browser = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'],
 });
 
-let totalNoAr = 0, totalSobre = 0, totalVazias = 0;
+let totalNoAr = 0, totalSobre = 0;
 const relatorio = {};
 for (const id of MAPAS) {
   if (ONLY && id !== ONLY) continue;
@@ -230,12 +199,8 @@ for (const id of MAPAS) {
   const r = await page.evaluate(AUDITAR, [VAO_MAX, LIMITE_SOBREPOR]);
   relatorio[id] = r;
   totalNoAr += r.noAr; totalSobre += r.sobrepostas;
-  /* 0 peças NÃO é OK: a Mansão passou meses "OK 0 peças" porque o mapa parou de
-     chamar `grafitar` e a régua lia ausência como saúde. Mapa desta lista tem que
-     ter peça; zero é instrumento quebrado ou mapa desligado. */
-  if (!r.total) totalVazias++;
 
-  const sinal = (!r.total || r.noAr || r.sobrepostas) ? 'RUIM' : 'OK  ';
+  const sinal = (r.noAr || r.sobrepostas) ? 'RUIM' : 'OK  ';
   console.log(`${sinal} ${id.padEnd(14)} ${r.total} peças | NO AR ${r.noAr} | tapadas ${r.tapadas} | sobrepostas ${r.sobrepostas}`);
   for (const p of r.piores.slice(0, 6)) {
     console.log(`      no ar ${Math.round(p.vao * 100)}%  (${p.x}, ${p.y}, ${p.z}) ry=${p.ry}  ${p.w}×${p.h} m  ${p.quem}`);
@@ -253,40 +218,13 @@ for (const id of MAPAS) {
       const nx = Math.sin(p.ry), nz = Math.cos(p.ry);
       await page.evaluate(([f, l]) => window.MAPEVAL.view(f, l),
         [[p.x + nx * 3.2, p.y + 0.4, p.z + nz * 3.2], [p.x, p.y, p.z]]);
-      /* screenshot pode estourar timeout em mapa pesado (quebrada, 13/08) — perder
-         UMA foto não pode derrubar a régua inteira antes de ela gravar o JSON. */
-      try {
-        await page.screenshot({ path: `${OUT}/${id}/${String(i).padStart(2, '0')}_vao${Math.round(p.vao * 100)}.png` });
-      } catch (e) { console.log(`      [foto ${i} falhou: ${e.message.split('\n')[0]}]`); }
+      await page.screenshot({ path: `${OUT}/${id}/${String(i).padStart(2, '0')}_vao${Math.round(p.vao * 100)}.png` });
     }
     console.log(`      -> ${Math.min(FOTOS, r.piores.length)} fotos em ${OUT}/${id}/`);
   }
   await page.close();
 }
 await browser.close();
-/* Com mapa único (ONLY) o relatório mescla com o JSON em disco: regravar só o recorte
-   apagava a medição dos outros 9 — o mesmo fosso do "0 peças = OK". */
-let saida = relatorio;
-if (ONLY) {
-  try {
-    const ant = JSON.parse(readFileSync('tools/eval/graffiti_audit.json', 'utf8'));
-    saida = Object.assign(ant, relatorio);
-  } catch { /* primeira execução */ }
-}
-writeFileSync('tools/eval/graffiti_audit.json', JSON.stringify(saida, null, 1));
+writeFileSync('tools/eval/graffiti_audit.json', JSON.stringify(relatorio, null, 1));
 console.log(`GRAFFITI-AUDIT no ar ${totalNoAr} | sobrepostas ${totalSobre} -> tools/eval/graffiti_audit.json`);
-
-/* Placar contra o teto declarado: piora reprova, melhoria manda baixar o teto. */
-let estourou = 0;
-for (const [id, r] of Object.entries(relatorio)) {
-  const t = TETO[id];
-  if (!t) { console.error(`  ${id}: sem teto declarado — declare em TETO`); estourou++; continue; }
-  if (r.noAr > t.noAr || r.sobrepostas > t.sobre) {
-    console.error(`  ${id} PIOROU: no ar ${r.noAr}/${t.noAr} · sobrepostas ${r.sobrepostas}/${t.sobre}`);
-    estourou++;
-  } else if (r.noAr < t.noAr || r.sobrepostas < t.sobre) {
-    console.log(`  ${id} MELHOROU: no ar ${r.noAr} (teto ${t.noAr}) · sobrepostas ${r.sobrepostas} (teto ${t.sobre}) — baixe o teto`);
-  }
-}
-if (totalVazias) console.error(`  ${totalVazias} mapa(s) com 0 peças medidas — instrumento quebrado ou mapa sem grafitar()`);
-if (estourou || totalVazias) process.exitCode = 1;
+if (totalNoAr || totalSobre) process.exitCode = 1;

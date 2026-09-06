@@ -26,11 +26,11 @@ de malha skinned.
   controlador `cat` do `ambientlife.js`.
 - `galinha_campo.glb` — “Chicken”, Quaternius (Ultimate Animated Animals),
   [Poly Pizza](https://poly.pizza/m/ineV9pU5VL), [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
-  v2.1: galinha do campinho (campomorro) e de quintal (corrego); clipes
+  v2.1: galinha do campinho (fy_campomorro) e de quintal (fy_corrego); clipes
   Idle/Walk (o pack não traz Walk+Run separados — flee usa o Walk).
 - `vaca_campo.glb` — “Cow”, Quaternius (Ultimate Animated Animals),
   [Poly Pizza](https://poly.pizza/m/26zM1outCr), [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
-  v2.1: vaca da várzea do campomorro; clipes podados para Idle/Walk/Gallop
+  v2.1: vaca da várzea do fy_campomorro; clipes podados para Idle/Walk/Gallop
   (o pack traz 24 — `keepClips` do pipeline corta os que o controlador não toca).
 - `jacare_corrego.glb` — “Blocky Belly Caiman”, Mint text-to-3D (Meshy), gerado
   18/08/2026 para o BUG-57 (pedido do dono: “precisa gerar jacare no mintgg”).
@@ -56,13 +56,27 @@ de malha skinned.
   Mesma licença do jacaré/capivara; registro em `mint-assets.json` (`tatu-campo`).
   Estático — anda pelo `_updateQuad` do `ambientlife.js`. Tatu não existe em
   nenhum pack Quaternius (a varredura 19/08 acima cobre: 12 mamíferos + farm,
-  nenhum xenartro). Call-sites: campomorro, praca_poderes (AR4).
+  nenhum xenartro). Call-sites: fy_campomorro, praca_poderes (AR4).
 - `papagaio_poleiro.glb` — “Yellow Chevron Parrot”, Mint text-to-3D, 19/08/2026
   (vida 1). Chat: <https://mint.gg/chat/ph73z314p21j55zt11pa040frh8cstk4>.
   Registro `papagaio-poleiro`. Estático de poleiro (a barra faz parte da malha)
   com balanço procedural `_updateParrot` — poleiro não precisa de voo, o que
   contorna a dívida de pássaro riggado CC0 registrada na pomba. Call-sites:
-  mansao (balaustrada do terraço), parque_treta (AR4).
+  fy_mansao (balaustrada do terraço), parque_treta (AR4).
+- `arara_voo.glb` — “Arara em voo”, Mint text-to-3D, 27/08/2026 (lote céu).
+  Chat: <https://mint.gg/chat/ph7ajvsqfqtnafkh23jjd5dpsh8d6709>. Registro
+  `arara-voo`. **Paga a dívida registrada acima na pomba**: a presença aérea
+  acabou na v2.1 porque o `pigeon_flight.glb` era ave de asas abertas PARADA, e o
+  plans/22 condicionou a volta a "pássaro riggado de verdade". O rig do Mint
+  continua sendo só humanoid, então a solução foi a mesma do tatu e da pipa —
+  **asa vira NÓ, o bater é procedural**: `tools/split-props-v21.mjs arara_voo`
+  separa `asa-esquerda`/`asa-direita` com pivô na raiz (regra medida no bruto:
+  |z| > 0,10 é asa; 512/515 tris cada, simétrico), e o `skylife.js` gira as duas
+  em sentidos opostos, curso ~33°. Nariz em −X (`BIRD_FORWARD_X`), medido pela
+  densidade de triângulos: a ponta −x tem a cabeça compacta, a +x afina no rabo.
+  2.951 tris após `simplify .6`. Call-sites: fy_corrego (bando de 3), fy_lajes
+  (par). NÃO é fauna de chão: não entra no `ambientlife.js` nem no censo do
+  `ambience-registry` — vive no `skylife.js`, sem colisão e sem reação a tiro.
 - `barata_urbana.glb` — Mint text-to-3D, 19/08/2026 (vida 1). Barata de esgoto
   do córrego e da doca do atacadão; darta pelo `_updateRat`. Registro
   `barata-urbana`. (Primeira geração bloqueada pela moderação do Mint;

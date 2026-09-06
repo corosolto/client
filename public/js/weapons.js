@@ -11,9 +11,6 @@ export const WEAPON_IDS = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'pisto
   'm92', 'akm', 'g3', 'revolver38', 'md97', 'carbine', 'm400', 'mosin', 'rem700',
   'lmg', 'scar', 'tavor', 'famas', 'uzi', 'p90',
   'svd', 'g3sg1', 'sks'];   // snipers semi-auto (reusam o modelo de outra arma via MODEL_ALIAS)
-// Modelos só de apresentação: não viram slot, pickup nem 27ª arma. O Bandeirante usa
-// o mosquete histórico no corpo de 3ª pessoa, enquanto a balística continua no id `mosin`.
-const DISPLAY_MODEL_IDS = ['mosquete'];
 
 // Snipers semi-auto novas reaproveitam a MALHA de uma arma existente (sem asset novo):
 // SVD←SCAR, G3SG1←G3, SKS←carabina. weaponModel/preload usam este alias.
@@ -93,9 +90,6 @@ const CFG = {
   carbine:   { len: 0.98, rot: [0, 0, 0], gripZ: 0.6, vm: 0.92 },   // natively +Z; [0,90,0] threw the barrel onto X (giant)
   m400:      { len: 0.92, rot: [0, 270, 0], gripZ: 0.62, vm: 0.85 },  // +180: usuário confirmou invertido
   mosin:     { len: 1.20, rot: [0, 270, 0], gripZ: 0.66, vm: 0.75 },  // +180: estava invertido
-  /* mosquete: o cano já nasce no eixo Z no GLB (medido; maior eixo, como nas outras) —
-     rot em X jogava a seção transversal no eixo da normalização. Régua: weapon-scale-check. */
-  mosquete:  { len: 1.45, rot: [0, 0, 0], gripZ: 0.68 },
   rem700:    { len: 1.15, rot: [0, 270, 0], gripZ: 0.66, vm: 0.78 },  // +180: estava invertido
   // arsenal-3 (military)
   lmg:       { len: 1.10, rot: [0, 90, 0], gripZ: 0.58, vm: 0.72 },   // vm: caixão preto gigante na tela
@@ -238,10 +232,9 @@ function buildMag(id) {
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
 /* `ids` opcional: a partida carrega SÓ as armas que ela sorteou (ver pickMatchWeapons), e o
-   resto chega em ocioso. Sem lista = elenco inteiro MAIS os modelos que só aparecem em
-   vitrine (o mosquete do bandeirante), que é o caminho do arnês e do menu. */
+   resto chega em ocioso. Sem lista = elenco inteiro, que é o caminho do arnês e do menu. */
 export async function preloadWeapons(ids) {
-  await Promise.all((ids && ids.length ? ids : [...WEAPON_IDS, ...DISPLAY_MODEL_IDS]).map(async (id) => {
+  await Promise.all((ids && ids.length ? ids : WEAPON_IDS).map(async (id) => {
     const src = MODEL_ALIAS[id] || id;    // snipers reusadas carregam a malha da arma-fonte
     if (_cache.has(src)) return;
     try { const g = await loadGLB(`models/weapons/${src}.glb?v=${VERSION}`); _cache.set(src, g.scene); }
@@ -250,6 +243,9 @@ export async function preloadWeapons(ids) {
 }
 
 export function hasWeapon(id) { return _cache.has(MODEL_ALIAS[id] || id); }
+// Costura da régua (BUG-121): simula o GLB que ainda não chegou. Nada de produção chama isto.
+export function unloadWeaponModel(id) { _cache.delete(MODEL_ALIAS[id] || id); }
+export function setWeaponModel(id, scene) { _cache.set(MODEL_ALIAS[id] || id, scene); }
 
 // Geometry facts for aligning hands/mounts: real length + grip point (fraction from muzzle).
 export function weaponCFG(id) { return CFG[id] || CFG.awp; }
@@ -319,7 +315,9 @@ export function weaponMetrics(id) { return _metrics.get(id) || null; }
 // Returns a THREE.Group holding the weapon, scaled to real size, barrel pointing +Z,
 // grip roughly at the group origin (so it sits in a hand placed at origin).
 export function weaponModel(id) {
-  const tpl = _cache.get(MODEL_ALIAS[id] || id) || _cache.get('awp');
+  const requested = MODEL_ALIAS[id] || id;
+  const source = _cache.has(requested) ? requested : null;
+  const tpl = source ? _cache.get(source) : null;
   if (!tpl) return null;
   const cfg = CFG[id] || CFG.awp;
   const model = tpl.clone(true);
@@ -329,10 +327,7 @@ export function weaponModel(id) {
   wrap.add(model);
   wrap.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(wrap);
-  /* Normaliza pelo MAIOR eixo, não só por Z: um `rot` errado deixa a arma torta (a régua
-     de orientação pega), mas nunca gigante. Régua: tools/eval/weapon-scale-check.mjs. */
-  const dx = box.max.x - box.min.x, dy = box.max.y - box.min.y, dz = box.max.z - box.min.z;
-  const zlen = Math.max(dx, dy, dz) || 1;
+  const zlen = (box.max.z - box.min.z) || 1;
   const s = Math.min(8, Math.max(0.05, cfg.len / zlen)); // guard against a bad bbox → giant gun
   wrap.scale.setScalar(s);
   // shift so the grip point (gripZ along the barrel) sits at the origin
@@ -351,6 +346,8 @@ export function weaponModel(id) {
   const mag = buildMag(id);
   if (mag) { mag.scale.setScalar(1 / s); wrap.add(mag); }
   wrap.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.frustumCulled = false; } });
+  wrap.userData.weaponSource = source;
+  wrap.userData.weaponRequested = requested;
   wrap.userData.metrics = measureGun(id, wrap);   // boca/alça/caixa medidas (ver measureGun)
   return wrap;
 }

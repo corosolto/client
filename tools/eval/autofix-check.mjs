@@ -17,11 +17,18 @@
          workflow pode chamar `gh pr merge`. O `csbrasil-bot-automerge` chamava, e
          era a única coisa que um bot daqui fazia sozinho — justamente a que não
          devia. Ele agora aplica `pronto-pra-merge` e o botão continua humano.
-   AF7 · todo commit que o bot faz - `git commit` E `git merge` - carrega os trailers que
-         o CI cobra de gente: `Agent:` (agente_check) e `Signed-off-by:` (dco_check). Sem
-         `-m`, o `git merge` escreve a mensagem automática, que não leva trailer nenhum -
-         e aí o bot conserta o PR e o dco reprova o commit que ele mesmo fez. Medido no
-         #406, onde o merge limpo do autofix travou o PR inteiro.
+   AF7 · todo commit que o bot faz - `git commit` E `git merge`, inclusive a chamada
+         GUARDADA (`… || git commit`) - carrega os trailers que o CI cobra de gente:
+         `Agent:` (agente_check) e `Signed-off-by:` (dco_check). Sem `-m`, o `git merge`
+         escreve a mensagem automática, que não leva trailer nenhum - e aí o bot conserta
+         o PR e o dco reprova o commit que ele mesmo fez. Medido no #406 (merge limpo) e
+         de novo no #450, onde o commit "regenera bloco derivado" saiu sem `Agent:` e
+         reprovou a PR #448. E — como a AF4 — vale para TODOS os workflows, não só o
+         autofix: a terceira ocorrência da classe veio de OUTRO arquivo (#451, o
+         bootstrap do issues-bot saía sem `Agent:` e toda draft PR do bot nascia
+         reprovada no dco), e a varredura promovida pegou no mesmo dia o release.yml
+         comitando sem o trailer. Régua que ENUMERA onde devia VARRER envelhece no
+         primeiro arquivo novo.
    AF6 · o autofix acorda quando a MAIN anda, não só quando o PR se mexe. Foram 9
          releases em 20 horas e cada um reabre conflito em todo PR aberto; sem o
          gatilho de push o bot só conserta quem empurra commit — ou seja, nunca
@@ -47,6 +54,12 @@ const MUTANTES = {
   'sem-varredura-pos-release': 'AF6',
   'commit-sem-trailer': 'AF7',
   'merge-sem-trailer': 'AF7',
+  'commit-guardado-sem-trailer': 'AF7',
+  'bootstrap-sem-trailer': 'AF7',
+  'release-sem-trailer': 'AF7',
+  'release-sem-signoff': 'AF7',
+  'workflow-fora-do-registro': 'AF7',
+  'registro-orfao': 'AF7',
   'trava-do-pr': 'AF5',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
@@ -124,15 +137,60 @@ if (resolveConflito) {
   }
 }
 
-/* ---- AF7: os commits do bot levam os trailers que o CI cobra ---- */
+/* ---- AF7: os commits que os workflows fazem levam os trailers que o CI cobra ---- */
 if (MUT === 'commit-sem-trailer') wf = wf.replace(/\n\s*-m "Agent: csbrasil-bot \(autofix\)" \\/g, '');
 if (MUT === 'merge-sem-trailer') wf = wf.replace(/git merge --no-edit -m[\s\S]*?FETCH_HEAD; then/, 'git merge --no-edit FETCH_HEAD; then');
+if (MUT === 'commit-guardado-sem-trailer') wf = wf.replace(/(\|\| git commit[\s\S]*?)\n\s*-m "Agent: csbrasil-bot \(autofix\)" \\/, '$1');
 /* Só a CHAMADA conta. `git merge` citado dentro de `--body` é instrução que o bot manda
-   para o humano ler, não comando que ele roda — contá-la acusaria quem documentou. */
-for (const trecho of [...wf.matchAll(/^\s*(?:if )?git (?:commit|merge)[\s\S]{0,600}?(?=\n\s{0,10}[a-z-]+:|\n\s*$)/gm)].map((m) => m[0])) {
-  if (/--abort/.test(trecho)) continue;                   // abortar não cria commit
-  if (!/Agent:/.test(trecho)) falhas.push('AF7 um `git commit`/`git merge` do bot não leva `Agent:` — o agente_check reprova o PR que ele acabou de consertar');
-  if (!/Signed-off-by:/.test(trecho)) falhas.push('AF7 um `git commit`/`git merge` do bot não leva `Signed-off-by:` — o dco reprova o PR que ele acabou de consertar');
+   para o humano ler, não comando que ele roda — contá-la acusaria quem documentou. O
+   recorte é a chamada INTEIRA: a linha do `git commit`/`git merge` — inclusive guardada
+   por `… ||` — mais as continuações de `\`, que é onde os trailers moram. O recorte
+   antigo ("600 chars até a próxima chave YAML") não alcançava parada nenhuma dentro dos
+   blocos `run:`: as chamadas reais ficavam FORA do recorte, a régua media só o `--abort`
+   e os dois mutantes de trailer estavam cegos — foi assim que o commit "regenera bloco
+   derivado" saiu sem `Agent:` e o dco reprovou a PR #448 (issue #450). */
+const recortarChamadas = (texto) =>
+  [...texto.matchAll(/^[^\S\n]*(?:if !? ?)?(?:[^\n#]*?(?:\|\||&&|;)[^\S\n]*)?git (?:commit|merge)(?:[^\n]*\\\n)*[^\n]*/gm)]
+    .map((m) => m[0])
+    .filter((t) => !/--abort/.test(t))                      // abortar não cria commit
+    .filter((t) => !/^[^\S\n]*["']/.test(t));               // linha de string de `--body`: citação, não chamada
+/* Não saber medir é o mesmo vermelho de medir errado: foi um recorte que não achava
+   chamada NENHUMA que cegou os dois mutantes de trailer (#450). Achar menos que o
+   registrado é recorte quebrado, não workflow limpo — e workflow com chamada que não
+   está no registro é a mesma cegueira pela outra porta: um recorte que emudecesse
+   nele viraria verde silencioso. */
+const CHAMADAS_ESPERADAS = { 'autofix.yml': 3, 'issues-bot.yml': 1, 'release.yml': 1 };
+if (MUT === 'workflow-fora-do-registro') delete CHAMADAS_ESPERADAS['issues-bot.yml'];
+if (MUT === 'registro-orfao') CHAMADAS_ESPERADAS['fantasma.yml'] = 1;
+const WORKFLOWS = readdirSync('.github/workflows').filter((f) => /\.ya?ml$/.test(f));
+/* Registro órfão é a régua jurando medir arquivo que não existe: se o workflow for
+   renomeado ou removido, a entrada velha ficaria verde calada para sempre. */
+for (const nome of Object.keys(CHAMADAS_ESPERADAS)) {
+  if (!WORKFLOWS.includes(nome)) falhas.push(`AF7 CHAMADAS_ESPERADAS registra ${nome}, que não está em .github/workflows/ — renomeie ou remova o registro, senão a régua jura medir arquivo que não existe`);
+}
+for (const nome of WORKFLOWS) {
+  let texto = nome === 'autofix.yml' ? wf : ler(`.github/workflows/${nome}`);
+  if (MUT === 'bootstrap-sem-trailer' && nome === 'issues-bot.yml') texto = texto.replace(/\n\s*-m "Agent: csbrasil-bot \(issues-bot\)" \\/, '');
+  if (MUT === 'release-sem-trailer' && nome === 'release.yml') texto = texto.replace(/ \\\n\s*-m "Agent: csbrasil-deploy-bot \(release\)"/, '');
+  if (MUT === 'release-sem-signoff' && nome === 'release.yml') texto = texto.replace('git commit -s -m "chore(release)', 'git commit -m "chore(release)');
+  const chamadas = recortarChamadas(texto);
+  const esperado = CHAMADAS_ESPERADAS[nome] ?? 0;
+  if (chamadas.length < esperado) {
+    falhas.push(`AF7 o recorte achou ${chamadas.length} chamada(s) de \`git commit\`/\`git merge\` no ${nome}, e CHAMADAS_ESPERADAS registra ${esperado} — o recorte está cego: conserte a regex da AF7 (ou atualize o registro se uma chamada saiu de propósito) antes de confiar no verde`);
+  }
+  if (!esperado && chamadas.length) {
+    falhas.push(`AF7 ${nome} faz \`git commit\`/\`git merge\` e não está em CHAMADAS_ESPERADAS — registre a contagem, senão um recorte que ficar cego neste arquivo vira verde silencioso`);
+  }
+  for (const trecho of chamadas) {
+    if (!/Agent:/.test(trecho)) falhas.push(`AF7 um \`git commit\`/\`git merge\` do ${nome} não leva \`Agent:\` — o agente_check reprova a PR que a própria máquina tocou (#406, #450, #451)`);
+    /* `-s` vale como Signed-off-by SÓ depois de `git commit`: o git grava o trailer com
+       a identidade configurada no passo. É o que o release.yml usa, porque o e-mail
+       daquela identidade vem de secret/var (BOT_GIT_EMAIL) — grafá-lo na mensagem
+       congelaria o valor no YAML. A âncora em `git commit` é de propósito: em
+       `git merge`, `-s` é ESTRATÉGIA (`-s ours`), e `[ -s arquivo ]` é o operador de
+       teste do shell — os dois passariam por signoff num recorte que só visse ` -s `. */
+    if (!/Signed-off-by:/.test(trecho) && !/git commit[^\n]*\s-s\s/.test(trecho)) falhas.push(`AF7 um \`git commit\`/\`git merge\` do ${nome} não leva \`Signed-off-by:\` nem \`git commit … -s\` — o dco reprova o commit que a máquina fez`);
+  }
 }
 
 /* ---- AF6: a varredura pós-release existe e enxerga quem ficou para trás ---- */
@@ -145,7 +203,6 @@ else if (!temVarredura) falhas.push('AF6 o gatilho de push existe mas não há j
 else if (!filtraAtrasado) falhas.push('AF6 a varredura não seleciona os PRs desatualizados nem dispara o autofix de cada um');
 
 /* ---- AF4: e nenhum outro workflow mergeia tampouco ---- */
-const WORKFLOWS = readdirSync('.github/workflows').filter((f) => /\.ya?ml$/.test(f));
 for (const nome of WORKFLOWS) {
   let texto = ler(`.github/workflows/${nome}`);
   if (MUT === 'automerge-volta' && nome === 'csbrasil-bot-automerge.yml') {

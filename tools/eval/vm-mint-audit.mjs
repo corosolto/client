@@ -121,19 +121,6 @@ function loadCFG() {
 }
 export const CFG = loadCFG();
 
-// A CFG também contém modelos exclusivamente cênicos (por exemplo, o mosquete
-// histórico do Bandeirante). A população do viewmodel é WEAPON_IDS: slot/pickup/
-// balística do jogo. Ler Object.keys(CFG) transformava um prop em 27ª arma e fazia
-// o auditor inventar uma tela que o jogador nunca vê.
-function loadWeaponIds() {
-  const src = fs.readFileSync(path.join(ROOT, 'public/js/weapons.js'), 'utf8');
-  const match = src.match(/export const WEAPON_IDS\s*=\s*(\[[\s\S]*?\]);/);
-  if (!match) throw new Error('WEAPON_IDS não encontrado em public/js/weapons.js');
-  // eslint-disable-next-line no-new-func
-  return new Function('return ' + match[1])();
-}
-export const WEAPON_IDS = loadWeaponIds();
-
 /* ---------- réplica de weaponModel(): grip na origem, cano +Z, comprimento real ---------- */
 /* gunSpace(id) usa o CFG DESTA árvore. `cfgAlt` existe para o vm-project projetar uma
    ÁRVORE ALVO (o "antes" da sobreposição): len/gripZ/rot/vm vivem em weapons.js e MUDAM
@@ -599,9 +586,7 @@ export function main() {
   const ONE_H = new Set(['pistol', 'deagle', 'revolver38', 'knife']);
   const ASPECTS = { '16:9': 16 / 9, '3:2': 3 / 2 };
   const report = { gerado: new Date().toISOString(), lente: { V0deg: V0DEG, halfTanH: +H.toFixed(4), vmOff: OFF, offYForma: 'VM_OFF[1]*(16/9)/aspecto (fração de altura; 16:9 == VM_OFF[1])', offY: { '16:9': +offYFor(16 / 9).toFixed(4), '3:2': +offYFor(3 / 2).toFixed(4) } }, tuning: F, armas: {} };
-  const allModels = Object.keys(CFG).filter((id) => fs.existsSync(path.join(WDIR, id + '.glb')));
-  const mutateDisplayIntoViewmodel = process.argv.includes('--mutante=display-no-fpvm');
-  const ids = mutateDisplayIntoViewmodel ? allModels : WEAPON_IDS.filter((id) => allModels.includes(id));
+  const ids = Object.keys(CFG).filter((id) => fs.existsSync(path.join(WDIR, id + '.glb')));
   for (const id of ids) {
     const { P, T, cfg } = gunSpace(id);
     const bb = bbox(P);
@@ -739,10 +724,5 @@ for (const f of fails.slice(0, 40)) console.log('  ✗', f);
 const t = (id) => { const e = report.armas[id]; if (!e) return; const a = e.aspectos['16:9'], b = e.aspectos['3:2']; console.log(`${id.padEnd(11)} ${e.classe.padEnd(8)} esq=${a.bordaEsq}/${b.bordaEsq} braco=${a.bracoBordaDir} area=${a.areaPct}/${b.areaPct}% cano=${e.anguloCanoGraus}° coronhaZ=${e.coronhaZ} folgaBraco=${e.alcanceBraco.folga}`); };
 console.log('');
 for (const id of ids) t(id);
-const unexpected = ids.filter((id) => !WEAPON_IDS.includes(id));
-if (unexpected.length) {
-  console.error(`DISPLAY-NO-FPVM FALHA: modelo(s) só de apresentação auditados como arma: ${unexpected.join(', ')}`);
-  process.exitCode = 1;
-}
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) main();

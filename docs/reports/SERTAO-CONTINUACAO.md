@@ -226,3 +226,25 @@ baixar os três modelos do projeto zd7d9mfmgv0b80ezp3xbykp1ns8dw47r, medir,
 otimizar e animar localmente. Eles NÃO estão no mapa. Galinhaantiga permanece.
 Memorial ainda sem resultado aceito. Servidor local8149, recarregar partida
 para ver calangoquadrúpede, aves, horizonte e placa. Sem merge/deploy manual.
+
+## Integração com main — 06/09/2026, em validação
+
+O dono autorizou atualizar com main, resolver conflitos, build e merge. A base
+`a551204fd80a4b02599b6658fc7dc991a1810585` foi incorporada somente nesta worktree.
+O checkpoint anterior `402665ef` preserva integralmente a revisão visual.
+
+A divergência antiga abrangia 1.810 caminhos; a resolução conserva a árvore da
+main e reaplica apenas Sertão, preview, réguas e dependências locais. Backend,
+protocolos, áudio aprovado, armas, outros mapas, aliases e menu permanecem na main.
+`main.js` recebe apenas preview e preload específico; `game.js`, pausa da ambiência.
+O loop de sanfona ausente foi retirado da configuração para não requisitar um
+arquivo sem fonte disponível. Nenhum áudio novo, asset Mint novo ou memorial entrou.
+
+Galinha/pintinhos/cabra Mint continuam candidatos, sem licença específica
+verificada e sem animação aprovada. A fauna entregue é a anterior mais o calango
+quadrúpede corrigido e aves procedurais já revisadas. Os GLBs locais herdados
+conservam os registros e lacunas documentais; nenhum termo foi inventado.
+
+Próximo passo: concluir gates e capturas na main integrada, registrar o resultado,
+push sem força na codex/sertao-astra, retarget do PR511 para main e merge autorizado
+com SHA verificado. PR445 será indicado como substituído, sem reescrever a branch.

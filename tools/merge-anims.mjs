@@ -23,10 +23,9 @@
    em todos os clipes da pasta), os nós duplicados são descartados e o prune limpa os
    accessors órfãos.
 
-   uso: node tools/merge-anims.mjs [--check] [--only=id]
+   uso: node tools/merge-anims.mjs [--check]
      (sem args)  reescreve todos os <pasta>.glb mesclados
      --check     não escreve: verifica que cada mesclado existe e tem os clipes da pasta
-     --only=id   limita geração/verificação à pasta informada (retomada segura do pipeline)
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,7 +35,6 @@ import { prune, mergeDocuments, unpartition } from '@gltf-transform/functions';
 const ANIMS = 'public/models/anims';
 const GLBCHARS = 'public/js/glbchars.js';
 const CHECK = process.argv.includes('--check');
-const ONLY = (process.argv.find((arg) => arg.startsWith('--only=')) || '').slice('--only='.length);
 
 // Os estados vêm do jogo, não de uma cópia (mesma regra do gen-anim-manifest.mjs).
 const fonte = fs.readFileSync(GLBCHARS, 'utf8');
@@ -52,12 +50,8 @@ const io = new NodeIO();
 // Pastas com pelo menos 1 clipe de estado (inclui o pack compartilhado, ex. `mixamo`).
 const pastas = fs.readdirSync(ANIMS).filter((f) => {
   const p = path.join(ANIMS, f);
-  return (!ONLY || f === ONLY) && fs.statSync(p).isDirectory() && ESTADOS.some((s) => fs.existsSync(path.join(p, `${s}.glb`)));
+  return fs.statSync(p).isDirectory() && ESTADOS.some((s) => fs.existsSync(path.join(p, `${s}.glb`)));
 }).sort();
-if (ONLY && !pastas.length) {
-  console.error(`pasta de animação inexistente ou vazia: ${ONLY}`);
-  process.exit(1);
-}
 
 async function mesclar(pasta) {
   const dir = path.join(ANIMS, pasta);

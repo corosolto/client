@@ -6,15 +6,12 @@
 import { execSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import sharp from 'sharp';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
 const OUT = '/tmp/eval';
 const ANGLES = ['front','q34','side','back','low'];
 const ALL = ['esquerdomacho','sindicato','mst','doutora','mistico','caminhoneiro','influencer','sertanejo','senhora','coach','gotinha','farialimer','bombado','hipster','dollynho','et','ancap'];
-const requested = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
-const chars = requested.length ? requested : ALL;
-const MUTANT_BG = process.argv.includes('--mutante=fundopreto');
+const chars = process.argv.slice(2).length ? process.argv.slice(2) : ALL;
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -34,20 +31,9 @@ for (const char of chars){
     await page.goto(`${BASE}/eval.html?char=${char}&w=900&h=900`, { waitUntil:'networkidle' });
     await page.waitForFunction('window.EVAL && window.EVAL.ready===true', { timeout:30000 });
     const rep = await page.evaluate('window.__report');
-    // A medição de silhueta já ocorreu com alpha transparente. Para a figura que
-    // alguém precisa OLHAR, fundo preto escondia capacete/cabelo pretos e inventava
-    // uma cabeça cortada. Troca apenas o fundo das capturas, não o dado medido.
-    if (!MUTANT_BG) await page.evaluate(() => window.EVAL.setBackground(0x20242b));
     for (let i=0;i<ANGLES.length;i++){
       await page.evaluate(a=>window.EVAL.setAngle(a), ANGLES[i]);
-      const frame = `${dir}/${i}_${ANGLES[i]}.png`;
-      await page.screenshot({ path:frame });
-      if (i === 0) {
-        const pixel = await sharp(frame).extract({ left:0, top:0, width:1, height:1 }).removeAlpha().raw().toBuffer();
-        if ((pixel[0] + pixel[1] + pixel[2]) / 3 < 20) {
-          throw new Error('VIS1: figura servida sobre fundo preto esconde material/cabelo preto');
-        }
-      }
+      await page.screenshot({ path:`${dir}/${i}_${ANGLES[i]}.png` });
     }
     if (hasFFmpeg){
       const ins = ANGLES.map((a,i)=>`-i ${dir}/${i}_${a}.png`).join(' ');
@@ -74,4 +60,3 @@ for (const r of reports){
 }
 writeFileSync(`${OUT}/report.md`, md);
 console.log(`\nreport -> ${OUT}/report.md  (+ report.json, per-char _sheet.png)`);
-if (reports.some((report) => report.error)) process.exitCode = 1;

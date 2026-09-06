@@ -1,28 +1,14 @@
 {
- "gerado": "2026-08-12T00:23:48.700Z",
+ "gerado": "2026-08-15T03:05:59.343Z",
  "mutante": null,
  "teto": {
   "frenteZmin": 0.117,
-  "canoZmin": 0.794,
-  "dMaoRmax": 0.083,
+  "canoZmin": 0.594,
+  "dMaoRmax": 0.025,
   "dMaoLmax": 0.02,
   "apoioYmax": 0.551
  },
  "personagens": [
-  {
-   "id": "bandeirante",
-   "arma": "mosin",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 1.021,
-   "frenteZ": 0.22,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 1.639,
-   "apoioY": 0.34,
-   "gripCurl": null,
-   "fingerP90": null
-  },
   {
    "id": "adjim",
    "arma": "uzi",
@@ -30,12 +16,10 @@
    "mascote": false,
    "palmaY": 1.012,
    "frenteZ": 0.142,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.165,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.002,
+   "apoioY": 0.173
   },
   {
    "id": "ancap",
@@ -44,12 +28,10 @@
    "mascote": false,
    "palmaY": 0.968,
    "frenteZ": 0.256,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.008,
-   "apoioY": 0.202,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.004,
+   "apoioY": 0.23
   },
   {
    "id": "blackmetal",
@@ -58,12 +40,10 @@
    "mascote": false,
    "palmaY": 1.053,
    "frenteZ": 0.145,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.121,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.004,
+   "apoioY": 0.136
   },
   {
    "id": "bombado",
@@ -72,12 +52,10 @@
    "mascote": false,
    "palmaY": 0.832,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.008,
-   "apoioY": 0.051,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.001,
+   "apoioY": 0.076
   },
   {
    "id": "bonzo",
@@ -86,26 +64,10 @@
    "mascote": false,
    "palmaY": 1.331,
    "frenteZ": 0.294,
-   "canoZ": 0.992,
-   "dMaoR": 0.043,
+   "canoZ": 0.897,
+   "dMaoR": 0.004,
    "dMaoL": null,
-   "apoioY": 0.409,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "boto",
-   "arma": "deagle",
-   "oneHanded": true,
-   "mascote": false,
-   "palmaY": 1.228,
-   "frenteZ": 0.326,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": null,
-   "apoioY": 0.4,
-   "gripCurl": 0,
-   "fingerP90": null
+   "apoioY": 0.409
   },
   {
    "id": "cadequinha",
@@ -114,26 +76,10 @@
    "mascote": false,
    "palmaY": 1.289,
    "frenteZ": 0.303,
-   "canoZ": 0.992,
-   "dMaoR": 0.04,
-   "dMaoL": null,
-   "apoioY": 0.444,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "camera-roxa",
-   "arma": "m4",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 0.87,
-   "frenteZ": 0.149,
-   "canoZ": 0.992,
+   "canoZ": 0.897,
    "dMaoR": 0,
-   "dMaoL": 0.002,
-   "apoioY": 0.004,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": null,
+   "apoioY": 0.444
   },
   {
    "id": "caminhoneiro",
@@ -142,12 +88,10 @@
    "mascote": false,
    "palmaY": 0.871,
    "frenteZ": 0.142,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.007,
-   "apoioY": 0.152,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.002,
+   "apoioY": 0.175
   },
   {
    "id": "canarinho",
@@ -156,12 +100,10 @@
    "mascote": true,
    "palmaY": 1.081,
    "frenteZ": 0.539,
-   "canoZ": 0.992,
-   "dMaoR": 0.008,
+   "canoZ": 0.897,
+   "dMaoR": 0,
    "dMaoL": null,
-   "apoioY": 0.359,
-   "gripCurl": null,
-   "fingerP90": null
+   "apoioY": 0.359
   },
   {
    "id": "chave",
@@ -170,12 +112,10 @@
    "mascote": false,
    "palmaY": 1.021,
    "frenteZ": 0.143,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.15,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.002,
+   "apoioY": 0.163
   },
   {
    "id": "clubber",
@@ -184,12 +124,10 @@
    "mascote": false,
    "palmaY": 1.051,
    "frenteZ": 0.143,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.128,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.004,
+   "apoioY": 0.147
   },
   {
    "id": "coach",
@@ -198,12 +136,10 @@
    "mascote": false,
    "palmaY": 1.009,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.003,
-   "apoioY": 0.098,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.001,
+   "apoioY": 0.121
   },
   {
    "id": "criarj",
@@ -212,68 +148,10 @@
    "mascote": false,
    "palmaY": 1.038,
    "frenteZ": 0.147,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
    "dMaoL": 0.001,
-   "apoioY": 0.148,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "cuca",
-   "arma": "shotgun",
-   "oneHanded": false,
-   "mascote": true,
-   "palmaY": 0.949,
-   "frenteZ": 0.216,
-   "canoZ": 0.992,
-   "dMaoR": 0.021,
-   "dMaoL": null,
-   "apoioY": 0.12,
-   "gripCurl": 0,
-   "fingerP90": null
-  },
-  {
-   "id": "curupira",
-   "arma": "mp5",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 0.946,
-   "frenteZ": 0.147,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.006,
-   "apoioY": 0.123,
-   "gripCurl": 0,
-   "fingerP90": null
-  },
-  {
-   "id": "designer-ux",
-   "arma": "m4",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 0.998,
-   "frenteZ": 0.149,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.004,
-   "apoioY": 0.131,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "doidinho-bairro",
-   "arma": "p90",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 1.021,
-   "frenteZ": 0.148,
-   "canoZ": 0.946,
-   "dMaoR": 0,
-   "dMaoL": 0.005,
-   "apoioY": 0.128,
-   "gripCurl": 0.65,
-   "fingerP90": 0.103
+   "apoioY": 0.154
   },
   {
    "id": "dollynho",
@@ -282,12 +160,10 @@
    "mascote": true,
    "palmaY": 0.875,
    "frenteZ": 0.149,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
    "dMaoL": null,
-   "apoioY": 0.065,
-   "gripCurl": null,
-   "fingerP90": null
+   "apoioY": 0.065
   },
   {
    "id": "doutora",
@@ -296,12 +172,10 @@
    "mascote": false,
    "palmaY": 1,
    "frenteZ": 0.173,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.004,
-   "apoioY": 0.166,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.003,
+   "apoioY": 0.184
   },
   {
    "id": "emo",
@@ -310,12 +184,10 @@
    "mascote": false,
    "palmaY": 1.006,
    "frenteZ": 0.147,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.083,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.004,
+   "apoioY": 0.103
   },
   {
    "id": "esbirro",
@@ -324,12 +196,10 @@
    "mascote": false,
    "palmaY": 1.075,
    "frenteZ": 0.149,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
    "dMaoL": 0.001,
-   "apoioY": 0.199,
-   "gripCurl": null,
-   "fingerP90": null
+   "apoioY": 0.202
   },
   {
    "id": "esquerdomacho",
@@ -338,12 +208,10 @@
    "mascote": false,
    "palmaY": 1.299,
    "frenteZ": 0.389,
-   "canoZ": 0.992,
-   "dMaoR": 0.02,
+   "canoZ": 0.897,
+   "dMaoR": 0,
    "dMaoL": null,
-   "apoioY": 0.42,
-   "gripCurl": 0,
-   "fingerP90": null
+   "apoioY": 0.42
   },
   {
    "id": "et",
@@ -352,12 +220,10 @@
    "mascote": true,
    "palmaY": 0.873,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
    "dMaoL": null,
-   "apoioY": 0.042,
-   "gripCurl": 0,
-   "fingerP90": null
+   "apoioY": 0.042
   },
   {
    "id": "farialimer",
@@ -366,12 +232,10 @@
    "mascote": false,
    "palmaY": 1.016,
    "frenteZ": 0.145,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.003,
-   "apoioY": 0.14,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.002,
+   "apoioY": 0.157
   },
   {
    "id": "fluxo",
@@ -380,12 +244,10 @@
    "mascote": false,
    "palmaY": 1.041,
    "frenteZ": 0.143,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
    "dMaoL": 0.003,
-   "apoioY": 0.154,
-   "gripCurl": null,
-   "fingerP90": null
+   "apoioY": 0.164
   },
   {
    "id": "funkraiz",
@@ -394,12 +256,10 @@
    "mascote": false,
    "palmaY": 1.009,
    "frenteZ": 0.144,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.015,
-   "apoioY": 0.191,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.006,
+   "apoioY": 0.203
   },
   {
    "id": "gotinha",
@@ -408,12 +268,10 @@
    "mascote": true,
    "palmaY": 0.614,
    "frenteZ": 0.149,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
    "dMaoL": null,
-   "apoioY": 0.052,
-   "gripCurl": 0,
-   "fingerP90": null
+   "apoioY": 0.052
   },
   {
    "id": "hipster",
@@ -422,12 +280,10 @@
    "mascote": false,
    "palmaY": 0.981,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
    "dMaoL": 0.001,
-   "apoioY": 0.127,
-   "gripCurl": 0,
-   "fingerP90": null
+   "apoioY": 0.134
   },
   {
    "id": "jozo",
@@ -436,54 +292,10 @@
    "mascote": false,
    "palmaY": 1.011,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.008,
-   "apoioY": 0.18,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "lampiao",
-   "arma": "m4",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 0.924,
-   "frenteZ": 0.148,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.01,
-   "apoioY": 0.131,
-   "gripCurl": 0,
-   "fingerP90": null
-  },
-  {
-   "id": "lenda-lanhouse",
-   "arma": "m4",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 1.065,
-   "frenteZ": 0.149,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.134,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "lobisomem",
-   "arma": "shotgun",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 0.953,
-   "frenteZ": 0.357,
-   "canoZ": 0.992,
-   "dMaoR": 0.022,
    "dMaoL": 0.002,
-   "apoioY": 0.053,
-   "gripCurl": 0.7,
-   "fingerP90": null
+   "apoioY": 0.204
   },
   {
    "id": "mandrake",
@@ -492,26 +304,10 @@
    "mascote": false,
    "palmaY": 0.949,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.002,
-   "apoioY": 0.125,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "mariabonita",
-   "arma": "awp",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 0.946,
-   "frenteZ": 0.147,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.015,
-   "apoioY": 0.122,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.006,
+   "apoioY": 0.14
   },
   {
    "id": "metaleiro",
@@ -520,26 +316,10 @@
    "mascote": false,
    "palmaY": 1.012,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.002,
-   "apoioY": 0.133,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "microfonildo",
-   "arma": "m4",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 1.052,
-   "frenteZ": 0.149,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.004,
-   "apoioY": 0.134,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.003,
+   "apoioY": 0.153
   },
   {
    "id": "mistico",
@@ -548,26 +328,10 @@
    "mascote": false,
    "palmaY": 0.987,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.003,
-   "apoioY": 0.177,
-   "gripCurl": 0,
-   "fingerP90": null
-  },
-  {
-   "id": "motoca-cachorro-loko",
-   "arma": "m4",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 1.017,
-   "frenteZ": 0.148,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.007,
-   "apoioY": 0.14,
-   "gripCurl": 0.65,
-   "fingerP90": 0.087
+   "dMaoL": 0.002,
+   "apoioY": 0.187
   },
   {
    "id": "mst",
@@ -576,12 +340,10 @@
    "mascote": false,
    "palmaY": 0.957,
    "frenteZ": 0.148,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.003,
-   "apoioY": 0.12,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.001,
+   "apoioY": 0.144
   },
   {
    "id": "oakley",
@@ -590,12 +352,10 @@
    "mascote": false,
    "palmaY": 0.996,
    "frenteZ": 0.149,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.171,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.002,
+   "apoioY": 0.205
   },
   {
    "id": "ostentacao",
@@ -604,12 +364,10 @@
    "mascote": false,
    "palmaY": 1.394,
    "frenteZ": 0.325,
-   "canoZ": 0.992,
-   "dMaoR": 0.029,
+   "canoZ": 0.897,
+   "dMaoR": 0.001,
    "dMaoL": null,
-   "apoioY": 0.457,
-   "gripCurl": null,
-   "fingerP90": null
+   "apoioY": 0.457
   },
   {
    "id": "padata",
@@ -618,12 +376,10 @@
    "mascote": false,
    "palmaY": 0.969,
    "frenteZ": 0.145,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.114,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.002,
+   "apoioY": 0.123
   },
   {
    "id": "padati",
@@ -632,12 +388,10 @@
    "mascote": false,
    "palmaY": 1.22,
    "frenteZ": 0.326,
-   "canoZ": 0.992,
-   "dMaoR": 0.066,
+   "canoZ": 0.897,
+   "dMaoR": 0.02,
    "dMaoL": null,
-   "apoioY": 0.352,
-   "gripCurl": null,
-   "fingerP90": null
+   "apoioY": 0.352
   },
   {
    "id": "pagodeiro",
@@ -646,12 +400,10 @@
    "mascote": false,
    "palmaY": 1.301,
    "frenteZ": 0.329,
-   "canoZ": 0.992,
-   "dMaoR": 0.029,
+   "canoZ": 0.897,
+   "dMaoR": 0.002,
    "dMaoL": null,
-   "apoioY": 0.448,
-   "gripCurl": null,
-   "fingerP90": null
+   "apoioY": 0.448
   },
   {
    "id": "palhacomal",
@@ -660,12 +412,10 @@
    "mascote": false,
    "palmaY": 1.021,
    "frenteZ": 0.145,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.009,
-   "apoioY": 0.14,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.001,
+   "apoioY": 0.163
   },
   {
    "id": "proerd",
@@ -674,40 +424,10 @@
    "mascote": false,
    "palmaY": 0.92,
    "frenteZ": 0.333,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.002,
-   "apoioY": 0.154,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "profeta-calcada",
-   "arma": "m4",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 1.123,
-   "frenteZ": 0.145,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.003,
-   "apoioY": 0.129,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "programador-virado",
-   "arma": "m4",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 1.032,
-   "frenteZ": 0.148,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.004,
-   "apoioY": 0.146,
-   "gripCurl": 0.2,
-   "fingerP90": 0.081
+   "dMaoL": 0.001,
+   "apoioY": 0.189
   },
   {
    "id": "punk",
@@ -716,12 +436,10 @@
    "mascote": false,
    "palmaY": 0.924,
    "frenteZ": 0.153,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.001,
-   "apoioY": 0.11,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.003,
+   "apoioY": 0.132
   },
   {
    "id": "rapper",
@@ -730,12 +448,10 @@
    "mascote": false,
    "palmaY": 1.049,
    "frenteZ": 0.141,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.011,
-   "apoioY": 0.269,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.001,
+   "apoioY": 0.279
   },
   {
    "id": "raul",
@@ -744,12 +460,10 @@
    "mascote": false,
    "palmaY": 1.281,
    "frenteZ": 0.352,
-   "canoZ": 0.992,
-   "dMaoR": 0.021,
+   "canoZ": 0.897,
+   "dMaoR": 0,
    "dMaoL": null,
-   "apoioY": 0.441,
-   "gripCurl": null,
-   "fingerP90": null
+   "apoioY": 0.441
   },
   {
    "id": "reggae",
@@ -758,26 +472,10 @@
    "mascote": false,
    "palmaY": 0.953,
    "frenteZ": 0.147,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.006,
-   "apoioY": 0.153,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "saci",
-   "arma": "mp5",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 0.847,
-   "frenteZ": 0.144,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.015,
-   "apoioY": 0.059,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.01,
+   "apoioY": 0.172
   },
   {
    "id": "sertanejo",
@@ -786,12 +484,10 @@
    "mascote": false,
    "palmaY": 1.186,
    "frenteZ": 0.35,
-   "canoZ": 0.992,
-   "dMaoR": 0.04,
+   "canoZ": 0.897,
+   "dMaoR": 0.007,
    "dMaoL": null,
-   "apoioY": 0.383,
-   "gripCurl": 0,
-   "fingerP90": null
+   "apoioY": 0.383
   },
   {
    "id": "sindicato",
@@ -800,12 +496,10 @@
    "mascote": false,
    "palmaY": 0.89,
    "frenteZ": 0.128,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.017,
-   "apoioY": 0.133,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.003,
+   "apoioY": 0.145
   },
   {
    "id": "skatista",
@@ -814,12 +508,10 @@
    "mascote": false,
    "palmaY": 1.031,
    "frenteZ": 0.144,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.003,
-   "apoioY": 0.099,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.002,
+   "apoioY": 0.117
   },
   {
    "id": "titica",
@@ -828,12 +520,10 @@
    "mascote": false,
    "palmaY": 0.956,
    "frenteZ": 0.145,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.006,
-   "apoioY": 0.162,
-   "gripCurl": null,
-   "fingerP90": null
+   "dMaoL": 0.007,
+   "apoioY": 0.173
   },
   {
    "id": "trapfunk",
@@ -842,26 +532,10 @@
    "mascote": false,
    "palmaY": 1.128,
    "frenteZ": 0.146,
-   "canoZ": 0.992,
+   "canoZ": 0.743,
    "dMaoR": 0,
-   "dMaoL": 0.003,
-   "apoioY": 0.17,
-   "gripCurl": null,
-   "fingerP90": null
-  },
-  {
-   "id": "zumbi",
-   "arma": "ak",
-   "oneHanded": false,
-   "mascote": false,
-   "palmaY": 0.946,
-   "frenteZ": 0.147,
-   "canoZ": 0.992,
-   "dMaoR": 0,
-   "dMaoL": 0.009,
-   "apoioY": 0.124,
-   "gripCurl": 0,
-   "fingerP90": null
+   "dMaoL": 0.001,
+   "apoioY": 0.195
   }
  ]
 }

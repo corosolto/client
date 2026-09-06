@@ -10,6 +10,7 @@ import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
 import { createWater } from './water.js';
 import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS } from './ambientlife.js';
+import { createSkyLife, SKY_KITE_ASSET, SKY_HELI_ASSET } from './skylife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -47,7 +48,11 @@ export const CORREGO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fu
   /* Kit de favela que estava no disco sem nenhum mapa consumindo. `fav_house` já era
      pré-carregada e nunca colocada — peso de download por nada. Agora as três entram
      como VOLUME de fundo (ver o bloco FILEIRA C) e as duas pequenas como vocabulário. */
-  'fav_brasileira', 'caixa_dagua', 'botijao_gas', 'uno_mille', 'fiat_uno', 'kombi'];
+  'fav_brasileira', 'caixa_dagua', 'botijao_gas', 'uno_mille', 'fiat_uno', 'kombi',
+  // BUG-72: sem isto o preloadMapProps nunca baixava vegetação e o mapa ficava só terra
+  'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba',
+  // vida de céu (skylife.js): pipa e helicóptero, os dois sem call-site até agora
+  SKY_KITE_ASSET, SKY_HELI_ASSET];
 
 export const CORREGO_ARTE_SUBSTITUICOES = Object.freeze({
   'folha-person-02.png': 'or-mitico-mural.png',
@@ -384,6 +389,24 @@ export function buildCorrego(scene, T) {
       // Mureta baixa do lado do vão: a rampa é uma calçada, não um trampolim.
       addBox(0.22, 0.5, hip * 0.94, matReboco, lado * (RAMPA_X0 + 0.11), CANAL_FUNDO / 2 - 0.2, (r.zAlto + r.zBaixo) / 2,
         { collide: false, skirt: false });
+      /* BUG-72: sem isto via-se o skybox por cima e por baixo da laje (40,3% dos raios).
+         ARRIMO — a parede externa do corte é contínua — quem desce a rampa desce num
+         corte no terreno, não num vão suspenso. É ela que fecha a linha de visão. */
+      const arrimo = addBox(0.46, -CANAL_FUNDO, L, matParedeCanal,
+        lado * (RAMPA_X1 - 0.23), CANAL_FUNDO, (r.zAlto + r.zBaixo) / 2);
+      arrimo.userData.corregoRampaArrimo = true;
+      /* Enchimento sob a laje (senão a rampa lê como prancha sobre um bolsão preto), no
+         StaticBatch: 32 malhas soltas gastariam a folga do corrego-superficie. BUG-72. */
+      const DEGRAUS = 8;
+      for (let k = 0; k < DEGRAUS; k++) {
+        const t0 = k / DEGRAUS, t1 = (k + 1) / DEGRAUS;
+        const yTopo = CANAL_FUNDO * ((t0 + t1) / 2);
+        const dz = Math.abs(r.zBaixo - r.zAlto) / DEGRAUS;
+        addBoxSB(RAMPA_X1 - RAMPA_X0 - 0.46, yTopo - CANAL_FUNDO, dz + 0.02, matParedeCanal,
+          lado * ((RAMPA_X0 + RAMPA_X1 - 0.46) / 2), CANAL_FUNDO,
+          r.zAlto + (r.zBaixo - r.zAlto) * ((t0 + t1) / 2),
+          { collide: false, skirt: false, cast: false });
+      }
     }
   }
   for (const x of [CANAL_X0 - 0.18, CANAL_X1 + 0.18]) addBox(0.36, 0.08, HALF_Z * 2, matLimo, x, -0.04, 0, { collide: false, cast: false });
@@ -437,16 +460,21 @@ export function buildCorrego(scene, T) {
   for (const [sx, sz] of [[-HALF_X + 1.2, -HALF_Z + 1.2], [HALF_X - 1.2, -HALF_Z + 1.2], [-HALF_X + 1.2, HALF_Z - 1.2], [HALF_X - 1.2, HALF_Z - 1.2]])
     GRAMA_SPOTS.push({ x: sx, z: sz, ry: 0.7 });
   const gramaServida = [];
-  if (hasProp('grama_corrego')) {
-    for (const spot of GRAMA_SPOTS) {
-      const tufo = placeProp('grama_corrego', { x: spot.x, z: spot.z, targetH: 0.4, ry: spot.ry });
-      if (!tufo) continue;
-      tufo.userData.nonCollider = true;
-      tufo.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
-      root.add(tufo);
-      gramaServida.push(tufo);
-    }
-  }
+  // BUG-72: o id pedido era `grama_corrego`; o acervo tem `_01` e `_02` — nunca entrava
+  const GRAMA_IDS = ['grama_corrego_01', 'grama_corrego_02'];
+  const plantar = (id, { x, z, y = 0, ry = 0, targetH = 0.4 }) => {
+    const tufo = placeProp(id, { x, y, z, targetH, ry });
+    if (!tufo) return null;
+    tufo.userData.nonCollider = true;
+    tufo.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+    root.add(tufo);
+    gramaServida.push(tufo);
+    return tufo;
+  };
+  GRAMA_SPOTS.forEach((spot, i) => {
+    // alterna os dois tufos: um só repetido 26 vezes lê como carimbo
+    plantar(GRAMA_IDS[i % GRAMA_IDS.length], { x: spot.x, z: spot.z, ry: spot.ry, targetH: 0.38 + (i % 4) * 0.07 });
+  });
 
   /* ===================== JACARÉ (decoração no córrego) ===================== */
   {
@@ -1178,6 +1206,42 @@ export function buildCorrego(scene, T) {
   /* PB (carros) e IB (caixas instanciadas) viram occluders: são a malha visível com
      colisor — sem isto a bala atravessava carro e palafita que o corpo respeita. */
   const _antesBatch = new Set(root.children);
+  /* Vegetação de beira e chão (BUG-72). Fica aqui e não junto dos GRAMA_SPOTS porque
+     depende do `groundHeightAt` — plantar antes dele é plantar no ar. */
+  {
+    const ehPonte = (z) => [-22, 0, 22].some((bz) => Math.abs(z - bz) < 2.6);
+    // beira da água: taboa e taioba são plantas de brejo — a "grama realista" do pedido
+    let n = 0;
+    for (const lado of [-1, 1]) {
+      for (let z = -37; z <= 37; z += 2.9) {
+        if (ehPonte(z)) continue;
+        if (RAMPAS.some((r) => r.lado === lado && z > Math.min(r.zAlto, r.zBaixo) - 1 && z < Math.max(r.zAlto, r.zBaixo) + 1)) continue;
+        const id = (n % 3 === 0) ? 'planta_corrego_taioba' : 'planta_corrego_taboa';
+        plantar(id, { x: lado * (3.18 + (n % 3) * 0.12), z, ry: (n * 1.911) % 6.283,
+          targetH: id === 'planta_corrego_taboa' ? 1.05 + (n % 3) * 0.16 : 0.62 + (n % 2) * 0.1 });
+        n++;
+      }
+    }
+    /* Chão difuso, instanciado: grade de 1,25 m com jitter. Pula canal, pontes e todo
+       ponto fora do nível da rua. A 2 m lia como mato de rachadura, não chão tomado. */
+    let espalhados = 0;
+    for (let gx = -HALF_X + 1.2; gx <= HALF_X - 1.2; gx += 1.25) {
+      for (let gz = -HALF_Z + 1.2; gz <= HALF_Z - 1.2; gz += 1.25) {
+        const k = Math.abs(Math.sin(gx * 12.9898 + gz * 78.233) * 43758.5453);
+        const x = gx + ((k % 1) - 0.5) * 0.95;
+        const z = gz + (((k * 7.13) % 1) - 0.5) * 0.95;
+        if (Math.abs(x) <= CORREGO_X1 + 0.4) continue;         // canal, rampas e passeio da beira
+        if (ehPonte(z) && Math.abs(x) <= CORREGO_W) continue;
+        if (Math.abs(groundHeightAt(x, z)) > 0.06) continue;    // só a rua; nada de telhado ou rampa
+        const id = GRAMA_IDS[espalhados % GRAMA_IDS.length];
+        if (!PB.add(id, { x, z, targetH: 0.16 + ((k * 3.7) % 1) * 0.13, ry: ((k * 11.3) % 1) * 6.283 })) break;
+        espalhados++;
+      }
+    }
+    if (typeof window !== 'undefined' && new URLSearchParams(location.search).has('debug'))
+      console.info(`[corrego] vegetação: ${gramaServida.length} peças plantadas, ${espalhados} tufos de chão instanciados`);
+  }
+
   PB.build(root);
   SKIRT.build(root);
   /* LOTE ESTÁTICO — toda a alvenaria vira ~1 malha por material; as malhas entram em
@@ -1246,11 +1310,34 @@ export function buildCorrego(scene, T) {
     chickens: [{ pos: [10.5, groundHeightAt(10.5, 12), 12], to: [12, groundHeightAt(12, 13.5), 13.5], phase: 2.2 }],
   });
 
+  /* Vida de céu (skylife.js): o córrego não tinha nada acima da linha dos telhados.
+     Pipas ficam sobre as MARGENS, não sobre o canal — quem solta está no quintal. */
+  const skyLife = createSkyLife(root, {
+    map: 'corrego', low: LOWQ,
+    kites: [
+      { pos: [-14, 17, -26], scale: .95, phase: .3 },
+      { pos: [-9.5, 21, -12], scale: 1.1, phase: 1.9 },
+      { pos: [12, 18, -19], scale: .85, phase: 3.1 },
+      { pos: [16.5, 22, 4], scale: 1.05, phase: 4.4 },
+      { pos: [-17, 19, 14], scale: .9, phase: 5.6 },
+      { pos: [10, 16, 24], scale: 1, phase: 2.5 },
+      { pos: [-11, 23, 31], scale: .88, phase: 6.2 },
+    ],
+    helicopters: [{ center: [0, 41, 0], radius: 52, speed: .13, phase: 2.1 }],
+    // araras: a presença aérea que a v2.1 tirou, agora com asa que bate de verdade
+    birds: [
+      { center: [-4, 27, -8], radius: 26, speed: .30, phase: 0, scale: 1 },
+      { center: [-4, 29, -8], radius: 29, speed: .27, phase: 1.15, scale: .92 },
+      { center: [-4, 25, -8], radius: 23, speed: .33, phase: 2.4, scale: .86 },
+    ],
+  });
+
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.corrego,pos:[0,.3,-37],radius:15,vol:.45},{src:AMB_LOOPS.corrego,pos:[0,.3,37],radius:15,vol:.45},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'}, propEscala,
-    update(dt) { aguaCorrego.update(dt); },
+    skyLife,
+    update(dt, time) { aguaCorrego.update(dt); skyLife.update(dt, time); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     gramaSpots: GRAMA_SPOTS, gramaServida,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },

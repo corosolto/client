@@ -5,13 +5,14 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troca-clubber-rasta', 'faria-volta-lula', 'pack-antigo'].includes(mutante)) {
+if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troca-clubber-rasta', 'faria-volta-lula', 'pack-antigo', 'manifest-antigo'].includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
 
 let main = readFileSync('public/js/main.js', 'utf8');
 let fetchAudio = readFileSync('scripts/fetch-audio.sh', 'utf8');
+let audio = readFileSync('public/js/audio.js', 'utf8');
 if (mutante === 'sem-clique') {
   main = main.replace(
     'row.onclick = () => selectCharacterFromAvatar(c, row, chars);',
@@ -21,7 +22,8 @@ if (mutante === 'sem-clique') {
 if (mutante === 'auto-fala') {
   main = main.replace('if (row) selectChar(character, row);', 'row?.click();');
 }
-if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v6', 'audio-pack-v5');
+if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v8', 'audio-pack-v7');
+if (mutante === 'manifest-antigo') audio = audio.replace('audio/manifest.json?v=10', 'audio/manifest.json?v=9');
 
 const failures = [];
 const expect = (ok, message) => { if (!ok) failures.push(message); };
@@ -41,8 +43,12 @@ expect(!/characterSelectVoice/.test(selectBody),
   'VOICE3 selectChar fala durante a montagem automática da tela');
 expect(!/row\?\.click\(\)/.test(main),
   'VOICE4 a query string simula clique humano e dispara fala');
-expect(/releases\/download\/audio-pack-v6\/audio-pack\.zip/.test(fetchAudio),
-  'VOICE12 o build não baixa o pacote com a voz corrigida do Faria Limer');
+expect(/releases\/download\/audio-pack-v8\/audio-pack\.zip/.test(fetchAudio),
+  'VOICE12 o build não baixa o pacote com as vozes do time Mítico e o upgrade dos funkeiros (v8; inclui o Faria Limer corrigido e o menu Suno do v7)');
+const packVersion = fetchAudio.match(/audio-pack-v(\d+)\/audio-pack\.zip/)?.[1];
+const manifestVersion = audio.match(/audio\/manifest\.json\?v=(\d+)/)?.[1];
+expect(packVersion === '8' && manifestVersion === '10',
+  `VOICE13 fallback público v${packVersion || '?'} e chave privada v${manifestVersion || '?'} não identificam o canal atual; CDN pode servir catálogo antigo`);
 
 globalThis.location ||= { search: '' };
 const { Sfx } = await import('../../public/js/audio.js');
@@ -113,10 +119,13 @@ const identityCases = [
   { id: 'dollynho', faction: 'B', roster: ['caminhoneiro', 'sertanejo', 'coach', 'farialimer', 'bombado', 'dollynho', 'ancap', 'canarinho', 'proerd'], expected: 'audio/a/dc26854fa366d0ec.mp3' },
   { id: 'clubber', faction: 'U', roster: ['emo', 'blackmetal', 'metaleiro', 'punk', 'skatista', 'clubber', 'rapper', 'reggae', 'pagodeiro'], expected: 'audio/a/08290068f8d9935f.mp3' },
   { id: 'reggae', faction: 'U', roster: ['emo', 'blackmetal', 'metaleiro', 'punk', 'skatista', 'clubber', 'rapper', 'reggae', 'pagodeiro'], expected: 'audio/a/f180be207d0b440b.mp3' },
-  { id: 'funkraiz', faction: 'F', roster: ['mandrake', 'raulfranja', 'oakley', 'criarj', 'chavesp', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao'], expected: 'audio/a/d5b87c3d2638e166.mp3' },
+  { id: 'funkraiz', faction: 'F', roster: ['mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao'], expected: 'audio/approved-funkraiz.mp3' },
 ];
 const identityProbe = new Sfx();
-identityProbe.pack = { voice };
+identityProbe.pack = { voice, characterVoice: {
+  dollynho: 'audio/a/dc26854fa366d0ec.mp3',
+  funkraiz: { select: ['audio/approved-funkraiz.mp3'] },
+} };
 const identityPlayed = [];
 identityProbe._sample = (file) => { identityPlayed.push(file); return { pause() {} }; };
 if (mutante === 'sem-identidade') {

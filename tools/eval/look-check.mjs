@@ -39,7 +39,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import * as THREE from '../../public/vendor/three.module.js';
-import { initTextures, bootGame } from './harness.mjs';
+import { initTextures, bootGame, MAPS } from './harness.mjs';
+import { LOOK } from '../../public/js/look.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(HERE, '../..');
@@ -48,8 +49,8 @@ const TETO_DE = 8;
 const MUTANTES = ['fog', 'ceu', 'costura', 'ceu-ausente'];
 if (MUT && !MUTANTES.includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
 let mutou = false;
-// RC1: panoramas dos três mapas piloto e céu analítico do Sertão.
-const MAPAS = ['mansao', 'corrego', 'campomorro', 'velho_oeste'];
+// Só mapas registrados: cada look ativo precisa passar pelo builder real.
+const MAPAS = Object.keys(LOOK).filter(id => MAPS[id]);
 
 /* ---------- sRGB -> Lab (D65), ΔE CIE76 ---------- */
 function srgbParaLab(hex) {
