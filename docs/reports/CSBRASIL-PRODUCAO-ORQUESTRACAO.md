@@ -184,6 +184,15 @@ amostras; todos8 mediana/p95 0,296542/0,318206 ms por frame isolado, quinze8+Cuc
 personagem para comparar; custo bruto e lacuna foram preservados. Crítica independente
 `/root/critico_cuca_ik` foi despachada antes de qualquer implementação restrita.
 
+Crítica Cuca concluiu: aceitar experimento local, rejeitar conclusão de pegada resolvida.
+`IK_L_SKIP` em `public/js/glbchars.js` impede criar `ikL` para Cuca, logo só aumentar
+iterações seria no-op público. A candidata deve criar ikL/256 explicitamente em seu arnês,
+sem remover skip global; manter8 para todos os demais. Mesmo em256, alvo original fica
+~210,539 mm distante: só o resíduo do alvo projetado fecha. Antes de integração, comparar
+baseline público/candidata8/candidata256 em atualização completa e partida, com contato de
+superfície, ciclos/transições, armas, hitbox, corpo/cauda e p95/p99. Browser foi reservado
+exclusivamente a essa validação; falha de contato, hiperextensão ou frame regressivo rejeita.
+
 M4 tactical Terra foi rejeitada no checkpoint `29f07868`, sem tocar idle/runtime/materiais:
 magazine real/readable e reimport/retorno2,4s passam, mas frames13/45 ainda expõem pele
 no punho L e somente polegar fica a<=5mm do pente; indicador/médio/anel/mínimo medem
