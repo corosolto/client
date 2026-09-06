@@ -808,6 +808,17 @@ export function buildAmazonia(scene, T) {
   const crusos = [];
   for (let x = -HALF_X + 2.5; x <= HALF_X - 2.5; x += STEP) for (let z = -HALF_Z + 2.5; z <= HALF_Z - 2.5; z += STEP)
     if (!blocked(x, z)) crusos.push({ x, z, y: groundHeightAt(x, z, 0) });
+  /* Faixa externa transitável do spawn B; causa, prova e limites estão no ledger da Amazônia. */
+  const ROTA_LATERAL_B = [
+    [18, 38.2], [19.6, 36.6], [21.2, 35], [21.2, 33.4], [21.2, 31.8], [21.2, 30.2],
+    [22.8, 28.6], [22.8, 27], [21.2, 25.4], [21.2, 23.8], [21.2, 22.2], [21.2, 20.6],
+    [21.2, 19], [21.2, 17.4], [19.6, 15.8], [19.6, 14.2], [18, 12.6], [16.4, 11], [14.8, 9.4],
+    [13.2, 7.8], [11.6, 6.2], [10, 4.6], [8.4, 3], [8.4, 1.4],
+  ];
+  const rotaLateralB = (QP.get('amzctf2lane') === '0' ? [] : ROTA_LATERAL_B).map(([x, z]) => {
+    crusos.push({ x, z, y: groundHeightAt(x, z, 0), rotaLateralB: true });
+    return crusos.length - 1;
+  });
   for (const st of ESTACOES) {
     const uc = CASA_A + PAT_A;
     for (const [u, v] of [[uc, 0], [uc + 1.1, 0], [uc - 1.1, 0], [uc, 1.0], [uc, -1.0]])
@@ -848,12 +859,31 @@ export function buildAmazonia(scene, T) {
     const out = [];
     for (let j = 0; j < crusos.length; j++) {
       if (i === j) continue;
+      // A faixa B é uma rota declarada: só as 25 ligações auditadas abaixo podem
+      // tocá-la. Sem isto a vizinhança automática cria atalhos para o interior.
+      if (crusos[i].rotaLateralB || crusos[j].rotaLateralB) continue;
       const dx = crusos[i].x - crusos[j].x, dz = crusos[i].z - crusos[j].z, dy = Math.abs(crusos[i].y - crusos[j].y);
       if (dy <= 0.75 && dx * dx + dz * dz < STEP * STEP * 2.45 && segClear(crusos[i], crusos[j])) out.push(j);
     }
     return out;
   };
   const adjCrusos = crusos.map((_, i) => vizinhos(i));
+  const ligacoesLateraisB = [];
+  const liga = (a, b, lateralB = false) => {
+    if (!adjCrusos[a].includes(b)) adjCrusos[a].push(b);
+    if (!adjCrusos[b].includes(a)) adjCrusos[b].push(a);
+    if (lateralB) ligacoesLateraisB.push([a, b]);
+  };
+  for (let i = 1; i < rotaLateralB.length; i++) liga(rotaLateralB[i - 1], rotaLateralB[i], true);
+  for (const ponta of rotaLateralB.length ? [rotaLateralB[0], rotaLateralB.at(-1)] : []) {
+    let melhor = -1, dist = Infinity;
+    for (let i = 0; i < crusos.length; i++) if (!crusos[i].rotaLateralB) {
+      if (Math.abs(crusos[i].y - crusos[ponta].y) > .55) continue;
+      const d = Math.hypot(crusos[i].x - crusos[ponta].x, crusos[i].z - crusos[ponta].z);
+      if (d < dist) { melhor = i; dist = d; }
+    }
+    if (dist <= STEP) liga(ponta, melhor, true);
+  }
   const componente = new Uint8Array(crusos.length);
   {
     const fila = [0]; componente[0] = 1;
@@ -868,6 +898,8 @@ export function buildAmazonia(scene, T) {
   mantidos.forEach((i, novo) => { remapa[i] = novo; });
   const nodes = mantidos.map((i) => crusos[i]);
   const adj = mantidos.map((i) => adjCrusos[i].map((j) => remapa[j]));
+  const rotaLateralBNodos = rotaLateralB.map(i => remapa[i]).filter(i => i >= 0);
+  const rotaLateralBLigacoes = ligacoesLateraisB.map(([a, b]) => [remapa[a], remapa[b]]).filter(([a, b]) => a >= 0 && b >= 0);
   function nearestWaypoint(x, z, yRef) {
     const y = groundHeightAt(x, z, yRef);
     let best = 0, bd = Infinity;
@@ -1082,6 +1114,7 @@ export function buildAmazonia(scene, T) {
         patamar: { x: x + d[0] * (CASA_A + PAT_A), z: z + d[1] * (CASA_A + PAT_A) },
       })),
       pontes: PONTES_ALTA,
+      rotaLateralB: { nodes: rotaLateralBNodos, links: rotaLateralBLigacoes },
       perimetro: { arvores: MATA_ARVORES, palmeiras: MATA_PALMEIRAS, fundo: MATA_FUNDO },
       interior: { arvores: MATA_INTERIOR, palmeiras: BABACU_INTERIOR, subbosque: BABACU_INTERIOR.length + GRAMA_INTERIOR.length },
     },
