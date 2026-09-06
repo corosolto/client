@@ -820,3 +820,22 @@ FPS baixo não pode desacelerar o relógio do jogo (issue #295). O clamp de 50 m
 ```bash
 npm run eval:simclock
 ```
+
+## `eval:sertao-livestock` e `eval:sertao-livestock-runtime`
+
+O dono não via os animais Mint no mapa. A régua em node lê os três GLBs finais,
+confere procedência/hash, skin, clipes, textura e o URL realmente solicitado pelo
+preloader. Entra no `check:fast`; mutantes `sem-rig`, `sem-clipe`,
+`textura-ausente`, `hash-divergente` e `cache-velho`.
+
+A régua de navegador carrega o mapa real em3:2, confere os bytes servidos,
+deformação durante caminhada contínua, percurso contra os colisores do jogo,
+orçamento, low, reset, descarte e contato em pixels. Fica fora do portão rápido.
+Mutantes: `sem-caprinos`, `patas-paradas`, `parede`, `sombra`, `low-cheio`,
+`reset-ausente`, `sem-contato`, `dispose-ausente` e `rig-nao-descartado`. Relatório e imagens em
+`artifacts/sertao-astra/livestock-runtime/`; `ARTIFACT_DIR` muda a pasta.
+
+```bash
+npm run eval:sertao-livestock
+BASE=http://localhost:8149 npm run eval:sertao-livestock-runtime
+```

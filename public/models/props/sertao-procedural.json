@@ -1,0 +1,79 @@
+{
+  "scope": "Sertão: geometria e materiais construídos em código nesta revisão",
+  "generation": "JavaScript/Three.js; sem download de modelo novo",
+  "authorship": "Contribuição assistida por agentes, rastreável nos commits com trailer Agent; sem atribuição humana presumida",
+  "codeLicenseFile": "LICENSE",
+  "externalAssets": "Texturas e GLBs reutilizados mantêm procedência própria; este registro não lhes atribui licença do código. Lacunas existentes em docs/reports/SERTAO-REFERENCIAS.md.",
+  "assets": [
+    {
+      "id": "sertao-procedural-casario",
+      "sourceFile": "public/js/map_velho_oeste.js",
+      "symbols": [
+        "casaProxy",
+        "casaPlatibandaProxy"
+      ],
+      "delivery": "geração em runtime, sem GLB derivado",
+      "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    },
+    {
+      "id": "sertao-procedural-acabamento",
+      "sourceFile": "public/js/map_sertao_architecture.js",
+      "symbols": [
+        "finishTaipa",
+        "finishVenda",
+        "crateBattens",
+        "settlementGround",
+        "untileSertaoSoil"
+      ],
+      "delivery": "geração em runtime, sem GLB derivado",
+      "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    },
+    {
+      "id": "sertao-procedural-flora",
+      "sourceFile": "public/js/map_sertao_flora.js",
+      "symbols": [
+        "sertaoLeafSprig",
+        "copaJuazeiro",
+        "mandacaruSertao"
+      ],
+      "delivery": "geração em runtime, sem GLB derivado",
+      "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    },
+    {
+      "id": "sertao-procedural-entorno",
+      "sourceFile": "public/js/map_sertao_landscape.js",
+      "symbols": [
+        "sertaoLandscape"
+      ],
+      "delivery": "geração em runtime, sem GLB derivado",
+      "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    },
+    {
+      "id": "sertao-asas-brancas",
+      "sourceFile": "public/js/map_sertao_fauna.js",
+      "symbols": [
+        "createSertaoFauna"
+      ],
+      "delivery": "InstancedMesh autoral em runtime, sem modelo/textura externa",
+      "evidence": "tools/eval/sertao-fauna-check.mjs; docs/reports/SERTAO-FAUNA-VOO.md"
+    },
+    {
+      "id": "sertao-aves-distantes",
+      "sourceFile": "public/js/map_sertao_distant_birds.js",
+      "symbols": [
+        "createSertaoDistantBirds"
+      ],
+      "delivery": "InstancedMesh autoral em runtime, sem modelo/textura externa",
+      "evidence": "tools/eval/sertao-distant-birds-check.mjs; docs/reports/SERTAO-AVES-DISTANTES.md"
+    },
+    {
+      "id": "sertao-horizonte",
+      "sourceFile": "public/js/map_sertao_horizon.js",
+      "symbols": [
+        "createSertaoHorizon"
+      ],
+      "delivery": "Composição externa em runtime; juazeiro GLB reutilizado mantém procedência própria",
+      "evidence": "tools/eval/sertao-horizon-check.mjs; docs/reports/SERTAO-HORIZONTE.md"
+    }
+  ]
+}
