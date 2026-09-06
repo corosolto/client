@@ -205,20 +205,24 @@ html[data-ui="legacy"]{--br-faixa:var(--br-faixa-legacy)}
 }
 .aaa-card-cut{clip-path:var(--aaa-cut-sm);border-radius:0}
 
-/* ---- submenu de modos (JOGAR ▸ ABATE / CAPTURE A BANDEIRA) ----
-   Recuo de 14px + filete à esquerda: o submenu tem de ler como SEGUNDO NÍVEL sem
-   repetir a placa do acento, que é reservada ao item ativo da lista principal. */
-/* `.cs-menu` na frente de tudo aqui é PROPOSITAL, não estilo: o bloco `.cs-item` /
-   `.cs-tick` mora ~1200 linhas ABAIXO deste ponto do arquivo, então com a mesma
-   especificidade quem ganha é ele. Subir para (0,3,1) faz a regra valer sem
-   depender da ordem — e sem ter de espalhar o redesign no meio do CSS antigo. */
-.cs-menu .cs-sub{display:flex;flex-direction:column;margin:2px 0 2px 14px;
-  border-left:1px solid rgba(236,235,230,.14)}
-.cs-menu .cs-sub[hidden]{display:none}
-.cs-menu .cs-sub-item{font-size:var(--fs-300);padding-top:8px;padding-bottom:8px;opacity:.92}
-.cs-menu .cs-sub-item:hover,.cs-menu .cs-sub-item:focus-visible{opacity:1}
-/* O ▸ do JOGAR gira quando abre — é o único aviso de que ali tem mais coisa. */
-.cs-menu .cs-item.is-open .cs-tick{transform:rotate(90deg);width:22px;opacity:1;margin-right:6px}
+/* ---- PRIMEIRA INSTÂNCIA (pedido do dono, 30/08): MULTIPLAYER e SINGLE PLAYER ----
+   Os dois modos são as duas primeiras entradas do menu, GRANDES (display Bebas, um
+   degrau acima dos itens comuns) e com subtítulo que diz o que cada porta abre. O
+   submenu "JOGAR ▸" morreu — primeira instância é primeira instância.
+   `.cs-menu` na frente é PROPOSITAL: o bloco `.cs-item` mora ~1200 linhas ABAIXO
+   deste ponto do arquivo; (0,2,0) garante a vitória sem depender da ordem. */
+.cs-menu .cs-prime{display:flex;align-items:center;margin:2px 0;
+  font-family:var(--aaa-font-display);font-weight:400;font-size:clamp(28px,4.4vh,42px);
+  letter-spacing:var(--tr-2);padding:8px var(--s-4) 10px var(--s-3)}
+.cs-menu .cs-prime .cs-prime-txt{display:flex;flex-direction:column;gap:3px;line-height:var(--lh-tight)}
+.cs-menu .cs-prime small{font:600 var(--fs-100)/1.1 var(--aaa-font-body);
+  letter-spacing:var(--tr-2);color:var(--ink-300);text-transform:uppercase}
+.cs-menu .cs-prime:hover small,.cs-menu .cs-prime:focus-visible small{color:var(--ink-200)}
+/* dentro da barra cheia (item atual, ou o primeiro por padrão) o subtítulo escurece
+   junto com o título — âmbar com texto claro em cima é o defeito, não o desenho */
+.cs-menu .cs-item[aria-current="true"] .cs-prime-txt small,
+.cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-item:first-of-type .cs-prime-txt small{
+  color:rgba(var(--bg-900-rgb),.78)}
 
 /* ---- chips de link do topo-direito (tela 01 do redesign) ----
    z-index 4 porque a coluna da esquerda e o setup vivem em 3; sem isto os chips
@@ -496,19 +500,18 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
    uma tira deitada. É por isso que a arte entrava cortada — não havia altura pra ela.
    O header também sobe: `justify-content:center` empurrava o título pra 43% da altura
    e espremia as placas contra o rodapé; na referência o título mora em 16-22%. */
-#team-select{justify-content:flex-start;gap:10px;padding:22px 28px 36px;overflow:hidden;
-  --team-band-h:26px}
+#team-select{justify-content:flex-start;gap:var(--s-5);padding:clamp(40px,5vh,68px) var(--s-5) var(--s-5);
+  --team-band-h:28px}
 /* VOLTAR no alto à DIREITA (referência 02 e 03); só o map-screen leva ele pro rodapé */
 #team-select .btn-back,#char-select .btn-back{left:auto;right:26px}
-.team-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));
-  gap:10px;width:min(1180px,94vw);flex:1 1 auto;min-height:0}
-.team-card.faction-excluded{visibility:hidden;pointer-events:none}
+.team-row{display:flex;gap:var(--s-3);flex-wrap:nowrap;justify-content:center;align-items:center;
+  width:min(1280px,96vw);flex:1 1 auto;min-height:0}
 /* Altura POR TETO, não por aspect-ratio: a proporção 47:100 da referência é de uma tela
    com QUATRO placas; com cinco a coluna cai pra ~245px e o mesmo aspect esticaria o
    cartão pra 820px (medido: razão 0,30, um espeto). O teto de 620px dá razão ~0,40 e
    mantém a placa na mesma fatia de altura da referência (~74% da tela) sem sobrar
    buraco embaixo. Em 1280×720 o 72vh (518px) é quem manda e ainda cabe. */
-.team-card{width:100%;height:100%;max-width:none;min-width:0;min-height:0;
+.team-card{flex:1 1 20%;max-width:none;min-width:0;height:min(72vh,620px);
   cursor:pointer;font-family:inherit;color:#fff;
   display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0;
   position:relative;overflow:hidden;border:1px solid var(--line);clip-path:var(--cut);background:var(--tc-bg);
@@ -562,8 +565,6 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
   --tc-bg:linear-gradient(165deg,#d81e8c 0%,#7a1fa0 52%,#e0761a 100%)}
 .team-f{--tc:#ffd23f;--tc-rgb:255,210,63;--art:url('/img/faccoes/funkeiros.webp');
   --tc-bg:linear-gradient(165deg,#c78a12 0%,#8a5a0d 52%,#3d2a05 100%)}
-.team-m{--tc:#9d4edd;--tc-rgb:157,78,221;--art:url('/img/faccoes/mitico.webp');
-  --tc-bg:linear-gradient(165deg,#5e35b1 0%,#3d1b6e 52%,#1a0a3d 100%)}
 /* CABEÇALHO TINGIDO NA COR DA FACÇÃO (referência 02): o topo de cada placa lava de
    vermelho/amarelo/roxo e morre no meio, e é isso que faz "quem é quem" ser legível
    antes de ler o nome. Sem ele o texto branco caía direto na foto e sumia. */
@@ -583,22 +584,16 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 .team-card[aria-pressed="true"]::after{content:"SEU LADO";position:absolute;top:0;right:0;z-index:3;
   font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);color:var(--bg-900);
   background:var(--br-faixa);padding:4px var(--s-3)}
-.team-card[aria-disabled="true"]{cursor:not-allowed;opacity:1;filter:none}
-.team-card[aria-disabled="true"]>.team-art{filter:saturate(.35) brightness(.52)}
-.team-card[aria-disabled="true"]:hover{transform:none;box-shadow:none;border-color:var(--line)}
-.team-production{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) rotate(-3deg);z-index:5;
-  white-space:nowrap;border:2px solid var(--br-faixa);background:rgba(var(--bg-900-rgb),.88);color:var(--br-faixa);
-  padding:5px 8px;font-family:var(--mono);font-weight:800;font-size:11px;letter-spacing:1px}
 /* Bloco de leitura no ALTO da placa (referência: kicker → nome → grito, tudo no primeiro
    terço, sobre o degradê tingido; a foto fica com os dois terços de baixo). */
-.team-elate{display:flex;flex-direction:column;gap:2px;padding:8px 8px 0}
+.team-elate{display:flex;flex-direction:column;gap:3px;padding:var(--s-3) var(--s-3) 0}
 .team-kicker{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-3);color:var(--tc)}
 /* "BOLSONARISTAS" a 32px + tracking 3px estourava a caixa e vazava pro card vizinho —
    o corpo encolhe com a largura disponível e a linha pode quebrar. Com cinco placas em
    pé a coluna caiu pra ~236px, então o teto desce junto: 22px cabe "BOLSONARISTAS". */
-.team-name{font-size:clamp(12px,1.12vw,17px);font-weight:700;letter-spacing:var(--tr-1);
+.team-name{font-size:clamp(15px,1.45vw,22px);font-weight:700;letter-spacing:var(--tr-1);
   text-transform:uppercase;line-height:var(--lh-tight);text-shadow:var(--sh-text)}
-.team-slogan{font-size:11px;font-style:italic;font-weight:500;color:var(--ink-100);
+.team-slogan{font-size:var(--fs-100);font-style:italic;font-weight:500;color:var(--ink-100);
   line-height:var(--lh-snug);text-shadow:var(--sh-text)}
 .team-desc{font-size:var(--fs-100);font-weight:600;letter-spacing:var(--tr-tight);color:var(--ink-200);
   line-height:var(--lh-snug);text-shadow:var(--sh-text)}
@@ -615,7 +610,9 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 .team-card:hover .team-cta,.team-card:focus-visible .team-cta{opacity:1}
 #team-select[data-step="side"] .team-cta::before{content:"ENTRAR NESSE CORO ▸"}
 #team-select[data-step="enemy"] .team-cta::before{content:"CHAMAR PRO CORO ▸"}
-@media(max-height:820px){.team-name{font-size:clamp(11px,1vw,15px)}}
+@media(max-height:820px){
+  .team-name{font-size:clamp(14px,1.3vw,19px)}
+}
 
 /* ---------- character select ----------
    O corpo é elástico; a faixa inferior rola horizontalmente sem cortar o último avatar. */
@@ -660,8 +657,6 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 #char-info-name{font-size:var(--fs-600);font-weight:700;letter-spacing:var(--tr-2);color:var(--ink-100);
   text-transform:uppercase;line-height:var(--lh-tight)}
 #char-info-blurb{font-size:var(--fs-200);font-weight:500;color:var(--ink-200);line-height:var(--lh-base)}
-#char-voice-caption{min-height:1.35em;font-size:var(--fs-100);font-weight:650;color:var(--sys);line-height:1.35;opacity:0;transition:opacity .16s ease}
-#char-voice-caption.show{opacity:1}
 .char-spec small,.char-attrs-block small{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:var(--fs-50);
   letter-spacing:var(--tr-3);color:var(--ink-300);text-transform:uppercase;margin-bottom:var(--s-1)}
 .char-spec small::before,.char-attrs-block small::before{content:"";display:block;flex:0 0 auto;
@@ -1063,6 +1058,9 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    engrossa o poço da barra — não devolve o painel. */
 /* irmão POSTERIOR no DOM: quando a faixa de CTF existe, o killfeed desce. */
 #ctf-hud:not(.hidden) ~ #killfeed{top:136px}
+body.net-overlay #killfeed{right:270px}   /* o painel NET (netgame.js) mora no canto; o feed sai de baixo dele */
+#match-next{margin:14px 0 0;font-weight:700;letter-spacing:.08em;opacity:.85;animation:match-next-pulse 1.2s ease-in-out infinite}
+@keyframes match-next-pulse{0%,100%{opacity:.85}50%{opacity:.35}}
 #killfeed{position:absolute;top:98px;right:48px;display:flex;flex-direction:column;gap:var(--s-1);
   align-items:flex-end;font-size:var(--fs-200);font-weight:600;max-width:min(42vw,460px)}
 .kf-row{display:flex;align-items:center;gap:var(--s-2);background:rgba(var(--bg-900-rgb),.82);padding:5px var(--s-3);
@@ -1491,7 +1489,8 @@ html[data-ui="legacy"] #match-title{font-family:var(--font)}
 /* empilha em telas estreitas */
 @media(max-width:640px){
   .match-opts{grid-template-columns:1fr;gap:var(--s-3)}
-  .team-row{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .team-row{flex-wrap:wrap}
+  .team-card{flex:1 1 240px}
 }
 
 /* ============ MENU (Coro Solto) — wallpaper + lista de texto à esquerda ============ */
@@ -1999,7 +1998,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .team-count{position:absolute;bottom:0;left:0;right:0;z-index:4;text-align:center;
   box-sizing:border-box;height:var(--team-band-h);line-height:calc(var(--team-band-h) - 1px);
   background:rgba(var(--bg-900-rgb),.90);border-top:1px solid rgba(255,255,255,.10);
-  font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--ink-200);
+  font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);color:var(--ink-200);
   text-shadow:none;pointer-events:none}
 
 /* 04 — chrome persistente da map screen: jogador no topo (nível/XP), VOLTAR embaixo */
@@ -2015,11 +2014,8 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 /* Brasão da facção no TOPO do card (pedido do dono, 06/08) + setas do seletor de mapa
    mais ÓBVIAS (mesmo pedido): as de 34px sumiam na moldura — viram alvo de 52px com
    fundo de chip e hover amarelo. */
-.team-crest{width:38px;height:38px;margin:7px auto 1px;display:block;
+.team-crest{width:56px;height:56px;margin:12px auto 2px;display:block;
   object-fit:contain;z-index:2;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));position:relative}
-.team-crest-fallback{box-sizing:border-box;display:grid;place-items:center;border:1px solid var(--tc);
-  border-radius:50%;background:rgba(var(--bg-900-rgb),.72);color:var(--tc);font-family:var(--mono);
-  font-size:14px;font-weight:800;letter-spacing:1px}
 /* Pedido do dono (06/08, com print): sem "FACÇÃO 0N"; brasão no topo, NOME abaixo dele e
    slogan abaixo do nome, tudo CENTRALIZADO. O plate deixa de ser linha no canto e vira
    coluna central no topo do card. */
@@ -2052,6 +2048,36 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .menu-footer .mf-social a{display:inline-flex;width:30px;height:30px;border-bottom:0;
   align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:7px}
 .menu-footer .mf-social svg{width:16px;height:16px;fill:currentColor;display:block}
+
+/* Curadoria local das músicas do menu. Só existe quando main.js recebe
+   ?menumusiclab=1; não ocupa DOM, rede ou layout no jogo normal. */
+#menu-music-review{position:fixed;top:82px;right:min(4vw,42px);z-index:75;width:340px;
+  display:flex;flex-direction:column;gap:10px;padding:16px;background:rgba(9,7,4,.94);
+  border:1px solid var(--line-2);border-left:4px solid var(--am);color:var(--ink-100);
+  box-shadow:0 12px 36px rgba(0,0,0,.45)}
+#menu-music-review .mmr-kicker{font:700 10px/1 var(--aaa-font-body);letter-spacing:3px;color:var(--am)}
+#menu-music-review strong{font:700 25px/1 var(--aaa-font-body);letter-spacing:2px}
+#menu-music-review #mmr-progress{font:600 11px/1.3 var(--font);letter-spacing:.5px;color:var(--ink-300)}
+#menu-music-review .mmr-row{display:flex;gap:6px}
+#menu-music-review button{flex:1;min-height:34px;padding:7px 8px;background:var(--bg-700);
+  border:1px solid var(--line-2);border-radius:0;color:var(--ink-200);cursor:pointer;
+  font:700 11px/1 var(--aaa-font-body);letter-spacing:1px}
+#menu-music-review button:hover,#menu-music-review button:focus-visible{border-color:var(--am);color:var(--ink-100)}
+#menu-music-review[data-verdict="manter"] #mmr-keep{background:var(--ok);border-color:var(--ok);color:#07110b}
+#menu-music-review[data-verdict="remover"] #mmr-reject{background:var(--crit);border-color:var(--crit);color:#190505}
+#menu-music-review .mmr-catalog-title{font:700 9px/1 var(--aaa-font-body);letter-spacing:1.5px;color:var(--ink-400)}
+#menu-music-review .mmr-list{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-height:190px;overflow-y:auto;
+  padding:1px;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+#menu-music-review .mmr-list-item{min-width:0;min-height:29px;padding:5px 6px;display:flex;align-items:center;
+  justify-content:space-between;gap:3px;font-size:10px;letter-spacing:.5px}
+#menu-music-review .mmr-list-item b{font:800 13px/1 var(--font);color:var(--ink-500)}
+#menu-music-review .mmr-list-item.current{outline:2px solid var(--am);outline-offset:-2px;color:var(--ink-100)}
+#menu-music-review .mmr-list-item[data-verdict="manter"] b{color:var(--ok)}
+#menu-music-review .mmr-list-item[data-verdict="remover"] b{color:var(--crit)}
+#menu-music-review .mmr-copy{width:100%}
+@media (max-width:760px),(max-height:620px){
+  #menu-music-review{top:12px;right:12px;width:min(340px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto}
+}
 
 /* ---- MENU EM CELULAR RETRATO (print do dono, 07/08: logo cortado no meio e o
    rodapé atropelando o último item). O logo é PINTADO no wallpaper 16:9; com
@@ -2202,295 +2228,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .dd-ico-all{display:inline-flex;flex-direction:column;gap:1px;margin-right:8px}
 .dd-ico-all .dd-ico{width:36px;height:12px;margin:0}   /* 2×12 + gap 1 = 25px: cabe no .dd-btn de 47px sem estufar (ARMAS = BOTS = botões) */
 
-/* ============================================================================
-   CINEMATIC FLOW — alpha.58
-   A moldura é um sistema de navegação, não um enfeite por tela: o mesmo broadcast,
-   capítulo e progresso atravessam home, setup, facção, personagem, mapas, sistema,
-   pausa e resultado. Direção: cartaz de rua brasileiro + transmissão esportiva.
-   A arte-base veio de references/telas; os conceitos derivados estão ao lado delas.
-   ============================================================================ */
-:root{--cine-frame:rgba(240,240,237,.22);--cine-paper:rgba(20,16,8,.88);--cine-gutter:18px;
-  --cine-red:#e2402c;--cine-yellow:#ffc93f;--cine-enter:cinematicEnter 420ms cubic-bezier(.16,.84,.24,1) both}
-#cine-chrome{position:fixed;inset:0;z-index:88;pointer-events:none;opacity:0;color:var(--ink-100);
-  transition:opacity var(--t) var(--ease)}
-body[data-cine-screen] #cine-chrome{opacity:1}
-.cine-broadcast{position:absolute;left:var(--cine-gutter);top:13px;display:flex;align-items:center;gap:8px;
-  min-height:25px;padding:4px 10px 4px 7px;background:rgba(var(--bg-900-rgb),.82);
-  border-left:3px solid var(--cine-red);font-family:var(--mono);font-size:10px;letter-spacing:2px}
-.cine-broadcast i{width:7px;height:7px;border-radius:50%;background:var(--cine-red);box-shadow:0 0 0 3px rgba(226,64,44,.18)}
-.cine-broadcast span{font-weight:700;color:var(--ink-100)}
-.cine-broadcast b{font-weight:400;color:var(--ink-300)}
-.cine-chapter{position:absolute;right:var(--cine-gutter);top:12px;display:flex;align-items:baseline;gap:12px;
-  padding:4px 9px;background:rgba(var(--bg-900-rgb),.72);text-align:right;text-transform:uppercase}
-.cine-chapter small{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--cine-yellow)}
-.cine-chapter span{font-size:12px;letter-spacing:2px;color:var(--ink-200)}
-.cine-stepbar{position:absolute;left:50%;bottom:42px;width:min(260px,28vw);height:3px;
-  transform:translateX(-50%);background:rgba(255,255,255,.14);box-shadow:0 0 0 5px rgba(var(--bg-900-rgb),.38)}
-.cine-stepbar i{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--cine-red),var(--cine-yellow));
-  transition:width 420ms var(--ease)}
-.cine-corner{position:absolute;width:34px;height:34px;border-color:var(--cine-frame);border-style:solid}
-.cine-corner-tl{left:var(--cine-gutter);top:48px;border-width:1px 0 0 1px}
-.cine-corner-tr{right:var(--cine-gutter);top:48px;border-width:1px 1px 0 0}
-.cine-corner-bl{left:var(--cine-gutter);bottom:35px;border-width:0 0 1px 1px}
-.cine-corner-br{right:var(--cine-gutter);bottom:35px;border-width:0 1px 1px 0}
-.cine-surface:not(.hidden){animation:var(--cine-enter)}
-@keyframes cinematicEnter{from{opacity:.35;transform:scale(1.012)}to{opacity:1;transform:scale(1)}}
-.cine-surface :is(button,a,input,select,textarea):focus-visible{outline:3px solid var(--cine-yellow);outline-offset:4px;
-  box-shadow:0 0 0 7px rgba(9,7,4,.72)}
 
-/* HOME — o item ativo vira placa física; a coluna parece colada sobre a key art. */
-#main-menu.cine-surface .cs-left::before{content:"";position:absolute;inset:-28px -42px -24px -6px;z-index:-1;
-  background:linear-gradient(90deg,rgba(var(--bg-900-rgb),.94),rgba(var(--bg-900-rgb),.58) 68%,transparent);
-  clip-path:polygon(0 0,92% 0,100% 9%,94% 100%,0 96%)}
-#main-menu.cine-surface .cs-menu-label{display:flex;align-items:center;gap:9px;color:var(--cine-yellow)}
-#main-menu.cine-surface .cs-menu-label::before{content:"";width:28px;height:4px;background:var(--cine-red)}
-#main-menu.cine-surface .cs-item{border-left:3px solid transparent;transform-origin:left center}
-#main-menu.cine-surface .cs-item:hover,#main-menu.cine-surface .cs-item:focus-visible,
-#main-menu.cine-surface .cs-item[aria-current="true"]{border-left-color:var(--cine-yellow);
-  background:linear-gradient(90deg,var(--cine-yellow),#e3a72e);color:var(--bg-900);transform:skew(-2deg) translateX(9px)}
-
-/* FACÇÕES — uma tomada horizontal de pôsteres altos, scroll-snap e setas de projeção. */
-#team-select.cine-surface{padding:58px 28px 54px;gap:12px;background-image:
-  linear-gradient(90deg,rgba(var(--bg-900-rgb),.98) 0%,rgba(var(--bg-900-rgb),.52) 48%,rgba(var(--bg-900-rgb),.9) 100%),
-  radial-gradient(circle at 50% 28%,rgba(255,201,63,.12),transparent 40%),var(--wall,url('/img/select-bg.png'))}
-#team-select.cine-surface .ts-head{align-self:stretch;align-items:flex-start;padding-left:max(5vw,54px);z-index:2}
-#team-select.cine-surface .screen-title{text-align:left;padding-bottom:8px;font-size:clamp(34px,4vw,62px)}
-#team-select.cine-surface .screen-title::after{left:0;transform:none;width:170px}
-#team-select.cine-surface .ts-hint{text-align:left}
-.team-rail{width:min(1420px,96vw);flex:1 1 auto;min-height:0;display:grid;
-  grid-template-columns:48px minmax(0,1fr) 48px;gap:10px;align-items:stretch}
-.team-row{display:flex;grid-template-columns:none;grid-template-rows:none;width:auto;min-width:0;min-height:0;
-  gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;
-  scrollbar-color:var(--cine-yellow) rgba(255,255,255,.08);padding:5px 2px 12px}
-.team-card{flex:0 0 calc((100% - 36px)/4);height:100%;scroll-snap-align:center;border-width:1px;
-  box-shadow:0 18px 40px rgba(0,0,0,.34)}
-.team-card.faction-excluded{display:none}
-.team-card:hover,.team-card:focus-visible{transform:translateY(-8px) rotate(-.35deg);box-shadow:0 22px 48px rgba(0,0,0,.62)}
-.team-rail-arrow{appearance:none;border:1px solid var(--line-2);background:rgba(var(--bg-900-rgb),.82);
-  color:var(--cine-yellow);font:700 38px/1 var(--font);cursor:pointer;clip-path:var(--cut-sm)}
-.team-rail-arrow:hover,.team-rail-arrow:focus-visible{background:var(--cine-yellow);color:var(--bg-900);border-color:var(--cine-yellow)}
-
-/* PERSONAGEM — a miniatura real é a estrela; o wallpaper vira só atmosfera lateral. */
-#char-select.cine-surface{padding-top:62px;background-image:
-  linear-gradient(90deg,rgba(var(--bg-900-rgb),.99) 0%,rgba(var(--bg-900-rgb),.94) 36%,rgba(var(--bg-900-rgb),.82) 72%,rgba(var(--bg-900-rgb),.92)),
-  var(--wall,url('/img/select-bg.png'))}
-#char-select.cine-surface .ts-head{position:absolute;left:clamp(140px,13vw,220px);top:54px;align-items:flex-start;z-index:3}
-#char-select.cine-surface .screen-title{text-align:left;font-size:clamp(30px,3.3vw,54px)}
-#char-select.cine-surface .screen-title::after{left:0;transform:none}
-#char-select.cine-surface .char-stage{width:min(1420px,94vw);grid-template-columns:92px minmax(300px,390px) 1fr;
-  padding-top:84px;gap:clamp(18px,2vw,34px)}
-#char-select.cine-surface .char-sheet{background:linear-gradient(145deg,rgba(var(--bg-700-rgb),.97),rgba(var(--bg-900-rgb),.82));
-  border:1px solid var(--line-2);box-shadow:14px 18px 0 rgba(0,0,0,.23);transform:rotate(-.35deg)}
-#char-select.cine-surface .char-preview-box{position:relative;isolation:isolate}
-#char-select.cine-surface .char-preview-box::before{content:"";position:absolute;z-index:-1;width:min(45vw,680px);aspect-ratio:1;
-  border-radius:50%;background:radial-gradient(circle,rgba(255,201,63,.2),rgba(226,64,44,.06) 42%,transparent 69%)}
-#char-select.cine-surface #char-preview{height:min(74vh,760px);width:auto;max-width:100%}
-
-/* SISTEMA E ARQUIVO — formulários viram mesa de operação, não modal sobre vazio. */
-#settings-panel.cine-surface,#ranking-panel.cine-surface,#feedback-panel.cine-surface,
-#howto-panel.cine-surface,#mobile-warning.cine-surface{background:
-  linear-gradient(115deg,rgba(var(--bg-900-rgb),.98) 0 56%,rgba(var(--bg-800-rgb),.88) 56%),
-  repeating-linear-gradient(0deg,transparent 0 36px,rgba(255,255,255,.025) 36px 37px)}
-#settings-panel.cine-surface{align-items:stretch;padding:70px 5vw 58px;gap:14px}
-#settings-panel.cine-surface>.screen-title{align-self:flex-start;text-align:left;font-size:clamp(38px,5vw,72px)}
-#settings-panel.cine-surface>.screen-title::after{left:0;transform:none;width:190px}
-#settings-panel.cine-surface .settings-wrap{width:100%;max-width:none;flex:1;min-height:0;background:rgba(var(--bg-700-rgb),.76);
-  border-top:4px solid var(--cine-yellow);box-shadow:24px 24px 0 rgba(0,0,0,.22)}
-#settings-panel.cine-surface .settings-wrap{flex:none}
-#ranking-panel.cine-surface .center-panel,#feedback-panel.cine-surface .center-panel,
-#howto-panel.cine-surface .center-panel,#mobile-warning.cine-surface .center-panel{max-width:min(900px,84vw);width:100%;
-  align-items:flex-start;text-align:left;border-top:5px solid var(--cine-yellow);padding:clamp(26px,4vw,58px);
-  box-shadow:28px 28px 0 rgba(0,0,0,.22);transform:rotate(-.2deg)}
-#ranking-panel.cine-surface .center-panel h2,#feedback-panel.cine-surface .center-panel h2,
-#howto-panel.cine-surface .center-panel h2{font-size:clamp(40px,5vw,74px);letter-spacing:4px}
-
-/* PAUSA / RESULTADO — a mesma transmissão continua quando a ação para. */
-#pause-menu.cine-surface{align-items:flex-start;padding-left:8vw;background:
-  linear-gradient(90deg,rgba(var(--bg-900-rgb),.96),rgba(var(--bg-900-rgb),.74) 42%,rgba(var(--bg-900-rgb),.35))}
-#pause-menu.cine-surface .screen-title{text-align:left;font-size:clamp(54px,7vw,104px);letter-spacing:1px}
-#pause-menu.cine-surface .pause-actions{align-items:stretch;width:min(480px,42vw);border-top:5px solid var(--cine-yellow);
-  box-shadow:22px 22px 0 rgba(0,0,0,.24);transform:rotate(-.35deg)}
-#match-end.cine-surface .me-wrap{border-top:5px solid var(--cine-yellow)}
-#match-end.cine-surface .me-wrap:has(.me-hero:empty){grid-template-columns:minmax(0,760px);justify-content:center;
-  padding:8vh 4vw 6vh}
-#match-end.cine-surface .me-wrap:has(.me-hero:empty) .me-hero{display:none}
-#match-end.cine-surface .me-col{position:relative}
-#match-end.cine-surface .me-col::before{content:"ÚLTIMA RODADA //";display:block;font-family:var(--mono);font-size:10px;
-  letter-spacing:4px;color:var(--cine-yellow);margin-bottom:12px}
-
-@media(max-width:900px){
-  :root{--cine-gutter:10px}
-  .cine-broadcast b,.cine-chapter small{display:none}.cine-chapter span{font-size:10px}.cine-stepbar{width:34vw}
-  .team-rail{grid-template-columns:40px minmax(0,1fr) 40px}.team-card{flex-basis:min(72vw,280px)}
-  #team-select.cine-surface .ts-head{padding-left:48px}
-  #settings-panel.cine-surface{padding-inline:20px}
-}
-@media(max-height:760px){.cine-stepbar{bottom:14px}}
-@media (prefers-reduced-motion: reduce){
-  /* cine-reduced-motion */
-  .cine-surface:not(.hidden){animation:none}.cine-stepbar i{transition:none}.team-row{scroll-behavior:auto}
-}
-
-/* ============ ALPHA.59 · BUG-42 · COMPOSIÇÕES CINEMATOGRÁFICAS ============
-   O chrome da alpha.58 foi preservado, mas os seis shells abaixo foram trocados no
-   DOM. Este bloco não tenta "embelezar cards": ele dá a cada decisão uma montagem
-   própria (programa, missão, facção, elenco, mapa e sistema). */
-
-/* ABERTURA — duas decisões grandes + serviços em trilho, nunca uma lista vertical. */
-.home-broadcast{position:relative;z-index:5;width:100%;height:100%;box-sizing:border-box;
-  display:grid;grid-template-rows:1fr auto;padding:clamp(112px,13vh,150px) clamp(52px,6vw,96px) 68px;
-  background:linear-gradient(90deg,rgba(var(--bg-900-rgb),.96) 0 34%,rgba(var(--bg-900-rgb),.56) 55%,transparent 78%)}
-.home-title-block{align-self:start;max-width:min(620px,48vw);text-shadow:0 3px 24px #000}
-.home-season{font-family:var(--mono);font-size:11px;letter-spacing:4px;color:var(--cine-yellow)}
-.home-title-block h1{margin:13px 0 8px;font-size:clamp(46px,5.6vw,88px);line-height:.86;letter-spacing:-1px}
-.home-title-block h1 em{font-style:normal;color:var(--cine-yellow)}
-.home-title-block p{max-width:44ch;color:var(--ink-200);font-weight:600;letter-spacing:.3px}
-.home-broadcast .cs-menu{width:min(820px,70vw);padding:0;background:none;border:0;box-shadow:none;gap:12px}
-.home-mode-deck{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.home-broadcast .home-mode-card{position:relative;min-height:118px;display:grid;grid-template-columns:52px 1fr auto;
-  align-items:end;gap:14px;padding:18px 20px;text-align:left;color:#fff;border:1px solid rgba(255,255,255,.22);
-  background:linear-gradient(135deg,rgba(var(--bg-900-rgb),.96),rgba(var(--bg-700-rgb),.74));
-  clip-path:polygon(0 0,96% 0,100% 18%,100% 100%,4% 100%,0 82%)}
-.home-broadcast .home-mode-card::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--cine-red)}
-.home-broadcast .home-mode-card:nth-child(2)::before{background:var(--cine-yellow)}
-.home-mode-no{align-self:start;font:700 13px/1 var(--mono);color:var(--ink-300)}
-.home-mode-copy{display:flex;flex-direction:column;gap:5px}.home-mode-copy b{font-size:clamp(25px,2.3vw,36px);letter-spacing:1px}
-.home-mode-copy small{font:700 11px/1.3 var(--mono);letter-spacing:1px;color:var(--ink-300)}
-.home-broadcast .home-mode-card .cs-tick{font:800 10px/1 var(--mono);letter-spacing:1px;color:var(--cine-yellow)}
-.home-broadcast .home-mode-card:hover,.home-broadcast .home-mode-card:focus-visible,
-.home-broadcast .home-mode-card[aria-current="true"]{transform:translateY(-6px);color:#17120c;border-color:var(--cine-yellow);
-  background:linear-gradient(135deg,#ffd95e,var(--cine-yellow));box-shadow:0 18px 48px rgba(0,0,0,.46)}
-.home-broadcast .home-mode-card:hover small,.home-broadcast .home-mode-card:focus-visible small,
-.home-broadcast .home-mode-card[aria-current="true"] small,.home-broadcast .home-mode-card:hover .cs-tick,
-.home-broadcast .home-mode-card:focus-visible .cs-tick{color:#342716}
-.home-service-strip{display:flex;align-items:center;gap:4px;border-top:1px solid rgba(255,255,255,.18);padding-top:9px}
-.home-broadcast .home-service-strip .cs-item{width:auto;min-height:42px;padding:8px 14px;background:rgba(var(--bg-900-rgb),.7);
-  border:1px solid transparent;font:700 10px/1 var(--mono);letter-spacing:1.2px;color:var(--ink-200);transform:none}
-.home-broadcast .home-service-strip .cs-item:hover,.home-broadcast .home-service-strip .cs-item:focus-visible,
-.home-broadcast .home-service-strip .cs-item[aria-current="true"]{transform:none;background:var(--ink-100);color:var(--bg-900);border-color:var(--ink-100)}
-.home-broadcast .menu-footer{right:clamp(52px,6vw,96px);bottom:18px}
-#main-menu:has(.mission-cut.open) .home-broadcast{opacity:.16;transform:translateX(-5vw);filter:saturate(.25);pointer-events:none}
-
-/* MISSÃO — cartaz full-height à esquerda, console de decisão à direita. */
-#menu-setup.mission-cut{position:absolute;z-index:45;inset:52px 0 34px max(38px,3vw);width:auto;height:auto;max-height:none;
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,31vw);grid-template-rows:auto 1fr;padding:0;
-  background:rgba(var(--bg-900-rgb),.97);border:1px solid rgba(255,255,255,.16);border-left:5px solid var(--cine-yellow);
-  clip-path:polygon(0 0,98.5% 0,100% 3%,100% 100%,1.5% 100%,0 97%);transform:translateX(105%);opacity:0}
-#menu-setup.mission-cut.open{transform:translateX(0);opacity:1}
-#menu-setup.mission-cut>.cs-setup-head{grid-column:2;grid-row:1;padding:24px 28px 13px;border-bottom:1px solid var(--line)}
-#menu-setup.mission-cut>.setup-pane{grid-column:1/-1;grid-row:2;min-height:0;display:none;grid-template-columns:minmax(0,1fr) minmax(330px,31vw)}
-#menu-setup.mission-cut[data-step="match"] .pane-match{display:grid}
-#menu-setup.mission-cut[data-step="profile"] .pane-profile{display:flex;grid-column:2;grid-row:2;padding:28px;background:var(--bg-800)}
-.mission-visual{position:relative;min-height:0;overflow:hidden;background:#080705}
-.mission-visual .map-picker{height:100%;min-height:0;border:0;clip-path:none}
-.mission-visual .map-picker::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 55%,rgba(var(--bg-900-rgb),.96)),linear-gradient(0deg,rgba(0,0,0,.76),transparent 45%);pointer-events:none}
-.mission-visual .map-side{z-index:3;left:42px;right:auto;bottom:36px;align-items:flex-start;text-align:left;max-width:75%}
-.mission-visual #map-name{font-size:clamp(42px,5.5vw,84px);line-height:.88;text-shadow:0 4px 22px #000}
-.mission-visual .map-arrows{z-index:4;left:38px;right:auto;top:auto;bottom:148px}
-.mission-console{display:flex;flex-direction:column;justify-content:flex-start;gap:20px;padding:26px 28px 32px;
-  background:linear-gradient(180deg,rgba(var(--bg-700-rgb),.38),rgba(var(--bg-900-rgb),.9));border-left:1px solid var(--line)}
-.mission-brief{margin-top:clamp(46px,8vh,92px);display:flex;flex-direction:column;gap:8px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.mission-brief small{font:700 9px/1 var(--mono);letter-spacing:3px;color:var(--cine-yellow)}.mission-brief b{font-size:clamp(25px,2.2vw,38px);line-height:.92}
-.mission-brief p{margin:0;color:var(--ink-200);font-size:13px;line-height:1.45}.mission-brief span{font:700 9px/1 var(--mono);letter-spacing:1px;color:var(--ink-400)}
-.mission-console .match-opts{display:flex;flex-direction:column;gap:12px}.mission-console .map-label{width:100%}
-.mission-console .cs-setup-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:auto}
-.mission-console #btn-jogar{grid-column:1/-1;grid-row:1;min-height:64px}.mission-console #setup-back{grid-column:1}.mission-console #btn-profile{grid-column:2}
-
-/* FACÇÕES — índice navegável + um único pôster dominante. */
-#team-select.cine-surface{padding:54px 48px 42px;display:flex;align-items:stretch;justify-content:stretch}
-.faction-editorial{width:100%;min-height:0;flex:1;display:grid;grid-template-columns:minmax(700px,57vw) minmax(0,1fr);gap:14px}
-.faction-index{position:relative;z-index:4;min-height:0;display:grid;grid-template-rows:auto 1fr;padding:18px 14px;
-  background:rgba(var(--bg-900-rgb),.93);border:1px solid var(--line);border-top:5px solid var(--cine-yellow)}
-.faction-index-label{display:flex;flex-direction:column;gap:4px;padding:0 8px 14px}.faction-index-label small{font:700 9px/1 var(--mono);letter-spacing:3px;color:var(--cine-yellow)}
-.faction-index-label b{font-size:18px;letter-spacing:1px}.faction-index .team-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:8px;overflow:hidden;padding:0}
-.faction-index .team-card{position:relative;width:100%;height:100%;min-width:0;min-height:0;display:flex;align-items:stretch;padding:0;text-align:left;overflow:hidden;
-  background:rgba(var(--bg-700-rgb),.64);border:1px solid rgba(255,255,255,.12);clip-path:none;box-shadow:none}
-.faction-index .team-card::after,.faction-index .team-chars,.faction-index .team-count,.faction-index .team-cta{display:none!important}
-.faction-index .team-art{display:block!important;position:absolute;inset:0;z-index:0;background:var(--art) center 28%/cover no-repeat;filter:saturate(.82) contrast(1.06)}
-.faction-index .team-card::before{display:block;z-index:1;height:100%;background:linear-gradient(0deg,rgba(var(--bg-900-rgb),.98),transparent 65%)}
-.faction-index .faction-index-no{position:absolute;z-index:4;left:7px;top:7px;font:700 9px/1 var(--mono);color:#fff;text-shadow:0 1px 4px #000}
-.faction-index .team-crest{position:absolute;z-index:4;right:7px;top:7px;width:31px;height:31px;margin:0;filter:drop-shadow(0 2px 5px #000)}
-.faction-index .team-plate{position:absolute!important;z-index:4!important;left:0;right:0;bottom:0;display:flex!important;align-items:flex-start!important;text-align:left!important;padding:9px!important}
-.faction-index .team-name{font-size:11px!important;line-height:1.05;text-align:left!important;white-space:normal;overflow:visible}
-.faction-index .team-slogan{display:block!important;font-size:8px!important;line-height:1.15;max-width:100%;color:var(--ink-200)}
-.faction-index .team-production{position:absolute;z-index:5;right:5px;top:45px;left:auto;bottom:auto;transform:none;font-size:6px;padding:2px 4px}
-.faction-index .team-card:hover,.faction-index .team-card:focus-visible,.faction-index .team-card.is-preview{transform:translateY(-3px);border-color:var(--tc);box-shadow:inset 0 -5px 0 var(--tc),0 10px 24px #000}
-.faction-index .team-card[aria-disabled="true"]{opacity:.62}.faction-index .team-card.faction-excluded{visibility:hidden;pointer-events:none}
-.faction-index .team-rail-arrow{display:none}
-.faction-hero{--hero-color:var(--cine-yellow);--hero-rgb:255,201,63;position:relative;min-width:0;min-height:0;overflow:hidden;
-  border:1px solid rgba(255,255,255,.15);background:#0b0906;isolation:isolate}
-.faction-hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(var(--bg-900-rgb),.98) 0 34%,rgba(var(--bg-900-rgb),.64) 52%,transparent 82%),linear-gradient(0deg,rgba(var(--bg-900-rgb),.8),transparent 48%)}
-.faction-hero-art{position:absolute;inset:0;z-index:-2;background:var(--hero-art) center 24%/cover no-repeat;transform:scale(1.015)}
-.faction-hero-copy{height:100%;width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
-  padding:clamp(24px,2.2vw,38px);max-width:none}
-.faction-hero .ts-head{position:absolute;left:clamp(24px,2.2vw,38px);right:clamp(24px,2.2vw,38px);top:clamp(24px,3vh,38px);align-items:flex-start;padding:0!important}
-.faction-hero .screen-title{font-size:clamp(25px,2.1vw,34px)!important;line-height:.94;text-align:left}.faction-hero .screen-title::after{left:0;transform:none}
-.faction-hero .ts-hint{text-align:left;max-width:52ch}.faction-hero-crest{width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 8px 20px #000)}
-.faction-hero-kicker{margin-top:12px;font:700 9px/1 var(--mono);letter-spacing:3px;color:var(--hero-color)}
-.faction-hero h3{margin:7px 0 0;font-size:clamp(38px,3.4vw,54px);line-height:.9;letter-spacing:-1px;text-transform:uppercase}
-.faction-hero-slogan{margin:10px 0 0;font-size:18px;font-style:italic;color:var(--ink-100)}.faction-hero-desc{margin:8px 0 0;max-width:52ch;color:var(--ink-200)}
-.faction-hero-status{margin-top:18px;min-width:280px;min-height:56px;padding:12px 18px;border:1px solid var(--hero-color);background:var(--hero-color);
-  font:800 11px/1 var(--mono);letter-spacing:1.4px;color:var(--bg-900);cursor:pointer;clip-path:var(--cut-sm)}
-.faction-hero-status:hover,.faction-hero-status:focus-visible{filter:brightness(1.12);transform:translateY(-2px)}
-.faction-hero[data-ready="0"] .faction-hero-art{filter:grayscale(.7) brightness(.58)}
-
-/* PERSONAGEM — corpo em palco, dossiê lateral e elenco horizontal. */
-#char-select.cine-surface{padding:56px 48px 42px;align-items:stretch}
-#team-select.cine-surface>.btn-back,#char-select.cine-surface>.btn-back{top:72px;right:68px;min-width:132px;padding-inline:18px;white-space:nowrap;z-index:12}
-#char-select.cine-surface>.ts-head{left:64px;top:60px}.cast-stage{width:100%;min-height:0;display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(320px,29vw);grid-template-rows:minmax(0,1fr) 112px;gap:14px;padding-top:86px}
-.cast-avatar{grid-column:1;grid-row:1;min-height:0;display:flex;align-items:flex-end;justify-content:center;position:relative;overflow:hidden;
-  background:radial-gradient(ellipse at 50% 65%,rgba(255,201,63,.18),transparent 58%)}
-.cast-avatar::before{content:"";position:absolute;left:50%;bottom:8%;width:62%;height:14%;transform:translateX(-50%);
-  border:1px solid rgba(255,201,63,.2);border-radius:50%;background:radial-gradient(ellipse,rgba(255,201,63,.15),transparent 65%)}
-.cast-avatar #char-preview{position:relative;z-index:1;width:auto;max-width:100%;height:min(72vh,720px)}
-.cast-dossier{grid-column:2;grid-row:1/3;align-self:stretch;max-height:none!important;overflow:auto;margin:0;padding:26px;
-  background:linear-gradient(145deg,rgba(var(--bg-700-rgb),.96),rgba(var(--bg-900-rgb),.94));border:1px solid var(--line-2);border-top:5px solid var(--cine-yellow)}
-.cast-dossier #char-info-name{font-size:clamp(32px,3vw,50px);line-height:.9}.cast-dossier #char-confirm{margin-top:auto;min-height:58px}
-.cast-dossier #char-info-blurb,.cast-dossier .char-spec p{font-size:13px;line-height:1.5}.cast-dossier small{font-size:11px;letter-spacing:1.5px}
-.cast-rail{grid-column:1;grid-row:2;min-width:0;display:grid;grid-template-columns:42px minmax(0,1fr) 42px;gap:8px;
-  align-items:stretch;padding:9px;background:rgba(var(--bg-900-rgb),.88);border-top:1px solid var(--line-2)}
-.cast-rail .char-list{display:flex;flex-direction:row;gap:8px;min-width:0;overflow-x:auto;overflow-y:hidden;padding:0;scroll-snap-type:x mandatory}
-.cast-rail .char-row{flex:0 0 84px;width:84px;height:84px;scroll-snap-align:center}.cast-rail .char-row:hover,.cast-rail .char-row:focus-visible{transform:translateY(-4px)}
-.cast-rail .char-row.sel{transform:translateY(-5px);box-shadow:inset 0 -4px 0 var(--br-faixa)}
-.cast-rail .strip-arrow{height:auto;width:auto;font-size:28px}.cast-avatar .pv-hints{position:absolute;z-index:3;right:14px;bottom:12px}
-
-/* SISTEMA — navegação vertical fixa e bancada de ajustes. */
-#settings-panel.cine-surface{padding:54px 48px 42px;display:flex;align-items:stretch}.settings-cockpit{width:100%;min-height:0;
-  flex:1;display:grid;grid-template-columns:minmax(210px,18vw) minmax(0,1fr);grid-template-rows:auto 1fr;border:1px solid var(--line);
-  background:rgba(var(--bg-900-rgb),.86)}
-.settings-title{grid-column:1/-1;padding:20px 26px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-end;justify-content:space-between}
-.settings-title small{font:700 9px/1 var(--mono);letter-spacing:3px;color:var(--cine-yellow)}
-.settings-title .screen-title{font-size:clamp(38px,4.2vw,68px);padding:0;text-align:right}.settings-title .screen-title::after{display:none}
-.settings-nav{grid-column:1;grid-row:2;display:flex;flex-direction:column;gap:4px;padding:22px 14px;border:0;border-right:1px solid var(--line);
-  background:rgba(var(--bg-800-rgb),.78)}.settings-nav .set-tab{flex:0 0 auto;width:100%;min-height:54px;text-align:left;padding:12px 16px;
-  border:1px solid transparent;border-left:4px solid transparent}.settings-nav .set-tab.active{background:var(--cine-yellow);color:var(--bg-900);border-left-color:var(--cine-red)}
-.settings-workbench{grid-column:2;grid-row:2;min-height:0;display:flex;flex-direction:column;gap:18px;padding:clamp(22px,3vw,42px);overflow:auto}
-.settings-workbench .set-cols{flex:1;grid-template-columns:minmax(0,1fr) minmax(320px,42%);align-items:stretch}.settings-workbench .set-preview{min-height:100%}
-.settings-workbench .set-row{min-height:64px;border-bottom:1px solid var(--line)}.settings-workbench .set-actions{margin-top:auto}
-.settings-workbench .set-list{display:flex;flex-direction:column;min-height:100%}.settings-readout{margin-top:auto;padding:20px 18px;border-left:4px solid var(--cine-red);
-  background:linear-gradient(90deg,rgba(var(--bg-700-rgb),.72),transparent)}.settings-readout small{display:block;font:700 9px/1 var(--mono);letter-spacing:3px;color:var(--cine-yellow)}
-.settings-readout b{display:block;margin-top:9px;font-size:22px;letter-spacing:1px}.settings-readout p{max-width:42ch;margin:7px 0;color:var(--ink-200);font-size:13px}.settings-readout span{font:700 9px/1 var(--mono);letter-spacing:1.2px;color:var(--ink-400)}
-
-/* Tratamento único para fontes visuais heterogêneas: key art, cover 3D, captura e canvas
-   continuam sendo seus próprios assets, mas chegam à transmissão com o mesmo contraste. */
-#main-menu .cs-wallpaper,#map-screen .ms-bg img,.faction-hero-art,.set-preview,#char-preview{filter:saturate(.86) contrast(1.06) sepia(.035)}
-
-@media(max-width:900px){
-  .home-broadcast{padding-inline:24px}.home-title-block{max-width:78vw}.home-broadcast .cs-menu{width:94vw}.home-mode-deck{grid-template-columns:1fr}
-  #menu-setup.mission-cut{left:10px;grid-template-columns:1fr}#menu-setup.mission-cut>.cs-setup-head{grid-column:1}
-  #menu-setup.mission-cut>.setup-pane{grid-template-columns:1fr}.mission-console{position:absolute;right:0;bottom:0;width:min(380px,78vw)}
-  .faction-editorial{grid-template-columns:150px 1fr}.faction-hero-copy{max-width:72%}.faction-hero .ts-head{display:none}
-  .cast-stage{grid-template-columns:1fr 300px}.settings-cockpit{grid-template-columns:150px 1fr}
-}
-@media(max-height:760px){
-  .home-broadcast{padding-top:76px}.home-title-block h1{font-size:48px}.home-mode-card{min-height:92px!important}
-  #menu-setup.mission-cut{top:38px;bottom:18px}.faction-hero h3{font-size:46px}.faction-hero-desc{display:none}
-  .cast-stage{padding-top:70px;grid-template-rows:minmax(0,1fr) 92px}.cast-rail .char-row{width:68px;height:68px;flex-basis:68px}
-}
-
-/* HUD EM RETRATO (vindo da main) — o bloco de 640px do menu já existe lá em cima;
-   este cobre a PARTIDA (mira, HUD, killfeed, scoreboard) no celular em pé. */
 @media (max-width:640px) and (orientation:portrait){
   #hud-actions{top:8px;right:8px;gap:6px}
   #hud-actions button{width:30px;height:30px;font-size:14px}
@@ -2690,3 +2428,187 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   #settings-panel .set-actions{flex:0 0 auto;padding-bottom:max(18px,env(safe-area-inset-bottom))}
   #settings-panel .set-head{padding-top:max(14px,env(safe-area-inset-top))}
 }
+
+/* ---------- MULTIPLAYER (tela cheia: servidores + entrada + salas) ----------
+   Redesign 30/08 ("a UI de multiplayer está ruim"): de cartão central 760px pra tela
+   cheia no padrão das outras (mesma família do settings/map-screen). Paleta só por
+   token — as bandeiras dos nós são IMAGENS reais (public/img/flags/, FONTE.md lá),
+   não cor de UI. O ping segue sendo a informação de maior peso — cor semântica
+   (--ok / --am / --crit), nunca cinza. */
+.mp-shell{width:min(1180px,94vw);max-height:92vh;display:flex;flex-direction:column;
+  gap:var(--s-5);text-align:left}
+.mp-head{display:flex;align-items:center;gap:var(--s-5);width:100%;
+  border-bottom:1px solid var(--line);padding-bottom:var(--s-4)}
+.mp-head-txt{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.mp-kicker{font:600 var(--fs-100)/1 var(--aaa-font-body);letter-spacing:var(--tr-4);
+  color:var(--ink-300);text-transform:uppercase}
+.mp-title{font-family:var(--aaa-font-display);font-weight:400;font-size:var(--fs-700);
+  line-height:var(--lh-tight);letter-spacing:var(--tr-4);color:var(--ink-100);margin:0}
+/* chip de ESTADO: um lugar só, sempre visível; a cor é o estado (regra "cor=significado") */
+.mp-estado{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-1);
+  padding:7px 12px;border:1px solid var(--line-2);color:var(--ink2);clip-path:var(--cut-sm);
+  display:flex;align-items:center;gap:8px;white-space:nowrap}
+.mp-estado::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--ink-400)}
+.mp-estado[data-s="sondando"]{color:var(--am);border-color:var(--am)}
+.mp-estado[data-s="sondando"]::before{background:var(--am);animation:mp-pulse 1s infinite}
+.mp-estado[data-s="conectando"]{color:var(--sys);border-color:var(--sys)}
+.mp-estado[data-s="conectando"]::before{background:var(--sys);animation:mp-pulse 1s infinite}
+.mp-estado[data-s="on"]{color:var(--ok);border-color:var(--ok)}
+.mp-estado[data-s="on"]::before{background:var(--ok)}
+.mp-estado[data-s="erro"]{color:var(--crit);border-color:var(--crit)}
+.mp-estado[data-s="erro"]::before{background:var(--crit)}
+/* o VOLTAR mora NO cabeçalho (o .btn-back global é absoluto pro canto da tela) */
+.mp-head .btn-back{position:static;top:auto;left:auto}
+@keyframes mp-pulse{50%{opacity:.25}}
+
+/* duas colunas: decisões à esquerda, salas (o acervo) à direita — mesma lógica da
+   tela de mapas: cabeçalho decide, corpo mostra */
+.mp-grid{display:grid;grid-template-columns:minmax(320px,380px) 1fr;gap:var(--s-6);
+  width:100%;min-height:0;flex:1}
+.mp-lado{display:flex;flex-direction:column;gap:var(--s-5);min-width:0;overflow-y:auto}
+.mp-corpo{display:flex;flex-direction:column;gap:var(--s-3);min-width:0;min-height:0}
+@media (max-width:900px){.mp-grid{grid-template-columns:1fr}.mp-shell{max-height:none}}
+
+.mp-bloco{width:100%;display:flex;flex-direction:column;gap:var(--s-3)}
+.mp-titulo{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-2);
+  color:var(--ink3);display:flex;align-items:center;gap:var(--s-3);text-transform:uppercase}
+.mp-dica{color:var(--ink3);opacity:.7;letter-spacing:var(--tr-tight);text-transform:none}
+.mp-dica2{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3);margin:0}
+.mp-mini{margin-left:auto;font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  color:var(--cs);background:transparent;border:1px solid var(--line);padding:3px 9px;
+  clip-path:var(--cut-sm);cursor:pointer}
+.mp-mini:hover,.mp-mini:focus-visible{border-color:var(--cs);color:var(--ink-100)}
+
+/* ---- cartões de região: bandeira | nome | sinal | ping ---- */
+.mp-nos{display:flex;flex-direction:column;gap:var(--s-2)}
+.mp-no{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-4);
+  background:rgba(var(--bg-700-rgb),.7);border:1px solid var(--line);clip-path:var(--cut-sm);
+  cursor:pointer;text-align:left;transition:border-color var(--t) var(--ease),background var(--t) var(--ease)}
+.mp-no:hover,.mp-no:focus-visible{border-color:var(--line-hi)}
+.mp-no[aria-checked="true"]{border-color:var(--cs);background:rgba(var(--bg-600-rgb),.85)}
+.mp-no-info{display:flex;flex-direction:column;gap:2px;min-width:0;margin-right:auto}
+.mp-no-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-200);color:var(--ink-100);letter-spacing:var(--tr-1)}
+.mp-no-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3)}
+.mp-ping{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.mp-ping[data-q="bom"]{color:var(--ok)} .mp-ping[data-q="medio"]{color:var(--am)} .mp-ping[data-q="ruim"]{color:var(--crit)}
+.mp-no[data-online="0"]{opacity:.55}
+/* bandeira REAL (dono, 31/08): <img> WebP local dos SVGs oficiais do Commons — a
+   procedência mora em public/img/flags/FONTE.md. Mesma área da versão CSS (30×20),
+   cantos levemente arredondados; alt com o país (não é mais decoração muda). */
+.mp-flag{flex:0 0 30px;width:30px;height:20px;object-fit:cover;border-radius:var(--r-1);
+  border:1px solid rgba(0,0,0,.5);box-shadow:0 0 0 1px var(--line);background:var(--bg-600)}
+/* medidor de sinal: a leitura de longe do ping (3 barras boas / 2 médias / 1 ruim) */
+.mp-sinal{display:flex;align-items:flex-end;gap:2px;height:14px}
+.mp-sinal i{width:4px;background:var(--bg-500)}
+.mp-sinal i:nth-child(1){height:6px}.mp-sinal i:nth-child(2){height:10px}.mp-sinal i:nth-child(3){height:14px}
+.mp-sinal[data-q="bom"] i.on{background:var(--ok)}
+.mp-sinal[data-q="medio"] i.on{background:var(--am)}
+.mp-sinal[data-q="ruim"] i.on{background:var(--crit)}
+
+/* ---- entrada: jogo rápido + código de convite ---- */
+.mp-quick{width:100%}
+.mp-convite{display:flex;gap:var(--s-2)}
+.mp-convite input{flex:1;min-width:0;font-family:var(--mono);font-size:var(--fs-300);
+  letter-spacing:var(--tr-2);text-transform:uppercase;color:var(--ink-100);
+  background:rgba(var(--bg-900-rgb),.7);border:1px solid var(--line);padding:8px 10px}
+.mp-convite input:focus-visible{border-color:var(--cs);outline:none}
+.mp-convite input::placeholder{color:var(--ink-400);letter-spacing:var(--tr-2)}
+.mp-convite .btn{flex:0 0 auto}
+
+/* ---- cartões de sala ---- */
+.mp-salas{display:flex;flex-direction:column;gap:var(--s-2);min-height:0;flex:1;overflow-y:auto}
+.mp-sala{display:flex;flex-direction:column;gap:var(--s-2);
+  padding:var(--s-3) var(--s-4);background:rgba(var(--bg-700-rgb),.6);border:1px solid var(--line);
+  clip-path:var(--cut-sm);text-align:left;transition:border-color var(--t) var(--ease)}
+.mp-sala:hover{border-color:var(--line-2)}
+.mp-sala-top{display:flex;align-items:center;gap:var(--s-3);justify-content:space-between}
+.mp-sala-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-300);color:var(--ink-100);
+  letter-spacing:var(--tr-1);display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
+.mp-tag{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);padding:1px 6px;
+  border:1px solid var(--line-2);color:var(--ink3)}
+.mp-tag[data-t="oficial"]{border-color:var(--cs);color:var(--cs)}
+.mp-tag[data-t="privada"]{border-color:var(--am);color:var(--am)}
+.mp-sala-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3)}
+.mp-lot{font-family:var(--mono);font-size:var(--fs-200);color:var(--ink2);white-space:nowrap;
+  display:flex;align-items:center;gap:var(--s-2)}
+.mp-lot b{color:var(--ink-100)}
+/* barra de lotação: sala vazia × meio cheia × lotada se distinguem sem ler fração */
+.mp-lot-bar{width:56px;height:6px;background:rgba(var(--bg-900-rgb),.8);border:1px solid var(--line);
+  display:inline-block;overflow:hidden}
+.mp-lot-bar i{display:block;height:100%;background:var(--ok)}
+.mp-lot-spec{font-size:var(--fs-50);color:var(--ink3);margin-left:4px}
+.mp-acoes{display:flex;gap:var(--s-2);flex-wrap:wrap}
+.mp-entrar,.mp-assistir{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:5px 10px;clip-path:var(--cut-sm);cursor:pointer;border:1px solid var(--line-2);
+  background:transparent;color:var(--ink2)}
+.mp-entrar{border-color:var(--cs);color:var(--cs)}
+.mp-entrar:hover,.mp-entrar:focus-visible{background:var(--cs);color:var(--dark)}
+.mp-entrar[disabled]{opacity:var(--op-disabled);cursor:not-allowed;border-color:var(--line);color:var(--ink3)}
+.mp-assistir:hover,.mp-assistir:focus-visible{border-color:var(--ink-100);color:var(--ink-100)}
+/* chip do CONVITE: é um CÓDIGO (mono, âmbar) e um botão de copiar ao mesmo tempo —
+   o clique confirma na própria etiqueta ("COPIADO!") */
+.mp-convite-chip{margin-left:auto;font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);
+  padding:5px 10px;clip-path:var(--cut-sm);cursor:pointer;border:1px solid var(--am);
+  background:transparent;color:var(--am)}
+.mp-convite-chip:hover,.mp-convite-chip:focus-visible{background:var(--am);color:var(--dark)}
+
+.mp-criar summary{cursor:pointer;list-style:none}
+.mp-criar summary::-webkit-details-marker{display:none}
+.mp-criar summary::before{content:'▸ ';color:var(--cs)}
+.mp-criar[open] summary::before{content:'▾ '}
+.mp-form{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-3);margin-top:var(--s-3)}
+.mp-form label{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);
+  font-size:var(--fs-50);letter-spacing:var(--tr-1);color:var(--ink3)}
+.mp-form input[type=text],.mp-form select{font-family:var(--mono);font-size:var(--fs-100);
+  color:var(--ink-100);background:rgba(var(--bg-900-rgb),.7);border:1px solid var(--line);padding:6px 8px}
+.mp-form input:focus-visible,.mp-form select:focus-visible{border-color:var(--cs);outline:none}
+.mp-check{flex-direction:row!important;align-items:center;gap:var(--s-2)!important}
+.mp-form .btn{grid-column:1/-1}
+.mp-erro{width:100%;font-family:var(--mono);font-size:var(--fs-100);color:var(--crit);
+  border:1px solid var(--crit);padding:var(--s-3);clip-path:var(--cut-sm);
+  display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap}
+.mp-erro[hidden]{display:none}   /* display:flex venceria o atributo hidden sem isto */
+.mp-retry{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:5px 10px;border:1px solid var(--crit);color:var(--crit);background:transparent;
+  clip-path:var(--cut-sm);cursor:pointer}
+.mp-retry:hover,.mp-retry:focus-visible{background:var(--crit);color:var(--dark)}
+.mp-vazio{font-family:var(--mono);font-size:var(--fs-100);color:var(--ink3);padding:var(--s-4);text-align:center}
+
+/* ---- modal SALA CRIADA ----
+   Mesmo idioma do #launch-error (overlay escuro + cartão chanfrado com filete no topo),
+   trocando o acento pra ÂMBAR: convite é OBJETIVO/conquista (--am), não erro. O código
+   é o herói do cartão — display Bebas no degrau de número-herói (--fs-800). */
+#mp-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:rgba(var(--bg-900-rgb),.86);backdrop-filter:blur(6px)}
+#mp-modal.hidden{display:none}
+.mp-modal-card{width:min(520px,calc(100vw - 32px));padding:clamp(26px,4vw,44px);text-align:center;
+  background:linear-gradient(155deg,rgba(var(--bg-700-rgb),.98),rgba(var(--bg-900-rgb),.99));
+  border:1px solid var(--line-2);border-top:4px solid var(--am);clip-path:var(--cut);
+  box-shadow:var(--sh-2);display:flex;flex-direction:column;align-items:center;gap:var(--s-3)}
+.mp-modal-kicker{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-4);
+  color:var(--am);text-transform:uppercase}
+.mp-modal-card h2{margin:0;font-family:var(--aaa-font-display);font-weight:400;
+  font-size:var(--fs-600);line-height:var(--lh-tight);letter-spacing:var(--tr-4);color:var(--ink-100)}
+.mp-modal-convite{font-family:var(--aaa-font-display);font-weight:400;font-size:var(--fs-800);
+  line-height:var(--lh-tight);letter-spacing:var(--tr-6);color:var(--am);
+  padding:var(--s-2) var(--s-5);border:1px solid var(--am);clip-path:var(--cut-sm);
+  background:rgba(var(--bg-900-rgb),.7);user-select:all}
+.mp-modal-lot{margin:0;font-family:var(--mono);font-size:var(--fs-100);color:var(--ink-300);letter-spacing:var(--tr-1)}
+.mp-modal-copy{display:flex;gap:var(--s-3);flex-wrap:wrap;justify-content:center}
+.mp-modal-copy .btn{min-width:170px}
+.mp-modal-card .btn-big{min-width:280px;margin-top:var(--s-2)}
+.mp-modal-nota{margin:0;max-width:44ch;font:600 var(--fs-50)/var(--lh-base) var(--font);color:var(--ink-300)}
+@media(max-width:560px){.mp-modal-copy{flex-direction:column;width:100%}.mp-modal-copy .btn,.mp-modal-card .btn-big{width:100%;min-width:0}}
+
+/* Faixa do ESPECTADOR: quem está assistindo precisa saber que está assistindo, de quem é a
+   visão, e como entrar em campo. Sem isso o modo espectador é indistinguível de um bug. */
+#mp-spec-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;
+  display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-5);
+  background:rgba(var(--bg-900-rgb),.88);border:1px solid var(--line-2);clip-path:var(--cut-sm);
+  font-family:var(--mono);font-size:var(--fs-100);color:var(--ink2);letter-spacing:var(--tr-1)}
+#mp-spec-bar b{color:var(--ink-100)}
+#mp-spec-bar button{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:4px 9px;border:1px solid var(--cs);color:var(--cs);background:transparent;
+  clip-path:var(--cut-sm);cursor:pointer}
+#mp-spec-bar button:hover:not([disabled]){background:var(--cs);color:var(--dark)}
+#mp-spec-bar button[disabled]{opacity:var(--op-disabled);cursor:not-allowed;border-color:var(--line);color:var(--ink3)}

@@ -29544,7 +29544,8 @@ class WebGLRenderer {
 
 			}
 
-			if ( _isContextLost === true ) return;
+			// #419/#420: a flag só vira verdade quando o evento webglcontextlost (assíncrono) chega; na janela da corrida createShader() devolve null e shaderSource(null,…) lança no WebKit
+			if ( _isContextLost === true || _gl.isContextLost() === true ) return;
 
 			// update scene graph
 

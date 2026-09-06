@@ -5,6 +5,62 @@ Documento técnico. Para **reportar** uma vulnerabilidade, veja
 
 Cada item tem: onde estava (`arquivo:linha`), o que fecha, e como testar.
 
+## Arquitetura de segurança entre projetos
+
+Há quatro unidades, com responsabilidades que não se misturam:
+
+```mermaid
+flowchart LR
+  B[Navegador] -->|site e proxy same-origin| V[Vercel · client]
+  V -->|API sem credencial do navegador| A[Cloud Run · backend/api]
+  B -->|lobby público| N[VM regional · backend/game]
+  B -->|ticket HMAC curto| N
+  A -->|service_role| S[(Supabase · db-privado)]
+  A -->|emite ticket; não expõe segredo| B
+  N -->|métricas agregadas + identidade do nó| A
+  S -->|views diárias server-side| G[game-admin privado]
+  M[Secret Manager] -->|service account Cloud Run| A
+  M -->|service account exclusiva das VMs| N
+```
+
+| Projeto | Pode ter segredo? | Responsabilidade |
+|---|---|---|
+| `corosolto/client` | Produção SSR ainda usa `service_role`; Preview não. O browser só recebe valores públicos. | Jogo, UI, proxy same-origin do Preview e pedido de tickets. |
+| `csbrasil-backend/api` | Sim, via Secret Manager. | Banco, rate limit durável, emissão de tickets e ingestão de métricas. |
+| `csbrasil-backend/game` | Sim, via identidade própria da VM e Secret Manager. | Autoridade da partida, lobby, WebSocket e telemetria agregada. |
+| `db-privado` | SQL e políticas; nunca credenciais em git. | Tabelas, RPCs, retenção e views diárias. |
+| `game-admin` | `service_role` apenas no SSR privado. | Leitura das views agregadas, inclusive multiplayer diário por nó. |
+
+### Fluxo de entrada no multiplayer
+
+1. O browser mede `/health` dos nós e guarda a região declarada pelo próprio nó.
+2. Para criar sala ou abrir WebSocket, pede a `/api/mp-ticket` um ticket para aquela região e ação.
+3. A API aplica rate limit por IP confiável e assina um payload com região, ação, expiração e nonce. O segredo HMAC nunca chega ao cliente.
+4. O nó valida assinatura em tempo constante, região, ação e expiração, e consome o nonce. Reuso é recusado.
+5. O WebSocket também exige `Origin` permitido. `Origin` é uma segunda trava, não identidade.
+
+O ticket não é conta de usuário: ele limita abuso anônimo e impede que uma página qualquer use
+o browser da vítima para criar salas ou sockets. Autenticação de conta e posse de cosmético
+continuam sendo uma frente separada.
+
+### Preview da Vercel
+
+Preview fica atrás de Deployment Protection e usa `/api/[rota]` como proxy same-origin. O proxy
+repassa só método, corpo, `content-type` e o IP obtido pelo SSR; descarta cookie, Authorization e
+headers arbitrários do browser. No escopo Preview ficam apenas variáveis publicáveis. Tokens de
+Cloudflare/GitHub, `service_role` e segredos do multiplayer são proibidos e cobrados por
+`tools/eval/vercel-env-security-check.mjs`.
+
+### Ordem coordenada de rollout
+
+1. Criar os segredos e as service accounts no GCP.
+2. Implantar a API emissora, que é compatível com nós antigos.
+3. Publicar um Preview novo sem segredos privilegiados e testar a emissão.
+4. Implantar os nós que passam a exigir ticket.
+5. Testar dois browsers reais e só então promover o cliente.
+
+Essa ordem evita tanto cliente novo sem emissor quanto nó fechado diante de cliente antigo.
+
 ---
 
 ## 1. `players.token` era legível pela anon key — **crítico**

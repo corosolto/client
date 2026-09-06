@@ -31,11 +31,13 @@
 //   SITE_URL=https://... node tools/eval/site-smoke.mjs
 //   node tools/eval/site-smoke.mjs --json
 //   node tools/eval/site-smoke.mjs --mutante=jsonld # prova que o portão morde
+//   node tools/eval/site-smoke.mjs --mutante=proxy-sem-corpo
 //
 // Sai 1 se qualquer checagem falhar, então serve de gate no CI sem parser.
 // ============================================================================
 import { spawn, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 
 // O CONTRATO DEPENDE DE UMA FLAG. `RANKING_ON` (src/lib/site.ts) muda o que
 // duas rotas devem responder, e a issue #45 escreveu o contrato assumindo ela
@@ -125,22 +127,17 @@ const CONTRATO = [
     checa: ({ status }) => (status === 200 ? null : `status ${status}`),
   })),
 
-  // Com o ranking DESLIGADO a rota responde 200 {disabled:true} de propósito —
-  // está comentado nela: `disabled` diz "de propósito", um erro diria "quebrou",
-  // e o jogador entenderia bug onde é escolha. O 503 not_configured que a issue
-  // pede é o contrato do ranking LIGADO sem envs.
+  /* A rota migrada passa pelo proxy same-origin para previews dinâmicos não dependerem de
+     CORS. No CI, o upstream é o stub local abaixo; nunca a rede ou o backend publicado. */
   { rota: '/api/leaderboard',
-    esperado: RANKING_ON ? '503 not_configured' : '200 {disabled:true}',
-    checa: ({ status, corpo }) => {
-      let j;
-      try { j = JSON.parse(corpo); } catch { return `corpo não é JSON: ${corpo.slice(0, 60)}`; }
-      if (RANKING_ON) {
-        if (status !== 503) return `status ${status} (esperado 503 sem envs, ranking ligado)`;
-        if (j.error !== 'not_configured') return `body.error = ${JSON.stringify(j.error)}`;
-      } else {
-        if (status !== 200) return `status ${status} (esperado 200 com ranking desligado)`;
-        if (j.disabled !== true) return `esperado {disabled:true}, veio ${JSON.stringify(j).slice(0, 60)}`;
-      }
+    esperado: '200 + JSON do backend via proxy same-origin',
+    checa: ({ status, corpo, headers }) => {
+      if (status !== 200) return `status ${status}`;
+      if (!/application\/json/i.test(headers.get('content-type') || '')) return 'content-type não é JSON';
+      let payload;
+      try { payload = JSON.parse(corpo); } catch { return 'corpo não é JSON válido'; }
+      if (RANKING_ON ? !Array.isArray(payload.players) : payload.disabled !== true)
+        return `contrato inesperado: ${JSON.stringify(payload).slice(0, 120)}`;
       return null;
     } },
 
@@ -156,8 +153,8 @@ const PAGINAS_JSONLD = ['/', '/ranking', '/como-jogar', '/mapas', '/armas', '/pe
 // ---------------------------------------------------------------------------
 const RE_JSONLD = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
 
-async function pegar(rota) {
-  const r = await fetch(BASE + rota, { redirect: 'follow' });
+async function pegar(rota, redirect = 'follow') {
+  const r = await fetch(BASE + rota, { redirect });
   return { status: r.status, corpo: await r.text(), headers: r.headers };
 }
 
@@ -184,6 +181,8 @@ function checaJsonLd(rota, corpo) {
 // servidor
 // ---------------------------------------------------------------------------
 let subiuAqui = false;
+let upstream = null;
+const PORTA_UPSTREAM = 4326;
 async function noAr(ms = 90_000) {
   const fim = Date.now() + ms;
   while (Date.now() < fim) {
@@ -194,16 +193,34 @@ async function noAr(ms = 90_000) {
 }
 async function sobeServidor() {
   if (EXTERNO) return true;
+  upstream = createServer((req, res) => {
+    if (!req.url?.startsWith('/api/leaderboard')) {
+      res.writeHead(404).end();
+      return;
+    }
+    const payload = MUTANTE === 'proxy-sem-corpo'
+      ? {}
+      : RANKING_ON ? { players: [] } : { disabled: true };
+    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'public, max-age=300' });
+    res.end(JSON.stringify(payload));
+  });
+  await new Promise((resolve, reject) => {
+    upstream.once('error', reject);
+    upstream.listen(PORTA_UPSTREAM, '127.0.0.1', resolve);
+  });
   // `astro dev` daemoniza e o processo lançador sai — não dá pra segurar o pid.
   // Quem derruba é `astro dev stop`, no finally.
-  spawn('npx', ['astro', 'dev', '--port', String(PORTA)], { stdio: 'ignore', detached: false })
+  spawn('npx', ['astro', 'dev', '--port', String(PORTA)], {
+    stdio: 'ignore', detached: false,
+    env: { ...process.env, PUBLIC_API_BASE: `http://127.0.0.1:${PORTA_UPSTREAM}` },
+  })
     .on('error', () => {});
   subiuAqui = true;
   return noAr();
 }
 function derrubaServidor() {
-  if (!subiuAqui) return;
-  spawnSync('npx', ['astro', 'dev', 'stop'], { stdio: 'ignore' });
+  if (subiuAqui) spawnSync('npx', ['astro', 'dev', 'stop'], { stdio: 'ignore' });
+  upstream?.close();
 }
 
 // ---------------------------------------------------------------------------
@@ -217,7 +234,7 @@ try {
   for (const c of CONTRATO) {
     let falha = null;
     try {
-      const res = await pegar(c.rota);
+      const res = await pegar(c.rota, c.redirect);
       falha = c.checa(res);
       if (!falha && PAGINAS_JSONLD.includes(c.rota) && /text\/html/i.test(res.headers.get('content-type') || '')) {
         const { n, erros } = checaJsonLd(c.rota, res.corpo);
@@ -240,7 +257,7 @@ if (JSON_OUT) {
 } else {
   console.log('\n=============== SMOKE DO SITE — CORO SOLTO ===============');
   console.log(`alvo: ${BASE}${EXTERNO ? ' (externo, via SITE_URL)' : ' (astro dev, subido por este script)'}`);
-  console.log(`RANKING_ON: ${RANKING_ON} (src/lib/site.ts) — muda o contrato de /api/leaderboard e do sitemap`);
+  console.log(`RANKING_ON: ${RANKING_ON} (src/lib/site.ts) — muda o contrato do sitemap (/api/leaderboard migrou pro backend, PR #462)`);
   if (MUTANTE) console.log(`MUTANTE ATIVO: ${MUTANTE} — este run DEVE falhar`);
   console.log('');
   for (const r of resultados) {

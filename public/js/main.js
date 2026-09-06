@@ -5,7 +5,8 @@ import { CHARACTERS, buildCharacter, charWeapon } from './characters.js';
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
-import { preloadAmbientLife } from './ambientlife.js';
+import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
+import { apiUrl } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
@@ -17,12 +18,14 @@ import { bindMapPreview, stopMapPreviews, previewRevision } from './map_preview.
 import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
-import { FACTIONS } from './factions.js';
-/* Literal exigido pela régua UIR1 (redesign-check lê a declaração, não o uso);
-   a fonte dos nomes é factions.js — mantenha os dois em sincronia. */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
+import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
+/* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
+   (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
+import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { makeNetcode } from './netgame.js';
+import { FACCAO_NOME_UI } from './mapcat.js';
 
 /* ---------------- settings & nickname ---------------- */
 const SETTINGS_KEY = 'awpbr_settings';
@@ -41,6 +44,19 @@ const trainingEnabled = () => { try { return localStorage.getItem(TRAIN_CONSENT_
 const SOCIAL_KEY = 'awpbr_social';
 const STATS_KEY = 'awpbr_stats';   // declarado no bloco de storage: syncPlayState→renderPlayerPlate→loadStats roda ANTES da definição antiga (TDZ)
 const PLAYER_AVATAR_KEY = 'awpbr_player_avatar';
+
+/* Contexto declarado antes da música: picks de menu ficam sem gameType e nunca
+   herdam a partida anterior. */
+let telemetryGameContext = {
+  gameType: null, node: null, roomId: null, roomOfficial: null, createdRoom: null,
+};
+let _matchEventId = null;
+function clearTelemetryGameContext() {
+  telemetryGameContext = {
+    gameType: null, node: null, roomId: null, roomOfficial: null, createdRoom: null,
+  };
+  _matchEventId = null;
+}
 
 /* ---------------- renderer ---------------- */
 // Import extra (top-level, legal em ESM) em vez de mexer no bloco de imports lá de cima:
@@ -144,14 +160,6 @@ sfx.onDuck = (amt, hold) => {
   if (!m || m.paused || m.muted || musicFade) return;
   m.volume = MENU_MUSIC_VOL * amt;
   setTimeout(() => { if (menuMusic && !musicFade && !menuMusic.paused) menuMusic.volume = MENU_MUSIC_VOL; }, hold * 1000 + 220);
-};
-sfx.onCharacterVoice = ({ characterId, event, text }) => {
-  if (event !== 'select') return;
-  const caption = $('char-voice-caption');
-  if (!caption) return;
-  const character = CHARACTERS.find((entry) => entry.id === characterId);
-  caption.textContent = text ? `${character?.name || characterId}: “${text}”` : '';
-  caption.classList.toggle('show', !!text);
 };
 const sfxReady = sfx.loadManifest();
 
@@ -289,67 +297,14 @@ function rebuildMenuBackdrop() {
   menuScene = new THREE.Scene();
   MAPS[currentMap].build(menuScene, textures);
 }
-function menuProps(id) {
-  return [...MAP_PROPS, ...((MAPS[id] && MAPS[id].props) || [])];
-}
-let _menuLoadSeq = 0;
-function loadMenuBackdrop() {
-  const id = currentMap, seq = ++_menuLoadSeq;
-  return Promise.all([
-    preloadMapProps(menuProps(id)),
-    preloadAmbientLife((MAPS[id] && MAPS[id].ambience) || []),
-  ]).then(() => {
-    // O jogador pode trocar de mapa enquanto o GLB baixa. Resultado velho não reconstrói
-    // a cena nova; a próxima chamada tem seu próprio preload e sequência.
-    if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop();
-  });
-}
 // The first backdrop is built before props load; rebuild once they're ready so the
 // menu shows the real Brasília landmarks too. Só então a splash libera a entrada.
-loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
+preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady(); }).catch(() => _splashSetReady());
 
 /* ---------------- screens ---------------- */
-const CINE_SCREEN_META = Object.freeze({
-  'mobile-warning': { section: 'ACESSO', step: 'DESKTOP RECOMENDADO', progress: 4 },
-  'main-menu': { section: 'ABERTURA', step: 'ESCOLHA A TRETA', progress: 12 },
-  'map-screen': { section: 'PREPARAÇÃO', step: '01 · O PALCO', progress: 26 },
-  'team-select': { section: 'ESCALAÇÃO', step: '02 · O SEU LADO', progress: 44 },
-  'char-select': { section: 'ESCALAÇÃO', step: '03 · O PERSONAGEM', progress: 62 },
-  'settings-panel': { section: 'SISTEMA', step: 'AJUSTE A ARENA', progress: 18 },
-  'howto-panel': { section: 'ARQUIVO', step: 'MANUAL DE CAMPO', progress: 18 },
-  'ranking-panel': { section: 'ARQUIVO', step: 'PLACAR DA RUA', progress: 18 },
-  'feedback-panel': { section: 'CANAL ABERTO', step: 'MANDE O PAPO', progress: 18 },
-  'pause-menu': { section: 'INTERVALO', step: 'A TRETA ESPERA', progress: 76 },
-  'match-end': { section: 'DESFECHO', step: 'FIM DE RODADA', progress: 100 },
-  'support-panel': { section: 'CANAL ABERTO', step: 'APOIE A TRETA', progress: 18 },
-});
-const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
-function applyCinematicScreen(id) {
-  if (!id || !CINE_SCREEN_META[id]) {
-    delete document.body.dataset.cineScreen;
-    return;
-  }
-  const meta = { ...CINE_SCREEN_META[id] };
-  if (id === 'main-menu' && document.getElementById('menu-setup')?.classList.contains('open')) {
-    const profile = document.getElementById('menu-setup')?.dataset.step === 'profile';
-    meta.section = profile ? 'IDENTIDADE' : 'PREPARAÇÃO';
-    meta.step = profile ? 'SEU PERFIL' : '01 · A PARTIDA';
-    meta.progress = profile ? 20 : 26;
-  }
-  if (id === 'team-select' && document.getElementById('team-select')?.dataset.step === 'enemy') {
-    meta.section = 'CONFRONTO'; meta.step = '04 · O ADVERSÁRIO'; meta.progress = 82;
-  }
-  document.body.dataset.cineScreen = id;
-  const section = document.getElementById('cine-section');
-  const step = document.getElementById('cine-step');
-  const progress = document.getElementById('cine-progress');
-  if (section) section.textContent = meta.section;
-  if (step) step.textContent = meta.step;
-  if (progress) progress.style.width = `${meta.progress}%`;
-}
+const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
   stopMapPreviews();
-  applyCinematicScreen(id);
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
   if (id !== 'char-select') pvStopVideo();
@@ -444,16 +399,24 @@ applyHomeWall();
 // ATENÇÃO: use uma faixa CC0/licenciada — NÃO usar música protegida (ex.: YouTube/MPB) no
 // build público (risco de copyright, igual aos sons da Valve a trocar).
 const MENU_MUSIC_VOL = 0.3;
+const MENU_MUSIC_REVIEW_PARAMS = new URLSearchParams(location.search);
+const MENU_MUSIC_REVIEW = MENU_MUSIC_REVIEW_PARAMS.get('menumusiclab') === '1';
+const _menuMusicRequested = /^m(\d{2})$/.exec(MENU_MUSIC_REVIEW_PARAMS.get('menutrack') || '');
+let menuMusicReviewIndex = _menuMusicRequested ? Math.max(0, Number(_menuMusicRequested[1]) - 1) : 0;
 // Trilhas do menu (public/audio/menu-music/mNN.mp3 — trims de ~105s normalizados via ffmpeg,
 // ver HANDOFF). Uma aleatória POR VISITA ao menu; troca a cada partida/retorno.
 //
-// Este array é só o FALLBACK do primeiro quadro: a fonte de verdade é a pasta, via
-// audio/manifest.json (chave `menuMusic`). Falha de rede mantém o fallback.
-const MENU_TRACKS = Array.from({ length: 26 }, (_, i) => `/audio/menu-music/m${String(i + 1).padStart(2, '0')}.mp3`);
+// A curadoria aprovada é nominal para a remoção de uma faixa não deslocar as demais.
+// O laboratório mantém o catálogo completo; o jogo normal e o release usam só a seleção.
+const MENU_REVIEW_TRACKS = Array.from({ length: 26 }, (_, i) => `/audio/menu-music/m${String(i + 1).padStart(2, '0')}.mp3`);
+const MENU_TRACKS = (MENU_MUSIC_REVIEW ? MENU_REVIEW_TRACKS : MENU_MUSIC_ACTIVE_IDS.map((id) => `/audio/menu-music/${id}.mp3`));
 fetch(`/audio/manifest.json?v=${VERSION}`)
   .then((response) => (response.ok ? response.json() : null))
   .then((manifest) => {
-    const list = manifest && Array.isArray(manifest.menuMusic) ? manifest.menuMusic : null;
+    if (MENU_MUSIC_REVIEW) return;
+    const active = new Set(MENU_MUSIC_ACTIVE_IDS);
+    const list = manifest && Array.isArray(manifest.menuMusic)
+      ? manifest.menuMusic.filter((url) => active.has(_menuTrackId(url))) : null;
     if (!list || !list.length) return;
     // manifest grava caminho relativo (`audio/...`); a URL do <Audio> é absoluta (`/audio/...`).
     const novas = list.map((u) => (u.startsWith('/') ? u : `/${u}`));
@@ -468,16 +431,21 @@ fetch(`/audio/manifest.json?v=${VERSION}`)
   })
   .catch(() => {});
 let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
+const _menuTrackId = (url) => url.match(/([^/]+)\.\w+$/)?.[1] || 'desconhecida';
 function _ensureMusic() {
   if (menuMusic && !tracksTrocadas) return menuMusic;
   if (menuMusic) { menuMusic.pause(); menuMusic = null; }
   tracksTrocadas = false;
-  { const _mi = (Math.random() * MENU_TRACKS.length) | 0;
+  { const _mi = MENU_MUSIC_REVIEW
+      ? Math.max(0, Math.min(MENU_TRACKS.length - 1, menuMusicReviewIndex))
+      : (Math.random() * MENU_TRACKS.length) | 0;
     const _url = MENU_TRACKS[_mi];
-    menuMusic = new Audio(_url);
+    // O laboratório pode trocar a fonte local mantendo o mesmo mNN; o sufixo evita que o
+    // browser reutilize no A/B um MP3 antigo que já estava em cache sob a mesma URL.
+    menuMusic = new Audio(MENU_MUSIC_REVIEW ? `${_url}?review=${encodeURIComponent(VERSION)}` : _url);
     // rótulo vem do NOME do arquivo, não do índice: com lista vinda da pasta o índice pode
     // não casar mais com o número da faixa (some uma no meio e o telemetry mentiria).
-    _pick('musica', _url.match(/([^/]+)\.\w+$/)?.[1] || `m${String(_mi + 1).padStart(2, '0')}`); }
+    if (!MENU_MUSIC_REVIEW) _pick('musica', _menuTrackId(_url)); }
   menuMusic.loop = true; menuMusic.volume = MENU_MUSIC_VOL;
   window.__mm = menuMusic;   // hook de debug/teste (estado da música do menu)
   return menuMusic;
@@ -555,6 +523,100 @@ window.addEventListener('keydown', dismissSplash, true);
 window.addEventListener('pointerdown', _armMusic);
 window.addEventListener('keydown', _armMusic);
 startMenuMusic();   // boot: começa MUDA imediatamente (loop rolando antes do 1º clique)
+
+/* Laboratório local de curadoria (?menumusiclab=1). O jogo normal continua escolhendo uma
+   faixa aleatória por visita; aqui a escolha é determinística e o veredito fica somente no
+   localStorage. Assim dá para ouvir no contexto real do menu sem apagar um MP3 por engano. */
+function mountMenuMusicReview() {
+  if (!MENU_MUSIC_REVIEW || document.getElementById('menu-music-review')) return;
+  const host = document.getElementById('main-menu');
+  if (!host) return;
+  const key = 'csbr-menu-music-review-v1';
+  let verdicts = {};
+  try { verdicts = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { verdicts = {}; }
+  const lab = document.createElement('aside');
+  lab.id = 'menu-music-review';
+  lab.setAttribute('aria-label', 'Revisão das músicas do menu');
+  lab.innerHTML = `
+    <span class="mmr-kicker">CURADORIA LOCAL</span>
+    <strong id="mmr-track">FAIXA</strong>
+    <span id="mmr-progress"></span>
+    <div class="mmr-row">
+      <button id="mmr-prev" type="button" title="Faixa anterior">‹ ANTERIOR</button>
+      <button id="mmr-restart" type="button" title="Ouvir esta faixa desde o início">REOUVIR</button>
+      <button id="mmr-next" type="button" title="Próxima faixa">PRÓXIMA ›</button>
+    </div>
+    <div class="mmr-row mmr-verdicts">
+      <button id="mmr-keep" type="button">MANTER</button>
+      <button id="mmr-reject" type="button">REMOVER</button>
+      <button id="mmr-clear" type="button">LIMPAR</button>
+    </div>
+    <span class="mmr-catalog-title">CATÁLOGO · CLIQUE PARA OUVIR</span>
+    <div id="mmr-list" class="mmr-list" aria-label="Lista das músicas do menu"></div>
+    <button id="mmr-copy" class="mmr-copy" type="button">COPIAR RESULTADO</button>`;
+  host.appendChild(lab);
+
+  const byId = (id) => document.getElementById(id);
+  const normalizeIndex = (i) => (i + MENU_TRACKS.length) % MENU_TRACKS.length;
+  const currentId = () => _menuTrackId(MENU_TRACKS[menuMusicReviewIndex]);
+  const catalog = byId('mmr-list');
+  catalog.innerHTML = MENU_TRACKS.map((url, index) => {
+    const id = _menuTrackId(url);
+    return `<button type="button" class="mmr-list-item" data-track-index="${index}" data-track-id="${id}" title="Ouvir ${id.toUpperCase()}"><span>${id.toUpperCase()}</span><b aria-hidden="true">?</b></button>`;
+  }).join('');
+  const sync = () => {
+    const id = currentId();
+    const atuais = MENU_TRACKS.map(_menuTrackId).map((track) => verdicts[track]);
+    const keep = atuais.filter((v) => v === 'manter').length;
+    const reject = atuais.filter((v) => v === 'remover').length;
+    byId('mmr-track').textContent = `${id.toUpperCase()} · ${menuMusicReviewIndex + 1}/${MENU_TRACKS.length}`;
+    byId('mmr-progress').textContent = `MANTER ${keep} · REMOVER ${reject} · PENDENTES ${MENU_TRACKS.length - keep - reject}`;
+    lab.dataset.verdict = verdicts[id] || 'pendente';
+    for (const item of catalog.querySelectorAll('[data-track-index]')) {
+      const verdict = verdicts[item.dataset.trackId] || 'pendente';
+      item.dataset.verdict = verdict;
+      item.classList.toggle('current', Number(item.dataset.trackIndex) === menuMusicReviewIndex);
+      item.querySelector('b').textContent = verdict === 'manter' ? '✓' : verdict === 'remover' ? '×' : '?';
+    }
+  };
+  const play = (index, restart = false) => {
+    menuMusicReviewIndex = normalizeIndex(index);
+    tracksTrocadas = true;
+    const m = _ensureMusic();
+    if (restart) m.currentTime = 0;
+    musicArmed = true; m.muted = false; m.volume = MENU_MUSIC_VOL;
+    m.play().catch(() => {});
+    const url = new URL(location.href);
+    url.searchParams.set('menutrack', currentId());
+    history.replaceState(null, '', url);
+    sync();
+  };
+  const mark = (verdict) => {
+    const id = currentId();
+    if (verdict) verdicts[id] = verdict; else delete verdicts[id];
+    localStorage.setItem(key, JSON.stringify(verdicts));
+    sync();
+    if (verdict) play(menuMusicReviewIndex + 1);
+  };
+  byId('mmr-prev').onclick = () => play(menuMusicReviewIndex - 1);
+  byId('mmr-next').onclick = () => play(menuMusicReviewIndex + 1);
+  byId('mmr-restart').onclick = () => play(menuMusicReviewIndex, true);
+  byId('mmr-keep').onclick = () => mark('manter');
+  byId('mmr-reject').onclick = () => mark('remover');
+  byId('mmr-clear').onclick = () => mark(null);
+  for (const item of catalog.querySelectorAll('[data-track-index]')) {
+    item.onclick = () => play(Number(item.dataset.trackIndex));
+  }
+  byId('mmr-copy').onclick = async () => {
+    const list = (v) => MENU_TRACKS.map(_menuTrackId).filter((id) => verdicts[id] === v);
+    const text = `MANTER: ${list('manter').join(', ') || '(nenhuma)'}\nREMOVER: ${list('remover').join(', ') || '(nenhuma)'}`;
+    try { await navigator.clipboard.writeText(text); byId('mmr-copy').textContent = 'COPIADO'; }
+    catch { prompt('Copie o resultado:', text); }
+  };
+  sync();
+}
+mountMenuMusicReview();
+
 const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 820;
 /* TOUCH = aparelho de toque DE VERDADE (dedo, sem mouse). Separado do isMobile porque este
    inclui "janela estreita" — um desktop com a janela apertada NÃO deve entrar em modo toque
@@ -773,8 +835,9 @@ let submitted = true;   // stats da partida atual já enviados?
    jogador limpa o storage. O nick vai junto quando existe, só pra cruzar com `stats`
    quando o ranking voltar.
 
-   sendBeacon porque isto costuma sair junto com o fim da partida ou com a aba
-   fechando — `fetch` normal é cancelado no unload, sendBeacon não. */
+   Os eventos usam fetch keepalive: sobrevive ao unload e permite `credentials: omit`.
+   Isto importa porque sendBeacon força credenciais e, com JSON cross-origin, depende de
+   um preflight credenciado perfeito no Cloud Run. */
 const ANON_KEY = 'cs_anon';
 const SESSION_KEY = 'cs_session';
 function clientUuid() {
@@ -798,6 +861,18 @@ function getSessionId() {
   if (!s) { s = clientUuid(); sessionStorage.setItem(SESSION_KEY, s); }
   return s;
 }
+function sendJsonKeepalive(path, payload) {
+  try {
+    void fetch(apiUrl(path), {
+      method: 'POST',
+      keepalive: true,
+      credentials: 'omit',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+    return true;
+  } catch { return false; }
+}
 let telemetrySent = true;
 function sendTelemetry() {
   if (telemetrySent || testMode || !game) return;
@@ -811,10 +886,7 @@ function sendTelemetry() {
     rounds: (g.roundsWon?.E || 0) + (g.roundsWon?.B || 0),
     nick: registeredNick || null,
   };
-  try {
-    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-    if (!navigator.sendBeacon('/api/telemetry', blob)) api('/api/telemetry', payload);
-  } catch { try { api('/api/telemetry', payload); } catch {} }
+  sendJsonKeepalive('/api/telemetry', payload);
 }
 let registeredNick = ''; // nick canônico devolvido pelo registro do UID
 let rankingBloqueado = ''; // erro do register da sessão (nick de outro dono, charset…) — vira aviso claro no fim da partida
@@ -829,9 +901,9 @@ await resolveGeoLang();
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
 // links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
-// weapons, maps, about, docs/en); /changelog e /mapa continuam só PT (issue #54)
+// weapons, maps, about, whats-new, docs/en); /mapa continua só PT (issue #54)
 if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) {
-  const GEMEA = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/docs/': '/docs/en/' };
+  const GEMEA = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/changelog': '/whats-new', '/docs/': '/docs/en/' };
   const h = a.getAttribute('href');
   if (GEMEA[h]) a.setAttribute('href', GEMEA[h]);
 }
@@ -845,13 +917,26 @@ if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) 
       location.reload();
     };
   } }
-/* PICKS — "o que as pessoas escolhem" (dono, 06/08). sendBeacon: nunca atrasa nem
+/* PICKS — "o que as pessoas escolhem" (dono, 06/08). keepalive: nunca atrasa nem
    quebra o jogo; o servidor conta por (kind, key) na picks_daily (migration 013). */
 function _pick(kind, key) {
-  try { navigator.sendBeacon('/api/pick', new Blob([JSON.stringify({ kind, key })], { type: 'application/json' })); } catch { /* sem beacon: paciência */ }
+  try {
+    sendJsonKeepalive('/api/pick', {
+      kind, key, eventId: clientUuid(), anonId: getAnonId(), sessionId: getSessionId(),
+      matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
+      ...telemetryGameContext,
+    });
+  } catch { /* pode rodar antes do bootstrap da telemetria; nunca quebra o menu */ }
 }
 function _picks(lote) {
-  try { navigator.sendBeacon('/api/pick', new Blob([JSON.stringify({ picks: lote })], { type: 'application/json' })); } catch { /* idem */ }
+  try {
+    sendJsonKeepalive('/api/pick', {
+      anonId: getAnonId(), sessionId: getSessionId(),
+      matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
+      ...telemetryGameContext,
+      picks: lote.map((pick) => ({ ...pick, eventId: clientUuid() })),
+    });
+  } catch { /* fail-silent */ }
 }
 /* PRESENÇA ANÔNIMA — o que o "N online" do rodapé passou a contar (07/08).
    Antes o único sinal de presença era o `/api/heartbeat`, que exige nick + token e
@@ -865,29 +950,32 @@ function _picks(lote) {
    inflado num rodapé de social proof é pior que número pequeno.
    45 s contra a janela de 2 min da view (migration 014): perder um pacote não
    apaga ninguém da conta. */
-function _pingPresenca() {
-  if (testMode) return;
-  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+async function _pingPresenca(aguardar = false) {
+  if (testMode) return false;
+  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
   const payload = JSON.stringify({ anonId: getAnonId() });
-  try {
-    const blob = new Blob([payload], { type: 'application/json' });
-    if (!navigator.sendBeacon('/api/presence', blob)) api('/api/presence', JSON.parse(payload));
-  } catch { /* presença nunca atrapalha o jogador */ }
+  if (aguardar) {
+    try {
+      const response = await fetch(apiUrl('/api/presence'), {
+        method: 'POST', keepalive: true, credentials: 'omit',
+        headers: { 'content-type': 'application/json' }, body: payload,
+      });
+      if (response.ok) return true;
+    } catch { /* o beacon abaixo ainda tenta entregar */ }
+  }
+  sendJsonKeepalive('/api/presence', JSON.parse(payload));
+  return false;
 }
 
 /* ============ TELEMETRIA NOVA (feat/telemetria: funil · aquisição · perf · match) ============
  * Quatro sinais que SAIAM do Vercel Analytics (plano grátis não filtra propriedade de
  * evento) e passam a morar no NOSSO backend, lidos pelo painel admin. Mesma regra das
- * irmãs: sendBeacon, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
+ * irmãs: fetch keepalive, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
  * Contrato: /api/{match,funnel,perf,acquisition} e tools/eval/telemetry-check.mjs. */
 // FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
 function _funnel(step) {
   if (testMode) return;
-  try {
-    navigator.sendBeacon('/api/funnel', new Blob([
-      JSON.stringify({ step, sessionId: getSessionId() }),
-    ], { type: 'application/json' }));
-  } catch { /* fail-silent */ }
+  sendJsonKeepalive('/api/funnel', { step, sessionId: getSessionId() });
 }
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
 // sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
@@ -907,8 +995,8 @@ async function _sendAcquisition() {
        não devolve resposta — marcar cs_acq sem saber se o servidor gravou
        aposentava a 1ª aquisição para sempre num 503/stored:false (P1 da review,
        PR #92). keepalive mantém a entrega mesmo se a aba fechar no meio. */
-    const resp = await fetch('/api/acquisition', {
-      method: 'POST', keepalive: true,
+    const resp = await fetch(apiUrl('/api/acquisition'), {
+      method: 'POST', keepalive: true, credentials: 'omit',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
@@ -955,6 +1043,7 @@ function _perfFinish(bootMs, frames) {
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
     anonId: getAnonId(), version: VERSION,
+    sessionId: getSessionId(), ...telemetryGameContext,
     fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
     memoryGb: navigator.deviceMemory || null,
@@ -964,13 +1053,12 @@ function _perfFinish(bootMs, frames) {
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
   };
-  try { navigator.sendBeacon('/api/perf', new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
+  sendJsonKeepalive('/api/perf', payload);
 }
 // MATCH EVENT (016): evento RICO por partida (anônimo), carrega arma/personagem/placar/
 // resultado. Complementa o submit-match (só registrado) e a telemetria agregada (012).
 // _wperf vem do game.js (abates por arma, zerado por partida no construtor).
 let _matchEventSent = false;
-let _matchEventId = null;
 function sendMatchEvent(result) {
   if (_matchEventSent || testMode || !game) return;
   _matchEventSent = true;
@@ -980,6 +1068,7 @@ function sendMatchEvent(result) {
   const payload = {
     anonId: getAnonId(),
     sessionId: getSessionId(), eventId: _matchEventId, version: VERSION,
+    ...telemetryGameContext,
     map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
     character: currentChar, team: g.playerTeam,
     faction: g.playerFaction || currentFaction,
@@ -991,7 +1080,7 @@ function sendMatchEvent(result) {
     topWeapon: top, weaponKills: wk, botCount: g.bots?.length || 0,
     nick: registeredNick || null,
   };
-  try { navigator.sendBeacon('/api/match', new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
+  sendJsonKeepalive('/api/match', payload);
 }
 function sendTrainingFrames(blob) {
   if (testMode || !blob || !registeredNick || !trainingEnabled()) return;
@@ -1012,17 +1101,18 @@ function sendTrainingFrames(blob) {
 
 async function _refreshOnline() {
   try {
-    const r = await fetch('/api/online');
+    const r = await fetch(apiUrl('/api/online'));
     const { online } = await r.json();
     const box = document.getElementById('mf-online'), n = document.getElementById('mf-online-n');
     if (box && n && typeof online === 'number' && online > 0) { n.textContent = online; box.hidden = false; }
     else if (box) box.hidden = true;
   } catch { /* rodapé segue sem contador */ }
 }
-_refreshOnline();
-setInterval(_refreshOnline, 60000);
 const params = new URLSearchParams(location.search);
 const inspectionScreen = resolveInspectionScreen(params);
+// A curadoria é uma sessão de teste, mas mantemos a expressão canônica abaixo porque
+// screenquery-check também prova a integração do modo de inspeção por query.
+if (MENU_MUSIC_REVIEW) params.set('debug', '1');
 const testMode = params.get('debug') === '1' || !!inspectionScreen;
 // ?nav=1 isola transições de tela; web-assets.spec.js cobre preload e render 3D.
 const navOnly = params.get('nav') === '1';
@@ -1030,8 +1120,13 @@ const navOnly = params.get('nav') === '1';
 /* Presença: as chamadas descem para CÁ, depois de `testMode` existir (ver o comentário na
    linha em que elas moravam). O intervalo e o comportamento são os mesmos — o que muda é
    só a ordem, que era o defeito. */
-_pingPresenca();
+async function _iniciaPresencaOnline() {
+  await _pingPresenca(true);
+  await _refreshOnline();
+}
+void _iniciaPresencaOnline();
 setInterval(_pingPresenca, 45_000);
+setInterval(_refreshOnline, 60_000);
 
 /* Telemetria nova (feat/telemetria) — dispara UMA vez na carga, depois de `testMode`
    existir (mesma lição do BUG-34: estas leem testMode na 1ª linha). */
@@ -1044,7 +1139,7 @@ const _menuOnce = () => { if (_menuFuneled) return; _menuFuneled = true; _funnel
 addEventListener('pointerdown', _menuOnce);
 addEventListener('keydown', _menuOnce);
 
-async function startGame(team, charId, enemyFaction) {
+async function startGame(team, charId, enemyFaction, online = false) {
   /* #241: em rede lenta o preload dos GLBs passa de 60 s COM progresso andando
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
@@ -1055,7 +1150,7 @@ async function startGame(team, charId, enemyFaction) {
     return !!(window.__game && window.__game.state === 'live');
   });
   try {
-    await _startGame(team, charId, enemyFaction);
+    await _startGame(team, charId, enemyFaction, online);
     window.__gameLaunch?.ready('partida');
   } catch (e) {
     try { hideLoading(); } catch {}
@@ -1068,13 +1163,28 @@ async function startGame(team, charId, enemyFaction) {
     window.__gameLaunch?.fail(e, 'main.js:startGame');
   }
 }
-async function _startGame(team, charId, enemyFaction) {
+async function _startGame(team, charId, enemyFaction, online = false) {
+  const sessao = online ? mpSessao : null;
+  const metaMp = sessao?.net?.meta || {};
+  const salaMp = sessao?.sala || {};
+  telemetryGameContext = online ? {
+    gameType: 'multiplayer',
+    node: String(metaMp.regiao || sessao?.no?.ticketNode || sessao?.no?.id || '').toLowerCase() || null,
+    roomId: metaMp.room || salaMp.id || salaMp.room || null,
+    roomOfficial: !!(metaMp.oficial ?? salaMp.oficial),
+    createdRoom: !!metaMp.createdRoom,
+  } : {
+    gameType: 'single_player', node: null, roomId: null, roomOfficial: null, createdRoom: null,
+  };
+  // Nasce ANTES dos picks: pick_event.match_event_id passa a ligar a escolha ao
+  // resultado/duração exatos desta partida, não apenas à aba do navegador.
+  _matchEventId = clientUuid();
   // MOBILE: não bloqueia mais — entra com controles de toque. No retrato o overlay
   // "gire o celular" (CSS) cobre a tela até deitar.
   // facção = time do personagem ('E'/'B'/'U'). O jogador ESCOLHE o adversário (enemyFaction);
   // default = oposto político. Mesma facção dos dois lados = mirror (inimigo roxo no HUD).
   const faction = (CHARACTERS.find(c => c.id === charId) || {}).team || team || 'E';
-  const side = faction === 'B' ? 'B' : 'E';
+  const side = resolvePlayerSide(team, faction, online);
   const enemyFac = enemyFaction || currentEnemyFaction || (side === 'B' ? 'E' : 'B');
   currentFaction = faction; currentTeam = side; currentChar = charId; currentEnemyFaction = enemyFac;
   // o lote de escolha da partida — 5 contadores numa chamada (ver /api/pick)
@@ -1100,8 +1210,8 @@ async function _startGame(team, charId, enemyFaction) {
     try {
       const fs = document.documentElement.requestFullscreen?.();
       // trava de orientação só depois da tela cheia (a API exige fullscreen). Android respeita;
-      // iOS ignora — daí o overlay "gire o celular" (CSS) como rede. Falhar é aceitável.
-      if (TOUCH && fs?.then) fs.then(() => { try { screen.orientation?.lock?.('landscape'); } catch {} }).catch(() => {});
+      // WebKit REJEITA a promessa, e sem o catch a rejeição derrubava o launch (#431/#432).
+      if (TOUCH && fs?.then) fs.then(() => { try { screen.orientation?.lock?.('landscape')?.catch?.(() => {}); } catch {} }).catch(() => {});
       else fs?.catch?.(() => {});
     } catch {}
   }
@@ -1118,20 +1228,34 @@ async function _startGame(team, charId, enemyFaction) {
   setHavanCarSeed((Math.random() * 1e9) | 0);
   /* SÓ OS PERSONAGENS DA PARTIDA: o roster é sorteado ANTES do preload e só esses GLBs sobem
      (jogador + ~teamSize×2). Filtro vazio = rede de segurança: elenco inteiro. Régua: PL1. */
-  const matchRoster = pickMatchRoster(faction, enemyFac, Math.max(1, Math.min(8, settings.bots || 4)), charId);
+  /* Tamanho do time é do SERVIDOR, nunca do ajuste local de bots (senão sobram corpos e o
+     casamento de ids fica adivinhando). */
+  const tamanhoTime = sessao ? sessao.net.meta.teamSize : Math.max(1, Math.min(8, settings.bots || 4));
+  /* ELENCO: no multiplayer ele vem PRONTO do servidor (welcome.roster). Sortear o próprio faria
+     cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
+     rosto que apareceu na tela. Fora do multiplayer, sorteio normal. */
+  const matchRoster = sessao ? rosterDoServidor(side, charId) : pickMatchRoster(faction, enemyFac, tamanhoTime, charId);
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
   const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
   /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
-  const matchWeapons = pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: Math.max(1, Math.min(8, settings.bots || 4)) });
+  /* Armas: no multiplayer também são do servidor (ele é dono do estado de arma de cada corpo).
+     Pré-carregar as erradas faria a arma certa chegar como caixa procedural no meio do tiroteio. */
+  const matchWeapons = sessao
+    ? sessao.net.meta.roster.map((r) => r.weapon).filter(Boolean)
+    : pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: tamanhoTime });
   const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons])].filter(Boolean);
   try {
     if (!navOnly) {
       await Promise.all([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
+        sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
+        /* fauna: sem esta linha o mapa constrói, o `ambience` existe e TODO bicho cai
+           no fallback procedural sem textura — verde na régua de registro, feio na tela.
+           Foi literalmente o BUG-57. Lista vazia é tratada como "tudo" no ambientlife. */
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
@@ -1139,10 +1263,16 @@ async function _startGame(team, charId, enemyFaction) {
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
   if (_lstat.phase) _lstat.phase.set(1);
   game = new Game({
-    renderer, textures, sfx, settings,
+    renderer, textures, sfx,
+    settings: sessao ? { ...settings, bots: tamanhoTime } : settings,
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
+    /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
+       sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
+    mpFactory: sessao ? makeNetcode : null,
+    net: sessao ? sessao.net : null,
+    dedicated: !!(sessao && sessao.net.espectador),
     roundsMax: matchRounds(),
     onMatchEnd: recordMatchStats,
     recordTraining: trainingEnabled(),
@@ -1159,23 +1289,24 @@ async function _startGame(team, charId, enemyFaction) {
       if (meuJogo.state !== 'live') return;
       clearInterval(espera);
       const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
-      ocioso(() => preloadWeapons().catch(() => {}));
+      ocioso(async () => {
+        try {
+          await preloadWeapons();
+          if (window.__game === meuJogo) { meuJogo.refreshPickupModels(); meuJogo._applyVmVisibility?.(); }   // + viewmodel da arma na mão, se chegou agora
+        } catch { /* disponibilidade: o fallback procedural continua jogável */ }
+      });
     }, 250);
   }
   submitted = false;
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
-  _matchEventId = clientUuid(); // idempotência no banco se o beacon for repetido
   _funnel('match_start');    // funil: começou a jogar (017)
   retryPending();
   armSwitchHook();
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
-  game.onPauseChange = (paused) => {
-    resetConfirms();
-    applyCinematicScreen(paused ? 'pause-menu' : null);
-  };
+  game.onPauseChange = () => resetConfirms();
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -1242,6 +1373,8 @@ function quitToMenu() {
     }
   } catch {}
   switchMode = false;   // never carry an in-match team-switch into the menu
+  mpEncerrarSessao();
+  clearTelemetryGameContext();
   // dispose protegido: se a limpeza da partida falhar, o menu volta MESMO assim
   // (antes, uma exceção aqui deixava o botão "SAIR PRO MENU" morto e o jogo zumbi)
   try { if (game) game.dispose(); } catch (e) { console.error('dispose falhou ao sair pro menu', e); }
@@ -1306,13 +1439,12 @@ $('avatar-file').onchange = async e => {
 };
 
 /* ---------------- menu CS 1.6 (Coro Solto) ---------------- */
-/* Som de UI: um menu AAA tem TRÊS sons (mover, confirmar, voltar) e o "mover" é o que dá
-   a sensação tátil. Só existia uiClick(); hover/back são compostos aqui com as primitivas
-   do Sfx (audio.js pertence a outro agente — nada é adicionado lá). Falha em silêncio. */
+/* Som de UI: mover, confirmar e voltar usam contratos distintos do manifest.
+   O Sfx preserva synth como fallback quando o laboratorio local nao esta instalado. */
 const ui = {
   click() { try { sfx.uiClick(); } catch {} },
-  hover() { try { sfx.ensure(); sfx._beep('square', 1240, 1240, .02, .04, 0, true); } catch {} },
-  back()  { try { sfx.ensure(); sfx.duck(0.5, 0.1); sfx._beep('square', 560, 400, .06, .10, 0, true); } catch {} },
+  hover() { try { sfx.uiHover(); } catch {} },
+  back()  { try { sfx.uiBack(); } catch {} },
 };
 let matchMode = 'rounds';   // 'rounds' | 'ctf' — lido em startGame (ctf)
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu
@@ -1359,7 +1491,6 @@ function setSetupStep(step) {
     if (st) st.textContent = tr(matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA');
     if (tt) tt.textContent = tr(setupTitle);
   }
-  if (document.body.dataset.cineScreen === 'main-menu') applyCinematicScreen('main-menu');
 }
 const openSetup = (mode, title, act) => {
   if (mode) { matchMode = mode; modoEscolhido = true; }   // veio de SINGLE PLAYER/CAPTURE THE FLAG = escolha explícita
@@ -1375,27 +1506,18 @@ function openModeMap(mode, title, act) {
   renderMapScreen();
   show('map-screen');
 }
-/* JOGAR abre os DOIS modos num submenu em vez de ocupar duas linhas da lista: o
-   redesign fecha o menu principal em 4 itens, e os modos são escolha de segundo
-   nível. `sp` e `ctf` seguem exatamente como estavam — só ganharam um pai. */
-const csJogar = document.querySelector('.cs-item[data-act="jogar"]');
-const csModos = $('cs-modos');
-function abreModos(abrir) {
-  if (!csModos || !csJogar) return;
-  const on = abrir === undefined ? csModos.hidden : abrir;
-  csModos.hidden = !on;
-  csJogar.setAttribute('aria-expanded', String(on));
-  csJogar.classList.toggle('is-open', on);
-}
+/* MULTIPLAYER e SINGLE PLAYER são PRIMEIRA INSTÂNCIA do menu (pedido do dono, 30/08):
+   o degrau "JOGAR ▸ submenu" saiu — quem abre o jogo escolhe o modo no primeiro clique.
+   `sp` e `ctf` seguem exatamente como estavam; só o caso 'jogar' morreu com o botão. */
 csItems.forEach((it) => {
   it.onmouseenter = () => ui.hover();
   it.onclick = () => {
     if (performance.now() - _entradaEm < ENTRADA_MS) return;
     ui.click();
     switch (it.dataset.act) {
-      case 'jogar': abreModos(); markCurrent(csModos && !csModos.hidden ? 'jogar' : null); break;
-      case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;
+      case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;
       case 'ctf':   openModeMap('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
+      case 'mp':    markCurrent('mp'); abrirMultiplayer(); break;
       /* MAPA saiu (mapa se escolhe no fluxo de partida); FEEDBACK entrou (07/08) */
       case 'feedback': markCurrent('feedback'); show('feedback-panel'); break;
       case 'apoie': markCurrent('apoie'); showSupport(); break;
@@ -1623,7 +1745,6 @@ function gotoMap(i) {
   if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
   setMapMode();
   rebuildMenuBackdrop();
-  loadMenuBackdrop().catch(() => {});
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
 }
 function stepMap(dir, ids = MAP_IDS) {
@@ -1642,6 +1763,7 @@ $('map-next').onclick = () => stepMap(1);
    Abre pelo cartaz do mapa no setup. Lê o MESMO estado do carrossel (currentMap/mapIdx) —
    trocar aqui troca lá, e vice-versa. CONTINUAR segue o fluxo normal (nick → facção). */
 const MAP_DESC = {
+  amazonia: 'Comunidade ribeirinha: palafitas com interiores, janelas de cobertura e travessias sobre o igarapé.',
   praca_poderes: 'O coração do poder vira arena: rampas do Planalto, espelho d\'água e linhas de tiro longas entre os ministérios.',
   piscina_treta: 'Salão fechado, eco de tiro e briga de faca no raso. Quem controla a borda controla o round.',
   loja_h: 'Estacionamento de megastore: corredores de vaga, mezanino de sniper e a estátua te olhando atirar.',
@@ -1655,47 +1777,9 @@ const MAP_DESC = {
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
 };
-/* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
- * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
- * a ficha e as tabs já entendem. Autor/data vêm do git (git log --follow do
- * arquivo do mapa); OFICIAL é o autor da casa. */
-const MAP_CATS = {
-  praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
-  ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
-  piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
-  parque_treta: ['ARENA', 'COMUNIDADE'],
-  velho_oeste: ['ARENA', 'COMUNIDADE'],
-  penitenciaria: ['ARENA', 'COMUNIDADE'],
-  upa_24h: ['ARENA', 'COMUNIDADE'],
-  obras_prefeitura: ['ARENA', 'COMUNIDADE'],
-};
-const MAP_AUTOR = {
-  praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
-  ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Emerson Garrido',
-  piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
-  parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',
-  upa_24h: 'Emerson Garrido', obras_prefeitura: 'Emerson Garrido',
-};
-const MAP_DATA = {
-  praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
-  quebrada: '04/08/2026', atacadao_treta: '14/08/2026',
-  piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
-  parque_treta: '17/08/2026', velho_oeste: '17/08/2026', penitenciaria: '17/08/2026',
-  upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
-};
-const CAT_DESC = {
-  TODOS: 'O acervo inteiro, do mais jogado ao menos jogado.',
-  OFICIAIS: 'Mapas oficiais da casa.',
-  ARENA: 'Combate fechado e simétrico — o duelo de angulação clássico.',
-  FAVELA: 'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.',
-  CIDADES: 'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.',
-  COMUNIDADE: 'Mapas feitos pela comunidade.',
-  AI: 'Construídos pelos agentes de IA da casa.',
-};
-const AUTOR_CASA = 'Ruben Marcus';
-const catsDe = (id) => MAP_CATS[id] || ['ARENA'];
-const autorDe = (id) => MAP_AUTOR[id] || AUTOR_CASA;
-const oficialDe = (id) => autorDe(id) === AUTOR_CASA;
+/* Catálogo de mapas (categoria/autoria/data): fonte única em mapcat.js — o servidor do
+   multiplayer importa a MESMA tabela para as rotações das salas oficiais. */
+import { MAP_CATS, MAP_AUTOR, MAP_DATA, CAT_DESC, AUTOR_CASA, catsDe, autorDe, oficialDe } from './mapcat.js';
 let mapCategory = 'TODOS';
 let mapAutorFiltro = 'TODOS';
 function autoresDeComunidade() {
@@ -1706,7 +1790,7 @@ function autoresDeComunidade() {
    e quando chega redesenha. Nada aqui pode depender do número existir. */
 let mapPlays = {};
 const playsDe = (id) => mapPlays[id] || 0;
-fetch('/api/map-plays')
+fetch(apiUrl('/api/map-plays'))
   .then((r) => (r.ok ? r.json() : null))
   .then((j) => {
     if (!j || !j.plays || typeof j.plays !== 'object') return;
@@ -1927,61 +2011,21 @@ const stripStep = (dir) => {
 };
 $('strip-up').onclick = () => { ui.click(); stripStep(-1); };
 $('strip-down').onclick = () => { ui.click(); stripStep(1); };
-// Cards vêm do registro único; facção sem roster aprovado aparece no
-// catálogo, mas não abre o fallback procedural que o dono reprovou como Roblox.
-const factionCards = [...document.querySelectorAll('.team-card[data-faction]')];
-/* BUG-42: o catálogo de pôsteres virou índice + um único hero editorial. A seleção
-   continua vindo dos mesmos botões/registro; esta função só projeta a linha focada no
-   palco, sem duplicar regra de disponibilidade nem de roster. */
-function presentFaction(card) {
-  if (!card || card.classList.contains('faction-excluded')) return;
-  const hero = $('faction-hero'); if (!hero) return;
-  const name = card.querySelector('.team-name')?.textContent?.trim() || '—';
-  const slogan = card.querySelector('.team-slogan')?.textContent?.trim() || '—';
-  const ready = card.dataset.ready === '1';
-  const count = CHARACTERS.filter(c => c.team === card.dataset.faction).length;
-  hero.style.setProperty('--hero-art', card.style.getPropertyValue('--art'));
-  hero.style.setProperty('--hero-color', card.style.getPropertyValue('--tc'));
-  hero.style.setProperty('--hero-rgb', card.style.getPropertyValue('--tc-rgb'));
-  const crest = $('fh-crest'); if (crest) { crest.src = card.querySelector('.team-crest')?.src || ''; crest.alt = `Brasão ${name}`; }
-  $('fh-name').textContent = name;
-  $('fh-slogan').textContent = slogan;
-  $('fh-desc').textContent = card.dataset.description || '';
-  $('fh-status').textContent = ready && count ? `${count} PERSONAGENS // ABRIR ELENCO` : 'ELENCO 3D EM PRODUÇÃO';
-  hero.dataset.ready = ready && count ? '1' : '0';
-  for (const item of factionCards) item.classList.toggle('is-preview', item === card);
-}
-for (const card of factionCards) {
-  const fac = card.dataset.faction;
-  const n = CHARACTERS.filter(c => c.team === fac).length;
+// Contador de elenco nos cards de facção ("8 PERSONAGENS" — referência telas/02)
+for (const f of ['e', 'b', 'u', 'c', 'f']) {
+  const n = CHARACTERS.filter(c => c.team === f.toUpperCase()).length;
+  const card = $('btn-team-' + f);
+  if (!card) continue;
   const chip = document.createElement('span');
   chip.className = 'team-count';
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
-  if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
-  const ready = card.dataset.ready === '1' && n > 0;
-  card.setAttribute('aria-disabled', String(!ready));
-  card.addEventListener('focus', () => { card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); presentFaction(card); });
-  card.addEventListener('mouseenter', () => presentFaction(card));
-  card.onclick = () => {
-    if (!ready) { ui.back(); return; }
-    sfx.uiClick(); pickTeam(fac);
-  };
 }
-presentFaction(factionCards.find(card => card.dataset.ready === '1') || factionCards[0]);
-if ($('fh-status')) $('fh-status').onclick = () => {
-  const card = factionCards.find(item => item.classList.contains('is-preview'));
-  if (card) card.click();
-};
-for (const [id, direction] of [['team-prev', -1], ['team-next', 1]]) {
-  const button = $(id);
-  if (!button) continue;
-  button.onclick = () => {
-    ui.click();
-    const rail = document.querySelector('.team-row');
-    rail?.scrollBy({ top: direction * Math.max(92, rail.clientHeight * .56), behavior: 'smooth' });
-  };
-}
+$('btn-team-e').onclick = () => { sfx.uiClick(); pickTeam('E'); };
+$('btn-team-b').onclick = () => { sfx.uiClick(); pickTeam('B'); };
+$('btn-team-u') && ($('btn-team-u').onclick = () => { sfx.uiClick(); pickTeam('U'); });
+$('btn-team-c') && ($('btn-team-c').onclick = () => { sfx.uiClick(); pickTeam('C'); });
+$('btn-team-f') && ($('btn-team-f').onclick = () => { sfx.uiClick(); pickTeam('F'); });
 $('btn-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
 $('btn-pause-settings').onclick = () => { sfx.uiClick(); settingsReturn = 'pause-menu'; show('settings-panel'); };
 $('btn-pause-controls').onclick = () => { sfx.uiClick(); howtoReturn = 'pause-menu'; show('howto-panel'); };
@@ -2029,14 +2073,14 @@ function needsConfirm(btn, run) {
 }
 const resetConfirms = () => { for (const r of confirmables) r(); };
 // Mesma chamada da REVANCHE do match-end: recomeça a partida com time/personagem/adversário atuais.
-needsConfirm($('btn-restart'), () => startGame(currentTeam, currentChar));
+needsConfirm($('btn-restart'), () => startGame(currentTeam, currentChar, undefined, !!mpSessao));
 needsConfirm($('btn-quit'), () => {
   sendTelemetry();   // fora do `if (pl)`: partialPayload() devolve null sem nick, telemetria não depende disso
   const pl = partialPayload();
   if (pl) { submitted = true; submitGlobal(pl); }
   quitToMenu();
 });
-$('btn-again').onclick = () => { sfx.uiClick(); startGame(currentTeam, currentChar); };
+$('btn-again').onclick = () => { sfx.uiClick(); startGame(currentTeam, currentChar, undefined, !!mpSessao); };
 $('btn-menu').onclick = () => { sfx.uiClick(); quitToMenu(); };
 // M in-game: escolhe o personagem do novo time antes de trocar
 let switchMode = false;
@@ -2076,18 +2120,19 @@ $('char-confirm').onclick = () => {
   }
 };
 
-// Esconde/mostra o card da sua facção na tela de adversário; os demais continuam juntos.
+// Esconde/mostra o card da sua facção na tela de adversário (btn-team-e/b/u).
 function setEnemyPickMode(on, myFaction) {
-  for (const card of factionCards)
-    card.classList.toggle('faction-excluded', !!(on && card.dataset.faction === myFaction));
-  presentFaction(factionCards.find(card => !card.classList.contains('faction-excluded') && card.dataset.ready === '1') ||
-    factionCards.find(card => !card.classList.contains('faction-excluded')));
+  for (const f of ['e', 'b', 'u', 'c', 'f']) {
+    const b = $('btn-team-' + f);
+    if (b) b.classList.toggle('hidden', !!(on && f.toUpperCase() === myFaction));
+  }
 }
 /* A MESMA tela serve dois passos e precisa DIZER qual é. Antes o único sinal era o
    título trocado por querySelector em 4 lugares diferentes do arquivo — e o 2º passo
    ficava com cara de formulário ("escolha o adversário" e três caixas iguais).
    Agora o passo é um estado (data-step) que a tela inteira lê: eyebrow, título, dica
    e o texto da barra de ação de cada placa (ver .team-cta no style.css). */
+const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS' };
 function setTeamStep(step, myFaction) {
   const ts = $('team-select'); if (ts) ts.dataset.step = step;
   const st = $('team-step'), tt = $('team-title'), hint = $('team-hint');
@@ -2100,7 +2145,6 @@ function setTeamStep(step, myFaction) {
     if (tt) tt.textContent = tr('ESCOLHA SEU LADO DA TRETA');
     if (hint) hint.textContent = tr('Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.');
   }
-  if (document.body.dataset.cineScreen === 'team-select') applyCinematicScreen('team-select');
 }
 
 const nickEl = $('nick-input');
@@ -2170,7 +2214,7 @@ function getToken() {
 }
 async function api(path, body) {
   try {
-    const r = await fetch(path, body
+    const r = await fetch(apiUrl(path), body
       ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
       : undefined);
     const j = await r.json().catch(() => ({}));
@@ -2215,7 +2259,7 @@ addEventListener('beforeunload', (e) => {
   sendTelemetry();   // aba fechando no meio da partida ainda conta como tempo jogado
   if (emPartida()) { sendMatchEvent('quit'); _funnel('quit'); }   // feat/telemetria
   const pl = partialPayload();
-  if (pl) navigator.sendBeacon('/api/submit-match', new Blob([JSON.stringify(pl)], { type: 'application/json' }));
+  if (pl) sendJsonKeepalive('/api/submit-match', pl);
   /* SEGUNDA CAMADA CONTRA O CTRL+W (relato do Daniel Diniz: *"quando fica muito tempo com
      a tecla Control pressionada a página fecha"* — é agachar + andar pra frente formando
      Ctrl+W no Windows). A trava de atalho do game.js resolve de verdade, mas é Chromium e
@@ -2260,7 +2304,6 @@ function loadStats() {
     JSON.parse(localStorage.getItem(STATS_KEY) || '{}'));
 }
 async function recordMatchStats(s) {
-  applyCinematicScreen('match-end');
   submitted = true;
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
@@ -2401,8 +2444,8 @@ let teamPreviewsDone = false;
 function ensureTeamPreviews() {
   if (teamPreviewsDone) return;
   teamPreviewsDone = true;
-  for (const fac of FACTIONS.map((f) => f.id)) {
-    const box = document.querySelector(`.team-card[data-faction="${fac}"] .team-chars`);
+  for (const [btn, fac] of [['btn-team-e', 'E'], ['btn-team-b', 'B'], ['btn-team-u', 'U'], ['btn-team-c', 'C'], ['btn-team-f', 'F']]) {
+    const box = document.querySelector(`#${btn} .team-chars`);
     if (!box) continue;
     const chars = CHARACTERS.filter(c => c.team === fac && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
@@ -2431,8 +2474,10 @@ function pickTeam(faction) {
   currentFaction = faction;
   currentTeam = faction === 'B' ? 'B' : 'E';
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
-  for (const card of factionCards)
-    card.setAttribute('aria-pressed', String(card.dataset.faction === faction));
+  for (const f of ['e', 'b', 'u', 'c', 'f']) {
+    const b = $('btn-team-' + f);
+    if (b) b.setAttribute('aria-pressed', String(f.toUpperCase() === faction));
+  }
   const chars = CHARACTERS.filter(c => c.team === faction);   // roster da facção escolhida
   // ?nav=1 pula o preload 3D do roster (lento) — thumbnails caem no fallback pvThumb, que
   // nunca dispara GLB. A transição #char-select é o que o smoke de navegação quer provar.
@@ -2529,9 +2574,6 @@ function selectChar(c, row) {
   $('char-info-name').textContent = c.name;
   $('char-info-blurb').textContent = tr(c.blurb);
   renderCharAttrs(c);
-  sfxReady.then(() => {
-    if (selChar?.id === c.id) sfx.characterVoice(c.id, 'select', { fallbackFaction: c.team, interrupt: true });
-  });
 }
 
 function selectCharacterFromAvatar(c, row, roster) {
@@ -2812,6 +2854,520 @@ async function openInspectionScreen(target) {
 if (inspectionScreen) {
   openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
 } else if (testMode && params.get('auto')) {
-  const [team, char, enemyFaction] = params.get('auto').split(',');
-  startGame(team || 'E', char || CHARACTERS[0].id, enemyFaction || undefined);
+  const [team, char] = params.get('auto').split(',');
+  startGame(team || 'E', char || CHARACTERS[0].id);
+} else if (params.get('sala')) {
+  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
+     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
+  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
+  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
+  else entrarQuandoPuder();
+}
+
+/* MULTIPLAYER — navegador de servidores, salas e sessão de rede. Aqui só se escolhe ONDE e
+   EM QUE sala; a autoridade é do servidor. Desenho e decisões: docs/MULTIPLAYER.md. */
+
+/* `matchRoster` a partir do elenco do servidor. Personagem desconhecido cai no fallback em
+   vez de sumir e desalinhar o casamento de ids. */
+function rosterDoServidor(lado, charId) {
+  const roster = mpSessao.net.meta.roster || [];
+  const meu = mpSessao.net.yourEnt;
+  const def = (r) => CHARACTERS.find((c) => c.id === r.char) || CHARACTERS[0];
+  return {
+    allyDefs: roster.filter((r) => r.team === lado && r.id !== meu).map(def),
+    enemyDefs: roster.filter((r) => r.team !== lado).map(def),
+  };
+}
+
+/* Sessão de rede em curso. `null` = single-player, e é o estado normal: nada de rede roda
+   até alguém entrar numa sala. */
+let mpSessao = null;
+let mpNoAtual = null;
+let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
+let mpNos = [];
+let mpTimerLista = null;
+
+async function obterMpTicket(action) {
+  /* Nó local explícito (?mp=1/localhost) roda com MP_TICKET_REQUIRED=0. Pedir o ticket à API
+     pública com node=xx fazia o fluxo de desenvolvimento morrer ANTES do WebSocket. */
+  const localMp = new URLSearchParams(location.search).get('mp') || '';
+  if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
+  const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
+  if (!/^[a-z]{2}$/.test(node)) return '';
+  const r = await fetch(apiUrl('/api/mp-ticket'), {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ node, action, anonId: getAnonId(), sessionId: getSessionId() }),
+  });
+  if (!r.ok) throw new Error(`ticket_${r.status}`);
+  const body = await r.json();
+  if (!body.ticket) throw new Error('ticket_ausente');
+  return body.ticket;
+}
+
+const mpEl = (id) => document.getElementById(id);
+function mpErro(msg, comRetry = false) {
+  const e = mpEl('mp-erro'); if (!e) return;
+  e.hidden = !msg; e.textContent = msg || '';
+  /* erro com saída, não beco: quando a falha é de rede o botão TENTAR DE NOVO refaz a
+     sondagem inteira — sem ele a única saída era VOLTAR e entrar de novo no painel. */
+  if (msg && comRetry) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mp-retry'; b.textContent = 'TENTAR DE NOVO';
+    b.onclick = () => { ui.click(); abrirMultiplayer(); };
+    e.appendChild(b);
+  }
+}
+/* Chip de estado da conexão (#mp-estado). Um lugar só e sempre visível: "medindo",
+   "online em tal região", "conectando na sala" e "fora do ar" são estados diferentes
+   e a tela antiga não distinguia nenhum deles de "travou". */
+function mpEstado(s, txt) {
+  const e = mpEl('mp-estado'); if (!e) return;
+  e.dataset.s = s; e.textContent = txt;
+}
+// Faixas de ping: o limiar não é gosto — acima de ~120 ms o tiro passa a depender de
+// lag compensation pra tudo, e é aí que começa o "morri atrás da parede".
+const mpQualidade = (ms) => (ms == null ? 'ruim' : ms <= 60 ? 'bom' : ms <= 120 ? 'medio' : 'ruim');
+
+async function abrirMultiplayer() {
+  show('mp-panel');
+  mpErro('');
+  mpMontarFormulario();
+  mpEstado('sondando', 'MEDINDO O PING…');
+  const nos = mpEl('mp-nos');
+  if (nos) nos.innerHTML = '<div class="mp-vazio">medindo o ping dos servidores…</div>';
+  mpEl('mp-salas').innerHTML = '';
+  mpNos = await sondarNos(NOS);
+  // ordena por ping: o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono
+  mpNos.sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
+  const local = new URLSearchParams(location.search).get('mp');
+  if (local) {
+    // ?mp=1 é a máquina local; ?mp=host:porta é um servidor apontado à mão (não confundir os dois).
+    const u = mpUrls(local);
+    const nome = local === '1' ? 'LOCAL (desenvolvimento)' : `SERVIDOR DA URL · ${local}`;
+    const sonda = await sondarNos([{ id: 'url', nome, url: u.ws }]);
+    mpNos.unshift(sonda[0]);
+  }
+  mpDesenharNos();
+  const primeiro = mpNos.find((n) => n.online) || mpNos[0];
+  if (primeiro && primeiro.online) mpSelecionarNo(primeiro);
+  else {
+    mpEstado('erro', 'SERVIDORES FORA DO AR');
+    mpErro('Nenhum servidor respondeu. Pode ser a sua conexão, ou os servidores estão fora do ar.', true);
+    if (primeiro) mpSelecionarNo(primeiro);
+  }
+}
+
+/* Bandeiras REAIS (dono, 31/08: "seria legal se fossem as REAIS, é só baixar e por"):
+   WebP local dos SVGs oficiais do Commons — procedência em public/img/flags/FONTE.md. */
+const MP_BANDEIRAS = {
+  br: { img: 'br', pais: 'Brasil' },
+  us: { img: 'us', pais: 'Estados Unidos' },
+  eu: { img: 'es', pais: 'Espanha' },   // o nó "Europa" vive em Madri; nó novo = linha nova
+};
+function mpCartaoNoHTML(n) {
+  const q = n.online ? mpQualidade(n.ping) : 'ruim';
+  const ping = n.online ? `${n.ping} ms` : 'fora do ar';
+  /* medidor de sinal: 3 barras (bom) / 2 (médio) / 1 (ruim) — o número em ms é exato,
+     as barras são a leitura de longe, mesma faixa do limiar do mpQualidade */
+  const acesas = q === 'bom' ? 3 : q === 'medio' ? 2 : 1;
+  const barras = [1, 2, 3].map((i) => `<i class="${i <= acesas ? 'on' : ''}"></i>`).join('');
+  const band = MP_BANDEIRAS[n.id];
+  const flag = band
+    ? `<img class="mp-flag" src="/img/flags/${band.img}.webp" width="30" height="20" alt="${band.pais}">`
+    : '<span class="mp-flag" aria-hidden="true"></span>';   // nó fora do mapa (ex.: ?mp=1 local)
+  return flag
+    + `<span class="mp-no-info"><span class="mp-no-nome">${n.nome}</span>`
+    + `<span class="mp-no-sub">${n.jogadores} jogando · ${n.salas} sala(s)</span></span>`
+    + `<span class="mp-sinal" data-q="${q}" aria-hidden="true">${barras}</span>`
+    + `<span class="mp-ping" data-q="${q}">${ping}</span>`;
+}
+
+function mpDesenharNos() {
+  const box = mpEl('mp-nos'); if (!box) return;
+  box.innerHTML = '';
+  for (const n of mpNos) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mp-no'; b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(mpNoAtual && mpNoAtual.id === n.id));
+    b.dataset.online = n.online ? '1' : '0';
+    b.innerHTML = mpCartaoNoHTML(n);
+    b.onclick = () => { ui.click(); mpSelecionarNo(n); };
+    box.appendChild(b);
+  }
+}
+
+function mpSelecionarNo(no) {
+  mpNoAtual = no;
+  if (no.online) mpEstado('on', `ONLINE · ${no.nome.split('·')[0].trim()} · ${no.ping} ms`);
+  mpDesenharNos();
+  mpAtualizarSalas();
+  // a lista se refaz sozinha: lotação muda o tempo todo e uma lista velha manda o jogador
+  // pra uma sala que já encheu.
+  clearInterval(mpTimerLista);
+  mpTimerLista = setInterval(() => { if (!document.getElementById('mp-panel').classList.contains('hidden')) mpAtualizarSalas(); }, 5000);
+}
+
+async function mpAtualizarSalas() {
+  const box = mpEl('mp-salas'); if (!box || !mpNoAtual) return;
+  let salas;
+  try { salas = await listRooms(mpNoAtual.http); }
+  catch { box.innerHTML = '<div class="mp-vazio">não deu pra falar com esse servidor.</div>'; return; }
+  if (!salas.length) { box.innerHTML = '<div class="mp-vazio">nenhuma sala aberta. crie a sua abaixo.</div>'; return; }
+  // oficiais primeiro, depois as mais cheias (sala com gente é sala boa de entrar)
+  salas.sort((a, b) => (b.oficial - a.oficial) || (b.players - a.players));
+  box.innerHTML = '';
+  for (const r of salas) {
+    const div = document.createElement('div');
+    div.className = 'mp-sala';
+    /* sem emoji (regra do redesign): PRIVADA e espectador viram texto/tag */
+    const tags = (r.oficial ? '<span class="mp-tag" data-t="oficial">OFICIAL</span>' : '')
+      + (r.private ? '<span class="mp-tag" data-t="privada">PRIVADA</span>' : '')
+      + (r.ctf ? '<span class="mp-tag">CTF</span>' : '');
+    /* lotação como BARRA além do número: sala meio cheia e sala lotada se distinguem
+       de longe, sem ler fração nenhuma */
+    const frac = r.max ? Math.min(1, r.players / r.max) : 0;
+    div.innerHTML =
+      `<div class="mp-sala-top"><div class="mp-sala-nome">${r.name}${tags}</div>`
+      + `<div class="mp-lot"><span class="mp-lot-bar"><i style="width:${Math.round(frac * 100)}%"></i></span>`
+      + `<b>${r.players}</b>/${r.max}${r.spectators ? `<span class="mp-lot-spec">+${r.spectators} assistindo</span>` : ''}</div></div>`
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`
+      + `<div class="mp-acoes"></div>`;
+    const acoes = div.querySelector('.mp-acoes');
+    /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
+       quem joga, e a facção é metade da graça do jogo. O número é a vaga daquele lado — lado
+       cheio apaga em vez de sumir, senão a sala parece ter menos opção do que tem. */
+    for (const lado of ['E', 'B']) {
+      const livres = (r.livre && r.livre[lado]) || 0;
+      const b = document.createElement('button');
+      b.className = 'mp-entrar'; b.type = 'button';
+      b.dataset.lado = lado;
+      b.textContent = `${lado === 'E' ? r.nomeE : r.nomeB} ${livres}`;
+      b.title = livres ? `Entrar no time ${lado === 'E' ? r.nomeE : r.nomeB} (${livres} vaga(s))` : 'Esse lado está cheio';
+      b.disabled = !livres;
+      b.onclick = () => { ui.click(); mpEntrar(r, lado); };
+      acoes.appendChild(b);
+    }
+    const assistir = document.createElement('button');
+    assistir.className = 'mp-assistir'; assistir.type = 'button'; assistir.textContent = 'ASSISTIR';
+    assistir.title = 'Entrar como espectador — dá pra ir pro time depois, quando abrir vaga';
+    assistir.onclick = () => { ui.click(); mpEntrar(r, 'spec'); };
+    const convite = document.createElement('button');
+    convite.className = 'mp-convite-chip'; convite.type = 'button'; convite.textContent = r.convite || 'CONVITE';
+    convite.title = 'Copiar o link de convite desta sala';
+    convite.onclick = () => { ui.click(); mpCopiarConvite(r.convite, convite); };
+    acoes.append(assistir, convite);
+    box.appendChild(div);
+  }
+}
+
+/* Copia o link e CONFIRMA na própria etiqueta. Botão de copiar sem retorno visual é o caso
+   clássico de a pessoa clicar três vezes sem saber se funcionou. */
+async function mpCopiarConvite(convite, botao) {
+  if (!convite) return;
+  const link = linkDeConvite(convite);
+  const antes = botao ? botao.textContent : '';
+  try { await navigator.clipboard.writeText(link); if (botao) botao.textContent = 'COPIADO!'; }
+  catch { if (botao) botao.textContent = convite; mpErro(`Copie à mão: ${link}`); }
+  if (botao) setTimeout(() => { botao.textContent = antes; }, 1600);
+}
+
+/* MODAL "SALA CRIADA" (dono, 31/08): o convite nasce aqui e se copia ANTES de entrar.
+   Fechar (ESC/clique fora) não desfaz a criação — a lista é atualizada pra provar. */
+function mpModalSalaCriada(sala, senha = '') {
+  const m = mpEl('mp-modal');
+  if (!m || !sala.convite) return mpEntrar(sala, 'auto', senha);   // sem modal ou sem código, o fluxo antigo vale
+  mpEl('mp-modal-convite').textContent = sala.convite;
+  const lot = mpEl('mp-modal-lot');
+  if (lot) lot.textContent = `${sala.players | 0}/${sala.max || 10} na sala · ${sala.name || 'SALA'}`;
+  const fecha = () => {
+    m.classList.add('hidden');
+    removeEventListener('keydown', escFecha, true);
+    mpAtualizarSalas();   // a sala nova aparece na lista = prova de que fechar não cancelou
+  };
+  const escFecha = (e) => {
+    if (e.key !== 'Escape' || m.classList.contains('hidden')) return;
+    e.preventDefault(); e.stopPropagation(); ui.back(); fecha();
+  };
+  /* capture=true: o ESC do modal tem de vencer os outros atalhos de ESC do menu */
+  addEventListener('keydown', escFecha, true);
+  m.onpointerdown = (e) => { if (!e.target.closest('.mp-modal-card')) { ui.back(); fecha(); } };
+  const rotula = (b, txt) => { const antes = b.textContent; b.textContent = txt; setTimeout(() => { b.textContent = antes; }, 1600); };
+  const codigo = mpEl('mp-modal-copiar-codigo');
+  if (codigo) codigo.onclick = async () => {
+    ui.click();
+    try { await navigator.clipboard.writeText(sala.convite); rotula(codigo, 'COPIADO!'); }
+    catch { mpErro(`Copie à mão: ${sala.convite}`); fecha(); }
+  };
+  const link = mpEl('mp-modal-copiar-link');
+  if (link) link.onclick = async () => {
+    ui.click();
+    try { await navigator.clipboard.writeText(linkDeConvite(sala.convite)); rotula(link, 'COPIADO!'); }
+    catch { mpErro(`Copie à mão: ${linkDeConvite(sala.convite)}`); fecha(); }
+  };
+  const entrar = mpEl('mp-modal-entrar');
+  if (entrar) entrar.onclick = () => { ui.click(); fecha(); mpEntrar(sala, 'auto', senha); };
+  m.classList.remove('hidden');
+  entrar?.focus();
+}
+window.__mpModalSala = mpModalSalaCriada;   // sonda/captura, mesmo precedente do __mpConvite
+
+/* Entrada por LINK (?sala=BR-7K3M). É o caminho de quem recebeu o convite no zap: abre o jogo
+   já dentro da sala, sem passar pela lista. Sala privada ainda pede senha — o link diz ONDE é
+   a sala, não que você tem permissão. */
+async function mpEntrarPorConvite(txt) {
+  const alvo = parseConvite(txt);
+  show('mp-panel'); mpMontarFormulario();
+  if (!alvo) return mpErro(`Convite inválido: "${txt}". O formato é REGIÃO-CÓDIGO, tipo BR-7K3M.`);
+  mpEstado('conectando', `PROCURANDO ${alvo.convite}…`);
+  const http = httpDoNo(alvo.no);
+  mpNoAtual = { ...alvo.no, http, ticketNode: alvo.no.id };
+  const sala = await salaPorConvite(http, alvo.codigo);
+  if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
+  mpEntrar(sala, 'auto');
+}
+window.__mpConvite = mpEntrarPorConvite;
+
+function mpMontarFormulario() {
+  const e = mpEl('mp-fac-e'), b = mpEl('mp-fac-b');
+  if (e && !e.options.length) {
+    for (const [id, nome] of Object.entries(FACCAO_NOME_UI)) {
+      e.add(new Option(nome, id)); b.add(new Option(nome, id));
+    }
+    e.add(new Option('SORTEAR A CADA PARTIDA', 'random'));
+    b.add(new Option('SORTEAR A CADA PARTIDA', 'random'));
+    e.value = 'E'; b.value = 'B';
+  }
+  const priv = mpEl('mp-privada'), wrap = mpEl('mp-senha-wrap');
+  if (priv && wrap) priv.onchange = () => { wrap.hidden = !priv.checked; };
+  const criar = mpEl('mp-criar');
+  if (criar) criar.onclick = async () => {
+    ui.click(); mpErro('');
+    if (!mpNoAtual) return mpErro('Escolha um servidor primeiro.');
+    const privada = mpEl('mp-privada').checked;
+    const senha = mpEl('mp-senha').value.trim();
+    if (privada && !senha) return mpErro('Sala privada precisa de senha.');
+    try {
+      const ticket = await obterMpTicket('create');
+      const sala = await createRoom(mpNoAtual.http, {
+        name: mpEl('mp-nome').value.trim(), rotacao: mpEl('mp-rotacao').value,
+        faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
+        ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
+        creatorNick: ($('nick-input').value || '').trim() || null,
+      }, ticket);
+      let cheia = { ...sala, id: sala.room || sala.id };
+      /* o convite pode não vir no POST — a lista é a fonte que já o carrega; busca a sala
+         recém-criada lá antes de mostrar o modal, que existe PARA o copy do código */
+      if (!cheia.convite) {
+        try {
+          const daLista = (await listRooms(mpNoAtual.http)).find((r) => r.id === cheia.id);
+          if (daLista) cheia = { ...daLista, ...cheia, convite: daLista.convite };
+        } catch { /* sem lista, o modal mostra a sala sem código */ }
+      }
+      mpModalSalaCriada(cheia, senha);
+    } catch (err) {
+      mpErro(err && err.message === 'http_429'
+        ? 'Esse servidor está no limite de salas. Tente outra região.'
+        : 'Não deu pra criar a sala. Tente de novo.');
+    }
+  };
+  const at = mpEl('mp-atualizar'); if (at) at.onclick = () => { ui.click(); mpAtualizarSalas(); };
+  const back = mpEl('mp-back'); if (back) back.onclick = () => { ui.click(); clearInterval(mpTimerLista); show('main-menu'); };
+  /* JOGO RÁPIDO: a melhor sala aberta do nó de menor ping — oficiais primeiro, depois as
+     mais cheias (mesmo critério da lista). Sem sala com vaga, CRIA uma pública padrão:
+     "rápido" que devolve "não achei nada" não é rápido, é beco. */
+  const quick = mpEl('mp-quick');
+  if (quick) quick.onclick = async () => {
+    ui.click(); mpErro('');
+    if (!mpNoAtual || !mpNoAtual.online) return mpErro('Nenhum servidor online agora.');
+    mpEstado('conectando', 'PROCURANDO SALA…');
+    let salas = [];
+    try { salas = await listRooms(mpNoAtual.http); } catch { /* lista fora = cria sala */ }
+    const aberta = salas
+      .filter((r) => !r.private && ((r.livre?.E || 0) + (r.livre?.B || 0)) > 0)
+      .sort((a, b) => (b.oficial - a.oficial) || (b.players - a.players))[0];
+    if (aberta) return mpEntrar(aberta, 'auto');
+    try {
+      const ticket = await obterMpTicket('create');
+      const sala = await createRoom(mpNoAtual.http, {
+        name: 'TRETA RÁPIDA', rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
+        ctf: false, private: false, password: '', maxPlayers: 10,
+        creatorNick: ($('nick-input').value || '').trim() || null,
+      }, ticket);
+      mpEntrar({ ...sala, id: sala.room || sala.id }, 'auto');
+    } catch {
+      mpEstado('on', `ONLINE · ${mpNoAtual.nome.split('·')[0].trim()} · ${mpNoAtual.ping} ms`);
+      mpErro('Não deu pra entrar agora. Tente uma sala da lista.');
+    }
+  };
+  /* entrada por CÓDIGO (BR-7K3M): o caminho de quem recebeu convite fora do link */
+  const form = mpEl('mp-convite-form');
+  if (form && !form._ok) {
+    form._ok = true;
+    form.onsubmit = (e) => {
+      e.preventDefault(); ui.click();
+      const txt = (mpEl('mp-convite-in')?.value || '').trim();
+      if (!txt) return mpErro('Digite o código do convite (formato REGIÃO-CÓDIGO, tipo BR-7K3M).');
+      mpEntrarPorConvite(txt);
+    };
+  }
+}
+
+/* Abre o socket e SÓ ENTÃO começa a partida. A ordem importa: o welcome traz o mapa, as
+   facções e o modo que o servidor está rodando — é ele que manda, não o que estava
+   escolhido no menu. Começar antes seria carregar o mapa errado e trocar na cara do jogador. */
+async function mpEntrar(sala, team = 'auto', senha = '') {
+  if (mpConectando) return;   // dois cliques em ENTRAR não podem abrir dois sockets
+  mpErro('');
+  const nick = ($('nick-input').value || '').trim();
+  if (sala.private && !senha) {
+    senha = (prompt('Essa sala é privada. Senha:') || '').trim();
+    if (!senha) return;
+  }
+  mpEstado('conectando', `CONECTANDO · ${sala.name || sala.convite || 'SALA'}…`);
+  mpConectando = true;
+  let ticket;
+  try { ticket = await obterMpTicket('connect'); }
+  catch {
+    mpConectando = false;
+    return mpErro('Não deu para autorizar a conexão. Tente novamente.');
+  }
+  const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
+    nome: nick || null, room: sala.id, pw: senha, team, ticket,
+  });
+  /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
+     mensagem lê como "cliquei e não aconteceu nada" (BUG-88). O prazo é do net.connect(). */
+  mpErro(`Conectando na sala ${sala.name || sala.id}…`);
+  let welcome;
+  try { welcome = await net.connect(); }
+  catch (err) {
+    mpConectando = false;
+    const m = String(err && err.message || '');
+    if (mpNoAtual.online) mpEstado('on', `ONLINE · ${mpNoAtual.nome.split('·')[0].trim()} · ${mpNoAtual.ping} ms`);
+    else mpEstado('erro', 'SERVIDORES FORA DO AR');
+    return mpErro(m.includes('bad_password') ? 'Senha errada.'
+      : m.includes('room_full') ? 'Sala cheia.'
+      : m.includes('room_not_found') ? 'Essa sala não existe mais.'
+      : m.includes('timeout') ? 'O servidor demorou demais pra responder. Tente de novo ou escolha outra região.'
+      : 'Não deu pra conectar nesse servidor.');
+  }
+  mpConectando = false;
+  mpErro('');
+  mpEstado('on', `NA SALA · ${sala.name || sala.convite || ''}`);
+  clearInterval(mpTimerLista);
+  mpSessao = { net, sala, no: mpNoAtual };
+  /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê. */
+  if (MAPS[welcome.map]) currentMap = welcome.map;
+  matchMode = welcome.ctf ? 'ctf' : 'rounds';
+  modoEscolhido = true;
+  net.onClose = () => mpDesconectou();
+  net.onSlot = async (m) => {
+    await transitionSlot(m, net.meta, {
+      team: currentTeam, faction: currentFaction, enemyFaction: currentEnemyFaction, char: currentChar,
+    }, (id) => CHARACTERS.some((c) => c.id === id), async (next) => {
+      currentTeam = next.team; currentFaction = next.faction;
+      currentEnemyFaction = next.enemyFaction; currentChar = next.char;
+      mpAtualizarBarraSpec(m);
+      if (mpSessao?.net === net) await startGame(currentTeam, currentChar, currentEnemyFaction, true);
+    });
+  };
+  // Nova partida no servidor (mapa girou): mesmo conteúdo do welcome, remonta por cima.
+  // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
+  net.onPartida = async (m) => {
+    if (mpSessao?.net !== net) return;
+    if (MAPS[m.map]) currentMap = m.map;
+    matchMode = m.ctf ? 'ctf' : 'rounds';
+    await mpMontarPartida(net, m);
+  };
+  await mpMontarPartida(net, welcome);
+}
+
+/* Monta (ou remonta) a partida a partir de um welcome/partida: lado, facções e personagem
+   são do CORPO que o servidor deu; espectador usa qualquer um da facção (preload não vazio). */
+async function mpMontarPartida(net, m) {
+  // o lado do jogador vem do servidor; a facção também (a sala LIVRE sorteia)
+  const lado = m.yourTeam === 'B' ? 'B' : 'E';
+  const faccaoMinha = lado === 'B' ? m.faccaoB : m.faccaoE;
+  const faccaoDele = lado === 'B' ? m.faccaoE : m.faccaoB;
+  const meuNoRoster = (m.roster || []).find((r) => r.id === m.yourEnt);
+  const personagem = (meuNoRoster && CHARACTERS.some((c) => c.id === meuNoRoster.char) ? meuNoRoster.char : null)
+    || (CHARACTERS.find((c) => c.team === faccaoMinha) || CHARACTERS[0]).id;
+  await startGame(lado, personagem, faccaoDele, true);
+  if (mpSessao?.net === net) mpAtualizarBarraSpec(m);
+}
+
+/* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
+   o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
+function mpDesconectou() {
+  if (!mpSessao) return;
+  try { if (game) sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia a saída */ }
+  mpSessao = null;
+  clearTelemetryGameContext();
+  mpFecharBarraSpec();
+  try { if (game) game.dispose(); } catch { /* já foi */ }
+  game = null; window.__game = null;
+  try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
+  show('mp-panel');
+  /* o aviso entra DEPOIS da sondagem: abrirMultiplayer começa com mpErro('') — na ordem
+     antiga a mensagem "caiu" vivia um frame e era apagada antes de alguém ler */
+  abrirMultiplayer().then(() => mpErro('A conexão com o servidor caiu. Entre de novo.'));
+}
+
+/* Barra do espectador: quem está assistindo tem que saber que está assistindo, de quem é a
+   visão, e como entrar em campo quando abrir vaga. Sem ela o modo espectador é
+   indistinguível de "o jogo travou olhando pro outro". */
+function mpAtualizarBarraSpec(estado) {
+  if (!mpSessao) return;
+  const espectando = !!(estado && estado.espectador);
+  let bar = document.getElementById('mp-spec-bar');
+  if (!espectando) { mpFecharBarraSpec(); return; }
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'mp-spec-bar';
+    bar.innerHTML = '<span>ASSISTINDO <b id="mp-spec-quem">—</b></span>'
+      + '<button id="mp-spec-prev" type="button">◂ ANTERIOR</button>'
+      + '<button id="mp-spec-next" type="button">PRÓXIMO ▸</button>'
+      + '<button id="mp-spec-e" type="button">ENTRAR NO TIME E</button>'
+      + '<button id="mp-spec-b" type="button">ENTRAR NO TIME B</button>'
+      + '<button id="mp-spec-sair" type="button">SAIR</button>';
+    document.body.appendChild(bar);
+    bar.querySelector('#mp-spec-prev').onclick = () => window.__game?._mp?.trocarAlvo(-1);
+    bar.querySelector('#mp-spec-next').onclick = () => window.__game?._mp?.trocarAlvo(1);
+    bar.querySelector('#mp-spec-e').onclick = () => mpSessao?.net.pedirTime('E');
+    bar.querySelector('#mp-spec-b').onclick = () => mpSessao?.net.pedirTime('B');
+    bar.querySelector('#mp-spec-sair').onclick = () => { mpSair(); };
+    /* Atualiza a lotação dos botões pelo SNAPSHOT (é o servidor que diz se há vaga). Um botão
+       "ENTRAR" que está sempre aceso e não faz nada é pior que um botão apagado. */
+    bar._timer = setInterval(() => {
+      const mp = window.__game?._mp;
+      const vagas = mp?.vagas;
+      const quem = document.getElementById('mp-spec-quem');
+      if (quem) quem.textContent = mp?.nomeAlvo || '—';
+      const be = document.getElementById('mp-spec-e'), bb = document.getElementById('mp-spec-b');
+      // nome da FACÇÃO, não a letra do lado (BUG-110)
+      const meta = mpSessao?.net?.meta || {};
+      const nomeE = meta.nomeE || 'TIME E', nomeB = meta.nomeB || 'TIME B';
+      if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR: ${nomeE}${vagas ? ` (${vagas.E})` : ''}`; }
+      if (bb) { bb.disabled = !(vagas && vagas.B > 0); bb.textContent = `ENTRAR: ${nomeB}${vagas ? ` (${vagas.B})` : ''}`; }
+    }, 400);
+  }
+}
+function mpFecharBarraSpec() {
+  const bar = document.getElementById('mp-spec-bar');
+  if (bar) { clearInterval(bar._timer); bar.remove(); }
+}
+function mpEncerrarSessao() {
+  const s = mpSessao; mpSessao = null;
+  mpFecharBarraSpec();
+  try { s?.net.close(); } catch { /* já fechado */ }
+}
+/* Sair da partida online. Fecha o socket ANTES de derrubar o jogo: o servidor precisa
+   liberar o corpo (senão fica um manequim segurando vaga até o heartbeat derrubar). */
+function mpSair() {
+  try { if (game) sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia a saída */ }
+  mpEncerrarSessao();
+  clearTelemetryGameContext();
+  try { if (game) game.dispose(); } catch { /* já foi */ }
+  game = null; window.__game = null;
+  try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
+  show('main-menu');
 }

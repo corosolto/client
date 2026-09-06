@@ -1,13 +1,21 @@
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
 // Real CS 1.6 samples are NOT bundled (Valve copyright) — drop your own legally-owned
 // files in audio/cs/ and register them under "cs" in audio/manifest.json.
-/* Fator global do tiro — ver shotWeapon(). 0,62 = -4,2 dB, escolhido pra deixar a arma
-   audivelmente à frente da voz e do passo sem cobri-los (era 1,0: o tiro dominava tudo, e
-   o duck de 0,3 em cima ainda derrubava a voz de propósito). Tunável ao vivo: ?gunvol=N */
+/* Fator global do tiro — ver shotWeapon(). 0,42 = -7,5 dB, revisão pedida pelo dono no
+   BUG-140 para a arma não cobrir voz e passo (era 1,0; depois 0,62 e 0,52).
+   O duck continua independente. Tunável ao vivo: ?gunvol=N. */
 const GUN_VOL = (() => {
   const q = +new URLSearchParams(location.search).get('gunvol');
-  return Number.isFinite(q) && q > 0 ? q : 0.62;
+  return Number.isFinite(q) && q > 0 ? q : 0.42;
 })();
+/* Samples de tiro do Fab têm caudas de até 3,5 s, enquanto uma automática chega a
+   disparar a cada 65–120 ms. Sem estes tetos, uma única arma acumula dezenas de
+   BufferSources e cobre passos/vozes; vários bots ainda multiplicam o problema. */
+const MAX_SHOT_VOICES_PER_SAMPLE = 4;
+const MAX_SHOT_VOICES = 16;
+// Sem dublagem genérica: Funkeiros usam apenas takes próprios estruturados;
+// Palhaços ficam sem fala até existir catálogo aprovado. Fish e SFX são separados.
+const NO_GENERIC_VOICE_FACTIONS = new Set(['C', 'F']);
 
 export const CHARACTER_SELECT_VOICE = Object.freeze({
   gotinha: 'audio/a/cc77ec4f134a71ba.mp3',
@@ -18,13 +26,34 @@ export const CHARACTER_SELECT_VOICE = Object.freeze({
   funkraiz: 'audio/a/d5b87c3d2638e166.mp3',
 });
 
+const VOICE_FALLBACK = Object.freeze({
+  E: ['Boa!', 'Avança!', 'Pegamos!'],
+  B: ['Boa!', 'Vai pra cima!', 'Derrubamos!'],
+  U: ['Bonito tiro!', 'É nossa!', 'Bora pra treta!'],
+  C: ['O circo chegou!', 'Ingresso pago!', 'A praça é nossa!'],
+  F: ['É os cria!', 'Bicho solto!', 'Passou o corre!'],
+});
+const GENERAL_FALLBACK = Object.freeze({
+  headshot: 'Headshot!',
+  doublekill: 'Double kill!',
+  triplekill: 'Triple kill!',
+  multikill: 'Multi kill!',
+  megakill: 'Mega kill!',
+  killingspree: 'Killing spree!',
+  godlike: 'Godlike!',
+});
+const ROUND_FALLBACK = Object.freeze(['', 'Round one!', 'Round two!', 'Round three!',
+  'Round four!', 'Round five!', 'Round six!', 'Round seven!']);
+
 export class Sfx {
   constructor() {
     this.ctx = null; this.master = null; this.vol = 0.7;
     this.pack = null;            // parsed manifest
     this.speechEnabled = true;   // falas dos times (memes) — vitória/UT/arma sempre tocam
     this._lastVoice = 0;
+    this._lastKillVoice = 0;
     this._radioAudio = null;
+    this._announcerAudio = null; // locucao prioritaria: um callout por vez
     this._live = new Set();      // samples HTMLAudio tocando (pra duck de vozes)
     this._stepI = -1;            // round-robin dos passos
     this.reverbOn = false;       // send de reverb leve (opt-in: ?reverb=1) — OFF por padrão
@@ -34,7 +63,9 @@ export class Sfx {
     // Local pack first (audio/manifest.json, gitignored — dev's own CS samples);
     // fall back to the committed CC0 pack (real gun recordings, public domain) so
     // production plays real shots instead of the synth. Never throws.
-    for (const url of ['audio/manifest.json?v=7', 'audio/manifest.default.json?v=1']) {
+    // A chave acompanha a release de fetch-audio.sh; se atrasar, a CDN conserva catálogo
+    // antigo mesmo com os MP3 novos presentes no deployment (BUG-109).
+    for (const url of ['audio/manifest.json?v=10', 'audio/manifest.default.json?v=1']) {
       try {
         const r = await fetch(url, { cache: 'no-cache' });
         if (r.ok) { this.pack = await r.json(); return; }
@@ -42,15 +73,16 @@ export class Sfx {
     }
     this.pack = null;
   }
-  _sample(url, vol = 1) {
+  _sample(url, vol = 1, duckable = true, rate = 1) {
     try {
       const a = new Audio(encodeURI(url));
       // o "fahhh...bro" é MUITO alto — abaixa bastante onde quer que toque (ingame + captura)
       if (/fah{4,}/i.test(url)) vol *= 0.35;
+      if (Number.isFinite(rate) && rate > 0) a.playbackRate = rate;
       a._baseVol = Math.min(1, this.vol * vol);
-      a.volume = a._baseVol * (this._ducked ? this._duckAmt : 1);
-      this._live.add(a);
-      const off = () => this._live.delete(a);
+      a.volume = a._baseVol * (duckable && this._ducked ? this._duckAmt : 1);
+      if (duckable) this._live.add(a);
+      const off = () => { if (duckable) this._live.delete(a); };
       a.addEventListener('ended', off); a.addEventListener('pause', off); a.addEventListener('error', off);
       a.play().catch(() => off());
       return a;
@@ -77,52 +109,101 @@ export class Sfx {
   }
   _pick(arr) { return arr && arr.length ? arr[(Math.random() * arr.length) | 0] : null; }
 
+  _speak(text, { lang = 'pt-BR', volume = 0.72, interrupt = false } = {}) {
+    if (!this.speechEnabled || !text || !globalThis.speechSynthesis || !globalThis.SpeechSynthesisUtterance) return false;
+    try {
+      if (interrupt) globalThis.speechSynthesis.cancel();
+      const utterance = new globalThis.SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.volume = Math.max(0, Math.min(1, this.vol * volume));
+      utterance.rate = lang === 'en-US' ? 0.92 : 1;
+      utterance.pitch = lang === 'en-US' ? 0.82 : 0.94;
+      this._spokenUtterance = utterance;
+      globalThis.speechSynthesis.speak(utterance);
+      return true;
+    } catch { return false; }
+  }
+  _voiceFallback(team) { return this._pick(VOICE_FALLBACK[team]) || this._pick(VOICE_FALLBACK.U); }
+
   // team voice line (kill celebration / random), throttled
   voice(team, minGap = 3.5) {
-    if (!this.speechEnabled) return;
+    if (!this.speechEnabled) return false;
+    if (NO_GENERIC_VOICE_FACTIONS.has(team)) return false;
     const now = performance.now();
-    if (now - this._lastVoice < minGap * 1000) return;
+    if (this._lastVoice > 0 && now - this._lastVoice < minGap * 1000) return false;
     const arr = this.pack?.voice?.[team];
-    if (!arr || !arr.length) return;
     // IN-GAME (grito de kill): prioriza clipes CURTOS. O array vem ordenado do mais curto
     // pro mais longo (por tamanho no manifest); random*random puxa o sorteio pro início.
-    const f = arr[Math.floor(Math.random() * Math.random() * arr.length)];
-    if (f) { this._lastVoice = now; this._sample(f); }
+    const f = arr?.length ? arr[Math.floor(Math.random() * Math.random() * arr.length)] : null;
+    const played = f ? !!this._sample(f) : this._speak(this._voiceFallback(team), { volume: 0.72 });
+    if (played) this._lastVoice = now;
+    return played;
   }
   // player-triggered radio line (CS-style) — always plays, stops previous
   radioVoice(team) {
     if (!this.speechEnabled) return false;
+    if (NO_GENERIC_VOICE_FACTIONS.has(team)) return false;
     const f = this._pick(this.pack?.voice?.[team]);
-    if (!f) return false;
-    if (this._radioAudio) this._radioAudio.pause();
-    this._radioAudio = this._sample(f);
+    if (f) {
+      if (this._radioAudio) this._radioAudio.pause();
+      this._radioAudio = this._sample(f);
+    } else if (!this._speak(this._voiceFallback(team), { volume: 0.78, interrupt: true })) return false;
     this._lastVoice = performance.now();
     return true;
   }
-  // Voz por personagem; sem o arquivo no pacote, cai no pool da facção. Kills
-  // respeitam o cooldown global para os oito bots não se sobreporem.
+  // Fala autoral do personagem. Os nove Funkeiros aprovados têm um take próprio por
+  // select/kill/radio/round; só cai na facção/voz sintética quando esse take não existe.
   characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
     if (!this.speechEnabled) return false;
     const now = performance.now();
-    if (event === 'kill' && now - this._lastVoice < 3500) return false;
+    if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
     const own = this.pack?.characterVoice?.[characterId]?.[event];
-    const f = this._pick(own?.length ? own : this.pack?.voice?.[fallbackFaction]);
-    if (!f) return false;
-    if (interrupt && this._characterAudio) this._characterAudio.pause();
-    const audio = this._sample(f);
-    if (!audio) return false;
-    this._characterAudio = audio; this._lastVoice = now;
-    const text = this.pack?.characterVoiceText?.[f] || null;
-    if (this.onCharacterVoice) { try { this.onCharacterVoice({ characterId, event, text, file: f }); } catch {} }
-    return true;
+    const genericPool = NO_GENERIC_VOICE_FACTIONS.has(fallbackFaction) ? null : this.pack?.voice?.[fallbackFaction];
+    const file = this._pick(own?.length ? own : genericPool);
+    if (file) {
+      if (interrupt && this._characterAudio) this._characterAudio.pause();
+      const audio = this._sample(file);
+      if (!audio) return false;
+      this._characterAudio = audio; this._lastVoice = now;
+      if (event === 'kill') this._lastKillVoice = now;
+      const text = this.pack?.characterVoiceText?.[file] || null;
+      if (this.onCharacterVoice) {
+        try { this.onCharacterVoice({ characterId, event, text, file }); } catch {}
+      }
+      return true;
+    }
+    if (NO_GENERIC_VOICE_FACTIONS.has(fallbackFaction)) return false;
+    const spoken = this._speak(this._voiceFallback(fallbackFaction), { volume: 0.78, interrupt });
+    if (spoken) {
+      this._lastVoice = now;
+      if (event === 'kill') this._lastKillVoice = now;
+    }
+    return spoken;
   }
   characterSelectVoice(characterId, faction, rosterIds) {
     if (!this.speechEnabled) return false;
     const rosterSlot = rosterIds?.indexOf(characterId) ?? -1;
     if (rosterSlot < 0) return false;
+    const ownSelect = this.pack?.characterVoice?.[characterId]?.select;
+    if (ownSelect?.length) {
+      if (this._characterSelectAudio) this._characterSelectAudio.pause();
+      const file = ownSelect[rosterSlot % ownSelect.length];
+      this._characterSelectAudio = this._sample(file);
+      const text = this.pack?.characterVoiceText?.[file] || null;
+      if (this.onCharacterVoice) {
+        try { this.onCharacterVoice({ characterId, event: 'select', text, file }); } catch {}
+      }
+      return !!this._characterSelectAudio;
+    }
+    if (NO_GENERIC_VOICE_FACTIONS.has(faction)) return false;
     const pool = this.pack?.voice?.[faction];
-    const characterVoice = { ...CHARACTER_SELECT_VOICE, ...this.pack?.characterVoice };
-    let file = characterVoice[characterId];
+    const configuredVoice = this.pack?.characterVoice || {};
+    const flatConfigured = Object.fromEntries(Object.entries(configuredVoice)
+      .filter(([, value]) => typeof value === 'string'));
+    const characterVoice = { ...CHARACTER_SELECT_VOICE, ...flatConfigured };
+    let file = flatConfigured[characterId];
+    const knownFile = CHARACTER_SELECT_VOICE[characterId];
+    if (!file && knownFile && pool?.includes(knownFile)) file = knownFile;
     if (!file) {
       const reserved = new Set(rosterIds
         .map((id) => characterVoice[id])
@@ -132,7 +213,7 @@ export class Sfx {
         .indexOf(characterId);
       file = pool?.filter((candidate) => !reserved.has(candidate))[fallbackSlot];
     }
-    if (!file) return false;
+    if (!file) return this._speak(this._voiceFallback(faction), { volume: 0.78, interrupt: true });
     if (this._characterSelectAudio) this._characterSelectAudio.pause();
     this._characterSelectAudio = this._sample(file);
     return !!this._characterSelectAudio;
@@ -184,7 +265,22 @@ export class Sfx {
     step();
   }
   csSound(key) { const f = this._cs(key); if (f) { this._sample(f); return true; } return false; }
-  general(kind) { const f = this._pick(this.pack?.general?.[kind]); if (f) { this._sample(f); return true; } return false; }
+  _announcer(pool, vol = 0.78) {
+    const f = this._pick(pool);
+    if (!f) return false;
+    if (this._announcerAudio) { try { this._announcerAudio.pause(); } catch {} }
+    // Callout curto nao entra no duck dos tiros: precisa continuar inteligivel.
+    this._announcerAudio = this._sample(f, vol, false);
+    return !!this._announcerAudio;
+  }
+  general(kind) {
+    return this._announcer(this.pack?.general?.[kind])
+      || this._speak(GENERAL_FALLBACK[kind], { lang: 'en-US', volume: 0.78, interrupt: true });
+  }
+  roundNumber(number) {
+    return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72)
+      || this._speak(ROUND_FALLBACK[number], { lang: 'en-US', volume: 0.72, interrupt: true });
+  }
   captureSound(faction) { const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }   // captura de bandeira (CTF): pool por facção (captureByTeam) c/ fallback global
   _cs(key) { const v = this.pack?.cs?.[key]; return v && v.length ? this._pick(v) : null; }
 
@@ -289,10 +385,32 @@ export class Sfx {
     // MD97 = IMBEL MD97, o fuzil 5,56 do Exército Brasileiro — NÃO é espingarda. Estava em
     // 'shotgun' só porque o viewmodel dela reaproveita a malha da shotgun (STATIC_CLASS no
     // game.js), e a classe de SOM foi arrastada junto. Som de classe é calibre, não malha.
-    pistol: 'pistol', deagle: 'pistol', revolver38: 'pistol', m92: 'pistol',   // m92 = Beretta 92 (era 'ak', errado)
-    ak: 'ak', akm: 'ak', g3: 'ak',                                              // 7.62 grave/soco
+    pistol: 'pistol', deagle: 'pistol', revolver38: 'pistol',
+    m92: 'ak', ak: 'ak', akm: 'ak', g3: 'ak',   // M92 daqui = Zastava 7,62 curta, não Beretta
     m4: 'ar', scar: 'ar', famas: 'ar', tavor: 'ar', carbine: 'ar', md97: 'ar', // 5.56 crisp (era fallback 'rifle')
   };
+  /* Um disparo tem UMA fonte. O WAV Fab pode receber apenas rate/EQ/gain; nunca outro
+     transiente/sub sintetizado por cima. Perfis exatos separam armas da mesma família.
+     A AK fica totalmente neutra para preservar o take aprovado na escuta local. */
+  static SAMPLE_WEAPON_SIGNATURE = {
+    ak:         { rate: 1.00, hp: 0,   lp: 22000, gain: 1.00 },
+    pistol:     { rate: 1.12, hp: 220, lp: 11000, gain: .84 },
+    revolver38: { rate: .98,  hp: 85,  lp: 9000,  gain: 1.02 },
+    deagle:     { rate: .88,  hp: 35,  lp: 7200,  gain: 1.12 },
+    m92:        { rate: .98,  hp: 55,  lp: 9000,  gain: 1.04 },
+    shotgun:    { rate: 1.00, hp: 0,   lp: 22000, gain: .95 },
+  };
+  static SAMPLE_CLASS_SIGNATURE = {
+    ak:      { rate: 1.00, hp: 0,   lp: 22000, gain: 1.00 },
+    pistol:  { rate: 1.06, hp: 150, lp: 10000, gain: .92 },
+    smg:     { rate: 1.04, hp: 120, lp: 9500,  gain: .92 },
+    ar:      { rate: 1.01, hp: 75,  lp: 11000, gain: .98 },
+    rifle:   { rate: .99,  hp: 60,  lp: 9500,  gain: 1.00 },
+    lmg:     { rate: .94,  hp: 35,  lp: 7600,  gain: 1.05 },
+    sniper:  { rate: .90,  hp: 28,  lp: 6800,  gain: 1.08 },
+    shotgun: { rate: .96,  hp: 28,  lp: 7800,  gain: 1.08 },
+  };
+  static SAMPLE_SOURCE_NEUTRAL = Object.freeze({ rate: 1, hp: 0, lp: 22000, gain: 1 });
   // Ressonador metálico (mini struckResonator do CoD): burst de ruído em bandpass com Q alto
   // e decay curto — soa como ferrolho/mola, não como "beep atrasado" (o tal eco estranho).
   _resonator(t, freqs, lvl) {
@@ -334,7 +452,7 @@ export class Sfx {
     this.ensure(); if (!this.ctx) return;
     const R = this.ctx, t = R.currentTime + propDelay;
     // sidechain: tiro abaixa vozes/rádio/jingles por ~160ms (tiro perto ducka mais)
-    this.duck(dist < 12 ? 0.3 : 0.55, 0.16);
+    this.duck(Sfx.duckTiro(dist), 0.16);
     const bus = R.createGain(); const lim = R.createDynamicsCompressor();
     lim.threshold.value = -5; lim.knee.value = 8; lim.ratio.value = 14; lim.attack.value = 0.002; lim.release.value = 0.12;
     if (pan) {   // StereoPanner entre o bus da voz e o compressor (pan simples, sem HRTF)
@@ -459,6 +577,177 @@ export class Sfx {
     }
     this._send(out, 0.06 + far * 0.14);   // reverb opt-in: mais "sala" de longe, quase nada em 1ª pessoa
   }
+  /* UMA regra de duck para sample e synth — o sample usava 0.3 fixo (lição 2).
+     Régua: `npm run eval:audioespacial`, cláusula ESP4. */
+  static duckTiro(dist) { return dist < 12 ? 0.3 : 0.55; }
+
+  /* Tiro por sample no grafo: HTMLAudio não tem pan nem `start(t)`, então pan e
+     propDelay que o game.js calcula eram descartados. Régua ESP2/ESP3. */
+  _loadShotSample(url) {
+    this.ensure();
+    this._shotBuf = this._shotBuf || new Map();
+    this._shotCarregando = this._shotCarregando || new Map();
+    const buf = this._shotBuf.get(url);
+    if (!this.ctx || buf === null) return Promise.resolve(buf || null);
+    if (buf !== undefined) return Promise.resolve(buf);
+    if (!this._shotCarregando.has(url)) {
+      this._shotCarregando.set(url, (async () => {
+        try {
+          const res = await fetch(encodeURI(url));
+          if (!res.ok) throw new Error(`http ${res.status}`);
+          const decoded = await this.ctx.decodeAudioData(await res.arrayBuffer());
+          this._shotBuf.set(url, decoded);
+          return decoded;
+        } catch (error) {
+          this._shotBuf.set(url, null);
+          console.warn('[sfx] sample de tiro não carregou; o synth assume', url, error?.message || error);
+          return null;
+        } finally {
+          this._shotCarregando.delete(url);
+        }
+      })());
+    }
+    return this._shotCarregando.get(url);
+  }
+  async preloadWeaponSamples(weapons = []) {
+    this.ensure();
+    if (!this.ctx || !this.pack?.weaponSamples) return;
+    const query = new URLSearchParams(location.search);
+    const packId = query.has('gunpack') ? query.get('gunpack') : this.pack?.defaultWeaponPack;
+    const fallbackWeapons = this.pack?.weaponPacks?.[packId]?.fallbackWeapons || [];
+    /* Armas que o pack ativo não cobre podem aparecer depois do preload inicial
+       (pickup/troca). Aquecê-las aqui evita que o primeiro uso caia no synth genérico. */
+    const requestedWeapons = [...new Set([...weapons, ...fallbackWeapons])];
+    const urls = [...new Set(requestedWeapons.flatMap((weapon) => this._weaponPool(weapon)))];
+    await Promise.all(urls.map((url) => this._loadShotSample(url)));
+  }
+  _weaponPack(weapon) {
+    const query = new URLSearchParams(location.search);
+    const id = query.has('gunpack') ? query.get('gunpack') : this.pack?.defaultWeaponPack;
+    const pack = id ? this.pack?.weaponPacks?.[id] : null;
+    const cfg = pack?.weapons?.[weapon];
+    if (!cfg) return null;
+    const requestedStyle = query.get('gunstyle');
+    const style = cfg.styles?.[requestedStyle] ? requestedStyle : cfg.defaultStyle;
+    const pool = cfg.styles?.[style] || [];
+    const gain = Number.isFinite(pack.gain) && pack.gain >= 0 ? pack.gain : 1;
+    return pool.length ? { id, pool, neutral: pack.neutralPlayback === true, gain } : null;
+  }
+  _weaponPool(weapon) {
+    const selectedPack = this._weaponPack(weapon);
+    if (selectedPack) return selectedPack.pool;
+    const candidates = this.pack?.weaponCandidates?.[weapon];
+    if (weapon === 'shotgun' && candidates?.length) return candidates;
+    return this.pack?.weapons?.[weapon] || [];
+  }
+  _weaponSample(weapon) {
+    const query = new URLSearchParams(location.search);
+    const selectedPack = this._weaponPack(weapon);
+    const pool = selectedPack?.pool || this._weaponPool(weapon);
+    if (!pool.length) return undefined;
+    const key = selectedPack ? 'guntake' : (weapon === 'shotgun' ? 'shotguntake' : null);
+    if (key && query.has(key)) {
+      const requested = Number.parseInt(query.get(key) || '1', 10);
+      const index = Number.isFinite(requested) ? Math.max(1, Math.min(pool.length, requested)) - 1 : 0;
+      return pool[index];
+    }
+    return this._pick(pool);
+  }
+  _shotSample(url, weapon, dist, vol, pan, propDelay, neutral = this.pack?.weaponSamplesAuthentic === true) {
+    this.ensure();
+    this._shotBuf = this._shotBuf || new Map();
+    const buf = this._shotBuf.get(url);
+    /* O jogo pré-carrega os WAVs das armas da partida. Se uma URL falhar ou uma chamada
+       externa chegar antes do preload, false mantém o synth apenas como contingência. */
+    if (!this.ctx || !buf) { if (buf !== null) this._loadShotSample(url); return false; }
+    /* O duck fica DEPOIS das saídas por false: quem devolve false não tocou, e o
+       `_gunshot` que assume ducka sozinho — duckar aqui duplicaria o sidechain. */
+    this.duck(Sfx.duckTiro(dist), 0.16);
+    const R = this.ctx, t = R.currentTime + propDelay;
+    const src = R.createBufferSource(); src.buffer = buf;
+    const cls = Sfx.GUN_CLASS[weapon] || 'rifle';
+    const signature = neutral
+      ? Sfx.SAMPLE_SOURCE_NEUTRAL
+      : (Sfx.SAMPLE_WEAPON_SIGNATURE[weapon]
+        || Sfx.SAMPLE_CLASS_SIGNATURE[cls]
+        || Sfx.SAMPLE_CLASS_SIGNATURE.rifle);
+    src.playbackRate.value = signature.rate;
+    this._shotVoices = this._shotVoices || [];
+    const cortar = (i) => {
+      const [antiga] = this._shotVoices.splice(i, 1);
+      try { antiga?.src.stop(); } catch {}
+    };
+    while (this._shotVoices.filter((v) => v.url === url).length >= MAX_SHOT_VOICES_PER_SAMPLE) {
+      cortar(this._shotVoices.findIndex((v) => v.url === url));
+    }
+    while (this._shotVoices.length >= MAX_SHOT_VOICES) cortar(0);
+    const voz = { src, url };
+    this._shotVoices.push(voz);
+    src.onended = () => {
+      const i = this._shotVoices?.indexOf(voz) ?? -1;
+      if (i >= 0) this._shotVoices.splice(i, 1);
+    };
+    /* `vol` entra uma vez e o perfil pode acertar o nível relativo da arma; quem passa
+       pelo `master` já leva o volume do usuário. Régua ESP7. */
+    const g = R.createGain(); g.gain.value = vol * signature.gain;
+    let sampleOut = src;
+    if (signature.hp > 0) { const hp = R.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = signature.hp; sampleOut.connect(hp); sampleOut = hp; }
+    if (signature.lp < 20000) { const lp = R.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = signature.lp; sampleOut.connect(lp); sampleOut = lp; }
+    sampleOut.connect(g);
+    if (pan) {
+      const pz = R.createStereoPanner(); pz.pan.value = Math.max(-1, Math.min(1, pan));
+      g.connect(pz); pz.connect(this.master);
+    } else g.connect(this.master);
+    src.start(t); src.stop(t + buf.duration / signature.rate + 0.05);
+    return true;
+  }
+  /* Eventos posicionais curtos (morte/explosão) usam o mesmo contrato espacial
+     do tiro. No primeiro uso, HTMLAudio garante que o dono já ouça o candidato;
+     usos seguintes saem do buffer com pan e atraso. */
+  _eventSample(url, vol = 1, pan = 0, propDelay = 0, direct = false, rate = 1) {
+    this.ensure();
+    this._eventBuf = this._eventBuf || new Map();
+    this._eventCarregando = this._eventCarregando || new Map();
+    const buf = this._eventBuf.get(url);
+    if (!this.ctx || buf === null) return false;
+    if (buf === undefined) {
+      if (!this._eventCarregando.has(url)) {
+        this._eventCarregando.set(url, (async () => {
+          try {
+            const res = await fetch(encodeURI(url));
+            if (!res.ok) throw new Error(`http ${res.status}`);
+            this._eventBuf.set(url, await this.ctx.decodeAudioData(await res.arrayBuffer()));
+          } catch (error) {
+            this._eventBuf.set(url, null);
+            console.warn('[sfx] sample de evento não carregou; synth assume', url, error?.message || error);
+          } finally { this._eventCarregando.delete(url); }
+        })());
+      }
+      return !!this._sample(url, vol, !direct, rate);
+    }
+    const R = this.ctx, t = R.currentTime + propDelay;
+    const src = R.createBufferSource(); src.buffer = buf;
+    if (src.playbackRate && Number.isFinite(rate) && rate > 0) src.playbackRate.value = rate;
+    const gain = R.createGain(); gain.gain.value = vol; src.connect(gain);
+    const output = direct ? this.master : (this.duckBus || this.master);
+    if (pan) {
+      const panner = R.createStereoPanner(); panner.pan.value = Math.max(-1, Math.min(1, pan));
+      gain.connect(panner); panner.connect(output);
+    } else gain.connect(output);
+    src.start(t); src.stop(t + buf.duration / Math.max(0.01, rate) + 0.05);
+    return true;
+  }
+
+  /* Dor/morte FÍSICAS não fingem ser dublagem; o manifest pode trocar cada perfil no futuro.
+     Cues vão direto ao master para o tiro não apagar a informação de dano ou morte. */
+  _characterPhysical(kind, characterId, vol = 1, pan = 0, propDelay = 0) {
+    const physical = this.pack?.characterPhysical;
+    const profileId = physical?.byCharacter?.[characterId] || 'male';
+    const profile = physical?.profiles?.[profileId];
+    const sample = this._pick(profile?.[kind]);
+    if (!sample) return false;
+    return this._eventSample(sample, vol, pan, propDelay, true, profile?.rate || 1);
+  }
   // tiro por arma: synth por classe é PRIMÁRIO (samples CC0 = opt-in via "weaponSamples":true).
   // dist em metros (game.js: 0 = player, _sd = distância do bot). pan/propDelay só de bots.
   shotWeapon(w, dist = 0, vol = 1, pan = 0, propDelay = 0) {
@@ -473,8 +762,13 @@ export class Sfx {
 
        Vale para os dois caminhos — sample CC0 e synth — porque o volume alto se ouve nos
        dois. `?gunvol=N` para ajustar ao vivo sem recompilar nada. */
-    vol *= GUN_VOL;
-    if (this.pack?.weaponSamples) { const f = this._pick(this.pack?.weapons?.[w]); if (f) { this.duck(0.3, 0.16); this._sample(f, vol); return; } }
+    const selectedPack = this._weaponPack(w);
+    vol *= GUN_VOL * (selectedPack?.gain ?? 1);
+    if (this.pack?.weaponSamples) {
+      const f = this._weaponSample(w);
+      const neutral = selectedPack?.neutral || this.pack?.weaponSamplesAuthentic === true;
+      if (f && this._shotSample(f, w, dist, vol, pan, propDelay, neutral)) return;
+    }
     // GUNFEEL: peso POR ARMA dentro da classe — só a classe fazia .38, PT-38 e Deagle
     // soarem idênticos (e a SKS soar igual à AWP). `vol` é o único parâmetro por tiro que o
     // synth aceita, então a hierarquia de calibre entra por aqui.
@@ -482,7 +776,6 @@ export class Sfx {
       awp: 1.15, mosin: 1.10, rem700: 1.12, m400: 0.85, svd: 0.90, g3sg1: 0.88, sks: 0.80,
       ak: 1.00, akm: 1.08, g3: 1.05, m4: 0.95, scar: 0.98, tavor: 0.93, famas: 0.90, carbine: 1.0,
       mp5: 0.90, uzi: 0.88, p90: 0.85, lmg: 1.10, shotgun: 1.15, md97: 0.96 };   // md97 = 5,56, peso de fuzil (era 1.08, de espingarda)
-    if (dist === 0) this.duck(0.3, 0.09);   // PUNCH: o próprio tiro afunda o resto do mix por ~90 ms (o caminho por sample já fazia)
     this._gunshot(Sfx.GUN_CLASS[w] || 'rifle', dist, vol * (W[w] ?? 1), pan, propDelay);
   }
   // whizz: projétil supersônico passando perto do ouvido (CoD bulletWhizz) — tiro inimigo
@@ -497,7 +790,38 @@ export class Sfx {
     s.connect(bp); bp.connect(g); g.connect(this.master); s.start(t); s.stop(t + 0.25);
   }
 
-  uiClick()   { this.ensure(); this.duck(0.5, 0.12); this._beep('square', 880, 660, .06, .12, 0, true); }
+  /* Feedback tatil por contrato. Cada familia consulta uma chave propria do
+     manifest; false deixa o game executar o synth legado sem sobrepor sample. */
+  impact(surface, vol = 1, pan = 0, propDelay = 0) {
+    const key = ({ concreto: 'concrete', madeira: 'wood', vidro: 'glass', areia: 'dirt', agua: 'water' })[surface] || surface;
+    const sample = this._pick(this.pack?.cs?.impactsBySurface?.[key]);
+    return !!(sample && this._eventSample(sample, .34 * vol, pan, propDelay, true));
+  }
+  bodyImpact(armored = false, vol = 1, pan = 0, propDelay = 0) {
+    const sample = this._pick(this.pack?.cs?.characterImpact?.[armored ? 'armor' : 'body']);
+    return !!(sample && this._eventSample(sample, (armored ? .30 : .26) * vol, pan, propDelay, true));
+  }
+  pickup(kind = 'weapon') {
+    const sample = this._pick(this.pack?.cs?.pickupByKind?.[kind]);
+    if (sample && this._eventSample(sample, .42, 0, 0, true)) return true;
+    this.reloadEnd();
+    return false;
+  }
+  weaponSwitch(weapon, cls = 'rifle') {
+    const exact = this.pack?.cs?.weaponSwitchByWeapon?.[weapon];
+    const sample = this._pick(exact?.length ? exact : this.pack?.cs?.weaponSwitchByClass?.[cls]);
+    return !!(sample && this._eventSample(sample, .26, 0, 0, true));
+  }
+  _uiAction(action, vol) {
+    const sample = this._pick(this.pack?.cs?.uiByAction?.[action]);
+    return !!(sample && this._eventSample(sample, vol, 0, 0, true));
+  }
+  uiClick()   { this.ensure(); this.duck(0.5, 0.12); if (this._uiAction('click', .30)) return true;
+    this._beep('square', 880, 660, .06, .12, 0, true); return false; }
+  uiHover()   { this.ensure(); if (this._uiAction('hover', .18)) return true;
+    this._beep('square', 1240, 1240, .02, .04, 0, true); return false; }
+  uiBack()    { this.ensure(); this.duck(0.5, 0.1); if (this._uiAction('back', .26)) return true;
+    this._beep('square', 560, 400, .06, .10, 0, true); return false; }
   scopeIn()   { const s = this._cs('scope'); if (s) { this._sample(s); return; }
     this.ensure(); this._beep('sine', 500, 900, .09, .15); }
   scopeOut()  { this.ensure(); this._beep('sine', 900, 500, .09, .12); }
@@ -516,7 +840,8 @@ export class Sfx {
   knifeHit()  { const s = this._cs('knifehit'); if (s) { this._sample(s); return; }
     this.ensure(); this._burst(.08, .3, 1200); }
   knifeDeploy(){ const s = this._cs('knifedeploy'); if (s) { this._sample(s, .7); } }
-  dryFire()   { this.ensure(); this._beep('square', 1200, 900, .03, .1); }
+  dryFire()   { const s = this._cs('dryfire'); if (s) { this._sample(s, .75); return; }
+    this.ensure(); this._beep('square', 1200, 900, .03, .1); }
   // bolt da AWP: sample real do pack quando houver; fallback = 2 cliques de metal filtrado
   // (antes: 2 beeps square "game boy" a +420ms — soava como eco digital depois do estouro)
   bolt()      { const s = this._cs('bolt'); if (s) { this._sample(s, .8); return; }
@@ -527,20 +852,30 @@ export class Sfx {
     this.ensure(); this._beep('square', 180, 420, .09, .2); this._burst(.06, .25, 2600); }
   hitmark()   { this.ensure(); this._beep('sine', 1400, 1100, .05, .22); }
   killConfirm(){ this.ensure(); this._beep('sine', 660, 660, .07, .25); this._beep('sine', 990, 990, .1, .25, .08); }
-  hurt()      { this.ensure(); this._beep('sawtooth', 180, 90, .18, .3); this._burst(.1, .2, 500); }
-  death(vol = 1, pan = 0, propDelay = 0)     {
-    // morte: thud de corpo (ruído grave filtrado) + queda de tom suave em sine/sub — em vez do
-    // beep sawtooth "minecraft". Mais encorpado e menos game-boy.
+  hurt(characterId = '') {
+    if (this._characterPhysical('hurt', characterId, .52, 0, 0)) return;
+    this.ensure(); this._beep('sawtooth', 180, 90, .18, .3); this._burst(.1, .2, 500);
+  }
+  death(characterId = '', vol = 1, pan = 0, propDelay = 0)     {
+    /* Compatibilidade com chamadores/sondas anteriores: death(vol, pan, delay).
+       Sem o overload, `death(1, 0, 0)` virava characterId=1, vol=0 e retornava mudo. */
+    if (typeof characterId !== 'string') {
+      propDelay = pan; pan = vol; vol = characterId; characterId = '';
+    }
+    // Morte padrão = apenas a queda corporal seca. O vocal Fab foi rejeitado na escuta por
+    // soar como jogo de luta, e stings tonais por cima transformavam informação em drama.
     // vol escala por distância (game.js) — bot morrendo do outro lado do mapa não "canta" no
     // ouvido do player (antes: sting completo em TODA morte, somava com tiro = "eco estranho").
     // pan/propDelay: posição estéreo + delay de propagação da morte de bots (player = 0).
-    if (vol < 0.12) return;
+    if (vol < 0.08) return;
+    const sample = this._cs('death');
+    const bodyPlayed = sample && this._eventSample(sample, 0.72 * vol, pan, propDelay, true);
+    if (bodyPlayed) return;
     this.ensure(); if (!this.ctx) return;
-    let out = false;
-    if (pan) { out = this.ctx.createStereoPanner(); out.pan.value = pan; out.connect(this.duckBus || this.master); }
-    this._burst(0.2, 0.5 * vol, 240, 0.8, 'lowpass', propDelay, out);        // baque grave (corpo caindo)
-    this._beep('sine', 180, 55, 0.5, 0.26 * vol, propDelay, out);            // queda de tom
-    this._beep('triangle', 90, 28, 0.7, 0.18 * vol, 0.04 + propDelay, out);  // sub grave curto
+    let out = this.ctx.createGain();
+    if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; out.connect(panner); panner.connect(this.master); }
+    else out.connect(this.master);
+    this._burst(0.14, 0.34 * vol, 220, 0.8, 'lowpass', propDelay, out);
   }
   jump()      { this.ensure(); this._beep('sine', 220, 330, .08, .1); }
   land()      { this.ensure(); this._burst(.08, .18, 400); }
@@ -548,10 +883,10 @@ export class Sfx {
   // volume ±15%. Fallback synth: timbre por surface (água do piscinão = splash grave+ruído,
   // metal = brilho agudo, concreto = seco). surface vem do game.js (world.slowAt).
   step(surface = 'concrete') {
-    const arr = this.pack?.cs?.footsteps;
+    const arr = this.pack?.cs?.footstepsBySurface?.[surface] || this.pack?.cs?.footsteps;
     if (arr && arr.length) {
       this._stepI = (this._stepI + 1) % arr.length;
-      const a = this._sample(arr[this._stepI], 0.5 * (0.85 + Math.random() * 0.3));
+      const a = this._sample(arr[this._stepI], 0.68 * (0.85 + Math.random() * 0.3));
       if (a) a.playbackRate = 0.92 + Math.random() * 0.16;
       return;
     }
@@ -568,18 +903,60 @@ export class Sfx {
   }
   respawn()   { this.ensure(); this._beep('sine', 440, 880, .18, .18); }
   ricochet()  { this.ensure(); this._beep('sine', 2400, 700, .12, .08); }
-  explosion() { this.ensure(); if (!this.ctx) return;   // frag: crack agudo + corpo grave + rumble
-    this.duck(0.22, 0.3);                  // explosão ducka tudo (vozes/rádio/música)
+  grenadePin(kind = 'frag') {
+    const sample = this._cs('grenadepin');
+    if (sample && this._eventSample(sample, .52, 0, 0, true, kind === 'smoke' ? .94 : 1.04)) return true;
+    this.ensure(); if (!this.ctx) return;
+    const base = kind === 'smoke' ? 1180 : 1440;
+    this._beep('square', base, base * .72, .035, .1, 0, true);
+    this._beep('square', base * .62, base * .48, .045, .08, .055, true);
+    return false;
+  }
+  grenadeThrow(kind = 'frag', vol = 1, pan = 0, propDelay = 0) {
+    const sample = this._cs('grenadethrow');
+    const rate = kind === 'smoke' ? .92 : 1.04;
+    if (sample && this._eventSample(sample, .58 * vol, pan, propDelay, false, rate)) return true;
+    this.ensure(); this._burst(.12, .22 * vol, kind === 'smoke' ? 950 : 1250, 2.2, 'bandpass', propDelay);
+    return false;
+  }
+  grenadeBounce(kind = 'frag', vol = 1, pan = 0, propDelay = 0) {
+    if (vol < .06) return false;
+    const sample = this._cs('grenadebounce');
+    const rate = kind === 'smoke' ? 1.12 : .96;
+    if (sample && this._eventSample(sample, .38 * vol, pan, propDelay, false, rate)) return true;
+    this.ensure(); this._burst(.055, .17 * vol, kind === 'smoke' ? 1500 : 950, 1.8, 'bandpass', propDelay);
+    return false;
+  }
+  smokePop(vol = 1, pan = 0, propDelay = 0) {
+    this.ensure(); if (!this.ctx) return;
+    let out = this.ctx.createGain();
+    if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; out.connect(panner); panner.connect(this.master); }
+    else out.connect(this.master);
+    this._burst(.42, .36 * vol, 720, 1.1, 'lowpass', propDelay, out);
+    this._burst(.18, .16 * vol, 2400, 1.8, 'bandpass', propDelay + .035, out);
+  }
+  explosion(vol = 1, pan = 0, propDelay = 0) { // frag: crack agudo + corpo grave + rumble
+    const sample = this._cs('explosion');
+    this.duck(0.22, 0.3);
+    if (sample && this._eventSample(sample, 0.88 * vol, pan, propDelay, true)) return true;
+    this.ensure(); if (!this.ctx) return;
+                                               // explosão ducka tudo (vozes/rádio/música)
     // bus próprio (direct no master — explosão é ducker, não vítima) + send de reverb opt-in
-    const bus = this.ctx.createGain(); bus.connect(this.master);
+    const bus = this.ctx.createGain(); bus.gain.value = vol;
+    if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; bus.connect(panner); panner.connect(this.master); }
+    else bus.connect(this.master);
     this._send(bus, 0.2);
-    this._burst(.18, .95, 1800, 0.7, 'lowpass', 0, bus);   // crack inicial
-    this._burst(.6, .8, 300, 1, 'lowpass', 0, bus);        // corpo
-    this._beep('sine', 90, 30, .55, .6, 0, bus);           // rumble grave
-    this._beep('sawtooth', 160, 45, .35, .3, .02, bus);
+    /* Crack inicial, corpo e rumble grave formam uma explosão; sem sting tonal separado. */
+    this._burst(.18, .95, 1800, 0.7, 'lowpass', propDelay, bus);
+    this._burst(.6, .8, 300, 1, 'lowpass', propDelay, bus);
+    this._beep('sine', 90, 30, .55, .6, propDelay, bus);
+    this._beep('sawtooth', 160, 45, .35, .3, .02 + propDelay, bus);
+    return false;
     }
 
   vuvuzela(dur = 1.2) { // round start — Brazilian stadium energy
+    const sample = this._cs('roundstart');
+    if (sample) { this._sample(sample, .75); return; }
     this.ensure();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
@@ -594,7 +971,10 @@ export class Sfx {
       o.start(t); o.stop(t + dur + .05);
     });
   }
-  roundWin()  { this.ensure(); [523, 659, 784, 1047].forEach((f, i) => this._beep('square', f, f, .16, .2, i * .13)); }
-  roundLose() { this.ensure(); [392, 330, 262].forEach((f, i) => this._beep('square', f, f * .9, .22, .2, i * .16)); }
-  matchWin()  { this.ensure(); [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this._beep('square', f, f, .18, .22, i * .14)); this.vuvuzela(1.8); }
+  roundWin()  { const s = this._cs('roundwin'); if (s) { this._sample(s, .8); return; }
+    this.ensure(); [523, 659, 784, 1047].forEach((f, i) => this._beep('square', f, f, .16, .2, i * .13)); }
+  roundLose() { const s = this._cs('roundlose'); if (s) { this._sample(s, .8); return; }
+    this.ensure(); [392, 330, 262].forEach((f, i) => this._beep('square', f, f * .9, .22, .2, i * .16)); }
+  matchWin()  { const s = this._cs('roundwin'); if (s) { this._sample(s, .9); return; }
+    this.ensure(); [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this._beep('square', f, f, .18, .22, i * .14)); this.vuvuzela(1.8); }
 }

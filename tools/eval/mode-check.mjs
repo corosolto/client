@@ -101,11 +101,6 @@ const DEFAULT_MAP = (MAPSRC.match(/export const DEFAULT_MAP = '(\w+)'/) || [])[1
 /* ---- sandbox: o menu de verdade, com tudo que não é modo virando no-op ---- */
 function novoMenu(mapaInicial) {
   const noop = () => {};
-  // gotoMap também atualiza o backdrop assíncrono do menu. O sandbox precisa manter
-  // essa dependência como Promise resolvida; `--mutante=sem-backdrop` a remove e prova
-  // que a execução real (não só a forma do fonte) continua sendo exercitada.
-  const loadMenuBackdrop = process.argv.includes('--mutante=sem-backdrop')
-    ? undefined : () => Promise.resolve();
   const el = new Proxy({ dataset: {}, textContent: '', innerHTML: '', style: {}, classList: { add: noop, remove: noop, toggle: noop, contains: () => false }, querySelectorAll: () => [], addEventListener: noop },
     { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
   const corpo = `
@@ -126,10 +121,10 @@ function novoMenu(mapaInicial) {
     };`;
   const f = new Function('MAPS', 'MAP_IDS', 'DEFAULT_MAP', 'resolveMapId', 'settings', 'saveSettings',
     '$', 'ui', 'setMapMode', 'setSetupStep', 'markCurrent', 'menuSetup', 'applySetupWall',
-    'mapNameEl', 'setMapThumb', 'rebuildMenuBackdrop', 'renderMapScreen', 'loadMenuBackdrop', corpo);
+    'mapNameEl', 'setMapThumb', 'rebuildMenuBackdrop', 'renderMapScreen', corpo);
   return f(MAPS, MAP_IDS, DEFAULT_MAP, (id) => (MAPS[id] ? id : DEFAULT_MAP), { map: mapaInicial }, noop,
     () => el, { click: noop, hover: noop, back: noop }, noop, noop, noop, el, noop,
-    el, noop, noop, noop, loadMenuBackdrop);
+    el, noop, noop, noop);
 }
 
 /* ---- os 10 casos ---- */

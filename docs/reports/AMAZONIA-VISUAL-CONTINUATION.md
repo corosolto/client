@@ -423,3 +423,13 @@ validar build e mergear. Relato adicional: bots perdidos; investigar caminhos
 reais até objetivos/interiores antes da integração. PR439 tem base antiga
 feat/times-e-mapas-completo; head remoto5c66d28b é ancestral desta branch.
 Última main consultada a551204f. Preservar checkpoint local antes do merge.
+
+Checkpoint85e2af1a preserva cabanas/fauna. Maina551204 incorporada com
+resolução restrita: runtime/menu/audio e demais mapas da main, só delta Amazônia.
+Build integrado passou (build-main.log). AMZ, superfícies, água e quintal
+passaram após adaptar teste de travessia ao _updatePlayer atual sem mantle.
+Crítico aprovou capturas final-med (apoios, poses, cabanas e teto limpo).
+Custo isolado normalopt caiu6.15–8.79ms→0.53–1.87ms em ABBA concorrente;
+não equivale a FPS. Bots reproduzidos4/6rotas; correção do grafo em andamento.
+Próximo: validar todas rotas de bots, captura integrada e mídia, gates/CI e
+merge PR439 para main conforme autorização explícita do dono.

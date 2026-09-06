@@ -25,17 +25,16 @@ function prepare(root, type, phase, animal) {
     }
     geometry.setAttribute('position',new THREE.BufferAttribute(original.slice(),3).setUsage(THREE.DynamicDrawUsage));
     if(!geometry.attributes.normal) geometry.computeVertexNormals();
-    const normals=geometry.attributes.normal,originalNormals=new Float32Array(normals.count*3),localNormals=new Float32Array(normals.count*3);
+    const normals=geometry.attributes.normal,originalNormals=new Float32Array(normals.count*3);
     const normalMatrix=new THREE.Matrix3().getNormalMatrix(matrix);
     for(let i=0;i<normals.count;i++) {
       point.fromBufferAttribute(normals,i);point.toArray(originalNormals,i*3);
-      point.applyNormalMatrix(normalMatrix);point.toArray(localNormals,i*3);
     }
     geometry.setAttribute('normal',new THREE.BufferAttribute(originalNormals.slice(),3).setUsage(THREE.DynamicDrawUsage));
     mesh.geometry=geometry;
     const meshInverse=matrix.clone().invert();
-    parts.push({mesh,source,geometry,original,local,originalNormals,localNormals,matrix,inverse:meshInverse,
-      normalInverse:new THREE.Matrix3().getNormalMatrix(meshInverse),weights:new Float32Array(attribute.count*2),active:[]});
+    parts.push({mesh,source,geometry,original,local,originalNormals,matrix,inverse:meshInverse,normalMatrix,
+      normalInverse:new THREE.Matrix3().getNormalMatrix(meshInverse),normalRotation:new THREE.Matrix3(),weights:new Float32Array(attribute.count*2),active:[]});
   });
   if(!parts.length) return null;
   const size=box.getSize(new THREE.Vector3()), pivot=new THREE.Vector3(...profile.pivot).multiply(size).add(box.min);
@@ -66,7 +65,7 @@ export function createAmazoniaFaunaMotion({ambience,quintal,jacare,capivaras=[]}
   for(const [i,root] of (quintal?.children||[]).entries()) add(root,i===0?'hen':'chick',i*1.7);
   add(jacare,'jacare',.8);
   capivaras.forEach((root,i)=>add(root,'capivara',1.2+i*2));
-  const point=new THREE.Vector3(), scale=new THREE.Vector3();
+  const point=new THREE.Vector3(), scale=new THREE.Vector3(), headRotation=new THREE.Matrix3();
   let lastTick=-Infinity, updates=0;
   function update(time) {
     for(const e of entries) if(e.animal) {
@@ -80,8 +79,11 @@ export function createAmazoniaFaunaMotion({ambience,quintal,jacare,capivaras=[]}
       const yaw=Math.sin(t*.83)*p.yaw, nod=Math.sin(t*1.31+.6)*p.nod;
       const sy=Math.sin(yaw),cy=Math.cos(yaw),sn=Math.sin(nod),cn=Math.cos(nod);
       const breath=Math.sin(t*2.2)*e.size.y*.007;
+      if(p.axis==='z') headRotation.set(cn*cy,-sn,cn*sy,sn*cy,cn,sn*sy,-sy,0,cy);
+      else headRotation.set(cy,0,sy,sn*sy,cn,-sn*cy,-cn*sy,sn,cn*cy);
       for(const part of e.parts) {
         const target=part.geometry.attributes.position,normals=part.geometry.attributes.normal;
+        const n=part.normalRotation.copy(part.normalInverse).multiply(headRotation).multiply(part.normalMatrix).elements;
         for(const i of part.active) {
           const j=i*3,head=part.weights[i*2],body=part.weights[i*2+1];
           const x=part.local[j]-e.pivot.x,y=part.local[j+1]-e.pivot.y,z=part.local[j+2]-e.pivot.z;
@@ -91,12 +93,12 @@ export function createAmazoniaFaunaMotion({ambience,quintal,jacare,capivaras=[]}
           point.set(part.local[j]+(nx-x)*head,part.local[j+1]+(ny-y)*head+breath*body*(1-head),part.local[j+2]+(nz-z)*head);
           point.applyMatrix4(part.inverse);target.setXYZ(i,point.x,point.y,point.z);
           if(head) {
-            const bx=part.localNormals[j],by=part.localNormals[j+1],bz=part.localNormals[j+2];
-            let rx=cy*bx+sy*bz,ry=by,rz=-sy*bx+cy*bz;
-            if(p.axis==='z') {const xx=cn*rx-sn*ry;ry=sn*rx+cn*ry;rx=xx;}
-            else {const yy=cn*ry-sn*rz;rz=sn*ry+cn*rz;ry=yy;}
-            point.set(bx+(rx-bx)*head,by+(ry-by)*head,bz+(rz-bz)*head).applyNormalMatrix(part.normalInverse);
-            normals.setXYZ(i,point.x,point.y,point.z);
+            const bx=part.originalNormals[j],by=part.originalNormals[j+1],bz=part.originalNormals[j+2];
+            const rx=bx+(n[0]*bx+n[3]*by+n[6]*bz-bx)*head;
+            const ry=by+(n[1]*bx+n[4]*by+n[7]*bz-by)*head;
+            const rz=bz+(n[2]*bx+n[5]*by+n[8]*bz-bz)*head;
+            const inverseLength=1/(Math.sqrt(rx*rx+ry*ry+rz*rz)||1);
+            normals.setXYZ(i,rx*inverseLength,ry*inverseLength,rz*inverseLength);
           }
         }
         target.needsUpdate=true;normals.needsUpdate=true;

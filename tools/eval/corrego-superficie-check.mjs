@@ -46,11 +46,11 @@
    OS TETOS, E DE ONDE VIERAM
    Medido nos 10 mapas em 12/08 (probe de área/material, antes do conserto):
 
-       praca_poderes  15% mats   1,2% área      escadao     63% mats  14,6% área
-       ferro_velho    14% mats   0,4% área      campomorro  53% mats  17,2% área
-       piscina_treta  21% mats  20,0% área      lajes       56% mats  18,0% área
+       praca_poderes  15% mats   1,2% área      fy_escadao     63% mats  14,6% área
+       ferro_velho    14% mats   0,4% área      fy_campomorro  53% mats  17,2% área
+       piscina_treta  21% mats  20,0% área      fy_lajes       56% mats  18,0% área
        quebrada       41% mats   8,6% área      corrego     66% mats  13,1% área
-       loja_h         68% mats   8,7% área      mansao      97% mats  35,9% área
+       loja_h         68% mats   8,7% área      fy_mansao      97% mats  35,9% área
 
    Os 5 maduros dão média de 31,8% de materiais chapados; os 5 novos, 67%. O teto
    abaixo NÃO é a média dos maduros (teto colado no medido reprova por ruído): é a
@@ -147,9 +147,16 @@ function areaDe(o) {
 
 const fauna = [];
 const materiais = new Map();   // uuid -> { map: bool, malhas, area }
+/* VIDA DE CÉU fora do censo de superfície, pelo MESMO motivo que o parque-wheel-check
+   tira a fauna do dele: no arnês node os GLBs não baixam, os proxies procedurais entram
+   sem textura e mexem numa razão que mede SUPERFÍCIE DE MAPA. Pipa a 18 m de altura não
+   é parede. Medido: com os proxies dentro, 31,4% -> 39,0% contra teto de 40% — a régua
+   estaria reprovando o céu achando que reprovava o barraco. */
+const doCeu = (o) => { for (let p = o; p; p = p.parent) if (p.userData?.skyLife) return true; return false; };
 root.traverse((o) => {
   if (o.userData?.fauna) fauna.push(o);
   if (!o.isMesh || o.visible === false) return;
+  if (doCeu(o)) return;
   const arr = Array.isArray(o.material) ? o.material : [o.material];
   const m = arr.find((x) => x && x.map) || arr[0];
   if (!m || m.visible === false) return;   // colisor invisível da ponte: não chega no olho

@@ -35,39 +35,6 @@
      F2 · NÃO nasceu espelho novo: nenhum outro módulo de `public/js/` declara tabela ou
           ternário de cor indexado por letra de facção. É a cláusula que impede a
           duplicação de VOLTAR, e é ela que substitui o antigo F2 de comparação.
-     F3 · o `palida` de cada facção alcança 4,5:1 sobre o chip do killfeed. (12/08)
-     F4 · os hexes de PALETA batem com o registro do elenco, `factions.js`. (12/08)
-
-   ── O QUE F3 E F4 CONSERTARAM NA RÉGUA (12/08) ──────────────────────────────────
-   Dos três tons, `palida` é o ÚNICO com alvo numérico escrito — 4,5:1 da WCAG 1.4.3 — e
-   era justamente o que ninguém media. F1 só perguntava "existe?", então um `palida`
-   escuro demais passava: a chave está lá, o valor é um hex válido, e o texto do killfeed
-   fica ilegível sem uma linha de erro em lugar nenhum. Preencher as cinco facções novas
-   sem F3 seria escolher cinco cores no olho e chamar isso de verde.
-
-   F4 é o par de F3 e nasce do mesmo defeito de 07/08. A cor de facção é decisão editorial
-   e mora em `factions.js`; `paleta.js` não pode importar de lá (ciclo no boot — ver o
-   cabeçalho dele), então carrega uma CÓPIA. Cópia sem régua foi exatamente o rename Time E.
-   F4 é o pedágio da cópia: compara os dois arquivos hex a hex, os trinta valores.
-
-   ── O MODELO DE F3, E ONDE ELE É OTIMISTA ───────────────────────────────────────
-   O chip é `background:${cor}2e` (a própria cor a 18%) sobre a linha do killfeed, e a
-   linha tem TRÊS fundos declarados em `style.css` — `.kf-row` (scrim bg-900 a 82%),
-   `.me-atk` e `.me-vic`. F3 compõe o chip sobre os três e cobra o PIOR.
-
-   Este modelo é estático e o UI1 do `ui-check.mjs` mede o DOM vivo; os dois não batem na
-   vírgula. No mesmo ponto de ancoragem — o `palida` do Time E — o modelo estático dá
-   6,62:1 e o número que `paleta.js` registra do UI1 é 5,9:1. O estático lê ~0,7 ALTO, ou
-   seja, para o lado errado. Por isso o gate é 4,5:1 mas há um aviso de MARGEM CURTA
-   abaixo de 5,5:1: valor nessa faixa passa aqui e pode reprovar no UI1, e quem estiver
-   ali deve conferir no `ui-check.mjs` antes de comemorar. As dez de hoje estão em
-   6,6-9,4:1, bem fora da faixa de dúvida, então a diferença de modelo não decide nada —
-   mas ela está escrita para o dia em que decidir.
-
-   As constantes de fundo e o `2e` do chip são CÓPIA de `style.css` e `game.js`. F3 checa
-   que os literais continuam lá antes de medir: se o killfeed for retingido, a cláusula
-   para e diz que está medindo contra um fundo que não existe mais, em vez de devolver um
-   verde calmo sobre um fundo imaginário.
 
    ── POR QUE F2 É POR FORMA, E NÃO POR VALOR ─────────────────────────────────────
    A primeira tentativa foi proibir os hexes da paleta fora de `paleta.js`. Ela é mais
@@ -83,24 +50,16 @@
    lista é decisão de quem escreve, e é o pedágio certo: obriga a dizer em voz alta que
    aquilo é outro fato, e não mais uma cópia do mesmo.
 
-   AS MUTAÇÕES QUE A DEIXAM VERMELHA (as quatro foram executadas)
+   AS MUTAÇÕES QUE A DEIXAM VERMELHA (as duas foram executadas)
      --mutar=sem-e     remove `E` de PALETA          -> F1 acusa a facção sem cor
      --mutar=espelho   injeta uma tabela de cor por facção em brasoes.js -> F2 acusa o
                        espelho novo. É a regressão que esta régua existe para impedir:
                        alguém "resolvendo" um import com uma cópia local.
-     --mutar=palida-escura  troca o `palida` dos Míticos pelo `escura` da mesma facção
-                       -> F3 acusa o contraste. É a regressão REAL de quem preenche uma
-                       facção nova copiando a linha de cima: hex válido, chave presente,
-                       F1 verde, e o nome no killfeed ilegível.
-     --mutar=cor-divergente  muda o `base` do Time E só em PALETA -> F4 acusa a cópia
-                       fora de sincronia com `factions.js`. É o rename Time E de novo.
 
    USO
      node tools/eval/faccao-paleta-check.mjs
      node tools/eval/faccao-paleta-check.mjs --mutar=sem-e
      node tools/eval/faccao-paleta-check.mjs --mutar=espelho
-     node tools/eval/faccao-paleta-check.mjs --mutar=palida-escura
-     node tools/eval/faccao-paleta-check.mjs --mutar=cor-divergente
 
    Node puro, lê texto de arquivo, roda em milissegundos — cabe no `check:fast`, que é
    onde ela precisa estar. Régua cara demais para o gatilho errado é régua que não roda.
@@ -143,60 +102,10 @@ function paleta() {
   return out;
 }
 
-/* ── O REGISTRO DO ELENCO: a origem editorial dos hexes, para F4 ──────────────────
-   `[^{}]*?` e não `[\s\S]*?` de propósito: assim a busca não consegue atravessar o fecho
-   de uma entrada e casar o `color` da entrada SEGUINTE quando a primeira estiver capenga.
-   Entrada sem os três campos some daqui e F4 acusa como ausente, que é o lado seguro. */
-function registro() {
-  const src = ler(`${DIR}/factions.js`);
-  const out = {};
-  for (const m of src.matchAll(/id:\s*'([A-Z])'[^{}]*?color:\s*'(#[0-9a-fA-F]{6})'\s*,\s*dark:\s*'(#[0-9a-fA-F]{6})'\s*,\s*ink:\s*'(#[0-9a-fA-F]{6})'/g)) {
-    out[m[1]] = { base: m[2].toLowerCase(), escura: m[3].toLowerCase(), palida: m[4].toLowerCase() };
-  }
-  return out;
-}
-
-/* ── COR: sRGB, composição alfa e contraste WCAG 2.1 ──────────────────────────────
-   Mesma matemática do `ui-check.mjs`, reescrita aqui em seis linhas em vez de importada:
-   esta régua é `check:fast` e roda em milissegundos porque não puxa o mundo do UI1 (que
-   sobe DOM). Fórmula fechada da WCAG, não há o que divergir. */
-const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-const sobre = (fg, a, bg) => fg.map((c, i) => c * a + bg[i] * (1 - a));
-const lum = (c) => { const s = c.map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * s[0] + 0.7152 * s[1] + 0.0722 * s[2]; };
-const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-
-/* ── O FUNDO DO CHIP: cópia de style.css/game.js, com guarda ──────────────────────
-   Cada constante traz o literal que a sustenta. Se o literal sumir do arquivo, F3 para:
-   medir contra um fundo que o jogo não pinta mais é pior que não medir. */
-const BG_900 = [9, 7, 4];                       // --bg-900-rgb
-const CHIP_ALFA = 0x2e / 255;                   // `background:${cor}2e` = 18%
-const FUNDOS = [
-  { nome: '.kf-row', cor: sobre(BG_900, 0.82, BG_900), guarda: ['style.css', 'rgba(var(--bg-900-rgb),.82)'] },
-  { nome: '.me-atk', cor: sobre([9, 38, 42], 0.92, BG_900), guarda: ['style.css', 'rgba(9,38,42,.92)'] },
-  { nome: '.me-vic', cor: sobre([44, 10, 10], 0.92, BG_900), guarda: ['style.css', 'rgba(44,10,10,.92)'] },
-];
-const GUARDAS = [...FUNDOS.map((f) => f.guarda), ['style.css', '--bg-900-rgb:9,7,4'], ['js/game.js', '2e;color:']];
-const AA_TEXTO = 4.5;    // WCAG 1.4.3
-const MARGEM = 5.5;      // abaixo disto, o modelo estático (~0,7 alto) pode estar mentindo
-
-/* Pior contraste do `palida` sobre o chip, entre os três fundos de linha do killfeed. */
-function piorContraste(base, palida) {
-  return Math.min(...FUNDOS.map((f) => contraste(rgb(palida), sobre(rgb(base), CHIP_ALFA, f.cor))));
-}
-
 /* ── ESPELHOS QUE NÃO SÃO COR DE TIME ─────────────────────────────────────────────
    Declaradas, com motivo. Ver o bloco `A LISTA CONHECIDAS` no cabeçalho. */
 const CONHECIDAS = [
   { nome: 'GLOVE', motivo: 'tinta da LUVA, hues próprios de propósito (roxo Tribos contra o azul do time)' },
-  /* O cabeçalho desta régua já citava este objeto como o exemplo de coincidência — "onde B
-     é 'Blue' de tinta de muro e não Time B". Ele passava batido porque F2 exige DUAS letras
-     de facção e só `B` batia. Quando o elenco foi de 5 para 10 facções, `R` virou letra de
-     facção (Profissionais do Corre) e as duas letras apareceram: `paints` acendeu como
-     espelho novo sem ninguém ter escrito uma linha em `map_piscinao_ramos.js`. As letras são
-     as INICIAIS das tintas de reboco (Green, White, Amarelo, Rosa, Blue), e os hexes não são
-     de facção nenhuma. Fica declarado com `arquivo` — `paints` em qualquer OUTRO módulo
-     continua acendendo, que é o pedágio certo. */
-  { nome: 'paints', arquivo: 'map_piscinao_ramos.js', motivo: 'iniciais de tinta de REBOCO (Green/White/Amarelo/Rosa/Blue), não letra de facção' },
 ];
 
 /* ── F2: procura a FORMA do espelho em todo módulo que não seja a origem ──────────
@@ -208,16 +117,13 @@ const CONHECIDAS = [
    onde B é "Blue" de tinta de muro e não Time B). */
 function espelhos(nomeArquivo, src) {
   const achados = [];
-  /* `arquivo` ausente = conhecida em qualquer módulo (GLOVE mora em dois). `arquivo`
-     presente = conhecida SÓ ali; o mesmo nome noutro lugar volta a acender. */
-  const daqui = (c) => !c.arquivo || c.arquivo === nomeArquivo;
-  const conhecida = (trecho) => CONHECIDAS.find((c) => daqui(c) && trecho.includes(c.nome));
+  const conhecida = (trecho) => CONHECIDAS.find((c) => trecho.includes(c.nome));
 
   for (const m of src.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*\{([^{}]*)\}/g)) {
     const chaves = [...m[2].matchAll(/\b([A-Z])\s*:\s*(?:0x[0-9a-fA-F]{6}|'#[0-9a-fA-F]{6}')/g)].map((x) => x[1]);
     const daFaccao = [...new Set(chaves)].filter((c) => FACCOES.includes(c));
     if (daFaccao.length < 2) continue;
-    const c = CONHECIDAS.find((k) => k.nome === m[1] && daqui(k));
+    const c = CONHECIDAS.find((k) => k.nome === m[1]);
     achados.push({ tipo: 'objeto', nome: m[1], letras: daFaccao, conhecida: c, linha: src.slice(0, m.index).split('\n').length });
   }
 
@@ -236,11 +142,6 @@ if (!P) {
   process.exit(1);
 }
 if (MUTAR === 'sem-e') delete P.E;
-/* Em MEMÓRIA, como as outras: o disco não é tocado. `palida-escura` é a regressão de quem
-   preenche facção nova copiando a linha de cima e repetindo o tom escuro no lugar do
-   pálido; `cor-divergente` é o rename Time E outra vez, mexendo na cópia e não na origem. */
-if (MUTAR === 'palida-escura' && P.M) P.M = { ...P.M, palida: P.M.escura };
-if (MUTAR === 'cor-divergente' && P.E) P.E = { ...P.E, base: '#ff0000' };
 console.log(`elenco declara ${FACCOES.length} facções: ${FACCOES.join(', ')}`);
 console.log(`origem única: ${DIR}/${ORIGEM}\n`);
 
@@ -278,66 +179,7 @@ for (const e of todos) {
 }
 console.log(`   ${f2 ? 'PASSA' : 'FALHA'}\n`);
 
-/* ── F3 · o `palida` alcança 4,5:1 sobre o chip do killfeed ───────────────────────
-   Antes das medidas, as guardas: as constantes de fundo são cópia, e cópia sem guarda é
-   como esta régua vira verde medindo um jogo que não existe mais. */
-let f3 = true;
-console.log(`F3 · \`palida\` legível sobre o chip do killfeed (>= ${AA_TEXTO.toFixed(1)}:1, pior dos ${FUNDOS.length} fundos)`);
-const soltas = GUARDAS.filter(([arq, lit]) => !ler(arq === 'style.css' ? 'public/style.css' : `public/${arq}`).includes(lit));
-if (soltas.length) {
-  f3 = false;
-  for (const [arq, lit] of soltas) console.log(`   ✗ o literal \`${lit}\` sumiu de ${arq} — F3 está medindo contra um fundo que o jogo não pinta mais`);
-} else {
-  for (const f of FACCOES) {
-    const t = P[f];
-    if (!t?.base || !t?.palida) { console.log(`   ${f}  (sem base/palida — já reprovado em F1)`); continue; }
-    const c = piorContraste(t.base, t.palida);
-    const cheia = Math.min(...FUNDOS.map((x) => contraste(rgb(t.base), sobre(rgb(t.base), CHIP_ALFA, x.cor))));
-    if (c < AA_TEXTO) f3 = false;
-    const nota = c < AA_TEXTO ? 'ILEGÍVEL' : (c < MARGEM ? 'MARGEM CURTA — confira no ui-check.mjs (UI1)' : '');
-    console.log(`   ${f}  ${t.palida}  ${c.toFixed(2)}:1   (a cor cheia daria ${cheia.toFixed(2)}:1)  ${nota}`);
-  }
-}
-console.log(`   ${f3 ? 'PASSA' : 'FALHA'}\n`);
-
-/* ── F4 · a cópia bate com o registro do elenco ───────────────────────────────────
-   Os trinta valores, um a um. É o pedágio de `paleta.js` não poder importar `factions.js`. */
-let f4 = true;
-console.log('F4 · os hexes de PALETA batem com o registro do elenco (factions.js)');
-const REG = registro();
-/* A mutação `palida-escura` é aplicada TAMBÉM aqui, e é de propósito: se ela mexesse só em
-   PALETA, F4 acenderia junto e o vermelho de F3 não provaria nada — poderia ser F4 vazando.
-   Propagada aos dois arquivos ela vira o caso honesto ("a escolha editorial em si é
-   ilegível"), F1/F2/F4 ficam verdes e sobra F3 sozinho acusando. É essa a prova. */
-if (MUTAR === 'palida-escura' && REG.M) REG.M = { ...REG.M, palida: REG.M.escura };
-for (const f of FACCOES) {
-  const a = P[f], b = REG[f];
-  if (!b) { f4 = false; console.log(`   ${f}  factions.js NÃO declara color/dark/ink para esta facção`); continue; }
-  if (!a) { console.log(`   ${f}  (ausente em PALETA — já reprovado em F1)`); continue; }
-  const dif = TONS.filter((k) => a[k] !== b[k]);
-  if (dif.length) f4 = false;
-  console.log(`   ${f}  ${dif.length ? dif.map((k) => `${k}: paleta ${a[k]} != registro ${b[k]}`).join('  ') : 'idêntico'}`);
-}
-console.log(`   ${f4 ? 'PASSA' : 'FALHA'}\n`);
-
-/* ── AVISO (não reprova): quem CONSOME esta paleta ────────────────────────────────
-   Descoberto em 12/08 ao completar as dez: `game.js`, `brasoes.js` e `characters.js`
-   deixaram de ler `PALETA` e passaram a ler `factions.js` — os comentários deles dizem o
-   motivo em voz alta, "`paleta.js` só cobre as 5 primeiras facções". Com as dez aqui esse
-   motivo acabou, mas religar os consumidores é conserto em arquivo de OUTRO dono, então
-   este aviso não reprova. Ele existe para o verde acima não ser lido como "a bandeira
-   pinta certo": F1/F3/F4 provam que a TABELA está correta, não que alguém a usa. */
-const importadores = fs.readdirSync(DIR).filter((a) => a.endsWith('.js') && a !== ORIGEM)
-  .map((a) => [a, /import\s*\{([^}]*)\}\s*from\s*'\.\/paleta\.js'/.exec(ler(path.join(DIR, a)))])
-  .filter(([, m]) => m).map(([a, m]) => [a, m[1].split(',').map((s) => s.trim()).filter(Boolean)]);
-const usam = importadores.filter(([, nomes]) => nomes.some((n) => ['PALETA', 'FACCOES', 'BASE_POR_FACCAO', 'tons'].includes(n)));
-console.log('AVISO · quem importa desta origem (não reprova)');
-if (!importadores.length) console.log(`   NINGUÉM importa ${ORIGEM}.`);
-for (const [a, nomes] of importadores) console.log(`   ${a}  ${nomes.join(', ')}`);
-if (!usam.length) console.log(`   ⚠ nenhum módulo lê PALETA/FACCOES/BASE_POR_FACCAO/tons — a tabela está CORRETA e OCIOSA.\n     A cor que o jogo pinta hoje vem de factions.js. F4 garante que as duas dizem a mesma coisa.`);
-console.log('');
-
-const passou = f1 && f2 && f3 && f4;
+const passou = f1 && f2;
 console.log(passou
   ? '✓ FAC1  cor de facção com origem única e elenco coberto'
   : '✗ FAC1  paleta de facção furada — bandeira/contorno/faixa saem errados SEM erro no console');

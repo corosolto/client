@@ -34,14 +34,10 @@
    (`0xff5555`) chama `num()`.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
-/* Cópia declarada, hex a hex, de `factions.js` (`color`/`dark`/`ink`) — importar de lá
-   criaria aresta e risco de ciclo no boot. Cobrada pela cláusula F4 de
-   tools/eval/faccao-paleta-check.mjs: base=color, escura=dark, palida=ink. */
-
 /* As facções que têm cor própria, na ordem em que o elenco as declara.
    Facção fora desta lista cai no NEUTRO, nunca em `undefined` — foi o `undefined` que
    apagou a bandeira em 07/08. */
-export const FACCOES = ['E', 'B', 'U', 'C', 'F', 'M', 'N', 'R', 'O', 'T'];
+export const FACCOES = ['E', 'B', 'U', 'C', 'F'];
 
 /* Três tons por facção, e cada um existe por um motivo medido:
 
@@ -53,11 +49,6 @@ export const FACCOES = ['E', 'B', 'U', 'C', 'F', 'M', 'N', 'R', 'O', 'T'];
                morreu" — abaixo dos 4,5:1 da WCAG 1.4.3, medido em `ui-check.mjs` (UI1).
                A versão pálida passa a 5,9-9,1:1 e mantém a leitura "vermelho = time-e".
 
-   O alvo do `palida` é NUMÉRICO, não estético: >= 4,5:1 contra o chip. Quem acrescenta
-   facção não escolhe o tom "que parece claro o bastante" — mede. A cláusula F3 de
-   `faccao-paleta-check.mjs` mede as dez, contra os TRÊS fundos de linha que o killfeed
-   declara em `style.css` (`.kf-row`, `.me-atk`, `.me-vic`), e cobra o pior dos três.
-
    Os valores são exatamente os que já estavam espalhados: nenhum pixel muda ao unificar. */
 export const PALETA = {
   E: { base: '#ff5555', escura: '#e03232', palida: '#ff9a9a' },   // Time E vermelho
@@ -65,14 +56,6 @@ export const PALETA = {
   U: { base: '#4aa3ff', escura: '#2f7fe0', palida: '#a8cdff' },   // Tribos azul
   C: { base: '#ff6ec7', escura: '#c23a86', palida: '#ffb3e0' },   // Palhaços rosa-circo
   F: { base: '#ffc233', escura: '#c79a12', palida: '#ffd98a' },   // Funkeiros ouro
-
-  /* M=Míticos, N=Nerdolas, R=Profissionais do Corre, O=Noias, T=TV — cópia hex a hex
-     de `factions.js` (cláusula F4; ver o bloco acima). */
-  M: { base: '#9d4edd', escura: '#5e35b1', palida: '#d0a3f0' },
-  N: { base: '#3f8cff', escura: '#2452b8', palida: '#b6d4ff' },
-  R: { base: '#ff8c32', escura: '#bd5520', palida: '#ffd0ad' },
-  O: { base: '#a6e22e', escura: '#638f17', palida: '#d8ff8e' },
-  T: { base: '#31d9ff', escura: '#157eaa', palida: '#b3f3ff' },
 };
 
 /* ESPELHO — inimigo da MESMA facção do jogador. Não é cor de facção: é o roxo que existe

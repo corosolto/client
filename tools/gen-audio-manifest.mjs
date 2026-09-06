@@ -31,24 +31,33 @@
  *   node tools/gen-audio-manifest.mjs --check   não escreve; sai 1 se estiver defasado
  */
 import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { carregarPolitica, motivoDeRecusa } from './audio/politica.mjs';
 import { execFileSync } from 'node:child_process';
-import { join, relative } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MENU_MUSIC_ACTIVE_IDS } from '../public/js/menu-music-selection.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const AUDIO = join(ROOT, 'public', 'audio');
+/* `--raiz=<dir>` troca a pasta de áudio inteira. Existe para a régua de alcance
+   (tools/eval/audio-alcance-check.mjs) medir gerador+empacotador numa fixture
+   sintética, sem depender do pacote privado. Sem o flag, nada muda. */
+const RAIZ = (process.argv.find((a) => a.startsWith('--raiz=')) || '').slice(7);
+const AUDIO = RAIZ ? resolve(RAIZ) : join(ROOT, 'public', 'audio');
+const PUBLICO = RAIZ ? dirname(AUDIO) : join(ROOT, 'public');
 const MANIFEST = join(AUDIO, 'manifest.json');
 const CHECK = process.argv.includes('--check');
 
 // facção em disco -> letra de time usada pelo jogo (game.js/characters.js)
-const FACTIONS = { 'time-e': 'E', 'time-b': 'B', tribos: 'U', palhacos: 'C', funkeiros: 'F',
-  nerdolas: 'N', profissionais: 'R', noias: 'O', tv: 'T' };
+const FACTIONS = { 'time-e': 'E', 'time-b': 'B', tribos: 'U', palhacos: 'C', funkeiros: 'F' };
 const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|webm)$/i;
-const VOICE_LINES = join(ROOT, 'content', 'voice-lines.json');
 
-// Preservados do manifest atual: cada entrada aqui é uma escolha (qual tiro é da AWP),
-// não um pool. Regenerar do disco trocaria som de arma por ordem alfabética.
-const CURATED = ['cs', 'weapons', 'general', 'weaponSamples'];
+// Contratos curados não podem ser reconstruídos pela ordem dos arquivos no disco. Isso inclui
+// os packs locais e seus metadados: `audio:check` precisa medir o mesmo jogo instalado.
+const CURATED = [
+  '_localLab', 'cs', 'weapons', 'weaponSamples', 'weaponSamplesAuthentic',
+  'defaultWeaponPack', 'weaponCandidates', 'weaponPacks', 'general', 'roundNumbers',
+  'characterPhysical', 'mapSoundscapes',
+];
 
 function listAudio(dir) {
   if (!existsSync(dir)) return [];
@@ -72,12 +81,44 @@ function listAudio(dir) {
    pro funkeiro".
 
    Quem grava o caminho não codifica; quem monta a URL codifica. Um lado só. */
-const toUrl = (abs) => relative(join(ROOT, 'public'), abs).split('/').join('/');
+const toUrl = (abs) => relative(PUBLICO, abs).split('/').join('/');
 
 const used = new Set();
 const take = (files) => { files.forEach(f => used.add(f)); return files.map(toUrl); };
 
 const prev = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : {};
+
+// O pacote privado já chega com todas as folhas reescritas para audio/a/<hash>.
+// Reconstruí-lo pela estrutura do disco apagaria characterVoice e trocaria as músicas
+// hasheadas pelo espelho menu-music/, criando exatamente 44 falsos órfãos. Neste formato
+// o check correto é integridade referencial e ausência de arquivos opacos não usados.
+if (prev?._privateBuild?.format === 'content-addressed-v1') {
+  const refs = [];
+  const collect = (value) => {
+    if (typeof value === 'string' && value.startsWith('audio/')) refs.push(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === 'object') Object.values(value).forEach(collect);
+  };
+  collect(prev);
+  const unique = new Set(refs);
+  const missing = [...unique].filter((ref) => !existsSync(join(PUBLICO, decodeURIComponent(ref))));
+  const opaqueDir = join(AUDIO, 'a');
+  const opaque = existsSync(opaqueDir)
+    ? readdirSync(opaqueDir).filter((name) => AUDIO_EXT.test(name)).map((name) => `audio/a/${name}`)
+    : [];
+  const orphanOpaque = opaque.filter((ref) => !unique.has(ref));
+  const menuExpected = MENU_MUSIC_ACTIVE_IDS.map((id) => `audio/menu-music/${id}.mp3`);
+  const missingMenuMirror = menuExpected.filter((ref) => !existsSync(join(PUBLICO, ref)));
+  console.log(`AUDIO PRIVATE  ${refs.length} referências · ${unique.size} únicas · ${opaque.length} opacas`);
+  if (missing.length || orphanOpaque.length || missingMenuMirror.length) {
+    if (missing.length) console.error(`✗ ${missing.length} referência(s) ausente(s): ${missing.slice(0, 8).join(', ')}`);
+    if (orphanOpaque.length) console.error(`✗ ${orphanOpaque.length} arquivo(s) opaco(s) órfão(s): ${orphanOpaque.slice(0, 8).join(', ')}`);
+    if (missingMenuMirror.length) console.error(`✗ espelho das oito músicas incompleto: ${missingMenuMirror.join(', ')}`);
+    process.exit(1);
+  }
+  console.log(`✓ pacote privado íntegro; menu espelhado: ${MENU_MUSIC_ACTIVE_IDS.join(', ')}`);
+  process.exit(0);
+}
 const out = {};
 
 // ── pools por facção ────────────────────────────────────────────────────────
@@ -87,29 +128,46 @@ for (const [dir, team] of Object.entries(FACTIONS)) {
   out.round[team] = take(listAudio(join(AUDIO, dir, 'round')));
 }
 
-// ── voz por personagem: a pasta continua sendo a verdade; o texto versionado alimenta
-// a legenda da seleção e a auditoria de licença/provedor sem viajar dentro do MP3.
-out.characterVoice = {}; out.characterVoiceText = {};
-if (existsSync(VOICE_LINES)) {
-  const voiceSource = JSON.parse(readFileSync(VOICE_LINES, 'utf8'));
-  for (const [id, character] of Object.entries(voiceSource.characters || {}).sort(([a], [b]) => a.localeCompare(b))) {
-    out.characterVoice[id] = {};
-    for (const event of ['select', 'kill', 'radio']) {
-      const files = take(listAudio(join(AUDIO, 'characters', id, event)));
-      out.characterVoice[id][event] = files;
-    }
-    for (const line of character.lines || []) {
-      const url = line.output?.file;
-      if (url && line.text) out.characterVoiceText[url] = line.text;
-    }
-  }
+// ── curados: vêm do manifest anterior, menos o que o ledger barra ───────────
+/* O ledger CONTROLA o que sai daqui, e a regra é ALLOWLIST sob o prefixo
+   derivado: o que não está catalogado não entra, nem no manifest local. A
+   decisão mora em `tools/audio/politica.mjs`, a mesma que o empacotador e o
+   `assets-check` usam — três cópias divergiriam na próxima edição (lição 2).
+   Régua: `npm run eval:audioproc`, cláusulas PRV7 e PRV11. */
+const LEDGER = (process.argv.find((a) => a.startsWith('--ledger=')) || '').slice(9)
+  || join(ROOT, 'docs', 'audio', 'proveniencia.json');
+const politica = carregarPolitica(LEDGER);
+/* SEM LEDGER, ABORTA — antes de escrever qualquer coisa, e nos dois modos.
+   Isto fazia `return null` e seguia: "não consigo verificar" virava "pode passar",
+   e o manifest saía com o não catalogado dentro, exit 0, sem diagnóstico. O
+   empacotador e o `assets-check` já falhavam fechados; era esta camada que
+   contradizia a política. Régua: PRV12. */
+if (politica.erro) {
+  console.error(`FALTA o ledger de procedência (${politica.erro}).`);
+  console.error('Sem ele não dá para saber o que pode entrar no manifest, e não saber custa o'
+    + ' mesmo que estar errado. Nada foi escrito.');
+  process.exit(1);
 }
-
-// ── curados: vêm do manifest anterior, intocados ────────────────────────────
-for (const k of CURATED) if (prev[k] !== undefined) out[k] = prev[k];
+const barrado = (rel) => {
+  const abs = join(PUBLICO, decodeURIComponent(rel));
+  if (!existsSync(abs)) return null;
+  return motivoDeRecusa(rel, readFileSync(abs), politica, 'manifest');
+};
+const tirados = [];
+const podar = (v) => {
+  if (typeof v === 'string') { const m = barrado(v); if (m) { tirados.push(`${v} (${m})`); return undefined; } return v; }
+  if (Array.isArray(v)) return v.map(podar).filter((x) => x !== undefined);
+  if (v && typeof v === 'object') {
+    const r = {};
+    for (const [k, val] of Object.entries(v)) { const p = podar(val); if (p !== undefined) r[k] = p; }
+    return r;
+  }
+  return v;
+};
+for (const k of CURATED) if (prev[k] !== undefined) out[k] = podar(prev[k]);
 // marca os curados como "usados" pra não aparecerem como órfãos no relatório
 const markUsed = (v) => {
-  if (typeof v === 'string') { const p = join(ROOT, 'public', decodeURIComponent(v)); if (existsSync(p)) used.add(p); }
+  if (typeof v === 'string') { const p = join(PUBLICO, decodeURIComponent(v)); if (existsSync(p)) used.add(p); }
   else if (Array.isArray(v)) v.forEach(markUsed);
   else if (v && typeof v === 'object') Object.values(v).forEach(markUsed);
 };
@@ -133,7 +191,17 @@ out.soundtrack = take(listAudio(join(AUDIO, 'soundtrack')));
 // outras listas: main.js trazia `Array.from({ length: 26 })` e a faixa nova na pasta sumia
 // calada (issue #47). Agora a pasta manda — main.js lê `menuMusic` daqui com fallback pra
 // lista antiga, e o `--check` cobra a 27ª faixa no dia em que ela entrar.
-out.menuMusic = take(listAudio(join(AUDIO, 'menu-music')));
+const menuMusic = take(listAudio(join(AUDIO, 'menu-music')));
+const activeMenuPaths = new Set(MENU_MUSIC_ACTIVE_IDS.map((id) => `audio/menu-music/${id}.mp3`));
+out.menuMusic = RAIZ ? menuMusic : menuMusic.filter((url) => activeMenuPaths.has(url));
+
+// ── áudio ambiente por mapa ─────────────────────────────────────────────────
+// `public/js/soundscape.js` nomeia esses arquivos, e ANTES DISTO nenhum deles era
+// alcançado: sem regra aqui eles entravam como ÓRFÃOS, não viravam folha do
+// manifest, e `scripts/build-audio-pack.mjs` — que copia só o que o manifest
+// nomeia — não os punha no zip. Em produção viravam 404 que `soundscape.js:59`
+// engolia com um warn. Régua: `npm run eval:audioalcance`.
+out.ambiente = take(listAudio(join(AUDIO, 'ambiente')));
 
 /* ── TETO DE DURAÇÃO DA VOZ IN-GAME ─────────────────────────────────────────
    Regra do dono (04/08): fala de `ingame/` tem no máximo **8 s**. Ela toca por cima do
@@ -200,6 +268,10 @@ for (const [k, v] of Object.entries(byFolder).sort((a, b) => b[1] - a[1])) conso
 console.log(`  voice ${Object.entries(out.voice).map(([t, a]) => t + ':' + a.length).join(' ')}`);
 console.log(`  round ${Object.entries(out.round).map(([t, a]) => t + ':' + a.length).join(' ')}`);
 console.log(`  capture ${out.capture.length} · soundtrack ${out.soundtrack.length} · menuMusic ${out.menuMusic.length}`);
+if (tirados.length) {
+  console.log(`  ⚠ ${tirados.length} caminho(s) BARRADO(S) pelo ledger de procedência — não entram no manifest:`);
+  for (const t of tirados) console.log(`     ${t}`);
+}
 if (longas === null) console.log('  (ffprobe ausente — teto de 8 s da voz in-game NÃO foi verificado)');
 else if (longas.length) {
   console.log(`  ⚠ ${longas.length} fala(s) de ingame acima de ${LIMITE_INGAME}s (tocam por cima do jogo):`);

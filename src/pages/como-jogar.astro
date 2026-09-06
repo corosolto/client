@@ -25,13 +25,11 @@
 import Layout from '../layouts/Layout.astro';
 import { CONTROLES, MAPAS } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
-import { FACTIONS } from '../../public/js/factions.js';
 
 const nCtf = MAPAS.filter(m => m.ctf).length;
 const nRounds = MAPAS.length - nCtf;
 const CTF_NOMES = MAPAS.filter(m => m.ctf).map(m => m.nome);
-const porExtenso = ['zero', 'uma', 'duas', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
-const faccoesProntas = FACTIONS.filter((f) => f.ready);
+const porExtenso = ['zero', 'uma', 'duas', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito'];
 
 const PASSOS = [
   { nome: 'Abra o jogo no navegador de desktop',
@@ -39,7 +37,7 @@ const PASSOS = [
   { nome: 'Escolha um nick',
     texto: 'O nick tem de 2 a 14 caracteres e fica salvo no navegador: é o nome que aparece no placar da partida e nos anúncios de abate. Não é obrigatório para jogar.' },
   { nome: 'Escolha a facção e o personagem',
-    texto: `${FACTIONS.length} facções no catálogo, com ${faccoesProntas.length} já jogáveis: ${faccoesProntas.map((f) => f.name).join(', ')}. Todos os personagens jogam sob a mesma base competitiva - a escolha é de estilo, não de vantagem.` },
+    texto: 'Cinco facções: Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros. São 44 personagens no total, e todos jogam igual - a escolha é de estilo, não de vantagem.' },
   { nome: 'Escolha o mapa e o modo',
     texto: `${porExtenso[MAPAS.length][0].toUpperCase()}${porExtenso[MAPAS.length].slice(1)} arenas: ${MAPAS.map(m => m.nome).join(', ')}. ${porExtenso[nRounds][0].toUpperCase()}${porExtenso[nRounds].slice(1)} abrem em rounds e ${porExtenso[nCtf]} em Capture the Flag, mas dá pra trocar o modo de qualquer mapa antes de começar. O tamanho dos times também é seu: de 1 contra 1 até 8 contra 8, com 4 contra 4 como padrão.` },
   { nome: 'Mire, agache, atire',
@@ -62,7 +60,7 @@ const FAQ: [string, string][] = [
   ['Dá pra jogar com amigos?',
    'Ainda não: hoje todas as partidas são contra bots. O multiplayer é a próxima grande frente do projeto.'],
   ['O jogo tem lado político?',
-   'Não. É sátira leve distribuída igualmente para todos os lados, sem gore e sem ódio, com personagens 100% fictícios. Tribos Urbanas, Funkeiros, Míticos e as novas facções culturais nem são lados políticos.'],
+   'Não. É sátira leve distribuída igualmente para todos os lados, sem gore e sem ódio, com personagens 100% fictícios. Duas das cinco facções (Tribos Urbanas e Funkeiros) nem são políticas.'],
 ];
 
 const jsonld = [

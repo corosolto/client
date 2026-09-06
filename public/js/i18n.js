@@ -8,7 +8,7 @@
      3. `translateDom(root)`: varre nós de texto e atributos (placeholder/title/aria) do
         menu ESTÁTICO uma vez no boot — zero mudança no index.astro;
      4. `frase(id, ...args)`: os textos DINÂMICOS do game.js (banner, HUD) com template.
-   Páginas do site e docs em EN são outra frente (issue #54). */
+   Páginas do site e docs em EN são outra frente (issue #54; changelog já tem /whats-new). */
 
 let _lang = null;
 // ?lang=pt|en na URL vence tudo (teste/demonstração — ex.: a live mostra EN sem mexer em config)
@@ -76,6 +76,28 @@ const DICT = {
   'Como jogar': 'How to play', 'Changelog': 'Changelog', 'Sobre': 'About',
   'Docs': 'Docs', 'Issues': 'Issues',
   'online': 'online',
+  // multiplayer (menu de primeira instância + tela de salas, 30/08)
+  'SALAS ONLINE · CONVIDE PELO LINK': 'ONLINE ROOMS · INVITE BY LINK',
+  'CONTRA BOTS · MATA-MATA E CTF': 'VS BOTS · DEATHMATCH AND CTF',
+  '// TRETA ONLINE': '// ONLINE FIGHT',
+  'SERVIDOR': 'SERVER',
+  'o de menor ping é o seu': 'lowest ping is yours',
+  'ENTRAR NA TRETA': 'JOIN THE FIGHT',
+  '▶ JOGO RÁPIDO': '▶ QUICK PLAY',
+  'ENTRAR': 'JOIN',
+  'Recebeu um convite? Cola o código aqui.': 'Got an invite? Paste the code here.',
+  'CRIAR MINHA SALA': 'CREATE MY ROOM',
+  'SALAS ABERTAS': 'OPEN ROOMS',
+  'ATUALIZAR': 'REFRESH',
+  'NOME': 'NAME', 'MAPAS': 'MAPS', 'MODO': 'MODE', 'SENHA': 'PASSWORD',
+  'SALA PRIVADA (só com senha)': 'PRIVATE ROOM (password only)',
+  'CRIAR E ENTRAR': 'CREATE AND JOIN',
+  'SALA CRIADA': 'ROOM CREATED',
+  'COPIAR CÓDIGO': 'COPY CODE',
+  'COPIAR LINK': 'COPY LINK',
+  '▶ ENTRAR NA SALA': '▶ JOIN THE ROOM',
+  'ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.':
+    'ESC or clicking outside only closes this notice - the room stays created, in the list.',
   // setup da partida
   'PASSO 1 · A PARTIDA': 'STEP 1 · THE MATCH',
   'PASSO 2 · O SEU LADO': 'STEP 2 · YOUR SIDE',
@@ -222,42 +244,6 @@ const DICT = {
     'Tamborzão in his head and footwork in the recoil. The arena’s old-school funk.',
   'Autotune no grito de guerra e 808 no peito. Trap em dose dupla.':
     'Autotune in the battle cry and an 808 in the chest. A double dose of trap.',
-  'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.':
-    'A tracker of footprints. Sees where the enemy stepped — the villain his own team tolerates.',
-  'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.':
-    'The pink dolphin of the Amazon. Breaks cover, hexes enemy aim and answers with a Deagle.',
-  'Robô de estúdio com lente única e rig no ombro. A transmissão começou.':
-    'Studio robot with a single lens and a shoulder rig. The broadcast has begun.',
-  'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — "dorme com o medo".':
-    'Lobato\'s witch. Throws slowing potions and scrambled vision — "sleep with your fear".',
-  'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.':
-    'Fire-haired boy with backwards feet. His footprints point the wrong way.',
-  'Roupa preta, tablet e leque de cores. Esse fluxo precisa de combate.':
-    'All-black outfit, tablet and a color palette. This user flow needs combat.',
-  'Camadas incompatíveis e invenções nas costas. Hoje eu tô calibrado!':
-    'Mismatched layers and inventions on his back. Today I\'m calibrated!',
-  'Repórter policial dos anos 90. Chega antes da polícia e narra com gosto.':
-    '90s crime reporter. Gets there before the police and narrates with relish.',
-  'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!':
-    'Cangaço on the trigger. The longer he holds the shot, the harder it hits — Holy Mary!',
-  'Headset antigo, fichas e mouse de bolinha. Reserva a máquina oito.':
-    'Old headset, arcade tokens and a ball mouse. Machine eight is reserved.',
-  'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.':
-    'Seventh son, crossroads curse. The black wolf wakes up strong, fanged and collarless.',
-  'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.':
-    'Precision cangaceira. Stopped, aimed, hit — the queen of the first shot.',
-  'Criatura felpuda com fones e boom dorsal. Som rodando!':
-    'Fuzzy creature with headphones and a dorsal boom mic. Sound is rolling!',
-  'Capacete, refletivo e bag térmica. Endereço confirmado.':
-    'Helmet, hi-vis vest and a thermal bag. Address confirmed.',
-  'Placas de papelão com previsões absurdas e case de feira. Já aconteceu semana que vem.':
-    'Cardboard signs with absurd forecasts and a street-fair briefcase. It already happened next week.',
-  'Moletom, olheiras e teclado nas costas. Só mais um commit.':
-    'Hoodie, dark circles and a keyboard on his back. Just one more commit.',
-  'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.':
-    'One-legged trickster. A whirlwind of smoke and he\'s gone — the red cap is the hitbox.',
-  'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.':
-    'Quilombola captain. The cry of Palmares echoes and speeds up his allies\' reloads.',
   'Óculos espelhado e corte na régua. No fluxo, quem corre é a bala.':
     'Mirrored shades and a razor-sharp fade. In the flow, the bullet does the running.',
   'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.':
@@ -265,9 +251,6 @@ const DICT = {
   'TIME E': 'TEAM E', 'TIME B': 'TEAM B',
   'os seus': 'your crew',
   'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS',
-  'PALHACOS': 'CLOWNS', 'MITICOS': 'MYTHICS', 'NERDOLAS': 'GEEKS',
-  'PROFISSIONAIS DO CORRE': 'HUSTLE PROS', 'NOIAS': 'JUNKIES', 'TV': 'TV',
-  'TIME ADVERSÁRIO': 'ENEMY TEAM',
   '"A treta se faz na praça!"': '"The fight is at the square!"',
   '"A treta se faz na rodovia!"': '"The fight is on the highway!"',
   '"A treta se faz na quebrada!"': '"The fight is in the hood!"',
@@ -309,7 +292,7 @@ const DICT = {
   'CONTINUAR': 'RESUME', 'CONTINUAR ▶': 'RESUME ▶',
   'REINICIAR PARTIDA': 'RESTART MATCH', 'SAIR PRO MENU': 'QUIT TO MENU',
   'VOLTAR AO MENU': 'BACK TO MENU', 'JOGAR NOVAMENTE': 'PLAY AGAIN',
-  'VITÓRIA': 'VICTORY', 'DERROTA': 'DEFEAT',
+  'VITÓRIA': 'VICTORY', 'DERROTA': 'DEFEAT', 'PRÓXIMO MAPA CARREGANDO…': 'LOADING NEXT MAP…',
   'ENTRAR NESSE CORO': 'GET THIS BOOT ON',
   'SÓ PISTOLAS': 'PISTOLS ONLY', 'SÓ FACA': 'KNIFE ONLY', 'SÓ AWP': 'AWP ONLY',
   'VOCÊ': 'YOU', 'RÁDIO': 'RADIO', 'Respawn em': 'Respawn in',   // tradução DO DONO (06/08) — não 'join this crew'

@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-11T23:44:57.043Z",
+ "gerado": "2026-08-04T21:02:49.542Z",
  "amostras": 8,
  "clipes": [
   "walk",
@@ -9,32 +9,92 @@
  ],
  "personagens": [
   {
-   "id": "blender-v2/profeta-calcada-v2",
+   "id": "padati",
    "errBind": 0,
    "clipes": {
     "walk": {
-     "esticP95med": 0.24,
-     "esticP95pior": 0.288,
-     "pctAcima25": 5.15,
-     "volRel": 2.09
+     "esticP95med": 0.292,
+     "esticP95pior": 0.306,
+     "pctAcima25": 6.34,
+     "volRel": 1
     },
     "run": {
-     "esticP95med": 0.194,
-     "esticP95pior": 0.222,
-     "pctAcima25": 4.87,
-     "volRel": 2.29
+     "esticP95med": 0.287,
+     "esticP95pior": 0.3,
+     "pctAcima25": 6.4,
+     "volRel": 1
     },
     "idle": {
-     "esticP95med": 0.097,
-     "esticP95pior": 0.102,
-     "pctAcima25": 4.16,
-     "volRel": 1.03
+     "esticP95med": 0.263,
+     "esticP95pior": 0.264,
+     "pctAcima25": 5.47,
+     "volRel": 1
     },
     "crouchwalk": {
-     "esticP95med": 0.356,
+     "esticP95med": 0.38,
      "esticP95pior": 0.395,
-     "pctAcima25": 5.37,
-     "volRel": 2.14
+     "pctAcima25": 9.43,
+     "volRel": 1
+    }
+   }
+  },
+  {
+   "id": "mandrake",
+   "errBind": 0,
+   "clipes": {
+    "walk": {
+     "esticP95med": 0.251,
+     "esticP95pior": 0.26,
+     "pctAcima25": 5.22,
+     "volRel": 1
+    },
+    "run": {
+     "esticP95med": 0.345,
+     "esticP95pior": 0.372,
+     "pctAcima25": 7.79,
+     "volRel": 1
+    },
+    "idle": {
+     "esticP95med": 0.233,
+     "esticP95pior": 0.235,
+     "pctAcima25": 4.59,
+     "volRel": 1
+    },
+    "crouchwalk": {
+     "esticP95med": 0.388,
+     "esticP95pior": 0.402,
+     "pctAcima25": 8.85,
+     "volRel": 1
+    }
+   }
+  },
+  {
+   "id": "pagodeiro",
+   "errBind": 0.0092,
+   "clipes": {
+    "walk": {
+     "esticP95med": 0.304,
+     "esticP95pior": 0.339,
+     "pctAcima25": 7.26,
+     "volRel": 1
+    },
+    "run": {
+     "esticP95med": 0.292,
+     "esticP95pior": 0.314,
+     "pctAcima25": 6.71,
+     "volRel": 1.14
+    },
+    "idle": {
+     "esticP95med": 0.181,
+     "esticP95pior": 0.182,
+     "pctAcima25": 3.13,
+     "volRel": 1
+    },
+    "crouchwalk": {
+     "esticP95med": 0.404,
+     "esticP95pior": 0.432,
+     "pctAcima25": 10.79,
+     "volRel": 1.02
     }
    }
   }

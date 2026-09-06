@@ -128,7 +128,7 @@ export interface Mapa {
   ctf: boolean;
 }
 
-/** Arenas jogáveis - a ordem é a do registro (public/js/maps.js, objeto MAPS). */
+/** 5 arenas jogáveis - a ordem é a do registro (public/js/maps.js, objeto MAPS). */
 export const MAPAS: Mapa[] = [
   {
     id: 'praca_poderes', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
@@ -171,49 +171,6 @@ export const MAPAS: Mapa[] = [
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
   },
-  {
-    id: 'escadao', nome: 'Escadão (Morro)', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Comunidade cortada por uma escadaria monumental de azulejo colorido, com caveirão no patamar central.',
-    detalhe: 'O mapa de verticalidade pura: um time nasce na rua lá embaixo (bar, mercadinho, carros), ' +
-      'o outro nasce no mirante lá em cima (caixa d\'água, mureta). Entre os dois, o escadão - três lances ' +
-      'de escada com patamares de barricada e um caveirão atravessado no meio da subida. Dois becos laterais ' +
-      'sobem por trás das casas e dão rota de flanco sem expor na escada. Cada patamar é um andar de combate: ' +
-      'você só enxerga o próximo lance, nunca o escadão inteiro.',
-  },
-  {
-    id: 'campomorro', nome: 'Campo do Morro', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Campo de várzea no centro de uma comunidade - todos os becos convergem pra ele.',
-    detalhe: 'O mapa de convergência: um time nasce no campo (centro, exposto, dono do meio) e ' +
-      'o outro nasce no galpão do baile funk (periferia, protegido, paredão de som e portão de aço). ' +
-      'Quatro becos descem do morro e desembocam em bordas diferentes do campo - cada um é uma rota ' +
-      'de flanco separada. O campo tem traves, alambrado derrubado, container e arquibancada de cimento. ' +
-      'Segurar o centro é punição e prêmio ao mesmo tempo: cinco bocas de beco para vigiar.',
-  },
-  {
-    id: 'lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Comunidade em duas camadas: lajes em cima, becos embaixo - a luta pela vertical.',
-    detalhe: 'Um time nasce nas lajes (pula de telhado em telhado, vê longe mas se expõe); o outro ' +
-      'nos becos (tem cover mas não vê nada). Quatro escadas conectam as camadas - cada uma é um ' +
-      'ponto de estrangulamento contestável dos dois lados. As lajes têm caixas d\'água e muretas ' +
-      'como cover; os becos têm carros, caçambas e motos encostadas. Prédio central da fileira ' +
-      'norte é mais alto - é a posição de sniper do mapa.',
-  },
-  {
-    id: 'corrego', nome: 'Córrego (Favela de SP)', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Duas margens de palafitas separadas por água poluída e três pontes muito diferentes.',
-    detalhe: 'Mapa de travessia e risco: o córrego corre abaixo das margens, com trechos alagados nas pontas, ' +
-      'pontes de madeira no meio e casas sobre pilotis. A margem leste e a oeste têm rotas próprias entre ' +
-      'palafitas, lixo, motos e barracas; atravessar cedo encurta o ataque, mas expõe o jogador de lado. ' +
-      'Pixação paulistana, zinco, madeira úmida e o céu cinzento separam visualmente este mapa dos morros do Rio.',
-  },
-  {
-    id: 'mansao', nome: 'Mansão do Joá', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Mansão modernista entre jardim tropical e piscina infinita, com interior e mezanino jogáveis.',
-    detalhe: 'O time invasor nasce no portão e avança por um jardim geométrico até garagem, hall, sala e cozinha. ' +
-      'O defensor ocupa o deck e a piscina diante do oceano. O mezanino a 4,5 m é alcançado por uma escada real ' +
-      'e abre linhas verticais sobre o interior; biombos, móveis e paisagismo dividem as visadas sem transformar ' +
-      'a casa em corredor. O horizonte do Joá mostra mar, costão e maciço sob luz dourada.',
-  },
 ];
 
 export interface Personagem { faccao: string; nome: string; blurb: string; }
@@ -235,10 +192,9 @@ export const FACCOES: { id: string; nome: string; lema: string; cor: string; not
   { id: 'urbanas', nome: 'Tribos Urbanas', lema: 'A treta se faz na quebrada!', cor: '#c79bff', nota: 'Facção sem lado político: emo, punk, metaleiro, skatista, rapper e companhia. Entra na treta pelo estilo.' },
   { id: 'palhacos', nome: 'Palhaços', lema: 'A treta se faz no picadeiro!', cor: '#ff8ad1', nota: 'O picadeiro invadiu a arena. Nove palhaços, do clássico de cartola ao que dá medo de verdade.' },
   { id: 'funkeiros', nome: 'Funkeiros', lema: 'A treta se faz no bailão!', cor: '#ffd23f', nota: 'A facção mais nova: mandrake, cria, trap, tamborzão. Ostenta antes, atira depois.' },
-  { id: 'mitico', nome: 'Mítico', lema: 'A treta atravessa os séculos!', cor: '#9d4edd', nota: 'Heróis históricos e folclore brasileiro: Zumbi, Lampião, Saci, Cuca, Curupira. Ninguém da atualidade.' },
 ];
 
-/** 53 personagens (public/js/characters.js). `faccao` casa com FACCOES[].id */
+/** 44 personagens (public/js/characters.js). `faccao` casa com FACCOES[].id */
 export const PERSONAGENS: Personagem[] = [
   { id: 'esquerdomacho', faccao: 'E', nome: 'Esquerdomacho', blurb: 'Barba, tote bag e 47 bottons. Mira acadêmica: analisa a treta antes de atirar.' },
   { id: 'sindicato', faccao: 'E', nome: 'Líder do Sindicato', blurb: 'Boné vermelho, colete de assembleia e megafone. Convoca greve de fogo a cada round.' },
@@ -288,16 +244,6 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'trapfunk', faccao: 'funkeiros', nome: 'Trap Funk', blurb: 'Autotune no grito de guerra e 808 no peito. Trap em dose dupla.' },
   { id: 'fluxo', faccao: 'funkeiros', nome: 'Fluxo', blurb: 'Óculos espelhado e corte na régua. No fluxo, quem corre é a bala.' },
   { id: 'ostentacao', faccao: 'funkeiros', nome: 'Ostentação', blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.' },
-
-  { id: 'mariabonita', faccao: 'mitico', nome: 'Maria Bonita', blurb: 'Cangaceira de precisão. Parou, mirou, acertou - a rainha do primeiro tiro.' },
-  { id: 'saci', faccao: 'mitico', nome: 'Saci-Pererê', blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some - o gorro vermelho é hitbox.' },
-  { id: 'lampiao', faccao: 'mitico', nome: 'Lampião', blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz - Virgem Maria!' },
-  { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.' },
-  { id: 'bandeirante', faccao: 'mitico', nome: 'Bandeirante', blurb: 'Caçador de pegadas. Vê onde o inimigo pisou - o vilão que o time tolera.' },
-  { id: 'boto', faccao: 'mitico', nome: 'Boto Cor de Rosa', blurb: 'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.' },
-  { id: 'zumbi', faccao: 'mitico', nome: 'Zumbi dos Palmares', blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.' },
-  { id: 'cuca', faccao: 'mitico', nome: 'Cuca', blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada - dorme com o medo.' },
-  { id: 'curupira', faccao: 'mitico', nome: 'Curupira', blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.' },
 ];
 
 export interface Controle { tecla: string; acao: string; }

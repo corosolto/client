@@ -35,9 +35,9 @@ jobs:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
     steps:
-      - uses: ./.github/actions/setup
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
-          node-version: ''
           python-version: '3.13'
       - name: Ensure labels exist
         run: python3 scripts/ci/ensure_labels.py crash-auto bot-fixable covered-by-pr
@@ -128,9 +128,9 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
     steps:
-      - uses: ./.github/actions/setup
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
-          node-version: ''
           python-version: '3.13'
       - name: Ensure labels exist
         run: python3 scripts/ci/ensure_labels.py bot-fixable covered-by-pr crash-auto stale-backlog needs-repro
@@ -202,12 +202,13 @@ jobs:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       ISSUE_NUMBER: ${{ github.event.issue.number }}
     steps:
-      - uses: ./.github/actions/setup
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          node-version: ''
-          python-version: '3.13'
-          fetch-depth: '0'
+          fetch-depth: 0
           token: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
       - name: Ensure bot-fixable label exists
         run: python3 scripts/ci/ensure_labels.py bot-fixable
       - name: Fetch issue
@@ -234,7 +235,12 @@ jobs:
           git config user.name "csbrasil-bot"
           git config user.email "csbrasil-bot@users.noreply.github.com"
           git checkout -B "$branch" origin/main
-          git commit --allow-empty -s -m "chore(bot): bootstrap fix for #${ISSUE_NUMBER}"
+          # Trailers explícitos, byte a byte como nos caminhos irmãos do autofix.yml:
+          # sem `Agent:` o agente_check reprova a draft PR que este mesmo job abre no
+          # passo seguinte (#451 — terceira ocorrência da classe, depois do #406 e #450).
+          git commit --allow-empty -m "chore(bot): bootstrap fix for #${ISSUE_NUMBER}" \
+                     -m "Agent: csbrasil-bot (issues-bot)" \
+                     -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
           git push -u origin "$branch" --force
           echo "BRANCH=$branch" >> "$GITHUB_ENV"
       - name: Open draft PR

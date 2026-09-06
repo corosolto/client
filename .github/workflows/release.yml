@@ -93,7 +93,12 @@ jobs:
             exit 1
           fi
           git add package.json package-lock.json public/js/version.js CHANGELOG.md README.md AGENTS.md STATUS.md docs/ public/docs/ tools/eval/ARCH.md tools/eval/README.md
-          git commit -s -m "chore(release): $NEW"
+          # O `Agent:` vai explícito — a AF7 cobra os dois trailers em todo commit de
+          # workflow desde o #451. O Signed-off-by fica com o `-s` porque o e-mail desta
+          # identidade vem de secret (BOT_GIT_EMAIL); grafá-lo na mensagem congelaria o
+          # secret no YAML, e o `-s` o grava com a identidade configurada acima.
+          git commit -s -m "chore(release): $NEW" \
+                     -m "Agent: csbrasil-deploy-bot (release)"
           # Tag ANOTADA + push explícito do ref. `--follow-tags` só sobe tag anotada, e
           # `git tag` sem `-a` cria tag LEVE: o alpha.38 (08/08) nasceu leve, ficou só no
           # runner, e o `gh release create` abortou com "tag exists locally but has not

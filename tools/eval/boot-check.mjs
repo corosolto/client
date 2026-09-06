@@ -125,8 +125,9 @@ try {
       novo = `void testMode;\n${novo}`;
       mutacaoAplicou = true;
     } else {
-      const inicioPartida = 'async function _startGame(team, charId, enemyFaction) {';
-      novo = novo.replace(inicioPartida, `${inicioPartida}\n  throw new Error('SEGREDO_BOOT_CHECK');`);
+      // ancorado no NOME: a lista de parâmetros já mudou uma vez (#489, `online = false`) e cegou a régua
+      const inicioPartida = /async function _startGame\([^)]*\) \{/;
+      novo = novo.replace(inicioPartida, (m) => `${m}\n  throw new Error('SEGREDO_BOOT_CHECK');`);
       novo = novo.replace("if (testMode && params.get('auto'))", "if (params.get('auto'))");
       if (!novo.includes("throw new Error('SEGREDO_BOOT_CHECK')") || novo === corpo)
         throw new Error('fixture de falha não aplicou em main.js');
@@ -272,8 +273,7 @@ try {
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
     await jornada.waitForTimeout(3100);
     const entradaOk = await jornada.locator('#launch-error').evaluate((el) => el.classList.contains('hidden'));
-    await jornada.locator('.cs-item[data-act="jogar"]').click();
-    await jornada.locator('#cs-modos:not([hidden])').waitFor();
+    // SINGLE PLAYER é primeira instância do menu (30/08) — o degrau JOGAR morreu
     await jornada.locator('.cs-item[data-act="sp"]').click();
     await jornada.evaluate(() => {
       const nick = document.getElementById('nick-input');

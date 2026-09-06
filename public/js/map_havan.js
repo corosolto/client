@@ -12,9 +12,6 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras } from './map_decals.js';     // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';               // cobertura medida, não coordenada à mão
-import { setMapSky } from './map_sky.js';
-import { createFavelaAmbience } from './ambientlife.js';
-import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 38, HALF_Z = 58;
 // Carros do estacionamento (ids otimizados em public/models/props). Forte cara BR.
@@ -636,14 +633,7 @@ export function buildHavan(scene, T) {
   // z < -6 = dentro da loja (SF): vai pro lote sem sombra.
   const gprop = (id, x, z, h, ry = 0, y = 0) => {
     if (BATCH) return (z < -6 ? PROPS_LOJA : PROPS).add(id, { x, y, z, targetH: h, ry });
-    const o = placeProp(id, { x, y, z, targetH: h, ry });
-    if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
-    return !!o;
-  };
-  // SÓ corpo (AABB): a malha visível entra em `occluders` no build — caixa inteira cobria
-  // o vão entre rodas e matava a bala no ar (BUG-54).
-  const carCover = (x, z, hw, hd, h) => {
-    colliders.push({ minX: x - hw, maxX: x + hw, minY: 0, maxY: h, minZ: z - hd, maxZ: z + hd });
+    const o = placeProp(id, { x, y, z, targetH: h, ry }); if (o) root.add(o); return !!o;
   };
   // fallback enquanto o GLB não carrega (ou falha): mini-carro colorido por hash do id —
   // substitui a caixa preta que fazia o estacionamento parecer quebrado no menu/loading.
@@ -692,7 +682,6 @@ export function buildHavan(scene, T) {
     const o = placeProp(id, { x, y: 0, z, targetLen: cl, targetH: ch, ry });
     if (!o) { fallbackCar(id, x, z, ry); return; }
     paintBR(o); root.add(o);
-    o.traverse((m) => { if (m.isMesh) occluders.push(m); });
   };
   function fallbackCar(id, x, z, ry) {
     let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
@@ -705,17 +694,6 @@ export function buildHavan(scene, T) {
     const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6 * kl, 0.5 * ka, 2.1 * kl), lam({ color: 0x20242a, metalness: 0.45, roughness: 0.18, envMapIntensity: 2.2 }));   // vidro do carro
     cabin.position.set(0, 1.05 * ka, -0.2 * kl); cabin.castShadow = true; g.add(cabin);
     g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
-    g.traverse((m) => { if (m.isMesh) occluders.push(m); });
-  }
-
-  // ===== entorno não jogável =====
-  // Avental puramente visual: sem collider, occluder ou waypoint — só fecha o horizonte.
-  {
-    const grass = lam({ map: reTile(T.grass, 52, 42), color: 0xa6a56f, roughness: 1 });
-    const road = lam({ map: reTile(T.asphalt, 34, 46), color: 0x8b8b86, roughness: 0.98 });
-    addFloor(154, 162, -10, 3, grass, -0.12);
-    addFloor(104, 154, 0, 3, road, -0.08);
-    addFloor(16, 74, -70, 16, MAT.curb, -0.10);
   }
 
   // ===== chão: estacionamento (z>-6) + loja (z<-6) =====
@@ -819,9 +797,8 @@ export function buildHavan(scene, T) {
       const b = new THREE.Mesh(subUV(new THREE.PlaneGeometry(1.9, 2.9), i * 0.25, 0.25), bannerMat);
       b.position.set(sx * bx, 3.35, SF + 1.9); b.castShadow = true; deco(b);
     });
-    // CORNIJA corrida no topo, avançando da parede até cobrir a colunata.
-    // SÓLIDA: a parede para em y=5 e o raio a 5,02 via a cornija e não achava occluder (BUG-54).
-    addBox(2 * HALF_X + 1, 0.55, 2.3, plaster, 0, 5.0, SF + 1.05);
+    // CORNIJA corrida no topo, avançando da parede até cobrir a colunata
+    addBox(2 * HALF_X + 1, 0.55, 2.3, plaster, 0, 5.0, SF + 1.05, { collide: false });
     addBox(2 * HALF_X + 1, 0.2, 1.6, plaster, 0, 5.55, SF + 0.7, { collide: false });   // filete superior
     // DENTÍCULOS sob a cornija: 1 InstancedMesh p/ ~150 blocos (1 draw call) — é o detalhe
     // que faz a cornija ler como cornija e não como laje. Só em quality >= med.
@@ -1171,8 +1148,9 @@ export function buildHavan(scene, T) {
        spawn) e um colisor em cima dela empurraria as armas, que foi como a rodada do
        "critério de alcance a pé" esticou uma fileira de 12,65 m para 17,88 m. */
     for (const [cxp, zc] of [[-3.6, DEP_Z - 0.45], [3.6, DEP_Z - 0.45]]) {
-      addBox(1.4, 0.14, 1.2, MAT.rack, cxp, MZ.h, zc);
-      addBox(1.3, 0.76, 1.1, MAT.goods, cxp, MZ.h + 0.14, zc);
+      addBox(1.4, 0.14, 1.2, MAT.rack, cxp, MZ.h, zc, { collide: false });
+      addBox(1.3, 0.76, 1.1, MAT.goods, cxp, MZ.h + 0.14, zc, { collide: false });
+      colliders.push({ minX: cxp - 0.7, maxX: cxp + 0.7, minY: MZ.h, maxY: MZ.h + 0.9, minZ: zc - 0.6, maxZ: zc + 0.6 });
     }
   }
   /* DEGRAUS: PISO + ESPELHO separados, com o topo de cada piso em MÚLTIPLO EXATO do espelho.
@@ -1204,20 +1182,19 @@ export function buildHavan(scene, T) {
       // ela vira um segundo patamar e a régua MAP3 lê 35 degraus de 10 cm em vez de 20 de 17.
       addBox(ESC.larg, 0.012, 0.04, antid, cx, yTop - 0.010, zNariz - 0.03, { collide: false, cast: false });
     }
-    // viga lateral + corrimão: caixas INCLINADAS, vão como malha própria e são occluders
-    // (merge estático continua fora de occluders — ver :1122).
+    // viga lateral (limão) + corrimão: caixas INCLINADAS, então vão como malha própria
     const ang = Math.atan2(MZ.h, R.z1 - R.z0);                       // 30,4°
     const comp = Math.hypot(MZ.h, R.z1 - R.z0);
     for (const sx of [R.x0 + 0.05, R.x1 - 0.05]) {
       const lm = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.42, comp), limao);
       lm.position.set(sx, ESC.espelho / 2 + MZ.h / 2 - 0.16, (R.z0 + R.z1) / 2); lm.rotation.x = ang;
-      lm.castShadow = true; root.add(lm); occluders.push(lm);
+      lm.castShadow = true; deco(lm);
       const cr = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, comp + 0.24), MAT.steel);
       cr.position.set(sx, ESC.espelho / 2 + MZ.h / 2 + 0.95, (R.z0 + R.z1) / 2); cr.rotation.x = ang;
-      cr.castShadow = true; root.add(cr); occluders.push(cr);
+      cr.castShadow = true; deco(cr);
       for (let k = 1; k < ESC.n; k += 4) {                           // montantes do corrimão
         const y = ESC.espelho * k;
-        occluders.push(addBox(0.05, 0.95, 0.05, MAT.steel, sx, y, R.z1 - (k - 0.5) * ESC.piso, { collide: false, batch: false }));
+        addBox(0.05, 0.95, 0.05, MAT.steel, sx, y, R.z1 - (k - 0.5) * ESC.piso, { collide: false });
       }
     }
     /* COLISOR da escada: o corrimão é INCLINADO e um colisor AABB inclinado não existe —
@@ -1396,13 +1373,12 @@ export function buildHavan(scene, T) {
     // todo objeto apoiado precisa de escurecimento encostado no chão) e volta a ler como
     // peça solta. O plinto é o mesmo concreto do rufo, 20 cm mais largo que o fuste.
     for (let pz = SF + 4; pz < wZ; pz += PSTEP) for (const sx of [-1, 1]) {
-      // fuste é occluder (sem colisor: a pilastra é alvenaria, mas o corpo desliza no muro)
-      occluders.push(addBox(0.5, 3.1, 0.9, pil, sx * (HALF_X - 0.1), 0, pz, { collide: false, batch: false }));
+      addBox(0.5, 3.1, 0.9, pil, sx * (HALF_X - 0.1), 0, pz, { collide: false });
       addBox(0.75, 0.18, 1.15, cap, sx * (HALF_X - 0.1), 3.1, pz, { collide: false });
       addBox(0.66, 0.3, 1.06, cap, sx * (HALF_X - 0.1), 0, pz, { collide: false, cast: false });
     }
     for (let px = -HALF_X + 4; px <= HALF_X - 4; px += PSTEP) {
-      occluders.push(addBox(0.9, 3.1, 0.5, pil, px, 0, wZ - 0.4, { collide: false, batch: false }));
+      addBox(0.9, 3.1, 0.5, pil, px, 0, wZ - 0.4, { collide: false });
       addBox(1.15, 0.18, 0.75, cap, px, 3.1, wZ - 0.4, { collide: false });
       addBox(1.06, 0.3, 0.66, cap, px, 0, wZ - 0.4, { collide: false, cast: false });
     }
@@ -1499,10 +1475,8 @@ export function buildHavan(scene, T) {
   if (DECO_HI) carts.push([-15.5, 15, 1.9], [33, 29, 0.5], [-3.5, 47, 2.2], [20, 55, 1.1]);
   for (const [cx, cz, cry] of carts) gprop('shopping_cart', cx, cz, 1.0, cry);
   if (DECO) for (const [bx, bz] of [[-8.5, 30], [8.5, 42]]) {   // baia: dois trilhos + placa
-    // trilhos SÓLIDOS: a régua viu a ponta do trilho dentro do colisor do carro vizinho
-    // sem occluder nenhum — e o corpo atravessava a baia (mesmo defeito do pedestal).
-    for (const sx of [-1, 1]) addBox(0.12, 1.1, 5, MAT.steel, bx + sx * 1.3, 0, bz);
-    addBox(2.8, 0.12, 0.12, MAT.steel, bx, 1.1, bz - 2.4);
+    for (const sx of [-1, 1]) addBox(0.12, 1.1, 5, MAT.steel, bx + sx * 1.3, 0, bz, { collide: false });
+    addBox(2.8, 0.12, 0.12, MAT.steel, bx, 1.1, bz - 2.4, { collide: false });
   }
   // CARROS: grade de vagas nos dois lados, contornando a estátua e o caminho central.
   // Usa a SELEÇÃO da partida (12 modelos leves sorteados por seed — ver havanCarSelection).
@@ -1530,7 +1504,7 @@ export function buildHavan(scene, T) {
     const id = carPool[ci % carPool.length]; ci++;
     const ry = (z > 28 ? 0 : Math.PI) + (RY_FIX[id] || 0) + (Math.random() - 0.5) * 0.12;   // fileiras retas, quase alinhadas
     placeCar(id, x, z, ry);
-    carCover(x, z, 1.2, 2.2, 1.4);
+    colliders.push({ minX: x - 1.2, maxX: x + 1.2, minY: 0, maxY: 1.4, minZ: z - 2.2, maxZ: z + 2.2 });  // collider do carro
   }
   /* MAIS CARROS NO PÁTIO (pedido do dono: "enchemos o estacionamento de mais carros ...
      assim o mapa fica mais preenchido e utilizável"). +14 carros, net +12 (duas vagas do
@@ -1550,7 +1524,7 @@ export function buildHavan(scene, T) {
     const id = carPool[ci++ % carPool.length];
     const ry = Math.PI + (RY_FIX[id] || 0) + (Math.random() - 0.5) * 0.12;
     placeCar(id, xc, zc, ry);
-    carCover(xc, zc, 1.2, 2.2, 1.4);
+    colliders.push({ minX: xc - 1.2, maxX: xc + 1.2, minY: 0, maxY: 1.4, minZ: zc - 2.2, maxZ: zc + 2.2 });
   }
   /* Os 6 das faixas laterais entram ENCOSTADOS no muro (nariz pra parede) e com colisor
      QUADRADO de 4,4 × 4,4 m. Não é preguiça: o `ry` de cada carro leva o `RY_FIX` DO MODELO
@@ -1564,7 +1538,7 @@ export function buildHavan(scene, T) {
     if (LOWQ && ((xc + zc) % 7 < 3)) continue;
     const id = carPool[ci++ % carPool.length];
     placeCar(id, xc, zc, (xc < 0 ? -Math.PI / 2 : Math.PI / 2) + (RY_FIX[id] || 0));
-    carCover(xc, zc, 2.2, 2.2, 1.4);
+    colliders.push({ minX: xc - 2.2, maxX: xc + 2.2, minY: 0, maxY: 1.4, minZ: zc - 2.2, maxZ: zc + 2.2 });
   }
   // CARROS NA FAIXA CENTRAL (G2-R14B, pedido do dono): pares escalonados no corredor
   // x∈[-7,7] entre o spawn do estacionamento e a loja — quebram a lane aberta de tiro.
@@ -1574,12 +1548,12 @@ export function buildHavan(scene, T) {
     const id = carPool[ci++ % carPool.length];
     const ry = (cz > 28 ? 0 : Math.PI) + (RY_FIX[id] || 0) + (Math.random() - 0.5) * 0.12;
     placeCar(id, cx, cz, ry);
-    carCover(cx, cz, 1.2, 2.2, 1.4);
+    colliders.push({ minX: cx - 1.2, maxX: cx + 1.2, minY: 0, maxY: 1.4, minZ: cz - 2.2, maxZ: cz + 2.2 });
   }
   // ônibus urbanos no fundo do estacionamento (marco + cover grande)
   for (const bx of [-28, 28]) {
     if (!gprop('onibus_urbano', bx, 50, 2.8, 0.05)) addBox(2.9, 2.8, 7.6, MAT.trim, bx, 0, 50);
-    carCover(bx, 50, 1.5, 3.9, 2.8);
+    colliders.push({ minX: bx - 1.5, maxX: bx + 1.5, minY: 0, maxY: 2.8, minZ: 46.1, maxZ: 53.9 });
   }
   // POSTES DE LUZ — antes eram addBox(0.4,4,0.4) cinza puro: a tal "coluna solta flutuando
   // no meio do estacionamento" da crítica era isto (um paralelepípedo sem luminária, sem
@@ -1640,7 +1614,7 @@ export function buildHavan(scene, T) {
   // CONTRASTE SOL x INTERIOR: o sol era 0xffffff e a fluorescente 0xfff0dd (quente) — as
   // duas iguais, sem troca de temperatura na porta. Agora sol QUENTE de meio-dia brasileiro
   // + rebote do asfalto quente vindo de baixo, contra a fluorescente FRIA lá dentro.
-  setMapSky(scene, T, '/img/textures/sky_havan.webp', 0x9fb8cc);
+  scene.background = T.sky || new THREE.Color(0x9fb8cc);
   /* NÉVOA R9: linear 85→210 era o mesmo que NÃO TER névoa — o estacionamento inteiro cabe
      dentro dos primeiros 85 m, então nenhum pixel do mapa jogável recebia um grama de haze
      e o muro do fundo lia com o MESMO microcontraste do meio-fio a 3 m. Agora FogExp2
@@ -1842,7 +1816,7 @@ export function buildHavan(scene, T) {
   for (const [cx, cz, cry] of [[-6, 50.5, 0.1], [6, 50.5, -0.1], [-14.5, 50.5, 0.06], [14.5, 50.5, -0.06], [0, 44.5, 0.04]]) {
     const id = carPool[ci++ % carPool.length];
     placeCar(id, cx, cz, Math.PI + cry);
-    carCover(cx, cz, 1.2, 2.2, 1.4);
+    colliders.push({ minX: cx - 1.2, maxX: cx + 1.2, minY: 0, maxY: 1.4, minZ: cz - 2.2, maxZ: cz + 2.2 });
   }
   // 3 bandeiras: estacionamento, estátua, gôndolas (corredor central da loja)
   /* 3 bandeiras — DISTRIBUÍDAS, não enfileiradas. As três estavam em x=0: a mesma reta que
@@ -1923,16 +1897,8 @@ export function buildHavan(scene, T) {
      e sai da mesma forma que os planos individuais saíam. */
   DECO_BATCH.build(root);
   PAINT_BATCH.build(root);
-  const preProps = new Set(root.children);
   PROPS.build(root);
   PROPS_LOJA.build(root);
-  // InstancedMesh do lote entra em `occluders` (BUG-54: bala atravessava gôndola/carro);
-  // material transparente (vidro) fica de fora.
-  for (const c of root.children) {
-    if (preProps.has(c) || !c.isInstancedMesh) continue;
-    const ms = Array.isArray(c.material) ? c.material : [c.material];
-    if (ms.some((m) => m && m.visible !== false && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9)))) occluders.push(c);
-  }
 
   /* ═══ PASSADA DE GRAFITE (07/08) ══════════════════════════════════════════
      Pedido literal do dono: "na loja h seria em todo estacionamento no muro e na
@@ -1981,22 +1947,7 @@ export function buildHavan(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 29, separacao: 15 },
   });
 
-  /* BUG-57: estacionamento tem pombo e depósito tem rato. */
-  const ambience = createFavelaAmbience(root, {
-    map: 'loja_h',
-    rats: [
-      { pos: [-20, 0, -25], to: [-17.5, 0, -22.5], phase: .2 },
-      { pos: [19, 0, -25], to: [16.5, 0, -22.5], phase: 1.3 },
-      { pos: [-4, 0, 34], to: [-1.5, 0, 36.5], phase: 2.5 },
-    ],
-    pigeons: [
-      { mode: 'ground', pos: [-9, 0, 20], phase: .5 }, { mode: 'ground', pos: [14, 0, 22], phase: 1.7 },
-      { mode: 'ground', pos: [-7.6, 0, 21], phase: .9 },
-    ],
-  });
-
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:80,vol:.3}],bioma:'urbano'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, doors, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     /* DECLARAÇÃO PRA RÉGUA (tools/eval/map-check.mjs) — não é usada pelo jogo.

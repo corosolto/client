@@ -48,8 +48,11 @@ for (const a of w.spawns.E) for (const b of w.spawns.B) {
 const drySlow = [9.5,10,10.3].filter(x => w.slowAt(x,20));
 const autoClimbs = [];
 for (const z of [-24,0]) for (const x of [7.2,7.5,7.8,8.1,11.2,10.9]) {
-  const target = g._mantleTarget(new THREE.Vector3(x, w.groundHeightAt(x,z,0), z), x < 9.4 ? 1 : -1, 0);
-  if (target) autoClimbs.push({x,z,target});
+  const p=g.player, startY=w.groundHeightAt(x,z,0);
+  p.pos.set(x,startY,z);p.vel.set(0,0,0);p.grounded=true;p.alive=true;p.hp=100;p.yaw=0;p.crouchF=0;
+  g.keys=x<9.4?{KeyD:true}:{KeyA:true};g.touchMove={x:0,z:0};
+  for(let i=0;i<30;i++){g._updatePlayer(1/120);if(p.pos.y>startY+.4){autoClimbs.push({x,z,target:p.pos.toArray()});break;}}
+  g.keys={};
 }
 const results = [
   { id:'AMV7', ok:autoClimbs.length === 0, value:autoClimbs, rule:'travessia baixa não escala automaticamente o teto' },

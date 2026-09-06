@@ -1,4 +1,0 @@
-interface:
-  display_name: "Faction Pipeline"
-  short_description: "Cria e integra facções completas do CS Brasil"
-  default_prompt: "Implemente uma facção do CS Brasil do spec até os assets, UI, voz, vídeo e quality gates."

@@ -29,6 +29,22 @@
    confere que **todo caminho citado existe no disco** — manifest cheio apontando pra
    arquivo que não veio é a mesma falha com outra cara.
 
+   PROCEDÊNCIA (PRV5). Aplica `tools/audio/politica.mjs` — a MESMA regra do
+   gerador e do empacotador — a cada folha do manifest instalado. É ALLOWLIST sob
+   o prefixo derivado: a versão anterior dava `continue` em hash desconhecido, e
+   arquivo não catalogado passava calado (o escape P0 da 4ª rodada).
+
+   LIMITE DECLARADO, não coberto: depois que o empacotador renomeia para
+   `audio/a/<sha1>` o prefixo some, e um derivado não catalogado fica
+   indistinguível de qualquer outro áudio — sem hash no ledger não há o que casar.
+   Por isso a camada DECISIVA é o empacotador, que roda antes do rename e ainda vê
+   o caminho (PRV10). Esta aqui é segunda linha.
+
+   AMBIENTE. O piso não pega pacote que chegou inteiro MENOS uma família: 17 arquivos
+   de ambiente faltando num manifest de 308 deixam 291, acima do piso, verde. Por isso
+   a cláusula do ambiente é NOMINAL e a lista vem de `soundscape.js` — a mesma fonte
+   que a `eval:audioalcance` usa na fixture (lição 2: mesmo conceito, mesma fonte).
+
    DECALQUES. A lista NÃO é lida do texto do textures.js: ela vem do módulo importado
    em node (`initTextures().decalFiles`), porque `DECAL_FILES` são 196 entradas
    estáticas + os `or-*` empurrados em runtime, e vai crescer. Parse de linha ficaria
@@ -49,16 +65,28 @@
    Issue #77: `node tools/eval/assets-check.mjs --mutante=grafite-orfa` tira em
    memória um nome usado pelo layout e exige que a contagem de peças fique vermelha.
    ============================================================================ */
+import { carregarPolitica, motivoDeRecusa } from '../audio/politica.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { initTextures } from './harness.mjs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
+import { AMB_LOOPS, BIOME_SHOTS } from '../../public/js/soundscape.js';
+import { carregarMapIds } from '../audio/map-ids.mjs';
+
+const MAP_IDS = carregarMapIds();
 
 const PISO_AUDIO = 250;          // real 308 · exemplo 62 — ver o bloco de medição acima
-const MANIFEST = 'public/audio/manifest.json';
-const DIR_DECALS = 'public/img/decals';
-const DIR_POSTERS = 'public/posters';
-const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10);
+/* `--raiz=`, `--ledger=` e `--so=audio` existem para a régua PRV13 rodar ESTE
+   script — o chamador real — contra uma fixture sintética. A prova adversarial
+   da procedência era manual até a 5ª rodada, e prova manual não roda no portão.
+   Sem os flags, nada muda. */
+const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
+const PUBLICO = arg('raiz') || 'public';
+const LEDGER = arg('ledger') || 'docs/audio/proveniencia.json';
+const SO = arg('so');
+const MANIFEST = path.join(PUBLICO, 'audio', 'manifest.json');
+const DIR_DECALS = path.join(PUBLICO, 'img', 'decals');
+const mutante = process.argv.find((arg2) => arg2.startsWith('--mutante='))?.slice(10);
 
 if (mutante && mutante !== 'grafite-orfa') {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -80,13 +108,16 @@ if (!existsSync(MANIFEST)) {
     (function rec(o) {
       if (Array.isArray(o)) o.forEach(rec);
       else if (o && typeof o === 'object') Object.values(o).forEach(rec);
-      else if (typeof o === 'string') folhas.push(o);
+      // O manifest também carrega metadados de laboratório (`label`, `approval`,
+      // notas). Só strings que são caminhos de runtime pertencem ao contrato de
+      // assets; tratar texto editorial como arquivo produz falsos 404.
+      else if (typeof o === 'string' && o.startsWith('audio/')) folhas.push(o);
     })(m);
 
-    if (folhas.length < PISO_AUDIO) {
+    if (folhas.length < PISO_AUDIO && SO !== 'audio') {
       /* O caso mais provável tem nome: o fallback da linha 23 do fetch-audio.sh. Dizer
          isso na mensagem é a diferença entre "conserta em 1 min" e "investiga 1 h". */
-      const exemplo = 'public/audio/manifest.example.json';
+      const exemplo = path.join(PUBLICO, 'audio', 'manifest.example.json');
       const igual = existsSync(exemplo)
         && readFileSync(exemplo, 'utf8').trim() === readFileSync(MANIFEST, 'utf8').trim();
       erros.push(`áudio: manifest com ${folhas.length} caminhos, piso ${PISO_AUDIO}.`
@@ -97,18 +128,90 @@ if (!existsSync(MANIFEST)) {
           : ' Pacote incompleto — confira AUDIO_PACK_URL e a release apontada.'));
     }
 
-    const semArquivo = folhas.filter((f) => !existsSync(path.join('public', f)));
+    const semArquivo = folhas.filter((f) => !existsSync(path.join(PUBLICO, f)));
     if (semArquivo.length) {
       erros.push(`áudio: ${semArquivo.length} de ${folhas.length} caminhos do manifest não existem`
         + ` no disco (ex.: ${semArquivo.slice(0, 3).join(', ')}) — o zip veio parcial.`);
     }
-    if (!erros.length) avisos.push(`áudio ok: ${folhas.length} caminhos, todos no disco.`);
+    /* AMBIENTE — a irmã de produção da `eval:audioalcance`. A régua de alcance mede
+       a PIPELINE numa fixture; esta mede o PACOTE QUE CHEGOU. Duas coisas medem o
+       mesmo conceito, então compartilham a fonte da lista (`soundscape.js`) em vez
+       de cada uma manter a sua — lição 2 do `docs/LICOES.md`. Sem esta cláusula,
+       um pacote velho (sem `ambiente/`) passaria verde e o mapa subiria mudo, com
+       o warn de `soundscape.js:59` como único sinal. */
+    const doCodigo = new Set(Object.values(AMB_LOOPS));
+    for (const pools of Object.values(BIOME_SHOTS)) for (const p of pools) for (const src of p.srcs) doCodigo.add(src);
+    const overrideValido = (cfg) => !!(cfg?.synth?.kind
+      || cfg?.loops?.some((loop) => typeof loop?.src === 'string')
+      || cfg?.shots?.some((shot) => shot?.srcs?.some((src) => typeof src === 'string')));
+    const overrides = m.mapSoundscapes || {};
+    const usaOverrides = Object.keys(overrides).length > 0;
+    const mapasSemOverride = usaOverrides ? MAP_IDS.filter((id) => !overrideValido(overrides[id])) : [];
+    const semAmbiente = SO === 'audio' || usaOverrides ? []
+      : [...doCodigo].filter((f) => !folhas.includes(f) || !existsSync(path.join(PUBLICO, f)));
+    if (mapasSemOverride.length) {
+      erros.push(`áudio ambiente: mapSoundscapes existe, mas ${mapasSemOverride.length} de ${MAP_IDS.length} mapas`
+        + ` não têm loop, one-shot ou synth válido (ex.: ${mapasSemOverride.slice(0, 3).join(', ')}).`
+        + ' Override parcial silencia apenas alguns mapas e não pode substituir o pack legado.');
+    } else if (semAmbiente.length) {
+      erros.push(`áudio ambiente: ${semAmbiente.length} de ${doCodigo.size} caminhos que \`soundscape.js\` nomeia`
+        + ` não estão no manifest OU não estão no disco (ex.: ${semAmbiente.slice(0, 3).join(', ')}).`
+        + ' Sem mapSoundscapes completo, o fallback legado precisa chegar inteiro.');
+    }
+    /* PRV5 — a cláusula de BUILD do contrato de procedência (docs/audio/PROVENIENCIA.md).
+       `.gitignore` protege o git e só ele: o pacote é montado à parte e servido em
+       produção, então asset sem origem declarada chega ao jogador sem passar por commit
+       nenhum. Aqui ele para. As PRV1-PRV4 (forma do ledger) rodam no `eval:audioproc`. */
+    let ledger = null;
+    try { ledger = JSON.parse(readFileSync(LEDGER, 'utf8')); } catch (e) {
+      erros.push(`procedência: ${LEDGER} ilegível (${e.message}) —`
+        + ' sem o ledger não dá para saber a origem de nada que a build serve.');
+    }
+    if (ledger) {
+      /* FAIL-CLOSED, e a mesma política do gerador e do empacotador
+         (`tools/audio/politica.mjs`). A versão anterior dava `continue` em hash
+         desconhecido: arquivo não catalogado passava calado — o escape P0 da 4ª
+         rodada. Aqui o desconhecido SOB O PREFIXO reprova.
+
+         LIMITE DECLARADO: depois que o empacotador renomeia para `audio/a/<sha1>`,
+         o prefixo some e um derivado não catalogado fica indistinguível de
+         qualquer outro áudio. Por isso a camada decisiva é o EMPACOTADOR, que roda
+         antes do rename. Aqui medimos o que ainda dá para medir. */
+      const pol = carregarPolitica(LEDGER);
+      const recusados = [];
+      let sobPrefixo = 0;
+      if (!pol.erro) {
+        for (const f of folhas) {
+          const abs = path.join(PUBLICO, f);
+          if (!existsSync(abs)) continue;             // já reportado pela cláusula acima
+          if (f.startsWith(pol.prefixo)) sobPrefixo++;
+          const motivo = motivoDeRecusa(f, readFileSync(abs), pol, 'pack');
+          if (motivo) recusados.push(`${f} — ${motivo}`);
+        }
+      }
+      if (pol.erro) {
+        erros.push(`procedência: ${pol.erro}. Sem o ledger não dá para saber a origem de nada`
+          + ' que a build serve.');
+      } else if (recusados.length) {
+        erros.push(`procedência: ${recusados.length} arquivo(s) do pacote instalado não podem ser`
+          + ` servidos (ex.: ${recusados.slice(0, 3).join('; ')}). Ver docs/audio/PROVENIENCIA.md.`);
+      } else {
+        avisos.push(`procedência ok: ${folhas.length} caminhos conferidos contra o ledger`
+          + ` (${sobPrefixo} sob \`${pol.prefixo}\`, todos catalogados).`
+          + ' Pós-rename o prefixo some — a trava decisiva é a do empacotador.');
+      }
+    }
+    if (!erros.length) {
+      avisos.push(`áudio ok: ${folhas.length} caminhos, todos no disco (`
+        + (usaOverrides ? `${MAP_IDS.length} mapas com override` : `${doCodigo.size} de ambiente legado`) + ').');
+    }
   }
 }
 
 /* -------------------------------- DECALQUES -------------------------------- */
 let T;
-try { T = initTextures(); } catch (e) {
+if (SO === 'audio' || SO === 'runtime-audio') T = null;
+else try { T = initTextures(); } catch (e) {
   erros.push(`decalques: não deu pra importar o textures.js em node (${e.message}).`);
 }
 if (T) try {
@@ -140,18 +243,6 @@ if (T) try {
   }
 } catch (e) {
   erros.push(`decalques: não deu pra importar o textures.js em node (${e.message}).`);
-}
-
-if (T) {
-  const posterFiles = T.posterFiles || [];
-  if (posterFiles.length) {
-    const faltaPoster = posterFiles.filter((f) => !existsSync(path.join(DIR_POSTERS, f)));
-    if (faltaPoster.length) {
-      erros.push(`posters: ${faltaPoster.length} de ${posterFiles.length} faltando no disco`
-        + ` (ex.: ${faltaPoster.slice(0, 3).join(', ')}) — POSTER_FILES cita arquivo que não existe`
-        + ' em public/posters/.');
-    }
-  }
 }
 
 /* Issue #77: todo nome do layout gerado precisa continuar no pacote do jogo.

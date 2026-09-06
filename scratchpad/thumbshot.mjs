@@ -1,0 +1,22 @@
+import { execSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
+const gRoot = execSync('npm root -g').toString().trim();
+const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+const chromium = _pw.chromium || _pw.default?.chromium;
+const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--headless=new','--mute-audio'] });
+const p = await b.newPage({ viewport:{width:1536,height:864} });
+await p.addInitScript(() => localStorage.setItem('awpbr_nick','ZÉ DO AWP'));
+await p.goto('http://localhost:4323/?debug=1', { waitUntil:'domcontentloaded' });
+await p.click('#boot-splash').catch(()=>{});
+await p.waitForSelector('#main-menu:not(.hidden)', { timeout:30000 });
+await p.waitForTimeout(1200);
+await p.evaluate(()=>document.getElementById('map-thumb')?.click());
+await p.waitForSelector('#map-screen:not(.hidden)');
+await p.click('.ms-tab[data-cat="COMUNIDADE"]');
+await p.waitForTimeout(800);
+await p.evaluate(()=>{ const v=document.querySelector('.ms-viewport'); v.scrollTop = v.scrollHeight; });
+await p.waitForTimeout(1200);
+await p.screenshot({ path:'scratchpad/shots/thumbs_fim.png' });
+console.log('ok');
+await b.close();

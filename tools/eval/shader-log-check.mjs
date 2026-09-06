@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (mutant && !['sem-guardas', 'sem-cache-bust', 'addons-immutable', 'cloudflare-vendor', 'framebuffer-nulo'].includes(mutant)) {
+if (mutant && !['sem-guardas', 'sem-cache-bust', 'addons-immutable', 'cloudflare-vendor', 'framebuffer-nulo', 'sem-contexto-sincrono'].includes(mutant)) {
   throw new Error(`mutante desconhecido: ${mutant}`);
 }
 
@@ -35,6 +35,14 @@ if (mutant === 'framebuffer-nulo') {
     '',
   );
   if (vendor === before) throw new Error('MUTANTE NAO APLICOU: framebuffer-nulo');
+}
+if (mutant === 'sem-contexto-sincrono') {
+  const before = vendor;
+  vendor = vendor.replace(
+    'if ( _isContextLost === true || _gl.isContextLost() === true ) return;',
+    'if ( _isContextLost === true ) return;',
+  );
+  if (vendor === before) throw new Error('MUTANTE NAO APLICOU: sem-contexto-sincrono');
 }
 if (mutant === 'sem-cache-bust') {
   productSources = productSources.map(([file, source]) => [file, source.replace('?v=${V}', '')]);
@@ -158,6 +166,18 @@ if (!drawBuffersFn) {
       failures.push(`SL7 caminho normal quebrou: ${error.message}`);
     }
   }
+}
+
+/* SL8 · perda de contexto no MEIO do frame (#419/#420): `_isContextLost` só vira verdade
+   quando o evento DOM webglcontextlost chega, e o evento é assíncrono — na janela entre a
+   perda física e o despacho, createShader() devolve null e shaderSource(null,…) lança no
+   WebKit. O render() precisa consultar a verdade síncrona do driver ALÉM da flag, e no
+   topo — antes de tocar o grafo de cena. Textual-posicional como SL4-SL6: executar o
+   render() inteiro exigiria stub do renderer inteiro, e arnês desse tamanho mede a si
+   mesmo (lição registrada na EP12 do error-provenance-check). */
+const guardaRender = /this\.render = function \( scene, camera \) \{[\s\S]{0,600}?if \( _isContextLost === true \|\| _gl\.isContextLost\(\) === true \) return;/;
+if (!guardaRender.test(vendor)) {
+  failures.push('SL8 render() não consulta gl.isContextLost() além da flag assíncrona (ou a guarda saiu do topo)');
 }
 
 if (mutant && !failures.length) failures.push(`mutação ${mutant} não foi detectada`);

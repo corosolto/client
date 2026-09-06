@@ -10,9 +10,6 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras } from './map_decals.js';   // pool por NOME + raycast na MALHA
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';             // cobertura medida, não coordenada à mão
-import { setMapSky } from './map_sky.js';
-import { createFavelaAmbience } from './ambientlife.js';
-import { AMB_LOOPS } from './soundscape.js';
 
 /* PEGADA NA ALTURA DO CORPO (reprovação do dono, 05/08: "problemas com o box do ônibus
    e barracas"). O colisor derivado do Box3 do GLB INTEIRO conta como parede coisas que só
@@ -230,7 +227,7 @@ export function buildBrasilia(scene, T) {
   // Asfalto claro estourado de sol (BAR: "cinza-claro esbranquiçado, faixas desgastadas").
   function asfaltoTex() {
     const c = cvs(256, 256), x = c.getContext('2d');
-    x.fillStyle = '#8d8982'; x.fillRect(0, 0, 256, 256);
+    x.fillStyle = '#6e6c68'; x.fillRect(0, 0, 256, 256);
     for (let i = 0; i < 5000; i++) {
       x.fillStyle = `rgba(${170 + Math.random() * 60 | 0},${168 + Math.random() * 55 | 0},${160 + Math.random() * 50 | 0},${Math.random() * 0.22})`;
       x.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
@@ -498,10 +495,10 @@ export function buildBrasilia(scene, T) {
     // vidro fumê dos ministérios. metalness BAIXA de propósito: vidro é dielétrico. Com metalness 0.7 sobre uma cor
     // quase preta o F0 cairia pra 0,03 e o reflexo do sol sumiria de novo — o brilho de
     // fachada de vidro vem do Fresnel (F->1 na rasante), não de tratar vidro como metal.
-    vidroFume: lam({ color: 0x56636b, roughness: 0.26, metalness: 0.08, envMapIntensity: 2.0 }),
+    vidroFume: lam({ color: 0x2b3237, roughness: 0.20, metalness: 0.10, envMapIntensity: 2.4 }),
     aco: lam({ color: 0x9aa0a6, roughness: 0.32, metalness: 0.85, envMapIntensity: 1.8 }),
     pintBranca: lam({ color: 0xdedbd2, roughness: 0.7 }),
-    asfalto: lam({ map: ctex(asfaltoTex(), 8, 40), roughness: 0.95, emissive: 0x282521, emissiveIntensity: 0.48 }),
+    asfalto: lam({ map: ctex(asfaltoTex(), 8, 40), roughness: 0.95 }),
     // lâmina d'água do espelho: 0.06 = espelho perfeito de uma fonte pontual = ponto
     // invisível. 0.24 abre o rastro de sol na água (o "glitter path") pra vários pixels.
     agua: lam({ color: 0x2f6ea0, roughness: 0.24, metalness: 0.55, envMapIntensity: 2.2, transparent: true, opacity: 0.88 }),
@@ -576,7 +573,6 @@ export function buildBrasilia(scene, T) {
     if (proxyGLB) b.userData.proxyGLB = proxyGLB;
     return b;
   }
-  // (sem uso desde o contrato BUG-54 — occluder = malha visível; mantida pela doutrina acima)
   /* Registra uma malha VISÍVEL (inclusive filha de Group, que é o caso de todo landmark
      procedural montado em grupo) como alvo de bala/LOS. É a alternativa certa ao occBox
      quando a geometria existe e é desenhada: a bala passa a bater na forma real — entre as
@@ -585,16 +581,14 @@ export function buildBrasilia(scene, T) {
 
   // Place a Mint building GLB, normalized to targetH metres, and derive a footprint
   // collider from its real placed bounds. Returns the object (or null if not loaded).
-  function putBuilding(id, { x, z, targetH, ry = 0, solid = true, y = 0, dress = null, skirt = true, sq = 1 }) {
+  function putBuilding(id, { x, z, targetH, ry = 0, solid = true, y = 0, occ = true, dress = null, skirt = true, sq = 1 }) {
     const o = placeProp(id, { x, z, targetH, ry, y });
     if (!o) return null;
     // `sq` achata SÓ o eixo Z LOCAL do modelo. Nos blocos que entram girados 90° esse eixo
     // vira a ESPESSURA no mundo — é o que deixa o ministério um prisma fino em vez de caixa.
     if (sq !== 1) o.scale.z *= sq;
     if (dress) dressGLB(o, dress);
-    // GLB é Group e o raycast de bala/LOS é NÃO-recursivo: quem segura a bala são as
-    // malhas filhas — occluder = malha visível (BUG-54). Caixa de procuração não entra mais.
-    root.add(o); occMesh(o);
+    root.add(o); occluders.push(o);
     o.updateMatrixWorld(true);
     const bb = new THREE.Box3().setFromObject(o);
     /* PEGADA NO EIXO DO PRÓPRIO PRÉDIO (BUG-21). `setFromObject` devolve a AABB do GLB JÁ
@@ -630,6 +624,18 @@ export function buildBrasilia(scene, T) {
     // onde nenhum recuo salva um anel retangular.
     if (skirt && y <= 0.35) SKIRT.add((bb.min.x + bb.max.x) / 2, y, (bb.min.z + bb.max.z) / 2,
       (bb.max.x - bb.min.x) * 0.94, (bb.max.z - bb.min.z) * 0.94, 0);
+    // O GLB é um Group e o raycast de bala/LOS do game.js é NÃO-recursivo — sem uma caixa
+    // MESH invisível a bala atravessa o prédio inteiro (mesmo bug já corrigido no ônibus).
+    // Sem isso não existe "cobertura" nenhuma nos ângulos longos da Esplanada.
+    // proxyGLB: caixa DERIVADA da bounding box do próprio GLB — procuração legítima da
+    // MAP4 (o GLB não carrega em node, então a régua a pula em vez de acusar).
+    // occ:'mesh' (5ª rodada do BUG-21, 06/08): prop ABERTO (barraca, barraquinha,
+    // drinkstand) NÃO pode ter a caixa da AABB — ela solidifica o vão debaixo do toldo e
+    // a margem das estacas, e a bala morria a 1,9 m da lona (medido no browser). A malha
+    // real vira o alvo: a bala para no tecido e atravessa o vão, como o olho promete.
+    if (occ === 'mesh') occMesh(o);
+    else if (occ) occBox(bb.max.x - bb.min.x, Math.max(0.4, bb.max.y - bb.min.y),
+      bb.max.z - bb.min.z, (bb.min.x + bb.max.x) / 2, bb.min.y, (bb.min.z + bb.max.z) / 2, 0, id);
     return o;
   }
 
@@ -713,7 +719,7 @@ export function buildBrasilia(scene, T) {
   // white ribs stay visible outside the glass, like the real Niemeyer crown.
   // Catedral: 40 m no real. 30 m recuada a -108 (era 13 m a -76, "minúscula no fundo").
   const CAT_H = BIG ? 30 : 13, CAT_Z = BIG ? -108 : -76, CAT_S = CAT_H / 13;
-  putBuilding('catedral', { x: 0, z: CAT_Z, targetH: CAT_H, ry: 0, dress: MAT.concBranco, skirt: false });
+  putBuilding('catedral', { x: 0, z: CAT_Z, targetH: CAT_H, ry: 0, occ: false, dress: MAT.concBranco, skirt: false });   // cone: AABB bloquearia bala nos cantos
   {
     // O perfil do vitral foi medido pra targetH 13; escala junto com a coroa (CAT_S).
     const profile = [[9.6, 0.3], [9.35, 1], [8.35, 2], [7.3, 3], [6.3, 4], [4.6, 5],
@@ -773,12 +779,16 @@ export function buildBrasilia(scene, T) {
       // jardim, essa sim com parapeito e leitura clara. Excesso é o problema, não falta.
       const b = placeProp('palacio', { x: px, z: PAL_Z, targetH: PAL_H, ry, y: PL + 0.16 });
       if (b) {
-        // Não revestir a malha do Palácio Mint com material procedural: apaga o PBR do asset.
-        // Os volumes abaixo complementam a silhueta sem substituir o material.
-        root.add(b); occMesh(b);
+        // Este GLB é UMA malha com UM material branco liso: a 10 m de altura por ~35 m de
+        // lado ele vira uma parede chapada. O revestimento de concreto de forma (triplanar)
+        // resolve o material; a IDENTIDADE quem devolve é o bloco logo abaixo.
+        dressGLB(b, MAT.concBranco);
+        root.add(b); occluders.push(b);
         b.updateMatrixWorld(true);
         const bb2 = new THREE.Box3().setFromObject(b);
         col(bb2.min.x, bb2.max.x, 0, Math.max(1, bb2.max.y), bb2.min.z, bb2.max.z);
+        occBox(bb2.max.x - bb2.min.x, bb2.max.y - PL, bb2.max.z - bb2.min.z,
+          (bb2.min.x + bb2.max.x) / 2, PL, (bb2.min.z + bb2.max.z) / 2, 0, 'palacio');   // procuração de GLB (MAP4)
         /* ============ IDENTIDADE DO PLANALTO / STF (reclamação nº 4 do dono) ============
            "ganhou texturas mas perdeu toda identidade". A versão anterior enfiava BRISE
            VERTICAL nas QUATRO faces + uma laje de coroamento de 60 cm: brise vertical em
@@ -792,10 +802,7 @@ export function buildBrasilia(scene, T) {
                 no meio e afina de novo ao encontrar a laje (era um tronco de cone de 8 lados);
              4. a RAMPA, que é a assinatura do Planalto.
            `?planalto=old` volta ao brise antigo. */
-        // A/B visual: `mint` preserva o landmark autoral; `enhanced`/`old` comparam,
-        // na mesma câmera, o quanto cada sobreposição se afasta do asset aprovado.
-        const PALMODE = QP.get('planalto') || 'enhanced';
-        const NEWPAL = PALMODE === 'enhanced';
+        const NEWPAL = QP.get('planalto') !== 'old';
         if (BIG && DETAIL > 0 && NEWPAL) {
           const y0 = bb2.min.y, y1 = bb2.max.y, HH = Math.max(2, y1 - y0);
           const x0 = bb2.min.x, x1 = bb2.max.x, z0 = bb2.min.z, z1 = bb2.max.z;
@@ -845,7 +852,7 @@ export function buildBrasilia(scene, T) {
           guard.position.set(0, 0.39, -1.16); rmp.add(guard);   // guarda-corpo só na face de fora
         }
         // brise antigo (só com `?planalto=old`, para A/B)
-        if (BIG && DETAIL > 0 && PALMODE === 'old') {
+        if (BIG && DETAIL > 0 && !NEWPAL) {
           const y0 = bb2.min.y, y1 = bb2.max.y, HH = Math.max(2, y1 - y0);
           const x0 = bb2.min.x, x1 = bb2.max.x, z0 = bb2.min.z, z1 = bb2.max.z;
           const W = x1 - x0, D = z1 - z0;
@@ -887,13 +894,14 @@ export function buildBrasilia(scene, T) {
   // Continua sendo 2 draw calls no total (InstancedMesh) e nenhum prop novo.
   const minGlass = [], minBand = [];
   for (const sx of [-1, 1]) for (const mz of MZ) {
-    const b = putBuilding('ministerio', { x: sx * MIN_CX, z: mz, targetH: MIN_H, ry: Math.PI / 2, y: PILOTI, solid: !BIG, dress: MAT.concBranco, sq: MIN_SQ });
+    const b = putBuilding('ministerio', { x: sx * MIN_CX, z: mz, targetH: MIN_H, ry: Math.PI / 2, y: PILOTI, solid: !BIG, occ: false, dress: MAT.concBranco, sq: MIN_SQ });
     ministries.push(b);
     if (!b) continue;
     b.updateMatrixWorld(true);
     const bb = new THREE.Box3().setFromObject(b);
     const w = bb.max.x - bb.min.x, d = bb.max.z - bb.min.z;
     const cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
+    occBox(w, bb.max.y - PILOTI, d, cx, PILOTI, cz, 0, 'ministerio');   // bala/LOS só a partir do piloti (procuração de GLB, MAP4)
     if (!BIG) continue;
     // laje inferior (fecha o vão por baixo e dá sombra dura de meio-dia no piso)
     addBox(w, 0.9, d, MAT.concBranco, cx, PILOTI - 0.9, cz, { collide: false });
@@ -931,7 +939,7 @@ export function buildBrasilia(scene, T) {
     const sx = BIG ? -9 : -11, sz = BIG ? 26 : 22;   // out in the open facing the lane (+X)
     const o = placeProp('justica', { x: sx, z: sz, targetH: 3.6, ry: Math.PI / 2 });
     if (o) {
-      root.add(o); occMesh(o); col(sx - 1, sx + 1, 0, 3.6, sz - 1, sz + 1);
+      root.add(o); occluders.push(o); col(sx - 1, sx + 1, 0, 3.6, sz - 1, sz + 1);
       // small "PERDEU MANÉ" graffiti decal on the chest (statue front faces +X, chest
       // surface measured by raycast at x≈-11.1), clear of the sash
       addPlane(0.6, 0.4, lam({ map: T.perdeuMane, transparent: true, side: THREE.DoubleSide }),
@@ -1100,8 +1108,7 @@ export function buildBrasilia(scene, T) {
       const emb = new THREE.Mesh(new THREE.BoxGeometry(15.6, 0.42, 12.6), MAT.granitoPreto);
       emb.position.y = 0.21; g.add(emb);
       g.traverse(o => { if (o.isMesh) { o.castShadow = !LOWQ; o.receiveShadow = true; } });
-      // A pegada acompanha o embasamento visível de 15,6 × 12,6 m, não só as asas.
-      col(px - 7.8, px + 7.8, 0, 12, pz - 6.3, pz + 6.3);
+      col(px - 7, px + 7, 0, 12, pz - 6, pz + 6);
       /* PAREDE INVISÍVEL CORRIGIDA (map_brasilia.js:1042, invariante MAP4). Era
          `occBox(14, 12, 12, …)`: um bloco maciço de 14 × 12 × 12 m em cima de um edifício
          que é DUAS chapas de 0,90 m inclinadas e um bico. Medido: 100% da superfície dessa
@@ -1287,22 +1294,24 @@ export function buildBrasilia(scene, T) {
 
   /* ---------------- gameplay cover: props do 8 de janeiro ---------------- */
   // Tire-pile barricades (Mint) as the main lane cover — the protest look.
+  // occ:'mesh' também aqui: a AABB da pilha é um bloco cheio e a pilha é piramidal —
+  // as quinas de cima comiam tiro no ar (mesma classe do toldo da barraquinha).
   for (const [tx, tz, ry] of [[-6, -14, 0.3], [7, 12, -0.4], [-8, 26, 0.8], [9, -26, 0.2],
     [10, 3, 0], [-10, -3, 1.1], [4, 34, 0.5], [-4, -34, -0.3]])
-    putBuilding('tires', { x: tx, z: tz, targetH: 1.6, ry, skirt: false });
-  // Barraquinhas de camelô (vendor stalls) — o vão debaixo do toldo é ABERTO
+    putBuilding('tires', { x: tx, z: tz, targetH: 1.6, ry, skirt: false, occ: 'mesh' });
+  // Barraquinhas de camelô (vendor stalls) — occ:'mesh': o vão debaixo do toldo é ABERTO
   for (const [sx, sz, sry] of [[-13, -8, Math.PI / 2], [13, 8, -Math.PI / 2], [-10, -23, Math.PI / 2], [9, -21, -Math.PI / 2]])
-    putBuilding('stall', { x: sx, z: sz, targetH: 2.7, ry: sry });
+    putBuilding('stall', { x: sx, z: sz, targetH: 2.7, ry: sry, occ: 'mesh' });
   // Mini-acampamento de barracas (protest camp) junto aos ministérios oeste
   // (+2 barracas avançadas em direção ao centro: cobertura extra saindo do spawn B)
   for (const [tx, tz, ry] of [[-15, -30, 0.2], [-17, -35, 1.1], [-13, -36, -0.5], [16, 20, 0.6],
     [-6, -27, 0.9], [7, -25, -0.4]])
-    putBuilding('tent', { x: tx, z: tz, targetH: 1.7, ry });
+    putBuilding('tent', { x: tx, z: tz, targetH: 1.7, ry, occ: 'mesh' });
   // Acampamento (barracas em 2 fileiras) emoldurando a ponta da CATEDRAL (lado time-b),
   // simétrico ao jardim+espelho da ponta do Congresso — backdrop temático atrás do spawn B.
   for (const [tx, tz, ry] of [[-12, -66, 0.15], [-4, -67, -0.2], [4, -66, 0.25], [12, -67, -0.15],
     [-8, -70.5, 0.5], [8, -70.5, -0.5]])
-    putBuilding('tent', { x: tx, z: tz, targetH: 1.7, ry });
+    putBuilding('tent', { x: tx, z: tz, targetH: 1.7, ry, occ: 'mesh' });
   // a few Correios/SEDEX parcels still around for variety (Brazilian postal boxes)
   const crateMats = [lam({ map: T.crate }), lam({ map: T.crate2 || T.crate })];
   for (const [i, [cx, cz, lv]] of [[11, 2, 0], [-11, 0, 0], [11, 3.6, 1], [-5, 18, 0]].entries())
@@ -1313,12 +1322,26 @@ export function buildBrasilia(scene, T) {
   // solid:false — o colisor do ônibus é o colRot MEDIDO logo abaixo (único, igual em
   // browser e em node); deixar o putBuilding derivar outro do Box3 criava caixa DUPLICADA
   // e mais gorda (o Box3 inteiro conta retrovisor e saia do para-choque).
-  putBuilding('bus', { x: 2.5, z: -4, targetH: 3.1, ry: 0.55, solid: false });
+  putBuilding('bus', { x: 2.5, z: -4, targetH: 3.1, ry: 0.55, occ: false, solid: false });   // já tem caixa-occluder própria (medida) logo abaixo
+  // ônibus: caixa-occluder invisível — o GLB é Group e o raycast de bala é NÃO-recursivo,
+  // então a bala atravessava. Dimensões e ÂNGULO casados ao CORPO visível (PEGADA_BUS):
+  // a box antiga (9,3 × 4,5 no ry de placement) seguia a CAIXA do GLB, que é ~20° mais
+  // larga que o corpo torto do modelo — a bala morria a 3,77 m da lataria (medido por
+  // raycast no browser, 06/08: 31-32 de 32 raios paravam no ar em toda faixa de altura).
   {
+    const RY_BUS = 0.55 + PEGADA_BUS.ryCorr;   // placement + correção do corpo torto
+    const bx = new THREE.Mesh(new THREE.BoxGeometry(PEGADA_BUS.hx * 2, 3.1, PEGADA_BUS.hz * 2), new THREE.MeshBasicMaterial({ visible: false }));
+    // PROCURAÇÃO LEGÍTIMA (invariante MAP4): as medidas acima são as do MESH do GLB, medidas
+    // no browser. Em node o GLB não carrega, então a régua PULA esta caixa em vez de acusá-la
+    // de parede invisível — é o limite declarado da MAP4, não uma isenção de conveniência.
+    bx.userData.proxyGLB = 'bus';
+    bx.position.set(2.5, 3.1 / 2, -4); bx.rotation.y = RY_BUS; root.add(bx); occluders.push(bx);
+
     /* COLISÃO DO ÔNIBUS — defeito reportado pelo dono com print: "o mapa não deixa eu andar
        perto do ônibus".
 
-       CAUSA RAIZ: o ônibus está girado 0,55 rad (31,5°) e `col()` empurra `{minX,maxX,minY,maxY,minZ,maxZ}` e **o motor
+       CAUSA RAIZ: o ônibus está girado 0,55 rad (31,5°) — o occluder ACIMA respeita isso
+       (`bx.rotation.y`), mas `col()` empurra `{minX,maxX,minY,maxY,minZ,maxZ}` e **o motor
        não tem collider rotacionado em lugar nenhum** (nem `_collide`, nem o A* dos bots).
        A caixa única de 9,0 × 5,2 alinhada aos eixos é o retângulo girado "achatado": sobra
        nas quinas e falta nas laterais.
@@ -1360,8 +1383,7 @@ export function buildBrasilia(scene, T) {
        esta pegando tiros"): a pegada da 3ª passada estava no eixo DA CAIXA do GLB, e o
        corpo do modelo é TORTO dentro dela (-18,7° — PCA ponderado por área; ver PEGADA_BUS).
        Colisor e occluder ficavam ~20° fora da lataria: fantasma de 3,77 m numa ponta,
-       lataria descoberta na outra. Agora o colisor segue o eixo DO CORPO — e a bala
-       bate nas malhas do GLB (occMesh do putBuilding), sem caixa de procuração. */
+       lataria descoberta na outra. Agora os dois seguem o eixo DO CORPO. */
     colRot(2.5, -4, PEGADA_BUS.hx, PEGADA_BUS.hz, 0, 3.1, 0.55 + PEGADA_BUS.ryCorr);
   }
 
@@ -1375,12 +1397,12 @@ export function buildBrasilia(scene, T) {
 
   /* ---------------- barraquinha de bebida (Mint GLB — mini-bar c/ guarda-sol) -------------- */
   // Drink stand com cadeiras de plástico e guarda-sol grande, junto às barraquinhas.
-  putBuilding('drinkstand', { x: -14, z: -17, targetH: 3.2, ry: 0.5 });   // guarda-sol é ABERTO embaixo — bala atravessa e para só no balcão/mastro
+  putBuilding('drinkstand', { x: -14, z: -17, targetH: 3.2, ry: 0.5, occ: 'mesh' });   // guarda-sol é ABERTO embaixo — bala atravessa e para só no balcão/mastro
 
   /* ---------------- barricada improvisada (bloco + chapa + tábuas) ---------------- */
   { // protest barricade near the west tents: concrete block, corrugated sheet, planks.
     const bx = -8, bz = 20, bry = -0.3;
-    const g = new THREE.Group(); g.position.set(bx, 0, bz); g.rotation.y = bry; root.add(g);
+    const g = new THREE.Group(); g.position.set(bx, 0, bz); g.rotation.y = bry; root.add(g); occluders.push(g);
     const conc = lam({ color: 0xb8bab2 }), rust = lam({ color: 0x8a5a3a }), wood = lam({ color: 0x9a7b4f });
     const base = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.7, 0.8), conc); base.position.y = 0.35; g.add(base);
     const sheet = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.1, 0.08), rust);
@@ -1390,7 +1412,6 @@ export function buildBrasilia(scene, T) {
       plank.position.set(0, py, 0.28); plank.rotation.z = pr; g.add(plank);
     }
     g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-    occMesh(g);
     const c = Math.abs(Math.cos(bry)), s = Math.abs(Math.sin(bry));
     const ex = 1.7 * c + 0.45 * s, ez = 1.7 * s + 0.45 * c;
     col(bx - ex, bx + ex, 0, 1.6, bz - ez, bz + ez);
@@ -1458,7 +1479,7 @@ export function buildBrasilia(scene, T) {
       heads.push({ x: x - sx * 1.8, y: 8.7, z });
       col(x - 0.25, x + 0.25, 0, 9, z - 0.25, z + 0.25);
     }
-    addInst(new THREE.CylinderGeometry(0.13, 0.22, 9, 6), MAT.aco, masts, { occlude: true });
+    addInst(new THREE.CylinderGeometry(0.13, 0.22, 9, 6), MAT.aco, masts, { occlude: false });
     addInst(new THREE.CylinderGeometry(0.1, 0.1, 2, 5), MAT.aco, arms, { shadow: false });
     addInst(new THREE.BoxGeometry(0.9, 0.18, 0.4), MAT.pintBranca, heads, { shadow: false });
 
@@ -1474,23 +1495,20 @@ export function buildBrasilia(scene, T) {
     for (const [gx, gz, gr] of [[-13, 34, 0], [-10.6, 34, 0], [13, 34, 0], [10.6, 34, 0],
       [-13, -30, 0], [13, -30, 0], [4, 20, 0], [-4, 20, 0], [8, -44, 0], [-8, -44, 0]])
       if (DETAIL === 2 || gx > 0) gradeAt(gx, gz, gr);
-    addInst(new THREE.BoxGeometry(0.08, 1.1, 0.08), MAT.aco, gPost, { occlude: true });
-    addInst(new THREE.CylinderGeometry(0.045, 0.045, 2.2, 5), MAT.aco, gRail, { occlude: true, shadow: false });
+    addInst(new THREE.BoxGeometry(0.08, 1.1, 0.08), MAT.aco, gPost, { occlude: false });
+    addInst(new THREE.CylinderGeometry(0.045, 0.045, 2.2, 5), MAT.aco, gRail, { occlude: false, shadow: false });
 
     // Lixeiras + cones + jardineiras cilíndricas (props de escala humana perto do chão).
     const bins = [], cones = [], vasos = [];
     for (const [bx2, bz2] of [[7.2, 22], [-7.2, 6], [7.2, -18], [-7.2, -38], [7.2, 46], [-7.2, -56]])
       if ((DETAIL === 2 || bz2 > 0) && freeSpot(bx2, bz2, 0.8)) { bins.push({ x: bx2, y: 0.5, z: bz2 }); col(bx2 - 0.4, bx2 + 0.4, 0, 1, bz2 - 0.4, bz2 + 0.4); }
-    addInst(new THREE.CylinderGeometry(0.38, 0.30, 1.0, 8), lam({ color: 0x3f4a3f, roughness: 0.7 }), bins, { occlude: true });
+    addInst(new THREE.CylinderGeometry(0.38, 0.30, 1.0, 8), lam({ color: 0x3f4a3f, roughness: 0.7 }), bins, { occlude: false });
     for (const [cx2, cz2] of [[3, -8], [4.2, -9], [-3, 12], [-4.2, 13], [1, 30], [10, -34], [-10, 42], [2.4, -52]])
-      if ((DETAIL === 2 || cx2 > 0) && freeSpot(cx2, cz2, 0.6)) {
-        cones.push({ x: cx2, y: 0.35, z: cz2 });
-        col(cx2 - 0.28, cx2 + 0.28, 0, 0.7, cz2 - 0.28, cz2 + 0.28);
-      }
-    addInst(new THREE.ConeGeometry(0.28, 0.7, 7), lam({ color: 0xd8501e, roughness: 0.8 }), cones, { occlude: true, shadow: false });
+      if ((DETAIL === 2 || cx2 > 0) && freeSpot(cx2, cz2, 0.6)) cones.push({ x: cx2, y: 0.35, z: cz2 });
+    addInst(new THREE.ConeGeometry(0.28, 0.7, 7), lam({ color: 0xd8501e, roughness: 0.8 }), cones, { shadow: false });
     for (const [vx, vz] of [[9.5, 40], [-9.5, 40], [9.5, -12], [-9.5, -12], [9.5, 56], [-9.5, 56]])
       if (freeSpot(vx, vz, 1.1)) { vasos.push({ x: vx, y: 0.35, z: vz }); col(vx - 0.7, vx + 0.7, 0, 0.7, vz - 0.7, vz + 0.7); }
-    addInst(new THREE.CylinderGeometry(0.72, 0.6, 0.7, 10), MAT.concCru, vasos, { occlude: true });
+    addInst(new THREE.CylinderGeometry(0.72, 0.6, 0.7, 10), MAT.concCru, vasos, { occlude: false });
 
     // Faixa de pedestre atravessando o eixo (tinta branca desgastada).
     const zebra = [];
@@ -1512,7 +1530,7 @@ export function buildBrasilia(scene, T) {
         frondes.push({ x: x + Math.cos(a) * 1.5, y: 14.1, z: z + Math.sin(a) * 1.5, ry: -a, rz: 0.55 });
       }
     }
-    addInst(new THREE.CylinderGeometry(0.34, 0.5, 14, 7), palmMat, troncos, { occlude: true });
+    addInst(new THREE.CylinderGeometry(0.34, 0.5, 14, 7), palmMat, troncos, { occlude: false });
     addInst(new THREE.PlaneGeometry(3.4, 0.9), leafMat, frondes, { shadow: false });
 
     // IPÊ-AMARELO florido (ago–set): galhos NUS cobertos de flor amarela intensa. O BAR diz
@@ -1552,7 +1570,7 @@ export function buildBrasilia(scene, T) {
             sy: ts * 0.62 * (0.82 + hash(S0 + t + b + 41) * 0.42) });
       }
     }
-    addInst(new THREE.CylinderGeometry(0.2, 0.42, 4.7, 8), ipeMat, ipeTr, { occlude: true });
+    addInst(new THREE.CylinderGeometry(0.2, 0.42, 4.7, 8), ipeMat, ipeTr, { occlude: false });
     addInst(new THREE.CylinderGeometry(0.05, 0.14, 2.4, 5), ipeMat, ipeGalho, { shadow: false });
     ipeFolha.forEach((list, i) => addInst(new THREE.PlaneGeometry(1, 1), MAT.folhaIpe[i], list, { shadow: false }));
 
@@ -1569,8 +1587,7 @@ export function buildBrasilia(scene, T) {
         const s = onRoad ? 1.6 + h2 * 3.4 : 1.0 + h2 * 2.6;
         decals.push({ x, y: onRoad ? 0.055 : 0.045, z: (h2 - 0.5) * 210, rx: -Math.PI / 2, ry: h3 * 3.1, sx: s, sy: s * (0.6 + h * 0.8) });
       }
-      const manchas = addInst(new THREE.PlaneGeometry(1, 1), MAT.mancha, decals, { shadow: false });
-      if (manchas) manchas.userData.nonSolidSurface = true;
+      addInst(new THREE.PlaneGeometry(1, 1), MAT.mancha, decals, { shadow: false });
 
       // BANCO de concreto do mobiliário urbano dos anos 60 (bloco maciço sobre dois apoios).
       // Cobertura baixa de verdade nas laterais, longe do miolo do duelo.
@@ -1581,8 +1598,8 @@ export function buildBrasilia(scene, T) {
         for (const d of [-0.75, 0.75]) bancoP.push({ x: bx2, y: 0.21, z: bz2 + d });
         col(bx2 - 0.32, bx2 + 0.32, 0, 0.55, bz2 - 1.1, bz2 + 1.1);
       }
-      addInst(new THREE.BoxGeometry(0.58, 0.16, 2.3), MAT.guia, bancoT, { occlude: true });
-      addInst(new THREE.BoxGeometry(0.44, 0.42, 0.36), MAT.concCru, bancoP, { occlude: true, shadow: false });
+      addInst(new THREE.BoxGeometry(0.58, 0.16, 2.3), MAT.guia, bancoT, { occlude: false });
+      addInst(new THREE.BoxGeometry(0.44, 0.42, 0.36), MAT.concCru, bancoP, { shadow: false });
 
       // PLACA INDICATIVA OFICIAL (critério D4). Poste galvanizado + chapa verde do DNIT.
       const placas = [['ESPLANADA', -12.6, 30, 1], ['PRAÇA DOS TRÊS PODERES', 12.6, -30, -1]];
@@ -1594,7 +1611,7 @@ export function buildBrasilia(scene, T) {
         addPlane(2.6, 0.65, pm, sx2, 2.55, sz2, sg > 0 ? Math.PI / 2 : -Math.PI / 2);
         col(sx2 - 0.12, sx2 + 0.12, 0, 3, sz2 - 0.12, sz2 + 0.12);
       }
-      addInst(new THREE.CylinderGeometry(0.06, 0.08, 3, 6), MAT.aco, placaPost, { occlude: true });
+      addInst(new THREE.CylinderGeometry(0.06, 0.08, 3, 6), MAT.aco, placaPost, { occlude: false });
     }
   }
 
@@ -1614,9 +1631,7 @@ export function buildBrasilia(scene, T) {
     const sk = new THREE.CanvasTexture(c);
     sk.colorSpace = THREE.SRGBColorSpace;
     sk.wrapS = sk.wrapT = THREE.ClampToEdgeWrapping;
-    // No browser, a placa fotográfica prolonga o cerrado e a silhueta baixa da cidade.
-    // O canvas acima continua sendo fallback determinístico do harness node.
-    setMapSky(scene, { sky: sk }, '/img/textures/sky_brasilia.webp', sk);
+    scene.background = sk;
   } else scene.background = T.sky;
   // FOG: continua valendo que no Planalto o ar é seco e os primeiros metros não têm haze —
   // o que muda é a CURVA. A névoa linear (near 130 / far 360) só tinha apagado 43 % do
@@ -1640,7 +1655,7 @@ export function buildBrasilia(scene, T) {
   // e quente-neutro, e sobretudo penumbra ESTREITA (radius 3 -> 1). O sol fica a ~33° de
   // elevação: sombra longa (≈1,6× a altura) atravessando a lane, que é o que dá volume ao
   // vazio da praça. O env map (IBL, do agente de gráficos) preenche o resto do ambiente.
-  const hemi = new THREE.HemisphereLight(0xbdd8f5, SKY2 ? 0xa08a5c : 0x8a7f63, SKY2 ? 0.52 : 0.48);
+  const hemi = new THREE.HemisphereLight(0xbdd8f5, SKY2 ? 0xa08a5c : 0x8a7f63, SKY2 ? 0.30 : 0.42);
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(SKY2 ? 0xfff4e2 : 0xfff1d8, SKY2 ? 3.1 : 2.5);
   if (SKY2) sun.position.set(90, 62, -40); else sun.position.set(38, 58, -14);
@@ -1656,7 +1671,7 @@ export function buildBrasilia(scene, T) {
   sun.shadow.radius = SKY2 ? 1 : 3;   // sol duro do cerrado = penumbra estreita
   scene.add(sun);
   // Rebote: no cerrado seco o rebote dominante vem do CHÃO (palha/laterita), não do céu.
-  const fill = new THREE.DirectionalLight(SKY2 ? 0xd8c9a3 : 0xaecbe8, SKY2 ? 0.42 : 0.38);
+  const fill = new THREE.DirectionalLight(SKY2 ? 0xc9b98f : 0xaecbe8, SKY2 ? 0.20 : 0.35);
   fill.position.set(-32, 22, 28); scene.add(fill);
 
   /* ---------------- ground height (flat) ---------------- */
@@ -1788,26 +1803,7 @@ export function buildBrasilia(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 17, separacao: 13, larg: 4.0, alt: 2.1, minLarg: 2.2 },
   });
 
-  /* BUG-57: a Praça é DOS POMBOS — fauna ancorada na esplanada aberta (0,0). */
-  const ambience = createFavelaAmbience(root, {
-    map: 'praca_poderes',
-    rats: [
-      { pos: [-18, 0, -30], to: [-15.5, 0, -27], phase: .3 },
-      { pos: [17, 0, 24], to: [14.5, 0, 27], phase: 1.7 },
-    ],
-    pigeons: [
-      { mode: 'ground', pos: [-4, 0, -8], phase: .2 }, { mode: 'ground', pos: [11, 0, -6], phase: 1.1 },
-      { mode: 'ground', pos: [-2, 0, 10], phase: 2.0 }, { mode: 'ground', pos: [8, 0, 16], phase: 2.9 },
-      { mode: 'ground', pos: [-2.8, 0, 1], phase: .6 }, { mode: 'ground', pos: [9.5, 0, 17], phase: 2.4 },
-    ],
-    /* vida 1: tatu no gramado do eixo — cerrado de Brasília (fauna 2) */
-    armadillos: [
-      { pos: [-8, 0, 2], to: [-5, 0, 5], phase: 1.3 }, { pos: [13, 0, -14], to: [10, 0, -11], phase: 2.8 },
-    ],
-  });
-
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:85,vol:.28},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:85,vol:.22}],bioma:'campo'},
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi,
     /* BANDEIRAS DO CTF — DECLARADAS PELO MAPA (06/08). Os nomes CONGRESSO/ÔNIBUS/CATEDRAL
        moravam no fallback do game.js e vazavam pra QUALQUER mapa sem declaração — o dono

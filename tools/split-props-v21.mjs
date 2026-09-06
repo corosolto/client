@@ -30,6 +30,26 @@ const CONFIG = {
     out: 'references/glb/aviao_faixa_split.glb',
     regras: [{ nome: 'faixa', teste: (c) => c[0] > -0.02, pivo: [0.0, 0.0, -0.095] }],
   },
+  /* ARARA EM VOO (plans/22 § "Pombas voando"). O `pigeon_flight.glb` foi removido na
+     v2.1 porque era ave de asas abertas PARADA — arte estática pendurada no céu. O
+     plano registra a condição para a presença aérea voltar: "só com pássaro riggado
+     de verdade (não existe CC0; rig Mint é humanoid-only)". O rig continua não
+     existindo, então a asa vira NÓ e o bater é procedural, exatamente como o tatu
+     anda e a pipa balança — mesma solução da fauna 2.
+
+     Regra medida no GLB bruto (tools/_tmp-probe2 → evidência em asset-evidence):
+     corpo+cabeça+cauda ocupam |z| <= 0,10 e x ∈ [−0,36; 0,36]; TODO triângulo com
+     |z| > 0,10 está na faixa x ∈ [−0,23; −0,03], y ∈ [0,02; 0,15] — ou seja, é asa,
+     e nada de corpo invade. 512/515 tris por asa, simétrico. Pivô na RAIZ da asa
+     (encosto no corpo), senão a asa bate girando em torno da ponta da pena. */
+  arara_voo: {
+    src: 'references/glb/arara_voo_mint.glb',
+    out: 'references/glb/arara_voo_split.glb',
+    regras: [
+      { nome: 'asa-direita', teste: (c) => c[2] > 0.10, pivo: [-0.13, 0.06, 0.10] },
+      { nome: 'asa-esquerda', teste: (c) => c[2] < -0.10, pivo: [-0.13, 0.06, -0.10] },
+    ],
+  },
 };
 
 const alvo = process.argv[2];

@@ -17,7 +17,6 @@ attribute float aGrow;
 uniform float uTime;
 uniform float uScale; // px per world-unit at 1m: height / (2*tan(fov/2))
 varying float vAlpha;
-varying float vViewZ;
 void main() {
   float age = uTime - aBirth;
   float alive = step(0.0, age) * step(age, aLife);
@@ -28,43 +27,25 @@ void main() {
   gl_PointSize = alive * sz * (uScale / max(0.1, -mv.z));
   gl_Position = projectionMatrix * mv;
   vAlpha = alive * (1.0 - frac);
-  vViewZ = mv.z;
 }
 `;
 
-/* Soft particles (RC3, plans/23): o fade de contato lê a CÓPIA linearizada de depth
-   do DepthPass (tDepth). uLumAlpha=1: textura sem alfa — a luminância vira alfa. */
 const FRAG = /* glsl */`
 uniform sampler2D uTex;
-uniform sampler2D tDepth;
-uniform float uDepthOn;
-uniform float uFar;
-uniform vec2 uRes;
-uniform float uFadeDist;
-uniform float uLumAlpha;
 varying float vAlpha;
-varying float vViewZ;
 void main() {
   if (vAlpha <= 0.001) discard;
   vec4 tex = texture2D(uTex, gl_PointCoord);
-  float a = mix(tex.a, tex.r, uLumAlpha) * vAlpha;
-  if (uDepthOn > 0.5) {
-    float sceneZ = -texture2D(tDepth, gl_FragCoord.xy / uRes).r * uFar;
-    float softDepth = clamp((vViewZ - sceneZ) / uFadeDist, 0.0, 1.0);
-    a *= softDepth;
-  }
-  gl_FragColor = vec4(tex.rgb, a);
+  gl_FragColor = vec4(tex.rgb, tex.a * vAlpha);
 }
 `;
 
 export class GPUParticles {
   // tex: sprite texture; additive: bright (flash) vs soft (smoke). max = ring-buffer slots.
-  // fadeDist: metros de transição no contato (só vale com composer); ambiente: rótulo da régua.
-  constructor(scene, camera, { tex, additive = false, max = 256, fadeDist = 0.35, lumAlpha = false, ambiente = null } = {}) {
+  constructor(scene, camera, { tex, additive = false, max = 256 } = {}) {
     this.camera = camera;
     this.max = max;
     this.cursor = 0;
-    this.ambiente = ambiente;
     const geo = new THREE.BufferGeometry();
     this.pos = new Float32Array(max * 3);
     this.vel = new Float32Array(max * 3);
@@ -83,12 +64,6 @@ export class GPUParticles {
       uTime: { value: 0 },
       uScale: { value: 600 },
       uTex: { value: tex },
-      tDepth: { value: null },
-      uDepthOn: { value: 0 },
-      uFar: { value: 400 },
-      uRes: { value: new THREE.Vector2(1, 1) },
-      uFadeDist: { value: fadeDist },
-      uLumAlpha: { value: lumAlpha ? 1 : 0 },
     };
     const mat = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
@@ -103,8 +78,6 @@ export class GPUParticles {
     this.points.renderOrder = 5;
     scene.add(this.points);
     this._geo = geo;
-    // o DepthPass (bloom.js) alimenta tDepth e migra para a camada soft quem está na lista
-    (scene.userData.softs || (scene.userData.softs = [])).push(this);
   }
 
   // One slot written; GPU does the rest. vel/grow default to a stationary, steady-size sprite.
