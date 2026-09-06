@@ -3,6 +3,12 @@ export async function proxyApiRequest(request, target, clientAddress, fetchFn = 
   const contentType = request.headers.get('content-type');
   if (contentType) upstreamHeaders.set('content-type', contentType);
   if (clientAddress) upstreamHeaders.set('x-forwarded-for', clientAddress);
+  // Geo da borda: o backend lê `x-vercel-ip-*` (api/_lib/geo.ts) e é a única fonte de city_daily.
+  // Só estes quatro; cookie/authorization continuam de fora.
+  for (const nome of ['x-vercel-ip-country', 'x-vercel-ip-city', 'x-vercel-ip-latitude', 'x-vercel-ip-longitude']) {
+    const valor = request.headers.get(nome);
+    if (valor) upstreamHeaders.set(nome, valor);
+  }
 
   const temCorpo = request.method !== 'GET' && request.method !== 'HEAD';
   const upstream = await fetchFn(target, {

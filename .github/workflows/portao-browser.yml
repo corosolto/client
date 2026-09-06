@@ -51,6 +51,15 @@ on:
       - 'tools/eval/graffiti-audit.mjs'
       - 'tools/eval/select-inflate.mjs'
       - 'tools/eval/serve.mjs'
+      # O boot (07/08: TDZ deixou o JOGAR inerte com todo portão verde) e a camada
+      # operacional: eval:boot ficou vermelho na main por dias em 09/2026 porque só
+      # rodava à mão; aqui roda no PR que toca o que o boot carrega.
+      - 'public/js/main.js'
+      - 'public/js/ops.js'
+      - 'public/js/apibase.js'
+      - 'src/pages/index.astro'
+      - 'tools/eval/boot-check.mjs'
+      - 'tools/ops/**'
       - '.github/workflows/portao-browser.yml'
   workflow_dispatch:
 
@@ -133,6 +142,19 @@ jobs:
       - name: eval:armas (preload de arma por partida)
         if: ${{ !cancelled() }}
         run: npm run eval:armas
+
+      # O main.js AVALIA? B1–B7 do boot-check com o Chromium do runner (sobe o astro dev sozinho).
+      - name: eval:boot (o main.js terminou de avaliar; falha de entrada recupera)
+        if: ${{ !cancelled() }}
+        env:
+          BASE: ''
+        run: npm run eval:boot
+
+      # As provas de navegador da camada operacional: boot provado + ops.js lido, TDZ vira
+      # crítico, e a sonda barra POST/beacon (o contrato "só lê"). Sem Playwright são puladas.
+      - name: ops:selftest — cenários de navegador
+        if: ${{ !cancelled() }}
+        run: node tools/ops/selftest.mjs --so=navegador
 
       # Número diz que caiu; imagem diz por quê. Só quando algum passo acima reprova.
       - name: Fotos das piores células (só em falha)
