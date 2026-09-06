@@ -48,6 +48,8 @@ jobs:
         run: npm run eval:mapcontrato
       - name: Escadão — circulação, estrutura e casa
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
+      - name: Escadão — compatibilidade com pacote de áudio publicado
+        run: node tools/eval/escadao-audio-pack-check.mjs
       - name: Veículos do estacionamento em escala de fábrica
         run: npm run eval:escala
       - name: Orçamento de shader WebGL1
