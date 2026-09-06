@@ -3435,6 +3435,14 @@ hipótese de escorço foram **refutadas com número**. Nenhum parâmetro de câm
 malha: o caminho é **malha nova ou outra família de pose**. Não gaste rodada procurando
 parâmetro.
 
+### BUG-142 · Lobisomem em FP com mãos ligadas continua com escala ruim
+
+O modo padrão do Lobisomem segue `weaponOnly=true`, porque o rig compartilhado de mãos
+mostra proporção ruim quando habilitado: a arma encaixa, mas a mão extra fica grande e
+desancorada. A revisão local trata isso como limitação herdada do viewmodel opcional, não
+como regressão da facção M. Evidência: `artifacts/miticos-review/hands/arms.glb-0.png` e
+`artifacts/miticos-review/after/fp-32.png`.
+
 ---
 
 ### ~~BUG-24 · "as armas estão 1,5x do tamanho que deveriam"~~ · RESOLVIDO 04/08

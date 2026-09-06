@@ -127,7 +127,7 @@ export function buildFPArms(def) {
   // LUVA POR TIME (antes a mão era genérica pros 3 times): tinge o material (clonado, pra não
   // vazar entre builds) na cor do time — Petista avermelhado, Bolsonarista verde, Tribos azul.
   // Blend moderado (não recolore a pele toda de roxo): multiplica a cor base pela cor da luva.
-  const GLOVE = { E: 0xd83232, B: 0x28c858, U: 0x8a3ffc, C: 0xf0f0f0 };   // vermelho PT / verde / roxo Tribos / branco Palhaços
+  const GLOVE = { E: 0xd83232, B: 0x28c858, U: 0x8a3ffc, C: 0xf0f0f0, M: 0x9d4edd };
   const gloveHex = GLOVE[def && def.team] || 0xbdb6ab;
   const _gc = new THREE.Color(gloveHex);
   model.traverse((o) => {

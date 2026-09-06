@@ -1,10 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
-const mutate = process.argv.includes('--mutate=sem-lobisomem');
+const mutant = (process.argv.find(a => a.startsWith('--mutate=')) || '').split('=')[1];
+if (mutant && !['sem-lobisomem', 'roster', 'links', 'gloves', 'resultados', 'clipes'].includes(mutant)) throw new Error(`Mutante desconhecido: ${mutant}`);
 const read = (file) => readFileSync(file, 'utf8');
 let characters = read('public/js/characters.js');
-if (mutate) characters = characters.replace("{ id: 'lobisomem'", "{ id: 'mutado'" );
+if (mutant === 'sem-lobisomem') characters = characters.replace("{ id: 'lobisomem'", "{ id: 'mutado'" );
 
 const failures = [];
 const expect = (ok, message) => { if (!ok) failures.push(message); };
@@ -41,9 +42,40 @@ const digest = createHash('sha256');
 for (const asset of assets) if (existsSync(asset)) digest.update(asset).update('\0').update(readFileSync(asset)).update('\0');
 const assetHash = digest.digest('hex');
 
-if (mutate) {
+const change = (source, from, to) => {
+  if (!source.includes(from)) throw new Error(`Mutação não aplicada: ${from}`);
+  return source.replace(from, to);
+};
+const defs = [...characters.matchAll(/\{ id: '([^']+)', team: '([^']+)'/g)].map(m => ({ id: m[1], team: m[2] }));
+let game = read('public/js/game.js');
+if (mutant === 'roster') game = change(game, 'others.length ? others : allies', 'others');
+const rosterSource = game.slice(game.indexOf('const _cyclePool ='), game.indexOf('/* Pool dos bots'));
+const pickRoster = new Function('CHARACTERS', `${rosterSource.replace('export function', 'function')}return pickMatchRoster;`)(defs);
+for (const dedicated of [false, true]) for (const size of [1, 5, 8]) {
+  const result = pickRoster('M', 'B', size, 'lobisomem', dedicated);
+  expect(result.allyDefs.length === size - (dedicated ? 0 : 1) && result.allyDefs.every(c => c.id === 'lobisomem'), `roster M incorreto: size=${size}, dedicated=${dedicated}`);
+}
+let query = read('public/js/screenquery.js');
+if (mutant === 'links') query = change(query, ", 'M'", '');
+const resolveQuery = new Function(`${query.replace('export function', 'function')}return resolveInspectionScreen;`)();
+for (const tela of ['personagem', 'hud', 'vitoria', 'derrota']) {
+  const target = resolveQuery(new URLSearchParams({ tela, time: 'M', char: 'lobisomem' }));
+  expect(target.faction === 'M' && target.character === 'lobisomem', `inspeção ${tela} perde M`);
+}
+let fp = read('public/js/fparms.js');
+if (mutant === 'gloves') fp = change(fp, ', M: 0x9d4edd', '');
+expect(/const GLOVE = \{[^}]*M: 0x9d4edd/.test(fp), 'luva FP M ausente');
+const victory = readFileSync('public/img/resultado/lobisomem-vitoria.webp');
+const defeat = mutant === 'resultados' ? victory : readFileSync('public/img/resultado/lobisomem-derrota.webp');
+expect(!victory.equals(defeat), 'vitória e derrota repetem a mesma pose estática');
+const index = JSON.parse(read('public/models/anims/index.json'));
+if (mutant === 'clipes') delete index.clipes.lobisomem;
+expect(index.estados.every(state => index.clipes.lobisomem?.includes(state)), 'Lobisomem sem clipes próprios obrigatórios');
+expect(existsSync('public/models/anims/lobisomem.glb'), 'pack mesclado do Lobisomem ausente');
+
+if (mutant) {
   if (!failures.length) throw new Error('mutação não foi pega');
-  console.log(`✓ mutação pega: ${failures.join('; ')}`);
+  console.log(`✓ mutação ${mutant} pega: ${failures.join('; ')}`);
   process.exit(0);
 }
 if (failures.length) throw new Error(failures.join('\n'));

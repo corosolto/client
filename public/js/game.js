@@ -566,8 +566,10 @@ const _rosterPool = (pool, want, quem, fallback) => {
    time aliado, então o lado aliado leva teamSize corpos inteiros (e não teamSize-1). É o que
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
 export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId, dedicado = false) {
+  const allies = CHARACTERS.filter(c => c.team === playerFaction);
+  const others = allies.filter(c => c.id !== playerCharId);
   return {
-    allyDefs: _rosterPool(CHARACTERS.filter(c => c.team === playerFaction && c.id !== playerCharId),
+    allyDefs: _rosterPool(others.length ? others : allies,
       dedicado ? teamSize : teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId)),
     enemyDefs: _rosterPool(CHARACTERS.filter(c => c.team === enemyFaction), teamSize, `inimigos (${enemyFaction})`, CHARACTERS),
   };
