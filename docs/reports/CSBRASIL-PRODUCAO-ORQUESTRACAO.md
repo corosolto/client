@@ -80,6 +80,23 @@ Míticos: ledger `/Users/ruben/csbrasil/worktrees/miticos-visual/docs/reports/MI
 Checkpoint recebido confirma servidores 8191/8192/8193 encerrados, crítico interrompido,
 sem captura própria ativa, sem automação; aguarda novo despacho.
 
+### Novos defeitos reportados pelo dono — 06/09
+
+O dono relata travadas na Amazônia acima de 5x5, mesmo depois do fechamento de PR439.
+Não assumir que tem a mesma causa de Lajes. PR517/Lajes é referência de método: nele a
+visão dos bots em 8x8 caiu de 6.059.736 para 22.056 testes de triângulos preservando a
+sequência de impactos; a correção é específica de Lajes até reproduzirmos outra causa.
+Frente Amazônia recebeu investigação primeiro, offline: matriz de carga para todos os
+mapas, separando visão/oclusão, colisão, render e GC, com 5x5 e 8x8 quando suportados.
+Não mudar runtime ou mapas sem uma régua que reprove o estado atual e uma hipótese medida.
+
+Também investigar cabanas/palafitas da Amazônia: escada voltada ao lado de respawn com
+visão desobstruída para o rio, e madeiras aparentemente flutuando sem estaca/contato com
+o solo. Primeiro localizar coordenadas/nós e relações com spawn/linha de visão; árvores
+podem permanecer. Não remover cobertura nem editar geometria por inferência. Auditoria
+inicial sem browser; imagens/validação de gameplay terão reserva exclusiva quando houver
+candidato concreto.
+
 ## Viewmodels e substituição Claude
 
 `VIEWMODEL-CATALOGO-ORQUESTRACAO.md` conserva catálogo, controles, critérios e release.
@@ -116,6 +133,15 @@ renders ou alterações. Preparação de decisão não ocupa escritor de produç
 parecer em artifacts/viewmodels/prep/precisao/orquestracao/ antes de despachar correção.
 Após fechamento dos mapas prontos, liberar produção de personagens com esse parecer;
 manter uma frente de armas avançando por marcos durante o primeiro pacote.
+
+Parecer Astra Cuca: os dados não sustentam alterar pesos nem mount. Crouch anterior tinha
+gap L máximo 1,00 mm e mínimo global -325,82 mm; raised reduziu cauda no chão para
+-8,68 mm, mas elevou gap L a 164,46–238,42 mm (crouchwalk 76,35 mm). A hipótese útil é
+alvo esquerdo fora de alcance após a nova relação tronco/braço/shotgun, possivelmente
+ampliada pelo clamp frontal do braço direito. Terra deve primeiro sondar apenas crouch
+raised, amostra17 (~0,591667s): juntas/palma/alvo L no mundo, clamp R e retornos pedido,
+alcance e resíduos do IK. Aceita a hipótese se recorte de alcance e resíduo projetado
+<=1mm; caso contrário investigar convergência/transformações. Esta sonda não aprova Cuca.
 
 ## Registro de consumo e limites operacionais
 
