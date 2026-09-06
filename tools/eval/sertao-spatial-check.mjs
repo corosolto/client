@@ -66,11 +66,28 @@ function alphaCheck(world) {
 }
 
 function houseCheck(world) {
-  const houses = named(world, 'sertao-casa-');
+  // Grupos diretos da raiz: as paredes segmentadas da casa interior também
+  // carregam o prefixo sertao-casa- no nome da malha (BUG-91).
+  const houses = named(world, 'sertao-casa-').filter(o => o.parent === world.root);
   const errors = [];
   for (const house of houses) {
     const matches = world.colliders.filter(c => c.tag === house.name);
-    if (matches.length !== 1) { errors.push({ house: house.name, reason: 'tag-unica-ausente', matches: matches.length }); continue; }
+    if (matches.length !== 1) {
+      /* BUG-91: casa interior (registrada em interiorHouses) tem parede
+         segmentada — muitas partes com a tag da casa, centro coerente e
+         paredes de altura total. Caixa única fechando a planta reprova. */
+      const interior = (world.interiorHouses || []).some(h => h === house);
+      if (interior && matches.length >= 8) {
+        const cx = matches.reduce((a, c) => a + (c.minX + c.maxX) / 2, 0) / matches.length;
+        const cz = matches.reduce((a, c) => a + (c.minZ + c.maxZ) / 2, 0) / matches.length;
+        if (!close(cx, house.position.x, .8) || !close(cz, house.position.z, .8))
+          errors.push({ house: house.name, reason: 'interior-centro-diverge' });
+        else if (matches.filter(c => c.maxY >= 3).length < 4)
+          errors.push({ house: house.name, reason: 'interior-sem-parede-altura-total' });
+        continue;
+      }
+      errors.push({ house: house.name, reason: 'tag-unica-ausente', matches: matches.length }); continue;
+    }
     const c = matches[0], o = c.obb ?? c;
     if (!o || !['cx', 'cz', 'hx', 'hz', 'ry', 'cos', 'sin'].every(k => Number.isFinite(o[k])) || o.hx <= 0 || o.hz <= 0) {
       errors.push({ house: house.name, reason: 'obb-invalido' }); continue;
@@ -242,9 +259,9 @@ const MUTANTS = {
   'alpha-zero': { target: 'SP1', apply(w) { const t = wallTextures(w)[0]; if (!t) throw Error('parede DataTexture ausente'); t.image.data[3] = 0; } },
   'tumbleweed': { target: 'SP2', apply(w) { const o = new THREE.Group(); o.name = 'tumbleweed-mutante'; w.root.add(o); } },
   'colisor-movel': { target: 'SP2', apply(w) { const update = w.update, c = w.colliders[0]; if (!c) throw Error('colisor ausente'); const x = c.minX; w.update = (dt, t) => { update(dt, t); c.minX = x + t / 20; }; } },
-  'casa-yaw': { target: 'SP3', apply(w) { const o = named(w, 'sertao-casa-')[0]; if (!o) throw Error('casa ausente'); o.rotation.y += .37; } },
+  'casa-yaw': { target: 'SP3', apply(w) { const o = named(w, 'sertao-casa-').find(h => w.colliders.filter(c => c.tag === h.name).length === 1); if (!o) throw Error('casa clássica ausente'); o.rotation.y += .37; } },
   'casa-tag': { target: 'SP3', apply(w) { const c = w.colliders.find(c => c.tag?.startsWith('sertao-casa-')); if (!c) throw Error('tag ausente'); c.tag = 'mutante-sem-casa'; } },
-  'casa-obb': { target: 'SP3', apply(w) { const c = w.colliders.find(c => c.tag?.startsWith('sertao-casa-')); const o = c?.obb ?? c; if (!Number.isFinite(o?.hx)) throw Error('OBB ausente'); o.hx += 1; } },
+  'casa-obb': { target: 'SP3', apply(w) { const c = w.colliders.find(c => c.tag?.startsWith('sertao-casa-') && Number.isFinite(c.hx) && w.colliders.filter(d => d.tag === c.tag).length === 1); if (!c) throw Error('OBB ausente'); c.hx += 1; c.minX -= 1; c.maxX += 1; } },
   'rota-leste': { target: 'SP4', apply(w) { const cut = new Set(w.waypoints.nodes.flatMap((p, i) => p.x >= 12 && Math.abs(p.z) <= 4 ? [i] : [])); if (!cut.size) throw Error('nós leste ausentes'); w.waypoints.adj = w.waypoints.adj.map((edges, i) => cut.has(i) ? [] : edges.filter(j => !cut.has(j))); } },
   'spawn-deslocado': { target: 'SP5', apply(w) { w.spawns.E[0].x += 1; } },
   'pickup-deslocado': { target: 'SP6', apply(w) { w.pickups[0].x += 1; } },

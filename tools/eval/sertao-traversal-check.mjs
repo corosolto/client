@@ -21,9 +21,17 @@ if (process.argv.includes('--offline')) {
  if(mutant === 'porta') game.world.colliders.push({minX:-12.5,maxX:-10.5,minY:0,maxY:3,minZ:11.6,maxZ:12,tag:'mutante-porta'});
  const p=game.player, routes=[];
  const paths=Object.entries(spatial.baseline.SP4.paths).map(([name,ids])=>[name,ids.map(i=>game.world.waypoints.nodes[i])]);
+ // BUG-91: interiores além dos da praça (porta em qualquer orientação) — o
+ // percurso deriva do userData.interior registrado pelo mapa.
  for(const house of game.world.interiorHouses){
-  const {x,z}=house.position;
-  paths.push([house.name,[{x,z:z-4.8},{x,z},{x,z:z+2.5},{x,z},{x:x-2.9,z:z+.1},{x,z},{x:x+2.9,z:z+.1},{x,z},{x,z:z-4.8}]]);
+  const meta=house.userData.interior,{x,z}=house.position,ry=meta?.ry ?? house.rotation.y;
+  const l=(px,pz)=>({x:x+Math.cos(ry)*px+Math.sin(ry)*pz,z:z-Math.sin(ry)*px+Math.cos(ry)*pz});
+  // percurso derivado do contrato de interior: porta (entrance), centro,
+  // janela oposta (farWindow/northWindow) e laterais em local.
+  const door=meta?.entrance,win=meta?.farWindow??meta?.northWindow;
+  const out=door?{x:door[0]+(door[0]-x)*.35,z:door[1]+(door[1]-z)*.35}:{...l(0,4.8)};
+  const winIn=win?{x:x+(win[0]-x)*.55,z:z+(win[1]-z)*.55}:{...l(0,-2.5)};
+  paths.push([house.name,[out,{x,z},winIn,{x,z},l(-2.9,.1),{x,z},l(2.9,.1),{x,z},out]]);
  }
  for(const [name,nodes] of paths){
   p.pos.set(nodes[0].x,game._spawnY(nodes[0].x,nodes[0].z),nodes[0].z);p.vel.set(0,0,0);
@@ -40,7 +48,7 @@ if (process.argv.includes('--offline')) {
   const target=nodes.at(-1);
   routes.push({name,completed:index===nodes.length,remaining:Math.hypot(target.x-p.pos.x,target.z-p.pos.z),simulatedSeconds:steps/60,index,total:nodes.length,trajectory});
  }
- const checks={TR1:routes.slice(0,3).every(r=>r.completed&&r.remaining<.5),TR3:routes.length===5&&routes.slice(3).every(r=>r.completed&&r.remaining<.5)};
+ const checks={TR1:routes.slice(0,3).every(r=>r.completed&&r.remaining<.5),TR3:routes.length===game.world.interiorHouses.length+3&&routes.slice(3).every(r=>r.completed&&r.remaining<.5)};
  writeFileSync(`${OUT}/report.json`,JSON.stringify({mode:'Node Game._updatePlayer 60Hz; DOM stub; sem browser, GLBs ou render',checks,routes,mutant},null,2));
  console.log(JSON.stringify({checks,routes:routes.map(({trajectory,...r})=>r)}));game.dispose();
   const passed=mutant === 'porta' ? !checks.TR3 : mutant === 'barreira' ? !checks.TR1&&checks.TR3 : Object.values(checks).every(Boolean);
