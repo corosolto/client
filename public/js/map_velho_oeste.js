@@ -430,13 +430,69 @@ export function buildVelhoOeste(scene, T) {
     testeira.position.set(0, .45 + h + .12, d / 2 + .05); testeira.castShadow = true; group.add(testeira);
   }
   /* r3b · mix de 4 famílias ("mais variacoes de casas"): 5 pau a pique leste/oeste,
-     2 platibanda na rua da igrejinha, 2 pedra na baixada, 1 geminada fecha o eixo sul. */
+     2 platibanda na rua da igrejinha, 2 pedra na baixada, 1 geminada fecha o eixo sul.
+     BUG-91: platibanda-1 (fachada no spawn E) e pedra-7 (fachada no spawn B) são
+     interiores jogáveis — porta encara o respawn, janela oposta cobre a praça. */
+  const interiorHouses = [];
+  function casaInteriorProxy(group, opts = {}) {
+    const x = group.position.x, z = group.position.z, ry = group.rotation.y;
+    const cos = Math.cos(ry), sin = Math.sin(ry), id = opts.id ?? 0;
+    const w = 7.2, d = 6.4, h = 3.45, halfW = w / 2, halfD = d / 2;
+    const cor = opts.pedra ? MAT.paupiqueCaiado : MAT.paupiqueOcre;
+    const part = (name, pw, ph, pd, px, py, pz, material, collide = true) => {
+      const mesh = new THREE.Mesh(boxGeo(pw, ph, pd), material);
+      mesh.name = name.startsWith('parede-casa') ? name : `${group.name}-${name}`;
+      mesh.position.set(px, py + ph / 2, pz);
+      mesh.castShadow = true; mesh.receiveShadow = true; group.add(mesh);
+      if (collide) {
+        // OBB exato: AABB de parede girada infla ~0,2 m no canto e raspa a
+        // circulação interna (IN3) e o vão da porta.
+        const hx = Math.abs(cos) * pw / 2 + Math.abs(sin) * pd / 2;
+        const hz = Math.abs(sin) * pw / 2 + Math.abs(cos) * pd / 2;
+        const cx = x + cos * px + sin * pz, cz = z - sin * px + cos * pz;
+        colliders.push({ minX: cx - hx, maxX: cx + hx, minY: py, maxY: py + ph, minZ: cz - hz, maxZ: cz + hz,
+          cx, cz, hx: pw / 2, hz: pd / 2, cos, sin, ry, tag: group.name });
+      }
+      return mesh;
+    };
+    // Frente da planta (porta, encara o respawn): vão de 1,9 m.
+    part(`parede-casa-${id}`, 2.65, h, .28, -2.275, 0, halfD, cor);
+    part('frente-leste', 2.65, h, .28, 2.275, 0, halfD, cor);
+    part('verga-porta', 1.9, .72, .28, 0, h - .72, halfD, cor);
+    // Fundo: janela central de 1,4 m com linha de tiro pra praça.
+    part('fundo-oeste', 2.9, h, .28, -2.15, 0, -halfD, cor);
+    part('fundo-leste', 2.9, h, .28, 2.15, 0, -halfD, cor);
+    part('peitoril-fundo', 1.4, .82, .28, 0, 0, -halfD, cor);
+    part('verga-fundo', 1.4, .88, .28, 0, h - .88, -halfD, cor);
+    for (const side of [-1, 1]) {
+      part(`lateral-${side}-sul`, .28, h, 2.6, side * halfW, 0, -1.9, MAT.paupiqueCru);
+      part(`lateral-${side}-norte`, .28, h, 2.4, side * halfW, 0, 2, MAT.paupiqueCru);
+      part(`peitoril-lateral-${side}`, .28, .88, 1.44, side * halfW, 0, .1, MAT.paupiqueCru);
+      part(`verga-lateral-${side}`, .28, .9, 1.44, side * halfW, h - .9, .1, MAT.paupiqueCru);
+      part(`moldura-lateral-${side}`, .14, 1.8, .12, side * (halfW + .03), .85, -.57, MAT.trim, false);
+      part(`moldura-lateral-${side}-b`, .14, 1.8, .12, side * (halfW + .03), .85, .77, MAT.trim, false);
+    }
+    part('piso', w - .25, .12, d - .25, 0, 0, 0, MAT.pedra, false);
+    part('telhado', w + .5, .16, d + .55, 0, h, 0, MAT.roof, false);
+    for (const px of [-halfW + .08, halfW - .08]) part(`esteio-${px}`, .16, h, .16, px, 0, halfD + .25, MAT.dark, true);
+    if (opts.pedra) part('base-pedra', w + .25, .3, d + .25, 0, 0, 0, MAT.pedra, false);
+    else {
+      part('platibanda-testeira', w + .35, .5, .3, 0, h, halfD - .12, cor, false);
+      part('cornija', w + .5, .14, .48, 0, h + .5, halfD - .12, cor, false);
+    }
+    group.userData.interior = {
+      entrance: [x + sin * (halfD + .55), z + cos * (halfD + .55)], inside: [x, z],
+      farWindow: [x - sin * (halfD + .1), z - cos * (halfD + .1)], doorWidth: 1.9, ry,
+    };
+    interiorHouses.push(group);
+    occluders.push(group);
+  }
   const CASAS = [
-    { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1 },
+    { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1, interior: true },
     { x: -17.2, z: -7, ry: Math.PI / 2 + .08, fam: 'paupique', v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, fam: 'paupique', v: 0 },
     { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, fam: 'paupique', v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, fam: 'paupique', v: 2 },
     { x: 17.2, z: -20.6, ry: -Math.PI / 2 + .07, fam: 'paupique', v: 0 },
-    { x: -8.4, z: 24.2, ry: .14, fam: 'pedra' }, { x: 9.1, z: 24.7, ry: -.1, fam: 'pedra' },
+    { x: -8.4, z: 24.2, ry: .14, fam: 'pedra', interior: true, pedra: true }, { x: 9.1, z: 24.7, ry: -.1, fam: 'pedra' },
     { x: -0.4, z: 26.2, ry: Math.PI - .06, fam: 'geminada' },
   ];
   const FAMILIAS_CASA = {
@@ -447,9 +503,9 @@ export function buildVelhoOeste(scene, T) {
   };
   CASAS.forEach((c, i) => {
     const F = FAMILIAS_CASA[c.fam];
-    sertaoElement(`casa-${c.fam}`, i, c.x, c.z, F.proxy, F.prop, F.h(i),
-      F.col, { ry: c.ry, variante: c.v ?? 0, id: i, targetLen: F.len, authored: ['paupique', 'platibanda'].includes(c.fam),
-        after: c.fam === 'platibanda' ? g => finishVenda(g, MAT, i) : undefined });
+    sertaoElement(`casa-${c.fam}`, i, c.x, c.z, c.interior ? casaInteriorProxy : F.proxy, F.prop, F.h(i),
+      c.interior ? null : F.col, { ry: c.ry, variante: c.v ?? 0, id: i, pedra: !!c.pedra, targetLen: F.len, authored: c.interior || ['paupique', 'platibanda'].includes(c.fam),
+        after: c.fam === 'platibanda' && !c.interior ? g => finishVenda(g, MAT, i) : undefined });
     if (i === 0) {
       const placa = addSign('VENDA DO SERTÃO', 'FARINHA • ÁGUA • PROSA', c.x + Math.sin(c.ry) * 3.55, 4.48, c.z + Math.cos(c.ry) * 3.55, c.ry, 5.2, .85);
       placa.name = 'sertao-venda-placa';
@@ -462,6 +518,50 @@ export function buildVelhoOeste(scene, T) {
         minZ: cz - .08, maxZ: cz + .08, tag: `varanda-casa-${i}-${sx}` });
     }
   });
+
+  // Paredes segmentadas preservam os vãos reais de porta e janelas (PR #526).
+  function casaDaPraca(id, x, z) {
+    const group = new THREE.Group();
+    group.name = `sertao-praca-casa-interior-${id}`;
+    group.position.set(x, 0, z); root.add(group);
+    const w = 7.2, d = 6.4, h = 3.45, halfW = w / 2, halfD = d / 2;
+    const part = (name, pw, ph, pd, px, py, pz, material, collide = true) => {
+      const mesh = new THREE.Mesh(boxGeo(pw, ph, pd), material);
+      mesh.name = `${group.name}-${name}`; mesh.position.set(px, py + ph / 2, pz);
+      mesh.castShadow = true; mesh.receiveShadow = true; group.add(mesh);
+      if (collide) colliders.push({ minX: x + px - pw / 2, maxX: x + px + pw / 2, minY: py, maxY: py + ph,
+        minZ: z + pz - pd / 2, maxZ: z + pz + pd / 2, tag: group.name });
+      return mesh;
+    };
+    // Frente sul: vão de 1,9 m deixa duas cápsulas de jogador passarem sem atrito.
+    part('frente-oeste', 2.65, h, .28, -2.275, 0, -halfD, MAT.paupiqueCaiado);
+    part('frente-leste', 2.65, h, .28, 2.275, 0, -halfD, MAT.paupiqueCaiado);
+    part('verga-porta', 1.9, .72, .28, 0, h - .72, -halfD, MAT.paupiqueCaiado);
+    // Fundo norte: janela central de 1,4 m voltada para a rota do forró.
+    part('fundo-oeste', 2.9, h, .28, -2.15, 0, halfD, MAT.paupiqueOcre);
+    part('fundo-leste', 2.9, h, .28, 2.15, 0, halfD, MAT.paupiqueOcre);
+    part('peitoril-norte', 1.4, .82, .28, 0, 0, halfD, MAT.paupiqueOcre);
+    part('verga-norte', 1.4, .88, .28, 0, h - .88, halfD, MAT.paupiqueOcre);
+    // Janelas laterais altas: cobertura tem leitura, mas não vira bunker fechado.
+    for (const side of [-1, 1]) {
+      part(`lateral-${side}-sul`, .28, h, 2.6, side * halfW, 0, -1.9, MAT.paupiqueCru);
+      part(`lateral-${side}-norte`, .28, h, 2.4, side * halfW, 0, 2, MAT.paupiqueCru);
+      part(`peitoril-lateral-${side}`, .28, .88, 1.44, side * halfW, 0, .1, MAT.paupiqueCru);
+      part(`verga-lateral-${side}`, .28, .9, 1.44, side * halfW, h - .9, .1, MAT.paupiqueCru);
+      part(`moldura-lateral-${side}`, .14, 1.8, .12, side * (halfW + .03), .85, -.57, MAT.trim, false);
+      part(`moldura-lateral-${side}-b`, .14, 1.8, .12, side * (halfW + .03), .85, .77, MAT.trim, false);
+    }
+    part('piso', w - .25, .12, d - .25, 0, 0, 0, MAT.pedra, false);
+    part('telhado', w + .5, .16, d + .55, 0, h, 0, MAT.roof, false);
+    for (const px of [-halfW + .08, halfW - .08]) part(`esteio-${px}`, .16, h, .16, px, 0, -halfD - .42, MAT.dark, true);
+    const sign = addSign(id === 0 ? 'CASA DE FARINHA' : 'CASA DE REZA', 'PORTA ABERTA PRA PRAÇA', x, 3.95, z - halfD - .18, 0, 4.8, .62);
+    sign.name = `${group.name}-placa`;
+    group.userData.interior = { entrance: [x, z - halfD - .55], inside: [x, z], northWindow: [x, z + halfD + .1], doorWidth: 1.9 };
+    interiorHouses.push(group);
+    occluders.push(group);
+  }
+  casaDaPraca(0, -11.5, 15.0);
+  casaDaPraca(1, 11.5, 15.0);
 
   /* ── IGREJINHA DA MATRIZ — landmark da praça, porta pro sul (pro largo). Proxy:
      nave caiada, porta dupla, torre sineira com cruz. Molde: igrejinha.glb. */
@@ -691,17 +791,23 @@ export function buildVelhoOeste(scene, T) {
       const wheel = new THREE.Mesh(new THREE.TorusGeometry(.72, .09, 6, 16), MAT.dark); wheel.position.set(wx, .75, wz); wheel.rotation.y = Math.PI / 2; g.add(wheel);
       for (let i = 0; i < 8; i++) { const spoke = new THREE.Mesh(boxGeo(.05, 1.2, .05), MAT.dark); spoke.position.set(wx, .75, wz); spoke.rotation.x = i * Math.PI / 4; g.add(spoke); }
     }
-    const hx = Math.abs(Math.cos(ry)) * 2.3 + Math.abs(Math.sin(ry)) * 3.2, hz = Math.abs(Math.sin(ry)) * 2.3 + Math.abs(Math.cos(ry)) * 3.2;
-    colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: 2, minZ: z - hz, maxZ: z + hz });
-    /* lança (tração) tem colisor PRÓPRIO: ela sai ~1,6 m da caixa acima e o MAP1
-       pega corpo sob a ponta (r3b: ponto andável a pen 0,925 m na carroça sul). */
-    const lx = x - 2.3 * Math.sin(ry), lz = z - 2.3 * Math.cos(ry);
-    const shx = Math.abs(Math.cos(ry)) * .14 + Math.abs(Math.sin(ry)) * 2.55;
-    const shz = Math.abs(Math.sin(ry)) * .14 + Math.abs(Math.cos(ry)) * 2.55;
-    colliders.push({ minX: lx - shx, maxX: lx + shx, minY: 0, maxY: 1.1, minZ: lz - shz, maxZ: lz + shz });
+    /* BUG-91: colisor espelha a geometria visível — carroceria 3,8 de largura com
+       rodas até 1,71 em z, e a lança como OBB fino. O AABB 2,3×3,2 de fábrica era
+       parede invisível na traseira e nos cantos (régua: sertao-wagon-check WA1). */
+    const cos = Math.cos(ry), sin = Math.sin(ry);
+    const obb = (tag, hx, hz, cx, cz, maxY) => {
+      const ehx = Math.abs(cos) * hx + Math.abs(sin) * hz, ehz = Math.abs(sin) * hx + Math.abs(cos) * hz;
+      colliders.push({ minX: cx - ehx, maxX: cx + ehx, minY: 0, maxY, minZ: cz - ehz, maxZ: cz + ehz,
+        cx, cz, hx, hz, cos, sin, ry, tag });
+    };
+    obb('carroca-corpo', 1.9, 1.71, x, z, 1.6);
+    obb('carroca-lanca', .09, 2.375, x - 2.425 * sin, z - 2.425 * cos, 1);
     occluders.push(g); return g;
   }
-  wagon(-6, -20, .18); wagon(7, 2, -2.7); wagon(-14.2, 25.4, 2.9);
+  /* BUG-91: a carroça oeste tinha a lança cravada na parede da platibanda-0
+     (ponta ~1 m dentro da planta) e o colisor giant fechava o corredor da praça.
+     Espelhada: lança aponta pro largo, mesma caixa, mesmo ry em espelho. */
+  wagon(-6, -19.6, Math.PI + .18); wagon(7, 2, -2.7); wagon(-14.2, 25.4, 2.9);
 
   function obstacle(name, x, z, ry, hx, hz, height, build) {
     const group = new THREE.Group(); group.name = `obstaculo-${name}`; group.position.set(x, 0, z); group.rotation.y = ry; root.add(group);
@@ -765,11 +871,11 @@ export function buildVelhoOeste(scene, T) {
     part(4.7, .22, .24, MAT.pale, 0, .5, 0, { rz: -.12 }); part(4.25, .22, .24, MAT.wood, .15, 1.08, 0, { rz: .2 });
   });
 
-  for (const [x, z] of [[13,-31],[-14,-4],[14,17],[-13,36]]) {
+  for (const [x, z] of [[13.8,-31],[-14,-4],[14,20.5],[-13,36]]) {
     for (let i = 0; i < 3; i++) addCylinder(.65, 1.15, MAT.hay, x + (i - 1) * 1.25, 0, z, { collide: true, segments: 14, rz: Math.PI / 2 });
   }
   // O barril legado coincidia com o centro CTF B; a cobertura fica dois metros ao lado.
-  for (const [x, z] of [[-12,-33],[12,-12],[-13,13],[14,34]]) {
+  for (const [x, z] of [[-12,-33],[12,-12],[-17,13],[14,34]]) {
     addCylinder(.62, 1, MAT.dark, x, 0, z, { collide: true, segments: 12 });
     addCylinder(.67, .1, MAT.metal, x, .98, z, { segments: 12 });
   }
@@ -814,6 +920,20 @@ export function buildVelhoOeste(scene, T) {
     const novasAdj = maior.map(v => adj[v].map(m => mapa[m]).filter(m => m >= 0));
     nodes.length = 0; nodes.push(...novosNodes);
     adj.length = 0; adj.push(...novasAdj);
+  }
+  /* BUG-91: a grade de 3,4 m só acerta um interior por sorte de alinhamento;
+     casa interior sem nó ganha centro + soleira da porta, ligados pelo mesmo
+     clear() do grafo — sem isso o bot não sabe entrar na casa do spawn. */
+  for (const house of interiorHouses) {
+    const { x, z } = house.position;
+    if (nodes.some(n => Math.hypot(n.x - x, n.z - z) < 3.4)) continue;
+    const ry = house.rotation.y, doorOut = { x: x + Math.sin(ry) * 4, z: z + Math.cos(ry) * 4 };
+    const a = nodes.length; nodes.push({ x, z }); adj.push([]);
+    const b = nodes.length; nodes.push(doorOut); adj.push([]);
+    adj[a].push(b); adj[b].push(a);
+    for (let i = 0; i < a; i++) {
+      if (Math.hypot(nodes[i].x - doorOut.x, nodes[i].z - doorOut.z) <= step * 1.5 && clear(nodes[i], doorOut)) { adj[b].push(i); adj[i].push(b); }
+    }
   }
   function nearestWaypoint(x, z) { let best = 0, distance = Infinity; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < distance) { distance = d; best = i; } } return best; }
   function findPath(fromIdx, toIdx) {
@@ -874,7 +994,7 @@ export function buildVelhoOeste(scene, T) {
   occluders.splice(0, occluders.length, ...solidMeshes);
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22}],bioma:'campo'},
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight, horizon, distantBirds, livestock,
+    root, colliders, occluders, interiorHouses, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight, horizon, distantBirds, livestock,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),
