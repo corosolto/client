@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**11 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben Marcus`, `rubenmarcus`, `Ruben`, `Emerson Garrido`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `matheusgb`, `Maná Soares`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**14 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `rubenmarcus`, `Ruben Marcus`, `Ruben`, `Emerson Garrido`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `nunreasonable`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
