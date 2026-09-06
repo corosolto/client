@@ -207,3 +207,22 @@ sertao-fauna2. Não houve regressão nova identificada nos gates. Não é conclu
 do objetivo completo: animaisMint, memorial e pendênciasdeáudio/procedência
 continuam abertos. Próximo: publicar checkpoint noPR511draft semmerge/deploy;
 após fonte de licençaMint, baixar/animar/integrar galinha,pintinhos,caprinos.
+
+### Publicação da etapa validada
+
+PR511 atualizado e verificado: head4fa6d4d08c31bf825f0d3f5d8ccb48b648c7c633,
+base map2/velho-oeste, draft=true, mergeable. Push normal passou pelo hook
+em140s, sem bypass/force. Corpo distingue explicitamente os animaisMint ainda
+não integrados. PR445 continua49441895, com conflito histórico na base original.
+
+Main consultada novamente:a551204fd80a4b02599b6658fc7dc991a1810585. Comparação
+com69555790:duas linhas em index.astro apenas incluem ops.js/telemetria; sem
+mudança visual de menu. Não transportar essa frente operacional para o Sertão.
+
+Este registro é checkpoint documental local posterior ao push; implementação e
+evidências estão noPR4fa6d4d0. Próxima integração pode levar este registro junto.
+Próxima ação dependente: receber link/trecho dos termosMint solicitado ao dono,
+baixar os três modelos do projeto zd7d9mfmgv0b80ezp3xbykp1ns8dw47r, medir,
+otimizar e animar localmente. Eles NÃO estão no mapa. Galinhaantiga permanece.
+Memorial ainda sem resultado aceito. Servidor local8149, recarregar partida
+para ver calangoquadrúpede, aves, horizonte e placa. Sem merge/deploy manual.
