@@ -4762,4 +4762,4 @@ mapa; arrays de vértices/índices compartilhados, nenhum lote de render adicion
 O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame completo;
 otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
-`artifacts/lajes-performance/`. Checks gerais/build ainda em execução.
+`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.

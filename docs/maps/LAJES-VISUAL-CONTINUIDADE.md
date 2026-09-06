@@ -64,6 +64,20 @@ Artefatos novos: `artifacts/lajes-performance/`. Régua: nenhuma neste marco.
   em `LAJES-PERFORMANCE.md`. Check:fast em execução; próximo build, VM/invariants,
   restauração dos dados gerados, docs, checkpoint e integração da correção.
 
+## BUG-141: portões locais concluídos e atualização da main
+
+- Checkpoint de produção/régua `c1397d67`; documentação gerada `48f703a2`.
+- Build passou. Check:fast 105/108 no passe inicial; IDs passaram na visão de todos
+  os arquivos-fonte (falso positivo era artefato histórico V7), autoria passou após
+  checkpoint. Somente audio:check permanece limitado ao pack privado incompleto.
+- VM regenerado antes de invariants; auditoria completa terminou com nenhuma falha
+  crítica nova. Dívidas herdadas permanecem no KNOWN-RED, sem afrouxar portões.
+  Dados JSON/overlays gerados preservados em `artifacts/lajes-performance/generated/`
+  e restaurados na árvore de código. Logs build/check-fast/invariants no mesmo diretório.
+- PR517 aberta: https://github.com/corosolto/client/pull/517. Main avançou para
+  `f7f4402e`/alpha.227 (Escadão). Próximo: merge normal, conflitos de documentos/
+  scripts resolvidos preservando a main, regeneração, checks afetados/build e CI final.
+
 ## Encerramento V7 — 06/09/2026
 
 - PR438 saiu de draft e foi mergeada por squash, sem bypass, às 05:01:53 UTC.

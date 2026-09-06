@@ -98,5 +98,8 @@ Os quatro mutantes devem sair com código 1. O browser aceita `--maps=lajes`,
 Artefatos locais: `artifacts/lajes-performance/`; baseline `browser-*.json`,
 `after/`, `after-occlusion/`, `sustained/`, `raycast-final.json` e os quatro
 `*-final.json` dos mutantes. Imagens PNG acompanham cada execução de navegador.
-A revisão independente não encontrou bloqueante de código. Checks gerais e build
-estão em fechamento; a correção ainda não foi publicada.
+A revisão independente não encontrou bloqueante de código. Build e invariants
+passaram sem falha crítica nova. Check:fast teve 105/108 no primeiro passe; IDs e
+autoria passaram nas verificações posteriores. Audio:check local mantém a limitação
+do pack privado incompleto, sem alterações de áudio nesta correção. PR517 está em
+integração com a nova main alpha.227; a correção ainda não foi publicada.
