@@ -32,27 +32,15 @@ e `miudo`. `node --check` passou nos quatro arquivos JS tocados. `eval:abateshud
 `eval:botfaca` entraram no `package.json` e no `check:fast`, ao lado de `eval:replaycam`, para
 o defeito não voltar em silêncio.
 
-**BLOQUEIO PENDENTE — `npm run build` não chegou a compilar nesta máquina.** A saída parou
-antes do Astro, com estas duas linhas exatas:
-
-```
-[copy-wasm] resvg-wasm não encontrado no node_modules — /api/badge vai depender de public/wasm/resvg.wasm já existir. Rode npm install e repita.
-sh: astro: command not found
-```
-
-Numa segunda execução, depois de o `resvg-wasm` já ter sido resolvido no `node_modules`, o
-primeiro passo passou (`[copy-wasm] ok: …/@resvg/resvg-wasm/index_bg.wasm -> public/wasm/resvg.wasm`)
-e a build parou exatamente no mesmo ponto, com a mesma linha:
-
-```
-sh: astro: command not found
-```
-
-**Em nenhuma das execuções o Astro chegou a compilar — a build NÃO está verde nesta máquina.**
-É ambiente sem dependências instaladas (`node_modules` incompleto), não regressão desta
-mudança: nada aqui toca `/api/badge`, `public/wasm/` ou a build do site. Quem publicar precisa
-rodar `npm install` e repetir `npm run build` antes do merge — o gate de build deste PR só pode
-ser considerado verde depois disso.
+**`npm run build`: VERDE, mas só depois de consertar o ambiente.** As primeiras execuções
+paravam antes do Astro (`[copy-wasm] resvg-wasm não encontrado no node_modules` e
+`sh: astro: command not found`), e a causa era a máquina, não o diff: o `node_modules` do
+worktree estava incompleto (87 pastas, sem `@resvg` nem o `.bin` no PATH do npm) e o `node` do
+PATH era o **v16.13.0**, abaixo do que o Astro 7 aceita — com ele o binário morria em silêncio
+(exit 1, zero linhas). Com `npm ci` e o `node v23.6.0` de `/opt/homebrew/bin` a build vai até o
+fim: `exit=0`, `[build] Complete!`, função Vercel empacotada, 10 arquivos AEO de 7 páginas e a
+poda de 0,2 MB. `package.json` e `package-lock.json` ficaram intactos (`npm ci`, não `install`).
+Quem publicar em Node 16 vai reproduzir a falha do ambiente — é o Node, não a mudança.
 
 **Navegador não foi aberto nesta entrega:** as três réguas executam o `Game` de verdade pelo
 harness headless (semente fixa), que é onde o defeito é mensurável. A conferência visual do
