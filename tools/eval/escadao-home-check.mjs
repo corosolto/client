@@ -27,6 +27,21 @@ const beforeFeet=targetFeet.clone(); game._collide(targetFeet,.38);
 assert.ok(targetFeet.distanceTo(beforeFeet)<1e-6,'Área do alvo cabe o jogador');
 ray.set(new THREE.Vector3(6.2,3.3,15.5),new THREE.Vector3(0,0,-1)); ray.far=2;
 assert.ok(ray.intersectObjects(W.occluders,true).length>0,'Peitoril continua sólido');
+const rearEye = new THREE.Vector3(5.85,4.37,17.2), rearTarget = new THREE.Vector3(8,W.groundHeightAt(8,21)+1.5,21);
+ray.set(rearEye,rearTarget.clone().sub(rearEye).normalize()); ray.far=rearEye.distanceTo(rearTarget);
+assert.equal(ray.intersectObjects(W.occluders,true).length,0,'Janela traseira enxerga a rua/respawn');
+const upper = [[.1,10.12],[.8,10.12],[.8,12],[.8,14.7],[1.6,14.9],[3.2,15.5]];
+const elevated=game.player;
+elevated.pos.set(-.3,W.groundHeightAt(-.3,10.12),10.12);elevated.vel.set(0,0,0);elevated.grounded=true;elevated.mantle=null;
+for(const [x,z] of [...upper, ...upper.slice().reverse()]) {
+  let frames=0;
+  while(Math.hypot(x-elevated.pos.x,z-elevated.pos.z)>.15&&frames++<300) {
+    elevated.yaw=Math.atan2(elevated.pos.x-x,elevated.pos.z-z);game.time+=1/60;
+    game._moveEntity(elevated,{ax:0,az:-1,jump:false,crouch:false,shift:false},1/60);
+  }
+  assert.ok(frames<300,`Acesso alto/retorno travou rumo a ${x},${z}`);
+}
+assert.ok(elevated.pos.y>=2.5,'Passarela alta mantém a cota da casa e retorna ao patamar');
 assert.ok(!game._walkReach({pos:{x:11,y:0,z:19}}, {x:9.3,z:19}, .45), 'Lateral elevada não pode teleportar bots');
 const start=W.nearestWaypoint(9.2,23), end=W.nearestWaypoint(7,16);
 for (const source of [start,W.nearestWaypoint(12,20),W.nearestWaypoint(0,26)]) {
