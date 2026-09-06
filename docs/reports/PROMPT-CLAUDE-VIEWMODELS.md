@@ -60,6 +60,17 @@ desproporcionalmente grande na tela. Leia o marco 27 e os posteriores do ledger.
 Não confundir o fallback 32° com o FOV real exportado da faca (29,241747° antes
 da calibração), nem comparar FOV da pistola sem sua conversão de aspecto.
 Vídeo do movimento antigo não é aprovação.
+Estado novo (06/09, marco 31): a lente **50° está no GLB público local**, hash
+`3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621`; não é mais
+override experimental. Buffers, rig e animações D foram preservados. Texturas
+`team-hands-5` corrigem o punho F/U sem cobrir os dedos. Não retomar v3/v4.
+Prévia atual: `artifacts/viewmodels/astra-series/knife-final-review.html`.
+Evidências em `hand-continuity/final-chrome-{3x2,16x9}/` (27/27 cada, dois vídeos
+de 225 frames), `final-teams-r2/` (60 fotos, 121/121), `final-blender/` (oito poses)
+e `final-review-page.json` (7/7). Use `--browser=chrome` nos capturadores deste
+host; um browser por vez. Relatórios de `final-default-*` e `final-teams/`
+contêm tentativas falhas e não substituem esses resultados. A confirmação
+humana da nova proporção/continuidade permanece pendente; ataques já aprovados.
 Há também skins por time: Palhaços/C branca, Funkeiros/F preta SEM DEDOS,
 B camuflada, E com estrela e Tribos Urbanas/U preta SEM DEDOS com punho
 quadriculado. Ruben aceitou essa distinção F/U; não volte a cobrir os dedos

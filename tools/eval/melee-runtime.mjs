@@ -11,8 +11,10 @@ import sharp from 'sharp';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const flags = new Map(process.argv.slice(2).map((arg) => arg.replace(/^--/, '').split('=')));
 for (const key of flags.keys()) {
-  if (!['saida', 'porta', 'largura', 'altura', 'mutante', 'quadro-z', 'video', 'flash-check', 'asset-candidate'].includes(key)) throw new Error(`flag desconhecida: ${key}`);
+  if (!['saida', 'porta', 'largura', 'altura', 'mutante', 'quadro-z', 'video', 'flash-check', 'asset-candidate', 'browser'].includes(key)) throw new Error(`flag desconhecida: ${key}`);
 }
+const browserName = flags.get('browser') || 'chromium';
+if (!['chromium', 'chrome'].includes(browserName)) throw Error('browser desconhecido');
 const video = flags.has('video');
 if (video) execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' });
 const frameZ = flags.has('quadro-z') ? Number(flags.get('quadro-z')) : null;
@@ -43,7 +45,7 @@ catch (error) { if (error.message.includes('já ocupada')) throw error; }
 const server = spawn(process.execPath, ['tools/eval/serve.mjs', String(port)], { cwd: ROOT, stdio: 'ignore' });
 process.on('exit', () => server.kill());
 let browser;
-const report = { viewport, mutant: mutant || null, sampling: 'Game.update em subpassos <= 1/120 s; fotos congeladas, não vídeo',
+const report = { viewport, browser: browserName, mutant: mutant || null, sampling: 'Game.update em subpassos <= 1/120 s; fotos congeladas, não vídeo',
   errors: [], warnings: [], checks: [], states: [] };
 const cells = [];
 const check = (ok, name, evidence) => report.checks.push({ ok: !!ok, name, evidence });
@@ -54,7 +56,9 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   if (!ready) throw new Error('servidor não abriu');
-  browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
+  browser = await chromium.launch(browserName === 'chrome'
+    ? { channel: 'chrome', headless: true, args: ['--mute-audio'] }
+    : { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
   const page = await browser.newPage({ viewport });
   if (candidate) await page.route('**/models/viewmodels/coro/melee/knife-hires.glb*', (route) => route.fulfill({ path: candidate, contentType: 'model/gltf-binary' }));
   page.on('pageerror', (error) => report.errors.push(error.message));
@@ -70,7 +74,9 @@ try {
     if (/\/viewmodels\/|\/js\/meleevm\.js/.test(response.url())) report.errors.push(text);
   });
   console.log('melee: abrindo jogo e carregando GLB');
-  await page.goto(`${base}/?debug=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  const response = await page.goto(`${base}/?debug=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`, { waitUntil: 'commit', timeout: 180000 });
+  if (!response?.ok()) throw Error(`HTML do jogo: HTTP ${response?.status()}`);
+  console.log('melee: HTML recebido; aguardando Game live e GLB ativo');
   await page.waitForFunction(() => window.__game?.state === 'live' && window.__game?.vm?.melee?.active, null, { timeout: 180000 });
   await page.waitForTimeout(1000);
   if (candidate) report.candidateOverride = { path: candidate, attackRouting: candidateLegacyRouting
@@ -129,6 +135,12 @@ try {
     }
   }, seconds);
   const snapshot = async (label) => {
+    await page.waitForFunction(() => {
+      const scene = window.__game.vm.melee.scene, materials = [];
+      scene.traverse(o => { if (o.isMesh) materials.push(...(Array.isArray(o.material) ? o.material : [o.material])); });
+      const hands = materials.filter(m => m.userData.teamHands);
+      return hands.length > 0 && hands.every(m => m.map?.image?.width > 0 && m.bumpMap?.image?.width > 0);
+    });
     const state = await page.evaluate(() => {
       const game = window.__game, vm = game.vm.melee;
       game.__meleeQaUpdate.call(game, 0, true);
@@ -214,6 +226,9 @@ try {
     console.log('melee: vídeo contínuo em tempo simulado');
     await page.evaluate(() => window.__game._switchWeapon('pistol'));
     await page.waitForFunction(() => window.__authoredVm?.entry('pistol'), null, { timeout: 120000 });
+    await page.waitForFunction(() => window.__authoredVm.entry('pistol').handMeshes.every(o =>
+      (Array.isArray(o.material) ? o.material : [o.material]).every(m => !m.userData.teamHands ||
+        (m.map?.image?.width > 0 && m.bumpMap?.image?.width > 0))));
     await page.evaluate(() => window.__game._switchWeapon('knife'));
     await advance(1);
     const dir = path.join(out, 'video-frames');
@@ -266,7 +281,7 @@ try {
     .composite(composite).png().toFile(path.join(out, 'contact-sheet.png'));
   check(report.errors.length === 0, 'sem erros de runtime/assets', report.errors);
   report.ok = report.checks.every((item) => item.ok);
-} catch (error) { report.errors.push(error.stack); report.ok = false; }
+} catch (error) { report.errors.push(error.stack); report.ok = false; console.error(error.message); }
 finally {
   await browser?.close(); server.kill();
   await fs.writeFile(path.join(out, 'runtime-report.json'), JSON.stringify(report, null, 2));

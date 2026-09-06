@@ -88,7 +88,7 @@ Esses números são o alvo do calibrador — não um teto inventado.
 | p90 | p90 | molde `p90` + Mint | construída | construída | PARCIAL |
 | svd | svd | molde `g3sg1` + Mint | construída | construída | PARCIAL |
 | sks | marksman | molde `g3sg1` + Mint | construída | construída | PARCIAL |
-| knife | melee | pipeline próprio | fora do caminho autorado | — | **PARCIAL**: mãos e ataques D aprovados; proporção e luvas em revisão |
+| knife | melee | pipeline próprio | fora do caminho autorado | — | **PARCIAL**: mãos/ataques D aprovados; FOV 50 e luvas v5 integrados localmente, Game/Blender validados; confirmação visual final pendente (marco 31) |
 
 O doador de cada arma está em `DOADORES` de `tools/viewmodels/build_goldsrc_all.mjs`.
 

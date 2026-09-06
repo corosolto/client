@@ -7,7 +7,9 @@ import { spawn, execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 const root = path.resolve(import.meta.dirname, '../..');
 const args = new Map(process.argv.slice(2).map(s => s.replace(/^--/, '').split('=')));
-for (const k of args.keys()) if (!['saida','porta','sweep','reload','inspection','asset-candidate'].includes(k)) throw Error(`flag ${k}`);
+for (const k of args.keys()) if (!['saida','porta','sweep','reload','inspection','asset-candidate','browser'].includes(k)) throw Error(`flag ${k}`);
+const browserName=args.get('browser')||'chromium';
+if(!['chromium','chrome'].includes(browserName))throw Error('browser desconhecido');
 const out = path.resolve(root, args.get('saida') || 'artifacts/viewmodels/astra-series/hand-continuity/runtime');
 const port = Number(args.get('porta') || 8348), base = `http://127.0.0.1:${port}`;
 const candidate=args.has('asset-candidate')?path.resolve(root,args.get('asset-candidate')):null;
@@ -20,16 +22,21 @@ catch(e) { if(e.message==='porta ocupada') throw e; }
 const server = spawn(process.execPath,['tools/eval/serve.mjs',String(port)],{cwd:root,stdio:'ignore'});
 process.on('exit',()=>server.kill());
 let browser;
-const report={checks:[],errors:[],states:[],scope:'Game real; fotos congeladas; não mede FPS/contato/qualidade humana'};
+const report={browser:browserName,checks:[],errors:[],states:[],scope:'Game real; fotos congeladas; não mede FPS/contato/qualidade humana'};
 const check=(ok,name,evidence)=>report.checks.push({ok:!!ok,name,evidence});
 try {
   for(let i=0;i<60;i++) { try { if((await fetch(base)).ok)break; }catch{} await new Promise(r=>setTimeout(r,250)); }
-  browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--mute-audio']});
+  browser=await chromium.launch(browserName==='chrome'?{channel:'chrome',headless:true,args:['--mute-audio']}:{args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--mute-audio']});
   const page=await browser.newPage({viewport:{width:960,height:640}});
+  let knifeUrl;
   if(candidate)await page.route('**/models/viewmodels/coro/melee/knife-hires.glb*',r=>r.fulfill({path:candidate,contentType:'model/gltf-binary'}));
   page.on('pageerror',e=>report.errors.push(e.message));
-  page.on('response',r=>{if(r.status()>=400&&/viewmodels|vmhands/.test(r.url()))report.errors.push(`${r.status()} ${r.url()}`);});
-  await page.goto(`${base}/?debug=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`,{waitUntil:'domcontentloaded',timeout:180000});
+  page.on('response',r=>{
+    if(r.url().includes('/melee/knife-hires.glb'))knifeUrl=r.url();
+    if(r.status()>=400&&/viewmodels|vmhands/.test(r.url()))report.errors.push(`${r.status()} ${r.url()}`);
+  });
+  const response=await page.goto(`${base}/?debug=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`,{waitUntil:'commit',timeout:180000});
+  if(!response?.ok())throw Error(`HTML do jogo: HTTP ${response?.status()}`);
   await page.waitForFunction(()=>window.__game?.state==='live'&&window.__game?.vm?.melee?.loaded,null,{timeout:180000});
   await page.evaluate(()=>{
     const g=window.__game;g.__qaUpdate=g.update;g.update=()=>{};
@@ -37,11 +44,14 @@ try {
   });
   await page.waitForFunction(()=>window.__authoredVm?.entry('pistol'),null,{timeout:120000});
   const nativeKnifeFov=await page.evaluate(()=>window.__game.vm.melee.cameraFov);
-  report.knifeAsset=await page.evaluate(async()=>{
-    const url=performance.getEntriesByType('resource').find(r=>r.name.includes('/melee/knife-hires.glb')).name;
-    const r=await fetch(url),b=await r.arrayBuffer(),hash=await crypto.subtle.digest('SHA-256',b);
-    return {url,bytes:b.byteLength,sha256:[...new Uint8Array(hash)].map(n=>n.toString(16).padStart(2,'0')).join('')};
-  });
+  // Resource Timing has a bounded buffer; capture the real response before loading the map.
+  if(!knifeUrl)throw Error('resposta do GLB da faca não observada');
+  report.knifeAsset=await page.evaluate(async url=>{
+    const r=await fetch(url);
+    if(!r.ok)throw Error(`GLB da faca: HTTP ${r.status}`);
+    const b=await r.arrayBuffer(),hash=await crypto.subtle.digest('SHA-256',b);
+    return {url,status:r.status,bytes:b.byteLength,sha256:[...new Uint8Array(hash)].map(n=>n.toString(16).padStart(2,'0')).join('')};
+  },knifeUrl);
   report.candidate=candidate;
   const advance=async seconds=>page.evaluate(seconds=>{
     const g=window.__game;for(let t=0;t<seconds;t+=1/120)g.__qaUpdate.call(g,Math.min(1/120,seconds-t),false);

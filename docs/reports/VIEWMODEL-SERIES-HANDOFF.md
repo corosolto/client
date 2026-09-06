@@ -1,5 +1,9 @@
 # Continuação das famílias de viewmodel
 
+**Estado atual (06/09): marco 31 no final.** Continuidade e proporção da faca
+implementadas no produto local, com evidências novas sem override. Não retomar
+as tentativas históricas v3/v4 abaixo como se fossem o estado atual.
+
 ## Objetivo e autorização — 05/09/2026
 
 Ruben aprovou a pistola com yaw 15° e pediu avançar a próxima série de armas,
@@ -346,7 +350,7 @@ preservar AK e poses/mãos aprovadas.
   iniciadas podem manter `weight=1`. A prova de transição usa a fixture animada
   e a inspeção das fotos, não a soma ingênua dos pesos.
 
-## Comandos para reproduzir (Node 23, um browser de cada vez)
+## Comandos históricos para reproduzir (substituídos pelo marco 31)
 
 ```sh
 export PATH=/opt/homebrew/bin:$PATH
@@ -364,7 +368,50 @@ captura o padrão real. Não sobrescrever controles/artefatos de antes do conser
 
 ## Próxima ação concreta
 
-### Checkpoint de continuidade — pedido de prompts paralelos, 06/09
+### Marco 30 — fechamento solicitado, acabamento v5 e proporção local (06/09)
+
+- Ruben pediu "vamos concluir a faca entao". Ataques D continuam aprovados;
+  não reconstruir mãos/rig nem mudar sua mecânica visual. Objetivo completo de
+  terminar o arsenal permanece, com AWP e escopeta na sequência canônica.
+- Crítico novo, sem justificativas anteriores (`knife_finish4_critic`), examinou
+  os 60 PNGs `teams-frame50-finish4/`: aprovou identidade/cobertura estática dos
+  times e redução da ampliação da faca. Variações de UV B/U e estrela E parcialmente
+  escondida na pistola não foram consideradas bloqueantes. Não certificou movimento.
+- Inspeção adicional mediu a exceção restante F/U: landmarks UV do punho da
+  pistola ainda tinham RGB [182,137,104]. O mesh `GEO_FP_SK_Hand` só alcança
+  y=0,2211 no referencial punho→base do dedo médio; pontas articuladas estão no
+  mesh `Glove`. Retirada a exceção que pintava esse mesh inteiro como pele.
+  `vm-hand-atlas-check.mjs` lê WebPs públicos: v4 com 4/12 falhas, v5 com 12/12;
+  mutantes de punho descoberto/dedos cobertos falham em 6/12 cada. Prova pixels
+  amostrados, não toda superfície ou estética. Acrescentado a `eval:melee-vm`.
+- V5: 48 mapas gerados, 1.257.526 bytes; sem editar UVs, rig ou animações.
+  `vmhands.js` usa `team-hands-5`. AK e GLB da pistola mantêm seus hashes do
+  início deste ledger. Rigs continuam distintos, não prometer a mesma malha 3D.
+- `promote-knife-motion.mjs --fov=50` promoveu a lente ao GLB público local,
+  sem alterar buffers originais ou clipes aprovados. SHA-256
+  `3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621`;
+  URL `knife-motion-d-frame50-2`. A aprovação visual do dono ainda é necessária.
+- Tentativas `motion50-finish4-3x2/` e `final-default-3x2/` falharam antes de
+  produzir frames: `page.goto: Timeout 180000ms exceeded`. Havia captura Amazônia
+  simultânea; não atribuir a causa exclusivamente a ela sem diagnóstico adicional.
+  Não reciclar estes relatórios falhos como evidência. Pedido assíncrono de
+  coordenação enviado ao dono; nenhuma tarefa alheia foi interrompida.
+- Novo gerador `tools/viewmodels/build-knife-final-review.mjs` preparado;
+  recusa relatórios incompletos ou hashes diferentes do GLB público. Ainda não
+  executado. Espera `final-default-3x2/`, `final-default-16x9/` e `final-teams/`.
+- `check:fast` desta rodada: 61/66, 1.973,7 s; falhas mapid, docs:check,
+  audio:check, feet:check e docsautoria. Log `finish4-check-fast.log` em
+  `hand-continuity/`; não alterar dados de mapa/áudio/personagens para esta frente.
+  Regenerar documentação após estabilizar fontes e repetir os checks afetados.
+
+Próximo passo: revisar v5 no Game padrão, sem override, em 3:2/16:9 (um browser
+por vez), rever vídeo e relatório com crítico, gerar `knife-final-review.html`,
+guardar checkpoint e mostrar ao Ruben. Se um destino de captura acima já tiver
+frames, preservar e usar diretório novo, atualizando o gerador. Conferência de
+dano: Game ainda chama `_meleeHit` na aceitação do ataque; não foi introduzido
+atraso/rebalanceamento nem mudança de protocolo multiplayer nesta correção visual.
+
+### Checkpoint histórico — pedido de prompts paralelos, 06/09, antes do marco 30
 
 - Ruben pediu prompts para abrir outras frentes. Preparados em
   `PROMPTS-PARALELOS-VIEWMODELS.md`: AWP, escopeta e Deagle/revólver, somente
@@ -398,13 +445,74 @@ captura o padrão real. Não sobrescrever controles/artefatos de antes do conser
   na árvore atual; não foram incluídos no commit dos prompts. Após fechar v4,
   executar `npm run docs` e repetir a checagem antes do checkpoint de implementação.
 
-Movimento D aprovado e promovido localmente. Concluir revisão da continuidade
-de luvas e medir/corrigir escala pistola/faca, com captura real nas duas proporções.
-Conferir timing de dano: `_tryKnifeAttack` chama `_meleeHit` imediatamente;
-o candidato é VISUAL, não resolve sincronização de impacto ou multiplayer.
-Skins por time implementadas como candidato conforme marcos 28–29, incluindo F/U
-sem dedos; faltam aprovação visual e propagação às outras rotas. Não avançar
-a AWP antes da faca passar. AWP → escopeta → matriz completa do catálogo.
-Atualizar este ledger após cada marco e guardar checkpoint apenas dos arquivos próprios.
+### Marco 31 — produto local recapturado e conferido, 06/09
+
+- Branch `codex/vm-astra-pistol`, base desta conclusão `1ffbc452`. Mudanças
+  limitadas à lane; nenhum push, merge, deploy, gasto ou instalação de MCP.
+  AK e pistola mantêm os hashes do início. Comparação GLB anterior/atual confirma
+  que **só `cameras[0].perspective.yfov` mudou**, 29,241747° → 50°:
+  todos os buffers, rig, geometria, materiais e animações D são idênticos.
+- Chrome instalado, perfil temporário/headless, `--browser=chrome`, resolveu
+  a captura neste host. Não concluir que a concorrência era a causa única dos
+  timeouts do Chromium/SwiftShader. `final-default-3x2-r2` foi interrompido
+  explicitamente no processo próprio e não é prova de deadlock. Nenhuma sessão
+  do usuário ou de outra tarefa foi encerrada. O pedido de coordenação não
+  precisou ser executado: a outra captura terminou sozinha.
+- `hand-continuity/final-chrome-{3x2,16x9}/runtime-report.json`: **27/27** cada,
+  21 stills + 225 frames contínuos (7,5 s simulados) cada, oito comandos aceitos,
+  zero erros. GLB público SHA `3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621`,
+  sem candidato ou deslocamento experimental. Os MP4 não são benchmark FPS/áudio.
+- `final-teams/` falhou antes de fotos: ausência da URL no buffer Resource Timing
+  (`Cannot read properties of undefined (reading 'name')`). Capturador agora
+  registra a resposta real por evento antes da navegação; não depende de um
+  histórico finito. `final-teams-r2/report.json`: **60 fotos, 121/121**, zero
+  erros; cinco times × dois formatos × idle/recarga/inspeção. As fotos
+  `inspect-pistol` elevam y em .14 m só para QA; os pares da prévia são idle real.
+- Crítico independente de movimento aprovou os dois aspectos: estocada e ataque
+  elevado distintos, troca sem quadro vazio, retornos 172–174 e 220–224 sem salto,
+  clarões antigos ausentes em 176–178/222–224. A lâmina cruza a mira brevemente
+  no golpe pesado; idle deixa o centro livre. Revisou seis folhas e vizinhos
+  críticos, não todos os 450 quadros individualmente nem contatos internos.
+  O crítico dos materiais examinou **todos os 60 PNGs v5** e aprovou os cinco
+  times nos dois formatos, inclusive dedos abertos F/U e continuidade dos
+  punhos. Variação de densidade B/U e pequena exposição da estrela E na pistola
+  continuam limitações de UV/pose, sem correção obrigatória nesta rodada.
+- Blender 5.2 em background: `verify-final-knife.py` reutiliza o método de
+  `knife-blender-contact.py`, sem alterar o GLB/sessão do dono. Oito renders e
+  16 comparações de bounds deformados: máximo **0,0000023518 da tela** (<0,003 px
+  em 960 px), limiar .0001. Relatório `hand-continuity/final-blender/report.json`.
+  Cores Workbench diagnósticas, não materiais de jogo; não certifica penetração.
+- `knife-final-review.html` (4.084.149 bytes) reúne antes/depois, vídeos e pares
+  por time. Gerador recusa hashes divergentes e overrides. `final-review-page.json`:
+  **7/7**, 28 imagens decodificadas, dois vídeos 960 px/7,5 s, reprodução e botões
+  3:2/16:9 funcionando, zero erros. O antes/depois histórico difere em câmera
+  de cenário, luz e renderizador; serve para enquadramento, não comparação de cor.
+- `eval:melee-vm`, sintaxe dos scripts, `docs:check`, `arch:check`, shaderbudget
+  SB1–SB7 e build passaram. Build em `finish5-build.log`; teste da faca repetido
+  com exit 0 em `finish5-unit-final.log`. Atlas v5 **12/12**, mutantes falham
+  conforme marco 30. `check:fast` completo anterior foi 61/66; docs regeneradas
+  depois. `eval:docsautoria` requer docs commitadas (`DOCSAUT não dá para medir`),
+  repetir após checkpoint. Mapid/audio/feet são falhas herdadas, não reparadas aqui.
+- Dano continua imediato na aceitação de `_tryKnifeAttack`; nenhum atraso,
+  balanceamento ou protocolo MP foi alterado. P4 de contato da pistola em 16:9
+  continua insuficiente; mãos de AK/GoldSrc/retarget não receberam essas skins.
+
+Reprodução (usar outro destino se já existir evidência):
+
+```sh
+export PATH=/opt/homebrew/bin:$PATH
+npm run eval:melee-vm
+node tools/eval/melee-runtime.mjs --browser=chrome --porta=8347 --largura=960 --altura=640 --video --flash-check --saida=artifacts/viewmodels/astra-series/hand-continuity/recheck-3x2
+node tools/eval/melee-runtime.mjs --browser=chrome --porta=8347 --largura=960 --altura=540 --video --flash-check --saida=artifacts/viewmodels/astra-series/hand-continuity/recheck-16x9
+node tools/eval/vm-hand-continuity-runtime.mjs --browser=chrome --reload --inspection --saida=artifacts/viewmodels/astra-series/hand-continuity/recheck-teams
+node tools/viewmodels/build-knife-final-review.mjs
+```
+
+**Próximo passo:** checkpoint recuperável e `docsautoria` pós-commit;
+mostrar `knife-final-review.html` ao Ruben. Só falta a aprovação
+visual humana da **nova proporção e acabamento/continuidade**, não dos ataques
+ou geometria já aprovados. Depois AWP → escopeta → catálogo inteiro; não retomar
+a remodelagem da faca nem declarar o arsenal pronto. Nenhuma captura própria
+ou Blender ficou ativo após estes relatórios. Atualizar este ledger por marco.
 
 Prompt pronto para outra ferramenta: `PROMPT-CLAUDE-VIEWMODELS.md`.

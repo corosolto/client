@@ -79,22 +79,24 @@ for (const [layout, inventory] of Object.entries(inspection)) {
       const heights=Buffer.alloc(size*size);
       for(let ix=0;ix<size*size;ix++){
         const [x,y,z,tip]=fields.subarray(ix*4,ix*4+4);
-        const isSleeve=role==='cloth'||(role==='combined'&&y<-.15);
-        const exposed=(role==='skin'&&(style.fingerless||y<-.15))||(style.fingerless&&tip>.48);
+        const isSleeve=role==='cloth'||((role==='combined'||role==='skin')&&y<-.15);
+        const exposed=style.fingerless&&tip>.48;
         const edge=style.fingerless&&role!=='skin'?gauss(tip-.445,.035):0;
         const cuffSeam=gauss(y+.15,.015);
-        const panel=(gauss(x-.23,.012)+gauss(x+.23,.012))*smooth(.05,.2,y)*(1-smooth(.72,.9,y));
+        const panel=(gauss(x-.33,.016)+gauss(x+.33,.016))*smooth(.05,.2,y)*(1-smooth(.72,.9,y))
+          +(gauss(y-.17,.016)+gauss(y-.88,.016))*(1-smooth(.29,.36,Math.abs(x)));
         const fold=gauss(y-.08,.16)*(Math.sin(y*65+x*5+z*8)+Math.sin(y*98-x*4))*.5;
         let color=exposed?skin:isSleeve?sleeve:glove;
         const cuff=y>-.38&&y<.06;
+        const handPanel=y>.18&&y<.85&&Math.abs(x)<.31;
         if(!exposed&&style.motif==='camo'){
           const n=Math.sin(x*14+y*9)+Math.cos(y*18-z*13)+Math.sin(z*24+x*11);
           color=n>.8?accent:n<-.9?[43,47,33]:n<-.15?[90,82,56]:glove;
         }
-        if(!exposed&&cuff&&style.motif==='checker')color=(Math.floor(x*9)+Math.floor(y*10))%2===0?accent:glove;
-        if(!exposed&&style.motif==='star'&&cuff){
-          color=sleeve;
-          if(inStar(x,(y+.15)*1.4))color=accent;
+        if(!exposed&&(cuff||handPanel)&&style.motif==='checker')color=(Math.floor(x*9)+Math.floor(y*10))%2===0?accent:glove;
+        if(!exposed&&style.motif==='star'){
+          if(cuff){color=sleeve;if(inStar(x,(y+.15)*1.4))color=accent;}
+          if(handPanel&&inStar(x,(y-.49)*1.1))color=accent;
         }
         // Bainha contínua + costura; transição antialias segue pesos reais dos dedos.
         if(style.fingerless&&role!=='skin'&&tip>.38){
@@ -104,12 +106,15 @@ for (const [layout, inventory] of Object.entries(inspection)) {
         }
         const seam=Math.max(cuffSeam,panel,edge);
         const stitch=seam*Math.pow(Math.max(0,Math.sin(x*120+y*85+z*50)),8);
+        const diamond=handPanel&&!exposed&&style.motif==='plain'
+          ? Math.max(gauss(Math.sin((x+y)*39),.14),gauss(Math.sin((x-y)*39),.14)):0;
         const noise=Math.sin(ix*12.9898)*43758.5453%1;
         const weave=(ix%size)%3===0?.99:1;
-        const value=exposed&&edge<.1?1:(.97+noise*.025-.18*seam+.10*stitch+fold*.035)*weave;
-        for(let c=0;c<3;c++)pixels[ix*3+c]=Math.round(Math.max(0,Math.min(255,color[c]*value)));
+        const value=exposed&&edge<.1?1:(.97+noise*.04-.22*seam-.12*diamond+fold*.06)*weave;
+        const thread=style.id==='C'?[220,216,206]:[156,153,143];
+        for(let c=0;c<3;c++)pixels[ix*3+c]=Math.round(Math.max(0,Math.min(255,color[c]*value*(1-stitch*.55)+thread[c]*stitch*.55)));
         const grain=Math.sin(x*180+z*90)*Math.cos(y*190-z*45);
-        heights[ix]=Math.round(Math.max(0,Math.min(255,128+(exposed?0:grain*3+fold*10)+seam*46+stitch*10)));
+        heights[ix]=Math.round(Math.max(0,Math.min(255,128+(exposed?0:grain*5+fold*16)-diamond*12+seam*60+stitch*18)));
       }
       const file=path.join(output,layout,`${role}-${style.id}.webp`);
       await sharp(pixels,{raw:{width:size,height:size,channels:3}}).webp({quality:92}).toFile(file);

@@ -74,6 +74,18 @@ npm audit --omit=dev: alta/crítica fora da lista de isenção reprova (isençõ
 npm run eval:deps
 ```
 
+## `eval:melee-vm`
+
+Regressão da faca e da continuidade das mãos: GLB, controlador e transições reais,
+clipes aprovados, troca de time, bind de materiais, pixels do atlas e projeção por
+aspecto. Nasceu de BUG-83/84/85; mutantes individuais comprovam as cláusulas.
+Não substitui aprovação visual nem captura no Game. Comandos e limites em
+`tools/eval/README.md`.
+
+```bash
+npm run eval:melee-vm
+```
+
 ## `eval:escala`
 
 procedência da escala dos veículos do estacionamento: bbox real do glb contra ficha de fábrica

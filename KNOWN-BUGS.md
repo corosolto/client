@@ -1950,10 +1950,24 @@ os dois aplicadores e o bind tardio reais: 21/21 falhas na primeira régua antes
 31/31 passam após identidade por time e refresh, mutante falha em 15/31.
 Atlas separados respeitam UVs dos dois rigs; isso não certifica aparência.
 `vm-hand-continuity-runtime.mjs` captura times e proporções no Game real.
-FOV servido da faca = 29,241747°; pistola = 55° de referência 16:9.
+FOV inicial servido da faca = 29,241747°; pistola = 55° de referência 16:9.
 Escala, acabamento visual e extensão às demais rotas ainda em revisão.
 Movimento D já integrado sem sobrescrever clipes originais; runtime 3:2
 com 225 frames, 26/26 verificações. Evidências: `astra-series/hand-continuity/`.
+
+**Atualização 06/09:** crítico independente aprovou os 60 stills v4 (identidade
+e proporção), sem certificar movimento. A inspeção UV encontrou pele residual
+no punho F/U da pistola: o mesh chamado `Skin` cobre a região do punho, não as
+pontas dos dedos. Régua `vm-hand-atlas-check.mjs`: 4/12 falhas nos WebPs v4,
+12/12 após retirar essa exceção da máscara. Mutantes `punho-descoberto` e
+`dedos-cobertos` falham em 6/12 cada. FOV 50° já está no GLB público **local**,
+hash `3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621`;
+geometria, escala e ataques preservados. Recaptura pública v5 concluída:
+`final-chrome-{3x2,16x9}` com 27/27 e 225 frames cada; `final-teams-r2` com
+60 fotos, 121/121. Zero erros. Blender: oito poses, delta projetado máximo
+0,0000023518 da tela. Prévia `astra-series/knife-final-review.html` verificada.
+Ainda exige aprovação final do dono para proporção/continuidade e extensão às
+demais rotas; BUG-85 não encerrado globalmente por validar só pistola/faca.
 
 ### ~~BUG-84 · tiros alheios acendem a luz do viewmodel da faca~~ · CORRIGIDO LOCALMENTE 05/09
 

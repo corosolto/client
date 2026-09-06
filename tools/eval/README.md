@@ -39,6 +39,9 @@ nesta página, sem substituir o arquivo público. É preview experimental:
 nos candidatos antigos quick usa Stab e heavy usa Slash, sem avanço extra.
 Candidatos com QuickThrust/HeavyStab preservam o roteamento real. O relatório
 marca `candidateOverride` e o hash servido; um verde não aprova visualmente o asset.
+Os dois capturadores aceitam `--browser=chrome` para o Chrome instalado, com
+perfil temporário/headless; o padrão `chromium` usa SwiftShader. O relatório
+identifica o navegador. Não misturar renderizadores em comparações de cor.
 
 `npm run eval:melee-vm` também executa `melee-motion-check.mjs`: transições e enquadramento
 com o controlador e AnimationMixer reais, fixture mínima sem assets privados.
@@ -57,6 +60,14 @@ Não usar essa pose elevada como evidência do enquadramento normal do jogo.
 `--sweep` testa lentes candidatas; `--asset-candidate` serve um GLB local de
 artifacts sem sobrescrever o público. Fotos/identificadores não certificam
 contato, anatomia oculta, qualidade humana ou sincronização multiplayer.
+
+`vm-hand-atlas-check.mjs`, na cadeia `eval:melee-vm`, decodifica os WebPs públicos
+e amostra landmarks UV de punho/dedos F/U. Reproduz a faixa de pele que os testes
+de identidade não enxergavam. `--mutante=punho-descoberto` e
+`--mutante=dedos-cobertos` devem falhar. Cobre pixels amostrados, não toda a malha;
+as fotos reais continuam obrigatórias. `build-knife-final-review.mjs`, em
+`tools/viewmodels/`, só gera a revisão final quando os relatórios dos dois
+aspectos e dos times usam o hash público atual, sem override de candidato.
 
 `node tools/eval/vm-contact-diagnostic-check.mjs --mutate` verifica oito
 contratos do diagnóstico P4 e duas regressões. O gauntlet reporta distância

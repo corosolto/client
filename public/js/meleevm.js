@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
 
-const KNIFE_URL = '/models/viewmodels/coro/melee/knife-hires.glb?v=knife-motion-d-1';
+const KNIFE_URL = '/models/viewmodels/coro/melee/knife-hires.glb?v=knife-motion-d-frame50-2';
 const REQUIRED_CLIPS = Object.freeze(['Idle', 'Draw', 'Slash', 'Stab', 'QuickThrust', 'HeavyStab']);
 const QA_SLOW_MOTION = typeof location !== 'undefined'
   && new URLSearchParams(location.search).get('meleeqa') === '1';
