@@ -63,6 +63,16 @@ jobs:
         id: probe
         run: node tools/eval/prod-coherence.mjs https://www.csbrasil.online
 
+      # O purge acima esvazia o edge e cada release muda o ?v=: sem aquecer, os primeiros
+      # jogadores de cada alpha pagam a origem em todos os assets (medido 06/09/2026, logo
+      # após a alpha.224: 111 MISS de 112, p95 608 ms). tools/ops/aquecer.mjs pede, com a
+      # URL que o runtime monta, módulos do import map e assets dos registros servidos, e
+      # confere HIT na 2ª passada. Falha aqui é informação (a ops-diag explica), não incidente.
+      - name: aquece o edge depois do deploy
+        if: github.event_name == 'deployment_status'
+        continue-on-error: true
+        run: node tools/ops/aquecer.mjs https://www.csbrasil.online --espera=120000
+
       - name: probe do banco e schema de telemetria
         run: |
           node --input-type=module - <<'NODE'
