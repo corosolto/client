@@ -380,3 +380,10 @@ piso seco. Fonte7e144533e7f23d22838bf50812afc1f1801adb2933df09792d7db7f667e720fa
 Imagens/código em revisão final independente; gravação da mídia atual em curso.
 Próximo: recibo/hover, docs gerados e checkpoint de entrega. Desempenho FPS e
 pendências herdadas não foram declarados resolvidos.
+
+Checkpoint61413c4b preserva implementação/assets/réguas. Crítico limpo aprovou
+final-med/canoa-amarrada.png e fauna, com limite de continuidade dos saltos ainda
+restrito aos cinco frames. docs:check/arch:check passaram após regenerar inventários.
+Primeira regravação de vídeo expirou no boot240s sem tocar mídia antiga; captura
+agora reconhece guarda de boot e oferece até duas tentativas pelo botão real.
+Segunda gravação entrou live sem guarda. Próximo: validar mídia e hover, entregar.
