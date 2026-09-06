@@ -73,9 +73,14 @@ export function sertaoLandscape(root, soilMaterial) {
     stem(cactus, i, new THREE.Vector3(x, y, z), new THREE.Vector3(x + arm * .05, y + h, z), .13);
   }
   for (let i = 0; i < 40; i++) {
-    const site = sites[(i * 13) % sites.length];
-    obj.position.set(site.x + 2, surface(site.x + 2, site.z) + .14, site.z);
-    obj.rotation.set(i * .7, i * 2.4, .3); obj.scale.set(.7 + (i % 3) * .3, .35, .65); obj.updateMatrix(); rocks.setMatrixAt(i, obj.matrix);
+    // Dois afloramentos assimétricos, além das bordas físicas, com os mesmos40 blocos.
+    const west = i < 23, j = west ? i : i-23, angle = j*2.39996;
+    const radius = Math.sqrt(j)*1.6, x = (west ? -50 : 51)+Math.cos(angle)*radius;
+    const z = (west ? 33 : -18)+Math.sin(angle)*radius*.65;
+    const height = .8+(j%4)*.38+(j<4?1.2:0);
+    obj.position.set(x,surface(x,z)+height*.6,z);
+    obj.rotation.set(i*.7,i*2.4,.3);obj.scale.set(1.4+(j%3)*.6,height,1.3+(j%2)*.5);
+    obj.updateMatrix(); rocks.setMatrixAt(i,obj.matrix);
   }
   for (const [mesh, name] of [[twigs, 'ramos'], [leaves, 'folhas'], [cactus, 'cactos'], [rocks, 'pedras']]) {
     mesh.name = `sertao-caatinga-${name}`; mesh.computeBoundingSphere(); root.add(mesh);

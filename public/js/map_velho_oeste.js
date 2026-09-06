@@ -7,7 +7,7 @@ import { applyLook } from './map_sky.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { sertaoLandscape, batchSertaoDecor } from './map_sertao_landscape.js';
 import { copaJuazeiro as addCopaJuazeiro, mandacaruSertao } from './map_sertao_flora.js';
-import { finishTaipa, finishVenda, crateBattens, settlementGround } from './map_sertao_architecture.js';
+import { finishTaipa, finishVenda, crateBattens, settlementGround, untileSertaoSoil } from './map_sertao_architecture.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
@@ -195,10 +195,12 @@ export function buildVelhoOeste(scene, T) {
     return [181 + grain + patch, 164 + grain + patch, 133 + grain + patch];
   });
   solo.name = 'oeste-sand'; solo.repeat.set(180, 180);
+  // A terra do acervo conserva pedriscos reais: manchas largas sozinhas pareciam dunas.
+  const soilMap = GLB_ON ? TX.sand : solo; soilMap.repeat.set(400, 400);
   const mineral = texProcedural(128, (x,y) => { const n = ((Math.imul(x ^ (y * 373), 1597334677) >>> 16) % 15) - 7; return [167+n,163+n,149+n]; });
   mineral.name = 'sertao-mineral'; mineral.repeat.set(2, 2);
   const MAT = {
-    sand: new THREE.MeshStandardMaterial({ color: 0xffffff, map: solo, bumpMap: TX.rachado || (TX.rachado = texturaRachado()), bumpScale: .035, roughness: 1, metalness: 0 }),
+    sand: new THREE.MeshStandardMaterial({ color: GLB_ON ? 0xd1c8b0 : 0xffffff, map: soilMap, bumpMap: null, bumpScale: 0, roughness: 1, metalness: 0 }),
     wood: mat(0xffffff), pale: mat(0xd9b17a, TX.paleWood), dark: mat(0x3b2115),
     roof: mat(0xe1a582, TX.roof, .94, 0, .1), trim: mat(0xd8ad6b, TX.paleWood), metal: mat(0x8c8174, TX.metal, .55, .35, .035),
     black: mat(0x191411, TX.metal, .6, .25), cactus: mat(0xffffff, TX.cactus, 1, 0, .075), cactusLight: mat(0xaed09a, TX.cactus, 1, 0, .075),
@@ -208,6 +210,9 @@ export function buildVelhoOeste(scene, T) {
     paupiqueCru: paupiqueDe(0xffffff), paupiqueCaiado: paupiqueDe(0xf6efdd), paupiqueOcre: paupiqueDe(0xd8b98c),
     pedra: mat(0xffffff, mineral, 1, 0, .025),
   };
+
+  // Corrige a dominante amarela do albedo legado sem modificar a imagem de origem.
+  if (GLB_ON) { MAT.sand.color.setRGB(.85, 1.15, 2.2); untileSertaoSoil(MAT.sand); }
 
   function addBox(w, h, d, material, x, y, z, opts = {}) {
     const mesh = new THREE.Mesh(boxGeo(w, h, d), material); mesh.position.set(x, y + h / 2, z);
@@ -285,6 +290,8 @@ export function buildVelhoOeste(scene, T) {
     group.rotation.y = opts.ry ?? id * 1.7;
     const prop = GLB_ON && !opts.authored && propId && hasProp(propId)
       ? placeProp(propId, { targetH: opts.targetH ?? targetH, targetLen: opts.targetLen ?? 0 }) : null;
+    group.userData.sertaoSource = prop ? 'glb' : opts.authored ? 'authored' : 'fallback';
+    group.userData.sertaoPropId = propId || null;
     if (prop) group.add(prop); else buildProxy(group, opts);
     if (opts.after) opts.after(group);
     if (/mandacaru|macambira|juazeiro|xique/.test(name)) group.traverse(m => { if (m.isMesh) m.castShadow = false; });
@@ -336,7 +343,7 @@ export function buildVelhoOeste(scene, T) {
     }
     const beiral = new THREE.Mesh(boxGeo(w + .7, .16, 1.5), MAT.roof);
     beiral.position.set(0, 2.85, d / 2 + 1.05); beiral.rotation.x = -.14; beiral.castShadow = true; group.add(beiral);
-    finishTaipa(group, MAT.roof, MAT.paupiqueOcre, opts.id ?? 0, w, d);
+    finishTaipa(group, MAT.roof, MAT.paupiqueOcre, opts.id ?? 0, w, d, MAT);
   }
   /* r3b: as 3 famílias novas do mix (feedback r3). Pedra usa MAT.pedra de propósito —
      casa de pedra é construto sertanejo; a ST2 da eval:sertao conta a folga. */
@@ -375,10 +382,11 @@ export function buildVelhoOeste(scene, T) {
     cornija.position.set(0, .5 + h + .88, d / 2 - .12); cornija.castShadow = true; group.add(cornija);
     const oitao = new THREE.Mesh(boxGeo(w + .4, .2, d + .5), MAT.roof);
     oitao.position.set(0, .5 + h - .3, 0); oitao.rotation.x = -.07; oitao.castShadow = true; group.add(oitao);
-    const porta = new THREE.Mesh(boxGeo(1.3, 2.25, .16), MAT.dark);
+    const doorPaint = MAT.paupiqueCaiado.clone(); doorPaint.color.setHex(0x738b7b);
+    const porta = new THREE.Mesh(boxGeo(1.3, 2.25, .16), doorPaint);
     porta.position.set(0, .5 + 1.12, d / 2 + .03); group.add(porta);
-    const bandeira = new THREE.Mesh(boxGeo(.7, .5, .12), MAT.dark);
-    bandeira.position.set(0, .5 + 2.6, d / 2 + .03); group.add(bandeira);
+    const bandeira = new THREE.Mesh(boxGeo(1.3, .35, .12), doorPaint);
+    bandeira.position.set(0, .5 + 2.54, d / 2 + .03); group.add(bandeira);
     for (const sx of [-2.4, 2.4]) {
       const jan = new THREE.Mesh(boxGeo(.95, 1.15, .14), MAT.dark);
       jan.position.set(sx, .5 + 1.95, d / 2 + .03); group.add(jan);

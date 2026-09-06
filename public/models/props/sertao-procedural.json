@@ -1,0 +1,52 @@
+{
+  "scope": "Sertão: geometria e materiais construídos em código nesta revisão",
+  "generation": "JavaScript/Three.js; sem download de modelo novo",
+  "authorship": "Contribuição assistida por agentes, rastreável nos commits com trailer Agent; sem atribuição humana presumida",
+  "codeLicenseFile": "LICENSE",
+  "externalAssets": "Texturas e GLBs reutilizados mantêm procedência própria; este registro não lhes atribui licença do código. Lacunas existentes em docs/reports/SERTAO-REFERENCIAS.md.",
+  "assets": [
+    {
+      "id": "sertao-procedural-casario",
+      "sourceFile": "public/js/map_velho_oeste.js",
+      "symbols": [
+        "casaProxy",
+        "casaPlatibandaProxy"
+      ],
+      "delivery": "geração em runtime, sem GLB derivado",
+      "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    },
+    {
+      "id": "sertao-procedural-acabamento",
+      "sourceFile": "public/js/map_sertao_architecture.js",
+      "symbols": [
+        "finishTaipa",
+        "finishVenda",
+        "crateBattens",
+        "settlementGround",
+        "untileSertaoSoil"
+      ],
+      "delivery": "geração em runtime, sem GLB derivado",
+      "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    },
+    {
+      "id": "sertao-procedural-flora",
+      "sourceFile": "public/js/map_sertao_flora.js",
+      "symbols": [
+        "sertaoLeafSprig",
+        "copaJuazeiro",
+        "mandacaruSertao"
+      ],
+      "delivery": "geração em runtime, sem GLB derivado",
+      "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    },
+    {
+      "id": "sertao-procedural-entorno",
+      "sourceFile": "public/js/map_sertao_landscape.js",
+      "symbols": [
+        "sertaoLandscape"
+      ],
+      "delivery": "geração em runtime, sem GLB derivado",
+      "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    }
+  ]
+}

@@ -28,10 +28,16 @@ export function copaJuazeiro(group, folha) {
   folha.emissive.setHex(0x4d5b30); folha.emissiveIntensity = .16;
   const copa = new THREE.InstancedMesh(sertaoLeafSprig(), folha, 208), part = new THREE.Object3D();
   copa.name = 'copa-juazeiro';
+  // Pontas medidas no GLB normalizado a 4,6 m; reprodução em FL8.
+  const lateral = [[-.250143, 2.861181, -2.220835], [1.741161, 3.433605, .929369], [-1.586110, 2.731894, 1.159837]];
   for (let i = 0; i < copa.count; i++) {
     const branch = i % 16, tier = Math.floor(i / 16), angle = branch * 2.39996;
     const reach = .30 + Math.sqrt(tier / 12) * 1.70, a = angle + Math.sin(i * 3.7) * .16;
     part.position.set(Math.cos(a) * reach, 4.5 - reach * .30 + Math.sin(branch * 1.7) * .25 + Math.sin(i * 1.3) * .16, Math.sin(a) * reach);
+    if (i >= 136) {
+      const local = (i - 136) % 24, tip = lateral[Math.floor((i - 136) / 24)], radius = Math.sqrt(local / 24) * .40, angle = local * 2.39996;
+      part.position.set(tip[0] + Math.cos(angle) * radius, tip[1] + Math.sin(local * 1.3) * .18, tip[2] + Math.sin(angle) * radius * .75);
+    }
     part.rotation.set(Math.sin(i * 2.3) * .8, -a + Math.sin(i) * .5, .15 + Math.cos(i * 1.7) * .45);
     const scale = .85 + (i % 5) * .075;
     part.scale.set(scale, scale, scale); part.updateMatrix();
@@ -58,8 +64,11 @@ function mandacaruGeometry(variant, scale) {
     const offset = positions.length / 3;
     for (let j = 0; j < rings.length; j++) {
       const [x, y, z, taper] = rings[j];
+      const round = j >= rings.length - 2 ? (j - rings.length + 3) / 2 : 0;
+      const domeBase = rings[rings.length - 3], t = (y - domeBase[1]) / (tip[1] - domeBase[1]);
+      const profile = round ? domeBase[3] * Math.sqrt(Math.max(0, 1 - t * t)) : taper;
       for (let k = 0; k < sides; k++) {
-        const angle = k / sides * Math.PI * 2, r = radius * taper * (k % 2 ? .65 : 1);
+        const angle = k / sides * Math.PI * 2, r = radius * profile * (k % 2 ? .65 + round * .35 : 1);
         positions.push(x + Math.cos(angle) * r, y, z + Math.sin(angle) * r); uv.push(k / sides, y / 3.8);
         const base = woody ? Math.max(0, 1 - y / 1.5) : 0;
         colors.push(.90 + base * .55, .94 - base * .23, .86 + base * .18);
@@ -81,9 +90,9 @@ function mandacaruGeometry(variant, scale) {
     [.04, 2.8, .02, .73], [.025, 3.5, .015, .62], [.025, 3.70, .015, .45], [.025, 3.77, .015, .24]], [.025, 3.8, .015], .30, true);
   const branches = 3 + variant;
   for (let i = 0; i < branches; i++) {
-    const angle = i * 2.39996 + variant * .49, reach = .53 + ((i + variant) % 3) * .12;
+    const angle = i * 2.39996 + variant * .71 + Math.sin(i * 1.7 + variant * 2.3) * .28, reach = .53 + ((i + variant) % 3) * .12;
     const start = 2.04 + ((i * 2 + variant) % 4) * .14;
-    const height = Math.max(start + .75, 3.04 + ((i * 3 + variant * 2) % 7) * .09);
+    const height = Math.max(start + .75, 3.00 + ((i * 3 + variant * 2) % 7) * .085 + Math.sin(i * 2.3 + variant) * .09);
     const x = Math.cos(angle) * reach, z = Math.sin(angle) * reach;
     column([[0, start, 0, .68], [x * .3, start + .18, z * .3, 1], [x * .74, start + .44, z * .74, 1],
       [x, height - .22, z, .9], [x + .015, height - .07, z, .54]], [x + .015, height, z], .14 + (i % 2) * .025);

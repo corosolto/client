@@ -200,3 +200,9 @@ Hashes abaixo são snapshot extraído do manifesto e conferido contra os arquivo
 | [`casa_geminada.glb`](casa_geminada.glb) / `casa-geminada` | [chat](https://mint.gg/chat/ph7ck5kbnh4syt5gsbnan3m4ah8d6qsy) / `ks72vcqrhyehnsm5mky7ppe5198d7pp6` | `bc7a2b9149b4139e9f446b9c5ce44807a64b4a304f28da68808542752e3f4673` |
 
 As fotografias de Maranguape e da capela da Fazenda Colônia foram apenas referências de observação do agente principal no Chrome; não foram incorporadas aos GLBs nem copiadas como textura nesta revisão. Créditos, observações atribuídas e limites em [SERTAO-REFERENCIAS.md](../../../docs/reports/SERTAO-REFERENCIAS.md).
+
+## Sertão — geometria procedural desta revisão
+
+Registro: [sertao-procedural.json](sertao-procedural.json). Casario sólido, acabamentos, folhas, mandacarus e entorno são construídos em JavaScript/Three.js pelos módulos ali enumerados. Contribuição assistida por agentes, identificada nos commits desta frente e trailers `Agent:`; não se presume autor humano individual, ID Mint nem geração externa. O código acompanha o [LICENSE](../../../LICENSE) do repositório. Este registro não atribui uma licença nova aos GLBs ou às texturas herdadas.
+
+Referências visuais são documentais, não incorporadas como imagens ou texturas. Ver [pesquisa](../../../docs/reports/SERTAO-REFERENCIAS.md) e [flora](../../../docs/reports/SERTAO-FLORA.md). Os GLBs antigos de mandacaru, palhoça, pau-a-pique e platibanda saíram do preload deste mapa porque os corpos agora são autorais; os arquivos do acervo foram preservados. Licença/autoria específica dos GLBs retidos e procedência incompleta de texturas legadas continuam pendências, não foram regularizadas por esta alteração.
