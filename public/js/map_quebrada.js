@@ -762,7 +762,11 @@ export function buildQuebrada(scene, T) {
      era um trecho plano e exposto. Estas muretas são baixas, soltas e deslocadas dos vãos:
      cortam a linha da rua para o primeiro passo, sem fechar nenhuma das duas rotas. */
   for (const [mx, mz, ry] of [[-16.9, 25.1, -0.16], [16.9, 25.1, 0.16]]) {
-    addBox(2.8, 1.05, 0.48, MAT_MURO, mx, 0, mz, { ry }).userData.campinhoRole = 'gate-cover';
+    const wall = addBox(2.8, 1.05, 0.48, MAT_MURO, mx, 0, mz, { ry });
+    wall.userData.campinhoRole = 'gate-cover';
+    const cos = Math.cos(ry), sin = Math.sin(ry), ex = 1.4 * Math.abs(cos) + .24 * Math.abs(sin), ez = 1.4 * Math.abs(sin) + .24 * Math.abs(cos);
+    Object.assign(colliders[colliders.length - 1], { minX: mx - ex, maxX: mx + ex, minZ: mz - ez, maxZ: mz + ez,
+      ry, cos, sin, cx: mx, cz: mz, hx: 1.4, hz: .24 });
     addBox(0.18, 1.35, 0.62, posteMat, mx - Math.cos(ry) * 1.18, 0, mz + Math.sin(ry) * 1.18, { ry, collide: false });
   }
   /* POVOAMENTO DO CAMPO (MAP5). Medido na 1ª passada: os dois quadrantes do campinho tinham
@@ -781,7 +785,7 @@ export function buildQuebrada(scene, T) {
      arquibancada/feira. São cover baixo: permitem reposicionar, mas não viram bunker. */
   for (const [bx2, bz2] of [[-13.1, 34.5], [13.1, 40.2]]) {
     addBox(2.4, 0.52, 0.72, MAT.concreteDark, bx2, 0, bz2).userData.campinhoRole = 'sideline-cover';
-    addBox(2.4, 0.48, 0.14, MAT.concreteDark, bx2, 0.52, bz2 + (bx2 < 0 ? -0.28 : 0.28), { collide: false });
+    addBox(2.4, 0.48, 0.14, MAT.concreteDark, bx2, 0.52, bz2 + (bx2 < 0 ? -0.28 : 0.28)).userData.campinhoRole = 'sideline-backrest';
   }
   /* Bancos curtos nas duas laterais quebram a travessia longa do campo em decisões de
      cobertura. Ficam junto ao alambrado, alternados, para preservar o corredor central e
@@ -806,6 +810,11 @@ export function buildQuebrada(scene, T) {
     const placar = lam({ color: 0x26382f, roughness: 0.78, metalness: 0.16 });
     addBox(5.2, 1.8, 0.16, placar, 0, 3.4, 45.8, { collide: false, cast: false }).userData.campinhoRole = 'scoreboard';
     for (const sx of [-1.8, 1.8]) addBox(0.16, 3.4, 0.16, posteMat, sx, 0, 45.8, { collide: false, cast: false });
+    for (const sx of [-1.2, 1.2]) {
+      for (const y of [3.8, 4.71]) addBox(.7, .09, .02, MAT_TRAVE, sx, y, 45.7, { collide: false, cast: false }).userData.campinhoRole = 'score-mark';
+      for (const dx of [-.305, .305]) addBox(.09, .82, .02, MAT_TRAVE, sx + dx, 3.89, 45.7, { collide: false, cast: false }).userData.campinhoRole = 'score-mark';
+    }
+    addBox(.35, .09, .02, MAT_TRAVE, 0, 4.255, 45.7, { collide: false, cast: false }).userData.campinhoRole = 'score-mark';
   }
 
   /* ===================== COMÉRCIO =====================
@@ -1013,7 +1022,7 @@ export function buildQuebrada(scene, T) {
   const MAT_CACAMBA = lam({ color: 0x5e6a52, roughness: 0.85, metalness: 0.25 });
   for (const [cx, cz] of [[-24.15, -30], [-24.15, -6], [-24.15, 12], [24.15, -26], [24.15, 2], [24.15, 20]])
     if (!gprop('dumpster', cx, cz, 1.35)) addBox(1.2, 1.35, 2.6, MAT_CACAMBA, cx, 0, cz);
-  for (const [cx, cz] of [[-24.3, -18], [-21.7, 3], [-24.3, 22], [24.3, -12], [21.7, 10], [24.3, -34]])
+  for (const [cx, cz] of [[-24.3, -18], [-21.7, 3], [-24.3, 22], [24.3, -12], [21.7, 8.8], [24.3, -34]])
     addBox(1.0, 1.0, 1.0, MAT_BARRACO[5], cx, 0, cz);   // pilha de tijolo/sacaria, colada no muro
   // entulho na BOCA de cada beco (na calçada, não dentro dele): dá cover a quem sai do beco
   // sem estrangular a passagem que a CTF2 depende.
@@ -1491,8 +1500,28 @@ export function buildQuebrada(scene, T) {
   linha(-24.5, 26, 24.5, 26, 2.6);              // travessa do campinho
   for (const gx of [-12, 12]) linha(gx, 26.5, gx, 31, 2.0);           // os dois portões do muro
   for (let vz = -44.4; vz <= -38.6; vz += 2.4) linha(-24, vz, -13.4, vz);   // pátio da vila (spawn P)
+  // Contornos medidos com o corpo real: arquibancada, ponto de ônibus e margem da feira.
+  for (const [x, z] of [[-15.7, 29.3], [-9.5, -9.1], [16.7, 43.9]]) if (!blocked(x, z, .38)) nodes.push({ x, z });
 
-  const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t; if (blocked(x, z, 0.25)) return false; } return true; };
+  // Varredura contínua com o raio do corpo de game._collide; cinco amostras perdiam quinas.
+  const segClear = (a, b) => {
+    for (const c of colliders) {
+      if (c.minY >= 1.5 || c.maxY <= .3) continue;
+      const local = (p) => c.ry ? { x: (p.x - c.cx) * c.cos - (p.z - c.cz) * c.sin, z: (p.x - c.cx) * c.sin + (p.z - c.cz) * c.cos } : p;
+      const A = local(a), B = local(b);
+      let enter = 0, leave = 1;
+      for (const [axis, min, max] of [['x', c.ry ? -c.hx : c.minX, c.ry ? c.hx : c.maxX], ['z', c.ry ? -c.hz : c.minZ, c.ry ? c.hz : c.maxZ]]) {
+        const delta = B[axis] - A[axis];
+        if (Math.abs(delta) < 1e-9) { if (A[axis] <= min - .38 || A[axis] >= max + .38) { enter = 2; break; } }
+        else {
+          const t0 = (min - .38 - A[axis]) / delta, t1 = (max + .38 - A[axis]) / delta;
+          enter = Math.max(enter, Math.min(t0, t1)); leave = Math.min(leave, Math.max(t0, t1));
+        }
+      }
+      if (enter < leave) return false;
+    }
+    return true;
+  };
   for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
   function nearestWaypoint(x, z) { let b = 0, bd = 1e9; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < bd) { bd = d; b = i; } } return b; }
   const _D = (a, b) => { const dx = nodes[a].x - nodes[b].x, dz = nodes[a].z - nodes[b].z; return Math.sqrt(dx * dx + dz * dz); };

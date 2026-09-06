@@ -1,5 +1,87 @@
 # Campinho da Quebrada — candidato de release
 
+## Continuação da revisão final — 06/09/2026
+
+Objetivo: revisar cobertura, rotas, pontos de conflito, spawns, bots e qualidade
+visual na lane `campo-morro-release`, branch `astra/campo-morro-release-audit`,
+PR #530. Concluir com correções medidas, crítica independente e PR atualizado;
+merge/release estão fora da autorização. Capturas exclusivamente offline.
+
+Retomada: `1e416221` era o checkpoint local; fast-forward para `164894ea`
+incorporou o estado já publicado pelo autofix, sem editar outra lane.
+O mapa passou novamente em `map-check` antes desta revisão. A crítica
+independente confirmou que a régua antiga aceitava cobertura invisível/sem bala.
+A nova medição reprovou antes do conserto por colisão fantasma e encosto oeste
+atravessável por bala. A primeira leitura de `0.2010 m` incluía o limite externo
+do mapa; o instrumento passou a excluir amostras fora dos limites. O mutante
+que restaura o colisor original mede `0.1854 m` de empurrão fantasma e quatro
+penetrações. Logs: `artifacts/campo-morro-final/regression-red.log` e
+`mutant-sem-rotacao.log` no mesmo diretório.
+
+Correções validadas: OBB nas duas muretas e encostos sólidos. O placar deixou
+de ser uma caixa lisa: marcação geométrica decorativa `0–0`, sem ligação com o
+placar da partida FPS. A nova régua está encadeada em `eval:mapcontrato`.
+
+Navegação: a régua com `_collide` real reprovou 26 conexões do grafo anterior
+(`nav-red.log`). A varredura contínua usa o raio do corpo; três pontos de
+contorno e o reposicionamento do caixote da saída do beco leste preservam o
+grafo conectado. A tentativa intermediária que apenas eliminava conexões foi
+rejeitada: deixava oito nós fora do componente principal. Resultado aceito:
+344 nós, 1.021 conexões não orientadas, nenhum nó/trecho amostrado em sólido,
+oito spawns livres. Crítica independente também mediu a distância contínua
+segmento–retângulo/OBB: nenhuma violação, folga corporal mínima de 6 cm.
+
+Baseline e sete mutantes validados em `mutations.json`: cobertura invisível,
+sem bala, sem rotação, encosto atravessável, placar vazio, rota obstruída e
+spawn obstruído. Cada mutante reprova com diagnóstico específico.
+
+### Validação final local
+
+| Verificação | Resultado observado |
+| --- | --- |
+| `campinho-release-check` e mutantes | baseline verde; sete mutantes vermelhos |
+| `map-check quebrada` | nenhum spawn em sólido, nenhum occluder invisível; folga mínima 2,1 m e área contígua mínima 42,9 m² |
+| Cobertura e CTF | pior espaçamento 4,28 m; razão mínima de props 0,38×; todos os pares spawn–bandeira com pelo menos duas rotas separadas |
+| `map-contrato-check` | contrato, índices e conectividade aprovados; Quebrada totalmente conectada |
+| `pickup-arma-check` | armas válidas e atualização real dos pickups aprovadas em todos os mapas |
+| `botsim 180 quebrada`, nove sementes | stuck mata-mata 3,311% → 2,178%; CTF 5,544% → 2,656% |
+| `syntax`, `eval:shaderbudget`, `docs:check` | passaram, inclusive cache-bust por conteúdo |
+| `npm run build` | Astro/Vercel e poda de assets passaram |
+
+As sementes são `12345,777,4242,90210,31337,8675309,2718,1618,42`. São medidas
+do motor real com cenário procedural do arnês, sem prometer desempenho ou
+equivalência visual com GLBs carregados. Uma tentativa intermediária, antes
+da correção de navegação, teve stuck CTF de 12,256% e foi rejeitada.
+Logs completos no diretório de evidência: `bots-*-final.log`, `map-final.log`,
+`contract-final.log`, `pickups-final.log`, `build.log` e `shaderbudget.log`.
+O primeiro build local encontrou apenas o shim de Three em `node_modules`;
+`npm ci --ignore-scripts` na própria lane instalou as dependências e o build
+subsequente passou.
+
+Próximo passo: checkpoint e atualização do PR após os portões finais. Aceite
+humano de assets/render real e partida manual, staging e release seguem pendentes.
+
+### Capturas offline e limites
+
+Reprodução, com Node 23 e Blender 5.2 locais:
+
+```sh
+node tools/eval/campinho-offline.mjs artifacts/campo-morro-final/after
+blender -b -t 4 --python tools/render-campinho.py -- artifacts/campo-morro-final/after
+```
+
+As pastas `before/` e `after/` preservam vistas aéreas, entrada oeste, travessas
+leste/oeste e fundo do campo em 1200×800. `before` é o candidato anterior aos
+consertos finais, já com as coberturas do PR; não é a base anterior ao PR.
+Foram inspecionados os PNGs: o `0–0` lê da entrada e junto ao gol, sem tapar a
+abertura; as correções de colisão preservam a disposição das coberturas.
+
+O exportador lê vértices do mundo construído, mas a evidência visual usa
+somente geometria procedural e cores; não reproduz GLBs assíncronos, texturas
+canvas, transparências, HUD, pós-processamento ou iluminação WebGL. Não é
+aprovação visual final do jogo. Capturas e logs ficam em `artifacts/`, fora do
+Git. Nenhum navegador foi aberto nesta tarefa.
+
 ## Escopo confirmado
 
 O mapa jogável atual que contém o Campinho é `quebrada`, em
@@ -16,7 +98,7 @@ Campinho navegável, mas com uma chegada exposta pela travessa e dois quadrantes
 sul com cobertura baixa em relação ao restante: pior espaçamento `5.42 m`,
 razão de props `0.24×` e `0.26×` da mediana. A exposição do spawn B era `0.8%`.
 
-## Mudança
+## Mudança original do candidato
 
 1. Duas muretas baixas e deslocadas dos portões dão cobertura ao primeiro passo
    entre travessa e campo sem fechar os dois caminhos CTF.
@@ -26,10 +108,11 @@ razão de props `0.24×` e `0.26×` da mediana. A exposição do spawn B era `0.
 3. Um placar físico no fundo do campo melhora a leitura do destino e não entra
    em colisão.
 
-Nenhum módulo de runtime, material compartilhado, pickup, spawn, arma ou outro
-mapa foi alterado.
+O candidato original não alterou módulos compartilhados, pickups, spawns,
+armas ou outros mapas. A revisão final acima também corrige a navegação local
+da Quebrada.
 
-## Evidência após a mudança
+## Evidência do checkpoint original
 
 | Verificação | Resultado |
 | --- | --- |
@@ -46,7 +129,6 @@ check inspeciona o mundo construído e não apenas a presença do script.
 
 ## Limites antes de release
 
-Esta lane não abriu navegador por escopo, logo não há aprovação humana de frame
-para o placar, as muretas e os bancos. O candidato está tecnicamente validado;
-a revisão visual em 3:2 e uma partida manual continuam obrigatórias antes de
-merge/release.
+Esta lane não abriu navegador por escopo. A revisão offline acima não substitui
+aprovação humana do frame real, GLBs carregados e partida manual em 3:2 antes
+de merge/release. O PR permanece aberto, sem automerge habilitado.
