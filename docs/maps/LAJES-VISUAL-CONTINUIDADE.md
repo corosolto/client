@@ -6,12 +6,15 @@ Checkpoint de transição 06/09/2026: coordenação pediu pausa para redistribui
 as frentes e concluir até 07/09 aproximadamente 06:55 Lisboa. Objetivo e aprovações
 anteriores preservados; não iniciar trabalho, merge ou deploy até novo despacho.
 
-- Branch `codex/lajes-performance`; head de produção e remoto PR517
-  `c26a40cfe0416232c33653de6a189bb843dff6ad`, incorpora main `f7f4402e`/alpha.227.
-  Árvore limpa antes deste registro; somente este ledger alterado no checkpoint.
-- Push final confirmado; hooks locais, docs e autoria passaram. PR517 OPEN e
-  MERGEABLE. Snapshot remoto: dco, ratchet, versão e um build verdes; outro build,
-  portao e smoke ainda em execução. CI não acompanhado após pausa. Sem merge.
+- Branch `codex/lajes-performance`; alpha.228 incorporada em
+  `9f07a70f7cd3ff2dfa14ccc28fc23564b90d2b7d`, a partir da main
+  `bc8ce4e9`/alpha.228. Árvore limpa após o merge normal e esta atualização.
+- A atualização trouxe Amazônia e documentação gerada; preservou LRP1 na CI e o
+  script `eval:lajes-raycast`. Docs, autoria, LRP1, integração/respawn Lajes,
+  contrato dos mapas, contratos Escadão e build passaram no head alpha.228.
+- PR517 segue OPEN. O head remoto anterior `c26a40cf` ficou conflitante quando a
+  main avançou; o novo head ainda deve ser enviado e submetido ao CI antes do merge.
+  Sem merge ou deploy neste checkpoint.
 - Candidato pronto para revisão: correção `c1397d67`, quatro mutantes causais,
   stress 220/220 e 189 raios sem divergências; revisão independente sem bloqueante.
   Visual V6/V7 aceito preservado, nenhuma simplificação nesta correção. Protótipo
