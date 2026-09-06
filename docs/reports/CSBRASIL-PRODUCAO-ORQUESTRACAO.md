@@ -125,6 +125,16 @@ cada par afetado, com contraprova/mutante. Sertão pode resolver seu conflito, m
 declara checks finais nem entra em merge antes de main corrigida; integração continua
 sequencial Lajes → Sertão → Escadão.
 
+Revisão independente 2 do candidato local `d4b58b71` aceitou o contrato de navegação para
+fechamento local, sem aprovar release: fonte SHA-256
+`d8d43d5dd126826ab06ad883c5868d1701928350cf5cb8f5a70488936aa22e96`, 24 nós/25 ligações,
+exatamente os conectores `[362,310]` e `[385,250]`, maior segmento 2,263 m e bots 71/71.
+A contraverificação percorreu continuamente os 26 pontos nos dois sentidos, com colisão
+real e sem recuperação. Há degrau de aproximadamente 0,406 m junto ao pontão; a prova
+é de transitabilidade neste modelo, não de suavidade. Antes do commit final, regenerar
+recibos CTF2 fixo/mutante com o hash atual e corrigir referências antigas a 25/26 e
+`lane-fixed.json`. Só então a correção pode ser publicada e integrar a `main`.
+
 ## Viewmodels e substituição Claude
 
 `VIEWMODEL-CATALOGO-ORQUESTRACAO.md` conserva catálogo, controles, critérios e release.
@@ -149,10 +159,10 @@ pendentes e bloqueios com artefatos. Continuar objetivo autorizado conforme prio
 
 ## Próximo passo
 
-M4 tactical segue offline. Amazônia foi fechada e liberou integração. Lajes/PR517 foi
-despachada para fechamento sequencial; em seguida Sertão/PR516 e Escadão/R5. Preparar decisão
-Astra delimitada para Cuca antes de repetir tentativas. A fila poderá avançar enquanto
-M4 trabalha offline, sem abrir mais produção concorrente. Atualizar tabela por retorno.
+M4 tactical segue offline. Amazônia aguarda somente os recibos CTF2 atualizados e o commit
+local final; até ele ser revisado e integrado, Lajes/PR517, Sertão/PR516 e Escadão/R5 não
+avançam ao merge. A fila poderá avançar enquanto M4 trabalha offline, sem abrir mais
+produção concorrente. Atualizar tabela por retorno.
 Registrar modelo configurado separadamente do modelo efetivamente observado quando possível.
 
 Decisão Astra `/root/decisao_cuca_pacote1` despachada em contexto limpo: somente leitura,
