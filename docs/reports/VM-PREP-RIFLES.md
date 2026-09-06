@@ -454,19 +454,42 @@ individual Mint e revisão das mãos centrais. Próximo comando concreto de reto
 os insumos M4 já identificados, quando a integradora liberar a produção.
 
 
-### Continuação: publicação do PR
+### Continuação: PR aberto e objetivo completo no jogo
 
-Ruben autorizou abrir PR desta frente após a preparação. Checkpoint documental
-concluído: `bb7bda10`; descrição preparada em `A/pr-body.md`. Na verificação de
-06/09/2026, nem `codex/vm-astra-pistol` nem uma branch remota contendo a base
-`961c70d2` estavam disponíveis. A branch remota `vm-cs16-gabarito` deixaria entrar
-33 commits anteriores da integradora no diff. Publicação adicional de uma base
-congelada `codex/vm-prep-base-961c70d2` foi proposta a Ruben e aguarda resposta;
-a alternativa é aguardar a integradora publicar a base. Nenhum push ou PR feito
-neste checkpoint. A produção das armas continua fora desta frente.
+Ruben autorizou a publicação da base congelada e reforçou: “precisamos finalizar
+o view model tambem no jogo”. A preparação é um marco concluído; o objetivo
+completo passa a incluir M4, MD97, carabina, SCAR, FAMAS e M92 produzidas,
+integradas e validadas no Game real, com aprovação visual. Esta seção prevalece
+sobre expressões anteriores de encerramento quando se referirem à tarefa inteira.
 
-Sintaxe, escopo dos cinco arquivos e `git diff --check` reconferidos; hashes dos
-seis modelos próprios, pacotes nativos ar/ak/pistol e AK golden preservados.
-Próximo passo: conferir a resposta de Ruben e os refs remotos, publicar a branch
-Rifles e abrir o PR contra a base autorizada usando `A/pr-body.md`; confirmar que
-o diff remoto contém somente o relatório e os quatro scripts de preparação.
+- PR de preparação: https://github.com/corosolto/client/pull/509.
+- Base remota congelada: `codex/vm-prep-base-961c70d2`, em
+  `961c70d20a41336a53ba3b9abcc2068d3e7f9eb0`, publicada com autorização de Ruben.
+- Head: `codex/vm-prep-rifles`; checkpoints de preparação `b802ff67`, `bb7bda10`
+  e `7cfd18af`. O PR contém apenas este relatório e quatro scripts próprios.
+- Publicação feita com `PREPUSH=0`: o hook amplo executa verificações fora da
+  faixa de inspeção desta frente. Não declarar `check:deploy`, `check:fast` ou
+  build verdes; as verificações específicas estão registradas acima e no PR.
+- Nenhum merge, deploy, alteração de runtime/material compartilhado ou browser.
+
+Leitura atual da integradora em 06/09: HEAD `1ffbc452`, com alterações locais de
+faca/luvas v5, runtime e documentação. O marco 30 do ledger integrador ainda
+exige capturas válidas no Game padrão em 3:2/16:9 e aprovação visual da faca;
+AWP e escopeta permanecem depois desse portão. Não copiar nem commitar essas
+alterações nesta branch. Um pedido de definição de responsabilidade foi enviado
+a Ruben: integração permanece na `vm-astra-pistol` ou esta tarefa assume a
+etapa no jogo. A proibição inicial de runtime/materiais/browser não foi tratada
+como transferência automática de responsabilidade entre tarefas.
+
+Definição de pronto final das seis armas: candidato dedicado por arma, peças
+completas, câmera/sockets exportados, contatos e ações coerentes, carregamento
+real por hash, preservação da AK/pistola e identidade central das mãos. Cada
+arma precisa da sequência Blender→GLB→Game descrita acima, nas duas proporções,
+com disparo/recargas/trocas contínuos, revisão independente e aprovação do Ruben.
+Nenhuma arma desta frente satisfaz ainda essa definição.
+
+Próximo passo: conferir a resposta de responsabilidade e os portões da
+integradora; quando liberada a etapa, produzir M4 pela receita medida, validar
+no Game e avançar individualmente nas demais. A carabina mantém o bloqueio
+específico de identificação da alimentação. Não marcar a tarefa completa pela
+abertura ou pelo merge deste PR documental.
