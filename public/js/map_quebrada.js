@@ -758,6 +758,13 @@ export function buildQuebrada(scene, T) {
     if (!gprop('pilha_pneus', tx, tz, 1.1)) addBox(1.4, 1.1, 1.4, MAT_PNEU, tx, 0, tz);
   for (const [sx2, sz2] of [[19, 39.5], [-19.4, 43.5]])
     if (!gprop('stall', sx2, sz2, 2.3)) addBox(2.4, 2.3, 2.0, MAT_BARRACO[3], sx2, 0, sz2);
+  /* A entrada do campinho tinha duas portas corretas no grafo, mas a chegada pela travessa
+     era um trecho plano e exposto. Estas muretas são baixas, soltas e deslocadas dos vãos:
+     cortam a linha da rua para o primeiro passo, sem fechar nenhuma das duas rotas. */
+  for (const [mx, mz, ry] of [[-16.9, 25.1, -0.16], [16.9, 25.1, 0.16]]) {
+    addBox(2.8, 1.05, 0.48, MAT_MURO, mx, 0, mz, { ry }).userData.campinhoRole = 'gate-cover';
+    addBox(0.18, 1.35, 0.62, posteMat, mx - Math.cos(ry) * 1.18, 0, mz + Math.sin(ry) * 1.18, { ry, collide: false });
+  }
   /* POVOAMENTO DO CAMPO (MAP5). Medido na 1ª passada: os dois quadrantes do campinho tinham
      4 e 5 peças de cobertura em ~295 m² andáveis, o que dá espaçamento médio de 8,54 m — mais
      que as duas arestas de grafo (7,0 m) que a régua usa como teto. Um descampado de 44 × 18 m
@@ -770,6 +777,18 @@ export function buildQuebrada(scene, T) {
     addBox(2.8, 0.5, 0.8, MAT.concreteDark, bx2, 0, 37.5);
     addBox(2.8, 0.62, 0.16, MAT.concreteDark, bx2, 0.5, 37.5 + (bx2 < 0 ? -0.32 : 0.32), { collide: false });
   }
+  /* Dois bancos de beira de campo desenham a rota lateral que liga os portões à
+     arquibancada/feira. São cover baixo: permitem reposicionar, mas não viram bunker. */
+  for (const [bx2, bz2] of [[-13.1, 34.5], [13.1, 40.2]]) {
+    addBox(2.4, 0.52, 0.72, MAT.concreteDark, bx2, 0, bz2).userData.campinhoRole = 'sideline-cover';
+    addBox(2.4, 0.48, 0.14, MAT.concreteDark, bx2, 0.52, bz2 + (bx2 < 0 ? -0.28 : 0.28), { collide: false });
+  }
+  /* Bancos curtos nas duas laterais quebram a travessia longa do campo em decisões de
+     cobertura. Ficam junto ao alambrado, alternados, para preservar o corredor central e
+     a área livre em volta dos quatro slots de spawn. */
+  for (const [bx2, bz2] of [[-11, 29.8], [-11, 33.7], [-11, 38.7], [-11, 43.8], [-11, 45.6], [11, 29.8], [11, 34.1], [11, 38.1], [11, 43.8]]) {
+    addBox(1.15, 0.82, 0.68, MAT.concreteDark, bx2, 0, bz2).userData.campinhoRole = 'sideline-cover';
+  }
   // os montes ficam no MIOLO do campo, longe da fileira de respawn: em (4,2 , 40,5) o monte
   // encostava no slot B de (4,5 , 41,5) e a folga de parede da MAP2B caía pra 0,15 m — o
   // corpo tem 0,38 m de raio, o jogador nascia dentro do monte.
@@ -780,6 +799,13 @@ export function buildQuebrada(scene, T) {
   for (const [px2, pz2] of [[-16.9, 31], [16.9, 43]]) {   // refletor de campo de várzea
     addBox(0.26, 7.2, 0.26, posteMat, px2, 0, pz2);
     addBox(1.2, 0.5, 0.22, lam({ color: 0xcfc9b4 }), px2 + (px2 < 0 ? 0.6 : -0.6), 6.8, pz2, { collide: false, cast: false });
+  }
+  /* Marcação física de praça esportiva: o placar fecha a leitura do fundo sem acrescentar
+     bloqueio no campo. A caixa fica fora da faixa de spawn e não participa dos colliders. */
+  {
+    const placar = lam({ color: 0x26382f, roughness: 0.78, metalness: 0.16 });
+    addBox(5.2, 1.8, 0.16, placar, 0, 3.4, 45.8, { collide: false, cast: false }).userData.campinhoRole = 'scoreboard';
+    for (const sx of [-1.8, 1.8]) addBox(0.16, 3.4, 0.16, posteMat, sx, 0, 45.8, { collide: false, cast: false });
   }
 
   /* ===================== COMÉRCIO =====================
