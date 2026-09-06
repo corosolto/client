@@ -1,6 +1,78 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (décima sétima rodada: Blob privado e fetch autenticado).
+Atualizado em 2026-09-06 (décima nona rodada: catálogos aprovados no build privado).
+
+## Décima nona rodada — Fish, vozes próprias e menu voltam ao jogo
+
+O dono corrigiu a aceitação do preview com três relatos literais: *“essas vozes nao sao as
+vozes que fizemos no fish audio”*, *“e a musica do menu eu tinha tirado”* e *“inclusive varios
+audios de funkeiros estao genericos e nao vozes pre aprovadas do fish audio”*. A inspeção do
+pack realmente servido confirmou a causa: efeitos/armas estavam presentes, mas `general`,
+`roundNumbers` e `characterVoice` estavam vazios. A contingência Web Speech da rodada anterior
+não preservava timbre e nem existe no navegador interno usado na escuta.
+
+O contrato corrigido é obrigatório, não um fallback opcional:
+
+- o locutor Fish exato fornece nove callouts (`kill`, `headshot`, `doublekill`, `triplekill`,
+  `multikill`, `ultrakill`, `megakill`, `killingspree`, `godlike`) e `Round 1`–`Round 7`;
+- os nove Funkeiros recebem exatamente os 36 takes finais já ouvidos (`select`, `kill`,
+  `radio`, `round`). Os recibos autoritativos da lane `feat/audio-voices-test`, commit
+  `282ff734`, registram OpenRouter + `google/gemini-3.1-flash-tts-preview`, sem clonagem de
+  voz — eles não são Fish e não foram regenerados nesta rodada;
+- a música permanece restrita a `m03`, `m05`, `m10`, `m11`, `m14`, `m16`, `m17` e `m22`.
+
+`game.js` e `netgame.js` agora roteiam seleção, kill simples, rádio e fim de round pelo
+personagem real; tiers/headshot/round numerado usam Fish. O cooldown de kill ficou separado da
+seleção/rádio, evitando que a primeira comemoração fosse silenciada. A síntese do navegador
+continua somente como último recurso para personagens sem take próprio fora de `C`/`F`.
+
+O instalador valida 9 personagens × 4 eventos e a lista exata do menu antes de escrever o
+manifest. O pack privado montado localmente tem 823 referências, 611 arquivos únicos, zero
+ausente, zero órfão e zero caminho legado; SHA-256
+`71e5c7faf3c7cb025facd27049c6a65cbe0cefce1fef380793f787d1870308b7`. A política de
+procedência também foi corrigida para uma raiz CC0 conhecida prevalecer sobre coincidência
+nominal (`awp.wav` não é legado da Valve apenas pelo nome). O teste local está em
+`http://127.0.0.1:8132/?tactile=1&announcerlab=all&voicecatalog=fish36`.
+
+O ZIP foi enviado ao Blob privado como
+`audio/audio-pack-alpha221-fish-characters-71e5c7fa.zip`, baixado novamente com bearer e
+verificado byte a byte. `AUDIO_PACK_URL` e `AUDIO_PACK_SHA256` apontam para ele em Production,
+Preview e Development; o token foi confirmado presente sem ser impresso. O `check:fast`
+posterior ao refino C/F fechou 83/83, e o build de produção também passou. A chave do manifest
+privado foi elevada para `v10`, para impedir que a Cloudflare reutilize o catálogo `v9` sem as
+vozes. `check:deploy` fechou 37/37 sob Node 23 (compatível com o runtime Node 24 da Vercel), e
+12 referências representativas — Fish, round, personagens, menu, AK, Uzi, granada e morte —
+responderam HTTP 200 no build local. Pendentes antes de release: PR/CI, merge e smoke após deploy.
+
+Na escuta desse build o dono refinou a decisão: *“ALGumas falas dos funkeiros e dos palhacos
+ainda estao genericas eu nao gosto melhor tirarmos por agora e depois refazer”*. A regra passa
+a ser: Funkeiros tocam somente seus 36 takes próprios; Palhaços não tocam fala de personagem
+até ganhar um catálogo aprovado. `voice`, `radioVoice`, `characterVoice` e seleção recusam
+pool/voz sintética genérica para `C` e `F`; efeitos físicos e o locutor Fish permanecem.
+
+## Décima oitava rodada — mix e vozes nunca mudas
+
+O dono reportou em produção que os novos efeitos estavam altos e que as vozes ingame,
+`Round one` e `Multi kill` tinham sumido. A reprodução baixou o objeto privado realmente
+configurado na Vercel e confirmou o transporte íntegro, mas também confirmou que o catálogo
+tem zero arquivos nos pools `voice`, `round`, `general` e `roundNumbers`. O código ainda
+agravava a lacuna no multiplayer: o countdown não tentava `roundNumber` e o kill streak não
+voltava à voz da facção quando o callout não existia.
+
+O ganho exclusivo dos tiros caiu de 0,52 para 0,42; `?gunvol=N` preserva o A/B e os demais
+efeitos aprovados não foram reequalizados nesta rodada. Samples de voz licenciados continuam
+sendo a primeira escolha. Quando o pack não os fornece, a Web Speech API do navegador fala
+texto original: frases curtas por facção, números de round e os tiers de kill. O single-player
+e o multiplayer usam a mesma contingência; a seleção de personagem também deixa de pedir um
+hash antigo ausente e cai na voz original. A preferência “falas” continua desligando tudo.
+
+O gate `eval:audiovoicemix` nasceu com oito cláusulas vermelhas contra o estado de produção
+e agora fica verde. Os mutantes `ganho-alto`, `sem-fallback-voz`,
+`sem-fallback-personagem`, `sem-round-mp` e `sem-fallback-kill-mp` são todos detectados.
+`eval:charvoice` e `eval:netcode` (178/178) também ficaram verdes. Falta rodar o conjunto
+completo, abrir preview e o dono ouvir no jogo. Este estado foi supersedido pela décima nona
+rodada: o dono autorizou expressamente os 16 Fish no build privado; os callouts antigos seguem
+excluídos.
 
 ## Pós-merge — cache-bust do catálogo privado
 
