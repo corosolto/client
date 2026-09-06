@@ -17,7 +17,7 @@ todos iguais à tabela de insumos, e dos controles M4/AK citados abaixo.
 
 | Rifle | Estado / artefatos presentes | Gates e bloqueador atual | Próximo menor passo offline |
 |---|---|---|---|
-| M4 | Bloqueado. `A/m4-approved-2a4a189d/` e `A/m4-actions-fingers-c1/` com Blender, GLB, GIFs, contato, reimport e revisão independente; réguas em `A/m4-actions-wrist/` e `A/m4-actions-bolt/`; ajuste e imagens de C3 em `A/m4-actions-c3/` | Idle aprovado pelo dono; 409 tracks protegidas e retorno real conferidos. Recarga reprovada: a mão cruza o carregador em 59 de 73 frames e `bolt_release` nunca é alcançado (mínimo 50,37 mm em f057). C3 tentou reautorar pega e ferrolho e **não produziu candidato**: 1.655 configurações rígidas medidas, nenhuma limpa; o punho fechado (cavidade ~33 mm) não contém a placa de 71,6 × 27,9 mm. Controle decisivo: a **idle aprovada tem 428 cruzamentos** mão/arma, mais que os 242 do transporte, logo "zero cruzamentos" não é o padrão desta composição. Punho reclassificado: 0,00 mm² de pele em f013/f045 contra 76,37 mm² da idle | Decisão do dono sobre o critério de interpenetração, já que a idle aprovada falha nele; se o critério for geométrico, o conserto é o par mão/arma com pega autorada por dedo ou outra malha, não mais sondas de recarga |
+| M4 | Idle com candidato novo em `A/m4-idle-grip-c4/` (Blender, GLB, folhas 3:2 e 16:9, close-ups, JSON); recarga ainda bloqueada em `A/m4-actions-fingers-c1/`; réguas em `A/m4-actions-wrist/`, `A/m4-actions-bolt/` e `A/m4-actions-c3/` | **Idle reautorada com pega por dedo e aprovada pela régua**: 660 → 237 cruzamentos, quatro dedos de ~2 mm para 0,000 mm, palma 8,288 → 6,625 mm, polegar 5,802 → 4,555 mm, sem regressão em nenhum eixo; silhueta IoU 0,99035; round trip do GLB em 2,27 × 10⁻⁶ m com mutante que reprova. Aguarda aprovação visual do dono e não entrou em runtime. Recarga segue reprovada: mão cruza o carregador em 59 de 73 frames, `bolt_release` nunca alcançado, e C3 não produziu candidato | Aprovação visual do dono sobre `A/m4-idle-grip-c4/evidence/`; depois reautorar a recarga a partir desta pega, sabendo que palma (6,625 mm) e polegar (4,555 mm) são limite de malha, não de junta |
 | MD97 | Bloqueado; sem novo candidato. `A/raw-md97.png`, `A/goldsrc-vm-md97-part.png` e `A/goldsrc-vm-md97-reload-half.png` | Inspeção/receita disponíveis; carregador ausente no bruto; split CLIP de 1.148 vértices inclui alça/coronha/punho. Sem gate visual de candidato ou Game | Construir só o carregador em cópia offline, usando a especificação MAG existente e verificando encaixe dianteiro; não transportar recarga bullpup |
 | Carabina | Bloqueado; sem novo candidato. `A/raw-carbine.png`, `A/goldsrc-vm-carbine-part.png` e `A/goldsrc-vm-carbine-reload-half.png` | Inspeção identifica alavanca e tubo; split Bone54 de 1.377 vértices leva alavanca/gatilho/receiver. Porta e gesto de alimentação não confirmados; recarga não pode ser autorada com segurança geométrica | Inspecionar lado oposto e tampa do tubo para localizar a alimentação; registrar ausência se não houver geometria identificável |
 | SCAR | Bloqueado; sem novo candidato. `A/raw-scar.png`, `A/goldsrc-vm-scar-part.png` e `A/goldsrc-vm-scar-reload-half.png` | Receita específica disponível; split Bone25 de 113 vértices é fragmento do pente/receiver. Sem aprovação visual de candidato; comando lateral ainda precisa ser marcado | Selecionar o carregador completo em cópia offline e provar separação sem carregar partes do receiver |
@@ -1221,3 +1221,78 @@ Duas saídas reais, e nenhuma é mais uma sonda de dedo:
    superfície (três juntas por dedo resolvidas na malha, não uma fração uniforme)
    ou outra malha de mão — trabalho de asset, com aprovação visual do dono antes
    de qualquer runtime.
+
+## M4 — idle reautorada com pega por dedo, 06/09/2026 — **candidato defensável, aguardando o dono**
+
+Decisão do dono: priorizar qualidade, reautorar o par mão/arma começando pela
+idle, com critério ancorado na referência aprovada em vez de interpenetração
+zero. Foi o que esta rodada fez, em `tools/viewmodels/prep/rifles-m4-idle-grip.py`
+e `rifles-m4-idle-grip-export.py`, sobre a idle aprovada (`6925c7f5…`).
+
+### Critério
+
+Nenhum dedo pode terminar mais fundo nem cortando mais superfície do que já
+corta na pose aprovada; a mão precisa continuar apoiada; e a silhueta que o dono
+aprovou precisa sobreviver. O teto por dedo é o próprio valor de referência, e
+está codificado na busca, não só conferido no fim.
+
+### Autoria
+
+Uma folga rígida de 2,00 mm na mão — a menor dentro de 0,5 mm da melhor
+profundidade, porque a curva é ruidosa e cada milímetro extra custa contato e
+silhueta — mais deltas de flexão em dez das quinze juntas dos dedos esquerdos,
+cada uma limitada a 18°. Cinco juntas encostaram no limite
+(`middle_01_l`, `pinky_01_l`, `pinky_03_l`, `ring_01_l`, `thumb_03_l`), então o
+resultado é conservador de propósito: há margem além do limite que não foi usada
+para proteger a silhueta.
+
+| Região | Profundidade aprovada → candidata | Cruzamentos → | Distância mínima → |
+|---|---|---|---|
+| palma | 8,288 → **6,625 mm** | 176 → 148 | 0,169 → 0,019 mm |
+| indicador | 2,156 → **0,000 mm** | 86 → **0** | 0,004 → 0,103 mm |
+| médio | 1,932 → **0,000 mm** | 103 → **0** | 0,022 → 0,594 mm |
+| anelar | 1,839 → **0,000 mm** | 120 → **0** | 0,004 → 1,719 mm |
+| mínimo | 1,901 → **0,000 mm** | 85 → **0** | 0,031 → 0,375 mm |
+| polegar | 5,802 → **4,555 mm** | 90 → 89 | 0,195 → 0,019 mm |
+
+Total: 660 → **237 cruzamentos** e pior profundidade 8,288 → 6,625 mm, sem
+regressão em nenhum eixo de nenhuma região. Os quatro dedos deixam de atravessar
+o punho vertical e passam a apoiar nele.
+
+### Mutantes e guardas
+
+- Silhueta pela `VIEWMODEL_CAMERA`: IoU **0,99035**, 0,97% dos pixels mudam. A
+  pose aprovada continua sendo a pose aprovada.
+- Mutante de autoria: revertendo as juntas do indicador, ele volta de 0,000 para
+  1,910 mm — a régua lê a autoria.
+- Sensibilidade por junta publicada, inclusive as quatro juntas que **não** mexem
+  na profundidade (`middle_02_l`, `pinky_02_l`, `pinky_03_l`, `thumb_03_l`); o
+  primeiro mutante que tentei usava justamente uma delas e falhou, por isso ele
+  passou a reverter o dedo inteiro.
+- Round trip do GLB: reimportado e comparado por posição, porque o glTF divide
+  vértices em costuras (8.658 → 9.894). Pior desvio 2,27 × 10⁻⁶ m na luva e
+  7,46 × 10⁻⁸ m na arma, contra tolerância de 10⁻⁵; o mutante de um vértice
+  deslocado 1 mm reprova como deve.
+
+### Evidência gerada
+
+`A/m4-idle-grip-c4/`: `m4-idle-grip.blend` (`2d6267a1…`), `m4-idle-grip.glb`
+(`773dcbce…`, 1.375.720 bytes), `idle-grip.json`, `export-check.json` e
+`evidence/` com folhas 3:2 (1152×768) e 16:9 (1024×576) da pose aprovada e da
+candidata, mais close-ups da pega em três ângulos, em passada Cycles e em passada
+plana legível.
+
+Olhando as imagens: na pose aprovada o punho vertical **desaparece dentro do
+punho fechado** — só sobra uma nesga escura no topo. Na candidata a coluna do
+punho fica visível entre polegar/indicador e segue legível entre os dedos, que
+agora apoiam em volta dela. É a mesma coisa que os números dizem, e é a razão
+pela qual vale a pena.
+
+### Limites que continuam de pé
+
+Palma (6,625 mm) e polegar (4,555 mm) ainda atravessam o punho vertical. Isso é
+limite material da malha da mão contra o cilindro do punho, não de autoria por
+junta: a concavidade da palma não é ajustável por rotação de dedo. O anelar ficou
+a 1,719 mm da superfície, um leve flutuar. Nada disso entra em runtime agora:
+**o candidato aguarda aprovação visual do dono**, e a recarga segue reprovada
+pelas rodadas anteriores, com a pega da idle como base para reautorá-la depois.
