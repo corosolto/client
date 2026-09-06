@@ -3130,11 +3130,8 @@ export class Game {
     }
     if (best) { this.sfx.knifeHit(); this._damage(best, WEAPONS.knife.dmg, this.player, 'FACA'); }
   }
-  /* ALCANCE DE CORPO A CORPO (0 = arma de fogo). Fonte única das DUAS decisões que o bot
-     toma com faca na mão: até onde ele fecha (a banda de `_updateBot`) e a que distância o
-     golpe conecta (`_botMelee`). Em cópias separadas, uma banda calibrada pra fuzil e o
-     alcance real da faca voltam a divergir — que é o defeito (a).
-     Régua: tools/eval/botfaca-check.mjs */
+  /* Alcance de corpo a corpo (0 = arma de fogo). Fonte única de até onde o bot fecha e de
+     onde o golpe conecta: em cópias separadas os dois voltam a divergir (BUG-143). */
   _meleeRange(wid) {
     return wid === 'knife' ? (WEAPONS.knife.range || 2.4) : 0;
   }
