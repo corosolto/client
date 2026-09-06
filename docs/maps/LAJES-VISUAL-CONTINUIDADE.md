@@ -15,6 +15,11 @@ anteriores preservados; não iniciar trabalho, merge ou deploy até novo despach
 - PR517 segue OPEN. O head remoto anterior `c26a40cf` ficou conflitante quando a
   main avançou; o novo head ainda deve ser enviado e submetido ao CI antes do merge.
   Sem merge ou deploy neste checkpoint.
+- CI do head `ec40d26b` passou em DCO, ratchet, versão, análises, preview Vercel,
+  smoke, portão de navegador e build curto. O build completo reprovou somente CTF2:
+  Amazônia tem uma rota entre spawn B e as bandeiras E/MID/B, embora Lajes mantenha
+  duas. A diferença desta branch contra `origin/main` não toca Amazônia ou CTF; é
+  regressão da main alpha.228, não mascarada nesta frente.
 - Candidato pronto para revisão: correção `c1397d67`, quatro mutantes causais,
   stress 220/220 e 189 raios sem divergências; revisão independente sem bloqueante.
   Visual V6/V7 aceito preservado, nenhuma simplificação nesta correção. Protótipo
@@ -26,11 +31,10 @@ anteriores preservados; não iniciar trabalho, merge ou deploy até novo despach
   Histórico visual e vídeos preservados em `artifacts/lajes-visual/`.
 - Servidor próprio PID68351/porta8147 encerrado; nenhum browser, worker ou despacho
   automático próprio ativo. CI remoto já disparado pode terminar autonomamente.
-- Próximo marco após despacho: conferir CI/reviews e drift da main, atualizar corpo
-  do PR com integração alpha.227/invariants, integrar com head conferido se verde,
-  registrar recibo. Estimativa 15–30 min se CI verde e main sem novo conflito;
-  falha nova de CI exige diagnóstico antes de estimar. Não há bloqueio de código
-  conhecido; entrega depende de CI final e despacho do coordenador.
+- Próximo marco após despacho: a frente Amazônia deve corrigir/revalidar CTF2 na
+  main; então incorporar o novo head, repetir somente os checks afetados e integrar
+  com SHA conferido. A entrega Lajes permanece candidata pronta, mas bloqueada pelo
+  gate crítico compartilhado; não há estimativa de merge sem a correção upstream.
 - Retomar servidor se necessário: `node tools/eval/serve.mjs 8147` neste worktree.
 
 Pedido de 06/09/2026 após revisão V6: manter ruas estreitas e apenas campo amplo;
