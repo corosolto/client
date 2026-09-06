@@ -1,4 +1,4 @@
-/* Mede o A* real com a escala que o menu chama de 8×8 (15 bots + jogador).
+/* Mede a BFS real com a escala que o menu chama de 8×8 (15 bots + jogador).
  * AMAZONIA_BASELINE aponta para uma cópia temporária do mapa anterior na mesma pasta.
  */
 import { performance } from 'node:perf_hooks';

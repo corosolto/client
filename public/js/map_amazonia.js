@@ -11,6 +11,7 @@ import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS, AMAZONIA_FAUNA_
 import { createSkyLife } from './skylife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { detailFor } from './textures.js';
+import { indexLajesRaycast as indexStaticRaycast } from './lajes_raycast_index.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -50,8 +51,8 @@ const ESTACOES = [
   { x: 17, z: 29, d: [-1, 0], e: 1 },                 // B: lance abre para o respawn norte
   { x: 27, z: -7, d: [-1, 0], e: 1 },
   { x: -14, z: 6, d: [1, 0], e: -1, rede: true },     // F — cabeça oeste da travessia
-  { x: -14, z: -22, d: [1, 0], e: -1 },
-  { x: -27, z: -25, d: [1, 0], e: -1 },
+  { x: -14, z: -22, d: [1, 0], e: 1, aguaE: -1 },
+  { x: -27, z: -25, d: [1, 0], e: 1, aguaE: -1 },
 ];
 for (const st of ESTACOES) { st.p = [st.d[1], -st.d[0]]; }   // p = lateral esquerda de d
 /* Pranchas da rota alta (eixos alinhados): patamar→patamar/plataforma a DECK_Y. */
@@ -483,7 +484,7 @@ export function buildAmazonia(scene, T) {
       }
       st.escada = { g0, esp, n, run };
     }
-    CAIXAS_AGUA.push(W(CASA_A + 2 * PAT_A + 0.7, st.e * 1.35));
+    CAIXAS_AGUA.push(W(CASA_A + 2 * PAT_A + 0.7, (st.aguaE ?? st.e) * 1.35));
   };
   for (const st of ESTACOES) estacao(st);
 
@@ -1095,11 +1096,24 @@ export function buildAmazonia(scene, T) {
       {center:[14,20.5,20],radius:12,speed:.14,phase:2.26,subida:1.4},
     ]});
   // O Game já encerra ambience; cancela também a montagem assíncrona das aves.
+  const indexedOccluders = [...new Set(occluders)].filter(mesh =>
+    !mesh.isInstancedMesh && ['madeira-amazonia', 'chao-de-mata'].includes(mesh.name));
+  const disposeRaycasts = QP.get('amzrayindex') === '0' ? [] : indexedOccluders.map(indexStaticRaycast);
+  const rayHits = [];
+  const rayOccluded = raycaster => {
+    for (const mesh of occluders) {
+      rayHits.length = 0;
+      raycaster.intersectObject(mesh, false, rayHits);
+      if (rayHits.length) return true;
+    }
+    return false;
+  };
   const disposeAmbience = ambience.dispose.bind(ambience);
-  ambience.dispose = () => { skyLife._disposed = true; faunaMotion.dispose(); disposeAmbience(); };
+  ambience.dispose = () => { for (const dispose of disposeRaycasts) dispose(); skyLife._disposed = true; faunaMotion.dispose(); disposeAmbience(); };
   return {
     // Contrato: grafo com camadas, consultas de piso/nó com yRef e curvas precisas no CTF.
     botLayeredNavigation: true,
+    rayOccluded: QP.get('amzrayindex') === '0' ? undefined : rayOccluded,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, footstepSurfaceAt,     spawns: {
       /* 0,4 m além da face da mata girada: o AABB conservador da copa com yaw
          projeta a quina ~0,5 m para dentro da caixa e a folga do MAP2B mede

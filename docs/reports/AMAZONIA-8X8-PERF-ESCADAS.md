@@ -3,7 +3,7 @@
 ## Escopo
 
 Worktree `amazonia-8x8-perf-stairs`, branch `astra/amazonia-8x8-perf-stairs`.
-Esta rodada altera somente `public/js/map_amazonia.js` e verificadores/documentação da Amazônia. Não altera `game.js`, renderer, materiais compartilhados, assets, rotas do rio, fauna ou a densidade da mata.
+Esta rodada altera `public/js/map_amazonia.js` e verificadores/documentação da Amazônia; reutiliza o índice estático existente do Lajes sem alterar o módulo compartilhado. Não altera `game.js`, renderer, materiais compartilhados, assets, rotas do rio, fauna ou a densidade da mata.
 
 ## Diagnóstico mensurável
 
@@ -45,3 +45,23 @@ npm run eval:amazonia
 ## Limite conhecido
 
 Não houve navegador, captura WebGL nem medição de FPS, por restrição desta frente. O ganho demonstrado é de custo de pathfinding em 8×8; ainda falta uma sessão humana no navegador para confirmar frametime e leitura visual das escadas e da vista para o rio.
+
+
+## Continuação 06/09/2026 — CPU completa e cobertura das escadas
+
+Objetivo: reduzir custo real do single-player 8×8, confirmar todos os lances voltados ao respawn mais próximo e abertura visual B→rio, preservando mapa/fauna/densidade. Sem navegador, merge ou release. Base desta continuação: `770174a5`; checkout e branch acima, PR #527.
+
+Milestone medido: perfil Node `Game.update` real por 1.800 frames consumiu 8.294,783 ms; `_losClear` 7.712,533 ms/11.898 chamadas; `findPath` somente 1,426 ms/118 chamadas. A hipótese de BFS como causa principal foi rejeitada. Madeira agrupada e chão de mata dominam o raycast. A nova régua `amazonia-raycast-check.mjs` foi vermelha antes da correção (`artifacts/amazonia-8x8/raycast-before.json`): 2.968.896 testes de triângulo, sem consulta com parada antecipada. O índice já validado do Lajes aplicado só a esses lotes manteve os impactos e reduziu para 708 testes; artefato `raycast-after.json`. Não altera triângulos desenhados ou materiais.
+
+Revisão adversarial identificou duas cegueiras do teste anterior: raio começava fora da parede e pé livre não demonstrava subida. Régua ampliada caminha por `Game._moveEntity` em todos os lances, mira o rio de dentro da cabana e tem mutantes físicos. Antes, duas escadas E apontavam contra o respawn; depois da inversão, 10/10 apontam e sobem. A orientação das caixas d'água foi preservada para não deslocar sólido sobre papagaio.
+
+Resultado rejeitado: primeira simulação A/B no mesmo processo teve estados divergentes por caches preguiçosos do arnês. Será substituída por processos novos por amostra, mesmo seed, conferindo hash do estado. Não usar `sim.json` como comparação equivalente.
+
+Próximo passo: concluir A/B isolado na fonte final; rodar mutantes, suíte Amazônia e portões locais; capturar geometria offline 3:2; revisão adversarial final; checkpoint e atualização do PR. Captura Blender estrutural não substitui WebGL/GLBs/FPS. Nenhum release/merge autorizado.
+
+
+Checkpoint desta continuação: suíte Amazônia aprovada, 71/71 rotas, 11/11 cabanas, 10/10 subidas e orientações, sete mutantes detectados. Régua final (`raycast-final.json`): 192 raios, 91 com impacto, 3.002.496→912 testes de triângulo, zero divergências, fumaça preservada e 220 casos de stress aprovados. Crítico independente não encontrou regressão bloqueadora. O caminho respawn→pé e patamar→interior não é coberto pelo gate de escadas; a suíte de bots cobre acesso às cabanas separadamente.
+
+Capturas finais offline em `artifacts/amazonia-8x8/offline/`: quatro PNGs 1440×960, scripts export/render e `capture-manifest.json`. Blender Workbench recebeu os meshes efetivos do harness; sem GLBs carregados/texturas/shaders. Observado: abertura B livre; dez lances caminháveis pela física; imagens B/E mostram patamares e degraus. Ressalvas visuais no fallback: arbusto sobre parte dos degraus baixos B e tora junto ao pé E(-14,-22). Não constituem bloqueio físico medido, nem aprovação estética do runtime.
+
+A/B de processos isolados preservou estados para os três seeds; falta rodar recibo final após todas as verificações, pois a fonte mudou durante a primeira coleta isolada. Portões gerais ainda em execução; DOCSAUT recusa docs de autoria não commitadas, portanto requer checkpoint antes da rechecagem.
