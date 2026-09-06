@@ -46,5 +46,5 @@ execFileSync(process.env.FFMPEG || 'ffmpeg', ['-y', '-framerate', String(fps), '
 const media = Object.fromEntries(Object.entries({ poster, video }).map(([key, path]) => [key, { path, bytes: readFileSync(path).length, sha256: sha(readFileSync(path)) }]));
 const receipt = { kind: 'webgl-map-capture', map: 'velho_oeste', capturedAt: new Date().toISOString(), viewport: { width: 1536, height: 1024 }, output: { width: 960, height: 640, fps, frames, seconds: frames / fps }, camera: { fov: 58, from: [11, 6.5, 23], look: [-3, 2.5, -10], motion: 'small closed orbit, radiusX 2m/radiusZ .65m' }, command: 'BASE=http://localhost:8149 node tools/capture-sertao-preview.mjs', sources, media, errors };
 writeFileSync(`${dest}/velho_oeste.capture.json`, JSON.stringify(receipt, null, 2) + '\n');
-writeFileSync('public/js/map_preview_media.js', `export const SERTAO_PREVIEW = Object.freeze(${JSON.stringify({ poster: media.poster.sha256.slice(0, 12), video: media.video.sha256.slice(0, 12) })});\n`);
+writeFileSync('public/js/sertao_preview_media.js', `export const SERTAO_PREVIEW = Object.freeze(${JSON.stringify({ poster: media.poster.sha256.slice(0, 12), video: media.video.sha256.slice(0, 12) })});\n`);
 console.log(JSON.stringify(media));
