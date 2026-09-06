@@ -87,3 +87,9 @@ Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs` (filtre por
 espécies v2.1). Referências de silhueta/procedência de medidas:
 `references/fauna-corrego/FONTE.md`; ficha: `plans/21-FAUNA-CORREGO.md`;
 evidência e revisão: `tools/eval/asset-evidence/fauna/`.
+
+## Fauna da Amazônia
+
+Os GLBs boto_amazonia, onca_pintada, tucano, preguica, macaco_prego, anta,
+arara_vermelha, piranha e carcara vieram do Mint no PR439. IDs, prompts e
+procedência por asset estão no mint-assets.json. Arara de voo reutilizada da main.

@@ -1,6 +1,16 @@
 /* look.js — LOOK por mapa (RC1 do plans/23): céu, névoa, sol e grade nascem do MESMO
    lugar e bloom.js deriva desta tabela. Cores medidas por tools/eval/look-horizonte.py. */
 export const LOOK = {
+  amazonia: {   // equador úmido: céu lavado de água, névoa verde densa
+    sky: '/img/textures/sky_amazonia.webp',
+    horizonte: 0xc9d0cd,   // look-horizonte.py sobre sky_amazonia.webp (banda 429-441 de 887)
+    zenite: 0x7c919f,
+    sol: { cor: 0xfff2dc, i: 1.45, pos: [12, 38, 10] },
+    hemi: { ceu: 0xdfe8e4, chao: 0x3d4a33, i: 1.05 },
+    neblina: { d: 0.0112, solDir: [12, 38, 10], forca: 0.18 },
+    grade: { exposicao: 1.50, piso: 0.0050, expAces: 1.60 },
+  },
+
   fy_mansao: {   // Joá: sol de fim de tarde sobre o mar
     sky: '/img/textures/sky_joa.webp',
     horizonte: 0xc7a378,   // look-horizonte.py sobre sky_joa.webp (banda 498-510 de 1024)
