@@ -397,5 +397,22 @@
       }
     ],
     "failed": []
+  },
+  "flowHeaded": {
+    "steps": [
+      "boot",
+      "maps",
+      "character",
+      "game"
+    ],
+    "state": {
+      "state": "live",
+      "map": "velho-oeste-da-treta",
+      "bots": 7,
+      "pointerLocked": true,
+      "team": "B",
+      "yawDelta": -10.479340994086812
+    },
+    "errors": []
   }
 }

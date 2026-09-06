@@ -85,8 +85,9 @@ independente aceitou menu, personagem e thumbnail para revisão humana.
 A crítica encontrou chamada de entrada em facção EM PRODUÇÃO. MENU8 foi vermelho
 antes de limitar o CTA a cards habilitados, verde depois; `--mutantes` agora prova
 oito cláusulas isoladas. Hover real em card indisponível confirmou opacity0.
-O Chrome headless não travou o ponteiro, mesmo com novo clique no canvas:
-esse percurso valida entrada, não giro360/mira. Testar mira em aba normal.
+O Chrome headless não travou o ponteiro. Repetição em Chrome com janela confirmou
+pointer lock e yaw acumulado de10,479rad (~600°) por eventos reais de mouse,
+sem erros JavaScript. Evidência em menu-main/headed/flow.json e game-final.png.
 
 O alinhamento usa a estrutura visual da main69555790, preservando dez facções e
 single player desta branch. Não traz o backend/fluxo multiplayer da main.

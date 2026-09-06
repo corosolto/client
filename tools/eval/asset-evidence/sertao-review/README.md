@@ -24,8 +24,11 @@ repetitivo e a diferença de acabamento entre casas continua perceptível.
 
 Referência visual main69555790, sem transportar a dependência multiplayer.
 O fluxo real chegou à partida com sete bots e nenhum erro JavaScript. O hover
-de facção indisponível foi verificado sem CTA de entrada. Chrome headless não
-travou o ponteiro: giro360 e combate com mouse exigem revisão em aba normal.
+de facção indisponível foi verificado sem CTA de entrada. Headless não travou o
+ponteiro; repetição em Chrome com janela confirmou pointer lock e giro de10,479rad
+(~600°), sem erros JS. `flowHeaded` no JSON e a captura abaixo registram esse teste.
+
+![Partida após giro com mouse](partida.jpg)
 
 O [JPEG do Sertão](../../../../public/img/map-previews/velho_oeste.jpg) e o
 [vídeo silencioso de seis segundos](../../../../public/img/map-previews/velho_oeste.mp4)

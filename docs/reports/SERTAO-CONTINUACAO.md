@@ -99,3 +99,11 @@ Menu normal Astro percorreu boot → mapa → facção → personagem → advers
 Fauna: mais dois calangos em rotas seguras e três asas-brancas articuladas autorais (uma em low); 14.400 amostras de fuga sem penetrar colisores. SF1–7 + sete mutantes, FA1–4 + quatro mutantes, runtime RV1–12 verdes. Cena atual: máximo491calls/291060triângulos. Preview real recapturado: JPEG9102503fceee, MP4 seis segundos472437a07822; recibo liga bytes e fontes. Race de play antigo corrigida, dois mutantes. Mutante sem-pausa atinge PV4/PV5; sem-saida demonstra PV4 isoladamente, sem esconder efeito colateral.
 
 Próximo: terminar medição em movimento/ambience, registrar evidências pequenas no Git, commits separados, regenerar docs, rodar global/build e publicar codex/sertao-astra em PR contra map2/velho-oeste. Não há aprovação visual final ou autorização de merge/deploy; pendências de áudio/procedência anteriores permanecem.
+
+### Fechamento técnico da revisão
+
+Commits3a29d724(calango),1b29ab5f(fauna),45332cd2(preview),495a6d88(menu),805926a8(contratos),ec4e60e9/d9dc73ea(docs),f2d10667(capturas). Preview b917cce1 usa Promise tratada reconhecida pela régua global, preservando comportamento e contraprovas resolve/reject.
+
+Chrome com janela validou pointer lock e giro10,479rad (~600°) por mouse real, zero erros; menu-main/headed/flow.json e game-final.png. O resultado headless sem lock é limitação do instrumento, não evidência de trava do jogo. Ambience global passou. Partida30s com sete bots: p95=10,6ms,p50=8,4ms,60,39m,sem erros,95,8MBheap. Build/assertassets/maptex passaram. Galeria pequena versionada em tools/eval/asset-evidence/sertao-review.
+
+Primeiro check:fast109/112: áudio herdado, sintaxe de guard de mídia e docsautoria durante atualização dos índices. Guard ajustado e testes próximos verdes; regenerar/commitar docs antes de repetir global no estado congelado. Relatório consolidado SERTAO-REVISAO-MENU-FAUNA.md inclui arquivos exatos, contraprovas e pendências. Próximo passo imediato: resultado global final, commit documental, push sem força e PR draft contra map2/velho-oeste. Nenhum merge/deploy.

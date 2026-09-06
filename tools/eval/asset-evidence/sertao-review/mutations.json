@@ -1,0 +1,153 @@
+{
+  "preview": [
+    {
+      "mutante": "ilustracao",
+      "expected": [
+        "PV1"
+      ],
+      "observed": [
+        "PV1"
+      ],
+      "passed": true
+    },
+    {
+      "mutante": "autoplay",
+      "expected": [
+        "PV2"
+      ],
+      "observed": [
+        "PV2"
+      ],
+      "passed": true
+    },
+    {
+      "mutante": "congelado",
+      "expected": [
+        "PV3"
+      ],
+      "observed": [
+        "PV3"
+      ],
+      "passed": true
+    },
+    {
+      "mutante": "sem-saida",
+      "expected": [
+        "PV4"
+      ],
+      "observed": [
+        "PV4"
+      ],
+      "passed": true
+    },
+    {
+      "mutante": "sem-pausa",
+      "expected": [
+        "PV4",
+        "PV5"
+      ],
+      "observed": [
+        "PV4",
+        "PV5"
+      ],
+      "passed": true
+    },
+    {
+      "mutante": "movimento-reduzido",
+      "expected": [
+        "PV5"
+      ],
+      "observed": [
+        "PV5"
+      ],
+      "passed": true
+    },
+    {
+      "mutante": "astro-cru",
+      "expected": [
+        "PV6"
+      ],
+      "observed": [
+        "PV6"
+      ],
+      "passed": true
+    }
+  ],
+  "fauna": [
+    {
+      "m": "",
+      "status": 0
+    },
+    {
+      "m": "asas-congeladas",
+      "status": 0
+    },
+    {
+      "m": "voo-no-chao",
+      "status": 0
+    },
+    {
+      "m": "sombra-cara",
+      "status": 0
+    },
+    {
+      "m": "low-cheio",
+      "status": 0
+    },
+    {
+      "m": "relogio-por-frame",
+      "status": 0
+    },
+    {
+      "m": "sem-fauna",
+      "status": 0
+    },
+    {
+      "m": "mundo-parado",
+      "status": 0
+    }
+  ],
+  "runtime": [
+    {
+      "mutante": "glb-ausente",
+      "failed": [
+        "FA1"
+      ]
+    },
+    {
+      "mutante": "calango-parede",
+      "failed": [
+        "FA2"
+      ]
+    },
+    {
+      "mutante": "low-cheio",
+      "failed": [
+        "FA3"
+      ]
+    },
+    {
+      "mutante": "sombra",
+      "failed": [
+        "FA4"
+      ]
+    }
+  ],
+  "menu": {
+    "checks": 8,
+    "isolatedMutants": 8,
+    "log": "artifacts/sertao-astra/logs/revision-menu-mutants.log"
+  },
+  "calango": {
+    "checks": 3,
+    "isolatedMutants": 3
+  },
+  "previewRace": {
+    "resolve": true,
+    "reject": true,
+    "mutants": [
+      "play-antigo",
+      "erro-antigo"
+    ]
+  }
+}
