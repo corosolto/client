@@ -153,7 +153,8 @@ const checks={
   IN4:results.every(r=>r.exists&&!r.leaks.length),
   IN5:results.every(r=>r.exists&&r.reachable&&!r.badEdges.length),
   IN6:barrels.length===1&&hay.length===3&&[...barrelClearance,...hayClearance].every(p=>p.displacement<=EPS),
+  IN7:sweep.spawnFree&&!sweep.pockets.length&&sweep.reachable===sweep.freeCells,
 };
-console.log(JSON.stringify({checks,houses:results,barrelClearance,hayClearance,mutation:mutant||null},null,2));
+console.log(JSON.stringify({checks,houses:results,barrelClearance,hayClearance,sweep:{...sweep,pockets:sweep.pockets.slice(0,8),pocketCount:sweep.pockets.length},mutation:mutant||null},null,2));
 const failed=Object.entries(checks).filter(([,ok])=>!ok).map(([id])=>id);
 process.exitCode=mutant ? (failed.includes(targets[mutant])?0:1) : (failed.length?1:0);
