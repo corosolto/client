@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.237`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.238`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -53,6 +53,25 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.238] — 2026-09-06
+
+### Mudado
+- perf(amazonia): reduz custo 8x8 e vira escada do respawn (#527)
+- chore(amazonia): regenera blocos pós-merge e encurta comentário da estação A
+- docs(amazonia): registra validação pós-merge
+- docs(amazonia): registra resolução dos conflitos
+- fix(amazonia): abre as cabeças da ponte norte e fecha a VM14
+- docs(amazonia): fecha relatório 8x8 com A/B, mutantes e portões
+- docs(amazonia): atualiza scripts e blocos gerados
+- docs(amazonia): atualiza recibo final da simulação
+- test(amazonia): fortalece a simulação final
+- docs(amazonia): atualiza blocos gerados e ledger final
+- test(amazonia): integra réguas de visão e escadas no portão
+- perf(amazonia): acelera visão dos bots e valida todas as escadas
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(amazonia): otimiza rota 8x8 e vira escada B
 
 ## [2.0.0-alpha.237] — 2026-09-06
 
