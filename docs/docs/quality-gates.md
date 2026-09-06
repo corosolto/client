@@ -15,7 +15,7 @@ PR (`.github/workflows/ci.yml`).
 {/* BEGIN:GERADO:invariantes — não edite à mão, rode `npm run docs` */}
 
 - `tools/eval/invariants.mjs`: **2.301 linhas**, **67 identificadores de invariante declarados** (`put()`), dos quais **28** têm caminho de `skip()` declarado.
-- O arnês inteiro são **303 scripts** em `tools/eval/` (`.mjs` + `.py`), mais **69 scripts** de pipeline em `tools/`.
+- O arnês inteiro são **304 scripts** em `tools/eval/` (`.mjs` + `.py`), mais **69 scripts** de pipeline em `tools/`.
 - Quantas invariantes rodam como **críticas** numa execução **não é derivável do fonte**: depende de qual insumo existe na máquina (o JSON do auditor de viewmodel, um GLB, uma pasta de anims). Esse número só sai rodando o quality gate — e o lugar dele é o cabeçalho do `KNOWN-BUGS.md`, atualizado com saída real.
 
 Reproduza:
