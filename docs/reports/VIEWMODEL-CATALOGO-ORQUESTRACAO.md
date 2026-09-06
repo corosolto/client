@@ -77,9 +77,9 @@ Prompt e metadados do despacho ficam em `artifacts/viewmodels/prep/precisao/orqu
 O executor escreve `../vm-prep-rifles/artifacts/viewmodels/prep/rifles/m4-actions-c1/progress.json`
 com fase, saídas, validações, bloqueios e próximo passo.
 
-Sessão ativa confirmada: `5f4987a8-7d43-462a-9892-e95258051bee`; modelo efetivo
+Sessão do executor: `5f4987a8-7d43-462a-9892-e95258051bee`; modelo efetivo
 `claude-fable-5-1`, cwd e permissionMode `acceptEdits` conferidos no evento init.
-O worker já começou a leitura do ledger e dos insumos. PID/argv reais, arquivos
+A sessão iniciou e produziu a candidata parcial; consulte o estado mais recente abaixo. PID/argv reais, arquivos
 stdout/stderr, supervisor e caminho do resultado de saída estão em `claude-worker.json`
 e `claude-launch.json`; confira o comando do PID, pois um PID antigo pode ser reutilizado.
 Logs JSONL ficam em arquivo e não devem ser despejados na conversa.
@@ -125,3 +125,47 @@ Conferência remota de 06/09 não encontrou `STAGING_URL` nos secrets do reposit
 confirmar/configurar o ambiente antes de contar seu smoke como executado.
 A main aciona versão/tag/release e publicação Vercel conforme workflows: reservar sua
 entrada para pacote aprovado, com rollback do código E assets e checagem pós-publicação.
+
+## Marco de acompanhamento — limite Claude, 06/09 às 05:21 UTC
+
+O processo terminou com exit 1 e `is_error:true`: `You've hit your session limit ·
+resets 9:50am (Europe/Lisbon)`. Reset informado: **06/09 09:50 Lisboa / 08:50 UTC**.
+Não relançar, sondar API paga ou trocar modelo antes desse horário. Não há worker
+Claude ativo desta etapa; a sessão `5f4987a8-7d43-462a-9892-e95258051bee` está preservada
+para `--resume`. O registro JSON recebeu state `waiting_claude_session_reset` e reset_utc.
+A automação continua ativa; antes do reset pode revisar evidências, sem repetir avisos
+de cota ou pedir novamente a aprovação da faca já apresentada ao dono.
+
+Produção parcial encontrada em `../vm-prep-rifles/artifacts/viewmodels/prep/rifles/m4-actions-c1/`:
+Blender e `m4-actions-runtime.glb` (1.401.712 bytes, SHA-256
+`715224388a156279b1e118dc818f2fd81b3e3fe101e3713a3676a20232e5b88b`), idle e
+reload_tactical de 2,4 s. Há medições e apenas frames 13/45 renderizados em 3:2
+com closes/material-ID; export/revisão do ciclo completo, 16:9 e Game não concluídos.
+Não chamar essa saída de recarga aceita. `progress.json` ainda não existe.
+
+Os quatro scripts novos `rifles-m4-actions-{build,export,inspect,lib}.py` continuam
+não versionados na lane rifles. Sintaxe compilada pelo coordenador sem alterar a lane;
+cópia recuperável com hashes em `artifacts/viewmodels/prep/precisao/orquestracao/quota-20260906-0521/`.
+O controle M4 aprovado e o m4-candidate mantêm o hash `2a4a189d…`; AK golden preservada.
+Revisão independente da candidata parcial foi despachada sem a justificativa do construtor.
+
+Próxima execução Claude, somente após o reset: confirmar ausência de PID/sessão ativa,
+retomar a MESMA sessão com `--resume 5f4987a8-7d43-462a-9892-e95258051bee`, incorporar
+os achados da revisão, criar progress.json e completar a etapa. Gerar novos arquivos
+stdout/stderr/exit por rodada, atualizar claude-worker.json com PID/config atuais e
+não confundir o exit antigo com o resultado da retomada. Preservar os controles e não
+promover a candidata no servidor ou no Game antes de revisão.
+
+Revisão independente concluída durante a pausa: **tactical ainda não aceita**. Pele
+exposta em fragmentos no punho esquerdo; os frames 13/45 não mostram o carregador
+separado; AABB/bone tails não comprovam penetração ou grip dos dedos; falta reimportar
+GLB e conferir retorno/orientações/ciclo em ambos os aspectos. Próximas amostras mínimas:
+f20 com close do lado oposto e f43 durante inserção. Evidência e referências por símbolo
+em `orquestracao/revisao-m4-tactical-parcial.md`. Nenhum pedido de remodelar o idle aprovado.
+
+A configuração e o prompt de retomada estão preparados, ainda **não executados**:
+`orquestracao/claude-resume-after-quota.json` e `claude-resume-after-quota-prompt.md`.
+Após 08:50 UTC, confirmar ausência de executor, usar o mesmo supervisor com essa nova
+configuração, ler seu arquivo `.pid` e atualizar o registro worker com launch/PID atuais.
+O campo pending_resume_config aponta para essa configuração; usar uma única vez e
+apagar esse campo do registro depois de iniciar para evitar duplicação.
