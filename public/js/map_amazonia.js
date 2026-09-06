@@ -39,6 +39,7 @@ const PILA_GLB = 1.1;              // offset do molde acompanha a subida da pass
 const CASA_A = 3.0;
 const PAT_A = 1.6;
 const ESC_N = 12, ESC_PISO = 0.26;  // espelho ~0,15: 2 espelhos cabem no pé de 0,30 do corpo
+export const AMAZONIA_NAV_STEP = 3.2;
 const ESTACOES = [
   { x: 14, z: -26, d: [-1, 0], e: -1, rede: true },   // A — pé da bandeira E
   { x: 25, z: -18, d: [-1, 0], e: -1 },
@@ -46,7 +47,7 @@ const ESTACOES = [
   { x: 14, z: 6, d: [-1, 0], e: 1, rede: true },      // D — virada pro igarapé
   { x: 21, z: 17, d: [-1, 0], e: 1 },
   { x: 27, z: 7, d: [-1, 0], e: 1 },
-  { x: 17, z: 29, d: [-1, 0], e: -1 },
+  { x: 17, z: 29, d: [-1, 0], e: 1 },                 // B: lance abre para o respawn norte
   { x: 27, z: -7, d: [-1, 0], e: 1 },
   { x: -14, z: 6, d: [1, 0], e: -1, rede: true },     // F — cabeça oeste da travessia
   { x: -14, z: -22, d: [1, 0], e: -1 },
@@ -605,9 +606,12 @@ export function buildAmazonia(scene, T) {
   pranchas(MX - 6.5, -4.5, 0.34); pranchas(MX + 4.5, -4.8, -0.28); pranchas(23, 33, 0.18);
   // Madeira armazenada protege os spawns; duas saídas laterais e borda do canal livres.
   for (const side of [-1, 1]) {
-    const x = side * 15, z = side * 35.7;
-    addBox(8.2, 1.9, 0.8, matDeck, x, 0, z);
-    for (let i = 1; i < 6; i++) pieceBox(matCasca, 8.2, 0.025, 0.025, x, i * 0.3, z - side * 0.411);
+    const z = side * 35.7;
+    const stacks = side > 0 ? [[11.15, 0.5], [16.6, 5.0]] : [[-15, 8.2]];
+    for (const [x, w] of stacks) {
+      addBox(w, 1.9, 0.8, matDeck, x, 0, z);
+      for (let i = 1; i < 6; i++) pieceBox(matCasca, w, 0.025, 0.025, x, i * 0.3, z - side * 0.411);
+    }
   }
   // scrap da madeireira: pneus e entulho herdam o vocabulário do ferro-velho
   for (const [id, x, z, h, ry] of [['pilha_pneus', MX - 8.5, 5.5, 1.1, 0.2], ['dumpster', MX + 9.8, 0, 1.4, -0.34], ['tires', 12.5, -33.5, 0.8, 0.4], ['pilha_pneus', 25, 20, 1.1, -0.26]]) {
@@ -804,7 +808,7 @@ export function buildAmazonia(scene, T) {
     return colliders.some((c) => c.minY < g + 1.5 && c.maxY > g + 0.3
       && x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate);
   };
-  const STEP = 3.2;
+  const STEP = AMAZONIA_NAV_STEP;
   const crusos = [];
   for (let x = -HALF_X + 2.5; x <= HALF_X - 2.5; x += STEP) for (let z = -HALF_Z + 2.5; z <= HALF_Z - 2.5; z += STEP)
     if (!blocked(x, z)) crusos.push({ x, z, y: groundHeightAt(x, z, 0) });
@@ -912,8 +916,8 @@ export function buildAmazonia(scene, T) {
   function findPath(fromIdx, toIdx) {
     if (fromIdx === toIdx) return [toIdx];
     const prev = new Int16Array(nodes.length).fill(-1), queue = [fromIdx]; prev[fromIdx] = fromIdx;
-    while (queue.length) {
-      const n = queue.shift();
+    for (let head = 0; head < queue.length; head++) {
+      const n = queue[head];
       for (const next of adj[n]) if (prev[next] === -1) { prev[next] = n; if (next === toIdx) { const path = [next]; let cur = n; while (cur !== fromIdx) { path.unshift(cur); cur = prev[cur]; } path.unshift(fromIdx); return path; } queue.push(next); }
     }
     return [fromIdx];
