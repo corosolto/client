@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**14 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `rubenmarcus`, `Ruben`, `Emerson Garrido`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `nunreasonable`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**14 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `rubenmarcus`, `Ruben Marcus`, `Ruben`, `Emerson Garrido`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `nunreasonable`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -248,6 +248,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
+| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.101 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
@@ -262,7 +263,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
 
-**13 mapas registrados** — 2 abrem em rodadas e 11 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 15 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**14 mapas registrados** — 2 abrem em rodadas e 12 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 16 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
