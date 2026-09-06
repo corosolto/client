@@ -457,3 +457,21 @@ integração. O build local apenas avisou que Node 23 será substituído por Nod
 no runtime Vercel, sem erro de build. Não houve execução de browser/servidor,
 merge remoto ou deploy. Próximo: conferir `origin/main` e `origin` uma vez,
 publicar o candidato e aguardar os checks do GitHub antes de qualquer merge.
+
+### Correção do portão de criação na alpha.234 — 2026-09-06
+
+O portão remoto do head `d63ab1b2` reprovou somente por timeout de 30 s em
+`page.screenshot()` após a simulação da criação: o log confirma fontes prontas,
+mas o canvas WebGL ainda não havia sido lido pelo SwiftShader do runner. A
+captura, a análise de contato e as imagens de evidência continuam obrigatórias;
+o helper do teste agora aplica timeout explícito de 120 s a cada captura,
+compatível com as outras provas WebGL do repositório.
+
+Reprodução local com o servidor de avaliação em `localhost:8123`: LG1--LG8
+passaram para médio e baixo. As nove mutações (`sem-caprinos`, `patas-paradas`,
+`parede`, `sombra`, `low-cheio`, `reset-ausente`, `sem-contato`,
+`dispose-ausente`, `rig-nao-descartado`) deixaram exclusivamente a régua
+esperada vermelha. As capturas e o relatório estão em
+`artifacts/sertao-astra/livestock-runtime/` e permanecem fora do Git. Próximo:
+publicar somente esta correção e aguardar a repetição do portão remoto; nenhum
+merge ou deploy manual é autorizado por este checkpoint.

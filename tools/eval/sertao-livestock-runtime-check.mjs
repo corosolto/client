@@ -25,6 +25,10 @@ try {
     });
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(quality => localStorage.setItem('awpbr_settings', JSON.stringify({quality})), quality);
+    // SwiftShader no runner pode levar mais que os 30 s padrão para ler o canvas
+    // depois da simulação de 2.400 frames. A captura continua obrigatória: só
+    // damos ao mesmo frame um limite compatível com as outras provas WebGL.
+    const screenshot = options => page.screenshot({ timeout: 120000, ...options });
     if (mut && !['sem-caprinos','reset-ausente','sombra'].includes(mut)) await page.route('**/js/map_sertao_livestock.js*', async route => {
       const response = await route.fetch(), source = await response.text();
       const replacements = {
@@ -102,7 +106,7 @@ try {
         if(contact)contact.visible=visible;
         MAPEVAL.cam.fov=70;MAPEVAL.cam.updateProjectionMatrix();MAPEVAL.view([18,1.62,30],[15,.3,26]);
       },visible);
-      contactImages.push(await sharp(await page.screenshot()).removeAlpha().raw().toBuffer());
+      contactImages.push(await sharp(await screenshot()).removeAlpha().raw().toBuffer());
     }
     sample.contactDarkenedPixels=0;
     for(let i=0;i<contactImages[0].length;i+=3){
@@ -116,12 +120,12 @@ try {
         ['cabras-contexto',[-17,1.62,35],[-23,1,26]],['familia-contexto',[18,1.62,33],[15,1,26]],
       ]){
         await page.evaluate(({from,to})=>{MAPEVAL.cam.fov=70;MAPEVAL.cam.updateProjectionMatrix();MAPEVAL.view(from,to)},{from,to});
-        await page.screenshot({path:`${OUT}/${name}.png`});
+        await screenshot({path:`${OUT}/${name}.png`});
       }
       const thumbs=[];
       for(let i=0;i<8;i++){
         await page.evaluate(i=>{if(i===0){__gworld.ambience.reset();for(let f=0;f<480;f++)__gworld.update(1/60,f/60)}for(let f=0;f<20;f++)__gworld.update(1/60,f/60);MAPEVAL.view([-18,1.62,32],[-23,.6,28]);},i);
-        const png=await page.screenshot();
+        const png=await screenshot();
         thumbs.push({input:await sharp(png).resize(576,384).png().toBuffer(),left:(i%4)*576,top:Math.floor(i/4)*384});
       }
       await sharp({create:{width:2304,height:768,channels:3,background:'#222'}}).composite(thumbs).png().toFile(`${OUT}/cabras-movimento.png`);
