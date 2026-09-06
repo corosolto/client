@@ -1,5 +1,54 @@
 # HANDOFF
 
+## Feedback de combate: contador de abates, replay no headshot e bot de faca — 06/09/2026
+
+Objetivo: fechar as três frentes de leitura de combate pedidas pelo dono — um contador de
+abates legível durante a partida, devolver a câmera ao jogador no headshot (o #364 tirava a
+primeira pessoa por 1,36 s) e fazer o bot RESPEITAR o modo em rodada de faca. Branch
+`claude/combat-feedback-hud-bots`, worktree `claude-combat-feedback`, base `42c01175`.
+
+**Estado inicial medido (`botfaca-check.mjs`, praca_poderes, semente 4242, 4 bots, 60 s):** o
+modo já entregava a faca na mão do bot, mas a cabeça continuava de fuzil. A banda de distância
+com histerese de fuzil (recuo abaixo de 6 m, volta a `mid` só acima de 9,5 m) contra um alcance
+de faca de 2,4 m virava ciclo-limite: **menor distância bot→alvo 5,98 m, ZERO golpes, ZERO
+abates**. Quando por acaso entrava no alcance, o golpe saía pelo caminho de tiro — traçante,
+fogacho de cano e som de arma de fogo.
+
+**Mudança (lógica de jogo em `public/js/game.js`, sem navegador e sem penetração):**
+`_meleeRange(wid)` devolve alcance só de arma branca; quando o bot está em corpo a corpo a
+histerese de fuzil é substituída por "fecha e não recua" (`push` até 0,6× do alcance,
+`approach` nunca negativo) e o gate de ataque roteia para `_botMelee`, que resolve o golpe com
+alcance, ângulo, LOS, dano e `sfx.knife()/knifeHit()` — sem traçante, fogacho ou `shotWeapon`.
+Fora do corpo a corpo a banda de fuzil ficou intacta (é a cláusula BF4).
+
+**Estado final medido (mesma semente):** encostou a **1,24 m** (alcance 2,40), **18 golpes**,
+**9 abates**, 0 traçante/fogacho; rodada normal intacta com menor distância 23,46 m.
+
+**Validações:** as três bases passaram (`eval:botfaca`, `eval:replaycam`, `eval:abateshud`) e
+os **11 mutantes** reprovaram como devem — botfaca `recuo` (5,40 m, zero golpes, zero abates),
+`tracante` (18 traçantes/18 fogachos) e `corredor` (rodada normal colando a 2,87 m);
+replaycam `orbita`, `hitstop`, `esconde` e `sem-kill`; abateshud `time`, `rodada`, `congelado`
+e `miudo`. `node --check` passou nos quatro arquivos JS tocados. `eval:abateshud` e
+`eval:botfaca` entraram no `package.json` e no `check:fast`, ao lado de `eval:replaycam`, para
+o defeito não voltar em silêncio.
+
+**BLOQUEIO PENDENTE — `npm run build` não chegou a compilar nesta máquina.** A saída parou
+antes do Astro, com estas duas linhas exatas:
+
+```
+[copy-wasm] resvg-wasm não encontrado no node_modules — /api/badge vai depender de public/wasm/resvg.wasm já existir. Rode npm install e repita.
+sh: astro: command not found
+```
+
+É ambiente sem dependências instaladas (`node_modules` incompleto), não regressão desta
+mudança: nada aqui toca `/api/badge`, `public/wasm/` ou a build do site. Quem publicar precisa
+rodar `npm install` e repetir `npm run build` antes do merge — o gate de build deste PR só pode
+ser considerado verde depois disso.
+
+**Navegador não foi aberto nesta entrega:** as três réguas executam o `Game` de verdade pelo
+harness headless (semente fixa), que é onde o defeito é mensurável. A conferência visual do
+contador em tela e do headshot ao vivo continua pendente para quem publicar.
+
 ## CTF no menu da home — 06/09/2026
 
 Objetivo: restaurar o submenu de Single Player com CTF, validar clique e preservação do modo
