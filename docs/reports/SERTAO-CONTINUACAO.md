@@ -192,3 +192,18 @@ examinada lateralmente; ninguém deve procurar esses modelos ainda no jogo.
 Checkpoint62b6538e registra pendências;3640e682 contém aves distantes. Próximo:
 concluir checkpointHZ+integração, previewrecibo, globais/docs/build; licençasMint
 continuam bloqueando novos downloads/animais. Sem merge/deploy.
+
+### Estado congelado e validação global — e8858900
+
+Commits48a0dbc6(horizonte),55ba3e12(integração/contratos),06994004(preview/
+evidência),e8858900(índices). HZ9/9+13mutantes isolados. LP4/4+3mutantes
+repetidos sobre a r5. PreviewPV6/6 com mídia nova passou. Build,assert:assets,
+maptex e ambience global Chrome passaram. Global114/115 em399,5s: apenas
+audio:check herdado, manifest.json DEFASADO. Logfauna2-check-fast.log.
+
+Relatório final da etapa: SERTAO-REVISAO-FAUNA2.md, lista exata de arquivos
+desde d48d389c; galeria localfauna2-galeria.html e evidência versionada
+sertao-fauna2. Não houve regressão nova identificada nos gates. Não é conclusão
+do objetivo completo: animaisMint, memorial e pendênciasdeáudio/procedência
+continuam abertos. Próximo: publicar checkpoint noPR511draft semmerge/deploy;
+após fonte de licençaMint, baixar/animar/integrar galinha,pintinhos,caprinos.
