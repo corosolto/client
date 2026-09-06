@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.233`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.234`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -52,6 +52,20 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.234] — 2026-09-06
+
+### Mudado
+- Escadão: casa frontal conectada e horizonte (#522)
+- docs(escadao): registrar ajuste de passarela
+- fix(escadao): preservar lance sob passarela
+- docs(escadao): registrar casa de disputa R5
+- feat(escadao): abrir casa frontal aos dois lados
+- docs(escadao): registrar contratos R5
+- feat(escadao): adicionar horizonte de morro
+- docs(escadao): registrar prazo e marco para redistribuição
+- wip(escadao): preservar passagens R5 antes da pausa coordenada
+- docs(escadao): registrar merge e evidência final
 
 ## [2.0.0-alpha.233] — 2026-09-06
 
