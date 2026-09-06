@@ -67,6 +67,15 @@ Só a árvore, sem rede: versão sincronizada, index.astro com a cadeia de boot,
 npm run ops:diag:local
 ```
 
+## `ops:aquecer`
+
+Aquece o edge depois de um deploy: pede, com a URL que o runtime monta (`?v=` da raiz), os módulos do import map e todos os assets dos registros que a produção serve (armas, elenco, props, prévias, anims, three, CSS), e confere HIT numa segunda passada. O `prod-watch.yml` chama no `deployment_status`; à mão, `--esperada=2.0.0-alpha.N` espera a raiz servir essa versão.
+
+```bash
+npm run ops:aquecer
+npm run ops:aquecer -- https://www.csbrasil.online --esperada=2.0.0-alpha.225
+```
+
 ## `ops:selftest`
 
 A prova de que a diagnose morde (lei 3): sobe uma produção sintética por sintoma — export arrancado, módulo 404, versão divergente, main.js servido como HTML, banco fora, 503 intermitente, GLB em 404 ou como HTML, flag de ranking incoerente, CSP ausente, raiz lenta, árvore dessincronizada, GLB corrompido — e cobra o achado com id e severidade esperados; o cenário sadio tem de sair tecnicamente verde. Com Playwright disponível, prova ainda o boot em Chromium e o mutante de TDZ (o caso de 07/08). Mutante que não acende sai 1. Entra no check:fast.
