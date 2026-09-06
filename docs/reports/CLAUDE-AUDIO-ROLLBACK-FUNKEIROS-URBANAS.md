@@ -34,6 +34,12 @@ Commits e arquivos lidos na investigação:
 - `6c667acd` `fix(audio): associa bordoes aos personagens` — cria
   `CHARACTER_SELECT_VOICE` em `public/js/audio.js`, com os únicos bordões de `F`/`U`
   versionados.
+- `8b3e3127` `test: inclui pacote local de audio para validacao` — commit não
+  ancestral de `feat/audio-voices-test` que contém 36 MP3s de `F`, incluindo quatro
+  de `funkraiz`. Os bytes são recuperáveis pelo hash do Git, mas a árvore não contém
+  recibo que os associe a `ememe` ou a uma aprovação; o recibo separado em
+  `c79dee67` cobre apenas uma rodada parcial de `round-01` e não pode ser estendido
+  a esse pacote. Não há equivalente de `U` nessa árvore.
 - `9c2900ff` `fix(audio): troca voz do Faria Limer` — única troca posterior no mapa, e é
   do time `B` (fora de escopo).
 - `0643fc76`, `4c8b3642`, `c79dee67` — pilotos, falas finais e recibos dos Funkeiros
@@ -53,8 +59,14 @@ Commits e arquivos lidos na investigação:
 
 ## Onde as vozes de `F` e `U` moram hoje
 
-Os bytes de áudio **não estão no Git** em nenhum momento da história. O runtime monta as
-vozes de três origens, e só a primeira é versionada:
+O runtime do `HEAD` não tem bytes de voz no Git, mas há uma exceção histórica que não
+constitui candidato a rollback: a branch não ancestral `feat/audio-voices-test` inclui,
+em `8b3e3127`, um pacote local de 36 MP3s dos Funkeiros. Seu recibo (`c79dee67`,
+`tools/eval/asset-evidence/funkeiros-round-voices-generation.json`) cobre somente uma
+rodada parcial e não prova a procedência ou aprovação dos MP3s adicionados em `8b3e3127`.
+Portanto o pacote não pode ser atribuído a `ememe` nem usado como rollback aprovado; ele
+também não inclui Tribos Urbanas. Fora dessa exceção, o runtime monta as vozes de três
+origens, e só a primeira é versionada:
 
 1. `public/js/audio.js:17-24` — `CHARACTER_SELECT_VOICE`, seis bordões por hash. Deles,
    `F` tem um (`funkraiz`) e `U` tem dois (`clubber`, `reggae`).
@@ -93,10 +105,12 @@ entradas de procedência (`PlaceHolder Inc.`, `BOOM Library`, `Ben Jaszczak et a
 `fish-audio-mortal-kombat-public-model`, `menu-main-alpha218`, `legado-nominal-cs-valve-ut`)
 atribui autoria a `ememe`. Sem isso não há como identificar "o asset aprovado" pedido.
 
-**B2 — não há alvo de rollback versionado.** Como as vozes de `F` e `U` são pools gerados
-do disco a partir do pacote privado, um `git revert` de manifesto não restaura timbre
-nenhum. As três referências versionadas de `F`/`U` são idênticas desde 2026-08-16, então
-"voltar ao estado anterior" seria um no-op.
+**B2 — não há alvo de rollback aprovado e atribuível a `ememe`.** Como as vozes de `F` e
+`U` são pools gerados do disco a partir do pacote privado, um `git revert` de manifesto não
+restaura timbre nenhum. A exceção histórica `8b3e3127` contém somente `F`, sem procedência
+ou aprovação verificável que permita atribuí-la a `ememe`; portanto não é uma alternativa
+autorizada. As três referências versionadas de `F`/`U` são idênticas desde 2026-08-16, então
+"voltar ao estado anterior" nessas referências seria um no-op.
 
 **B3 — o único gatilho de versão disponível é destrutivo e fora de escopo.** A única
 alavanca versionada que muda os pools é `scripts/fetch-audio.sh:14` (`audio-pack-v8`).
