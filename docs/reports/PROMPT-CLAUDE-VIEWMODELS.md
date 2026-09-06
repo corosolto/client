@@ -71,6 +71,10 @@ e `final-review-page.json` (7/7). Use `--browser=chrome` nos capturadores deste
 host; um browser por vez. Relatórios de `final-default-*` e `final-teams/`
 contêm tentativas falhas e não substituem esses resultados. A confirmação
 humana da nova proporção/continuidade permanece pendente; ataques já aprovados.
+Checkpoint de implementação `b253d6bc`, seguido de documentação atualizada.
+Críticos aprovaram movimento nos dois aspectos e todos os 60 PNGs dos times.
+Build, regressões da faca, docs/arquitetura/shaders e `eval:docsautoria` passaram;
+mapid/audio/feet continuam dívidas herdadas. Nenhum processo próprio aguardando.
 Há também skins por time: Palhaços/C branca, Funkeiros/F preta SEM DEDOS,
 B camuflada, E com estrela e Tribos Urbanas/U preta SEM DEDOS com punho
 quadriculado. Ruben aceitou essa distinção F/U; não volte a cobrir os dedos

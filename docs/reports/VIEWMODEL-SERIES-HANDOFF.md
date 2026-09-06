@@ -26,6 +26,7 @@ Não marcar tudo pronto só porque testes estruturais passam.
 - Checkpoint da aprovação da pistola e do prompt: `946cd4c6`.
 - Integração D e primeira identidade por time (revisão ainda pendente): `2bd18e04`.
 - Calibração de aspecto e acabamento v3 candidato: `961c70d2`.
+- Fechamento local FOV 50/atlas v5, testes e revisão: `b253d6bc`.
 - Mãos/enquadramento da faca e BUG-84 validados: `6d0b02b2`.
 - Correção da transição da faca, capturador e testes: `a60c0f3e`.
 - Não trabalhar em `primary`, Fable, retarget ou outros checkouts.
@@ -491,8 +492,11 @@ atraso/rebalanceamento nem mudança de protocolo multiplayer nesta correção vi
   SB1–SB7 e build passaram. Build em `finish5-build.log`; teste da faca repetido
   com exit 0 em `finish5-unit-final.log`. Atlas v5 **12/12**, mutantes falham
   conforme marco 30. `check:fast` completo anterior foi 61/66; docs regeneradas
-  depois. `eval:docsautoria` requer docs commitadas (`DOCSAUT não dá para medir`),
-  repetir após checkpoint. Mapid/audio/feet são falhas herdadas, não reparadas aqui.
+  depois. Após `b253d6bc`, a contagem de scripts versionados passou de 336 para
+  337: docs regeneradas novamente. `eval:docsautoria` final **passou com exit 0**
+  (`finish5-docsautoria-final.log`), restaurando seus arquivos mutados de teste.
+  Mapid/audio/feet são falhas herdadas, não reparadas aqui; não houve novo
+  `check:fast` completo depois desses consertos de documentação.
 - Dano continua imediato na aceitação de `_tryKnifeAttack`; nenhum atraso,
   balanceamento ou protocolo MP foi alterado. P4 de contato da pistola em 16:9
   continua insuficiente; mãos de AK/GoldSrc/retarget não receberam essas skins.
@@ -508,8 +512,9 @@ node tools/eval/vm-hand-continuity-runtime.mjs --browser=chrome --reload --inspe
 node tools/viewmodels/build-knife-final-review.mjs
 ```
 
-**Próximo passo:** checkpoint recuperável e `docsautoria` pós-commit;
-mostrar `knife-final-review.html` ao Ruben. Só falta a aprovação
+**Próximo passo:** aguardar a confirmação do Ruben em `knife-final-review.html`.
+Implementação preservada em `b253d6bc`, com checkpoint documental complementar.
+Prévia enviada ao painel do Codex (abertura retornou `queued`). Só falta a aprovação
 visual humana da **nova proporção e acabamento/continuidade**, não dos ataques
 ou geometria já aprovados. Depois AWP → escopeta → catálogo inteiro; não retomar
 a remodelagem da faca nem declarar o arsenal pronto. Nenhuma captura própria
