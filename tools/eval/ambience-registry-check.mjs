@@ -33,14 +33,16 @@
  *   node tools/eval/ambience-registry-check.mjs --mutante=pomba-voa-de-novo # AR5
  *   node tools/eval/ambience-registry-check.mjs --mutante=sem-som          # AR6
  *   node tools/eval/ambience-registry-check.mjs --mutante=sem-fauna2       # AR4 (tatu/barata/papagaio)
+ *   node tools/eval/ambience-registry-check.mjs --mutante=sem-galinha-mint # AR4 (props reais do quintal)
  *
  * Horizonte/vida de céu por mapa é a parte 2 do BUG-57 (direção de arte por
  * bioma) e ganha cláusula própria quando o dono aprovar a primeira referência.
  */
 import { THREE, MAPS, initTextures } from './harness.mjs';
+import { preloadPropGeometry } from './prop-geometry-fixture.mjs';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-ambience', 'fauna-em-solido', 'sem-gato', 'pomba-voa-de-novo', 'sem-som', 'sem-fauna2']);
+const conhecidos = new Set(['sem-ambience', 'fauna-em-solido', 'sem-gato', 'pomba-voa-de-novo', 'sem-som', 'sem-fauna2', 'sem-galinha-mint']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 /* Mapa 100% interno (sem céu): pombo não entra; rato sim — UPA com rato é a sátira. */
@@ -60,6 +62,8 @@ const BIOMA_FAUNA = {
   amazonia: ['parrot', 'chicken'],
 };
 const FAUNA2 = new Set(['armadillo', 'cockroach', 'parrot']);
+const PROP_FAUNA = {galinha_mint_amazonia:'chicken',pintinho_mint_amazonia:'chicken'};
+await preloadPropGeometry(Object.keys(PROP_FAUNA));
 
 const T = await initTextures();
 const ids = Object.keys(MAPS);
@@ -94,13 +98,24 @@ for (const id of ids) {
     if (pombo) { pombo.mode = 'flight'; mutanteAplicou = true; }
   }
   const por = {};
-  for (const a of amb.animals) por[a.type] = (por[a.type] || 0) + 1;
+  if(MUTANTE==='sem-galinha-mint' && W.quintal?.children.length) {
+    W.quintal.clear();mutanteAplicou=true;
+  }
+  const props=(W.quintal?.children||[]).flatMap(root=>{
+    const type=PROP_FAUNA[root.userData.geometryFixtureAsset];
+    let geometry=false;
+    root.traverse(o=>{if(o.isMesh&&o.geometry?.attributes.position?.count>0)geometry=true;});
+    return type&&geometry?[{type,root,mode:'ground'}]:[];
+  });
+  const observedAnimals=[...amb.animals,...props];
+  for (const a of observedAnimals) por[a.type] = (por[a.type] || 0) + 1;
   const voando = amb.animals.filter((a) => a.mode === 'flight').length;
   /* AR3: posição inicial dentro de colisor. Amostra o ponto do animal contra os AABBs;
      margem de 5 cm para encosto legítimo em parede. */
   const emSolido = [];
-  for (const a of amb.animals) {
-    const p = a.root?.position; if (!p) continue;
+  W.root.updateMatrixWorld(true);
+  for (const a of observedAnimals) {
+    const p = a.root?.getWorldPosition(new THREE.Vector3()); if (!p) continue;
     const px = p.x, py = (p.y ?? 0) + 0.12, pz = p.z;
     for (const c of (W.colliders || [])) {
       if (typeof c.minX !== 'number') continue;
@@ -112,7 +127,7 @@ for (const id of ids) {
     const c = W.colliders.find((k) => typeof k.minX === 'number' && k.maxY - k.minY > 0.5);
     if (c) emSolido.push({ type: 'mutante', x: (c.minX + c.maxX) / 2, z: (c.minZ + c.maxZ) / 2 });
   }
-  linhas.push({ id, animals: amb.animals.length, por, emSolido, voando, somOk });
+  linhas.push({ id, animals: observedAnimals.length, por, emSolido, voando, somOk });
 }
 
 const ar1 = linhas.filter((r) => r.erro || r.animals === null || r.animals === 0);
@@ -145,7 +160,7 @@ console.log(`  AR4 espécie-chave por bioma       ${ar4.length ? `FALHA — ${f4
 console.log(`  AR5 nenhuma pomba em voo          ${ar5.length ? `FALHA — ${f5} (mode flight sobreviveu; BUG-57 v2.1)` : 'PASSA'}`);
 console.log(`  AR6 todo mapa tem som ambiente    ${ar6.length ? `FALHA — ${ar6.map((r) => r.id).join(', ')}` : 'PASSA'}`);
 
-const MUTANTES = { 'sem-gato': ['AR4', ar4], 'sem-fauna2': ['AR4', ar4], 'pomba-voa-de-novo': ['AR5', ar5], 'sem-som': ['AR6', ar6] };
+const MUTANTES = { 'sem-gato': ['AR4', ar4], 'sem-fauna2': ['AR4', ar4], 'sem-galinha-mint': ['AR4', ar4], 'pomba-voa-de-novo': ['AR5', ar5], 'sem-som': ['AR6', ar6] };
 if (MUTANTES[MUTANTE]) {
   const [esperado, falhas] = MUTANTES[MUTANTE];
   const mordeu = falhas.length > 0;

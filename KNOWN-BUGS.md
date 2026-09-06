@@ -1,5 +1,19 @@
 # BUGS CONHECIDOS — CORO SOLTO: Treta Suprema
 
+## Amazônia — apoios da fauna e cabanas (06/09/2026, em correção local)
+
+Relato literal: "alguns animais estao em cima meio que de nada, e nao se movimentam".
+Baseline Chrome8157 sobre41eea0c1: tucano-0 tem1,066m entre base e margem;
+parrot-0 tem2,335m e arara-0 tem2,206m sem apoio sob o centro. A onça central
+está apenas2cm acima do tronco: não é o mesmo defeito; apoio lateral estreito e
+movimento de escala1,2% dão leitura de estátua. Não é ausência de update:
+Game chama ambience.update a cada frame. Régua: AMH1 em
+`tools/eval/amazonia-habitat-capture.mjs`; baseline em
+`artifacts/amazonia-visual/cabin-round/baseline/habitat.json`.
+Pedido adicional: entrar nas cabanas, proteger-se e atirar pela janela. Interior
+está fechado intencionalmente por malha/colisor inteiros; precisa shell aberto,
+chão navegável e comprovação de cobertura/tiro. AMH2 baseline falha.
+
 > Estado revisado: **2026-08-18**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
 > régua ou passo de reprodução. Suspeita sem medição vai para o fim, na seção
 > *Relatos recentes e resolução*.

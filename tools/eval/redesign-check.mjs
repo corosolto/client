@@ -217,7 +217,7 @@ main = muta('mapa-esconde-um', main,
   "return mapCategory === 'TODOS' ? MAP_IDS : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);",
   "return mapCategory === 'TODOS' ? MAP_IDS.slice(0, -1) : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);");
 main = muta('mapa-sem-miniaturas', main,
-  '`<img class="ms-thumb-img" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +',
+  '`<img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}${previewRevision(id)}" alt="">` +',
   "'' +");
 main = muta('mapa-navega-global', main,
   "$('ms-next').onclick = () => stepMap(1, visibleMapIds());",
@@ -656,7 +656,7 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /\$\('ms-strip'\)\.innerHTML = shown\.map\(\(id\) =>/.test(funcMap)
   && /\$\('ms-strip'\)\.style\.setProperty\('--map-count', shown\.length\)/.test(funcMap)
   && /aria-pressed="\$\{id === currentMap\}"/.test(funcMap)
-  && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
+  && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}\$\{previewRevision\(id\)\}" alt="">/.test(funcMap)
   && /id="ms-tabs"/.test(astro) && /id="ms-prev"/.test(astro) && /id="ms-next"/.test(astro)
   && /id="ms-dashes"/.test(astro) && /class="ms-carousel"/.test(astro)
   // As três abas: TODOS (acervo inteiro, por partidas), OFICIAIS e COMUNIDADE. O #368
