@@ -17,7 +17,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 81 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 89 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -28,7 +28,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **132** importam Playwright, **49** importam gltf-transform e **10** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **140** importam Playwright, **49** importam gltf-transform e **10** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -127,7 +127,7 @@ hipotético:
 | **Meshy** | props 3D por texto (alternativa) e rig | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
 | **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
-`mint-assets.json` registra **38 assets** gerados via Mint (11 `mint-model` · 9 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
+`mint-assets.json` registra **41 assets** gerados via Mint (11 `mint-model` · 12 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
 
 As três chaves de API vivem em `.env` na raiz — **gitignored, modo 600, nunca em `argv`** (argv vaza no `ps` de qualquer processo da máquina). Sem elas o jogo roda igual: o pipeline de geração é offline, o resultado é que entra no repositório.
 
