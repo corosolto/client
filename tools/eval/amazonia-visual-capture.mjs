@@ -6,6 +6,7 @@ const pw = await import(pathToFileURL(`${globalRoot}/playwright/index.js`).href)
 const chromium = pw.chromium || pw.default?.chromium;
 import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { captureAmazoniaLife, captureAmazoniaThumbnail } from './amazonia-life-capture.mjs';
 import { walkAmazonia } from './amazonia-walk.mjs';
 const out = process.argv[2] || 'artifacts/amazonia-visual/baseline';
 const mapSource = process.env.MAP_SOURCE ? readFileSync(process.env.MAP_SOURCE, 'utf8') : null;
@@ -156,6 +157,8 @@ try {
     await page.evaluate(()=>{for(const {b,visible,pos,rot} of window.__combatSaved){b.mesh.group.visible=visible;b.mesh.group.position.copy(pos);b.mesh.group.rotation.copy(rot);}});
   }
   if (process.env.WALK === '1'  && !await walkAmazonia(page,out)) process.exitCode = 1;
+  if (process.env.AMBIENT === '1' && !await captureAmazoniaLife(page,out)) process.exitCode=1;
+  if (process.env.THUMBNAIL === '1') await captureAmazoniaThumbnail(page,out,sourceSHA256);
   const runtime = await page.evaluate(() => {
     const g = window.__game, w = g.world;
     const meshes = []; w.root.traverse(o => { if (o.isMesh) meshes.push({ name: o.name, type: o.geometry.type, count: o.count || 1, triangles: (o.geometry.index?.count || o.geometry.attributes.position.count) / 3, transparent: o.material.transparent, alphaTest: o.material.alphaTest, shadow: o.castShadow }); });

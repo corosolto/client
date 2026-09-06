@@ -285,3 +285,12 @@ Pipeline e procedência em tools/amazonia-boat-asset.mjs e FONTEs. Barco move al
 bounds (z mínimo45,38>44); quatro araras GLB em med, duas em low. Próximo: fechar
 A/B controlado com assets completos, gates/build, capturar e servir thumbnail real,
 revalidar menu e entregar link local. Não publicar nem propagar aprovação de FPS.
+
+Marco final funcional: hash6435500ab916414271c3f531fa21462680a4895cfebd666cdde14cb412cfb74f,
+51/51percursos em med e low, menu das duas versões passou, thumbnail real servido.
+Revisão visual independente8/10 no recorte, sem bloqueante visual. Novas regressões
+achadas durante revisão (oclusão, nonSolidSurface, guarda interna e Float32) foram
+corrigidas e reprovam nos mutantes. Todos os GLBs validados e build passou.
+Relatório consolidado: AMAZONIA-FEEDBACK-2026-09-06.md, recibo do thumbnail adjacente.
+Próximo: commit dos fontes/réguas, regeneração/check dos docs e entrega do link.
+FPS/performance de CPU e ORT1/ALT1/SUP1 continuam sem aceite; não publicar.

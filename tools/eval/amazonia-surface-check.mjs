@@ -17,10 +17,28 @@ for (const z of [-20, 20]) for (const side of [-1, 1]) for (const ax of [7, 8, 9
   samples.push({ x, z, expected, actual, delta: actual == null ? null : Math.abs(expected - actual) });
 }
 const towers = [];
+// Mede componentes cúbicos da malha, inclusive após StaticBatch apagar BoxGeometry.
 w.root.traverse(o => {
-  const p = o.geometry?.parameters;
-  if (o.visible && o.geometry?.type === 'BoxGeometry' && p.height >= 6.5 && (Math.abs(o.position.x) >= 29 || Math.abs(o.position.z) >= 41.5)) towers.push(o.position.toArray());
+  if (!o.visible || !o.isMesh || o.isInstancedMesh) return;
+  const pos=o.geometry.attributes.position, ids=[], points=[], unique=new Map();
+  for(let i=0;i<pos.count;i++) {
+    const v=new THREE.Vector3().fromBufferAttribute(pos,i).applyMatrix4(o.matrixWorld);
+    const key=v.toArray().map(n=>Math.round(n*1e5)).join(',');
+    if(!unique.has(key)){unique.set(key,points.length);points.push(v);}
+    ids.push(unique.get(key));
+  }
+  const parent=points.map((_,i)=>i),find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
+  const index=o.geometry.index, count=index?.count||pos.count;
+  for(let i=0;i<count;i+=3){const a=ids[index?index.getX(i):i];for(let j=1;j<3;j++){const b=ids[index?index.getX(i+j):i+j];parent[find(b)]=find(a);}}
+  const groups=new Map();points.forEach((p,i)=>{const k=find(i);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(p);});
+  for(const vs of groups.values()) {
+    const box=new THREE.Box3().setFromPoints(vs),center=box.getCenter(new THREE.Vector3());
+    if(box.max.y-box.min.y<6.5 || (Math.abs(center.x)<29&&Math.abs(center.z)<41.5))continue;
+    const corner=v=>['x','y','z'].every(k=>Math.min(Math.abs(v[k]-box.min[k]),Math.abs(v[k]-box.max[k]))<1e-4);
+    if(vs.length>=8&&vs.every(corner))towers.push(center.toArray());
+  }
 });
+
 const spawnLines = [];
 for (const a of w.spawns.E) for (const b of w.spawns.B) {
   const from = new THREE.Vector3(a.x, 1.4, a.z), to = new THREE.Vector3(b.x, 1.4, b.z);

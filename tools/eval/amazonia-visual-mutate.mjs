@@ -20,10 +20,10 @@ const cases = process.argv.includes('--browser') ? [
   ['AMV7', 'const DECK_Y = 2.3', 'const DECK_Y = 1.8'],
   ['AMV5', 'for (const side of [-1, 1]) {\n    const x = side * 15', 'for (const side of []) {\n    const x = side * 15'],
   ['AMV6', 'Math.abs(x) < aguaMeiaLargura', 'Math.abs(x) <= RIO_MEIA_LARGURA + 0.6'],
-  ['AMV3', '  // Horizonte usa o mesmo molde', '  addBox(6.2, 9, 2.4, matMata, 30, 0, 42);\n  // Horizonte usa o mesmo molde'],
+  ['AMV3', '  // Copas em duas camadas', '  addBox(6.2, 9, 2.4, matMata, 30, 0, 42);\n  // Copas em duas camadas'],
 ];
 try {
-  for (const [id, from, to] of cases) {
+  for (const [id, from, to] of cases.filter(c => !process.env.CLAUSE || c[0]===process.env.CLAUSE)) {
     if (original.split(from).length !== 2) throw new Error(`${id}: alvo não é único`);
     const mutated = original.replace(from, to);
     writeFileSync(source, mutated);

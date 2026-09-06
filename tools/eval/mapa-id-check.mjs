@@ -83,6 +83,8 @@ const SEM_VARREDURA = [
      da árvore atual. Sem isto, a régua escaneia `.worktrees/<branch-velha>/` e
      acusa ids antigos que só existem lá, virando vermelha sem defeito. */
   '.worktrees',
+  // Snapshot de outra revisão usado no teste local da Amazônia; não é código vivo.
+  join('artifacts', 'amazonia-visual', 'main-preview'),
   'CHANGELOG.md', 'KNOWN-BUGS.md',
   /* Atribuição histórica: `docs/LICENCA.md` cita o mapa `fy_pool_day` como veio
      do contribuidor daltonfontes — é o nome da contribuição na origem, não código

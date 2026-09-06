@@ -27,6 +27,12 @@ export async function walkAmazonia(page, out) {
       to:[s.patamar.x,w.amazonia.deckY,s.patamar.z] }));
   });
   routes.push(...stairs);
+  const porches = await page.evaluate(() => window.__game.world.amazonia.estacoes.filter(s=>s.varanda).flatMap(s=>[
+    {name:`varanda-${s.x}-${s.z}-subir`,from:s.varanda.from,to:s.varanda.to},
+    {name:`varanda-${s.x}-${s.z}-descer`,from:s.varanda.to,to:s.varanda.from},
+    ...(s.peEscada ? [{name:`chao-varanda-${s.x}-${s.z}`,from:[s.peEscada.x,window.__game.world.groundHeightAt(s.peEscada.x,s.peEscada.z,0),s.peEscada.z],via:[[s.patamar.x,window.__game.world.amazonia.deckY,s.patamar.z],s.varanda.from],to:s.varanda.to}] : []),
+  ]));
+  routes.push(...porches);
   const results = [];
   for (const route of routes) {
     const result = await page.evaluate(route => {
@@ -35,12 +41,13 @@ export async function walkAmazonia(page, out) {
       p.grounded = true; p.mantle = null; p.pitch = 0; p.crouchF = 0; p.scoped = false;
       g.touchMove = { x: 0, z: 0 }; g.keys = { KeyW: true };
       const samples = [], originalCollide = g._collide;
-      let collideCalls = 0, ticks = 0;
+      let collideCalls = 0, ticks = 0, segment = 0;
+      const goals = [...(route.via || []), route.to];
       g._collide = function(...args) { collideCalls++; return originalCollide.apply(this, args); };
       try {
         for (; ticks < 2400; ticks++) {
-          const dx = route.to[0] - p.pos.x, dz = route.to[2] - p.pos.z;
-          if (Math.hypot(dx, dz) < .16) break;
+          const goal = goals[segment], dx = goal[0] - p.pos.x, dz = goal[2] - p.pos.z;
+          if (Math.hypot(dx, dz) < .16) { if(segment===goals.length-1) break; segment++; continue; }
           p.yaw = Math.atan2(-dx, -dz);
           g.time += 1 / 120; g._updatePlayer(1 / 120);
           if (ticks % 12 === 0) samples.push(p.pos.toArray());
