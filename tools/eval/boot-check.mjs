@@ -273,8 +273,9 @@ try {
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
     await jornada.waitForTimeout(3100);
     const entradaOk = await jornada.locator('#launch-error').evaluate((el) => el.classList.contains('hidden'));
-    // SINGLE PLAYER é primeira instância do menu (30/08) — o degrau JOGAR morreu
-    await jornada.locator('.cs-item[data-act="sp"]').click();
+    // SINGLE PLAYER abre os modos contra bots; Mata-mata inicia a jornada padrão.
+    await jornada.locator('.cs-item[data-act="single-player"]').click();
+    await jornada.locator('.cs-item[data-act="sp"]:visible').click();
     await jornada.evaluate(() => {
       const nick = document.getElementById('nick-input');
       nick.value = 'BOOT_CHECK';
