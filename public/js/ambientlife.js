@@ -33,6 +33,9 @@ const ASSETS = Object.freeze({
   arara: 'models/ambient/arara_vermelha.glb',
   piranha: 'models/ambient/piranha.glb',
   carcara: 'models/ambient/carcara.glb',
+  sertaoGoat: 'models/ambient/sertao_cabra.glb',
+  sertaoHen: 'models/ambient/sertao_galinha.glb',
+  sertaoChick: 'models/ambient/sertao_pintinho.glb',
 });
 /* FAVELA_AMBIENCE_ASSETS era `Object.keys(ASSETS)`; virou lista explícita quando
    ASSETS passou a abrigar também a fauna da amazonia: mapa sem bicho não baixa
@@ -73,7 +76,8 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
   if (!ids || !ids.length) ids = FAVELA_AMBIENCE_ASSETS;
   await Promise.all([...new Set(ids)].filter((id) => ASSETS[id] && !templates.has(id)).map(async (id) => {
     try {
-      const gltf = await loadGLB(`${ASSETS[id]}?v=${VERSION}`);
+      const revision = ({ sertaoGoat: 'a89410b7f899', sertaoHen: 'd07aa63bea9d', sertaoChick: 'a2f144c8b9de' })[id] || VERSION;
+      const gltf = await loadGLB(`${ASSETS[id]}?v=${revision}`);
       let skinned = false;
       gltf.scene.traverse((object) => {
         if (!object.isMesh) return;
