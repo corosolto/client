@@ -656,10 +656,8 @@ export function buildEscadao(scene, T) {
     const acessoAltoX = .15;
     marca(addBox(acessoAltoX - lajeMinX, LAJE_H, LAJE_D, MAT.concrete, (lajeMinX + acessoAltoX) / 2, LAJE_Y, LAJE_Z));
     const piso = LAJE_Y + LAJE_H;
-    // O shell procedural é autoritativo no runtime (PR 529): o molde fechado
-    // `escadao_casa_r3` + colisor monolítico selava a casa tática — sem janela para a
-    // escada, sem entrada e com vazio de piso na cauda leste. Régua:
-    // `eval:escadao-casa-central`, com o molde registrado via registerPropTemplate.
+    // Shell procedural autoritativo (PR 529): o molde fechado `escadao_casa_r3`
+    // selava a casa tática. Régua: `eval:escadao-casa-central`.
     for (const [x, w, h, mat] of [[-5.975, 5.25, 3.1, MAT_TIJOLO], [-1, 4.7, 2.85, MAT_CIMENTO]]) {
       for (const dz of [-1, 1]) {
         const frente = LAJE_Z + dz * (LAJE_D / 2);
@@ -704,9 +702,8 @@ export function buildEscadao(scene, T) {
       marca(addBox(w + .12, .14, LAJE_D + .16, MAT_CIMENTO, x, piso + h, LAJE_Z, { vao: false }));
       detalhe(w - .2, .23, .14, mat, x, piso + h + .14, LAJE_Z + LAJE_D / 2 - .12);
     }
-    // A cauda da geminada leste (x 0,15..1,35) ficava sem laje: era o vazio de piso
-    // interior visível pela porta da passarela. Complementa no nível do abrigo,
-    // sem tocar a passagem vertical que a laje deixa aberta para a casa frontal.
+    // Cauda da geminada leste sem laje era o vazio de piso visto pela porta da
+    // passarela; complementa sem tocar a passagem vertical da casa frontal.
     marca(addBox(.35, LAJE_H, LAJE_D, MAT.concrete, .325, LAJE_Y, LAJE_Z));
     marca(addBox(1.2, LAJE_H, 1.7, MAT.concrete, .75, LAJE_Y, LAJE_Z + .45));
   }
@@ -933,9 +930,8 @@ export function buildEscadao(scene, T) {
     if (underLanding && yRef != null && yRef + .3 < RISE) return 0;
     const houseFloor = escadaoHomeGround(x, z);
     if (houseFloor !== undefined) return houseFloor;
-    // Interiores das geminadas da laje (PR 529): no nível da laje pisa-se 2,75; na
-    // rua embaixo o chão continua 0 — mesma regra do underLanding, senão o vão dos
-    // pilotis vira degrau fantasma.
+    // Interiores das geminadas (PR 529): na laje pisa-se 2,75; na rua embaixo
+    // continua 0 — mesma regra do underLanding.
     if (x >= -8.6 && x <= 1.35 && z >= 14.2 && z <= 16.8) {
       if (yRef == null || yRef + .3 >= 2.75) return 2.75;
       return 0;
