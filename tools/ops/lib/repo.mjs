@@ -39,13 +39,6 @@ export function backendPadrao(raiz = RAIZ_PADRAO) {
   return m[1];
 }
 
-export function rotasNoBackend(raiz = RAIZ_PADRAO) {
-  const src = readFileSync(join(raiz, 'public/js/apibase.js'), 'utf8');
-  const m = /const NO_BACKEND = new Set\(\[([\s\S]*?)\]\)/.exec(src);
-  if (!m) throw new Error('public/js/apibase.js sem NO_BACKEND');
-  return [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
-}
-
 /* Mesmo parser para o weapons.js da árvore e para o SERVIDO pela produção (sonda de assets):
    dois leitores do mesmo registro divergindo é o instrumento discordando de si (LICOES §2). */
 export function weaponIdsDe(src) {
@@ -60,6 +53,21 @@ export function weaponIds(raiz = RAIZ_PADRAO) {
   if (!ids) throw new Error('public/js/weapons.js sem WEAPON_IDS');
   return ids;
 }
+
+/* Elenco: `GLB_CHARS = new Set([...])` em glbchars.js é o registro do que o runtime carrega
+   de models/characters — a listagem do diretório inclui GLB que ninguém pede. */
+export function charIdsDe(src) {
+  const m = /export\s+const\s+GLB_CHARS\s*=\s*new Set\(\[([\s\S]*?)\]\)/.exec(src || '');
+  if (!m) return null;
+  const ids = [...m[1].replace(/\/\/[^\n]*/g, '').matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  return ids.length ? ids : null;
+}
+
+/* Os registros que a sonda remota lê do ALVO, com a URL do import map e o parser de cada um. */
+export const REGISTROS = {
+  armas: { modulo: './js/weapons.js', parse: weaponIdsDe, caminho: (id) => `models/weapons/${id}.glb`, grupo: 'armas' },
+  personagens: { modulo: './js/glbchars.js', parse: charIdsDe, caminho: (id) => `models/characters/${id}.glb`, grupo: 'personagens' },
+};
 
 export async function manifestoDeModulos(raiz = RAIZ_PADRAO) {
   const { moduleCacheManifest } = await import(new URL('scripts/module-cache.mjs', `file://${raiz}/`).href);
@@ -97,7 +105,7 @@ export function espalha(lista, limite) {
    sonda passar em `armas` (o weapons.js servido pela produção) ou, sem ele, da árvore —
    cada item diz de onde veio (`origem`). Personagens: todos. Props e prévias: `limite`
    espalhados. */
-export function amostraDeAssets(raiz = RAIZ_PADRAO, { limite = 24, armas = null } = {}) {
+export function amostraDeAssets(raiz = RAIZ_PADRAO, { limite = 24, armas = null, personagens = null } = {}) {
   const pub = join(raiz, 'public');
   const itens = [];
   const add = (grupo, caminho, prova, origem = 'arvore') => {
@@ -105,7 +113,8 @@ export function amostraDeAssets(raiz = RAIZ_PADRAO, { limite = 24, armas = null 
     itens.push({ grupo, caminho, prova, origem, existe: existsSync(abs), tamanho: existsSync(abs) ? statSync(abs).size : 0 });
   };
   for (const id of armas || weaponIds(raiz)) add('armas', `models/weapons/${id}.glb`, 'glb', armas ? 'registro-servido' : 'arvore');
-  for (const f of glbs(join(pub, 'models/characters'))) add('personagens', `models/characters/${f}`, 'glb');
+  if (personagens) for (const id of personagens) add('personagens', `models/characters/${id}.glb`, 'glb', 'registro-servido');
+  else for (const f of glbs(join(pub, 'models/characters'))) add('personagens', `models/characters/${f}`, 'glb');
   add('anims', 'models/anims/index.json', 'json');
   add('anims', 'models/anims/foot-offsets.json', 'json');
   for (const f of espalha(glbs(join(pub, 'models/props')), limite)) add('props', `models/props/${f}`, 'glb');

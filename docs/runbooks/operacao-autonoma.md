@@ -41,7 +41,7 @@ lê `HTTPS_PROXY` sozinho).
 | boot remoto | o HTML da raiz tem import map? `main.js` é JS e responde 200? `?v=` do HTML = `VERSION` do `version.js`? o grafo de imports fecha (`prod-coherence.mjs`)? | rede |
 | api | `/api/health` campo a campo; `/api/online`, `/api/map-plays`, `/api/leaderboard` **N vezes** (5xx constante ≠ intermitente); rota inexistente devolve 404? | rede |
 | ranking | `RANKING_ON` da árvore × `/api/leaderboard` × `/ranking` | rede + árvore |
-| assets no edge | amostra que o runtime pede — **todas as armas do `/js/weapons.js` que o alvo serve** (a URL do import map; sem ele, a árvore, com aviso), todos os personagens, props e prévias espalhados pela lista, índices de animação, three, CSS — com `Range: bytes=0-15` e a URL `?v=` real; confere cabeçalho `glTF`/JSON/JS, não só o status | rede |
+| assets no edge | amostra que o runtime pede — **todas as armas do `/js/weapons.js` e todo o elenco do `/js/glbchars.js` que o alvo serve** (a URL do import map; sem eles, a árvore, com aviso), props e prévias espalhados pela lista, índices de animação, three, CSS — com `Range: bytes=0-15` e a URL `?v=` real; confere cabeçalho `glTF`/JSON/JS, não só o status | rede |
 | boot local | `package.json` × `version.js`; `index.astro` com import map, `main.js`, `ops.js` e coletor de erros; grafo de módulos da árvore num servidor estático | árvore |
 | assets na árvore | os mesmos assets existem e têm o cabeçalho certo (ponteiro LFS e checkout truncado reprovam) | árvore |
 | partida sintética | `Game` real em node (`tools/eval/harness.mjs`), todo mapa × rounds/CTF, 600 updates: sai do countdown? tem bots? nenhuma exceção? | árvore |
@@ -81,7 +81,7 @@ Quando o quality gate está verde e o dono diz que está errado, o defeito é do
 | `rota-intermitente:*` | cold start do Cloud Run (medido em 06/09/2026: `/api/online` 503 na 1ª chamada, 200 nas seguintes) | `min-instances=1` no serviço, ou retry com backoff no cliente; medir em horário de pico antes de decidir |
 | `rota-4xx:*` | a rota respondeu 4xx em todas as chamadas: removida/renomeada no backend publicado, ou bloqueio por origem/chave | comparar as rotas do backend no ar com `apibase.js`; logs do backend |
 | `coerencia-nao-medida`, `coerencia-local-nao-medida` | o `prod-coherence.mjs` explodiu ou não terminou — a diagnose sai `3` | rodar `npm run prod:coherence` à mão e ler o erro antes de confiar em qualquer verde |
-| `ranking-flag-nao-lida`, `registro-armas-nao-lido` | a régua não conseguiu ler `RANKING_ON` da árvore / `WEAPON_IDS` do alvo | ajustar o parser em `tools/ops/lib/repo.mjs` ao formato novo — silêncio aqui é régua cega (LICOES §5) |
+| `ranking-flag-nao-lida`, `registro-nao-lido:*` | a régua não conseguiu ler `RANKING_ON` da árvore / `WEAPON_IDS` ou `GLB_CHARS` do alvo | ajustar o parser em `REGISTROS` (`tools/ops/lib/repo.mjs`) ao formato novo — silêncio aqui é régua cega (LICOES §5) |
 | `html-lento`, `latencia-api:*`, `assets-lentos` | acima do limiar (`LIMIARES` em `lib/explain.mjs`), que só tem procedência de madrugada — por isso AVISO | medir em pico e, com a série, promover a MÉDIO |
 | `asset-404`, `asset-conteudo-errado`, `asset-tamanho-diverge` | o edge não entrega o que o runtime pede | conferir se o caminho existe em `dist/client` do build atual; existe → purgar o caminho; não existe → o commit que removeu/renomeou (LICOES §12/§14) |
 | `partida-crash:*`, `partida-nao-comeca:*` | o `Game` explode ou não sai do countdown naquele mapa/modo | skill `bug-hunt`: régua antes do conserto, registrar em `KNOWN-BUGS.md` com o stack do relatório |

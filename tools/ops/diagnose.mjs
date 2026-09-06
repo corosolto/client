@@ -97,8 +97,8 @@ export async function diagnosticar(flags, { log = () => {} } = {}) {
     comandos.push(`[${quando}] GET ${contexto.backend || flags.base}/api/{health,online,map-plays,leaderboard} ×${flags.repeticoes} · GET ${flags.base}/ranking`);
     if (boot.html?.status === 200) {
       const mesmaVersao = !!boot.versaoHtml && boot.versaoHtml === contexto.versaoLocal;
-      sondas.assets = await sondaAssetsRemoto(flags.base, { raiz, versao: boot.versaoHtml || contexto.versaoLocal, compararTamanho: mesmaVersao, timeoutMs: flags.timeout, registroUrl: boot.importMap?.['./js/weapons.js'] || null });
-      comandos.push(`[${quando}] GET ${sondas.assets.registro.url} (registro de armas: ${sondas.assets.registro.origem}) · GET Range bytes=0-15 em ${sondas.assets.total} assets de ${flags.base} (?v=${boot.versaoHtml || contexto.versaoLocal})`);
+      sondas.assets = await sondaAssetsRemoto(flags.base, { raiz, versao: boot.versaoHtml || contexto.versaoLocal, compararTamanho: mesmaVersao, timeoutMs: flags.timeout, registroUrls: { armas: boot.importMap?.['./js/weapons.js'] || null, personagens: boot.importMap?.['./js/glbchars.js'] || null } });
+      comandos.push(`[${quando}] GET ${Object.values(sondas.assets.registros).map((r) => `${r.url} (${r.nome || ''}${r.origem})`).join(' · ')} · GET Range bytes=0-15 em ${sondas.assets.total} assets de ${flags.base} (?v=${boot.versaoHtml || contexto.versaoLocal})`);
       if (!mesmaVersao) limitacoes.push(`tamanho dos assets não comparado com o disco: produção ${boot.versaoHtml || '?'} ≠ árvore ${contexto.versaoLocal || '?'}`);
     } else {
       limitacoes.push('assets no edge não sondados: a raiz não respondeu 200');

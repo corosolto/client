@@ -51,6 +51,8 @@ function fixture(cenario) {
   w('package.json', JSON.stringify({ name: 'fixture', version: V, type: 'module' }));
   w('public/js/version.js', `export const VERSION = '${cenario === 'versao-local-desincronizada' ? '9.9.9-teste.0' : V}';\n`);
   w('public/js/weapons.js', "export const WEAPON_IDS = ['ak', 'awp'];\n");
+  w('public/js/glbchars.js', "export const GLB_CHARS = new Set([\n  'heroi', // comentário no meio, como no real\n]);\n");
+  w('public/models/characters/heroi.glb', glb(120));
   w('public/js/apibase.js', "const NO_BACKEND = new Set(['health', 'online', 'map-plays', 'leaderboard']);\nconst BASE = (() => { return 'https://backend.invalido'; })();\n");
   w('public/js/main.js', cenario === 'boot-navegador-morto'
     ? "throw new ReferenceError(\"Cannot access 'testMode' before initialization\");\n"
@@ -97,6 +99,7 @@ function servidor(cenario, raiz) {
     if (caminho === '/js/ops.js') return envia(200, readFileSync(join(raiz, 'public/js/ops.js')), { 'content-type': 'text/javascript' });
     // registro servido: a produção pode pedir arma que a árvore não conhece ('novo') ou servir HTML no lugar do módulo
     if (caminho === '/js/weapons.js') return cenario === 'registro-armas-ilegivel' ? envia(200, '<!doctype html><html>404</html>', { 'content-type': 'text/html' }) : envia(200, cenario === 'asset-404-registro-servido' ? "export const WEAPON_IDS = ['ak', 'awp', 'novo'];\n" : readFileSync(join(raiz, 'public/js/weapons.js')), { 'content-type': 'text/javascript' });
+    if (caminho === '/js/glbchars.js') return cenario === 'registro-elenco-ilegivel' ? envia(404, '') : envia(200, cenario === 'asset-404-elenco-servido' ? "export const GLB_CHARS = new Set(['heroi', 'novato']);\n" : readFileSync(join(raiz, 'public/js/glbchars.js')), { 'content-type': 'text/javascript' });
     if (caminho === '/api/health') return cenario === 'health-indisponivel' ? envia(503, 'down') : envia(200, JSON.stringify(saude), { 'content-type': 'application/json' });
     if (caminho === '/api/online') {
       if (cenario === 'rota-intermitente' && n % 2 === 1) return envia(503, 'cold');
@@ -152,7 +155,9 @@ const CENARIOS = {
   'pagina-ranking-vazia': ['pagina-ranking-vazia', 'alto'],
   'asset-404': ['asset-404', 'alto'],
   'asset-404-registro-servido': ['asset-404', 'alto'],
-  'registro-armas-ilegivel': ['registro-armas-nao-lido', 'aviso'],
+  'registro-armas-ilegivel': ['registro-nao-lido:armas', 'aviso'],
+  'asset-404-elenco-servido': ['asset-404', 'alto'],
+  'registro-elenco-ilegivel': ['registro-nao-lido:personagens', 'aviso'],
   'asset-conteudo-errado': ['asset-conteudo-errado', 'alto'],
   'asset-tamanho-diverge': ['asset-tamanho-diverge', 'medio'],
   'asset-erro-http': ['asset-erro-http', 'medio'],

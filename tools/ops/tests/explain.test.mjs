@@ -150,7 +150,7 @@ const bootOk = () => ({ sonda: 'boot', alvo: 'https://x', html: { status: 200, m
 const apiOk = () => ({ sonda: 'api', health: { status: 200, url: 'u', ms: 1, corpo: { ok: true, database: true, telemetrySchema: true, fresh: true, stale: [], never: [], operationalFresh: true } }, rotas: [], redeSeguranca: { status: 404 } });
 const rota = (extra) => ({ rota: 'online', total: 5, ok: 5, cincoXx: 0, semResposta: 0, p50: 100, p95: 120, padrao: 'ok', chamadas: [{ status: 200, ms: 100 }], ...extra });
 const rkOk = () => ({ sonda: 'ranking', flagLocal: false, leaderboard: { status: 200, desligado: true, temLista: false }, pagina: { status: 200, bytes: 100 } });
-const asOk = (extra) => ({ sonda: 'assets', total: 2, itens: [{ caminho: 'models/weapons/ak.glb', grupo: 'armas', origem: 'arvore' }, { caminho: 'vendor/three.module.js', grupo: 'vendor', origem: 'arvore' }], faltando: [], semResposta: [], outrosErros: [], conteudoErrado: [], tamanhoDiverge: [], p95ms: 100, cacheHits: 0, registro: { origem: 'registro-servido', url: 'u', motivo: null, armas: 1 }, ...extra });
+const asOk = (extra) => ({ sonda: 'assets', total: 2, itens: [{ caminho: 'models/weapons/ak.glb', grupo: 'armas', origem: 'arvore' }, { caminho: 'vendor/three.module.js', grupo: 'vendor', origem: 'arvore' }], faltando: [], semResposta: [], outrosErros: [], conteudoErrado: [], tamanhoDiverge: [], p95ms: 100, cacheHits: 0, registros: { armas: { origem: 'registro-servido', url: 'u', motivo: null, total: 1 }, personagens: { origem: 'registro-servido', url: 'g', motivo: null, total: 1 } }, ...extra });
 const blOk = () => ({ sonda: 'boot-local', versaoPackage: '1', versaoJs: '1', indexAstro: { temImportMap: true, temMainJs: true, temOpsJs: true, temColetorDeErros: true }, manifesto: { temOps: true }, coerencia: { exit: 0, problemas: [] } });
 const alOk = (extra) => ({ sonda: 'assets-local', total: 1, itens: [{ caminho: 'models/weapons/ak.glb', grupo: 'armas' }, { caminho: 'models/props/x.glb', grupo: 'props' }], faltando: [], conteudoErrado: [], ...extra });
 const ptOk = (extra) => ({ sonda: 'partidas', fatal: null, timeout: false, partidas: [], comErro: [], semLive: [], semBots: [], ...extra });
@@ -199,7 +199,8 @@ const CASOS = [
   ['asset-404', 'critico', { assets: asOk({ faltando: ['vendor/three.module.js'] }) }],
   ['asset-404', 'aviso', { contexto: { versaoLocal: '2' }, boot: bootOk(), assets: asOk({ faltando: ['models/weapons/ak.glb'] }) }],
   ['asset-404', 'alto', { contexto: { versaoLocal: '2' }, boot: bootOk(), assets: asOk({ faltando: ['models/weapons/ak.glb'], itens: [{ caminho: 'models/weapons/ak.glb', grupo: 'armas', origem: 'registro-servido' }] }) }],
-  ['registro-armas-nao-lido', 'aviso', { assets: asOk({ registro: { origem: 'arvore', url: 'u', motivo: 'u → 404', armas: null } }) }],
+  ['registro-nao-lido:armas', 'aviso', { assets: asOk({ registros: { armas: { origem: 'arvore', url: 'u', motivo: 'u → 404', total: null } } }) }],
+  ['registro-nao-lido:personagens', 'aviso', { assets: asOk({ registros: { personagens: { origem: 'arvore', url: 'g', motivo: 'g → 200 com corpo HTML', total: null } } }) }],
   ['asset-conteudo-errado', 'alto', { assets: asOk({ conteudoErrado: ['models/weapons/ak.glb'] }) }],
   ['asset-tamanho-diverge', 'medio', { assets: asOk({ tamanhoDiverge: ['models/weapons/ak.glb (edge 1 ≠ disco 2)'] }) }],
   ['asset-erro-http', 'medio', { assets: asOk({ outrosErros: ['models/weapons/ak.glb (503)'] }) }],

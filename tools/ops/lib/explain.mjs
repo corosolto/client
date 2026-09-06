@@ -201,7 +201,9 @@ function explicaRanking(A, rk, ctx) {
 function explicaAssetsRemoto(A, as, ctx) {
   if (!as) return;
   if (as.semResposta.length === as.total && as.total) return ach(A, { id: 'assets-inalcancaveis', sonda: 'assets', severidade: 'inconclusivo', titulo: 'nenhum asset respondeu', causa: 'rede/proxy bloqueando o alvo', evidencia: as.semResposta.slice(0, 3).join(' · '), impacto: 'não medido', proximo: 'rodar de uma rede sem proxy' });
-  if (as.registro && as.registro.origem !== 'registro-servido') ach(A, { id: 'registro-armas-nao-lido', sonda: 'assets', severidade: 'aviso', titulo: 'a amostra de armas veio da árvore, não do weapons.js servido', causa: 'o alvo não serviu um /js/weapons.js legível (404, HTML no lugar do módulo, ou WEAPON_IDS mudou de forma)', evidencia: as.registro.motivo || '—', impacto: 'arma que só a produção pede fica sem sonda; com versões diferentes, 404 de arma vira só aviso', proximo: 'GET a URL citada e comparar com public/js/weapons.js; se o formato mudou, ajustar weaponIdsDe em tools/ops/lib/repo.mjs' });
+  for (const [nome, reg] of Object.entries(as.registros || {})) {
+    if (reg.origem !== 'registro-servido') ach(A, { id: `registro-nao-lido:${nome}`, sonda: 'assets', severidade: 'aviso', titulo: `a amostra de ${nome} veio da árvore, não do registro que o alvo serve`, causa: `o alvo não serviu um ${nome === 'armas' ? '/js/weapons.js' : '/js/glbchars.js'} legível (404, HTML no lugar do módulo, ou o registro mudou de forma)`, evidencia: reg.motivo || '—', impacto: `${nome} que só a produção pede ficam sem sonda; com versões diferentes, 404 deles vira só aviso`, proximo: 'GET a URL citada e comparar com o módulo da árvore; se o formato mudou, ajustar o parser em REGISTROS (tools/ops/lib/repo.mjs)' });
+  }
   if (as.faltando.length) {
     const itensFaltando = as.itens.filter((i) => as.faltando.includes(i.caminho));
     const grupos = new Set(itensFaltando.map((i) => i.grupo));
@@ -212,7 +214,7 @@ function explicaAssetsRemoto(A, as, ctx) {
     const arvoreAFrente = !doServido && !!ctx.versaoRemota && !!ctx.versaoLocal && ctx.versaoRemota !== ctx.versaoLocal;
     ach(A, {
       id: 'asset-404', sonda: 'assets', severidade: arvoreAFrente ? 'aviso' : grupos.has('vendor') || grupos.has('css') ? 'critico' : vital ? 'alto' : 'medio',
-      titulo: `${as.faltando.length} asset(s) da amostra em 404 no edge (${[...grupos].join(', ')})${arvoreAFrente ? ' — produção atrás da árvore' : doServido ? ' — pedidos pelo weapons.js que a produção serve' : ''}`,
+      titulo: `${as.faltando.length} asset(s) da amostra em 404 no edge (${[...grupos].join(', ')})${arvoreAFrente ? ' — produção atrás da árvore' : doServido ? ' — pedidos pelo registro que a produção serve' : ''}`,
       causa: arvoreAFrente ? `a amostra é da árvore (${ctx.versaoLocal}) e a produção serve ${ctx.versaoRemota}: pode ser asset novo ainda não publicado; se o caminho já existia, é o mesmo caso abaixo` : 'arquivo removido no prune-dist, renomeado sem o consumidor ou deploy incompleto (LICOES §12)',
       evidencia: as.faltando.slice(0, 6).join(' · '),
       impacto: grupos.has('armas') ? 'arma sem modelo: viewmodel/pickup somem sem erro no console' : grupos.has('personagens') ? 'personagem cai no fallback ou não aparece' : 'textura/prop em branco chapado',
