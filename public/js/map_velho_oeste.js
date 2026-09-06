@@ -1,13 +1,14 @@
 // SERTÃO DA TRETA (velho_oeste) — r2: reconstrução do faroeste em arraial de pau
 // a pique (feedback do dono). Gameplay/rotas: eval:velhooeste; identidade: eval:sertao.
 import * as THREE from 'three';
-import { createFavelaAmbience, placeFauna, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { createFavelaAmbience, placeFauna } from './ambientlife.js';
 import { placeProp, hasProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { sertaoLandscape, batchSertaoDecor } from './map_sertao_landscape.js';
 import { copaJuazeiro as addCopaJuazeiro, mandacaruSertao } from './map_sertao_flora.js';
 import { finishTaipa, finishVenda, crateBattens, settlementGround, untileSertaoSoil } from './map_sertao_architecture.js';
+import { createSertaoFauna } from './map_sertao_fauna.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
@@ -15,7 +16,7 @@ const HALF_Z = 46;
 export const VELHO_OESTE_PROPS = ['sertao_macambira', 'sertao_juazeiro',
   'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'caixa_som_baile',
   'casa_pedra', 'casa_geminada', 'igrejinha', 'caminhao_antigo'];
-export const VELHO_OESTE_AMBIENCE = Object.freeze([...FAVELA_AMBIENCE_ASSETS, 'lagarto', 'calango']);
+export const VELHO_OESTE_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'chicken', 'parrot', 'calango', 'lagarto']);
 
 export function buildVelhoOeste(scene, T) {
   const colliders = [];
@@ -25,6 +26,8 @@ export function buildVelhoOeste(scene, T) {
   root.name = 'velho-oeste-da-treta';   // id do mapa: 'sertao-*' é prefixo da régua ST1
   scene.add(root);
   const GLB_ON = typeof window !== 'undefined';
+  let low = false;
+  try { low = JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch {}
 
   const geometryCache = new Map();
   const boxGeo = (w, h, d) => {
@@ -815,8 +818,10 @@ export function buildVelhoOeste(scene, T) {
     while (queue.length) { const n = queue.shift(); for (const next of adj[n]) if (prev[next] < 0) { prev[next] = n; if (next === toIdx) { const path = [next]; let p = n; while (p !== fromIdx) { path.unshift(p); p = prev[p]; } path.unshift(fromIdx); return path; } queue.push(next); } }
     return [fromIdx];
   }
+  const faunaFlight = createSertaoFauna(root, { low });
   function update(dt, elapsed) {
     tecidos.forEach((tecido, i) => { tecido.rotation.x = Math.sin(elapsed * 1.8 + i * .6) * .16; });
+    faunaFlight.update(dt);
   }
 
   update(0, 0);
@@ -825,7 +830,7 @@ export function buildVelhoOeste(scene, T) {
      capoeira, rato de armazém, rolinha no terreiro e CALANGO correndo em rajadas
      entre as pedras (pedras 0↔4 a leste, 2↔3 pelo sul — o bicho é de pedreira). */
   const ambience = createFavelaAmbience(root, {
-    map: 'velho_oeste',
+    map: 'velho_oeste', low,
     rats: [
       { pos: [-16, 0, -34], to: [-13.5, 0, -31.5], phase: .3 },
       { pos: [16, 0, 34], to: [13.5, 0, 31.5], phase: 1.5 },
@@ -845,7 +850,15 @@ export function buildVelhoOeste(scene, T) {
       { pos: [21.6, 0, -21], to: [21.8, 0, -14.8], phase: .2 },
       { pos: [25, 0, 33], to: [21, 0, 29], phase: 1.6 },
       { pos: [-23.5, 0, 23], to: [-20, 0, 27], phase: 2.7 },
+      { pos: [-27, 0, -3.5], to: [-27, 0, -.5], phase: .7 },
+      { pos: [21, 0, 15], to: [21, 0, 18], phase: 2.3 },
     ],
+  });
+  const resetFauna = ambience.reset.bind(ambience), disposeFauna = ambience.dispose.bind(ambience);
+  ambience.reset = () => { resetFauna(); faunaFlight.reset(); };
+  ambience.dispose = () => { disposeFauna(); faunaFlight.dispose(); };
+  root.traverse(object => {
+    if (object.userData.fauna || object.userData.faunaAsset) object.traverse(mesh => { if (mesh.isMesh) mesh.castShadow = false; });
   });
 
   settlementGround(root);
@@ -859,7 +872,7 @@ export function buildVelhoOeste(scene, T) {
   occluders.splice(0, occluders.length, ...solidMeshes);
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.sanfona,pos:[-22,2.6,19.6],radius:12,vol:.12}],bioma:'campo'},
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),

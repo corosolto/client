@@ -47,6 +47,15 @@
       ],
       "delivery": "geração em runtime, sem GLB derivado",
       "evidence": "tools/eval/sertao-runtime-check.mjs e tools/eval/sertao-flora-check.mjs"
+    },
+    {
+      "id": "sertao-asas-brancas",
+      "sourceFile": "public/js/map_sertao_fauna.js",
+      "symbols": [
+        "createSertaoFauna"
+      ],
+      "delivery": "InstancedMesh autoral em runtime, sem modelo/textura externa",
+      "evidence": "tools/eval/sertao-fauna-check.mjs; docs/reports/SERTAO-FAUNA-VOO.md"
     }
   ]
 }
