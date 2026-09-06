@@ -75,10 +75,31 @@ Não escrever sobre `m4-candidate/` nem promover a candidata no servidor antes d
 
 Prompt e metadados do despacho ficam em `artifacts/viewmodels/prep/precisao/orquestracao/`.
 O executor escreve `../vm-prep-rifles/artifacts/viewmodels/prep/rifles/m4-actions-c1/progress.json`
-com fase, saídas, validações, bloqueios e próximo passo. Despacho inicial retornou ID
-Claude `acf78e9f`; confirmar estado real antes de dizer que está trabalhando.
+com fase, saídas, validações, bloqueios e próximo passo.
+
+Sessão ativa confirmada: `5f4987a8-7d43-462a-9892-e95258051bee`; modelo efetivo
+`claude-fable-5-1`, cwd e permissionMode `acceptEdits` conferidos no evento init.
+O worker já começou a leitura do ledger e dos insumos. PID/argv reais, arquivos
+stdout/stderr, supervisor e caminho do resultado de saída estão em `claude-worker.json`
+e `claude-launch.json`; confira o comando do PID, pois um PID antigo pode ser reutilizado.
+Logs JSONL ficam em arquivo e não devem ser despejados na conversa.
+
+A tentativa inicial nativa `--bg`, ID `acf78e9f`, é rejeitada: serviço perdeu
+`/tmp/cc-daemon-504/a99da0ef/control.sock` com ENOENT e não listou worker ativo.
+Foi substituída por CLI não interativa `-p --output-format stream-json`, executada
+por `run-claude-worker.py` em subprocesso próprio; sem bypass global de permissões.
+Não confundir o UUID solicitado ao --bg (ignorado pela ferramenta) com a sessão real.
+
+Acompanhamento persistente criado nesta tarefa: automação
+`coordenar-cat-logo-de-viewmodels-com-claude`, ativa a cada 15 minutos. Só notifica
+marco significativo, conclusão, falha ou ação do dono; sem recados repetidos de estado.
+O coordenador revisa/retoma a sessão real e não cria workers duplicados.
 
 ## Ciclo do coordenador
+
+Resumo read-only, com limite de saída e conferência do PID contra a sessão:
+`python3 tools/viewmodels/prep/precisao-orquestracao-status.py` nesta worktree.
+O registro `claude-worker.json` deve apontar para o worker atual após cada nova etapa.
 
 1. Ler este registro e os progressos dos workers; usar metadados/logs compactos. Não ler
    JSONLs enormes nem colocar imagens/base64 no transcript de monitoramento.
