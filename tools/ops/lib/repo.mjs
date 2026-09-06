@@ -27,8 +27,8 @@ export function versaoDoVersionJs(raiz = RAIZ_PADRAO) {
 
 export function rankingLigado(raiz = RAIZ_PADRAO) {
   const src = readFileSync(join(raiz, 'src/lib/site.ts'), 'utf8');
-  const m = /export\s+const\s+RANKING_ON\s*=\s*(true|false)/.exec(src);
-  if (!m) throw new Error('src/lib/site.ts sem `export const RANKING_ON`');
+  const m = /export\s+const\s+RANKING_ON(?:\s*:\s*boolean)?\s*=\s*(true|false)\b/.exec(src);
+  if (!m) throw new Error('src/lib/site.ts sem `export const RANKING_ON = true|false` legível');
   return m[1] === 'true';
 }
 

@@ -24,7 +24,7 @@ export function veredito(achados, sondas = {}, opcoes = {}) {
   const inconclusivo = conta.inconclusivo > 0;
   const tecnicamenteVerde = !inconclusivo && conta.critico === 0 && conta.alto === 0;
   const motivos = [];
-  if (inconclusivo) motivos.push('há sonda inconclusiva (alvo inalcançável desta rede)');
+  if (inconclusivo) motivos.push('há sonda inconclusiva (alvo inalcançável desta rede, ou régua que não terminou de medir)');
   if (conta.critico) motivos.push(`${conta.critico} achado(s) crítico(s)`);
   if (conta.alto) motivos.push(`${conta.alto} achado(s) alto(s)`);
   if (conta.medio) motivos.push(`${conta.medio} achado(s) médio(s) em aberto`);

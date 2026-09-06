@@ -56,7 +56,7 @@ function fixture(cenario) {
     : "import { foo } from './dep.js';\nimport { VERSION } from './version.js';\nfoo(VERSION);\nwindow.__CS_MAIN_READY__ = true;\nconst b = document.getElementById('btn-jogar'); if (b) b.onclick = () => {};\ntry { fetch('/api/pick', { method: 'POST', body: '{}' }); navigator.sendBeacon('/api/jserror', 'x'); } catch {}\n");
   w('public/js/dep.js', cenario === 'grafo-local-incoerente' ? 'export const bar = 1;\n' : 'export function foo() {}\n');
   w('public/js/ops.js', readFileSync(join(RAIZ_PADRAO, 'public/js/ops.js')));
-  w('src/lib/site.ts', `export const RANKING_ON = ${cenario === 'ranking-desligado-com-flag' ? 'true' : 'false'};\n`);
+  w('src/lib/site.ts', cenario === 'ranking-flag-ilegivel' ? 'export const RANKING_ON = flag();\n' : `export const RANKING_ON = ${cenario === 'ranking-desligado-com-flag' ? 'true' : 'false'};\n`);
   w('src/pages/index.astro', cenario === 'index-astro-sem-boot' ? '<html></html>' : `<link rel="stylesheet" href="/style.css?v=${V}"><script type="importmap"></script><script src="/js/ops.js?v=${V}-x" type="module"></script><script src="/js/main.js?v=${V}-x" type="module"></script>navigator.sendBeacon('/api/jserror')`);
   if (cenario !== 'asset-local-faltando') w('public/models/weapons/awp.glb', glb(300));
   w('public/models/weapons/ak.glb', cenario === 'asset-local-corrompido' ? Buffer.from('version https://git-lfs.github.com/spec/v1\n') : glb(200));
@@ -66,7 +66,8 @@ function fixture(cenario) {
   w('public/style.css', 'body{}');
   mkdirSync(join(raiz, 'scripts'), { recursive: true }); mkdirSync(join(raiz, 'tools/eval'), { recursive: true });
   copyFileSync(join(RAIZ_PADRAO, 'scripts/module-cache.mjs'), join(raiz, 'scripts/module-cache.mjs'));
-  copyFileSync(join(RAIZ_PADRAO, 'tools/eval/prod-coherence.mjs'), join(raiz, 'tools/eval/prod-coherence.mjs'));
+  if (cenario === 'coerencia-explode') w('tools/eval/prod-coherence.mjs', "throw new Error('fetch failed [mutante coerencia-explode]');\n");
+  else copyFileSync(join(RAIZ_PADRAO, 'tools/eval/prod-coherence.mjs'), join(raiz, 'tools/eval/prod-coherence.mjs'));
   return raiz;
 }
 
@@ -101,7 +102,7 @@ function servidor(cenario, raiz) {
       // p95 de 4 amostras é o máximo (lib/http percentil): UMA chamada lenta acende a régua
       return cenario === 'latencia-api' && n === 1 ? setTimeout(f, 2100) : f();
     }
-    if (caminho === '/api/map-plays') return envia(200, '{"plays":{}}', { 'content-type': 'application/json' });
+    if (caminho === '/api/map-plays') return cenario === 'rota-404' ? envia(404, '{"error":"not_found"}', { 'content-type': 'application/json' }) : envia(200, '{"plays":{}}', { 'content-type': 'application/json' });
     if (caminho === '/api/leaderboard') return envia(200, cenario === 'ranking-ligado-sem-flag' ? JSON.stringify({ players: [{ nick: 'a' }] }) : '{"disabled":true}', { 'content-type': 'application/json' });
     if (caminho.startsWith('/api/')) return envia(cenario === 'rede-seguranca-rota-desconhecida' ? 200 : 404, JSON.stringify({ error: 'not_found', path: caminho }), { 'content-type': 'application/json' });
     if (caminho === '/ranking') return cenario === 'pagina-ranking-quebrada' ? envia(500, 'erro') : cenario === 'pagina-ranking-vazia' ? envia(200, '') : envia(200, '<html><head><meta name="robots" content="noindex"></head><body>ranking</body></html>', { 'content-type': 'text/html' });
@@ -138,10 +139,12 @@ const CENARIOS = {
   'pipelines-parados': ['pipelines-parados', 'aviso'],
   'rota-intermitente': ['rota-intermitente:online', 'medio'],
   'rota-fora': ['rota-fora:online', 'alto'],
+  'rota-404': ['rota-4xx:map-plays', 'alto'],
   'latencia-api': ['latencia-api:online', 'aviso'],
   'rede-seguranca-rota-desconhecida': ['rede-seguranca-rota-desconhecida', 'medio'],
   'ranking-ligado-sem-flag': ['ranking-ligado-sem-flag', 'medio'],
   'ranking-desligado-com-flag': ['ranking-desligado-com-flag', 'alto'],
+  'ranking-flag-ilegivel': ['ranking-flag-nao-lida', 'alto'],
   'pagina-ranking-quebrada': ['pagina-ranking-quebrada', 'alto'],
   'pagina-ranking-vazia': ['pagina-ranking-vazia', 'alto'],
   'asset-404': ['asset-404', 'alto'],
@@ -151,6 +154,7 @@ const CENARIOS = {
   'versao-local-desincronizada': ['versao-local-desincronizada', 'alto'],
   'index-astro-sem-boot': ['index-astro-sem-boot', 'critico'],
   'grafo-local-incoerente': ['grafo-local-incoerente', 'critico'],
+  'coerencia-explode': ['coerencia-nao-medida', 'inconclusivo'],
   'asset-local-faltando': ['asset-local-faltando', 'critico'],
   'asset-local-corrompido': ['asset-local-corrompido', 'alto'],
 };

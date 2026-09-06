@@ -46,6 +46,9 @@ export function explicar(res = {}) {
   return A.sort((a, b) => PESO[b.severidade] - PESO[a.severidade] || a.id.localeCompare(b.id));
 }
 
+/* exit ≠ 0 sem nenhuma linha ✗ = a régua morreu (fetch failed, JSON.parse), não "grafo coerente" */
+const coerenciaNaoMedida = (c) => c.exit == null || (c.exit !== 0 && !(c.problemas || []).length);
+
 function explicaBootRemoto(A, boot, ctx) {
   if (!boot) return;
   const alvo = boot.alvo;
@@ -121,8 +124,8 @@ function explicaBootRemoto(A, boot, ctx) {
       impacto: 'boot morre no parse ("does not provide an export named …")',
       proximo: 'purge de `/js/*` no Cloudflare e re-sondar (`npm run prod:coherence`); se persistir, rollback do deploy',
     });
-  } else if (c && c.exit == null) {
-    ach(A, { id: 'coerencia-nao-medida', sonda: 'boot', severidade: 'aviso', titulo: 'a coerência do grafo não foi medida', causa: 'prod-coherence.mjs não terminou (timeout) ou não existe', evidencia: (c.saida || '').slice(0, 200), impacto: 'um split-brain passaria batido nesta execução', proximo: 'rodar `npm run prod:coherence` à mão' });
+  } else if (c && coerenciaNaoMedida(c)) {
+    ach(A, { id: 'coerencia-nao-medida', sonda: 'boot', severidade: 'inconclusivo', titulo: `a coerência do grafo não foi medida (prod-coherence ${c.exit == null ? 'não terminou' : `saiu ${c.exit} sem listar problema`})`, causa: 'prod-coherence.mjs explodiu (fetch/JSON sem try), não existe ou estourou o timeout — não é verde nem vermelho', evidencia: (c.saida || '').slice(-300), impacto: 'um split-brain passaria batido nesta execução', proximo: 'rodar `npm run prod:coherence` à mão e ler o erro; a diagnose sai 3 até a régua medir' });
   }
   if (!h.csp) {
     ach(A, { id: 'sem-csp', sonda: 'boot', severidade: 'aviso', titulo: 'a raiz saiu sem Content-Security-Policy', causa: 'headers do vercel.json não aplicados nesta resposta (edge/rewrite) — ou alvo não é a Vercel', evidencia: `GET ${alvo}/ sem header content-security-policy`, impacto: 'script injetado por extensão/terceiro roda sem trava', proximo: 'conferir `headers` em vercel.json e o que o edge repassa' });
@@ -177,6 +180,7 @@ function explicaApi(A, api, ctx) {
   for (const r of api.rotas || []) {
     if (r.padrao === 'inalcancavel') continue; // a rede de quem sondou: o health já virou achado inconclusivo
     if (r.padrao === 'sempre-falha') ach(A, { id: `rota-fora:${r.rota}`, sonda: 'api', severidade: r.rota === 'leaderboard' ? 'medio' : 'alto', titulo: `/api/${r.rota} falhou em ${r.total}/${r.total} chamadas`, causa: 'rota quebrada nesta revisão do backend ou upstream (banco) recusando', evidencia: r.chamadas.map((c) => c.status || c.erro).join(','), impacto: r.rota === 'online' ? 'contador "N online" vazio no menu' : r.rota === 'map-plays' ? 'partidas por mapa somem do menu' : 'ranking sem dados', proximo: 'logs do backend para a rota; comparar com a revisão anterior' });
+    else if (r.padrao === 'sempre-4xx') ach(A, { id: `rota-4xx:${r.rota}`, sonda: 'api', severidade: 'alto', titulo: `/api/${r.rota} respondeu ${r.chamadas[0]?.status} em ${r.total}/${r.total} chamadas`, causa: 'rota removida/renomeada nesta revisão do backend, ou bloqueio por origem/chave (401/403)', evidencia: r.chamadas.map((c) => c.status || c.erro).join(','), impacto: r.rota === 'online' ? 'contador "N online" vazio no menu' : r.rota === 'map-plays' ? 'partidas por mapa somem do menu' : 'ranking sem dados', proximo: 'comparar as rotas do backend publicado com apibase.js; logs do backend para a rota' });
     else if (r.padrao === 'intermitente') ach(A, { id: `rota-intermitente:${r.rota}`, sonda: 'api', severidade: 'medio', titulo: `/api/${r.rota} falhou em ${r.cincoXx + r.semResposta}/${r.total} chamadas`, causa: 'cold start / instância do Cloud Run subindo (min-instances 0) ou rate limit', evidencia: `status: ${r.chamadas.map((c) => c.status || c.erro).join(',')} · p50 ${r.p50} ms · p95 ${r.p95} ms`, impacto: 'primeira carga do menu sem contador/estatística; ticket de MP pode falhar na 1ª tentativa', proximo: 'min-instances=1 no Cloud Run ou retry com backoff no cliente; medir de novo em horário de pico' });
     else if (r.p95 != null && r.p95 > LIMIARES.apiP95Ms) ach(A, { id: `latencia-api:${r.rota}`, sonda: 'api', severidade: 'aviso', titulo: `/api/${r.rota} com p95 de ${r.p95} ms (limiar ${LIMIARES.apiP95Ms} ms, sem procedência de pico)`, causa: 'backend frio ou consulta lenta no banco', evidencia: `latências: ${r.chamadas.map((c) => c.ms).join(',')} ms`, impacto: 'menu demora a preencher', proximo: 'medir em pico; se persistir, índice/cache na rota' });
   }
@@ -186,6 +190,7 @@ function explicaApi(A, api, ctx) {
 
 function explicaRanking(A, rk, ctx) {
   if (!rk) return;
+  if (rk.flagErro) ach(A, { id: 'ranking-flag-nao-lida', sonda: 'ranking', severidade: 'alto', titulo: 'RANKING_ON não pôde ser lido da árvore', causa: 'src/lib/site.ts mudou de forma e a régua lê por regex (tools/ops/lib/repo.mjs)', evidencia: rk.flagErro, impacto: 'a sonda de ranking não compara nada: flag × backend × página ficam sem régua', proximo: 'ajustar `rankingLigado` ao formato novo — a mesma flag alimenta o site-smoke' });
   const lb = rk.leaderboard; const pg = rk.pagina;
   if (rk.flagLocal === false && lb && lb.status === 200 && !lb.desligado && lb.temLista) ach(A, { id: 'ranking-ligado-sem-flag', sonda: 'ranking', severidade: 'medio', titulo: 'leaderboard ligado no backend com RANKING_ON=false na árvore', causa: 'backend e site em versões diferentes da flag', evidencia: `RANKING_ON=false · /api/leaderboard 200 com lista`, impacto: 'site esconde o ranking que o backend ainda serve (ou vice-versa)', proximo: 'alinhar a flag nos dois repositórios no mesmo release' });
   if (rk.flagLocal === true && lb && lb.desligado) ach(A, { id: 'ranking-desligado-com-flag', sonda: 'ranking', severidade: 'alto', titulo: 'RANKING_ON=true mas /api/leaderboard diz disabled', causa: 'backend com ranking desligado (env/flag) enquanto o site promete ranking', evidencia: `RANKING_ON=true · /api/leaderboard → {"disabled":true}`, impacto: 'página de ranking vazia para quem clica', proximo: 'ligar no backend ou desligar a flag no site' });
@@ -226,7 +231,7 @@ function explicaBootLocal(A, bl, ctx) {
   if (ia.temOpsJs === false || bl.manifesto?.temOps === false) ach(A, { id: 'ops-runtime-nao-ligado', sonda: 'boot-local', severidade: 'info', titulo: 'ops.js não está ligado no index.astro/manifesto', causa: 'camada operacional ausente nesta árvore', evidencia: `temOpsJs=${ia.temOpsJs} · manifesto.temOps=${bl.manifesto?.temOps}`, impacto: 'sem métricas de sessão no navegador', proximo: 'incluir `<script type="module" src="/js/ops.js?v=…">` antes do main.js' });
   const c = bl.coerencia;
   if (c && c.problemas?.length) ach(A, { id: 'grafo-local-incoerente', sonda: 'boot-local', severidade: 'critico', titulo: `o grafo de módulos da ÁRVORE não fecha (${c.problemas.length} problema(s))`, causa: 'import nomeado de símbolo que o módulo alvo não exporta, ou módulo referenciado que não existe — quebraria o boot no deploy', evidencia: c.problemas.slice(0, 5).join(' · '), impacto: 'o próximo deploy morre no parse do main.js', proximo: 'corrigir o import/export citado antes de publicar; `npm run syntax` não pega isso' });
-  else if (c && c.exit == null) ach(A, { id: 'coerencia-local-nao-medida', sonda: 'boot-local', severidade: 'aviso', titulo: 'coerência local não medida', causa: 'prod-coherence.mjs não terminou', evidencia: (c.saida || '').slice(0, 200), impacto: 'split-brain lógico passaria', proximo: 'rodar `node tools/eval/prod-coherence.mjs http://127.0.0.1:<porta>` contra um servidor local' });
+  else if (c && coerenciaNaoMedida(c)) ach(A, { id: 'coerencia-local-nao-medida', sonda: 'boot-local', severidade: 'inconclusivo', titulo: `coerência local não medida (prod-coherence ${c.exit == null ? 'não terminou' : `saiu ${c.exit} sem listar problema`})`, causa: 'prod-coherence.mjs explodiu ou não terminou contra o servidor local', evidencia: (c.saida || '').slice(-300), impacto: 'split-brain lógico passaria', proximo: 'rodar `node tools/eval/prod-coherence.mjs http://127.0.0.1:<porta>` contra um servidor local e ler o erro' });
 }
 
 function explicaAssetsLocal(A, al, ctx) {
