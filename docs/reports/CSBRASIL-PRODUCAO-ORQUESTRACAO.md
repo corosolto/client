@@ -66,7 +66,7 @@ integração e publicação; não declarar pronto somando somente PRs ou gates v
 | Prepare a frente Rifles do CSBrasil. Leia integralmente: /V… | 01a073e3-1632-73d3-9683-e1394339fa8e | DESPACHADA Terra/high: M4 tactical do checkpoint Claude, somente offline, aguardando início confirmado |
 | Elevar visual do Escadão | 01a073e5-b003-7993-afd6-41d31e25d98d | PAUSADO ada21d8d, codex/escadao-passagens-horizonte limpa; duas divergências do grafo e horizonte pendentes; próximo marco45–90min, R5 estimado2–4h; Astro8148/PID94385 ativo sem captura |
 | Elevar visual de Lajes | 01a073e5-35e9-7312-b6a7-7beecc8df714 | PAUSADO 098a6fc2; candidato c26a40cf/PR517 pronto para revisão, 15–30min estimados se CI verde; sem browser/servidor próprio |
-| Elevar visual da Amazônia | 01a073de-ee16-74a1-8deb-c92763271450 | DESPACHADA Terra/medium, reserva de integração/main; candidato7a613e11/PR439, checkpointf74e7f83;5–30min se CI verde; conferir autorização anterior concreta |
+| Elevar visual da Amazônia | 01a073de-ee16-74a1-8deb-c92763271450 | **FECHADA**: PR439 squash-merged como 0af5e118; alpha.228 bc8ce4e9 e deployment Production6289742804 success. Checks completos verdes; URL requer SSO (302 anônimo esperado). Ledger b077dc4b |
 | Elevar visualmente o mapa Sertão | 01a073c0-b824-7503-b28a-f7522cececcc | PAUSADO0b925981; candidato ca8d569f/PR516 pronto, CI/imagem pendentes;30–60min estimados com publicação se autorizada; sem browser/servidor próprio |
 | Revisar e shipar PR Miticos | 01a07485-2ddf-7052-b858-f814cabc30f7 | PAUSADO confirmado, e370c2ff, codex/miticos-visual limpa; Cuca próximo marco2–4h, crouch/grip reprovados; Zumbi textura/integração e outros personagens pendentes; PR481 conflitante |
 | Corrigir modo CTF na home | 01a07540-471d-7a60-9448-2692d52ab8dd | Implementado 4abeaa40; relato build/browser3:2 aprovados; não publicado; três falhas gerais fora do menu |
@@ -104,8 +104,8 @@ pendentes e bloqueios com artefatos. Continuar objetivo autorizado conforme prio
 
 ## Próximo passo
 
-Primeiros despachos: M4 tactical offline + Amazônia em fechamento. Ao liberar integração,
-priorizar Lajes/PR517 e Sertão/PR516 sequencialmente; depois Escadão/R5. Preparar decisão
+M4 tactical segue offline. Amazônia foi fechada e liberou integração. Lajes/PR517 foi
+despachada para fechamento sequencial; em seguida Sertão/PR516 e Escadão/R5. Preparar decisão
 Astra delimitada para Cuca antes de repetir tentativas. A fila poderá avançar enquanto
 M4 trabalha offline, sem abrir mais produção concorrente. Atualizar tabela por retorno.
 Registrar modelo configurado separadamente do modelo efetivamente observado quando possível.
