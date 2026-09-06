@@ -191,9 +191,9 @@ test('fps: matchEnd desliga a amostragem (placar e menu não entram); aba de vol
     mock.timers.tick(1000);
     a.pumpFrames(70, 16);            // 1,12 s a 60 fps → 1 amostra
     assert.equal(a.mod.snapshot().fps.amostras, 1);
-    // escondeu por 5 s e voltou: o primeiro frame tem dt=5000 e NÃO é congelamento
+    // escondeu por 3 s e voltou (dentro da janela dt<5 s do passoFps): o primeiro frame NÃO é congelamento
     a.doc.hidden = true; a.doc.emit('visibilitychange', {});
-    a.avancar(5000);
+    a.avancar(3000);
     a.doc.hidden = false; a.doc.emit('visibilitychange', {});
     a.pumpFrames(1, 16);
     a.pumpFrames(70, 16);
