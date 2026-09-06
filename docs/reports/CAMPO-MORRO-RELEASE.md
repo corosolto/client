@@ -61,9 +61,12 @@ subsequente passou.
 Checkpoint funcional: `d564559c`. O build da documentação estática também
 passou, em português e inglês. `check:deploy` passou inicialmente 36/37;
 `eval:docsautoria` exigiu que os arquivos gerados estivessem commitados, por
-isso será repetido no checkout com os checkpoints concluídos.
-Próximo passo: portão final e push para atualizar o PR #530. Aceite humano de
-assets/render real e partida manual, staging e release seguem pendentes.
+isso foi regenerado o conjunto de docs e o novo contador de scripts do arnês
+subiu para 331. O checkpoint de docs geradas fica neste estado de trabalho e
+será consolidado no próximo commit de revisão.
+Próximo passo: repetir o portão final com a árvore sincronizada e então
+atualizar o PR #530. Aceite humano de assets/render real e partida manual,
+staging e release seguem pendentes.
 
 ### Capturas offline e limites
 
