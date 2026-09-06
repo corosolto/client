@@ -248,6 +248,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
+| `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.386 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.134 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.336 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
@@ -265,7 +266,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 889 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
 
-**16 mapas registrados** — 2 abrem em rodadas e 14 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 22 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 22 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

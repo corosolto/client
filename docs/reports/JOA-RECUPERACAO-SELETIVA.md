@@ -92,3 +92,11 @@ Capturas em geração: `artifacts/joa-recuperacao/offline/scene.json`, export de
 Checkpoint de origem/vegetação: `df0a1295`. Mobília e jardim complementares a seguir, sem alterar os bytes históricos.
 
 Checkpoint de mobília: registrado no histórico da branch; céu corrigido da r2, aves e faixa seguem a mesma origem do inventário. Revisão independente em andamento achou captura entre pisos e dimensões incorretas das paredes com vãos; reprodução em `artifacts/joa-recuperacao/ctf-before.log`. Próximo passo: corrigir esses contratos antes do checkpoint de runtime.
+
+### Marco: correção de teto e CTF entre camadas
+
+O teste de CTF que dependia de `_ctfMoving` foi ajustado para refletir o comportamento real do bot no andar errado. A cobertura sobre o mezanino foi elevada e o contrato de salto passou a medir do olho do jogador no mezanino, não do piso do térreo. O runtime local voltou verde em `mansao-runtime-check` com 515 nós e 6932 arestas dirigidas; `mansao-ctf-check` também passou.
+
+Gates verdes nesta rodada: `mansao-runtime-check`, `mansao-ctf-check`, `mansao-beach-check`, `mansao-garden-check`, `mansao-glb-fit`, `mansao-ocean-check`, `mansao-water-check`, `mansao-ambience-check`.
+
+Gate amplo `npm run check:fast` ainda estava em execução quando este marco foi registrado e já sinalizou falhas em `eval:mapcontrato`, `docs:check`, `arch:check`, `audio:check`, `eval:audiofablocal`, `eval:grafitelayout` e `eval:docsautoria`. Esses itens precisam de leitura separada antes de qualquer conclusão de integração total.

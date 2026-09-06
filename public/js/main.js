@@ -1263,6 +1263,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
            no fallback procedural sem textura — verde na régua de registro, feio na tela.
            Foi literalmente o BUG-57. Lista vazia é tratada como "tudo" no ambientlife. */
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
+        MAPS[currentMap]?.preload?.(),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
     }

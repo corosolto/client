@@ -127,7 +127,7 @@ hipotético:
 | **Meshy** | props 3D por texto (alternativa) e rig | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
 | **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
-`mint-assets.json` registra **41 assets** gerados via Mint (11 `mint-model` · 12 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
+`mint-assets.json` registra **56 assets** gerados via Mint (24 `mint-model` · 13 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative` · 1 `openrouter-image-concept`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
 
 As três chaves de API vivem em `.env` na raiz — **gitignored, modo 600, nunca em `argv`** (argv vaza no `ps` de qualquer processo da máquina). Sem elas o jogo roda igual: o pipeline de geração é offline, o resultado é que entra no repositório.
 
