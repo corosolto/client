@@ -35,6 +35,7 @@
 - O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
 
 ### Corrigido
+- Quebrada: muretas do Campinho alinham colisão e superfície, encostos bloqueiam tiros e rotas dos bots contornam obstáculos; saída do beco leste liberada e placar físico legível.
 - Single Player voltou a abrir o submenu de MATA-MATA e CAPTURE A BANDEIRA (CTF), que segue para a seleção de mapas com o modo escolhido.
 - `eval:boot` voltou a rodar: a fixture do `boot-check.mjs` ancorava na assinatura antiga de `_startGame` (mudada no #489) e reprovava antes de medir; agora ancora no nome da função.
 - Os contadores do menu (`/api/online` e `/api/map-plays`) tentam de novo no cold start do backend (503 na primeira chamada, medido 06/09) em vez de ficar vazios.
