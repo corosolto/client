@@ -107,3 +107,75 @@ nas ombreiras da janela e `fundo-aberto` na leitura do spawn superior.
 Isto fecha o que era mecânico. O que continua aberto não é: revisão visual humana em 3:2
 com GLBs, regeneração de grafites em frente autorizada a usar navegador e leitura de
 exposição das soleiras em partida real. Nenhum desses foi absorvido aqui.
+
+## Rodada de 07/09 — a casa central fechada e o falso positivo anterior
+
+Relato do dono em 3:2: "a casa central fechada, sem janela útil voltada à escada ou ao
+respawn, e um grande vazio no piso interior". Todas as réguas desta frente passavam
+verde — e o defeito era real. **O falso positivo foi estrutural (Lição 3 da LICOES.md):
+as réguas rodavam em node, onde `placeProp` devolve null, e mediam o fallback
+procedural; o navegador joga com `GLB_ON`, e na branch GLB_ON
+(`public/js/map_escadao.js`, laje da boca do escadão) a geminada oeste virava o molde
+fechado `escadao_casa_r3` + colisor monolítico + `continue` — sem janela, sem entrada,
+interior inalcançável. A cauda da geminada leste (x 0,15–1,35) não tinha laje: era o
+vazio de piso visto pela porta da passarela.** Régua que mede outro mundo aprova outro
+jogo.
+
+### Régua nova (antes do conserto)
+
+`tools/eval/escadao-casa-central-check.mjs` (`eval:escadao-casa-central`, no
+`check:fast`): registra um molde fechado de `escadao_casa_r3` via
+`registerPropTemplate` (BUG-72) **antes** do boot — a branch GLB_ON executa de verdade
+e a medição vê o mundo que o navegador serve. Cláusulas: nenhum prop `escadaoMint` na
+laje; janela real na face norte da geminada leste (olho ocupável dentro, alvo ocupável
+na escada e no patamar, tiro e revide por occluders E malha visível, fechado fora da
+abertura); piso interior contínuo (`groundHeightAt` == 2,75, cápsula 0,38 em pé, malha
+visível sob os pés); entrada por cápsula e caminante real; interior não lê slot de
+nascimento. No HEAD de `5d59dff0` ela **reprovou** na primeira cláusula (1 prop
+`escadaoMint` na laje).
+
+### Conserto
+
+- O shell procedural das geminadas é autoritativo no runtime: a branch GLB_ON com
+  `placeProp` + colisor monolítico + `continue` saiu do mapa. O molde fechado não mora
+  mais na casa tática.
+- Janela real para a escada na face norte da geminada leste (vão x −2,2..−0,7, banda
+  y 2,75+1,0..2,75+2,2): peitoril e verga sólidos, molduras fora do corredor de tiro.
+  A geminada oeste não enxerga a escada (moradia lateral e a própria leste interpostam)
+  — a janela mora na casa que encosta na boca do escadão.
+- Vãos nas paredes compartilhadas das geminadas e porta da casa frontal: a cadeia
+  PATAMAR 1 → passarela → geminada leste → geminada oeste anda com cápsula 0,38 nos
+  trechos internos e com o caminante real do jogo na cadeia inteira, ida e volta.
+- Piso: `groundHeightAt` conhece o interior das geminadas (2,75) com a mesma regra do
+  `underLanding` (quem está na rua embaixo continua no chão); a cauda leste ganhou laje
+  complementar sem fechar a passagem vertical. Mutante `sem-piso` derruba a cláusula.
+- Corrimão da passarela termina em z=14,2, onde a casa começa: até 15,1 ele
+  estrangulava o corredor (0,73 m livres contra 0,76 m de diâmetro da cápsula). A
+  passarela externa continua guardada por inteiro (MAP6).
+- Grafo de bots: rota nova entra pela porta da casa frontal, na fresta z 14,8–15,1
+  entre as inflações de parede, e corre até a geminada oeste (MC3 verde, 626/626 nós).
+
+### Mutantes (todos vermelhos na cláusula pretendida)
+
+- `--mutante=glb-fechado`: malha fechada sobre o vão da janela (o estado que o
+  `continue` produzia), sem tag — morre na cláusula de abertura de tiro.
+- `--mutante=sem-piso`: interior derrubado para a rua — morre na cláusula de piso.
+
+### Evidência
+
+Recibos em `artifacts/escadao-casas-conflito/review-casa-central/` (não versionados):
+`before/` e `after/` exportados pelo `tools/escadao-conflict-offline.mjs` (HEAD
+`5d59dff0` vs árvore corrigida; hashes dos fontes no `geometry.json`) e
+`resumo-textual.txt` — janela LIVRE para escada central e patamar 1, piso 68/68
+amostras com malha a 2,75 m, 0 props `escadaoMint`, corrimão terminando em z=14,2.
+Captura textual/geométrica porque o serviço de imagem estava indisponível; render PNG
+do Blender não foi executado nem analisado nesta rodada.
+
+### Não-regressão
+
+`eval:escadao-rota` segue com a dívida conhecida (1 lance sem destino, igual à base);
+oclusão de spawn 0/963 (E) e 0/0 (B). Passaram: home, conflict-home, casa-central,
+mirante-abrigo, structure, descent, details, graph, contract, facade, mapcontrato
+(MC1-3), spawn, botsim-golden, docs:check, arch:check e `npm run build` (Node 23).
+`eval:grafitelayout` e `audio:check` seguem pendentes pelos motivos já registrados
+(geometria mudou: o hash do grafite precisa ser regenerado em frente com navegador).
