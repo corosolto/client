@@ -105,6 +105,19 @@ e validar o head resultante. Remotos locais confirmados: `origin` é corosolto/c
 `nfvelten` também existe; nenhum push pode ir ao segundo. Após novo head MERGEABLE, manter
 o PR aguardando reserva de integração, sem canário/deploy até Lajes concluir.
 
+### Bloqueio de integração: CTF2 Amazônia
+
+Durante o fechamento de Lajes, CI/shared main reprova CTF2 somente porque Amazônia tem uma
+rota nos pares B→E, B→MID e B→B; Lajes tem duas. O candidato Lajes (`ec40d26b`, base
+alpha.228) passou LRP1, contratos/mapas, build, DCO, ratchet, versão, Vercel, smoke e
+portão-browser. Seu diff não toca Amazônia nem CTF; não esconder a regressão em PR517.
+Lajes foi preservada limpa no checkpoint `2af96c261534461c7870f88e0ef34a2db15af855`,
+sem merge/deploy. A frente Amazônia pausa inventário 5x5/palafitas e prioriza localizar
+nós, colisores ou oclusores que removem rotas, corrigir o mínimo e provar CTF2 ≥2 para
+cada par afetado, com contraprova/mutante. Sertão pode resolver seu conflito, mas não
+declara checks finais nem entra em merge antes de main corrigida; integração continua
+sequencial Lajes → Sertão → Escadão.
+
 ## Viewmodels e substituição Claude
 
 `VIEWMODEL-CATALOGO-ORQUESTRACAO.md` conserva catálogo, controles, critérios e release.
