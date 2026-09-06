@@ -84,8 +84,9 @@ que omitiam faces de materiais únicos foram descartadas e as capturas foram ref
 
 Implementação recuperável: `af7d9434`. Durante a revisão o autofix remoto atualizou a
 branch do PR para `751bb359`; o commit local foi reaplicado sobre ela sem conflitos,
-sem merge de PR ou release. Build e os oito checks específicos foram reexecutados
-nessa árvore (`build-final.log`, `map-final.log`). A execução ampla anterior aprovou
-122/125 passos; `audio:check` e `eval:grafitelayout` continuam pendentes pelos motivos
-acima. A terceira falha era somente a exigência de commit de documentação do DOCSAUT.
-Próximo passo desta entrega: publicar os checkpoints e este estado no PR #529.
+sem merge de PR ou release. Em seguida o checkpoint documental foi publicado em
+`851c5089` e enviado para `origin/astra/escadao-casas-conflito`. Build e os oito
+checks específicos foram reexecutados nessa árvore (`build-final.log`, `map-final.log`).
+A execução ampla anterior aprovou 122/125 passos; `audio:check` e `eval:grafitelayout`
+continuam pendentes pelos motivos acima. A terceira falha era somente a exigência de
+commit de documentação do DOCSAUT.
