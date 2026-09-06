@@ -1,6 +1,6 @@
 # Lajes visual — continuidade
 
-## Estado corrente: V7 validada localmente; integração remota em fechamento
+## Estado corrente: V7 integrada e PR438 mergeada
 
 Pedido de 06/09/2026 após revisão V6: manter ruas estreitas e apenas campo amplo;
 remover casas azuis, trazer terra e gramados, ratos e baratas, mais pipas e Santos
@@ -17,6 +17,27 @@ anterior. Não publicar resultado parcial nem ignorar falhas.
 - Próximo passo: integração, régua V7 vermelha, ambiência/14-bis/hover, captura real,
   crítica independente, gates atuais, build, atualização PR e merge condicionado.
 - Evidências V6 ficam em `artifacts/lajes-visual/v6/`. Artefatos V7 em `v7/`.
+
+## Encerramento V7 — 06/09/2026
+
+- PR438 saiu de draft e foi mergeada por squash, sem bypass, às 05:01:53 UTC.
+  Commit na main: `70f524937f428ec242177ffd98892062a9e30049`.
+  Head aprovado: `fce94272deb0e1b0591790cd205f1ad32ca5d7b0`, incorporando
+  main `971342e4`/alpha.225. Worktree permanece em `codex/lajes-visual`.
+- Checks obrigatórios build, dco, versao-bumpada e ratchet verdes; portao-browser,
+  smoke-web, CodeQL e Vercel verdes. pr-fast final `34012603547` concluiu com
+  sucesso, incluindo LSP1 (8/8 saídas físicas, 1.334 sondas), MAP2B e Astro build.
+- Preview final: `dpl_EamoAminoc95PFRsk2NVSiWZdWze`, READY. Browser anônimo
+  redireciona ao login da Vercel; não declarar hover remoto validado. Hover local
+  9/9 já validado. Deploy automático de produção pós-merge não foi validado aqui.
+- Recibos e log CI: `artifacts/lajes-visual/v7/merge-receipt.json`,
+  `checks-before-merge.json` e `gates/pr-fast-final.log`. Histórico original segue
+  preservado em `codex/lajes-v7-history-backup`; artefatos V6/V7 mantidos.
+- Vídeo pedido para redes entregue em `/Users/ruben/Downloads/Santos-Dumont-Lajes.mp4`:
+  H.264, 1536×1024, 7,952 s, 2.723.276 bytes. Nenhuma postagem social realizada.
+- Objetivo autorizado concluído: ambiência, preview, integração, conflitos, build,
+  atualização e merge. Limites de GPU, repetição modular e validação local global
+  com JSON antigo permanecem descritos na entrega; não são alegados como resolvidos.
 
 ## Marco V7: integração e primeira validação
 
