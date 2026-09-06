@@ -41,18 +41,18 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 42,715 lines in 78 files | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7,389** lines | `wc -l public/js/game.js` |
+| Game code | 44,184 lines in 86 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7,390** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,395 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props in GLB | 145 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props in GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Versioned animation clips | 573 | `git ls-files public/models/anims \| wc -l` |
 | Playable characters | 44, in 5 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 16 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 300 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Pipeline scripts | 69 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Harness scripts | 322 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Pipeline scripts | 72 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.0.0-alpha.230` | `public/js/version.js` and `package.json` (match) |
 
@@ -237,7 +237,7 @@ The maps registered today, and which mode each one opens in:
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 240 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 402 |
-| `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 433 |
+| `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 889 |
 | `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 247 |
 
 **16 registered maps** - 2 open in rounds and 14 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 20 `map_*.js` files on disk, so a file alone does **not** make a map playable.
