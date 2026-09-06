@@ -54,7 +54,7 @@ function fixture(cenario) {
   w('public/js/apibase.js', "const NO_BACKEND = new Set(['health', 'online', 'map-plays', 'leaderboard']);\nconst BASE = (() => { return 'https://backend.invalido'; })();\n");
   w('public/js/main.js', cenario === 'boot-navegador-morto'
     ? "throw new ReferenceError(\"Cannot access 'testMode' before initialization\");\n"
-    : "import { foo } from './dep.js';\nimport { VERSION } from './version.js';\nfoo(VERSION);\nwindow.__CS_MAIN_READY__ = true;\nconst b = document.getElementById('btn-jogar'); if (b) b.onclick = () => {};\ntry { fetch('/api/pick', { method: 'POST', body: '{}' }); navigator.sendBeacon('/api/jserror', 'x'); } catch {}\n");
+    : "import { foo } from './dep.js';\nimport { VERSION } from './version.js';\nfoo(VERSION);\nwindow.__CS_MAIN_READY__ = true;\nconst b = document.getElementById('btn-jogar'); if (b) b.onclick = () => {};\ntry { fetch('/api/pick', { method: 'POST', body: '{}' }); navigator.sendBeacon('/api/jserror', 'x'); const c = new AbortController(); fetch('/js/dep.js?abortado=1', { signal: c.signal }).catch(() => {}); c.abort(); } catch {}\n");
   w('public/js/dep.js', cenario === 'grafo-local-incoerente' ? 'export const bar = 1;\n' : 'export function foo() {}\n');
   w('public/js/ops.js', readFileSync(join(RAIZ_PADRAO, 'public/js/ops.js')));
   w('src/lib/site.ts', cenario === 'ranking-flag-ilegivel' ? 'export const RANKING_ON = flag();\n' : `export const RANKING_ON = ${cenario === 'ranking-desligado-com-flag' ? 'true' : 'false'};\n`);
@@ -248,6 +248,9 @@ if (!SO || SO === 'navegador') {
           if (!tentou) ruim(`MUTAÇÃO de escrita não aplicou: a página não tentou POST /api/pick + beacon /api/jserror (viu: ${nav.escritasBloqueadas.join(', ') || 'nada'})`);
           else if (s.escritas.length) ruim(`navegador 'saudavel' ESCREVEU no servidor: ${s.escritas.join(', ')} — o contrato "só lê" está furado`);
           else ok(`navegador 'saudavel' → ${nav.escritasBloqueadas.length} escrita(s) barradas antes da rede (${nav.escritasBloqueadas.join(', ')}), 0 chegaram`);
+          // a fixture também aborta um fetch de propósito: cancelamento pela página não é recurso falho
+          if (nav.requestsFalhas.length) ruim(`navegador 'saudavel' acusou recurso falho por pedido cancelado/barrado: ${nav.requestsFalhas.join(' · ')}`);
+          else ok("navegador 'saudavel' → fetch abortado pela página e escritas barradas não contam como recurso falho");
         } else {
           const a = achados.find((x) => x.id === esperado[0]);
           if (!nav.pageErrors.some((e) => /testMode/.test(e))) ruim("MUTAÇÃO 'boot-navegador-morto' não aplicou: sem pageerror de TDZ");

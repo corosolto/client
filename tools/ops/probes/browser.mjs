@@ -74,7 +74,8 @@ export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000
     page.on('pageerror', (e) => r.pageErrors.push(String(e.message || e).slice(0, 300)));
     // "Failed to load resource" já entra por requestsFalhas; repetir no console só duplicaria o achado
     page.on('console', (m) => { if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) r.consoleErros.push(m.text().slice(0, 300)); });
-    page.on('requestfailed', (req) => { if (!ignoravel(req.url())) r.requestsFalhas.push(`${caminho(req.url())} ${req.failure()?.errorText || 'falhou'}`); });
+    // ERR_ABORTED = a própria página cancelou (troca de src da imagem de loading, escrita barrada acima): não é rede
+    page.on('requestfailed', (req) => { const erro = req.failure()?.errorText || 'falhou'; if (!ignoravel(req.url()) && !/ERR_ABORTED/.test(erro) && ['GET', 'HEAD'].includes(req.method())) r.requestsFalhas.push(`${caminho(req.url())} ${erro}`); });
     page.on('response', (resp) => { if (resp.status() >= 400 && !ignoravel(resp.url())) r.requestsFalhas.push(`${caminho(resp.url())} ${resp.status()}`); });
     const url = `${base}/?debug=1${partida ? '&auto=E' : ''}`;
     const t0 = Date.now();
