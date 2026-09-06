@@ -92,7 +92,7 @@ evidência e revisão: `tools/eval/asset-evidence/fauna/`.
 
 Procedência dos GLBs existentes: [mint-assets.json](../../../mint-assets.json), entradas listadas abaixo. O registro declara geração Mint text-to-3D a partir de prompt próprio do projeto, sem referência de terceiro; o texto integral do prompt não está arquivado no manifesto. `source.notes` registra o propósito e o pipeline, `source.chatUrl`/`source.assetId` identificam a geração, e `processing.finalSha256` identifica o arquivo final. Não reconstruir o prompt de memória.
 
-**Licença específica e autor humano de cada geração: pendentes de documentação.** A declaração Mint Pro dos outros lotes não substitui termos específicos destes registros. Não declarar CC0, autoria individual, licença comercial verificada nem atribuição dispensada. Nenhum asset externo novo foi baixado para esta revisão.
+**Atualização contratual de 06/09/2026:** os [termos oficiais Mint](https://docs.mint.gg/terms-of-service), atualizados em07/05/2026, foram consultados. A seção4 atribui ao usuário os direitos que Mint tiver no output criado para ele, sujeitos aos termos e direitos de terceiros; não há licença individual separada por GLB nem obrigação específica de atribuição. A procedência destes arquivos permanece a declaração histórica de geração própria no manifesto, com chats/IDs/hashes; não foram reconstituídos os prompts integrais nem reconfirmada a conta dos chats antigos. Não declarar CC0, autoria humana ou exclusividade. Essa consulta substitui a antiga pendência de localizar a fonte contratual.
 
 Hashes abaixo são snapshot extraído do manifesto e conferido contra os arquivos em 05/09/2026. O manifesto permanece a fonte canônica; método de reprodução e inventário técnico em [SERTAO-REFERENCIAS.md](../../../docs/reports/SERTAO-REFERENCIAS.md).
 
@@ -112,7 +112,7 @@ As fotografias de Maranguape e da capela da Fazenda Colônia foram apenas refer�
 - Reprodução: `node tools/repair-calango-surface.mjs`, que aceita somente o hash original; original recuperável no commit `018806e2d11a1eb10b118da0d5afa5ce35869375`.
 - Validação: `node tools/eval/calango-surface-check.mjs` compara a superfície e o hash dos buffers não relacionados ao índice; a mutação `recoloca-triangulo` restaura a face original em memória.
 
-A correção local não resolve nem altera a pendência dos termos específicos de licença e da autoria humana da geração Mint. O snapshot de 05/09 acima identifica o original, enquanto `mint-assets.json` identifica o derivado final.
+A correção local não muda a procedência declarada da geração Mint; a consulta contratual de06/09 acima documenta a base de uso. O snapshot de 05/09 acima identifica o original, enquanto `mint-assets.json` identifica o derivado final.
 
 ## Calango quadrúpede — derivado local, 06/09/2026
 
@@ -121,8 +121,8 @@ Mint asset`ks7b9n65cxtmvfkxcc8a3rm93d8d4p9j`, mesmo chat/origem. A ferramenta
 `tools/derive-calango-quadruped.mjs` retira a pedra, ajusta quatro apoios, orienta+Z
 e acrescenta morphs e cicloRun autorais. Texturas preservadas byte a byte.
 608.484bytes/4.795tris; SHA256`78cc644d948de4a98da962edf084116c2c124ec5c8284a5cc53075d0e2ef8233`.
-Licença específica e autoria humana herdadas continuam pendentes. Não é CC0 nem
-animação fornecida pelo Mint. Registro `mint-assets.json`, relatório
+A base contratual é a consulta Mint de06/09 acima; a procedência é herdada do
+registro histórico. Não é CC0 nem animação fornecida pelo Mint. Registro `mint-assets.json`, relatório
 `docs/reports/SERTAO-CALANGO-QUADRUPEDE.md`. O calango bípede anterior permanece
 no acervo como evidência, mas foi rejeitado para a fauna em movimento pelo dono.
 

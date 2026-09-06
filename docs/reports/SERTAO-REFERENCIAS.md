@@ -2,6 +2,12 @@
 
 Pesquisa em 05/09/2026, branch `codex/sertao-astra`. Escopo: orientar a revisão visual do PR #445, preservando layout, CTF, spawns, colisores e desempenho. Nenhum modelo ou imagem foi baixado; nenhum runtime foi editado. Esta ficha não aprova o resultado visual do mapa.
 
+Atualização contratual de06/09/2026: os termos oficiais Mint foram localizados;
+ver `public/models/props/FONTE.md` e `public/models/ambient/FONTE.md`. A tabela
+abaixo preserva o snapshot inicial de05/09: a antiga pendência de termos não
+é mais atual. Chats/IDs/hashes continuam declarados pelos registros herdados;
+conta e prompts antigos não foram reconfirmados. Não atribuir autoria humana.
+
 ## Decisão e limites da evidência
 
 Priorizar o kit local. Há casas de pau a pique, pedra, platibanda e geminadas, igreja, capela, caminhão genérico, poço, flora e répteis registrados em `mint-assets.json`. O problema não exige inicialmente ampliar o acervo. Os arquivos locais abaixo foram lidos como GLB e seus hashes comparados com o manifesto; não foram renderizados nesta subtarefa.

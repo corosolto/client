@@ -4,7 +4,7 @@
 
 Procedência dos GLBs existentes: [mint-assets.json](../../../mint-assets.json), entradas listadas abaixo. O registro declara geração Mint text-to-3D a partir de prompt próprio do projeto, sem referência de terceiro; o texto integral do prompt não está arquivado no manifesto. `source.notes` registra o propósito e o pipeline, `source.chatUrl`/`source.assetId` identificam a geração, e `processing.finalSha256` identifica o arquivo final. Não reconstruir o prompt de memória.
 
-**Licença específica e autor humano de cada geração: pendentes de documentação.** A declaração Mint Pro dos outros lotes não substitui termos específicos destes registros. Não declarar CC0, autoria individual, licença comercial verificada nem atribuição dispensada. Nenhum asset externo novo foi baixado para esta revisão.
+**Atualização contratual de 06/09/2026:** os [termos oficiais Mint](https://docs.mint.gg/terms-of-service), atualizados em07/05/2026, foram consultados. A seção4 atribui ao usuário os direitos que Mint tiver no output criado para ele, sujeitos aos termos e direitos de terceiros; não há licença individual separada por GLB nem obrigação específica de atribuição. A procedência destes arquivos permanece a declaração histórica de geração própria no manifesto, com chats/IDs/hashes; não foram reconstituídos os prompts integrais nem reconfirmada a conta dos chats antigos. Não declarar CC0, autoria humana ou exclusividade. Essa consulta substitui a antiga pendência de localizar a fonte contratual.
 
 Hashes abaixo são snapshot extraído do manifesto e conferido contra os arquivos em 05/09/2026. O manifesto permanece a fonte canônica; método de reprodução e inventário técnico em [SERTAO-REFERENCIAS.md](../../../docs/reports/SERTAO-REFERENCIAS.md).
 
