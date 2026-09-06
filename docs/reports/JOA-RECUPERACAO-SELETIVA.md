@@ -88,3 +88,5 @@ Registry, alias fy_mansao, apresentação editorial e prévia histórica restaur
 Assets restaurados: `docs/maps/MANSAO-RECOVERY-ASSETS.json` registra SHA256 e blob de origem. A arara histórica recebeu nome exclusivo `mansao_arara_voo.glb` para preservar o asset atual usado por `skylife.js`. Fauna de céu agora possui deformação procedural de asas, medida em vértices reais; 10 verificações verdes e mutante `asas-travadas` vermelho. Autoria da fonte: commits históricos de Ruben Marcus, incluindo `fd792d0c`, `5bbcd849`, `e8acea8a`, `5d06613e`; adaptação nesta lane por Codex.
 
 Capturas em geração: `artifacts/joa-recuperacao/offline/scene.json`, export de 30 GLBs do disco, 826 objetos e 76 texturas. Render Blender não é aprovação de shaders WebGL. Próximo: revisão visual independente, física contínua/CTF, mutações, gates amplos e atualização do PR.
+
+Checkpoint de origem/vegetação: `df0a1295`. Mobília e jardim complementares a seguir, sem alterar os bytes históricos.
