@@ -172,3 +172,23 @@ pendente de fonte do dono; animações animais ainda não recebidas/criadas.
 Próximo: validarHZ5 visual+mutantes, resolver termosMint e integrar fauna real,
 substituir memorial por resultado digno de revisão, recapturar preview e gates
 globais antes da atualizaçãoPR511. Não declarar mapa finalizado.
+
+### Horizonte r5 e aves validados
+
+A mudança de estratégia resolveu a divergência da árvore vassoura: seis GLBs
+juazeiro já existentes,96ramosfoliares por copa e27arbustos; compartilha recursos.
+Crítico independente aprovou horizonte r5 para revisão humana, sem regressão
+material da praça/leste/sul; fundo distante ainda simples e esparso.
+RV1–12:496calls/337248tri. LP1–4 verdes, horizonte-ausente continua isoladoLP3.
+Spec altera apenas orçamento incremental para3calls/48miltri, conserva cena
+503calls/368208tri. Artefatos fauna2-horizon-r5 e life-polish-r5.
+
+Movimento30s/setebots: p508,4ms/p9512,6ms,109,39m,100178717bytesheap,
+zero erros; motion-fauna2-controlled-velho_oeste/report.json. Não comparar
+triângulos do composer acumulado com teto do passemapview.
+FA1–4+quatro mutantes repetidos passaram. Específicos13/13 passaram em16,1s,
+logfauna2-specific-rerun.log. Novos animais continuam só no Mint: cabra também
+examinada lateralmente; ninguém deve procurar esses modelos ainda no jogo.
+Checkpoint62b6538e registra pendências;3640e682 contém aves distantes. Próximo:
+concluir checkpointHZ+integração, previewrecibo, globais/docs/build; licençasMint
+continuam bloqueando novos downloads/animais. Sem merge/deploy.

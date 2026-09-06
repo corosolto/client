@@ -9,6 +9,8 @@ import { sertaoLandscape, batchSertaoDecor } from './map_sertao_landscape.js';
 import { copaJuazeiro as addCopaJuazeiro, mandacaruSertao } from './map_sertao_flora.js';
 import { finishTaipa, finishVenda, crateBattens, settlementGround, untileSertaoSoil } from './map_sertao_architecture.js';
 import { createSertaoFauna } from './map_sertao_fauna.js';
+import { createSertaoHorizon } from './map_sertao_horizon.js';
+import { createSertaoDistantBirds } from './map_sertao_distant_birds.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
@@ -273,7 +275,7 @@ export function buildVelhoOeste(scene, T) {
   }
   for (const z of [-HALF_Z, HALF_Z]) {
     addBox(22, 1.5, .22, MAT.pale, -22, 0, z); addBox(22, 1.5, .22, MAT.pale, 22, 0, z);
-    addSign('SERTÃO', 'DA TRETA', 0, 6.4, z, z > 0 ? Math.PI : 0, 10, 3);
+    addSign('CANUDOS', 'POP. 16.693 • IBGE 2025', 0, 6.4, z, z > 0 ? Math.PI : 0, 10, 3).name = 'sertao-placa-canudos';
     for (const x of [-6, 6]) addBox(.35, 7.6, .35, MAT.adobeCaiado, x, 0, z);
     addBox(12.4, .35, .35, MAT.adobeCaiado, 0, 7.3, z, { collide: false });
   }
@@ -555,6 +557,7 @@ export function buildVelhoOeste(scene, T) {
   folhaTex.name = 'sertao-folhagem';
   const folha = new THREE.MeshStandardMaterial({ map: folhaTex, roughness: 1 });
   function copaJuazeiro(group) { addCopaJuazeiro(group, folha); }
+  const horizon = createSertaoHorizon(root, { low, leafMaterial: folha });
   [[-25.5, -13], [25.5, 14], [-20.5, 34], [27, -8]].forEach((p, i) =>
     sertaoElement('juazeiro', i, p[0], p[1], juazeiroProxy, 'sertao_juazeiro', 4.6, [.3, 3.2, .3], { after: copaJuazeiro }));
   const xiqueProxy = (group) => {
@@ -819,9 +822,10 @@ export function buildVelhoOeste(scene, T) {
     return [fromIdx];
   }
   const faunaFlight = createSertaoFauna(root, { low });
+  const distantBirds = createSertaoDistantBirds(root, { low });
   function update(dt, elapsed) {
     tecidos.forEach((tecido, i) => { tecido.rotation.x = Math.sin(elapsed * 1.8 + i * .6) * .16; });
-    faunaFlight.update(dt);
+    faunaFlight.update(dt); distantBirds.update(dt);
   }
 
   update(0, 0);
@@ -855,8 +859,8 @@ export function buildVelhoOeste(scene, T) {
     ],
   });
   const resetFauna = ambience.reset.bind(ambience), disposeFauna = ambience.dispose.bind(ambience);
-  ambience.reset = () => { resetFauna(); faunaFlight.reset(); };
-  ambience.dispose = () => { disposeFauna(); faunaFlight.dispose(); };
+  ambience.reset = () => { resetFauna(); faunaFlight.reset(); distantBirds.reset(); };
+  ambience.dispose = () => { disposeFauna(); faunaFlight.dispose(); distantBirds.dispose(); horizon.dispose(); };
   root.traverse(object => {
     if (object.userData.fauna || object.userData.faunaAsset) object.traverse(mesh => { if (mesh.isMesh) mesh.castShadow = false; });
   });
@@ -872,7 +876,7 @@ export function buildVelhoOeste(scene, T) {
   occluders.splice(0, occluders.length, ...solidMeshes);
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.sanfona,pos:[-22,2.6,19.6],radius:12,vol:.12}],bioma:'campo'},
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight, horizon, distantBirds,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),

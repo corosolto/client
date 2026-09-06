@@ -206,3 +206,16 @@ As fotografias de Maranguape e da capela da Fazenda Colônia foram apenas refer�
 Registro: [sertao-procedural.json](sertao-procedural.json). Casario sólido, acabamentos, folhas, mandacarus e entorno são construídos em JavaScript/Three.js pelos módulos ali enumerados. Contribuição assistida por agentes, identificada nos commits desta frente e trailers `Agent:`; não se presume autor humano individual, ID Mint nem geração externa. O código acompanha o [LICENSE](../../../LICENSE) do repositório. Este registro não atribui uma licença nova aos GLBs ou às texturas herdadas.
 
 Referências visuais são documentais, não incorporadas como imagens ou texturas. Ver [pesquisa](../../../docs/reports/SERTAO-REFERENCIAS.md) e [flora](../../../docs/reports/SERTAO-FLORA.md). Os GLBs antigos de mandacaru, palhoça, pau-a-pique e platibanda saíram do preload deste mapa porque os corpos agora são autorais; os arquivos do acervo foram preservados. Licença/autoria específica dos GLBs retidos e procedência incompleta de texturas legadas continuam pendências, não foram regularizadas por esta alteração.
+
+## Sertão — aves distantes e horizonte, revisão06/09/2026
+
+`map_sertao_distant_birds.js`: geometria autoral assistida por agente, quatro
+aves distantes (uma em low), sem textura ou asset externo. Referências naturais
+e decisões em docs/reports/SERTAO-AVES-DISTANTES.md; autoria rastreada pelo
+trailer Agent dos commits, sem atribuição humana inventada.
+
+`map_sertao_horizon.js`: composição de Caatinga fora da arena. O juazeiro
+`sertao_juazeiro.glb` já existente conserva sua origem e lacunas documentadas;
+a composição não lhe atribui licença nova. Módulo e evidências registrados em
+sertao-procedural.json e docs/reports/SERTAO-HORIZONTE.md. Nenhum modelo novo
+downloadado para esta camada. Aves e vegetação não integram colisores/oclusores.
