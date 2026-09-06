@@ -463,9 +463,7 @@ export function buildVelhoOeste(scene, T) {
     }
   });
 
-  /* Duas casas abertas para a praça: entrada sul, janelas para o largo e para a
-     rua norte. Cada parede é um corpo separado; nunca um bloco invisível que
-     promete interior mas impede a passagem. */
+  // Paredes segmentadas preservam os vãos reais de porta e janelas (PR #526).
   const interiorHouses = [];
   function casaDaPraca(id, x, z) {
     const group = new THREE.Group();
@@ -491,16 +489,16 @@ export function buildVelhoOeste(scene, T) {
     part('verga-norte', 1.4, .88, .28, 0, h - .88, halfD, MAT.paupiqueOcre);
     // Janelas laterais altas: cobertura tem leitura, mas não vira bunker fechado.
     for (const side of [-1, 1]) {
-      part(`lateral-${side}-sul`, .28, h, 2.15, side * halfW, 0, -2.05, MAT.paupiqueCru);
-      part(`lateral-${side}-norte`, .28, h, 1.85, side * halfW, 0, 2.3, MAT.paupiqueCru);
-      part(`peitoril-lateral-${side}`, .28, .88, 1.25, side * halfW, 0, .1, MAT.paupiqueCru);
-      part(`verga-lateral-${side}`, .28, .9, 1.25, side * halfW, h - .9, .1, MAT.paupiqueCru);
+      part(`lateral-${side}-sul`, .28, h, 2.6, side * halfW, 0, -1.9, MAT.paupiqueCru);
+      part(`lateral-${side}-norte`, .28, h, 2.4, side * halfW, 0, 2, MAT.paupiqueCru);
+      part(`peitoril-lateral-${side}`, .28, .88, 1.44, side * halfW, 0, .1, MAT.paupiqueCru);
+      part(`verga-lateral-${side}`, .28, .9, 1.44, side * halfW, h - .9, .1, MAT.paupiqueCru);
       part(`moldura-lateral-${side}`, .14, 1.8, .12, side * (halfW + .03), .85, -.57, MAT.trim, false);
       part(`moldura-lateral-${side}-b`, .14, 1.8, .12, side * (halfW + .03), .85, .77, MAT.trim, false);
     }
     part('piso', w - .25, .12, d - .25, 0, 0, 0, MAT.pedra, false);
     part('telhado', w + .5, .16, d + .55, 0, h, 0, MAT.roof, false);
-    for (const px of [-halfW - .28, halfW + .28]) part(`esteio-${px}`, .16, h, .16, px, 0, -halfD - .42, MAT.dark, true);
+    for (const px of [-halfW + .08, halfW - .08]) part(`esteio-${px}`, .16, h, .16, px, 0, -halfD - .42, MAT.dark, true);
     const sign = addSign(id === 0 ? 'CASA DE FARINHA' : 'CASA DE REZA', 'PORTA ABERTA PRA PRAÇA', x, 3.95, z - halfD - .18, 0, 4.8, .62);
     sign.name = `${group.name}-placa`;
     group.userData.interior = { entrance: [x, z - halfD - .55], inside: [x, z], northWindow: [x, z + halfD + .1], doorWidth: 1.9 };
@@ -812,11 +810,11 @@ export function buildVelhoOeste(scene, T) {
     part(4.7, .22, .24, MAT.pale, 0, .5, 0, { rz: -.12 }); part(4.25, .22, .24, MAT.wood, .15, 1.08, 0, { rz: .2 });
   });
 
-  for (const [x, z] of [[13,-31],[-14,-4],[14,17],[-13,36]]) {
+  for (const [x, z] of [[13,-31],[-14,-4],[14,21.5],[-13,36]]) {
     for (let i = 0; i < 3; i++) addCylinder(.65, 1.15, MAT.hay, x + (i - 1) * 1.25, 0, z, { collide: true, segments: 14, rz: Math.PI / 2 });
   }
   // O barril legado coincidia com o centro CTF B; a cobertura fica dois metros ao lado.
-  for (const [x, z] of [[-12,-33],[12,-12],[-13,13],[14,34]]) {
+  for (const [x, z] of [[-12,-33],[12,-12],[-17,13],[14,34]]) {
     addCylinder(.62, 1, MAT.dark, x, 0, z, { collide: true, segments: 12 });
     addCylinder(.67, .1, MAT.metal, x, .98, z, { segments: 12 });
   }

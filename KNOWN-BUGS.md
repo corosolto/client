@@ -37,6 +37,15 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## Sertão — casas da praça (PR #526, revisão local 06/09)
+
+Frestas laterais, obstáculos internos e uma aresta bloqueada por esteio foram
+reproduzidos e corrigidos. Régua: `tools/eval/sertao-interiors-check.mjs`,
+`IN3/IN4/IN5` vermelhas antes e verdes depois, com mutantes. Evidência, custo e
+continuação em [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+A coordenada exata do relato original permanece sem reprodução localizada;
+validação WebGL/humana pendente. Esta evidência é offline, sem aprovação de lançamento.
+
 ## P0 — quebram o jogo ou mentem para quem mede
 
 ### ~~BUG-86 · no multiplayer o corpo TP do próprio jogador ficava DEITADO depois do respawn, arrastado pelo mundo~~ · RESOLVIDO 30/08 (PR #483)
