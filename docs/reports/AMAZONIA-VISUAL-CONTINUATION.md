@@ -334,3 +334,11 @@ já reprovam o comportamento errado; fonte servida permanece sem falhas JS.
 Crítico independente aprovou coerência do card e frames, sem bloqueantes; camada
 do losango corrigida. Relatório atual AMAZONIA-HOVER.md. Próximo: checkpoint dos
 fontes/mídia, atualização de docs gerados e entrega do link de seleção.
+
+Entrega hover concluída: c6431e5e contém mídia/runtime/réguas; 9f1d70df atualiza
+inventários. docs:check e arch:check passaram. Evidência final HOV10 também valida
+início por foco de teclado na main. Main8157 serve vídeo HTTP200/473.986 bytes.
+A fonte geométrica permanece igual; artefatos volumosos fora do Git. Próximo passo:
+usuário testar hover em ?tela=maps&map=amazonia&lang=pt&perfilauto=0, recarregando
+com Cmd+Shift+R. Não há implementação pendente deste pedido de hover. Pendências
+anteriores de FPS/CPU e aceites de publicação continuam no ledger/relatório anterior.

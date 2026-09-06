@@ -14,8 +14,9 @@ Está em `artifacts/amazonia-visual/main-preview/`, dentro da worktree autorizad
 Não é uma nova worktree Git; não houve merge, rebase, push ou alteração da original.
 A branch `codex/amazonia-visual` continua baseada no PR439.
 
-`index.astro`, `main.js`, `style.css` e `characters.js` coincidem byte a byte com
-essa main. Foram acrescentados o registro/LOOK da Amazônia, builder, céu, thumbnail,
+`style.css` e `characters.js` coincidem byte a byte com essa main.
+`index.astro` e `main.js` mantêm essa base com o pequeno delta de vídeo no hover
+registrado em `AMAZONIA-HOVER.md`; não foram trocados pelos da branch antiga. Foram acrescentados o registro/LOOK da Amazônia, builder, céu, thumbnail,
 os derivados de palafita/vegetação, canoa-rabeta e fauna. A arara de voo e
 `skylife.js` são cópias exatas desta main. As três texturas de chão/madeira/palha e
 as duas plantas antes ausentes agora estão incluídas no overlay. `ambientlife.js` vem do PR: sua diferença para a main
@@ -73,5 +74,9 @@ cd /Users/ruben/csbrasil/worktrees/amazonia-visual
 ```
 
 Esse comando verifica os hashes do menu da main antes de copiar o overlay.
-O manifesto contém 27 arquivos, incluindo todos os assets que faltavam. O preview
+O manifesto contém 31 arquivos, incluindo todos os assets que faltavam. O preview
 continua isolado: não significa que PR439 foi integrado na main.
+
+A thumbnail real também toca um clipe silencioso de 6 segundos no hover.
+[Abrir diretamente a seleção](http://127.0.0.1:8157/?tela=maps&map=amazonia&lang=pt&perfilauto=0).
+Recibo/mídia atuais e testes: [AMAZONIA-HOVER.md](AMAZONIA-HOVER.md).
