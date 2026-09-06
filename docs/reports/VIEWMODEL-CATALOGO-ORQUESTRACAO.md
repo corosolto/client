@@ -1,5 +1,10 @@
 # Orquestração do catálogo completo de viewmodels
 
+> Atualização 06/09: Ruben autorizou redistribuição entre modelos e pediu conclusão das
+> frentes abertas em 24h. A operação vigente está em `CSBRASIL-PRODUCAO-ORQUESTRACAO.md`.
+> Retomada automática Claude desativada; instruções históricas abaixo não a autorizam.
+> Catálogo, critérios, controles aprovados e evidências permanecem válidos.
+
 ## Objetivo e autorização
 
 Em 06/09/2026 Ruben pediu: “quero que voce orquestre isso até terminarmos tudo com o claude”.
