@@ -206,6 +206,8 @@ function cloneAsset(id) {  const template = templates.get(id);
   };
 }
 
+export function cloneAmbientLifeAsset(id) { return cloneAsset(id); }
+
 function normalizeModel(id, model) {
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
