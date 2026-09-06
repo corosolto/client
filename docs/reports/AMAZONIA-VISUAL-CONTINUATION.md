@@ -313,3 +313,24 @@ de FPS/CPU permanecem pendentes, conforme relatório. Artefatos ficam locais,
 fora dos commits. Nenhum push/merge/deploy. Próximo passo: feedback humano sobre
 acesso às varandas, fluidez e nova ambiência no link local; para publicar, ainda
 é necessário fechar os aceites pendentes, sem inferir autorização desta rodada.
+
+## Continuação — thumbnail real com vídeo no hover
+
+Pedido adicional: retomar o hover com vídeo real, como no trabalho do Sertão.
+Base 7ac7b2c7. Localizado componente em b917cce1; adaptação sem trazer o outro mapa.
+Clipe Game real gravado: 144 frames, 6 s, 24 fps, H.264 960×640/473.986 bytes;
+poster = quadro zero (88.524 bytes). Fonte do mapa mantém hash 6435500a…cfb74f.
+Recibo atual e mídias em public/img/map-previews/amazonia.{capture.json,jpg,mp4};
+quadros e capturas de UI em artifacts/amazonia-visual/hover-*.
+Baseline sem hover falha HOV3, entrega main8157 passa HOV1/2/3/4/5/6/7/9.
+Build, medianet/screenquery/preload e dois mutantes de race passaram. Revisão
+independente apontou resize/recorte/foco; ajustes implementados. Próximo: fechar
+contraprova sem-saída/404/branch, crítica visual, checkpoints e docs gerados.
+Objetivo anterior/pendências de FPS e gates genéricos mantidos no relatório anterior.
+
+Marco validado hover: main e branch passam reprodução/saída/resize/troca de tela,
+404 mantém poster e mutante sem-pointerleave falha HOV4. Dois mutantes de race
+já reprovam o comportamento errado; fonte servida permanece sem falhas JS.
+Crítico independente aprovou coerência do card e frames, sem bloqueantes; camada
+do losango corrigida. Relatório atual AMAZONIA-HOVER.md. Próximo: checkpoint dos
+fontes/mídia, atualização de docs gerados e entrega do link de seleção.
