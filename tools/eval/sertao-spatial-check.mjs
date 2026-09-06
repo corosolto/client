@@ -4,7 +4,7 @@
    Não há fixture normalizada: alvo já vermelho torna a mutação inconclusiva.
    Uso: node tools/eval/sertao-spatial-check.mjs [--json] [--mutante=NOME|--self-test]
 */
-import { THREE, MAPS, initTextures } from './harness.mjs';
+import { THREE, MAPS, initTextures, Game } from './harness.mjs';
 import { createHash } from 'node:crypto';
 
 const EPS = 1e-6;
@@ -203,11 +203,37 @@ function stableCheck(world) {
     firstChangedAt, t0Hash: digest(before), t20Hash: digest(after) };
 }
 
+function ctfBodyCheck(world) {
+  world.root.updateMatrixWorld(true);
+  const game = Object.create(Game.prototype); game.world = world;
+  const meshes = [];
+  world.root.traverseVisible(o => {
+    if (!o.isMesh || o.userData?.nonSolidSurface) return;
+    const materials = Array.isArray(o.material) ? o.material : [o.material];
+    if (materials.some(m => m?.visible !== false && (!m?.transparent || m.opacity > .05))) meshes.push(o);
+  });
+  const radius = .38, height = 1.5, step = .30, ray = new THREE.Raycaster();
+  const points = (world.ctfPoints || []).map(p => {
+    const ground = world.groundHeightAt(p.x, p.z);
+    if (![p.x, p.z, ground].every(Number.isFinite)) return { id: p.id, pass: false, reason: 'coordenada-ou-chao-invalido' };
+    const original = new THREE.Vector3(p.x, ground, p.z), body = original.clone();
+    game._collide(body, radius);
+    const displacement = body.distanceTo(original);
+    ray.set(new THREE.Vector3(p.x, ground + height, p.z), new THREE.Vector3(0, -1, 0));
+    ray.near = 0; ray.far = height + .01;
+    const hits = ray.intersectObjects(meshes, false);
+    const penetration = Math.max(0, ...hits.map(h => h.point.y - ground));
+    return { id: p.id, x: p.x, z: p.z, ground, displacement, penetration,
+      first: hits[0]?.object.name || null, pass: displacement <= EPS && penetration <= step + EPS };
+  });
+  return { pass: points.length === 3 && points.every(p => p.pass), radius, height, maxStep: step, points };
+}
+
 function evaluate(world) {
   // Estrutura medida antes de update: o mutante de update só afeta SP2.
   const structural = { SP1: alphaCheck(world), SP3: houseCheck(world), SP4: routesCheck(world),
     SP5: coordinateCheck(world, 'spawns'), SP6: coordinateCheck(world, 'pickups'),
-    SP7: coordinateCheck(world, 'ctf'), SP8: churchCheck(world) };
+    SP7: coordinateCheck(world, 'ctf'), SP8: churchCheck(world), SP9: ctfBodyCheck(world) };
   const SP2 = stableCheck(world);
   return { SP1: structural.SP1, SP2, ...Object.fromEntries(Object.entries(structural).filter(([id]) => id !== 'SP1')) };
 }
@@ -222,8 +248,23 @@ const MUTANTS = {
   'rota-leste': { target: 'SP4', apply(w) { const cut = new Set(w.waypoints.nodes.flatMap((p, i) => p.x >= 12 && Math.abs(p.z) <= 4 ? [i] : [])); if (!cut.size) throw Error('nós leste ausentes'); w.waypoints.adj = w.waypoints.adj.map((edges, i) => cut.has(i) ? [] : edges.filter(j => !cut.has(j))); } },
   'spawn-deslocado': { target: 'SP5', apply(w) { w.spawns.E[0].x += 1; } },
   'pickup-deslocado': { target: 'SP6', apply(w) { w.pickups[0].x += 1; } },
-  'ctf-deslocado': { target: 'SP7', apply(w) { w.ctfPoints[0].z += 1; } },
+  'ctf-deslocado': { target: 'SP7', apply(w) { w.ctfPoints[0].z -= 1; } },
   'igreja-excesso': { target: 'SP8', apply(w) { const found = churchCollider(w); if (!found) throw Error('igreja ausente'); const c = found.collider; const o = c.obb ?? c; if (Number.isFinite(o.hx)) o.hx += 1; c.minX -= 1; c.maxX += 1; } },
+  'barril-no-ctf': { target: 'SP9', apply(w) {
+    const p = w.ctfPoints.find(p => p.id === 'B');
+    if (!p) throw Error('SP9 mutante não aplicou: CTF B ausente');
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, 1.08, 12), new THREE.MeshStandardMaterial());
+    barrel.name = 'mutante-barril-ctf'; barrel.position.set(p.x, .54, p.z); w.root.add(barrel);
+    w.colliders.push({ minX: p.x - .62, maxX: p.x + .62, minZ: p.z - .62, maxZ: p.z + .62, minY: 0, maxY: 1.08, tag: 'mutante-barril-ctf' });
+  } },
+  'barril-sem-colisor': { target: 'SP9', apply(w) {
+    MUTANTS['barril-no-ctf'].apply(w);
+    w.colliders = w.colliders.filter(c => c.tag !== 'mutante-barril-ctf');
+  } },
+  'colisor-sem-barril': { target: 'SP9', apply(w) {
+    MUTANTS['barril-no-ctf'].apply(w);
+    w.root.getObjectByName('mutante-barril-ctf').removeFromParent();
+  } },
 };
 
 const mutation = process.argv.find(a => a.startsWith('--mutante='))?.slice('--mutante='.length);
@@ -248,7 +289,7 @@ for (const name of selected) {
   // não a estabilidade temporal. Não confundir esse hash diferente com falha SP2.
   const unrelated = changed.filter(id => id !== spec.target);
   const killed = changed.length === 1 && changed[0] === spec.target && !results[spec.target].pass && !unrelated.length;
-  mutations.push({ name, target: spec.target, status: killed ? 'MORDIDO' : 'FALHOU-ISOLAMENTO', changed, unrelated });
+  mutations.push({ name, target: spec.target, status: killed ? 'MORDIDO' : 'FALHOU-ISOLAMENTO', changed, unrelated, measurement: results[spec.target] });
 }
 const report = { mode: 'Node/proxy-sem-GLB', baseline, mutations };
 if (json) console.log(JSON.stringify(report, null, 2));

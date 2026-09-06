@@ -120,3 +120,47 @@ Pedido posterior do coordenador: conferir `public/js/map_sertao_landscape.js` se
 - **0/1.100 centros** dos ramos instanciados de `sertao-caatinga-distante` dentro dos bounds jogáveis. A medida é dos centros, não dos extremos de cada ramo nem da visibilidade dos jogadores.
 
 Nenhuma aprovação de visual, GLB, draw calls reais ou frame time decorre desse teste. A paisagem autoral e o novo material precisam das imagens finais; varandas/GLB ainda precisam de colisão e raycast no browser. Nenhum arquivo de runtime foi editado nesta inspeção.
+
+## SP9: corpo e volume visual nos centros CTF
+
+O `map-check` encontrou um barril de 1,08 m sobre o centro B, `[12,34]`, já
+presente em `49441895`. O coordenador moveu somente esse barril para `[14,34]`.
+SP7 continua verificando que as coordenadas das três bandeiras não mudaram;
+SP9 acrescenta uma verificação física independente em cada centro atual:
+
+- `Game._collide` real, raio do jogador de 0,38 m: nenhum deslocamento acima de
+  1e-6 m é permitido. A tolerância absorve somente erro numérico.
+- Raycast vertical contra malhas visíveis do root, incluindo instâncias,
+  partindo de 1,5 m acima do chão até 0,01 m abaixo dele. Altura de corpo de
+  1,5 m e degrau máximo de 0,30 m acompanham a física de `Game._collide` e a
+  régua MAP1. Superfícies declaradas `nonSolidSurface` ficam fora da sonda.
+  O maior topo acima do chão não pode exceder o degrau.
+
+```sh
+node tools/eval/sertao-spatial-check.mjs --self-test --json > artifacts/sertao-astra/logs/spatial-final-ctf-self-test.json
+```
+
+Validação após o deslocamento: **SP1–SP9 verdes e 14/14 mutantes mordidos
+isoladamente**, exit 0. Nos três centros, o deslocamento do corpo foi zero;
+penetração MID/B zero e E 7,33e-15 m, erro numérico do plano do chão.
+
+| Mutante SP9 | Deslocamento do corpo em B | Penetração visual em B | Cláusulas vermelhas |
+|---|---:|---:|---|
+| `barril-no-ctf` | 0,38 m | 1,08 m | Somente SP9 |
+| `barril-sem-colisor` | 0 m | 1,08 m | Somente SP9 |
+| `colisor-sem-barril` | 0,38 m | 0 m | Somente SP9 |
+
+Os mutantes inserem malha e/ou colisor no mundo recém-construído. Não alteram
+as coordenadas CTF nem uma fixture de resultados. As versões com só malha e
+só colisor comprovam que as duas medições mordem independentemente. Os valores
+completos de cada alvo agora acompanham as mutações no campo `measurement`.
+
+O mutante SP7 `ctf-deslocado` passou a mover E de z=-34 para z=-35, em vez de
+z=-33: o destino antigo coincidia com outro barril e acionaria SP9 junto.
+Continua sendo um deslocamento real de um metro e reprova somente SP7.
+
+SP9 verifica os centros, não toda a área dos anéis de captura. Node não
+carrega GLBs nem simula captura, combate ou jogadores reais. O problema
+herdado de 1,08 m foi resolvido nas sondas; validação browser e travessia são
+evidências separadas do coordenador. Os JSONs anteriores do `map-check` foram
+preservados como snapshots históricos, sem nova execução pesada nesta etapa.

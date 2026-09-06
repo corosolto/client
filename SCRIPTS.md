@@ -138,8 +138,8 @@ npm run eval:sertao
 
 ## Réguas adicionais do Sertão
 
-- `eval:sertao-spatial`: oito contratos Node de texturas, estabilidade física, OBB, três rotas e coordenadas preservadas. `--self-test` executa onze mutações isoladas.
-- `eval:sertao-runtime`: Chrome real em1536×1024, sete câmeras, onze contratos de GLB carregado, varanda livre, orçamento, erros, spawn, solo e fachadas. `--mutante=NOME` precisa derrubar somente a cláusula esperada; treze mutações. Use `BASE=http://localhost:8145 ARTIFACT_DIR=...`.
+- `eval:sertao-spatial`: nove contratos Node de texturas, estabilidade física, OBB, três rotas e coordenadas preservadas. `--self-test` executa mutações isoladas, incluindo obstrução visível e física de CTF.
+- `eval:sertao-runtime`: Chrome real em1536×1024, sete câmeras, doze contratos de GLB carregado, varanda livre, orçamento, erros, spawn, solo e fachadas. `--mutante=NOME` precisa derrubar somente a cláusula esperada; quatorze mutações. Use `BASE=http://localhost:8145 ARTIFACT_DIR=...`.
 - `eval:sertao-occlusion`: quatro contratos da lista de oclusores e dos raycasts não recursivos reais de LOS/bala; `--self-test` executa sete mutações isoladas, incluindo paredes invisíveis à bala e decoração indevidamente sólida.
 - `eval:sertao-flora`: oito cláusulas geométricas de copas/exterior, com doze mutantes; conjuntos exatos e prova isolada obrigatória por cláusula.
 - `eval:sertao-mandacaru`: cinco cláusulas do helper de mandacaru, oito mutantes; silhueta, variedade, custo, envelope e compartilhamento. Não substitui captura do mapa.

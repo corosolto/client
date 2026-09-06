@@ -11,7 +11,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 const BASE = process.env.BASE || 'http://localhost:8123';
 const MUT = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
-const EXPECTED = { 'igreja-sem-oclusao': 'RV11', 'sem-corpo': 'RV1', 'sem-glb': 'RV1', 'varanda-fantasma': 'RV2', 'sem-instancing': 'RV3', 'spawn-exposto': 'RV5', 'emenda-solo': 'RV6', 'venda-madeira': 'RV7', 'trama-repetida': 'RV8', 'solo-chapado': 'RV9', 'laterais-cegas': 'RV10', 'telhado-liso': 'RV10', 'solo-ondulado': 'RV9' };
+const EXPECTED = { 'ctf-obstruido': 'RV12', 'igreja-sem-oclusao': 'RV11', 'sem-corpo': 'RV1', 'sem-glb': 'RV1', 'varanda-fantasma': 'RV2', 'sem-instancing': 'RV3', 'spawn-exposto': 'RV5', 'emenda-solo': 'RV6', 'venda-madeira': 'RV7', 'trama-repetida': 'RV8', 'solo-chapado': 'RV9', 'laterais-cegas': 'RV10', 'telhado-liso': 'RV10', 'solo-ondulado': 'RV9' };
 if (MUT && !EXPECTED[MUT]) throw Error('Mutante desconhecido');
 const OUT = process.env.ARTIFACT_DIR || `artifacts/sertao-astra/runtime${MUT ? `-${MUT}` : ''}`;
 mkdirSync(OUT, { recursive: true });
@@ -72,6 +72,18 @@ try {
    const openClear=probe._losClear(new THREE.Vector3(0,1.62,-43),new THREE.Vector3(0,1.62,-42));
    probe.ray.set(from,to.clone().sub(from).normalize());probe.ray.far=from.distanceTo(to);
    const churchHits=probe.ray.intersectObjects(w.occluders,false).filter(h=>churchMeshes.has(h.object)).length;
+   if(mutant==='ctf-obstruido'){
+     const block=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial());
+     block.position.set(12,.5,34);w.root.add(block);
+     w.colliders.push({minX:11.5,maxX:12.5,minY:0,maxY:1,minZ:33.5,maxZ:34.5});
+   }
+   w.root.updateMatrixWorld(true);
+   const ctfClear=w.ctfPoints.map(p=>{
+     const at=new THREE.Vector3(p.x,w.groundHeightAt(p.x,p.z),p.z),body=at.clone();probe._collide(body,.38);
+     const down=new THREE.Raycaster(at.clone().add(new THREE.Vector3(0,1.4,0)),new THREE.Vector3(0,-1,0),0,1.39);
+     const hits=down.intersectObject(w.root,true),penetration=Math.max(0,...hits.map(h=>h.point.y-at.y));
+     return {id:p.id,pushed:body.distanceTo(at),penetration};
+   });
    const direct = [], ray = new THREE.Raycaster();
    for (const [i,a] of w.spawns.E.entries()) for (const [j,b] of w.spawns.B.entries()) {
      const from = new THREE.Vector3(a.x, 1.62, a.z), to = new THREE.Vector3(b.x, 1.62, b.z), distance = from.distanceTo(to);
@@ -96,7 +108,7 @@ try {
    // O tile anterior alternava 128 (trama) e 220–230 (reboco), carimbado 2×2.
    // O dano agora deve ser localizado; o tile de reboco não leva a trama escura.
    const plainPlaster = !!reds?.length && Math.min(...reds) > (128 + 220) / 2;
-   return { bodies, lateralShutters, porches, direct, churchBlocks, churchHits, openClear, seamlessSoil, plasterFacades, plainPlaster, gpu: MAPEVAL.renderer.getContext().getParameter(MAPEVAL.renderer.getContext().getExtension('WEBGL_debug_renderer_info').UNMASKED_RENDERER_WEBGL) };
+   return { bodies, lateralShutters, porches, direct, ctfClear, churchBlocks, churchHits, openClear, seamlessSoil, plasterFacades, plainPlaster, gpu: MAPEVAL.renderer.getContext().getParameter(MAPEVAL.renderer.getContext().getExtension('WEBGL_debug_renderer_info').UNMASKED_RENDERER_WEBGL) };
  }, MUT);
  const shots = [['praca',[0,1.62,16],[0,3,-15]],['venda',[-5,1.62,-35],[-10,2,-25]],['poco',[-29,1.62,-21],[-21,2,-13]],['forro',[-13,1.62,15],[-22,2,20]],['leste',[27,1.62,-33],[20,2,-10]],['sul',[0,1.62,38],[1,2,15]],['aerea',[55,65,65],[0,0,0]]];
  const frames = []; let groundStd = null, groundHighRms = null;
@@ -136,6 +148,7 @@ try {
    RV9: groundStd > 2.21 * 1.15 && groundHighRms >= 6.31 / 2,
    RV10: spatial.lateralShutters,
    RV11: spatial.churchBlocks && spatial.churchHits>0 && spatial.openClear,
+   RV12: spatial.ctfClear.length===3 && spatial.ctfClear.every(p=>p.pushed<1e-6 && p.penetration<=.3),
  };
  const report = { checks, spatial, frames, groundStd, groundHighRms, errors, mutation: MUT || null };
  writeFileSync(`${OUT}/report.json`, JSON.stringify(report, null, 2));

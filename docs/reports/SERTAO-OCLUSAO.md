@@ -88,8 +88,25 @@ o `current-result.json` anterior. Saiu zero, com os seguintes diagnósticos:
 
 MAP1 permaneceu sem penetração nas amostras de chão e spawn. MAP4 mediu 549
 oclusores sem superfície sem malha, pulando 19 InstancedMesh pelo limite do
-instrumento. A bandeira B mantém o diagnóstico herdado de penetração de 1,08 m;
+instrumento. Naquele snapshot, a bandeira B ainda tinha penetração herdada de 1,08 m;
 essa sonda da bandeira é distinta das amostras de MAP1. MAP5 já excedia o teto
 impresso de 7 m no baseline (9,70 m). MAP2, MAP5 e CTF1 são diagnósticos, não
 cláusulas que determinam o exit code: saída zero não significa aprovação
 integral do mapa. Logs completos em `map-check-comparison/occluded.log`.
+
+## Centro da bandeira B desobstruído
+
+A correção posterior moveu somente o barril de `[12,34]` para `[14,34]`, mantendo
+CTF, spawns e pickups. SP9 em `sertao-spatial-check.mjs` agora usa
+`Game._collide` com raio 0,38 m e uma sonda vertical contra as malhas visíveis
+do root. A execução em
+`artifacts/sertao-astra/logs/spatial-final-ctf-self-test.json` mediu deslocamento
+zero nos três centros e penetração zero em MID/B; E teve apenas erro numérico
+de 7,33e-15 m. O diagnóstico de 1,08 m está resolvido nesta medição Node.
+
+Três contraprovas isoladas recolocam barril+colisor, apenas a malha ou apenas
+o colisor em B. Todas derrubam somente SP9: respectivamente, deslocamento /
+penetração de 0,38 / 1,08 m; 0 / 1,08 m; 0,38 / 0 m. Isso prova os dois
+instrumentos independentemente. O `occluded-result.json` anterior foi
+preservado como histórico; não é o estado final do barril. Browser e travessia
+têm validação separada pelo coordenador.

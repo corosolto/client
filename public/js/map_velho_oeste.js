@@ -761,7 +761,8 @@ export function buildVelhoOeste(scene, T) {
   for (const [x, z] of [[13,-31],[-14,-4],[14,17],[-13,36]]) {
     for (let i = 0; i < 3; i++) addCylinder(.65, 1.15, MAT.hay, x + (i - 1) * 1.25, 0, z, { collide: true, segments: 14, rz: Math.PI / 2 });
   }
-  for (const [x, z] of [[-12,-33],[12,-12],[-13,13],[12,34]]) {
+  // O barril legado coincidia com o centro CTF B; a cobertura fica dois metros ao lado.
+  for (const [x, z] of [[-12,-33],[12,-12],[-13,13],[14,34]]) {
     addCylinder(.62, 1, MAT.dark, x, 0, z, { collide: true, segments: 12 });
     addCylinder(.67, .1, MAT.metal, x, .98, z, { segments: 12 });
   }
