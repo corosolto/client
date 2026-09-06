@@ -183,5 +183,11 @@ e nenhum arquivo permaneceu em estado não mesclado. A alteração local não pu
 `map_amazonia.js` e os overlays de `tools/eval/asset-evidence/maps/` foram preservados no
 `stash@{0}` `preserva trabalho local antes de resolver conflitos do PR 527`.
 
+Na fonte pós-merge, o A/B 8×8 continuou determinístico (`sourceSha256`
+`948468c75db1d4233ae10043be0cc245949388f1f69349b1b3919659999d7ecf`): seed `13007`
+reduziu `6.855,096 ms` para `835,282 ms` (`87,815%`), seed `7` `7.254,109 ms` para
+`923,365 ms` (`87,271%`) e seed `4321` `9.367,048 ms` para `966,784 ms` (`89,679%`),
+com `sameSimulation: true` e `sameObjects: true` nos três casos.
+
 Node local padrão é 16 (sem `structuredClone`); os gates desta sessão rodaram com Node 23.6.0 do
 Homebrew, a mesma família de versão do CI (22).
