@@ -60,6 +60,7 @@ jobs:
           npm run eval:velhooeste
           npm run eval:sertao-livestock
           npm run eval:sertao-integration
+          npm run eval:sertao-sky-lifecycle
       - name: Veículos do estacionamento em escala de fábrica
         run: npm run eval:escala
       - name: Orçamento de shader WebGL1

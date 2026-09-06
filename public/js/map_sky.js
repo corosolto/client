@@ -22,9 +22,14 @@ export function setMapSky(scene, T, url, fallback = 0x9fb8cc) {
   return tex;
 }
 
+const proceduralSkies = new WeakMap();
 function setProceduralSky(scene, L) {
   const cfg = L.sky;
   if (cfg.kind !== 'procedural' || cfg.model !== 'dry-afternoon') throw new Error('Modelo de céu desconhecido');
+  delete scene.userData.skyUrl;
+  scene.userData.skySource = { kind: 'procedural', model: cfg.model };
+  const cached = proceduralSkies.get(L);
+  if (cached) { scene.background = cached; return cached; }
   const width = 1024, height = 512;
   const data = new Uint8Array(width * height * 4);
   const horizon = new THREE.Color(L.horizonte), zenith = new THREE.Color(L.zenite);
@@ -65,9 +70,8 @@ function setProceduralSky(scene, L) {
   tex.wrapS = THREE.RepeatWrapping;
   tex.minFilter = tex.magFilter = THREE.LinearFilter;
   tex.needsUpdate = true;
+  proceduralSkies.set(L, tex);
   scene.background = tex;
-  delete scene.userData.skyUrl;
-  scene.userData.skySource = { kind: 'procedural', model: cfg.model };
   return tex;
 }
 
