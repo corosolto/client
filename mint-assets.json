@@ -2296,6 +2296,30 @@
     "triangles": 3616,
     "bytes": 198532
    }
+  },
+  "palafita-aberta-amazonia": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/palafita_aberta_amazonia.glb"
+   ],
+   "source": {
+    "kind": "local-derivative",
+    "assetId": "ks78sxjjcd26vpnktrwcd2596h8d7few",
+    "packAssetId": "th74btzfmyqgvrwzv97c3svtad8d7shz",
+    "chatUrl": "https://mint.gg/chat/ph7ajexkae9z6baym58jt1ekf18d73ye",
+    "displayName": "Palafita com passarela",
+    "notes": "Derivado local com paredes/porta removidas, beiral elevado e bounds preservados. Shell navegável com portas/janelas construído em amazonia_cabins.js. Original preservado.",
+    "derivedFrom": "palafita-pro-amazonia-visual",
+    "sourceSHA256": "0acc6dd66fd3e4f25281c124f6b87a96fcd5a7e61c43d4bc21cf473e15b65594"
+   },
+   "processing": {
+    "provider": "local",
+    "tools": [
+     "tools/amazonia-cabin-asset.mjs"
+    ],
+    "finalSha256": "2d5724305e9dd7e42689692f14cec6fff4a8f84ec8e5b8948825129d276dc954",
+    "triangles": 2167
+   }
   }
  }
 }

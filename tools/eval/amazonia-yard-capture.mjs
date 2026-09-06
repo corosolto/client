@@ -10,7 +10,7 @@ export async function captureAmazoniaYard(page,out){
  });
  for(const shot of [
   {name:'galinha-pintinhos',pos:[21.4,1.1,14.5],look:[19.4,.25,12.5],t:0},
-  {name:'jacare',pos:[6.7,1.3,22.2],look:[9.4,.2,18.8],t:0},
+  {name:'jacare',pos:[6.7,1.3,22.2],look:[11.1,.2,18.8],t:0},
   {name:'canoa-amarrada',pos:[-.8,1.4,21.2],look:[2.6,.1,18.5],t:0},
   ...[7.7,7.9,8.225,8.6,8.8].map((t,i)=>({name:`peixe-${i}`,pos:[-5.4,1.1,21.6],look:[-3.4,.25,19],t}))]){
    const png=await page.evaluate(shot=>{const g=window.__game;g.vm.root.visible=false;g.camera.fov=65;g.camera.updateProjectionMatrix();g.world.update(1/24,shot.t);g.camera.position.set(...shot.pos);g.camera.lookAt(...shot.look);g.renderer.render(g.scene,g.camera);return g.renderer.domElement.toDataURL('image/png');},shot);

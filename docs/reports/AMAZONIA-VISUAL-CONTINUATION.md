@@ -395,3 +395,31 @@ AMAZONIA-TESTE-LOCAL.md. Objetivo desta rodada concluído localmente: fauna, sal
 canoas e movimento na água; atualizados thumbnail/vídeo real. Próxima ação do dono:
 Cmd+Shift+R no preview8157 e conferir quintal/margem/canal. FPS, gates genéricos
 herdados e publicação continuam pendências separadas; nenhum push/merge/deploy.
+
+## Rodada cabanas e apoios — base41eea0c1
+
+Objetivo: corrigir fauna suspensa, tornar movimento perceptível sem deslizar a
+onça deitada, abrir11cabanas para entrar/sair, proteger-se e atirar das janelas.
+Definition of done: apoios e movimento medidos, caminhada real pelos interiores,
+raios de tiro atravessam vãos e param nas paredes, imagens e crítica independente,
+preview8157 sincronizado e mídia real atualizada. Baseline AMH1/2 falha: tucano
+suspenso1,066m; papagaio2,335m; onça centro2cm acima do tronco (palpite de que todos
+flutuam refutado). Game já atualiza ambience; movimento da onça é escala1,2%.
+Root integra mapa/testes/browser; agentes com faixas novas separadas:
+cabin_shell cuida de derivadoGLB+amazonia_cabins.js; fauna_motion de
+amazonia_fauna_motion.js. Nenhum edita Game/sharedruntime. Artefatos cabin-round/.
+
+Marco cabanas/apoios: med fontec3cbf2b6 passa51rotas antigas,11entradas/11saídas,
+44aproximações às janelas e44raios livres+44peitoris bloqueantes por _fireHitscan
+real. AMH1/2/3/4 verdes; movimento de cabeça e pés/galhos fixos confirmado por
+vértices e imagens. GLB aberto2d572430 (2167tris/352964bytes) corrige plano antigo
+do telhado. Crítico independente aprovou onça/tucano e interior madeira, reprovou
+copa atravessando teto da chapa apesar dos raios verdes: novo recorte local de
+folhagem em implementação. Próximo: integrar recorte, capturar low/med finais,
+contraprovas, custo CPU local, registro/reportes, mídia real e checkpoints.
+
+Novo escopo autorizado pelo dono: terminar, atualizar com main, resolver conflitos,
+validar build e mergear. Relato adicional: bots perdidos; investigar caminhos
+reais até objetivos/interiores antes da integração. PR439 tem base antiga
+feat/times-e-mapas-completo; head remoto5c66d28b é ancestral desta branch.
+Última main consultada a551204f. Preservar checkpoint local antes do merge.

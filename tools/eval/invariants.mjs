@@ -2250,6 +2250,8 @@ skip('PX1', 'no ADS o jogador vê a arma E a mira', 'exige browser — sem arnê
 skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — sem arnês dedicado (divida PX)');
 skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — sem arnês dedicado (divida PX)');
 skip('PX4', 'aliado × inimigo distinguíveis em 1 frame a 5/20/40 m', 'exige browser — sem arnês dedicado (divida PX)');
+for(const [id,rule] of [['AMH1','fauna da Amazônia apoiada'],['AMH2','onze cabanas abertas'],['AMH3','entrar/sair e atirar das janelas com cobertura'],['AMH4','cabeças se movem sem deslocar pés/galhos']])
+  skip(id,rule,'browser dedicado: HABITAT=1 node tools/eval/amazonia-visual-capture.mjs; não inferir verde sem captura atual');
 
 // ── RELATÓRIO ───────────────────────────────────────────────────────────────
 /* KNOWN-RED.json: dívidas conhecidas viram DÍVIDA (não reprovam); crítica

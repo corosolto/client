@@ -236,3 +236,15 @@ Galinha: 5.078→4.062 triângulos, 370.588 bytes, WebP até1024. Pintinho:
 não representam animações humanoides adaptadas. Originais preservados.
 Apenas procedência, não concessão de licença: a URL oficial de termos/atribuição
 não foi confirmada. Publicação comercial permanece pendente; não declarar CC0.
+
+### Palafita aberta da Amazônia — 06/09/2026
+
+`palafita_aberta_amazonia.glb` deriva localmente de `palafita_pro_amazonia.glb`.
+Ferramenta: `tools/amazonia-cabin-asset.mjs`. Remove volume fechado e eleva beiral,
+preservando bounds, cume e postes. Piso/porta/janelas e colisores correspondentes
+são construídos por `public/js/amazonia_cabins.js`. Sem nova geração ou licença.
+Final: 2167 triângulos, 352964 bytes, SHA256
+`2d5724305e9dd7e42689692f14cec6fff4a8f84ec8e5b8948825129d276dc954`.
+Origem SHA256 `0acc6dd66fd3e4f25281c124f6b87a96fcd5a7e61c43d4bc21cf473e15b65594`.
+Khronos: zero erros, um aviso de tangent space. Recibo local em
+`artifacts/amazonia-visual/cabin-round/asset.json`. Originais preservados.
