@@ -47,19 +47,22 @@ const temp = mkdtempSync(join(tmpdir(), 'lajes-audio-fetch-'));
 try {
   for (const dir of ['scripts', 'tools/audio', 'public/audio', 'bin', 'pack']) mkdirSync(join(temp, dir), { recursive: true });
   copyFileSync(join(root, 'tools/audio/lajes-soundscape.mjs'), join(temp, 'tools/audio/lajes-soundscape.mjs'));
+  copyFileSync(join(root, 'tools/audio/complete-amazonia-soundscape.mjs'), join(temp, 'tools/audio/complete-amazonia-soundscape.mjs'));
+  const fetchFixture = { ...baseline, mapSoundscapes: { ...baseline.mapSoundscapes, corrego: donor, parque_treta: donor } };
   copyFileSync(join(root, 'tools/audio/extend-map-soundscapes.mjs'), join(temp, 'tools/audio/extend-map-soundscapes.mjs'));
   const fetch = readFileSync(join(root, 'scripts/fetch-audio.sh'), 'utf8').replaceAll('/tmp/csbrasil-audio.zip', join(temp, 'download.zip'));
   writeFileSync(join(temp, 'scripts/fetch-audio.sh'), fetch);
   writeFileSync(join(temp, 'bin/curl'), `#!/usr/bin/env bash\nwhile [ "$#" -gt 0 ]; do if [ "$1" = "-o" ]; then shift; cp "$FIXTURE_ZIP" "$1"; exit 0; fi; shift; done\nexit 2\n`, { mode: 0o755 });
   const runFetch = vercel => spawnSync('bash', ['scripts/fetch-audio.sh'], { cwd: temp, encoding: 'utf8', env: { ...process.env, VERCEL: vercel, AUDIO_PACK_URL: 'https://example.invalid/fixture.zip', AUDIO_PACK_SHA256: '', BLOB_READ_WRITE_TOKEN: '', PATH: `${join(temp, 'bin')}:${process.env.PATH}`, FIXTURE_ZIP: join(temp, 'pack.zip') } });
   const path = join(temp, 'public/audio/manifest.json');
-  writeFileSync(path, JSON.stringify(baseline));
+  writeFileSync(path, JSON.stringify(fetchFixture));
   const cached = runFetch(''); assert.equal(cached.status, 0, cached.stderr);
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.lajes, donor, 'LSA7 early exit ignorou adaptação de Lajes');
-  writeFileSync(join(temp, 'pack/manifest.json'), JSON.stringify(baseline));
+  writeFileSync(join(temp, 'pack/manifest.json'), JSON.stringify(fetchFixture));
   const zip = spawnSync('zip', ['-q', join(temp, 'pack.zip'), 'manifest.json'], { cwd: join(temp, 'pack'), encoding: 'utf8' }); assert.equal(zip.status, 0, zip.stderr);
   const fresh = runFetch('1'); assert.equal(fresh.status, 0, fresh.stderr);
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.lajes, donor, 'LSA8 unzip ignorou adaptação de Lajes');
+  assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.amazonia, { loops: donor.loops, shots: donor.shots }, 'fetch deve preparar também Amazônia');
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.escadao, donor, 'Fetch integra também Escadão');
   console.log('PASS LSA7–LSA8 fetch real em cache e após unzip, sem rede');
 

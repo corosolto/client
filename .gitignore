@@ -207,4 +207,5 @@ artifacts/ops/
 # Capturas e medições locais de Lajes
 artifacts/lajes-visual/
 
-artifacts/lajes-performance/
+# Local diagnostic captures and isolated preview snapshots.
+/artifacts/

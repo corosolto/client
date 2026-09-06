@@ -224,7 +224,7 @@ main = muta('mapa-esconde-um', main,
   "return mapCategory === 'TODOS' ? MAP_IDS : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);",
   "return mapCategory === 'TODOS' ? MAP_IDS.slice(0, -1) : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);");
 main = muta('mapa-sem-miniaturas', main,
-  '`<img class="ms-thumb-img" loading="lazy" decoding="async" src="${mapPreviewPoster(id, VERSION)}" alt="">` +',
+  '`<span class="ms-thumb-media"><img class="ms-thumb-img" loading="lazy" decoding="async" src="${mapPreviewPoster(id, VERSION)}" alt=""></span>` +',
   "'' +");
 main = muta('mapa-navega-global', main,
   "$('ms-next').onclick = () => stepMap(1, visibleMapIds());",

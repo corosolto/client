@@ -2265,6 +2265,7 @@ function runNode(script, env = {}, args = []) {
 // citado aqui NUNCA existiu no git — ponteiro fantasma). O que roda em browser
 // no CI é o portao-browser (boot real + grafite + silhueta da seleção); estas
 // PX continuam pendentes de arnês dedicado (ver KNOWN-BUGS, dívida PX).
+for (const id of ['AMH1','AMH2','AMH3','AMH4']) skip(id, 'Amazônia: apoios, cabanas, tiros e movimento', 'exige browser: HABITAT=1 node tools/eval/amazonia-visual-capture.mjs');
 skip('PX1', 'no ADS o jogador vê a arma E a mira', 'exige browser — sem arnês dedicado (divida PX)');
 skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — sem arnês dedicado (divida PX)');
 skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — sem arnês dedicado (divida PX)');

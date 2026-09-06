@@ -46,6 +46,8 @@ jobs:
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
       - name: Todo mapa devolve o que o game.js consome
         run: npm run eval:mapcontrato
+      - name: Amazônia acessível e bots entre palafitas
+        run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
       - name: Escadão — compatibilidade com pacote de áudio publicado

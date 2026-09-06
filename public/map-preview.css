@@ -1,0 +1,5 @@
+.map-preview-host { position: relative; }
+.map-hover-video { position: absolute; pointer-events: none; object-fit: cover; opacity: 0; }
+.map-hover-video.playing { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .map-hover-video { display: none; } }
+.map-preview-host .ms-diamond { z-index: 1; }
