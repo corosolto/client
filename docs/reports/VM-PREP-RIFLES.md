@@ -1,5 +1,43 @@
 # Preparação offline dos rifles
 
+## Checkpoint do sprint de 72 h — 06/09/2026
+
+Estado conferido a partir de `d090a1db`, branch `codex/vm-prep-rifles`, árvore
+limpa antes desta atualização documental. **Nenhum dos seis rifles está
+publicável como viewmodel completo.** A M4 tem aprovação de idle e incremento
+de dedos aceito pelo crítico; isso não libera sua recarga. Os outros cinco
+têm diagnóstico medido, mas nenhum novo Blender/GLB candidato dedicado nesta
+lane nem decisão visual independente de aprovação. O PR de preparação
+histórico não constitui liberação; nenhum runtime/PR foi iniciado neste checkpoint.
+
+`A` nesta tabela é `artifacts/viewmodels/prep/rifles/` desta worktree.
+Os relatórios/gates abaixo foram inspecionados, não reexecutados neste checkpoint.
+Foram recalculados os hashes dos seis GLBs próprios em `public/models/weapons/`,
+todos iguais à tabela de insumos, e dos controles M4/AK citados abaixo.
+
+| Rifle | Estado / artefatos presentes | Gates e bloqueador atual | Próximo menor passo offline |
+|---|---|---|---|
+| M4 | Bloqueado. `A/m4-approved-2a4a189d/` e `A/m4-actions-fingers-c1/` com Blender, GLB, GIFs, contato, reimport e revisão independente | Idle aprovado pelo dono; melhoria de pega aceita; 409 tracks protegidas e retorno real conferidos no teste registrado. Recarga reprovada: pele f013/f045 e colisão herdada de anelar/mínimo f062. Outras ações e Game pendentes | Ajustar somente as curvas locais de anelar/mínimo perto de f062, preservando trajetória da palma; punho exige medição transversal antes de intervenção |
+| MD97 | Bloqueado; sem novo candidato. `A/raw-md97.png`, `A/goldsrc-vm-md97-part.png` e `A/goldsrc-vm-md97-reload-half.png` | Inspeção/receita disponíveis; carregador ausente no bruto; split CLIP de 1.148 vértices inclui alça/coronha/punho. Sem gate visual de candidato ou Game | Construir só o carregador em cópia offline, usando a especificação MAG existente e verificando encaixe dianteiro; não transportar recarga bullpup |
+| Carabina | Bloqueado; sem novo candidato. `A/raw-carbine.png`, `A/goldsrc-vm-carbine-part.png` e `A/goldsrc-vm-carbine-reload-half.png` | Inspeção identifica alavanca e tubo; split Bone54 de 1.377 vértices leva alavanca/gatilho/receiver. Porta e gesto de alimentação não confirmados; recarga não pode ser autorada com segurança geométrica | Inspecionar lado oposto e tampa do tubo para localizar a alimentação; registrar ausência se não houver geometria identificável |
+| SCAR | Bloqueado; sem novo candidato. `A/raw-scar.png`, `A/goldsrc-vm-scar-part.png` e `A/goldsrc-vm-scar-reload-half.png` | Receita específica disponível; split Bone25 de 113 vértices é fragmento do pente/receiver. Sem aprovação visual de candidato; comando lateral ainda precisa ser marcado | Selecionar o carregador completo em cópia offline e provar separação sem carregar partes do receiver |
+| FAMAS | Bloqueado; sem novo candidato. `A/raw-famas.png`, `A/goldsrc-vm-famas-part.png` e `A/goldsrc-vm-famas-reload-half.png` | Arquitetura bullpup identificada; split CLIP de 903 vértices deixa parte do pente no corpo e leva receiver. Falta referência CS 1.6 FAMAS comparável e gate visual de candidato | Refazer somente a seleção do carregador traseiro e localizar o poço atrás do punho; trajetória M4 não serve |
+| M92 | Bloqueado; sem novo candidato. `A/raw-m92.png`, `A/goldsrc-vm-m92-part.png` e `A/goldsrc-vm-m92-reload-half.png` | Receita própria disponível; split Bone50 de 90 vértices é casca/faixa sob guarda-mão. `ready` herdado da família AK não é aprovação. Falta referência CS 1.6 AK comparável | Separar o pente curvo inteiro e marcar o lábio/pivô do encaixe em cópia M92 exclusiva |
+
+Medições comuns: `A/inventory.json`, `A/gltf-state.json`, `A/summary.json`,
+`A/validation.json`. O gate de preparação preservou 35 hashes e corroborou
+48 amostras B; não certifica anatomia, contatos finais ou Game. As distâncias
+nativas/C do import Blender continuam rejeitadas como prova, conforme a seção
+de limites. Cada arma mantém comparação obrigatória com CS 1.6 por categoria.
+
+Hashes recalculados neste checkpoint: M4 candidata tactical
+`20fd7f8b69b9a88238596e1bccb089ca2bafeb5ad479f08c5ebe41f54344be06`;
+M4 idle aprovada `2a4a189d89f7c3912e60660d08ab4694dc07886a775e63a265afc1f4ffd197fd`;
+AK golden `3b6ca23d7ea26017803d81f476b9d7a835eeb9f679f169ad0f520db82333df29`.
+O objetivo das seis armas permanece aberto. Decisão visual independente é
+necessária antes de iniciar integração/runtime ou publicação de candidato;
+nenhuma aprovação de produção foi inferida de testes offline.
+
 ## Handoff para Claude — aprovação visual local da M4
 
 Em 06/09/2026, depois da revisão de mãos, Ruben respondeu:
