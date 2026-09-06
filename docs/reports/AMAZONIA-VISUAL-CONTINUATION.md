@@ -451,3 +451,12 @@ Main avançou durante a validação: integrada971342e4 (alpha.225), preservando
 ops/retry novos. Conflitos apenas em blocos gerados, reconstruídos com o gerador.
 Build final anterior e7/7retestes locais passaram; hover integrado verde.
 Próximo checkpoint guarda a história completa antes da integração limpa.
+
+Crítica independente final dos bots: sem bloqueantes. Flag só Amazônia,
+nenhuma aresta termina na camada errada; seed13007 também71/71. Há transições
+baixas até0,88m entre leito e pontões: não alegar ausência de saltos verticais.
+Checkpoint188246a1 contém a integração main971342e4. Preservado pela branch
+codex/amazonia-visual e tag archive/amazonia-visual-20260906; a próxima branch
+codex/amazonia-main aplica somente o delta final sobre main, sem264commits
+legados que não satisfazem DCO/Agent. PR antigo5c66d28b terá tag de backup
+antes da atualização com force-with-lease. Merge segue autorizado pelo dono.
