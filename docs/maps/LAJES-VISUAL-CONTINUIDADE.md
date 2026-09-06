@@ -109,6 +109,16 @@ anterior. Não publicar resultado parcial nem ignorar falhas.
   no check:fast e passo Lajes do CI. Próximo: build/checks pós-merge, push normal,
   revisar preview e checks obrigatórios no SHA final; mergear PR438 sem bypass.
 
+## Marco V7: Vercel verde e sincronização de release
+
+- Head `37c7cb78` passou build Vercel após adaptação do áudio; deployment
+  `dpl_8k7qwwJ9ThzkxbYGVuEyqmSdJkpQ`. Nenhum fio de review aberto.
+- Main publicou `971342e4`/alpha.225 durante o envio. Merge de release tem
+  conflito somente em STATUS.md gerado; resolvido por regeneração. Versões
+  package/lock/runtime sincronizadas, sem alterar novamente geometria/preview.
+- Próximo: push do merge de release para disparar CI sem conflito; validar todos
+  os checks exigidos, smoke do preview final e merge da PR438.
+
 ## Marco anterior: V6 entregue localmente
 
 Pedido de06/09/2026 concluído localmente: ruas no chão muito estreitas, somente
