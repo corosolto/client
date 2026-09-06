@@ -1048,8 +1048,11 @@ export function initTextures() {
   }
 
   // --- Brazil flag (simplified) ---
+  // 5× (900×504+126): a bandeira da Praça mede 13 × 9,4 m e a 180×126 dava 13,6 px/m — a pior
+  // superfície estrutural do mapa na texel-check (06/09). O desenho continua em coordenadas
+  // de 180×126; só a escala do contexto muda.
   {
-    const c = canvas(180, 126), x = c.getContext('2d');
+    const c = canvas(900, 630), x = c.getContext('2d'); x.scale(5, 5);
     x.fillStyle = '#159a3f'; x.fillRect(0, 0, 180, 126);
     x.fillStyle = '#ffd23f'; x.beginPath();
     x.moveTo(90, 12); x.lineTo(166, 63); x.lineTo(90, 114); x.lineTo(14, 63); x.closePath(); x.fill();

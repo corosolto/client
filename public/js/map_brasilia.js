@@ -10,6 +10,7 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras } from './map_decals.js';   // pool por NOME + raycast na MALHA
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';             // cobertura medida, não coordenada à mão
+import { createWater } from './water.js';   // a MESMA água viva do Córrego (uma lâmina, um estilo)
 
 /* PEGADA NA ALTURA DO CORPO (reprovação do dono, 05/08: "problemas com o box do ônibus
    e barracas"). O colisor derivado do Box3 do GLB INTEIRO conta como parede coisas que só
@@ -498,10 +499,9 @@ export function buildBrasilia(scene, T) {
     vidroFume: lam({ color: 0x2b3237, roughness: 0.20, metalness: 0.10, envMapIntensity: 2.4 }),
     aco: lam({ color: 0x9aa0a6, roughness: 0.32, metalness: 0.85, envMapIntensity: 1.8 }),
     pintBranca: lam({ color: 0xdedbd2, roughness: 0.7 }),
-    asfalto: lam({ map: ctex(asfaltoTex(), 8, 40), roughness: 0.95 }),
-    // lâmina d'água do espelho: 0.06 = espelho perfeito de uma fonte pontual = ponto
-    // invisível. 0.24 abre o rastro de sol na água (o "glitter path") pra vários pixels.
-    agua: lam({ color: 0x2f6ea0, roughness: 0.24, metalness: 0.55, envMapIntensity: 2.2, transparent: true, opacity: 0.88 }),
+    // repeat 8×114 sobre 21×300 m = ~97 px/m nos dois eixos (era 8×40: 34 px/m ao longo da
+    // pista, abaixo do piso de 64 da texel-check — ruído isotrópico, então tilar mais é grátis)
+    asfalto: lam({ map: ctex(asfaltoTex(), 8, 114), roughness: 0.95 }),
     bronze: lam({ color: 0x5d6b4e, roughness: 0.40, metalness: 0.78, envMapIntensity: 1.7 }),   // pátina verde-escura
   };
   // mármore polido da colunata: o mapa de veio já quebra o hotspot chapado (r2), então aqui
@@ -753,6 +753,7 @@ export function buildBrasilia(scene, T) {
   const PAL_OUT = 2.2;                       // avanço da colunata em relação à fachada
   const PAL_EX = BIG ? PAL_OUT + 1.0 : 1.2;  // folga da plataforma em X (cobre a colunata)
   let PAL_ZMAX = PAL_Z + 10;   // borda norte real da Praça, medida (usada pelos marcos)
+  const PLAT_FACES = [];       // faces internas dos embasamentos do Planalto/STF
 
   for (const px of [PAL_X, -PAL_X]) {
     const ry = px > 0 ? -Math.PI / 2 : Math.PI / 2;
@@ -764,6 +765,8 @@ export function buildBrasilia(scene, T) {
       const pw = (bb.max.x - bb.min.x) + PAL_EX * 2, pd = (bb.max.z - bb.min.z) + 2.4;
       const pcx = (bb.min.x + bb.max.x) / 2, pcz = (bb.min.z + bb.max.z) / 2;
       PAL_ZMAX = Math.max(PAL_ZMAX, bb.max.z + 1.2);
+      // face interna do embasamento (para as lambes coladas à mão — ver "LAMBES DA PLATAFORMA")
+      PLAT_FACES.push({ x: pcx - Math.sign(px) * pw / 2, z0: pcz - pd / 2, z1: pcz + pd / 2, ry: px > 0 ? -Math.PI / 2 : Math.PI / 2 });
       // base em GRANITO PRETO (BAR: granito preto em bases e soleiras) + soleira de mármore.
       // AGORA COLIDE (era `collide:false`): a plataforma tinha 1,2 m de altura VISÍVEL e zero
       // colisão, então o jogador entrava 1,2 m dentro do granito e só parava na caixa
@@ -771,7 +774,10 @@ export function buildBrasilia(scene, T) {
       // "não dá pra andar na parte da água". Com 1,45 m (acima do apex do pulo, 0,61 m) a
       // plataforma vira o que ela parece: um embasamento de monumento em que não se sobe.
       addBox(pw, PL, pd, MAT.granitoPreto, pcx, 0, pcz);
-      addBox(pw + 0.3, 0.14, pd + 0.3, MAT.marmore, pcx, PL, pcz, { collide: false });
+      // Soleira 1 cm PARA DENTRO do granito (era 15 cm para fora): beiral na altura do peito
+      // sem colisor, e o beiral fazia a passada de grafite recusar ("semParede") as 28 lambes
+      // da face interna da plataforma que o layout assado de 17/08 ainda tinha.
+      addBox(pw - 0.02, 0.14, pd - 0.02, MAT.marmore, pcx, PL, pcz, { collide: false });
       // O espelho d'água que existia AQUI EM CIMA foi REMOVIDO. Ele ficava sobre a plataforma,
       // quase todo escondido embaixo do próprio prédio: sobrava um anel azul de 40 cm que
       // ninguém nunca leu como água — só como "borda azul esquisita" — e era a segunda
@@ -1065,16 +1071,23 @@ export function buildBrasilia(scene, T) {
   const GARDEN_Z = BIG ? Math.max(76, PAL_ZMAX + 14) : 50;
   {
     const PAR_H = 1.05, HW = 14.2, HD = 5.1;   // meia-largura / meia-profundidade do parapeito
-    addPlane(26.4, 8.6, MAT.agua, 0, 0.55, GARDEN_Z, 0, -Math.PI / 2);
+    // fundo de granito da bacia (como o real): é o que o depth-fade e a transparência da água
+    // viva leem — com fundo claro a lâmina saía L* 70, mais clara que o céu (crítico, 06/09)
+    addPlane(HW * 2 - 0.8, HD * 2 - 0.8, MAT.granitoPreto, 0, 0.06, GARDEN_Z, 0, -Math.PI / 2);
+    // A lâmina é a água viva compartilhada (water.js) — criada no fim do build, depois de
+    // sol e névoa existirem (ver "ESPELHO D'ÁGUA VIVO"); aqui só fica a bacia.
     // parapeito fechado nos 4 lados: granito no corpo + soleira de mármore no topo (a linha
-    // clara é o que faz a borda LER a 30 m, mesmo contra o piso claro da praça)
+    // clara é o que faz a borda LER a 30 m, mesmo contra o piso claro da praça).
+    // Soleira 1 cm PARA DENTRO do granito (era 11 cm para fora): a sonda de corpo
+    // (praca-runtime-probe PR1b) media o ombro do jogador dentro do mármore em 31 células
+    // alcançáveis a z≈77 — beiral na altura do peito sem colisor é malha atravessável.
     for (const rz of [GARDEN_Z - HD, GARDEN_Z + HD]) {
       addBox(HW * 2, PAR_H, 0.7, MAT.granitoPreto, 0, 0, rz);
-      addBox(HW * 2 + 0.3, 0.12, 0.92, MAT.marmore, 0, PAR_H, rz, { collide: false });
+      addBox(HW * 2 - 0.02, 0.12, 0.68, MAT.marmore, 0, PAR_H, rz, { collide: false });
     }
     for (const rx of [-HW + 0.35, HW - 0.35]) {
       addBox(0.7, PAR_H, HD * 2, MAT.granitoPreto, rx, 0, GARDEN_Z);
-      addBox(0.92, 0.12, HD * 2, MAT.marmore, rx, PAR_H, GARDEN_Z, { collide: false });
+      addBox(0.68, 0.12, HD * 2 - 0.02, MAT.marmore, rx, PAR_H, GARDEN_Z, { collide: false });
     }
     for (const gx of [-22, 22]) addPlane(10, 12, lam({ map: ctex(cerradoTex(), 3, 4) }), gx, 0.04, GARDEN_Z, 0, -Math.PI / 2);
   }
@@ -1237,12 +1250,12 @@ export function buildBrasilia(scene, T) {
        Box3 do próprio GLB, que é a mesma caixa de onde saem `cx`/`w` logo abaixo. */
     const _dmix = (n) => { let v = (n * 2654435761) >>> 0; v ^= v >>> 15; v = Math.imul(v, 2246822519) >>> 0; v ^= v >>> 13; v = Math.imul(v, 3266489917) >>> 0; return (v ^ (v >>> 16)) >>> 0; };
     const _dmat = new Map(), _usados = [];
-    const decal = (x, y0, z, ry, alt, larg) => {
-      if (!T.decals || !T.decalAspects || !D_MURAL.length) return null;
+    const decal = (x, y0, z, ry, alt, larg, pool = D_MURAL) => {
+      if (!T.decals || !T.decalAspects || !pool.length) return null;
       const k = _dmix(_dmix(Math.round(x * 10) + 9973) + Math.round(z * 10) * 131 + 7);
-      let i = D_MURAL[k % D_MURAL.length];        // anti-repetição: arte repetida a menos de
-      for (let t = 0; t < D_MURAL.length; t++) {  // 30 m em fachada de bloco lê como falha de
-        const j = D_MURAL[(k + t) % D_MURAL.length];   // asset, não como cidade pichada
+      let i = pool[k % pool.length];              // anti-repetição: arte repetida a menos de
+      for (let t = 0; t < pool.length; t++) {     // 30 m em fachada de bloco lê como falha de
+        const j = pool[(k + t) % pool.length];    // asset, não como cidade pichada
         if (!_usados.some((u) => u.i === j && Math.hypot(u.x - x, u.z - z) < 30)) { i = j; break; }
       }
       const asp = T.decalAspects[i] || 1;
@@ -1290,6 +1303,17 @@ export function buildBrasilia(scene, T) {
         decal(cx + s * w * 0.24, BIG ? 5.2 : 0.6, bb.max.z + 0.35, 0, BIG ? 5.0 : 2.8, w * 0.44);
       }
     }
+    /* LAMBES DA PLATAFORMA (Planalto/STF). O layout assado de 17/08 tinha 28 lambes na face
+       interna do embasamento (x ≈ ±10,9, y ≈ 1,0) e a passada de hoje não as produz mais: o
+       embasamento tem 1,45 m e a passada só aceita parede ≥ 1,8 m (MIN_ALT_PAREDE, cartaz em
+       caixa não é parede). Regerar o layout (obrigatório ao mexer no mapa) apagava as 28 —
+       e é a parede que o jogador do spawn norte encosta. Aqui elas entram À MÃO, a cada
+       4,6 m, com o mesmo `paredeAtras` contra a malha; a passada as vê como vaga ocupada. */
+    for (const f of PLAT_FACES) {
+      const lado = f.ry < 0 ? -1 : 1;   // normal da face: -x (leste) ou +x (oeste)
+      for (let z = f.z0 + 2.4; z < f.z1 - 1.8; z += 4.6)
+        decal(f.x + lado * 0.03, 0.22, z + (_dmix(Math.round(z * 7)) % 100) / 100 - 0.5, f.ry, 1.0, 1.7, D_LAMBE.concat(D_TAG));
+    }
   }
 
   /* ---------------- gameplay cover: props do 8 de janeiro ---------------- */
@@ -1314,8 +1338,12 @@ export function buildBrasilia(scene, T) {
     putBuilding('tent', { x: tx, z: tz, targetH: 1.7, ry, occ: 'mesh' });
   // a few Correios/SEDEX parcels still around for variety (Brazilian postal boxes)
   const crateMats = [lam({ map: T.crate }), lam({ map: T.crate2 || T.crate })];
-  for (const [i, [cx, cz, lv]] of [[11, 2, 0], [-11, 0, 0], [11, 3.6, 1], [-5, 18, 0]].entries())
-    addBox(1.6, 1.6, 1.6, crateMats[i % 2], cx, lv * 1.6, cz, { ry: (cx * 7 % 10) / 22, pad: -0.05 });
+  // A caixa de cima estava em z=3,6 sobre uma de baixo em z=2: 1,6 m de caixa no AR, só a
+  // aresta encostava (captura caixas-leste.png, 06/09; sonda PR1b: cabeça a 1,6 m debaixo
+  // dela). Agora é um volume MENOR (1,3 m) em cima da de baixo, mesma rotação e centro a
+  // ≤ 15 cm: nenhuma quina sobra para fora da pegada — o olho (1,62 m) não entra nela.
+  for (const [i, [cx, cz, lv, sz]] of [[11, 2, 0, 1.6], [-11, 0, 0, 1.6], [11.1, 2.1, 1, 1.3], [-5, 18, 0, 1.6]].entries())
+    addBox(sz, sz, sz, crateMats[i % 2], cx, lv * 1.6, cz, { ry: ((lv ? 11 : cx) * 7 % 10) / 22, pad: -0.05 });
 
   /* ---------------- ônibus quebrado do DF (Mint GLB — cover grande, CENTRAL) ---------------- */
   // "Amarelinho" gerado no Mint, atravessado no meio da Esplanada (quebrado, encostado).
@@ -1615,6 +1643,60 @@ export function buildBrasilia(scene, T) {
     }
   }
 
+  /* ---------------- HORIZONTE: o que existe atrás dos ministérios ----------------
+     Baseline de 06/09/2026 (piloti-leste-corredor.png, ministerio-empena.png): das rotas de
+     flanco sob os pilotis o jogador via a pista do Eixo e depois um plano de cerrado até a
+     névoa — nenhuma silhueta em 468 raios horizontais (praca-contract-check PA2: 1 %). Na
+     Esplanada real, atrás de cada fileira de ministérios há os ANEXOS (4-5 pavimentos, mesma
+     pele branca) colados a um arvoredo denso, e mais longe os setores altos. Aqui é só isso,
+     no vocabulário do BAR-CONSISTENCIA (§3.4: fundo distante chapado, dentro da família):
+       · anexos: caixas brancas com faixas de janela, a ~14 m das pistas;
+       · SEM arvoredo: duas tentativas (copa em cutout com tronco; massa chapada) foram
+         reprovadas pelo crítico limpo de 06/09 — a névoa deste mapa iguala tudo a 60-90 m
+         em L* ≈ 50-55 (medido: copa 41 × anexo 42; massa 54 × anexo 51), então árvore
+         distante vira mancha cinza na mira do vão entre ministérios. Anexo e setor bastam
+         para o horizonte deixar de ser vazio (PA2: 1 % → 93 %);
+       · setores: prismas altos a ~130 m, que a névoa (24 % a 80 m, 88 % a 220 m) já lava.
+     Tudo fora dos bounds (|x| ≤ 45,5), sem colisor, sem occluder, sem sombra; 2 draw calls
+     instanciados (medido antes: 314 calls / 651 k tris, teto 350 / 740 k). ?horizonte=0 tira. */
+  if (QP.get('horizonte') !== '0') {
+    const ROAD_OUT = ROAD_IN + ROAD_W;                 // borda externa da pista do Eixo
+    const hz = (n) => { const v = Math.sin(n * 91.7 + 13.1) * 43758.5453; return v - Math.floor(v); };
+    // pele do anexo: faixas horizontais de janela (a caixa estica só no comprimento, e faixa
+    // horizontal esticada continua faixa — por isso NÃO tem montante vertical)
+    const fachadaTex = (pav) => {
+      const S = 256, c = cvs(S, S), x = c.getContext('2d');
+      x.fillStyle = '#d8d6cc'; x.fillRect(0, 0, S, S);
+      const h = S / pav;
+      for (let i = 0; i < pav; i++) {
+        const y0 = i * h;
+        x.fillStyle = '#39434b'; x.fillRect(0, y0 + h * 0.26, S, h * 0.50);       // fita de vidro
+        x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(0, y0 + h * 0.30, S, 2);  // brilho do peitoril
+        x.fillStyle = 'rgba(0,0,0,.18)'; x.fillRect(0, y0 + h * 0.72, S, 3);         // sombra da laje
+      }
+      return c;
+    };
+    const matAnexo = lam({ map: ctex(fachadaTex(4), 1, 1), roughness: 0.9 });
+    const matSetor = lam({ map: ctex(fachadaTex(10), 1, 1), roughness: 0.9 });
+    const anexos = [], setores = [];
+    for (const sx of [-1, 1]) {
+      // anexos: fileira paralela ao Eixo, vãos de rua entre eles
+      for (let i = 0; i < 7; i++) {
+        const z = -138 + i * 46 + (hz(i + sx * 9) - 0.5) * 6, len = 30 + hz(i * 3 + sx) * 8, alt = 12 + hz(i * 7 + sx * 2) * 5;
+        anexos.push({ x: sx * (ROAD_OUT + 14), y: alt / 2, z, sx: 12, sy: alt, sz: len });
+      }
+      // setores altos: prismas escalonados, mais longe
+      for (let i = 0; i < 5; i++) {
+        const z = -120 + i * 60 + (hz(i * 5 + sx * 3) - 0.5) * 20, alt = 26 + hz(i * 11 + sx) * 16;
+        setores.push({ x: sx * (ROAD_OUT + 55 + hz(i + sx * 7) * 18), y: alt / 2, z, sx: 18 + hz(i * 2) * 10, sy: alt, sz: 22 + hz(i * 4 + sx) * 12 });
+      }
+    }
+    for (const im of [
+      addInst(new THREE.BoxGeometry(1, 1, 1), matAnexo, anexos, { shadow: false }),
+      addInst(new THREE.BoxGeometry(1, 1, 1), matSetor, setores, { shadow: false }),
+    ]) if (im) { im.userData.pracaHorizonte = true; im.receiveShadow = false; }
+  }
+
   /* ---------------- lighting & sky ---------------- */
   // Céu do Planalto Central (BAR §4.1): azul PROFUNDO no zênite (1.172 m de altitude, ar
   // seco), clareando muito rápido perto do horizonte, e a poeira da seca deixando a faixa
@@ -1673,6 +1755,34 @@ export function buildBrasilia(scene, T) {
   // Rebote: no cerrado seco o rebote dominante vem do CHÃO (palha/laterita), não do céu.
   const fill = new THREE.DirectionalLight(SKY2 ? 0xc9b98f : 0xaecbe8, SKY2 ? 0.20 : 0.35);
   fill.position.set(-32, 22, 28); scene.add(fill);
+
+  /* ---------------- ESPELHO D'ÁGUA VIVO ----------------
+     Era um MeshStandardMaterial 0x2f6ea0 com metalness 0,55: na captura 3:2 de 06/09
+     (espelho-dagua-norte) a lâmina lia como faixa azul-marinho quase preta, sem céu. A
+     referência (espelho do Planalto/Congresso) é clara: reflexo do céu e da fachada. Entra
+     pela MESMA água viva do Córrego (water.js: depth-fade, espuma de contato, onda) — uma
+     lâmina, um estilo (BAR-CONSISTENCIA §3). Bacia de 55 cm: escala de profundidade 0,6 m,
+     onda quase parada. Sol, cor de céu e névoa vêm do que ESTE mapa acabou de declarar, não
+     do LOOK (a Praça não tem entrada em look.js e ganhar uma mudaria céu e bloom inteiros).
+     Régua: tools/eval/praca-contract-check.mjs (PA1). ?agua=0 volta ao plano antigo. */
+  let aguaEspelho = null;
+  if (QP.get('agua') !== '0') {
+    aguaEspelho = createWater(scene, T, 'praca_poderes', {
+      nivel: 0.55, centro: [0, GARDEN_Z], tamanho: [26.4, 8.6], segmentos: 8,
+      raso: 0x4a6d80, fundo: 0x2b4a5c, marLonge: 0x7d9cbb,   // exposição ACES do jogo (~1,4) clareia: estas cores dão L* ≈ 50 de perto (crítico: 72 lia mais claro que o céu)
+      profEscala: 0.6, espumaFaixa: 0.22, espumaMiolo: 0.06, profFallback: 0.5,
+      fluxo: [0, 0], ampEscala: 0.05, parent: root,
+    });
+    const u = aguaEspelho.material.uniforms;
+    u.uSolDir.value.copy(sun.position).normalize();
+    u.uSolCor.value.copy(sun.color);
+    u.uCeuCor.value.set(SKY2 ? 0x9fbdd2 : 0xbfd8ee);   // faixa baixa do gradiente do céu deste mapa
+    if (scene.fog) { u.uFogCor.value.copy(scene.fog.color); if (scene.fog.isFogExp2) u.uFogD.value = scene.fog.density; }
+    aguaEspelho.mesh.userData.nonSolidSurface = true;
+  } else {
+    addPlane(26.4, 8.6, lam({ color: 0x2f6ea0, roughness: 0.24, metalness: 0.55, envMapIntensity: 2.2, transparent: true, opacity: 0.88 }),
+      0, 0.55, GARDEN_Z, 0, -Math.PI / 2);
+  }
 
   /* ---------------- ground height (flat) ---------------- */
   function groundHeightAt() { return 0; }
@@ -1805,6 +1915,7 @@ export function buildBrasilia(scene, T) {
 
   return {
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi,
+    update(dt) { if (aguaEspelho) aguaEspelho.update(dt); },   // relógio da onda (game.js:_update)
     /* BANDEIRAS DO CTF — DECLARADAS PELO MAPA (06/08). Os nomes CONGRESSO/ÔNIBUS/CATEDRAL
        moravam no fallback do game.js e vazavam pra QUALQUER mapa sem declaração — o dono
        viu "CONGRESSO" jogando na piscina. Agora o nome mora onde o monumento mora.
