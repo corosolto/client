@@ -19,6 +19,55 @@ Código produtor: `0f28fbacc69bcebf1a5f3442e3d1e5069d1364df`.
 Esses assets não estão no Git: continuar nesta máquina, ou transportar os
 insumos privados por um canal próprio autorizado; apenas clonar o PR não basta.
 
+## M4 — marco tático C1, 06/09/2026 — candidato reprovado, checkpoint técnico
+
+Escopo deste marco foi somente `reload_tactical`: não alterou o idle aprovado,
+runtime, materiais compartilhados, AK golden, servidor ou navegador. A fonte é
+`tools/viewmodels/prep/rifles-m4-actions-{lib,build,export,inspect,verify}.*`;
+os artefatos privados ficam em `A/m4-actions-c1/`. A partir da cópia conferida
+do Blender aprovado (`6925c7…e26`), o construtor separa o carregador real em
+objeto próprio (313 vértices, 223 faces; corpo 7.468 → 7.155 vértices) e produz
+um clipe de 72 frames/2,4 s a 30 fps. A GLB mais recente é
+`A/m4-actions-c1/m4-actions-runtime.glb`, SHA-256
+`6c48a225f265785cf92410dccdd69712e085b1c6dcf54f1ab4aa09221422cb7e`.
+
+O arco é legível nas capturas 3:2 e 16:9: retirada completa em f020,
+reinserção em f043 e assentamento em f045. A medição registra primeira saída
+do poço em f014 e primeiro reassentamento em f045; os eventos de jogo de
+0,432/1,488/2,064 s foram autorados em 0,433/1,500/2,067 s (desvios de
+1,33/12,00/2,67 ms). Há `f013`, `f020`, `f043` e `f045` em 3:2, 16:9, close e
+ângulo oposto em `A/m4-actions-c1/evidence/reload_tactical/`.
+
+O reimport offline da GLB com `GLTFLoader`/`AnimationMixer` passa: duração
+2,400000095 s, 211 tracks, uma track de peso da manga e delta máximo de matriz
+de início/fim `3,23e-7`; o peso do morph está em zero no idle e ao fim. É prova
+CPU da GLB, não certificação WebGL/Game.
+
+### Crítica independente e bloqueio
+
+O crítico independente reprovou a frente tática. Nos IDs de material, verde é
+pele: f013 conserva fragmentos no pulso esquerdo nas duas câmeras e f045
+conserva fragmentos na principal e uma ponta na oposta. f020 e f043 limparam,
+mas isso não satisfaz os quatro frames críticos. A shape key local
+`reload_cuff_cover_l` move 213 vértices da manga até 14 mm, é exportada no
+clipe e zera nos limites; dois ajustes de sua curva/cobertura não fecharam a
+fenda. Não fazer uma terceira mudança geométrica sem decisão técnica.
+
+O contacto agora é medido por vértices deformados da luva contra BVH do
+carregador, sem alegação de AABB ou ponta de osso. Só o polegar chega a
+0,111 mm (72 vértices até 5 mm); indicador/médio/anelar/mínimo ficam pelo
+menos a 13,761/17,434/10,792/6,456 mm. Portanto a silhueta sugere pega, mas
+não a demonstra. A retirada/reinserção e o retorno offline passaram; manga e
+contacto da mão reprovaram.
+
+**Pergunta para Astra:** para o próximo e único round autorizado, prefere
+modelar uma extensão de manga específica da ação que cubra a fenda mantendo
+f000/f072 no zero, ou reposicionar os quatro dedos e aceitar o pulso existente
+como bloqueador separado? A correção mais barata indicada pela crítica é curvar
+e aproximar só os quatro dedos na fase `hold-mag`, mas ela não resolve a pele
+exposta. Não integrar nem apresentar como pronto antes dessa decisão e nova
+crítica independente.
+
 ### Instrução de retomada para Claude
 
 1. Assuma esta frente sequencialmente, na mesma worktree
