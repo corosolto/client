@@ -224,6 +224,15 @@ revisão local já falhou, não houve partida real; navegador e servidor foram e
 O próximo experimento só pode atacar alvo/offset de palma/orientação dos dedos, preservando
 esta prova e o `IK_L_SKIP` público.
 
+Essa hipótese foi explorada e reprovada no checkpoint `1c435f08`, ainda só no arnês local:
+o alvo `fore [-0,055, 0,075, 0,09616]` com 128 iterações reduziu a folga esquerda para
+até 3,614 mm nas oito amostras crouch/crouchwalk e o resíduo CCD para até 1,463 mm. Curls
+0,3/0,6/1,0/1,4 foram comparados; 1,0 foi o menos ruim, mas duas críticas independentes
+reprovaram dedos em garra vertical, compressão/atravessamento e desaparecimento no receptor,
+além de braços rígidos. Não há ajuste seguro só de alvo/CCD/curl. Próximo candidato exige
+retarget/pose da mão esquerda (palma e falanges) e possível ajuste de mount; sem fonte,
+GLB, PR, partida ou deploy público alterados. Navegador e servidor 8194 foram encerrados.
+
 M4 tactical Terra foi rejeitada no checkpoint `29f07868`, sem tocar idle/runtime/materiais:
 magazine real/readable e reimport/retorno2,4s passam, mas frames13/45 ainda expõem pele
 no punho L e somente polegar fica a<=5mm do pente; indicador/médio/anel/mínimo medem
