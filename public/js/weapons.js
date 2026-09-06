@@ -95,7 +95,7 @@ const CFG = {
   mosin:     { len: 1.20, rot: [0, 270, 0], gripZ: 0.66, vm: 0.75 },  // +180: estava invertido
   // +180: a boca crua aponta −Z (Bandeirante de coronha pra frente — BUG-86a).
   // Régua: weapon-scale-check cláusula C; mutante `flip` devolve o defeito.
-  mosquete:  { len: 1.45, rot: [0, 180, 0], gripZ: 0.68 },
+  mosquete:  { len: 1.15, rot: [0, 180, 0], gripZ: 0.68 },
   rem700:    { len: 1.15, rot: [0, 270, 0], gripZ: 0.66, vm: 0.78 },  // +180: estava invertido
   // arsenal-3 (military)
   lmg:       { len: 1.10, rot: [0, 90, 0], gripZ: 0.58, vm: 0.72 },   // vm: caixão preto gigante na tela
