@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 38,169 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 38,132 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,350** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,367 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -51,7 +51,7 @@ this page was aging at the very first commit — see
 | Playable characters | 44, in 5 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 13 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 233 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Harness scripts | 236 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Pipeline scripts | 58 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.0.0-alpha.224` | `public/js/version.js` and `package.json` (match) |
@@ -223,7 +223,7 @@ The maps registered today, and which mode each one opens in:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,941 |
+| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,905 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,964 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
