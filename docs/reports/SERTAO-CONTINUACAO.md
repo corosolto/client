@@ -352,3 +352,28 @@ Próximo passo: branch limpa `codex/sertao-main`, criada nesta MESMA worktree,
 merge squash de três vias da fonte preservada, commits pequenos com DCO/Agent,
 gates/build/crítica e PR contra main. Não houve merge nem alteração de backend.
 Memorial continua rejeitado/fora; os caprinos usam o mesmo modelo Mint.
+
+### Main226 integrada e criação revalidada
+
+Submissão limpa em `codex/sertao-main`, nesta mesma worktree. Todos os conflitos
+resolvidos preservando Lajes/pipa/ops; o módulo/teste de preview Lajes permanece
+idêntico à main. Preview Sertão agora `sertao_map_preview.js`, gate correspondente
+`sertao-map-preview-check.mjs`; comandos npm existentes preservados.
+
+Na árvore integrada: LG8/8 e RV12/12, máximo488drawcalls/352776triângulos sem
+alterar tetos. PV7 mede alinhamento do vídeo com o thumbnail; mutação que desloca
+20px reprova somentePV7. Browser real alternou Sertão→Lajes→Sertão, um vídeo ativo
+por vez; ESC fechou setup e pausou. Capturas3:2 em `main226-menu/`, `main226-runtime/`
+e `main226-livestock/`, dentro de `artifacts/sertao-astra/`.
+
+Crítico independente encontrouP2: céu procedural alocava2MiB por reconstrução.
+`e438455f` memoiza por LOOK. Régua antes:4texturas/8MiB; depois:1textura/2MiB,
+configurações diferentes preservadas. SK1–SK2 e dois mutantes passaram; gate
+ligado a check:fast eCI. Crítico não encontrou outroP1/P2 concreto na integração.
+A prévia foi capturada novamente após essa correção, sem alterar hashes à mão.
+
+LOOK2/2 passou (Córrego usa medição assada documentada; Sertão mede texels reais).
+Ambience-registry: Sertão AR1/AR2/AR3 passa; AR1 global continua vermelho nos onze
+outros mapas listados em `logs/main226-ambience.log`, problema herdado da main.
+Próximo: finalizar gates globais/build/movimento, publicar PR limpo e aguardar
+checks/revisão antes do merge autorizado. Memorial permanece fora/reprovado.
