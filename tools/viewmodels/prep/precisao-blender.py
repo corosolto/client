@@ -121,13 +121,20 @@ def amostrar(nome, t):
     bvh = BVHTree.FromPolygons(vs, fs)
     matrizes_glb = gltf.mundo(gj, gb, nome, t)
     glb_por_nome = {n.get('name'): matrizes_glb[i] for i,n in enumerate(gj['nodes'])}
+    nlerp = gltf.mundo(gj, gb, nome, t, rotation_interpolation='nlerp') if a.timing else None
+    nlerp_por_nome = {n.get('name'): nlerp[i] for i,n in enumerate(gj['nodes'])} if nlerp else {}
     d = {'clip': nome, 'time_s': t, 'frame_60': t*60, 'weapon_bounds': caixa(vs), 'bone_surface_distance': {}, 'mechanism_world': {}, 'hand_surface_distance': {}, 'gltf_joint_position_errors': {}, 'piece_distances': {}}
+    if a.timing:
+        d['nlerp_diagnostic_errors'] = {}
     for rig in rigs:
         for b in rig.pose.bones:
             if b.name in glb_por_nome:
                 alvo = glb_por_nome[b.name][:3,3]
                 erro = (rig.matrix_world @ b.head - Vector((alvo[0],-alvo[2],alvo[1]))).length
                 d['gltf_joint_position_errors'][b.name] = erro
+                if a.timing:
+                    alvo_nlerp = nlerp_por_nome[b.name][:3,3]
+                    d['nlerp_diagnostic_errors'][b.name] = (rig.matrix_world @ b.head - Vector((alvo_nlerp[0], -alvo_nlerp[2], alvo_nlerp[1]))).length
             if b.name in ('hand_l','hand_r','index_03_l','index_03_r','thumb_03_l','thumb_03_r'):
                 pos = rig.matrix_world @ b.head
                 hit = bvh.find_nearest(pos)

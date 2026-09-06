@@ -26,7 +26,7 @@ def trs(n):
     m[:3,:3]=np.array([[1-2*(y*y+z*z),2*(x*y-z*w),2*(x*z+y*w)],[2*(x*y+z*w),1-2*(x*x+z*z),2*(y*z-x*w)],[2*(x*z-y*w),2*(y*z+x*w),1-2*(x*x+y*y)]]) @ np.diag(n.get('scale',[1,1,1]))
     m[:3,3]=n.get('translation',[0,0,0]);return m
 
-def mundo(j,b,nome='idle',t=0):
+def mundo(j,b,nome='idle',t=0,rotation_interpolation='slerp'):
     nodes=[dict(n) for n in j['nodes']]
     anim=next((a for a in j.get('animations',[]) if a['name']==nome),None)
     if anim:
@@ -39,7 +39,7 @@ def mundo(j,b,nome='idle',t=0):
                 if c['target']['path']=='rotation':
                     dot=np.dot(u,v)
                     if dot<0:v=-v;dot=-dot
-                    if dot<.9995:
+                    if dot<.9995 and rotation_interpolation=='slerp':
                         ang=np.arccos(np.clip(dot,-1,1));v=(np.sin((1-f)*ang)*u+np.sin(f*ang)*v)/np.sin(ang)
                     else:v=u*(1-f)+v*f
                     v=v/np.linalg.norm(v)

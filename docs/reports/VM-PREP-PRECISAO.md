@@ -24,6 +24,9 @@ inspeção histórica. Renders em `timing-baseline/evidence/` e `timing-c1/evide
 Erro máximo joint Blender/glTF após retime: Mosin 3,60843e-6, SVD 3,30500e-6,
 SKS 1,63389e-5 unidades. **SKS excede o limite histórico 1e-5; não aceitar
 paridade sem investigar precisão/interpolação.** A régua não foi afrouxada.
+O diagnóstico extra de `precisao-gltf.py` mostrou que o restante do SKS é
+compatível com a interpolação de quaternions do Blender entre chaves, não com
+uma mudança de duração ou de amostragem do GLB de origem.
 
 Na SVD, o par reload_empty .62 praticamente não muda visualmente; alinhamento
 de endpoints não prova melhora de pegada. Na Mosin, a distância do joint hand_l
