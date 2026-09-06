@@ -30,9 +30,10 @@ await page.waitForSelector('#splash-enter:not(.hidden)', { timeout: 30000 });
 await page.keyboard.press('Enter');
 await page.waitForSelector('#boot-splash', { state: 'detached', timeout: 5000 });
 await page.waitForSelector('#main-menu:not(.hidden)', { timeout: 30000 });
+await page.click('.cs-item[data-act="jogar"]');
 await page.click('.cs-item[data-act="ctf"]');
-await page.waitForSelector('#menu-setup.open', { timeout: 5000 });
-await page.click('#btn-jogar');
+await page.waitForSelector('#map-screen:not(.hidden)', { timeout: 5000 });
+await page.click('#ms-continue');
 await page.click(`.team-card[data-faction="${TEAM}"]`);
 await page.waitForFunction(() => !document.getElementById('char-select')?.classList.contains('hidden'), null, { timeout: 15000 });
 // espera os GLBs carregarem e os thumbs trocarem

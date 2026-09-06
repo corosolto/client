@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Míticos · revisão visual</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#16191d;color:#eee;font:15px system-ui}header{padding:16px 24px;border-bottom:1px solid #42474e}h1{font-size:21px;margin:0 0 12px}label{display:inline-flex;gap:8px;align-items:center;margin:4px 15px 4px 0}select,button{background:#30353c;color:white;border:1px solid #69727c;border-radius:5px;padding:8px;font:inherit}#stage{height:calc(100vh - 164px);min-height:400px}canvas{display:block;width:100%;height:100%}footer{padding:12px 24px;color:#b8c2cd;font-size:13px}#status{margin-left:12px}
+</style>
+<script type="importmap">{"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/addons/"}}</script>
+<header><h1>Míticos / Lendas · revisão visual</h1>
+<label>Personagem <select id="character"></select></label>
+<label>Pose <select id="pose"><option value="idle">Seleção</option><option value="bind">Modelo em repouso</option><option value="walk">Andando</option><option value="run">Correndo</option><option value="crouch">Agachado</option></select></label>
+<label><input id="weapon" type="checkbox" checked> Arma</label>
+<button id="front">Frente</button> <button id="side">Lado</button> <button id="back">Costas</button> <button id="pause">Pausar</button><span id="status">Carregando…</span></header>
+<div id="stage"></div>
+<footer>Arraste para girar; use a roda para aproximar. Modelos e animações do jogo, em iluminação de inspeção. Esta bancada não substitui a aprovação em partida.</footer>
+<script type="module">
+import * as THREE from 'three';
+import { CHARACTERS, charWeapon } from '/js/characters.js';
+import { preloadCharacterAssets, buildCharacterModel } from '/js/glbchars.js';
+const $ = (id) => document.getElementById(id);
+const roster = CHARACTERS.filter((entry) => entry.team === 'M');
+for (const entry of roster) $('character').add(new Option(entry.name, entry.id));
+const initial = new URLSearchParams(location.search).get('char');
+if (roster.some((entry) => entry.id === initial)) $('character').value = initial;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+$('stage').appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x17191d);
+scene.add(new THREE.HemisphereLight(0xdde8ff, 0x4a3528, 2.1));
+const key = new THREE.DirectionalLight(0xffffff, 3); key.position.set(3, 5, 4); scene.add(key);
+const rim = new THREE.DirectionalLight(0x88aaff, 1.5); rim.position.set(-4, 3, -3); scene.add(rim);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshStandardMaterial({ color: 0x30343b, roughness: 0.95 }));
+floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const camera = new THREE.PerspectiveCamera(36, 1, 0.01, 100);
+const orbit = { target: new THREE.Vector3(), update() { camera.lookAt(this.target); } };
+let built, paused = false, token = 0, radius = 4;
+let dragging = false;
+renderer.domElement.onpointerdown = (event) => { dragging = true; renderer.domElement.setPointerCapture(event.pointerId); };
+renderer.domElement.onpointerup = () => { dragging = false; };
+renderer.domElement.onpointercancel = () => { dragging = false; };
+renderer.domElement.onpointermove = (event) => {
+  if (!dragging) return;
+  const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(orbit.target));
+  spherical.theta -= event.movementX * 0.008;
+  spherical.phi = THREE.MathUtils.clamp(spherical.phi - event.movementY * 0.008, 0.1, Math.PI - 0.1);
+  camera.position.copy(orbit.target).add(new THREE.Vector3().setFromSpherical(spherical));
+};
+renderer.domElement.addEventListener('wheel', (event) => {
+  event.preventDefault();
+  const offset = camera.position.clone().sub(orbit.target);
+  offset.setLength(THREE.MathUtils.clamp(offset.length() * Math.exp(event.deltaY * 0.001), 0.3, 20));
+  camera.position.copy(orbit.target).add(offset);
+}, { passive: false });
+function view(direction) {
+  camera.position.copy(orbit.target).add(new THREE.Vector3(...direction).normalize().multiplyScalar(radius));
+  camera.lookAt(orbit.target); orbit.update();
+}
+function frame() {
+  built.group.updateMatrixWorld(true);
+  const box = new THREE.Box3(), point = new THREE.Vector3();
+  built.group.traverse((object) => {
+    if (!object.isSkinnedMesh) return;
+    for (let i = 0; i < object.geometry.attributes.position.count; i++) {
+      object.getVertexPosition(i, point); point.applyMatrix4(object.matrixWorld); box.expandByPoint(point);
+    }
+  });
+  if (box.isEmpty()) throw new Error('Modelo sem malha animada');
+  orbit.target.copy(box.getCenter(new THREE.Vector3()));
+  const size = box.getSize(new THREE.Vector3());
+  radius = Math.max(size.y, size.x / camera.aspect) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.25;
+  view([0.38, 0.05, 1]);
+}
+// Share the initial load: the production clip cache is populated asynchronously.
+const assetsReady = preloadCharacterAssets(roster.map((entry) => entry.id));
+async function load() {
+  const current = ++token; $('status').textContent = 'Carregando…';
+  window.REVIEW_READY = null; window.REVIEW_STATE = null;
+  const id = $('character').value, pose = $('pose').value;
+  await assetsReady; if (current !== token) return;
+  if (built) { scene.remove(built.group); built.mixer?.stopAllAction(); }
+  const def = roster.find((entry) => entry.id === id);
+  built = buildCharacterModel(def, { weapon: $('weapon').checked && pose !== 'bind', weaponId: charWeapon(id), preview: pose === 'idle' });
+  if (!built?.isGLB) throw new Error('Modelo GLB indisponível');
+  scene.add(built.group);
+  if (pose !== 'bind') {
+    built.ctrl.setCrouch?.(pose === 'crouch');
+    for (let i = 0; i < 60; i++) built.ctrl.update(1 / 60, pose === 'walk' || pose === 'run' ? 1 : 0, false, pose === 'run' ? 1.9 : 1);
+  }
+  frame(); $('status').textContent = def.name;
+  window.REVIEW_READY = id;
+  window.REVIEW_STATE = { id, pose, weapon: $('weapon').checked && pose !== 'bind' };
+}
+for (const id of ['character', 'pose', 'weapon']) $(id).onchange = () => load().catch(showError);
+function showError(error) { window.REVIEW_READY = null; window.REVIEW_STATE = null; $('status').textContent = error.message; console.error(error); }
+$('front').onclick = () => view([0, 0, 1]); $('side').onclick = () => view([1, 0, 0]); $('back').onclick = () => view([0, 0, -1]);
+$('pause').onclick = () => { paused = !paused; $('pause').textContent = paused ? 'Continuar' : 'Pausar'; };
+new ResizeObserver(() => {
+  const { width, height } = $('stage').getBoundingClientRect(); renderer.setSize(width, height); camera.aspect = width / height; camera.updateProjectionMatrix();
+}).observe($('stage'));
+let last = performance.now();
+renderer.setAnimationLoop((now) => {
+  const dt = Math.min((now - last) / 1000, 0.05); last = now;
+  const pose = $('pose').value;
+  if (built && !paused && pose !== 'bind') built.ctrl.update(dt, pose === 'walk' || pose === 'run' ? 1 : 0, false, pose === 'run' ? 1.9 : 1);
+  orbit.update(); renderer.render(scene, camera);
+});
+load().catch(showError);
+</script>
+</html>

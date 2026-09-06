@@ -127,7 +127,7 @@ for (const id of alvos) {
 
     // EXATAMENTE o que main.js:355 (pvSetChar) monta na tela de seleção.
     const wid = C.charWeapon(cid);
-    const m = G.buildCharacterModel(def, { weaponId: wid });
+    const m = G.buildCharacterModel(def, { weaponId: wid, preview: true });
     if (!m) return { id: cid, erro: 'buildCharacterModel retornou null' };
 
     /* MUTAÇÕES — cada uma reintroduz uma das causas reais que esta régua tem que pegar.

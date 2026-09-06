@@ -116,6 +116,7 @@ http.createServer(async (req, res) => {
     let body, type;
     if (p === '/') { body = await renderIndex(); type = 'text/html'; }
     else if (p === '/eval-character.html') { body = CHARACTER_EVAL_SHELL; type = 'text/html'; }
+    else if (p === '/miticos-review.html') { body = await readFile('tools/eval/miticos-review.html'); type = 'text/html'; }
     else {
       const file = normalize(join(ROOT, p));
       if (!file.startsWith(ROOT)) throw new Error('path');
