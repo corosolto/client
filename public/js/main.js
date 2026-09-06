@@ -1050,6 +1050,8 @@ function _perfFinish(bootMs, frames) {
     vw: window.innerWidth, vh: window.innerHeight,
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
+    // sinais do ops.js (boot, FPS p50/p5, falhas de carga, sessão anterior); o backend descarta o que não conhece
+    ops: (() => { try { return window.__csbOps?.resumoBeacon?.() || null; } catch { return null; } })(),
   };
   sendJsonKeepalive('/api/perf', payload);
 }

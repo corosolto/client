@@ -15,12 +15,12 @@ function listeners() {
   };
 }
 
-async function sobe({ comObserver = true } = {}) {
+async function sobe({ comObserver = true, storageInicial = {} } = {}) {
   const win = listeners();
   const doc = listeners();
   const raf = [];
   let agora = 0;
-  const storage = {};
+  const storage = { ...storageInicial };
   Object.assign(doc, { hidden: false, getElementById: () => null, querySelector: () => null });
   globalThis.window = globalThis;
   globalThis.document = doc;
@@ -220,4 +220,28 @@ test('migalhas: o ops.js gasta no máximo 5 das 20 do coletor, mesmo com muitas 
     assert.ok(a.migalhas.length <= 5, `ops.js mandou ${a.migalhas.length} migalhas: ${a.migalhas.join(' | ')}`);
     assert.equal(a.mod.snapshot().recursos.falhas.length, 12, 'o snapshot guarda tudo; só a migalha é racionada');
   } finally { mock.timers.reset(); }
+});
+
+test('beacon: resumoBeacon é plano, com teto, e a sessão anterior vira migalha no boot', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  try {
+    const a = await sobe();
+    globalThis.__game = { state: 'live', _mapId: 'q', ctf: false }; mock.timers.tick(1000);
+    a.pumpFrames(70, 16);
+    a.doc.hidden = true; a.doc.emit('visibilitychange', {});
+    // a migalha sai no boot do módulo: o storage tem de existir ANTES do import
+    const b = await sobe({ storageInicial: { cs_ops_last: a.storage.cs_ops_last } });
+    globalThis.__CS_MAIN_READY__ = true; mock.timers.tick(300);
+    assert.ok(b.migalhas.some((m) => /última sessão: fase=partida saída=hidden/.test(m)), `sem migalha da sessão anterior: ${b.migalhas.join(' | ')}`);
+    const r = b.mod.resumoBeacon();
+    assert.equal(r.ultimaFase, 'partida'); assert.equal(r.ultimaSaida, 'hidden');
+    for (const [k, v] of Object.entries(r)) assert.ok(v === null || typeof v === 'number' || (typeof v === 'string' && v.length <= 12), `campo ${k} não é número/string curta: ${JSON.stringify(v)}`);
+    assert.ok(Object.keys(r).length <= 20, 'beacon cresceu além do contrato');
+  } finally { mock.timers.reset(); }
+});
+
+test('beacon: o payload de /api/perf do main.js leva o resumo do ops.js', () => {
+  const src = readFileSync(fileURLToPath(new URL('../../../public/js/main.js', import.meta.url)), 'utf8');
+  const perf = src.slice(src.indexOf('function _perfFinish'), src.indexOf("sendJsonKeepalive('/api/perf'"));
+  assert.match(perf, /ops: .*__csbOps\?\.resumoBeacon/, '_perfFinish não inclui window.__csbOps.resumoBeacon() no payload');
 });
