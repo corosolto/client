@@ -32,7 +32,11 @@ inv.guard()
 OUT = inv.OUT / 'm4-actions-c1'
 assert OUT.resolve().is_relative_to(inv.OUT)
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+if '--fingers-c1' in argv:
+    OUT = inv.OUT / 'm4-actions-fingers-c1'
+assert OUT.resolve().is_relative_to(inv.OUT.resolve())
 FAST = '--fast' in argv            # skip the heavy renders while iterating on poses
+MOTION_ONLY = '--motion-only' in argv
 ONLY = next((a for a in argv if a.startswith('--frames=')), None)
 ONLY = [int(v) for v in ONLY.split('=')[1].split(',')] if ONLY else None   # subset of renders, no strip
 CLIP = next((a for a in argv if not a.startswith('--')), 'reload_tactical')
@@ -249,11 +253,11 @@ if ONLY:
     critical = [f for f in ONLY]
     closeups = [f for f in ONLY]
 if not FAST:
-    for frame in critical:
+    for frame in ([] if MOTION_ONLY else critical):
         render(evidence / f'f{frame:03d}-1152x768.png', 1152, 768, frame)
         render(evidence / f'f{frame:03d}-1024x576.png', 1024, 576, frame)
     # Close-ups on the left hand / magazine from the camera side, following the hand.
-    for frame in closeups:
+    for frame in ([] if MOTION_ONLY else closeups):
         at(CLIP, frame)
         hand = bone_head('hand_l')
         toward_camera = (home_location - hand).normalized()
@@ -263,17 +267,18 @@ if not FAST:
     scene.render.engine = 'BLENDER_WORKBENCH'
     scene.display.shading.color_type = 'MATERIAL'
     scene.display.shading.light = 'FLAT'
-    for obj in scene.objects:
+    for obj in ([] if MOTION_ONLY else scene.objects):
         if obj.type != 'MESH':
             continue
         for material in obj.data.materials:
             material.diffuse_color = ((1, 0, 0, 1) if 'Cloth' in material.name else (0, 0, 1, 1) if 'Glove' in material.name
                                       else (0, 1, 0, 1) if obj.name.startswith('GEO_FP_') else (.3, .3, .3, 1))
-    mag_mat = mag.data.materials[0].copy()
-    mag_mat.name = 'QA_MAG_ID'
-    mag_mat.diffuse_color = (1, .5, 0, 1)
-    mag.data.materials[0] = mag_mat
-    for frame in closeups:
+    if not MOTION_ONLY:
+        mag_mat = mag.data.materials[0].copy()
+        mag_mat.name = 'QA_MAG_ID'
+        mag_mat.diffuse_color = (1, .5, 0, 1)
+        mag.data.materials[0] = mag_mat
+    for frame in ([] if MOTION_ONLY else closeups):
         at(CLIP, frame)
         hand = bone_head('hand_l')
         toward_camera = (home_location - hand).normalized()
@@ -283,8 +288,12 @@ if not FAST:
     scene.cycles.samples = 6
     strip = evidence / 'strip'
     strip.mkdir(exist_ok=True)
-    for frame in ([] if ONLY else range(0, frames + 1, 3)):
+    for frame in ([] if ONLY and not MOTION_ONLY else range(0, frames + 1, 3)):
         render(strip / f'f{frame:03d}.png', 384, 256, frame)
+        if MOTION_ONLY:
+            wide = evidence / 'strip-16x9'
+            wide.mkdir(exist_ok=True)
+            render(wide / f'f{frame:03d}.png', 384, 216, frame)
 camera.location, camera.rotation_euler, camera.data.lens = home_location, home_rotation, home_lens
 summary = {'glb': str(glb.relative_to(inv.ROOT)), 'glb_sha256': glb_sha, 'glb_bytes': glb.stat().st_size,
            'clips': {n: frames_of[n] / lib.FPS for n in frames_of}, 'measurements': str((evidence / 'measurements.json').relative_to(inv.ROOT)),

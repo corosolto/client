@@ -19,7 +19,69 @@ Código produtor: `0f28fbacc69bcebf1a5f3442e3d1e5069d1364df`.
 Esses assets não estão no Git: continuar nesta máquina, ou transportar os
 insumos privados por um canal próprio autorizado; apenas clonar o PR não basta.
 
-## M4 — marco tático C1, 06/09/2026 — candidato reprovado, checkpoint técnico
+## M4 — intervenção offline de dedos, 06/09/2026
+
+Entrada `29f07868`, mesma worktree/branch. A decisão Astra foi ajustar apenas
+as 12 rotações locais de indicador/médio/anelar/mínimo, mantendo palma,
+polegar, arma, carregador, manga, trajetória e duração. Saída separada:
+`A/m4-actions-fingers-c1/`; fonte `A/m4-actions-c1/` preservada. A hipótese de
+abertura uniforme herdada do grip vertical foi sustentada pela melhora de
+contato. A curva anterior da manga já era 1 em f013/f045: antecipar sua rampa
+não constituiu teste diferente nesses quadros e não provou falha de topologia.
+
+`rifles-m4-actions-fingers.py` ajusta regiões distais contíguas escolhidas
+antes do encaixe, com palma travada. A primeira solução de distância gerou
+interseções e foi rejeitada, preservada em `A/m4-actions-fingers-rejected-overlap/`.
+A mesma intervenção foi recalculada com rejeição de cruzamentos reais entre
+arestas da luva e triângulos do carregador; verificação independente mede também
+o sentido inverso. Não se declara ausência de contenção ou sobreposição coplanar.
+
+Medições reproduzíveis em `finger-fit.json`, `contact-check.json` e
+`evidence/reload_tactical/measurements.json` da saída:
+
+| Dedo | p05 antes → depois, mm | Região contígua até 5 mm em f013/20/43/45 |
+|---|---|---|
+| Indicador | 17,703 → 3,025 | 21 vértices |
+| Médio | 19,852 → 1,865 | 36 vértices |
+| Anelar | 12,100 → 2,137 | 59 vértices |
+| Mínimo | 8,982 → 1,752 | 18 vértices |
+
+Nos quatro quadros, nenhum cruzamento detectado nos dois sentidos nesses dedos.
+Polegar conserva suas medidas. A GLB `m4-actions-runtime.glb` tem SHA-256
+`20fd7f8b69b9a88238596e1bccb089ca2bafeb5ad479f08c5ebe41f54344be06`.
+O reimport compara os valores de 409 tracks protegidas, sem diferença;
+só as 12 tracks de quaternion dos dedos mudam, com os tempos preservados.
+Retorno agora usa `LoopOnce` e a última chave real, corrigindo a limitação do
+teste anterior que podia envolver ao início. Malhas inteiras retornam com delta
+máximo por coordenada abaixo de `4,76e-7`; mutar a última chave do indicador
+produz diferença de 0,07198 m e reprova. Ver `reimport-check.json`.
+
+Há 25 amostras de movimento f000–f072, GIFs `reload-3x2.gif`/`reload-16x9.gif`
+de 2,4 s e `reload-sheet.png`. Renders grandes incluem f013/20/43/45/62,
+closes opostos e IDs de material. Os hashes da M4 aprovada e servida continuam
+`2a4a189d…ffd197fd`; a GLB tática de entrada continua `6c48a225…21422cb7e`.
+
+**Crítica independente:** melhoria local da pega aceita, recarga completa
+reprovada. Persistem pele exposta no punho f013/f045 e um bloqueio herdado,
+agora medido em f062: anelar/mínimo cruzam o carregador 45/94 vezes no sentido
+direto e 6/13 no inverso, iguais no baseline e na candidata. Manga/pele diferem
+menos de 0,000388 mm entre as cenas avaliadas; esta rodada não corrigiu o punho.
+Parecer e estado estão em `independent-review.md` e `progress.json` da saída.
+
+Próxima intervenção mínima: curvas locais de anelar/mínimo na transição ao
+comando, ao redor de f062; manter a trajetória da palma. Para o punho, obter o
+perfil transversal deformado com borda, seleção e pesos antes de escolher
+entre cobertura ou skin. Não promover esta GLB. O objetivo das seis armas,
+outras ações e validação Game permanecem abertos.
+
+Reprodução local: Blender background/2 threads com
+`tools/viewmodels/prep/rifles-m4-actions-fingers.py`; depois exportador com
+`-- reload_tactical --fingers-c1 --frames=0,13,20,43,45,62,72`, verificador de
+contato `rifles-m4-actions-contact.py` e Node 23 com
+`rifles-m4-actions-verify.mjs --fingers-c1`. `--motion-only` no exportador gera
+as sequências pequenas nas duas proporções. Nenhuma integração ou deploy.
+
+## Histórico M4 — marco tático C1, 06/09/2026 — candidato reprovado
 
 Escopo deste marco foi somente `reload_tactical`: não alterou o idle aprovado,
 runtime, materiais compartilhados, AK golden, servidor ou navegador. A fonte é
