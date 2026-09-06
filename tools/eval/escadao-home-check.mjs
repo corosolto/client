@@ -27,7 +27,7 @@ const beforeFeet=targetFeet.clone(); game._collide(targetFeet,.38);
 assert.ok(targetFeet.distanceTo(beforeFeet)<1e-6,'Área do alvo cabe o jogador');
 ray.set(new THREE.Vector3(6.2,3.3,15.5),new THREE.Vector3(0,0,-1)); ray.far=2;
 assert.ok(ray.intersectObjects(W.occluders,true).length>0,'Peitoril continua sólido');
-const rearEye = new THREE.Vector3(5.85,4.37,17.2), rearTarget = new THREE.Vector3(8,W.groundHeightAt(8,21)+1.5,21);
+const rearEye = new THREE.Vector3(7.175,4.37,17.7), rearTarget = new THREE.Vector3(10.8,W.groundHeightAt(10.8,24)+1.5,24);
 ray.set(rearEye,rearTarget.clone().sub(rearEye).normalize()); ray.far=rearEye.distanceTo(rearTarget);
 assert.equal(ray.intersectObjects(W.occluders,true).length,0,'Janela traseira enxerga a rua/respawn');
 const upper = [[.2,10.12],[.9,10.12],[.9,12],[.9,14.7],[1.6,14.9],[3.2,15.5]];

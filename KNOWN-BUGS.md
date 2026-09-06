@@ -4862,3 +4862,11 @@ O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame comple
 otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 `artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.
+
+## Escadão PR #529 — janela medida fora do corpo (06/09/2026)
+
+A prova herdada usava olhos fora da fachada ou dentro da parede lateral. Corrigidos
+origem/alvo ocupáveis, janela voltada à aproximação leste e fechamento fora da abertura.
+O mirante recebeu ombreiras para preservar cobertura e duas portas para contestação.
+Régua vermelha anterior, mutantes, capturas offline e limites de spawn/camping estão em
+[`ESCADAO-CASAS-CONFLITO.md`](docs/reports/ESCADAO-CASAS-CONFLITO.md).
