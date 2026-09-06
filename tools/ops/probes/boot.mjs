@@ -19,7 +19,7 @@
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
-import { join, extname } from 'node:path';
+import { join, extname, sep } from 'node:path';
 import { sonda, pareceHtml } from '../lib/http.mjs';
 import { lerPackage, versaoDoVersionJs, manifestoDeModulos, importMapComo, RAIZ_PADRAO } from '../lib/repo.mjs';
 
@@ -54,6 +54,7 @@ export function coerenciaDoGrafo(base, raiz = RAIZ_PADRAO, timeoutMs = 120_000) 
     const p = spawn(process.execPath, [script, base], { cwd: raiz, env: { ...process.env } });
     let saida = '';
     const timer = setTimeout(() => { try { p.kill('SIGKILL'); } catch { /* já morreu */ } }, timeoutMs);
+    p.on('error', (e) => { clearTimeout(timer); resolve({ exit: null, problemas: [], saida: `prod-coherence não subiu: ${e.message}` }); });
     p.stdout.on('data', (d) => { saida += d; });
     p.stderr.on('data', (d) => { saida += d; });
     p.on('close', (exit) => {
@@ -107,15 +108,16 @@ export async function servidorEstaticoDePublic(raiz = RAIZ_PADRAO, { versao, man
   const mapa = importMapComo(null, v, man);
   const html = `<!doctype html><html><head><link rel="stylesheet" href="/style.css?v=${v}"><script type="importmap">${JSON.stringify(mapa)}</script></head><body><script type="module" src="/js/main.js?v=${v}-${man.revision}"></script></body></html>`;
   const srv = createServer((req, res) => {
-    const caminho = decodeURIComponent(req.url.split('?')[0]);
+    let caminho; try { caminho = decodeURIComponent(req.url.split('?')[0]); } catch { res.writeHead(400); res.end(); return; }
     if (caminho === '/' || caminho === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(html); return; }
     const abs = join(pub, caminho);
-    if (!abs.startsWith(pub) || !existsSync(abs)) { res.writeHead(404); res.end(); return; }
+    if (!abs.startsWith(pub + sep) || !existsSync(abs)) { res.writeHead(404); res.end(); return; }
     try { const corpo = readFileSync(abs); res.writeHead(200, { 'content-type': MIME[extname(abs)] || 'application/octet-stream' }); res.end(corpo); }
     catch { res.writeHead(404); res.end(); }
   });
   await new Promise((f) => srv.listen(0, '127.0.0.1', f));
-  return { srv, base: `http://127.0.0.1:${srv.address().port}`, versao: v, manifesto: man, fechar: () => new Promise((f) => srv.close(f)) };
+  // closeAllConnections: um pedido que morreu no handler não pode segurar o fechamento para sempre
+  return { srv, base: `http://127.0.0.1:${srv.address().port}`, versao: v, manifesto: man, fechar: () => new Promise((f) => { srv.closeAllConnections?.(); srv.close(f); }) };
 }
 
 export async function sondaBootLocal({ raiz = RAIZ_PADRAO, coerencia = true } = {}) {

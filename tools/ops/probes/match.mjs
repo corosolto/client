@@ -7,16 +7,19 @@
    número de bots e as exceções com stack — é a evidência que a bug-hunt pede.
    ============================================================================ */
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { RAIZ_PADRAO } from '../lib/repo.mjs';
 
 export function sondaPartidas({ raiz = RAIZ_PADRAO, mapas = 'all', modos = 'rounds,ctf', updates = 600, timeoutMs = 150_000, mutante = '' } = {}) {
   return new Promise((resolve) => {
-    const worker = new URL('./match-worker.mjs', import.meta.url);
+    const worker = fileURLToPath(new URL('./match-worker.mjs', import.meta.url));
     const env = { ...process.env };
     if (mutante) env.OPS_MUTANTE = mutante; else delete env.OPS_MUTANTE;
-    const p = spawn(process.execPath, [worker.pathname, `--mapas=${mapas}`, `--modos=${modos}`, `--updates=${updates}`], { cwd: raiz, env });
+    const p = spawn(process.execPath, [worker, `--mapas=${mapas}`, `--modos=${modos}`, `--updates=${updates}`], { cwd: raiz, env });
     let out = ''; let err = ''; let morto = false;
     const timer = setTimeout(() => { morto = true; try { p.kill('SIGKILL'); } catch { /* já saiu */ } }, timeoutMs);
+    // sem este listener, ENOENT (cwd inexistente, node ausente) derruba a diagnose inteira em vez de virar `fatal`
+    p.on('error', (e) => { clearTimeout(timer); resolve({ sonda: 'partidas', exit: null, timeout: false, fatal: `worker não subiu: ${e.message}`, partidas: [], mapasDisponiveis: [], comErro: [], semLive: [], semBots: [], bootP95: null, msPorUpdateMax: 0 }); });
     p.stdout.on('data', (d) => { out += d; });
     p.stderr.on('data', (d) => { err += d; });
     p.on('close', (exit) => {

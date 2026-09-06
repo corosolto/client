@@ -17,7 +17,7 @@
    real no `content-range`. Tamanho só é comparado com o disco quando a versão
    servida É a versão da árvore; do contrário é INFO, não vermelho.
    ============================================================================ */
-import { readFileSync, existsSync } from 'node:fs';
+import { openSync, readSync, closeSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { sonda, paralelo, totalDoContentRange, pareceHtml } from '../lib/http.mjs';
 import { amostraDeAssets, provaDoConteudo, RAIZ_PADRAO } from '../lib/repo.mjs';
@@ -43,13 +43,16 @@ export function sondaAssetsLocal({ raiz = RAIZ_PADRAO, limite = Infinity } = {})
   const itens = amostra.map((a) => {
     const abs = join(raiz, 'public', a.caminho);
     let conteudoOk = null;
-    if (existsSync(abs)) {
-      const fd = readFileSync(abs);
-      conteudoOk = fd.length > 0 && provaDoConteudo(a.prova, new Uint8Array(fd.subarray(0, 64)));
-    }
+    if (existsSync(abs)) conteudoOk = a.tamanho > 0 && provaDoConteudo(a.prova, cabecalho(abs));
     return { ...a, status: a.existe ? 200 : 404, conteudoOk };
   });
   return resumo('assets-local', raiz, itens);
+}
+
+/* 64 bytes, não o arquivo: a amostra local soma >100 MB de GLB e a prova é só o cabeçalho */
+function cabecalho(abs, n = 64) {
+  const fd = openSync(abs, 'r');
+  try { const b = Buffer.alloc(n); const lidos = readSync(fd, b, 0, n, 0); return new Uint8Array(b.subarray(0, lidos)); } finally { closeSync(fd); }
 }
 
 function resumo(sonda_, alvo, itens) {
