@@ -93,6 +93,10 @@
    "walk1h",
    "walkfire"
   ],
+  "boto": [
+   "idle1h",
+   "walk1h"
+  ],
   "cadequinha": [
    "idle",
    "walk",
