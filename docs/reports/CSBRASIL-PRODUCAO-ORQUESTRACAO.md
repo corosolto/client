@@ -178,6 +178,12 @@ resíduo projetado cai de 37,550 mm (8) para 18,246 (16), 8,335 (32), 3,480 (64)
 parametrizar `ik.iterations` e usar256 somente para Cuca candidata, mantendo padrão8;
 antes medir custo por bot/estado e submeter visual+custo a crítica independente.
 
+Medição de custo concluída em `c9cb4942`: 16 bots explícitos, 250 warmups e 1.000
+amostras; todos8 mediana/p95 0,296542/0,318206 ms por frame isolado, quinze8+Cuca256
+0,584251/0,628124, delta +0,287709/+0,309918 ms. Não há orçamento formal por
+personagem para comparar; custo bruto e lacuna foram preservados. Crítica independente
+`/root/critico_cuca_ik` foi despachada antes de qualquer implementação restrita.
+
 M4 tactical Terra foi rejeitada no checkpoint `29f07868`, sem tocar idle/runtime/materiais:
 magazine real/readable e reimport/retorno2,4s passam, mas frames13/45 ainda expõem pele
 no punho L e somente polegar fica a<=5mm do pente; indicador/médio/anel/mínimo medem
