@@ -811,3 +811,29 @@ FPS baixo não pode desacelerar o relógio do jogo (issue #295). O clamp de 50 m
 ```bash
 npm run eval:simclock
 ```
+
+## `eval:praca-contract`
+
+Contrato visual da Praça dos Três Poderes em node (`bootGame`): PA1 a lâmina do espelho d'água é a água viva compartilhada de `water.js` (ShaderMaterial `aguaViva` sob `world.root`, listada em `scene.userData.waters`, `uSolDir` = sol do mapa, escala de profundidade ≤ 1 m, sem lâmina Standard antiga na mesma cota); PA2 de 26 pontos nos corredores de flanco sob os pilotis, ≥ 50 % de 468 raios horizontais para fora acertam malha vertical entre 20 e 330 m (antes: 1 % — pista e cerrado até a névoa). Procedência e capturas no ledger `docs/reports/PRACA-PODERES-LEDGER.md`. Mutantes: agua-velha|sol|horizonte.
+
+```bash
+npm run eval:praca-contract
+node tools/eval/praca-contract-check.mjs --mutante=horizonte
+```
+
+## `eval:praca-runtime`
+
+Sonda de corpo real da Praça no NAVEGADOR (GLB carregado, `Game._updatePlayer`/`_collide` de verdade): PR1 waypoints com corpo livre, chão e nada na faixa peito→olho; PR1b grade de 1 m alcançável a pé (flood-fill por `_retaAndavel`) com as mesmas medidas — foi ela que achou a caixa SEDEX no ar e a soleira do espelho no ombro (06/09); PR2 rotas spawn → bandeiras → spawn nos dois times pelo A* do mapa; PR3 passeio aleatório com semente. Exige o Astro real no ar (`BASE=`). Mutantes: `MUTANTE=cabeca` (laje a 1,25 m sobre a lane) e `MUTANTE=parede` (colisor invisível na lane).
+
+```bash
+BASE=http://127.0.0.1:8177 npm run eval:praca-runtime -- artifacts/praca-poderes/runtime/after.json
+MUTANTE=parede BASE=http://127.0.0.1:8177 npm run eval:praca-runtime
+```
+
+## `eval:praca-capture`
+
+Captura de evidência 3:2 (1500×1000) da Praça no jogo real via Astro, com poses fixas para A/B reproduzível. `ONLY=` filtra poses, `QS=agua=0&horizonte=0` liga os kill-switches para o "antes" no mesmo código, `BOTS=1` mantém os bots.
+
+```bash
+BASE=http://127.0.0.1:8177 npm run eval:praca-capture -- artifacts/praca-poderes/after
+```
