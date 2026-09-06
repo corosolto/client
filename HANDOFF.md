@@ -11,7 +11,7 @@ Capturas e logs preservados em `artifacts/ctf-home/` (fora do Git). Navegador em
 1200×800 confirmou o submenu aberto, clique em CTF e seleção de mapas em CTF;
 inglês também conferido. Build e SEO/AEO 6/6 passaram; revisão
 adversarial sem bloqueios. `docs:check` passou após regenerar os contadores de i18n.
-Checkpoint funcional: `4abeaa40`. `check:fast` terminou em 289,4 s com 107/111;
+Checkpoint funcional: `2f62741a`. `check:fast` terminou em 289,4 s com 107/111;
 `docs:check` foi corrigido pela regeneração e passou isoladamente. Restam falhas
 fora do diff: `audio:check` (pacote privado ausente), `eval:audiofablocal`
 (`LAB8g` ambiência local do Escadão) e `eval:grafitelayout` (hash do layout do
