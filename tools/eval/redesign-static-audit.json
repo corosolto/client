@@ -1,8 +1,8 @@
 {
-  "resultImagesSha256": "eb77e196be8199146e4cf3d3d297063c9ae37603bf825125acf62111367ce058",
+  "resultImagesSha256": "67c827bcee5fc49ad1e92e2d31617b8930f8718859886dbe9c34219466a744f3",
   "punkAvatarSha256": "cb642e6968b6d45e07425874cf8827a407bd464d0f29ae1b7ac51010e39841e3",
   "gotinhaAvatarSha256": "1743f2dff0ccd39a3f7be9ee1fde376694cf75cd1a5ad08c54fc2cd87cf637a3",
   "avatarReference": "public/video/chars/{punk,gotinha}.webm@1.0s",
-  "reviewedAt": "2026-08-16",
-  "review": "Os 44 personagens do elenco atual foram comparados à seleção e aos GLBs: corpo inteiro, alpha limpo, folga superior/inferior e identidade preservada. Punk e Sindicato vêm dos próprios GLBs; nenhuma figura nova ou fictícia foi criada para o resultado."
+  "reviewedAt": "2026-09-06",
+  "review": "Os 45 personagens publicados têm avatar, seleção e resultados estáticos. Lobisomem é o único Mítico neste candidato, com mídia herdada dos commits aprovados f05edaf9/e4f52162; esta auditoria valida o lote e o recorte alpha, sem aprovar os demais Míticos."
 }

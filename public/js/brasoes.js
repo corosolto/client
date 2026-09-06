@@ -52,10 +52,10 @@ import { BASE_POR_FACCAO } from './paleta.js';
 
 const COR_TIME = BASE_POR_FACCAO;
 
-/* Só estas cinco têm brasão. Facção fora da lista devolve `null` de propósito: é o sinal
+/* Só estas seis têm brasão. Facção fora da lista devolve `null` de propósito: é o sinal
    combinado com o chamador para ele manter o pano que já desenhava. */
 // E: arquivo renomeado p.png->e.png no rename Time E (06/08)
-const BRASAO = { E: 'e', B: 'b', U: 'u', C: 'c', F: 'f' };
+const BRASAO = { E: 'e', B: 'b', U: 'u', C: 'c', F: 'f', M: 'm' };
 
 const W = 512, H = 320;          // 1,6:1 — a mesma proporção do pano que o jogo já usava
 const EMB = 0.74;                // altura do brasão como fração da altura do pano

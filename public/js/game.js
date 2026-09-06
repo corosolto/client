@@ -1273,7 +1273,7 @@ export class Game {
     const pal = (pdef && pdef.pal) || { skin: 0xd9a066, shirt: 0x3a4a5a };
     // LUVA POR TIME no fallback procedural também (mãos genéricas por time — pedido do dono):
     // P vermelho, B verde, U roxo; blend 55% (igual ao fparms) pra não virar luva plástica.
-    const GLOVE = { E: 0xd83232, B: 0x28c858, U: 0x8a3ffc };
+    const GLOVE = { E: 0xd83232, B: 0x28c858, U: 0x8a3ffc, M: 0x9d4edd };
     const skinMat = dark(pal.skin);
     if (GLOVE[this.playerFaction]) skinMat.color.lerp(new THREE.Color(GLOVE[this.playerFaction]), 0.85);
     const sleeveMat = dark(pal.shirt);
@@ -4219,8 +4219,8 @@ export class Game {
   // Facção que ocupa um LADO físico (P/B): lado do jogador = playerFaction, o outro = enemyFaction.
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
-  _teamName(side) { const f = this._factionOf(side); return f === 'U' ? 'TRIBOS URBANAS' : f === 'C' ? 'PALHAÇOS' : f === 'F' ? 'FUNKEIROS' : (TEAM_LABEL[f] || f); }
-  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'E' ? 'TME' : 'TMB'; }
+  _teamName(side) { const f = this._factionOf(side); return f === 'U' ? 'TRIBOS URBANAS' : f === 'C' ? 'PALHAÇOS' : f === 'F' ? 'FUNKEIROS' : f === 'M' ? 'MÍTICO' : (TEAM_LABEL[f] || f); }
+  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'TME' : 'TMB'; }
 
   /* Uma plaqueta do HUD. Chamada por QUADRO, então tudo aqui é comparação barata:
      o número só é escrito se mudou, e o brasão (data-f, arte no CSS) só quando a

@@ -223,7 +223,8 @@
     "eval:lajes-spawn-space": "node tools/eval/lajes-spawn-space-check.mjs",
     "eval:escadao-preview": "node tools/eval/escadao-preview-check.mjs",
     "eval:amazonia": "node tools/eval/amazonia-check.mjs && node tools/eval/amazonia-surface-check.mjs && node tools/eval/amazonia-water-movement-check.mjs && node tools/eval/ambience-registry-check.mjs --map=amazonia && node tools/eval/amazonia-bots-check.mjs && node tools/eval/amazonia-audio-pack-check.mjs",
-    "eval:lajes-raycast": "node tools/eval/lajes-raycast-check.mjs"
+    "eval:lajes-raycast": "node tools/eval/lajes-raycast-check.mjs",
+    "eval:miticos-lobisomem": "node tools/eval/miticos-lobisomem-integration-check.mjs"
   },
   "repository": {
     "type": "git",

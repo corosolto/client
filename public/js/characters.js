@@ -580,6 +580,10 @@ export const CHARACTERS = [
   { id: 'ostentacao', team: 'F', tribe: 'funkeiros', name: 'Ostentação',
     blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.',
     pal: { skin: 0xd9a066, shirt: 0xf0f0f0, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0xffd23f } },
+
+  { id: 'lobisomem', team: 'M', tribe: 'miticos', name: 'Lobisomem',
+    blurb: 'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.',
+    pal: { skin: 0x9a8a7a, shirt: 0x1a1a2a, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0x2a2a2a } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -594,6 +598,7 @@ export const CHAR_WEAPON = {
   palhacomal: 'g3sg1', jozo: 'shotgun', adjim: 'uzi', esbirro: 'mp5', titica: 'ak', padati: 'pistol', padata: 'p90', cadequinha: 'revolver38',
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
+  lobisomem: 'shotgun',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

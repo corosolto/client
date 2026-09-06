@@ -39,6 +39,7 @@ export const GLB_CHARS = new Set([
   // os outros 8 são GLBs Mint riggados offline (tools/rig-from-donor.mjs, esqueleto do mst)
   // com clips retargetados em models/anims/<id>/ (tools/retarget-glb.mjs).
   'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
+  'lobisomem',
 ]);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando

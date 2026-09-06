@@ -249,14 +249,17 @@ const DICT = {
     'Mirrored shades and a razor-sharp fade. In the flow, the bullet does the running.',
   'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.':
     'Chain, ring and a gleaming watch. If you are going to shoot, do it in style.',
+  'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.':
+    'Seventh son, crossroads curse. The black wolf wakes strong, fanged and unchained.',
   'TIME E': 'TEAM E', 'TIME B': 'TEAM B',
   'os seus': 'your crew',
-  'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS',
+  'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS', 'MÍTICO': 'MYTHIC',
   '"A treta se faz na praça!"': '"The fight is at the square!"',
   '"A treta se faz na rodovia!"': '"The fight is on the highway!"',
   '"A treta se faz na quebrada!"': '"The fight is in the hood!"',
   '"A treta se faz no picadeiro!"': '"The fight is at the circus ring!"',
   '"A treta se faz no bailão!"': '"The fight is at the baile!"',
+  '"A treta atravessa os séculos!"': '"The fight spans the centuries!"',
   '8 PERSONAGENS': '8 CHARACTERS', '9 PERSONAGENS': '9 CHARACTERS',
   'O coração do poder vira arena: rampas do Planalto, espelho d\'água e linhas de tiro longas entre os ministérios.':
     'The heart of power becomes an arena: palace ramps, reflecting pool and long sightlines between ministries.',
