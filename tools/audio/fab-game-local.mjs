@@ -8,6 +8,7 @@ import {
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MENU_MUSIC_ACTIVE_IDS } from '../../public/js/menu-music-selection.js';
+import { completeLajesSoundscape } from './lajes-soundscape.mjs';
 
 const RAIZ_REPO = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const arg = (nome, padrao = '') => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=').slice(1).join('=') || padrao;
@@ -431,7 +432,7 @@ function arquivo(nome) {
 }
 const loop = (nome, vol) => ({ src: arquivo(nome), global: true, pos: [0, 0, 0], radius: 240, vol });
 const shot = (nomes, minGap, maxGap, vol) => ({ srcs: nomes.map(arquivo), minGap, maxGap, vol });
-const mapSoundscapes = {
+const mapSoundscapes = completeLajesSoundscape({ mapSoundscapes: {
   praca_poderes: { loops: [loop('Environment/Wind_Loop_6.wav', .075)], shots: [shot(['Environment/Tree_Rustling_1-1.wav'], 28, 70, .16)] },
   piscina_treta: { loops: [loop('Environment/Water_Stream_Calm_1.wav', .045)], shots: [shot(['Environment/Water_Splash_1-1.wav'], 22, 60, .13)] },
   loja_h: { loops: [loop('Environment/Wind_Loop_1.wav', .055)], shots: [shot(['Doors/Door_Open_3-1.wav', 'Doors/Door_Close_3-1.wav'], 30, 85, .12)] },
@@ -445,7 +446,7 @@ const mapSoundscapes = {
   parque_treta: { loops: [loop('Environment/Wind_Loop_1.wav', .055), loop('Environment/Water_Stream_Calm_1.wav', .035)], shots: [shot(['Environment/Tree_Rustling_1-1.wav'], 18, 52, .14)] },
   velho_oeste: { loops: [loop('Environment/Wind_Loop_6.wav', .09)], shots: [shot(['Environment/Wood_Move_1-1.wav', 'Environment/Wood_Move_2-1.wav'], 16, 46, .17)] },
   penitenciaria: { synth: { kind: 'indoor-hum', vol: .02 }, shots: [shot(['Doors/Rusty_Metal_Creak_01.wav', 'Doors/Rusty_Metal_Creak_03.wav'], 22, 64, .14)] },
-};
+} }).mapSoundscapes;
 /* Stingers <=1,5 s pelo catalog.json. Os Special_Interface 5/6/7 duram
    2,75–9,52 s e invadiriam a rodada. Semântica ainda depende de escuta. */
 const roundstart = seguros(['Interface/Interface_12-1.wav', 'Interface/Interface_12-4.wav']);

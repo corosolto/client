@@ -732,7 +732,9 @@ window.__GEO_LANG__ = (function () {
       <!-- O cartaz do mapa é a tela inteira do passo: arte grande, nome grande e a
            ficha da partida (modo · bots · armas) LIDA EM CIMA DA ARTE, não num form. -->
       <div class="map-picker">
-        <img id="map-thumb" src="/img/map-previews/praca_poderes.jpg" alt="preview do mapa">
+        <button id="map-preview" type="button" aria-label="Ver mapa em tela cheia">
+          <img id="map-thumb" src="/img/map-previews/praca_poderes.jpg" alt="preview do mapa">
+        </button>
         <button id="map-mode" type="button" title="Clique pra trocar entre ROUNDS e CAPTURE THE FLAG">ROUNDS</button>
         <span id="map-dots" aria-hidden="true"></span>
         <!-- Setas do carrossel: `title` além do aria-label porque o dono reprovou duas
