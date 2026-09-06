@@ -34,9 +34,9 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 39.534 linhas em 64 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 39.570 linhas em 64 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.356** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.371 linhas | `wc -l public/js/main.js` |
+| `main.js` | 3.373 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 126 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -47,7 +47,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Scripts do arnês | 249 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 61 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.224` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.225` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 

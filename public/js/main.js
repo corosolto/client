@@ -6,7 +6,7 @@ import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
-import { apiUrl } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
+import { apiUrl, fetchComRetry } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
@@ -1052,6 +1052,8 @@ function _perfFinish(bootMs, frames) {
     vw: window.innerWidth, vh: window.innerHeight,
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
+    // sinais do ops.js (boot, FPS p50/p5, falhas de carga, sessão anterior); o backend descarta o que não conhece
+    ops: (() => { try { return window.__csbOps?.resumoBeacon?.() || null; } catch { return null; } })(),
   };
   sendJsonKeepalive('/api/perf', payload);
 }
@@ -1101,7 +1103,7 @@ function sendTrainingFrames(blob) {
 
 async function _refreshOnline() {
   try {
-    const r = await fetch(apiUrl('/api/online'));
+    const r = await fetchComRetry(apiUrl('/api/online'));
     const { online } = await r.json();
     const box = document.getElementById('mf-online'), n = document.getElementById('mf-online-n');
     if (box && n && typeof online === 'number' && online > 0) { n.textContent = online; box.hidden = false; }
@@ -1788,7 +1790,7 @@ function autoresDeComunidade() {
    e quando chega redesenha. Nada aqui pode depender do número existir. */
 let mapPlays = {};
 const playsDe = (id) => mapPlays[id] || 0;
-fetch(apiUrl('/api/map-plays'))
+fetchComRetry(apiUrl('/api/map-plays'))
   .then((r) => (r.ok ? r.json() : null))
   .then((j) => {
     if (!j || !j.plays || typeof j.plays !== 'object') return;

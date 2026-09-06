@@ -20,24 +20,29 @@
 import { openSync, readSync, closeSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { sonda, paralelo, totalDoContentRange, pareceHtml } from '../lib/http.mjs';
-import { amostraDeAssets, provaDoConteudo, weaponIdsDe, RAIZ_PADRAO } from '../lib/repo.mjs';
+import { amostraDeAssets, provaDoConteudo, REGISTROS, RAIZ_PADRAO } from '../lib/repo.mjs';
 
-/* O registro de armas vem do weapons.js que a PRODUÇÃO serve (a URL do import map, a mesma que o
-   runtime pede), não da árvore: com produção e árvore em versões diferentes, a árvore pede o que
-   ainda não foi publicado e não pede o que só a produção tem. Sem ele, cai na árvore e avisa. */
-export async function registroDeArmasServido(base, { registroUrl = null, versao = null, timeoutMs = 15_000 } = {}) {
-  const url = registroUrl ? new URL(registroUrl, `${base}/`).href : `${base}/js/weapons.js${versao ? `?v=${encodeURIComponent(versao)}` : ''}`;
+/* Os registros (armas: weapons.js; elenco: glbchars.js) vêm do módulo que a PRODUÇÃO serve — a URL
+   do import map, a mesma que o runtime pede — não da árvore: com produção e árvore em versões
+   diferentes, a árvore pede o que ainda não foi publicado e não pede o que só a produção tem.
+   Sem registro legível, cai na árvore e avisa. */
+export async function registroServido(base, nome, { registroUrl = null, versao = null, timeoutMs = 15_000 } = {}) {
+  const reg = REGISTROS[nome];
+  const modulo = reg.modulo.replace(/^\.\//, '/');
+  const url = registroUrl ? new URL(registroUrl, `${base}/`).href : `${base}${modulo}${versao ? `?v=${encodeURIComponent(versao)}` : ''}`;
   const r = await sonda(url, { timeoutMs, maxBytes: 65_536 });
-  if (r.status !== 200) return { origem: 'arvore', url: url.split('?')[0], armas: null, motivo: `${url.split('?')[0]} → ${r.status || r.erro}` };
-  if (pareceHtml(r.bytes)) return { origem: 'arvore', url: url.split('?')[0], armas: null, motivo: `${url.split('?')[0]} → 200 com corpo HTML` };
-  const armas = weaponIdsDe(r.texto());
-  if (!armas) return { origem: 'arvore', url: url.split('?')[0], armas: null, motivo: `${url.split('?')[0]} → 200 sem WEAPON_IDS legível` };
-  return { origem: 'registro-servido', url: url.split('?')[0], armas, motivo: null };
+  const limpa = url.split('?')[0];
+  if (r.status !== 200) return { nome, origem: 'arvore', url: limpa, ids: null, motivo: `${limpa} → ${r.status || r.erro}` };
+  if (pareceHtml(r.bytes)) return { nome, origem: 'arvore', url: limpa, ids: null, motivo: `${limpa} → 200 com corpo HTML` };
+  const ids = reg.parse(r.texto());
+  if (!ids) return { nome, origem: 'arvore', url: limpa, ids: null, motivo: `${limpa} → 200 sem registro legível` };
+  return { nome, origem: 'registro-servido', url: limpa, ids, motivo: null };
 }
 
-export async function sondaAssetsRemoto(base, { raiz = RAIZ_PADRAO, versao, compararTamanho = false, limite = 24, concorrencia = 6, timeoutMs = 15_000, registroUrl = null } = {}) {
-  const registro = await registroDeArmasServido(base, { registroUrl, versao, timeoutMs });
-  const amostra = amostraDeAssets(raiz, { limite, armas: registro.armas });
+export async function sondaAssetsRemoto(base, { raiz = RAIZ_PADRAO, versao, compararTamanho = false, limite = 24, concorrencia = 6, timeoutMs = 15_000, registroUrls = {} } = {}) {
+  const registros = {};
+  for (const nome of Object.keys(REGISTROS)) registros[nome] = await registroServido(base, nome, { registroUrl: registroUrls[nome] || null, versao, timeoutMs });
+  const amostra = amostraDeAssets(raiz, { limite, armas: registros.armas.ids, personagens: registros.personagens.ids });
   const itens = await paralelo(amostra, async (a) => {
     const url = `${base}/${a.caminho}${versao ? `?v=${encodeURIComponent(versao)}` : ''}`;
     const r = await sonda(url, { range: 'bytes=0-15', timeoutMs, maxBytes: 64 });
@@ -49,7 +54,7 @@ export async function sondaAssetsRemoto(base, { raiz = RAIZ_PADRAO, versao, comp
       tamanhoBate: compararTamanho && total != null && a.existe ? total === a.tamanho : null,
     };
   }, concorrencia);
-  return { ...resumo('assets', base, itens), registro: { origem: registro.origem, url: registro.url, motivo: registro.motivo, armas: registro.armas?.length ?? null } };
+  return { ...resumo('assets', base, itens), registros: Object.fromEntries(Object.values(registros).map((r) => [r.nome, { origem: r.origem, url: r.url, motivo: r.motivo, total: r.ids?.length ?? null }])) };
 }
 
 export function sondaAssetsLocal({ raiz = RAIZ_PADRAO, limite = Infinity } = {}) {

@@ -35,6 +35,8 @@ const n = (x) => (x == null ? '—' : x);
 export function explicar(res = {}) {
   const A = [];
   const ctx = res.contexto || {};
+  // package.json ilegível desliga em silêncio versaoLocal, mesmaVersao e o motivo do veredito: tem de custar como erro
+  if (ctx.erroPackage) ach(A, { id: 'arvore-ilegivel', sonda: 'boot-local', severidade: 'alto', titulo: 'package.json da árvore não pôde ser lido', causa: 'raiz errada (--raiz), checkout incompleto ou JSON inválido', evidencia: String(ctx.erroPackage).slice(0, 200), impacto: 'sem versão local: comparação com a produção, tamanho de assets e o veredito de candidato ficam desligados', proximo: 'conferir a raiz passada e `node -e "require(\'./package.json\')"`' });
   explicaBootRemoto(A, res.boot, ctx);
   explicaApi(A, res.api, ctx);
   explicaRanking(A, res.ranking, ctx);
@@ -164,10 +166,17 @@ function explicaApi(A, api, ctx) {
     if (c.fresh === false && !(Array.isArray(c.never) && c.never.length)) {
       const ativos = api.rotas?.find((r) => r.rota === 'online')?.chamadas?.find((x) => x.corpo)?.corpo || '';
       const online = /"online":(\d+)/.exec(ativos)?.[1];
-      ach(A, {
-        id: 'pipelines-parados', sonda: 'api', severidade: 'aviso', titulo: `sem linha recente em: ${(c.stale || []).join(', ')}`,
+      const stale = c.stale || [];
+      // `city` nasce da presença: presence fresca (janela de 30 min no health) e city parada há >24 h
+      // (janela de 24 h) não é "ninguém jogou" — é o escritor de city_daily que parou (visto em 06/09/2026)
+      const derivados = { city: 'presence' };
+      const parados = stale.filter((p) => derivados[p] && !stale.includes(derivados[p]) && !(c.never || []).includes(derivados[p]));
+      for (const p of parados) ach(A, { id: `ingestao-parada:${p}`, sonda: 'api', severidade: 'medio', titulo: `pipeline ${p} parado enquanto ${derivados[p]} continua gravando`, causa: `quem escreve ${p} (a partir de ${derivados[p]}) parou: rota/cron do backend ou migration que a tabela espera`, evidencia: `health.stale=${JSON.stringify(stale)} · ${derivados[p]} fresco · /api/online=${ativos.slice(0, 80) || '—'}`, impacto: 'painel cego nessa métrica desde a última linha; não é falta de tráfego', proximo: `backend (csbrasil-backend): logs de quem grava ${p} e a linha em telemetry_ingest_health; conferir migration pendente` });
+      const restantes = stale.filter((p) => !parados.includes(p));
+      if (restantes.length) ach(A, {
+        id: 'pipelines-parados', sonda: 'api', severidade: 'aviso', titulo: `sem linha recente em: ${restantes.join(', ')}`,
         causa: online === '0' || online === undefined ? 'provavelmente ninguém jogou na janela (online baixo) — ou ingestão parada' : `há ${online} online e mesmo assim nada gravou — suspeitar da ingestão`,
-        evidencia: `health.fresh=false stale=${JSON.stringify(c.stale)} · /api/online=${ativos.slice(0, 80) || '—'}`,
+        evidencia: `health.fresh=false stale=${JSON.stringify(restantes)} · /api/online=${ativos.slice(0, 80) || '—'}`,
         impacto: 'painel sem dado novo; se for ingestão, DAU medido cai sem o jogo ter caído (o "40 vs 1")',
         proximo: 'jogar uma partida de teste sem ?debug e re-sondar em 5 min: `match` continuar stale = ingestão quebrada',
       });
@@ -201,7 +210,9 @@ function explicaRanking(A, rk, ctx) {
 function explicaAssetsRemoto(A, as, ctx) {
   if (!as) return;
   if (as.semResposta.length === as.total && as.total) return ach(A, { id: 'assets-inalcancaveis', sonda: 'assets', severidade: 'inconclusivo', titulo: 'nenhum asset respondeu', causa: 'rede/proxy bloqueando o alvo', evidencia: as.semResposta.slice(0, 3).join(' · '), impacto: 'não medido', proximo: 'rodar de uma rede sem proxy' });
-  if (as.registro && as.registro.origem !== 'registro-servido') ach(A, { id: 'registro-armas-nao-lido', sonda: 'assets', severidade: 'aviso', titulo: 'a amostra de armas veio da árvore, não do weapons.js servido', causa: 'o alvo não serviu um /js/weapons.js legível (404, HTML no lugar do módulo, ou WEAPON_IDS mudou de forma)', evidencia: as.registro.motivo || '—', impacto: 'arma que só a produção pede fica sem sonda; com versões diferentes, 404 de arma vira só aviso', proximo: 'GET a URL citada e comparar com public/js/weapons.js; se o formato mudou, ajustar weaponIdsDe em tools/ops/lib/repo.mjs' });
+  for (const [nome, reg] of Object.entries(as.registros || {})) {
+    if (reg.origem !== 'registro-servido') ach(A, { id: `registro-nao-lido:${nome}`, sonda: 'assets', severidade: 'aviso', titulo: `a amostra de ${nome} veio da árvore, não do registro que o alvo serve`, causa: `o alvo não serviu um ${nome === 'armas' ? '/js/weapons.js' : '/js/glbchars.js'} legível (404, HTML no lugar do módulo, ou o registro mudou de forma)`, evidencia: reg.motivo || '—', impacto: `${nome} que só a produção pede ficam sem sonda; com versões diferentes, 404 deles vira só aviso`, proximo: 'GET a URL citada e comparar com o módulo da árvore; se o formato mudou, ajustar o parser em REGISTROS (tools/ops/lib/repo.mjs)' });
+  }
   if (as.faltando.length) {
     const itensFaltando = as.itens.filter((i) => as.faltando.includes(i.caminho));
     const grupos = new Set(itensFaltando.map((i) => i.grupo));
@@ -212,7 +223,7 @@ function explicaAssetsRemoto(A, as, ctx) {
     const arvoreAFrente = !doServido && !!ctx.versaoRemota && !!ctx.versaoLocal && ctx.versaoRemota !== ctx.versaoLocal;
     ach(A, {
       id: 'asset-404', sonda: 'assets', severidade: arvoreAFrente ? 'aviso' : grupos.has('vendor') || grupos.has('css') ? 'critico' : vital ? 'alto' : 'medio',
-      titulo: `${as.faltando.length} asset(s) da amostra em 404 no edge (${[...grupos].join(', ')})${arvoreAFrente ? ' — produção atrás da árvore' : doServido ? ' — pedidos pelo weapons.js que a produção serve' : ''}`,
+      titulo: `${as.faltando.length} asset(s) da amostra em 404 no edge (${[...grupos].join(', ')})${arvoreAFrente ? ' — produção atrás da árvore' : doServido ? ' — pedidos pelo registro que a produção serve' : ''}`,
       causa: arvoreAFrente ? `a amostra é da árvore (${ctx.versaoLocal}) e a produção serve ${ctx.versaoRemota}: pode ser asset novo ainda não publicado; se o caminho já existia, é o mesmo caso abaixo` : 'arquivo removido no prune-dist, renomeado sem o consumidor ou deploy incompleto (LICOES §12)',
       evidencia: as.faltando.slice(0, 6).join(' · '),
       impacto: grupos.has('armas') ? 'arma sem modelo: viewmodel/pickup somem sem erro no console' : grupos.has('personagens') ? 'personagem cai no fallback ou não aparece' : 'textura/prop em branco chapado',
@@ -262,12 +273,13 @@ function explicaNavegador(A, nav, ctx) {
   if (nav.mainReady === false) ach(A, { id: 'boot-navegador-morto', sonda: 'navegador', severidade: 'critico', titulo: 'o main.js não terminou de avaliar no navegador', causa: nav.pageErrors?.length ? `exceção no boot: ${nav.pageErrors[0]}` : 'módulo não chegou (rede) ou travou antes de `__CS_MAIN_READY__`', evidencia: `mainLoaded=${nav.mainLoaded} mainReady=${nav.mainReady} erros=${(nav.pageErrors || []).slice(0, 2).join(' | ')}`, impacto: 'botão JOGAR inerte (o caso de 07/08)', proximo: '`npm run eval:boot` com Chrome real e o stack acima' });
   else if (nav.pageErrors?.length) ach(A, { id: 'excecao-no-navegador', sonda: 'navegador', severidade: 'alto', titulo: `${nav.pageErrors.length} exceção(ões) não tratadas no boot`, causa: 'erro de runtime fora do caminho crítico (o menu abriu)', evidencia: nav.pageErrors.slice(0, 3).join(' | '), impacto: 'funcionalidade parcial; vira issue crash-auto em produção', proximo: 'reproduzir com ?debug=1 e olhar o stack' });
   if (nav.btnJogar === false && nav.mainReady) ach(A, { id: 'btn-jogar-inerte', sonda: 'navegador', severidade: 'critico', titulo: '#btn-jogar sem onclick com main.js pronto', causa: 'o handler é atribuído no fim do main.js; ausência = avaliação interrompida ou DOM mudou de id', evidencia: 'document.getElementById("btn-jogar").onclick == null', impacto: 'ninguém entra na partida', proximo: '`npm run eval:boot` (B2)' });
-  if (nav.webgl2 === false) ach(A, { id: 'sem-webgl2', sonda: 'navegador', severidade: nav.headless ? 'aviso' : 'alto', titulo: 'WebGL2 indisponível no navegador da sonda', causa: nav.headless ? 'headless sem GPU (SwiftShader desligado) — normal em CI' : 'driver/flags do navegador', evidencia: `webgl2=${nav.webgl2} webgl1=${nav.webgl1}`, impacto: nav.headless ? 'FPS não é medível nesta execução' : 'jogo cai no fallback sem WebGL', proximo: nav.headless ? 'rodar com `--gpu` ou Chrome real' : 'testar em outro navegador/driver' });
+  if (nav.webgl2 === false) ach(A, { id: 'sem-webgl2', sonda: 'navegador', severidade: nav.gpu ? 'alto' : 'aviso', titulo: 'WebGL2 indisponível no navegador da sonda', causa: nav.gpu ? 'GPU pedida e o navegador não abriu WebGL2: driver/flags ou máquina sem GPU (use --sem-gpu)' : 'headless com SwiftShader desligado — normal em CI', evidencia: `webgl2=${nav.webgl2} webgl1=${nav.webgl1} modo=${nav.gpu ? 'gpu' : 'swiftshader'}`, impacto: nav.gpu ? 'jogo cai no fallback sem WebGL nessa máquina' : 'FPS não é medível nesta execução', proximo: nav.gpu ? 'testar em outro navegador/driver' : 'rodar no Mac (GPU automática) ou com `--gpu`' });
   if (nav.requestsFalhas?.length) ach(A, { id: 'recursos-falhando-no-boot', sonda: 'navegador', severidade: nav.requestsFalhas.some((r) => /\/js\/|\/vendor\//.test(r)) ? 'critico' : 'medio', titulo: `${nav.requestsFalhas.length} recurso(s) falharam durante o boot`, causa: '404/rede em asset ou módulo pedido pela página', evidencia: nav.requestsFalhas.slice(0, 5).join(' · '), impacto: 'módulo → boot morto; asset → branco chapado/sem som', proximo: 'cruzar com a sonda de assets e o deploy' });
   if (nav.consoleErros?.length) ach(A, { id: 'console-error-no-boot', sonda: 'navegador', severidade: 'medio', titulo: `${nav.consoleErros.length} console.error no boot`, causa: 'aviso do jogo (textura, áudio) ou erro engolido', evidencia: nav.consoleErros.slice(0, 3).join(' | '), impacto: 'vira linha no js_error e come cota de relatório (BUG-72)', proximo: 'ler cada um com ?debug=1' });
   const ops = nav.ops;
   if (ops?.recursos?.falhas?.length && !nav.requestsFalhas?.length) ach(A, { id: 'ops-falhas-de-carga', sonda: 'navegador', severidade: 'medio', titulo: `ops.js viu ${ops.recursos.falhas.length} falha(s) de carga`, causa: 'asset 404/rede durante a sessão', evidencia: ops.recursos.falhas.slice(0, 4).map((f) => `${f.caminho} ${f.status}`).join(' · '), impacto: 'asset ausente na partida', proximo: 'sonda de assets nos caminhos citados' });
   if (ops?.webgl?.perdidos > 0) ach(A, { id: 'ops-contexto-perdido', sonda: 'navegador', severidade: 'alto', titulo: `contexto WebGL perdido ${ops.webgl.perdidos}×`, causa: 'GPU/driver ou excesso de VRAM (roster inteiro carregado — preload-check)', evidencia: JSON.stringify(ops.webgl), impacto: 'tela congela até restaurar', proximo: 'eval:preload e orçamento de cena (eval:cena)' });
-  if (ops?.fps?.amostras > 5 && ops.fps.p50 != null && ops.fps.p50 < 30 && !nav.headless) ach(A, { id: 'fps-baixo', sonda: 'navegador', severidade: 'medio', titulo: `FPS p50 ${ops.fps.p50} em partida`, causa: 'cena acima do orçamento ou GPU fraca da sonda', evidencia: `fps p50 ${ops.fps.p50} p5 ${ops.fps.p5} travadas>100ms ${ops.fps.travadas}`, impacto: 'jogabilidade abaixo do piso de 30 FPS', proximo: '`npm run eval:cena` no mapa medido' });
+  // só com GPU real: no SwiftShader o FPS mede o renderizador por software, não o jogo
+  if (ops?.fps?.amostras > 5 && ops.fps.p50 != null && ops.fps.p50 < 30 && nav.gpu) ach(A, { id: 'fps-baixo', sonda: 'navegador', severidade: 'medio', titulo: `FPS p50 ${ops.fps.p50} em partida (GPU)`, causa: 'cena acima do orçamento ou GPU fraca da sonda', evidencia: `fps p50 ${ops.fps.p50} p5 ${ops.fps.p5} travadas>100ms ${ops.fps.travadas}`, impacto: 'jogabilidade abaixo do piso de 30 FPS', proximo: '`npm run eval:cena` no mapa medido' });
   if (nav.partida && nav.partida.chegouLive === false) ach(A, { id: 'partida-navegador-nao-comeca', sonda: 'navegador', severidade: 'critico', titulo: 'a partida automática (?auto=) não chegou a `live` no navegador', causa: nav.partida.erro || 'carregamento preso (GLB/textura) ou exceção no startGame', evidencia: JSON.stringify(nav.partida).slice(0, 300), impacto: 'ninguém joga', proximo: '`npm run eval:boot` e o watchdog de launch (índice `launch-watchdog` no js_error)' });
 }
