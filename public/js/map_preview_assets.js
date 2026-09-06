@@ -1,7 +1,7 @@
 export const MAP_PREVIEWS = {
   "escadao": {
-    "poster": "/img/map-previews/escadao.jpg?v=2e05b0bf80c8",
-    "video": "/img/map-previews/escadao.webm?v=9a66350c1717",
+    "poster": "/img/map-previews/escadao.jpg?v=ba49a5d1ecee",
+    "video": "/img/map-previews/escadao.webm?v=ed0512ac00f2",
     "seconds": 6,
     "assets": {
       "public/models/props/pilha_pneus.glb": "3b1257763372645f44eb0b7738f0e8991b0d7042798abeebbd693c6098499d30",
@@ -29,6 +29,6 @@ export const MAP_PREVIEWS = {
     "source": "b7d5f6d7193bc2bd1dbf348c0b910002ebb3c24683500283d0e67bfc67905988",
     "home": "43dfd1d3fe9494f71e0b70440cf3c7d3f72bcea73b8edd99571dcd74670b4cb4",
     "details": "d6cff0c51bfadfc7e0520c3cc8c94de3e4567714d6e14d9a11260c3334aedcf1",
-    "layout": "bf8e57e9b1e8b785420afe9aa4d3700ebfb40afc3c1ee4d7dce891e2cdaa15b7"
+    "layout": "4318b22a0486ce33f7c24d6bb8b866daf1387a385cf1e1cbfde37e8dc112fe75"
   }
 };

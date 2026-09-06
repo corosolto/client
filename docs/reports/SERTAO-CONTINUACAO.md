@@ -1,0 +1,477 @@
+# Sertão: continuação da revisão do PR #445
+
+## Objetivo e aceite
+Elevar visual e tecnicamente o Sertão preservando layout, três rotas, objetivos, spawns, pickups e desempenho. Aprovação exige captura real 3:2, movimento, contratos e mutações, comparação antes/depois e revisão adversarial humana. Não fazer merge nem deploy. A entrega autorizada pode ser commits locais prontos para integração.
+
+## Isolamento
+Worktree criada exclusivamente em `/Users/ruben/csbrasil/worktrees/sertao-astra`, branch `codex/sertao-astra`, origem `49441895bebdfa328a228de142d0015b4597db9f` de `origin/map2/velho-oeste`. Nenhuma worktree existente usada para implementação. `git worktree list` verificou que a branch original estava livre. O diretório agregado `csbrasil` não é raiz Git.
+
+## Diagnóstico antes de alterar o mapa
+Evidência: `artifacts/sertao-astra/before/` contém sete PNG 1536×1024, câmera FOV 70 e metadados em `capture.json`. Chrome/ANGLE Metal Apple M4 Pro, sem SwiftShader. Fonte: baseline acima. Todas as imagens foram abertas pelo responsável; revisão independente em andamento.
+
+- Bom: igreja branca reconhecível, poço, caminhão antigo, três famílias de fachadas fechadas e porte de vila. Há cobertura central, flancos e objetivos definidos.
+- Reprovado visualmente: casas pau-a-pique são pavilhões abertos de madeira; folha inexistente no juazeiro; cerca de ranch, carroças e tumbleweeds reforçam western; amarelo/laranja domina luz e solo; costura vertical do céu no quadro forró; plano acaba no vazio; planta invade o palco; placas se sobrepõem e não há venda/forró identificáveis.
+- Escala/colisão: igreja visível mede cerca de 4.35×6.30 m no chão, mas seu colisor ocupa 8.8×13.4 m. No ramo GLB a rotação do prop não chega ao grupo usado no cálculo do colisor. Alpendres são caixas sólidas invisíveis até 2.6 m de altura. É hipótese de impacto jogável a medir, não aprovação da geometria.
+- Repetição: mesmo mandacaru e esqueleto arbóreo por todo perímetro. Nenhum fundo em camadas.
+- Performance baseline: 503 calls / 320181 tris na aérea, 86 texturas / 117 geometrias. Build 64 ms. Captura estática não prova FPS de partida; medição em movimento pendente.
+- Gates frescos iniciais: `eval:sertao`, `eval:velhooeste`, `eval:mapcontrato`, `eval:ambience-registry`, `eval:look` passaram. `eval:ambience` não executou por dependência ausente, resolvida com `npm ci --ignore-scripts` na worktree. Essa falha não conta como reprovação do mapa.
+- PR remoto: `CONFLICTING/DIRTY`; merge virtual apontou seis conflitos em documentação gerada, sem conflito de runtime. O merge virtual não alterou checkout/index. Não incorporar toda a base nesta entrega para não misturar outras frentes.
+
+## Decisões
+Pesquisa de referências e acervo em `SERTAO-REFERENCIAS.md`; crítico independente em `SERTAO-CRITICA-BASELINE.md`. Não comprar nem gerar assets pagos. Reusar acervo com procedência verificável e modelagem procedural própria quando o molde não satisfaz a silhueta. Preservar posições das casas, spawns, bandeiras e armas. Corrigir falsos bloqueios e correspondência de colisão com geometria visível. Remover tumbleweeds por decisão explícita do dono de eliminar western; substituir a exigência antiga de colisão móvel por régua de microvida sem bloqueio competitivo. Não baixar áudio de origem incerta.
+
+## Em andamento / próximo passo
+Criar réguas antes da correção para textura íntegra, vegetação não obstrutiva, semântica ligada à malha, correspondência física e três rotas. Corrigir céu, casario e entorno; recapturar e testar. Registrar commits e resultado integral dos gates antes da entrega. Nenhum resultado visual está aprovado.
+
+## Marco técnico — 06/09
+Checkpoint de diagnóstico/procedência: `727f3c84`. Alterações de runtime permanecem nesta branch exclusiva. As réguas espaciais passam 8/8 com 11 mutantes isolados; runtime GLB passa 5/5 e quatro mutantes isolados, incluindo varanda falsa, corpo ausente, batching desligado e spawn exposto. Semântica dos GLBs ligada à malha real; 10 postes finos substituem bloqueios de varanda; igreja corresponde ao footprint observado. Quatro abrigos novos eliminam LOS entre olhos dos spawns opostos sem mover coordenadas.
+
+Custo mapview intermediário: máximo 420 calls / 354401 tris; comparação baseline 503 / 320181. Folga de tris de 15% declarada conforme cena-tetos; não é FPS de partida. A revisão adversarial de uma iteração rejeitou copas/texto/fundo; versões corrigidas aguardam nova crítica. Capturas correntes em `artifacts/sertao-astra/runtime/`; relatório crítico tem hashes para distinguir a iteração avaliada.
+
+`check:fast` fresco: 100/104; falhas docs:check, audio:check, skills:check, eval:docsautoria. Pacotes oficiais audio-v6 e decals-v2 baixados apenas nesta worktree: assert:assets agora passa. Sync local de skills e docs geradas executados; recheck pendente. Pacote audio-v6 tem manifesto incompatível com o gerador atual e não contém a pasta ambiente; não reescrever o manifesto removendo falas para forçar verde. `eval:ambience` tinha path `map_${id.slice(3)}.js` inexistente; corrigido para mapa real, execução de browser pendente.
+
+Próximos passos: movimento real antes/depois e mapa pesado de referência; terminar ambiência/global/build; recapturar após correção do solo contínuo; revisão adversarial; commits pequenos e relatório de integração. Não houve push, PR novo, merge ou deploy. Nada está aprovado visualmente.
+
+## Prompts para frentes paralelas — solicitação adicional do dono
+Preparados em `artifacts/sertao-astra/prompts/{amazonia,lajes,escadao}.md`, completos e independentes. PRs conferidos: Amazônia #439 (`map2/amazonia`), Lajes #438 (`map2/lajes`), Escadão #436 (`map2/escadao`), todos com base `feat/times-e-mapas-completo`. Cada prompt exige worktree nova, portas distintas e benchmark GPU sem concorrência. Nenhuma nova task/worktree foi criada por esta solicitação.
+
+O objetivo completo do Sertão permanece pendente. Último checkpoint: `d1ff3d60` (céu). Alterações posteriores de mapa/paisagem/réguas ainda não commitadas. Último runtime validado: 5/5, quatro mutantes; SP 8/8, 11 mutantes. A cláusula RV6 e seu mutante `emenda-solo`, acrescentados para material contínuo entre solo e entorno, ainda precisam executar e recapturar. O relatório crítico final existente corresponde à iteração anterior, identificada por hashes, e não aprova a última versão.
+
+Movimento real de 30 s em 1536×1024, sete bots, Chrome Metal, com todos os passes: baseline p50/p95 9.5/14.5 ms; depois 12.5/19.2 ms; referência Loja H 23.5/42.7 ms. Distâncias percorridas 101.97/99.74/95.03 m, sem completar todos os waypoints. Calls médios 885.79/817.65/875.07; triângulos médios 819469/745258/1760443. Relatórios em `artifacts/sertao-astra/motion-{before-velho_oeste,after-velho_oeste,reference-loja_h}/report.json`. Há piora medida de frame time: não alegar ganho de FPS com base na queda de draw calls. Ambiente não isolado e pequena correção posterior de material exigem validação final; preservar todos os resultados.
+
+Próximo passo concreto: congelar a última iteração, rodar runtime/RV6 e mutante, examinar sete imagens atuais, pedir nova crítica independente, finalizar ambience/build/docs e repetir medição controlada antes de qualquer conclusão de performance. Só então checkpoint pequeno de runtime e relatório final. Sem push, merge, deploy ou aprovação visual.
+
+## Marco de continuação — iteração polish4
+Retomado explicitamente por instrução do dono para finalizar Sertão. HEAD ainda d1ff3d60; toda implementação posterior é exclusiva desta worktree. Casas autorais fechadas, copas instanciadas, mandacarus autorais sem pedestal, correção dos volumes físicos, abrigos de spawn e solo/entorno contínuos implementados. Captura polish4: RV1–RV9 9/9, máximo 470 calls / 264829 tris, solo ROI desvio 11.04. Não é aprovação visual: crítica independente nova em andamento. A polish3 também passou nos números, mas foi REJEITADA pelo autor por ondas repetidas no chão e faixas triangulares; substituída por ruído contínuo não direcional e removidas faixas. Preservados os artefatos rejeitados.
+
+Sete gates Node frescos passaram: sertao, velhooeste, sertao-spatial, mapcontrato, asset-integrity, maptex, map-source (logs/polish3-gates.log). Ambience em Chrome Metal passou 16 cláusulas (logs/ambience-final.log); esse teste global não aprova áudio Sertão. Sete áudios CC0 existentes foram recuperados das fontes exatas, com tamanho/SHA/duração em audio-restored.json e FONTE.md; sanfona continua ausente e distribuição no pacote é pendência. Não houve substituição musical de procedência incerta.
+
+Próximo: testar sensibilidade atual de todos os mutantes, circulação física pelas três rotas, captura com personagens, desempenho final comparável, crítica dos pixels e correções necessárias, build/global e commits pequenos. Não houve push/merge/deploy.
+
+Circulação real validada em Chrome Metal, Game._updatePlayer a60Hz determinísticos (não FPS): oeste114.48m/22.77s,centro109.28m/21.77s,leste127.28m/25.33s, três chegadas a<.35m do destino, sem erros. Mutação de barreira pendente. ST1 antigo comprovadamente cego (49elementos/19tipos após remover flora); reparo restringe elenco primário e mantém pisos. Quatro preloads sem corpo visual removidos. Checkpoint de runtime preparado após estes marcos; ainda não aprovado visualmente.
+
+## Marcos seguintes — circulação e crítica
+Commits locais b4f96183 (casario/física/flora inicial) e035d0a9f (réguas espaciais/identidade). Três rotas completadas no Game._updatePlayer sem teletransporte no percurso; mutante barreira impede todas e reprova exclusivamente TR1. Crítico polish4 deu6/10; após solo pedregoso, venezianas e copa lateral, polish8 recebeu6.8/10: revisável por humano, ainda com entorno exposto, padrões distantes no piso e diferença de acabamento entre famílias. Não confundir revisão possível com aprovação do mapa.
+
+Runtime polish8:10/10;485calls/266269tris;10mutantes isolados passaram. GLB fallback ainda não era medido explicitamente: revisão técnica solicitou reparo RV1 e mutação de falha real de download. OESTE5 também reteve exigência de bump removido; atualização deve manter obrigação de chão detalhado via RV9 e mutação de materiais reais. Build fresco passou; refazer após congelar shader final. Áudio probe inicial usou quatro nomes sem hífen incorretos: corrigir o instrumento e repetir, não tratar como falta dos arquivos recuperados.
+
+## Congelamento visual para entrega à revisão
+Os sete PNG after/ foram examinados pelo responsável e pelo crítico independente:7/10, aptos à revisão adversarial humana, com refinamentos restantes em piso/entorno/alvenaria. Nenhuma aprovação de publicação. Runtime10/10 antes do último agrupamento de venezianas/rodapés:487calls/277033tris. Agrupamento reduz5calls, preserva matrizes e material; mutante de falha real deGLB agora reprova somenteRV1 (500calls no fallback). Anteriormente sobrevivia; logantespreservado.
+
+Node final pelo revisor:24execuções verdes — Sertão normal+6mutantes, VelhoOeste normal+10mutantes, Spatial8contratos+11mutantes, Look4mapas+4mutantes. Flora/MC: auditoria encontrou que algumas mutações tinham efeitos colaterais ocultos pelo runner; reparo instrumental em andamento, não alegar isolamento anterior. Áudio7arquivosHTTP200+decodeWebAudio, sanfona404. Build passou antes dos últimos acabamentos; recheckfinal pendente. Benchmarkpartidas ABBA em andamento, comparação com elenco/armas fixos a seguir; depoisglobal/build/commits/galeira.
+
+## Fechamento técnico — descoberta adversarial de oclusão
+
+A revisão final encontrou que tiros e LOS não recursivos ignoravam67Groups visíveis, incluindo igreja/casas. A falha também existe em49441895; não foi aceita como verde herdado. Correção local expande só oclusores registrados em Mesh únicas, sem mudar Game, pais ou pixels; copas/tecidos flexíveis ficam fora. Runtime atual11/11 e13mutantes isolados, incluindo retirada dos oclusores da igreja, todos verdes. Capturas after/ recapturadas:482calls/277033tris/84texturas; aparência igual à criticada7/10. Régua Node OC1–4 com mutações em fechamento.
+
+Commits adicionais5458d9c5(runtime/travessia),0ada9243(flora com efeitos exatos),c10ed7ff(críticas/áudio). FL8/8 com10mutações isoladas+2multialvo; MC5/5 com6isoladas+2multialvo, prova isolada para todas as cláusulas. A versão anterior escondia colaterais; manter histórico rejeitado.
+
+Runner global executado105/108: falhasaudio:check herdada,comentário de3linhas próprio e docsautoria por documento gerado ainda não commitado. Comentário encurtado; após registrar oclusão e docs, repetir global. Build eassert:assets passaram. Benchmark de custo da nova oclusão em andamento, com elenco/arma fixos; não usar medições pré-oclusão como resultado final. Próximo passo: concluir benchmark/OC, commit pequeno, regenerar/commitar docs, globalfinal e relatório SERTAO-ENTREGA.md. Sem push/merge/deploy.
+
+Oclusão validada: OC1–4 verdes, sete mutantes isolados; RV1–11 verdes, treze mutantes isolados. Duas partidas pós-correção p95=10.0/10.1ms, semerros, contra9.5ms semcorreção na rodada controlada. Browser:379Mesh oclusores, zeroGroups; casters351→228 e meshes502→481. Contratos/implementação prontos para checkpoint. Resta mapcheck pós-oclusão, docs geradas commitadas, globalfinal e fechar relatório; nenhuma nova alteração visual prevista.
+
+Última correção física: barril no centroCTFB deslocado[12,34]→[14,34], coordenadas doCTF preservadas. SP9mede _collide e sonda vertical:zero deslocamento/penetração nos3pontos. SP9/9 e14mutantesisolados; RV12/12 e14mutantesisolados; travessia ebarreira repetidas:3rotasverdes, leste131.76m/26.25s apósodesvio. Produto congelado novamente para registrofinal, sem nova alteração prevista. Runnerglobal107/109falhouaudioherdado edocsautoriapor linha de mapa alterada duranteexecução; regenerar/commitar docs antesdoúltimorun.
+
+## Resultado final dos gates
+
+Produto final486cc3cd; índices/documentaçãoa53ec67c. Runner fresco sobre estado congelado:108/109, únicafalhaaudio:check(manifestoherdadoDEFASADO). Docs/autoria/comentário corrigidos e verdes. Build5.83s, assert:assets e eval:maptex verdes. Artefatosclosed-global-runs.json e logs/closed-*.log. Runtime12/12,14mutantes; Spatial9/9,14mutantes; OC4/4,7mutantes; trêsrotas físicas e barreiravalidadas. Nenhuma alteração restante de produto. Relatório final/galeria e amostra final de desempenho em fechamento documental.
+
+## Entrega e próximo passo
+
+Amostrafinal pósbarril: p50=8.3/p95=10.0ms,7bots,30s,sem erros; motion-final-controlled-velho_oeste/report.json. Capturasafter/atuais eCTFBexaminadas; notaindependente7/10 permanece atribuídaàiteraçãoanterioraosajustesfinais, semaprovaçãoautomática. Entrega documental emSERTAO-ENTREGA.md:47arquivoslistados, gates,mutantes,rejeições,referências,pendências. Galeria emartifacts/sertao-astra/review.html; port8145continua disponívelpara revisão local.
+
+Implementaçãoautorizada econtraprovas encerradas nesta entrega; próximo passo é revisãoadversarialhumana do mapa e dos commits locais, seguida de decisão sobre refinamentosvisuais. Antesdepublicar:resolver sanfona/distribuição/manifestodeáudio,termos/procedênciadoacervoherdado econflitosdoPR445. Nenhum push,PRnovo,mergeoudeploy. Não interpretarbranchlocalcomoaprovaçãofinaldojogo.
+
+## Revisão solicitada pelo dono: preview, fauna e menu
+
+Objetivo reaberto após revisão local: substituir ilustração do thumbnail por captura real e vídeo silencioso no hover; ampliar fauna crível; alinhar menu à main. Autorizado publicar branch própria e PR contra map2/velho-oeste após validar, sem merge/deploy. HEAD inicial018806e2, worktree exclusiva preservada. Main consultada695557906bcf6a8a3a80e8baf4c434d17d492944; nunca realizar checkout dela.
+
+Diagnóstico: tools/eval/serve.mjs deixa FACTIONS.map sem renderizar; a captura do dono prova que porta8145 não serve para revisão completa de menu. Astro real iniciado nesta worktree na porta8149 (8146–8148 ocupadas; nenhum processo alheio alterado). Além do defeito de servidor, a camada cinematográfica diverge de main. Preservar catálogo10/ready e fluxo local ao alinhar estrutura e CSS; não transportar multiplayer inteiro.
+
+Mint aberto em navegador sem sessão autenticada. Não houve geração paga ou novo download. Calango Mint já existe (licença específica herdada pendente); aves autorais articuladas e fontes naturais em avaliação. Root único responsável por browser; frentes disjuntas menu/contrato e módulo fauna delegadas conforme gauntlet. Próximo: baseline vermelho dos novos contratos, implementar, captura real3:2, mutantes, gates, revisão independente e PR com pendências explícitas.
+
+### Marcos da revisão adicional
+
+Calango corrigido em 3a29d724: uma face espúria removida, 4.957 triângulos, mesmos atributos/texturas/pose. CS1–3 e três mutantes isolados verdes; cache por SHA. Nova captura real em fauna-runtime/calango-close-final.png mostra a face preta removida. A pose bípede herdada e a ausência de rig continuam limitações.
+
+Menu normal Astro percorreu boot → mapa → facção → personagem → adversário → partida com sete bots e nenhum erro JavaScript. Capturas menu-main/*-final.png; personagem real carregado. Crítico aprovou composição para revisão humana, rejeitou CTA em facção indisponível; corrigido, MENU8 vermelho antes/verde depois com mutante. Teste de mira e screenshot sem overlay em andamento.
+
+Fauna: mais dois calangos em rotas seguras e três asas-brancas articuladas autorais (uma em low); 14.400 amostras de fuga sem penetrar colisores. SF1–7 + sete mutantes, FA1–4 + quatro mutantes, runtime RV1–12 verdes. Cena atual: máximo491calls/291060triângulos. Preview real recapturado: JPEG9102503fceee, MP4 seis segundos472437a07822; recibo liga bytes e fontes. Race de play antigo corrigida, dois mutantes. Mutante sem-pausa atinge PV4/PV5; sem-saida demonstra PV4 isoladamente, sem esconder efeito colateral.
+
+Próximo: terminar medição em movimento/ambience, registrar evidências pequenas no Git, commits separados, regenerar docs, rodar global/build e publicar codex/sertao-astra em PR contra map2/velho-oeste. Não há aprovação visual final ou autorização de merge/deploy; pendências de áudio/procedência anteriores permanecem.
+
+### Fechamento técnico da revisão
+
+Commits3a29d724(calango),1b29ab5f(fauna),45332cd2(preview),495a6d88(menu),805926a8(contratos),ec4e60e9/d9dc73ea(docs),f2d10667(capturas). Preview b917cce1 usa Promise tratada reconhecida pela régua global, preservando comportamento e contraprovas resolve/reject.
+
+Chrome com janela validou pointer lock e giro10,479rad (~600°) por mouse real, zero erros; menu-main/headed/flow.json e game-final.png. O resultado headless sem lock é limitação do instrumento, não evidência de trava do jogo. Ambience global passou. Partida30s com sete bots: p95=10,6ms,p50=8,4ms,60,39m,sem erros,95,8MBheap. Build/assertassets/maptex passaram. Galeria pequena versionada em tools/eval/asset-evidence/sertao-review.
+
+Primeiro check:fast109/112: áudio herdado, sintaxe de guard de mídia e docsautoria durante atualização dos índices. Guard ajustado e testes próximos verdes; regenerar/commitar docs antes de repetir global no estado congelado. Relatório consolidado SERTAO-REVISAO-MENU-FAUNA.md inclui arquivos exatos, contraprovas e pendências. Próximo passo imediato: resultado global final, commit documental, push sem força e PR draft contra map2/velho-oeste. Nenhum merge/deploy.
+
+Rodada final congelada037c48b1: check:fast111/112 em304,0s; apenas audio:check herdado. Mídia/docsautoria e demais globais verdes. Build final e preview baseline+sete mutantes repetidos passaram. Log revision-final-check-fast.log; galeria/relatório atuais incluem prova de giro600°. Não regenerar manifesto de áudio para esconder a falha. Publicação autorizada limita-se à branch própria e PR draft para revisão humana; sem merge/deploy.
+
+## PR de revisão publicado
+
+PR draft **#511**: https://github.com/corosolto/client/pull/511, base map2/velho-oeste,
+head codex/sertao-astra. Commit de entrega c2414c56; PR445 permanece49441895.
+Pré-push passou com Node23.6.0. Primeira tentativa com Node16 bloqueada pelo hook;
+depois houve falha de transporte HTTP400 após gates verdes. Reenvio do mesmo SHA
+com HTTP/1.1 e postBuffer apenas no comando passou; PREPUSH=0 somente nessa
+retransmissão reutilizou a validação concluída, sem bypass de gate reprovado.
+Nenhum force-push, merge ou deploy. Próximo passo: revisão adversarial humana no
+PR511, especialmente cenário, cobertura, áudio/procedência e naturalidade da fauna.
+Servidor Astro desta worktree continua em localhost:8149; abrir em Chrome sem debug.
+
+## Nova revisão do dono — fauna natural e memória regional
+
+Base desta iteração d48d389c, PR511 draft existente, mesma worktree/branch exclusiva.
+Dono aprovou aproximadamente90% do mapa; rejeitou galinha lowpoly e calango bípede.
+Pediu pintinhos, cabras/bodes andando, aves no horizonte, vegetação Caatinga/Agreste,
+placaCanudos e homenagemPadreCícero. Spec plans/16-SERTAO.md preenchido e validado.
+
+Calango derivado local quadrúpede4795tris/608484bytes e clipeRun preparado, fonte
+lagarto_sertao preservada; CQ1–4+contraprovas verdes. Integração/movimento ainda
+em validação. Horizonte inicial4draws/11856tris passouRV12/12,495calls/302916tris,
+mas capturas fauna2-horizon mostraram pouca diferença: resultado VISUAL REJEITADO.
+Versão aproximada das copas está em ajuste, não aprovada. Memorial autoral e aves
+distantes em módulos disjuntos. Não tocar menu/rotas aceitos sem evidência nova.
+
+Mint agora autenticado: projeto exclusivo zd7d9mfmgv0b80ezp3xbykp1ns8dw47r,
+chat ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba, pack th78004y9j8g2kd0mkd45xq65x8dw112.
+Concepts hen/chick/goat examinados e geração3D solicitada com créditos existentes.
+Nenhuma compra/aceite de termos. Mint não forneceu URL de licença verificável;
+solicitada fonte ao dono. Não baixar/integrar novos modelos enquanto a exigência
+original de licença permanecer sem evidência. Prompt/registro em
+SERTAO-FAUNA2-ASSETS.md; não confundir concepts bonitos com modelo real aprovado.
+
+Próximo: concluir calango/fallback/velocidade e testes; capturar horizonte revisado,
+memorial e aves; revisão independente; resolver termos dos três novos animais;
+atualizar preview, gates/mutantes e PR511 com commits pequenos. Sem merge/deploy.
+
+### Checkpoint calango validado — 3eae04ca
+
+Calango quadrúpede integrado e commitado com Agent:Astra. CQ1–10+11mutantes
+Node e CR1–6+4mutantes Chrome passaram: pitch0, velocidade máxima1,2m/s,
+quatro pés apoiados parado/dois em corrida, morph parado no idle. Normalização
+da caixa corrigida por teste real que detectou pés9,17mm acima do chão.
+Artefatos: calango-quadrupede/runtime/report*.json e calango-motion.mp4.
+FA1–4 repetidos depois do commit:14.400 amostras, zero penetração, low1calango.
+
+Canudos usa POP.16.693 • IBGE2025 em dois portais, dado datado da estimativa
+IBGE; LP1–4+3mutantes passaram. Aves distantes SDB1–8+9mutantes passaram
+após ajustar envelope externo para20m além da arena; revisão independente
+aprovou silhueta na captura life-polish-r4/aves.png. HZ4 passou técnico
+(496calls/305718tris), mas árvore próxima foi REPROVADA visualmente como
+vassoura. HZ5 em construção reutiliza seis juazeiros do acervo com copa leve.
+
+Memorial PadreCícero procedural/Blender REJEITADO: não representa bem o rosto
+e postura pretendidos. Protótipos preservados em artifacts/sertao-astra/memorial,
+sem integração de produto. Galinha/pintinho/cabra Mint gerados; metadados e
+inspeção em SERTAO-FAUNA2-ASSETS.md. Ainda sem download, licença verificável
+pendente de fonte do dono; animações animais ainda não recebidas/criadas.
+Próximo: validarHZ5 visual+mutantes, resolver termosMint e integrar fauna real,
+substituir memorial por resultado digno de revisão, recapturar preview e gates
+globais antes da atualizaçãoPR511. Não declarar mapa finalizado.
+
+### Horizonte r5 e aves validados
+
+A mudança de estratégia resolveu a divergência da árvore vassoura: seis GLBs
+juazeiro já existentes,96ramosfoliares por copa e27arbustos; compartilha recursos.
+Crítico independente aprovou horizonte r5 para revisão humana, sem regressão
+material da praça/leste/sul; fundo distante ainda simples e esparso.
+RV1–12:496calls/337248tri. LP1–4 verdes, horizonte-ausente continua isoladoLP3.
+Spec altera apenas orçamento incremental para3calls/48miltri, conserva cena
+503calls/368208tri. Artefatos fauna2-horizon-r5 e life-polish-r5.
+
+Movimento30s/setebots: p508,4ms/p9512,6ms,109,39m,100178717bytesheap,
+zero erros; motion-fauna2-controlled-velho_oeste/report.json. Não comparar
+triângulos do composer acumulado com teto do passemapview.
+FA1–4+quatro mutantes repetidos passaram. Específicos13/13 passaram em16,1s,
+logfauna2-specific-rerun.log. Novos animais continuam só no Mint: cabra também
+examinada lateralmente; ninguém deve procurar esses modelos ainda no jogo.
+Checkpoint62b6538e registra pendências;3640e682 contém aves distantes. Próximo:
+concluir checkpointHZ+integração, previewrecibo, globais/docs/build; licençasMint
+continuam bloqueando novos downloads/animais. Sem merge/deploy.
+
+### Estado congelado e validação global — e8858900
+
+Commits48a0dbc6(horizonte),55ba3e12(integração/contratos),06994004(preview/
+evidência),e8858900(índices). HZ9/9+13mutantes isolados. LP4/4+3mutantes
+repetidos sobre a r5. PreviewPV6/6 com mídia nova passou. Build,assert:assets,
+maptex e ambience global Chrome passaram. Global114/115 em399,5s: apenas
+audio:check herdado, manifest.json DEFASADO. Logfauna2-check-fast.log.
+
+Relatório final da etapa: SERTAO-REVISAO-FAUNA2.md, lista exata de arquivos
+desde d48d389c; galeria localfauna2-galeria.html e evidência versionada
+sertao-fauna2. Não houve regressão nova identificada nos gates. Não é conclusão
+do objetivo completo: animaisMint, memorial e pendênciasdeáudio/procedência
+continuam abertos. Próximo: publicar checkpoint noPR511draft semmerge/deploy;
+após fonte de licençaMint, baixar/animar/integrar galinha,pintinhos,caprinos.
+
+### Publicação da etapa validada
+
+PR511 atualizado e verificado: head4fa6d4d08c31bf825f0d3f5d8ccb48b648c7c633,
+base map2/velho-oeste, draft=true, mergeable. Push normal passou pelo hook
+em140s, sem bypass/force. Corpo distingue explicitamente os animaisMint ainda
+não integrados. PR445 continua49441895, com conflito histórico na base original.
+
+Main consultada novamente:a551204fd80a4b02599b6658fc7dc991a1810585. Comparação
+com69555790:duas linhas em index.astro apenas incluem ops.js/telemetria; sem
+mudança visual de menu. Não transportar essa frente operacional para o Sertão.
+
+Este registro é checkpoint documental local posterior ao push; implementação e
+evidências estão noPR4fa6d4d0. Próxima integração pode levar este registro junto.
+Próxima ação dependente: receber link/trecho dos termosMint solicitado ao dono,
+baixar os três modelos do projeto zd7d9mfmgv0b80ezp3xbykp1ns8dw47r, medir,
+otimizar e animar localmente. Eles NÃO estão no mapa. Galinhaantiga permanece.
+Memorial ainda sem resultado aceito. Servidor local8149, recarregar partida
+para ver calangoquadrúpede, aves, horizonte e placa. Sem merge/deploy manual.
+
+## Integração com main — 06/09/2026, em validação
+
+O dono autorizou atualizar com main, resolver conflitos, build e merge. A base
+`a551204fd80a4b02599b6658fc7dc991a1810585` foi incorporada somente nesta worktree.
+O checkpoint anterior `402665ef` preserva integralmente a revisão visual.
+
+A divergência antiga abrangia 1.810 caminhos; a resolução conserva a árvore da
+main e reaplica apenas Sertão, preview, réguas e dependências locais. Backend,
+protocolos, áudio aprovado, armas, outros mapas, aliases e menu permanecem na main.
+`main.js` recebe apenas preview e preload específico; `game.js`, pausa da ambiência.
+O loop de sanfona ausente foi retirado da configuração para não requisitar um
+arquivo sem fonte disponível. Nenhum áudio novo, asset Mint novo ou memorial entrou.
+
+Galinha/pintinhos/cabra Mint continuam candidatos, sem licença específica
+verificada e sem animação aprovada. A fauna entregue é a anterior mais o calango
+quadrúpede corrigido e aves procedurais já revisadas. Os GLBs locais herdados
+conservam os registros e lacunas documentais; nenhum termo foi inventado.
+
+Próximo passo: concluir gates e capturas na main integrada, registrar o resultado,
+push sem força na codex/sertao-astra, retarget do PR511 para main e merge autorizado
+com SHA verificado. PR445 será indicado como substituído, sem reescrever a branch.
+
+### Checkpoint da integração ea90bc2c
+
+Build passou; RV12/12, LP4/4, PV6/6 e SI3/3+3mutantes passaram.
+Crítico independente não encontrou P1/P2 e confirmou os sete PNGs de main-runtime
+idênticos byte a byte aos de fauna2-horizon-r5. O preview foi recapturado da
+árvore integrada e preservou os bytes das mídias; recibo atualizado com os fontes
+da main. Check global, benchmark em movimento e sincronização do backend
+seguem em validação.
+
+### Retomada dos caprinos e da família de galinhas — 06/09/2026
+
+HEAD `fe21db15`, publicado sem força na branch exclusiva. A integração com main
+passou nos gates específicos e no pre-push; detalhes nos logs `main-*.log` em
+`artifacts/sertao-astra/logs/`. Nenhum merge ou deploy executado.
+
+Os termos oficiais foram finalmente localizados em
+https://docs.mint.gg/terms-of-service (atualização de 07/05/2026). A seção 4
+cede ao usuário os direitos que Mint tiver no output criado para ele, sujeita às
+condições contratuais e direitos de terceiros. Isso substitui o bloqueio anterior
+de fonte não encontrada; não equivale a CC0 nem garante exclusividade.
+O pacote próprio `vd7azjz400t2sy4g2h4z14ff318dx0mb` foi baixado pela UI autorizada.
+Originais e cópia dos termos: `artifacts/sertao-astra/mint-livestock/raw/`.
+
+Cabra, galinha e pintinho ainda NÃO estão no jogo. Próximo passo: examinar os GLBs,
+criar animação local, integrar somente no Sertão e provar presença, contato,
+movimento e orçamento com imagens reais e mutantes; depois atualizar preview e PR.
+Memorial continua sem resultado aceito. O backend foi apenas inspecionado e seu
+build preparado em `artifacts/sertao-astra/backend-runtime/`; nenhuma VM alterada.
+Antes de eventual sincronização, revalidar SHA/ocupação e manter o código de servidor
+implantado, trocando somente a revisão de cliente após validação final.
+
+### Presença comprovada da criação — checkpoint R1
+
+Os dois caprinos, a galinha Mint e três pintinhos estão agora integrados no mapa
+local. Capturas reais 1536×1024 e relatório em
+`artifacts/sertao-astra/livestock-r1/`: LG1–LG6 passaram, com 14.400 amostras de
+percurso sem colisão, seis meshes e 24.228 triângulos na qualidade normal; quatro
+animais em low. Isso substitui o estado “NÃO estão no jogo” do checkpoint anterior.
+ST6/6, WO9/9 e SI3/3 com três mutantes também passaram nesta integração.
+
+R1 não aprova a entrega final: o crítico confirmou a leitura dos caprinos e
+pintinhos, mas apontou ausência de contato suave no solo e pediu conjunto de
+animações congelado. O builder está refinando pesos da barriga da cabra e dos pés
+da galinha; sheets intermediários divergiram dos GLBs novos e não são evidência
+final. Um passe instanciado de contato foi adicionado após essa crítica e ainda
+precisa ser capturado. A régua local distingue seis rigs mais esse passe; o teto
+global RV3 de 503 draw calls e 368.208 triângulos não foi alterado.
+
+Próximo passo: congelar os três GLBs, registrar hashes/procedência, validar LG1–LG8
+e mutantes, recapturar preview e movimento, receber crítica final e checkpointar.
+PR511 foi retargetado para main, continua draft e não foi mergeado. A faixa de
+280 commits importados contém 25 sem DCO; preservar esta branch e preparar uma
+branch de submissão limpa a partir da main, na mesma worktree exclusiva, depois
+da validação. Não usar force-push nem afrouxar checks para contornar o histórico.
+
+### Criação congelada e crítica independente
+
+Checkpoint `c9b05881`: três GLBs próprios Mint, rigs locais e procedência. O trio
+foi reimportado; hashes finais em `mint-assets.json` e
+`artifacts/sertao-astra/mint-livestock/animation/asset-manifest.json`. Crítico
+aprovou48 poses e33 quadros temporais em jogo, sem bloqueador visual observado;
+não assistiu vídeo contínuo, portanto cadência fina continua sujeita à revisão
+humana. Vídeos reais16s por grupo, incluindo pausa/retomada, em
+`artifacts/sertao-astra/livestock-final/`; cópias compactas versionadas em
+`tools/eval/asset-evidence/sertao-criacao/`.
+
+LA4/4, LG8/8 e RV12/12 passaram. Mutantes revelaram dois instrumentos inadequados
+(troca de pose contada como Walk e sombra anulada por política posterior), ambos
+corrigidos e comprovados vermelhos na cláusula correta. Partida30s/7bots: p50
+8,3ms, p95 10,1ms, sem pageerror. Relatório `SERTAO-CRIACAO.md`.
+
+O descarte de texturas de ossos está recebendo uma medição adicional antes do
+checkpoint do runtime. `check:fast` está em curso; `eval:docsautoria` ainda rejeita
+documentação gerada não commitada, o que será resolvido pelo checkpoint normal.
+Main avançou para `971342e4` (alpha225/PR514). Simulação de três vias confirmou
+preservação de retries/beacon em main.js e oito conflitos documentais gerados.
+Próximo: concluir descarte/gates, checkpointar runtime/evidências, criar branch
+limpa nesta mesma worktree a partir da main atual e aplicar squash de três vias.
+Não houve merge no GitHub nem alteração nas VMs; memorial segue reprovado/fora.
+
+Checkpoint de runtime `06463c49`: contato e boneTextures descartados sem destruir
+texturas compartilhadas. LA4/4+5mutantes; LG8/8+9mutantes, com a ausência de
+caprinos isolada emLG1; RV12/12. `check:fast` concluiu94/95 em464,5s: apenas
+DOCSAUT, que recusa medir enquanto colaborar.md gerado está não commitado.
+Gates e evidências novos estão em commits locais; ainda sem push posterior a
+fe21db15. Próxima ação é checkpointar documentação/evidências e executar DOCSAUT,
+depois aplicar a submissão limpa na main225 e validar build/preview nessa árvore.
+
+### Submissão limpa sobre main226
+
+Fonte preservada e publicada em `codex/sertao-astra`, commit `bcf70e8d`.
+DOCSAUT passou depois do checkpoint gerado; pre-push passou em39s. A primeira
+transferência falhou HTTP400, a repetição normal com HTTP1.1/postBuffer64MiB
+concluiu e `ls-remote` confirmou o SHA, sem force-push ou bypass de hooks.
+Main fixada para integração: `2786fa482abda6c7408b9b6391e446abc48f6b4a`
+(alpha226, Lajes). Auditoria independente encontrou21 conflitos numa simulação
+sem escrever: preservar pipa, preview Lajes, navegação em camadas e operações.
+O preview Sertão será renomeado para evitar colisão de contrato com o módulo e
+check Node de Lajes. A captura será refeita após resolver a árvore integrada.
+Próximo passo: branch limpa `codex/sertao-main`, criada nesta MESMA worktree,
+merge squash de três vias da fonte preservada, commits pequenos com DCO/Agent,
+gates/build/crítica e PR contra main. Não houve merge nem alteração de backend.
+Memorial continua rejeitado/fora; os caprinos usam o mesmo modelo Mint.
+
+### Main226 integrada e criação revalidada
+
+Submissão limpa em `codex/sertao-main`, nesta mesma worktree. Todos os conflitos
+resolvidos preservando Lajes/pipa/ops; o módulo/teste de preview Lajes permanece
+idêntico à main. Preview Sertão agora `sertao_map_preview.js`, gate correspondente
+`sertao-map-preview-check.mjs`; comandos npm existentes preservados.
+
+Na árvore integrada: LG8/8 e RV12/12, máximo488drawcalls/352776triângulos sem
+alterar tetos. PV7 mede alinhamento do vídeo com o thumbnail; mutação que desloca
+20px reprova somentePV7. Browser real alternou Sertão→Lajes→Sertão, um vídeo ativo
+por vez; ESC fechou setup e pausou. Capturas3:2 em `main226-menu/`, `main226-runtime/`
+e `main226-livestock/`, dentro de `artifacts/sertao-astra/`.
+
+Crítico independente encontrouP2: céu procedural alocava2MiB por reconstrução.
+`e438455f` memoiza por LOOK. Régua antes:4texturas/8MiB; depois:1textura/2MiB,
+configurações diferentes preservadas. SK1–SK2 e dois mutantes passaram; gate
+ligado a check:fast eCI. Crítico não encontrou outroP1/P2 concreto na integração.
+A prévia foi capturada novamente após essa correção, sem alterar hashes à mão.
+
+LOOK2/2 passou (Córrego usa medição assada documentada; Sertão mede texels reais).
+Ambience-registry: Sertão AR1/AR2/AR3 passa; AR1 global continua vermelho nos onze
+outros mapas listados em `logs/main226-ambience.log`, problema herdado da main.
+Próximo: finalizar gates globais/build/movimento, publicar PR limpo e aguardar
+checks/revisão antes do merge autorizado. Memorial permanece fora/reprovado.
+
+### Portões locais finais e PR516
+
+Submissão publicada: https://github.com/corosolto/client/pull/516,
+`codex/sertao-main` contra main226. Fonte de runtime congelada em
+`87cf863108a7dd727ca75b78faf61f4ec3a94b15`. `check:fast` passou118/118 em418,4s;
+`npm run build` e pre-push/check:deploy passaram. Logs em
+`artifacts/sertao-astra/logs/main226-{check-fast,build,push}.log`.
+PV final7/7, calango CR6/6 e vida regional LP4/4 passaram nesta árvore.
+Movimento30s/7bots:95,24m, p50 10ms/p95 15,1ms, zero pageerrors; relatório em
+`motion-main226-controlled-velho_oeste/`. Crítica visual independente examinou
+15capturas, incluindo calango próximo e Lajes realmente selecionado, sem bloqueador
+inequívoco; não afirma ter assistido vídeo contínuo. Ave sobre o coreto parece
+separada alguns pixels numa captura; sem sequência próxima não foi classificada
+como defeito confirmado. Vídeos da criação continuam disponíveis para revisão.
+
+DCO e preview Vercel passaram no GitHub; checks build/portao ainda em andamento
+neste checkpoint. Dono reiterou autorização para merge assim que estiver pronto.
+Antes do merge, verificar novamente SHA, checks e threads de revisão.
+
+Servidor existente revalidado: três regiões com zero jogadores/partidas ativas,
+serverSha d05c00a e clientSha0090ab82. Nenhum nó alterado. Primeiro build isolado
+72245fb2 falhou no instrumento: construtor Room sorteia rotação mesmo recebendo
+mapId. A prova foi corrigida com subclasse de teste que fixa somente a rotação
+para Sertão; produção não foi modificada. Sala real local passou300ticks,
+6combatentes,112colisores,390waypoints e3objetivos CTF. Repetição de build
+`dd2d4884-7529-46da-ae02-49825f263c21` em andamento. Imagem candidata fixa código
+servidor d05c00a e cliente87cf8631; metadados/secret/startup de nós devem ser
+preservados. Só eventual canário vazio após image gate, seguido de health e
+WebSocket real. Não confundir build de imagem com implantação.
+
+### Rebase contra alpha.232 — 2026-09-06
+
+Integração normal da branch `codex/sertao-main` em `origin/main` `b64aa886`.
+Conflitos limitados ao workflow e aos derivados de documentação; o workflow
+preserva o novo gate de raycast de Lajes e a sequência de gates do Sertão.
+Foi restaurada a união de conteúdo em `ambientlife.js`: a integração anterior
+perdera o tipo `calango` durante rebase, embora `map_velho_oeste.js` ainda
+declarasse cinco instâncias. A régua ST5 detectou o defeito com 0 vivos; após a
+correção mede 5. A mutação `sem-calango` volta a deixar apenas ST5 vermelha.
+
+Os failures remotos do head `d8b7584d` foram reproduzidos por leitura dos logs:
+o CI chamava scripts inexistentes `eval:sertao` e `eval:sertao-livestock-runtime`.
+Os seis scripts do Sertão foram restaurados no `package.json`, e os gates do
+Sertão voltaram ao `check:fast`. Pré-matriz na alpha.232: contratos Sertão,
+Velho Oeste, criação, integração e ciclo do céu passaram; seis mutantes Sertão
+foram mordidos isoladamente; contrato CTF2 da Amazônia passou. `build` passou.
+`check:fast` encontrou LAB8g externo: o gerador local de soundscape não registra
+o mapa Amazônia. Não alterar essa frente nesta lane; reavaliar na alpha.233.
+Nenhum navegador, servidor, merge remoto ou deploy foi usado.
+
+### Rebase contra alpha.233 — 2026-09-06
+
+`origin/main` avançou para `c7302096` (alpha.233) e foi integrado sem conflito.
+O primeiro `check:fast` na árvore de merge revelou mais sete referências órfãs
+do Sertão no próprio `check:fast`; todas tinham arquivos reais, mas perderam as
+entradas de `package.json` no rebase. O portão `eval:portaointeiro` ficou
+vermelho, as sete entradas foram restauradas e a régua voltou a passar com 160
+citações válidas. O LAB8g também revelou que a Amazônia estava ausente do
+manifest local de soundscape; a entrada usa somente loops Fab existentes de
+água e árvores e o laboratório passou com 16 mapas.
+
+As duas falhas remanescentes da primeira matriz alpha.233 foram documentais:
+`docs:check` e `docsautoria` rodaram antes da regeneração posterior ao
+`package.json`. Regenerar, commitar a merge e repetir o `check:fast` com árvore
+limpa é a última validação local antes de publicar. Sem navegador, servidor,
+merge remoto ou deploy.
+
+### Candidato alpha.233 validado localmente
+
+Merge local `e5df4bdf98a4e24bb661a27c649d525abf780173`, pais
+`0664039c` e `c7302096`. Com árvore limpa, `check:fast` passou **123/123** em
+206,8 s; log em `artifacts/sertao-astra/logs/alpha233-check-fast-clean.log`.
+`npm run build`, `docs:check`, `arch:check`, `eval:docsautoria` e
+`eval:portaointeiro` passaram. Contratos do Sertão medem 5 calangos vivos,
+2 cabras, 1 galinha e 3 pintinhos; CTF2 da Amazônia também passou após a
+integração. O build local apenas avisou que Node 23 será substituído por Node 24
+no runtime Vercel, sem erro de build. Não houve execução de browser/servidor,
+merge remoto ou deploy. Próximo: conferir `origin/main` e `origin` uma vez,
+publicar o candidato e aguardar os checks do GitHub antes de qualquer merge.
+
+### Correção do portão de criação na alpha.234 — 2026-09-06
+
+O portão remoto do head `d63ab1b2` reprovou somente por timeout de 30 s em
+`page.screenshot()` após a simulação da criação: o log confirma fontes prontas,
+mas o canvas WebGL ainda não havia sido lido pelo SwiftShader do runner. A
+captura, a análise de contato e as imagens de evidência continuam obrigatórias;
+o helper do teste agora aplica timeout explícito de 120 s a cada captura,
+compatível com as outras provas WebGL do repositório.
+
+Reprodução local com o servidor de avaliação em `localhost:8123`: LG1--LG8
+passaram para médio e baixo. As nove mutações (`sem-caprinos`, `patas-paradas`,
+`parede`, `sombra`, `low-cheio`, `reset-ausente`, `sem-contato`,
+`dispose-ausente`, `rig-nao-descartado`) deixaram exclusivamente a régua
+esperada vermelha. As capturas e o relatório estão em
+`artifacts/sertao-astra/livestock-runtime/` e permanecem fora do Git. Próximo:
+publicar somente esta correção e aguardar a repetição do portão remoto; nenhum
+merge ou deploy manual é autorizado por este checkpoint.
