@@ -1,5 +1,5 @@
-// AMAZONIA (amazonia) — retrato do "Treta no Vietnã" (PR #375) como comunidade
-// ribeirinha: igarapé, palafitas de palha, market flutuante, madeireira. Spec: ~/map2/prompt-opencode.md.
+// AMAZONIA — comunidade fictícia de várzea brasileira na vazante.
+// Direção e limites verificáveis: plans/AMAZONIA-VISUAL.md.
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch, StaticBatch } from './mapprops.js';
 import { applyLook } from './map_sky.js';
@@ -30,8 +30,8 @@ export const AMAZONIA_PROPS = ['samambaia', 'heliconia', 'planta_corrego_taboa',
 
 /* ── PALAFITAS DE VERDADE (molde palafita_pro.glb): "subir na madeira pra atravessar" —
     cada estação tem patamar e escada andáveis + corrimão `passarela`; rede = rota alta. */
-const DECK_Y = 1.8;                 // madeira alta: corpo (1,5) e sonda (1,4) passam por baixo, sem viga
-const PILA_GLB = 0.6;              // molde com pilares cravados: o deck dele (40%·6) bate no 1,8
+const DECK_Y = 2.3;                 // vão livre: 2,12 m sobre a ponte, maior que mantle de 1,95 m
+const PILA_GLB = 1.1;              // offset do molde acompanha a subida da passarela; estacas estendidas abaixo
 const CASA_A = 3.0;
 const PAT_A = 1.6;
 const ESC_N = 12, ESC_PISO = 0.26;  // espelho ~0,15: 2 espelhos cabem no pé de 0,30 do corpo
@@ -42,7 +42,7 @@ const ESTACOES = [
   { x: 14, z: 6, d: [-1, 0], e: 1, rede: true },      // D — virada pro igarapé
   { x: 21, z: 17, d: [-1, 0], e: 1 },
   { x: 27, z: 7, d: [-1, 0], e: 1 },
-  { x: 17, z: 29, d: [-1, 0], e: 1 },
+  { x: 17, z: 29, d: [-1, 0], e: -1 },
   { x: 27, z: -7, d: [-1, 0], e: 1 },
   { x: -14, z: 6, d: [1, 0], e: -1, rede: true },     // F — cabeça oeste da travessia
   { x: -14, z: -22, d: [1, 0], e: -1 },
@@ -66,7 +66,7 @@ const MATA_ARVORES = [];
   const fileira = (fix, axis, posicoes) => {
     for (let i = 0; i < posicoes.length; i++) {
       const v = posicoes[i], jit = Math.sin(i * 12.9898 + v * 78.233 + fix) * 1.3;
-      const s = 7 + ((i * 37 + Math.abs(Math.round(fix))) % 5) * 1.1;
+      const s = 10 + ((i * 37 + Math.abs(Math.round(fix))) % 5) * 1.1;
       MATA_ARVORES.push(axis === 'x' ? { x: v + jit, z: fix, s } : { x: fix + jit, z: v, s });
     }
   };
@@ -178,6 +178,11 @@ const MATA_INTERIOR = [], BABACU_INTERIOR = [], GRAMA_INTERIOR = [];
     GRAMA_INTERIOR.push({ x: gx2, z: gz2, id: i % 4 ? 'grama_corrego_01' : 'grama_corrego_02' });
   }
 }
+
+// AMZ5: a árvore na boca da escada norte (17,29) bloqueava a entrada com guardas.
+// Deslocamento autorado de 1,2m preserva a instância e a densidade dos quadrantes.
+const arvoreNoAcesso = MATA_INTERIOR.find(a => a.x === 13 && a.z === 22.7);
+if (arvoreNoAcesso) arvoreNoAcesso.z = 21.5;
 
 export function buildAmazonia(scene, T) {
   const colliders = [], occluders = [], pickups = [];
@@ -295,12 +300,13 @@ export function buildAmazonia(scene, T) {
   }
 
   /* Canal de várzea na vazante: sedimento em suspensão e espuma discreta.
+     Raso próximo ao fundo evita faixas claras artificiais no contato com madeira.
      A lâmina termina onde encontra a rampa, abaixo das três pontes. */
   const aguaMeiaLargura = RIO_CAMPO + (RIO_AGUA - RIO_FUNDO) /
     (RIO_MARGEM - RIO_FUNDO) * (RIO_MEIA_LARGURA - RIO_CAMPO);
   const agua = createWater(scene, T, 'amazonia', {
     nivel: RIO_AGUA, centro: [0, 0], tamanho: [aguaMeiaLargura * 2, PAISAGEM_Z * 2], segmentos: 12,
-    raso: 0x766a45, fundo: 0x302f22, marLonge: 0x585c41,
+    raso: 0x3b3b29, fundo: 0x302f22, marLonge: 0x585c41,
     profEscala: 0.4, espumaFaixa: 0.06, espumaMiolo: 0.01,
     profFallback: RIO_AGUA - RIO_FUNDO, fluxo: [0, 0.09], ampEscala: 0.06,
     mapa: TEX.agua.map || T.dirt, mapaEscala: [3, 13.3], mapaForca: 0.08,
@@ -369,6 +375,16 @@ export function buildAmazonia(scene, T) {
       if (casaChapa) {
         // Casa de madeira/chapa referenciada em Marajó: janela com veneziana e beiral baixo.
         const escuro = lam({ map: texDe(TEX.madeira, 1, 1) || T.dirt, color: 0x34423b });
+        // Porta FECHADA: a casa é cover sólido; o trajeto continua pela varanda lateral.
+        const [portaX, portaZ] = W(2.73, 0);
+        pieceBox(matDeck, .06, 2.05, .95, portaX, DECK_Y + 1.025, portaZ, yaw);
+        for (const h of [.35, 1.65]) pieceBox(matPoste, .08, .09, .91, portaX, DECK_Y + h, portaZ, yaw);
+        const [mx, mz] = W(2.81, .3);
+        pieceBox(matCasca, .1, .13, .08, mx, DECK_Y + 1, mz, yaw);
+        for (const v of [-.52, .52]) {
+          const [x, z] = W(2.77, v);
+          pieceBox(matDeck, .07, 2.12, .07, x, DECK_Y + 1.06, z, yaw);
+        }
         for (const v of [-1.45, 1.45]) {
           const [x, z] = W(2.715, v);
           pieceBox(escuro, .035, .9, 1.0, x, DECK_Y + 1.5, z, yaw);
@@ -449,8 +465,15 @@ export function buildAmazonia(scene, T) {
         const vC = st.e * (PAT_A + (i + 0.5) * ESC_PISO);
         const top = g0 + esp * (n - i);
         const [cx, cz] = W(4.4, vC);
-        colliders.push({ minX: cx - 0.65, maxX: cx + 0.65, minY: g0 - 0.6, maxY: top, minZ: cz - 0.19, maxZ: cz + 0.19 });
-        pieceBox(matDeck, 1.3, 0.09, 0.3, cx, top - 0.045, cz, yaw);
+        colliders.push({ minX: cx - 0.8, maxX: cx + 0.8, minY: g0 - 0.6, maxY: top, minZ: cz - 0.19, maxZ: cz + 0.19 });
+        pieceBox(matDeck, 1.6, 0.09, 0.3, cx, top - 0.045, cz, yaw);
+        // MAP6: elevar o deck tornou a queda lateral >2m; guarda acompanha cada degrau.
+        for (const ladoGuarda of [-1, 1]) {
+          const [gx, gz] = W(4.4 + ladoGuarda * .86, vC);
+          colliders.push({minX:gx-.055,maxX:gx+.055,minZ:gz-.19,maxZ:gz+.19,minY:top,maxY:top+.52,passarela:true});
+          pieceBox(matPoste,.11,.16,.3,gx,top+.44,gz,yaw);
+          if(i%3===0)pieceBox(matPoste,.09,.5,.09,gx,top+.25,gz,yaw);
+        }
       }
       st.escada = { g0, esp, n, run };
     }
@@ -487,6 +510,22 @@ export function buildAmazonia(scene, T) {
   for (const [cx, cz] of CAIXAS_AGUA) addCyl(0.5, 0.9, matZinco, cx, chaoBase(cx, cz) - 0.05, cz, { seg: 10 });
   const preMadeira = new Set(root.children);
   PB.build(root); SB.build(root);
+  const estacas = new Map();
+  for (const c of root.children) if (!preMadeira.has(c)) c.traverse(o => {
+    if (!o.isMesh || !o.material.name.includes('Palafita com passarela')) return;
+    if (!estacas.has(o.geometry)) {
+      const geo = o.geometry.clone(); geo.computeBoundingBox();
+      const p = geo.attributes.position, {min,max} = geo.boundingBox, h = max.y-min.y;
+      for (let i=0;i<p.count;i++) {
+        const peso = Math.max(0, 1 - (p.getY(i)-min.y)/(h*.2));
+        p.setY(i, p.getY(i)-PILA_GLB*h/6*peso);
+      }
+      p.needsUpdate=true; geo.computeVertexNormals(); geo.computeBoundingBox(); geo.computeBoundingSphere();
+      estacas.set(o.geometry,geo);
+    }
+    o.geometry=estacas.get(o.geometry);
+    if(o.isInstancedMesh) o.computeBoundingSphere();
+  });
   for (const c of root.children) {
     if (preMadeira.has(c)) continue;
     if (c.isInstancedMesh || c.isMesh) occluders.push(c);   // molde e madeira seguram bala (idioma da mansão)
@@ -513,7 +552,7 @@ export function buildAmazonia(scene, T) {
     stalls();
   };
   pontao(pontoes[0], () => {
-    barraca(5.4, 0.3, 0.24, matLona[0]); barraca(6.9, 1.9, -0.18, matLona[1]); barraca(5.1, -0.9, 0.31, matLona[2]);
+    barraca(5.2, 2.3, 0, matLona[0]); barraca(7.2, 2.3, 0, matLona[1]); barraca(5.2, -1.25, 0, matLona[2]);
   });
   pontao(pontoes[1], () => { barraca(5.4, 9.2, -0.26, matLona[3]); barraca(7.8, 11.6, 0.2, matLona[0]); });
   pontao(pontoes[2], () => { barraca(5.2, -14.8, 0.15, matLona[2]); barraca(6.6, -12.4, -0.29, matLona[1]); });
@@ -557,45 +596,17 @@ export function buildAmazonia(scene, T) {
   pranchas(MX - 6.5, -4.5, 0.34); pranchas(MX + 4.5, -4.8, -0.28); pranchas(23, 33, 0.18);
   // Madeira armazenada protege os spawns; duas saídas laterais e borda do canal livres.
   for (const side of [-1, 1]) {
-    const x = side * 15, z = side * 34.5;
-    addBox(10.5, 1.9, 0.8, matDeck, x, 0, z);
-    for (let i = 1; i < 6; i++) pieceBox(matCasca, 10.5, 0.025, 0.025, x, i * 0.3, z - side * 0.411);
+    const x = side * 15, z = side * 35.7;
+    addBox(8.2, 1.9, 0.8, matDeck, x, 0, z);
+    for (let i = 1; i < 6; i++) pieceBox(matCasca, 8.2, 0.025, 0.025, x, i * 0.3, z - side * 0.411);
   }
   // scrap da madeireira: pneus e entulho herdam o vocabulário do ferro-velho
   for (const [id, x, z, h, ry] of [['pilha_pneus', MX - 8.5, 5.5, 1.1, 0.2], ['dumpster', MX + 9.8, 0, 1.4, -0.34], ['tires', 12.5, -33.5, 0.8, 0.4], ['pilha_pneus', 25, 20, 1.1, -0.26]]) {
     if (hasProp(id)) { const p = placeProp(id, { x, z, y: 0, targetH: h, ry }); if (p) { root.add(p); colliders.push({ minX: x - 1.2, maxX: x + 1.2, minY: 0, maxY: h, minZ: z - 1.2, maxZ: z + 1.2 }); occluders.push(p); } }
   }
 
-  /* ── CERCA VIVA / MATA DE FUNDO: parede verde com ruído de yaw e duas alturas —
-     é o horizonte fechado do mapa e a massa alta do ALT1. */
-  const matas = [];
-  for (let i = 0; i < 12; i++) {
-    const x = -HALF_X + 1.3 + i * (HALF_X * 2 - 2.6) / 11;
-    matas.push([x, -HALF_Z + 0.9, 8 + (i % 3) * 1.5, (i * 0.37) % 0.5 - 0.25]);
-    matas.push([x, HALF_Z - 0.9, 6.5 + (i % 4) * 1.4, -((i * 0.29) % 0.5) + 0.25]);
-  }
-  for (let j = 0; j < 10; j++) {
-    const z = -HALF_Z + 4.5 + j * (HALF_Z * 2 - 9) / 9;
-    matas.push([-HALF_X + 1.2, z, 7 + (j % 3) * 1.6, ((j * 0.31) % 0.5) - 0.25]);
-    matas.push([HALF_X - 1.2, z, 9 + (j % 2) * 1.3, -((j * 0.23) % 0.45) + 0.22]);
-  }
-  // Segundo estrato fora da área jogável: copas recortam o céu sem caixas sólidas.
-  const PBF = new StaticBatch({ name: 'dossel-distante-amazonia' });
-  const copaFundo = new THREE.IcosahedronGeometry(1, 1);
-  const troncoFundo = new THREE.CylinderGeometry(0.16, 0.3, 1, 6);
-  for (const [x, z, h, ry] of matas) {
-    const xx = Math.abs(x) > 29 ? Math.sign(x) * (HALF_X + 4) : x;
-    const zz = Math.abs(z) > 41 ? Math.sign(z) * (HALF_Z + 4) : z;
-    const m = new THREE.Matrix4().makeScale(1, h, 1).setPosition(xx, h / 2, zz);
-    PBF.add(troncoFundo, m, matCasca, { cast: false });
-    for (let k = 0; k < 3; k++) {
-      const a = ry * 9 + k * 2.1, r = 2.6 + fract(x + z * k) * 1.3;
-      m.makeRotationY(a).scale(new THREE.Vector3(r, 1.4 + k * 0.4, r * 0.85));
-      m.setPosition(xx + Math.cos(a) * 1.7, h + k * 0.8, zz + Math.sin(a) * 1.7);
-      PBF.add(copaFundo, m, k === 1 ? matMata : matMataEscura, { cast: false });
-    }
-  }
-  PBF.build(root);
+  // Horizonte usa o mesmo molde texturizado do bosque, com copas mais altas
+  // no perímetro. Sem balões procedurais nem instâncias adicionais.
 
   /* ── MATA DENSA (molde arvore_mata.glb + palmeira_babacu.glb, kit Mint r2): fileira
       de árvores de verdade por cima da cerca — o horizonte vira floresta, não cidade.
@@ -900,7 +911,7 @@ export function buildAmazonia(scene, T) {
       const u = rx * st.d[0] + rz * st.d[1], v = rx * st.p[0] + rz * st.p[1];
       if (u >= CASA_A && u <= CASA_A + 2 * PAT_A && Math.abs(v) <= PAT_A) return DECK_Y;
       if (st.escada && v * st.e > 0 && Math.abs(v) >= PAT_A && Math.abs(v) <= PAT_A + st.escada.run
-        && u >= 3.7 && u <= 5.1) {
+        && u >= 3.6 && u <= 5.2) {
         const i = Math.min(st.escada.n - 1, Math.floor((Math.abs(v) - PAT_A) / ESC_PISO));
         return st.escada.g0 + st.escada.esp * (st.escada.n - i);
       }
@@ -942,8 +953,9 @@ export function buildAmazonia(scene, T) {
     pickups, sun, hemi, ambience,
     amazonia: {
       deckY: DECK_Y,
-      estacoes: ESTACOES.map(({ x, z, d, rede, escada }) => ({
+      estacoes: ESTACOES.map(({ x, z, d, p, e, rede, escada }) => ({
         x, z, rede, temEscada: !!escada,
+        peEscada: escada ? { x:x+d[0]*4.4+p[0]*e*(PAT_A+escada.run+.3), z:z+d[1]*4.4+p[1]*e*(PAT_A+escada.run+.3) } : null,
         patamar: { x: x + d[0] * (CASA_A + PAT_A), z: z + d[1] * (CASA_A + PAT_A) },
       })),
       pontes: PONTES_ALTA,

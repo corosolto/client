@@ -34,7 +34,7 @@ export const LOOK = {
     zenite: 0x7c919f,
     sol: { cor: 0xfff2dc, i: 1.45, pos: [12, 38, 10] },
     hemi: { ceu: 0xdfe8e4, chao: 0x3d4a33, i: 1.05 },
-    neblina: { d: 0.0112, solDir: [12, 38, 10], forca: 0.92 },
+    neblina: { d: 0.0112, solDir: [12, 38, 10], forca: 0.18 },
     grade: { exposicao: 1.50, piso: 0.0050, expAces: 1.60 },
   },
 };

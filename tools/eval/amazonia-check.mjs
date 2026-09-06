@@ -242,6 +242,7 @@ for (let i = 0; i < angulos.length; i++) {
 }
 const escalas = anel.map((a) => a.s);
 const razaoEsc = anel.length ? Math.max(...escalas) / Math.min(...escalas) : 0;
+if (decksAcessiveis.length !== META.estacoes.length) console.error('Patamares inalcançáveis:', META.estacoes.filter(st => !decksAcessiveis.includes(st)).map(st => ({ x:st.x,z:st.z,patamar:st.patamar })));
 const amz5ok = decksAcessiveis.length === META.estacoes.length && travessia
   && estacoesComCorrimao.length === META.estacoes.length && vaosComCorrimao.length === META.pontes.length;
 const amz6ok = anel.length >= 18 && noAnel && piorVao <= 45 && razaoEsc >= 1.25 && META.perimetro.palmeiras.length >= 10;

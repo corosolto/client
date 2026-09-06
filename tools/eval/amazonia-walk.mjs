@@ -14,6 +14,19 @@ export async function walkAmazonia(page, out) {
     { name: 'passarela-D-M', from: [7.8, 1.8, 6], to: [1.6, 1.8, 6] },
     { name: 'passarela-M-F', from: [-1.6, 1.8, 6], to: [-7.8, 1.8, 6] },
   ];
+  if (process.env.FOREST === '1') routes.push(
+    {name:'mata-oeste',from:[-20,0,-22],to:[-20,0,-16]},
+    {name:'mata-leste',from:[20,0,12],to:[20,0,18]},
+  );
+  const deckY = await page.evaluate(() => window.__game.world.amazonia.deckY);
+  for (const r of routes) if (r.name.startsWith('passarela')) { r.from[1]=deckY; r.to[1]=deckY; }
+  const stairs = await page.evaluate(() => {
+    const w=window.__game.world;
+    return w.amazonia.estacoes.filter(s=>s.peEscada).map(s=>({ name:`escada-${s.x}-${s.z}`,
+      from:[s.peEscada.x,w.groundHeightAt(s.peEscada.x,s.peEscada.z,0),s.peEscada.z],
+      to:[s.patamar.x,w.amazonia.deckY,s.patamar.z] }));
+  });
+  routes.push(...stairs);
   const results = [];
   for (const route of routes) {
     const result = await page.evaluate(route => {
@@ -58,6 +71,7 @@ export async function walkAmazonia(page, out) {
     }
     return { settlement, directLines:los, ok:los.length === 0 && settlement.every(s=>s.shift<.05) };
   });
+  console.log(`${spawns.ok ? 'PASS' : 'FAIL'} SPAWNS: ${spawns.directLines.length} linhas diretas`);
   writeFileSync(`${out}/walk.json`, JSON.stringify({ routes:results, spawns },null,2));
   return results.every(r=>r.ok) && spawns.ok;
 }
