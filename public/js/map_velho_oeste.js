@@ -463,6 +463,53 @@ export function buildVelhoOeste(scene, T) {
     }
   });
 
+  /* Duas casas abertas para a praça: entrada sul, janelas para o largo e para a
+     rua norte. Cada parede é um corpo separado; nunca um bloco invisível que
+     promete interior mas impede a passagem. */
+  const interiorHouses = [];
+  function casaDaPraca(id, x, z) {
+    const group = new THREE.Group();
+    group.name = `sertao-praca-casa-interior-${id}`;
+    group.position.set(x, 0, z); root.add(group);
+    const w = 7.2, d = 6.4, h = 3.45, halfW = w / 2, halfD = d / 2;
+    const part = (name, pw, ph, pd, px, py, pz, material, collide = true) => {
+      const mesh = new THREE.Mesh(boxGeo(pw, ph, pd), material);
+      mesh.name = `${group.name}-${name}`; mesh.position.set(px, py + ph / 2, pz);
+      mesh.castShadow = true; mesh.receiveShadow = true; group.add(mesh);
+      if (collide) colliders.push({ minX: x + px - pw / 2, maxX: x + px + pw / 2, minY: py, maxY: py + ph,
+        minZ: z + pz - pd / 2, maxZ: z + pz + pd / 2, tag: group.name });
+      return mesh;
+    };
+    // Frente sul: vão de 1,9 m deixa duas cápsulas de jogador passarem sem atrito.
+    part('frente-oeste', 2.65, h, .28, -2.275, 0, -halfD, MAT.paupiqueCaiado);
+    part('frente-leste', 2.65, h, .28, 2.275, 0, -halfD, MAT.paupiqueCaiado);
+    part('verga-porta', 1.9, .72, .28, 0, h - .72, -halfD, MAT.paupiqueCaiado);
+    // Fundo norte: janela central de 1,4 m voltada para a rota do forró.
+    part('fundo-oeste', 2.9, h, .28, -2.15, 0, halfD, MAT.paupiqueOcre);
+    part('fundo-leste', 2.9, h, .28, 2.15, 0, halfD, MAT.paupiqueOcre);
+    part('peitoril-norte', 1.4, .82, .28, 0, 0, halfD, MAT.paupiqueOcre);
+    part('verga-norte', 1.4, .88, .28, 0, h - .88, halfD, MAT.paupiqueOcre);
+    // Janelas laterais altas: cobertura tem leitura, mas não vira bunker fechado.
+    for (const side of [-1, 1]) {
+      part(`lateral-${side}-sul`, .28, h, 2.15, side * halfW, 0, -2.05, MAT.paupiqueCru);
+      part(`lateral-${side}-norte`, .28, h, 1.85, side * halfW, 0, 2.3, MAT.paupiqueCru);
+      part(`peitoril-lateral-${side}`, .28, .88, 1.25, side * halfW, 0, .1, MAT.paupiqueCru);
+      part(`verga-lateral-${side}`, .28, .9, 1.25, side * halfW, h - .9, .1, MAT.paupiqueCru);
+      part(`moldura-lateral-${side}`, .14, 1.8, .12, side * (halfW + .03), .85, -.57, MAT.trim, false);
+      part(`moldura-lateral-${side}-b`, .14, 1.8, .12, side * (halfW + .03), .85, .77, MAT.trim, false);
+    }
+    part('piso', w - .25, .12, d - .25, 0, 0, 0, MAT.pedra, false);
+    part('telhado', w + .5, .16, d + .55, 0, h, 0, MAT.roof, false);
+    for (const px of [-halfW - .28, halfW + .28]) part(`esteio-${px}`, .16, h, .16, px, 0, -halfD - .42, MAT.dark, true);
+    const sign = addSign(id === 0 ? 'CASA DE FARINHA' : 'CASA DE REZA', 'PORTA ABERTA PRA PRAÇA', x, 3.95, z - halfD - .18, 0, 4.8, .62);
+    sign.name = `${group.name}-placa`;
+    group.userData.interior = { entrance: [x, z - halfD - .55], inside: [x, z], northWindow: [x, z + halfD + .1], doorWidth: 1.9 };
+    interiorHouses.push(group);
+    occluders.push(group);
+  }
+  casaDaPraca(0, -11.5, 15.0);
+  casaDaPraca(1, 11.5, 15.0);
+
   /* ── IGREJINHA DA MATRIZ — landmark da praça, porta pro sul (pro largo). Proxy:
      nave caiada, porta dupla, torre sineira com cruz. Molde: igrejinha.glb. */
   sertaoElement('igrejinha', 0, 0, -15.5, (group) => {
@@ -874,7 +921,7 @@ export function buildVelhoOeste(scene, T) {
   occluders.splice(0, occluders.length, ...solidMeshes);
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22}],bioma:'campo'},
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight, horizon, distantBirds, livestock,
+    root, colliders, occluders, interiorHouses, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update, faunaFlight, horizon, distantBirds, livestock,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),

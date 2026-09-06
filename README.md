@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 44.494 linhas em 89 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 44.541 linhas em 89 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.390** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.402 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -320,7 +320,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
-| `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 889 |
+| `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 936 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
 
 **16 mapas registrados** — 2 abrem em rodadas e 14 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 22 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
