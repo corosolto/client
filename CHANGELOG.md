@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.231`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.232`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -52,6 +52,22 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.232] — 2026-09-06
+
+### Mudado
+- fix(menu): restore Single Player mode submenu (#518)
+- test(smoke): open Single Player before mode
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(skylife): skip bird preload in Node probes
+- chore(docs): regenera bloco derivado (autofix)
+- test(boot): follow Single Player submenu
+- docs: regenerate architecture index
+- docs: update CTF menu checkpoint
+- fix(menu): restore single-player mode submenu
+- docs: record CTF home verification and remaining gates
+- fix(menu): restore direct CTF entry on home
 
 ## [2.0.0-alpha.231] — 2026-09-06
 
