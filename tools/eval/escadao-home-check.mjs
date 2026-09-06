@@ -30,7 +30,7 @@ assert.ok(ray.intersectObjects(W.occluders,true).length>0,'Peitoril continua só
 const rearEye = new THREE.Vector3(5.85,4.37,17.2), rearTarget = new THREE.Vector3(8,W.groundHeightAt(8,21)+1.5,21);
 ray.set(rearEye,rearTarget.clone().sub(rearEye).normalize()); ray.far=rearEye.distanceTo(rearTarget);
 assert.equal(ray.intersectObjects(W.occluders,true).length,0,'Janela traseira enxerga a rua/respawn');
-const upper = [[.1,10.12],[.8,10.12],[.8,12],[.8,14.7],[1.6,14.9],[3.2,15.5]];
+const upper = [[.2,10.12],[.9,10.12],[.9,12],[.9,14.7],[1.6,14.9],[3.2,15.5]];
 const elevated=game.player;
 elevated.pos.set(-.3,W.groundHeightAt(-.3,10.12),10.12);elevated.vel.set(0,0,0);elevated.grounded=true;elevated.mantle=null;
 for(const [x,z] of [...upper, ...upper.slice().reverse()]) {

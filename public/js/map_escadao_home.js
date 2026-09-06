@@ -3,7 +3,7 @@ export const ESCADAO_HOME = Object.freeze({
   stairX: 9.3, stairBottom: 23, stairTop: 17.5,
   // Passarela chega pelo PATAMAR 1: dá uma entrada para quem sobe e mantém a
   // escada externa para quem vem da rua/respawn.
-  upperX0: .2, upperX1: 1.35, upperZ0: 10.3, upperZ1: 15.1,
+  upperX0: .5, upperX1: 1.35, upperZ0: 10.3, upperZ1: 15.1,
 });
 
 export function escadaoHomeGround(x, z) {
@@ -56,8 +56,6 @@ export function buildEscadaoHome({ addBox, occluders, wall, concrete, dark, meta
   const upperW=h.upperX1-h.upperX0, upperD=h.upperZ1-h.upperZ0, upperX=(h.upperX0+h.upperX1)/2, upperZ=(h.upperZ0+h.upperZ1)/2;
   box(upperW,.18,upperD,concrete,upperX,h.floor-.18,upperZ);
   box(.12,1.05,upperD-.45,dark,h.upperX0+.06,h.floor-.18,upperZ+.225);
-  // Guarda interna termina antes da porta lateral; a abertura continua uma passagem real.
-  box(.12,1.05,upperD-1.2,dark,h.upperX1-.06,h.floor-.18,(h.upperZ0+h.upperZ1-.75)/2);
 
   for (let i=0;i<16;i++) {
     const d=(h.stairBottom-h.stairTop)/16, y=(i+1)*h.floor/16;

@@ -964,8 +964,8 @@ export function buildEscadao(scene, T) {
   linha(-2.5, P1.z1, 2.5, P1.z0, 1.2);
   linha(-2.5, P2.z1, 2.5, P2.z0, 1.2);
   // Porta alta da casa frontal: do patamar 1 pela passarela, sem usar o acesso da rua.
-  linha(.1, P1.z1 - .4, .8, P1.z1 - .4, .45);
-  linha(.8, P1.z1 - .4, .8, 14.9, .55);
+  linha(.3, P1.z1 - .4, .9, P1.z1 - .4, .45);
+  linha(.9, P1.z1 - .4, .9, 14.9, .55);
   // becos: escada própria + conexão ao patamar 1. A rota é cotovelada porque a reta
   // beco → patamar corta muros e o `blocked` derrubava os nós do meio.
   const CONEX_Z = CONEX.z0 + 0.9, P1_MEIO = (P1.z0 + P1.z1) / 2;
