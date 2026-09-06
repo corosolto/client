@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.230`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.231`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -52,6 +52,17 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.231] — 2026-09-06
+
+### Mudado
+- fix(audio): remover fallback de voz sintetica (#520)
+- docs(audio): atualiza índices após rebase
+- fix(audio): restaurar memes e rounds historicos
+- fix(audio): remover fallback de voz sintetica
+- fix(audio): restaurar memes e rounds historicos
+- chore(docs): regenera bloco derivado (autofix)
+- fix(audio): remover fallback de voz sintetica
 
 ## [2.0.0-alpha.230] — 2026-09-06
 
