@@ -34,10 +34,93 @@ de endpoints não prova melhora de pegada. Na Mosin, a distância do joint hand_
 certificado. Essa métrica de joint não é contato da superfície dos dedos.
 
 Estado: correção de endpoints reproduzida, candidata de timing em avaliação,
-nenhuma das três armas liberada. Próximo passo: identificar canais mecânicos
-estáticos/desconectados e a divergência de reimport SKS antes de promover timing;
-depois montar peças próprias e autorar contato por arma. Silhueta e mecanismos
-das próprias continuam os bloqueios documentados abaixo. Nenhum runtime alterado.
+nenhuma das três armas liberada. Silhueta e mecanismos das próprias continuam
+os bloqueios documentados abaixo. Nenhum runtime alterado.
+
+## Continuação de 06/09 (noite): rastreio fechado e assembly C2 isolado
+
+### Procedência da divergência: linha do tempo fechada
+
+A hipótese "os GLBs não refletem a normalização atual" virou cronologia comprovada:
+
+1. **29/08 11:15** — `bolt`, `svd` e `marksman` foram montados com o assembler
+   **anterior** a `bda90c0d`: o `mergeSamples` de `24e51dac` grava braços e arma
+   com os tempos crus de cada sample (`git show 24e51dac:…/assemble_paid_family.mjs`,
+   linhas 251-267, não há `timeScale`). É exatamente a divergência medida
+   (`A/resumo.json → channel_timing`).
+2. **01/09 12:38** — `optimize_paid_family.mjs` reescreveu os `*-runtime.glb`
+   (dedup de texturas, BUG-75). O script só troca `texture.setImage` e regrava;
+   animações e `assembly-report.json` ficam intocados. O relatório de assembly
+   das três famílias continua datado de 29/08 **sem** o campo `weaponTimeScale`
+   — prova de que o assembler novo nunca rodou nelas.
+3. **01/09 12:59** — `bda90c0d` introduz `duration/sample.duration` no
+   `mergeSamples`, mas só a `pistol` foi reconstruída. As três famílias de
+   precisão nunca foram re-montadas.
+
+### Assembly C2: prova com o montador atual em destino isolado
+
+Execução do assembler vigente (hash SHA-256 `53ef70cd…` idêntico no worktree e
+na integradora) sobre cópias locais, sem tocar o `privateRoot` compartilhado:
+
+- Manifesto **copiado** para `A/assembly-c2/manifest.json` com
+  `output.privateRoot` redirecionado para
+  `/Users/ruben/csbrasil-private-assets/generated/precisao-c2-isolated/`
+  (fora do repo e fora da raiz compartilhada; `assertPrivateOutput` do assembler
+  proíbe GLB dentro do repo). `raw-clips` cai no destino isolado pelo manifesto.
+- Base GLBs copiadas da integradora (somente leitura) com SHA-256 em
+  `A/assembly-c2/base-sha256.txt`; módulos Node resolvidos pela cópia
+  **idêntica por hash** do script na integradora, sem escrita lá.
+- `weaponTimeScale` resultante: Mosin 1,949-1,986 (5 clipes), SVD 1,979-1,981,
+  SKS **1,0** (a arma já era o canal mais longo; quem estica é o braço, e a
+  duração de `reload_empty` vai de 3,3167 para 3,3333 s).
+
+`precisao-assembly-c2.py` (novo) lê os samplers GLB direto, sem confiar no
+relatório do montador, e mede o último input dos canais arms-skin vs
+weapon-skin por clipe (`A/assembly-c2/verification.json`):
+
+| Arma | clipes | gap máximo native (mutante) | gap máximo saída nova |
+|---|---:|---:|---:|
+| mosin | 5 | 2,3167 s | 0,0 (< 1e-6) |
+| svd | 2 | 1,7333 s | 0,0 (< 1e-6) |
+| sks | 2 | 0,0167 s (1 frame @60 Hz) | 0,0 (< 1e-6) |
+
+O native é o mutante que reprova o critério de endpoints coincidentes; a saída
+nova passa nas nove ações. Os runtimes C2 têm ~23 MB (texturas embutidas; o
+passe do optimizer seria obrigatório antes de qualquer promoção — tarefa da
+integradora). **Nada disso certifica contato frame a frame nem entra em runtime.**
+
+### SKS: excedente 1,6e-5 fechado como interpolante, não defeito do GLB
+
+Regenerada a evidência timing com o campo `nlerp_diagnostic_errors` (presente
+no script desde `d2100a36` mas ainda não medido):
+
+| Arma / timing | máx \|Blender−slerp\| | máx \|Blender−nlerp\| |
+|---|---:|---:|
+| mosin c1 | 3,608e-6 | 3,382e-6 |
+| svd c1 | 3,305e-6 | 3,214e-6 |
+| sks baseline | 3,326e-6 | 3,326e-6 |
+| sks c1 | 1,634e-5 | 3,528e-6 |
+
+O Blender adere ao nlerp em todas as armas e instantes (≤ 3,5e-6); o excedente
+SKS é a diferença slerp↔nlerp em degraus grandes de rotação (máximos medidos:
+SKS reload_empty 87,4°, Mosin 178,1°, SVD 94,5°) quando o retime faz a amostra
+cair entre chaves — no baseline SKS (amostras em chave) o erro é 3,3e-6.
+Varredura de norma nos três natives: 99.116 chaves VEC4, **todas** com |q|=1±1e-3
+(pior 1,0000). Conclusão: o limite histórico 1e-5 mede o interpolante do
+Blender, não o GLB; a régua continua sem afrouxamento e paridade glTF segue
+declarada por slerp com o resíduo nlerp registrado por amostra.
+
+### Contato na saída C2: endpoint não é pegada
+
+Proxy glTF (joint `hand_l` → peça no frame .62 de `reload_empty`, mundo,
+mesmo método do C1): Mosin 1,048→0,714 (melhora, ainda sem contato);
+SVD 0,903→0,903; SKS 0,849→0,847. A saída real do montador reproduz o C1:
+alinhamento de endpoints não certifica contato de superfície — continua
+pendência de autoria por arma conforme as receitas abaixo.
+
+Próximo passo: a integradora decide re-montar bolt/svd/marksman com o assembler
+vigente (a divergência some comprovadamente) e segue para as receitas por arma;
+esta frente mantém `ready:false` e os bloqueios de silhueta/alimentação.
 
 ## Resultado, definição de pronto e continuidade
 
@@ -453,6 +536,24 @@ python3 tools/viewmodels/prep/precisao-resumo.py --relatorio > artifacts/viewmod
 python3 tools/viewmodels/prep/precisao-verificar.py
 ```
 
+Assembly C2 isolado (o assembler vigente roda pela cópia idêntica da
+integradora porque este worktree não tem `node_modules`; todos os caminhos de
+entrada/saída apontam ao destino isolado):
+
+```sh
+ISO=/Users/ruben/csbrasil-private-assets/generated/precisao-c2-isolated
+INT=../vm-astra-pistol
+for fam in bolt svd marksman; do
+  node "$INT/tools/viewmodels/assemble_paid_family.mjs" \
+    --manifest artifacts/viewmodels/prep/precisao/assembly-c2/manifest.json \
+    --family "$fam" --input "$ISO/$fam-base.glb" --output "$ISO/$fam-runtime.glb"
+done
+python3 tools/viewmodels/prep/precisao-assembly-c2.py   # verificação independente dos samplers
+```
+
+A evidência nlerp do timing regenera com `precisao-blender.py … --timing
+baseline|c1` (sem `--render`, só JSON).
+
 `--tipo own` produz as vistas da arma própria; `precisao-fontes.py` confere FPS.
 Inspeções reescrevem apenas os artefatos próprios; `--relatorio` atualiza as três tabelas
 geradas deste relatório. Arquivar uma rodada antes de comparar versões.
@@ -486,4 +587,9 @@ cria `node_modules/three` fora da faixa de escrita autorizada. Esta publicação
 preparação usa sua opção documentada `PREPUSH=0`, preservando a faixa. Conferir
 separadamente diff, autoria dos commits e integridade offline; os gates globais,
 build e Game não são declarados aprovados. O rascunho evita o preview automático
-de runtime herdado (`preview-build.yml` ignora drafts).
+de runtime herdado (`preview-build.yml` ignora drafts). Checkpoint de 06/09
+(noite) incluído no mesmo PR: rastreio da divergência fechado (cronologia
+29/08→01/09), assembly C2 isolado verificado (gap 0 nas nove ações; native é o
+mutante), excedente SKS 1,6e-5 fechado como interpolante nlerp do Blender, e
+`precisao-assembly-c2.py` adicionado aos scripts próprios. Continua draft;
+nenhum asset promovido, nenhum `ready:true`.
