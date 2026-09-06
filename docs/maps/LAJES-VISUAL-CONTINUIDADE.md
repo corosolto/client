@@ -28,6 +28,42 @@ comparação no Game real e browser, CPU por subsistema e crescimento 5×5/8×8.
 Frente principal: MAPAS/MUNDO e BOTS/JOGABILIDADE, somente após perfil identificar causa.
 Artefatos novos: `artifacts/lajes-performance/`. Régua: nenhuma neste marco.
 
+## BUG-141: reprodução e correção em validação
+
+- Branch `codex/lajes-performance`, main alpha.226; marcos de retomada `90870a07` e `9b1f151f`.
+- Browser Chrome/M4 Pro, 1536×1024, med, single player real: Piscina8×8 RAF P95
+  16,9ms; Lajes5×5 199,3ms e Lajes8×8 391,6ms. Amostras12s em
+  `artifacts/lajes-performance/browser-*.json`; não representam estabilidade longa.
+- Node confirmou CPU LOS dominante; alvenaria agrupada testa milhares de triângulos
+  por consulta. Índice de faixas12tri (uma caixa original), sem alterar render/collider:
+  6.059.736→22.056 testes em189raios,166comimpacto; sequência de impactos idêntica.
+  Mutantes linear e sem-parede vermelhos. Primeiro browser corrigido8×8 P95 58,2ms:
+  melhora real, ainda insuficiente para encerrar investigação.
+- Perfil browser residual: varais GLB, custo alto calculando obstáculos além da
+  primeira parede. Hook opcional só Lajes `rayOccluded` agora encerra consulta no
+  primeiro obstáculo; `_losClear` conserva fumaça e demais mapas.189/189consultas
+  comparadas ao Three linear, sem divergências. Novo browser em execução.
+- Crítica independente inicial sem bloqueante no formato estático atual; desempates
+  passaram a preservar ordem original. Falta: stress near/far/transformações, browser
+  prolongado e refutação visual, integração gates/docs, build e checkpoint final.
+- Métricas render.calls=1/draw.triangles=1 dos primeiros scripts são pós-processamento,
+  não custo da cena; não usar como prova de GPU nem de geometria equivalente.
+
+## BUG-141: comportamento e carga prolongada validados
+
+- LRP1 verde: 189 raios, impactos em sequência idênticos; trabalho 6.059.736 → 22.056
+  triângulos. Hook da visão exercitado em 190 chamadas incluindo fumaça. Nenhuma
+  consulta depois do primeiro obstáculo. Stress ampliado 220/220, inclusive troca
+  de geometry/index, needsUpdate, materiais múltiplos, recorte e descarte.
+- Quatro mutantes vermelhos: linear, sem-parede, sem-consulta e sem-parada.
+- Browser sequencial de 60 s: Lajes 8×8, 3.393 quadros / 60,238 s, cerca de 56 FPS,
+  P95 33,3 ms, zero erros JS. Piscina 8×8 P95 25,3 ms nesta rodada. Um intervalo
+  RAF isolado de 441,2 ms permanece registrado; maior update 80,8 ms, sem atribuir
+  esse evento a LOS. Não declarar FPS constante ou validação online.
+- Revisão independente aprovou o código sem bloqueantes. Detalhes e reprodução
+  em `LAJES-PERFORMANCE.md`. Check:fast em execução; próximo build, VM/invariants,
+  restauração dos dados gerados, docs, checkpoint e integração da correção.
+
 ## Encerramento V7 — 06/09/2026
 
 - PR438 saiu de draft e foi mergeada por squash, sem bypass, às 05:01:53 UTC.

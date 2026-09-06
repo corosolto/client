@@ -1804,6 +1804,10 @@ function runNode(script, env = {}, args = []) {
   if (!existsSync(join(HERE, 'map-check.mjs'))) {
     skip('MAP*', 'geometria de mapa (submerso/respawn/escada/bandeiras)', 'map-check.mjs ausente');
   } else {
+    const raycast = runNode('lajes-raycast-check.mjs');
+    put('LRP1', 'Lajes: raycast conserva impactos e elimina trabalho fora do raio',
+      !raycast.includes('__ERRO__') && raycast.includes('✓ LRP1'),
+      raycast.split('\n').find(line => line.includes('LRP1')) || raycast.slice(-400));
     const beco = runNode('lajes-spawn-space-check.mjs');
     const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
     put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
