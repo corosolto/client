@@ -65,9 +65,14 @@ for (const tela of ['personagem', 'hud', 'vitoria', 'derrota']) {
 let fp = read('public/js/fparms.js');
 if (mutant === 'gloves') fp = change(fp, ', M: 0x9d4edd', '');
 expect(/const GLOVE = \{[^}]*M: 0x9d4edd/.test(fp), 'luva FP M ausente');
+// O desfecho vive nos dois vídeos (0/45 pares iguais); o WebP é fallback compartilhado (44/45 pares iguais).
 const victory = readFileSync('public/img/resultado/lobisomem-vitoria.webp');
-const defeat = mutant === 'resultados' ? victory : readFileSync('public/img/resultado/lobisomem-derrota.webp');
-expect(!victory.equals(defeat), 'vitória e derrota repetem a mesma pose estática');
+const defeat = readFileSync(mutant === 'resultados'
+  ? 'public/img/resultado/mst-derrota.webp' : 'public/img/resultado/lobisomem-derrota.webp');
+expect(victory.equals(defeat), 'par estático do Lobisomem foge da convenção do elenco publicado');
+expect(!readFileSync('public/video/resultado/lobisomem-vitoria.webm')
+  .equals(readFileSync('public/video/resultado/lobisomem-derrota.webm')),
+'vídeos de vitória e derrota do Lobisomem repetem a mesma cena');
 const index = JSON.parse(read('public/models/anims/index.json'));
 if (mutant === 'clipes') delete index.clipes.lobisomem;
 expect(index.estados.every(state => index.clipes.lobisomem?.includes(state)), 'Lobisomem sem clipes próprios obrigatórios');

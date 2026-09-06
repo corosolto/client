@@ -3443,6 +3443,25 @@ desancorada. A revisão local trata isso como limitação herdada do viewmodel o
 como regressão da facção M. Evidência: `artifacts/miticos-review/hands/arms.glb-0.png` e
 `artifacts/miticos-review/after/fp-32.png`.
 
+### BUG-143 · Render offline do Lobisomem publica brilho, não pelagem
+
+O GLB do Lobisomem é `metallic=1` com albedo escuro; o rig offline
+(`tools/eval/miticos-render-review.py`) usa Principled dielétrico, então o especular das
+áreas de luz domina a imagem. Medido: baixar o albedo 3,3× (tint branco → `baseColorFactor`
+0,3/0,32/0,36) moveu a luma do retrato só de 88,8 para 82,0, e a pelagem continua invisível.
+Reduzir a luz para o nível do modo padrão corrige a luma (43,9) mas derruba `contraste` para
+20,8 e `cores` para 332, abaixo do mínimo dos 88 retratos aprovados (26,1 e 473). Enquanto o
+rig não reproduzir o material metálico, retrato de Mítico sai de mídia aprovada, não de
+render offline. Medição e folha comparativa em
+`docs/reports/MITICOS-LOBISOMEM-INTEGRATION.md`.
+
+### BUG-144 · Lobisomem não tem perfil físico de áudio
+
+`CHARACTER_IDS` em `tools/audio/fab-game-local.mjs` lista 44 ids e não inclui `lobisomem`,
+então `characterPhysical.byCharacter` não cobre o personagem e `eval:audiofablocal` reprova
+em `LAB8e` com 44/45. O conserto é entrar o id na lista (perfil `creature`) e regerar o
+manifest com o pacote de áudio presente — fora do escopo da lane de retratos.
+
 ---
 
 ### ~~BUG-24 · "as armas estão 1,5x do tamanho que deveriam"~~ · RESOLVIDO 04/08
