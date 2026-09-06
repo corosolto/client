@@ -192,3 +192,28 @@ nem afrouxar thresholds: revisão visual e aderência desses critérios continua
 pendentes. Crítico limpo review_delivery está examinando a entrega atual.
 Próximo: checkpoint de fonte/guardas, docs geradas, check:fast/build/contratos final,
 consolidar relatório com parecer independente e bloqueadores. Não aprovado.
+
+## Parecer final independente e estado de entrega
+
+Crítico limpo review_delivery:5/10, NÃO APROVADO visualmente. Ganhos: madeira nas
+pontes, horizonte sem caixas e menos raízes atravessando chão. Pendências: C18
+contraste (20/40m tênue), C23 marcos/saídas, C25 vegetação inconsistente, halos da
+água, chão com borda reta e casas ainda genéricas. Spawn cobre a apresentação da
+saída; guardas/rotas corretas não equivalem a composição aprovada. O relatório
+AMAZONIA-VISUAL-REVIEW.md preserva esses achados e números, sem aprovação própria.
+
+Checkpoints locais:93f623ea fonte/guardas/testes e31b29509 docs geradas.
+Build passou novamente. SSR canônico falha por caminho antigo; diagnóstico local
+separado lendo handler do descriptor atual entregou200 com corpo nas3 páginas e
+SSR1/2/3 passaram. Não modifica o teste compartilhado nem prova Node24/deploy.
+Servidor próprio8146 fica disponível para revisão; capturas em comparacao.html.
+Nenhum benchmark GPU foi executado ou processo externo interrompido. Permanecem
+performance, mixagem humana, aceitação visual e três critérios de mapa novo.
+
+Check global final encerrado:103/104 em251.6s, única falha audio:check (manifest
+legado vs pack local). docs:check/docsautoria/skills e todos demais checks passaram.
+Artefatos e resultados finais: docs/reports/AMAZONIA-VISUAL-REVIEW.md e
+artifacts/amazonia-visual/comparacao.html. Builder congelado nas capturas pelo hash
+acima, árvore/guardas validadas, branch com commits locais. Não aprovado para
+integração; próxima ação concreta: revisão humana das imagens e planejamento do
+ajuste de C18/C23/C25, seguido de janela exclusiva de GPU. Nenhum PR/push/deploy.
