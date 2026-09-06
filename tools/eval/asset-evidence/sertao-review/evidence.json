@@ -414,5 +414,21 @@
       "yawDelta": -10.479340994086812
     },
     "errors": []
+  },
+  "global": {
+    "commit": "037c48b1",
+    "passed": 111,
+    "total": 112,
+    "seconds": 304,
+    "failed": [
+      "audio:check"
+    ],
+    "reason": "manifest.json DEFASADO (herdado)",
+    "log": "artifacts/sertao-astra/logs/revision-final-check-fast.log",
+    "logSha256": "fc857534bf60ec71c663486ab7734d14f0d3c73fc8e1e423b62e16b392ce058f",
+    "build": true,
+    "assertAssets": true,
+    "maptex": true,
+    "ambience": true
   }
 }

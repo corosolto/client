@@ -57,6 +57,12 @@ dos índices. O guard de mídia foi adaptado em b917cce1 sem reduzir a régua;
 baseline e dois mutantes da race continuaram passando. Índices regenerados
 antes da execução global final. Não interpretar aquela primeira rodada como verde.
 
+Execução final sobre037c48b1: **111/112 gates passaram**, em304,0s. Única falha:
+`audio:check`, manifesto herdado DEFASADO. `eval:medianet`, `eval:docsautoria`,
+todos os contratos novos e os demais globais passaram. Log completo:
+`artifacts/sertao-astra/logs/revision-final-check-fast.log`. Build final passou;
+preview repetido após b917cce1: baseline e sete mutantes detectados corretamente.
+
 Resultados e contraprovas resumidos em
 [evidence.json](../../tools/eval/asset-evidence/sertao-review/evidence.json) e
 [mutations.json](../../tools/eval/asset-evidence/sertao-review/mutations.json).
