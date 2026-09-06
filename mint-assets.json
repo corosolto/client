@@ -379,6 +379,108 @@
         "triangles": 4795,
         "bytes": 608484
       }
+    },
+    "sertao-galinha-animada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/sertao_galinha.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th78004y9j8g2kd0mkd45xq65x8dw112",
+        "outputId": "vd7azjz400t2sy4g2h4z14ff318dx0mb",
+        "chatUrl": "https://mint.gg/chat/ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba",
+        "projectUrl": "https://mint.gg/project/zd7d9mfmgv0b80ezp3xbykp1ns8dw47r",
+        "displayName": "Sertão — galinha de criação",
+        "promptFile": "docs/reports/SERTAO-FAUNA2-ASSETS.md",
+        "termsUrl": "https://docs.mint.gg/terms-of-service",
+        "termsUpdated": "2026-05-07",
+        "verifiedAt": "2026-09-06",
+        "termsSha256": "1b91654d70dbebe9b0c3766060c920a8078447208038521fe848419416171957",
+        "licenseBasis": "Mint Terms §4: cessão dos direitos que Mint tiver no output ao usuário, sujeita aos termos e direitos de terceiros; não CC0.",
+        "attribution": "Sem exigência específica nos termos consultados. Créditos de procedência preservados.",
+        "notes": "Modelo gerado por IA (TRIPO_P1 na UI Mint) em projeto próprio, apenas prompt original, sem imagem ou malha de terceiros. Animações são derivação local, não fornecidas pelo Mint."
+      },
+      "processing": {
+        "provider": "local",
+        "sourceFile": "01-adult-hen.glb",
+        "sourceSha256": "590a6707883e23784ee898dac1535e46ab40b6575e8db132bf13807217a11989",
+        "tools": [
+          "tools/animate-sertao-livestock.py"
+        ],
+        "finalSha256": "d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17",
+        "triangles": 5078,
+        "bytes": 498484,
+        "notes": "Blender: escala em metros, Y-up/frente+Z, rig animal e Walk/Idle locais; albedo JPEG1024. Geometria dos adultos preservada; pintinho simplificado, silhueta comparada em quatro vistas."
+      }
+    },
+    "sertao-pintinho-animada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/sertao_pintinho.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th78004y9j8g2kd0mkd45xq65x8dw112",
+        "outputId": "vd7azjz400t2sy4g2h4z14ff318dx0mb",
+        "chatUrl": "https://mint.gg/chat/ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba",
+        "projectUrl": "https://mint.gg/project/zd7d9mfmgv0b80ezp3xbykp1ns8dw47r",
+        "displayName": "Sertão — pintinho de criação",
+        "promptFile": "docs/reports/SERTAO-FAUNA2-ASSETS.md",
+        "termsUrl": "https://docs.mint.gg/terms-of-service",
+        "termsUpdated": "2026-05-07",
+        "verifiedAt": "2026-09-06",
+        "termsSha256": "1b91654d70dbebe9b0c3766060c920a8078447208038521fe848419416171957",
+        "licenseBasis": "Mint Terms §4: cessão dos direitos que Mint tiver no output ao usuário, sujeita aos termos e direitos de terceiros; não CC0.",
+        "attribution": "Sem exigência específica nos termos consultados. Créditos de procedência preservados.",
+        "notes": "Modelo gerado por IA (TRIPO_P1 na UI Mint) em projeto próprio, apenas prompt original, sem imagem ou malha de terceiros. Animações são derivação local, não fornecidas pelo Mint."
+      },
+      "processing": {
+        "provider": "local",
+        "sourceFile": "02-baby-chick.glb",
+        "sourceSha256": "fb54f1dd25d555e855667ad7742c35d73eb542b6eecb5db8550cd7145dddd5c4",
+        "tools": [
+          "tools/animate-sertao-livestock.py"
+        ],
+        "finalSha256": "a2f144c8b9de0ff140a2cde29fccc619dd6a2620b7b62d1948b52d94e924bbc0",
+        "triangles": 3190,
+        "bytes": 288400,
+        "notes": "Blender: escala em metros, Y-up/frente+Z, rig animal e Walk/Idle locais; albedo JPEG1024. Geometria dos adultos preservada; pintinho simplificado, silhueta comparada em quatro vistas."
+      }
+    },
+    "sertao-cabra-animada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/sertao_cabra.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th78004y9j8g2kd0mkd45xq65x8dw112",
+        "outputId": "vd7azjz400t2sy4g2h4z14ff318dx0mb",
+        "chatUrl": "https://mint.gg/chat/ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba",
+        "projectUrl": "https://mint.gg/project/zd7d9mfmgv0b80ezp3xbykp1ns8dw47r",
+        "displayName": "Sertão — cabra de criação",
+        "promptFile": "docs/reports/SERTAO-FAUNA2-ASSETS.md",
+        "termsUrl": "https://docs.mint.gg/terms-of-service",
+        "termsUpdated": "2026-05-07",
+        "verifiedAt": "2026-09-06",
+        "termsSha256": "1b91654d70dbebe9b0c3766060c920a8078447208038521fe848419416171957",
+        "licenseBasis": "Mint Terms §4: cessão dos direitos que Mint tiver no output ao usuário, sujeita aos termos e direitos de terceiros; não CC0.",
+        "attribution": "Sem exigência específica nos termos consultados. Créditos de procedência preservados.",
+        "notes": "Modelo gerado por IA (TRIPO_P1 na UI Mint) em projeto próprio, apenas prompt original, sem imagem ou malha de terceiros. Animações são derivação local, não fornecidas pelo Mint."
+      },
+      "processing": {
+        "provider": "local",
+        "sourceFile": "03-caatinga-goat.glb",
+        "sourceSha256": "0db087af909564787ccacd28f34cc9c5760b95d67ed33ebd2be74d14fd0521d9",
+        "tools": [
+          "tools/animate-sertao-livestock.py"
+        ],
+        "finalSha256": "a89410b7f899a14e19d8955cd5935e2222b3f764d36abc48f42f59e68eac0eea",
+        "triangles": 4790,
+        "bytes": 495836,
+        "notes": "Blender: escala em metros, Y-up/frente+Z, rig animal e Walk/Idle locais; albedo JPEG1024. Geometria dos adultos preservada; pintinho simplificado, silhueta comparada em quatro vistas."
+      }
     }
   }
 }

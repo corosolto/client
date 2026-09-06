@@ -125,3 +125,39 @@ Licença específica e autoria humana herdadas continuam pendentes. Não é CC0 
 animação fornecida pelo Mint. Registro `mint-assets.json`, relatório
 `docs/reports/SERTAO-CALANGO-QUADRUPEDE.md`. O calango bípede anterior permanece
 no acervo como evidência, mas foi rejeitado para a fauna em movimento pelo dono.
+
+## Criação do Sertão — outputs próprios Mint, 06/09/2026
+
+`sertao_cabra.glb`, `sertao_galinha.glb` e `sertao_pintinho.glb` vêm do projeto
+[Sertão — fauna e memória](https://mint.gg/project/zd7d9mfmgv0b80ezp3xbykp1ns8dw47r),
+pack `th78004y9j8g2kd0mkd45xq65x8dw112`, output
+`vd7azjz400t2sy4g2h4z14ff318dx0mb`,
+[chat de geração](https://mint.gg/chat/ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba).
+Prompt original integral e recibo do ZIP em
+[`SERTAO-FAUNA2-ASSETS.md`](../../../docs/reports/SERTAO-FAUNA2-ASSETS.md).
+Geração por IA, TRIPO_P1 identificado pela UI Mint; não atribuir autoria humana
+ao gerador. Nenhuma imagem, malha de terceiro, marca ou pessoa usada no prompt.
+
+Base de uso: [termos oficiais Mint](https://docs.mint.gg/terms-of-service),
+atualizados em 07/05/2026, consultados em 06/09/2026. A seção 4 cede ao usuário os
+direitos que Mint tiver no output criado para ele, sujeitos aos termos e direitos
+de terceiros; a seção 6 exige revisão antes de uso/distribuição. Não é CC0 nem
+garantia de exclusividade. Não há exigência específica de atribuição nesses
+termos; o projeto preserva estes créditos e os IDs de procedência.
+
+Os originais eram estáticos. `tools/animate-sertao-livestock.py` cria localmente
+rigs animais e clipes `Walk`/`Idle`, normaliza metros/Y-up/frente+Z e conserva
+albedo Mint em JPEG1024. Galinha e cabra mantêm a geometria original normalizada;
+o pintinho foi reduzido de4.910 para3.190 tris e comparado em quatro vistas.
+Não são animações fornecidas pelo Mint. Nenhuma textura externa acrescentada.
+
+| Arquivo | Triângulos | Bytes | SHA-256 final |
+|---|---:|---:|---|
+| `sertao_cabra.glb` | 4.790 | 495.836 | `a89410b7f899a14e19d8955cd5935e2222b3f764d36abc48f42f59e68eac0eea` |
+| `sertao_galinha.glb` | 5.078 | 498.484 | `d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17` |
+| `sertao_pintinho.glb` | 3.190 | 288.400 | `a2f144c8b9de0ff140a2cde29fccc619dd6a2620b7b62d1948b52d94e924bbc0` |
+
+Fonte canônica de hashes/transformações: entradas `sertao-*-animada` em
+[`mint-assets.json`](../../../mint-assets.json). Esta verificação documenta
+estes três downloads próprios; não atribui retrospectivamente autoria aos lotes
+antigos com lacunas acima.
