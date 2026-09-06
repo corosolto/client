@@ -124,19 +124,27 @@ npm run eval:parquewheel
 
 ## `eval:velhooeste`
 
-O CONTRATO DE GAMEPLAY/ROTAS da frente map2 (r2): a estética faroeste foi revogada pelo dono e a régua foi re-derivada — o tema é medido pela `eval:sertao`. Ficam, com os mesmos tetos: arraial denso (≥12 estruturas, ≥6 casas, ≥8 obstáculos no miolo), movimento vivo (tumbleweeds + calango em rajada start-stop), CTF/spawns, rota ≥100 nós, texturas dedicadas (adobe/pau-a-pique/solo rachado inclusos), webp real ligados ao fonte, colisor móvel e ≥8 alpendres bloqueando o corpo real. Mutantes: sem-casas|centro-aberto|obstaculos-sem-nome|parada|calango-morto|sem-ctf|rota-cortada|texturas-genericas|sem-colisao-movel|sem-colisao-varanda.
-
+Contrato de gameplay do Sertão: arraial denso (≥12 estruturas, ≥6 casas, ≥8 obstáculos no miolo), tecidos oscilantes e calango start-stop, CTF/spawns, rota ≥100 nós, texturas dedicadas e real-v1 no disco/fonte. A revisão remove tumbleweeds e colisores móveis; exige colisores estáticos e ≥8 postes de alpendre que bloqueiam o corpo real. O piso detalhado é verificado também na imagem por RV9. Mutantes atuam no mundo e incluem textura genérica, colisor móvel e remoção dos postes. O contrato não aprova estética por contagem.
 ```bash
 npm run eval:velhooeste
 ```
 
 ## `eval:sertao`
 
-Frente map2/velho-oeste (r2, reconstrução Sertão da Treta; ST6 na r3b): cada substantivo do feedback do dono virou cláusula — ST1 caatinga viva (`sertao-*`, ≥28 elementos ≥8 tipos), ST2 taipa de mão em ≥75% das paredes (pau a pique É taipa; parede de casa_de_pedra é pedra por identidade, a folga do piso engole as 2), ST3 tarde quente (fog R−B ≥ 60, sol ≤25°, névoa ≤0,0065), ST4 o arraial pedido (≥6 casas pau-a-pique do molde Mint, igrejinha na praça central, caminhão, moldes no fonte+disco+preload), ST5 calango registrado (≥2 vivos + GLB + preload), ST6 variedade de casario do feedback r3 (≥3 famílias `sertao-casa-<fam>-*` instanciadas, nenhuma com >60% do total, molde real por família). Mutantes: sem-sertao|volta-oeste|ceu-frio|sem-igrejinha|sem-calango|monocultura.
-
+Seis contratos: ST1 ≥28 grupos primários com geometria e ≥8 tipos, sem inflar a conta com helpers; ST2 ≥75% de paredes de taipa; ST3 tarde quente com horizonte e névoa coerentes; ST4 ≥6 casas com corpo autoral ou molde rastreável, igreja e caminhão; ST5 ≥2 calangos registrados; ST6 ≥3 famílias de casas, nenhuma acima de60%. GLBs precisam de fonte/disco/preload; corpos autorais precisam de paredes e material. Carregamento efetivo e pixels são responsabilidade da régua runtime. Seis mutantes isolados comprovam as cláusulas.
 ```bash
 npm run eval:sertao
 ```
+
+## Réguas adicionais do Sertão
+
+- `eval:sertao-spatial`: oito contratos Node de texturas, estabilidade física, OBB, três rotas e coordenadas preservadas. `--self-test` executa onze mutações isoladas.
+- `eval:sertao-runtime`: Chrome real em1536×1024, sete câmeras, dez contratos de GLB carregado, varanda livre, orçamento, erros, spawn, solo e fachadas. `--mutante=NOME` precisa derrubar somente a cláusula esperada; doze mutações. Use `BASE=http://localhost:8145 ARTIFACT_DIR=...`.
+- `eval:sertao-flora`: oito cláusulas geométricas de copas/exterior, com doze mutantes; conjuntos exatos e prova isolada obrigatória por cláusula.
+- `eval:sertao-mandacaru`: cinco cláusulas do helper de mandacaru, oito mutantes; silhueta, variedade, custo, envelope e compartilhamento. Não substitui captura do mapa.
+- `eval:sertao-traversal`: percorre três caminhos com `Game._updatePlayer`, sem teletransporte no percurso. `--mutante=barreira` precisa impedir as chegadas. Simulação a60Hz não é medição de FPS.
+
+Relatórios, limites e resultados históricos ficam em `docs/reports/SERTAO-*.md`. Réguas verdes não substituem crítica dos PNG reais nem aprovação humana.
 
 
 ## `eval:penitenciaria`
