@@ -1,184 +1,90 @@
-/* ============================================================================
-   cinematic-ui-contract-check.mjs — o chrome cinematográfico cobre TODO fluxo de tela?
-   ----------------------------------------------------------------------------
-   POR QUE EXISTE
-     Pedido do dono em 11/08/2026: "uma UI bem cinematográfica de todos os flows do
-     menu". O baseline real em Astro, 1536x1024, mostrou cada trecho falando um idioma:
-     facções = catálogo de dez cards, mapa = campo preto, configurações = formulário e
-     pausa = modal. Esta régua não tenta dar nota de "cinema". Ela cobra apenas as
-     decisões estruturais que podem sumir sem erro: um chrome persistente, metadados
-     para toda tela roteada, uma superfície compartilhada, foco e reduced-motion.
-
-   O QUE MEDE, E POR QUE ASSIM
-     O inventário vem do `screens` de PRODUÇÃO em public/js/main.js. Cada id ali precisa
-     existir como `.cine-surface` no Astro e como chave de CINE_SCREEN_META; portanto
-     adicionar uma tela nova sem integrá-la deixa o portão vermelho. A captura visual
-     continua obrigatória: este contrato prova cobertura/estados, não beleza.
-
-   MUTAÇÕES
-     --mutante=sem-chrome   remove o único #cine-chrome -> CINE1 vermelha
-     --mutante=sem-tela     remove match-end dos metadados -> CINE2 vermelha
-     --mutante=sem-movimento reduzido remove o bloco de acessibilidade -> CINE5 vermelha
-     --mutante=sem-runtime  corta o hook de pausa real -> CINE6 vermelha
-     --mutante=composicao-antiga restaura os seis shells da alpha.58 -> CINE7 vermelha
-     --mutante=faccao-rolavel restaura paginação/scroll -> CINE8 vermelha
-
-   Uso: node tools/eval/cinematic-ui-contract-check.mjs [--mutante=<nome>] [--json]
-   ============================================================================ */
+/* Menu alinhado à main 695557906bcf6a8a3a80e8baf4c434d17d492944.
+   Pedido do dono em 06/09/2026 substitui os shells cinematográficos do BUG-42.
+   Referência: src/pages/index.astro e public/style.css desse SHA; adaptação preserva
+   o registro de dez facções 5×2 e o fluxo local. docs/reports/SERTAO-MENU-MAIN.md.
+   Contrato estrutural, não aprovação visual: capturas Astro 1536×1024 são obrigatórias.
+   Cada --mutante abaixo altera uma única cláusula. --mutantes prova o conjunto exato.
+*/
 import { readFileSync } from 'node:fs';
-import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const MAIN_PATH = path.join(ROOT, 'public/js/main.js');
-const ASTRO_PATH = path.join(ROOT, 'src/pages/index.astro');
-const CSS_PATH = path.join(ROOT, 'public/style.css');
-const FACTION_PATH = path.join(ROOT, 'public/js/factions.js');
-const mutante = (process.argv.find(a => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const json = process.argv.includes('--json');
-
-let main = readFileSync(MAIN_PATH, 'utf8');
-let astro = readFileSync(ASTRO_PATH, 'utf8');
-let css = readFileSync(CSS_PATH, 'utf8');
-const factions = readFileSync(FACTION_PATH, 'utf8');
-
-function troca(src, antigo, novo, nome) {
-  const out = src.replace(antigo, novo);
-  if (out === src) {
-    console.error(`MUTANTE NAO APLICOU: ${nome} — o código mudou de forma; atualize a mutação`);
-    process.exit(2);
-  }
-  return out;
+const root = new URL('../../', import.meta.url);
+const read = p => readFileSync(new URL(p, root), 'utf8');
+let astro = read('src/pages/index.astro');
+let main = read('public/js/main.js');
+let css = read('public/style.css');
+const mutante = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1] || '';
+const targets = { cinema: 'MENU1', elenco: 'MENU2', personagem: 'MENU3', configuracoes: 'MENU4', preview: 'MENU5', rota: 'MENU6', foco: 'MENU7', indisponivel: 'MENU8' };
+function replace(src, before, after) {
+  const changed = src.replace(before, after);
+  if (changed === src) throw new Error(`MUTANTE NAO APLICOU: ${mutante}`);
+  return changed;
 }
-
-if (mutante === 'sem-chrome') astro = troca(astro, 'id="cine-chrome"', 'id="cine-chrome-removido"', mutante);
-if (mutante === 'sem-tela') main = troca(main,
-  /\n\s*'match-end':\s*\{[^\n]+\},?/, '', mutante);
-if (mutante === 'sem-movimento-reduzido') css = troca(css,
-  /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?\/\* cine-reduced-motion \*\/[\s\S]*?\}/,
-  '/* cine reduced motion removido pelo mutante */', mutante);
-if (mutante === 'sem-runtime') main = troca(main,
-  "applyCinematicScreen(paused ? 'pause-menu' : null);",
-  '/* hook cinematográfico removido pelo mutante */', mutante);
-if (mutante === 'composicao-antiga') {
-  const regressions = [
-    ['data-ui-layout="home-broadcast"', 'class="cs-left"'],
-    ['data-ui-layout="mission-cut"', 'class="cs-setup"'],
-    ['data-ui-layout="faction-editorial"', 'class="team-rail"'],
-    ['data-ui-layout="cast-stage"', 'class="char-stage"'],
-    ['data-ui-layout="settings-cockpit"', 'class="panel settings-wrap"'],
-  ];
-  for (const [novo, antigo] of regressions) astro = troca(astro, novo, antigo, mutante);
-}
-if (mutante === 'faccao-rolavel') css = troca(css,
-  'display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:8px;overflow:hidden',
-  'display:flex;gap:8px;overflow:auto', mutante);
-if (mutante && !['sem-chrome', 'sem-tela', 'sem-movimento-reduzido', 'sem-runtime', 'composicao-antiga', 'faccao-rolavel'].includes(mutante)) {
-  console.error(`mutante desconhecido: ${mutante}`);
-  process.exit(2);
-}
-
+if (mutante && !targets[mutante]) throw new Error(`Mutante desconhecido: ${mutante}`);
+if (mutante === 'cinema') astro = replace(astro, 'class="cs-left"', 'class="home-broadcast"');
+if (mutante === 'elenco') main = replace(main, "card.dataset.ready === '1' && n > 0", 'true');
+if (mutante === 'personagem') astro = replace(astro, 'class="char-stage"', 'class="cast-stage"');
+if (mutante === 'configuracoes') astro = replace(astro, 'class="panel settings-wrap"', 'class="settings-cockpit"');
+if (mutante === 'preview') main = replace(main, 'bindMapPreview(b, b.dataset.id);', 'void b.dataset.id;');
+if (mutante === 'rota') astro = replace(astro, 'id="pause-menu"', 'id="pause-menu-removido"');
+if (mutante === 'foco') css = replace(css, '.team-card:focus-visible{outline:', '.team-card:focus{outline:');
+if (mutante === 'indisponivel') css = replace(css, '.team-card:not([aria-disabled="true"]):hover .team-cta', '.team-card:hover .team-cta');
 const results = [];
-const put = (id, desc, ok, evid) => results.push({ id, desc, ok, evid });
-
-const screenMatch = /const screens\s*=\s*\[([^\]]+)\]/.exec(main);
-const screens = screenMatch ? [...screenMatch[1].matchAll(/['"]([^'"]+)['"]/g)].map(m => m[1]) : [];
-put('CINE0', 'o inventário vem do array screens de produção', screens.length > 0,
-  screens.length ? `${screens.length} telas: ${screens.join(', ')}` : 'não consegui ler public/js/main.js: screens');
-
-const chromeCount = (astro.match(/id="cine-chrome"/g) || []).length;
-put('CINE1', 'existe um único chrome cinematográfico persistente e decorativo',
-  chromeCount === 1 && /id="cine-chrome"[^>]*aria-hidden="true"/.test(astro),
-  `${chromeCount} #cine-chrome; esperado 1 com aria-hidden=true`);
-
-const metaStart = main.indexOf('const CINE_SCREEN_META = Object.freeze({');
-let metaKeys = [];
-if (metaStart >= 0) {
-  const metaEnd = main.indexOf('\n});', metaStart);
-  const block = metaEnd >= 0 ? main.slice(metaStart, metaEnd) : '';
-  metaKeys = [...block.matchAll(/^\s*'([^']+)':\s*\{/gm)].map(m => m[1]);
+function check(id, desc, ok, evid) { results.push({ id, desc, ok: !!ok, evid }); }
+const classHas = name => new RegExp(`class="[^"\\n]*\\b${name}\\b`).test(astro);
+check('MENU1', 'home usa coluna e entrada local direta da main',
+  classHas('cs-left') && classHas('aaa-links') && /data-act="sp"/.test(astro)
+  && !/id="cine-chrome"|data-ui-layout="home-broadcast"|data-act="jogar"|data-act="mp"/.test(astro)
+  && /case 'sp':\s*openModeMap\('rounds', 'SINGLE PLAYER'/.test(main),
+  'coluna cs-left, links reais e SINGLE PLAYER; sem casca cinema/submenu/MP sem runtime');
+check('MENU2', 'dez facções do registro ficam em grade, com bloqueio de elenco e adversário estável',
+  /FACTIONS\.map\s*\(/.test(astro) && !/FACTIONS\.slice/.test(astro)
+  && /data-faction=\{f.id\}/.test(astro) && /card.dataset.ready === '1' && n > 0/.test(main)
+  && /grid-template-columns:repeat\(5,minmax\(0,1fr\)\);grid-template-rows:repeat\(2,minmax\(0,1fr\)\)/.test(css)
+  && /\.team-card.faction-excluded\{visibility:hidden;pointer-events:none\}/.test(css)
+  && !/class="faction-editorial"|id="faction-hero"/.test(astro),
+  'FACTIONS sem recorte, ready AND roster, grade5×2 e posição preservada');
+check('MENU3', 'personagem usa ficha, preview e faixa de elenco da main',
+  ['char-stage', 'char-filmstrip', 'char-sheet', 'char-preview-box'].every(classHas)
+  && !classHas('cast-stage') && /id="char-voice-caption"/.test(astro),
+  'quatro landmarks da main e legenda de voz preservada');
+check('MENU4', 'configurações usam wrap e abas da main',
+  classHas('panel settings-wrap') && /id="settings-panel"[^>]*data-active-tab="video"/.test(astro)
+  && !classHas('settings-cockpit') && /class="set-preview-wrap"/.test(astro),
+  'wrap, aba inicial e prévia mantidos');
+check('MENU5', 'preview real conecta as duas superfícies e encerra na navegação',
+  /import \{ bindMapPreview, stopMapPreviews, previewRevision \} from '.\/map_preview.js'/.test(main)
+  && /bindMapPreview\(mapThumb.parentElement, currentMap\)/.test(main)
+  && /bindMapPreview\(b, b.dataset.id\)/.test(main)
+  && /function show\(id\)\s*\{\s*stopMapPreviews\(\)/.test(main)
+  && /href=\{`\/map-preview.css\?v=/.test(astro),
+  'poster/card vinculados; saída pausa todos; stylesheet com revisão');
+const screens = [...(main.match(/const screens\s*=\s*\[([^\]]+)\]/)?.[1] || '').matchAll(/'([^']+)'/g)].map(m => m[1]);
+const missing = screens.filter(id => (astro.match(new RegExp(`id="${id}"`, 'g')) || []).length !== 1);
+check('MENU6', 'inventário de telas de produção resolve DOM único', screens.length > 0 && missing.length === 0,
+  `${screens.length} telas; IDs ausentes/duplicados: ${missing.join(', ') || 'nenhum'}`);
+check('MENU7', 'foco de cartão e preferência de movimento ficam explícitos',
+  /\.team-card:focus-visible\{outline:/.test(css)
+  && /@media\s*\(prefers-reduced-motion:reduce\)\{[\s\S]*?\.team-card/.test(css),
+  'foco visível e transições reduzidas na seleção');
+check('MENU8', 'facção indisponível não promete entrada no hover ou foco',
+  css.includes('.team-card:not([aria-disabled="true"]):hover .team-cta,.team-card:not([aria-disabled="true"]):focus-visible .team-cta{opacity:1}'),
+  'crítica visual encontrou EM PRODUÇÃO junto de ENTRAR NESSE CORO');
+const failures = results.filter(r => !r.ok).map(r => r.id);
+if (process.argv.includes('--mutantes')) {
+  if (failures.length) throw new Error(`Baseline vermelho: ${failures.join(', ')}`);
+  for (const [name, target] of Object.entries(targets)) {
+    const run = spawnSync(process.execPath, [fileURLToPath(import.meta.url), `--mutante=${name}`, '--json'], { encoding: 'utf8' });
+    const result = JSON.parse(run.stdout);
+    if (run.status !== 1 || JSON.stringify(result.failures) !== JSON.stringify([target])) {
+      throw new Error(`${name}: esperado somente ${target}, recebido ${run.status} ${run.stdout} ${run.stderr}`);
+    }
+    console.log(`✓ mutante ${name} -> somente ${target} vermelho`);
+  }
 }
-const missingMeta = screens.filter(s => !metaKeys.includes(s));
-const extraMeta = metaKeys.filter(s => !screens.includes(s));
-put('CINE2', 'toda tela roteada declara seção, etapa e progresso no chrome',
-  screens.length > 0 && missingMeta.length === 0 && extraMeta.length === 0,
-  `faltam [${missingMeta.join(', ') || 'nenhuma'}] · sobram [${extraMeta.join(', ') || 'nenhuma'}]`);
-
-const missingSurface = screens.filter(id => {
-  const re = new RegExp(`<div\\s+id=["']${id}["'][^>]*class=["'][^"']*\\bcine-surface\\b`);
-  return !re.test(astro);
-});
-put('CINE3', 'toda tela roteada usa a superfície compartilhada no DOM real',
-  screens.length > 0 && missingSurface.length === 0,
-  `sem .cine-surface: ${missingSurface.join(', ') || 'nenhuma'}`);
-
-const applies = /function\s+show\(id\)[\s\S]{0,900}applyCinematicScreen\(id\)/.test(main);
-const writesState = /document\.body\.dataset\.cineScreen/.test(main)
-  && /cine-section/.test(main) && /cine-step/.test(main) && /cine-progress/.test(main);
-put('CINE4', 'o roteador de produção atualiza o chrome a cada show(id)', applies && writesState,
-  `show->apply=${applies} · estado/labels=${writesState}`);
-
-const sharedCss = /--cine-frame:/.test(css)
-  && /#cine-chrome\{/.test(css)
-  && /body\[data-cine-screen\]/.test(css)
-  && /\.cine-surface:not\(\.hidden\)/.test(css)
-  && /\.cine-surface\s+:is\([^)]*button/.test(css) && /:focus-visible/.test(css);
-const reduced = /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\/\* cine-reduced-motion \*\//.test(css);
-put('CINE5', 'CSS compartilhado cobre moldura, entrada, foco e reduced-motion', sharedCss && reduced,
-  `chrome/foco=${sharedCss} · reduced-motion=${reduced}`);
-
-const pauseRuntime = /onPauseChange\s*=\s*\(paused\)[\s\S]{0,180}applyCinematicScreen\(paused \? 'pause-menu' : null\)/.test(main);
-const endRuntime = /async function recordMatchStats\(s\)[\s\S]{0,120}applyCinematicScreen\('match-end'\)/.test(main);
-put('CINE6', 'pausa e resultado acionam o chrome pelos caminhos reais do jogo', pauseRuntime && endRuntime,
-  `pause=${pauseRuntime} · match-end=${endRuntime}`);
-
-/* CINE7 — BUG-42, palavras do dono: "a UI continua a mesma de sempre".
-   O contrato anterior premiava decoração: chrome, foco e reduced-motion podiam ficar
-   verdes sobre os mesmos cinco shells da alpha.58. Esta cláusula lê o DOM de produção
-   e exige cinco composições novas, cada uma com landmarks próprios. Não tenta dar nota
-   estética; prova que a árvore deixou de ser a velha coluna/cards/filmstrip/painel.
-   Eram SEIS: o fluxo map-broadcast saiu em 19/08/2026 por decisão do dono — a tela de
-   seleção de mapas volta ao carrossel da main (commit 71c5640); UIR4 é quem a guarda.
-   Home re-derivada em 25/08 (decisão do dono no merge do #399): os mode-cards saíram e
-   o menu voltou ao formato da main — quem guarda o menu agora são UIR22/26/30; os
-   landmarks da home aqui são a vitrine de temporada/título do home-broadcast. */
-const structuralFlows = [
-  ['home-broadcast', ['home-title-block', 'home-season']],
-  ['mission-cut', ['mission-visual', 'mission-console']],
-  ['faction-editorial', ['faction-index', 'faction-hero']],
-  ['cast-stage', ['cast-rail', 'cast-avatar', 'cast-dossier']],
-  ['settings-cockpit', ['settings-nav', 'settings-workbench']],
-];
-const structuralEvidence = structuralFlows.map(([layout, landmarks]) => {
-  const hasLayout = astro.includes(`data-ui-layout="${layout}"`);
-  const missing = landmarks.filter(name => !new RegExp(`class=["'][^"']*\\b${name}\\b`).test(astro));
-  return { layout, ok: hasLayout && missing.length === 0, missing: hasLayout ? missing : ['shell'] };
-});
-const legacyShells = ['cs-left', 'team-rail', 'char-filmstrip', 'panel settings-wrap']
-  .filter(name => astro.includes(`class="${name}"`));
-put('CINE7', 'os cinco fluxos usam composições próprias, não os shells da alpha.58',
-  structuralEvidence.every(x => x.ok) && legacyShells.length === 0,
-  `${structuralEvidence.filter(x => x.ok).length}/${structuralEvidence.length} fluxos novos · ` +
-  `faltas: ${structuralEvidence.filter(x => !x.ok).map(x => `${x.layout}[${x.missing.join('+')}]`).join(', ') || 'nenhuma'} · ` +
-  `shells antigos: ${legacyShells.join(', ') || 'nenhum'}`);
-
-/* CINE8 — specs/0002-novas-faccoes/spec.md §2: dez facções simultâneas em 5×2,
-   sem paginação/rolagem, e o adversário indisponível não desloca a grade. O hero novo
-   pode coexistir com a decisão; não pode transformar a regra de produto em carrossel. */
-const factionPageSize = Number(/FACTION_PAGE_SIZE\s*=\s*(\d+)/.exec(factions)?.[1] || 0);
-const gridFiveByTwo = /\.faction-index \.team-row\{display:grid;grid-template-columns:repeat\(5,minmax\(0,1fr\)\);grid-template-rows:repeat\(2,minmax\(0,1fr\)\);gap:8px;overflow:hidden/.test(css);
-const noPagination = /\.faction-index \.team-rail-arrow\{display:none\}/.test(css);
-const stableEnemy = /\.faction-index \.team-card\.faction-excluded\{visibility:hidden;pointer-events:none\}/.test(css);
-put('CINE8', 'as dez facções ficam simultâneas em grade 5×2 e estáveis no adversário',
-  factionPageSize === 10 && gridFiveByTwo && noPagination && stableEnemy,
-  `pageSize=${factionPageSize} · grade5x2=${gridFiveByTwo} · sem paginação=${noPagination} · posição adversário estável=${stableEnemy}`);
-
-const failures = results.filter(r => !r.ok);
-if (json) console.log(JSON.stringify({ mutante: mutante || null, results }, null, 2));
+if (process.argv.includes('--json')) console.log(JSON.stringify({ mutante, results, failures }, null, 2));
 else {
-  console.log(`\nCINEMATIC UI CONTRACT${mutante ? ` · mutante=${mutante}` : ''}`);
-  for (const r of results) console.log(`${r.ok ? '✓' : '✗'} ${r.id} ${r.desc}\n    ${r.evid}`);
-  console.log(`\n${results.length - failures.length}/${results.length} cláusulas verdes`);
-  if (failures.length) console.log('Correção: integre chrome/estado, os seis layouts estruturais e preserve a grade de facções 5×2 sem scroll.');
+  for (const r of results) console.log(`${r.ok ? '✓' : '✗'} ${r.id} ${r.desc}\n  ${r.evid}`);
+  console.log(`${results.length - failures.length}/${results.length} contratos verdes; aprovação visual depende de Astro real.`);
 }
-process.exit(failures.length ? 1 : 0);
+process.exitCode = failures.length ? 1 : 0;

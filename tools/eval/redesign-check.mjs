@@ -217,7 +217,7 @@ main = muta('mapa-esconde-um', main,
   "return mapCategory === 'TODOS' ? MAP_IDS : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);",
   "return mapCategory === 'TODOS' ? MAP_IDS.slice(0, -1) : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);");
 main = muta('mapa-sem-miniaturas', main,
-  '`<img class="ms-thumb-img" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +',
+  '`<img class="ms-thumb-img" src="/img/map-previews/${id}.jpg?v=${VERSION}${previewRevision(id)}" alt="">` +',
   "'' +");
 main = muta('mapa-navega-global', main,
   "$('ms-next').onclick = () => stepMap(1, visibleMapIds());",
@@ -348,8 +348,8 @@ game = muta('killfeed-volta-svg', game,
   '${this._killfeedWeaponIcon(weap)}',
   '${this._wpnIcon(weap)}');
 main = muta('modo-volta-setup', main,
-  "case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;",
-  "case 'sp':    openSetup('rounds', 'MATA-MATA', 'sp'); break;");
+  "case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;",
+  "case 'sp':    openSetup('rounds', 'SINGLE PLAYER', 'sp'); break;");
 main = muta('personagem-dificuldade-volta', main,
   ".map(([l, v]) => `<div class=\"attr\"><span>${tr(l)}</span><div class=\"attr-bar\"><i style=\"width:${v * 20}%\"></i></div><b>${v}</b></div>`).join('');",
   ".map(([l, v]) => `<div class=\"attr\"><span>${tr(l)}</span><div class=\"attr-bar\"><i style=\"width:${v * 20}%\"></i></div><b>${v}</b></div>`).join('') + `<div class=\"attr attr-dif\">DIFICULDADE</div>`;");
@@ -656,7 +656,7 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /\$\('ms-strip'\)\.innerHTML = shown\.map\(\(id\) =>/.test(funcMap)
   && /\$\('ms-strip'\)\.style\.setProperty\('--map-count', shown\.length\)/.test(funcMap)
   && /aria-pressed="\$\{id === currentMap\}"/.test(funcMap)
-  && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
+  && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}\$\{previewRevision\(id\)\}" alt="">/.test(funcMap)
   && /id="ms-tabs"/.test(astro) && /id="ms-prev"/.test(astro) && /id="ms-next"/.test(astro)
   && /id="ms-dashes"/.test(astro) && /class="ms-carousel"/.test(astro)
   // As três abas: TODOS (acervo inteiro, por partidas), OFICIAIS e COMUNIDADE. O #368
@@ -822,11 +822,14 @@ const killfeedArma2D = /_killfeedWeaponIcon\(short\) \{/.test(game)
   && /\.kf-weapon-mask\{[^}]*background:currentColor[^}]*mask:var\(--weapon-mask\) center\/contain no-repeat/.test(css)
   && /\.kf-weapon-2d:has\(\.kf-weapon-mask\) \.kf-fallback\{display:none\}/.test(css);
 const funcAttrs = blocoFuncao(main, 'renderCharAttrs');
-const modoMapaPadrao = /<button class="cs-item cs-sub-item" data-act="sp"[^>]*>[\s\S]*?MATA-MATA<\/button>/.test(astro)
+// Pedido 06/09: entrada direta da main; CTF continua no seletor de modo do mapa.
+const modoMapaPadrao = /<button class="cs-item cs-prime" data-act="sp"[^>]*>[\s\S]*?SINGLE PLAYER/.test(astro)
   && !/>ABATE<\/button>/.test(astro)
   && /function openModeMap\(mode, title, act\) \{[\s\S]{0,180}openSetup\(mode, title, act\);[\s\S]{0,100}renderMapScreen\(\);[\s\S]{0,80}show\('map-screen'\);/.test(main)
-  && /case 'sp':\s+openModeMap\('rounds', 'MATA-MATA', 'sp'\); break;/.test(main)
-  && /case 'ctf':\s+openModeMap\('ctf', 'CAPTURE THE FLAG', 'ctf'\); break;/.test(main);
+  && /case 'sp':\s+openModeMap\('rounds', 'SINGLE PLAYER', 'sp'\); break;/.test(main)
+  && /case 'ctf':\s+openModeMap\('ctf', 'CAPTURE THE FLAG', 'ctf'\); break;/.test(main)
+  && /id="map-mode" type="button"/.test(astro)
+  && /matchMode = matchMode === 'ctf' \? 'rounds' : 'ctf'/.test(main);
 const personagemSemDificuldade = !!funcAttrs && !/attr-dif|DIFICULDADE|undefined/.test(funcAttrs);
 const perfilComAvatar = /const PLAYER_AVATAR_KEY = 'awpbr_player_avatar'/.test(main)
   && /function fallbackPlayerAvatar\(seed\)[\s\S]{0,420}\/img\/chars\/avatars\/\$\{character\.id\}\.webp/.test(main)
