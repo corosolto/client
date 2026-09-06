@@ -26,25 +26,6 @@ export const CHARACTER_SELECT_VOICE = Object.freeze({
   funkraiz: 'audio/a/d5b87c3d2638e166.mp3',
 });
 
-const VOICE_FALLBACK = Object.freeze({
-  E: ['Boa!', 'Avança!', 'Pegamos!'],
-  B: ['Boa!', 'Vai pra cima!', 'Derrubamos!'],
-  U: ['Bonito tiro!', 'É nossa!', 'Bora pra treta!'],
-  C: ['O circo chegou!', 'Ingresso pago!', 'A praça é nossa!'],
-  F: ['É os cria!', 'Bicho solto!', 'Passou o corre!'],
-});
-const GENERAL_FALLBACK = Object.freeze({
-  headshot: 'Headshot!',
-  doublekill: 'Double kill!',
-  triplekill: 'Triple kill!',
-  multikill: 'Multi kill!',
-  megakill: 'Mega kill!',
-  killingspree: 'Killing spree!',
-  godlike: 'Godlike!',
-});
-const ROUND_FALLBACK = Object.freeze(['', 'Round one!', 'Round two!', 'Round three!',
-  'Round four!', 'Round five!', 'Round six!', 'Round seven!']);
-
 export class Sfx {
   constructor() {
     this.ctx = null; this.master = null; this.vol = 0.7;
@@ -110,22 +91,6 @@ export class Sfx {
   }
   _pick(arr) { return arr && arr.length ? arr[(Math.random() * arr.length) | 0] : null; }
 
-  _speak(text, { lang = 'pt-BR', volume = 0.72, interrupt = false } = {}) {
-    if (!this.speechEnabled || !text || !globalThis.speechSynthesis || !globalThis.SpeechSynthesisUtterance) return false;
-    try {
-      if (interrupt) globalThis.speechSynthesis.cancel();
-      const utterance = new globalThis.SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.volume = Math.max(0, Math.min(1, this.vol * volume));
-      utterance.rate = lang === 'en-US' ? 0.92 : 1;
-      utterance.pitch = lang === 'en-US' ? 0.82 : 0.94;
-      this._spokenUtterance = utterance;
-      globalThis.speechSynthesis.speak(utterance);
-      return true;
-    } catch { return false; }
-  }
-  _voiceFallback(team) { return this._pick(VOICE_FALLBACK[team]) || this._pick(VOICE_FALLBACK.U); }
-
   // team voice line (kill celebration / random), throttled
   voice(team, minGap = 3.5) {
     if (!this.speechEnabled) return false;
@@ -136,7 +101,7 @@ export class Sfx {
     // IN-GAME (grito de kill): prioriza clipes CURTOS. O array vem ordenado do mais curto
     // pro mais longo (por tamanho no manifest); random*random puxa o sorteio pro início.
     const f = arr?.length ? arr[Math.floor(Math.random() * Math.random() * arr.length)] : null;
-    const played = f ? !!this._sample(f) : this._speak(this._voiceFallback(team), { volume: 0.72 });
+    const played = f ? !!this._sample(f) : false;
     if (played) this._lastVoice = now;
     return played;
   }
@@ -148,12 +113,11 @@ export class Sfx {
     if (f) {
       if (this._radioAudio) this._radioAudio.pause();
       this._radioAudio = this._sample(f);
-    } else if (!this._speak(this._voiceFallback(team), { volume: 0.78, interrupt: true })) return false;
+    } else return false;
     this._lastVoice = performance.now();
     return true;
   }
-  // Fala autoral do personagem. Os nove Funkeiros aprovados têm um take próprio por
-  // select/kill/radio/round; só cai na facção/voz sintética quando esse take não existe.
+  // Fala autoral do personagem. Sem take próprio ou pool curado, não há voz substituta.
   characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
     if (!this.speechEnabled) return false;
     const now = performance.now();
@@ -174,12 +138,7 @@ export class Sfx {
       return true;
     }
     if (NO_GENERIC_VOICE_FACTIONS.has(fallbackFaction)) return false;
-    const spoken = this._speak(this._voiceFallback(fallbackFaction), { volume: 0.78, interrupt });
-    if (spoken) {
-      this._lastVoice = now;
-      if (event === 'kill') this._lastKillVoice = now;
-    }
-    return spoken;
+    return false;
   }
   characterSelectVoice(characterId, faction, rosterIds) {
     if (!this.speechEnabled) return false;
@@ -214,7 +173,7 @@ export class Sfx {
         .indexOf(characterId);
       file = pool?.filter((candidate) => !reserved.has(candidate))[fallbackSlot];
     }
-    if (!file) return this._speak(this._voiceFallback(faction), { volume: 0.78, interrupt: true });
+    if (!file) return false;
     if (this._characterSelectAudio) this._characterSelectAudio.pause();
     this._characterSelectAudio = this._sample(file);
     return !!this._characterSelectAudio;
@@ -275,12 +234,10 @@ export class Sfx {
     return !!this._announcerAudio;
   }
   general(kind) {
-    return this._announcer(this.pack?.general?.[kind])
-      || this._speak(GENERAL_FALLBACK[kind], { lang: 'en-US', volume: 0.78, interrupt: true });
+    return this._announcer(this.pack?.general?.[kind]);
   }
   roundNumber(number) {
-    return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72)
-      || this._speak(ROUND_FALLBACK[number], { lang: 'en-US', volume: 0.72, interrupt: true });
+    return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72);
   }
   captureSound(faction) { const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }   // captura de bandeira (CTF): pool por facção (captureByTeam) c/ fallback global
   _cs(key) { const v = this.pack?.cs?.[key]; return v && v.length ? this._pick(v) : null; }
