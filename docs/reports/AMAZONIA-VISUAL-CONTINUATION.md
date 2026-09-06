@@ -507,3 +507,102 @@ artifacts/amazonia-visual/cabin-round/gates-alpha227.log. A captura real foi
 refeita com mapa SHA 6d155a14 e revisão visual do poster: passarelas, rio,
 barcos, cabanas e mata correspondem ao cenário jogável. Recibo com hashes
 em public/img/map-previews/amazonia.capture.json. Próximo: CI e merge.
+
+7a613e11 enviado ao PR439; pre-push passou (19 s), build alpha.227 local
+passou e docs/arch/autoria passaram 3/3. Hover local e remoto passaram 9/9.
+Preview dpl_9VLKqyz8Jpjso3ucZ1ugbdjaCoxH READY para esse mesmo SHA: oito
+fontes/assets conferidos byte a byte, áudio HTTP200 com 16 mapas e overrides
+Amazônia/Lajes/Escadão. Capturas pickup-rack.png e pickup-mp5.png revistas:
+armas em terra firme e MP5 visível ao lado das toras. Sem erros JS ou HTTP.
+CI pr-fast34014646644 ainda executa invariantes; sem revisão pendente no PR.
+Aguardar todos os checks antes do merge, sem bypass.
+
+## Pausa por coordenação — 2026-09-06
+
+A coordenação da tarefa 01a073e4-50fa-7c52-9ac7-729a088fc976 determinou
+pausa antes de merge/deploy. Objetivo completo e autorização de merge após
+todos os gates permanecem, mas a retomada depende de novo despacho.
+Branch local: codex/amazonia-main; implementação e head remoto do PR439:
+7a613e1195958f50b5111b0f1234484aeb1c1896, baseado em main f7f4402e (alpha.227).
+Só este ledger mudou após o push; checkpoint documental local não será enviado.
+
+Aceito: VM14 71 pickups sem falhas, mutante 1 inalcançável/4 abaixo do piso;
+71/71 rotas de bots; 10/10 checks afetados pela integração; build local;
+docs/arch/autoria; revisão independente; hover local/remoto 9/9 e deploy
+de preview READY com oito fontes/assets idênticos e áudio dos 16 mapas.
+Rejeitado: posições antigas de pickups. Não continuar melhorias do mapa
+nem investigação de desempenho de Lajes neste fechamento.
+
+PR439 permanece OPEN/BLOCKED, sem merge. Run34014646644 ainda executa
+invariantes; único check pendente era build na consulta de pausa. Todos os
+outros checks aplicáveis passaram. CI remoto foi preservado, sem cancelamento.
+Artefatos: artifacts/amazonia-visual/cabin-round/{pickup-fixed.json,
+pickup-mutant.json,pickup-rack.png,pickup-mp5.png,gates-alpha227.log,
+build-alpha227.log,hover-remote-pickups.log,remote-source-pickups.json}.
+Preview: dpl_9VLKqyz8Jpjso3ucZ1ugbdjaCoxH. Histórico anterior nas duas tags
+archive já documentadas. Nenhuma automação própria; workers concluídos.
+Watcher local e servidores exclusivos 8156/8157 encerrados para liberar
+recursos; nenhum navegador de teste permanece aberto.
+
+Próximo marco, somente após despacho: consultar conclusão do run34014646644,
+revalidar head/regras/conflitos/revisões e todos os checks, então merge PR439
+com guarda de SHA se autorizado a retomar. Se falhar, corrigir apenas gate real.
+Servidor pode ser retomado nesta worktree com Node23 e o comando de
+AMAZONIA-TESTE-LOCAL.md (porta8157). Não disparar testes de novo sem necessidade.
+
+Coordenação confirmou que a pausa é transição para redistribuição, com meta
+global até 07/09 aproximadamente 06:55 Lisboa. Candidato pronto para revisão:
+7a613e11, sem desenvolvimento adicional previsto. Estimativa do próximo marco
+após despacho: 5–10 minutos se o CI já estiver verde (consulta e merge), ou
+15–30 minutos se for necessário aguardar/revalidar gates; o job de invariantes
+levou cerca de 10–12 minutos nas execuções observadas. Bloqueios de entrega:
+despacho da coordenação e conclusão verde do build; falha nova de CI ou novo
+conflito com main exige reestimar. Não há bloqueio de asset/visual conhecido
+para o escopo aceito. Produção permanece parada.
+
+## Fechamento — 2026-09-06
+
+PR439 integrado por squash em `0af5e1180bada645846119d5b3c15a77e107514f`,
+aplicando o SHA validado `7a613e1195958f50b5111b0f1234484aeb1c1896` sobre
+`main` alpha.227. Guarda de SHA, base sem drift, revisões resolvidas e todos os
+checks do PR foram conferidos antes do merge. A release pós-merge foi iniciada
+pelo repositório; acompanhar somente seu resultado, sem reabrir desenvolvimento.
+
+A execução de release do merge foi cancelada pela fila em favor da release
+subsequente `v2.0.0-alpha.228` (`bc8ce4e9`), que concluiu com sucesso e contém
+`0af5e118`. O deployment de produção `6289742804` foi marcado como concluído
+para esse SHA; sua URL responde com a proteção SSO esperada, portanto a
+verificação HTTP anônima não inspeciona o conteúdo publicado.
+
+## Hotfix CTF2 após integração — 2026-09-06
+
+O gate global passou a medir a Amazônia e encontrou uma única rota nos três
+pares que saem do spawn B. A causa não era colisão nova: a grade de navegação
+de 3,2 m saltava toda a faixa externa transitável entre palafitas. A faixa
+`ROTA_LATERAL_B` insere nós de 1,6 m já percorridos pela física real e liga
+somente suas duas pontas ao grafo existente; não move spawns, objetivos,
+colisores ou geometria. `map-check amazonia` agora mede duas rotas separadas
+para E, MID e B (as seis combinações em 2/2); `amazonia-bots-check` passa
+71/71 nas sementes 7, 42 e 13007. A contraprova `?amzctf2lane=0` remove a
+faixa e devolve B→E/B→MID/B→B a uma rota, reprovando CTF2. A investigação
+separada de escala 5x5/8x8 e da aparência das palafitas permanece pausada por
+coordenação, sem mudança de runtime, renderização ou Lajes.
+
+Após crítica independente, `tools/eval/amazonia-ctf2-lane-check.mjs` passou a
+medir as 25 ligações explícitas da faixa com `Game._walkReach` nos dois
+sentidos. A primeira tentativa revelou uma ligação de 3,578 m; ela foi
+subdividida. O recibo final mede 24 nós, 25 ligações, zero falhas e maior
+segmento de 2,263 m (≤ passo original de 3,2 m), em
+`artifacts/amazonia-ctf2-hotfix/lane-pointsonly.json`. Recibos fixed/mutant do
+CTF2 e das 71 rotas estão no mesmo diretório. Nenhuma aresta é aceita apenas
+por estar no grafo: todas são caminhadas pela física real antes do checkpoint.
+Os recibos finais correspondem à fonte `map_amazonia.js` SHA-256
+`a2996b7268089930e739df99962a40857469fd602714b6a1564b7fa8a39cb1d7`.
+O contrato PONTAS-ONLY exclui a faixa da vizinhança automática: os únicos
+contatos faixa→grafo são os dois conectores explícitos. O seletor recusa nó
+com desnível maior que 0,55 m; isto eliminou a tentativa de conectar ao
+patamar alto. O recibo `lane-pointsonly.json` registra esses dois contatos,
+24 nós, 25 ligações e caminhada sem recuperação nos dois sentidos.
+O degrau de piso observado de aproximadamente 0,406 m continua documentado
+como limitação da rota; esta correção não a suaviza nem afirma que ela seja
+imperceptível.
