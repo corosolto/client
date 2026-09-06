@@ -57,3 +57,41 @@ solo retangular e identidade insuficiente. Não aprovou colisão por screenshot 
 Pesquisa/ficha em plans/AMAZONIA-VISUAL.md e references/amazonia-visual/FONTE.md.
 Próximo: corrigir água/margem e bosque em escopo exclusivo de map_amazonia.js;
 reexecutar quatro cláusulas, aplicar mutantes de fonte reais, recapturar e andar.
+
+## Milestone: correções de superfície e crítica da rodada 2
+
+AMV1/2/3 passaram; mutantes reais em fonte reprovaram somente a cláusula alvo,
+com SHA e restauração registrados em artifacts/amazonia-visual/mutations.log.
+Rodada 1 rejeitada: aviso de erro de boot cobria as imagens apesar de state=live.
+O capturador agora exige o aviso oculto e usa o botão de recuperação do jogo.
+Rodada 2 válida visualmente, em iteration-2/: AMV4 passou nos 63 GLBs interiores,
+mas o crítico de regressões detectou colisor maior que a malha. Correção atual
+faz raio físico acompanhar escala, incluindo fallback batch=0; recaptura pendente.
+Crítica A/B: skyline e travessia de madeira melhoraram; água/solo/repetição/casas
+seguem reprovados. Nota editorial 4/10→5/10, não é aprovação BAR.
+
+Movimento real: 8/12 trajetos passaram; falharam os dois sentidos das pontes z=-24
+(elevam corpo via mantle até corrimão) e z=0 (barracas/mantle). As quatro passarelas
+altas, ponte z=24 e saída da água nas duas margens passaram. Spawns assentaram sem
+empurrão, mas 20/25 raios no browser tiveram visão direta. Não atribuir esses
+problemas à revisão sem baseline correspondente; reprodução baseline em andamento.
+AMV5 vermelho Node=21 linhas diretas; AMV6 vermelho=3 amostras secas lentificadas.
+Agora ambos verdes: pilhas de madeira visíveis protegem spawns e slowAt termina
+na interseção água/margem. Mutantes e confirmação browser destas cláusulas pendentes.
+
+Regressões da rodada 2 corrigidas em fonte, ainda sem aceite visual: solo estendido
+sob árvores externas; segundo estrato distante simplificado/instanciado (em vez de
+44 GLBs completos); colisores proporcionais; lentidão só dentro da lâmina.
+Duas casas ganham cobertura baixa de chapa/venezianas conforme referência inspecionada.
+Geometrias são derivadas em runtime neste mapa, sem substituir arquivos do acervo.
+
+Contratos iniciais: 9/11 passaram. eval:ambience falha antes de medir em map_es.js
+inexistente (script usa id.slice(3)); assert:assets detectou packs ausentes. Pacotes
+oficiais audio-pack-v6 e decals-pack-v2 baixados por URL das releases para esta
+worktree, 321/196 arquivos extraídos; sem publicação nem alteração de licenças.
+README registra direitos incertos do pacote de áudio; não constitui procedência
+aprovada para novos usos. Sons ambiente específicos ainda retornaram 404.
+
+Próximo: reproduzir travessias/LoS do baseline; nova captura med/low e caminhada;
+mutantes AMV4/5/6; gates/build/global; crítica independente da correção das regressões.
+Performance continua PENDENTE; não executar benchmark com outros renderers ativos.

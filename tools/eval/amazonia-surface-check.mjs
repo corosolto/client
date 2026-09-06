@@ -21,7 +21,16 @@ w.root.traverse(o => {
   const p = o.geometry?.parameters;
   if (o.visible && o.geometry?.type === 'BoxGeometry' && p.height >= 6.5 && (Math.abs(o.position.x) >= 29 || Math.abs(o.position.z) >= 41.5)) towers.push(o.position.toArray());
 });
+const spawnLines = [];
+for (const a of w.spawns.E) for (const b of w.spawns.B) {
+  const from = new THREE.Vector3(a.x, 1.4, a.z), to = new THREE.Vector3(b.x, 1.4, b.z);
+  const dir = to.clone().sub(from); ray.set(from, dir.clone().normalize()); ray.far = dir.length();
+  if (!ray.intersectObjects(w.occluders, true).length) spawnLines.push({ a:[a.x,a.z], b:[b.x,b.z] });
+}
+const drySlow = [9.5,10,10.3].filter(x => w.slowAt(x,20));
 const results = [
+  { id:'AMV5', ok:spawnLines.length === 0, value:spawnLines.length, rule:'zero linhas diretas entre spawns em pé' },
+  { id:'AMV6', ok:drySlow.length === 0, value:drySlow, rule:'margem seca não aplica lentidão de água' },
   { id: 'AMV1', ok: Number.isFinite(waterY) && bridgeY > waterY, value: { waterY, bridgeY }, rule: 'ponte acima da água' },
   { id: 'AMV2', ok: samples.every(s => s.delta !== null && s.delta < 1e-4), value: samples, rule: 'malha coincide com chão físico nas rampas' },
   { id: 'AMV3', ok: towers.length === 0, value: towers.length, rule: 'zero torres retangulares do baseline no horizonte; AMZ6 protege densidade' },

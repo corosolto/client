@@ -14,12 +14,14 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 32, HALF_Z = 44;
 export const AMAZONIA_AMBIENCE = Object.freeze([...CORREGO_FAUNA_ASSETS, ...AMAZONIA_FAUNA_ASSETS]);   // + jacaré/capivara e o elenco novo (este mapa baixa)
 
-/* ── IGARAPÉ: rio em x ∈ [−9,75, 9,75]; centro fundo (−0,6), margens em rampa até −0,28 —
+/* ── IGARAPÉ: rio em x ∈ [−9,75, 9,75]; centro fundo (−0,6), margens em rampa até o chão seco (0) —
    quem cai da ponte vadeia e sai pela margem (lição das rampas do córrego). */
 const RIO_MEIA_LARGURA = 9.75;
-const RIO_FUNDO = -0.6, RIO_MARGEM = -0.28, RIO_AGUA = 0.20;
+const RIO_FUNDO = -0.6, RIO_MARGEM = 0, RIO_AGUA = -0.12;
 const RIO_CAMPO = 6.5;                       // além daqui a rampa começa
 const PONTE_W = 3.4, PONTE_Y = 0.18;
+const margemY = x => RIO_FUNDO + (Math.abs(x) - RIO_CAMPO) /
+  (RIO_MEIA_LARGURA - RIO_CAMPO) * (RIO_MARGEM - RIO_FUNDO);
 
 export const AMAZONIA_PROPS = ['samambaia', 'heliconia', 'planta_corrego_taboa',
   'planta_corrego_taioba', 'grama_corrego_01', 'grama_corrego_02', 'stall', 'arara_roupas',
@@ -217,7 +219,7 @@ export function buildAmazonia(scene, T) {
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
     return t;
   };
-  const matSelva = lam({ map: texDe(TEX.selva, 10, 14) || T.dirt, roughness: 1 });
+  const matSelva = lam({ map: texDe(TEX.selva, 28, 36) || T.dirt, color: 0xadb4a2, roughness: 1 });
   const matFundo = lam({ map: texDe(TEX.selva, 6, 10) || T.dirt, color: 0x51604a, roughness: 1 });
   const matMata = lam({ map: texDe(TEX.selva, 7, 3) || T.dirt, color: 0x4f7a45, roughness: 1 });
   const matMataEscura = lam({ map: texDe(TEX.selva, 6, 2) || T.dirt, color: 0x39573a, roughness: 1 });
@@ -273,30 +275,39 @@ export function buildAmazonia(scene, T) {
   }
 
   /* ── CHÃO: duas faixas de terra — plano a y=0 sob o rio era 0,6 m de MAP1 em toda a lâmina. */
-  const FAIXA = HALF_X - RIO_MEIA_LARGURA;
-  addFloor(FAIXA, HALF_Z * 2, matSelva, -(RIO_MEIA_LARGURA + FAIXA / 2), 0, 0);
-  addFloor(FAIXA, HALF_Z * 2, matSelva, RIO_MEIA_LARGURA + FAIXA / 2, 0, 0);
-  const fundo = addFloor(RIO_MEIA_LARGURA * 2, HALF_Z * 2, matFundo, 0, 0, RIO_FUNDO);
+  const PAISAGEM_X = 48, PAISAGEM_Z = 60; // chão sob a mata externa, fora dos bounds físicos
+  const FAIXA = PAISAGEM_X - RIO_MEIA_LARGURA;
+  addFloor(FAIXA, PAISAGEM_Z * 2, matSelva, -(RIO_MEIA_LARGURA + FAIXA / 2), 0, 0);
+  addFloor(FAIXA, PAISAGEM_Z * 2, matSelva, RIO_MEIA_LARGURA + FAIXA / 2, 0, 0);
+  const fundo = addFloor(RIO_MEIA_LARGURA * 2, PAISAGEM_Z * 2, matFundo, 0, 0, RIO_FUNDO);
   fundo.userData.nonSolidSurface = true;
 
-  /* ── ÁGUA VIVA: o idioma do córrego (createWater + sobreposições de reflexo).
-     Escala de igarapé: célula de 1 m, lâmina preta-esverdeada, fluxo para −z. */
+  // A mesma rampa alimenta malha e pés: sem degrau invisível na saída da água.
+  for (const side of [-1, 1]) {
+    const geo = new THREE.PlaneGeometry(RIO_MEIA_LARGURA - RIO_CAMPO, PAISAGEM_Z * 2);
+    geo.rotateX(-Math.PI / 2);
+    geo.translate(side * (RIO_CAMPO + RIO_MEIA_LARGURA) / 2, 0, 0);
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setY(i, margemY(p.getX(i)));
+    geo.computeVertexNormals();
+    const bank = new THREE.Mesh(geo, matFundo);
+    bank.name = 'margem-amazonia'; bank.receiveShadow = true; root.add(bank);
+  }
+
+  /* Canal de várzea na vazante: sedimento em suspensão e espuma discreta.
+     A lâmina termina onde encontra a rampa, abaixo das três pontes. */
+  const aguaMeiaLargura = RIO_CAMPO + (RIO_AGUA - RIO_FUNDO) /
+    (RIO_MARGEM - RIO_FUNDO) * (RIO_MEIA_LARGURA - RIO_CAMPO);
   const agua = createWater(scene, T, 'amazonia', {
-    nivel: RIO_AGUA, centro: [0, 0], tamanho: [RIO_MEIA_LARGURA * 2 - 0.6, HALF_Z * 2], segmentos: 12,
-    raso: 0x51755a, fundo: 0x1c2b22, marLonge: 0x40554a,
-    profEscala: 0.4, espumaFaixa: 0.35, espumaMiolo: 0.12,
-    profFallback: 0.35, fluxo: [0, 0.09], ampEscala: 0.1,
-    /* albedo poluído como tMapa (mesmo idioma do córrego): o shader amostra de
-       verdade E a lâmina conta como área texturizada no texel-check. */
-    mapa: TEX.agua.map || T.dirt, mapaEscala: [3, 13.3], mapaForca: 0.55,
+    nivel: RIO_AGUA, centro: [0, 0], tamanho: [aguaMeiaLargura * 2, PAISAGEM_Z * 2], segmentos: 12,
+    raso: 0x766a45, fundo: 0x302f22, marLonge: 0x585c41,
+    profEscala: 0.4, espumaFaixa: 0.06, espumaMiolo: 0.01,
+    profFallback: RIO_AGUA - RIO_FUNDO, fluxo: [0, 0.09], ampEscala: 0.06,
+    mapa: TEX.agua.map || T.dirt, mapaEscala: [3, 13.3], mapaForca: 0.08,
     parent: root,
   });
   agua.mesh.userData.nonSolidSurface = true;
-  const mapaAgua = lam({ map: texDe(TEX.selva, 2, 12) || T.dirt, color: 0x9fc4ae, transparent: true, opacity: 0.22, roughness: 0.06, metalness: 0.3, depthWrite: false });
-  for (const [x, z, w, d, ry] of [[-4.5, -18, 8, 14, 0.04], [4, 10, 9, 16, -0.05], [-2, 32, 7, 12, 0.03]]) {
-    const r = addFloor(w, d, mapaAgua, x, z, RIO_AGUA + 0.015, ry);
-    r.userData.nonSolidSurface = true; r.renderOrder = 2;
-  }
+  agua.mesh.material.uniforms.uCorEspuma.value.setHex(0x85856b);
 
   /* ── LOOK: o céu equatorial úmido mora no LOOK[amazonia] (look.js) — applyLook
      devolve hemi/sun e a névoa densa verde-água. */
@@ -344,25 +355,43 @@ export function buildAmazonia(scene, T) {
     const [dx, dz] = st.d, [px, pz] = st.p;
     const W = (u, v) => [st.x + dx * u + px * v, st.z + dz * u + pz * v];
     const yaw = Math.atan2(-dz, dx);
-    if (hasProp('palafita_pro')) PB.add('palafita_pro', { x: st.x, z: st.z, y: PILA_GLB, targetH: 6.0, ry: dx < 0 ? 0 : Math.PI });
+    const casaChapa = (st.x === 14 && st.z === -9) || (st.x === -14 && st.z === 6);
+    const paredeH = casaChapa ? 2.5 : 3.2;
+    if (hasProp('palafita_pro') && !casaChapa) PB.add('palafita_pro', { x: st.x, z: st.z, y: PILA_GLB, targetH: 6.0, ry: dx < 0 ? 0 : Math.PI });
     else {
       // bucha do arnês: mesmas medidas do molde (6×6, deck a DECK_Y) — a régua mede isto
       for (const [u, v] of [[-2.6, -2.6], [2.6, -2.6], [-2.6, 2.6], [2.6, 2.6], [0, 0]]) {
         const [cx, cz] = W(u, v);
         addCyl(0.16, DECK_Y, matPoste, cx, 0, cz, { seg: 6 });
       }
-      const parede = lam({ map: texDe(TEX.madeira, 3, 2) || T.dirt, color: 0xc4a577, roughness: 0.95 });
-      addBox(5.4, 3.2, 5.4, parede, st.x, DECK_Y, st.z);
-      for (const s of [-1, 1]) {
-        const telhado = new THREE.Mesh(new THREE.BoxGeometry(6.7, 0.09, 3.2), matPalha);
-        telhado.position.set(st.x, DECK_Y + 3.2 + 0.62, st.z + s * 1.55);
-        telhado.rotation.x = s * 0.42;
+      const parede = lam({ map: texDe(TEX.madeira, 3, 2) || T.dirt, color: casaChapa ? (st.x > 0 ? 0x80a39d : 0xb7aa7f) : 0xc4a577, roughness: 0.95 });
+      addBox(5.4, paredeH, 5.4, parede, st.x, DECK_Y, st.z);
+      if (casaChapa) {
+        // Casa de madeira/chapa referenciada em Marajó: janela com veneziana e beiral baixo.
+        const escuro = lam({ map: texDe(TEX.madeira, 1, 1) || T.dirt, color: 0x34423b });
+        for (const v of [-1.45, 1.45]) {
+          const [x, z] = W(2.715, v);
+          pieceBox(escuro, .035, .9, 1.0, x, DECK_Y + 1.5, z, yaw);
+          for (let k = 0; k < 4; k++) pieceBox(parede, .055, .04, .95, x, DECK_Y + 1.15 + k * .21, z, yaw);
+        }
+      }
+      const matCobertura = casaChapa ? lam({ map: texDe(TEX.madeira, 3, 2) || T.dirt, color: 0x9ca6a5, roughness: .72, metalness: .2, side: THREE.DoubleSide }) : matPalha;
+      for (const side of [-1, 1]) {
+        const geo = casaChapa ? new THREE.PlaneGeometry(6.7, 3.3, 64, 1) : new THREE.BoxGeometry(6.7, .09, 3.2);
+        if (casaChapa) {
+          const p = geo.attributes.position;
+          for (let i = 0; i < p.count; i++) p.setZ(i, .025 * Math.cos(i % 65 * Math.PI));
+          geo.computeVertexNormals();
+        }
+        const telhado = new THREE.Mesh(geo, matCobertura);
+        telhado.position.set(st.x, DECK_Y + paredeH + (casaChapa ? .3 : .62), st.z + side * 1.55);
+        telhado.rotation.x = casaChapa ? -Math.PI / 2 + side * .18 : side * .42;
         telhado.castShadow = true; telhado.receiveShadow = true;
         root.add(telhado); occluders.push(telhado);
-        colliders.push({ minX: st.x - 3.35, maxX: st.x + 3.35, minY: DECK_Y + 3.4, maxY: DECK_Y + 4.3, minZ: st.z - 3.2, maxZ: st.z + 3.2 });
+        if (!casaChapa) colliders.push({ minX: st.x - 3.35, maxX: st.x + 3.35, minY: DECK_Y + 3.4, maxY: DECK_Y + 4.3, minZ: st.z - 3.2, maxZ: st.z + 3.2 });
       }
     }
-    colliders.push({ minX: st.x - 2.7, maxX: st.x + 2.7, minY: DECK_Y, maxY: DECK_Y + 3.2, minZ: st.z - 2.7, maxZ: st.z + 2.7 });
+    colliders.push({ minX: st.x - 2.7, maxX: st.x + 2.7, minY: DECK_Y, maxY: DECK_Y + paredeH, minZ: st.z - 2.7, maxZ: st.z + 2.7 });
     // patamar: prancha a DECK_Y + viga embaixo (corpo não anda sob a madeira)
     const [pcx, pcz] = W(CASA_A + PAT_A, 0);
     pieceBox(matDeck, 2 * PAT_A + 0.4, 0.12, 2 * PAT_A, pcx, DECK_Y - 0.06, pcz, yaw);
@@ -526,6 +555,12 @@ export function buildAmazonia(scene, T) {
   // pranchas empilhadas
   const pranchas = (x, z, ry) => { for (let i = 0; i < 4; i++) addBox(2.6, 0.14, 0.9, matDeck, x, 0.14 * i, z, { ry: ry + i * 0.04 }); };
   pranchas(MX - 6.5, -4.5, 0.34); pranchas(MX + 4.5, -4.8, -0.28); pranchas(23, 33, 0.18);
+  // Madeira armazenada protege os spawns; duas saídas laterais e borda do canal livres.
+  for (const side of [-1, 1]) {
+    const x = side * 15, z = side * 34.5;
+    addBox(10.5, 1.9, 0.8, matDeck, x, 0, z);
+    for (let i = 1; i < 6; i++) pieceBox(matCasca, 10.5, 0.025, 0.025, x, i * 0.3, z - side * 0.411);
+  }
   // scrap da madeireira: pneus e entulho herdam o vocabulário do ferro-velho
   for (const [id, x, z, h, ry] of [['pilha_pneus', MX - 8.5, 5.5, 1.1, 0.2], ['dumpster', MX + 9.8, 0, 1.4, -0.34], ['tires', 12.5, -33.5, 0.8, 0.4], ['pilha_pneus', 25, 20, 1.1, -0.26]]) {
     if (hasProp(id)) { const p = placeProp(id, { x, z, y: 0, targetH: h, ry }); if (p) { root.add(p); colliders.push({ minX: x - 1.2, maxX: x + 1.2, minY: 0, maxY: h, minZ: z - 1.2, maxZ: z + 1.2 }); occluders.push(p); } }
@@ -544,38 +579,77 @@ export function buildAmazonia(scene, T) {
     matas.push([-HALF_X + 1.2, z, 7 + (j % 3) * 1.6, ((j * 0.31) % 0.5) - 0.25]);
     matas.push([HALF_X - 1.2, z, 9 + (j % 2) * 1.3, -((j * 0.23) % 0.45) + 0.22]);
   }
+  // Segundo estrato fora da área jogável: copas recortam o céu sem caixas sólidas.
+  const PBF = new StaticBatch({ name: 'dossel-distante-amazonia' });
+  const copaFundo = new THREE.IcosahedronGeometry(1, 1);
+  const troncoFundo = new THREE.CylinderGeometry(0.16, 0.3, 1, 6);
   for (const [x, z, h, ry] of matas) {
-    addBox(6.2, h, 2.4, (h + x + z) % 2 > 1 ? matMata : matMataEscura, x, 0, z, { ry });
-    // copa em sanfona quebra a silhueta de muro
-    addBox(3.4, 2.2, 2.8, matMataEscura, x + Math.sin(ry * 7 + z) * 1.4, h, z + Math.cos(ry * 5 + x) * 1.1, { ry: ry + 0.4, collide: false, cast: true });
+    const xx = Math.abs(x) > 29 ? Math.sign(x) * (HALF_X + 4) : x;
+    const zz = Math.abs(z) > 41 ? Math.sign(z) * (HALF_Z + 4) : z;
+    const m = new THREE.Matrix4().makeScale(1, h, 1).setPosition(xx, h / 2, zz);
+    PBF.add(troncoFundo, m, matCasca, { cast: false });
+    for (let k = 0; k < 3; k++) {
+      const a = ry * 9 + k * 2.1, r = 2.6 + fract(x + z * k) * 1.3;
+      m.makeRotationY(a).scale(new THREE.Vector3(r, 1.4 + k * 0.4, r * 0.85));
+      m.setPosition(xx + Math.cos(a) * 1.7, h + k * 0.8, zz + Math.sin(a) * 1.7);
+      PBF.add(copaFundo, m, k === 1 ? matMata : matMataEscura, { cast: false });
+    }
   }
+  PBF.build(root);
 
   /* ── MATA DENSA (molde arvore_mata.glb + palmeira_babacu.glb, kit Mint r2): fileira
       de árvores de verdade por cima da cerca — o horizonte vira floresta, não cidade.
       Instanciado no PropBatch (1 draw call por material) e com tronco-collider. */
-  const PBM = new PropBatch({ bucket: 18 });
+  const PBM = new PropBatch({ bucket: 18, tag: 'amazonia-bosque', shadowMin: 0.02 });
   for (const a of MATA_ARVORES) {
-    if (PBM.add('arvore_mata', { x: a.x, z: a.z, y: 0, targetH: a.s }))
-      colliders.push({ minX: a.x - 0.45, maxX: a.x + 0.45, minY: 0, maxY: 2.6, minZ: a.z - 0.45, maxZ: a.z + 0.45 });
+    PBM.add('arvore_mata', { x: a.x, z: a.z, y: 0, targetH: a.s });
+    const r = 0.45 * a.s / 11.4;
+    colliders.push({ minX: a.x - r, maxX: a.x + r, minY: 0, maxY: 2.6, minZ: a.z - r, maxZ: a.z + r });
   }
   for (const pa of MATA_PALMEIRAS) PBM.add('palmeira_babacu', { x: pa.x, z: pa.z, y: 0, targetH: pa.s });
   // interior (r3): colisor de tronco INCONDICIONAL — em node o GLB não carrega e o
   // arnês tem que medir o mesmo tronco que o browser instancia (sem segunda verdade)
   for (const a of MATA_INTERIOR) {
     PBM.add('arvore_mata', { x: a.x, z: a.z, y: 0, targetH: a.s, ry: fract(a.x * 3.1 + a.z * 1.7) * 6.283 });
-    colliders.push({ minX: a.x - 0.45, maxX: a.x + 0.45, minY: 0, maxY: 2.6, minZ: a.z - 0.45, maxZ: a.z + 0.45 });
+    const r = 0.45 * a.s / 11.4;
+    colliders.push({ minX: a.x - r, maxX: a.x + r, minY: 0, maxY: 2.6, minZ: a.z - r, maxZ: a.z + r });
   }
   for (const pa of BABACU_INTERIOR) PBM.add('palmeira_babacu', { x: pa.x, z: pa.z, y: 0, targetH: pa.s, ry: fract(pa.z * 2.9) * 6.283 });
   for (const gr of GRAMA_INTERIOR) PBM.add(gr.id, { x: gr.x, z: gr.z, y: 0, targetH: 0.75 + fract(gr.x) * 0.5, ry: fract(gr.z * 5.5) * 6.283 });
   const preMata = new Set(root.children);
   PBM.build(root);
-  for (const c of root.children) if (!preMata.has(c) && c.isInstancedMesh) occluders.push(c);
+  const troncos = new Map();
+  const ajustarTronco = c => {
+    if (c.isMesh && c.material.name.includes('Árvore de mata')) {
+      // Derivação local do molde: sapopemas do GLB chegavam a 2,26 m fora do
+      // colisor. Mantém copa/UV, estreita apenas a seção baixa de todas as instâncias.
+      if (!troncos.has(c.geometry)) {
+        const geo = c.geometry.clone(); geo.computeBoundingBox();
+        const p = geo.attributes.position, { min, max } = geo.boundingBox;
+        const h = max.y - min.y, radius = h * 0.45 / 11.4;
+        for (let i = 0; i < p.count; i++) {
+          const y = (p.getY(i) - min.y) / h;
+          const r = Math.hypot(p.getX(i), p.getZ(i));
+          const blend = THREE.MathUtils.smoothstep(y, 0.41, 0.62);
+          const scale = r > radius ? radius / r + (1 - radius / r) * blend : 1;
+          p.setXYZ(i, p.getX(i) * scale, p.getY(i), p.getZ(i) * scale);
+        }
+        p.needsUpdate = true; geo.computeVertexNormals(); geo.computeBoundingBox(); geo.computeBoundingSphere();
+        troncos.set(c.geometry, geo);
+      }
+      c.geometry = troncos.get(c.geometry);
+      if (c.isInstancedMesh) c.computeBoundingSphere();
+    }
+  };
+  for (const c of root.children) if (!preMata.has(c)) {
+    c.traverse(ajustarTronco); occluders.push(c);
+  }
 
   /* ── CHÃO DE MATA (r3): serapilheira sob o bosque, raiz de sustentação nos
       troncos e tora fina no chão — o piso de terra vira chão de floresta. */
   const SBS = new StaticBatch({ name: 'chao-de-mata' });
   const matSerapilheira = lam({ map: texDe(TEX.serragem, 5, 4) || T.dirt, color: 0x76604a, roughness: 1 });
-  const geoRaiz = new THREE.BoxGeometry(1, 1, 1);
+  const geoRaiz = new THREE.CylinderGeometry(0.5, 0.22, 1, 6).rotateZ(Math.PI / 2);
   const raiz = (x, z, ry, len) => {
     // topo ≤ 0,28 m: raiz é degrau de tornozelo, não sólido (MAP1 mede raycast, não collider)
     const m = new THREE.Matrix4().makeRotationY(ry).multiply(new THREE.Matrix4().makeRotationZ(0.09));
@@ -586,7 +660,15 @@ export function buildAmazonia(scene, T) {
   for (let i = 0; i < MATA_INTERIOR.length; i += 4) {
     const a = MATA_INTERIOR[i], r = fract(a.x * 1.3 + a.z * 2.1);
     const m = addFloor(4.2 + r * 3, 3.4 + fract(a.z - a.x) * 2.4, matSerapilheira,
-      a.x + (r - 0.5) * 3, a.z + (fract(a.x * 8.8) - 0.5) * 3, 0.012, r * 3.1);
+      a.x, a.z, 0.012, r * 3.1);
+    m.geometry.dispose();
+    m.geometry = new THREE.CircleGeometry(1, 11);
+    const p = m.geometry.attributes.position;
+    for (let j = 1; j < p.count; j++) {
+      const k = 0.75 + fract(j * 3.1 + a.x) * 0.25;
+      p.setXYZ(j, p.getX(j) * k, p.getY(j) * k, 0);
+    }
+    m.scale.set(1.4 + r * 0.5, 1.1 + r * 0.4, 1);
     m.userData.nonSolidSurface = true;
   }
   for (let i = 0; i < MATA_INTERIOR.length; i += 3) {
@@ -779,7 +861,7 @@ export function buildAmazonia(scene, T) {
        fora de AABB de colisor (AR3) — caixa d'água, poste, beiral e tronco por altura. */
     botos: [{ pos: [2.5, -0.38, -12], to: [2.5, -0.38, 14], phase: 0.4, mode: 'swim' }],
     piranhas: Array.from({ length: 7 }, (_, i) => (
-      { pos: [-4, -0.15, -20.5], radius: [1.2 + (i % 3) * 0.35, 1], phase: i * 0.87 }
+      { pos: [-4, RIO_AGUA - 0.24, -20.5], radius: [1.2 + (i % 3) * 0.35, 1], phase: i * 0.87 }
     )),
     araras: [
       { pos: [4.77, 2.5, 0.6], phase: Math.PI },          // poste da barraca do MID
@@ -810,7 +892,7 @@ export function buildAmazonia(scene, T) {
     const ax = Math.abs(x);
     if (ax > RIO_MEIA_LARGURA) return 0;
     if (ax <= RIO_CAMPO) return RIO_FUNDO;
-    return RIO_FUNDO + (ax - RIO_CAMPO) / (RIO_MEIA_LARGURA - RIO_CAMPO) * (RIO_MARGEM - RIO_FUNDO);
+    return margemY(x);
   }
   function madeiraAt(x, z) {
     for (const st of ESTACOES) {
@@ -845,7 +927,7 @@ export function buildAmazonia(scene, T) {
     t = t < 0 ? 0 : t > 1 ? 1 : t;
     return (p.ax + dx * t - x) ** 2 + (p.az + dz * t - z) ** 2 <= 2.9;
   });
-  const slowAt = (x, z) => !naMadeiraAlta(x, z) && Math.abs(x) <= RIO_MEIA_LARGURA + 0.6 && Math.abs(z) < HALF_Z - 2
+  const slowAt = (x, z) => !naMadeiraAlta(x, z) && Math.abs(x) < aguaMeiaLargura && Math.abs(z) < HALF_Z - 2
     && ![0, -24, 24].some((pz) => Math.abs(z - pz) < (pz === 0 ? PONTE_W : 2.6) / 2 + 0.4);
 
   return {
