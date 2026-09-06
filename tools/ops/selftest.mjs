@@ -95,6 +95,8 @@ function servidor(cenario, raiz) {
     if (caminho === '/js/dep.js') return cenario === 'modulo-404' ? envia(404, '') : envia(200, cenario === 'export-sumido' ? 'export const bar = 1;\n' : readFileSync(join(raiz, 'public/js/dep.js')), { 'content-type': 'text/javascript' });
     if (caminho === '/js/version.js') return envia(200, `export const VERSION = '${cenario === 'versao-divergente' ? '9.9.9-teste.0' : V}';\n`, { 'content-type': 'text/javascript' });
     if (caminho === '/js/ops.js') return envia(200, readFileSync(join(raiz, 'public/js/ops.js')), { 'content-type': 'text/javascript' });
+    // registro servido: a produção pode pedir arma que a árvore não conhece ('novo') ou servir HTML no lugar do módulo
+    if (caminho === '/js/weapons.js') return cenario === 'registro-armas-ilegivel' ? envia(200, '<!doctype html><html>404</html>', { 'content-type': 'text/html' }) : envia(200, cenario === 'asset-404-registro-servido' ? "export const WEAPON_IDS = ['ak', 'awp', 'novo'];\n" : readFileSync(join(raiz, 'public/js/weapons.js')), { 'content-type': 'text/javascript' });
     if (caminho === '/api/health') return cenario === 'health-indisponivel' ? envia(503, 'down') : envia(200, JSON.stringify(saude), { 'content-type': 'application/json' });
     if (caminho === '/api/online') {
       if (cenario === 'rota-intermitente' && n % 2 === 1) return envia(503, 'cold');
@@ -149,6 +151,8 @@ const CENARIOS = {
   'pagina-ranking-quebrada': ['pagina-ranking-quebrada', 'alto'],
   'pagina-ranking-vazia': ['pagina-ranking-vazia', 'alto'],
   'asset-404': ['asset-404', 'alto'],
+  'asset-404-registro-servido': ['asset-404', 'alto'],
+  'registro-armas-ilegivel': ['registro-armas-nao-lido', 'aviso'],
   'asset-conteudo-errado': ['asset-conteudo-errado', 'alto'],
   'asset-tamanho-diverge': ['asset-tamanho-diverge', 'medio'],
   'asset-erro-http': ['asset-erro-http', 'medio'],

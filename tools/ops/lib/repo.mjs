@@ -46,11 +46,19 @@ export function rotasNoBackend(raiz = RAIZ_PADRAO) {
   return [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
 }
 
+/* Mesmo parser para o weapons.js da árvore e para o SERVIDO pela produção (sonda de assets):
+   dois leitores do mesmo registro divergindo é o instrumento discordando de si (LICOES §2). */
+export function weaponIdsDe(src) {
+  const m = /export\s+const\s+WEAPON_IDS\s*=\s*\[([\s\S]*?)\];/.exec(src || '');
+  if (!m) return null;
+  const ids = [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  return ids.length ? ids : null;
+}
+
 export function weaponIds(raiz = RAIZ_PADRAO) {
-  const src = readFileSync(join(raiz, 'public/js/weapons.js'), 'utf8');
-  const m = /export\s+const\s+WEAPON_IDS\s*=\s*\[([\s\S]*?)\];/.exec(src);
-  if (!m) throw new Error('public/js/weapons.js sem WEAPON_IDS');
-  return [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  const ids = weaponIdsDe(readFileSync(join(raiz, 'public/js/weapons.js'), 'utf8'));
+  if (!ids) throw new Error('public/js/weapons.js sem WEAPON_IDS');
+  return ids;
 }
 
 export async function manifestoDeModulos(raiz = RAIZ_PADRAO) {
@@ -76,25 +84,35 @@ function glbs(dir) {
   return readdirSync(dir).filter((f) => f.endsWith('.glb')).sort();
 }
 
+/* `limite` itens espalhados pela lista inteira, não o prefixo alfabético: com `.slice(0, 24)` os
+   últimos 21 personagens e 92 props nunca eram sondados. */
+export function espalha(lista, limite) {
+  if (!Number.isFinite(limite) || lista.length <= limite) return lista;
+  const passo = lista.length / limite;
+  return Array.from({ length: limite }, (_, i) => lista[Math.floor(i * passo)]);
+}
+
 /* Amostra de assets que o jogo pede em runtime, com o grupo e a prova esperada:
-   `glTF` nos GLB, JSON nos índices, JS nos módulos. `limite` corta os grupos
-   grandes (props, personagens) para a sonda remota caber em segundos. */
-export function amostraDeAssets(raiz = RAIZ_PADRAO, { limite = 24 } = {}) {
+   `glTF` nos GLB, JSON nos índices, JS nos módulos. Armas: TODAS, do registro que a
+   sonda passar em `armas` (o weapons.js servido pela produção) ou, sem ele, da árvore —
+   cada item diz de onde veio (`origem`). Personagens: todos. Props e prévias: `limite`
+   espalhados. */
+export function amostraDeAssets(raiz = RAIZ_PADRAO, { limite = 24, armas = null } = {}) {
   const pub = join(raiz, 'public');
   const itens = [];
-  const add = (grupo, caminho, prova) => {
+  const add = (grupo, caminho, prova, origem = 'arvore') => {
     const abs = join(pub, caminho);
-    itens.push({ grupo, caminho, prova, existe: existsSync(abs), tamanho: existsSync(abs) ? statSync(abs).size : 0 });
+    itens.push({ grupo, caminho, prova, origem, existe: existsSync(abs), tamanho: existsSync(abs) ? statSync(abs).size : 0 });
   };
-  for (const id of weaponIds(raiz)) add('armas', `models/weapons/${id}.glb`, 'glb');
-  for (const f of glbs(join(pub, 'models/characters')).slice(0, limite)) add('personagens', `models/characters/${f}`, 'glb');
+  for (const id of armas || weaponIds(raiz)) add('armas', `models/weapons/${id}.glb`, 'glb', armas ? 'registro-servido' : 'arvore');
+  for (const f of glbs(join(pub, 'models/characters'))) add('personagens', `models/characters/${f}`, 'glb');
   add('anims', 'models/anims/index.json', 'json');
   add('anims', 'models/anims/foot-offsets.json', 'json');
-  for (const f of glbs(join(pub, 'models/props')).slice(0, limite)) add('props', `models/props/${f}`, 'glb');
+  for (const f of espalha(glbs(join(pub, 'models/props')), limite)) add('props', `models/props/${f}`, 'glb');
   add('vendor', 'vendor/three.module.js', 'js');
   add('css', 'style.css', 'texto');
   const prev = join(pub, 'img/map-previews');
-  if (existsSync(prev)) for (const f of readdirSync(prev).sort().slice(0, limite)) add('previas', `img/map-previews/${f}`, 'imagem');
+  if (existsSync(prev)) for (const f of espalha(readdirSync(prev).sort(), limite)) add('previas', `img/map-previews/${f}`, 'imagem');
   return itens;
 }
 

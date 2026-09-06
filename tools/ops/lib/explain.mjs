@@ -201,14 +201,18 @@ function explicaRanking(A, rk, ctx) {
 function explicaAssetsRemoto(A, as, ctx) {
   if (!as) return;
   if (as.semResposta.length === as.total && as.total) return ach(A, { id: 'assets-inalcancaveis', sonda: 'assets', severidade: 'inconclusivo', titulo: 'nenhum asset respondeu', causa: 'rede/proxy bloqueando o alvo', evidencia: as.semResposta.slice(0, 3).join(' · '), impacto: 'não medido', proximo: 'rodar de uma rede sem proxy' });
+  if (as.registro && as.registro.origem !== 'registro-servido') ach(A, { id: 'registro-armas-nao-lido', sonda: 'assets', severidade: 'aviso', titulo: 'a amostra de armas veio da árvore, não do weapons.js servido', causa: 'o alvo não serviu um /js/weapons.js legível (404, HTML no lugar do módulo, ou WEAPON_IDS mudou de forma)', evidencia: as.registro.motivo || '—', impacto: 'arma que só a produção pede fica sem sonda; com versões diferentes, 404 de arma vira só aviso', proximo: 'GET a URL citada e comparar com public/js/weapons.js; se o formato mudou, ajustar weaponIdsDe em tools/ops/lib/repo.mjs' });
   if (as.faltando.length) {
-    const grupos = new Set(as.itens.filter((i) => as.faltando.includes(i.caminho)).map((i) => i.grupo));
+    const itensFaltando = as.itens.filter((i) => as.faltando.includes(i.caminho));
+    const grupos = new Set(itensFaltando.map((i) => i.grupo));
     const vital = ['armas', 'personagens', 'anims', 'vendor', 'css'].some((g) => grupos.has(g));
-    // a amostra vem da ÁRVORE: com produção atrás dela, 404 pode ser só asset ainda não publicado
-    const arvoreAFrente = !!ctx.versaoRemota && !!ctx.versaoLocal && ctx.versaoRemota !== ctx.versaoLocal;
+    // item do registro SERVIDO em 404 é a produção não entregando o que ela mesma pede — versão não desculpa;
+    // item da ÁRVORE, com produção em outra versão, pode ser só asset ainda não publicado
+    const doServido = itensFaltando.some((i) => i.origem === 'registro-servido');
+    const arvoreAFrente = !doServido && !!ctx.versaoRemota && !!ctx.versaoLocal && ctx.versaoRemota !== ctx.versaoLocal;
     ach(A, {
       id: 'asset-404', sonda: 'assets', severidade: arvoreAFrente ? 'aviso' : grupos.has('vendor') || grupos.has('css') ? 'critico' : vital ? 'alto' : 'medio',
-      titulo: `${as.faltando.length} asset(s) da amostra em 404 no edge (${[...grupos].join(', ')})${arvoreAFrente ? ' — produção atrás da árvore' : ''}`,
+      titulo: `${as.faltando.length} asset(s) da amostra em 404 no edge (${[...grupos].join(', ')})${arvoreAFrente ? ' — produção atrás da árvore' : doServido ? ' — pedidos pelo weapons.js que a produção serve' : ''}`,
       causa: arvoreAFrente ? `a amostra é da árvore (${ctx.versaoLocal}) e a produção serve ${ctx.versaoRemota}: pode ser asset novo ainda não publicado; se o caminho já existia, é o mesmo caso abaixo` : 'arquivo removido no prune-dist, renomeado sem o consumidor ou deploy incompleto (LICOES §12)',
       evidencia: as.faltando.slice(0, 6).join(' · '),
       impacto: grupos.has('armas') ? 'arma sem modelo: viewmodel/pickup somem sem erro no console' : grupos.has('personagens') ? 'personagem cai no fallback ou não aparece' : 'textura/prop em branco chapado',
