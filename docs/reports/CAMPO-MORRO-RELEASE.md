@@ -62,11 +62,48 @@ Checkpoint funcional: `d564559c`. O build da documentação estática também
 passou, em português e inglês. `check:deploy` passou inicialmente 36/37;
 `eval:docsautoria` exigiu que os arquivos gerados estivessem commitados, por
 isso foi regenerado o conjunto de docs e o novo contador de scripts do arnês
-subiu para 331. O checkpoint de docs geradas fica neste estado de trabalho e
-será consolidado no próximo commit de revisão.
-Próximo passo: repetir o portão final com a árvore sincronizada e então
-atualizar o PR #530. Aceite humano de assets/render real e partida manual,
-staging e release seguem pendentes.
+subiu para 331. O checkpoint de docs geradas foi consolidado em `896e92d1` e
+`b6181d39`.
+
+### Reverificação com a árvore sincronizada
+
+Rodada de confirmação sobre `b6181d39`, sem tocar no mapa: o objetivo era provar
+que os números do candidato sobrevivem à árvore já commitada, não repetir a
+narrativa. Logs em `artifacts/campo-morro-final/*-sync.log`.
+
+| Verificação | Resultado |
+| --- | --- |
+| `check:deploy` | **37/37**; `docs:check` e `eval:docsautoria` verdes com os gerados commitados |
+| `map-check quebrada` | MAP1/MAP4 zero; MAP2B `2,1 m` / `42,9 m²`; MAP5 `4,28 m` e razão mínima `0,38×`; CTF2 mínimo duas rotas |
+| `eval:mapcontrato` | 16 mapas ok; Quebrada `344` nós, `2042` arestas, conexa; `CAMPINHO_RELEASE` com colisão fantasma `0.0000 m` |
+| `pickup-arma-check` | PA1/PA2 passam, 1034 pickups em 16 mapas |
+| baseline + sete mutantes | baseline verde; sete vermelhos, cada um com diagnóstico distinto |
+| `botsim 180 quebrada`, nove sementes | stuck mata-mata `2,178%`, CTF `2,656%` — idênticos ao checkpoint |
+| `botsim-golden`, `bot:brain:check` | verdes |
+| `npm run docs` e `npm run arch` | sem diferença: os gerados deste diff já estão em dia |
+
+Os mutantes reprovam por motivos diferentes, que é o ponto da régua:
+`invisivel` → `gate-cover: invisível`; `sem-bala` → `gate-cover: não bloqueia
+bala`; `sem-rotacao` → `colisão fora da face visível: 0.1854 m` e quatro
+penetrações; `sem-encosto` → encosto atravessável dos dois lados em `x=-13,1`;
+`placar-vazio` → `score-mark: invisível`; `rota-obstruida` → sete arestas em
+sólido; `spawn-obstruido` → spawn em sólido mais duas arestas.
+
+Leitura independente do código, além dos números: o `segClear` novo usa a mesma
+convenção mundo↔local do `_collideRot` e o mesmo recorte de altura do
+`_collide`, e expande o retângulo por `0,38 m` em cada eixo. Isso é a soma de
+Minkowski com um QUADRADO, não com o círculo do corpo, então nas quinas ele é
+conservador: pode recusar uma conexão que o jogador passaria, nunca aceitar uma
+que ele não passa. É o lado seguro do erro, e o `campinho-release-check`
+confirma com `_collide` real que nenhuma aresta sobrevivente cruza sólido.
+
+Uma correção de honestidade sobre o instrumento: `tools/eval/map-check.mjs` com
+um único mapa reescreve `tools/eval/map_check.json` contendo só aquele mapa.
+Isso apareceu como diferença nesta rodada e foi revertido — o arquivo não
+pertence a este diff e não deve absorver a poda dos outros quinze mapas.
+
+Aceite humano de assets/render real e partida manual, staging e release seguem
+pendentes.
 
 ### Capturas offline e limites
 
@@ -92,6 +129,22 @@ somente geometria procedural e cores; não reproduz GLBs assíncronos, texturas
 canvas, transparências, HUD, pós-processamento ou iluminação WebGL. Não é
 aprovação visual final do jogo. Capturas e logs ficam em `artifacts/`, fora do
 Git. Nenhum navegador foi aberto nesta tarefa.
+
+Limite adicional medido nesta rodada, que a redação anterior não dizia: as
+cores lineares passam pela resposta tonal do Cycles e SATURAM. Na vista aérea e
+nas travessas quase tudo lê branco, e o terreiro de terra não aparece como
+terra. Ou seja, o render offline serve para conferir SILHUETA, posição e
+oclusão — foi assim que o `0–0` e as muretas foram conferidos — mas NÃO julga
+cor, material nem a leitura brasileira da quadra. Essa parte continua dependendo
+inteiramente do olho humano no frame WebGL real.
+
+O exportador foi rodado de novo sobre a árvore sincronizada
+(`artifacts/campo-morro-final/sync/scene.json`) e saiu byte a byte idêntico ao
+`after/scene.json` que gerou os PNGs: 199 malhas, `gate-cover=2`,
+`sideline-cover=11`, `sideline-backrest=2`, `scoreboard=1`, `score-mark=9`.
+As imagens continuam correspondendo ao código commitado. O `blender` não estava
+no `PATH` desta sessão, então os PNGs não foram re-renderizados; a identidade do
+`scene.json` é o que garante a correspondência.
 
 ## Escopo confirmado
 
@@ -143,3 +196,24 @@ check inspeciona o mundo construído e não apenas a presença do script.
 Esta lane não abriu navegador por escopo. A revisão offline acima não substitui
 aprovação humana do frame real, GLBs carregados e partida manual em 3:2 antes
 de merge/release. O PR permanece aberto, sem automerge habilitado.
+
+### Revisão humana ainda pendente
+
+Nenhum item abaixo foi verificado por esta lane; são todos genuinamente abertos.
+
+1. **Frame real no navegador.** Cor, material e a leitura brasileira do campinho
+   — o render offline satura e não decide isso.
+2. **Muretas dos portões em jogo.** Se `1,05 m` de altura realmente cobre o
+   primeiro passo sem virar parapeito de camping. É decisão de jogo, não de
+   medida.
+3. **Encostos de banco agora sólidos.** Passaram a bloquear bala; conferir se
+   não criam um cover melhor do que se pretendia na lateral.
+4. **Placar `0–0` decorativo.** É geometria fixa, sem ligação com o placar da
+   partida. Confirmar se um placar que nunca muda é aceitável ou se deve sair.
+5. **Partida manual 3:2 com bots.** `stuck` de `2,178%`/`2,656%` é medida do
+   arnês; ninguém assistiu bot jogando o Campinho.
+6. **Caixote do beco leste movido** de `z=10` para `z=8,8` e três nós de
+   contorno novos: efeito no fluxo do beco não foi jogado.
+7. **`segClear` conservador nas quinas** (Minkowski quadrado): pode ter cortado
+   atalhos legítimos de bot em outros pontos da Quebrada.
+8. **Staging e release.** Fora do escopo autorizado desta lane.
