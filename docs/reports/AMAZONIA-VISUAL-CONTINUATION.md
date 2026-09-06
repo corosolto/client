@@ -486,3 +486,14 @@ Régua de som Lajes passou após fixture incluir os dois preparos; docs/arch/
 docsautoria verdes. Crítica independente final sem bloqueantes emruntime,
 preview, áudio ouregistries. Próximo: push final, marcar PR pronto, aguardar
 checks do SHA atual e preview remoto, merge autorizado. Não afirmar FPS geral.
+
+VM14 bloqueou build do PR emc31d5ebb (run34013225748):71pickups,1inalcançável
+e4abaixo do piso. Dono autorizou explicitamente corrigir somente o gate e mergear.
+Correção restrita ao mapa: slot0 troca com slot2 nos spawns existentes de ambos
+times, ancorando rack longe da margem; MP5 sai da pilha de toras para seu lado.
+Nenhuma arma removida, spawn criado, colisor ou critério alterado. pickup-fixed.json
+mede71/0/0/0; pickup-mutant.json restaura as posições antigas apenas no loader
+e volta a71/1/4/0. Artefatos emartifacts/amazonia-visual/cabin-round/.
+eval:amazonia passou, incluindo71/71rotas de bots (seed13007). Próximo: mídia
+real atualizada, crítica independente, push/CI do novo SHA e merge autorizado.
+Não continuar features da Amazônia nem abrir investigação de Lajes neste fechamento.

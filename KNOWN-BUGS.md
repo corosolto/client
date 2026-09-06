@@ -4738,3 +4738,13 @@ no baseline amplo para71/71 nas sementes7 e42. Mutante sem navegação por
 camadas retorna68/71 e27arestas falhas. Correção opt-in somente Amazônia;
 botsim-golden dos demais mapas verde. Detalhes em
 [AMAZONIA-CABANAS-FAUNA.md](docs/reports/AMAZONIA-CABANAS-FAUNA.md).
+
+### Amazônia — VM14: pickups na tora e na margem (corrigido, 2026-09-06)
+
+Em `public/js/map_amazonia.js`, a MP5 da madeireira nascia dentro da pilha
+de toras; o slot inicial central ancorava quatro armas do rack na margem
+inclinada. `pickup-check.mjs amazonia` mediu 71 armas, uma inalcançável e
+quatro abaixo do piso antes da correção. Trocar a ordem dos spawns já existentes
+e posicionar a MP5 ao lado das toras preserva as 71 armas e mede zero falhas.
+O loader que restaura as três linhas anteriores reproduz 1/4/0 falhas.
+Evidência e próximo passo: [continuação](docs/reports/AMAZONIA-VISUAL-CONTINUATION.md).

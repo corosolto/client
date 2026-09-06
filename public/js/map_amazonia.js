@@ -101,8 +101,8 @@ const BOOMS = [
      pelas zonas vivas; os Arrays alimentam GLB, colisor e AMZ7 (mesma fonte). */
 const MX = -24.5;
 const fract = (v) => v - Math.floor(v);
-const SPAWN_E = [[-15, -40], [-12, -39.3], [-18, -39.3], [-13.5, -37.9], [-16.5, -37.9]];
-const SPAWN_B = [[15, 40], [12, 39.3], [18, 39.3], [13.5, 37.9], [16.5, 37.9]];
+const SPAWN_E = [[-18, -39.3], [-12, -39.3], [-15, -40], [-13.5, -37.9], [-16.5, -37.9]];
+const SPAWN_B = [[18, 39.3], [12, 39.3], [15, 40], [13.5, 37.9], [16.5, 37.9]];
 const CTF_PTS = [
   { id: 'E', label: 'PALAFITAS', x: 20.5, z: -28 },
   { id: 'MID', label: 'MERCADO FLUTUANTE', x: 7.4, z: 0.6 },
@@ -787,7 +787,7 @@ export function buildAmazonia(scene, T) {
   for (const sz of [-1, 1]) arsenal.forEach((kind, i) => place(kind, sz < 0 ? -21 + i * 1.7 : 12 + i * 2, sz * 39, sz < 0 ? 0.6 : Math.PI - 0.6));
   // miolo: market, madeireira e pontes estreitas
   place('ak', 5.6, 1.4, 1.2); place('awp', 7.0, -0.5, 0.4);
-  place('shotgun', MX + 1, -1.4, 2.2); place('mp5', MX, 18.5, -0.6);
+  place('shotgun', MX + 1, -1.4, 2.2); place('mp5', MX + 3, 18.5, -0.6);
   place('deagle', 0, -24.2, 0); place('m4', 0, 24.2, Math.PI);
   place('deagle', 0, 6, 0.4);   // platforma do meio do igarapé: a rota alta paga a subida
 
