@@ -2,7 +2,7 @@
 // o módulo real nas duas ordens de término (resolve/reject), sem esperar rede.
 import { readFileSync } from 'node:fs';
 let source = readFileSync(new URL('../../public/js/sertao_map_preview.js', import.meta.url), 'utf8');
-source = source.replace("import { SERTAO_PREVIEW } from './map_preview_media.js';", readFileSync(new URL('../../public/js/map_preview_media.js', import.meta.url), 'utf8'));
+source = source.replace("import { SERTAO_PREVIEW } from './sertao_preview_media.js';", readFileSync(new URL('../../public/js/sertao_preview_media.js', import.meta.url), 'utf8'));
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
 if (mutant && !['play-antigo', 'erro-antigo'].includes(mutant)) throw Error('Mutante desconhecido');
 if (mutant) {
