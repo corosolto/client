@@ -1,3 +1,5 @@
+> CANCELADO pelo dono em 06/09/2026: remover Nerdolas, Profissionais, Noias e TV. Míticos é o único time novo desta entrega. Conteúdo abaixo é histórico e não autoriza geração ou cadastro.
+
 <!-- spec:time -->
 # 19 — Novas facções: vertical slices
 

@@ -1,13 +1,13 @@
-/* faction-registry-check.mjs - UMA fonte cobre as dez faccoes numa unica rota/DOM.
+/* faction-registry-check.mjs - UMA fonte cobre as seis faccoes numa unica rota/DOM.
    -----------------------------------------------------------------------------
    CASO QUE COMPROU A REGUA (09/08): a setima faccao exigiria editar seis botoes HTML,
-   paletas, nomes e handlers separados. Em 09/08 o dono corrigiu o contrato: os dez
+   paletas, nomes e handlers separados. Em 09/08 o dono corrigiu o contrato: os seis
    times precisam aparecer juntos, sem paginacao. Em 11/08 o novo contrato cinematografico
    baseado na referencia 02 trocou a grade 5x2 por rail: scroll contínuo é permitido, mas
    cortar o registro em páginas continua proibido. Indicador `1 / 2` precisa reprovar.
 
    MUTACOES PROVADAS:
-     --mutar=sem-tv      remove T do registro em memoria -> F1 vermelho
+     --mutar=sem-miticos      remove M do registro em memoria -> F1 vermelho
      --mutar=hardcode    simula um botao manual no Astro -> F2 vermelho
      --mutar=paginar     restaura pageSize=5 -> F3 vermelho
 */
@@ -17,8 +17,7 @@ import { pathToFileURL } from 'node:url';
 const MUTAR = (process.argv.find((x) => x.startsWith('--mutar=')) || '').split('=')[1] || '';
 const EXPECTED = new Map([
   ['E', 'TIME E'], ['B', 'TIME B'], ['U', 'TRIBOS URBANAS'], ['C', 'PALHACOS'],
-  ['F', 'FUNKEIROS'], ['M', 'MITICOS'], ['N', 'NERDOLAS'],
-  ['R', 'PROFISSIONAIS DO CORRE'], ['O', 'NOIAS'], ['T', 'TV'],
+  ['F', 'FUNKEIROS'], ['M', 'MITICOS'],
 ]);
 
 const astroPath = 'src/pages/index.astro';
@@ -35,11 +34,11 @@ try {
 } catch (err) {
   loadError = err && err.message || String(err);
 }
-if (MUTAR === 'sem-tv' && registry) registry.factions = registry.factions.filter((f) => f.id !== 'T');
+if (MUTAR === 'sem-miticos' && registry) registry.factions = registry.factions.filter((f) => f.id !== 'M');
 
 console.log(`REGUA DO REGISTRO DE FACCOES${MUTAR ? ` [MUTACAO: ${MUTAR}]` : ''}`);
 let f1 = !!registry;
-console.log('F1 - registro exporta os dez IDs e nomes publicos contratados');
+console.log('F1 - registro exporta os seis IDs e nomes publicos contratados');
 if (!registry) {
   console.log(`   NAO MEDIU: ${registryPath} ausente ou invalido (${loadError})`);
 } else {
@@ -68,18 +67,18 @@ console.log(`   botoes manuais: ${manualButtons.length}${manualButtons.length ? 
 console.log(`   main importa/data-faction: ${mainImports && mainUsesData ? 'ok' : 'FALTA'}`);
 console.log(`   ${f2 ? 'PASSA' : 'FALHA'}\n`);
 
-console.log('F3 - os dez cards ficam na mesma rota/DOM, sem cortar o registro em paginas');
+console.log('F3 - os seis cards ficam na mesma rota/DOM, sem cortar o registro em paginas');
 const pageSize = MUTAR === 'paginar' ? 5 : registry?.pageSize;
 const pageIndicators = (astro.match(/id=["']team-pages["']/g) || []).length;
 const rail = /class=["'][^"']*team-rail\b/.test(astro)
   && /id=["']team-prev["']/.test(astro) && /id=["']team-next["']/.test(astro)
   && /\.team-row[\s\S]{0,120}scrollBy/.test(main);
 const slicesRegistry = /FACTIONS\s*\.\s*slice\s*\(/.test(astro) || /factionCards\s*\.\s*slice\s*\(/.test(main);
-const f3 = !!registry && pageSize === 10 && registry.factions.length === 10
+const f3 = !!registry && pageSize === 6 && registry.factions.length === 6
   && pageIndicators === 0 && !slicesRegistry;
 console.log(`   pageSize=${pageSize ?? '-'} faccoes=${registry?.factions.length ?? '-'} rail=${rail ? 'sim' : 'nao'} paginas=${pageIndicators} slice=${slicesRegistry}`);
 console.log(`   ${f3 ? 'PASSA' : 'FALHA'}\n`);
 
 const pass = f1 && f2 && f3;
-console.log(pass ? 'OK FACREG1 registro unico suporta dez faccoes na mesma tela' : 'X FACREG1 o catalogo nao cumpre dez faccoes simultaneas');
+console.log(pass ? 'OK FACREG1 registro unico suporta seis faccoes na mesma tela' : 'X FACREG1 o catalogo nao cumpre seis faccoes simultaneas');
 process.exit(pass ? 0 : 1);

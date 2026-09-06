@@ -637,37 +637,7 @@ export const CHARACTERS = [
     blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.',
     pal: { skin: 0xb88a5a, shirt: 0x4a6a3a, pants: 0x3a4a2a, hair: 0xff4400, boots: 0x3a2a1a } },
 
-  // ── NOVAS FACÇÕES — fatias verticais da spec 0002. A facção permanece `ready:false`
-  // até os oito integrantes existirem; cadastrar aqui permite validar o caminho real.
-  { id: 'camera-roxa', team: 'T', tribe: 'tv', name: 'Câmera Roxa',
-    blurb: 'Robô de estúdio com lente única e rig no ombro. A transmissão começou.',
-    pal: { skin: 0x272331, shirt: 0x6325a8, pants: 0x24172f, hair: 0x31d9ff, boots: 0x16131c } },
-  { id: 'microfonildo', team: 'T', tribe: 'tv', name: 'Microfonildo',
-    blurb: 'Criatura felpuda com fones e boom dorsal. Som rodando!',
-    pal: { skin: 0xc28b25, shirt: 0xd9a42f, pants: 0x795019, hair: 0xe2b33f, boots: 0x224f56 } },
-  /* GIL BOMES — repórter policial, PRIMEIRO humano fotorrealista da facção: divergência de
-     direção conhecida (pedido do dono). `pal` = fallback procedural. Ver BAR-CONSISTENCIA.md. */
-  { id: 'gilbomes', team: 'T', tribe: 'tv', name: 'Gil Bomes',
-    blurb: 'Repórter policial dos anos 90. Chega antes da polícia e narra com gosto.',
-    pal: { skin: 0xc99a76, shirt: 0x7b1f2b, pants: 0x1c1b22, hair: 0x241a14, boots: 0x14110f } },
-  { id: 'programador-virado', team: 'N', tribe: 'nerdolas', name: 'Programador Virado',
-    blurb: 'Moletom, olheiras e teclado nas costas. Só mais um commit.',
-    pal: { skin: 0xa88068, shirt: 0x303039, pants: 0x56515f, hair: 0x3a302d, boots: 0xe8e3d8 } },
-  { id: 'designer-ux', team: 'N', tribe: 'nerdolas', name: 'Designer de UX',
-    blurb: 'Roupa preta, tablet e leque de cores. Esse fluxo precisa de combate.',
-    pal: { skin: 0x86543f, shirt: 0x071329, pants: 0x071329, hair: 0x100b12, boots: 0x071021 } },
-  { id: 'lenda-lanhouse', team: 'N', tribe: 'nerdolas', name: 'Lenda da Lan House',
-    blurb: 'Headset antigo, fichas e mouse de bolinha. Reserva a máquina oito.',
-    pal: { skin: 0xa9775f, shirt: 0x5474a8, pants: 0x626a69, hair: 0x352e2b, boots: 0xd8d7ca } },
-  { id: 'motoca-cachorro-loko', team: 'R', tribe: 'profissionais', name: 'Motoca Cachorro Loko',
-    blurb: 'Capacete, refletivo e bag térmica. Endereço confirmado.',
-    pal: { skin: 0x78503c, shirt: 0xe5aa32, pants: 0x34383d, hair: 0x171719, boots: 0x292a2d } },
-  { id: 'doidinho-bairro', team: 'O', tribe: 'noias', name: 'Doidinho do Bairro',
-    blurb: 'Camadas incompatíveis e invenções nas costas. Hoje eu tô calibrado!',
-    pal: { skin: 0xb98966, shirt: 0xf18d5a, pants: 0x3f887f, hair: 0x3d332d, boots: 0x3b9990 } },
-  { id: 'profeta-calcada', team: 'O', tribe: 'noias', name: 'Profeta da Calçada',
-    blurb: 'Placas de papelão com previsões absurdas e case de feira. Já aconteceu semana que vem.',
-    pal: { skin: 0xc89168, shirt: 0x2a3040, pants: 0x23282e, hair: 0x1c1a18, boots: 0x3a3f45 } },
+
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -685,12 +655,7 @@ export const CHAR_WEAPON = {
   // Time Mítico
   mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'shotgun',
   bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', cuca: 'shotgun', curupira: 'mp5',
-  // TV — fatia vertical
-  'camera-roxa': 'm4', 'microfonildo': 'm4', 'gilbomes': 'm4',
-  // Novas facções — fatias verticais da spec 0002
-  'programador-virado': 'm4', 'designer-ux': 'm4', 'lenda-lanhouse': 'm4',
-  'motoca-cachorro-loko': 'm4', 'doidinho-bairro': 'p90',
-  'profeta-calcada': 'm4',
+
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

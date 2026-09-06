@@ -46,3 +46,31 @@ A captura do menu herdada falhava porque tentava clicar CTF antes de expandir JO
 
 ## Próxima ação completa
 Revisão do dono na bancada, incluindo decisão Boto humano/golfinho e aparência a preservar. Corrigir rig/animação dos seis sem reduzir limiares; tratar identidade de Saci/Boto; validar movimento, grip e partida, regerar vídeo/poster/thumbnail afetados; integrar somente escopo autorizado em main atual, testar e publicar. PR #481 mistura mapas/sistemas e segue conflitando; não é seguro anunciar pronto apenas pelo build.
+
+## Review do dono em andamento (06/09)
+- Cuca reprovada por aparência/deformação e por não segurar a arma direito.
+- Saci reprovado por postura toda curvada, sem leitura humana convincente.
+- Lampião reprovado por postura curvada e pouca semelhança com Lampião histórico. Três imagens fornecidas pelo dono preservadas em `references/lampiao/owner-review-20260906/`: duas fotos PB (rosto e corpo) e uma referência colorida de figurino. Não atribuir identidade histórica à imagem colorida sem verificação.
+- Maria Bonita: dono reprova todas as poses. Boto: caminhada excessivamente curvada.
+- Lobisomem: dono pede cauda menor; preservar restante da direção de arte já aprovada. Bandeirante: mosquete grande demais; reduzir tamanho visual e rever contato das mãos.
+- Dono não encontra os times adicionais no seletor. Registro contém dez facções, porém N/R/O/T estão `ready:false`; elencos atuais têm 3/1/2/3 personagens. Decisão posterior do dono: apagar os quatro times adicionais e manter somente os cinco existentes e Míticos.
+- Checkpoint dos instrumentos: `a77bf76e`; nenhum modelo aceito nesse commit.
+- Experimentos adicionais Cuca por regiões v1/v2 reprovados (1218/376,9 arestas ruins por 10 mil); artefatos preservados, malha original restaurada antes do teste seguinte.
+- Descoberto manifesto sem clipes próprios para Cuca/Saci: runtime usa pack compartilhado. Teste em andamento adapta os 11 clipes à Cuca original, isolando animação de alterações de pesos. Não considerar assets temporários aceitos.
+
+
+## Decisão e remoção dos times adicionais (06/09)
+- Autorização explícita do dono: “descadastre e apague os times adicionais só queremos o time miticos/lendarios”. Retirados Nerdolas, Profissionais, Noias e TV do cadastro, nove personagens publicados, assets exclusivos, conteúdo de vozes e capacidades exclusivas. Mantidos cinco times existentes e os nove Míticos.
+- Menu real validado em 1200×800 e 1536×1024: seis cards visíveis, elenco M com nove entradas, zero erros de página. Imagens e JSON em `artifacts/miticos-review/only-six-factions-*.png` e `removal-browser.json`.
+- Doze verificações direcionadas passaram (sintaxe, registro, Míticos, vozes, UI, CTF, animações e offsets dos pés); log `removal-checks.log`. Revisão adversarial encontrou teste de capacete dependente do Motoca removido: substituídos contratos exclusivos pelo contrato genérico CS_HARD_, preservado no runtime. Cinco verificações adicionais passaram: charhard, integridade dos assets, docs, arquitetura e spec. A mutação sem marcador CS_HARD_ reprovou como esperado. `git diff --check` passou. Logs `removal-extra-checks.log`.
+- Manifesto de áudio e arquivos de áudio não estão disponíveis nesta worktree; não declarar pipeline completo de áudio validado.
+
+## Zumbi: feedback e pesquisa de referências (06/09)
+- Dono reprova volume corporal balonado, poses e mão atravessando as costas. Screenshot em `references/zumbi/owner-review-20260906/mao-nas-costas.png`. Corrigir contato e deformação em seleção e movimento; uma captura frontal não basta.
+- Não foi encontrada comprovação das pinturas corporais atuais. O estudo publicado pela USP relata ausência de descrição física conhecida de Zumbi: https://revistas.usp.br/revistaec/article/view/235811 . A Brasiliana Fotográfica/BN identifica o retrato de Antônio Parreiras como obra de 1927: https://brasilianafotografica.bn.gov.br/?p=17370 . É representação posterior, não retrato feito em vida. Remover marcas sem fundamento; não apresentar nova aparência como reconstrução histórica exata.
+- Pesquisa não confirma que nunca usou pinturas; ausência de comprovação não permite essa conclusão. Trajes e aparência também exigem distinguir documentação histórica de interpretação artística.
+
+## Retarget experimental encerrado sem aprovação
+- A geração de onze clipes próprios para Cuca/Saci/Lampião/Maria melhorou algumas medidas, mas todos continuam reprovados: Cuca 279,5; Saci 600,8; Lampião 99,9; Maria 36,1 arestas ruins/10 mil. Cuca regiões+retarget 479,7, cabeça v1+retarget 357,8 também reprovadas.
+- Todos os modelos e packs experimentais foram retirados de public e preservados somente em `artifacts/miticos-review/retarget-candidates/` e variantes documentadas nos logs. Não repetir os ajustes heurísticos de pesos como se fossem inéditos.
+- Próximo: isolar animação e IK na mão atravessando Zumbi, corrigir rig/pose com evidência dinâmica; concluir todas as correções do dono listadas acima, validar no jogo e revisar integração/publicação. Nenhum personagem foi aprovado nem publicado até este ponto.

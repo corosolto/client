@@ -2175,64 +2175,9 @@ export class Game {
     while (this.el.radioLog.children.length > 3) this.el.radioLog.firstChild.remove();
   }
 
-  /* ================= mecânicas das vertical slices =================
-     Helpers pequenos e testáveis: a ficha vive no motor sem espalhar condicionais de
-     personagem por dano, movimento, rádio e CTF. Nenhum deles altera dano ou velocidade. */
-  _abilityNotice(text, life = 3200) {
-    if (!this.el?.radioLog) return;
-    const log = document.createElement('div');
-    log.className = 'radio-line ability-line';
-    log.textContent = text;
-    this.el.radioLog.appendChild(log);
-    setTimeout(() => log.remove(), life);
-    while (this.el.radioLog.children.length > 3) this.el.radioLog.firstChild.remove();
-  }
-
-  _resetSliceAbilities() {
+  _resetRouteTrail() {
     const p = this.player;
-    p._motocaRun = 0; p._motocaPingReady = false;
-    p._pieceReady = this.playerCharId === 'doidinho-bairro'; p._pieceObjectiveId = null;
     p._routeTrail = [{ x: p.pos.x, z: p.pos.z }];
-    p._stackBearing = null; p._stackUntil = 0;
-    this._stackTraceEvent = null;
-  }
-
-  _stackTrace(attacker) {
-    const p = this.player;
-    if (this.playerCharId !== 'programador-virado' || !p.alive || p.hp <= 0 || !attacker?.alive || !attacker.pos) return false;
-    const from = p.pos.clone(); from.y += 1.35;
-    const to = attacker.pos.clone(); to.y += 1.35;
-    // Agressor atrás de parede/fumaça não vira informação de time. Granadas podem causar
-    // dano sem LOS, por isso esta guarda não é redundante com o hitscan.
-    if (!this._losClear(from, to)) return false;
-    const STEP = Math.PI / 4;
-    const raw = Math.atan2(attacker.pos.x - p.pos.x, attacker.pos.z - p.pos.z);
-    const bearing = Math.round(raw / STEP) * STEP;   // oitante, nunca coordenada
-    const until = this.time + 1.2;
-    let allies = 0;
-    for (const b of this.bots) {
-      if (!b.alive || b.team !== p.team || b.pos.distanceTo(p.pos) > 24) continue;
-      b._stackBearing = bearing; b._stackUntil = until;
-      // Utilidade real sem telepatia: amplia por 1,2 s a sonda normal de percepção; o bot
-      // ainda precisa confirmar LOS antes de adquirir/atirar e não recebe o alvo.
-      b.alertUntil = Math.max(b.alertUntil || 0, until);
-      allies++;
-    }
-    const names = ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO'];
-    const oct = ((Math.round(bearing / STEP) % 8) + 8) % 8;
-    this._stackTraceEvent = { bearing, until, allies };
-    if (allies) this._abilityNotice(`STACK TRACE · ameaça a ${names[oct]} · ${allies} aliado${allies > 1 ? 's' : ''}`, 1200);
-    return allies > 0;
-  }
-
-  _updateMotocaCharge(dt, running) {
-    const p = this.player;
-    if (this.playerCharId !== 'motoca-cachorro-loko' || p._motocaPingReady) return;
-    p._motocaRun = running ? (p._motocaRun || 0) + dt : 0;
-    if (p._motocaRun + 1e-6 >= 3) {
-      p._motocaRun = 3; p._motocaPingReady = true;
-      this._abilityNotice('ROTA CONFIRMADA · próximo ping +1s');
-    }
   }
 
   _recordRoutePoint(moving) {
@@ -2248,9 +2193,7 @@ export class Game {
 
   _routePing() {
     const p = this.player;
-    const bonus = this.playerCharId === 'motoca-cachorro-loko' && p._motocaPingReady ? 1 : 0;
-    const duration = 2 + bonus;
-    if (bonus) { p._motocaPingReady = false; p._motocaRun = 0; }
+    const duration = 2;
     const pts = (p._routeTrail?.length ? p._routeTrail : [{ x: p.pos.x, z: p.pos.z }]).slice(-10);
     const group = new THREE.Group();
     const geo = new THREE.RingGeometry(0.12, 0.21, 12);
@@ -2279,19 +2222,6 @@ export class Game {
       const first = g.children[0]; first?.geometry?.dispose?.(); first?.material?.dispose?.();
       this._routePings.splice(i, 1);
     }
-  }
-
-  _objectiveInteractionMultiplier(pt, solo) {
-    const p = this.player;
-    const inside = p.alive && solo === p.team &&
-      (p.pos.x - pt.x) ** 2 + (p.pos.z - pt.z) ** 2 <= pt.r * pt.r;
-    if (p._pieceObjectiveId === pt.id && !inside) p._pieceObjectiveId = null;
-    if (this.playerCharId !== 'doidinho-bairro' || !inside) return 1;
-    if (p._pieceObjectiveId === pt.id) return 1.25;
-    if (!p._pieceReady) return 1;
-    p._pieceReady = false; p._pieceObjectiveId = pt.id;
-    this._abilityNotice('TEM UMA PEÇA PRA ISSO · objetivo 20% mais rápido');
-    return 1.25;   // tempo ×0,8 exige taxa ×(1/0,8), não ×1,20
   }
 
   /* ================= flow ================= */
@@ -2364,7 +2294,7 @@ export class Game {
     const playerSpawn = place(this.player, this.playerTeam, 0);
     this.player.yaw = this._spawnYaw(playerSpawn, this.playerTeam, false);
     this.player.pitch = 0; this.player.vel.set(0, 0, 0); this.player.crouchF = 0;
-    this._resetSliceAbilities();
+    this._resetRouteTrail();
     this.player.ammo.awp = { mag: WEAPONS.awp.mag, res: WEAPONS.awp.reserve };
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
     this.player.smokes = 5; this.player.frags = 1; this._updateSmokeHud();   // 5 fumaças + 1 frag por round
@@ -3385,7 +3315,6 @@ export class Game {
     if (!ent.alive || this.state !== 'live') return;
     if (this.time < (ent.protUntil || 0)) return;   // spawn protection: zero dano (e sem hitmarker) enquanto protegido
     ent.hp -= dmg;
-    if (ent.isPlayer && ent.hp > 0) this._stackTrace(attacker);
     if (ent.isPlayer) {
       this.el.vignette.style.opacity = 0.9;
       setTimeout(() => this.el.vignette.style.opacity = 0, 130);
@@ -4455,12 +4384,10 @@ export class Game {
       pt.capTeam = solo;   // time que está capturando agora (pra cor da barra no HUD)
       pt.contested = np > 0 && nb > 0;
       if (solo && solo !== pt.owner) {
-        let crew = Math.min(2, 1 + 0.35 * ((solo === 'E' ? np : nb) - 1));   // 2º e 3º corpo aceleram
-        crew *= this._objectiveInteractionMultiplier(pt, solo);
+        const crew = Math.min(2, 1 + 0.35 * ((solo === 'E' ? np : nb) - 1));   // 2º e 3º corpo aceleram
         pt.prog += (dt * crew) / (pt.owner ? CAP_STEAL : CAP_NEUTRAL);
         if (pt.prog >= 1) {
           pt.owner = solo; pt.prog = 0;
-          if (this.player._pieceObjectiveId === pt.id) this.player._pieceObjectiveId = null;
           this.sfx.captureSound && this.sfx.captureSound(this._factionOf(solo));   // captura: pool de som por facção (palhaços = pasta própria)
           // credita a captura: +1 pro time e +1 pra cada combatente do time DENTRO do anel
           this.ctfCaps[solo] = (this.ctfCaps[solo] || 0) + 1;
@@ -4473,7 +4400,6 @@ export class Game {
           this._updateCtfHud();
         }
       } else if (!solo) {
-        this._objectiveInteractionMultiplier(pt, solo);   // encerra interação abandonada/contestada
         // CONTESTADO (os dois times no anel) CONGELA o progresso — é o momento de tensão do
         // modo; só decai quando o anel fica vazio ou o dono retoma sozinho.
         if (!pt.contested) pt.prog = Math.max(0, pt.prog - dt / (CAP_NEUTRAL * DECAY));
@@ -5411,7 +5337,6 @@ export class Game {
     // footsteps + view bob
     const moving = sp > 0.6 && p.grounded;
     const running = moving && !p.scoped && p.crouchF < 0.2 && slowMul === 1 && sp >= maxSp * 0.88;
-    this._updateMotocaCharge(dt, running);
     this._recordRoutePoint(moving);
     if (moving) {
       p.stepPhase += dt * sp * 1.6;

@@ -42,9 +42,6 @@ export const GLB_CHARS = new Set([
   // Mítico (6ª facção). Os três raws Meshy foram removidos; o elenco volta a
   // apontar somente para malhas PBR. Bandeirante usa rig Meshy provisório, ainda em revisão.
   'mariabonita', 'saci', 'lampiao', 'lobisomem', 'bandeirante', 'cuca', 'curupira', 'boto', 'zumbi',
-  // Novas facções — fatias verticais da spec 0002; a facção só fica ready com 8/8.
-  'camera-roxa', 'microfonildo', 'programador-virado', 'designer-ux', 'lenda-lanhouse', 'motoca-cachorro-loko', 'doidinho-bairro',
-  'profeta-calcada', 'gilbomes',
 ]);
 
 /* SET MANTIDO À MÃO: personagem fora daqui cai no procedural E some das réguas, porque a
@@ -128,13 +125,6 @@ const LOBI_CURL_Q = parseFloat(qp.get('lobcurl'));
 const LOBI_CURL = Number.isFinite(LOBI_CURL_Q) ? LOBI_CURL_Q : 0.35;
 const LOBI_CURL_R = _num3(qp.get('lobcurlr'), [LOBI_CURL, 0, 0]);
 const LOBI_CURL_L = _num3(qp.get('lobcurll'), [LOBI_CURL, 0, 0]);
-// Rigs Meshy de palma plana: o curl combina duas falanges + compactação distal. No Programador
-// 0,65 estourava a régua (P99=0,890), por isso 0,20. Régua: select-mount/select-inflate.
-const CHAR_GRIP_CURL = new Map([
-  ['programador-virado', 0.20],
-  ['motoca-cachorro-loko', 0.65],
-  ['doidinho-bairro', 0.65],
-]);
 // Armas que precisam de +180° só na 3ª pessoa (mount). VAZIO desde 04/08: o flip da p90
 // era da época de outro GLB; o modelo atual já nasce com o cano em +Z e o flip a deixava
 // de coronha pra frente (visto pelo dono na tela de seleção; A/B por figura no scratchpad
@@ -159,11 +149,6 @@ const TP_MOUNT_LIVE = qp.get('tpmountlive') !== '0';
 const _tpc = (qp.get('tpcarry') || '').split(',').map(Number);
 const TP_CARRY_PITCH = ((_tpc.length === 2 && !isNaN(_tpc[0]) ? _tpc[0] : -6)) * Math.PI / 180;  // cano levemente pro chão (porte)
 const TP_CARRY_YAW = ((_tpc.length === 2 && !isNaN(_tpc[1]) ? _tpc[1] : 4)) * Math.PI / 180;     // levemente cruzando o corpo
-// BUG-47: no porte global de 4° a P90 (0,52 m) projetava só 0,110 m no 3:2 — abaixo dos
-// 0,178 m da M4 aprovada. Yaw só do mount visual do Doidinho; roster, escala e balística intactos.
-const TP_CHAR_CARRY_YAW = new Map([
-  ['doidinho-bairro', -18],
-]);
 const TP_CLEAR = parseFloat(qp.get('tpclear')) || 0.06;   // folga mínima entre o grip e a superfície do corpo (m)
 // O empurrão só entra quando a palma está ENTERRADA de verdade. Medido: humano típico
 // tem a palma 3-10 cm dentro do volume do quadril na pose de idle (braço encostado no
@@ -610,7 +595,7 @@ export function buildCharacterModel(def, opts = {}) {
       const cd = opts.preview ? (ONE_HANDED.has(weaponId) ? [4, 26] : [-14, 40]) : null;
       const charCarryYaw = _tpc.length === 2 && !isNaN(_tpc[1])
         ? TP_CARRY_YAW
-        : (TP_CHAR_CARRY_YAW.get(def.id) ?? 4) * Math.PI / 180;
+        : 4 * Math.PI / 180;
       const carry = new THREE.Quaternion().setFromEuler(cd
         ? new THREE.Euler(cd[0] * Math.PI / 180, cd[1] * Math.PI / 180, 0, 'YXZ')
         : new THREE.Euler(TP_CARRY_PITCH, charCarryYaw, 0, 'YXZ'));
@@ -689,7 +674,6 @@ export function buildCharacterModel(def, opts = {}) {
        Aqui o ângulo sai da própria arma: `gripPoints` dá o ponto do guarda-mão e o
        weaponModel dá a caixa, então a espessura no grip é MEDIDA e não tabelada.
        Faixa geral 0,35-0,80 rad: abaixo disso a mão não fecha, acima pode entrar na palma.
-       Rigs com bind excepcional usam CHAR_GRIP_CURL, medido por A/B servido.
        RESSALVA HONESTA: sem os GLB de personagem nesta árvore não deu pra conferir o
        resultado em imagem. A faixa é conservadora e contém o 0,5 antigo, então o pior
        caso é ficar igual ao que já estava. */
@@ -704,7 +688,7 @@ export function buildCharacterModel(def, opts = {}) {
     };
     const curl = def.id === 'lobisomem'
       ? LOBI_CURL
-      : (CHAR_GRIP_CURL.get(def.id) ?? (gunObj ? curlPara(gunObj) : 0.5));
+      : (gunObj ? curlPara(gunObj) : 0.5);
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) {
       if (def.id === 'lobisomem') {

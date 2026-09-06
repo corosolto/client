@@ -48,7 +48,7 @@ const CHECK = process.argv.includes('--check');
    aceito POR ORA; quando as vozes entrarem no disco este manifesto passa a emiti-las
    sem mais nenhuma mudança. */
 const FACTIONS = { 'time-e': 'E', 'time-b': 'B', tribos: 'U', palhacos: 'C', funkeiros: 'F',
-  nerdolas: 'N', profissionais: 'R', noias: 'O', tv: 'T', miticos: 'M' };
+  miticos: 'M' };
 const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|webm)$/i;
 const VOICE_LINES = join(ROOT, 'content', 'voice-lines.json');
 

@@ -53,6 +53,10 @@ if (!existsSync(FONTE)) {
 }
 
 const probe = JSON.parse(readFileSync(FONTE, 'utf8'));
+globalThis.location ||= { search: '' };
+globalThis.localStorage ||= { getItem: () => null };
+const { CHARACTERS } = await import('../public/js/characters.js');
+const activeIds = new Set(CHARACTERS.map(character => character.id));
 const TOL = 0.01;            // a mesma tolerância da CHR3
 const R = (v) => Math.round(v * 1e4) / 1e4;
 
@@ -90,6 +94,7 @@ const tabela = {};
 const suspeitos = [];
 let corrigidos = 0, total = 0, pior = 0, piorQuem = '';
 for (const p of probe.personagens || []) {
+  if (!activeIds.has(p.id)) continue;
   const porPose = p.C3?.porPose;
   if (!porPose) continue;
   const linha = {};

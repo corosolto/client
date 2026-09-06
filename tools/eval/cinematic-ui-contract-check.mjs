@@ -162,16 +162,16 @@ put('CINE7', 'os cinco fluxos usam composições próprias, não os shells da al
   `faltas: ${structuralEvidence.filter(x => !x.ok).map(x => `${x.layout}[${x.missing.join('+')}]`).join(', ') || 'nenhuma'} · ` +
   `shells antigos: ${legacyShells.join(', ') || 'nenhum'}`);
 
-/* CINE8 — specs/0002-novas-faccoes/spec.md §2: dez facções simultâneas em 5×2,
+/* CINE8 — Decisão do dono em 06/09: apenas os cinco times existentes + Míticos: seis facções simultâneas em 3×2,
    sem paginação/rolagem, e o adversário indisponível não desloca a grade. O hero novo
    pode coexistir com a decisão; não pode transformar a regra de produto em carrossel. */
 const factionPageSize = Number(/FACTION_PAGE_SIZE\s*=\s*(\d+)/.exec(factions)?.[1] || 0);
-const gridFiveByTwo = /\.faction-index \.team-row\{display:grid;grid-template-columns:repeat\(5,minmax\(0,1fr\)\);grid-template-rows:repeat\(2,minmax\(0,1fr\)\);gap:8px;overflow:hidden/.test(css);
+const gridThreeByTwo = /\.faction-index \.team-row\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\);grid-template-rows:repeat\(2,minmax\(0,1fr\)\);gap:8px;overflow:hidden/.test(css);
 const noPagination = /\.faction-index \.team-rail-arrow\{display:none\}/.test(css);
 const stableEnemy = /\.faction-index \.team-card\.faction-excluded\{visibility:hidden;pointer-events:none\}/.test(css);
-put('CINE8', 'as dez facções ficam simultâneas em grade 5×2 e estáveis no adversário',
-  factionPageSize === 10 && gridFiveByTwo && noPagination && stableEnemy,
-  `pageSize=${factionPageSize} · grade5x2=${gridFiveByTwo} · sem paginação=${noPagination} · posição adversário estável=${stableEnemy}`);
+put('CINE8', 'as seis facções ficam simultâneas em grade 3×2 e estáveis no adversário',
+  factionPageSize === 6 && gridThreeByTwo && noPagination && stableEnemy,
+  `pageSize=${factionPageSize} · grade3x2=${gridThreeByTwo} · sem paginação=${noPagination} · posição adversário estável=${stableEnemy}`);
 
 const failures = results.filter(r => !r.ok);
 if (json) console.log(JSON.stringify({ mutante: mutante || null, results }, null, 2));
@@ -179,6 +179,6 @@ else {
   console.log(`\nCINEMATIC UI CONTRACT${mutante ? ` · mutante=${mutante}` : ''}`);
   for (const r of results) console.log(`${r.ok ? '✓' : '✗'} ${r.id} ${r.desc}\n    ${r.evid}`);
   console.log(`\n${results.length - failures.length}/${results.length} cláusulas verdes`);
-  if (failures.length) console.log('Correção: integre chrome/estado, os seis layouts estruturais e preserve a grade de facções 5×2 sem scroll.');
+  if (failures.length) console.log('Correção: integre chrome/estado, os seis layouts estruturais e preserve a grade de facções 3×2 sem scroll.');
 }
 process.exit(failures.length ? 1 : 0);
