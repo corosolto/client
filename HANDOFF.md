@@ -11,7 +11,12 @@ Capturas e logs preservados em `artifacts/ctf-home/` (fora do Git). Navegador em
 1200×800 confirmou botão legível, clique em CTF e troca Ferro Velho → Piscina sem
 perder o modo; inglês também conferido. Build e SEO/AEO 6/6 passaram; revisão
 adversarial sem bloqueios. `docs:check` passou após regenerar os contadores de i18n.
-Próximo passo: concluir o portão geral e criar checkpoint local.
+Checkpoint funcional: `4abeaa40`. `check:fast` terminou em 289,4 s com 107/111;
+`docs:check` foi corrigido pela regeneração e passou isoladamente. Restam falhas
+fora do diff: `audio:check` (pacote privado ausente), `eval:audiofablocal`
+(`LAB8g` ambiência local do Escadão) e `eval:grafitelayout` (hash do layout do
+Escadão desatualizado). Log completo em `artifacts/ctf-home/ctf-home-check-fast.log`.
+Próximo passo: publicar a correção após autorização e conferir a home publicada.
 Publicação não realizada; depende de autorização do dono.
 
 ## Confiabilidade da telemetria browser → admin — 06/09/2026
