@@ -109,7 +109,8 @@ def main():
         entries[f'control/{Path(f).name}'] = SOURCE / f
     for f in ['public/js/game.js', 'public/js/weapons.js', 'public/js/data/weapons.js', 'public/js/data/vmconfig.js',
               'public/js/authoredvm.js', 'public/js/vmweapon.js', 'public/js/vmhands.js', 'tools/viewmodels/paid-pack-manifest.json',
-              'mint-assets.json', 'public/models/viewmodels/FONTE.md', 'docs/LICENCA.md']:
+              'mint-assets.json', 'public/models/viewmodels/FONTE.md', 'docs/LICENCA.md',
+              'AGENTS.md', 'docs/LICOES.md', 'docs/development/VIEWMODEL-1P-PROFISSIONAL.md']:
         entries[f'code/{Path(f).name}'] = ROOT / f
     extracted = Path('/Users/ruben/csbrasil-private-assets/generated/extracted/Assets/KINEMATION/FPSAnimationPack/Animations')
     for family in ['MX16A4', 'AK']:
