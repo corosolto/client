@@ -46,6 +46,9 @@ provedor: a disponibilidade do GLM desta máquina pertence ao ZCode.
 - `VIEWMODEL-ZCODE-M4.md` — tarefa de produção ativa; execute sozinha no ZCode.
 - `VIEWMODEL-ZCODE-PRECISAO.md` — próxima tarefa sequencial, depois da M4.
 - `VIEWMODEL-ZCODE-INTEGRACAO.md` — integração final após os dois checkpoints.
+- `VIEWMODEL-ZCODE-AWP.md` — candidata offline da AWP em lane exclusiva.
+- `VIEWMODEL-ZCODE-SHOTGUN.md` — candidata offline, sem reutilizar a lane pesada rejeitada.
+- `VIEWMODEL-ZCODE-CURTAS.md` — Deagle e revólver .38, sequenciais dentro da lane.
 - `AUDIO-FUNKEIROS-URBANAS.md`
 - `JOA-MANSAO.md`
 - `LAJES.md`
