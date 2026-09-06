@@ -32,11 +32,11 @@
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { impressao } from './eval/graffiti-fingerprint.mjs';
+import { impressao, MAP_SOURCES } from './eval/graffiti-fingerprint.mjs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
 const SAIDA = 'public/js/graffiti_layout.js';
-const MAPAS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada'];
+const MAPAS = Object.keys(MAP_SOURCES);
 const ONLY = process.argv[2];
 
 const gRoot = execSync('npm root -g').toString().trim();
@@ -48,13 +48,9 @@ const chromium = _pw.chromium || _pw.default?.chromium;
 const anterior = {};
 if (existsSync(SAIDA)) {
   const txt = readFileSync(SAIDA, 'utf8');
-  const i = txt.indexOf('export const GRAFITE =');
-  if (i >= 0) {
-    try {
-      const json = txt.slice(txt.indexOf('{', i), txt.lastIndexOf('}') + 1);
-      Object.assign(anterior, JSON.parse(json));
-    } catch { /* arquivo antigo em outro formato: recomeça */ }
-  }
+  const json = txt.match(/^export const GRAFITE = (.+);$/m)?.[1];
+  if (!json) throw Error('Layout anterior não reconhecido; regeneração cancelada');
+  Object.assign(anterior, JSON.parse(json));
 }
 
 const browser = await chromium.launch({
@@ -67,7 +63,7 @@ for (const id of MAPAS) {
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
   page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
   // `grafite=vivo`: manda o mapa RODAR a passada em vez de aplicar o layout assado
-  await page.goto(`${BASE}/mapview.html?map=${id}&grafite=vivo`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/mapview.html?map=${id}&grafite=vivo`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction('window.MAPEVAL && window.MAPEVAL.ready===true', null, { timeout: 300000 });
   const g = await page.evaluate(() => window.__grafite || null);
   await page.close();

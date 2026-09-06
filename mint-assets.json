@@ -112,6 +112,257 @@
         "notes": "6 itens (churrasqueira, mesa c/ guarda-sol, cooler, boia, placa, caixa de som). Set dressing da festa de piscina BR."
       }
     },
+    "varal-roupas-01": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/varal_roupas_01.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7dtxhh7gbkyf8941pet5vav58crdye",
+        "chatUrl": "https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p",
+        "displayName": "Colorful Laundry Varal (varal de corda)",
+        "frente": "v21-e-models",
+        "notes": "Lote 3 da frente E v2.1 (dono: \"as roupas penduradas no corrego, quebrada e campinho tao ruins, na laje tao bons, fazer variacoes\"). Corda com 6 peças coloridas em prendedores entre ganchos. GLB normalizado pela largura (1,0 m; 0,28 m de altura): integrar com scale ~3,0 => 3,0 m x 0,84 m. Calibrado pelo lajes_varal.glb (o varal bom do dono). Evidência: tools/eval/asset-evidence/props-v21/varal_roupas_01-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "3ea3085f1c0f0729b0563b3a9c6e9330a39c4a7da720592d931ef1681edb1a52"
+      }
+    },
+    "varal-roupas-02": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/varal_roupas_02.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75rz911e611m14c0pbah8c2h8crgr1",
+        "chatUrl": "https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg",
+        "displayName": "Colorful Laundry Varal (varal de chão)",
+        "frente": "v21-e-models",
+        "notes": "Lote 3 da frente E v2.1. Varal de chão em T de alumínio, 2 linhas com camisetas, jeans, meias e fronha. GLB normalizado pela largura (1,0 m; 0,81 m de altura): integrar com scale ~1,8 => 1,8 m x 1,46 m. Evidência: tools/eval/asset-evidence/props-v21/varal_roupas_02-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "389993f574d3dcfabca27109268ce50a47438c72618f6b0c057a647ceaf89969"
+      }
+    },
+    "samambaia-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/samambaia.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7966nvp1k21fd5e12aqq5cxn8cvq8f",
+        "chatUrl": "https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0",
+        "displayName": "Emerald Feather Clump (samambaia)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Samambaia espada em touceira densa (3.757 tris). Forração instanciada dos drifts de borda (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
+      }
+    },
+    "casa-favela-azul": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/casa_favela_azul.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7fet6qkrzjrs9jk2zsqsh0rh8d78by",
+        "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+        "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+        "displayName": "Casa de favela azul",
+        "frente": "v21-e-models",
+        "notes": "Kit `favela_r3` (dono, 20/08: \"os mapas de favela so o lajes tem cordao de roupas do model, os outros nao e tudo generico low poly\"). Casario do escadao: molde de casa de alvenaria pintada de azul, 4.780 tris, 1 no. GLB normalizado em ~1 m no maior eixo — bbox 0,955 x 0,998 x 0,764 (larg x alt x prof). A razao entre eixos esta declarada em CASARIO_MOLDES (public/js/map_escadao.js) e a regua eval:escala-casario rele este arquivo para conferir: trocar o GLB sem reconferir a escala reprova."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (pack favela_r3, otimizado webp 1024)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "c311fd2a66e7aeeb8c218cfd74b4a8e0dcb79130f62766451eb4b2b5ffc4ae92"
+      }
+    },
+    "casa-favela-tijolo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/casa_favela_tijolo.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77wm8m73833tvn9edhztpkx98d6dtx",
+        "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+        "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+        "displayName": "Casa de favela tijolo",
+        "frente": "v21-e-models",
+        "notes": "Kit `favela_r3`, par do casa_favela_azul: mesma familia em tijolo aparente, 4.181 tris, 1 no. bbox 0,943 x 0,936 x 0,998 — planta quase quadrada, entao ele mora nas plantas quadradas do mirante e nas casas de 1 pavimento (a regua eval:escala-casario reprovou o tijolo numa planta 3,0 x 4,4 m com 5,9 m de altura: ficava espremido a 0,50x o fator vertical)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (pack favela_r3, otimizado webp 1024)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "c6d26492a9d5a5b2a0676169de4f43ad5e67ac83bafda8ba6f7e0e9171e15016"
+      }
+    },
+    "varal-roupas-favela": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/varal_roupas.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77x28h86c6wvx3xzr996npdh8d7bv8",
+        "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+        "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+        "displayName": "Varal de roupas",
+        "frente": "v21-e-models",
+        "notes": "Kit `favela_r3`. Varal com roupa pendurada, 4.677 tris, bbox 0,998 x 0,697 x 0,326. Espalhado pelos becos e lajes baixas do escadao (4 instancias) alem dos dois varal_roupas_0X do mirante. NUNCA ganha colisor: roupa e silhueta, nao cover — todas as malhas levam nonSolidSurface."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (pack favela_r3, otimizado webp 1024)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "0cd259177b239c7198b8158195c82a493480c69846f210981faeb87eac2c89bf"
+      }
+    },
+    "escadao_casa_r3": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/escadao_casa_r3.glb"
+      ],
+      "source": {
+        "kind": "mint-text-to-3d",
+        "frente": "v21-e-models",
+        "displayName": "01-escadao-casa-residencial-r3.glb",
+        "chatUrl": "https://mint.gg/chat/ph76fdb7fh3t30vzjz8ajv01xs8dx139",
+        "projectId": "zd72r64gkq3d9k3v8349cp6yt98dwvx4",
+        "assetPackId": "th7290wv39q83egs019b1g29vs8dwnr1",
+        "finalRunKey": "asset-pack-final:assetPackOutput:vd77drm22g8fn3p0t9hyn39w6h8dxed8",
+        "packFile": "01-escadao-casa-residencial-r3.glb",
+        "sha256": "49a2553f02a66d4e9377a66d4addf3b35cf5564c84dd49d2fe6e5df91ea89a89",
+        "license": "Mint Terms of Service section 4, updated 2026-05-07; rights assigned to user subject to terms and third-party rights",
+        "licenseUrl": "https://docs.mint.gg/terms-of-service",
+        "licenseCheckedAt": "2026-09-06"
+      },
+      "processing": {
+        "tools": [
+          "tools/optimize-escadao-r3.mjs"
+        ],
+        "model": "TRIPO_P1",
+        "triangles": 4146,
+        "finalSha256": "9bceba38acb38726b1df871b4a22697d5cb988f10e6cde13a972bdbf4eeb3a4b"
+      }
+    },
+    "escadao_cat_r4": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/escadao_cat_r4.glb"
+      ],
+      "source": {
+        "kind": "mint-text-to-3d",
+        "frente": "v21-e-models",
+        "displayName": "01-gato-rajado-tabby-cat.glb",
+        "chatUrl": "https://mint.gg/chat/ph71esgt6wvxqr9ywswh7nr8f58dxycs",
+        "projectId": "zd72r64gkq3d9k3v8349cp6yt98dwvx4",
+        "assetPackId": "th71b3y03ksncsfj8wzt08w5hh8dxjpk",
+        "finalRunKey": "asset-pack-final:assetPackOutput:vd7cw36hdpbv3zxwkt19km2d6h8dwz6j",
+        "packFile": "01-gato-rajado-tabby-cat.glb",
+        "sha256": "1946c37da48e57b2833049927991e2169de1248327a9a6708876678ee3688295",
+        "license": "Mint Terms of Service section 4, updated 2026-05-07; rights assigned to user subject to terms and third-party rights",
+        "licenseUrl": "https://docs.mint.gg/terms-of-service",
+        "licenseCheckedAt": "2026-09-06"
+      },
+      "processing": {
+        "tools": [
+          "tools/optimize-escadao-r4.mjs",
+          "tools/rig-escadao-cat-r4.py"
+        ],
+        "model": "TRIPO_P1",
+        "triangles": 4723,
+        "finalSha256": "065988ff0eeb6adf7af962c8bff8a188867af4dfd1c636272360191b8275a9ac"
+      }
+    },
+    "escadao_varanda_r4": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/escadao_varanda_r4.glb"
+      ],
+      "source": {
+        "kind": "mint-text-to-3d",
+        "frente": "v21-e-models",
+        "displayName": "02-varanda-vivida-balcony-cluster.glb",
+        "chatUrl": "https://mint.gg/chat/ph71esgt6wvxqr9ywswh7nr8f58dxycs",
+        "projectId": "zd72r64gkq3d9k3v8349cp6yt98dwvx4",
+        "assetPackId": "th71b3y03ksncsfj8wzt08w5hh8dxjpk",
+        "finalRunKey": "asset-pack-final:assetPackOutput:vd7cw36hdpbv3zxwkt19km2d6h8dwz6j",
+        "packFile": "02-varanda-vivida-balcony-cluster.glb",
+        "sha256": "ecf7633aa0f8474052db8f71051bb47618740e8efce620b0051fa3a56b97cf40",
+        "license": "Mint Terms of Service section 4, updated 2026-05-07; rights assigned to user subject to terms and third-party rights",
+        "licenseUrl": "https://docs.mint.gg/terms-of-service",
+        "licenseCheckedAt": "2026-09-06"
+      },
+      "processing": {
+        "tools": [
+          "tools/optimize-escadao-r4.mjs"
+        ],
+        "model": "TRIPO_P1",
+        "triangles": 4453,
+        "finalSha256": "808371e470de7073a590e9b5bb65c8c9f05a6d871c87b259bdcf7e9df19bccfc"
+      }
+    },
+    "escadao_eletrica_r4": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/escadao_eletrica_r4.glb"
+      ],
+      "source": {
+        "kind": "mint-text-to-3d",
+        "frente": "v21-e-models",
+        "displayName": "03-instalacao-eletrica-meter-box.glb",
+        "chatUrl": "https://mint.gg/chat/ph71esgt6wvxqr9ywswh7nr8f58dxycs",
+        "projectId": "zd72r64gkq3d9k3v8349cp6yt98dwvx4",
+        "assetPackId": "th71b3y03ksncsfj8wzt08w5hh8dxjpk",
+        "finalRunKey": "asset-pack-final:assetPackOutput:vd7cw36hdpbv3zxwkt19km2d6h8dwz6j",
+        "packFile": "03-instalacao-eletrica-meter-box.glb",
+        "sha256": "a7e0401c907c837c59b500438d5408211c14cd2de7852ac5a776dc1a6d5c9c20",
+        "license": "Mint Terms of Service section 4, updated 2026-05-07; rights assigned to user subject to terms and third-party rights",
+        "licenseUrl": "https://docs.mint.gg/terms-of-service",
+        "licenseCheckedAt": "2026-09-06"
+      },
+      "processing": {
+        "tools": [
+          "tools/optimize-escadao-r4.mjs"
+        ],
+        "model": "TRIPO_P1",
+        "triangles": 3470,
+        "finalSha256": "e971f91254a6170da06174c5420eb41b47d40fb927076bde9ca5b044faf5ac90"
+      }
+    },
     "pipa-lajes": {
       "artifactType": "model/gltf-binary",
       "files": [

@@ -1915,6 +1915,9 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-thumb:hover,.ms-thumb:focus-visible{filter:brightness(1.15);opacity:1}
 .ms-thumb.on{border:2px solid #b4d92e;opacity:1;box-shadow:0 0 26px rgba(180,217,46,.3)}
 .ms-thumb-img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.ms-thumb-video{position:absolute;top:0;left:0;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;pointer-events:none;opacity:0}
+.ms-thumb.preview-playing .ms-thumb-video{opacity:1}
+.ms-thumb .ms-diamond{z-index:1}
 .ms-thumb-media{position:relative;display:block;width:100%}
 .ms-thumb-copy{display:flex;flex-direction:column;gap:3px;padding:8px 11px 10px;background:rgba(10,10,12,.85)}
 .ms-thumb-name{font-weight:700;font-size:12px;letter-spacing:2px;color:#c9c9cc;
