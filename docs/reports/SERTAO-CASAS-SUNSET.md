@@ -84,3 +84,17 @@ O `check:fast` amplo terminou com 120/124 em 258,8 s: `docs:check` e
 `eval:docsautoria` rodaram antes da regeneração; `audio:check` acusa manifesto
 local defasado e `eval:grafitelayout` acusa hash herdado do Escadão. Não houve
 mudança nesses assets. A suíte específica será registrada após o último ajuste.
+
+A segunda relocação rejeitada foi o fardo esquerdo em `(12.75,21.5)`, que
+interpenetrava a quina de outra casa em 0,131 m. A fileira final ficou em
+`z=20.5`, com deslocamento zero contra os demais colisores. `IN6` também mede
+os três fardos, excluindo apenas o contato previsto entre eles; o sétimo mutante,
+`fardo-na-parede`, reproduz a regressão. Snapshot intermediário preservado em
+`artifacts/sertao-casas/rejected-hay-position/`.
+
+Após as posições finais: suíte específica Sertão/Velho Oeste 13/13, SP1–SP9 e
+14 mutantes espaciais aprovados, TR1/TR3 aprovados. `docs:check`, `arch:check` e
+`eval:docsautoria` passaram após os commits de inventário. O último ajuste de
+inventário precisou ocorrer depois de versionar os scripts novos, pois o gerador
+conta arquivos rastreados pelo Git. Revisão adversarial final aprovou o estado
+técnico, sem bloqueio remanescente encontrado; capturas finais ainda em conclusão.

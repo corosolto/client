@@ -3,7 +3,7 @@
 import { THREE, MAPS, initTextures, Game } from './harness.mjs';
 
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.slice(10);
-const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6' };
+const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6' };
 if (mutant && !targets[mutant]) throw Error(`Mutante desconhecido: ${mutant}`);
 const world = MAPS.velho_oeste.build(new THREE.Scene(), await initTextures());
 const houses = world.interiorHouses || [];
@@ -24,6 +24,10 @@ if (mutant) {
     const wall = house.getObjectByName(`${house.name}-lateral-1-sul`);
     if (!wall) throw Error('Mutante não aplicou: parede ausente');
     wall.scale.z = .6;
+  } else if (mutant === 'fardo-na-parede') {
+    const hay=world.colliders.filter(c=>c.maxY===1.15&&c.minX>11&&c.maxX<18&&c.minZ>19&&c.maxZ<23);
+    if(hay.length!==3) throw Error('Mutante não aplicou: fardos ausentes');
+    for(const c of hay){c.minZ=20.85;c.maxZ=22.15;}
   } else if (mutant === 'barril-na-parede') {
     const c=world.colliders.find(c=>Math.abs(c.minX+17.62)<EPS&&Math.abs(c.maxY-1)<EPS);
     if(!c) throw Error('Mutante não aplicou: barril ausente');
@@ -85,14 +89,20 @@ const barrelClearance=barrels.map(c=>{
   const others=Object.create(Game.prototype);others.world={...world,colliders:world.colliders.filter(other=>other!==c)};
   others._collide(p,.67);return {x:original.x,z:original.z,displacement:p.distanceTo(original)};
 });
+const hay=world.colliders.filter(c=>Math.abs(c.maxX-c.minX-1.3)<EPS&&c.maxY===1.15&&c.minX>11&&c.maxX<18&&c.minZ>19&&c.maxZ<23);
+const hayClearance=hay.map(c=>{
+  const p=new THREE.Vector3((c.minX+c.maxX)/2,0,(c.minZ+c.maxZ)/2),original=p.clone();
+  const others=Object.create(Game.prototype);others.world={...world,colliders:world.colliders.filter(other=>!hay.includes(other))};
+  others._collide(p,.65);return {x:original.x,z:original.z,displacement:p.distanceTo(original)};
+});
 const checks={
   IN1:houses.length===2&&results.every(r=>r.exists&&r.entry.clear),
   IN2:results.every(r=>r.exists&&r.windows.every(Boolean)),
   IN3:results.every(r=>r.exists&&[...r.firingRoutes,...r.circulation].every(p=>p.clear)),
   IN4:results.every(r=>r.exists&&!r.leaks.length),
   IN5:results.every(r=>r.exists&&r.reachable&&!r.badEdges.length),
-  IN6:barrels.length===1&&barrelClearance.every(p=>p.displacement<=EPS),
+  IN6:barrels.length===1&&hay.length===3&&[...barrelClearance,...hayClearance].every(p=>p.displacement<=EPS),
 };
-console.log(JSON.stringify({checks,houses:results,barrelClearance,mutation:mutant||null},null,2));
+console.log(JSON.stringify({checks,houses:results,barrelClearance,hayClearance,mutation:mutant||null},null,2));
 const failed=Object.entries(checks).filter(([,ok])=>!ok).map(([id])=>id);
 process.exitCode=mutant ? (failed.includes(targets[mutant])?0:1) : (failed.length?1:0);

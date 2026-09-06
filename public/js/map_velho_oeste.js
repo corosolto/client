@@ -810,7 +810,7 @@ export function buildVelhoOeste(scene, T) {
     part(4.7, .22, .24, MAT.pale, 0, .5, 0, { rz: -.12 }); part(4.25, .22, .24, MAT.wood, .15, 1.08, 0, { rz: .2 });
   });
 
-  for (const [x, z] of [[13,-31],[-14,-4],[14,21.5],[-13,36]]) {
+  for (const [x, z] of [[13,-31],[-14,-4],[14,20.5],[-13,36]]) {
     for (let i = 0; i < 3; i++) addCylinder(.65, 1.15, MAT.hay, x + (i - 1) * 1.25, 0, z, { collide: true, segments: 14, rz: Math.PI / 2 });
   }
   // O barril legado coincidia com o centro CTF B; a cobertura fica dois metros ao lado.
