@@ -1362,6 +1362,8 @@ window.__GEO_LANG__ = (function () {
   }
 </script>
 
+<!-- Sinais operacionais da sessão (FPS, falhas de carga, abandono); só coleta - docs/runbooks/operacao-autonoma.md -->
+<script type="module" src={`/js/ops.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
 </body>
 </html>

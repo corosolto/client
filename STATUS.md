@@ -2,10 +2,10 @@
 
 <!-- BEGIN:GERADO:status_atual — não edite à mão, rode `npm run docs` -->
 
-- **Versão:** `2.0.0-alpha.223`
+- **Versão:** `2.0.0-alpha.224`
 - **Conteúdo jogável:** 5 facções, 44 personagens, 14 mapas e 26 armas com GLB
-- **Código do jogo:** 39.239 linhas em 61 módulos JavaScript
-- **Automação:** 173 comandos npm, 244 scripts de avaliação e 61 scripts de pipeline
+- **Código do jogo:** 39.519 linhas em 64 módulos JavaScript
+- **Automação:** 177 comandos npm, 249 scripts de avaliação e 61 scripts de pipeline
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `package.json · CHARACTERS · MAPS · public/models/weapons · public/js · tools/`
 

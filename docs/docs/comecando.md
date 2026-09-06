@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 39.239 linhas em 61 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 39.519 linhas em 64 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.356** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.371 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -49,10 +49,10 @@ esta página envelhecia no primeiro commit — ver
 | Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 14 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 244 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 249 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 61 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.223` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.224` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -221,7 +221,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.278 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.280 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
@@ -236,7 +236,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
 
-**14 mapas registrados** — 2 abrem em rodadas e 12 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 16 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**14 mapas registrados** — 2 abrem em rodadas e 12 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 18 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
@@ -277,10 +277,10 @@ E os dois quality gates, com a lista exata do que cada um roda — direto do `pa
 {/* BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` */}
 
 ```bash
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:analytics eval:online eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check eval:audioalcance eval:audioespacial eval:audioproc eval:audiocapacidade eval:audiofablocal eval:audioeventos eval:audioannouncer eval:audiovoicemix eval:audioprivate eval:audioruntimeassets eval:menumusicreview audio:inventario:autoteste audio:shortlist:autoteste feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:wflocal eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:netcodecbin eval:movimento eval:botsim-golden eval:replaycam eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:analytics eval:online eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check eval:audioalcance eval:audioespacial eval:audioproc eval:audiocapacidade eval:audiofablocal eval:audioeventos eval:audioannouncer eval:audiovoicemix eval:audioprivate eval:audioruntimeassets eval:menumusicreview audio:inventario:autoteste audio:shortlist:autoteste feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:wflocal eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:netcodecbin eval:movimento eval:botsim-golden eval:replaycam eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife ops:test ops:selftest
 ```
 
-`package.json` tem **173 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
+`package.json` tem **177 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

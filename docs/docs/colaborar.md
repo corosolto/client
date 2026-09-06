@@ -248,7 +248,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.278 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.280 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
@@ -263,7 +263,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
 
-**14 mapas registrados** — 2 abrem em rodadas e 12 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 16 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**14 mapas registrados** — 2 abrem em rodadas e 12 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 18 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

@@ -125,8 +125,9 @@ try {
       novo = `void testMode;\n${novo}`;
       mutacaoAplicou = true;
     } else {
-      const inicioPartida = 'async function _startGame(team, charId, enemyFaction) {';
-      novo = novo.replace(inicioPartida, `${inicioPartida}\n  throw new Error('SEGREDO_BOOT_CHECK');`);
+      // ancorado no NOME: a lista de parâmetros já mudou uma vez (#489, `online = false`) e cegou a régua
+      const inicioPartida = /async function _startGame\([^)]*\) \{/;
+      novo = novo.replace(inicioPartida, (m) => `${m}\n  throw new Error('SEGREDO_BOOT_CHECK');`);
       novo = novo.replace("if (testMode && params.get('auto'))", "if (params.get('auto'))");
       if (!novo.includes("throw new Error('SEGREDO_BOOT_CHECK')") || novo === corpo)
         throw new Error('fixture de falha não aplicou em main.js');

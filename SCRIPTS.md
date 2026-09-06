@@ -50,6 +50,40 @@ Mede o que o EDGE está servindo, não o repo: baixa o HTML de produção, segue
 npm run prod:coherence
 ```
 
+## `ops:diag`
+
+A camada operacional: o jogo se diagnostica e explica. Encadeia boot (HTML → import map → main.js → version.js → grafo via prod-coherence), APIs (`/api/health` campo a campo e rotas leves N vezes, para separar 5xx constante de intermitente — o cold start do Cloud Run medido em 06/09/2026), ranking (flag × backend × página), assets no edge (Range GET com prova de cabeçalho), a árvore (versão, index.astro, grafo local, assets) e a partida sintética (Game real em node, todo mapa × modo). Escreve causa provável, evidência, impacto e próximo passo por achado, e separa "tecnicamente verde" de "pronto para lançamento". Só lê: nenhum POST. `--browser` acrescenta o Chromium (o main.js AVALIA?) e o snapshot do `public/js/ops.js`. Fica FORA do check:fast por precisar de rede; quem roda é gente ou o prod-watch. Runbook: docs/runbooks/operacao-autonoma.md.
+
+```bash
+npm run ops:diag
+npm run ops:diag -- --browser --partida
+```
+
+## `ops:diag:local`
+
+Só a árvore, sem rede: versão sincronizada, index.astro com a cadeia de boot, grafo de módulos coerente num servidor estático (pega import de símbolo inexistente ANTES do deploy — `syntax` não pega), assets com o cabeçalho certo e a partida sintética em todos os mapas. É o `ops:diag` que cabe no CI.
+
+```bash
+npm run ops:diag:local
+```
+
+## `ops:selftest`
+
+A prova de que a diagnose morde (lei 3): sobe uma produção sintética por sintoma — export arrancado, módulo 404, versão divergente, main.js servido como HTML, banco fora, 503 intermitente, GLB em 404 ou como HTML, flag de ranking incoerente, CSP ausente, raiz lenta, árvore dessincronizada, GLB corrompido — e cobra o achado com id e severidade esperados; o cenário sadio tem de sair tecnicamente verde. Com Playwright disponível, prova ainda o boot em Chromium e o mutante de TDZ (o caso de 07/08). Mutante que não acende sai 1. Entra no check:fast.
+
+```bash
+npm run ops:selftest
+node tools/ops/selftest.mjs --so=rota-intermitente --verboso
+```
+
+## `ops:test`
+
+Unidades da camada operacional em `node --test`: regras sintoma → causa, veredito (verde ≠ pronto), parsers de HTML/import map/version.js, classificação de erro de rede e o `public/js/ops.js` rodando num DOM stubado (boot, FPS, falhas de carga, WebGL, abandono). Milissegundos; entra no check:fast.
+
+```bash
+npm run ops:test
+```
+
 ## `eval:release`
 
 Release preserva nome/créditos, DCO, docs e um único deploy automático pela main; o CLI fica manual. Mutantes: nome-antigo|semcreditos|semdco|semdocs|semrollback|deploy-duplo.
