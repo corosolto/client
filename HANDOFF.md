@@ -21,6 +21,12 @@ O primeiro smoke hospedado ainda achou TDZ no pick inicial: `_ensureMusic` chama
 antes de `ANON_KEY`; o antigo `try/catch` protegia o menu. O isolamento foi restaurado e TT6
 passou a cobrá-lo antes da nova execução do browser.
 
+**Publicado e validado:** PR #508 integrado em `main` por `e3889895`; release seguinte
+`37e25668` (`v2.0.0-alpha.222`). A segunda rodada hospedada passou smoke browser 1m50 e portão
+amplo 4m43. O JS servido no domínio contém `sendJsonKeepalive` e `credentials: 'omit'`, o
+navegador abriu sem erros e o Cloud Run registrou `OPTIONS 204` seguido de `POST 200` para
+presence/funnel. `prod-watch` manual `34001747882` passou edge, purge, preflight, banco e schema.
+
 Este é o ponto de entrada para continuar trabalho no repositório sem herdar um retrato
 antigo como se fosse o estado atual.
 
