@@ -203,5 +203,8 @@ public/img/chars/molde/
 # relatórios da camada operacional (npm run ops:diag) — evidência de rodada, não contrato
 artifacts/ops/
 
+# Capturas e medições locais de Lajes
+artifacts/lajes-visual/
+
 # Local diagnostic captures and isolated preview snapshots.
 /artifacts/

@@ -468,3 +468,12 @@ completo138s. Vercel dpl_7CEYJvsT3rqaGbEE32Y1XDJsAL5w parou no pacote privado:
 mapSoundscapes sem Amazônia. Régua AMAP reproduz e correção de preparo reutiliza
 água/vegetação existentes sem novosassets; mutante mata. Próximo: reenviar após
 revisão, aguardar CI/preview e merge autorizado.
+
+Main avançou novamente para70f52493 (Lajes) durante CI. Merge conciliado:
+Game preserva layeredNavigation de Lajes e botLayeredNavigation da Amazônia;
+footstepSurfaceAt passa y para manter terra/laje. Fauna mantém pipas da main.
+Controlador de preview da main permanece intacto; controlador Amazônia foi
+movido para amazonia_map_preview.js e ambos menus preservados. Preparos de
+áudio Lajes/Amazônia executam juntos após fetch, sem alterar outros overrides.
+Pacote/registro/CI combinam os mapas; blocos gerados reconstruídos.
+Próximo: testes de ambos mapas e hover, build, novo CI e merge autorizado.

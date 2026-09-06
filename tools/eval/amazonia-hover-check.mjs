@@ -21,7 +21,7 @@ try{
    const u=new URL(r.request().url());
    if(u.origin!==new URL(base).origin||u.pathname.startsWith('/api/'))return r.abort();
    if(missing&&u.pathname.endsWith('/amazonia.mp4'))return r.fulfill({status:404,body:''});
-   if(mutant&&u.pathname==='/js/map_preview.js'){
+   if(mutant&&u.pathname==='/js/amazonia_map_preview.js'){
      const res=await r.fetch(),source=await res.text(),body=source.replace("host.addEventListener('pointerleave', stop);",'');
      if(body===source)throw Error('mutante não aplicou');
      return r.fulfill({response:res,body});

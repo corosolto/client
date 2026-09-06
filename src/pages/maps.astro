@@ -52,6 +52,14 @@ const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> 
       'that keeps the street from becoming a sniper corridor. Four flags: dirt pitch, corner bar, ' +
       'bus stop and baile square.',
   },
+  lajes: {
+    nome: 'Lajes (Community)',
+    resumo: 'Narrow alleys between masonry homes, an open central field and rooftop combat.',
+    detalhe: 'Both teams start at ground level. Three routes between the homes connect the spawns, ' +
+      'with the central field as the only wide opening on the ground. Four stairways lead to two ' +
+      'upper crossings lined with water tanks, parapets and clotheslines. Four rooftop flags reward ' +
+      'the longer view, but getting there means contesting the stairs and their cover.',
+  },
 };
 const en = (id: string) => MAP_EN[id];
 
@@ -85,7 +93,7 @@ const jsonld = [
 ---
 <Layout
   ogImage={abs('/api/og/mapas.png')}
-  ogImageAlt={`Card with the 5 arenas of ${BRAND_FULL}`}
+  ogImageAlt={`Card with the ${MAPAS.length} arenas of ${BRAND_FULL}`}
   title={`Maps - the ${MAPAS.length} arenas | ${BRAND_FULL}`}
   description={`The ${MAPAS.length} arenas of ${BRAND_FULL}: ${MAPAS.map(m => en(m.id).nome).join(', ')} - layout, mode and how to play each one.`}
   jsonld={jsonld}

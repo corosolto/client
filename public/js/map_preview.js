@@ -1,78 +1,79 @@
-import { MAP_PREVIEW_MEDIA } from './map_preview_media.js';
-const clips = Object.fromEntries(Object.entries(MAP_PREVIEW_MEDIA).map(([id, media]) => [id, `/img/map-previews/${id}.mp4?v=${media.video}`]));
-export const previewRevision = id => MAP_PREVIEW_MEDIA[id] ? `-${MAP_PREVIEW_MEDIA[id].poster}` : '';
-const bindings = new WeakMap();
-let active = null;
-function fitVideo() {
-  const video=active?.video, img=active?.host.querySelector('img');
-  if (!video || !img) return;
-  Object.assign(video.style, { width:`${img.clientWidth}px`, height:`${img.clientHeight}px`,
-    left:`${img.offsetLeft}px`, top:`${img.offsetTop}px`, clipPath:getComputedStyle(img).clipPath });
-}
-const sizeObserver = new ResizeObserver(fitVideo);
+const VIDEO_MAPS = new Set(['lajes']);
 
-export function stopMapPreviews() {
-  if (!active) return;
-  sizeObserver.disconnect();
-  active.token++;
-  active.video?.pause();
-  active.video?.classList.remove('playing');
-  active = null;
-}
-
-export function bindMapPreview(host, mapId) {
-  if (!host) return;
-  const previous = bindings.get(host);
-  if (previous) {
-    previous.mapId = mapId;
-    if (active === previous) stopMapPreviews();
-    return;
+export function createMapPreview(host, { id, version, media = host, isActive = () => true }) {
+  const doc = host.ownerDocument, win = doc.defaultView;
+  const motion = win.matchMedia('(prefers-reduced-motion: reduce)');
+  const connection = win.navigator.connection;
+  let mapId = id, video = null, failed = false, disposed = false, request = 0;
+  const blocked = () => disposed || failed || doc.hidden || motion.matches || connection?.saveData ||
+    !VIDEO_MAPS.has(mapId) || !isActive() || !host.isConnected || !host.getClientRects().length;
+  function stop() {
+    request++;
+    if (media.classList.contains('map-preview-playing')) media.classList.toggle('map-preview-playing', false);
+    if (video) { video.pause(); video.currentTime = 0; }
   }
-  const state = { host, mapId, video: null, token: 0 };
-  bindings.set(host, state);
-  host.classList.add('map-preview-host');
-  const stop = () => { if (active === state) stopMapPreviews(); };
-  const start = async event => {
-    const url = clips[state.mapId];
-    if (!url || event.pointerType === 'touch' || (event.type === 'focusin' && !event.target.matches(':focus-visible')) || document.hidden ||
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) return;
-    if (active === state) return;
-    stopMapPreviews();
-    active = state;
-    const token = ++state.token;
-    if (!state.video) {
-      const video = document.createElement('video');
-      video.className = 'map-hover-video';
-      video.muted = true;
-      video.loop = true;
-      video.playsInline = true;
-      video.preload = 'none';
-      video.setAttribute('aria-hidden', 'true');
-      video.addEventListener('error', stop);
-      host.append(video);
-      state.video = video;
+  function release() {
+    stop();
+    if (!video) return;
+    video.onerror = null;
+    video.removeAttribute('src'); video.load(); video.remove(); video = null;
+  }
+  function fail() { failed = true; stop(); }
+  async function start(event) {
+    if (event?.pointerType === 'touch' || blocked()) return;
+    if (!video) {
+      video = doc.createElement('video');
+      video.className = 'map-preview-video';
+      video.preload = 'none'; video.muted = true; video.defaultMuted = true;
+      video.loop = true; video.playsInline = true;
+      video.setAttribute('aria-hidden', 'true'); video.setAttribute('tabindex', '-1');
+      video.src = `/video/map-previews/${mapId}.webm?v=${version}`;
+      video.onerror = fail;
+      media.append(video);
     }
-    const video = state.video;
-    fitVideo();
-    sizeObserver.observe(host);
-    const img=host.querySelector('img');
-    if(img) sizeObserver.observe(img);
-    if (video.getAttribute('src') !== url) video.src = url;
-    video.currentTime = 0;
+    const playing = video, token = ++request;
     try {
-      const playing = video.play();
-      await playing.then(() => {
-        if (active === state && token === state.token) video.classList.add('playing');
-        else if (active !== state) video.pause();
-      });
-    } catch { if (active === state && token === state.token) stop(); }
-  };
+      const started = await playing.play().catch(() => false);
+      if (token !== request) return;
+      if (started === false) { fail(); return; }
+      if (blocked()) { stop(); return; }
+      media.classList.toggle('map-preview-playing', true);
+    } catch {
+      if (token === request) fail();
+    }
+  }
+  const blur = event => { if (!host.contains(event.relatedTarget)) stop(); };
+  const visibility = () => { if (blocked()) stop(); };
+  const observer = new win.MutationObserver(() => {
+    if (!host.isConnected) dispose();
+    else if (video && !video.paused) visibility();
+  });
+  for (let ancestor = host; ancestor; ancestor = ancestor.parentElement) {
+    observer.observe(ancestor, { childList: true, attributes: true, attributeFilter: ['class', 'hidden', 'style'] });
+  }
   host.addEventListener('pointerenter', start);
   host.addEventListener('pointerleave', stop);
   host.addEventListener('focusin', start);
-  host.addEventListener('focusout', event => { if (!host.contains(event.relatedTarget)) stop(); });
+  host.addEventListener('focusout', blur);
+  doc.addEventListener('visibilitychange', visibility);
+  motion.addEventListener('change', visibility);
+  connection?.addEventListener('change', visibility);
+  function dispose() {
+    if (disposed) return;
+    disposed = true; release(); observer.disconnect();
+    host.removeEventListener('pointerenter', start);
+    host.removeEventListener('pointerleave', stop);
+    host.removeEventListener('focusin', start);
+    host.removeEventListener('focusout', blur);
+    doc.removeEventListener('visibilitychange', visibility);
+    motion.removeEventListener('change', visibility);
+    connection?.removeEventListener('change', visibility);
+  }
+  return {
+    stop, dispose,
+    setMap(next) {
+      if (next === mapId || disposed) return;
+      release(); mapId = next; failed = false;
+    },
+  };
 }
-
-document.addEventListener('visibilitychange', () => { if (document.hidden) stopMapPreviews(); });
-window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', stopMapPreviews);
-window.addEventListener('pagehide', stopMapPreviews);

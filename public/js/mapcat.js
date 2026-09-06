@@ -5,6 +5,7 @@ const MAP_CATS = {
   amazonia: ['FAVELA'],
   praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
   ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
+  lajes: ['FAVELA', 'COMUNIDADE'],
   piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
   parque_treta: ['ARENA', 'COMUNIDADE'],
   velho_oeste: ['ARENA', 'COMUNIDADE'],
@@ -15,6 +16,7 @@ const MAP_CATS = {
 const MAP_AUTOR = {
   amazonia: 'Ruben Marcus',
   praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
+  lajes: 'Ruben Marcus',
   ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Emerson Garrido',
   piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
   parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',

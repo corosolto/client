@@ -1804,6 +1804,10 @@ function runNode(script, env = {}, args = []) {
   if (!existsSync(join(HERE, 'map-check.mjs'))) {
     skip('MAP*', 'geometria de mapa (submerso/respawn/escada/bandeiras)', 'map-check.mjs ausente');
   } else {
+    const beco = runNode('lajes-spawn-space-check.mjs');
+    const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
+    put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
+      respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
     const out = runNode('map-check.mjs');
     const pj = join(ROOT, 'tools', 'eval', 'map_check.json');
     if (!existsSync(pj)) {
@@ -1921,16 +1925,23 @@ function runNode(script, env = {}, args = []) {
            folga ≥ 1,20 m = raio 0,38 + 0,82 de passo lateral (uma esquiva);
            área ≥ 40 m² num raio de 5 m (teto geométrico π·5² = 78,5) = pouco mais da metade
            do disco, o mínimo pra 4 pessoas nascerem e se espalharem sem se empurrar.
-         Vale pros 4 mapas: fresta de respawn não é característica de mapa nenhum. */
+         Lajes tem contrato próprio de beco aceito pelo dono: LSP1 cobra corpos e saída.
+         A exigência de pátio não se aplica ali; demais mapas preservam ambos os tetos. */
       {
         const ruins = [], evid = [];
         for (const m of (j.mapas || [])) {
           if (m.err) continue;
           evid.push(`${m.map} folga ${m.piorFolga} m / área ${m.piorArea} m²`);
+          // V6 aceita exige respawn em beco; segurança física cobrada por LSP1.
+          // Contrato e medição original: docs/maps/LAJES-V7-SPAWN.md.
+          if (m.map === 'lajes') {
+            if (!respawnBecoValido) ruins.push('lajes: contrato de respawn em beco reprovado');
+            continue;
+          }
           for (const s2 of (m.salaDoSpawn || []))
             if (!s2.okFolga || !s2.okArea) ruins.push(`${m.map}/${s2.team}(${s2.x},${s2.z}) folga ${s2.folgaParede} m área ${s2.areaContigua} m²`);
         }
-        put('MAP2B', 'todo slot de respawn é um LUGAR: ≥ 1,20 m de folga até a parede mais próxima e ≥ 40 m² de chão andável CONTÍGUO num raio de 5 m',
+        put('MAP2B', 'respawn amplo: folga ≥ 1,20 m e área contígua ≥ 40 m²; Lajes em beco exige LSP1',
           !erros.length && !ruins.length,
           `${evid.join(' · ')} | slots fora do teto: ${ruins.length ? ruins.join(' · ') : 0} | ` +
           'critério: 64 direções na altura do peito contra os colisores do jogo + flood-fill a partir do próprio slot (parede do outro lado NÃO conta)');

@@ -1,5 +1,12 @@
 # Fauna ambiente
 
+- `pipa.glb` — “Red Yellow Diamond Kite”, Mint text-to-3D, 26/08/2026.
+  [Chat de origem](https://mint.gg/chat/ph724bnemdzzbkp3va6bxdf5v98d6rrb),
+  registro `pipa-lajes` em `mint-assets.json`, SHA-256
+  `9ae646b40e18403bd861d35198b25be72d20c727de7a90ca7df1a389d6b2583e`.
+  Voo procedural por `attachPipaSky`, com escala e âncoras definidas em
+  `lajes_sky.js`. O arquivo não possui clipe de animação próprio.
+
 Derivados otimizados das referências locais; texturas WebP 256², sem quantização
 de malha skinned.
 

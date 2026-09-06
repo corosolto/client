@@ -6,6 +6,7 @@ import { VERSION } from './version.js';
 const loader = new GLTFLoader();
 const templates = new Map();
 const ASSETS = Object.freeze({
+  pipa: 'models/ambient/pipa.glb',
   rat: 'models/ambient/rat_animated.glb',
   pigeonGround: 'models/ambient/pigeon_ground.glb',
   dog: 'models/ambient/dog_caramelo.glb',
@@ -705,4 +706,155 @@ export function placeFauna(id, { x = 0, y = 0, z = 0, ry = 0, targetLen, submerg
     object.receiveShadow = true;
   });
   return root;
+}
+
+/* PIPA NO CÉU — região append-only. Voo procedural: a linha tem comprimento fixo, o abanar
+   é soma de dois períodos que não fecham e a rabiola é rastro. docs/maps/LAJES-PIPA.md */
+
+/* Só o lajes baixa: pipa em mapa fechado (UPA, Loja H) seria pipa dentro do prédio. */
+export const PIPA_ASSETS = Object.freeze(['pipa']);
+/* envergadura da vela em metros; nós do rastro; quadros entre um nó e o seguinte */
+const PIPA_ENVERGADURA = 1.35, PIPA_RABIOLA_NOS = 14, PIPA_RABIOLA_ATRASO = 3;
+const PIPA_HIST = PIPA_RABIOLA_NOS * PIPA_RABIOLA_ATRASO + 2;
+
+function pipaFallback() {
+  /* Sem GLB (harness node, sem rede) a pipa vira losango e o voo é o mesmo:
+     fallback mudo devolveria céu vazio sem ninguém perceber. */
+  const grupo = new THREE.Group();
+  const vela = new THREE.Mesh(new THREE.PlaneGeometry(PIPA_ENVERGADURA * .82, PIPA_ENVERGADURA),
+    new THREE.MeshStandardMaterial({ color: 0xd63b42, roughness: .85, side: THREE.DoubleSide }));
+  vela.rotation.z = Math.PI / 4; grupo.add(vela);
+  return grupo;
+}
+
+/* Envolve o `update` da ambiência em vez de abrir laço no game.js: pausa, reset e descarte
+   ficam com um dono só — pipa abanando com o jogo pausado denuncia enfeite colado por fora. */
+export function attachPipaSky(ambience, root, configs = []) {
+  if (!ambience || !configs.length) return null;
+  const grupo = new THREE.Group();
+  grupo.name = 'PIPA_SKY';
+  grupo.userData.skyLife = 'pipa';
+  root.add(grupo);
+  const modelo = templates.get('pipa');
+  const pipas = configs.map((config, indice) => {
+    const corpo = modelo ? modelo.scene.clone(true) : pipaFallback();
+    if (modelo) {
+      corpo.updateMatrixWorld(true);
+      const caixa = new THREE.Box3().setFromObject(corpo);
+      const tamanho = caixa.getSize(new THREE.Vector3());
+      corpo.scale.setScalar(PIPA_ENVERGADURA / Math.max(.001, Math.max(tamanho.x, tamanho.y)));
+    }
+    const no = new THREE.Group();
+    no.add(corpo);
+    no.userData.skyLife = 'pipa';
+    no.userData.nonCollider = true;
+    grupo.add(no);
+    // Line, não tubo: 2 draw calls por pipa e nada de geometria refeita por quadro
+    const linha = new THREE.Line(new THREE.BufferGeometry().setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(6), 3)),
+      new THREE.LineBasicMaterial({ color: 0xe8e2d4, transparent: true, opacity: .5 }));
+    linha.frustumCulled = false; grupo.add(linha);
+    const rabiola = new THREE.Line(new THREE.BufferGeometry().setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(PIPA_RABIOLA_NOS * 3), 3)),
+      new THREE.LineBasicMaterial({ color: [0xf0bd2b, 0x2f70c1, 0xd63b42][indice % 3] }));
+    rabiola.frustumCulled = false; grupo.add(rabiola);
+    return {
+      no, linha, rabiola,
+      /* âncora = quem segura a linha, na laje ou no quintal */
+      ancora: new THREE.Vector3(...(config.ancora || [0, 5.2, 0])),
+      alt: config.alt ?? (26 + indice * 5),          // 25–40 m: acima da laje e dos prédios
+      raio: config.raio ?? (9 + indice * 2.5),       // afastamento horizontal da âncora
+      fase: config.fase ?? indice * 2.1,
+      giro: config.giro ?? (.55 + indice * .12),     // amplitude da guinada, em radianos
+      hist: Array.from({ length: PIPA_HIST }, () => new THREE.Vector3()),
+      cursor: 0, iniciado: false, anterior: new THREE.Vector3(),
+    };
+  });
+
+  const passo = (pipa, t) => {
+    /* Períodos que não fecham entre si (7,3 s e 1,73 s): a soma nunca repete o
+       mesmo desenho, que é o que separa "abanando" de "oscilando". */
+    const largo = Math.sin(t / 7.3 * Math.PI * 2 + pipa.fase);
+    const tremido = Math.sin(t / 1.73 * Math.PI * 2 + pipa.fase * 1.7);
+    const azimute = pipa.fase + largo * pipa.giro + tremido * .09;
+    /* A linha esticada é o vínculo: sobe de um lado, a pipa recua do outro. */
+    const subida = largo * .18 + tremido * .05;
+    const alt = pipa.alt + subida * 6;
+    const raio = pipa.raio * Math.sqrt(Math.max(.05, 1 - subida * subida * .8));
+    return new THREE.Vector3(
+      pipa.ancora.x + Math.sin(azimute) * raio,
+      alt,
+      pipa.ancora.z + Math.cos(azimute) * raio);
+  };
+
+  let tempo = 0;
+  const atualizar = (dt) => {
+    tempo += Math.max(0, Math.min(.05, dt));
+    const pos = new THREE.Vector3(), vel = new THREE.Vector3();
+    for (const pipa of pipas) {
+      pos.copy(passo(pipa, tempo));
+      if (!pipa.iniciado) {
+        for (const p of pipa.hist) p.copy(pos);
+        pipa.anterior.copy(pos); pipa.iniciado = true;
+      }
+      vel.copy(pos).sub(pipa.anterior);
+      pipa.anterior.copy(pos);
+      pipa.no.position.copy(pos);
+      /* Aponta para onde VAI e banca para o lado da guinada; sem velocidade (jogo
+         pausado) mantém a pose em vez de saltar para o eixo zero. */
+      if (vel.lengthSq() > 1e-8) {
+        pipa.no.rotation.y = Math.atan2(vel.x, vel.z);
+        pipa.no.rotation.x = -Math.atan2(vel.y, Math.hypot(vel.x, vel.z)) * .6;
+        pipa.no.rotation.z = THREE.MathUtils.clamp(-vel.x * 9, -.5, .5);
+      }
+      pipa.hist[pipa.cursor].copy(pos);
+      const linhaPos = pipa.linha.geometry.attributes.position;
+      linhaPos.setXYZ(0, pipa.ancora.x, pipa.ancora.y, pipa.ancora.z);
+      linhaPos.setXYZ(1, pos.x, pos.y, pos.z);
+      linhaPos.needsUpdate = true;
+      const rabPos = pipa.rabiola.geometry.attributes.position;
+      for (let i = 0; i < PIPA_RABIOLA_NOS; i++) {
+        // cada nó ocupa onde a pipa esteve há i × atraso quadros: o rabo CHEGA depois
+        const p = pipa.hist[(pipa.cursor - i * PIPA_RABIOLA_ATRASO + PIPA_HIST * 4) % PIPA_HIST];
+        rabPos.setXYZ(i, p.x, p.y - i * .012, p.z);
+      }
+      rabPos.needsUpdate = true;
+      pipa.cursor = (pipa.cursor + 1) % PIPA_HIST;
+    }
+  };
+
+  grupo.traverse((objeto) => {
+    if (!objeto.isMesh) return;
+    objeto.castShadow = false;        // 30 m acima da cena: sombra é orçamento sem pixel
+    objeto.receiveShadow = false;
+    objeto.userData.nonSolidSurface = true;
+    objeto.userData.nonCollider = true;
+  });
+  atualizar(0);
+
+  const updateOriginal = ambience.update.bind(ambience);
+  ambience.update = (dt, playerPosition) => {
+    updateOriginal(dt, playerPosition);
+    if (!ambience.paused) atualizar(dt);
+  };
+  const disposeOriginal = ambience.dispose.bind(ambience);
+  let disposed = false;
+  ambience.dispose = () => {
+    if (!disposed) {
+      disposed = true;
+      for (const pipa of pipas) {
+        for (const line of [pipa.linha, pipa.rabiola]) { line.geometry.dispose(); line.material.dispose(); }
+        if (!modelo) pipa.no.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
+      }
+      grupo.removeFromParent();
+    }
+    disposeOriginal();
+  };
+  ambience.pipaSky = {
+    group: grupo, count: pipas.length,
+    snapshot: () => pipas.map((pipa, i) => ({ id: `pipa-${i}`,
+      x: +pipa.no.position.x.toFixed(3), y: +pipa.no.position.y.toFixed(3), z: +pipa.no.position.z.toFixed(3),
+      rabiola: PIPA_RABIOLA_NOS, fonte: modelo ? 'gltf' : 'fallback' })),
+  };
+  return ambience.pipaSky;
 }

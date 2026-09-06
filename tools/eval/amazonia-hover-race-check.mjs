@@ -1,7 +1,7 @@
 // Crítico reproduziu play antigo pausando hover novo. Promessas controladas medem
 // o módulo real nas duas ordens de término (resolve/reject), sem esperar rede.
 import { readFileSync } from 'node:fs';
-let source = readFileSync(new URL('../../public/js/map_preview.js', import.meta.url), 'utf8');
+let source = readFileSync(new URL('../../public/js/amazonia_map_preview.js', import.meta.url), 'utf8');
 source = source.replace("import { MAP_PREVIEW_MEDIA } from './map_preview_media.js';", readFileSync(new URL('../../public/js/map_preview_media.js', import.meta.url), 'utf8'));
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
 if (mutant && !['play-antigo', 'erro-antigo'].includes(mutant)) throw Error('Mutante desconhecido');

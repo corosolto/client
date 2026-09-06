@@ -8,7 +8,7 @@ const dest='artifacts/amazonia-visual/main-preview';
 if(!realpathSync(dest).startsWith(realpathSync('.')+'/artifacts/')) throw Error('preview fora dos artefatos');
 const manifestPath='artifacts/amazonia-visual/main-preview-manifest.json';
 const manifest=JSON.parse(readFileSync(manifestPath));
-const extra=['public/js/amazonia_foliage_clearance.js','public/js/amazonia_cabins.js','public/js/amazonia_fauna_motion.js','public/models/props/palafita_aberta_amazonia.glb','public/models/props/galinha_mint_amazonia.glb','public/models/props/pintinho_mint_amazonia.glb','public/js/map_preview.js','public/js/map_preview_media.js','public/map-preview.css','public/img/map-previews/amazonia.mp4','public/js/skylife.js','public/models/ambient/arara_voo.glb',
+const extra=['public/js/amazonia_foliage_clearance.js','public/js/amazonia_cabins.js','public/js/amazonia_fauna_motion.js','public/models/props/palafita_aberta_amazonia.glb','public/models/props/galinha_mint_amazonia.glb','public/models/props/pintinho_mint_amazonia.glb','public/js/map_preview.js','public/js/amazonia_map_preview.js','public/js/map_preview_media.js','public/map-preview.css','public/img/map-previews/amazonia.mp4','public/js/skylife.js','public/models/ambient/arara_voo.glb',
  ...['arvore_mata_amazonia','palmeira_babacu_amazonia','palafita_pro_amazonia','samambaia','heliconia','canoa_rabeta_amazonia'].map(n=>`public/models/props/${n}.glb`),
  ...['tex_selva','tex_madeira_serragem','tex_palha'].map(n=>`public/img/textures/${n}.webp`)];
 const menuPatches={};

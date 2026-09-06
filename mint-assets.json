@@ -112,6 +112,28 @@
         "notes": "6 itens (churrasqueira, mesa c/ guarda-sol, cooler, boia, placa, caixa de som). Set dressing da festa de piscina BR."
       }
     },
+    "pipa-lajes": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/pipa.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77pb3qdfmp4wezctvrpqsmkn8d62ta",
+        "chatUrl": "https://mint.gg/chat/ph724bnemdzzbkp3va6bxdf5v98d6rrb",
+        "displayName": "Red Yellow Diamond Kite (pipa do lajes)",
+        "sha256": "9ae646b40e18403bd861d35198b25be72d20c727de7a90ca7df1a389d6b2583e",
+        "notes": "Kit de revisao r2 do lajes (kits-mint.json, item lajes.pipa, 26/08/2026). Pipa de losango vermelha e amarela, 4532 triangulos, WebP 1024, sem esqueleto e SEM CLIPE DE ANIMACAO — e nao precisa: pipa nao tem parte movel, o que se move e a pipa inteira contra a linha esticada. O voo e PROCEDURAL (ambientlife.js, regiao 'PIPA NO CEU'): casca esferica em volta da ancora porque a linha tem comprimento fixo, abanar por soma de duas oscilacoes de periodos que nao fecham entre si (7,3 s e 1,73 s), yaw/pitch/roll tirados da velocidade do quadro e rabiola como RASTRO de posicoes passadas. Bbox nativo 0,553 x 0,998 x 0,361 m; integrada com envergadura 1,35 m e altura de voo de 26 a 38 m. Substituiu 12 losangos de BufferGeometry parados no ceu entre 14 e 22 m ('pipas nao voam', dono 26/08/2026). Nao e colisor, nao e occluder e nao projeta sombra."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "9ae646b40e18403bd861d35198b25be72d20c727de7a90ca7df1a389d6b2583e"
+      }
+    },
     "boto-amazonia": {
       "artifactType": "model/gltf-binary",
       "files": [
