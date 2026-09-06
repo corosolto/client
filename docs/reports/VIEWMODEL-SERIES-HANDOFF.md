@@ -521,3 +521,13 @@ a remodelagem da faca nem declarar o arsenal pronto. Nenhuma captura própria
 ou Blender ficou ativo após estes relatórios. Atualizar este ledger por marco.
 
 Prompt pronto para outra ferramenta: `PROMPT-CLAUDE-VIEWMODELS.md`.
+
+### Revalidação do fechamento — 06/09
+
+Retomada em `d359391f`, árvore limpa. `npm run eval:melee-vm` repetido com
+exit 0; relatórios finais dos dois formatos, times e Blender conferidos contra
+o SHA-256 do GLB público atual. Folha de movimento e pares de luvas revistos,
+sem nova alteração de assets ou ataques. Usar `knife-final-review.html`, não a
+antiga `knife-motion-review.html` ainda aberta no contexto do usuário. Abertura
+da revisão final solicitada ao Codex, com retorno `queued`; link direto entregue.
+Continua pendente o aceite visual da proporção e acabamento, sem merge/deploy.
