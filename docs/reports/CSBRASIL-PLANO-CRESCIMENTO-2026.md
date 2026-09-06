@@ -80,7 +80,7 @@ Nenhum gráfico que pareça atual substitui a data da última linha observada.
 | Viewmodel em primeira pessoa | Um único integrador | mãos, arma, animação, ADS e HUD sequenciais; não dividir entre agentes |
 | Personagens em terceira pessoa | Emerson | clips e poses 3P, com contrato explícito de entrega para não competir com o integrador de viewmodel |
 | UI e áudio | Ruben | mudanças pequenas, isoladas e congeladas antes do RC |
-| Mapas | Uma lane por mapa | não começar Campinho e Joá antes do checkpoint de entrada de cada um |
+| Mapas | Uma lane por mapa | não começar Campinho antes do checkpoint; Joá começa pelo resgate cirúrgico do PR #446 fechado, não por uma reautoria |
 | Coordenação/release | Codex | evidência, CI, merge sequencial, release e rollback |
 
 ### 6–8/09 — fechar o núcleo que já está em andamento
@@ -114,7 +114,11 @@ aceito.
 
 ### 13–15/09 — Mansão do Joá
 
-- Fazer o mesmo diagnóstico de entrada; não começar por fauna/avião/faixa antes de leitura de
+- Recuperar do PR fechado #446 (`map2/mansao`, ponta `73cf81c8`), que contém praia, horizonte,
+  interiores e ambiência, mas está 382 commits atrás de `main`, 231 à frente e conflita amplamente.
+  Não tentar merge direto nem repetir as 43 mudanças do PR: separar somente o que sobreviver ao
+  diagnóstico atual e criar uma série pequena sobre `main`.
+- Fazer o diagnóstico de entrada; não começar por fauna/avião/faixa antes de leitura de
   combate, visada, água, performance e preview.
 - Entregar uma versão competitiva legível; ambiência extra fica apenas se couber no orçamento.
 - Capturar material de trailer apenas após a revisão humana do mapa.
