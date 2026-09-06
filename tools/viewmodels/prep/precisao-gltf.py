@@ -31,6 +31,7 @@ def mundo(j,b,nome='idle',t=0):
     anim=next((a for a in j.get('animations',[]) if a['name']==nome),None)
     if anim:
         for c in anim['channels']:
+            assert anim['samplers'][c['sampler']].get('interpolation','LINEAR') in ('LINEAR','STEP')
             q=anim['samplers'][c['sampler']]; ts=accessor(j,b,q['input']).ravel(); val=accessor(j,b,q['output']); idx=int(np.searchsorted(ts,t,side='right')-1); idx=max(0,min(idx,len(ts)-1))
             if idx==len(ts)-1 or t<=ts[0] or q.get('interpolation')=='STEP': v=val[idx]
             else:

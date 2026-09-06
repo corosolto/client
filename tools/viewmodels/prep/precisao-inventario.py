@@ -65,12 +65,13 @@ def main():
     assert subprocess.check_output(['git', 'branch', '--show-current'], cwd=RAIZ, text=True).strip() == 'codex/vm-prep-precisao'
     assert SAIDA.resolve().is_relative_to(RAIZ)
     SAIDA.mkdir(parents=True, exist_ok=True)
-    inventario = {'base': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=RAIZ, text=True).strip(), 'weapons': {}}
+    inventario = {'base': subprocess.check_output(['git', 'rev-parse', '961c70d2'], cwd=RAIZ, text=True).strip(), 'weapons': {}}
     for w, (f, pacote) in ARMAS.items():
         raiz_privada = FONTE / 'public/private-assets/viewmodels'
         paths = {'own': RAIZ / f'public/models/weapons/{w}.glb', 'base': raiz_privada / f'{f}/{f}.glb', 'native': raiz_privada / f'{f}/{f}-runtime.glb', 'baked': raiz_privada / f'{f}/{w}-baked-runtime.glb', 'goldsrc': raiz_privada / f'goldsrc-vm/{w}-runtime.glb', 'retarget': raiz_privada / f'retarget-vm/{w}-runtime.glb'}
         fonte_fbx = Path('/Users/ruben/csbrasil-private-assets/generated/extracted/Assets/KINEMATION/FPSAnimationPack/Animations') / pacote
         inventario['weapons'][w] = {'family': f, 'assets': {k: glb(p) for k, p in paths.items()}, 'blend': metadados(raiz_privada / f'{f}/{f}.blend'), 'fbx': [metadados(p) for p in sorted(fonte_fbx.rglob('*')) if p.suffix.lower() == '.fbx']}
+    inventario['source_package'] = metadados(Path('/Users/ruben/csbrasil-private-assets/sources/fpsanimationpack_ultimate.unitypackage'))
     inventario['controls'] = [metadados(FONTE / p) for p in ('public/models/viewmodels/coro/ak-hires.glb', 'public/private-assets/viewmodels/pistol/pistol-runtime.glb')]
     inventario['pistol_uv_reference'] = glb(FONTE / 'public/private-assets/viewmodels/pistol/pistol-runtime.glb')
     inventario['inputs'] = [metadados(RAIZ / p) for p in ('public/js/authoredvm.js', 'public/js/data/vmconfig.js', 'public/js/data/weapons.js', 'public/js/weapons.js', 'public/js/game.js', 'public/js/vmhands.js', 'tools/viewmodels/paid-pack-manifest.json')]
