@@ -191,6 +191,13 @@ const path = (() => {
 const routeOk = nodes.length >= 100 && path.length >= 2 && path.every(i => Number.isInteger(i) && nodes[i]);
 
 /* ── OE5: texturas dedicadas ── */
+// Mutação atua no material do mundo, não na lista de medições.
+if (mutante === 'texturas-genericas') world.root.traverse(object => {
+  if (!object.isMesh) return;
+  for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+    if (material) { material.map = new THREE.Texture(); material.map.name = 'generica'; material.bumpMap = null; }
+  }
+});
 const textureNames = new Set();
 world.root.traverse(object => {
   if (!object.isMesh) return;
@@ -200,11 +207,12 @@ world.root.traverse(object => {
     if (material?.bumpMap?.name) textureNames.add(material.bumpMap.name);
   }
 });
-if (mutante === 'texturas-genericas') textureNames.clear();
 const textureOk = [
   ['oeste-sand', 'oeste-sand-real'], ['oeste-wood', 'oeste-wood-real'], ['oeste-wood-pale', 'oeste-wood-pale-real'],
   ['oeste-roof', 'oeste-roof-real'], ['oeste-cactus', 'oeste-cactus-real'], ['oeste-hay', 'oeste-hay-real'],
-  ['oeste-adobe', 'oeste-adobe-real'], ['oeste-adobe-paupique'], ['oeste-rachado'],
+  ['oeste-adobe', 'oeste-adobe-real'], ['oeste-adobe-paupique'],
+  // O bump rachado foi removido: causava listras que contrariavam o novo albedo.
+  // RV9 mede detalhe e contraste na imagem real, com mutantes de solo plano/ondulado.
 ].every(names => names.some(name => textureNames.has(name)));
 
 /* ── OE6: obstáculos-chave da praça (nomes do retheme r2) ── */
