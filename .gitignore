@@ -199,3 +199,6 @@ tmp/
 url_verification_cache.json
 # Logs de eval/serve do scratchpad (os PROMPT-HANDOFF-*.md são HISTÓRIA e ficam).
 scratchpad/*.log
+
+# Capturas e variantes locais da revisão Mítica.
+/artifacts/miticos-review/
