@@ -251,7 +251,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,280 |
+| `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,295 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,964 |

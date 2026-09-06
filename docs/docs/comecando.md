@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 39.519 linhas em 64 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 39.534 linhas em 64 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.356** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.371 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -221,7 +221,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.280 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.295 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |

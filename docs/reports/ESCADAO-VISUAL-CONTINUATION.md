@@ -203,3 +203,9 @@ Elevar Escadão (Morro) do PR #436: subida, becos e patamares de um bairro brasi
 - Navegação final453/453nós e zeroarestas impossíveis. Beco oeste ganha vão1,10m, recuo dianteiro e pneus fora da passagem; leste tem ligação exterior física. Fundação fecha vaziossemacesso e piso doCTF E conecta aoauxiliar a5,04m. Regresso da queda pela bordasul reproduzido e resolvido comguarda; mutante semguarda cai. Crítico independente confirmou caminhada/retorno/guardas e não encontrou novo bloqueador Node.
 - Fontes congeladas para runtime/browser/preview-release. browser-main comprovou3ratos/3baratas carregados e móveis; motion-main1100posições reais. Relatório ESCADAO-R4-CIRCULACAO.md distingue esses estágios da geometria final.
 - Próximo: evidênciafinal, checks/build apósúltimosajustes, push/PR/CI/merge autorizado. FPSexclusivo/AM7 seguem limitações explícitas, sem reduzir tetos.
+
+## R4 — evidência final antes do PR
+- Núcleo revisado em b310a9d4. runtime-final EV0–EV7 passa:140séries,12/12escadas,0headHits/0sem piso,67destinosporlado comretorno,0LOSspawn. browser-final-merge PASS249posições e15capturas,3ratos/3baratas e gatoMintcarregados. Crítico visual não encontrou novosbloqueadores nasvistaspatamar2/becooeste/fauna/casafrontal.
+- Previewfinal JPG42.881bytes/WebM232.305bytes6s; hashesHTTP dosarquivosservidosverificados, hover-finalPASS. Fonte divergente ainda terá mutante executado antesdoPR.
+- Node-release9/9 e build-releasePASS; guardamutantreproduzqueda. Novo pisoP2 eguardas passam no críticofísico; grafo453/453 ealcance32/32zonas, saídaoestediretapassa.
+- origin/main avançou durantevalidação para971342e4(alpha.225). Próximo: incorporar atualizaçãooperacional/menu, regenchecks/docs, fecharA/B+mutanteproveniência, pushPR e CI/mergeautorizado.

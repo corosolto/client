@@ -1,12 +1,8 @@
 export const MAP_PREVIEWS = {
   "escadao": {
-    "poster": "/img/map-previews/escadao.jpg?v=ed4dd4e48a72",
-    "video": "/img/map-previews/escadao.webm?v=dd9f112919f8",
+    "poster": "/img/map-previews/escadao.jpg?v=3030a4853c88",
+    "video": "/img/map-previews/escadao.webm?v=bfb3a56179b0",
     "seconds": 6,
-    "source": "195374467a95403e00744b0c9af371027695d21b0bb4c4922d070f6f2f39dfeb",
-    "home": "43dfd1d3fe9494f71e0b70440cf3c7d3f72bcea73b8edd99571dcd74670b4cb4",
-    "details": "d6cff0c51bfadfc7e0520c3cc8c94de3e4567714d6e14d9a11260c3334aedcf1",
-    "layout": "9d864c1a123deca233f58a5894e554f0a44f81735545db41160f20f6238af1da",
     "assets": {
       "public/models/props/pilha_pneus.glb": "3b1257763372645f44eb0b7738f0e8991b0d7042798abeebbd693c6098499d30",
       "public/models/props/tires.glb": "1ab37c4656f6a3058b388d01d95a4987296ccf46f7fd99dd05a4646b85dfc1f4",
@@ -29,6 +25,10 @@ export const MAP_PREVIEWS = {
       "public/models/props/escadao_varanda_r4.glb": "808371e470de7073a590e9b5bb65c8c9f05a6d871c87b259bdcf7e9df19bccfc",
       "public/models/props/escadao_eletrica_r4.glb": "e971f91254a6170da06174c5420eb41b47d40fb927076bde9ca5b044faf5ac90",
       "public/models/props/escadao_cat_r4.glb": "065988ff0eeb6adf7af962c8bff8a188867af4dfd1c636272360191b8275a9ac"
-    }
+    },
+    "source": "dd16e83d3352c8fbd906198905bb17aefec3d55f42e7439709bf55d8c93dbcc8",
+    "home": "43dfd1d3fe9494f71e0b70440cf3c7d3f72bcea73b8edd99571dcd74670b4cb4",
+    "details": "d6cff0c51bfadfc7e0520c3cc8c94de3e4567714d6e14d9a11260c3334aedcf1",
+    "layout": "bf8e57e9b1e8b785420afe9aa4d3700ebfb40afc3c1ee4d7dce891e2cdaa15b7"
   }
 };
