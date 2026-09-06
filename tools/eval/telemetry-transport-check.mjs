@@ -18,10 +18,12 @@ cobra(!/sendBeacon\([^\n]*apiUrl|sendBeacon\(apiUrl/.test(source), 'TT4 JSON vol
 for (const rota of ['telemetry', 'pick', 'presence', 'funnel', 'perf', 'match', 'submit-match']) {
   cobra(source.includes(`sendJsonKeepalive('/api/${rota}'`), `TT5 /api/${rota} não usa o transporte confiável`);
 }
+const pick = source.slice(source.indexOf('function _pick('), source.indexOf('function _picks('));
+cobra(pick.includes('try {') && pick.includes('getAnonId()'), 'TT6 pick de boot perdeu isolamento fail-silent');
 
 if (falhas.length) {
   console.error(`telemetry transport: ${falhas.length} FALHA(S)`);
   for (const falha of falhas) console.error(`  ✗ ${falha}`);
   process.exit(1);
 }
-console.log('telemetry transport: TT1–TT5 verde');
+console.log('telemetry transport: TT1–TT6 verde');

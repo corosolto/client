@@ -17,6 +17,9 @@ preflight real do Cloud Run em vez de inferir saúde apenas pelo pipeline multip
 
 **Validado localmente:** sintaxe, `eval:telemetrytransport`, três mutantes negativos,
 `eval:analytics`, `eval:apis`, `check:vercel` 4/4 e build Astro/Vercel verdes.
+O primeiro smoke hospedado ainda achou TDZ no pick inicial: `_ensureMusic` chama `_pick`
+antes de `ANON_KEY`; o antigo `try/catch` protegia o menu. O isolamento foi restaurado e TT6
+passou a cobrá-lo antes da nova execução do browser.
 
 Este é o ponto de entrada para continuar trabalho no repositório sem herdar um retrato
 antigo como se fosse o estado atual.

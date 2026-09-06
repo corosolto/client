@@ -918,19 +918,23 @@ if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) 
 /* PICKS — "o que as pessoas escolhem" (dono, 06/08). keepalive: nunca atrasa nem
    quebra o jogo; o servidor conta por (kind, key) na picks_daily (migration 013). */
 function _pick(kind, key) {
-  sendJsonKeepalive('/api/pick', {
-    kind, key, eventId: clientUuid(), anonId: getAnonId(), sessionId: getSessionId(),
-    matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
-    ...telemetryGameContext,
-  });
+  try {
+    sendJsonKeepalive('/api/pick', {
+      kind, key, eventId: clientUuid(), anonId: getAnonId(), sessionId: getSessionId(),
+      matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
+      ...telemetryGameContext,
+    });
+  } catch { /* pode rodar antes do bootstrap da telemetria; nunca quebra o menu */ }
 }
 function _picks(lote) {
-  sendJsonKeepalive('/api/pick', {
-    anonId: getAnonId(), sessionId: getSessionId(),
-    matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
-    ...telemetryGameContext,
-    picks: lote.map((pick) => ({ ...pick, eventId: clientUuid() })),
-  });
+  try {
+    sendJsonKeepalive('/api/pick', {
+      anonId: getAnonId(), sessionId: getSessionId(),
+      matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
+      ...telemetryGameContext,
+      picks: lote.map((pick) => ({ ...pick, eventId: clientUuid() })),
+    });
+  } catch { /* fail-silent */ }
 }
 /* PRESENÇA ANÔNIMA — o que o "N online" do rodapé passou a contar (07/08).
    Antes o único sinal de presença era o `/api/heartbeat`, que exige nick + token e
