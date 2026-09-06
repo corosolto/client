@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { WEAPONS } from '../../public/js/data/weapons.js';
+import { carregarMapIds } from '../audio/map-ids.mjs';
 
 const RAIZ = resolve(new URL('../..', import.meta.url).pathname);
 const SCRIPT = join(RAIZ, 'tools/audio/fab-game-local.mjs');
@@ -16,11 +17,7 @@ const NET_RUNTIME = readFileSync(join(RAIZ, 'public/js/netgame.js'), 'utf8');
 const CHARACTERS_RUNTIME = readFileSync(join(RAIZ, 'public/js/characters.js'), 'utf8');
 const SOUNDSCAPE_RUNTIME = readFileSync(join(RAIZ, 'public/js/soundscape.js'), 'utf8');
 const MANIFEST_GENERATOR = readFileSync(join(RAIZ, 'tools/gen-audio-manifest.mjs'), 'utf8');
-const MAP_IDS = [
-  'praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada', 'corrego',
-  'posto_treta', 'upa_24h', 'obras_prefeitura', 'atacadao_treta', 'parque_treta',
-  'velho_oeste', 'penitenciaria',
-];
+const MAP_IDS = carregarMapIds();
 const FIREARM_IDS = Object.keys(WEAPONS).filter((id) => id !== 'knife');
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (mutante && mutante !== 'sem-veto') {
@@ -482,4 +479,4 @@ if (erros.length) {
   for (const e of erros) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log('AUDIO FAB LOCAL: verde — arsenal, granadas, 13 mapas, 16 Fish, 36 vozes próprias e 8 músicas; staging privado e veto preservados.');
+console.log(`AUDIO FAB LOCAL: verde — arsenal, granadas, ${MAP_IDS.length} mapas, 16 Fish, 36 vozes próprias e 8 músicas; staging privado e veto preservados.`);
