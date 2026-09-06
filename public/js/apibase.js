@@ -25,3 +25,20 @@ export function apiUrl(caminho) {
 }
 
 export const ROTAS_NO_BACKEND = NO_BACKEND;
+
+/* GET com nova tentativa em 5xx ou falha de rede — o cold start do Cloud Run (medido em
+   06/09/2026: /api/online e /api/map-plays 503 na 1ª chamada da página, 200 na seguinte)
+   deixava o menu sem contador. 4xx não repete. Espera 400 ms, depois 800 ms. */
+export async function fetchComRetry(url, init = {}, { tentativas = 3, esperaMs = 400, fetchFn = (...a) => globalThis.fetch(...a), dorme = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
+  let ultimo = null;
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      const r = await fetchFn(url, init);
+      if (r.status < 500) return r;
+      ultimo = r;
+    } catch (e) { ultimo = e; }
+    if (i < tentativas - 1) await dorme(esperaMs * 2 ** i);
+  }
+  if (ultimo instanceof Error) throw ultimo;
+  return ultimo;
+}
