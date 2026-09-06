@@ -185,3 +185,9 @@ Com o Node empacotado do ambiente local (`.../codex-primary-runtime/dependencies
 O primeiro `eval:mansao` com o `/usr/local/bin/node` (v16.13.0) falhou em
 `import.meta.dirname`; isso é incompatibilidade do runtime local antigo e não uma
 falha do mapa. O teste válido acima usa o Node empacotado.
+
+Após abrir a URL de debug no navegador local, a primeira partida revelou uma
+incompatibilidade do Three vendorizado (`BufferAttribute` sem `setUsage`) na animação
+das asas. `mansao_ambience.js` agora trata essa API opcional e mantém `needsUpdate`; a
+partida reiniciada entrou na arena com HUD CTF visível (JARDIM, SALA, MEZZO e PISCINA),
+sem `launch-error`. A suíte `eval:mansao` permaneceu verde depois do ajuste.

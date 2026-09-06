@@ -377,8 +377,10 @@ function prepareWingDeformation(type, model) {
       weights[i] = THREE.MathUtils.smoothstep(span, 0, .10);
       travel = Math.max(travel, 2 * Math.sin(.42 / 2) * Math.hypot(span, point[1] - hingeY));
     }
-    position.setUsage(THREE.DynamicDrawUsage);
-    normal?.setUsage(THREE.DynamicDrawUsage);
+    // Algumas versões do Three vendorizado não expõem setUsage no atributo;
+    // needsUpdate abaixo continua garantindo o upload dos vértices deformados.
+    position.setUsage?.(THREE.DynamicDrawUsage);
+    normal?.setUsage?.(THREE.DynamicDrawUsage);
     geometry.computeBoundingBox(); geometry.boundingBox.expandByScalar(travel);
     geometry.computeBoundingSphere(); geometry.boundingSphere.radius += travel;
     parts.push({ geometry, rest, restNormals, weights, lateral, cut, hingeY });
