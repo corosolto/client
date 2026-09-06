@@ -72,9 +72,12 @@ Terra deve começar pela revisão M4, preservar controles e produzir progresso v
 ## Continuidade e automação
 
 Automação existente `coordenar-cat-logo-de-viewmodels-com-claude` foi renomeada para
-`Coordenar produção CSBrasil com orçamento`, com prompt global sem retomada Claude.
-Temporariamente PAUSADA durante transição; reativar após registro de despachos e modelo
-de acompanhamento. Não criar duplicata nem deixar mecanismo antigo lançar Claude.
+`Coordenar produção CSBrasil — 24 horas`, com prompt global sem retomada Claude.
+Reativada após despachar M4 + Amazônia, a cada15min, somente mudanças acionáveis.
+Coordenação operacional configurada para Terra/medium no próximo turno desta tarefa;
+Astra permanece disponível para revisões/decisões delimitadas. Não criar duplicata nem
+deixar mecanismo antigo lançar Claude. As duas tarefas despachadas já aparecem active
+em novos turnos; modelo configurado via ferramenta, sem observação independente do runtime.
 A janela de 24h não encerra silenciosamente o objetivo: no prazo, informar entregues,
 pendentes e bloqueios com artefatos. Continuar objetivo autorizado conforme prioridades.
 
