@@ -17,7 +17,7 @@ todos iguais à tabela de insumos, e dos controles M4/AK citados abaixo.
 
 | Rifle | Estado / artefatos presentes | Gates e bloqueador atual | Próximo menor passo offline |
 |---|---|---|---|
-| M4 | Bloqueado. `A/m4-approved-2a4a189d/` e `A/m4-actions-fingers-c1/` com Blender, GLB, GIFs, contato, reimport e revisão independente; réguas novas em `A/m4-actions-wrist/` e `A/m4-actions-bolt/` | Idle aprovado pelo dono; 409 tracks protegidas e retorno real conferidos no teste registrado. Recarga reprovada pela medição de 06/09: a mão cruza o carregador em 59 de 73 frames (palma e polegar com 242 cruzamentos constantes em f012–f046, pico 585 em f049) e `bolt_release` nunca é alcançado (mínimo 50,37 mm em f057). A melhora de dedos de C1 foi medida por distância não assinada e não prova pega. Punho reclassificado: 0,00 mm² de pele visível em f013/f045 contra 76,37 mm² da idle aprovada | Reautorar `H_grasp` e `H_bolt` para contato por fora do carregador e alcance real do ferrolho; remedir o clipe inteiro com as duas réguas antes de qualquer export |
+| M4 | Bloqueado. `A/m4-approved-2a4a189d/` e `A/m4-actions-fingers-c1/` com Blender, GLB, GIFs, contato, reimport e revisão independente; réguas em `A/m4-actions-wrist/` e `A/m4-actions-bolt/`; ajuste e imagens de C3 em `A/m4-actions-c3/` | Idle aprovado pelo dono; 409 tracks protegidas e retorno real conferidos. Recarga reprovada: a mão cruza o carregador em 59 de 73 frames e `bolt_release` nunca é alcançado (mínimo 50,37 mm em f057). C3 tentou reautorar pega e ferrolho e **não produziu candidato**: 1.655 configurações rígidas medidas, nenhuma limpa; o punho fechado (cavidade ~33 mm) não contém a placa de 71,6 × 27,9 mm. Controle decisivo: a **idle aprovada tem 428 cruzamentos** mão/arma, mais que os 242 do transporte, logo "zero cruzamentos" não é o padrão desta composição. Punho reclassificado: 0,00 mm² de pele em f013/f045 contra 76,37 mm² da idle | Decisão do dono sobre o critério de interpenetração, já que a idle aprovada falha nele; se o critério for geométrico, o conserto é o par mão/arma com pega autorada por dedo ou outra malha, não mais sondas de recarga |
 | MD97 | Bloqueado; sem novo candidato. `A/raw-md97.png`, `A/goldsrc-vm-md97-part.png` e `A/goldsrc-vm-md97-reload-half.png` | Inspeção/receita disponíveis; carregador ausente no bruto; split CLIP de 1.148 vértices inclui alça/coronha/punho. Sem gate visual de candidato ou Game | Construir só o carregador em cópia offline, usando a especificação MAG existente e verificando encaixe dianteiro; não transportar recarga bullpup |
 | Carabina | Bloqueado; sem novo candidato. `A/raw-carbine.png`, `A/goldsrc-vm-carbine-part.png` e `A/goldsrc-vm-carbine-reload-half.png` | Inspeção identifica alavanca e tubo; split Bone54 de 1.377 vértices leva alavanca/gatilho/receiver. Porta e gesto de alimentação não confirmados; recarga não pode ser autorada com segurança geométrica | Inspecionar lado oposto e tampa do tubo para localizar a alimentação; registrar ausência se não houver geometria identificável |
 | SCAR | Bloqueado; sem novo candidato. `A/raw-scar.png`, `A/goldsrc-vm-scar-part.png` e `A/goldsrc-vm-scar-reload-half.png` | Receita específica disponível; split Bone25 de 113 vértices é fragmento do pente/receiver. Sem aprovação visual de candidato; comando lateral ainda precisa ser marcado | Selecionar o carregador completo em cópia offline e provar separação sem carregar partes do receiver |
@@ -1145,3 +1145,79 @@ fora e o dedo pressionador alcance `bolt_release`, e só então remedir o clipe
 inteiro com as duas réguas antes de qualquer render ou export. Enquanto a
 recarga estiver reprovada, o item de manga f050–f057 fica atrás dessa correção,
 porque a trajetória que o produz vai mudar.
+
+## M4 — tentativa C3 de reautorar pega e ferrolho, 06/09/2026 — **não produzida**
+
+Seguindo o passo mínimo da rodada anterior, `rifles-m4-actions-build.py` ganhou um
+ajuste medido de contato (`--fit-contact`) e um modo de diagnóstico
+(`--fit-report`). Sem essas opções o script continua reproduzindo C1: a
+reconstrução em `A/m4-actions-c1-recheck/` dá o mesmo centro de palma
+(`-0,017527 / -0,025572 / -0,084635`), os mesmos eventos e diferença zero de
+`stretch_l` nos 73 frames.
+
+### O que foi tentado, e medido
+
+`H_bolt` passou a mirar o **polegar** na paleta, por ponto fixo: a translação da
+palma que leva a ponta do polegar ao `bolt_release` converge em poucas passadas.
+`H_grasp` foi refeito a partir do raio real da aresta do carregador (metade da
+espessura, 16,6 mm de malha) em vez do raio do punho vertical (19,56 mm), e
+depois varrido contra a luva deformada em quatro eixos rígidos mais duas
+aberturas de dedo, sempre com o critério assinado de cruzamento exato:
+
+| Varredura | Configurações | Limpas |
+|---|---|---|
+| folga 0–8 mm × abertura −10…+30% | 221 | 0 |
+| folga 0–12 mm × roll ±120° × abertura × polegar | 510 | 0 |
+| folga 0–45 mm × roll −60…0° × abertura 0,2–0,8 | 600 | 0 |
+| deslize 0–40 mm × folga × roll × abertura × polegar | 324 | 0 |
+
+Nenhuma das 1.655 configurações zera os cruzamentos. Os quatro dedos limpam
+sozinhos com abertura ≥ 0,2; **palma e polegar nunca limpam**. Com 40 mm de
+deslize à frente da aresta — a mão já fora do corpo do carregador — ainda restam
+32 cruzamentos de polegar e 8 de palma.
+
+Como esse número é implausível para uma mão afastada, a pose foi renderizada
+antes de ser aceita como verdade, em `A/m4-actions-c3/fit-evidence/best-{left,
+front,below}.png`. As imagens mostram o motivo: o punho **fecha no ar ao lado do
+carregador** enquanto a placa atravessa a região dos dedos. A cavidade do punho
+fechado tem ~33 mm; a seção do carregador é 71,6 × 27,9 mm. Uma mão fechada nessa
+forma não contém essa placa: ou a placa atravessa o punho, ou o punho não segura
+nada.
+
+### O controle que muda o critério
+
+A mesma régua foi então apontada para a **idle aprovada pelo dono**, medindo a mão
+esquerda contra o punho vertical que ela segura:
+
+| Região | Direto | Inverso | Além da superfície |
+|---|---|---|---|
+| palma | 56 | 40 | 8,29 mm |
+| indicador | 45 | 0 | 2,16 mm |
+| médio | 60 | 0 | 1,93 mm |
+| anelar | 91 | 0 | 1,84 mm |
+| mínimo | 54 | 0 | 1,90 mm |
+| polegar | 57 | 25 | 5,80 mm |
+
+**428 cruzamentos na idle aprovada**, contra 242 constantes na fase de transporte
+da recarga. A pose que o dono aprovou penetra a arma mais do que a recarga que
+está sendo reprovada por penetrar o carregador. Portanto "zero cruzamentos" nunca
+foi o padrão contra o qual esta composição foi aceita, e não pode ser o portão que
+reprova a recarga sozinho.
+
+### Veredito
+
+**C3 não foi produzida e nada foi exportado.** Não há GLB, não houve reimport nem
+folhas por ação, porque não existe candidato: o ajuste não encontrou pose limpa e
+publicar uma pega que fecha no ar seria pior que C1. C1 e C2 seguem rejeitados.
+
+Duas saídas reais, e nenhuma é mais uma sonda de dedo:
+
+1. Decisão do dono sobre o critério. Se interpenetração mão/arma é tolerada
+   visualmente — como a idle aprovada indica —, a recarga deve ser julgada pelo
+   que a câmera mostra, e por essa régua ela já está medida: 0,00 mm² de pele em
+   f013/f045 e cruzamentos internos à silhueta.
+2. Se o critério for mesmo geométrico, o conserto não é a recarga: é o par
+   mão/arma, começando pela idle. Isso exige pega autorada por dedo contra a
+   superfície (três juntas por dedo resolvidas na malha, não uma fração uniforme)
+   ou outra malha de mão — trabalho de asset, com aprovação visual do dono antes
+   de qualquer runtime.

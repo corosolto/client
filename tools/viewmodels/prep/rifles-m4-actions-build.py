@@ -32,12 +32,17 @@ def load(name):
 inv = load('rifles-inventory')
 lib = load('rifles-m4-actions-lib')
 inv.guard()
-OUT = inv.OUT / 'm4-actions-c1'
-INPUT = OUT / 'input/m4-approved.blend'
+argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+OUT = inv.OUT / next((a.split('=')[1] for a in argv if a.startswith('--out=')), 'm4-actions-c1')
+INPUT = inv.OUT / 'm4-actions-c1/input/m4-approved.blend'
 APPROVED_BLEND_SHA = '6925c7f5633c7e2869e989bc4f379770965e7a9cd38fb505da2840ad082d0e26'
 assert OUT.resolve().is_relative_to(inv.OUT) and INPUT.is_file()
 assert inv.digest(INPUT) == APPROVED_BLEND_SHA, 'input copy differs from the approved snapshot'
-argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+OUT.mkdir(parents=True, exist_ok=True)
+# C1 held the magazine with the pose calibrated for the vertical grip cylinder and
+# aimed the palm, not a digit, at the bolt catch.  --fit-contact re-fits both
+# against the deformed glove; without it this script still reproduces C1.
+FIT_CONTACT = '--fit-contact' in argv
 CLIPS = [a for a in argv if not a.startswith('--')] or ['reload_tactical']
 
 bpy.ops.wm.open_mainfile(filepath=str(INPUT), load_ui=False)
@@ -235,16 +240,22 @@ def remap(v):
     """Grip frame (front -X, up +Z, right +Y) -> magazine frame (front_m, axis_up, -left_m)."""
     return front_m * v.dot(Vector((-1, 0, 0))) + axis_up * v.dot(Vector((0, 0, 1))) + (-left_m) * v.dot(Vector((0, 1, 0)))
 K_EDGE = .80
-grasp_axis_point = Vector((band_lo.x + grip_radius * K_EDGE, band_lo.y + grip_radius * K_EDGE, GRASP_Z)) * S
+# The hand closes around the vertical grip, a cylinder of `grip_radius`.  The
+# magazine is a slab: what the fingers could wrap is its front edge, whose radius
+# is half the slab thickness.  Only the fit uses that; C1's value is kept as-is.
+edge_radius = (band_hi.y - band_lo.y) / 2
+wrap_radius = edge_radius if FIT_CONTACT else grip_radius * K_EDGE
+grasp_axis_point = Vector((band_lo.x + wrap_radius, band_lo.y + wrap_radius, GRASP_Z)) * S
 palm_mag = grasp_axis_point + remap(palm_center_l - grip_axis_point)
-H_grasp = hand_pose(palm_mag, remap(forward_l), remap(dorsal_l))
 record['grasp']['magazine'] = {'band_bounds_mesh': [list(band_lo), list(band_hi)], 'grasp_axis_point_m': list(grasp_axis_point),
-                               'palm_center_m': list(palm_mag), 'edge_factor': K_EDGE, 'grasp_z_mesh': GRASP_Z}
+                               'edge_radius_mesh': edge_radius, 'grip_radius_mesh': grip_radius,
+                               'radius_deficit_m': (grip_radius - edge_radius) * S, 'edge_factor': K_EDGE, 'grasp_z_mesh': GRASP_Z}
+grasp_out = remap(dorsal_l).normalized()
+GRASP_DIR = remap(forward_l), remap(dorsal_l)
 
 paddle = Vector((.062, left_face_at_bolt.y, .062))
-palm_bolt = paddle * S + Vector((0, -.020, 0)) + Vector((.012, 0, -.012))
-H_bolt = hand_pose(palm_bolt, Vector((-1, 0, .5)).normalized(), Vector((0, -1, 0)))
-PRESS = Vector((0, .012, 0))
+BOLT_DIR = Vector((-1, 0, .5)).normalized(), Vector((0, -1, 0))
+bolt_out = Vector((0, -1, 0))
 
 # ---------------------------------------------------------------- sockets (mesh units, children of gun/mag)
 def socket(name, parent, local):
@@ -275,6 +286,251 @@ bpy.context.view_layer.update()
 fingers_l = R.finger_axes('l')
 fingers_r = R.finger_axes('r')
 pivot_r = R.head('hand_r')
+
+# ---------------------------------------------------------------- contact fit against the deformed glove
+glove = bpy.data.objects['GEO_FP_SK_Glove_01']
+glove_groups = {g.index: g.name for g in glove.vertex_groups}
+hand_ids = {v.index for v in glove.data.vertices
+            if sum(g.weight for g in v.groups if glove_groups[g.group].endswith('_l')
+                   and not glove_groups[g.group].startswith(('lowerarm', 'upperarm'))) > .35}
+hand_edges = [tuple(e.vertices) for e in glove.data.edges if all(i in hand_ids for i in e.vertices)]
+hand_polys = [tuple(p.vertices) for p in glove.data.polygons if all(i in hand_ids for i in p.vertices)]
+assert hand_ids and hand_edges and hand_polys, (len(hand_ids), len(hand_edges), len(hand_polys))
+mag_polys = [tuple(p.vertices) for p in mag.data.polygons]
+mag_edge_list = [tuple(e.vertices) for e in mag.data.edges]
+body_polys = [tuple(p.vertices) for p in gun.data.polygons]
+
+
+def pose_left(hand_world, fraction, extra=None):
+    desired, info = R.two_bone('l', hand_world)
+    local = dict(R.open_fingers(fingers_l, fraction, extra=extra))
+    local['lowerarm_twist_01_l'] = R.twist_rotation('l', info['twist'], desired['lowerarm_l'])
+    R.apply(desired, local)
+    bpy.context.view_layer.update()
+
+
+def world_points(obj):
+    ev = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    mesh = ev.to_mesh()
+    pts = [ev.matrix_world @ v.co for v in mesh.vertices]
+    ev.to_mesh_clear()
+    return pts
+
+
+def contact(target_pts, target_polys, target_edges=None, touch=.002):
+    """Crossings both ways plus how much of the hand actually rests on the surface.
+
+    Distance alone cannot tell a grip from a burial, so a candidate only counts
+    when nothing crosses; only then is the touching area worth comparing.
+    """
+    pts = world_points(glove)
+    tree = BVHTree.FromPolygons(target_pts, target_polys)
+    direct = 0
+    for a, b in hand_edges:
+        delta = pts[b] - pts[a]
+        if delta.length < 1e-7:
+            continue
+        hit = tree.ray_cast(pts[a], delta.normalized(), delta.length)
+        if hit[0] is not None and 1e-6 < hit[3] < delta.length - 1e-6:
+            direct += 1
+    reverse = 0
+    if target_edges:
+        hand_tree = BVHTree.FromPolygons(pts, hand_polys)
+        for a, b in target_edges:
+            delta = target_pts[b] - target_pts[a]
+            if delta.length < 1e-7:
+                continue
+            hit = hand_tree.ray_cast(target_pts[a], delta.normalized(), delta.length)
+            if hit[0] is not None and 1e-6 < hit[3] < delta.length - 1e-6:
+                reverse += 1
+    distances = [tree.find_nearest(pts[i])[3] for i in hand_ids]
+    return {'direct': direct, 'reverse': reverse, 'touching': sum(1 for d in distances if d <= touch),
+            'nearest_mm': round(min(distances) * 1000, 3)}
+
+
+def joint_degrees(fraction):
+    return round(max(math.degrees(abs(fraction * bend)) for _, bend in fingers_l.values()), 2)
+
+
+REGIONS = {'palm': ('hand_l',), 'index': tuple(f'index_0{k}_l' for k in (1, 2, 3)),
+           'middle': tuple(f'middle_0{k}_l' for k in (1, 2, 3)), 'ring': tuple(f'ring_0{k}_l' for k in (1, 2, 3)),
+           'pinky': tuple(f'pinky_0{k}_l' for k in (1, 2, 3)), 'thumb': tuple(f'thumb_0{k}_l' for k in (1, 2, 3))}
+region_ids = {name: {v.index for v in glove.data.vertices
+                     if sum(g.weight for g in v.groups if glove_groups[g.group] in bones) > .35}
+              for name, bones in REGIONS.items()}
+region_edges = {name: [tuple(e.vertices) for e in glove.data.edges if all(i in ids for i in e.vertices)]
+                for name, ids in region_ids.items()}
+
+
+def by_region(target_pts, target_polys):
+    pts = world_points(glove)
+    tree = BVHTree.FromPolygons(target_pts, target_polys)
+    out = {}
+    for name, edges in region_edges.items():
+        direct = 0
+        for a, b in edges:
+            delta = pts[b] - pts[a]
+            if delta.length < 1e-7:
+                continue
+            hit = tree.ray_cast(pts[a], delta.normalized(), delta.length)
+            if hit[0] is not None and 1e-6 < hit[3] < delta.length - 1e-6:
+                direct += 1
+        near = min(tree.find_nearest(pts[i])[3] for i in region_ids[name])
+        out[name] = {'direct': direct, 'nearest_mm': round(near * 1000, 3)}
+    return out
+
+
+def grasp_pose(gap, roll_deg, fingers, thumb, slide=0.):
+    """Hand on the magazine: stand-off across the broad face, slide along the mag's
+    front-back axis, roll about the magazine axis, and a thumb opening of its own,
+    because the closed hand encircles a slab far deeper than the grip cylinder."""
+    axis = Matrix.Rotation(math.radians(roll_deg), 4, axis_up)
+    pivot = grasp_axis_point
+    placed = Matrix.Translation(pivot) @ axis @ Matrix.Translation(-pivot) @ \
+        hand_pose(palm_mag + grasp_out * gap + front_m * slide, *GRASP_DIR)
+    extra = {name: (thumb - fingers) * -bend for name, (_, bend) in fingers_l.items() if name.startswith('thumb')}
+    pose_left(G0n @ placed, fingers, extra=extra)
+    return placed
+
+
+if '--fit-report' in argv:
+    table = []
+    for slide in [s / 1000 for s in range(0, 41, 5)]:
+        for gap in [g / 1000 for g in (0, 5, 10)]:
+            for roll in (-30, 0, 30):
+                for fingers in (.2, .5):
+                    for thumb in (.4, .8):
+                        grasp_pose(gap, roll, fingers, thumb, slide)
+                        row = contact(world_points(mag), mag_polys, mag_edge_list)
+                        row.update(gap_mm=round(gap * 1000, 1), slide_mm=round(slide * 1000, 1), roll_deg=roll,
+                                   open_fraction=fingers, thumb_fraction=thumb,
+                                   max_joint_deg=joint_degrees(max(fingers, thumb)),
+                                   regions=by_region(world_points(mag), mag_polys))
+                        table.append(row)
+    best = min(table, key=lambda t: (t['direct'] + t['reverse'], -t['touching']))
+    # Where the crossings land decides whether this is a placement problem or a
+    # shape problem, so the best candidate reports them in magazine coordinates.
+    grasp_pose(best['gap_mm'] / 1000, best['roll_deg'], best['open_fraction'], best['thumb_fraction'],
+               best.get('slide_mm', 0) / 1000)
+    pts = world_points(glove)
+    mag_pts = world_points(mag)
+    tree = BVHTree.FromPolygons(mag_pts, mag_polys)
+    to_local = mag.matrix_world.inverted()
+    where = {}
+    for name in ('palm', 'thumb'):
+        hits = []
+        for a, b in region_edges[name]:
+            delta = pts[b] - pts[a]
+            if delta.length < 1e-7:
+                continue
+            hit = tree.ray_cast(pts[a], delta.normalized(), delta.length)
+            if hit[0] is not None and 1e-6 < hit[3] < delta.length - 1e-6:
+                hits.append(to_local @ hit[0])
+        if hits:
+            where[name] = {'hits': len(hits),
+                           'local_x_mm': [round(min(h.x for h in hits) * 1000, 1), round(max(h.x for h in hits) * 1000, 1)],
+                           'local_y_mm': [round(min(h.y for h in hits) * 1000, 1), round(max(h.y for h in hits) * 1000, 1)],
+                           'local_z_mm': [round(min(h.z for h in hits) * 1000, 1), round(max(h.z for h in hits) * 1000, 1)]}
+    span = {'mag_local_bounds_mm': [[round(v * 1000, 1) for v in mag_lo], [round(v * 1000, 1) for v in mag_hi]],
+            'grasp_station_mm': round(GRASP_Z * 1000, 1)}
+    (OUT / 'grasp-fit-report.json').write_text(json.dumps({'trials': table, 'best': best, 'crossing_sites': where,
+                                                           'magazine': span}, indent=1) + '\n')
+    # A pose that measures impossible has to be looked at before it is believed.
+    scene.render.engine = 'BLENDER_WORKBENCH'
+    scene.display.shading.light = 'FLAT'
+    scene.display.shading.color_type = 'OBJECT'
+    scene.render.film_transparent = True
+    scene.render.resolution_x, scene.render.resolution_y = 900, 600
+    for obj, colour in ((glove, (0, .35, 1, 1)), (mag, (1, .2, .1, 1)), (gun, (.45, .45, .45, 1)),
+                        (bpy.data.objects['GEO_FP_SK_Cloth_01'], (.8, .8, .2, 1)),
+                        (bpy.data.objects['GEO_FP_SK_Hand'], (.2, .9, .3, 1))):
+        obj.color = colour
+    look = bpy.data.objects.new('FIT_CAM', bpy.data.cameras.new('FIT_CAM'))
+    scene.collection.objects.link(look)
+    look.data.lens = 55
+    focus = mag.matrix_world @ Vector((0, 0, GRASP_Z))
+    shots = {'left': Vector((-.15, -.42, .10)), 'front': Vector((-.55, -.10, .06)), 'below': Vector((-.10, -.22, -.36))}
+    (OUT / 'fit-evidence').mkdir(exist_ok=True)
+    for name, offset in shots.items():
+        look.location = focus + offset
+        direction = focus - look.location
+        look.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
+        scene.camera = look
+        scene.render.filepath = str(OUT / f'fit-evidence/best-{name}.png')
+        bpy.ops.render.render(write_still=True)
+    scene.camera = camera
+    print('M4_FIT_REPORT', json.dumps({'rows': len(table), 'best': {k: v for k, v in best.items() if k != 'regions'},
+                                       'crossing_sites': where, 'magazine': span,
+                                       'clear': len([t for t in table if t['direct'] == 0 and t['reverse'] == 0])}))
+    sys.exit(0)
+
+
+if FIT_CONTACT:
+    trials = []
+    for gap in [g / 1000 for g in range(0, 9)]:
+        for fraction in [f / 100 for f in range(-10, 35, 5)]:
+            pose_left(G0n @ hand_pose(palm_mag + grasp_out * gap, *GRASP_DIR), fraction)
+            score = contact(world_points(mag), mag_polys, mag_edge_list)
+            score.update(gap_mm=round(gap * 1000, 1), open_fraction=fraction, max_joint_deg=joint_degrees(fraction))
+            trials.append(score)
+    clear = [t for t in trials if t['direct'] == 0 and t['reverse'] == 0]
+    assert clear, max(trials, key=lambda t: -t['direct'] - t['reverse'])
+    # Among poses that do not cross, keep the one resting on the most surface;
+    # ties go to the smaller opening so the hand stays closest to the approved idle.
+    grasp_fit = max(clear, key=lambda t: (t['touching'], -abs(t['open_fraction']), -t['gap_mm']))
+    GRASP_GAP, F_HOLD = grasp_fit['gap_mm'] / 1000, grasp_fit['open_fraction']
+    record['grasp']['magazine_fit'] = {'chosen': grasp_fit, 'clear_candidates': len(clear), 'trials': len(trials),
+                                       'legacy_gap_mm': 0., 'legacy_open_fraction': .12}
+else:
+    GRASP_GAP, F_HOLD = 0., .12
+    record['grasp']['magazine_fit'] = {'chosen': None, 'legacy': True}
+palm_mag = palm_mag + grasp_out * GRASP_GAP
+H_grasp = hand_pose(palm_mag, *GRASP_DIR)
+record['grasp']['magazine']['palm_center_m'] = list(palm_mag)
+
+# The bolt catch is pressed by the thumb, so the thumb tip is what has to arrive.
+# The palm target that puts it there is found by iteration: the map is a rigid
+# translation, so the residual collapses in a few passes.
+if FIT_CONTACT:
+    bolt_trials = []
+    for fraction in [f / 100 for f in range(0, 55, 10)]:
+        for stand in [s / 1000 for s in (3, 5, 7)]:
+            target = paddle * S + bolt_out * stand
+            palm = paddle * S + bolt_out * .02 + Vector((.012, 0, -.012))
+            residual = None
+            for _ in range(6):
+                pose_left(G0n @ hand_pose(palm, *BOLT_DIR), fraction)
+                tip = G0n_inv @ (R.world @ rig_obj.pose.bones['thumb_03_l'].tail)
+                residual = target - tip
+                palm = palm + residual
+                if residual.length < 1e-5:
+                    break
+            pose_left(G0n @ hand_pose(palm, *BOLT_DIR), fraction)
+            score = contact(world_points(mag), mag_polys, mag_edge_list)
+            body = contact(world_points(gun), body_polys)
+            tip = G0n_inv @ (R.world @ rig_obj.pose.bones['thumb_03_l'].tail)
+            score.update(open_fraction=fraction, standoff_mm=round(stand * 1000, 1), palm_m=list(palm),
+                         body_direct=body['direct'], body_nearest_mm=body['nearest_mm'],
+                         thumb_to_paddle_mm=round((tip - paddle * S).length * 1000, 3),
+                         residual_mm=round(residual.length * 1000, 4), max_joint_deg=joint_degrees(fraction))
+            bolt_trials.append(score)
+    clear = [t for t in bolt_trials if t['direct'] == 0 and t['reverse'] == 0 and t['body_direct'] == 0]
+    assert clear, min(bolt_trials, key=lambda t: t['direct'] + t['reverse'] + t['body_direct'])
+    bolt_fit = min(clear, key=lambda t: (t['standoff_mm'], t['open_fraction']))
+    palm_bolt = Vector(bolt_fit['palm_m'])
+    F_PRESS = bolt_fit['open_fraction']
+    PRESS = -bolt_out * (bolt_fit['standoff_mm'] / 1000 - .0005)
+    record['grasp']['bolt_fit'] = {'chosen': bolt_fit, 'clear_candidates': len(clear), 'trials': len(bolt_trials),
+                                   'press_travel_mm': round(PRESS.length * 1000, 3)}
+else:
+    palm_bolt = paddle * S + Vector((0, -.020, 0)) + Vector((.012, 0, -.012))
+    F_PRESS, PRESS = .45, Vector((0, .012, 0))
+    record['grasp']['bolt_fit'] = {'chosen': None, 'legacy': True}
+H_bolt = hand_pose(palm_bolt, *BOLT_DIR)
+record['grasp']['bolt'] = {'paddle_mesh': list(paddle), 'palm_center_m': list(palm_bolt),
+                           'press_vector_m': list(PRESS), 'press_open_fraction': F_PRESS}
+R.apply()
+bpy.context.view_layer.update()
 
 def gun_frame(t, spec):
     """Unscaled world frame of the gun: rise/roll about the right hand plus bobs."""
@@ -395,19 +651,19 @@ if 'reload_tactical' in CLIPS:
         if t < .40:
             s = lib.segment(t, .10, .40)
             arc = Matrix.Translation(Vector((0, -.045, -.02)) * math.sin(math.pi * s))
-            return arc @ lib.lerp_matrix(H_idle_l, H_grasp, s), .35 * math.sin(math.pi * min(1., s * 1.15)) + .12 * s, 'reach'
+            return arc @ lib.lerp_matrix(H_idle_l, H_grasp, s), .35 * math.sin(math.pi * min(1., s * 1.15)) + F_HOLD * s, 'reach'
         if t < 1.56:
-            return mag_m @ H_grasp, .12, 'hold-mag'
+            return mag_m @ H_grasp, F_HOLD, 'hold-mag'
         if t < 2.02:
             s = lib.segment(t, 1.56, 2.02)
             arc = Matrix.Translation(Vector((0, -.05, .01)) * math.sin(math.pi * s))
-            return arc @ lib.lerp_matrix(H_grasp, H_bolt, s), .12 + .33 * s, 'to-bolt'
+            return arc @ lib.lerp_matrix(H_grasp, H_bolt, s), F_HOLD + (F_PRESS - F_HOLD) * s, 'to-bolt'
         if t < 2.14:
             s = lib.segment(t, 2.02, t_bolt, lib.ease_in) if t <= t_bolt else 1 - lib.segment(t, t_bolt, 2.14, lib.ease_out)
-            return Matrix.Translation(PRESS * s) @ H_bolt, .45, 'press'
+            return Matrix.Translation(PRESS * s) @ H_bolt, F_PRESS, 'press'
         s = lib.segment(t, 2.14, 2.40)
         arc = Matrix.Translation(Vector((0, -.035, -.015)) * math.sin(math.pi * s))
-        return arc @ lib.lerp_matrix(H_bolt, H_idle_l, s), .45 * (1 - s), 'return'
+        return arc @ lib.lerp_matrix(H_bolt, H_idle_l, s), F_PRESS * (1 - s), 'return'
 
     def right_index(t):
         e = lib.segment(t, .27, .40) * (1 - lib.segment(t, .50, .82))

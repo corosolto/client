@@ -58,13 +58,14 @@ region_ids = {name: {v.index for v in glove.data.vertices
 assert all(region_ids.values()), {k: len(v) for k, v in region_ids.items()}
 mag_polys = [tuple(p.vertices) for p in mag.data.polygons]
 mag_edges = [tuple(e.vertices) for e in mag.data.edges]
+body_polys = [tuple(p.vertices) for p in gun.data.polygons]
 
 
-def at(frame):
+def at(frame, clip='reload_tactical'):
     for obj in animated:
         obj.animation_data.action = None
         for track in obj.animation_data.nla_tracks:
-            track.mute = track.name != 'reload_tactical'
+            track.mute = track.name != clip
     scene.frame_set(frame + 1 if frame == 0 else frame - 1)
     scene.frame_set(frame)
     bpy.context.view_layer.update()
@@ -165,6 +166,19 @@ control = {'clean_frame': 72, 'clean_crossings': clean[:2], 'pushed_mm': round(s
 assert clean[0] == clean[1] == 0, control
 assert pushed[0] > 0 and pushed[1] > 0, control
 
+# The reload is only fairly judged against the pose the owner already approved,
+# so the same ruler reads the idle left hand against the weapon it holds.
+at(0, 'idle')
+idle_pts, body_pts = evaluated(glove), evaluated(gun)
+body_tree = BVHTree.FromPolygons(body_pts, body_polys)
+baseline = {}
+for name, ids in region_ids.items():
+    polys = [tuple(p.vertices) for p in glove.data.polygons if all(v in ids for v in p.vertices)]
+    direct, reverse, beyond = crossings(idle_pts, body_pts, ids, polys, body_tree)
+    baseline[name] = {'direct': direct, 'reverse': reverse, 'beyond_surface_mm': round(beyond * 1000, 3),
+                      'nearest_surface_mm': round(min(body_tree.find_nearest(idle_pts[i])[3] for i in ids) * 1000, 3)}
+baseline['total_crossings'] = sum(r['direct'] + r['reverse'] for r in baseline.values() if isinstance(r, dict))
+
 worst = {}
 for frame in FRAMES:
     row = next(r for r in rows if r['frame'] == frame)
@@ -180,8 +194,10 @@ report = {'source_blend_sha256': inv.digest(SOURCE / 'm4-actions.blend'),
                      'selection': {name: len(ids) for name, ids in region_ids.items()},
                      'overlap': 'palm and thumb share the vertices weighted to both hand_l and thumb_01_l above the threshold',
                      'weight_threshold': .35},
+          'approved_idle_left_hand_vs_gun': baseline,
           'magazine_integrity': integrity, 'ruler_control': control, 'frames': rows, 'frames_with_crossings': worst,
           'bolt_release_reach_mm': {str(r['frame']): min(r['index_tip_to_bolt_release_mm'], r['thumb_tip_to_bolt_release_mm']) for r in rows}}
 (OUT / 'bolt-press.json').write_text(json.dumps(report, indent=1) + '\n')
-print('M4_BOLT', json.dumps({'magazine_integrity': integrity, 'frames_with_crossings': worst,
-                             'bolt_release_reach_mm': report['bolt_release_reach_mm']}))
+print('M4_BOLT', json.dumps({'approved_idle_left_hand_vs_gun': baseline,
+                             'frames_with_crossings': len(worst),
+                             'bolt_release_reach_mm': min(report['bolt_release_reach_mm'].values())}))
