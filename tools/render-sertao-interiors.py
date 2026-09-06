@@ -28,7 +28,11 @@ pos=data['look']['sol']['pos'];bpy.ops.object.light_add(type='SUN');sun=bpy.cont
 sun.rotation_euler=Vector((-pos[0],pos[2],-pos[1])).to_track_quat('-Z','Y').to_euler();sun.data.energy=1.9;sun.data.angle=math.radians(8);sun.data.color=(1,.63,.35)
 def coord(v):return Vector((v[0],-v[2],v[1]))
 bpy.ops.object.camera_add();camera=bpy.context.object;scene.camera=camera;camera.data.lens=24;camera.data.clip_end=500
-views=[('praca',[-2,1.62,2],[0,2,15]),('lateral-oeste',[-19,1.62,11],[-11.5,1.5,15]),('interior-oeste',[-11.5,1.62,12.4],[-11.5,1.62,18.5]),('interior-leste',[11.5,1.62,12.4],[14,1.4,17]),('sunset',[0,1.62,5],[-30,9,-18])]
+views=[('praca',[-2,1.62,2],[0,2,15]),('lateral-oeste',[-19,1.62,11],[-11.5,1.5,15]),('interior-oeste',[-11.5,1.62,12.4],[-11.5,1.62,18.5]),('interior-leste',[11.5,1.62,12.4],[14,1.4,17]),('sunset',[0,1.62,5],[-30,9,-18]),
+ # BUG-91: casas dos spawns e corredores das carroças
+ ('casa-spawn-e-ext',[10.4,1.62,-33.8],[9.7,1.4,-26]),('casa-spawn-e-int',[9.94,1.62,-27.97],[9.45,1.4,-23.05]),
+ ('casa-spawn-b-ext',[-7.3,1.62,31.4],[-8.4,1.4,24.2]),('casa-spawn-b-int',[-8.61,1.62,25.69],[-7.98,1.4,27.17]),
+ ('carroca-norte',[-5.7,1.62,-14.2],[-6.5,1.1,-20]),('carroca-leste',[3.4,1.62,-1.4],[8,1.1,3]),('carroca-sul',[-10.2,1.62,29.6],[-14.6,1.1,25.2])]
 for name,eye,target in views:
     camera.location=coord(eye);camera.rotation_euler=(coord(target)-camera.location).to_track_quat('-Z','Y').to_euler()
     scene.render.filepath=str(out/f'{name}.png');bpy.ops.render.render(write_still=True)
