@@ -81,3 +81,21 @@ Produto final486cc3cd; índices/documentaçãoa53ec67c. Runner fresco sobre esta
 Amostrafinal pósbarril: p50=8.3/p95=10.0ms,7bots,30s,sem erros; motion-final-controlled-velho_oeste/report.json. Capturasafter/atuais eCTFBexaminadas; notaindependente7/10 permanece atribuídaàiteraçãoanterioraosajustesfinais, semaprovaçãoautomática. Entrega documental emSERTAO-ENTREGA.md:47arquivoslistados, gates,mutantes,rejeições,referências,pendências. Galeria emartifacts/sertao-astra/review.html; port8145continua disponívelpara revisão local.
 
 Implementaçãoautorizada econtraprovas encerradas nesta entrega; próximo passo é revisãoadversarialhumana do mapa e dos commits locais, seguida de decisão sobre refinamentosvisuais. Antesdepublicar:resolver sanfona/distribuição/manifestodeáudio,termos/procedênciadoacervoherdado econflitosdoPR445. Nenhum push,PRnovo,mergeoudeploy. Não interpretarbranchlocalcomoaprovaçãofinaldojogo.
+
+## Revisão solicitada pelo dono: preview, fauna e menu
+
+Objetivo reaberto após revisão local: substituir ilustração do thumbnail por captura real e vídeo silencioso no hover; ampliar fauna crível; alinhar menu à main. Autorizado publicar branch própria e PR contra map2/velho-oeste após validar, sem merge/deploy. HEAD inicial018806e2, worktree exclusiva preservada. Main consultada695557906bcf6a8a3a80e8baf4c434d17d492944; nunca realizar checkout dela.
+
+Diagnóstico: tools/eval/serve.mjs deixa FACTIONS.map sem renderizar; a captura do dono prova que porta8145 não serve para revisão completa de menu. Astro real iniciado nesta worktree na porta8149 (8146–8148 ocupadas; nenhum processo alheio alterado). Além do defeito de servidor, a camada cinematográfica diverge de main. Preservar catálogo10/ready e fluxo local ao alinhar estrutura e CSS; não transportar multiplayer inteiro.
+
+Mint aberto em navegador sem sessão autenticada. Não houve geração paga ou novo download. Calango Mint já existe (licença específica herdada pendente); aves autorais articuladas e fontes naturais em avaliação. Root único responsável por browser; frentes disjuntas menu/contrato e módulo fauna delegadas conforme gauntlet. Próximo: baseline vermelho dos novos contratos, implementar, captura real3:2, mutantes, gates, revisão independente e PR com pendências explícitas.
+
+### Marcos da revisão adicional
+
+Calango corrigido em 3a29d724: uma face espúria removida, 4.957 triângulos, mesmos atributos/texturas/pose. CS1–3 e três mutantes isolados verdes; cache por SHA. Nova captura real em fauna-runtime/calango-close-final.png mostra a face preta removida. A pose bípede herdada e a ausência de rig continuam limitações.
+
+Menu normal Astro percorreu boot → mapa → facção → personagem → adversário → partida com sete bots e nenhum erro JavaScript. Capturas menu-main/*-final.png; personagem real carregado. Crítico aprovou composição para revisão humana, rejeitou CTA em facção indisponível; corrigido, MENU8 vermelho antes/verde depois com mutante. Teste de mira e screenshot sem overlay em andamento.
+
+Fauna: mais dois calangos em rotas seguras e três asas-brancas articuladas autorais (uma em low); 14.400 amostras de fuga sem penetrar colisores. SF1–7 + sete mutantes, FA1–4 + quatro mutantes, runtime RV1–12 verdes. Cena atual: máximo491calls/291060triângulos. Preview real recapturado: JPEG9102503fceee, MP4 seis segundos472437a07822; recibo liga bytes e fontes. Race de play antigo corrigida, dois mutantes. Mutante sem-pausa atinge PV4/PV5; sem-saida demonstra PV4 isoladamente, sem esconder efeito colateral.
+
+Próximo: terminar medição em movimento/ambience, registrar evidências pequenas no Git, commits separados, regenerar docs, rodar global/build e publicar codex/sertao-astra em PR contra map2/velho-oeste. Não há aprovação visual final ou autorização de merge/deploy; pendências de áudio/procedência anteriores permanecem.
