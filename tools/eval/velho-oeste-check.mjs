@@ -19,16 +19,22 @@
        janelas western, gênero/recompensa). O TEMA agora é medido pela
        eval:sertao (ST1-ST5), com mutações próprias — não é afrouxar, é a
        medida morar no instrumento certo.
-     · O QUE FICOU COM OS MESMOS TETOS: CTF/spawns, rota ≥100 nós, ≥3
-       tumbleweeds com colisor móvel, ≥8 proteções de alpendre bloqueando o
+     · O QUE FICOU COM OS MESMOS TETOS: CTF/spawns, rota ≥100 nós,
+       ≥8 postes de alpendre bloqueando o
        corpo REAL, densidade central ≥12 estruturas + ≥8 obstáculos, texturas
-       dedicadas e os webp real-v1 ligados ao fonte. Nenhum teto baixou.
+       dedicadas e os webp real-v1 ligados ao fonte.
+     · REVISÃO SERTÃO 2026-09: por instrução do dono, a identidade western de
+       tumbleweeds com colisão dá lugar a tecidos no forró. OE8 passa a proibir
+       tumbleweeds e colisores móveis. OE2 exige ≥3 tecidos variando >0,01 rad
+       entre t=0 e 4,7 s: isso detecta animação, não aprova seu aspecto visual.
+       O limiar angular separa movimento de zero; não foi extraído de fotografia.
+       OE9 mantém piso 8 e teste Game._collide, agora nos postes finos reais.
 
    O QUE ELA MEDE (no mundo construído em node puro, MESMO lugar das demais)
      OE1  layout do arraial: ≥12 estruturas sertão (casas pau-a-pique, igrejinha,
           caminhão, poço, capelinha, palhoça, placa) com ≥6 casas, e ≥8
           obstáculos de cover no miolo (|x|,|z| ≤ 12 — a praça).
-     OE2  movimento vivo: ≥3 tumbleweeds rolando (deslocamento ≥1 m no update)
+     OE2  movimento vivo: ≥3 tecidos oscilando (variação angular >0,01 rad)
           E ≥2 calangos em rajada (corre, PARA bruscamente, corre de novo).
      OE3  CTF: 3 pontos com ids distintos; spawns 4×4 dentro dos bounds.
      OE4  rota dos bots: ≥100 waypoints e caminho E→B íntegro.
@@ -36,20 +42,20 @@
      OE6  obstáculos-chave no miolo: bebedouro, caixas-feira, amarra-cavalos,
           barricada (nomes do retheme sertão da r2).
      OE7  texturas realistas real-v1.webp presentes em disco e ligadas ao fonte.
-     OE8  colisor móvel dos tumbleweeds empurra o corpo REAL (Game._collide).
-     OE9  ≥8 alpendres (tag varanda-*) bloqueiam o corpo REAL.
+     OE8  nenhum tumbleweed; nenhum colisor muda durante world.update.
+     OE9  ≥8 postes (tag varanda-*) bloqueiam o corpo REAL (Game._collide).
 
    MUTANTES — cada um acende SÓ a cláusula dele (o teclado da r1 foi portado
    para os nomes da r2; os de tema saíram com o tema):
      sem-casas ........... remove as sertao-casa-*      -> OE1
      centro-aberto ....... esvazia estruturas/miolo     -> OE1
      obstaculos-sem-nome . renomeia os 4 obstáculos-chave -> OE6
-     parada .............. congela os tumbleweeds      -> OE2
+     parada .............. substitui world.update e congela tecidos      -> OE2
      calango-morto ....... zera os calangos            -> OE2
      sem-ctf ............. derruba os pontos CTF       -> OE3
      rota-cortada ........ ilha o grafo de waypoints   -> OE4
      texturas-genericas .. apaga os nomes de textura   -> OE5
-     sem-colisao-movel ... solta o colisor do tumbleweed -> OE8
+     colisao-movel ....... world.update move um colisor existente -> OE8
      sem-colisao-varanda . solta os colisores varanda- -> OE9
      (o `sem-obstaculos-centrais` da r1 removia TODOS os obstáculos: na r2 a OE1
      também conta obstáculos e ele acenderia duas — vira `obstaculos-sem-nome`.)
@@ -73,6 +79,7 @@ const named = prefix => {
 const casas = named('sertao-casa-');
 const estruturas = named('sertao-');
 const tumbleweeds = named('tumbleweed-');
+const tecidos = named('tecido-forro-');
 const obstacles = named('obstaculo-');
 if (mutante === 'sem-casas') {
   if (!casas.length) { console.error('MUTANTE NÃO APLICOU: nenhuma sertao-casa-*'); process.exit(1); }
@@ -100,13 +107,34 @@ const layoutOk = estruturas.length >= 12 && casas.length >= 6
   && obstacles.length >= 8
   && obstacles.every(object => Math.abs(object.position.x) <= 12 && Math.abs(object.position.z) <= 12);
 
-/* ── OE2: movimento vivo — rolagem contínua E rajada start-stop ──
+/* ── OE2: movimento vivo — tecidos oscilantes E rajada start-stop ──
    O update(dt) da ambiência CLAMPA dt em 0,05 s: saltar a janela da rajada
    exige marcar o relógio da própria ambiência (mesmo idioma do snap()). */
-const antes = tumbleweeds.map(o => o.position.clone());
-world.update?.(0.9, 4.7);                     // tumbleweed anda pelo elapsed, não pelo clamp
-const motion = tumbleweeds.map((o, i) => o.position.distanceTo(antes[i]));
-if (mutante === 'parada') motion.fill(0);
+if (mutante === 'parada') {
+  if (typeof world.update !== 'function' || !tecidos.length) throw new Error('MUTANTE parada NÃO APLICOU: update/tecidos ausentes');
+  const updateOriginal = world.update;
+  world.update = () => {};
+  if (world.update === updateOriginal) throw new Error('MUTANTE parada NÃO APLICOU');
+}
+if (mutante === 'colisao-movel') {
+  const colisor = world.colliders.find(c => Number.isFinite(c.minX) && Number.isFinite(c.maxX) && !c.tag?.startsWith('varanda-'));
+  if (!colisor || typeof world.update !== 'function') throw new Error('MUTANTE colisao-movel NÃO APLICOU: colisor/update ausentes');
+  const updateOriginal = world.update;
+  world.update = function (...args) {
+    updateOriginal.apply(this, args);
+    colisor.minX += .25;
+    colisor.maxX += .25;
+  };
+}
+world.update?.(0, 0);
+const antes = tecidos.map(o => o.rotation.x);
+const collidersAntes = JSON.stringify(world.colliders);
+world.update?.(0.9, 4.7);
+const collidersDepois = JSON.stringify(world.colliders);
+const collidersMudaram = collidersAntes !== collidersDepois;
+if (mutante === 'colisao-movel' && !collidersMudaram) throw new Error('MUTANTE colisao-movel NÃO APLICOU: colisores não mudaram');
+const motion = tecidos.map((o, i) => Math.abs(o.rotation.x - antes[i]));
+const tecidosMovendo = motion.filter(delta => Number.isFinite(delta) && delta > .01).length;
 const calangosVivos = calangos.length;
 /* Cada calango tem fase própria (0,2/1,6/2,7 s): janela FIXA só pega um na
    corrida. A janela é calculada POR ANIMAL a partir da sua fase — t com fase
@@ -120,8 +148,8 @@ const rajadas = calangos.map(c => {
   return c.root.position.distanceTo(p1);
 });
 if (mutante === 'calango-morto') rajadas.length = 0;
-const vidaOk = tumbleweeds.length >= 3 && typeof world.update === 'function'
-  && motion.length >= 3 && Math.min(...motion) >= 1
+const vidaOk = tecidos.length >= 3 && typeof world.update === 'function'
+  && tecidosMovendo >= 3
   && calangosVivos >= 2 && rajadas.length >= 2 && Math.min(...rajadas) >= .2;
 /* o outro lado da rajada: em fase de PARADA (≥1,6 s do ciclo) o bicho congela */
 let calangoPara = calangos.length === 0;
@@ -191,17 +219,7 @@ const realTexturesOk = realTextureFiles.every(file => existsSync(new URL(`../../
 /* ── OE8/OE9: colisões contra o corpo REAL ── */
 const collisionProbe = Object.create(Game.prototype);
 collisionProbe.world = { colliders: world.colliders, bounds: { minX: -999, maxX: 999, minZ: -999, maxZ: 999 } };
-let movingCollisionOk = tumbleweeds.length >= 3 && tumbleweeds.every(weed => {
-  if (mutante === 'sem-colisao-movel') {
-    const i = world.colliders.indexOf(weed.userData.collider);
-    if (i < 0) { console.error('MUTANTE NÃO APLICOU: tumbleweed sem colisor no mundo'); process.exit(1); }
-    world.colliders.splice(i, 1);
-    return false;
-  }
-  if (!weed.userData.collider || !world.colliders.includes(weed.userData.collider)) return false;
-  const before = weed.position.clone(); const body = new THREE.Vector3(before.x, 0, before.z);
-  collisionProbe._collide(body, .38); return Math.hypot(body.x - before.x, body.z - before.z) >= .37;
-});
+const staticCollisionOk = tumbleweeds.length === 0 && typeof world.update === 'function' && !collidersMudaram;
 const porchColliders = world.colliders.filter(collider => collider.tag?.startsWith('varanda-'));
 if (mutante === 'sem-colisao-varanda') {
   const antes = world.colliders.length;
@@ -217,23 +235,23 @@ const porchCollisionOk = porchColliders.length >= 8 && porchColliders.every(coll
 });
 
 console.log(`OESTE1 ${layoutOk ? 'PASSA' : 'FALHA'} — ${estruturas.length} estruturas · ${casas.length} casas pau-a-pique · ${obstacles.length} obstáculos no miolo${mutante ? ` [mutante ${mutante}]` : ''}`);
-console.log(`OESTE2 ${vidaOk && calangoPara ? 'PASSA' : 'FALHA'} — ${tumbleweeds.length} tumbleweeds (menor deslocamento ${motion.length ? Math.min(...motion).toFixed(2) : '0.00'} m) · ${calangos.length} calangos (rajada ≥${rajadas.length ? Math.min(...rajadas).toFixed(2) : '0.00'} m · param: ${calangoPara ? 'sim' : 'NÃO'})`);
+console.log(`OESTE2 ${vidaOk && calangoPara ? 'PASSA' : 'FALHA'} — ${tecidosMovendo}/${tecidos.length} tecidos com delta>0.01 rad (piso 3; mínimo observado ${motion.length ? Math.min(...motion).toFixed(3) : '0.000'} rad) · ${calangos.length} calangos (rajada ≥${rajadas.length ? Math.min(...rajadas).toFixed(2) : '0.00'} m · param: ${calangoPara ? 'sim' : 'NÃO'})`);
 console.log(`OESTE3 ${ctfOk && spawnsOk ? 'PASSA' : 'FALHA'} — ${ctfPoints?.length || 0} pontos CTF · ${world.spawns?.E?.length || 0}×${world.spawns?.B?.length || 0} spawns`);
 console.log(`OESTE4 ${routeOk ? 'PASSA' : 'FALHA'} — ${nodes.length} nós · rota entre bases com ${path.length} passos`);
 console.log(`OESTE5 ${textureOk ? 'PASSA' : 'FALHA'} — materiais dedicados: ${[...textureNames].sort().join(', ') || 'nenhum'}`);
 console.log(`OESTE6 ${obstaclesOk ? 'PASSA' : 'FALHA'} — obstáculos-chave da praça presentes`);
 console.log(`OESTE7 ${realTexturesOk ? 'PASSA' : 'FALHA'} — ${realTextureFiles.length} texturas realistas presentes e ligadas ao mapa`);
-console.log(`OESTE8 ${movingCollisionOk ? 'PASSA' : 'FALHA'} — ${tumbleweeds.filter(weed => weed.userData.collider).length}/${tumbleweeds.length} tumbleweeds com colisor móvel`);
-console.log(`OESTE9 ${porchCollisionOk ? 'PASSA' : 'FALHA'} — ${porchColliders.length}/8 alpendres bloqueiam o corpo real`);
+console.log(`OESTE8 ${staticCollisionOk ? 'PASSA' : 'FALHA'} — ${tumbleweeds.length} tumbleweeds · ${world.colliders.length} colisores · snapshot antes/depois ${collidersMudaram ? 'MUDOU' : 'idêntico'}`);
+console.log(`OESTE9 ${porchCollisionOk ? 'PASSA' : 'FALHA'} — ${porchColliders.length}/8 postes de alpendre bloqueiam o corpo real`);
 
 const esperados = {
   'sem-casas': 'OESTE1', 'centro-aberto': 'OESTE1', 'obstaculos-sem-nome': 'OESTE6',
   'parada': 'OESTE2', 'calango-morto': 'OESTE2', 'sem-ctf': 'OESTE3', 'rota-cortada': 'OESTE4',
-  'texturas-genericas': 'OESTE5', 'sem-colisao-movel': 'OESTE8', 'sem-colisao-varanda': 'OESTE9',
+  'texturas-genericas': 'OESTE5', 'colisao-movel': 'OESTE8', 'sem-colisao-varanda': 'OESTE9',
 };
 const resultados = {
   OESTE1: layoutOk, OESTE2: vidaOk && calangoPara, OESTE3: ctfOk && spawnsOk, OESTE4: routeOk,
-  OESTE5: textureOk, OESTE6: obstaclesOk, OESTE7: realTexturesOk, OESTE8: movingCollisionOk, OESTE9: porchCollisionOk,
+  OESTE5: textureOk, OESTE6: obstaclesOk, OESTE7: realTexturesOk, OESTE8: staticCollisionOk, OESTE9: porchCollisionOk,
 };
 if (mutante) {
   if (!Object.hasOwn(esperados, mutante)) { console.error(`mutante desconhecido: ${mutante}`); process.exit(2); }

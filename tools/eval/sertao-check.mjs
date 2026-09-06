@@ -37,17 +37,17 @@
       ST4  O ARRAIAL PEDIDO PELO DONO (r2): ≥6 casas de pau a pique instanciadas
             (`sertao-casa-*`), igrejinha na praça central (grupo `sertao-igrejinha-*`
             a ≤16 m do centro do mapa) e caminhão antigo presente — os três
-            têm acervo GLB registrado no fonte/disco/preload. A família de taipa
-            pode usar corpo sólido autoral casaProxy: acervo não é prova do corpo
-            desenhado, que exige a captura de browser e sua auditoria geométrica.
+            mantêm corpos no mundo Node. Paupique/platibanda exigem parede sólida
+            autoral com material/textura; igreja e caminhão exigem também GLB
+            em fonte/disco/preload. O corpo desenhado exige captura de browser.
       ST5  calango registrado: o mapa tem ≥2 calangos vivos na ambiência E o
             molde calango.glb existe em public/models/ambient/ e está no
             preload (VELHO_OESTE_AMBIENCE).
       ST6  VARIEDADE DE CASARIO (r3): ≥3 famílias de casa distintas instanciadas
             (`sertao-casa-<familia>-<id>`) e nenhuma família com >60% do total.
-            Cada família mantém acervo GLB (disco + registro no fonte + preload),
-            no mesmo idioma da ST4; paupique nomeia a família de taipa, não exige
-            que o GLB aberto seja o corpo visual. Captura final ainda é necessária.
+            Paupique/platibanda exigem corpo autoral com parede/material; pedra e
+            geminada mantêm GLB em disco/fonte/preload. A existência de um GLB
+            não prova qual corpo o browser desenha; captura continua necessária.
 
    PROCEDÊNCIA DOS PISOS (Lei 2 — teto sem procedência é opinião)
      ST1 ≥28 e ≥8 tipos · contagem fechada da build r2 (saída deste script):
@@ -130,9 +130,17 @@ const rgb = (hex) => [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255];
 const quente = (hex) => { const [r, g, b] = rgb(hex); return r > g && g > b; };
 const elevacao = (pos) => Math.atan2(pos[1] ?? pos.y, Math.hypot(pos[0] ?? pos.x, pos[2] ?? pos.z)) * 180 / Math.PI;
 
-/* ── ST1: elementos-sertão por nome (fallback procedural conta: GLB é enfeite) ── */
-const elementos = [];
-world.root.traverse((o) => { if (o.name?.startsWith('sertao-')) elementos.push(o); });
+/* ── ST1: grupos semânticos primários com geometria no mundo Node ── */
+// sem-sertao sobreviveu com 49/19 em artifacts/sertao-astra/logs/st1-before-repair.log:
+// nomes de solo, horizonte, batching e acabamentos não são elementos semânticos.
+const SEMANTICO = /^sertao-(?:(?:mandacaru|macambira|juazeiro|xique|pedra|lagarto|poco|capelinha|palhoca|placa|igrejinha|caminhao)-\d+|casa-(?:paupique|pedra|platibanda|geminada)-\d+)$/;
+const temCorpo = group => {
+  let found = false;
+  group.traverseVisible(o => { if (o.isMesh && o.geometry?.attributes.position?.count >= 3) found = true; });
+  return found;
+};
+const elementosPrimarios = () => world.root.children.filter(o => o.isGroup && o.visible && SEMANTICO.test(o.name) && temCorpo(o));
+const elementos = elementosPrimarios();
 const tipos = new Set(elementos.map((o) => o.name.split('-')[1]));
 if (MUT === 'sem-sertao') {
   /* remove a CAATINGA (ver cabeçalho): casas/igrejinha ficam para não derrubar
@@ -141,7 +149,7 @@ if (MUT === 'sem-sertao') {
   if (!caatinga.length) { console.error('MUTANTE NÃO APLICOU: nenhuma planta de caatinga no mundo'); process.exit(1); }
   for (const o of caatinga) o.parent?.remove(o);
   elementos.length = 0;
-  world.root.traverse((o) => { if (o.name?.startsWith('sertao-')) elementos.push(o); });
+  elementos.push(...elementosPrimarios());
   tipos.clear(); elementos.forEach((o) => tipos.add(o.name.split('-')[1]));
 }
 
@@ -154,7 +162,10 @@ world.root.traverse((o) => {
   if (map.startsWith('oeste-adobe')) taipa.push(o);
 });
 if (MUT === 'volta-oeste') {
-  const madeira = new THREE.MeshStandardMaterial({ color: 0x8a4f28, map: { name: 'oeste-wood-real' } });
+  let mapaMadeira;
+  world.root.traverse(o => { if (o.isMesh && o.material?.map?.isTexture && o.material.map.name?.startsWith('oeste-wood')) mapaMadeira ??= o.material.map; });
+  if (!mapaMadeira) throw new Error('MUTANTE NÃO APLICOU: textura real de madeira ausente');
+  const madeira = new THREE.MeshStandardMaterial({ color: 0x8a4f28, map: mapaMadeira });
   if (!paredes.length) { console.error('MUTANTE NÃO APLICOU: nenhuma parede-* para devolver à madeira'); process.exit(1); }
   for (const p of paredes) { p.material = madeira; }
   taipa.length = 0;
@@ -179,21 +190,35 @@ const solBaixo = !!sol && elevacao(sol.position) <= TETO_ELEV && !!L && elevacao
 const neblinaSeca = !!L && L.neblina.d <= TETO_NEBLINA;
 
 /* ── ST4: o arraial do dono — casas pau-a-pique, igrejinha na praça, caminhão ──
-   A instância vive como grupo `sertao-*`; o acervo GLB é verificado à parte.
-   Taipa pode usar casaProxy sólido autoral; o preload antigo não prova uso visual. */
+   Os corpos autorais são medidos no mundo; só famílias que usam GLB exigem
+   acervo/preload. O mundo Node não prova qual corpo o navegador seleciona. */
 const MOLDES_PROPS = {
-  casa_pau_a_pique: 'public/models/props/casa_pau_a_pique.glb',
   igrejinha: 'public/models/props/igrejinha.glb',
   caminhao_antigo: 'public/models/props/caminhao_antigo.glb',
 };
 const mapSource = readFileSync(new URL('../../public/js/map_velho_oeste.js', import.meta.url), 'utf8');
 let casas = [], igrejinhas = [], caminhoes = [];
-world.root.traverse((o) => {
-  if (!o.name?.startsWith('sertao-')) return;
+for (const o of elementosPrimarios()) {
   if (o.name.startsWith('sertao-casa-')) casas.push(o);
   else if (o.name.startsWith('sertao-igrejinha-')) igrejinhas.push(o);
   else if (o.name.startsWith('sertao-caminhao-')) caminhoes.push(o);
-});
+}
+const FAMILIAS_AUTORAIS = new Set(['paupique', 'platibanda']);
+const familiaCasa = o => /^sertao-casa-([a-z]+)-\d+$/.exec(o.name)?.[1];
+const paredeAutoral = group => {
+  let found = false;
+  group.traverseVisible(o => {
+    if (!o.isMesh || !o.name?.startsWith('parede-casa-') || !o.geometry?.attributes.position) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    if (!mats.length || !mats.every(m => m?.isMaterial && m.visible && m.map?.isTexture && m.map.name)) return;
+    o.geometry.computeBoundingBox();
+    const size = o.geometry.boundingBox.getSize(new THREE.Vector3());
+    if ([size.x, size.y, size.z].every(v => Number.isFinite(v) && v > 0)) found = true;
+  });
+  return found;
+};
+const casasAutorais = casas.filter(o => FAMILIAS_AUTORAIS.has(familiaCasa(o)));
+const corposAutorais = casasAutorais.length > 0 && casasAutorais.every(paredeAutoral);
 const igrejaNaPraca = (() => {
   if (MUT === 'sem-igrejinha') {
     if (!igrejinhas.length) { console.error('MUTANTE NÃO APLICOU: nenhuma sertao-igrejinha-* no mundo'); process.exit(1); }
@@ -224,15 +249,14 @@ const FAMILIAS_CASA = {
   platibanda: 'casa_platibanda', geminada: 'casa_geminada',
 };
 const porFamilia = {};
-world.root.traverse((o) => {
-  const m = /^sertao-casa-([a-z]+)-/.exec(o.name || '');
-  if (m) porFamilia[m[1]] = (porFamilia[m[1]] || 0) + 1;
-});
+for (const o of casas) {
+  const family = familiaCasa(o);
+  if (family) porFamilia[family] = (porFamilia[family] || 0) + 1;
+}
 if (MUT === 'monocultura') {
   /* RENOMEIA em vez de remover (ver cabeçalho): o casario inteiro vira pau a
      pique — contagem ST1/ST2/ST4 não se mexe, só a variedade morre. */
-  const casasFam = [];
-  world.root.traverse((o) => { if (/^sertao-casa-/.test(o.name || '')) casasFam.push(o); });
+  const casasFam = [...casas];
   if (!casasFam.length) { console.error('MUTANTE NÃO APLICOU: nenhuma sertao-casa-* no mundo'); process.exit(1); }
   for (const o of casasFam) o.name = o.name.replace(/^sertao-casa-(?:[a-z]+-)?/, 'sertao-casa-paupique-');
   for (const k of Object.keys(porFamilia)) delete porFamilia[k];
@@ -241,10 +265,11 @@ if (MUT === 'monocultura') {
 const totalCasasFam = Object.values(porFamilia).reduce((a, b) => a + b, 0);
 const familiasDistintas = Object.keys(porFamilia).length;
 const piorDominancia = Math.max(0, ...Object.values(porFamilia));
-const moldesFamiliares = Object.keys(porFamilia).every((f) => FAMILIAS_CASA[f]
-  && existsSync(new URL(`../../public/models/props/${FAMILIAS_CASA[f]}.glb`, import.meta.url))
+const moldesFamiliares = Object.keys(porFamilia).every((f) => FAMILIAS_CASA[f] && (FAMILIAS_AUTORAIS.has(f)
+  ? casas.filter(o => familiaCasa(o) === f).every(paredeAutoral)
+  : existsSync(new URL(`../../public/models/props/${FAMILIAS_CASA[f]}.glb`, import.meta.url))
   && mapSource.includes(`'${FAMILIAS_CASA[f]}'`)
-  && VELHO_OESTE_PROPS.includes(FAMILIAS_CASA[f]));
+  && VELHO_OESTE_PROPS.includes(FAMILIAS_CASA[f])));
 
 /* ── veredito ── */
 const clausulas = [
@@ -254,14 +279,14 @@ const clausulas = [
     valor: `${taipa.length}/${paredes.length || 0} paredes em taipa = ${(fracaoTaipa * 100).toFixed(0)}% (piso ${(PISO_TAIPA * 100).toFixed(0)}%)` },
   { id: 'ST3 tarde quente de sertão', ok: fogQuente && horizonteQuente && solBaixo && neblinaSeca,
     valor: `fog ${fogHex === null ? 'ausente' : '#' + fogHex.toString(16).padStart(6, '0')} (RGB ${fogHex === null ? '—' : rgb(fogHex).join('/')} · R>G>B ${fogQuente ? 'sim' : 'NÃO'}) · LOOK ${L ? 'presente' : 'AUSENTE'} · sol a ${sol ? elevacao(sol.position).toFixed(1) : '—'}° · névoa d=${L ? L.neblina.d : '—'}` },
-  { id: 'ST4 arraial de pau a pique', ok: casas.length >= PISO_CASAS && igrejaNaPraca && caminhoes.length > 0 && moldesReais,
-    valor: `${casas.length} casas (piso ${PISO_CASAS}) · igrejinha ${igrejaNaPraca ? `na praça (≤${RAIO_PRACA} m)` : igrejinhas.length ? 'FORA da praça' : 'AUSENTE'} · caminhão ${caminhoes.length ? 'presente' : 'AUSENTE'} · acervo GLB ${moldesReais ? 'fonte+disco+preload (corpo visual exige browser)' : 'AUSENTE'}` },
+  { id: 'ST4 arraial de pau a pique', ok: casas.length >= PISO_CASAS && igrejaNaPraca && caminhoes.length > 0 && moldesReais && corposAutorais,
+    valor: `${casas.length} casas (piso ${PISO_CASAS}) · igrejinha ${igrejaNaPraca ? `na praça (≤${RAIO_PRACA} m)` : igrejinhas.length ? 'FORA da praça' : 'AUSENTE'} · caminhão ${caminhoes.length ? 'presente' : 'AUSENTE'} · autorais ${casasAutorais.length} ${corposAutorais ? 'com parede/material' : 'SEM corpo válido'} · igreja/caminhão GLB ${moldesReais ? 'fonte+disco+preload (visual exige browser)' : 'AUSENTE'}` },
   { id: 'ST5 calango registrado', ok: calangoRegistrado,
     valor: `${calangos.length} vivos (piso ${PISO_CALANGOS}) · calango.glb ${calangoGlb ? 'existe' : 'AUSENTE'} · preload ${calangoNoPreload ? 'sim' : 'NÃO'}` },
   { id: 'ST6 variedade de casario',
     ok: familiasDistintas >= PISO_FAMILIAS && totalCasasFam > 0
       && piorDominancia <= TETO_DOMINANCIA * totalCasasFam && moldesFamiliares,
-    valor: `${totalCasasFam} casas em ${familiasDistintas} famílias (${Object.entries(porFamilia).map(([f, n]) => `${f} ${n}`).join(', ') || 'nenhuma'}) · maior família ${totalCasasFam ? Math.round(100 * piorDominancia / totalCasasFam) : 0}% (teto 60%) · acervo familiar ${moldesFamiliares ? 'fonte+disco+preload' : 'AUSENTE'}` },
+    valor: `${totalCasasFam} casas em ${familiasDistintas} famílias (${Object.entries(porFamilia).map(([f, n]) => `${f} ${n}`).join(', ') || 'nenhuma'}) · maior família ${totalCasasFam ? Math.round(100 * piorDominancia / totalCasasFam) : 0}% (teto 60%) · corpos/acervo ${moldesFamiliares ? 'autorais com parede/material; GLBs fonte+disco+preload' : 'AUSENTE ou corpo inválido'}` },
 ];
 
 console.log(`SERTÃO — régua da frente  ${MUT ? `[mutante: ${MUT}]` : ''}`);
@@ -281,4 +306,4 @@ if (vermelhas.length) {
   console.error(`\n✗ SERTÃO: ${vermelhas.length} cláusula(s) vermelha(s) — "parece sertão" tem número, e ele está aqui.`);
   process.exit(1);
 }
-console.log('\n✓ SERTÃO ok — arraial de pau a pique, caatinga densa e tarde quente nos pisos da frente.');
+console.log('\n✓ SERTÃO: contratos Node satisfeitos; não equivale a aprovação visual ou GLBs carregados.');
