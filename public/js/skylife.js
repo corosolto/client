@@ -23,6 +23,9 @@ export function preloadSkyBird() {
   if (_birdTemplate) return Promise.resolve(_birdTemplate);
   // promessa memoizada, não só o resultado: o dedup do FileLoader trava o 2º consumidor
   if (_birdPromise) return _birdPromise;
+  // Sondas Node montam os mapas sem document.baseURI; a arara é só ambiente e não deve
+  // deixar um FileLoader com URL relativa pendurado fora do navegador.
+  if (typeof document === 'undefined' || !document.baseURI) return Promise.resolve(null);
   _birdPromise = new Promise((resolve) => {
     // try/catch: sem document.baseURI o loader estoura SÍNCRONO e o onError nunca vem
     try {

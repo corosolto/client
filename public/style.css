@@ -223,6 +223,9 @@ html[data-ui="legacy"]{--br-faixa:var(--br-faixa-legacy)}
 .cs-menu .cs-item[aria-current="true"] .cs-prime-txt small,
 .cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-item:first-of-type .cs-prime-txt small{
   color:rgba(var(--bg-900-rgb),.78)}
+.cs-sub{display:flex;flex-direction:column;margin:0 0 4px var(--s-5);border-left:1px solid rgba(255,255,255,.18)}
+.cs-sub[hidden]{display:none}
+.cs-sub-item{font-size:var(--fs-200);padding-block:5px}
 
 /* ---- chips de link do topo-direito (tela 01 do redesign) ----
    z-index 4 porque a coluna da esquerda e o setup vivem em 3; sem isto os chips
