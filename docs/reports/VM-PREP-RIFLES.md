@@ -1,5 +1,109 @@
 # Preparação offline dos rifles
 
+## Correção de direção do dono: CS 1.6 obrigatório por categoria
+
+Ruben reprovou o teste local: **“está muito ruim”**. Em seguida determinou que
+**a comparação seja sempre contra CS 1.6, mesmo que não seja a mesma arma,
+mas da mesma categoria**. Esta instrução prevalece sobre réguas anteriores
+que misturavam CS2/Valorant/ev.io como alvo visual desta frente. AK golden e
+pistola continuam controles de regressão; não substituem a referência CS 1.6.
+O estado servido em 8160 está reprovado pelo dono. Foi observado e capturado
+na aba que o usuário já tinha aberta, sem navegar, abrir browser ou alterar
+o Game. Ainda não há delta quantitativo válido entre aspectos/ações equivalentes.
+
+O diagnóstico anterior identificou defeitos mecânicos, mas não fechou a comparação
+visual obrigatória. HTTP 200, `ready`, clipes existentes e hashes iguais não
+avaliam esse critério. O objetivo no Game permanece aberto; este complemento
+registra referências e critério, sem declarar uma correção de aparência aplicada.
+
+### Referências fornecidas e medidas reproduzíveis
+
+Originais preservados sem alteração apenas em `A/cs16-reference/`:
+
+| Arquivo | Dimensões | Uso | SHA-256 |
+|---|---|---|---|
+| `cs16-rifle-detail.png` | 436×236, RGBA | detalhe de arma/mãos; recorte, sem viewport ou fase de ação confirmados | `ca47b55bce2cdef721ac97867a9f6bd9bf20d0d4c4af2b777717f324388c8c4a` |
+| `cs16-rifle-game.png` | 1024×768, RGB, 4:3 | composição do rifle no jogo conforme referência enviada | `deadbccca62e18bb41a1379a5deeb704116b684ceac64c7eafcd3762a8ee7bb9` |
+
+Reprodução: `python3 tools/viewmodels/prep/rifles-cs16-reference.py`.
+O script verifica os hashes e normaliza **marcações manuais**, registrando a
+incerteza de leitura. Não segmenta automaticamente nem estima câmera/contato 3D.
+Resultados: `reference_manifest.json`, `source_analysis/game.json`,
+`source_analysis/detail.json` e `validation/front_mask_validation.json` nesse
+subdiretório. Overlay, IoU e SSIM estão explicitamente pendentes por falta de
+frame comparável do Game e máscaras revisadas. Não preencher com zero ou verde.
+
+Na imagem de jogo, com origem superior esquerda:
+
+| Medida | Pixel marcado | Fração da tela | Limite |
+|---|---|---|---|
+| Caixa arma + braços | `[535,458,1024,768]` | largura 0,47754; altura 0,40365 | bordas direita/baixo exclusivas; esquerda/topo aproximados ±6 px |
+| Boca do cano | `[637,484]` | `[0,62207;0,63021]` | leitura aproximada ±6 px |
+| Topo da massa de mira frontal | `[684,459]` | `[0,66797;0,59766]` | leitura aproximada ±5 px |
+| Região visível de contato do apoio | `[691,548]` | `[0,67480;0,71354]` | marca de região, ±12 px; não centro anatômico ou socket |
+
+A caixa ocupa cerca de 19,3% da tela, mas isso **não é área da silhueta**.
+O conjunto entra pelas bordas inferior/direita; o centro `[512,384]` fica livre.
+O cano aponta para a região central a partir da direita; a parte traseira sai
+do enquadramento. Não tentar mostrar toda a coronha. A mão de apoio envolve a
+arma; mão forte e faces internas não ficam integralmente visíveis neste frame.
+O recorte de detalhe ajuda a ler dedos/contato e material escuro com detalhes,
+mas não determina tamanho na tela. As fontes foram fornecidas como CS 1.6;
+configuração, FOV e estado exato da animação não estão documentados.
+
+São medidas **desse frame**, não tolerâncias universais. A faixa de boca
+`0,51–0,60` comentada em `ref-measure.py` vem de outras imagens; não mudar esta
+marca de 0,63021 para caber naquela faixa. O script antigo mistura fontes de
+outros jogos e não será executado como aprovação visual desta frente.
+
+### Evidência do estado rejeitado no Game
+
+`A/cs16-reference/game-observed-rejected.png`: 1512×755, SHA-256
+`bc941eb6cc959bbd79f9660928f296727590b715a680f57859f80cc8b1f0fce1`.
+Captura somente leitura da aba existente em 8160 com `vmweapon=m4&vmready=ar`;
+HUD confirma `M4A1 REQUINTE` e `vm: AUTORADO (ar)`. O rifle aparece quase
+vertical, com vista superior dominante. Na referência enviada, a arma apresenta
+a lateral em diagonal para o centro a partir do canto inferior direito. Essa
+orientação precisa ser corrigida junto da pose; reduzir tamanho sozinho não
+resolve. Não há prova nesta captura de qual transformação causa o problema.
+
+A câmera do mundo está olhando para o céu; não foi alterada. O aspecto é
+1512:755, diferente de 4:3, e a fase do mixer não foi instrumentada. Portanto
+esta é triagem visual do estado real rejeitado, não comparação quantitativa
+controlada, paridade de projeção ou aprovação de idle/animação. Metadados em
+`source_analysis/game-observed-rejected.json`; overlay controlado segue pendente.
+
+### Pareamento por categoria e correção da receita
+
+| Arma própria | Referência visual CS 1.6 | Adaptação que continua obrigatória |
+|---|---|---|
+| M4 | M4 enviada | Apoio no grip vertical próprio; não forçar dedos na pose de guarda-mão horizontal |
+| MD97 | M4 como rifle de carregador frontal | Completar carregador ausente e localizar comandos próprios |
+| SCAR | M4 como rifle de carregador frontal | Largura, apoio e comando lateral da própria SCAR |
+| M92 | AK como rifle com pente curvo | Referência AK comparável ainda precisa ser anexada; pacote M92 exclusivo |
+| FAMAS | FAMAS como rifle bullpup | Referência comparável ainda precisa ser anexada; recarga atrás do punho |
+| Carabina | Rifle CS 1.6 para composição geral | Não há equivalente de alavanca confirmado; a categoria visual não autoriza recarga de M4 |
+
+Primeiro passo visual de M4: alinhar perspectiva, tamanho aparente e diagonais
+com a referência de jogo, com a geometria própria e pose de apoio dedicada.
+Medir arma e braços separadamente, posição de boca/mira, relação de tamanho
+mão/guarda-mão e recorte das bordas. Não corrigir o conjunto apenas encolhendo
+mãos, deslocando sockets, escondendo carregador ou trazendo a coronha toda à tela.
+
+Toda apresentação de candidato deve incluir **CS 1.6 ao lado do Game real**,
+com categoria declarada e ação comparável. Antes/depois próprio é auxiliar.
+O frame enviado é 4:3: comparar inicialmente sem deformação em 4:3; obter
+referências CS 1.6 correspondentes para o aceite final em 3:2 e 16:9. Não
+esticar a imagem para fingir igualdade de aspecto. FOV desconhecido impede
+alegar projeções idênticas. Medir desvios sem impor IoU pixel a pixel entre
+armas diferentes ou importar os limiares de mascote/logotipo da skill.
+
+Idle, equip, tiro e recargas precisam de sequência CS 1.6 da categoria e
+sequência contínua do candidato; as duas imagens estáticas não demonstram
+timing nem retorno. Contato, deformação, recorte, centro livre e identidade
+visual são revisados em conjunto, por crítico independente e por Ruben.
+Nenhum material/mesh/animação de CS 1.6 será copiado para os assets próprios.
+
 ## Resultado e definição de pronto
 
 Preparação de M4, MD97, carabina, SCAR, FAMAS e M92, em 06/09/2026.
@@ -246,6 +350,9 @@ até superfície/penetração. Serve para triagem; não equivale a contato 3D ne
 
 ## Receita de produção específica
 
+Aplicar antes o pareamento CS 1.6 por categoria e o critério visual no início
+deste relatório; as etapas abaixo continuam necessárias para a mecânica própria.
+
 ### M4: primeiro caso, após os pilotos obrigatórios
 
 1. Abrir a Mint `m4.glb` e o rig ar no Blender de produção da integradora,
@@ -466,7 +573,7 @@ sobre expressões anteriores de encerramento quando se referirem à tarefa intei
 - Base remota congelada: `codex/vm-prep-base-961c70d2`, em
   `961c70d20a41336a53ba3b9abcc2068d3e7f9eb0`, publicada com autorização de Ruben.
 - Head: `codex/vm-prep-rifles`; checkpoints de preparação `b802ff67`, `bb7bda10`
-  e `7cfd18af`. O PR contém apenas este relatório e quatro scripts próprios.
+  e `7cfd18af`. O PR contém apenas este relatório e scripts próprios de preparação.
 - Publicação feita com `PREPUSH=0`: o hook amplo executa verificações fora da
   faixa de inspeção desta frente. Não declarar `check:deploy`, `check:fast` ou
   build verdes; as verificações específicas estão registradas acima e no PR.
@@ -519,3 +626,6 @@ etapa: nenhum browser automático aberto. O servidor oferece o estado atual,
 não candidatos de rifle finalizados. Para reiniciar após conferir porta livre:
 `cd artifacts/viewmodels/prep/rifles/local-server-8160` e executar Node com o
 caminho absoluto de `R/tools/eval/serve.mjs 8160`.
+
+Revisão independente das referências e das marcações: sem bloqueadores
+documentais; não certifica armas nem procedência além das imagens do dono.
