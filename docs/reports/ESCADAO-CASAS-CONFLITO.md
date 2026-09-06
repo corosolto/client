@@ -47,3 +47,19 @@ cláusula antes da alteração de geometria.
 
 Não foi aberta captura de navegador por instrução desta frente. A confirmação estética em 3:2
 continua pendente de revisão humana; esta entrega prova geometria, raycast, movimento e grafo.
+
+## Segunda etapa: abrigo do mirante
+
+A área central do mirante, perto do respawn superior, tinha piso aberto entre as coberturas
+laterais e não oferecia uma decisão de combate. Ela recebeu um abrigo de alvenaria com duas
+portas opostas, janela voltada à descida e cobertura. Os dois props que estavam dentro das
+portas foram deslocados às laterais; não foram removidos do mapa.
+
+A nova régua `eval:escadao-mirante-abrigo` nasceu vermelha porque o abrigo não existia. Ela
+exige abrigo marcado, rota do spawn da rua ao interior, arestas caminháveis, duas entradas e
+janela com leitura para a descida. Depois da geometria, a rota até o interior contém 26 nós.
+O mutante `--mutante=saidas-seladas` bloqueia as duas portas e faz o teste falhar no grafo.
+
+Passaram também `eval:mapcontrato`, `eval:spawn`, `eval:botsim-golden`, além de estrutura,
+descida, detalhes, grafo e contrato específicos do Escadão. Não houve nova captura de navegador
+nesta etapa por instrução da frente; a validação humana do enquadramento em 3:2 segue pendente.

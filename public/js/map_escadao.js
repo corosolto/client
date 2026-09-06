@@ -764,6 +764,22 @@ export function buildEscadao(scene, T) {
   casa(7, -24, 4.2, 4.2, 3.1, 0, H_TOP, { molde: 'casa_favela_azul', pav: 1, ry: 0.033 });
   casa(-12, -26, 4.2, 4.2, 3.05, 0, H_TOP, { molde: 'casa_favela_tijolo', pav: 1, ry: 0.015 });
   casa(12, -27, 4.2, 4.2, 3.05, 1, H_TOP, { molde: 'casa_favela_azul', pav: 1, ry: -0.028 });
+  // O centro do mirante era piso sem decisão. Este abrigo recebe a subida por duas
+  // portas opostas e abre a janela somente para a descida, não para os slots B.
+  {
+    const y = H_TOP, z = -21.5, tag = mesh => { mesh.userData.escadaoMiranteAbrigo = true; return mesh; };
+    const abrigoBox = (...args) => tag(addBox(...args));
+    addFloor(4.4, 3.6, 0, z, MAT.concrete, y + .02);
+    abrigoBox(4.4, 1.1, .25, MAT_TIJOLO, 0, y, z + 1.8 - .125);
+    abrigoBox(1.6, 1.2, .25, MAT_TIJOLO, -1.4, y + 2.0, z + 1.8 - .125);
+    abrigoBox(1.6, 1.2, .25, MAT_TIJOLO, 1.4, y + 2.0, z + 1.8 - .125);
+    abrigoBox(4.4, 3.2, .25, MAT_CIMENTO, 0, y, z - 1.8 + .125);
+    for (const x of [-2.2, 2.2]) {
+      abrigoBox(.25, 3.2, .8, MAT_CIMENTO, x, y, z - 1.4);
+      abrigoBox(.25, 3.2, .8, MAT_CIMENTO, x, y, z + 1.4);
+    }
+    abrigoBox(4.65, .18, 3.85, MAT_CIMENTO, 0, y + 3.2, z);
+  }
   // muretas de mirante (cover agachado), afastadas dos slots centrais de spawn
   for (const [mx, mz] of [[6, -38], [-6, -38], [9, -22], [-9, -22]])
     addBox(2.0, 1.0, 0.5, MAT.concrete, mx, H_TOP, mz);
@@ -775,7 +791,7 @@ export function buildEscadao(scene, T) {
   for (const [x, z, id] of [
     [-14, -36, 'pilha_pneus'], [-14, -29, 'dumpster'], [-14, -22, 'pilha_pneus'],
     [14, -36, 'dumpster'], [14, -30, 'pilha_pneus'], [14, -22, 'dumpster'],
-    [-7, -29, 'pilha_pneus'], [-2, -22, 'dumpster'], [7, -29, 'dumpster'], [2, -22, 'pilha_pneus'], [4, -14, 'dumpster'],
+    [-7, -29, 'pilha_pneus'], [-4.5, -20, 'dumpster'], [7, -29, 'dumpster'], [4.5, -20, 'pilha_pneus'], [4, -14, 'dumpster'],
     [-14, -15, 'dumpster'], [-14, -11, 'pilha_pneus'], [-14, -6, 'pilha_pneus'], [-14, 5, 'dumpster'], [-14, 13, 'pilha_pneus'],
     [14, -15, 'pilha_pneus'], [14, -11, 'dumpster'], [14, -6, 'dumpster'], [14, 5, 'pilha_pneus'], [14, 13, 'dumpster'],
     [-14, 24, 'pilha_pneus'], [-14, 31, 'dumpster'], [-14, 37, 'pilha_pneus'],
