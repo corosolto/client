@@ -4822,9 +4822,9 @@ Na revisão antes do merge, o grafo aceitava142arestas incompatíveis com corpo/
 ### Escadão R5 — acessos aparentes e horizonte (relatado 06/09/2026)
 Relato literal: “existe a lateral que nao liga a lugar nenhum, e passando por baixo da escada principal de quem vem por baixo tem varias areas que nao da pra entrar”; “falta um fundo de horizonte como outros mapas”. Régua: em preparação, ainda não corrigido. Base merge515/mainalpha.227; preservar escadas, casa/janela e fauna já entregues.
 
-## Regressão de Lajes — correção validada localmente
+## Regressão de Lajes — correção integrada na main
 
-### BUG-141 · Lajes trava acima de 5×5 no single player · CORRIGIDO LOCALMENTE 06/09
+### BUG-141 · Lajes trava acima de 5×5 no single player · INTEGRADO NA MAIN 06/09
 
 Relato do dono: “fiz um teste no lajes e acima de 5x5 players mesmo no single player o mapa trava. fiz comparacao com o mapa piscina na treta que funciona numa boa em 8x8...”.
 
@@ -4861,4 +4861,4 @@ mapa; arrays de vértices/índices compartilhados, nenhum lote de render adicion
 O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame completo;
 otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
-`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.
+`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado. A PR517 foi integrada à main em 06/09/2026 pelo merge `b64aa886` e a correção acompanha a release `v2.0.0-alpha.236`; integrar não é publicar, e nenhum deploy em produção foi verificado.
