@@ -833,8 +833,9 @@ let submitted = true;   // stats da partida atual já enviados?
    jogador limpa o storage. O nick vai junto quando existe, só pra cruzar com `stats`
    quando o ranking voltar.
 
-   sendBeacon porque isto costuma sair junto com o fim da partida ou com a aba
-   fechando — `fetch` normal é cancelado no unload, sendBeacon não. */
+   Os eventos usam fetch keepalive: sobrevive ao unload e permite `credentials: omit`.
+   Isto importa porque sendBeacon força credenciais e, com JSON cross-origin, depende de
+   um preflight credenciado perfeito no Cloud Run. */
 const ANON_KEY = 'cs_anon';
 const SESSION_KEY = 'cs_session';
 function clientUuid() {
@@ -858,6 +859,18 @@ function getSessionId() {
   if (!s) { s = clientUuid(); sessionStorage.setItem(SESSION_KEY, s); }
   return s;
 }
+function sendJsonKeepalive(path, payload) {
+  try {
+    void fetch(apiUrl(path), {
+      method: 'POST',
+      keepalive: true,
+      credentials: 'omit',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+    return true;
+  } catch { return false; }
+}
 let telemetrySent = true;
 function sendTelemetry() {
   if (telemetrySent || testMode || !game) return;
@@ -871,10 +884,7 @@ function sendTelemetry() {
     rounds: (g.roundsWon?.E || 0) + (g.roundsWon?.B || 0),
     nick: registeredNick || null,
   };
-  try {
-    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-    if (!navigator.sendBeacon(apiUrl('/api/telemetry'), blob)) api('/api/telemetry', payload);
-  } catch { try { api('/api/telemetry', payload); } catch {} }
+  sendJsonKeepalive('/api/telemetry', payload);
 }
 let registeredNick = ''; // nick canônico devolvido pelo registro do UID
 let rankingBloqueado = ''; // erro do register da sessão (nick de outro dono, charset…) — vira aviso claro no fim da partida
@@ -905,26 +915,22 @@ if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) 
       location.reload();
     };
   } }
-/* PICKS — "o que as pessoas escolhem" (dono, 06/08). sendBeacon: nunca atrasa nem
+/* PICKS — "o que as pessoas escolhem" (dono, 06/08). keepalive: nunca atrasa nem
    quebra o jogo; o servidor conta por (kind, key) na picks_daily (migration 013). */
 function _pick(kind, key) {
-  try {
-    navigator.sendBeacon(apiUrl('/api/pick'), new Blob([JSON.stringify({
-      kind, key, eventId: clientUuid(), anonId: getAnonId(), sessionId: getSessionId(),
-      matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
-      ...telemetryGameContext,
-    })], { type: 'application/json' }));
-  } catch { /* sem beacon: paciência */ }
+  sendJsonKeepalive('/api/pick', {
+    kind, key, eventId: clientUuid(), anonId: getAnonId(), sessionId: getSessionId(),
+    matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
+    ...telemetryGameContext,
+  });
 }
 function _picks(lote) {
-  try {
-    navigator.sendBeacon(apiUrl('/api/pick'), new Blob([JSON.stringify({
-      anonId: getAnonId(), sessionId: getSessionId(),
-      matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
-      ...telemetryGameContext,
-      picks: lote.map((pick) => ({ ...pick, eventId: clientUuid() })),
-    })], { type: 'application/json' }));
-  } catch { /* idem */ }
+  sendJsonKeepalive('/api/pick', {
+    anonId: getAnonId(), sessionId: getSessionId(),
+    matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
+    ...telemetryGameContext,
+    picks: lote.map((pick) => ({ ...pick, eventId: clientUuid() })),
+  });
 }
 /* PRESENÇA ANÔNIMA — o que o "N online" do rodapé passou a contar (07/08).
    Antes o único sinal de presença era o `/api/heartbeat`, que exige nick + token e
@@ -945,32 +951,25 @@ async function _pingPresenca(aguardar = false) {
   if (aguardar) {
     try {
       const response = await fetch(apiUrl('/api/presence'), {
-        method: 'POST', keepalive: true,
+        method: 'POST', keepalive: true, credentials: 'omit',
         headers: { 'content-type': 'application/json' }, body: payload,
       });
       if (response.ok) return true;
     } catch { /* o beacon abaixo ainda tenta entregar */ }
   }
-  try {
-    const blob = new Blob([payload], { type: 'application/json' });
-    if (!navigator.sendBeacon(apiUrl('/api/presence'), blob)) api('/api/presence', JSON.parse(payload));
-  } catch { /* presença nunca atrapalha o jogador */ }
+  sendJsonKeepalive('/api/presence', JSON.parse(payload));
   return false;
 }
 
 /* ============ TELEMETRIA NOVA (feat/telemetria: funil · aquisição · perf · match) ============
  * Quatro sinais que SAIAM do Vercel Analytics (plano grátis não filtra propriedade de
  * evento) e passam a morar no NOSSO backend, lidos pelo painel admin. Mesma regra das
- * irmãs: sendBeacon, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
+ * irmãs: fetch keepalive, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
  * Contrato: /api/{match,funnel,perf,acquisition} e tools/eval/telemetry-check.mjs. */
 // FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
 function _funnel(step) {
   if (testMode) return;
-  try {
-    navigator.sendBeacon(apiUrl('/api/funnel'), new Blob([
-      JSON.stringify({ step, sessionId: getSessionId() }),
-    ], { type: 'application/json' }));
-  } catch { /* fail-silent */ }
+  sendJsonKeepalive('/api/funnel', { step, sessionId: getSessionId() });
 }
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
 // sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
@@ -991,7 +990,7 @@ async function _sendAcquisition() {
        aposentava a 1ª aquisição para sempre num 503/stored:false (P1 da review,
        PR #92). keepalive mantém a entrega mesmo se a aba fechar no meio. */
     const resp = await fetch(apiUrl('/api/acquisition'), {
-      method: 'POST', keepalive: true,
+      method: 'POST', keepalive: true, credentials: 'omit',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
@@ -1048,7 +1047,7 @@ function _perfFinish(bootMs, frames) {
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
   };
-  try { navigator.sendBeacon(apiUrl('/api/perf'), new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
+  sendJsonKeepalive('/api/perf', payload);
 }
 // MATCH EVENT (016): evento RICO por partida (anônimo), carrega arma/personagem/placar/
 // resultado. Complementa o submit-match (só registrado) e a telemetria agregada (012).
@@ -1075,7 +1074,7 @@ function sendMatchEvent(result) {
     topWeapon: top, weaponKills: wk, botCount: g.bots?.length || 0,
     nick: registeredNick || null,
   };
-  try { navigator.sendBeacon(apiUrl('/api/match'), new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
+  sendJsonKeepalive('/api/match', payload);
 }
 function sendTrainingFrames(blob) {
   if (testMode || !blob || !registeredNick || !trainingEnabled()) return;
@@ -2250,7 +2249,7 @@ addEventListener('beforeunload', (e) => {
   sendTelemetry();   // aba fechando no meio da partida ainda conta como tempo jogado
   if (emPartida()) { sendMatchEvent('quit'); _funnel('quit'); }   // feat/telemetria
   const pl = partialPayload();
-  if (pl) navigator.sendBeacon(apiUrl('/api/submit-match'), new Blob([JSON.stringify(pl)], { type: 'application/json' }));
+  if (pl) sendJsonKeepalive('/api/submit-match', pl);
   /* SEGUNDA CAMADA CONTRA O CTRL+W (relato do Daniel Diniz: *"quando fica muito tempo com
      a tecla Control pressionada a página fecha"* — é agachar + andar pra frente formando
      Ctrl+W no Windows). A trava de atalho do game.js resolve de verdade, mas é Chromium e

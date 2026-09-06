@@ -1,5 +1,23 @@
 # HANDOFF
 
+## Confiabilidade da telemetria browser → admin — 06/09/2026
+
+**Objetivo e pronto:** toda telemetria do jogo precisa atravessar navegador → Cloud Run →
+Supabase → admin, e produção deve acusar a quebra do transporte. Checkout
+`/Users/ruben/csbrasil/worktrees/telemetry-reliability-client`, branch
+`codex/telemetry-reliability-client`, base `93cd8f41`.
+
+**Diagnóstico:** os beacons JSON cross-origin faziam OPTIONS 204, mas não POST, porque
+`sendBeacon` força credenciais e o backend não anunciava `Access-Control-Allow-Credentials`.
+
+**Mudança em validação:** os eventos usam `fetch` com `keepalive: true` e
+`credentials: 'omit'`; clientes antigos continuam cobertos pela correção CORS do backend.
+`eval:telemetrytransport` cobra todas as rotas e tem mutantes. `prod-watch` agora testa o
+preflight real do Cloud Run em vez de inferir saúde apenas pelo pipeline multiplayer.
+
+**Validado localmente:** sintaxe, `eval:telemetrytransport`, três mutantes negativos,
+`eval:analytics`, `eval:apis`, `check:vercel` 4/4 e build Astro/Vercel verdes.
+
 Este é o ponto de entrada para continuar trabalho no repositório sem herdar um retrato
 antigo como se fosse o estado atual.
 
