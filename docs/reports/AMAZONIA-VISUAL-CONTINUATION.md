@@ -460,3 +460,11 @@ codex/amazonia-visual e tag archive/amazonia-visual-20260906; a próxima branch
 codex/amazonia-main aplica somente o delta final sobre main, sem264commits
 legados que não satisfazem DCO/Agent. PR antigo5c66d28b terá tag de backup
 antes da atualização com force-with-lease. Merge segue autorizado pelo dono.
+
+Integração limpa94942e62 enviada ao PR439, agora basemain; backups remoto
+archive/pr439-before-main-20260906 e archive/amazonia-visual-20260906 confirmados.
+Buildmain225 e5/5gates (docsautoria/arch/docs/redesign/ops) passaram; prepush
+completo138s. Vercel dpl_7CEYJvsT3rqaGbEE32Y1XDJsAL5w parou no pacote privado:
+mapSoundscapes sem Amazônia. Régua AMAP reproduz e correção de preparo reutiliza
+água/vegetação existentes sem novosassets; mutante mata. Próximo: reenviar após
+revisão, aguardar CI/preview e merge autorizado.

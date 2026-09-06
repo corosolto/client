@@ -48,3 +48,11 @@ Recibos em `cabin-round/bots/production-{7,42,mutant}.json`.
 Mídia real regravada após a correção dos bots: fonte23f6f611,144frames,6segundos;
 poster mostra canal, canoas, palafitas e vegetação da árvore integrada.
 Porta8157 serve agora a worktree atual, substituindo o snapshot antigo.
+
+Deploy remoto encontrou pacote privado com overrides dos mapas anteriores sem
+Amazônia. `fetch-audio.sh` agora completa somente essa entrada ausente com
+loops de água do córrego e one-shots de vegetação do parque já presentes no
+mesmo pacote. Não publica novos bytes de áudio nem altera entradas existentes;
+pack legado conserva world.sound. A régua AMAP reproduz a falha no assets-check
+real, aprova o preparo e reprova o mutante sem preparo; outro mapa ausente
+continua bloqueando. Build local main225 passou e pre-push passou138s.

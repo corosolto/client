@@ -167,7 +167,7 @@
     "eval:vercelbuild": "node tools/eval/vercel-build-check.mjs",
     "eval:movimento": "node tools/eval/movimento-golden.mjs",
     "eval:botsim-golden": "node tools/eval/botsim-golden.mjs",
-    "eval:amazonia": "node tools/eval/amazonia-check.mjs && node tools/eval/amazonia-surface-check.mjs && node tools/eval/amazonia-water-movement-check.mjs && node tools/eval/ambience-registry-check.mjs --map=amazonia && node tools/eval/amazonia-bots-check.mjs"
+    "eval:amazonia": "node tools/eval/amazonia-check.mjs && node tools/eval/amazonia-surface-check.mjs && node tools/eval/amazonia-water-movement-check.mjs && node tools/eval/ambience-registry-check.mjs --map=amazonia && node tools/eval/amazonia-bots-check.mjs && node tools/eval/amazonia-audio-pack-check.mjs"
   },
   "repository": {
     "type": "git",
