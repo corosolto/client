@@ -10,7 +10,7 @@ Números atuais das zonas, do quality gate e do `package.json`:
 |---|---|---|---|
 | `public/` | o **jogo** | 67 arquivos `.js`, 39.579 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
 | `src/` | o **site** | 20 páginas `.astro`, 4 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 264 scripts em `tools/eval/`, 58 em `tools/` | node puro: sobe o jogo real sem browser |
+| `tools/` | o **arnês** | 264 scripts em `tools/eval/`, 62 em `tools/` | node puro: sobe o jogo real sem browser |
 
 **Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
 
