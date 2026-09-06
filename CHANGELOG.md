@@ -26,6 +26,7 @@
 ## Não lançado — 2026-09-06
 
 ### Adicionado
+- Sertão da Treta substitui o Velho Oeste: casario de taipa, Caatinga, Canudos, calango quadrúpede, aves, cabras e galinha com pintinhos. Preview real com vídeo silencioso ao passar o mouse; criação com caminhada e pausas. O memorial de Padre Cícero permanece fora desta entrega.
 - Camada operacional (`tools/ops/`, `npm run ops:diag`): o jogo diagnostica boot, deploy, assets no edge, APIs, telemetria, ranking e partida sintética e explica cada achado com causa provável, evidência, impacto e próximo passo; separa "tecnicamente verde" de "pronto para lançamento". Mutantes em `ops:selftest` e unidades em `ops:test`, os dois no `check:fast`.
 - `public/js/ops.js`: sinais da sessão no navegador (marcos de boot, FPS em partida, falhas de carga, contexto WebGL, erros de partida, abandono) expostos em `window.__csbOps` e como migalhas do relatório de erro — sem endpoint novo, sem desenhar nada.
 - Runbook `docs/runbooks/operacao-autonoma.md`: como diagnosticar, recuperar por classe de achado e reverter site, edge, backend e banco.

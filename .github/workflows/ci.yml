@@ -54,6 +54,12 @@ jobs:
         run: node tools/eval/escadao-audio-pack-check.mjs
       - name: Lajes — geometria, ambiência, integração e preview
         run: node tools/eval/runner.mjs eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:mappreview
+      - name: Sertão (tema, rotas, criação e integração)
+        run: |
+          npm run eval:sertao
+          npm run eval:velhooeste
+          npm run eval:sertao-livestock
+          npm run eval:sertao-integration
       - name: Veículos do estacionamento em escala de fábrica
         run: npm run eval:escala
       - name: Orçamento de shader WebGL1
