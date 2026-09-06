@@ -25,7 +25,13 @@
 
 ## Não lançado — 2026-09-06
 
+### Adicionado
+- Camada operacional (`tools/ops/`, `npm run ops:diag`): o jogo diagnostica boot, deploy, assets no edge, APIs, telemetria, ranking e partida sintética e explica cada achado com causa provável, evidência, impacto e próximo passo; separa "tecnicamente verde" de "pronto para lançamento". Mutantes em `ops:selftest` e unidades em `ops:test`, os dois no `check:fast`.
+- `public/js/ops.js`: sinais da sessão no navegador (marcos de boot, FPS em partida, falhas de carga, contexto WebGL, erros de partida, abandono) expostos em `window.__csbOps` e como migalhas do relatório de erro — sem endpoint novo, sem desenhar nada.
+- Runbook `docs/runbooks/operacao-autonoma.md`: como diagnosticar, recuperar por classe de achado e reverter site, edge, backend e banco.
+
 ### Corrigido
+- `eval:boot` voltou a rodar: a fixture do `boot-check.mjs` ancorava na assinatura antiga de `_startGame` (mudada no #489) e reprovava antes de medir; agora ancora no nome da função.
 - O build privado volta a carregar os 16 anúncios Fish, as 36 falas finais dos nove Funkeiros e somente as oito músicas aprovadas do menu.
 - Palhaços e Funkeiros sem take próprio deixam de tocar dublagem genérica; os Funkeiros preservam somente as 36 falas aprovadas.
 - A primeira fala de kill não é mais bloqueada por uma seleção ou chamada de rádio imediatamente anterior.

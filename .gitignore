@@ -199,3 +199,6 @@ tools/eval/cena_probe.mutante-*.json
 # derivados em public/img/entrada, public/img/resultado e public/video/. Sem esta
 # regra o repo ganharia 97 MB e o deploy publicaria todos eles.
 public/img/chars/molde/
+
+# relatórios da camada operacional (npm run ops:diag) — evidência de rodada, não contrato
+artifacts/ops/
