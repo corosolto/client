@@ -68,7 +68,7 @@ integração e publicação; não declarar pronto somando somente PRs ou gates v
 | Elevar visual de Lajes | 01a073e5-35e9-7312-b6a7-7beecc8df714 | PAUSADO 098a6fc2; candidato c26a40cf/PR517 pronto para revisão, 15–30min estimados se CI verde; sem browser/servidor próprio |
 | Elevar visual da Amazônia | 01a073de-ee16-74a1-8deb-c92763271450 | **FECHADA**: PR439 squash-merged como 0af5e118; alpha.228 bc8ce4e9 e deployment Production6289742804 success. Checks completos verdes; URL requer SSO (302 anônimo esperado). Ledger b077dc4b |
 | Elevar visualmente o mapa Sertão | 01a073c0-b824-7503-b28a-f7522cececcc | DESPACHADA Terra/high: PR516 prioritário; resolver conflito contra main atual e deixar MERGEABLE. Candidato ca8d569f; merge/publicação aguardam reserva depois de Lajes |
-| Revisar e shipar PR Miticos | 01a07485-2ddf-7052-b858-f814cabc30f7 | PAUSADO confirmado, e370c2ff, codex/miticos-visual limpa; Cuca próximo marco2–4h, crouch/grip reprovados; Zumbi textura/integração e outros personagens pendentes; PR481 conflitante |
+| Revisar e shipar PR Miticos | 01a07485-2ddf-7052-b858-f814cabc30f7 | Cuca IK candidata reprovada no checkpoint 7c116d97: converge ao alvo projetado, mas não segura a arma e piora o custo; sem mudança pública. Zumbi textura/integração e outros personagens pendentes; PR481 conflitante |
 | Corrigir modo CTF na home | 01a07540-471d-7a60-9448-2692d52ab8dd | Implementado 4abeaa40; relato build/browser3:2 aprovados; não publicado; três falhas gerais fora do menu |
 | Estabilizar CSBR antes de expandir | 01a069ad-894d-7fb0-80d4-21b00fa1e60d | Último turno interrompido preparando laboratório de áudio na home para escuta; tracer separado do PR; recuperar escopo/ledger antes de produção |
 | Corrigir data dos gráficos | 01a073dd-418d-73b1-8583-ce2560742795 | Última resposta relata aplicado em produção, PR508/admin6/backend21; histórico ausente não retropreenchido. Não reabrir sem defeito novo |
@@ -199,6 +199,19 @@ sem remover skip global; manter8 para todos os demais. Mesmo em256, alvo origina
 baseline público/candidata8/candidata256 em atualização completa e partida, com contato de
 superfície, ciclos/transições, armas, hitbox, corpo/cauda e p95/p99. Browser foi reservado
 exclusivamente a essa validação; falha de contato, hiperextensão ou frame regressivo rejeita.
+
+Validação restrita concluída no checkpoint `7c116d97`, sem mudança pública: o arnês criou
+`ikL` somente para a candidata e comparou baseline público, candidata8 e candidata256 em
+crouch/crouchwalk, quatro fases, vistas e closeups. A 256 fecha o alvo projetado (crouch
+2,472–5,538 mm; crouchwalk 0,767–0,995 mm), mas a mão esquerda permanece 59,668–64,836
+mm da arma no crouch e 73,241–80,506 mm no crouchwalk. O crítico reprovou dedos sob o
+guarda-mão, sem envolvê-lo, e braço excessivamente esticado. Atualização completa em
+crouch subiu de 0,1/0,2 ms mediana/p95 na candidata8 para 1,4/1,5 ms na256 nesta captura.
+Morte/respawn e arma de uma mão foram exercitados; nenhum `pageerror`; 129 PNGs e vídeo
+de 3 s estão em `artifacts/miticos-review/cuca-proxy/ik-candidate-validation/`. Como a
+revisão local já falhou, não houve partida real; navegador e servidor foram encerrados.
+O próximo experimento só pode atacar alvo/offset de palma/orientação dos dedos, preservando
+esta prova e o `IK_L_SKIP` público.
 
 M4 tactical Terra foi rejeitada no checkpoint `29f07868`, sem tocar idle/runtime/materiais:
 magazine real/readable e reimport/retorno2,4s passam, mas frames13/45 ainda expõem pele
