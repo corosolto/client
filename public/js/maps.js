@@ -1,3 +1,5 @@
+import { preloadMansaoAmbience } from './mansao_ambience.js';
+import { buildMansao, MANSAO_PROPS, MANSAO_AMBIENCE } from './map_mansao.js';
 import { buildAmazonia, AMAZONIA_PROPS, AMAZONIA_AMBIENCE } from './map_amazonia.js';
 import { buildEscadao, ESCADAO_PROPS, ESCADAO_AMBIENCE } from './map_escadao.js';
 // Map registry — single source of truth for selectable arenas.
@@ -36,6 +38,7 @@ import { buildPenitenciaria } from './map_penitenciaria.js';
    Ver `ALIAS_MAPA` logo abaixo do registro: id antigo continua resolvendo, e o motivo
    de isso não ser opcional está escrito lá. */
 export const MAPS = {
+  mansao: { name: 'Mansão do Joá', preload: preloadMansaoAmbience, build: buildMansao, props: MANSAO_PROPS, ambience: MANSAO_AMBIENCE, ctfMode: true },
   amazonia: { name: 'Treta na Amazônia', build: buildAmazonia, props: AMAZONIA_PROPS, ambience: AMAZONIA_AMBIENCE, ctfMode: true },
   escadao: { name: 'Escadão (Morro)', build: buildEscadao, props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
   praca_poderes: { name: 'Praça dos Três Poderes', build: buildBrasilia }, // Brasília fiel (substitui o clássico)
@@ -116,6 +119,7 @@ export const DEFAULT_MAP = 'praca_poderes';
    Régua: `tools/eval/mapa-id-check.mjs` — M1 nenhum id do CS sobrevive no código, M2
    todo id antigo resolve para um mapa que existe. */
 export const ALIAS_MAPA = {
+  fy_mansao: 'mansao',
   fy_amazonia: 'amazonia',
   vietnam: 'amazonia',
   awp_map: 'praca_poderes',

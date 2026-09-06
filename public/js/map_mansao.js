@@ -1,0 +1,1383 @@
+// MANSAO JOÁ (mansao) — spec plans/14-MANSAO_JOA.md. Eixo longo = z; norte = -z
+// (terraço/mar, spawn B), sul = +z (portão/jardim, spawn A); planta e dimensões na spec.
+import * as THREE from 'three';
+import { placeProp, hasProp, PropBatch } from './mapprops.js';
+import { decalIds } from './map_decals.js';
+import { grafitar } from './graffiti_pass.js';
+import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
+import { detailFor } from './textures.js';
+import { applyLook } from './map_sky.js';
+import { createMansaoAmbience } from './mansao_ambience.js';
+import { buildHorizonte } from './mansao_horizon.js';
+import { makeLajesCTFSurface } from './lajes_ctf_surface.js';
+import { createWater } from './water.js';
+import { AMB_LOOPS } from './soundscape.js';
+
+const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
+const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
+export const HALF_X = 22, HALF_Z = 36;
+const LAJE_H = 4.5;  // pé-direito duplo
+
+/* Fonte única de porta/janela: `centro` é ABSOLUTO no eixo em que a parede corre, `em` é a
+   coordenada fixa. Régua tools/eval/mansao-vaos-check.mjs; história em KNOWN-BUGS BUG-143. */
+export const CASA = { x0: -15, x1: 15, z0: -15, z1: 8 };
+export const PAREDE = { espessura: 0.3, altura: 4.0 };
+export const MANSAO_VAOS = [
+  { id: 'porta-sul', tipo: 'porta', eixo: 'x', em: CASA.z1, centro: 0, largura: 4.0 },
+  { id: 'porta-norte', tipo: 'porta', eixo: 'x', em: CASA.z0, centro: 0, largura: 6.0 },
+  { id: 'janela-leste', tipo: 'janela', eixo: 'z', em: CASA.x1, centro: 0, largura: 5.0, peitoril: 0.3, verga: 3.8 },
+  { id: 'porta-oeste', tipo: 'porta', eixo: 'z', em: CASA.x0, centro: 2.0, largura: 3.0 },
+];
+
+/* Frota da garagem (BUG-56): dimensões de fábrica, mesma ficha do CAR_DIM do map_havan.js
+   (tools/eval/escala-veiculo-check.mjs); cada carro tem que caber no colisor da vaga (4,10 m). */
+const GARAGEM = [
+  ['1968_volkswagen_beetle', 4.03, 1.50],
+  ['2014_mini_cooper_s_f56', 3.85, 1.41],
+  ['2002_volkswagen_golf_r32_mk4', 4.15, 1.44],
+];
+
+/* Piscina ENTRÁVEL (plans/13): fundo -1,85 abaixo do guarda-corpo MAP6 (QUEDA_ANDAR 2,0);
+   z1=-26,5 porque a 2ª fileira do armário nasce em -25,6 NO DECK (pickup-check H_MIN). */
+export const PISCINA = { x0: -5.5, x1: 5.5, z0: -32.5, z1: -26.5, raso: -0.85, fundo: -1.85 };
+
+/* Jardim BUG-64: 8 espécies tropicais em GLB (lote 4 do props/FONTE.md); o
+   procedural vira fallback de node/?glb=0 — zonas e colisores não mudam. */
+const JARDIM_VEG = ['palmeira_imperial', 'palmeira_ravenala', 'heliconia', 'costela_adao', 'bananeira', 'ixora', 'agave', 'samambaia'];
+
+// Kits Mint `mansao_interior`/`mansao_exterior` (kits-mint.json). O procedural
+// correspondente vira fallback de node/?glb=0. Contas em docs/maps/MANSAO-R2.md.
+export const MANSAO_MOBILIA = ['mansao_sofa', 'mansao_poltrona', 'mansao_mesa_centro', 'mansao_lustre'];
+export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol', ...GARAGEM.map(([id]) => id), ...JARDIM_VEG,
+  // BUG-56, pack Mint "Mansão do Joá — jardim e casa": set dressing de jardim/fachada
+  'banco_jardim', 'poste_jardim', 'escultura_jardim', 'vaso_tropical', 'lounge_externo', 'lampiao_fachada',
+  ...MANSAO_MOBILIA, 'coqueiro'];
+// O avião fica fora de MANSAO_PROPS: quem o carrega é o preloadAmbientLife, porque
+// ele é vida de céu (rota no ambientlife.js), não set dressing.
+export const MANSAO_AMBIENCE = ['rat', 'pigeonGround', 'parrot'];
+
+export function buildMansao(scene, T) {
+  const colliders = [], occluders = [], pickups = [];
+  const solids = [];
+  const root = new THREE.Group(); scene.add(root);
+
+  const lam = (o) => {
+    const m = new THREE.MeshStandardMaterial({ roughness: 0.95, metalness: 0, ...o });
+    const det = m.map && detailFor(m.map);
+    if (det) { if (det.normalMap && !m.normalMap) { m.normalMap = det.normalMap; m.normalScale.set(0.65, 0.65); } if (det.roughnessMap && !m.roughnessMap) m.roughnessMap = det.roughnessMap; }
+    return m;
+  };
+  const texturaLaje = (base,junta,rx,ry) => {
+    // Placas de grande formato com junta fina e variação mínima. O antigo 4×4
+    // alternava quadrados e lia como o mesmo xadrez provisório do galpão.
+    const S=16, data=new Uint8Array(S*S*4), rgb=(hex)=>[hex>>16&255,hex>>8&255,hex&255];
+    const baseRgb=rgb(base), juntaRgb=rgb(junta);
+    for(let y=0;y<S;y++) for(let x=0;x<S;x++) {
+      const grout=x===0 || y===0 || x===8 || y===8;
+      const variation=((x*13+y*7)%5)-2;
+      const c=(grout?juntaRgb:baseRgb).map((v)=>Math.max(0,Math.min(255,v+(grout?0:variation))));
+      data.set([...c,255],(y*S+x)*4);
+    }
+    const tex=new THREE.DataTexture(data,S,S,THREE.RGBAFormat); tex.colorSpace=THREE.SRGBColorSpace;
+    tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(rx,ry); tex.needsUpdate=true; return tex;
+  };
+  /* Hardscape do jardim (crítico v2.1: cor chapada = Minecraft): texturas DataTexture
+     — existem em node, que é onde a régua G5 mede. 128 px/m via escalaUVporMundo. */
+  const texProcedural = (S, fn) => {
+    const data = new Uint8Array(S * S * 4);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) data.set([...fn(x, y), 255], (y * S + x) * 4);
+    const t = new THREE.DataTexture(data, S, S, THREE.RGBAFormat);
+    t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true;
+    return t;
+  };
+  // concreto de fôrma: fiadas de 0,5 m + junta de painel + nuance; tile 2 m (S=256)
+  const texturaMuro = () => texProcedural(256, (x, y) => {
+    const junta = x < 3 || (y % 64) < 2, n = ((x * 17 + y * 31) % 19) - 9;
+    const b = junta ? 138 : 196 + n;
+    return [b, b - 3, b - 8];
+  });
+  const MAT_MURO = lam({ map: texturaMuro(), roughness: .85 });
+  // ripado de madeira: ripa de 12,5 cm com fresta escura e tom por tábua; tile 1 m
+  const texturaRipado = () => texProcedural(128, (x, y) => {
+    const fresta = (x % 16) < 2, tom = (((x >> 4) * 37) % 5 - 2) * 5, n = ((x * 5 + y * 11) % 9) - 4;
+    return fresta ? [40, 27, 19] : [114 + tom + n * 2, 81 + tom + n, 59 + tom + n];
+  });
+  // portão de aço: lâminas horizontais grafite-azuladas com fio de luz, não o #2a2a2a chapado
+  const texturaPortao = () => texProcedural(128, (x, y) => {
+    const lam2 = y % 16, n = ((x * 7 + y * 13) % 7) - 3;
+    const b = lam2 < 3 ? 24 : 58 + n + (lam2 === 4 ? 16 : 0);
+    return [b - 2, b, b + 5];
+  });
+  const pisoInterior=lam({ map:texturaLaje(0xc9c1b2,0x8e887f,3,2),color:0xf0ede7,roughness:.34 });
+  const forroInterior=lam({ map:texturaLaje(0xe7e1d7,0xc8c2b8,2,2),color:0xf8f4ed,roughness:.82,side:THREE.DoubleSide });
+  let TEX = {
+    concrete: lam({ map: T.concrete }), grass: lam({ map: T.grass }), dirt: lam({ map: T.dirt }),
+    marble: lam({ map: T.concrete, color: 0xeee9df, roughness: 0.22 }),
+    garden: lam({ map: T.grass, roughness: 1 }), deck: lam({ map: T.dirt, color: 0x9a7654, roughness: 0.72 }),
+  };
+  if (typeof document !== 'undefined') {
+    const load = (url, rx = 3, ry = 3) => { const t = new THREE.TextureLoader().load(url); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t; };
+    TEX.marble = lam({ map: load('/img/textures/mansao_streetart_marble.webp', 4, 4), roughness: 0.15, metalness: 0.05 });
+    TEX.garden = lam({ map: load('/img/textures/tex_mansao_lawn.webp', 11, 15.6), roughness: 1.0 });   // grama limpa v2.1: tex_garden tinha flor 2D gigante e xadrez de pedra assados
+    TEX.garden.map.wrapS = TEX.garden.map.wrapT = THREE.MirroredRepeatWrapping;   // tile 4 m sem emenda
+    TEX.deck = lam({ map: load('/img/textures/tex_deck.webp', 3, 6), roughness: 0.7 });
+    TEX.concrete = lam({ map: load('/img/textures/concrete_br.webp', 2, 2) });
+  }
+  const aoMat = aoMatFactory();
+  const SKIRT = new ContactSkirt({ low: LOWQ });
+  function addBox(w, h, d, mat, x, y, z, opts = {}) {
+    const vao = VAO_BANDS && opts.vao !== false && mat && mat.visible !== false;
+    const solo = onGround(y, h) && !opts.ry;
+    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING }) : new THREE.BoxGeometry(w, h, d);
+    const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
+    m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
+    if (opts.ry) m.rotation.y = opts.ry;
+    if (solo && opts.skirt !== false) SKIRT.add(x, y, z, w, d, opts.ry || 0);
+    root.add(m);
+    if (opts.collide !== false) {
+      colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 });
+      // vidro segura o corpo mas não a bala: transparente fica fora de occluders (BUG-54)
+      if (!(mat && mat.transparent && (mat.opacity === undefined || mat.opacity < 0.9))) occluders.push(m);
+    } else if (opts.bala) occluders.push(m);   // visível dentro de colisor alheio: a bala tem que parar nele
+    return m;
+  }
+  const col = (x0, x1, y0, y1, z0, z1) => colliders.push({ minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minY: y0, maxY: y1, minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1) });
+  const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; };
+  const PB = new PropBatch({ bucket: 24 });
+  const GLB_ON = QP.get('glb') !== '0';
+  function propComFallback(id, x, z, h, ry, fallback) {
+    const proxy = fallback();
+    const obj = GLB_ON && hasProp(id) ? placeProp(id, { x, z, targetH: h, ry }) : null;
+    if (obj) {
+      proxy.visible = false; root.add(obj);
+      // a bala testa a malha visível: proxy sai de occluders (corpo fica no collider), GLB entra
+      const pi = occluders.indexOf(proxy); if (pi >= 0) occluders.splice(pi, 1);
+      obj.traverse((m) => { if (m.isMesh && !(m.material && m.material.transparent && (m.material.opacity === undefined || m.material.opacity < 0.9))) occluders.push(m); });
+    }
+    return obj;
+  }
+  /* Prop do pack Mint (BUG-56) no lote PB. Colisor SEMPRE pelo chamador — a pegada não
+     depende do download; fallback com a dimensão real, senão é corpo-em-sólido no MAP1. */
+  const jardimProp = (id, x, z, targetH, ry, y = 0, fb = null, fallback = null) => {
+    if (GLB_ON && PB.add(id, { x, y, z, targetH, ry })) return true;
+    if (fallback) { fallback(); return false; }
+    const [w, d, h] = fb || [0.6, 0.6, targetH];
+    addBox(w, h, d, lam({ color: 0x8a7654, roughness: .8 }), x, y, z, { ry, collide: false });
+    return false;
+  };
+
+  // Troca peças procedurais por um molde Mint e LEVA A MARCA DE RÉGUA junto; o colisor
+  // continua no procedural. Pegadas tabeladas em tools/eval/mansao-glb-fit.mjs.
+  const mobilia = (id, { x, y = 0, z, alturaAlvo, ry = 0, bala = true }, procedurais, marca) => {
+    const obj = GLB_ON && hasProp(id) ? placeProp(id, { x, y, z, targetH: alturaAlvo, ry }) : null;
+    if (!obj) return null;
+    for (const peca of procedurais) {
+      if (!peca) continue;
+      peca.visible = false;
+      const i = occluders.indexOf(peca); if (i >= 0) occluders.splice(i, 1);
+      for (const k of Object.keys(peca.userData)) if (k !== 'nonSolidSurface') delete peca.userData[k];
+    }
+    Object.assign(obj.userData, marca);
+    obj.traverse((m) => { if (!m.isMesh) return; if (bala) occluders.push(m); else m.userData.nonSolidSurface = true; });
+    root.add(obj);
+    return obj;
+  };
+
+  /* CÉU */
+  const { hemi, sun } = applyLook(scene, T, 'mansao', { nofog: QP.get('nofog') === '1' });
+  buildHorizonte(scene, 'mansao');
+  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
+  sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
+  sun.shadow.camera.far = 150; sun.shadow.bias = -0.0006;
+
+  /* CHÃO — gramado cortado no recorte da piscina/vertedouro: sem o corte o plano de
+     grass atravessa a cuba. Mesmo corte do córrego (map_corrego.js:428-435). */
+  const gramado = TEX.garden || lam({ map: T.grass });
+  addFloor(HALF_X * 2, 62.45, 0, 4.775, gramado, -0.01);
+  addFloor(15.65, 9.05, -14.175, -30.975, gramado, -0.01);
+  addFloor(15.65, 9.05, 14.175, -30.975, gramado, -0.01);
+
+  /* ===================== CASA (interior jogável) =====================
+     Planta: retângulo de 30×16 m. Paredes externas com vãos de porta/janela.
+     Mezanino parcial (escritório) a y=4,5. Piso de mármore. */
+  // piso de mármore
+  const pisoCasa=addFloor(CASA.x1 - CASA.x0, CASA.z1 - CASA.z0, (CASA.x0 + CASA.x1) / 2, (CASA.z0 + CASA.z1) / 2, pisoInterior, 0.02);
+  pisoCasa.userData.mansaoFeature='interior-surface'; pisoCasa.userData.surfaceType='floor';
+  // contrapiso sólido (bala não atravessa)
+  addBox(CASA.x1 - CASA.x0, 0.12, CASA.z1 - CASA.z0, lam({ color: 0x909088 }), (CASA.x0 + CASA.x1) / 2, -0.12, (CASA.z0 + CASA.z1) / 2);
+
+  const MAT_WALL = lam({ map: TEX.concrete.map || null, color: 0xf5f0e8, roughness: 0.9 });  // branco modernista texturizado
+  /* Recorta a parede externa a partir do vão declarado, no eixo em que ela corre; cada peça
+     leva `mansaoVao` com o próprio colisor, que é por onde o mutante da régua derruba UMA. */
+  function paredeComVao(vao) {
+    const eixoX = vao.eixo === 'x';
+    const a0 = eixoX ? CASA.x0 : CASA.z0, a1 = eixoX ? CASA.x1 : CASA.z1;
+    const v0 = vao.centro - vao.largura / 2, v1 = vao.centro + vao.largura / 2;
+    if (v0 <= a0 || v1 >= a1) throw new Error(`vão ${vao.id} não cabe na parede`);
+    const trecho = (s0, s1, y, h, parte) => {
+      if (s1 - s0 < 1e-6 || h < 1e-6) return;
+      const c = (s0 + s1) / 2, L = s1 - s0;
+      const w = eixoX ? L : PAREDE.espessura, d = eixoX ? PAREDE.espessura : L;
+      const x = eixoX ? c : vao.em, z = eixoX ? vao.em : c;
+      const m = addBox(w, h, d, MAT_WALL, x, y, z);
+      m.userData.mansaoVao = { id: vao.id, parte, collider: colliders[colliders.length - 1] };
+      // sólido da alvenaria (nunca do vão livre): é o que o grafo de waypoints evita
+      solids.push({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2 });
+    };
+    trecho(a0, v0, 0, PAREDE.altura, 'antes');
+    trecho(v1, a1, 0, PAREDE.altura, 'depois');
+    if (vao.peitoril) trecho(v0, v1, 0, vao.peitoril, 'peitoril');
+    if (vao.verga) trecho(v0, v1, vao.verga, PAREDE.altura - vao.verga, 'verga');
+  }
+  for (const vao of MANSAO_VAOS) paredeComVao(vao);
+  /* Vidro é fechamento real e nasce do MESMO registro do vão: peitoril, verga e pano não
+     podem divergir. Transparente fica fora de `occluders` por contrato (BUG-54). */
+  for (const vao of MANSAO_VAOS.filter(v => v.tipo === 'janela')) {
+    const eixoX = vao.eixo === 'x';
+    const x = eixoX ? vao.centro : vao.em - 0.02, z = eixoX ? vao.em - 0.02 : vao.centro;
+    const m = addBox(eixoX ? vao.largura : 0.06, vao.verga - vao.peitoril, eixoX ? 0.06 : vao.largura,
+      lam({ color: 0xa0c8e0, transparent: true, opacity: 0.2 }), x, vao.peitoril, z);
+    m.userData.mansaoVao = { id: vao.id, parte: 'vidro', collider: colliders[colliders.length - 1] };
+  }
+  /* Divisórias sem beco cego: a primeira PARA em x=-5,8 e deixa 1,8 m livres da escada para
+     a sala sob o mezanino, que antes ficava ilhada no grafo (KNOWN-BUGS BUG-144). */
+  for (const [x, z, w, d] of [[-10.4,-6.5,9.2,.18],[9.75,-6.5,3.5,.18],[14.5,-6.5,1,.18],[-4,4.5,.18,7],[-4,-4.5,.18,3]])
+    addBox(w, 3.1, d, MAT_WALL, x, 0, z);
+  /* Ripado ENQUADRA a passagem e não a atravessa: dentro da porta ele era cerca que o corpo
+     cruza e o tiro não (cláusula V2 da régua de vãos; KNOWN-BUGS BUG-143). */
+  const ripado = lam({ map: texturaRipado(), roughness: 0.72 });
+  const vaoNorte = MANSAO_VAOS.find((v) => v.eixo === 'x' && v.em === CASA.z0);
+  for (let x = -13; x <= 13; x += 0.42) {
+    if (vaoNorte && Math.abs(x - vaoNorte.centro) < vaoNorte.largura / 2 + 0.12) continue;
+    addBox(0.12, 2.7, 0.08, ripado, x, 0.2, CASA.z0 + 0.24, { collide: false, skirt: false, bala: true });
+  }
+
+  // Casca modernista: lajes finas em balanço e vidro contínuo fecham a leitura de "planta aberta".
+  const glass = lam({ color: 0x9bd0df, transparent: true, opacity: 0.24, metalness: 0.08, roughness: 0.12, side: THREE.DoubleSide });
+  const concretoClaro = lam({ map: TEX.concrete.map || null, color: 0xe8e4dc, roughness: 0.72 });
+  // O vazio central e a faixa de vidro recortam a cobertura que antes parecia uma placa única.
+  for (const [x,z,w,d] of [[-11.4,2.6,9.7,10.5],[11.4,2.6,9.7,10.5],[0,6.15,13.1,3.4],[0,-.35,13.1,2.4]])
+    addBox(w, .22, d, concretoClaro, x, 4.03, z, { skirt: false });
+  for (const [x,z,w,d] of [[-11.4,2.6,9.55,10.35],[11.4,2.6,9.55,10.35],[0,6.15,12.95,3.25],[0,-.35,12.95,2.25]]) {
+    const forro=addFloor(w,d,x,z,forroInterior,4.025); forro.userData.mansaoFeature='interior-surface'; forro.userData.surfaceType='ceiling';
+  }
+  // Pilares e fáscias revelam o caminho estrutural das lajes em balanço. Sem eles,
+  // a captura 3:2 lia quatro placas brancas flutuando, não arquitetura modernista.
+  for (const [x,z] of [[-14.1,-1.8],[-8.7,7.2],[8.7,7.2],[14.1,-1.8],[-5.8,-1.4],[5.8,-1.4]])
+    addBox(.34, 4.03, .34, concretoClaro, x, 0, z);
+  for (const [x,z,w,d] of [[-11.4,7.82,9.7,.34],[11.4,7.82,9.7,.34],[-16.08,2.6,.34,10.5],[16.08,2.6,.34,10.5]])
+    addBox(w, .42, d, concretoClaro, x, 3.82, z, { collide: false, skirt: false });
+  addBox(9.2, .06, 4.2, glass, 0, 4.08, 2.55, { collide: false, cast: false, skirt: false });
+  for (const x of [-4.6,0,4.6]) addBox(.055,.12,4.25,lam({ color: 0x596263, metalness: .7, roughness: .25 }),x,4.06,2.55,
+    { collide: false, skirt: false });
+  for (const [x,w] of [[-7.7,10.1],[7.7,10.1]]) addBox(w, .24, 8.2, concretoClaro, x, 8.95, -11.4,
+    { skirt: false });
+  addBox(4.8, .07, 8.0, glass, 0, 8.97, -11.4, { collide: false, cast: false, skirt: false });
+  addBox(7.0, 0.18, 15.0, concretoClaro, -15.7, 3.95, -3.0, { skirt: false });
+  addBox(7.0, 0.18, 12.0, concretoClaro, 15.7, 3.95, -1.5, { skirt: false });
+  // Beiral fino e claro coroando cada laje (crítico r3: aérea lia placa sem acabamento)
+  const beiralMat = lam({ color: 0xf5f1e6, roughness: .6 });
+  for (const [bx, bz, bw, bd, by] of [[-11.4, 2.6, 9.7, 10.5, 4.25], [11.4, 2.6, 9.7, 10.5, 4.25], [0, 6.15, 13.1, 3.4, 4.25], [0, -.35, 13.1, 2.4, 4.25],
+    [-7.7, -11.4, 10.1, 8.2, 9.19], [7.7, -11.4, 10.1, 8.2, 9.19], [-15.7, -3, 7, 15, 4.13], [15.7, -1.5, 7, 12, 4.13]])
+    addBox(bw + .14, .08, bd + .14, beiralMat, bx, by, bz, { collide: false, cast: false, skirt: false }).userData.mansaoFeature = 'beiral';
+  // Panos segmentados: 4 m livres na entrada e 6 m livres para o terraço.
+  for (const [x, z, w, d, h] of [[-7,7.82,10,.06,3.3],[7,7.82,10,.06,3.3],[-8.5,-14.78,5,.06,3.45],[8.5,-14.78,5,.06,3.45]]) {
+    addBox(w, h, d, glass, x, .38, z, { cast: false, skirt: false });
+    const horizontal = w > d;
+    for (let i = -2; i <= 2; i++) addBox(horizontal ? .045 : .06, h, horizontal ? .06 : .045,
+      lam({ color: 0x3b4244, metalness: .7, roughness: .28 }), horizontal ? x + i * w / 5 : x, .38,
+      horizontal ? z : z + i * d / 5, { collide: false, skirt: false, bala: true });
+  }
+  // Brises profundos modulam a ala direita, antes uma placa branca sem escala.
+  const madeiraNobre = lam({ color: 0x704a31, roughness: .66 });
+  for (let x = 3.2; x <= 13; x += .82)
+    addBox(.12, 3.45, .72, madeiraNobre, x, .28, 8.17, { collide: false, skirt: false, bala: true });
+  for (let z = -12; z <= 5.8; z += 1.15)
+    addBox(.82, 3.25, .1, madeiraNobre, 15.18, .35, z, { collide: false, skirt: false, bala: true });
+  // Lampiões Mint (BUG-56) na fachada, sem colisor: colados à parede que já é sólida.
+  for (const [lx, lz, ry] of [[-6, 8.32, 0], [6, 8.32, 0], [-8, -14.62, Math.PI], [8, -14.62, Math.PI]]) {
+    jardimProp('lampiao_fachada', lx, lz, .52, ry, 2.3, null, () => addBox(.3, .42, .16, lam({ color: 0xb98a4a, emissive: 0x6b4a1c, emissiveIntensity: .35 }), lx, 2.3, lz, { collide: false, cast: false, skirt: false }));
+  }
+  const pedraFachada = lam({ map: TEX.concrete.map || null, color: 0xb2aa98, roughness: .86 });
+  for (const [z,h,y] of [[-10,1.0,.2],[-6.6,.72,1.55],[-2.8,1.1,.15],[4.7,.82,1.7]])
+    addBox(.08, h, 2.5, pedraFachada, 15.2, y, z, { collide: false, cast: false, skirt: false });
+
+  // MEZANINO parcial (escritório — z ∈ [-15, -8])
+  {
+    const MZ = { x0: -12, x1: 12, z0: -15, z1: -8 };
+    // Poço aberto x[-4.25,-1.75]: a laje não pode atravessar a escada.
+    for (const [x0, x1] of [[MZ.x0, -4.25], [-1.75, MZ.x1]]) {
+      addFloor(x1 - x0, MZ.z1 - MZ.z0, (x0 + x1) / 2, (MZ.z0 + MZ.z1) / 2, TEX.marble || lam({ color: 0xe8e8e0 }), LAJE_H + 0.02);
+      addBox(x1 - x0, 0.12, MZ.z1 - MZ.z0, lam({ color: 0xa0a098 }), (x0 + x1) / 2, LAJE_H, (MZ.z0 + MZ.z1) / 2);
+    }
+    // guarda-corpo do mezanino (vão da escada no centro)
+    addBox(0.2, 1.0, MZ.z1 - MZ.z0, lam({ color: 0x333333, metalness: 0.6 }), MZ.x0, LAJE_H, (MZ.z0 + MZ.z1) / 2);
+    // A lateral leste reserva 1,5 m para a escada de serviço.
+    addBox(0.2, 1.0, 5.5, lam({ color: 0x333333, metalness: 0.6 }), MZ.x1, LAJE_H, -10.75);
+    addBox(MZ.x1 - MZ.x0, 1.0, 0.2, lam({ color: 0x333333, metalness: 0.6 }), (MZ.x0 + MZ.x1) / 2, LAJE_H, MZ.z0);
+    // Sul fechado em toda a largura, salvo a saída exata da escada x[-4,25,-1,75].
+    addBox(7.6, 1.0, 0.2, lam({ color: 0x333333, metalness: 0.6 }), -8.2, LAJE_H, MZ.z1);
+    addBox(13.6, 1.0, 0.2, lam({ color: 0x333333, metalness: 0.6 }), 5.2, LAJE_H, MZ.z1);
+    // Guarda do poço: a saída fica no topo norte, não no trecho baixo da escada.
+    for (const sx of [-4.25, -1.75]) addBox(.16, 1.0, 4.8, lam({ color: 0x333333, metalness: .6 }), sx, LAJE_H, -10.4);
+    // colunas de apoio
+    for (const cx of [-8, 8]) addBox(0.4, LAJE_H, 0.4, concretoClaro, cx, 0, MZ.z0 + 0.5);
+  }
+
+  /* ESCADA (NBR 9077) subindo pro mezanino */
+  const STAIR = { x0: -4.25, x1: -1.75, z0: -14.91, z1: -7.34 };
+  const STAIR_SERVICE = { x0: 12.25, x1: 14.75, z0: -14.91, z1: -7.34 };
+  {
+    const ESC = { espelho: 0.18, piso: 0.29, n: 26 };
+    const sx = -3, sz0 = -7.5, sz1 = sz0 - ESC.n * ESC.piso;
+    for (let i = 0; i < ESC.n; i++) { const z = sz0 - i * ESC.piso; const y = i * ESC.espelho; addBox(2.5, 0.04, ESC.piso + 0.02, TEX.marble || lam({ color: 0xe0e0d8 }), sx, y - 0.04, z, { collide: false }); }
+    // Corrimãos acompanham os degraus e deixam a saída lateral livre no patamar alto.
+    const ferro = lam({ color: 0x292825, metalness: 0.72, roughness: 0.42 });
+    for (const lx of [sx - 1.25, sx + 1.25]) for (let i = 0; i < ESC.n; i += 3) {
+      const y = i * ESC.espelho, z = sz0 - i * ESC.piso;
+      const desembarque = lx === sx - 1.25 && i >= 18;
+      addBox(0.09, 0.9, 0.09, ferro, lx, y, z, { collide: !desembarque, skirt: false });
+      if (i + 3 < ESC.n) addBox(0.09, 0.09, ESC.piso * 3 + 0.1, ferro, lx, y + 0.88, z - ESC.piso * 1.5,
+        { collide: !desembarque, skirt: false });
+    }
+  }
+  // Escada de serviço no flanco leste: segunda rota física para o escritório/mezanino.
+  {
+    const ESC = { espelho: 0.18, piso: 0.29, n: 26 }, sx = 13.5, sz0 = -7.5;
+    const ferro = lam({ color: 0x292825, metalness: 0.72, roughness: 0.42 });
+    for (let i = 0; i < ESC.n; i++) {
+      const z = sz0 - i * ESC.piso, y = i * ESC.espelho;
+      addBox(2.5, .04, ESC.piso + .02, TEX.marble, sx, y - .04, z, { collide: false });
+      if (i % 3 === 0) for (const lx of [sx - 1.25, sx + 1.25]) {
+        const desembarque = lx === sx - 1.25 && i >= 18;
+        addBox(.09, .9, .09, ferro, lx, y, z, { collide: !desembarque, skirt: false });
+      }
+    }
+    addBox(1.0, .12, 1.4, TEX.marble, 12.25, LAJE_H - .12, -14.75);
+  }
+
+  /* COVER INTERIOR: móveis de luxo */
+  const tecidoClaro = lam({ color: 0x77756f, roughness: .78 });
+  const tecidoEscuro = lam({ color: 0x31333a, roughness: .82 });
+  // SALA. O colisor encolheu de 4,00x1,50 para 2,30x1,10 = a malha do molde (2,20x1,00):
+  // colisor maior que a malha visível é parede invisível. Encolher só abre passagem.
+  const estarA = addBox(2.3, 0.8, 1.1, tecidoClaro, 4, 0, 0); estarA.userData.mansaoFeature = 'estar';
+  const estarB = addBox(2.3, 0.82, 1.1, tecidoEscuro, 0, 0, 4); estarB.userData.mansaoFeature = 'estar';
+  solids.push({ x0: 2.85, x1: 5.15, z0: -0.55, z1: 0.55 }, { x0: -1.15, x1: 1.15, z0: 3.45, z1: 4.55 });
+  // Encostos e braços: silhueta de mobiliário no fallback procedural (node/?glb=0).
+  const silhuetaEstar = [];
+  for (const [x,z,w,d,ry,mat] of [[4,-.47,2.1,.18,0,tecidoClaro],[2.96,0,.18,.95,0,tecidoClaro],[5.04,0,.18,.95,0,tecidoClaro],
+    [0,3.53,2.1,.18,0,tecidoEscuro],[-1.04,4,.18,.95,0,tecidoEscuro],[1.04,4,.18,.95,0,tecidoEscuro]])
+    silhuetaEstar.push(addBox(w, .72, d, mat, x, .5, z, { collide: false, skirt: false, ry }));
+  addFloor(5.6, 3.4, 3.1, 1.55, lam({ color: 0x9a744f, roughness: .92 }), .035);
+  // A frente do molde olha para +Z (medida em tools/blender-prop-orient-render.py):
+  // daí o ry = PI no grupo de z=+4, que encosta na divisória do norte.
+  mobilia('mansao_sofa', { x: 4, z: 0, alturaAlvo: .95, ry: 0 },
+    [estarA, silhuetaEstar[0], silhuetaEstar[1], silhuetaEstar[2]], { mansaoFeature: 'estar' });
+  mobilia('mansao_sofa', { x: 0, z: 4, alturaAlvo: .95, ry: Math.PI },
+    [estarB, silhuetaEstar[3], silhuetaEstar[4], silhuetaEstar[5]], { mansaoFeature: 'estar' });
+  const gourmetPart=(object,tipo)=>{ object.userData.mansaoFeature='gourmet-part'; object.userData.gourmetPart=tipo; return object; };
+  const theaterPart=(object,tipo)=>{ object.userData.mansaoFeature='theater-part'; object.userData.theaterPart=tipo; return object; };
+  // Ilha gourmet funcional: bancada inteira, cuba/torneira, cooktop, três
+  // banquetas e pendentes. A captura anterior só provava um plano cortado.
+  const ilha = addBox(4.2, 1.0, 1.35, TEX.marble || lam({ color: 0xe8e8e0, roughness: 0.15 }), -8, 0, -10);
+  ilha.userData.mansaoFeature = 'ilha-gourmet'; solids.push({ x0: -10.1, x1: -5.9, z0: -10.68, z1: -9.32 });
+  gourmetPart(addBox(4.55,.14,1.62,TEX.marble || lam({color:0xf0ece3,roughness:.16}),-8,1.0,-10,{collide:false,skirt:false}),'countertop');
+  const metalCozinha=lam({color:0x667174,metalness:.75,roughness:.24});
+  gourmetPart(addBox(.82,.045,.54,lam({color:0x181c1e,metalness:.2,roughness:.2}),-9.15,1.15,-10,{collide:false,cast:false,skirt:false}),'cooktop');
+  gourmetPart(addBox(.72,.04,.48,metalCozinha,-7.25,1.15,-10,{collide:false,cast:false,skirt:false}),'sink');
+  const torneira=new THREE.Mesh(new THREE.TorusGeometry(.18,.025,7,12,Math.PI),metalCozinha);
+  torneira.rotation.z=Math.PI/2; torneira.position.set(-7.25,1.35,-10.12); gourmetPart(torneira,'faucet'); root.add(torneira);
+  for (const x of [-9.2,-8,-6.8]) {
+    gourmetPart(addBox(.48,.52,.48,tecidoEscuro,x,0,-8.85,{ collide: false }),'stool');
+    addBox(.16,.42,.16,lam({ color: 0x3a332b, metalness: .4 }),x,.48,-8.85,{ collide: false, skirt: false });
+  }
+  const pendente=lam({color:0xa56f3c,metalness:.45,roughness:.42,emissive:0x4d2d12,emissiveIntensity:.24});
+  for(const x of [-9.3,-8,-6.7]) {
+    addBox(.025,1.05,.025,lam({color:0x272521,metalness:.55}),x,2.5,-10,{collide:false,cast:false,skirt:false});
+    const shade=new THREE.Mesh(new THREE.ConeGeometry(.24,.34,10,1,true),pendente); shade.position.set(x,2.55,-10); shade.rotation.x=Math.PI; gourmetPart(shade,'pendant'); root.add(shade);
+  }
+  // Home theater inequívoco: tela preta, console, painéis acústicos e quatro
+  // recliners com encosto/braços, não quatro caixas sem contexto.
+  const tela=theaterPart(addBox(5.1,2.35,.08,lam({color:0x090b0d,roughness:.18}),9,.65,-14.55,{collide:false,cast:false,skirt:false}),'screen');
+  const consoleMidia=theaterPart(addBox(3.4,.42,.48,lam({color:0x2c2724,roughness:.5}),9,0,-14.08,{collide:false}),'media-console');
+  // Poltronas viradas para a tela (z=-14,55): a frente do molde olha para +Z, daí ry = PI.
+  // Malha 0,94x0,90 dentro do colisor de 1,08x1,02 (mansao-glb-fit).
+  for(const [px,pz] of [[8,-9.2],[10,-9.2],[8,-11.35],[10,-11.35]]) {
+    const cadeira=theaterPart(addBox(1.08,.52,1.02,tecidoEscuro,px,0,pz),'recliner');
+    const encosto=addBox(.96,.86,.24,tecidoEscuro,px,.42,pz-.39,{collide:false,skirt:false});
+    const bracos=[-.53,.53].map((ax)=>addBox(.16,.62,.9,tecidoEscuro,px+ax,.05,pz,{collide:false,skirt:false}));
+    solids.push({x0:px-.62,x1:px+.62,z0:pz-.58,z1:pz+.58});
+    mobilia('mansao_poltrona',{x:px,z:pz,alturaAlvo:.98,ry:Math.PI+(px*.11+pz*.07)%.18},
+      [cadeira,encosto,...bracos],{mansaoFeature:'theater-part',theaterPart:'recliner'});
+  }
+  for(const x of [6.75,9,11.25]) theaterPart(addBox(1.55,1.25,.06,lam({color:0x465056,roughness:.86}),x,2.05,-14.46,{collide:false,cast:false,skirt:false}),'acoustic-panel');
+  // mesa de jantar
+  addBox(3.0, 0.9, 1.5, lam({ color: 0x4a3a2a, roughness: 0.3 }), 8, 0, 4); solids.push({ x0: 6.5, x1: 9.5, z0: 3.25, z1: 4.75 });
+  const divisoriaBaixa = addBox(4.8, .82, .22, ripado, -1.55, 0, 2.1);
+  divisoriaBaixa.userData.mansaoFeature = 'divisoria-baixa';
+  const propVivo=(object,tipo)=>{ object.userData.mansaoFeature='lived-prop'; object.userData.propType=tipo; return object; };
+  // Sete famílias, pequenas e sem colisão, tiram o hall do estado de showroom vazio.
+  const almofadas=new THREE.Group(); propVivo(almofadas,'almofadas');
+  for(const [x,z,c] of [[3.1,-.25,0xb66e4a],[4.1,-.24,0xd0b989],[5.05,-.24,0x6c8490]]) {
+    const a=new THREE.Mesh(new THREE.BoxGeometry(.62,.18,.52),lam({color:c,roughness:1})); a.position.set(x,.84,z); a.rotation.y=(x-4)*.12; almofadas.add(a);
+  } root.add(almofadas);
+  const tapete=addFloor(4.9,2.8,3.2,1.55,lam({color:0x805f49,roughness:1}),.047); propVivo(tapete,'tapete');
+  const luminariaPe=new THREE.Group(); propVivo(luminariaPe,'luminaria-de-piso');
+  const haste=new THREE.Mesh(new THREE.CylinderGeometry(.035,.05,2.25,8),lam({color:0x3b3935,metalness:.55})); haste.position.y=1.12; luminariaPe.add(haste);
+  const cupula=new THREE.Mesh(new THREE.ConeGeometry(.42,.62,12,1,true),lam({color:0xe4cda5,emissive:0x5d4426,emissiveIntensity:.25,side:THREE.DoubleSide})); cupula.position.y=2.12; luminariaPe.add(cupula); luminariaPe.position.set(6.7,0,1.3); root.add(luminariaPe);
+  const quadro=addBox(.07,1.45,2.35,lam({color:0x315f68,roughness:.7}),-14.76,1.25,-2.5,{collide:false,cast:false,skirt:false}); propVivo(quadro,'arte-original');
+  const fruteira=new THREE.Group(); propVivo(fruteira,'fruteira'); fruteira.position.set(-8,1.12,-10); root.add(fruteira);
+  const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.42,.28,.16,14),lam({color:0x755642,roughness:.68})); fruteira.add(bowl);
+  for(const [x,z,c] of [[-.18,0,0xd5a33b],[.12,.08,0xb84935],[.03,-.13,0x6e9a48]]) { const f=new THREE.Mesh(new THREE.SphereGeometry(.13,8,6),lam({color:c})); f.position.set(x,.15,z); fruteira.add(f); }
+  const louca=new THREE.Group(); propVivo(louca,'louca-cozinha'); louca.position.set(-6.8,1.04,-10); root.add(louca);
+  for(const x of [-.3,0,.3]) { const copo=new THREE.Mesh(new THREE.CylinderGeometry(.075,.06,.28,10),lam({color:0xbad5d8,transparent:true,opacity:.7,roughness:.18})); copo.position.set(x,.14,0); louca.add(copo); }
+  const vaso=new THREE.Group(); propVivo(vaso,'vaso-interno'); vaso.position.set(-11.8,0,-3.7); root.add(vaso);
+  // MAP1: o pote é cerâmica rígida — colisor de verdade, como os vasos do deck e os
+  // troncos; `nonSolidSurface` aqui seria mentir pra régua e manter o defeito.
+  const pote=new THREE.Mesh(new THREE.CylinderGeometry(.28,.36,.5,12),lam({color:0x9b6b4a,roughness:.9})); pote.position.y=.25; vaso.add(pote);
+  col(-12.1,-11.5,0,.5,-4.0,-3.4); occluders.push(pote);   // a bala para na cerâmica que o corpo já não atravessa
+  // As FOLHAS são atravessáveis como todo o paisagismo do arquivo (cluster, palmeira, folhagem).
+  for(let i=0;i<7;i++){ const folha=new THREE.Mesh(new THREE.SphereGeometry(.25,8,5),lam({color:i%2?0x386b42:0x4e8050,roughness:1})); const a=i*Math.PI*2/7; folha.scale.set(.34,.14,1.4); folha.rotation.y=a; folha.position.set(Math.sin(a)*.25,.78+Math.cos(a)*.08,Math.cos(a)*.25); folha.userData.nonSolidSurface=true; vaso.add(folha); }
+  /* Luxo excessivo em 3 famílias (teto 3-5, cobrado no mansao-water-check). Tag própria:
+     `lived-prop` tem contrato de 6-8 tipos e crescer ali reprovaria o mapa por sucesso. */
+  const luxo = (object, tipo) => { object.userData.mansaoFeature = 'luxo-prop'; object.userData.luxoType = tipo; return object; };
+  {
+    // LUSTRE: pendurado na laje leste (y=4,02) sobre a mesa de jantar de (8, 4).
+    const lustre = new THREE.Group(); lustre.position.set(8, 0, 4); luxo(lustre, 'lustre');
+    const latao = lam({ color: 0xbd9a52, metalness: .68, roughness: .28 });
+    const cabo = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, 1.05, 5), latao);
+    cabo.position.y = 3.5; lustre.add(cabo);
+    for (const [r, y, n] of [[.62, 2.98, 12], [.38, 3.24, 8]]) {
+      const anel = new THREE.Mesh(new THREE.TorusGeometry(r, .022, 5, 20), latao);
+      anel.rotation.x = Math.PI / 2; anel.position.y = y; lustre.add(anel);
+      const cristal = lam({ color: 0xdfeaf2, roughness: .08, metalness: .1, transparent: true, opacity: .72,
+        emissive: 0x6a5a34, emissiveIntensity: .3 });
+      const gotas = new THREE.InstancedMesh(new THREE.OctahedronGeometry(.062, 0), cristal, n);
+      const eixo = new THREE.Object3D();
+      for (let i = 0; i < n; i++) {
+        const a = i * Math.PI * 2 / n;
+        eixo.position.set(Math.cos(a) * r, y - .17 - (i % 3) * .07, Math.sin(a) * r);
+        eixo.rotation.set(0, a, .2); eixo.updateMatrix(); gotas.setMatrixAt(i, eixo.matrix);
+      }
+      gotas.instanceMatrix.needsUpdate = true; gotas.castShadow = false; lustre.add(gotas);
+    }
+    const miolo = new THREE.Mesh(new THREE.SphereGeometry(.13, 9, 6),
+      lam({ color: 0xffeec4, emissive: 0xffca6a, emissiveIntensity: .8, roughness: .3 }));
+    miolo.position.y = 3.02; lustre.add(miolo);
+    lustre.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+    root.add(lustre);
+    // Pendurado pelo TOPO e o placeProp ancora pela BASE: y = teto - altura. Fora de
+    // occluders porque cristal pendurado não para bala.
+    mobilia('mansao_lustre', { x: 8, y: 4.05 - 1.10, z: 4, alturaAlvo: 1.10, bala: false },
+      [lustre], { mansaoFeature: 'luxo-prop', luxoType: 'lustre' });
+
+    // POLTRONAS: assento leva o colisor (o resto é silhueta), mesmo padrão do sofá.
+    const couro = lam({ color: 0x6d3b26, roughness: .52 });
+    const pesMetal = lam({ color: 0x2f2c28, metalness: .55, roughness: .4 });
+    // Duas na sala e duas no escritório do mezanino (y = LAJE_H), que estava sem uma
+    // peça de mobília desde a v2.1.
+    for (const [px, py, pz, pry] of [[1.6, 0, -2.6, .55], [5.9, 0, -2.9, -.42],
+      [-9.2, LAJE_H, -13.1, 2.35], [-6.4, LAJE_H, -13.4, 3.62]]) {
+      const assento = addBox(.95, .42, .92, couro, px, py, pz, { ry: pry });
+      luxo(assento, 'poltrona');
+      // `solids` é 2D e só vale no térreo: móvel do mezanino ali derrubava nó do hall
+      // EMBAIXO dele (MC3 vermelho). Lá em cima quem segura é o colisor.
+      if (py === 0) solids.push({ x0: px - .48, x1: px + .48, z0: pz - .46, z1: pz + .46 });
+      const partes = [assento, addBox(.95, .66, .17, couro, px, py + .42, pz - .38, { collide: false, skirt: false, ry: pry })];
+      for (const ax of [-.44, .44]) partes.push(addBox(.16, .3, .88, couro, px + ax, py + .4, pz, { collide: false, skirt: false, ry: pry }));
+      for (const [ox, oz] of [[-.36, -.32], [.36, -.32], [-.36, .32], [.36, .32]])
+        partes.push(addBox(.06, .16, .06, pesMetal, px + ox, py - .16, pz + oz, { collide: false, skirt: false, cast: false }));
+      mobilia('mansao_poltrona', { x: px, y: py, z: pz, alturaAlvo: .98, ry: pry + Math.PI },
+        partes, { mansaoFeature: 'luxo-prop', luxoType: 'poltrona' });
+    }
+    // MESA DE CENTRO: 4ª família de luxo (o teto do mansao-water-check é 3-5), uma por
+    // grupo de estar e uma no escritório.
+    for (const [mx, my, mz, mry] of [[4, 0, 1.5, 0], [0, 0, 2.5, 1.57], [-7.8, LAJE_H, -12.2, .4]]) {
+      const tampo = addBox(1.0, .45, .6, lam({ color: 0x5a3f2b, roughness: .42 }), mx, my, mz, { ry: mry });
+      luxo(tampo, 'mesa-centro');
+      if (my === 0) solids.push({ x0: mx - .5, x1: mx + .5, z0: mz - .3, z1: mz + .3 });   // ver a nota da poltrona
+      mobilia('mansao_mesa_centro', { x: mx, y: my, z: mz, alturaAlvo: .45, ry: mry },
+        [tampo], { mansaoFeature: 'luxo-prop', luxoType: 'mesa-centro' });
+    }
+
+    // TRÍPTICO na face leste da divisória de x=-4 (a parede já é sólida: sem colisor).
+    const moldura = lam({ color: 0x8c6a33, metalness: .4, roughness: .45 });
+    const telas = [0x2d5a63, 0x7b3f2c, 0x3f5c35];
+    telas.forEach((cor, i) => {
+      const z = 2.6 + i * 1.9;
+      luxo(addBox(.05, 1.18, 1.18, moldura, -3.855, 1.5, z, { collide: false, cast: false, skirt: false }), 'triptico');
+      addBox(.02, .98, .98, lam({ color: cor, roughness: .74 }), -3.83, 1.6, z, { collide: false, cast: false, skirt: false });
+    });
+  }
+  // Luz quente local impede que a cobertura do mezanino transforme os móveis em
+  // silhuetas pretas; sem sombra dinâmica, o custo em mobile é pequeno.
+  for (const [x,z] of [[-8,-9],[3,1],[9,-10],[-5,4]]) {
+    const luz = new THREE.PointLight(0xffe0b5, 1.25, 14, 1.65); luz.position.set(x, 3.15, z);
+    luz.userData.mansaoFeature='interior-fill'; root.add(luz);
+  }
+  // escultura modernista (cover alto)
+  addBox(0.6, 2.5, 0.6, lam({ color: 0x8a7a6a, metalness: 0.3 }), 0, 0, -12); solids.push({ x0: -0.3, x1: 0.3, z0: -12.3, z1: -11.7 });
+
+  /* ===================== GARAGEM (aberta) ===================== */
+  // piso diferente (cimento queimado)
+  addFloor(20, 7, 0, 11.5, TEX.concrete || lam({ map: T.concrete }), 0.03);
+  /* Desenhos procedurais ORIGINAIS, sem traço de marca real (linha editorial); desde
+     BUG-56 são o fallback do lote GLB, com o mesmo colisor da vaga. */
+  const carroGenerico = (cx, cor, estilo, ry = 0) => {
+    const familias=['aurora-roadster','mare-fastback','serra-targa'];
+    const g = new THREE.Group(); g.position.set(cx, 0, 11); g.rotation.y = ry;
+    g.userData.mansaoFeature = 'carro-generico'; g.userData.originalDesign = `joa-${familias[estilo]}`;
+    g.userData.sportsFamily=familias[estilo];
+    g.userData.genericFront = true; g.userData.hoodHeight = .74;
+    const pintura = lam({ color: cor, roughness: .28, metalness: .42 });
+    const vidro = lam({ color: 0x172b34, transparent:true, opacity:.82, roughness: .12, metalness: .28 });
+    const borracha = lam({ color: 0x171717, roughness: .96 });
+    const aro = lam({color:0xa8ada8,metalness:.82,roughness:.22});
+    const parte = (geo, mat, x, y, z, tipo) => { const m = new THREE.Mesh(geo, mat); m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; if(tipo)m.userData.carPart=tipo; g.add(m); return m; };
+    const dims=[[1.9,.42,4.25],[1.96,.48,4.05],[1.88,.5,3.82]][estilo];
+    parte(new THREE.BoxGeometry(...dims), pintura, 0,.43,0,'body');
+    if(estilo===0){
+      // capô longo e cockpit aberto com dois arcos independentes
+      parte(new THREE.BoxGeometry(1.72,.2,1.22),pintura,0,.72,1.32,'long-hood');
+      parte(new THREE.BoxGeometry(1.48,.44,.86),vidro,0,.82,-.42,'windshield');
+      for(const x of [-.48,.48]) { const arco=parte(new THREE.TorusGeometry(.23,.045,7,12,Math.PI),aro,x,1.12,-.82,'roll-hoop'); arco.rotation.y=Math.PI/2; }
+    } else if(estilo===1){
+      // fastback comprido em dois volumes recuados
+      parte(new THREE.BoxGeometry(1.62,.58,1.28),vidro,0,.84,.05,'windshield');
+      const traseira=parte(new THREE.BoxGeometry(1.58,.42,1.12),vidro,0,.72,-1.02,'fastback-roof'); traseira.rotation.x=-.13;
+      parte(new THREE.BoxGeometry(1.78,.18,.82),pintura,0,.7,1.55,'short-hood');
+    } else {
+      // targa curto, barra estrutural clara e cobertura destacada
+      parte(new THREE.BoxGeometry(1.5,.5,.82),vidro,0,.82,.22,'windshield');
+      parte(new THREE.BoxGeometry(1.68,.18,.18),aro,0,1.12,-.44,'targa-bar');
+      parte(new THREE.BoxGeometry(1.48,.12,.78),pintura,0,1.08,-.86,'targa-roof');
+      parte(new THREE.BoxGeometry(1.72,.24,.72),pintura,0,.76,1.43,'raised-hood');
+    }
+    parte(new THREE.BoxGeometry(1.7,.13,.5), pintura, 0,.68,-1.7,'rear-deck');
+    for (const x of [-.97,.97]) for (const z of [-1.27,1.27]) {
+      const frente=z>0, wheel = parte(new THREE.CylinderGeometry(.31,.31,.2,14), borracha,x,.32,z,frente?'front-wheel':'wheel'); wheel.rotation.z = Math.PI/2;
+      const hub=parte(new THREE.CylinderGeometry(.14,.14,.215,12),aro,x,.32,z,'rim'); hub.rotation.z=Math.PI/2;
+    }
+    const lamp = lam({ color: 0xf6e6bd, emissive: 0x705c22, emissiveIntensity: .45, roughness: .35 });
+    for (const x of [-.56,.56]) parte(new THREE.BoxGeometry(estilo===1?.5:.34,.14,.075), lamp,x,.57,2.06,'headlight');
+    const grade=lam({color:0x303538,metalness:.45,roughness:.46});
+    if(estilo===0) for(const x of [-.48,0,.48]) parte(new THREE.BoxGeometry(.3,.085,.09),grade,x,.34,2.09,'grille');
+    else if(estilo===1) parte(new THREE.BoxGeometry(1.18,.12,.09),grade,0,.34,2.09,'grille');
+    else for(const x of [-.58,.58]) parte(new THREE.BoxGeometry(.42,.12,.09),grade,x,.34,1.96,'grille');
+    parte(new THREE.BoxGeometry(1.48,.1,.1),lam({color:0x777b7c,metalness:.75,roughness:.3}),0,.21,2.08,'bumper');
+    root.add(g); col(cx - 1, cx + 1, 0, 1.3, 8.95, 13.05); solids.push({ x0: cx - 1, x1: cx + 1, z0: 8.95, z1: 13.05 });
+    // a bala testa a malha visível do carro (vidro atravessa) — BUG-54, mesmo padrão do propComFallback
+    g.traverse((m) => { if (m.isMesh && !(m.material && m.material.transparent && (m.material.opacity === undefined || m.material.opacity < 0.9))) occluders.push(m); });
+    return g;
+  };
+  /* BUG-56: GLB do acervo no PropBatch, mesmo eixo e colisor da vaga; os InstancedMesh
+     entram em `occluders` no PB.build sem o vidro (BUG-54, padrão do map_havan.js). */
+  const carroAcervo = (cx, [id, cl, ch], cor, estilo, ry) => {
+    if (!(GLB_ON && PB.add(id, { x: cx, y: 0, z: 11, targetLen: cl, targetH: ch, ry }))) carroGenerico(cx, cor, estilo, ry);
+    else { col(cx - 1, cx + 1, 0, 1.3, 8.95, 13.05); solids.push({ x0: cx - 1, x1: cx + 1, z0: 8.95, z1: 13.05 }); }
+  };
+  carroAcervo(-6, GARAGEM[0], 0xa84132, 0, .04);
+  carroAcervo(0, GARAGEM[1], 0x31506a, 1, 0);
+  carroAcervo(6, GARAGEM[2], 0xb8b6aa, 2, -.04);
+
+  /* ===================== JARDIM TROPICAL MODERNISTA ===================== */
+  // Cadeia portão→porta (plans/13): pedras a ≤3 m uma da outra — régua G2.a do mansao-garden-check.
+  const pedraJardim = lam({ color: 0x9a998a, roughness: 0.94 });
+  for (const [px, pz, sx, sz, ry] of [[.3,33.6,1.25,.7,-.25],[-.2,32,1.55,.75,.28],[.2,30.6,1.2,.72,.4],[1.0,29.2,1.2,.72,-.5],[.2,28,1.15,.7,.35],[-.7,26.7,1.5,.8,.15],[.6,24.4,1.25,.68,-.35],[-.6,23.35,1.35,.7,.2],[-1.8,22.3,1.45,.72,.45],[.2,20.1,1.05,.82,-.2],[-1.2,18,1.3,.75,.3],[-.1,16.2,1.3,.75,.15]]) {
+    const pedra = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.08, .08, 7), pedraJardim);
+    pedra.scale.set(sx, 1, sz); pedra.rotation.y = ry; pedra.position.set(px, .035, pz); pedra.receiveShadow = true;
+    pedra.userData.mansaoFeature = 'pedra-caminho'; pedra.userData.nonSolidSurface = true; root.add(pedra);
+  }
+  // Espelho deslocado do eixo: base escura + lâmina viva (água da water.js, mesma
+  // família RC2 do oceano/córrego) — o plano azul chapado foi reprovo do crítico.
+  const eixoX=-4.2;
+  addFloor(3.45,13.2,eixoX,24.8,lam({color:0x163f4b,roughness:.5}),-.055);
+  const LAMINA = { segmentos: 4, raso: 0x4eaabd, fundo: 0x16323e, profEscala: .3,
+    espumaFaixa: .12, espumaMiolo: .05, profFallback: .25, ampEscala: .05, parent: root };
+  const aguaEixo = createWater(scene, T, 'mansao', { nivel: .025, centro: [eixoX, 24.8], tamanho: [3.25, 13.2], ...LAMINA });
+  aguaEixo.mesh.userData.nonSolidSurface = true;
+  for (const x of [eixoX-1.78,eixoX+1.78]) addBox(.16,.08,13.2,TEX.marble,x,.01,24.8,{ collide:false,cast:false,skirt:false });
+  // espelho d'água (retangular, raso): cuba escura sob a lâmina viva
+  addFloor(6, 4, -8, 25, lam({ color: 0x14313d, roughness: .5 }), -.04);
+  const aguaEspelho = createWater(scene, T, 'mansao', { nivel: .02, centro: [-8, 25], tamanho: [6, 4], ...LAMINA });
+  aguaEspelho.mesh.userData.nonSolidSurface = true;
+  col(-11, -5, -0.5, 0.65, 23, 27);  // topo acima dos pés: _collide realmente expulsa o corpo
+  // Árvores mantêm o tronco-colisor, mas as copas deixam de ser cubos.
+  const folhaA = lam({ color: 0x28582f, roughness: 1 });
+  const folhaB = lam({ color: 0x3f773b, roughness: 1 });
+  const jardimAssimetrico=new THREE.Group(); jardimAssimetrico.userData.mansaoFeature='garden-asymmetry'; root.add(jardimAssimetrico);
+  // Seis maciços autorados, sem pares espelhados e com três famílias de silhueta.
+  // Cada grupo é geometria real; o contrato mede posição e diversidade, não um selo vazio.
+  const clusterSpecs=[[-14.7,18.2,'heliconia'],[-9.9,22.8,'filodendro'],[13.5,19.7,'agave'],[8.7,29.6,'heliconia'],[-15.8,31.4,'agave'],[5.6,25.1,'filodendro']];
+  clusterSpecs.forEach(([gx,gz,familia],clusterIndex)=>{
+    const cluster=new THREE.Group(); cluster.position.set(gx,0,gz);
+    cluster.userData.mansaoFeature='garden-cluster'; cluster.userData.gardenFamily=familia; cluster.userData.clusterIndex=clusterIndex;
+    const glbOk = familia==='heliconia' ? GLB_ON && PB.add('heliconia',{x:gx,z:gz,targetH:1.35,ry:clusterIndex*1.7})
+      : familia==='filodendro' ? GLB_ON && PB.add('costela_adao',{x:gx,z:gz,targetH:1.15,ry:clusterIndex*2.3})
+      : GLB_ON && PB.add('agave',{x:gx,z:gz,targetH:.95,ry:clusterIndex*1.1});
+    if (!glbOk) {
+      if(familia==='heliconia') for(let i=0;i<7;i++) {
+      const a=-.9+i*.3, caule=new THREE.Mesh(new THREE.CylinderGeometry(.035,.05,.75+i*.09,6),lam({color:0x397343,roughness:1}));
+      caule.position.set((i-3)*.12,(.75+i*.09)/2,Math.sin(a)*.18); cluster.add(caule);
+      const flor=new THREE.Mesh(new THREE.ConeGeometry(.13,.38,6),lam({color:i%2?0xd64d32:0xf09a35,roughness:.9})); flor.rotation.z=(i-3)*.09; flor.position.set((i-3)*.12,.82+i*.09,Math.sin(a)*.18); cluster.add(flor);
+    } else if(familia==='filodendro') for(let i=0;i<9;i++) {
+      const a=i*Math.PI*2/9, folha=new THREE.Mesh(new THREE.SphereGeometry(.34,8,5),lam({color:i%2?0x347b45:0x4b9253,roughness:1}));
+      folha.scale.set(.36,.08,1.65); folha.rotation.set(-.48,a,0); folha.position.set(Math.sin(a)*.45,.42+(i%3)*.12,Math.cos(a)*.45); cluster.add(folha);
+    } else for(let i=0;i<10;i++) {
+      const a=i*Math.PI*2/10, folha=new THREE.Mesh(new THREE.ConeGeometry(.16,.95,6),lam({color:i%2?0x64834a:0x78994f,roughness:1}));
+      folha.rotation.set(.68,a,0); folha.position.set(Math.sin(a)*.31,.34,Math.cos(a)*.31); cluster.add(folha);
+    }
+      cluster.traverse((o)=>{if(o.isMesh){o.castShadow=true;o.userData.nonSolidSurface=true;}});
+    }
+    root.add(cluster);
+  });
+  // Três maciços densos deslocados: volumes contínuos enquadram a aproximação e
+  // retiram o jardim da leitura axial/rala sem invadir o corredor central.
+  const massSpecs=[[-12.4,20.4,1.18],[11.2,25.8,.92],[-8.7,31.4,1.34]];
+  massSpecs.forEach(([mx,mz,rot],mi)=>{
+    const mass=new THREE.Group(); mass.position.set(mx,0,mz); mass.rotation.y=rot;
+    mass.userData.mansaoFeature='garden-mass';
+    const glbMass = GLB_ON && hasProp('costela_adao') && hasProp('heliconia') && hasProp('agave');
+    if (glbMass) {
+      PB.add('costela_adao',{x:mx,z:mz,targetH:1.5,ry:rot});
+      PB.add('heliconia',{x:mx+.9,z:mz+.45,targetH:1.6,ry:rot+2.1});
+      if (!LOWQ) PB.add('agave',{x:mx-.85,z:mz+.6,targetH:.8,ry:rot+4.2});
+    } else {
+      for(let i=0;i<24;i++) {
+        const a=i*Math.PI*2/24+mi*.31,r=.38+(i%6)*.17;
+        const leaf=new THREE.Mesh(new THREE.SphereGeometry(.42,8,5),lam({color:i%3===0?0x255f36:i%3===1?0x3d8245:0x527d3e,roughness:1}));
+        leaf.scale.set(.28,.10,1.45+(i%4)*.16); leaf.rotation.set(-.42+(i%3)*.1,a,(i%2?1:-1)*.12);
+        leaf.position.set(Math.sin(a)*r,.42+(i%5)*.13,Math.cos(a)*r); leaf.userData.nonSolidSurface=true; mass.add(leaf);
+      }
+      for(let i=0;i<6;i++) {
+        const flower=new THREE.Mesh(new THREE.ConeGeometry(.12,.52,6),lam({color:i%2?0xe06a34:0xc94334,roughness:.9}));
+        flower.position.set((i-2.5)*.19,.72+(i%3)*.18,Math.sin(i)*.32); flower.rotation.z=(i-2.5)*.07;
+        flower.userData.nonSolidSurface=true; mass.add(flower);
+      }
+    }
+    root.add(mass);
+  });
+  for (const [tx, tz, h] of [[-12.8,19.2,3.7],[10.7,21.4,4.3],[-15.2,27.1,4.8],[13.1,29.6,3.9],[-8.7,33.1,4.2]]) {
+    const tronco=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,h,9),lam({color:0x63482f,roughness:1})); tronco.position.set(tx,h/2,tz); root.add(tronco);
+    tronco.userData.mansaoFeature = 'arvore';   // G3 do mansao-garden-check: 3,0–6,8 m
+    occluders.push(tronco);   // tronco visível dentro do próprio colisor: a bala para nele
+    if (GLB_ON && PB.add('palmeira_imperial', { x: tx, z: tz, targetH: h + 1.6, ry: (tx * 7 + tz * 3) % 6.283 })) tronco.visible = false;
+    else for (const [ox, oy, oz, s] of [[0,0,0,1],[-.85,-.15,.15,.72],[.8,-.08,-.2,.76],[.1,.48,.2,.68]]) {
+      const copa = new THREE.Mesh(new THREE.IcosahedronGeometry(1.55 * s, 1), (ox + oz) > 0 ? folhaB : folhaA);
+      copa.scale.set(1.05, .78, .94); copa.position.set(tx + ox, h + .1 + oy, tz + oz); copa.castShadow = true; root.add(copa);
+    }
+    col(tx-.3,tx+.3,0,h,tz-.3,tz+.3); solids.push({ x0: tx - 0.3, x1: tx + 0.3, z0: tz - 0.3, z1: tz + 0.3 });
+  }
+  // Bromélias em manchas curvas amarram canteiros, espelho d'água e caminho.
+  for (const [x, z, c] of [[-11.2,19.4,0xb84132],[-7.4,20.8,0xd1842f],[6.7,21.7,0xb84132],[10.6,24.1,0xd1842f],[-13.3,28.9,0xb84132],[-6.1,31.2,0xd1842f],[7.9,27.4,0xb84132],[14.1,32.2,0xd1842f]]) {
+    if (GLB_ON && PB.add('ixora', { x, z, targetH: .95, ry: (x * 5 + z * 11) % 6.283 })) continue;   // BUG-64: ixora florida no lugar dos cones
+    const g = new THREE.Group();
+    g.userData.mansaoFeature = 'bromelia';
+    for (let i = 0; i < 11; i++) {
+      const a = i * Math.PI * 2 / 11, externo = i % 2 === 0;
+      const folha = new THREE.Mesh(new THREE.ConeGeometry(.16,externo?.92:.68,6), lam({ color: i % 4 === 0 ? c : 0x376f3b, roughness: 1 }));
+      folha.rotation.set(externo ? .82 : .55,a,0);
+      folha.position.set(Math.sin(a) * (externo ? .34 : .2), externo ? .34 : .42, Math.cos(a) * (externo ? .34 : .2));
+      g.add(folha);
+    }
+    const miolo = new THREE.Mesh(new THREE.SphereGeometry(.22, 9, 6), lam({ color: c, roughness: .9 }));
+    miolo.position.y = .32; g.add(miolo);
+    // MAP1: bromélia é a mesma construção do `garden-cluster` (cones sem colisor) —
+    // a marca é a verdade medida: o corpo atravessa a folhagem.
+    g.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+    g.position.set(x, 0, z); root.add(g);
+  }
+  // Duas palmeiras assimétricas enquadram a fachada; folhas alongadas têm três
+  // inclinações para não ler como as copas esféricas existentes.
+  const folhaPalma = lam({ color: 0x2c713c, roughness: 1 });
+  for (const [px,pz,sgn] of [[-17.2,22.5,1],[17.2,24,-1]]) {
+    if (GLB_ON && PB.add('palmeira_ravenala', { x: px, z: pz, targetH: 5.0, ry: sgn > 0 ? .45 : 2.69 })) continue;   // BUG-64: ravenala em leque no lugar das esferas
+    const palm = new THREE.Group(); palm.position.set(px,0,pz); palm.userData.mansaoFeature = 'palmeira';
+    const tropicalTag=new THREE.Group(); tropicalTag.userData.mansaoFeature='tropical-3d'; palm.add(tropicalTag);
+    for (let i=0;i<5;i++) {
+      const tronco = new THREE.Mesh(new THREE.CylinderGeometry(.18+i*.015,.24+i*.018,.9,8), lam({ color: 0x80613d, roughness: 1 }));
+      tronco.position.set(sgn*i*.07,.45+i*.82,0); tronco.rotation.z = -sgn*.055;
+      tronco.userData.nonSolidSurface = true; palm.add(tronco);
+    }
+    for (let i=0;i<10;i++) {
+      const a=i*Math.PI*2/10, leaf=new THREE.Mesh(new THREE.SphereGeometry(.58,8,5),folhaPalma);
+      leaf.scale.set(.24,.09,2.35); leaf.rotation.set(-.42,a,Math.sin(a)*.18);
+      leaf.position.set(sgn*.32+Math.sin(a)*.55,4.45+Math.cos(a)*.14,Math.cos(a)*.55);
+      leaf.userData.nonSolidSurface = true; palm.add(leaf);
+    }
+    root.add(palm);
+  }
+  // Bananeiras no primeiro plano: folhas altas, largas e em leque, não estrelas 2D.
+  for(const [bx,bz,ry] of [[-9.8,24.8,.3],[11.6,26.5,-.45]]){
+    if (GLB_ON && PB.add('bananeira', { x: bx, z: bz, targetH: 2.3, ry })) continue;   // BUG-64
+    const banana=new THREE.Group(); banana.position.set(bx,0,bz); banana.rotation.y=ry;
+    banana.userData.mansaoFeature='tropical-3d';
+    for(let i=0;i<7;i++){ const a=-1.1+i*.36, folha=new THREE.Mesh(new THREE.SphereGeometry(.52,9,5),lam({color:i%2?0x4b8b45:0x35783c,roughness:1})); folha.scale.set(.28,.08,2.25); folha.rotation.set(-.55,a,0); folha.position.set(Math.sin(a)*.55,1.45+i*.12,Math.cos(a)*.55); banana.add(folha); }
+    const caule=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,1.45,8),lam({color:0x6f8744,roughness:1})); caule.position.y=.72; banana.add(caule);
+    // MAP1: bananeira é `tropical-3d`, mesma taxonomia da palmeira — tronco e folha
+    // atravessáveis; o pseudocaule não é cover (árvore lenhosa é que leva `col()`).
+    banana.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+    root.add(banana);
+  }
+  /* SET DRESSING MINT (BUG-56): fora do corredor central e das linhas de waypoint
+     z=18/24/30 — colisores de borda, A* e fluxo de spawn inalterados. */
+  for (const [bx, bz, ry] of [[-14.9, 16.6, .28], [16.6, 22.6, -2.86]]) {
+    jardimProp('banco_jardim', bx, bz, .82, ry, 0, [1.8, .55, .5]);
+    const horiz = Math.abs(Math.cos(ry)) > Math.abs(Math.sin(ry));
+    col(bx - (horiz ? .95 : .35), bx + (horiz ? .95 : .35), 0, .5, bz - (horiz ? .35 : .95), bz + (horiz ? .35 : .95));
+    solids.push({ x0: bx - (horiz ? .95 : .35), x1: bx + (horiz ? .95 : .35), z0: bz - (horiz ? .35 : .95), z1: bz + (horiz ? .35 : .95) });
+  }
+  // Postes em x=±2,3 com col ±0,18 (base real 0,34 m, mansao-glb-fit): colisor mais
+  // largo mata nós da grade pela inflação de 0,5 m do blocked() e derruba rota do CTF2.
+  for (const [px, pz] of [[-2.3, 17.4], [2.3, 22.6], [-2.3, 27.4], [2.3, 32.6]]) {
+    jardimProp('poste_jardim', px, pz, 2.4, 0, 0, [.26, .26, 2.4]);
+    col(px - .18, px + .18, 0, 2.4, pz - .18, pz + .18);
+  }
+  jardimProp('escultura_jardim', 18.6, 32.2, 2.2, -.6, 0, [.9, .9, 2.2]);
+  col(18.0, 19.2, 0, 2.2, 31.6, 32.8); solids.push({ x0: 18.0, x1: 19.2, z0: 31.6, z1: 32.8 });
+  // Vaso com col 0,70 m = base rígida medida 0,67 (mansao-glb-fit); a folhagem do GLB
+  // é atravessável por doutrina (mesma regra da bananeira) e leva nonSolidSurface.
+  for (const [vx, vz] of [[-18.9, 20.4], [19.6, 26.2], [-20.2, -21.4], [20.2, -21.4]]) {
+    const v = propComFallback('vaso_tropical', vx, vz, 1.05, (vx + vz) * .3,
+      () => addBox(.7, 1.05, .7, lam({ color: 0x2e6636, roughness: 1 }), vx, 0, vz));
+    if (v) v.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+  }
+  // Encosta verde lateral em dois planos de profundidade: o horizonte deixa de
+  // terminar numa linha oceânica reta, sem bloquear o eixo central de combate.
+  const encosta = new THREE.Group(); encosta.userData.mansaoFeature = 'encosta';
+  for (const [x,z,sx,sy,sz] of [[-20.8,26,1.2,.46,2.2],[20.8,29,1.15,.4,1.9]]) {
+    const morro = new THREE.Mesh(new THREE.DodecahedronGeometry(3.5,1), lam({ color: 0x356438, roughness: 1 }));
+    morro.scale.set(sx,sy,sz); morro.position.set(x,.55,z); morro.rotation.y = x < 0 ? .24 : -.3; morro.receiveShadow = true;
+    morro.userData.nonSolidSurface = true; encosta.add(morro);
+    // BUG-64: coroamento quebra a silhueta de poliedro chapado
+    if (GLB_ON) { PB.add('agave', { x: x * .96, y: 1.0, z: z - 1.1, targetH: .9, ry: x }); PB.add('samambaia', { x: x * .98, y: .8, z: z + 1.5, targetH: .85, ry: z }); }
+  }
+  root.add(encosta);
+  // Pergolado do lounge: quatro pilares chegam ao solo; cinco travessas e duas
+  // longarinas formam uma estrutura legível, eliminando as vigas soltas no céu.
+  const pergolaMat=lam({color:0x765039,roughness:.66});
+  const marcaPergola=(o,tipo)=>{o.userData.mansaoFeature='pergola-part';o.userData.pergolaPart=tipo;return o;};
+  for(const [x,z] of [[-13.8,14.7],[-8.2,14.7],[-13.8,18.3],[-8.2,18.3]]) marcaPergola(addBox(.22,3.05,.22,pergolaMat,x,0,z,{collide:false,skirt:false}),'pillar');
+  for(const z of [14.7,18.3]) marcaPergola(addBox(5.85,.18,.22,pergolaMat,-11,2.96,z,{collide:false,skirt:false}),'beam');
+  for(let z=15;z<=18;z+=.75) marcaPergola(addBox(.16,.14,3.8,pergolaMat,-13.3+(z-15)*1.52,3.13,16.5,{collide:false,skirt:false}),'beam');
+  /* FOLHAGEM INSTANCIADA (plans/13): drifts de ângulo áureo nas bordas, régua G1 do
+     mansao-garden-check. BUG-64: com GLB os drifts são touceiras via PropBatch. */
+  const rndJardim = (() => { let s = 20260818 >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
+  const driftsJardim = [
+    [-17.6, 16.8], [-13.2, 18.6], [-18.4, 24.9], [-14.1, 33.6], [-8.3, 33.2],
+    [16.8, 17.8], [12.1, 19.9], [18.2, 27.4], [14.8, 33.9], [7.6, 32.7], [-9.8, 28.3],
+  ];
+  // Seis touceiras GORDAS na faixa z >= 29 (o que o spawn A vê nos 2 primeiros segundos),
+  // todas com |x| >= 10 para não tocar o corredor do portão. Números na cláusula G9.
+  const driftsRespawn = [
+    [-10.2, 29.6], [-17.4, 31.4], [-11.6, 34.8],
+    [10.4, 29.8], [17.2, 31.6], [11.8, 34.9],
+  ];
+  if (GLB_ON && hasProp('samambaia') && hasProp('ixora') && hasProp('heliconia')) {
+    // Costela-de-adão e samambaia alternadas com uma ixora a cada três: folha larga é o
+    // que tira o canteiro da leitura de "cone verde".
+    for (const [di, [dx, dz]] of driftsRespawn.entries()) {
+      const n = LOWQ ? 3 : 6;
+      for (let i = 0; i < n; i++) {
+        const a = i * 2.399963 + rndJardim() * .5, r = .42 * Math.sqrt(i + .5) + rndJardim() * .25;
+        const fx = dx + Math.cos(a) * r, fz = dz + Math.sin(a) * r, fry = rndJardim() * 6.283;
+        if (i % 3 === 2) PB.add('ixora', { x: fx, z: fz, targetH: .8 + rndJardim() * .3, ry: fry });
+        else if ((i + di) % 2 === 0) PB.add('costela_adao', { x: fx, z: fz, targetH: 1.0 + rndJardim() * .45, ry: fry });
+        else PB.add('samambaia', { x: fx, z: fz, targetH: .7 + rndJardim() * .35, ry: fry });
+      }
+    }
+    for (const [dx, dz] of driftsJardim) {
+      const n = LOWQ ? 2 : 3;
+      for (let i = 0; i < n; i++) {
+        const a = i * 2.399963 + rndJardim() * .6, r = .34 * Math.sqrt(i + .6) + rndJardim() * .2;
+        const fx = dx + Math.cos(a) * r, fz = dz + Math.sin(a) * r, fh = .55 + rndJardim() * .45, fry = rndJardim() * 6.283;
+        if (i % 3 === 0) PB.add('samambaia', { x: fx, z: fz, targetH: fh, ry: fry });
+        else if (i % 3 === 1) PB.add('ixora', { x: fx, z: fz, targetH: fh + .15, ry: fry });
+        else PB.add('heliconia', { x: fx, z: fz, targetH: fh + .5, ry: fry });
+      }
+    }
+  } else {
+  const paletaFolha = [0x2f7040, 0x3d8a4a, 0x529a4b, 0x2a6b3a, 0x6aa14e].map((c) => new THREE.Color(c));
+  const criaFolhagem = (geo) => {
+    const mesh = new THREE.InstancedMesh(geo, lam({ color: 0xffffff, roughness: 1 }), 30);   // branco: cor vem do instanceColor
+    mesh.userData.mansaoFeature = 'folhagem-instanciada';
+    mesh.userData.nonSolidSurface = true;
+    mesh.castShadow = true;
+    root.add(mesh);
+    return mesh;
+  };
+  const dummyFolha = new THREE.Object3D();
+  const corFolha = new THREE.Color();
+  const famA = criaFolhagem(new THREE.SphereGeometry(.48, 8, 5));
+  const famB = criaFolhagem(new THREE.ConeGeometry(.30, 1.05, 6));
+  const famResp = [   // TRÊS malhas: com duas o pior aglomerado same-mesh dá 9 e a G1.iii (teto 8) reprova
+    criaFolhagem(new THREE.SphereGeometry(.52, 8, 5)),
+    criaFolhagem(new THREE.ConeGeometry(.22, 1.15, 5)),
+    criaFolhagem(new THREE.SphereGeometry(.34, 7, 5)),
+  ];
+  const iResp = [0, 0, 0];
+  for (const [di, [dx, dz]] of driftsRespawn.entries()) {
+    const n = LOWQ ? 3 : 6;
+    for (let i = 0; i < n; i++) {
+      const a = i * 2.399963 + rndJardim() * .5, r = .42 * Math.sqrt(i + .5) + rndJardim() * .25;
+      dummyFolha.position.set(dx + Math.cos(a) * r, .52 + rndJardim() * .28, dz + Math.sin(a) * r);
+      dummyFolha.rotation.set(rndJardim() * .35, rndJardim() * Math.PI * 2, rndJardim() * .35);
+      // achatamento pelo ÍNDICE, não pela malha: preso à malha, a G1.ii perde spread
+      const s = .7 + rndJardim() * .85, largo = i % 2 === 0 ? 1.35 : .85;
+      dummyFolha.scale.set(s * largo, s * (.9 + rndJardim() * .3), s * largo);
+      dummyFolha.updateMatrix();
+      const k = (i + di) % 3, idx = iResp[k];
+      if (idx >= 30) continue;
+      iResp[k]++;
+      famResp[k].setMatrixAt(idx, dummyFolha.matrix);
+      corFolha.copy(paletaFolha[Math.floor(rndJardim() * paletaFolha.length)])
+        .offsetHSL((rndJardim() - .5) * .03, (rndJardim() - .5) * .15, (rndJardim() - .5) * .08);
+      famResp[k].setColorAt(idx, corFolha);
+    }
+  }
+  famResp.forEach((mesh, k) => {
+    mesh.count = iResp[k];
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  });
+  let iA = 0, iB = 0;
+  for (const [dx, dz] of driftsJardim) {
+    const n = 4 + Math.floor(rndJardim() * 3);   // drift de 4-6 plantas misturando famílias
+    for (let i = 0; i < n; i++) {
+      const a = i * 2.399963 + rndJardim() * .6, r = .34 * Math.sqrt(i + .6) + rndJardim() * .2;
+      dummyFolha.position.set(dx + Math.cos(a) * r, .48 + rndJardim() * .3, dz + Math.sin(a) * r);
+      dummyFolha.rotation.set(rndJardim() * .4, rndJardim() * Math.PI * 2, rndJardim() * .4);
+      const s = .65 + rndJardim() * .8;
+      dummyFolha.scale.set(s, s * (.9 + rndJardim() * .35), s);
+      dummyFolha.updateMatrix();
+      const mesh = i % 2 ? famB : famA;
+      const idx = mesh === famA ? iA : iB;
+      if (idx >= 30) continue;
+      mesh === famA ? iA++ : iB++;
+      mesh.setMatrixAt(idx, dummyFolha.matrix);
+      corFolha.copy(paletaFolha[Math.floor(rndJardim() * paletaFolha.length)])
+        .offsetHSL((rndJardim() - .5) * .03, (rndJardim() - .5) * .15, (rndJardim() - .5) * .08);
+      mesh.setColorAt(idx, corFolha);
+    }
+  }
+  famA.count = iA; famB.count = iB;
+  famA.instanceMatrix.needsUpdate = true; famB.instanceMatrix.needsUpdate = true;
+  if (famA.instanceColor) famA.instanceColor.needsUpdate = true;
+  if (famB.instanceColor) famB.instanceColor.needsUpdate = true;
+  }
+  const forracao = lam({ color: 0x416f38, roughness: 1 });
+  for (const [x,z,s] of [[-16.4,18.1,2.2],[-14.8,25.6,2.5],[-10.7,33.2,2.8],[15.7,19.1,2.0],[16.4,27.2,2.4],[10.9,31.7,2.6]]) {
+    const m = new THREE.Mesh(new THREE.CircleGeometry(s, 14), forracao);
+    m.rotation.x = -Math.PI / 2; m.position.set(x,.018,z); m.receiveShadow = true;
+    m.userData.nonSolidSurface = true; root.add(m);
+  }
+  // muretas dos canteiros (cover agachado); a de (-7,4;22,6) saiu de cima do espelho —
+  // sobre a água ela lia como viga flutuando (crítico v2.1)
+  for (const [mx, mz, ry] of [[5.4,23.3,.08],[-7.4,22.55,-.12],[7.1,30.5,.16],[-4.8,29.1,-.06],
+    [-10.6,33.0,.10],[10.6,33.0,-.10]]) {
+    addBox(3.0, 0.6, 0.4, lam({ map: texturaMuro(), roughness: .9 }), mx, 0, mz, { ry })
+      .userData.mansaoFeature = 'mureta';   // a marca é o que a cláusula G9 mede
+    solids.push({ x0: mx - 1.5, x1: mx + 1.5, z0: mz - 0.2, z1: mz + 0.2 });
+  }
+  // Portão de correr: o colisor único 8×3 fica (gameplay); o visual ganha trilho,
+  // mourões, motor e folha de aço flutuando 12 cm — a "laje preta" morreu (crítico r3).
+  col(-4, 4, 0, 3.0, 33.85, 34.15);
+  // Mourões e motor ficam FORA do colisor do vão e o corpo entrava na geometria
+  // visível (MAP1: ponto (4,5; 34,5) preso no motor, 0,9 m) — ganham colisor próprio.
+  for (const mx of [-4.15, 4.15]) col(mx - .18, mx + .18, 0, 2.6, 33.75, 34.25);
+  col(4.37, 4.87, 0, 0.9, 34.375, 34.725);
+  const marcaParte = (o, k, t) => { o.userData[k] = t; return o; };
+  marcaParte(addBox(8.3, .05, .14, lam({ color: 0x4a4f55, metalness: .6, roughness: .4 }), 0, 0, 34, { collide: false, cast: false, skirt: false }), 'portaoPart', 'trilho');
+  for (const mx of [-4.15, 4.15]) marcaParte(addBox(.35, 2.6, .5, MAT_MURO, mx, 0, 34, { collide: false }), 'portaoPart', 'mourao');
+  marcaParte(addBox(.5, .9, .35, lam({ color: 0x3a4046, metalness: .5, roughness: .5 }), 4.62, 0, 34.55, { collide: false }), 'portaoPart', 'motor');
+  const portaoObj = propComFallback('portao_correr', 0, 34, 2.3, 0, () => {
+    const folha = addBox(7.9, 2.1, .12, lam({ map: texturaPortao(), metalness: .45, roughness: .55 }), 0, .12, 34, { collide: false, skirt: false });
+    folha.userData.portaoPart = 'folha'; folha.userData.mansaoFeature = 'portao'; occluders.push(folha);
+    return folha;
+  });
+  if (portaoObj) portaoObj.userData.mansaoFeature = 'portao';
+  // Guarita e biombo protegem o respawn, deixando rotas laterais independentes.
+  addBox(3.2, 2.8, 3.2, TEX.concrete, -17.5, 0, 31.5);
+  // Biombo com estrutura (crítico r3: "caixa flutuando"): mourões a cada ~1,2 m
+  // descendo ao chão e travessa coroando — painéis e passagens dos spawns (CTF2) intactos.
+  for (const x of [-6.75, -2.25, 2.25, 6.75]) {
+    addBox(2.5, 2.1, 0.35, ripado, x, 0, 29).userData.mansaoFeature = 'biombo';
+    for (const px of [x - 1.22, x, x + 1.22]) marcaParte(addBox(.14, 2.3, .44, ripado, px, 0, 29, { collide: false }), 'biomboPart', 'mourao');
+    marcaParte(addBox(2.62, .09, .42, lam({ color: 0x5c4030, roughness: .7 }), x, 2.1, 29, { collide: false, cast: false, skirt: false }), 'biomboPart', 'travessa');
+  }
+
+  /* ===================== TERRAÇO + PISCINA INFINITA ===================== */
+  // Deck recortado nas laterais: não existe madeira depois da borda infinita central.
+  const deckMat = TEX.deck || lam({ color: 0x8a6a4a });
+  addFloor(HALF_X * 2 - 2, 9, 0, -19.5, deckMat, 0.03);
+  addFloor(15, 11, -13.5, -29.5, deckMat, 0.03);
+  addFloor(15, 11, 13.5, -29.5, deckMat, 0.03);
+  // piscina ENTRÁVEL (plans/13): piso andável via groundHeightAt, paredes de colisor só
+  // até y=0 (em cima _collide não pega); degraus 0,28 m < STEP_H 0,55 — quem cai, SAI.
+  const azulejoCuba = lam({ color: 0x256d84, roughness: .38 });
+  const degCuba = (h, d, z, yBase) => {
+    const m = addBox(11, h, d, azulejoCuba, 0, yBase, z, { collide: false, cast: false, skirt: false });
+    m.userData.mansaoFeature = 'pool-tread'; m.userData.nonSolidSurface = true;
+  };
+  degCuba(.567, .284, -26.642, PISCINA.raso);   // degraus de entrada (largura total)
+  degCuba(.283, .284, -26.926, PISCINA.raso);
+  degCuba(.75, .288, -29.744, PISCINA.fundo);   // escada submersa raso→fundo
+  degCuba(.50, .288, -30.031, PISCINA.fundo);
+  degCuba(.25, .288, -30.319, PISCINA.fundo);
+  const pisoRaso = addFloor(11, 2.53, 0, -28.334, lam({ color: 0x1d5a74, roughness: .5 }), PISCINA.raso - .01);
+  const pisoFundo = addFloor(11, 1.75, 0, -31.625, lam({ color: 0x123f54, roughness: .55 }), PISCINA.fundo - .01);
+  for (const p of [pisoRaso, pisoFundo]) { p.userData.mansaoFeature = 'pool-basin-floor'; p.userData.nonSolidSurface = true; }
+  const paredeCuba = (x, z, w, d) => {
+    const m = addBox(w, 1.95, d, azulejoCuba, x, PISCINA.fundo - .1, z);
+    m.userData.mansaoFeature = 'pool-wall';
+  };
+  paredeCuba(0, -26.25, 12, .5);   // sul (borda de entrada)
+  paredeCuba(0, -32.75, 12, .5);   // norte (sob a borda infinita)
+  paredeCuba(-5.75, -29.5, .5, 6);
+  paredeCuba(5.75, -29.5, .5, 6);
+  // Piscina com a MESMA água viva RC2 (crítico r3: "retângulo turquesa fosco") —
+  // fade na profundidade real da cuba (1,93 m); o contrato entrável não muda.
+  const aguaPiscina = createWater(scene, T, 'mansao', { nivel: .08, centro: [0, -29.5], tamanho: [11, 6],
+    segmentos: 6, raso: 0x419bb3, fundo: 0x1a5a72, profEscala: 1.9, espumaFaixa: .3, espumaMiolo: .1,
+    profFallback: .55, ampEscala: .06, parent: root });
+  aguaPiscina.mesh.userData.nonSolidSurface = true;
+  aguaPiscina.material.side = THREE.DoubleSide;   // piscina é entrável: de dentro o fundo lê a película da superfície
+  const bordaPiscina = lam({ map: TEX.marble.map || null, color: 0xf0eadc, roughness: .3 });
+  for (const x of [-6.2,6.2]) addBox(.32,.18,7.6,bordaPiscina,x,.01,-29.5,{ collide:false, skirt:false });
+  // borda sul sobre o TOPO da parede (z∈[-26,31,-25,99]): dentro da cuba o chão é o
+  // degrau a -0,283 e a pedra a +0,19 virava penetração de 0,47 m no MAP1
+  addBox(12.7,.18,.32,bordaPiscina,0,.01,-26.15,{ collide:false, skirt:false });
+  // Subleito OPACO em y=0 cobre o gramado cortado sob o vertedouro translúcido;
+  // a máscara de cuba saiu — dentro da piscina ela virava teto do nadador.
+  addFloor(12, 2.9, 0, -34.45, lam({ color: 0x0f3a4c, roughness: .4 }), 0);
+  addFloor(12, .55, 0, -33.74, lam({ color: 0x59c9df, roughness: .08, metalness: .08 }), .075);
+  addBox(12, .42, .08, lam({ color: 0x2a91ae, transparent: true, opacity: .72, roughness: .16 }), 0, -.35, -33.02,
+    { collide: false, cast: false, skirt: false });
+  addFloor(12, 2.9, 0, -34.45, lam({ color: 0x247d9d, roughness: .16, metalness: .08, transparent: true, opacity: .9 }), .015);
+  // espreguiçadeiras
+  for (const [ex, ez, ry] of [[-12, -22, 0.2], [12, -22, -0.2], [-12, -28, 0.1], [12, -28, -0.1]])
+    propComFallback('guarda_sol', ex, ez, 2.2, ry, () => addBox(0.8, 0.4, 2.0, lam({ color: 0xf0e8d0 }), ex, 0, ez));
+  // mesa externa
+  propComFallback('mesa_guardasol', 0, -20, 2.3, 0, () => addBox(2.0, 0.9, 1.0, lam({ color: 0xe0d0b0 }), 0, 0, -20));
+  solids.push({ x0: -1, x1: 1, z0: -20.5, z1: -19.5 });
+  // heliponto (H) — decoração
+  addBox(0.3, 0.05, 8.0, lam({ color: 0xffffff }), -15, 0, -30, { collide: false });
+  addBox(8.0, 0.05, 0.3, lam({ color: 0xffffff }), -15, 0, -30, { collide: false });
+  // Lounge Mint (BUG-56): colisor 1,9 = malha real 1,91×1,06 (mansao-glb-fit), em
+  // janela entre nós da grade — não apaga waypoint nem a linha do terraço.
+  jardimProp('lounge_externo', -14.9, -18.5, 1.05, 1.57, 0, [1.7, 1.7, .8]);
+  col(-15.85, -13.95, 0, .8, -19.45, -17.55); solids.push({ x0: -15.85, x1: -13.95, z0: -19.45, z1: -17.55 });
+
+  /* MUROS — concreto de fôrma com junta (G5); o volume e o colisor não mudam */
+  for (const sx of [-HALF_X, HALF_X]) addBox(0.5, 2.5, HALF_Z * 2, MAT_MURO, sx, 0, 0).userData.mansaoFeature = 'muro-perimetro';
+  addBox(HALF_X * 2, 2.5, 0.5, MAT_MURO, 0, 0, HALF_Z).userData.mansaoFeature = 'muro-perimetro';
+
+  /* COSTÃO E OCEANO (RC2, plans/23): o leito desce 4,4 m sob a água — a régua de
+     depth-fade da water.js faz o turquesa de raso e a espuma nas pedras que a furam. */
+  {
+    const leitoGeo = new THREE.PlaneGeometry(200, 44.5, 1, 1);
+    const leito = new THREE.Mesh(leitoGeo, lam({ color: 0x6f6350, roughness: .95 }));   // areia/rocha MOLHADA: clara demais lavava o raso pelo alfa
+    leito.rotation.x = -Math.PI / 2 - Math.atan2(4.38, 44);
+    leito.position.set(0, -2.21, -58);
+    leito.receiveShadow = true; root.add(leito);
+    const pedraMat = lam({ color: 0x7d7468, roughness: .9 });
+    for (const [px, pz, pr, py] of [[-9, -41, 1.6, -1.5], [7, -44, 2.2, -1.8], [-22, -47, 2.8, -2.0], [16, -52, 1.9, -2.2], [30, -43, 1.3, -1.4]]) {
+      const pedra = new THREE.Mesh(new THREE.DodecahedronGeometry(pr, 0), pedraMat);
+      pedra.position.set(px, py, pz); pedra.rotation.set(pr, pz, px);
+      pedra.castShadow = true; root.add(pedra);
+    }
+  }
+  createWater(scene, T, 'mansao');   // oceano; o update() tica todas as scene.userData.waters
+  let praiaAlturaEm = () => 0;
+
+  /* ===================== PRAIA =====================
+     Vive FORA de `world.bounds` (z < -35,5): sem colisor, occluder nem waypoint.
+     Perfil, tetos e procedência: tools/eval/mansao-beach-check.mjs. */
+  {
+    const AREIA = { z0: -36.4, z1: -52.4, larg: 150, incl: .0995, zLeito: -35.75, folga: .10 };
+    const yLeito = (z) => (z - AREIA.zLeito) * AREIA.incl;
+    /* duna (0,85 m ao fundo) + berma (0,35 m no meio) + baía (centro 0,25 m mais baixo,
+       então a orla vira crescente), tudo somado ao leito da RC2. */
+    const perfil = (x, z) => {
+      const t = (z - AREIA.z0) / (AREIA.z1 - AREIA.z0);
+      const duna = .85 * Math.exp(-(((t - .06) / .10) ** 2));
+      const berma = .35 * Math.exp(-(((t - .28) / .13) ** 2));
+      const baia = -.25 * Math.max(0, 1 - (x / 70) ** 2);
+      const onda = Math.sin(x * .09 + 1.3) * .10 + Math.sin(x * .31 - z * .17) * .05;
+      return yLeito(z) + AREIA.folga + duna + berma + baia + onda * (1 - t * .6);
+    };
+    const ySand = (x, z) => perfil(x, z);
+    praiaAlturaEm = ySand;
+    // grão + conchas, tile de 2 m (escala do texturaMuro). A cor seca é o 0x6f6350 que o
+    // leito já declara como "areia MOLHADA", clareado 1,62x: mesma areia, com e sem água.
+    const texturaAreia = () => texProcedural(128, (x, y) => {
+      const grao = ((x * 29 + y * 17) % 23) - 11, fino = ((x * 7 + y * 53) % 11) - 5;
+      const concha = ((x * 41 + y * 91) % 199) > 195 ? 34 : 0;
+      const b = 180 + grao * .9 + fino * .5 + concha;
+      return [Math.min(255, b), Math.min(255, b - 18 + concha * .4), Math.min(255, b - 48 + concha * .6)];
+    });
+    const texAreia = texturaAreia();
+    texAreia.repeat.set(AREIA.larg / 2, Math.abs(AREIA.z1 - AREIA.z0) / 2);
+    texAreia.wrapS = texAreia.wrapT = THREE.MirroredRepeatWrapping;
+    const NX = 72, NZ = 20;
+    const geoAreia = new THREE.PlaneGeometry(AREIA.larg, AREIA.z0 - AREIA.z1, NX, NZ);
+    const pos = geoAreia.attributes.position;
+    const corAreia = new Float32Array(pos.count * 3);
+    const seca = new THREE.Color(0xffffff), molhada = new THREE.Color(0x8d8272);
+    const tmpCor = new THREE.Color();
+    const zCentro = (AREIA.z0 + AREIA.z1) / 2;
+    for (let i = 0; i < pos.count; i++) {
+      // plano deitado por rotation.x=-PI/2: x local = x mundo, y local = -(z mundo)
+      const wx = pos.getX(i), wz = zCentro - pos.getY(i), h = perfil(wx, wz);
+      pos.setZ(i, h);   // z LOCAL vira a altura do mundo
+      // areia molhada perto da lâmina: gradiente por vértice, não uma segunda textura
+      tmpCor.copy(seca).lerp(molhada, THREE.MathUtils.smoothstep(h, -.55, -1.15));
+      corAreia[i * 3] = tmpCor.r; corAreia[i * 3 + 1] = tmpCor.g; corAreia[i * 3 + 2] = tmpCor.b;
+    }
+    geoAreia.setAttribute('color', new THREE.BufferAttribute(corAreia, 3));
+    geoAreia.computeVertexNormals();
+    const areia = new THREE.Mesh(geoAreia, lam({ map: texAreia, vertexColors: true, roughness: .97 }));
+    areia.rotation.x = -Math.PI / 2;
+    areia.position.set(0, 0, zCentro);
+    areia.receiveShadow = true; areia.castShadow = false;
+    areia.userData.praiaFeature = 'areia';
+    areia.userData.nonSolidSurface = true;   // fora dos bounds, mas nenhuma sonda a lê como chão
+    root.add(areia);
+
+    /* Rebentação: lâmina própria sobre o oceano. O plano de mar aberto tem espumaFaixa
+       2,4, que na margem vira lençol em vez de quebra. Mesma família RC2 do córrego. */
+    const rebentacao = createWater(scene, T, 'mansao', {
+      nivel: -.86, centro: [0, -45.6], tamanho: [AREIA.larg, 13], segmentos: 40,
+      raso: 0x63bccb, fundo: 0x2b7c92, profEscala: 1.1,
+      espumaFaixa: .9, espumaMiolo: .22, profFallback: .35, ampEscala: 1.35,
+    });
+    rebentacao.mesh.userData.praiaFeature = 'rebentacao';
+    rebentacao.mesh.userData.nonSolidSurface = true;
+
+    /* Coqueiros: tronco em curva, copa a ~18° da vertical. A régua mede a inclinação pela
+       posição MUNDO da copa contra a base, não por um número declarado. */
+    const matTronco = lam({ color: 0x8a7050, roughness: .95 });
+    const matFolha = lam({ color: 0x2f6b39, roughness: 1 });
+    const matCoco = lam({ color: 0x5d4a30, roughness: .9 });
+    /* ry preso a [-0,5; 0,5]: a curva do tronco cresce no -z LOCAL, então só assim a copa
+       cai para o MAR. Fora disso a folhagem entra nos bounds jogáveis (cláusula B6a). */
+    const COQUEIROS = [[-34, -39.2, 7.4, .30, .34], [-21, -38.6, 6.2, .26, -.42], [-11, -39.9, 8.1, .33, .18],
+      [3, -38.8, 6.8, .24, -.28], [14, -40.1, 7.7, .31, .46], [26, -39.0, 6.5, .28, -.16],
+      [39, -39.6, 7.1, .29, .38], [-47, -39.1, 6.6, .27, -.36]];
+    const nCoqueiros = LOWQ ? 6 : COQUEIROS.length;
+    for (let c = 0; c < nCoqueiros; c++) {
+      const [cx, cz, alt, incl, ry] = COQUEIROS[c];
+      const palma = new THREE.Group();
+      palma.position.set(cx, ySand(cx, cz), cz);
+      palma.rotation.y = ry;
+      palma.userData.praiaFeature = 'coqueiro';
+      const pts = [];
+      for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push(new THREE.Vector3(0, alt * t, -Math.sin(incl) * alt * t * t * 1.15)); }
+      const tronco = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 6, .17, 5), matTronco);
+      tronco.userData.praiaParte = 'tronco'; tronco.userData.nonSolidSurface = true;
+      tronco.castShadow = false; palma.add(tronco);
+      const copa = new THREE.Group();
+      copa.position.copy(pts[6]);
+      copa.userData.praiaParte = 'copa';
+      palma.add(copa);
+      for (let i = 0; i < 7; i++) {
+        const a = i * Math.PI * 2 / 7 + c * .4;
+        const folha = new THREE.Mesh(new THREE.SphereGeometry(.5, 6, 3), matFolha);
+        folha.scale.set(.22, .07, 3.1);
+        folha.rotation.set(-.34 - (i % 3) * .12, a, Math.sin(a) * .2);
+        folha.position.set(Math.sin(a) * .6, -.05, Math.cos(a) * .6);
+        folha.userData.praiaParte = 'folha'; folha.userData.nonSolidSurface = true;
+        folha.castShadow = false; copa.add(folha);
+      }
+      for (const [ox, oz] of [[-.14, .06], [.11, -.09], [.02, .16]]) {
+        const coco = new THREE.Mesh(new THREE.SphereGeometry(.095, 5, 3), matCoco);
+        coco.position.set(ox, -.24, oz);
+        coco.userData.praiaParte = 'coco'; coco.userData.nonSolidSurface = true;
+        coco.castShadow = false; copa.add(coco);
+      }
+      root.add(palma);
+      // Molde por cima da palma procedural (fallback de node/?glb=0), com jitter de
+      // escala de ±6%. Fora de occluders/colliders: a praia é vista, não arena.
+      const glbPalma = GLB_ON && hasProp('coqueiro')
+        ? placeProp('coqueiro', { x: cx, y: ySand(cx, cz), z: cz,
+            targetH: alt * (1 + ((c * 37) % 13 - 6) / 100), ry: ry + c * 1.31 })
+        : null;
+      if (glbPalma) {
+        palma.visible = false;
+        glbPalma.userData.praiaFeature = 'coqueiro';
+        glbPalma.traverse((m) => { if (m.isMesh) { m.userData.nonSolidSurface = true; m.castShadow = false; } });
+        root.add(glbPalma);
+      }
+    }
+
+    /* Barraca: lona listrada procedural (sem marca real), balcão, isopor e banquinhos.
+       Cinco tipos de peça, porque caixa com pano em cima não é barraca. */
+    const texLona = texProcedural(64, (x) => ((x >> 3) & 1 ? [222, 78, 60] : [242, 236, 222]));
+    texLona.repeat.set(4, 2);
+    const matLona = lam({ map: texLona, roughness: .88, side: THREE.DoubleSide });
+    const matPoste = lam({ color: 0x9a8055, roughness: .92 });
+    const matBalcao = lam({ color: 0xb9a276, roughness: .9 });
+    const barraca = new THREE.Group();
+    barraca.position.set(-27.5, ySand(-27.5, -39.6), -39.6);
+    barraca.rotation.y = .22;
+    barraca.userData.praiaFeature = 'barraca';
+    for (const [px, pz] of [[-2.1, -1.5], [2.1, -1.5], [-2.1, 1.5], [2.1, 1.5]]) {
+      const poste = new THREE.Mesh(new THREE.CylinderGeometry(.07, .08, 2.5, 5), matPoste);
+      poste.position.set(px, 1.25, pz);
+      poste.userData.praiaParte = 'poste'; poste.userData.nonSolidSurface = true;
+      barraca.add(poste);
+    }
+    const lona = new THREE.Mesh(new THREE.BoxGeometry(4.8, .06, 3.6), matLona);
+    lona.position.set(0, 2.52, 0); lona.rotation.z = .05;
+    lona.userData.praiaParte = 'cobertura'; lona.userData.nonSolidSurface = true;
+    barraca.add(lona);
+    const balcao = new THREE.Mesh(new THREE.BoxGeometry(4.2, .95, .7), matBalcao);
+    balcao.position.set(0, .48, 1.2);
+    balcao.userData.praiaParte = 'balcao'; balcao.userData.nonSolidSurface = true;
+    barraca.add(balcao);
+    const isopor = new THREE.Mesh(new THREE.BoxGeometry(.9, .6, .6), lam({ color: 0xe6e9ea, roughness: .7 }));
+    isopor.position.set(-1.6, .3, -.9);
+    isopor.userData.praiaParte = 'caixa'; isopor.userData.nonSolidSurface = true;
+    barraca.add(isopor);
+    for (const bx of [1.1, 1.9]) {
+      const banco = new THREE.Mesh(new THREE.CylinderGeometry(.22, .24, .45, 6), matPoste);
+      banco.position.set(bx, .22, 2.1);
+      banco.userData.praiaParte = 'banco'; banco.userData.nonSolidSurface = true;
+      barraca.add(banco);
+    }
+    root.add(barraca);
+    // guarda-sóis soltos: escala e cor na faixa seca, sem virar cláusula de régua
+    for (const [ux, uz, uc] of [[-16.5, -40.4, 0xe2643f], [8.5, -41.2, 0xf0c04a], [31, -40.1, 0x3f8fc2]]) {
+      const sol = new THREE.Group();
+      sol.position.set(ux, ySand(ux, uz), uz);
+      const haste = new THREE.Mesh(new THREE.CylinderGeometry(.04, .05, 2.1, 5), matPoste);
+      haste.position.y = 1.05; haste.userData.nonSolidSurface = true; sol.add(haste);
+      const capa = new THREE.Mesh(new THREE.ConeGeometry(1.35, .5, 9), lam({ color: uc, roughness: .9, side: THREE.DoubleSide }));
+      capa.position.y = 2.15; capa.userData.nonSolidSurface = true; sol.add(capa);
+      root.add(sol);
+    }
+
+    /* Frescobol: dois vultos na ponta da enseada, a ~54 m do spawn B. É silhueta de
+       longe, e o orçamento por figura é o que a régua cobra. */
+    const matVulto = lam({ color: 0x3b3a3c, roughness: .95 });
+    for (const [fx, fz, olhaPara] of [[-44, -43.5, 1], [-50.5, -43.2, -1]]) {
+      const vulto = new THREE.Group();
+      vulto.position.set(fx, ySand(fx, fz), fz);
+      vulto.rotation.y = olhaPara > 0 ? -Math.PI / 2 : Math.PI / 2;
+      vulto.userData.praiaFeature = 'frescobol';
+      const corpo = new THREE.Mesh(new THREE.CapsuleGeometry(.19, .78, 3, 6), matVulto);
+      corpo.position.y = .96; corpo.userData.nonSolidSurface = true; vulto.add(corpo);
+      const cabeca = new THREE.Mesh(new THREE.SphereGeometry(.14, 6, 4), matVulto);
+      cabeca.position.y = 1.62; cabeca.userData.nonSolidSurface = true; vulto.add(cabeca);
+      for (const [bx, by, bz2, rz] of [[.26, 1.22, .12, -1.1], [-.24, 1.05, -.08, .5]]) {
+        const braco = new THREE.Mesh(new THREE.CylinderGeometry(.055, .05, .62, 4), matVulto);
+        braco.position.set(bx, by, bz2); braco.rotation.z = rz;
+        braco.userData.nonSolidSurface = true; vulto.add(braco);
+      }
+      const raquete = new THREE.Mesh(new THREE.CircleGeometry(.19, 8), lam({ color: 0x2c2b2d, roughness: .9, side: THREE.DoubleSide }));
+      raquete.position.set(.5, 1.5, .18); raquete.rotation.y = Math.PI / 2;
+      raquete.userData.nonSolidSurface = true; vulto.add(raquete);
+      for (const [px, pz] of [[-.09, 0], [.09, 0]]) {
+        const perna = new THREE.Mesh(new THREE.CylinderGeometry(.07, .06, .58, 4), matVulto);
+        perna.position.set(px, .29, pz); perna.userData.nonSolidSurface = true; vulto.add(perna);
+      }
+      root.add(vulto);
+    }
+  }
+
+  // Vasos e balizadores dão escala ao deck e às circulações sem virarem paredes de cover.
+  const vasos = [
+    [-19,-33,1.0],[-19,-29,.8],[-19,-25,.8],[-19,-19,.9],[-10,-34,.8],[-10,-29,.75],[-10,-25,.75],[-10,-19,.8],
+    [10,-34,.8],[10,-29,.75],[10,-25,.75],[10,-19,.8],[19,-33,1.0],[19,-29,.8],[19,-25,.8],[19,-19,.9],
+    [-19,-14,.75],[-19,-8,.7],[-19,-2,.8],[-19,5,.75],[-19,11,.8],[19,-14,.75],[19,-8,.7],[19,-2,.8],[19,5,.75],[19,11,.8],
+    [-10,-4,.65],[-10,3,.65],[-10,9,.65],[-10,15,.65],[10,-4,.65],[10,3,.65],[-19,15,.65],[-18,18,.8],[18,18,.8],[-18,27,.7],[18,27,.7]
+  ];
+  for (const [x, z, s] of vasos) {
+    addBox(0.72 * s, 0.7, 0.72 * s, TEX.concrete, x, 0, z);
+    addBox(0.65 * s, 1.15 * s, 0.65 * s, lam({ color: 0x2e6636, roughness: 1 }), x, 0.5 * s, z, { collide: false, skirt: false });
+  }
+
+  /* GROUND HEIGHT (multinível: mezanino) */
+  const MZ = { x0: -12, x1: 12, z0: -15, z1: -8 };
+  function groundHeightAt(x, z, yRef) {
+    if (((x >= STAIR.x0 && x <= STAIR.x1) || (x >= STAIR_SERVICE.x0 && x <= STAIR_SERVICE.x1)) &&
+        z >= STAIR.z0 && z <= STAIR.z1) {
+      const i = THREE.MathUtils.clamp(Math.round((-7.5 - z) / 0.29), 0, 25);
+      return i * 0.18;
+    }
+    if (x >= 12 && x < 12.25 && z >= -15 && z <= -14.05 &&
+        (yRef === undefined || yRef >= LAJE_H * .5)) return LAJE_H;
+    // piscina entrável: degraus de entrada ao sul (largura total), raso, escada
+    // submersa e fundo — cada subida ≤0,28 m, então a saída é andando (anti-trap)
+    if (x >= PISCINA.x0 && x <= PISCINA.x1 && z >= PISCINA.z0 && z <= PISCINA.z1) {
+      if (z > -27.068) return -0.2834 * Math.min(2, Math.floor((-z - 26.5) / 0.284) + 1);
+      if (z > -29.6) return PISCINA.raso;
+      if (z > -30.75) return PISCINA.raso - 0.25 * Math.min(4, Math.floor((-z - 29.6) / 0.2875) + 1);
+      return PISCINA.fundo;
+    }
+    // Sem referência, preserva a camada superior usada por bandeira/pickup. Com yRef,
+    // o hall sob o escritório permanece no térreo e o mezanino continua em 4,5 m.
+    if (x >= MZ.x0 && x <= MZ.x1 && z >= MZ.z0 && z <= MZ.z1 &&
+        (yRef === undefined || yRef >= LAJE_H * .5)) return LAJE_H;
+    return 0;
+  }
+
+  /* WAYPOINTS */
+  const nodes = [], adj = [], STEP = 3.4;
+  const insideSolid = (x, z, inf) => { for (const s of solids) if (x > s.x0 - inf && x < s.x1 + inf && z > s.z0 - inf && z < s.z1 + inf) return true; return false; };
+  const blocked = (x, z, inf, yRef = 0) => {
+    const g = groundHeightAt(x, z, yRef);
+    if (g < 1 && insideSolid(x, z, inf)) return true;
+    for (const c of colliders) if (x > c.minX - inf && x < c.maxX + inf && z > c.minZ - inf && z < c.maxZ + inf && c.minY < g + 1.5 && c.maxY > g + 0.3) return true;
+    return false;
+  };
+  for (let gx = -HALF_X + 2; gx <= HALF_X - 2; gx += STEP)
+    for (let gz = -HALF_Z + 2; gz <= HALF_Z - 2; gz += STEP)
+      if (!blocked(gx, gz, 0.5, 0)) nodes.push({ x: gx, z: gz, y: groundHeightAt(gx, gz, 0) });
+  const linha = (x0, z0, x1, z1, passo = 2.4, inf = 0.35, yRef = 0) => {
+    const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / passo));
+    for (let i = 0; i <= n; i++) {
+      const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n;
+      if (!blocked(x, z, Math.max(inf, .4), yRef)) nodes.push({ x, z, y: groundHeightAt(x, z, yRef) });
+    }
+  };
+  // escada (passo apertado)
+  linha(-3, -7.5, -3, -14.5, 0.9, 0.25, null);
+  linha(13.5, -7.5, 13.5, -14.5, 0.9, 0.25, null);
+  linha(13.5, -7.5, 13.5, -4.8, .7, .2, 0);
+  // mezanino
+  for (const z of [-14.45, -13, -11.5, -10, -8.6]) linha(-11.4, z, 11.4, z, 1, .4, LAJE_H);
+  for (const mz of [-14, -12, -9]) linha(-11, mz, 11, mz, 3.0, 0.3, LAJE_H);
+  linha(-3, -14.5, -5.2, -14.5, .55, .2, LAJE_H);
+  linha(13.5, -14.5, 11, -14.5, .55, .2, LAJE_H);
+  // interior
+  for (const iz of [-12, -6, 0, 6]) linha(-14, iz, 14, iz, 3.0);
+  // Pé da escada: única ligação de chão com a sala sob o mezanino, e as linhas de z=-6 e
+  // z=-12 passavam por fora dela. Passo curto porque a faixa livre tem ~1 m (BUG-144).
+  linha(-13, -7.05, 2, -7.05, 1.2, .35);
+  // jardim
+  for (const jz of [18, 24, 30]) linha(-20, jz, 20, jz, 3.0);
+  // O STEP global (3,4 m) caía exatamente sobre os montantes dos biombos e não
+  // amostrava os vãos de 2 m. Estas duas linhas são o eixo navegável das portas.
+  linha(-4.5, 32, -4.5, 26.5, .9, .2);
+  linha(4.5, 32, 4.5, 26.5, .9, .2);
+  // terraço
+  for (const tz of [-20, -25, -30]) linha(-18, tz, 18, tz, 3.0);
+  // piscina entrável: lane pelo raso e pelo fundo, degrau a degrau (dy por nó ≤0,29)
+  linha(0, -26.9, 0, -32.2, 0.42, 0.22);
+
+  const segClear = (a, b) => {
+    const steps = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / .15));
+    let previous = a.y;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+      const y = groundHeightAt(x, z, a.y + (b.y - a.y) * t);
+      if (blocked(x, z, .4, y) || Math.abs(y - previous) > .3) return false;
+      previous = y;
+    }
+    return true;
+  };
+  for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z, dy = Math.abs(nodes[i].y - nodes[j].y); if (dy <= .72 && dx * dx + dz * dz < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
+  function nearestWaypoint(x, z, yRef) { const y = groundHeightAt(x, z, yRef); let b = 0, bd = 1e9; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, dy = nodes[i].y - y, d = dx * dx + dz * dz + dy * dy; if (d < bd) { bd = d; b = i; } } return b; }
+  const _D = (a, b) => { const dx = nodes[a].x - nodes[b].x, dz = nodes[a].z - nodes[b].z, dy = nodes[a].y - nodes[b].y; return Math.sqrt(dx * dx + dz * dz + dy * dy); };
+  function findPath(fromIdx, toIdx) { if (fromIdx === toIdx) return [toIdx]; const n = nodes.length, g = new Float32Array(n).fill(Infinity), f = new Float32Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), open = new Uint8Array(n); g[fromIdx] = 0; f[fromIdx] = _D(fromIdx, toIdx); open[fromIdx] = 1; let oc = 1; while (oc > 0) { let cur = -1, bf = Infinity; for (let i = 0; i < n; i++) if (open[i] && f[i] < bf) { bf = f[i]; cur = i; } if (cur === -1) break; if (cur === toIdx) { const p = [cur]; let c = prev[cur]; while (c !== -1) { p.unshift(c); c = prev[c]; } return p; } open[cur] = 0; oc--; for (const m of adj[cur]) { const t = g[cur] + _D(cur, m); if (t < g[m]) { prev[m] = cur; g[m] = t; f[m] = t + _D(m, toIdx); if (!open[m]) { open[m] = 1; oc++; } } } } return [fromIdx]; }
+
+  /* SPAWNS: A no PORTÃO (jardim), B no TERRAÇO (piscina) */
+  const spawns = {
+    E: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: 32, yaw: Math.PI })),
+    B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -22, yaw: 0 })),
+  };
+
+  /* CTF */
+  const ctfPoints = [
+    { id: 'R', label: 'JARDIM',   x: 10,  z: 28 },
+    { id: 'E', label: 'SALA',     x: -10, z: 2 },
+    { id: 'P', label: 'MEZZO',    x: 8,   z: -11 },
+    { id: 'B', label: 'PISCINA',  x: -13, z: -25 },
+  ];
+
+  const mezzSurface = makeLajesCTFSurface([{x0: -1.75, x1: 12, z0: -15, z1: -8}], LAJE_H);
+  const groundSurface = makeLajesCTFSurface([{x0: -HALF_X, x1: HALF_X, z0: -HALF_Z, z1: HALF_Z}], 0);
+  const configureCTFPoint = (point) => {
+    point.y = groundHeightAt(point.x, point.z);
+    (point.y === LAJE_H ? mezzSurface : groundSurface)(point);
+  };
+
+  /* ARSENAL */
+  const gmat = lam({ color: 0x20242a });
+  const place = (kind, x, z) => { const y = groundHeightAt(x, z); const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.userData.nonSolidSurface = true; m.position.set(x, y + 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
+  place('ak', 9, 1);       place('m4', -8, -4);
+  place('awp', 0, -11);    place('shotgun', 8, -10);
+  place('mp5', -8, 31);    place('deagle', 10, 28);
+  place('m400', 0, -22);   place('mp5', -12, -22);
+  place('deagle', 4, 4);   place('ak', -8, 11);
+  place('shotgun', 0, 32); place('m4', 6, -20);
+
+  /* O lote de carros nasce InstancedMesh em root mas fora de `occluders`: sem isto a
+     bala atravessava carro que o corpo respeita (BUG-54, cláusula atravessa-parede).
+     Vidro (transparente) fica de fora — mesmo teste de superfície do map_havan.js. */
+  const preProps = new Set(root.children);
+  PB.build(root);
+  for (const c of root.children) {
+    if (preProps.has(c) || !c.isInstancedMesh) continue;
+    const ms = Array.isArray(c.material) ? c.material : [c.material];
+    if (ms.some((m) => m && m.visible !== false && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9)))) occluders.push(c);
+  }
+  SKIRT.build(root);
+
+  /* Pixo no muro externo, sem o folha-pixaca-01 ("MORTE" — veto editorial da mansão,
+     cobrado no eval:grafite-editorial). */
+  const D_PIXO_M = decalIds(T, ['folha-pixaca-03.png', 'folha-pixaca-04.png', 'folha-pixaca-05.png']);
+  grafitar({ id: 'mansao', root, T, waypoints: nodes, seed: 14000, passo: 1.0, alcance: 4, cobre: 0.01, minLarg: 0.3, bandas: [{ y0: 0.3, y1: 1.5, larg: 1.5, alturas: [0.8], chance: 5, pool: D_PIXO_M }] });
+
+  /* BUG-57: mansão tem pombo de cobertura e um rato só — no jardim, longe da sala. */
+  const ambience = createMansaoAmbience(root, {
+    map: 'mansao', low: LOWQ,
+    rats: [{ pos: [-14, 0, 30], to: [-11.5, 0, 32], phase: .7 }],
+    pigeons: [
+      { mode: 'ground', pos: [6, 0, 33], phase: .4 }, { mode: 'ground', pos: [-16, 0, 20], phase: 1.5 },
+      { mode: 'ground', pos: [7.4, 0, 32], phase: .9 },
+    ],
+    /* vida 1: papagaio de poleiro no topo da sebe (y=1,24) — mais baixo fica dentro
+       dela ou flutua no céu (BUG-57). */
+    parrots: [
+      { pos: [10, 1.24, -25], phase: .5 }, { pos: [-10, 1.24, -29], phase: 1.9 },
+    ],
+    /* A gaivota NÃO usa `mode: 'flight'` (o pombo travado que a AR5 proíbe): ela planeia
+       com asa batendo, e as cláusulas B8b/B8c do eval:mansao-beach cobram as duas. */
+    gulls: [
+      { pos: [-18, 10.5, -44], to: [14, 10.5, -47], phase: .3 },
+      { pos: [6, 12.8, -42], to: [-10, 12.8, -50], phase: 2.4 },
+      { pos: [22, 9.4, -46], to: [-2, 9.4, -43], phase: 4.1 },
+    ],
+    crabs: [
+      { pos: [-6, praiaAlturaEm(-6, -38.6), -38.6], to: [-3.4, praiaAlturaEm(-3.4, -39.4), -39.4], phase: .8 },
+      { pos: [17.5, praiaAlturaEm(17.5, -40.2), -40.2], to: [20.2, praiaAlturaEm(20.2, -41), -41], phase: 3.3 },
+    ],
+    // VIDA DE CÉU: rota, banking e escala moram no ambientlife.js; aqui só a posição.
+    // Avião a 150 m de raio nunca entra nos bounds de 22x36 — é vista, como a praia.
+    planes: [{ centro: [0, -30], raio: 150, altura: 62, periodo: 90, phase: 1.2 }],
+    // Alto o bastante para passar do muro de 2,5 m e da sebe, baixo o bastante para
+    // se ler a cor.
+    macaws: [
+      { centro: [-6, 8], raio: 26, altura: 17, periodo: 26, phase: 0 },
+      { centro: [-6, 8], raio: 26, altura: 17, periodo: 26, phase: 2.6 },
+    ],
+    // Bando de 6 sobre o terraço, circuito curto e rápido; em `low` cai para 3.
+    songbirds: [0, 1, 2, 3, 4, 5].map((i) => ({ centro: [4, -20], raio: 13, altura: 12, periodo: 15, phase: i * 1.05 })),
+  });
+
+  return {
+    ambience,sound:{loops:[{src:AMB_LOOPS.ondas,pos:[0,0,-45.6],radius:44,vol:.46},{src:AMB_LOOPS.piscina,pos:[0,.5,-28],radius:10,vol:.3}],bioma:'praia'},
+    configureCTFPoint, ctfLayerContains: (point, pos) => Math.abs(pos.y - point.y) < LAJE_H / 2,
+    layeredNavigation: true, botLayeredNavigation: true, authoredSpawnYaw: true,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
+    update(dt) { for (const w of scene.userData.waters || []) w.update(dt); },
+    stairs: [{ nome: 'escada do mezanino', ...STAIR, topo: LAJE_H },
+      { nome: 'escada de serviço', ...STAIR_SERVICE, topo: LAJE_H }],
+    waypoints: { nodes, adj }, nearestWaypoint, findPath,
+    bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
+  };
+}

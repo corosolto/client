@@ -448,6 +448,8 @@ const mapSoundscapes = completeLajesSoundscape({ mapSoundscapes: {
   parque_treta: { loops: [loop('Environment/Wind_Loop_1.wav', .055), loop('Environment/Water_Stream_Calm_1.wav', .035)], shots: [shot(['Environment/Tree_Rustling_1-1.wav'], 18, 52, .14)] },
   velho_oeste: { loops: [loop('Environment/Wind_Loop_6.wav', .09)], shots: [shot(['Environment/Wood_Move_1-1.wav', 'Environment/Wood_Move_2-1.wav'], 16, 46, .17)] },
   penitenciaria: { synth: { kind: 'indoor-hum', vol: .02 }, shots: [shot(['Doors/Rusty_Metal_Creak_01.wav', 'Doors/Rusty_Metal_Creak_03.wav'], 22, 64, .14)] },
+  // Joá: mar abaixo do penhasco por baixo de tudo, vento de encosta e vegetação do jardim.
+  mansao: { loops: [loop('Environment/Water_Stream_Calm_1.wav', .05), loop('Environment/Wind_Loop_1.wav', .05)], shots: [shot(['Environment/Tree_Rustling_1-1.wav', 'Environment/Tree_Rustling_1-4.wav'], 20, 56, .13)] },
 } }).mapSoundscapes;
 extendMapSoundscapes({ mapSoundscapes });
 /* Stingers <=1,5 s pelo catalog.json. Os Special_Interface 5/6/7 duram

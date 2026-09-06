@@ -4394,6 +4394,7 @@ export class Game {
       let np = 0, nb = 0;
       for (const c of this.combatants) {
         if (!c.alive) continue;
+        if (this.world.ctfLayerContains?.(pt, c.pos) === false) continue;
         const dx = c.pos.x - pt.x, dz = c.pos.z - pt.z;
         if (dx * dx + dz * dz <= pt.r * pt.r) { if (c.team === 'E') np++; else nb++; }
       }
@@ -4411,6 +4412,7 @@ export class Game {
           this.roundCaps[solo] = (this.roundCaps[solo] || 0) + 1;   // placar DA RODADA (quem leva o round)
           for (const c of this.combatants) {
             if (!c.alive || c.team !== solo) continue;
+            if (this.world.ctfLayerContains?.(pt, c.pos) === false) continue;
             const dx = c.pos.x - pt.x, dz = c.pos.z - pt.z;
             if (dx * dx + dz * dz <= pt.r * pt.r) c.captures = (c.captures || 0) + 1;
           }
@@ -4618,7 +4620,7 @@ export class Game {
        giro contínuo, A* local com nós banidos, checagem física de alcance, raio de chegada
        de 1,5 m (o de 0,7 m era menor que o passo de um frame lento — o bot "chegava" e
        "saía" do nó no mesmo lugar), teto de giro e destravamento por deslize. */
-    if (distPt < pt.r * 0.7) {   // dentro do anel: SEGURA o ponto e vigia as entradas
+    if (distPt < pt.r * 0.7 && W.ctfLayerContains?.(pt, b.pos) !== false) {
       b._ctfMoving = 0;
       if (BOT_MOVE2) {
         // varredura por SETORES com dwell: escolhe um rumo, para 1,4-2,8 s olhando pra ele,

@@ -62,7 +62,7 @@ const PREVIEWS = 'public/img/map-previews';
 /* Os ids antigos, escritos aqui de propósito: é a lista contra a qual o M2 cobra a
    cobertura do ALIAS_MAPA. Se um mapa novo for renomeado no futuro, ele entra aqui E no
    alias — e a régua reprova enquanto só um dos dois tiver sido feito. */
-const IDS_ANTIGOS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
+const IDS_ANTIGOS = ['fy_mansao', 'awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
 
 /* A FORMA de um id do Counter-Strike, e não uma lista de nomes. Lista de nome fechada
    envelhece — foi exatamente assim que o `[PBUCF]` dentro de um regex cegou o C3 do
