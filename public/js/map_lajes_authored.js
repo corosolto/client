@@ -7,6 +7,7 @@ import { createFavelaAmbience, attachPipaSky, FAVELA_AMBIENCE_ASSETS, PIPA_ASSET
 import { AMB_LOOPS } from './soundscape.js';
 import { makeLajesCTFSurface } from './lajes_ctf_surface.js';
 import { lajesArchitecture } from './lajes_houses.js';
+import { lajesOcclusionQuery } from './lajes_raycast_index.js';
 import { buildLajesNavigation } from './lajes_navigation.js';
 import { LAJES_SKY_PROPS, LAJES_KITE_CONFIGS, attachLajesSky, addLajesBackdrop, addLajesSkyDome, attachLajesKitePresentation } from './lajes_sky.js';
 
@@ -372,6 +373,7 @@ export function buildLajes(scene, T) {
   const backdrop = addLajesBackdrop(root, { low }), skyDome = addLajesSkyDome(root), disposeAmbience = ambience.dispose?.bind(ambience);
   ambience.dispose = () => { terrain.dispose(); disposeArchitecture(); backdrop?.dispose(); skyDome?.dispose(); disposeAmbience?.(); };
   return { root, colliders, occluders, pickups, spawns, groundHeightAt, ctfPoints, sun, hemi, ...nav,
+    rayOccluded: lajesOcclusionQuery(occluders),
     authoredSpawnYaw: true, layeredNavigation: true, footstepSurfaceAt: terrain.surfaceAt,
     configureCTFPoint: makeLajesCTFSurface(PLATFORMS, H), jumpImpulse: 5.85,
     ambience, sound: { bioma: 'favela', loops: [

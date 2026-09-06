@@ -1900,6 +1900,21 @@ mudar.
 
 ## P1 — o jogador vê
 
+### ~~CTF sumiu do menu da home~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato:** "o modo CTF sumiu do menu da home". O redesign removeu o botão
+`data-act="ctf"` de `src/pages/index.astro`; o handler em `public/js/main.js`
+continuou presente. Não era ocultação por CSS: o botão não existia no HTML.
+
+**Correção:** restaurado o submenu de SINGLE PLAYER com MATA-MATA e CAPTURE A
+BANDEIRA, com os handlers existentes. UIR26 de `npm run eval:redesign` reprovou antes e passou depois;
+`--mutante=ctf-some-home` remove o acesso em memória e faz UIR26 reprovar.
+`node tools/eval/mode-check.mjs` passou 60/60 casos de preservação da escolha.
+
+**Visual:** navegador local em 1200×800: submenu legível, coluna completa e rodapé
+visível. Clique em CAPTURE A BANDEIRA abre mapas em CTF. Revisão adversarial sem achados bloqueantes; a régua estática
+não comprova visibilidade por si só. Publicação e acompanhamento: `HANDOFF.md`.
+
 ### BUG-36 · Ctrl+W fecha a aba no meio da partida (Windows/Linux) — MITIGADO, limite de plataforma
 
 **REBAIXADO P0 → P1 em 29/08 — a mitigação de duas camadas JÁ ESTÁ NA MAIN e o que
@@ -4008,6 +4023,34 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   os 36 takes próprios; Palhaços ficam sem fala até nova dublagem aprovada. Voz genérica de
   facção/síntese para `C` e `F` é agora uma regressão coberta por mutante.
 
+  **Reaberto (06/09, ainda local):** *“os audios ingame sumiram, nenhum dos memes que antes
+  tinhamos e nem os inround está”*. A produção carregava o manifesto do runtime por
+  `audio/manifest.json?v=10`, cuja resposta tinha `last-modified: 16/08`, enquanto a mesma
+  produção já expunha o manifesto da release atual por `?v=2.0.0-alpha.228` (06/09). O menu
+  já usava `VERSION`, mas o `Sfx` que abastece memes, callouts e início/fim de round não.
+  **Régua:** `tools/eval/character-select-voice-check.mjs`: antes, as quatro cláusulas de
+  revisão/revalidação estavam ausentes; depois ela exige `sfx.loadManifest(VERSION)`, a query
+  da revisão e `Cache-Control: public, max-age=0, must-revalidate`. O mutante
+  `--mutante=manifest-antigo` acende VOICE13. **Pendente:** deploy e escuta final; os MP3
+  content-addressed continuam `immutable`.
+
+- **BUG-141 · fallback de fala sintética toma o lugar dos memes quando o pack está vazio.**
+  **Sintoma literal (dono, 06/09/2026, produção):** *“durante o jogo os audios de meme ingame
+  nao reproduz, alias ele fica reproduzindo um gerado com ia ‘bora pra treta’”* e *“é horrivel
+  apaga esses gerados com IA sao muito ruins”*. **Reproduzido:** o manifesto de produção da
+  `alpha.229` tem `voice.E/B/U/C/F = 0` e `round.E/B/U/C/F = 0`, embora o ZIP passe no SHA-256;
+  `Sfx.voice()` então chamava `speechSynthesis` e sorteava `Bora pra treta!`. O arquivo não é
+  um MP3 do pacote: é a Web Speech do navegador. **Correção local:** nenhuma voz, rádio,
+  personagem, callout ou número de round inventa fala quando não existe take no manifesto;
+  o caminho fica silencioso e os takes Fish/personagem já presentes continuam prioritários.
+  **Régua:** `npm run eval:audiovoicemix`; antes, MIX1 fica vermelho porque o runtime contém
+  `speechSynthesis`; depois, o mutante `--mutante=fala-sintetica-volta` acende MIX1. **Reposição
+  06/09:** o Blob privado `48a97edb…` preserva os efeitos atuais e recoloca os takes históricos:
+  `voice E/B/U/C/F = 17/16/15/31/69`, `round E/B/U/C/F = 14/14/16/25/22` e sete callouts
+  históricos. Os 16 arquivos Fish/números de round gerados foram retirados do novo artefato;
+  o runtime voltou a aceitar takes históricos de C/F, mas continua silencioso sem arquivo real.
+  **Pendente:** merge, deploy e escuta de uma partida em produção.
+
 - **BUG-127 · estado de arma/munição/recarga ainda diverge entre cliente e servidor no multiplayer.**
   **Sintoma literal (feedback de 04/09/2026):** *“algumas armas não aparecem quando equipadas”*.
   **Evidência inicial:** `public/js/netgame.js` mantém a arma do jogador local fora da aplicação
@@ -4723,6 +4766,31 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
 - **C10** — `_freeSpot` (`game.js`) ignora colisores com `minY ≥ 1,5`; no mezanino não empurra
   arma para fora de parede. Não mordeu ainda; é armadilha para o próximo mapa com andar de cima.
 
+## Amazônia — revisão de cabanas/fauna e integração, 06/09/2026
+
+Relato: fauna suspensa e parada, cabanas fechadas, bots perdidos. Baseline e
+contraprovas em `docs/reports/AMAZONIA-CABANAS-FAUNA.md`; andamento do grafo
+em `docs/reports/AMAZONIA-VISUAL-CONTINUATION.md`. Testes browser AMH1–4
+medem apoios, interiores, circulação, tiro/parede e movimento temporal.
+`npm run eval:amazonia` mede materiais, rotas, água e fauna real do quintal.
+
+### Amazônia: bots sob palafitas (2026-09-06)
+
+Rotas misturavam chão e piso elevado. A régua real de _updateBot foi de56/71
+no baseline amplo para71/71 nas sementes7 e42. Mutante sem navegação por
+camadas retorna68/71 e27arestas falhas. Correção opt-in somente Amazônia;
+botsim-golden dos demais mapas verde. Detalhes em
+[AMAZONIA-CABANAS-FAUNA.md](docs/reports/AMAZONIA-CABANAS-FAUNA.md).
+
+### Amazônia — VM14: pickups na tora e na margem (corrigido, 2026-09-06)
+
+Em `public/js/map_amazonia.js`, a MP5 da madeireira nascia dentro da pilha
+de toras; o slot inicial central ancorava quatro armas do rack na margem
+inclinada. `pickup-check.mjs amazonia` mediu 71 armas, uma inalcançável e
+quatro abaixo do piso antes da correção. Trocar a ordem dos spawns já existentes
+e posicionar a MP5 ao lado das toras preserva as 71 armas e mede zero falhas.
+O loader que restaura as três linhas anteriores reproduz 1/4/0 falhas.
+Evidência e próximo passo: [continuação](docs/reports/AMAZONIA-VISUAL-CONTINUATION.md).
 ## Menu local do Escadão — resolvido em 06/09/2026
 
 > "ESTA desatualizada com a main e nao da pra testar"
@@ -4753,3 +4821,44 @@ Na revisão antes do merge, o grafo aceitava142arestas incompatíveis com corpo/
 
 ### Escadão R5 — acessos aparentes e horizonte (relatado 06/09/2026)
 Relato literal: “existe a lateral que nao liga a lugar nenhum, e passando por baixo da escada principal de quem vem por baixo tem varias areas que nao da pra entrar”; “falta um fundo de horizonte como outros mapas”. Régua: em preparação, ainda não corrigido. Base merge515/mainalpha.227; preservar escadas, casa/janela e fauna já entregues.
+
+## Regressão de Lajes — correção validada localmente
+
+### BUG-141 · Lajes trava acima de 5×5 no single player · CORRIGIDO LOCALMENTE 06/09
+
+Relato do dono: “fiz um teste no lajes e acima de 5x5 players mesmo no single player o mapa trava. fiz comparacao com o mapa piscina na treta que funciona numa boa em 8x8...”.
+
+**Reprodução:** Chrome/ANGLE Metal M4 Pro, 1536×1024, qualidade med, jogo real com15bots
+(8×8). Antes:83quadros em12,2s, P95391,6ms; Piscina8×8 P9516,9ms. LOS consumiu
+10,88s dos12,2s no Lajes. O perfil em Node isolou a mesma causa sem render/GPU:
+malhas de alvenaria agrupadas por material testavam milhares de triângulos distantes.
+
+**Correção:** `public/js/lajes_raycast_index.js` indexa faixas de12triângulos, uma
+BoxGeometry original, mantendo os lotes renderizados. `lajes_houses.js` instala e
+remove o índice. `map_lajes_authored.js` oferece `rayOccluded`; `_losClear` em
+`public/js/game.js` encerra a busca no primeiro obstáculo no Lajes e conserva
+fumaça e caminho original nos outros mapas. Tiros continuam obtendo todos os
+impactos na ordem nativa. Sem redução de arquitetura, fauna, céu ou jogadores.
+
+**Régua:** `npm run eval:lajes-raycast`, LRP1 crítica em invariants e CI.189raios,
+166comimpacto,13malhas:6.059.736→22.056testes de triângulos (−99,64%), sequência
+idêntica de impactos/face/UV/normal;189consultas de visão idênticas mais fumaça.
+220casos de near/far, sidedness, origem interna/aresta, transformações, drawRange,
+mutação/substituição de dados e descarte. Zero consultas após o primeiro obstáculo.
+Mutantes `linear`, `sem-parede`, `sem-consulta`, `sem-parada` falham nas cláusulas
+respectivas. Limite de trabalho≤10% do linear é orçamento de redução de uma ordem
+para a etapa que consumia~90% do frame; tempo real é medido separadamente, não é
+asserção de desempenho universal no CI.
+
+**Depois:**60s de8×8,3.393quadros/~56FPS, P9533,3ms, sem erros JS; Piscina nessa
+execução longa P9525,3ms. Houve1intervalo RAF de441,2ms; o maior update medido foi
+80,8ms, portanto a pausa isolada não está atribuída a LOS. Não alegar ausência total
+de hitches,60FPS travados, todos os dispositivos ou multiplayer online. Primeiras
+amostras de render.calls/triangles eram do pós e não servem como custo da cena.
+
+**Custo declarado:** árvore e proxies de consulta em memória, construída uma vez por
+mapa; arrays de vértices/índices compartilhados, nenhum lote de render adicional.
+O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame completo;
+otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
+comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
+`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.

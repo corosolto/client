@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.227`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.233`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -34,6 +34,7 @@
 - O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
 
 ### Corrigido
+- Single Player voltou a abrir o submenu de MATA-MATA e CAPTURE A BANDEIRA (CTF), que segue para a seleção de mapas com o modo escolhido.
 - `eval:boot` voltou a rodar: a fixture do `boot-check.mjs` ancorava na assinatura antiga de `_startGame` (mudada no #489) e reprovava antes de medir; agora ancora no nome da função.
 - Os contadores do menu (`/api/online` e `/api/map-plays`) tentam de novo no cold start do backend (503 na primeira chamada, medido 06/09) em vez de ficar vazios.
 - O proxy da rede de segurança do site repassa a geo da borda (`x-vercel-ip-*`); a diagnose distingue `city` parado com `presence` viva (ingestão parada, corosolto/backend#22) de "ninguém jogou".
@@ -51,6 +52,55 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.233] — 2026-09-06
+
+### Mudado
+- fix(lajes): evita travamentos ao aumentar a partida para 8x8 (#517)
+
+## [2.0.0-alpha.232] — 2026-09-06
+
+### Mudado
+- fix(menu): restore Single Player mode submenu (#518)
+- test(smoke): open Single Player before mode
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(skylife): skip bird preload in Node probes
+- chore(docs): regenera bloco derivado (autofix)
+- test(boot): follow Single Player submenu
+- docs: regenerate architecture index
+- docs: update CTF menu checkpoint
+- fix(menu): restore single-player mode submenu
+- docs: record CTF home verification and remaining gates
+- fix(menu): restore direct CTF entry on home
+
+## [2.0.0-alpha.231] — 2026-09-06
+
+### Mudado
+- fix(audio): remover fallback de voz sintetica (#520)
+- docs(audio): atualiza índices após rebase
+- fix(audio): restaurar memes e rounds historicos
+- fix(audio): remover fallback de voz sintetica
+- fix(audio): restaurar memes e rounds historicos
+- chore(docs): regenera bloco derivado (autofix)
+- fix(audio): remover fallback de voz sintetica
+
+## [2.0.0-alpha.230] — 2026-09-06
+
+### Mudado
+- fix(amazonia): restaura rota alternativa do spawn B (#521)
+
+## [2.0.0-alpha.229] — 2026-09-06
+
+### Mudado
+- fix(audio): revalidar manifesto ingame por release (#519)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(audio): revalidar manifesto ingame por release
+
+## [2.0.0-alpha.228] — 2026-09-06
+
+### Mudado
+- feat(amazonia): integrar mapa ribeirinho jogável
 
 ## [2.0.0-alpha.227] — 2026-09-06
 

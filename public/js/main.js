@@ -14,7 +14,9 @@ import { preloadWeapons } from './weapons.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
 import { VERSION } from './version.js';
-import { mapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
+import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
+import { mapPreviewPoster as escadaoMapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
+const mapPreviewPoster = (id, version) => escadaoMapPreviewPoster(id, `${version}${previewRevision(id)}`);
 import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
@@ -162,7 +164,7 @@ sfx.onDuck = (amt, hold) => {
   m.volume = MENU_MUSIC_VOL * amt;
   setTimeout(() => { if (menuMusic && !musicFade && !menuMusic.paused) menuMusic.volume = MENU_MUSIC_VOL; }, hold * 1000 + 220);
 };
-const sfxReady = sfx.loadManifest();
+const sfxReady = sfx.loadManifest(VERSION);
 
 /* ---------------- selected map ---------------- */
 const urlMap = new URLSearchParams(location.search).get('map');
@@ -305,6 +307,7 @@ preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady()
 /* ---------------- screens ---------------- */
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
+  stopMapPreviews();
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
   if (id !== 'char-select') pvStopVideo();
@@ -1466,6 +1469,13 @@ let modoEscolhido = false;
 if (MAPS[currentMap].ctfMode) matchMode = 'ctf';   // Loja H / Ferro Velho ABREM em CTF (geometria feita em volta das bandeiras), mas dá pra trocar
 const menuSetup = $('menu-setup');
 const csItems = [...document.querySelectorAll('.cs-item')];
+const singlePlayerButton = $('cs-menu').querySelector('[data-act="single-player"]');
+const modeMenu = $('cs-modos');
+function toggleModeMenu() {
+  const open = modeMenu.hidden;
+  modeMenu.hidden = !open;
+  singlePlayerButton.setAttribute('aria-expanded', String(open));
+}
 // Kill-switch de UI: ?ui=legacy volta o scrim do menu e o HUD ao visual da rodada 1
 // (vinheta de coluna inteira, HUD sem plaquinha nem scrim de canto). Serve de degradação
 // segura se o tratamento novo regredir em algum wallpaper/mapa.
@@ -1509,16 +1519,16 @@ function openModeMap(mode, title, act) {
   renderMapScreen();
   show('map-screen');
 }
-/* MULTIPLAYER e SINGLE PLAYER são PRIMEIRA INSTÂNCIA do menu (pedido do dono, 30/08):
-   o degrau "JOGAR ▸ submenu" saiu — quem abre o jogo escolhe o modo no primeiro clique.
-   `sp` e `ctf` seguem exatamente como estavam; só o caso 'jogar' morreu com o botão. */
+/* Multiplayer abre direto. Single Player abre os modos locais; a escolha de mata-mata ou
+   CTF ainda usa os mesmos caminhos que levam à seleção de mapas. */
 csItems.forEach((it) => {
   it.onmouseenter = () => ui.hover();
   it.onclick = () => {
     if (performance.now() - _entradaEm < ENTRADA_MS) return;
     ui.click();
     switch (it.dataset.act) {
-      case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;
+      case 'single-player': toggleModeMenu(); break;
+      case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;
       case 'ctf':   openModeMap('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
       case 'mp':    markCurrent('mp'); abrirMultiplayer(); break;
       /* MAPA saiu (mapa se escolhe no fluxo de partida); FEEDBACK entrou (07/08) */
@@ -1697,6 +1707,7 @@ function setMapThumb() {
   mapPreview?.setMap(currentMap);
   mapThumb.style.opacity = '0';
   mapThumb.src = mapPreviewPoster(currentMap, VERSION);
+  bindMapPreview(mapThumb.parentElement, currentMap);
   mapThumb.alt = MAPS[currentMap].name;
 }
 // Badge de modo + pontinhos de posição: o carrossel não dizia onde o jogador estava
@@ -1772,6 +1783,7 @@ $('map-next').onclick = () => stepMap(1);
    Abre pelo cartaz do mapa no setup. Lê o MESMO estado do carrossel (currentMap/mapIdx) —
    trocar aqui troca lá, e vice-versa. CONTINUAR segue o fluxo normal (nick → facção). */
 const MAP_DESC = {
+  amazonia: 'Comunidade ribeirinha: palafitas com interiores, janelas de cobertura e travessias sobre o igarapé.',
   praca_poderes: 'O coração do poder vira arena: rampas do Planalto, espelho d\'água e linhas de tiro longas entre os ministérios.',
   piscina_treta: 'Salão fechado, eco de tiro e briga de faca no raso. Quem controla a borda controla o round.',
   loja_h: 'Estacionamento de megastore: corredores de vaga, mezanino de sniper e a estátua te olhando atirar.',
@@ -1817,6 +1829,7 @@ function visibleMapIds() {
   return MAP_IDS.filter((id) => catsDe(id).includes(mapCategory));
 }
 function renderMapScreen() {
+  stopMapPreviews();
   stopMapPreview();
   const img = $('ms-bg-img'); if (!img) return;
   /* O mapa em foco manda na aba: se não pertence à aba atual, troca pra aba que o contém.
@@ -1876,6 +1889,10 @@ function renderMapScreen() {
   // de paginação eram falsos — marcavam páginas que não existem. Removidos.
   $('ms-dashes').innerHTML = '';
   $('ms-strip').querySelectorAll('.ms-thumb').forEach(b => {
+    const stopOtherPreview = () => b.dataset.id === 'escadao' ? stopMapPreviews() : stopMapPreview();
+    b.addEventListener('pointerenter', stopOtherPreview);
+    b.addEventListener('focusin', stopOtherPreview);
+    bindMapPreview(b, b.dataset.id);
     b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
     if (b.dataset.id === 'lajes') mapCardPreviews.push(createMapPreview(b, {

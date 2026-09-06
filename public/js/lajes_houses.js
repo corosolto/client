@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { StaticBatch, PROP_BATCH } from './mapprops.js';
+import { indexLajesRaycast } from './lajes_raycast_index.js';
 
 // Dimensões e materiais: docs/maps/LAJES-V4-ESCALA.md; cada porta mantém sua escala.
 export function lajesArchitecture(root, colliders, occluders, T) {
   const batch = PROP_BATCH ? new StaticBatch({ name: 'lajes-alvenaria' }) : null;
   const backgroundBatches = new Map(); let activeBatch = batch;
+  const disposeRaycasts = [];
   const textures = new Map(), materials = new Map(), doors = [], signMaterials = new Set();
   const texture = (path, color = true) => {
     if (typeof document === 'undefined') return T.concrete;
@@ -204,7 +206,9 @@ export function lajesArchitecture(root, colliders, occluders, T) {
     activeBatch = previousBatch;
   }
   function flush() {
-    if (batch) occluders.push(...batch.build(root));
+    if (batch) for (const mesh of batch.build(root)) {
+      occluders.push(mesh); disposeRaycasts.push(indexLajesRaycast(mesh));
+    }
     for (const background of backgroundBatches.values()) occluders.push(...background.build(root));
     // Os lotes imóveis usam também AABB antes da interseção dos triângulos.
     for (const mesh of occluders) mesh.geometry?.computeBoundingBox();
@@ -212,6 +216,7 @@ export function lajesArchitecture(root, colliders, occluders, T) {
   let disposed = false;
   const dispose = () => {
     if (disposed) return; disposed = true;
+    for (const disposeRaycast of disposeRaycasts) disposeRaycast();
     for (const m of signMaterials) { m.map?.dispose(); m.dispose(); }
     for (const t of textures.values()) t.dispose();
     for (const m of materials.values()) m.dispose();

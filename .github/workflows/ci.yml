@@ -46,12 +46,14 @@ jobs:
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
       - name: Todo mapa devolve o que o game.js consome
         run: npm run eval:mapcontrato
+      - name: Amazônia acessível e bots entre palafitas
+        run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
       - name: Escadão — compatibilidade com pacote de áudio publicado
         run: node tools/eval/escadao-audio-pack-check.mjs
       - name: Lajes — geometria, ambiência, integração e preview
-        run: node tools/eval/runner.mjs eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:mappreview
+        run: node tools/eval/runner.mjs eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:lajes-raycast eval:mappreview
       - name: Veículos do estacionamento em escala de fábrica
         run: npm run eval:escala
       - name: Orçamento de shader WebGL1

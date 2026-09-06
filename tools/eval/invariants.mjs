@@ -1804,6 +1804,10 @@ function runNode(script, env = {}, args = []) {
   if (!existsSync(join(HERE, 'map-check.mjs'))) {
     skip('MAP*', 'geometria de mapa (submerso/respawn/escada/bandeiras)', 'map-check.mjs ausente');
   } else {
+    const raycast = runNode('lajes-raycast-check.mjs');
+    put('LRP1', 'Lajes: raycast conserva impactos e elimina trabalho fora do raio',
+      !raycast.includes('__ERRO__') && raycast.includes('✓ LRP1'),
+      raycast.split('\n').find(line => line.includes('LRP1')) || raycast.slice(-400));
     const beco = runNode('lajes-spawn-space-check.mjs');
     const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
     put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
@@ -2261,6 +2265,7 @@ function runNode(script, env = {}, args = []) {
 // citado aqui NUNCA existiu no git — ponteiro fantasma). O que roda em browser
 // no CI é o portao-browser (boot real + grafite + silhueta da seleção); estas
 // PX continuam pendentes de arnês dedicado (ver KNOWN-BUGS, dívida PX).
+for (const id of ['AMH1','AMH2','AMH3','AMH4']) skip(id, 'Amazônia: apoios, cabanas, tiros e movimento', 'exige browser: HABITAT=1 node tools/eval/amazonia-visual-capture.mjs');
 skip('PX1', 'no ADS o jogador vê a arma E a mira', 'exige browser — sem arnês dedicado (divida PX)');
 skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — sem arnês dedicado (divida PX)');
 skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — sem arnês dedicado (divida PX)');

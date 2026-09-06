@@ -2,6 +2,7 @@
    multiplayer leem daqui. Dados puros, importável do browser e do node. Ver docs/MULTIPLAYER.md. */
 /* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE. OFICIAL é o autor da casa. */
 const MAP_CATS = {
+  amazonia: ['FAVELA'],
   escadao: ['FAVELA'],
   praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
   ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
@@ -14,6 +15,7 @@ const MAP_CATS = {
   obras_prefeitura: ['ARENA', 'COMUNIDADE'],
 };
 const MAP_AUTOR = {
+  amazonia: 'Ruben Marcus',
   praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
   lajes: 'Ruben Marcus',
   ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Emerson Garrido',
@@ -22,6 +24,7 @@ const MAP_AUTOR = {
   upa_24h: 'Emerson Garrido', obras_prefeitura: 'Emerson Garrido',
 };
 const MAP_DATA = {
+  amazonia: '06/09/2026',
   praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
   quebrada: '04/08/2026', atacadao_treta: '14/08/2026',
   piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
