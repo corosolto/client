@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 44.500 linhas em 90 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 44.514 linhas em 90 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.390** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.402 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -306,7 +306,7 @@ Os mapas registrados, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.138 |
+| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.152 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.336 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
