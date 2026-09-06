@@ -49,3 +49,18 @@ soft zabumba drum and triangle, lo-fi dusty ambience as heard from far away
 across a dry sertão field at dusk, slow tempo, instrumental only, seamless
 loop, no vocals". Licença de assinante OpenRouter; shipa pelo audio-pack.zip
 como os demais binários da pasta.
+
+
+## Recuperação verificável do Sertão — 06/09/2026
+
+Os sete previews CC0 das páginas individuais acima foram recuperados sem conversão. Termos e URLs conferidos em `docs/reports/SERTAO-AUDIO-PENDENCIAS.md`. As alegações históricas de download dos 16 arquivos não descrevem este checkout: esta recuperação cobre somente os sete abaixo. Sanfona permanece ausente; não atribuir ao arquivo inexistente uma aprovação de licença ou escuta. Binários continuam fora do Git, conforme política do pacote. Registro de URL/codec/duração em `artifacts/sertao-astra/audio-restored.json`.
+
+| Arquivo | Bytes | Duração decodificada (s) | SHA-256 |
+|---|---:|---:|---|
+| vento.mp3 | 267120 | 35.671 | `9485f7df809afd1e8caf0837056bede732cec430ab87b81b1842c64d4e8e2c37` |
+| passaros.mp3 | 826368 | 129.448 | `7eaa2147a7b8b965050943ca808f13bc4c41a594e5373b391c2718fdd18de4be` |
+| galo.mp3 | 20232 | 2.157 | `12a075aeb6ee087fdd908f0b5ea13d3057e35e6ea6fe945cffea57085f686a3b` |
+| passaro-1.mp3 | 17184 | 1.841 | `ed712951ced228629ba0465ecd68a3e19e0176824e310608536c07b61cfa2853` |
+| passaro-2.mp3 | 15528 | 1.781 | `c64c121b82af7cd4958cb70892e1a0d86a48cdd45a9fd00ad13edad4bd1025e9` |
+| latido-1.mp3 | 39936 | 4.725 | `10709d2c5de82e4f175ce31203eb384259699acf1fd9b9b7ad4fb0ca54c6a830` |
+| latido-2.mp3 | 27552 | 3.200 | `3a6d3a1d582a8b2a517d0cf55e963a4dd6a46bb1eb6b8c159d7155d891d3db01` |

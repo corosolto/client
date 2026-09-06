@@ -106,7 +106,7 @@ const srcAmb = existsSync(`${ROOT}public/js/ambientlife.js`)
 const srcGame = readFileSync(`${ROOT}public/js/game.js`, 'utf8');
 const srcMain = readFileSync(`${ROOT}public/js/main.js`, 'utf8');
 const srcMaps = Object.fromEntries(MAPAS.map((id) => [id,
-  readFileSync(`${ROOT}public/js/map_${id.slice(3)}.js`, 'utf8')]));
+  readFileSync(`${ROOT}public/js/map_${id}.js`, 'utf8')]));
 const fireBody = corpoMetodo(srcGame, '\n  _fireHitscan(');
 const updateBody = corpoMetodo(srcGame, '\n  update(dt');
 const mapasIntegrados = Object.entries(srcMaps).filter(([, src]) =>
@@ -168,7 +168,7 @@ const playwright = await import(pathToFileURL(`${globalRoot}/playwright/index.js
 const chromium = playwright.chromium || playwright.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio', '--no-sandbox'],
+  args: [...(process.env.WEBGL_BACKEND === 'hardware' ? [] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']), '--headless=new', '--mute-audio', '--no-sandbox'],
 });
 if (fotos) mkdirSync(fotos, { recursive: true });
 const runtime = { maps: {}, lowq: null, game: null };
