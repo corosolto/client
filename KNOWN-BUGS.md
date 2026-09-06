@@ -4819,6 +4819,9 @@ A escada mais íngreme solicitada revelou saltos involuntários ao descer: `esca
 
 Na revisão antes do merge, o grafo aceitava142arestas incompatíveis com corpo/degrau. A régua agora percorre todas as arestas com a física real, exige chegada dentro das zonas CTF e testa180frames contra a guarda do piso novo. O filtro global de arestas, amostras da passagem exterior leste, vão oeste/pneus e piso contínuo do PATAMAR2 corrigem os casos. Mutantes parede e sem-guarda-p2 reproduzem respectivamente a ligação impossível e a queda num bolsão. A captura de preview também rejeita fonte HTTP divergente do checkout, e a régua visual aceita main/detachedHEAD.
 
+### Escadão R5 — acessos aparentes e horizonte (relatado 06/09/2026)
+Relato literal: “existe a lateral que nao liga a lugar nenhum, e passando por baixo da escada principal de quem vem por baixo tem varias areas que nao da pra entrar”; “falta um fundo de horizonte como outros mapas”. Régua: em preparação, ainda não corrigido. Base merge515/mainalpha.227; preservar escadas, casa/janela e fauna já entregues.
+
 ## Regressão de Lajes — correção validada localmente
 
 ### BUG-141 · Lajes trava acima de 5×5 no single player · CORRIGIDO LOCALMENTE 06/09
