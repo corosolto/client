@@ -2,8 +2,13 @@
    browser.mjs — O MAIN.JS AVALIA? (opcional: precisa de Playwright + Chromium)
    ----------------------------------------------------------------------------
    Tudo que boot.mjs mede sem navegador para no parse. Esta sonda abre a rota
-   real com `?debug=1` (testMode: nenhum beacon de telemetria sai — a sonda não
-   pode virar jogador no painel) e prova o boot pelo EFEITO, como o eval:boot:
+   real com `?debug=1` (testMode desliga a telemetria) E bloqueia toda escrita na
+   rede: `?debug=1` não basta — `_picks` (main.js) e o coletor de /api/jserror
+   (index.astro) POSTam mesmo em testMode, e a sonda não pode virar jogador no
+   painel nem abrir issue crash-auto. Todo método fora de GET/HEAD/OPTIONS é
+   respondido com 204 sem sair, e `navigator.sendBeacon` é substituído; o que a
+   página TENTOU mandar fica em `escritasBloqueadas` (evidência, não achado).
+   Prova o boot pelo EFEITO, como o eval:boot:
    `__CS_MAIN_READY__` ligou e `#btn-jogar` tem onclick. Junta o que a página
    contou (pageerror, console.error, requestfailed, respostas ≥ 400) e o
    `window.__csbOps.snapshot()` do public/js/ops.js quando ele existe.
@@ -42,7 +47,7 @@ export async function carregaPlaywright() {
 }
 
 export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000, gpu = false, amostraFpsMs = 8000 } = {}) {
-  const r = { sonda: 'navegador', alvo: base, headless: true, indisponivel: false, motivo: null, mainLoaded: null, mainReady: null, btnJogar: null, webgl2: null, webgl1: null, readyMs: null, pageErrors: [], consoleErros: [], requestsFalhas: [], ops: null, partida: null, versaoHtml: null };
+  const r = { sonda: 'navegador', alvo: base, headless: true, indisponivel: false, motivo: null, mainLoaded: null, mainReady: null, btnJogar: null, webgl2: null, webgl1: null, readyMs: null, pageErrors: [], consoleErros: [], requestsFalhas: [], escritasBloqueadas: [], ops: null, partida: null, versaoHtml: null };
   const pw = await carregaPlaywright();
   if (!pw.chromium) { r.indisponivel = true; r.motivo = `Playwright não encontrado (${(pw.tentativas || []).join(' · ')})`; return r; }
   let browser;
@@ -56,6 +61,16 @@ export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     const caminho = (u) => u.replace(base, '').split('?')[0];
     const ignoravel = (u) => /\/favicon\.ico$/.test(caminho(u));
+    await page.addInitScript(() => {
+      window.__opsEscritas = [];
+      navigator.sendBeacon = (u) => { window.__opsEscritas.push(`BEACON ${String(u).split('?')[0]}`); return true; };
+    });
+    await page.route('**/*', (rota) => {
+      const m = rota.request().method();
+      if (m === 'GET' || m === 'HEAD' || m === 'OPTIONS') return rota.continue();
+      r.escritasBloqueadas.push(`${m} ${caminho(rota.request().url())}`);
+      return rota.fulfill({ status: 204, body: '' });
+    });
     page.on('pageerror', (e) => r.pageErrors.push(String(e.message || e).slice(0, 300)));
     // "Failed to load resource" já entra por requestsFalhas; repetir no console só duplicaria o achado
     page.on('console', (m) => { if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) r.consoleErros.push(m.text().slice(0, 300)); });
@@ -86,6 +101,7 @@ export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000
       r.partida = p;
     }
     r.ops = await page.evaluate(() => { try { return window.__csbOps ? window.__csbOps.snapshot() : null; } catch { return null; } });
+    r.escritasBloqueadas.push(...await page.evaluate(() => window.__opsEscritas || []).catch(() => []));
   } catch (e) {
     r.motivo = `sonda interrompida: ${String(e.message).split('\n')[0].slice(0, 200)}`;
     if (r.mainReady == null) r.mainReady = false;

@@ -53,7 +53,7 @@ function fixture(cenario) {
   w('public/js/apibase.js', "const NO_BACKEND = new Set(['health', 'online', 'map-plays', 'leaderboard']);\nconst BASE = (() => { return 'https://backend.invalido'; })();\n");
   w('public/js/main.js', cenario === 'boot-navegador-morto'
     ? "throw new ReferenceError(\"Cannot access 'testMode' before initialization\");\n"
-    : "import { foo } from './dep.js';\nimport { VERSION } from './version.js';\nfoo(VERSION);\nwindow.__CS_MAIN_READY__ = true;\nconst b = document.getElementById('btn-jogar'); if (b) b.onclick = () => {};\n");
+    : "import { foo } from './dep.js';\nimport { VERSION } from './version.js';\nfoo(VERSION);\nwindow.__CS_MAIN_READY__ = true;\nconst b = document.getElementById('btn-jogar'); if (b) b.onclick = () => {};\ntry { fetch('/api/pick', { method: 'POST', body: '{}' }); navigator.sendBeacon('/api/jserror', 'x'); } catch {}\n");
   w('public/js/dep.js', cenario === 'grafo-local-incoerente' ? 'export const bar = 1;\n' : 'export function foo() {}\n');
   w('public/js/ops.js', readFileSync(join(RAIZ_PADRAO, 'public/js/ops.js')));
   w('src/lib/site.ts', `export const RANKING_ON = ${cenario === 'ranking-desligado-com-flag' ? 'true' : 'false'};\n`);
@@ -73,6 +73,7 @@ function fixture(cenario) {
 /* ---------- a "produção" sintética, com a falha do cenário ---------- */
 function servidor(cenario, raiz) {
   const chamadas = {};
+  const escritas = [];
   const html = `<!doctype html><html><head><link rel="stylesheet" href="/style.css?v=${V}"><script type="importmap">${JSON.stringify({ imports: { './js/main.js': `./js/main.js?v=${V}-x`, './js/dep.js': `./js/dep.js?v=${V}-x`, './js/version.js': `./js/version.js?v=${V}-x`, './js/ops.js': `./js/ops.js?v=${V}-x` } })}</script></head><body><div id="btn-jogar"></div><script type="module" src="/js/ops.js?v=${V}-x"></script><script type="module" src="/js/main.js?v=${V}-x"></script></body></html>`;
   const saude = { ok: true, service: 'fixture', database: true, telemetrySchema: true, fresh: true, stale: [], never: [], operationalFresh: true, operationalStale: [], operationalNever: [] };
   if (cenario === 'banco-fora') saude.database = false;
@@ -82,6 +83,7 @@ function servidor(cenario, raiz) {
   if (cenario === 'pipelines-parados') { saude.fresh = false; saude.stale = ['match']; }
   const srv = createServer((req, res) => {
     const caminho = req.url.split('?')[0];
+    if (req.method !== 'GET' && req.method !== 'HEAD') escritas.push(`${req.method} ${caminho}`);
     chamadas[caminho] = (chamadas[caminho] || 0) + 1;
     const n = chamadas[caminho];
     const envia = (status, corpo, headers = {}) => { res.writeHead(status, headers); res.end(corpo); };
@@ -113,7 +115,7 @@ function servidor(cenario, raiz) {
     if (range) { const a = Number(range[1]); const b = Math.min(Number(range[2]), corpo.length - 1); return envia(206, corpo.subarray(a, b + 1), { 'content-range': `bytes ${a}-${b}/${corpo.length}`, 'content-type': 'application/octet-stream' }); }
     return envia(200, corpo, { 'content-type': 'application/octet-stream' });
   });
-  return new Promise((f) => srv.listen(0, '127.0.0.1', () => f({ base: `http://127.0.0.1:${srv.address().port}`, fechar: () => new Promise((g) => srv.close(g)), chamadas })));
+  return new Promise((f) => srv.listen(0, '127.0.0.1', () => f({ base: `http://127.0.0.1:${srv.address().port}`, fechar: () => new Promise((g) => srv.close(g)), chamadas, escritas })));
 }
 
 /* ---------- cenários: id do achado esperado + severidade ---------- */
@@ -213,6 +215,11 @@ if (!SO || SO === 'navegador') {
           const graves = achados.filter((a) => ['critico', 'alto'].includes(a.severidade));
           if (!nav.mainReady || !nav.btnJogar || nav.ops?.marcos?.main_ready == null || graves.length) ruim(`navegador 'saudavel' devia provar o boot e ler o ops.js: ready=${nav.mainReady} btn=${nav.btnJogar} ops=${JSON.stringify(nav.ops?.marcos)} graves=${graves.map((a) => a.id).join(',')}`);
           else ok(`navegador 'saudavel' → boot provado em ${nav.readyMs} ms, ops.js com marco main_ready=${nav.ops.marcos.main_ready} ms`);
+          // "só lê": a fixture TENTA um POST e um beacon (LICOES §8: a mutação tem de ter aplicado) e nada pode chegar ao servidor
+          const tentou = nav.escritasBloqueadas.some((e) => /^POST \/api\/pick/.test(e)) && nav.escritasBloqueadas.some((e) => /^BEACON \/api\/jserror/.test(e));
+          if (!tentou) ruim(`MUTAÇÃO de escrita não aplicou: a página não tentou POST /api/pick + beacon /api/jserror (viu: ${nav.escritasBloqueadas.join(', ') || 'nada'})`);
+          else if (s.escritas.length) ruim(`navegador 'saudavel' ESCREVEU no servidor: ${s.escritas.join(', ')} — o contrato "só lê" está furado`);
+          else ok(`navegador 'saudavel' → ${nav.escritasBloqueadas.length} escrita(s) barradas antes da rede (${nav.escritasBloqueadas.join(', ')}), 0 chegaram`);
         } else {
           const a = achados.find((x) => x.id === esperado[0]);
           if (!nav.pageErrors.some((e) => /testMode/.test(e))) ruim("MUTAÇÃO 'boot-navegador-morto' não aplicou: sem pageerror de TDZ");

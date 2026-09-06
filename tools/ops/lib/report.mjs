@@ -52,7 +52,7 @@ function linhaSonda(nome, s) {
   if (s.sonda === 'boot-local') return `| boot local | ${s.coerencia?.problemas?.length ? `${s.coerencia.problemas.length} problema(s)` : 'ok'} | package ${s.versaoPackage} · version.js ${s.versaoJs} · ${s.manifesto?.modulos} módulos · ops.js ${s.indexAstro?.temOpsJs ? 'ligado' : 'ausente'} |`;
   if (s.sonda === 'assets-local') return `| assets na árvore | ${s.faltando.length || s.conteudoErrado.length ? `${s.faltando.length} faltando · ${s.conteudoErrado.length} corrompido(s)` : 'ok'} | ${s.total} conferidos |`;
   if (s.sonda === 'partidas') return `| partida sintética | ${s.fatal ? 'não subiu' : s.comErro.length || s.semLive.length ? `${s.comErro.length} crash · ${s.semLive.length} sem live` : 'ok'} | ${s.partidas.length} partidas · boot p95 ${s.bootP95 ?? '—'} ms · ${s.msPorUpdateMax ? s.msPorUpdateMax.toFixed(2) : '—'} ms/update máx |`;
-  if (s.sonda === 'navegador') return `| navegador | ${s.indisponivel ? 'não rodou' : s.mainReady ? 'ok' : 'boot morto'} | ${s.indisponivel ? s.motivo : `ready em ${s.readyMs ?? '—'} ms · ${(s.pageErrors || []).length} exceções · ${(s.requestsFalhas || []).length} recursos falhos · fps p50 ${s.ops?.fps?.p50 ?? '—'}`} |`;
+  if (s.sonda === 'navegador') return `| navegador | ${s.indisponivel ? 'não rodou' : s.mainReady ? 'ok' : 'boot morto'} | ${s.indisponivel ? s.motivo : `ready em ${s.readyMs ?? '—'} ms · ${(s.pageErrors || []).length} exceções · ${(s.requestsFalhas || []).length} recursos falhos · partida ${s.partida ? (s.partida.chegouLive ? `live em ${s.partida.ms} ms` : 'não chegou a live') : 'não pedida'} · fps p50 ${s.ops?.fps?.p50 ?? '—'} · ${(s.escritasBloqueadas || []).length} escrita(s) bloqueada(s)`} |`;
   return `| ${nome} | ? | |`;
 }
 
