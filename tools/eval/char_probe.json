@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-29T23:04:36.749Z",
+ "gerado": "2026-09-06T23:27:15.404Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 44,
@@ -70,6 +70,26 @@
   "medidoEm": "runtime (MAPS[id].build)",
   "porMapa": [
    {
+    "mapa": "amazonia",
+    "materiais": 53,
+    "map": 16,
+    "normalMap": 1,
+    "roughnessMap": 1,
+    "aoMap": 0,
+    "meshes": 333,
+    "triangulos": 36624
+   },
+   {
+    "mapa": "escadao",
+    "materiais": 201,
+    "map": 81,
+    "normalMap": 8,
+    "roughnessMap": 8,
+    "aoMap": 0,
+    "meshes": 1162,
+    "triangulos": 31404
+   },
+   {
     "mapa": "praca_poderes",
     "materiais": 99,
     "map": 84,
@@ -130,6 +150,16 @@
     "triangulos": 23124
    },
    {
+    "mapa": "lajes",
+    "materiais": 119,
+    "map": 57,
+    "normalMap": 7,
+    "roughnessMap": 6,
+    "aoMap": 0,
+    "meshes": 622,
+    "triangulos": 173700
+   },
+   {
     "mapa": "posto_treta",
     "materiais": 116,
     "map": 87,
@@ -181,13 +211,13 @@
    },
    {
     "mapa": "velho_oeste",
-    "materiais": 40,
-    "map": 36,
+    "materiais": 87,
+    "map": 51,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 701,
-    "triangulos": 17650
+    "meshes": 785,
+    "triangulos": 50372
    },
    {
     "mapa": "penitenciaria",
@@ -201,10 +231,10 @@
    }
   ],
   "total": {
-   "materiais": 1626,
-   "map": 1072,
-   "normalMap": 62,
-   "roughnessMap": 62,
+   "materiais": 2046,
+   "map": 1241,
+   "normalMap": 78,
+   "roughnessMap": 77,
    "aoMap": 0
   }
  },
