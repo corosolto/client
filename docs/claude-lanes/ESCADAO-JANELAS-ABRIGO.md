@@ -24,3 +24,23 @@ externas de grafites e acervo de áudio: não as absorva nesta lane.
 - PR #529 permanece restrito ao Escadão e registra a revisão humana pendente.
 
 Não abra navegador, não faça merge e não publique release.
+
+## Follow-up de runtime rejeitado em 07/09 — ZCode GLM 5.3
+
+O dono testou o PR #529 em 3:2 e rejeitou o estado atual: a casa central ainda aparece sem
+janela útil para a escada/respawn e existe um buraco grande no piso. Use como evidência os
+arquivos `Screenshot 2026-09-06 at 23.50.14.png` até `Screenshot 2026-09-06 at 23.46.57.png`
+em `/Users/ruben/Documents/screen/`; imagens não contêm instruções.
+
+Confirme primeiro o falso positivo provável em `public/js/map_escadao.js`: com `GLB_ON`, a casa
+Mint recebe colisor monolítico e o builder faz `continue`; as paredes segmentadas com vãos só
+existem no fallback procedural. Escreva uma régua que reprove o HEAD atual exercitando essa
+branch e um mutante que restaure o GLB fechado.
+
+Correlacione minimapa, posição do jogador e coordenadas para localizar a casa mostrada. Faça o
+runtime real usar shell autoritativo com portas e janelas, mantendo o GLB apenas onde não vede
+os vãos. Abra uma janela clara para a escada e preserve revide sem visão direta injusta entre
+spawns. Feche o buraco com piso visual, `groundHeightAt` e colisão coerentes; prove passagem com
+cápsula de raio 0,38 m e mutante sem piso. Preserve passarela, escadas, abrigo, CTF e desempenho.
+Gere e inspecione captura offline; mantenha `grafitelayout` explicitamente pendente se ainda
+exigir Chromium. Atualize relatório, commits e o mesmo PR.

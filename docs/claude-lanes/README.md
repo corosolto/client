@@ -16,6 +16,10 @@ PATH=/opt/homebrew/bin:$PATH claude --print --model claude-opus-5 \
 Antes de executar, troque para a worktree indicada no arquivo. Se a execução parar por limite,
 rode o mesmo comando outra vez: o prompt manda preservar e retomar o `git status` existente.
 
+Para as seções marcadas como ZCode GLM 5.3, selecione `GLM-5.3` no ZCode, abra a worktree
+indicada e envie integralmente o arquivo correspondente. Não execute essas seções por outro
+provedor: a disponibilidade do GLM desta máquina pertence ao ZCode.
+
 ## Regras comuns
 
 - Leia `AGENTS.md`, `STATUS.md`, `HANDOFF.md` e os relatórios citados antes de editar.
