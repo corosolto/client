@@ -51,7 +51,10 @@ export function buildEscadaoHome({ addBox, occluders, wall, concrete, dark, meta
   // Passarela alta: liga a porta frontal ao PATAMAR 1 sem fechar o lance central.
   const upperW=h.upperX1-h.upperX0, upperD=h.upperZ1-h.upperZ0, upperX=(h.upperX0+h.upperX1)/2, upperZ=(h.upperZ0+h.upperZ1)/2;
   box(upperW,.18,upperD,concrete,upperX,h.floor-.18,upperZ);
-  box(.12,1.05,upperD-.45,dark,h.upperX0+.06,h.floor-.18,upperZ+.225);
+  // O corrimão termina onde a geminada leste começa (PR 529): de z 14,2 para
+  // dentro a fachada norte assume a guarda; até 15,1 ele estrangulava o corredor
+  // para a cápsula do jogador (0,73 m livres contra 0,76 m de diâmetro).
+  box(.12,1.05,upperD-1.35,dark,h.upperX0+.06,h.floor-.18,h.upperZ0+(upperD-1.35)/2+.45);
 
   for (let i=0;i<16;i++) {
     const d=(h.stairBottom-h.stairTop)/16, y=(i+1)*h.floor/16;

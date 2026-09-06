@@ -656,31 +656,27 @@ export function buildEscadao(scene, T) {
     const acessoAltoX = .15;
     marca(addBox(acessoAltoX - lajeMinX, LAJE_H, LAJE_D, MAT.concrete, (lajeMinX + acessoAltoX) / 2, LAJE_Y, LAJE_Z));
     const piso = LAJE_Y + LAJE_H;
-    // As geminadas conservam as duas testas opacas do abrigo; janelas são painéis fechados.
+    // O shell procedural é autoritativo no runtime (PR 529): o molde fechado
+    // `escadao_casa_r3` + colisor monolítico selava a casa tática — sem janela para a
+    // escada, sem entrada e com vazio de piso na cauda leste. Régua:
+    // `eval:escadao-casa-central`, com o molde registrado via registerPropTemplate.
     for (const [x, w, h, mat] of [[-5.975, 5.25, 3.1, MAT_TIJOLO], [-1, 4.7, 2.85, MAT_CIMENTO]]) {
-      const casa = x < -3 && GLB_ON ? placeProp('escadao_casa_r3', { x, y: piso, z: LAJE_Z, targetH: h }) : null;
-      if (casa) {
-        const box = new THREE.Box3().setFromObject(casa), size = box.getSize(new THREE.Vector3());
-        // Mantém as duas fachadas na borda da laje, sem avançar sobre os degraus.
-        casa.scale.x *= w / size.x; casa.scale.z *= LAJE_D / size.z;
-        casa.name = `escadao_casa_mint_${x < 0 ? 'oeste' : 'leste'}`;
-        casa.userData.escadaoMint = { id: 'escadao_casa_r3', width: w, height: h, depth: LAJE_D };
-        root.add(casa);
-        col(x-w/2,x+w/2,piso,piso+h,LAJE_Z-LAJE_D/2,LAJE_Z+LAJE_D/2);
-        // Tiros/LOS usam a malha visível; o corpo usa o volume fechado da moradia.
-        casa.traverse(m => { if (m.isMesh) { marca(m); occluders.push(m); } });
-        continue;
-      }
       for (const dz of [-1, 1]) {
         const frente = LAJE_Z + dz * (LAJE_D / 2);
-        const abrePassarela = x === -1 && dz === -1;
-        if (abrePassarela) {
-          // Porta no prédio da laje: conecta a passarela vinda do patamar à
-          // casa frontal. A abertura ocupa a borda leste, onde a casa começa.
-          marca(addBox(3.45, h, .25, mat, -1.625, piso, frente - dz * .125, { vao: false }));
+        const faceEscada = x === -1 && dz === -1;   // geminada leste: face da boca do escadão
+        if (faceEscada) {
+          // Janela REAL para a escada: peitoril e verga sólidos, vão livre de tiro
+          // (x -2,2..-0,7, banda de 1,2 m). Fecha fora da abertura, do piso ao teto.
+          marca(addBox(1.15, h, .25, mat, -2.775, piso, frente - dz * .125, { vao: false }));
+          marca(addBox(.8, h, .25, mat, -.3, piso, frente - dz * .125, { vao: false }));
+          marca(addBox(1.5, 1, .25, mat, -1.45, piso, frente - dz * .125, { vao: false }));
+          marca(addBox(1.5, h - 2.2, .25, mat, -1.45, piso + 2.2, frente - dz * .125, { vao: false }));
+          detalhe(1.7, .09, .18, MAT_CIMENTO, -1.45, piso + 1, frente + dz * .075);
+          detalhe(1.7, .09, .18, MAT_CIMENTO, -1.45, piso + 2.2, frente + dz * .075);
+          // Porta da passarela: entrada alta vinda do PATAMAR 1, na borda leste.
           marca(addBox(1.25, h - 2.1, .25, mat, .725, piso + 2.1, frente - dz * .125, { vao: false }));
         } else marca(addBox(w, h, .25, mat, x, piso, frente - dz * .125, { vao: false }));
-        for (const dx of [-w * .24, w * .24]) {
+        for (const dx of (faceEscada ? [] : [-w * .24, w * .24])) {
           const wx = x + dx, wy = piso + 1.0;
           detalhe(1.34, 1.28, .08, MAT_CIMENTO, wx, wy - .08, frente + dz * .045);
           detalhe(1.18, 1.1, .06, MAT_VIDRO, wx, wy, frente + dz * .10);
@@ -693,16 +689,26 @@ export function buildEscadao(scene, T) {
           detalhe(.18, h, .04, MAT_CIMENTO, x + dx, piso, frente + dz * .025);
       }
       for (const dx of [-w / 2 + .125, w / 2 - .125]) {
+        const wx = x + dx;
+        // Vão na parede compartilhada das geminadas: a casa central se alcança
+        // pela passarela sem cruzar fachada opaca (mesmo perfil do vão da casa frontal).
+        const entreGeminadas = Math.abs(wx + 3.35) < .3;
         if (x === -1 && dx > 0) {
-          // Mesmo vão continua na parede compartilhada: o jogador não cruza
-          // uma fachada opaca para entrar na casa.
-          marca(addBox(.25, h, 1.05, mat, x + dx, piso, 16.025, { vao: false }));
-          marca(addBox(.25, h - 2.1, 1.1, mat, x + dx, piso + 2.1, 14.95, { vao: false }));
-        } else marca(addBox(.25, h, LAJE_D - .5, mat, x + dx, piso, LAJE_Z, { vao: false }));
+          marca(addBox(.25, h, 1.05, mat, wx, piso, 16.025, { vao: false }));
+          marca(addBox(.25, h - 2.1, 1.1, mat, wx, piso + 2.1, 14.95, { vao: false }));
+        } else if (entreGeminadas) {
+          marca(addBox(.25, h, 1.05, mat, wx, piso, 16.025, { vao: false }));
+          marca(addBox(.25, h - 2.1, 1.1, mat, wx, piso + 2.1, 14.95, { vao: false }));
+        } else marca(addBox(.25, h, LAJE_D - .5, mat, wx, piso, LAJE_Z, { vao: false }));
       }
       marca(addBox(w + .12, .14, LAJE_D + .16, MAT_CIMENTO, x, piso + h, LAJE_Z, { vao: false }));
       detalhe(w - .2, .23, .14, mat, x, piso + h + .14, LAJE_Z + LAJE_D / 2 - .12);
     }
+    // A cauda da geminada leste (x 0,15..1,35) ficava sem laje: era o vazio de piso
+    // interior visível pela porta da passarela. Complementa no nível do abrigo,
+    // sem tocar a passagem vertical que a laje deixa aberta para a casa frontal.
+    marca(addBox(.35, LAJE_H, LAJE_D, MAT.concrete, .325, LAJE_Y, LAJE_Z));
+    marca(addBox(1.2, LAJE_H, 1.7, MAT.concrete, .75, LAJE_Y, LAJE_Z + .45));
   }
   buildEscadaoHome({ addBox, occluders, wall: PAREDES[1], concrete: MAT_CIMENTO, dark: MAT.concreteDark, metal: MAT_FERRO, glass: MAT_VIDRO });
   buildEscadaoDetails({ root, addBox, occluders, enabled: GLB_ON });
@@ -927,6 +933,13 @@ export function buildEscadao(scene, T) {
     if (underLanding && yRef != null && yRef + .3 < RISE) return 0;
     const houseFloor = escadaoHomeGround(x, z);
     if (houseFloor !== undefined) return houseFloor;
+    // Interiores das geminadas da laje (PR 529): no nível da laje pisa-se 2,75; na
+    // rua embaixo o chão continua 0 — mesma regra do underLanding, senão o vão dos
+    // pilotis vira degrau fantasma.
+    if (x >= -8.6 && x <= 1.35 && z >= 14.2 && z <= 16.8) {
+      if (yRef == null || yRef + .3 >= 2.75) return 2.75;
+      return 0;
+    }
     if (z <= TOP_Z) return H_TOP;
     if (x >= AUX_X - AUX_W / 2 && x <= AUX_X + AUX_W / 2) {
       if (z >= AUX_F3.z0 && z <= AUX_F3.z1) return rampHeight(z, AUX_F3.z1, RISE * 2);
@@ -984,6 +997,10 @@ export function buildEscadao(scene, T) {
   // Porta alta da casa frontal: do patamar 1 pela passarela, sem usar o acesso da rua.
   linha(.3, P1.z1 - .4, .9, P1.z1 - .4, .45);
   linha(.9, P1.z1 - .4, .9, 14.9, .55);
+  // Interior das geminadas da laje (PR 529): entra pela porta da casa frontal, na
+  // fresta z 14,8–15,1 entre as paredes, e corre até a geminada oeste pelos vãos.
+  linha(1.45, 14.94, 4.4, 15.0, .5);
+  linha(1.45, 14.94, -5.975, 15.05, .45);
   // becos: escada própria + conexão ao patamar 1. A rota é cotovelada porque a reta
   // beco → patamar corta muros e o `blocked` derrubava os nós do meio.
   const CONEX_Z = CONEX.z0 + 0.9, P1_MEIO = (P1.z0 + P1.z1) / 2;
