@@ -444,3 +444,16 @@ As duas falhas remanescentes da primeira matriz alpha.233 foram documentais:
 `package.json`. Regenerar, commitar a merge e repetir o `check:fast` com árvore
 limpa é a última validação local antes de publicar. Sem navegador, servidor,
 merge remoto ou deploy.
+
+### Candidato alpha.233 validado localmente
+
+Merge local `e5df4bdf98a4e24bb661a27c649d525abf780173`, pais
+`0664039c` e `c7302096`. Com árvore limpa, `check:fast` passou **123/123** em
+206,8 s; log em `artifacts/sertao-astra/logs/alpha233-check-fast-clean.log`.
+`npm run build`, `docs:check`, `arch:check`, `eval:docsautoria` e
+`eval:portaointeiro` passaram. Contratos do Sertão medem 5 calangos vivos,
+2 cabras, 1 galinha e 3 pintinhos; CTF2 da Amazônia também passou após a
+integração. O build local apenas avisou que Node 23 será substituído por Node 24
+no runtime Vercel, sem erro de build. Não houve execução de browser/servidor,
+merge remoto ou deploy. Próximo: conferir `origin/main` e `origin` uma vez,
+publicar o candidato e aguardar os checks do GitHub antes de qualquer merge.
