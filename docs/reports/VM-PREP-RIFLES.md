@@ -1024,3 +1024,36 @@ caminho absoluto de `R/tools/eval/serve.mjs 8160`.
 
 Revisão independente das referências e das marcações: sem bloqueadores
 documentais; não certifica armas nem procedência além das imagens do dono.
+
+## M4 — sonda C2 de transição anelar/mínimo, 06/09/2026 — **rejeitada**
+
+Esta rodada começou de `A/m4-actions-fingers-c1/`, sem modificar runtime,
+M4 idle aprovada, arma, carregador, palma, polegar, manga ou relógio. A régua
+primeiro reprovou C1 em f062: anelar tinha 45 cruzamentos de aresta contra o
+carregador (6 no sentido inverso) e mínimo 94 (13 inversos), medidos em
+`A/m4-actions-fingers-c2/transition-fit.json`. C1 é também a mutação concreta:
+reintroduzi-lo ao lugar de C2 restaura esses contadores.
+
+A sonda isolada `tools/viewmodels/prep/rifles-m4-actions-fingers-c2.py` tentou
+somente os seis quaternions `ring_0[123]_l`/`pinky_0[123]_l` entre 1,60 e 2,32 s,
+com endpoints f000/f072 preservados. O export C2 zera os dois sentidos no f062
+e o reimport do GLB confirma 415 tracks protegidas idênticas em relação a C1,
+retorno de malha abaixo de `4,76e-7` e mutação de dedo detectada. A evidência
+reproduzível está fora do Git em `A/m4-actions-fingers-c2/`:
+`transition-fit.json`, `contact-check.json`, `reimport-check.json` e
+`evidence/reload_tactical/f062-{close-hand,close-hand-opposite,material-id*}.png`.
+
+**Não aceitar C2:** a única solução que fecha o mínimo requer `pinky_01_l =
+-83°` (anelar `-45°`). Embora os cruzamentos sejam zero, esse deslocamento é
+maior do que uma correção local defensável e não prova uma pega física. Além
+disso, C2 não toca no outro bloqueio: a pele ainda é exposta no punho em f013 e
+f045 em `A/m4-actions-fingers-c1/evidence/reload_tactical/*-material-id*.png`.
+Portanto, nenhum candidato de recarga M4 passa anatomia, contatos e cobertura
+em conjunto; não houve integração, PR, runtime ou commit desta sonda.
+
+Próximo passo mínimo, antes de qualquer nova animação: medir no Blender o
+perfil transversal deformado da borda manga/pele nos f013/f045 (seleções,
+pesos e distância assinada), e decidir se existe uma cobertura de manga
+específica à ação que zera nos endpoints. Se isso não for possível sem mexer
+na malha/rig comum, a recarga M4 permanece bloqueada e o caminho correto é
+novo asset de mão/roupa, não ampliar a rotação do mínimo.
