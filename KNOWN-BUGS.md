@@ -1906,14 +1906,13 @@ mudar.
 `data-act="ctf"` de `src/pages/index.astro`; o handler em `public/js/main.js`
 continuou presente. Não era ocultação por CSS: o botão não existia no HTML.
 
-**Correção:** restaurado CAPTURE A BANDEIRA após SINGLE PLAYER, com o handler
-existente. UIR26 de `npm run eval:redesign` reprovou antes e passou depois;
+**Correção:** restaurado o submenu de SINGLE PLAYER com MATA-MATA e CAPTURE A
+BANDEIRA, com os handlers existentes. UIR26 de `npm run eval:redesign` reprovou antes e passou depois;
 `--mutante=ctf-some-home` remove o acesso em memória e faz UIR26 reprovar.
 `node tools/eval/mode-check.mjs` passou 60/60 casos de preservação da escolha.
 
-**Visual:** `artifacts/ctf-home/ctf-home-after.png`, navegador local em 1200×800: botão legível,
-coluna completa e rodapé visível. O custo é mais uma entrada na coluna. Clique
-abre mapas em CTF. Revisão adversarial sem achados bloqueantes; a régua estática
+**Visual:** navegador local em 1200×800: submenu legível, coluna completa e rodapé
+visível. Clique em CAPTURE A BANDEIRA abre mapas em CTF. Revisão adversarial sem achados bloqueantes; a régua estática
 não comprova visibilidade por si só. Publicação e acompanhamento: `HANDOFF.md`.
 
 ### BUG-36 · Ctrl+W fecha a aba no meio da partida (Windows/Linux) — MITIGADO, limite de plataforma

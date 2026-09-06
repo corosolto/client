@@ -1469,6 +1469,13 @@ let modoEscolhido = false;
 if (MAPS[currentMap].ctfMode) matchMode = 'ctf';   // Loja H / Ferro Velho ABREM em CTF (geometria feita em volta das bandeiras), mas dá pra trocar
 const menuSetup = $('menu-setup');
 const csItems = [...document.querySelectorAll('.cs-item')];
+const singlePlayerButton = $('cs-menu').querySelector('[data-act="single-player"]');
+const modeMenu = $('cs-modos');
+function toggleModeMenu() {
+  const open = modeMenu.hidden;
+  modeMenu.hidden = !open;
+  singlePlayerButton.setAttribute('aria-expanded', String(open));
+}
 // Kill-switch de UI: ?ui=legacy volta o scrim do menu e o HUD ao visual da rodada 1
 // (vinheta de coluna inteira, HUD sem plaquinha nem scrim de canto). Serve de degradação
 // segura se o tratamento novo regredir em algum wallpaper/mapa.
@@ -1512,16 +1519,16 @@ function openModeMap(mode, title, act) {
   renderMapScreen();
   show('map-screen');
 }
-/* MULTIPLAYER e SINGLE PLAYER são PRIMEIRA INSTÂNCIA do menu (pedido do dono, 30/08):
-   o degrau "JOGAR ▸ submenu" saiu — quem abre o jogo escolhe o modo no primeiro clique.
-   `sp` e `ctf` seguem exatamente como estavam; só o caso 'jogar' morreu com o botão. */
+/* Multiplayer abre direto. Single Player abre os modos locais; a escolha de mata-mata ou
+   CTF ainda usa os mesmos caminhos que levam à seleção de mapas. */
 csItems.forEach((it) => {
   it.onmouseenter = () => ui.hover();
   it.onclick = () => {
     if (performance.now() - _entradaEm < ENTRADA_MS) return;
     ui.click();
     switch (it.dataset.act) {
-      case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;
+      case 'single-player': toggleModeMenu(); break;
+      case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;
       case 'ctf':   openModeMap('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
       case 'mp':    markCurrent('mp'); abrirMultiplayer(); break;
       /* MAPA saiu (mapa se escolhe no fluxo de partida); FEEDBACK entrou (07/08) */

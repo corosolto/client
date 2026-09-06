@@ -79,8 +79,7 @@ const DICT = {
   // multiplayer (menu de primeira instância + tela de salas, 30/08)
   'SALAS ONLINE · CONVIDE PELO LINK': 'ONLINE ROOMS · INVITE BY LINK',
   'CONTRA BOTS · MATA-MATA E CTF': 'VS BOTS · DEATHMATCH AND CTF',
-  'CONTRA BOTS · MATA-MATA': 'VS BOTS · DEATHMATCH',
-  'CONTRA BOTS · CTF': 'VS BOTS · CTF',
+  'CONTRA BOTS · ESCOLHA O MODO': 'VS BOTS · CHOOSE A MODE',
   '// TRETA ONLINE': '// ONLINE FIGHT',
   'SERVIDOR': 'SERVER',
   'o de menor ping é o seu': 'lowest ping is yours',

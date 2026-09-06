@@ -2,14 +2,14 @@
 
 ## CTF no menu da home — 06/09/2026
 
-Objetivo: restaurar o acesso direto ao CTF na home, validar clique e preservação do modo
+Objetivo: restaurar o submenu de Single Player com CTF, validar clique e preservação do modo
 ao trocar de mapa. Branch `fix/ctf-home-menu`, base `f7f4402e`, worktree `ctf-home`.
-O botão foi restaurado sem alterar o roteamento existente; traduções dos subtítulos
-acompanham a separação entre mata-mata e CTF. UIR26 reprovou antes e passou depois;
+O submenu foi restaurado sem alterar os caminhos dos modos; traduções acompanham a escolha
+entre mata-mata e CTF. UIR26 reprovou antes e passou depois;
 `ctf-some-home` detectou a remoção. `mode-check.mjs`: 60/60 casos passaram.
 Capturas e logs preservados em `artifacts/ctf-home/` (fora do Git). Navegador em
-1200×800 confirmou botão legível, clique em CTF e troca Ferro Velho → Piscina sem
-perder o modo; inglês também conferido. Build e SEO/AEO 6/6 passaram; revisão
+1200×800 confirmou o submenu aberto, clique em CTF e seleção de mapas em CTF;
+inglês também conferido. Build e SEO/AEO 6/6 passaram; revisão
 adversarial sem bloqueios. `docs:check` passou após regenerar os contadores de i18n.
 Checkpoint funcional: `4abeaa40`. `check:fast` terminou em 289,4 s com 107/111;
 `docs:check` foi corrigido pela regeneração e passou isoladamente. Restam falhas
