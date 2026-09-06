@@ -48,7 +48,8 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
   if (!ids || !ids.length) ids = FAVELA_AMBIENCE_ASSETS;
   await Promise.all([...new Set(ids)].filter((id) => ASSETS[id] && !templates.has(id)).map(async (id) => {
     try {
-      const gltf = await loadGLB(`${ASSETS[id]}?v=${VERSION}`);
+      const revision = id === 'calango' ? '2088f293ac3e' : VERSION;
+      const gltf = await loadGLB(`${ASSETS[id]}?v=${revision}`);
       let skinned = false;
       gltf.scene.traverse((object) => {
         if (!object.isMesh) return;

@@ -88,3 +88,14 @@ Hashes abaixo são snapshot extraído do manifesto e conferido contra os arquivo
 | [`calango.glb`](calango.glb) / `calango-sertao` | [chat](https://mint.gg/chat/ph78ys61n792at10xms9e053ax8d7cdr) / `ks77c1dphgsvbxfar88b6080jh8d7bf2` | `0dcb851d6d1a20e9c9161fc2b559175a10e264b91bfbdf0f0b441a5617cc3d07` |
 
 As fotografias de Maranguape e da capela da Fazenda Colônia foram apenas referências de observação do agente principal no Chrome; não foram incorporadas aos GLBs nem copiadas como textura nesta revisão. Créditos, observações atribuídas e limites em [SERTAO-REFERENCIAS.md](../../../docs/reports/SERTAO-REFERENCIAS.md).
+
+### Calango: derivado corretivo de 06/09/2026
+
+`calango.glb` conserva a geração, textura e autoria pendente do registro `calango-sertao`. Foi removida apenas a face ordinal 1118 (índices 1409/1410/1411), um triângulo preto que atravessava o vão sob o corpo. Não houve regeneração, mudança de material, escala, pose ou substituição por outro animal. Os três vértices dessa face eram usados apenas por ela no índice; duas posições coincidem com costuras de outros vértices. O diagnóstico visual e geométrico está em `docs/reports/SERTAO-FAUNA-VOO.md`.
+
+- Original: SHA-256 `0dcb851d6d1a20e9c9161fc2b559175a10e264b91bfbdf0f0b441a5617cc3d07`.
+- Derivado: SHA-256 `2088f293ac3ef5c6f1779fb3e45b1193173629001a0687d3956bef81a0a8e2c1`.
+- Reprodução: `node tools/repair-calango-surface.mjs`, que aceita somente o hash original; original recuperável no commit `018806e2d11a1eb10b118da0d5afa5ce35869375`.
+- Validação: `node tools/eval/calango-surface-check.mjs` compara a superfície e o hash dos buffers não relacionados ao índice; a mutação `recoloca-triangulo` restaura a face original em memória.
+
+A correção local não resolve nem altera a pendência dos termos específicos de licença e da autoria humana da geração Mint. O snapshot de 05/09 acima identifica o original, enquanto `mint-assets.json` identifica o derivado final.

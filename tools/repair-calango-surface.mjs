@@ -1,0 +1,26 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const file = 'public/models/ambient/calango.glb';
+const bytes = readFileSync(file);
+const hash = createHash('sha256').update(bytes).digest('hex');
+if (hash !== '0dcb851d6d1a20e9c9161fc2b559175a10e264b91bfbdf0f0b441a5617cc3d07') throw Error('Reparo aceita somente o GLB original identificado; não reaplicar no derivado.');
+const jsonLength = bytes.readUInt32LE(12);
+const gltf = JSON.parse(bytes.subarray(20, 20 + jsonLength));
+const primitive = gltf.meshes[0].primitives[0];
+const accessor = gltf.accessors[primitive.indices];
+const view = gltf.bufferViews[accessor.bufferView];
+if (accessor.componentType !== 5123 || accessor.count !== 14874) throw Error('Layout original inesperado');
+const start = 28 + jsonLength + (view.byteOffset || 0) + (accessor.byteOffset || 0);
+const removedAt = start + 1118 * 3 * 2;
+if (![1409, 1410, 1411].every((value, i) => bytes.readUInt16LE(removedAt + i * 2) === value)) throw Error('Triângulo original não encontrado');
+const end = start + accessor.count * 2;
+bytes.copy(bytes, removedAt, removedAt + 6, end);
+bytes.fill(0, end - 6, end);
+accessor.count -= 3;
+const json = Buffer.from(JSON.stringify(gltf));
+if (json.length > jsonLength) throw Error('Cabeçalho maior que a reserva original');
+bytes.fill(0x20, 20, 20 + jsonLength);
+json.copy(bytes, 20);
+writeFileSync(file, bytes);
+console.log(JSON.stringify({ file, beforeSha256: hash, afterSha256: createHash('sha256').update(bytes).digest('hex'), removedFace: 1118, indices: [1409, 1410, 1411], triangles: accessor.count / 3 }));

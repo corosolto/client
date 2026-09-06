@@ -2140,12 +2140,14 @@
       },
       "processing": {
         "provider": "mint",
-        "model": "mint text-to-3d (original)",
+        "model": "mint text-to-3d (original), derivado local sem triângulo espúrio",
         "tools": [
           "mint.gg",
-          "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)",
+          "tools/repair-calango-surface.mjs (remove apenas face 1118, indices 1409/1410/1411; preserva atributos e texturas)"
         ],
-        "finalSha256": "0dcb851d6d1a20e9c9161fc2b559175a10e264b91bfbdf0f0b441a5617cc3d07"
+        "finalSha256": "2088f293ac3ef5c6f1779fb3e45b1193173629001a0687d3956bef81a0a8e2c1",
+        "originalSha256": "0dcb851d6d1a20e9c9161fc2b559175a10e264b91bfbdf0f0b441a5617cc3d07"
       }
     },
     "casa-pedra": {
