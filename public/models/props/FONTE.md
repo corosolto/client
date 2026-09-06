@@ -73,3 +73,31 @@ Final: 2167 triângulos, 352964 bytes, SHA256
 Origem SHA256 `0acc6dd66fd3e4f25281c124f6b87a96fcd5a7e61c43d4bc21cf473e15b65594`.
 Khronos: zero erros, um aviso de tangent space. Recibo local em
 `artifacts/amazonia-visual/cabin-round/asset.json`. Originais preservados.
+# Props Mint integrados no Escadão
+
+Arquivos preservados da branch `codex/escadao-visual` (072e6d71), com origem e
+processamento completos em `mint-assets.json`. Somente estes sete GLBs foram
+acrescentados ao acervo da main nesta integração.
+
+- `varal_roupas_01.glb` — [Colorful Laundry Varal (varal de corda)](https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p). SHA256: `3ea3085f1c0f0729b0563b3a9c6e9330a39c4a7da720592d931ef1681edb1a52`.
+- `varal_roupas_02.glb` — [Colorful Laundry Varal (varal de chão)](https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg). SHA256: `389993f574d3dcfabca27109268ce50a47438c72618f6b0c057a647ceaf89969`.
+- `samambaia.glb` — [Emerald Feather Clump (samambaia)](https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0). SHA256: `d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c`.
+- `casa_favela_azul.glb` — [Casa de favela azul](https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq). SHA256: `c311fd2a66e7aeeb8c218cfd74b4a8e0dcb79130f62766451eb4b2b5ffc4ae92`.
+- `casa_favela_tijolo.glb` — [Casa de favela tijolo](https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq). SHA256: `c6d26492a9d5a5b2a0676169de4f43ad5e67ac83bafda8ba6f7e0e9171e15016`.
+- `varal_roupas.glb` — [Varal de roupas](https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq). SHA256: `0cd259177b239c7198b8158195c82a493480c69846f210981faeb87eac2c89bf`.
+- `escadao_casa_r3.glb` — [01-escadao-casa-residencial-r3.glb](https://mint.gg/chat/ph76fdb7fh3t30vzjz8ajv01xs8dx139). SHA256: `9bceba38acb38726b1df871b4a22697d5cb988f10e6cde13a972bdbf4eeb3a4b`.
+
+A casa R3 foi gerada em 06/09/2026; licença e seleção documentadas em
+`docs/reports/ESCADAO-MINT-R3.md`. Os outros seis modelos reutilizam o acervo Mint
+anterior, sem alteração dos bytes ou da proveniência. O mato novo rejeitado não
+foi incluído. Demais props usados pelo mapa já existiam na main.
+
+## R4 — gato e detalhes domésticos
+
+Gerados em 06/09/2026 no [projeto Mint do Escadão](https://mint.gg/chat/ph71esgt6wvxqr9ywswh7nr8f58dxycs), pack `th71b3y03ksncsfj8wzt08w5hh8dxjpk`, run `vd7cw36hdpbv3zxwkt19km2d6h8dwz6j`, TRIPO_P1 Standard. Termos e hashes das fontes/finais em `mint-assets.json`; mesma seção 4 dos termos documentados na R3. Nenhuma foto de referência foi incorporada à textura.
+
+- `escadao_cat_r4.glb`: 4.723 triângulos, PBR WebP 1024, rig autoral de 19 ossos com idle/walk/run. Caminhada 0,55 m/s e fuga 1,5 m/s, altura de referência 0,48 m. Substituição restrita ao Escadão.
+- `escadao_varanda_r4.glb`: 4.453 triângulos, cadeira plástica, pano e dois vasos; geometria original preservada.
+- `escadao_eletrica_r4.glb`: 3.470 triângulos, caixa de medição e conduítes; simplificação limitada por erro geométrico.
+
+Pipeline reproduzível em `tools/optimize-escadao-r4.mjs` e `tools/rig-escadao-cat-r4.py`; inspeção do GLB reimportado em `tools/inspect-escadao-cat-r4.py`. Recibos e renders privados em `artifacts/escadao-visual/r4/assets/`.

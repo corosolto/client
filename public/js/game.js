@@ -5177,6 +5177,7 @@ export class Game {
     if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && this._acceptInput()) {
       p.vel.y = this.world.jumpImpulse ?? 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();
     }
+    const followStepDown = this.world.snapDownSteps === true && p.grounded && p.vel.y <= 0;
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
     // integrate with step-limit so platform fronts block
     /* CHÃO MULTINÍVEL: o 3º argumento é o Y de quem pergunta. Onde há mais de uma
@@ -5201,6 +5202,11 @@ export class Game {
     this._collide(p.pos, 0.38);
     p.pos.y += p.vel.y * dt;
     const g2 = this.world.groundHeightAt(p.pos.x, p.pos.z, p.pos.y);
+    // Opt-in para escadaria íngreme: acompanha um passo descendente sem lançar o corpo
+    // no ar. Pulo já desarmou grounded; quedas maiores que STEP_H continuam livres.
+    if (followStepDown && oldG >= g2 && oldG - g2 <= STEP_H && p.pos.y > g2 && p.pos.y - g2 <= STEP_H) {
+      p.pos.y = g2; p.vel.y = 0; p.grounded = true;
+    }
     if (p.pos.y <= g2) {
       if (!p.grounded && p.vel.y < -4) { this.sfx.land(); p.landDip = Math.min(1, -p.vel.y / 14); } // landing dip, sized by impact
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;

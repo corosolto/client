@@ -31,6 +31,7 @@ import { createHash } from 'node:crypto';
 
 /* id do mapa (o mesmo do `grafitar({ id })` e da chave do GRAFITE) -> fonte. */
 export const MAP_SOURCES = {
+  escadao: 'public/js/map_escadao.js',
   praca_poderes: 'public/js/map_brasilia.js',
   piscina_treta: 'public/js/map_piscina.js',
   loja_h: 'public/js/map_havan.js',
@@ -38,6 +39,7 @@ export const MAP_SOURCES = {
   quebrada: 'public/js/map_quebrada.js',
   corrego: 'public/js/map_corrego.js',
 };
+const MAP_DEPENDENCIES = { escadao: ['public/js/map_escadao_home.js', 'public/js/map_escadao_details.js'] };
 export const PASS_FILE = 'public/js/graffiti_pass.js';
 export const TEX_FILE = 'public/js/textures.js';
 
@@ -120,7 +122,7 @@ export function universoTexto(u = universoDecals()) {
 export function impressao() {
   const maps = {};
   for (const [id, arq] of Object.entries(MAP_SOURCES)) {
-    maps[id] = sha(normalizar(readFileSync(arq, 'utf8')));
+    maps[id] = sha([arq, ...(MAP_DEPENDENCIES[id] || [])].map(file => normalizar(readFileSync(file, 'utf8'))).join('\n'));
   }
   const pass = sha(normalizar(readFileSync(PASS_FILE, 'utf8')));
   return { pass, maps };

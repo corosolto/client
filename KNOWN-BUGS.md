@@ -4748,3 +4748,30 @@ quatro abaixo do piso antes da correção. Trocar a ordem dos spawns já existen
 e posicionar a MP5 ao lado das toras preserva as 71 armas e mede zero falhas.
 O loader que restaura as três linhas anteriores reproduz 1/4/0 falhas.
 Evidência e próximo passo: [continuação](docs/reports/AMAZONIA-VISUAL-CONTINUATION.md).
+## Menu local do Escadão — resolvido em 06/09/2026
+
+> "ESTA desatualizada com a main e nao da pra testar"
+
+A porta 8148 usava `tools/eval/serve.mjs`, que entrega o template Astro parcialmente
+processado. O HTML continha `FACTIONS.map` e `String(index + 1)` uma vez cada.
+Substituído pelo Astro real da main 69555790 (alpha.223), com o Escadão integrado
+na branch `codex/escadao-main`. As duas assinaturas passaram a zero.
+
+`tools/eval/escadao-menu-check.mjs` rejeita o HTML anterior com `--html=...` e
+valida o fluxo completo sem `auto`: mapa, nick isolado de teste, facção, personagem,
+adversário, GLBs e movimento. Recibos em `artifacts/escadao-visual/main-sync/`.
+A régua aguarda a retirada da splash antes do primeiro clique, respeitando a
+proteção contra gesto de entrada acionar o menu.
+
+A integração encontrou cinco nós isolados junto à Deagle (-10,38). Uma linha de
+waypoints no vão x=-8,5 conecta esse fundo de rua: 370/370 nós e oito rotas dos
+spawns à arma. `escadao-graph-check.mjs` reprova o estado anterior;
+`--mutante=sem-conexao-rua` volta a isolar a arma. Nenhuma tolerância foi ampliada.
+
+## Escadão R4 — pisos sem espessura e circulação (06/09/2026)
+
+Relato literal: “ver o chao de cima estando embaixo, lugates que nao da pra passar”. Fotos do usuário04.07–04.09 mostram piso superior invisível por baixo e props aparentando flutuar. O plano FrontSide do topo não fechava o volume. Massa de terreno e degraus sólidos agora bloqueia os raios inferiores; `escadao-structure-check.mjs` preserva RED e mutação sem massa.
+
+A escada mais íngreme solicitada revelou saltos involuntários ao descer: `escadao-descent-check.mjs` mediu0,305m de separação e78frames aéreos. `Game._moveEntity` acompanha somente passos descendentes no opt-in `world.snapDownSteps`, preservando salto e queda maior que um passo. Browser real `r4/runtime-delivery` passou12/12travessias, sem perda de apoio nem interseção corporal. Porta, janela e grafo da casa são cobrados por `escadao-home-check.mjs`; porta fechada por mutação reprova. Crítica independente em `r4/browser-delivery` confirmou fechamento do piso, acesso, janela e continuidade visual do beco. Performance/FPS e orçamento AM7 continuam pendentes.
+
+Na revisão antes do merge, o grafo aceitava142arestas incompatíveis com corpo/degrau. A régua agora percorre todas as arestas com a física real, exige chegada dentro das zonas CTF e testa180frames contra a guarda do piso novo. O filtro global de arestas, amostras da passagem exterior leste, vão oeste/pneus e piso contínuo do PATAMAR2 corrigem os casos. Mutantes parede e sem-guarda-p2 reproduzem respectivamente a ligação impossível e a queda num bolsão. A captura de preview também rejeita fonte HTTP divergente do checkout, e a régua visual aceita main/detachedHEAD.

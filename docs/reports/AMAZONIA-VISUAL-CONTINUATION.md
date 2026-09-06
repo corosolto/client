@@ -497,3 +497,13 @@ e volta a71/1/4/0. Artefatos emartifacts/amazonia-visual/cabin-round/.
 eval:amazonia passou, incluindo71/71rotas de bots (seed13007). Próximo: mídia
 real atualizada, crítica independente, push/CI do novo SHA e merge autorizado.
 Não continuar features da Amazônia nem abrir investigação de Lajes neste fechamento.
+
+Checkpoint 09454be8 guarda a correção VM14. Main avançou para f7f4402e
+(alpha.227, Escadão), incorporada nesta integração. Conflitos preservam os
+três mapas, previews e preparos de áudio; documentação gerada reconstruída.
+Revisão independente dos cinco módulos compartilhados passou, incluindo
+contraprova UIR4. Gates locais afetados: 10/10 em 145,6 s, registrados em
+artifacts/amazonia-visual/cabin-round/gates-alpha227.log. A captura real foi
+refeita com mapa SHA 6d155a14 e revisão visual do poster: passarelas, rio,
+barcos, cabanas e mata correspondem ao cenário jogável. Recibo com hashes
+em public/img/map-previews/amazonia.capture.json. Próximo: CI e merge.

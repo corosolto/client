@@ -49,6 +49,7 @@ try {
   copyFileSync(join(root, 'tools/audio/lajes-soundscape.mjs'), join(temp, 'tools/audio/lajes-soundscape.mjs'));
   copyFileSync(join(root, 'tools/audio/complete-amazonia-soundscape.mjs'), join(temp, 'tools/audio/complete-amazonia-soundscape.mjs'));
   const fetchFixture = { ...baseline, mapSoundscapes: { ...baseline.mapSoundscapes, corrego: donor, parque_treta: donor } };
+  copyFileSync(join(root, 'tools/audio/extend-map-soundscapes.mjs'), join(temp, 'tools/audio/extend-map-soundscapes.mjs'));
   const fetch = readFileSync(join(root, 'scripts/fetch-audio.sh'), 'utf8').replaceAll('/tmp/csbrasil-audio.zip', join(temp, 'download.zip'));
   writeFileSync(join(temp, 'scripts/fetch-audio.sh'), fetch);
   writeFileSync(join(temp, 'bin/curl'), `#!/usr/bin/env bash\nwhile [ "$#" -gt 0 ]; do if [ "$1" = "-o" ]; then shift; cp "$FIXTURE_ZIP" "$1"; exit 0; fi; shift; done\nexit 2\n`, { mode: 0o755 });
@@ -62,6 +63,7 @@ try {
   const fresh = runFetch('1'); assert.equal(fresh.status, 0, fresh.stderr);
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.lajes, donor, 'LSA8 unzip ignorou adaptação de Lajes');
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.amazonia, { loops: donor.loops, shots: donor.shots }, 'fetch deve preparar também Amazônia');
+  assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.escadao, donor, 'Fetch integra também Escadão');
   console.log('PASS LSA7–LSA8 fetch real em cache e após unzip, sem rede');
 
   mkdirSync(join(temp, 'public/audio/a'), { recursive: true });

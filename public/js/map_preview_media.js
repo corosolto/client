@@ -1,1 +1,1 @@
-export const MAP_PREVIEW_MEDIA = Object.freeze({"amazonia":{"poster":"561670ce01e8","video":"d6216927a3ba"}});
+export const MAP_PREVIEW_MEDIA = Object.freeze({"amazonia":{"poster":"a9ad821b6fb1","video":"6eb5ac905276"}});

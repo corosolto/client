@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.226`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.227`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -51,6 +51,25 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.227] — 2026-09-06
+
+### Mudado
+- feat(escadao): integrar mapa com becos, casa acessível e fauna (#515)
+- fix(escadao): manter chegada dos becos no grafo físico
+- fix(escadao): completar ambiência do pacote publicado
+- chore(escadao): finalizar mídia e registrar validação do mapa
+- fix(escadao): validar rotas físicas e proteger o patamar do objetivo
+- docs(escadao): atualizar inventário e gates da rodada R4
+- feat(escadao): preview real e provas de navegação e fauna
+- fix(escadao): fechar pisos e abrir casa com circulação e janela
+- feat(escadao): preserve Mint cat rig and domestic props
+- feat(menu): preview atual do Escadão com vídeo sob demanda
+- record verified Astro preview on current main
+- refresh generated documentation for Escadao integration
+- preserve Escadao evidence and main integration report
+- integrate Escadao on main and validate real menu and bot routes
+- import approved Escadao assets onto current main
 
 ## [2.0.0-alpha.226] — 2026-09-06
 

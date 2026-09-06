@@ -3,6 +3,7 @@
 /* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE. OFICIAL é o autor da casa. */
 const MAP_CATS = {
   amazonia: ['FAVELA'],
+  escadao: ['FAVELA'],
   praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
   ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
   lajes: ['FAVELA', 'COMUNIDADE'],

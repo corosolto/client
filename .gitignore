@@ -5,6 +5,7 @@ node_modules
 dist/
 .astro/
 .vercel/
+/artifacts/
 *.tsbuildinfo
 
 # ── Segredos ────────────────────────────────────────────────────────────────
