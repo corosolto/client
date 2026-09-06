@@ -196,3 +196,10 @@ Elevar Escadão (Morro) do PR #436: subida, becos e patamares de um bairro brasi
 - Novo pedido explícito do usuário: adicionar ratos/baratas, terminar, atualizar com main, resolver conflitos/build e fazer merge. Autorização de push/PR/merge agora concedida; não editar outros checkouts.
 - Acrescentado um rato e uma barata próximos à escada lateral da casa, total3de cada, usando GLBs existentes. Caminhos testados no corpo real sem bloqueio; prova de carregamento/movimento acrescentada ao navegador.
 - origin/main avançou para a551204f(alpha.224), dois commits desde69555790. Próximo: checkpoint local do núcleo; merge da main nesta branch, resolver/regenerar docs, finalizar fauna/preview/movimento/build e integrar via PR. FPS exclusivo/AM7 permanecem limites explícitos.
+
+## R4 — revisão antes do merge e correções causais
+- Main integrada em5a6da9cf: conflitos apenas emdocsgeradas/package; scripts de ambasasfrentes preservados. Build-main passou, node-main8/8 e deploy-main37/37.
+- Crítico limpo encontrou142arestas impossíveis, guarda de branch que impedia gateapósmerge e proveniência de preview sem verificar HTTP. Corrigidos os três; validação positiva e mutantes em fechamento.
+- Navegação final453/453nós e zeroarestas impossíveis. Beco oeste ganha vão1,10m, recuo dianteiro e pneus fora da passagem; leste tem ligação exterior física. Fundação fecha vaziossemacesso e piso doCTF E conecta aoauxiliar a5,04m. Regresso da queda pela bordasul reproduzido e resolvido comguarda; mutante semguarda cai. Crítico independente confirmou caminhada/retorno/guardas e não encontrou novo bloqueador Node.
+- Fontes congeladas para runtime/browser/preview-release. browser-main comprovou3ratos/3baratas carregados e móveis; motion-main1100posições reais. Relatório ESCADAO-R4-CIRCULACAO.md distingue esses estágios da geometria final.
+- Próximo: evidênciafinal, checks/build apósúltimosajustes, push/PR/CI/merge autorizado. FPSexclusivo/AM7 seguem limitações explícitas, sem reduzir tetos.

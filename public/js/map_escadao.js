@@ -562,7 +562,8 @@ export function buildEscadao(scene, T) {
   buildAuxFlight(AUX_F2, RISE);
   addFloor(AUX_W, AUX_P2.z1 - AUX_P2.z0, AUX_X, (AUX_P2.z0 + AUX_P2.z1) / 2, MAT.concrete, RISE * 2 + 0.01);
   addBox(AUX_W, 0.12, AUX_P2.z1 - AUX_P2.z0, MAT.concreteDark, AUX_X, RISE * 2 - 0.12, (AUX_P2.z0 + AUX_P2.z1) / 2);
-  for (const sx of [AUX_X - AUX_W / 2 - 0.15, AUX_X + AUX_W / 2 + 0.15])
+  // À direita há o patamar contínuo do objetivo; guarda somente na borda de queda.
+  for (const sx of [AUX_X - AUX_W / 2 - 0.15])
     addBox(0.28, 1.08, AUX_P2.z1 - AUX_P2.z0, MAT_GUARDA, sx, RISE * 2, (AUX_P2.z0 + AUX_P2.z1) / 2);
   buildAuxFlight(AUX_F3, RISE * 2);
 
@@ -590,11 +591,13 @@ export function buildEscadao(scene, T) {
 
   // Pequenos puxadinhos e caixas d'água criam uma silhueta escalonada ao redor do eixo.
   for (const [x, z, y, w, h, mi] of [
-    [-7.2, 7.5, RISE, 2.5, 2.8, 3], [6.1, 6.2, RISE, 2.8, 3.2, 0],
+    [-7.85, 8.12, RISE, 2.5, 2.8, 3], [6.1, 6.2, RISE, 2.8, 3.2, 0],
     [-7.1, -7.4, H_TOP, 2.6, 3.0, 1], [7.3, -9.1, H_TOP, 2.5, 2.6, 2],
   ]) {
     if (y > 0.05) addBox(w, y, 3.0, MAT.concreteDark, x, 0, z, { collide: false });
     addBox(w, h, 3.0, PAREDES[mi], x, y, z);
+    // O caixilho avança 5,5 cm: o corpo precisa respeitar também essa face.
+    col(x-w/2-(x>0?.075:0),x+w/2+(x<0?.075:0),y,y+h,z-1.5,z+1.5);
     addBox(w + 0.22, 0.1, 3.22, MAT_ZINCO, x, y + h, z, { collide: false, skirt: false });
     addBox(0.05, 0.75, 0.95, MAT_VIDRO, x + (x < 0 ? w / 2 + 0.03 : -w / 2 - 0.03), y + 1.3, z, { collide: false, cast: false, skirt: false });
   }
@@ -616,7 +619,7 @@ export function buildEscadao(scene, T) {
   /* ===================== BARRICADAS ===================== */
   // patamar 1: pneus
   const MAT_PNEU = lam({ color: 0x1a1a1a, roughness: 0.95 });
-  propAt('pilha_pneus', -1.2, (P1.z0 + P1.z1) / 2, 0.9, 1.6, 1.2, MAT_PNEU, 0, RISE);
+  propAt('pilha_pneus', -1.2, P1.z1-.75, 0.9, 1.6, 1.2, MAT_PNEU, 0, RISE);
   // base: portão arrancado
   addBox(2.5, 1.2, 0.8, lam({ color: 0x4a4a3a, roughness: 0.8 }), 1.5, 0, 14.5);
 
@@ -687,6 +690,15 @@ export function buildEscadao(scene, T) {
   // A casa nova fecha a saída sul deste recuo. Sua fundação agora completa o volume
   // entre moradias; não deixa um bolsão térreo sem saída nem um nó de bot isolado.
   addBox(3.3, 3.05, 14.2-CONEX.z1, MAT.concreteDark, 7.15, 0, (14.2+CONEX.z1)/2);
+  // Fecha os vazios térreos sem entrada sob as moradias oeste. A circulação fica
+  // no beco/auxiliar em sua cota real; bots não recebem destinos dentro da fundação.
+  addBox(8,RISE,8.5,MAT.concreteDark,-6,0,-1.2);
+  // O objetivo PATAMAR 2 conserva x/z e ganha piso na mesma cota do lance
+  // auxiliar oeste, com acesso contínuo até a cobertura central.
+  addBox(X0-(AUX_X+AUX_W/2),RISE*2,P2.z1-P2.z0,MAT_CIMENTO,
+    (X0+AUX_X+AUX_W/2)/2,0,(P2.z0+P2.z1)/2);
+  for(const z of [P2.z0+.12,P2.z1-.12])
+    addBox(X0-(AUX_X+AUX_W/2),1.05,.24,MAT_GUARDA,(X0+AUX_X+AUX_W/2)/2,RISE*2,z);
   // GLB com cadeiras ocupa 2,124 m; proxy de 1,2 m deixava o corpo atravessar (EV3).
   for (const [mx, mz] of [[-9, 29], [-7, 30]]) propAt('mesa_guardasol', mx, mz, 2.3, 2.13, 2.13, lam({ color: 0xcca060 }));
   // carros
@@ -875,7 +887,7 @@ export function buildEscadao(scene, T) {
       if (z >= AUX_P2.z0 && z <= AUX_P2.z1) return RISE * 2;
       if (z >= AUX_F2.z0 && z <= AUX_F2.z1) return rampHeight(z, AUX_F2.z1, RISE);
     }
-    if (z >= P2.z0 && z <= P2.z1 && x >= X0 - 0.5 && x <= X1 + 0.5) return RISE * 2;
+    if (z >= P2.z0 && z <= P2.z1 && x >= AUX_X + AUX_W/2 && x <= X1 + 0.5) return RISE * 2;
     if (inBeco(x) && z >= B_STAIR.z0 && z <= B_STAIR.z1) return becoRampHeight(z);
     if (inBeco(x) && z >= CONEX.z0 && z < B_STAIR.z0) return RISE;
     // A conexão vai até a testa da chegada do beco (CONEX.z0), não só até P1.z0: é isso que
@@ -906,7 +918,7 @@ export function buildEscadao(scene, T) {
     for (let gz = -HALF_Z + 2; gz <= HALF_Z - 2; gz += STEP)
       if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz });
 
-  const linha = (x0, z0, x1, z1, passo = 2.4, inf = 0.35) => {
+  const linha = (x0, z0, x1, z1, passo = 2.4, inf = 0.38) => {
     const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / passo));
     for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n; if (!blocked(x, z, inf)) nodes.push({ x, z }); }
   };
@@ -919,6 +931,7 @@ export function buildEscadao(scene, T) {
   linha(AUX_X, AUX_F2.z1, AUX_X, AUX_F2.z0, 0.6);
   linha(AUX_X, AUX_P2.z1, AUX_X, AUX_P2.z0, 0.9);
   linha(AUX_X, AUX_F3.z1, AUX_X, AUX_F3.z0, 0.6);
+  linha(AUX_X,1.5,-5.8,1.5,.6);
   // patamares: cruzeta de um lado ao outro
   linha(-2.5, P1.z1, 2.5, P1.z0, 1.2);
   linha(-2.5, P2.z1, 2.5, P2.z0, 1.2);
@@ -933,7 +946,11 @@ export function buildEscadao(scene, T) {
     linha(mx, P1_MEIO, alvo, P1_MEIO, 1.2);      // entra pelo vão da mureta do patamar 1
   };
   rotaBeco(-12, -6, X0);
-  rotaBeco(12, 6, X1);   // beco leste
+  rotaBeco(12, 8, X1);   // desvio leste contorna a fundação da casa
+  linha(15.75,26,15.75,6.75,.75);
+  linha(15.75,6.75,15.25,4.25,.5);
+  linha(15.25,4.25,15,1,.5);
+  linha(15,1,15,-4,.75);
   // Liga o fundo da rua pelo vão entre as moradias e o carro.
   linha(-8.5, 26, -8.5, 38, 0.8);
   linha(9.2, 24, 9.2, 16, .4);
@@ -952,13 +969,11 @@ export function buildEscadao(scene, T) {
   linha(-16.5, 38, 16.5, 38, 3.0);
 
   const segClear = (a, b) => {
-    const nearHome = (p) => p.x > 1 && p.x < 11 && p.z > 13 && p.z < 24;
-    const home = nearHome(a) || nearHome(b);
-    const steps = home ? Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/.15) : 6;
+    const steps = Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/.15));
     let previous = groundHeightAt(a.x,a.z);
     for (let i=1;i<=steps;i++) {
       const t=i/steps, x=a.x+(b.x-a.x)*t, z=a.z+(b.z-a.z)*t, y=groundHeightAt(x,z);
-      if (blocked(x,z,home?.42:.25) || (home && Math.abs(y-previous)>.3)) return false;
+      if (blocked(x,z,.38) || Math.abs(y-previous)>.3) return false;
       previous=y;
     }
     return true;

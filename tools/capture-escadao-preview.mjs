@@ -7,11 +7,21 @@ import sharp from 'sharp';
 const base = process.env.BASE || 'http://127.0.0.1:8148';
 const out = 'artifacts/escadao-visual/hover-preview';
 const dest = 'public/img/map-previews';
+const hash = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+const served = new Map(), responses = [];
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 960, height: 720 }, deviceScaleFactor: 1 });
   const errors = [];
+  page.on('response', response => {
+    const pathname=new URL(response.url()).pathname;
+    if(/^\/js\/(map_escadao(?:_home|_details)?|graffiti_layout)\.js$/.test(pathname)||/^\/models\/props\/[^/]+\.glb$/.test(pathname))
+      responses.push(response.body().then(body=>served.set(`public${pathname}`,createHash('sha256').update(body).digest('hex'))));
+  });
+  if(process.argv.includes('--mutante=origem-antiga'))await page.route('**/js/map_escadao.js*',async route=>{
+    const response=await route.fetch();await route.fulfill({response,body:(await response.text())+'\n// fonte divergente para prova de procedência\n'});
+  });
   page.on('pageerror', e => errors.push(e.message));
   page.on('response', r => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
   await page.addInitScript(() => localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'high' })));
@@ -23,6 +33,10 @@ try {
     return ESCADAO_PROPS.map(id => ({ id, loaded: hasProp(id) }));
   });
   if (errors.length || props.some(p => !p.loaded)) throw Error(JSON.stringify({ errors, props }));
+  await Promise.all(responses);
+  const captureFiles=['public/js/map_escadao.js','public/js/map_escadao_home.js','public/js/map_escadao_details.js','public/js/graffiti_layout.js',...props.map(p=>`public/models/props/${p.id}.glb`),'public/models/props/escadao_cat_r4.glb'];
+  const verifyServed=()=>{for(const file of captureFiles)if(served.get(file)!==hash(file))throw Error(`Servidor diverge do checkout: ${file}`);};
+  verifyServed();
   await page.evaluate(() => {
     window.previewPose = t => {
       const m = window.MAPEVAL, phase = t < 3 ? t / 3 : (t - 3) / 3;
@@ -57,12 +71,12 @@ try {
   });
   writeFileSync(`${out}/source.webm`, Buffer.from(bytes));
   execFileSync('/opt/homebrew/bin/ffmpeg', ['-y', '-i', `${out}/source.webm`, '-an', '-vf', 'scale=640:480', '-r', '24', '-t', '6', '-c:v', 'libvpx-vp9', '-crf', '34', '-b:v', '0', `${dest}/escadao.webm`], { stdio: 'ignore' });
-  const hash = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+  verifyServed();
   const manifest = { escadao: { poster: `/img/map-previews/escadao.jpg?v=${hash(`${dest}/escadao.jpg`).slice(0, 12)}`,
     video: `/img/map-previews/escadao.webm?v=${hash(`${dest}/escadao.webm`).slice(0, 12)}`, seconds: 6,
     assets: Object.fromEntries([...props.map(p => `public/models/props/${p.id}.glb`), 'public/models/props/escadao_cat_r4.glb'].map(file => [file, hash(file)])),
     source: hash('public/js/map_escadao.js'), home: hash('public/js/map_escadao_home.js'), details: hash('public/js/map_escadao_details.js'), layout: hash('public/js/graffiti_layout.js') } };
   writeFileSync('public/js/map_preview_assets.js', `export const MAP_PREVIEWS = ${JSON.stringify(manifest, null, 2)};\n`);
-  writeFileSync(`${out}/capture.json`, JSON.stringify({ manifest, props, errors, viewport: [960, 720], fov: { stairs: 70, street: 65 }, source: 'mapview: builder e GLBs reais; câmera editorial, sem HUD' }, null, 2));
+  writeFileSync(`${out}/capture.json`, JSON.stringify({ manifest, served: Object.fromEntries(captureFiles.map(file=>[file,served.get(file)])), props, errors, viewport: [960, 720], fov: { stairs: 70, street: 65 }, source: 'mapview: builder e GLBs reais; câmera editorial, sem HUD' }, null, 2));
   console.log(`Preview: ${readFileSync(`${dest}/escadao.jpg`).length} bytes JPG; ${readFileSync(`${dest}/escadao.webm`).length} bytes WebM`);
 } finally { await browser.close(); }

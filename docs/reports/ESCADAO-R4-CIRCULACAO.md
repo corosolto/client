@@ -2,7 +2,7 @@
 
 O relato de 06/09 reabriu a entrega visual: o usuário mostrou pisos vistos por baixo, objetos aparentemente suspensos, passagens pouco claras e o gato cúbico. Pediu escadas mais íngremes, becos jogáveis e acesso à casa frontal com uma janela para atirar. A direção de jogabilidade existente foi preservada.
 
-Trabalho local em `codex/escadao-main`, sobre a integração da main `69555790` (alpha.223). A branch visual anterior continua preservada. O servidor de teste é `http://127.0.0.1:8148/`; a galeria na porta 58555 é histórica, da R3. Não houve push, merge ou deploy.
+Trabalho local em `codex/escadao-main`, com a main `a551204f` (alpha.224), integrada em `5a6da9cf`. A branch visual anterior continua preservada. O servidor de teste é `http://127.0.0.1:8148/`; a galeria na porta 58555 é histórica, da R3. O usuário autorizou push/PR/merge em 06/09; os recibos de integração ficam no ledger.
 
 ## Mudanças
 
@@ -31,7 +31,7 @@ A inspeção do GLB reimportado confirma fechamento dos ciclos e contato dos vé
 
 ## Evidência e regressões
 
-- `r4/runtime-r3`: EV0–EV7 passam; 140 séries finitas, 12 travessias de escada, nenhuma interseção com varal/cabeça nem perda de apoio. Cada lado percorreu 67 destinos e retornou. Não houve visada direta entre spawns ou de áreas elevadas para os spawns.
+- `r4/runtime-delivery`: EV0–EV7 passam; 140 séries finitas, 12 travessias de escada, nenhuma interseção com varal/cabeça nem perda de apoio. Cada lado percorreu 67 destinos e retornou. Não houve visada direta entre spawns ou de áreas elevadas para os spawns.
 - `r4/node-final.log`: 13/13 checks passaram, incluindo contrato, rotas, fachada, grafo, casa, massa estrutural, descida, props, cache/shader, menu, sintaxe e golden de movimento.
 - Grafo: 394/394 nós alcançáveis, oito rotas de spawn até a Deagle. Rotas: oito destinos úteis e 0/943 visadas elevadas para spawn.
 - Casa: 250 posições no motor Node e 249 no navegador, com subida, entrada, aproximação da janela e retorno ao chão. O crítico verificou mais 566 arestas próximas, sem passagem incompatível com o raio físico.
@@ -49,3 +49,17 @@ O instrumento antigo MAP3 continua acusando a fórmula normativa de Blondel com 
 O interior ainda é simples. A qualidade visual do conjunto melhorou, mas isso não converte automaticamente todo o casario procedural em um cenário fotorealista. AM7 e FPS com GPU exclusiva continuam pendentes. Não foi validada partida multiplayer contra servidor remoto nem feita aprovação competitiva do novo ângulo de tiro.
 
 A atualização final de grafite, mídia da seleção, navegador e build é registrada no ledger `ESCADAO-VISUAL-CONTINUATION.md`; recibos finais ficam sob `artifacts/escadao-visual/r4/`.
+
+## Revisão adversarial antes do merge
+
+A revisão detectou 142 arestas aceitas pelo grafo mas incompatíveis com o corpo real, incluindo uma subida de 6,62 m. O filtro agora verifica toda aresta a cada 15 cm com raio de 38 cm e limite de passo de 30 cm. A conexão externa leste ganhou amostras; centros de linha que entravam 3 cm nos props foram corrigidos pelo raio físico.
+
+O puxadinho oeste foi recuado em x e z: o vão lateral passou de 45 cm para 1,10 m e a passagem dianteira deixou de ser bloqueada. Os pneus saíram do vão. Vazios térreos fechados ganharam fundação; o objetivo PATAMAR 2 conserva x/z, com piso contínuo a 5,04 m conectado à escada auxiliar. Guardas nas bordas impedem a queda em um recuo sem saída.
+
+`graph-ctf-final` confirma453/453nós, zero arestas inválidas e destinos físicos dentro das quatro zonas a partir dos oito spawns. O centro do piso novo também é alcançado diretamente. A checagem de guarda caminha180frames no motor real; o mutante sem-guarda-p2 reproduz a queda. As zonas R/P existentes conservam seus centros geométricos próximos das construções; a prova é de chegada a pontos livres dentro do raio, sem mudar esses objetivos.
+
+A régua de grafo passou a integrar o CI explicitamente. O gate visual registra a branch sem recusar main/detachedHEAD. A captura do preview compara hashes dos corpos HTTP de JS e GLB com o checkout antes e depois da gravação; uma origem divergente deve reprovar.
+
+Há três ratos e três baratas usando os GLBs do acervo, com um novo trajeto de cada espécie junto ao acesso da casa. `browser-main` confirma carregamento, movimento, piso e ausência de colisão; também registra1100posições de subida/retorno no loop normal em `motion-main`. Essa gravação precede o ajuste final do grafo/patamar. `comparison-delivery` é a comparação anterior ao último ajuste; não deve ser apresentada como captura da geometria final.
+
+O build sobre main e check:deploy37/37 passaram antes das correções finais da revisão. Os recibos posteriores com sufixo release são a referência do fechamento, conforme o ledger.

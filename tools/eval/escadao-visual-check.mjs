@@ -34,7 +34,6 @@ const losContract = { high: contractNumber('ALTO'), outside: contractNumber('FOR
 if (!Object.values(losContract).every(v => Number.isFinite(v) && v > 0)) throw Error('Contrato LOS não reconhecido');
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
 const provenance = { createdAt: new Date().toISOString(), root, branch: git('branch', '--show-current'), commit: git('rev-parse', 'HEAD'), sources };
-if (!['codex/escadao-visual', 'codex/escadao-main'].includes(provenance.branch)) throw Error(`Branch inesperada: ${provenance.branch}`);
 fs.mkdirSync(out, { recursive: true });
 
 function evaluate(result) {

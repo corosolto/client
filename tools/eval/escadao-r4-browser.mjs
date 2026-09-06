@@ -80,6 +80,8 @@ try {
     {id:'casa-janela',pos:[6.15,2.75,15.5],look:[6.15,4.02,9]},
     {id:'casa-interior',pos:[7,2.75,15.7],look:[2.55,3.5,17.35]},
     {id:'ratos-baratas',pos:[12,0,26],look:[11.3,.1,24.3]},
+    {id:'patamar-2',pos:[-12,5.04,1.1],look:[-7,5.6,1.5]},
+    {id:'beco-oeste-saida',pos:[-6,2.52,8.2],look:[-2.8,4.14,8.52]},
     {id:'gato',cat:true},
   ];
   for(const view of views){
