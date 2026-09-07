@@ -593,3 +593,126 @@ de runtime herdado (`preview-build.yml` ignora drafts). Checkpoint de 06/09
 mutante), excedente SKS 1,6e-5 fechado como interpolante nlerp do Blender, e
 `precisao-assembly-c2.py` adicionado aos scripts próprios. Continua draft;
 nenhum asset promovido, nenhum `ready:true`.
+
+## Finalização de 07/09: entrega final das três armas (gates verdes)
+
+Pipeline próprio completo (`tools/viewmodels/prep/precisao-final-*.py`), sem
+navegador, sem runtime compartilhado, sem materiais de outras famílias. Saídas
+em `A/artifacts/viewmodels/prep/precisao/final/` (GLBs ~24,3 MB cada, locais).
+
+Resultado por arma — todos os gates verdes, `pronto:true` no `gates.json`:
+
+| arma | T timing | M mecanismo | C contato | F enquadramento | A ADS |
+|------|----------|-------------|-----------|-----------------|-------|
+| mosin | ✓ | ✓ (ferrolho 1,17 m nos reloads; 1,05 no shoot) | ✓ | ✓ 3:2/16:9 | ✓ 8,98° |
+| svd   | ✓ | ✓ (pente 0,19–0,20 m) | ✓ | ✓ | ✓ 10,61° |
+| sks   | ✓ | ✓ (ferrolho 1,21 m) | ✓ | ✓ | ✓ 2,48° |
+
+Os 12 mutantes (4 por arma) mordem: T=native pré-C2, M=peça presa ao corpo,
+C=arma +3 cm (agora inclui régua absoluta `k40_r_min > 30 mm`), F=frame alto.
+Baseline doador (`donor-baseline.json`) medido com a MESMA régua nos GLBs C2
+isolados — teto com procedência, não régua de opinião.
+
+### Correções da sessão, com causa raiz
+
+1. **Avaliador de skin**: `inverseBindMatrices` é MAT4 column-major; sem o
+   transpose, TODAS as conclusões anteriores de "rigs deslocados" eram artefato
+   do avaliador (a pistola aprovada estava correta). Corrigido em
+   `skin_prims`/`deform` do alinhamento.
+2. **Gate C refinado para o que o jogador vê**: oclusores = arma + mãos/braços
+   (o depth buffer do jogo oculta com a cena toda; a métrica só-arma ficaria em
+   `visivel_arma_gt3mm` como referência); exclusão de oco: vértice a >25 mm de
+   qualquer metal está em região ocava (guarda-mato, junta coronha/empunhadura)
+   — guarda existe para alojar dedos, não é interpenetração. O doador segue em
+   0 visível sob a régua (monotônica: adicionar oclusores só esconde).
+3. **Pente da SVD — descoberta principal**: no GLB doador, o pente vive
+   estacionado a 60–74 cm da arma em TODOS os clipes (a mão mima a troca sem
+   pente nenhum; por isso o baseline doador tem 0 visíveis trivialmente).
+   Seguir o canal do doador varria nossa peça por um arco desconexo da mão.
+   Solução: **coreografia autoral do osso `Mag`** no builder — assenta no
+   alojamento (reproduz exatamente o repouso, sem pop nas bordas), segue a mão
+   esquerda na puxada e no carrego (offset de empunhadura calibrado por busca
+   de não-penetração; de-penetração por amostra até 3,5 mm de folga), e retorna
+   ao alojamento na inserção. Fases detectadas por clusters de proximidade da
+   palma ao alojamento (raio 6 cm, cluster válido exige chegada). Parâmetros no
+   `build-resumo.json::mag_autoral`.
+4. **Corretiva de braço (SVD tactical)**: polegar direito afundava 10,4 mm no
+   receptor em t≈1,58 s (nossa geometria é maior que a folga do doador ali).
+   Corretiva translacional na cadeia direita (`upperarm_r`), janela 0,6 s,
+   direção = extração medida pelo próprio gate (`c-ofensores-svd.json`).
+   Cuidado de unidades: o espaço local do osso carrega escala ~100 (raiz 0,01
+   compensada) — delta em metros precisava da divisão pela escala do pai.
+5. **Nudge do equip (mosin)**: equip retargeteado do General deixa o punho
+   direito na junção ocava coronha/empunhadura a t≈0,59 s; nudge de 10 mm do
+   nó da arma na janela 0,30–0,72 (zero nas pontas, sem pop no loop p/ idle).
+6. **Sockets**: dois bugs — (a) o local do socket usava `inv(local_body)`
+   (referencial do rig) em vez de `inv(T_align)` (referencial do corpo, seu pai
+   real); (b) a boca assumia extremidade +x do modelo próprio, mas a convenção
+   varia (o comprimento da SVD não está no eixo que os ±x pegavam). Agora o
+   eixo do comprimento sai por PCA e a extremidade é escolhida pela régua do
+   gate A (menor ângulo boca→mira contra −Z). O gate A passou a exigir
+   colinearidade < 30°: antes, um eixo reverso (169° na SVD) passaria e o ADS
+   viraria a arma 180°. `sight_xy_mm` agora é relativo à câmera (93–113 mm à
+   direita, 3–25 mm na vertical — arma de ombro apoiada, esperado).
+
+### Evidência
+
+`gates.json` (todas as métricas por clipe/fase), `donor-baseline.json`,
+`c-ofensores-*.json` (vértices ofensores por quadro), e 69 renders 1440 px com a
+câmera real do runtime (FAMILY_FRAME + fov por aspecto) em `final/evidence/`:
+planos por arma/clip/fase em 3:2 (+16:9 no idle) e `MARCA_*` com esferas de 8 mm
+nos ofensores — vermelho = visível na cena, amarelo = "visível só pela arma".
+Os quadros marcados atuais só têm amarelos (1–41 verts por quadro), e as esferas
+amarelas NÃO aparecem nos renders — prova visual de que a oclusão pelas mãos é
+real, não um truque da régua. Julgamento por visão sobre os renders finais da
+SVD: pente assentado e alinhado no idle; puxado pela mão esquerda com grip
+plausível na tactical 0,35; carregado/inserido na 0,62 e na empty; sem clipping
+reportado em nenhum quadro auditado.
+
+SHA-256 (`A/final/`): mosin `814d4974…3e1c0bc`, svd `dc65b1ff…9e981`,
+sks `d4d4275…429f7`, mutantes `30d17538…`, `6e8a53f7…`, `a8252c21…`,
+gates.json `ad567e68…`, donor-baseline `570ae72a…`.
+
+### Texturas e tamanho
+
+Cada GLB assado embute 12 imagens (19,3 MB); 9 delas (19,2 MB) casam a regex
+`T_(Arm|Cloth|Glove)01_(B|N|ORM)` do `tools/viewmodels/optimize_paid_family.mjs`
+— após o passo do otimizador cada GLB cai para ~5,2 MB com as texturas de braço
+religadas por nome no load. `sharp`/`@gltf-transform` não existem em nenhum
+checkout desta frente (instalar violaria a faixa de escrita), então o otimizador
+não foi executado aqui; os gates acima correram nos GLBs não otimizados. A
+operação é byte-a-byte em texturas (não toca animações/skin), mas o integrador
+deve re-rodar os gates sobre os otimizados por rigor.
+
+### Receita exata para o integrador sequencial
+
+1. Copiar `A/final/{mosin,svd,sks}-baked-runtime.glb` para
+   `public/private-assets/viewmodels/<family>/<weapon>-baked-runtime.glb`
+   com family = `bolt`/`svd`/`marksman` e weapon = `mosin`/`svd`/`sks`.
+2. `tools/viewmodels/optimize_paid_family.mjs --familia=<family> <PRIVATE_ROOT>`
+   por família (deps do repositório integrador).
+3. `public/js/data/vmconfig.js`: `mosin: W('bolt', { baked: true })`,
+   `svd: W('svd', { baked: true })`, `sks: W('marksman', { baked: true })`;
+   `ready: true` por família quando aprovado em revisão; bump de
+   `CATALOG_VERSION`.
+4. Re-rodar `precisao-final-gates.py` apontando para os GLBs otimizados no
+   destino (confere T/M/C/F/A + mutantes fora da caixa de preparação).
+
+### Limitações declaradas
+
+- Pente da SVD é a casca própria de 66 tris; a coreografia é translacional
+  (o pente mantém a orientação do corpo — sem tilt no carrego).
+- `k40_r` idle da SKS = 31 mm (doador bolt = 27,3 mm): pegada de mão forte
+  naturalmente frouxa na família; dentro do teto doador+18 mm.
+- Socket de mira = centróide da fatia superior (topo da luneta), aproximação.
+- Julgamento visual é sobre renders offline com modelo de visão (não in-game);
+  a prova de contato/oclusão é geométrica (gates + marcadores), o render é
+  confirmação.
+- Vértices "amarelos" (dentro por paridade de raio, ocultos pela cena)
+  permanecem: mosin 1–6, svd 1–41, sks 1–3 por quadro — provados invisíveis.
+- Otimizador de texturas não executado aqui (deps ausentes na faixa de
+  escrita); ver receita acima.
+
+Esta frente entrega os assets finais e a receita; **não** altera runtime
+compartilhado nem promove `ready` — os gates próprios das três armas estão
+verdes (`pronto:true`) e o merge/promoção pertence à integradora.
