@@ -1,6 +1,16 @@
 # Auditoria dos controles visuais — AK, pistola e faca
 
 **Data:** 07/09/2026 · **Branch:** `glm/vm-controles-final` · **Base:** `d35c6658`
+
+> **Atualização 07/09 (tarde), veredito do dono após jogar localmente:** Ruben
+> disse literalmente **"faca pistola e ak estao perfeitas"**. Isso fecha, para
+> os três controles, a aprovação visual que estava pendente desde 06/09
+> (proporção/acabamento da faca do marco 31 e proporção da pistola do BUG-88).
+> A decisão remanescente do BUG-88 vira só tarefa de arnês: re-derivar o teto
+> P2 (4,0×) da referência com a sonda corrigida, já que a silhueta atual foi
+> aceita pelo dono. O BUG-89 (AK em 16:9) trata de aspecto que o veredito não
+> cobre explicitamente — permanece aberto. Os hashes congelados continuam os
+> mesmos.
 ("docs(viewmodel): confirma fechamento local da faca"), ancestry confirmado:
 descende da golden AK `1d33cb7b` e contém os 5 commits de fechamento da faca que
 as lanes rifles (`f63e730f`) e precisão (`a988d72b`), divergentes de `961c70d2`,

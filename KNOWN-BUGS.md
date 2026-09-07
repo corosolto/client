@@ -1969,6 +1969,12 @@ geometria, escala e ataques preservados. Recaptura pública v5 concluída:
 Ainda exige aprovação final do dono para proporção/continuidade e extensão às
 demais rotas; BUG-85 não encerrado globalmente por validar só pistola/faca.
 
+**Atualização 07/09 (tarde):** o dono jogou localmente (worktree da auditoria
+dos controles, conteúdo `d35c6658`) e disse "faca pistola e ak estao
+perfeitas" — a aprovação de proporção/acabamento pendente desde 06/09 foi
+dada verbalmente. Encerramento formal do bug (registro na lane da faca e
+extensão às demais armas) permanece com a lane `codex/vm-astra-pistol`.
+
 ### ~~BUG-86 · sonda do gauntlet contava silhueta dependendo do PBR do material~~ · CORRIGIDO 07/09 (branch `glm/vm-controles-final`)
 
 `pinta()` do `vm-gauntlet.mjs` zerava só `map`: normal/ORM/bump ativos deixavam
@@ -2006,6 +2012,11 @@ Com a sonda honesta do BUG-86, o idle da pistola (frame aprovado a 15°,
 acabamento v5) mede 4,047× em 1440×960 — acima do teto 4,0×, calibrado na era
 que subcontava. A mesma régua no molde CC0 `usp` do CS 1.6 mede 1,9×; a AK
 golden, 0,73×. **Régua:** `node tools/eval/vm-gauntlet.mjs --modo=kinemation
+**Atualização 07/09 (tarde):** o dono jogou localmente e disse "faca pistola e
+ak estao perfeitas" — a proporção atual da pistola está ACEITA por ele. Resta
+a tarefa de arnês de re-derivar o teto 4,0× da referência (molde usp, régua
+corrigida do BUG-86) com procedência, sem afrouxar às cegas.
+
 --armas=pistol` (vermelho em P2). Não é regressão geométrica: a silhueta era a
 mesma na aprovação do yaw (a régua é que subcontava). Decisão do dono:
 re-derivar o teto da referência com a régua corrigida, ou reduzir a massa de
