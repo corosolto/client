@@ -9,6 +9,29 @@ Não editar primary nem outras worktrees. Sem merge, release ou publicação.
 Capturas reais locais em 3:2, gates técnicos e aprovação visual humana são entregas
 distintas. O primeiro lote não encerra o objetivo integral.
 
+## Correção de escopo após revisão do dono — 07/09/2026
+
+O dono rejeitou a profundidade visual do primeiro passe: continua básico. Seus gates
+não aprovam a entrega artística. O inventário inicial também confundiu o mapa próprio
+**Campinho do Morro (`campomorro`)** com o campo dentro da Quebrada. Essa conclusão e
+a confirmação do crítico estavam erradas por olhar apenas a base incompleta.
+
+Fontes verificadas no GitHub: [Campinho #437](https://github.com/corosolto/client/pull/437),
+[Parque #440](https://github.com/corosolto/client/pull/440),
+[Penitenciária #441](https://github.com/corosolto/client/pull/441). Fechados em 06/09/2026
+sem merge na limpeza da base intermediária; comentário de encerramento orienta recuperar
+o trabalho em mudanças pequenas contra main. HEADs recuperados somente para leitura:
+`873a6473`, `3d64c868`, `8fd95c80`. JSONs em `artifacts/mapas-polish/pr-recovery/`.
+
+O #437 possui `map_campomorro.js`, terreno próprio, oito becos, casario, arquibancada
+e torcida. O #530 é outra frente: campo interno da Quebrada. O #440 possui coreto,
+vegetação, kit de atrações e horizonte; o #441 possui kit Carandiru, galeria, campo
+pichado, instancing e holofotes. Tudo isso deve ser confrontado antes de novo polish.
+
+Próximo marco: recuperação seletiva desses três candidatos nesta lane, sem importar
+a cadeia histórica inteira nem editar as lanes funcionais. Atualizar registros, assets,
+proveniência e gates; capturar no browser real e aprofundar a partir desses resultados.
+
 ## Inventário e matriz única de prioridade
 
 Snapshot reproduzível: `node tools/eval/mapas-polish-inventory.mjs` escreve
@@ -20,7 +43,7 @@ declaração de preload com placement ou aprovação. O harness não carrega GLB
 |---|---|---|---|---|
 | P0 / A | Parque da Treta / Ubiracy Santos | Parque de diversões procedural: roda, carrossel, castelo, montanha-russa; cores concorrentes e piso esticado. Ainda distante de Madureira. | Canvas próprios; sem props externos declarados. | Piso com escala coerente e entorno de parque urbano; depois pérgolas, esporte e concha acústica. Preservar atrações colidíveis/CTF neste lote. |
 | P0 / A | Penitenciária / Ubiracy Santos | Pátio baixo e isolado, celas e guaritas de caixas, concreto com textura muito esticada; falta massa dos pavilhões. | Canvas e geometria próprios; sem GLB declarado. | Superfícies em metros e silhueta exterior de pavilhões inspirada no Carandiru. Interior/rotas ficam intactos. |
-| P1 / B | Campinho do Morro dentro de `quebrada` / Ruben Marcus | Campo de terra ao fundo da Rua do Baile; não é um mapa separado do catálogo. Referência Tavares Bastos ainda sem equivalência visual demonstrada. | Casas favela, arquibancada, varais/props urbanos; lista e hashes no JSON. | Casario em encosta, telhados e composição do campo. Consumir depois as correções funcionais da lane do Campinho, sem sobrescrevê-las. |
+| P0 / recuperação | Campinho do Morro (`campomorro`) / Ruben Marcus | Mapa independente no PR #437, ausente da base escolhida. Não confundir com campo da Quebrada/#530. | Builder, oito becos, casario Mint, arquibancada, torcida e réguas no HEAD `873a6473`. | Recuperar contrato e integração do mapa próprio; depois aprofundar referência Tavares Bastos. |
 | P1 / B | Mansão do Joá / recuperação em curso | Ausente desta base; construtor, catálogo, água, praia e ambiência recuperados em outra lane. | Mármore streetart, gramado, deck e concreto já existem; GLB/ambiência próprios da lane Joá. | Inventariar/portar seletivamente o candidato quando estabilizado; capturar interior, jardim, mezanino e praia. Não importar branch histórica inteira. |
 | P1 / C | Posto da Treta / Emerson Garrido | Marquise, bombas e pátio procedurais; escala de textura baixa, props sem unidade entre fachadas e rodovia. | Frota BR Mint, quiosque, gás, cooler, barreiras e bairro; todos os preloads presentes no disco. | Marquise/fachada e piso; depois sinalização, frota e horizonte. Não alterar fila/cover/rotas. |
 | P1 / C | Atacadão / Emerson Garrido | Galpão e grandes planos com textura esticada; estacionamento e interior pouco articulados. | Gôndolas, caixas, carrinhos, frota BR e fachadas. | Fachada industrial, módulos de piso e cobertura, materiais por função; props só após orçamento runtime. |
@@ -90,7 +113,7 @@ das fotos. A modelagem entregue no lote A é original em código.
   restante nos quatro enquadramentos finais. Código em `f06668d7`, gerados em `e9dd5734`.
 - Pendente: refinamento de identidade de A, lotes B–E, visita ao Campinho propriamente
   dito, captura de Joá, hardware-alvo, combate humano e aprovação visual humana.
-- Aceito tecnicamente: diagnóstico, ordem dos passes e primeiro passe A. Nenhum visual
+- Primeiro passe A: gates técnicos passaram, mas o dono rejeitou a profundidade visual. Nenhum visual
   novo tem aprovação humana; esta entrega não encerra o catálogo integral.
 - Rejeitado: declarar asset aplicado/aprovado pela existência; alterar gameplay para
   melhorar screenshot; importar trabalho inteiro de outra lane.
@@ -101,7 +124,8 @@ das fotos. A modelagem entregue no lote A é original em código.
 
 ### Revisão independente do inventário
 
-Crítico somente leitura confirmou autoria, vínculo Campinho–Quebrada e ausência do avião
+Crítico somente leitura confirmou autoria e ausência do avião; sua conclusão sobre
+Campinho–Quebrada foi invalidada pela revisão do dono e pelo PR #437. Ausência do avião
 com faixa em callsites. Corrigida descrição da UPA para preservar seu kit hospitalar;
 o gerador agora resolve também caminhos/hashes/origem da ambiência declarada.
 Carregamentos internos fora do registro ainda precisam de auditoria runtime. A assinatura
