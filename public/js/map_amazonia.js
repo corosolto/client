@@ -12,6 +12,7 @@ import { createSkyLife } from './skylife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { detailFor } from './textures.js';
 import { indexLajesRaycast as indexStaticRaycast } from './lajes_raycast_index.js';
+import { fabricasUV, metrosPorUV, planoUV, esferaUV, cilindroUV } from './map_uv.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -250,8 +251,10 @@ export function buildAmazonia(scene, T) {
   const matCasca = lam({ map: texDe(TEX.madeira, 1, 2) || T.dirt, color: 0x8a7258, roughness: 1 });
   const matTroncoBoiando = lam({ map: texDe(TEX.madeira, 2, 1) || T.dirt, color: 0x7c6a50, roughness: 1 });
 
+  /* UV em metros (map_uv.js): densidade de texel pelo tamanho no mundo. */
+  const { box: geoBox, plano: geoPlano } = fabricasUV();
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const m = new THREE.Mesh(geoBox(w, h, d, mat), mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
     if (opts.rz) m.rotation.z = opts.rz;
@@ -269,7 +272,7 @@ export function buildAmazonia(scene, T) {
     /* deitado (rx ≈ 90°): a barriga fica em y e o topo em y+2r — CylinderGeometry
        centraliza no eixo; sem isto o tronco deitado boiava a h/2 do chão. */
     const along = Math.abs(opts.rx || 0) > Math.PI / 4;
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, opts.seg || 8), mat);
+    const m = new THREE.Mesh(cilindroUV(new THREE.CylinderGeometry(r, r, h, opts.seg || 8), r, h, opts.seg || 8, metrosPorUV(mat)), mat);
     m.rotation.order = 'YXZ';
     m.rotation.y = opts.ry || 0;
     m.rotation.x = opts.rx || 0;
@@ -285,7 +288,7 @@ export function buildAmazonia(scene, T) {
     return m;
   }
   function addFloor(w, d, mat, x, z, y, ry = 0) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+    const m = new THREE.Mesh(geoPlano(w, d, mat), mat);
     m.rotation.x = -Math.PI / 2; m.rotation.z = ry;
     m.position.set(x, y, z); m.receiveShadow = true;
     root.add(m);
@@ -302,7 +305,8 @@ export function buildAmazonia(scene, T) {
 
   // A mesma rampa alimenta malha e pés: sem degrau invisível na saída da água.
   for (const side of [-1, 1]) {
-    const geo = new THREE.PlaneGeometry(RIO_MEIA_LARGURA - RIO_CAMPO, PAISAGEM_Z * 2);
+    const geo = planoUV(new THREE.PlaneGeometry(RIO_MEIA_LARGURA - RIO_CAMPO, PAISAGEM_Z * 2),
+      RIO_MEIA_LARGURA - RIO_CAMPO, PAISAGEM_Z * 2, metrosPorUV(matFundo));
     geo.rotateX(-Math.PI / 2);
     geo.translate(side * (RIO_CAMPO + RIO_MEIA_LARGURA) / 2, 0, 0);
     const p = geo.attributes.position;
@@ -356,11 +360,10 @@ export function buildAmazonia(scene, T) {
      andável no groundHeightAt (idioma das pontes) + corrimão `passarela` nas bordas livres. */
   const PB = new PropBatch({ bucket: 16, shadowMin: 0.02 });
   const SB = new StaticBatch({ name: 'madeira-amazonia' });
-  const geoPrancha = new THREE.BoxGeometry(1, 1, 1);
+  /* Prancha com geometria no tamanho real, não cubo unitário escalado pela matriz:
+     escalar a matriz mantinha a UV 0→1 e punha a madeira em 3.696 px/m. */
   const pieceBox = (mat, w, h, d, x, y, z, ry = 0) => {
-    const m = new THREE.Matrix4().makeRotationY(ry).setPosition(x, y, z);
-    m.scale(new THREE.Vector3(w, h, d));
-    SB.add(geoPrancha, m, mat);
+    SB.add(geoBox(w, h, d, mat), new THREE.Matrix4().makeRotationY(ry).setPosition(x, y, z), mat);
   };
   const trilhoCol = (x0, z0, x1, z1) => {
     colliders.push({
@@ -722,7 +725,7 @@ export function buildAmazonia(scene, T) {
     addCyl(0.75 * s, 8.4 * s, matCasca, x, 0, z, { seg: 9 });
     for (let i = 0; i < 5; i++) {
       const a = i * Math.PI * 2 / 5 + x;
-      const copa = new THREE.Mesh(new THREE.SphereGeometry(2.6 * s, 8, 6), matMata);
+      const copa = new THREE.Mesh(esferaUV(new THREE.SphereGeometry(2.6 * s, 8, 6), 2.6 * s, metrosPorUV(matMata)), matMata);
       copa.position.set(x + Math.cos(a) * 2.4 * s, (8.4 + Math.sin(i * 2.1) * 1.2) * s, z + Math.sin(a) * 2.4 * s);
       copa.scale.y = 0.62; copa.castShadow = true; copa.receiveShadow = true;
       root.add(copa); occluders.push(copa);
@@ -738,7 +741,7 @@ export function buildAmazonia(scene, T) {
     ['grama_corrego_01', 0.8], ['grama_corrego_02', 0.7],
   ];
   const moita = (x, z, s) => {
-    const m = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55 * s, 1), matMata);
+    const m = new THREE.Mesh(esferaUV(new THREE.IcosahedronGeometry(0.55 * s, 1), 0.55 * s, metrosPorUV(matMata)), matMata);
     m.position.set(x, 0.3 * s, z); m.scale.y = 0.75; m.castShadow = true; m.receiveShadow = true;
     m.userData.nonSolidSurface = true;
     root.add(m);

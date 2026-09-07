@@ -136,6 +136,39 @@ Zero erro JS. Fica registrado que o **Córrego desenha ~11,06 milhões de triân
 a **Quebrada é o segundo mapa abaixo do vsync** (P95 17,1 ms, 1.774 draw calls) — dívida anterior
 a este lote, não consequência dele.
 
+## Lote H — Amazônia, 07/09/2026
+
+| | antes | depois |
+|---|---:|---:|
+| mediana | 240 | **128** |
+| dispersão p95/mediana | **9,94×** | **1,38×** |
+| dispersão máx | 15,4× | 12,0× |
+
+`TEXEL3` passou. A mediana estava **acima** do alvo (240) e a dispersão era a segunda pior do
+catálogo.
+
+O achado principal: `pieceBox` montava toda a madeira a partir de **um cubo unitário escalado
+pela matriz** (`geoPrancha`), o que mantém a UV 0→1 e punha a `madeira-amazonia` em
+**3.696 px/m**. Passou a construir a geometria no tamanho real. O mesmo tratamento foi para
+`addBox`, `addFloor`, o cilindro genérico, a copa das árvores, a rampa da margem e a moita.
+
+### Duas coisas deixadas como estão, de propósito
+
+- **`TEXEL2` continua em 12,7%** (teto 10%). As superfícies que faltam estão dentro dos lotes
+  `amazonia-estatica`, que são mesclados **depois** da construção, e em `amazonia_cabins.js`,
+  arquivo próprio. Não mexi ali para não abrir outra frente sem medir.
+- **A raiz foi revertida.** Assar a escala na geometria do `geoRaiz` era a mesma correção do
+  `pieceBox` e parecia certa — mas a medição não se moveu **um dígito** (12,7% antes e depois,
+  lista de piores idêntica). Mudança sem efeito medido não entra.
+
+O maior desvio restante é `paredes-cabanas-abertas` a 1.536 px/m, que nasce no módulo das
+cabanas.
+
+Custo: 592,2 calls/quadro, 1.648.361 triângulos, P50/P95 8,3/9,8 ms.
+
+**Quarta ocorrência** do `RangeError` de áudio na captura (depois de Penitenciária, Parque e
+Loja H), sempre com a mesma pilha. O conserto está na #543.
+
 ## Estado do catálogo e próximo passo — 07/09/2026, fim desta sessão
 
 **O catálogo NÃO está pronto.** Quatro dos dezoito mapas passaram por um lote medido;
