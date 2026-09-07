@@ -1,5 +1,39 @@
 # Polish integral do catálogo — continuidade
 
+## Lote E — anisotropia de quatro mapas, 07/09/2026
+
+A `TEXEL4` acusava 106 superfícies horizontais com anisotropia abaixo de 4 em quatro mapas:
+Ferro Velho (79), Piscina (13), Obras (8) e Loja H (6). Sem anisotropia o chão visto em ângulo
+rasteiro vira papa.
+
+**A dica da régua estava desatualizada.** Ela manda consertar `textures.js:5 tex()`, dizendo que
+a fábrica "nunca atribui `anisotropy`" — mas a fábrica **já atribui** (`t.anisotropy = ANISO_TEX`,
+`textures.js:19`). O texto envelheceu depois de um conserto anterior. Seguir a dica ao pé da letra
+não teria mudado nada.
+
+A causa real: esses quatro mapas **têm fábrica de textura própria**, com `new THREE.CanvasTexture()`
+local que nunca configura anisotropia — 30 texturas somadas.
+
+Conserto: `textures.js` passa a exportar `applyAniso(t)`, e os quatro mapas usam essa função em vez
+de repetir o número. Assim o alvo continua vindo de **uma fonte só** e segue respeitando o
+kill-switch `?texel=0` e o `q=low` (que baixa para 4). Copiar `8` para dentro de cada mapa teria
+criado quatro números para envelhecer separados.
+
+| | antes | depois |
+|---|---:|---:|
+| superfícies com anisotropia < 4 | 106 | **0** |
+| cláusulas TEXEL vermelhas no catálogo | 31 | **27** |
+
+Custo medido, todos com zero regressão de draw call: Ferro Velho 522,5 calls/quadro · P95 9,6 ms;
+Piscina 720,6 · 10,0; Loja H 488,9 · 9,5; Obras 1.077 · 9,9. Anisotropia é estado de amostrador,
+não geometria: não acrescenta lote nem triângulo.
+
+Verdes: `mapcontrato`, `spawn`, `ctfround`, `ctfwin`, `shaderbudget`, `mapjson`, `preload`, `cena`.
+
+**Terceira ocorrência do `RangeError` de áudio**, agora na Loja H, com a mesma pilha
+(`_env` ← `_burst` ← `grenadeThrow` ← bot). Já vista em Penitenciária e Parque. Esta branch não
+tem o conserto — ele está na #543, que sai de `main`. Serve de corroboração independente.
+
 ## Estado do catálogo e próximo passo — 07/09/2026, fim desta sessão
 
 **O catálogo NÃO está pronto.** Quatro dos dezoito mapas passaram por um lote medido;

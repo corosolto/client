@@ -255,7 +255,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,154 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,336 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 811 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,964 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
@@ -263,7 +263,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 391 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 493 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 288 |
-| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 240 |
+| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 241 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 259 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 922 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 889 |

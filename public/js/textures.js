@@ -9,6 +9,10 @@ const _texQS = (() => { try { return new URLSearchParams(location.search); } cat
 const TEXEL_ON = _texQS.get('texel') !== '0';
 const ANISO_TEX = !TEXEL_ON ? 1 : (_texQS.get('q') === 'low' ? 4 : 8);
 
+/* Mapa com fábrica de textura própria usa isto em vez de repetir o número:
+   o alvo já respeita o kill-switch `?texel=0` e o `q=low`. */
+export function applyAniso(t) { t.anisotropy = ANISO_TEX; return t; }
+
 function tex(c, repeat = 1, ry = null) {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
