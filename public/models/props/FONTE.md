@@ -101,3 +101,19 @@ Gerados em 06/09/2026 no [projeto Mint do Escadão](https://mint.gg/chat/ph71esg
 - `escadao_eletrica_r4.glb`: 3.470 triângulos, caixa de medição e conduítes; simplificação limitada por erro geométrico.
 
 Pipeline reproduzível em `tools/optimize-escadao-r4.mjs` e `tools/rig-escadao-cat-r4.py`; inspeção do GLB reimportado em `tools/inspect-escadao-cat-r4.py`. Recibos e renders privados em `artifacts/escadao-visual/r4/assets/`.
+
+## Recuperação seletiva dos PRs #440 e #441 (07/09/2026)
+
+Bytes históricos, sem regeneração. Manifesto de origem: `docs/maps/POLISH-RECOVERY-ASSETS.json`.
+
+- `parque_coreto.glb` — "Festive Green Coreto", coreto octogonal de praça com
+- `roda_gigante_roda.glb` — parte ROTATIVA do split (aro duplo + raios +
+- `roda_gigante_base.glb` — parte ESTÁTICA do split (pernas A, pés, plataforma,
+- `carrossel.glb` — "Carousel", carrossel com cavalos e cobertura. 4.419 tris,
+- `barraca_quermesse.glb` — "Quermesse Tent", barraca de quermesse. 4.419
+- `predio_artdeco.glb` — "Art Deco Building", prédio de entorno. 4.297 tris,
+  (substituída pela `torre_vigilancia.glb`) e segue no acervo. A torre
+- `torre_vigilancia.glb` — "Prison Guard Tower", torre de vigilância de
+- `bloco_celas.glb` — "Bloco de celas", pavilhão de 2 pavimentos com galeria
+- `portao_penitenciaria.glb` — "Portão de penitenciária", portão principal
+- `guarita_muro.glb` — "Guarita de muro", cabine envidraçada sobre estrutura

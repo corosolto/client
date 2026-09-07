@@ -239,3 +239,23 @@ visual desses mapas fica pendente até recuperar o pacote local e sua proveniên
 Nenhum desses seis builders foi alterado. Todas as demais respostas HTTP de erro
 registradas foram de áudio. Penitenciária reproduziu no final med o erro de AudioParam
 descrito acima; os outros sete mapas não registraram erro JS nessa rodada.
+
+### Recuperação dos PRs — marco técnico
+
+Correção do inventário em `edaa5e49`. Recuperados os builders #440/#441 e suas réguas
+sem alteração da geometria histórica. Dez GLBs e dois céus recuperados por bytes/blobs
+registrados em `POLISH-RECOVERY-ASSETS.json`; entradas Mint e FONTE preservadas.
+Campinho #437 recuperado como mapa independente, nome Campinho do Morro, registro/alias
+próprios, preview histórico, descrição e callback de torcida no CTF. Os 26 GLBs de props
+e fauna já existiam com bytes idênticos. O código de poeira depende de API de partículas
+mais nova e ficou desativado neste candidato; terreno, rotas e casario foram preservados.
+
+O passe básico A foi substituído pelos candidatos históricos. Seu helper visual e gate
+específico foram removidos: congelavam a geometria simplificada que o dono rejeitou.
+Não atualizar os hashes antigos para fingir preservação: o #441 possui pavilhão central,
+pickups nos flancos e MID em z=14. A recuperação usa as réguas funcionais de cada mapa.
+
+Validação atual: `integration-checks.log` 5/5 (Parque vida/roda, Penitenciária vida/contrato,
+shaderbudget); `contracts.log` 9/9 (Campo contrato/molde, mapas, spawns, CTF rodada/vitória,
+IDs, rotação e previews). Ambos em `artifacts/mapas-polish/pr-recovery/`. A captura real
+dos GLBs ainda está em andamento; aprovação visual continua pendente.

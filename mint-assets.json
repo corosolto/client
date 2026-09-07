@@ -946,6 +946,235 @@
         "bytes": 495836,
         "notes": "Blender: escala em metros, Y-up/frente+Z, rig animal e Walk/Idle locais; albedo JPEG1024. Geometria dos adultos preservada; pintinho simplificado, silhueta comparada em quatro vistas."
       }
+    },
+    "coreto-praca-parque": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/parque_coreto.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75c1dfd2g0hcxytvzkgeqghs8d4qja",
+        "chatUrl": "https://mint.gg/chat/ph74qprnsd4nzq113248a9sd6s8d4zhk",
+        "displayName": "Festive Green Coreto (coreto de praça)",
+        "frente": "map2-parque",
+        "notes": "Coreto octogonal com colunas de ferro e bandeirolas (4.742 tris). Prop herói do rebuild USANTOS do parque_treta. GLB normalizado ~1 m, pivô central; escala no call-site (targetH 4,4 / targetLen 7,2)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props.mjs"
+        ],
+        "finalSha256": "7278c6deb242234459b27c966af1d92afc0fcf425901075d99f237c29e194ae0"
+      }
+    },
+    "roda-gigante-roda-parque": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/roda_gigante_roda.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks74m3x604r82xbtnxt126sqbx8d754g",
+        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
+        "displayName": "Ferris Wheel — parte rotativa (aro+raios+gôndolas)",
+        "frente": "map2-parque",
+        "notes": "Split Blender (2.871 tris) do roda_gigante.glb por componentes conexos: aro duplo, raios e gôndolas. Gira como filha do grupo 'roda-gigante' (rotação procedural do update). Escala no call-site: targetH 24,1, cubo na origem via Box3 (hubFrac 0,537)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props.mjs",
+          "tools/blender-split-roda-gigante.py"
+        ],
+        "finalSha256": "b5ba3713bb23cdbb3b617d691532adf79b2e9b31683413d5d5f6df39a2fa205f"
+      }
+    },
+    "roda-gigante-base-parque": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/roda_gigante_base.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks74m3x604r82xbtnxt126sqbx8d754g",
+        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
+        "displayName": "Ferris Wheel — base estática (pernas A+plataforma)",
+        "frente": "map2-parque",
+        "notes": "Split Blender (1.042 tris) do roda_gigante.glb: pernas em A com pés, plataforma cercada e cabine do operador. Estática, pés em y=0; targetH 19,9 casa o cubo da base com o da parte rotativa (escala comum 25,7 m/un)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props.mjs",
+          "tools/blender-split-roda-gigante.py"
+        ],
+        "finalSha256": "cbe7321c54a64f87a5935ee4718f5c5e9de3ad595b652092dc3053015a947792"
+      }
+    },
+    "carrossel-parque": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/carrossel.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7dba32rp93p94y1582xt4cqx8d7z0t",
+        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
+        "displayName": "Carousel (carrossel de parque)",
+        "frente": "map2-parque",
+        "notes": "Carrossel completo com cavalos e cobertura (4.419 tris). Filho do grupo 'carrossel-giratorio' — gira junto com a rotação procedural; targetH 8,5 no call-site."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props.mjs"
+        ],
+        "finalSha256": "0a96f3a605ef36eefe8aa483c13c610391525144bdf96916da5f6f735843c340"
+      }
+    },
+    "barraca-quermesse-parque": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/barraca_quermesse.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77wmwqmw4ef5dm24h3mbhfas8d6xh0",
+        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
+        "displayName": "Quermesse Tent (barraca de quermesse)",
+        "frente": "map2-parque",
+        "notes": "Barraca de quermesse (4.419 tris) substituindo os 4 quiosques-caixa do parque_treta (PIPOCA/ALGODÃO DOCE/PESCARIA/ARGOLA); placas signTexture e colisores procedurais mantidos. targetH 3,2."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props.mjs"
+        ],
+        "finalSha256": "bef57d0ea1310119356cb9104c0d916fdcf6f7b82b9981f18136e4405bc3f204"
+      }
+    },
+    "predio-artdeco-entorno-parque": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/predio_artdeco.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7a5tm3psp3hb90m50mq548m18d6bpa",
+        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
+        "displayName": "Art Deco Building (prédio de entorno)",
+        "frente": "map2-parque",
+        "notes": "Prédio art-déco (4.297 tris) instanciado 8× fora dos bounds jogáveis do parque_treta, fechando o quarteirão; rotações e alturas variadas (15–19 m), sem colisor."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props.mjs"
+        ],
+        "finalSha256": "54772ff857273da0630f46d9fe7b0f67dfbc3dad71ed123eb1f085e7ca7717cc"
+      }
+    },
+    "torre-vigilancia-penitenciaria": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/torre_vigilancia.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks79j7c9xgqs48qz8r4cf6gf6d8d6398",
+        "chatUrl": "https://mint.gg/chat/ph73cszyryt8jreekq64vj4s1x8d66ef",
+        "displayName": "Prison Guard Tower (torre_vigilancia)",
+        "frente": "map2-penitenciaria",
+        "notes": "Torre de vigilância com pernas de concreto em treliça X, escada, varanda com guarda-corpo e cabine envidraçada (4.535 tris). Substitui o visual das 4 guaritas de canto do muro (USANTOS-R2); a guarita GLB anterior segue no acervo. GLB normalizado ~1 m, pivô central; escala no call-site (targetH 9,6 / targetLen 5,6)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props.mjs"
+        ],
+        "finalSha256": "45943077f7b998cbc3daa5ab5ef6788a0e7483999b2ef161ec126c45128ac31d"
+      }
+    },
+    "bloco-celas-carandiru": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/bloco_celas.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7ad5wz2hcf78xfnwtxb1xfkd8d69pv",
+        "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt",
+        "displayName": "Bloco de celas (kit carandiru_r3b)",
+        "frente": "map2-penitenciaria",
+        "notes": "Pavilhão de celas de 2 pavimentos com galeria e grades (3.988 tris, texturas WebP 1024). Pavilhão central do mapa penitenciária (referência Carandiru, dono 27/08/2026): o jogador circula pela galeria externa gradeada ao redor do bloco. Item do pack carandiru_r3b (packAssetId th7fkxdza9fd93fxc84xrnemy18d6r1v). GLB normalizado ~1 m, pivô central; escala não-uniforme no call-site (9 × 15 m de planta, 6,6 m)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "1560055af1eb9268ad7257843890ab28974d64f94634b54cb0f09d58873b5a4d"
+      }
+    },
+    "portao-penitenciaria-carandiru": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/portao_penitenciaria.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75stmhnwxtapdam0mz8mqmgn8d6013",
+        "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt",
+        "displayName": "Portão de penitenciária (kit carandiru_r3b)",
+        "frente": "map2-penitenciaria",
+        "notes": "Portão principal de penitenciária com pilastras e folha de grade fechada (4.491 tris, texturas WebP 1024). Embutido no muro norte do mapa penitenciária (referência Carandiru) — portão fechado, o colisor sela o vão. Item do pack carandiru_r3b (packAssetId th7fkxdza9fd93fxc84xrnemy18d6r1v). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 5,6 / targetLen 11)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "df2052512e03649fbec7dd85ee12beaabe17ca2d2e422d67bd0a4b7bf078e669"
+      }
+    },
+    "guarita-muro-carandiru": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/guarita_muro.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7a33yhwearthy8y6gmh98f358d7jtv",
+        "chatUrl": "https://mint.gg/chat/ph77vksqsbvk24d8gv6zkytdtn8d7f7t",
+        "displayName": "Guarita de muro (carandiru_r3b, item solto)",
+        "frente": "map2-penitenciaria",
+        "notes": "Guarita de muro de presídio com cabine envidraçada sobre estrutura de concreto (4.827 tris, texturas WebP 1024). Duas instâncias flanqueando o portão norte do mapa penitenciária — a frente não tinha vigia entre as 4 guaritas de canto (torre_vigilancia). Modelo solto da onda carandiru_r3b (chat próprio). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 8,2 / targetLen 5,6, ry=π)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "26a8a5fcac3089a955f204e9e3b265dd1084cbba5ff4317a47f4ea9cacd5006d"
+      }
     }
   }
 }
