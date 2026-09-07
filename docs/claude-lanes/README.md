@@ -1,5 +1,9 @@
 # Lanes Claude do sprint de 72 horas
 
+> **Atualização de 07/09/2026:** use primeiro o pacote
+> [`2026-09-07/README.md`](2026-09-07/README.md). Ele substitui os estados e prompts abaixo
+> para novas retomadas. Este arquivo permanece como histórico da rodada anterior.
+
 Estes prompts são auto-contidos e podem ser entregues diretamente ao Claude Code. Cada lane
 tem worktree e branch exclusivas. Não mova alterações entre lanes sem PR ou cherry-pick
 deliberado.
