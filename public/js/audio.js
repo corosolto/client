@@ -279,10 +279,13 @@ export class Sfx {
     const g = this.ctx.createGain(); g.gain.value = lvl; node.connect(g); g.connect(this.verbSend); }
   setVolume(v) { this.vol = v; if (this.master) this.master.gain.value = v; }
 
+  /* Rampa exponencial não pode mirar em zero (RangeError): volume espacial 0 de
+     fonte distante chegava cru aqui. Piso = o mesmo 0,0001 do `end`. */
   _env(node, t0, a, peak, d, end = 0.0001) {
-    node.gain.setValueAtTime(0.0001, t0);
-    node.gain.exponentialRampToValueAtTime(peak, t0 + a);
-    node.gain.exponentialRampToValueAtTime(end, t0 + a + d);
+    const piso = 0.0001;
+    node.gain.setValueAtTime(piso, t0);
+    node.gain.exponentialRampToValueAtTime(Math.max(piso, peak), t0 + a);
+    node.gain.exponentialRampToValueAtTime(Math.max(piso, end), t0 + a + d);
   }
   _noise(dur) {
     const n = this.ctx.sampleRate * dur, buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate);

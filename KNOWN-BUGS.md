@@ -4942,3 +4942,37 @@ comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 ### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527
 
 Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.
+
+### BUG-142 · Granada de bot longe derruba o quadro: rampa exponencial mirando em zero · CORRIGIDO 07/09/2026
+
+`exponentialRampToValueAtTime` é proibido de mirar em zero — a Web Audio API lança
+`RangeError` para alvo em `(-1.40130e-45, 1.40130e-45)`. `Sfx._env` mandava `peak` cru
+para a rampa, e o volume espacial chega a **0** quando a fonte está longe demais.
+
+Pilha medida no navegador, em partida local, com o capturador desta lane:
+
+```
+RangeError: Failed to execute 'exponentialRampToValueAtTime' on 'AudioParam':
+The float target value provided (0) should not be in the range (…)
+    at Sfx._env (public/js/audio.js:284)
+    at Sfx._burst (public/js/audio.js:299)
+    at Sfx.grenadeThrow (public/js/audio.js:870)
+    at Game._spawnGrenade (public/js/game.js:4098)
+    at Game._updateBot (public/js/game.js:6351)
+    at Game.update (public/js/game.js:7349)
+```
+
+Quem estoura é o **laço de quadro**: um bot jogando granada longe derruba o `update`
+inteiro daquele frame. `grenadeBounce` já se protegia com `if (vol < .06) return false;`;
+`grenadeThrow` não. Consertar só o `grenadeThrow` deixaria de pé os outros três
+chamadores de `_env` que também multiplicam por volume (`audio.js:372`, `:740`, `:307`),
+então o piso foi para o `_env`, por onde todos passam.
+
+**Por que nenhuma régua de áudio pegou:** o `AudioParam` falso das réguas existentes é
+mais permissivo que o navegador — `tools/eval/audio-espacial-check.mjs:105` empilha
+`['exp', v, t]` e nunca reclama de alvo zero. Dublê mais frouxo que a produção não mede a
+produção.
+
+`Régua: eval:audioenvelope` (`tools/eval/audio-envelope-check.mjs`), no `check:fast`.
+Reprovava antes do conserto por ENV2; o mutante `--mutante=env-sem-piso` restaura o `_env`
+antigo e é detectado. Não mede som, mixagem nem o caminho de sample.
