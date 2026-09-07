@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 46.321 linhas em 92 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 46.506 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.427** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.403 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 92 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 93 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -320,9 +320,9 @@ Os mapas registrados, e em que modo cada um abre:
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 815 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 922 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 889 |
-| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 728 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 693 |
 
 **17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 23 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 

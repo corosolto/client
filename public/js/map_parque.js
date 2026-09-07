@@ -5,6 +5,7 @@ import { InstBatch, mergeParts, placeProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
+import { metrosPorUV, chaveUV, caixaUV, planoUV, cilindroUV, coneUV, esferaUV } from './map_uv.js';
 
 /* props GLB do mapa (Mint, FONTE.md): os moldes substituem o procedural no
    browser; no arnês node placeProp devolve null e o procedural cobre (mesma
@@ -147,19 +148,42 @@ export function buildParque(scene, T) {
   const COLORS = [MAT.pink, MAT.blue, MAT.yellow, MAT.purple, MAT.green, MAT.red];
   const animated = { wheel: null, cabins: [], carousel: null, horses: [], clouds: [], birds: [] };
   const geometryCache = new Map();
-  const boxGeometry = (w, h, d) => {
-    const key = `b:${w}:${h}:${d}`;
-    if (!geometryCache.has(key)) geometryCache.set(key, new THREE.BoxGeometry(w, h, d));
+  /* UV em metros (map_uv.js): a densidade de texel deixa de depender do tamanho da
+     malha. Antes o chão media 17,5 px/m em 5.376 m². */
+  const boxGeometry = (w, h, d, material) => {
+    const mpu = metrosPorUV(material), key = `b:${w}:${h}:${d}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) geometryCache.set(key, caixaUV(new THREE.BoxGeometry(w, h, d), w, h, d, mpu));
     return geometryCache.get(key);
   };
-  const cylinderGeometry = (r, h, segments = 16) => {
-    const key = `c:${r}:${h}:${segments}`;
-    if (!geometryCache.has(key)) geometryCache.set(key, new THREE.CylinderGeometry(r, r, h, segments));
+  const planeGeometry = (w, d, material) => {
+    const mpu = metrosPorUV(material), key = `p:${w}:${d}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) geometryCache.set(key, planoUV(new THREE.PlaneGeometry(w, d), w, d, mpu));
+    return geometryCache.get(key);
+  };
+  /* Cilindro com topo e base diferentes: o vão de U usa o maior raio. */
+  const cylGeoT = (rt, rb, h, seg, material) => {
+    const mpu = metrosPorUV(material), key = `ct:${rt}:${rb}:${h}:${seg}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) geometryCache.set(key, cilindroUV(new THREE.CylinderGeometry(rt, rb, h, seg), Math.max(rt, rb), h, seg, mpu));
+    return geometryCache.get(key);
+  };
+  const sphereGeometry = (r, ws, hs, material) => {
+    const mpu = metrosPorUV(material), key = `s:${r}:${ws}:${hs}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) geometryCache.set(key, esferaUV(new THREE.SphereGeometry(r, ws, hs), r, mpu));
+    return geometryCache.get(key);
+  };
+  const coneGeometry = (r, h, segments, material) => {
+    const mpu = metrosPorUV(material), key = `co:${r}:${h}:${segments}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) geometryCache.set(key, coneUV(new THREE.ConeGeometry(r, h, segments), r, h, segments, mpu));
+    return geometryCache.get(key);
+  };
+  const cylinderGeometry = (r, h, segments = 16, material) => {
+    const mpu = metrosPorUV(material), key = `c:${r}:${h}:${segments}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) geometryCache.set(key, cilindroUV(new THREE.CylinderGeometry(r, r, h, segments), r, h, segments, mpu));
     return geometryCache.get(key);
   };
 
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
-    const mesh = new THREE.Mesh(boxGeometry(w, h, d), mat);
+    const mesh = new THREE.Mesh(boxGeometry(w, h, d, mat), mat);
     mesh.position.set(x, y + h / 2, z);
     mesh.castShadow = opts.cast !== false;
     mesh.receiveShadow = opts.receive !== false;
@@ -173,7 +197,7 @@ export function buildParque(scene, T) {
   }
 
   function addFloor(w, d, mat, x, z, y = 0.01) {
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+    const mesh = new THREE.Mesh(planeGeometry(w, d, mat), mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(x, y, z);
     mesh.receiveShadow = true;
@@ -182,7 +206,7 @@ export function buildParque(scene, T) {
   }
 
   function addCylinder(r, h, mat, x, y, z, opts = {}) {
-    const mesh = new THREE.Mesh(cylinderGeometry(r, h, opts.segments || 16), mat);
+    const mesh = new THREE.Mesh(cylinderGeometry(r, h, opts.segments || 16, mat), mat);
     mesh.position.set(x, y + h / 2, z);
     mesh.castShadow = opts.cast !== false;
     mesh.receiveShadow = true;
@@ -216,9 +240,9 @@ export function buildParque(scene, T) {
   function addBird(x, y, z, scale, speed, phase) {
     const bird = new THREE.Group();
     const feather = lam({ color: 0x253247, side: THREE.DoubleSide });
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 6), feather); body.scale.set(1.7, 0.75, 0.7); bird.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), feather); head.position.x = 0.42; bird.add(head);
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.24, 5), MAT.yellow); beak.rotation.z = -Math.PI / 2; beak.position.set(0.62, -0.01, 0); bird.add(beak);
+    const body = new THREE.Mesh(sphereGeometry(0.25, 8, 6, feather), feather); body.scale.set(1.7, 0.75, 0.7); bird.add(body);
+    const head = new THREE.Mesh(sphereGeometry(0.16, 8, 6, feather), feather); head.position.x = 0.42; bird.add(head);
+    const beak = new THREE.Mesh(coneGeometry(0.07, 0.24, 5, MAT.yellow), MAT.yellow); beak.rotation.z = -Math.PI / 2; beak.position.set(0.62, -0.01, 0); bird.add(beak);
     const wings = [];
     const wing = (side) => {
       const pivot = new THREE.Group(); pivot.name = `asa-${side < 0 ? 'esquerda' : 'direita'}`;
@@ -229,7 +253,7 @@ export function buildParque(scene, T) {
     };
     wing(-1); wing(1);
     for (const side of [-1, 1]) {
-      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.42, 4), feather); tail.rotation.z = Math.PI / 2; tail.rotation.x = side * 0.3; tail.position.set(-0.48, 0, side * 0.09); bird.add(tail);
+      const tail = new THREE.Mesh(coneGeometry(0.11, 0.42, 4, feather), feather); tail.rotation.z = Math.PI / 2; tail.rotation.x = side * 0.3; tail.position.set(-0.48, 0, side * 0.09); bird.add(tail);
     }
     bird.name = 'passaro'; bird.position.set(x, y, z); bird.scale.setScalar(scale); root.add(bird);
     animated.birds.push({ bird, wings, speed, phase, startX: x, baseY: y, span: HALF_X * 2 + 40 });
@@ -276,7 +300,7 @@ export function buildParque(scene, T) {
     addBox(0.28, 0.12, HALF_Z * 2 - 8, MAT.stone, sx * 26.15, 0, 0, { collide: false });
   }
   for (const [x, z, w, d, ry] of [[0, -33, 9, 5, 0], [0, 33, 9, 5, 0], [-14, -16.5, 6, 4, 0.3], [14, 16.5, 6, 4, -0.3], [CORETO.x + 4.5, CORETO.z + 4.5, 5, 4, 0.5]]) {
-    const patch = new THREE.Mesh(new THREE.PlaneGeometry(w, d), MAT.dirt);
+    const patch = new THREE.Mesh(planeGeometry(w, d, MAT.dirt), MAT.dirt);
     patch.rotation.x = -Math.PI / 2; patch.rotation.z = ry; patch.position.set(x, 0.045, z);
     patch.receiveShadow = true; root.add(patch);
   }
@@ -319,41 +343,42 @@ export function buildParque(scene, T) {
   const glbCarrossel = placeProp('carrossel', { targetH: 8.5 });
   if (glbCarrossel) moldeCarrossel.add(glbCarrossel);
   carrosselBase.visible = carrosselMastro.visible = !glbCarrossel;
-  const canopy = new THREE.Mesh(new THREE.ConeGeometry(7, 3.2, 16), MAT.pink);
+  const canopy = new THREE.Mesh(coneGeometry(7, 3.2, 16, MAT.pink), MAT.pink);
   canopy.position.set(0, 7.2, 0); canopy.castShadow = true; canopy.visible = !glbCarrossel; carousel.add(canopy);
-  const canopyTop = new THREE.Mesh(new THREE.ConeGeometry(3.5, 1.7, 16), MAT.yellow);
+  const canopyTop = new THREE.Mesh(coneGeometry(3.5, 1.7, 16, MAT.yellow), MAT.yellow);
   canopyTop.position.set(0, 8.7, 0); canopyTop.visible = !glbCarrossel; carousel.add(canopyTop);
   for (let i = 0; i < 8; i++) {
     const a = i * Math.PI / 4, x = Math.cos(a) * 4.25, z = Math.sin(a) * 4.25;
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 5.2, 8), MAT.white); pole.position.set(x, 3.15, z); pole.visible = !glbCarrossel; carousel.add(pole);
+    const pole = new THREE.Mesh(cylGeoT(0.09, 0.09, 5.2, 8, MAT.white), MAT.white); pole.position.set(x, 3.15, z); pole.visible = !glbCarrossel; carousel.add(pole);
     const horse = new THREE.Group(); horse.name = `carrossel-cavalo-${i}`; horse.position.set(x, 2.15, z); horse.rotation.y = -a; horse.visible = !glbCarrossel; carousel.add(horse);
     const horseMat = COLORS[i % COLORS.length];
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.75, 0.48), horseMat); horse.add(body);
-    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.85, 0.38), horseMat); neck.position.set(0.58, 0.5, 0); neck.rotation.z = -0.35; horse.add(neck);
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.42, 0.4), horseMat); head.position.set(0.82, 0.9, 0); horse.add(head);
-    const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.14, 0.58), MAT.dark); saddle.position.set(-0.1, 0.45, 0); horse.add(saddle);
+    const body = new THREE.Mesh(boxGeometry(1.45, 0.75, 0.48, horseMat), horseMat); horse.add(body);
+    const neck = new THREE.Mesh(boxGeometry(0.38, 0.85, 0.38, horseMat), horseMat); neck.position.set(0.58, 0.5, 0); neck.rotation.z = -0.35; horse.add(neck);
+    const head = new THREE.Mesh(boxGeometry(0.58, 0.42, 0.4, horseMat), horseMat); head.position.set(0.82, 0.9, 0); horse.add(head);
+    const saddle = new THREE.Mesh(boxGeometry(0.62, 0.14, 0.58, MAT.dark), MAT.dark); saddle.position.set(-0.1, 0.45, 0); horse.add(saddle);
     for (const lx of [-0.48, 0.42]) for (const lz of [-0.16, 0.16]) {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.72, 0.13), MAT.white); leg.position.set(lx, -0.62, lz); horse.add(leg);
+      const leg = new THREE.Mesh(boxGeometry(0.13, 0.72, 0.13, MAT.white), MAT.white); leg.position.set(lx, -0.62, lz); horse.add(leg);
     }
     animated.horses.push({ horse, phase: i * Math.PI / 2, baseY: 2.15 });
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), COLORS[(i + 2) % COLORS.length]); bulb.position.set(Math.cos(a) * 6.15, 6.15, Math.sin(a) * 6.15); bulb.visible = !glbCarrossel; carousel.add(bulb);
+    const bulb = new THREE.Mesh(sphereGeometry(0.14, 8, 6, COLORS[(i + 2) % COLORS.length]), COLORS[(i + 2) % COLORS.length]); bulb.position.set(Math.cos(a) * 6.15, 6.15, Math.sin(a) * 6.15); bulb.visible = !glbCarrossel; carousel.add(bulb);
   }
 
   // Detalhes leves: luminárias, floreiras e bandeirolas sem alterar as rotas do FPS.
   for (const [x, z] of [[-7, -12], [7, -12], [-7, 12], [7, 12], [-23.5, -20], [23.5, -20], [-23.5, 20], [23.5, 20]]) {
     addCylinder(0.11, 4.2, MAT.dark, x, 0, z, { collide: false, segments: 7 });
-    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.38, 10, 7), MAT.yellow); lamp.position.set(x, 4.25, z); root.add(lamp);
+    const lamp = new THREE.Mesh(sphereGeometry(0.38, 10, 7, MAT.yellow), MAT.yellow); lamp.position.set(x, 4.25, z); root.add(lamp);
   }
   for (const [x, z] of [[-16, -12], [16, -12], [-16, 12], [16, 12]]) {
     addCylinder(1.25, 0.45, MAT.wood, x, 0, z, { collide: false, segments: 12 });
     for (let i = 0; i < 5; i++) {
       const a = i * Math.PI * 0.4;
-      const flower = new THREE.Mesh(new THREE.SphereGeometry(0.2, 7, 5), lam({ color: COLORS[(i + (x > 0 ? 2 : 0)) % COLORS.length].color, map: SURFACE.folha, roughness: 0.85 }));
+      const matFlor = lam({ color: COLORS[(i + (x > 0 ? 2 : 0)) % COLORS.length].color, map: SURFACE.folha, roughness: 0.85 });
+      const flower = new THREE.Mesh(sphereGeometry(0.2, 7, 5, matFlor), matFlor);
       flower.position.set(x + Math.cos(a) * 0.68, 0.62, z + Math.sin(a) * 0.68); root.add(flower);
     }
   }
   for (const sz of [-1, 1]) for (let i = 0; i < 7; i++) {
-    const flag = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.75, 3), COLORS[i % COLORS.length]);
+    const flag = new THREE.Mesh(coneGeometry(0.36, 0.75, 3, COLORS[i % COLORS.length]), COLORS[i % COLORS.length]);
     flag.rotation.z = Math.PI; flag.position.set(-6 + i * 2, 8.15, sz * 35); root.add(flag);
   }
 
@@ -377,14 +402,14 @@ export function buildParque(scene, T) {
     if (glbBase) { glbBase.scale.z *= RODA_Z; moldeBase.add(glbBase); }
     const rimMat = MAT.white, hubMat = MAT.yellow;
     const rim = new THREE.Mesh(new THREE.TorusGeometry(10, 0.32, 8, 48), rimMat); rim.name = 'roda-aro'; rim.position.z = WHEEL_FRAME_Z; rim.visible = !glbRoda; wheel.add(rim);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 1.4, 12), hubMat); hub.name = 'roda-cubo'; hub.rotation.x = Math.PI / 2; hub.visible = !glbRoda; wheel.add(hub);
+    const hub = new THREE.Mesh(cylGeoT(0.8, 0.8, 1.4, 12, hubMat), hubMat); hub.name = 'roda-cubo'; hub.rotation.x = Math.PI / 2; hub.visible = !glbRoda; wheel.add(hub);
     for (let i = 0; i < 10; i++) {
       const a = i * Math.PI / 5, x = Math.cos(a) * 10, y = 12 + Math.sin(a) * 10;
-      const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 10, 6), MAT.white);
+      const spoke = new THREE.Mesh(cylGeoT(0.09, 0.09, 10, 6, MAT.white), MAT.white);
       spoke.position.set(x / 2, (y - 12) / 2, WHEEL_FRAME_Z); spoke.rotation.z = a - Math.PI / 2; spoke.visible = !glbRoda; wheel.add(spoke);
       const hanger = new THREE.Group(); hanger.name = `roda-cadeira-${i}`; hanger.position.set(x, y - 12, 0); hanger.visible = !glbRoda; wheel.add(hanger);
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), MAT.dark); arm.position.y = -0.9; hanger.add(arm);
-      const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.4, 1.5), COLORS[i % COLORS.length]); cabin.name = `roda-cabine-${i}`; cabin.position.y = -2.1; hanger.add(cabin);
+      const arm = new THREE.Mesh(cylGeoT(0.07, 0.07, 1.8, 6, MAT.dark), MAT.dark); arm.position.y = -0.9; hanger.add(arm);
+      const cabin = new THREE.Mesh(boxGeometry(2.0, 1.4, 1.5, COLORS[i % COLORS.length]), COLORS[i % COLORS.length]); cabin.name = `roda-cabine-${i}`; cabin.position.y = -2.1; hanger.add(cabin);
       animated.cabins.push({ hanger, phase: a });
     }
     for (const sx of [-1, 1]) addTube([new THREE.Vector3(WHEEL_X, 0.2, sx * 2.2), new THREE.Vector3(WHEEL_X, WHEEL_Y, 0)], 0.28, MAT.dark, 10).visible = !glbBase;
@@ -397,12 +422,12 @@ export function buildParque(scene, T) {
     addBox(8.8, 4.4, 7.4, MAT.purple, cx, 0, cz);
     for (const dx of [-4.2, 4.2]) for (const dz of [-3.5, 3.5]) {
       addCylinder(1.45, 6.2, (dx + dz > 0) ? MAT.pink : MAT.blue, cx + dx, 0, cz + dz);
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(2.0, 2.6, 10), MAT.yellow); roof.position.set(cx + dx, 7.5, cz + dz); root.add(roof);
+      const roof = new THREE.Mesh(coneGeometry(2.0, 2.6, 10, MAT.yellow), MAT.yellow); roof.position.set(cx + dx, 7.5, cz + dz); root.add(roof);
     }
     addBox(2.4, 3.2, 0.4, MAT.dark, cx, 0, cz - 3.72, { collide: false });
     for (const dx of [-2.2, 0, 2.2]) addBox(0.09, 4.35, 0.06, MAT.purple, cx + dx, 0.02, cz - 3.72, { collide: false, cast: false });
     for (const dx of [-1.6, 1.6]) {
-      const bocal = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.9, 10), MAT.blue);
+      const bocal = new THREE.Mesh(cylGeoT(0.42, 0.5, 0.9, 10, MAT.blue), MAT.blue);
       bocal.rotation.x = Math.PI / 2; bocal.position.set(cx + dx, 0.5, cz - 4.15); bocal.castShadow = true; root.add(bocal);
     }
   }
@@ -440,7 +465,7 @@ export function buildParque(scene, T) {
   }
   for (const [x, z, mat] of [[-18, -10, MAT.pink], [18, 10, MAT.blue], [18, -10, MAT.yellow], [-18, 10, MAT.green]]) {
     addCylinder(0.18, 4.4, MAT.dark, x, 0, z);
-    const balloon = new THREE.Mesh(new THREE.SphereGeometry(1.15, 14, 10), mat); balloon.scale.y = 1.2; balloon.position.set(x, 5.3, z); root.add(balloon);
+    const balloon = new THREE.Mesh(sphereGeometry(1.15, 14, 10, mat), mat); balloon.scale.y = 1.2; balloon.position.set(x, 5.3, z); root.add(balloon);
   }
 
   // Espelhos d'água rasos decoram as bases sem alterar navegação.
@@ -455,26 +480,26 @@ export function buildParque(scene, T) {
     colliders.push({ minX: CORETO.x - 2.9, maxX: CORETO.x + 2.9, minY: 0, maxY: 0.45, minZ: CORETO.z - 2.9, maxZ: CORETO.z + 2.9 });
     const glb = placeProp('parque_coreto', { x: 0, y: 0, z: 0, targetH: 4.4, targetLen: 7.2 });
     if (glb) g.add(glb);
-    const stage = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.65, 0.45, 8), MAT.stone);
+    const stage = new THREE.Mesh(cylGeoT(3.4, 3.65, 0.45, 8, MAT.stone), MAT.stone);
     stage.position.y = 0.225; stage.castShadow = stage.receiveShadow = true; stage.visible = !glb; g.add(stage);
     if (!glb) occluders.push(stage);
-    const rimTiles = new THREE.Mesh(new THREE.CylinderGeometry(3.42, 3.42, 0.08, 8), MAT.plaza);
+    const rimTiles = new THREE.Mesh(cylGeoT(3.42, 3.42, 0.08, 8, MAT.plaza), MAT.plaza);
     rimTiles.position.y = 0.49; rimTiles.receiveShadow = true; rimTiles.visible = !glb; g.add(rimTiles);
     for (let i = 0; i < 8; i++) {
       const a = i * Math.PI / 4 + Math.PI / 8, cx = Math.cos(a) * 2.9, cz = Math.sin(a) * 2.9;
-      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 2.4, 8), MAT.white);
+      const col = new THREE.Mesh(cylGeoT(0.12, 0.14, 2.4, 8, MAT.white), MAT.white);
       col.position.set(cx, 1.65, cz); col.castShadow = true; col.visible = !glb; g.add(col);
       colliders.push({ minX: CORETO.x + cx - 0.16, maxX: CORETO.x + cx + 0.16, minY: 0.45, maxY: 2.85, minZ: CORETO.z + cz - 0.16, maxZ: CORETO.z + cz + 0.16 });
       if (!glb) occluders.push(col);
     }
-    const roof = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 4.5, 1.7, 8), MAT.roof);
+    const roof = new THREE.Mesh(cylGeoT(0.7, 4.5, 1.7, 8, MAT.roof), MAT.roof);
     roof.position.y = 3.75; roof.castShadow = true; roof.visible = !glb; g.add(roof);
-    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), MAT.yellow); finial.position.y = 4.75; finial.visible = !glb; g.add(finial);
+    const finial = new THREE.Mesh(sphereGeometry(0.3, 8, 6, MAT.yellow), MAT.yellow); finial.position.y = 4.75; finial.visible = !glb; g.add(finial);
     for (let i = 0; i < 8; i++) {
       const a0 = i * Math.PI / 4 + Math.PI / 8, a1 = (i + 1) * Math.PI / 4 + Math.PI / 8;
       for (let k = 1; k <= 3; k++) {
         const a = a0 + (a1 - a0) * k / 4;
-        const flag = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.5, 3), COLORS[(i + k) % COLORS.length]);
+        const flag = new THREE.Mesh(coneGeometry(0.22, 0.5, 3, COLORS[(i + k) % COLORS.length]), COLORS[(i + k) % COLORS.length]);
         flag.rotation.z = Math.PI; flag.position.set(Math.cos(a) * 2.9, 2.72 - Math.sin(Math.PI * k / 4) * 0.22, Math.sin(a) * 2.9);
         flag.visible = !glb; g.add(flag);
       }
@@ -516,21 +541,21 @@ export function buildParque(scene, T) {
       dummy.position.set(p.x, 0.045, p.z);
       dummy.rotation.set(0, Math.atan2(t.x, t.z), 0);
       dummy.scale.setScalar(1); dummy.updateMatrix();
-      dormBatch.add(boxGeometry(1.05, 0.07, 0.26), MAT.wood, dummy.matrix);
+      dormBatch.add(boxGeometry(1.05, 0.07, 0.26, MAT.wood), MAT.wood, dummy.matrix);
     }
   }
   dormBatch.build(root);
   {
     const g = new THREE.Group(); g.name = 'parque-estacao'; g.position.set(ESTACAO.x, 0, ESTACAO.z); root.add(g);
-    const platform = new THREE.Mesh(boxGeometry(3.2, 0.4, 2.2), MAT.asphalt);
+    const platform = new THREE.Mesh(boxGeometry(3.2, 0.4, 2.2, MAT.asphalt), MAT.asphalt);
     platform.position.y = 0.2; platform.castShadow = platform.receiveShadow = true; g.add(platform);
     colliders.push({ minX: ESTACAO.x - 1.6, maxX: ESTACAO.x + 1.6, minY: 0, maxY: 0.4, minZ: ESTACAO.z - 1.1, maxZ: ESTACAO.z + 1.1 });
     occluders.push(platform);
     for (const dz of [-0.85, 0.85]) {
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.3, 7), MAT.dark);
+      const post = new THREE.Mesh(cylGeoT(0.07, 0.07, 2.3, 7, MAT.dark), MAT.dark);
       post.position.set(-0.9, 1.55, dz); post.castShadow = true; g.add(post);
     }
-    const roofE = new THREE.Mesh(boxGeometry(2.6, 0.12, 2.6), MAT.roof);
+    const roofE = new THREE.Mesh(boxGeometry(2.6, 0.12, 2.6, MAT.roof), MAT.roof);
     roofE.position.set(-0.9, 2.75, 0); roofE.rotation.z = 0.1; roofE.castShadow = true; g.add(roofE);
     const board = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.9), new THREE.MeshLambertMaterial({ map: signTexture('ESTAÇÃO', 'TRENZINHO DO PARQUE', '#2a6e3f', '#fff7a8') }));
     board.position.set(-1.05, 2.1, 0); board.rotation.y = -Math.PI / 2; g.add(board);
@@ -538,8 +563,8 @@ export function buildParque(scene, T) {
 
   // Lixeiras instanciadas com variação de cor; bancos de praça, três deles quebrados.
   const binGeo = mergeParts([
-    new THREE.CylinderGeometry(0.3, 0.26, 0.82, 10).translate(0, 0.41, 0),
-    new THREE.CylinderGeometry(0.33, 0.33, 0.09, 10).translate(0, 0.87, 0),
+    cilindroUV(new THREE.CylinderGeometry(0.3, 0.26, 0.82, 10), 0.3, 0.82, 10, metrosPorUV(MAT.tin)).translate(0, 0.41, 0),
+    cilindroUV(new THREE.CylinderGeometry(0.33, 0.33, 0.09, 10), 0.33, 0.09, 10, metrosPorUV(MAT.tin)).translate(0, 0.87, 0),
   ]);
   const binBatch = new InstBatch({ name: 'parque-lixeira-lote' });
   const BIN_CORES = [0x2e7d32, 0xf9a825, 0x1565c0];
@@ -563,18 +588,18 @@ export function buildParque(scene, T) {
     const g = new THREE.Group(); g.name = `parque-banco-${bi}`;
     g.position.set(cfg.x, 0, cfg.z); g.rotation.y = cfg.ry; root.add(g);
     for (const lx of [-0.75, 0.75]) {
-      const leg = new THREE.Mesh(boxGeometry(0.12, 0.44, 0.55), MAT.dark); leg.position.set(lx, 0.22, 0); leg.castShadow = true; g.add(leg);
+      const leg = new THREE.Mesh(boxGeometry(0.12, 0.44, 0.55, MAT.dark), MAT.dark); leg.position.set(lx, 0.22, 0); leg.castShadow = true; g.add(leg);
     }
     for (let p = 0; p < 3; p++) {
       if (cfg.quebrado === 'sem-tabua' && p === 1) continue;
-      const plank = new THREE.Mesh(boxGeometry(1.8, 0.06, 0.16), MAT.wood);
+      const plank = new THREE.Mesh(boxGeometry(1.8, 0.06, 0.16, MAT.wood), MAT.wood);
       plank.position.set(0, 0.47, -0.18 + p * 0.18); plank.castShadow = true;
       if (cfg.quebrado === 'torta' && p === 2) { plank.rotation.z = 0.16; plank.position.y = 0.43; }
       g.add(plank);
     }
     for (let p = 0; p < 2; p++) {
       if (cfg.quebrado === 'sem-encosto' && p === 1) continue;
-      const back = new THREE.Mesh(boxGeometry(1.8, 0.15, 0.05), MAT.wood);
+      const back = new THREE.Mesh(boxGeometry(1.8, 0.15, 0.05, MAT.wood), MAT.wood);
       back.position.set(0, 0.78 + p * 0.22, -0.32); back.rotation.x = -0.14; back.castShadow = true; g.add(back);
     }
     colliders.push({ minX: cfg.x - 0.95, maxX: cfg.x + 0.95, minY: 0, maxY: 0.52, minZ: cfg.z - 0.35, maxZ: cfg.z + 0.35 });
@@ -591,23 +616,23 @@ export function buildParque(scene, T) {
     geo.computeVertexNormals();
     return geo;
   };
-  const trunkPain = new THREE.CylinderGeometry(0.16, 0.24, 2.4, 7).translate(0, 1.2, 0);
+  const trunkPain = cilindroUV(new THREE.CylinderGeometry(0.16, 0.24, 2.4, 7), 0.24, 2.4, 7, metrosPorUV(MAT.trunk)).translate(0, 1.2, 0);
   /* Copas acima de 1,70 m: abre só o envelope vertical, sem mexer em raio,
      posição, população ou colisor. Motivo e números em POLISH-CATALOGO-CONTINUIDADE.md. */
-  const canopyPain = jitterGeo(new THREE.SphereGeometry(1.9, 10, 8).scale(1, 0.55, 1).translate(0, 6, 0), 0.34, 7101);
-  const branchPain = new THREE.CylinderGeometry(0.09, 0.16, 3, 7).translate(0, 3.8, 0);
-  const trunkPalm = new THREE.CylinderGeometry(0.11, 0.17, 4.6, 7).translate(0, 2.3, 0);
+  const canopyPain = jitterGeo(esferaUV(new THREE.SphereGeometry(1.9, 10, 8), 1.9, metrosPorUV(MAT.leaf)).scale(1, 0.55, 1).translate(0, 6, 0), 0.34, 7101);
+  const branchPain = cilindroUV(new THREE.CylinderGeometry(0.09, 0.16, 3, 7), 0.16, 3, 7, metrosPorUV(MAT.trunk)).translate(0, 3.8, 0);
+  const trunkPalm = cilindroUV(new THREE.CylinderGeometry(0.11, 0.17, 4.6, 7), 0.17, 4.6, 7, metrosPorUV(MAT.trunk)).translate(0, 2.3, 0);
   const crownPalm = mergeParts((() => {
     const parts = [];
     for (let i = 0; i < 7; i++) {
-      const f = new THREE.BoxGeometry(0.16, 0.05, 2.1).translate(0, 0, 0.85);
+      const f = caixaUV(new THREE.BoxGeometry(0.16, 0.05, 2.1), 0.16, 0.05, 2.1, metrosPorUV(MAT.leaf)).translate(0, 0, 0.85);
       f.rotateX(0.52); f.rotateY(i * Math.PI * 2 / 7); f.translate(0, 4.72, 0);
       parts.push(f);
     }
-    parts.push(new THREE.SphereGeometry(0.22, 7, 5).translate(0, 4.68, 0));
+    parts.push(esferaUV(new THREE.SphereGeometry(0.22, 7, 5), 0.22, metrosPorUV(MAT.leaf)).translate(0, 4.68, 0));
     return parts;
   })());
-  const shrubGeo = jitterGeo(new THREE.SphereGeometry(0.7, 8, 6).scale(1, 0.72, 1).translate(0, 0.42, 0), 0.22, 4402);
+  const shrubGeo = jitterGeo(esferaUV(new THREE.SphereGeometry(0.7, 8, 6), 0.7, metrosPorUV(MAT.hedge)).scale(1, 0.72, 1).translate(0, 0.42, 0), 0.22, 4402);
 
   const CLEAR_RECT = [
     [-6.8, -HALF_Z, 6.8, HALF_Z], [-HALF_X, -5.8, HALF_X, 5.8],
@@ -711,8 +736,90 @@ export function buildParque(scene, T) {
   batArbA.build(root);
   batArbB.build(root);
 
+  /* Entorno de Madureira: pérgola de concreto pintado e alameda de palmeiras
+     imperiais. Fica FORA da cerca viva, sem colisor nem occluder — identidade do
+     lugar sem tocar rota, CTF, spawn ou orçamento de colisão. */
+  {
+    const batPergola = new InstBatch({ name: 'parque-pergola' });
+    const batRipas = new InstBatch({ name: 'parque-pergola-ripas' });
+    const batPalmImpT = new InstBatch({ name: 'parque-palmeira-imperial' });
+    const batPalmImpC = new InstBatch({ name: 'parque-palmeira-imperial-copa' });
+    const colunaGeo = boxGeometry(0.36, 3.6, 0.36, MAT.path);
+    const vigaGeo = boxGeometry(0.3, 0.42, 6.2, MAT.path);
+    const ripaGeo = boxGeometry(2.9, 0.16, 0.22, MAT.path);
+    const troncoImp = cilindroUV(new THREE.CylinderGeometry(0.3, 0.44, 15, 8), 0.44, 15, 8, metrosPorUV(MAT.trunk)).translate(0, 7.5, 0);
+    /* Copa da palmeira imperial: dois anéis de folhas que caem (o de fora cai mais)
+       e a capitel verde no topo do estipe. Origem no encontro com o tronco. */
+    const crownImperial = mergeParts((() => {
+      const partes = [];
+      for (let anel = 0; anel < 2; anel++) {
+        const n = anel ? 9 : 6, queda = anel ? 0.95 : 0.42, comp = anel ? 4.3 : 3.2;
+        for (let i = 0; i < n; i++) {
+          const f = caixaUV(new THREE.BoxGeometry(0.36, 0.07, comp), 0.36, 0.07, comp, metrosPorUV(MAT.leaf));
+          f.translate(0, 0, comp / 2); f.rotateX(queda); f.rotateY(i * Math.PI * 2 / n + anel * 0.35);
+          partes.push(f);
+        }
+      }
+      partes.push(cilindroUV(new THREE.CylinderGeometry(0.27, 0.35, 1.7, 8), 0.35, 1.7, 8, metrosPorUV(MAT.leaf)).translate(0, -0.85, 0));
+      return partes;
+    })());
+    const CORES_RIPA = [0xe2622c, 0xf0a92b, 0xd8452f, 0x2f7fae, 0x3f9c5c];
+    const pergola = new THREE.Object3D();
+    let iRipa = 0;
+    /* Duas orientações: as laterais correm em Z, as de fundo correm em X e caem
+       na linha de visada de quem sai do spawn — pérgola que não se vê não conta. */
+    const vigaXGeo = boxGeometry(6.2, 0.42, 0.3, MAT.path);
+    const ripaXGeo = boxGeometry(0.22, 0.16, 2.9, MAT.path);
+    for (const sx of [-1, 1]) for (let z = -30; z <= 30.01; z += 6.2) {
+      for (const dz of [-2.7, 2.7]) {
+        pergola.position.set(sx * 34.8, 1.8, z + dz); pergola.updateMatrix();
+        batPergola.add(colunaGeo, MAT.path, pergola.matrix);
+      }
+      pergola.position.set(sx * 34.8, 3.81, z); pergola.updateMatrix();
+      batPergola.add(vigaGeo, MAT.path, pergola.matrix);
+      for (let k = -2; k <= 2; k++) {
+        pergola.position.set(sx * 34.8, 4.1, z + k * 1.18); pergola.updateMatrix();
+        batRipas.add(ripaGeo, MAT.path, pergola.matrix, CORES_RIPA[(iRipa++) % CORES_RIPA.length]);
+      }
+    }
+    for (const sz of [-1, 1]) for (let x = -27.9; x <= 27.91; x += 6.2) {
+      for (const dx of [-2.7, 2.7]) {
+        pergola.position.set(x + dx, 1.8, sz * 44); pergola.updateMatrix();
+        batPergola.add(colunaGeo, MAT.path, pergola.matrix);
+      }
+      pergola.position.set(x, 3.81, sz * 44); pergola.updateMatrix();
+      batPergola.add(vigaXGeo, MAT.path, pergola.matrix);
+      for (let k = -2; k <= 2; k++) {
+        pergola.position.set(x + k * 1.18, 4.1, sz * 44); pergola.updateMatrix();
+        batRipas.add(ripaXGeo, MAT.path, pergola.matrix, CORES_RIPA[(iRipa++) % CORES_RIPA.length]);
+      }
+    }
+    /* Copa: crownPalm tem as folhas em y≈4,72 no espaço local; com escala 1,7 o
+       encontro com o topo do tronco (15 m) cai em 15 − 4,72×1,7. */
+    const plantaPalmeira = (x, z) => {
+      pergola.scale.setScalar(1); pergola.rotation.set(0, (x + z) % Math.PI, 0);
+      pergola.position.set(x, 0, z); pergola.updateMatrix();
+      batPalmImpT.add(troncoImp, MAT.trunk, pergola.matrix, 0xb9b3a4);
+      pergola.position.set(x, 15, z); pergola.updateMatrix();
+      batPalmImpC.add(crownImperial, MAT.leaf, pergola.matrix, 0x357a34);
+    };
+    for (const sx of [-1, 1]) for (let z = -36; z <= 36.01; z += 9) plantaPalmeira(sx * 38.5, z);
+    for (const sz of [-1, 1]) for (const x of [-24, -12, 0, 12, 24]) plantaPalmeira(x, sz * 48.5);
+    /* Alameda interna: planta só onde a própria regra do mapa libera — mesma guarda
+       de nó de rota, colisor e trilho que as árvores existentes já respeitam. */
+    let nAlameda = 0;
+    for (const sx of [-1, 1]) for (let z = -28; z <= 28.01; z += 7) {
+      const x = sx * 9.6;
+      if (livreVeg(x, z, 1.2)) { plantaPalmeira(x, z); nAlameda++; }
+    }
+    root.userData.alamedaPalmeiras = nAlameda;
+    pergola.scale.setScalar(1);
+    batPergola.build(root); batRipas.build(root);
+    batPalmImpT.build(root); batPalmImpC.build(root);
+  }
+
   const GM = { black: lam({ color: 0x202735 }), steel: lam({ color: 0xaab4c0 }), wood: MAT.wood, green: lam({ color: 0x315b43 }) };
-  const gbox = (w, h, d, mat, x, y, z) => { const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); mesh.position.set(x, y, z); return mesh; };
+  const gbox = (w, h, d, mat, x, y, z) => { const mesh = new THREE.Mesh(boxGeometry(w, h, d, mat), mat); mesh.position.set(x, y, z); return mesh; };
   function buildGun(kind, x, z, yaw) {
     const g = new THREE.Group();
     const long = ['awp', 'ak', 'm4', 'shotgun', 'mp5'].includes(kind);

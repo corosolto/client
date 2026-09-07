@@ -124,6 +124,71 @@ low. Capturas em `artifacts/mapas-polish/lote-b/pen-depois{,-low}/`.
 - Neblina ainda lava o contraste de distância.
 - Nada disso tem aprovação visual humana.
 
+## Lote C — Parque da Treta: escala de material e alameda de Madureira, 07/09/2026
+
+Segundo mapa. O helper de UV virou módulo compartilhado `public/js/map_uv.js`; a
+Penitenciária passou a importá-lo em vez de manter cópia local.
+
+### A régua
+
+| | antes | depois |
+|---|---:|---:|
+| mediana | 35,4 | **128** |
+| chão | 17 | **128** |
+| p05 | — | **107** |
+| dispersão p95/mediana | 6,68× | **1,00×** |
+| dispersão máx/mediana | 80,4× | **2,1×** |
+| área abaixo do piso | **67%** | **4%** |
+
+`TEXEL1`, `TEXEL2`, `TEXEL3` e `TEXEL3b` reprovavam; todas passaram. Além de caixa e
+plano, o Parque exigiu cone, esfera e cilindro com topo/base diferentes — daí `coneUV`,
+`esferaUV` e `cylGeoT`. Geometria que é transformada ou mesclada (folha da palmeira,
+copas, arbustos, tronco) **não pode sair do cache compartilhado**: nesses pontos a UV é
+aplicada direto na geometria nova.
+
+### Identidade: alameda de palmeiras imperiais e pérgola
+
+A direção do mapa pede alamedas, palmeiras, pérgolas e bairro carioca — e diz, com todas
+as letras, que trocar cor não basta. Entregue nesta rodada:
+
+- **Pérgola de concreto pintado** em duas orientações: as laterais correm em Z, as de
+  fundo correm em X. Colunas, viga e ripas coloridas instanciadas.
+- **Palmeiras imperiais de 15 m**, com copa própria — dois anéis de folhas que caem, o de
+  fora caindo mais, e capitel verde no topo do estipe. Estipe cinza por cor de instância.
+
+**Duas tentativas antes desta foram rejeitadas pela própria captura**, e isso é o registro
+honesto: na primeira, pérgola e palmeiras ficaram só fora da cerca viva e **não apareciam
+em nenhuma das três vistas**; na segunda, mesmo trazidas para z=±44, sumiam atrás das
+atrações a 76 m com a névoa. Identidade que não se vê não conta. Só na terceira, com a
+alameda **dentro** da arena, o conjunto passou a ler.
+
+A alameda interna usa a guarda de vegetação que o mapa já tem, `livreVeg(x, z, 1.2)` —
+a mesma que rejeita nó de rota, colisor e trilho. Das 18 posições candidatas, **4**
+passaram; as outras 14 foram descartadas pela própria regra, não por escolha. As árvores
+existentes do mapa também não têm colisor, então a convenção foi mantida.
+
+### Custo
+
+| | antes | depois |
+|---|---:|---:|
+| calls/quadro (live, med) | 712,2 | 722,2 |
+| vistas fixas, calls | 621 · 610 · 436 | 619 · 608 · 434 |
+| triângulos por vista | +≈4.200 | |
+| low: calls/quadro · triângulos | — | 429 · 544.882 |
+
+Draw calls das vistas fixas ficaram **iguais ou menores** que antes: tudo que foi
+acrescentado é instanciado. Verdes: `parquewheel`, `parquevida`, `parquecanopy`,
+`mapcontrato`, `spawn`, `ctfround`, `ctfwin`, `shaderbudget`, `cena`, e os dois da
+Penitenciária depois da migração para o módulo. Zero erro JS em med e low.
+
+### O que este lote NÃO resolve
+
+- A paleta das atrações continua doce demais: castelo de cones pastel, rosa/roxo/ciano
+  concorrendo. Foi deixado de fora de propósito — trocar cor sem estrutura é o que a
+  direção proíbe, e a estrutura veio primeiro.
+- Praça cívica, concha acústica e equipamentos de lazer de Madureira não foram feitos.
+- Sem aprovação visual humana.
+
 ## Estado de parada — 07/09/2026
 
 Execução encerrada por instrução de limite de créditos; GLM/Claude retomam pelos
