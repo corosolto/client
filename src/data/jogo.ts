@@ -161,6 +161,11 @@ export const MAPAS: Mapa[] = [
       'Luz baixa e quente, sombras longas. Quatro bandeiras, todas alcançáveis dos dois spawns.',
   },
   {
+    id: 'campomorro', nome: 'Campinho do Morro', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Campo de várzea cercado por casas e oito becos do morro.',
+    detalhe: 'Mapa próprio com terreno em encosta, arquibancada e torcida, galpão do baile e rotas entre o casario.',
+  },
+  {
     id: 'quebrada', nome: 'Quebrada (Rua do Baile)', modo: 'CTF · rounds opcional', ctf: true,
     resumo: 'Uma rua reta e comprida de periferia, com a rotunda do baile numa ponta e o campinho de terra na outra.',
     detalhe: 'O mapa mais novo, e o único que é uma RUA: asfalto no eixo, calçada dos dois lados, ' +

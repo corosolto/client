@@ -302,7 +302,7 @@ export class PropBatch {
    cadeira, guarda-sol, laje). Mesma ideia do PropBatch, sem glTF: o mapa registra
    matriz + cor e no fim sai 1 draw call por (geometria, material, bloco). */
 export class InstBatch {
-  constructor(opts = {}) { this.bucket = opts.bucket || 0; this.by = new Map(); }
+  constructor(opts = {}) { this.bucket = opts.bucket || 0; this.by = new Map(); this.name = opts.name || ''; }
   /* geo/mat DEVEM ser sempre as mesmas referencias para o mesmo grupo. */
   add(geo, mat, mtxOrObj, color = null, opts = {}) {
     const m = mtxOrObj.isObject3D ? (mtxOrObj.updateMatrix(), mtxOrObj.matrix.clone()) : mtxOrObj.clone();
@@ -314,6 +314,7 @@ export class InstBatch {
     g.list.push(m); g.cols.push(color);
   }
   build(root) {
+    const out = [];
     for (const g of this.by.values()) {
       const im = new THREE.InstancedMesh(g.geo, g.mat, g.list.length);
       let anyCol = false;
@@ -326,9 +327,11 @@ export class InstBatch {
       im.castShadow = g.cast; im.receiveShadow = true;
       im.frustumCulled = PROP_CULL;
       im.computeBoundingSphere();
-      root.add(im);
+      if (this.name) im.name = this.name;
+      root.add(im); out.push(im);
     }
     this.by.clear();
+    return out;
   }
 }
 

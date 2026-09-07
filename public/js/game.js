@@ -4478,6 +4478,7 @@ export class Game {
 
   _ctfWin(team) {
     this.roundsWon[team] = (this.roundsWon[team] || 0) + 1;
+    this.world.onGoal?.();
     this.state = 'roundEnd'; this.stateUntil = this.time + 4;
     this.player.scoped = false; this.el.scope.classList.remove('on');
     this.radioOpen = null; this._radioUi();

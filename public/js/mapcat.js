@@ -2,6 +2,7 @@
    multiplayer leem daqui. Dados puros, importável do browser e do node. Ver docs/MULTIPLAYER.md. */
 /* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE. OFICIAL é o autor da casa. */
 const MAP_CATS = {
+  campomorro: ['FAVELA'],
   amazonia: ['FAVELA'],
   escadao: ['FAVELA'],
   praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
@@ -15,6 +16,7 @@ const MAP_CATS = {
   obras_prefeitura: ['ARENA', 'COMUNIDADE'],
 };
 const MAP_AUTOR = {
+  campomorro: 'Ruben Marcus',
   amazonia: 'Ruben Marcus',
   praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
   lajes: 'Ruben Marcus',
