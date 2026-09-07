@@ -31,18 +31,33 @@ de `PROMPTS-PARALELOS-VIEWMODELS.md` e é auto-contido. Responda em português.
   plena recarga a arma flutua a ~20% da tela SEM mãos/braços visíveis; a
   régua de visibilidade deve reprová-lo antes e aprová-lo depois.**
 
+## Diretriz do dono (07/09, pós-reprovação)
+
+**Rifles e MGs já têm boa posição de arma; o que falta é as mãos no lugar
+certo.** Consequências práticas: NÃO recalcibrar `FAMILY_FRAME`/`VM_WEAPON`
+nem tocar na câmera; TODA a correção é nos caminhos de mão dos clipes
+(visibilidade em quadro + contato com a superfície da arma), guiada por
+réguas determinísticas (números por frame), nunca por análise de imagem
+não determinística.
+
 ## O que fazer (ordem)
 
-1. **Régua antes do conserto** (LICOES 1): duas réguas novas que REPROVAM o
-   GLB reprovado — (a) visibilidade das mãos/luva ao longo de TODOS os clipes
-   (amostragem por frame no jogo real, via `tools/eval/vm-cs16-frames.mjs`
-   estendido ou equivalente); (b) presença da arma no quadro (fração de
-   conteúdo no quadrante inferior-direito acima de piso em todos os frames de
-   ação). Cada régua com mutante que morde. Reproduzir os números dos
-   screenshots primeiro.
-2. Corrigir o que as réguas + screenshots apontarem: caminhos de mão das
-   recargas rebaseadas saindo do quadro; arma abandonando a tela em plena
-   recarga (frames 05/16); conferir mão de apoio na alça/guarda-mão no idle.
+1. **Régua antes do conserto** (LICOES 1): régua nova que REPROVA o GLB
+   reprovado — **mãos visíveis e em contato ao longo de TODOS os frames de
+   TODOS os clipes**: por frame, (a) massa de luva dentro do quadro acima de
+   piso (calibrar o piso pelos frames bons dos screenshots: 2,5–4,7 mil px
+   vs 87–820 nos ruins); (b) distância mínima luva↔arma em quadro (contato),
+   na linha da `lmg-contact.py` mas amostrada por clipe inteiro. Com mutante
+   que morde (remover os tracks de mão → régua vermelha). Reproduzir os
+   números dos screenshots antes de tocar em qualquer curve.
+2. Corrigir os caminhos de mão: os tracks de braço das recargas rebaseadas
+   levam as mãos para fora do quadro (arma flutuando no `15.47.19`). As
+   ferramentas da casa para isto já existem: `applySupportPose`/
+   `bakeMagazineGrip` do `tools/viewmodels/assemble_paid_family.mjs`
+   (fixam a pose da mão de apoio com janelas de blend durante a recarga) e a
+   metodologia dedo-a-dedo da frente rifles (`rifles-m4-idle-grip.py`,
+   `rifles-m4-actions-*`). Adaptar para cinto/caixa: mão de apoio ancora na
+   arma/caixa em vez de sair do quadro; mão forte nunca larga o punho.
 3. Revalidar com a suíte existente (verify/contato com mutantes, syntax/docs/
    arch, build com node_modules compartilhado por symlink — permitido nesta
    lane) e com captura de jogo real na 8165 (`node tools/eval/serve.mjs 8165`

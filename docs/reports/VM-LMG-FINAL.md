@@ -14,6 +14,17 @@ volta a `paid-aaa-3`, raízes servidas restauradas dos backups
 anteriores. O GLB reprovado fica preservado como
 `A/lmg-candidate/lmg-runtime-rejected.glb` (SHA `0f1df532…6104e9`).
 
+### Esclarecimento do dono (07/09, após a reprovação)
+
+Ruben foi categórico: **rifles e MGs já têm boa posição de arma — o que falta
+é as mãos no lugar certo.** O eixo da correção NÃO é re-enquadramento nem
+escala: `FAMILY_FRAME`/`VM_WEAPON` vigentes estão aprovados e não se mexem.
+O eixo é **caminho, visibilidade e contato das mãos** ao longo das ações
+(idle, recargas, inspeção), medido por réguas determinísticas — não por
+análise de imagem não determinística. O programa já tinha esse tema aberto (a
+saga de dedos/pega da M4 na frente rifles); a LMG reprovada é o mesmo defeito
+em família nova: no `15.47.19` a arma flutua porque as mãos saíram do quadro.
+
 ### Triagem determinística dos screenshots (`lmg-review-measure.py`)
 
 Medição por pixels dos 16 frames de tela cheia (sem depender de visão — o canal
@@ -25,9 +36,11 @@ de análise visual do agente GLM estava instável nesta sessão e a declaração
   2.500–4.700 nos frames 07/08/13/14/18. Consistente com o relato da revisão
   ("mão de apoio ausente"): os caminhos de mão da recarga rebaseada deixam as
   mãos saírem do quadro (ou o enquadramento as oculta) em plena manipulação.
-- **Arma fora do quadro em plena ação**: o quadrante inferior-direito fica
-  quase preto (frac_escuro 0,797 e 0,926) nos frames 05 e 16 — o viewmodel
-  abandona a tela em momentos que não são troca de arma.
+- **Quadrante quase preto nos frames 05 e 16** (frac_escuro 0,797/0,926):
+  com o esclarecimento do dono (posição de arma já boa), tratar como sintoma
+  do mesmo defeito central — mãos ausentes/pose colapsada — e não como pedido
+  de re-enquadramento; confirmar o estado do clipe nesses frames antes de
+  qualquer mudança de câmera (que segue proibida).
 - **Textura presente**: 34–147 mil cores únicas por quadrante — o problema não
   é acabamento chapado (contrário da hipótese inicial da análise de folha).
 - A régua de bbox saturou (sempre 0,499 = quadrante inteiro): inútil para
