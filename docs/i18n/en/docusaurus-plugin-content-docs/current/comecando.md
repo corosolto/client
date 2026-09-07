@@ -52,7 +52,7 @@ this page was aging at the very first commit — see
 | Maps in the registry | 16 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
 | Harness scripts | 335 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Pipeline scripts | 72 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Pipeline scripts | 76 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.0.0-alpha.238` | `public/js/version.js` and `package.json` (match) |
 
