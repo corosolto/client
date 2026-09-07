@@ -57,6 +57,23 @@ provável é o caminho de mão da recarga rebaseada saindo do quadro
 (enquadramento) — a régua nova de visibilidade de mãos (item 1 do handoff)
 deve reproduzir exatamente este frame como caso de teste.
 
+### Retomada Codex (07/09, evidência nova; ainda reprovada)
+
+A captura real do GLB rejeitado no estágio isolado confirmou o defeito de pega:
+em `game-frames/vermelho-rejeitado-32/reload_tactical-f036.png`, a mão que
+deveria apoiar a arma está suspensa acima do receptor, sem contato. O driver
+`lmg-frames-game.mjs` teve corrigidos o caminho raiz e dois typos que impediam
+a coleta dos dois equips; ele agora reproduz equip 1/2, idle, ADS, fire e os
+scrubs de ambas as recargas no jogo real.
+
+Uma tentativa de manter a pose de idle durante a recarga foi descartada após
+captura: ao congelar o root de mão, `pos-fix-2-32/reload_tactical-f036.png`
+perde a mão de apoio. Portanto esse caminho não é candidato e não entrou no
+asset. A métrica atual de projeção ainda retorna bbox/contato inválidos para a
+malha da arma em muitos frames; ela é evidência de instrumentação incompleta,
+não um gate de aceite. `lmg.ready` continua `false`; faltam a régua que morde
+por mão e uma nova correção autorada, seguida de revisão humana do Ruben.
+
 ## O que fica de aproveitável (infraestrutura verificada)
 
 - Pipeline: `lmg-build.py` (Blender; Mint + peças skinned nos bones reais +

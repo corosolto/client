@@ -13,7 +13,7 @@ import process from 'node:process';
 import { execSync, spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const PORTA = arg('porta') || '8166';
 const ASPECTO = arg('aspecto') || '32';
@@ -138,7 +138,7 @@ try {
   const t0 = Date.now();
   for (const t of EQUIP_TEMPOS) {
     const espera = t * 1000 - (Date.now() - t0);
-    if (espera > 0) await page.waitForTimeout(espa);
+    if (espera > 0) await page.waitForTimeout(espera);
     await capturar(page, 'equip1', `t${String(t).replace('.', '')}`);
   }
   await page.waitForTimeout(1200);
@@ -160,7 +160,7 @@ try {
   await page.evaluate((w) => { window.__game._switchWeapon(w); }, ARMA);
   for (const t of EQUIP_TEMPOS) {
     const espera = t * 1000 - (Date.now() - t1);
-    if (espera > 0) await page.waitForTimeout(espa);
+    if (espera > 0) await page.waitForTimeout(espera);
     await capturar(page, 'equip2', `t${String(t).replace('.', '')}`);
   }
   await page.waitForTimeout(800);
