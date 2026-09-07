@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
+import { fabricasUV, metrosPorUV, caixaUVPorNormal } from './map_uv.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
 import { detailFor, applyAniso } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras, caixaGirada } from './map_decals.js';   // pool por NOME + raycast de parede
@@ -561,8 +562,8 @@ export function buildFerroVelho(scene, T) {
     // `solo` é geométrico, não depende do gate de faixas — assim `?vao=skirt` (A/B do
     // agente de captura) ainda emite a saia. SKIRT.add já checa o próprio kill-switch.
     const solo = onGround(y, h) && !opts.rx && !opts.rz;
-    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
-      : new THREE.BoxGeometry(w, h, d);
+    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING, material: mat })
+      : caixaUVPorNormal(new THREE.BoxGeometry(w, h, d), w, h, d, metrosPorUV(mat));
     const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
@@ -571,7 +572,8 @@ export function buildFerroVelho(scene, T) {
     if (opts.collide !== false) { colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 }); occluders.push(m); }
     return m;
   }
-  const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); };
+  const { plano: geoPlano } = fabricasUV();
+  const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(geoPlano(w, d, mat), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); };
   const gprop = (id, x, z, h, ry = 0) => { const o = placeProp(id, { x, z, targetH: h, ry }); if (o) root.add(o); return !!o; };
   /* Variação de painel (crítico gauntlet: "mesmo módulo repetido") + ESTÁGIO DE FERRUGEM.
      Os GLB de carcaça já vêm com map próprio, então não dá pra trocar a textura sem perder
@@ -706,7 +708,8 @@ export function buildFerroVelho(scene, T) {
      1 draw call, 2 triângulos, e o mundo deixa de "acabar". ===== */
   {
     const apron = MAT.dirt.map.clone(); apron.needsUpdate = true; apron.repeat.set(100, 100);
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(360, 360), lam({ map: apron, color: 0xc0ab8c }));
+    const matApron = lam({ map: apron, color: 0xc0ab8c });
+    const m = new THREE.Mesh(geoPlano(360, 360, matApron), matApron);
     m.rotation.x = -Math.PI / 2; m.position.set(0, -0.08, 0); root.add(m);
   }
   // ===== chão de terra + poças de óleo =====

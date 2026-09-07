@@ -38,6 +38,7 @@ export const MAP_SOURCES = {
   ferro_velho: 'public/js/map_ferrovelho.js',
   quebrada: 'public/js/map_quebrada.js',
   corrego: 'public/js/map_corrego.js',
+  campomorro: 'public/js/map_campomorro.js',
 };
 const MAP_DEPENDENCIES = { escadao: ['public/js/map_escadao_home.js', 'public/js/map_escadao_details.js'] };
 export const PASS_FILE = 'public/js/graffiti_pass.js';

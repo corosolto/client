@@ -76,7 +76,7 @@ export function buildQuebrada(scene, T) {
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
     const vao = VAO_BANDS && opts.vao !== false && mat && mat.visible !== false;
     const solo = onGround(y, h) && !opts.ry;
-    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
+    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING, material: mat })
       : new THREE.BoxGeometry(w, h, d);
     const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;

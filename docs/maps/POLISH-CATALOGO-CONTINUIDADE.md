@@ -81,6 +81,61 @@ nos três. UV não cria lote nem triângulo.
 Os dois estão **fora do `check:fast`**, que é exatamente como portão apodrece sem ninguém ver.
 Não foram consertados aqui para não misturar assunto; ficam registrados.
 
+## Lote G — Córrego, Quebrada e Ferro Velho, e o layout de grafite, 07/09/2026
+
+| mapa | mediana | chão | dispersão p95 | dispersão máx | área < 64 px/m |
+|---|---|---|---|---|---|
+| Córrego | 262 → **128** | 132 → **128** | 7,23× → **1,03×** | 29,3× → **5,2×** | 1% → **0%** |
+| Quebrada | 114 → **128** | 120 | 2,22× → **1,00×** | 52,5× → **2,4×** | 3% |
+| Ferro Velho | 71 → **128** | 71 → **128** | 1,45× → **1,00×** | 53,2× → 29,6× | 3% → **2%** |
+
+Catálogo: **22 → 19** cláusulas vermelhas.
+
+Os três já usavam `aoBoxGeo`, então bastou passar `material`. O Ferro Velho precisou de mais:
+com só as caixas escaladas, a dispersão **piorou** (1,45× → 1,80×), porque planos grandes de
+520, 408 e 330 m² continuavam a 8–14 px/m e a tela passou a mostrar dois níveis de detalhe — que
+é exatamente o que a `TEXEL3` chama de bug. Cobrir `addFloor`, o ramo `vao === false` e o
+tapete de 360×360 m fechou a conta.
+
+Sobra a `TEXEL3b` do Ferro Velho (29,6×). O culpado é a **tampa de 3 cm de uma barra de
+0,90 × 0,03 × 0,03 m** — superfície que nenhum jogador resolve. Ficou vermelha de propósito:
+inflar a UV dela só para satisfazer uma cláusula de máximo seria comprar verde.
+
+`map_piscinao_ramos.js` foi revertido: está **fora do registro** de mapas, então a régua não o
+mede e eu não tenho como verificar a mudança.
+
+### O layout de grafite envelheceu por causa desta lane — e o carimbo mente
+
+Mexer nos `map_*.js` invalida `public/js/graffiti_layout.js`, porque a `F2` compara o hash de
+cada fonte. Medido contra `origin/main` puro, **só `escadao` estava vencido antes**; os outros
+cinco (Piscina, Loja H, Ferro Velho, Quebrada, Córrego) venceram por causa dos lotes E, F e G.
+
+**Duas armadilhas encontradas ao consertar:**
+
+1. **O gerador roda contra um servidor que pode não ser o seu.** `gen-graffiti-layout.mjs` usa
+   `BASE || 'http://localhost:8123'`, e nesta máquina o 8123 é a worktree
+   `miticos-integracao-priority`. A primeira regeneração do Córrego saiu do código de **outra
+   lane** e foi descartada. O correto aqui é `BASE=http://127.0.0.1:8192`.
+2. **O carimbo de frescor é atacadão.** `const fp = impressao()` recalcula o hash de **todos**
+   os mapas a cada escrita, mesmo os que não foram regerados. Rodar `npm run grafite corrego`
+   marcou Escadão, Loja H e Piscina como frescos sem recalcular nada — inclusive apagando a
+   dívida real do Escadão. Por isso os **seis** foram regerados de fato, para o carimbo dizer a
+   verdade. *Isto é um defeito da ferramenta e continua de pé: ela consegue deixar o portão
+   verde sem ter feito o trabalho.*
+
+### `M1`: o Campinho estava fora do portão
+
+O `campomorro` aparecia no layout mas **nenhum fonte o declarava** em `MAP_SOURCES`
+(`graffiti-fingerprint.mjs`) — herança da recuperação do #437. Na prática o frescor do grafite
+dele nunca era cobrado. Declarado e regerado: o portão passou a cobrir **8 mapas** e ficou verde.
+
+### Custo
+
+Córrego 809,3 calls/quadro · P95 10,0 ms; Quebrada 1.774,1 · 17,1; Ferro Velho 529,6 · 9,9.
+Zero erro JS. Fica registrado que o **Córrego desenha ~11,06 milhões de triângulos por quadro** e
+a **Quebrada é o segundo mapa abaixo do vsync** (P95 17,1 ms, 1.774 draw calls) — dívida anterior
+a este lote, não consequência dele.
+
 ## Estado do catálogo e próximo passo — 07/09/2026, fim desta sessão
 
 **O catálogo NÃO está pronto.** Quatro dos dezoito mapas passaram por um lote medido;
