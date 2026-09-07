@@ -20,14 +20,72 @@ export function buildPenitenciaria(scene, T) {
   scene.add(root);
   const colliders = [], occluders = [], pickups = [];
   const geometryCache = new Map();
-  const boxGeo = (w, h, d) => {
-    const key = `b:${w}:${h}:${d}`;
-    if (!geometryCache.has(key)) geometryCache.set(key, new THREE.BoxGeometry(w, h, d));
+  /* UV em metros: densidade de texel passa a depender do tamanho no mundo, não do
+     tamanho da malha. Números e motivo em docs/maps/POLISH-CATALOGO-CONTINUIDADE.md. */
+  const TEXEL_ALVO = 128;
+  /* `uvElevacao` marca textura de elevação (o reboco tem a faixa de umidade na base e
+     precisa caber uma vez na altura do muro): nela só o U vira metros. */
+  const metrosPorUV = (material) => {
+    const map = material?.map, largura = map?.image?.width;
+    if (!largura) return null;
+    return { u: (largura * (map.repeat?.x || 1)) / TEXEL_ALVO,
+      v: (map.image.height * (map.repeat?.y || 1)) / TEXEL_ALVO,
+      elevacao: !!material.userData?.uvElevacao };
+  };
+  const chaveUV = (mpu) => mpu ? `${mpu.u.toFixed(4)}:${mpu.v.toFixed(4)}:${mpu.elevacao ? 'e' : 't'}` : '0';
+  function escalaUV(geo, pares, mpu) {
+    const uv = geo.attributes?.uv;
+    if (!mpu || !uv) return geo;
+    for (let f = 0; f < pares.length; f++) {
+      const [su, sv] = pares[f];
+      for (let i = f * 4; i < f * 4 + 4 && i < uv.count; i++) {
+        uv.setXY(i, uv.getX(i) * su / mpu.u, mpu.elevacao ? uv.getY(i) : uv.getY(i) * sv / mpu.v);
+      }
+    }
+    uv.needsUpdate = true; return geo;
+  }
+  const boxGeo = (w, h, d, material) => {
+    const mpu = metrosPorUV(material);
+    const key = `b:${w}:${h}:${d}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      escalaUV(geo, [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]], mpu);
+      geometryCache.set(key, geo);
+    }
     return geometryCache.get(key);
   };
-  const cylGeo = (r, h, segments = 12) => {
-    const key = `c:${r}:${h}:${segments}`;
-    if (!geometryCache.has(key)) geometryCache.set(key, new THREE.CylinderGeometry(r, r, h, segments));
+  const circleGeo = (r, seg, material) => {
+    const mpu = metrosPorUV(material);
+    const key = `ci:${r}:${seg}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) {
+      const geo = new THREE.CircleGeometry(r, seg), uv = geo.attributes.uv, k = mpu ? 2 * r / mpu.u : 0;
+      if (k) { for (let i = 0; i < uv.count; i++) uv.setXY(i, .5 + (uv.getX(i) - .5) * k, .5 + (uv.getY(i) - .5) * k); uv.needsUpdate = true; }
+      geometryCache.set(key, geo);
+    }
+    return geometryCache.get(key);
+  };
+  const planeGeo = (w, h, material) => {
+    const mpu = metrosPorUV(material);
+    const key = `p:${w}:${h}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) geometryCache.set(key, escalaUV(new THREE.PlaneGeometry(w, h), [[w, h]], mpu));
+    return geometryCache.get(key);
+  };
+  const cylGeo = (r, h, segments = 12, material) => {
+    const mpu = metrosPorUV(material);
+    const key = `c:${r}:${h}:${segments}:${chaveUV(mpu)}`;
+    if (!geometryCache.has(key)) {
+      const geo = new THREE.CylinderGeometry(r, r, h, segments), uv = geo.attributes.uv;
+      if (mpu) {
+        // Tronco: U dá a volta na circunferência, V sobe a altura. Tampas: disco em torno do centro.
+        const nTronco = (segments + 1) * 2, kU = (2 * Math.PI * r) / mpu.u, kV = h / mpu.v, kT = 2 * r / mpu.u;
+        for (let i = 0; i < uv.count; i++) {
+          if (i < nTronco) uv.setXY(i, uv.getX(i) * kU, mpu.elevacao ? uv.getY(i) : uv.getY(i) * kV);
+          else uv.setXY(i, .5 + (uv.getX(i) - .5) * kT, .5 + (uv.getY(i) - .5) * kT);
+        }
+        uv.needsUpdate = true;
+      }
+      geometryCache.set(key, geo);
+    }
     return geometryCache.get(key);
   };
 
@@ -195,7 +253,7 @@ export function buildPenitenciaria(scene, T) {
     rubber: new THREE.MeshStandardMaterial({ color: 0x17191a, roughness: .96 }),
     grass: new THREE.MeshStandardMaterial({ color: 0x52643c, roughness: 1 }),
     ammo: new THREE.MeshStandardMaterial({ map: tex.ammo, bumpMap: tex.ammo, bumpScale: .035, color: 0xffffff, roughness: .76, metalness: .18 }),
-    reboco: new THREE.MeshStandardMaterial({ map: tex.reboco, bumpMap: tex.reboco, bumpScale: .06, color: 0xcfc8ba, roughness: .9 }),
+    reboco: Object.assign(new THREE.MeshStandardMaterial({ map: tex.reboco, bumpMap: tex.reboco, bumpScale: .06, color: 0xcfc8ba, roughness: .9 }), { userData: { uvElevacao: true } }),
     galvanizado: new THREE.MeshStandardMaterial({ map: tex.galvanizado, bumpMap: tex.galvanizado, bumpScale: .02, color: 0xb9c0c4, metalness: .68, roughness: .44 }),
     arame: new THREE.MeshStandardMaterial({ map: tex.arame, color: 0x9a7a5c, metalness: .55, roughness: .6 }),
     grade: new THREE.MeshStandardMaterial({ map: tex.grade, color: 0xaab2b6, metalness: .6, roughness: .5 }),
@@ -205,7 +263,7 @@ export function buildPenitenciaria(scene, T) {
     mesa: new THREE.MeshStandardMaterial({ map: tex.mesa, bumpMap: tex.mesa, bumpScale: .015, color: 0xc4c9cc, metalness: .7, roughness: .38 }),
   };
   function addBox(w, h, d, material, x, y, z, opts = {}) {
-    const mesh = new THREE.Mesh(boxGeo(w, h, d), material); mesh.position.set(x, y + h / 2, z);
+    const mesh = new THREE.Mesh(boxGeo(w, h, d, material), material); mesh.position.set(x, y + h / 2, z);
     if (opts.ry) mesh.rotation.y = opts.ry; if (opts.rx) mesh.rotation.x = opts.rx; if (opts.rz) mesh.rotation.z = opts.rz;
     mesh.castShadow = opts.cast !== false; mesh.receiveShadow = true; if (opts.name) mesh.name = opts.name; root.add(mesh);
     if (opts.collide !== false) {
@@ -217,7 +275,7 @@ export function buildPenitenciaria(scene, T) {
     return mesh;
   }
   function addCylinder(r, h, material, x, y, z, opts = {}) {
-    const mesh = new THREE.Mesh(cylGeo(r, h, opts.segments || 12), material); mesh.position.set(x, y + h / 2, z);
+    const mesh = new THREE.Mesh(cylGeo(r, h, opts.segments || 12, material), material); mesh.position.set(x, y + h / 2, z);
     if (opts.rx) mesh.rotation.x = opts.rx; if (opts.rz) mesh.rotation.z = opts.rz; mesh.castShadow = true; mesh.receiveShadow = true; if (opts.name) mesh.name = opts.name; root.add(mesh);
     if (opts.collide) { const collider = { minX: x-r, maxX: x+r, minY: y, maxY: y+h, minZ: z-r, maxZ: z+r, tag: opts.tag }; colliders.push(collider); mesh.userData.collider = collider; }
     return mesh;
@@ -229,7 +287,7 @@ export function buildPenitenciaria(scene, T) {
   function ibox(w, h, d, material, x, y, z, opts = {}) {
     const key = `${w}|${h}|${d}|${material.uuid}|${opts.cast === false ? 0 : 1}`;
     let g = instGroups.get(key);
-    if (!g) { g = { geo: boxGeo(w, h, d), mat: material, list: [], cast: opts.cast !== false, occluder: false }; instGroups.set(key, g); }
+    if (!g) { g = { geo: boxGeo(w, h, d, material), mat: material, list: [], cast: opts.cast !== false, occluder: false }; instGroups.set(key, g); }
     const o = new THREE.Object3D(); o.position.set(x, y + h / 2, z);
     if (opts.ry) o.rotation.y = opts.ry; o.updateMatrix();
     g.list.push(o.matrix.clone());
@@ -260,7 +318,7 @@ export function buildPenitenciaria(scene, T) {
   sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58;
   sun.shadow.camera.far = 180; sun.shadow.bias = -.0004;
 
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 175), MAT.darkConcrete); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
+  const ground = new THREE.Mesh(planeGeo(150, 175, MAT.darkConcrete), MAT.darkConcrete); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
 
   /* Muro de reboco descascado sobre embasamento de concreto: a faixa escura de
      umidade da textura encontra o embasamento físico — a junção reboco↔concreto
@@ -379,7 +437,7 @@ export function buildPenitenciaria(scene, T) {
       ibox(.05, .9, .9, MAT.grade, side * 25.05, 5.65, z + 5, { cast: false });
     }
     const varanda = new THREE.Group(); varanda.name = `penitenciaria-varanda-${ala}`; root.add(varanda);
-    const piso = new THREE.Mesh(boxGeo(2.4, .18, 70.4), MAT.galvanizado);
+    const piso = new THREE.Mesh(boxGeo(2.4, .18, 70.4, MAT.galvanizado), MAT.galvanizado);
     piso.position.set(side * 23.55, 4.54, 0); piso.castShadow = true; piso.receiveShadow = true; varanda.add(piso);
     for (let z = -33; z <= 33; z += 3.3) {
       ibox(.1, .1, 1.6, MAT.galvanizado, side * 24.6, 4.28, z, { ry: 0, cast: false });   // mísula
@@ -387,7 +445,7 @@ export function buildPenitenciaria(scene, T) {
     }
     for (const y of [5.15, 5.68]) ibox(.08, .07, 70.4, MAT.galvanizado, side * 22.5, y, 0);
     const guardaNome = `penitenciaria-varanda-${ala}-guarda-corpo`;
-    const tela = new THREE.Mesh(new THREE.PlaneGeometry(70.4, 1.05), MAT.grade);
+    const tela = new THREE.Mesh(planeGeo(70.4, 1.05, MAT.grade), MAT.grade);
     tela.name = guardaNome; tela.position.set(side * 22.5, 5.15, 0); tela.rotation.y = Math.PI / 2;
     tela.castShadow = false; varanda.add(tela);
     // escada de acesso visual na ponta sul (decorative: sem colisor novo)
@@ -396,7 +454,7 @@ export function buildPenitenciaria(scene, T) {
   }
 
   // Pátio bruto: concreto remendado, manchas de umidade e drenagem, sem marcação esportiva.
-  const yard = new THREE.Mesh(new THREE.PlaneGeometry(35, 43), MAT.yard); yard.name = 'penitenciaria-patio'; yard.rotation.x = -Math.PI/2; yard.position.y = .018; yard.receiveShadow = true; root.add(yard);
+  const yard = new THREE.Mesh(planeGeo(35, 43, MAT.yard), MAT.yard); yard.name = 'penitenciaria-patio'; yard.rotation.x = -Math.PI/2; yard.position.y = .018; yard.receiveShadow = true; root.add(yard);
   for (const [x,z,sx,sz] of [[-11,-14,4,1.8],[9,-12,5,2.4],[-13,10,3,5],[11,14,5,2],[-2,17,7,1.4]]) {
     const stain = new THREE.Mesh(new THREE.CircleGeometry(1,18), new THREE.MeshBasicMaterial({color:0x252c27,transparent:true,opacity:.2,depthWrite:false}));
     stain.scale.set(sx,sz,1); stain.rotation.x=-Math.PI/2; stain.position.set(x,.032,z); root.add(stain);
@@ -406,7 +464,7 @@ export function buildPenitenciaria(scene, T) {
   for (const x of [-14, -7, 0, 7, 14]) ibox(.16, .02, 43, MAT.black, x, .012, 0, { cast: false });
   for (const z of [-14, -7, 0, 7, 14]) ibox(35, .02, .16, MAT.black, 0, .013, z, { cast: false });
   for (const [x, z, r] of [[-6, -9, 2.2], [8, 4, 1.7], [-3, 12, 1.4], [12, -15, 1.2]]) {
-    const poca = new THREE.Mesh(new THREE.CircleGeometry(r, 22), MAT.poca);
+    const poca = new THREE.Mesh(circleGeo(r, 22, MAT.poca), MAT.poca);
     poca.rotation.x = -Math.PI / 2; poca.position.set(x, .026, z); poca.receiveShadow = true; root.add(poca);
   }
 
@@ -439,7 +497,7 @@ export function buildPenitenciaria(scene, T) {
 
   function policeCar(x,z,ry) {
     const group = new THREE.Group(); group.name = 'penitenciaria-carro-policia'; group.position.set(x,0,z); group.rotation.y=ry; root.add(group);
-    const part=(w,h,d,m,px,py,pz)=>{const mesh=new THREE.Mesh(boxGeo(w,h,d),m);mesh.position.set(px,py+h/2,pz);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;};
+    const part=(w,h,d,m,px,py,pz)=>{const mesh=new THREE.Mesh(boxGeo(w,h,d,m),m);mesh.position.set(px,py+h/2,pz);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;};
     part(2.7,.75,5.4,MAT.white,0,.55,0); part(2.55,.12,3.4,MAT.blue,0,1.05,0); part(2.35,1.05,2.65,MAT.white,0,1.12,.05);
     part(2.38,.72,.08,MAT.glass,0,1.35,-1.35); part(2.38,.72,.08,MAT.glass,0,1.35,1.35);
     for(const sx of [-1,1]) for(const sz of [-1.75,1.75]) { const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.28,16),MAT.rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(sx*1.35,.55,sz);group.add(wheel); }
@@ -458,7 +516,7 @@ export function buildPenitenciaria(scene, T) {
 
   function dynamite(index,x,z,ry=0) {
     const group=new THREE.Group();group.name=`penitenciaria-dinamite-${index}`;group.position.set(x,0,z);group.rotation.y=ry;root.add(group);
-    for(let i=0;i<6;i++){const stick=new THREE.Mesh(cylGeo(.11,1.25,8),MAT.red);stick.rotation.z=Math.PI/2;stick.position.set(0,.18+(i%2)*.2,(i-2.5)*.24);group.add(stick);} const band=new THREE.Mesh(boxGeo(.18,.65,1.65),MAT.black);band.position.y=.25;group.add(band);
+    for(let i=0;i<6;i++){const stick=new THREE.Mesh(cylGeo(.11,1.25,8,MAT.red),MAT.red);stick.rotation.z=Math.PI/2;stick.position.set(0,.18+(i%2)*.2,(i-2.5)*.24);group.add(stick);} const band=new THREE.Mesh(boxGeo(.18,.65,1.65),MAT.black);band.position.y=.25;group.add(band);
   }
   dynamite(0,-19,-16,.2); dynamite(1,19,17,-.25); dynamite(2,4,23,1.1);
 
@@ -524,14 +582,19 @@ export function buildPenitenciaria(scene, T) {
     // Referência e limites em POLISH-CATALOGO-CONTINUIDADE.md.
     const janelasPav = [];
     let janelaId = 0;
+    /* Vão fundo: moldura de 0,34 m (peitoril, verga e dois montantes) avança da face
+       4,50 até 4,84 e a grade recua para 4,55 — 0,25 m de mocheta que sombreia. */
+    const fundoVao = new THREE.MeshStandardMaterial({ color: 0x1d2224, roughness: 1 });
     for (const yy of [1.9, 4.6]) for (const zz of [-5, -1.7, 1.7, 5]) for (const sx of [-1, 1]) {
       const id = janelaId++;
-      janelasPav.push(addBox(.1, 1.3, 1.7, MAT.grade, sx * 4.56, yy, zz,
+      ibox(.04, 1.34, 1.78, fundoVao, sx * 4.52, yy - .02, zz, { cast: false });
+      janelasPav.push(addBox(.05, 1.3, 1.7, MAT.grade, sx * 4.575, yy, zz,
         { name: `penitenciaria-pavilhao-janela-${id}`, collide: false, cast: false }));
-      addBox(.28, .14, 1.92, MAT.concrete, sx * 4.61, yy - .14, zz,
+      addBox(.34, .16, 1.98, MAT.concrete, sx * 4.67, yy - .16, zz,
         { name: `penitenciaria-pavilhao-peitoril-${id}`, collide: false });
-      addBox(.24, .14, 1.92, MAT.concrete, sx * 4.59, yy + 1.3, zz,
+      addBox(.34, .16, 1.98, MAT.concrete, sx * 4.67, yy + 1.3, zz,
         { name: `penitenciaria-pavilhao-verga-${id}`, collide: false });
+      for (const sz of [-1, 1]) ibox(.34, 1.3, .16, MAT.concrete, sx * 4.67, yy, zz + sz * .91);
     }
     if (glbPav) {
       /* molde normalizado (~1 m) esticado ao volume do pavilhão: 9 × 15 m de planta,
@@ -609,7 +672,7 @@ export function buildPenitenciaria(scene, T) {
   }
 
   const GM={dark:MAT.black,steel:MAT.steel,wood:MAT.rust};
-  function gun(kind,x,z,yaw){const g=new THREE.Group();g.name=`arma-central-${kind}`;g.position.set(x,.1,z);g.rotation.y=yaw;root.add(g);const long=['awp','ak','m4','shotgun','mp5'].includes(kind);const body=new THREE.Mesh(boxGeo(.13,.13,long?1:.42),kind==='shotgun'?GM.wood:GM.dark);body.position.y=.1;g.add(body);if(long){const barrel=new THREE.Mesh(boxGeo(.08,.08,.55),GM.steel);barrel.position.set(0,.13,-.62);g.add(barrel);}const grip=new THREE.Mesh(boxGeo(.11,.25,.14),GM.wood);grip.position.set(0,-.02,long?.25:.12);g.add(grip);pickups.push({x,z,kind,weapon:kind,readyAt:0,mesh:g});}
+  function gun(kind,x,z,yaw){const g=new THREE.Group();g.name=`arma-central-${kind}`;g.position.set(x,.1,z);g.rotation.y=yaw;root.add(g);const long=['awp','ak','m4','shotgun','mp5'].includes(kind);const matBody=kind==='shotgun'?GM.wood:GM.dark;const body=new THREE.Mesh(boxGeo(.13,.13,long?1:.42,matBody),matBody);body.position.y=.1;g.add(body);if(long){const barrel=new THREE.Mesh(boxGeo(.08,.08,.55,GM.steel),GM.steel);barrel.position.set(0,.13,-.62);g.add(barrel);}const grip=new THREE.Mesh(boxGeo(.11,.25,.14,GM.wood),GM.wood);grip.position.set(0,-.02,long?.25:.12);g.add(grip);pickups.push({x,z,kind,weapon:kind,readyAt:0,mesh:g});}
   /* `kind` é ID de arma (chave de WEAPONS), não CLASSE: o 8º era 'smg' e crashava
      o `_updatePickups` todo quadro. KNOWN-BUGS BUG-70 / #366. As 8 do miolo flanqueiam
      a galeria do pavilhão (Carandiru r3) — continuam |x|≤12, |z|≤12 (PEN4). */
