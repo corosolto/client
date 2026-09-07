@@ -3530,12 +3530,20 @@ rig não reproduzir o material metálico, retrato de Mítico sai de mídia aprov
 render offline. Medição e folha comparativa em
 `docs/reports/MITICOS-LOBISOMEM-INTEGRATION.md`.
 
-### BUG-147 · Lobisomem não tem perfil físico de áudio
+### BUG-147 · Lobisomem não tem perfil físico de áudio · FONTE CORRIGIDA 07/09/2026, manifest pendente
 
-`CHARACTER_IDS` em `tools/audio/fab-game-local.mjs` lista 44 ids e não inclui `lobisomem`,
-então `characterPhysical.byCharacter` não cobre o personagem e `eval:audiofablocal` reprova
-em `LAB8e` com 44/45. O conserto é entrar o id na lista (perfil `creature`) e regerar o
-manifest com o pacote de áudio presente — fora do escopo da lane de retratos.
+`CHARACTER_IDS` em `tools/audio/fab-game-local.mjs` listava 44 ids e não incluía
+`lobisomem`, então `characterPhysical.byCharacter` não cobria o personagem e
+`eval:audiofablocal` reprovava em `LAB8e` com 44/45.
+
+**Fonte corrigida:** o id entrou na lista (45) e em `CREATURE_CHARACTERS`, ao lado de
+`gotinha`/`dollynho`/`et`/`canarinho`/`proerd` — `physicalByCharacter` é derivado só
+dessas duas listas, sem depender de nenhum byte de áudio.
+
+**Continua vermelho neste worktree, por um motivo só:** `LAB8e` lê o `manifest.json`
+GERADO, e regerá-lo exige o pacote Fab, que não está baixado aqui — é a mesma causa do
+`audio:check` (`manifest.json DEFASADO em relação ao disco`). Onde o pacote existir,
+`npm run audio` fecha em 45/45 sem mais nenhuma edição.
 
 
 ### BUG-148 · malha atravessa o chão na morte e no agachado, e nada media isso
