@@ -26,7 +26,10 @@ de `PROMPTS-PARALELOS-VIEWMODELS.md` e é auto-contido. Responda em português.
   reutilizável): **luva/braço some nos frames 09–12/15–17** (87–820 px vs
   2.500–4.700 nos bons) e **arma fora do quadro nos frames 05 e 16**
   (quadrante quase preto). Textura confirmada presente (34–147 mil cores).
-  Confirmar cada sinal contra os frames antes de corrigir.
+  Confirmar cada sinal contra os frames antes de corrigir. **Caso de teste
+  primário (apontado pelo Ruben): frame `15.47.19` (frame 10 da cópia) — em
+  plena recarga a arma flutua a ~20% da tela SEM mãos/braços visíveis; a
+  régua de visibilidade deve reprová-lo antes e aprová-lo depois.**
 
 ## O que fazer (ordem)
 
