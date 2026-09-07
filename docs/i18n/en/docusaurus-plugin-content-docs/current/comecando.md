@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 46,261 lines in 92 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 46,258 lines in 92 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,427** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,403 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -237,9 +237,9 @@ The maps registered today, and which mode each one opens in:
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 288 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 240 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 817 |
+| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 815 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 889 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 666 |
+| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 665 |
 
 **17 registered maps** - 2 open in rounds and 15 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 23 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
