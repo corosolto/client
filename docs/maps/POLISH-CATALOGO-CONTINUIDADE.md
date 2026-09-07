@@ -1,5 +1,80 @@
 # Polish integral do catálogo — continuidade
 
+## Estado do catálogo e próximo passo — 07/09/2026, fim desta sessão
+
+**O catálogo NÃO está pronto.** Quatro dos dezoito mapas passaram por um lote medido;
+os outros catorze continuam como estavam. O que mudou de verdade nesta sessão foi ter
+uma régua confiável e quatro mapas dentro dela.
+
+TEXEL do catálogo inteiro: **47 cláusulas vermelhas → 31**.
+
+| mapa | mediana | chão | p05 | disp95 | <piso | estado |
+|---|---:|---:|---:|---:|---:|---|
+| penitenciaria | 128 | 128 | 70 | 1,00× | 0% | **lote feito** |
+| posto_treta | 128 | 128 | 128 | 1,00× | 0% | **lote feito** |
+| parque_treta | 128 | 128 | 107 | 1,00× | 4% | **lote feito** |
+| atacadao_treta | 128 | 128 | 128 | 1,00× | 2% | **lote feito** |
+| upa_24h | 15 | 17 | 4,4 | 1,12× | 99% | planta pintada — exige decisão de arte |
+| piscina_treta | 84 | 89 | 53 | 1,74× | 41% | a fazer |
+| escadao | 91 | 91 | 21 | 5,39× | 27% | a fazer |
+| ferro_velho | 71 | 71 | 71 | 1,45× | 3% | 79 superfícies com anisotropia < 4 |
+| praca_poderes | 66 | 66 | 58 | 1,49× | 6% | outra lane ativa |
+| quebrada | 114 | 120 | 66 | 2,22× | 3% | 9,1% sem medida — decals ausentes |
+| loja_h | 119 | 88 | 18 | 5,25× | 9% | a fazer |
+| campomorro | 131 | 131 | 50 | 1,35× | 10% | a fazer |
+| obras_prefeitura | 139 | 139 | 42 | 1,00× | 11% | textura presa na borda |
+| velho_oeste | 169 | 169 | 169 | 1,01× | 0% | dispersão máx 85,8× |
+| corrego | 262 | 132 | 83 | 7,23× | 1% | a fazer |
+| amazonia | 240 | 240 | 38 | 9,94× | 13% | a fazer |
+| lajes | 362 | 183 | 183 | 1,83× | 0% | acima do alvo |
+
+Faltam ainda, sem nenhuma linha escrita: **Joá (#533)**, e a recuperação de **#457/#458/#459**
+de Emerson citada no handoff anterior.
+
+### Ordem sugerida para quem continuar
+
+1. **Escadão, Piscina e Loja H** — dispersão alta e muita área abaixo do piso; o conserto de UV
+   em metros se aplica direto, com o mesmo `map_uv.js`. É o melhor retorno por hora.
+2. **Anisotropia** (`ferro_velho` 79, `piscina` 13, `loja_h` 6, `obras` 8). A régua aponta a
+   causa única: `textures.js:5 tex()` nunca atribui `anisotropy`. É **uma linha em arquivo
+   compartilhado** que resolve quatro mapas — vale PR próprio, sequencial, fora de lane de mapa.
+3. **UPA e Obras** — não são conserto mecânico. Exigem decisão de arte (resolução da planta ou
+   camada de detalhe ladrilhada por cima). Não repetir a tentativa de escalar UV: a `TEXEL6`
+   reprova, e com razão.
+4. **Identidade**, que é o pedido do dono e onde há menos feito: só o Parque recebeu passe de
+   identidade (alameda de palmeiras e pérgola). Penitenciária ganhou vão fundo, mas **a silhueta
+   continua baixa** e a pele do pavilhão é GLB, fora do alcance da UV.
+
+### Armadilhas medidas nesta sessão, para não repetir
+
+- **Frametime não discrimina nada nesta máquina**: 8,30 ms é o vsync de 120 Hz. Orçamento é
+  draw call e triângulo por quadro. Só o Posto cai abaixo do vsync (P95 ≈ 17 ms).
+- **Medir uma vez não basta**: uma leitura de P95 10,3 no Posto parecia regressão de 65% e era
+  ponto fora da curva — repetindo, antes e depois dão 16,5–17,1.
+- **Identidade que não se vê não conta**: pérgola e palmeiras fora da cerca viva não apareciam
+  em nenhuma das três vistas.
+- **Não escalar UV de textura presa na borda** (`TEXEL6`), e **não escalar textura de elevação**
+  no eixo V (a faixa de umidade do reboco tem de cair uma vez na altura do muro).
+- **Geometria transformada ou mesclada não pode sair do cache compartilhado**: `.translate()`
+  numa geometria em cache corrompe todos os usos dela.
+- **`eval:cena` reescreve `tools/eval/cena_probe.json` do catálogo inteiro.** Não deixar isso
+  entrar num PR de mapa.
+- **Dublê mais frouxo que a produção não mede a produção**: o `AudioParam` falso das réguas de
+  áudio aceitava alvo zero, e por isso sete réguas não viram o `RangeError` que derrubava o
+  quadro.
+
+### PRs desta sessão
+
+| PR | conteúdo | base |
+|---|---|---|
+| #540 | recuperação dos PRs fechados + conserto da contagem de draw calls | `main` |
+| #541 | Penitenciária: UV em metros e vão fundo | #540 |
+| #542 | Parque: UV em metros e alameda de Madureira | #541 |
+| #545 | Posto e Atacadão + regra de wrap; UPA e Obras revertidos | #542 |
+| #543 | áudio: piso na rampa exponencial + régua `eval:audioenvelope` | `main` |
+
+Nenhum deles tem aprovação visual humana, e nenhum foi mergeado.
+
 ## Retomada — captura corrigida dos três recuperados, 07/09/2026
 
 Checkpoint anterior preservado na tag `checkpoint/mapas-polish-506b82c7`. A captura
@@ -188,6 +263,70 @@ Penitenciária depois da migração para o módulo. Zero erro JS em med e low.
   direção proíbe, e a estrutura veio primeiro.
 - Praça cívica, concha acústica e equipamentos de lazer de Madureira não foram feitos.
 - Sem aprovação visual humana.
+
+## Lote D — Posto e Atacadão: escala de material, autoria preservada, 07/09/2026
+
+Os quatro mapas de Emerson foram tentados juntos porque o conserto é o mesmo e **não toca
+geometria, posição nem colisor** — só a UV. Dois entraram; **dois foram revertidos pela
+medição**, e é isso que esta seção registra.
+
+| mapa | mediana antes → depois | chão | área < 64 px/m |
+|---|---|---|---|
+| Posto da Treta | 32,3 → **128** | 32 → **128** | **98,2% → 0%** |
+| Atacadão da Treta | 42,4 → **128** | 47 → **128** | **91,1% → 2%** |
+| UPA 24h | revertido | — | — |
+| Obras da Prefeitura | revertido | — | — |
+
+Posto e Atacadão ficaram **sem nenhuma cláusula vermelha** no TEXEL.
+
+### A régua pegou o meu próprio conserto
+
+Ao aplicar UV em metros nos quatro, a `TEXEL6` acendeu em UPA (23 superfícies) e Obras (12):
+
+> *UV além de uma volta sobre textura marcada ClampToEdge pelo autor do mapa. Fora da volta
+> o WebGL repete a última coluna de texels — mural e placa viram borrão esticado.*
+
+Ela existe exatamente porque **subir densidade de texel premia esse estado ruim**. `map_uv.js`
+passou a devolver `null` quando `wrapS` ou `wrapT` não é `RepeatWrapping`: textura presa na
+borda não é ladrilho e não pode ser escalada. Com a regra certa, `TEXEL6` zerou.
+
+### Por que UPA e Obras não se resolvem por UV
+
+Com a regra correta, os dois voltaram ao número original — e a leitura do código explica:
+
+- **UPA:** `floorTex()` é um canvas de 1024×1229 que pinta **a planta inteira do hospital em
+  coordenadas de mundo** (`px = (wx + HALF_X)/(HALF_X*2) * W`). Não é ladrilho: é uma planta
+  baixa esticada sobre 4.320 m², daí os 17 px/m. `wallTex()` é uma tira de 8×256 com o perfil
+  vertical da parede — faixa lilás na altura do peito, rodapé de madeira. Os dois são textura
+  de elevação/planta, não de repetição.
+- **Obras:** mesma família de textura presa na borda.
+
+Portanto os 15,2 px/m da UPA **não são um defeito que a UV conserta**: são propriedade da
+direção de arte. Subir aquilo exige outro caminho — resolução maior da planta ou uma camada
+de detalhe ladrilhada por cima — e isso é lote próprio, com decisão de arte, não conserto
+mecânico. Reverter foi mais honesto que deixar código morto no mapa de outro autor.
+
+### Custo, com repetição
+
+O primeiro par de medidas sugeria regressão no Posto (P95 10,3 → 17,0 ms). **Repetir desfez
+a suspeita:**
+
+| | P95, ms |
+|---|---|
+| antes, duas execuções | 16,7 · 17,1 |
+| depois, duas execuções | 16,7 · 16,5 |
+
+O Posto roda em P95 ≈ 16,5–17,1 ms nas duas versões; a leitura de 10,3 foi o ponto fora da
+curva, não a de 17,0. **Não há regressão.** Draw calls ficaram estáveis (1.622 → 1.635 e
+1.440 → 1.420, dentro da variação de bots), como esperado de uma mudança que só altera valores
+de UV.
+
+Fica registrado que o **Posto é o mapa mais caro medido até aqui** — P95 ≈ 17 ms e ~1.620 draw
+calls por quadro, o único que cai abaixo do vsync de 120 Hz. Isso é dívida anterior a este
+lote, não consequência dele.
+
+Verdes: `mapcontrato`, `spawn`, `ctfround`, `ctfwin`, `shaderbudget`, `mapjson`, `preload` e os
+quatro de Parque/Penitenciária. Zero erro JS.
 
 ## Estado de parada — 07/09/2026
 
