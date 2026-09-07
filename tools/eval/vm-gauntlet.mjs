@@ -117,7 +117,12 @@ const SONDA = `((ARMA, MUTANTE, AJUSTE_X, QUADRO) => {
       // cor CHAPADA: emissivo puro + albedo preto + toneMapped=false. Com a
       // iluminação da vmScene por cima, o magenta saía (250,180,230) e nenhum
       // limiar honesto separava isso do céu — a cor tem que ser exata.
+      // normal/ORM/bump também sai: sem isso a contagem de silhueta depende do
+      // PBR do material (team-hands v5 removeu os mapas do doador e a régua
+      // contou +5% de pixels de mão sem mudar geometria — audit 07/09).
       m.map = null; m.roughness = 1; m.metalness = 0;
+      m.normalMap = null; m.bumpMap = null; m.roughnessMap = null;
+      m.metalnessMap = null; m.aoMap = null; m.alphaMap = null; m.displacementMap = null;
       m.transparent = false; m.opacity = 1; m.toneMapped = false;
       if (m.color) m.color.setRGB(m.emissive ? 0 : r, m.emissive ? 0 : gg, m.emissive ? 0 : b);
       if (m.emissive) { m.emissive.setRGB(r, gg, b); m.emissiveIntensity = 1; }

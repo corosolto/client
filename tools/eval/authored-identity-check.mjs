@@ -16,6 +16,10 @@
    Mutantes (provam que a régua morde):
      --mutante=escala        infla o wrap ×3 → ID4 tem que reprovar.
      --mutante=pack-visivel  religa as malhas do pack → ID1 tem que reprovar.
+   Entradas SEM wrap Mint (golden AK, pistola assada — a2396697 adiante) medem
+   ID1/ID5/ID6/ID8 (+ID7 quando o rig tem hand_l); ID2/ID3/ID4 viram NOTA —
+   a identidade do assado é o GLB congelado, guardado pelo contrato estrutural.
+   Sob mutante, entrada sem Mint reprova (verde cego é pior que vermelho).
    Uso: node tools/eval/authored-identity-check.mjs [--armas=ak,akm] [--mutante=…] [--porta=8154]
    Requer private-assets (symlink public/private-assets) — régua LOCAL, fora do check:fast.
    ============================================================================ */
@@ -62,8 +66,11 @@ try {
       { waitUntil: 'load', timeout: 180000 },
     );
     await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
+    // A espera era por mint.active e a golden (a2396697) não tem wrap Mint —
+    // a régua travava 120 s e check:vm morria. Espera a ENTRY; sem Mint, ID2/3/4
+    // viram NOTA (identidade do assado é guardada pelo contrato estrutural).
     await page.waitForFunction(
-      (weapon) => window.__authoredVm?.entry?.(weapon)?.mint?.active,
+      (weapon) => window.__authoredVm?.entry?.(weapon),
       id, { timeout: 120000 },
     );
     /* Dá dois frames para _applyVmVisibility assentar depois do onReady. */
@@ -74,8 +81,8 @@ try {
       const vm = window.__authoredVm;
       const g = window.__game;
       const entry = vm.entry(weapon);
-      const wrap = entry.mint.active;
-      if (mutante === 'escala') { wrap.scale.multiplyScalar(3); wrap.updateWorldMatrix(true, true); }
+      const wrap = entry.mint?.active || null;
+      if (wrap && mutante === 'escala') { wrap.scale.multiplyScalar(3); wrap.updateWorldMatrix(true, true); }
       if (mutante === 'pack-visivel') for (const mesh of entry.weaponMeshes) mesh.visible = true;
 
       const efetivamenteVisivel = (object) => {
@@ -95,55 +102,64 @@ try {
         if (o.isMesh && soPack(o) && efetivamenteVisivel(o)) packVisiveis.push(o.name || '(sem nome)');
       });
 
-      const mintVisivel = efetivamenteVisivel(wrap)
+      const mintVisivel = Boolean(wrap)
+        && efetivamenteVisivel(wrap)
         && (wrap.name === `mint_weapon_${weapon}`
           || wrap.name === `MINT_WEAPON_${weapon.toUpperCase()}`);
 
-      wrap.updateWorldMatrix(true, true);
-      const min = [Infinity, Infinity, Infinity];
-      const max = [-Infinity, -Infinity, -Infinity];
-      const v = wrap.position.clone();
-      wrap.traverse((o) => {
-        if (!o.isMesh || !o.geometry) return;
-        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
-        const bb = o.geometry.boundingBox;
-        for (const cx of [bb.min.x, bb.max.x]) {
-          for (const cy of [bb.min.y, bb.max.y]) {
-            for (const cz of [bb.min.z, bb.max.z]) {
-              v.set(cx, cy, cz).applyMatrix4(o.matrixWorld);
-              g.camera.localToWorld(v);
-              for (let lane = 0; lane < 3; lane += 1) {
-                const value = [v.x, v.y, v.z][lane];
-                if (value < min[lane]) min[lane] = value;
-                if (value > max[lane]) max[lane] = value;
+      let muzzleDentro = null;
+      let worldDim = null;
+      let realDim = null;
+      if (wrap) {
+        wrap.updateWorldMatrix(true, true);
+        const min = [Infinity, Infinity, Infinity];
+        const max = [-Infinity, -Infinity, -Infinity];
+        const v = wrap.position.clone();
+        wrap.traverse((o) => {
+          if (!o.isMesh || !o.geometry) return;
+          if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+          const bb = o.geometry.boundingBox;
+          for (const cx of [bb.min.x, bb.max.x]) {
+            for (const cy of [bb.min.y, bb.max.y]) {
+              for (const cz of [bb.min.z, bb.max.z]) {
+                v.set(cx, cy, cz).applyMatrix4(o.matrixWorld);
+                g.camera.localToWorld(v);
+                for (let lane = 0; lane < 3; lane += 1) {
+                  const value = [v.x, v.y, v.z][lane];
+                  if (value < min[lane]) min[lane] = value;
+                  if (value > max[lane]) max[lane] = value;
+                }
               }
             }
           }
-        }
-      });
-      const muzzle = vm.muzzleWorld(weapon, g.camera);
-      const folga = 0.05;
-      const muzzleDentro = Boolean(muzzle)
-        && muzzle.x >= min[0] - folga && muzzle.x <= max[0] + folga
-        && muzzle.y >= min[1] - folga && muzzle.y <= max[1] + folga
-        && muzzle.z >= min[2] - folga && muzzle.z <= max[2] + folga;
+        });
+        const muzzle = vm.muzzleWorld(weapon, g.camera);
+        const folga = 0.05;
+        muzzleDentro = Boolean(muzzle)
+          && muzzle.x >= min[0] - folga && muzzle.x <= max[0] + folga
+          && muzzle.y >= min[1] - folga && muzzle.y <= max[1] + folga
+          && muzzle.z >= min[2] - folga && muzzle.z <= max[2] + folga;
 
-      const worldDim = Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2]);
-      const m = wrap.userData.metrics;
-      // GLB assado não tem metrics de wrap: o tamanho real vem do len esperado
-      // (injetado pelo Node) — mesma régua de ±20% sobre a medida em mundo.
-      const realDim = m ? Math.max(
-        m.box.max.x - m.box.min.x, m.box.max.y - m.box.min.y, m.box.max.z - m.box.min.z,
-      ) : (window.__vmLenEsperado || 0);
+        worldDim = Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2]);
+        const m = wrap.userData.metrics;
+        // GLB assado não tem metrics de wrap: o tamanho real vem do len esperado
+        // (injetado pelo Node) — mesma régua de ±20% sobre a medida em mundo.
+        realDim = m ? Math.max(
+          m.box.max.x - m.box.min.x, m.box.max.y - m.box.min.y, m.box.max.z - m.box.min.z,
+        ) : (window.__vmLenEsperado || 0);
+      }
 
       /* M4: o GLB viaja com placeholder 1×1; o shared/ religa por nome ANTES da
-         primeira pintura — material de mão com imagem ≤4 px é regressão. */
+         primeira pintura — material de mão com imagem ≤4 px é regressão.
+         Golden é o caso oposto e válido: sem map NENHUM por contrato (fatores
+         de base + normal embutido) — só placeholder EXISTENTE é defeito. */
       const maosPlaceholder = [];
       for (const mesh of entry.handMeshes) {
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         for (const material of materials) {
           if (!/CoroSolto_FP_/.test(material?.name || '')) continue;
-          const image = material.map?.image || material.map?.source?.data;
+          if (!material.map) continue;
+          const image = material.map.image || material.map.source?.data;
           const width = image?.width ?? 0;
           if (width <= 4) maosPlaceholder.push(`${material.name}:${width}px`);
         }
@@ -154,23 +170,27 @@ try {
 
       /* Lição dos prints do dono (29/08): parado, a mão NÃO pode vagar — o
          aditivo genérico arrancava o braço da pose. Amostra 8× em 3,5 s e mede
-         o MAIOR desvio da mão de apoio em relação à primeira amostra. */
+         o MAIOR desvio da mão de apoio em relação à primeira amostra.
+         Rig golden não tem osso hand_l: ID7 fica não mensurável. */
       const hand = entry.scene.getObjectByName('hand_l');
       const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-      const handAt = () => {
-        entry.scene.updateWorldMatrix(true, true);
-        const p = v.clone();
-        hand.getWorldPosition(p);
-        return [p.x, p.y, p.z];
-      };
-      const base = handAt();
-      let breathDelta = 0;
-      for (let sample = 0; sample < 8; sample += 1) {
-        await sleep(440);
-        const now = handAt();
-        breathDelta = Math.max(breathDelta, Math.hypot(
-          now[0] - base[0], now[1] - base[1], now[2] - base[2],
-        ));
+      let breathDelta = null;
+      if (hand) {
+        const handAt = () => {
+          entry.scene.updateWorldMatrix(true, true);
+          const p = entry.scene.position.clone();
+          hand.getWorldPosition(p);
+          return [p.x, p.y, p.z];
+        };
+        const base = handAt();
+        breathDelta = 0;
+        for (let sample = 0; sample < 8; sample += 1) {
+          await sleep(440);
+          const now = handAt();
+          breathDelta = Math.max(breathDelta, Math.hypot(
+            now[0] - base[0], now[1] - base[1], now[2] - base[2],
+          ));
+        }
       }
 
       /* M2/M7: recarga escondida no meio não encalha — volta ao idle sozinha. */
@@ -196,27 +216,57 @@ try {
         vivo: g.player?.alive ?? null,
         armaAtual: g.player?.weapon ?? null,
       };
-      const strandRecovered = strandInfo.acao === 'idle' && strandInfo.fila === 0;
+      /* Golden nomeia os clipes com inicial maiúscula (Idle/Reload); o pack
+         usa minúscula. A volta ao idle é o critério, não a caixa do nome. */
+      const strandRecovered = /^idle$/i.test(strandInfo.acao || '') && strandInfo.fila === 0;
 
       return {
-        packVisiveis, mintVisivel, muzzleDentro, worldDim, realDim,
+        packVisiveis, temWrap: Boolean(wrap), mintVisivel, muzzleDentro, worldDim, realDim,
         maosPlaceholder, familyBytes, breathDelta, strandRecovered, strandInfo,
       };
     }, [id, MUT]);
 
-    check(medida.packVisiveis.length === 0, `ID1 ${id}: pack invisível`, medida.packVisiveis.join(', '));
-    check(medida.mintVisivel, `ID2 ${id}: malha Mint na mão`);
-    check(medida.muzzleDentro, `ID3 ${id}: muzzle dentro da arma Mint`);
-    const razao = medida.realDim > 0 ? medida.worldDim / medida.realDim : Infinity;
-    check(razao >= 0.8 && razao <= 1.2, `ID4 ${id}: escala em mundo ±20%`, `razão ${razao.toFixed(3)}`);
+    if (!medida.temWrap) {
+      // Sem wrap Mint não existe "pack genérico a esconder": na família assada
+      // a malha GEO_WEAPON_* É a arma licenciada (pistola X18/G18), e na golden
+      // os nomes nem passam por GEO_WEAPON_. ID1 é NOTA, igual ID2–ID4.
+      if (MUT === 'pack-visivel') {
+        check(false, `ID1 ${id}: mutante não discrimina entrada sem wrap Mint`, 'use uma arma com Mint para mutação');
+      } else {
+        console.info(`NOTA ID1 ${id}: não mensurável — sem wrap Mint a malha GEO_WEAPON_* é a própria arma assada`);
+      }
+    } else {
+      check(medida.packVisiveis.length === 0, `ID1 ${id}: pack invisível`, medida.packVisiveis.join(', '));
+    }
+    if (!medida.temWrap) {
+      // Golden/pistola assada não têm wrap Mint: a identidade é o próprio GLB
+      // congelado, guardado por ak/pistol-viewmodel-contract (hash, rig, clipes)
+      // e pela régua de escala do gauntlet. Sob mutante, reprova — nunca verde cego.
+      if (MUT) {
+        check(false, `ID2 ${id}: mutante não discrimina entrada sem wrap Mint`, 'use uma arma com Mint para mutação');
+      } else {
+        console.info(`NOTA ID2/ID3/ID4 ${id}: não mensurável — entrada sem wrap Mint (identidade no contrato estrutural)`);
+      }
+    } else {
+      check(medida.mintVisivel, `ID2 ${id}: malha Mint na mão`);
+      check(medida.muzzleDentro, `ID3 ${id}: muzzle dentro da arma Mint`);
+      const razao = medida.realDim > 0 ? medida.worldDim / medida.realDim : Infinity;
+      check(razao >= 0.8 && razao <= 1.2, `ID4 ${id}: escala em mundo ±20%`, `razão ${razao.toFixed(3)}`);
+    }
     check(medida.maosPlaceholder.length === 0, `ID5 ${id}: mãos com textura real (shared religado)`,
       medida.maosPlaceholder.join(', '));
     check(medida.familyBytes > 0 && medida.familyBytes < 8 * 1024 * 1024,
       `ID6 ${id}: download da família < 8 MiB`, `${(medida.familyBytes / 1048576).toFixed(1)} MiB`);
-    check(medida.breathDelta < 0.02, `ID7 ${id}: parado, a mão fica na arma (sem vagar)`,
-      `desvio máximo ${(medida.breathDelta * 1000).toFixed(1)} mm em 3,5 s`);
+    if (medida.breathDelta === null) {
+      console.info(`NOTA ID7 ${id}: não mensurável — rig sem osso hand_l`);
+    } else {
+      check(medida.breathDelta < 0.02, `ID7 ${id}: parado, a mão fica na arma (sem vagar)`,
+        `desvio máximo ${(medida.breathDelta * 1000).toFixed(1)} mm em 3,5 s`);
+    }
     check(medida.strandRecovered, `ID8 ${id}: recarga escondida volta ao idle sem encalhar`);
-    resultados.push({ id, familia, ...medida, razao: Number(razao.toFixed(3)) });
+    const razaoGravada = medida.temWrap && medida.realDim > 0
+      ? Number((medida.worldDim / medida.realDim).toFixed(3)) : null;
+    resultados.push({ id, familia, ...medida, razao: razaoGravada });
     await page.close();
   }
 } finally {

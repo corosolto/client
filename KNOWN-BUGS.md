@@ -1969,6 +1969,61 @@ geometria, escala e ataques preservados. Recaptura pública v5 concluída:
 Ainda exige aprovação final do dono para proporção/continuidade e extensão às
 demais rotas; BUG-85 não encerrado globalmente por validar só pistola/faca.
 
+### ~~BUG-86 · sonda do gauntlet contava silhueta dependendo do PBR do material~~ · CORRIGIDO 07/09 (branch `glm/vm-controles-final`)
+
+`pinta()` do `vm-gauntlet.mjs` zerava só `map`: normal/ORM/bump ativos deixavam
+glints especulares quebrando o classificador estrito (`r<70 && b<70`) e
+subcontavam até 5% dos pixels de mão. Prova: mesma geometria/enquadramento
+mede 37.122 px com normal maps do doador e 39.039 px sem (as `team-hands-5`
+removeram os mapas e a régua "mudou" sozinha: 3,890× → 4,047×). Correção
+saneia normal/bump/roughness/metalness/ao/alpha/displacement; validada por
+independência de material (com e sem acabamento, contadores idênticos).
+Réguas visuais afetadas re-executadas: AK 3:2 verde, mutantes AK/pistola
+mordendo. Diagnóstico e tabela na
+`docs/reports/VIEWMODEL-CONTROLES-AUDITORIA-2026-09-07.md`.
+
+### ~~BUG-87 · réguas de ADS e identidade travavam na golden (e 3 checks de era errada ao destravar)~~ · CORRIGIDO 07/09 (branch `glm/vm-controles-final`)
+
+A entrega da golden (`a2396697`) tirou o wrap Mint sem trazer `SOCKET_MINT_*`;
+`authored-ads-check.mjs` e `authored-identity-check.mjs` esperavam
+`mint.active` e morriam em timeout 120 s — `check:vm` 5/6 com a arma padrão.
+Ao destravar, a régua de identidade ainda trazia três suposições da era
+AKM/KINEMATION: `map === null` tratado como placeholder (a golden não tem
+baseColor map por contrato), clip comparado como `'idle'` minúsculo (golden:
+`Idle`) e `GEO_WEAPON_*` tratado como pack a esconder (na pistola assada é a
+arma licenciada). Correções: espera pela entry; sem Mint/sockets, AD1/AD3 e
+ID1–ID4 viram NOTA explícita, AD2 mede pela caixa do esqueleto (bind pose não
+serve para SkinnedMesh) e mutantes em entrada sem Mint REPROVAM (verde celo
+é pior que vermelho — lei 3). Mesma lei aplicada aos mutantes
+`sem-oclusor-frontal`/`sem-ads-autorado`/`ads-cortado` do contrato AK, que
+passavam em silêncio contra a golden (checks condicionados ao AKM).
+Pós-correção: `check:vm` 6/6; M4 continua medindo AD1–AD4/ID1–ID8 como antes
+e seus mutantes falham.
+
+### BUG-88 · pistola mede mãos/arma 4,047× contra teto 4,0× (referência CS 1.6: 1,9×) · RELATADO 07/09
+
+Com a sonda honesta do BUG-86, o idle da pistola (frame aprovado a 15°,
+acabamento v5) mede 4,047× em 1440×960 — acima do teto 4,0×, calibrado na era
+que subcontava. A mesma régua no molde CC0 `usp` do CS 1.6 mede 1,9×; a AK
+golden, 0,73×. **Régua:** `node tools/eval/vm-gauntlet.mjs --modo=kinemation
+--armas=pistol` (vermelho em P2). Não é regressão geométrica: a silhueta era a
+mesma na aprovação do yaw (a régua é que subcontava). Decisão do dono:
+re-derivar o teto da referência com a régua corrigida, ou reduzir a massa de
+mão aparente (mudança visual exige nova aprovação). Nenhum teto foi afrouxado
+nesta auditoria.
+
+### BUG-89 · AK golden 16:9 corta luva direita e encosta no topo na recarga · RELATADO 07/09
+
+C6 preserva a meia-tangente horizontal: em 1440×810 a golden renderiza na
+mesma escala por pixel (luva esquerda 18.729 px vs 18.726 em 3:2) e o canvas
+menor corta o excedente vertical. Gauntlet 16:9: P1 luva direita 1.602 px
+(idle)/692 px (fire) contra mínimo 2.109 px; P5 recarga com 0 px de margem no
+topo (43 px em 3:2). Consequência aritmética do enquadramento normativo 3:2
+sobre o GLB congelado — a faca resolveu o equivalente com z=-0,25 + FOV 50°
+aprovados. **Régua:** `node tools/eval/vm-gauntlet.mjs --modo=golden --armas=ak
+--largura=1440 --altura=810`. Re-enquadrar a golden (congelada por hash em
+contrato e ledger) é decisão do dono.
+
 ### ~~BUG-84 · tiros alheios acendem a luz do viewmodel da faca~~ · CORRIGIDO LOCALMENTE 05/09
 
 Na revisão contínua da faca, o crítico viu clarões isolados nos frames

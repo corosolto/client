@@ -240,6 +240,11 @@ const frontOccluder = mutantFrontHole ? null : (gltf.nodes || []).find((node) =>
   && node.extras?.occlusion_role === 'seal-front-sky-leak');
 check(!isAkm || frontOccluder,
   'AKM não possui vedação interna identificada para impedir céu visível pela frente');
+// Lei 3: contra a golden (isAkm=false) estes checks são vacuos — o mutante
+// passaria em silêncio. Mutante que não pode discriminar reprova com motivo.
+if (!isAkm && mutantFrontHole) {
+  check(false, 'mutante sem-oclusor-frontal não discrimina neste alvo (check condicionado ao AKM integrado)');
+}
 
 // Contrato de ADS pós-BUG-75: a pose por arma vive em data/vmconfig.js (auto +
 // trim residual, M6); aqui a régua cobra o encanamento — config presente, setAim
@@ -256,6 +261,11 @@ const hasAkmAds = !mutantAds
   && /authored\?\.setAim\(p\.weapon,\s*a\)/.test(gameSource);
 check(!isAkm || hasAkmAds,
   'AKM autorada não possui encanamento de ADS (vmconfig.ads + setAim(id, amount) + blend do game.js)');
+// Lei 3: mutantes de ADS só encontram o encanamento no alvo AKM; na golden a
+// invariante vacua e o mutante verde seria cego.
+if (!isAkm && (mutantAds || mutantAdsCropped)) {
+  check(false, 'mutante de ADS não discrimina neste alvo (check condicionado ao AKM integrado)');
+}
 const hasGoldenRuntime = /ak:\s*\{\s*ready:\s*true/.test(vmconfigSource)
   && /ak:\s*W\('ak',\s*\{\s*baked:\s*true,\s*golden:\s*true/.test(vmconfigSource)
   && /return `gold#\$\{weapon\}`/.test(authoredVmSource)

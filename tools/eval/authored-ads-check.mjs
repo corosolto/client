@@ -11,6 +11,11 @@
    Roda nos DOIS aspectos que já morderam este repo: 16:9 e 3:2.
    Mutante: --mutante=sem-ads (remove ?vmads=1) tem que REPROVAR AD1 — prova
    que a medida discrimina quadril de mira.
+   Entradas SEM pontos de mira (golden AK e pistola assada: nem wrap Mint
+   nem SOCKET_MINT_*; a2396697 congelou a golden sem eles) só medem AD2 e
+   imprimem NOTA explícita em AD1/AD3 — o ADS delas é o pull residual do
+   vmconfig. Sob mutante, entrada não mensurável reprova (a régua nunca
+   passa em silêncio).
    Uso: node tools/eval/authored-ads-check.mjs [--armas=ak] [--porta=8156]
    Requer private-assets — régua LOCAL (check:vm), fora do check:fast.
    ============================================================================ */
@@ -61,8 +66,11 @@ try {
         { waitUntil: 'load', timeout: 180000 },
       );
       await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
+      // A espera era por mint.active e a golden (a2396697) trouxe o assado SEM
+      // wrap Mint nem sockets: a régua travava 120 s e check:vm morria. Espera
+      // a ENTRY; pontos de mira ausentes viram nota explícita, não timeout.
       await page.waitForFunction(
-        (weapon) => window.__authoredVm?.entry?.(weapon)?.mint?.active,
+        (weapon) => window.__authoredVm?.entry?.(weapon),
         id, { timeout: 120000 },
       );
       await page.waitForTimeout(1200);   // blend do ADS + draw assentados
@@ -71,69 +79,115 @@ try {
         const g = window.__game;
         const vm = window.__authoredVm;
         const entry = vm.entry(weapon);
-        const wrap = entry.mint.active;
-        const metrics = wrap.userData.metrics || null;
-        wrap.updateWorldMatrix(true, false);
+        const wrap = entry.mint?.active || null;
+        const metrics = wrap?.userData?.metrics || null;
+        if (wrap) wrap.updateWorldMatrix(true, false);
         // GLB assado traz sockets nomeados; wrap ao vivo traz metrics medidas.
         const ponto = (kind) => {
           const socket = entry.sockets?.[kind];
           if (socket) {
             socket.updateWorldMatrix(true, false);
-            return socket.getWorldPosition(wrap.position.clone());
+            return socket.getWorldPosition(entry.scene.position.clone());
           }
+          if (!wrap || !metrics) return null;
           const p = (kind === 'sight' ? metrics.sight : metrics.muzzle).clone()
             .divideScalar(metrics.norm || 1);
           return wrap.localToWorld(p);
         };
         const sight = ponto('sight');
-        // AD3: colinearidade REAL — ângulo entre (boca−alça) e o eixo óptico.
         const muzzle = ponto('muzzle');
-        const axis = muzzle.clone().sub(sight).normalize();
-        const barrelAngleDeg = Math.acos(Math.min(1, Math.max(-1, -axis.z))) * 180 / Math.PI;
-        const ndc = sight.clone().project(g.vmCamera);
+        // AD3: colinearidade REAL — ângulo entre (boca−alça) e o eixo óptico.
+        const medivel = Boolean(sight && muzzle);
+        let ndcX = null;
+        let ndcY = null;
+        let barrelAngleDeg = null;
+        if (medivel) {
+          const axis = muzzle.clone().sub(sight).normalize();
+          barrelAngleDeg = Math.acos(Math.min(1, Math.max(-1, -axis.z))) * 180 / Math.PI;
+          const ndc = sight.clone().project(g.vmCamera);
+          ndcX = ndc.x;
+          ndcY = ndc.y;
+        }
 
         let minX = Infinity;
         let minY = Infinity;
         let maxX = -Infinity;
         let maxY = -Infinity;
-        const v = wrap.position.clone();
-        wrap.traverse((o) => {
-          if (!o.isMesh || !o.geometry) return;
-          if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
-          const bb = o.geometry.boundingBox;
-          for (const cx of [bb.min.x, bb.max.x]) {
-            for (const cy of [bb.min.y, bb.max.y]) {
-              for (const cz of [bb.min.z, bb.max.z]) {
-                v.set(cx, cy, cz).applyMatrix4(o.matrixWorld).project(g.vmCamera);
-                minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x);
-                minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
+        const v = entry.scene.position.clone();
+        const canto = (x, y, z) => {
+          v.set(x, y, z).project(g.vmCamera);
+          minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x);
+          minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
+        };
+        if (wrap) {
+          // wrap Mint é malha rígida: bbox por matrixWorld vale.
+          wrap.traverse((o) => {
+            if (!o.isMesh || !o.geometry || o.visible === false) return;
+            if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+            const bb = o.geometry.boundingBox;
+            for (const cx of [bb.min.x, bb.max.x]) {
+              for (const cy of [bb.min.y, bb.max.y]) {
+                for (const cz of [bb.min.z, bb.max.z]) {
+                  v.set(cx, cy, cz).applyMatrix4(o.matrixWorld);
+                  canto(v.x, v.y, v.z);
+                }
               }
             }
-          }
-        });
+          });
+        } else {
+          // Sem wrap (golden/pistola assada) a arma é SKINNED: bbox de malha
+          // ficaria na bind pose. Os OSSOS é que estão na pose animada — a
+          // caixa do esqueleto é a proxy honesta do que está na tela.
+          entry.scene.updateWorldMatrix(true, true);
+          entry.scene.traverse((o) => {
+            if (!o.isSkinnedMesh || !o.skeleton) return;
+            for (const bone of o.skeleton.bones) {
+              bone.updateWorldMatrix(true, false);
+              const p = bone.getWorldPosition(entry.scene.position.clone());
+              canto(p.x, p.y, p.z);
+            }
+          });
+        }
         const clip = (value) => Math.min(1, Math.max(-1, value));
         const areaFrac = ((clip(maxX) - clip(minX)) / 2) * ((clip(maxY) - clip(minY)) / 2);
-        return { ndcX: ndc.x, ndcY: ndc.y, areaFrac, adsF: g.vm.adsF ?? 0, barrelAngleDeg };
+        return { medivel, ndcX, ndcY, areaFrac, adsF: g.vm.adsF ?? 0, barrelAngleDeg };
       }, id);
 
-      const offCenter = Math.hypot(medida.ndcX, medida.ndcY);
       const label = `${id}@${viewport.name}`;
-      if (MUT === 'sem-ads') {
-        check(offCenter > 0.035, `AD1 ${label}: SEM ads a alça fica fora do centro (mutante)`,
-          `desvio ${offCenter.toFixed(3)}`);
+      if (!medida.medivel) {
+        // Golden AK e pistola assada não têm wrap Mint nem sockets de mira:
+        // o ADS delas é o pull residual do vmconfig, sem alinhamento de alça.
+        // Nota explícita — sob mutante isso vira falha para a régua nunca
+        // passar em silêncio sem discriminar quadril de mira.
+        const motivo = 'entrada sem wrap Mint nem sockets de mira (ADS = pull residual)';
+        if (MUT === 'sem-ads') {
+          check(false, `AD1 ${label}: mutante não discrimina`, motivo);
+        } else {
+          console.info(`NOTA AD1/AD3 ${label}: não mensurável — ${motivo}`);
+        }
       } else {
-        check(offCenter <= 0.035, `AD1 ${label}: alça no eixo da câmera`,
-          `desvio ${offCenter.toFixed(3)} (adsF ${medida.adsF.toFixed(2)})`);
+        const offCenter = Math.hypot(medida.ndcX, medida.ndcY);
+        if (MUT === 'sem-ads') {
+          check(offCenter > 0.035, `AD1 ${label}: SEM ads a alça fica fora do centro (mutante)`,
+            `desvio ${offCenter.toFixed(3)}`);
+        } else {
+          check(offCenter <= 0.035, `AD1 ${label}: alça no eixo da câmera`,
+            `desvio ${offCenter.toFixed(3)} (adsF ${medida.adsF.toFixed(2)})`);
+        }
       }
       check(medida.areaFrac >= 0.02, `AD2 ${label}: arma na tela`, `área ${(medida.areaFrac * 100).toFixed(1)}%`);
-      if (MUT === 'sem-ads') {
-        check(medida.barrelAngleDeg > 2, `AD3 ${label}: SEM ads o cano fica fora do eixo (mutante)`,
-          `${medida.barrelAngleDeg.toFixed(1)}°`);
-      } else {
-        check(medida.barrelAngleDeg <= 2, `AD3 ${label}: cano COLINEAR com o eixo óptico`,
-          `${medida.barrelAngleDeg.toFixed(2)}°`);
+      if (medida.medivel) {
+        if (MUT === 'sem-ads') {
+          check(medida.barrelAngleDeg > 2, `AD3 ${label}: SEM ads o cano fica fora do eixo (mutante)`,
+            `${medida.barrelAngleDeg.toFixed(1)}°`);
+        } else {
+          check(medida.barrelAngleDeg <= 2, `AD3 ${label}: cano COLINEAR com o eixo óptico`,
+            `${medida.barrelAngleDeg.toFixed(2)}°`);
+        }
       }
-      resultados.push({ id, viewport: viewport.name, ...medida, offCenter: Number(offCenter.toFixed(4)) });
+      const offCenterGravado = medida.medivel && Number.isFinite(medida.ndcX)
+        ? Number(Math.hypot(medida.ndcX, medida.ndcY).toFixed(4)) : null;
+      resultados.push({ id, viewport: viewport.name, ...medida, offCenter: offCenterGravado });
       await page.close();
     }
   }
