@@ -189,6 +189,70 @@ Penitenciária depois da migração para o módulo. Zero erro JS em med e low.
 - Praça cívica, concha acústica e equipamentos de lazer de Madureira não foram feitos.
 - Sem aprovação visual humana.
 
+## Lote D — Posto e Atacadão: escala de material, autoria preservada, 07/09/2026
+
+Os quatro mapas de Emerson foram tentados juntos porque o conserto é o mesmo e **não toca
+geometria, posição nem colisor** — só a UV. Dois entraram; **dois foram revertidos pela
+medição**, e é isso que esta seção registra.
+
+| mapa | mediana antes → depois | chão | área < 64 px/m |
+|---|---|---|---|
+| Posto da Treta | 32,3 → **128** | 32 → **128** | **98,2% → 0%** |
+| Atacadão da Treta | 42,4 → **128** | 47 → **128** | **91,1% → 2%** |
+| UPA 24h | revertido | — | — |
+| Obras da Prefeitura | revertido | — | — |
+
+Posto e Atacadão ficaram **sem nenhuma cláusula vermelha** no TEXEL.
+
+### A régua pegou o meu próprio conserto
+
+Ao aplicar UV em metros nos quatro, a `TEXEL6` acendeu em UPA (23 superfícies) e Obras (12):
+
+> *UV além de uma volta sobre textura marcada ClampToEdge pelo autor do mapa. Fora da volta
+> o WebGL repete a última coluna de texels — mural e placa viram borrão esticado.*
+
+Ela existe exatamente porque **subir densidade de texel premia esse estado ruim**. `map_uv.js`
+passou a devolver `null` quando `wrapS` ou `wrapT` não é `RepeatWrapping`: textura presa na
+borda não é ladrilho e não pode ser escalada. Com a regra certa, `TEXEL6` zerou.
+
+### Por que UPA e Obras não se resolvem por UV
+
+Com a regra correta, os dois voltaram ao número original — e a leitura do código explica:
+
+- **UPA:** `floorTex()` é um canvas de 1024×1229 que pinta **a planta inteira do hospital em
+  coordenadas de mundo** (`px = (wx + HALF_X)/(HALF_X*2) * W`). Não é ladrilho: é uma planta
+  baixa esticada sobre 4.320 m², daí os 17 px/m. `wallTex()` é uma tira de 8×256 com o perfil
+  vertical da parede — faixa lilás na altura do peito, rodapé de madeira. Os dois são textura
+  de elevação/planta, não de repetição.
+- **Obras:** mesma família de textura presa na borda.
+
+Portanto os 15,2 px/m da UPA **não são um defeito que a UV conserta**: são propriedade da
+direção de arte. Subir aquilo exige outro caminho — resolução maior da planta ou uma camada
+de detalhe ladrilhada por cima — e isso é lote próprio, com decisão de arte, não conserto
+mecânico. Reverter foi mais honesto que deixar código morto no mapa de outro autor.
+
+### Custo, com repetição
+
+O primeiro par de medidas sugeria regressão no Posto (P95 10,3 → 17,0 ms). **Repetir desfez
+a suspeita:**
+
+| | P95, ms |
+|---|---|
+| antes, duas execuções | 16,7 · 17,1 |
+| depois, duas execuções | 16,7 · 16,5 |
+
+O Posto roda em P95 ≈ 16,5–17,1 ms nas duas versões; a leitura de 10,3 foi o ponto fora da
+curva, não a de 17,0. **Não há regressão.** Draw calls ficaram estáveis (1.622 → 1.635 e
+1.440 → 1.420, dentro da variação de bots), como esperado de uma mudança que só altera valores
+de UV.
+
+Fica registrado que o **Posto é o mapa mais caro medido até aqui** — P95 ≈ 17 ms e ~1.620 draw
+calls por quadro, o único que cai abaixo do vsync de 120 Hz. Isso é dívida anterior a este
+lote, não consequência dele.
+
+Verdes: `mapcontrato`, `spawn`, `ctfround`, `ctfwin`, `shaderbudget`, `mapjson`, `preload` e os
+quatro de Parque/Penitenciária. Zero erro JS.
+
 ## Estado de parada — 07/09/2026
 
 Execução encerrada por instrução de limite de créditos; GLM/Claude retomam pelos

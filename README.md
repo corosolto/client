@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 46.506 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 46.518 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.427** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.403 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -316,10 +316,10 @@ Os mapas registrados, e em que modo cada um abre:
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.345 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 391 |
-| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 493 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 259 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 922 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 889 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 693 |
