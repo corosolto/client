@@ -249,7 +249,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `campomorro` | Campinho do Morro | **captura** | `map_campomorro.js` | 815 |
-| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.154 |
+| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.157 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.337 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 814 |
