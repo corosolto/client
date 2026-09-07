@@ -1278,6 +1278,9 @@ window.__GEO_LANG__ = (function () {
   <div id="hud-bottom-left">
     <div id="hp-row"><span id="hp-num">100</span></div>
     <div id="hp-bar"><div id="hp-fill"></div></div>
+    <!-- Abates do JOGADOR (BUG-144): as plaquetas do topo contam o TIME na RODADA.
+         Régua: tools/eval/abateshud-check.mjs -->
+    <div id="kill-counter"><span id="kill-count">0</span><span class="kc-label">ABATES</span></div>
   </div>
   <div id="weapon-hud" class="hidden" aria-label="Armas e utilitários"></div>
   <div id="hud-bottom-right">
