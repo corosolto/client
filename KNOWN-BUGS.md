@@ -3574,6 +3574,65 @@ o levantaria 45 cm e o deixaria o único do elenco deitado certo, com `proerd` e
 piores e sem régua para eles; e mexer no clipe arrisca o contato de pata que hoje está em
 `1e-7 m`. A catraca impede que piore enquanto a classe não for atacada de uma vez.
 
+
+### ~~BUG-149 · o retarget assava torção nos ossos de curl e matava o fechamento da pata~~ · CORRIGIDO 07/09/2026
+
+`Curl_L`/`Curl_R` não são ossos de animação: são o **atuador de runtime** do fechamento da
+mão, escrito UMA vez pelo `buildCharacterModel` (`glbchars.js`, bloco "Grip curl") com o
+ângulo tirado da espessura medida da arma. Canal de clipe neles é sobrescrita por quadro —
+o grip curl morre e a arma fica na pata aberta.
+
+O `retarget-glb.mjs` montava o delta de rotação de mundo para **todo osso de nome igual**,
+`Curl_*` incluído. Nos 13 rigs humanos com esses ossos o rest da fonte e o do alvo
+coincidem e o delta saía **identidade** (`|delta|max = 0,0000 rad`): inerte, e por isso
+nenhuma régua de asset acusava. Na pata do Lobisomem os rests divergem:
+
+    lobisomem  Curl_R  |delta|max = 0,8763 rad   x=0,293  y=-0,544  z=-0,621
+    (os outros 13)     |delta|max = 0,0000 rad
+
+O eixo dominante é **torção** (y/z), não o `x` do curl — numa folha que carrega 12,55% do
+peso de skin do modelo, a maior região de curl do elenco (P95 a 22,6 cm do osso, contra
+15,0-20,5 cm dos outros 13).
+
+**Estrago, na régua do portão** (`npm run eval:select`, o caminho da tela de seleção):
+
+| | p99 | ruins/1e4 | |
+| --- | --- | --- | --- |
+| com a torção do clipe | 0,694 | 36,2 | REPROVA (teto 0,675 / 23,6) |
+| sem as tracks de Curl | 0,511 | 14,5 | passa — melhor que o `mandrake` (0,540 / 18,9) |
+
+Era o 13º reprovado num portão que declara no máximo 12.
+
+**Conserto em duas pontas:** `tools/strip-curl-tracks.mjs` tira o canal dos GLB já no
+disco (mede antes de tirar, e tem `--check`); `retarget-glb.mjs` nunca mais emite `Curl_*`
+— no-op nos 13 rigs humanos, porque o canal que eles perdem é identidade. Remover em vez
+de regerar foi deliberado: regerar refaria também o contato de pata assado pelo
+`ground-lobisomem-anims.mjs` e a CHR3 junto.
+
+**Mutantes:** `select-inflate.mjs --mutate=curltwist` devolve a torção medida (lobisomem
+p99 0,511 → 0,808, ruins 14,5 → 44,6, VERMELHO; `mandrake`/`pagodeiro` não se movem, e
+está certo — o rig deles não tem `Curl_*` com peso). `miticos-lobisomem-integration-check
+--mutate=curltwist` RECONSTRÓI o canal no documento e o portão o acha sozinho.
+
+**`CURL_MAX` (`glbchars.js`) é LIMITE, não conserto — e hoje não morde.** Com a shotgun
+que o Lobisomem carrega, `curlPara` já devolve 0,35, o piso da faixa, então
+`min(0,35, 0,50)` = 0,35. Ele existe porque a faixa 0,35-0,80 é calibrada em MÃO HUMANA
+("fecha ~0,8 rad em volta de 3 cm") e o lobo tem PATA: arco é r·θ, pata longa precisa de
+MENOS ângulo, e o `curlPara` não tem como saber porque mede a ARMA, nunca a mão. Varrido
+com os clipes já limpos (teto p99 0,675 / ruins 23,6):
+
+| teto | p99 | ruins/1e4 | |
+| --- | --- | --- | --- |
+| 0,35 (o de hoje) | 0,510 | 14,5 | passa |
+| **0,50 (o escrito)** | 0,554 | 16,9 | passa |
+| 0,55 | 0,561 | 21,7 | passa |
+| 0,60 | 0,572 | 24,1 | REPROVA |
+
+O joelho está entre 0,55 e 0,60. Trocar a arma do lobo por uma mais FINA sobe o `curlPara`
+(no limite 0,80 → ruins 35,0) e derrubaria o portão sem ninguém ter tocado no lobo; 0,50
+para essa queda com 28% de folga. Tabela explícita, com um nome só, para o valor não
+vazar para os outros 44.
+
 ---
 
 ### ~~BUG-24 · "as armas estão 1,5x do tamanho que deveriam"~~ · RESOLVIDO 04/08

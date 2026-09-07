@@ -25,7 +25,7 @@ Primeira amostragem do controlador passou CHR3; validação entre keyframes e cr
 visual ainda em andamento. Não equivale a aprovação para release.
 
 Mãos opcionais em primeira pessoa continuam visualmente fracas quando ligadas: o modo
-default segue arma בלבד, e o render com mãos existe só como evidência da limitação
+default segue arma apenas, e o render com mãos existe só como evidência da limitação
 herdada do rig compartilhado.
 
 Evidências e logs: `artifacts/miticos-review/` (fora do Git). Instrumentos:
@@ -128,12 +128,98 @@ nova arte como se fosse aprovada.
 - Leitura do GLB com `NodeIO` + `ALL_EXTENSIONS`
   - uma cena, 28 nós, uma malha, uma skin, uma animação, um material e três texturas.
 
+## Procedência dos binários (incorporada do PR #528)
+
+O PR #528 é o relatório que concluiu, sobre a `main` de 06/09, que **não existia patch
+escopado possível** para o Lobisomem: os sete binários não estavam na `main`, `GLB_CHARS`
+não listava o personagem e não havia facção Mítico, então trazer só a mídia geraria
+assets órfãos. A recomendação 1 daquele relatório era *"integração do personagem/facção
+Mítico em PR própria, com o wiring de `glbchars.js` e roster, e então validar seleção +
+partida real"*. **Este PR é esse veículo**, e por isso #528 fica supersedido — a análise
+dele não é reaplicada aqui como documento, só o que nela é fato duradouro:
+
+| arquivo | commit de origem | blob |
+| --- | --- | --- |
+| `public/models/characters/lobisomem.glb` | `f05edaf9` | `229754f5` |
+| `public/video/chars/lobisomem.webm` | `f05edaf9` | `215bb26e` |
+| `public/video/resultado/lobisomem-derrota.webm` | `f05edaf9` | `97e4021b` |
+| `public/video/resultado/lobisomem-vitoria.webm` | `f05edaf9` | `380a6126` |
+| `public/img/chars/avatars/lobisomem.webp` | `e4f52162` | `9675a565` |
+| `public/img/resultado/lobisomem-{vitoria,derrota}.webp` | `e4f52162` | `94b7aa10` (o MESMO nos dois) |
+
+O GLB não é o "delta da cauda": ele passou por seis commits entre a base comum
+(`dc634392`) e `f05edaf9` — `4e198dfd` → `fbed2fc7` → `03fdf24d` → `9b80d299` →
+`eb1491b2` → `f05edaf9` —, indo de 1.007.904 para 2.755.204 bytes, acumulando regeração,
+retarget e retextura. A aprovação registrada na origem é incremental (66 vértices de
+cauda, 3547 preservados) e **não cobre** empunhadura nem release.
+
+Os dois pontos que #528 levantou como risco estão resolvidos ou explícitos aqui:
+
+- **retratos idênticos nos dois desfechos** (blob `94b7aa10`): deixou de ser acidente e
+  virou convenção medida — 44 dos 45 pares `.webp` publicados são byte-idênticos e 0 dos
+  45 pares `.webm` são; o desfecho vive no vídeo. O mutante `resultados` do
+  `eval:miticos-lobisomem` reprova quem foge dessa convenção.
+- **"nenhuma partida validada ainda"**: continua sendo o limite principal, agora com o
+  navegador atravessado (seção abaixo) e a revisão humana ainda pendente.
+
+## Revisão em navegador (07/09)
+
+O limite "sem navegador" do texto acima **caiu**. `tools/eval/miticos-browser-review.mjs`
+sobe Chrome com `astro dev` e mede sete pontos em 3:2, o formato de revisão do dono:
+facção (as seis placas, brasão e arte de M), seleção (avatar próprio, ficha sem
+`undefined`), palco 3D de carregamento, corpo inteiro capturado do canvas em
+`run/ready/shoot/crouch/jump`, partida viva (`MÍTICO`/`MIT`, vida 100), primeira pessoa
+(viewmodel e mira) e os dois retratos. Figuras em `artifacts/miticos-browser/`.
+
+**Bind pose:** o palco 3D roda 44 quadros e todos saem distintos, com os pares
+`ação:clipe` batendo em `run`, `shoot`, `crouch`, `crouchwalk`, `jump` e `walkfire`. O
+personagem não herda bind pose — é a mesma régua que o `screen-query-browser.mjs` cobra
+do Time B.
+
+**Defeito achado e consertado aqui:** `LOADING_CHARACTER_IDS` (`public/js/loading3d.js`)
+tinha cinco facções e o fallback `|| .E` engolia a sexta em silêncio — quem escolhia
+MÍTICO via **GOTINHA, do Time E**, girando na tela de carregamento. É o mesmo defeito de
+"puxar gente de outra facção" que esta lane consertou no roster, um andar acima, e nenhuma
+régua olhava para lá porque o dicionário sempre devolvia alguém. A invariante nova cobre
+**todas** as facções do `FACCOES`, não só a M, com mutante `loading`.
+
+**Armadilha registrada:** na rota `?tela=personagem` o preview 3D da seleção sai como o
+boneco procedural de caixas. Isso **não** é defeito do Lobisomem: a rota de inspeção
+direta não roda o preload dos GLB e o elenco inteiro cai no fallback. Conferido lado a
+lado com `mandrake`, personagem publicado — mesma tela, mesmo boneco.
+
+## Chão: o que o contato de pata não media (BUG-148)
+
+O contato de pata (CHR3) está em `1e-7 m` — melhor que o elenco. Mas ele só olha os ossos
+de **perna**. Olhando a malha inteira, o quadril do lobo fica **45 cm abaixo do chão** na
+morte: o cadáver afunda em vez de deitar. A causa é a malha, não o esqueleto — no mesmo
+clipe o `Hips` para na mesma altura do `mandrake` (0,138 × 0,129), mas o corpo do lobo
+desce 0,59 m abaixo do próprio quadril contra 0,18 m.
+
+**E o Lobisomem não é o pior — é o terceiro.** `proerd` (-0,7771) e `canarinho` (-0,7484)
+já estão no ar e nunca foram acusados. Não é regressão desta lane; é uma classe sem régua.
+`npm run eval:chao` (CHR7) passou a travar o estado de hoje por personagem, com mutante
+`afunda`, e a decisão de não consertar aqui está justificada no BUG-148.
+
 ## Limites antes de release
 
-Não houve navegador nem partida manual neste trabalho. Os gates provam registro, assets,
-formato e contratos de seleção; não substituem revisão humana de pose, contato da escopeta,
-animação e resultado dentro de uma partida real. O candidato requer essa revisão antes de
-merge ou release.
+Houve navegador (seção acima); **não houve partida jogada por gente**. Os gates e as
+figuras provam registro, assets, formato, contratos de seleção, troca de ação e
+enquadramento de retrato — e **não** substituem revisão humana de pose, contato da
+escopeta, animação e resultado dentro de uma partida real. O candidato requer essa
+revisão antes de merge ou release.
+
+Três pontos que só uma pessoa decide, todos visíveis nas figuras de
+`artifacts/miticos-browser/`:
+
+1. **Cópia da tela de resultado:** lê-se "MÍTICO VENCERAM A TRETA" — nome no singular num
+   molde plural que serve FUNKEIROS/PALHAÇOS. Ou a facção vira "MÍTICOS", ou o molde
+   ganha exceção. Não foi mexido aqui porque é decisão de marca, não defeito de código.
+2. **Contador do elenco:** "MÍTICO · 1 PERSONAGENS" — o mesmo molde, com uma facção de um
+   personagem só.
+3. **Time inteiro de clones:** com um personagem para 4-8 vagas, o roster repete o mesmo
+   Lobisomem dos dois lados (o próprio `pickMatchRoster` avisa no log). É consequência
+   direta de a facção ter um candidato; some quando o segundo Mítico entrar.
 
 Fica aberto, fora do escopo desta lane: `lobisomem` não tem perfil físico de áudio
 (`CHARACTER_IDS` em `tools/audio/fab-game-local.mjs`), o que mantém `eval:audiofablocal`

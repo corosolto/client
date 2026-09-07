@@ -3,12 +3,18 @@ import { CHARACTERS, charWeapon } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { criaRenderer } from './glcontext.js';
 
+/* UM POR FACÇÃO, e a facção manda. Sem a entrada, o `|| .E` lá embaixo mostrava GOTINHA
+   (Time E) para quem escolheu Mítico — a tela de carregamento contradizia a escolha que o
+   jogador acabou de fazer, do mesmo jeito que o roster fazia antes do #532. O fallback é
+   rede de segurança para facção desconhecida, não lugar de facção que existe: quem entra
+   no `FACCOES` do `paleta.js` entra aqui junto. Medido pelo `eval:miticos-lobisomem`. */
 export const LOADING_CHARACTER_IDS = Object.freeze({
   E: 'gotinha',
   B: 'canarinho',
   U: 'blackmetal',
   C: 'bonzo',
   F: 'mandrake',
+  M: 'lobisomem',
 });
 
 export const LOADING_ACTIONS = Object.freeze([

@@ -4,7 +4,7 @@ import { NodeIO } from '@gltf-transform/core';
 import * as THREE from '../../public/vendor/three.module.js';
 
 const mutant = (process.argv.find(a => a.startsWith('--mutate=')) || '').split('=')[1];
-if (mutant && !['sem-lobisomem', 'roster', 'links', 'gloves', 'resultados', 'clipes', 'curltwist'].includes(mutant)) throw new Error(`Mutante desconhecido: ${mutant}`);
+if (mutant && !['sem-lobisomem', 'roster', 'links', 'gloves', 'resultados', 'clipes', 'curltwist', 'loading'].includes(mutant)) throw new Error(`Mutante desconhecido: ${mutant}`);
 const read = (file) => readFileSync(file, 'utf8');
 let characters = read('public/js/characters.js');
 if (mutant === 'sem-lobisomem') characters = characters.replace("{ id: 'lobisomem'", "{ id: 'mutado'" );
@@ -146,6 +146,36 @@ for (const [arq, doc] of docs) {
 }
 expect(!torcidos.length,
   `clipe do Lobisomem escreve nos ossos de curl (o runtime perde o fechamento da mão e a pata torce):\n  ${torcidos.join('\n  ')}`);
+
+/* ── A TELA DE CARREGAMENTO TAMBÉM É UMA FACÇÃO ───────────────────────────────────
+   `LOADING_CHARACTER_IDS` (loading3d.js) escolhe quem posa no palco 3D enquanto o mapa
+   monta, e o `|| LOADING_CHARACTER_IDS.E` no fim é fallback para facção DESCONHECIDA.
+   Com M fora do mapa, o fallback engolia a escolha em silêncio: quem clicava em MÍTICO
+   via GOTINHA, do Time E, girando na tela — o mesmo defeito de "puxar gente de outra
+   facção" que esta lane consertou no roster, um andar acima. Nenhuma régua olhava aqui
+   porque o objeto é um dicionário estático e sempre devolvia ALGUÉM.
+   A invariante é sobre TODAS as facções, não só a M: quem entra em `FACCOES`
+   (paleta.js) entra aqui junto, com personagem da própria facção e com GLB — um id sem
+   modelo deixa o palco vazio (`dataset.error = 'modelo-ausente'`). Medido no navegador
+   por `tools/eval/miticos-browser-review.mjs`, que foi quem achou. */
+const loading3d = read('public/js/loading3d.js');
+const paleta = read('public/js/paleta.js');
+const faccoes = (paleta.match(/export const FACCOES = \[([^\]]*)\]/) || [])[1]
+  ?.match(/'([A-Z])'/g)?.map((f) => f.slice(1, -1)) || [];
+expect(faccoes.length >= 6, `FACCOES não foi lido do paleta.js: ${JSON.stringify(faccoes)}`);
+let mapaLoading = (loading3d.match(/LOADING_CHARACTER_IDS = Object\.freeze\(\{([\s\S]*?)\}\)/) || [])[1] || '';
+if (mutant === 'loading') mapaLoading = mapaLoading.replace(/\n\s*M: '[^']*',/, '');
+const porFaccao = Object.fromEntries([...mapaLoading.matchAll(/([A-Z]):\s*'([^']+)'/g)].map((m) => [m[1], m[2]]));
+const glbChars = read('public/js/glbchars.js');
+for (const f of faccoes) {
+  const id = porFaccao[f];
+  expect(!!id, `facção ${f} não tem personagem no palco de carregamento — o fallback mostra o Time E no lugar dela (loading3d.js)`);
+  if (!id) continue;
+  const dono = new RegExp(`\\{ id: '${id}',[^}]*team: '([A-Z])'`).exec(characters)?.[1]
+    || new RegExp(`id: '${id}',\\s*team: '([A-Z])'`).exec(characters)?.[1];
+  expect(dono === f, `palco de carregamento da facção ${f} usa '${id}', que é da facção ${dono}`);
+  expect(glbChars.includes(`'${id}'`), `palco de carregamento da facção ${f} usa '${id}', que não está em GLB_CHARS — o palco fica vazio`);
+}
 
 if (mutant) {
   if (!failures.length) throw new Error('mutação não foi pega');
