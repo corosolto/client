@@ -1,8 +1,10 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { NodeIO } from '@gltf-transform/core';
+import * as THREE from '../../public/vendor/three.module.js';
 
 const mutant = (process.argv.find(a => a.startsWith('--mutate=')) || '').split('=')[1];
-if (mutant && !['sem-lobisomem', 'roster', 'links', 'gloves', 'resultados', 'clipes'].includes(mutant)) throw new Error(`Mutante desconhecido: ${mutant}`);
+if (mutant && !['sem-lobisomem', 'roster', 'links', 'gloves', 'resultados', 'clipes', 'curltwist'].includes(mutant)) throw new Error(`Mutante desconhecido: ${mutant}`);
 const read = (file) => readFileSync(file, 'utf8');
 let characters = read('public/js/characters.js');
 if (mutant === 'sem-lobisomem') characters = characters.replace("{ id: 'lobisomem'", "{ id: 'mutado'" );
@@ -77,6 +79,73 @@ const index = JSON.parse(read('public/models/anims/index.json'));
 if (mutant === 'clipes') delete index.clipes.lobisomem;
 expect(index.estados.every(state => index.clipes.lobisomem?.includes(state)), 'Lobisomem sem clipes próprios obrigatórios');
 expect(existsSync('public/models/anims/lobisomem.glb'), 'pack mesclado do Lobisomem ausente');
+
+/* ── OS OSSOS DE CURL SÃO DO RUNTIME, NÃO DO CLIPE ────────────────────────────────
+   `Curl_L`/`Curl_R` não são ossos de animação: são o atuador do fechamento da mão, que
+   o `buildCharacterModel` escreve UMA vez (glbchars.js, bloco "Grip curl") com o ângulo
+   tirado da espessura medida da arma. Canal de clipe neles é sobrescrita por quadro: o
+   grip curl morre e a arma fica na pata aberta.
+   POR QUE ISTO É PORTÃO, e não conselho: em 06/09 o `retarget-glb.mjs` assou 0,8763 rad
+   de TORÇÃO (x=0,293 y=-0,544 z=-0,621) nesses ossos nos 11 clipes do Lobisomem — nos 13
+   outros rigs com `Curl_*` o mesmo tool sai IDENTIDADE (0,0000 rad), então nada nas
+   réguas de asset acusava. O efeito era 12,55% do peso de skin da pata torcendo todo
+   quadro: `npm run eval:select` foi a 13 reprovados (p99 0,694 / ruins 36,2 no lobo)
+   num portão que declara no máximo 12. Depois do `tools/strip-curl-tracks.mjs`: p99
+   0,511 / ruins 14,5 — melhor que o `mandrake`, que é referência elogiada.
+   A tolerância é 1e-4 rad e não zero: quaternion vai e volta de float32 no GLB, então
+   exigir igualdade exata reprovaria por ruído de arredondamento, não por defeito. */
+const TOL_CURL = 1e-4;
+const io = new NodeIO();
+const clipesLobo = ['public/models/anims/lobisomem.glb',
+  ...index.estados.concat(index.opcionais || []).map(s => `public/models/anims/lobisomem/${s}.glb`)]
+  .filter(existsSync);
+expect(clipesLobo.length >= 1 + index.estados.length, 'clipes do Lobisomem sumiram do disco');
+const docs = [];
+for (const arq of clipesLobo) docs.push([arq, await io.read(arq)]);
+
+/* MUTANTE DE VERDADE, não carimbo. Ele RECONSTRÓI o canal de `Curl_R` em memória com a
+   torção medida no disco em 06/09 e deixa o laço de baixo achá-lo sozinho. Um mutante que
+   só empurrasse a mensagem na lista de falhas provaria que a string existe — não que a
+   régua enxerga o defeito. Como o conserto apagou o canal, o mutante precisa CRIAR um:
+   é exatamente o que uma regeração do `retarget-glb.mjs` sem a guarda faria. */
+if (mutant === 'curltwist') {
+  const [, doc] = docs[0];
+  const alvo = doc.getRoot().listNodes().find(n => n.getName() === 'Curl_R');
+  const anim = doc.getRoot().listAnimations()[0];
+  if (!alvo || !anim) throw new Error('mutante curltwist: sem Curl_R ou sem animação para mutar');
+  const torto = new THREE.Quaternion().fromArray(alvo.getRotation())
+    .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0.293, -0.544, -0.621, 'XYZ')));
+  const buf = doc.getRoot().listBuffers()[0] || doc.createBuffer();
+  const samp = doc.createAnimationSampler()
+    .setInput(doc.createAccessor().setType('SCALAR').setBuffer(buf).setArray(new Float32Array([0, 1])))
+    .setOutput(doc.createAccessor().setType('VEC4').setBuffer(buf).setArray(new Float32Array([...torto.toArray(), ...torto.toArray()])))
+    .setInterpolation('LINEAR');
+  anim.addSampler(samp);
+  anim.addChannel(doc.createAnimationChannel().setTargetNode(alvo).setTargetPath('rotation').setSampler(samp));
+}
+
+const torcidos = [];
+for (const [arq, doc] of docs) {
+  for (const anim of doc.getRoot().listAnimations()) {
+    for (const ch of anim.listChannels()) {
+      const no = ch.getTargetNode();
+      if (!no || !/^Curl_/.test(no.getName())) continue;
+      if (ch.getTargetPath() !== 'rotation') { torcidos.push(`${arq}·${anim.getName()}·${no.getName()} (${ch.getTargetPath()})`); continue; }
+      const out = ch.getSampler().getOutput().getArray();
+      const inv = new THREE.Quaternion().fromArray(no.getRotation()).invert();
+      const q = new THREE.Quaternion(), e = new THREE.Euler();
+      let pior = 0;
+      for (let i = 0; i + 3 < out.length; i += 4) {
+        q.set(out[i], out[i + 1], out[i + 2], out[i + 3]);
+        e.setFromQuaternion(inv.clone().multiply(q), 'XYZ');
+        pior = Math.max(pior, Math.hypot(e.x, e.y, e.z));
+      }
+      if (pior > TOL_CURL) torcidos.push(`${arq}·${anim.getName()}·${no.getName()} |delta|max=${pior.toFixed(4)} rad`);
+    }
+  }
+}
+expect(!torcidos.length,
+  `clipe do Lobisomem escreve nos ossos de curl (o runtime perde o fechamento da mão e a pata torce):\n  ${torcidos.join('\n  ')}`);
 
 if (mutant) {
   if (!failures.length) throw new Error('mutação não foi pega');

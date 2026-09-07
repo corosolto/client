@@ -618,7 +618,31 @@ export function buildCharacterModel(def, opts = {}) {
       // mão humana fecha ~0,8 rad em volta de 3 cm e ~0,35 rad em volta de 9 cm
       return Math.max(0.35, Math.min(0.80, 0.80 - (esp - 0.03) * (0.45 / 0.06)));
     };
-    const curl = gunObj ? curlPara(gunObj) : 0.5;
+    /* TETO DE CURL POR PERSONAGEM — LIMITE, NÃO CONSERTO. Honestidade primeiro: com a
+       arma que o Lobisomem carrega hoje (shotgun) o `curlPara` acima devolve 0,35 — o
+       PISO da faixa —, então `min(0,35, 0,50)` = 0,35 e este teto NÃO morde. Quem
+       consertou o balão da pata foi tirar a TORÇÃO que os clipes retargetados escreviam
+       nos próprios ossos de curl (`tools/strip-curl-tracks.mjs`): p99 0,694 -> 0,511 e
+       ruins/1e4 36,2 -> 14,5 na régua do portão, com este valor sem efeito nenhum.
+       Então por que existir: a faixa 0,35-0,80 é calibrada em MÃO HUMANA ("fecha ~0,8 rad
+       em volta de 3 cm") e o lobo tem PATA — a maior região de curl do elenco (vértices
+       dominados por `Curl_R` a P95 22,6 cm do osso, contra 15,0-20,5 cm nos outros 13
+       rigs com `Curl_*`). Arco é r·θ: pata longa precisa de MENOS ângulo, e o `curlPara`
+       não tem como saber, porque ele mede a ARMA e nunca a mão. Varrido com os clipes já
+       limpos (`npm run eval:select`, teto p99 0,675 / ruins 23,6):
+           0,35 (o de hoje) -> p99 0,510  ruins 14,5   PASSA
+           0,50 (este teto) -> p99 0,554  ruins 16,9   PASSA
+           0,55             -> p99 0,561  ruins 21,7   PASSA
+           0,60             -> p99 0,572  ruins 24,1   REPROVA
+       O joelho está entre 0,55 e 0,60. Trocar a arma do lobo por uma mais FINA sobe o
+       `curlPara` (no limite 0,80 -> ruins 35,0) e derruba o portão de novo sem que
+       ninguém tenha tocado no lobo; 0,50 para essa queda com 28% de folga. TABELA
+       EXPLÍCITA, com um nome só, para que o valor não vaze para os outros 44 — quem não
+       está aqui continua idêntico ao que era. */
+    const CURL_MAX = { lobisomem: 0.50 };
+    const tetoCurl = CURL_MAX[def.id];
+    let curl = gunObj ? curlPara(gunObj) : 0.5;
+    if (tetoCurl != null) curl = Math.min(curl, tetoCurl);
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) b.rotation.x += curl;
     if (twoHanded) for (const b of curlLs) b.rotation.x += curl;
