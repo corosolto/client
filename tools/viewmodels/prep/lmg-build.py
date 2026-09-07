@@ -214,6 +214,36 @@ def main():
         separated.append(part)
     body = mint
 
+
+    # cinto do doador: verts do MG5 com peso dominante em Bag/bullet* ficam
+    # como malha própria COM OS PESOS ORIGINAIS do pack (o cinto balança no
+    # reload e aparece na inspeção)
+    dominant = {}
+    for v in mg5.data.vertices:
+        best, bw = None, -1.0
+        for g in v.groups:
+            if g.weight > bw:
+                bw, best = g.weight, mg5.vertex_groups[g.group].name
+        dominant[v.index] = best
+    belt_names = {'Bag'} | {f'bullet_{i:03d}' for i in range(22)} | {'bullet'}
+    bpy.ops.object.select_all(action='DESELECT')
+    mg5.select_set(True)
+    bpy.context.view_layer.objects.active = mg5
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for i, name in dominant.items():
+        if name in belt_names:
+            mg5.data.vertices[i].select = True
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.separate(type='SELECTED')
+    bpy.ops.object.mode_set(mode='OBJECT')
+    belt = next(o for o in bpy.data.objects if o.name.startswith('GEO_WEAPON_LMG_MG5') and o is not mg5)
+    belt.name = 'GEO_LMG_DONOR_BELT'
+    belt_count = len(belt.data.vertices)
+    report['parts']['belt'] = {'name': belt.name, 'vertices': belt_count}
+    assert belt_count > 2000, f'cinto pequeno demais: {belt_count}'
+
     # --- assa o ajuste direto nos vértices (import glTF deixa empty pai: transform_apply não basta) ---
     all_meshes = [body] + separated
     fit = wrig.matrix_world @ Matrix.Translation(delta) @ rot @ Matrix.Scale(scale, 4)
@@ -259,6 +289,7 @@ def main():
     for part in separated:
         skin(part, BONE_FOR[part.name])
     report['parts']['skinned'] = {'GEO_LMG_MINT_BODY': BODY_BONE, **{p.name: BONE_FOR[p.name] for p in separated}}
+
     bpy.data.objects.remove(mg5, do_unlink=True)
 
     # --- sockets no espaço do rig, presos ao receiver ---
@@ -412,7 +443,8 @@ def main():
                ('GEO_LMG_MINT_BODY', 'CoroSolto_WEAPON_BODY', (0.20, 0.22, 0.25), 0.35),
                ('GEO_LMG_MINT_COVER', 'CoroSolto_WEAPON_COVER', (0.26, 0.28, 0.31), 0.35),
                ('GEO_LMG_MINT_BOX', 'CoroSolto_WEAPON_BOX', (0.30, 0.28, 0.18), 0.2),
-               ('GEO_LMG_MINT_LEVER', 'CoroSolto_WEAPON_LEVER', (0.35, 0.33, 0.28), 0.5)]
+               ('GEO_LMG_MINT_LEVER', 'CoroSolto_WEAPON_LEVER', (0.35, 0.33, 0.28), 0.5),
+               ('GEO_LMG_DONOR_BELT', 'CoroSolto_Bullet', (0.54, 0.36, 0.09), 0.7)]
     for obj_name, mat_name, color, metal in mat_for:
         o = bpy.data.objects.get(obj_name)
         if o is None or o.type != 'MESH':

@@ -14,6 +14,16 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '../../..');
 const SOURCE = path.resolve(REPO_ROOT, '../vm-astra-pistol');
 const NM = path.join(SOURCE, 'node_modules');
+// GLTFLoader resolve texturas embutidas via Image/createImageBitmap: em Node,
+// stub que resolve imediatamente (a régua só lê geometria/animação)
+globalThis.self = globalThis;
+globalThis.window = globalThis;
+globalThis.Image = class {
+  set src(_) { setTimeout(() => this.onload && this.onload(), 0); }
+};
+if (!globalThis.createImageBitmap) {
+  globalThis.createImageBitmap = async () => ({ width: 1, height: 1 });
+}
 const { AnimationMixer, LoopOnce, Vector3 } = await import(`${NM}/three/index.js`);
 const { GLTFLoader } = await import(`${NM}/three/addons/loaders/GLTFLoader.js`);
 
@@ -233,6 +243,23 @@ async function mutate(file, kind) {
   return tmp;
 }
 
+async function eventsRuler() {
+  const assembly = JSON.parse(await fs.readFile(path.join(OUTDIR, 'assembly-report.json'), 'utf8'));
+  const out = {};
+  for (const clip of assembly.clips) {
+    if (!clip.name.startsWith('reload')) continue;
+    const bag = clip.mechanism.find((m) => m && m.bone === 'Bag');
+    if (!bag) return { fail: `sem evento de caixa em ${clip.name}` };
+    if (Math.abs(bag.at_s - 3.1) > 0.25) return { fail: `${clip.name}: caixa em ${bag.at_s}s (alvo 3,1)` };
+    const rates = clip.warp.anchors.slice(1).map(([t1, o1], i) =>
+      (o1 - clip.warp.anchors[i][1]) / (t1 - clip.warp.anchors[i][0]));
+    const maxRate = Math.max(...rates);
+    if (maxRate > 2.5) return { fail: `${clip.name}: trecho ${maxRate.toFixed(2)}x (lentidão não é peso)` };
+    out[clip.name] = { bag_peak_s: bag.at_s, max_rate: Number(maxRate.toFixed(2)) };
+  }
+  return { events: out };
+}
+
 async function main() {
   const selftest = process.argv.includes('--selftest');
   const report = { target: RUNTIME };
@@ -247,6 +274,11 @@ async function main() {
         process.exitCode = 1;
       }
     }
+  }
+  report.events = await eventsRuler();
+  if (report.events.fail) {
+    console.error(`EVENTOS REPROVADOS: ${report.events.fail}`);
+    process.exitCode = 1;
   }
   report.target_result = await measure(RUNTIME);
   await fs.writeFile(path.join(OUTDIR, 'verify-report.json'), `${JSON.stringify(report, null, 2)}\n`);
