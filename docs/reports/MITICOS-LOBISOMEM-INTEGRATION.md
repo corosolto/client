@@ -119,12 +119,17 @@ nova arte como se fosse aprovada.
     mídia e imagem atualizadas para os hashes publicados; `UIR19` verde com 90/90 recortes.
   - `--mutante=resultado-sem-alpha`, `--mutante=resultado-derrota-sem-alpha` e
     `--mutante=resultado-nao-auditado` ficaram vermelhos em `UIR19`/`UIA1`.
-- `npm run check:fast`
-  - 121/124. As três reprovações são anteriores a este trabalho e fora dos arquivos tocados:
-    `audio:check` e `eval:audiofablocal` (pacote de áudio não baixado no worktree; além
-    disso `CHARACTER_IDS` em `tools/audio/fab-game-local.mjs` tem 44 ids e não inclui
-    `lobisomem`, então `LAB8e` marca 44/45) e `eval:grafitelayout` (layout do Escadão
-    defasado, outra lane).
+- `npm run check:fast` (07/09, depois do merge da `main` em `2.0.0-alpha.239`)
+  - **125/127.** As duas reprovações são anteriores a este trabalho e fora dos arquivos
+    tocados: `audio:check` (pacote Fab não baixado neste worktree — `manifest.json
+    DEFASADO em relação ao disco`) e `eval:grafitelayout` (a geometria do Escadão mudou na
+    `main` e o layout não foi regerado; esta branch não toca nenhum `map_*.js`).
+  - Passaram a verde no caminho: `eval:audiofablocal` (o id entrou em `CHARACTER_IDS`,
+    BUG-147), `feet:check` (`foot-offsets.json` regerado; os 44 offsets saíram idênticos,
+    só o carimbo estava velho), `eval:comentario` (CM1 — os comentários voltaram ao teto
+    de 2 linhas e a evidência virou BUG-149), `docs:check`, `arch:check` e
+    `eval:docsautoria`.
+- `npm run build` — completo, com a poda do publicado.
 - Leitura do GLB com `NodeIO` + `ALL_EXTENSIONS`
   - uma cena, 28 nós, uma malha, uma skin, uma animação, um material e três texturas.
 
