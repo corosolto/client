@@ -305,6 +305,7 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   const golden = sourceKey.startsWith('gold#');
   // A trilha retarget ainda não tem enquadramento medido: a manga do pack entra
   // por cima da arma e o C5 só fecha escondendo o cano (VIEWMODEL-INVENTARIO).
+
   // arma assada por arma: a câmera registrada offline É o enquadramento
   const weaponDaChave = sourceKey.includes('#') ? sourceKey.split('#')[1] : '';
   const frame = golden || (weaponDaChave && VM_WEAPON[weaponDaChave]?.baked && VM_WEAPON[weaponDaChave]?.runtime !== 'family')
