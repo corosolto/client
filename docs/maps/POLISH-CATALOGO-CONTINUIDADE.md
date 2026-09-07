@@ -24,7 +24,7 @@ declaração de preload com placement ou aprovação. O harness não carrega GLB
 | P1 / B | Mansão do Joá / recuperação em curso | Ausente desta base; construtor, catálogo, água, praia e ambiência recuperados em outra lane. | Mármore streetart, gramado, deck e concreto já existem; GLB/ambiência próprios da lane Joá. | Inventariar/portar seletivamente o candidato quando estabilizado; capturar interior, jardim, mezanino e praia. Não importar branch histórica inteira. |
 | P1 / C | Posto da Treta / Emerson Garrido | Marquise, bombas e pátio procedurais; escala de textura baixa, props sem unidade entre fachadas e rodovia. | Frota BR Mint, quiosque, gás, cooler, barreiras e bairro; todos os preloads presentes no disco. | Marquise/fachada e piso; depois sinalização, frota e horizonte. Não alterar fila/cover/rotas. |
 | P1 / C | Atacadão / Emerson Garrido | Galpão e grandes planos com textura esticada; estacionamento e interior pouco articulados. | Gôndolas, caixas, carrinhos, frota BR e fachadas. | Fachada industrial, módulos de piso e cobertura, materiais por função; props só após orçamento runtime. |
-| P1 / C | UPA 24h / Emerson Garrido | Blocos de atendimento com mobiliário de comércio reaproveitado; falta identidade de equipamento de saúde. | Manequim, gôndolas, painel de TVs, caixa e cooler; registros Mint encontrados. | Arquitetura/placas/assentos e materiais laváveis; substituir móveis visualmente sem deslocar seus volumes de gameplay. |
+| P1 / C | UPA 24h / Emerson Garrido | Blocos de atendimento com placas, cadeiras, macas, monitores, respiradores e cadeira de rodas procedurais; props comerciais reaproveitados. Coerência visual a confirmar em captura. | Manequim, gôndolas, painel de TVs, caixa e cooler; registros Mint encontrados. | Arquitetura/placas/assentos e materiais laváveis; substituir móveis visualmente sem deslocar seus volumes de gameplay. |
 | P1 / C | Obras da Prefeitura / Emerson Garrido | Lajes, pilares e solo básicos; repetição do kit e entorno genérico. | Guindaste, entulho, barreiras, caminhão e bairro. | Estrutura/concreto/formas, terra e tapumes; não alterar circulação nem corrigir nesta lane o balanceamento herdado. |
 | P2 / D | Sertão da Treta / Ubiracy Santos | Já possui arquitetura, flora, fauna e horizonte especializados; outra lane trabalha casas/pôr do sol. | Kit Sertão, arquitetura e vegetação com FONTE e builders próprios. | Revisão de consistência com catálogo e A/B após absorção seletiva do candidato. Evitar regressão sobre trabalho existente. |
 | P2 / E | Amazônia, Escadão, Lajes, Córrego / autoria do catálogo | Passes recentes de casario, bioma, fauna e horizonte; não recomeçar. | Kits Mint/CC0, texturas e contratos específicos, ver JSON e FONTE. | Baseline 3:2 e harmonização apenas onde evidência pedir. |
@@ -40,7 +40,7 @@ declaração de preload com placement ou aprovação. O harness não carrega GLB
 - O avião `public/models/props/aviao_faixa.glb` existe. `docs/SKYLIFE.md` documenta
   geração Mint, divisão animável e revisão técnica. `skylife.js` implementa faixa e
   trajetória, mas a base não tem chamada com `planes:`; portanto o avião com banner
-  **não está aplicado ao catálogo atual**. Córrego usa pipa/helicóptero; Amazônia usa aves.
+  **não está aplicado ao catálogo atual**. Córrego usa pipa/helicóptero/arara; Amazônia usa aves.
   Lajes usa outro sistema aéreo e outro avião, o 14-bis; não contar isso como entrega da faixa.
 - O avião com faixa será avaliado no lote B, em passagem espaçada, sem colisão/sombra,
   respeitando a degradação low já implementada. Texto da faixa será editorial próprio.
@@ -79,7 +79,7 @@ ou afirmar reconstrução 1:1. Modelagem do lote A será original em código.
 ## Marcos, aceitação e próximo passo
 
 - Validado: isolamento em nova worktree; base atual; dependências próprias Node 23;
-  inventário estático e assinatura de colisores, occluders, spawns, CTF, pickups e grafo
+  inventário estático e assinatura estática de colisores, occluders, spawns, CTF, pickups e grafo
   antes de editar Parque/Penitenciária em `baseline/inventory.json`.
 - Em andamento: baseline do jogo local Astro `http://127.0.0.1:8192`, imagens 1200×800;
   implementação lote A, A/B e crítica independente.
@@ -90,3 +90,58 @@ ou afirmar reconstrução 1:1. Modelagem do lote A será original em código.
 - Próximo passo: concluir baseline A, aplicar superfícies/contexto, comparar assinatura
   de gameplay e custo real do browser, verificar `eval:parquewheel`, `eval:penitenciaria`,
   contratos, spawns, CTF, shader budget e build; registrar commit/evidência neste ledger.
+
+### Revisão independente do inventário
+
+Crítico somente leitura confirmou autoria, vínculo Campinho–Quebrada e ausência do avião
+com faixa em callsites. Corrigida descrição da UPA para preservar seu kit hospitalar;
+o gerador agora resolve também caminhos/hashes/origem da ambiência declarada.
+Carregamentos internos fora do registro ainda precisam de auditoria runtime. A assinatura
+é estática: não cobre animação, função de altura/lentidão ou visibilidade de material;
+os gates funcionais e o A/B continuam obrigatórios.
+
+### Lote A — implementação e primeira validação
+
+O checkpoint inicial de inventário é `087f6fdc`. O lote A adiciona
+`map_visual_surfaces.js`: UV com escala física e cache de geometria; entorno original
+modelado em código, sem asset adquirido/gerado por serviço. Parque recebe piso paginado,
+gramado/cerca viva menos saturados, palmeiras, pérgolas e casario externo. Penitenciária
+recebe escala de concreto e massa de pavilhões fora do muro. As estruturas novas não
+participam de colisores/occluders nem lançam sombras; usam batches por material.
+
+`eval:mapspolish` entrou no `check:fast`. Antes da alteração, reprovou piso e entorno nos
+mapas, mantendo verde a assinatura estática. Depois, passou. Mutantes `uv`, `spawn` e
+`entorno` reprovam pelos motivos esperados; logs em `artifacts/mapas-polish/mutant-*.log`.
+A banda de densidade vem de `texel-check.mjs`/`BAR-CONSISTENCIA`, não de um teto novo.
+O piso medido passou a 64 px/m nas duas direções. A verificação de entorno mede cada
+triângulo contra os limites: nenhuma face nova acima do chão invade a arena.
+
+O runner direcionado passou em sintaxe, animação da roda, Penitenciária, contrato dos
+mapas, spawns, rodada CTF, vitória CTF e orçamento de shaders (`gates.log`). Build Astro
+passou (`build.log`). Os gerados e `docs:check` foram atualizados depois de rastrear o
+novo módulo. Isto não é execução de `check:fast` completo nem aprovação de publicação.
+
+Crítico visual independente inspecionou os pares `baseline/` × `lot-a/` e encontrou
+veios grandes na madeira e perda de contraste praça/caminho. A madeira saiu da
+normalização; a praça passou a terracota, com paginação distinta. Essas duas tentativas
+anteriores estão rejeitadas; a recaptura final deve confirmar as correções. Pavilhões
+melhoraram a massa, mas profundidade das janelas e identidade arquitetônica ainda são
+passes seguintes. O Parque continua dominado pelos brinquedos existentes.
+
+Captura automatizada: `node tools/eval/mapas-polish-capture.mjs <diretório> <ids>`,
+Astro real, Chrome/Metal, 1200×800. `BASELINE_REF=09614892` serve somente os dois
+construtores originais por interceptação local do browser, sem trocar ou editar checkouts.
+As vistas fixas são feitas logo após `live`, antes da amostra de 30 s, para evitar a
+fumaça variável que comprometia a primeira comparação. Câmera pausada para inspeção;
+a amostra de desempenho volta à partida. Não é prova de combate humano em movimento.
+`QUALITY=low` executa o mesmo percurso em qualidade baixa.
+
+Limitações observadas: pack privado de áudio ausente (`/audio/manifest.json`, fallback
+e música retornam 404). Uma sessão manual inicial produziu RangeError em
+`AudioParam.exponentialRampToValueAtTime`; as primeiras capturas automatizadas do lote A
+não tiveram erro JS. Não corrigir áudio nesta lane nem declarar o jogo integral verde.
+As primeiras métricas `calls=1` eram só o passe final do bloom e foram descartadas para
+custo: o capturador agora soma todos os passes nas vistas fixas com `info.autoReset=false`.
+
+Próximo marco: terminar `ab-before/`, `final/` e `final-low/`, revisar imagens finais,
+comparar custo, registrar hashes/commits e manter B–E pendentes na matriz integral.

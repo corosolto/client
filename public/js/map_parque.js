@@ -1,5 +1,6 @@
 // Parque da Treta: arena CTF simétrica, colorida e inteiramente procedural.
 import * as THREE from 'three';
+import { surfaceMeters, civicSurround } from './map_visual_surfaces.js';
 
 const HALF_X = 32;
 const HALF_Z = 42;
@@ -29,10 +30,13 @@ export function buildParque(scene, T) {
       }
       ctx.globalAlpha = 1;
     } else if (kind === 'concrete') {
-      ctx.fillStyle = accent;
-      for (let i = 0; i < 500; i++) ctx.fillRect(rand() * 128, rand() * 128, 0.6 + rand() * 1.8, 0.6 + rand() * 1.8);
-      ctx.strokeStyle = 'rgba(90,75,58,.25)'; ctx.lineWidth = 1;
-      for (let i = 0; i < 5; i++) { const y = rand() * 128; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(128, y + (rand() - 0.5) * 12); ctx.stroke(); }
+      for (let y=0;y<128;y+=32) for(let x=0;x<128;x+=64) {
+        ctx.fillStyle = y%64===0 ? '#c9c3b3' : '#c1bcad';
+        ctx.fillRect(x+1,y+1,62,30);
+      }
+      ctx.fillStyle = accent; ctx.globalAlpha=.15;
+      for(let i=0;i<300;i++) ctx.fillRect(rand()*128,rand()*128,1,1);
+      ctx.globalAlpha=1;
     } else if (kind === 'tiles') {
       ctx.strokeStyle = accent; ctx.lineWidth = 3;
       for (let i = 0; i <= 128; i += 32) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 128); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(128, i); ctx.stroke(); }
@@ -59,10 +63,10 @@ export function buildParque(scene, T) {
   }
 
   const SURFACE = {
-    grass: surfaceTexture('grass', '#58a94c', '#2e7f36', 10), concrete: surfaceTexture('concrete', '#e3d2ad', '#aa9878', 7),
-    tiles: surfaceTexture('tiles', '#dba93f', '#b77e27', 5), paint: surfaceTexture('paint', '#eeeeea', '#5e6772', 3),
+    grass: surfaceTexture('grass', '#71814e', '#415e37', 10), concrete: surfaceTexture('concrete', '#a49e8c', '#898575', 7),
+    tiles: surfaceTexture('tiles', '#b98c64', '#886647', 5), paint: surfaceTexture('paint', '#eeeeea', '#5e6772', 3),
     metal: surfaceTexture('metal', '#aeb6bd', '#2f3942', 3), wood: surfaceTexture('wood', '#9b6039', '#5d321f', 4),
-    hedge: surfaceTexture('hedge', '#287b48', '#174e33', 5), water: surfaceTexture('water', '#43c9f2', 'rgba(230,255,255,.6)', 3),
+    hedge: surfaceTexture('hedge', '#365e43', '#244631', 5), water: surfaceTexture('water', '#43c9f2', 'rgba(230,255,255,.6)', 3),
   };
   const lam = (opts = {}) => new THREE.MeshStandardMaterial({ roughness: 0.62, metalness: 0, map: SURFACE.paint, ...opts });
   const material = (color, surface = SURFACE.paint, roughness = 0.62, metalness = 0) => new THREE.MeshStandardMaterial({ color, map: surface, roughness, metalness });
@@ -385,6 +389,10 @@ export function buildParque(scene, T) {
     }
   }
 
+  root.traverse(mesh => {
+    if (mesh.isMesh && [MAT.grass,MAT.path,MAT.plaza,MAT.hedge].includes(mesh.material)) surfaceMeters(mesh);
+  });
+  civicSurround(root, 'parque');
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt: () => 0, slowAt: () => false, update, sun, hemi, pickups,
     spawns: {

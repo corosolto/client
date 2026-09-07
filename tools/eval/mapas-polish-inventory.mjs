@@ -10,21 +10,23 @@ fs.mkdirSync(out, { recursive: true });
 const digest = value => createHash('sha256').update(value).digest('hex');
 const registry = JSON.parse(fs.readFileSync('mint-assets.json')).assets;
 const sources = fs.readdirSync('public/js').filter(f => /^map_.*\.js$/.test(f));
+const ambientPaths = Object.fromEntries([...fs.readFileSync('public/js/ambientlife.js','utf8')
+  .matchAll(/^\s+(\w+): '(models\/[^']+\.glb)'/gm)].map(m => [m[1], `public/${m[2]}`]));
+function asset(id, file) {
+  const record = Object.entries(registry).find(([, r]) => r.files?.includes(file));
+  const exists = !!file && fs.existsSync(file);
+  return { id, file: file || null, exists, bytes: exists ? fs.statSync(file).size : null,
+    sha256: exists ? digest(fs.readFileSync(file)) : null,
+    registry: record?.[0] || null, source: record?.[1].source || null,
+    approval: 'not inferred from file presence' };
+}
 const T = await initTextures();
 const rows = [];
 for (const [id, definition] of Object.entries(MAPS)) {
   const file = sources.find(f => fs.readFileSync(`public/js/${f}`, 'utf8').includes(`export function ${definition.build.name}(`));
-  const props = (definition.props || []).map(prop => {
-    const file = `public/models/props/${prop}.glb`;
-    const record = Object.entries(registry).find(([, r]) => r.files?.includes(file));
-    const exists = fs.existsSync(file);
-    return { id: prop, file, exists, bytes: exists ? fs.statSync(file).size : null,
-      sha256: exists ? digest(fs.readFileSync(file)) : null,
-      registry: record?.[0] || null, source: record?.[1].source || null,
-      approval: 'not inferred from file presence' };
-  });
+  const props = (definition.props || []).map(prop => asset(prop, `public/models/props/${prop}.glb`));
   rows.push({ id, name: definition.name, author: autorDe(id), file: file && `public/js/${file}`,
-    props, ambience: definition.ambience || [], runtimeCapture: 'pending' });
+    props, ambience: (definition.ambience || []).map(id => asset(id,ambientPaths[id])), runtimeCapture: 'pending' });
 }
 const contracts = {};
 for (const id of ['parque_treta', 'penitenciaria']) {
