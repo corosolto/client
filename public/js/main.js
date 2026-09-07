@@ -1748,8 +1748,18 @@ function setMapMode() {
     matchMode = matchMode === 'ctf' ? 'rounds' : 'ctf';
     modoEscolhido = true;   // alternar no badge também é escolha do jogador
     ui.click();
+    /* O BADGE TROCA O MODO INTEIRO, não só o próprio rótulo. Sem estas duas linhas o
+       painel ficava se contradizendo: o eyebrow lia "PASSO 1 · A PARTIDA (CTF)" e o
+       título logo abaixo continuava "MATA-MATA" (`setupTitle` só era escrito por quem
+       veio do menu), e a tela cheia de mapas continuava mostrando os rounds do OUTRO
+       modo — `#ms-rounds` sai de `matchRounds()`, que é `rounds` ou `ctfRounds`
+       conforme `matchMode`, e nada re-renderizava depois da troca. Medido pelo
+       `eval:screenquery:browser`: badge em CTF devolvia `mode:"MATA-MATA"` e
+       `rounds:"7"` com `ctfRounds` em 3. */
+    setupTitle = matchMode === 'ctf' ? 'CAPTURE THE FLAG' : 'MATA-MATA';
     setMapMode();
     setSetupStep('match');   // o eyebrow do passo carrega o modo (PARTIDA / PARTIDA (CTF))
+    renderMapScreen();       // a tela cheia acompanha o modo (rounds por modo, ficha)
   });
 }
 let mapIdx = Math.max(0, MAP_IDS.indexOf(currentMap));
