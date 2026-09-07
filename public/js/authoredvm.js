@@ -14,7 +14,7 @@ export const AUTHORED_VM_MODELS = Object.freeze(Object.fromEntries(
   Object.entries(VM_WEAPON).map(([weapon, config]) => [weapon, config.family]),
 ));
 
-const CATALOG_VERSION = 'paid-aaa-3';
+const CATALOG_VERSION = 'paid-aaa-4';
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
@@ -228,12 +228,13 @@ const READY_OVERRIDE = new Set(
   CS16_TUDO || RETARGET_TUDO
     ? Object.keys(VM_FAMILY)
     : (_QS?.get('vmready') || '').split(',').filter(Boolean));
-const familyReady = (family) => Boolean(family)
-  && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
+const familyReady = (family, weapon = '') => Boolean(family)
+  && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family)
+    || (weapon && VM_WEAPON[weapon]?.ready === true));  // liberação por arma, não família
 const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';
   const family = AUTHORED_VM_MODELS[weapon] || '';
-  return familyReady(family) ? family : '';
+  return familyReady(family, weapon) ? family : '';
 };
 // Arma "baked" tem GLB próprio (Mint assada dentro, offline): entry por ARMA.
 const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
@@ -304,7 +305,9 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   const golden = sourceKey.startsWith('gold#');
   // A trilha retarget ainda não tem enquadramento medido: a manga do pack entra
   // por cima da arma e o C5 só fecha escondendo o cano (VIEWMODEL-INVENTARIO).
-  const frame = golden
+  // arma assada por arma: a câmera registrada offline É o enquadramento
+  const weaponDaChave = sourceKey.includes('#') ? sourceKey.split('#')[1] : '';
+  const frame = golden || (weaponDaChave && VM_WEAPON[weaponDaChave]?.baked && VM_WEAPON[weaponDaChave]?.runtime !== 'family')
     ? { x: 0, y: 0, z: 0, fov: cameraFov }
     : molde
     ? { ...(VM_FONTE === 'goldsrc'

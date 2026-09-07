@@ -65,6 +65,10 @@ export const VM_WEAPON = {
   famas: W('ar'),
   uzi: W('smg'),
   p90: W('p90', { recoilScale: 1.6 }),
+  // DMRs assadas por arma (lane vm-dmr-final): rem700 usa a família bolt
+  // (bolt_loop: clip de 5 no mag interno) e g3sg1 a g3 (pente, sem ferrolho).
+  rem700: W('bolt', { baked: true, ready: true }),
+  g3sg1: W('g3', { baked: true, ready: true }),
   svd: W('svd'),
   sks: W('marksman'),
 };

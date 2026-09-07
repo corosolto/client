@@ -9,7 +9,7 @@ const loader = new GLTFLoader();
 const _cache = new Map();
 export const WEAPON_IDS = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'pistol', 'knife',
   'm92', 'revolver38', 'md97', 'carbine', 'mosin', 'lmg', 'scar', 'famas', 'uzi', 'p90',
-  'svd', 'sks'];
+  'svd', 'sks', 'rem700', 'g3sg1'];
 // Modelos só de apresentação: não viram slot, pickup nem 27ª arma. O Bandeirante usa
 // o mosquete histórico no corpo de 3ª pessoa, enquanto a balística continua no id `mosin`.
 const DISPLAY_MODEL_IDS = ['mosquete'];
@@ -41,6 +41,9 @@ const MODEL_ALIAS = {};   // as 3 snipers novas têm modelo próprio (Mint)
    `back` medido no proprio GLB e o pull medido no vm_kick_sim.json — nao e chute por arma.
    Sao exatamente as armas de coronha longa (G3/G3SG1/SKS/carbine/shotgun/bullpups). */
 const CFG = {
+  // DMRs (lane vm-dmr-final): ferrolho caçadora e semi-auto com luneta.
+  rem700:  { len: 1.15, rot: [0, 270, 0], gripZ: 0.66, vm: 0.78 },
+  g3sg1:   { len: 1.12, rot: [0, 270, 0], gripZ: 0.58, vm: 0.71 },
   awp:     { len: 1.15, rot: [0, 90, 0], gripZ: 0.72, vm: 0.78 },   // vm: scope/rifle longo demais de perto (dono: "gigantesca")
   ak:      { len: 0.88, rot: [0, 270, 0], gripZ: 0.62 },  // +180: estava coronha em +Z (invertido)
   m4:      { len: 0.84, rot: [0, 90, 0], gripZ: 0.62 },
