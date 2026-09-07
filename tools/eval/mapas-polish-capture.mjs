@@ -28,10 +28,20 @@ try {
       await page.goto(`${base}/?debug=1&map=${id}&auto=E,lula&perfilauto=0`, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 120000 });
       const liveMs = Date.now() - started;
+      await page.waitForFunction(async id => {
+        const {MAPS}=await import('/js/maps.js'); const {hasProp}=await import('/js/mapprops.js');
+        return (MAPS[id].props||[]).every(hasProp);
+      },id,{timeout:45000});
+      await page.waitForTimeout(1500);
       const views = id === 'parque_treta' ? [
         ['south', [3,1.7,-32], [0,3,0]], ['west', [-27,1.7,-12],[-10,3,6]],
+        ['coreto',[-18,1.7,-14],[-25,3,-22.5]],
       ] : id === 'penitenciaria' ? [
         ['south', [0,1.7,-38],[0,4,15]], ['yard', [12,1.7,0],[-30,6,10]],
+        ['galeria',[8,1.7,1],[0,3,-10]], ['campo',[14,1.7,29],[0,1,20]],
+      ] : id === 'campomorro' ? [
+        ['field-mouth',[-23,1.45,0],[0,1,0]], ['field-eye',[-4,1.57,5],[18,1.57,-2]],
+        ['galpao-eye',[30.5,2.65,-23.5],[22,2.65,-20.5]], ['overview',[0,18,28],[0,-.2,-4]],
       ] : [];
       const viewsMetrics = [];
       for (const [label, from, to] of views) {
