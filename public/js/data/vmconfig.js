@@ -22,10 +22,10 @@ export const VM_FAMILY = {
   revolver: { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'pistol', camShake: 'Pistol_Heavy', reloadStyle: 'cylinder' },
   shotgun:  { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Shotgun', reloadStyle: 'pump_loop', cs16: { draw: 1.0, shoot: 1.156 } },
   // belt: a M249 alimenta por cinto/caixa — não há pente destacável para a mão
-  // buscar, e cobrar um da régua seria cobrar mentira. Pronta em 07/09 com
-  // runtime próprio (Mint + mecanismo, eventos sincronizados com o áudio):
-  // docs/reports/VM-LMG-FINAL.md.
-  lmg:      { ready: true, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Heavy', reloadStyle: 'belt', cs16: { draw: 1.0, reload: 4.667, shoot: 0.5 } },
+  // buscar, e cobrar um da régua seria cobrar mentira. A versão de 07/09 foi
+  // REPROVADA em revisão humana (screenshots em artifacts/…/review-2026-09-07;
+  // diagnóstico e handoff em docs/reports/VM-LMG-FINAL.md).
+  lmg:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Heavy', reloadStyle: 'belt', cs16: { draw: 1.0, reload: 4.667, shoot: 0.5 } },
   // A granada já funcionava antes deste conserto (bind no hand_r, sem o bug do
   // socket) — nasce ready para não regredir o arremesso que o jogo usa hoje.
   grenade:  { ready: true, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Pistol', reloadStyle: 'mag' },

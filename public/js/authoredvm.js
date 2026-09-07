@@ -14,7 +14,7 @@ export const AUTHORED_VM_MODELS = Object.freeze(Object.fromEntries(
   Object.entries(VM_WEAPON).map(([weapon, config]) => [weapon, config.family]),
 ));
 
-const CATALOG_VERSION = 'paid-aaa-4';
+const CATALOG_VERSION = 'paid-aaa-3';
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]

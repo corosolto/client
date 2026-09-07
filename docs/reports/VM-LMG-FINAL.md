@@ -1,9 +1,58 @@
-# VM-LMG-FINAL — viewmodel LMG FINAL (METRALHA "TRETA PESADA")
+# VM-LMG-FINAL — viewmodel LMG (METRALHA "TRETA PESADA") — REPROVADA em 07/09
 
 Worktree exclusiva `vm-lmg-final`, branch `glm/vm-lmg-final`, base `d35c6658`
-(fechamento local da faca). Escopo exclusivo: `lmg`. **Versão final integrada**
-na rota autorada da família com `ready: true`; merge/release continuam pendentes
-de decisão do dono, e aprovação visual informal dele não substitui o release.
+(fechamento local da faca). Escopo exclusivo: `lmg`.
+
+## Reprovação humana (07/09, tarde)
+
+Ruben reprovou a versão declarada final (`a3512af0`, PR #546) após sessão de
+revisão com 19 screenshots (`~/Documents/screen/`, 14:03–15:52; cópia integral
+em `artifacts/viewmodels/prep/lmg/review-2026-09-07/` com folha de contato).
+Estado revertido no mesmo dia: `ready:false` de volta, `CATALOG_VERSION` de
+volta a `paid-aaa-3`, raízes servidas restauradas dos backups
+`.pre-lmg-final.bak` (SHA `ce9921338a35cf0a…`), catálogo de volta aos bytes
+anteriores. O GLB reprovado fica preservado como
+`A/lmg-candidate/lmg-runtime-rejected.glb` (SHA `0f1df532…6104e9`).
+
+### Triagem determinística dos screenshots (`lmg-review-measure.py`)
+
+Medição por pixels dos 16 frames de tela cheia (sem depender de visão — o canal
+de análise visual do agente GLM estava instável nesta sessão e a declaração de
+"final" foi feita com verificação visual fraca; LICOES 1 aplicada a contrário):
+
+- **Luva/braço some na metade dos frames**: pixels da cor do material de luva
+  no miolo inferior caem para 87–820 nos frames 09–12, 15–17, contra
+  2.500–4.700 nos frames 07/08/13/14/18. Consistente com o relato da revisão
+  ("mão de apoio ausente"): os caminhos de mão da recarga rebaseada deixam as
+  mãos saírem do quadro (ou o enquadramento as oculta) em plena manipulação.
+- **Arma fora do quadro em plena ação**: o quadrante inferior-direito fica
+  quase preto (frac_escuro 0,797 e 0,926) nos frames 05 e 16 — o viewmodel
+  abandona a tela em momentos que não são troca de arma.
+- **Textura presente**: 34–147 mil cores únicas por quadrante — o problema não
+  é acabamento chapado (contrário da hipótese inicial da análise de folha).
+- A régua de bbox saturou (sempre 0,499 = quadrante inteiro): inútil para
+  discriminate; substituir por máscara de centro-livre antes da próxima rodada.
+
+Estes são sinais de triagem reproduzíveis, não vereditos: confirmar cada um
+contra os frames reais é o primeiro passo do retomador
+(`docs/reports/PROMPT-CODEX-VM-LMG-RETOMADA.md`).
+
+## O que fica de aproveitável (infraestrutura verificada)
+
+- Pipeline: `lmg-build.py` (Blender; Mint + peças skinned nos bones reais +
+  cinto do doador), `lmg-assemble.mjs` (warp de eventos ≤2,5×, transplante de
+  materiais EXT_texture_webp), `lmg-verify.mjs` (durações/eventos/envelope/
+  braços + mutantes que mordem), `lmg-contact.py` (contato no blend com
+  mutante), `lmg-review-measure.py` (triagem de screenshots), `lmg-stage.py`.
+- Réguas verdes na build reprovada — e foi exatamente aí o erro: nenhuma delas
+  media VISIBILIDADE DAS MÃOS NO QUADRO nem PRESENÇA DA ARMA NO QUADRO ao
+  longo dos clipes. A próxima rodada precisa dessas duas réguas antes de
+  qualquer correção (régua antes do conserto, LICOES 1).
+
+## Histórico da versão reprovada (a3512af0) — para referência técnica
+
+Detalhes do que foi construído (peças, clipes, warp de eventos, materiais,
+deploy) preservados abaixo porque o retomador parte deles.
 
 ## Estado
 
