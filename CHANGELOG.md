@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.238`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.239`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -56,6 +56,19 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.239] — 2026-09-07
+
+### Mudado
+- feat(combate): contador de abates, headshot em 1ª pessoa e bot de faca que joga de faca (#536)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(handoff): fecha o ledger com o que foi medido, o que ficou vermelho e o que falta
+- chore(docs): regenera bloco derivado (autofix)
+- docs(gerado): sincroniza índices após feedback de combate
+- docs(combate): registra evidência e mutantes dos três defeitos
+- docs(combate): enxuga o comentário de _meleeRange
+- fix(combate): bot de faca fecha e golpeia; HANDOFF sem build verde falso
+- feat(combate): contador de abates no HUD, headshot em 1ª pessoa e bot de faca
 
 ## [2.0.0-alpha.238] — 2026-09-06
 
