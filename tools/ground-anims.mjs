@@ -1,13 +1,22 @@
-// Finaliza o retarget com contato das patas. Só altera Y da raiz nos clipes terrestres.
-// Execute após retarget-glb.mjs; morte e salto preservam a trajetória original.
+/* Finaliza o retarget com CONTATO DO PÉ: só altera o Y da raiz, quadro a quadro, nos
+   clipes terrestres. Morte e salto ficam de fora de propósito — os dois saem do chão, e
+   corrigir a trajetória deles é o que apagaria a queda.
+   Era `ground-lobisomem-anims.mjs`, com o caminho do lobo escrito na mão; virou genérico
+   quando o time Mítico inteiro precisou do mesmo passo. O pack compartilhado deixa oito
+   dos nove fora do chão (cinco afundam, três flutuam) — é a CHR7 que mede.
+   Uso: node tools/ground-anims.mjs <id> [pasta-dos-clipes] */
 import fs from 'node:fs';
 import path from 'node:path';
 import { NodeIO } from '@gltf-transform/core';
 import { readGLB, buildScene, worldMats, poseWith, skinVerts, bboxOf } from './eval/tp-mount-probe.mjs';
 
-const folder = process.argv[2];
-if (!folder) throw new Error('Uso: node tools/ground-lobisomem-anims.mjs <pasta-dos-clipes-retargetados>');
-const source = readGLB('public/models/characters/lobisomem.glb');
+const id = process.argv[2];
+if (!id) throw new Error('Uso: node tools/ground-anims.mjs <id> [pasta-dos-clipes]');
+const folder = process.argv[3] || `public/models/anims/${id}`;
+const modelo = `public/models/characters/${id}.glb`;
+if (!fs.existsSync(modelo)) throw new Error(`sem GLB do personagem: ${modelo}`);
+if (!fs.existsSync(folder)) throw new Error(`sem pasta de clipes: ${folder} (rode o retarget-glb.mjs antes)`);
+const source = readGLB(modelo);
 const scene = buildScene(source);
 const rest = worldMats(scene);
 const floor = bboxOf(skinVerts(scene, source, rest, 1))[1];

@@ -35,7 +35,7 @@
 
    POR QUE REMOVER E NÃO REGERAR
    Regerar o retarget refaria TAMBÉM o contato de pata assado pelo
-   `ground-lobisomem-anims.mjs` (Y da raiz, quadro a quadro) e a invariante CHR3 junto.
+   `ground-anims.mjs` (Y da raiz, quadro a quadro) e a invariante CHR3 junto.
    Remover o canal é cirúrgico: preserva quadro a quadro tudo que o retarget acertou e
    tira só o que o runtime tem que mandar. A recorrência fica barrada na origem —
    `retarget-glb.mjs` passou a nunca emitir `Curl_*`.

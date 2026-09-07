@@ -30,7 +30,7 @@ herdada do rig compartilhado.
 
 Evidências e logs: `artifacts/miticos-review/` (fora do Git). Instrumentos:
 `tools/eval/miticos-runtime-review.mjs`, `tools/eval/miticos-render-review.py` e
-`tools/ground-lobisomem-anims.mjs`. Render offline não executa WebGL nem CSS.
+`tools/ground-anims.mjs`. Render offline não executa WebGL nem CSS.
 Próximo passo: amostrar ciclos completos, renderizar antes/depois, revisar ângulos
 opostos e o modo opcional de mãos, executar gates, criar checkpoints e atualizar o PR.
 

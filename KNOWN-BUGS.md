@@ -3571,7 +3571,7 @@ na morte. O Lobisomem é o terceiro pior, dentro do envelope que já é publicad
 A causa é a malha, não o esqueleto: no mesmo clipe de morte o `Hips` para na mesma altura
 nos dois (`0,138` no lobo, `0,129` no mandrake), mas o corpo do lobo desce `0,59 m` abaixo
 do próprio quadril contra `0,18 m` do mandrake. A morte e o salto não são aterrados de
-propósito (`ground-lobisomem-anims.mjs` preserva a trajetória), então nada corrige o que
+propósito (`ground-anims.mjs` preserva a trajetória), então nada corrige o que
 sobra embaixo.
 
 **Régua:** `npm run eval:chao` (CHR7), no `check:fast`, 3,6 s para os 45. Catraca por
@@ -3617,7 +3617,7 @@ Era o 13º reprovado num portão que declara no máximo 12.
 disco (mede antes de tirar, e tem `--check`); `retarget-glb.mjs` nunca mais emite `Curl_*`
 — no-op nos 13 rigs humanos, porque o canal que eles perdem é identidade. Remover em vez
 de regerar foi deliberado: regerar refaria também o contato de pata assado pelo
-`ground-lobisomem-anims.mjs` e a CHR3 junto.
+`ground-anims.mjs` e a CHR3 junto.
 
 **Mutantes:** `select-inflate.mjs --mutate=curltwist` devolve a torção medida (lobisomem
 p99 0,511 → 0,808, ruins 14,5 → 44,6, VERMELHO; `mandrake`/`pagodeiro` não se movem, e

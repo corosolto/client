@@ -16,7 +16,7 @@
 
    Mesmo esqueleto, mesmo clipe, `Hips` parando na mesma altura (0,138 × 0,129): o que
    muda é a MALHA. O corpo do lobo desce 0,59 m abaixo do próprio quadril; o do mandrake,
-   0,18 m. A morte não é aterrada de propósito (`ground-lobisomem-anims.mjs` preserva a
+   0,18 m. A morte não é aterrada de propósito (`ground-anims.mjs` preserva a
    trajetória de morte e salto), então ninguém corrigia o que sobrava embaixo.
 
    E O LOBISOMEM NÃO É O PIOR — É O TERCEIRO. Varrendo os 45 personagens com GLB
@@ -38,14 +38,18 @@
    mesmo desenho do `select_inflate.json`, pela mesma razão: um teto único no pior do
    elenco deixaria os outros 44 livres para afundar até lá sem ninguém ver.
 
-   `idle` é a exceção e ganha teto ABSOLUTO de 1,5 cm, não catraca: é a pose que a tela de
-   seleção, o menu e o retrato mostram, o elenco inteiro já cabe nela (pior -0,0075) e é
-   onde afundar é visível de verdade — o personagem aparece plantado no chão errado.
+   `idle` é a exceção e ganha BANDA absoluta de ±1,5 cm, não catraca: é a pose que a tela
+   de seleção, o menu e o retrato mostram, e é onde o erro é visível de verdade. A banda é
+   simétrica porque FLUTUAR é tão errado quanto afundar, e a primeira versão desta régua só
+   olhava para baixo — deixou o `curupira` passar boiando 14,4 cm. Envelope medido do
+   elenco publicado: pior afunda -0,0075 (cadequinha), pior flutua +0,0109 (canarinho);
+   ±0,015 cobre os dois com folga.
 
    USO
      node tools/eval/chao-check.mjs                 # elenco inteiro
      node tools/eval/chao-check.mjs lobisomem,mandrake
-     node tools/eval/chao-check.mjs --mutate=afunda # prova que a régua morde
+     node tools/eval/chao-check.mjs --mutate=afunda # prova que a régua morde (afunda)
+     node tools/eval/chao-check.mjs --mutate=flutua # prova que ela morde para o outro lado
      node tools/eval/chao-check.mjs --escreve       # regrava a catraca (só ao MELHORAR)
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
@@ -86,13 +90,13 @@ const { charWeapon } = await import('../../public/js/characters.js');
 
 const args = process.argv.slice(2);
 const mutante = (args.find((a) => a.startsWith('--mutate=')) || '').split('=')[1];
-if (mutante && mutante !== 'afunda') throw new Error(`Mutante desconhecido: ${mutante}`);
+if (mutante && !['afunda', 'flutua'].includes(mutante)) throw new Error(`Mutante desconhecido: ${mutante}`);
 const escreve = args.includes('--escreve');
 const alvoArg = args.find((a) => !a.startsWith('-'));
 
 const ARQ = 'tools/eval/chao_check.json';
 const ESTADOS = ['idle', 'crouch', 'death'];
-const TETO_IDLE = -0.015;      // absoluto: pior do elenco -0,0075, e é a pose que a tela mostra
+const BANDA_IDLE = 0.015;      // ±: elenco vai de -0,0075 (afunda) a +0,0109 (flutua)
 const FOLGA = 0.01;            // 1 cm — a mesma tolerância do contato de pé (CHR3)
 const PASSO = 3;               // 1 vértice em 3: envelope, não máximo exato (ver docstring)
 const ASSENTA = 200, ATE = 260;
@@ -112,6 +116,10 @@ for (const id of alvos) {
     /* mut=afunda — empurra a raiz 5 cm para baixo. Não é ângulo inventado: é exatamente o
        que um clipe sem aterramento faz, e é a classe de defeito que esta régua vigia. */
     if (mutante === 'afunda') char.group.position.y -= 0.05;
+    /* mut=flutua — o mesmo defeito do outro lado, com o valor medido no `curupira` antes
+       do conserto (+0,1442 m). Existe porque a primeira versão desta régua era um PISO e
+       deixava passar quem boiava. */
+    if (mutante === 'flutua') char.group.position.y += 0.05;
     let base = Infinity;
     for (let f = 0; f < ATE; f++) {
       char.ctrl.update(1 / 60, 0, false, 0);
@@ -136,8 +144,8 @@ const falhas = [], melhoras = [];
 for (const [id, estados] of Object.entries(medido)) {
   for (const estado of ESTADOS) {
     const v = estados[estado];
-    if (estado === 'idle' && v < TETO_IDLE) {
-      falhas.push(`${id}/${estado}: ${v.toFixed(4)} m abaixo do teto absoluto ${TETO_IDLE}`);
+    if (estado === 'idle' && Math.abs(v) > BANDA_IDLE) {
+      falhas.push(`${id}/${estado}: ${v.toFixed(4)} m — ${v < 0 ? 'AFUNDA' : 'FLUTUA'} fora da banda ±${BANDA_IDLE}`);
       continue;
     }
     const antes = catraca.personagens?.[id]?.[estado];
@@ -156,7 +164,7 @@ if (escreve) {
   fs.writeFileSync(ARQ, JSON.stringify({
     gerado: new Date().toISOString(),
     instrumento: `buildCharacterModel + skinning em node, 60 Hz, quadro ${ASSENTA}-${ATE}, 1 vértice em ${PASSO}`,
-    tetoIdle: TETO_IDLE, folga: FOLGA,
+    bandaIdle: BANDA_IDLE, folga: FOLGA,
     personagens: { ...catraca.personagens, ...medido },
   }, null, 2) + '\n');
   console.log(`\n-> ${ARQ} regravado com ${Object.keys(medido).length} personagem(ns).`);
@@ -176,4 +184,4 @@ if (falhas.length) {
   for (const f of falhas) console.error('   ' + f);
   process.exit(1);
 }
-console.log(`\n✓ CHR7: ${Object.keys(medido).length} personagem(ns) dentro da catraca (folga ${FOLGA} m) e do teto de idle (${TETO_IDLE} m).`);
+console.log(`\n✓ CHR7: ${Object.keys(medido).length} personagem(ns) dentro da catraca (folga ${FOLGA} m) e da banda de idle (±${BANDA_IDLE} m).`);
