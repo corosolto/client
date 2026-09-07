@@ -20,7 +20,7 @@ from `package.json`, `docs/package.json` and the vendored Three.js itself.
 | Layer | Tool | Version |
 |---|---|---|
 | 3D engine (WebGL) | **Three.js**, vendored | `r160` |
-| Game | vanilla ES modules, **zero build** | 91 files |
+| Game | vanilla ES modules, **zero build** | 92 files |
 | Site | **Astro** with SSR | `^7.1.1` |
 | Hosting | **Vercel** adapter | `^11.0.6` |
 | Database | **managed Postgres** (RLS; private schema) | `^2.110.7` |
@@ -126,7 +126,7 @@ hypothetical one:
 | **Meshy** | 3D props and rigging | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
 | **OpenRouter** | 2D art | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
-`mint-assets.json` records **41 assets** generated through Mint (11 `mint-model` · 12 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative`).
+`mint-assets.json` records **51 assets** generated through Mint (21 `mint-model` · 12 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative`).
 
 API keys live in the gitignored root `.env`; generation is offline and the game runs without them.
 

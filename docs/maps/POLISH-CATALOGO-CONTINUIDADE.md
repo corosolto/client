@@ -1,5 +1,14 @@
 # Polish integral do catálogo — continuidade
 
+## Estado de parada — 07/09/2026
+
+Execução encerrada por instrução de limite de créditos; GLM/Claude retomam pelos
+[18 prompts individuais com Mint.gg](prompts/README.md). Não iniciar novas frentes
+automaticamente. Nenhuma geração Mint, merge ou release nesta entrega.
+Código integrado recuperável em `883a7efa`, na branch `codex/mapas-polish-integral`.
+Recuperação técnica concluída; aprofundamento artístico e aprovação humana pendentes.
+As seções antigas abaixo preservam histórico e não substituem este estado.
+
 ## Objetivo e isolamento
 
 Elevar em conjunto o catálogo, preservando autoria, proveniência, gameplay, colisões,
@@ -28,9 +37,9 @@ e torcida. O #530 é outra frente: campo interno da Quebrada. O #440 possui core
 vegetação, kit de atrações e horizonte; o #441 possui kit Carandiru, galeria, campo
 pichado, instancing e holofotes. Tudo isso deve ser confrontado antes de novo polish.
 
-Próximo marco: recuperação seletiva desses três candidatos nesta lane, sem importar
-a cadeia histórica inteira nem editar as lanes funcionais. Atualizar registros, assets,
-proveniência e gates; capturar no browser real e aprofundar a partir desses resultados.
+Esse marco de recuperação seletiva foi concluído nos checkpoints registrados ao final.
+A próxima etapa é validar visualmente as últimas correções e aprofundar os mapas
+recuperados, sem importar a cadeia histórica inteira nem editar lanes alheias.
 
 ## Inventário e matriz única de prioridade
 
@@ -257,5 +266,48 @@ pickups nos flancos e MID em z=14. A recuperação usa as réguas funcionais de 
 
 Validação atual: `integration-checks.log` 5/5 (Parque vida/roda, Penitenciária vida/contrato,
 shaderbudget); `contracts.log` 9/9 (Campo contrato/molde, mapas, spawns, CTF rodada/vitória,
-IDs, rotação e previews). Ambos em `artifacts/mapas-polish/pr-recovery/`. A captura real
-dos GLBs ainda está em andamento; aprovação visual continua pendente.
+IDs, rotação e previews). Ambos em `artifacts/mapas-polish/pr-recovery/`.
+
+### Checkpoint de entrega para GLM/Claude
+
+- `e4d32c84`: dez GLBs recuperados, proveniência Mint/FONTE e manifesto de assets.
+- `52a24a22` / `7fbd4a7c`: construtor independente Campinho e contratos/contexto.
+- `fe7d1a47`: Parque recuperado; copas elevadas, altura mínima medida de 3,695 m,
+  mantendo posições e contratos. Gate reprovava antes; mutante de copa baixa reprova.
+- `459ab107` / `fc029a22`: Penitenciária recuperada; removidos quatro cones visuais
+  opacos, preservados holofotes; janelas gradeadas visíveis com GLB carregado.
+  Gates de fachada e mutantes confirmam as duas correções.
+- `052fdf21`: integração dos três mapas, registros, céus e preview Campinho.
+- `883a7efa`: remoção do passe básico rejeitado e capturador para os três candidatos.
+
+Validação final após correções: `pr-recovery/final-checks.log` 10/10 — sintaxe,
+Campo contrato/molde, Parque vida/copas/roda, Penitenciária contrato/vida/fachada,
+shaderbudget. `pr-recovery/build.log`: build concluído. Não equivale a execução
+integral de `check:fast` nem aprovação visual.
+Documentação gerada atualizada; `arch:check` e `docs:check` passaram. A verificação
+de autoria pós-merge não faz parte desse comando e não foi declarada aprovada.
+
+Capturas reais concluídas em `artifacts/mapas-polish/recovered/`, incluindo
+`browser-med.json`, quatro vistas Campinho, três Parque, quatro Penitenciária e
+as três vistas live. Todos chegaram à partida e ao carregamento dos props GLB,
+sem erro JS nessa rodada. Os 404 de áudio e decals estão registrados no JSON.
+Essas imagens precedem as correções de copas/fachadas/cones; **não demonstram o
+resultado final dessas correções**. O banner de início obstrui parte das vistas.
+Não foram executadas novas capturas após a ordem de parada.
+
+Próximo operador: ler o prompt do mapa e reservar a fila de browser; confirmar
+servidor local em 8192 (iniciar com o script dev do projeto se necessário), documentar
+o tratamento do banner apenas para inspeção e capturar o código corrigido:
+
+```sh
+PATH=/opt/homebrew/bin:$PATH node tools/eval/mapas-polish-capture.mjs artifacts/mapas-polish/recovery-fixed campomorro,parque_treta,penitenciaria
+QUALITY=low PATH=/opt/homebrew/bin:$PATH node tools/eval/mapas-polish-capture.mjs artifacts/mapas-polish/recovery-fixed-low campomorro,parque_treta,penitenciaria
+```
+
+Executar sequencialmente após a retomada autorizada; não há captura corrigida pronta.
+Permanecem: profundidade Tavares Bastos/Madureira/Carandiru; visual humano; Joá #533;
+Emerson (recuperar também #457/#458/#459 antes de polir); Sertão; restante do catálogo.
+Poeira do Campinho depende de API incompatível e continua desativada. Áudio/decals
+ausentes exigem recuperação do acervo com proveniência. Critério de conclusão continua
+sendo implementação, evidência visual comparável, contratos preservados e revisão do
+dono; esta parada entrega recuperação e prompts, não declara o catálogo pronto.
