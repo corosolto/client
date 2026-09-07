@@ -31,18 +31,11 @@ export { WEAPONS };
    ?pace=0  -> round volta a ser SÓ tempo (sem alvo de abates, sem match point)
    ?move=0  -> movimento volta ao modelo antigo (4.7 base, sprint 6.6, sem counter-strafe)
    ?killcam=0 -> sem painel/câmera de morte
-   ?replaycam=0 -> sem replay cam ao matar (câmera orbital na vítima)
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
-const REPLAY_CAM = QS.get('replaycam') !== '0';
 const ANNOUNCER_LAB = ['kills', 'rounds', 'all'].includes(QS.get('announcerlab')) ? QS.get('announcerlab') : '';
-/* Replay cam (kill-switch ?replaycam=0): duração total em s, escala de dt do hit-stop e a
-   janela dele em tempo real, e o raio/altura da órbita em torno da vítima. */
-const REPLAY_DUR = 1.2;
-const REPLAY_SLOWMO = 0.18;
-const REPLAY_SLOWMO_DUR = 0.2;
-const REPLAY_ORBIT_R = 3.2;
-const REPLAY_ORBIT_H = 1.8;
+/* Replay cam de headshot (#364) REMOVIDA a pedido do dono: nada aqui pode voltar a mexer em
+   câmera, FOV ou dt no abate. Régua do contrário: tools/eval/replaycam-check.mjs */
 // ?vmlab=1 usa o viewmodel afinado; sem a flag mantém o calibrado.
 const VMLAB = QS.get('vmlab') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
@@ -1174,7 +1167,7 @@ export class Game {
     this.el = {
       hud: $('hud'), crosshair: $('crosshair'), hitmarker: $('hitmarker'), dmgNums: $('dmg-numbers'),
       scope: $('scope-overlay'), vignette: $('damage-vignette'), dmgDir: $('dmg-dir'),
-      hpFill: $('hp-fill'), hpNum: $('hp-num'), weaponName: $('weapon-name'),
+      hpFill: $('hp-fill'), hpNum: $('hp-num'), killCount: $('kill-count'), weaponName: $('weapon-name'),
       ammoMag: $('ammo-mag'), ammoRes: $('ammo-reserve'), reloadNote: $('reload-note'), smokeCount: $('smoke-count'),
       ammoWeaponArt: $('ammo-weapon-art'), ammoBars: $('ammo-bars'),
       roundTime: $('round-time'), roundsRow: $('rounds-row'),
@@ -3139,6 +3132,39 @@ export class Game {
     }
     if (best) { this.sfx.knifeHit(); this._damage(best, WEAPONS.knife.dmg, this.player, 'FACA'); }
   }
+  /* Alcance de corpo a corpo (0 = arma de fogo). Fonte única de até onde o bot fecha e de
+     onde o golpe conecta: em cópias separadas os dois voltam a divergir (BUG-143). */
+  _meleeRange(wid) {
+    return wid === 'knife' ? (WEAPONS.knife.range || 2.4) : 0;
+  }
+  /* Golpe de faca do BOT — espelha `_meleeHit`: pelo caminho de tiro o golpe saía com
+     traçante, fogacho de cano e som de disparo. Régua: tools/eval/botfaca-check.mjs (BF3) */
+  _botMelee(b, e) {
+    const W = WEAPONS[b.weapon] || WEAPONS.knife;
+    const alcance = this._meleeRange(b.weapon) || WEAPONS.knife.range;
+    b.nextShotAt = this.time + (W.rate || 0.55) * (1 + Math.random() * 0.5) / Math.max(0.5, b.skill);
+    b.revealedAt = this.time;
+    b.burst = 0;
+    this.sfx.knife();
+    if (b.mesh?.isGLB) b.mesh.ctrl.shoot();
+    const from = this._botEye(b);
+    const alvo = e.isPlayer ? this.camera.position.clone() : this._botEye(e);
+    const to = alvo.clone().sub(from);
+    const d = to.length();
+    const dir = to.clone().normalize();
+    if (d > alcance + 0.6) return;
+    if (dir.dot(new THREE.Vector3(Math.sin(b.yaw), 0, Math.cos(b.yaw))) < 0.5) return;
+    if (!this._losClear(from, alvo)) return;
+    const mul = e.isPlayer ? (BOT_FAIR ? this._botDmgPlayer : BOT_DMG_PLAYER) : 1;
+    const dmg = Math.max(6, Math.min(e.isPlayer ? 100 : 130, Math.round((W.dmg || 55) * mul)));
+    this.sfx.knifeHit();
+    this._damage(e, dmg, b, W.short || 'FACA', false, alvo);
+    if (BLOOD) {
+      if (e.isPlayer) this._bloodSpatter(alvo, dir, false, e.pos ? e.pos.y : null);
+      else this._fleshImpact(alvo, dir, false, e.pos ? e.pos.y : null, false);
+    }
+    if (e.isPlayer) this._noteHit(b, W.short || 'FACA', dmg, false, d);
+  }
   /* Dano de um tiro: base × falloff por classe × multiplicador de headshot. O servidor usa a
      MESMA conta — duas cópias envelheceriam separadas. Ver docs/MULTIPLAYER.md. */
   _shotDamage(dmg, wid, dist, head) {
@@ -3160,12 +3186,7 @@ export class Game {
     const hC = hitsChar[0], hW = hitsWorld[0];
     let end;
     if (hC && (!hW || hC.distance < hW.distance)) {
-      let o = hC.object, bot = null, head = false;
-      while (o) {
-        if (o.userData.botOwner && !bot) bot = o.userData.botOwner;
-        if (bot && o === bot.mesh.parts.head) head = true;
-        o = o.parent;
-      }
+      const { bot, head } = this._targetFromHit(hC);
       end = hC.point;
       if (bot) {
         if (bot.team === shooter.team) { /* friendly fire off */ }
@@ -3180,12 +3201,27 @@ export class Game {
     } else if (hW) {
       end = hW.point;
       const n = hW.face ? hW.face.normal : null;
-      const surf = GUNFEEL ? this._surfaceOf(hW.object) : null;
+      const surf = this._surfaceOf(hW.object);
       this._puff(hW.point, n, surf);
       // som de impacto em 100% dos tiros do jogador (era `ricochet()` — um BIP de sine — em
       // 30%: 70% dos tiros na parede eram literalmente mudos).
       if (GUNFEEL) { if (byPlayer || Math.random() < 0.35) this._impactSfx(surf, hW.point, from.distanceTo(hW.point)); }
       else if (Math.random() < 0.3) this.sfx.ricochet();
+      const pen = this._penetrationExit(hW, dir, wid, surf);
+      if (pen) {
+        const nextWorld = hitsWorld.find(hit => hit.distance > pen.exitDistance + 0.005);
+        const hP = hitsChar.find(hit => hit.distance > pen.exitDistance + 0.005
+          && (!nextWorld || hit.distance < nextWorld.distance - 0.005));
+        if (hP) {
+          const { bot, head } = this._targetFromHit(hP);
+          if (bot && bot.team !== shooter.team) {
+            end = hP.point;
+            const penDamage = Math.round(this._shotDamage(dmg, wid, hP.distance, head) * pen.damageMul);
+            if (!this.online) this._damage(bot, penDamage, shooter, weap, head, end);
+            this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer, this._armoredTarget(bot));
+          }
+        }
+      }
     } else {
       end = from.clone().add(dir.clone().multiplyScalar(120));
     }
@@ -3195,6 +3231,32 @@ export class Game {
       this._tracer(muzzle, end);
     }
     return end;
+  }
+  _targetFromHit(hit) {
+    let o = hit.object, bot = null, head = false;
+    while (o) {
+      if (o.userData.botOwner && !bot) bot = o.userData.botOwner;
+      if (bot && o === bot.mesh.parts.head) head = true;
+      o = o.parent;
+    }
+    return { bot, head };
+  }
+  _penetrationExit(hit, dir, wid, surf) {
+    const cfg = WEAPONS[wid]?.penetration;
+    if (!cfg || this.online || !cfg.surfaces.includes(surf)) return null;
+    const box = new THREE.Box3().setFromObject(hit.object);
+    if (box.isEmpty()) return null;
+    const origin = hit.point.clone().addScaledVector(dir, 1e-4);
+    let exit = Infinity;
+    for (const axis of ['x', 'y', 'z']) {
+      const d = dir[axis], p = origin[axis], lo = box.min[axis], hi = box.max[axis];
+      if (Math.abs(d) < 1e-8) { if (p < lo || p > hi) return null; continue; }
+      const t0 = (lo - p) / d, t1 = (hi - p) / d;
+      exit = Math.min(exit, Math.max(t0, t1));
+    }
+    const thickness = exit + 1e-4;
+    if (!(thickness > 0 && thickness <= cfg.maxThickness)) return null;
+    return { exitDistance: hit.distance + thickness, damageMul: cfg.damageMul };
   }
   // MATERIAL da superfície atingida, inferido do material do mesh (os mapas não marcam
   // userData.surf; quando marcarem, ela ganha prioridade). Cache em WeakMap — o raycast roda
@@ -3390,13 +3452,7 @@ export class Game {
           ? this.sfx.general(kind || 'headshot')
           : this.sfx.characterVoice(attacker.def?.id, 'kill', { fallbackFaction: this._voiceKey(attacker.team) });
         if (!announced && !this.sfx.general('kill')) this.sfx.voice(this._voiceKey(attacker.team));
-        if (REPLAY_CAM && head && ent.pos) {
-          this._replayCam = {
-            t: 0,
-            victimPos: ent.pos.clone(),
-            killerYaw: attacker.yaw,
-          };
-        }
+        /* O feedback do headshot é TODO sonoro/HUD daqui pra cima — ver BUG-142. */
       }
     }
     if (ent.isPlayer) {
@@ -4975,39 +5031,6 @@ export class Game {
       c.rotation.x += (wantPitch - c.rotation.x) * Math.min(1, dt * 3.5);
     }
   }
-  _updateReplayCam(dt) {
-    const rc = this._replayCam;
-    if (!rc) return;
-    rc.t += dt;
-    if (rc.t >= REPLAY_DUR) {
-      this._replayCam = null;
-      const p = this.player;
-      const tFov = p.scoped ? this._zoomFov(p.weapon) : 70;
-      this.camera.fov = tFov;
-      this.camera.updateProjectionMatrix();
-      this._fovFrom = undefined;
-      return;
-    }
-    const progress = rc.t / REPLAY_DUR;
-    const angle = rc.killerYaw + Math.PI + progress * 1.2;
-    const ease = 1 - (1 - progress) * (1 - progress);
-    const r = REPLAY_ORBIT_R * (0.6 + 0.4 * ease);
-    const cx = rc.victimPos.x + Math.sin(angle) * r;
-    const cz = rc.victimPos.z + Math.cos(angle) * r;
-    const cy = rc.victimPos.y + REPLAY_ORBIT_H - ease * 0.4;
-    this.camera.position.set(cx, cy, cz);
-    const lookY = rc.victimPos.y + 1.2;
-    const dx = rc.victimPos.x - cx, dz = rc.victimPos.z - cz;
-    this.camera.rotation.set(
-      Math.atan2(lookY - cy, Math.hypot(dx, dz)),
-      Math.atan2(-dx, -dz),
-      0
-    );
-    this.camera.fov = 50;
-    this.camera.updateProjectionMatrix();
-    if (this.vm?.root) this.vm.root.visible = false;
-    if (this.el.crosshair) this.el.crosshair.style.display = 'none';
-  }
   // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla B). Constrói o corpo
   // 3ª pessoa na 1ª vez (lazy).
   _toggleCamView() {
@@ -5223,7 +5246,6 @@ export class Game {
     this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
     if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
     if (!p.alive) {
-      if (this._replayCam) this._replayCam = null;
       const left = p.respawnAt - this.time;
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
@@ -5462,7 +5484,6 @@ export class Game {
       if (wg) poseToWeapon(this.vm.arms, wg, p.weapon);
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
-    this._updateReplayCam(dt);
   }
 
   /* O mapa ainda não expõe material sob o pé. Até essa API existir, cada arena
@@ -6249,13 +6270,19 @@ export class Game {
          piscinão). Com histerese ele COMPROMETE com um estado e só troca quando a distância
          muda de verdade: entra em avanço acima de 22 m e só sai abaixo de 17; entra em recuo
          abaixo de 6 m e só sai acima de 9,5. */
+      /* A banda acima é de fuzil e nunca chega no alcance de uma faca de 2,4 m (BUG-143):
+         arma de corpo a corpo fecha e não recua. Régua: tools/eval/botfaca-check.mjs */
+      const alcanceArma = this._meleeRange(b.weapon);
+      const corpoACorpo = alcanceArma > 0;
       const rs = b._range || 'mid';
-      b._range = rs === 'push' ? (dist < 17 ? 'mid' : 'push')
+      b._range = corpoACorpo ? (dist > alcanceArma * 0.6 ? 'push' : 'mid')
+        : rs === 'push' ? (dist < 17 ? 'mid' : 'push')
         : rs === 'back' ? (dist > 9.5 ? 'mid' : 'back')
         : (dist > 22 ? 'push' : dist < 6 ? 'back' : 'mid');
       let approach = holding ? 0
         : BOT_MOVE2 ? (b._range === 'push' ? 0.9 : b._range === 'back' ? -1 : (b._adv || 0))
         : (dist > 20 ? 0 : dist < 8 ? -1 : (b._adv || 0));
+      if (corpoACorpo && !holding) approach = b._range === 'push' ? 1 : Math.max(0, approach);
       /* NUNCA GIRAR PARADO. Restava um caso: alvo fora do eixo (o bot ainda virando) numa
          decisão de "segurar posição" (45% delas dão _adv = 0). Corpo parado + cabeça girando
          é, na tela, a pirueta — e a métrica confirma (voltas/min sobe quando o bot para de
@@ -6343,8 +6370,7 @@ export class Game {
       }
       // FACA (w.range): bot de faca disparava hitscan a 40m como se fosse rifle — agora só
       // "ataca" no alcance real da arma; longe disso ele avança (o approach acima já faz isso).
-      const _w0 = WEAPONS[b.weapon];
-      const inRange = !(_w0 && _w0.range) || dist <= _w0.range + 0.6;
+      const inRange = alcanceArma > 0 ? dist <= alcanceArma + 0.6 : true;
       // fire (bloqueado enquanto o alvo está stale/sem LOS — ver aquisição: sem wallhack)
       // TURNO DE DUELO: contra o JOGADOR só atira quem tem o token (ver _duelToken). Fora do
       // turno o bot continua manobrando/avançando — ele não congela, só não soma fogo.
@@ -6364,8 +6390,10 @@ export class Game {
          cego, fora de alcance) desqualifica; impedimento IMINENTE (reação, foco, cadência) não. */
       const canUse = !b._losLost && inRange && this.time > (b.reloadUntil || 0);
       const hasTurn = !(BOT_FAIR && e.isPlayer) || (canUse && this._duelToken(b));
-      if (this.time > b.reactAt && this.time > (b.focusUntil || 0) && this.time > b.nextShotAt && this.time > (b.reloadUntil || 0)
-          && Math.abs(dy) < 0.3 && !b._losLost && inRange && hasTurn) {
+      const podeAtacar = this.time > b.reactAt && this.time > (b.focusUntil || 0) && this.time > b.nextShotAt && this.time > (b.reloadUntil || 0)
+          && Math.abs(dy) < 0.3 && !b._losLost && inRange && hasTurn;
+      if (podeAtacar && corpoACorpo) this._botMelee(b, e);
+      else if (podeAtacar) {
         /* ===== TIRO DO BOT =====
            ANTES: dano FIXO (63 no jogador / 100 no bot), cadência 0.75-3.5s igual pra P90 e
            AWP, e um sorteio de acerto invisível (até 92%) que ignorava a parede no caminho.
@@ -7185,6 +7213,13 @@ export class Game {
     this.el.hpFill.style.width = Math.max(0, p.hp) + '%';
     this.el.hpFill.classList.toggle('low', p.hp <= 35);
     this.el.hpNum.classList.toggle('low', p.hp <= 35);
+    /* `player.kills` (partida), não `roundKills` (time, zera na virada). Escrito só quando
+       muda porque este método roda por quadro. Régua: tools/eval/abateshud-check.mjs */
+    const abates = p.kills | 0;
+    if (this.el.killCount && this._hudKills !== abates) {
+      this._hudKills = abates;
+      this.el.killCount.textContent = String(abates);
+    }
     if (this.el.ammoWeaponArt.dataset.weapon !== p.weapon) {
       this.el.ammoWeaponArt.dataset.weapon = p.weapon;
       this.el.ammoWeaponArt.src = `/img/weapons/${p.weapon}.webp`;
@@ -7259,11 +7294,8 @@ export class Game {
   /* ================= main update ================= */
   update(dt, render = true) {
     if (this.paused) return;
-    // Hit-stop: scale dt during replay cam slowmo phase (uses wall-clock time, not game time)
-    if (this._replayCam) {
-      const wallT = this._replayCam._wallT = (this._replayCam._wallT || 0) + dt;
-      if (wallT < REPLAY_SLOWMO_DUR) dt *= REPLAY_SLOWMO;
-    }
+    /* O `dt` chega e vai embora inteiro: o hit-stop do headshot saiu com a replay cam,
+       porque escalar o relógio vazava para física, tiro e rede (BUG-142). */
     this.time += dt;
     // Snapshot ANTES de mover: aplicar depois renderizaria o frame com o mundo de ontem.
     if (this.online) this._mp?.applySnapshot();

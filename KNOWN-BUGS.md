@@ -1900,6 +1900,81 @@ mudar.
 
 ## P1 — o jogador vê
 
+### ~~BUG-142 · a replay cam de headshot arrancava a câmera do jogador por 1,2 s~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** tirar o efeito de câmera do headshot.
+
+**Evidência (`node tools/eval/replaycam-check.mjs` na árvore `42c01175`, `praca_poderes`,
+semente 4242, 4 bots, 90 quadros de aquecimento):** depois do headshot do jogador a câmera
+saltava **121,377 m** do olho, girava **3,440 rad**, o FOV ia de 70 para 50 (**Δ20°**), o
+relógio andava **1,836 s de jogo em 2,000 s reais** (hit-stop escalando o `dt` em 0,18 por
+0,2 s reais) e viewmodel e mira sumiam. O efeito vinha do PR #364 (`REPLAY_CAM`,
+`_updateReplayCam`, `REPLAY_DUR` 1,2 s — 1,36 s reais, porque `rc.t` acumulava o `dt` já
+escalado).
+
+**Correção:** removidos `REPLAY_CAM`, as cinco constantes `REPLAY_*`, `_updateReplayCam`, o
+armamento no `_kill`, a chamada no `_updatePlayer`, o descarte no jogador morto e o hit-stop
+do `update()`. Saiu inteira em vez de virar mais um kill-switch: com respawn de 2,2 s, 1,2 s
+sem câmera e sem mira punia quem acertou o tiro, e o headshot já tem hitmarker, número de
+dano, killfeed e locutor. `tools/eval/replaycam-probe.mjs` (sonda do kill-switch) deixou de
+ter função e foi apagada.
+
+**Régua:** `tools/eval/replaycam-check.mjs` (`npm run eval:replaycam`), agora medindo o
+contrário — HS1 câmera parada (teto 0,250 m / 0,250 rad / 0,5°), HS2 relógio 1:1 (teto
+0,02 s), HS3 viewmodel e mira visíveis, HS4 o abate continua contando. Depois: Δ0,000 m,
+Δ0,000 rad, ΔFOV 0,000°, 2,000 s de jogo em 2,000 s reais. **Mutantes:** `orbita`,
+`hitstop`, `esconde` e `sem-kill` — os quatro reprovam.
+
+### ~~BUG-143 · em rodada de faca o bot carregava a faca e jogava de fuzil~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** em rodadas de faca, os bots precisam respeitar o modo.
+
+**Evidência (`node tools/eval/botfaca-check.mjs` na árvore `42c01175`, `praca_poderes`,
+semente 4242, 4 bots, 60 s):** `_botWeapon()` já entregava `knife`, mas o comportamento
+continuava de arma de fogo em duas frentes.
+
+- **(a) banda de distância.** `_updateBot` mantém histerese calibrada para fuzil — entra em
+  `back` abaixo de 6 m e só volta a `mid` acima de 9,5 m. O alcance da faca é 2,4 m. Medido:
+  menor distância bot→alvo **5,98 m**, **zero golpes**, **zero abates** em 60 s.
+- **(b) o golpe.** Quando entrava no alcance, o ataque saía pelo caminho de tiro: hitscan com
+  desvio angular, `_tracer`, `_flash` e `sfx.shotWeapon`. Faca não tem cano nem projétil.
+
+**Correção (`public/js/game.js`):** `_meleeRange(wid)` é a fonte única do alcance de arma
+branca (0 para arma de fogo); com ele a banda vira "fecha e não recua" (`push` acima de 0,6×
+o alcance, `approach` nunca negativo) e o gate de ataque roteia para `_botMelee`, que resolve
+alcance, ângulo, LOS e dano tocando `sfx.knife()`/`sfx.knifeHit()`. Fora do corpo a corpo a
+banda de fuzil não mudou.
+
+**Depois (mesma semente):** encostou a **1,24 m**, **18 golpes**, **9 abates**, **0
+traçantes e 0 fogachos**; rodada normal intacta (menor distância **23,46 m**).
+
+**Régua:** `tools/eval/botfaca-check.mjs` (`npm run eval:botfaca`) — BF1 faca na mão, BF2
+perseguição e combate, BF3 sem enfeite de arma de fogo, BF4 a rodada normal não vira corrida
+(piso de 4 m, derivado do `dist < 6 ? 'back'` da própria banda). **Mutantes:** `recuo`
+(5,40 m, zero golpes), `tracante` (18 traçantes/18 fogachos) e `corredor` (rodada normal
+colando a 2,87 m) — os três reprovam.
+
+### ~~BUG-144 · o jogador não conseguia ler os próprios abates durante a partida~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** contador de abates legível, no espírito do Valorant.
+
+**Evidência (`node tools/eval/abateshud-check.mjs` na árvore `42c01175`):** `#kill-count` não
+existia em lugar nenhum — AB1, AB2, AB3 e AB4 reprovavam de saída. O HUD tinha dois números
+grandes no topo (`#score-e`/`#score-b`), e os dois são `roundKills` do TIME na RODADA; o
+número pessoal só existia atrás do TAB e na tela de fim de partida.
+
+**Correção:** `#kill-counter` na coluna de estado do jogador (`src/pages/index.astro`), com
+algarismo de 28 px no lima da casa (`--aaa-lime`) e rótulo `ABATES` de 11 px — os mesmos
+tokens do resto do HUD, sem asset de terceiro. O valor é `player.kills` (partida), escrito
+pelo `_updateHud` só quando muda. Do Valorant vem apenas o princípio "número grande com
+rótulo miúdo ancorado no bloco do jogador"; layout, tipografia e cor são os da casa.
+
+**Régua:** `tools/eval/abateshud-check.mjs` (`npm run eval:abateshud`) — AB1 existe dentro do
+`#hud` com rótulo, AB2 corpo ≥ 24 px fora de `@media` e não nasce `display:none`, AB3 imprime
+o abate do JOGADOR (com abate de aliado no meio para separar do número do time), AB4
+sobrevive à virada de rodada. **Mutantes:** `time`, `rodada`, `congelado` e `miudo` — os
+quatro reprovam.
+
 ### ~~CTF sumiu do menu da home~~ · CORRIGIDO LOCALMENTE 06/09/2026
 
 **Relato:** "o modo CTF sumiu do menu da home". O redesign removeu o botão
@@ -4889,3 +4964,8 @@ O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame comple
 otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 `artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.
+
+
+### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527
+
+Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.

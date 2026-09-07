@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.236`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.239`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -26,6 +26,7 @@
 ## Não lançado — 2026-09-06
 
 ### Adicionado
+- Contador de ABATES do jogador no HUD, na coluna de estado dele: algarismo grande com rótulo miúdo, conta a PARTIDA (não o abate do time nem o da rodada) e não zera na virada de round — antes o número pessoal só existia atrás do TAB. Régua `eval:abateshud` com quatro mutantes, no `check:fast`.
 - Sertão da Treta substitui o Velho Oeste: casario de taipa, Caatinga, Canudos, calango quadrúpede, aves, cabras e galinha com pintinhos. Preview real com vídeo silencioso ao passar o mouse; criação com caminhada e pausas. O memorial de Padre Cícero permanece fora desta entrega.
 - Camada operacional (`tools/ops/`, `npm run ops:diag`): o jogo diagnostica boot, deploy, assets no edge, APIs, telemetria, ranking e partida sintética e explica cada achado com causa provável, evidência, impacto e próximo passo; separa "tecnicamente verde" de "pronto para lançamento". Mutantes em `ops:selftest` e unidades em `ops:test`, os dois no `check:fast`.
 - `public/js/ops.js`: sinais da sessão no navegador (marcos de boot, FPS em partida, falhas de carga, contexto WebGL, erros de partida, abandono) expostos em `window.__csbOps` e como migalhas do relatório de erro — sem endpoint novo, sem desenhar nada.
@@ -37,6 +38,8 @@
 ### Corrigido
 - Lobisomem Mítico deixa de puxar aliados de outras facções, passa a resolver M nas telas de inspeção, usa luva M distinta no viewmodel, ganha animação própria com pés no chão e volta a publicar os retratos de resultado aprovados, que tinham saído do quadro medido no elenco.
 - O pack integrado do Lobisomem passa a servir os clipes próprios na sequência do runtime, com o fallback compartilhado preservado só para comparação e regressão.
+- Em rodada de FACA os bots passam a jogar de faca: fecham até o alcance real da arma (medido 5,98 m e zero golpes em 60 s antes; 1,24 m, 18 golpes e 9 abates depois) e o golpe sai como faca — sem traçante, fogacho de cano nem som de tiro. A banda de distância de arma de fogo continua valendo na rodada normal. Régua `eval:botfaca` com três mutantes, no `check:fast`.
+- O headshot do jogador não arranca mais a câmera da primeira pessoa: a replay orbital e o hit-stop do #364 saíram, e o abate continua contando com hitmarker, dano, killfeed e locutor. Régua `eval:replaycam` passou a medir o contrário, com quatro mutantes.
 - Single Player voltou a abrir o submenu de MATA-MATA e CAPTURE A BANDEIRA (CTF), que segue para a seleção de mapas com o modo escolhido.
 - `eval:boot` voltou a rodar: a fixture do `boot-check.mjs` ancorava na assinatura antiga de `_startGame` (mudada no #489) e reprovava antes de medir; agora ancora no nome da função.
 - Os contadores do menu (`/api/online` e `/api/map-plays`) tentam de novo no cold start do backend (503 na primeira chamada, medido 06/09) em vez de ficar vazios.
@@ -55,6 +58,44 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.239] — 2026-09-07
+
+### Mudado
+- feat(combate): contador de abates, headshot em 1ª pessoa e bot de faca que joga de faca (#536)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(handoff): fecha o ledger com o que foi medido, o que ficou vermelho e o que falta
+- chore(docs): regenera bloco derivado (autofix)
+- docs(gerado): sincroniza índices após feedback de combate
+- docs(combate): registra evidência e mutantes dos três defeitos
+- docs(combate): enxuga o comentário de _meleeRange
+- fix(combate): bot de faca fecha e golpeia; HANDOFF sem build verde falso
+- feat(combate): contador de abates no HUD, headshot em 1ª pessoa e bot de faca
+
+## [2.0.0-alpha.238] — 2026-09-06
+
+### Mudado
+- perf(amazonia): reduz custo 8x8 e vira escada do respawn (#527)
+- chore(amazonia): regenera blocos pós-merge e encurta comentário da estação A
+- docs(amazonia): registra validação pós-merge
+- docs(amazonia): registra resolução dos conflitos
+- fix(amazonia): abre as cabeças da ponte norte e fecha a VM14
+- docs(amazonia): fecha relatório 8x8 com A/B, mutantes e portões
+- docs(amazonia): atualiza scripts e blocos gerados
+- docs(amazonia): atualiza recibo final da simulação
+- test(amazonia): fortalece a simulação final
+- docs(amazonia): atualiza blocos gerados e ledger final
+- test(amazonia): integra réguas de visão e escadas no portão
+- perf(amazonia): acelera visão dos bots e valida todas as escadas
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(amazonia): otimiza rota 8x8 e vira escada B
+
+## [2.0.0-alpha.237] — 2026-09-06
+
+### Mudado
+- feat(combat): add bounded AWP penetration (#535)
+- feat(combat): add bounded AWP penetration
 
 ## [2.0.0-alpha.236] — 2026-09-06
 

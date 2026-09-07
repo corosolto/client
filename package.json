@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.0.0-alpha.236",
+  "version": "2.0.0-alpha.239",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -118,6 +118,8 @@
     "eval:select": "node tools/eval/select-inflate.mjs",
     "eval:entrada": "node tools/eval/entrada-check.mjs",
     "eval:replaycam": "node tools/eval/replaycam-check.mjs",
+    "eval:abateshud": "node tools/eval/abateshud-check.mjs",
+    "eval:botfaca": "node tools/eval/botfaca-check.mjs",
     "eval:select:mutate": "node tools/eval/select-inflate.mjs mandrake,pagodeiro --mutate=skin",
     "assert:assets": "node tools/eval/assets-check.mjs",
     "strip:decalbg": "node tools/strip-decal-bg.mjs",
@@ -170,7 +172,7 @@
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
     "check:deploy": "node tools/eval/runner.mjs syntax eval:error-console eval:edgecache eval:webgl eval:webglguard eval:shaderlog eval:shaderbudget eval:prune eval:vmlabhud eval:vminspect eval:redesign eval:charvoice eval:screenquery arch:check docs:check media:check eval:assetfetch eval:vercelbuild menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:wflocal eval:comentario eval:fixture eval:preload eval:apis eval:nosgemeos eval:docsautoria eval:replaycam eval:miticos-lobisomem",
     "check:vercel": "node tools/eval/runner.mjs syntax eval:assetfetch eval:apis eval:nosgemeos",
-    "check:fast": "node tools/eval/runner.mjs syntax eval:analytics eval:online eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check eval:audioalcance eval:audioespacial eval:audioproc eval:audiocapacidade eval:audiofablocal eval:audioeventos eval:audioannouncer eval:audiovoicemix eval:audioprivate eval:audioruntimeassets eval:menumusicreview audio:inventario:autoteste audio:shortlist:autoteste feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:wflocal eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:netcodecbin eval:movimento eval:botsim-golden eval:replaycam eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife ops:test ops:selftest eval:lajes-layout eval:lajes-rooftop eval:lajes-visual eval:lajes-ruas eval:lajes-identidade eval:lajes-roof-overlap eval:lajes-nav eval:lajes-ctf-surface eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:lajes-vertical eval:lajes-bots eval:lajes-ambiencia eval:lajes-santos eval:lajes-game eval:mappreview eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:sertao eval:sertao-spatial eval:sertao-flora eval:sertao-occlusion eval:sertao-fauna eval:calango-quadruped eval:sertao-horizon eval:sertao-distant-birds eval:sertao-integration eval:sertao-livestock eval:sertao-sky-lifecycle eval:amazonia eval:miticos-lobisomem",
+    "check:fast": "node tools/eval/runner.mjs syntax eval:analytics eval:online eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check eval:audioalcance eval:audioespacial eval:audioproc eval:audiocapacidade eval:audiofablocal eval:audioeventos eval:audioannouncer eval:audiovoicemix eval:audioprivate eval:audioruntimeassets eval:menumusicreview audio:inventario:autoteste audio:shortlist:autoteste feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:wflocal eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:netcodecbin eval:movimento eval:botsim-golden eval:replaycam eval:abateshud eval:botfaca eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife ops:test ops:selftest eval:lajes-layout eval:lajes-rooftop eval:lajes-visual eval:lajes-ruas eval:lajes-identidade eval:lajes-roof-overlap eval:lajes-nav eval:lajes-ctf-surface eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:lajes-vertical eval:lajes-bots eval:lajes-ambiencia eval:lajes-santos eval:lajes-game eval:mappreview eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:sertao eval:sertao-spatial eval:sertao-flora eval:sertao-occlusion eval:sertao-fauna eval:calango-quadruped eval:sertao-horizon eval:sertao-distant-birds eval:sertao-integration eval:sertao-livestock eval:sertao-sky-lifecycle eval:amazonia eval:miticos-lobisomem",
     "eval:tags": "node tools/eval/tag-main-check.mjs",
     "eval:simclock": "node tools/eval/sim-clock-check.mjs",
     "eval:mutcega": "node tools/eval/mutacao-cega-check.mjs",
@@ -222,8 +224,11 @@
     "eval:lajes-soundscape": "node tools/eval/lajes-soundscape-check.mjs",
     "eval:lajes-spawn-space": "node tools/eval/lajes-spawn-space-check.mjs",
     "eval:escadao-preview": "node tools/eval/escadao-preview-check.mjs",
-    "eval:amazonia": "node tools/eval/amazonia-check.mjs && node tools/eval/amazonia-surface-check.mjs && node tools/eval/amazonia-water-movement-check.mjs && node tools/eval/ambience-registry-check.mjs --map=amazonia && node tools/eval/amazonia-bots-check.mjs && node tools/eval/amazonia-audio-pack-check.mjs",
+    "eval:amazonia": "node tools/eval/amazonia-check.mjs && node tools/eval/amazonia-surface-check.mjs && node tools/eval/amazonia-water-movement-check.mjs && node tools/eval/ambience-registry-check.mjs --map=amazonia && node tools/eval/amazonia-bots-check.mjs && node tools/eval/amazonia-audio-pack-check.mjs && node tools/eval/amazonia-raycast-check.mjs && node tools/eval/amazonia-spawn-stairs-check.mjs",
+    "eval:amazonia-8x8": "node tools/eval/amazonia-8x8-sim-check.mjs",
+    "eval:amazonia-rota": "node tools/eval/amazonia-8x8-perf-check.mjs",
     "eval:lajes-raycast": "node tools/eval/lajes-raycast-check.mjs",
+    "eval:penetration": "node tools/eval/weapon-penetration-check.mjs",
     "eval:miticos-lobisomem": "node tools/eval/miticos-lobisomem-integration-check.mjs"
   },
   "repository": {
