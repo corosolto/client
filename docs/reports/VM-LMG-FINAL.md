@@ -33,9 +33,16 @@ de análise visual do agente GLM estava instável nesta sessão e a declaração
 - A régua de bbox saturou (sempre 0,499 = quadrante inteiro): inútil para
   discriminate; substituir por máscara de centro-livre antes da próxima rodada.
 
-Estes são sinais de triagem reproduzíveis, não vereditos: confirmar cada um
-contra os frames reais é o primeiro passo do retomador
-(`docs/reports/PROMPT-CODEX-VM-LMG-RETOMADA.md`).
+Estes são sinais de triagem reproduzíveis. **Confirmado no frame que Ruben
+apontou (`.47.19` = frame 10 da cópia)**, por grade de pixels + leitura
+visual independente: durante a recarga, a arma ocupa só ~20% da tela como um
+bloco escuro compacto no canto inferior-direito, **sem braços nem mãos em
+quadro nenhum** — a arma flutua sozinha (HUD ~100 cartuchos). No frame bom
+(18 = 15:51.55) o mesmo mapa mostra o conteúdo da arma subindo até 1/3 da
+tela e cobrindo a borda direita, com massa de luva presente. A causa
+provável é o caminho de mão da recarga rebaseada saindo do quadro
+(enquadramento) — a régua nova de visibilidade de mãos (item 1 do handoff)
+deve reproduzir exatamente este frame como caso de teste.
 
 ## O que fica de aproveitável (infraestrutura verificada)
 
