@@ -152,7 +152,44 @@ Frames 3:2/16:9 por clipe em `cand1/frames/`; times em `cand1/times/`.
   g3sg1 é parte da malha estática (o bone `ChargingHandle` do doador existe
   para uma rodada futura).
 
-## Integração local (staging 8162)
+## ENTREGA FINAL (07/09, rodada 2 — correção de escopo do dono)
+
+O dono rejeitou o patamar de candidata/opt-in. A rodada 2 entregou a rota REAL:
+
+- **Integração no runtime da branch**: `WEAPON_IDS` + CFG + stats no repo;
+  `VM_WEAPON.{rem700,g3sg1}` baked; **liberação por arma** (`VM_WEAPON[x].ready`)
+  em `familyFor` — abre exatamente as duas DMRs sem destravar mosin/svd/sks;
+  arma assada por arma usa a câmera exportada (offsets de família não se
+  aplicam); `CATALOG_VERSION` → `paid-aaa-4` (cache-bust).
+- **Correções das pendências registradas**:
+  - registro da Mint pela **geometria do doador** (boca↔boca, seções
+    centradas) — o registro por gripZ deixava a mão de apoio a 19 cm da
+    coronha (pego pela régua de contato; a inspeção visual anterior era
+    otimista — Lição 4);
+  - **encaixe iterativo** (medir→deslocar vértices→remedir): apoio do rem700
+    de 37-84 mm para **0,0-0,8 mm**; g3sg1 0,01-0,04 mm;
+  - **curls por dedo** aplicados nos clipes finais pelo assembler
+    (24 tracks rem700, 6 g3sg1);
+  - **alavanca de armar do g3sg1** separada (58 verts medidos) no bone
+    `ChargingHandle` — o HK slap do `reload_empty` agora mexe a peça;
+  - **validação visual no jogo real** (captures com action.time pausado,
+    3:2+16:9): idle composto e texturizado por time, ADS com luneta centrada,
+    pente do g3sg1 na mão durante a troca, clip de 5 do rem700 na mão
+    esquerda. Evidência: `artifacts/viewmodels/dmr/<arma>/runtime/`.
+- **ready:true SOMENTE com evidência**: régua verde + mutantes + captures;
+  re-capturado SEM override (`--sem-override`) para provar o portão por arma.
+- Suíte: syntax/docs/arch/comentario/fixture/catalog verdes; eval:vm+
+  invariants com as MESMAS críticas da base (36/55 — dívida herdada, zero
+  vermelhos novos, comparado com stash); `npm run build` verde.
+- **Servidor da branch**: http://127.0.0.1:8163/?debug=1&auto=E&vmweapon=rem700&map=brasilia
+  (trocar vmweapon=g3sg1) — rota real, sem parâmetros de lane.
+
+Resíduo honesto: anelar/mínimo direitos do rem700 ~1,7/3,2 cm (punho da
+caçadora mais fino que o doador; gap lateral, não de dobra); pente-reserva
+do g3sg1 é o próprio pente Mint seguindo o bone Mag (lê como troca, sem
+malha extra na mão).
+
+## Staging 8162 (rodada 1, superseded)
 
 `python3 tools/viewmodels/prep/dmr-stage.py` materializa
 `artifacts/viewmodels/dmr/local-server-8162` (padrão `rifles-m4-stage.py`):
