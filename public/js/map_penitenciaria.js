@@ -520,9 +520,8 @@ export function buildPenitenciaria(scene, T) {
       addBox(9, 6.6, 15, MAT.tijolo, 0, 0, 0, { collide: false }),
       addBox(9.4, .3, 15.4, MAT.darkConcrete, 0, 6.6, 0, { collide: false }),
     ];
-    // Ritmo das aberturas/peitoris das fotos do Carandiru (Vazio): as 16 grades
-    // do rebuild permanecem nos dois caminhos, inclusive quando o GLB carrega.
-    // Só o volume procedural é fallback. Acabamento raso não altera colisores.
+    // 16 grades presentes nos dois caminhos; só o volume procedural é fallback.
+    // Referência e limites em POLISH-CATALOGO-CONTINUIDADE.md.
     const janelasPav = [];
     let janelaId = 0;
     for (const yy of [1.9, 4.6]) for (const zz of [-5, -1.7, 1.7, 5]) for (const sx of [-1, 1]) {

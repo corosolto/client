@@ -592,10 +592,8 @@ export function buildParque(scene, T) {
     return geo;
   };
   const trunkPain = new THREE.CylinderGeometry(0.16, 0.24, 2.4, 7).translate(0, 1.2, 0);
-  /* Copas acima da faixa de leitura da câmera (1,70 m): a recuperação do
-     PR440 baixava a folhagem até 1,02 m em algumas instâncias e tapava o
-     coreto. Mantém raio, posição e população; só abre o envelope vertical.
-     O ramo fino conecta ao tronco original, sem novo colisor/occluder. */
+  /* Copas acima de 1,70 m: abre só o envelope vertical, sem mexer em raio,
+     posição, população ou colisor. Motivo e números em POLISH-CATALOGO-CONTINUIDADE.md. */
   const canopyPain = jitterGeo(new THREE.SphereGeometry(1.9, 10, 8).scale(1, 0.55, 1).translate(0, 6, 0), 0.34, 7101);
   const branchPain = new THREE.CylinderGeometry(0.09, 0.16, 3, 7).translate(0, 3.8, 0);
   const trunkPalm = new THREE.CylinderGeometry(0.11, 0.17, 4.6, 7).translate(0, 2.3, 0);
