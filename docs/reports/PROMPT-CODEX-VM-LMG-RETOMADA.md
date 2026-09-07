@@ -40,6 +40,38 @@ nem tocar na câmera; TODA a correção é nos caminhos de mão dos clipes
 réguas determinísticas (números por frame), nunca por análise de imagem
 não determinística.
 
+## Ordem de trabalho do dono (07/09, verbatim da sessão — é o seu contrato)
+
+> Primeiro reproduza cada falha com regressão vermelha usando a primeira coleta
+> em sessão limpa, troca/equip repetida, fire, ADS e recargas. Crie mutantes
+> que provem que os gates mordem. Corrija contato da mão de apoio, orientação
+> do punho e dedos, escala aparente e framing preservando a posição boa da
+> arma e sem deformar no ADS. Elimine a divergência primeira versus segunda
+> coleta na origem da inicialização/crossfade. Valide no jogo real, não apenas
+> Blender/GLB isolado: frames 3:2 e 16:9 de idle, primeiro equip, segundo
+> equip, ADS, fire e recargas; medidas de contato e escala aparente em pixels.
+> Não enfraqueça gates nem declare pronto com tolerâncias que aceitem os
+> screenshots reprovados. Preserve mecanismo, timings, materiais e texturas
+> que já passaram. Atualize o relatório/ledger com a rejeição humana e as
+> novas evidências. Rode build/gates, commit, push e atualize a PR #546. Só
+> declare final se todos os defeitos acima estiverem objetivamente eliminados;
+> revisão humana continua obrigatória.
+
+## Ferramenta pronta para a coleta vermelha
+
+`tools/viewmodels/prep/lmg-frames-game.mjs` (parse OK, ainda não executado até
+o fim): driver Playwright no jogo real com medidas EM-PÁGINA por frame — mãos
+em quadro (vértices skinados da luva projetados), contato luva↔arma em px,
+bbox/diagonal da arma. Cenários: **primeira coleta em sessão limpa** (timings
+0,06/0,15/0,3/0,55/1,02 s do equip), idle, ADS (`setAim`), fire (`shoot`),
+segunda coleta (`_switchWeapon('knife')` → volta) e recargas em scrub pausado.
+Uso: servidor em cima (ex. `node tools/eval/serve.mjs 8166`) e
+`node tools/viewmodels/prep/lmg-frames-game.mjs --porta=8166 --aspecto=32|169
+--tag=<nome>`; saída em `A/game-frames/<tag>-<aspecto>/frames.json` + PNGs.
+**Estado do estágio:** `A/local-server-8165/public/…/lmg/lmg-runtime.glb` está
+servindo o GLB REPROVADO (copiado de `lmg-runtime-rejected.glb`) — pronto para
+a coleta vermelha; as raízes compartidas seguem no runtime pré-lane (seguras).
+
 ## O que fazer (ordem)
 
 1. **Régua antes do conserto** (LICOES 1): régua nova que REPROVA o GLB
