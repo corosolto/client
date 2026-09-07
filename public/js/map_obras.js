@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
+import { applyAniso } from './textures.js';
 
 export const OBRAS_PROPS = [
   'construction_rubble', 'guindaste', 'concrete_roadblock', 'jersey_barrier', 'sandbags',
@@ -24,7 +25,7 @@ function signTex(bg, fg, title, sub, W = 512, H = 160) {
   const fit = (t, base, fam) => { let fs = base; x.font = `bold ${fs}px ${fam}`; while (x.measureText(t).width > W - pad && fs > 8) { fs -= 2; x.font = `bold ${fs}px ${fam}`; } };
   fit(title, H * 0.42, '"Arial Black",Impact,sans-serif'); x.fillText(title, W / 2, sub ? H * 0.4 : H * 0.5);
   if (sub) { fit(sub, H * 0.2, 'Arial,sans-serif'); x.fillText(sub, W / 2, H * 0.72); }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
 // listra de perigo amarela/preta (a cara de canteiro de obra)
@@ -32,7 +33,7 @@ function hazardTex() {
   const c = document.createElement('canvas'); c.width = 128; c.height = 32; const x = c.getContext('2d');
   x.fillStyle = '#e8b81a'; x.fillRect(0, 0, 128, 32);
   x.fillStyle = '#1a1a1a'; for (let i = -32; i < 160; i += 24) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + 16, 0); x.lineTo(i - 16, 32); x.lineTo(i - 32, 32); x.closePath(); x.fill(); }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.repeat.set(6, 1);
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.repeat.set(6, 1);
   return t;
 }
 

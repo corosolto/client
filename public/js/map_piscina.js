@@ -27,6 +27,7 @@
 // Same buildWorld contract as map.js.
 import * as THREE from 'three';
 import { decalIds, paredeAtras } from './map_decals.js';
+import { applyAniso } from './textures.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
 
 const HALF_X = 17, HALF_Z = 25;   // interior half-extents (walls sit just outside)
@@ -34,7 +35,7 @@ const WALL_H = 7, CEIL = 7;
 
 /* ---------- inline procedural tile textures ---------- */
 function mkTex(c, rx = 1, rz = 1, clamp = false) {
-  const t = new THREE.CanvasTexture(c);
+  const t = applyAniso(new THREE.CanvasTexture(c));
   t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter;
   t.wrapS = t.wrapT = clamp ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
   t.repeat.set(rx, rz);

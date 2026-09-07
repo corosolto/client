@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
-import { detailFor } from './textures.js';   // normal+rough por Sobel (ver lam)
+import { detailFor, applyAniso } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras, caixaGirada } from './map_decals.js';   // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';                         // cobertura medida, não coordenada à mão
 
@@ -61,7 +61,7 @@ function noiseTex(base, blotches, rx, rz, opts = {}) {
     for (let i = 0; i < (opts.pebbleN || 240); i++) { x.globalAlpha = 0.25 + rnd() * 0.3; x.fillStyle = rnd() > 0.5 ? opts.pebbles : base; x.fillRect(rnd() * S, rnd() * S, 1.6, 1.6); }
   }
   x.globalAlpha = 1;
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
 }
 // ZINCO GALVANIZADO — a assinatura nº1 do ferro velho (BAR §4.4). A versão antiga era
@@ -107,7 +107,7 @@ function zincTex(rx, rz, seed = 71, opts = {}) {
   x.globalAlpha = 0.35; x.fillStyle = '#3c4348';
   for (const yy of [S * 0.34, S * 0.71]) x.fillRect(0, yy, S, 2);
   x.globalAlpha = 1;
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
 }
 // FIBROCIMENTO ondulado cinza (telhado do barraco — BAR §4.4 pede fibrocimento, não zinco):
@@ -125,7 +125,7 @@ function fibroTex(rx, rz, seed = 907) {
     const r = 5 + rnd() * 22; x.beginPath(); x.ellipse(rnd() * S, rnd() * S, r, r * 0.5, 0, 0, 6.3); x.fill();
   }
   x.globalAlpha = 1;
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
 }
 // ALVENARIA DE BLOCO CERÂMICO SEM REBOCO (BAR §4.4: o barraco do Zé não é pintado) —
@@ -148,7 +148,7 @@ function blocoTex(rx, rz, seed = 449) {
     x.fillRect(rnd() * S, rnd() * S, 3 + rnd() * 9, 20 + rnd() * 70);
   }
   x.globalAlpha = 1;
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
 }
 // barril (azul desbotado c/ faixa + ferrugem no fundo)
@@ -161,7 +161,7 @@ function barrelTex() {
   const g = x.createLinearGradient(0, S * 0.6, 0, S);   // ferrugem subindo do fundo
   g.addColorStop(0, 'rgba(120,60,30,0)'); g.addColorStop(1, 'rgba(120,60,30,0.75)');
   x.fillStyle = g; x.fillRect(0, 0, S, S);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 // decal de mancha (óleo/poeira) — alpha radial irregular
 function blobTex(r, g, b, aMax, seed = 101) {
@@ -173,7 +173,7 @@ function blobTex(r, g, b, aMax, seed = 101) {
     gr.addColorStop(0, `rgba(${r},${g},${b},${aMax})`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
     x.fillStyle = gr; x.beginPath(); x.arc(px, py, rr, 0, 7); x.fill();
   }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
 }
 
@@ -282,7 +282,7 @@ function rustStageTex(stage, seed = 7, paint = null, rx = 1, rz = 1) {
     g.addColorStop(0, 'rgba(146,110,88,0.75)'); g.addColorStop(1, 'rgba(146,110,88,0)');   // R3: escorrimento dessaturado
     x.globalAlpha = 1; x.fillStyle = g; x.fillRect(px - 2, py, 4 + rnd() * 3, 50 + rnd() * 90);
   }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
 }
 
@@ -365,7 +365,7 @@ function handSignTex(lines, opts = {}) {
   x.globalAlpha = 0.75; x.fillStyle = '#2a1a12';
   for (const [fx, fy] of [[W * 0.03, H * 0.1], [W * 0.97, H * 0.1], [W * 0.03, H * 0.9], [W * 0.97, H * 0.9]]) { x.beginPath(); x.arc(fx, fy, 5, 0, 6.3); x.fill(); }
   x.globalAlpha = 1;
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 4; return t;
 }
 
@@ -383,7 +383,7 @@ function pixacaoTex(seed = 555) {
     x.beginPath(); x.moveTo(bx, top + rnd() * 10); x.lineTo(bx + 12 + rnd() * 10, top + rnd() * 22); x.stroke();
     if (rnd() > 0.4) { x.beginPath(); x.moveTo(bx, bot); x.lineTo(bx + 10 + rnd() * 12, bot - 8 - rnd() * 14); x.stroke(); }
   }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
 }
 
@@ -408,7 +408,7 @@ function bladeTex(seed = 401, tall = false) {
     x.quadraticCurveTo(px + (rnd() - 0.5) * 22, S - h * 0.55, px + (rnd() - 0.5) * 40, S - h);
     x.stroke();
   }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
 }
 // trepadeira: manta de folhas que cobre a pilha inteira (alpha, bordas recortadas)
@@ -430,7 +430,7 @@ function vineTex(seed = 733) {
     x.save(); x.translate(px, py); x.rotate(rnd() * 6.3);
     x.beginPath(); x.ellipse(0, 0, r, r * 0.62, 0, 0, 6.3); x.fill(); x.restore();
   }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
 }
 // copa de árvore (mangueira do quintal) — cachos de folha, silhueta irregular
@@ -445,7 +445,7 @@ function canopyTex(seed = 811) {
     x.fillStyle = `rgba(${(30 + sh * 62) | 0},${(78 + sh * 96) | 0},${(24 + sh * 42) | 0},${0.85 + rnd() * 0.15})`;
     x.beginPath(); x.ellipse(px, py, r, r * (0.6 + rnd() * 0.5), rnd() * 6.3, 0, 6.3); x.fill();
   }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
 }
 // POÇA: água escura espelhando o céu + IRIDESCÊNCIA de óleo (BAR §4.4)
@@ -465,7 +465,7 @@ function puddleTex(seed = 617) {
     x.globalAlpha = 1; x.strokeStyle = IRI[i % IRI.length]; x.lineWidth = 2 + rnd() * 5;
     x.beginPath(); x.ellipse(S / 2 + (rnd() - 0.5) * 28, S / 2 + (rnd() - 0.5) * 28, 10 + rnd() * 34, 8 + rnd() * 28, rnd() * 3, 0, 6.3); x.stroke();
   }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
 }
 
@@ -1660,7 +1660,7 @@ export function buildFerroVelho(scene, T) {
         x.fillStyle = g(115); x.fillRect(72, base - 74, 3, 74);
         for (const dy of [66, 60]) x.fillRect(66, base - dy, 15, 2);
       }
-      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+      const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
       t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
       skyTexCache[key] = t; return t;
     };
