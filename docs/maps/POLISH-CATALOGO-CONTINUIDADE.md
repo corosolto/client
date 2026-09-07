@@ -34,6 +34,53 @@ Verdes: `mapcontrato`, `spawn`, `ctfround`, `ctfwin`, `shaderbudget`, `mapjson`,
 (`_env` ← `_burst` ← `grenadeThrow` ← bot). Já vista em Penitenciária e Parque. Esta branch não
 tem o conserto — ele está na #543, que sai de `main`. Serve de corroboração independente.
 
+## Lote F — Escadão, Loja H e Piscina, 07/09/2026
+
+| mapa | mediana | p05 | dispersão p95 | área < 64 px/m |
+|---|---|---|---|---|
+| Escadão | 91 → **128** | 21 → **67** | 5,39× → **1,27×** | 27% → **4%** |
+| Loja H | 119 → **128** | 18 | 5,25× → **1,00×** | 9% → **8%** |
+| Piscina | 84 → **128** | 53 → **128** | 1,74× → **1,00×** | **41% → 0%** |
+
+Escadão e Loja H ficaram **sem nenhuma cláusula vermelha**. A Piscina só mantém a `TEXEL5`,
+que é acervo de decalque ausente no disco (`scripts/fetch-decals.sh`), não código.
+
+Catálogo: **27 → 22** cláusulas vermelhas.
+
+### `aoBoxGeo` ganhou UV em metros, mas só para quem pedir
+
+Escadão e Loja H constroem suas caixas com `aoBoxGeo` de `vao.js` — o helper que a própria
+régua aponta como lugar do conserto. Ele é usado por **sete mapas**, então mudar o
+comportamento para todos de uma vez seria mexer, sem medir, em Córrego, Quebrada, Ferro Velho,
+Brasília e Piscinão de Ramos.
+
+Duas restrições resolveram isso:
+
+1. **`aoBoxGeo(w, h, d, opts)` não recebia material**, e sem material não há como saber
+   texels-por-UV nem modo de wrap. Passou a aceitar `opts.material` — **quem não passa continua
+   exatamente como antes**. Verificado na tabela: os outros cinco mapas não se moveram.
+2. **A caixa do `aoBoxGeo` é segmentada em altura** (`BoxGeometry(w,h,d,1,segs,1)`), então não
+   tem 4 vértices por face e o helper de caixa simples não serve. A face passa a sair da
+   **normal** do vértice — `caixaUVPorNormal`, agora em `map_uv.js` e usado nos dois lugares.
+   Isso também preserva de graça a correção de anel que o `aoBoxGeo` já fazia no `uv.y`, porque
+   o V passa a vir da posição real em Y.
+
+O maior desvio restante da Loja H (2.954 px/m) não estava no caminho do `aoBoxGeo`: era o ramo
+`vao === false` do `addBox` e o `muroBox`, que monta `BoxGeometry(w,h,d,1,8,1)` para o gradiente
+de AO. Os dois passaram pelo mesmo helper.
+
+### Custo
+
+Escadão 708,6 calls/quadro · P95 9,8 ms; Loja H 488,5 · 9,9; Piscina 722,2 · 9,8. Zero erro JS
+nos três. UV não cria lote nem triângulo.
+
+### Dois portões vermelhos que **não** são desta lane
+
+`eval:escadao-rota` e `eval:escadao-ring` reprovam — e reprovam **também com o
+`map_escadao.js` de `origin/main`**, verificado trocando só esse arquivo. É dívida anterior.
+Os dois estão **fora do `check:fast`**, que é exatamente como portão apodrece sem ninguém ver.
+Não foram consertados aqui para não misturar assunto; ficam registrados.
+
 ## Estado do catálogo e próximo passo — 07/09/2026, fim desta sessão
 
 **O catálogo NÃO está pronto.** Quatro dos dezoito mapas passaram por um lote medido;

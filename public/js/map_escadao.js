@@ -14,6 +14,7 @@ import { buildEscadaoHome, escadaoHomeGround } from './map_escadao_home.js';
 import { buildEscadaoDetails } from './map_escadao_details.js';
 import { buildEscadaoContour, contourHeight, ESCADAO_CONTOUR } from './map_escadao_contour.js';
 import { buildEscadaoHorizon } from './map_escadao_horizon.js';
+import { metrosPorUV, caixaUVPorNormal } from './map_uv.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -100,8 +101,8 @@ export function buildEscadao(scene, T) {
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
     const vao = VAO_BANDS && opts.vao !== false && mat && mat.visible !== false;
     const solo = onGround(y, h) && !opts.ry;
-    const geo = opts.bevel ? caixaChanfrada(w,h,d,.025) : vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
-      : new THREE.BoxGeometry(w, h, d);
+    const geo = opts.bevel ? caixaChanfrada(w,h,d,.025) : vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING, material: mat })
+      : caixaUVPorNormal(new THREE.BoxGeometry(w, h, d), w, h, d, metrosPorUV(mat));
     const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;

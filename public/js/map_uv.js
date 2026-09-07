@@ -41,6 +41,21 @@ export function caixaUV(geo, w, h, d, mpu) {
   return escalaUV(geo, [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]], mpu);
 }
 
+/* Caixa segmentada (heightSegments > 1) não tem 4 vértices por face: a face sai da normal. */
+export function caixaUVPorNormal(geo, w, h, d, mpu) {
+  const uv = geo.attributes?.uv, pos = geo.attributes?.position, nor = geo.attributes?.normal;
+  if (!mpu || !uv || !pos || !nor) return geo;
+  for (let i = 0; i < pos.count; i++) {
+    const nx = Math.abs(nor.getX(i)), ny = Math.abs(nor.getY(i)), nz = Math.abs(nor.getZ(i));
+    const px = pos.getX(i) + w / 2, py = pos.getY(i) + h / 2, pz = pos.getZ(i) + d / 2;
+    const lateralX = nx > ny && nx > nz, topo = !lateralX && ny > nz;
+    const u = lateralX ? pz : px, v = topo ? pz : py;
+    uv.setXY(i, u / mpu.u, mpu.elevacao ? uv.getY(i) : v / mpu.v);
+  }
+  uv.needsUpdate = true;
+  return geo;
+}
+
 export function planoUV(geo, w, h, mpu) {
   return escalaUV(geo, [[w, h]], mpu);
 }
