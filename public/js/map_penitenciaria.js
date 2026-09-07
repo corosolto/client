@@ -6,6 +6,7 @@ import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { applyLook } from './map_sky.js';
 import { placeProp } from './mapprops.js';
+import { metrosPorUV, chaveUV, caixaUV, planoUV, discoUV, cilindroUV } from './map_uv.js';
 
 const HALF_X = 38;
 const HALF_Z = 48;
@@ -22,35 +23,11 @@ export function buildPenitenciaria(scene, T) {
   const geometryCache = new Map();
   /* UV em metros: densidade de texel passa a depender do tamanho no mundo, não do
      tamanho da malha. Números e motivo em docs/maps/POLISH-CATALOGO-CONTINUIDADE.md. */
-  const TEXEL_ALVO = 128;
-  /* `uvElevacao` marca textura de elevação (o reboco tem a faixa de umidade na base e
-     precisa caber uma vez na altura do muro): nela só o U vira metros. */
-  const metrosPorUV = (material) => {
-    const map = material?.map, largura = map?.image?.width;
-    if (!largura) return null;
-    return { u: (largura * (map.repeat?.x || 1)) / TEXEL_ALVO,
-      v: (map.image.height * (map.repeat?.y || 1)) / TEXEL_ALVO,
-      elevacao: !!material.userData?.uvElevacao };
-  };
-  const chaveUV = (mpu) => mpu ? `${mpu.u.toFixed(4)}:${mpu.v.toFixed(4)}:${mpu.elevacao ? 'e' : 't'}` : '0';
-  function escalaUV(geo, pares, mpu) {
-    const uv = geo.attributes?.uv;
-    if (!mpu || !uv) return geo;
-    for (let f = 0; f < pares.length; f++) {
-      const [su, sv] = pares[f];
-      for (let i = f * 4; i < f * 4 + 4 && i < uv.count; i++) {
-        uv.setXY(i, uv.getX(i) * su / mpu.u, mpu.elevacao ? uv.getY(i) : uv.getY(i) * sv / mpu.v);
-      }
-    }
-    uv.needsUpdate = true; return geo;
-  }
   const boxGeo = (w, h, d, material) => {
     const mpu = metrosPorUV(material);
     const key = `b:${w}:${h}:${d}:${chaveUV(mpu)}`;
     if (!geometryCache.has(key)) {
-      const geo = new THREE.BoxGeometry(w, h, d);
-      escalaUV(geo, [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]], mpu);
-      geometryCache.set(key, geo);
+      geometryCache.set(key, caixaUV(new THREE.BoxGeometry(w, h, d), w, h, d, mpu));
     }
     return geometryCache.get(key);
   };
@@ -58,33 +35,21 @@ export function buildPenitenciaria(scene, T) {
     const mpu = metrosPorUV(material);
     const key = `ci:${r}:${seg}:${chaveUV(mpu)}`;
     if (!geometryCache.has(key)) {
-      const geo = new THREE.CircleGeometry(r, seg), uv = geo.attributes.uv, k = mpu ? 2 * r / mpu.u : 0;
-      if (k) { for (let i = 0; i < uv.count; i++) uv.setXY(i, .5 + (uv.getX(i) - .5) * k, .5 + (uv.getY(i) - .5) * k); uv.needsUpdate = true; }
-      geometryCache.set(key, geo);
+      geometryCache.set(key, discoUV(new THREE.CircleGeometry(r, seg), r, mpu));
     }
     return geometryCache.get(key);
   };
   const planeGeo = (w, h, material) => {
     const mpu = metrosPorUV(material);
     const key = `p:${w}:${h}:${chaveUV(mpu)}`;
-    if (!geometryCache.has(key)) geometryCache.set(key, escalaUV(new THREE.PlaneGeometry(w, h), [[w, h]], mpu));
+    if (!geometryCache.has(key)) geometryCache.set(key, planoUV(new THREE.PlaneGeometry(w, h), w, h, mpu));
     return geometryCache.get(key);
   };
   const cylGeo = (r, h, segments = 12, material) => {
     const mpu = metrosPorUV(material);
     const key = `c:${r}:${h}:${segments}:${chaveUV(mpu)}`;
     if (!geometryCache.has(key)) {
-      const geo = new THREE.CylinderGeometry(r, r, h, segments), uv = geo.attributes.uv;
-      if (mpu) {
-        // Tronco: U dá a volta na circunferência, V sobe a altura. Tampas: disco em torno do centro.
-        const nTronco = (segments + 1) * 2, kU = (2 * Math.PI * r) / mpu.u, kV = h / mpu.v, kT = 2 * r / mpu.u;
-        for (let i = 0; i < uv.count; i++) {
-          if (i < nTronco) uv.setXY(i, uv.getX(i) * kU, mpu.elevacao ? uv.getY(i) : uv.getY(i) * kV);
-          else uv.setXY(i, .5 + (uv.getX(i) - .5) * kT, .5 + (uv.getY(i) - .5) * kT);
-        }
-        uv.needsUpdate = true;
-      }
-      geometryCache.set(key, geo);
+      geometryCache.set(key, cilindroUV(new THREE.CylinderGeometry(r, r, h, segments), r, h, segments, mpu));
     }
     return geometryCache.get(key);
   };
