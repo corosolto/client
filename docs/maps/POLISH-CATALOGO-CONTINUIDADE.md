@@ -171,66 +171,74 @@ Loja H), sempre com a mesma pilha. O conserto está na #543.
 
 ## Estado do catálogo e próximo passo — 07/09/2026, fim desta sessão
 
-**O catálogo NÃO está pronto.** Quatro dos dezoito mapas passaram por um lote medido;
-os outros catorze continuam como estavam. O que mudou de verdade nesta sessão foi ter
-uma régua confiável e quatro mapas dentro dela.
+**O catálogo NÃO está pronto.** O que esta sessão entregou foi uma régua confiável e a
+**escala de material do catálogo inteiro** — não identidade, que é o pedido central do dono e
+onde só o Parque recebeu um passe.
 
-TEXEL do catálogo inteiro: **47 cláusulas vermelhas → 31**.
+TEXEL do catálogo: **47 cláusulas vermelhas → 18**. Onze mapas passaram a medir exatamente
+128 px/m com dispersão 1,0×.
 
-| mapa | mediana | chão | p05 | disp95 | <piso | estado |
-|---|---:|---:|---:|---:|---:|---|
-| penitenciaria | 128 | 128 | 70 | 1,00× | 0% | **lote feito** |
-| posto_treta | 128 | 128 | 128 | 1,00× | 0% | **lote feito** |
-| parque_treta | 128 | 128 | 107 | 1,00× | 4% | **lote feito** |
-| atacadao_treta | 128 | 128 | 128 | 1,00× | 2% | **lote feito** |
-| upa_24h | 15 | 17 | 4,4 | 1,12× | 99% | planta pintada — exige decisão de arte |
-| piscina_treta | 84 | 89 | 53 | 1,74× | 41% | a fazer |
-| escadao | 91 | 91 | 21 | 5,39× | 27% | a fazer |
-| ferro_velho | 71 | 71 | 71 | 1,45× | 3% | 79 superfícies com anisotropia < 4 |
-| praca_poderes | 66 | 66 | 58 | 1,49× | 6% | outra lane ativa |
-| quebrada | 114 | 120 | 66 | 2,22× | 3% | 9,1% sem medida — decals ausentes |
-| loja_h | 119 | 88 | 18 | 5,25× | 9% | a fazer |
-| campomorro | 131 | 131 | 50 | 1,35× | 10% | a fazer |
-| obras_prefeitura | 139 | 139 | 42 | 1,00× | 11% | textura presa na borda |
-| velho_oeste | 169 | 169 | 169 | 1,01× | 0% | dispersão máx 85,8× |
-| corrego | 262 | 132 | 83 | 7,23× | 1% | a fazer |
-| amazonia | 240 | 240 | 38 | 9,94× | 13% | a fazer |
-| lajes | 362 | 183 | 183 | 1,83× | 0% | acima do alvo |
+| mapa | mediana | chão | disp95 | <piso | estado |
+|---|---:|---:|---:|---:|---|
+| penitenciaria | 128 | 128 | 1,00× | 0% | **lote feito** + vão fundo |
+| posto_treta | 128 | 128 | 1,00× | 0% | **lote feito** |
+| piscina_treta | 128 | 128 | 1,00× | 0% | **lote feito** |
+| corrego | 128 | 128 | 1,03× | 0% | **lote feito** |
+| atacadao_treta | 128 | 128 | 1,00× | 2% | **lote feito** |
+| ferro_velho | 128 | 128 | 1,00× | 2% | **lote feito** |
+| quebrada | 128 | 120 | 1,00× | 3% | **lote feito** |
+| parque_treta | 128 | 128 | 1,00× | 4% | **lote feito** + alameda |
+| escadao | 128 | 91 | 1,27× | 4% | **lote feito** |
+| loja_h | 128 | 88 | 1,00× | 8% | **lote feito** |
+| amazonia | 128 | 128 | 1,38× | 13% | **lote feito**, TEXEL2 aberta |
+| campomorro | 131 | 131 | 1,35× | 10% | a fazer |
+| obras_prefeitura | 139 | 139 | 1,00× | 11% | textura presa na borda |
+| velho_oeste | 169 | 169 | 1,01× | 0% | só dispersão máx |
+| lajes | 362 | 183 | 1,83× | 0% | acima do alvo |
+| praca_poderes | 66 | 66 | 1,49× | 6% | **outra lane ativa — não tocar** |
+| upa_24h | 15 | 17 | 1,12× | 99% | planta pintada — decisão de arte |
 
-Faltam ainda, sem nenhuma linha escrita: **Joá (#533)**, e a recuperação de **#457/#458/#459**
-de Emerson citada no handoff anterior.
+Das 18 vermelhas restantes, **dez são `TEXEL3b`**, cláusula de máximo/mediana que costuma
+apontar superfície minúscula (o pior caso medido foi a tampa de 3 cm de uma barra). Duas são
+`TEXEL5`, que é **acervo de decalque ausente no disco**, não código.
+
+Faltam sem nenhuma linha escrita: **Joá (#533)** e a recuperação **#457/#458/#459** de Emerson.
 
 ### Ordem sugerida para quem continuar
 
-1. **Escadão, Piscina e Loja H** — dispersão alta e muita área abaixo do piso; o conserto de UV
-   em metros se aplica direto, com o mesmo `map_uv.js`. É o melhor retorno por hora.
-2. **Anisotropia** (`ferro_velho` 79, `piscina` 13, `loja_h` 6, `obras` 8). A régua aponta a
-   causa única: `textures.js:5 tex()` nunca atribui `anisotropy`. É **uma linha em arquivo
-   compartilhado** que resolve quatro mapas — vale PR próprio, sequencial, fora de lane de mapa.
-3. **UPA e Obras** — não são conserto mecânico. Exigem decisão de arte (resolução da planta ou
-   camada de detalhe ladrilhada por cima). Não repetir a tentativa de escalar UV: a `TEXEL6`
-   reprova, e com razão.
-4. **Identidade**, que é o pedido do dono e onde há menos feito: só o Parque recebeu passe de
-   identidade (alameda de palmeiras e pérgola). Penitenciária ganhou vão fundo, mas **a silhueta
-   continua baixa** e a pele do pavilhão é GLB, fora do alcance da UV.
+1. **Identidade** — é o pedido do dono e o que menos avançou. Só o Parque tem passe
+   (alameda de palmeiras imperiais e pérgola). A Penitenciária ganhou vão fundo mas **a silhueta
+   continua baixa**, e a pele do pavilhão é GLB, fora do alcance da UV.
+2. **Lajes (362) e Velho Oeste (169)** estão *acima* do alvo de 128 — o oposto do resto. Vale
+   entender antes de mexer: densidade alta demais custa memória sem ganho visível.
+3. **UPA e Obras** — não são conserto mecânico, exigem decisão de arte. Não repetir a tentativa
+   de escalar UV: a `TEXEL6` reprova, e com razão.
+4. **Campinho** — o único mapa jogável ainda sem passe de escala.
 
 ### Armadilhas medidas nesta sessão, para não repetir
 
-- **Frametime não discrimina nada nesta máquina**: 8,30 ms é o vsync de 120 Hz. Orçamento é
-  draw call e triângulo por quadro. Só o Posto cai abaixo do vsync (P95 ≈ 17 ms).
-- **Medir uma vez não basta**: uma leitura de P95 10,3 no Posto parecia regressão de 65% e era
-  ponto fora da curva — repetindo, antes e depois dão 16,5–17,1.
+- **Frametime não discrimina**: 8,30 ms é o vsync de 120 Hz. Orçamento é draw call e triângulo
+  por quadro. Só **Posto** (P95 ≈ 17 ms) e **Quebrada** (17,1 ms) caem abaixo do vsync.
+- **Medir uma vez engana**: uma leitura de P95 no Posto fingiu regressão de 65%.
 - **Identidade que não se vê não conta**: pérgola e palmeiras fora da cerca viva não apareciam
   em nenhuma das três vistas.
-- **Não escalar UV de textura presa na borda** (`TEXEL6`), e **não escalar textura de elevação**
-  no eixo V (a faixa de umidade do reboco tem de cair uma vez na altura do muro).
-- **Geometria transformada ou mesclada não pode sair do cache compartilhado**: `.translate()`
-  numa geometria em cache corrompe todos os usos dela.
-- **`eval:cena` reescreve `tools/eval/cena_probe.json` do catálogo inteiro.** Não deixar isso
-  entrar num PR de mapa.
-- **Dublê mais frouxo que a produção não mede a produção**: o `AudioParam` falso das réguas de
-  áudio aceitava alvo zero, e por isso sete réguas não viram o `RangeError` que derrubava o
-  quadro.
+- **Não escalar UV de textura presa na borda** (`TEXEL6`) nem o V de textura de elevação.
+- **Geometria transformada, mesclada ou escalada pela matriz não pode sair do cache** — e cubo
+  unitário escalado pela matriz mantém UV 0→1 (foi o que pôs a madeira da Amazônia em 3.696 px/m
+  e a prancha do Parque fora de escala).
+- **Cobrir metade de um mapa piora a leitura**: no Ferro Velho, escalar só as caixas levou a
+  dispersão de 1,45× para 1,80×.
+- **Mudança sem efeito medido não entra** (a raiz da Amazônia foi revertida por isso).
+- **`eval:cena` reescreve `cena_probe.json` do catálogo inteiro** — não deixar entrar em PR de mapa.
+- **O gerador de grafite roda contra `localhost:8123` por padrão**, que nesta máquina é outra
+  worktree. Usar `BASE=http://127.0.0.1:8192`.
+- **O carimbo de frescor do grafite é atacadão**: regerar um mapa marca todos como frescos.
+  Defeito da ferramenta, ainda de pé.
+- **Dublê mais frouxo que a produção não mede a produção**: o `AudioParam` falso aceitava alvo
+  zero, e por isso sete réguas de áudio não viram o `RangeError` que derruba o quadro — visto em
+  **quatro mapas** nesta sessão.
+- **Dica de régua envelhece**: a `TEXEL4` mandava consertar `textures.js:5`, que já estava certo
+  havia tempo. Ler o arquivo antes de seguir a dica.
 
 ### PRs desta sessão
 
@@ -239,10 +247,14 @@ de Emerson citada no handoff anterior.
 | #540 | recuperação dos PRs fechados + conserto da contagem de draw calls | `main` |
 | #541 | Penitenciária: UV em metros e vão fundo | #540 |
 | #542 | Parque: UV em metros e alameda de Madureira | #541 |
-| #545 | Posto e Atacadão + regra de wrap; UPA e Obras revertidos | #542 |
+| #545 | Posto e Atacadão; UPA e Obras revertidos pela medição | #542 |
+| #547 | anisotropia de Ferro Velho, Piscina, Obras e Loja H | #545 |
+| #548 | Escadão, Loja H e Piscina; `aoBoxGeo` opt-in | #547 |
+| #550 | Córrego, Quebrada e Ferro Velho; grafite regerado; Campinho no portão | #548 |
+| #551 | Amazônia | #550 |
 | #543 | áudio: piso na rampa exponencial + régua `eval:audioenvelope` | `main` |
 
-Nenhum deles tem aprovação visual humana, e nenhum foi mergeado.
+Nenhum tem aprovação visual humana e nenhum foi mergeado.
 
 ## Retomada — captura corrigida dos três recuperados, 07/09/2026
 
