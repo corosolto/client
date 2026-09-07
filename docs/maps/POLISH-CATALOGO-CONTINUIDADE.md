@@ -1,5 +1,57 @@
 # Polish integral do catálogo — continuidade
 
+## Retomada — captura corrigida dos três recuperados, 07/09/2026
+
+Checkpoint anterior preservado na tag `checkpoint/mapas-polish-506b82c7`. A captura
+pendente do handoff foi executada nesta lane, agora sobre o código corrigido.
+
+**Defeito de medição encontrado e corrigido antes de usar qualquer número.** O bloco
+`live` do capturador lia `renderer.info.render.calls` depois de o `autoReset` voltar a
+`true`, devolvendo `calls: 1` — só o passe final do bloom. As vistas fixas já somavam
+todos os passes; o `live` não. Agora o `live` desliga `autoReset`, acumula os 30 s e
+divide pelo número de quadros, publicando `calls`/`triangles` por quadro mais os totais
+brutos. Prova de que a régua morde: a mesma Penitenciária saiu de `calls: 1` para
+`calls/quadro: 753,9`, coerente com as vistas fixas (571–716) mais arma, bots e HUD.
+
+**Frametime está saturado nesta máquina e não serve de orçamento.** Os três mapas dão
+P50 = 8,30 ms com 3.546–3.603 quadros em 30 s, isto é, 120 Hz travados no vsync. Enquanto
+a cena couber no quadro, o P50 é o refresh do monitor, não o custo do mapa. O orçamento
+desta lane passa a ser **draw calls e triângulos por quadro**; frametime só entra como
+detector de queda abaixo do vsync, e ainda falta hardware-alvo.
+
+| Mapa | calls/quadro (live) | triângulos/quadro | Vistas fixas, calls | P50/P95 ms |
+|---|---:|---:|---|---|
+| Campinho do Morro | 485,4 | 861.004 | mouth 810 · eye 672 · galpão 845 · overview 829 | 8,30/9,20 |
+| Parque da Treta | 712,2 | 1.121.726 | south 621 · west 610 · coreto 436 | 8,30/9,10 |
+| Penitenciária | 741,6 | 1.065.529 | south 712 · yard 614 · galeria 567 · campo 653 | 8,30/9,10 |
+
+O `live` do Campinho é menor que suas vistas fixas porque a câmera de partida fica em
+região barata; não é ganho de otimização. Artefatos em
+`artifacts/mapas-polish/recovery-fixed/` (fora do Git), 1200×800.
+
+Os três chegaram a `live` e carregaram os props GLB. 404 restantes: áudio (10–13 por mapa)
+e 3 decals no Campinho — acervo local ausente já registrado, não regressão. Um erro JS
+intermitente do Campinho ficou registrado em `KNOWN-BUGS.md`; o capturador agora grava a
+pilha para a próxima ocorrência.
+
+**Diagnóstico visual desta rodada, por inspeção das imagens:**
+
+- **Penitenciária** — o pátio lê como galpão rural, não como presídio: chão de terra
+  uniforme e esticado no lugar de laje de concreto com juntas, pavilhões baixos de
+  telhado plano e neblina lavando o contraste. Na galeria as janelas são grades chapadas
+  na parede, sem peitoril nem profundidade de vão, sob vergas que flutuam. A linguagem
+  Carandiru — pavilhões altos, faixas horizontais de janela com vão fundo, ritmo vertical
+  — ainda não existe. Esta é a lacuna do próximo lote.
+- **Parque da Treta** — parque genérico pastel, não Madureira: castelo de cones, árvores
+  em esfera, azul/rosa/roxo concorrendo e casario de fundo branco sem carioca nenhum.
+  O piso tem respingos escuros grandes que lêem como ruído, não como sujeira.
+- **Campinho do Morro** — o campo de terra batida com marcação branca e o casario ao
+  redor estão certos de origem; o que derruba a leitura é a neblina forte, que apaga os
+  planos de distância e achata o morro inteiro.
+
+Nenhum desses três visuais tem aprovação humana. Esta seção substitui apenas a pendência
+de captura do handoff; o restante do estado abaixo continua valendo.
+
 ## Estado de parada — 07/09/2026
 
 Execução encerrada por instrução de limite de créditos; GLM/Claude retomam pelos

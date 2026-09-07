@@ -4867,3 +4867,23 @@ comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 ### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527
 
 Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.
+
+## Campinho do Morro — erro JS intermitente na entrada da partida (07/09/2026)
+
+Observado **1 vez em 4 execuções** do capturador nesta lane, sempre em `campomorro`,
+sem erro nos outros mapas da mesma rodada:
+
+```
+Cannot read properties of undefined (reading 'id')
+```
+
+Evidência: `artifacts/mapas-polish/recovery-fixed/browser-med.json`, campo `errors` da
+entrada `campomorro`, gravado por
+`node tools/eval/mapas-polish-capture.mjs artifacts/mapas-polish/recovery-fixed campomorro`.
+Duas reexecuções isoladas do mesmo comando deram `errors: 0`; portanto é corrida, não
+falha determinística, e **não** foi atribuída a arquivo:linha ainda.
+
+`Régua: nenhuma.` O capturador passou a registrar `e.stack` em vez de `e.message`
+(`tools/eval/mapas-polish-capture.mjs`), de modo que a próxima ocorrência já sai com pilha.
+Não corrigir às cegas: sem a pilha, qualquer palpite sobre torcida/CTF/bots é especulação.
+O mapa chega a `live`, carrega os props e joga nas quatro vistas fixas.

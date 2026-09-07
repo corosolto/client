@@ -21,7 +21,7 @@ try {
       return route.fulfill({status:200,contentType:'text/javascript',body});
     });
     const errors = new Set(), failed = new Set();
-    page.on('pageerror', e => errors.add(e.message));
+    page.on('pageerror', e => errors.add(e.stack || e.message));
     page.on('response', r => { if (r.status() >= 400) failed.add(`${r.status()} ${new URL(r.url()).pathname}`); });
     const started = Date.now();
     try {
@@ -59,12 +59,23 @@ try {
       await page.evaluate(() => { window.__game.paused=false; });
       const live = await page.evaluate(async () => {
         const times = []; let last = performance.now();
+        // Somar TODOS os passes por quadro: sem autoReset, info acumula ate a leitura.
+        // Ler info.render.calls sem isto devolve so o passe final do bloom (calls=1).
+        const r0 = window.__game.renderer; r0.info.autoReset = false; r0.info.reset();
+        let frames = 0;
         await new Promise(resolve => { const end = last + 30000; function tick(now) {
-          times.push(now-last); last=now; if (now<end) requestAnimationFrame(tick); else resolve();
+          times.push(now-last); last=now; frames++; if (now<end) requestAnimationFrame(tick); else resolve();
         } requestAnimationFrame(tick); });
         times.sort((a,b)=>a-b); const g = window.__game, r=g.renderer;
-        return { id:g._mapId, state:g.state, frameMsP50:times[Math.floor(times.length*.5)],
-          frameMsP95:times[Math.floor(times.length*.95)], calls:r.info.render.calls, triangles:r.info.render.triangles,
+        const callsTotal = r.info.render.calls, trianglesTotal = r.info.render.triangles;
+        r.info.autoReset = true;
+        const p50 = times[Math.floor(times.length*.5)];
+        return { id:g._mapId, state:g.state, frameMsP50:p50,
+          frameMsP95:times[Math.floor(times.length*.95)], frames,
+          calls: frames ? +(callsTotal/frames).toFixed(1) : null,
+          triangles: frames ? Math.round(trianglesTotal/frames) : null,
+          callsTotal, trianglesTotal,
+          refreshHzP50: p50 ? +(1000/p50).toFixed(1) : null,
           textures:r.info.memory.textures, geometries:r.info.memory.geometries,
           heapMB:performance.memory?.usedJSHeapSize/1048576 };
       });
