@@ -30,20 +30,18 @@ const ARSENAL = {
     len: 1.15,
     clipes: ['idle', 'shoot', 'reload_start', 'reload_loop', 'reload_end', 'reload_empty'],
     mecanismo: 'bolt',
-    parte: 'MINT_BOLT_REM700',
-    bone_parte: 'Bolt',
-    clipe_movimento: 'shoot',
-    excursao_min: 0.03,
+    mecanismos: [{ parte: 'MINT_BOLT_REM700', clipe: 'shoot', min: 0.03, maxVerts: 2000 }],
   },
   g3sg1: {
     glb: 'artifacts/viewmodels/dmr/g3sg1/cand1/g3sg1-baked-runtime.glb',
     len: 1.12,
     clipes: ['idle', 'reload_tactical', 'reload_empty'],
     mecanismo: 'mag',
-    parte: 'MINT_MAG_G3SG1',
-    bone_parte: 'Mag',
-    clipe_movimento: 'reload_tactical',
-    excursao_min: 0.08,
+    mecanismos: [
+      { parte: 'MINT_MAG_G3SG1', clipe: 'reload_tactical', min: 0.08, maxVerts: 800 },
+      // alavanca de armar (HK slap no fim do reload_empty)
+      { parte: 'MINT_ALAVANCA_G3SG1', clipe: 'reload_empty', min: 0.008, maxVerts: 400 },
+    ],
     proibidos: ['shoot', 'reload_start', 'reload_loop', 'reload_end'],
   },
 };
@@ -146,34 +144,37 @@ function inspeciona(gltf, cfg, arma) {
     }
   }
 
-  // mecanismo: excursão da peça no clipe de movimento
-  const parte = cena.getObjectByName(cfg.parte);
-  if (check(!!parte, `${arma}: peça móvel ${cfg.parte} ausente do GLB`)) {
-    const clipe = clipes.get(cfg.clipe_movimento);
-    if (clipe) {
-      const mixer = new THREE.AnimationMixer(cena);
-      const acao = mixer.clipAction(clipe);
-      acao.play();
-      // A peça é NÓ RÍGIDO filho do bone: mede a posição de mundo do nó.
-      const ponto = () => {
-        cena.updateMatrixWorld(true);
-        return parte.getWorldPosition(new THREE.Vector3());
-      };
+  // mecanismo: excursão de cada peça no clipe-mestre declarado
+  const resultado = { mecanismos: [] };
+  for (const mec of cfg.mecanismos) {
+    const parte = cena.getObjectByName(mec.parte);
+    if (!check(!!parte, `${arma}: peça móvel ${mec.parte} ausente do GLB`)) continue;
+    // censo de vértices: pega troca de peça (o caso do mag renomeado p/ alavanca)
+    const nVerts = parte.geometry?.attributes?.position?.count ?? 0;
+    check(nVerts > 0 && nVerts <= (mec.maxVerts ?? 2000),
+      `${arma}: peça ${mec.parte} com ${nVerts} verts (teto ${mec.maxVerts ?? 2000})`);
+    const clipe = clipes.get(mec.clipe);
+    if (!clipe) { check(false, `${arma}: clipe ${mec.clipe} ausente para ${mec.parte}`); continue; }
+    const mixer = new THREE.AnimationMixer(cena);
+    mixer.clipAction(clipe).play();
+    // A peça é NÓ RÍGIDO filho do bone: mede a posição de mundo do nó.
+    const ponto = () => {
+      cena.updateMatrixWorld(true);
+      return parte.getWorldPosition(new THREE.Vector3());
+    };
+    mixer.update(0);
+    const p0 = ponto();
+    let maxDist = 0;
+    for (let i = 1; i <= 12; i += 1) {
       mixer.update(0);
-      const p0 = ponto();
-      let maxDist = 0;
-      for (let i = 1; i <= 12; i += 1) {
-        mixer.update(0);
-        mixer.setTime((clipe.duration * i) / 12);
-        maxDist = Math.max(maxDist, ponto().distanceTo(p0));
-      }
-      const maxDistM = maxDist;
-      check(maxDistM >= cfg.excursao_min,
-        `${arma}: peça ${cfg.parte} excursionou ${maxDistM.toFixed(4)} m (< ${cfg.excursao_min} m) em ${cfg.clipe_movimento}`);
-      return { excursion: maxDistM };
+      mixer.setTime((clipe.duration * i) / 12);
+      maxDist = Math.max(maxDist, ponto().distanceTo(p0));
     }
+    check(maxDist >= mec.min,
+      `${arma}: peça ${mec.parte} excursionou ${maxDist.toFixed(4)} m (< ${mec.min} m) em ${mec.clipe}`);
+    resultado.mecanismos.push({ parte: mec.parte, clipe: mec.clipe, excursion: +maxDist.toFixed(4) });
   }
-  return { falhasNovas: falhas.length - falhasAntes };
+  return resultado;
 }
 
 // ---------------------------------------------------------------- mutantes
@@ -198,7 +199,7 @@ const MUTANTES = {
     // bone como pai, a peça congela enquanto o resto recua — é isso que a
     // régua de excursão tem que pegar.
     const cena = g.scene;
-    const parte = cena.getObjectByName(cfg.parte);
+    const parte = cena.getObjectByName(cfg.mecanismos[0].parte);
     if (!parte || !parte.parent) throw new Error('mutação não aplicou (peça sem pai)');
     const paiAntes = parte.parent;
     cena.attach(parte);
@@ -216,7 +217,7 @@ for (const [arma, cfg] of Object.entries(ARSENAL)) {
   const mec = inspeciona(gltf, cfg, arma);
   const mutantes = {};
   for (const [nome, fn] of Object.entries(MUTANTES)) {
-    if (nome === 'congela_peca' && !mec.excursion) continue;
+    if (nome === 'congela_peca' && !mec.mecanismos?.length) continue;
     try {
       mutantes[nome] = await mutaEGuarda(nome, fn, cfg, arma);
     } catch (e) {

@@ -37,12 +37,12 @@ ARMAS = {
         'len_m': 1.15, 'gripZ': 0.66,
         # maçã+haste do ferrolho: protrai além da meia-largura do receiver (|z|>0.09)
         # na janela do receiver medida no topo (x -0.11..-0.03, knob em +z)
-        'parte': {'tipo': 'bolt', 'eixo': 'z', 'limiar': 0.090, 'x_min': -0.11, 'x_max': -0.03},
+        'partes': [{'tipo': 'bolt', 'eixo': 'z', 'limiar': 0.090, 'x_min': -0.11, 'x_max': -0.03,
+                    'bone': 'Bolt'}],
         'mint_axes': {'cima': 'Y', 'lado': 'Z'},   # no GLB Mint: X=cano(+boca), Y=cima, Z=lado
         'props_donor': ['Clip', 'Cartridge', 'CartridgeClip0', 'CartridgeClip1',
                         'CartridgeClip2', 'CartridgeClip3', 'CartridgeClip4'],
         'bone_corpo': 'StaticBolt',   # corpo do doador Kar98K é skinned neste bone
-        'bone_parte': 'Bolt',
         'clipes': ['shoot', 'reload_start', 'reload_loop', 'reload_end', 'reload_empty'],
     },
     'g3sg1': {
@@ -52,11 +52,17 @@ ARMAS = {
         'ancora': {'tipo': 'objeto', 'objeto': 'SOCKET_WEAPON_G3'},
         'len_m': 1.12, 'gripZ': 0.58,
         # GLB Mint do g3sg1: X=cano(+boca), Z=CIMA, Y=lado (invertido vs rem700)
-        'parte': {'tipo': 'mag', 'eixo': 'z', 'limiar': -0.048, 'x_min': -0.27, 'x_max': 0.03},
+        'partes': [
+            # carregador: abaixo da linha do receiver, à frente do gatilho
+            {'tipo': 'mag', 'eixo': 'z', 'limiar': -0.048, 'x_min': -0.27, 'x_max': 0.03, 'bone': 'Mag'},
+            # alavanca de armar G3: bloco no TOPO frontal do receiver (medido:
+            # 58 verts, z>0.115, x 0.03..0.065) — segue o bone ChargingHandle
+            {'tipo': 'alavanca', 'eixo': 'z', 'limiar': 0.115, 'x_min': 0.01, 'x_max': 0.09,
+             'bone': 'ChargingHandle', 'acima': True},
+        ],
         'mint_axes': {'cima': 'Z', 'lado': 'Y'},
         'props_donor': ['Cartridge'],
         'bone_corpo': None,           # corpo do G3 não tem grupo: segue o objeto do rig
-        'bone_parte': 'Mag',
         'clipes': ['reload_tactical', 'reload_empty'],
     },
 }
@@ -138,19 +144,43 @@ def estagio_montar(arma, cfg):
     grip_mint = Vector((mmn.x + mspan.x * (1 - cfg['gripZ']),
                         (mmn.y + mmx.y) / 2, (mmn.z + mmx.z) / 2))
 
-    # registra: p_world = T(grip_doador) ∘ [eixos Mint→doador] ∘ S ∘ T(-grip_mint).
-    # A Mint tem X=cano; cima/lado podem estar em Y ou Z conforme a arma:
-    # P reordena (cano, cima, lado) para as linhas de B.
+    mint_root = bpy.data.objects.new(f'MINT_WEAPON_{arma.upper()}', None)
+    bpy.context.scene.collection.objects.link(mint_root)
+
+    # REGISTRO PELA GEOMETRIA DO DOADOR (não pelo gripZ teórico): as mãos do
+    # doador seguram a arma DELE — a Mint tem que ocupar o MESMO volume (boca
+    # na boca do doador, eixo no eixo, seções centradas). Aferido na régua de
+    # contato: registrar por gripZ deixava a mão de apoio a ~19 cm da coronha.
     perm = {'rem700': ((1, 0, 0), (0, 1, 0), (0, 0, 1)),
             'g3sg1': ((1, 0, 0), (0, 0, 1), (0, 1, 0))}[arma]
     m_perm = Matrix(perm).to_4x4()
     m_map = Matrix((dir_cano, cima, lado)).to_4x4().transposed()  # colunas = destino de cano/cima/lado
-    reg = (Matrix.Translation(grip_doador) @ m_map @ m_perm @
-           Matrix.Diagonal((escala, escala, escala, 1.0)).to_4x4() @
-           Matrix.Translation(-grip_mint))
+    m_esc = Matrix.Diagonal((escala, escala, escala, 1.0)).to_4x4()
+    # centro da Mint cru (depois de perm/escala, o maior eixo vira o cano)
+    centro_mint = (mmn + mmx) / 2
+    # boca do doador no eixo do cano; comprimento do doador no mesmo eixo
+    dmn_eixo = list(dmn)[eixo]; dmx_eixo = list(dmx)[eixo]
+    boca_doador = dmx_eixo if boca_no_max else dmn_eixo
+    # centro da arma do doador nas seções transversais (cima/lado); a Mint
+    # conserva o comprimento REAL dela (escala já aplicada) — só a POSIÇÃO
+    # se alinha à arma do doador (boca na boca, seções centradas)
+    centro_doador = (dmn + dmx) / 2
+    # monta: alinha centros; a coincidência das BOCAS é medida EM MUNDO em
+    # segunda passada (a Mint carrega matriz interna de conversão do import —
+    # alinhar analiticamente no espaço cru erra a extremidade).
+    reg = (Matrix.Translation(centro_doador) @ m_map @ m_perm @ m_esc @
+           Matrix.Translation(-centro_mint))
+    mint_root.matrix_world = reg
+    bpy.context.view_layer.update()
+    provisorios = [mint_mesh.matrix_world @ v.co.copy() for v in mint_mesh.data.vertices]
+    proj = [v.dot(dir_cano) for v in provisorios]
+    mint_boca_proj = max(proj) if boca_no_max else min(proj)
+    proj_doador = [v.dot(dir_cano) for v in dvs]
+    boca_doador_proj = max(proj_doador) if boca_no_max else min(proj_doador)
+    reg = Matrix.Translation(dir_cano * (boca_doador_proj - mint_boca_proj)) @ reg
+    mint_root.matrix_world = reg
+    bpy.context.view_layer.update()
 
-    mint_root = bpy.data.objects.new(f'MINT_WEAPON_{arma.upper()}', None)
-    bpy.context.scene.collection.objects.link(mint_root)
     mint_root.matrix_world = reg
     bpy.context.view_layer.update()
     for o in mint_objs:
@@ -240,46 +270,48 @@ def estagio_partes(arma, cfg):
     load_candidate(arma)
     mint_root = bpy.data.objects[f'MINT_WEAPON_{arma.upper()}']
     mint_mesh = next(o for o in bpy.data.objects if o.type == 'MESH' and o.parent == mint_root)
-    parte = cfg['parte']
-
-    bpy.context.view_layer.objects.active = mint_mesh
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode='OBJECT')
-    sel = []
-    for v in mint_mesh.data.vertices:
-        co = v.co  # espaço local Mint: X=cano(+boca); cima/lado conforme a arma
-        valor = abs(co.z) if parte['tipo'] == 'bolt' else co.z
-        if parte['tipo'] == 'bolt':
-            ok = valor >= parte['limiar'] and parte['x_min'] <= co.x <= parte['x_max']
-        else:
-            ok = valor <= parte['limiar'] and parte['x_min'] <= co.x <= parte['x_max']
-        if ok:
-            sel.append(v.index)
-    print('DMR_PARTE_VERTS', arma, len(sel), 'de', len(mint_mesh.data.vertices))
-    if not sel:
-        raise SystemExit('seleção vazia; ajuste a caixa da parte')
-
-    vg = mint_mesh.vertex_groups.new(name=f'PARTE_{parte["tipo"]}')
-    vg.add(sel, 1.0, 'REPLACE')
-    bpy.context.view_layer.objects.active = mint_mesh
-    mint_mesh.vertex_groups.active_index = mint_mesh.vertex_groups.find(vg.name)
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.vertex_group_select()
-    bpy.ops.mesh.separate(type='SELECTED')
-    bpy.ops.object.mode_set(mode='OBJECT')
-
-    parte_obj = None
-    for o in bpy.data.objects:
-        if o.type == 'MESH' and o != mint_mesh and o.parent == mint_root and 'PARTE' not in o.name:
-            parte_obj = o
-    if parte_obj is None:
-        raise SystemExit('peça separada não encontrada')
-    nome = f'MINT_{parte["tipo"].upper()}_{arma.upper()}'
-    parte_obj.name = nome
-    parte_obj.vertex_groups.clear()
-    print('DMR_PARTE_OK', arma, nome, '→ skin no estágio assar (bone', cfg['bone_parte'] + ')')
+    for parte in cfg['partes']:
+        bpy.context.view_layer.objects.active = mint_mesh
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='DESELECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        sel = []
+        for v in mint_mesh.data.vertices:
+            co = v.co  # espaço local Mint: X=cano(+boca); cima/lado conforme a arma
+            valor = abs(co.z) if parte['tipo'] == 'bolt' else co.z
+            if parte['tipo'] == 'bolt':
+                ok = valor >= parte['limiar'] and parte['x_min'] <= co.x <= parte['x_max']
+            elif parte.get('acima'):
+                ok = valor >= parte['limiar'] and parte['x_min'] <= co.x <= parte['x_max']
+            else:
+                ok = valor <= parte['limiar'] and parte['x_min'] <= co.x <= parte['x_max']
+            if ok:
+                sel.append(v.index)
+        print('DMR_PARTE_VERTS', arma, parte['tipo'], len(sel), 'de', len(mint_mesh.data.vertices))
+        if not sel:
+            raise SystemExit('seleção vazia; ajuste a caixa da peça ' + parte['tipo'])
+        vg = mint_mesh.vertex_groups.new(name=f'PARTE_{parte["tipo"]}')
+        vg.add(sel, 1.0, 'REPLACE')
+        bpy.context.view_layer.objects.active = mint_mesh
+        mint_mesh.vertex_groups.active_index = mint_mesh.vertex_groups.find(vg.name)
+        antes = {o.name for o in bpy.data.objects}
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='DESELECT')
+        bpy.ops.object.vertex_group_select()
+        bpy.ops.mesh.separate(type='SELECTED')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        # diff de nomes: o separate cria o objeto novo; achar por exclusão já
+        # trocou peças quando o sufixo .001 reaproveita nome de peça anterior
+        novos = [n for n in {o.name for o in bpy.data.objects} - antes]
+        if not novos:
+            raise SystemExit('peça separada não encontrada: ' + parte['tipo'])
+        parte_obj = bpy.data.objects[novos[0]]
+        if len(parte_obj.data.vertices) != len(sel):
+            raise SystemExit(f'peça {parte["tipo"]} com {len(parte_obj.data.vertices)} verts ≠ {len(sel)} selecionados')
+        nome = f'MINT_{parte["tipo"].upper()}_{arma.upper()}'
+        parte_obj.name = nome
+        parte_obj.vertex_groups.clear()
+        print('DMR_PARTE_OK', arma, nome, '→ skin no assar (bone', parte['bone'] + ')')
     bpy.ops.wm.save_as_mainfile(filepath=blend_path(arma))
 
 
@@ -298,10 +330,13 @@ def estagio_assar(arma, cfg):
 
     malhas = [o for o in bpy.data.objects
               if o.type == 'MESH' and o.parent == mint_root]
-    parte_nome = f'MINT_{cfg["parte"]["tipo"].upper()}_{arma.upper()}'
-    p = bpy.data.objects.get(parte_nome)
-    if p and p not in malhas:
-        malhas.append(p)
+    partes = []
+    for parte_cfg in cfg['partes']:
+        p = bpy.data.objects.get(f'MINT_{parte_cfg["tipo"].upper()}_{arma.upper()}')
+        if p:
+            partes.append((p, parte_cfg['bone']))
+            if p not in malhas:
+                malhas.append(p)
 
     for o in malhas:
         m = rig_mw.inverted() @ o.matrix_world
@@ -316,13 +351,12 @@ def estagio_assar(arma, cfg):
         mod.object = rig
         o.vertex_groups.clear()
 
-    parte_tag = cfg['parte']['tipo'].upper()
-    corpo = next(o for o in malhas if parte_tag not in o.name)
+    corpo = next(o for o in malhas if not o.name.startswith('MINT_'))
     if cfg['bone_corpo']:
         vg = corpo.vertex_groups.new(name=cfg['bone_corpo'])
         vg.add([v.index for v in corpo.data.vertices], 1.0, 'REPLACE')
-    if p:
-        vgp = p.vertex_groups.new(name=cfg['bone_parte'])
+    for p, bone in partes:
+        vgp = p.vertex_groups.new(name=bone)
         vgp.add([v.index for v in p.data.vertices], 1.0, 'REPLACE')
 
     # sockets: reparenta ANTES de remover o root; local limpo no espaço do rig
@@ -386,7 +420,7 @@ def estagio_sockets(arma, cfg):
 # ---------------------------------------------------------------- render
 
 AMOSTRAS = {
-    'idle': [0.0],
+    'idle': [0.0, 0.36],
     'shoot': [0.0, 0.3, 0.6, 0.9, 1.19],
     'reload_start': [0.0, 0.5, 1.0],
     'reload_loop': [0.0, 0.3, 0.6],
@@ -455,8 +489,8 @@ def estagio_extrair(arma, cfg):
     load_candidate(arma)
     bpy.context.view_layer.update()
 
-    nomes_alvo = [f'MINT_WEAPON_{arma.upper()}',
-                  f'MINT_{cfg["parte"]["tipo"].upper()}_{arma.upper()}']
+    nomes_alvo = [f'MINT_WEAPON_{arma.upper()}'] + \
+                 [f'MINT_{p["tipo"].upper()}_{arma.upper()}' for p in cfg['partes']]
     props = bpy.data.objects.get(f'PROPS_DONOR_{arma.upper()}')
     if props:
         for g in [vg.name for vg in props.vertex_groups]:

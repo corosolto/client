@@ -53,6 +53,7 @@ ARMAS = {
         'pais': {
             'MINT_WEAPON_G3SG1': 'RIG_WEAPON_G3',
             'MINT_MAG_G3SG1': 'Mag',
+            'MINT_ALAVANCA_G3SG1': 'ChargingHandle',
         },
         'sockets_pai': 'MINT_WEAPON_G3SG1',
     },
@@ -337,6 +338,44 @@ def montar(arma, cfg):
         base_doc['nodes'][corpo_idx].setdefault('children', []).append(len(base_doc['nodes']) - 1)
         relatorio['saidas'].append({'peca': nome_socket, 'pai': cfg['sockets_pai'],
                                     'mundo_mini': [round(v, 4) for v in ponto]})
+
+    # 6. curls de contato: aplica os deltas de quaternion nos clipes listados
+    deltas_path = os.path.join(os.path.dirname(cfg['saida']), 'finger-deltas.json')
+    if os.path.exists(deltas_path):
+        with open(deltas_path) as fh:
+            pacote = json.load(fh)
+        nome_por_indice = {i: n.get('name', '') for i, n in enumerate(base_doc['nodes'])}
+        aplicados = 0
+        for anim in base_doc.get('animations', []):
+            if anim.get('name') not in pacote.get('clipes', []):
+                continue
+            for canal in anim.get('channels', []):
+                alvo = canal.get('target', {})
+                if alvo.get('path') != 'rotation':
+                    continue
+                nome_no = nome_por_indice.get(alvo.get('node'), '')
+                if nome_no not in pacote['deltas']:
+                    continue
+                sampler = anim['samplers'][canal['sampler']]
+                acc = base_doc['accessors'][sampler['output']]
+                bv = base_doc['bufferViews'][acc['bufferView']]
+                base_off = bv.get('byteOffset', 0) + acc.get('byteOffset', 0)
+                n = acc['count']
+                dx, dy, dz, dw = pacote['deltas'][nome_no]
+                import struct as _s2
+                pedaco = bytearray(bin_final[base_off:base_off + n * 16])
+                for i in range(n):
+                    qx, qy, qz, qw = _s2.unpack_from('<ffff', pedaco, i * 16)
+                    # q' = delta ⊗ q (mesma composição do Blender usada no delta)
+                    nx = dw * qx + dx * qw + dy * qz - dz * qy
+                    ny = dw * qy - dx * qz + dy * qw + dz * qx
+                    nz = dw * qz + dx * qy - dy * qx + dz * qw
+                    nw = dw * qw - dx * qx - dy * qy - dz * qz
+                    _s2.pack_into('<ffff', pedaco, i * 16, nx, ny, nz, nw)
+                bin_final = bin_final[:base_off] + bytes(pedaco) + bin_final[base_off + n * 16:]
+                aplicados += 1
+        relatorio['curls'] = {'tracks': aplicados, 'clipes': pacote.get('clipes')}
+        print('DMR_CURLS', arma, aplicados, 'tracks')
 
     escreve_glb(cfg['saida'], base_doc, bin_final)
     with open(os.path.join(os.path.dirname(cfg['saida']), 'assemble-report.json'), 'w') as fh:
