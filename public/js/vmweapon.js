@@ -1,7 +1,7 @@
 // Identidade Mint no viewmodel pago (BUG-75 M3): a malha da PRÓPRIA arma entra
 // no socket da mão do pack; a genérica KINEMATION fica oculta atrás dela.
 import * as THREE from 'three';
-import { weaponModel } from './weapons.js';
+import { hasWeapon, preloadWeapons, weaponModel } from './weapons.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 
 const DEG = Math.PI / 180;
@@ -36,6 +36,34 @@ function hidePackGun(entry) {
   for (const mesh of entry.weaponMeshes) {
     if (!/^UTILITY_/.test(mesh.name)) mesh.visible = false;
   }
+}
+
+// Devolve o pack e apaga wrap de OUTRA arma que tenha ficado na mao (BUG-76).
+function fallbackParaOPack(entry) {
+  for (const mesh of entry.weaponMeshes || []) {
+    if (!/^UTILITY_/.test(mesh.name)) mesh.visible = true;
+  }
+  const mint = entry.mint;
+  if (!mint) return;
+  for (const [, candidate] of mint.wraps) {
+    candidate.visible = false;
+    for (const part of candidate.userData.mintParts || []) part.visible = false;
+  }
+  mint.active = null;
+  mint.weaponId = '';
+}
+
+const _pedidosDeModelo = new Set();
+/* Pede o GLB que faltou e reencaixa quando chega — attachMintWeapon so roda no
+   equip. BUG-76; régua tools/eval/vm-attach-fallback-check.mjs. */
+function pedirModeloDeMundo(entry, weaponId) {
+  const chave = `${entry.family || '?'}:${weaponId}`;
+  if (_pedidosDeModelo.has(chave)) return;
+  _pedidosDeModelo.add(chave);
+  preloadWeapons([weaponId])
+    .then(() => { if (weaponModel(weaponId)) attachMintWeapon(entry, weaponId); })
+    .catch(() => {})
+    .finally(() => _pedidosDeModelo.delete(chave));
 }
 
 // Base automática do encaixe: leva o -Z (cano) e +Y da câmera para o LOCAL do
@@ -134,6 +162,13 @@ export function attachMintWeapon(entry, weaponId) {
   const familyConfig = weaponConfig && VM_FAMILY[weaponConfig.family];
   const socket = weaponSocketOf(entry);
   if (!weaponConfig || !familyConfig || !socket) return null;
+  /* O pack só sai de cena quando há malha Mint desta arma para pôr no lugar:
+     esconder antes deixava a família sem arma a sessão inteira (BUG-76). */
+  /* `hasWeapon` obrigatório: sem ele `weaponModel` devolve a malha da AWP com o
+     nome da arma pedida, e a mão segura a arma de outro (BUG-76). */
+  const jaCacheado = entry.mint?.wraps?.get(weaponId) || null;
+  const recemCriado = (jaCacheado || !hasWeapon(weaponId)) ? null : weaponModel(weaponId);
+  if (!jaCacheado && !recemCriado) { fallbackParaOPack(entry); pedirModeloDeMundo(entry, weaponId); return null; }
   hidePackGun(entry);
 
   let mint = entry.mint;
@@ -155,10 +190,9 @@ export function attachMintWeapon(entry, weaponId) {
   mint.holder.position.set(0, 0, 0);
   mint.holder.scale.setScalar(familyConfig.mount.scale / worldScale);
 
-  let wrap = mint.wraps.get(weaponId);
+  let wrap = jaCacheado;
   if (!wrap) {
-    wrap = weaponModel(weaponId);
-    if (!wrap) return null;
+    wrap = recemCriado;
     wrap.name = `mint_weapon_${weaponId}`;
     if (weaponConfig.parts) splitParts(entry, wrap, weaponConfig.parts);
     mint.wraps.set(weaponId, wrap);

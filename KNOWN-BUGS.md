@@ -51,6 +51,49 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-76 · o viewmodel autorado escondia a arma do pack sem ter malha Mint — e servia a AWP no lugar de outras armas~~ · RESOLVIDO 07/09
+
+**Palavras de quem reportou** (07/09, revisão do dono, 19 screenshots 14:03–15:52): a arma
+"flutua sem mãos", e depois: *"nao so LMG mas todas lanes, eu ja testei ,pistola ,faca e ak
+e estao resolvidas, nao testei a M4A1"*.
+
+**O que era.** `attachMintWeapon` (`public/js/vmweapon.js`) chamava `hidePackGun(entry)`
+ANTES de saber se havia malha Mint, e saía por `if (!wrap) return null`. A malha Mint vem do
+modelo de MUNDO, e a partida pré-carrega só as armas que sorteou (`public/js/weapons.js`
+`preloadWeapons`; o resto chega em ocioso). Resultado: a família ficava **sem arma nenhuma**
+— luva segurando o vazio — pelo resto da sessão, e QUAL família caía mudava a cada partida.
+Somado a isso, `weaponModel(id)` cai em `_cache.get('awp')` quando a arma pedida não está
+carregada: com a AWP em cache e a Zastava fora, o wrap saía `mint_weapon_m92` com a malha
+`sniper_1` — a arma gigante e errada do frame `15.51.33`.
+
+**Medida antes** (jogo real, `piscina_treta`, 3:2, 7 capturas por arma):
+`awp`, `shotgun` e `revolver38` com `arma 0/0` e mão em quadro; em outra sessão os mesmos
+zeros caíram em `m4`, `carbine` e `lmg`. Diagonal aparente da `m92`: 857 px contra 552 px da
+`ak` na mesma família (1,55×).
+
+**Medida depois**: `awp` 292/302, `shotgun` 300/302, `revolver38` 306/306 vértices de arma em
+quadro; substituição silenciosa eliminada (`hasWeapon` obrigatório antes do wrap).
+
+**Causa raiz**: `public/js/vmweapon.js:137` (hidePackGun incondicional) + `public/js/weapons.js:338`
+(`|| _cache.get('awp')`).
+
+**Régua**: `tools/eval/vm-attach-fallback-check.mjs` (`npm run eval:vm-attach`, dentro do
+`check:vm`) — bloqueia o GLB de mundo da arma e exige que a família continue com arma em
+quadro E sem wrap de outra arma. Mutantes: `--mutante=escondepack` (reintroduz o estado do
+defeito) e `--mutante=forjawrap` (forja wrap com malha `sniper_1`); os dois reprovam, e a
+régua sai 1 se um deles passar.
+
+**Coleta e portão do arsenal**: `tools/viewmodels/prep/vm-arsenal-frames.mjs` +
+`tools/eval/vm-arsenal-check.mjs`; relatório em
+`docs/reports/VM-ENCAIXE-MINT-2026-09-07.md`.
+
+**Custo declarado**: quando o GLB de mundo não chegou, a família desenha a malha do pack
+(licenciada, já dentro do runtime GLB) em vez da Mint, até o modelo chegar — o portão avisa
+`AVISO fallback:` quais armas estão nesse estado. Continuam ABERTOS, com régua vermelha
+medindo: escala em fuga da `m92` (1,49–1,55× a `ak`), contato da mão no `revolver38`
+(53–59 px, teto 40) e `m92/reload` com a mão saindo do quadro.
+
+
 ### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
 
 **Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de
