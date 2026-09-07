@@ -1,0 +1,233 @@
+{
+  "gerado": "2026-09-07T01:15:42.818Z",
+  "instrumento": "buildCharacterModel + skinning em node, 60 Hz, quadro 200-260, 1 vértice em 3",
+  "tetoIdle": -0.015,
+  "folga": 0.01,
+  "personagens": {
+    "esquerdomacho": {
+      "idle": -0.0008,
+      "crouch": 0.0001,
+      "death": -0.0552
+    },
+    "sindicato": {
+      "idle": 0.0073,
+      "crouch": -0.0004,
+      "death": -0.0671
+    },
+    "mst": {
+      "idle": -0.0007,
+      "crouch": -0.0002,
+      "death": -0.12
+    },
+    "doutora": {
+      "idle": -0.0007,
+      "crouch": -0.0002,
+      "death": -0.1921
+    },
+    "mistico": {
+      "idle": 0.0042,
+      "crouch": -0.0001,
+      "death": -0.0477
+    },
+    "caminhoneiro": {
+      "idle": 0.0046,
+      "crouch": -0.0001,
+      "death": -0.0784
+    },
+    "sertanejo": {
+      "idle": -0.004,
+      "crouch": -0.0001,
+      "death": -0.153
+    },
+    "coach": {
+      "idle": 0.0056,
+      "crouch": 0.0008,
+      "death": -0.0136
+    },
+    "gotinha": {
+      "idle": -0.004,
+      "crouch": -0.0034,
+      "death": -0.2881
+    },
+    "farialimer": {
+      "idle": 0.0065,
+      "crouch": -0.001,
+      "death": -0.0369
+    },
+    "bombado": {
+      "idle": -0.0066,
+      "crouch": 0,
+      "death": -0.0946
+    },
+    "hipster": {
+      "idle": -0.0007,
+      "crouch": -0.0002,
+      "death": -0.0243
+    },
+    "dollynho": {
+      "idle": -0.0041,
+      "crouch": -0.0081,
+      "death": -0.1221
+    },
+    "et": {
+      "idle": -0.0038,
+      "crouch": -0.0081,
+      "death": -0.1282
+    },
+    "ancap": {
+      "idle": -0.0008,
+      "crouch": -0.0001,
+      "death": -0.3598
+    },
+    "canarinho": {
+      "idle": 0.0109,
+      "crouch": -0.3678,
+      "death": -0.7484
+    },
+    "proerd": {
+      "idle": -0.0011,
+      "crouch": -0.4313,
+      "death": -0.7771
+    },
+    "bonzo": {
+      "idle": 0.0073,
+      "crouch": -0.0005,
+      "death": -0.1265
+    },
+    "palhacomal": {
+      "idle": 0.0005,
+      "crouch": -0.0384,
+      "death": -0.0561
+    },
+    "jozo": {
+      "idle": -0.0001,
+      "crouch": -0.0001,
+      "death": -0.0935
+    },
+    "adjim": {
+      "idle": 0.0003,
+      "crouch": 0.0068,
+      "death": -0.0677
+    },
+    "esbirro": {
+      "idle": -0.0035,
+      "crouch": -0.0049,
+      "death": -0.0835
+    },
+    "titica": {
+      "idle": 0.001,
+      "crouch": -0.0001,
+      "death": -0.07
+    },
+    "padati": {
+      "idle": -0.0017,
+      "crouch": -0.0005,
+      "death": -0.1292
+    },
+    "padata": {
+      "idle": -0.0007,
+      "crouch": -0.0031,
+      "death": -0.0605
+    },
+    "cadequinha": {
+      "idle": -0.0075,
+      "crouch": -0.0062,
+      "death": -0.0959
+    },
+    "emo": {
+      "idle": -0.0016,
+      "crouch": -0.0013,
+      "death": -0.0291
+    },
+    "blackmetal": {
+      "idle": -0.0002,
+      "crouch": -0.0002,
+      "death": -0.0369
+    },
+    "metaleiro": {
+      "idle": 0.0019,
+      "crouch": -0.0002,
+      "death": -0.0613
+    },
+    "punk": {
+      "idle": -0.0028,
+      "crouch": -0.0005,
+      "death": -0.1615
+    },
+    "skatista": {
+      "idle": 0.0065,
+      "crouch": -0.0025,
+      "death": -0.0617
+    },
+    "clubber": {
+      "idle": 0.0008,
+      "crouch": -0.0002,
+      "death": -0.0606
+    },
+    "rapper": {
+      "idle": -0.0012,
+      "crouch": 0.0005,
+      "death": -0.0573
+    },
+    "reggae": {
+      "idle": 0.007,
+      "crouch": -0.0003,
+      "death": -0.0838
+    },
+    "pagodeiro": {
+      "idle": 0.0045,
+      "crouch": 0.0006,
+      "death": -0.028
+    },
+    "mandrake": {
+      "idle": -0.0002,
+      "crouch": -0.0047,
+      "death": -0.0444
+    },
+    "raul": {
+      "idle": 0.0002,
+      "crouch": -0.0037,
+      "death": -0.0598
+    },
+    "oakley": {
+      "idle": 0.0029,
+      "crouch": -0.0094,
+      "death": -0.1044
+    },
+    "criarj": {
+      "idle": -0.0045,
+      "crouch": -0.0001,
+      "death": -0.0671
+    },
+    "chave": {
+      "idle": 0.004,
+      "crouch": -0.0059,
+      "death": -0.0425
+    },
+    "funkraiz": {
+      "idle": -0.001,
+      "crouch": -0.0011,
+      "death": -0.0638
+    },
+    "trapfunk": {
+      "idle": 0.0026,
+      "crouch": -0.0129,
+      "death": -0.0968
+    },
+    "fluxo": {
+      "idle": 0.0022,
+      "crouch": -0.0001,
+      "death": -0.0706
+    },
+    "ostentacao": {
+      "idle": 0.0027,
+      "crouch": -0.0007,
+      "death": -0.0571
+    },
+    "lobisomem": {
+      "idle": 0,
+      "crouch": -0.1158,
+      "death": -0.4518
+    }
+  }
+}

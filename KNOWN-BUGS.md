@@ -3510,7 +3510,7 @@ hipótese de escorço foram **refutadas com número**. Nenhum parâmetro de câm
 malha: o caminho é **malha nova ou outra família de pose**. Não gaste rodada procurando
 parâmetro.
 
-### BUG-142 · Lobisomem em FP com mãos ligadas continua com escala ruim
+### BUG-145 · Lobisomem em FP com mãos ligadas continua com escala ruim
 
 O modo padrão do Lobisomem segue `weaponOnly=true`, porque o rig compartilhado de mãos
 mostra proporção ruim quando habilitado: a arma encaixa, mas a mão extra fica grande e
@@ -3518,7 +3518,7 @@ desancorada. A revisão local trata isso como limitação herdada do viewmodel o
 como regressão da facção M. Evidência: `artifacts/miticos-review/hands/arms.glb-0.png` e
 `artifacts/miticos-review/after/fp-32.png`.
 
-### BUG-143 · Render offline do Lobisomem publica brilho, não pelagem
+### BUG-146 · Render offline do Lobisomem publica brilho, não pelagem
 
 O GLB do Lobisomem é `metallic=1` com albedo escuro; o rig offline
 (`tools/eval/miticos-render-review.py`) usa Principled dielétrico, então o especular das
@@ -3530,12 +3530,49 @@ rig não reproduzir o material metálico, retrato de Mítico sai de mídia aprov
 render offline. Medição e folha comparativa em
 `docs/reports/MITICOS-LOBISOMEM-INTEGRATION.md`.
 
-### BUG-144 · Lobisomem não tem perfil físico de áudio
+### BUG-147 · Lobisomem não tem perfil físico de áudio
 
 `CHARACTER_IDS` em `tools/audio/fab-game-local.mjs` lista 44 ids e não inclui `lobisomem`,
 então `characterPhysical.byCharacter` não cobre o personagem e `eval:audiofablocal` reprova
 em `LAB8e` com 44/45. O conserto é entrar o id na lista (perfil `creature`) e regerar o
 manifest com o pacote de áudio presente — fora do escopo da lane de retratos.
+
+
+### BUG-148 · malha atravessa o chão na morte e no agachado, e nada media isso
+
+**Classe do elenco inteiro, não regressão da facção M.** O contato de pé (CHR3,
+`gen-foot-offsets.mjs`, e o `*-feet` do `miticos-runtime-review.mjs`) mede o vértice mais
+baixo dos ossos de PERNA. O resto do corpo nunca teve régua. O Lobisomem passou 30/30 no
+review com a pata em `0,0000 m` e o quadril 45 cm abaixo do chão na morte — o cadáver
+afunda em vez de deitar.
+
+Medido em 07/09 nos 45 personagens com GLB (`node tools/eval/chao-check.mjs`, o mesmo
+`buildCharacterModel` da tela, 60 Hz, quadro assentado; metros, 0 = chão):
+
+| estado | pior do elenco | mediana | lobisomem |
+| --- | --- | --- | --- |
+| `idle` | -0,0075 (cadequinha) | -0,0001 | **0,0000** (o melhor do elenco) |
+| `crouch` | -0,4313 (proerd) | -0,0004 | -0,1158 |
+| `death` | -0,7771 (proerd) | -0,0677 | -0,4518 |
+
+`proerd` e `canarinho` — **dois personagens que já estão no ar** — enterram 75 cm de corpo
+na morte. O Lobisomem é o terceiro pior, dentro do envelope que já é publicado.
+
+A causa é a malha, não o esqueleto: no mesmo clipe de morte o `Hips` para na mesma altura
+nos dois (`0,138` no lobo, `0,129` no mandrake), mas o corpo do lobo desce `0,59 m` abaixo
+do próprio quadril contra `0,18 m` do mandrake. A morte e o salto não são aterrados de
+propósito (`ground-lobisomem-anims.mjs` preserva a trajetória), então nada corrige o que
+sobra embaixo.
+
+**Régua:** `npm run eval:chao` (CHR7), no `check:fast`, 3,6 s para os 45. Catraca por
+personagem em `tools/eval/chao_check.json` — piorar reprova; melhorar pede `--escreve`.
+`idle` tem teto absoluto de 1,5 cm porque é a pose que a seleção, o menu e o retrato
+mostram. Mutante `--mutate=afunda` (raiz 5 cm para baixo) reprova 135 casos.
+
+**Não consertado nesta lane, de propósito.** Aterrar a morte do lobo pelo mínimo da malha
+o levantaria 45 cm e o deixaria o único do elenco deitado certo, com `proerd` e `canarinho`
+piores e sem régua para eles; e mexer no clipe arrisca o contato de pata que hoje está em
+`1e-7 m`. A catraca impede que piore enquanto a classe não for atacada de uma vez.
 
 ---
 

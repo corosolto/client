@@ -52,6 +52,7 @@ com código 1 em falha crítica.
 | `stance-speed.mjs` | Velocidade por postura (andar/correr/agachar). |
 | `loadout-test.mjs` | Loadout por personagem/facção. |
 | `abateshud-check.mjs` | O contador de abates do JOGADOR existe no HUD, é legível por medida (piso de 24px fora de `@media`), imprime `player.kills` — não o placar do time — e sobrevive à virada de rodada. `npm run eval:abateshud` |
+| `chao-check.mjs` | CHR7: nenhuma malha atravessa o chão na pose assentada (`idle`/`crouch`/`death`). O contato de pé só olhava os PES — `proerd`/`canarinho`/`lobisomem` enterravam 75/75/45 cm de corpo na morte sem nada acusar (BUG-148). Catraca por personagem em `chao_check.json`; `idle` tem teto absoluto. Mutante: `afunda`. `npm run eval:chao` |
 | `botfaca-check.mjs` | Rodada de faca: o bot fecha até o alcance da arma (a banda de fuzil recuava abaixo de 6 m com faca de 2,4 m), ataca por caminho de corpo a corpo — sem traçante, fogacho nem som de cano — e a rodada normal continua com bot que abre distância. `npm run eval:botfaca` |
 | `replaycam-check.mjs` | Headshot do jogador **não** pode tirar a câmera da primeira pessoa, escalar o relógio (hit-stop) nem esconder arma/mira — e segue contando abate. Mede o contrário do que media até 06/09/2026. `npm run eval:replaycam` |
 
