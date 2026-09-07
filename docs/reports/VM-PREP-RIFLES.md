@@ -1,5 +1,95 @@
 # Preparação offline dos rifles
 
+## M4 — candidata offline final da recarga (ZCode GLM 5.3), 07/09/2026 — **melhora grande, ainda não aprovável; três pendências medidas**
+
+Entrada `f63e730f`, mesma worktree/branch, árvore limpa antes desta rodada.
+Escopo: somente `reload_tactical` da M4 e seu retorno, partindo do snapshot
+aprovado (`6925c7f5…`), sem tocar idle aprovado, AK golden, câmera,
+enquadramento, materiais, `vmhands`, runtime servido ou balanceamento. Saída
+exclusiva em `A/m4-reload-final-zcode/`; scripts novos
+`tools/viewmodels/prep/rifles-m4-reload-final{,-export,-verify}.py` e
+`rifles-m4-reload-final-verify.mjs`. Tentativas intermediárias rejeitadas
+preservadas em `bolt-fit-evidence/`, `gate-evidence/`, `gate-sites.json` e
+`bolt-fit-report.json` dessa pasta.
+
+### Régua antes do conserto (validada com mutantes)
+
+`rifles-m4-reload-final-verify.py` mede, nos 73 frames: cruzamentos exatos
+aresta/triângulo nos dois sentidos por região (o inverso é por região — uma
+aresta do carregador atravessando a palma, que a idle aprovada tolera contra
+seu punho, não pode ser cobrada ao anelar), distância assinada por vértice
+(ponto mais próximo + normal da face), pele visível pela câmera do jogo em
+3:2/16:9 com oclusão real, ponta do polegar/indicador até `bolt_release`,
+passo por frame e retorno à idle por malha da luva. Sobre o C1 atual ela
+reproduz a reprovação: anelar/mínimo cruzam em f010–011 e f048–066; pele
+acima da idle em 3:2 nos f051–057; ferrolho a 67,57 mm no f062; veredito
+FAIL. Três mutantes mordem: desligar a cobertura de manga aumenta a pele
+descoberta (f013 1.134 mm², f045 1.352, f053 2.991); carregador empurrado
+144,35 mm sobre a palma limpa gera 238 cruzamentos; perturbar a última chave
+do mínimo deforma a pose final em 35,8 mm.
+
+### O que a correção mudou
+
+O diagnóstico C3 (punho fechado não contém a placa de 71,6 × 27,9 mm) foi
+resolvido orientando a pega pela **largura** do carregador: varredura de
+rolamento/folga/deslizamento com ranking por contato limpo (contato que vem
+de entrar na placa é penalizado), limpeza por dedo com rejeição de
+cruzamentos e enterro, e encaixe por junta dos quatro dedos contra o
+carregador posicionado. O evento `bolt_release` ficou explícito: a paleta é
+alcançada pela ponta do polegar por convergência translacional, com prensa
+real (percurso de 209 mm medido na GLB reimportada entre 2,0 s e o evento).
+A soltura do carregador ocorre em dois tempos (recuo fechado, abrir depois),
+o trajeto ao ferrolho interpola **palma e rotação separadamente** —
+interpolar translação do osso produz overshoot quando a mão gira — e a
+cobertura de manga ganhou termo radial (14 mm) e alcance axial maior
+(22 mm × amplitude 2,6). Relógio, trajetória do carregador (pivô acompanha a
+nova palma) e eventos preservados: primeira saída do poço f014, reassentamento
+f045, prensa no f062 (2,067 s) contra 0,432/1,488/2,064 s do jogo.
+
+### Medidas da candidata (`A/m4-reload-final-zcode/`)
+
+- Anelar/mínimo: **0 cruzamentos nos dois sentidos nos 73 frames** (gate
+  interno + verificador independente). Contato na pega: mínimos de 44/66/110/56
+  vértices ≤ 5 mm (indicador/médio/anelar/mínimo), p05 ≤ 4,1 mm.
+- Ferrolho: ponta do polegar a **0,5 mm** da paleta no f062.
+- Retorno: `hand_l` 0,000 mm e malha da luva 4,8 × 10⁻⁷ m contra a idle;
+  GLB reimportada (GLTFLoader/Mixer, LoopOnce) com **384 tracks protegidas
+  delta 0** e 37 declaradas reautoradas (braço/dedos esquerdos, polegar,
+  posição do carregador, morfo da manga); mutação da chave terminal rejeitada.
+- GLB `m4-actions-runtime.glb` SHA-256
+  `11c48c6f0eb331ca0431c135bb91328a5408825358e7dbb08275d81c5b84c7ec`
+  (1.446.948 bytes). Controles imutáveis conferidos: idle aprovado
+  `2a4a189d…`/`6925c7f5…` intactos, AK golden `3b6ca23d…` intacta.
+- Evidência: 12 frames críticos (0/13/20/25/30/35/43/45/54/62/70/72) em
+  1152×768 e 1024×576, close-ups dos dois lados e material-id dos dois lados,
+  faixa frame a frame nos dois aspectos, vídeos `reload-3x2.mp4`/`reload-16x9.mp4`
+  (2,4 s, 30 fps, ffmpeg local), folhas, `measurements.json`, `summary.json`,
+  `blender-samples.json`, `reimport-check.json`, `reload-final*.json` do
+  verificador com os três mutantes.
+
+### Pendências registradas (exigem julgamento; gate não é aprovação visual)
+
+1. **Pele na janela da prensa**: f053–f060 em 3:2 e f055–f059 em 16:9 ficam
+   acima da idle aprovada (pico ~600 mm² vs teto 77). A manga estendida na
+   prensa ainda deixa a camada de pele visível entre manga e luva; coberturas
+   maiores distorcem a silhueta. Precisa de decisão de asset (extensão de manga
+   específica ou nova peça), não de mais curva.
+2. **Pico de velocidade na virada ao ferrolho**: 92,45 mm/frame nos f57–f60
+   (C1: 58,5). O caminho é contínuo em palma, mas a rotação da mão move a
+   cabeça do osso; avaliar se aparece como solavanco visual.
+3. **Polpa do mínimo −6,19 mm assinada** durante a pega, sem cruzamento de
+   aresta: a ponta apoia entrando levemente na placa. As outras três pontas
+   ficam ≥ −0,03 mm.
+4. Aprovação visual do Ruben/Astra sobre `evidence/reload_tactical/` e os
+   vídeos; nada entrou em runtime, Game, PR de merge ou deploy.
+
+Reprodução: Blender background 2 threads com
+`tools/viewmodels/prep/rifles-m4-reload-final.py -- --fit-fingers`, depois
+`rifles-m4-reload-final-export.py`, o verificador
+`rifles-m4-reload-final-verify.py -- --source=m4-reload-final-zcode` e seus
+`--mutant=cuff|crossing|return`, e Node com
+`rifles-m4-reload-final-verify.mjs`. Os seis rifles seguem não-prontos.
+
 ## Checkpoint do sprint de 72 h — 06/09/2026
 
 Estado conferido a partir de `d090a1db`, branch `codex/vm-prep-rifles`, árvore
