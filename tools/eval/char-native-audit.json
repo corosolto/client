@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "8e8aaba909642c3edb1b77f2f19a1d0f099be76ca45c0b7f04864f1f395a140e",
-  "weaponMapSha256": "6fab0575d64a36516a26452444b1767b8cbdbbe3a659f04058772434b5d84ca5",
-  "review": "Quadros centrais de seleção, vitória e derrota foram comparados em pranchas; pistola, escopeta, submetralhadora, fuzil, metralhadora e rifles de precisão permanecem distinguíveis, os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
+  "mediaSha256": "1f6c89961c7007b16f6c186d0973970bca86415f0832d8a8cc9cc640b4710772",
+  "weaponMapSha256": "90f4ad36c0e486f144b38353beca61ab6ec57df0a471ecce9c967bcac25f3b65",
+  "review": "O lote de mídia inclui o Lobisomem, único Mítico deste candidato, herdado da evidência aprovada de f05edaf9/e4f52162. A verificação confirma o hash publicado, formatos VP9 e o loadout de escopeta; ela não aprova os demais Míticos.",
   "regenerate": "BASE=http://127.0.0.1:8123 node tools/eval/char-native-vids.mjs"
 }

@@ -39,6 +39,7 @@ export const GLB_CHARS = new Set([
   // os outros 8 são GLBs Mint riggados offline (tools/rig-from-donor.mjs, esqueleto do mst)
   // com clips retargetados em models/anims/<id>/ (tools/retarget-glb.mjs).
   'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
+  'lobisomem',
 ]);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
@@ -617,7 +618,12 @@ export function buildCharacterModel(def, opts = {}) {
       // mão humana fecha ~0,8 rad em volta de 3 cm e ~0,35 rad em volta de 9 cm
       return Math.max(0.35, Math.min(0.80, 0.80 - (esp - 0.03) * (0.45 / 0.06)));
     };
-    const curl = gunObj ? curlPara(gunObj) : 0.5;
+    /* Teto de curl por personagem: a faixa do `curlPara` é calibrada em mão HUMANA e o lobo
+       tem pata. Não morde hoje (shotgun já dá 0,35); varredura e porquê em BUG-149. */
+    const CURL_MAX = { lobisomem: 0.50 };
+    const tetoCurl = CURL_MAX[def.id];
+    let curl = gunObj ? curlPara(gunObj) : 0.5;
+    if (tetoCurl != null) curl = Math.min(curl, tetoCurl);
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) b.rotation.x += curl;
     if (twoHanded) for (const b of curlLs) b.rotation.x += curl;

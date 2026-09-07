@@ -22,6 +22,20 @@ await page.addInitScript(() => {
   localStorage.setItem('cs_lang', 'pt');
 });
 
+async function abrirModosLocais() {
+  /* MATA-MATA e CTF vivem num SUBMENU desde `009c87da` — `SINGLE PLAYER` deixou de ser um
+     degrau e virou o interruptor de `#cs-modos`, que nasce `hidden`. Este portão continuava
+     clicando `[data-act="sp"]` direto e morria em timeout de 30 s ("element is not visible"),
+     sem chegar em nenhuma das telas que ele existe para medir. Abrir o submenu é o caminho
+     do jogador, não um atalho: `aria-expanded` é conferido nos dois sentidos para que um
+     submenu que pare de abrir REPROVE aqui em vez de virar timeout mudo. */
+  const gatilho = '.cs-item[data-act="single-player"]';
+  if (await page.getAttribute(gatilho, 'aria-expanded') !== 'false') throw new Error('submenu de modos já nasce aberto: `aria-expanded` não é o estado do `#cs-modos`');
+  await page.click(gatilho);
+  await page.waitForSelector('#cs-modos', { state: 'visible', timeout: 30000 });
+  if (await page.getAttribute(gatilho, 'aria-expanded') !== 'true') throw new Error('submenu de modos abriu sem anunciar `aria-expanded=true`');
+}
+
 async function open(screen, query, selector, timeout = 120000, navigationOnly = true) {
   await page.goto(`${BASE}/?tela=${query}&debug=1${navigationOnly ? '&nav=1' : ''}`, { waitUntil: 'commit', timeout });
   await page.waitForFunction((expected) => document.documentElement.dataset.inspectScreen === expected, screen, { timeout });
@@ -123,7 +137,8 @@ try {
     throw new Error(`perfil/suporte do menu inválido: ${JSON.stringify(menuProfile)}`);
   }
   const registeredMaps = await page.evaluate(async () => (await import('/js/maps.js')).MAP_IDS.length);
-  // SINGLE PLAYER é primeira instância do menu (30/08) — o degrau JOGAR morreu
+  // SINGLE PLAYER abre os modos locais; MATA-MATA é o primeiro deles (ver abrirModosLocais)
+  await abrirModosLocais();
   await page.click('.cs-item[data-act="sp"]');
   await page.waitForSelector('#map-screen', { state: 'visible' });
   const modeMap = await page.evaluate(() => ({
@@ -151,8 +166,17 @@ try {
   }
   await page.screenshot({ path: `${OUT}/01_mata-mata-abre-mapas.png` });
   await open('menu', '01', '#main-menu');
+  /* CTF pelos DOIS caminhos, porque os dois existem e já divergiram: o item próprio do
+     submenu (o do jogador) e o interruptor `#map-mode` da tela de mapa (o que este portão
+     media). Medir só o interruptor deixava `[data-act="ctf"]` sem régua nenhuma. */
+  await abrirModosLocais();
+  await page.click('.cs-item[data-act="ctf"]');
+  await page.waitForSelector('#map-screen', { state: 'visible' });
+  if (await page.evaluate(() => document.getElementById('setup-title')?.textContent) !== 'CAPTURE THE FLAG') throw new Error('item CAPTURE A BANDEIRA do submenu não abriu o setup em CTF');
+  await open('menu', '01', '#main-menu');
+  await abrirModosLocais();
   await page.click('.cs-item[data-act="sp"]');
-  await page.evaluate(() => document.getElementById('map-mode')?.click());   // CTF entra pelo interruptor de modo da tela de mapa
+  await page.evaluate(() => document.getElementById('map-mode')?.click());   // CTF entra também pelo interruptor de modo da tela de mapa
   await page.waitForSelector('#map-screen', { state: 'visible' });
   const ctfMap = await page.evaluate(() => ({
     mode: document.getElementById('setup-title')?.textContent,
@@ -195,8 +219,15 @@ try {
       count: cards.length,
       selected: cards.filter((card) => card.getAttribute('aria-pressed') === 'true').length,
       visual: cards.every((card) => !!card.querySelector('img.ms-thumb-img') && !!card.querySelector('.ms-thumb-copy')),
+      /* As setas continuam sendo a régua da navegação; os "dashes" NÃO. `ccd47a1f` apagou
+         os pontos de paginação de propósito — a tira mostra os mapas todos de uma vez,
+         então marcavam páginas que não existem — e este portão continuou exigindo
+         `#ms-dashes i`, ou seja, exigindo de volta o defeito que foi consertado. A
+         decisão vira invariante ao contrário: o contêiner tem de ficar VAZIO. Que as
+         setas FUNCIONAM é medido logo abaixo (`cityNavigation`), o que é mais forte do
+         que conferir que o elemento existe. */
       navigation: !!document.getElementById('ms-prev') && !!document.getElementById('ms-next')
-        && document.querySelectorAll('#ms-dashes i').length > 0,
+        && document.querySelectorAll('#ms-dashes i').length === 0,
       options: ['ms-wpn-mode', 'ms-players', 'ms-rounds'].every((id) => {
         const rect = document.getElementById(id)?.getBoundingClientRect();
         return rect && rect.width > 0 && rect.height > 0;
@@ -217,35 +248,46 @@ try {
   }
   await page.screenshot({ path: `${OUT}/04_mapas-direto.png` });
   console.log(`✓ mapas direto: palco único ${Math.round(maps.preview.width)}px e carrossel visual com ${maps.count} missões`);
-  await page.click('.ms-tab[data-cat="CIDADES"]');
-  await page.click('#ms-next');
-  const cityNavigation = await page.evaluate(() => {
-    const cards = [...document.querySelectorAll('.ms-thumb')];
-    return {
-      count: cards.length,
-      ids: cards.map((card) => card.dataset.id),
-      allCities: cards.every((card) => card.querySelector('.ms-thumb-cat')?.dataset.cat === 'CIDADES'),
-      selected: cards.filter((card) => card.getAttribute('aria-pressed') === 'true').map((card) => card.dataset.id),
-    };
+  /* AS ABAS SÃO TODOS/OFICIAIS/COMUNIDADE, e não mais as temáticas. Este bloco media
+     `CIDADES` e `ARENA`, que deixaram de existir como aba (`.ms-tabs` no index.astro), e
+     por isso morria em timeout antes de medir qualquer coisa. O CONTRATO medido continua
+     o mesmo, ponto por ponto: (a) a aba filtra a tira, (b) a seta anda DENTRO do recorte
+     e (c) sobra exatamente um card selecionado. O que mudou é de onde sai o esperado — do
+     `mapcat.js`, que é a fonte que a tela também usa, em vez da lista de ids escrita à
+     mão que envelheceu junto com as abas. O passo da seta também virou medida em vez de
+     nome fixo: `stepMap` anda uma casa na ordem visível, e é isso que se confere. */
+  const recortes = await page.evaluate(async () => {
+    const { MAP_IDS } = await import('/js/maps.js');
+    const { ehComunidade, ehOficial } = await import('/js/mapcat.js');
+    return { COMUNIDADE: MAP_IDS.filter(ehComunidade), OFICIAIS: MAP_IDS.filter(ehOficial) };
   });
-  if (cityNavigation.count < 1 || !cityNavigation.allCities || cityNavigation.selected.join('') !== 'loja_h'
-    || !['praca_poderes', 'loja_h', 'atacadao_treta'].every((id) => cityNavigation.ids.includes(id))) {
-    throw new Error(`navegação filtrada de mapas inválida: ${JSON.stringify(cityNavigation)}`);
+  for (const aba of ['COMUNIDADE', 'OFICIAIS']) {
+    await page.click(`.ms-tab[data-cat="${aba}"]`);
+    const antes = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('.ms-thumb')];
+      return { ids: cards.map((c) => c.dataset.id), sel: cards.find((c) => c.getAttribute('aria-pressed') === 'true')?.dataset.id };
+    });
+    await page.click('#ms-next');
+    const depois = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('.ms-thumb')];
+      return {
+        ids: cards.map((c) => c.dataset.id),
+        selecionados: cards.filter((c) => c.getAttribute('aria-pressed') === 'true').map((c) => c.dataset.id),
+      };
+    });
+    const esperado = recortes[aba];
+    const esperadaApos = antes.ids[(antes.ids.indexOf(antes.sel) + 1) % antes.ids.length];
+    if (!esperado.length || depois.ids.join(',') !== esperado.join(',')
+      || depois.selecionados.length !== 1 || depois.selecionados[0] !== esperadaApos
+      || !esperado.includes(depois.selecionados[0])) {
+      throw new Error(`aba ${aba} inválida: ${JSON.stringify({ esperado, esperadaApos, ...depois })}`);
+    }
+    console.log(`✓ mapas ${aba}: ${esperado.length} mapas do recorte, seta anda dentro dele (${antes.sel} → ${depois.selecionados[0]}) e sobra um card selecionado`);
   }
-  console.log('✓ mapas CIDADES: setas permanecem dentro da categoria e mantêm um card selecionado');
-  await page.click('.ms-tab[data-cat="ARENA"]');
-  const arenaNavigation = await page.evaluate(() => {
-    const cards = [...document.querySelectorAll('.ms-thumb')];
-    return {
-      ids: cards.map((card) => card.dataset.id),
-      allArenas: cards.every((card) => card.querySelector('.ms-thumb-cat')?.dataset.cat === 'ARENA'),
-    };
-  });
-  if (!arenaNavigation.allArenas || !['piscina_treta', 'ferro_velho', 'posto_treta']
-    .every((id) => arenaNavigation.ids.includes(id))) {
-    throw new Error(`categoria ARENA inválida: ${JSON.stringify(arenaNavigation)}`);
-  }
-  console.log('✓ mapas ARENA: Piscina da Treta, Ferro Velho do Zé e Posto da Treta');
+  await page.click('.ms-tab[data-cat="TODOS"]');
+  const todos = await page.evaluate(() => [...document.querySelectorAll('.ms-thumb')].map((c) => c.dataset.id));
+  if (todos.length !== registeredMaps) throw new Error(`aba TODOS não traz o acervo inteiro: ${todos.length} de ${registeredMaps}`);
+  console.log(`✓ mapas TODOS: o acervo inteiro (${todos.length}) volta ao voltar para a aba`);
 
   await open('loading', 'loading&time=B&map=praca_poderes', '#load-overlay');
   await page.waitForFunction(() => document.getElementById('load-character-3d')?.dataset.ready === '1', null, { timeout: 240000 });

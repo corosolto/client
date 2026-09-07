@@ -33,7 +33,7 @@ const SCREEN_ALIASES = Object.freeze({
   defeat: 'defeat',
 });
 
-const FACTIONS = new Set(['E', 'B', 'U', 'C', 'F']);
+const FACTIONS = new Set(['E', 'B', 'U', 'C', 'F', 'M']);
 
 export function resolveInspectionScreen(params) {
   const requested = (params.get('tela') || '').trim().toLowerCase();
