@@ -250,10 +250,10 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 |---|---|---|---|---:|
 | `campomorro` | Campinho do Morro | **captura** | `map_campomorro.js` | 815 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.154 |
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.336 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.337 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 811 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 814 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.966 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.345 |

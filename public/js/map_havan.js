@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { placeProp, PropBatch, StaticBatch, PROP_BATCH } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
+import { metrosPorUV, caixaUVPorNormal } from './map_uv.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
 import { detailFor, registerDetail, applyAniso } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras } from './map_decals.js';     // pool por NOME + raycast de parede
@@ -530,8 +531,8 @@ export function buildHavan(scene, T) {
     // `solo` é geométrico, não depende do gate de faixas — assim `?vao=skirt` (A/B do
     // agente de captura) ainda emite a saia. SKIRT.add já checa o próprio kill-switch.
     const solo = onGround(y, h) && !opts.rx && !opts.rz;
-    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
-      : new THREE.BoxGeometry(w, h, d);
+    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING, material: mat })
+      : caixaUVPorNormal(new THREE.BoxGeometry(w, h, d), w, h, d, metrosPorUV(mat));
     const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
@@ -1302,6 +1303,7 @@ export function buildHavan(scene, T) {
   // em 8 faixas de altura pra o gradiente de AO ter onde interpolar
   const muroBox = (w, h, d, mat, mx, mz) => {
     const geo = new THREE.BoxGeometry(w, h, d, 1, 8, 1); bakeMuroAO(geo, h);
+    caixaUVPorNormal(geo, w, h, d, metrosPorUV(mat));
     const m = new THREE.Mesh(geo, mat); m.position.set(mx, h / 2, mz);
     m.castShadow = m.receiveShadow = true; root.add(m);
     // o bakeMuroAO já resolve o LADO DA PAREDE; a saia resolve o lado do ASFALTO — sem os

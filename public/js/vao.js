@@ -27,6 +27,7 @@
  * KILL-SWITCH: `?vao=0` desliga as duas coisas.
  */
 import * as THREE from 'three';
+import { metrosPorUV, caixaUVPorNormal } from './map_uv.js';
 
 const _qp = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } })();
 export const VAO_ON = _qp.get('vao') !== '0';
@@ -115,6 +116,9 @@ export function aoBoxGeo(w, h, d, opts = {}) {
     // sombra levemente quente: oclusão real recebe bounce do chão, não é cinza neutro
     col[i * 3] = k; col[i * 3 + 1] = k * 0.994; col[i * 3 + 2] = k * 0.982;
   }
+  /* UV em metros quando o chamador passa `material`: densidade de texel pelo tamanho no
+     mundo. A face sai da normal porque esta caixa é segmentada e não tem 4 vértices por face. */
+  if (opts.material) caixaUVPorNormal(geo, w, h, d, metrosPorUV(opts.material));
   pos.needsUpdate = true; uv.needsUpdate = true;
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   return geo;
