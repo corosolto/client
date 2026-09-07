@@ -16,7 +16,7 @@ Snapshot reproduzível: `node tools/eval/mapas-polish-inventory.mjs` escreve
 existência, tamanho, SHA-256 e vínculo ao registro Mint quando encontrado. Não confundir
 declaração de preload com placement ou aprovação. O harness não carrega GLBs.
 
-| Prioridade / lote | Mapa / autor | Estado e lacuna visual | Acervo aplicado / disponível | Próximo passe e limite |
+| Prioridade / lote | Mapa / autor | Diagnóstico inicial e lacuna visual | Acervo aplicado / disponível | Próximo passe e limite |
 |---|---|---|---|---|
 | P0 / A | Parque da Treta / Ubiracy Santos | Parque de diversões procedural: roda, carrossel, castelo, montanha-russa; cores concorrentes e piso esticado. Ainda distante de Madureira. | Canvas próprios; sem props externos declarados. | Piso com escala coerente e entorno de parque urbano; depois pérgolas, esporte e concha acústica. Preservar atrações colidíveis/CTF neste lote. |
 | P0 / A | Penitenciária / Ubiracy Santos | Pátio baixo e isolado, celas e guaritas de caixas, concreto com textura muito esticada; falta massa dos pavilhões. | Canvas e geometria próprios; sem GLB declarado. | Superfícies em metros e silhueta exterior de pavilhões inspirada no Carandiru. Interior/rotas ficam intactos. |
@@ -73,23 +73,31 @@ silhueta exterior porque isso não exige reformar rotas ou criar assets pagos.
 Madureira: [Prefeitura, equipamentos e pérgolas](https://www.rio.rj.gov.br/web/guest/exibeconteudo?id=7658313),
 [Praça do Samba e esportes](https://www.rio.rj.gov.br/web/guest/exibeconteudo?id=4192423).
 Carandiru: [documentação municipal do conjunto e pavilhões](https://legislacao.prefeitura.sp.gov.br/resolucao-secretaria-municipal-de-cultura-smc-conpresp-38-de-18-de-marco-de-2019).
-Fontes consultadas em 07/09/2026 para referência arquitetônica, sem copiar fotografias
-ou afirmar reconstrução 1:1. Modelagem do lote A será original em código.
+Fotografias inspecionadas: [Riotur, roteiro Madureira](https://riotur.rio/editorial/roteiro-madureira/)
+(palmeiras, água, pérgolas e bairro) e [Vazio, Carandiru](https://www.vazio.com.br/en/projetos/carandiru)
+(pavilhões, ritmo e profundidade de janelas). Cópias de pesquisa em
+`artifacts/mapas-polish/references/`, fora do Git e do produto.
+Fontes consultadas em 07/09/2026, sem afirmar reconstrução 1:1 ou licença de reutilização
+das fotos. A modelagem entregue no lote A é original em código.
 
 ## Marcos, aceitação e próximo passo
 
 - Validado: isolamento em nova worktree; base atual; dependências próprias Node 23;
   inventário estático e assinatura estática de colisores, occluders, spawns, CTF, pickups e grafo
   antes de editar Parque/Penitenciária em `baseline/inventory.json`.
-- Em andamento: baseline do jogo local Astro `http://127.0.0.1:8192`, imagens 1200×800;
-  implementação lote A, A/B e crítica independente.
-- Pendente: todos os demais lotes, capturas atuais por mapa e aprovação humana.
-- Aceito: apenas diagnóstico e ordem dos passes. Nenhum visual novo aprovado.
+- Validado: implementação do primeiro passe A, gates direcionados, A/B 1200×800 no
+  jogo local Astro `http://127.0.0.1:8192` e revisão independente sem bloqueio visual
+  restante nos quatro enquadramentos finais. Código em `f06668d7`, gerados em `e9dd5734`.
+- Pendente: refinamento de identidade de A, lotes B–E, visita ao Campinho propriamente
+  dito, captura de Joá, hardware-alvo, combate humano e aprovação visual humana.
+- Aceito tecnicamente: diagnóstico, ordem dos passes e primeiro passe A. Nenhum visual
+  novo tem aprovação humana; esta entrega não encerra o catálogo integral.
 - Rejeitado: declarar asset aplicado/aprovado pela existência; alterar gameplay para
   melhorar screenshot; importar trabalho inteiro de outra lane.
-- Próximo passo: concluir baseline A, aplicar superfícies/contexto, comparar assinatura
-  de gameplay e custo real do browser, verificar `eval:parquewheel`, `eval:penitenciaria`,
-  contratos, spawns, CTF, shader budget e build; registrar commit/evidência neste ledger.
+- Próximo passo: iniciar B pela atualização somente leitura dos checkpoints Campinho/Joá;
+  incorporar seletivamente as correções funcionais estabilizadas nesta lane antes de
+  montar o A/B do campo e da mansão. Resolver o acervo local de decals antes de avaliar
+  a completude dos grafites; depois percorrer C, D e E, mantendo esta matriz única.
 
 ### Revisão independente do inventário
 
@@ -124,7 +132,7 @@ novo módulo. Isto não é execução de `check:fast` completo nem aprovação d
 Crítico visual independente inspecionou os pares `baseline/` × `lot-a/` e encontrou
 veios grandes na madeira e perda de contraste praça/caminho. A madeira saiu da
 normalização; a praça passou a terracota, com paginação distinta. Essas duas tentativas
-anteriores estão rejeitadas; a recaptura final deve confirmar as correções. Pavilhões
+anteriores estão rejeitadas; a recaptura final confirmou as correções. Pavilhões
 melhoraram a massa, mas profundidade das janelas e identidade arquitetônica ainda são
 passes seguintes. O Parque continua dominado pelos brinquedos existentes.
 
@@ -143,5 +151,67 @@ não tiveram erro JS. Não corrigir áudio nesta lane nem declarar o jogo integr
 As primeiras métricas `calls=1` eram só o passe final do bloom e foram descartadas para
 custo: o capturador agora soma todos os passes nas vistas fixas com `info.autoReset=false`.
 
-Próximo marco: terminar `ab-before/`, `final/` e `final-low/`, revisar imagens finais,
-comparar custo, registrar hashes/commits e manter B–E pendentes na matriz integral.
+### Evidência final do primeiro passe A
+
+Raiz dos artefatos: `artifacts/mapas-polish/` nesta worktree, sem arquivos de imagem
+versionados. `evidence-manifest.json` registra tamanho e SHA-256 dos arquivos finais;
+`ab-before/browser-med.json` e `final/browser-med.json` preservam métricas e erros brutos.
+Manifesto: 37 arquivos, 25.241.842 bytes; SHA-256
+`c39914325b0aba2624c38c55ac25f8eead0f77de096122530886cd42e05731d8`.
+Os oito mapas do escopo presentes na base chegaram a `live` (Joá está ausente).
+Build final passou novamente após as correções (`build-final.log`), seguido de 6/6
+checks: sintaxe, mapspolish, roda do Parque, Penitenciária, docs e arquitetura
+(`checks-final.log`). Os oito gates funcionais anteriores estão em `gates.log`.
+
+| Mapa | P50/P95 antes → depois, ms, med | Draw calls antes → depois, vistas fixas |
+|---|---|---|
+| Parque | 8,3/9,7 → 8,3/9,9 | south 680→702; west 743→783 |
+| Penitenciária | 8,3/9,5 → 8,3/9,9 | south 1469→1452; yard 1218→1207 |
+
+A amostra mede intervalos de `requestAnimationFrame` durante 30 s de partida local,
+não tempo GPU isolado. Personagens/bots variam entre inicializações; contagens totais
+de triângulos/geometrias também variam. Não atribuir sua diferença exclusivamente ao
+mapa ou afirmar ganho de desempenho. O entorno acrescenta estaticamente 6 batches/
+2.876 triângulos no Parque e 4/4.392 na Penitenciária. Não houve piora evidente nesta
+máquina, mas desempenho em notebook/hardware-alvo continua pendente.
+
+Qualidade baixa: `final-low/browser-low.json`, imagens 1200×800 inspecionadas. Parque
+P50/P95 8,3/9,9 ms, Penitenciária 8,3/9,7 ms; pisos e entornos continuam presentes.
+As vistas fixas low precedem o carregamento visível da arma, que aparece em `*-live.png`;
+portanto não comparar seu custo diretamente com med. O erro de AudioParam também
+ocorreu em Penitenciária low e aparece no overlay da captura live: essa amostra não
+aprova funcionamento integral da partida nem seu desempenho. O escopo validado low é
+a renderização do mapa, com essa limitação explícita.
+
+Pares finais inspecionados por autor e crítico independente:
+
+- `ab-before/parque_treta-{south,west}.png` × `final/parque_treta-{south,west}.png`:
+  piso legível, centro terracota distinto e madeira restaurada. Sem novo bloqueio visual.
+- `ab-before/penitenciaria-{south,yard}.png` × `final/penitenciaria-{south,yard}.png`:
+  escala de chão e massa dos pavilhões melhores, acessos/coberturas reconhecíveis.
+- O aviso de início sobrepõe parte de duas vistas; não impede verificar as correções.
+  Vistas fixas não demonstram contraste de inimigos em combate. Madureira e Carandiru
+  continuam referências a aprofundar, não reconstruções concluídas.
+
+### Capturas de diagnóstico para os lotes seguintes
+
+`final/<id>-live.png`, 1200×800, inspecionadas nesta lane. São vistas iniciais da partida,
+sem vistoria completa de interiores/perímetro. A captura da Quebrada mostra a rua,
+**não comprova o visual do Campinho**; o enquadramento do Sertão é limitado pelo cover
+do spawn. Obras/Atacadão têm fumaça dinâmica: não usar essas imagens como A/B estático.
+
+| Mapa | P95 local, ms | Diagnóstico observável / limite |
+|---|---:|---|
+| Quebrada | 17,1 | Casario e materiais presentes; escala de tijolos varia; 65 decals 404. Campo ainda precisa de câmera própria. |
+| Posto | 9,4 | Marquise legível, pátio amplo e materiais de escalas diferentes; 18 decals 404. |
+| UPA | 16,8 | Interior hospitalar básico e manequins comerciais coexistem; 3 decals 404. |
+| Obras | 9,6 | Estrutura e placas presentes; superfícies muito uniformes, entorno baixo; 4 decals 404. |
+| Atacadão | 9,6 | Frota BR detalhada contrasta com fachada plana e grandes panos de vidro; 7 decals 404. |
+| Sertão | 9,7 | Fachada, vegetação e pássaros presentes; vista do spawn insuficiente para revisão do conjunto. |
+
+Os decals faltantes são acervo ignorado pelo Git, conforme `.gitignore:117–130` e
+`scripts/fetch-decals.sh`; não são GLBs ausentes nem regressão causada por A. A completude
+visual desses mapas fica pendente até recuperar o pacote local e sua proveniência.
+Nenhum desses seis builders foi alterado. Todas as demais respostas HTTP de erro
+registradas foram de áudio. Penitenciária reproduziu no final med o erro de AudioParam
+descrito acima; os outros sete mapas não registraram erro JS nessa rodada.
