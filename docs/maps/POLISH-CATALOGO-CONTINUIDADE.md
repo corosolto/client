@@ -52,6 +52,78 @@ pilha para a próxima ocorrência.
 Nenhum desses três visuais tem aprovação humana. Esta seção substitui apenas a pendência
 de captura do handoff; o restante do estado abaixo continua valendo.
 
+## Lote B — Penitenciária: escala de material e vão fundo, 07/09/2026
+
+Primeiro mapa do percurso. Escolhido pela medição, não por gosto: `texel-check.mjs`
+mostrava a Penitenciária como **o pior mapa do catálogo** em densidade de texel.
+
+### A régua antes
+
+| | antes | depois |
+|---|---:|---:|
+| mediana (px/m, ponderada por área) | 3,95 | **128** |
+| chão | 3,95 | **128** |
+| p05 | 3,95 | **70** |
+| dispersão p95/mediana | 39,45× | **1,00×** |
+| dispersão máx/mediana | 638,7× | **1,5×** |
+| área abaixo do piso de 64 px/m | **81%** | **0%** |
+
+`TEXEL1`, `TEXEL2`, `TEXEL3` e `TEXEL3b` estavam vermelhas; as quatro passaram.
+Logs: `artifacts/mapas-polish/lote-b/texel-penitenciaria-antes.log` e a saída verde.
+
+### O conserto, e por que não é comprar verde
+
+A causa é a que a própria régua descreve: superfície recebe UV 0→1 seja ela de 0,08 m
+ou de 150 m. O chão de 150×175 m tinha 4 px/m; caixas pequenas chegavam a 2.522 px/m.
+
+`boxGeo`, `planeGeo`, `circleGeo` e `cylGeo` passaram a escalar a UV **pelo tamanho no
+mundo**, com metros-por-UV derivados da própria textura. A densidade deixa de depender do
+tamanho da malha por construção — não é limiar recalibrado, é a variável certa.
+
+Três detalhes que a primeira tentativa errou e a medição pegou:
+
+1. **Repeat não é quadrado.** `reboco` é 256² com repeat 12,1 e `tijolo` 128² com 10,2.
+   Usar só `repeat.x` deixava paredes grandes a 37 e 57 px/m. Agora U e V são calculados
+   separadamente a partir de `width*repeat.x` e `height*repeat.y`.
+2. **O reboco é textura de elevação.** Seu `repeat.y = 1` é intencional: a faixa de umidade
+   tem de cair uma vez na base do muro. Ladrilhar o V repetiria a umidade a cada 2 m e
+   quebraria o gradiente que a NV1 mede. Marcado com `userData.uvElevacao`, só o U vira
+   metros.
+3. **Os piores extremos não eram cenário.** O pico de 2.164 px/m eram as armas de pickup
+   (`gun()`) e depois um cilindro — chamadas que não passavam o material para o cache de
+   geometria.
+
+### Vão fundo das janelas
+
+As 16 janelas eram grades chapadas na parede, sem peitoril nem mocheta. Agora cada uma tem
+moldura de 0,34 m — peitoril, verga e dois montantes — avançando da face 4,50 até 4,84, com
+a grade recuada a 4,55. A sombra da moldura sobre o vão é o que dá a profundidade.
+
+Montantes e fundo escuro são instanciados: o conjunto custa **+3 draw calls e ~2.900
+triângulos por vista**, não 48 malhas novas.
+
+### Custo e contratos
+
+| | antes | depois |
+|---|---:|---:|
+| calls/quadro (live, med) | 741,6 | 769,5 |
+| vistas fixas, calls | 712 · 614 · 567 · 653 | 715 · 619 · 570 · 656 |
+| low: calls/quadro · triângulos | — | 464 · 518.079 |
+
+`PF5` continua com o mesmo hash `602d8a00ef9c`: **colisão, navegação, spawns, CTF e pickups
+preservados**. Verdes: `eval:penitenciaria`, `penitenciariavida`, `penitenciariafacade`,
+`mapcontrato`, `spawn`, `ctfround`, `ctfwin`, `shaderbudget`, `cena`. Zero erro JS em med e
+low. Capturas em `artifacts/mapas-polish/lote-b/pen-depois{,-low}/`.
+
+### O que este lote NÃO resolve
+
+- A parede do pavilhão é a pele do GLB `bloco_celas`. A correção de UV **não alcança
+  textura de GLB**; o reboco liso do pavilhão continua liso.
+- A silhueta ainda é baixa. O contrato fixa o pavilhão em 9×15×6,6 m, então altura de
+  pavilhão não se resolve aqui — a massa Carandiru fora do muro é passe seguinte.
+- Neblina ainda lava o contraste de distância.
+- Nada disso tem aprovação visual humana.
+
 ## Estado de parada — 07/09/2026
 
 Execução encerrada por instrução de limite de créditos; GLM/Claude retomam pelos
