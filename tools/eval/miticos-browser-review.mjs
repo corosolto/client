@@ -96,10 +96,17 @@ try {
       mVisivel: !!m && m.getBoundingClientRect().width > 0,
     };
   });
-  conta('faccao: as seis placas, com MÍTICO visível, brasão e arte próprios',
+  /* O elenco de M cresceu de 1 para 7 em 08/09. Cravar o nome do Lobisomem aqui era medir
+     o estado de ontem, não o contrato: o que vale é o card listar EXATAMENTE quem está
+     registrado como team 'M', então o esperado sai do `characters.js`. */
+  const elencoM = await page.evaluate(async () => (await import('/js/characters.js')).CHARACTERS
+    .filter((c) => c.team === 'M').map((c) => c.name));
+  const listados = faccoes.mElenco.split('·').map((x) => x.trim()).filter(Boolean);
+  conta('faccao: as seis placas, com MÍTICO visível, brasão, arte e o elenco de M',
     faccoes.total === 6 && faccoes.mVisivel && faccoes.mNome === 'MÍTICO'
     && faccoes.mBrasao === '/img/brasoes/m.png' && faccoes.mArte.includes('/img/faccoes/mitico.webp')
-    && faccoes.mElenco === 'Lobisomem', faccoes);
+    && listados.length === elencoM.length && elencoM.every((n) => listados.includes(n)),
+    { ...faccoes, elencoM });
   await page.screenshot({ path: `${OUT}/02_faccoes-com-mitico.png` });
 
   // ── 2. seleção + retrato ───────────────────────────────────────────────────────────
@@ -110,9 +117,10 @@ try {
     ficha: document.getElementById('char-attrs')?.textContent,
     linhas: document.querySelectorAll('.char-row').length,
   }));
-  conta('selecao: Lobisomem com avatar próprio e ficha sem undefined',
+  conta('selecao: Lobisomem com avatar próprio, ficha sem undefined e uma linha por Mítico',
     selecao.avatar?.includes('/avatars/lobisomem.webp') && selecao.nome?.toUpperCase().includes('LOBISOMEM')
-    && !selecao.ficha?.includes('undefined') && selecao.linhas === 1, selecao);
+    && !selecao.ficha?.includes('undefined') && selecao.linhas === elencoM.length,
+    { ...selecao, esperadoLinhas: elencoM.length });
   await page.screenshot({ path: `${OUT}/03_selecao-lobisomem.png` });
 
   // ── 3. palco 3D do loading: TROCA DE AÇÃO e BIND POSE ──────────────────────────────
