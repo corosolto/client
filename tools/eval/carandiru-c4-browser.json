@@ -1,0 +1,238 @@
+{
+  "sourceSha256": "c623d17776f4ce872666e083f6e593f782e9a46fe8e4b350d42e285a54747cbc",
+  "browser": "Google Chrome",
+  "viewport": [
+    1200,
+    800
+  ],
+  "aspectRatio": "3:2",
+  "state": "live",
+  "evidenceMethod": "Travessia contínua renderizada em visão de jogador sobre as polilinhas medidas por CAR4; cada amostra também chama Game._collide. Não é playtest humano.",
+  "routes": [
+    {
+      "id": "radial-interna",
+      "method": "camera-over-CAR4-capsule-validated-polyline",
+      "continuous": true,
+      "points": 43,
+      "traceSamples": 211,
+      "startErrorM": 0,
+      "endErrorM": 0,
+      "maxStepM": 0.4,
+      "collisionCorrections": 0,
+      "maxCollisionCorrectionM": 0,
+      "motionDurationSecs": 7.24,
+      "verticalRangeM": 0,
+      "video": {
+        "file": "artifacts/carandiru-c4/final/radial-interna.webm",
+        "bytes": 1901323,
+        "sha256": "05bdd6b784f5efa13b4a194892628cf35f5ff24deefc2a201708be3c981a1a9a",
+        "width": 1200,
+        "height": 800,
+        "durationSecs": 7.4
+      },
+      "captures": [
+        {
+          "file": "artifacts/carandiru-c4/final/radial-interna-inicio.png",
+          "bytes": 1110889,
+          "sha256": "43671d23b1e5794a7481a4af653d7faa83626fc059961a6a5474a4850599f115",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "file": "artifacts/carandiru-c4/final/radial-interna-meio.png",
+          "bytes": 1095219,
+          "sha256": "a6f909db67ff21a7aaa85fd60968dc000cb0511ed943abe1725331a35c6d2a83",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "file": "artifacts/carandiru-c4/final/radial-interna-fim.png",
+          "bytes": 990528,
+          "sha256": "207a7d9ff884b20f3f5c564a9d575afad307a632b32849af7243394060dd4e7b",
+          "width": 1200,
+          "height": 800
+        }
+      ]
+    },
+    {
+      "id": "externa-oeste",
+      "method": "camera-over-CAR4-capsule-validated-polyline",
+      "continuous": true,
+      "points": 34,
+      "traceSamples": 227,
+      "startErrorM": 0,
+      "endErrorM": 0,
+      "maxStepM": 0.4488,
+      "collisionCorrections": 0,
+      "maxCollisionCorrectionM": 0,
+      "motionDurationSecs": 7.81,
+      "verticalRangeM": 0,
+      "video": {
+        "file": "artifacts/carandiru-c4/final/externa-oeste.webm",
+        "bytes": 1242211,
+        "sha256": "d971ccab639cd3bb74550c9d30542663076b9085261e09ab7637944ee6a18acf",
+        "width": 1200,
+        "height": 800,
+        "durationSecs": 7.96
+      },
+      "captures": [
+        {
+          "file": "artifacts/carandiru-c4/final/externa-oeste-inicio.png",
+          "bytes": 1090939,
+          "sha256": "e7012da01535dd9d7f6297b16f4074d466f3ee14d27537873f35d6663731ea61",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "file": "artifacts/carandiru-c4/final/externa-oeste-meio.png",
+          "bytes": 1061499,
+          "sha256": "6a9773c580ab412d12cdaee2bed6571d9ff125aa4a1a8b4ebc5d4a2c0de24cdd",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "file": "artifacts/carandiru-c4/final/externa-oeste-fim.png",
+          "bytes": 1039778,
+          "sha256": "c29588805818a7be7927d9708c3d7cf67d92326a86825938a9a3266d3abdfbb1",
+          "width": 1200,
+          "height": 800
+        }
+      ]
+    },
+    {
+      "id": "muralha-leste",
+      "method": "camera-over-CAR4-capsule-validated-polyline",
+      "continuous": true,
+      "points": 63,
+      "traceSamples": 431,
+      "startErrorM": 0,
+      "endErrorM": 0,
+      "maxStepM": 0.45,
+      "collisionCorrections": 0,
+      "maxCollisionCorrectionM": 0,
+      "motionDurationSecs": 16.77,
+      "verticalRangeM": 5.8,
+      "video": {
+        "file": "artifacts/carandiru-c4/final/muralha-leste.webm",
+        "bytes": 2747354,
+        "sha256": "b0d22c5460b868f10880743ed98afc9bff5ae5b231aab89d48236bbf151e1c4e",
+        "width": 1200,
+        "height": 800,
+        "durationSecs": 16.92
+      },
+      "captures": [
+        {
+          "file": "artifacts/carandiru-c4/final/muralha-leste-inicio.png",
+          "bytes": 1051815,
+          "sha256": "c769a5439a765c9c48ae702b8040d405ff816439b26c9e5555681945ecbfd69e",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "file": "artifacts/carandiru-c4/final/muralha-leste-meio.png",
+          "bytes": 1062949,
+          "sha256": "517a7e521cd1d2f6b7c7e73b2c282009de48fd09bf4584f87a19bb44fabf04cd",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "file": "artifacts/carandiru-c4/final/muralha-leste-fim.png",
+          "bytes": 1073474,
+          "sha256": "e84680397590c56ead74ce322720d268b2c8dbd67f37d7faa527942fcb81033a",
+          "width": 1200,
+          "height": 800
+        }
+      ]
+    }
+  ],
+  "wallReadability": {
+    "distancesM": [
+      10,
+      20,
+      30
+    ],
+    "captures": [
+      {
+        "distanceM": 10,
+        "actorId": "esquerdomacho",
+        "actorGLB": true,
+        "camera": [
+          36.7,
+          7.42,
+          -14
+        ],
+        "actor": [
+          36.7,
+          5.8,
+          -4
+        ],
+        "file": "artifacts/carandiru-c4/final/muralha-personagem-10m.png",
+        "bytes": 1069400,
+        "sha256": "f8b1f7e80db9049ffeab1b8d7041d8bc7837c64f5932f02243990bf942607399",
+        "width": 1200,
+        "height": 800
+      },
+      {
+        "distanceM": 20,
+        "actorId": "esquerdomacho",
+        "actorGLB": true,
+        "camera": [
+          36.7,
+          7.42,
+          -14
+        ],
+        "actor": [
+          36.7,
+          5.8,
+          6
+        ],
+        "file": "artifacts/carandiru-c4/final/muralha-personagem-20m.png",
+        "bytes": 1067803,
+        "sha256": "19b2a37486a8da5ac0f9a8ac68a08cc2fd1f0395500e96119bebfdd7fd303835",
+        "width": 1200,
+        "height": 800
+      },
+      {
+        "distanceM": 30,
+        "actorId": "esquerdomacho",
+        "actorGLB": true,
+        "camera": [
+          36.7,
+          7.42,
+          -14
+        ],
+        "actor": [
+          36.7,
+          5.8,
+          16
+        ],
+        "file": "artifacts/carandiru-c4/final/muralha-personagem-30m.png",
+        "bytes": 1066721,
+        "sha256": "2e3bf853cae65e93d24a957e8c424a90b63d60e73a62cfc86b0b6d74fe9e7f73",
+        "width": 1200,
+        "height": 800
+      }
+    ],
+    "assessment": "pending-independent-and-human-review",
+    "humanGameplay": "pending"
+  },
+  "warnings": [
+    "SUPPORT_URL_BR is not defined",
+    "404 /%7B%60/map-preview.css",
+    "404 /%7B%60/js/ops.js",
+    "404 /api/geo-lang",
+    "404 /audio/manifest.json",
+    "404 /audio/menu-music/m10.mp3",
+    "404 /audio/manifest.default.json",
+    "404 /audio/ambiente/vento.mp3",
+    "404 /audio/ambiente/hum-indoor.mp3",
+    "404 /audio/ambiente/eco-patio.mp3",
+    "404 /audio/ambiente/buzina.mp3",
+    "404 /audio/ambiente/latido-1.mp3",
+    "404 /audio/ambiente/latido-2.mp3",
+    "404 /audio/ambiente/passaro-1.mp3",
+    "404 /audio/ambiente/passaro-2.mp3"
+  ],
+  "errors": [],
+  "humanVisualApproval": "pending"
+}

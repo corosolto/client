@@ -208,6 +208,7 @@ const c4BrowserValid = c4Receipt?.sourceSha256 === sourceHash && c4Receipt?.stat
     return route?.continuous === true && route?.collisionCorrections === 0
       && route?.traceSamples >= 60 && route?.startErrorM <= .05 && route?.endErrorM <= .05
       && route?.maxStepM <= .8 && route?.video?.bytes >= 50000
+      && route?.motionDurationSecs >= 4 && route?.video?.durationSecs >= 4
       && /^[a-f0-9]{64}$/.test(route?.video?.sha256 || '')
       && route?.video?.width === 1200 && route?.video?.height === 800
       && route?.captures?.length === 3 && route.captures.every((capture) =>

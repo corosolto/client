@@ -175,11 +175,58 @@ Ainda faltam vídeo contínuo das rotas e acessos e avaliação com jogadores do
 corredor longo e escuro da muralha, cuja cobertura intermediária não fica clara.
 Esse parecer não substitui aprovação visual humana.
 
+## C4 — travessias contínuas e leitura da muralha
+
+- `8a813a81` introduziu CAR9 antes da evidência. O gate exige três vídeos úteis,
+  sem tela de carregamento, em 1200×800/3:2; início e fim exatos; passo máximo de
+  0,8 m; duração mínima de quatro segundos; zero correção de colisão; três
+  capturas por rota; variação vertical mínima de 5,7 m na muralha; e personagem
+  real do jogo a 10, 20 e 30 m. A aprovação humana deve continuar declarada como
+  `pending` para o recibo ser válido.
+- `npm run eval:carandiru:c4` abre o jogo real em Chrome e percorre as polilinhas
+  validadas por CAR4 em visão de jogador. Cada amostra chama `Game._collide` e o
+  vídeo mostra continuidade renderizada, mas o controle da câmera é automatizado:
+  isto não substitui locomoção por teclado/mouse, combate nem playtest humano.
+- Duas tentativas foram rejeitadas antes do lote final. A primeira conservava a
+  tela de carregamento e o banner ROUND 1; a segunda removeu o pre-roll, mas
+  acelerava as rotas a cerca de dois segundos. Elas ficam isoladas em
+  `artifacts/carandiru-c4/rejected-preroll/` e `rejected-fast/` e não alimentam
+  o recibo.
+- O lote final em `artifacts/carandiru-c4/final/` registra `radial-interna` em
+  7,40 s/211 amostras, `externa-oeste` em 7,96 s/227 e `muralha-leste` em
+  16,92 s/431. As três chegam ao fim com zero correção, passo máximo entre 0,40
+  e 0,45 m e sem erro inesperado. A muralha cobre 5,8 m de variação vertical.
+  Os vídeos têm SHA-256 `05bdd6b784f5efa13b4a194892628cf35f5ff24deefc2a201708be3c981a1a9a`,
+  `d971ccab639cd3bb74550c9d30542663076b9085261e09ab7637944ee6a18acf` e
+  `b0d22c5460b868f10880743ed98afc9bff5ae5b231aab89d48236bbf151e1c4e`.
+- O ensaio de leitura usa o GLB real `esquerdomacho` parado no corredor da
+  muralha. A silhueta é reconhecível a 10 e 20 m e ainda humana a 30 m, mas a
+  amostra clara/vermelha não cobre skins escuras, movimento, oclusão parcial ou
+  aquisição sob fogo. O piso é legível e o corredor continua comprido, estreito
+  e escuro, sem cobertura intermediária evidente.
+- `tools/eval/carandiru-c4-browser.json` é o recibo versionado. CAR1–CAR9 ficam
+  verdes; o recibo C3 de Mint e o recibo de performance continuam vinculados ao
+  mesmo SHA-256 da fonte do mapa.
+
+## Crítica independente do C4
+
+O veredito final foi **WARN — lote revisável por humano**, com aprovação visual e
+jogável ainda pendente. Os três vídeos passaram em formato, continuidade
+automatizada e ausência das duas regressões do C3. A radial cruza o Pavilhão 6,
+a externa acompanha a ala oeste e a muralha sobe, percorre a passarela e retorna
+ao térreo.
+
+O crítico manteve três bloqueios objetivos: playtest humano de orientação,
+quedas e combate; demonstração ou correção da leitura dos acessos escuros, em
+especial nos trechos de subida e descida da muralha; e validação de exposição,
+contrafogo e cobertura no corredor elevado com personagens variados em
+movimento. CAR9 prova a integridade do material entregue, não resolve esses
+juízos humanos.
+
 ## Próximo passo
 
-C3 integra arquitetura e viatura Blender/Mint com proveniência completa, sem
-alterar os volumes competitivos aprovados pelos gates. C4 substitui os
-enquadramentos obstruídos e entrega vídeo contínuo das três rotas, transições
-verticais e entrada nas guaritas, seguido por nova crítica independente e
-aprovação humana. Não avançar o rótulo visual enquanto esses itens estiverem
+C4 entrega material revisável das três rotas e torna explícito o limite da
+muralha. Ainda faltam playtest humano com movimento e combate, skins de contraste
+baixo, avaliação da cobertura no corredor e aprovação visual do dono. Não
+avançar o rótulo visual nem autorizar merge/deploy enquanto esses itens estiverem
 pendentes.
