@@ -220,3 +220,19 @@ silencioso durante progresso normal. Ele notifica quando surgir um commit testá
 material ou ação humana. A implementação de Escadão e Piscina continua bloqueada até a
 fundação correspondente ser estabilizada; Sertão pode avançar por não depender dos arquivos
 da pilha de UV examinada.
+
+### Checkpoint de 08/09, 04:19 Europe/Lisbon
+
+- Campinho concluiu a preparação no commit local `c885b210`: worktree limpa, sete mutantes
+  novos e sete herdados vermelhos, baseline de cobertura/CTF/5x5/8x8 verde. Aguarda a
+  fundação antes de resolver o conflito do PR #530.
+- Escadão concluiu a baseline vermelha no commit local `5190b4ca`: régua das janelas, piso e
+  acesso superior mais plano de patch. Aguarda a fundação antes de tocar no mapa.
+- Joá concluiu a auditoria de integração e carga no commit local `f25a51ab`: contratos,
+  simulação até 8x8 e roteiro de captura. Aguarda a fundação antes de resolver #533.
+- Sertão avançou para o remoto, aplicou a fuga lateral das casas e integrou `origin/main`; a
+  tarefa continua ativa com quatro arquivos de mapa/eval ainda sem checkpoint final.
+- A raiz #540 está sendo trabalhada em `mapas-stack-root`; ainda há conflito/gerados em curso,
+  sem liberação da pilha descendente.
+- Piscina continua ativa em baseline e especificação; runtime permanece bloqueado como
+  planejado.
