@@ -1,5 +1,89 @@
 # HANDOFF
 
+## Feedback de combate: contador de abates, replay no headshot e bot de faca — 06/09/2026
+
+Objetivo: fechar as três frentes de leitura de combate pedidas pelo dono — um contador de
+abates legível durante a partida, devolver a câmera ao jogador no headshot (o #364 tirava a
+primeira pessoa por 1,36 s) e fazer o bot RESPEITAR o modo em rodada de faca. Branch
+`claude/combat-feedback-hud-bots`, worktree `claude-combat-feedback`, base `42c01175`.
+
+**Estado inicial medido (`botfaca-check.mjs`, praca_poderes, semente 4242, 4 bots, 60 s):** o
+modo já entregava a faca na mão do bot, mas a cabeça continuava de fuzil. A banda de distância
+com histerese de fuzil (recuo abaixo de 6 m, volta a `mid` só acima de 9,5 m) contra um alcance
+de faca de 2,4 m virava ciclo-limite: **menor distância bot→alvo 5,98 m, ZERO golpes, ZERO
+abates**. Quando por acaso entrava no alcance, o golpe saía pelo caminho de tiro — traçante,
+fogacho de cano e som de arma de fogo.
+
+**Mudança (lógica de jogo em `public/js/game.js`, sem navegador e sem penetração):**
+`_meleeRange(wid)` devolve alcance só de arma branca; quando o bot está em corpo a corpo a
+histerese de fuzil é substituída por "fecha e não recua" (`push` até 0,6× do alcance,
+`approach` nunca negativo) e o gate de ataque roteia para `_botMelee`, que resolve o golpe com
+alcance, ângulo, LOS, dano e `sfx.knife()/knifeHit()` — sem traçante, fogacho ou `shotWeapon`.
+Fora do corpo a corpo a banda de fuzil ficou intacta (é a cláusula BF4).
+
+**Estado final medido (mesma semente):** encostou a **1,24 m** (alcance 2,40), **18 golpes**,
+**9 abates**, 0 traçante/fogacho; rodada normal intacta com menor distância 23,46 m.
+
+**As três réguas foram vistas VERMELHAS no estado defeituoso**, e não só contra mutante: a
+árvore da base `42c01175` foi materializada com `git archive HEAD | tar -x` em `/tmp/csb-head`
+(só leitura, nada de `stash`/`checkout`) e as três rodaram lá. `abateshud` reprovou AB1-AB4
+(`#kill-count` não existia: "<sem elemento>"); `replaycam` reprovou HS1-HS3 (câmera 121,377 m,
+3,440 rad, ΔFOV 20°, relógio 1,836 s em 2,000 s reais, viewmodel e mira escondidos);
+`botfaca` reprovou BF2 (5,98 m, zero golpes, zero abates).
+
+**Mutantes — os 11 reprovaram:** botfaca `recuo` (5,40 m, zero golpes/abates), `tracante`
+(18 traçantes e 18 fogachos) e `corredor` (rodada normal colando a 2,87 m contra o piso de
+4 m); replaycam `orbita`, `hitstop`, `esconde` e `sem-kill`; abateshud `time` (lê 4 com 3
+abates do jogador), `rodada` (3 → 0 no `_startRound`), `congelado` e `miudo` (12 px contra o
+piso de 24 px). Dois mutantes precisaram ser CONSERTADOS porque nasceram cegos e o
+`eval:mutcega` não pega isso: o `corredor` escrevia em `b._range`, que `_updateBot` recalcula
+no topo de todo quadro (agora move a posição depois do quadro), e o `rodada` do abateshud
+zerava o `textContent` em vez do estado (agora embrulha o `_startRound`). O piso da BF4 saiu
+de 1,2 m — número sem procedência — para 4 m, derivado do `dist < 6 ? 'back'` da própria banda
+de fuzil, com 23,46 m medidos limpos contra 2,87 m sob mutante.
+
+**Validações rodadas (node v23.6.0 de `/opt/homebrew/bin`; o `node` do PATH é v16.13.0 e não
+serve para o harness nem para o Astro):**
+
+- `node --check` em `public/js/game.js`: verde.
+- `npm run eval:replaycam`, `npm run eval:abateshud`, `npm run eval:botfaca`: verdes.
+- `npm run arch` / `arch:check` e `npm run docs` / `docs:check`: verdes depois de regerar.
+- `npm run eval:comentario` (base `origin/main`): VERDE. Os comentários herdados do trabalho
+  em curso passavam de duas linhas e a régua só mede o que já está commitado — foram
+  condensados, com a narrativa toda migrada para o KNOWN-BUGS.md.
+- `npm run eval:mutcega`: verde, 14 réguas com modo mutante auditadas.
+- `npm run build`: VERDE (`[build] Complete!`, função Vercel empacotada, 10 arquivos AEO,
+  poda de 0,2 MB). O `node_modules` do worktree só tinha `three`; foi preciso `npm install`
+  para o Astro existir. `package.json` e `package-lock.json` ficaram intactos (a árvore segue
+  limpa depois da instalação).
+- `npm run check:fast`: **122/125 em 269,9 s**, com `eval:replaycam`, `eval:abateshud` e
+  `eval:botfaca` verdes dentro dele.
+
+**Vermelhos PRÉ-EXISTENTES, não introduzidos (`git diff --name-only 42c01175..HEAD` não toca
+nenhum dos dois assuntos):**
+
+- `audio:check` — "0 arquivos no disco · 0 alcançáveis pelo manifest": o pacote privado de
+  áudio não está baixado nesta máquina. Mesmo vermelho já registrado na entrada do CTF abaixo.
+- `eval:grafitelayout` — F2 no `escadao`: o hash de `map_*.js` mudou e o layout não foi
+  regerado (`npm run grafite escadao`). Também já registrado abaixo.
+
+**Commits (todos com DCO e `Agent: Claude Code (Opus 5)`):** `76178362` (HUD + headshot + bot
+de faca e as duas réguas novas), `7e83946b` (`_meleeRange`/`_botMelee`), `dbe7d867` (enxuga
+comentário), `36748eec` (KNOWN-BUGS BUG-142/143/144), `a17cd298` (blocos gerados).
+
+**Artefatos:** logs em `/tmp/csb-logs/check-fast.log` e a árvore da base em `/tmp/csb-head`
+(ambos fora do Git, some no próximo boot). Nada binário entrou no repositório.
+
+**Bloqueios e o que NÃO foi feito:** navegador não foi aberto e nenhuma automação de browser
+rodou — as três réguas executam o `Game` de verdade pelo harness headless com semente fixa,
+que é onde o defeito é mensurável, mas ninguém VIU o contador na tela nem o headshot ao vivo.
+Penetração de tiro não foi implementada, como pedido. `audio:check` e `eval:grafitelayout`
+continuam vermelhos por motivo alheio a esta mudança.
+
+**Próximo passo:** abrir a partida em 1200×800, conferir o `#kill-counter` na coluna do HP
+(legibilidade e não competir com o número de vida), dar um headshot e confirmar que a câmera
+não se mexe, e jogar uma rodada de faca vendo os bots fecharem. Sem merge e sem release.
+
 ## CTF no menu da home — 06/09/2026
 
 Objetivo: restaurar o submenu de Single Player com CTF, validar clique e preservação do modo

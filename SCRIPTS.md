@@ -177,6 +177,17 @@ A roda-gigante gira em torno do cubo; assentos não invadem lateral, base nem ar
 npm run eval:parquewheel
 ```
 
+## `eval:penitenciariapickup`
+
+Executa o flood-fill real do VM14 somente na Penitenciária. Existe para impedir
+que o rack norte volte a ser empurrado para o canto fechado entre a guarita elevada
+e o muro (BUG-142). Mutante: `node tools/eval/pickup-check.mjs penitenciaria
+--mutante=torre-bloco` restaura o colisor cheio da cabine e precisa ficar vermelho.
+
+```bash
+npm run eval:penitenciariapickup
+```
+
 ## `eval:velhooeste`
 
 O mapa Velho Oeste preserva marcos, janelas de madeira abertas/fechadas, gênero, perigo e recompensas dos cartazes, retratos, densidade, colisões, spawns e rota. Mutantes: sem-saloon|sem-carrocas|sem-tumbleweed|sem-obstaculos-centrais|centro-aberto|sem-cartazes|sem-retratos|cartaz-sobre-janela|genero-unico|janela-verde|todas-fechadas|perigoso-unico|recompensa-repetida|sem-colisao-varanda|sem-colisao-movel|parada|texturas-genericas.
@@ -215,6 +226,30 @@ O arco de dano na borda da tela (_dmgArc) tem que apontar pro atacante, não pro
 
 ```bash
 npm run eval:dmgdir
+```
+
+## `eval:abateshud`
+
+O contador de abates do JOGADOR tem que ser legível DURANTE a partida. Nasceu do pedido do dono: o HUD tinha dois números grandes no topo e nenhum dos dois é o abate pessoal — `#score-e`/`#score-b` imprimem `roundKills[side]`, que é do TIME e zera na virada; o número do jogador só existia atrás do TAB. Mede marcação (`#kill-counter`/`#kill-count` dentro do `#hud`, com rótulo), legibilidade por medida (piso de 24px fora de `@media`, contra os 42px do `#hp-num`) e comportamento com o Game rodando: imprime `player.kills`, não o placar do time, e sobrevive ao `_startRound`. `--mutante=time|rodada|congelado|miudo`.
+
+```bash
+npm run eval:abateshud
+```
+
+## `eval:botfaca`
+
+Em rodada de faca o bot tem que jogar de faca. Nasceu do pedido do dono. A faca já ia pra mão dele (`_botWeapon`), mas a cabeça continuava de fuzil em duas frentes: a banda de distância de `_updateBot` entra em recuo abaixo de 6 m e a faca alcança 2,4 m (medido antes do conserto: menor distância bot→alvo 5,98 m, zero golpes e zero abates em 60 s), e o golpe, quando saía, ia pelo caminho do tiro — com traçante, fogacho de cano e som de disparo. Mede perseguição, golpe, ausência de enfeite de arma de fogo e — cláusula que impede o conserto preguiçoso — que a rodada NORMAL continue com bot que abre distância (piso de 4 m). `--mutante=recuo|tracante|corredor`.
+
+```bash
+npm run eval:botfaca
+```
+
+## `eval:replaycam`
+
+Headshot **não** tira a câmera da mão do jogador. A régua nasceu junto com a replay cam do #364 (media se ela disparava e devolvia o FOV) e **trocou de lado** em 06/09/2026, quando o dono pediu o efeito de volta pra caixa: 1,2 s em câmera orbital, FOV 50, hit-stop de 0,18 e sem viewmodel/mira é o duelo seguinte perdido por quem acertou o tiro difícil. Agora mede o contrário — câmera parada, relógio 1:1, arma e mira na tela — e mantém uma cláusula de que o abate segue contando, para o conserto preguiçoso (matar o `_kill`) não ficar verde. `--mutante=orbita|hitstop|esconde|sem-kill`.
+
+```bash
+npm run eval:replaycam
 ```
 
 ## `eval:ctflabels`
@@ -619,11 +654,12 @@ npm run eval:audiocapacidade
 
 ## `eval:audiofablocal`
 
-Prova o instalador do laboratório Fab sem ler áudio comprado: a fixture usa arquivos de texto e exige symlink para a raiz privada exata, manifest sem caminho absoluto, somente os 5 eventos que o runtime alcança hoje e tiro da AK fixado em um candidato para não cair eternamente em cache frio. Também planta gore dentro de `ak.shot`; `--mutante=sem-veto` desliga o filtro do instalador e precisa acender LAB4.
+Prova o instalador do laboratório Fab sem ler áudio comprado: a fixture usa arquivos de texto e exige symlink para a raiz privada exata, manifest sem caminho absoluto, somente os 5 eventos que o runtime alcança hoje e tiro da AK fixado em um candidato para não cair eternamente em cache frio. Também planta gore dentro de `ak.shot`; `--mutante=sem-veto` desliga o filtro do instalador e precisa acender LAB4. O Campinho do Morro reutiliza a cama de favela já presente no pack; `--mutante=sem-campomorro` remove essa extensão e precisa acender LAB8g.
 
 ```bash
 npm run eval:audiofablocal
 node tools/eval/audio-fab-local-check.mjs --mutante=sem-veto
+node tools/eval/audio-fab-local-check.mjs --mutante=sem-campomorro
 ```
 
 ## `audio:shortlist`

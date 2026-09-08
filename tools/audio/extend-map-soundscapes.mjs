@@ -1,13 +1,18 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-// O pack privado antecede Escadão. Reutiliza sua cama de vento/vegetação de favela,
+// O pack privado antecede Escadão e Campinho. Reutiliza a cama de favela existente,
 // sem inventar caminhos de áudio nem substituir configurações curadas posteriores.
 export function extendMapSoundscapes(manifest) {
   const maps=manifest.mapSoundscapes;
-  if(!maps || Object.hasOwn(maps,'escadao') || !maps.quebrada) return false;
-  maps.escadao=structuredClone(maps.quebrada);
-  return true;
+  if(!maps || !maps.quebrada) return false;
+  let changed=false;
+  for(const id of ['escadao','campomorro']) {
+    if(Object.hasOwn(maps,id)) continue;
+    maps[id]=structuredClone(maps.quebrada);
+    changed=true;
+  }
+  return changed;
 }
 
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
@@ -15,6 +20,6 @@ if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   const manifest=JSON.parse(readFileSync(file,'utf8'));
   if(extendMapSoundscapes(manifest)) {
     writeFileSync(file,JSON.stringify(manifest,null,1)+'\n');
-    console.log('AUDIO: Escadão usa a ambiência de favela existente no pack.');
+    console.log('AUDIO: mapas novos usam a ambiência de favela existente no pack.');
   }
 }

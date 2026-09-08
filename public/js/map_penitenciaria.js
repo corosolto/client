@@ -571,7 +571,10 @@ export function buildPenitenciaria(scene, T) {
     // vigia entre as guaritas das quinas.
     for (const [i, tx] of [[0, -9], [1, 9]]) {
       const torre = new THREE.Group(); torre.name = `penitenciaria-torre-muro-${i}`; torre.userData.molde = 'guarita_muro'; root.add(torre);
-      colliders.push({ minX: tx - 2.8, maxX: tx + 2.8, minY: 0, maxY: 8.2, minZ: 43.9, maxZ: 46.8, tag: 'torre-muro' });
+      for (const dx of [-2.2, 2.2]) for (const dz of [-1, 1]) colliders.push({
+        minX: tx + dx - .15, maxX: tx + dx + .15, minY: 0, maxY: 7,
+        minZ: 45.35 + dz - .15, maxZ: 45.35 + dz + .15, tag: `torre-muro-apoio-${i}`,
+      });
       const glbTorre = placeProp('guarita_muro', { x: tx, y: 0, z: 45.35, targetH: 8.2, targetLen: 5.6, ry: Math.PI });
       if (glbTorre) { torre.add(glbTorre); occluders.push(glbTorre); continue; }
       const pecas = [];

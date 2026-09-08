@@ -75,7 +75,11 @@ check('PF4', windows.length === 16 && windows.every(validWindow) && rhythm.size 
 const signature = { colliders: world.colliders, spawns: world.spawns, ctfPoints: world.ctfPoints,
   waypoints: world.waypoints, bounds: world.bounds, pickups: world.pickups.map(({ x, z, kind }) => ({ x, z, kind })) };
 const hash = createHash('sha256').update(JSON.stringify(signature)).digest('hex');
-check('PF5', hash === '602d8a00ef9c127ad9a6231f5453af0f311d2fbec319b9d961399f80f8b4c280', `colisão, navegação, spawns, CTF e pickups preservados (${hash.slice(0, 12)})`);
+const apoios = world.colliders.filter((c) => String(c.tag).startsWith('torre-muro-apoio-'));
+const torreCheia = world.colliders.some((c) => c.tag === 'torre-muro');
+check('PF5', hash === '57052d4b94a824b9a89b1ababdc52243a99004a72f05519c2881abcb95aa2962'
+  && apoios.length === 8 && !torreCheia,
+`contratos preservados com 8 apoios e sem volume cheio da guarita, BUG-142 (${hash.slice(0, 12)})`);
 const failed = results.filter((r) => !r.ok).map((r) => r.id);
 if (mutant) {
   const target = mutant === 'sem-fachada' ? 'PF4' : 'PF2';

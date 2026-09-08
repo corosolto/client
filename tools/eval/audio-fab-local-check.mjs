@@ -20,7 +20,7 @@ const MANIFEST_GENERATOR = readFileSync(join(RAIZ, 'tools/gen-audio-manifest.mjs
 const MAP_IDS = carregarMapIds();
 const FIREARM_IDS = Object.keys(WEAPONS).filter((id) => id !== 'knife');
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (mutante && mutante !== 'sem-veto') {
+if (mutante && !['sem-veto', 'sem-campomorro'].includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
