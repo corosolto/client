@@ -50,7 +50,7 @@ if (mutant && !targets[mutant]) throw Error(`Mutante desconhecido: ${mutant}`);
 
 const EPS = 1e-6, R = .38;
 // Congeladas do fonte; não derivar do mundo medido.
-const WAGONS = [{ x: -6, z: -19.6, ry: Math.PI + .18 }, { x: 7, z: 2, ry: -2.7 }, { x: -14.2, z: 25.4, ry: 2.9 }];
+const WAGONS = [{ x: -6, z: -19.6, ry: Math.PI + .18 }, { x: 7, z: 2, ry: -2.5 }, { x: -15.8, z: 25.9, ry: 2.9 }];
 // Carroceria visível (meia-largura, meia-profundidade com rodas) e lança, em local.
 const BODY_HW = 1.9, BODY_HD = 1.71, SHAFT_HW = .09, SHAFT_Z = [-4.8, -.05];
 const HUG_MAX = 3.3, LANE_PZ = [-5.0, 1.7], CROSS_PZ = 2.21, CROSS_SPAN_MIN = 3.0;
