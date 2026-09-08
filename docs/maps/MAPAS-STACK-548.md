@@ -32,3 +32,9 @@ portanto a cápsula do Escadão não está aprovada por esta evidência.
 Roteiro humano: percorrer os patamares/escadas do Escadão, pátio→loja da Loja H
 e borda/vestiário/trampolim da Piscina, em 5x5 e 8x8, com câmera rasante e
 troca de time. Capturas não constituem aprovação visual humana.
+
+Crítico adversarial: não aprovou os seis frames. São tomadas de spawn com
+HUD/"VALENDO", arma, avatar e pickup cobrindo o mapa; Escadão e Loja H têm
+personagem em primeiro plano, e Piscina fica plana/estourada. A comparação
+5x5↔8x8 não controla arma ou avatar. Falta captura limpa e equivalente, em
+movimento e 3:2, antes de qualquer aprovação humana.
