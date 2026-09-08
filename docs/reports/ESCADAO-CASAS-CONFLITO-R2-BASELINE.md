@@ -125,7 +125,9 @@ entrada/interior das duas casas do mirante. A leitura visual confirma vãos reai
 piso contínuo e as janelas orientadas para a área de disputa.
 
 O processo visual terminou com status técnico `failed` porque o servidor respondeu
-404 para 45 decais e áudios já ausentes nesta branch; todas as imagens foram salvas
-antes da asserção. As fundações #540–#551 continuam DIRTY/UNSTABLE, incluindo a #548
-que toca a escala de materiais do Escadão. O próximo passo é atualizar a branch com a
-`main`, resolver esses conflitos e repetir build e navegador antes do merge da PR.
+404 para 45 decais e áudios ausentes; todas as imagens foram salvas antes da asserção.
+A `main` `d8bc0bd2` foi integrada, a documentação derivada foi regenerada e o build
+alpha.241 passou com Node 23. A régua ampla também passou com 10/10 lances levando a
+destinos, 0/979 posições altas lendo o spawn e grafo 669/669 conectado. Para isso a
+pilha de pneus que deixava 0,02 m de invasão na boca inferior foi recuada 0,10 m, e a
+proteção da janela ganhou um corredor central registrado no grafo.

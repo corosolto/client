@@ -646,7 +646,7 @@ export function buildEscadao(scene, T) {
   /* ===================== BARRICADAS ===================== */
   // patamar 1: pneus
   const MAT_PNEU = lam({ color: 0x1a1a1a, roughness: 0.95 });
-  propAt('pilha_pneus', -1.2, P1.z1-.75, 0.9, 1.6, 1.2, MAT_PNEU, 0, RISE);
+  propAt('pilha_pneus', -1.3, P1.z1-.75, 0.9, 1.6, 1.2, MAT_PNEU, 0, RISE);
   // base: portão arrancado
   addBox(2.5, 1.2, 0.8, lam({ color: 0x4a4a3a, roughness: 0.8 }), 1.5, 0, 14.5);
 
@@ -666,9 +666,9 @@ export function buildEscadao(scene, T) {
   casa(5, 22, 4, 5, 5.9, 0, 0, { molde: 'casa_favela_azul', pav: 2, ry: -0.026 });
   // A parede fecha a leitura dos slots E pela casa elevada; o duelo termina na
   // aproximação em z=24, antes desta proteção do nascimento.
-  for (const x of [-1.775, 1.775]) {
-    addBox(2.45, 2, .35, MAT_CIMENTO, x, 0, 25, { vao: false });
-    addBox(2.55, .12, .5, MAT_ZINCO, x, 2, 25, { collide: false, skirt: false, vao: false });
+  for (const [x, w] of [[-1.875, 2.25], [1.725, 2.55]]) {
+    addBox(w, 2, .35, MAT_CIMENTO, x, 0, 25, { vao: false });
+    addBox(w + .1, .12, .5, MAT_ZINCO, x, 2, 25, { collide: false, skirt: false, vao: false });
   }
 
   /* ---- LAJE SOBRE A BOCA DO ESCADÃO (abrigo do spawn E; BUG-32, régua escadao-rota) ----
@@ -1051,6 +1051,7 @@ export function buildEscadao(scene, T) {
   linha(9.2, 16, 7, 16, .4);
   // base
   for (const bz of [20, 26, 32, 37]) linha(-15, bz, 15, bz, 3.0);
+  linha(0, 20, 0, 26, .6);
   // topo
   for (const bz of [-22, -28, -34, -38]) linha(-15, bz, 15, bz, 3.0);
   linha(-14.55, -22.8, -14.55, -26, .55);

@@ -37,6 +37,46 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## Sertão — casas da praça (PR #526, revisão local 06/09)
+
+### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO E VALIDADO EM WEBGL 08/09
+
+**Relato literal do dono (runtime 3:2, capturas de 06→07/09 23h52–00h00)**: (1) há
+trechos em que o jogador não passa junto às carroças; (2) as casas diante dos spawns
+continuam cenográficas e fechadas — ele quer entrar nelas e usar janelas como posição
+tática. O quality gate estava verde (IN1–IN7, TR1/TR3, SP1–SP9): pelo corolário da lei 1
+da `bug-hunt`, o defeito é do quality gate — nenhuma régua media corredor junto às
+carroças nem interiores diante dos spawns.
+
+**Inspeção inicial (`public/js/map_velho_oeste.js`)**: `wagon()` empurra AABB
+conservador de meia-largura 2,3×3,2 quando a carroceria visível é 1,9 de largura ×
+1,1 de corpo (+ rodas até 1,71 em z) e a lança tem colisor próprio sobreposto — parede
+invisível de ~1,5 m na traseira e cantos inflamados pela rotação. O PR #526 abriu só as
+duas `casaDaPraca` em z=15; as `CASAS` diante dos spawns (platibanda 0/1 ao norte,
+pedra 7/8 e geminada 9 ao sul) mantêm colisor único fechando a planta.
+
+Régua: `tools/eval/sertao-wagon-check.mjs` (WA1–WA4) + `sertao-interiors-check.mjs`
+estendido às 4 casas. **Antes:** WA1 19–30 m² de área invisível por carroça,
+WA2/WA3 zero; casas dos spawns sem interior. **Depois:** WA1–WA4 e IN1–IN7
+verdes; mutantes `aabb-conservador`, `barreira-spawn`, `fechar-porta-casa`,
+`fechar-janela-casa` (+8 anteriores, +17 espaciais) mordendo. De carona:
+`sertao-spatial-check` truncava stdout em pipe (`process.exit` → `exitCode`).
+Antes/depois, custos e comandos: [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+**WebGL 3:2:** RV1–RV12 verdes em 1536×1024; imagens reais abertas e examinadas.
+O agrupamento dos interiores reduz o pico de 564 para 499 draw calls e o mutante
+sem batch deixa RV3 vermelho. IN8–IN11 cobrem saída lateral, tiro tático, seis
+coberturas da praça. Cabras, galinha e pintinhos foram conferidos no runtime por
+LG1–LG8. O julgamento final da sensação de combate permanece humano.
+
+Frestas laterais, obstáculos internos e uma aresta bloqueada por esteio foram
+reproduzidos e corrigidos. Régua: `tools/eval/sertao-interiors-check.mjs`,
+`IN3/IN4/IN5` vermelhas antes e verdes depois, com mutantes. Evidência, custo e
+continuação em [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+A coordenada exata do relato original permanece sem reprodução localizada; a
+varredura IN7 confirma zero bolsões livres inacessíveis no mapa inteiro. A
+evidência WebGL está em `artifacts/sertao-casas/runtime-final-v2/`; a entrega não é
+uma publicação de produção.
+
 ## P0 — quebram o jogo ou mentem para quem mede
 
 ### ~~BUG-86 · no multiplayer o corpo TP do próprio jogador ficava DEITADO depois do respawn, arrastado pelo mundo~~ · RESOLVIDO 30/08 (PR #483)
@@ -1899,6 +1939,81 @@ mudar.
 ---
 
 ## P1 — o jogador vê
+
+### ~~BUG-142 · a replay cam de headshot arrancava a câmera do jogador por 1,2 s~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** tirar o efeito de câmera do headshot.
+
+**Evidência (`node tools/eval/replaycam-check.mjs` na árvore `42c01175`, `praca_poderes`,
+semente 4242, 4 bots, 90 quadros de aquecimento):** depois do headshot do jogador a câmera
+saltava **121,377 m** do olho, girava **3,440 rad**, o FOV ia de 70 para 50 (**Δ20°**), o
+relógio andava **1,836 s de jogo em 2,000 s reais** (hit-stop escalando o `dt` em 0,18 por
+0,2 s reais) e viewmodel e mira sumiam. O efeito vinha do PR #364 (`REPLAY_CAM`,
+`_updateReplayCam`, `REPLAY_DUR` 1,2 s — 1,36 s reais, porque `rc.t` acumulava o `dt` já
+escalado).
+
+**Correção:** removidos `REPLAY_CAM`, as cinco constantes `REPLAY_*`, `_updateReplayCam`, o
+armamento no `_kill`, a chamada no `_updatePlayer`, o descarte no jogador morto e o hit-stop
+do `update()`. Saiu inteira em vez de virar mais um kill-switch: com respawn de 2,2 s, 1,2 s
+sem câmera e sem mira punia quem acertou o tiro, e o headshot já tem hitmarker, número de
+dano, killfeed e locutor. `tools/eval/replaycam-probe.mjs` (sonda do kill-switch) deixou de
+ter função e foi apagada.
+
+**Régua:** `tools/eval/replaycam-check.mjs` (`npm run eval:replaycam`), agora medindo o
+contrário — HS1 câmera parada (teto 0,250 m / 0,250 rad / 0,5°), HS2 relógio 1:1 (teto
+0,02 s), HS3 viewmodel e mira visíveis, HS4 o abate continua contando. Depois: Δ0,000 m,
+Δ0,000 rad, ΔFOV 0,000°, 2,000 s de jogo em 2,000 s reais. **Mutantes:** `orbita`,
+`hitstop`, `esconde` e `sem-kill` — os quatro reprovam.
+
+### ~~BUG-143 · em rodada de faca o bot carregava a faca e jogava de fuzil~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** em rodadas de faca, os bots precisam respeitar o modo.
+
+**Evidência (`node tools/eval/botfaca-check.mjs` na árvore `42c01175`, `praca_poderes`,
+semente 4242, 4 bots, 60 s):** `_botWeapon()` já entregava `knife`, mas o comportamento
+continuava de arma de fogo em duas frentes.
+
+- **(a) banda de distância.** `_updateBot` mantém histerese calibrada para fuzil — entra em
+  `back` abaixo de 6 m e só volta a `mid` acima de 9,5 m. O alcance da faca é 2,4 m. Medido:
+  menor distância bot→alvo **5,98 m**, **zero golpes**, **zero abates** em 60 s.
+- **(b) o golpe.** Quando entrava no alcance, o ataque saía pelo caminho de tiro: hitscan com
+  desvio angular, `_tracer`, `_flash` e `sfx.shotWeapon`. Faca não tem cano nem projétil.
+
+**Correção (`public/js/game.js`):** `_meleeRange(wid)` é a fonte única do alcance de arma
+branca (0 para arma de fogo); com ele a banda vira "fecha e não recua" (`push` acima de 0,6×
+o alcance, `approach` nunca negativo) e o gate de ataque roteia para `_botMelee`, que resolve
+alcance, ângulo, LOS e dano tocando `sfx.knife()`/`sfx.knifeHit()`. Fora do corpo a corpo a
+banda de fuzil não mudou.
+
+**Depois (mesma semente):** encostou a **1,24 m**, **18 golpes**, **9 abates**, **0
+traçantes e 0 fogachos**; rodada normal intacta (menor distância **23,46 m**).
+
+**Régua:** `tools/eval/botfaca-check.mjs` (`npm run eval:botfaca`) — BF1 faca na mão, BF2
+perseguição e combate, BF3 sem enfeite de arma de fogo, BF4 a rodada normal não vira corrida
+(piso de 4 m, derivado do `dist < 6 ? 'back'` da própria banda). **Mutantes:** `recuo`
+(5,40 m, zero golpes), `tracante` (18 traçantes/18 fogachos) e `corredor` (rodada normal
+colando a 2,87 m) — os três reprovam.
+
+### ~~BUG-144 · o jogador não conseguia ler os próprios abates durante a partida~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** contador de abates legível, no espírito do Valorant.
+
+**Evidência (`node tools/eval/abateshud-check.mjs` na árvore `42c01175`):** `#kill-count` não
+existia em lugar nenhum — AB1, AB2, AB3 e AB4 reprovavam de saída. O HUD tinha dois números
+grandes no topo (`#score-e`/`#score-b`), e os dois são `roundKills` do TIME na RODADA; o
+número pessoal só existia atrás do TAB e na tela de fim de partida.
+
+**Correção:** `#kill-counter` na coluna de estado do jogador (`src/pages/index.astro`), com
+algarismo de 28 px no lima da casa (`--aaa-lime`) e rótulo `ABATES` de 11 px — os mesmos
+tokens do resto do HUD, sem asset de terceiro. O valor é `player.kills` (partida), escrito
+pelo `_updateHud` só quando muda. Do Valorant vem apenas o princípio "número grande com
+rótulo miúdo ancorado no bloco do jogador"; layout, tipografia e cor são os da casa.
+
+**Régua:** `tools/eval/abateshud-check.mjs` (`npm run eval:abateshud`) — AB1 existe dentro do
+`#hud` com rótulo, AB2 corpo ≥ 24 px fora de `@media` e não nasce `display:none`, AB3 imprime
+o abate do JOGADOR (com abate de aliado no meio para separar do número do time), AB4
+sobrevive à virada de rodada. **Mutantes:** `time`, `rodada`, `congelado` e `miudo` — os
+quatro reprovam.
 
 ### ~~CTF sumiu do menu da home~~ · CORRIGIDO LOCALMENTE 06/09/2026
 
@@ -3999,6 +4114,15 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-145 · tiros com volume zero derrubavam o áudio com `RangeError`.**
+  **Sintoma literal (admin, 08/09/2026, produção alpha.239):**
+  `Failed to execute 'exponentialRampToValueAtTime' on 'AudioParam': The target value provided (0) should be greater than 0.`
+  **Causa reproduzida:** `Sfx._env` repassava `peak` ou `end` iguais a zero para uma rampa
+  exponencial; a Web Audio API exige alvo estritamente positivo. **Correção:** limita ambos
+  a `0.0001`, inaudível mas válido. **Régua:** `eval:audioenvelope`; o mutante
+  `--mutante=pico-zero` precisa reprovar. **Não cobre:** escuta em navegador real nem o
+  timeout de abertura de partida, que é outro relato e ainda exige contexto de rede/estado.
+
 - **BUG-140 · regressão de mix e vozes após o pack privado.**
   **Sintoma literal (dono, 05/09/2026, produção):** *“os sons estao ok, mas estao altos, os
   audios ingame sumiram, e os de voz round1, mult kill etc tb sumiram preciasa arrumar isso”*.
@@ -4863,10 +4987,7 @@ otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 `artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.
 
-## Escadão PR #529 — janela medida fora do corpo (06/09/2026)
 
-A prova herdada usava olhos fora da fachada ou dentro da parede lateral. Corrigidos
-origem/alvo ocupáveis, janela voltada à aproximação leste e fechamento fora da abertura.
-O mirante recebeu ombreiras para preservar cobertura e duas portas para contestação.
-Régua vermelha anterior, mutantes, capturas offline e limites de spawn/camping estão em
-[`ESCADAO-CASAS-CONFLITO.md`](docs/reports/ESCADAO-CASAS-CONFLITO.md).
+### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527
+
+Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.

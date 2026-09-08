@@ -1,8 +1,8 @@
 # Escadão: plano de patch das casas disputáveis
 
 Plano executado localmente em 08/09/2026 após a nova reprovação visual do dono. A
-atualização da PR #529 contra a `main` e a repetição dos portões ainda são obrigatórias
-antes do merge.
+`main` `d8bc0bd2` foi incorporada, os conflitos derivados foram regenerados e os
+portões funcionais abaixo foram repetidos na árvore combinada antes do merge.
 
 ## 1. Preservar a casa central já validada
 
@@ -70,8 +70,8 @@ Não abrir uma segunda janela para o respawn. A posição é aceita somente quan
 6. Rodar as réguas existentes da casa, estrutura, descida, grafo e contrato.
 7. Gerar capturas 3:2 no navegador com GLBs reais, olhando as duas portas, as duas
    janelas e a face fechada para o respawn.
-8. Só então integrar a régua ao `package.json` e ao portão, regenerar documentação,
-   atualizar o relatório da PR e solicitar revisão humana.
+8. Integrar a régua ao `package.json` e ao portão, regenerar documentação e atualizar
+   o relatório da PR. Essa etapa foi concluída com o contrato `full` em 24/24.
 
 O patch não deve aproveitar esta rodada para mudar iluminação, materiais, horizonte,
 decais ou outras casas. A #548 já toca materiais do Escadão; manter o diff de gameplay

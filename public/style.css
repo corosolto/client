@@ -2318,6 +2318,12 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 #hp-num.low::after{color:#e04c44}
 #hp-bar{width:190px;height:5px;margin-top:6px;border:0;clip-path:none;background:rgba(10,10,12,.7)}
 #hp-fill{background:#46c268}#hp-fill.low{background:#e04c44}
+/* ABATES: um degrau abaixo da vida na mesma coluna (28px contra os 42px do #hp-num), no
+   lima da casa e não branco, para não competir com o número-herói ao lado (BUG-144). */
+#kill-counter{display:flex;align-items:baseline;gap:9px;margin-top:11px}
+#kill-count{font-family:var(--font);font-size:28px;font-weight:700;line-height:1;color:var(--aaa-lime,#b4d92e);
+  font-variant-numeric:tabular-nums;text-shadow:0 2px 6px rgba(0,0,0,.55)}
+#kill-counter .kc-label{font:700 11px/1 var(--aaa-font-body);letter-spacing:3px;color:#9a9ba1}
 #hud-bottom-right{right:20px;bottom:18px;gap:3px}
 #weapon-name{order:-1;margin:0;font-family:var(--aaa-font-body);font-size:11px;font-weight:700;letter-spacing:3px;color:#9a9ba1}
 #ammo{order:0;font-family:var(--font);font-size:42px;font-weight:700;-webkit-text-stroke:0}

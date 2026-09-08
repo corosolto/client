@@ -280,6 +280,8 @@ export class Sfx {
   setVolume(v) { this.vol = v; if (this.master) this.master.gain.value = v; }
 
   _env(node, t0, a, peak, d, end = 0.0001) {
+    peak = Math.max(0.0001, peak);
+    end = Math.max(0.0001, end);
     node.gain.setValueAtTime(0.0001, t0);
     node.gain.exponentialRampToValueAtTime(peak, t0 + a);
     node.gain.exponentialRampToValueAtTime(end, t0 + a + d);
