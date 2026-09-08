@@ -229,3 +229,45 @@ Três pontos que só uma pessoa decide, todos visíveis nas figuras de
 Fica aberto, fora do escopo desta lane: `lobisomem` não tem perfil físico de áudio
 (`CHARACTER_IDS` em `tools/audio/fab-game-local.mjs`), o que mantém `eval:audiofablocal`
 vermelho em `LAB8e`. O conserto exige regerar o manifest com o pacote de áudio presente.
+
+## Revalidação de integração — 08/09/2026
+
+**Base revalidada:** `origin/main` `e67addf4` (`v2.0.0-alpha.242`).
+**Cabeça do candidato:** `7b4ff3d4`, na branch
+`astra/miticos-integracao-priority`, PR #532. A atualização da base teve conflitos só
+em documentação derivada e no catálogo de scripts; os blocos derivados foram
+regenerados e o script `eval:chao` foi preservado no `check:fast`.
+
+O escopo continua estrito: a facção M expõe somente `lobisomem`. Cuca, Boto,
+Bandeirante, Saci, Lampião, Maria Bonita, Curupira e Zumbi não foram promovidos,
+alterados ou adicionados ao roster por esta revalidação.
+
+Validação na árvore integrada:
+
+- `npm run eval:miticos-lobisomem` passou para o roster `M/lobisomem` e os dez
+  assets, SHA-256 `cee31d103554b1d1ae5d3939ae94429d4594cf068f6fb1af5338f15dc95aa336`.
+  As mutações `sem-lobisomem`, `roster`, `links`, `gloves`, `resultados`, `clipes`,
+  `curltwist` e `loading` foram rejeitadas. O contrato exercitou elencos 5×5 e 8×8.
+- `npm run eval:chao` passou para os 45 personagens; o Lobisomem ficou em `0,0000 m`
+  no idle e dentro da catraca registrada para crouch e death.
+- `BASE=http://localhost:4399 OUT=artifacts/miticos-browser-alpha242-rerun node
+  tools/eval/miticos-browser-review.mjs` passou em viewport 1536×1024 (3:2): seleção,
+  loading 3D com troca de clipes, corpo em run/ready/shoot/crouch/jump, partida viva,
+  primeira pessoa e os dois resultados. As capturas ficam fora do Git em
+  `artifacts/miticos-browser-alpha242-rerun/`.
+- `npm run build`, `npm run docs:check` e `npm run arch:check` passaram.
+- `npm run check:fast` fechou **133/134**: a única falha é anterior e externa ao
+  candidato, `audio:check`, pois este worktree tem zero arquivos de áudio e
+  `manifest.json` está defasado do disco. Todos os portões de Míticos, animação,
+  mídia e mapa passaram.
+
+## Roteiro local para revisão humana
+
+O servidor deste worktree fica disponível em `http://localhost:4399`.
+
+1. Abra `/?tela=02` e escolha **MÍTICO**; confirme que há somente Lobisomem.
+2. Abra `/?tela=loading&time=M&map=praca_poderes` e observe o palco 3D mudar de ação.
+3. Abra `/?tela=hud&map=praca_poderes&time=M&char=lobisomem` e jogue uma partida.
+4. Confira `/?tela=vitoria&time=M&char=lobisomem` e a rota equivalente `derrota`.
+
+Este é um candidato de PR para revisão e não autoriza merge ou deploy.
