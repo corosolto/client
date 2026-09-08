@@ -7,9 +7,15 @@ checkpoint.
 ## 1. Preservar a casa central já validada
 
 Manter os dois acessos existentes: passarela a partir do patamar e escada externa a
-partir da rua. Preservar a janela da escada e a janela voltada à aproximação inferior
-nos pontos já verdes da matriz. A integração deve continuar com piso físico e visual
-na cota 2,75 m e sem visão direta para slots de nascimento.
+partir da rua. Ambos precisam terminar na sala tática delimitada por
+`x=-3,35..1,35`, `z=14,2..16,8`. Preservar a janela da escada na face norte e
+substituir a parede sul hoje contínua por peitoril, verga e segmentos laterais que
+deixem uma segunda abertura real na mesma sala. A nova abertura liga o olho
+`[-1,4; 4,37; 15,7]` à aproximação inferior em `[0; 1,5; 24]`, com tiro e revide.
+
+A janela decorativa de outro volume conectado não satisfaz essa cláusula. A
+integração deve continuar com piso físico e visual na cota 2,75 m e sem visão direta
+para slots de nascimento.
 
 ## 2. Transformar os dois volumes do mirante em sobrados táticos
 
@@ -61,7 +67,7 @@ Não abrir uma segunda janela para o respawn. A posição é aceita somente quan
 1. Atualizar a branch e resolver conflitos sem aceitar arquivos gerados antigos.
 2. Rodar o escopo `full` e guardar a saída vermelha como baseline A.
 3. Editar o runtime e o grafo numa única frente sequencial.
-4. Rodar `full` até 22/22 sem afrouxar cápsula, degrau ou proteção do spawn.
+4. Rodar `full` até 23/23 sem afrouxar cápsula, degrau ou proteção do spawn.
 5. Rodar os três mutantes e confirmar a família exata de falha.
 6. Rodar as réguas existentes da casa, estrutura, descida, grafo e contrato.
 7. Gerar capturas 3:2 no navegador com GLBs reais, olhando as duas escadas, as duas

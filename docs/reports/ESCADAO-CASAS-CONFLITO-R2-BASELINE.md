@@ -8,7 +8,8 @@ Checkpoint de 08/09/2026 para a PR #529, branch
 O relato humano foi convertido em contrato antes de uma nova edição de runtime:
 
 - casa central alcançável tanto pela escada/passarela quanto pela rua;
-- janela útil para o eixo da escada e janela útil para a aproximação inferior;
+- duas janelas opostas na mesma sala: uma para a escada e outra para a aproximação
+  inferior;
 - piso físico e visível sob todas as amostras internas;
 - dois sobrados próximos ao respawn superior com acesso lateral ao pavimento de cima;
 - cada posição de tiro declarada tem revide e uma rota física pela qual o adversário
@@ -37,13 +38,14 @@ Executado com Node 23 em 08/09/2026:
 | escopo | resultado | leitura |
 |---|---:|---|
 | `mutation` | 10/10 | núcleo verde usado para testar os mutantes |
-| `central` | 12/12 | dois acessos, quatro amostras de piso e duas janelas com revide |
-| `full` | 14/22 | baseline vermelha; oito cláusulas ainda ausentes nos sobrados |
+| `central` | 12/13 | a segunda face da mesma sala continua fechada |
+| `full` | 14/23 | baseline vermelha; uma falha central e oito nos sobrados |
 
-As duas rotas da casa central chegaram ao interior. A rota alta terminou em 95
-frames e a inferior em 120; ambas alcançaram a cota 2,75 m. As quatro amostras
-internas têm `groundHeightAt == 2,75`, malha visível sob os pés e cápsula sem
-deslocamento.
+As duas rotas da casa central chegaram ao mesmo ponto interno `[-1,4; 2,75; 15,5]`.
+A rota alta terminou em 95 frames e a inferior em 208; ambas alcançaram a cota
+2,75 m. As quatro amostras internas têm `groundHeightAt == 2,75`, malha visível sob
+os pés e cápsula sem deslocamento. A janela da escada está aberta, mas a parede sul
+da mesma sala bloqueia tiro e revide em direção a `[0; 1,5; 24]`.
 
 Nos dois sobrados, a malha de cobertura existe em 10,61 m, mas a física continua
 devolvendo 7,56 m, a cota do mirante. A rota oeste travou em
@@ -60,7 +62,7 @@ desenhada no grafo.
 | posição | olho/alvo cabem | tiro | revide | rota de expulsão | proteção do spawn B |
 |---|---:|---:|---:|---:|---:|
 | janela da escada | sim | sim | sim | sim | n/a |
-| janela da aproximação inferior | sim | sim | sim | sim | n/a |
+| janela oposta da mesma sala | sim | **não** | **não** | sim | n/a |
 | sobrado oeste, janela interna | sim | sim, hoje no ar | sim, hoje no ar | **não** | **não, 4 slots** |
 | sobrado leste, janela interna | sim | sim, hoje no ar | sim, hoje no ar | **não** | **não, 4 slots** |
 
@@ -69,8 +71,22 @@ justamente por faltar parede, têm tiro e revide livres. A régua irmã de piso,
 cápsula, a rota e a proteção de spawn impedem esse falso verde.
 
 Malhas `decal:*`, `nonSolidSurface` e o lote de peças decorativas são excluídos da
-oclusão visual. Um decalque atravessava o raio de revide da janela inferior e havia
-produzido um vermelho falso, embora não participe dos occluders de tiro do jogo.
+oclusão visual.
+
+## Correção após a captura humana
+
+As capturas de 08/09/2026 mostraram que a primeira versão desta régua aceitava a
+janela de outro volume conectado como se fosse a face oposta da sala tática. A
+imagem `Screenshot 2026-09-08 at 04.31.03.png` mostra a janela existente; a imagem
+`Screenshot 2026-09-08 at 04.31.07.png` mostra a parede oposta totalmente fechada.
+As imagens `04.31.35`, `04.31.46`, `04.31.51` e `04.32.12` mostram os volumes do
+respawn superior sem entrada para um pavimento jogável.
+
+A cláusula `SALA/janelas-opostas-no-mesmo-comodo` agora exige que os dois olhos
+fiquem dentro do retângulo da sala `x=-3,35..1,35`, `z=14,2..16,8`. A linha inferior
+sai de `[-1,4; 4,37; 15,7]`, atravessa a face sul em `z=16,8` e aponta para a rua em
+`[0; 1,5; 24]`. Portanto uma janela pertencente a outra casa não pode mais produzir
+um falso verde.
 
 ## Mutantes
 
@@ -95,7 +111,8 @@ PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs
 PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs --scope=mutation --mutante=acesso-removido
 ```
 
-O terceiro comando deve sair 1 com `ESCADAO CASAS CONFLITO R2 RED`. Os três
+O segundo e o terceiro comandos devem sair 1 com `ESCADAO CASAS CONFLITO R2 RED`.
+Os três
 comandos mutantes também devem sair 1, cada um com a família de falha da tabela.
 
 ## Limites e bloqueio de implementação

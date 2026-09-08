@@ -38,6 +38,7 @@ const EYE_HEIGHT = 1.62;
 const CENTRAL_FLOOR = 2.75;
 const MIRANTE_FLOOR = 7.56;
 const UPPER_FLOOR = MIRANTE_FLOOR + 3.05;
+const MAIN_ROOM = { x0: -3.35, x1: 1.35, z0: 14.2, z1: 16.8 };
 
 W.root.updateMatrixWorld(true);
 
@@ -118,12 +119,12 @@ for (const [name, x, z] of centralFloors) {
 const routeSpecs = {
   'acesso-superior-central': {
     floor: CENTRAL_FLOOR,
-    points: [[-.3, 10.12], [.9, 10.12], [.9, 12], [.9, 14.4], [1, 14.9], [3.2, 15.5]],
+    points: [[-.3, 10.12], [.9, 10.12], [.9, 12], [.9, 14.4], [1, 14.9], [-1.4, 15.5]],
   },
 };
 if (scope !== 'mutation') routeSpecs['acesso-inferior-central'] = {
   floor: CENTRAL_FLOOR,
-  points: [[9.2, 23.2], [9.2, 20], [9.2, 17.5], [9.2, 16], [8, 16], [7, 16], [6.2, 15.5]],
+  points: [[9.2, 23.2], [9.2, 20], [9.2, 17.5], [9.2, 16], [8, 16], [7, 16], [4.4, 15], [1.45, 14.94], [-1.4, 15.5]],
 };
 
 if (scope === 'full') {
@@ -183,8 +184,8 @@ const losRows = [
   },
 ];
 if (scope !== 'mutation') losRows.push({
-    id: 'janela-respawn-inferior', route: 'acesso-inferior-central',
-    eye: [7.175, CENTRAL_FLOOR + EYE_HEIGHT, 17.7], target: [10.8, W.groundHeightAt(10.8, 24) + 1.5, 24],
+    id: 'janela-oposta-mesma-sala', route: 'acesso-inferior-central',
+    eye: [-1.4, CENTRAL_FLOOR + EYE_HEIGHT, 15.7], target: [0, W.groundHeightAt(0, 24) + 1.5, 24],
   });
 if (scope === 'full') losRows.push(
   {
@@ -216,6 +217,16 @@ for (const row of losRows) {
     'Abra somente o vão útil e conecte a posição à rota física do atacante.');
 }
 
+if (scope !== 'mutation') {
+  const centralEyes = losRows.filter(row => row.id.startsWith('janela-'));
+  const inMainRoom = row => row.eye[0] > MAIN_ROOM.x0 && row.eye[0] < MAIN_ROOM.x1
+    && row.eye[2] > MAIN_ROOM.z0 && row.eye[2] < MAIN_ROOM.z1;
+  check('SALA/janelas-opostas-no-mesmo-comodo', centralEyes.length === 2 && centralEyes.every(inMainRoom),
+    JSON.stringify(centralEyes.map(row => ({ id: row.id, eye: row.eye }))),
+    'dois olhos dentro da sala x=-3.35..1.35, z=14.2..16.8',
+    'Meça as duas faces da mesma sala tática; não conte uma janela de outro volume conectado.');
+}
+
 if (scope === 'full') {
   for (const row of losRows.filter(r => r.id.startsWith('sobrado-'))) {
     const eye = new THREE.Vector3(...row.eye);
@@ -230,6 +241,7 @@ const report = {
   scope, mutant,
   capsule: { radius: BODY_RADIUS, diameter: BODY_RADIUS * 2, maxStep: MAX_STEP, eyeHeight: EYE_HEIGHT },
   floors: { central: CENTRAL_FLOOR, mirante: MIRANTE_FLOOR, upper: UPPER_FLOOR },
+  mainRoom: MAIN_ROOM,
   losMatrix,
   routes: Object.fromEntries(Object.entries(routeResults).map(([name, r]) => [name, {
     reached: r.reached, frames: r.frames, maxY: Number(r.maxY.toFixed(3)), end: r.end.map(n => Number(n.toFixed(3))),
