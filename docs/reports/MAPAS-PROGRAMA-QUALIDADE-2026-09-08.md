@@ -203,3 +203,20 @@ A infraestrutura comum de ambiência, se necessária, vira PR próprio antes dos
 Cada PR entrega: baseline, mudança de topologia, ambiência, custo, mutação, capturas antes/depois,
 limitações e roteiro de teste local. O release é feito em ondas pequenas para associar regressão,
 desempenho e retenção ao mapa que realmente mudou.
+
+## Coordenação ativa
+
+As tarefas abaixo foram acionadas e agrupadas na seção `CSBR · Mapas` do Codex:
+
+- fundação #540: `01a07925-0207-7fe3-894a-928e075778dd`;
+- Escadão: `01a073e5-b003-7993-afd6-41d31e25d98d`;
+- Sertão: `01a073c0-b824-7503-b28a-f7522cececcc`;
+- Piscina: `01a07ef5-1988-7d32-ab58-dcf4f0932406`;
+- Campinho: `01a07ef7-968e-73e2-94c3-c18181001173`;
+- Joá: `01a0778d-d384-7540-88a6-e27ee08fe297`.
+
+O heartbeat `coordenar-cat-logo-de-viewmodels-com-claude` verifica as dependências e deve ficar
+silencioso durante progresso normal. Ele notifica quando surgir um commit testável, falha
+material ou ação humana. A implementação de Escadão e Piscina continua bloqueada até a
+fundação correspondente ser estabilizada; Sertão pode avançar por não depender dos arquivos
+da pilha de UV examinada.
