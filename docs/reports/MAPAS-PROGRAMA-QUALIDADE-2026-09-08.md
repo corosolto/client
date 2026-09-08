@@ -48,6 +48,19 @@ de retomar uma lane, conferir branch, HEAD, status e PR novamente.
   deve começar por mais textura transversal; deve fechar o feedback humano e os conflitos dos
   mapas já abertos.
 
+### Dependência da fundação de materiais
+
+A passada de materiais não é um único PR independente. Ela é uma pilha, nesta ordem:
+
+`#540 → #541 → #542 → #545 → #547 → #548 → #550 → #551`
+
+O PR raiz #540 conflita com `main`; os descendentes aparecem mergeáveis apenas em relação ao
+PR anterior. O CI da ponta #551 também reprova `VM14` por um pickup inalcançável na
+Penitenciária, além do preview Vercel. Portanto, não rebasear todos os mapas contra #551 agora.
+Primeiro atualizar e estabilizar #540; depois integrar cada degrau da pilha e atualizar o PR
+seguinte. Só então Escadão, Sertão, Campinho e Joá recebem a nova `main`. Essa ordem evita
+resolver os mesmos conflitos de textura em cada mapa duas vezes.
+
 ## Fila de produção
 
 ### P0 — fechar feedback humano já aberto
