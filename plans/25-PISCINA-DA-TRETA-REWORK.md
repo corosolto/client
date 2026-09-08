@@ -85,9 +85,10 @@ somente após a régua vermelha medir o mundo real e o teste humano confirmar es
 
 ## Réguas vermelhas
 
-O futuro `tools/eval/piscina-rework-check.mjs` deve ser escrito e executado vermelho
-antes de `public/js/map_piscina.js` ser editado. Ele mede mundo novo a cada caso; não
-aceita metadado declaratório como substituto de geometria, colisão, navegação ou áudio.
+`tools/eval/piscina-rework-check.mjs` foi escrito nesta etapa, antes do blockout, e
+executado vermelho no mapa atual. Ele mede PIS1–PIS4/PIS6 em um mundo novo a cada caso;
+PIS5 continua no arnês Chrome e PIS7 é humana. Nenhum deles aceita metadado declaratório
+como substituto de geometria, colisão, navegação, custo, áudio ou leitura visual.
 
 - **PIS1 — corredor real:** duas bocas alcançáveis, passagem ponta a ponta e terceira
   família de rota separada por 6 m. Baseline esperado: vermelho (mínimo atual CTF2=2).
@@ -124,7 +125,7 @@ normal já estiver vermelho, o resultado do mutante é **inconclusivo**, nunca �
 - `cobertura-submersa` desloca as ilhas para `y=-1,5` e deve matar PIS2.
 - `posto-sem-colisao` mantém a malha, remove piso/colisor navegável e deve matar PIS3.
 - `posto-sem-contrajogo` fecha as janelas/ângulos de resposta e deve matar PIS3.
-- `spawn-exposto` remove o anteparo de uma faixa e deve matar PIS4.
+- `spawn-deslocado` move um ponto da formação contratada e deve matar PIS4.
 - `rota-central-lenta` aumenta somente o custo central e deve matar PIS5.
 - `low-completo` força custo med em low e deve matar PIS5.
 - `sem-ambiencia` limpa o som do mapa e deve matar PIS6.
@@ -132,7 +133,8 @@ normal já estiver vermelho, o resultado do mutante é **inconclusivo**, nunca �
 ## Ordem de implementação depois do sinal da fundação
 
 1. Atualizar este baseline contra a fundação estabilizada e registrar o novo SHA.
-2. Criar a régua PIS1–PIS6 e guardar a execução vermelha; PIS7 já nasce pendente humana.
+2. Reexecutar a régua PIS1–PIS4/PIS6 e guardar a nova execução vermelha; PIS5 continua
+   no Chrome e PIS7 já nasce pendente humana.
 3. Implementar B1, depois navegação/colisão; rodar normal e mutantes de PIS1.
 4. Implementar B2 e PIS2/PIS4; recusar qualquer ganho obtido por emparedamento.
 5. Implementar B3 e PIS3; validar subida, descida, LoS, decal e impacto.
