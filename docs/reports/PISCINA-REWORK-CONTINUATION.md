@@ -249,3 +249,15 @@ Validação após o isolamento:
 
 Próximo passo concreto: commit do isolamento, push e PR draft empilhada contra
 `codex/mapas-stack-548-v2`; depois observar CI e corrigir apenas falhas desta lane.
+
+### Publicação da lane
+
+- PR draft: #566, head `codex/piscina-rework-stack`, base
+  `codex/mapas-stack-548-v2`, estado `OPEN/MERGEABLE`;
+- #557 recebeu comentário explícito de supersessão e foi mantida apenas como histórico;
+- CI no checkpoint `c7b6594b`: 9 aprovados, 0 falhas, 8 pulados; `pr-fast/build`
+  14m14s, `portao-browser/portao` 14m35s, `smoke-web/smoke`, DCO e preview verdes;
+- nenhum merge ou deploy executado.
+
+Estado de entrega: implementação e validação técnica concluídas. Restam PIS5 como dívida
+de orçamento declarada e PIS7 como aceite visual/jogável do dono.
