@@ -9,7 +9,8 @@ somente o PR #540. Sem merge remoto, force-push ou avanço para descendentes.
 ## Isolamento e base
 
 - worktree: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/mapas-stack-root`
-- branch: `codex/mapas-polish-integral`
+- branch de publicação: `codex/mapas-stack-root-v2`
+- branch original preservada: `codex/mapas-polish-integral`
 - HEAD recebido: `0265aa766d8d95b47a779896be01df86f79cf6c3`
 - base integrada: `origin/main` em `3880380165c170c0e694c28088876e396d5a1e29`
 - `mapas-polish-integral` permaneceu fora desta operação, em
@@ -69,7 +70,10 @@ vento/vegetação de favela já existente no pack, sem criar asset nem caminho n
   `3880380165c170c0e694c28088876e396d5a1e29`
 - `check:deploy` pós-commit: 37/37 verde em 55,0 s, incluindo
   `eval:docsautoria`.
-- nenhum push, merge remoto ou alteração de PR descendente foi feito.
+- validação pré-push da branch substituta: `check:deploy` 37/37 em 62,1 s;
+  VM14 0/66 e mutante `torre-bloco` 1/66; grafite e áudio Fab verdes.
+- a branch e o PR #540 originais não foram alterados; nenhum merge remoto ou
+  alteração de PR descendente foi feito.
 
 ## Próximo passo
 
