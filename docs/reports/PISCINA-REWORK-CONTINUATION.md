@@ -207,3 +207,19 @@ combinada. O smoke Chrome anterior chegou a `window.__game.state === 'live'`; re
 também `SUPPORT_URL_BR is not defined`, erro herdado da página-base e fora do diff da
 Piscina. A publicação desta branch é somente um PR draft: integração permanece bloqueada
 até o degrau #548 da pilha de mapas e não há autorização de merge ou deploy.
+
+## Correção do CI do PR #557 — 08/09/2026
+
+Os runs `34191523225` e `34191523201` separaram uma regressão real da lane de alertas
+herdados. O censo de grafite caiu para 56,4% porque corredor, fachada perfurada e ilhas
+novas aumentaram a parede visível sem receber a mesma cobertura. A meta de 76% foi
+preservada. As superfícies novas agora usam somente os pools originais `D_TAG`,
+`D_CARTAZ`, `D_BOMBA`, `D_LETRA` e `D_ADESIVO`, sempre atrás de `paredeAtras`; o censo
+local subiu para 521/676 placas, 77,1%, com 506 peças e 48 arquivos.
+
+No crítico de invariantes, a Piscina continua verde em MAP2B (folga 2,1 m, área 52,7
+m²) e CTF2 (mínimo 2; rotas E→B=3 e B→E=3). O mesmo `origin/main` mede 2,1 m/52,6 m²
+e CTF2=2 na Piscina. A única falha MAP2B é do Escadão (folga 0,85 m), cujo arquivo é
+idêntico ao `origin/main`; VM15, BOT3 e CENA3 também são alertas herdados. Esta lane não
+altera Escadão, viewmodels, bots ou probe de custo. PIS5 e PIS7 permanecem pendentes e
+o PR continua draft, bloqueado pelo #548, sem autorização de merge/deploy.

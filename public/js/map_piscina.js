@@ -435,6 +435,25 @@ export function buildPoolDay(scene, T) {
     for (const z of [-25, 16]) decal(D_CARTAZ, -HALF_X + OFFD, 0.9, z, Math.PI / 2, 1.7, 1.3);
     for (const z of [-25, 25]) decal(D_CARTAZ, HALF_X - OFFD, 0.9, z, -Math.PI / 2, 1.7, 1.3);
     for (const x of [-11, 11]) decal(D_CARTAZ, x, 0.9, -HALF_Z + OFFD, 0, 1.7, 1.3);
+    // Rota técnica: tinta nos dois lados da fachada e na parede externa, sempre validada por `paredeAtras`.
+    const serviceBandas = [
+      [D_TAG, 0.35, 2.0, 2.45],
+      [D_CARTAZ, 2.25, 1.5, 1.9],
+      [D_BOMBA, 4.15, 2.0, 2.45],
+    ];
+    for (let z = SERVICE.minZ + 1.2; z <= SERVICE.maxZ - 1.2; z += 2.55) {
+      for (const [pool, y0, alt, larg] of serviceBandas) {
+        decal(pool, SERVICE.minX + OFFD, y0, z, Math.PI / 2, alt, larg);
+        decal(pool, SERVICE.maxX - 1 - OFFD, y0, z, -Math.PI / 2, alt, larg);
+      }
+    }
+    for (let z = -HALF_Z + 1.2; z <= HALF_Z - 1.2; z += 2.55)
+      for (const [pool, y0, alt, larg] of serviceBandas)
+        decal(pool, -HALF_X + OFFD, y0, z, Math.PI / 2, alt, larg);
+    for (const [pool, y0, alt] of serviceBandas) {
+      decal(pool, SERVICE.axisX, y0, SERVICE.minZ + OFFD, 0, alt, 3.4);
+      decal(pool, SERVICE.axisX, y0, SERVICE.maxZ - OFFD, Math.PI, alt, 3.4);
+    }
     /* PILASTRA, ARMÁRIO E GUARITA SÓ NASCEM ~150 LINHAS ABAIXO (bloco "COBERTURA"), e o
        `paredeAtras` mede a geometria que EXISTE no instante da chamada. Colar aqui devolvia
        null nas 42 peças, em silêncio — não é teoria: foi o que aconteceu na primeira
@@ -465,8 +484,11 @@ export function buildPoolDay(scene, T) {
         decal(D_LETRA, px, s2 > 0 ? 0.75 : 1.5, pz + s2 * 0.61, s2 > 0 ? 0 : Math.PI, 1.9, 1.02);
         decal(D_CARTAZ, px, s2 > 0 ? 1.5 : 0.9, pz - s2 * 0.61, s2 > 0 ? Math.PI : 0, 1.55, 1.02);
         // face de fora (o corredor de trás): cartaz nas pares, tag nas ímpares
-        decal(n % 2 ? D_TAG : D_CARTAZ, px + sx * 0.61, n % 2 ? 1.4 : 1.1, pz, sx > 0 ? Math.PI / 2 : -Math.PI / 2,
+        const fora = sx > 0 ? Math.PI / 2 : -Math.PI / 2;
+        decal(n % 2 ? D_TAG : D_CARTAZ, px + sx * 0.61, n % 2 ? 1.4 : 1.1, pz, fora,
           n % 2 ? 1.1 : 1.6, 1.02);
+        decal(D_BOMBA, px + sx * 0.61, 3.0, pz, fora, 1.4, 1.02);
+        decal(D_LETRA, px + sx * 0.61, 4.55, pz, fora, 1.25, 1.02);
       }
       /* --- ARMÁRIOS. Bancos laterais (x = ∓16,3, z = -11/0/11): 3 portas de 1,30 m ao
          longo de z, um adesivo em cada. A porta tem 2,10 m de altura, então o adesivo vai
@@ -474,14 +496,19 @@ export function buildPoolDay(scene, T) {
          vestiário é adesivo, não lambe-lambe de 3 m. */
       for (const sx of [-1, 1]) for (const bz of (sx < 0 ? [0] : [-11, 0, 11])) for (const dz of [-1.3, 0, 1.3])
         decal(D_ADESIVO, sx * 15.89, 0.5, bz + dz, sx > 0 ? -Math.PI / 2 : Math.PI / 2, 1.25, 1.05);
-      /* Ilhas de respawn (anteparos das faixas de nascimento): 1 adesivo por ilha, na
-         face virada pro CENTRO do salão — a outra fica de costas pro time que nasce ali. */
+      /* Ilhas novas recebem tag nas faces largas e adesivo nas laterais; toda peça usa
+         os pools originais e só nasce quando `paredeAtras` confirma o armário real. */
       for (const sz of [-1, 1]) {
-        for (const bx of [-9, 9]) decal(D_ADESIVO, bx, 0.5, sz * (18.0 - 0.54), sz > 0 ? Math.PI : 0, 1.2, 1.05);
-        for (const bx of [-3, 3]) decal(D_ADESIVO, bx, 0.5, sz * (16.1 - 0.54), sz > 0 ? Math.PI : 0, 1.2, 1.05);
+        for (const [z0, xs] of [[sz * 18.0, [-9, 9]], [sz * 16.1, [-3, 3]]]) for (const bx of xs) {
+          decal(D_TAG, bx, 0.25, z0 - sz * 0.54, sz > 0 ? Math.PI : 0, 1.55, 2.45);
+          decal(D_TAG, bx, 0.25, z0 + sz * 0.54, sz > 0 ? 0 : Math.PI, 1.55, 2.45);
+          decal(D_ADESIVO, bx - 1.41, 0.35, z0, -Math.PI / 2, 1.2, 0.92);
+          decal(D_ADESIVO, bx + 1.41, 0.35, z0, Math.PI / 2, 1.2, 0.92);
+        }
         // GUARITA do salva-vidas (2,80 × 3,00 × 2,40): as duas laterais. A FRENTE tem o
         // vidro em z = ∓17,28 e decalque em vidro é a reclamação nº 1 do dono — não vai.
         for (const sx of [-1, 1]) decal(D_TAG, sx * 1.46, 0.45, sz * 18.5, sx > 0 ? Math.PI / 2 : -Math.PI / 2, 1.9, 2.0);
+        decal(D_TAG, 0, 0.45, sz * 19.72, sz > 0 ? 0 : Math.PI, 1.9, 2.5);
       }
 
       /* ADENSAMENTO PROCEDURAL (dono, 07/08: "parede branca é desperdício — 70-80%

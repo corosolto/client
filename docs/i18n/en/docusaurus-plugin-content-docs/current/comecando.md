@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 44,893 lines in 90 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 44,920 lines in 90 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,422** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,402 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -226,7 +226,7 @@ The maps registered today, and which mode each one opens in:
 | `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,154 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,404 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 928 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 955 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,964 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
