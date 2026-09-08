@@ -459,18 +459,20 @@ export function buildVelhoOeste(scene, T) {
     part(`parede-casa-${id}`, 2.65, h, .28, -2.275, 0, halfD, cor);
     part('frente-leste', 2.65, h, .28, 2.275, 0, halfD, cor);
     part('verga-porta', 1.9, .72, .28, 0, h - .72, halfD, cor);
-    // Fundo: janela central de 1,4 m com linha de tiro pra praça.
-    part('fundo-oeste', 2.9, h, .28, -2.15, 0, -halfD, cor);
-    part('fundo-leste', 2.9, h, .28, 2.15, 0, -halfD, cor);
-    part('peitoril-fundo', 1.4, .82, .28, 0, 0, -halfD, cor);
-    part('verga-fundo', 1.4, .88, .28, 0, h - .88, -halfD, cor);
+    // Fundo: vão de 2 m abre o cone da janela para a praça e seus acessos.
+    part('fundo-oeste', 2.6, h, .28, -2.3, 0, -halfD, cor);
+    part('fundo-leste', 2.6, h, .28, 2.3, 0, -halfD, cor);
+    part('peitoril-fundo', 2, .82, .28, 0, 0, -halfD, cor);
+    part('verga-fundo', 2, .88, .28, 0, h - .88, -halfD, cor);
+    const exitSide = opts.exitSide;
     for (const side of [-1, 1]) {
-      part(`lateral-${side}-sul`, .28, h, 2.6, side * halfW, 0, -1.9, MAT.paupiqueCru);
-      part(`lateral-${side}-norte`, .28, h, 2.4, side * halfW, 0, 2, MAT.paupiqueCru);
-      part(`peitoril-lateral-${side}`, .28, .88, 1.44, side * halfW, 0, .1, MAT.paupiqueCru);
-      part(`verga-lateral-${side}`, .28, .9, 1.44, side * halfW, h - .9, .1, MAT.paupiqueCru);
-      part(`moldura-lateral-${side}`, .14, 1.8, .12, side * (halfW + .03), .85, -.57, MAT.trim, false);
-      part(`moldura-lateral-${side}-b`, .14, 1.8, .12, side * (halfW + .03), .85, .77, MAT.trim, false);
+      const isExit = side === exitSide;
+      part(`lateral-${side}-sul`, .28, h, isExit ? 2.25 : 2.6, side * halfW, 0, isExit ? -2.075 : -1.9, MAT.paupiqueCru);
+      part(`lateral-${side}-norte`, .28, h, isExit ? 2.25 : 2.4, side * halfW, 0, isExit ? 2.075 : 2, MAT.paupiqueCru);
+      if (!isExit) part(`peitoril-lateral-${side}`, .28, .88, 1.44, side * halfW, 0, .1, MAT.paupiqueCru);
+      part(`verga-lateral-${side}`, .28, .9, isExit ? 1.9 : 1.44, side * halfW, h - .9, isExit ? 0 : .1, MAT.paupiqueCru);
+      part(`moldura-lateral-${side}`, .14, 1.8, .12, side * (halfW + .03), .85, isExit ? -.91 : -.57, MAT.trim, false);
+      part(`moldura-lateral-${side}-b`, .14, 1.8, .12, side * (halfW + .03), .85, isExit ? .91 : .77, MAT.trim, false);
     }
     part('piso', w - .25, .12, d - .25, 0, 0, 0, MAT.pedra, false);
     part('telhado', w + .5, .16, d + .55, 0, h, 0, MAT.roof, false);
@@ -482,17 +484,19 @@ export function buildVelhoOeste(scene, T) {
     }
     group.userData.interior = {
       entrance: [x + sin * (halfD + .55), z + cos * (halfD + .55)], inside: [x, z],
-      farWindow: [x - sin * (halfD + .1), z - cos * (halfD + .1)], doorWidth: 1.9, ry,
+      farWindow: [x - sin * (halfD + .1), z - cos * (halfD + .1)],
+      sideExit: [x + cos * exitSide * (halfW + .55), z - sin * exitSide * (halfW + .55)],
+      doorWidth: 1.9, sideExitWidth: 1.9, ry,
     };
     interiorHouses.push(group);
     occluders.push(group);
   }
   const CASAS = [
-    { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1, interior: true },
+    { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1, interior: true, exitSide: 1 },
     { x: -17.2, z: -7, ry: Math.PI / 2 + .08, fam: 'paupique', v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, fam: 'paupique', v: 0 },
     { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, fam: 'paupique', v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, fam: 'paupique', v: 2 },
     { x: 17.2, z: -20.6, ry: -Math.PI / 2 + .07, fam: 'paupique', v: 0 },
-    { x: -8.4, z: 24.2, ry: .14, fam: 'pedra', interior: true, pedra: true }, { x: 9.1, z: 24.7, ry: -.1, fam: 'pedra' },
+    { x: -8.4, z: 24.2, ry: .14, fam: 'pedra', interior: true, pedra: true, exitSide: 1 }, { x: 9.1, z: 24.7, ry: -.1, fam: 'pedra' },
     { x: -0.4, z: 26.2, ry: Math.PI - .06, fam: 'geminada' },
   ];
   const FAMILIAS_CASA = {
@@ -504,7 +508,7 @@ export function buildVelhoOeste(scene, T) {
   CASAS.forEach((c, i) => {
     const F = FAMILIAS_CASA[c.fam];
     sertaoElement(`casa-${c.fam}`, i, c.x, c.z, c.interior ? casaInteriorProxy : F.proxy, F.prop, F.h(i),
-      c.interior ? null : F.col, { ry: c.ry, variante: c.v ?? 0, id: i, pedra: !!c.pedra, targetLen: F.len, authored: c.interior || ['paupique', 'platibanda'].includes(c.fam),
+      c.interior ? null : F.col, { ry: c.ry, variante: c.v ?? 0, id: i, pedra: !!c.pedra, exitSide: c.exitSide, targetLen: F.len, authored: c.interior || ['paupique', 'platibanda'].includes(c.fam),
         after: c.fam === 'platibanda' && !c.interior ? g => finishVenda(g, MAT, i) : undefined });
     if (i === 0) {
       const placa = addSign('VENDA DO SERTÃO', 'FARINHA • ÁGUA • PROSA', c.x + Math.sin(c.ry) * 3.55, 4.48, c.z + Math.cos(c.ry) * 3.55, c.ry, 5.2, .85);
@@ -902,7 +906,7 @@ export function buildVelhoOeste(scene, T) {
   const nodes = [], adj = [], step = 3.4;
   for (let x = bounds.minX + 1; x <= bounds.maxX - 1; x += step) for (let z = bounds.minZ + 1; z <= bounds.maxZ - 1; z += step) if (!blocked(x, z)) nodes.push({ x, z });
   for (let i = 0; i < nodes.length; i++) adj.push([]);
-  const clear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6; if (blocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, .25)) return false; } return true; };
+  const clear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6; if (blocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, .38)) return false; } return true; };
   for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) { const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz <= step * step * 2.25 && clear(nodes[i], nodes[j])) { adj[i].push(j); adj[j].push(i); } }
   /* Poda de ilhados (MC3): colliders do retheme cercaram células que o grid
      ainda gera; só o maior componente sobrevive — ilha não é pathfinding. */
