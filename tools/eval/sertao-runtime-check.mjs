@@ -11,7 +11,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 const BASE = process.env.BASE || 'http://localhost:8123';
 const MUT = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
-const EXPECTED = { 'ctf-obstruido': 'RV12', 'igreja-sem-oclusao': 'RV11', 'sem-corpo': 'RV1', 'sem-glb': 'RV1', 'varanda-fantasma': 'RV2', 'sem-instancing': 'RV3', 'spawn-exposto': 'RV5', 'emenda-solo': 'RV6', 'venda-madeira': 'RV7', 'trama-repetida': 'RV8', 'solo-chapado': 'RV9', 'laterais-cegas': 'RV10', 'telhado-liso': 'RV10', 'solo-ondulado': 'RV9' };
+const EXPECTED = { 'ctf-obstruido': 'RV12', 'igreja-sem-oclusao': 'RV11', 'sem-corpo': 'RV1', 'sem-glb': 'RV1', 'varanda-fantasma': 'RV2', 'sem-instancing': 'RV3', 'interiores-sem-batch': 'RV3', 'spawn-exposto': 'RV5', 'emenda-solo': 'RV6', 'venda-madeira': 'RV7', 'trama-repetida': 'RV8', 'solo-chapado': 'RV9', 'laterais-cegas': 'RV10', 'telhado-liso': 'RV10', 'solo-ondulado': 'RV9' };
 if (MUT && !EXPECTED[MUT]) throw Error('Mutante desconhecido');
 const OUT = process.env.ARTIFACT_DIR || `artifacts/sertao-astra/runtime${MUT ? `-${MUT}` : ''}`;
 mkdirSync(OUT, { recursive: true });
@@ -26,6 +26,18 @@ try {
    if (body === source) throw Error('Mutante não aplicado');
    await route.fulfill({ response, body });
  });
+ if (MUT === 'interiores-sem-batch') await page.route('**/js/map_velho_oeste.js*', async route => {
+   const response = await route.fetch(), source = await response.text();
+   const body = source.replace('const key = item.material;', `
+      const unbatched = new THREE.Mesh(boxGeo(item.w, item.h, item.d), item.material);
+      unbatched.name = item.name; unbatched.position.set(item.x, item.y + item.h / 2, item.z);
+      unbatched.castShadow = true; unbatched.receiveShadow = true; group.add(unbatched);
+      group.userData.boxParts[item.name] = { mesh: unbatched, index: null };
+      continue;
+      const key = item.material;`);
+   if (body === source) throw Error('Mutante interiores-sem-batch não aplicado');
+   await route.fulfill({ response, body });
+ });
  if (MUT === 'solo-ondulado') await page.route('**/js/map_velho_oeste.js*', async route => {
    const response=await route.fetch(), source=await response.text();
    const body=source.replace('const soilMap = GLB_ON ? TX.sand : solo; soilMap.repeat.set(400, 400);', 'const soilMap = solo; soilMap.repeat.set(180, 180);');
@@ -37,7 +49,9 @@ try {
  await page.waitForFunction(() => window.MAPEVAL?.ready && window.__gworld?.ambience?.ready, null, { timeout: 120000 });
  const spatial = await page.evaluate(async mutant => {
    const THREE = await import('/vendor/three.module.js'), { Game } = await import('/js/game.js');
-   const w = __gworld, houses = []; w.root.traverse(o => { if (o.name.startsWith('sertao-casa-')) houses.push(o); });
+   const w = __gworld, houses = []; w.root.traverse(o => {
+     if (o.parent === w.root && o.name.startsWith('sertao-casa-') && o.userData.sertaoSource) houses.push(o);
+   });
    if (mutant === 'sem-corpo') houses[9].clear();
    if(mutant === 'laterais-cegas') w.root.getObjectByName('sertao-acabamento-taipa-2-0')?.removeFromParent();
    if(mutant==='telhado-liso')w.root.getObjectByName('sertao-telhas-cobertura')?.removeFromParent();
@@ -134,7 +148,8 @@ try {
    frames.push({name, ...measured});
  }
  const checks = {
-   RV1: spatial.bodies.length === 10 && spatial.bodies.every(h => h.meshes > 0 && h.source === (/sertao-casa-(paupique|platibanda)-/.test(h.name) ? 'authored' : 'glb')),
+   RV1: spatial.bodies.length === 10 && spatial.bodies.every(h => h.meshes > 0
+     && h.source === (/sertao-casa-(paupique|platibanda)-/.test(h.name) || h.name === 'sertao-casa-pedra-7' ? 'authored' : 'glb')),
    RV2: spatial.porches.length === 5 && spatial.porches.every(h => h.pushed < 1e-6),
    RV3: frames.every(f => f.calls <= 503 && f.triangles <= Math.ceil(320181 * 1.15) && f.textures <= Math.ceil(86 * 1.15)),
    RV4: errors.length === 0,
