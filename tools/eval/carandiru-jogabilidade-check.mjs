@@ -196,6 +196,26 @@ const c3BrowserValid = c3Receipt?.sourceSha256 === sourceHash && c3Receipt?.stat
   && c3Receipt?.viewport?.join('x') === '1200x800' && c3Receipt?.vehicle?.source === 'mint'
   && c3Receipt?.vehicle?.visible === true && c3Receipt?.vehicle?.httpStatus >= 200
   && c3Receipt?.vehicle?.httpStatus < 300 && c3Receipt?.errors?.length === 0;
+const c4ReceiptPath = 'tools/eval/carandiru-c4-browser.json';
+const c4Receipt = existsSync(c4ReceiptPath) ? JSON.parse(readFileSync(c4ReceiptPath, 'utf8')) : null;
+const c4RouteIds = ['radial-interna', 'externa-oeste', 'muralha-leste'];
+const c4Routes = c4Receipt?.routes || [];
+const c4BrowserValid = c4Receipt?.sourceSha256 === sourceHash && c4Receipt?.state === 'live'
+  && c4Receipt?.viewport?.join('x') === '1200x800' && c4Receipt?.aspectRatio === '3:2'
+  && c4Receipt?.humanVisualApproval === 'pending' && c4Receipt?.errors?.length === 0
+  && c4Routes.length === 3 && c4RouteIds.every((id) => {
+    const route = c4Routes.find((row) => row.id === id);
+    return route?.continuous === true && route?.collisionCorrections === 0
+      && route?.traceSamples >= 60 && route?.startErrorM <= .05 && route?.endErrorM <= .05
+      && route?.maxStepM <= .8 && route?.video?.bytes >= 50000
+      && /^[a-f0-9]{64}$/.test(route?.video?.sha256 || '')
+      && route?.video?.width === 1200 && route?.video?.height === 800
+      && route?.captures?.length === 3 && route.captures.every((capture) =>
+        capture.width === 1200 && capture.height === 800 && /^[a-f0-9]{64}$/.test(capture.sha256 || ''));
+  }) && (c4Routes.find((route) => route.id === 'muralha-leste')?.verticalRangeM || 0) >= 5.7
+  && c4Receipt?.wallReadability?.distancesM?.join(',') === '10,20,30'
+  && c4Receipt?.wallReadability?.captures?.length === 3
+  && c4Receipt.wallReadability.captures.every((capture) => capture.width === 1200 && capture.height === 800);
 const results = [];
 const put = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${detail}`); };
 
@@ -229,10 +249,14 @@ put('CAR7', c.mintVehicle === true && c.vehicleSource === 'mint' && vehicleGeome
   + `registro=${provenanceValid}; fallback/colisor=${sameVehicleCollider}; browser=${c3BrowserValid}`);
 put('CAR8', perfValid, selftestMutants ? `med=${c.cost?.med}; low=${c.cost?.low}`
   : `recibo=${perf ? 'presente' : 'ausente'}; amostras=${perfRows.length}/8; fonte=${perf?.sourceSha256 === sourceHash ? 'atual' : 'divergente'}`);
+put('CAR9', c4BrowserValid, `vídeos=${c4Routes.length}/3; rotas=${c4Routes.filter((route) => route.continuous).length}/3; `
+  + `muralha=${c4Routes.find((route) => route.id === 'muralha-leste')?.verticalRangeM ?? 'pendente'} m; `
+  + `silhuetas=${c4Receipt?.wallReadability?.captures?.length || 0}/3; humano=${c4Receipt?.humanVisualApproval || 'ausente'}`);
 
 const active = checkpoint === 'C1' ? new Set(['CAR1', 'CAR2', 'CAR3', 'CAR6'])
   : checkpoint === 'C2' ? new Set(['CAR1', 'CAR2', 'CAR3', 'CAR4', 'CAR5', 'CAR6', 'CAR8'])
-    : new Set(results.map((r) => r.id));
+    : checkpoint === 'C3' ? new Set(results.filter((r) => r.id !== 'CAR9').map((r) => r.id))
+      : new Set(results.map((r) => r.id));
 const failed = results.filter((r) => active.has(r.id) && !r.ok).map((r) => r.id);
 if (mutant) {
   const target = mutants[mutant];
