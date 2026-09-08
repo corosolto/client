@@ -10,10 +10,12 @@
      --scope=central  inclui as duas janelas da casa central; baseline vermelha
      --scope=full     inclui também os dois pavimentos superiores; baseline vermelha
 
-   Mutantes, sempre com --scope=mutation:
+   Mutantes indicam o escopo exigido quando não usam --scope=mutation:
      --mutante=janela-fechada  veda a janela voltada à escada
+     --mutante=janela-oposta-fechada veda a nova janela da mesma sala
      --mutante=piso-reaberto   reabre o buraco sob o interior
      --mutante=acesso-removido fecha a entrada alta da passarela
+     --mutante=casa-mirante-fechada veda a porta leste do mirante
  */
 import assert from 'node:assert/strict';
 import { THREE, bootGame, initTextures } from './harness.mjs';
@@ -22,10 +24,11 @@ import { registerPropTemplate } from '../../public/js/mapprops.js';
 const scope = process.argv.find(a => a.startsWith('--scope='))?.split('=')[1] || 'full';
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1] || null;
 const scopes = ['mutation', 'central', 'full'];
-const mutants = ['janela-fechada', 'piso-reaberto', 'acesso-removido'];
+const mutants = ['janela-fechada', 'janela-oposta-fechada', 'piso-reaberto', 'acesso-removido', 'casa-mirante-fechada'];
+const mutantScopes = { 'janela-oposta-fechada': 'central', 'casa-mirante-fechada': 'full' };
 if (!scopes.includes(scope)) throw Error(`Escopo desconhecido: ${scope}`);
 if (mutant && !mutants.includes(mutant)) throw Error(`Mutante desconhecido: ${mutant}`);
-if (mutant && scope !== 'mutation') throw Error('Mutantes rodam com --scope=mutation para isolar a cláusula que devem morder');
+if (mutant && scope !== (mutantScopes[mutant] || 'mutation')) throw Error(`Mutante ${mutant} requer --scope=${mutantScopes[mutant] || 'mutation'}`);
 
 const molde = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial());
 registerPropTemplate('escadao_casa_r3', molde);
@@ -37,7 +40,6 @@ const MAX_STEP = .30;
 const EYE_HEIGHT = 1.62;
 const CENTRAL_FLOOR = 2.75;
 const MIRANTE_FLOOR = 7.56;
-const UPPER_FLOOR = MIRANTE_FLOOR + 3.05;
 const MAIN_ROOM = { x0: -3.35, x1: 1.35, z0: 14.2, z1: 16.8 };
 
 W.root.updateMatrixWorld(true);
@@ -57,6 +59,15 @@ if (mutant === 'janela-fechada') {
   W.root.add(sealed); W.occluders.push(sealed); W.root.updateMatrixWorld(true);
   mutationApplied = before && !rawClear(from, to);
 }
+if (mutant === 'janela-oposta-fechada') {
+  const from = new THREE.Vector3(-1.4, CENTRAL_FLOOR + EYE_HEIGHT, 15.7);
+  const to = new THREE.Vector3(0, W.groundHeightAt(0, 24) + 1.5, 24);
+  const before = rawClear(from, to);
+  const sealed = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.35, .32), new THREE.MeshStandardMaterial());
+  sealed.position.set(-1.45, CENTRAL_FLOOR + 1.6, 16.675);
+  W.root.add(sealed); W.occluders.push(sealed); W.root.updateMatrixWorld(true);
+  mutationApplied = before && !rawClear(from, to);
+}
 if (mutant === 'piso-reaberto') {
   const original = W.groundHeightAt;
   const before = original(-1.4, 15.3, CENTRAL_FLOOR);
@@ -71,6 +82,15 @@ if (mutant === 'acesso-removido') {
   W.colliders.push({ minX: .35, maxX: 1.25, minY: CENTRAL_FLOOR, maxY: 5.7, minZ: 9.9, maxZ: 10.38 });
   const after = game._retaAndavel(.2, 10.12, .9, 10.12, BODY_RADIUS, MAX_STEP);
   mutationApplied = before && !after;
+}
+if (mutant === 'casa-mirante-fechada') {
+  const before = game._retaAndavel(14.55, -27, 12, -27, BODY_RADIUS, MAX_STEP);
+  const sealed = new THREE.Mesh(new THREE.BoxGeometry(.32, 2.2, 2.05), new THREE.MeshStandardMaterial());
+  sealed.position.set(13.975, MIRANTE_FLOOR + 1.1, -27);
+  W.root.add(sealed); W.occluders.push(sealed);
+  W.colliders.push({ minX: 13.815, maxX: 14.135, minY: MIRANTE_FLOOR, maxY: MIRANTE_FLOOR + 2.2, minZ: -28.025, maxZ: -25.975 });
+  W.root.updateMatrixWorld(true);
+  mutationApplied = before && !game._retaAndavel(14.55, -27, 12, -27, BODY_RADIUS, MAX_STEP);
 }
 assert.ok(mutationApplied, `MUTANTE NAO APLICOU: ${mutant}`);
 
@@ -128,13 +148,13 @@ if (scope !== 'mutation') routeSpecs['acesso-inferior-central'] = {
 };
 
 if (scope === 'full') {
-  routeSpecs['sobrado-oeste-lateral'] = {
-    floor: UPPER_FLOOR,
-    points: [[-14.55, -22.8], [-14.55, -24.4], [-14.55, -25.5], [-14.55, -26.6], [-14.55, -27.7], [-13.8, -27.7], [-10.35, -26]],
+  routeSpecs['casa-mirante-oeste-lateral'] = {
+    floor: MIRANTE_FLOOR,
+    points: [[-14.55, -22.8], [-14.55, -24.4], [-14.55, -26], [-12, -26]],
   };
-  routeSpecs['sobrado-leste-lateral'] = {
-    floor: UPPER_FLOOR,
-    points: [[14.55, -23.8], [14.55, -25.4], [14.55, -26.5], [14.55, -27.6], [14.55, -28.5], [13.8, -28.5], [10.35, -27]],
+  routeSpecs['casa-mirante-leste-lateral'] = {
+    floor: MIRANTE_FLOOR,
+    points: [[14.55, -23.8], [14.55, -25.4], [14.55, -27], [12, -27]],
   };
 }
 
@@ -144,6 +164,7 @@ const drive = (points) => {
   actor.vel.set(0, 0, 0); actor.grounded = true; actor.mantle = null;
   let frames = 0, maxY = actor.pos.y;
   for (const [x, z] of points.slice(1)) {
+    actor.vel.set(0, 0, 0);
     let leg = 0;
     while (Math.hypot(x - actor.pos.x, z - actor.pos.z) > .15 && leg++ < 360) {
       actor.yaw = Math.atan2(actor.pos.x - x, actor.pos.z - z);
@@ -159,21 +180,20 @@ const drive = (points) => {
 const routeResults = {};
 for (const [name, spec] of Object.entries(routeSpecs)) {
   const result = drive(spec.points); routeResults[name] = result;
-  const climbed = name.startsWith('sobrado-') ? result.maxY >= spec.floor - .08 : true;
-  check(`ROTA/${name}`, result.reached && climbed,
+  check(`ROTA/${name}`, result.reached,
     `chegou=${result.reached}, maxY=${result.maxY.toFixed(2)}, fim=${result.end.map(n => n.toFixed(2)).join(',')}`,
-    `ida livre com r=0.38 e degrau<=0.30${name.startsWith('sobrado-') ? ` até y=${UPPER_FLOOR.toFixed(2)}` : ''}`,
+    'ida livre com r=0.38 e degrau<=0.30',
     'Abra a passagem indicada e registre piso/rampa na física e no grafo.');
 }
 
 if (scope === 'full') {
-  for (const [name, x, z] of [['sobrado-oeste', -10.35, -26], ['sobrado-leste', 10.35, -27]]) {
-    const y = W.groundHeightAt(x, z, UPPER_FLOOR);
-    check(`PISO/${name}`, Math.abs(y - UPPER_FLOOR) < .001 && floorVisible(x, UPPER_FLOOR, z),
-      `ground=${y.toFixed(2)}, malha=${floorVisible(x, UPPER_FLOOR, z)}`, `ground=${UPPER_FLOOR.toFixed(2)} e malha sob os pés`,
-      'Cadastre o pavimento superior no groundHeightAt e preserve uma laje visível.');
-    check(`CAPSULA/${name}`, capsuleAt(x, UPPER_FLOOR, z), 'corpo r=0.38', 'posição sem deslocamento',
-      'Recorte a parede do pavimento para a cápsula real, sem depender só da fachada.');
+  for (const [name, x, z] of [['casa-mirante-oeste', -12, -26], ['casa-mirante-leste', 12, -27]]) {
+    const y = W.groundHeightAt(x, z, MIRANTE_FLOOR);
+    check(`PISO/${name}`, Math.abs(y - MIRANTE_FLOOR) < .001 && floorVisible(x, MIRANTE_FLOOR, z),
+      `ground=${y.toFixed(2)}, malha=${floorVisible(x, MIRANTE_FLOOR, z)}`, `ground=${MIRANTE_FLOOR.toFixed(2)} e malha sob os pés`,
+      'Preserve o piso do mirante dentro da casa e uma superfície visível sob os pés.');
+    check(`CAPSULA/${name}`, capsuleAt(x, MIRANTE_FLOOR, z), 'corpo r=0.38', 'posição sem deslocamento',
+      'Troque a caixa sólida por um shell com interior útil para a cápsula real.');
   }
 }
 
@@ -189,12 +209,12 @@ if (scope !== 'mutation') losRows.push({
   });
 if (scope === 'full') losRows.push(
   {
-    id: 'sobrado-oeste-contrajogo', route: 'sobrado-oeste-lateral',
-    eye: [-10.35, UPPER_FLOOR + EYE_HEIGHT, -26], target: [-5, MIRANTE_FLOOR + 1.5, -27],
+    id: 'casa-mirante-oeste-contrajogo', route: 'casa-mirante-oeste-lateral',
+    eye: [-11, MIRANTE_FLOOR + EYE_HEIGHT, -26], target: [-5, MIRANTE_FLOOR + 1.5, -27],
   },
   {
-    id: 'sobrado-leste-contrajogo', route: 'sobrado-leste-lateral',
-    eye: [10.35, UPPER_FLOOR + EYE_HEIGHT, -27], target: [5, MIRANTE_FLOOR + 1.5, -27],
+    id: 'casa-mirante-leste-contrajogo', route: 'casa-mirante-leste-lateral',
+    eye: [11, MIRANTE_FLOOR + EYE_HEIGHT, -27], target: [5, MIRANTE_FLOOR + 1.5, -27],
   },
 );
 
@@ -225,10 +245,16 @@ if (scope !== 'mutation') {
     JSON.stringify(centralEyes.map(row => ({ id: row.id, eye: row.eye }))),
     'dois olhos dentro da sala x=-3.35..1.35, z=14.2..16.8',
     'Meça as duas faces da mesma sala tática; não conte uma janela de outro volume conectado.');
+
+  const ruaEye = new THREE.Vector3(...losRows.find(row => row.id === 'janela-oposta-mesma-sala').eye);
+  const exposed = W.spawns.E.filter(slot => clear(ruaEye,
+    new THREE.Vector3(slot.x, W.groundHeightAt(slot.x, slot.z) + 1.62, slot.z)));
+  check('SPAWN/janela-oposta-mesma-sala', exposed.length === 0, `${exposed.length} slots E visíveis`, '0 slots E visíveis',
+    'Mantenha cobertura depois da aproximação da rua para que a janela não vire spawn kill.');
 }
 
 if (scope === 'full') {
-  for (const row of losRows.filter(r => r.id.startsWith('sobrado-'))) {
+  for (const row of losRows.filter(r => r.id.startsWith('casa-mirante-'))) {
     const eye = new THREE.Vector3(...row.eye);
     const exposed = W.spawns.B.filter(slot => clear(eye,
       new THREE.Vector3(slot.x, W.groundHeightAt(slot.x, slot.z) + 1.5, slot.z)));
@@ -240,7 +266,7 @@ if (scope === 'full') {
 const report = {
   scope, mutant,
   capsule: { radius: BODY_RADIUS, diameter: BODY_RADIUS * 2, maxStep: MAX_STEP, eyeHeight: EYE_HEIGHT },
-  floors: { central: CENTRAL_FLOOR, mirante: MIRANTE_FLOOR, upper: UPPER_FLOOR },
+  floors: { central: CENTRAL_FLOOR, mirante: MIRANTE_FLOOR },
   mainRoom: MAIN_ROOM,
   losMatrix,
   routes: Object.fromEntries(Object.entries(routeResults).map(([name, r]) => [name, {

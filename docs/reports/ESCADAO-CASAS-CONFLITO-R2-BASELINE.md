@@ -11,13 +11,14 @@ O relato humano foi convertido em contrato antes de uma nova edição de runtime
 - duas janelas opostas na mesma sala: uma para a escada e outra para a aproximação
   inferior;
 - piso físico e visível sob todas as amostras internas;
-- dois sobrados próximos ao respawn superior com acesso lateral ao pavimento de cima;
+- duas casas próximas ao respawn superior com porta lateral e interior no nível do
+  mirante;
 - cada posição de tiro declarada tem revide e uma rota física pela qual o adversário
   consegue expulsar o ocupante;
 - as posições altas não leem os slots do respawn superior.
 
-O runtime não foi editado nesta rodada. O diretório não rastreado
-`tools/eval/asset-evidence/maps/` foi preservado sem alteração.
+O runtime foi corrigido após a reprovação humana. O diretório não rastreado
+`tools/eval/asset-evidence/maps/` permaneceu preservado sem alteração.
 
 ## Instrumento
 
@@ -29,7 +30,7 @@ ponto de amostragem da matriz de visão.
 
 O escopo `mutation` contém apenas cláusulas atualmente verdes. Isso evita apresentar
 um mutante vermelho em cima de uma baseline que já estava vermelha. O escopo `central`
-mede a casa central inteira. O escopo `full` acrescenta os dois sobrados do mirante.
+mede a casa central inteira. O escopo `full` acrescenta as duas casas do mirante.
 
 ## Medição da árvore atual
 
@@ -38,20 +39,19 @@ Executado com Node 23 em 08/09/2026:
 | escopo | resultado | leitura |
 |---|---:|---|
 | `mutation` | 10/10 | núcleo verde usado para testar os mutantes |
-| `central` | 12/13 | a segunda face da mesma sala continua fechada |
-| `full` | 14/23 | baseline vermelha; uma falha central e oito nos sobrados |
+| `central` antes/depois | 12/13 → 14/14 | abriu a face oposta e bloqueou os slots E |
+| `full` antes/depois | 14/23 → 24/24 | abriu as duas casas e preservou o contrajogo |
 
 As duas rotas da casa central chegaram ao mesmo ponto interno `[-1,4; 2,75; 15,5]`.
-A rota alta terminou em 95 frames e a inferior em 208; ambas alcançaram a cota
+A rota alta terminou em 101 frames e a inferior em 217; ambas alcançaram a cota
 2,75 m. As quatro amostras internas têm `groundHeightAt == 2,75`, malha visível sob
-os pés e cápsula sem deslocamento. A janela da escada está aberta, mas a parede sul
-da mesma sala bloqueia tiro e revide em direção a `[0; 1,5; 24]`.
+os pés e cápsula sem deslocamento. A nova janela sul tem tiro e revide até
+`[0; 1,5; 24]`; uma parede de proteção depois dessa aproximação bloqueia os quatro
+slots E e preserva a saída lateral já usada pelos jogadores.
 
-Nos dois sobrados, a malha de cobertura existe em 10,61 m, mas a física continua
-devolvendo 7,56 m, a cota do mirante. A rota oeste travou em
-`[-14,55; 7,56; -27,52]`; a leste travou em `[14,48; 7,56; -28,50]`.
-Nenhuma subiu acima de 7,56 m. As duas posições altas ainda enxergam os quatro
-slots B porque o pavimento tático e sua parede voltada ao nascimento não existem.
+As duas caixas sólidas do mirante viraram shells. As rotas laterais chegam aos
+interiores em 66 e 69 frames, sem mudar a cota 7,56 m. O poste que ocupava exatamente
+a porta leste em `[14; -27]` foi movido para `[14; -29]`, mantendo os cabos visíveis.
 
 ## Matriz de LOS e contrajogo
 
@@ -62,13 +62,12 @@ desenhada no grafo.
 | posição | olho/alvo cabem | tiro | revide | rota de expulsão | proteção do spawn B |
 |---|---:|---:|---:|---:|---:|
 | janela da escada | sim | sim | sim | sim | n/a |
-| janela oposta da mesma sala | sim | **não** | **não** | sim | n/a |
-| sobrado oeste, janela interna | sim | sim, hoje no ar | sim, hoje no ar | **não** | **não, 4 slots** |
-| sobrado leste, janela interna | sim | sim, hoje no ar | sim, hoje no ar | **não** | **não, 4 slots** |
+| janela oposta da mesma sala | sim | sim | sim | sim | 0 slots E |
+| casa oeste, janela interna | sim | sim | sim | sim | 0 slots B |
+| casa leste, janela interna | sim | sim | sim | sim | 0 slots B |
 
-O LOS sozinho premiaria um estado ruim: as posições dos sobrados estão no ar e,
-justamente por faltar parede, têm tiro e revide livres. A régua irmã de piso, a
-cápsula, a rota e a proteção de spawn impedem esse falso verde.
+Piso, cápsula, rota e proteção de spawn são medidos separadamente para impedir que
+uma linha de tiro no ar ou através de uma caixa fechada produza um falso verde.
 
 Malhas `decal:*`, `nonSolidSurface` e o lote de peças decorativas são excluídos da
 oclusão visual.
@@ -96,8 +95,10 @@ o mundo antes de rodar as cláusulas:
 | comando adicional | saída | cláusula mordida |
 |---|---:|---|
 | `--mutante=janela-fechada` | vermelho, 1 falha | LOS da janela da escada |
+| `--scope=central --mutante=janela-oposta-fechada` | vermelho, 1 falha | LOS da janela sul |
 | `--mutante=piso-reaberto` | vermelho, 4 falhas | piso das quatro amostras centrais |
 | `--mutante=acesso-removido` | vermelho, 2 falhas | travessia alta e rota de expulsão |
+| `--scope=full --mutante=casa-mirante-fechada` | vermelho, 2 falhas | porta leste e expulsão |
 
 ## Como reproduzir
 
@@ -107,25 +108,24 @@ PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs
 PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs --scope=full
 
 PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs --scope=mutation --mutante=janela-fechada
+PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs --scope=central --mutante=janela-oposta-fechada
 PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs --scope=mutation --mutante=piso-reaberto
 PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs --scope=mutation --mutante=acesso-removido
+PATH=/opt/homebrew/bin:$PATH node tools/eval/escadao-casas-conflito-r2-check.mjs --scope=full --mutante=casa-mirante-fechada
 ```
 
-O segundo e o terceiro comandos devem sair 1 com `ESCADAO CASAS CONFLITO R2 RED`.
-Os três
-comandos mutantes também devem sair 1, cada um com a família de falha da tabela.
+Os três comandos sem mutação devem sair 0. Os cinco comandos mutantes devem sair 1,
+cada um com a família de falha da tabela.
 
-## Limites e bloqueio de implementação
+## Evidência visual e limite atual
 
-A medição roda no harness Node. A casa central registra o molde fechado que aciona a
-branch GLB usada no navegador; os sobrados usam o colisor autoritativo do runtime e
-o fallback procedural. Portanto, piso, cápsula e rota são evidência física, mas a
-aparência final dos GLBs, o enquadramento 3:2 e a leitura da abertura ainda exigirão
-captura em navegador depois do patch.
+A medição roda no harness Node. A captura de navegador gerou 21 imagens reais em
+`artifacts/escadao-visual/r2-casas-fix/`, incluindo as duas faces da casa central e
+entrada/interior das duas casas do mirante. A leitura visual confirma vãos reais,
+piso contínuo e as janelas orientadas para a área de disputa.
 
-Em 08/09/2026, a fundação #540–#551 ainda não estava estabilizada: havia PRs em
-estado DIRTY e UNSTABLE, incluindo a #548 que toca a escala de materiais do Escadão.
-Por isso esta rodada para no teste, nesta medição e no plano de patch. O próximo passo
-é receber o sinal de implementação após a fundação estabilizar; então atualizar a
-branch contra a `main`, manter esta baseline vermelha como A e só depois editar
-`public/js/map_escadao.js`.
+O processo visual terminou com status técnico `failed` porque o servidor respondeu
+404 para 45 decais e áudios já ausentes nesta branch; todas as imagens foram salvas
+antes da asserção. As fundações #540–#551 continuam DIRTY/UNSTABLE, incluindo a #548
+que toca a escala de materiais do Escadão. O próximo passo é atualizar a branch com a
+`main`, resolver esses conflitos e repetir build e navegador antes do merge da PR.

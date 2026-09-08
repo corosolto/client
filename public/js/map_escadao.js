@@ -403,6 +403,30 @@ export function buildEscadao(scene, T) {
     addBox(w * 0.32, 0.72, d * 0.38, mat, x + w * 0.18, y + h + 0.08, z - d * 0.12, { collide: false, skirt: false });
   }
 
+  function casaMiranteJogavel(x, z, matIdx, outerSide) {
+    const w = 4.2, d = 4.2, h = 3.05, y = H_TOP, mat = PAREDES[matIdx % PAREDES.length];
+    const tag = mesh => { mesh.userData.escadaoCasaMirante = true; return mesh; };
+    const shell = (...args) => tag(addBox(...args));
+    for (const dz of [-1, 1]) shell(w, h, .25, mat, x, y, z + dz * (d / 2 - .125), { vao: false });
+
+    const portaW = 2, portaH = 2.15, portaSideD = (d - portaW) / 2;
+    const outerX = x + outerSide * (w / 2 - .125);
+    for (const dz of [-1, 1]) shell(.25, h, portaSideD, mat, outerX, y,
+      z + dz * (portaW / 2 + portaSideD / 2), { vao: false });
+    shell(.25, h - portaH, portaW, mat, outerX, y + portaH, z, { vao: false });
+
+    const janelaW = 1.2, janelaZ = z + .2, janelaSideD = (d - janelaW) / 2;
+    const innerX = x - outerSide * (w / 2 - .125);
+    for (const dz of [-1, 1]) shell(.25, h, janelaSideD, mat, innerX, y,
+      janelaZ + dz * (janelaW / 2 + janelaSideD / 2), { vao: false });
+    shell(.25, 1, janelaW, mat, innerX, y, janelaZ, { vao: false });
+    shell(.25, h - 2.2, janelaW, mat, innerX, y + 2.2, janelaZ, { vao: false });
+
+    shell(w + .18, .14, d + .18, MAT_ZINCO, x, y + h, z, { vao: false });
+    detalhe(.52, .09, janelaW + .18, MAT_CIMENTO, innerX - outerSide * .08, y + .96, janelaZ);
+    detalhe(.7, .09, portaW + .28, MAT_ZINCO, outerX + outerSide * .2, y + 2.22, z);
+  }
+
   // constrói um lance de escada (piso + espelho + muros laterais)
   function fundacaoDegrau(w, yTop, d, x, z) {
     // Massa abaixo do revestimento fecha a visão lateral entre espelhos. Seu topo fica
@@ -640,6 +664,12 @@ export function buildEscadao(scene, T) {
   // BLOQUEIO CENTRAL: prédio entre a escada e o spawn (corta a linha de visão do escadão)
   casa(-5, 22, 4, 5, 5.9, 1, 0, { molde: 'casa_favela_tijolo', pav: 2, ry: 0.017 });
   casa(5, 22, 4, 5, 5.9, 0, 0, { molde: 'casa_favela_azul', pav: 2, ry: -0.026 });
+  // A parede fecha a leitura dos slots E pela casa elevada; o duelo termina na
+  // aproximação em z=24, antes desta proteção do nascimento.
+  for (const x of [-1.775, 1.775]) {
+    addBox(2.45, 2, .35, MAT_CIMENTO, x, 0, 25, { vao: false });
+    addBox(2.55, .12, .5, MAT_ZINCO, x, 2, 25, { collide: false, skirt: false, vao: false });
+  }
 
   /* ---- LAJE SOBRE A BOCA DO ESCADÃO (abrigo do spawn E; BUG-32, régua escadao-rota) ----
      Invariante: NÃO é piso — `groundHeightAt` não a conhece, senão vira plataforma sem saída. */
@@ -661,20 +691,22 @@ export function buildEscadao(scene, T) {
     for (const [x, w, h, mat] of [[-5.975, 5.25, 3.1, MAT_TIJOLO], [-1, 4.7, 2.85, MAT_CIMENTO]]) {
       for (const dz of [-1, 1]) {
         const frente = LAJE_Z + dz * (LAJE_D / 2);
-        const faceEscada = x === -1 && dz === -1;   // geminada leste: face da boca do escadão
-        if (faceEscada) {
+        const faceEscada = x === -1 && dz === -1;
+        const faceJanela = x === -1;
+        if (faceJanela) {
           // Janela REAL para a escada: peitoril e verga sólidos, vão livre de tiro
           // (x -2,2..-0,7, banda de 1,2 m). Fecha fora da abertura, do piso ao teto.
           marca(addBox(1.15, h, .25, mat, -2.775, piso, frente - dz * .125, { vao: false }));
-          marca(addBox(.8, h, .25, mat, -.3, piso, frente - dz * .125, { vao: false }));
+          const lateralW = faceEscada ? .8 : 2.05, lateralX = faceEscada ? -.3 : .325;
+          marca(addBox(lateralW, h, .25, mat, lateralX, piso, frente - dz * .125, { vao: false }));
           marca(addBox(1.5, 1, .25, mat, -1.45, piso, frente - dz * .125, { vao: false }));
           marca(addBox(1.5, h - 2.2, .25, mat, -1.45, piso + 2.2, frente - dz * .125, { vao: false }));
           detalhe(1.7, .09, .18, MAT_CIMENTO, -1.45, piso + 1, frente + dz * .075);
           detalhe(1.7, .09, .18, MAT_CIMENTO, -1.45, piso + 2.2, frente + dz * .075);
           // Porta da passarela: entrada alta vinda do PATAMAR 1, na borda leste.
-          marca(addBox(1.25, h - 2.1, .25, mat, .725, piso + 2.1, frente - dz * .125, { vao: false }));
+          if (faceEscada) marca(addBox(1.25, h - 2.1, .25, mat, .725, piso + 2.1, frente - dz * .125, { vao: false }));
         } else marca(addBox(w, h, .25, mat, x, piso, frente - dz * .125, { vao: false }));
-        for (const dx of (faceEscada ? [] : [-w * .24, w * .24])) {
+        for (const dx of (faceJanela ? [] : [-w * .24, w * .24])) {
           const wx = x + dx, wy = piso + 1.0;
           detalhe(1.34, 1.28, .08, MAT_CIMENTO, wx, wy - .08, frente + dz * .045);
           detalhe(1.18, 1.1, .06, MAT_VIDRO, wx, wy, frente + dz * .10);
@@ -765,8 +797,8 @@ export function buildEscadao(scene, T) {
   // cobertura lateral preserva a visada do spawn para o cartão-postal central
   casa(-7, -24, 4.2, 4.2, 3.1, 1, H_TOP, { molde: 'casa_favela_tijolo', pav: 1, ry: -0.021 });
   casa(7, -24, 4.2, 4.2, 3.1, 0, H_TOP, { molde: 'casa_favela_azul', pav: 1, ry: 0.033 });
-  casa(-12, -26, 4.2, 4.2, 3.05, 0, H_TOP, { molde: 'casa_favela_tijolo', pav: 1, ry: 0.015 });
-  casa(12, -27, 4.2, 4.2, 3.05, 1, H_TOP, { molde: 'casa_favela_azul', pav: 1, ry: -0.028 });
+  casaMiranteJogavel(-12, -26, 0, -1);
+  casaMiranteJogavel(12, -27, 1, 1);
   // O centro do mirante era piso sem decisão. Este abrigo recebe a subida por duas
   // portas opostas e abre a janela somente para a descida, não para os slots B.
   {
@@ -855,7 +887,7 @@ export function buildEscadao(scene, T) {
   }
   for (const [a,b] of [
     [[-15,5.8,32],[15,6.1,34]], [[-15,6.5,12],[-2.1,5.0,12.8]],
-    [[15,6.6,12],[2.1,5.0,12.8]], [[-14,H_TOP+5,-27],[14,H_TOP+5.2,-27]],
+    [[15,6.6,12],[2.1,5.0,12.8]], [[-14,H_TOP+5,-27],[14,H_TOP+5.2,-29]],
     [[-14,H_TOP+5.4,-36],[14,H_TOP+5.1,-34]],
   ]) {
     for (const [x,y,z] of [a,b]) if (Math.abs(x) >= 14) {
@@ -1021,6 +1053,10 @@ export function buildEscadao(scene, T) {
   for (const bz of [20, 26, 32, 37]) linha(-15, bz, 15, bz, 3.0);
   // topo
   for (const bz of [-22, -28, -34, -38]) linha(-15, bz, 15, bz, 3.0);
+  linha(-14.55, -22.8, -14.55, -26, .55);
+  linha(-14.55, -26, -12, -26, .42);
+  linha(14.55, -23.8, 14.55, -27, .55);
+  linha(14.55, -27, 12, -27, .42);
   // bordas e cantos do topo (cobertura MAP5: sem estes os quadrantes das quinas ficam vazios)
   linha(-16.5, -38, 16.5, -38, 3.0);
   linha(-16.5, -10, -16.5, -38, 3.0);
