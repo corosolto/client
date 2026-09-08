@@ -202,7 +202,7 @@ export function buildCorrego(scene, T) {
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
     const vao = VAO_BANDS && opts.vao !== false && mat && mat.visible !== false;
     const solo = onGround(y, h) && !opts.ry;
-    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
+    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING, material: mat })
       : new THREE.BoxGeometry(w, h, d);
     const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
@@ -221,7 +221,7 @@ export function buildCorrego(scene, T) {
      chamado imediatamente antes de `aoMat` — o vao passa a UV por handoff de módulo. */
   const _mtx = new THREE.Matrix4(), _eul = new THREE.Euler();
   function addBoxSB(w, h, d, mat, x, y, z, opts = {}) {
-    const geo = aoBoxGeo(w, h, d, { low: LOWQ, base: (onGround(y, h) && !opts.ry) ? undefined : BASE_FLOATING });
+    const geo = aoBoxGeo(w, h, d, { low: LOWQ, base: (onGround(y, h) && !opts.ry) ? undefined : BASE_FLOATING, material: mat });
     const m = aoMat(mat);
     _eul.set(opts.rx || 0, opts.ry || 0, 0, 'YXZ');
     _mtx.makeRotationFromEuler(_eul).setPosition(x, y + h / 2, z);
@@ -238,7 +238,7 @@ export function buildCorrego(scene, T) {
   function geoInst(w, h, d, mat) {
     const k = `${w}|${h}|${d}|${mat.uuid}`;
     let e = _geoI.get(k);
-    if (!e) { const g = aoBoxGeo(w, h, d, { low: LOWQ, base: BASE_FLOATING }); e = { g, m: aoMat(mat) }; _geoI.set(k, e); }
+    if (!e) { const g = aoBoxGeo(w, h, d, { low: LOWQ, base: BASE_FLOATING, material: mat }); e = { g, m: aoMat(mat) }; _geoI.set(k, e); }
     return e;
   }
   function addBoxI(w, h, d, mat, x, y, z, opts = {}) {
