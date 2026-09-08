@@ -262,7 +262,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 815 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 922 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 889 |
 | `penitenciaria` | Carandiru | **captura** | `map_penitenciaria.js` | 912 |
 
