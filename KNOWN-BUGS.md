@@ -37,6 +37,46 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## Sertão — casas da praça (PR #526, revisão local 06/09)
+
+### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO E VALIDADO EM WEBGL 08/09
+
+**Relato literal do dono (runtime 3:2, capturas de 06→07/09 23h52–00h00)**: (1) há
+trechos em que o jogador não passa junto às carroças; (2) as casas diante dos spawns
+continuam cenográficas e fechadas — ele quer entrar nelas e usar janelas como posição
+tática. O quality gate estava verde (IN1–IN7, TR1/TR3, SP1–SP9): pelo corolário da lei 1
+da `bug-hunt`, o defeito é do quality gate — nenhuma régua media corredor junto às
+carroças nem interiores diante dos spawns.
+
+**Inspeção inicial (`public/js/map_velho_oeste.js`)**: `wagon()` empurra AABB
+conservador de meia-largura 2,3×3,2 quando a carroceria visível é 1,9 de largura ×
+1,1 de corpo (+ rodas até 1,71 em z) e a lança tem colisor próprio sobreposto — parede
+invisível de ~1,5 m na traseira e cantos inflamados pela rotação. O PR #526 abriu só as
+duas `casaDaPraca` em z=15; as `CASAS` diante dos spawns (platibanda 0/1 ao norte,
+pedra 7/8 e geminada 9 ao sul) mantêm colisor único fechando a planta.
+
+Régua: `tools/eval/sertao-wagon-check.mjs` (WA1–WA4) + `sertao-interiors-check.mjs`
+estendido às 4 casas. **Antes:** WA1 19–30 m² de área invisível por carroça,
+WA2/WA3 zero; casas dos spawns sem interior. **Depois:** WA1–WA4 e IN1–IN7
+verdes; mutantes `aabb-conservador`, `barreira-spawn`, `fechar-porta-casa`,
+`fechar-janela-casa` (+8 anteriores, +17 espaciais) mordendo. De carona:
+`sertao-spatial-check` truncava stdout em pipe (`process.exit` → `exitCode`).
+Antes/depois, custos e comandos: [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+**WebGL 3:2:** RV1–RV12 verdes em 1536×1024; imagens reais abertas e examinadas.
+O agrupamento dos interiores reduz o pico de 564 para 499 draw calls e o mutante
+sem batch deixa RV3 vermelho. IN8–IN11 cobrem saída lateral, tiro tático, seis
+coberturas da praça. Cabras, galinha e pintinhos foram conferidos no runtime por
+LG1–LG8. O julgamento final da sensação de combate permanece humano.
+
+Frestas laterais, obstáculos internos e uma aresta bloqueada por esteio foram
+reproduzidos e corrigidos. Régua: `tools/eval/sertao-interiors-check.mjs`,
+`IN3/IN4/IN5` vermelhas antes e verdes depois, com mutantes. Evidência, custo e
+continuação em [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+A coordenada exata do relato original permanece sem reprodução localizada; a
+varredura IN7 confirma zero bolsões livres inacessíveis no mapa inteiro. A
+evidência WebGL está em `artifacts/sertao-casas/runtime-final-v2/`; a entrega não é
+uma publicação de produção.
+
 ## P0 — quebram o jogo ou mentem para quem mede
 
 ### ~~BUG-86 · no multiplayer o corpo TP do próprio jogador ficava DEITADO depois do respawn, arrastado pelo mundo~~ · RESOLVIDO 30/08 (PR #483)
