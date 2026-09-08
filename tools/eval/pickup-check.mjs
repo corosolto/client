@@ -70,7 +70,9 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
    -------------------------------------------------------------------------- */
 import { writeFileSync } from 'node:fs';
 
-const ONLY = process.argv[2] || 'all';
+const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+if (MUTANTE && MUTANTE !== 'torre-bloco') throw new Error(`Mutante desconhecido: ${MUTANTE}`);
+const ONLY = process.argv.slice(2).find((a) => !a.startsWith('--')) || 'all';
 const R_WP = 3.0;      // diagnóstico do critério VELHO (waypoint mais próximo) — não reprova mais
 const H_MIN = -0.10;   // (b) piso: nada pode estar abaixo disto
 const VAO_MAX = 0.05;  // (c) folga máxima entre a base da arma e o chão
@@ -88,6 +90,7 @@ const R_ALCANCE = 1.0;
 const textures = initTextures();
 const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : [ONLY];
 const SEED = 12345;
+let mutanteAplicado = false;
 
 /* bbox do mesh já POSICIONADO e ROTACIONADO na cena: é o que o jogador vê. O three
    vendorizado tem Box3.setFromObject, que percorre os filhos aplicando as matrizes —
@@ -111,6 +114,13 @@ for (const mapId of MAP_IDS) {
   }
 
   const W = g.world;
+  if (MUTANTE === 'torre-bloco' && mapId === 'penitenciaria') {
+    const apoios = W.colliders.filter((c) => String(c.tag).startsWith('torre-muro-apoio-'));
+    if (apoios.length !== 8) throw new Error(`Mutante impossível: esperava 8 apoios de guarita, recebeu ${apoios.length}`);
+    W.colliders.push({ minX: 6.2, maxX: 11.8, minY: 0, maxY: 8.2, minZ: 43.9, maxZ: 46.8, tag: 'mutante-torre-muro-bloco' });
+    g._resetPositions();
+    mutanteAplicado = true;
+  }
   const nodes = (W.waypoints && W.waypoints.nodes) || [];
   const gh = typeof W.groundHeightAt === 'function' ? W.groundHeightAt : () => 0;
 
@@ -343,3 +353,9 @@ for (const m of mapas) {
     `flutuando ${m.flutuando} (pior vão ${m.piorVao} m)`);
 }
 console.log(`PICKUPCHECK total ${saida.totalPickups} | semAlcance ${saida.semAlcance} | abaixoDoPiso ${saida.abaixoDoPiso} | flutuando ${saida.flutuando}`);
+if (MUTANTE) {
+  const alvo = mapas.flatMap((m) => m.itens || []).find((i) => i.arma === 'carbine' && i.fonte === 'rack' && !i.okAlcance);
+  if (!mutanteAplicado || !alvo) throw new Error(`Mutante ${MUTANTE} não reproduziu a carbine inalcançável do rack`);
+  console.log(`Mutante ${MUTANTE} aplicado e detectado: carbine a ${alvo.distAndavel} m do chão alcançável`);
+}
+process.exitCode = saida.semAlcance || saida.abaixoDoPiso || saida.flutuando ? 1 : 0;

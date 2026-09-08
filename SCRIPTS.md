@@ -177,6 +177,17 @@ A roda-gigante gira em torno do cubo; assentos não invadem lateral, base nem ar
 npm run eval:parquewheel
 ```
 
+## `eval:penitenciariapickup`
+
+Executa o flood-fill real do VM14 somente na Penitenciária. Existe para impedir
+que o rack norte volte a ser empurrado para o canto fechado entre a guarita elevada
+e o muro (BUG-146). Mutante: `node tools/eval/pickup-check.mjs penitenciaria
+--mutante=torre-bloco` restaura o colisor cheio da cabine e precisa ficar vermelho.
+
+```bash
+npm run eval:penitenciariapickup
+```
+
 ## `eval:velhooeste`
 
 O mapa Velho Oeste preserva marcos, janelas de madeira abertas/fechadas, gênero, perigo e recompensas dos cartazes, retratos, densidade, colisões, spawns e rota. Mutantes: sem-saloon|sem-carrocas|sem-tumbleweed|sem-obstaculos-centrais|centro-aberto|sem-cartazes|sem-retratos|cartaz-sobre-janela|genero-unico|janela-verde|todas-fechadas|perigoso-unico|recompensa-repetida|sem-colisao-varanda|sem-colisao-movel|parada|texturas-genericas.
@@ -643,11 +654,12 @@ npm run eval:audiocapacidade
 
 ## `eval:audiofablocal`
 
-Prova o instalador do laboratório Fab sem ler áudio comprado: a fixture usa arquivos de texto e exige symlink para a raiz privada exata, manifest sem caminho absoluto, somente os 5 eventos que o runtime alcança hoje e tiro da AK fixado em um candidato para não cair eternamente em cache frio. Também planta gore dentro de `ak.shot`; `--mutante=sem-veto` desliga o filtro do instalador e precisa acender LAB4.
+Prova o instalador do laboratório Fab sem ler áudio comprado: a fixture usa arquivos de texto e exige symlink para a raiz privada exata, manifest sem caminho absoluto, somente os 5 eventos que o runtime alcança hoje e tiro da AK fixado em um candidato para não cair eternamente em cache frio. Também planta gore dentro de `ak.shot`; `--mutante=sem-veto` desliga o filtro do instalador e precisa acender LAB4. O Campinho do Morro reutiliza a cama de favela já presente no pack; `--mutante=sem-campomorro` remove essa extensão e precisa acender LAB8g.
 
 ```bash
 npm run eval:audiofablocal
 node tools/eval/audio-fab-local-check.mjs --mutante=sem-veto
+node tools/eval/audio-fab-local-check.mjs --mutante=sem-campomorro
 ```
 
 ## `audio:shortlist`

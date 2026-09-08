@@ -1,0 +1,108 @@
+{
+  "assets": [
+    {
+      "file": "public/models/props/parque_coreto.glb",
+      "sourcePR": 440,
+      "sourceCommit": "3d64c868fd5cb10500fd8ee77ed4d91f5130c960",
+      "sourceBlob": "dc98883dd82f9645775f6b30d2fce11c76a9794f",
+      "bytes": 459652,
+      "sha256": "7278c6deb242234459b27c966af1d92afc0fcf425901075d99f237c29e194ae0"
+    },
+    {
+      "file": "public/models/props/roda_gigante_roda.glb",
+      "sourcePR": 440,
+      "sourceCommit": "3d64c868fd5cb10500fd8ee77ed4d91f5130c960",
+      "sourceBlob": "692536578e37ec16588be60a0af3fa06984684d1",
+      "bytes": 485840,
+      "sha256": "b5ba3713bb23cdbb3b617d691532adf79b2e9b31683413d5d5f6df39a2fa205f"
+    },
+    {
+      "file": "public/models/props/roda_gigante_base.glb",
+      "sourcePR": 440,
+      "sourceCommit": "3d64c868fd5cb10500fd8ee77ed4d91f5130c960",
+      "sourceBlob": "82ad30697c0a1c94332285bf0d0a7d4b1e9587e4",
+      "bytes": 377904,
+      "sha256": "cbe7321c54a64f87a5935ee4718f5c5e9de3ad595b652092dc3053015a947792"
+    },
+    {
+      "file": "public/models/props/carrossel.glb",
+      "sourcePR": 440,
+      "sourceCommit": "3d64c868fd5cb10500fd8ee77ed4d91f5130c960",
+      "sourceBlob": "f134bcb544183efba70ca590a8198866459b97cd",
+      "bytes": 523248,
+      "sha256": "0a96f3a605ef36eefe8aa483c13c610391525144bdf96916da5f6f735843c340"
+    },
+    {
+      "file": "public/models/props/barraca_quermesse.glb",
+      "sourcePR": 440,
+      "sourceCommit": "3d64c868fd5cb10500fd8ee77ed4d91f5130c960",
+      "sourceBlob": "ad8a0a81631ee68db09103ff22dd36447a461b65",
+      "bytes": 430092,
+      "sha256": "bef57d0ea1310119356cb9104c0d916fdcf6f7b82b9981f18136e4405bc3f204"
+    },
+    {
+      "file": "public/models/props/predio_artdeco.glb",
+      "sourcePR": 440,
+      "sourceCommit": "3d64c868fd5cb10500fd8ee77ed4d91f5130c960",
+      "sourceBlob": "f1341ad282b32c2df5c71c4ccb58bf0c69d90c81",
+      "bytes": 409688,
+      "sha256": "54772ff857273da0630f46d9fe7b0f67dfbc3dad71ed123eb1f085e7ca7717cc"
+    },
+    {
+      "file": "public/models/props/torre_vigilancia.glb",
+      "sourcePR": 441,
+      "sourceCommit": "8fd95c800b0441869f731b08b2b1dd715db0f2d7",
+      "sourceBlob": "31f75501e9553b19bb838cbd76797a28c4e74712",
+      "bytes": 403756,
+      "sha256": "45943077f7b998cbc3daa5ab5ef6788a0e7483999b2ef161ec126c45128ac31d"
+    },
+    {
+      "file": "public/models/props/bloco_celas.glb",
+      "sourcePR": 441,
+      "sourceCommit": "8fd95c800b0441869f731b08b2b1dd715db0f2d7",
+      "sourceBlob": "d23c8d6a7e02d1c0dcfe7213419fd741a8f3be70",
+      "bytes": 379540,
+      "sha256": "1560055af1eb9268ad7257843890ab28974d64f94634b54cb0f09d58873b5a4d"
+    },
+    {
+      "file": "public/models/props/portao_penitenciaria.glb",
+      "sourcePR": 441,
+      "sourceCommit": "8fd95c800b0441869f731b08b2b1dd715db0f2d7",
+      "sourceBlob": "028cab727cec663814905e4770a89c57082acbb3",
+      "bytes": 436604,
+      "sha256": "df2052512e03649fbec7dd85ee12beaabe17ca2d2e422d67bd0a4b7bf078e669"
+    },
+    {
+      "file": "public/models/props/guarita_muro.glb",
+      "sourcePR": 441,
+      "sourceCommit": "8fd95c800b0441869f731b08b2b1dd715db0f2d7",
+      "sourceBlob": "ff54da26cfe5abb9122a81610db6de94bf28174e",
+      "bytes": 372328,
+      "sha256": "26a8a5fcac3089a955f204e9e3b265dd1084cbba5ff4317a47f4ea9cacd5006d"
+    },
+    {
+      "file": "public/img/textures/sky_parque.webp",
+      "sourcePR": 440,
+      "sourceCommit": "3d64c868fd5cb10500fd8ee77ed4d91f5130c960",
+      "sourceBlob": "40d81a5ad94ebe46f36b0a0cf3425432e84a8d2a",
+      "bytes": 74448,
+      "sha256": "a5c8f4e5de530cfedeecfcd0652fce15bde84fdb76cbdc4b7e5ca5b5104ff799"
+    },
+    {
+      "file": "public/img/textures/sky_penitenciaria.webp",
+      "sourcePR": 441,
+      "sourceCommit": "8fd95c800b0441869f731b08b2b1dd715db0f2d7",
+      "sourceBlob": "8e335920b8337d129ada6f1938fd4c3f282c33c2",
+      "bytes": 56466,
+      "sha256": "356779704bf0083831f14676a4b65c31639f2e1ddc88bd62f0157657ac8bb38e"
+    },
+    {
+      "file": "public/img/map-previews/campomorro.jpg",
+      "sourcePR": 437,
+      "sourceCommit": "873a64732f5a820621ca540a0937ece7bd85152e",
+      "sourceBlob": "01f73201c95625fecf26bce17df21da52583745f",
+      "bytes": 39298,
+      "sha256": "2e97bfa91fe1d16e48cf0dce2e20fbe2f6e5d53c42d492d3483ea4c4948aa2c4"
+    }
+  ]
+}

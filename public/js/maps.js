@@ -12,9 +12,10 @@ import { buildObras, OBRAS_PROPS } from './map_obras.js';
 import { buildPosto, POSTO_PROPS } from './map_posto.js';
 import { buildUpa, UPA_PROPS } from './map_upa.js';
 import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
-import { buildParque } from './map_parque.js';
+import { buildCampoMorro, CAMPOMORRO_PROPS, CAMPOMORRO_AMBIENCE } from './map_campomorro.js';
+import { buildParque, PARQUE_PROPS, PARQUE_AMBIENCE } from './map_parque.js';
 import { buildVelhoOeste, VELHO_OESTE_PROPS, VELHO_OESTE_AMBIENCE } from './map_velho_oeste.js';
-import { buildPenitenciaria } from './map_penitenciaria.js';
+import { buildPenitenciaria, PENITENCIARIA_PROPS, PENITENCIARIA_AMBIENCE } from './map_penitenciaria.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -36,6 +37,7 @@ import { buildPenitenciaria } from './map_penitenciaria.js';
    Ver `ALIAS_MAPA` logo abaixo do registro: id antigo continua resolvendo, e o motivo
    de isso não ser opcional está escrito lá. */
 export const MAPS = {
+  campomorro: { name: 'Campinho do Morro', build: buildCampoMorro, props: CAMPOMORRO_PROPS, ambience: CAMPOMORRO_AMBIENCE, ctfMode: true },
   amazonia: { name: 'Treta na Amazônia', build: buildAmazonia, props: AMAZONIA_PROPS, ambience: AMAZONIA_AMBIENCE, ctfMode: true },
   escadao: { name: 'Escadão (Morro)', build: buildEscadao, props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
   praca_poderes: { name: 'Praça dos Três Poderes', build: buildBrasilia }, // Brasília fiel (substitui o clássico)
@@ -87,9 +89,9 @@ export const MAPS = {
   // por portas de verdade na fachada. Gôndolas reais (gondola_mercado/eletro), caixas, doca, e um
   // bairro/skyline em volta. A treta é o preço absurdo. Simétrico funcional, A* pelos corredores.
   atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
-  parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
+  parque_treta: { name: 'Parque da Treta', build: buildParque, props: PARQUE_PROPS, ambience: PARQUE_AMBIENCE, ctfMode: true },
   velho_oeste: { name: 'Sertão da Treta', build: buildVelhoOeste, props: VELHO_OESTE_PROPS, ambience: VELHO_OESTE_AMBIENCE, ctfMode: true },
-  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
+  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, props: PENITENCIARIA_PROPS, ambience: PENITENCIARIA_AMBIENCE, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';
@@ -116,6 +118,7 @@ export const DEFAULT_MAP = 'praca_poderes';
    Régua: `tools/eval/mapa-id-check.mjs` — M1 nenhum id do CS sobrevive no código, M2
    todo id antigo resolve para um mapa que existe. */
 export const ALIAS_MAPA = {
+  fy_campomorro: 'campomorro',
   fy_amazonia: 'amazonia',
   vietnam: 'amazonia',
   awp_map: 'praca_poderes',

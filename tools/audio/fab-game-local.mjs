@@ -44,6 +44,7 @@ const MENU_MUSIC = MENU_MUSIC_ARG ? resolve(MENU_MUSIC_ARG) : null;
 const MENU_MUSIC_LINK = join(PUBLICO, 'menu-music');
 const MANIFEST = join(PUBLICO, 'manifest.json');
 const MUTANTE_SEM_VETO = process.env.FAB_GAME_LOCAL_MUTANTE === 'sem-veto';
+const MUTANTE_SEM_CAMPOMORRO = process.env.FAB_GAME_LOCAL_MUTANTE === 'sem-campomorro';
 const VETO = ['blood', 'gore', 'bone', 'scream', 'screaming'];
 
 if (!relative(RAIZ_REPO, PACK).startsWith('..')) {
@@ -450,6 +451,7 @@ const mapSoundscapes = completeLajesSoundscape({ mapSoundscapes: {
   penitenciaria: { synth: { kind: 'indoor-hum', vol: .02 }, shots: [shot(['Doors/Rusty_Metal_Creak_01.wav', 'Doors/Rusty_Metal_Creak_03.wav'], 22, 64, .14)] },
 } }).mapSoundscapes;
 extendMapSoundscapes({ mapSoundscapes });
+if (MUTANTE_SEM_CAMPOMORRO) delete mapSoundscapes.campomorro;
 /* Stingers <=1,5 s pelo catalog.json. Os Special_Interface 5/6/7 duram
    2,75–9,52 s e invadiriam a rodada. Semântica ainda depende de escuta. */
 const roundstart = seguros(['Interface/Interface_12-1.wav', 'Interface/Interface_12-4.wav']);

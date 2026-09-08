@@ -4951,3 +4951,53 @@ comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 ### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527
 
 Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.
+
+## Campinho do Morro — erro JS intermitente na entrada da partida (07/09/2026)
+
+Observado **1 vez em 4 execuções** do capturador nesta lane, sempre em `campomorro`,
+sem erro nos outros mapas da mesma rodada:
+
+```
+Cannot read properties of undefined (reading 'id')
+```
+
+Evidência: `artifacts/mapas-polish/recovery-fixed/browser-med.json`, campo `errors` da
+entrada `campomorro`, gravado por
+`node tools/eval/mapas-polish-capture.mjs artifacts/mapas-polish/recovery-fixed campomorro`.
+Duas reexecuções isoladas do mesmo comando deram `errors: 0`; portanto é corrida, não
+falha determinística, e **não** foi atribuída a arquivo:linha ainda.
+
+`Régua: nenhuma.` O capturador passou a registrar `e.stack` em vez de `e.message`
+(`tools/eval/mapas-polish-capture.mjs`), de modo que a próxima ocorrência já sai com pilha.
+Não corrigir às cegas: sem a pilha, qualquer palpite sobre torcida/CTF/bots é especulação.
+O mapa chega a `live`, carrega os props e joga nas quatro vistas fixas.
+
+### ~~BUG-146 · VM14: rack norte da Penitenciária encosta na guarita~~ · CORRIGIDO LOCALMENTE 08/09/2026
+
+Relato recebido na integração do PR #540: “reproduza o gate VM14 do pickup
+inalcançável da Penitenciária e determine se é introduzido pela pilha ou herdado”.
+
+**Régua vermelha:** `PATH=/opt/homebrew/bin:$PATH node tools/eval/pickup-check.mjs
+penitenciaria` no merge local de `0265aa76` com `origin/main` mediu 1 de 66 pickups
+sem alcance. A `carbine` do rack norte foi empurrada para `(11,18; 46,60)` e ficou
+a 1,23 m da célula alcançável mais próxima; VM14 exige no máximo 1,0 m.
+
+**Origem:** a mesma régua em `origin/main` mede 0/66 falhas; no HEAD `0265aa76` do
+#540 mede 1/66. Portanto a falha é introduzida pela pilha. O colisor cheio da
+`guarita_muro` norte cobre também o vão sob a cabine elevada; `_freeSpot` empurra a
+arma para o canto entre guarita e muro. Evidências locais em
+`artifacts/mapas-stack-root/vm14-{origin_main,codex_mapas-polish-integral}.{log,json}`.
+
+**Correção:** as duas guaritas mantêm o mesmo modelo e posição, mas o colisor cheio
+foi substituído pelos oito apoios de 0,30 m que correspondem à estrutura visível.
+VM14 passou para 0/66 falhas; pior distância até chão alcançável caiu de 1,23 m para
+0,14 m. Spawns, pickups declarados, CTF e limites não mudaram.
+
+**Mutante:** `node tools/eval/pickup-check.mjs penitenciaria
+--mutante=torre-bloco` restaura o AABB cheio da guarita direita. A régua volta a
+1/66 sem alcance, com a `carbine` a 1,33 m, e sai 1. O mutante falha se não encontrar
+os oito apoios ou se não reproduzir a arma específica.
+
+**Custo declarado:** quatro AABBs estreitos por guarita em vez de um AABB grande;
+o vão sob a cabine passa a ser navegável e os apoios continuam sólidos. Aparência,
+draw calls e posição dos GLBs não mudam. Teste manual sob a guarita ainda pendente.

@@ -29,7 +29,7 @@ export const LOOK = {
     neblina: { d: 0.0102, solDir: [20, 35, 15], forca: 0.72 },
     grade: { exposicao: 1.42, piso: 0.0054, expAces: 1.52 },
   },
-  fy_campomorro: {   // várzea do RJ: azul aberto, terra quente
+  campomorro: {   // várzea do RJ: azul aberto, terra quente
     sky: '/img/textures/sky_rj.webp',
     horizonte: 0xb9daee,
     zenite: 0xa5cae9,
@@ -48,4 +48,27 @@ export const LOOK = {
     neblina: { d: 0.0056, solDir: [-30, 14, -18], forca: 0 },
     grade: { exposicao: 1.48, piso: 0.0050, expAces: 1.58 },
   },
+  parque_treta: {   // fim de tarde no parque: sol baixo a oeste, sombras longas
+    sky: '/img/textures/sky_parque.webp',
+    horizonte: 0x7b739a,   // look-horizonte.py sobre sky_parque.webp (banda 498-510 de 1024)
+    zenite: 0x193660,
+    sol: { cor: 0xffc890, i: 1.75, pos: [-38, 16, -8] },
+    hemi: { ceu: 0xd9c2e0, chao: 0x4f4034, i: 1.0 },
+    neblina: { d: 0.0075, solDir: [-38, 16, -8], forca: 0.88 },
+    grade: { exposicao: 1.42, piso: 0.0050, expAces: 1.52 },
+  },
+
+  penitenciaria: {   // fim de tarde de presídio: azul-chumbo, glow de vapor de sódio; os holofotes quentes carregam a cena
+    sky: '/img/textures/sky_penitenciaria.webp',
+    horizonte: 0x567186,   // look-horizonte.py sobre sky_penitenciaria.webp (banda 498-510 de 1024)
+    zenite: 0x5e85a3,
+    sol: { cor: 0x9db8d8, i: 0.55, pos: [25, 40, -18] },
+    hemi: { ceu: 0x5e7f9d, chao: 0x2a2b26, i: 0.5 },
+    neblina: { d: 0.0085, solDir: [25, 40, -18], forca: 0.6 },
+    /* grade calibrada por medição (25/08): com 1,50 a média dos 4 frames 3:2 media
+       L* 20,1 — buraco preto. Alvo noturno L* ≈ 37 (mapa de dia mira 42-48);
+       piso·exposicao ≈ 0,022 segura blk < 1 % (mesma receita do loja_h R9). */
+    grade: { exposicao: 2.60, piso: 0.0085, expAces: 2.80 },
+  },
+
 };
