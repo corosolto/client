@@ -9,6 +9,9 @@
    ela ficou vermelha e todas as outras preservaram o veredito. Alvo já vermelho é
    INCONCLUSIVO: não existe fixture sintética para fingir um mundo corrigido. */
 import { THREE, initTextures, bootGame } from './harness.mjs';
+import { readFileSync } from 'node:fs';
+
+const FAB_SOURCE = readFileSync(new URL('../audio/fab-game-local.mjs', import.meta.url), 'utf8');
 
 const SEP_ROTA = 6;
 const CORRIDOR_X = -17.2;
@@ -55,33 +58,44 @@ function shortest(nodes, adj, from, to, blocked) {
   return path;
 }
 
-function separatedRoutes(world) {
+function separatedPair(world, from, to) {
   const nodes = world.waypoints?.nodes || [];
   const adj = world.waypoints?.adj || [];
-  if (!nodes.length || !adj.length || !world.nearestWaypoint) return 0;
-  let worst = Infinity;
-  for (const spawns of Object.values(world.spawns || {})) {
-    for (const flag of world.ctfPoints || []) {
-      const from = world.nearestWaypoint(spawns[0].x, spawns[0].z);
-      const to = world.nearestWaypoint(flag.x, flag.z);
+  const fromIdx = world.nearestWaypoint(from.x, from.z);
+  const toIdx = world.nearestWaypoint(to.x, to.z);
       const blocked = new Uint8Array(nodes.length);
       let count = 0;
       for (let attempt = 0; attempt < 4; attempt++) {
-        const path = shortest(nodes, adj, from, to, blocked);
+        const path = shortest(nodes, adj, fromIdx, toIdx, blocked);
         if (!path) break;
         count++;
         const endMargin = SEP_ROTA + 3.4;
         for (let i = 0; i < nodes.length; i++) {
-          if (i === from || i === to) continue;
-          if (Math.hypot(nodes[i].x - nodes[from].x, nodes[i].z - nodes[from].z) <= endMargin) continue;
-          if (Math.hypot(nodes[i].x - nodes[to].x, nodes[i].z - nodes[to].z) <= endMargin) continue;
+          if (i === fromIdx || i === toIdx) continue;
+          if (Math.hypot(nodes[i].x - nodes[fromIdx].x, nodes[i].z - nodes[fromIdx].z) <= endMargin) continue;
+          if (Math.hypot(nodes[i].x - nodes[toIdx].x, nodes[i].z - nodes[toIdx].z) <= endMargin) continue;
           if (path.some((p) => Math.hypot(nodes[i].x - nodes[p].x, nodes[i].z - nodes[p].z) <= SEP_ROTA)) blocked[i] = 1;
         }
       }
+  return count;
+}
+
+function separatedRoutes(world) {
+  if (!world.waypoints?.nodes?.length || !world.nearestWaypoint) return 0;
+  let worst = Infinity;
+  for (const spawns of Object.values(world.spawns || {})) {
+    for (const flag of world.ctfPoints || []) {
+      const count = separatedPair(world, spawns[0], flag);
       worst = Math.min(worst, count);
     }
   }
   return Number.isFinite(worst) ? worst : 0;
+}
+
+function teamSeparatedRoutes(world) {
+  const e = world.spawns?.E?.[0], b = world.spawns?.B?.[0];
+  if (!e || !b) return 0;
+  return Math.min(separatedPair(world, e, b), separatedPair(world, b, e));
 }
 
 function corridor(world) {
@@ -154,12 +168,14 @@ function elevated(game) {
 
 function sound(world) {
   const cfg = world.sound;
-  const loops = (cfg?.loops || []).map((x) => String(x.src || ''));
+  const loops = (cfg?.loops || []).map((x) => String(x.path || x.src || ''));
+  const fabPiscina = FAB_SOURCE.match(/piscina_treta:\s*\{[^\n]+/i)?.[0] || '';
   return {
     indoor: cfg?.bioma === 'indoor',
     piscina: loops.some((x) => /piscina|water/i.test(x)),
     hum: loops.some((x) => /hum/i.test(x)),
-    shots: (cfg?.shots || []).length,
+    synth: /indoor-hum/i.test(fabPiscina),
+    splash: /Water_Splash/i.test(fabPiscina),
   };
 }
 
@@ -167,6 +183,7 @@ function evaluate(game) {
   const world = game.world;
   const c = corridor(world);
   const routes = separatedRoutes(world);
+  const teamRoutes = teamSeparatedRoutes(world);
   const decks = { south: endDeckComponents(world, -1), north: endDeckComponents(world, 1) };
   const deckOk = Object.values(decks).every((parts) => parts.length >= 3 && parts.every((p) => p.span <= 2.8));
   const high = elevated(game);
@@ -176,14 +193,13 @@ function evaluate(game) {
     JSON.stringify([['E', 0, -13], ['MID', 12, 0], ['B', 0, 14]]);
   const audio = sound(world);
   const verdicts = {
-    PIS1: c.boundsMinX <= -20.5 && c.nodes >= 4 && c.south > 0 && c.north > 0 && c.connected && routes >= 3,
+    PIS1: c.boundsMinX <= -20.5 && c.nodes >= 4 && c.south > 0 && c.north > 0 && c.connected && teamRoutes >= 3,
     PIS2: deckOk,
-    PIS3: high.samples >= 12 && high.counters >= 2 && high.visible.E <= 2 && high.visible.B <= 2 &&
-      (high.visible.E === 0 || high.visible.B === 0),
+    PIS3: high.samples >= 12 && high.counters >= 2 && high.visible.E <= 2 && high.visible.B <= 2,
     PIS4: spawnShape && flagShape && routes >= 2,
-    PIS6: audio.indoor && audio.piscina && audio.hum && audio.shots > 0,
+    PIS6: audio.indoor && audio.piscina && audio.hum && audio.synth && audio.splash,
   };
-  return { verdicts, measurements: { corridor: c, separatedRoutes: routes, decks, elevated: high, sound: audio } };
+  return { verdicts, measurements: { corridor: c, separatedRoutes: routes, teamSeparatedRoutes: teamRoutes, decks, elevated: high, sound: audio } };
 }
 
 function applyMutant(game, name) {

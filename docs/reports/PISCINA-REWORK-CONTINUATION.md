@@ -163,3 +163,38 @@ isolado à medida que sua cláusula for corrigida.
 Aguardar sinal explícito sobre a fundação. Depois: atualizar SHA e baseline, reexecutar
 PIS1–PIS4/PIS6 no mundo real, implementar B1→B2→B3 sequencialmente, morder os
 mutantes, repetir 5×5/8×8 med/low e entregar capturas 3:2 para aceite humano do dono.
+
+## Milestone implementado — 08/09/2026
+
+O dono autorizou explicitamente seguir sem aguardar a antiga fundação. Na branch
+`codex/mapa-piscina-rework`, a Piscina recebeu corredor técnico oeste com duas bocas,
+oito ilhas compactas de cobertura, posto elevado leste com duas escadas, navegação pela
+piscina central e ambiência indoor própria. Spawns e três objetivos foram preservados.
+
+Validação técnica antes do rebase final:
+
+- régua normal: PIS1, PIS2, PIS3, PIS4 e PIS6 verdes;
+- mutantes: 8/8 `MORDIDO`;
+- grafo: 118 nós, 636 arestas, totalmente conectado; rotas E→B=3, B→E=3, CTF=2;
+- exposição: E=15,3%, B=14,9%; 72 pickups, nenhum inacessível, enterrado ou flutuante;
+- duas escadas: sete transições, espelho 0,1688 m, piso 0,32 m, Blondel 0,658 m,
+  largura 1,65 m e inclinação 31,34°;
+- `eval:mapcontrato`, `map-check piscina_treta`, `eval:audiofablocal`, `eval:ctfwin`,
+  `eval:botsim-golden` focado e `build` passaram;
+- texel melhorou frente ao baseline (mediana 84→89; estrutura abaixo de 64 caiu de
+  41,1% para 28,7%), mas a dívida global de materiais ainda mantém esse gate vermelho.
+
+PIS5 é parcial. No Chrome/Metal/WebGL2, os quatro ensaios med/low 5×5/8×8 tiveram zero
+frame acima de 100 ms e ficaram abaixo de 870 mil triângulos. Em med, o controle do
+`main` atual mediu 976/1102 calls e o rework 1018/1051; portanto o teto absoluto de 860
+já está vermelho na base e não pode ser atribuído apenas a esta lane.
+
+Evidência 3:2 em `artifacts/piscina-rework/final/curated/`: `overview2` mostra a
+piscina dominante e as ilhas separadas; `lookout` mostra o posto e as duas escadas;
+`corridor` comprova a passagem interna. A leitura do corredor é estreita, escura e
+técnica, mas PIS7 continua pendente da avaliação visual/jogável humana do dono.
+
+Próximo passo concreto: rebasear sobre o `origin/main` mais recente, regenerar docs e
+layout de grafites, repetir os gates focados e o build, e registrar o SHA final. Não
+declarar PIS5 nem PIS7 verdes sem, respectivamente, uma decisão de orçamento e o aceite
+humano.

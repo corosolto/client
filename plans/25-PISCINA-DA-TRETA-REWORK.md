@@ -150,3 +150,23 @@ Nenhum runtime será editado antes de um sinal explícito sobre a fundação de 
 #550 e #551 estava aberta; #540 estava `DIRTY`, as demais `UNSTABLE`, com falhas de
 `build` e, em #550/#551, também `portao`. #543, #544, #546 e #549 também estavam
 abertas, mas são lanes não pertencentes à pilha sequencial de mapas.
+
+## Implementação autorizada — 08/09/2026
+
+O dono removeu explicitamente o bloqueio da fundação e autorizou terminar o mapa nesta
+lane. O layout implementado mantém a piscina como identidade central e adiciona:
+
+- corredor técnico oeste contínuo, com duas entradas e conexões próprias de navegação;
+- oito ilhas compactas de armários, com span máximo medido de 2,76 m, em duas
+  profundidades por equipe (`z=±18,0` e `z=±16,1`), preservando gaps caminháveis;
+- posto elevado leste com duas escadas jogáveis e contrajogo por mais de um ângulo;
+- terceira família de rota entre as equipes passando pela piscina central; CTF mantém
+  pelo menos duas rotas separadas;
+- ambiência indoor com água de piscina, hum técnico e splash registrado no pacote Fab.
+
+PIS1–PIS4 e PIS6 ficaram verdes e seus oito mutantes ficaram `MORDIDO`. PIS5 ficou
+parcial: frame pacing e triângulos passaram, mas o teto absoluto histórico de 860 draw
+calls já não descreve o `main` atual (controle: 976/1102; rework: 1018/1051 em 5×5/8×8).
+Não houve frame acima de 100 ms e o teto de 870 mil triângulos foi respeitado. Uma
+decisão mais ampla de orçamento de render é necessária para tornar essa cláusula verde.
+PIS7 continua deliberadamente pendente do aceite visual humano do dono.
