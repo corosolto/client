@@ -1,5 +1,19 @@
 # HANDOFF
 
+## Admin 08/09: áudio e escalonamento de crashes
+
+- Checkout `worktrees/bug-pipeline-audio`, branch `fix/admin-audio-crash-pipeline`, base
+  `38803801` (alpha.239). O `RangeError` reportado pelo admin foi reproduzido: uma rampa
+  exponencial recebia alvo zero. `Sfx._env` agora limita pico/fim a `0.0001`; a régua
+  `eval:audioenvelope` passa e o mutante `pico-zero` reprova. A régua entrou em `check:fast`.
+- Separadamente, o backend de produção não tem `GH_DISPATCH_TOKEN`; isso impede
+  `repository_dispatch` e explica a ausência de novas issues. A correção de infraestrutura e
+  health fica no checkout irmão `csbrasil-backend/worktrees/bug-crash-dispatch` e ainda exige
+  um token de bot autorizado para publicação. Não confundir com Ollama: o workflow de crash
+  não o utiliza.
+- Não resolvidos neste checkpoint: os timeouts de abertura de partida e `M_ID` precisam de
+  evidência de rede/estado além da mensagem agregada do admin.
+
 ## Feedback de combate: contador de abates, replay no headshot e bot de faca — 06/09/2026
 
 Objetivo: fechar as três frentes de leitura de combate pedidas pelo dono — um contador de

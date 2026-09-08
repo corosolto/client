@@ -74,7 +74,7 @@ reproduzidos e corrigidos. Régua: `tools/eval/sertao-interiors-check.mjs`,
 continuação em [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
 A coordenada exata do relato original permanece sem reprodução localizada; a
 varredura IN7 confirma zero bolsões livres inacessíveis no mapa inteiro. A
-evidência WebGL está em `artifacts/sertao-casas/runtime-final/`; a entrega não é
+evidência WebGL está em `artifacts/sertao-casas/runtime-final-v2/`; a entrega não é
 uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
@@ -4113,6 +4113,15 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatos recentes e resolução
+
+- **BUG-145 · tiros com volume zero derrubavam o áudio com `RangeError`.**
+  **Sintoma literal (admin, 08/09/2026, produção alpha.239):**
+  `Failed to execute 'exponentialRampToValueAtTime' on 'AudioParam': The target value provided (0) should be greater than 0.`
+  **Causa reproduzida:** `Sfx._env` repassava `peak` ou `end` iguais a zero para uma rampa
+  exponencial; a Web Audio API exige alvo estritamente positivo. **Correção:** limita ambos
+  a `0.0001`, inaudível mas válido. **Régua:** `eval:audioenvelope`; o mutante
+  `--mutante=pico-zero` precisa reprovar. **Não cobre:** escuta em navegador real nem o
+  timeout de abertura de partida, que é outro relato e ainda exige contexto de rede/estado.
 
 - **BUG-140 · regressão de mix e vozes após o pack privado.**
   **Sintoma literal (dono, 05/09/2026, produção):** *“os sons estao ok, mas estao altos, os

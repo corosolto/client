@@ -2,10 +2,10 @@
 
 <!-- BEGIN:GERADO:status_atual — não edite à mão, rode `npm run docs` -->
 
-- **Versão:** `2.0.0-alpha.239`
+- **Versão:** `2.0.0-alpha.240`
 - **Conteúdo jogável:** 5 facções, 44 personagens, 16 mapas e 26 armas com GLB
-- **Código do jogo:** 44.711 linhas em 90 módulos JavaScript
-- **Automação:** 223 comandos npm, 340 scripts de avaliação e 72 scripts de pipeline
+- **Código do jogo:** 44.713 linhas em 90 módulos JavaScript
+- **Automação:** 224 comandos npm, 341 scripts de avaliação e 72 scripts de pipeline
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `package.json · CHARACTERS · MAPS · public/models/weapons · public/js · tools/`
 
@@ -20,7 +20,7 @@ single-player contra bots, com rodadas e captura de bandeiras.
 ## Frente atual — Sertão PR #526 (08/09/2026)
 
 Branch exclusiva `astra/sertao-praca-casas-por-do-sol`, atualizada com `main`
-alpha.239. Casas dos spawns têm entrada, janela tática e saída lateral; carroças
+alpha.240. Casas dos spawns têm entrada, janela tática e saída lateral; carroças
 usam colisores coerentes; interiores são agrupados por material. A validação
 WebGL 3:2 passa RV1–RV12 com 499 draw calls, 349.175 triângulos e 82 texturas.
 Duas cabras, uma galinha e três pintinhos animados estão presentes e medidos por
