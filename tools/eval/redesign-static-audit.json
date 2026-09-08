@@ -1,8 +1,8 @@
 {
-  "resultImagesSha256": "67c827bcee5fc49ad1e92e2d31617b8930f8718859886dbe9c34219466a744f3",
+  "resultImagesSha256": "c607c00c41d3d2394918faa5dbc7687f78139b002e154e24f4958cacad64bf01",
   "punkAvatarSha256": "cb642e6968b6d45e07425874cf8827a407bd464d0f29ae1b7ac51010e39841e3",
   "gotinhaAvatarSha256": "1743f2dff0ccd39a3f7be9ee1fde376694cf75cd1a5ad08c54fc2cd87cf637a3",
   "avatarReference": "public/video/chars/{punk,gotinha}.webm@1.0s",
-  "reviewedAt": "2026-09-06",
-  "review": "Os 45 personagens publicados têm avatar, seleção e resultados estáticos. Lobisomem é o único Mítico neste candidato e volta à mídia aprovada em ac633518: o mesmo recorte alpha para vitória e derrota, como em 44 dos 45 pares publicados. Os retratos renderizados offline foram medidos e rejeitados em docs/reports/MITICOS-LOBISOMEM-INTEGRATION.md. Esta auditoria valida o lote e o recorte alpha, sem aprovar os demais Míticos."
+  "reviewedAt": "2026-09-08",
+  "review": "Elenco de 51: os 45 publicados mais os 6 Míticos novos (Maria Bonita, Lampião, Bandeirante, Boto Cor de Rosa, Zumbi dos Palmares, Curupira), ao lado do Lobisomem que já estava. O dono revisou os sete retratos de resultado em 08/09 e aprovou (\"estão bons\"), depois de reprovar a leva anterior do Lampião: aquela era render do modelo ANTIGO, sem os óculos redondos e sem as rosetas do chapéu. A mídia do Lampião foi regerada do modelo v4 por tools/gen-char-video.mjs e é a que está auditada aqui. Vitória e derrota continuam sendo o mesmo recorte alpha por personagem, a convenção de 44 dos 45 pares publicados; o desfecho vive no .webm. LIMITE CONHECIDO E ACEITO NESTA AUDITORIA: os sete Míticos pararam na etapa 1 do pipeline de mídia (render do GLB real) e NÃO têm o acabamento de tools/gen-char-realista.mjs que os 45 publicados têm — ao lado do mandrake a diferença de nitidez é visível. Aprovado como dívida declarada, para uma rodada de arte própria. Saci e Cuca não entram: reprovam a régua de deformação por 27× e 12× (BUG-150)."
 }

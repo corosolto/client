@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "1f6c89961c7007b16f6c186d0973970bca86415f0832d8a8cc9cc640b4710772",
-  "weaponMapSha256": "90f4ad36c0e486f144b38353beca61ab6ec57df0a471ecce9c967bcac25f3b65",
-  "review": "O lote de mídia inclui o Lobisomem, único Mítico deste candidato, herdado da evidência aprovada de f05edaf9/e4f52162. A verificação confirma o hash publicado, formatos VP9 e o loadout de escopeta; ela não aprova os demais Míticos.",
+  "mediaSha256": "bb67211642d4962a5fcbf3b864c9a722a219121d3984130010f35702c6eb24b9",
+  "weaponMapSha256": "075fe935d4510949836a7f04ca6b21ec5052b3f63983e37ec17fa614783bf869",
+  "review": "Lote de mídia dos 51 personagens: os 45 publicados mais os 6 Míticos novos. Revisado pelo dono em 08/09 e aprovado. A mídia do Lampião foi regerada do modelo v4 por tools/gen-char-video.mjs depois que o dono reprovou a leva anterior, que era render do modelo antigo. Formatos VP9 nos quadros nativos do elenco (640×854 busto, 640×640 resultado) e loadout de armas conferidos. Saci e Cuca não entram no lote: reprovam a régua de deformação (BUG-150) e a mídia órfã deles saiu do disco.",
   "regenerate": "BASE=http://127.0.0.1:8123 node tools/eval/char-native-vids.mjs"
 }
