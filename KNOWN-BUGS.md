@@ -3643,6 +3643,43 @@ O joelho está entre 0,55 e 0,60. Trocar a arma do lobo por uma mais FINA sobe o
 para essa queda com 28% de folga. Tabela explícita, com um nome só, para o valor não
 vazar para os outros 44.
 
+
+### BUG-150 · Saci e Cuca deformam 12× e 27× o teto, e ficam fora do elenco
+
+Os dois únicos Míticos que o pipeline por personagem NÃO salvou. Medido em
+`npm run eval:select` (teto 23,6 ruins/1e4), depois de retarget + aterramento + strip curl:
+
+| | antes | depois do pipeline |
+| --- | --- | --- |
+| `saci` | 607,1 | ~630 |
+| `cuca` | 316,8 | 284,9 |
+
+Para comparação, o mesmo passo levou o `bandeirante` de 93,1 para **7,3**.
+
+**O que já foi tentado e NÃO resolveu** (resultado negativo, medido — para ninguém repetir):
+
+- **`reskin-glb`**: trocou o dominante em **0 de 7446 vértices (0%)**. Os pesos já são o que
+  a proximidade produziria; a convenção junta→filho está correta nos dois.
+- **Costura de peso entre ossos distantes.** Os dois são os únicos do elenco acima de 8% de
+  vértices com peso repartido entre ossos a mais de 3 arestas no grafo (saci 8,9%, cuca
+  10,8%, contra 0,14-1,5% de todo o resto) — a correlação é real na ponta. Tirar esse peso
+  e renormalizar levou a **cuca de 316,8 para 245,8** (22% melhor, ainda 10× o teto) e o
+  **saci de 607,1 para 629,6** (pior). Na cuca ainda quebrou o contato de chão: o crouch
+  foi para **-1,05 m** e a morte para **-1,38 m**. Os dois consertos foram revertidos e a
+  ferramenta não entrou na árvore.
+- **Regerar a cuca em T-pose com rig do Mint**: gerada em 08/09
+  (`Mossfang Crone T Pose`), rigging disparado, não chegou a ser medida antes do fim da
+  janela de trabalho. É por onde continuar.
+
+**Fora do registro, não do disco.** Os GLB seguem em `public/models/characters/`; o que
+saiu foi a entrada em `characters.js`/`GLB_CHARS`/`CHAR_WEAPON`. A invariante de roster do
+`eval:miticos-lobisomem` barra os dois por nome, com mutante.
+
+**O Saci tem uma pergunta de identidade em aberto**, anterior a isto: a ficha diz "moleque
+de uma perna só" e o modelo tem duas. Clipe humanoide compartilhado precisa de duas pernas,
+então ou a identidade sai do gorro e da fumaça, ou ele vira caso especial com clipe próprio.
+Decisão do dono, não da régua.
+
 ---
 
 ### ~~BUG-24 · "as armas estão 1,5x do tamanho que deveriam"~~ · RESOLVIDO 04/08
