@@ -665,12 +665,15 @@ export function buildEscadao(scene, T) {
   // BLOQUEIO CENTRAL: prédio entre a escada e o spawn (corta a linha de visão do escadão)
   casa(-5, 22, 4, 5, 5.9, 1, 0, { molde: 'casa_favela_tijolo', pav: 2, ry: 0.017 });
   casa(5, 22, 4, 5, 5.9, 0, 0, { molde: 'casa_favela_azul', pav: 2, ry: -0.026 });
-  // A parede fecha a leitura dos slots E pela casa elevada; o duelo termina na
-  // aproximação em z=24, antes desta proteção do nascimento.
+  // A parede fecha a leitura dos slots E; o duelo termina na aproximação em z=24.
+  // Ela fica atrás desse limite para preservar ao menos 1,20 m livres no nascimento.
   for (const x of [-1.775, 1.775]) {
-    addBox(2.45, 2, .35, MAT_CIMENTO, x, 0, 25, { vao: false });
-    addBox(2.55, .12, .5, MAT_ZINCO, x, 2, 25, { collide: false, skirt: false, vao: false });
+    addBox(2.45, 2.35, .3, MAT_CIMENTO, x, 0, 24.55, { vao: false });
+    addBox(2.55, .12, .45, MAT_ZINCO, x, 2.35, 24.55, { collide: false, skirt: false, vao: false });
   }
+  const vergaSpawn = addBox(1.2, .55, .3, MAT_ZINCO, 0, 1.8, 24.55,
+    { collide: false, skirt: false, vao: false });
+  occluders.push(vergaSpawn);
 
   /* ---- LAJE SOBRE A BOCA DO ESCADÃO (abrigo do spawn E; BUG-32, régua escadao-rota) ----
      Invariante: NÃO é piso — `groundHeightAt` não a conhece, senão vira plataforma sem saída. */
