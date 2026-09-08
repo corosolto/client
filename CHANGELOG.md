@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.240`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.241`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -57,6 +57,36 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.241] — 2026-09-08
+
+### Mudado
+- feat(sertao): finaliza casas, fauna e por do sol com reguas WebGL (#526)
+- chore(docs): sincroniza indices finais do Sertao
+- style(sertao): reduz comentarios de implementacao
+- test(sertao): reposiciona mutante de folga
+- fix(sertao): abre gargalo da rota oeste
+- perf(sertao): agrupa interiores e mede contraste
+- fix(sertao): abre fuga lateral nas casas dos spawns
+- chore(docs): regenera bloco derivado (autofix)
+- docs(sertao): fecha BUG-91 no ledger e regenera blocos gerados
+- test(sertao): verifica captura offline do BUG-91 por raio no enquadramento
+- test(sertao): contrato de interiores estendido às casas dos spawns
+- fix(sertao): platibanda-1 e pedra-7 viram interiores jogáveis (BUG-91)
+- fix(sertao): colisor da carroça espelha a geometria visível (BUG-91)
+- test(sertao): régua das carroças WA1-WA4 reprova o HEAD
+- docs(sertao): registra BUG-91, rejeição humana das carroças e casas fechadas
+- docs(sertao): registra IN7 e restaura limitações pendentes
+- test(sertao): expõe resultado do mutante bolsao
+- test(sertao): cobre mutante bolsao no check de interiores
+- docs(sertao): fecha ledger das casas da praça
+- fix(sertao): preserva folga dos obstáculos fora das casas
+- chore(docs): inclui ferramentas offline no inventário versionado
+- chore(docs): sincroniza índices da validação offline
+- fix(sertao): libera circulação e fecha frestas nas casas
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(sertao): abre casas da praça ao combate
 
 ## [2.0.0-alpha.240] — 2026-09-08
 
