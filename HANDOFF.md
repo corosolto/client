@@ -6,15 +6,30 @@ Objetivo: corrigir a rejeição humana posterior ao PR #526 sem reutilizar sua
 branch. Worktree exclusiva `worktrees/sertao-respawn-wagons-fix`, branch
 `codex/sertao-respawn-wagons-fix`, base `origin/main` alpha.242 (`e67addf4`).
 
-Baseline antes do conserto: WA5 vermelho porque duas das três carroças só têm
-um flanco transitável; IN12/IN13 vermelhos porque `platibanda-0` e `pedra-8`,
-uma fachada em cada fileira de respawn, continuam fechadas. Os gates antigos
-permanecem verdes e demonstram a lacuna da medição. Artefatos em
+Baseline antes do conserto: WA5 vermelho porque duas das três carroças só tinham
+um flanco transitável; IN12/IN13 vermelhos porque `platibanda-0`, `pedra-8` e a
+geminada central continuavam fechadas. Os gates antigos permaneceram verdes e
+demonstraram a lacuna da medição. Artefatos em
 `artifacts/sertao-respawn-fix/*-baseline-red.json`.
 
-Próximo passo: abrir as duas fachadas restantes, liberar ambos os flancos das
-carroças, provar os mutantes, capturar WebGL 3:2 e validar 5x5/8x8. Sem merge ou
-deploy nesta frente.
+Checkpoint funcional `21b0d72d`: cinco casas da fileira dos respawns têm porta,
+saída lateral e janela com LOS recíproca; as três carroças têm ambos os flancos e
+4,9 m de travessia traseira. A grade dos bots não cria nós aleatórios dentro dos
+interiores. SP4 preserva três rotas disjuntas (31/34/29 nós), o golden dos bots
+passa, e 5x5/8x8 mediram 9/15 bots com 1,267%/0,756% de amostras travadas. WebGL
+real 1536×1024: RV1–RV12 verdes, máximo 500 calls/340.530 triângulos; capturas em
+`artifacts/sertao-respawn-fix/runtime-final-source/`. O único gate conhecido
+vermelho é `look-check`, por Amazônia sem horizonte assado; a mesma falha existe
+na base `e67addf4`, enquanto Sertão mede ΔE76=0,0. Relatório:
+`docs/reports/SERTAO-RESPAWN-WAGONS-FIX.md`.
+
+Próximo passo: revisão humana adversarial no servidor local e no draft PR. Sem
+merge ou deploy nesta frente.
+
+Build Astro/Vercel verde. `check:fast`: 129/132; todo gate de mapa ficou verde.
+Os três vermelhos são alheios ao diff: `audio:check` exige a árvore-fonte privada
+e vê órfãos no pack público materializado, `feet:check` também reprova na base
+`e67addf4`, e `eval:docsautoria` só pode medir depois do commit documental.
 
 ## Admin 08/09: áudio e escalonamento de crashes
 

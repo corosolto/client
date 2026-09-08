@@ -36,6 +36,7 @@
 - O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
 
 ### Corrigido
+- No Sertão, as três carroças deixam passagem pelos dois flancos e as cinco casas diante dos respawns passam a ter porta, saída lateral, janela com revide e navegação intencional para bots.
 - As casas abertas da Praça da Matriz no Sertão preservam cobertura nas laterais das janelas, circulação interna livre e passagem dos bots junto aos esteios.
 - Em rodada de FACA os bots passam a jogar de faca: fecham até o alcance real da arma (medido 5,98 m e zero golpes em 60 s antes; 1,24 m, 18 golpes e 9 abates depois) e o golpe sai como faca — sem traçante, fogacho de cano nem som de tiro. A banda de distância de arma de fogo continua valendo na rodada normal. Régua `eval:botfaca` com três mutantes, no `check:fast`.
 - O headshot do jogador não arranca mais a câmera da primeira pessoa: a replay orbital e o hit-stop do #364 saíram, e o abate continua contando com hitmarker, dano, killfeed e locutor. Régua `eval:replaycam` passou a medir o contrário, com quatro mutantes.
