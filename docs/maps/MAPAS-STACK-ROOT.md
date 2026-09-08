@@ -59,8 +59,17 @@ vento/vegetação de favela já existente no pack, sem criar asset nem caminho n
 - `audio:check` e `feet:check`: vermelhos idênticos em `origin/main` limpo por
   ausência do pack local e offsets defasados, respectivamente; não introduzidos
   pelo #540.
-- `eval:docsautoria`: deve ser medido depois do checkpoint, porque a autoria de
-  `docs/gen-docs.mjs` não é derivável enquanto o merge está sem commit.
+- `eval:docsautoria`: verde depois do checkpoint; autoria de `docs/gen-docs.mjs`
+  derivada da árvore commitada.
+
+## Checkpoint recuperável
+
+- merge local: `920ee4c233d60f738dc2bb129b1805dd7c9671cf`
+- pais: `0265aa766d8d95b47a779896be01df86f79cf6c3` e
+  `3880380165c170c0e694c28088876e396d5a1e29`
+- `check:deploy` pós-commit: 37/37 verde em 55,0 s, incluindo
+  `eval:docsautoria`.
+- nenhum push, merge remoto ou alteração de PR descendente foi feito.
 
 ## Próximo passo
 
