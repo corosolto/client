@@ -107,13 +107,91 @@ Pipeline reproduzível em `tools/optimize-escadao-r4.mjs` e `tools/rig-escadao-c
 Bytes históricos, sem regeneração. Manifesto de origem: `docs/maps/POLISH-RECOVERY-ASSETS.json`.
 
 - `parque_coreto.glb` — "Festive Green Coreto", coreto octogonal de praça com
+  colunas de ferro branco, telhado de zinco verde e bandeirolas juninas. 4.742
+  tris, 1 primitiva, texturas WebP 1024. Mint text-to-3D, gerado 25/08/2026 para
+  o rebuild USANTOS do parque_treta (pedido do dono: mapas usantos "não podem
+  parecer low poly"). Chat: <https://mint.gg/chat/ph74qprnsd4nzq113248a9sd6s8d4zhk>.
+  Registro: `coreto-praca-parque`. Otimizado por `tools/optimize-props.mjs`
+  (dedup + webp 1024 + prune, 1.107 KB → 448 KB). No mapa, substitui o coreto
+  procedural quando carrega (fallback idêntico em colisores).
+- `roda_gigante.glb` — "Ferris Wheel", roda-gigante completa (aro duplo, raios,
+  14 gôndolas, pernas em A, plataforma). 3.913 tris. Mint text-to-3D, kit
+  "parque" (26/08/2026, pack th783j3d4kq2saf84wyv3kfpkh8d6fmz). Chat:
+  <https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn>. Registro:
+  `roda-gigante-parque`. Modelo-fonte do split abaixo; o mapa não o carrega.
 - `roda_gigante_roda.glb` — parte ROTATIVA do split (aro duplo + raios +
+  gôndolas). 2.871 tris. Split por componentes conexos em Blender headless
+  (`tools/blender-split-roda-gigante.py`), verificado por render (composite
+  idêntico ao original). Registro: `roda-gigante-roda-parque`. No mapa, filha
+  do grupo `roda-gigante` — gira com a rotação procedural do update.
 - `roda_gigante_base.glb` — parte ESTÁTICA do split (pernas A, pés, plataforma,
+  cabine do operador). 1.042 tris, mesma origem e script. Registro:
+  `roda-gigante-base-parque`. Pés em y=0, mesma escala da parte rotativa.
 - `carrossel.glb` — "Carousel", carrossel com cavalos e cobertura. 4.419 tris,
-- `barraca_quermesse.glb` — "Quermesse Tent", barraca de quermesse. 4.419
+  mesmo kit/chat. Registro: `carrossel-parque`. Filho do grupo
+  `carrossel-giratorio` (gira junto); substitui plataforma/cavalos/teto
+  procedurais no browser.
 - `predio_artdeco.glb` — "Art Deco Building", prédio de entorno. 4.297 tris,
+  mesmo kit/chat. Registro: `predio-artdeco-entorno-parque`. 8 instâncias fora
+  dos bounds jogáveis fechando o quarteirão, rotações/alturas variadas.
+- `barraca_quermesse.glb` — "Quermesse Tent", barraca de quermesse. 4.419
+  tris, mesmo kit/chat. Registro: `barraca-quermesse-parque`. Substitui os 4
+  quiosques-caixa (PIPOCA/ALGODÃO DOCE/PESCARIA/ARGOLA); placas signTexture e
+  colisores procedurais mantidos.
+
+- `penitenciaria_guarita.glb` — "Weathered Searchlight Guarita", torre de
+  vigilância de presídio com escada metálica, cabine octogonal envidraçada,
+  telhado de zinco e holofote no canto da cabine. 4.749 tris, 1 primitiva,
+  texturas WebP 1024. Mint text-to-3D, gerado 25/08/2026 para o rebuild USANTOS
+  da penitenciaria. Chat: <https://mint.gg/chat/ph7dbfdzwpfa6mzdh15wx5tprx8d4c3v>.
+  Registro: `guarita-vigilancia-penitenciaria`. Otimizado por
+  `tools/optimize-props.mjs` (1.110 KB → 431 KB). Saiu de cena na USANTOS-R2
   (substituída pela `torre_vigilancia.glb`) e segue no acervo. A torre
+  procedural fica de fallback (colisores idênticos) e o SpotLight que
+  varre o pátio (NV2) é sempre procedural — o GLB é só visual.
 - `torre_vigilancia.glb` — "Prison Guard Tower", torre de vigilância de
+  presídio com quatro pernas de concreto em treliça X, escada metálica,
+  varanda com guarda-corpo e cabine envidraçada com telhado. 4.535 tris,
+  1 primitiva. Mint text-to-3D, gerado 26/08/2026 para a frente USANTOS-R2
+  (kit penitenciaria_gelo). Chat:
+  <https://mint.gg/chat/ph73cszyryt8jreekq64vj4s1x8d66ef>. Registro:
+  `torre-vigilancia-penitenciaria`. Substitui o visual da
+  `penitenciaria_guarita.glb` nas 4 guaritas de canto do muro; o fallback
+  procedural e os colisores são os mesmos nos dois mundos.
 - `bloco_celas.glb` — "Bloco de celas", pavilhão de 2 pavimentos com galeria
+  e grades. 3.988 tris, texturas WebP 1024. Mint text-to-3D, gerado 26/08/2026 —
+  item do pack carandiru_r3b. Chat:
+  <https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt>. Registro:
+  `bloco-celas-carandiru`. Pavilhão central do mapa penitenciária (referência
+  Carandiru): escala não-uniforme no call-site (9 × 15 m de planta, 6,6 m);
+  o jogador circula pela galeria externa gradeada ao redor; procedural de
+  tijolo com janelas de grade cobre o arnês (colisor idêntico).
 - `portao_penitenciaria.glb` — "Portão de penitenciária", portão principal
+  com pilastras e folha de grade fechada. 4.491 tris, texturas WebP 1024.
+  Mint text-to-3D, gerado 26/08/2026 — item do pack carandiru_r3b. Chat:
+  <https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt>. Registro:
+  `portao-penitenciaria-carandiru`. Embutido no muro norte do mapa
+  penitenciária; portão fechado — o colisor sela o vão.
 - `guarita_muro.glb` — "Guarita de muro", cabine envidraçada sobre estrutura
+  de concreto. 4.827 tris, texturas WebP 1024. Mint text-to-3D, gerado
+  26/08/2026 — modelo solto da onda carandiru_r3b. Chat:
+  <https://mint.gg/chat/ph77vksqsbvk24d8gv6zkytdtn8d7f7t>. Registro:
+  `guarita-muro-carandiru`. 2 instâncias flanqueando o portão norte do mapa
+  penitenciária (a frente sem vigia entre as guaritas de canto); fallback
+  procedural de pernas+cabine no arnês.
+
+### Viatura Carandiru C3 — 08/09/2026
+
+- `carandiru_viatura_1990.glb` — "Weathered Grey Patrol Wagon", perua policial
+  brasileira genérica do fim dos anos 1980/início dos 1990, sem marca, pessoas ou
+  cena de violência. Mint / Tripo P1, 4.840 triângulos e 3 texturas WebP até 1024.
+  [Projeto e chat](https://mint.gg/project/zd7agpw4xxat6kytnxka8kj19h8e1969?chat=ph7ev8zdhy23p8v1ec4vtjyt058e1r4k),
+  asset `p97a1j1skm2w33wjyv8pkw92n18e0g2j`. Original 1.043.988 bytes / SHA-256
+  `26c04d5b950633e7882e98826cc454a4bb4cab0e204dcad0a747815a0671d752`; final
+  415.268 bytes / SHA-256
+  `5251a70e9e63a1652f129d945a79d901d0b0e2d7b7394414ca393fe64062f2bf`.
+  `dedup`, compressão WebP 1024 e `prune` não alteraram os 4.840 triângulos. A
+  casca GLB substitui apenas o visual da viatura; o fallback e o colisor existente
+  permanecem determinísticos. A geração ocorreu na conta Mint do usuário para este
+  projeto. Termos públicos e publicação comercial ainda exigem verificação; não
+  declarar CC0.
