@@ -63,6 +63,7 @@
     "eval:sertao-integration": "node tools/eval/sertao-integration-check.mjs",
     "eval:sertao-sky-lifecycle": "node tools/eval/sertao-sky-lifecycle-check.mjs",
     "eval:sertao-livestock-runtime": "node tools/eval/sertao-livestock-runtime-check.mjs",
+    "eval:sertao-contrast": "node tools/eval/sertao-contrast-check.mjs",
     "eval:penitenciaria": "node tools/eval/penitenciaria-check.mjs",
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",
     "eval:pegada": "node tools/eval/pegada-check.mjs",

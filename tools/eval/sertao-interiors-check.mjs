@@ -67,9 +67,12 @@ if (mutant) {
     const meshes = new Set(); cover.traverse(o => { if (o.isMesh) meshes.add(o); });
     world.occluders = world.occluders.filter(o => !meshes.has(o)); cover.removeFromParent();
   } else if (mutant === 'fresta-lateral') {
-    const wall = house.getObjectByName(`${house.name}-lateral-1-sul`);
-    if (!wall) throw Error('Mutante não aplicou: parede ausente');
-    wall.scale.z = .6;
+    const ref = house.userData.boxParts?.[`${house.name}-lateral-1-sul`];
+    if (!ref || ref.index == null) throw Error('Mutante não aplicou: parede instanciada ausente');
+    const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), rotation = new THREE.Quaternion(), scale = new THREE.Vector3();
+    ref.mesh.getMatrixAt(ref.index, matrix); matrix.decompose(position, rotation, scale); scale.z *= .6;
+    matrix.compose(position, rotation, scale); ref.mesh.setMatrixAt(ref.index, matrix);
+    ref.mesh.instanceMatrix.needsUpdate = true; ref.mesh.computeBoundingBox?.(); ref.mesh.computeBoundingSphere?.();
   } else if (mutant === 'fardo-na-parede') {
     const hay=world.colliders.filter(c=>c.maxY===1.15&&c.minX>11&&c.maxX<18&&c.minZ>19&&c.maxZ<23);
     if(hay.length!==3) throw Error('Mutante não aplicou: fardos ausentes');

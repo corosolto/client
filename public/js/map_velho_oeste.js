@@ -434,16 +434,53 @@ export function buildVelhoOeste(scene, T) {
      BUG-91: platibanda-1 (fachada no spawn E) e pedra-7 (fachada no spawn B) são
      interiores jogáveis — porta encara o respawn, janela oposta cobre a praça. */
   const interiorHouses = [];
+  /* As paredes segmentadas precisam continuar sendo geometria real para portas,
+     janelas e oclusão. Agrupar somente as caixas visuais por material reduz o
+     custo sem fundir colisores nem alterar a planta. A fachada `parede-casa-N`
+     fica individual porque é a testemunha histórica da régua ST2. */
+  function flushInteriorParts(group, parts) {
+    const batches = new Map();
+    group.userData.boxParts = {};
+    for (const item of parts) {
+      if (item.name.startsWith('parede-casa-')) {
+        const mesh = new THREE.Mesh(boxGeo(item.w, item.h, item.d), item.material);
+        mesh.name = item.name; mesh.position.set(item.x, item.y + item.h / 2, item.z);
+        mesh.castShadow = true; mesh.receiveShadow = true; group.add(mesh);
+        group.userData.boxParts[item.name] = { mesh, index: null };
+        continue;
+      }
+      const key = item.material;
+      if (!batches.has(key)) batches.set(key, []);
+      batches.get(key).push(item);
+    }
+    let batchIndex = 0;
+    const matrix = new THREE.Matrix4(), quaternion = new THREE.Quaternion();
+    for (const [material, items] of batches) {
+      const mesh = new THREE.InstancedMesh(boxGeo(1, 1, 1), material, items.length);
+      mesh.name = `${group.name}-box-batch-${batchIndex++}`;
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      mesh.userData.partNames = items.map(item => item.name);
+      items.forEach((item, index) => {
+        matrix.compose(new THREE.Vector3(item.x, item.y + item.h / 2, item.z), quaternion,
+          new THREE.Vector3(item.w, item.h, item.d));
+        mesh.setMatrixAt(index, matrix);
+        group.userData.boxParts[item.name] = { mesh, index };
+      });
+      mesh.instanceMatrix.setUsage?.(THREE.StaticDrawUsage);
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingBox?.(); mesh.computeBoundingSphere?.();
+      group.add(mesh);
+    }
+  }
   function casaInteriorProxy(group, opts = {}) {
     const x = group.position.x, z = group.position.z, ry = group.rotation.y;
     const cos = Math.cos(ry), sin = Math.sin(ry), id = opts.id ?? 0;
     const w = 7.2, d = 6.4, h = 3.45, halfW = w / 2, halfD = d / 2;
     const cor = opts.pedra ? MAT.paupiqueCaiado : MAT.paupiqueOcre;
+    const parts = [];
     const part = (name, pw, ph, pd, px, py, pz, material, collide = true) => {
-      const mesh = new THREE.Mesh(boxGeo(pw, ph, pd), material);
-      mesh.name = name.startsWith('parede-casa') ? name : `${group.name}-${name}`;
-      mesh.position.set(px, py + ph / 2, pz);
-      mesh.castShadow = true; mesh.receiveShadow = true; group.add(mesh);
+      const effectiveName = name.startsWith('parede-casa') ? name : `${group.name}-${name}`;
+      parts.push({ name: effectiveName, w: pw, h: ph, d: pd, x: px, y: py, z: pz, material });
       if (collide) {
         // OBB exato: AABB de parede girada infla ~0,2 m no canto e raspa a
         // circulação interna (IN3) e o vão da porta.
@@ -453,7 +490,6 @@ export function buildVelhoOeste(scene, T) {
         colliders.push({ minX: cx - hx, maxX: cx + hx, minY: py, maxY: py + ph, minZ: cz - hz, maxZ: cz + hz,
           cx, cz, hx: pw / 2, hz: pd / 2, cos, sin, ry, tag: group.name });
       }
-      return mesh;
     };
     // Frente da planta (porta, encara o respawn): vão de 1,9 m.
     part(`parede-casa-${id}`, 2.65, h, .28, -2.275, 0, halfD, cor);
@@ -482,6 +518,7 @@ export function buildVelhoOeste(scene, T) {
       part('platibanda-testeira', w + .35, .5, .3, 0, h, halfD - .12, cor, false);
       part('cornija', w + .5, .14, .48, 0, h + .5, halfD - .12, cor, false);
     }
+    flushInteriorParts(group, parts);
     group.userData.interior = {
       entrance: [x + sin * (halfD + .55), z + cos * (halfD + .55)], inside: [x, z],
       farWindow: [x - sin * (halfD + .1), z - cos * (halfD + .1)],
@@ -529,13 +566,11 @@ export function buildVelhoOeste(scene, T) {
     group.name = `sertao-praca-casa-interior-${id}`;
     group.position.set(x, 0, z); root.add(group);
     const w = 7.2, d = 6.4, h = 3.45, halfW = w / 2, halfD = d / 2;
+    const parts = [];
     const part = (name, pw, ph, pd, px, py, pz, material, collide = true) => {
-      const mesh = new THREE.Mesh(boxGeo(pw, ph, pd), material);
-      mesh.name = `${group.name}-${name}`; mesh.position.set(px, py + ph / 2, pz);
-      mesh.castShadow = true; mesh.receiveShadow = true; group.add(mesh);
+      parts.push({ name: `${group.name}-${name}`, w: pw, h: ph, d: pd, x: px, y: py, z: pz, material });
       if (collide) colliders.push({ minX: x + px - pw / 2, maxX: x + px + pw / 2, minY: py, maxY: py + ph,
         minZ: z + pz - pd / 2, maxZ: z + pz + pd / 2, tag: group.name });
-      return mesh;
     };
     // Frente sul: vão de 1,9 m deixa duas cápsulas de jogador passarem sem atrito.
     part('frente-oeste', 2.65, h, .28, -2.275, 0, -halfD, MAT.paupiqueCaiado);
@@ -558,6 +593,7 @@ export function buildVelhoOeste(scene, T) {
     part('piso', w - .25, .12, d - .25, 0, 0, 0, MAT.pedra, false);
     part('telhado', w + .5, .16, d + .55, 0, h, 0, MAT.roof, false);
     for (const px of [-halfW + .08, halfW - .08]) part(`esteio-${px}`, .16, h, .16, px, 0, -halfD - .42, MAT.dark, true);
+    flushInteriorParts(group, parts);
     const sign = addSign(id === 0 ? 'CASA DE FARINHA' : 'CASA DE REZA', 'PORTA ABERTA PRA PRAÇA', x, 3.95, z - halfD - .18, 0, 4.8, .62);
     sign.name = `${group.name}-placa`;
     group.userData.interior = { entrance: [x, z - halfD - .55], inside: [x, z], northWindow: [x, z + halfD + .1], doorWidth: 1.9 };

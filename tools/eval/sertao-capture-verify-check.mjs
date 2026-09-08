@@ -86,7 +86,8 @@ const floorHits = [];
 for (const [casa, cam] of [['sertao-casa-platibanda-1', cameras['casa-spawn-e-int']], ['sertao-casa-pedra-7', cameras['casa-spawn-b-int']]]) {
   const house = world.interiorHouses.find(h => h.name === casa);
   const down = hitAny(cam.eye.clone().add(V(0, -.2, 0)), V(0, -1, 0), 3);
-  const piso = down.find(h => h.object.name === `${casa}-piso`);
+  const piso = down.find(h => h.object.name === `${casa}-piso`
+    || h.object.userData.partNames?.[h.instanceId] === `${casa}-piso`);
   floorHits.push({ casa, piso: !!piso, first: down[0]?.object.name || null });
 }
 
