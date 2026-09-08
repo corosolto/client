@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.241`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.242`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -57,6 +57,30 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.242] — 2026-09-08
+
+### Mudado
+- feat(escadao): abre duas janelas e casas jogáveis no mirante (#529)
+- chore(escadao): regenerar layout de grafites
+- feat(escadao): abrir casas dos dois lados
+- test(escadao): exigir janelas na mesma sala
+- test(escadao): registrar baseline vermelha das casas
+- docs(escadao): regenera blocos derivados após encurtar comentários
+- style(escadao): comentários da casa central dentro do orçamento de 2 linhas
+- docs(escadao): regenera blocos derivados após o commit da régua
+- docs(escadao): registra a rodada da casa central e o falso positivo
+- test(escadao): régua da casa central exercendo a branch GLB_ON
+- fix(escadao): shell procedural autoritativo na casa central da laje
+- docs(escadao): fecha portoes de push e mede nao-regressao da rota
+- docs(escadao): registra checkpoint de publicacao
+- docs(escadao): registra evidências e limites do PR 529
+- fix(escadao): valida janelas e cobertura a partir do corpo real
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(escadao): cria abrigo disputável no mirante
+- chore(docs): regenera bloco derivado (autofix)
+- feat(escadao): abre janela da casa para a rua
 
 ## [2.0.0-alpha.241] — 2026-09-08
 
