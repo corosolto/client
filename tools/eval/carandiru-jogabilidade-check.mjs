@@ -7,6 +7,7 @@ import { THREE, MAPS, initTextures } from './harness.mjs';
 
 const checkpoint = (process.argv.find((a) => a.startsWith('--checkpoint=')) || '=C1').split('=')[1];
 const mutant = (process.argv.find((a) => a.startsWith('--mutante=')) || '=').split('=')[1];
+const selftestMutants = process.argv.includes('--selftest-mutantes');
 const mutants = {
   'muro-sem-acesso': 'CAR2', 'guarita-fechada': 'CAR2',
   'pavilhao-solido': 'CAR3', 'escada-decorativa': 'CAR3',
@@ -20,6 +21,13 @@ const source = await import('../../public/js/maps.js');
 const world = MAPS.penitenciaria.build(new THREE.Scene(), await initTextures());
 world.root.updateMatrixWorld(true);
 const c = structuredClone(world.carandiru || {});
+if (selftestMutants) Object.assign(c, {
+  routes: [{ id: 'externa' }, { id: 'pavilhao' }, { id: 'muralha' }],
+  minRouteWidth: 1.2,
+  maxSpawnSight: 2,
+  counterfireRoutes: 2,
+  cost: { med: 100, low: 80, baselineMed: 100, baselineLow: 80 },
+});
 if (mutant === 'muro-sem-acesso') c.wallAccesses = [];
 if (mutant === 'guarita-fechada') c.guardEntries = [];
 if (mutant === 'pavilhao-solido') c.pavilionPassages = [];
@@ -76,5 +84,6 @@ if (mutant) {
   console.log(`MUTANTE MORDIDO: ${mutant} -> ${target}`);
   process.exit(0);
 }
+if (selftestMutants) throw new Error('--selftest-mutantes exige --mutante');
 console.log(`CARANDIRU ${checkpoint} ${failed.length ? `VERMELHO: ${failed.join(', ')}` : 'VERDE'}`);
 process.exit(failed.length ? 1 : 0);

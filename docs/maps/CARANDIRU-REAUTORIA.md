@@ -55,8 +55,17 @@ trabalho. Colisão, rotas, escala, pisos e navegação permanecem determinístic
 código; GLBs são cascas visuais. Comparação cega 3:2 e performance são avaliações
 separadas.
 
+## C2 — régua vermelha antes da implementação
+
+- O checkpoint C2 reprova o mapa atual em CAR4 (rotas), CAR5 (LOS/contracobertura)
+  e CAR8 (custo).
+- `--selftest-mutantes` monta apenas um contrato sintético C2 válido para provar
+  os operadores antes de alterar o mapa. `rota-unica` reprova somente CAR4 e
+  `spawn-exposto` reprova somente CAR5. Esse autoteste não mede a jogabilidade do
+  mapa; o fechamento C2 precisa fazer os mesmos mutantes morderem o mundo real.
+
 ## Próximo passo
 
 C2 fecha três rotas spawn→MID e spawn→spawn, waypoints multinível, CTF, matriz
-de LOS, contracoberturas e orçamento 5x5/8x8. Os mutantes `rota-unica` e
-`spawn-exposto` precisam morder antes do checkpoint. Mint não entra antes do C3.
+de LOS, contracoberturas e orçamento 5x5/8x8. A régua deve medir geometria e
+grafo reais, sem confiar em metadados declarativos. Mint não entra antes do C3.
