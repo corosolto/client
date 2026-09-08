@@ -220,3 +220,75 @@ juiz, nem o MCP de visão): a inspeção foi substituída por `sertao-capture-ve
 oclusores. Continua pendente a revisão humana 3:2 em WebGL: leitura das novas
 casas (materiais planos não provam o paupique real), corredores junto às
 carroças e as seis capturas originais do dono.
+
+## Fechamento WebGL de 08/09/2026
+
+A lacuna acima foi fechada em navegador real, a 1536×1024 (3:2), sobre a branch
+atualizada com `origin/main` alpha.239. As vistas `praca`, `venda`, `leste` e
+`aerea` foram abertas e examinadas. O mapa lê como Sertão pelo casario, igreja,
+mandacarus, caminhão, praça, solo seco e luz quente; as rotas e os vãos das casas
+continuam distinguíveis. Limitações visuais honestas: algumas pedras e props de
+primeiro plano ainda revelam baixo polígono e a borda retangular do mapa fica
+perceptível na vista aérea.
+
+Artefatos locais: `artifacts/sertao-casas/runtime-final-v2/`. A régua WebGL
+`sertao-runtime-check.mjs` aprovou RV1–RV12, com máximo de 499 draw calls,
+349.175 triângulos e 82 texturas no perfil médio, GPU Apple M4 Pro. Antes do
+agrupamento dos interiores eram 564 draw calls, acima do teto de 503; o mutante
+`interiores-sem-batch` repõe a regressão e deixa somente RV3 vermelho. As partes
+repetidas das casas agora usam `InstancedMesh` por material, preservando a
+geometria, os colisores e o nome individual `parede-casa-N` exigido pelos
+contratos históricos.
+
+As duas casas diante dos spawns ganharam também uma saída lateral de 1,9 m. A
+baseline vermelha está em `tactical-baseline/interiors-red.json`: IN8 media
+deslocamentos de 0,52–1,11 m e IN9 encontrava um raio tático bloqueado. Depois,
+IN1–IN10 ficam verdes e IN10 confirma seis posições de cobertura visível na
+praça. Os 14 mutantes, incluindo `fechar-saida-lateral`, `cegar-praca` e
+`sem-cobertura-praca`, ficam vermelhos no alvo.
+
+O primeiro `botsim-golden` final encontrou um gargalo que as rotas abstratas não
+viam: 9,211% de tempo parado, acima do teto de 7,195%. Por semente e posição, a
+concentração estava em `(-15,4; 11,1)`, entre a casa pau-a-pique oeste e a casa
+da praça. A casa antiga foi afastada 0,8 m para o sul, sem mover o landmark nem
+alterar os spawns. Depois, `stuckPct` caiu para 1,644% e o golden completo voltou
+a passar. IN11 congela o corredor da cápsula; o 14º mutante `gargalo-bot` devolve
+a geometria à posição ruim e reprova somente IN11.
+
+### Vida local e assets Mint
+
+O runtime contém duas cabras animadas perto da praça de forró, uma galinha Mint
+e três pintinhos no terreiro, além dos calangos e aves distantes. Os três GLBs
+Mint têm procedência já registrada, rig e clipes Idle/Walk. A régua estática
+LA1–LA4 e a régua WebGL LG1–LG8 confirmam população, animação, deslocamento,
+contato com o solo, ausência de colisão e descarte. No médio são seis animais,
+24.240 triângulos e nenhuma sombra projetada; no baixo são quatro animais e
+16.256 triângulos. Capturas examinadas em
+`artifacts/sertao-casas/livestock-final/`: `cabras.png`,
+`cabras-movimento.png`, `cabras-contexto.png`, `familia.png` e
+`familia-contexto.png`.
+
+### Contraste, menu e miniatura
+
+`eval:sertao-contrast` renderiza o GLB real do inimigo a 5, 20 e 40 m no mapa,
+com e sem os uniforms reais de rim do shader. A baseline 3:2 passou C18/C18R;
+frações de contorno explícito de 26,2%, 19,7% e 14,8%, respectivamente. O
+mutante sem rim reprova C18 nas três distâncias. Para estabilizar 40 m, o valor
+global distante `rimFar` passou de 0,70 para 0,82; o valor próximo continua
+0,18. Evidência em `artifacts/sertao-casas/contrast-final/` e mutante em
+`contrast-mutant-v2/`.
+
+O menu foi aberto pelo servidor Astro real: não há JSX cru ou imagem quebrada,
+e a tela de mapas permanece alinhada à `main`. O card do Sertão carrega a
+captura real `img/map-previews/velho_oeste.jpg` e oferece 2×2 até 8×8. Vídeo no
+hover não faz parte desta entrega; a miniatura estática já é um preview real.
+O pointer lock mantém a rotação livre: é preciso clicar no canvas depois de
+entrar na partida; `Esc` devolve o cursor ao navegador.
+
+### Pendências para revisão adversarial humana
+
+A captura visual controlada cobre um personagem inimigo real, não todos os 44
+personagens contra cada fundo. A sensação de combate nas novas casas, a
+quantidade ideal de fauna em uma partida longa e a leitura do limite aéreo do
+mapa continuam sendo julgamentos humanos. Não foram adicionados novos assets sem
+procedência e não há publicação de produção nesta frente.

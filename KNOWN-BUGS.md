@@ -39,7 +39,7 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## Sertão — casas da praça (PR #526, revisão local 06/09)
 
-### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO OFFLINE 07/09 — revisão humana 3:2 pendente
+### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO E VALIDADO EM WEBGL 08/09
 
 **Relato literal do dono (runtime 3:2, capturas de 06→07/09 23h52–00h00)**: (1) há
 trechos em que o jogador não passa junto às carroças; (2) as casas diante dos spawns
@@ -62,16 +62,20 @@ verdes; mutantes `aabb-conservador`, `barreira-spawn`, `fechar-porta-casa`,
 `fechar-janela-casa` (+8 anteriores, +17 espaciais) mordendo. De carona:
 `sertao-spatial-check` truncava stdout em pipe (`process.exit` → `exitCode`).
 Antes/depois, custos e comandos: [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
-**Não verificado:** revisão visual humana 3:2 em WebGL — nenhum modelo desta
-sessão recebe imagem; a inspeção das capturas foi por raio no mesmo
-enquadramento (`sertao-capture-verify-check.mjs`, CV1–CV3).
+**WebGL 3:2:** RV1–RV12 verdes em 1536×1024; imagens reais abertas e examinadas.
+O agrupamento dos interiores reduz o pico de 564 para 499 draw calls e o mutante
+sem batch deixa RV3 vermelho. IN8–IN11 cobrem saída lateral, tiro tático, seis
+coberturas da praça. Cabras, galinha e pintinhos foram conferidos no runtime por
+LG1–LG8. O julgamento final da sensação de combate permanece humano.
 
 Frestas laterais, obstáculos internos e uma aresta bloqueada por esteio foram
 reproduzidos e corrigidos. Régua: `tools/eval/sertao-interiors-check.mjs`,
 `IN3/IN4/IN5` vermelhas antes e verdes depois, com mutantes. Evidência, custo e
 continuação em [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
-A coordenada exata do relato original permanece sem reprodução localizada;
-validação WebGL/humana pendente. Esta evidência é offline, sem aprovação de lançamento.
+A coordenada exata do relato original permanece sem reprodução localizada; a
+varredura IN7 confirma zero bolsões livres inacessíveis no mapa inteiro. A
+evidência WebGL está em `artifacts/sertao-casas/runtime-final/`; a entrega não é
+uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 

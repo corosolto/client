@@ -7,7 +7,7 @@
 import { THREE, MAPS, initTextures, Game } from './harness.mjs';
 
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.slice(10);
-const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6', 'bolsao': 'IN7', 'fechar-porta-casa': 'IN1', 'fechar-janela-casa': 'IN2', 'fechar-saida-lateral': 'IN8', 'cegar-praca': 'IN9', 'sem-cobertura-praca': 'IN10' };
+const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6', 'bolsao': 'IN7', 'fechar-porta-casa': 'IN1', 'fechar-janela-casa': 'IN2', 'fechar-saida-lateral': 'IN8', 'cegar-praca': 'IN9', 'sem-cobertura-praca': 'IN10', 'gargalo-bot': 'IN11' };
 if (mutant && !targets[mutant]) throw Error(`Mutante desconhecido: ${mutant}`);
 const world = MAPS.velho_oeste.build(new THREE.Scene(), await initTextures());
 const houses = world.interiorHouses || [];
@@ -66,6 +66,10 @@ if (mutant) {
     if (!cover) throw Error('Mutante não aplicou: cobertura da praça ausente');
     const meshes = new Set(); cover.traverse(o => { if (o.isMesh) meshes.add(o); });
     world.occluders = world.occluders.filter(o => !meshes.has(o)); cover.removeFromParent();
+  } else if (mutant === 'gargalo-bot') {
+    const walls = world.colliders.filter(c => c.tag === 'sertao-casa-paupique-3');
+    if (!walls.length) throw Error('Mutante não aplicou: colisor da casa vizinha ausente');
+    for (const c of walls) { c.minZ += .8; c.maxZ += .8; if (Number.isFinite(c.cz)) c.cz += .8; }
   } else if (mutant === 'fresta-lateral') {
     const ref = house.userData.boxParts?.[`${house.name}-lateral-1-sul`];
     if (!ref || ref.index == null) throw Error('Mutante não aplicou: parede instanciada ausente');
@@ -179,6 +183,11 @@ const plazaCover = COVER_WITNESSES.map(([name, x, z, axis]) => {
   const hits = ray.intersectObjects(world.occluders, false);
   return { name, blocked: hits.some(h => h.object.parent?.name === name), first: hits[0]?.object.parent?.name || hits[0]?.object.name || null };
 });
+/* IN11 nasceu de uma vermelha do botsim-golden: em z=15,0 sobravam apenas
+   0,82 m entre a casa antiga e o canto da casa da praça. A cápsula entrava no
+   gargalo e parava em (-15,4; 11,1). Esta testemunha congela a passagem lateral
+   com o mesmo raio de 0,38 m; o mutante devolve a casa aos 15,0 m. */
+const botCornerRoute = capsulePath([-15.7, 10.8], [-15.7, 12.2]);
 /* IN7 responde ao relato de área inacessível sem depender da coordenada original:
    varre todo o mapa com o corpo real e exige que nenhum vão livre fique enclausurado. */
 const SWEEP=.25;
@@ -238,7 +247,8 @@ const checks={
   IN8:results.filter(r=>r.sideExitRoutes.length).length===2&&results.filter(r=>r.sideExitRoutes.length).every(r=>r.sideExitRoutes.every(p=>p.clear)),
   IN9:results.filter(r=>r.tacticalSight.length).length===2&&results.filter(r=>r.tacticalSight.length).every(r=>r.tacticalSight.every(p=>p.clear)),
   IN10:plazaCover.length===COVER_WITNESSES.length&&plazaCover.every(c=>c.blocked),
+  IN11:botCornerRoute.clear,
 };
-console.log(JSON.stringify({checks,houses:results,barrelClearance,hayClearance,plazaCover,sweep:{...sweep,pockets:sweep.pockets.slice(0,8),pocketCount:sweep.pockets.length},mutation:mutant||null},null,2));
+console.log(JSON.stringify({checks,houses:results,barrelClearance,hayClearance,plazaCover,botCornerRoute,sweep:{...sweep,pockets:sweep.pockets.slice(0,8),pocketCount:sweep.pockets.length},mutation:mutant||null},null,2));
 const failed=Object.entries(checks).filter(([,ok])=>!ok).map(([id])=>id);
 process.exitCode=mutant ? (failed.includes(targets[mutant])?0:1) : (failed.length?1:0);

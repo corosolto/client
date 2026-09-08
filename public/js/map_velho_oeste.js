@@ -530,7 +530,7 @@ export function buildVelhoOeste(scene, T) {
   }
   const CASAS = [
     { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1, interior: true, exitSide: 1 },
-    { x: -17.2, z: -7, ry: Math.PI / 2 + .08, fam: 'paupique', v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, fam: 'paupique', v: 0 },
+    { x: -17.2, z: -7, ry: Math.PI / 2 + .08, fam: 'paupique', v: 2 }, { x: -17.6, z: 6.7, ry: Math.PI / 2 - .13, fam: 'paupique', v: 0 },
     { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, fam: 'paupique', v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, fam: 'paupique', v: 2 },
     { x: 17.2, z: -20.6, ry: -Math.PI / 2 + .07, fam: 'paupique', v: 0 },
     { x: -8.4, z: 24.2, ry: .14, fam: 'pedra', interior: true, pedra: true, exitSide: 1 }, { x: 9.1, z: 24.7, ry: -.1, fam: 'pedra' },
