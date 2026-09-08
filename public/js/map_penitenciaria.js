@@ -23,6 +23,7 @@ export function buildPenitenciaria(scene, T) {
   const carandiru = {
     wallAccesses: [], wallWalkways: [], guardEntries: [],
     pavilionPassages: [], pavilionStairs: [], pavilionWindows: [], pavilionGallery: null,
+    routes: [], watchtowers: [], counterfireVantages: [],
     elevatedCoverage: 1, wireClearance: 2.28,
   };
   const geometryCache = new Map();
@@ -378,23 +379,26 @@ export function buildPenitenciaria(scene, T) {
     elevatedSurfaces.push({ minX: x-w/2, maxX: x+w/2, minZ: z-d/2, maxZ: z+d/2, y: 5.8 });
     carandiru.wallWalkways.push({ name, side: name.split('-').at(-1) });
   };
-  walkway('carandiru-passarela-muro-oeste', 2.2, 84, -35.6, 0);
-  walkway('carandiru-passarela-muro-leste', 2.2, 84, 35.6, 0);
+  walkway('carandiru-passarela-muro-oeste', 3.4, 90, -35.6, 0);
+  walkway('carandiru-passarela-muro-leste', 3.4, 90, 35.6, 0);
   walkway('carandiru-passarela-muro-sul', 69, 2.2, 0, -45.6);
-  for (const [side, x] of [['oeste', -35.6], ['leste', 35.6]]) {
-    const name = `carandiru-acesso-muralha-${side}`;
-    const marker = new THREE.Group(); marker.name = name; root.add(marker);
-    const heights = [];
-    for (let i = 0; i < 10; i++) {
-      const top = (i + 1) * .58, z = -33.7 - i * 1.25;
-      addBox(2.2, .18, 1.3, MAT.galvanizado, x, top - .18, z, { collide: false });
-      elevatedSurfaces.push({ minX: x-1.1, maxX: x+1.1, minZ: z-.65, maxZ: z+.65, y: top });
-      heights.push(top);
+  for (const [team, zSign] of [['sul', -1], ['norte', 1]]) {
+    for (const [side, x] of [['oeste', -35.6], ['leste', 35.6]]) {
+      const suffix = team === 'sul' ? side : `${team}-${side}`;
+      const name = `carandiru-acesso-muralha-${suffix}`;
+      const marker = new THREE.Group(); marker.name = name; root.add(marker);
+      const heights = [];
+      for (let i = 0; i < 10; i++) {
+        const top = (i + 1) * .58, z = zSign * (27.7 + i * 1.25);
+        addBox(2.2, .18, 1.3, MAT.galvanizado, x, top - .18, z, { collide: false });
+        elevatedSurfaces.push({ minX: x-1.1, maxX: x+1.1, minZ: z-.65, maxZ: z+.65, y: top });
+        heights.push(top);
+      }
+      carandiru.wallAccesses.push({ name, team, side, x, z0: zSign * 27.7, dz: zSign * 1.25, heights });
+      const guardName = `carandiru-entrada-guarita-${suffix}`;
+      const guardMarker = new THREE.Group(); guardMarker.name = guardName; root.add(guardMarker);
+      carandiru.guardEntries.push(guardName);
     }
-    carandiru.wallAccesses.push({ name, x, z0: -33.7, dz: -1.25, heights });
-    const guardName = `carandiru-entrada-guarita-${side}`;
-    const guardMarker = new THREE.Group(); guardMarker.name = guardName; root.add(guardMarker);
-    carandiru.guardEntries.push(guardName);
   }
 
   /* Guaritas com holofote REAL que varre o pátio (NV2). SpotLight SEM sombra e sem
@@ -430,6 +434,12 @@ export function buildPenitenciaria(scene, T) {
     holofotes.push({ cabeca, alvo, fase: index * Math.PI * .5, giro: index % 2 ? 1 : -1, cx: sx * 9, cz: sz * 11 });
   }
   guardTower(0, -33.5, -43.5); guardTower(1, 33.5, -43.5); guardTower(2, -33.5, 43.5); guardTower(3, 33.5, 43.5);
+  carandiru.watchtowers.push(
+    { name: 'penitenciaria-guarita-0', team: 'E', eye: [-33.5, 8.2, -43.5] },
+    { name: 'penitenciaria-guarita-1', team: 'E', eye: [33.5, 8.2, -43.5] },
+    { name: 'penitenciaria-guarita-2', team: 'B', eye: [-33.5, 8.2, 43.5] },
+    { name: 'penitenciaria-guarita-3', team: 'B', eye: [33.5, 8.2, 43.5] },
+  );
 
   /* Celas do térreo (contrato PEN1/PEN2 intacto) + beliche no fundo e porta de
      grade entreaberta. Estrutura repetida sai instanciada; o que tem nome de
@@ -621,7 +631,7 @@ export function buildPenitenciaria(scene, T) {
       { name: passagemNS.name, width: 3.6 }, { name: passagemEO.name, width: 3.2 });
 
     const galeria = new THREE.Group(); galeria.name = 'carandiru-pavilhao-galeria-superior'; root.add(galeria);
-    for (const [w, d, x, z] of [[2.5, 15, -3.25, 0], [2.5, 15, 3.25, 0], [4, 2.5, 0, -6.25], [4, 2.5, 0, 6.25]]) {
+    for (const [w, d, x, z] of [[.8, 15, -1.35, 0], [.8, 15, 1.35, 0], [1.9, .8, 0, -1.35], [1.9, .8, 0, 1.35], [3.4, .8, 3, 0]]) {
       addBox(w, .2, d, MAT.galvanizado, x, 3.2, z, { collide: false });
       elevatedSurfaces.push({ minX: x-w/2, maxX: x+w/2, minZ: z-d/2, maxZ: z+d/2, y: 3.4 });
     }
@@ -707,6 +717,10 @@ export function buildPenitenciaria(scene, T) {
       pecas.push(addBox(5.6, .3, 3, MAT.darkConcrete, tx, 9.2, 45.35, { collide: false }));
       occluders.push(...pecas);
     }
+    carandiru.watchtowers.push(
+      { name: 'penitenciaria-torre-muro-0', team: 'B', eye: [-9, 8.2, 45.35] },
+      { name: 'penitenciaria-torre-muro-1', team: 'B', eye: [9, 8.2, 45.35] },
+    );
 
     // O campo do Carandiru: marcações de futebol PICHADAS no concreto do pátio
     // norte — tinta gasta, sem trave nem quadra (o recorte da PEN4 segue intacto).
@@ -762,15 +776,63 @@ export function buildPenitenciaria(scene, T) {
       && s.y <= yRef + .65 && s.y > best) best = s.y;
     return best;
   }, slowAt=()=>false;
+  const spawns={E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))};
+  const ctfPoints=[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PAVILHÃO 6',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}];
+  const stairPoints = (team, side) => {
+    const a = carandiru.wallAccesses.find((item) => item.team === team && item.side === side);
+    return a.heights.map((y, i) => [a.x, y, a.z0 + a.dz * i]);
+  };
+  const internal = [];
+  for (let z = -42; z <= 42; z += 2) internal.push([0, 0, z]);
+  const external = [[-15,0,-42],[-18,0,-37],[-22.5,0,-35]];
+  for (let z = -33; z <= 36; z += 2.4) external.push([-22.5,0,z]);
+  external.push([-22.5,0,39],[-15,0,42]);
+  const southStair = stairPoints('sul','leste'), northStair = stairPoints('norte','leste');
+  const southTop = southStair.at(-1)[2], northTop = northStair.at(-1)[2];
+  const elevated = [[15,0,-42],[24,0,-42],[24,0,-39],[35.6,0,-39],[35.6,0,-26.7],
+    ...southStair,[36.7,5.8,southTop]];
+  for (let z = southTop + 2.4; z <= northTop - 2.4; z += 2.4) elevated.push([36.7,5.8,z]);
+  elevated.push([36.7,5.8,northTop],...northStair.reverse(),[35.6,0,26.7],[35.6,0,36],[29,0,39],[24,0,42],[15,0,42]);
+  carandiru.routes.push(
+    { id:'radial-interna', layer:'ground', points:internal, midBranch:[[0,0,0]] },
+    { id:'externa-oeste', layer:'ground', points:external, midBranch:[[-22.5,0,0],[-14,0,0],[-7,0,0],[0,0,0]] },
+    { id:'muralha-leste', layer:'elevated', points:elevated, midBranch:[[35.6,0,26.7],[24,0,26],[12,0,18],[0,0,0]] },
+  );
+  carandiru.counterfireVantages.push(
+    { route:'radial-interna', eye:[0,1.6,30] },
+    { route:'externa-oeste', eye:[-22.5,1.6,30] },
+    { route:'muralha-leste', eye:[36.7,7.4,20] },
+  );
+
   const bounds={minX:-HALF_X+.9,maxX:HALF_X-.9,minZ:-HALF_Z+.9,maxZ:HALF_Z-.9};
-  const blocked=(x,z,inflate=.44)=>colliders.some(c=>x>c.minX-inflate&&x<c.maxX+inflate&&z>c.minZ-inflate&&z<c.maxZ+inflate&&c.minY<1.7&&c.maxY>.1);
+  const blocked=(x,z,inflate=.44,yRef=0)=>{
+    const y=groundHeightAt(x,z,yRef);
+    return colliders.some(c=>x>c.minX-inflate&&x<c.maxX+inflate&&z>c.minZ-inflate&&z<c.maxZ+inflate&&c.minY<y+1.55&&c.maxY>y+.25);
+  };
   const nodes=[],adj=[],step=3.2;
-  for(let x=bounds.minX+1;x<=bounds.maxX-1;x+=step)for(let z=bounds.minZ+1;z<=bounds.maxZ-1;z+=step)if(!blocked(x,z))nodes.push({x,z});
+  for(let x=bounds.minX+1;x<=bounds.maxX-1;x+=step)for(let z=bounds.minZ+1;z<=bounds.maxZ-1;z+=step)if(!blocked(x,z,.44,0))nodes.push({x,y:0,z});
+  const addNavPolyline=(points,maxStep=1.2)=>{
+    for(let k=1;k<points.length;k++){
+      const a=points[k-1],b=points[k],distance=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]),n=Math.max(1,Math.ceil(distance/maxStep));
+      for(let i=k===1?0:1;i<=n;i++){
+        const t=i/n,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t,z=a[2]+(b[2]-a[2])*t;
+        if(!blocked(x,z,.38,y))nodes.push({x,y,z});
+      }
+    }
+  };
+  for(const route of carandiru.routes){addNavPolyline(route.points);addNavPolyline(route.midBranch);}
+  const pavilionNav=[[9,0,0],...carandiru.pavilionStairs[0].heights.map((y,i)=>[9-i*.48,y,0]),
+    [1.35,3.4,0],[1.35,3.4,1.35],[0,3.4,1.35],[-1.35,3.4,1.35],[-1.35,3.4,0],
+    [-1.35,3.4,-1.35],[0,3.4,-1.35],[1.35,3.4,-1.35],[1.35,3.4,0]];
+  addNavPolyline(pavilionNav,.65);
+  for(const side of [-1,1])for(const z of [-30,-20,-10,10,20,30])addNavPolyline([
+    [side*32.9,0,z],[side*32.9,0,z+1.7],[side*29,0,z+1.7],[side*24,0,z]
+  ],.8);
   for(let i=0;i<nodes.length;i++)adj.push([]);
-  const clear=(a,b)=>{for(let i=1;i<7;i++){const t=i/7;if(blocked(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t,.25))return false;}return true;};
-  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=nodes[i].x-nodes[j].x,dz=nodes[i].z-nodes[j].z;if(dx*dx+dz*dz<=step*step*2.3&&clear(nodes[i],nodes[j])){adj[i].push(j);adj[j].push(i);}}
-  for(let i=0;i<nodes.length;i++)if(adj[i].length===0){let nearest=-1,distance=Infinity;for(let j=0;j<nodes.length;j++){if(i===j||!clear(nodes[i],nodes[j]))continue;const dx=nodes[i].x-nodes[j].x,dz=nodes[i].z-nodes[j].z,d=dx*dx+dz*dz;if(d<distance){distance=d;nearest=j;}}if(nearest>=0){adj[i].push(nearest);adj[nearest].push(i);}}
-  function nearestWaypoint(x,z){let best=0,distance=Infinity;for(let i=0;i<nodes.length;i++){const dx=nodes[i].x-x,dz=nodes[i].z-z,d=dx*dx+dz*dz;if(d<distance){distance=d;best=i;}}return best;}
+  const clear=(a,b)=>{const distance=Math.hypot(b.x-a.x,b.z-a.z),steps=Math.max(1,Math.ceil(distance/.25));let previous=a.y;for(let i=1;i<=steps;i++){const t=i/steps,x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t,y=groundHeightAt(x,z,previous);if(blocked(x,z,.38,previous)||Math.abs(y-previous)>.65)return false;previous=y;}return Math.abs(previous-b.y)<.36;};
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,dz=nodes[i].z-nodes[j].z;if(dx*dx+dz*dz<=step*step*2.3&&Math.abs(dy)<=.65&&clear(nodes[i],nodes[j])){adj[i].push(j);adj[j].push(i);}}
+  for(let i=0;i<nodes.length;i++)if(!adj[i].length){let nearest=-1,distance=Infinity;for(let j=0;j<nodes.length;j++){if(i===j||Math.abs(nodes[i].y-nodes[j].y)>.65||!clear(nodes[i],nodes[j]))continue;const d=(nodes[i].x-nodes[j].x)**2+(nodes[i].z-nodes[j].z)**2;if(d<distance){distance=d;nearest=j;}}if(nearest>=0){adj[i].push(nearest);adj[nearest].push(i);}}
+  function nearestWaypoint(x,z,yRef){const y=groundHeightAt(x,z,yRef);let best=0,distance=Infinity;for(let i=0;i<nodes.length;i++){const dx=nodes[i].x-x,dy=nodes[i].y-y,dz=nodes[i].z-z,d=dx*dx+dz*dz+dy*dy*16;if(d<distance){distance=d;best=i;}}return best;}
   function findPath(fromIdx,toIdx){if(fromIdx===toIdx)return[toIdx];const prev=new Int16Array(nodes.length).fill(-1),queue=[fromIdx];prev[fromIdx]=fromIdx;while(queue.length){const n=queue.shift();for(const next of adj[n])if(prev[next]<0){prev[next]=n;if(next===toIdx){const path=[next];let p=n;while(p!==fromIdx){path.unshift(p);p=prev[p];}path.unshift(fromIdx);return path;}queue.push(next);}}return[fromIdx];}
   /* BUG-57: pombo de pátio de presídio e rato de cela. r3 Carandiru: o bando
      toma o campo pichado do pátio norte; o rato do miolo saiu do pé do pavilhão. */
@@ -792,7 +854,6 @@ export function buildPenitenciaria(scene, T) {
 
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16},{src:AMB_LOOPS.eco,pos:[0,4,0],radius:55,vol:.13}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,update,pickups,sun,hemi,carandiru,
-    spawns:{E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))},
-    ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:14},{id:'B',label:'ALA NORTE',x:0,z:39}],
+    layeredNavigation:true,botLayeredNavigation:true,snapDownSteps:true,spawns,ctfPoints,
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};
 }

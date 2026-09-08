@@ -64,8 +64,55 @@ separadas.
   `spawn-exposto` reprova somente CAR5. Esse autoteste não mede a jogabilidade do
   mapa; o fechamento C2 precisa fazer os mesmos mutantes morderem o mundo real.
 
+## C2 — implementação e validação
+
+- `cb7b34bd`: mutantes `rota-unica` e `spawn-exposto` provaram a régua antes da
+  implementação. Depois da implementação, ambos também mordem isoladamente o
+  mapa real em CAR4 e CAR5.
+- Três famílias independentes ligam os dois lados ao MID do Pavilhão 6:
+  `radial-interna`, `externa-oeste` e `muralha-leste`. O grafo usa coordenadas
+  `(x,y,z)`, inclui as quatro escadas de muralha, passarela e galeria interna;
+  `eval:mapcontrato` confirma o grafo inteiro conexo.
+- CAR4 percorre cada segmento a cada 0,25 m usando `Game._collide`, exige apoio de
+  piso, cápsula livre, largura lateral, conexão ao MID, separação das rotas e
+  acesso das oito posições de spawn. CAR5 traça LOS contra colisores reais: as
+  guaritas de canto não veem o spawn oposto, as duas torres do portão veem no
+  máximo duas posições e duas das três rotas oferecem contrafogo.
+- O recibo `tools/eval/carandiru-performance.json` mede Chrome/WebGL real em
+  1200x800, 5x5/8x8 e med/low contra o C1 `5d5155ba` na mesma execução. O custo
+  médio de chamadas cresceu 4,2%, 6,3%, 5,0% e 4,9%, abaixo do teto de 15%; todas
+  as oito amostras ficaram `live`, com zero erro inesperado. O recibo conserva os
+  avisos conhecidos do servidor local em vez de escondê-los.
+- Gates verdes no estado final: CAR1–CAR6 e CAR8, Penitenciária PEN1–PEN5,
+  fachada PF1–PF5, vida NV1–NV8, pickups, contrato global, 276 colocações de
+  spawn, `docs:check` e build. CAR7 continua inativo no C2 porque Mint pertence
+  ao C3.
+- Capturas reais 1200x800 em `artifacts/carandiru-c2/`: `divineia`, `radial`,
+  `pavilhao-6`, `galeria`, `muralha` e `guarita-patio`. Elas demonstram presença
+  de térreo, galeria, muralha e escada externa; o gate e o recibo demonstram as
+  propriedades que uma imagem isolada não mede.
+
+## Crítica independente do C2
+
+Nenhuma aprovação visual foi emitida. A leitura em contexto limpo classificou o
+resultado como blockout multinível e apontou bloqueios concretos:
+
+- `divineia` tem um mastro no centro escondendo o eixo de chegada;
+- `muralha` mostra profundidade, mas não entradas, saídas nem quebra de LOS ou
+  cobertura intermediária discernível;
+- `galeria` não mostra a escada/acesso e deixa proteção, quedas e continuidade
+  ambíguas;
+- tijolo vermelho uniforme e caixas de munição repetidas ainda leem como pátio
+  industrial genérico; faltam portal CASA DE DETENÇÃO, massa cinzenta dos
+  pavilhões, ritmo de vãos/grades/peitoris e viatura característica rastreável;
+- os PNGs não provam percurso contínuo das três rotas, subida funcional, entrada
+  nas guaritas, contraste de personagens nem contrafogo em combate.
+
 ## Próximo passo
 
-C2 fecha três rotas spawn→MID e spawn→spawn, waypoints multinível, CTF, matriz
-de LOS, contracoberturas e orçamento 5x5/8x8. A régua deve medir geometria e
-grafo reais, sem confiar em metadados declarativos. Mint não entra antes do C3.
+C3 integra arquitetura e viatura Blender/Mint com proveniência completa, sem
+alterar os volumes competitivos aprovados pelos gates. C4 substitui os
+enquadramentos obstruídos e entrega vídeo contínuo das três rotas, transições
+verticais e entrada nas guaritas, seguido por nova crítica independente e
+aprovação humana. Não avançar o rótulo visual enquanto esses itens estiverem
+pendentes.

@@ -72,12 +72,14 @@ check('PF4', windows.length === 16 && windows.every(validWindow) && rhythm.size 
 
 // Assinatura anterior ao conserto: inclui os contratos funcionais do PR441, não
 // o mapa simplificado anterior à recuperação. O acabamento não desloca circulação.
-const signature = { colliders: world.colliders, spawns: world.spawns, ctfPoints: world.ctfPoints,
-  waypoints: world.waypoints, bounds: world.bounds, pickups: world.pickups.map(({ x, z, kind }) => ({ x, z, kind })) };
+// Waypoints e MID pertencem ao C2 e podem evoluir sem mudar o volume C1. A assinatura
+// conserva colisores, spawns, limites e pickups que a recuperação não pode deslocar.
+const signature = { colliders: world.colliders, spawns: world.spawns,
+  bounds: world.bounds, pickups: world.pickups.map(({ x, z, kind }) => ({ x, z, kind })) };
 const hash = createHash('sha256').update(JSON.stringify(signature)).digest('hex');
 const apoios = world.colliders.filter((c) => String(c.tag).startsWith('torre-muro-apoio-'));
 const torreCheia = world.colliders.some((c) => c.tag === 'torre-muro');
-check('PF5', hash === '1bb17f2abafd1f0e8027fbc50e1926ed17673de5efb7b7b4666b4001959a6960'
+check('PF5', hash === 'cdbc191b38024648b3989a2d363b12521484ec9a51c4375deadefd59e550141e'
   && apoios.length === 8 && !torreCheia,
 `contrato C1 Carandiru com pavilhão oco, 8 apoios e sem volume cheio da guarita (${hash.slice(0, 12)})`);
 const failed = results.filter((r) => !r.ok).map((r) => r.id);

@@ -3,7 +3,9 @@
    Uso: node tools/eval/carandiru-jogabilidade-check.mjs --checkpoint=C1
         node tools/eval/carandiru-jogabilidade-check.mjs --checkpoint=C1 --mutante=muro-sem-acesso
 */
-import { THREE, MAPS, initTextures } from './harness.mjs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { THREE, MAPS, bootGame, initTextures } from './harness.mjs';
 
 const checkpoint = (process.argv.find((a) => a.startsWith('--checkpoint=')) || '=C1').split('=')[1];
 const mutant = (process.argv.find((a) => a.startsWith('--mutante=')) || '=').split('=')[1];
@@ -18,7 +20,8 @@ if (!['C1', 'C2', 'C3', 'C4'].includes(checkpoint)) throw new Error(`checkpoint 
 if (mutant && !mutants[mutant]) throw new Error(`mutante desconhecido: ${mutant}`);
 
 const source = await import('../../public/js/maps.js');
-const world = MAPS.penitenciaria.build(new THREE.Scene(), await initTextures());
+const game = bootGame('penitenciaria', { textures: await initTextures(), bots: 0, seed: 1977 });
+const world = game.world;
 world.root.updateMatrixWorld(true);
 const c = structuredClone(world.carandiru || {});
 if (selftestMutants) Object.assign(c, {
@@ -33,7 +36,7 @@ if (mutant === 'guarita-fechada') c.guardEntries = [];
 if (mutant === 'pavilhao-solido') c.pavilionPassages = [];
 if (mutant === 'escada-decorativa') c.pavilionStairs = [];
 if (mutant === 'rota-unica') c.routes = (c.routes || []).slice(0, 1);
-if (mutant === 'spawn-exposto') c.maxSpawnSight = 4;
+if (mutant === 'spawn-exposto' && selftestMutants) c.maxSpawnSight = 4;
 if (mutant === 'arame-na-passarela') c.wireClearance = 0;
 if (mutant === 'viatura-procedural') c.mintVehicle = false;
 
@@ -49,29 +52,137 @@ const accessSurfaceWorks = (a) => {
     return Math.abs(y - expected) < .01;
   });
 };
+const capsuleFree = (x, y, z, colliders = world.colliders, radius = .38) => {
+  if (colliders !== world.colliders) return !colliders.some((box) => x > box.minX - radius && x < box.maxX + radius
+    && z > box.minZ - radius && z < box.maxZ + radius && box.minY < y + 1.55 && box.maxY > y + .25);
+  const probe = new THREE.Vector3(x, y, z);
+  game._collide(probe, radius);
+  return Math.hypot(probe.x - x, probe.z - z) < 1e-3;
+};
+const pointFree = (x, y, z) => !world.colliders.some((box) => x > box.minX && x < box.maxX
+  && z > box.minZ && z < box.maxZ && box.minY < y + 1.55 && box.maxY > y + .25);
+const samplesOf = (points, spacing = .25) => {
+  const out = [];
+  for (let k = 1; k < points.length; k++) {
+    const a = points[k - 1], b = points[k], length = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    const count = Math.max(1, Math.ceil(length / spacing));
+    for (let i = k === 1 ? 0 : 1; i <= count; i++) {
+      const t = i / count;
+      out.push({ x: a[0] + (b[0] - a[0]) * t, y: a[1] + (b[1] - a[1]) * t,
+        z: a[2] + (b[2] - a[2]) * t, dx: b[0] - a[0], dz: b[2] - a[2] });
+    }
+  }
+  return out;
+};
+const routeMeasurement = (route) => {
+  const samples = samplesOf(route.points || []), blocked = [], unsupported = [], narrow = [];
+  for (const p of samples) {
+    const ground = world.groundHeightAt(p.x, p.z, p.y);
+    if (Math.abs(ground - p.y) > .65) unsupported.push(p);
+    if (!capsuleFree(p.x, p.y, p.z)) blocked.push(p);
+    const length = Math.hypot(p.dx, p.dz) || 1, nx = -p.dz / length, nz = p.dx / length;
+    if (!pointFree(p.x + nx * .6, p.y, p.z + nz * .6) || !pointFree(p.x - nx * .6, p.y, p.z - nz * .6)) narrow.push(p);
+  }
+  const endpoint = (point) => world.nearestWaypoint(point[0], point[2], point[1]);
+  const connected = (points) => {
+    if (!points?.length) return false;
+    const a = endpoint(points[0]), b = endpoint(points.at(-1)), path = world.findPath(a, b);
+    return a === b || path.length > 1 && path[0] === a && path.at(-1) === b;
+  };
+  return { id: route.id, samples: samples.length, blocked: blocked.length, unsupported: unsupported.length,
+    narrow: narrow.length, firstBlocked: blocked[0] && [blocked[0].x, blocked[0].y, blocked[0].z].map((n) => +n.toFixed(2)),
+    firstNarrow: narrow[0] && [narrow[0].x, narrow[0].y, narrow[0].z].map((n) => +n.toFixed(2)),
+    connected: connected(route.points), midConnected: connected(route.midBranch) };
+};
+const routeMetrics = selftestMutants ? [] : (c.routes || []).map(routeMeasurement);
+const routeMids = (c.routes || []).map((route) => route.points?.[Math.floor(route.points.length / 2)]).filter(Boolean);
+const independentRoutes = routeMids.length >= 3 && routeMids.every((a, i) => routeMids.every((b, j) =>
+  i === j || Math.hypot(a[0] - b[0], (a[1] - b[1]) * 2, a[2] - b[2]) >= 6));
+const mid = world.ctfPoints?.find((point) => point.id === 'MID');
+const routesReachMid = selftestMutants || !!mid && /PAVILHÃO 6/i.test(mid.label) && Math.hypot(mid.x, mid.z) <= 1
+  && (c.routes || []).every((route) => {
+    const endpoint = route.midBranch?.at(-1);
+    return endpoint && Math.hypot(endpoint[0] - mid.x, endpoint[2] - mid.z) <= 1;
+  });
+const spawnRouteAccess = selftestMutants || Object.values(world.spawns).flat().every((spawn) => (c.routes || []).every((route) => {
+  const endpoint = spawn.z < 0 ? route.points?.[0] : route.points?.at(-1);
+  if (!endpoint) return false;
+  const from = world.nearestWaypoint(spawn.x, spawn.z, 0), to = world.nearestWaypoint(endpoint[0], endpoint[2], endpoint[1]);
+  const path = world.findPath(from, to);
+  return from === to || path.length > 1 && path.at(-1) === to;
+}));
+const upperNodes = world.waypoints.nodes.filter((n) => n.y > 3.2), wallNodes = upperNodes.filter((n) => n.y > 5.5);
+
+const segmentHits = (a, b, box) => {
+  let enter = 0, exit = 1;
+  for (const [start, end, min, max] of [[a[0], b[0], box.minX, box.maxX], [a[1], b[1], box.minY, box.maxY], [a[2], b[2], box.minZ, box.maxZ]]) {
+    const delta = end - start;
+    if (Math.abs(delta) < 1e-9) { if (start <= min || start >= max) return false; continue; }
+    let lo = (min - start) / delta, hi = (max - start) / delta;
+    if (lo > hi) [lo, hi] = [hi, lo];
+    enter = Math.max(enter, lo); exit = Math.min(exit, hi);
+    if (enter >= exit) return false;
+  }
+  return exit > .02 && enter < .98;
+};
+const losColliders = mutant === 'spawn-exposto'
+  ? world.colliders.filter((box) => !String(box.tag).startsWith('pavilhao-canto')) : world.colliders;
+const visible = (a, b) => !losColliders.some((box) => {
+  const originInside = a[0] > box.minX - .5 && a[0] < box.maxX + .5 && a[1] > box.minY - .5
+    && a[1] < box.maxY + .5 && a[2] > box.minZ - .5 && a[2] < box.maxZ + .5;
+  return !originInside && segmentHits(a, b, box);
+});
+const towerSight = selftestMutants ? [] : (c.watchtowers || []).map((tower) => {
+  const targets = tower.team === 'E' ? world.spawns.B : world.spawns.E;
+  return { name: tower.name, visible: targets.filter((spawn) => visible(tower.eye, [spawn.x, 1.6, spawn.z])).length };
+});
+const maxSpawnSight = selftestMutants ? c.maxSpawnSight : towerSight.length ? Math.max(...towerSight.map((row) => row.visible)) : 4;
+const counterfire = selftestMutants ? c.counterfireRoutes : new Set((c.counterfireVantages || []).filter((vantage) =>
+  (c.watchtowers || []).some((tower) => visible(vantage.eye, tower.eye))).map((vantage) => vantage.route)).size;
+
+const perfPath = (process.argv.find((a) => a.startsWith('--performance=')) || '=tools/eval/carandiru-performance.json').split('=')[1];
+const sourceHash = createHash('sha256').update(readFileSync(new URL('../../public/js/map_penitenciaria.js', import.meta.url))).digest('hex');
+let perf = null;
+if (!selftestMutants && existsSync(perfPath)) perf = JSON.parse(readFileSync(perfPath, 'utf8'));
+const perfRows = perf?.samples || [];
+const perfValid = selftestMutants ? c.cost?.med <= c.cost?.baselineMed * 1.15 && c.cost?.low <= c.cost?.baselineLow * 1.15
+  : perf?.sourceSha256 === sourceHash && ['med', 'low'].every((quality) => [5, 8].every((team) => {
+    const row = perfRows.find((sample) => sample.variant === 'candidate' && sample.quality === quality && sample.team === team);
+    const baseline = perfRows.find((sample) => sample.variant === 'baseline' && sample.quality === quality && sample.team === team);
+    return row?.state === 'live' && baseline?.state === 'live' && row.actualBots === team * 2 - 1
+      && baseline.actualBots === team * 2 - 1 && row.errors?.length === 0 && baseline.errors?.length === 0
+      && row.frames >= 120 && baseline.frames >= 120 && row.callsPerFrame <= baseline.callsPerFrame * 1.15;
+  }));
 const results = [];
 const put = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${detail}`); };
 
 put('CAR1', source.MAPS.penitenciaria?.name === 'Carandiru' && source.MAPS.penitenciaria?.build === MAPS.penitenciaria.build,
   `nome=${source.MAPS.penitenciaria?.name}; ID penitenciaria preservado`);
 const access = c.wallAccesses || [], entries = c.guardEntries || [], walks = c.wallWalkways || [];
-put('CAR2', access.length >= 2 && access.every((a) => named(a.name) && staircaseWorks(a.heights) && accessSurfaceWorks(a))
-  && walks.length >= 3 && walks.every((w) => named(w.name)) && entries.length >= 2 && entries.every(named),
-  `${access.length}/2 acessos; ${walks.length}/3 lados; ${entries.length}/2 guaritas`);
+put('CAR2', access.length >= 4 && access.every((a) => named(a.name) && staircaseWorks(a.heights) && accessSurfaceWorks(a))
+  && new Set(access.map((a) => a.team)).size === 2 && walks.length >= 3 && walks.every((w) => named(w.name))
+  && entries.length >= 4 && entries.every(named),
+  `${access.length}/4 acessos em ${new Set(access.map((a) => a.team)).size}/2 lados de spawn; ${walks.length}/3 passarelas; ${entries.length}/4 guaritas`);
 const passages = c.pavilionPassages || [], pStairs = c.pavilionStairs || [], gallery = c.pavilionGallery;
 put('CAR3', passages.length >= 2 && passages.every((p) => p.width >= 2.2 && named(p.name))
   && pStairs.length >= 1 && pStairs.every((s) => named(s.name) && staircaseWorks(s.heights, 3.3) && accessSurfaceWorks(s))
   && gallery?.connected && named(gallery.name) && (c.pavilionWindows || []).length >= 4
   && !world.colliders.some((x) => x.tag === 'pavilhao'),
   `${passages.length}/2 passagens; ${pStairs.length}/1 escada; galeria=${!!gallery?.connected}`);
-put('CAR4', (c.routes || []).length >= 3 && c.minRouteWidth >= 1.2, `${(c.routes || []).length}/3 rotas; largura ${c.minRouteWidth ?? 'pendente'}`);
-put('CAR5', c.maxSpawnSight <= 2 && c.counterfireRoutes >= 2, `visão ${c.maxSpawnSight ?? 'pendente'}/4; contrafogo ${c.counterfireRoutes ?? 'pendente'}`);
+const car4 = selftestMutants ? (c.routes || []).length >= 3 && c.minRouteWidth >= 1.2
+  : (c.routes || []).length >= 3 && independentRoutes && spawnRouteAccess && routesReachMid && routeMetrics.every((r) =>
+    r.samples > 0 && !r.blocked && !r.unsupported && !r.narrow && r.connected && r.midConnected)
+    && upperNodes.length >= 20 && wallNodes.length >= 10;
+put('CAR4', car4, selftestMutants ? `${(c.routes || []).length}/3 rotas; largura ${c.minRouteWidth ?? 'pendente'}`
+  : `${routeMetrics.map((r) => `${r.id}: b${r.blocked}${r.firstBlocked?`@${r.firstBlocked}`:''}/s${r.unsupported}/e${r.narrow}${r.firstNarrow?`@${r.firstNarrow}`:''}/${r.connected&&r.midConnected?'ligada':'solta'}`).join('; ')}; altos=${upperNodes.length}; muralha=${wallNodes.length}; 3 saídas/spawn=${spawnRouteAccess}; MID P6=${routesReachMid}`);
+put('CAR5', maxSpawnSight <= 2 && counterfire >= 2 && towerSight.every((row) => named(row.name)),
+  `máximo visto=${maxSpawnSight}/4; contrafogo real=${counterfire}/3; ${towerSight.map((row) => `${row.name}:${row.visible}`).join(', ') || 'fixture'}`);
 put('CAR6', c.elevatedCoverage >= .9 && c.wireClearance >= 1.75,
   `piso ${Math.round((c.elevatedCoverage || 0) * 100)}%; altura livre ${c.wireClearance ?? 'pendente'} m`);
 put('CAR7', c.mintVehicle === true && c.vehicleFallback === true && c.vehicleCollider === true,
   `Mint=${!!c.mintVehicle}; fallback=${!!c.vehicleFallback}; colisor=${!!c.vehicleCollider}`);
-put('CAR8', c.cost?.med <= c.cost?.baselineMed * 1.15 && c.cost?.low <= c.cost?.baselineLow * 1.15,
-  `med=${c.cost?.med ?? 'pendente'}; low=${c.cost?.low ?? 'pendente'}`);
+put('CAR8', perfValid, selftestMutants ? `med=${c.cost?.med}; low=${c.cost?.low}`
+  : `recibo=${perf ? 'presente' : 'ausente'}; amostras=${perfRows.length}/8; fonte=${perf?.sourceSha256 === sourceHash ? 'atual' : 'divergente'}`);
 
 const active = checkpoint === 'C1' ? new Set(['CAR1', 'CAR2', 'CAR3', 'CAR6'])
   : checkpoint === 'C2' ? new Set(['CAR1', 'CAR2', 'CAR3', 'CAR4', 'CAR5', 'CAR6', 'CAR8'])
