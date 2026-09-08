@@ -5,7 +5,11 @@
 */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { THREE, MAPS, bootGame, initTextures } from './harness.mjs';
+import { preloadPropGeometry } from './prop-geometry-fixture.mjs';
+import { registerPropTemplate } from '../../public/js/mapprops.js';
 
 const checkpoint = (process.argv.find((a) => a.startsWith('--checkpoint=')) || '=C1').split('=')[1];
 const mutant = (process.argv.find((a) => a.startsWith('--mutante=')) || '=').split('=')[1];
@@ -20,8 +24,28 @@ if (!['C1', 'C2', 'C3', 'C4'].includes(checkpoint)) throw new Error(`checkpoint 
 if (mutant && !mutants[mutant]) throw new Error(`mutante desconhecido: ${mutant}`);
 
 const source = await import('../../public/js/maps.js');
+const mapModule = await import('../../public/js/map_penitenciaria.js');
+const vehicleId = 'carandiru_viatura_1990';
+const vehiclePath = `public/models/props/${vehicleId}.glb`;
+const vehicleExists = existsSync(vehiclePath);
+let vehicleGeometryLoaded = false, vehicleGlb = { triangles: 0, textures: 0, error: 'ausente' };
+if (vehicleExists) {
+  try {
+    const doc = await new NodeIO().registerExtensions(ALL_EXTENSIONS).read(vehiclePath);
+    const primitives = doc.getRoot().listMeshes().flatMap((mesh) => mesh.listPrimitives());
+    vehicleGlb = {
+      triangles: Math.round(primitives.reduce((sum, primitive) => sum
+        + (primitive.getIndices()?.getCount() || primitive.getAttribute('POSITION')?.getCount() || 0) / 3, 0)),
+      textures: doc.getRoot().listTextures().length,
+    };
+    await preloadPropGeometry([vehicleId]);
+    vehicleGeometryLoaded = true;
+  } catch (error) { vehicleGlb = { triangles: 0, textures: 0, error: error.message }; }
+}
 const game = bootGame('penitenciaria', { textures: await initTextures(), bots: 0, seed: 1977 });
 const world = game.world;
+registerPropTemplate(vehicleId, null);
+const fallbackWorld = MAPS.penitenciaria.build(new THREE.Scene(), await initTextures());
 world.root.updateMatrixWorld(true);
 const c = structuredClone(world.carandiru || {});
 if (selftestMutants) Object.assign(c, {
@@ -38,7 +62,7 @@ if (mutant === 'escada-decorativa') c.pavilionStairs = [];
 if (mutant === 'rota-unica') c.routes = (c.routes || []).slice(0, 1);
 if (mutant === 'spawn-exposto' && selftestMutants) c.maxSpawnSight = 4;
 if (mutant === 'arame-na-passarela') c.wireClearance = 0;
-if (mutant === 'viatura-procedural') c.mintVehicle = false;
+if (mutant === 'viatura-procedural') { c.mintVehicle = false; c.vehicleSource = 'fallback'; }
 
 const named = (name) => !!world.root.getObjectByName(name);
 const staircaseWorks = (samples = [], target = 5.7) => samples.length >= 8
@@ -153,6 +177,25 @@ const perfValid = selftestMutants ? c.cost?.med <= c.cost?.baselineMed * 1.15 &&
       && baseline.actualBots === team * 2 - 1 && row.errors?.length === 0 && baseline.errors?.length === 0
       && row.frames >= 120 && baseline.frames >= 120 && row.callsPerFrame <= baseline.callsPerFrame * 1.15;
   }));
+const mintRegistry = JSON.parse(readFileSync('mint-assets.json', 'utf8')).assets?.['carandiru-viatura-1990'];
+const vehicleHash = vehicleExists ? createHash('sha256').update(readFileSync(vehiclePath)).digest('hex') : '';
+const sourceNotes = readFileSync('public/models/props/FONTE.md', 'utf8');
+const provenanceValid = mintRegistry?.files?.includes(vehiclePath)
+  && mintRegistry.source?.kind === 'mint-model' && /^ks[a-z0-9]+$/.test(mintRegistry.source?.assetId || '')
+  && /^https:\/\/mint\.gg\/(?:project|chat)\//.test(mintRegistry.source?.chatUrl || '')
+  && typeof mintRegistry.source?.prompt === 'string' && mintRegistry.source.prompt.length >= 120
+  && typeof mintRegistry.source?.licenseBasis === 'string' && mintRegistry.source.licenseBasis.length >= 20
+  && mintRegistry.processing?.finalSha256 === vehicleHash
+  && sourceNotes.includes(`${vehicleId}.glb`) && sourceNotes.includes(mintRegistry.source.chatUrl || '#');
+const candidateCollider = world.colliders.find((box) => box.tag === 'carro-policia');
+const fallbackCollider = fallbackWorld.colliders.find((box) => box.tag === 'carro-policia');
+const sameVehicleCollider = !!candidateCollider && JSON.stringify(candidateCollider) === JSON.stringify(fallbackCollider);
+const c3ReceiptPath = 'tools/eval/carandiru-c3-browser.json';
+const c3Receipt = existsSync(c3ReceiptPath) ? JSON.parse(readFileSync(c3ReceiptPath, 'utf8')) : null;
+const c3BrowserValid = c3Receipt?.sourceSha256 === sourceHash && c3Receipt?.state === 'live'
+  && c3Receipt?.viewport?.join('x') === '1200x800' && c3Receipt?.vehicle?.source === 'mint'
+  && c3Receipt?.vehicle?.visible === true && c3Receipt?.vehicle?.httpStatus >= 200
+  && c3Receipt?.vehicle?.httpStatus < 300 && c3Receipt?.errors?.length === 0;
 const results = [];
 const put = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${detail}`); };
 
@@ -179,8 +222,11 @@ put('CAR5', maxSpawnSight <= 2 && counterfire >= 2 && towerSight.every((row) => 
   `máximo visto=${maxSpawnSight}/4; contrafogo real=${counterfire}/3; ${towerSight.map((row) => `${row.name}:${row.visible}`).join(', ') || 'fixture'}`);
 put('CAR6', c.elevatedCoverage >= .9 && c.wireClearance >= 1.75,
   `piso ${Math.round((c.elevatedCoverage || 0) * 100)}%; altura livre ${c.wireClearance ?? 'pendente'} m`);
-put('CAR7', c.mintVehicle === true && c.vehicleFallback === true && c.vehicleCollider === true,
-  `Mint=${!!c.mintVehicle}; fallback=${!!c.vehicleFallback}; colisor=${!!c.vehicleCollider}`);
+put('CAR7', c.mintVehicle === true && c.vehicleSource === 'mint' && vehicleGeometryLoaded
+  && vehicleGlb.triangles > 0 && vehicleGlb.triangles <= 8000 && vehicleGlb.textures <= 4
+  && mapModule.PENITENCIARIA_PROPS.includes(vehicleId) && provenanceValid && sameVehicleCollider && c3BrowserValid,
+  `Mint=${!!c.mintVehicle}/${c.vehicleSource || 'ausente'}; GLB=${vehicleGlb.error || `${vehicleGlb.triangles}t/${vehicleGlb.textures}tex`}; `
+  + `registro=${provenanceValid}; fallback/colisor=${sameVehicleCollider}; browser=${c3BrowserValid}`);
 put('CAR8', perfValid, selftestMutants ? `med=${c.cost?.med}; low=${c.cost?.low}`
   : `recibo=${perf ? 'presente' : 'ausente'}; amostras=${perfRows.length}/8; fonte=${perf?.sourceSha256 === sourceHash ? 'atual' : 'divergente'}`);
 

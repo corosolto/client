@@ -110,6 +110,21 @@ resultado como blockout multinível e apontou bloqueios concretos:
 - os PNGs não provam percurso contínuo das três rotas, subida funcional, entrada
   nas guaritas, contraste de personagens nem contrafogo em combate.
 
+## C3 — régua vermelha antes da identidade
+
+- Baseline congelado antes de alterar o mapa em `artifacts/carandiru-c3/before/`:
+  as seis vistas 1200×800 e seus SHA-256 vêm do C2 `f2657143`.
+- Não havia viatura Carandiru em nenhuma branch ou worktree pesquisada. Os quatro
+  GLBs arquitetônicos recuperados continuam com os bytes e hashes do inventário.
+- Projeto Mint criado sem compra de créditos: `zd7agpw4xxat6kytnxka8kj19h8e1969`;
+  chat da viatura modular: `ph7ev8zdhy23p8v1ec4vtjyt058e1r4k`. O prompt exige
+  perua policial brasileira genérica 1980–1990, sem marca/pessoa/cena de violência,
+  até 8 mil triângulos, dimensões e pivô declarados.
+- CAR7 agora exige arquivo GLB parseável, orçamento, preload no mapa, registro Mint
+  com `assetId`/chat/prompt/licença/hash, caminho GLB real e fallback com colisor
+  idêntico, além de recibo Chrome 1200×800 com HTTP 2xx e instância visível.
+  Antes da implementação, C3 reprova somente CAR7; C1/C2 continuam verdes.
+
 ## Próximo passo
 
 C3 integra arquitetura e viatura Blender/Mint com proveniência completa, sem
