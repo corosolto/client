@@ -83,6 +83,8 @@ vento/vegetação de favela já existente no pack, sem criar asset nem caminho n
 - primeiro push: `f4f5cea07d22046a670a6a880f2ae7623a44084f`; o GitHub acusou
   conflito porque `main` avançou durante a abertura do PR.
 - o delta alpha.240 preserva o novo `eval:audioenvelope` e todos os gates da raiz.
+- merge da ponta alpha.240: `28a1d822`; `check:deploy` pós-commit 37/37 em
+  100,7 s, `audioenvelope` e VM14 verdes, ambos os mutantes vermelhos.
 - `main` ocupou BUG-145 nesse delta para o defeito de envelope de áudio; VM14 foi
   desambiguado novamente como BUG-146, sem mudar sua régua ou correção.
 
