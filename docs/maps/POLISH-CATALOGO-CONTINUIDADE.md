@@ -110,8 +110,9 @@ triângulos por vista**, não 48 malhas novas.
 | vistas fixas, calls | 712 · 614 · 567 · 653 | 715 · 619 · 570 · 656 |
 | low: calls/quadro · triângulos | — | 464 · 518.079 |
 
-`PF5` continua com o mesmo hash `602d8a00ef9c`: **colisão, navegação, spawns, CTF e pickups
-preservados**. Verdes: `eval:penitenciaria`, `penitenciariavida`, `penitenciariafacade`,
+Na raiz v2, `PF5` usa o hash `57052d4b94a8` depois de o BUG-146 trocar o volume cheio
+das guaritas pelos oito apoios. O passe de UV e janelas preserva esse contrato de
+**colisão, navegação, spawns, CTF e pickups**. Verdes: `eval:penitenciaria`, `penitenciariavida`, `penitenciariafacade`,
 `mapcontrato`, `spawn`, `ctfround`, `ctfwin`, `shaderbudget`, `cena`. Zero erro JS em med e
 low. Capturas em `artifacts/mapas-polish/lote-b/pen-depois{,-low}/`.
 
