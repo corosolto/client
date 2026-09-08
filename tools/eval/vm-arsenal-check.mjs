@@ -85,7 +85,10 @@ for (const c of dados) {
   if (!c.arma_diag_px) continue;
   // Chave inclui a FONTE: comparar wrap Mint com malha do pack mede a troca de
   // malha, não escala em fuga (foi o falso vermelho `ak 554 ÷ m92 344`).
-  const f = `${FAMILIA[c.arma] || c.arma}/${c.fonte || 'ignorada'}`;
+  /* Chave inclui fonte E pipeline: a `ak` assada mede 489 px e a `akm`/`m92`
+     encaixadas medem 616/624 na MESMA familia — 1,26×, que e diferenca de pipeline,
+     nao arma fora de escala. Medido duas vezes, identico. */
+  const f = `${FAMILIA[c.arma] || c.arma}/${c.fonte || 'ignorada'}/${c.assada ? 'assada' : 'encaixada'}`;
   const d = porFamilia.get(f) || new Map();
   d.set(c.arma, Math.max(d.get(c.arma) || 0, c.arma_diag_px));
   porFamilia.set(f, d);

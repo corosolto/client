@@ -118,8 +118,32 @@ const MEDIR = (arma) => {
     for (const a of maoPx) for (const b of armaPx) { const d = Math.hypot(a.x - b.x, a.y - b.y); if (d < contato) contato = d; }
     contato = Math.round(contato);
   }
+  /* Espacamento da amostra: mediana da distancia ao vizinho mais proximo DENTRO da
+     nuvem da arma. O contato em px cresce sozinho quando a arma ocupa mais tela — sem
+     esta escala nao se separa "mao solta" de "amostra rala". */
+  let espacamento = null;
+  if (armaPx.length > 8) {
+    const passoE = Math.max(1, Math.floor(armaPx.length / 120));
+    const dists = [];
+    for (let i = 0; i < armaPx.length; i += passoE) {
+      let melhor = 1e9;
+      for (let k = 0; k < armaPx.length; k += 1) {
+        if (k === i) continue;
+        const d = Math.hypot(armaPx[i].x - armaPx[k].x, armaPx[i].y - armaPx[k].y);
+        if (d < melhor) melhor = d;
+      }
+      dists.push(melhor);
+    }
+    dists.sort((a, b) => a - b);
+    espacamento = Math.round(dists[Math.floor(dists.length / 2)] * 10) / 10;
+  }
   return {
     maoEmQuadro: maoPx.length, maoAmostra: maoPts.length,
+    espacamento_px: espacamento,
+    // assada (Mint dentro do GLB) ou encaixada em runtime: sao dois pipelines de
+    // escala, e comparar um com o outro produz "escala em fuga" que nao existe.
+    assada: !!window.__VM_BAKED?.[arma],
+    contato_em_espacamentos: (contato !== null && espacamento) ? Math.round(contato / espacamento * 100) / 100 : null,
     armaEmQuadro: armaPx.length, armaAmostra: armaPts.length,
     contato_px: contato,
     arma_diag_px: maxX > minX ? Math.round(Math.hypot(maxX - minX, maxY - minY)) : 0,
@@ -161,6 +185,8 @@ try {
   await page.evaluate(async () => {
     const m = await import('/js/data/weapons.js');
     window.__WEAPONS_SCOPE = Object.fromEntries(Object.entries(m.WEAPONS).map(([k, v]) => [k, !!v.scope]));
+    const c = await import('/js/data/vmconfig.js');
+    window.__VM_BAKED = Object.fromEntries(Object.entries(c.VM_WEAPON).map(([k, v]) => [k, !!v.baked]));
   });
   const lista = ARMAS.length ? ARMAS : await page.evaluate(() => window.__game.player.inventarioQA || null);
   relatorio.solicitadas = lista;   // inventário declarado: o portão reprova o que não foi medido
@@ -174,13 +200,23 @@ try {
     /* 1,4 s pegava o arco de equip em voo (a mão ainda subindo, fora do quadro) e a
        medida saía 0 com a arma já em quadro — falso vermelho. Espera a contagem de
        mão estabilizar entre duas amostras antes de capturar. */
-    let esperou = 0;
-    for (let i = 0; i < 15; i += 1) {
+    /* Presenca NAO basta: durante o arco de equip a arma ainda se aproxima, e a
+       diagonal aparente do mesmo par de armas chegou a inverter entre rodadas
+       (akm 616 numa, 450 noutra). Espera a diagonal parar de andar (<3% entre duas
+       amostras) antes de capturar. */
+    let esperou = 0, diagAnterior = -1, assentou = false;
+    for (let i = 0; i < 20; i += 1) {
       await page.waitForTimeout(400);
       esperou += 400;
       const m = await page.evaluate(MEDIR, arma);
-      if (m.maoEmQuadro > 0 && m.armaEmQuadro > 0 && esperou >= 1200) break;
+      if (m.maoEmQuadro > 0 && m.armaEmQuadro > 0 && esperou >= 1200) {
+        const d = m.arma_diag_px || 0;
+        if (diagAnterior > 0 && Math.abs(d - diagAnterior) / diagAnterior < 0.03) { assentou = true; break; }
+        diagAnterior = d;
+      }
     }
+    relatorio.assentou = relatorio.assentou || {};
+    relatorio.assentou[arma] = assentou;   // false = capturou sem assentar, o dado avisa
     relatorio.esperas = relatorio.esperas || {};
     relatorio.esperas[arma] = esperou;   // se bateu no teto, o viewmodel nao assentou
     await capturar(page, arma, 'idle');
