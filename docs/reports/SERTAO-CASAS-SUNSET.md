@@ -224,7 +224,7 @@ carroças e as seis capturas originais do dono.
 ## Fechamento WebGL de 08/09/2026
 
 A lacuna acima foi fechada em navegador real, a 1536×1024 (3:2), sobre a branch
-atualizada com `origin/main` alpha.239. As vistas `praca`, `venda`, `leste` e
+atualizada com `origin/main` alpha.240. As vistas `praca`, `venda`, `leste` e
 `aerea` foram abertas e examinadas. O mapa lê como Sertão pelo casario, igreja,
 mandacarus, caminhão, praça, solo seco e luz quente; as rotas e os vãos das casas
 continuam distinguíveis. Limitações visuais honestas: algumas pedras e props de
@@ -292,3 +292,20 @@ personagens contra cada fundo. A sensação de combate nas novas casas, a
 quantidade ideal de fauna em uma partida longa e a leitura do limite aéreo do
 mapa continuam sendo julgamentos humanos. Não foram adicionados novos assets sem
 procedência e não há publicação de produção nesta frente.
+
+## Revalidação pós-main alpha.240
+
+Depois do merge `74d6a748`, RV1–RV12 voltaram a passar em navegador 3:2 com os
+mesmos máximos de 499 draw calls, 349.175 triângulos e 82 texturas; o mutante
+`interiores-sem-batch` elevou o pico a 564 e reprovou somente RV3. C18/C18R e
+LG1–LG8 também passaram novamente. A mudança da casa que abriu o gargalo tornou
+o antigo mutante `barril-na-parede` inerte; a posição da mutação foi corrigida
+para invadir a geometria atual e IN6 voltou a mordê-la, mantendo 14/14 mutantes
+de interiores. Evidência fresca: `artifacts/sertao-casas/final-alpha240/`.
+
+O build Astro alpha.240 passou. `docs:check`, `arch:check`, `changelog:check` e o
+novo `eval:audioenvelope` da main passaram. A régua global de look mantém a
+vermelha herdada do `sky_amazonia.webp` ausente no acervo local; o par do Sertão
+continua com fog e horizonte iguais (`#d7a477`, ΔE76 0). `assert:assets` mantém a
+vermelha herdada dos 17 áudios de ambiente legados ausentes no pacote oficial
+v8; decalques e procedência dos assets visuais passaram.

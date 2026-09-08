@@ -275,16 +275,20 @@ falhar, manter produção atual e não misturar este trabalho com armas/viewmode
 
 Objetivo: fechar o mapa Sertão com evidência técnica e visual antes de integrar.
 Worktree exclusivo: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/sertao-casas-por-do-sol`;
-branch `astra/sertao-praca-casas-por-do-sol`, baseada em `main` alpha.239.
+branch `astra/sertao-praca-casas-por-do-sol`, integrada com `main` alpha.240 no
+commit `74d6a748`.
 
 Validado: IN1–IN11, 14 mutantes de interiores, SP1–SP9, RV1–RV12 em WebGL
 1536×1024, contraste C18/C18R com inimigo real e mutante sem rim, e fauna Mint
 LG1–LG8 com duas cabras, galinha e três pintinhos. O batch dos interiores reduz
 564 para 499 draw calls e seu mutante reprova RV3. Artefatos ficam sob
-`artifacts/sertao-casas/{runtime-final-v2,livestock-final,contrast-final}`. Relatório
+`artifacts/sertao-casas/{runtime-final-v2,livestock-final,contrast-final}` e a
+revalidação pós-main em `artifacts/sertao-casas/final-alpha240/`. Relatório
 completo: `docs/reports/SERTAO-CASAS-SUNSET.md`.
 
-Próximo passo: rodar gates finais, build e checks remotos; publicar esta branch e
-integrar o PR #526 quando o GitHub confirmar merge limpo. Riscos restantes são
+Próximo passo: publicar esta branch, acompanhar os checks remotos e integrar o
+PR #526 quando o GitHub confirmar merge limpo. O build alpha.240 passou; o
+`assert:assets` local continua vermelho pelos 17 áudios legados ausentes no
+pacote oficial v8, enquanto os assets visuais e decalques passam. Riscos restantes são
 de julgamento humano: combate prolongado dentro das casas, amostra de contraste
 de todo o elenco e acabamento low-poly de alguns props do perímetro.

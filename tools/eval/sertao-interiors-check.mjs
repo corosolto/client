@@ -87,7 +87,9 @@ if (mutant) {
   } else if (mutant === 'barril-na-parede') {
     const c=world.colliders.find(c=>Math.abs(c.minX+17.62)<EPS&&Math.abs(c.maxY-1)<EPS);
     if(!c) throw Error('Mutante não aplicou: barril ausente');
-    c.minZ=9.88;c.maxZ=11.12;
+    // A casa pau-a-pique vizinha mudou de z=7,5 para 6,7 ao abrir o gargalo
+    // dos bots. Invade a geometria atual sem remover o barril da amostra IN6.
+    c.minZ=8.68;c.maxZ=9.92;
   } else {
     const inside = new Set(world.waypoints.nodes.flatMap((n,i) => Math.abs(n.x-x)<3.5 && Math.abs(n.z-z)<3.1 ? [i]:[]));
     if (!inside.size) throw Error('Mutante não aplicou: nós internos ausentes');
