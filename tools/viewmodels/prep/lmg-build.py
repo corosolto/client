@@ -318,8 +318,7 @@ def main():
                 track.mute = track.name != 'idle'
     scene.frame_set(2)
     bpy.context.view_layer.update()
-    hold = {name: arms.pose.bones[name].matrix_basis.copy()
-            for name in ('ik_hand_gun', 'spine_03', 'ik_hand_l')}
+    hold = {bone.name: bone.matrix_basis.copy() for bone in arms.pose.bones}
     for o in scene.objects:
         if o.animation_data:
             o.animation_data.action = None
@@ -343,6 +342,17 @@ def main():
               (12, hold['spine_03'].copy())]),
     ):
         for frame, mat in keys:
+            pbone.matrix_basis = mat
+            key_basis(pbone, frame)
+        pbone.matrix_basis = Matrix.Identity(4)
+    # O exportador escreve canais para o rig inteiro. Como o `idle` foi mutado
+    # para assar o shoot, cada osso sem chave explícita cairia no rest pose;
+    # mantenha a pega/dedos da idle e deixe o recoil só nos dois controllers acima.
+    for name, mat in hold.items():
+        if name in ('ik_hand_gun', 'spine_03'):
+            continue
+        pbone = arms.pose.bones[name]
+        for frame in (1, 12):
             pbone.matrix_basis = mat
             key_basis(pbone, frame)
         pbone.matrix_basis = Matrix.Identity(4)

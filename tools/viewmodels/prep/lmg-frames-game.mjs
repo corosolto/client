@@ -58,29 +58,34 @@ async function medir(page, cenario, detalhe) {
       return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, fora: p.z > 1 || p.x < -1.05 || p.x > 1.05 || p.y < -1.05 || p.y > 1.05 };
     };
     const V3 = e.mount.position.constructor;
-    const amostra = (obj, maxPts) => {
+    const amostra = (meshes, maxPts) => {
       const pts = [];
-      obj?.traverse((c) => {
-        if (!c.isMesh || !c.geometry?.attributes?.position) return;
+      const total = meshes.reduce((sum, c) => sum + c.geometry.attributes.position.count, 0) || 1;
+      for (const c of meshes) {
         const pos = c.geometry.attributes.position;
-        const step = Math.max(1, Math.floor(pos.count / maxPts));
+        const step = Math.max(1, Math.floor(total / maxPts));
         const v = new V3();
         for (let i = 0; i < pos.count; i += step) {
           v.fromBufferAttribute(pos, i);
           if (c.isSkinnedMesh && c.applyBoneTransform) c.applyBoneTransform(i, v);
           pts.push(v.clone().applyMatrix4(c.matrixWorld));
         }
-      });
+      }
       return pts;
     };
     const cena = e.scene;
     cena.updateWorldMatrix(true, true);
-    const luvaPts = amostra(cena.getObjectByName('GEO_FP_SK_Glove_01'), 260);
-    const armaObj = cena.getObjectByName('GEO_LMG_MINT_BODY') || e.mint?.active || cena;
-    const armaPts = [];
-    for (const n of ['GEO_LMG_MINT_BODY', 'GEO_LMG_MINT_COVER', 'GEO_LMG_MINT_BOX']) {
-      armaPts.push(...amostra(cena.getObjectByName(n), 200));
-    }
+    const eMao = (name) => /GEO_FP_SK_|fp-character|(^|[_.\-])(glove|hand|forearm|sleeve|cloth)/i.test(name || '');
+    const visivel = (obj) => { let p = obj; while (p) { if (!p.visible) return false; p = p.parent; } return true; };
+    const luvas = [], armas = [];
+    cena.traverse((c) => {
+      if (!c.isMesh || !c.geometry?.attributes?.position || !visivel(c)) return;
+      let p = c.parent, mao = eMao(c.name);
+      while (!mao && p) { if (/fp-character/i.test(p.name || '')) mao = true; p = p.parent; }
+      (mao ? luvas : armas).push(c);
+    });
+    const luvaPts = amostra(luvas, 300);
+    const armaPts = amostra(armas, 300);
     let handIn = 0;
     const luvaPx = [];
     for (const p of luvaPts) {
@@ -126,7 +131,7 @@ async function capturar(page, cenario, detalhe) {
   const m = await medir(page, cenario, detalhe);
   const nome = `${cenario}${detalhe ? '-' + detalhe : ''}`.replace(/[^a-z0-9-]/gi, '_');
   await page.screenshot({ path: path.join(OUT, `${nome}.png`) });
-  console.log(`${cenario}/${detalhe}: hand ${m.handIn}/${m.handTotal} contato ${m.contatoPx}px diag ${m.arma_diag_px}px`);
+  console.log(`${cenario}/${detalhe}: hand ${m.handIn}/${m.handTotal} contato ${m.contato_px}px diag ${m.arma_diag_px}px`);
 }
 
 try {
@@ -186,6 +191,10 @@ try {
       await page.evaluate(({ arma, t }) => {
         const e = window.__authoredVm.entry(arma);
         e.action.time = Math.min(t, e.action.getClip().duration - 1e-4);
+        // `action.time` só vira pose após o mixer avaliar; sem isto o primeiro
+        // scrub mede a pose anterior enquanto a captura já mostra o novo frame.
+        e.mixer.update(0);
+        e.scene.updateWorldMatrix(true, true);
       }, { arma: ARMA, t: dur * f });
       await page.waitForTimeout(220);
       await capturar(page, clipe, `f${String(Math.round(f * 100)).padStart(3, '0')}`);

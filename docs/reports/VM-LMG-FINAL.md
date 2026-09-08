@@ -74,6 +74,31 @@ malha da arma em muitos frames; ela é evidência de instrumentação incompleta
 não um gate de aceite. `lmg.ready` continua `false`; faltam a régua que morde
 por mão e uma nova correção autorada, seguida de revisão humana do Ruben.
 
+### Retomada Codex (08/09, checkpoint parcial; ainda reprovada)
+
+O commit herdado `188e0801` corrigiu a procedência dos screenshots: o frame
+humano 15.47.19 é AWP, e o diagnóstico transversal vive separadamente em
+`VM-ARSENAL-COLETA-2026-09-07.md`. A coleta isolada da LMG, contra o GLB
+rejeitado e com a projeção por malhas visíveis, achou outro defeito real:
+`lmg/fire` tinha mão `0/306` com arma `306/306`. A causa era o clipe `shoot`
+assado sem baseline da ação `idle`: ao mutar idle, ossos sem chave voltavam ao
+rest pose.
+
+O autor agora assa a base idle para todos os ossos do braço e aplica recoil
+somente em `ik_hand_gun` e `spine_03`. No jogo real, o pico de fire passou para
+286/306 pontos de mão em 3:2 (contato 1 px) e 282/306 em 16:9 (0 px); os gates
+de duração/eventos/envelope e seus três mutantes continuam verdes. A coleta
+específica corrigida também mede primeiro/segundo equip, idle, ADS e ambas as
+recargas: 3:2 fica entre 281–305/307 mãos e 0–4 px de contato; 16:9, entre
+256–302/307 e 0–4 px.
+
+Isso NÃO fecha a LMG. Na inspeção visual de
+`game-frames/lmg-pos-shoot-2-dupla-sync-32/reload_tactical-f036.png`, a mão de
+apoio ainda não está legível em contato. A métrica atual agrega as duas mãos e
+pode passar porque a mão forte toca o punho; antes de nova correção é preciso
+separar mão de apoio/mão forte na régua. `lmg.ready:false` permanece, sem
+merge, release ou pedido de revisão humana.
+
 ## O que fica de aproveitável (infraestrutura verificada)
 
 - Pipeline: `lmg-build.py` (Blender; Mint + peças skinned nos bones reais +
