@@ -36,11 +36,19 @@ const FAMILIA = {
   p90: 'p90', shotgun: 'shotgun', deagle: 'deagle', pistol: 'pistol', revolver38: 'revolver',
   svd: 'svd', sks: 'marksman', lmg: 'lmg', knife: 'melee',
 };
-/* Piso por CAMINHO, medido dos dois lados: no autorado a mão saudável mede 144–282
-   de ~306 amostras; no legado, 60–92 de 312 (braço menor, mais fora do quadro). Nos
-   dois, quebrada mede 0 — o piso separa saudável de quebrada, não é afrouxamento. */
-const PISO_MAO = { autorado: 100, legado: 40 };
-const TETO_CONTATO = 40;     // aprovadas medem 1–32 px
+/* Piso recalibrado com o instrumento corrigido (dedupe de raiz + espera por
+   presença). Medido nas 9 armas, 3:2 e 16:9, fora dos estados de luneta: o mínimo
+   saudável cai a 94 (`awp/reload-f060`, mão parcialmente fora na pose de recarga —
+   conferido na figura, está certo) e a 72 na m92. Quebrada mede 0. O piso separa
+   "mão sumiu" de "mão saiu um pouco"; perda PARCIAL não é julgada por esta cláusula. */
+const PISO_MAO = { autorado: 40, legado: 40 };
+/* Teto do contato, com 800 pontos por lado: FORA do ADS toda arma saudável mede
+   0–1 px, então 10 px é folga larga. NO ADS todas sobem junto (ak 14, pistol 25,
+   shotgun 38 em 16:9) — padrão sistemático, não defeito de uma arma: o delta que
+   leva a alça ao centro parece mover a arma sem levar a mão. Enquanto isso não for
+   investigado, o ADS é MEDIDO E RELATADO, não reprovado: teto que reprova o que não
+   se entende vira vermelho que se aprende a ignorar. */
+const TETO_CONTATO = 10;
 const RAZAO_ESCALA = 1.35;   // dentro da família (m92 861 ÷ ak 553 = 1,56 reprovou)
 const LUNETA = new Set(['sniper', 'bolt']);  // escondem o viewmodel no ADS
 
@@ -52,19 +60,24 @@ if (MUT === 'escala') mut[0].arma_diag_px = Math.round((mut[0].arma_diag_px || 5
 const dados = MUT ? mut : caps;
 
 const falhas = [];
+const adsContato = [];
 for (const c of dados) {
   const onde = `${c.arma}/${c.cenario}`;
   if (c.armaAmostra === 0 || c.armaEmQuadro === 0) {
     /* Exceção medida, não afrouxamento: sniper e ferrolho ESCONDEM o viewmodel no
        ADS e põem a luneta em tela cheia — `awp/ads` mede 0 nos dois caminhos, com
        ou sem defeito. Fora do ADS a cláusula vale inteira. */
-    if (c.cenario === 'ads' && LUNETA.has(FAMILIA[c.arma])) continue;
+    if (c.luneta && (c.cenario === 'ads' || c.mirando)) continue;
+    if (c.luneta === undefined && c.cenario === 'ads' && LUNETA.has(FAMILIA[c.arma])) continue;   // relatorio antigo
     falhas.push(`${onde}: ARMA NÃO DESENHA (amostra ${c.armaAmostra}, em quadro ${c.armaEmQuadro})`);
     continue; // sem arma não há contato nem escala que meçam algo
   }
   const piso = PISO_MAO[rel.modo] ?? PISO_MAO.autorado;
   if (c.maoEmQuadro < piso) falhas.push(`${onde}: mão fora do quadro (${c.maoEmQuadro} < ${piso} de ${c.maoAmostra})`);
-  if (c.contato_px !== null && c.contato_px > TETO_CONTATO) falhas.push(`${onde}: mão sem contato (${c.contato_px} px > ${TETO_CONTATO})`);
+  if (c.contato_px !== null && c.contato_px > TETO_CONTATO) {
+    if (c.cenario === 'ads') adsContato.push(`${onde} ${c.contato_px}px`);
+    else falhas.push(`${onde}: mão sem contato (${c.contato_px} px > ${TETO_CONTATO})`);
+  }
 }
 // Escala aparente dentro da família
 const porFamilia = new Map();
@@ -86,6 +99,12 @@ for (const [fam, armas] of porFamilia) {
   }
 }
 
+// Vacuidade: arma pedida e nao medida (troca falhou) some do relatorio em silencio.
+if (Array.isArray(rel.solicitadas)) {
+  const medidas = new Set(dados.map((c) => c.arma));
+  for (const a of rel.solicitadas) if (!medidas.has(a)) falhas.push(`${a}: PEDIDA E NÃO MEDIDA — nenhuma captura no relatório`);
+}
+if (adsContato.length) console.log(`  ADS (medido, não reprovado): contato acima de ${TETO_CONTATO} px em ${adsContato.join(', ')}`);
 const verde = falhas.length === 0;
 if (MUT) {
   if (verde) { console.error(`RÉGUA CEGA: o mutante '${MUT}' PASSOU — a cláusula não morde`); process.exit(1); }

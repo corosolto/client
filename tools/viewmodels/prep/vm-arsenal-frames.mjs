@@ -63,10 +63,15 @@ const MEDIR = (arma) => {
   const eMao = (n) => /GEO_FP_SK_|fp-character|(^|[_.\-])(glove|hand|forearm|sleeve|cloth)/i.test(n || '');
   const visivel = (o) => { let p = o; while (p) { if (!p.visible) return false; p = p.parent; } return true; };
   const maos = [], armas = [], invMao = [], invArma = [];
+  // `entry.scene` pende de `vm.root`: sem dedupe a mesma malha entra duas vezes e
+  // a amostra vira metade do que diz ser.
+  const vistas = new Set();
   for (const r of raizes) {
     r.updateWorldMatrix(true, true);
     r.traverse((c) => {
       if (!c.isMesh || !c.geometry?.attributes?.position || !visivel(c)) return;
+      if (vistas.has(c)) return;
+      vistas.add(c);
       let n = c.name || '', p = c.parent, mao = eMao(n);
       while (!mao && p) { if (/fp-character/i.test(p.name || '')) mao = true; p = p.parent; }
       (mao ? maos : armas).push(c);
@@ -93,7 +98,10 @@ const MEDIR = (arma) => {
     const p = v.clone().project(cam);
     return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, fora: p.z > 1 || p.z < -1 || p.x < -1 || p.x > 1 || p.y < -1 || p.y > 1 };
   };
-  const maoPts = amostrar(maos, 300), armaPts = amostrar(armas, 300);
+  /* 300 pontos por lado davam 41 px num par de mãos que a figura mostra ENCOSTADO
+     (pistol/ads) contra 49 px numa mão comprovadamente solta (shotgun/ads): o teto
+     caía dentro do ruído da amostra. Resolução maior separa os dois casos. */
+  const maoPts = amostrar(maos, 800), armaPts = amostrar(armas, 800);
   const maoPx = [], armaPx = [];
   for (const p of maoPts) { const s = proj(p); if (!s.fora) maoPx.push(s); }
   let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
@@ -124,6 +132,10 @@ const MEDIR = (arma) => {
        conserto do encaixe uma familia pode cair no pack enquanto o GLB de mundo
        nao chega (vmweapon.js pedirModeloDeMundo). */
     fonte: (ent?.mint?.weaponId === arma && ent.mint.active?.visible) ? 'mint' : (armas.length ? 'pack' : 'nenhuma'),
+    /* Arma com luneta esconde o viewmodel enquanto mirada (game.js `_scope`): medir
+       0 ali e estado legitimo, nao defeito. Vem do dado do jogo, nao de lista minha. */
+    luneta: !!(window.__WEAPONS_SCOPE?.[arma]),
+    mirando: !!g.player?.scoped,
   };
 };
 
@@ -145,17 +157,48 @@ try {
   await page.goto(`${BASE}/?${q}`, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.waitForTimeout(2500);
+  // expoe o flag de luneta do dado do jogo para a medicao ler
+  await page.evaluate(async () => {
+    const m = await import('/js/data/weapons.js');
+    window.__WEAPONS_SCOPE = Object.fromEntries(Object.entries(m.WEAPONS).map(([k, v]) => [k, !!v.scope]));
+  });
   const lista = ARMAS.length ? ARMAS : await page.evaluate(() => window.__game.player.inventarioQA || null);
+  relatorio.solicitadas = lista;   // inventário declarado: o portão reprova o que não foi medido
   for (const arma of lista) {
-    const trocou = await page.evaluate((w) => { try { window.__game._switchWeapon(w); return window.__game.player.weapon === w; } catch (e) { return String(e).slice(0, 80); } }, arma);
+    let trocou = false;
+    for (let t = 0; t < 3 && trocou !== true; t += 1) {
+      trocou = await page.evaluate((w) => { try { window.__game._switchWeapon(w); return window.__game.player.weapon === w; } catch (e) { return String(e).slice(0, 80); } }, arma);
+      if (trocou !== true) await page.waitForTimeout(600);
+    }
     if (trocou !== true) { console.log(`${arma}: troca falhou (${trocou})`); continue; }
-    await page.waitForTimeout(1400);
+    /* 1,4 s pegava o arco de equip em voo (a mão ainda subindo, fora do quadro) e a
+       medida saía 0 com a arma já em quadro — falso vermelho. Espera a contagem de
+       mão estabilizar entre duas amostras antes de capturar. */
+    let esperou = 0;
+    for (let i = 0; i < 15; i += 1) {
+      await page.waitForTimeout(400);
+      esperou += 400;
+      const m = await page.evaluate(MEDIR, arma);
+      if (m.maoEmQuadro > 0 && m.armaEmQuadro > 0 && esperou >= 1200) break;
+    }
+    relatorio.esperas = relatorio.esperas || {};
+    relatorio.esperas[arma] = esperou;   // se bateu no teto, o viewmodel nao assentou
     await capturar(page, arma, 'idle');
     await page.mouse.down({ button: 'right' });
     await page.waitForTimeout(600);
     await capturar(page, arma, 'ads');
     await page.mouse.up({ button: 'right' });
-    await page.waitForTimeout(300);
+    /* Arma com luneta usa ADS em ALTERNANCIA (game.js: "so solta o ADS das
+       nao-sniper"): soltar o botao nao desmira. Sem este toggle as capturas
+       seguintes saem todas com o viewmodel escondido — falso vermelho meu. */
+    for (let i = 0; i < 10; i += 1) {
+      const mirando = await page.evaluate(() => !!window.__game.player?.scoped);
+      if (!mirando) break;
+      await page.mouse.down({ button: 'right' });
+      await page.mouse.up({ button: 'right' });
+      await page.waitForTimeout(350);
+    }
+    await page.waitForTimeout(500);
     await page.mouse.down({ button: 'left' });
     await page.waitForTimeout(90);
     await capturar(page, arma, 'fire');
