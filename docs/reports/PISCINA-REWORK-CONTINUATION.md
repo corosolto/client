@@ -10,7 +10,7 @@ fundação de mapas. O contrato completo está em `plans/25-PISCINA-DA-TRETA-REW
 - Base e HEAD inicial: `3880380165c170c0e694c28088876e396d5a1e29`.
 - Estado inicial confirmado limpo: `## codex/mapa-piscina-rework...origin/main`.
 - Node usado: `/opt/homebrew/bin/node` v23.6.0; dependências próprias via `npm ci`.
-- Escopo desta etapa: dois documentos e artefatos locais ignorados. Nenhuma alteração em
+- Escopo desta etapa: dois documentos, uma régua isolada e artefatos locais ignorados. Nenhuma alteração em
   `public/js/map_piscina.js`, arquivos compartilhados, assets, lockfile ou outro checkout.
 
 ## Fontes consultadas
@@ -139,7 +139,7 @@ PATH=/opt/homebrew/bin:/usr/bin:/bin node tools/eval/lajes-performance-browser.m
 PATH=/opt/homebrew/bin:/usr/bin:/bin BASE=http://127.0.0.1:8147 ONLY=piscina_treta node tools/eval/gl-shots.mjs artifacts/piscina-rework/baseline/shots game
 ```
 
-Depois do sinal e da implementação, além da futura régua PIS1–PIS6 e seus mutantes:
+Régua atual e, depois do sinal, validação final:
 
 ```bash
 PATH=/opt/homebrew/bin:/usr/bin:/bin node tools/eval/piscina-rework-check.mjs
@@ -150,11 +150,16 @@ PATH=/opt/homebrew/bin:/usr/bin:/bin npm run build
 git diff --check
 ```
 
-O arquivo `piscina-rework-check.mjs` ainda não existe: criá-lo vermelho é o primeiro ato
-autorizado depois da rebaseline da fundação, antes de qualquer edição no mapa.
+O verificador já existe e está vermelho no baseline: PIS1/PIS2/PIS3/PIS6 falham e PIS4
+passa (exit 1). Mediu zero nós no corredor, mínimo de duas rotas, fileiras de armários
+com span 3,96 m, zero amostras elevadas e zero loops/shots de mapa. Os mutantes foram
+implementados sobre mundos frescos: `spawn-deslocado` já morde PIS4 isoladamente; os sete
+alvos ainda vermelhos retornam `INCONCLUSIVO`, resultando exit 2 no lote, nunca uma falsa
+mordida. Depois da fundação, reexecutar o baseline e fazer cada mutante ficar `MORDIDO`
+isolado à medida que sua cláusula for corrigida.
 
 ## Próximo passo
 
-Aguardar sinal explícito sobre a fundação. Depois: atualizar SHA e baseline, escrever
-PIS1–PIS6 vermelho no mundo real, implementar B1→B2→B3 sequencialmente, morder os
+Aguardar sinal explícito sobre a fundação. Depois: atualizar SHA e baseline, reexecutar
+PIS1–PIS4/PIS6 no mundo real, implementar B1→B2→B3 sequencialmente, morder os
 mutantes, repetir 5×5/8×8 med/low e entregar capturas 3:2 para aceite humano do dono.
