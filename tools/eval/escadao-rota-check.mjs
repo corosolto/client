@@ -6,8 +6,8 @@
    1) CONECTIVIDADE. Os lances NÃO são lidos de `world.stairs` (a declaração omite as duas
       escadas de beco, que são justamente as que o dono conta). São DESCOBERTOS varrendo o
       campo `groundHeightAt` atrás de células em rampa e agrupando-as. Para cada lance a régua
-      ANDA o caminho de verdade com `Game._retaAndavel` (raio 0,42 m, degrau 0,30 m — os mesmos
-      defaults do jogo, que por baixo chamam `Game._collide` contra os colisores REAIS). Um
+      ANDA o caminho de verdade com `Game._retaAndavel` (raio 0,38 m, degrau 0,30 m — a cápsula usada em movimento
+      por jogadores e bots no jogo, que por baixo chamam `Game._collide` contra os colisores REAIS). Um
       lance só passa se: tem boca embaixo, tem boca em cima, e a região alcançável a partir da
       boca de cima — COM as células do próprio lance removidas, para que descer de volta não
       conte como saída — tem área ≥ MIN_AREA e contém pelo menos um destino de jogo (spawn,
@@ -33,7 +33,7 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 
 const GRID = 0.5;          // passo da malha navegável (menor que o diâmetro do corpo)
 const GRID_LOS = 1.0;      // passo da varredura de linha de visão (raycast é caro)
-const R = 0.42;            // raio do corpo — default de Game._retaAndavel/_collide
+const R = 0.38;            // cápsula real usada pelos jogadores e bots em movimento
 const DEGRAU = 0.30;       // degrau que se sobe andando — default do jogo
 const MIN_AREA = 18;       // m² mínimos da área de chegada de um lance
 const ALTO = 1.5;          // altura acima do piso do spawn a partir da qual "se olha de cima"
