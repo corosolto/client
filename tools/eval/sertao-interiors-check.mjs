@@ -7,7 +7,7 @@
 import { THREE, MAPS, initTextures, Game } from './harness.mjs';
 
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.slice(10);
-const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6', 'bolsao': 'IN7', 'fechar-porta-casa': 'IN1', 'fechar-janela-casa': 'IN2', 'fechar-saida-lateral': 'IN8', 'cegar-praca': 'IN9', 'sem-cobertura-praca': 'IN10', 'gargalo-bot': 'IN11' };
+const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6', 'bolsao': 'IN7', 'fechar-porta-casa': 'IN1', 'fechar-janela-casa': 'IN2', 'fechar-saida-lateral': 'IN8', 'cegar-praca': 'IN9', 'sem-cobertura-praca': 'IN10', 'gargalo-bot': 'IN11', 'fechar-casa-respawn': 'IN12', 'fechar-janela-respawn': 'IN13' };
 if (mutant && !targets[mutant]) throw Error(`Mutante desconhecido: ${mutant}`);
 const world = MAPS.velho_oeste.build(new THREE.Scene(), await initTextures());
 const houses = world.interiorHouses || [];
@@ -21,6 +21,11 @@ const SPECS = [
     sightTargets: [[0, 0], [6, -2], [12, 8]] },
   { name: 'sertao-casa-pedra-7', x: -8.4, z: 24.2, ry: .14, doorSide: 1, exitSide: 1,
     sightTargets: [[0, 0], [-4, 8], [12, -8]] },
+];
+const SPAWN_ROW_SPECS = [
+  { name: 'sertao-casa-platibanda-0', x: -9.2, z: -25.5, ry: Math.PI + .12, doorSide: 1, exitSide: -1 },
+  SPECS[2], SPECS[3],
+  { name: 'sertao-casa-pedra-8', x: 9.1, z: 24.7, ry: -.1, doorSide: 1, exitSide: -1 },
 ];
 const probe = Object.create(Game.prototype); probe.world = world;
 const EPS = 1e-6, radius = .38;
@@ -70,6 +75,15 @@ if (mutant) {
     const walls = world.colliders.filter(c => c.tag === 'sertao-casa-paupique-3');
     if (!walls.length) throw Error('Mutante não aplicou: colisor da casa vizinha ausente');
     for (const c of walls) { c.minZ += .8; c.maxZ += .8; if (Number.isFinite(c.cz)) c.cz += .8; }
+  } else if (mutant === 'fechar-casa-respawn') {
+    const s = SPAWN_ROW_SPECS[0], [wx, wz] = l2w(s, 0, s.doorSide * 3.2);
+    world.colliders.push({ minX: wx - .8, maxX: wx + .8, minY: 0, maxY: 2.7,
+      minZ: wz - .35, maxZ: wz + .35, tag: 'mutante-fechar-casa-respawn' });
+  } else if (mutant === 'fechar-janela-respawn') {
+    const s = SPAWN_ROW_SPECS[3], [wx, wz] = l2w(s, 0, -s.doorSide * 3.2);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.9, .35), new THREE.MeshBasicMaterial());
+    mesh.position.set(wx, 1.7, wz); mesh.rotation.y = s.ry; world.root.add(mesh);
+    world.root.updateMatrixWorld(true); world.occluders.push(mesh);
   } else if (mutant === 'fresta-lateral') {
     const ref = house.userData.boxParts?.[`${house.name}-lateral-1-sul`];
     if (!ref || ref.index == null) throw Error('Mutante não aplicou: parede instanciada ausente');
@@ -190,6 +204,15 @@ const plazaCover = COVER_WITNESSES.map(([name, x, z, axis]) => {
    gargalo e parava em (-15,4; 11,1). Esta testemunha congela a passagem lateral
    com o mesmo raio de 0,38 m; o mutante devolve a casa aos 15,0 m. */
 const botCornerRoute = capsulePath([-15.7, 10.8], [-15.7, 12.2]);
+const spawnRow = SPAWN_ROW_SPECS.map(s => {
+  const exists = houses.some(h => h.name === s.name);
+  const entry = capsulePath(l2w(s, 0, s.doorSide * 4.6), l2w(s, 0, 0));
+  const sideExit = capsulePath(l2w(s, s.exitSide * 2.7, 0), l2w(s, s.exitSide * 4.35, 0));
+  const eye = (pz) => l3w(s, 0, pz, 1.62);
+  const throughWindow = !rayBlocked(eye(-s.doorSide * 2.5), eye(-s.doorSide * 4.2));
+  const returnWindow = !rayBlocked(eye(-s.doorSide * 4.2), eye(-s.doorSide * 2.5));
+  return { name: s.name, exists, entry, sideExit, throughWindow, returnWindow };
+});
 /* IN7 responde ao relato de área inacessível sem depender da coordenada original:
    varre todo o mapa com o corpo real e exige que nenhum vão livre fique enclausurado. */
 const SWEEP=.25;
@@ -250,7 +273,9 @@ const checks={
   IN9:results.filter(r=>r.tacticalSight.length).length===2&&results.filter(r=>r.tacticalSight.length).every(r=>r.tacticalSight.every(p=>p.clear)),
   IN10:plazaCover.length===COVER_WITNESSES.length&&plazaCover.every(c=>c.blocked),
   IN11:botCornerRoute.clear,
+  IN12:spawnRow.length===4&&spawnRow.every(r=>r.exists&&r.entry.clear&&r.sideExit.clear),
+  IN13:spawnRow.length===4&&spawnRow.every(r=>r.exists&&r.throughWindow&&r.returnWindow),
 };
-console.log(JSON.stringify({checks,houses:results,barrelClearance,hayClearance,plazaCover,botCornerRoute,sweep:{...sweep,pockets:sweep.pockets.slice(0,8),pocketCount:sweep.pockets.length},mutation:mutant||null},null,2));
+console.log(JSON.stringify({checks,houses:results,spawnRow,barrelClearance,hayClearance,plazaCover,botCornerRoute,sweep:{...sweep,pockets:sweep.pockets.slice(0,8),pocketCount:sweep.pockets.length},mutation:mutant||null},null,2));
 const failed=Object.entries(checks).filter(([,ok])=>!ok).map(([id])=>id);
 process.exitCode=mutant ? (failed.includes(targets[mutant])?0:1) : (failed.length?1:0);

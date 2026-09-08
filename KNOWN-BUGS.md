@@ -39,6 +39,25 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## Sertão — casas da praça (PR #526, revisão local 06/09)
 
+### BUG-145 · Rejeição humana pós-merge: carroças ainda bloqueiam e a fileira dos respawns ainda tem fachadas fechadas
+
+**Relato literal recebido depois do merge do PR #526:** "carroças ainda bloqueiam
+passagem e as casas diante dos dois spawns continuam fechadas/inúteis". Os gates
+anteriores respondiam outra pergunta: WA2 aceitava um único flanco livre por carroça,
+e IN1/IN2 cobravam apenas uma das duas fachadas de cada fileira de respawn.
+
+**Baseline vermelha em `origin/main` alpha.242 (`e67addf4`):** WA5 encontra o
+flanco leste da carroça `(7,2)` e o oeste da `(-14,2;25,4)` bloqueados. IN12/IN13
+encontram somente duas das quatro fachadas jogáveis: `platibanda-0` desloca a
+cápsula 3,68 m na entrada e `pedra-8`, 3,43 m; ambas estão ausentes de
+`interiorHouses` e falham na visada recíproca pela janela. Evidência:
+`artifacts/sertao-respawn-fix/{wagon,interiors}-baseline-red.json`.
+
+**Réguas:** `tools/eval/sertao-wagon-check.mjs` (WA5 exige os dois flancos das
+três carroças) e `tools/eval/sertao-interiors-check.mjs` (IN12 entrada/saída nas
+quatro fachadas; IN13 tiro e revide pelas quatro janelas). Correção, mutantes e
+capturas WebGL 3:2 ainda pendentes nesta entrada.
+
 ### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO E VALIDADO EM WEBGL 08/09
 
 **Relato literal do dono (runtime 3:2, capturas de 06→07/09 23h52–00h00)**: (1) há

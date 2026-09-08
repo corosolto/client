@@ -1,5 +1,21 @@
 # HANDOFF
 
+## Correção pós-merge do Sertão — BUG-145 (08/09/2026)
+
+Objetivo: corrigir a rejeição humana posterior ao PR #526 sem reutilizar sua
+branch. Worktree exclusiva `worktrees/sertao-respawn-wagons-fix`, branch
+`codex/sertao-respawn-wagons-fix`, base `origin/main` alpha.242 (`e67addf4`).
+
+Baseline antes do conserto: WA5 vermelho porque duas das três carroças só têm
+um flanco transitável; IN12/IN13 vermelhos porque `platibanda-0` e `pedra-8`,
+uma fachada em cada fileira de respawn, continuam fechadas. Os gates antigos
+permanecem verdes e demonstram a lacuna da medição. Artefatos em
+`artifacts/sertao-respawn-fix/*-baseline-red.json`.
+
+Próximo passo: abrir as duas fachadas restantes, liberar ambos os flancos das
+carroças, provar os mutantes, capturar WebGL 3:2 e validar 5x5/8x8. Sem merge ou
+deploy nesta frente.
+
 ## Admin 08/09: áudio e escalonamento de crashes
 
 - Checkout `worktrees/bug-pipeline-audio`, branch `fix/admin-audio-crash-pipeline`, base
