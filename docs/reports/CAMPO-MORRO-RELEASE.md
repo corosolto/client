@@ -1,5 +1,165 @@
 # Campinho da Quebrada — candidato de release
 
+## Preparação da integração, bloqueada pela fundação de mapas — 08/09/2026
+
+### Estado retomado
+
+Objetivo desta etapa: preparar a reaplicação seletiva do PR #530 sem resolver o
+conflito, sem ampliar arte e sem misturar o Campinho dentro da Quebrada com o mapa
+independente Campinho do Morro. A worktree delegada hoje existe como
+`/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/campo-morro-release`
+(o sufixo `-audit` não existe no caminho), na branch correta
+`astra/campo-morro-release-audit`. Ela estava limpa em `73dfc45b`, quatro commits
+atrás da remota, e recebeu somente fast-forward para `378e4000`. Nenhuma outra
+worktree foi editada.
+
+Referências conferidas nesta retomada:
+
+- PR #530: aberta, `DIRTY`/`CONFLICTING`, head remoto `378e4000`;
+- `origin/main`: `38803801` (`v2.0.0-alpha.239`);
+- merge-base atual: `e8a99307` (merge do PR #535);
+- a fundação não está estável: #540 continua conflitante com `main`; #541, #542,
+  #545, #547, #548, #550 e #551 seguem abertas numa pilha encadeada e marcadas
+  `UNSTABLE`. #543, #544, #546 e #549 são frentes de áudio/viewmodel no mesmo
+  intervalo numérico e não pertencem à fundação de mapas.
+
+Por isso a integração funcional continua **bloqueada por decisão de escopo**. Esta
+etapa só acrescenta uma régua, este relatório/ledger e o checkpoint correspondente.
+
+### Inventário do conflito
+
+`git merge-tree --write-tree origin/astra/campo-morro-release-audit origin/main`
+encontra 40 conflitos: 30 de conteúdo e 10 `rename/rename`. Todos estão em
+documentação, índices gerados e no build estático de `public/docs/`; não há conflito
+atual em `public/js/map_quebrada.js`, nos dois checks do Campinho nem neste relatório.
+Um ensaio somente leitura contra o head ainda provisório de #551 encontra 41
+conflitos (31 de conteúdo e os mesmos 10 renames), também sem conflito textual em
+`map_quebrada.js`. Esse ensaio não é a base de integração: #551 ainda é uma ponta
+instável, não `main` estabilizada.
+
+O único encontro semântico já visível na Quebrada é deliberadamente compatível:
+#550 passa `material: mat` para `aoBoxGeo` na fábrica `addBox`; #530 acrescenta as
+coberturas do campo e corrige OBB/grafo em regiões posteriores do construtor. A
+resolução futura deve manter **as duas coisas**, não escolher `ours` ou `theirs` para
+o arquivo inteiro. A fundação também introduz `public/js/map_campomorro.js`, mapa
+independente recuperado do #437; ele não substitui nem absorve o campo interno de
+`map_quebrada.js` tratado pelo #530.
+
+`public/js/graffiti_layout.js` merece resolução própria. #550 altera a fábrica da
+Quebrada e regenera o layout/fingerprint; reaplicar a geometria do #530 muda de novo
+o fonte normalizado. Portanto nenhum blob de layout de qualquer lado será aceito:
+o layout da Quebrada será regenerado uma vez, contra o servidor desta worktree, após
+o fonte combinado estar final.
+
+### Baseline funcional fresco
+
+Execução de 08/09/2026 sobre `378e4000`, em Node puro. Isso mede CPU/geometria do
+arnês e não substitui WebGL, GPU, GLBs carregados ou partida humana.
+
+| Contrato | Evidência observada |
+| --- | --- |
+| cobertura/colisão | `campinho-release-check`: `gate-cover=2`, `sideline-cover=11`, placar presente, colisão fantasma `0.0000 m`, encostos sólidos |
+| rotas | Quebrada com 344 nós, 1.021 arestas não orientadas, grafo conexo; `map-contrato-check`: 344/344 nós alcançados |
+| spawns | quatro slots por lado, oito livres de sólido |
+| CTF | quatro bandeiras, alvo 4/4; suíte global `ctf-win-check` verde em 16 mapas |
+| pickups | 62 na Quebrada; PA1/PA2 verdes, 1.034 pickups em 16 mapas |
+| 5×5 e 8×8 | mata-mata e CTF compõem exatamente 5×5 e 8×8 no motor; as 32 combinações spawn→bandeira têm rota em cada tamanho |
+| sintaxe | `npm run syntax` verde; aviso ambiental: npm 11.6.0 não suporta o Node 16.13.0 selecionado pelo shell |
+
+A régua nova é `tools/eval/campinho-integration-foundation-check.mjs`. Baseline:
+
+```sh
+node tools/eval/campinho-integration-foundation-check.mjs
+```
+
+Saída esperada: `CAMPINHO_INTEGRACAO ok`, com 5×5/8×8 em mata-mata e CTF,
+cobertura sólida, spawns `4x4` livres, CTF `4/4` e 32 rotas spawn→CTF.
+
+### Régua vermelha e mutantes
+
+Os sete mutantes novos foram executados e cada processo saiu `1` na cláusula
+esperada. O mutante falha se não conseguir aplicar a quebra antes da medição.
+
+| Mutante | Vermelho observado |
+| --- | --- |
+| `cobertura-invisivel` | `gate-cover: cobertura invisivel` |
+| `cobertura-sem-bala` | `gate-cover: cobertura nao bloqueia bala` |
+| `spawn-obstruido` | `spawn B0 em solido` |
+| `ctf-curto` | `alvo 3, bandeiras 4` |
+| `rota-partida` | rotas dos dois times para a bandeira `R` ausentes |
+| `time-5x5` | `5x5`: composição medida `5x4` |
+| `time-8x8` | `8x8`: composição medida `8x7` |
+
+Os sete mutantes anteriores de `campinho-release-check` (`invisivel`, `sem-bala`,
+`sem-rotacao`, `sem-encosto`, `placar-vazio`, `rota-obstruida` e
+`spawn-obstruido`) também foram reverificados nesta retomada; todos saíram `1`.
+
+### Capturas obrigatórias quando a implementação for liberada
+
+Todas em WebGL real, viewport **1200×800 (3:2)**, sem overlay cobrindo o mapa e com
+console/rede preservados:
+
+1. spawn B olhando o gol e os dois portões, em mata-mata 5×5;
+2. o mesmo quadro em CTF 8×8, com a bandeira CAMPINHO e corpos em jogo;
+3. mureta do portão oeste de cada lado, mostrando silhueta e espaço de passagem;
+4. mureta do portão leste de cada lado;
+5. bancos/encostos das duas laterais, incluindo impacto de bala e passagem do corpo;
+6. placar `0–0` visto da entrada e de perto, para decisão humana sobre a peça fixa;
+7. beco leste e caixote movido, percorrendo o contorno novo sem bot preso;
+8. travessia contínua spawn B → quatro bandeiras → spawn E, com rota central e dois flancos;
+9. aérea do campo e uma vista ao nível do olho depois da regeneração do grafite;
+10. frame equivalente do mapa independente `campomorro`, apenas para provar que os
+    dois mapas não foram confundidos — não é autorização para ampliar sua arte.
+
+As imagens offline existentes continuam válidas apenas para silhueta. Elas saturam
+cor no Cycles e não aprovam material, identidade brasileira, HUD, pós-processamento,
+GPU nem carregamento de GLB.
+
+### Plano exato de resolução seletiva
+
+1. Esperar a pilha de mapas estabilizar: a base só pode ser `origin/main` depois de
+   #540 e da sequência #541/#542/#545/#547/#548/#550/#551 estarem incorporadas ou
+   substituídas por um head final verde e declarado. Conferir OIDs/estado de novo;
+   os OIDs desta seção são fotografia, não autorização para integrar.
+2. Confirmar worktree, branch, HEAD e status limpo; `git fetch origin --prune`;
+   rodar esta régua e `campinho-release-check` antes do merge para guardar o antes.
+3. Iniciar `git merge --no-commit --no-ff origin/main`. Não usar `ours`/`theirs` em
+   `map_quebrada.js`, `package.json`, documentação ou diretórios gerados.
+4. Em `map_quebrada.js`, partir da fábrica material-aware de `main` e preservar os
+   hunks funcionais do #530: muretas/encostos/placar, colisores OBB, três pontos de
+   contorno, caixote do beco leste, `segClear` contínuo, spawns e quatro bandeiras.
+   Não tocar no builder independente `map_campomorro.js`.
+5. Em `package.json`, preservar os gates novos da fundação e a cadeia atual
+   `map-contrato-check && campinho-release-check`; só então encadear
+   `campinho-integration-foundation-check`. Não substituir a lista inteira de
+   `check:fast` por nenhum dos lados.
+6. Preservar as entradas semânticas de ambos os lados em `CHANGELOG.md` e neste
+   relatório. Para `ARCH.generated.md`, contadores nos `.md`, traduções espelhadas,
+   `tools/eval/ARCH.md` e todo `public/docs/`, aceitar a árvore-fonte combinada e
+   regenerar com `npm run docs` e `npm run arch`; nunca resolver hashes/bundles à mão.
+7. Subir **esta** worktree numa porta exclusiva e regenerar somente depois do fonte
+   combinado. Para grafite: `BASE=http://127.0.0.1:8530 npm run grafite -- quebrada`.
+   Rodar `eval:grafitelayout` e conferir as piores fotos; um hash verde sozinho não
+   aprova o posicionamento.
+8. Rodar, nesta ordem, régua nova + mutantes, `eval:mapcontrato`, `map-check quebrada`,
+   `eval:pickuparma`, `eval:ctfwin`, bots 5×5/8×8 em mata-mata/CTF,
+   `check:fast`, build e as capturas 3:2 acima. Mudança visível só segue para
+   crítica adversarial e aceite do dono depois dessas imagens.
+9. Commitar primeiro a resolução funcional/testes; gerados ficam em checkpoint
+   separado. Merge, push, automerge, deploy e release continuam fora desta etapa.
+
+Servidor e URL que serão usados quando a implementação for liberada:
+
+```sh
+npm run dev -- --host 127.0.0.1 --port 8530
+```
+
+`http://127.0.0.1:8530/?debug=1&auto=P,mst&map=quebrada&perfilauto=0&ctf=1`
+
+Antes de abrir o auto-start, selecionar 5 ou 8 jogadores no menu grava `bots` em
+`awpbr_settings`; cada tamanho será conferido em CTF e mata-mata. A URL acima é a
+prova CTF; sem `&ctf=1` é a prova mata-mata.
+
 ## Continuação da revisão final — 06/09/2026
 
 Objetivo: revisar cobertura, rotas, pontos de conflito, spawns, bots e qualidade
