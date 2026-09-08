@@ -90,9 +90,7 @@ export const CHAR_FX = {
   albLod:   _cnum('charalblod', 6),                    // mip do nível regional (6 = bloco de 64 texels)
   sat:      _cnum('charsat', 1.32),                    // ganho de croma do albedo (+cor original dos moldes)
   rimNear: _cnum('rimnear', 0.18),                     // rim a queima-roupa: discreto, não vira fantasma
-  // 0.82: no pior corredor quente do Sertão, 0.70 deixava o ganho p95 do
-  // contorno oscilar abaixo de 3 L* a 40 m; 0.82 preserva a banda explícita
-  // com margem sem tocar no valor de perto (0.18).
+  // Mantém o contorno explícito a 40 m no corredor quente medido por C18.
   rimFar:  _cnum('rimfar', 0.82),                      // rim a 34 m+: é longe que o inimigo some no fundo
   rimPow:  _cnum('rimpow', 1.7),                       // expoente da banda LARGA (dá área pro ΔL* médio subir)
   rimEdge: _cnum('rimedge', 1.35),                     // peso da banda FINA (contorno explícito, C1)

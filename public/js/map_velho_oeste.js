@@ -434,10 +434,8 @@ export function buildVelhoOeste(scene, T) {
      BUG-91: platibanda-1 (fachada no spawn E) e pedra-7 (fachada no spawn B) são
      interiores jogáveis — porta encara o respawn, janela oposta cobre a praça. */
   const interiorHouses = [];
-  /* As paredes segmentadas precisam continuar sendo geometria real para portas,
-     janelas e oclusão. Agrupar somente as caixas visuais por material reduz o
-     custo sem fundir colisores nem alterar a planta. A fachada `parede-casa-N`
-     fica individual porque é a testemunha histórica da régua ST2. */
+  /* Agrupa só as caixas visuais; colisores, planta e a fachada testemunha de ST2
+     continuam individuais. */
   function flushInteriorParts(group, parts) {
     const batches = new Map();
     group.userData.boxParts = {};
