@@ -198,3 +198,12 @@ Próximo passo concreto: rebasear sobre o `origin/main` mais recente, regenerar 
 layout de grafites, repetir os gates focados e o build, e registrar o SHA final. Não
 declarar PIS5 nem PIS7 verdes sem, respectivamente, uma decisão de orçamento e o aceite
 humano.
+
+## Fechamento de publicação — 08/09/2026
+
+A lane foi rebaseada novamente sobre `origin/main` `79e19232`, já incluindo o PR #529
+do Escadão. Os snapshots de documentação e grafites foram regenerados a partir da árvore
+combinada. O smoke Chrome anterior chegou a `window.__game.state === 'live'`; registrou
+também `SUPPORT_URL_BR is not defined`, erro herdado da página-base e fora do diff da
+Piscina. A publicação desta branch é somente um PR draft: integração permanece bloqueada
+até o degrau #548 da pilha de mapas e não há autorização de merge ou deploy.

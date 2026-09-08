@@ -690,10 +690,7 @@ export function buildPoolDay(scene, T) {
     }
   }
 
-  /* --- 3. ROTA TÉCNICA OESTE -------------------------------------------------------
-     Duas portas (z ±11) alimentam uma rota realmente separada. As caixas alternadas
-     quebram a visada axial, mas deixam 2,25 m livres do lado oposto; as janelas em z ±4
-     permitem punir quem tenta usar o corredor como passagem sem risco. */
+  // 3. ROTA TÉCNICA OESTE — duas portas e caixas alternadas; janelas em z ±4 dão contrajogo.
   addBox(1.5, 1.15, 1.0, COV.caixa, -20.25, 0, -3.5);
   addBox(1.5, 1.15, 1.0, COV.caixa, -17.75, 0, 3.5);
   for (const z of [-8, 0, 8]) {
@@ -707,10 +704,7 @@ export function buildPoolDay(scene, T) {
     addPlane(2.0, 0.72, signTexture('#263f52', '#f2c84b', 'SERVIÇO', z < 0 ? 'SUL' : 'NORTE'),
       -wX - 0.52, 2.55, z, Math.PI / 2);
 
-  /* --- 4. POSTO ELEVADO LESTE ------------------------------------------------------
-     Um patamar baixo, acessível pelos dois lados, substitui a pilastra em z=6,5. Ele
-     cria decisão vertical sem dominar os spawns: a frente para a piscina é aberta e a
-     traseira só tem guarda-corpo de cintura, visível e com contrajogo de ambos os decks. */
+  // 4. POSTO ELEVADO LESTE — dois acessos e guarda-corpo baixo sem dominar spawns.
   addBox(LOOKOUT.maxX - LOOKOUT.minX, LOOKOUT.y, LOOKOUT.maxZ - LOOKOUT.minZ,
     COV.cabine, (LOOKOUT.minX + LOOKOUT.maxX) / 2, 0, (LOOKOUT.minZ + LOOKOUT.maxZ) / 2);
   for (let i = 1; i <= STAIR.steps; i++) {
