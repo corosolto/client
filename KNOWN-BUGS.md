@@ -4074,6 +4074,15 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-145 · tiros com volume zero derrubavam o áudio com `RangeError`.**
+  **Sintoma literal (admin, 08/09/2026, produção alpha.239):**
+  `Failed to execute 'exponentialRampToValueAtTime' on 'AudioParam': The target value provided (0) should be greater than 0.`
+  **Causa reproduzida:** `Sfx._env` repassava `peak` ou `end` iguais a zero para uma rampa
+  exponencial; a Web Audio API exige alvo estritamente positivo. **Correção:** limita ambos
+  a `0.0001`, inaudível mas válido. **Régua:** `eval:audioenvelope`; o mutante
+  `--mutante=pico-zero` precisa reprovar. **Não cobre:** escuta em navegador real nem o
+  timeout de abertura de partida, que é outro relato e ainda exige contexto de rede/estado.
+
 - **BUG-140 · regressão de mix e vozes após o pack privado.**
   **Sintoma literal (dono, 05/09/2026, produção):** *“os sons estao ok, mas estao altos, os
   audios ingame sumiram, e os de voz round1, mult kill etc tb sumiram preciasa arrumar isso”*.
@@ -4963,7 +4972,7 @@ falha determinística, e **não** foi atribuída a arquivo:linha ainda.
 Não corrigir às cegas: sem a pilha, qualquer palpite sobre torcida/CTF/bots é especulação.
 O mapa chega a `live`, carrega os props e joga nas quatro vistas fixas.
 
-### ~~BUG-145 · VM14: rack norte da Penitenciária encosta na guarita~~ · CORRIGIDO LOCALMENTE 08/09/2026
+### ~~BUG-146 · VM14: rack norte da Penitenciária encosta na guarita~~ · CORRIGIDO LOCALMENTE 08/09/2026
 
 Relato recebido na integração do PR #540: “reproduza o gate VM14 do pickup
 inalcançável da Penitenciária e determine se é introduzido pela pilha ou herdado”.

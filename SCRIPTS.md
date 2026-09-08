@@ -181,7 +181,7 @@ npm run eval:parquewheel
 
 Executa o flood-fill real do VM14 somente na Penitenciária. Existe para impedir
 que o rack norte volte a ser empurrado para o canto fechado entre a guarita elevada
-e o muro (BUG-145). Mutante: `node tools/eval/pickup-check.mjs penitenciaria
+e o muro (BUG-146). Mutante: `node tools/eval/pickup-check.mjs penitenciaria
 --mutante=torre-bloco` restaura o colisor cheio da cabine e precisa ficar vermelho.
 
 ```bash

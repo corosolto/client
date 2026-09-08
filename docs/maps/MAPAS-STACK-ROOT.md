@@ -12,7 +12,9 @@ somente o PR #540. Sem merge remoto, force-push ou avanço para descendentes.
 - branch de publicação: `codex/mapas-stack-root-v2`
 - branch original preservada: `codex/mapas-polish-integral`
 - HEAD recebido: `0265aa766d8d95b47a779896be01df86f79cf6c3`
-- base integrada: `origin/main` em `3880380165c170c0e694c28088876e396d5a1e29`
+- primeira base integrada: `origin/main` em `3880380165c170c0e694c28088876e396d5a1e29`
+- base atual integrada: `origin/main` alpha.240 em
+  `8eed0fafbe08a86dd1a88711aeae88007a4fa657`
 - `mapas-polish-integral` permaneceu fora desta operação, em
   `codex/mapas-escala-amazonia` no HEAD `fab8bd9b`.
 
@@ -24,7 +26,7 @@ O merge encontrou onze conflitos: dez blocos derivados de documentação/índice
 
 VM14 antes do conserto: `main` 0/66 pickups sem alcance; #540 e a integração local
 1/66. Falha: `carbine` do rack norte em `(11,18; 46,60)`, distância alcançável
-1,23 m para teto de 1,0 m. A pilha introduziu a falha. Registro: BUG-145 em
+1,23 m para teto de 1,0 m. A pilha introduziu a falha. Registro: BUG-146 em
 `KNOWN-BUGS.md`; artefatos locais em `artifacts/mapas-stack-root/`.
 
 ## Correção VM14
@@ -74,6 +76,15 @@ vento/vegetação de favela já existente no pack, sem criar asset nem caminho n
   VM14 0/66 e mutante `torre-bloco` 1/66; grafite e áudio Fab verdes.
 - a branch e o PR #540 originais não foram alterados; nenhum merge remoto ou
   alteração de PR descendente foi feito.
+
+## Publicação para revisão
+
+- PR substituto: `#554`, `https://github.com/corosolto/client/pull/554`.
+- primeiro push: `f4f5cea07d22046a670a6a880f2ae7623a44084f`; o GitHub acusou
+  conflito porque `main` avançou durante a abertura do PR.
+- o delta alpha.240 preserva o novo `eval:audioenvelope` e todos os gates da raiz.
+- `main` ocupou BUG-145 nesse delta para o defeito de envelope de áudio; VM14 foi
+  desambiguado novamente como BUG-146, sem mudar sua régua ou correção.
 
 ## Próximo passo
 
