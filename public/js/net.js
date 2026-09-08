@@ -53,19 +53,22 @@ export const createRoom = (httpBase, cfg, ticket = '') => j(`${httpBase}/rooms`,
 /* Sonda TODOS os nós em paralelo e devolve cada um com ping e lotação. É a coluna de ping do
    server browser — sem ela o jogador não tem como saber que o nó da Europa é o dele. Nó que
    não responde volta com ping null e NÃO some da lista: sumir esconde a queda do servidor. */
-export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
+export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 3) {
   return Promise.all(nos.map(async (no) => {
     const { http } = mpUrls(no.url);
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
-      let h = null, ping = 0;
+      let h = await j(`${http}/health`, { signal: ctrl.signal });
+      const medidas = [];
       const n = Math.max(1, Math.min(3, amostras | 0));
       for (let i = 0; i < n; i++) {
         const t0 = performance.now();
         h = await j(`${http}/health`, { signal: ctrl.signal });
-        ping = performance.now() - t0;
+        medidas.push(performance.now() - t0);
       }
+      medidas.sort((a, b) => a - b);
+      const ping = medidas[(medidas.length - 1) >> 1];
       return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0 };
     } catch {
       return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };

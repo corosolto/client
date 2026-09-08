@@ -3700,6 +3700,9 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   (80 ms) + um quadro. Com o buffer no relógio do servidor (BUG-118) dá para MEDIR se o buffer
   pode cair sem congelar; hitscan já tem lag comp. **Régua:** nenhuma ainda.
 
+- **BUG-128 · “o multiplayer tem varios dados no admin tambem precisamos consultar e melhorar esse multiplayer quanto antes”** (dono, 08/09, admin).
+  **Evidência (08/09):** o painel de 30 dias aponta RTT como causa mais frequente de 135/216 sessões fora da meta; o nó BR ainda expõe p50 19,2 ms, p95 192,4 ms e máximo 7.481 ms, enquanto o loop do nó permanece p95 0 ms. **CORRIGIDO LOCALMENTE:** o browser escolhia a região pelo último `GET /health` aquecido. No roteiro com handshake 180 ms e RTTs 20/250/30 ms, ele escolhia 252 ms (vermelho); agora aquece uma vez e usa a mediana das três medidas, 51 ms na mesma execução. **Régua:** `/opt/homebrew/bin/node tools/eval/netcode-check.mjs`, cenário BUG-128; ele reprova se reduzir a sonda às três requisições/último valor.
+
 - **BUG-124 · “no singleplayer temos que indicar que são [BOT] também”** (dono, 02/09).
   **RESOLVIDO 03/09 (v2.0.0-alpha.212).** Bot nasce `[BOT] Nome` no local (`mkBot`, game.js); online o rótulo segue vindo do snapshot, uma vez só. **Régua:** `eval:netcode` (cláusula BUG-124). No online o rótulo `[BOT]` vem do snapshot (BUG-112); no local `name` é o do
   personagem e o killfeed/placar/tela de morte mostram sem prefixo. **Régua:** nenhuma ainda.

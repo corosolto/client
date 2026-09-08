@@ -521,6 +521,19 @@ console.log('\n· server browser mede RTT aquecido, não o custo único de TLS')
 {
   const { NetClient, createRoom, sondarNos } = await import('../../public/js/net.js');
   const fetchReal = globalThis.fetch;
+
+  let amostrasDePico = 0;
+  globalThis.fetch = async () => {
+    const atrasos = [180, 20, 250, 30];
+    await new Promise((r) => setTimeout(r, atrasos[amostrasDePico++]));
+    return new Response(JSON.stringify({ ok: true, players: 2, rooms: 4, regiao: 'eu' }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  };
+  const [estavel] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 1000, 3);
+  cobra(amostrasDePico === 4, `BUG-128: aquece e mede três RTTs (${amostrasDePico} requisições)`);
+  cobra(estavel.ping < 80, `BUG-128: um pico isolado não escolhe a região (${estavel.ping} ms)`);
+
   let chamadas = 0;
   const fetchSonda = async () => {
     chamadas++;
@@ -550,7 +563,7 @@ console.log('\n· server browser mede RTT aquecido, não o custo único de TLS')
   chamadas = 0;
   globalThis.fetch = fetchSonda;
   const [mutante] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 1000, 1);
-  cobra(mutante.ping >= 150, `MUTANTE com uma amostra volta a misturar TLS no ping (${mutante.ping} ms)`);
+  cobra(mutante.ping < 80, `uma medida explícita ainda exclui o handshake (${mutante.ping} ms)`);
 
   let abortsDaSonda = 0;
   globalThis.fetch = async (_url, { signal } = {}) => new Promise((resolve, reject) => {

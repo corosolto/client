@@ -72,6 +72,22 @@ para provar a coluna (`p95 0,02 m`, máximo `0,03 m`), o outro permaneceu em zer
 participantes e sessões sintéticas foram removidos e conferidos em zero. Próxima evidência:
 acompanhar rounds orgânicos; WebRTC permanece um canário posterior comparado à mesma régua.
 
+## Seleção de nó resistente a pico — 08/09/2026
+
+**Objetivo:** impedir que Jogo Rápido escolha uma região pior por uma resposta HTTP isolada, sem
+confundir a sonda de entrada com o RTT WebSocket da partida.
+
+**Diagnóstico:** a leitura orgânica de 30 dias marcou RTT como causa mais frequente de 135/216
+sessões fora da meta. No mesmo momento, `/metrics` do nó BR mostrou p50 19,2 ms, p95 192,4 ms e
+máximo 7.481 ms, enquanto o event loop ficou p95 0 ms. Isto não prova que toda variação é do
+seletor, mas prova que não se deve deixar uma única amostra decidir a rota.
+
+**Correção validada localmente:** `sondarNos()` aquece uma conexão e usa a mediana de três RTTs;
+antes, reutilizava a última resposta. A régua `tools/eval/netcode-check.mjs` ficou vermelha com
+handshake 180 ms e amostras 20/250/30 ms (252 ms escolhido), e verde após a alteração (51 ms;
+180/180 checks). `npm run build` passou com Node 23.6.0. Arquivos: `public/js/net.js`, a régua e
+`KNOWN-BUGS.md`. Nenhum deploy foi feito.
+
 ## Analytics consolidado por jogador — 02/09/2026
 
 **Objetivo inteiro:** dar ao game-admin uma única jornada por `anon_id` em Multiplayer,
