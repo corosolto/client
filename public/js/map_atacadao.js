@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
+import { fabricasUV } from './map_uv.js';
 
 export const ATACADAO_PROPS = [
   'gondola_mercado', 'gondola_eletro', 'shopping_cart', 'caixa_cobranca', 'arara_roupas',
@@ -50,15 +51,18 @@ export function buildAtacadao(scene, T) {
   };
   const PROD = [lam({ color: 0xd23b3b }), lam({ color: 0xe0b83a }), lam({ color: 0x2e8b57 }), lam({ color: 0x2e6f9e }), lam({ color: 0xe86a1e }), lam({ color: 0xe8e2d4 })];
 
+  /* UV em metros (map_uv.js): densidade de texel pelo tamanho no mundo.
+     Só muda UV — geometria, posição e colisor do autor ficam intactos. */
+  const { box: geoBox, plano: geoPlano } = fabricasUV();
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const m = new THREE.Mesh(geoBox(w, h, d, mat), mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
     root.add(m);
     if (opts.collide !== false) { colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 }); occluders.push(m); }
     return m;
   }
-  function addFloor(w, d, mat, x, z, y = 0.01) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; }
+  function addFloor(w, d, mat, x, z, y = 0.01) { const m = new THREE.Mesh(geoPlano(w, d, mat), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; }
   const col = (x, z, hx, hz, h) => colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: h, minZ: z - hz, maxZ: z + hz });
   function prop(id, x, z, targetH, ry, hx, hz, h) { const o = placeProp(id, { x, z, y: 0, targetH, ry }); if (o) { root.add(o); occluders.push(o); } if (hx) col(x, z, hx, hz, h); return o; }
   const gprop = (id, x, z, h, ry) => { const o = placeProp(id, { x, z, y: 0, targetH: h, ry }); if (o) { root.add(o); occluders.push(o); } return o; };
@@ -134,7 +138,7 @@ export function buildAtacadao(scene, T) {
   // muro do fundo com VÃOS de ENTRADA (x∈[-14,-8]) e SAÍDA (x∈[8,14]): a saída de carro pra rua
   { const gaps = [[-14, -8], [8, 14]]; let xc = -wX; for (const [g0, g1] of gaps) { if (g0 > xc) addBox(g0 - xc, PARK_H, 0.6, MAT.muro, (xc + g0) / 2, 0, ZS); xc = g1; } if (wX > xc) addBox(wX - xc, PARK_H, 0.6, MAT.muro, (xc + wX) / 2, 0, ZS); }
   // RUA além do muro (backdrop): só asfalto + faixa central (os carros vêm do laço de trânsito abaixo)
-  { const rua = new THREE.Mesh(new THREE.PlaneGeometry(HALF_X * 2 + 30, 18), MAT.asfalto); rua.rotation.x = -Math.PI / 2; rua.position.set(0, 0.02, ZS - 9); root.add(rua);
+  { const rua = new THREE.Mesh(geoPlano(HALF_X * 2 + 30, 18, MAT.asfalto), MAT.asfalto); rua.rotation.x = -Math.PI / 2; rua.position.set(0, 0.02, ZS - 9); root.add(rua);
     for (let x = -28; x <= 28; x += 4) addBox(2.2, 0.02, 0.35, MAT.faixa, x, 0.03, ZS - 9, { collide: false, cast: false }); }   // faixa central da rua (ao longo de X)
   const cars = ['kombi', 'saveiro', 'opala', 'fiat_uno', 'chevette', 'brasilia_vw'];
   let cix = 0;
