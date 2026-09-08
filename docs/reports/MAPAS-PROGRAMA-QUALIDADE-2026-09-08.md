@@ -243,8 +243,8 @@ da pilha de UV examinada.
   baseline 5x5/8x8 medido, contrato B1→B2→B3 e régua executável. PIS1/PIS2/PIS3/PIS6 estão
   vermelhas por desenho e PIS4 está verde; nenhum arquivo de runtime foi alterado. A etapa
   aguarda a fundação antes do blockout.
-- A raiz foi republicada sem force-push no PR substituto #554, head `f4f5cea0`. O PR ficou
-  `CONFLICTING/DIRTY` porque `origin/main` avançou para `8eed0faf` (alpha.240) depois da
-  integração local. A mesma tarefa foi reativada para integrar a nova base, repetir os gates
-  afetados e só então liberar #541.
+- A raiz foi republicada sem force-push no PR substituto #554 e atualizada no head
+  `b8f16cbc` após integrar `origin/main` em `8eed0faf` (alpha.240). O PR agora está
+  `MERGEABLE`; Vercel, CodeQL, smoke, dois builds, DCO e ratchet passaram. Apenas `portao`
+  permanece pendente. A tarefa liberará #541 se esse último gate passar.
 - Sertão segue ativo com a implementação e os avaliadores ainda sem checkpoint final.
