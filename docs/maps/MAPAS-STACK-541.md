@@ -32,10 +32,10 @@ spawns, CTF e pickups depois da troca do volume cheio pelos apoios.
 - `eval:texel -- --mapa=penitenciaria`: mediana/chão 128 px/m, p05 70 px/m,
   dispersão p95 1,00×, dispersão máxima 1,5× e 0% abaixo de 64 px/m.
 - `npm run build`: verde em alpha.240; Vercel usará Node 24 no remoto.
+- `check:deploy`: 37/37 verde em 14,6 s sobre a árvore commitada.
 
 ## Limitações e próximo passo
 
 A combinação ainda não recebeu nova captura 3:2 nem aprovação visual humana. O
-próximo passo é rodar `check:deploy` sobre a árvore commitada, publicar a branch sem
-force-push e abrir um PR substituto empilhado na #554. Não iniciar #542 antes de
-conhecer o estado remoto desse PR.
+próximo passo é publicar a branch sem force-push e abrir um PR substituto empilhado
+na #554. Não iniciar #542 antes de conhecer o estado remoto desse PR.
