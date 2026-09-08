@@ -69,6 +69,8 @@ separadas.
 - `cb7b34bd`: mutantes `rota-unica` e `spawn-exposto` provaram a régua antes da
   implementação. Depois da implementação, ambos também mordem isoladamente o
   mapa real em CAR4 e CAR5.
+- `6a0c0ebe`: três rotas, navegação multinível, LOS/contrafogo, recibo browser,
+  capturas, documentação dos comandos e limitações da crítica independente.
 - Três famílias independentes ligam os dois lados ao MID do Pavilhão 6:
   `radial-interna`, `externa-oeste` e `muralha-leste`. O grafo usa coordenadas
   `(x,y,z)`, inclui as quatro escadas de muralha, passarela e galeria interna;
