@@ -4963,7 +4963,7 @@ falha determinística, e **não** foi atribuída a arquivo:linha ainda.
 Não corrigir às cegas: sem a pilha, qualquer palpite sobre torcida/CTF/bots é especulação.
 O mapa chega a `live`, carrega os props e joga nas quatro vistas fixas.
 
-### ~~BUG-142 · VM14: rack norte da Penitenciária encosta na guarita~~ · CORRIGIDO LOCALMENTE 08/09/2026
+### ~~BUG-145 · VM14: rack norte da Penitenciária encosta na guarita~~ · CORRIGIDO LOCALMENTE 08/09/2026
 
 Relato recebido na integração do PR #540: “reproduza o gate VM14 do pickup
 inalcançável da Penitenciária e determine se é introduzido pela pilha ou herdado”.
