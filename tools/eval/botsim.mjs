@@ -134,12 +134,15 @@ const SECS = parseFloat(process.argv[2] || '60');
 const ONLY = process.argv[3] || 'all';
 const DT = 1 / 60, SAMPLE = 9;
 const DUEL = process.env.SIM_DUEL === '1';   // amostra a cada 9 passos ≈ 150 ms
+const TEAM_SIZE = process.env.SIM_TEAM_SIZE === undefined ? 4 : Number(process.env.SIM_TEAM_SIZE);
+if (!Number.isInteger(TEAM_SIZE) || TEAM_SIZE < 1 || TEAM_SIZE > 8)
+  throw new Error(`SIM_TEAM_SIZE inválido: ${process.env.SIM_TEAM_SIZE} (esperado inteiro 1..8)`);
 
 let D = null;
 function runMap(mapId, textures, seed) {
   seedRandom(seed);
   const g = new Game({
-    renderer, textures, sfx, settings: { bots: 4, quality: 'low', difficulty: 'normal', sens: 1 },
+    renderer, textures, sfx, settings: { bots: TEAM_SIZE, quality: 'low', difficulty: 'normal', sens: 1 },
     playerCharId: PCHAR, playerTeam: 'E', playerFaction: 'E', enemyFaction: 'B',
     nickname: 'SIM', mapId, ctf: process.env.SIM_CTF === '1', testMode: true, onQuit() {}, onMatchEnd() {},
   });
