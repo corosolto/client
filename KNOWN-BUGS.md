@@ -3667,9 +3667,11 @@ Para comparação, o mesmo passo levou o `bandeirante` de 93,1 para **7,3**.
   **saci de 607,1 para 629,6** (pior). Na cuca ainda quebrou o contato de chão: o crouch
   foi para **-1,05 m** e a morte para **-1,38 m**. Os dois consertos foram revertidos e a
   ferramenta não entrou na árvore.
-- **Regerar a cuca em T-pose com rig do Mint**: gerada em 08/09
-  (`Mossfang Crone T Pose`), rigging disparado, não chegou a ser medida antes do fim da
-  janela de trabalho. É por onde continuar.
+- **Regerar a cuca em T-pose com rig do Mint** (`Mossfang Crone T Pose`, 08/09): a mesma
+  receita que levou o Lampião de 121,5 para 42,3 deixou a Cuca **PIOR** — 412 contra 284,9,
+  e o idle passou a afundar 0,2744 m. Revertida. Ou seja: a receita nova não é geral, e o
+  que falha na Cuca não é rig nem pose. Sobra investigar a MALHA dela — a única do elenco
+  com feições de jacaré num esqueleto humanoide.
 
 **Fora do registro, não do disco.** Os GLB seguem em `public/models/characters/`; o que
 saiu foi a entrada em `characters.js`/`GLB_CHARS`/`CHAR_WEAPON`. A invariante de roster do
