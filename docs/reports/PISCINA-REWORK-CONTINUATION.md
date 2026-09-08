@@ -2,16 +2,18 @@
 
 ## Objetivo e estado
 
-Preparar a Piscina da Treta como piloto do novo padrão sem alterar runtime antes da
-fundação de mapas. O contrato completo está em `plans/25-PISCINA-DA-TRETA-REWORK.md`.
+Terminar a Piscina da Treta como piloto do novo padrão sobre a fundação de mapas
+integrada em #564. O contrato completo está em `plans/25-PISCINA-DA-TRETA-REWORK.md`.
 
-- Worktree exclusiva: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/mapa-piscina-rework`.
-- Branch: `codex/mapa-piscina-rework`, tracking `origin/main`.
-- Base e HEAD inicial: `3880380165c170c0e694c28088876e396d5a1e29`.
-- Estado inicial confirmado limpo: `## codex/mapa-piscina-rework...origin/main`.
+- Worktree exclusiva atual: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/piscina-rework-stack`.
+- Branch: `codex/piscina-rework-stack`, empilhada em `origin/codex/mapas-stack-548-v2`.
+- Base exata: `9113ed82c7aea4028f88ef9892a347a286053ddc`.
+- A lane antiga `codex/mapa-piscina-rework` e o PR #557 não foram alterados; #557 será
+  registrado como supersedido pelo PR desta branch.
 - Node usado: `/opt/homebrew/bin/node` v23.6.0; dependências próprias via `npm ci`.
-- Escopo desta etapa: dois documentos, uma régua isolada e artefatos locais ignorados. Nenhuma alteração em
-  `public/js/map_piscina.js`, arquivos compartilhados, assets, lockfile ou outro checkout.
+- Escopo atual: reaplicar somente a reautoria válida da Piscina, preservar UV/
+  anisotropia da base, corrigir a navegação do mirante, regenerar derivados e produzir
+  prova Node + Chrome. Nenhum outro checkout, merge ou deploy entra no escopo.
 
 ## Fontes consultadas
 
@@ -198,3 +200,33 @@ Próximo passo concreto: rebasear sobre o `origin/main` mais recente, regenerar 
 layout de grafites, repetir os gates focados e o build, e registrar o SHA final. Não
 declarar PIS5 nem PIS7 verdes sem, respectivamente, uma decisão de orçamento e o aceite
 humano.
+
+## Milestone reempilhado sobre #564 — 08/09/2026
+
+Estado validado na worktree atual antes do PR:
+
+- commits transplantados de #557: `41d78880`, `4a218502`, `45326914` e `cd981e98`;
+- PIS1/PIS2/PIS3/PIS4/PIS6 verdes; 9/9 mutantes `MORDIDO`;
+- 119 nós, 679 arestas, 24/24 rotas spawn→bandeira alcançáveis pela cápsula real de
+  raio 0,38 m; central 53,31 m < serviço 65,65 m; mirante 10,38 m;
+- a sonda detectou que as escadas desenhadas como AABB bloqueavam os bots antes do
+  step-up. Patamar/degraus agora usam `groundHeightAt` para corpo, preservam oclusão de
+  tiros e ativam `snapDownSteps`/`botLayeredNavigation`;
+- Chrome real, viewport 1536×1024, 12 s: final med 5×5 8,2/10,1/31,6 ms e
+  792/911.916 calls/tris; med 8×8 8,3/10,0/17,9 ms e 972/1.052.242; low 5×5
+  8,3/10,1/10,4 ms e 491/440.828; low 8×8 8,3/10,1/10,5 ms e 616/494.627.
+  Zero frame >100 ms, mas PIS5 continua vermelho nos tetos absolutos originais.
+- capturas limpas equivalentes 1200×800: `artifacts/piscina-stack/final/browser/`;
+  recibos confirmam WebGL2/ANGLE Metal/Apple M4 Pro, `software:false`, `state=live` e
+  elencos reais 9/15. Cobertura de grafite: 77,1% (521/676), meta 76%.
+- evidência espacial: `artifacts/piscina-stack/final/spatial.json`; scripts reproduzíveis
+  versionados em `tools/eval/piscina-stack-evidence.mjs` e
+  `tools/eval/piscina-stack-browser.mjs`.
+- `SUPPORT_URL_BR is not defined` permanece erro herdado após o boot tanto no controle
+  quanto no final. PIS7 depende do aceite visual/jogável humano; não está verde.
+- Crítica independente: NO-GO 6/10 no primeiro conjunto por falta de prova de fluxo;
+  após recaptura com POV do mirante, linha d'água, boca do corredor e `spawn-flow`
+  5×5/8×8, reavaliação GO técnico-visual 8/10. Não substitui aceite do dono.
+
+Próximo passo: checkpointar, abrir PR draft contra
+`codex/mapas-stack-548-v2` e registrar #557 como supersedido. Não fazer merge/deploy.

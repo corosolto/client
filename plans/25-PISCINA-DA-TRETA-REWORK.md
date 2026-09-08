@@ -1,10 +1,10 @@
 <!-- spec:mapa -->
 # Piscina da Treta — reautoria controlada
 
-Piloto do padrão de reautoria de mapas, preparado em 08/09/2026 sobre
-`origin/main` (`3880380165c170c0e694c28088876e396d5a1e29`). Esta fase é somente de
-baseline, contrato espacial e plano de validação. Não altera runtime, assets nem
-arquivos compartilhados.
+Piloto do padrão de reautoria de mapas, iniciado em 08/09/2026 e reempilhado sobre
+`origin/codex/mapas-stack-548-v2` (`9113ed82c7aea4028f88ef9892a347a286053ddc`).
+A fase atual implementa e valida o mapa em `codex/piscina-rework-stack`; a tentativa
+anterior em #557 fica supersedida por esta pilha, sem merge nem deploy.
 
 ## Intenção
 
@@ -125,6 +125,8 @@ normal já estiver vermelho, o resultado do mutante é **inconclusivo**, nunca �
 - `cobertura-submersa` desloca as ilhas para `y=-1,5` e deve matar PIS2.
 - `posto-sem-colisao` mantém a malha, remove piso/colisor navegável e deve matar PIS3.
 - `posto-sem-contrajogo` fecha as janelas/ângulos de resposta e deve matar PIS3.
+- `posto-sem-navegacao` remove os opt-ins de degrau do jogador e de cota dos bots e
+  deve matar PIS3.
 - `spawn-deslocado` move um ponto da formação contratada e deve matar PIS4.
 - `rota-central-lenta` aumenta somente o custo central e deve matar PIS5.
 - `low-completo` força custo med em low e deve matar PIS5.
@@ -143,9 +145,9 @@ normal já estiver vermelho, o resultado do mutante é **inconclusivo**, nunca �
 7. Rodar 5×5/8×8 med/low em janela GPU exclusiva, suíte global, build, capturas 3:2 e
    crítica adversarial. O dono decide PIS7 jogando; técnico verde não é aceite visual.
 
-## Bloqueio atual
+## Bloqueio histórico
 
-Nenhum runtime será editado antes de um sinal explícito sobre a fundação de mapas
+Nenhum runtime seria editado antes de um sinal explícito sobre a fundação de mapas
 #540–#551. Em 08/09/2026, a pilha de mapas #540, #541, #542, #545, #547, #548,
 #550 e #551 estava aberta; #540 estava `DIRTY`, as demais `UNSTABLE`, com falhas de
 `build` e, em #550/#551, também `portao`. #543, #544, #546 e #549 também estavam
@@ -164,9 +166,32 @@ lane. O layout implementado mantém a piscina como identidade central e adiciona
   pelo menos duas rotas separadas;
 - ambiência indoor com água de piscina, hum técnico e splash registrado no pacote Fab.
 
-PIS1–PIS4 e PIS6 ficaram verdes e seus oito mutantes ficaram `MORDIDO`. PIS5 ficou
-parcial: frame pacing e triângulos passaram, mas o teto absoluto histórico de 860 draw
-calls já não descreve o `main` atual (controle: 976/1102; rework: 1018/1051 em 5×5/8×8).
-Não houve frame acima de 100 ms e o teto de 870 mil triângulos foi respeitado. Uma
-decisão mais ampla de orçamento de render é necessária para tornar essa cláusula verde.
+PIS1–PIS4 e PIS6 ficaram verdes; depois da correção de navegação do mirante, os nove
+mutantes ficaram `MORDIDO`. PIS5 permanece vermelho sem recalibrar os tetos de 860 draw
+calls/870 mil triângulos. No controle `9113ed82`, med 5×5 já mediu 790/923.813 e med
+8×8 911/1.069.013 calls/tris; no rework final mediu 792/911.916 e 972/1.052.242.
+Os casos low finais ficaram em 491/440.828 e 616/494.627. Não houve frame acima de
+100 ms; a variação incremental não compra verde para um orçamento absoluto já excedido.
 PIS7 continua deliberadamente pendente do aceite visual humano do dono.
+
+## Reempilhamento final sobre #564 — 08/09/2026
+
+- Base exata: `origin/codex/mapas-stack-548-v2` em `9113ed82`; worktree nova
+  `worktrees/piscina-rework-stack`, branch `codex/piscina-rework-stack`.
+- UV em metros e `applyAniso` da fundação foram preservados. A mediana estrutural da
+  Piscina é 128 px/m, p95/mediana 1,00 e nenhuma área estrutural fica abaixo de 64 px/m.
+- A prova espacial usa Dijkstra próprio e `Game._collide`/`Game._walkReach` com cápsula
+  real de raio 0,38 m. São 119 nós, 679 arestas e 24/24 pares spawn→bandeira
+  alcançáveis; rota central 53,31 m, serviço 65,65 m e mirante 10,38 m.
+- O achado da prova foi corrigido no mapa: degraus/patamar são piso por
+  `groundHeightAt`, continuam oclusores de tiro, não viram paredes horizontais para o
+  corpo, e o bot recalcula a cota durante o hop. O espelho máximo segue 0,1688 m.
+- A cobertura de grafite no navegador ficou em 77,1% (521/676 placas), acima da meta
+  congelada de 76%. Capturas limpas equivalentes 1200×800 existem para 5×5 e 8×8 no
+  Chrome/WebGL2/Metal, com os elencos reais de 9 e 15 bots carregados.
+- O erro `SUPPORT_URL_BR is not defined` aparece tanto no controle quanto no rework
+  depois de `state=live`; é dívida herdada e permanece explicitamente registrada.
+- A primeira crítica independente reprovou a cobertura das câmeras (6/10). Depois de
+  adicionar POV do mirante, linha d'água, boca do corredor e fluxo com bots visíveis,
+  a reavaliação deu GO técnico-visual 8/10. Isso não torna PIS7 verde: falta o aceite
+  humano do dono jogando.

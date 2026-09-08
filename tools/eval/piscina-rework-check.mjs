@@ -22,6 +22,7 @@ const targets = Object.freeze({
   'cobertura-submersa': 'PIS2',
   'posto-sem-colisao': 'PIS3',
   'posto-sem-contrajogo': 'PIS3',
+  'posto-sem-navegacao': 'PIS3',
   'spawn-deslocado': 'PIS4',
   'sem-ambiencia': 'PIS6',
 });
@@ -163,7 +164,13 @@ function elevated(game) {
   for (const [team, spawns] of Object.entries(world.spawns || {})) {
     visible[team] = spawns.filter((s) => game._losClear(perch, new THREE.Vector3(s.x, 1.62, s.z))).length;
   }
-  return { samples, heightMax: +heightMax.toFixed(2), counters, visible };
+  return {
+    samples,
+    heightMax: +heightMax.toFixed(2),
+    counters,
+    visible,
+    navigation: world.snapDownSteps === true && world.botLayeredNavigation === true,
+  };
 }
 
 function sound(world) {
@@ -195,7 +202,7 @@ function evaluate(game) {
   const verdicts = {
     PIS1: c.boundsMinX <= -20.5 && c.nodes >= 4 && c.south > 0 && c.north > 0 && c.connected && teamRoutes >= 3,
     PIS2: deckOk,
-    PIS3: high.samples >= 12 && high.counters >= 2 && high.visible.E <= 2 && high.visible.B <= 2,
+    PIS3: high.samples >= 12 && high.counters >= 2 && high.visible.E <= 2 && high.visible.B <= 2 && high.navigation,
     PIS4: spawnShape && flagShape && routes >= 2,
     PIS6: audio.indoor && audio.piscina && audio.hum && audio.synth && audio.splash,
   };
@@ -232,6 +239,12 @@ function applyMutant(game, name) {
       mesh.position.set(x, 2, z); mesh.rotation.y = ry; game.scene.add(mesh); world.occluders.push(mesh);
     }
     game.scene.updateMatrixWorld(true); return true;
+  }
+  if (name === 'posto-sem-navegacao') {
+    const applied = world.snapDownSteps === true && world.botLayeredNavigation === true;
+    world.snapDownSteps = false;
+    world.botLayeredNavigation = false;
+    return applied;
   }
   if (name === 'spawn-deslocado') { world.spawns.E[0].x += 1; return true; }
   if (name === 'sem-ambiencia') { const applied = Boolean(world.sound); world.sound = null; return applied; }

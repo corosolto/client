@@ -94,7 +94,7 @@ export function buildPoolDay(scene, T) {
       const ez = (opts.ry || opts.rz) ? Math.max(w, d) / 2 : d / 2;
       colliders.push({ minX: x - ex - pad, maxX: x + ex + pad, minY: y, maxY: y + h, minZ: z - ez - pad, maxZ: z + ez + pad });
       occluders.push(m);
-    }
+    } else if (opts.occlude === true) occluders.push(m);
     return m;
   }
   function addPlane(w, h, mat, x, y, z, ry = 0, rx = 0) {
@@ -721,10 +721,8 @@ export function buildPoolDay(scene, T) {
     }
   }
 
-  /* --- 3. ROTA TÉCNICA OESTE -------------------------------------------------------
-     Duas portas (z ±11) alimentam uma rota realmente separada. As caixas alternadas
-     quebram a visada axial, mas deixam 2,25 m livres do lado oposto; as janelas em z ±4
-     permitem punir quem tenta usar o corredor como passagem sem risco. */
+  // --- 3. ROTA TÉCNICA OESTE: duas portas e caixas alternadas criam o flanco
+  // sem liberar uma visada axial.
   addBox(1.5, 1.15, 1.0, COV.caixa, -20.25, 0, -3.5);
   addBox(1.5, 1.15, 1.0, COV.caixa, -17.75, 0, 3.5);
   for (const z of [-8, 0, 8]) {
@@ -738,18 +736,17 @@ export function buildPoolDay(scene, T) {
     addPlane(2.0, 0.72, signTexture('#263f52', '#f2c84b', 'SERVIÇO', z < 0 ? 'SUL' : 'NORTE'),
       -wX - 0.52, 2.55, z, Math.PI / 2);
 
-  /* --- 4. POSTO ELEVADO LESTE ------------------------------------------------------
-     Um patamar baixo, acessível pelos dois lados, substitui a pilastra em z=6,5. Ele
-     cria decisão vertical sem dominar os spawns: a frente para a piscina é aberta e a
-     traseira só tem guarda-corpo de cintura, visível e com contrajogo de ambos os decks. */
+  // --- 4. POSTO ELEVADO LESTE: patamar/degraus são piso em `groundHeightAt`;
+  // AABB de corpo bloquearia o step-up.
   addBox(LOOKOUT.maxX - LOOKOUT.minX, LOOKOUT.y, LOOKOUT.maxZ - LOOKOUT.minZ,
-    COV.cabine, (LOOKOUT.minX + LOOKOUT.maxX) / 2, 0, (LOOKOUT.minZ + LOOKOUT.maxZ) / 2);
+    COV.cabine, (LOOKOUT.minX + LOOKOUT.maxX) / 2, 0, (LOOKOUT.minZ + LOOKOUT.maxZ) / 2,
+    { collide: false, occlude: true });
   for (let i = 1; i <= STAIR.steps; i++) {
     const h = i * (LOOKOUT.y / STAIR.steps);
     addBox(1.6, h, STAIR.tread, COV.cabine, 12.8, 0,
-      STAIR.southStart + (i - 0.5) * STAIR.tread);
+      STAIR.southStart + (i - 0.5) * STAIR.tread, { collide: false, occlude: true });
     addBox(1.6, h, STAIR.tread, COV.cabine, 12.8, 0,
-      STAIR.northEnd - (i - 0.5) * STAIR.tread);
+      STAIR.northEnd - (i - 0.5) * STAIR.tread, { collide: false, occlude: true });
   }
   addBox(0.22, 0.9, 2.7, MAT.navy, LOOKOUT.maxX - 0.22, LOOKOUT.y, 5.5);
   for (const z of [LOOKOUT.minZ + 0.18, LOOKOUT.maxZ - 0.18]) {
@@ -933,7 +930,10 @@ export function buildPoolDay(scene, T) {
   });
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
+    // O mirante acompanha a descida do jogador e recalcula a cota dos bots por hop;
+    // sem estes opt-ins, a cápsula r=0,38 rejeita a escada norte para ARMÁRIOS.
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt,
+    snapDownSteps: true, botLayeredNavigation: true, spawns, sun, hemi, pickups,
     /* BANDEIRAS DO CTF — DECLARADAS (06/08, defeito do dono: "bandeiras com nome do pátio
        brasília" jogando aqui). O fallback do game.js punha as 3 bandeiras de spawn×0,42 —
        que NESTE mapa caíam DENTRO da lâmina d'água (|x|<7,5, |z|<9,5; P ficava em
