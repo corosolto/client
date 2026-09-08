@@ -4,6 +4,9 @@ Data: 08/09/2026. A recuperação final foi feita em `v2/mansao-joa-recuperacao`
 diretamente de `origin/main` em `e67addf4` (`v2.0.0-alpha.242`). O PR histórico #533 e
 a branch `astra/joa-recuperacao-seletiva` foram preservados sem rebase ou force-push.
 
+Checkpoint funcional: `4177f77a`. PR atual: #561. Depois da abertura da #561, o PR
+histórico #533 foi fechado como substituído; sua branch e commits continuam preservados.
+
 ## Decisão
 
 A pilha de fundação #540–#551 não era uma base estável: a raiz #540 conflituava com a
