@@ -46,7 +46,7 @@ this page was aging at the very first commit — see
 | `main.js` | 3,403 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props in GLB | 164 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props in GLB | 165 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Versioned animation clips | 573 | `git ls-files public/models/anims \| wc -l` |
 | Playable characters | 44, in 5 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 17 | `MAPS` object in `maps.js` |
