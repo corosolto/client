@@ -237,7 +237,7 @@
     "eval:amazonia-rota": "node tools/eval/amazonia-8x8-perf-check.mjs",
     "eval:lajes-raycast": "node tools/eval/lajes-raycast-check.mjs",
     "eval:penetration": "node tools/eval/weapon-penetration-check.mjs",
-    "eval:mansao": "node tools/eval/mansao-runtime-check.mjs && node tools/eval/mansao-vaos-check.mjs && node tools/eval/mansao-ctf-check.mjs && node tools/eval/mansao-load-check.mjs && node tools/eval/mansao-water-check.mjs && node tools/eval/mansao-garden-check.mjs && node tools/eval/mansao-beach-check.mjs && node tools/eval/mansao-ocean-check.mjs && node tools/eval/mansao-glb-fit.mjs && node tools/eval/mansao-ambience-check.mjs"
+    "eval:mansao": "node tools/eval/mansao-runtime-check.mjs && node tools/eval/mansao-vaos-check.mjs && node tools/eval/mansao-ctf-check.mjs && node tools/eval/mansao-load-check.mjs && node tools/eval/mansao-water-check.mjs && node tools/eval/mansao-garden-check.mjs && node tools/eval/mansao-beach-check.mjs && node tools/eval/mansao-ocean-check.mjs && node tools/eval/mansao-glb-fit.mjs && node tools/eval/mansao-ambience-check.mjs && node tools/eval/mansao-audio-pack-check.mjs"
   },
   "repository": {
     "type": "git",

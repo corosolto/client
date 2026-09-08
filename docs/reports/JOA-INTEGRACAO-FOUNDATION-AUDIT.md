@@ -50,6 +50,13 @@ mantendo o cubo procedural apenas como fallback.
 Node 16 falha em `import.meta.dirname`; os resultados válidos usam Node 23.6.0 por
 `PATH=/opt/homebrew/bin:$PATH`.
 
+O primeiro preview da #561 falhou antes do build no `assert:assets`: o pack privado
+antecede o Joá e tinha `mapSoundscapes` para 16/17 mapas. `extend-map-soundscapes.mjs`
+agora completa `mansao` a partir da cama existente do Parque da Treta (água, vento e
+vegetação), sem criar caminho de áudio ou substituir override curado. A régua
+`mansao-audio-pack-check.mjs` reproduz o pack antigo vermelho, passa pelo mesmo
+`assets-check.mjs`, cobra idempotência e reprova quando não existe doador válido.
+
 ## Evidência visual e aceite
 
 O jogo local roda em `http://127.0.0.1:4382/?debug=1&auto=P,mst&map=mansao&perfilauto=0`.
