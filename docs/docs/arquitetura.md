@@ -62,7 +62,7 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 
 | Arquivo | Linhas |
 |---|---:|
-| `public/js/game.js` | 7.426 |
+| `public/js/game.js` | 7.422 |
 | `public/js/main.js` | 3.402 |
 | `public/js/characters.js` | 1.068 |
 | `public/js/glbchars.js` | 844 |
