@@ -23,7 +23,7 @@ O merge encontrou onze conflitos: dez blocos derivados de documentação/índice
 
 VM14 antes do conserto: `main` 0/66 pickups sem alcance; #540 e a integração local
 1/66. Falha: `carbine` do rack norte em `(11,18; 46,60)`, distância alcançável
-1,23 m para teto de 1,0 m. A pilha introduziu a falha. Registro: BUG-142 em
+1,23 m para teto de 1,0 m. A pilha introduziu a falha. Registro: BUG-145 em
 `KNOWN-BUGS.md`; artefatos locais em `artifacts/mapas-stack-root/`.
 
 ## Correção VM14
@@ -73,6 +73,6 @@ vento/vegetação de favela já existente no pack, sem criar asset nem caminho n
 
 ## Próximo passo
 
-Regenerar docs/ARCH, rodar build e gates finais e criar checkpoint recuperável.
-Teste manual de passagem sob a guarita permanece como limitação. Depois da revisão
-humana e eventual publicação da raiz, a integração pode seguir para o PR #541.
+Fazer o teste manual da passagem sob a guarita e revisar a raiz local. Depois da
+aprovação humana e eventual publicação da raiz, a integração pode seguir para o
+PR #541.
