@@ -4906,6 +4906,9 @@ Na revisão antes do merge, o grafo aceitava142arestas incompatíveis com corpo/
 ### Escadão R5 — acessos aparentes e horizonte (relatado 06/09/2026)
 Relato literal: “existe a lateral que nao liga a lugar nenhum, e passando por baixo da escada principal de quem vem por baixo tem varias areas que nao da pra entrar”; “falta um fundo de horizonte como outros mapas”. Régua: em preparação, ainda não corrigido. Base merge515/mainalpha.227; preservar escadas, casa/janela e fauna já entregues.
 
+### Escadão R6 — casa central unilateral e casas do mirante sem acesso (relatado 08/09/2026)
+Relato literal: “os problemas continuam lá; ele só tem janela em um dos lados, o outro lado não tem, e as casas em cima no respawn de cima não têm acesso nenhum”. Baseline servido em 1200×800 reprovou quatro rotas físicas, as duas linhas de tiro e o piso central; `escadao-casas-conflito-r2-check` reprovou 13/24 cláusulas. Correção local na branch `codex/escadao-r6-stack`: 24/24, quatro rotas de ida/volta e matriz LOS bidirecional verdes; 5×5 e 8×8 carregam 10/16 atores. Build verde e crítica independente aprovada; CI e playtest humano ainda pendentes, sem merge/deploy.
+
 ## Regressão de Lajes — correção validada localmente
 
 ### BUG-141 · Lajes trava acima de 5×5 no single player · CORRIGIDO LOCALMENTE 06/09
