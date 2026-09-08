@@ -19,15 +19,25 @@ worktree. Não avançar #551, não fazer merge nem deploy.
   legítima preservada.
 - `campomorro` já existia no fingerprint na base #548; o hunk de #550 o
   duplicava sem efeito. A declaração herdada foi preservada, sem duplicata.
-- Grafite foi regerado para todos os 8 mapas com
-  `BASE=http://127.0.0.1:8154 npm run grafite`, servidor iniciado por
-  `node tools/eval/serve.mjs 8154` nesta worktree. `eval:grafitelayout --duplo`:
-  8 mapas, 2.804 peças, impressão determinística e fresca. O defeito conhecido
-  de `impressao()` (escrita global poder parecer fresca) continua documentado e
-  não foi mascarado; a mitigação desta execução é a regeneração completa local.
-- Gates verdes: `syntax`, `eval:grafitelayout`, `eval:mapcontrato`,
-  `eval:spawn` (276), `eval:ctfround`, `eval:ctfwin`, `eval:shaderbudget`,
-  `eval:corrego-contract`, `eval:preload`.
+- A regeneração global de grafite não é aceitável: o CI do PR #565 reprovou
+  Praça dos Poderes (`30,5% < 35%`) e Ferro Velho (`45,6% < 46%`). A reprodução
+  limpa em Node 22 separou a causa: na base #548, Praça foi `394/1027` (`38,4%`)
+  e Ferro `751/1529` (`49,1%`); no head regenerado, foram respectivamente
+  `310/1027` (`30,2%`) e `697/1529` (`45,6%`). Os denominadores idênticos provam
+  que não houve alteração nas placas/cobertura de parede pelo UV; perderam-se
+  peças do layout assado. A Praça não é herdada, pois não reproduz
+  byte-identicamente na base. Recibos temporários: `/tmp/mapas550-ci-repro/`.
+- O layout preservado da base recompõe o censo, mas não é uma correção publicável:
+  `eval:grafitelayout --duplo` aponta seis F2 já vencidos na própria base. O
+  mecanismo atual faz hash do arquivo inteiro do mapa, confundindo UV com entrada
+  espacial, e seu rodapé global pode aparentar frescor depois de passe parcial.
+  Não atualizar os FPs sem uma assinatura de superfícies observada no navegador;
+  isso mascararia o defeito conhecido de `impressao()`.
+- Gates que estavam verdes antes da reprodução: `syntax`, `eval:grafitelayout`,
+  `eval:mapcontrato`, `eval:spawn` (276), `eval:ctfround`, `eval:ctfwin`,
+  `eval:shaderbudget`, `eval:corrego-contract`, `eval:preload`. O estado atual
+  do head não passa `eval:grafite` no Node 22 do CI; não declarar o portão local
+  completo verde até haver correção real.
 
 ## Runtime e performance
 
@@ -52,7 +62,9 @@ em aprovação visual.
 
 ## Entrega e próximo passo
 
-- Commit: `85d8512a` (será atualizado só se este ledger for emendado).
+- Commit publicado: `c5e0be715`. Não há correção adicional publicada enquanto a
+  assinatura semântica de grafite não for implementada e coberta por mutante de
+  parede; a árvore de trabalho não deve carregar o layout-base como se fosse novo.
 - PR empilhado: #565, base `codex/mapas-stack-548-v2`, sem merge/deploy e sem #551.
 - `npm run check:deploy` passou 37/37 depois do commit; checks remotos estavam
   em fila na abertura do PR.
