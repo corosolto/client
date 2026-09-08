@@ -248,3 +248,12 @@ da pilha de UV examinada.
   `MERGEABLE`; Vercel, CodeQL, smoke, dois builds, DCO e ratchet passaram. Apenas `portao`
   permanece pendente. A tarefa liberará #541 se esse último gate passar.
 - Sertão segue ativo com a implementação e os avaliadores ainda sem checkpoint final.
+
+### Direção Carandiru — 08/09
+
+O dono aprovou o ganho visual da fundação e pediu que Penitenciária assuma o nome
+**Carandiru**, com referências reais dos anos 1990 e mais espaço jogável além do pátio.
+A pesquisa, contratos, prompts Mint e quatro checkpoints de produção estão em
+`docs/reports/CARANDIRU-REFERENCIAS-E-REAUTORIA-2026-09-08.md`. A reautoria deve partir do
+degrau #541 integrado, preservando o ID técnico `penitenciaria` e tornando muralha,
+guaritas e Pavilhão 6 acessíveis antes do acabamento visual.
