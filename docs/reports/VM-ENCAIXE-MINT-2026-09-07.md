@@ -71,10 +71,32 @@ herdadas (`eval:mapid`, `docs:check`, `feet:check`, `eval:camera-grip`,
 - `awp/fire`: mede 0 em algumas sessões (estado da luneta durante o disparo); falta
   separar estado legítimo de defeito.
 
+## Segunda rodada — o caminho legado (08/09)
+
+O legado tinha a mesma substituição e com alcance maior: o `rw` de TODAS as armas é montado
+uma vez só no boot (`game.js` `_buildViewModels`), com o que estivesse em cache, e
+`alignHands` posiciona a mão pelo grip da arma PEDIDA — daí `mão 0/312` nas medidas de
+antes.
+
+Régua determinística (`npm run eval:vm-attach-legado`): libera só `awp.glb`, bloqueia o
+resto, e usa a própria `awp` com `rw` como prova de que a substituta chegou antes da
+montagem — sem isso a rodada é declarada INCONCLUSIVA em vez de verde mentiroso.
+
+- antes: **25 armas** montaram a malha da AWP, inclusive a faca;
+- depois: 0. As 9 armas medidas desenham a própria arma, mão em quadro 60–92 de 312,
+  contato 1–7 px.
+
+Conserto: `hasWeapon(id)` obrigatório no `mountRw` e montagem tardia (`preloadWeapons` dos
+que faltaram + `alignHands` + `_vmFrame(true)`) quando o GLB chega.
+
+Mutante: `montaalheia` (força um `rw` alheio na arma) — reprova; a régua sai 1 se passar.
+
+Piso da mão passou a ser por caminho, medido dos dois lados: autorado 100 (saudável mede
+144–282 de ~306), legado 40 (saudável mede 60–92 de 312). Quebrada mede 0 nos dois.
+
 ## O que este relatório NÃO verificou
 
-- O caminho legado (`ready:false`) continua com `lmg`, `m92` e `revolver38` sem desenhar
-  arma e `awp`/`shotgun`/`ak` com a mão fora do quadro — a mesma substituição da AWP mora
-  lá, e o conserto desta rodada não tocou nele.
+- Sobra no legado: `m92/reload` com a mão em 18 de 312 (piso 40) — mesma Zastava que já
+  reprova no autorado.
 - A faca (`melee`) não é medida por estas réguas.
 - Materiais: a leitura "cromado/espelhado" da `lmg` e da `m92` segue sem régua.

@@ -36,7 +36,10 @@ const FAMILIA = {
   p90: 'p90', shotgun: 'shotgun', deagle: 'deagle', pistol: 'pistol', revolver38: 'revolver',
   svd: 'svd', sks: 'marksman', lmg: 'lmg', knife: 'melee',
 };
-const PISO_MAO = 100;        // aprovadas medem 144+; reprovadas medem 0
+/* Piso por CAMINHO, medido dos dois lados: no autorado a mão saudável mede 144–282
+   de ~306 amostras; no legado, 60–92 de 312 (braço menor, mais fora do quadro). Nos
+   dois, quebrada mede 0 — o piso separa saudável de quebrada, não é afrouxamento. */
+const PISO_MAO = { autorado: 100, legado: 40 };
 const TETO_CONTATO = 40;     // aprovadas medem 1–32 px
 const RAZAO_ESCALA = 1.35;   // dentro da família (m92 861 ÷ ak 553 = 1,56 reprovou)
 const LUNETA = new Set(['sniper', 'bolt']);  // escondem o viewmodel no ADS
@@ -59,7 +62,8 @@ for (const c of dados) {
     falhas.push(`${onde}: ARMA NÃO DESENHA (amostra ${c.armaAmostra}, em quadro ${c.armaEmQuadro})`);
     continue; // sem arma não há contato nem escala que meçam algo
   }
-  if (c.maoEmQuadro < PISO_MAO) falhas.push(`${onde}: mão fora do quadro (${c.maoEmQuadro} < ${PISO_MAO} de ${c.maoAmostra})`);
+  const piso = PISO_MAO[rel.modo] ?? PISO_MAO.autorado;
+  if (c.maoEmQuadro < piso) falhas.push(`${onde}: mão fora do quadro (${c.maoEmQuadro} < ${piso} de ${c.maoAmostra})`);
   if (c.contato_px !== null && c.contato_px > TETO_CONTATO) falhas.push(`${onde}: mão sem contato (${c.contato_px} px > ${TETO_CONTATO})`);
 }
 // Escala aparente dentro da família
@@ -90,7 +94,8 @@ if (MUT) {
 }
 console.log(`vm-arsenal-check: ${caps.length} capturas, ${new Set(caps.map((c) => c.arma)).size} armas, modo=${rel.modo}, aspecto=${rel.aspecto}`);
 for (const f of falhas) console.log(`  REPROVA ${f}`);
-const noPack = [...new Set(dados.filter((c) => c.fonte === 'pack').map((c) => c.arma))];
+// No legado nao existe wrap Mint por construcao: o aviso so faz sentido no autorado.
+const noPack = rel.modo === 'legado' ? [] : [...new Set(dados.filter((c) => c.fonte === 'pack').map((c) => c.arma))];
 if (noPack.length) console.log(`  AVISO fallback: ${noPack.join(', ')} desenhando a malha do PACK — o GLB Mint de mundo não chegou nesta sessão`);
 console.log(verde ? 'VERDE' : `VERMELHO: ${falhas.length} falha(s)`);
 process.exit(verde ? 0 : 1);

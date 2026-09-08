@@ -87,6 +87,15 @@ régua sai 1 se um deles passar.
 `tools/eval/vm-arsenal-check.mjs`; relatório em
 `docs/reports/VM-ENCAIXE-MINT-2026-09-07.md`.
 
+**O caminho LEGADO tinha a mesma substituição, e pior** (07/09, segunda rodada): o `rw` de
+TODAS as armas é montado uma vez só no boot (`public/js/game.js` `_buildViewModels`), com o
+que estivesse em cache. Régua determinística — libera só `awp.glb` e bloqueia o resto, com
+`awp` montada provando a pré-condição: **25 armas montaram a malha da AWP**, inclusive a
+faca, e `alignHands` punha a mão no grip da arma pedida (por isso `mão 0/312` nas medidas de
+antes). Depois do conserto (`hasWeapon` obrigatório + montagem tardia quando o GLB chega):
+0 substituições, e as 9 armas medidas desenham a própria arma com mão em quadro (60–92 de
+312) e contato 1–7 px. Régua: `npm run eval:vm-attach-legado`, mutante `montaalheia`.
+
 **Custo declarado**: quando o GLB de mundo não chegou, a família desenha a malha do pack
 (licenciada, já dentro do runtime GLB) em vez da Mint, até o modelo chegar — o portão avisa
 `AVISO fallback:` quais armas estão nesse estado. Continuam ABERTOS, com régua vermelha
