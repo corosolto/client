@@ -230,3 +230,22 @@ Estado validado na worktree atual antes do PR:
 
 Próximo passo: checkpointar, abrir PR draft contra
 `codex/mapas-stack-548-v2` e registrar #557 como supersedido. Não fazer merge/deploy.
+
+### Fechamento do layout de grafite
+
+A regeneração global inicial alterava, por efeito colateral, layouts assados de outros
+mapas e derrubava `eval:campo-contract` de 92% para 76% de abertura visual. O artefato
+foi refeito pelo modo seletivo oficial (`gen-graffiti-layout.mjs piscina_treta`): todas
+as sete entradas externas à Piscina agora são byte-a-byte iguais às da base `9113ed82`.
+Só `piscina_treta` mudou (211→173 peças assadas), com as impressões digitais atuais.
+
+Validação após o isolamento:
+
+- `eval:grafitelayout`: verde, 8 mapas e 2.947 peças;
+- `eval:campo-contract`: verde, abertura visual 92% / meta 80%;
+- censo Chrome da Piscina: 83,4% (564/676 placas), acima da meta 76%, com 479 peças
+  visíveis e dois murais na cena completa;
+- `git diff --check` e `node --check` dos três arquivos JS focados: verdes.
+
+Próximo passo concreto: commit do isolamento, push e PR draft empilhada contra
+`codex/mapas-stack-548-v2`; depois observar CI e corrigir apenas falhas desta lane.
