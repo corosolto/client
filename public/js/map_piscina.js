@@ -28,9 +28,13 @@
 import * as THREE from 'three';
 import { decalIds, paredeAtras } from './map_decals.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
+import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 17, HALF_Z = 25;   // interior half-extents (walls sit just outside)
 const WALL_H = 7, CEIL = 7;
+const SERVICE = { minX: -21, maxX: -17, minZ: -14, maxZ: 14, axisX: -18.8 };
+const LOOKOUT = { minX: 11.2, maxX: 14.4, minZ: 4, maxZ: 7, y: 1.35 };
+const STAIR = { steps: 8, tread: 0.32, southStart: 1.44, northEnd: 9.56 };
 
 /* ---------- inline procedural tile textures ---------- */
 function mkTex(c, rx = 1, rz = 1, clamp = false) {
@@ -105,6 +109,7 @@ export function buildPoolDay(scene, T) {
     navy: lam({ color: 0x24407a }), white: lam({ color: 0xf2f5f7 }),
     locker: lam({ color: 0xc2ccd4 }), lockerDark: lam({ color: 0x94a3af }),
     chair: lam({ color: 0x2f4f9e }), steel: lam({ color: 0x8a9096 }),
+    service: lam({ color: 0x355268 }), warning: lam({ color: 0xe3b23c }),
     /* TEX1 — o forro eram 4 lajes de 105 a 180 m² de cor CHAPADA (0xe4ebef, luminância de
        albedo 0,82): quatro retângulos brancos lisos ocupando o topo inteiro do quadro, que é
        literalmente o "retângulo branco grande e liso" que o dono descreveu. O caminho certo
@@ -150,6 +155,9 @@ export function buildPoolDay(scene, T) {
   addFloor(HALF_X * 2, sZ + HALF_Z, 0, (sZ - HALF_Z) / 2);
   addFloor(HALF_X - nX, nZ - sZ, (nX + HALF_X) / 2, POOL.cz);
   addFloor(sX + HALF_X, nZ - sZ, (sX - HALF_X) / 2, POOL.cz);
+  // Corredor técnico a oeste: rota coberta adicional, sem alargar o salão principal.
+  addFloor(SERVICE.maxX - SERVICE.minX, SERVICE.maxZ - SERVICE.minZ,
+    (SERVICE.minX + SERVICE.maxX) / 2, (SERVICE.minZ + SERVICE.maxZ) / 2);
 
   /* ---------------- the pool ---------------- */
   {
@@ -197,10 +205,29 @@ export function buildPoolDay(scene, T) {
   const wX = HALF_X + 0.5, wZ = HALF_Z + 0.5;
   addBox(HALF_X * 2 + 2, WALL_H, 1, MAT.wall, 0, 0, -wZ);
   addBox(HALF_X * 2 + 2, WALL_H, 1, MAT.wall, 0, 0, wZ);
-  addBox(1, WALL_H, HALF_Z * 2 + 2, MAT.wall, -wX, 0, 0);
   addBox(1, WALL_H, HALF_Z * 2 + 2, MAT.wall, wX, 0, 0);
+  // A antiga parede oeste vira uma fachada perfurada: duas portas ligam a rota técnica
+  // e duas janelas permitem contrajogo. Cabeçalhos preservam a leitura de salão fechado.
+  for (const [a, b] of [[-25.5, -12.2], [-9.8, -4.7], [-3.3, 3.3], [4.7, 9.8], [12.2, 25.5]])
+    addBox(1, WALL_H, b - a, MAT.wall, -wX, 0, (a + b) / 2);
+  for (const z of [-11, 11]) addBox(1, WALL_H - 3.0, 2.4, MAT.wall, -wX, 3.0, z);
+  for (const z of [-4, 4]) {
+    addBox(1, 1.05, 1.4, MAT.wall, -wX, 0, z);
+    addBox(1, WALL_H - 2.55, 1.4, MAT.wall, -wX, 2.55, z);
+    addPlane(1.25, 1.35, lam({ color: 0x9fd4e6, transparent: true, opacity: 0.25 }),
+      -wX - 0.51, 1.8, z, Math.PI / 2);
+  }
+  // Envelope do corredor: parede exterior, tampas e teto. As bocas ficam só em z ±11.
+  addBox(1, WALL_H, SERVICE.maxZ - SERVICE.minZ + 1, MAT.service,
+    SERVICE.minX - 0.5, 0, 0);
+  addBox(SERVICE.maxX - SERVICE.minX + 1, WALL_H, 1, MAT.service,
+    (SERVICE.minX + SERVICE.maxX) / 2, 0, SERVICE.minZ - 0.5);
+  addBox(SERVICE.maxX - SERVICE.minX + 1, WALL_H, 1, MAT.service,
+    (SERVICE.minX + SERVICE.maxX) / 2, 0, SERVICE.maxZ + 0.5);
   for (const [w, h, d, x, z] of [[HALF_X * 2 + 2, 0.6, 0.12, 0, -HALF_Z], [HALF_X * 2 + 2, 0.6, 0.12, 0, HALF_Z], [0.12, 0.6, HALF_Z * 2 + 2, -HALF_X, 0], [0.12, 0.6, HALF_Z * 2 + 2, HALF_X, 0]])
     addBox(w, h, d, MAT.navy, x, 2.0, z, { collide: false });
+  addBox(0.12, 0.6, SERVICE.maxZ - SERVICE.minZ, MAT.warning,
+    SERVICE.minX + 0.06, 2.0, 0, { collide: false });
   // clock + signage on the north wall
   {
     const clock = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.2, 20), MAT.white);
@@ -294,7 +321,7 @@ export function buildPoolDay(scene, T) {
          letra de alfabeto (aspecto ~0,7) sai com 1,36 m em pé, que é exatamente como uma
          coluna pichada se lê na vida real. É também o único uso bom que este pacote tem
          para as folhas de alfabeto, que em parede grande foram descartadas por sumirem.
-       · ARMÁRIOS: os 6 bancos laterais levam 3 adesivos cada (um por porta) e os 8 bancos
+       · ARMÁRIOS: os 4 bancos laterais levam 3 adesivos cada (um por porta) e as 8 ilhas
          de respawn levam 1. Adesivo, não lambe-lambe: 1,0-1,25 m.
        · GUARITA do salva-vidas: as duas laterais (a frente tem vidro, e cartaz em vidro é
          justamente a reclamação nº 1 do dono).
@@ -445,13 +472,13 @@ export function buildPoolDay(scene, T) {
          longo de z, um adesivo em cada. A porta tem 2,10 m de altura, então o adesivo vai
          com 1,25 m — MENOR que o cartaz, e é o certo: o que se cola em porta de armário de
          vestiário é adesivo, não lambe-lambe de 3 m. */
-      for (const sx of [-1, 1]) for (const bz of [-11, 0, 11]) for (const dz of [-1.3, 0, 1.3])
+      for (const sx of [-1, 1]) for (const bz of (sx < 0 ? [0] : [-11, 0, 11])) for (const dz of [-1.3, 0, 1.3])
         decal(D_ADESIVO, sx * 15.89, 0.5, bz + dz, sx > 0 ? -Math.PI / 2 : Math.PI / 2, 1.25, 1.05);
-      /* Bancos de respawn (anteparos das faixas de nascimento): 1 adesivo por banco, na
+      /* Ilhas de respawn (anteparos das faixas de nascimento): 1 adesivo por ilha, na
          face virada pro CENTRO do salão — a outra fica de costas pro time que nasce ali. */
       for (const sz of [-1, 1]) {
-        for (const bx of [-9, 9]) decal(D_ADESIVO, bx, 0.5, sz * (13.5 - 0.41), sz > 0 ? Math.PI : 0, 1.2, 1.05);
-        for (const bx of [-3, 3]) decal(D_ADESIVO, bx, 0.5, sz * (16.1 - 0.41), sz > 0 ? Math.PI : 0, 1.2, 1.05);
+        for (const bx of [-9, 9]) decal(D_ADESIVO, bx, 0.5, sz * (18.0 - 0.54), sz > 0 ? Math.PI : 0, 1.2, 1.05);
+        for (const bx of [-3, 3]) decal(D_ADESIVO, bx, 0.5, sz * (16.1 - 0.54), sz > 0 ? Math.PI : 0, 1.2, 1.05);
         // GUARITA do salva-vidas (2,80 × 3,00 × 2,40): as duas laterais. A FRENTE tem o
         // vidro em z = ∓17,28 e decalque em vidro é a reclamação nº 1 do dono — não vai.
         for (const sx of [-1, 1]) decal(D_TAG, sx * 1.46, 0.45, sz * 18.5, sx > 0 ? Math.PI / 2 : -Math.PI / 2, 1.9, 2.0);
@@ -502,6 +529,8 @@ export function buildPoolDay(scene, T) {
     addBox(HALF_X * 2 + 2, 0.35, HALF_Z - oZ, MAT.ceil, 0, CEIL, -(oZ + HALF_Z) / 2, { collide: false, cast: false });
     addBox(HALF_X - oX, 0.35, oZ * 2, MAT.ceil, (oX + HALF_X) / 2, CEIL, 0, { collide: false, cast: false });
     addBox(HALF_X - oX, 0.35, oZ * 2, MAT.ceil, -(oX + HALF_X) / 2, CEIL, 0, { collide: false, cast: false });
+    addBox(SERVICE.maxX - SERVICE.minX, 0.35, SERVICE.maxZ - SERVICE.minZ,
+      MAT.ceil, (SERVICE.minX + SERVICE.maxX) / 2, CEIL, 0, { collide: false, cast: false });
     // translucent glass panel + beams over the opening
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(oX * 2, oZ * 2), new THREE.MeshLambertMaterial({ color: 0xcfe8f2, transparent: true, opacity: 0.35 }));
     glass.rotation.x = Math.PI / 2; glass.position.set(0, CEIL - 0.05, 0); root.add(glass);
@@ -523,6 +552,12 @@ export function buildPoolDay(scene, T) {
       addBox(along === 'x' ? 1.3 : 0.7, 2.1, along === 'z' ? 1.3 : 0.7, MAT.locker, bx, 0, bz, { ry, pad: -0.02 });
       addBox(along === 'x' ? 0.95 : 0.08, 1.5, along === 'z' ? 0.95 : 0.08, MAT.lockerDark, bx, 0.3, bz + (along === 'x' ? 0.36 : 0), { collide: false });
     }
+  }
+  // Cobertura de respawn em ilhas: silhueta de armário, mas sem formar uma parede contínua.
+  function lockerIsland(x, z, face = 1) {
+    addBox(2.8, 1.9, 1.05, MAT.locker, x, 0, z, { pad: -0.02 });
+    addBox(0.48, 0.5, 0.62, MAT.lockerDark, x - 0.42, 1.9, z + face * 0.08, { pad: -0.02 });
+    addBox(0.62, 0.08, 0.08, MAT.navy, x + 0.38, 0.82, z + face * 0.54, { collide: false });
   }
   /* As CHAMADAS de lockerBank(), as espreguiçadeiras e os boxes de chuveiro saíram daqui e
      foram para o bloco "COBERTURA" mais abaixo, junto com pilares, lixeiras e o resto.
@@ -602,12 +637,19 @@ export function buildPoolDay(scene, T) {
      Os boxes de chuveiro saíram do corredor (comiam 1,8 m dos 5,5 m) e foram para os quatro
      cantos, onde viram cobertura de respawn. */
   for (const sx of [-1, 1]) {
-    for (const pz of [-17, -6.5, 6.5, 17]) addBox(1.1, 6.5, 1.1, COV.concreto, sx * 13.6, 0, pz);
-    for (const bz of [-11, 0, 11]) lockerBank(sx * 16.3, bz, 3, 'z');
+    for (const pz of [-17, -6.5, 6.5, 17]) {
+      if (sx === 1 && pz === 6.5) continue; // vaga ocupada pelo posto elevado abaixo
+      addBox(1.1, 6.5, 1.1, COV.concreto, sx * 13.6, 0, pz);
+    }
+    for (const bz of [-11, 0, 11]) {
+      if (sx === -1 && bz !== 0) continue; // as duas portas da rota técnica ficam livres
+      lockerBank(sx * 16.3, bz, 3, 'z');
+    }
     // caixas de material da piscina: cobertura de 1,15 m na alameda das armas (peito agachado)
     for (const cz of [-6, 6]) addBox(1.0, 1.15, 1.0, COV.caixa, sx * 15.05, 0, cz);
     // espreguiçadeiras: decoração na promenade, SEM colisor (não podem partir a coluna do A*)
     for (const cz of [-9, -4.5, 4.5, 9]) {
+      if (sx === 1 && (cz === 4.5 || cz === 9)) continue;
       addBox(0.85, 0.25, 1.9, MAT.chair, sx * 11.4, 0.2, cz, { collide: false });
       const back = addBox(0.85, 0.85, 0.2, MAT.chair, sx * 11.4, 0.2, cz - 0.85, { collide: false }); back.rotation.x = -0.5;
     }
@@ -618,10 +660,10 @@ export function buildPoolDay(scene, T) {
      442 m² por time contra os 357 m² que o PET tinha. Os pontos de nascimento abriram de
      x ∈ {-6,-2,2,6} para x ∈ {-9,-3,3,9}: frente de 18 m em vez de 12 m.
 
-     Cada faixa de nascimento ganhou um anteparo À FRENTE dela, ESCALONADO em z para não
+     Cada faixa de nascimento ganhou ilhas À FRENTE dela, ESCALONADAS em z para não
      virar muro:
-       x = ±9  → banco de armários em z = ±13,5
-       x = ±3  → banco de armários em z = ±16,1
+       x = ±9  → ilha externa em z = ±18,0
+       x = ±3  → ilha interna em z = ±16,1
        x =  0  → guarita do salva-vidas em z = ±18,5
      É isso que mata a visada axial de 47,8 m que a MAP2 mediu: a reta de um respawn ao outro
      atravessa o banco do PRÓPRIO time antes de sair do deck.
@@ -630,8 +672,10 @@ export function buildPoolDay(scene, T) {
      fresta de 2,6 m. Aqui, no z do anteparo, sobram vãos de 3,3 m entre peças e o disco de
      5 m de cada spawn continua aberto. */
   for (const sz of [-1, 1]) {
-    for (const bx of [-9, 9]) lockerBank(bx, sz * 13.5, 3, 'x');
-    for (const bx of [-3, 3]) lockerBank(bx, sz * 16.1, 3, 'x');
+    // As ilhas externas avançam para perto dos spawns de borda; as internas ficam
+    // recuadas. O escalonamento protege ângulos laterais sem reconstruir uma parede.
+    for (const bx of [-9, 9]) lockerIsland(bx, sz * 18.0, -sz);
+    for (const bx of [-3, 3]) lockerIsland(bx, sz * 16.1, -sz);
     addBox(2.8, 3.0, 2.4, MAT.wall, 0, 0, sz * 18.5);                                  // guarita
     addBox(3.2, 0.25, 2.8, MAT.navy, 0, 3.0, sz * 18.5, { collide: false });           // beiral
     addBox(2.5, 0.7, 0.06, lam({ color: 0x9fd4e6 }), 0, 1.5, sz * 17.28, { collide: false }); // vidro
@@ -645,6 +689,46 @@ export function buildPoolDay(scene, T) {
       for (const d of [-0.7, 0.7]) addBox(0.4, 0.4, 0.18, MAT.steel, sx * (14.6 + d), 2.15, sz * (23.3 - 0.14), { collide: false });
     }
   }
+
+  /* --- 3. ROTA TÉCNICA OESTE -------------------------------------------------------
+     Duas portas (z ±11) alimentam uma rota realmente separada. As caixas alternadas
+     quebram a visada axial, mas deixam 2,25 m livres do lado oposto; as janelas em z ±4
+     permitem punir quem tenta usar o corredor como passagem sem risco. */
+  addBox(1.5, 1.15, 1.0, COV.caixa, -20.25, 0, -3.5);
+  addBox(1.5, 1.15, 1.0, COV.caixa, -17.75, 0, 3.5);
+  for (const z of [-8, 0, 8]) {
+    addBox(0.12, 3.2, 0.12, MAT.steel, -20.75, 0, z, { collide: false });
+    addBox(0.12, 3.2, 0.12, MAT.steel, -20.35, 0, z, { collide: false });
+    addBox(0.12, 0.12, 0.52, MAT.steel, -20.55, 2.7, z, { collide: false });
+  }
+  addPlane(3.2, 1.25, signTexture('#263f52', '#f2c84b', 'ACESSO TÉCNICO', 'ROTA DE SERVIÇO'),
+    SERVICE.minX + 0.06, 4.2, 0, Math.PI / 2);
+  for (const z of [-11, 11])
+    addPlane(2.0, 0.72, signTexture('#263f52', '#f2c84b', 'SERVIÇO', z < 0 ? 'SUL' : 'NORTE'),
+      -wX - 0.52, 2.55, z, Math.PI / 2);
+
+  /* --- 4. POSTO ELEVADO LESTE ------------------------------------------------------
+     Um patamar baixo, acessível pelos dois lados, substitui a pilastra em z=6,5. Ele
+     cria decisão vertical sem dominar os spawns: a frente para a piscina é aberta e a
+     traseira só tem guarda-corpo de cintura, visível e com contrajogo de ambos os decks. */
+  addBox(LOOKOUT.maxX - LOOKOUT.minX, LOOKOUT.y, LOOKOUT.maxZ - LOOKOUT.minZ,
+    COV.cabine, (LOOKOUT.minX + LOOKOUT.maxX) / 2, 0, (LOOKOUT.minZ + LOOKOUT.maxZ) / 2);
+  for (let i = 1; i <= STAIR.steps; i++) {
+    const h = i * (LOOKOUT.y / STAIR.steps);
+    addBox(1.6, h, STAIR.tread, COV.cabine, 12.8, 0,
+      STAIR.southStart + (i - 0.5) * STAIR.tread);
+    addBox(1.6, h, STAIR.tread, COV.cabine, 12.8, 0,
+      STAIR.northEnd - (i - 0.5) * STAIR.tread);
+  }
+  addBox(0.22, 0.9, 2.7, MAT.navy, LOOKOUT.maxX - 0.22, LOOKOUT.y, 5.5);
+  for (const z of [LOOKOUT.minZ + 0.18, LOOKOUT.maxZ - 0.18]) {
+    addBox(3.0, 0.12, 0.12, MAT.steel, 12.8, LOOKOUT.y + 0.85, z, { collide: false });
+    for (const x of [LOOKOUT.minX + 0.18, LOOKOUT.maxX - 0.18])
+      addBox(0.1, 0.85, 0.1, MAT.steel, x, LOOKOUT.y, z, { collide: false });
+  }
+  addPlane(2.55, 0.85, signTexture('#1b3566', '#dff2ff', 'SALVA-VIDAS', 'POSTO TÉCNICO'),
+    LOOKOUT.minX - 0.02, LOOKOUT.y + 0.62, 5.5, Math.PI / 2);
+
   // AGORA pilastra, armário e guarita existem — só aqui o `paredeAtras` deles acha sólido.
   if (pintaCobertura) pintaCobertura();
   // blocos de partida: espelho exato dos pés da prancha (|z| = 13,7), para o deck do PET ter
@@ -686,7 +770,19 @@ export function buildPoolDay(scene, T) {
   fill.position.set(-15, 35, 15); scene.add(fill);
 
   /* ---------------- ground height ---------------- */
-  function groundHeightAt(x, z) { return poolDepth(x, z); }
+  function groundHeightAt(x, z) {
+    if (x >= LOOKOUT.minX && x <= LOOKOUT.maxX && z >= LOOKOUT.minZ && z <= LOOKOUT.maxZ)
+      return LOOKOUT.y;
+    if (x >= 12.0 && x <= 13.6) {
+      for (let i = 1; i <= STAIR.steps; i++) {
+        if (z >= STAIR.southStart + (i - 1) * STAIR.tread && z <= STAIR.southStart + i * STAIR.tread)
+          return i * (LOOKOUT.y / STAIR.steps);
+        if (z >= STAIR.northEnd - i * STAIR.tread && z <= STAIR.northEnd - (i - 1) * STAIR.tread)
+          return i * (LOOKOUT.y / STAIR.steps);
+      }
+    }
+    return poolDepth(x, z);
+  }
 
   /* ---------------- waypoints (deck only) ---------------- */
   const nodes = [], adj = [];
@@ -701,10 +797,27 @@ export function buildPoolDay(scene, T) {
   for (let gx = -HALF_X + 2; gx <= HALF_X - 2; gx += STEP)
     for (let gz = -HALF_Z + 2; gz <= HALF_Z - 2; gz += STEP)
       if (!blocked(gx, gz, 0.5) && groundHeightAt(gx, gz) > -0.35) nodes.push({ x: gx, z: gz });
+  // Nós autorais: a grade principal continua intacta, e só recebe as duas novas rotas.
+  for (const z of [-11, -7.6, -4.2, -0.8, 2.6, 6, 9.4, 11])
+    if (!blocked(SERVICE.axisX, z, 0.35)) nodes.push({ x: SERVICE.axisX, z });
+  for (const z of [-11, 11]) if (!blocked(-15, z, 0.25)) nodes.push({ x: -15, z });
+  // A piscina volta a ser rota de bot: rampa sul, raia central e rampa norte.
+  for (const z of [-13, -11.5, -10.5, -9.5, -6.5, -3.5, -0.5, 2.5, 5.5, 8.5, 9.5, 10.5, 11.5, 13, 14])
+    if (!blocked(0, z, 0.18)) nodes.push({ x: 0, z });
+  for (let i = 1; i <= STAIR.steps; i++) {
+    for (const z of [STAIR.southStart + (i - 0.5) * STAIR.tread,
+      STAIR.northEnd - (i - 0.5) * STAIR.tread])
+      if (!blocked(12.8, z, 0.08)) nodes.push({ x: 12.8, z });
+  }
+  for (const z of [LOOKOUT.minZ + 0.2, 5.5, LOOKOUT.maxZ - 0.2])
+    if (!blocked(12.8, z, 0.08)) nodes.push({ x: 12.8, z });
   const segClear = (a, b) => {
     for (let i = 1; i < 6; i++) {
       const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
-      if (blocked(x, z, 0.25)) return false;
+      const onLookoutRoute = x >= 12.0 && x <= 13.6 && z >= STAIR.southStart && z <= STAIR.northEnd;
+      // Nos degraus, o AABB inflado da peça seguinte invade o piso anterior. O chão
+      // autoral já é a fonte de verdade ali; fora da escada continua valendo inflate 0,25.
+      if (blocked(x, z, 0.25) && !onLookoutRoute) return false;
       if (Math.abs(groundHeightAt(x, z) - groundHeightAt(a.x, a.z)) > 0.65) return false;
     }
     return true;
@@ -805,6 +918,17 @@ export function buildPoolDay(scene, T) {
       { id: 'B', label: 'TRAMPOLIM', x: 0, z: 14 },
     ],
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
-    bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
+    stairs: [
+      { x0: 12.0, x1: 13.6, z0: STAIR.southStart, z1: LOOKOUT.minZ },
+      { x0: 12.0, x1: 13.6, z0: LOOKOUT.maxZ, z1: STAIR.northEnd },
+    ],
+    sound: {
+      bioma: 'indoor',
+      loops: [
+        { path: AMB_LOOPS.piscina, pos: [0, 0], radius: 30, vol: 0.24 },
+        { path: AMB_LOOPS.hum, pos: [SERVICE.axisX, 0], radius: 18, vol: 0.08 },
+      ],
+    },
+    bounds: { minX: SERVICE.minX, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
   };
 }
