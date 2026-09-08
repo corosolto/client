@@ -77,9 +77,9 @@ const signature = { colliders: world.colliders, spawns: world.spawns, ctfPoints:
 const hash = createHash('sha256').update(JSON.stringify(signature)).digest('hex');
 const apoios = world.colliders.filter((c) => String(c.tag).startsWith('torre-muro-apoio-'));
 const torreCheia = world.colliders.some((c) => c.tag === 'torre-muro');
-check('PF5', hash === '57052d4b94a824b9a89b1ababdc52243a99004a72f05519c2881abcb95aa2962'
+check('PF5', hash === '1bb17f2abafd1f0e8027fbc50e1926ed17673de5efb7b7b4666b4001959a6960'
   && apoios.length === 8 && !torreCheia,
-`contratos preservados com 8 apoios e sem volume cheio da guarita, BUG-146 (${hash.slice(0, 12)})`);
+`contrato C1 Carandiru com pavilhão oco, 8 apoios e sem volume cheio da guarita (${hash.slice(0, 12)})`);
 const failed = results.filter((r) => !r.ok).map((r) => r.id);
 if (mutant) {
   const target = mutant === 'sem-fachada' ? 'PF4' : 'PF2';

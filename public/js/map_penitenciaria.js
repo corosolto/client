@@ -19,6 +19,12 @@ export function buildPenitenciaria(scene, T) {
   root.name = 'penitenciaria-da-treta';
   scene.add(root);
   const colliders = [], occluders = [], pickups = [];
+  const elevatedSurfaces = [];
+  const carandiru = {
+    wallAccesses: [], wallWalkways: [], guardEntries: [],
+    pavilionPassages: [], pavilionStairs: [], pavilionWindows: [], pavilionGallery: null,
+    elevatedCoverage: 1, wireClearance: 2.28,
+  };
   const geometryCache = new Map();
   /* UV em metros: densidade de texel passa a depender do tamanho no mundo, não do
      tamanho da malha. Números e motivo em docs/maps/POLISH-CATALOGO-CONTINUIDADE.md. */
@@ -364,6 +370,33 @@ export function buildPenitenciaria(scene, T) {
     tube.position.set(mx, 8.45, mz); tube.castShadow = false; root.add(tube);
   }
 
+  /* C1 Carandiru: passarela interna em três lados e duas subidas espelhadas.
+     O piso é determinístico e groundHeightAt acompanha cada degrau; arame permanece
+     no limite externo, 2,28 m acima da cápsula apoiada na passarela. */
+  const walkway = (name, w, d, x, z) => {
+    addBox(w, .22, d, MAT.galvanizado, x, 5.58, z, { name, collide: false });
+    elevatedSurfaces.push({ minX: x-w/2, maxX: x+w/2, minZ: z-d/2, maxZ: z+d/2, y: 5.8 });
+    carandiru.wallWalkways.push({ name, side: name.split('-').at(-1) });
+  };
+  walkway('carandiru-passarela-muro-oeste', 2.2, 84, -35.6, 0);
+  walkway('carandiru-passarela-muro-leste', 2.2, 84, 35.6, 0);
+  walkway('carandiru-passarela-muro-sul', 69, 2.2, 0, -45.6);
+  for (const [side, x] of [['oeste', -35.6], ['leste', 35.6]]) {
+    const name = `carandiru-acesso-muralha-${side}`;
+    const marker = new THREE.Group(); marker.name = name; root.add(marker);
+    const heights = [];
+    for (let i = 0; i < 10; i++) {
+      const top = (i + 1) * .58, z = -33.7 - i * 1.25;
+      addBox(2.2, .18, 1.3, MAT.galvanizado, x, top - .18, z, { collide: false });
+      elevatedSurfaces.push({ minX: x-1.1, maxX: x+1.1, minZ: z-.65, maxZ: z+.65, y: top });
+      heights.push(top);
+    }
+    carandiru.wallAccesses.push({ name, x, z0: -33.7, dz: -1.25, heights });
+    const guardName = `carandiru-entrada-guarita-${side}`;
+    const guardMarker = new THREE.Group(); guardMarker.name = guardName; root.add(guardMarker);
+    carandiru.guardEntries.push(guardName);
+  }
+
   /* Guaritas com holofote REAL que varre o pátio (NV2). SpotLight SEM sombra e sem
      .map: o SB2 já mede 8/8 no piso WebGL1 (mutantes sombra-pontual/spot-map provam). */
   const holofotes = [];
@@ -572,12 +605,38 @@ export function buildPenitenciaria(scene, T) {
     // Pavilhão central (bloco_celas.glb): massa de 2 pavimentos; o jogador circula
     // pela galeria de 2,2 m entre o bloco e a grade.
     const pav = new THREE.Group(); pav.name = 'penitenciaria-pavilhao'; pav.userData.molde = 'bloco_celas'; root.add(pav);
-    colliders.push({ minX: -4.5, maxX: 4.5, minY: 0, maxY: 6.6, minZ: -7.5, maxZ: 7.5, tag: 'pavilhao' });
+    /* O volume cheio antigo virava uma parede invisível. Quatro cantos deixam um
+       cruzamento térreo N-S/E-O e sustentam a galeria superior. */
     const glbPav = placeProp('bloco_celas', { x: 0, y: 0, z: 0 });
     const pecasPav = [
-      addBox(9, 6.6, 15, MAT.tijolo, 0, 0, 0, { collide: false }),
+      ...[-1, 1].flatMap((sx) => [-1, 1].map((sz) =>
+        addBox(2.5, 6.6, 4.5, MAT.tijolo, sx * 3.25, 0, sz * 5.25, { tag: `pavilhao-canto-${sx}-${sz}` }))),
       addBox(9.4, .3, 15.4, MAT.darkConcrete, 0, 6.6, 0, { collide: false }),
     ];
+    const passagemNS = addBox(3.6, .08, 15.2, MAT.darkConcrete, 0, .01, 0,
+      { name: 'carandiru-pavilhao-passagem-ns', collide: false, cast: false });
+    const passagemEO = addBox(9.2, .08, 3.2, MAT.darkConcrete, 0, .012, 0,
+      { name: 'carandiru-pavilhao-passagem-eo', collide: false, cast: false });
+    carandiru.pavilionPassages.push(
+      { name: passagemNS.name, width: 3.6 }, { name: passagemEO.name, width: 3.2 });
+
+    const galeria = new THREE.Group(); galeria.name = 'carandiru-pavilhao-galeria-superior'; root.add(galeria);
+    for (const [w, d, x, z] of [[2.5, 15, -3.25, 0], [2.5, 15, 3.25, 0], [4, 2.5, 0, -6.25], [4, 2.5, 0, 6.25]]) {
+      addBox(w, .2, d, MAT.galvanizado, x, 3.2, z, { collide: false });
+      elevatedSurfaces.push({ minX: x-w/2, maxX: x+w/2, minZ: z-d/2, maxZ: z+d/2, y: 3.4 });
+    }
+    carandiru.pavilionGallery = { name: galeria.name, connected: true };
+    const stairName = 'carandiru-pavilhao-escada-leste';
+    const stairMarker = new THREE.Group(); stairMarker.name = stairName; root.add(stairMarker);
+    const stairHeights = [];
+    for (let i = 0; i < 10; i++) {
+      const top = (i + 1) * .34, x = 9 - i * .48;
+      addBox(.55, .16, 2.2, MAT.galvanizado, x, top - .16, 0, { collide: false });
+      elevatedSurfaces.push({ minX: x-.3, maxX: x+.3, minZ: -1.1, maxZ: 1.1, y: top });
+      stairHeights.push(top);
+    }
+    carandiru.pavilionStairs.push({ name: stairName, x0: 9, dx: -.48, z: 0, heights: stairHeights });
+    carandiru.pavilionWindows.push('norte', 'sul', 'leste', 'oeste');
     // 16 grades presentes nos dois caminhos; só o volume procedural é fallback.
     // Referência e limites em POLISH-CATALOGO-CONTINUIDADE.md.
     const janelasPav = [];
@@ -603,9 +662,11 @@ export function buildPenitenciaria(scene, T) {
       const sy = 6.6 / NAT.sizeY;
       glbPav.scale.set(9 / NAT.sizeX, sy, 15 / NAT.sizeZ);
       glbPav.position.y = -NAT.minY * sy;
-      pav.add(glbPav); occluders.push(glbPav);
-      for (const p of pecasPav) p.visible = false;
-    } else occluders.push(...pecasPav, ...janelasPav);
+      /* O molde recuperado é uma massa fechada. Em C1 ele fica registrado, mas
+         oculto até C3 ganhar vãos compatíveis; não pode selar as rotas novas. */
+      pav.add(glbPav); glbPav.visible = false;
+    }
+    occluders.push(...pecasPav, ...janelasPav);
 
     // Galeria externa gradeada: anel de 2,2 m entre o pavilhão e a grade de 1,1 m,
     // com 4 passagens (meio de cada lado) — a circulação do pátio do Carandiru.
@@ -694,7 +755,13 @@ export function buildPenitenciaria(scene, T) {
     }
   }
 
-  const groundHeightAt=()=>0, slowAt=()=>false;
+  const groundHeightAt=(x,z,yRef)=>{
+    if (!Number.isFinite(yRef)) return 0;
+    let best = 0;
+    for (const s of elevatedSurfaces) if (x >= s.minX && x <= s.maxX && z >= s.minZ && z <= s.maxZ
+      && s.y <= yRef + .65 && s.y > best) best = s.y;
+    return best;
+  }, slowAt=()=>false;
   const bounds={minX:-HALF_X+.9,maxX:HALF_X-.9,minZ:-HALF_Z+.9,maxZ:HALF_Z-.9};
   const blocked=(x,z,inflate=.44)=>colliders.some(c=>x>c.minX-inflate&&x<c.maxX+inflate&&z>c.minZ-inflate&&z<c.maxZ+inflate&&c.minY<1.7&&c.maxY>.1);
   const nodes=[],adj=[],step=3.2;
@@ -724,7 +791,7 @@ export function buildPenitenciaria(scene, T) {
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16},{src:AMB_LOOPS.eco,pos:[0,4,0],radius:55,vol:.13}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,update,pickups,sun,hemi,
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16},{src:AMB_LOOPS.eco,pos:[0,4,0],radius:55,vol:.13}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,update,pickups,sun,hemi,carandiru,
     spawns:{E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))},
     ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:14},{id:'B',label:'ALA NORTE',x:0,z:39}],
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};

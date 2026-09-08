@@ -30,21 +30,29 @@ if (mutant === 'arame-na-passarela') c.wireClearance = 0;
 if (mutant === 'viatura-procedural') c.mintVehicle = false;
 
 const named = (name) => !!world.root.getObjectByName(name);
-const staircaseWorks = (samples = []) => samples.length >= 8
-  && samples[0] <= .65 && samples.at(-1) >= 5.7
+const staircaseWorks = (samples = [], target = 5.7) => samples.length >= 8
+  && samples[0] <= .65 && samples.at(-1) >= target
   && samples.every((h, i) => i === 0 || h >= samples[i - 1] && h - samples[i - 1] <= .65);
+const accessSurfaceWorks = (a) => {
+  let y = 0;
+  return a.heights.every((expected, i) => {
+    const x = a.x ?? a.x0 + i * a.dx, z = a.z ?? a.z0 + i * a.dz;
+    y = world.groundHeightAt(x, z, y);
+    return Math.abs(y - expected) < .01;
+  });
+};
 const results = [];
 const put = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${detail}`); };
 
 put('CAR1', source.MAPS.penitenciaria?.name === 'Carandiru' && source.MAPS.penitenciaria?.build === MAPS.penitenciaria.build,
   `nome=${source.MAPS.penitenciaria?.name}; ID penitenciaria preservado`);
 const access = c.wallAccesses || [], entries = c.guardEntries || [], walks = c.wallWalkways || [];
-put('CAR2', access.length >= 2 && access.every((a) => named(a.name) && staircaseWorks(a.heights))
+put('CAR2', access.length >= 2 && access.every((a) => named(a.name) && staircaseWorks(a.heights) && accessSurfaceWorks(a))
   && walks.length >= 3 && walks.every((w) => named(w.name)) && entries.length >= 2 && entries.every(named),
   `${access.length}/2 acessos; ${walks.length}/3 lados; ${entries.length}/2 guaritas`);
 const passages = c.pavilionPassages || [], pStairs = c.pavilionStairs || [], gallery = c.pavilionGallery;
 put('CAR3', passages.length >= 2 && passages.every((p) => p.width >= 2.2 && named(p.name))
-  && pStairs.length >= 1 && pStairs.every((s) => named(s.name) && staircaseWorks(s.heights))
+  && pStairs.length >= 1 && pStairs.every((s) => named(s.name) && staircaseWorks(s.heights, 3.3) && accessSurfaceWorks(s))
   && gallery?.connected && named(gallery.name) && (c.pavilionWindows || []).length >= 4
   && !world.colliders.some((x) => x.tag === 'pavilhao'),
   `${passages.length}/2 passagens; ${pStairs.length}/1 escada; galeria=${!!gallery?.connected}`);

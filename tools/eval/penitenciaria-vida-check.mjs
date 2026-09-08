@@ -311,10 +311,13 @@ if (MUTANTE && !mutanteAplicou) {
   const grades = [];
   W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-galeria-grade-')) grades.push(o); });
   if (grades.length < 6) falta.push(`${grades.length}/6 segmentos 'penitenciaria-galeria-grade-*' — a galeria externa gradeada é a circulação do pátio do Carandiru`);
-  const pav = (W.colliders || []).find((c) => c.tag === 'pavilhao');
-  if (!pav) {
-    falta.push(`não sei medir: colisor tag 'pavilhao' ausente — sem o bloco central não há anel para sondar`);
+  const cantos = (W.colliders || []).filter((c) => String(c.tag).startsWith('pavilhao-canto-'));
+  const cheio = (W.colliders || []).some((c) => c.tag === 'pavilhao');
+  if (cantos.length !== 4 || cheio) {
+    falta.push(`${cantos.length}/4 cantos e volume cheio=${cheio} — C1 exige Pavilhão 6 oco, sem o colisor sólido antigo`);
   } else {
+    const pav = { minX: Math.min(...cantos.map((c) => c.minX)), maxX: Math.max(...cantos.map((c) => c.maxX)),
+      minZ: Math.min(...cantos.map((c) => c.minZ)), maxZ: Math.max(...cantos.map((c) => c.maxZ)) };
     const livre = (x, z) => !(W.colliders || []).some((c) => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && c.minY < 1.7 && c.maxY > .1);
     const sondas = [];
     for (const sz of [-1, 1]) {
