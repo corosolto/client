@@ -3677,10 +3677,24 @@ Para comparação, o mesmo passo levou o `bandeirante` de 93,1 para **7,3**.
 saiu foi a entrada em `characters.js`/`GLB_CHARS`/`CHAR_WEAPON`. A invariante de roster do
 `eval:miticos-lobisomem` barra os dois por nome, com mutante.
 
-**O Saci tem uma pergunta de identidade em aberto**, anterior a isto: a ficha diz "moleque
-de uma perna só" e o modelo tem duas. Clipe humanoide compartilhado precisa de duas pernas,
-então ou a identidade sai do gorro e da fumaça, ou ele vira caso especial com clipe próprio.
-Decisão do dono, não da régua.
+**O Saci é de UMA PERNA — decidido pelo dono em 08/09**, e é tecnicamente viável. A
+pergunta dele foi a certa ("se for possível ele andar no jogo"), e a resposta foi medida
+antes de gastar geração:
+
+O truque é separar MALHA de ESQUELETO. O rig continua com as duas pernas — é o que os 11
+clipes compartilhados animam —, e só a GEOMETRIA de uma delas some. Provado no Saci atual:
+removendo os triângulos cujos vértices são dominados por `LeftUpLeg|LeftLeg|LeftFoot|
+LeftToeBase` saem 752 de 4975 triângulos (15,1%), o personagem fica de uma perna só, o
+clipe de caminhada toca (RMSE ~2000 entre quadros, medido) e o pé pisa no chão pelo
+`ground-anims`.
+
+O que continua em aberto é ESTÉTICO, não técnico: o ciclo foi autorado para duas pernas,
+então na fase em que a perna que sumiu seria o apoio o corpo fica sem suporte visível.
+Lido de perto isso vira ou um pulinho — que é o Saci — ou um deslize. Um ciclo de pulo
+próprio resolveria de vez, e é trabalho de autoria.
+
+Nada disso é aproveitável enquanto o modelo do Saci reprovar por 27×: a perna é decisão
+de identidade para o Saci REGERADO, não para este.
 
 ---
 
