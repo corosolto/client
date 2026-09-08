@@ -23,13 +23,15 @@ vermelho é `look-check`, por Amazônia sem horizonte assado; a mesma falha exis
 na base `e67addf4`, enquanto Sertão mede ΔE76=0,0. Relatório:
 `docs/reports/SERTAO-RESPAWN-WAGONS-FIX.md`.
 
+Draft PR #559: `https://github.com/corosolto/client/pull/559`, base `main`.
 Próximo passo: revisão humana adversarial no servidor local e no draft PR. Sem
 merge ou deploy nesta frente.
 
 Build Astro/Vercel verde. `check:fast`: 129/132; todo gate de mapa ficou verde.
-Os três vermelhos são alheios ao diff: `audio:check` exige a árvore-fonte privada
+Os três vermelhos eram alheios ao diff: `audio:check` exige a árvore-fonte privada
 e vê órfãos no pack público materializado, `feet:check` também reprova na base
-`e67addf4`, e `eval:docsautoria` só pode medir depois do commit documental.
+`e67addf4`; `eval:docsautoria` passou isolado depois do commit documental. Resultado
+efetivo atual: dois vermelhos herdados.
 
 ## Admin 08/09: áudio e escalonamento de crashes
 

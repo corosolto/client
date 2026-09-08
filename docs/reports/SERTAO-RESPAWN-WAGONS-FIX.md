@@ -4,6 +4,8 @@ Data: 08/09/2026. Branch `codex/sertao-respawn-wagons-fix`, criada em worktree
 exclusiva a partir de `origin/main` alpha.242 (`e67addf4`). Esta frente corrige a
 rejeição humana do PR #526 e não faz merge ou deploy.
 
+Draft PR: [#559](https://github.com/corosolto/client/pull/559), base `main`.
+
 ## Diagnóstico antes
 
 O relato foi preservado literalmente no BUG-145: “carroças ainda bloqueiam
@@ -89,9 +91,10 @@ O build Astro/Vercel passa. `check:fast` fechou 129/132; os gates do Sertão e o
 golden dos bots passaram dentro do agregado. Os três vermelhos não são do diff:
 `audio:check` requer a árvore-fonte privada e rejeita os órfãos presentes no pack
 público materializado; `feet:check` também reprova na base `e67addf4`; e
-`eval:docsautoria` recusa documentação ainda não commitada. `assert:assets`, que
-valida o pacote efetivamente servido, passa com 470 referências presentes e 16
-mapas com override de ambiência.
+`eval:docsautoria` recusou a documentação ainda não commitada. Este último passou
+isolado depois do commit documental; restam dois vermelhos herdados.
+`assert:assets`, que valida o pacote efetivamente servido, passa com 470
+referências presentes e 16 mapas com override de ambiência.
 
 ## Playtest adversarial
 
