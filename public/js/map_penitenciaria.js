@@ -12,7 +12,7 @@ const HALF_Z = 48;
 
 /* Subset da fauna que o main.js pré-carrega para este mapa (maps.js ambience). */
 export const PENITENCIARIA_AMBIENCE = ['rat', 'pigeonGround'];
-export const PENITENCIARIA_PROPS = ['torre_vigilancia', 'bloco_celas', 'portao_penitenciaria', 'guarita_muro'];
+export const PENITENCIARIA_PROPS = ['torre_vigilancia', 'bloco_celas', 'portao_penitenciaria', 'guarita_muro', 'carandiru_viatura_1990'];
 
 export function buildPenitenciaria(scene, T) {
   const root = new THREE.Group();
@@ -269,6 +269,16 @@ export function buildPenitenciaria(scene, T) {
     caixaDagua: new THREE.MeshStandardMaterial({ map: tex.caixaDagua, bumpMap: tex.caixaDagua, bumpScale: .03, color: 0x9fb2bd, metalness: .35, roughness: .6 }),
     mesa: new THREE.MeshStandardMaterial({ map: tex.mesa, bumpMap: tex.mesa, bumpScale: .015, color: 0xc4c9cc, metalness: .7, roughness: .38 }),
   };
+  function placaTexto(texto, w, h, fg = '#e3ddd0', bg = '#303536') {
+    const canvas = document.createElement('canvas'); canvas.width = 768; canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#9b9383'; ctx.lineWidth = 10; ctx.strokeRect(7, 7, canvas.width - 14, canvas.height - 14);
+    ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '900 66px "Arial Narrow",Arial,sans-serif'; ctx.fillText(texto, canvas.width / 2, canvas.height / 2 + 4);
+    const map = new THREE.CanvasTexture(canvas); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8;
+    return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, side: THREE.FrontSide }));
+  }
   function addBox(w, h, d, material, x, y, z, opts = {}) {
     const mesh = new THREE.Mesh(boxGeo(w, h, d, material), material); mesh.position.set(x, y + h / 2, z);
     if (opts.ry) mesh.rotation.y = opts.ry; if (opts.rx) mesh.rotation.x = opts.rx; if (opts.rz) mesh.rotation.z = opts.rz;
@@ -540,11 +550,16 @@ export function buildPenitenciaria(scene, T) {
 
   function policeCar(x,z,ry) {
     const group = new THREE.Group(); group.name = 'penitenciaria-carro-policia'; group.position.set(x,0,z); group.rotation.y=ry; root.add(group);
-    const part=(w,h,d,m,px,py,pz)=>{const mesh=new THREE.Mesh(boxGeo(w,h,d,m),m);mesh.position.set(px,py+h/2,pz);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;};
+    const fallback = new THREE.Group(); fallback.name = 'carandiru-viatura-fallback'; group.add(fallback);
+    const part=(w,h,d,m,px,py,pz)=>{const mesh=new THREE.Mesh(boxGeo(w,h,d,m),m);mesh.position.set(px,py+h/2,pz);mesh.castShadow=true;mesh.receiveShadow=true;fallback.add(mesh);return mesh;};
     part(2.7,.75,5.4,MAT.white,0,.55,0); part(2.55,.12,3.4,MAT.blue,0,1.05,0); part(2.35,1.05,2.65,MAT.white,0,1.12,.05);
     part(2.38,.72,.08,MAT.glass,0,1.35,-1.35); part(2.38,.72,.08,MAT.glass,0,1.35,1.35);
-    for(const sx of [-1,1]) for(const sz of [-1.75,1.75]) { const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.28,16),MAT.rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(sx*1.35,.55,sz);group.add(wheel); }
+    for(const sx of [-1,1]) for(const sz of [-1.75,1.75]) { const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.28,16),MAT.rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(sx*1.35,.55,sz);fallback.add(wheel); }
     part(1.45,.18,.28,MAT.black,0,2.2,0); part(.65,.22,.3,MAT.red,-.42,2.35,0); part(.65,.22,.3,MAT.blue,.42,2.35,0);
+    const glb = placeProp('carandiru_viatura_1990', { x: 0, y: 0, z: 0, targetH: 1.75, targetLen: 4.6 });
+    if (glb) { glb.name = 'carandiru-viatura-mint'; group.add(glb); fallback.visible = false; }
+    carandiru.mintVehicle = !!glb; carandiru.vehicleSource = glb ? 'mint' : 'fallback';
+    carandiru.vehicleFallback = true; carandiru.vehicleCollider = true; carandiru.vehiclePropId = 'carandiru_viatura_1990';
     const hx=Math.abs(Math.cos(ry))*1.55+Math.abs(Math.sin(ry))*2.8,hz=Math.abs(Math.sin(ry))*1.55+Math.abs(Math.cos(ry))*2.8;
     const collider={minX:x-hx,maxX:x+hx,minY:0,maxY:2.5,minZ:z-hz,maxZ:z+hz,tag:'carro-policia'};colliders.push(collider);group.userData.collider=collider;occluders.push(group);
   }
@@ -620,7 +635,7 @@ export function buildPenitenciaria(scene, T) {
     const glbPav = placeProp('bloco_celas', { x: 0, y: 0, z: 0 });
     const pecasPav = [
       ...[-1, 1].flatMap((sx) => [-1, 1].map((sz) =>
-        addBox(2.5, 6.6, 4.5, MAT.tijolo, sx * 3.25, 0, sz * 5.25, { tag: `pavilhao-canto-${sx}-${sz}` }))),
+        addBox(2.5, 6.6, 4.5, MAT.concrete, sx * 3.25, 0, sz * 5.25, { tag: `pavilhao-canto-${sx}-${sz}` }))),
       addBox(9.4, .3, 15.4, MAT.darkConcrete, 0, 6.6, 0, { collide: false }),
     ];
     const passagemNS = addBox(3.6, .08, 15.2, MAT.darkConcrete, 0, .01, 0,
@@ -665,6 +680,24 @@ export function buildPenitenciaria(scene, T) {
         { name: `penitenciaria-pavilhao-verga-${id}`, collide: false });
       for (const sz of [-1, 1]) ibox(.34, 1.3, .16, MAT.concrete, sx * 4.67, yy, zz + sz * .91);
     }
+    /* As faces norte/sul também recebem vãos fundos, grades e peitoris. São cascas
+       visuais: nenhum volume competitivo, oclusor ou apoio de navegação é alterado. */
+    for (const yy of [1.9, 4.6]) for (const xx of [-3.25, 3.25]) for (const sz of [-1, 1]) {
+      const id = janelaId++;
+      ibox(1.78, 1.34, .04, fundoVao, xx, yy - .02, sz * 7.52, { cast: false });
+      addBox(1.7, 1.3, .05, MAT.grade, xx, yy, sz * 7.575,
+        { name: `carandiru-pavilhao6-janela-ns-${id}`, collide: false, cast: false });
+      addBox(1.98, .16, .34, MAT.concrete, xx, yy - .16, sz * 7.67,
+        { name: `carandiru-pavilhao6-peitoril-ns-${id}`, collide: false });
+      addBox(1.98, .16, .34, MAT.concrete, xx, yy + 1.3, sz * 7.67,
+        { name: `carandiru-pavilhao6-verga-ns-${id}`, collide: false });
+      for (const sx of [-1, 1]) ibox(.16, 1.3, .34, MAT.concrete, xx + sx * .91, yy, sz * 7.67);
+    }
+    for (const sz of [-1, 1]) {
+      const placa = placaTexto('PAVILHÃO 6', 3.7, .62, '#ddd7c9', '#44494a');
+      placa.name = `carandiru-placa-pavilhao-6-${sz < 0 ? 'sul' : 'norte'}`;
+      placa.position.set(0, 2.72, sz * 7.72); placa.rotation.y = sz < 0 ? Math.PI : 0; root.add(placa);
+    }
     if (glbPav) {
       /* molde normalizado (~1 m) esticado ao volume do pavilhão: 9 × 15 m de planta,
          6,6 m — medidas nativas do accessor POSITION (mesmo padrão do galpão do gelo). */
@@ -700,6 +733,9 @@ export function buildPenitenciaria(scene, T) {
     ];
     if (glbPort) { portao.add(glbPort); occluders.push(glbPort); for (const p of pecasPort) p.visible = false; }
     else occluders.push(...pecasPort);
+    const placaDetencao = placaTexto('CASA DE DETENÇÃO', 8.4, .92);
+    placaDetencao.name = 'carandiru-placa-casa-de-detencao';
+    placaDetencao.position.set(0, 6.72, 46.48); placaDetencao.rotation.y = Math.PI; root.add(placaDetencao);
 
     // Torres de muro flanqueando o portão (guarita_muro.glb): a frente não tinha
     // vigia entre as guaritas das quinas.
@@ -721,6 +757,23 @@ export function buildPenitenciaria(scene, T) {
       { name: 'penitenciaria-torre-muro-0', team: 'B', eye: [-9, 8.2, 45.35] },
       { name: 'penitenciaria-torre-muro-1', team: 'B', eye: [9, 8.2, 45.35] },
     );
+
+    /* Duas massas de pavilhão além da muralha dão ao mapa o perfil institucional
+       cinzento. Reusam a casca Mint recuperada e nunca entram em colisão/LOS. */
+    for (const [i, x] of [[0, -55], [1, 55]]) {
+      const shell = placeProp('bloco_celas', { x, y: 0, z: 2, targetH: 15, targetLen: 24, ry: Math.PI / 2 });
+      if (shell) {
+        shell.name = `carandiru-pavilhao-fundo-mint-${i}`;
+        shell.traverse((node) => { if (node.isMesh) node.material = MAT.concrete; });
+        root.add(shell);
+      }
+      else {
+        addBox(10, 14, 27, MAT.concrete, x, 0, 2,
+          { name: `carandiru-pavilhao-fundo-fallback-${i}`, collide: false });
+        for (const yy of [3, 6, 9, 12]) for (const zz of [-9, -3, 3, 9])
+          addBox(.06, 1.2, 1.7, fundoVao, x + (x < 0 ? 5.03 : -5.03), yy, 2 + zz, { collide: false, cast: false });
+      }
+    }
 
     // O campo do Carandiru: marcações de futebol PICHADAS no concreto do pátio
     // norte — tinta gasta, sem trave nem quadra (o recorte da PEN4 segue intacto).

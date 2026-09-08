@@ -15,13 +15,19 @@ if (captureDir) mkdirSync(captureDir, { recursive: true });
 const sourcePath = 'public/js/map_penitenciaria.js';
 const sourceSha256 = createHash('sha256').update(readFileSync(sourcePath)).digest('hex');
 const samples = [];
+let c3Receipt = null;
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
 try {
   for (const variant of ['baseline', 'candidate']) for (const quality of ['med', 'low']) for (const team of [5, 8]) {
     const context = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: 1 });
     const page = await context.newPage(), errors = [], failed = [];
+    let vehicleHttpStatus = null;
     page.on('pageerror', (error) => errors.push(error.message));
-    page.on('response', (response) => { if (response.status() >= 400) failed.push(`${response.status()} ${new URL(response.url()).pathname}`); });
+    page.on('response', (response) => {
+      const pathname = new URL(response.url()).pathname;
+      if (pathname.endsWith('/models/props/carandiru_viatura_1990.glb')) vehicleHttpStatus = response.status();
+      if (response.status() >= 400) failed.push(`${response.status()} ${pathname}`);
+    });
     if (variant === 'baseline') await page.route(/\/js\/map_penitenciaria\.js(?:\?|$)/, (route) => route.fulfill({
       status: 200, contentType: 'text/javascript',
       body: execFileSync('git', ['show', `${baselineRef}:public/js/map_penitenciaria.js`], { encoding: 'utf8' }),
@@ -65,14 +71,31 @@ try {
     for (const key of ['elapsedMs', 'callsPerFrame', 'trianglesPerFrame']) row[key] = +row[key].toFixed(2);
     samples.push(row);
 
+    if (variant === 'candidate' && quality === 'med' && team === 5) {
+      const vehicle = await page.evaluate(() => {
+        const game = window.__game, group = game.world.root.getObjectByName('penitenciaria-carro-policia');
+        const mint = group?.getObjectByName('carandiru-viatura-mint');
+        let visible = !!mint;
+        for (let node = mint; node; node = node.parent) visible &&= node.visible;
+        return { source: game.world.carandiru?.vehicleSource || null, visible,
+          fallbackVisible: group?.getObjectByName('carandiru-viatura-fallback')?.visible ?? null };
+      });
+      c3Receipt = { sourceSha256, browser: 'Google Chrome', viewport: [1200, 800], state: row.state,
+        vehicle: { ...vehicle, httpStatus: vehicleHttpStatus }, warnings: row.warnings, errors: row.errors };
+    }
+
     if (captureDir && variant === 'candidate' && quality === 'med' && team === 5) {
       const views = [
-        ['divineia', [0, 1.62, -40], [0, 2.2, -8]],
+        ['divineia', [-8, 1.62, -40], [0, 2.2, -8]],
         ['radial', [-14, 1.62, -24], [0, 2.4, 0]],
         ['pavilhao-6', [0, 1.62, -8.5], [0, 2.4, 0]],
         ['galeria', [3.25, 5.02, 5.5], [-2.8, 4.5, -4]],
+        ['galeria-acesso', [10.5, 1.62, 3.7], [4, 3.5, 0]],
         ['muralha', [36.7, 7.42, -12], [36.7, 6.2, 20]],
+        ['muralha-acesso-sul', [22, 1.62, -18], [35.6, 3.2, -33]],
         ['guarita-patio', [20, 1.62, 30], [9, 8.2, 45.35]],
+        ['portal-casa-de-detencao', [14, 1.62, 32], [0, 6.5, 47]],
+        ['viatura', [11, 1.62, -28], [17, 1.15, -25]],
       ];
       await page.evaluate(() => {
         const game = window.__game;
@@ -101,4 +124,5 @@ const report = {
   sourceSha256, browser: 'Google Chrome', viewport: [1200, 800], seconds, samples,
 };
 writeFileSync(out, JSON.stringify(report, null, 2) + '\n');
-if (samples.some((row) => row.errors.length || row.state !== 'live' || row.actualBots !== row.team * 2 - 1 || row.frames < 120)) process.exitCode = 1;
+writeFileSync('tools/eval/carandiru-c3-browser.json', JSON.stringify(c3Receipt, null, 2) + '\n');
+if (!c3Receipt || samples.some((row) => row.errors.length || row.state !== 'live' || row.actualBots !== row.team * 2 - 1 || row.frames < 120)) process.exitCode = 1;

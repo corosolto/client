@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 46.450 linhas em 92 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 46.503 linhas em 92 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.423** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.403 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -100,7 +100,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **142** importam Playwright, **49** importam gltf-transform e **10** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **142** importam Playwright, **50** importam gltf-transform e **10** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -322,7 +322,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 815 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 889 |
-| `penitenciaria` | Carandiru | **captura** | `map_penitenciaria.js` | 859 |
+| `penitenciaria` | Carandiru | **captura** | `map_penitenciaria.js` | 912 |
 
 **17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 23 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 

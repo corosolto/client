@@ -62,7 +62,7 @@
     "eval:sertao-sky-lifecycle": "node tools/eval/sertao-sky-lifecycle-check.mjs",
     "eval:sertao-livestock-runtime": "node tools/eval/sertao-livestock-runtime-check.mjs",
     "eval:penitenciaria": "node tools/eval/penitenciaria-check.mjs",
-    "eval:carandiru": "node tools/eval/carandiru-jogabilidade-check.mjs --checkpoint=C2",
+    "eval:carandiru": "node tools/eval/carandiru-jogabilidade-check.mjs --checkpoint=C3",
     "eval:carandiru:browser": "node tools/eval/carandiru-browser-evidence.mjs",
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",
     "eval:pegada": "node tools/eval/pegada-check.mjs",

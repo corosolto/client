@@ -181,7 +181,7 @@ const mintRegistry = JSON.parse(readFileSync('mint-assets.json', 'utf8')).assets
 const vehicleHash = vehicleExists ? createHash('sha256').update(readFileSync(vehiclePath)).digest('hex') : '';
 const sourceNotes = readFileSync('public/models/props/FONTE.md', 'utf8');
 const provenanceValid = mintRegistry?.files?.includes(vehiclePath)
-  && mintRegistry.source?.kind === 'mint-model' && /^ks[a-z0-9]+$/.test(mintRegistry.source?.assetId || '')
+  && mintRegistry.source?.kind === 'mint-model' && /^(?:ks|p)[a-z0-9]+$/.test(mintRegistry.source?.assetId || '')
   && /^https:\/\/mint\.gg\/(?:project|chat)\//.test(mintRegistry.source?.chatUrl || '')
   && typeof mintRegistry.source?.prompt === 'string' && mintRegistry.source.prompt.length >= 120
   && typeof mintRegistry.source?.licenseBasis === 'string' && mintRegistry.source.licenseBasis.length >= 20

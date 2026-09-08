@@ -125,6 +125,56 @@ resultado como blockout multinível e apontou bloqueios concretos:
   idêntico, além de recibo Chrome 1200×800 com HTTP 2xx e instância visível.
   Antes da implementação, C3 reprova somente CAR7; C1/C2 continuam verdes.
 
+## C3 — identidade arquitetônica e viatura Mint
+
+- `3e98d334` introduziu CAR7 antes da implementação. A fonte C2 reprovou somente
+  a ausência da viatura Mint/GLB/registro/recibo; CAR1–CAR6 e CAR8 permaneceram
+  verdes.
+- O projeto Mint `zd7agpw4xxat6kytnxka8kj19h8e1969`, chat
+  `ph7ev8zdhy23p8v1ec4vtjyt058e1r4k`, gerou a perua policial genérica
+  "Weathered Grey Patrol Wagon" no Tripo P1. Asset
+  `p97a1j1skm2w33wjyv8pkw92n18e0g2j`: 4.840 triângulos, três texturas WebP,
+  original 1.043.988 bytes e final 415.268 bytes. Original, recibo e hashes ficam
+  em `artifacts/carandiru-c3/mint/`; o arquivo final e a licença cautelar estão em
+  `public/models/props/carandiru_viatura_1990.glb`, `mint-assets.json` e
+  `public/models/props/FONTE.md`.
+- A viatura GLB substitui apenas a casca visual. CAR7 constrói também o fallback e
+  confirma que o colisor `carro-policia` é idêntico. O recibo Chrome comprova HTTP
+  200, `source=mint`, instância visível, fallback oculto e zero erro inesperado; o
+  mutante `viatura-procedural` reprova somente CAR7.
+- O C3 torna o Pavilhão 6 e as duas massas de fundo cinza, acrescenta vãos
+  norte/sul com profundidade, grades, peitoris e vergas, identifica as duas
+  entradas como PAVILHÃO 6 e o portal como CASA DE DETENÇÃO. As massas externas
+  reutilizam `bloco_celas.glb`; todo esse lote é visual e não entra nos colisores,
+  LOS, pisos, waypoints ou CTF do C2.
+- A primeira captura C3 foi rejeitada localmente porque as placas estavam
+  espelhadas e o Pavilhão 6 ainda lia como tijolo vermelho. A fonte final corrige
+  ambos, eleva a inscrição do portal acima da bandeira CTF e troca os
+  enquadramentos de Divinéia, acesso da galeria, acesso da muralha, portal e
+  viatura. Dez vistas 1200×800 ficam em
+  `artifacts/carandiru-c3/after-final2/`; as seis do C2 permanecem em `before/`.
+- O recibo final `tools/eval/carandiru-performance.json` mede, contra o C1 na mesma
+  execução, aumentos de chamadas de 6,7% (med/5), 10,7% (med/8), 9,9% (low/5) e
+  4,7% (low/8), todos abaixo do teto de 15%. Oito amostras ficaram `live`, com
+  1200×800 e zero erro inesperado. CAR1–CAR8 estão verdes.
+- A captura confirma avanço visual claro: portal legível, Pavilhão 6 cinza,
+  viatura de época reconhecível e eixo Divinéia sem o mastro no centro. O acesso
+  estreito da muralha continua escuro e uma imagem não prova percurso contínuo;
+  esses pontos permanecem no C4, junto da revisão independente e aprovação humana.
+
+## Crítica independente do C3
+
+A primeira revisão classificou o C3 como avanço claro sobre o blockout C2 e apto
+para revisão, sem promovê-lo a C4. Ela encontrou uma massa de fundo invadindo o
+corredor da muralha e uma placa PAVILHÃO 6 espelhada. A fonte foi corrigida e uma
+segunda leitura independente dos frames finais confirmou que o corredor voltou a
+ficar visível até o fundo e que a placa espelhada desapareceu, sem novo bloqueador
+nesses dois enquadramentos.
+
+Ainda faltam vídeo contínuo das rotas e acessos e avaliação com jogadores do
+corredor longo e escuro da muralha, cuja cobertura intermediária não fica clara.
+Esse parecer não substitui aprovação visual humana.
+
 ## Próximo passo
 
 C3 integra arquitetura e viatura Blender/Mint com proveniência completa, sem
