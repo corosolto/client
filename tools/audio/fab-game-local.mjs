@@ -417,10 +417,10 @@ const CHARACTER_IDS = [
   'bonzo', 'palhacomal', 'jozo', 'adjim', 'esbirro', 'titica', 'padati', 'padata', 'cadequinha',
   'emo', 'blackmetal', 'metaleiro', 'punk', 'skatista', 'clubber', 'rapper', 'reggae', 'pagodeiro',
   'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
-  'lobisomem',
+  'lobisomem', 'mariabonita', 'lampiao', 'bandeirante', 'boto', 'zumbi', 'curupira',
 ];
-const FEMALE_CHARACTERS = new Set(['doutora']);
-const CREATURE_CHARACTERS = new Set(['gotinha', 'dollynho', 'et', 'canarinho', 'proerd', 'lobisomem']);
+const FEMALE_CHARACTERS = new Set(['doutora', 'mariabonita']);
+const CREATURE_CHARACTERS = new Set(['gotinha', 'dollynho', 'et', 'canarinho', 'proerd', 'lobisomem', 'boto', 'curupira']);
 const physicalByCharacter = Object.fromEntries(CHARACTER_IDS.map((id) => [
   id, FEMALE_CHARACTERS.has(id) ? 'female' : (CREATURE_CHARACTERS.has(id) ? 'creature' : 'male'),
 ]));

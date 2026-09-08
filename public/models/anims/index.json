@@ -41,6 +41,19 @@
    "walk1h",
    "walkfire"
   ],
+  "bandeirante": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "blackmetal": [
    "idle",
    "walk",
@@ -68,6 +81,19 @@
    "walkfire"
   ],
   "bonzo": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "boto": [
    "idle",
    "walk",
    "run",
@@ -159,6 +185,19 @@
    "walkfire"
   ],
   "criarj": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "curupira": [
    "idle",
    "walk",
    "run",
@@ -340,6 +379,19 @@
    "walk1h",
    "walkfire"
   ],
+  "lampiao": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "lobisomem": [
    "idle",
    "walk",
@@ -354,6 +406,19 @@
    "walkfire"
   ],
   "mandrake": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "mariabonita": [
    "idle",
    "walk",
    "run",

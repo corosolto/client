@@ -587,9 +587,6 @@ export const CHARACTERS = [
   { id: 'mariabonita', team: 'M', tribe: 'mitico', name: 'Maria Bonita',
     blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.',
     pal: { skin: 0xc49070, shirt: 0xb04020, pants: 0x6a3020, hair: 0x1a0a00, boots: 0x4a2a1a } },
-  { id: 'saci', team: 'M', tribe: 'mitico', name: 'Saci-Pererê',
-    blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.',
-    pal: { skin: 0x8d6a4f, shirt: 0xc01010, pants: 0xc01010, hair: 0xc01010, boots: 0x1a1a1a } },
   { id: 'lampiao', team: 'M', tribe: 'mitico', name: 'Lampião',
     blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!',
     pal: { skin: 0xb0805a, shirt: 0x8a4a2a, pants: 0x5a3a1a, hair: 0x1a0a00, boots: 0x3a2a1a } },
@@ -602,9 +599,6 @@ export const CHARACTERS = [
   { id: 'zumbi', team: 'M', tribe: 'mitico', name: 'Zumbi dos Palmares',
     blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.',
     pal: { skin: 0x4a3020, shirt: 0x8b0000, pants: 0x3a2a1a, hair: 0x1a0a00, boots: 0x2a1a0a } },
-  { id: 'cuca', team: 'M', tribe: 'mitico', name: 'Cuca',
-    blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — "dorme com o medo".',
-    pal: { skin: 0x4a6a4a, shirt: 0x2a3a2a, pants: 0x3a2a3a, hair: 0x2a2a1a, boots: 0x1a2a1a } },
   { id: 'curupira', team: 'M', tribe: 'mitico', name: 'Curupira',
     blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.',
     pal: { skin: 0xb88a5a, shirt: 0x4a6a3a, pants: 0x3a4a2a, hair: 0xff4400, boots: 0x3a2a1a } },
@@ -623,7 +617,7 @@ export const CHAR_WEAPON = {
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   lobisomem: 'shotgun',
-  mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', cuca: 'shotgun', curupira: 'mp5',
+  mariabonita: 'awp', lampiao: 'm4', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

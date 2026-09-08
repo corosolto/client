@@ -12,8 +12,15 @@ if (mutant === 'sem-lobisomem') characters = characters.replace("{ id: 'lobisome
 const failures = [];
 const expect = (ok, message) => { if (!ok) failures.push(message); };
 const roster = [...characters.matchAll(/\{ id: '([^']+)', team: 'M'/g)].map((match) => match[1]);
-expect(roster.length === 1 && roster[0] === 'lobisomem', `roster M deve conter somente lobisomem, recebeu ${roster.join(', ') || 'vazio'}`);
-expect(!/\b(?:cuca|saci|lampiao|mariabonita|curupira|zumbi|boto|bandeirante)\b/.test(roster.join(' ')), 'personagem M bloqueado entrou no roster');
+/* O elenco M cresceu de 1 para 7 em 08/09. A invariante era "só o lobisomem" porque essa
+   era a facção inteira; agora ela mede o que importa de verdade — que o roster de M é
+   EXATAMENTE quem está registrado como team 'M', sem faltar nem sobrar. `saci` e `cuca`
+   ficam de fora de propósito: os modelos deles reprovam a régua de deformação por 12× e
+   27× (BUG-150), e continuam no disco fora do registro. */
+const ESPERADO_M = ['lobisomem', 'mariabonita', 'lampiao', 'bandeirante', 'boto', 'zumbi', 'curupira'];
+expect(roster.length === ESPERADO_M.length && ESPERADO_M.every(id => roster.includes(id)),
+  `roster M fora do esperado: recebeu ${roster.join(', ') || 'vazio'}`);
+expect(!/\b(?:cuca|saci)\b/.test(roster.join(' ')), 'personagem M reprovado na régua de deformação entrou no roster (BUG-150)');
 expect(/lobisomem:\s*'shotgun'/.test(characters), 'loadout de lobisomem não está registrado');
 
 const glb = read('public/js/glbchars.js');
@@ -55,7 +62,13 @@ const rosterSource = game.slice(game.indexOf('const _cyclePool ='), game.indexOf
 const pickRoster = new Function('CHARACTERS', `${rosterSource.replace('export function', 'function')}return pickMatchRoster;`)(defs);
 for (const dedicated of [false, true]) for (const size of [1, 5, 8]) {
   const result = pickRoster('M', 'B', size, 'lobisomem', dedicated);
-  expect(result.allyDefs.length === size - (dedicated ? 0 : 1) && result.allyDefs.every(c => c.id === 'lobisomem'), `roster M incorreto: size=${size}, dedicated=${dedicated}`);
+  /* Com 7 candidatos o roster deixa de repetir o mesmo corpo: o que se cobra agora é que
+     todo aliado seja da facção M e que ninguém apareça duas vezes enquanto houver gente. */
+  const ids = result.allyDefs.map(c => c.id);
+  const vagas = size - (dedicated ? 0 : 1);
+  expect(ids.length === vagas && result.allyDefs.every(c => c.team === 'M')
+    && (vagas > ESPERADO_M.length - 1 || new Set(ids).size === ids.length),
+    `roster M incorreto: size=${size}, dedicated=${dedicated}, recebeu ${ids.join(',')}`);
 }
 let query = read('public/js/screenquery.js');
 if (mutant === 'links') query = change(query, ", 'M'", '');
