@@ -3,7 +3,7 @@
 <!-- BEGIN:GERADO — não edite à mão, rode `npm run arch` -->
 
 > Gerado por `node tools/gen-arch.mjs`. **Não edite este bloco à mão.**
-> Versão do jogo: 2.0.0-alpha.239 · `npm run arch` para regenerar · `npm run arch:check` no CI.
+> Versão do jogo: 2.0.0-alpha.242 · `npm run arch` para regenerar · `npm run arch:check` no CI.
 
 ## Tamanho dos arquivos indexados
 
@@ -12,7 +12,7 @@
 | `public/js/game.js` | 7425 | 271 |
 | `public/js/main.js` | 3408 | 278 |
 | `public/js/glbchars.js` | 851 | 60 |
-| `public/js/characters.js` | 1074 | 40 |
+| `public/js/characters.js` | 1075 | 40 |
 | `public/js/vmattach.js` | 629 | 4 |
 | `public/js/springs.js` | 261 | 28 |
 | `public/js/weapons.js` | 354 | 22 |
