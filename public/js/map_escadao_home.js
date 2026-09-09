@@ -3,7 +3,7 @@ export const ESCADAO_HOME = Object.freeze({
   stairX: 9.3, stairBottom: 23, stairTop: 17.5,
   // Passarela chega pelo PATAMAR 1: dá uma entrada para quem sobe e mantém a
   // escada externa para quem vem da rua/respawn.
-  upperX0: .5, upperX1: 1.35, upperZ0: 10.3, upperZ1: 15.1,
+  upperX0: .5, upperX1: 1.55, upperZ0: 10.3, upperZ1: 15.1,
 });
 
 export function escadaoHomeGround(x, z) {
@@ -51,9 +51,11 @@ export function buildEscadaoHome({ addBox, occluders, wall, concrete, dark, meta
   // Passarela alta: liga a porta frontal ao PATAMAR 1 sem fechar o lance central.
   const upperW=h.upperX1-h.upperX0, upperD=h.upperZ1-h.upperZ0, upperX=(h.upperX0+h.upperX1)/2, upperZ=(h.upperZ0+h.upperZ1)/2;
   box(upperW,.18,upperD,concrete,upperX,h.floor-.18,upperZ);
-  // Corrimão termina em z=14,2, onde a geminada leste começa: até 15,1
-  // estrangulava o corredor da cápsula (0,73 m livres vs 0,76 m de diâmetro).
-  box(.12,1.05,upperD-1.35,dark,h.upperX0+.06,h.floor-.18,h.upperZ0+(upperD-1.35)/2+.45);
+  // As guardas fecham as quedas, mas começam após a boca do lance para não bloquear a cápsula.
+  for (const guardX of [h.upperX0+.06, h.upperX1-.06]) {
+    const guard = box(.12,1.05,upperD-1.85,dark,guardX,h.floor-.18,h.upperZ0+(upperD-1.85)/2+.95);
+    guard.userData.escadaoPassarelaGuarda = true;
+  }
 
   for (let i=0;i<16;i++) {
     const d=(h.stairBottom-h.stairTop)/16, y=(i+1)*h.floor/16;

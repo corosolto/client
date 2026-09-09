@@ -4,10 +4,10 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const out = process.env.OUT || 'artifacts/escadao-r6/browser';
+const out = process.env.OUT || 'artifacts/escadao-r7/browser';
 const base = process.env.BASE || 'http://127.0.0.1:8164';
 const sourceRoot = process.env.SOURCE_ROOT || process.cwd();
-const files = ['public/js/map_escadao.js', 'public/js/map_escadao_home.js', 'public/js/game.js'];
+const files = ['public/js/map_escadao.js', 'public/js/map_escadao_home.js', 'public/js/ambientlife.js', 'public/js/game.js'];
 const sha = data => createHash('sha256').update(data).digest('hex');
 const sources = Object.fromEntries(files.map(file => [file, sha(readFileSync(join(sourceRoot, file)))]));
 mkdirSync(out, { recursive: true });
@@ -48,10 +48,12 @@ try {
     { id: 'casa-central-janela-escada', pos: [-1.4, 2.75, 15.35], look: [0, 4.25, 10.5] },
     { id: 'casa-central-janela-rua', pos: [-1.4, 2.75, 15.65], look: [0, 4.25, 24] },
     { id: 'casa-central-acesso-inferior', pos: [10.8, 0, 24], look: [7, 4.1, 16] },
-    { id: 'mirante-oeste-exterior', pos: [-16.5, 7.56, -23.8], look: [-12, 8.8, -26] },
-    { id: 'mirante-oeste-interior', pos: [-12, 7.56, -26], look: [-5, 9.05, -27] },
-    { id: 'mirante-leste-exterior', pos: [16.5, 7.56, -24.8], look: [12, 8.8, -27] },
-    { id: 'mirante-leste-interior', pos: [12, 7.56, -27], look: [5, 9.05, -27] },
+    { id: 'mirante-oeste-entrada', pos: [-9.2, 7.56, -31], look: [-12, 8.8, -28] },
+    { id: 'mirante-oeste-interior', pos: [-12, 7.56, -26], look: [-12, 9.05, -21.8] },
+    { id: 'mirante-leste-entrada', pos: [9.4, 7.56, -30.2], look: [12, 8.8, -29] },
+    { id: 'mirante-leste-interior', pos: [12, 7.56, -27], look: [12, 9.05, -22.8] },
+    { id: 'escada-ambiencia', pos: [1.1, 0, 13.5], look: [-1.45, 4.1, -2.5] },
+    { id: 'esgoto-curvo', pos: [.15, 5.04, -3.4], look: [-1.22, 2.7, 5.2] },
   ];
   for (const view of views) {
     const pose = await page.evaluate(view => {
@@ -102,14 +104,14 @@ try {
     const routes = [
       drive('central-superior', 2.75, [[.3, 10.12], [.9, 10.12], [.9, 12], [.9, 14.4], [1, 14.9], [-1.4, 15.5]]),
       drive('central-inferior', 2.75, [[9.2, 23.2], [9.2, 20], [9.2, 17.5], [9.2, 16], [8, 16], [7, 16], [4.4, 15], [1.45, 14.94], [-1.4, 15.5]]),
-      drive('mirante-oeste', 7.56, [[-14.55, -23.2], [-14.55, -24.4], [-14.55, -26], [-12, -26]]),
-      drive('mirante-leste', 7.56, [[14.55, -24], [14.55, -25.4], [14.55, -27], [12, -27]]),
+      drive('mirante-oeste', 7.56, [[-4.5, -34], [-8.8, -33], [-9.4, -30.4], [-12, -28.6], [-12, -26]]),
+      drive('mirante-leste', 7.56, [[4.5, -34], [8.6, -31], [9.4, -29.6], [12, -29.6], [12, -27]]),
     ];
     const rows = [
-      { id: 'janela-escada', eye: [-1.4, 4.37, 15.3], target: [0, W.groundHeightAt(0, 11) + 1.5, 11], floor: 2.75 },
+      { id: 'janela-escada', eye: [-1.4, 4.37, 15.3], target: [-.6, W.groundHeightAt(-.6, 11) + 1.5, 11], floor: 2.75 },
       { id: 'janela-rua', eye: [-1.4, 4.37, 15.7], target: [0, W.groundHeightAt(0, 24) + 1.5, 24], floor: 2.75 },
-      { id: 'mirante-oeste', eye: [-11, 9.18, -26], target: [-5, 9.06, -27], floor: 7.56 },
-      { id: 'mirante-leste', eye: [11, 9.18, -27], target: [5, 9.06, -27], floor: 7.56 },
+      { id: 'mirante-oeste', eye: [-12, 9.18, -25], target: [-12, 9.06, -21.8], floor: 7.56 },
+      { id: 'mirante-leste', eye: [12, 9.18, -26], target: [12, 9.06, -22.8], floor: 7.56 },
     ];
     const los = rows.map(row => ({
       id: row.id,
@@ -124,7 +126,12 @@ try {
       id: row.id,
       exposed: W.spawns.B.filter(slot => clear(row.eye, [slot.x, W.groundHeightAt(slot.x, slot.z) + 1.62, slot.z])).length,
     }));
-    return { routes, los, centralFloor, exposedE, exposedB };
+    const fauna = Object.fromEntries(['rat','pigeon','cat','cockroach'].map(type => [type, W.ambience.animals.filter(a => a.type === type).length]));
+    const faunaSources = [...new Set(W.ambience.animals.filter(a => ['rat','pigeon','cat','cockroach'].includes(a.type)).map(a => a.source))];
+    const esgoto = W.root.getObjectByName('escadao_esgoto_curvo')?.userData.escadaoEsgoto;
+    const plantios = W.root.getObjectByName('escadao_vegetacao')?.userData.escadaoPlantios?.length || 0;
+    const fios = W.root.getObjectByName('escadao_fiacao')?.userData.escadaoRamais?.length || 0;
+    return { routes, los, centralFloor, exposedE, exposedB, fauna, faunaSources, esgoto, plantios, fios };
   });
   receipt.result = result;
 
@@ -134,10 +141,15 @@ try {
   assert.equal(result.centralFloor, 2.75, 'Piso central contínuo na mesma sala');
   assert.equal(result.exposedE, 0, 'Janela oposta não lê o spawn inferior');
   assert.ok(result.exposedB.every(row => row.exposed === 0), JSON.stringify(result.exposedB));
+  assert.deepEqual(result.fauna, { rat: 5, pigeon: 5, cat: 2, cockroach: 5 });
+  assert.deepEqual(result.faunaSources, ['gltf'], `faunaSources=${result.faunaSources}`);
+  assert.ok(result.esgoto?.points >= 24 && result.esgoto?.yDrop >= 7, JSON.stringify(result.esgoto));
+  assert.ok(result.plantios >= 25, `plantios=${result.plantios}`);
+  assert.ok(result.fios >= 28, `fios=${result.fios}`);
   receipt.criticalErrors = receipt.errors.filter(error => error.startsWith('PAGE ') || /\/js\/|\/models\/props\/escadao_/.test(error));
   assert.equal(receipt.criticalErrors.length, 0, JSON.stringify(receipt.criticalErrors));
   receipt.status = 'passed';
-  console.log(`ESCADAO R6 BROWSER PASS: ${result.routes.length} rotas ida/volta, ${result.los.length} linhas de tiro, ${views.length} capturas 1200x800`);
+  console.log(`ESCADAO R7 BROWSER PASS: ${result.routes.length} rotas ida/volta, ${result.los.length} linhas de tiro, ${views.length} capturas 1200x800`);
 } catch (error) {
   receipt.status = 'failed'; receipt.error = error.stack; process.exitCode = 1;
   console.error(error.message);

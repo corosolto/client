@@ -15,7 +15,7 @@
      --mutante=janela-oposta-fechada veda a nova janela da mesma sala
      --mutante=piso-reaberto   reabre o buraco sob o interior
      --mutante=acesso-removido fecha a entrada alta da passarela
-     --mutante=casa-mirante-fechada veda a porta leste do mirante
+     --mutante=casa-mirante-fechada veda a porta voltada ao respawn do mirante
  */
 import assert from 'node:assert/strict';
 import { THREE, bootGame, initTextures } from './harness.mjs';
@@ -84,13 +84,13 @@ if (mutant === 'acesso-removido') {
   mutationApplied = before && !after;
 }
 if (mutant === 'casa-mirante-fechada') {
-  const before = game._retaAndavel(14.55, -27, 12, -27, BODY_RADIUS, MAX_STEP);
-  const sealed = new THREE.Mesh(new THREE.BoxGeometry(.32, 2.2, 2.05), new THREE.MeshStandardMaterial());
-  sealed.position.set(13.975, MIRANTE_FLOOR + 1.1, -27);
+  const before = game._retaAndavel(12, -29.5, 12, -27, BODY_RADIUS, MAX_STEP);
+  const sealed = new THREE.Mesh(new THREE.BoxGeometry(1.45, 2.2, .32), new THREE.MeshStandardMaterial());
+  sealed.position.set(12, MIRANTE_FLOOR + 1.1, -29.025);
   W.root.add(sealed); W.occluders.push(sealed);
-  W.colliders.push({ minX: 13.815, maxX: 14.135, minY: MIRANTE_FLOOR, maxY: MIRANTE_FLOOR + 2.2, minZ: -28.025, maxZ: -25.975 });
+  W.colliders.push({ minX: 11.275, maxX: 12.725, minY: MIRANTE_FLOOR, maxY: MIRANTE_FLOOR + 2.2, minZ: -29.185, maxZ: -28.865 });
   W.root.updateMatrixWorld(true);
-  mutationApplied = before && !game._retaAndavel(14.55, -27, 12, -27, BODY_RADIUS, MAX_STEP);
+  mutationApplied = before && !game._retaAndavel(12, -29.5, 12, -27, BODY_RADIUS, MAX_STEP);
 }
 assert.ok(mutationApplied, `MUTANTE NAO APLICOU: ${mutant}`);
 
@@ -148,13 +148,13 @@ if (scope !== 'mutation') routeSpecs['acesso-inferior-central'] = {
 };
 
 if (scope === 'full') {
-  routeSpecs['casa-mirante-oeste-lateral'] = {
+  routeSpecs['casa-mirante-oeste-frontal'] = {
     floor: MIRANTE_FLOOR,
-    points: [[-14.55, -22.8], [-14.55, -24.4], [-14.55, -26], [-12, -26]],
+    points: [[-4.5, -34], [-8.8, -33], [-9.4, -30.4], [-12, -28.6], [-12, -26]],
   };
-  routeSpecs['casa-mirante-leste-lateral'] = {
+  routeSpecs['casa-mirante-leste-frontal'] = {
     floor: MIRANTE_FLOOR,
-    points: [[14.55, -23.8], [14.55, -25.4], [14.55, -27], [12, -27]],
+    points: [[4.5, -34], [8.6, -31], [9.4, -29.6], [12, -29.6], [12, -27]],
   };
 }
 
@@ -200,7 +200,7 @@ if (scope === 'full') {
 const losRows = [
   {
     id: 'janela-escada', route: 'acesso-superior-central',
-    eye: [-1.4, CENTRAL_FLOOR + EYE_HEIGHT, 15.3], target: [0, W.groundHeightAt(0, 11) + 1.5, 11],
+    eye: [-1.4, CENTRAL_FLOOR + EYE_HEIGHT, 15.3], target: [-.6, W.groundHeightAt(-.6, 11) + 1.5, 11],
   },
 ];
 if (scope !== 'mutation') losRows.push({
@@ -209,12 +209,12 @@ if (scope !== 'mutation') losRows.push({
   });
 if (scope === 'full') losRows.push(
   {
-    id: 'casa-mirante-oeste-contrajogo', route: 'casa-mirante-oeste-lateral',
-    eye: [-11, MIRANTE_FLOOR + EYE_HEIGHT, -26], target: [-5, MIRANTE_FLOOR + 1.5, -27],
+    id: 'casa-mirante-oeste-contrajogo', route: 'casa-mirante-oeste-frontal',
+    eye: [-12, MIRANTE_FLOOR + EYE_HEIGHT, -25], target: [-12, MIRANTE_FLOOR + 1.5, -21.8],
   },
   {
-    id: 'casa-mirante-leste-contrajogo', route: 'casa-mirante-leste-lateral',
-    eye: [11, MIRANTE_FLOOR + EYE_HEIGHT, -27], target: [5, MIRANTE_FLOOR + 1.5, -27],
+    id: 'casa-mirante-leste-contrajogo', route: 'casa-mirante-leste-frontal',
+    eye: [12, MIRANTE_FLOOR + EYE_HEIGHT, -26], target: [12, MIRANTE_FLOOR + 1.5, -22.8],
   },
 );
 
@@ -261,6 +261,30 @@ if (scope === 'full') {
     check(`SPAWN/${row.id}`, exposed.length === 0, `${exposed.length} slots B visíveis`, '0 slots B visíveis',
       'Oriente a janela para o centro do mirante e feche a face voltada ao nascimento.');
   }
+
+  const fauna = W.ambience?.animals || [];
+  const faunaCount = type => fauna.filter(animal => animal.type === type).length;
+  for (const [type, minimum] of [['rat', 5], ['pigeon', 5], ['cat', 2], ['cockroach', 5]]) {
+    check(`AMBIENCIA/${type}`, faunaCount(type) >= minimum, faunaCount(type), `>=${minimum}`,
+      'Distribua a fauna entre rua, patamares, escadas e mirante em vez de concentrá-la fora do percurso.');
+  }
+  const plantios = W.root.getObjectByName('escadao_vegetacao')?.userData.escadaoPlantios || [];
+  check('AMBIENCIA/matinhos', plantios.length >= 25, plantios.length, '>=25 plantios',
+    'Aumente os tufos visíveis nas bordas dos lances e nos encontros com as paredes.');
+  const esgoto = W.root.getObjectByName('escadao_esgoto_curvo')?.userData.escadaoEsgoto;
+  check('AMBIENCIA/esgoto-curvo', !!esgoto && esgoto.points >= 24 && esgoto.xSpan >= .3 && esgoto.yDrop >= 7,
+    JSON.stringify(esgoto || null), '>=24 pontos, curva lateral>=0.3 m e queda>=7 m',
+    'Faça o filete acompanhar os três lances com queda e variação lateral visíveis.');
+  const fios = W.root.getObjectByName('escadao_fiacao')?.userData.escadaoRamais || [];
+  check('AMBIENCIA/fios', fios.length >= 28, fios.length, '>=28 ramais',
+    'Reforce as travessias e os ramais presos às fachadas ao longo da subida.');
+  let guardas = 0;
+  W.root.traverse(object => { if (object.userData?.escadaoPassarelaGuarda) guardas++; });
+  check('CASA/passarela-sem-buraco-lateral', guardas === 2, guardas, '2 guardas laterais',
+    'Feche as duas quedas da passarela sem invadir a boca da escada principal.');
+  check('SPAWN/inferior-sem-biombo-central', W.spawns.E.every(slot => Math.abs(slot.x) >= 4 && slot.z > 25),
+    JSON.stringify(W.spawns.E), 'slots atrás dos sobrados e centro livre',
+    'Use os sobrados como proteção natural e mantenha a rua central desobstruída.');
 }
 
 const report = {

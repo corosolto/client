@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 46.837 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 46.891 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.423** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.403 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -223,7 +223,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 |---|---|---|---|---:|
 | `campomorro` | Campinho do Morro | **captura** | `map_campomorro.js` | 815 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.154 |
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.410 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.462 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 814 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.966 |
