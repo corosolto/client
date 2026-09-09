@@ -1,0 +1,38 @@
+[mcp_servers.serena]
+command = "/Users/ruben/.local/bin/serena"
+args = [
+  "start-mcp-server",
+  "--context",
+  "codex",
+  "--project-from-cwd",
+  "--enable-web-dashboard",
+  "false",
+  "--open-web-dashboard",
+  "false",
+  "--tool-timeout",
+  "60",
+]
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+enabled_tools = [
+  "activate_project",
+  "find_declaration",
+  "find_file",
+  "find_implementations",
+  "find_referencing_symbols",
+  "find_symbol",
+  "get_current_config",
+  "get_diagnostics_for_file",
+  "get_symbols_overview",
+  "initial_instructions",
+  "insert_after_symbol",
+  "insert_before_symbol",
+  "list_dir",
+  "read_file",
+  "rename_symbol",
+  "replace_content",
+  "replace_symbol_body",
+  "safe_delete_symbol",
+  "search_for_pattern",
+]

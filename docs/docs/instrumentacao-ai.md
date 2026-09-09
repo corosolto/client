@@ -189,6 +189,31 @@ errado. Se você achar isso verboso: esse comentário é o que impediu a próxim
 refazer o mesmo erro de três dias. Não delete comentário de procedência num PR de
 limpeza.
 
+## Orçamento de contexto por tarefa
+
+O histórico da conversa não é o repositório. O estado que precisa sobreviver mora em
+commit, contrato, relatório e evidência com caminho estável. Antes de trocar de tarefa,
+faça um checkpoint local e escreva o próximo passo; só então encerre ou arquive o chat.
+
+Cada tarefa trabalha em **uma família de armas**. AK, pistola e shotgun não dividem o
+mesmo histórico longo. Ao atingir um marco, ou quando `npm run context:check` avisar,
+abra uma tarefa nova a partir do commit e do handoff. O medidor usa apenas metadados de
+arquivo: não abre nem reprocessa o conteúdo dos JSONL. O orçamento operacional é aviso
+em 250 MB e interrupção em 500 MB.
+
+Ferramentas têm papéis diferentes:
+
+- **Graphify** responde relações e arquitetura. Se já existir `graphify-out/graph.json`,
+  use `query`, `path` ou `explain` com `--budget 1500`; não reconstrua o grafo em toda
+  tarefa e não despeje o JSON no chat.
+- **Serena** localiza símbolos, referências e pontos exatos de edição. O MCP deste
+  projeto limita respostas e ignora modelos, mídia, dependências, builds e evidências.
+- **Arquivos grandes** ficam em `artifacts/`; o chat recebe estado, métricas, hash e
+  caminho, nunca PNG, GLB, log ou JSON completo serializado como texto.
+
+Se um comando produzir saída extensa, salve a saída como evidência e resuma somente a
+conclusão verificável. O browser continua sendo executado por um agente de cada vez.
+
 :::warning Nem tudo que está escrito está atualizado
 `SKILL.md:72` afirma que o `game.js` tem 3.234 linhas — o arquivo passou do dobro disso
 (o número de hoje está no bloco gerado de [Arquitetura](./arquitetura.md#os-arquivos-indexados),

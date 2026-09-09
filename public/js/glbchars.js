@@ -192,9 +192,10 @@ const _base = new Map();           // id -> THREE.Object3D template scene
 
 export function hasModel(id) { return _base.has(id); }
 // Acesso ao template já carregado (fparms.js clona daqui p/ os braços de 1ª pessoa)
-// e aos clipes compartilhados (pose base congelada). Pré-requisito: preloadCharacterAssets.
+// e aos clipes do MESMO personagem. Pré-requisito: preloadCharacterAssets.
 export function getCharTemplate(id) { return _base.get(id); }
 export function getSharedClips() { return _clips; }
+export function getCharClips(id) { return _clipsByChar[id] || _clips; }
 
 // Mede o centro REAL da palma no espaço local do osso Hand: média (em BIND pose) dos
 // verts da malha com peso dominante (>0.5) no osso Hand ou no seu filho Curl (os dedos

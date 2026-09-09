@@ -51,6 +51,125 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-78 · `trim.pos` por arma era inerte — a âncora do centro cancelava a translação~~ · RESOLVIDO 09/09
+
+**O que era.** `attachMintWeapon` aplicava `trim.pos` na posição do wrap e, logo depois,
+recentrava o holder para o centro da arma Mint coincidir com o centro da arma do pack
+(*"Âncora DEFINITIVA"*). Essa âncora é calculada com o wrap JÁ transladado, então
+cancelava a translação exatamente. O `trim`, documentado no `vmconfig.js` como *"ajuste
+fino do wrap Mint no socket"*, não movia nada — só `mount.pos`, que é por FAMÍLIA, tinha
+efeito.
+
+**Como ficou provado**: `trim.pos = [0, 0, 0.3]` (30 cm) e `[0, -0.03, 0]` deram exatamente
+o mesmo contato medido (1,9 cm) e a mesma bbox da rodada sem trim nenhum. O arquivo servido
+continha o trim — conferido com `curl`.
+
+**Medida antes × depois** (m92, jogo real, `piscina_treta`, 3:2, contato 3D em cm):
+1,9 cm em idle/ADS/disparo → **0,5 cm**, dentro da faixa das aprovadas (ak 0,2, deagle
+0,3–0,5, shotgun 0,2–0,5). Nenhuma outra arma muda: `trim.pos` é `[0,0,0]` em todas as
+demais, e o caminho assado não passa por aqui.
+
+**Causa raiz**: ordem em `public/js/vmweapon.js` — a translação por arma agora entra no
+holder DEPOIS da âncora, do mesmo jeito que `mount.pos`.
+
+**Régua**: `tools/eval/vm-arsenal-check.mjs`, cláusula de contato em CENTÍMETROS. Em
+pixels a medida ordenava errado — o `deagle/ads`, com a mão na coronha (conferido na
+figura), dava a pior razão de todas, porque distância na tela depende de quanto a arma
+ocupa o quadro e da densidade da amostra. Teto 1,0 cm; procedência: ak 0,1–0,2 em todas as
+capturas, deagle 0,3–0,5, shotgun 0,2–0,5, m92 1,2–1,9 antes do conserto. Mutante
+`semcontato` reprova.
+
+**Limite declarado da régua**: é a distância MÍNIMA sobre a nuvem de mão inteira — com a
+mão forte encostada, uma mão de apoio solta não aparece. Separar as duas exige dividir a
+malha `GEO_FP_SK_Glove_01`, que hoje é uma só.
+
+
+### ~~BUG-77 · peça separada (pente/ferrolho) ficava no tamanho pré-normalização — a AKM renderizava 20% maior~~ · RESOLVIDO 09/09
+
+**O que era.** `splitParts` (`public/js/vmweapon.js`) recorta o pente da malha da arma e
+pendura o fragmento num OSSO do braço, congelando a matriz a partir de `mesh.matrixWorld`.
+Ele rodava ANTES de `wrap.scale.setScalar(...)`, a linha que dá a escala final ao wrap — e
+como o fragmento fica pendurado no osso, e não no wrap, ele nunca recebia essa escala.
+
+**Medida antes** (jogo real, `piscina_treta`, 3:2, diâmetro 3D da nuvem de pontos da arma,
+invariante à pose): `akm` 105,8 cm contra **88 cm** declarados em `weapons.js`, e razão
+arma/mão **1,36** contra **1,12** da `ak` aprovada — com as MESMAS mãos (77,8 cm), porque
+as duas são da família `ak`.
+
+**Medida depois**: `akm` 87,1 cm e razão 1,12 — idêntica à `ak`. As outras 24 armas não
+mudaram (só `ak` e `akm` declaram `parts`, e a `ak` é assada, que não passa por este
+caminho).
+
+**Causa raiz**: ordem de `splitParts` em `public/js/vmweapon.js` — separar a peça antes da
+escala final do wrap.
+
+**Régua**: `tools/eval/vm-arsenal-check.mjs`, cláusula de tamanho: o diâmetro 3D medido tem
+de bater com o `len` declarado em `weapons.js` dentro de 8% para arma longa. Procedência do
+teto: 21 das 25 armas batem dentro de 2% (awp 116,1/115, ak 87,2/88, lmg 110,1/110,
+svd 115/115). Arma de UMA MÃO fica de fora da cláusula — o diâmetro vai da boca ao
+calcanhar da coronha e supera o `len` por construção (pistol 30,4/26, revolver38 27,3/24,
+deagle 31,5/30). Mutante `tamanho` infla o diâmetro medido e reprova.
+
+**Por que a régua anterior não pegava**: ela media a diagonal NA TELA, que depende da pose
+e da distância — a mesma arma mediu 624 px numa rodada e 878 px em outra. O diâmetro 3D é
+de corpo rígido e reproduziu idêntico em rodadas seguidas.
+
+**Custo declarado**: nenhum medido. `check:fast` 89/100 com o conserto contra 88/100 na
+base (a diferença é `eval:devport`, intermitente).
+
+
+### ~~BUG-76 · o viewmodel autorado escondia a arma do pack sem ter malha Mint — e servia a AWP no lugar de outras armas~~ · RESOLVIDO 07/09
+
+**Palavras de quem reportou** (07/09, revisão do dono, 19 screenshots 14:03–15:52): a arma
+"flutua sem mãos", e depois: *"nao so LMG mas todas lanes, eu ja testei ,pistola ,faca e ak
+e estao resolvidas, nao testei a M4A1"*.
+
+**O que era.** `attachMintWeapon` (`public/js/vmweapon.js`) chamava `hidePackGun(entry)`
+ANTES de saber se havia malha Mint, e saía por `if (!wrap) return null`. A malha Mint vem do
+modelo de MUNDO, e a partida pré-carrega só as armas que sorteou (`public/js/weapons.js`
+`preloadWeapons`; o resto chega em ocioso). Resultado: a família ficava **sem arma nenhuma**
+— luva segurando o vazio — pelo resto da sessão, e QUAL família caía mudava a cada partida.
+Somado a isso, `weaponModel(id)` cai em `_cache.get('awp')` quando a arma pedida não está
+carregada: com a AWP em cache e a Zastava fora, o wrap saía `mint_weapon_m92` com a malha
+`sniper_1` — a arma gigante e errada do frame `15.51.33`.
+
+**Medida antes** (jogo real, `piscina_treta`, 3:2, 7 capturas por arma):
+`awp`, `shotgun` e `revolver38` com `arma 0/0` e mão em quadro; em outra sessão os mesmos
+zeros caíram em `m4`, `carbine` e `lmg`. Diagonal aparente da `m92`: 857 px contra 552 px da
+`ak` na mesma família (1,55×).
+
+**Medida depois**: `awp` 292/302, `shotgun` 300/302, `revolver38` 306/306 vértices de arma em
+quadro; substituição silenciosa eliminada (`hasWeapon` obrigatório antes do wrap).
+
+**Causa raiz**: `public/js/vmweapon.js:137` (hidePackGun incondicional) + `public/js/weapons.js:338`
+(`|| _cache.get('awp')`).
+
+**Régua**: `tools/eval/vm-attach-fallback-check.mjs` (`npm run eval:vm-attach`, dentro do
+`check:vm`) — bloqueia o GLB de mundo da arma e exige que a família continue com arma em
+quadro E sem wrap de outra arma. Mutantes: `--mutante=escondepack` (reintroduz o estado do
+defeito) e `--mutante=forjawrap` (forja wrap com malha `sniper_1`); os dois reprovam, e a
+régua sai 1 se um deles passar.
+
+**Coleta e portão do arsenal**: `tools/viewmodels/prep/vm-arsenal-frames.mjs` +
+`tools/eval/vm-arsenal-check.mjs`; relatório em
+`docs/reports/VM-ENCAIXE-MINT-2026-09-07.md`.
+
+**O caminho LEGADO tinha a mesma substituição, e pior** (07/09, segunda rodada): o `rw` de
+TODAS as armas é montado uma vez só no boot (`public/js/game.js` `_buildViewModels`), com o
+que estivesse em cache. Régua determinística — libera só `awp.glb` e bloqueia o resto, com
+`awp` montada provando a pré-condição: **25 armas montaram a malha da AWP**, inclusive a
+faca, e `alignHands` punha a mão no grip da arma pedida (por isso `mão 0/312` nas medidas de
+antes). Depois do conserto (`hasWeapon` obrigatório + montagem tardia quando o GLB chega):
+0 substituições, e as 9 armas medidas desenham a própria arma com mão em quadro (60–92 de
+312) e contato 1–7 px. Régua: `npm run eval:vm-attach-legado`, mutante `montaalheia`.
+
+**Custo declarado**: quando o GLB de mundo não chegou, a família desenha a malha do pack
+(licenciada, já dentro do runtime GLB) em vez da Mint, até o modelo chegar — o portão avisa
+`AVISO fallback:` quais armas estão nesse estado. Continuam ABERTOS, com régua vermelha
+medindo: escala em fuga da `m92` (1,49–1,55× a `ak`), contato da mão no `revolver38`
+(53–59 px, teto 40) e `m92/reload` com a mão saindo do quadro.
+
+
 ### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
 
 **Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de
@@ -1483,6 +1602,178 @@ mudar.
 ---
 
 ## P1 — o jogador vê
+
+### BUG-75 · mãos genéricas, encaixe torto e anatomia deformada — REABERTO 24/08
+
+**Sintoma (do dono):** *"mãos genéricas que não se parecem nada com mãos, mal encaixe nas
+armas, recarregar some com a arma ao invés de mostrá-la, péssimas animações, péssima
+inclinação das armas"*. O pedido inclui todas as famílias e explicitamente a faca.
+
+**Causa raiz — confirmada.** O caminho servido cria `fpArm()` e `frontHand()` com cápsulas
+e prende essas peças diretamente em cada grupo de arma (`public/js/game.js`,
+`_buildViewModels`). O módulo que deveria fornecer braços rigados está desligado por
+`FP_OFF = true` e `buildFPArms()` devolve `null` (`public/js/fparms.js`). A recarga do
+`ViewModelRig` movimenta apenas o pivô global da arma; não existe ação de mão indo ao
+carregador/ferrolho (`public/js/springs.js`, estado `reload`). Portanto os cinco sintomas
+são o mesmo defeito de arquitetura, não cinco offsets ruins.
+
+**Referência funcional:** os vídeos enviados pelo Emerson em 23/08 mostram o personagem
+Mint já rigado, a arma montada no esqueleto e três câmeras lendo a mesma pose. O próprio
+acervo local confirma `LeftHand`/`RightHand` e cadeias de braço nos personagens, além de
+clipes retargetados por personagem em `public/models/anims/`.
+
+**Reprodução:** abrir `/?hands=1`, trocar entre rifle, pistola e faca e recarregar. O
+personagem escolhido não participa do viewmodel; durante a recarga nenhuma mão visita
+carregador ou ferrolho.
+
+**Conserto entregue.** `public/js/fpsrig.js` usa o rig FP CC0 WRAD com 30 ossos de dedos,
+luvas próprias e IK por socket; o arquivo Blender canônico é
+`tools/blender/source/fp-arms-source.blend`, o arquivo autorado é
+`tools/blender/fp-arms-authored.blend` e o export servido é
+`public/models/viewmodels/fp-arms.glb`. Rifle, pistola, escopeta, bolt action e faca têm
+poses/fases próprias. A recarga move a mão ao carregador, bomba, ferrolho ou slide e mantém
+a arma visível; rifle e pistola exibem também o carregador destacado.
+
+**Régua fechada:** `npm run eval:fp-rig` mede as 26 armas e as quatro famílias de recarga.
+Em 24/08: 26/26 com fonte de identidade `mandrake`, 2 SkinnedMeshes, arma visível e erro de
+palma ≤ 0,015 m; fases `magazine+bolt`, `magazine+slide`, `pump` e `bolt` presentes. Os
+mutantes `generico` e `recarga-global` ficam vermelhos como esperado. A compilação Astro e
+a verificação de sintaxe passaram, e AK/pistola/faca foram conferidas no navegador real.
+
+**Reaberto pelo dono:** *"parece o braço de uma pessoa deformada e nao real"*; *"as armas
+tambem estao bem ruim posicionadas especialmente a faca e sniper"*. A régua anterior mede
+punho→socket e existência de fases inventadas em JS. Ela não mede anatomia, silhueta nem se
+mãos+arma+animação foram autoradas como um único viewmodel; portanto ficou verde para a
+arquitetura errada. O palpite "ajustar novamente o IK" foi refutado pela inspeção dos pacotes
+CC0 enviados: os `v_*.mdl` já contêm mãos, arma, esqueleto e sequências específicas. AK, AWP,
+Deagle e faca serão o corte de prova do novo caminho, sem CCD IK em runtime.
+
+**Nova régua, antes do conserto:** `npm run eval:authored-vm`. O contrato exige um GLB
+autorado completo por arma de prova, com skin, as duas mãos e os clips originais. O estado de
+24/08 reprova por ausência dos quatro artefatos. Mutantes obrigatórios: `sem-clipe` e
+`sem-maos`.
+
+**Correção final em 24/08 — pacote CC0 é doador, nunca aparência.** A primeira integração
+reutilizava também as armas e texturas GoldSrc e, portanto, entregava um clone visual do CS.
+Isso foi descartado. `public/js/authoredvm.js` agora usa os 18 GLBs convertidos somente como
+esqueleto, mãos e clips mecânicos. Todo mesh de arma doadora recebe
+`animationDonorOnly=true` e fica invisível. No mesmo osso animado é montado, por ID, o GLB
+próprio de `public/models/weapons/` já usado pelo Coro Solto. Toda cor das texturas de mão
+do pacote é descartada; apenas o relevo em cinza ajuda a ler dedos e costuras, enquanto a
+skin final é gerada com pele, tatuagem e roupa do personagem selecionado. Assim AK,
+M92, M400, faca e cada uma das outras 22 armas conservam sua identidade do jogo, enquanto
+recarga, disparo, saque e golpe vêm do molde animado CC0.
+
+**Antes × depois e evidência.** Antes, o caminho procedural exibia braços deformados; a
+primeira tentativa autorada corrigiu a anatomia mas copiou a aparência do CS. Depois, a
+régua passa **18/18 doadores e 26/26 armas próprias**, incluindo `idle`, `draw`, disparo,
+recarga e `slash/stab`. Além dos mutantes `sem-clipe` e `sem-maos`, o mutante `clone-cs`
+agora falha se a arma doadora reaparecer, se a arma própria deixar de ser montada ou se uma
+textura de mão doadora sobreviver. A bancada `authoredvmviewer.html` foi percorrida nas 26
+armas com recarga ou golpe ativo e confirmou que cada ID monta seu GLB próprio, mantém a
+arma doadora invisível e recebe os materiais personalizados do personagem.
+
+**Reaberto novamente pelo dono em 24/08 — a bancada estrutural não é aprovação visual.**
+Os screenshots do jogo real mostram mãos e armas disformes, contatos incompatíveis e
+enquadramento diferente do render do Blender. Há também uma divergência concreta de
+câmera: o piloto AK é composto com VFOV 58° em
+`tools/blender/viewmodels/build_ak_hires_pilot.py`, mas a câmera fica fora do GLB porque o
+export seleciona somente rig e meshes. `public/js/authoredvm.js` reconstrói a projeção pela
+regra HFOV 90, que em 3:2 vira VFOV 67,38°. Portanto o navegador não avalia a mesma
+composição aprovada offline.
+
+O caminho final e seus portões vivem em
+[`docs/development/VIEWMODEL-1P-PROFISSIONAL.md`](docs/development/VIEWMODEL-1P-PROFISSIONAL.md).
+Até os cinco pilotos (rifle, pistola, faca, sniper e escopeta) passarem no jogo real, o 1P
+continua **não aprovado** independentemente de build, ossos, clips ou sockets verdes.
+
+**Reaberto no piloto AK em 25/08 — defeitos literais do `akpilot=21`.** *"o pente
+para no ar, e a arma que encaixa no pente e não o pente na arma"*; *"quando atira o
+tamanho do pente diminui"*; *"a mão de trás não está segurando no cabo de madeira"*;
+e a composição mostra a coronha inteira, ao contrário da referência de enquadramento do
+CS 1.6. A inclinação foi aprovada e não deve mudar. Evidência servida:
+`Screenshot 2026-08-25 at 02.06.27.png`. Régua anterior: **cega**, pois verificava
+câmera, nomes das ações e existência do rig, mas não amostrava escala do carregador,
+trajetória relativa arma↔carregador nem contato da mão forte. Nova régua desta rodada:
+`tools/eval/ak-viewmodel-contract.mjs` precisa amostrar a animação real do GLB e reprovar
+qualquer escala do carregador instalado diferente de 1 durante `Shoot`; a evidência visual
+obrigatória é uma prancha de disparo e outra de recarga, no recorte 3:2 servido.
+
+**Reaberto no piloto AKM em 26/08 — contato incompleto da mão forte.** *"a mão de
+trás da AKM não está segurando o suporte e o dedo até fica no trigger mas não se
+movimenta corretamente"*. A causa foi medida no arquivo autorado: a palma estava
+registrada no rifle e somente a cadeia do indicador era resolvida; polegar, médio,
+anelar e mínimo continuavam na pose aberta do doador, formando uma plataforma sob o
+cabo. Além disso, o alvo do indicador era idêntico em todos os frames de `Shoot`, então
+o teste anterior aceitava contato estático como disparo. A nova correção precisa envolver
+o cabo com as cinco cadeias e medir deslocamento/retorno do indicador durante `Shoot`.
+
+**Correção e régua em 26/08.** O registro da palma foi recalculado contra o volume real do
+cabo de madeira da AKM, e polegar, médio, anelar e mínimo agora possuem alvos separados que
+envolvem o cabo. O indicador ganhou curso de disparo próprio: o GLB exportado mede 5,979°
+entre repouso e pressão, com retorno de 0° no fim do clipe. A régua
+`tools/eval/ak-viewmodel-contract.mjs` exige os 15 ossos da mão forte, curso ≥ 4° e retorno
+≤ 1°; `--mutante-gatilho-estatico` zera artificialmente o curso e obrigatoriamente reprova.
+Pranchas específicas da mão forte ficam em
+`artifacts/viewmodels/akm-hires-pilot/renders/strong-hand-*.png`.
+
+**Reaberto novamente em 26/08 — fechamento frontal, contato e ADS.** Relato literal do
+dono: *"a akm ainda esta com bugs, ela tem um buraco na frente voce ve um fundo azul quando
+olha pro ceu, o dedo nao chega a encostar no trigger apesar da mao de tras estar correta
+segurando a arma, e quando o usuario clica em mirar com zoom com o botao direito do mouse ela
+nao fica mais de frente."* As três causas eram independentes: o mesh autorado terminava com
+uma abertura interna visível contra fundos claros; a pose aproximava o indicador sem impor
+contato geométrico mensurável; e o ADS herdava apenas a transformação genérica, sem alinhar o
+pacote autorado inteiro à linha óptica.
+
+**Correção validada.** O export da AKM recebeu o oclusor interno escuro
+`coro_solto_project_akm_front_occluder`, marcado com
+`occlusion_role=seal-front-sky-leak`, sem alterar a silhueta externa. O indicador foi
+recalibrado e agora fica a **0,722 mm** do gatilho; os 15 ossos da mão forte continuam
+presentes e o disparo mede **5,1°**, retornando a **0°**. O ADS passa a transformar o mount
+completo da arma e mãos com `yaw=-0,55 rad` e `x=-1,05`, escolha feita por comparação visual
+de seis enquadramentos (`x=-0,45` a `-1,45`), não apenas por build. A prancha dessa varredura
+está em `artifacts/viewmodels/akm-hires-pilot/ads-sweep/contact-sheet.png`.
+
+**Evidência no navegador real.** `fire.png`, `ads.png`, `reload.png`, `lookdown.png` e a
+prancha final em `artifacts/viewmodels/akm-hires-pilot/final-browser-v9/` confirmam: nenhum
+azul atravessa a frente ao olhar para o céu; no botão direito a caixa da culatra e a linha do
+cano vêm para o centro sem cortar arma ou mãos; e a pose de disparo permanece estável. O
+flash e a boca da arma coincidem em NDC `[0,181; -0,075]`. A régua agora também exige o
+oclusor, contato ≤ 4,5 mm, ADS autorado e faixa de enquadramento `-1,20 ≤ x ≤ -0,80`;
+`--mutante-dedo-sem-contato`, `--mutante-sem-oclusor-frontal`,
+`--mutante-sem-ads-autorado` e `--mutante-ads-cortado` ficam todos vermelhos.
+
+**Pistola reaberta em 26–27/08 — pose, disparo e recarga ainda não aprovados.** Relatos
+literais: *"a arma esta muito de lado, quando atira fica uma mao segurando o carregador ao
+inves das duas atirando"* e *"sim o dedo no gatilho nao dispara, e o recarregar nao esta
+animado direito"*. Os contact sheets `shoot-contact-v14.png` e
+`reload-contact-v14.png` confirmam que a pistola ainda fica comprimida no canto, os braços
+dominam o quadro e os contatos mecânicos não são demonstrados com clareza. O
+`eval:pistol-pilot` existente valida contrato/estrutura do arquivo; seu PASS não equivale a
+aprovação visual no navegador.
+
+**Rodada 28/08 (pack pago) — régua antes do conserto, causas MEDIDAS.** A integração do
+KINEMATION (29 commits em ~90 min, sem portões) trocou 25/26 armas pela malha genérica do
+pack e quebrou o resto por quatro causas confirmadas lendo o binário dos GLBs e o código:
+(1) `build_paid_family.py` parenteava a arma no OBJETO armature com matriz de rest
+congelada — os clipes animam `ik_hand_gun` e a arma ficava soldada no ar (consertado:
+bone-parent com compensação de tail; delta de posição com idle aplicado ≤1e-6 m nas 15
+famílias; régua no `validate_paid_catalog` com baseline versionado e mutante provado);
+(2) as mesmas 9 texturas de braço (18,3 MB) embutidas nos 16 GLBs — troca de arma baixava
+23 MB (consertado: shared/ + placeholder 1×1 religado por nome; família 2,9–7,5 MiB,
+catálogo 345→68 MB; ID5/ID6 na `authored-identity-check`); (3) sem clipe de fire em 12/15
+famílias e o kick legado zerado — arma parada atirando (consertado: `vmrecoil.js` com as
+curvas e amplitudes do RecoilAnimData extraídas do pack; `vmrecoil-sim` 42/42, pico AK
+medido no jogo 1,50° vs 1,55° da simulação); (4) `setAim()` no-op (consertado: alça MEDIDA
+da arma Mint alinhada ao eixo da vmCamera; `authored-ads-check` em 16:9 e 3:2, desvio
+0.000). A identidade voltou: `vmweapon.js` monta a malha Mint no socket com base automática
+de encaixe (contra-escala razão 1,001) e a genérica do pack fica oculta — tudo atrás do
+portão `ready` por família no `vmconfig.js` (o jogo segue 100% legado até a onda flipar) e
+do kill-switch `?vmauthored=0`. Idle respira (ID7), fila não encalha com mount oculto
+(ID8), fuzil saca com o clipe `equip_rifle` do General/ e a faca ganhou dono (meleevm
+construído; `melee-vm-check` 6/6). Suíte local: `npm run check:vm`; matriz visual por arma
+em `viewmodel-visual-matrix.mjs` para o A/B da onda contra o golden gen-2.
 
 ### ~~BUG-59 · 18 personagens desta branch sem mídia do redesign (avatar/webm/resultado)~~ · RESOLVIDO 18/08 (mídia)
 

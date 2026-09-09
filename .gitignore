@@ -199,3 +199,17 @@ tmp/
 url_verification_cache.json
 # Logs de eval/serve do scratchpad (os PROMPT-HANDOFF-*.md são HISTÓRIA e ficam).
 scratchpad/*.log
+
+# ── Viewmodels 1P (BUG-75, 28/08) ───────────────────────────────────────────
+# `artifacts/` são 1,1 GB de contact sheets, grids de câmera e GLBs INTERMEDIÁRIOS
+# dos pilotos de viewmodel — tudo regenerável pelos scripts versionados em
+# tools/blender/viewmodels/. O produto final versiona em public/models/viewmodels/.
+# Mesma regra do /issues/ (captura não é produto).
+/artifacts/
+# Backup automático do Blender — nunca é fonte.
+*.blend1
+# Assets derivados do KINEMATION FPS Animation Pack (Fab Standard License,
+# redistributableAsSource: false). Vivem em ~/csbrasil-private-assets e chegam ao
+# runtime pelo symlink public/private-assets. Já estava em .git/info/exclude (local);
+# fica AQUI também porque o repo é PÚBLICO e a regra precisa valer em todo clone.
+/public/private-assets/

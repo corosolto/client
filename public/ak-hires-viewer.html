@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AK própria — piloto de viewmodel</title>
+  <style>
+    html,body{margin:0;height:100%;overflow:hidden;background:#26313c;color:#eef5ff;font:14px system-ui}
+    canvas{display:block;width:100%;height:100%}
+    #panel{position:fixed;left:16px;top:16px;display:grid;gap:8px;padding:12px;background:#101820d9;border:1px solid #ffffff2b;border-radius:10px;backdrop-filter:blur(10px)}
+    #status{max-width:520px;color:#bcd0df}
+    #actions{display:flex;gap:7px;flex-wrap:wrap}
+    button{border:1px solid #ffffff38;border-radius:7px;background:#263a4b;color:white;padding:8px 12px;cursor:pointer}
+    button:hover{background:#34546c}
+    #crosshair{position:fixed;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);pointer-events:none}
+    #crosshair:before,#crosshair:after{content:"";position:absolute;background:#4fe8e0;box-shadow:0 0 0 1px #061219}
+    #crosshair:before{left:9px;top:0;width:2px;height:20px}#crosshair:after{left:0;top:9px;width:20px;height:2px}
+  </style>
+</head>
+<body>
+  <div id="panel">
+    <strong>AK do Coro Solto · mãos/rig CC0 retexturizados</strong>
+    <div id="status">carregando o piloto…</div>
+    <div id="actions">
+      <button data-action="Idle">Repouso</button>
+      <button data-action="Shoot">Disparo</button>
+      <button data-action="Reload">Recarregar</button>
+      <button data-action="Equip">Equipar</button>
+    </div>
+  </div>
+  <div id="crosshair"></div>
+  <script type="importmap">
+    {"imports":{"three":"./vendor/three.module.js?h=919693a84f08","three/addons/":"./vendor/addons/"}}
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    const renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    document.body.append(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x26313c);
+    scene.add(new THREE.HemisphereLight(0xd8e9ff,0x16202b,2.4));
+    const key = new THREE.DirectionalLight(0xffe8cf,3.6); key.position.set(-2,5,3); scene.add(key);
+    const rim = new THREE.DirectionalLight(0x8bc8ff,2.2); rim.position.set(4,2,-3); scene.add(rim);
+    let camera = new THREE.PerspectiveCamera(58,16/9,0.03,50);
+    const clock = new THREE.Clock();
+    const status = document.querySelector('#status');
+    let mixer = null;
+    let clips = new Map();
+    let current = null;
+
+    function play(name){
+      const clip = clips.get(name);
+      if(!clip||!mixer)return;
+      current?.stop();
+      current = mixer.clipAction(clip).reset();
+      const loop = name === 'Idle';
+      current.setLoop(loop?THREE.LoopRepeat:THREE.LoopOnce,loop?Infinity:1);
+      current.clampWhenFinished = !loop;
+      current.play();
+      status.textContent = `${name} · ${clip.duration.toFixed(2)} s · arma própria sempre visível`;
+    }
+
+    new GLTFLoader().load('./models/viewmodels/coro/ak-hires.glb?v=ak-pilot-27',(gltf)=>{
+      const exportedCamera = gltf.scene.getObjectByName('AK_Hires_FP_Camera');
+      if(!exportedCamera?.isPerspectiveCamera) throw new Error('GLB sem câmera FP exportada');
+      camera = exportedCamera;
+      gltf.scene.traverse((object)=>{if(object.isMesh){object.frustumCulled=false;object.castShadow=false;}});
+      scene.add(gltf.scene);
+      mixer = new THREE.AnimationMixer(gltf.scene);
+      clips = new Map(gltf.animations.map((clip)=>[clip.name.split('-').at(-1),clip]));
+      mixer.addEventListener('finished',()=>play('Idle'));
+      status.textContent = `clipes: ${[...clips.keys()].join(', ')}`;
+      play('Idle');
+      window.__akHiresPilot = {gltf,mixer,clips,play};
+    },undefined,(error)=>{status.textContent=`falha ao carregar: ${error.message}`;console.error(error);});
+    document.querySelectorAll('[data-action]').forEach((button)=>button.addEventListener('click',()=>play(button.dataset.action)));
+    function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+    addEventListener('resize',resize);resize();
+    renderer.setAnimationLoop(()=>{const dt=Math.min(.05,clock.getDelta());mixer?.update(dt);renderer.render(scene,camera);});
+  </script>
+</body>
+</html>
