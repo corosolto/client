@@ -34,20 +34,20 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 44.792 linhas em 90 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7.422** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.402 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 44.857 linhas em 90 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7.424** linhas | `wc -l public/js/game.js` |
+| `main.js` | 3.407 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
-| GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
+| GLBs de personagem | 55 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
-| Clipes de animação versionados | 573 | `git ls-files public/models/anims \| wc -l` |
-| Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
+| Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
+| Personagens jogáveis | 53, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 16 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 346 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 73 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Scripts do arnês | 350 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 75 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.245` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.246` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -100,7 +100,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **141** importam Playwright, **49** importam gltf-transform e **10** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **142** importam Playwright, **52** importam gltf-transform e **10** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -278,7 +278,7 @@ projeto.
 
 | Regra | Valor | Constante |
 |---|---|---|
-| Facções · personagens | 5 · 44 (B 9 · C 9 · E 8 · F 9 · U 9) | `CHARACTERS` |
+| Facções · personagens | 6 · 53 (B 9 · C 9 · E 8 · F 9 · M 9 · U 9) | `CHARACTERS` |
 | Mapas no menu | 16 — 2 abrem em rodadas, **14 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
@@ -313,7 +313,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
-| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.349 |
+| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.345 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 391 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
