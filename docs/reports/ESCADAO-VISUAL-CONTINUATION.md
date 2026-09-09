@@ -289,5 +289,5 @@ Elevar Escadão (Morro) do PR #436: subida, becos e patamares de um bairro brasi
 
 ## R7.1 — atualização de segurança exigida pelo CI (09/09/2026)
 - O primeiro `pr-fast` do HEAD `7bb6cf5f` reprovou somente `eval:deps`: o banco do `npm audit` passou a classificar como altas/crítica as versões travadas de `astro`, `js-yaml`, `sharp` e `svgo`. A falha foi reproduzida localmente sem relação com a geometria do mapa.
-- `npm audit fix --omit=dev` atualizou apenas `package-lock.json`, mantendo os intervalos declarados em `package.json`. Uma instalação limpa com `npm ci --ignore-scripts` retorna zero vulnerabilidades; `eval:deps`, build, `check:deploy` 37/37 e os oito gates estruturais/jogáveis do Escadão passam.
+- `npm audit fix --omit=dev` atualizou apenas `package-lock.json`, mantendo os intervalos declarados em `package.json`. O lock foi normalizado com npm 10.9.8, igual ao CI em Node 22, para registrar também os peers WASI opcionais; instalações limpas com npm 10 e 11 retornam zero vulnerabilidades. `eval:deps`, build, `check:deploy` 37/37 e os oito gates estruturais/jogáveis do Escadão passam.
 - Próximo: publicar o lock corrigido, aguardar a nova CI e manter a PR em draft até o dono validar visualmente o candidato R7 na arena local.
