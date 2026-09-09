@@ -110,7 +110,7 @@
   --lambe:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,0) 1px 3px);
 
   /* ---- times ---- */
-  --team-e:#e03232; --team-b:#1faa4d; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f;
+  --team-e:#e03232; --team-b:#1faa4d; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f; --team-m:#9d4edd;
 
   /* ---- espaçamento (escala de 4) ---- */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px;
@@ -568,6 +568,8 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
   --tc-bg:linear-gradient(165deg,#d81e8c 0%,#7a1fa0 52%,#e0761a 100%)}
 .team-f{--tc:#ffd23f;--tc-rgb:255,210,63;--art:url('/img/faccoes/funkeiros.webp');
   --tc-bg:linear-gradient(165deg,#c78a12 0%,#8a5a0d 52%,#3d2a05 100%)}
+.team-m{--tc:#d0a3f0;--tc-rgb:157,78,221;--art:url('/img/faccoes/mitico.webp');
+  --tc-bg:linear-gradient(165deg,#5e35b1 0%,#3d1b6e 52%,#1a0a3d 100%)}
 /* CABEÇALHO TINGIDO NA COR DA FACÇÃO (referência 02): o topo de cada placa lava de
    vermelho/amarelo/roxo e morre no meio, e é isso que faz "quem é quem" ser legível
    antes de ler o nome. Sem ele o texto branco caía direto na foto e sumia. */
@@ -1024,6 +1026,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .ts-crest[data-f="c"]{background-image:url('/img/brasoes/c.png')}
 .ts-crest[data-f="e"]{background-image:url('/img/brasoes/e.png')}
 .ts-crest[data-f="f"]{background-image:url('/img/brasoes/f.png')}
+.ts-crest[data-f="m"]{background-image:url('/img/brasoes/m.png')}
 .ts-crest[data-f="u"]{background-image:url('/img/brasoes/u.png')}
 /* A sigla sai do olho mas NÃO do documento: o brasão diz o time para quem vê, e
    quem usa leitor de tela não pode ficar com um "0" sem dono. */
