@@ -66,12 +66,15 @@ try {
   if (CAMINHO === 'legado') {
     /* No legado o `rw` de TODAS as armas e montado uma unica vez, no boot. Com so a
        awp liberada, toda arma que ganhar `rw` ganhou a malha DELA — a substituicao.
-       A propria awp com `rw` e a pre-condicao: prova que ela chegou antes da
-       montagem. Sem isso a rodada e inconclusiva, e a regua diz isso em vez de
-       mentir verde. */
+       A awp EM CACHE e a pre-condicao: sem ela a substituicao nao teria do que se
+       servir, e a rodada sai INCONCLUSIVA em vez de verde mentiroso. */
     let r = null;
     for (let tentativa = 1; tentativa <= 4; tentativa += 1) {
       r = await page.evaluate(async ({ arma, mut }) => {
+        /* Pre-condicao: a awp precisa estar EM CACHE para a substituicao ter do que se
+           servir. Depois do BUG-76 ela pode chegar tarde, entao espera-se o cache. */
+        const mod = await import('/js/weapons.js');
+        for (let t = 0; t < 40 && !mod.hasWeapon('awp'); t += 1) await new Promise((res) => setTimeout(res, 500));
         window.__game._switchWeapon(arma);
         if (mut === 'montaalheia') {   // reintroduz o estado: monta `rw` alheio na arma
           const g = window.__game.vm?.models?.[arma];
@@ -83,14 +86,14 @@ try {
         const rwAlvo = models[arma]?.getObjectByName?.('rw');
         const malhas = [];
         rwAlvo?.traverse?.((c) => { if (c.isMesh) malhas.push(c.name || '?'); });
-        return { awpTemRw: comRw.includes('awp'), substituidas: comRw.filter((id) => id !== 'awp'), malhasAlvo: malhas.slice(0, 6) };
+        return { awpEmCache: mod.hasWeapon('awp'), awpTemRw: comRw.includes('awp'), substituidas: comRw.filter((id) => id !== 'awp'), malhasAlvo: malhas.slice(0, 6) };
       }, { arma: ARMA, mut: MUT });
-      if (r.awpTemRw) break;
+      if (r.awpEmCache) break;
       if (tentativa < 4) { await page.reload({ waitUntil: 'load', timeout: 180000 }); await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 }); await page.waitForTimeout(2500); }
     }
-    console.log(`[legado] alvo=${ARMA} bloqueios=${bloqueados} awpTemRw=${r.awpTemRw} substituidas=[${r.substituidas.join(',')}] malhasAlvo=[${r.malhasAlvo.join(',')}]`);
-    if (!r.awpTemRw) {
-      console.error('INCONCLUSIVO: a awp nao entrou em cache antes da montagem do viewmodel em 4 tentativas');
+    console.log(`[legado] alvo=${ARMA} bloqueios=${bloqueados} awpEmCache=${r.awpEmCache} awpTemRw=${r.awpTemRw} substituidas=[${r.substituidas.join(',')}] malhasAlvo=[${r.malhasAlvo.join(',')}]`);
+    if (!r.awpEmCache) {
+      console.error('INCONCLUSIVO: a awp nao entrou em cache — sem ela a substituicao nao teria do que se servir');
       saida = 2;
     } else if (r.substituidas.length) {
       if (MUT) { console.log(`mutante '${MUT}' reprovado como devia: ${r.substituidas.join(', ')}`); saida = 0; }
