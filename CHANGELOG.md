@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.242`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.243`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -58,6 +58,17 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.243] — 2026-09-09
+
+### Mudado
+- docs(áudio): registra bloqueio do rollback F/U (#531)
+- docs(viewmodels): registrar bloqueio da recarga M4 (#534)
+- feat(audio): comparativo A/B v7×v8 e rollback determinístico de F/U
+- docs(audio): fontes das vozes antigas de F/U localizadas fora do Git
+- docs(audio): corrige cobertura do rollback de vozes
+- docs(viewmodels): registrar diagnóstico da recarga M4
+- docs(audio): bloqueio do rollback de vozes de Funkeiros e Tribos Urbanas
 
 ## [2.0.0-alpha.242] — 2026-09-08
 
