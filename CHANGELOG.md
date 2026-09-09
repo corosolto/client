@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.243`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.244`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -36,6 +36,7 @@
 - O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
 
 ### Corrigido
+- No Sertão, as três carroças deixam passagem pelos dois flancos e as cinco casas diante dos respawns passam a ter porta, saída lateral, janela com revide e navegação intencional para bots.
 - As casas abertas da Praça da Matriz no Sertão preservam cobertura nas laterais das janelas, circulação interna livre e passagem dos bots junto aos esteios.
 - Em rodada de FACA os bots passam a jogar de faca: fecham até o alcance real da arma (medido 5,98 m e zero golpes em 60 s antes; 1,24 m, 18 golpes e 9 abates depois) e o golpe sai como faca — sem traçante, fogacho de cano nem som de tiro. A banda de distância de arma de fogo continua valendo na rodada normal. Régua `eval:botfaca` com três mutantes, no `check:fast`.
 - O headshot do jogador não arranca mais a câmera da primeira pessoa: a replay orbital e o hit-stop do #364 saíram, e o abate continua contando com hitmarker, dano, killfeed e locutor. Régua `eval:replaycam` passou a medir o contrário, com quatro mutantes.
@@ -57,6 +58,13 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.244] — 2026-09-09
+
+### Mudado
+- fix(deps): desbloquear auditoria dos PRs (#571)
+- fix(deps): atualizar smol-toml seguro
+- fix(deps): corrigir auditoria do build
 
 ## [2.0.0-alpha.243] — 2026-09-09
 
