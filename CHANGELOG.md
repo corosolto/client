@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.245`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.246`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,41 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.246] — 2026-09-09
+
+### Mudado
+- feat(míticos): time Mítico completo — 9 personagens jogáveis (#570)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(deps): lockfile idêntico ao da main, sem npm install por cima
+- fix(deps): regenera o lockfile inteiro para o npm ci do CI voltar a instalar
+- fix(deps): npm audit fix zera as 5 vulnerabilidades que travavam o portão
+- feat(miticos): Caipora entra no lugar da Cuca e o time fecha em 9
+- docs(miticos): a última tentativa da Cuca — 333,4 - 187,0, e ainda não passa
+- feat(miticos): Saci e Zumbi entram consertados, e os avatares viram retrato de verdade
+- fix(regua): a revisão de browser cravava o elenco de M de ontem
+- docs(miticos): Saci é de uma perna, e a viabilidade foi medida antes de decidir
+- feat(miticos): auditoria visual do dono aprova os 7, e a mídia órfã sai do disco
+- fix(miticos): tira os webm de render que a folha de contato deixou para trás
+- fix(miticos): mídia do Lampião regerada do modelo novo, e o enquadramento certo
+- docs(miticos): a regeração da Cuca piorou, e BUG-150 registra o número
+- chore(miticos): tira scratchpad e a costura de peso que não entrou, e registra BUG-150
+- feat(miticos): time Mítico vai de 1 para 7 personagens jogáveis
+- feat(miticos): CHR7 pega quem flutua, aterramento vira genérico e Zumbi ganha clipe próprio
+- docs(miticos): fecha BUG-147 e registra o placar real do portão
+- fix(audio): Lobisomem entra no perfil físico, e comentários voltam ao orçamento
+- fix(miticos): a tela de carregamento respeitava só cinco facções
+- feat(regua): CHR7 — nenhuma malha atravessa o chão na pose assentada
+- chore(docs): bloco derivado e evidência de layout do Lajes
+- fix(menu): portão de browser volta a rodar e o badge de modo troca o painel inteiro
+- fix(miticos): tira do clipe os ossos de curl e devolve o portão de seleção
+- fix(miticos): devolve os retratos de resultado aprovados do Lobisomem
+- fix(miticos): integrate lobisomem assets and review
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs: regenera índices após candidato Mítico
+- feat(miticos): integra Lobisomem como candidato isolado
+- feat(miticos): adiciona mídia aprovada do Lobisomem
 
 ## [2.0.0-alpha.245] — 2026-09-09
 
