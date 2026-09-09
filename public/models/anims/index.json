@@ -626,6 +626,19 @@
    "walk1h",
    "walkfire"
   ],
+  "saci": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "sertanejo": [
    "idle",
    "walk",

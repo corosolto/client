@@ -40,7 +40,7 @@ export const GLB_CHARS = new Set([
   // com clips retargetados em models/anims/<id>/ (tools/retarget-glb.mjs).
   'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
   'lobisomem',
-  'mariabonita', 'lampiao', 'bandeirante', 'boto', 'zumbi', 'curupira',
+  'mariabonita', 'lampiao', 'bandeirante', 'boto', 'zumbi', 'curupira', 'saci',
 ]);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando

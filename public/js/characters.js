@@ -602,6 +602,9 @@ export const CHARACTERS = [
   { id: 'curupira', team: 'M', tribe: 'mitico', name: 'Curupira',
     blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.',
     pal: { skin: 0xb88a5a, shirt: 0x4a6a3a, pants: 0x3a4a2a, hair: 0xff4400, boots: 0x3a2a1a } },
+  { id: 'saci', team: 'M', tribe: 'mitico', name: 'Saci-Pererê',
+    blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.',
+    pal: { skin: 0x8d6a4f, shirt: 0xc01010, pants: 0xc01010, hair: 0xc01010, boots: 0x1a1a1a } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -617,7 +620,7 @@ export const CHAR_WEAPON = {
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   lobisomem: 'shotgun',
-  mariabonita: 'awp', lampiao: 'm4', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
+  mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

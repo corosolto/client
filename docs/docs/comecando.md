@@ -39,14 +39,14 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 44.609 linhas em 90 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 44.612 linhas em 90 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.424** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.407 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 54 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 657 | `git ls-files public/models/anims \| wc -l` |
-| Personagens jogáveis | 51, em 6 facções | array `CHARACTERS` de `characters.js` |
+| Personagens jogáveis | 52, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 16 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
 | Scripts do arnês | 340 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
@@ -65,7 +65,7 @@ E as regras de partida que mais mudam de lugar, todas lidas das constantes de
 
 | Regra | Valor | Constante |
 |---|---|---|
-| Facções · personagens | 6 · 51 (B 9 · C 9 · E 8 · F 9 · M 7 · U 9) | `CHARACTERS` |
+| Facções · personagens | 6 · 52 (B 9 · C 9 · E 8 · F 9 · M 8 · U 9) | `CHARACTERS` |
 | Mapas no menu | 16 — 2 abrem em rodadas, **14 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
