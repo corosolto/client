@@ -14,15 +14,14 @@ import { readFileSync } from 'node:fs';
 const FAB_SOURCE = readFileSync(new URL('../audio/fab-game-local.mjs', import.meta.url), 'utf8');
 
 const SEP_ROTA = 6;
-const CORRIDOR_X = -17.2;
+const CORRIDOR_X = 17.2;
 const targets = Object.freeze({
   'sem-corredor': 'PIS1',
   'boca-unica': 'PIS1',
-  'muro-de-armarios': 'PIS2',
   'cobertura-submersa': 'PIS2',
-  'posto-sem-colisao': 'PIS3',
-  'posto-sem-contrajogo': 'PIS3',
-  'posto-sem-navegacao': 'PIS3',
+  'ilha-solta': 'PIS2',
+  'sem-anteparo-spawn': 'PIS3',
+  'porta-estreita': 'PIS3',
   'spawn-deslocado': 'PIS4',
   'sem-ambiencia': 'PIS6',
 });
@@ -99,9 +98,9 @@ function teamSeparatedRoutes(world) {
   return Math.min(separatedPair(world, e, b), separatedPair(world, b, e));
 }
 
-function corridor(world) {
+function corridor(world, side) {
   const nodes = world.waypoints?.nodes || [];
-  const ids = nodes.map((n, i) => n.x < CORRIDOR_X ? i : -1).filter((i) => i >= 0);
+  const ids = nodes.map((n, i) => side * n.x > CORRIDOR_X ? i : -1).filter((i) => i >= 0);
   const allowed = new Set(ids);
   const south = ids.filter((i) => nodes[i].z <= -9);
   const north = new Set(ids.filter((i) => nodes[i].z >= 9));
@@ -117,60 +116,45 @@ function corridor(world) {
     south: south.length,
     north: north.size,
     connected: [...north].some((i) => seen.has(i)),
-    boundsMinX: world.bounds?.minX,
+    boundsEdge: side < 0 ? world.bounds?.minX : world.bounds?.maxX,
   };
 }
 
-function endDeckComponents(world, sign) {
-  const boxes = (world.colliders || []).filter((c) => {
+function clearHall(world) {
+  const submerged = (world.colliders || []).filter((c) => c.minY < -0.2 && c.maxY <= 0.05 &&
+    c.maxX > -7.5 && c.minX < 7.5 && c.maxZ > -9.5 && c.minZ < 9.5);
+  const loose = (world.colliders || []).filter((c) => {
     const x = (c.minX + c.maxX) / 2, z = (c.minZ + c.maxZ) / 2;
-    return Math.sign(z) === sign && Math.abs(z) >= 11.5 && Math.abs(z) <= 18.5 &&
-      Math.abs(x) <= 12 && c.minY >= -0.15 && c.maxY >= 1.05;
+    return Math.abs(x) < 13 && Math.abs(z) > 15.5 && Math.abs(z) < 20 &&
+      c.minY >= -0.15 && c.maxY >= 1.05;
   });
-  const hit = (a, b) => a.minX <= b.maxX + 0.25 && a.maxX + 0.25 >= b.minX &&
-    a.minZ <= b.maxZ + 0.25 && a.maxZ + 0.25 >= b.minZ;
-  const unseen = new Set(boxes.map((_, i) => i));
-  const out = [];
-  while (unseen.size) {
-    const first = unseen.values().next().value;
-    unseen.delete(first);
-    const group = [first];
-    for (let q = 0; q < group.length; q++) {
-      for (const i of [...unseen]) if (hit(boxes[group[q]], boxes[i])) { unseen.delete(i); group.push(i); }
-    }
-    const members = group.map((i) => boxes[i]);
-    const minX = Math.min(...members.map((c) => c.minX));
-    const maxX = Math.max(...members.map((c) => c.maxX));
-    const minZ = Math.min(...members.map((c) => c.minZ));
-    const maxZ = Math.max(...members.map((c) => c.maxZ));
-    out.push({ count: members.length, span: +Math.max(maxX - minX, maxZ - minZ).toFixed(2) });
-  }
-  return out;
+  return { submerged: submerged.length, loose: loose.length };
 }
 
-function elevated(game) {
-  const world = game.world;
-  const gh = world.groundHeightAt || (() => 0);
-  let samples = 0, heightMax = 0;
-  for (let x = 11; x <= 14.5; x += 0.25) for (let z = 3.5; z <= 7.5; z += 0.25) {
-    const y = gh(x, z); heightMax = Math.max(heightMax, y);
-    if (y >= 1.2 && y <= 1.6) samples++;
+function spawnPartitions(world) {
+  const result = {};
+  for (const side of [-1, 1]) {
+    const z = side * 15;
+    const walls = (world.colliders || []).filter((c) => c.minZ <= z && c.maxZ >= z &&
+      c.minY <= 0.05 && c.maxY >= 3 && c.maxX > -17.6 && c.minX < 17.6)
+      .map((c) => [Math.max(-17.5, c.minX), Math.min(17.5, c.maxX)])
+      .filter(([a, b]) => b > a).sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    for (const span of walls) {
+      const last = merged.at(-1);
+      if (last && span[0] <= last[1] + 0.02) last[1] = Math.max(last[1], span[1]);
+      else merged.push([...span]);
+    }
+    const gaps = [];
+    let cursor = -17.5;
+    for (const [a, b] of merged) { if (a > cursor) gaps.push(a - cursor); cursor = Math.max(cursor, b); }
+    if (cursor < 17.5) gaps.push(17.5 - cursor);
+    result[side < 0 ? 'south' : 'north'] = {
+      wallSegments: merged.length,
+      portalWidths: gaps.filter((w) => w > 0.5).map((w) => +w.toFixed(2)),
+    };
   }
-  const y = gh(12.8, 5.5) + 1.62;
-  const perch = new THREE.Vector3(12.8, y, 5.5);
-  const responses = [new THREE.Vector3(-17, 1.62, 4), new THREE.Vector3(7, 1.62, -13)];
-  const counters = responses.filter((p) => game._losClear(p, perch)).length;
-  const visible = {};
-  for (const [team, spawns] of Object.entries(world.spawns || {})) {
-    visible[team] = spawns.filter((s) => game._losClear(perch, new THREE.Vector3(s.x, 1.62, s.z))).length;
-  }
-  return {
-    samples,
-    heightMax: +heightMax.toFixed(2),
-    counters,
-    visible,
-    navigation: world.snapDownSteps === true && world.botLayeredNavigation === true,
-  };
+  return result;
 }
 
 function sound(world) {
@@ -188,63 +172,52 @@ function sound(world) {
 
 function evaluate(game) {
   const world = game.world;
-  const c = corridor(world);
+  const corridors = { west: corridor(world, -1), east: corridor(world, 1) };
+  const routeFamilies = 1 + Object.values(corridors).filter((c) => c.connected).length;
   const routes = separatedRoutes(world);
   const teamRoutes = teamSeparatedRoutes(world);
-  const decks = { south: endDeckComponents(world, -1), north: endDeckComponents(world, 1) };
-  const deckOk = Object.values(decks).every((parts) => parts.length >= 3 && parts.every((p) => p.span <= 2.8));
-  const high = elevated(game);
+  const hall = clearHall(world);
+  const partitions = spawnPartitions(world);
+  const partitionsOk = Object.values(partitions).every((p) => p.wallSegments >= 4 &&
+    p.portalWidths.length === 3 && p.portalWidths.every((w) => w >= 2.6));
   const spawnShape = JSON.stringify(Object.fromEntries(Object.entries(world.spawns || {}).map(([team, ss]) =>
     [team, ss.map((s) => [s.x, s.z])]))) === JSON.stringify({ E: [[-9, -21], [-3, -21], [3, -21], [9, -21]], B: [[-9, 21], [-3, 21], [3, 21], [9, 21]] });
   const flagShape = JSON.stringify((world.ctfPoints || []).map((p) => [p.id, p.x, p.z])) ===
     JSON.stringify([['E', 0, -13], ['MID', 12, 0], ['B', 0, 14]]);
   const audio = sound(world);
   const verdicts = {
-    PIS1: c.boundsMinX <= -20.5 && c.nodes >= 4 && c.south > 0 && c.north > 0 && c.connected && teamRoutes >= 3,
-    PIS2: deckOk,
-    PIS3: high.samples >= 12 && high.counters >= 2 && high.visible.E <= 2 && high.visible.B <= 2 && high.navigation,
+    PIS1: world.bounds?.minX <= -20.5 && world.bounds?.maxX >= 20.5 &&
+      Object.values(corridors).every((c) => c.nodes >= 6 && c.south > 0 && c.north > 0 && c.connected) && routeFamilies >= 3,
+    PIS2: hall.submerged === 0 && hall.loose === 0,
+    PIS3: partitionsOk,
     PIS4: spawnShape && flagShape && routes >= 2,
     PIS6: audio.indoor && audio.piscina && audio.hum && audio.synth && audio.splash,
   };
-  return { verdicts, measurements: { corridor: c, separatedRoutes: routes, teamSeparatedRoutes: teamRoutes, decks, elevated: high, sound: audio } };
+  return { verdicts, measurements: { corridors, routeFamilies, separatedRoutes: routes, teamSeparatedRoutes: teamRoutes, hall, partitions, sound: audio } };
 }
 
 function applyMutant(game, name) {
   const world = game.world;
-  const corridorNodes = (world.waypoints?.nodes || []).filter((n) => n.x < CORRIDOR_X);
-  if (name === 'sem-corredor') { for (const n of corridorNodes) n.x = 0; return corridorNodes.length > 0; }
-  if (name === 'boca-unica') {
-    const north = corridorNodes.filter((n) => n.z >= 9); for (const n of north) n.x = 0; return north.length > 0;
+  const corridorNodes = (world.waypoints?.nodes || []).filter((n) => Math.abs(n.x) > CORRIDOR_X);
+  if (name === 'sem-corredor') {
+    const east = corridorNodes.filter((n) => n.x > 0); for (const n of east) n.x = 0; return east.length > 0;
   }
-  if (name === 'muro-de-armarios') {
-    world.colliders.push({ minX: -4, maxX: 4, minY: 0, maxY: 2.1, minZ: 12.7, maxZ: 13.3 });
-    return true;
+  if (name === 'boca-unica') {
+    const north = corridorNodes.filter((n) => n.x > 0 && n.z >= 7); for (const n of north) n.x = 0; return north.length > 0;
   }
   if (name === 'cobertura-submersa') {
-    const boxes = world.colliders.filter((c) => Math.abs((c.minZ + c.maxZ) / 2) >= 11.5 &&
-      Math.abs((c.minZ + c.maxZ) / 2) <= 18.5 && Math.abs((c.minX + c.maxX) / 2) <= 12 && c.minY >= -0.15 && c.maxY >= 1.05);
-    for (const c of boxes) { c.minY -= 1.5; c.maxY -= 1.5; }
-    return boxes.length > 0;
+    world.colliders.push({ minX: -2, maxX: 2, minY: -1.5, maxY: -0.5, minZ: -0.3, maxZ: 0.3 }); return true;
   }
-  if (name === 'posto-sem-colisao') {
-    const before = elevated(game); if (before.samples < 12) return false;
-    const original = world.groundHeightAt || (() => 0);
-    world.groundHeightAt = (x, z) => x >= 11 && x <= 14.5 && z >= 3.5 && z <= 7.5 ? 0 : original(x, z);
-    return true;
+  if (name === 'ilha-solta') {
+    world.colliders.push({ minX: -1.4, maxX: 1.4, minY: 0, maxY: 2, minZ: 17, maxZ: 18 }); return true;
   }
-  if (name === 'posto-sem-contrajogo') {
-    if (elevated(game).samples < 12) return false;
-    for (const [x, z, ry] of [[-2.1, 4.5, 0], [9.9, -2.7, -0.45]]) {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 4, 9), new THREE.MeshBasicMaterial());
-      mesh.position.set(x, 2, z); mesh.rotation.y = ry; game.scene.add(mesh); world.occluders.push(mesh);
-    }
-    game.scene.updateMatrixWorld(true); return true;
+  if (name === 'sem-anteparo-spawn') {
+    const before = world.colliders.length;
+    world.colliders = world.colliders.filter((c) => !([15, -15].some((z) => c.minZ <= z && c.maxZ >= z) && c.maxY >= 3 && c.minY <= 0.05));
+    return world.colliders.length < before;
   }
-  if (name === 'posto-sem-navegacao') {
-    const applied = world.snapDownSteps === true && world.botLayeredNavigation === true;
-    world.snapDownSteps = false;
-    world.botLayeredNavigation = false;
-    return applied;
+  if (name === 'porta-estreita') {
+    world.colliders.push({ minX: -1.1, maxX: 1.1, minY: 0, maxY: 4, minZ: 14.7, maxZ: 15.3 }); return true;
   }
   if (name === 'spawn-deslocado') { world.spawns.E[0].x += 1; return true; }
   if (name === 'sem-ambiencia') { const applied = Boolean(world.sound); world.sound = null; return applied; }

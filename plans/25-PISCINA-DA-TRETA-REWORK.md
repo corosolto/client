@@ -195,3 +195,79 @@ PIS7 continua deliberadamente pendente do aceite visual humano do dono.
   adicionar POV do mirante, linha d'água, boca do corredor e fluxo com bots visíveis,
   a reavaliação deu GO técnico-visual 8/10. Isso não torna PIS7 verde: falta o aceite
   humano do dono jogando.
+
+## Reabertura arquitetural — 09/09/2026
+
+O dono reprovou o layout anterior mesmo após o passe de materiais: a piscina ainda lia
+como arena básica com obstáculos soltos e as divisórias submersas davam sensação de
+labirinto. O GO técnico de 08/09 fica, portanto, supersedido como decisão visual. A nova
+referência é a leitura clássica de `fy_pool_day`: piscina central limpa, circulação por
+volumes fechados de vestiário e rotas laterais legíveis.
+
+### Novo blockout contratado
+
+- A bacia e a lâmina d'água ficam totalmente livres de colisor/cover. Escadas, raias,
+  ralos, borda, bloco de partida e trampolim continuam como identidade, não como maze.
+- Dois corredores fechados e simétricos ocupam `x=-21..-17` e `x=17..21`,
+  `z=-15..15`, com parede externa, teto e tampas. Cada um possui três portais largos
+  para o salão, centrados em `z=-11/0/+11`, e caminho contínuo norte-sul.
+- As faixas de spawn em `z=±21` viram vestiários reais, separados do salão por paredes
+  em `z=±15`. Cada parede possui três entradas de 3 m, centradas em `x=-12/0/+12`:
+  proteção por arquitetura, mas sem tubo, porta falsa ou gargalo de corpo único.
+- Armários, bancos e chuveiros ficam presos às paredes dos corredores/vestiários.
+  Saem as oito ilhas de armário, as duas guaritas centrais, as caixas alternadas do
+  corredor e o mirante/escadas. O salão principal preserva uma promenade clara.
+- As três famílias de rota entre equipes passam a ser: corredor oeste, salão/piscina e
+  corredor leste. A central continua mais curta; as laterais compram proteção e ângulo.
+- Spawns, armas de chão e objetivos CTF permanecem nas coordenadas contratadas até que
+  playtest meça motivo real para mudá-los.
+
+### Réguas substitutas
+
+- **PIS1 — arquitetura lateral:** ambos os corredores existem nos bounds, são fechados,
+  contínuos e têm três conexões distintas ao salão; a travessia E→B possui três famílias.
+- **PIS2 — salão limpo:** zero cobertura submersa e zero ilha/guarita solta entre spawn
+  e piscina. Cobertura decorativa só vale ligada a parede ou elemento arquitetônico.
+- **PIS3 — vestiários reais:** paredes norte/sul atravessam o salão, cada uma tem três
+  portais de pelo menos 2,6 m e nenhuma entrada vira gargalo de um corpo.
+- **PIS4 — preservação:** oito spawns, três objetivos e pelo menos duas rotas separadas
+  spawn→objetivo. PIS5/PIS6 mantêm seus contratos; PIS7 volta a pendente humana.
+
+### Contratos para módulos Mint.gg (não bloqueiam o blockout)
+
+Mint pode substituir somente módulos locais e independentes: banco azulejado 2,4 m,
+banco de armários 2,7 m, divisória de chuveiro 1,2 m, moldura de portal 3 m, escada/rail
+de piscina e cabine de salva-vidas encaixada na parede. Cada ativo precisa registrar
+prompt, URL/assetId, licença/fonte, SHA-256, dimensões em metros, pivô, orientação,
+materiais e orçamento. Não aceitar mapa monolítico, porta falsa ou mesh cuja colisão não
+coincida com o visual.
+
+### Próximo aceite
+
+Implementar o blockout, morder os mutantes novos, atualizar navegação/evidência, rodar
+build e réguas globais, depois produzir capturas reais 1200×800 med/low. O servidor
+local será o único ponto de aceite visual do dono; testes Node/headless não fecham PIS7.
+
+### Checkpoint arquitetural validado — 09/09/2026
+
+- Partida: `58a4f7fcc`; branch/worktree mantidas em `codex/piscina-rework-stack` /
+  `worktrees/piscina-rework-stack`; PR de entrega continua #566, sem merge/deploy.
+- Implementados dois corredores fechados `x=±17..21`, três portais por lado, paredes de
+  vestiário em `z=±15`, três portas de 3 m por equipe, molduras, sinalização, guias de
+  piso, bancos e armários presos a parede. Ilhas, guaritas, mirante e 12 muretas
+  submersas foram removidos.
+- PIS1/PIS2/PIS3/PIS4/PIS6 verdes e oito mutantes `MORDIDO`. Grafo: 124 nós/615
+  arestas, 24/24 pares spawn→objetivo alcançáveis com cápsula `r=0,38`; central 41,32 m,
+  oeste 65,79 m e leste 70,59 m, todas transitáveis.
+- Browser real Chrome/WebGL2/Metal: 5×5 com 9 bots e 8×8 com 15 bots, 1200×800, sete
+  câmeras por caso em `artifacts/piscina-stack/layout-rework/browser/`. O erro herdado
+  `SUPPORT_URL_BR is not defined` continua sendo o único pageerror aceito pelo arnês.
+- Custo de frame: 691/860 calls e 785.852/870.000 triângulos, 135,5 fps na sonda local.
+  Graffiti após regeneração: 83,3% (757/909), meta 76%. Build passou.
+- `map-check` confirma exposição E 12,8% / B 11,2%, folga mínima 2,85 m, área de spawn
+  63,7 m² e CTF2 mínimo 2. MAP5 acusa 99 m nos quadrantes da água porque seu critério
+  premia props dentro da bacia; este vermelho é rejeitado pela nova decisão humana de
+  piscina limpa e substituído por PIS2, que exige zero cobertura submersa.
+- PIS7 permanece pendente do dono jogar o servidor local. Mint não foi executado: os
+  cinco contratos modulares estão em `docs/maps/prompts/16-piscina_treta.md`; geração
+  exige ferramenta/sessão Mint disponível e registro completo de proveniência.

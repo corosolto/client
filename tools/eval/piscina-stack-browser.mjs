@@ -20,23 +20,24 @@ const browser = await chromium.launch({
 });
 
 const poses = [
-  { id: 'overview', eye: [12.8, 2.97, 5.5], target: [0, 0.4, -4] },
-  { id: 'service', eye: [-18.8, 1.62, -12.5], target: [-18.8, 1.0, 5] },
-  { id: 'lookout', eye: [7.5, 1.62, 0], target: [12.8, 1.2, 5.5] },
+  { id: 'overview', eye: [0, 4.8, -13.2], target: [0, 0.1, 1] },
+  { id: 'west-corridor', eye: [-19, 1.62, -13.5], target: [-19, 1.0, 10] },
+  { id: 'east-corridor', eye: [19, 1.62, 13.5], target: [19, 1.0, -10] },
   { id: 'waterline', eye: [0, -0.12, -7], target: [0, -0.65, 5] },
-  { id: 'service-entry', eye: [-15.5, 1.62, -11], target: [-19.2, 1.0, -11] },
-  { id: 'spawn-flow', eye: [11.5, 2.1, -22.5], target: [0, 1.0, -15], bots: true },
+  { id: 'west-portal', eye: [-14.5, 1.62, -11], target: [-19.2, 1.0, -11] },
+  { id: 'south-vestibule', eye: [0, 1.8, -22.8], target: [0, 1.1, -14.5] },
+  { id: 'spawn-flow', eye: [11.5, 2.1, -22.5], target: [0, 1.0, -14], bots: true },
 ];
 const receipts = [];
 
-for (const teamSize of [5, 8]) {
+for (const quality of ['med', 'low']) for (const teamSize of [5, 8]) {
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.addInitScript((bots) => {
-    localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'med', bots, vol: 0, speech: false }));
-  }, teamSize);
+  await page.addInitScript(({ bots, quality }) => {
+    localStorage.setItem('awpbr_settings', JSON.stringify({ quality, bots, vol: 0, speech: false }));
+  }, { bots: teamSize, quality });
   const url = `${base}/?debug=1&auto=P,mst&map=piscina_treta&perfilauto=0`;
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live' && window.__game?._mapId === 'piscina_treta', null, { timeout: 180000 });
@@ -65,6 +66,7 @@ for (const teamSize of [5, 8]) {
   });
 
   receipt.teamSize = teamSize;
+  receipt.requestedQuality = quality;
   receipt.mode = `${teamSize}x${teamSize}`;
   receipt.viewport = [1200, 800];
   receipt.url = url;
@@ -89,11 +91,11 @@ for (const teamSize of [5, 8]) {
       g.renderer.render(g.scene, g.camera);
       return { eye, target, botsVisible: bots === true, yaw, pitch, render: { ...g.renderer.info.render } };
     }, pose);
-    const file = `${out}/piscina-${teamSize}x${teamSize}-${pose.id}.png`;
+    const file = `${out}/piscina-${quality}-${teamSize}x${teamSize}-${pose.id}.png`;
     await page.screenshot({ path: file });
     receipt.captures.push({ id: pose.id, file, ...render });
   }
-  writeFileSync(`${out}/piscina-${teamSize}x${teamSize}.json`, `${JSON.stringify(receipt, null, 2)}\n`);
+  writeFileSync(`${out}/piscina-${quality}-${teamSize}x${teamSize}.json`, `${JSON.stringify(receipt, null, 2)}\n`);
   receipts.push(receipt);
   await context.close();
 }
@@ -103,6 +105,7 @@ const summary = { base, cases: receipts };
 writeFileSync(`${out}/summary.json`, `${JSON.stringify(summary, null, 2)}\n`);
 console.log(JSON.stringify(summary, null, 2));
 const expectedKnown = (message) => message.includes('SUPPORT_URL_BR is not defined');
-if (receipts.some((r) => r.state !== 'live' || r.actualBots !== r.teamSize * 2 - 1 || r.quality !== 'med' || r.errors.some((e) => !expectedKnown(e)))) {
+if (receipts.some((r) => r.state !== 'live' || r.actualBots !== r.teamSize * 2 - 1 ||
+  r.quality !== r.requestedQuality || r.errors.some((e) => !expectedKnown(e)))) {
   process.exitCode = 1;
 }

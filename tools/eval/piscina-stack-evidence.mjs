@@ -96,13 +96,13 @@ const nearest = (x, z) => world.nearestWaypoint(x, z);
 const teamFrom = nearest(0, -21);
 const teamTo = nearest(0, 21);
 const central = via(teamFrom, nearest(0, -0.5), teamTo);
-const service = via(teamFrom, nearest(-18.8, -0.8), teamTo);
-const lookoutSouth = via(nearest(12.8, 0), nearest(12.8, 5.5), nearest(12.8, 11));
+const west = via(teamFrom, nearest(-19, 0), teamTo);
+const east = via(teamFrom, nearest(19, 0), teamTo);
 
 const routes = {
   central: { meters: +central.meters.toFixed(2), nodes: central.path.length, capsule: capsule(central.path) },
-  service: { meters: +service.meters.toFixed(2), nodes: service.path.length, capsule: capsule(service.path) },
-  lookout: { meters: +lookoutSouth.meters.toFixed(2), nodes: lookoutSouth.path.length, capsule: capsule(lookoutSouth.path) },
+  west: { meters: +west.meters.toFixed(2), nodes: west.path.length, capsule: capsule(west.path) },
+  east: { meters: +east.meters.toFixed(2), nodes: east.path.length, capsule: capsule(east.path) },
 };
 
 const matrix = [];
@@ -132,10 +132,10 @@ const evidence = {
   nodes: nodes.length,
   edges: adj.reduce((sum, row) => sum + row.length, 0),
   routes,
-  centralShorterThanService: routes.central.meters < routes.service.meters,
+  centralShorterThanSides: routes.central.meters < routes.west.meters && routes.central.meters < routes.east.meters,
   matrix,
 };
-evidence.pass = evidence.centralShorterThanService &&
+evidence.pass = evidence.centralShorterThanSides &&
   Object.values(routes).every((route) => route.capsule.pass) &&
   matrix.every((row) => row.meters !== null && row.capsule?.pass);
 
