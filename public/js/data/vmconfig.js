@@ -57,17 +57,20 @@ export const VM_WEAPON = {
   g3: W('g3'),
   revolver38: W('revolver'),
   md97: W('ar'),
-  carbine: W('ar'),
+  /* trim: a mão de apoio flutuava 1,7 cm abaixo do guarda-mão (a ak aprovada mede 0,2). */
+  carbine: W('ar', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   m400: W('sniper'),
   mosin: W('bolt'),
   rem700: W('sniper'),
   lmg: W('lmg'),
   scar: W('ar'),
-  tavor: W('ar'),
+  /* trim: mão de apoio a 1,1–1,4 cm do guarda-mão (a ak aprovada mede 0,2). */
+  tavor: W('ar', { trim: { pos: [0, -0.02, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   famas: W('ar'),
   uzi: W('smg'),
   p90: W('p90'),
   svd: W('svd'),
   g3sg1: W('marksman'),
-  sks: W('marksman'),
+  /* trim: mão de apoio a 1,5 cm do guarda-mão (a ak aprovada mede 0,2). */
+  sks: W('marksman', { trim: { pos: [0, -0.025, 0], rotDeg: [0, 0, 0], scale: 1 } }),
 };

@@ -79,12 +79,16 @@ const MEDIR = (arma) => {
     });
   }
   const V3 = cam.position.constructor;
+  /* Orcamento PROPORCIONAL com piso por malha: dividir um orcamento global pelo total
+     deixava arma de muitas malhas rala, e o contato media densidade de amostra em vez do
+     vao — carbine 1,7 cm no driver contra 0,5 numa sonda densa. */
   const amostrar = (lista, maxPts) => {
     const pts = [];
     const total = lista.reduce((s, c) => s + c.geometry.attributes.position.count, 0) || 1;
     for (const c of lista) {
       const pos = c.geometry.attributes.position;
-      const passo = Math.max(1, Math.floor(total / maxPts));
+      const cota = Math.max(150, Math.round(maxPts * (pos.count / total)));
+      const passo = Math.max(1, Math.floor(pos.count / cota));
       const v = new V3();
       for (let i = 0; i < pos.count; i += passo) {
         v.fromBufferAttribute(pos, i);
