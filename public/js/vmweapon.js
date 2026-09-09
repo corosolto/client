@@ -194,7 +194,6 @@ export function attachMintWeapon(entry, weaponId) {
   if (!wrap) {
     wrap = recemCriado;
     wrap.name = `mint_weapon_${weaponId}`;
-    if (weaponConfig.parts) splitParts(entry, wrap, weaponConfig.parts);
     mint.wraps.set(weaponId, wrap);
     mint.holder.add(wrap);
   }
@@ -203,6 +202,13 @@ export function attachMintWeapon(entry, weaponId) {
   wrap.position.set(...trim.pos);
   wrap.rotation.set(trim.rotDeg[0] * DEG, trim.rotDeg[1] * DEG, trim.rotDeg[2] * DEG);
   wrap.scale.setScalar((wrap.userData.metrics?.norm || 1) * trim.scale);
+  /* O fragmento (pente/ferrolho) nasce pendurado num OSSO com a matriz congelada de
+     `mesh.matrixWorld`: separar antes da escala final o deixava no tamanho pré-
+     normalização (akm 105,8 cm contra 88 declarados). BUG-77. */
+  if (weaponConfig.parts && !wrap.userData.mintParts) {
+    wrap.updateWorldMatrix(true, true);
+    splitParts(entry, wrap, weaponConfig.parts);
+  }
   for (const [id, candidate] of mint.wraps) {
     candidate.visible = id === weaponId;
     for (const part of candidate.userData.mintParts || []) part.visible = id === weaponId;

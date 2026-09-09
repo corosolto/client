@@ -121,6 +121,36 @@ const MEDIR = (arma) => {
   /* Espacamento da amostra: mediana da distancia ao vizinho mais proximo DENTRO da
      nuvem da arma. O contato em px cresce sozinho quando a arma ocupa mais tela — sem
      esta escala nao se separa "mao solta" de "amostra rala". */
+  /* Diametro 3D da nuvem da arma, em cm: a maior distancia entre dois pontos dela no
+     mundo. Corpo rigido, entao NAO muda com a pose — ao contrario da diagonal na tela,
+     que oscilou 624→878 px para a mesma arma entre rodadas. */
+  /* A luva e o MESMO asset em toda arma: a razao arma/mao e a unica medida de escala
+     com denominador comum entre familias e entre pipelines. */
+  const diam = (pts) => {
+    if (pts.length < 5) return null;
+    const passo = Math.max(1, Math.floor(pts.length / 200));
+    let maior = 0;
+    for (let i = 0; i < pts.length; i += passo) {
+      for (let k = i + passo; k < pts.length; k += passo) {
+        const d = pts[i].distanceTo(pts[k]);
+        if (d > maior) maior = d;
+      }
+    }
+    return Math.round(maior * 1000) / 10;
+  };
+  const maoDiam = diam(maoPts);
+  let diam3d = null;
+  if (armaPts.length > 4) {
+    const passoD = Math.max(1, Math.floor(armaPts.length / 200));
+    let maior = 0;
+    for (let i = 0; i < armaPts.length; i += passoD) {
+      for (let k = i + passoD; k < armaPts.length; k += passoD) {
+        const d = armaPts[i].distanceTo(armaPts[k]);
+        if (d > maior) maior = d;
+      }
+    }
+    diam3d = Math.round(maior * 1000) / 10;
+  }
   let espacamento = null;
   if (armaPx.length > 8) {
     const passoE = Math.max(1, Math.floor(armaPx.length / 120));
@@ -140,6 +170,10 @@ const MEDIR = (arma) => {
   return {
     maoEmQuadro: maoPx.length, maoAmostra: maoPts.length,
     espacamento_px: espacamento,
+    arma_diam3d_cm: diam3d,
+    mao_diam3d_cm: maoDiam,
+    razao_arma_mao: (diam3d && maoDiam) ? Math.round(diam3d / maoDiam * 100) / 100 : null,
+    len_declarado_cm: window.__WEAPON_LEN?.[arma] ?? null,
     // assada (Mint dentro do GLB) ou encaixada em runtime: sao dois pipelines de
     // escala, e comparar um com o outro produz "escala em fuga" que nao existe.
     assada: !!window.__VM_BAKED?.[arma],
@@ -187,6 +221,8 @@ try {
     window.__WEAPONS_SCOPE = Object.fromEntries(Object.entries(m.WEAPONS).map(([k, v]) => [k, !!v.scope]));
     const c = await import('/js/data/vmconfig.js');
     window.__VM_BAKED = Object.fromEntries(Object.entries(c.VM_WEAPON).map(([k, v]) => [k, !!v.baked]));
+    const w = await import('/js/weapons.js');
+    window.__WEAPON_LEN = Object.fromEntries(Object.keys(c.VM_WEAPON).map((k) => [k, Math.round(w.weaponCFG(k).len * 1000) / 10]));
   });
   const lista = ARMAS.length ? ARMAS : await page.evaluate(() => window.__game.player.inventarioQA || null);
   relatorio.solicitadas = lista;   // inventário declarado: o portão reprova o que não foi medido

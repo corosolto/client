@@ -14,6 +14,7 @@
  *   semmao    zera a mão em quadro de uma captura
  *   semcontato afasta a mão da arma
  *   escala    infla a diagonal de uma arma da família
+ *   tamanho   infla o diâmetro 3D medido — a cláusula de tamanho tem de reprovar
  */
 import fs from 'node:fs';
 import process from 'node:process';
@@ -57,6 +58,7 @@ if (MUT === 'semarma') mut[0].armaEmQuadro = 0;
 if (MUT === 'semmao') mut[0].maoEmQuadro = 0;
 if (MUT === 'semcontato') mut[0].contato_px = 400;
 if (MUT === 'escala') mut[0].arma_diag_px = Math.round((mut[0].arma_diag_px || 500) * 2);
+if (MUT === 'tamanho') for (const c of mut) c.arma_diam3d_cm = Math.round((c.arma_diam3d_cm || 90) * 1.4 * 10) / 10;
 const dados = MUT ? mut : caps;
 
 const falhas = [];
@@ -79,29 +81,37 @@ for (const c of dados) {
     else falhas.push(`${onde}: mão sem contato (${c.contato_px} px > ${TETO_CONTATO})`);
   }
 }
-// Escala aparente dentro da família
-const porFamilia = new Map();
+/* Escala: diagonal NA TELA nao serve — oscilou 624→878 px para a mesma arma entre
+   rodadas, porque depende da pose e da distancia. O diametro 3D da nuvem de pontos e
+   invariante (corpo rigido) e reproduziu identico em rodadas seguidas: ak 87,2 cm,
+   m4 84,6, m92 75,6, akm 105,8. Compara-se com o `len` DECLARADO em weapons.js:
+   as tres primeiras batem em ~1%; a akm mede 20% a mais que o declarado. */
+/* Tolerancia 8% para arma longa: 21 das 25 batem o declarado dentro de 2% (awp 116,1
+   /115, ak 87,2/88, lmg 110,1/110, svd 115/115...). A de UMA MAO fica de fora: o
+   diametro 3D vai da boca ao calcanhar da coronha e supera o `len` por construcao
+   (pistol 30,4/26, revolver38 27,3/24, deagle 31,5/30) — a clausula mediria a metrica,
+   nao a arma. */
+const TOL_TAMANHO = 0.08;
+const UMA_MAO = new Set(['pistol', 'deagle', 'revolver38', 'knife']);
+const tamanhos = new Map();
 for (const c of dados) {
-  if (!c.arma_diag_px) continue;
-  // Chave inclui a FONTE: comparar wrap Mint com malha do pack mede a troca de
-  // malha, não escala em fuga (foi o falso vermelho `ak 554 ÷ m92 344`).
-  /* Chave inclui fonte E pipeline: a `ak` assada mede 489 px e a `akm`/`m92`
-     encaixadas medem 616/624 na MESMA familia — 1,26×, que e diferenca de pipeline,
-     nao arma fora de escala. Medido duas vezes, identico. */
-  const f = `${FAMILIA[c.arma] || c.arma}/${c.fonte || 'ignorada'}/${c.assada ? 'assada' : 'encaixada'}`;
-  const d = porFamilia.get(f) || new Map();
-  d.set(c.arma, Math.max(d.get(c.arma) || 0, c.arma_diag_px));
-  porFamilia.set(f, d);
+  if (!c.arma_diam3d_cm || !c.len_declarado_cm) continue;
+  const d = tamanhos.get(c.arma) || [];
+  d.push(c.arma_diam3d_cm);
+  tamanhos.set(c.arma, d);
 }
-for (const [fam, armas] of porFamilia) {
-  if (armas.size < 2) continue;
-  const vs = [...armas.entries()].sort((a, b) => b[1] - a[1]);
-  const razao = vs[0][1] / vs[vs.length - 1][1];
-  if (razao > RAZAO_ESCALA) {
-    falhas.push(`família ${fam}: escala em fuga — ${vs[0][0]} ${vs[0][1]}px ÷ ${vs[vs.length - 1][0]} ${vs[vs.length - 1][1]}px = ${razao.toFixed(2)}× > ${RAZAO_ESCALA}×`);
+const umaMaoVistas = [];
+for (const [arma, medidas] of tamanhos) {
+  if (UMA_MAO.has(arma)) { umaMaoVistas.push(arma); continue; }
+  medidas.sort((a, b) => a - b);
+  const mediana = medidas[Math.floor(medidas.length / 2)];
+  const declarado = dados.find((c) => c.arma === arma)?.len_declarado_cm;
+  const erro = Math.abs(mediana - declarado) / declarado;
+  if (erro > TOL_TAMANHO) {
+    falhas.push(`${arma}: tamanho renderizado ${mediana} cm contra ${declarado} cm declarado em weapons.js (${Math.round(erro * 100)}%)`);
   }
 }
-
+if (umaMaoVistas.length) console.log(`  tamanho não julgado (arma de uma mão, ver nota): ${umaMaoVistas.join(', ')}`);
 // Vacuidade: arma pedida e nao medida (troca falhou) some do relatorio em silencio.
 if (Array.isArray(rel.solicitadas)) {
   const medidas = new Set(dados.map((c) => c.arma));

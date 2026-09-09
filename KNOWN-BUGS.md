@@ -51,6 +51,40 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-77 · peça separada (pente/ferrolho) ficava no tamanho pré-normalização — a AKM renderizava 20% maior~~ · RESOLVIDO 09/09
+
+**O que era.** `splitParts` (`public/js/vmweapon.js`) recorta o pente da malha da arma e
+pendura o fragmento num OSSO do braço, congelando a matriz a partir de `mesh.matrixWorld`.
+Ele rodava ANTES de `wrap.scale.setScalar(...)`, a linha que dá a escala final ao wrap — e
+como o fragmento fica pendurado no osso, e não no wrap, ele nunca recebia essa escala.
+
+**Medida antes** (jogo real, `piscina_treta`, 3:2, diâmetro 3D da nuvem de pontos da arma,
+invariante à pose): `akm` 105,8 cm contra **88 cm** declarados em `weapons.js`, e razão
+arma/mão **1,36** contra **1,12** da `ak` aprovada — com as MESMAS mãos (77,8 cm), porque
+as duas são da família `ak`.
+
+**Medida depois**: `akm` 87,1 cm e razão 1,12 — idêntica à `ak`. As outras 24 armas não
+mudaram (só `ak` e `akm` declaram `parts`, e a `ak` é assada, que não passa por este
+caminho).
+
+**Causa raiz**: ordem de `splitParts` em `public/js/vmweapon.js` — separar a peça antes da
+escala final do wrap.
+
+**Régua**: `tools/eval/vm-arsenal-check.mjs`, cláusula de tamanho: o diâmetro 3D medido tem
+de bater com o `len` declarado em `weapons.js` dentro de 8% para arma longa. Procedência do
+teto: 21 das 25 armas batem dentro de 2% (awp 116,1/115, ak 87,2/88, lmg 110,1/110,
+svd 115/115). Arma de UMA MÃO fica de fora da cláusula — o diâmetro vai da boca ao
+calcanhar da coronha e supera o `len` por construção (pistol 30,4/26, revolver38 27,3/24,
+deagle 31,5/30). Mutante `tamanho` infla o diâmetro medido e reprova.
+
+**Por que a régua anterior não pegava**: ela media a diagonal NA TELA, que depende da pose
+e da distância — a mesma arma mediu 624 px numa rodada e 878 px em outra. O diâmetro 3D é
+de corpo rígido e reproduziu idêntico em rodadas seguidas.
+
+**Custo declarado**: nenhum medido. `check:fast` 89/100 com o conserto contra 88/100 na
+base (a diferença é `eval:devport`, intermitente).
+
+
 ### ~~BUG-76 · o viewmodel autorado escondia a arma do pack sem ter malha Mint — e servia a AWP no lugar de outras armas~~ · RESOLVIDO 07/09
 
 **Palavras de quem reportou** (07/09, revisão do dono, 19 screenshots 14:03–15:52): a arma
