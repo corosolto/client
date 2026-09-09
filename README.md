@@ -40,7 +40,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 54 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
-| Clipes de animação versionados | 657 | `git ls-files public/models/anims \| wc -l` |
+| Clipes de animação versionados | 669 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 52, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 16 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |

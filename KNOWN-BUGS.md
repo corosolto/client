@@ -3667,11 +3667,39 @@ Para comparação, o mesmo passo levou o `bandeirante` de 93,1 para **7,3**.
   **saci de 607,1 para 629,6** (pior). Na cuca ainda quebrou o contato de chão: o crouch
   foi para **-1,05 m** e a morte para **-1,38 m**. Os dois consertos foram revertidos e a
   ferramenta não entrou na árvore.
-- **Regerar a cuca em T-pose com rig do Mint** (`Mossfang Crone T Pose`, 08/09): a mesma
-  receita que levou o Lampião de 121,5 para 42,3 deixou a Cuca **PIOR** — 412 contra 284,9,
-  e o idle passou a afundar 0,2744 m. Revertida. Ou seja: a receita nova não é geral, e o
-  que falha na Cuca não é rig nem pose. Sobra investigar a MALHA dela — a única do elenco
-  com feições de jacaré num esqueleto humanoide.
+**SEIS TENTATIVAS MEDIDAS (08-09/09), teto 23,6 ruins/1e4:**
+
+| tentativa | ruins/1e4 |
+| --- | --- |
+| v1, o modelo herdado | 316,8 |
+| v2, regerada HUMANOIDE (T-pose + rig do Mint) | 412 |
+| v4, regerada JACARÉ BÍPEDE (mesma receita) | 333,4 |
+| **v4 + `reskin-glb` (LOCAL=0)** | **187,0** ← melhor |
+| v4 + `reskin-glb` LOCAL=1 | 254,4 |
+| v4 + `reskin-glb` LOCAL=2 | 262,5 |
+
+**O dono estava certo sobre a identidade, e isso foi separado da causa.** Ele apontou que
+a Cuca é jacaré, não humanoide, e que forçá-la humana descaracteriza. Verdade — e o
+LOBISOMEM prova que bicho passa: focinho, pelo e cauda, com **14,5**, a melhor nota do
+elenco. A restrição nunca foi "ser humanoide", é **plano corporal** (dois braços, duas
+pernas, membros de comprimento humano). A v4 já é jacaré e mesmo assim reprova.
+
+**O que o reskin consertou, medido:** o auto-skin do Mint prendeu o braço e parte do ombro
+ao osso do COTOVELO — `LeftArm` com ZERO vértices dominados e `LeftForeArm` com 1934, o
+centroide a 0,298 m do próprio osso. O `reskin-glb` trocou o dominante em 81% dos vértices
+(4554 de 5598) e levou 333,4 -> 187,0, com o p99 caindo de 22,9 para 1,33 (o mandrake é
+0,54). O antebraço foi para 0,132.
+
+**O que sobra, e por que para aqui:** o pior agora é o `RightLeg` (joelho) dominando 250
+vértices com o pior deles a **1,49 m do osso**. Não é ilha de geometria solta (razão
+máx/p99 = 1,3), é a forma: a malha dela é espalhada — p50 0,46 e p99 1,39 de distância ao
+centro, contra 0,38/0,84 do Saci e 0,70/1,27 do Lobisomem. Focinho longo mais vestido longo
+mais braços abertos é forma ingrata para rig humanoide. Consertar isso é repintar peso à
+mão no Blender, em volta do joelho e da barra do vestido — horas de autoria com julgamento
+visual, não script.
+
+**Fica fora do elenco com 187,0**, oito vezes o teto. O GLB da v4 + reskin está no disco.
+
 
 **Fora do registro, não do disco.** Os GLB seguem em `public/models/characters/`; o que
 saiu foi a entrada em `characters.js`/`GLB_CHARS`/`CHAR_WEAPON`. A invariante de roster do
