@@ -473,7 +473,8 @@ export function buildVelhoOeste(scene, T) {
   function casaInteriorProxy(group, opts = {}) {
     const x = group.position.x, z = group.position.z, ry = group.rotation.y;
     const cos = Math.cos(ry), sin = Math.sin(ry), id = opts.id ?? 0;
-    const w = 7.2, d = 6.4, h = 3.45, halfW = w / 2, halfD = d / 2;
+    const w = opts.pedra ? 6.1 : 7.2, d = opts.pedra ? 6.2 : 6.4;
+    const h = 3.45, upperH = opts.geminada ? 2.35 : 0, halfW = w / 2, halfD = d / 2;
     const cor = opts.pedra ? MAT.paupiqueCaiado : MAT.paupiqueOcre;
     const parts = [];
     const part = (name, pw, ph, pd, px, py, pz, material, collide = true) => {
@@ -509,7 +510,15 @@ export function buildVelhoOeste(scene, T) {
       part(`moldura-lateral-${side}-b`, .14, 1.8, .12, side * (halfW + .03), .85, isExit ? .91 : .77, MAT.trim, false);
     }
     part('piso', w - .25, .12, d - .25, 0, 0, 0, MAT.pedra, false);
-    part('telhado', w + .5, .16, d + .55, 0, h, 0, MAT.roof, false);
+    if (opts.geminada) {
+      part('andar-superior-frente-oeste', w / 2, upperH, .28, -w / 4, h, halfD, MAT.paupiqueOcre);
+      part('andar-superior-frente-leste', w / 2, upperH, .28, w / 4, h, halfD, MAT.paupiqueCaiado);
+      part('andar-superior-fundo', w, upperH, .28, 0, h, -halfD, MAT.paupiqueCru);
+      for (const side of [-1, 1]) part(`andar-superior-lateral-${side}`, .28, upperH, d, side * halfW, h, 0, MAT.paupiqueCru);
+      for (const px of [-2.05, -.7, .7, 2.05]) part(`janela-superior-${px}`, .72, .82, .08, px, h + .72, halfD + .19, MAT.windowVoid, false);
+      part('laje-superior', w - .25, .12, d - .25, 0, h, 0, MAT.pedra, false);
+    }
+    part('telhado', w + .5, .16, d + .55, 0, h + upperH, 0, MAT.roof, false);
     for (const px of [-halfW + .08, halfW - .08]) part(`esteio-${px}`, .16, h, .16, px, 0, halfD + .25, MAT.dark, true);
     if (opts.pedra) part('base-pedra', w + .25, .3, d + .25, 0, 0, 0, MAT.pedra, false);
     else {
@@ -521,18 +530,18 @@ export function buildVelhoOeste(scene, T) {
       entrance: [x + sin * (halfD + .55), z + cos * (halfD + .55)], inside: [x, z],
       farWindow: [x - sin * (halfD + .1), z - cos * (halfD + .1)],
       sideExit: [x + cos * exitSide * (halfW + .55), z - sin * exitSide * (halfW + .55)],
-      doorWidth: 1.9, sideExitWidth: 1.9, ry,
+      doorWidth: 1.9, sideExitWidth: 1.9, halfW, halfD, ry,
     };
     interiorHouses.push(group);
     occluders.push(group);
   }
   const CASAS = [
-    { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1, interior: true, exitSide: 1 },
+    { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0, interior: true, exitSide: -1 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1, interior: true, exitSide: 1 },
     { x: -17.2, z: -7, ry: Math.PI / 2 + .08, fam: 'paupique', v: 2 }, { x: -17.6, z: 6.7, ry: Math.PI / 2 - .13, fam: 'paupique', v: 0 },
     { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, fam: 'paupique', v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, fam: 'paupique', v: 2 },
     { x: 17.2, z: -20.6, ry: -Math.PI / 2 + .07, fam: 'paupique', v: 0 },
-    { x: -8.4, z: 24.2, ry: .14, fam: 'pedra', interior: true, pedra: true, exitSide: 1 }, { x: 9.1, z: 24.7, ry: -.1, fam: 'pedra' },
-    { x: -0.4, z: 26.2, ry: Math.PI - .06, fam: 'geminada' },
+    { x: -8.4, z: 24.2, ry: .14, fam: 'pedra', interior: true, pedra: true, exitSide: -1 }, { x: 9.1, z: 24.7, ry: -.1, fam: 'pedra', interior: true, pedra: true, exitSide: -1 },
+    { x: -0.4, z: 26.2, ry: -.06, fam: 'geminada', interior: true, geminada: true, exitSide: 1 },
   ];
   const FAMILIAS_CASA = {
     paupique: { prop: 'casa_pau_a_pique', proxy: casaProxy, h: (i) => 4.1 + (i % 3) * .28, col: [2.9, 3.9, 3.55], len: 6.6 },
@@ -543,7 +552,7 @@ export function buildVelhoOeste(scene, T) {
   CASAS.forEach((c, i) => {
     const F = FAMILIAS_CASA[c.fam];
     sertaoElement(`casa-${c.fam}`, i, c.x, c.z, c.interior ? casaInteriorProxy : F.proxy, F.prop, F.h(i),
-      c.interior ? null : F.col, { ry: c.ry, variante: c.v ?? 0, id: i, pedra: !!c.pedra, exitSide: c.exitSide, targetLen: F.len, authored: c.interior || ['paupique', 'platibanda'].includes(c.fam),
+      c.interior ? null : F.col, { ry: c.ry, variante: c.v ?? 0, id: i, pedra: !!c.pedra, geminada: !!c.geminada, exitSide: c.exitSide, targetLen: F.len, authored: c.interior || ['paupique', 'platibanda'].includes(c.fam),
         after: c.fam === 'platibanda' && !c.interior ? g => finishVenda(g, MAT, i) : undefined });
     if (i === 0) {
       const placa = addSign('VENDA DO SERTÃO', 'FARINHA • ÁGUA • PROSA', c.x + Math.sin(c.ry) * 3.55, 4.48, c.z + Math.cos(c.ry) * 3.55, c.ry, 5.2, .85);
@@ -594,7 +603,7 @@ export function buildVelhoOeste(scene, T) {
     flushInteriorParts(group, parts);
     const sign = addSign(id === 0 ? 'CASA DE FARINHA' : 'CASA DE REZA', 'PORTA ABERTA PRA PRAÇA', x, 3.95, z - halfD - .18, 0, 4.8, .62);
     sign.name = `${group.name}-placa`;
-    group.userData.interior = { entrance: [x, z - halfD - .55], inside: [x, z], northWindow: [x, z + halfD + .1], doorWidth: 1.9 };
+    group.userData.interior = { entrance: [x, z - halfD - .55], inside: [x, z], northWindow: [x, z + halfD + .1], doorWidth: 1.9, halfW, halfD, ry: 0 };
     interiorHouses.push(group);
     occluders.push(group);
   }
@@ -845,7 +854,7 @@ export function buildVelhoOeste(scene, T) {
   /* BUG-91: a carroça oeste tinha a lança cravada na parede da platibanda-0
      (ponta ~1 m dentro da planta) e o colisor giant fechava o corredor da praça.
      Espelhada: lança aponta pro largo, mesma caixa, mesmo ry em espelho. */
-  wagon(-6, -19.6, Math.PI + .18); wagon(7, 2, -2.7); wagon(-14.2, 25.4, 2.9);
+  wagon(-6, -19.6, Math.PI + .18); wagon(7, 2, -2.5); wagon(-15.8, 25.9, 2.9);
 
   function obstacle(name, x, z, ry, hx, hz, height, build) {
     const group = new THREE.Group(); group.name = `obstaculo-${name}`; group.position.set(x, 0, z); group.rotation.y = ry; root.add(group);
@@ -937,8 +946,13 @@ export function buildVelhoOeste(scene, T) {
   const slowAt = () => false;
   const bounds = { minX: -HALF_X + .8, maxX: HALF_X - .8, minZ: -HALF_Z + .8, maxZ: HALF_Z - .8 };
   const blocked = (x, z, inflate = .45) => colliders.some(c => x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.7 && c.maxY > .1);
+  const insideInterior = (x, z) => interiorHouses.some(h => {
+    const m = h.userData.interior, dx = x - h.position.x, dz = z - h.position.z;
+    const px = Math.cos(m.ry) * dx - Math.sin(m.ry) * dz, pz = Math.sin(m.ry) * dx + Math.cos(m.ry) * dz;
+    return Math.abs(px) < m.halfW - .35 && Math.abs(pz) < m.halfD - .35;
+  });
   const nodes = [], adj = [], step = 3.4;
-  for (let x = bounds.minX + 1; x <= bounds.maxX - 1; x += step) for (let z = bounds.minZ + 1; z <= bounds.maxZ - 1; z += step) if (!blocked(x, z)) nodes.push({ x, z });
+  for (let x = bounds.minX + 1; x <= bounds.maxX - 1; x += step) for (let z = bounds.minZ + 1; z <= bounds.maxZ - 1; z += step) if (!blocked(x, z) && !insideInterior(x, z)) nodes.push({ x, z });
   for (let i = 0; i < nodes.length; i++) adj.push([]);
   const clear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6; if (blocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, .38)) return false; } return true; };
   for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) { const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz <= step * step * 2.25 && clear(nodes[i], nodes[j])) { adj[i].push(j); adj[j].push(i); } }
@@ -959,13 +973,12 @@ export function buildVelhoOeste(scene, T) {
     nodes.length = 0; nodes.push(...novosNodes);
     adj.length = 0; adj.push(...novasAdj);
   }
-  /* BUG-91: a grade de 3,4 m só acerta um interior por sorte de alinhamento;
-     casa interior sem nó ganha centro + soleira da porta, ligados pelo mesmo
-     clear() do grafo — sem isso o bot não sabe entrar na casa do spawn. */
+  /* A grade regular é excluída dos interiores: quatro nós por acaso dentro de uma
+     casa faziam o bot oscilar entre paredes. Cada casa recebe centro e soleira
+     intencionais, ligados ao mesmo clear() do grafo. */
   for (const house of interiorHouses) {
-    const { x, z } = house.position;
-    if (nodes.some(n => Math.hypot(n.x - x, n.z - z) < 3.4)) continue;
-    const ry = house.rotation.y, doorOut = { x: x + Math.sin(ry) * 4, z: z + Math.cos(ry) * 4 };
+    const { x, z } = house.position, m = house.userData.interior;
+    const doorOut = { x: m.entrance[0], z: m.entrance[1] };
     const a = nodes.length; nodes.push({ x, z }); adj.push([]);
     const b = nodes.length; nodes.push(doorOut); adj.push([]);
     adj[a].push(b); adj[b].push(a);
