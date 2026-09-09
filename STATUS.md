@@ -2,7 +2,7 @@
 
 <!-- BEGIN:GERADO:status_atual — não edite à mão, rode `npm run docs` -->
 
-- **Versão:** `2.0.0-alpha.243`
+- **Versão:** `2.0.0-alpha.244`
 - **Conteúdo jogável:** 6 facções, 53 personagens, 16 mapas e 26 armas com GLB
 - **Código do jogo:** 44.844 linhas em 90 módulos JavaScript
 - **Automação:** 230 comandos npm, 350 scripts de avaliação e 75 scripts de pipeline
