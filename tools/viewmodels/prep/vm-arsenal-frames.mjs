@@ -112,6 +112,22 @@ const MEDIR = (arma) => {
     minX = Math.min(minX, s.x); maxX = Math.max(maxX, s.x);
     minY = Math.min(minY, s.y); maxY = Math.max(maxY, s.y);
   }
+  /* Contato em 3D, em cm: a pergunta e fisica ("a mao encosta na arma?") e a resposta
+     em pixels depende de quanto a arma ocupa a tela e de quao rala e a amostra — no
+     `deagle/ads` a mao esta NA coronha e a medida em pixels deu a pior razao de todas. */
+  let contato3d = null;
+  if (maoPts.length && armaPts.length) {
+    /* Amostra INTEIRA: com 260 pontos por lado a mesma m92 media 2,7 cm e uma sonda
+       densa media 1,3 — o teto estaria medindo densidade de amostra, nao o vao. */
+    let melhor = 1e9;
+    for (let i = 0; i < maoPts.length; i += 1) {
+      for (let k = 0; k < armaPts.length; k += 1) {
+        const d = maoPts[i].distanceTo(armaPts[k]);
+        if (d < melhor) melhor = d;
+      }
+    }
+    contato3d = Math.round(melhor * 1000) / 10;
+  }
   let contato = null;
   if (maoPx.length && armaPx.length) {
     contato = 1e9;
@@ -180,6 +196,7 @@ const MEDIR = (arma) => {
     contato_em_espacamentos: (contato !== null && espacamento) ? Math.round(contato / espacamento * 100) / 100 : null,
     armaEmQuadro: armaPx.length, armaAmostra: armaPts.length,
     contato_px: contato,
+    contato_3d_cm: contato3d,
     arma_diag_px: maxX > minX ? Math.round(Math.hypot(maxX - minX, maxY - minY)) : 0,
     arma_bbox: maxX > minX ? [minX, minY, maxX, maxY].map(Math.round) : null,
     quadro: [W, H],

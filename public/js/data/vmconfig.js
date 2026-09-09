@@ -50,7 +50,9 @@ export const VM_WEAPON = {
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
   deagle: W('deagle', { recoilScale: 0.45 }),
   pistol: W('pistol'),
-  m92: W('ak'),
+  /* trim: a mão da família ak fica 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
+     Delta medido no espaço do holder: [-0,2, -0,8, +1,1] cm. */
+  m92: W('ak', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   akm: W('ak', { parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
   g3: W('g3'),
   revolver38: W('revolver'),

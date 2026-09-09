@@ -199,7 +199,7 @@ export function attachMintWeapon(entry, weaponId) {
   }
   // Trim reaplicado a cada attach: o editor calibra ao vivo mutando o vmconfig.
   const trim = weaponConfig.trim;
-  wrap.position.set(...trim.pos);
+  wrap.position.set(0, 0, 0);   // a translação por arma é aplicada no holder, após a âncora
   wrap.rotation.set(trim.rotDeg[0] * DEG, trim.rotDeg[1] * DEG, trim.rotDeg[2] * DEG);
   wrap.scale.setScalar((wrap.userData.metrics?.norm || 1) * trim.scale);
   /* O fragmento (pente/ferrolho) nasce pendurado num OSSO com a matriz congelada de
@@ -238,6 +238,12 @@ export function attachMintWeapon(entry, weaponId) {
   }
   // mount.pos em METROS no EIXO DA ARMA (+Z = cano): resíduo manual por cima.
   _mountOffset.set(...familyConfig.mount.pos)
+    .applyQuaternion(mint.holder.quaternion)
+    .divideScalar(worldScale);
+  mint.holder.position.add(_mountOffset);
+  /* trim.pos POR ARMA entra aqui, e não no wrap: a âncora acima recentra o holder pelo
+     centro da arma do pack e cancelava exatamente a translação do wrap (BUG-78). */
+  _mountOffset.set(...trim.pos)
     .applyQuaternion(mint.holder.quaternion)
     .divideScalar(worldScale);
   mint.holder.position.add(_mountOffset);

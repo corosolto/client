@@ -51,6 +51,39 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-78 · `trim.pos` por arma era inerte — a âncora do centro cancelava a translação~~ · RESOLVIDO 09/09
+
+**O que era.** `attachMintWeapon` aplicava `trim.pos` na posição do wrap e, logo depois,
+recentrava o holder para o centro da arma Mint coincidir com o centro da arma do pack
+(*"Âncora DEFINITIVA"*). Essa âncora é calculada com o wrap JÁ transladado, então
+cancelava a translação exatamente. O `trim`, documentado no `vmconfig.js` como *"ajuste
+fino do wrap Mint no socket"*, não movia nada — só `mount.pos`, que é por FAMÍLIA, tinha
+efeito.
+
+**Como ficou provado**: `trim.pos = [0, 0, 0.3]` (30 cm) e `[0, -0.03, 0]` deram exatamente
+o mesmo contato medido (1,9 cm) e a mesma bbox da rodada sem trim nenhum. O arquivo servido
+continha o trim — conferido com `curl`.
+
+**Medida antes × depois** (m92, jogo real, `piscina_treta`, 3:2, contato 3D em cm):
+1,9 cm em idle/ADS/disparo → **0,5 cm**, dentro da faixa das aprovadas (ak 0,2, deagle
+0,3–0,5, shotgun 0,2–0,5). Nenhuma outra arma muda: `trim.pos` é `[0,0,0]` em todas as
+demais, e o caminho assado não passa por aqui.
+
+**Causa raiz**: ordem em `public/js/vmweapon.js` — a translação por arma agora entra no
+holder DEPOIS da âncora, do mesmo jeito que `mount.pos`.
+
+**Régua**: `tools/eval/vm-arsenal-check.mjs`, cláusula de contato em CENTÍMETROS. Em
+pixels a medida ordenava errado — o `deagle/ads`, com a mão na coronha (conferido na
+figura), dava a pior razão de todas, porque distância na tela depende de quanto a arma
+ocupa o quadro e da densidade da amostra. Teto 1,0 cm; procedência: ak 0,1–0,2 em todas as
+capturas, deagle 0,3–0,5, shotgun 0,2–0,5, m92 1,2–1,9 antes do conserto. Mutante
+`semcontato` reprova.
+
+**Limite declarado da régua**: é a distância MÍNIMA sobre a nuvem de mão inteira — com a
+mão forte encostada, uma mão de apoio solta não aparece. Separar as duas exige dividir a
+malha `GEO_FP_SK_Glove_01`, que hoje é uma só.
+
+
 ### ~~BUG-77 · peça separada (pente/ferrolho) ficava no tamanho pré-normalização — a AKM renderizava 20% maior~~ · RESOLVIDO 09/09
 
 **O que era.** `splitParts` (`public/js/vmweapon.js`) recorta o pente da malha da arma e

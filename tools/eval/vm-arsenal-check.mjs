@@ -43,20 +43,24 @@ const FAMILIA = {
    conferido na figura, está certo) e a 72 na m92. Quebrada mede 0. O piso separa
    "mão sumiu" de "mão saiu um pouco"; perda PARCIAL não é julgada por esta cláusula. */
 const PISO_MAO = { autorado: 40, legado: 40 };
-/* Teto do contato, com 800 pontos por lado: FORA do ADS toda arma saudável mede
-   0–1 px, então 10 px é folga larga. NO ADS todas sobem junto (ak 14, pistol 25,
-   shotgun 38 em 16:9) — padrão sistemático, não defeito de uma arma: o delta que
-   leva a alça ao centro parece mover a arma sem levar a mão. Enquanto isso não for
-   investigado, o ADS é MEDIDO E RELATADO, não reprovado: teto que reprova o que não
-   se entende vira vermelho que se aprende a ignorar. */
-const TETO_CONTATO = 10;
+/* Contato medido em 3D, em cm. Em PIXELS a medida ordenava errado: o `deagle/ads`,
+   com a mão na coronha (conferido na figura), dava a pior razão de todas, porque
+   distância na tela depende de quanto a arma ocupa o quadro e de quão rala é a
+   amostra. Em cm o quadro fecha: ak 0,2 (a aprovada, em TODAS as capturas), shotgun
+   0,2–0,5, deagle 0,3–0,5, m92 1,2–1,9 — com a amostra INTEIRA nos dois lados (com
+   260 pontos por lado o numero media densidade de amostra, nao vao: a mesma m92 dava
+   2,7 e uma sonda densa dava 1,3). Teto 1,0 cm.
+   LIMITE DECLARADO: é a distância MÍNIMA sobre a nuvem de mão inteira — com a mão
+   forte encostada, uma mão de apoio solta não aparece. Medir por mão exige separar
+   as duas na malha `GEO_FP_SK_Glove_01`, que hoje é uma só. */
+const TETO_CONTATO_CM = 1.0;
 const RAZAO_ESCALA = 1.35;   // dentro da família (m92 861 ÷ ak 553 = 1,56 reprovou)
 const LUNETA = new Set(['sniper', 'bolt']);  // escondem o viewmodel no ADS
 
 const mut = JSON.parse(JSON.stringify(caps));
 if (MUT === 'semarma') mut[0].armaEmQuadro = 0;
 if (MUT === 'semmao') mut[0].maoEmQuadro = 0;
-if (MUT === 'semcontato') mut[0].contato_px = 400;
+if (MUT === 'semcontato') { mut[0].contato_px = 400; mut[0].contato_3d_cm = 12; }
 if (MUT === 'escala') mut[0].arma_diag_px = Math.round((mut[0].arma_diag_px || 500) * 2);
 if (MUT === 'tamanho') for (const c of mut) c.arma_diam3d_cm = Math.round((c.arma_diam3d_cm || 90) * 1.4 * 10) / 10;
 const dados = MUT ? mut : caps;
@@ -76,9 +80,8 @@ for (const c of dados) {
   }
   const piso = PISO_MAO[rel.modo] ?? PISO_MAO.autorado;
   if (c.maoEmQuadro < piso) falhas.push(`${onde}: mão fora do quadro (${c.maoEmQuadro} < ${piso} de ${c.maoAmostra})`);
-  if (c.contato_px !== null && c.contato_px > TETO_CONTATO) {
-    if (c.cenario === 'ads') adsContato.push(`${onde} ${c.contato_px}px`);
-    else falhas.push(`${onde}: mão sem contato (${c.contato_px} px > ${TETO_CONTATO})`);
+  if (c.contato_3d_cm !== null && c.contato_3d_cm !== undefined && c.contato_3d_cm > TETO_CONTATO_CM) {
+    falhas.push(`${onde}: mão sem contato (${c.contato_3d_cm} cm > ${TETO_CONTATO_CM})`);
   }
 }
 /* Escala: diagonal NA TELA nao serve — oscilou 624→878 px para a mesma arma entre
@@ -117,7 +120,7 @@ if (Array.isArray(rel.solicitadas)) {
   const medidas = new Set(dados.map((c) => c.arma));
   for (const a of rel.solicitadas) if (!medidas.has(a)) falhas.push(`${a}: PEDIDA E NÃO MEDIDA — nenhuma captura no relatório`);
 }
-if (adsContato.length) console.log(`  ADS (medido, não reprovado): contato acima de ${TETO_CONTATO} px em ${adsContato.join(', ')}`);
+if (adsContato.length) console.log(`  ADS: ${adsContato.join(', ')}`);
 const verde = falhas.length === 0;
 if (MUT) {
   if (verde) { console.error(`RÉGUA CEGA: o mutante '${MUT}' PASSOU — a cláusula não morde`); process.exit(1); }
