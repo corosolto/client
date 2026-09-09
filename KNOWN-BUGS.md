@@ -3695,6 +3695,220 @@ hipótese de escorço foram **refutadas com número**. Nenhum parâmetro de câm
 malha: o caminho é **malha nova ou outra família de pose**. Não gaste rodada procurando
 parâmetro.
 
+### BUG-145 · Lobisomem em FP com mãos ligadas continua com escala ruim
+
+O modo padrão do Lobisomem segue `weaponOnly=true`, porque o rig compartilhado de mãos
+mostra proporção ruim quando habilitado: a arma encaixa, mas a mão extra fica grande e
+desancorada. A revisão local trata isso como limitação herdada do viewmodel opcional, não
+como regressão da facção M. Evidência: `artifacts/miticos-review/hands/arms.glb-0.png` e
+`artifacts/miticos-review/after/fp-32.png`.
+
+### BUG-146 · Render offline do Lobisomem publica brilho, não pelagem
+
+O GLB do Lobisomem é `metallic=1` com albedo escuro; o rig offline
+(`tools/eval/miticos-render-review.py`) usa Principled dielétrico, então o especular das
+áreas de luz domina a imagem. Medido: baixar o albedo 3,3× (tint branco → `baseColorFactor`
+0,3/0,32/0,36) moveu a luma do retrato só de 88,8 para 82,0, e a pelagem continua invisível.
+Reduzir a luz para o nível do modo padrão corrige a luma (43,9) mas derruba `contraste` para
+20,8 e `cores` para 332, abaixo do mínimo dos 88 retratos aprovados (26,1 e 473). Enquanto o
+rig não reproduzir o material metálico, retrato de Mítico sai de mídia aprovada, não de
+render offline. Medição e folha comparativa em
+`docs/reports/MITICOS-LOBISOMEM-INTEGRATION.md`.
+
+### ~~BUG-147 · Lobisomem não tem perfil físico de áudio~~ · CORRIGIDO 07/09/2026
+
+`CHARACTER_IDS` em `tools/audio/fab-game-local.mjs` listava 44 ids e não incluía
+`lobisomem`, então `characterPhysical.byCharacter` não cobria o personagem e
+`eval:audiofablocal` reprovava em `LAB8e` com 44/45.
+
+**Fonte corrigida:** o id entrou na lista (45) e em `CREATURE_CHARACTERS`, ao lado de
+`gotinha`/`dollynho`/`et`/`canarinho`/`proerd` — `physicalByCharacter` é derivado só
+dessas duas listas, sem depender de nenhum byte de áudio.
+
+**`eval:audiofablocal` ficou VERDE com essa única edição.** A previsão de que ficaria
+vermelho até o pacote Fab chegar estava errada: o `audio-fab-local-check.mjs` monta as
+fixtures e roda o gerador num diretório temporário próprio, então `LAB8e` não depende do
+`manifest.json` publicado. Quem depende do pacote é o `audio:check`, que continua vermelho
+neste worktree pelo motivo de sempre (`manifest.json DEFASADO em relação ao disco`) e não
+tem relação com o Lobisomem.
+
+
+### BUG-148 · malha atravessa o chão na morte e no agachado, e nada media isso
+
+**Classe do elenco inteiro, não regressão da facção M.** O contato de pé (CHR3,
+`gen-foot-offsets.mjs`, e o `*-feet` do `miticos-runtime-review.mjs`) mede o vértice mais
+baixo dos ossos de PERNA. O resto do corpo nunca teve régua. O Lobisomem passou 30/30 no
+review com a pata em `0,0000 m` e o quadril 45 cm abaixo do chão na morte — o cadáver
+afunda em vez de deitar.
+
+Medido em 07/09 nos 45 personagens com GLB (`node tools/eval/chao-check.mjs`, o mesmo
+`buildCharacterModel` da tela, 60 Hz, quadro assentado; metros, 0 = chão):
+
+| estado | pior do elenco | mediana | lobisomem |
+| --- | --- | --- | --- |
+| `idle` | -0,0075 (cadequinha) | -0,0001 | **0,0000** (o melhor do elenco) |
+| `crouch` | -0,4313 (proerd) | -0,0004 | -0,1158 |
+| `death` | -0,7771 (proerd) | -0,0677 | -0,4518 |
+
+`proerd` e `canarinho` — **dois personagens que já estão no ar** — enterram 75 cm de corpo
+na morte. O Lobisomem é o terceiro pior, dentro do envelope que já é publicado.
+
+A causa é a malha, não o esqueleto: no mesmo clipe de morte o `Hips` para na mesma altura
+nos dois (`0,138` no lobo, `0,129` no mandrake), mas o corpo do lobo desce `0,59 m` abaixo
+do próprio quadril contra `0,18 m` do mandrake. A morte e o salto não são aterrados de
+propósito (`ground-anims.mjs` preserva a trajetória), então nada corrige o que
+sobra embaixo.
+
+**Régua:** `npm run eval:chao` (CHR7), no `check:fast`, 3,6 s para os 45. Catraca por
+personagem em `tools/eval/chao_check.json` — piorar reprova; melhorar pede `--escreve`.
+`idle` tem teto absoluto de 1,5 cm porque é a pose que a seleção, o menu e o retrato
+mostram. Mutante `--mutate=afunda` (raiz 5 cm para baixo) reprova 135 casos.
+
+**Não consertado nesta lane, de propósito.** Aterrar a morte do lobo pelo mínimo da malha
+o levantaria 45 cm e o deixaria o único do elenco deitado certo, com `proerd` e `canarinho`
+piores e sem régua para eles; e mexer no clipe arrisca o contato de pata que hoje está em
+`1e-7 m`. A catraca impede que piore enquanto a classe não for atacada de uma vez.
+
+
+### ~~BUG-149 · o retarget assava torção nos ossos de curl e matava o fechamento da pata~~ · CORRIGIDO 07/09/2026
+
+`Curl_L`/`Curl_R` não são ossos de animação: são o **atuador de runtime** do fechamento da
+mão, escrito UMA vez pelo `buildCharacterModel` (`glbchars.js`, bloco "Grip curl") com o
+ângulo tirado da espessura medida da arma. Canal de clipe neles é sobrescrita por quadro —
+o grip curl morre e a arma fica na pata aberta.
+
+O `retarget-glb.mjs` montava o delta de rotação de mundo para **todo osso de nome igual**,
+`Curl_*` incluído. Nos 13 rigs humanos com esses ossos o rest da fonte e o do alvo
+coincidem e o delta saía **identidade** (`|delta|max = 0,0000 rad`): inerte, e por isso
+nenhuma régua de asset acusava. Na pata do Lobisomem os rests divergem:
+
+    lobisomem  Curl_R  |delta|max = 0,8763 rad   x=0,293  y=-0,544  z=-0,621
+    (os outros 13)     |delta|max = 0,0000 rad
+
+O eixo dominante é **torção** (y/z), não o `x` do curl — numa folha que carrega 12,55% do
+peso de skin do modelo, a maior região de curl do elenco (P95 a 22,6 cm do osso, contra
+15,0-20,5 cm dos outros 13).
+
+**Estrago, na régua do portão** (`npm run eval:select`, o caminho da tela de seleção):
+
+| | p99 | ruins/1e4 | |
+| --- | --- | --- | --- |
+| com a torção do clipe | 0,694 | 36,2 | REPROVA (teto 0,675 / 23,6) |
+| sem as tracks de Curl | 0,511 | 14,5 | passa — melhor que o `mandrake` (0,540 / 18,9) |
+
+Era o 13º reprovado num portão que declara no máximo 12.
+
+**Conserto em duas pontas:** `tools/strip-curl-tracks.mjs` tira o canal dos GLB já no
+disco (mede antes de tirar, e tem `--check`); `retarget-glb.mjs` nunca mais emite `Curl_*`
+— no-op nos 13 rigs humanos, porque o canal que eles perdem é identidade. Remover em vez
+de regerar foi deliberado: regerar refaria também o contato de pata assado pelo
+`ground-anims.mjs` e a CHR3 junto.
+
+**Mutantes:** `select-inflate.mjs --mutate=curltwist` devolve a torção medida (lobisomem
+p99 0,511 → 0,808, ruins 14,5 → 44,6, VERMELHO; `mandrake`/`pagodeiro` não se movem, e
+está certo — o rig deles não tem `Curl_*` com peso). `miticos-lobisomem-integration-check
+--mutate=curltwist` RECONSTRÓI o canal no documento e o portão o acha sozinho.
+
+**`CURL_MAX` (`glbchars.js`) é LIMITE, não conserto — e hoje não morde.** Com a shotgun
+que o Lobisomem carrega, `curlPara` já devolve 0,35, o piso da faixa, então
+`min(0,35, 0,50)` = 0,35. Ele existe porque a faixa 0,35-0,80 é calibrada em MÃO HUMANA
+("fecha ~0,8 rad em volta de 3 cm") e o lobo tem PATA: arco é r·θ, pata longa precisa de
+MENOS ângulo, e o `curlPara` não tem como saber porque mede a ARMA, nunca a mão. Varrido
+com os clipes já limpos (teto p99 0,675 / ruins 23,6):
+
+| teto | p99 | ruins/1e4 | |
+| --- | --- | --- | --- |
+| 0,35 (o de hoje) | 0,510 | 14,5 | passa |
+| **0,50 (o escrito)** | 0,554 | 16,9 | passa |
+| 0,55 | 0,561 | 21,7 | passa |
+| 0,60 | 0,572 | 24,1 | REPROVA |
+
+O joelho está entre 0,55 e 0,60. Trocar a arma do lobo por uma mais FINA sobe o `curlPara`
+(no limite 0,80 → ruins 35,0) e derrubaria o portão sem ninguém ter tocado no lobo; 0,50
+para essa queda com 28% de folga. Tabela explícita, com um nome só, para o valor não
+vazar para os outros 44.
+
+
+### BUG-150 · Saci e Cuca deformam 12× e 27× o teto, e ficam fora do elenco
+
+Os dois únicos Míticos que o pipeline por personagem NÃO salvou. Medido em
+`npm run eval:select` (teto 23,6 ruins/1e4), depois de retarget + aterramento + strip curl:
+
+| | antes | depois do pipeline |
+| --- | --- | --- |
+| `saci` | 607,1 | ~630 |
+| `cuca` | 316,8 | 284,9 |
+
+Para comparação, o mesmo passo levou o `bandeirante` de 93,1 para **7,3**.
+
+**O que já foi tentado e NÃO resolveu** (resultado negativo, medido — para ninguém repetir):
+
+- **`reskin-glb`**: trocou o dominante em **0 de 7446 vértices (0%)**. Os pesos já são o que
+  a proximidade produziria; a convenção junta→filho está correta nos dois.
+- **Costura de peso entre ossos distantes.** Os dois são os únicos do elenco acima de 8% de
+  vértices com peso repartido entre ossos a mais de 3 arestas no grafo (saci 8,9%, cuca
+  10,8%, contra 0,14-1,5% de todo o resto) — a correlação é real na ponta. Tirar esse peso
+  e renormalizar levou a **cuca de 316,8 para 245,8** (22% melhor, ainda 10× o teto) e o
+  **saci de 607,1 para 629,6** (pior). Na cuca ainda quebrou o contato de chão: o crouch
+  foi para **-1,05 m** e a morte para **-1,38 m**. Os dois consertos foram revertidos e a
+  ferramenta não entrou na árvore.
+**SEIS TENTATIVAS MEDIDAS (08-09/09), teto 23,6 ruins/1e4:**
+
+| tentativa | ruins/1e4 |
+| --- | --- |
+| v1, o modelo herdado | 316,8 |
+| v2, regerada HUMANOIDE (T-pose + rig do Mint) | 412 |
+| v4, regerada JACARÉ BÍPEDE (mesma receita) | 333,4 |
+| **v4 + `reskin-glb` (LOCAL=0)** | **187,0** ← melhor |
+| v4 + `reskin-glb` LOCAL=1 | 254,4 |
+| v4 + `reskin-glb` LOCAL=2 | 262,5 |
+
+**O dono estava certo sobre a identidade, e isso foi separado da causa.** Ele apontou que
+a Cuca é jacaré, não humanoide, e que forçá-la humana descaracteriza. Verdade — e o
+LOBISOMEM prova que bicho passa: focinho, pelo e cauda, com **14,5**, a melhor nota do
+elenco. A restrição nunca foi "ser humanoide", é **plano corporal** (dois braços, duas
+pernas, membros de comprimento humano). A v4 já é jacaré e mesmo assim reprova.
+
+**O que o reskin consertou, medido:** o auto-skin do Mint prendeu o braço e parte do ombro
+ao osso do COTOVELO — `LeftArm` com ZERO vértices dominados e `LeftForeArm` com 1934, o
+centroide a 0,298 m do próprio osso. O `reskin-glb` trocou o dominante em 81% dos vértices
+(4554 de 5598) e levou 333,4 -> 187,0, com o p99 caindo de 22,9 para 1,33 (o mandrake é
+0,54). O antebraço foi para 0,132.
+
+**O que sobra, e por que para aqui:** o pior agora é o `RightLeg` (joelho) dominando 250
+vértices com o pior deles a **1,49 m do osso**. Não é ilha de geometria solta (razão
+máx/p99 = 1,3), é a forma: a malha dela é espalhada — p50 0,46 e p99 1,39 de distância ao
+centro, contra 0,38/0,84 do Saci e 0,70/1,27 do Lobisomem. Focinho longo mais vestido longo
+mais braços abertos é forma ingrata para rig humanoide. Consertar isso é repintar peso à
+mão no Blender, em volta do joelho e da barra do vestido — horas de autoria com julgamento
+visual, não script.
+
+**Fica fora do elenco com 187,0**, oito vezes o teto. O GLB da v4 + reskin está no disco.
+
+
+**Fora do registro, não do disco.** Os GLB seguem em `public/models/characters/`; o que
+saiu foi a entrada em `characters.js`/`GLB_CHARS`/`CHAR_WEAPON`. A invariante de roster do
+`eval:miticos-lobisomem` barra os dois por nome, com mutante.
+
+**O Saci é de UMA PERNA — decidido pelo dono em 08/09**, e é tecnicamente viável. A
+pergunta dele foi a certa ("se for possível ele andar no jogo"), e a resposta foi medida
+antes de gastar geração:
+
+O truque é separar MALHA de ESQUELETO. O rig continua com as duas pernas — é o que os 11
+clipes compartilhados animam —, e só a GEOMETRIA de uma delas some. Provado no Saci atual:
+removendo os triângulos cujos vértices são dominados por `LeftUpLeg|LeftLeg|LeftFoot|
+LeftToeBase` saem 752 de 4975 triângulos (15,1%), o personagem fica de uma perna só, o
+clipe de caminhada toca (RMSE ~2000 entre quadros, medido) e o pé pisa no chão pelo
+`ground-anims`.
+
+O que continua em aberto é ESTÉTICO, não técnico: o ciclo foi autorado para duas pernas,
+então na fase em que a perna que sumiu seria o apoio o corpo fica sem suporte visível.
+Lido de perto isso vira ou um pulinho — que é o Saci — ou um deslize. Um ciclo de pulo
+próprio resolveria de vez, e é trabalho de autoria.
+
+Nada disso é aproveitável enquanto o modelo do Saci reprovar por 27×: a perna é decisão
+de identidade para o Saci REGERADO, não para este.
+
 ---
 
 ### ~~BUG-24 · "as armas estão 1,5x do tamanho que deveriam"~~ · RESOLVIDO 04/08
