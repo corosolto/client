@@ -193,12 +193,12 @@ Esse parecer não substitui aprovação visual humana.
   `artifacts/carandiru-c4/rejected-preroll/` e `rejected-fast/` e não alimentam
   o recibo.
 - O lote final em `artifacts/carandiru-c4/final/` registra `radial-interna` em
-  7,40 s/211 amostras, `externa-oeste` em 7,96 s/227 e `muralha-leste` em
-  16,92 s/431. As três chegam ao fim com zero correção, passo máximo entre 0,40
+  7,76 s/211 amostras, `externa-oeste` em 7,88 s/227 e `muralha-leste` em
+  16,40 s/426. As três chegam ao fim com zero correção, passo máximo entre 0,40
   e 0,45 m e sem erro inesperado. A muralha cobre 5,8 m de variação vertical.
-  Os vídeos têm SHA-256 `05bdd6b784f5efa13b4a194892628cf35f5ff24deefc2a201708be3c981a1a9a`,
-  `d971ccab639cd3bb74550c9d30542663076b9085261e09ab7637944ee6a18acf` e
-  `b0d22c5460b868f10880743ed98afc9bff5ae5b231aab89d48236bbf151e1c4e`.
+  Os vídeos têm SHA-256 `16a3cf5fa5a14dba05896a3dee8ce2ebe297aab31224823f75878504df9d4ec6`,
+  `87b62c47c2e80485201f144fb7e6936732b282935a297db865a8784b9f901d48` e
+  `5918b2ee7c710c4d8fcf3800102cac62184ada984f90ea969cc6cb2376f91c22`.
 - O ensaio de leitura usa o GLB real `esquerdomacho` parado no corredor da
   muralha. A silhueta é reconhecível a 10 e 20 m e ainda humana a 30 m, mas a
   amostra clara/vermelha não cobre skins escuras, movimento, oclusão parcial ou
@@ -223,10 +223,37 @@ contrafogo e cobertura no corredor elevado com personagens variados em
 movimento. CAR9 prova a integridade do material entregue, não resolve esses
 juízos humanos.
 
+## Correção após o primeiro teste humano
+
+O dono aprovou a direção visual com a ressalva de que as escadas laterais não
+subiam direito e a subida central era pequena. A inspeção confirmou um defeito
+funcional: cada degrau lateral subia 0,58 m, acima do `STEP_H=0,55` do motor. A
+passarela inteira também continuava devolvendo piso a 5,8 m sobre a projeção das
+escadas, impedindo a descida.
+
+- As quatro laterais passaram de 10 para 12 degraus: 0,483 m por passo, 2,80 m
+  de largura e 14,10 m de desenvolvimento. Um recorte funcional de 2 m separa o
+  acesso da faixa de circulação superior sem abrir buraco visual na passarela.
+- A subida central passou de 10 para 18 degraus, 3,40 m de largura e 6,55 m de
+  desenvolvimento. O topo encontra a borda da galeria e uma arma que ficava sob
+  a subida foi deslocada para a lateral livre.
+- O recibo C4 agora executa a própria `Game._moveEntity` em subida e descida:
+  8/8 travessias laterais chegam a 0/5,8 m e 2/2 travessias centrais chegam a
+  0/3,4 m. A navegação continua conexa, com zero bloqueio, falta de piso ou
+  estreitamento nas três rotas.
+- Os 66 degraus usam duas instâncias de renderização. O A/B Chrome final ficou
+  em -12,7% (med/5), -0,2% (med/8), +5,3% (low/5) e +2,5% (low/8), abaixo do teto
+  de 15%, com oito amostras `live` e zero erro inesperado.
+
+O servidor local 8136 serve a fonte final com SHA-256
+`420677078c6d958b4ca4a11ce56077fb680cae7b420737b2dff3e10b1221a4a4`.
+Ainda é necessária a nova confirmação humana do tato das escadas; a observação
+anterior não constitui aprovação completa do mapa.
+
 ## Próximo passo
 
-C4 entrega material revisável das três rotas e torna explícito o limite da
-muralha. Ainda faltam playtest humano com movimento e combate, skins de contraste
-baixo, avaliação da cobertura no corredor e aprovação visual do dono. Não
+C4 entrega material revisável das três rotas e a correção mensurável das cinco
+escadas. Ainda faltam reteste humano das escadas, movimento e combate, skins de
+contraste baixo, avaliação da cobertura no corredor e aprovação final do dono. Não
 avançar o rótulo visual nem autorizar merge/deploy enquanto esses itens estiverem
 pendentes.

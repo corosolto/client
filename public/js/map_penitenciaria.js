@@ -386,25 +386,34 @@ export function buildPenitenciaria(scene, T) {
      no limite externo, 2,28 m acima da cápsula apoiada na passarela. */
   const walkway = (name, w, d, x, z) => {
     addBox(w, .22, d, MAT.galvanizado, x, 5.58, z, { name, collide: false });
-    elevatedSurfaces.push({ minX: x-w/2, maxX: x+w/2, minZ: z-d/2, maxZ: z+d/2, y: 5.8 });
+    elevatedSurfaces.push({ minX: x-w/2, maxX: x+w/2, minZ: z-d/2, maxZ: z+d/2,
+      y: 5.8, kind: 'wall-walkway' });
     carandiru.wallWalkways.push({ name, side: name.split('-').at(-1) });
   };
   walkway('carandiru-passarela-muro-oeste', 3.4, 90, -35.6, 0);
   walkway('carandiru-passarela-muro-leste', 3.4, 90, 35.6, 0);
   walkway('carandiru-passarela-muro-sul', 69, 2.2, 0, -45.6);
+  const WALL_STEPS = 12, WALL_STEP_H = MURO_H / WALL_STEPS;
+  const WALL_STEP_D = 1.45, WALL_STEP_DZ = 1.15, WALL_STAIR_W = 2.8;
   for (const [team, zSign] of [['sul', -1], ['norte', 1]]) {
     for (const [side, x] of [['oeste', -35.6], ['leste', 35.6]]) {
       const suffix = team === 'sul' ? side : `${team}-${side}`;
       const name = `carandiru-acesso-muralha-${suffix}`;
       const marker = new THREE.Group(); marker.name = name; root.add(marker);
       const heights = [];
-      for (let i = 0; i < 10; i++) {
-        const top = (i + 1) * .58, z = zSign * (27.7 + i * 1.25);
-        addBox(2.2, .18, 1.3, MAT.galvanizado, x, top - .18, z, { collide: false });
-        elevatedSurfaces.push({ minX: x-1.1, maxX: x+1.1, minZ: z-.65, maxZ: z+.65, y: top });
+      for (let i = 0; i < WALL_STEPS; i++) {
+        const top = (i + 1) * WALL_STEP_H, z = zSign * (26.9 + i * WALL_STEP_DZ);
+        ibox(WALL_STAIR_W, .2, WALL_STEP_D, MAT.galvanizado, x, top - .2, z);
+        elevatedSurfaces.push({ minX: x-WALL_STAIR_W/2, maxX: x+WALL_STAIR_W/2,
+          minZ: z-WALL_STEP_D/2, maxZ: z+WALL_STEP_D/2, y: top });
         heights.push(top);
       }
-      carandiru.wallAccesses.push({ name, team, side, x, z0: zSign * 27.7, dz: zSign * 1.25, heights });
+      carandiru.wallAccesses.push({ name, team, side, x, z0: zSign * 26.9,
+        dz: zSign * WALL_STEP_DZ, width: WALL_STAIR_W, cutoutWidth: 2,
+        run: (WALL_STEPS - 1) * WALL_STEP_DZ + WALL_STEP_D,
+        minZ: Math.min(zSign * 26.9, zSign * (26.9 + (WALL_STEPS - 1) * WALL_STEP_DZ)) - WALL_STEP_D/2,
+        maxZ: Math.max(zSign * 26.9, zSign * (26.9 + (WALL_STEPS - 1) * WALL_STEP_DZ)) + WALL_STEP_D/2,
+        heights });
       const guardName = `carandiru-entrada-guarita-${suffix}`;
       const guardMarker = new THREE.Group(); guardMarker.name = guardName; root.add(guardMarker);
       carandiru.guardEntries.push(guardName);
@@ -653,14 +662,18 @@ export function buildPenitenciaria(scene, T) {
     carandiru.pavilionGallery = { name: galeria.name, connected: true };
     const stairName = 'carandiru-pavilhao-escada-leste';
     const stairMarker = new THREE.Group(); stairMarker.name = stairName; root.add(stairMarker);
+    const PAV_STEPS = 18, PAV_STEP_H = 3.4 / PAV_STEPS;
+    const PAV_X0 = 10.5, PAV_DX = -.35, PAV_TREAD = .6, PAV_WIDTH = 3.4;
     const stairHeights = [];
-    for (let i = 0; i < 10; i++) {
-      const top = (i + 1) * .34, x = 9 - i * .48;
-      addBox(.55, .16, 2.2, MAT.galvanizado, x, top - .16, 0, { collide: false });
-      elevatedSurfaces.push({ minX: x-.3, maxX: x+.3, minZ: -1.1, maxZ: 1.1, y: top });
+    for (let i = 0; i < PAV_STEPS; i++) {
+      const top = (i + 1) * PAV_STEP_H, x = PAV_X0 + i * PAV_DX;
+      ibox(PAV_TREAD, .18, PAV_WIDTH, MAT.galvanizado, x, top - .18, 0);
+      elevatedSurfaces.push({ minX: x-PAV_TREAD/2, maxX: x+PAV_TREAD/2,
+        minZ: -PAV_WIDTH/2, maxZ: PAV_WIDTH/2, y: top });
       stairHeights.push(top);
     }
-    carandiru.pavilionStairs.push({ name: stairName, x0: 9, dx: -.48, z: 0, heights: stairHeights });
+    carandiru.pavilionStairs.push({ name: stairName, x0: PAV_X0, dx: PAV_DX, z: 0,
+      width: PAV_WIDTH, run: (PAV_STEPS - 1) * Math.abs(PAV_DX) + PAV_TREAD, heights: stairHeights });
     carandiru.pavilionWindows.push('norte', 'sul', 'leste', 'oeste');
     // 16 grades presentes nos dois caminhos; só o volume procedural é fallback.
     // Referência e limites em POLISH-CATALOGO-CONTINUIDADE.md.
@@ -807,7 +820,8 @@ export function buildPenitenciaria(scene, T) {
   /* `kind` é ID de arma (chave de WEAPONS), não CLASSE: o 8º era 'smg' e crashava
      o `_updatePickups` todo quadro. KNOWN-BUGS BUG-70 / #366. As 8 do miolo flanqueiam
      a galeria do pavilhão (Carandiru r3) — continuam |x|≤12, |z|≤12 (PEN4). */
-  ['awp','ak','m4','shotgun','mp5','deagle','pistol','uzi'].forEach((kind,i)=>gun(kind,i%2?10.4:-10.4,-4.9+i*1.4,i*.42));
+  ['awp','ak','m4','shotgun','mp5','deagle','pistol','uzi'].forEach((kind,i)=>
+    gun(kind,i%2?10.4:-10.4,i===3?-2.2:-4.9+i*1.4,i*.42));
   ['ak','m4','shotgun','deagle'].forEach((kind,i)=>{gun(kind,-15+i*10,-41,0);gun(kind,15-i*10,41,Math.PI);});
 
   buildInstanced();
@@ -824,8 +838,13 @@ export function buildPenitenciaria(scene, T) {
 
   const groundHeightAt=(x,z,yRef)=>{
     if (!Number.isFinite(yRef)) return 0;
+    // Recorta o piso lógico da passarela sobre as escadas; sem isso, quem chega
+    // ao topo continua recebendo y=5,8 e não consegue descer.
+    const inWallStair = carandiru.wallAccesses.some((a) =>
+      x >= a.x-a.cutoutWidth/2 && x <= a.x+a.cutoutWidth/2 && z >= a.minZ && z <= a.maxZ);
     let best = 0;
-    for (const s of elevatedSurfaces) if (x >= s.minX && x <= s.maxX && z >= s.minZ && z <= s.maxZ
+    for (const s of elevatedSurfaces) if (!(inWallStair && s.kind === 'wall-walkway')
+      && x >= s.minX && x <= s.maxX && z >= s.minZ && z <= s.maxZ
       && s.y <= yRef + .65 && s.y > best) best = s.y;
     return best;
   }, slowAt=()=>false;
@@ -874,7 +893,8 @@ export function buildPenitenciaria(scene, T) {
     }
   };
   for(const route of carandiru.routes){addNavPolyline(route.points);addNavPolyline(route.midBranch);}
-  const pavilionNav=[[9,0,0],...carandiru.pavilionStairs[0].heights.map((y,i)=>[9-i*.48,y,0]),
+  const pavilionStair = carandiru.pavilionStairs[0];
+  const pavilionNav=[[pavilionStair.x0 + .9,0,0],...pavilionStair.heights.map((y,i)=>[pavilionStair.x0+i*pavilionStair.dx,y,0]),
     [1.35,3.4,0],[1.35,3.4,1.35],[0,3.4,1.35],[-1.35,3.4,1.35],[-1.35,3.4,0],
     [-1.35,3.4,-1.35],[0,3.4,-1.35],[1.35,3.4,-1.35],[1.35,3.4,0]];
   addNavPolyline(pavilionNav,.65);

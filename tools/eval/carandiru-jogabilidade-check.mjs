@@ -65,15 +65,20 @@ if (mutant === 'arame-na-passarela') c.wireClearance = 0;
 if (mutant === 'viatura-procedural') { c.mintVehicle = false; c.vehicleSource = 'fallback'; }
 
 const named = (name) => !!world.root.getObjectByName(name);
+const MAX_PLAYER_STEP = .55;
 const staircaseWorks = (samples = [], target = 5.7) => samples.length >= 8
-  && samples[0] <= .65 && samples.at(-1) >= target
-  && samples.every((h, i) => i === 0 || h >= samples[i - 1] && h - samples[i - 1] <= .65);
+  && samples[0] <= MAX_PLAYER_STEP && samples.at(-1) >= target
+  && samples.every((h, i) => i === 0 || h >= samples[i - 1] && h - samples[i - 1] <= MAX_PLAYER_STEP);
+const stairEnvelopeWorks = (stair, minWidth, minRun) => stair?.width >= minWidth && stair?.run >= minRun;
 const accessSurfaceWorks = (a) => {
   let y = 0;
   return a.heights.every((expected, i) => {
     const x = a.x ?? a.x0 + i * a.dx, z = a.z ?? a.z0 + i * a.dz;
-    y = world.groundHeightAt(x, z, y);
-    return Math.abs(y - expected) < .01;
+    const next = world.groundHeightAt(x, z, y), rise = next - y;
+    y = next;
+    // Um patamar sobreposto pode assumir os últimos degraus; ainda precisa ser
+    // alcançável dentro do mesmo limite STEP_H usado pelo movimento real.
+    return next + .01 >= expected && rise <= MAX_PLAYER_STEP + .001;
   });
 };
 const capsuleFree = (x, y, z, colliders = world.colliders, radius = .38) => {
@@ -192,12 +197,16 @@ const fallbackCollider = fallbackWorld.colliders.find((box) => box.tag === 'carr
 const sameVehicleCollider = !!candidateCollider && JSON.stringify(candidateCollider) === JSON.stringify(fallbackCollider);
 const c3ReceiptPath = 'tools/eval/carandiru-c3-browser.json';
 const c3Receipt = existsSync(c3ReceiptPath) ? JSON.parse(readFileSync(c3ReceiptPath, 'utf8')) : null;
-const c3BrowserValid = c3Receipt?.sourceSha256 === sourceHash && c3Receipt?.state === 'live'
+const c3BrowserLegacyValid = c3Receipt?.sourceSha256 === sourceHash && c3Receipt?.state === 'live'
   && c3Receipt?.viewport?.join('x') === '1200x800' && c3Receipt?.vehicle?.source === 'mint'
   && c3Receipt?.vehicle?.visible === true && c3Receipt?.vehicle?.httpStatus >= 200
   && c3Receipt?.vehicle?.httpStatus < 300 && c3Receipt?.errors?.length === 0;
 const c4ReceiptPath = 'tools/eval/carandiru-c4-browser.json';
 const c4Receipt = existsSync(c4ReceiptPath) ? JSON.parse(readFileSync(c4ReceiptPath, 'utf8')) : null;
+const c3BrowserValid = c3BrowserLegacyValid || c4Receipt?.sourceSha256 === sourceHash && c4Receipt?.state === 'live'
+  && c4Receipt?.viewport?.join('x') === '1200x800' && c4Receipt?.vehicle?.source === 'mint'
+  && c4Receipt?.vehicle?.visible === true && c4Receipt?.vehicle?.httpStatus >= 200
+  && c4Receipt?.vehicle?.httpStatus < 300 && c4Receipt?.errors?.length === 0;
 const c4RouteIds = ['radial-interna', 'externa-oeste', 'muralha-leste'];
 const c4Routes = c4Receipt?.routes || [];
 const c4BrowserValid = c4Receipt?.sourceSha256 === sourceHash && c4Receipt?.state === 'live'
@@ -216,23 +225,29 @@ const c4BrowserValid = c4Receipt?.sourceSha256 === sourceHash && c4Receipt?.stat
   }) && (c4Routes.find((route) => route.id === 'muralha-leste')?.verticalRangeM || 0) >= 5.7
   && c4Receipt?.wallReadability?.distancesM?.join(',') === '10,20,30'
   && c4Receipt?.wallReadability?.captures?.length === 3
-  && c4Receipt.wallReadability.captures.every((capture) => capture.width === 1200 && capture.height === 800);
+  && c4Receipt.wallReadability.captures.every((capture) => capture.width === 1200 && capture.height === 800)
+  && c4Receipt?.stairTraversal?.length === 10 && c4Receipt.stairTraversal.every((row) => row.reached === true);
 const results = [];
 const put = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${detail}`); };
 
 put('CAR1', source.MAPS.penitenciaria?.name === 'Carandiru' && source.MAPS.penitenciaria?.build === MAPS.penitenciaria.build,
   `nome=${source.MAPS.penitenciaria?.name}; ID penitenciaria preservado`);
 const access = c.wallAccesses || [], entries = c.guardEntries || [], walks = c.wallWalkways || [];
-put('CAR2', access.length >= 4 && access.every((a) => named(a.name) && staircaseWorks(a.heights) && accessSurfaceWorks(a))
+put('CAR2', access.length >= 4 && access.every((a) => named(a.name) && staircaseWorks(a.heights)
+  && stairEnvelopeWorks(a, 2.6, 12) && accessSurfaceWorks(a))
   && new Set(access.map((a) => a.team)).size === 2 && walks.length >= 3 && walks.every((w) => named(w.name))
   && entries.length >= 4 && entries.every(named),
-  `${access.length}/4 acessos em ${new Set(access.map((a) => a.team)).size}/2 lados de spawn; ${walks.length}/3 passarelas; ${entries.length}/4 guaritas`);
+  `${access.length}/4 acessos em ${new Set(access.map((a) => a.team)).size}/2 lados de spawn; `
+  + `degrau máximo=${Math.max(0, ...access.flatMap((a) => a.heights.map((h, i) => h - (a.heights[i - 1] || 0)))).toFixed(3)} m; `
+  + `largura/run=${(access[0]?.width || 0).toFixed(2)}/${(access[0]?.run || 0).toFixed(2)} m; ${walks.length}/3 passarelas; ${entries.length}/4 guaritas`);
 const passages = c.pavilionPassages || [], pStairs = c.pavilionStairs || [], gallery = c.pavilionGallery;
 put('CAR3', passages.length >= 2 && passages.every((p) => p.width >= 2.2 && named(p.name))
-  && pStairs.length >= 1 && pStairs.every((s) => named(s.name) && staircaseWorks(s.heights, 3.3) && accessSurfaceWorks(s))
+  && pStairs.length >= 1 && pStairs.every((s) => named(s.name) && staircaseWorks(s.heights, 3.3)
+    && stairEnvelopeWorks(s, 3, 6.5) && accessSurfaceWorks(s))
   && gallery?.connected && named(gallery.name) && (c.pavilionWindows || []).length >= 4
   && !world.colliders.some((x) => x.tag === 'pavilhao'),
-  `${passages.length}/2 passagens; ${pStairs.length}/1 escada; galeria=${!!gallery?.connected}`);
+  `${passages.length}/2 passagens; ${pStairs.length}/1 escada; `
+  + `largura/run=${(pStairs[0]?.width || 0).toFixed(2)}/${(pStairs[0]?.run || 0).toFixed(2)} m; superfície=${!!pStairs[0] && accessSurfaceWorks(pStairs[0])}; galeria=${!!gallery?.connected}`);
 const car4 = selftestMutants ? (c.routes || []).length >= 3 && c.minRouteWidth >= 1.2
   : (c.routes || []).length >= 3 && independentRoutes && spawnRouteAccess && routesReachMid && routeMetrics.every((r) =>
     r.samples > 0 && !r.blocked && !r.unsupported && !r.narrow && r.connected && r.midConnected)
@@ -252,6 +267,7 @@ put('CAR8', perfValid, selftestMutants ? `med=${c.cost?.med}; low=${c.cost?.low}
   : `recibo=${perf ? 'presente' : 'ausente'}; amostras=${perfRows.length}/8; fonte=${perf?.sourceSha256 === sourceHash ? 'atual' : 'divergente'}`);
 put('CAR9', c4BrowserValid, `vídeos=${c4Routes.length}/3; rotas=${c4Routes.filter((route) => route.continuous).length}/3; `
   + `muralha=${c4Routes.find((route) => route.id === 'muralha-leste')?.verticalRangeM ?? 'pendente'} m; `
+  + `escadas=${c4Receipt?.stairTraversal?.filter((row) => row.reached).length || 0}/10; `
   + `silhuetas=${c4Receipt?.wallReadability?.captures?.length || 0}/3; humano=${c4Receipt?.humanVisualApproval || 'ausente'}`);
 
 const active = checkpoint === 'C1' ? new Set(['CAR1', 'CAR2', 'CAR3', 'CAR6'])

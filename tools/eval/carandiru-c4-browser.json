@@ -1,5 +1,5 @@
 {
-  "sourceSha256": "c623d17776f4ce872666e083f6e593f782e9a46fe8e4b350d42e285a54747cbc",
+  "sourceSha256": "420677078c6d958b4ca4a11ce56077fb680cae7b420737b2dff3e10b1221a4a4",
   "browser": "Google Chrome",
   "viewport": [
     1200,
@@ -20,35 +20,35 @@
       "maxStepM": 0.4,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 7.24,
+      "motionDurationSecs": 7.63,
       "verticalRangeM": 0,
       "video": {
         "file": "artifacts/carandiru-c4/final/radial-interna.webm",
-        "bytes": 1901323,
-        "sha256": "05bdd6b784f5efa13b4a194892628cf35f5ff24deefc2a201708be3c981a1a9a",
+        "bytes": 1962138,
+        "sha256": "16a3cf5fa5a14dba05896a3dee8ce2ebe297aab31224823f75878504df9d4ec6",
         "width": 1200,
         "height": 800,
-        "durationSecs": 7.4
+        "durationSecs": 7.76
       },
       "captures": [
         {
           "file": "artifacts/carandiru-c4/final/radial-interna-inicio.png",
-          "bytes": 1110889,
-          "sha256": "43671d23b1e5794a7481a4af653d7faa83626fc059961a6a5474a4850599f115",
+          "bytes": 1112780,
+          "sha256": "d246f68dd051c18cc657fa7e0f782ff4e2160392b4063073dfe8a4f709e4143d",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/radial-interna-meio.png",
-          "bytes": 1095219,
-          "sha256": "a6f909db67ff21a7aaa85fd60968dc000cb0511ed943abe1725331a35c6d2a83",
+          "bytes": 1095609,
+          "sha256": "fed6b3e075e2a4a6500593e4b0380d395cbc0e994c6376fba80e8dac9f231f98",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/radial-interna-fim.png",
-          "bytes": 990528,
-          "sha256": "207a7d9ff884b20f3f5c564a9d575afad307a632b32849af7243394060dd4e7b",
+          "bytes": 990825,
+          "sha256": "a96baa891d865917b15c1f5c4ee874a382b3833a4e17b0fce3b9d4c40f1db98c",
           "width": 1200,
           "height": 800
         }
@@ -65,35 +65,35 @@
       "maxStepM": 0.4488,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 7.81,
+      "motionDurationSecs": 7.74,
       "verticalRangeM": 0,
       "video": {
         "file": "artifacts/carandiru-c4/final/externa-oeste.webm",
-        "bytes": 1242211,
-        "sha256": "d971ccab639cd3bb74550c9d30542663076b9085261e09ab7637944ee6a18acf",
+        "bytes": 1230062,
+        "sha256": "87b62c47c2e80485201f144fb7e6936732b282935a297db865a8784b9f901d48",
         "width": 1200,
         "height": 800,
-        "durationSecs": 7.96
+        "durationSecs": 7.88
       },
       "captures": [
         {
           "file": "artifacts/carandiru-c4/final/externa-oeste-inicio.png",
-          "bytes": 1090939,
-          "sha256": "e7012da01535dd9d7f6297b16f4074d466f3ee14d27537873f35d6663731ea61",
+          "bytes": 1091818,
+          "sha256": "73c81a2a363141aa7d777c24fc9b2af8e761d2398818c9db2aec90a49c1cd2c3",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/externa-oeste-meio.png",
-          "bytes": 1061499,
-          "sha256": "6a9773c580ab412d12cdaee2bed6571d9ff125aa4a1a8b4ebc5d4a2c0de24cdd",
+          "bytes": 1061940,
+          "sha256": "986417b5f74239de1f63fe1479a273738a052852858ca8d8804da14d58d07b93",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/externa-oeste-fim.png",
-          "bytes": 1039778,
-          "sha256": "c29588805818a7be7927d9708c3d7cf67d92326a86825938a9a3266d3abdfbb1",
+          "bytes": 1040639,
+          "sha256": "fa725ee284df9a451d6901ed876f2126368a9f8ff3be23e151707db629569cca",
           "width": 1200,
           "height": 800
         }
@@ -103,46 +103,224 @@
       "id": "muralha-leste",
       "method": "camera-over-CAR4-capsule-validated-polyline",
       "continuous": true,
-      "points": 63,
-      "traceSamples": 431,
+      "points": 67,
+      "traceSamples": 426,
       "startErrorM": 0,
       "endErrorM": 0,
       "maxStepM": 0.45,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 16.77,
+      "motionDurationSecs": 16.27,
       "verticalRangeM": 5.8,
       "video": {
         "file": "artifacts/carandiru-c4/final/muralha-leste.webm",
-        "bytes": 2747354,
-        "sha256": "b0d22c5460b868f10880743ed98afc9bff5ae5b231aab89d48236bbf151e1c4e",
+        "bytes": 2775262,
+        "sha256": "5918b2ee7c710c4d8fcf3800102cac62184ada984f90ea969cc6cb2376f91c22",
         "width": 1200,
         "height": 800,
-        "durationSecs": 16.92
+        "durationSecs": 16.4
       },
       "captures": [
         {
           "file": "artifacts/carandiru-c4/final/muralha-leste-inicio.png",
-          "bytes": 1051815,
-          "sha256": "c769a5439a765c9c48ae702b8040d405ff816439b26c9e5555681945ecbfd69e",
+          "bytes": 1051468,
+          "sha256": "f4b80319947efcb6b322ba44be9286eee720c7ab831c173f732f5d662a963653",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/muralha-leste-meio.png",
-          "bytes": 1062949,
-          "sha256": "517a7e521cd1d2f6b7c7e73b2c282009de48fd09bf4584f87a19bb44fabf04cd",
+          "bytes": 1063599,
+          "sha256": "dfaa06b7879743e5311b52e738952236d08ac771c74d2b8e4bbe4aa4ddeae7d9",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/muralha-leste-fim.png",
-          "bytes": 1073474,
-          "sha256": "e84680397590c56ead74ce322720d268b2c8dbd67f37d7faa527942fcb81033a",
+          "bytes": 1073196,
+          "sha256": "f2efe74d61326e7adad883c054dd5243bcdc2a24737f2f7cc54de21d3a8f673c",
           "width": 1200,
           "height": 800
         }
       ]
+    }
+  ],
+  "vehicle": {
+    "source": "mint",
+    "visible": true,
+    "fallbackVisible": false,
+    "httpStatus": 200
+  },
+  "stairTraversal": [
+    {
+      "id": "carandiru-acesso-muralha-oeste-subida",
+      "mode": "up",
+      "start": [
+        -35.6,
+        0,
+        -25.7
+      ],
+      "end": [
+        -35.6,
+        5.8,
+        -40.72
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "reached": true
+    },
+    {
+      "id": "carandiru-acesso-muralha-oeste-descida",
+      "mode": "down",
+      "start": [
+        -35.6,
+        5.8,
+        -40.4
+      ],
+      "end": [
+        -35.6,
+        0,
+        -9.090628567987114
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "reached": true
+    },
+    {
+      "id": "carandiru-acesso-muralha-leste-subida",
+      "mode": "up",
+      "start": [
+        35.6,
+        0,
+        -25.7
+      ],
+      "end": [
+        35.6,
+        5.8,
+        -40.72
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "reached": true
+    },
+    {
+      "id": "carandiru-acesso-muralha-leste-descida",
+      "mode": "down",
+      "start": [
+        35.6,
+        5.8,
+        -40.4
+      ],
+      "end": [
+        35.6,
+        0,
+        -9.090628567987114
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "reached": true
+    },
+    {
+      "id": "carandiru-acesso-muralha-norte-oeste-subida",
+      "mode": "up",
+      "start": [
+        -35.6,
+        0,
+        25.7
+      ],
+      "end": [
+        -35.6,
+        5.8,
+        40.72
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "reached": true
+    },
+    {
+      "id": "carandiru-acesso-muralha-norte-oeste-descida",
+      "mode": "down",
+      "start": [
+        -35.6,
+        5.8,
+        40.4
+      ],
+      "end": [
+        -35.6,
+        0,
+        9.090628567987114
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "reached": true
+    },
+    {
+      "id": "carandiru-acesso-muralha-norte-leste-subida",
+      "mode": "up",
+      "start": [
+        35.6,
+        0,
+        25.7
+      ],
+      "end": [
+        35.6,
+        5.8,
+        40.72
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "reached": true
+    },
+    {
+      "id": "carandiru-acesso-muralha-norte-leste-descida",
+      "mode": "down",
+      "start": [
+        35.6,
+        5.8,
+        40.4
+      ],
+      "end": [
+        35.6,
+        0,
+        9.090628567987114
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "reached": true
+    },
+    {
+      "id": "carandiru-pavilhao-escada-leste-subida",
+      "mode": "up",
+      "start": [
+        10.5,
+        0,
+        0
+      ],
+      "end": [
+        -14.844124286346021,
+        0,
+        0
+      ],
+      "minY": 0,
+      "maxY": 3.4,
+      "reached": true
+    },
+    {
+      "id": "carandiru-pavilhao-escada-leste-descida",
+      "mode": "down",
+      "start": [
+        3.5500000000000007,
+        3.4,
+        0
+      ],
+      "end": [
+        10.739642240159728,
+        0.18888888888888888,
+        0
+      ],
+      "minY": 0,
+      "maxY": 3.4,
+      "reached": true
     }
   ],
   "wallReadability": {
@@ -154,7 +332,7 @@
     "captures": [
       {
         "distanceM": 10,
-        "actorId": "esquerdomacho",
+        "actorId": "sindicato",
         "actorGLB": true,
         "camera": [
           36.7,
@@ -167,14 +345,14 @@
           -4
         ],
         "file": "artifacts/carandiru-c4/final/muralha-personagem-10m.png",
-        "bytes": 1069400,
-        "sha256": "f8b1f7e80db9049ffeab1b8d7041d8bc7837c64f5932f02243990bf942607399",
+        "bytes": 1070601,
+        "sha256": "01f11898692c2099f5accfb43ce16c1796c3d999fbd73f1285173e0b06606c28",
         "width": 1200,
         "height": 800
       },
       {
         "distanceM": 20,
-        "actorId": "esquerdomacho",
+        "actorId": "sindicato",
         "actorGLB": true,
         "camera": [
           36.7,
@@ -187,14 +365,14 @@
           6
         ],
         "file": "artifacts/carandiru-c4/final/muralha-personagem-20m.png",
-        "bytes": 1067803,
-        "sha256": "19b2a37486a8da5ac0f9a8ac68a08cc2fd1f0395500e96119bebfdd7fd303835",
+        "bytes": 1068402,
+        "sha256": "009782c15ee91884a036efb4ce5f431c8f5763678f0ca1e14a3efa1c6bd139eb",
         "width": 1200,
         "height": 800
       },
       {
         "distanceM": 30,
-        "actorId": "esquerdomacho",
+        "actorId": "sindicato",
         "actorGLB": true,
         "camera": [
           36.7,
@@ -207,8 +385,8 @@
           16
         ],
         "file": "artifacts/carandiru-c4/final/muralha-personagem-30m.png",
-        "bytes": 1066721,
-        "sha256": "2e3bf853cae65e93d24a957e8c424a90b63d60e73a62cfc86b0b6d74fe9e7f73",
+        "bytes": 1067424,
+        "sha256": "802fb97e25832f733329fc2801defeae62e680b19d938843e6357df0640f2f3d",
         "width": 1200,
         "height": 800
       }
@@ -222,7 +400,7 @@
     "404 /%7B%60/js/ops.js",
     "404 /api/geo-lang",
     "404 /audio/manifest.json",
-    "404 /audio/menu-music/m10.mp3",
+    "404 /audio/menu-music/m17.mp3",
     "404 /audio/manifest.default.json",
     "404 /audio/ambiente/vento.mp3",
     "404 /audio/ambiente/hum-indoor.mp3",

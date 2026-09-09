@@ -159,15 +159,49 @@ try {
     const path = `${out}/muralha-personagem-${distanceM}m.png`; await page.screenshot({ path });
     wallCaptures.push({ distanceM, ...actor, ...pngMeta(path) });
   }
+  const stairTraversal = await page.evaluate(() => {
+    const game = window.__game, player = game.player, rows = [];
+    const run = (id, start, input, frames, mode, targetY) => {
+      player.pos.set(...start); player.vel.set(0, 0, 0); player.yaw = 0;
+      player.grounded = true; player.crouchF = 0; player.weapon = 'pistol';
+      player._spaceHeld = false; player.jumpBufferedUntil = 0; player.coyoteUntil = 0;
+      let minY = player.pos.y, maxY = player.pos.y;
+      for (let i = 0; i < frames; i++) {
+        game.time += 1 / 60;
+        game._moveEntity(player, { ax: input[0], az: input[1], shift: false, crouch: false, jump: false }, 1 / 60);
+        minY = Math.min(minY, player.pos.y); maxY = Math.max(maxY, player.pos.y);
+      }
+      rows.push({ id, mode, start, end: player.pos.toArray(), minY, maxY,
+        reached: mode === 'up' ? maxY >= targetY - .05 : minY <= targetY + .05 });
+    };
+    for (const access of game.world.carandiru.wallAccesses) {
+      const direction = Math.sign(access.dz), topZ = access.z0 + access.dz * (access.heights.length - 1);
+      run(`${access.name}-subida`, [access.x, 0, access.z0 - direction * 1.2], [0, direction], 360, 'up', 5.8);
+      run(`${access.name}-descida`, [access.x, 5.8, topZ + direction * .85], [0, -direction], 360, 'down', 0);
+    }
+    const stair = game.world.carandiru.pavilionStairs[0], direction = Math.sign(stair.dx);
+    const topX = stair.x0 + stair.dx * (stair.heights.length - 1);
+    run(`${stair.name}-subida`, [stair.x0, 0, stair.z], [direction, 0], 300, 'up', 3.4);
+    run(`${stair.name}-descida`, [topX + direction, 3.4, stair.z], [-direction, 0], 300, 'down', 0);
+    return rows;
+  });
+  const vehicle = await page.evaluate(async () => {
+    const game = window.__game, mint = game.world.root.getObjectByName('carandiru-viatura-mint');
+    const fallback = game.world.root.getObjectByName('carandiru-viatura-fallback');
+    const response = await fetch('/models/props/carandiru_viatura_1990.glb');
+    return { source: game.world.carandiru.vehicleSource, visible: !!mint?.visible,
+      fallbackVisible: !!fallback?.visible, httpStatus: response.status };
+  });
   collect(); await context.close();
 
   const receipt = { sourceSha256, browser: 'Google Chrome', viewport: [viewport.width, viewport.height], aspectRatio: '3:2',
     state: prepared.state, evidenceMethod: 'Travessia contínua renderizada em visão de jogador sobre as polilinhas medidas por CAR4; cada amostra também chama Game._collide. Não é playtest humano.',
-    routes, wallReadability: { distancesM: [10, 20, 30], captures: wallCaptures,
+    routes, vehicle, stairTraversal, wallReadability: { distancesM: [10, 20, 30], captures: wallCaptures,
       assessment: 'pending-independent-and-human-review', humanGameplay: 'pending' },
     warnings: unique(warnings), errors: unique(errors), humanVisualApproval: 'pending' };
   writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n');
-  if (receipt.errors.length || routes.some((route) => route.collisionCorrections || route.video.width !== 1200 || route.video.height !== 800)) process.exitCode = 1;
+  if (receipt.errors.length || stairTraversal.some((row) => !row.reached)
+    || routes.some((route) => route.collisionCorrections || route.video.width !== 1200 || route.video.height !== 800)) process.exitCode = 1;
 } finally {
   await browser.close();
 }
