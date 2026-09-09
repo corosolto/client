@@ -38,6 +38,7 @@
 ### Corrigido
 - Lobisomem Mítico deixa de puxar aliados de outras facções, passa a resolver M nas telas de inspeção, usa luva M distinta no viewmodel, ganha animação própria com pés no chão e volta a publicar os retratos de resultado aprovados, que tinham saído do quadro medido no elenco.
 - O pack integrado do Lobisomem passa a servir os clipes próprios na sequência do runtime, com o fallback compartilhado preservado só para comparação e regressão.
+- No Sertão, as três carroças deixam passagem pelos dois flancos e as cinco casas diante dos respawns passam a ter porta, saída lateral, janela com revide e navegação intencional para bots.
 - As casas abertas da Praça da Matriz no Sertão preservam cobertura nas laterais das janelas, circulação interna livre e passagem dos bots junto aos esteios.
 - Em rodada de FACA os bots passam a jogar de faca: fecham até o alcance real da arma (medido 5,98 m e zero golpes em 60 s antes; 1,24 m, 18 golpes e 9 abates depois) e o golpe sai como faca — sem traçante, fogacho de cano nem som de tiro. A banda de distância de arma de fogo continua valendo na rodada normal. Régua `eval:botfaca` com três mutantes, no `check:fast`.
 - O headshot do jogador não arranca mais a câmera da primeira pessoa: a replay orbital e o hit-stop do #364 saíram, e o abate continua contando com hitmarker, dano, killfeed e locutor. Régua `eval:replaycam` passou a medir o contrário, com quatro mutantes.

@@ -39,6 +39,36 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## Sertão — casas da praça (PR #526, revisão local 06/09)
 
+### ~~BUG-145 · Rejeição humana pós-merge: carroças ainda bloqueiam e a fileira dos respawns ainda tem fachadas fechadas~~ · CORRIGIDO, AGUARDA REVISÃO HUMANA 08/09
+
+**Relato literal recebido depois do merge do PR #526:** "carroças ainda bloqueiam
+passagem e as casas diante dos dois spawns continuam fechadas/inúteis". Os gates
+anteriores respondiam outra pergunta: WA2 aceitava um único flanco livre por carroça,
+e IN1/IN2 cobravam apenas uma das duas fachadas de cada fileira de respawn.
+
+**Baseline vermelha em `origin/main` alpha.242 (`e67addf4`):** WA5 encontra o
+flanco leste da carroça `(7,2)` e o oeste da `(-14,2;25,4)` bloqueados. IN12/IN13
+encontram somente duas das quatro fachadas jogáveis: `platibanda-0` desloca a
+cápsula 3,68 m na entrada e `pedra-8`, 3,43 m; ambas estão ausentes de
+`interiorHouses` e falham na visada recíproca pela janela. Evidência:
+`artifacts/sertao-respawn-fix/{wagon,interiors}-baseline-red.json`.
+
+**Depois:** WA5 exige os dois flancos das três carroças e mede 4,9 m de travessia
+traseira em todas. IN12/IN13 cobrem cinco casas das fileiras: entrada, saída
+lateral e LOS recíproca pela janela, sem deslocamento da cápsula. A geminada
+central também foi aberta; os interiores de pedra mantêm os 6,1×6,2 m da família
+original para não estrangular a rota leste. A grade dos bots exclui o interior e
+adiciona centro/soleira intencionais, removendo a oscilação que apareceu no
+primeiro golden pós-correção.
+
+**Réguas e prova negativa:** `sertao-wagon-check.mjs` mata
+`carroca-bloqueadora` em WA5; `sertao-interiors-check.mjs` mata
+`fechar-casa-respawn` em IN12 e `fechar-janela-respawn` em IN13. Os 16 mutantes
+de interiores, três de carroça e 14 espaciais foram mordidos. SP4 mantém três
+rotas disjuntas de 31/34/29 nós. Capturas WebGL 1536×1024 e resultados completos:
+[SERTAO-RESPAWN-WAGONS-FIX](docs/reports/SERTAO-RESPAWN-WAGONS-FIX.md). O estado
+continua em draft até o dono atravessar as carroças e entrar nas casas na partida.
+
 ### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO E VALIDADO EM WEBGL 08/09
 
 **Relato literal do dono (runtime 3:2, capturas de 06→07/09 23h52–00h00)**: (1) há
