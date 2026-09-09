@@ -1,5 +1,19 @@
 # HANDOFF
 
+## Admin 08/09: áudio e escalonamento de crashes
+
+- Checkout `worktrees/bug-pipeline-audio`, branch `fix/admin-audio-crash-pipeline`, base
+  `38803801` (alpha.239). O `RangeError` reportado pelo admin foi reproduzido: uma rampa
+  exponencial recebia alvo zero. `Sfx._env` agora limita pico/fim a `0.0001`; a régua
+  `eval:audioenvelope` passa e o mutante `pico-zero` reprova. A régua entrou em `check:fast`.
+- Separadamente, o backend de produção não tem `GH_DISPATCH_TOKEN`; isso impede
+  `repository_dispatch` e explica a ausência de novas issues. A correção de infraestrutura e
+  health fica no checkout irmão `csbrasil-backend/worktrees/bug-crash-dispatch` e ainda exige
+  um token de bot autorizado para publicação. Não confundir com Ollama: o workflow de crash
+  não o utiliza.
+- Não resolvidos neste checkpoint: os timeouts de abertura de partida e `M_ID` precisam de
+  evidência de rede/estado além da mensagem agregada do admin.
+
 ## Feedback de combate: contador de abates, replay no headshot e bot de faca — 06/09/2026
 
 Objetivo: fechar as três frentes de leitura de combate pedidas pelo dono — um contador de
@@ -257,3 +271,24 @@ fora deste checkpoint.
 **Próximo passo:** publicar primeiro um backend compatível com v3/v2/v1, depois o cliente;
 jogar o roteiro acima no canário, observar `/metrics` e só então promover. Se qualquer etapa
 falhar, manter produção atual e não misturar este trabalho com armas/viewmodels.
+# Continuação ativa — Sertão PR #526 (08/09/2026)
+
+Objetivo: fechar o mapa Sertão com evidência técnica e visual antes de integrar.
+Worktree exclusivo: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/sertao-casas-por-do-sol`;
+branch `astra/sertao-praca-casas-por-do-sol`, integrada com `main` alpha.240 no
+commit `74d6a748`.
+
+Validado: IN1–IN11, 14 mutantes de interiores, SP1–SP9, RV1–RV12 em WebGL
+1536×1024, contraste C18/C18R com inimigo real e mutante sem rim, e fauna Mint
+LG1–LG8 com duas cabras, galinha e três pintinhos. O batch dos interiores reduz
+564 para 499 draw calls e seu mutante reprova RV3. Artefatos ficam sob
+`artifacts/sertao-casas/{runtime-final-v2,livestock-final,contrast-final}` e a
+revalidação pós-main em `artifacts/sertao-casas/final-alpha240/`. Relatório
+completo: `docs/reports/SERTAO-CASAS-SUNSET.md`.
+
+Próximo passo: publicar esta branch, acompanhar os checks remotos e integrar o
+PR #526 quando o GitHub confirmar merge limpo. O build alpha.240 passou; o
+`assert:assets` local continua vermelho pelos 17 áudios legados ausentes no
+pacote oficial v8, enquanto os assets visuais e decalques passam. Riscos restantes são
+de julgamento humano: combate prolongado dentro das casas, amostra de contraste
+de todo o elenco e acabamento low-poly de alguns props do perímetro.
