@@ -267,6 +267,8 @@ const DICT = {
     'Lobato’s witch. Throws a potion of slowness and scrambled vision — "sleep with the fear".',
   'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.':
     'Fire-haired boy with backwards feet. The footprints point the wrong way.',
+  'Guardiã da mata, cabelo de fogo e pintura de guerra. Quem caça demais vira caça.':
+    'Guardian of the forest, fire hair and war paint. Hunt too much and you become the hunt.',
   'TIME E': 'TEAM E', 'TIME B': 'TEAM B',
   'os seus': 'your crew',
   'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS', 'MÍTICO': 'MYTHIC',

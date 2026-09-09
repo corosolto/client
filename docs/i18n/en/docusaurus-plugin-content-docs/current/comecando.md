@@ -41,14 +41,14 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 44,612 lines in 90 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 44,617 lines in 90 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,424** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,407 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
-| Character GLBs | 54 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
+| Character GLBs | 55 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props in GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
-| Versioned animation clips | 669 | `git ls-files public/models/anims \| wc -l` |
-| Playable characters | 52, in 6 factions | `CHARACTERS` array in `characters.js` |
+| Versioned animation clips | 681 | `git ls-files public/models/anims \| wc -l` |
+| Playable characters | 53, in 6 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 16 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
 | Harness scripts | 340 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
@@ -67,7 +67,7 @@ And the match rules that move around the most, all read from the constants in
 
 | Rule | Value | Constant |
 |---|---|---|
-| Factions · characters | 6 · 52 (B 9 · C 9 · E 8 · F 9 · M 8 · U 9) | `CHARACTERS` |
+| Factions · characters | 6 · 53 (B 9 · C 9 · E 8 · F 9 · M 9 · U 9) | `CHARACTERS` |
 | Maps in the menu | 16 - 2 open in rounds, **14 in capture** | `MAPS` / `ctfMode` |
 | Respawn | 2.2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 wins | `ROUND_TIME` / `ROUNDS_TO_WIN` |

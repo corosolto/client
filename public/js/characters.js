@@ -605,6 +605,9 @@ export const CHARACTERS = [
   { id: 'saci', team: 'M', tribe: 'mitico', name: 'Saci-Pererê',
     blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.',
     pal: { skin: 0x8d6a4f, shirt: 0xc01010, pants: 0xc01010, hair: 0xc01010, boots: 0x1a1a1a } },
+  { id: 'caipora', team: 'M', tribe: 'mitico', name: 'Caipora',
+    blurb: 'Guardiã da mata, cabelo de fogo e pintura de guerra. Quem caça demais vira caça.',
+    pal: { skin: 0xa0704a, shirt: 0xd8a03a, pants: 0xc08830, hair: 0xd11a1a, boots: 0x6a4a2a } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -620,7 +623,7 @@ export const CHAR_WEAPON = {
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   lobisomem: 'shotgun',
-  mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
+  mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', caipora: 'scar', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

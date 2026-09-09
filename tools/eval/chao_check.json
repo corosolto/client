@@ -1,7 +1,7 @@
 {
-  "gerado": "2026-09-07T01:15:42.818Z",
+  "gerado": "2026-09-09T19:30:02.416Z",
   "instrumento": "buildCharacterModel + skinning em node, 60 Hz, quadro 200-260, 1 vértice em 3",
-  "tetoIdle": -0.015,
+  "bandaIdle": 0.015,
   "folga": 0.01,
   "personagens": {
     "esquerdomacho": {
@@ -228,6 +228,46 @@
       "idle": 0,
       "crouch": -0.1158,
       "death": -0.4518
+    },
+    "mariabonita": {
+      "idle": 0,
+      "crouch": 0,
+      "death": -0.099
+    },
+    "lampiao": {
+      "idle": 0,
+      "crouch": 0.0004,
+      "death": -0.0569
+    },
+    "bandeirante": {
+      "idle": 0,
+      "crouch": 0,
+      "death": -0.3494
+    },
+    "boto": {
+      "idle": 0,
+      "crouch": 0,
+      "death": -0.0342
+    },
+    "zumbi": {
+      "idle": 0,
+      "crouch": 0,
+      "death": -0.0475
+    },
+    "curupira": {
+      "idle": 0,
+      "crouch": 0,
+      "death": -0.3079
+    },
+    "saci": {
+      "idle": 0,
+      "crouch": 0.0013,
+      "death": -0.3484
+    },
+    "caipora": {
+      "idle": 0,
+      "crouch": 0,
+      "death": -0.0706
     }
   }
 }

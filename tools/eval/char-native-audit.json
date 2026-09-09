@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "bb67211642d4962a5fcbf3b864c9a722a219121d3984130010f35702c6eb24b9",
-  "weaponMapSha256": "075fe935d4510949836a7f04ca6b21ec5052b3f63983e37ec17fa614783bf869",
-  "review": "Lote de mídia dos 51 personagens: os 45 publicados mais os 6 Míticos novos. Revisado pelo dono em 08/09 e aprovado. A mídia do Lampião foi regerada do modelo v4 por tools/gen-char-video.mjs depois que o dono reprovou a leva anterior, que era render do modelo antigo. Formatos VP9 nos quadros nativos do elenco (640×854 busto, 640×640 resultado) e loadout de armas conferidos. Saci e Cuca não entram no lote: reprovam a régua de deformação (BUG-150) e a mídia órfã deles saiu do disco.",
+  "mediaSha256": "e8b9f850156b839897dd39d29969fe365fff3bb6d4e3530c8d5f9f23898395a0",
+  "weaponMapSha256": "9cab068f5d37239775395e92308c7f03ead20b153d3909963ee3fb6663bf6b4a",
+  "review": "Lote de mídia dos 54 personagens: os 45 publicados mais os 9 Míticos. Revisado pelo dono em 09/09 e aprovado. A mídia de Lampião, Zumbi, Saci e Caipora foi gerada dos modelos novos por tools/gen-char-video.mjs; formatos VP9 nos quadros nativos do elenco (640x854 busto, 640x640 resultado) e loadout de armas conferidos. A Cuca saiu do lote junto com a mídia órfã dela.",
   "regenerate": "BASE=http://127.0.0.1:8123 node tools/eval/char-native-vids.mjs"
 }

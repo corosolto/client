@@ -17,10 +17,10 @@ const roster = [...characters.matchAll(/\{ id: '([^']+)', team: 'M'/g)].map((mat
    EXATAMENTE quem está registrado como team 'M', sem faltar nem sobrar. `saci` e `cuca`
    ficam de fora de propósito: os modelos deles reprovam a régua de deformação por 12× e
    27× (BUG-150), e continuam no disco fora do registro. */
-const ESPERADO_M = ['lobisomem', 'mariabonita', 'lampiao', 'bandeirante', 'boto', 'zumbi', 'curupira'];
+const ESPERADO_M = ['lobisomem', 'mariabonita', 'lampiao', 'bandeirante', 'boto', 'zumbi', 'curupira', 'saci', 'caipora'];
 expect(roster.length === ESPERADO_M.length && ESPERADO_M.every(id => roster.includes(id)),
   `roster M fora do esperado: recebeu ${roster.join(', ') || 'vazio'}`);
-expect(!/\b(?:cuca|saci)\b/.test(roster.join(' ')), 'personagem M reprovado na régua de deformação entrou no roster (BUG-150)');
+expect(!/\bcuca\b/.test(roster.join(' ')), 'Cuca entrou no roster: reprova a régua de deformação em seis tentativas (BUG-150)');
 expect(/lobisomem:\s*'shotgun'/.test(characters), 'loadout de lobisomem não está registrado');
 
 const glb = read('public/js/glbchars.js');
@@ -57,7 +57,11 @@ const change = (source, from, to) => {
 };
 const defs = [...characters.matchAll(/\{ id: '([^']+)', team: '([^']+)'/g)].map(m => ({ id: m[1], team: m[2] }));
 let game = read('public/js/game.js');
-if (mutant === 'roster') game = change(game, 'others.length ? others : allies', 'others');
+/* O mutante ANTIGO desfazia o fallback de facção com UM personagem (`others.length ? others
+   : allies`). Com 9 candidatos esse ramo é inalcançável e a mutação virava no-op — régua
+   cega. Agora ele quebra o que importa hoje: a POOL deixa de filtrar por facção, e o
+   invariante `every(c => c.team === 'M')` tem de pegar aliado de outro time. */
+if (mutant === 'roster') game = change(game, 'const allies = CHARACTERS.filter(c => c.team === playerFaction);', 'const allies = CHARACTERS.slice();');
 const rosterSource = game.slice(game.indexOf('const _cyclePool ='), game.indexOf('/* Pool dos bots'));
 const pickRoster = new Function('CHARACTERS', `${rosterSource.replace('export function', 'function')}return pickMatchRoster;`)(defs);
 for (const dedicated of [false, true]) for (const size of [1, 5, 8]) {
@@ -122,7 +126,9 @@ for (const arq of clipesLobo) docs.push([arq, await io.read(arq)]);
    régua enxerga o defeito. Como o conserto apagou o canal, o mutante precisa CRIAR um:
    é exatamente o que uma regeração do `retarget-glb.mjs` sem a guarda faria. */
 if (mutant === 'curltwist') {
-  const [, doc] = docs[0];
+  /* Mira no primeiro clipe que AINDA TEM o osso: o pack mesclado passou a ser podado pelo
+     `merge-anims` (sem track em `Curl_*`, o nó some), então `docs[0]` deixou de servir. */
+  const [, doc] = docs.find(([, d]) => d.getRoot().listNodes().some(n => n.getName() === 'Curl_R')) || docs[0];
   const alvo = doc.getRoot().listNodes().find(n => n.getName() === 'Curl_R');
   const anim = doc.getRoot().listAnimations()[0];
   if (!alvo || !anim) throw new Error('mutante curltwist: sem Curl_R ou sem animação para mutar');
