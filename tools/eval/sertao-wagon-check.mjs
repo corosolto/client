@@ -45,12 +45,12 @@ import { THREE, MAPS, initTextures, Game } from './harness.mjs';
 
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.slice(10);
 const json = process.argv.includes('--json');
-const targets = { 'aabb-conservador': 'WA1', 'barreira-spawn': 'WA4' };
+const targets = { 'aabb-conservador': 'WA1', 'barreira-spawn': 'WA4', 'carroca-bloqueadora': 'WA5' };
 if (mutant && !targets[mutant]) throw Error(`Mutante desconhecido: ${mutant}`);
 
 const EPS = 1e-6, R = .38;
 // Congeladas do fonte; não derivar do mundo medido.
-const WAGONS = [{ x: -6, z: -19.6, ry: Math.PI + .18 }, { x: 7, z: 2, ry: -2.7 }, { x: -14.2, z: 25.4, ry: 2.9 }];
+const WAGONS = [{ x: -6, z: -19.6, ry: Math.PI + .18 }, { x: 7, z: 2, ry: -2.5 }, { x: -15.8, z: 25.9, ry: 2.9 }];
 // Carroceria visível (meia-largura, meia-profundidade com rodas) e lança, em local.
 const BODY_HW = 1.9, BODY_HD = 1.71, SHAFT_HW = .09, SHAFT_Z = [-4.8, -.05];
 const HUG_MAX = 3.3, LANE_PZ = [-5.0, 1.7], CROSS_PZ = 2.21, CROSS_SPAN_MIN = 3.0;
@@ -90,6 +90,10 @@ if (mutant === 'aabb-conservador') {
   }
 } else if (mutant === 'barreira-spawn') {
   world.colliders.push({ minX: -34, maxX: 34, minY: 0, maxY: 4, minZ: -.5, maxZ: .5, tag: 'mutante-barreira-spawn' });
+} else if (mutant === 'carroca-bloqueadora') {
+  const w = WAGONS[1], [wx, wz] = l2w(w, 2.9, -1.6);
+  world.colliders.push({ minX: wx - .7, maxX: wx + .7, minY: 0, maxY: 1.8,
+    minZ: wz - .7, maxZ: wz + .7, tag: 'mutante-carroca-bloqueadora' });
 }
 // Re-identifica depois do mutante (o aabb-conservador entra com tag).
 const colliders = mutant === 'aabb-conservador' ? WAGONS.map(wagonColliders) : wagonSets;
@@ -178,6 +182,7 @@ const checks = {
   WA2: lanes.every(l => l.west || l.east),
   WA3: rears.every(r => r.span >= CROSS_SPAN_MIN),
   WA4: connectivity.praçaFree && connectivity.spawns.length === 8 && connectivity.spawns.every(s => s.free && s.connected),
+  WA5: lanes.every(l => l.west && l.east),
 };
 const report = { checks, radius: R, excess, lanes, rears, rearSpanMin: CROSS_SPAN_MIN, connectivity: { praçaFree: connectivity.praçaFree, spawns: connectivity.spawns }, mutation: mutant || null };
 if (json) console.log(JSON.stringify(report, null, 2));

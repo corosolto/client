@@ -7,7 +7,7 @@
 import { THREE, MAPS, initTextures, Game } from './harness.mjs';
 
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.slice(10);
-const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6', 'bolsao': 'IN7', 'fechar-porta-casa': 'IN1', 'fechar-janela-casa': 'IN2', 'fechar-saida-lateral': 'IN8', 'cegar-praca': 'IN9', 'sem-cobertura-praca': 'IN10', 'gargalo-bot': 'IN11' };
+const targets = { 'fechar-porta': 'IN1', 'fechar-janela': 'IN2', 'fardo-interior': 'IN3', 'fresta-lateral': 'IN4', 'cortar-nav': 'IN5', 'barril-na-parede': 'IN6', 'fardo-na-parede': 'IN6', 'bolsao': 'IN7', 'fechar-porta-casa': 'IN1', 'fechar-janela-casa': 'IN2', 'fechar-saida-lateral': 'IN8', 'cegar-praca': 'IN9', 'sem-cobertura-praca': 'IN10', 'gargalo-bot': 'IN11', 'fechar-casa-respawn': 'IN12', 'fechar-janela-respawn': 'IN13' };
 if (mutant && !targets[mutant]) throw Error(`Mutante desconhecido: ${mutant}`);
 const world = MAPS.velho_oeste.build(new THREE.Scene(), await initTextures());
 const houses = world.interiorHouses || [];
@@ -15,12 +15,18 @@ const houses = world.interiorHouses || [];
    fonte. doorSide +1 = porta na face local +z (casas dos spawns), -1 = face -z
    (casas da praça). Tudo mais é medido no mundo real. */
 const SPECS = [
-  { name: 'sertao-praca-casa-interior-0', x: -11.5, z: 15, ry: 0, doorSide: -1 },
-  { name: 'sertao-praca-casa-interior-1', x: 11.5, z: 15, ry: 0, doorSide: -1 },
-  { name: 'sertao-casa-platibanda-1', x: 9.6, z: -26, ry: Math.PI - .17, doorSide: 1, exitSide: 1,
+  { name: 'sertao-praca-casa-interior-0', x: -11.5, z: 15, ry: 0, w: 7.2, d: 6.4, doorSide: -1 },
+  { name: 'sertao-praca-casa-interior-1', x: 11.5, z: 15, ry: 0, w: 7.2, d: 6.4, doorSide: -1 },
+  { name: 'sertao-casa-platibanda-1', x: 9.6, z: -26, ry: Math.PI - .17, w: 7.2, d: 6.4, doorSide: 1, exitSide: 1,
     sightTargets: [[0, 0], [6, -2], [12, 8]] },
-  { name: 'sertao-casa-pedra-7', x: -8.4, z: 24.2, ry: .14, doorSide: 1, exitSide: 1,
+  { name: 'sertao-casa-pedra-7', x: -8.4, z: 24.2, ry: .14, w: 6.1, d: 6.2, doorSide: 1, exitSide: -1,
     sightTargets: [[0, 0], [-4, 8], [12, -8]] },
+];
+const SPAWN_ROW_SPECS = [
+  { name: 'sertao-casa-platibanda-0', x: -9.2, z: -25.5, ry: Math.PI + .12, w: 7.2, d: 6.4, doorSide: 1, exitSide: -1 },
+  SPECS[2], SPECS[3],
+  { name: 'sertao-casa-pedra-8', x: 9.1, z: 24.7, ry: -.1, w: 6.1, d: 6.2, doorSide: 1, exitSide: -1 },
+  { name: 'sertao-casa-geminada-9', x: -.4, z: 26.2, ry: -.06, w: 7.2, d: 6.4, doorSide: 1, exitSide: 1 },
 ];
 const probe = Object.create(Game.prototype); probe.world = world;
 const EPS = 1e-6, radius = .38;
@@ -70,6 +76,15 @@ if (mutant) {
     const walls = world.colliders.filter(c => c.tag === 'sertao-casa-paupique-3');
     if (!walls.length) throw Error('Mutante não aplicou: colisor da casa vizinha ausente');
     for (const c of walls) { c.minZ += .8; c.maxZ += .8; if (Number.isFinite(c.cz)) c.cz += .8; }
+  } else if (mutant === 'fechar-casa-respawn') {
+    const s = SPAWN_ROW_SPECS[0], [wx, wz] = l2w(s, 0, s.doorSide * 3.2);
+    world.colliders.push({ minX: wx - .8, maxX: wx + .8, minY: 0, maxY: 2.7,
+      minZ: wz - .35, maxZ: wz + .35, tag: 'mutante-fechar-casa-respawn' });
+  } else if (mutant === 'fechar-janela-respawn') {
+    const s = SPAWN_ROW_SPECS[3], [wx, wz] = l2w(s, 0, -s.doorSide * 3.2);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.9, .35), new THREE.MeshBasicMaterial());
+    mesh.position.set(wx, 1.7, wz); mesh.rotation.y = s.ry; world.root.add(mesh);
+    world.root.updateMatrixWorld(true); world.occluders.push(mesh);
   } else if (mutant === 'fresta-lateral') {
     const ref = house.userData.boxParts?.[`${house.name}-lateral-1-sul`];
     if (!ref || ref.index == null) throw Error('Mutante não aplicou: parede instanciada ausente');
@@ -113,8 +128,9 @@ function rayHit(a,b) {
 }
 const rayBlocked = (a, b) => !!rayHit(a, b);
 const results=SPECS.map(s=>{
+  const halfW = s.w / 2, halfD = s.d / 2;
   const exists=houses.some(h=>h.name===s.name);
-  const doorOut=s.doorSide*4.8;
+  const doorOut=s.doorSide*(halfD+1.6);
   const lanes=[-.4,0,.4].map(dx=>capsulePath(l2w(s,dx,doorOut),l2w(s,dx,0)));
   const exits=[-.4,0,.4].map(dx=>capsulePath(l2w(s,dx,0),l2w(s,dx,doorOut)));
   const entry={clear:lanes.every(p=>p.clear),maxDisplacement:Math.max(...lanes.map(p=>p.maxDisplacement))};
@@ -122,28 +138,28 @@ const results=SPECS.map(s=>{
   // Tiro: ocupante nos olhos (1,62) da janela do fundo e das laterais; o vão tem
   // que estar limpo nos DOIS sentidos — revide é a linha recíproca.
   const eye=(px,pz)=>l3w(s,px,pz,1.62);
-  const shots=[[[0,-s.doorSide*2.5],[0,-s.doorSide*3.7]]];
-  for(const side of [-1,1]) shots.push([[side*2.9,.1],[side*4.1,.1]]);
+  const shots=[[[0,-s.doorSide*(halfD-.7)],[0,-s.doorSide*(halfD+.5)]]];
+  for(const side of [-1,1]) shots.push([[side*(halfW-.7),.1],[side*(halfW+.5),.1]]);
   const windows=shots.map(([a,b])=>!rayBlocked(eye(...a),eye(...b)));
   const returnShots=shots.map(([a,b])=>!rayBlocked(eye(...b),eye(...a)));
-  const firingRoutes=[[0,-s.doorSide*2.5],[-2.9,.1],[2.9,.1]].map(([px,pz])=>capsulePath(l2w(s,0,0),l2w(s,px,pz)));
+  const firingRoutes=[[0,-s.doorSide*(halfD-.7)],[-(halfW-.7),.1],[halfW-.7,.1]].map(([px,pz])=>capsulePath(l2w(s,0,0),l2w(s,px,pz)));
   const sideExitRoutes = s.exitSide ? [-.35, 0, .35].map(pz =>
-    capsulePath(l2w(s, s.exitSide * 2.7, pz), l2w(s, s.exitSide * 4.35, pz))) : [];
+    capsulePath(l2w(s, s.exitSide * (halfW-.9), pz), l2w(s, s.exitSide * (halfW+.75), pz))) : [];
   const tacticalSight = (s.sightTargets || []).map(([x, z]) => {
-    const hit = rayHit(l3w(s, 0, -s.doorSide * 2.5, 1.62), [x, 1.62, z]);
+    const hit = rayHit(l3w(s, 0, -s.doorSide * (halfD-.7), 1.62), [x, 1.62, z]);
     return { target: [x, z], clear: !hit, blocker: hit?.object.parent?.name || hit?.object.name || null };
   });
-  const corners=[[-2.9,-2.5],[-2.9,2.5],[2.9,2.5],[2.9,-2.5]].map(([px,pz])=>l2w(s,px,pz));
+  const corners=[[-(halfW-.7),-(halfD-.7)],[-(halfW-.7),halfD-.7],[halfW-.7,halfD-.7],[halfW-.7,-(halfD-.7)]].map(([px,pz])=>l2w(s,px,pz));
   const circulation=corners.map((a,i)=>capsulePath(a,corners[(i+1)%corners.length]));
   const leaks=[];
   for(const side of [-1,1]) for(const y of [.4,1.62,3]) for(let dz=-3;dz<=3;dz+=.1){
     if(side===s.exitSide && y<2.55 && dz>-.95-EPS && dz<.95+EPS) continue;
     if(y===1.62 && dz>-.6-EPS && dz<.8+EPS) continue;
-    if(!rayBlocked(l3w(s,side*3.2,dz,y),l3w(s,side*4,dz,y))) leaks.push({side,y,dz:Number(dz.toFixed(2))});
+    if(!rayBlocked(l3w(s,side*(halfW-.4),dz,y),l3w(s,side*(halfW+.4),dz,y))) leaks.push({side,y,dz:Number(dz.toFixed(2))});
   }
   const {nodes,adj}=world.waypoints;
   const toLocal=(n)=>{const dx=n.x-s.x,dz=n.z-s.z;return [Math.cos(s.ry)*dx-Math.sin(s.ry)*dz,Math.sin(s.ry)*dx+Math.cos(s.ry)*dz];};
-  const internal=nodes.flatMap((p,i)=>{const [px,pz]=toLocal(p);return Math.abs(px)<3.4&&Math.abs(pz)<3 ? [i]:[];});
+  const internal=nodes.flatMap((p,i)=>{const [px,pz]=toLocal(p);return Math.abs(px)<halfW-.2&&Math.abs(pz)<halfD-.2 ? [i]:[];});
   const outside=nodes.reduce((best,p,i)=>Math.hypot(p.x,p.z+41)<Math.hypot(nodes[best].x,nodes[best].z+41)?i:best,0);
   const reached=new Set([outside]), queue=[outside];
   for(let i=0;i<queue.length;i++) for(const j of adj[queue[i]]) if(!reached.has(j)){reached.add(j);queue.push(j);}
@@ -190,6 +206,16 @@ const plazaCover = COVER_WITNESSES.map(([name, x, z, axis]) => {
    gargalo e parava em (-15,4; 11,1). Esta testemunha congela a passagem lateral
    com o mesmo raio de 0,38 m; o mutante devolve a casa aos 15,0 m. */
 const botCornerRoute = capsulePath([-15.7, 10.8], [-15.7, 12.2]);
+const spawnRow = SPAWN_ROW_SPECS.map(s => {
+  const halfW = s.w / 2, halfD = s.d / 2;
+  const exists = houses.some(h => h.name === s.name);
+  const entry = capsulePath(l2w(s, 0, s.doorSide * (halfD + 1.4)), l2w(s, 0, 0));
+  const sideExit = capsulePath(l2w(s, s.exitSide * (halfW-.9), 0), l2w(s, s.exitSide * (halfW+.75), 0));
+  const eye = (pz) => l3w(s, 0, pz, 1.62);
+  const throughWindow = !rayBlocked(eye(-s.doorSide * (halfD-.7)), eye(-s.doorSide * (halfD+1)));
+  const returnWindow = !rayBlocked(eye(-s.doorSide * (halfD+1)), eye(-s.doorSide * (halfD-.7)));
+  return { name: s.name, exists, entry, sideExit, throughWindow, returnWindow };
+});
 /* IN7 responde ao relato de área inacessível sem depender da coordenada original:
    varre todo o mapa com o corpo real e exige que nenhum vão livre fique enclausurado. */
 const SWEEP=.25;
@@ -239,7 +265,7 @@ const sweep=(()=>{
   return {spawnFree:true,freeCells,reachable:queue.length,pockets};
 })();
 const checks={
-  IN1:houses.length===SPECS.length&&results.every(r=>r.exists&&r.entry.clear&&r.exit.clear),
+  IN1:results.every(r=>r.exists&&r.entry.clear&&r.exit.clear),
   IN2:results.every(r=>r.exists&&r.windows.every(Boolean)&&r.revide.every(Boolean)),
   IN3:results.every(r=>r.exists&&[...r.firingRoutes,...r.circulation].every(p=>p.clear)),
   IN4:results.every(r=>r.exists&&!r.leaks.length),
@@ -250,7 +276,9 @@ const checks={
   IN9:results.filter(r=>r.tacticalSight.length).length===2&&results.filter(r=>r.tacticalSight.length).every(r=>r.tacticalSight.every(p=>p.clear)),
   IN10:plazaCover.length===COVER_WITNESSES.length&&plazaCover.every(c=>c.blocked),
   IN11:botCornerRoute.clear,
+  IN12:spawnRow.length===5&&spawnRow.every(r=>r.exists&&r.entry.clear&&r.sideExit.clear),
+  IN13:spawnRow.length===5&&spawnRow.every(r=>r.exists&&r.throughWindow&&r.returnWindow),
 };
-console.log(JSON.stringify({checks,houses:results,barrelClearance,hayClearance,plazaCover,botCornerRoute,sweep:{...sweep,pockets:sweep.pockets.slice(0,8),pocketCount:sweep.pockets.length},mutation:mutant||null},null,2));
+console.log(JSON.stringify({checks,houses:results,spawnRow,barrelClearance,hayClearance,plazaCover,botCornerRoute,sweep:{...sweep,pockets:sweep.pockets.slice(0,8),pocketCount:sweep.pockets.length},mutation:mutant||null},null,2));
 const failed=Object.entries(checks).filter(([,ok])=>!ok).map(([id])=>id);
 process.exitCode=mutant ? (failed.includes(targets[mutant])?0:1) : (failed.length?1:0);
