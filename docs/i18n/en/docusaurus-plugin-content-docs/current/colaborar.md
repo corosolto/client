@@ -255,7 +255,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,154 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,337 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 965 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 1,062 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,966 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |

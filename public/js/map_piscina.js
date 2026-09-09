@@ -59,6 +59,57 @@ function tileTex(base, line, n, rx, rz) {
   for (let i = 0; i < 120; i++) { x.fillStyle = `rgba(120,140,160,${Math.random() * 0.05})`; x.fillRect(Math.random() * 128, Math.random() * 128, 4, 4); }
   return mkTex(c, rx, rz);
 }
+function lockerTex(base = '#a9b7c2', dark = '#586875') {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 256, 0);
+  g.addColorStop(0, '#758692'); g.addColorStop(0.08, base);
+  g.addColorStop(0.52, '#d2dbe0'); g.addColorStop(0.92, base); g.addColorStop(1, '#667784');
+  x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+  x.strokeStyle = dark; x.lineWidth = 6; x.strokeRect(7, 5, 242, 246);
+  x.strokeStyle = 'rgba(255,255,255,.45)'; x.lineWidth = 2; x.strokeRect(14, 12, 228, 232);
+  x.fillStyle = dark;
+  for (const y of [42, 50, 58, 66]) x.fillRect(58, y, 140, 5);
+  x.fillRect(204, 116, 13, 48); x.fillRect(197, 134, 27, 7);
+  x.fillStyle = 'rgba(42,55,63,.28)'; x.fillRect(17, 205, 222, 24);
+  for (let i = 0; i < 34; i++) {
+    const px = (i * 73 + 19) % 238 + 9, py = (i * 47 + 31) % 224 + 10;
+    x.fillStyle = `rgba(45,59,68,${0.035 + (i % 4) * 0.012})`;
+    x.fillRect(px, py, 2 + (i % 7), 1);
+  }
+  return mkTex(c, 1, 1);
+}
+function utilityTex(base, seam, accent) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = base; x.fillRect(0, 0, 256, 256);
+  x.fillStyle = accent; x.fillRect(0, 194, 256, 62);
+  x.strokeStyle = seam; x.lineWidth = 3;
+  for (let p = 0; p <= 256; p += 64) { x.beginPath(); x.moveTo(p, 0); x.lineTo(p, 256); x.stroke(); }
+  for (let p = 0; p <= 256; p += 48) { x.beginPath(); x.moveTo(0, p); x.lineTo(256, p); x.stroke(); }
+  for (let i = 0; i < 48; i++) {
+    const px = (i * 91 + 23) % 256, py = (i * 53 + 11) % 256;
+    x.fillStyle = `rgba(20,30,34,${0.025 + (i % 5) * 0.012})`; x.fillRect(px, py, 10 + i % 18, 2);
+  }
+  return mkTex(c, 1.25, 1.25);
+}
+function waterTex() {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 256, 256);
+  g.addColorStop(0, '#177fba'); g.addColorStop(0.48, '#39d0e2'); g.addColorStop(1, '#0b6fa8');
+  x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 18; i++) {
+    x.strokeStyle = `rgba(220,252,255,${0.08 + (i % 4) * 0.035})`; x.lineWidth = 2 + i % 2;
+    x.beginPath();
+    for (let px = -20; px <= 276; px += 8) {
+      const py = 10 + i * 14 + Math.sin((px + i * 17) * 0.055) * 5;
+      if (px === -20) x.moveTo(px, py); else x.lineTo(px, py);
+    }
+    x.stroke();
+  }
+  return mkTex(c, 4, 6);
+}
 function signTexture(bg, fg, title, sub) {
   const c = document.createElement('canvas'); c.width = 512; c.height = 128;
   const x = c.getContext('2d');
@@ -102,6 +153,16 @@ export function buildPoolDay(scene, T) {
     m.position.set(x, y, z); m.rotation.y = ry; m.rotation.x = rx;
     m.receiveShadow = true; root.add(m); return m;
   }
+  function addBoxInstances(w, h, d, mat, items) {
+    if (!items.length) return null;
+    const m = new THREE.InstancedMesh(geoBox(w, h, d, mat), mat, items.length);
+    const q = new THREE.Object3D();
+    items.forEach((p, i) => {
+      q.position.set(p.x, p.y + h / 2, p.z); q.rotation.set(p.rx || 0, p.ry || 0, p.rz || 0);
+      q.scale.set(p.sx || 1, p.sy || 1, p.sz || 1); q.updateMatrix(); m.setMatrixAt(i, q.matrix);
+    });
+    m.castShadow = false; m.receiveShadow = true; root.add(m); return m;
+  }
 
   const TEX = {
     wall: tileTex('#eef3f6', '#c2d0d8', 4, 8, 3),
@@ -110,10 +171,13 @@ export function buildPoolDay(scene, T) {
   };
   const MAT = {
     wall: lam({ map: TEX.wall }), floor: lam({ map: TEX.floor }), pool: lam({ map: TEX.pool }),
-    navy: lam({ color: 0x24407a }), white: lam({ color: 0xf2f5f7 }),
-    locker: lam({ color: 0xc2ccd4 }), lockerDark: lam({ color: 0x94a3af }),
-    chair: lam({ color: 0x2f4f9e }), steel: lam({ color: 0x8a9096 }),
-    service: lam({ color: 0x355268 }), warning: lam({ color: 0xe3b23c }),
+    navy: lam({ map: tileTex('#193a70', '#10264c', 2, 2, 2) }),
+    white: lam({ map: tileTex('#f2f5f7', '#d1d9de', 4, 2, 2) }),
+    locker: lam({ map: lockerTex() }), lockerDark: lam({ map: lockerTex('#778894', '#34434e') }),
+    chair: lam({ map: utilityTex('#294984', '#1b315c', '#203764') }),
+    steel: lam({ map: utilityTex('#89949c', '#505b63', '#707b83') }),
+    service: lam({ map: utilityTex('#355268', '#203846', '#243b4b') }),
+    warning: lam({ map: utilityTex('#e3b23c', '#8a6417', '#bd7c1e') }),
     /* TEX1 — o forro eram 4 lajes de 105 a 180 m² de cor CHAPADA (0xe4ebef, luminância de
        albedo 0,82): quatro retângulos brancos lisos ocupando o topo inteiro do quadro, que é
        literalmente o "retângulo branco grande e liso" que o dono descreveu. O caminho certo
@@ -173,7 +237,8 @@ export function buildPoolDay(scene, T) {
     addBox(L, 0.1, POOL.hz * 2, MAT.pool, POOL.cx + POOL.hx + POOL.m / 2, -POOL.depth / 2, POOL.cz, { collide: false, rz: ang, cast: false });
     addBox(L, 0.1, POOL.hz * 2, MAT.pool, POOL.cx - POOL.hx - POOL.m / 2, -POOL.depth / 2, POOL.cz, { collide: false, rz: -ang, cast: false });
     const water = new THREE.Mesh(new THREE.PlaneGeometry(OUTX * 2 - 0.3, OUTZ * 2 - 0.3),
-      new THREE.MeshLambertMaterial({ color: 0x2fd0ea, transparent: true, opacity: 0.85 }));
+      new THREE.MeshLambertMaterial({ map: waterTex(), color: 0xd7fbff, transparent: true,
+        opacity: 0.76 }));
     water.rotation.x = -Math.PI / 2; water.position.set(POOL.cx, -0.4, POOL.cz); root.add(water);
     // navy tile border
     addBox(OUTX * 2 + 0.7, 0.16, 0.5, MAT.navy, POOL.cx, 0, nZ + 0.15, { collide: false });
@@ -182,6 +247,20 @@ export function buildPoolDay(scene, T) {
     addBox(0.5, 0.16, OUTZ * 2 + 0.7, MAT.navy, sX - 0.15, 0, POOL.cz, { collide: false });
     for (const lx of [-6, -2, 2, 6])
       addPlane(0.2, POOL.hz * 2 - 1, MAT.navy, POOL.cx + lx, -POOL.depth + 0.04, POOL.cz, 0, -Math.PI / 2);
+    const drains = [];
+    for (let x = -8.4; x <= 8.4; x += 1.4) {
+      drains.push({ x, y: 0.01, z: nZ + 0.52 }, { x, y: 0.01, z: sZ - 0.52 });
+    }
+    for (let z = -10.5; z <= 10.5; z += 1.4) {
+      drains.push({ x: nX + 0.52, y: 0.01, z, ry: Math.PI / 2 },
+        { x: sX - 0.52, y: 0.01, z, ry: Math.PI / 2 });
+    }
+    addBoxInstances(1.08, 0.025, 0.16, MAT.steel, drains);
+    const depthMat = lam({ map: signTexture('#edf6f8', '#183f72', '1,50 M', 'PROFUNDIDADE') });
+    for (const x of [-5.4, 5.4]) {
+      addPlane(2.15, 0.62, depthMat, x, 0.035, nZ + 0.88, 0, -Math.PI / 2);
+      addPlane(2.15, 0.62, depthMat, -x, 0.035, sZ - 0.88, Math.PI, -Math.PI / 2);
+    }
     // ladders
     for (const sx of [1, -1]) {
       const lx = POOL.cx + sx * (OUTX - 0.1);
@@ -567,6 +646,12 @@ export function buildPoolDay(scene, T) {
     glass.rotation.x = Math.PI / 2; glass.position.set(0, CEIL - 0.05, 0); root.add(glass);
     for (let z = -oZ; z <= oZ; z += 3.75) addBox(oX * 2, 0.2, 0.2, MAT.steel, 0, CEIL - 0.15, z, { collide: false, cast: false });
     for (const x of [-oX / 2, 0, oX / 2]) addBox(0.2, 0.2, oZ * 2, MAT.steel, x, CEIL - 0.15, 0, { collide: false, cast: false });
+    const luminarias = [];
+    for (const x of [-13.1, 13.1]) for (const z of [-20, -12, 12, 20]) luminarias.push({ x, y: 6.56, z });
+    addBoxInstances(2.5, 0.1, 0.38, MAT.steel, luminarias);
+    addBoxInstances(2.2, 0.045, 0.25,
+      lam({ color: 0xeafcff, emissive: 0xb9edff, emissiveIntensity: 0.75 }),
+      luminarias.map(p => ({ ...p, y: 6.49 })));
   }
 
   /* ---------------- spawns' end signage ---------------- */
@@ -585,10 +670,12 @@ export function buildPoolDay(scene, T) {
     }
   }
   // Cobertura de respawn em ilhas: silhueta de armário, mas sem formar uma parede contínua.
+  const lockerIslandMarks = [];
   function lockerIsland(x, z, face = 1) {
     addBox(2.8, 1.9, 1.05, MAT.locker, x, 0, z, { pad: -0.02 });
     addBox(0.48, 0.5, 0.62, MAT.lockerDark, x - 0.42, 1.9, z + face * 0.08, { pad: -0.02 });
     addBox(0.62, 0.08, 0.08, MAT.navy, x + 0.38, 0.82, z + face * 0.54, { collide: false });
+    lockerIslandMarks.push({ x, z, face });
   }
   /* As CHAMADAS de lockerBank(), as espreguiçadeiras e os boxes de chuveiro saíram daqui e
      foram para o bloco "COBERTURA" mais abaixo, junto com pilares, lixeiras e o resto.
@@ -651,9 +738,9 @@ export function buildPoolDay(scene, T) {
      da lataria). Peça girada exigiria decompor o colisor em grade; peça alinhada não. */
   const COV = {
     concreto: lam({ map: T.concrete }),          // 1 material para os 8 pilares (antes era 1 por pilar)
-    caixa: lam({ color: 0x8fa3b3 }),
-    lixo: lam({ color: 0x3a5a8f }),
-    cabine: lam({ color: 0xd8d4cc }),
+    caixa: lam({ map: utilityTex('#8fa3b3', '#526675', '#6e8494') }),
+    lixo: lam({ map: utilityTex('#315684', '#18334e', '#223f63') }),
+    cabine: lam({ map: utilityTex('#d8d4cc', '#9b9a92', '#2d5277') }),
   };
 
   /* --- 1. CORREDORES LATERAIS -------------------------------------------------------
@@ -720,6 +807,16 @@ export function buildPoolDay(scene, T) {
       for (const d of [-0.7, 0.7]) addBox(0.4, 0.4, 0.18, MAT.steel, sx * (14.6 + d), 2.15, sz * (23.3 - 0.14), { collide: false });
     }
   }
+  addBoxInstances(2.64, 0.08, 1.08, MAT.lockerDark,
+    lockerIslandMarks.map(p => ({ x: p.x, y: 1.86, z: p.z })));
+  addBoxInstances(2.64, 0.12, 1.08, MAT.lockerDark,
+    lockerIslandMarks.map(p => ({ x: p.x, y: 0, z: p.z })));
+  addBoxInstances(0.07, 0.34, 0.045, MAT.steel,
+    lockerIslandMarks.flatMap(p => [-0.48, 0.48].map(dx =>
+      ({ x: p.x + dx, y: 0.9, z: p.z + p.face * 0.55 }))));
+  addBoxInstances(0.42, 0.025, 0.045, MAT.lockerDark,
+    lockerIslandMarks.flatMap(p => [-0.48, 0.48].flatMap(dx => [1.34, 1.43, 1.52].map(y =>
+      ({ x: p.x + dx, y, z: p.z + p.face * 0.55 })))));
 
   // --- 3. ROTA TÉCNICA OESTE: duas portas e caixas alternadas criam o flanco
   // sem liberar uma visada axial.

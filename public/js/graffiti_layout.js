@@ -20,4 +20,4 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tag-selvagem.png","persona
 
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
-export const GRAFITE_FP = {"pass":"72a446b1c69e9697","maps":{"campomorro":"b35d3d997619edba","escadao":"1f78af31bd8d1491","praca_poderes":"a3462da08b82184e","piscina_treta":"9a32fb73622fd24b","loja_h":"9fb95432239cf99b","ferro_velho":"ebafb3e98a1872a2","quebrada":"05eb0fb8df2a5a36","corrego":"8008343b4035da83"}};
+export const GRAFITE_FP = {"pass":"72a446b1c69e9697","maps":{"campomorro":"b35d3d997619edba","escadao":"1f78af31bd8d1491","praca_poderes":"a3462da08b82184e","piscina_treta":"8c49e5fc675b64ba","loja_h":"9fb95432239cf99b","ferro_velho":"ebafb3e98a1872a2","quebrada":"05eb0fb8df2a5a36","corrego":"8008343b4035da83"}};

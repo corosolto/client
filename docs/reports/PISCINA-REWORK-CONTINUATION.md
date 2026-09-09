@@ -261,3 +261,27 @@ Próximo passo concreto: commit do isolamento, push e PR draft empilhada contra
 
 Estado de entrega: implementação e validação técnica concluídas. Restam PIS5 como dívida
 de orçamento declarada e PIS7 como aceite visual/jogável do dono.
+
+## Milestone de acabamento visual — 09/09/2026
+
+Depois de o dono reprovar a leitura como básica/low-poly, foi feita uma segunda passada
+sem alterar colisores, spawns, objetivos ou grafo: armários ganharam portas, respiros,
+puxadores, rodapés e tampas; água ganhou textura de ondulação; borda recebeu drenagem e
+placas de profundidade; serviço, caixas, lixeiras, cadeiras, aço e posto receberam materiais
+procedurais próprios; o teto recebeu luminárias instanciadas. Detalhes repetidos usam
+`InstancedMesh` e não projetam sombra para limitar custo.
+
+Evidência atual:
+
+- capturas Chrome real 1200×800 em `artifacts/piscina-stack/visual-polish/browser/`;
+- PIS1/PIS2/PIS3/PIS4/PIS6 verdes, 9/9 mutantes e contrato dos 17 mapas verde;
+- `map-check piscina_treta`, CTF, áudio e layout de grafite verdes;
+- cobertura de grafite preservada em 83,4% (564/676; meta 76%);
+- texel estrutural da Piscina permanece 128 px/m, p95/mediana 1,00×; o gate global segue
+  vermelho por dívidas já declaradas em vários mapas e por TEXEL3b/TEXEL5 da Piscina;
+- controle A/B contemporâneo em processo fresco: base 5×5 8,6/17,6 ms e 8×8
+  16,7/33,4 ms; polish 5×5 8,4/16,8 ms e 8×8 15,8/24,3 ms. A desaceleração frente ao
+  dia anterior reproduziu na base, portanto é carga da máquina, não regressão do polish.
+
+O servidor local permanece em `http://127.0.0.1:8152/`. PIS7 continua aguardando nova
+avaliação visual/jogável do dono; não fazer merge/deploy antes dela.
