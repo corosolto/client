@@ -54,7 +54,7 @@ export const VM_WEAPON = {
   deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
   m92: W('ak', { baked: true, frame: 'family' }),
-  akm: W('ak'),
+  akm: W('ak', { baked: true, frame: 'family' }),
   g3: W('g3'),
   revolver38: W('revolver'),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):

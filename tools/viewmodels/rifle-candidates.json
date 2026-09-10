@@ -106,6 +106,21 @@
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
       "rebuild": "tools/viewmodels/prep/rifles-m92-final.py + optimize_paid_family.mjs"
+    },
+    "akm": {
+      "family": "ak",
+      "file": "viewmodels/ak/akm-baked-runtime.glb",
+      "sourceSha256": "3b835674db9d5c11d75f8652ef3edc9794e529091bff91795eb3e08881bfd0b3",
+      "sourceBytes": 273828,
+      "productSha256": "54c72408d40dfc9bf7c37beddffa4411c7ecc8ba9f20f8ce7b7c4ce8b270a378",
+      "productBytes": 2614644,
+      "sha256": "54c72408d40dfc9bf7c37beddffa4411c7ecc8ba9f20f8ce7b7c4ce8b270a378",
+      "bytes": 2614644,
+      "mechanism": "complete-curved-rock-in-mag/real-magazine-catch/source-no-separable-charging-handle",
+      "ready": false,
+      "sourceBranch": "codex/viewmodels-catalog-final",
+      "sourceCommit": "pending",
+      "rebuild": "tools/viewmodels/prep/rifles-akm-final.py + optimize_paid_family.mjs"
     }
   }
 }
