@@ -52,10 +52,11 @@ export const VM_WEAPON = {
   // O pack autora a Deagle com 23–27° de pitch (hand cannon); no nosso mount o
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
   deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),
-  /* `golden` roteia para `/models/viewmodels/coro/<arma>-hires.glb`, versionado no repo.
-     Sem ele a arma cai em `/private-assets/`, que é pack pago e não existe no clone —
-     o GLB estava completo (Equip/Idle/Reload/Shoot) e mesmo assim não desenhava. */
-  pistol: W('pistol', { golden: true, runtime: 'family', timing: 'gameplay' }),
+  /* NÃO marcar `golden`: medido em 11/09/2026 no jogo real, o piloto da pistola
+     entra sem a normalização da família e renderiza 144× o declarado — arma de
+     3.743 cm, mão de 7.125 cm, contato 14,1 cm. Pelo caminho de família ela mede
+     26 cm e contato de milímetros. O piloto só serve depois de calibrar a escala. */
+  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
   /* trim: a mão da família ak fica 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
      Delta medido no espaço do holder: [-0,2, -0,8, +1,1] cm. */
   m92: W('ak', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
