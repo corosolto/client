@@ -74,7 +74,38 @@ do projeto é `npm run eval:vm` antes das invariantes; gates técnicos não subs
 ## Estado inicial — 10/09
 
 - worktree criada limpa na alpha.246;
-- inventário paralelo das branches/PRs e do catálogo atual em andamento;
+- inventário paralelo das branches/PRs e do catálogo atual concluído;
 - nenhum código de runtime portado ainda;
 - próximo passo: comparar os commits aprovados de #549 contra a base e materializar a primeira
   régua de uniformidade que fique vermelha com o catálogo misto.
+
+### Baseline reproduzido
+
+- produção usa `WEAPON_ONLY` por padrão; mãos só entram com `?hands=1`;
+- os 26 GLBs existem, mas cada um está achatado em um node e zero animações;
+- recarga, recoil, draw e ADS atuais movem a raiz; `magDrop` não produz ação visual;
+- não há slide, ferrolho, pump, tambor, clip ou cartucho móvel no caminho atual;
+- somente oito armas têm fallback procedural; as outras dezoito podem ficar invisíveis quando o
+  GLB falha;
+- a suíte aceita dívidas VM conhecidas e não possui matriz 26 × ações/contatos/sincronização.
+
+### Decisão de extração
+
+Os PRs-fonte estão entre 537 e 645 commits atrás desta base. Nenhum será mesclado ou
+cherry-picked integralmente. A espinha sai da linhagem #468 até `d35c6658`, portada por símbolos
+para preservar multiplayer, combate e Míticos do `game.js` atual.
+
+Ordem comprovada pelo inventário:
+
+1. fundação autorada de #468/`d35c6658`;
+2. correções transversais de #464: ausência sem AWP substituta, visibilidade só após malha,
+   escala do pente e trims efetivos;
+3. gates de #549 e congelamento dos três controles aprovados;
+4. Rem700/G3SG1 de #544, ainda sujeitos à revisão visual;
+5. M4 aprovada em idle, conclusão da recarga e produção dos demais fuzis;
+6. Mosin/SVD/SKS, corrigindo primeiro o desaparecimento intermitente da SVD;
+7. LMG refeita; o resultado anteriormente reprovado não entra;
+8. AWP, shotgun, SMGs e curtas, que ainda não possuem saída final aprovada nas fontes auditadas.
+
+Checkpoint documental: `41113d742`; `npm run check:deploy` passou 39/39 com Node 23 depois de
+instalar as dependências do worktree. Draft de acompanhamento: client#572.
