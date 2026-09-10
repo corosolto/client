@@ -74,3 +74,28 @@ ficou de pé, e qual é o próximo passo concreto.
 Sem worktree? Conflito que exige decisão de produto? Régua que contradiz o
 briefing? Escreva `BLOQUEADO` no ledger com a pergunta exata para o dono e encerre
 o turno. Chutar custa mais caro que esperar.
+
+## 11 · Turno morto deixa mutante na árvore — limpe ANTES de acreditar num vermelho
+
+Réguas desta casa provam que mordem injetando uma mutação no arquivo e restaurando
+depois. Se o processo morre no meio — teto de turno, Ctrl+C, limite de token — a
+mutação **fica**. O turno seguinte roda o portão, vê vermelho, e vai consertar um
+defeito que não existe.
+
+Caso real, 10/09/2026: `eval:docsautoria` injeta em `docs/docs/colaborar.md` a linha
+`"linha intrusa que o gerador não escreveu"`. Um `check:deploy` interrompido deixou
+a linha lá, e `docs:check` + `eval:docsautoria` passaram a reprovar numa árvore que
+minutos antes tinha dado 35/35.
+
+**No começo de todo turno, antes de rodar régua:**
+
+```sh
+git status --short          # árvore tem que estar como o ledger diz
+git diff | grep -i intrusa  # mutante órfão de régua anterior
+```
+
+Achou modificação que você não fez e o ledger não explica? `git checkout --` nela e
+registre no ledger. Não a commite, e não trate o vermelho dela como defeito.
+
+**E nunca rode `check:deploy` com limite de tempo curto**: ele leva ~125 s, e
+matá-lo no meio é justamente o que envenena a árvore.
