@@ -1175,6 +1175,37 @@
         ],
         "finalSha256": "26a8a5fcac3089a955f204e9e3b265dd1084cbba5ff4317a47f4ea9cacd5006d"
       }
+    },
+    "carandiru-viatura-1990": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/carandiru_viatura_1990.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "p97a1j1skm2w33wjyv8pkw92n18e0g2j",
+        "chatUrl": "https://mint.gg/project/zd7agpw4xxat6kytnxka8kj19h8e1969?chat=ph7ev8zdhy23p8v1ec4vtjyt058e1r4k",
+        "projectId": "zd7agpw4xxat6kytnxka8kj19h8e1969",
+        "chatId": "ph7ev8zdhy23p8v1ec4vtjyt058e1r4k",
+        "displayName": "Weathered Grey Patrol Wagon",
+        "prompt": "Crie UM asset 3D estático game-ready: uma perua policial brasileira genérica de fim dos anos 1980/início dos anos 1990 para um mapa histórico fictício inspirado na arquitetura do Carandiru. Carroceria quadrada cinza-clara, quatro portas, para-choques pretos simples, rodas fixas, vidro escurecido e giroflex baixo vermelho/azul no teto. Aparência de uso severo, pintura fosca envelhecida, pequenas marcas de sujeira e ferrugem, mas veículo inteiro e reconhecível. Sem SUV moderno, sem pessoas, sem armas, sem sangue, sem cena de violência, sem logotipo, sem brasão, sem placa legível e sem copiar um modelo ou fotografia específica. Um único veículo isolado, fundo neutro. Dimensões-alvo no jogo: 4,6 m de comprimento, 1,75 m de largura e 1,75 m de altura. Origem/pivô no centro do piso entre as rodas, frente claramente orientada no eixo longitudinal. Até 8.000 triângulos, PBR estilizado-realista, no máximo um atlas 1024, silhueta limpa para leitura a 20 m. Não inclua chão, cenário, colisor, rig ou animação.",
+        "licenseBasis": "Gerado na conta Mint do usuário para este projeto; uso local autorizado. Termos públicos e publicação comercial ainda exigem verificação; não declarar CC0.",
+        "notes": "Perua policial brasileira genérica 1980–1990, sem marca, pessoa ou violência. Asset original do Tripo P1; escala no call-site: 4,6 m de comprimento e 1,75 m de altura. Colisor e navegação permanecem procedurais."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "Tripo P1",
+        "tools": [
+          "mint.gg",
+          "@gltf-transform/functions dedup/prune/textureCompress"
+        ],
+        "originalSha256": "26c04d5b950633e7882e98826cc454a4bb4cab0e204dcad0a747815a0671d752",
+        "finalSha256": "5251a70e9e63a1652f129d945a79d901d0b0e2d7b7394414ca393fe64062f2bf",
+        "originalBytes": 1043988,
+        "finalBytes": 415268,
+        "triangles": 4840,
+        "textures": 3
+      }
     }
   }
 }

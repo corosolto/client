@@ -204,6 +204,28 @@ Contrato jogável da penitenciária: celas abertas, pátio sem campo, arsenal ce
 npm run eval:penitenciaria
 ```
 
+## `eval:carandiru`
+
+Fecha a etapa competitiva C2 sobre o mundo real: cápsula e largura das três
+rotas, conexão do grafo multinível, saídas por spawn, LOS das guaritas,
+contrafogo e recibo browser 5x5/8x8. `rota-unica` e `spawn-exposto` precisam
+reprovar somente CAR4 e CAR5. CAR7 (assets Mint) permanece reservado ao C3.
+
+```bash
+npm run eval:carandiru
+```
+
+## `eval:carandiru:browser`
+
+Mede Carandiru no Chrome/WebGL em 1200x800, med/low e 5x5/8x8, comparando o C2
+com o checkpoint C1 na mesma execução. Grava o recibo versionado consumido por
+CAR8; `--capture-dir` acrescenta vistas repetíveis sem transformar screenshot em
+prova de percurso ou aprovação visual.
+
+```bash
+npm run eval:carandiru:browser -- --capture-dir=artifacts/carandiru-c2
+```
+
 ## `eval:vminspect`
 
 O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.

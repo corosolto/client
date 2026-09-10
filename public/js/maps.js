@@ -91,7 +91,7 @@ export const MAPS = {
   atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
   parque_treta: { name: 'Parque da Treta', build: buildParque, props: PARQUE_PROPS, ambience: PARQUE_AMBIENCE, ctfMode: true },
   velho_oeste: { name: 'Sertão da Treta', build: buildVelhoOeste, props: VELHO_OESTE_PROPS, ambience: VELHO_OESTE_AMBIENCE, ctfMode: true },
-  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, props: PENITENCIARIA_PROPS, ambience: PENITENCIARIA_AMBIENCE, ctfMode: true },
+  penitenciaria: { name: 'Carandiru', build: buildPenitenciaria, props: PENITENCIARIA_PROPS, ambience: PENITENCIARIA_AMBIENCE, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';

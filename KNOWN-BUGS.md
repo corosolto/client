@@ -1900,6 +1900,20 @@ mudar.
 
 ## P1 — o jogador vê
 
+### ~~BUG-147 · escadas e guaritas do Carandiru não eram acessíveis; janelas do pavilhão flutuavam sem edifício~~ · CORRIGIDO LOCALMENTE 10/09/2026
+
+**Sintoma (do dono):** *"nenhuma das escadas permite chegar funcionalmente ao muro perimetral e às guaritas; o prédio central tem janelas suspensas sem parede/volume arquitetônico"*.
+
+**Causa raiz — confirmada.** `CAR2` aceitava nomes e arrays: `guardEntries` eram `Group` vazios, sem piso, destino nem percurso. O recibo C4 teleportava o corpo ao início de cada escada e aceitava apenas atingir a altura alvo. As quatro guaritas tinham o piso físico em 6,95 m enquanto a passarela termina em 5,80 m, sem `elevatedSurface` interna. No pavilhão, quatro massas de canto sustentavam parte das fachadas; as janelas restantes eram cascas em x=±4,575/z=±7,575 sem parede ou piso adjacente.
+
+**Reprodução:** `node tools/eval/carandiru-jogabilidade-check.mjs --checkpoint=C4`. A régua fortalecida exige pátio → escada → passarela → interior de cada guarita nos dois sentidos e suporte/piso real em cada janela.
+
+**Régua:** `tools/eval/carandiru-jogabilidade-check.mjs` (`npm run eval:carandiru`). Mutantes: `patamar-desconectado`, `degrau-alto`, `colisao-bloqueando`, `guarita-inalcancavel` e `janela-sem-parede`.
+
+**Correção:** quatro acessos laterais agora encontram as quatro passarelas em 5,80 m; seis rotas saem do pátio, percorrem os degraus e entram em seis guaritas com piso real, e voltam pelo mesmo caminho. As guaritas ganharam interiores, peitoris e contracobertura física; as duas torres centrais enxergam no máximo 2/4 spawns e preservam três posições reais de contratiro. O Pavilhão 6 ganhou piso superior completo, fachadas construídas ao redor dos vãos, uma escada contínua e pontos de tiro apoiados em parede e piso reais.
+
+**Evidência:** CAR2/CAR3/CAR5 verdes; 12/12 percursos pátio↔guarita e 2/2 pátio↔galeria executados no Chrome/WebGL por `Game._moveEntity`, com erro final máximo de 0,418 m. `eval:mapcontrato` mede 1.223 nós, 14.280 arestas e grafo conexo. Os cinco mutantes causais são mordidos. Capturas 1200×800 ficam em `artifacts/carandiru-c4/final/`; aprovação humana permanece pendente.
+
 ### ~~BUG-142 · a replay cam de headshot arrancava a câmera do jogador por 1,2 s~~ · CORRIGIDO LOCALMENTE 06/09/2026
 
 **Relato do dono (06/09):** tirar o efeito de câmera do headshot.
