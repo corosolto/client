@@ -100,10 +100,17 @@ SIM_TEAM_SIZE=5 SIM_CTF=1 node tools/eval/botsim.mjs 60 atacadao_treta
 SIM_TEAM_SIZE=8 SIM_CTF=1 node tools/eval/botsim.mjs 60 atacadao_treta
 npm run build
 npm run eval:atacadao-browser:compare
+npm run check:deploy
 ```
 
 Bots: 5x5 teve 2,411% de stuck, 0,038 spinRoam e 0,64 laneSpread; 8x8 teve
 2,289%, 0,037 e 0,64. Ambos saíram com código zero.
+
+`check:deploy`: 39/39 passos verdes. `check:fast`: 134/135 verdes; a única
+falha foi `audio:check`, com `442 arquivos no disco · 66 alcançáveis pelo
+manifest · 376 órfãos` e `manifest.json DEFASADO em relação ao disco`. Esse
+estado nasce do setup global da alpha.246 e não foi corrigido nesta lane para
+preservar a fronteira de áudio.
 
 Chrome/ANGLE Metal no Apple M4 Pro, build estático:
 
@@ -130,6 +137,10 @@ overview externo como esperado. Isso ainda requer avaliação visual do dono.
 - A alpha.246 falha no setup por 17 arquivos globais de soundscape ausentes.
   Esta lane não altera áudio. O Atacadão fica em silêncio fail-closed e preserva
   a fauna visual, sem música ou voz genérica.
+- `tools/inspect-glb.mjs` não registra `EXT_texture_webp` no `NodeIO` e por isso
+  rejeita estes sete GLBs antes de ler a malha. A estrutura foi conferida por
+  parser direto do contêiner (glTF 2, uma malha por arquivo, 4.424–22.158 tris),
+  e o Chrome carregou e renderizou todos com HTTP 200. O inspetor não foi alterado.
 - O máximo de 84,1 ms observado na amostra 5x5 ficou abaixo do teto de 100 ms,
   mas o p95 é o comparador principal e passou com +6,1%.
 - O próximo passo é o dono jogar 5x5 e 8x8 na URL candidata, conferir largura

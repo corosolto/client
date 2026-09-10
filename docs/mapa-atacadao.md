@@ -142,8 +142,9 @@ aprovado e alcançável. A fauna visual permanece ativa.
 Kit `atacadao_r3` do Mint, recuperado do ramo histórico com os identificadores
 originais. Os três GLBs estão registrados em `mint-assets.json` com
 `source.frente: "v21-e-models"`, com linha em
-`public/models/props/FONTE.md`, e passam `eval:props-acervo`,
-`eval:asset-integrity` e `eval:gltf-validator`.
+`public/models/props/FONTE.md`. O parser direto do contêiner GLB confirmou glTF 2,
+uma malha por arquivo e as contagens de triângulos registradas; a captura Chrome
+confirmou HTTP 200 e render dos sete arquivos.
 
 
 ## Orçamento WebGL desta revisão
