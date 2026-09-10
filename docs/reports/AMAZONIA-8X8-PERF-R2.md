@@ -145,9 +145,17 @@ npm run check:deploy
 Entrega registrada:
 
 - implementação e provas: commit `7460a6a68`;
+- registro de entrega: commit `4146f38b0`;
 - branch publicada: `codex/amazonia-8x8-perf-r2`;
 - PR draft: [#575](https://github.com/corosolto/client/pull/575);
 - `check:deploy`: 39/39 verde no commit publicado;
-- CI remoto: aguardando a primeira execução no momento deste registro.
+- CI remoto: build, `npm ci`, gates da Amazônia, invariantes, botsim, Astro,
+  smoke, CodeQL, Vercel, DCO e ratchet verdes;
+- bloqueio remoto herdado: `portao-browser / eval:select` mede 14/53
+  personagens acima do teto global declarado de 12. A reprodução local devolveu
+  os mesmos 14. Esta branch não altera `characters.js`, `glbchars.js`, modelos ou
+  o avaliador; `renderbudget.js` é puro e a tela de seleção não instancia `Game`.
+  O log remoto também registra `SUPPORT_URL_BR is not defined`; nenhum dos dois
+  defeitos foi mascarado com mudança de personagem ou limiar nesta lane.
 
 Não houve merge ou deploy.
