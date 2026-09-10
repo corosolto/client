@@ -1,4 +1,4 @@
-// Captura de auditoria do Joá no jogo real: 1536x1024 (3:2), câmera fixa e sem HUD.
+// Captura de auditoria do Joá no jogo real: 3:2 ou 16:9, câmera fixa e sem HUD.
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -11,6 +11,12 @@ const out = process.argv[2] || 'artifacts/joa-recuperacao/runtime-3x2';
 const base = process.env.BASE || 'http://127.0.0.1:4321';
 const quality = process.env.QUALITY || 'med';
 if (!['low', 'med', 'high'].includes(quality)) throw new Error(`QUALITY inválida: ${quality}`);
+const aspect = process.env.ASPECT || '3:2';
+const viewports = { '3:2': { width: 1536, height: 1024 }, '16:9': { width: 1600, height: 900 } };
+if (!viewports[aspect]) throw new Error(`ASPECT inválido: ${aspect}`);
+const viewport = viewports[aspect];
+const bots = Number(process.env.BOTS || (aspect === '16:9' ? 8 : 5));
+if (!Number.isInteger(bots) || bots < 1 || bots > 8) throw new Error(`BOTS inválido: ${bots}`);
 const source = readFileSync('public/js/map_mansao.js');
 const sourceSHA256 = createHash('sha256').update(source).digest('hex');
 const cameras = [
@@ -32,7 +38,7 @@ const browser = await chromium.launch({
 });
 
 try {
-  const page = await browser.newPage({ viewport: { width: 1536, height: 1024 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
   const errors = [], failedHTTP = [], assets = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('response', (r) => {
@@ -46,7 +52,7 @@ try {
     if (!['127.0.0.1', 'localhost'].includes(url.hostname) || url.pathname.startsWith('/api/')) return route.abort();
     return route.continue();
   });
-  await page.addInitScript((quality) => localStorage.setItem('awpbr_settings', JSON.stringify({ quality, bots: 4, vol: 0, speech: false })), quality);
+  await page.addInitScript(({ quality, bots }) => localStorage.setItem('awpbr_settings', JSON.stringify({ quality, bots, vol: 0, speech: false })), { quality, bots });
   await page.goto(`${base}/?debug=1&auto=P,mst&map=mansao&perfilauto=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live' || !document.getElementById('launch-error')?.classList.contains('hidden'), null, { timeout: 240000 });
   await page.waitForTimeout(2500);
@@ -112,7 +118,18 @@ try {
       ctf: g.ctf,
       teamCount: g.teamCount,
       ctfPoints: g.ctfPts.map((p) => ({ id: p.id, x: p.x, y: p.y, z: p.z })),
-      renderer: g.renderer.getContext().getParameter(g.renderer.getContext().RENDERER),
+      webgl: (() => {
+        const gl = g.renderer.getContext();
+        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+        return {
+          version: gl.getParameter(gl.VERSION),
+          vendor: gl.getParameter(gl.VENDOR),
+          renderer: gl.getParameter(gl.RENDERER),
+          unmaskedVendor: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : null,
+          unmaskedRenderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : null,
+          webgl2: typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext,
+        };
+      })(),
     };
   });
   await page.addStyleTag({ content: '#hud,#debug-panel,#launch-error{display:none!important} astro-dev-toolbar{display:none!important}' });
@@ -143,11 +160,12 @@ try {
   const missingCoreAssets = failedHTTP.filter(({ path }) => /^(\/js\/|\/models\/|\/img\/textures\/|\/img\/map-previews\/mansao\.)/.test(path));
   const requiredRuntimeAssets = ['/models/props/aviao_faixa.glb', '/img/textures/faixa_aviao.webp'];
   const absentRuntimeAssets = requiredRuntimeAssets.filter((path) => !assets.some((asset) => asset.path === path && asset.status >= 200 && asset.status < 300));
-  const receipt = { viewport: [1536, 1024], aspect: '3:2', quality, sourceSHA256, setup, performanceSample, gameplay, plane, cameras: rendered, errors, failedHTTP, missingCoreAssets, absentRuntimeAssets, assets };
+  const softwareRenderer = /swiftshader|llvmpipe|software/i.test(setup.webgl.unmaskedRenderer || setup.webgl.renderer || '');
+  const receipt = { viewport: [viewport.width, viewport.height], aspect, quality, bots, sourceSHA256, setup, performanceSample, gameplay, plane, cameras: rendered, errors, failedHTTP, missingCoreAssets, absentRuntimeAssets, assets };
   writeFileSync(`${out}/capture.json`, JSON.stringify(receipt, null, 2));
-  if (errors.length || missingCoreAssets.length || absentRuntimeAssets.length)
-    throw new Error(`${errors.length} pageerror(s), ${missingCoreAssets.length} asset(s) essencial(is) ausente(s), ${absentRuntimeAssets.length} asset(s) de runtime sem recibo`);
-  console.log(`JOA CAPTURA 3:2: gameplay final + ${rendered.length} vistas · avião GLB/faixa aplicados e em movimento · p95 ${performanceSample.frameMsP95.toFixed(2)} ms · ${out} · 0 pageerror · 0 asset essencial ausente · ${failedHTTP.length} 404 herdado(s) registrado(s)`);
+  if (errors.length || missingCoreAssets.length || absentRuntimeAssets.length || !setup.webgl.webgl2 || softwareRenderer)
+    throw new Error(`${errors.length} pageerror(s), ${missingCoreAssets.length} asset(s) essencial(is) ausente(s), ${absentRuntimeAssets.length} asset(s) de runtime sem recibo, webgl2=${setup.webgl.webgl2}, software=${softwareRenderer}`);
+  console.log(`JOA CAPTURA ${aspect} ${bots}x${bots}: gameplay final + ${rendered.length} vistas · avião GLB/faixa aplicados e em movimento · p95 ${performanceSample.frameMsP95.toFixed(2)} ms · ${out} · 0 pageerror · 0 asset essencial ausente · ${failedHTTP.length} 404 herdado(s) registrado(s)`);
 } finally {
   await browser.close();
 }
