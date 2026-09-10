@@ -328,3 +328,18 @@ Fila objetiva para o dono: abrir
 avaliar (1) saída dos três vãos do vestiário, (2) alternância entre piscina e corredores
 oeste/leste e (3) se a concentração inicial se desfaz sem engarrafar. PIS7 continua
 pendente desse aceite humano; nenhum merge ou deploy foi feito.
+
+### Correção do lock para instalação Linux
+
+A primeira normalização acima passou no macOS, mas o `npm ci` remoto em Linux
+revelou uma lacuna real: o lock não continha `@emnapi/core@1.11.3` e mantinha
+`@emnapi/wasi-threads@1.2.2`, embora o primeiro exija exatamente 1.2.3. Isso derrubou
+`build`, `smoke` e o preparo do portão antes de qualquer teste do mapa.
+
+Uma resolução limpa, feita só com `package.json` em diretório vazio e npm 10.9.2,
+identificou a árvore opcional correta. Para manter a correção mínima, o lock da
+branch recebeu somente as entradas ausentes: `@emnapi/core@1.11.3`,
+`@emnapi/wasi-threads@1.2.3` e as duas cópias aninhadas 1.2.2 exigidas pelos
+bindings WASI existentes. Um segundo diretório vazio concluiu `npm ci` com a mesma
+versão do npm; a instalação local, `eval:deps`, build e `check:deploy` também
+passam. A geometria e as evidências 8×8 não mudaram.
