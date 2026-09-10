@@ -52,11 +52,14 @@ export const VM_WEAPON = {
   // O pack autora a Deagle com 23–27° de pitch (hand cannon); no nosso mount o
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
   deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),
-  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
+  /* `golden` roteia para `/models/viewmodels/coro/<arma>-hires.glb`, versionado no repo.
+     Sem ele a arma cai em `/private-assets/`, que é pack pago e não existe no clone —
+     o GLB estava completo (Equip/Idle/Reload/Shoot) e mesmo assim não desenhava. */
+  pistol: W('pistol', { baked: true, golden: true, runtime: 'family', timing: 'gameplay' }),
   /* trim: a mão da família ak fica 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
      Delta medido no espaço do holder: [-0,2, -0,8, +1,1] cm. */
   m92: W('ak', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
-  akm: W('ak', { parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
+  akm: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
   g3: W('g3'),
   revolver38: W('revolver'),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
