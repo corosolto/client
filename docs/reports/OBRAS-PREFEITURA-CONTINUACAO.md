@@ -113,13 +113,13 @@ Observação do construtor, sem substituir aprovação humana: os corredores e c
 ## Validação de repositório
 
 - `npm run build`: verde.
-- `npm run check:deploy`: 38/39 antes dos commits; a única falha era `eval:docsautoria` porque os documentos gerados ainda estavam modificados. Repetir após os checkpoints.
+- `npm run check:deploy`: 39/39 verde após os checkpoints e a regeneração documental.
 - `npm run setup`: instalou dependências, áudio e decals, mas retornou vermelho por 17 arquivos de soundscape ausentes na alpha.246. O `eval:assetfetch` do `check:deploy` passou, portanto o débito é herdado e não foi corrigido nesta lane de mapa.
 
 ## Pendências e próximo passo
 
-1. Repetir `check:deploy` e `check:fast` depois de versionar os checkpoints.
-2. Abrir draft PR contra `main` e preservar esta branch sem merge/deploy.
-3. O dono deve jogar a URL local em 5x5 e 8x8, testar as três rotas dos dois lados, subir nas duas torres e verificar CTF.
-4. Só após aceite estrutural, abrir uma fase visual separada para escala/ancoragem da maquinaria, paleta, iluminação e identidade de prefeitura brasileira.
-
+1. `npm run check:deploy`: 39/39 verde após os checkpoints.
+2. `npm run check:fast`: 134/135 verde; somente `audio:check` falhou porque `npm run setup` materializou 442 arquivos enquanto o manifest da alpha.246 declara 66. A lane não executou `npm run audio`, pois isso alteraria o domínio compartilhado de áudio. O gate causal `eval:obras` passou dentro dessa suíte.
+3. Abrir draft PR contra `main` e preservar esta branch sem merge/deploy.
+4. O dono deve jogar a URL local em 5x5 e 8x8, testar as três rotas dos dois lados, subir nas duas torres e verificar CTF.
+5. Só após aceite estrutural, abrir uma fase visual separada para escala/ancoragem da maquinaria, paleta, iluminação e identidade de prefeitura brasileira.
