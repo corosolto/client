@@ -228,14 +228,18 @@ def feed_pose(frame: int) -> Vector:
 
 
 def feed_weight(frame: int) -> float:
+    # A pose-base já conduz a mão até a arma. O IK só fecha os últimos
+    # centímetros sobre a portinhola; influência total alonga o braço e traz a
+    # luva para o centro da câmera.
+    contact = 0.75
     if frame < 8:
         return 0.0
     if frame < 16:
-        return smooth((frame - 8) / 8)
+        return contact * smooth((frame - 8) / 8)
     if frame <= 67:
-        return 1.0
+        return contact
     if frame < 80:
-        return 1.0 - smooth((frame - 67) / 13)
+        return contact * (1.0 - smooth((frame - 67) / 13))
     return 0.0
 
 
@@ -376,7 +380,10 @@ for frame in range(16):
     amount = smooth(frame / 7) if frame <= 7 else 1.0 - smooth((frame - 7) / 8)
     transform = lever_matrix(amount)
     target.location = gun.matrix_world @ (transform @ lever_contact)
-    ik_r.influence = 0.82
+    # O alvo está no espaço da arma e a corrente do braço é longa. Uma
+    # influência discreta conserva a empunhadura e comunica o ciclo da
+    # alavanca sem projetar a mão forte contra a câmera.
+    ik_r.influence = 0.10
     bpy.context.view_layer.update()
     shoot_poses.append({bone.name: bone.matrix.copy() for bone in rig.pose.bones})
 hand_r.constraints.remove(ik_r)
