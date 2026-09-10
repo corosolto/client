@@ -3,11 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { WEAPON_IDS } from '../../public/js/weapons.js';
 import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
 import { AUTHORED_VM_ENABLED } from '../../public/js/authoredvm.js';
 
-const root = path.resolve(import.meta.dirname, '../..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const checks = [];
 const check = (ok, label, detail = '') => {
   checks.push({ ok: Boolean(ok), label, detail });
