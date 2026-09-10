@@ -61,6 +61,21 @@
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
       "rebuild": "tools/viewmodels/prep/rifles-famas-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
+    },
+    "m92": {
+      "family": "ak",
+      "file": "viewmodels/ak/m92-baked-runtime.glb",
+      "sourceSha256": "575ff58ae569392386edd2d8147904dd9e9dd75cb8979c1a95196457dbf70230",
+      "sourceBytes": 442856,
+      "productSha256": "491964e9efb304553821293e874ab464b2078c84a52b719f78a801e36edae95f",
+      "productBytes": 2749676,
+      "sha256": "491964e9efb304553821293e874ab464b2078c84a52b719f78a801e36edae95f",
+      "bytes": 2749676,
+      "mechanism": "complete-curved-rock-in-mag/right-side-handle-empty-reload",
+      "ready": false,
+      "sourceBranch": "codex/vm-prep-rifles",
+      "sourceCommit": "ea022c3c0",
+      "rebuild": "tools/viewmodels/prep/rifles-m92-final.py + optimize_paid_family.mjs"
     }
   }
 }
