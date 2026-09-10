@@ -260,10 +260,10 @@ histórica; não autorizam transplantar a pilha.
 - **tecnicamente fechadas, aguardando revisão humana:** Mosin, SVD e SKS;
 - **tecnicamente fechadas, aguardando revisão humana:** Rem700 e G3SG1 agora também têm rebuild,
   hashes, mutantes e 24 capturas reais; continuam opt-in e `ready:false`;
-- **tecnicamente fechadas, aguardando revisão humana:** M4, MD97 e SCAR com seis clipes,
-  carregadores separados e mãos preservadas por root comum; a SCAR também move o comando lateral;
+- **tecnicamente fechadas, aguardando revisão humana:** M4, MD97, SCAR e FAMAS com seis clipes,
+  carregadores separados e mãos; SCAR e FAMAS também movem seus comandos próprios;
 - **reprovadas:** LMG, shotgun e recargas M4 anteriores;
-- **receita sem produto final:** carabina, FAMAS e M92;
+- **receita sem produto final:** carabina e M92;
 - **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, AKM, G3, Tavor, M400 e AWP.
 
 O rebuild DMR encontrou um falso verde na branch fonte: os nós rígidos eram anexados contra a bind
@@ -294,14 +294,15 @@ CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels
 Abrir somente após o comando:
 
 ```text
-http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,mosin,svd,sks,rem700,g3sg1&vmqa=precision
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,famas,mosin,svd,sks,rem700,g3sg1&vmqa=precision
 ```
 
 Índice de revisão: (1) AK idle/reload e troca para faca; (2) fallback ao desativar `vmauthored`;
 (3) M4 equip/shoot/recarga tática/recarga vazia/inspect/ADS; (4) MD97 identidade/pente/
-recargas/inspect/ADS; (5) SCAR pente/comando lateral/inspect/ADS; (6) Mosin shoot/ferrolho/reload/inspect/ADS;
-(7) SVD 30 trocas ou recargas sem sumir; (8) SKS reload/inspect/ADS; (9) Rem700 shoot/ferrolho/
-reload/ADS; (10) G3SG1 recarga tática/ADS; (11) repetir
+recargas/inspect/ADS; (5) SCAR pente/comando lateral/inspect/ADS; (6) FAMAS pente traseiro/
+comando superior/ADS; (7) Mosin shoot/ferrolho/reload/inspect/ADS; (8) SVD 30 trocas ou recargas
+sem sumir; (9) SKS reload/inspect/ADS; (10) Rem700 shoot/ferrolho/reload/ADS; (11) G3SG1 recarga
+tática/ADS; (12) repetir
 em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
 proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
 
@@ -346,3 +347,14 @@ segue `ready:false`, com AR/global off até revisão humana. Recibo:
 
 Checkpoints: `35ad8e345`, `50d00eb39`, `c684f12fd`. Próxima arma: SCAR; precisa de pente
 integral e comando lateral próprio, sem promover o fragmento reprovado da preparação.
+
+## Marco rifles — FAMAS reautorada
+
+A FAMAS agora preserva corpo bullpup próprio, pente traseiro completo e comando superior sob a
+alça. A trajetória de recarga foi reautorada para levar a mão esquerda ao pente traseiro: menor
+distância medida de 0,1000 m no ciclo tático e 0,0471 m no vazio. O comando superior só opera na
+recarga vazia. Nove mutantes de asset, seis de lifecycle, 30 ciclos/540 amostras e 20 capturas
+reais passaram; 3:2 e 16:9 mostram a silhueta/ADS, ainda sem substituir revisão humana.
+
+Recibo: [`VIEWMODEL-RIFLES-FAMAS-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-FAMAS-ALPHA246-2026-09-10.md).
+Checkpoints: `ad9438253`, `49eadfb17`, `aa25a86ef`. Próxima arma: M92.
