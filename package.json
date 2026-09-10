@@ -95,6 +95,7 @@
     "eval:vm-identity": "node tools/eval/authored-identity-check.mjs",
     "eval:vm-ads": "node tools/eval/authored-ads-check.mjs",
     "eval:vm-serving": "node tools/eval/authored-serving-check.mjs",
+    "eval:vm-consistencia": "node tools/eval/vm-consistencia-check.mjs",
     "eval:vm-attach": "node tools/eval/vm-attach-fallback-check.mjs",
     "eval:vm-attach-legado": "node tools/eval/vm-attach-fallback-check.mjs --caminho=legado --arma=m92 --porta=8158",
     "check:vm": "node tools/eval/runner.mjs eval:vmrecoil eval:melee-vm eval:vm-catalog eval:vm-serving eval:vm-identity eval:vm-ads eval:vm-attach eval:vm-attach-legado",
