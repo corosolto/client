@@ -109,3 +109,7 @@ Ordem comprovada pelo inventário:
 
 Checkpoint documental: `41113d742`; `npm run check:deploy` passou 39/39 com Node 23 depois de
 instalar as dependências do worktree. Draft de acompanhamento: client#572.
+
+O censo das dezoito worktrees anteriores, incluindo conteúdo local não enviado e assets ignorados,
+está em [`VM-WORKTREES-CENSUS-2026-09-10.md`](VM-WORKTREES-CENSUS-2026-09-10.md). Ele substitui
+a suposição inicial de que os sete PRs continham todas as fontes relevantes.
