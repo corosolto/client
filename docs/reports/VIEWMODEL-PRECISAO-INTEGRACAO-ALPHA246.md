@@ -287,7 +287,21 @@ A fundação requerida por este plano foi portada por símbolos nos checkpoints 
 a visibilidade com fallback até a malha existir e descarta conclusões assíncronas fora do token
 ativo. AK e faca podem ser avaliadas somente por opt-in; PT-38 permanece fail-closed.
 
-Esse marco não libera a precisão. Ainda faltam capturas frescas 3:2/16:9 da fundação no Game real
-e aceite humano; Mosin/SVD/SKS continuam sem assets publicados, sem `baked:true` e sem override
-de produção. Evidência consolidada:
-[`VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md`](VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md).
+Esse marco não liberou a precisão. O marco seguinte integrou os três assets privados somente como
+candidatos opt-in; o registro atual está abaixo.
+
+## Integração candidata executada em 10/09/2026
+
+As duas interfaces bloqueadas foram corrigidas antes do staging: o gate aceita raízes por CLI e o
+otimizador aceita um único `*-baked-runtime.glb`, com mutantes que provam a raiz e o output
+isolados. Mosin, SVD e SKS usam `baked:true`, mas as três famílias seguem `ready:false`, a ativação
+global segue desligada e nenhum privado foi versionado.
+
+Fonte e outputs otimizados passaram T/M/C/F/A com os doze mutantes. O lifecycle da SVD passou 30
+ciclos e 630 amostras alternando 1440×960/1440×810; 42 capturas reais confirmaram que ela não some
+em idle, tiro, recarga ou entrada do ADS. A folha visual, porém, reprovou a promoção: Mosin/SKS têm
+uma peça bege dominante e a SVD tem mangas/antebraços grandes demais. Nenhum `ready:true` pode ser
+aberto antes da correção e nova revisão humana.
+
+Evidência, hashes, comandos e limites:
+[`VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md`](VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md).

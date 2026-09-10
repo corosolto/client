@@ -69,8 +69,9 @@ registrando as dívidas do alpha.246. O relatório gerado não foi commitado só
 
 ## O que falta para revisão visual
 
-Ainda não há captura fresca sobre alpha.246. Antes de abrir qualquer `ready:true`, executar no
-Game real, em canvas fixo:
+Este era o estado ao fechar a fase 1. A fase 2 já capturou AK, faca, fallback e precisão em
+1440×960/1440×810, mas ainda não cobriu toda a matriz abaixo e reprovou visualmente os três
+candidatos novos. Antes de abrir qualquer `ready:true`, completar no Game real:
 
 1. 1440×960 (3:2) e 1440×810 (16:9), uma sessão por aspecto;
 2. AK: idle, saque, tiro, início/contato/fim da recarga, troca para faca e volta, ADS e HUD;
@@ -86,9 +87,9 @@ Dívidas conhecidas que a captura deve tratar como falha real, não como detalhe
 - Mítico: não existe atlas próprio aprovado, portanto aparece com perfil neutro nesta bancada;
 - faca: reconstrução fonte a fonte do movimento ainda não é autônoma neste checkout.
 
-Mosin, SVD e SKS não receberam assets, `baked:true`, ativação nem captura nesta fase. A sequência
-deles continua em `VIEWMODEL-PRECISAO-INTEGRACAO-ALPHA246.md`, depois que esta fundação passar
-nas duas proporções.
+Mosin, SVD e SKS não receberam assets nesta fase histórica. A fase 2 os integrou como candidatos
+privados `baked:true`, ainda `ready:false`, e está registrada em
+`VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md`.
 
 ## Checkpoints
 

@@ -212,4 +212,17 @@ hashes publicados no build batem com a fonte. O marco foi publicado no draft #57
 `0ef681a2e6286c5eb728c386ae9389d3378ed72b`. Ainda faltam captura fresca 3:2/16:9 e revisão
 humana no Game real. A lista de rotas, evidências pendentes, dívidas de aspecto e limites está em
 [`VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md`](VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md).
-A etapa de Mosin/SVD/SKS permanece bloqueada até esse aceite e não foi iniciada.
+
+## Precisão integrada como candidata fechada
+
+Mosin/SVD/SKS foram staged fora do Git, otimizadas e ligadas ao runtime somente por
+`vmauthored=1&vmweapon=mosin,svd,sks`. O gate configurável e o otimizador de output único foram
+implementados com mutantes. Fonte e otimizado passaram T/M/C/F/A e os doze controles vermelhos;
+a matriz da SVD passou 30 ciclos/630 amostras sem desaparecimento.
+
+A captura real produziu 42 frames em 1440×960/1440×810 para AK, faca, fallback e as três armas de
+precisão. A promoção visual foi reprovada: a peça bege de Mosin/SKS domina o quadro, e os
+antebraços/mangas da SVD estão grandes demais. As três famílias continuam `ready:false`, o
+fallback das 26 armas está preservado e nenhum asset privado entrou no Git. O próximo passo é
+corrigir os candidatos na fonte e recapturar a matriz completa; detalhes e comando único estão em
+[`VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md`](VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md).
