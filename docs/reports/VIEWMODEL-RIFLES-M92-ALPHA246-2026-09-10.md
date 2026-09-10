@@ -71,20 +71,19 @@ inspect e linha de ADS nas duas proporções. Três pontos permanecem deliberada
 Ruben deve julgar esses pixels e o contato durante a ação completa no jogo antes de qualquer
 `ready:true`. Checkpoints: `f71613c69` (reautoria) e `71c4f0408` (runtime opt-in e evidência).
 
-## Bloqueio de preview consolidado
+## Preview consolidado isolado
 
-O comando consolidado continua fail-closed. Antes desta captura, o arquivo externo da Mosin mudou
-de 5.298.504 bytes / `94386be…` para 5.252.988 bytes /
-`e8d734…`; `prepare_precision_preview.mjs` recusou corretamente materializar a raiz. A M92 foi
-capturada contra a raiz já validada e o symlink foi desmontado depois. Não se deve ignorar o hash,
-substituir a Mosin ou chamar o preview consolidado de reproduzível até identificar/restaurar esse
-drift externo. As capturas miraram somente a M92, cujo hash continuou válido, enquanto o symlink
-de staging ainda apontava para a raiz externa; depois ele foi desmontado. O gate técnico isolado
-da M92 continua reproduzível:
+Antes desta captura, o arquivo externo da Mosin mudou de 5.298.504 bytes /
+`94386beceefde96a481458c296f616178ae56f8a1a70b8ae63be8697841655a2` para 5.252.988 bytes /
+`e8d73477705e142f79da1032bf2d583f149174df659166e1c5408b6053e4b2d3`;
+`prepare_precision_preview.mjs` recusou corretamente materializar a raiz. O arquivo alterado não
+foi sobrescrito. A continuidade posterior criou um snapshot isolado com a fonte validada da Mosin
+e registrou os dois hashes, mantendo o produto divergente fail-closed. O preview consolidado agora
+é reproduzível contra esse snapshot imutável:
 
 ```bash
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
 export PATH="/Users/ruben/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH"
-CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-root \
-  npm run eval:vm-rifle-m92
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/ede70146f-8de215ed \
+  npm run preview:vm-precision
 ```
