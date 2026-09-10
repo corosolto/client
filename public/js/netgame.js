@@ -416,7 +416,7 @@ class Netcode {
       if (!vic) return;
       try { game._feed(att, vic, w, h); } catch { /* HUD */ }
       if (vic === p) { if (att && !this.espectador) game._noteHit(att, w, d, h, dist(att)); }
-      else this.morteRemota(vic, att);
+      else this.morteRemota(vic, att, h);
     } else if (e.k === 'drop') {
       this._dropDeRede(e);
     } else if (e.k === 'gone') {
@@ -464,7 +464,7 @@ class Netcode {
         if (this._evOn) this.limparDropsDeRede();   // o servidor zera `drops` no _startRound sem mandar `gone`
         game._resultado = null;
         game._showScoreboard(false);
-        game.mk.life = 0; game.mk.count = 0;
+        game._resetKillSequence();
         game._banner(frase('round', game.roundNum), game.ctf
           ? frase('alvoBandeiras', game.capsToWin)
           : (game.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
@@ -480,7 +480,7 @@ class Netcode {
 
   /* Morte de remoto no online: o `_kill` local não roda — replica só o feedback dele (sting,
      kill confirm/multikill quando VOCÊ mata, poça). A morte em si é do servidor. BUG-116. */
-  morteRemota(ent, att) {
+  morteRemota(ent, att, head = false) {
     const game = this.game, p = game.player;
     try {
       const d = ent.pos ? ent.pos.distanceTo(game.camera.position) : 0;
@@ -489,18 +489,7 @@ class Netcode {
       game.sfx.death(ent.def?.id, Math.max(0, 1 - d / 55), pan, Math.min(0.25, d / 343));
     } catch { /* ctx mudo */ }
     if (att === p && !this.espectador) {
-      try { game.sfx.killConfirm(); } catch { /* ctx mudo */ }
-      const mk = game.mk;
-      if (game.time < mk.until) mk.count++; else mk.count = 1;
-      mk.until = game.time + 4.5; mk.life++;
-      mk.best = Math.max(mk.best || 0, mk.count);
-      const tiers = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'megakill' };
-      const labels = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
-      const kind = mk.count >= 6 ? 'godlike' : (tiers[mk.count] || (mk.life === 5 ? 'killingspree' : null));
-      let announced = false;
-      if (kind) { try { game._mkBanner(labels[kind]); announced = game.sfx.general(kind); } catch { /* HUD */ } }
-      if (!announced) announced = game.sfx.characterVoice(att.def?.id, 'kill', { fallbackFaction: game._voiceKey(att.team) });
-      if (!announced && !game.sfx.general('kill')) game.sfx.voice(game._voiceKey(att.team));
+      game._playerKillFeedback(att, head);
     } else if (att && att.team === p.team) {
       try {
         game.sfx.characterVoice(att.def?.id, 'kill', { fallbackFaction: game._voiceKey(att.team) });
@@ -628,7 +617,7 @@ class Netcode {
      FEEDBACK; posição, vida e instante do respawn continuam vindo do servidor. */
   playerDied(e, snap) {
     const game = this.game;
-    game.mk.life = 0;   // a sequência de abates morre com você (como no _kill)
+    game._resetKillSequence();
     try { game._scope(false, true); } catch { /* sem luneta */ }
     if (game.el.respawn) game.el.respawn.classList.remove('hidden');
     try { game.sfx.death(game.player.def?.id); } catch { /* ctx mudo */ }

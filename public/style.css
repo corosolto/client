@@ -984,6 +984,19 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
   text-shadow:0 2px 4px rgba(0,0,0,.8);
   opacity:0;transform:scale(1.35);transition:all .16s cubic-bezier(.16,1,.3,1);pointer-events:none}
 #mk-banner.show{opacity:1;transform:scale(1);letter-spacing:8px}
+/* Sequência da vida atual: usa a lima e os cortes diagonais do HUD do CSBrasil. A referência
+   funcional é o contador central de abates de arena; nenhum asset ou layout foi copiado. */
+#kill-streak{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);display:flex;
+  align-items:center;gap:8px;min-width:166px;height:38px;padding:0 15px 0 11px;
+  color:var(--aaa-lime,#b4d92e);background:rgba(10,10,12,.78);border-block:1px solid rgba(180,217,46,.5);
+  clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);pointer-events:none}
+#kill-streak-count{font-family:var(--font);font-size:30px;font-weight:800;line-height:1;
+  font-variant-numeric:tabular-nums;text-shadow:0 2px 6px rgba(0,0,0,.7)}
+#kill-streak .ks-label{font:700 10px/1 var(--aaa-font-body);letter-spacing:2.5px;color:#ecebe6}
+.ks-mark{display:flex;gap:2px;align-items:flex-end;height:19px;transform:skew(-13deg)}
+.ks-mark i{display:block;width:3px;background:currentColor}.ks-mark i:nth-child(1){height:9px}.ks-mark i:nth-child(2){height:14px}.ks-mark i:nth-child(3){height:19px}
+#kill-streak.pulse{animation:ksPulse .26s cubic-bezier(.16,1,.3,1)}
+@keyframes ksPulse{0%{transform:translateX(-50%) scale(.82);filter:brightness(1.9)}100%{transform:translateX(-50%) scale(1);filter:brightness(1)}}
 /* PROTEGIDO é estado DO JOGADOR: mora junto da vida (canto inferior esquerdo), não no
    centro superior — ali colidia com a faixa de objetivos do CTF e disputava o centro. */
 #prot-badge{position:absolute;left:68px;bottom:108px;
