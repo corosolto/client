@@ -15,8 +15,10 @@ const OUT = path.resolve(process.env.CSBRASIL_VM_EVIDENCE_DIR
 const errors = [];
 const records = [];
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-const root = execSync('npm root -g').toString().trim();
-const playwright = await import(pathToFileURL(`${root}/playwright/index.js`).href);
+const localPlaywright = path.join(ROOT, 'node_modules/playwright/index.js');
+const playwrightEntry = fs.existsSync(localPlaywright) ? localPlaywright
+  : `${execSync('npm root -g').toString().trim()}/playwright/index.js`;
+const playwright = await import(pathToFileURL(playwrightEntry).href);
 const chromium = playwright.chromium || playwright.default?.chromium;
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Evidência no jogo real para o candidato M4. O diretório padrão é privado e
+// Evidência no jogo real para o candidato FAMAS. O diretório padrão é privado e
 // externo ao Git. Os clipes são pausados em tempos determinísticos.
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -11,7 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const PORT = process.argv[2] || '4401';
 const BASE = `http://127.0.0.1:${PORT}`;
 const OUT = path.resolve(process.env.CSBRASIL_VM_EVIDENCE_DIR
-  || '/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/evidence/rifles-m4-20260910');
+  || '/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/evidence/rifles-famas-20260910');
 const errors = [];
 const records = [];
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
@@ -30,12 +30,12 @@ for (const [aspect, width, height] of [['3x2', 1440, 960], ['16x9', 1440, 810]])
   page.on('console', (event) => {
     if (event.type() === 'error' && !/favicon/i.test(event.text())) errors.push({ aspect, kind: 'console', message: event.text().slice(0, 500) });
   });
-  const query = 'debug=1&auto=P,mst&vmweapon=m4&map=piscina_treta&armaslazy=0&vmauthored=1&vmqa=precision';
+  const query = 'debug=1&auto=P,mst&vmweapon=famas&map=piscina_treta&armaslazy=0&vmauthored=1&vmqa=precision';
   await page.goto(`${BASE}/?${query}`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.addStyleTag({ content: 'astro-dev-toolbar,#vm-precision-qa,#vm-debug-badge{display:none!important}' });
   await page.waitForFunction(() => window.__game?.state === 'live' && window.__vmPrecisionQa, null, { timeout: 180000 });
-  if (!await page.evaluate(() => window.__vmPrecisionQa.equip('m4'))) throw new Error(`${aspect}: M4 não equipou`);
-  await page.waitForFunction(() => window.__authoredVm?.entry?.('m4')?.mint?.active, null, { timeout: 120000 });
+  if (!await page.evaluate(() => window.__vmPrecisionQa.equip('famas'))) throw new Error(`${aspect}: FAMAS não equipou`);
+  await page.waitForFunction(() => window.__authoredVm?.entry?.('famas')?.mint?.active, null, { timeout: 120000 });
   await page.evaluate(() => {
     for (const bot of window.__game?.bots || []) { bot.nextShotAt = Infinity; bot.target = null; }
     window.__game.player.hp = 100; window.__game.player.alive = true;
@@ -43,9 +43,9 @@ for (const [aspect, width, height] of [['3x2', 1440, 960], ['16x9', 1440, 810]])
   await page.waitForTimeout(800);
 
   const snap = async (state) => {
-    const file = path.join(OUT, `m4-${state}-${aspect}.png`);
+    const file = path.join(OUT, `famas-${state}-${aspect}.png`);
     const runtime = await page.evaluate(() => {
-      const entry = window.__authoredVm.entry('m4');
+      const entry = window.__authoredVm.entry('famas');
       return { weapon: window.__authoredVm.weapon, visible: entry.mount.visible,
         mint: entry.mint.active.name, clips: [...entry.clips.keys()] };
     });
@@ -55,7 +55,7 @@ for (const [aspect, width, height] of [['3x2', 1440, 960], ['16x9', 1440, 810]])
   };
   const pose = async (clipName, fraction) => page.evaluate(({ clipName, fraction }) => {
     const vm = window.__authoredVm;
-    const entry = vm.entry('m4');
+    const entry = vm.entry('famas');
     entry.mixer.stopAllAction();
     const clip = entry.clips.get(clipName);
     const action = entry.mixer.clipAction(clip);
@@ -75,13 +75,13 @@ for (const [aspect, width, height] of [['3x2', 1440, 960], ['16x9', 1440, 810]])
   await page.waitForFunction(() => window.__authoredVm?.adsAmount > 0.9, null, { timeout: 5000 });
   await snap('ads');
   await page.close();
-  console.log(`M4_CAPTURE ${aspect} ok`);
+  console.log(`FAMAS_CAPTURE ${aspect} ok`);
 }
 await browser.close();
 const fatalErrors = errors.filter((item) => item.kind === 'pageerror'
   || /\[paid-viewmodel\]|THREE\.WebGLProgram|WebGL creation failed/i.test(item.message));
 fs.writeFileSync(path.join(OUT, 'capture.json'), `${JSON.stringify({ schemaVersion: 1,
-  kind: 'real-browser-rifle-m4-capture', revision: execSync('git rev-parse HEAD').toString().trim(),
+  kind: 'real-browser-rifle-famas-capture', revision: execSync('git rev-parse HEAD').toString().trim(),
   base: BASE, records, errors, fatalErrors }, null, 2)}\n`);
 console.log(JSON.stringify({ ok: fatalErrors.length === 0, captures: records.length, errors: errors.length,
   fatalErrors: fatalErrors.length, output: OUT }));
