@@ -142,5 +142,12 @@ npm run build
 npm run check:deploy
 ```
 
-Não houve merge ou deploy. O commit, o push, o PR draft e o estado do CI serão
-registrados após a publicação da branch.
+Entrega registrada:
+
+- implementação e provas: commit `7460a6a68`;
+- branch publicada: `codex/amazonia-8x8-perf-r2`;
+- PR draft: [#575](https://github.com/corosolto/client/pull/575);
+- `check:deploy`: 39/39 verde no commit publicado;
+- CI remoto: aguardando a primeira execução no momento deste registro.
+
+Não houve merge ou deploy.
