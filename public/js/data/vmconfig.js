@@ -59,7 +59,7 @@ export const VM_WEAPON = {
   revolver38: W('revolver'),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
-  md97: W('ar', { recoilScale: 1.8 }),
+  md97: W('ar', { baked: true, frame: 'family', recoilScale: 1.8 }),
   carbine: W('ar'),
   m400: W('sniper'),
   mosin: W('bolt', { baked: true }),
