@@ -46,12 +46,12 @@ this page was aging at the very first commit — see
 | `main.js` | 3,407 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 55 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props in GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props in GLB | 156 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Versioned animation clips | 681 | `git ls-files public/models/anims \| wc -l` |
 | Playable characters | 53, in 6 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 16 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 350 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Harness scripts | 352 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Pipeline scripts | 75 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.0.0-alpha.246` | `public/js/version.js` and `package.json` (match) |
