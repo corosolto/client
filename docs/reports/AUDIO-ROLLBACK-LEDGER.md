@@ -2,6 +2,21 @@
 
 Branch: `claude/audio-funkeiros-urbanas-rollback` · PR #531 · Dono da decisão auditiva: Ruben.
 
+## Fechamento de 10/09/2026
+
+- O dono rejeitou as vozes de personagem geradas por IA e escolheu o retorno ao estado
+  v7. A lane de aplicação é `codex/audio-fu-runtime-rollback`, sobre
+  `origin/main@2115d5e2c`.
+- O manifest vivo ainda expunha 9 Funkeiros × 4 eventos Gemini. Tribos Urbanas não tinha
+  `characterVoice` estruturado, mas seu pool ainda continha quatro anexos Fish além do v7.
+- O runtime agora filtra F/U pela allowlist exata v7, ignora `characterVoice` estruturado
+  nessas facções e falha fechado se restarem apenas takes novos.
+- O lote Gemini permanece catalogado, mas sua autorização de build foi revogada. Nenhum
+  pack privado, áudio ou música foi editado/publicado.
+- Evidência e critérios: `docs/reports/AUDIO-FU-RUNTIME-ROLLBACK-2026-09-10.md`.
+- Gate novo `eval:audiofurollback` verde; mutante `fu-ia-volta` detectado pelo gate novo,
+  `eval:audiovoicemix` e `eval:charvoice`.
+
 ## Objetivo
 
 Preparar o rollback seletivo das vozes de personagem de `F`/`U` com comparação v7×v8
