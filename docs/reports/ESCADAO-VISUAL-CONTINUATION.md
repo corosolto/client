@@ -291,3 +291,35 @@ Elevar Escadão (Morro) do PR #436: subida, becos e patamares de um bairro brasi
 - O primeiro `pr-fast` do HEAD `7bb6cf5f` reprovou somente `eval:deps`: o banco do `npm audit` passou a classificar como altas/crítica as versões travadas de `astro`, `js-yaml`, `sharp` e `svgo`. A falha foi reproduzida localmente sem relação com a geometria do mapa.
 - `npm audit fix --omit=dev` atualizou apenas `package-lock.json`, mantendo os intervalos declarados em `package.json`. O lock foi normalizado com npm 10.9.8, igual ao CI em Node 22, para registrar também os peers WASI opcionais; instalações limpas com npm 10 e 11 retornam zero vulnerabilidades. `eval:deps`, build, `check:deploy` 37/37 e os oito gates estruturais/jogáveis do Escadão passam.
 - Próximo: publicar o lock corrigido, aguardar a nova CI e manter a PR em draft até o dono validar visualmente o candidato R7 na arena local.
+
+## Reteste independente do HEAD da PR #567 (10/09/2026)
+
+A inspeção partiu do checkout limpo `codex/escadao-r6-stack` em
+`867d06a436aabf342bf9eae8241fd17a6e654c0a`, sem portar ou alterar geometria. O
+builder do Escadão tem SHA-256
+`01cdeda0575f9892cb8ee74fdcc04bdc201e936490b64c1bfaeaa79a45bff852`, idêntico
+ao módulo servido pelo Astro em `http://127.0.0.1:8164`.
+
+O jogo real no Chrome/WebGL confirmou a correção já presente: a casa central tem
+acesso superior e inferior, uma janela voltada ao escadão e outra voltada à rua,
+ambas ligadas ao mesmo piso em 2,75 m. Os dois sobrados do mirante têm entrada
+voltada ao respawn superior, interior caminhável e janela oposta. As quatro rotas
+foram percorridas até o interior e de volta; quatro linhas de tiro e revide ficaram
+livres; nenhuma janela expõe diretamente os slots de spawn.
+
+A evidência fresca está em `artifacts/escadao-r7/retest-20260910/`: dez PNGs
+1200×800 e `receipt.json`. `eval:escadao-casas` passou 33/33; rota passou 10/10
+com 0/1128 pontos altos lendo spawn; home, estrutura, descida, detalhes, contrato
+e mapcontract passaram. O jogo servido também carregou 5×5 e 8×8. `build` e
+`check:deploy` passaram, este último em 37/37.
+
+Não foi encontrado um defeito novo que justificasse mexer novamente na geometria.
+O candidato está pronto para feedback humano no URL abaixo, ainda sem aprovação de
+equilíbrio ou merge:
+
+`http://127.0.0.1:8164/?debug=1&map=escadao&auto=B,sertanejo`
+
+Fila de teste: entrar pelas duas rotas da casa central, atirar pelas duas janelas;
+depois entrar em cada sobrado do mirante a partir do respawn superior e testar tiro,
+revide, recuo e saída sob combate. A PR #567 continua draft e não deve ser mergeada
+antes desse retorno.
