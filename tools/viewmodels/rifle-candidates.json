@@ -16,6 +16,21 @@
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
       "rebuild": "tools/viewmodels/prep/rifles-m4-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
+    },
+    "md97": {
+      "family": "ar",
+      "file": "viewmodels/ar/md97-baked-runtime.glb",
+      "sourceSha256": "16dd73c34583cd96ec6bfe71771ad32fe98caadf3966bb70f15c6d43d67ec9d5",
+      "sourceBytes": 280416,
+      "productSha256": "d0989e2f5688ad44d3338cf541fe2345036cea12d57c4695250344362059567f",
+      "productBytes": 1471632,
+      "sha256": "d0989e2f5688ad44d3338cf541fe2345036cea12d57c4695250344362059567f",
+      "bytes": 1471632,
+      "mechanism": "front-20-round-detachable-mag/bolt-release",
+      "ready": false,
+      "sourceBranch": "codex/vm-prep-rifles",
+      "sourceCommit": "ea022c3c0",
+      "rebuild": "tools/viewmodels/prep/rifles-md97-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
     }
   }
 }

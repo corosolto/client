@@ -14,8 +14,9 @@ for (const candidate of [input, output]) {
 }
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const document = await io.read(input);
-const root = document.getRoot().listNodes().find((node) => node.getName() === 'VM_PACKAGE_M4');
-if (!root) throw new Error('VM_PACKAGE_M4 ausente');
+const rootName = process.argv[4] || 'VM_PACKAGE_M4';
+const root = document.getRoot().listNodes().find((node) => node.getName() === rootName);
+if (!root) throw new Error(`${rootName} ausente`);
 root.setTranslation([0, 0, 0]);
 root.setRotation([0, 0, 0, 1]);
 root.setScale([1, 1, 1]);
