@@ -260,10 +260,10 @@ histórica; não autorizam transplantar a pilha.
 - **tecnicamente fechadas, aguardando revisão humana:** Mosin, SVD e SKS;
 - **tecnicamente fechadas, aguardando revisão humana:** Rem700 e G3SG1 agora também têm rebuild,
   hashes, mutantes e 24 capturas reais; continuam opt-in e `ready:false`;
-- **tecnicamente fechadas, aguardando revisão humana:** M4, MD97, SCAR e FAMAS com seis clipes,
-  carregadores separados e mãos; SCAR e FAMAS também movem seus comandos próprios;
+- **tecnicamente fechadas, aguardando revisão humana:** M4, MD97, SCAR, FAMAS e M92 com seis
+  clipes, carregadores separados e mãos; SCAR, FAMAS e M92 também movem seus comandos próprios;
 - **reprovadas:** LMG, shotgun e recargas M4 anteriores;
-- **receita sem produto final:** carabina e M92;
+- **receita sem produto final:** carabina;
 - **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, AKM, G3, Tavor, M400 e AWP.
 
 O rebuild DMR encontrou um falso verde na branch fonte: os nós rígidos eram anexados contra a bind
@@ -280,9 +280,10 @@ quatro commits preservam os binários fora do Git e não alteram o estado de apr
 
 ## Índice exato para revisão da manhã
 
-Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, M4, MD97, SCAR, Mosin,
-SVD, SKS, Rem700 e G3SG1. Um único
-servidor materializa os privados fora do Git e mantém a ativação global desligada:
+Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, M4, MD97, SCAR, FAMAS,
+M92, Mosin, SVD, SKS, Rem700 e G3SG1. A preparação do servidor mantém a ativação global desligada,
+mas está temporariamente bloqueada em fail-closed pelo drift externo da Mosin registrado no marco
+M92 abaixo:
 
 ```bash
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
@@ -294,15 +295,16 @@ CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels
 Abrir somente após o comando:
 
 ```text
-http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,famas,mosin,svd,sks,rem700,g3sg1&vmqa=precision
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,famas,m92,mosin,svd,sks,rem700,g3sg1&vmqa=precision
 ```
 
-Índice de revisão: (1) AK idle/reload e troca para faca; (2) fallback ao desativar `vmauthored`;
+Índice de revisão, assim que o drift externo for resolvido: (1) AK idle/reload e troca para faca;
+(2) fallback ao desativar `vmauthored`;
 (3) M4 equip/shoot/recarga tática/recarga vazia/inspect/ADS; (4) MD97 identidade/pente/
 recargas/inspect/ADS; (5) SCAR pente/comando lateral/inspect/ADS; (6) FAMAS pente traseiro/
-comando superior/ADS; (7) Mosin shoot/ferrolho/reload/inspect/ADS; (8) SVD 30 trocas ou recargas
-sem sumir; (9) SKS reload/inspect/ADS; (10) Rem700 shoot/ferrolho/reload/ADS; (11) G3SG1 recarga
-tática/ADS; (12) repetir
+comando superior/ADS; (7) M92 carregador curvo/comando lateral/recargas/inspect/ADS; (8) Mosin
+shoot/ferrolho/reload/inspect/ADS; (9) SVD 30 trocas ou recargas sem sumir; (10) SKS reload/
+inspect/ADS; (11) Rem700 shoot/ferrolho/reload/ADS; (12) G3SG1 recarga tática/ADS; (13) repetir
 em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
 proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
 
@@ -358,3 +360,19 @@ reais passaram; 3:2 e 16:9 mostram a silhueta/ADS, ainda sem substituir revisão
 
 Recibo: [`VIEWMODEL-RIFLES-FAMAS-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-FAMAS-ALPHA246-2026-09-10.md).
 Checkpoints: `ad9438253`, `49eadfb17`, `aa25a86ef`. Próxima arma: M92.
+
+## Marco rifles — M92 reautorada
+
+A M92 usa sua geometria pública própria sobre o rig, mãos e gramática da fundação AK aprovada. A
+preparação solda duplicatas exatas e separa o carregador curvo integral e o comando lateral
+direito. Seis ações, nove mutantes de asset e seis de lifecycle passaram; o lifecycle cobre 30
+ciclos/540 amostras. Vinte capturas reais cobrem 3:2 e 16:9, sem erro fatal de viewmodel/WebGL.
+
+A revisão humana deve decidir a apresentação vertical no fim da recarga, a distinção visual entre
+recarga tática e vazia e a ocupação inferior do ADS. A candidata segue `ready:false`, família AK e
+global off. O preview consolidado também permanece fail-closed porque a Mosin externa divergiu do
+hash/bytes do manifesto durante este marco; a M92 não foi usada para sobrescrever esse artefato.
+
+Recibo: [`VIEWMODEL-RIFLES-M92-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-M92-ALPHA246-2026-09-10.md).
+Checkpoints: `f71613c69`, `71c4f0408`. Próxima arma sem produto final: carabina. O AK golden já
+permanece preservado na fundação aprovada.
