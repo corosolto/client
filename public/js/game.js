@@ -2923,7 +2923,7 @@ export class Game {
       return el;
     };
     const weaponRow = panel.querySelector('[data-vmqa="weapons"]');
-    for (const [label, weapon] of [['AK', 'ak'], ['Faca', 'knife'], ['Mosin', 'mosin'], ['SVD', 'svd'], ['SKS', 'sks'], ['Fallback', 'pistol']]) {
+    for (const [label, weapon] of [['AK', 'ak'], ['Faca', 'knife'], ['M4', 'm4'], ['Mosin', 'mosin'], ['SVD', 'svd'], ['SKS', 'sks'], ['Fallback', 'pistol']]) {
       weaponRow.appendChild(button(label, () => equip(weapon)));
     }
     const actionRow = panel.querySelector('[data-vmqa="actions"]');
