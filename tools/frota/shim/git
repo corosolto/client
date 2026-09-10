@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Shim de `git` para a frota. Entra ANTES do git real no PATH do turno.
+#
+# POR QUE EXISTE
+# Prompt não é trava. Um agente com --dangerously-skip-permissions que "sabe" que
+# não deve tocar na main vai tocar na main no turno em que a instrução ficar longe
+# o suficiente no contexto. A única trava que vale é a que recusa a chamada.
+#
+# O QUE ELE RECUSA
+#   push para main/master        · a main é do dono, a frota só prepara
+#   push --force (sem lease)     · outra lane pode ter empurrado agora
+#   --no-verify                  · pula commit-msg/pre-push, que cobram Agent:,
+#                                  co-autoria de IA e o scanner de credencial
+#   trocar a worktree para a main · cada lane fica na sua branch
+#
+# O QUE ELE DEIXA PASSAR, DE PROPÓSITO
+#   `git checkout main -- <arquivo>` e `git checkout origin/main -- <arquivo>`:
+#   trazer UM arquivo da main é resolução de conflito legítima e acontece o tempo
+#   todo. Só a troca de branch é recusada.
+
+set -uo pipefail
+
+REAL=""
+for c in /opt/homebrew/bin/git /usr/bin/git /usr/local/bin/git; do
+  [ -x "$c" ] && REAL="$c" && break
+done
+[ -z "$REAL" ] && { echo "frota: git real não encontrado" >&2; exit 98; }
+
+recusa() {
+  echo "frota: RECUSADO — $1" >&2
+  echo "frota: veja tools/frota/GUARDRAILS.md. Registre no ledger e siga em frente." >&2
+  exit 97
+}
+
+for a in "$@"; do
+  [ "$a" = "--no-verify" ] && recusa "--no-verify pula os hooks que cobram Agent:, co-autoria de IA e credencial"
+done
+
+case "${1:-}" in
+  push)
+    for a in "$@"; do
+      case "$a" in
+        main|master|*:main|*:master|refs/heads/main|refs/heads/master)
+          recusa "push para a main. A frota prepara; quem integra é o dono." ;;
+        --force|-f)
+          recusa "--force puro apaga o push de outra lane. Use --force-with-lease." ;;
+      esac
+    done
+    ;;
+  checkout|switch)
+    # Só recusa TROCA DE BRANCH: se houver `--`, é checkout de arquivo e passa.
+    tem_sep=0
+    for a in "$@"; do [ "$a" = "--" ] && tem_sep=1; done
+    if [ "$tem_sep" = "0" ] && [ "$#" -le 3 ]; then
+      for a in "$@"; do
+        case "$a" in
+          main|master) recusa "trocar esta worktree para a main. Cada lane fica na sua branch." ;;
+        esac
+      done
+    fi
+    ;;
+esac
+
+exec "$REAL" "$@"
