@@ -5235,3 +5235,20 @@ comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 ### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527
 
 Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.
+
+### Amazônia 8×8 — lag ainda percebido em single-player, 10/09/2026
+
+Relato literal: “no amazonia 8x8 ainda ta dando muito lag no single player,
+idealmente não daria”. Baseline desta nova investigação: `origin/main` em
+`2115d5e2c`; nenhuma causa ou correção será declarada antes de comparar 5×5/8×8 e
+medium/low em processos Chrome/WebGL2 novos, incluindo custo de CPU, desenho,
+colisão/raycast e bots. A correção anterior de LOS continua presente, mas não prova
+que o frame completo ficou estável no dispositivo observado.
+
+Resolução r2: o baseline de hardware reproduziu p95 9,7 ms em 5×5 medium e 15,7 ms
+em 8×8 medium; low 8×8 ficou em 9,9 ms. O custo é combinado de preenchimento,
+sombras e pós sobre a cena larga, não uma regressão do índice de raycast. Mantendo
+todo o conteúdo, a resolução interna cai para 0,80 somente em Amazônia + medium +
+8×8. O novo processo pós mediu p95 10,0 ms e GPU p95 7,88 ms em 3:2; em 16:9,
+p95 16,2 ms e GPU p95 7,70 ms, sem frame acima de 100 ms. Provas, limites e receita:
+[`AMAZONIA-8X8-PERF-R2.md`](docs/reports/AMAZONIA-8X8-PERF-R2.md).

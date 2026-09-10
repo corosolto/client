@@ -22,6 +22,7 @@ import { PlayerRecorder } from './botbrain/recorder.js';   // BOTBRAIN: grava (e
 import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o vetor de estado do bot p/ a rede
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
+import { resolveMatchPixelRatio } from './renderbudget.js';
 
 import { WEAPONS } from './data/weapons.js';
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
@@ -2729,7 +2730,16 @@ export class Game {
   }
   _applyQuality() {
     const q = this.settings.quality;
-    this.renderer.setPixelRatio(q === 'high' ? Math.min(devicePixelRatio, 2) : q === 'med' ? 1 : 0.75);
+    const pixelRatio = resolveMatchPixelRatio({
+      quality: q,
+      mapId: this._mapId,
+      teamSize: this.settings.bots,
+      devicePixelRatio,
+    });
+    this.renderer.setPixelRatio(pixelRatio);
+    // O compositor guarda o próprio pixel ratio. Registrar na cena permite que bloom.js
+    // redimensione só os alvos deste jogo; previews/menu e outros mapas ficam intactos.
+    this.scene.userData.renderPixelRatio = pixelRatio;
     const shadows = q !== 'low';
     this.renderer.shadowMap.enabled = shadows;
     this.world.sun.castShadow = shadows;
