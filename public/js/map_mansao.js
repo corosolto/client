@@ -736,9 +736,9 @@ export function buildMansao(scene, T) {
     col(bx - (horiz ? .95 : .35), bx + (horiz ? .95 : .35), 0, .5, bz - (horiz ? .35 : .95), bz + (horiz ? .35 : .95));
     solids.push({ x0: bx - (horiz ? .95 : .35), x1: bx + (horiz ? .95 : .35), z0: bz - (horiz ? .35 : .95), z1: bz + (horiz ? .35 : .95) });
   }
-  // Postes em x=±2,3 com col ±0,18 (base real 0,34 m, mansao-glb-fit): colisor mais
-  // largo mata nós da grade pela inflação de 0,5 m do blocked() e derruba rota do CTF2.
-  for (const [px, pz] of [[-2.3, 17.4], [2.3, 22.6], [-2.3, 27.4], [2.3, 32.6]]) {
+  // Postes centrais com col ±0,18 (base real 0,34 m, mansao-glb-fit): o último sai
+  // do slot E(1,5;32), onde deixava só 0,8 m de folga lateral para o jogador.
+  for (const [px, pz] of [[-2.3, 17.4], [2.3, 22.6], [-2.3, 27.4], [6.5, 32.6]]) {
     jardimProp('poste_jardim', px, pz, 2.4, 0, 0, [.26, .26, 2.4]);
     col(px - .18, px + .18, 0, 2.4, pz - .18, pz + .18);
   }
@@ -1267,6 +1267,11 @@ export function buildMansao(scene, T) {
   linha(-13, -7.05, 2, -7.05, 1.2, .35);
   // jardim
   for (const jz of [18, 24, 30]) linha(-20, jz, 20, jz, 3.0);
+  // Flanco leste contínuo entre jardim e terraço. A grade regular termina em x=17,4;
+  // quando a rota interna ocupa a faixa central, faltava um segundo eixo realmente
+  // separado até a porta norte e as duas escadas acabavam convergindo no mesmo miolo.
+  // x=20 preserva 1,75 m até a face interna do muro e é chão livre no jogo real.
+  linha(20, 14, 20, -18, 2.0, .4);
   // O STEP global (3,4 m) caía exatamente sobre os montantes dos biombos e não
   // amostrava os vãos de 2 m. Estas duas linhas são o eixo navegável das portas.
   linha(-4.5, 32, -4.5, 26.5, .9, .2);
