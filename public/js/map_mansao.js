@@ -1267,10 +1267,8 @@ export function buildMansao(scene, T) {
   linha(-13, -7.05, 2, -7.05, 1.2, .35);
   // jardim
   for (const jz of [18, 24, 30]) linha(-20, jz, 20, jz, 3.0);
-  // Flanco leste contínuo entre jardim e terraço. A grade regular termina em x=17,4;
-  // quando a rota interna ocupa a faixa central, faltava um segundo eixo realmente
-  // separado até a porta norte e as duas escadas acabavam convergindo no mesmo miolo.
-  // x=20 preserva 1,75 m até a face interna do muro e é chão livre no jogo real.
+  // Segundo eixo jardim→terraço: x=20 fica 1,75 m da face interna do muro e
+  // mantém a alternativa à rota central até a porta norte (CTF2).
   linha(20, 14, 20, -18, 2.0, .4);
   // O STEP global (3,4 m) caía exatamente sobre os montantes dos biombos e não
   // amostrava os vãos de 2 m. Estas duas linhas são o eixo navegável das portas.
