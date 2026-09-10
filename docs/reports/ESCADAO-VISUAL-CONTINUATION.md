@@ -336,3 +336,29 @@ entradas opcionais para Linux/WASI. Uma instalação limpa em diretório tempor�
 com npm 10.9.2 passou, assim como `npm ci --ignore-scripts` e `eval:deps`, agora
 com zero vulnerabilidades altas não isentas. A correção é apenas de CI; o candidato
 visual e a fila de teste humano acima permanecem os mesmos.
+
+## R7.3 — validação dual-aspect, bots e CTF no HEAD do PR #567 (10/09/2026)
+
+A rodada partiu do HEAD remoto exato `2a54d5c99f76d6244c56322c35a863ee48f05ccd`, em checkout limpo e isolado. O PR #567 estava `MERGEABLE/CLEAN`, draft, com `pr-fast`, `portao-browser`, `smoke`, DCO e Vercel verdes. O builder local e o JavaScript servido em `http://127.0.0.1:8164` têm o mesmo SHA-256: `01cdeda0575f9892cb8ee74fdcc04bdc201e936490b64c1bfaeaa79a45bff852`.
+
+A geometria não foi alterada porque a inspeção e os gates confirmaram a correção presente. No Chrome/WebGL real, as dez vistas 1200×800 mostram a casa central com piso contínuo, acesso inferior e superior e janelas abertas para escada e rua; os dois sobrados do mirante mantêm entrada pelo percurso natural do respawn superior, interior ocupável e janela de contrajogo. As quatro rotas foram percorridas de ida e volta, as quatro linhas de tiro/revide ficaram livres e nenhuma delas lê diretamente um slot de spawn. Evidência ignorada pelo Git em `artifacts/escadao-overnight-20260910-r1/three-two/`.
+
+O gate de equipes deixou de apenas contar atores no mesmo viewport e agora exige:
+
+- 5×5 real em 1200×800 (3:2): 9 bots, 10 atores, 5 por time; os 9 bots se moveram ao menos 0,5 m em 6,01 s e o maior deslocamento foi 20,23 m;
+- 8×8 real em 1280×720 (16:9): 15 bots, 16 atores, 8 por time; os 15 bots se moveram ao menos 0,5 m em 6,01 s e o maior deslocamento foi 22,12 m;
+- posições finitas e dentro dos limites; quatro objetivos CTF, com os rótulos `MIRANTE`, `PATAMAR 2`, `PATAMAR 1` e `RUA`; dimensão, tamanho e SHA-256 de cada PNG; zero erro crítico de página, JavaScript ou GLB do Escadão.
+
+Os recibos e capturas dual-aspect ficam em `artifacts/escadao-overnight-20260910-r3/team-size/`. Os 404 registrados correspondem ao pack opcional de áudio/decalques ausente nesta worktree e não foram classificados como sucesso do mapa nem como regressão da lane.
+
+Os três mutantes novos foram exercitados: `viewport-unico` reprova por não entregar 16:9; `bots-imoveis` reprova com 0/9 bots em movimento; `ctf-ausente` reprova por remover os quatro objetivos. Os cinco mutantes das casas continuam vermelhos (`janela-fechada`, `janela-oposta-fechada`, `piso-reaberto`, `acesso-removido`, `casa-mirante-fechada`); os mutantes `escada-morta`, `sem-abrigo`, `parede` e `sem-guarda-p2` também são detectados. O automutante `sem-conexao-rua` confirma que o corte isola a rota para a Deagle.
+
+Uma amostra independente de navegação livre por 20 s, em 160 leituras, registrou os 7/7 bots com deslocamento significativo. Cada bot atravessou de 50,71 m a 62,58 m em relação ao início, cobrindo lances laterais, mirante e rua. O recibo, trilhas e mapa SVG/PNG estão em `artifacts/escadao-overnight-20260910-r3/bot-routes/`.
+
+O URL de teste humano permanece:
+
+`http://127.0.0.1:8164/?debug=1&map=escadao&auto=B,sertanejo`
+
+Fila humana: percorrer as duas entradas da casa central; atirar e receber revide pelas duas janelas; subir a partir do respawn superior e acessar os dois sobrados pelo percurso natural; testar recuo, congestionamento e exposição em combate 5×5 e 8×8. A evidência técnica está aprovada, mas equilíbrio e leitura visual continuam aguardando o dono. Sem merge ou deploy.
+
+Fechamento local da rodada: `npm run build` passou em alpha.240 e `npm run check:deploy` passou 37/37. O gate legado `eval:escadao-menu`, que não faz parte do `check:deploy`, expirou antes do mapa ao tentar clicar no seletor single-player oculto (`[data-act="sp"]`); a falha é anterior à arena e não foi mascarada nem usada como aprovação. Corrigi-la exigiria tocar o fluxo de menu compartilhado, fora do escopo desta lane.
