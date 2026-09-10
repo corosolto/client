@@ -957,6 +957,7 @@ class CharNoBloomPass extends Pass {
 export function enableLightBloom(renderer, opts = {}) {
   const composers = new Map();
   const rawRender = renderer.render.bind(renderer);
+  const defaultPixelRatio = renderer.getPixelRatio();
   renderer.__postPatched = true;   // game.js: sem essa flag ele desenha a vmScene manualmente
   const qp = QP();
   const quality = opts.quality || 'med';
@@ -1001,11 +1002,13 @@ export function enableLightBloom(renderer, opts = {}) {
 
   const forScene = (scene, camera) => {
     let cp = composers.get(scene);
+    const scenePixelRatio = scene.userData.renderPixelRatio ?? defaultPixelRatio;
     if (!cp) {
       cp = new EffectComposer(renderer);
-      cp.setPixelRatio(renderer.getPixelRatio());
+      cp.setPixelRatio(scenePixelRatio);
       cp.setSize(innerWidth, innerHeight);
       cp._w = innerWidth; cp._h = innerHeight;
+      cp._csPixelRatio = scenePixelRatio;
       cp.addPass(new RenderPass(scene, camera));
       /* Água viva (RC2) + partículas soft (RC3): com composer migram p/ as camadas
          WATER/SOFT e o DepthPass assume — amostrar o depth do próprio readBuffer é loop. */
@@ -1077,6 +1080,10 @@ export function enableLightBloom(renderer, opts = {}) {
         }
       }
       composers.set(scene, cp);
+    } else if (cp._csPixelRatio !== scenePixelRatio) {
+      cp.setPixelRatio(scenePixelRatio);
+      cp._csPixelRatio = scenePixelRatio;
+      cp._w = innerWidth; cp._h = innerHeight;
     } else if (cp._w !== innerWidth || cp._h !== innerHeight) {
       cp.setSize(innerWidth, innerHeight);   // acompanha resize da janela
       cp._w = innerWidth; cp._h = innerHeight;
