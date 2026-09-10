@@ -323,3 +323,16 @@ Fila de teste: entrar pelas duas rotas da casa central, atirar pelas duas janela
 depois entrar em cada sobrado do mirante a partir do respawn superior e testar tiro,
 revide, recuo e saída sob combate. A PR #567 continua draft e não deve ser mergeada
 antes desse retorno.
+
+## R7.2 — reparo reproduzível do lock após nova advisory (10/09/2026)
+
+O `build` remoto do commit `542d76c4d` reprovou somente DEP1 porque o banco do
+`npm audit` passou a marcar `smol-toml <=1.7.0` como vulnerabilidade alta. A falha
+foi reproduzida localmente antes da mudança e não toca geometria ou assets.
+
+O lock foi atualizado dentro dos mesmos intervalos de `package.json`, preservando
+a versão alpha.240 da branch. A resolução fixa `smol-toml` 1.8.0 e mantém as
+entradas opcionais para Linux/WASI. Uma instalação limpa em diretório temporário
+com npm 10.9.2 passou, assim como `npm ci --ignore-scripts` e `eval:deps`, agora
+com zero vulnerabilidades altas não isentas. A correção é apenas de CI; o candidato
+visual e a fila de teste humano acima permanecem os mesmos.
