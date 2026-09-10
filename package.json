@@ -65,6 +65,7 @@
     "eval:carandiru": "node tools/eval/carandiru-jogabilidade-check.mjs --checkpoint=C4",
     "eval:carandiru:browser": "node tools/eval/carandiru-browser-evidence.mjs",
     "eval:carandiru:c4": "node tools/eval/carandiru-c4-evidence.mjs",
+    "eval:carandiru:overnight": "node tools/eval/carandiru-overnight-browser.mjs",
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",
     "eval:pegada": "node tools/eval/pegada-check.mjs",
     "eval:dmgdir": "node tools/eval/dmgdir-check.mjs",

@@ -27,7 +27,9 @@ const visible = (o) => { for (let p = o; p; p = p.parent) if (!p.visible) return
 const prefix = (s) => meshes.filter((m) => m.name.startsWith(s));
 let applied = false;
 if (mutant === 'sem-fachada') {
-  for (const m of prefix('penitenciaria-pavilhao-janela-')) { m.visible = false; applied = true; }
+  for (const m of [...prefix('penitenciaria-pavilhao-janela-'), ...prefix('carandiru-pavilhao6-janela-ns-')]) {
+    m.visible = false; applied = true;
+  }
 } else if (mutant === 'cone-restaurado') {
   if (!heads.length) throw new Error('Não sei aplicar mutante: holofote ausente');
   const cone = new THREE.Mesh(new THREE.ConeGeometry(3.4, 30, 12, 1, true),
@@ -53,22 +55,38 @@ const moving = lights.filter((l, i) => JSON.stringify(l.target.position.toArray(
 const lenses = heads.filter((h) => h.children.some((o) => o.isMesh && o.geometry.type === 'CircleGeometry' && visible(o))).length;
 check('PF3', lights.length === 4 && moving === 4 && lenses === 4, `${lights.length} spots, ${moving} alvos móveis, ${lenses} lentes visíveis`);
 
-const windows = prefix('penitenciaria-pavilhao-janela-').filter(visible);
+const windows = [...prefix('penitenciaria-pavilhao-janela-'), ...prefix('carandiru-pavilhao6-janela-ns-')].filter(visible);
 const validWindow = (m) => {
   const box = new THREE.Box3().setFromObject(m), s = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-  const outside = c.x < 0 ? box.max.x < -4.5 : box.min.x > 4.5;
-  return outside && Math.abs(c.x) < 4.7 && Math.abs(c.z) < 6 && c.y > 1.8 && c.y < 5.6
-    && s.y >= 1.29 && s.z >= 1.69 && m.material.map?.name === 'penitenciaria-grade-cela';
+  const lateral = Math.abs(c.x) > 4.5 && Math.abs(c.x) < 4.7 && Math.abs(c.z) <= 5.1
+    && s.x <= .06 && s.z >= 1.69;
+  const extremidade = Math.abs(c.z) > 7.5 && Math.abs(c.z) < 7.7 && Math.abs(c.x) <= 3.3
+    && s.z <= .06 && s.x >= 1.69;
+  return (lateral || extremidade) && c.y > 3.8 && c.y < 5.4 && s.y >= 1.29
+    && m.material.map?.name === 'penitenciaria-grade-cela';
 };
-const rhythm = new Set(windows.map((m) => `${Math.sign(m.position.x)}:${m.position.y.toFixed(2)}:${m.position.z.toFixed(2)}`));
-const trims = [...prefix('penitenciaria-pavilhao-peitoril-'), ...prefix('penitenciaria-pavilhao-verga-')].filter(visible);
+const rhythm = new Set(windows.map((m) => {
+  const c = new THREE.Box3().setFromObject(m).getCenter(new THREE.Vector3());
+  return `${c.x.toFixed(2)}:${c.y.toFixed(2)}:${c.z.toFixed(2)}`;
+}));
+const trims = [
+  ...prefix('penitenciaria-pavilhao-peitoril-'), ...prefix('penitenciaria-pavilhao-verga-'),
+  ...prefix('carandiru-pavilhao6-peitoril-ns-'), ...prefix('carandiru-pavilhao6-verga-ns-'),
+].filter(visible);
 const validTrim = (m) => {
   const b = new THREE.Box3().setFromObject(m), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
-  return Math.abs(c.x) > 4.5 && Math.abs(c.x) < 4.8 && s.x >= .2 && s.x <= .4 && s.z >= 1.8 && s.y <= .2;
+  const lateral = Math.abs(c.x) > 4.5 && Math.abs(c.x) < 4.8 && s.x >= .2 && s.x <= .4 && s.z >= 1.8;
+  const extremidade = Math.abs(c.z) > 7.5 && Math.abs(c.z) < 7.8 && s.z >= .2 && s.z <= .4 && s.x >= 1.8;
+  return (lateral || extremidade) && s.y <= .2;
 };
-check('PF4', windows.length === 16 && windows.every(validWindow) && rhythm.size === 16
-  && trims.length === 32 && trims.every(validTrim),
-`${windows.length}/16 janelas de grade visíveis fora do GLB, ${rhythm.size} posições distintas, ${trims.length}/32 peitoris/vergas com relevo`);
+const supports = world.carandiru?.pavilionWindowSupports || [];
+const supported = supports.filter((support) => world.root.getObjectByName(support.window)
+  && world.root.getObjectByName(support.wall)
+  && world.colliders.filter((box) => box.tag === support.wall).length >= 4
+  && Math.abs(world.groundHeightAt(support.firing[0], support.firing[2], support.firing[1]) - support.firing[1]) <= .01);
+check('PF4', windows.length === 12 && windows.every(validWindow) && rhythm.size === 12
+  && trims.length === 24 && trims.every(validTrim) && supported.length === 12,
+`${windows.length}/12 janelas ancoradas, ${rhythm.size} posições, ${trims.length}/24 peitoris/vergas, ${supported.length}/12 apoios físicos`);
 
 // Assinatura anterior ao conserto: inclui os contratos funcionais do PR441, não
 // o mapa simplificado anterior à recuperação. O acabamento não desloca circulação.
@@ -79,7 +97,7 @@ const signature = { colliders: world.colliders, spawns: world.spawns,
 const hash = createHash('sha256').update(JSON.stringify(signature)).digest('hex');
 const apoios = world.colliders.filter((c) => String(c.tag).startsWith('torre-muro-apoio-'));
 const torreCheia = world.colliders.some((c) => c.tag === 'torre-muro');
-check('PF5', hash === 'cdbc191b38024648b3989a2d363b12521484ec9a51c4375deadefd59e550141e'
+check('PF5', hash === '6e06ca6da4fc968c3fddeffe75bb03a370c46be4b061628c6c70a14efeeab799'
   && apoios.length === 8 && !torreCheia,
 `contrato C1 Carandiru com pavilhão oco, 8 apoios e sem volume cheio da guarita (${hash.slice(0, 12)})`);
 const failed = results.filter((r) => !r.ok).map((r) => r.id);

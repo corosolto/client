@@ -22,6 +22,7 @@ const mutants = {
   'janela-sem-parede': 'CAR3',
   'rota-unica': 'CAR4', 'spawn-exposto': 'CAR5',
   'arame-na-passarela': 'CAR6', 'viatura-procedural': 'CAR7',
+  'recibo-sem-8x8': 'CAR10',
 };
 if (!['C1', 'C2', 'C3', 'C4'].includes(checkpoint)) throw new Error(`checkpoint desconhecido: ${checkpoint}`);
 if (mutant && !mutants[mutant]) throw new Error(`mutante desconhecido: ${mutant}`);
@@ -180,7 +181,7 @@ const segmentHits = (a, b, box) => {
   return exit > .02 && enter < .98;
 };
 const losColliders = mutant === 'spawn-exposto'
-  ? world.colliders.filter((box) => !String(box.tag).startsWith('pavilhao-canto')) : world.colliders;
+  ? world.colliders.filter((box) => box.tag !== 'torre-contracobertura') : world.colliders;
 const visible = (a, b) => !losColliders.some((box) => {
   const originInside = a[0] > box.minX - .5 && a[0] < box.maxX + .5 && a[1] > box.minY - .5
     && a[1] < box.maxY + .5 && a[2] > box.minZ - .5 && a[2] < box.maxZ + .5;
@@ -256,6 +257,35 @@ const c4BrowserValid = c4Receipt?.sourceSha256 === sourceHash && c4Receipt?.stat
   && c4Receipt?.stairTraversal?.length === 2 && c4Receipt.stairTraversal.every((row) => row.reached === true && row.endErrorM <= .65)
   && c4Receipt?.guardCaptures?.length === 6 && c4Receipt.guardCaptures.every((capture) => capture.width === 1200 && capture.height === 800)
   && c4Receipt?.pavilionCapture?.width === 1200 && c4Receipt?.pavilionCapture?.height === 800;
+const overnightPath = 'tools/eval/carandiru-overnight-browser.json';
+const overnight = existsSync(overnightPath) ? JSON.parse(readFileSync(overnightPath, 'utf8')) : null;
+let overnightCases = overnight?.cases || [];
+if (mutant === 'recibo-sem-8x8') overnightCases = overnightCases.filter((row) => row.team !== 8);
+const expectedOvernightCases = [
+  { id: '3x2-5x5', viewport: '1200x800', aspectRatio: '3:2', team: 5, bots: 9 },
+  { id: '16x9-8x8', viewport: '1280x720', aspectRatio: '16:9', team: 8, bots: 15 },
+];
+const overnightValid = overnight?.sourceSha256 === sourceHash && overnight?.humanVisualApproval === 'pending'
+  && overnight?.humanGameplayApproval === 'pending' && overnightCases.length === 2
+  && expectedOvernightCases.every((expected) => {
+    const row = overnightCases.find((item) => item.id === expected.id);
+    return row?.viewport?.join('x') === expected.viewport && row?.aspectRatio === expected.aspectRatio
+      && row?.team === expected.team && row?.expectedBots === expected.bots && row?.scene?.state === 'live'
+      && row?.errors?.length === 0 && row?.activity?.actualBots === expected.bots
+      && row?.activity?.activeBots >= Math.ceil(expected.bots / 2)
+      && row?.scene?.wallAccesses >= 4 && row?.scene?.wallWalkways >= 4
+      && row?.scene?.guardEntries >= 6 && row?.scene?.guardRoutes >= 6
+      && row?.scene?.pavilionPassages >= 2 && row?.scene?.pavilionStairs >= 1
+      && row?.scene?.pavilionWindows === 12 && row?.scene?.pavilionWindowSupports === 12
+      && row?.scene?.strategicRoutes?.length === 3 && row?.scene?.ctfPoints?.length === 3
+      && row?.scene?.vehicle?.source === 'mint' && row?.scene?.vehicle?.visible === true
+      && row?.scene?.vehicle?.httpStatus >= 200 && row?.scene?.vehicle?.httpStatus < 300
+      && row?.traversal?.guards?.attempts === 12 && row.traversal.guards.reached === 12
+      && row.traversal.guards.maxEndErrorM <= .65 && row?.traversal?.pavilion?.attempts === 2
+      && row.traversal.pavilion.reached === 2 && row.traversal.pavilion.maxEndErrorM <= .65
+      && row?.captures?.length === 4 && row.captures.every((capture) => capture.width === row.viewport[0]
+        && capture.height === row.viewport[1] && capture.bytes >= 50000 && /^[a-f0-9]{64}$/.test(capture.sha256 || ''));
+  });
 const results = [];
 const put = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${detail}`); };
 
@@ -313,10 +343,14 @@ put('CAR9', c4BrowserValid, `vídeos=${c4Routes.length}/3; rotas=${c4Routes.filt
   + `guaritas=${c4Receipt?.guardTraversal?.filter((row) => row.reached).length || 0}/12; `
   + `pavilhão=${c4Receipt?.stairTraversal?.filter((row) => row.reached).length || 0}/2; `
   + `silhuetas=${c4Receipt?.wallReadability?.captures?.length || 0}/3; humano=${c4Receipt?.humanVisualApproval || 'ausente'}`);
+put('CAR10', overnightValid, `casos=${overnightCases.length}/2; `
+  + overnightCases.map((row) => `${row.id}: bots=${row.activity?.activeBots || 0}/${row.expectedBots || 0}, `
+    + `guaritas=${row.traversal?.guards?.reached || 0}/12, `
+    + `pavilhão=${row.traversal?.pavilion?.reached || 0}/2`).join('; '));
 
 const active = checkpoint === 'C1' ? new Set(['CAR1', 'CAR2', 'CAR3', 'CAR6'])
   : checkpoint === 'C2' ? new Set(['CAR1', 'CAR2', 'CAR3', 'CAR4', 'CAR5', 'CAR6', 'CAR8'])
-    : checkpoint === 'C3' ? new Set(results.filter((r) => r.id !== 'CAR9').map((r) => r.id))
+    : checkpoint === 'C3' ? new Set(results.filter((r) => !['CAR9', 'CAR10'].includes(r.id)).map((r) => r.id))
       : new Set(results.map((r) => r.id));
 const failed = results.filter((r) => active.has(r.id) && !r.ok).map((r) => r.id);
 if (mutant) {
