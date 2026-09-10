@@ -62,7 +62,7 @@ export const VM_WEAPON = {
   md97: W('ar', { recoilScale: 1.8 }),
   carbine: W('ar'),
   m400: W('sniper'),
-  mosin: W('bolt'),
+  mosin: W('bolt', { baked: true }),
   rem700: W('bolt'),
   lmg: W('lmg'),
   scar: W('ar'),
@@ -70,7 +70,7 @@ export const VM_WEAPON = {
   famas: W('ar'),
   uzi: W('smg'),
   p90: W('p90', { recoilScale: 1.6 }),
-  svd: W('svd'),
+  svd: W('svd', { baked: true }),
   g3sg1: W('marksman'),
-  sks: W('marksman'),
+  sks: W('marksman', { baked: true }),
 };

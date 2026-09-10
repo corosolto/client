@@ -39,6 +39,9 @@ const AUTHORED_KILLED = !AUTHORED_VM_ENABLED;
 // _loadFamily consome clone — o mesmo download serve qualquer instância de Game.
 const GLTF_CACHE = new Map();
 let skeletonClonePromise = null;
+export function acceptsAuthoredLoad({ request, activeRequest, key, activeKey, utility = false }) {
+  return request === activeRequest && key === activeKey && !utility;
+}
 function loadFamilyGltf(key) {
   if (!GLTF_CACHE.has(key)) {
     GLTF_CACHE.set(key, new GLTFLoader().loadAsync(urlForKey(key)).catch((error) => {
@@ -229,12 +232,15 @@ const READY_OVERRIDE = new Set(
   CS16_TUDO || RETARGET_TUDO
     ? Object.keys(VM_FAMILY)
     : (_QS?.get('vmready') || '').split(',').filter(Boolean));
+// Candidato por arma: abre Mosin/SVD/SKS sem abrir as outras armas da mesma
+// família. Continua subordinado ao portão global `vmauthored=1`.
+const WEAPON_OVERRIDE = new Set((_QS?.get('vmweapon') || '').split(',').filter(Boolean));
 const familyReady = (family) => Boolean(family)
   && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
 const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';
   const family = AUTHORED_VM_MODELS[weapon] || '';
-  return familyReady(family) ? family : '';
+  return familyReady(family) || WEAPON_OVERRIDE.has(weapon) ? family : '';
 };
 // Arma "baked" tem GLB próprio (Mint assada dentro, offline): entry por ARMA.
 const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
@@ -477,7 +483,8 @@ export class AuthoredViewModels {
           : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family && !weaponBaked(id));
         if (owner) attachMintWeapon(entry, owner);
       }
-      if (request === this._activeRequest && entryKeyFor(this.weapon) === key && !this.utility) {
+      if (acceptsAuthoredLoad({ request, activeRequest: this._activeRequest, key,
+        activeKey: entryKeyFor(this.weapon), utility: Boolean(this.utility) })) {
         // Chegada tardia entra SUBINDO pelo arco de draw, nunca trocando no meio do idle.
         entry.mount.visible = true;
         this.draw(this.weapon);

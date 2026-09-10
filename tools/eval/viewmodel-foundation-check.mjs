@@ -6,7 +6,8 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { WEAPON_IDS } from '../../public/js/weapons.js';
 import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
-import { AUTHORED_VM_ENABLED } from '../../public/js/authoredvm.js';
+import { acceptsAuthoredLoad, AUTHORED_VM_ENABLED } from '../../public/js/authoredvm.js';
+import { viewmodelVisibility } from '../../public/js/vmvisibility.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const checks = [];
@@ -36,8 +37,12 @@ const game = text('public/js/game.js');
 const vmweapon = text('public/js/vmweapon.js');
 check(authored.includes("_QS?.get('vmauthored') === '1'"), 'ativação exige opt-in explícito ?vmauthored=1');
 check(game.indexOf('if (AUTHORED_VM_ENABLED)') < game.indexOf('createAuthoredViewModels(this.vm.root'), 'controladores só são criados dentro do portão global');
-check(game.includes('!authored && !melee && k === w'), 'uma decisão mantém o fallback até existir controlador ativo');
-check(authored.includes('request === this._activeRequest && entryKeyFor(this.weapon) === key'), 'conclusão assíncrona exige token e arma ainda ativos');
+const loadingState = viewmodelVisibility({ alive: true, firstPerson: true, authoredReady: false });
+check(loadingState.fallback && !loadingState.authored,
+  'uma decisão mantém o fallback até existir controlador ativo');
+check(!acceptsAuthoredLoad({ request: 1, activeRequest: 2, key: 'svd#svd', activeKey: 'svd#svd' })
+  && acceptsAuthoredLoad({ request: 2, activeRequest: 2, key: 'svd#svd', activeKey: 'svd#svd' }),
+  'conclusão assíncrona exige token e arma ainda ativos');
 const wrapAt = vmweapon.indexOf('wrap = weaponModel(weaponId)');
 const hideAt = vmweapon.indexOf('hidePackGun(entry)', wrapAt);
 check(wrapAt >= 0 && hideAt > wrapAt, 'placeholder do pack só é ocultado após a malha própria existir');

@@ -8,6 +8,7 @@ import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { VM_FRAME } from './vmattach.js';
 import { KnifeMeleeViewModel } from './meleevm.js';
 import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS } from './authoredvm.js';
+import { viewmodelVisibility } from './vmvisibility.js';
 import { vmlabPose, VMLAB_SCOPED, VMLAB_NO_ALIGN } from './vmlab.js';
 import { buildRecoilPattern, RECOIL_PARAMS, RECOIL_PATTERN, RECOIL_CLASS, REC_DEG, REC } from './recoil.js';
 import { GPUParticles } from './gpuparticles.js';
@@ -2838,11 +2839,8 @@ export class Game {
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
-    // Uma decisão de visibilidade: fallback continua visível enquanto o authored carrega
-    // ou falha; só some depois que o controlador confirma malha ativa.
-    if (this.vm.arms) this.vm.arms.group.visible = !authored && !melee;
-    for (const k in this.vm.models) this.vm.models[k].visible = !authored && !melee && k === w;
-    this.vm.root.visible = !melee;
+    this._vmPresentation = { authored, melee };
+    this._syncVmPresentation();
     if (this.vmCamera) {
       this.vmCamera.fov = melee ? this.vm.melee.fov(this.vmCamera.aspect)
         : authored ? this.vm.authored.fov(w, this.vmCamera.aspect)
@@ -2861,6 +2859,24 @@ export class Game {
       badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
     }
     return authored || melee;
+  }
+  _syncVmPresentation(realScope = false, scopeMask = this._scopeMask || 0) {
+    const w = this.player.weapon;
+    const presentation = this._vmPresentation || { authored: false, melee: false };
+    const state = viewmodelVisibility({
+      alive: this.player.alive,
+      firstPerson: this.camView === 'first',
+      realScope,
+      scopeMask,
+      meleeReady: presentation.melee,
+      authoredReady: presentation.authored,
+    });
+    this.vm.root.visible = state.root;
+    this.vm.melee?.setSuspended(!state.melee);
+    if (this.vm.arms) this.vm.arms.group.visible = state.fallback;
+    for (const k in this.vm.models) this.vm.models[k].visible = state.fallback && k === w;
+    this._vmVisibility = state;
+    return state;
   }
   // ?vmlab=1 usa um viewmodel isolado e criado sob demanda.
   _vmlabEnsure(id) {
@@ -5437,7 +5453,7 @@ export class Game {
     const gap = precAds ? 3 : Math.max(3, Math.min(26, 5 + sp * 1.15 + this.vm.kick * 20 - p.crouchF * 2.5 - (p.scoped ? 4 : 0)));
     this.el.crosshair.style.setProperty('--ch', gap.toFixed(1) + 'px');
     // 3ª pessoa esconde os braços/arma FP (o corpo TP tem a própria arma na mão).
-    this.vm.root.visible = this.camView === 'first' && !this.vm.melee?.active && !(realScope && mask > 0.55);   // a arma só sai de cena depois que a luneta cobre
+    this._syncVmPresentation(realScope, mask);   // arma só sai depois que a luneta cobre
     // reload completion — RELÓGIO DE JOGO (devolve a munição). A ANIMAÇÃO é do rig e usa a
     // mesma duração da tabela, então as duas pontas chegam no mesmo quadro (BUG-04).
     if (!this._reloading() && p.reloadUntil > 0) {

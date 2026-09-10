@@ -85,6 +85,7 @@
     "eval:vm-foundation": "node tools/eval/viewmodel-foundation-check.mjs",
     "eval:vm-precision-tools": "node tools/eval/viewmodel-precision-tools-check.mjs",
     "eval:vm-precision-assets": "python3 tools/viewmodels/prep/precisao-final-gates.py",
+    "eval:vm-precision-lifecycle": "node tools/eval/viewmodel-precision-lifecycle-check.mjs",
     "eval:kick": "node tools/eval/vm-kick-sim.mjs",
     "eval:bots": "node tools/eval/botsim.mjs 60 all",
     "eval:site": "node tools/eval/site-smoke.mjs",
