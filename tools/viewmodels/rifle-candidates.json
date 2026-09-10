@@ -31,6 +31,21 @@
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
       "rebuild": "tools/viewmodels/prep/rifles-md97-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
+    },
+    "scar": {
+      "family": "ar",
+      "file": "viewmodels/ar/scar-baked-runtime.glb",
+      "sourceSha256": "16f0bc90aba6cb1c236e95e45acd51d6e9f1fdf6fd328b313ab46d033eebd99f",
+      "sourceBytes": 335392,
+      "productSha256": "958a0223cb2efa703ffe200f17044308a7bf1a9016d786b816e3b1cdc053c20c",
+      "productBytes": 1526788,
+      "sha256": "958a0223cb2efa703ffe200f17044308a7bf1a9016d786b816e3b1cdc053c20c",
+      "bytes": 1526788,
+      "mechanism": "complete-detachable-mag/reciprocating-side-handle",
+      "ready": false,
+      "sourceBranch": "codex/vm-prep-rifles",
+      "sourceCommit": "ea022c3c0",
+      "rebuild": "tools/viewmodels/prep/rifles-scar-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
     }
   }
 }
