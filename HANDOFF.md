@@ -11,7 +11,9 @@ O RED real foi a ausência de sequência: a main tinha somente o total acumulado
 `#kill-streak` agora mostra abates da vida atual, alimentados por `_playerKillFeedback` em SP
 e pelos eventos autoritativos no MP. Acerto previsto não conta; morte, round e reconexão
 zeram sem alterar `player.kills`. `eval:killstreak` cobre os dois modos e seis mutantes.
-Relatório e comandos: `docs/reports/COMBAT-FEEDBACK-R2.md`.
+Implementação `37d252a02`, refresh documental `3a7445fb5`; draft PR #581:
+`https://github.com/corosolto/client/pull/581`. Relatório, evidência e comandos:
+`docs/reports/COMBAT-FEEDBACK-R2.md`.
 
 ## Correção pós-merge do Sertão — BUG-145 (08/09/2026)
 

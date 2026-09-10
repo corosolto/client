@@ -10,6 +10,7 @@ abates da partida permanece separado.
 Worktree: `worktrees/combat-feedback-r2`
 Branch: `codex/combat-feedback-r2`
 Base: `origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb`
+Draft PR: `https://github.com/corosolto/client/pull/581`
 
 ## Diagnóstico antes da mudança
 
