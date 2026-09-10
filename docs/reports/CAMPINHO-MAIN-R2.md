@@ -128,7 +128,8 @@ regenerado somente para o teste: `audio:check` ficou verde com zero órfãos. Na
 
 `npm run build` ficou verde. A primeira execução de `npm run check:deploy` passou
 38/39 e parou apenas porque `eval:docsautoria` recusa medir documentação gerada ainda
-não commitada; o rerun após o checkpoint documental é o próximo passo desta lane.
+não commitada. Depois do checkpoint documental, o mesmo comando passou **39/39** em
+15,8 s.
 
 Servidor local ativo:
 
@@ -147,6 +148,5 @@ combate.
 
 ## Próximo passo
 
-Commitar este ledger e os blocos gerados atuais, repetir `check:deploy`, atualizar o
-resultado final, fazer push e abrir um draft PR que declare explicitamente que
-supersede o #530. Não fazer merge nem deploy antes do playtest do dono.
+Fazer push e abrir um draft PR que declare explicitamente que supersede o #530.
+Não fazer merge nem deploy antes do playtest do dono.
