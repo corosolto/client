@@ -49,9 +49,25 @@ PLANOS = {
                                    delta_local=[-5e-05, -9.99e-03, 3.5e-04])),
     'svd': dict(base='svd', keep=['idle', 'reload_tactical', 'reload_empty'],
                 shoot_donor=False, clip_proc=False, mag_autoral=True,
-                correcao_braco=dict(clipe='reload_tactical', osso='upperarm_r')),
+                correcao_braco=dict(clipe='reload_tactical', osso='upperarm_r'),
+                # Gate C @ reload_tactical/0.50: um vertice da luva, pintado
+                # 85% por thumb_02_r, fica 8,4 mm dentro do receptor. A direção
+                # abaixo é a extração medida até a superfície + 3 mm de folga.
+                correcao_polegar=dict(clipe='reload_tactical', osso='thumb_02_r',
+                                      fase=0.50, delta_world=[0.0118, -0.0053, 0.0003])),
     'sks': dict(base='bolt', keep=['idle', 'reload_start', 'reload_loop', 'reload_end', 'reload_empty'],
-                shoot_donor=False, clip_proc=True),
+                shoot_donor=False, clip_proc=True,
+                # Gate C @ inspect/0.86: um vertice da luva esquerda, pintado
+                # 77% por hand_l e 23% por thumb_01_l, fica 4,9 mm dentro do
+                # receptor. A direção abaixo alcança a superfície + 3 mm.
+                correcoes_inspect=[
+                    dict(clipe='inspect', osso='hand_l', fase=0.86,
+                         delta_world=[0.00731, 0.00283, 0.00075]),
+                    # Com o pivô correto, a inspeção também expõe um vértice
+                    # 94% ring_01_l, 7,6 mm dentro da lateral do receptor.
+                    dict(clipe='inspect', osso='ring_01_l', fase=0.86,
+                         delta_world=[-0.04950, 0.01870, -0.00185]),
+                ]),
 }
 
 
@@ -329,39 +345,26 @@ def cilindro(r, h, seg=8, eixo='z', y0=0.0):
 
 
 def corrige_mangas_svd(bd, j, b, mutante=False):
-    """Afina somente a boca das mangas que aponta para a camera na pose SVD.
+    """Faz a manga terminar fora do quadro sem esmagar a malha do antebraco.
 
-    O taper e radial por bandas no bind pose, preserva a linha central e chega
-    gradualmente a 1.0 antes do cotovelo. As luvas, pesos e joints permanecem
-    intactos. A face interna deixa de ser renderizada pelo material.
+    O doador deixa o anel aberto do ombro apontado para a camera. Como o runtime
+    precisa de DoubleSide nesse rig espelhado, a face interna virava dois discos
+    dominantes. Um fade de vertice só no terco do ombro preserva geometria,
+    pesos, joints, contato e volume do antebraco; o anel some antes da borda.
     """
     ni = next(i for i, n in enumerate(j['nodes']) if n.get('name') == 'GEO_FP_SK_Cloth_01')
     for prim in j['meshes'][j['nodes'][ni]['mesh']]['primitives']:
         pos = accessor(j, b, prim['attributes']['POSITION']).astype(np.float64)
         if not mutante:
-            novo = pos.copy()
-            for sinal in (-1, 1):
-                ids = np.flatnonzero(pos[:, 0] * sinal > 0)
-                ys = pos[ids, 1]
-                bordas = np.linspace(float(ys.min()), float(ys.max()), 25)
-                for lo, hi in zip(bordas[:-1], bordas[1:]):
-                    faixa = ids[(ys >= lo) & (ys <= hi)]
-                    if not len(faixa):
-                        continue
-                    centro = (pos[faixa][:, [0, 2]].min(0) + pos[faixa][:, [0, 2]].max(0)) / 2
-                    y = float(pos[faixa, 1].mean())
-                    fator = float(np.interp(y, [1.10, 1.18, 1.32, 1.40], [0.50, 0.55, 0.82, 1.0]))
-                    novo[faixa[:, None], [0, 2]] = centro + (pos[faixa][:, [0, 2]] - centro) * fator
-            prim['attributes']['POSITION'] = bd.acc(novo.astype(np.float32), 'VEC3', 'f4')
-            # O taper e suave; transforma as normais pela mesma escala radial e
-            # renormaliza. Evita a iluminacao do bind pose antigo.
-            if 'NORMAL' in prim['attributes']:
-                nrm = accessor(j, b, prim['attributes']['NORMAL']).astype(np.float64)
-                nrm[:, [0, 2]] /= 0.82
-                nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
-                prim['attributes']['NORMAL'] = bd.acc(nrm.astype(np.float32), 'VEC3', 'f4', bounds=False)
+            alpha = 1.0 - np.clip((pos[:, 1] - 1.22) / (1.38 - 1.22), 0.0, 1.0)
+            alpha = alpha * alpha * (3.0 - 2.0 * alpha)  # smoothstep invertido
+            color = np.ones((len(pos), 4), dtype=np.float32)
+            color[:, 3] = alpha.astype(np.float32)
+            prim['attributes']['COLOR_0'] = bd.acc(color, 'VEC4', 'f4', bounds=False)
         mat = j['materials'][prim['material']]
-        mat['doubleSided'] = bool(mutante)
+        mat['doubleSided'] = True
+        if not mutante:
+            mat['alphaMode'] = 'BLEND'
 
 
 def parse_args():
@@ -588,8 +591,13 @@ def main():
                     # O osso Cartridge do doador carrega pesos residuais de
                     # outras partes. Mesmo com o slot correto, limita o estojo
                     # a dimensoes fisicas plausiveis para impedir dominancia.
-                    r = min(max(min(ext[1], ext[2]) * 0.45, 0.0035), 0.0065)
-                    comp = min(max(ext[0], 0.030) * 0.9, 0.055)
+                    r_raw = max(min(ext[1], ext[2]) * 0.45, 0.0035)
+                    comp_raw = max(ext[0], 0.030) * 0.9
+                    # O mutante precisa preservar a consequência causal do
+                    # slot errado. Aplicar o limitador físico também nele faria
+                    # a régua ficar verde apesar da seleção incorreta.
+                    r = r_raw if args.mutant_clip_index else min(r_raw, 0.0065)
+                    comp = comp_raw if args.mutant_clip_index else min(comp_raw, 0.055)
                     V, I = cilindro(r, comp, seg=8, eixo='z')
                     V = V + np.array([centro[0] - comp / 2, centro[1], centro[2]])
                     mat_i = mat_brass
@@ -682,15 +690,12 @@ def main():
                                    'target': {'node': ni_body, 'path': 'translation'}})
 
         # shoot/inspect autorais no nó-raiz RIG_FP_ARMS (movimento rígido do conjunto)
-        def trilho(nome, tempos, trans, rots_deg):
+        def trilho(nome, tempos, trans, rots_deg, pivot=None):
             eixo = idx['RIG_FP_ARMS']
             tin = bd.acc(np.array(tempos, dtype=np.float32), 'SCALAR', 'f4')
             sam = []
             ch = []
-            if trans is not None:
-                oo = bd.acc(np.array(trans, dtype=np.float32), 'VEC3', 'f4', bounds=False)
-                sam.append({'input': tin, 'output': oo})
-                ch.append({'sampler': 0, 'target': {'node': eixo, 'path': 'translation'}})
+            qs = None
             if rots_deg is not None:
                 qs = []
                 for e in rots_deg:
@@ -698,12 +703,45 @@ def main():
                     cx, sx = np.cos(rx / 2), np.sin(rx / 2)
                     cy, sy = np.cos(ry / 2), np.sin(ry / 2)
                     cz, sz = np.cos(rz / 2), np.sin(rz / 2)
-                    q_ = [sx * cy * cz - cx * sy * sz, cx * sy * cz + sx * cy * sz,
-                          cx * cy * sz - sx * sy * cz, cx * cy * cz + sx * sy * sz]
-                    qs.append(q_)
+                    qs.append([sx * cy * cz - cx * sy * sz,
+                               cx * sy * cz + sx * cy * sz,
+                               cx * cy * sz - sx * sy * cz,
+                               cx * cy * cz + sx * sy * sz])
+            if trans is not None:
+                trans_out = np.asarray(trans, dtype=np.float64)
+                if pivot is not None and qs is not None:
+                    p_ = np.asarray(pivot, dtype=np.float64)
+                    trans_out = np.asarray([
+                        t_ + p_ - trs_mat(r=q_)[:3, :3] @ p_
+                        for t_, q_ in zip(trans_out, qs)])
+                oo = bd.acc(trans_out.astype(np.float32), 'VEC3', 'f4', bounds=False)
+                sam.append({'input': tin, 'output': oo})
+                ch.append({'sampler': 0, 'target': {'node': eixo, 'path': 'translation'}})
+            if qs is not None:
                 oo = bd.acc(np.array(qs, dtype=np.float32), 'VEC4', 'f4', bounds=False)
                 sam.append({'input': tin, 'output': oo})
                 ch.append({'sampler': len(sam) - 1, 'target': {'node': eixo, 'path': 'rotation'}})
+            # Um AnimationAction único não mantém automaticamente os tracks do
+            # idle que não existem neste clipe. Sem estes holds, ossos de arma
+            # e mãos voltam ao bind depois do crossfade e o inspect some. A
+            # autoria é rígida: congela a pose idle real e anima só a raiz.
+            bin_pose = bytes(bd.bin)
+            pose_hold = amostra(idle_base, j, bin_pose, 0.0)
+            hold_t = bd.acc(np.array([tempos[0], tempos[-1]], dtype=np.float32),
+                            'SCALAR', 'f4')
+            occupied = {(c['target']['node'], c['target']['path']) for c in ch}
+            for node_i, paths in pose_hold.items():
+                for path_, value_ in paths.items():
+                    if path_ not in ('translation', 'rotation', 'scale') \
+                            or (node_i, path_) in occupied:
+                        continue
+                    value_ = np.asarray(value_, dtype=np.float32)
+                    value_out = np.stack([value_, value_])
+                    out_type = 'VEC4' if path_ == 'rotation' else 'VEC3'
+                    sam.append({'input': hold_t,
+                                'output': bd.acc(value_out, out_type, 'f4', bounds=False)})
+                    ch.append({'sampler': len(sam) - 1,
+                               'target': {'node': node_i, 'path': path_}})
             j['animations'].append({'name': nome, 'channels': ch, 'samplers': sam})
 
         def ease(t):
@@ -722,7 +760,76 @@ def main():
         tr = [[0, 0, 0], [0, -0.004, 0.02], [0, 0.002, 0.05], [0, 0.004, 0.03],
               [0, 0, 0.02], [0, -0.002, 0.006], [0, 0, 0]]
         ro = [[0, 0, 0], [4, -18, -6], [6, 10, 8], [-2, 24, 4], [2, 8, -4], [1, -6, -1], [0, 0, 0]]
-        trilho('inspect', ts, tr, ro)
+        # Rotacionar a raiz no zero do rig varreria a arma (a ~1,5 m dele) para
+        # fora do quadro. A compensação translacional mantém o pivô da arma no
+        # lugar e transforma a sequência numa inspeção local, como pretendido.
+        pivot_idle = node_mats(j, amostra(idle_base, j, bytes(bd.bin), 0.0))[ni_body][:3, 3]
+        trilho('inspect', ts, tr, ro, pivot=pivot_idle)
+
+        # ---- corretiva localizada de contato no inspect ----
+        # O inspect move arma e braços rigidamente, mas uma pequena região da
+        # luva esquerda do SKS que já estava dentro do receptor torna-se
+        # visível no ângulo final. Mantém a pose idle amostrada a 30 Hz e
+        # desloca apenas hand_l numa janela curta; fora dela o canal reproduz
+        # exatamente a base, sem salto na entrada/saída do clipe.
+        correcoes_ci = plano.get('correcoes_inspect', [])
+        if correcoes_ci:
+            binat_ci = bytes(bd.bin)
+            idle_ci = next(a for a in j['animations'] if a['name'] == 'idle')
+
+            def _dur_ci(a):
+                return float(max(accessor(j, binat_ci, s['input']).ravel().max()
+                                 for s in a['samplers']))
+
+            D_idle_ci = _dur_ci(idle_ci)
+            parents_ci = {c: i for i, n in enumerate(j['nodes'])
+                          for c in n.get('children', [])}
+            for ci in correcoes_ci:
+                # A correção anterior anexou accessors ao buffer; a seguinte
+                # deve ler a fotografia atual, não os bytes anteriores.
+                binat_ci = bytes(bd.bin)
+                anim_ci = next(a for a in j['animations'] if a['name'] == ci['clipe'])
+                D_ci = _dur_ci(anim_ci)
+                t_ci = D_ci * ci['fase']
+                bone_ci = idx[ci['osso']]
+                ov_ci = {k: dict(v) for k, v in
+                         amostra(idle_ci, j, binat_ci, t_ci % D_idle_ci).items()}
+                ov_ci.update(amostra(anim_ci, j, binat_ci, t_ci))
+                mats_ci = node_mats(j, ov_ci)
+                parent_ci = parents_ci[bone_ci]
+                A_ci = mats_ci[parent_ci][:3, :3]
+                delta_w_ci = np.asarray(ci['delta_world'], dtype=float)
+                delta_l_ci = np.linalg.solve(A_ci, delta_w_ci)
+                W_ci = np.array([max(0.0, t_ci - 0.28), t_ci - 0.10,
+                                 t_ci + 0.10, min(D_ci, t_ci + 0.28)])
+                # 30 Hz também preserva o loop curto do idle ao ser promovido
+                # a canal explícito dentro do inspect.
+                ts_ci = np.linspace(0.0, D_ci, max(2, int(np.ceil(D_ci * 30))) + 1)
+                ts_ci = np.unique(np.concatenate([ts_ci, W_ci]))
+                env_ci = np.interp(ts_ci, W_ci, [0.0, 1.0, 1.0, 0.0],
+                                   left=0.0, right=0.0)
+                vals_ci = []
+                rest_ci = np.asarray(j['nodes'][bone_ci].get('translation', [0, 0, 0]),
+                                     dtype=float)
+                for t_ in ts_ci:
+                    base_ci = amostra(idle_ci, j, binat_ci, float(t_ % D_idle_ci)) \
+                        .get(bone_ci, {}).get('translation', rest_ci)
+                    vals_ci.append(np.asarray(base_ci) + env_ci[len(vals_ci)] * delta_l_ci)
+                ii_ci = bd.acc(ts_ci.astype(np.float32), 'SCALAR', 'f4')
+                oo_ci = bd.acc(np.asarray(vals_ci, dtype=np.float32), 'VEC3', 'f4', bounds=False)
+                existing_ci = next((c for c in anim_ci['channels']
+                                    if c['target'].get('node') == bone_ci
+                                    and c['target']['path'] == 'translation'), None)
+                if existing_ci:
+                    anim_ci['samplers'][existing_ci['sampler']] = {'input': ii_ci, 'output': oo_ci}
+                else:
+                    anim_ci['samplers'].append({'input': ii_ci, 'output': oo_ci})
+                    anim_ci['channels'].append({'sampler': len(anim_ci['samplers']) - 1,
+                                                'target': {'node': bone_ci, 'path': 'translation'}})
+                resumo.setdefault('correcao_inspect', {}).setdefault(arma, {})[ci['osso']] = {
+                    'clipe': ci['clipe'], 't': round(t_ci, 3),
+                    'delta_world_mm': (delta_w_ci * 1000).round(2).tolist(),
+                    'delta_local_mm': (delta_l_ci * 1000).round(1).tolist()}
 
         # ---- SVD: coreografia autoral do osso Mag ----
         # No doador o pente vive estacionado a ~60 cm da arma (a mão faz
@@ -1054,6 +1161,54 @@ def main():
                         resumo.setdefault('correcao_braco', {})[cb['clipe']] = {
                             't': round(t_off, 3),
                             'delta_local_mm': (delta_l * 1000).round(1).tolist()}
+
+            # ---- corretiva local do polegar direito. O afinamento das mangas
+            # tornou visível uma interpenetração que já existia sob o tecido.
+            # Move só a falange responsável, numa janela curta da recarga; mão,
+            # carregador e contato do grip permanecem nos clipes originais. ----
+            cp = plano.get('correcao_polegar')
+            if cp:
+                binat = bytes(bd.bin)
+                anim = next(a for a in j['animations'] if a['name'] == cp['clipe'])
+                D_p = _dur(anim)
+                t_p = D_p * cp['fase']
+                bone_i = idx[cp['osso']]
+                mats_p = node_mats(j, _pose(anim, t_p))
+                parent_i = parents[bone_i]
+                R_p = _ort(mats_p[parent_i][:3, :3])
+                scale_p = float(np.linalg.norm(mats_p[parent_i][:3, :3], axis=0).mean())
+                delta_w = np.array(cp['delta_world'], dtype=float)
+                delta_l = R_p.T @ delta_w / scale_p
+                ch_p = next((c for c in anim['channels']
+                             if c['target'].get('node') == bone_i
+                             and c['target']['path'] == 'translation'), None)
+                if ch_p is not None:
+                    sp_p = anim['samplers'][ch_p['sampler']]
+                    ts_o = accessor(j, binat, sp_p['input']).ravel().astype(np.float64)
+                    vs_o = accessor(j, binat, sp_p['output']).astype(np.float64)
+                else:
+                    ts_o = np.array([0.0, D_p], dtype=np.float64)
+                    rest_t = np.array(j['nodes'][bone_i].get('translation', [0, 0, 0]), dtype=float)
+                    vs_o = np.stack([rest_t, rest_t])
+                    sp_p = None
+                W = np.array([max(0.0, t_p - 0.28), t_p - 0.10,
+                              t_p + 0.10, min(D_p, t_p + 0.28)])
+                ts_n = np.unique(np.concatenate([ts_o, W]))
+                env_n = np.interp(ts_n, W, [0.0, 1.0, 1.0, 0.0], left=0.0, right=0.0)
+                vs_n = np.stack([np.interp(ts_n, ts_o, vs_o[:, kk])
+                                 + env_n * delta_l[kk] for kk in range(3)], axis=1)
+                ii_p = bd.acc(ts_n.astype(np.float32), 'SCALAR', 'f4')
+                oo_p = bd.acc(vs_n.astype(np.float32), 'VEC3', 'f4', bounds=False)
+                if sp_p is None:
+                    anim['samplers'].append({'input': ii_p, 'output': oo_p})
+                    anim['channels'].append({'sampler': len(anim['samplers']) - 1,
+                                             'target': {'node': bone_i, 'path': 'translation'}})
+                else:
+                    sp_p['input'], sp_p['output'] = ii_p, oo_p
+                resumo.setdefault('correcao_polegar', {})[cp['clipe']] = {
+                    't': round(t_p, 3),
+                    'delta_world_mm': (delta_w * 1000).round(1).tolist(),
+                    'delta_local_mm': (delta_l * 1000).round(1).tolist()}
 
         # ---- grava GLB ----
         j['buffers'][0]['byteLength'] = len(bd.bin)

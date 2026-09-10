@@ -3,8 +3,8 @@
 
 P: cartuchos procedurais precisam herdar apenas os vertices do slot correto do
 skin. Um indice global usado no lugar do slot produz pecas de ate ~1,1 m.
-S: a manga da SVD nao pode renderizar a face interna nem dominar o quadro nas
-duas proporcoes oficiais.
+S: a manga da SVD preserva a geometria e o skinning, mas sua extremidade de
+ombro deve desaparecer por vertex alpha antes de dominar as duas proporcoes.
 """
 import argparse
 import importlib.util
@@ -57,9 +57,29 @@ def sleeve_metrics(j, b):
     camera_inv = np.linalg.inv(camera)
     ni = next(i for i, n in enumerate(j['nodes'])
               if n.get('name') == 'GEO_FP_SK_Cloth_01')
+    raw_prims = j['meshes'][j['nodes'][ni]['mesh']]['primitives']
     prims = gates.alinh.skin_prims(j, b, ni)
-    verts = np.vstack([gates.alinh.deform(p, mats) for p in prims])
+    verts_parts = []
+    has_vertex_alpha = True
+    shoulder_alpha = []
+    for raw, prim in zip(raw_prims, prims):
+        verts = gates.alinh.deform(prim, mats)
+        if 'COLOR_0' in raw['attributes']:
+            rgba = gates.accessor(j, b, raw['attributes']['COLOR_0'])
+            bind = gates.accessor(j, b, raw['attributes']['POSITION'])
+            # A borda aberta do ombro começa no fim do gradiente autoral.
+            shoulder_alpha.extend(rgba[bind[:, 1] >= 1.38, 3].tolist())
+            verts = verts[rgba[:, 3] > 0.05]
+        else:
+            has_vertex_alpha = False
+            shoulder_alpha.append(1.0)
+        verts_parts.append(verts)
+    verts = np.vstack(verts_parts)
     frame = gates.frame_de('svd')
+    # Mede a geometria no enquadramento de estresse que revelou a regressao.
+    # O frame final pode recortar os ombros, mas nao deve mascarar a malha
+    # gigante e fazer o mutante antigo passar.
+    frame['xyz'][1] = -0.06
     verts = (camera_inv[:3, :3] @ verts.T).T + camera_inv[:3, 3] + np.array(frame['xyz'])
     areas = {}
     for aspect, tag in ((3 / 2, '3x2'), (16 / 9, '16x9')):
@@ -68,7 +88,10 @@ def sleeve_metrics(j, b):
         q = px[inside]
         areas[tag] = float(np.prod((q.max(0) - q.min(0)) / [width, height])) if len(q) else 0.0
     material = j['materials'][j['meshes'][j['nodes'][ni]['mesh']]['primitives'][0]['material']]
-    return {'doubleSided': bool(material.get('doubleSided', False)), 'bboxArea': areas}
+    return {'doubleSided': bool(material.get('doubleSided', False)),
+            'hasVertexAlpha': has_vertex_alpha,
+            'shoulderAlphaMax': float(max(shoulder_alpha, default=1.0)),
+            'bboxArea': areas}
 
 
 def measure(path, weapon):
@@ -79,8 +102,13 @@ def measure(path, weapon):
         return {'proceduralExtentsM': ext, 'worstAxisM': worst,
                 'passes': bool(ext) and worst <= 0.16}
     sleeve = sleeve_metrics(j, b)
-    passes = (not sleeve['doubleSided'] and sleeve['bboxArea']['3x2'] <= 0.155
-              and sleeve['bboxArea']['16x9'] <= 0.105)
+    # O bbox limita dominancia nas duas proporcoes; o contrato de alpha testa
+    # a causa diretamente. Sem ele, um mutante poderia manter os aneis opacos
+    # e ainda passar por mero recorte de camera.
+    passes = (sleeve['hasVertexAlpha']
+              and sleeve['shoulderAlphaMax'] <= 0.05
+              and sleeve['bboxArea']['3x2'] <= 0.150
+              and sleeve['bboxArea']['16x9'] <= 0.120)
     return {**sleeve, 'passes': passes}
 
 

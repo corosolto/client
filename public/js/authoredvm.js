@@ -218,7 +218,7 @@ const FAMILY_FRAME = Object.freeze({
   bolt:    { x: 0.055, y: -0.083, z: -0.254, fov: 84, rotDeg: [-1.6, -0.3, 0] },
   g3:      { x: 0.117, y: -0.062, z: -0.202, fov: 84, rotDeg: [1.0, -0.2, 0] },
   marksman:{ x: 0.107, y: -0.07, z: -0.187, fov: 84, rotDeg: [0.5, -0.3, 0] },
-  svd:     { x: 0.107, y: -0.06, z: -0.419, fov: 84, rotDeg: [1.9, 0.5, 0] },
+  svd:     { x: 0.107, y: -0.17, z: -0.419, fov: 84, rotDeg: [1.9, 0.5, 0] },
   lmg:     { x: 0.153, y: -0.116, z: -0.409, fov: 84, rotDeg: [-5.2, -0.3, 0] },
   // revolver: sem doador CS 1.6 (não existe no jogo fonte) — fica no olho antigo.
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
