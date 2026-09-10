@@ -69,8 +69,9 @@ for (const [aspect, width, height] of [['3x2', 1440, 960], ['16x9', 1440, 810]])
     for (const fraction of [0.40, 0.70]) { await pose(clip, fraction); await snap(`${clip}-${fraction * 100}`); }
   }
   await pose('inspect', 0.50); await snap('inspect-50');
-  await pose('idle', 0); await page.evaluate(() => window.__authoredVm.setAim('m4', 1));
-  await page.waitForTimeout(350); await snap('ads');
+  await pose('idle', 0); await page.evaluate(() => window.__vmPrecisionQa.ads());
+  await page.waitForFunction(() => window.__authoredVm?.adsAmount > 0.9, null, { timeout: 5000 });
+  await snap('ads');
   await page.close();
   console.log(`M4_CAPTURE ${aspect} ok`);
 }
