@@ -37,7 +37,7 @@
 /* As facções que têm cor própria, na ordem em que o elenco as declara.
    Facção fora desta lista cai no NEUTRO, nunca em `undefined` — foi o `undefined` que
    apagou a bandeira em 07/08. */
-export const FACCOES = ['E', 'B', 'U', 'C', 'F'];
+export const FACCOES = ['E', 'B', 'U', 'C', 'F', 'M'];
 
 /* Três tons por facção, e cada um existe por um motivo medido:
 
@@ -56,6 +56,7 @@ export const PALETA = {
   U: { base: '#4aa3ff', escura: '#2f7fe0', palida: '#a8cdff' },   // Tribos azul
   C: { base: '#ff6ec7', escura: '#c23a86', palida: '#ffb3e0' },   // Palhaços rosa-circo
   F: { base: '#ffc233', escura: '#c79a12', palida: '#ffd98a' },   // Funkeiros ouro
+  M: { base: '#9d4edd', escura: '#5e35b1', palida: '#d0a3f0' },   // Mítico roxo
 };
 
 /* ESPELHO — inimigo da MESMA facção do jogador. Não é cor de facção: é o roxo que existe

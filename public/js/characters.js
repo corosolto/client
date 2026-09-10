@@ -90,7 +90,8 @@ export const CHAR_FX = {
   albLod:   _cnum('charalblod', 6),                    // mip do nível regional (6 = bloco de 64 texels)
   sat:      _cnum('charsat', 1.32),                    // ganho de croma do albedo (+cor original dos moldes)
   rimNear: _cnum('rimnear', 0.18),                     // rim a queima-roupa: discreto, não vira fantasma
-  rimFar:  _cnum('rimfar', 0.70),                      // rim a 34 m+: é longe que o inimigo some no fundo
+  // Mantém o contorno explícito a 40 m no corredor quente medido por C18.
+  rimFar:  _cnum('rimfar', 0.82),                      // rim a 34 m+: é longe que o inimigo some no fundo
   rimPow:  _cnum('rimpow', 1.7),                       // expoente da banda LARGA (dá área pro ΔL* médio subir)
   rimEdge: _cnum('rimedge', 1.35),                     // peso da banda FINA (contorno explícito, C1)
   sss:     _lowQ ? 0 : _cnum('charsss', 0.30),         // subsurface falso na pele (0 em low)
@@ -580,6 +581,34 @@ export const CHARACTERS = [
   { id: 'ostentacao', team: 'F', tribe: 'funkeiros', name: 'Ostentação',
     blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.',
     pal: { skin: 0xd9a066, shirt: 0xf0f0f0, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0xffd23f } },
+
+  { id: 'lobisomem', team: 'M', tribe: 'miticos', name: 'Lobisomem',
+    blurb: 'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.',
+    pal: { skin: 0x9a8a7a, shirt: 0x1a1a2a, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0x2a2a2a } },
+  { id: 'mariabonita', team: 'M', tribe: 'mitico', name: 'Maria Bonita',
+    blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.',
+    pal: { skin: 0xc49070, shirt: 0xb04020, pants: 0x6a3020, hair: 0x1a0a00, boots: 0x4a2a1a } },
+  { id: 'lampiao', team: 'M', tribe: 'mitico', name: 'Lampião',
+    blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!',
+    pal: { skin: 0xb0805a, shirt: 0x8a4a2a, pants: 0x5a3a1a, hair: 0x1a0a00, boots: 0x3a2a1a } },
+  { id: 'bandeirante', team: 'M', tribe: 'mitico', name: 'Bandeirante',
+    blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.',
+    pal: { skin: 0xc09070, shirt: 0x4a3a2a, pants: 0x3a2a1a, hair: 0x4a3a2a, boots: 0x2a1a0a } },
+  { id: 'boto', team: 'M', tribe: 'mitico', name: 'Boto Cor de Rosa',
+    blurb: 'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.',
+    pal: { skin: 0xffaaaa, shirt: 0xffffff, pants: 0xffffff, hair: 0x6a4a3a, boots: 0xffffff } },
+  { id: 'zumbi', team: 'M', tribe: 'mitico', name: 'Zumbi dos Palmares',
+    blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.',
+    pal: { skin: 0x4a3020, shirt: 0x8b0000, pants: 0x3a2a1a, hair: 0x1a0a00, boots: 0x2a1a0a } },
+  { id: 'curupira', team: 'M', tribe: 'mitico', name: 'Curupira',
+    blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.',
+    pal: { skin: 0xb88a5a, shirt: 0x4a6a3a, pants: 0x3a4a2a, hair: 0xff4400, boots: 0x3a2a1a } },
+  { id: 'saci', team: 'M', tribe: 'mitico', name: 'Saci-Pererê',
+    blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.',
+    pal: { skin: 0x8d6a4f, shirt: 0xc01010, pants: 0xc01010, hair: 0xc01010, boots: 0x1a1a1a } },
+  { id: 'caipora', team: 'M', tribe: 'mitico', name: 'Caipora',
+    blurb: 'Guardiã da mata, cabelo de fogo e pintura de guerra. Quem caça demais vira caça.',
+    pal: { skin: 0xa0704a, shirt: 0xd8a03a, pants: 0xc08830, hair: 0xd11a1a, boots: 0x6a4a2a } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -594,6 +623,8 @@ export const CHAR_WEAPON = {
   palhacomal: 'g3sg1', jozo: 'shotgun', adjim: 'uzi', esbirro: 'mp5', titica: 'ak', padati: 'pistol', padata: 'p90', cadequinha: 'revolver38',
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
+  lobisomem: 'shotgun',
+  mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', caipora: 'scar', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

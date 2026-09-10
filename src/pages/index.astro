@@ -951,6 +951,17 @@ window.__GEO_LANG__ = (function () {
       <span class="team-desc">Mandrake · Raul da Franja · Oakley · Cria RJ · Chave SP · Funk Raiz · Trap Funk · Fluxo · Ostentação</span>
       <span class="team-cta" aria-hidden="true"></span>
     </button>
+    <button id="btn-team-m" class="team-card team-m">
+      <img class="team-crest" src="/img/brasoes/m.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">MÍTICO</span>
+        <span class="team-slogan">"A treta atravessa os séculos!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Lobisomem · Bandeirante · Boto Cor de Rosa · Caipora · Curupira · Maria Bonita · Saci-Pererê · Zumbi dos Palmares · Lampião</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
   </div>
   <button id="team-back" class="btn btn-back">◀ VOLTAR</button>
 </div>
@@ -1278,6 +1289,9 @@ window.__GEO_LANG__ = (function () {
   <div id="hud-bottom-left">
     <div id="hp-row"><span id="hp-num">100</span></div>
     <div id="hp-bar"><div id="hp-fill"></div></div>
+    <!-- Abates do JOGADOR (BUG-144): as plaquetas do topo contam o TIME na RODADA.
+         Régua: tools/eval/abateshud-check.mjs -->
+    <div id="kill-counter"><span id="kill-count">0</span><span class="kc-label">ABATES</span></div>
   </div>
   <div id="weapon-hud" class="hidden" aria-label="Armas e utilitários"></div>
   <div id="hud-bottom-right">

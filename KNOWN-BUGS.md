@@ -37,6 +37,76 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## Sertão — casas da praça (PR #526, revisão local 06/09)
+
+### ~~BUG-145 · Rejeição humana pós-merge: carroças ainda bloqueiam e a fileira dos respawns ainda tem fachadas fechadas~~ · CORRIGIDO, AGUARDA REVISÃO HUMANA 08/09
+
+**Relato literal recebido depois do merge do PR #526:** "carroças ainda bloqueiam
+passagem e as casas diante dos dois spawns continuam fechadas/inúteis". Os gates
+anteriores respondiam outra pergunta: WA2 aceitava um único flanco livre por carroça,
+e IN1/IN2 cobravam apenas uma das duas fachadas de cada fileira de respawn.
+
+**Baseline vermelha em `origin/main` alpha.242 (`e67addf4`):** WA5 encontra o
+flanco leste da carroça `(7,2)` e o oeste da `(-14,2;25,4)` bloqueados. IN12/IN13
+encontram somente duas das quatro fachadas jogáveis: `platibanda-0` desloca a
+cápsula 3,68 m na entrada e `pedra-8`, 3,43 m; ambas estão ausentes de
+`interiorHouses` e falham na visada recíproca pela janela. Evidência:
+`artifacts/sertao-respawn-fix/{wagon,interiors}-baseline-red.json`.
+
+**Depois:** WA5 exige os dois flancos das três carroças e mede 4,9 m de travessia
+traseira em todas. IN12/IN13 cobrem cinco casas das fileiras: entrada, saída
+lateral e LOS recíproca pela janela, sem deslocamento da cápsula. A geminada
+central também foi aberta; os interiores de pedra mantêm os 6,1×6,2 m da família
+original para não estrangular a rota leste. A grade dos bots exclui o interior e
+adiciona centro/soleira intencionais, removendo a oscilação que apareceu no
+primeiro golden pós-correção.
+
+**Réguas e prova negativa:** `sertao-wagon-check.mjs` mata
+`carroca-bloqueadora` em WA5; `sertao-interiors-check.mjs` mata
+`fechar-casa-respawn` em IN12 e `fechar-janela-respawn` em IN13. Os 16 mutantes
+de interiores, três de carroça e 14 espaciais foram mordidos. SP4 mantém três
+rotas disjuntas de 31/34/29 nós. Capturas WebGL 1536×1024 e resultados completos:
+[SERTAO-RESPAWN-WAGONS-FIX](docs/reports/SERTAO-RESPAWN-WAGONS-FIX.md). O estado
+continua em draft até o dono atravessar as carroças e entrar nas casas na partida.
+
+### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO E VALIDADO EM WEBGL 08/09
+
+**Relato literal do dono (runtime 3:2, capturas de 06→07/09 23h52–00h00)**: (1) há
+trechos em que o jogador não passa junto às carroças; (2) as casas diante dos spawns
+continuam cenográficas e fechadas — ele quer entrar nelas e usar janelas como posição
+tática. O quality gate estava verde (IN1–IN7, TR1/TR3, SP1–SP9): pelo corolário da lei 1
+da `bug-hunt`, o defeito é do quality gate — nenhuma régua media corredor junto às
+carroças nem interiores diante dos spawns.
+
+**Inspeção inicial (`public/js/map_velho_oeste.js`)**: `wagon()` empurra AABB
+conservador de meia-largura 2,3×3,2 quando a carroceria visível é 1,9 de largura ×
+1,1 de corpo (+ rodas até 1,71 em z) e a lança tem colisor próprio sobreposto — parede
+invisível de ~1,5 m na traseira e cantos inflamados pela rotação. O PR #526 abriu só as
+duas `casaDaPraca` em z=15; as `CASAS` diante dos spawns (platibanda 0/1 ao norte,
+pedra 7/8 e geminada 9 ao sul) mantêm colisor único fechando a planta.
+
+Régua: `tools/eval/sertao-wagon-check.mjs` (WA1–WA4) + `sertao-interiors-check.mjs`
+estendido às 4 casas. **Antes:** WA1 19–30 m² de área invisível por carroça,
+WA2/WA3 zero; casas dos spawns sem interior. **Depois:** WA1–WA4 e IN1–IN7
+verdes; mutantes `aabb-conservador`, `barreira-spawn`, `fechar-porta-casa`,
+`fechar-janela-casa` (+8 anteriores, +17 espaciais) mordendo. De carona:
+`sertao-spatial-check` truncava stdout em pipe (`process.exit` → `exitCode`).
+Antes/depois, custos e comandos: [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+**WebGL 3:2:** RV1–RV12 verdes em 1536×1024; imagens reais abertas e examinadas.
+O agrupamento dos interiores reduz o pico de 564 para 499 draw calls e o mutante
+sem batch deixa RV3 vermelho. IN8–IN11 cobrem saída lateral, tiro tático, seis
+coberturas da praça. Cabras, galinha e pintinhos foram conferidos no runtime por
+LG1–LG8. O julgamento final da sensação de combate permanece humano.
+
+Frestas laterais, obstáculos internos e uma aresta bloqueada por esteio foram
+reproduzidos e corrigidos. Régua: `tools/eval/sertao-interiors-check.mjs`,
+`IN3/IN4/IN5` vermelhas antes e verdes depois, com mutantes. Evidência, custo e
+continuação em [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+A coordenada exata do relato original permanece sem reprodução localizada; a
+varredura IN7 confirma zero bolsões livres inacessíveis no mapa inteiro. A
+evidência WebGL está em `artifacts/sertao-casas/runtime-final-v2/`; a entrega não é
+uma publicação de produção.
+
 ## P0 — quebram o jogo ou mentem para quem mede
 
 ### ~~BUG-86 · no multiplayer o corpo TP do próprio jogador ficava DEITADO depois do respawn, arrastado pelo mundo~~ · RESOLVIDO 30/08 (PR #483)
@@ -1900,6 +1970,81 @@ mudar.
 
 ## P1 — o jogador vê
 
+### ~~BUG-142 · a replay cam de headshot arrancava a câmera do jogador por 1,2 s~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** tirar o efeito de câmera do headshot.
+
+**Evidência (`node tools/eval/replaycam-check.mjs` na árvore `42c01175`, `praca_poderes`,
+semente 4242, 4 bots, 90 quadros de aquecimento):** depois do headshot do jogador a câmera
+saltava **121,377 m** do olho, girava **3,440 rad**, o FOV ia de 70 para 50 (**Δ20°**), o
+relógio andava **1,836 s de jogo em 2,000 s reais** (hit-stop escalando o `dt` em 0,18 por
+0,2 s reais) e viewmodel e mira sumiam. O efeito vinha do PR #364 (`REPLAY_CAM`,
+`_updateReplayCam`, `REPLAY_DUR` 1,2 s — 1,36 s reais, porque `rc.t` acumulava o `dt` já
+escalado).
+
+**Correção:** removidos `REPLAY_CAM`, as cinco constantes `REPLAY_*`, `_updateReplayCam`, o
+armamento no `_kill`, a chamada no `_updatePlayer`, o descarte no jogador morto e o hit-stop
+do `update()`. Saiu inteira em vez de virar mais um kill-switch: com respawn de 2,2 s, 1,2 s
+sem câmera e sem mira punia quem acertou o tiro, e o headshot já tem hitmarker, número de
+dano, killfeed e locutor. `tools/eval/replaycam-probe.mjs` (sonda do kill-switch) deixou de
+ter função e foi apagada.
+
+**Régua:** `tools/eval/replaycam-check.mjs` (`npm run eval:replaycam`), agora medindo o
+contrário — HS1 câmera parada (teto 0,250 m / 0,250 rad / 0,5°), HS2 relógio 1:1 (teto
+0,02 s), HS3 viewmodel e mira visíveis, HS4 o abate continua contando. Depois: Δ0,000 m,
+Δ0,000 rad, ΔFOV 0,000°, 2,000 s de jogo em 2,000 s reais. **Mutantes:** `orbita`,
+`hitstop`, `esconde` e `sem-kill` — os quatro reprovam.
+
+### ~~BUG-143 · em rodada de faca o bot carregava a faca e jogava de fuzil~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** em rodadas de faca, os bots precisam respeitar o modo.
+
+**Evidência (`node tools/eval/botfaca-check.mjs` na árvore `42c01175`, `praca_poderes`,
+semente 4242, 4 bots, 60 s):** `_botWeapon()` já entregava `knife`, mas o comportamento
+continuava de arma de fogo em duas frentes.
+
+- **(a) banda de distância.** `_updateBot` mantém histerese calibrada para fuzil — entra em
+  `back` abaixo de 6 m e só volta a `mid` acima de 9,5 m. O alcance da faca é 2,4 m. Medido:
+  menor distância bot→alvo **5,98 m**, **zero golpes**, **zero abates** em 60 s.
+- **(b) o golpe.** Quando entrava no alcance, o ataque saía pelo caminho de tiro: hitscan com
+  desvio angular, `_tracer`, `_flash` e `sfx.shotWeapon`. Faca não tem cano nem projétil.
+
+**Correção (`public/js/game.js`):** `_meleeRange(wid)` é a fonte única do alcance de arma
+branca (0 para arma de fogo); com ele a banda vira "fecha e não recua" (`push` acima de 0,6×
+o alcance, `approach` nunca negativo) e o gate de ataque roteia para `_botMelee`, que resolve
+alcance, ângulo, LOS e dano tocando `sfx.knife()`/`sfx.knifeHit()`. Fora do corpo a corpo a
+banda de fuzil não mudou.
+
+**Depois (mesma semente):** encostou a **1,24 m**, **18 golpes**, **9 abates**, **0
+traçantes e 0 fogachos**; rodada normal intacta (menor distância **23,46 m**).
+
+**Régua:** `tools/eval/botfaca-check.mjs` (`npm run eval:botfaca`) — BF1 faca na mão, BF2
+perseguição e combate, BF3 sem enfeite de arma de fogo, BF4 a rodada normal não vira corrida
+(piso de 4 m, derivado do `dist < 6 ? 'back'` da própria banda). **Mutantes:** `recuo`
+(5,40 m, zero golpes), `tracante` (18 traçantes/18 fogachos) e `corredor` (rodada normal
+colando a 2,87 m) — os três reprovam.
+
+### ~~BUG-144 · o jogador não conseguia ler os próprios abates durante a partida~~ · CORRIGIDO LOCALMENTE 06/09/2026
+
+**Relato do dono (06/09):** contador de abates legível, no espírito do Valorant.
+
+**Evidência (`node tools/eval/abateshud-check.mjs` na árvore `42c01175`):** `#kill-count` não
+existia em lugar nenhum — AB1, AB2, AB3 e AB4 reprovavam de saída. O HUD tinha dois números
+grandes no topo (`#score-e`/`#score-b`), e os dois são `roundKills` do TIME na RODADA; o
+número pessoal só existia atrás do TAB e na tela de fim de partida.
+
+**Correção:** `#kill-counter` na coluna de estado do jogador (`src/pages/index.astro`), com
+algarismo de 28 px no lima da casa (`--aaa-lime`) e rótulo `ABATES` de 11 px — os mesmos
+tokens do resto do HUD, sem asset de terceiro. O valor é `player.kills` (partida), escrito
+pelo `_updateHud` só quando muda. Do Valorant vem apenas o princípio "número grande com
+rótulo miúdo ancorado no bloco do jogador"; layout, tipografia e cor são os da casa.
+
+**Régua:** `tools/eval/abateshud-check.mjs` (`npm run eval:abateshud`) — AB1 existe dentro do
+`#hud` com rótulo, AB2 corpo ≥ 24 px fora de `@media` e não nasce `display:none`, AB3 imprime
+o abate do JOGADOR (com abate de aliado no meio para separar do número do time), AB4
+sobrevive à virada de rodada. **Mutantes:** `time`, `rodada`, `congelado` e `miudo` — os
+quatro reprovam.
+
 ### ~~CTF sumiu do menu da home~~ · CORRIGIDO LOCALMENTE 06/09/2026
 
 **Relato:** "o modo CTF sumiu do menu da home". O redesign removeu o botão
@@ -3435,6 +3580,220 @@ hipótese de escorço foram **refutadas com número**. Nenhum parâmetro de câm
 malha: o caminho é **malha nova ou outra família de pose**. Não gaste rodada procurando
 parâmetro.
 
+### BUG-145 · Lobisomem em FP com mãos ligadas continua com escala ruim
+
+O modo padrão do Lobisomem segue `weaponOnly=true`, porque o rig compartilhado de mãos
+mostra proporção ruim quando habilitado: a arma encaixa, mas a mão extra fica grande e
+desancorada. A revisão local trata isso como limitação herdada do viewmodel opcional, não
+como regressão da facção M. Evidência: `artifacts/miticos-review/hands/arms.glb-0.png` e
+`artifacts/miticos-review/after/fp-32.png`.
+
+### BUG-146 · Render offline do Lobisomem publica brilho, não pelagem
+
+O GLB do Lobisomem é `metallic=1` com albedo escuro; o rig offline
+(`tools/eval/miticos-render-review.py`) usa Principled dielétrico, então o especular das
+áreas de luz domina a imagem. Medido: baixar o albedo 3,3× (tint branco → `baseColorFactor`
+0,3/0,32/0,36) moveu a luma do retrato só de 88,8 para 82,0, e a pelagem continua invisível.
+Reduzir a luz para o nível do modo padrão corrige a luma (43,9) mas derruba `contraste` para
+20,8 e `cores` para 332, abaixo do mínimo dos 88 retratos aprovados (26,1 e 473). Enquanto o
+rig não reproduzir o material metálico, retrato de Mítico sai de mídia aprovada, não de
+render offline. Medição e folha comparativa em
+`docs/reports/MITICOS-LOBISOMEM-INTEGRATION.md`.
+
+### ~~BUG-147 · Lobisomem não tem perfil físico de áudio~~ · CORRIGIDO 07/09/2026
+
+`CHARACTER_IDS` em `tools/audio/fab-game-local.mjs` listava 44 ids e não incluía
+`lobisomem`, então `characterPhysical.byCharacter` não cobria o personagem e
+`eval:audiofablocal` reprovava em `LAB8e` com 44/45.
+
+**Fonte corrigida:** o id entrou na lista (45) e em `CREATURE_CHARACTERS`, ao lado de
+`gotinha`/`dollynho`/`et`/`canarinho`/`proerd` — `physicalByCharacter` é derivado só
+dessas duas listas, sem depender de nenhum byte de áudio.
+
+**`eval:audiofablocal` ficou VERDE com essa única edição.** A previsão de que ficaria
+vermelho até o pacote Fab chegar estava errada: o `audio-fab-local-check.mjs` monta as
+fixtures e roda o gerador num diretório temporário próprio, então `LAB8e` não depende do
+`manifest.json` publicado. Quem depende do pacote é o `audio:check`, que continua vermelho
+neste worktree pelo motivo de sempre (`manifest.json DEFASADO em relação ao disco`) e não
+tem relação com o Lobisomem.
+
+
+### BUG-148 · malha atravessa o chão na morte e no agachado, e nada media isso
+
+**Classe do elenco inteiro, não regressão da facção M.** O contato de pé (CHR3,
+`gen-foot-offsets.mjs`, e o `*-feet` do `miticos-runtime-review.mjs`) mede o vértice mais
+baixo dos ossos de PERNA. O resto do corpo nunca teve régua. O Lobisomem passou 30/30 no
+review com a pata em `0,0000 m` e o quadril 45 cm abaixo do chão na morte — o cadáver
+afunda em vez de deitar.
+
+Medido em 07/09 nos 45 personagens com GLB (`node tools/eval/chao-check.mjs`, o mesmo
+`buildCharacterModel` da tela, 60 Hz, quadro assentado; metros, 0 = chão):
+
+| estado | pior do elenco | mediana | lobisomem |
+| --- | --- | --- | --- |
+| `idle` | -0,0075 (cadequinha) | -0,0001 | **0,0000** (o melhor do elenco) |
+| `crouch` | -0,4313 (proerd) | -0,0004 | -0,1158 |
+| `death` | -0,7771 (proerd) | -0,0677 | -0,4518 |
+
+`proerd` e `canarinho` — **dois personagens que já estão no ar** — enterram 75 cm de corpo
+na morte. O Lobisomem é o terceiro pior, dentro do envelope que já é publicado.
+
+A causa é a malha, não o esqueleto: no mesmo clipe de morte o `Hips` para na mesma altura
+nos dois (`0,138` no lobo, `0,129` no mandrake), mas o corpo do lobo desce `0,59 m` abaixo
+do próprio quadril contra `0,18 m` do mandrake. A morte e o salto não são aterrados de
+propósito (`ground-anims.mjs` preserva a trajetória), então nada corrige o que
+sobra embaixo.
+
+**Régua:** `npm run eval:chao` (CHR7), no `check:fast`, 3,6 s para os 45. Catraca por
+personagem em `tools/eval/chao_check.json` — piorar reprova; melhorar pede `--escreve`.
+`idle` tem teto absoluto de 1,5 cm porque é a pose que a seleção, o menu e o retrato
+mostram. Mutante `--mutate=afunda` (raiz 5 cm para baixo) reprova 135 casos.
+
+**Não consertado nesta lane, de propósito.** Aterrar a morte do lobo pelo mínimo da malha
+o levantaria 45 cm e o deixaria o único do elenco deitado certo, com `proerd` e `canarinho`
+piores e sem régua para eles; e mexer no clipe arrisca o contato de pata que hoje está em
+`1e-7 m`. A catraca impede que piore enquanto a classe não for atacada de uma vez.
+
+
+### ~~BUG-149 · o retarget assava torção nos ossos de curl e matava o fechamento da pata~~ · CORRIGIDO 07/09/2026
+
+`Curl_L`/`Curl_R` não são ossos de animação: são o **atuador de runtime** do fechamento da
+mão, escrito UMA vez pelo `buildCharacterModel` (`glbchars.js`, bloco "Grip curl") com o
+ângulo tirado da espessura medida da arma. Canal de clipe neles é sobrescrita por quadro —
+o grip curl morre e a arma fica na pata aberta.
+
+O `retarget-glb.mjs` montava o delta de rotação de mundo para **todo osso de nome igual**,
+`Curl_*` incluído. Nos 13 rigs humanos com esses ossos o rest da fonte e o do alvo
+coincidem e o delta saía **identidade** (`|delta|max = 0,0000 rad`): inerte, e por isso
+nenhuma régua de asset acusava. Na pata do Lobisomem os rests divergem:
+
+    lobisomem  Curl_R  |delta|max = 0,8763 rad   x=0,293  y=-0,544  z=-0,621
+    (os outros 13)     |delta|max = 0,0000 rad
+
+O eixo dominante é **torção** (y/z), não o `x` do curl — numa folha que carrega 12,55% do
+peso de skin do modelo, a maior região de curl do elenco (P95 a 22,6 cm do osso, contra
+15,0-20,5 cm dos outros 13).
+
+**Estrago, na régua do portão** (`npm run eval:select`, o caminho da tela de seleção):
+
+| | p99 | ruins/1e4 | |
+| --- | --- | --- | --- |
+| com a torção do clipe | 0,694 | 36,2 | REPROVA (teto 0,675 / 23,6) |
+| sem as tracks de Curl | 0,511 | 14,5 | passa — melhor que o `mandrake` (0,540 / 18,9) |
+
+Era o 13º reprovado num portão que declara no máximo 12.
+
+**Conserto em duas pontas:** `tools/strip-curl-tracks.mjs` tira o canal dos GLB já no
+disco (mede antes de tirar, e tem `--check`); `retarget-glb.mjs` nunca mais emite `Curl_*`
+— no-op nos 13 rigs humanos, porque o canal que eles perdem é identidade. Remover em vez
+de regerar foi deliberado: regerar refaria também o contato de pata assado pelo
+`ground-anims.mjs` e a CHR3 junto.
+
+**Mutantes:** `select-inflate.mjs --mutate=curltwist` devolve a torção medida (lobisomem
+p99 0,511 → 0,808, ruins 14,5 → 44,6, VERMELHO; `mandrake`/`pagodeiro` não se movem, e
+está certo — o rig deles não tem `Curl_*` com peso). `miticos-lobisomem-integration-check
+--mutate=curltwist` RECONSTRÓI o canal no documento e o portão o acha sozinho.
+
+**`CURL_MAX` (`glbchars.js`) é LIMITE, não conserto — e hoje não morde.** Com a shotgun
+que o Lobisomem carrega, `curlPara` já devolve 0,35, o piso da faixa, então
+`min(0,35, 0,50)` = 0,35. Ele existe porque a faixa 0,35-0,80 é calibrada em MÃO HUMANA
+("fecha ~0,8 rad em volta de 3 cm") e o lobo tem PATA: arco é r·θ, pata longa precisa de
+MENOS ângulo, e o `curlPara` não tem como saber porque mede a ARMA, nunca a mão. Varrido
+com os clipes já limpos (teto p99 0,675 / ruins 23,6):
+
+| teto | p99 | ruins/1e4 | |
+| --- | --- | --- | --- |
+| 0,35 (o de hoje) | 0,510 | 14,5 | passa |
+| **0,50 (o escrito)** | 0,554 | 16,9 | passa |
+| 0,55 | 0,561 | 21,7 | passa |
+| 0,60 | 0,572 | 24,1 | REPROVA |
+
+O joelho está entre 0,55 e 0,60. Trocar a arma do lobo por uma mais FINA sobe o `curlPara`
+(no limite 0,80 → ruins 35,0) e derrubaria o portão sem ninguém ter tocado no lobo; 0,50
+para essa queda com 28% de folga. Tabela explícita, com um nome só, para o valor não
+vazar para os outros 44.
+
+
+### BUG-150 · Saci e Cuca deformam 12× e 27× o teto, e ficam fora do elenco
+
+Os dois únicos Míticos que o pipeline por personagem NÃO salvou. Medido em
+`npm run eval:select` (teto 23,6 ruins/1e4), depois de retarget + aterramento + strip curl:
+
+| | antes | depois do pipeline |
+| --- | --- | --- |
+| `saci` | 607,1 | ~630 |
+| `cuca` | 316,8 | 284,9 |
+
+Para comparação, o mesmo passo levou o `bandeirante` de 93,1 para **7,3**.
+
+**O que já foi tentado e NÃO resolveu** (resultado negativo, medido — para ninguém repetir):
+
+- **`reskin-glb`**: trocou o dominante em **0 de 7446 vértices (0%)**. Os pesos já são o que
+  a proximidade produziria; a convenção junta→filho está correta nos dois.
+- **Costura de peso entre ossos distantes.** Os dois são os únicos do elenco acima de 8% de
+  vértices com peso repartido entre ossos a mais de 3 arestas no grafo (saci 8,9%, cuca
+  10,8%, contra 0,14-1,5% de todo o resto) — a correlação é real na ponta. Tirar esse peso
+  e renormalizar levou a **cuca de 316,8 para 245,8** (22% melhor, ainda 10× o teto) e o
+  **saci de 607,1 para 629,6** (pior). Na cuca ainda quebrou o contato de chão: o crouch
+  foi para **-1,05 m** e a morte para **-1,38 m**. Os dois consertos foram revertidos e a
+  ferramenta não entrou na árvore.
+**SEIS TENTATIVAS MEDIDAS (08-09/09), teto 23,6 ruins/1e4:**
+
+| tentativa | ruins/1e4 |
+| --- | --- |
+| v1, o modelo herdado | 316,8 |
+| v2, regerada HUMANOIDE (T-pose + rig do Mint) | 412 |
+| v4, regerada JACARÉ BÍPEDE (mesma receita) | 333,4 |
+| **v4 + `reskin-glb` (LOCAL=0)** | **187,0** ← melhor |
+| v4 + `reskin-glb` LOCAL=1 | 254,4 |
+| v4 + `reskin-glb` LOCAL=2 | 262,5 |
+
+**O dono estava certo sobre a identidade, e isso foi separado da causa.** Ele apontou que
+a Cuca é jacaré, não humanoide, e que forçá-la humana descaracteriza. Verdade — e o
+LOBISOMEM prova que bicho passa: focinho, pelo e cauda, com **14,5**, a melhor nota do
+elenco. A restrição nunca foi "ser humanoide", é **plano corporal** (dois braços, duas
+pernas, membros de comprimento humano). A v4 já é jacaré e mesmo assim reprova.
+
+**O que o reskin consertou, medido:** o auto-skin do Mint prendeu o braço e parte do ombro
+ao osso do COTOVELO — `LeftArm` com ZERO vértices dominados e `LeftForeArm` com 1934, o
+centroide a 0,298 m do próprio osso. O `reskin-glb` trocou o dominante em 81% dos vértices
+(4554 de 5598) e levou 333,4 -> 187,0, com o p99 caindo de 22,9 para 1,33 (o mandrake é
+0,54). O antebraço foi para 0,132.
+
+**O que sobra, e por que para aqui:** o pior agora é o `RightLeg` (joelho) dominando 250
+vértices com o pior deles a **1,49 m do osso**. Não é ilha de geometria solta (razão
+máx/p99 = 1,3), é a forma: a malha dela é espalhada — p50 0,46 e p99 1,39 de distância ao
+centro, contra 0,38/0,84 do Saci e 0,70/1,27 do Lobisomem. Focinho longo mais vestido longo
+mais braços abertos é forma ingrata para rig humanoide. Consertar isso é repintar peso à
+mão no Blender, em volta do joelho e da barra do vestido — horas de autoria com julgamento
+visual, não script.
+
+**Fica fora do elenco com 187,0**, oito vezes o teto. O GLB da v4 + reskin está no disco.
+
+
+**Fora do registro, não do disco.** Os GLB seguem em `public/models/characters/`; o que
+saiu foi a entrada em `characters.js`/`GLB_CHARS`/`CHAR_WEAPON`. A invariante de roster do
+`eval:miticos-lobisomem` barra os dois por nome, com mutante.
+
+**O Saci é de UMA PERNA — decidido pelo dono em 08/09**, e é tecnicamente viável. A
+pergunta dele foi a certa ("se for possível ele andar no jogo"), e a resposta foi medida
+antes de gastar geração:
+
+O truque é separar MALHA de ESQUELETO. O rig continua com as duas pernas — é o que os 11
+clipes compartilhados animam —, e só a GEOMETRIA de uma delas some. Provado no Saci atual:
+removendo os triângulos cujos vértices são dominados por `LeftUpLeg|LeftLeg|LeftFoot|
+LeftToeBase` saem 752 de 4975 triângulos (15,1%), o personagem fica de uma perna só, o
+clipe de caminhada toca (RMSE ~2000 entre quadros, medido) e o pé pisa no chão pelo
+`ground-anims`.
+
+O que continua em aberto é ESTÉTICO, não técnico: o ciclo foi autorado para duas pernas,
+então na fase em que a perna que sumiu seria o apoio o corpo fica sem suporte visível.
+Lido de perto isso vira ou um pulinho — que é o Saci — ou um deslize. Um ciclo de pulo
+próprio resolveria de vez, e é trabalho de autoria.
+
+Nada disso é aproveitável enquanto o modelo do Saci reprovar por 27×: a perna é decisão
+de identidade para o Saci REGERADO, não para este.
+
 ---
 
 ### ~~BUG-24 · "as armas estão 1,5x do tamanho que deveriam"~~ · RESOLVIDO 04/08
@@ -3998,6 +4357,15 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatos recentes e resolução
+
+- **BUG-145 · tiros com volume zero derrubavam o áudio com `RangeError`.**
+  **Sintoma literal (admin, 08/09/2026, produção alpha.239):**
+  `Failed to execute 'exponentialRampToValueAtTime' on 'AudioParam': The target value provided (0) should be greater than 0.`
+  **Causa reproduzida:** `Sfx._env` repassava `peak` ou `end` iguais a zero para uma rampa
+  exponencial; a Web Audio API exige alvo estritamente positivo. **Correção:** limita ambos
+  a `0.0001`, inaudível mas válido. **Régua:** `eval:audioenvelope`; o mutante
+  `--mutante=pico-zero` precisa reprovar. **Não cobre:** escuta em navegador real nem o
+  timeout de abertura de partida, que é outro relato e ainda exige contexto de rede/estado.
 
 - **BUG-140 · regressão de mix e vozes após o pack privado.**
   **Sintoma literal (dono, 05/09/2026, produção):** *“os sons estao ok, mas estao altos, os
@@ -4862,3 +5230,8 @@ O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame comple
 otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 `artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado. A PR517 foi integrada à main em 06/09/2026 pelo merge `b64aa886` e a correção acompanha a release `v2.0.0-alpha.236`; integrar não é publicar, e nenhum deploy em produção foi verificado.
+
+
+### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527
+
+Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.

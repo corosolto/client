@@ -109,6 +109,18 @@ procedência de DROP_TTL/DROP_MAX: acúmulo de armas no chão em regime
 npm run eval:drop
 ```
 
+## `eval:penetration`
+
+Constrói o `Game` real com uma camada fina controlada e cobra o contrato de
+penetração: apenas AWP, madeira/vidro até 0,28 m, 50% de dano e só um inimigo
+depois de uma única parede. Concreto, AK, segunda parede e cliente online
+permanecem bloqueados. O mutante que remove a saída da parede precisa deixar a
+cláusula de travessia vermelha. Entra no `check:fast`.
+
+```bash
+npm run eval:penetration
+```
+
 ## `eval:deps`
 
 npm audit --omit=dev: alta/crítica fora da lista de isenção reprova (isenções nominais e datadas no deps-check.mjs). Precisa de rede — passo de CI, não do check:deploy.
@@ -203,6 +215,30 @@ O arco de dano na borda da tela (_dmgArc) tem que apontar pro atacante, não pro
 
 ```bash
 npm run eval:dmgdir
+```
+
+## `eval:abateshud`
+
+O contador de abates do JOGADOR tem que ser legível DURANTE a partida. Nasceu do pedido do dono: o HUD tinha dois números grandes no topo e nenhum dos dois é o abate pessoal — `#score-e`/`#score-b` imprimem `roundKills[side]`, que é do TIME e zera na virada; o número do jogador só existia atrás do TAB. Mede marcação (`#kill-counter`/`#kill-count` dentro do `#hud`, com rótulo), legibilidade por medida (piso de 24px fora de `@media`, contra os 42px do `#hp-num`) e comportamento com o Game rodando: imprime `player.kills`, não o placar do time, e sobrevive ao `_startRound`. `--mutante=time|rodada|congelado|miudo`.
+
+```bash
+npm run eval:abateshud
+```
+
+## `eval:botfaca`
+
+Em rodada de faca o bot tem que jogar de faca. Nasceu do pedido do dono. A faca já ia pra mão dele (`_botWeapon`), mas a cabeça continuava de fuzil em duas frentes: a banda de distância de `_updateBot` entra em recuo abaixo de 6 m e a faca alcança 2,4 m (medido antes do conserto: menor distância bot→alvo 5,98 m, zero golpes e zero abates em 60 s), e o golpe, quando saía, ia pelo caminho do tiro — com traçante, fogacho de cano e som de disparo. Mede perseguição, golpe, ausência de enfeite de arma de fogo e — cláusula que impede o conserto preguiçoso — que a rodada NORMAL continue com bot que abre distância (piso de 4 m). `--mutante=recuo|tracante|corredor`.
+
+```bash
+npm run eval:botfaca
+```
+
+## `eval:replaycam`
+
+Headshot **não** tira a câmera da mão do jogador. A régua nasceu junto com a replay cam do #364 (media se ela disparava e devolvia o FOV) e **trocou de lado** em 06/09/2026, quando o dono pediu o efeito de volta pra caixa: 1,2 s em câmera orbital, FOV 50, hit-stop de 0,18 e sem viewmodel/mira é o duelo seguinte perdido por quem acertou o tiro difícil. Agora mede o contrário — câmera parada, relógio 1:1, arma e mira na tela — e mantém uma cláusula de que o abate segue contando, para o conserto preguiçoso (matar o `_kill`) não ficar verde. `--mutante=orbita|hitstop|esconde|sem-kill`.
+
+```bash
+npm run eval:replaycam
 ```
 
 ## `eval:ctflabels`
