@@ -161,3 +161,41 @@ checksums é `SHA256SUMS`, SHA-256
 Antes de aplicar qualquer parte na lane final, deve-se inspecionar o manifesto, restaurar em
 refs temporárias e portar somente os símbolos aprovados. O patch e o tar da LMG devem ser
 aplicados apenas sobre o HEAD exato salvo, sem substituir a worktree original.
+
+## Preservação P0/P1 — M4, precisão e rifles
+
+Um segundo snapshot, também ignorado, foi criado em
+`artifacts/viewmodel-preservation-2026-09-10/`. Ele não contém bytes dos assets privados:
+registra caminho relativo, tamanho, mtime e SHA-256 de cada evidência na worktree fonte, além
+de bundles de commits e patches recuperáveis. As três worktrees fonte permaneceram intocadas.
+
+| Fonte | HEAD | Estado preservado | Inventário local |
+|---|---|---|---:|
+| `vm-m4-reload-evidence` | `4d2a99ef6609` | um commit local; `m4-cuff-profile.py` modificado e dois scripts não rastreados; sonda anterior rejeitada | 174 arquivos / 130.007.644 bytes |
+| `vm-prep-precisao` | `99a522684aa5` | limpa e publicada; Mosin/SVD/SKS verdes apenas nos gates offline | 257 arquivos / 241.087.234 bytes |
+| `vm-prep-rifles` | `ea022c3c0ee5` | limpa e publicada; M4 idle aprovada, recarga ZCode ainda reprovada | 754 arquivos / 253.566.441 bytes |
+
+O snapshot referencia 1.185 arquivos e 624.661.319 bytes sem copiá-los. Os três bundles
+passaram em `git bundle verify`. Checksums principais:
+
+| Arquivo ignorado | SHA-256 |
+|---|---|
+| `SHA256SUMS` | `42ecf812c1a4066e108efcc741dc89e9d2157d1625392c2058017be53e455f86` |
+| `manifest.json` | `6279b13516612192560caeff80faa8bfe818e880456f0bd3bc2bc34ae942e2a6` |
+| bundle M4 | `3c7650dcbb4de3460bb8331a3d656273589439538474f7179eb1e8b60f9b3afa` |
+| patch dirty M4 | `eee78a52a5f8ce029495d67dfa4ddd850d98ea742bcdc3cd983ab7ff24b48ae3` |
+| bundle precisão | `7bba9ab493949212b43b9756e262866610ff8a635e3bcaacf8655683e71ebad5` |
+| bundle rifles | `ceb2e8177f15dd8721edcbcd66a4b2a53e643e010cdd5edea8cfa82b7aff992c` |
+
+Decisão de promoção: a candidata M4 de `vm-m4-reload-evidence` não substitui a mais recente de
+`vm-prep-rifles`; ambas continuam diagnóstico. A recarga M4 mais nova ainda expõe pele no press,
+tem pico de velocidade de 92,45 mm/frame e polpa do mínimo a -6,19 mm, sem aceite visual. Em
+precisão, `pronto:true` significa somente que a saída assada passou T/M/C/F/A offline; otimização,
+Game, lifecycle e aprovação humana continuam pendentes.
+
+A sequência de produção para Mosin/SVD/SKS está em
+[`VIEWMODEL-PRECISAO-INTEGRACAO-ALPHA246.md`](VIEWMODEL-PRECISAO-INTEGRACAO-ALPHA246.md).
+Ela corrige duas instruções não executáveis da fonte: o gate atual não aceita raiz por CLI e o
+otimizador atual não aceita os nomes `*-baked-runtime.glb`. O próximo marco é implementar essas
+interfaces e os gates vermelhos de assets/lifecycle sobre alpha.246, começando pela regressão
+intermitente de visibilidade da SVD. Nenhum runtime foi alterado neste marco.
