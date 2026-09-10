@@ -2861,10 +2861,8 @@ export class Game {
     }
     return authored || melee;
   }
-  // Bancada local explícita dos candidatos de precisão. Só existe em partida debug com
-  // `?vmqa=precision`; não altera seleção, HUD ou input do produto. A mesma API é usada
-  // pelo capturador real para que a revisão humana e a evidência automatizada percorram
-  // exatamente as mesmas transições de arma/tiro/recarga/ADS.
+  // Bancada local `?vmqa=precision`; o capturador real usa esta mesma API.
+  // Contrato e evidência: docs/reports/VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md.
   _ensureVmPrecisionQa() {
     if (this._vmPrecisionQa) return this._vmPrecisionQa;
     const settle = () => {
