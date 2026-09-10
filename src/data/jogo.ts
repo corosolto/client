@@ -131,6 +131,11 @@ export interface Mapa {
 /** Arenas com apresentação editorial; o registro jogável vive em public/js/maps.js. */
 export const MAPAS: Mapa[] = [
   {
+    id: 'mansao', nome: 'Mansão do Joá', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Jardim tropical, salão com mezanino e piscina sobre o mar do Joá.',
+    detalhe: 'Duas escadas ligam o salão ao mezanino. As rotas laterais atravessam o jardim e chegam ao terraço, com piscina entrável e vista da praia. Quatro pontos de captura disputam os dois níveis da casa.',
+  },
+  {
     id: 'praca_poderes', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
     resumo: 'A arena principal: uma Brasília fictícia com urna gigante quebrada no meio.',
     detalhe: 'Reinterpretação do praca_poderes do CS 1.6 em versão Brasília. Duas plataformas altas se encaram, ' +
