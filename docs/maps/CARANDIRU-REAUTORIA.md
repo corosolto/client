@@ -302,3 +302,20 @@ A correção está tecnicamente pronta para novo teste humano. Ainda é necessá
 dono percorrer as seis guaritas com teclado/mouse, combater nas posições elevadas
 e aprovar a leitura visual do pavilhão; CAR9 mantém `humanVisualApproval=pending`.
 Não autorizar merge ou deploy antes desse retorno.
+
+## Reparo do CI após o segundo teste — 10/09/2026
+
+O `build` remoto da PR #556 reproduziu cinco vulnerabilidades de dependências de
+produção (`astro`, `js-yaml`, `sharp`, `smol-toml` e `svgo`). O mapa não causava a
+falha: a branch ainda carregava o lock da base empilhada alpha.240. O lock foi
+atualizado dentro das mesmas faixas declaradas em `package.json`, preservando a
+versão da branch. `npm ci --ignore-scripts` em diretório temporário limpo com npm
+10.9.2 passou; o lock contém as entradas opcionais de Linux e `eval:deps` terminou
+com zero vulnerabilidades altas não isentas.
+
+O `portao` remoto permanece bloqueado por `loja_h` em 48,9% contra meta de 49%.
+Essa dívida é global e alheia ao Carandiru: o diff da PR contra
+`codex/mapas-stack-541-v2` não altera `map_loja_h.js`, `graffiti_pass.js`,
+`graffiti_layout.js` nem `graffiti-census.mjs`. Nenhum arquivo, limiar ou material
+da Loja H foi modificado nesta lane para mascarar o resultado. A PR deve ser
+reavaliada depois que a dívida da Loja H for corrigida em sua própria frente.
