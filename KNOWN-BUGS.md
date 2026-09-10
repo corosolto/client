@@ -2045,6 +2045,29 @@ o abate do JOGADOR (com abate de aliado no meio para separar do número do time)
 sobrevive à virada de rodada. **Mutantes:** `time`, `rodada`, `congelado` e `miudo` — os
 quatro reprovam.
 
+### ~~BUG-146 · o HUD mostrava o total, mas não a sequência de abates da vida atual~~ · CORRIGIDO LOCALMENTE 10/09/2026
+
+**Relato literal:** “remover o efeito de câmera que ocorre ao acertar um tiro na cabeça e
+adicionar um contador de abates semelhante ao do Valorant”. A parte da câmera já estava
+corrigida na `main`: `eval:replaycam` mediu Δposição 0,000 m, Δrotação 0,000 rad, ΔFOV
+0,000° e relógio 2,000/2,000 s. A régua foi fortalecida para entrar por `_damage` e também
+exigir hitmarker, número de dano, confirmação sonora e locução; os quatro mutantes antigos
+continuam vermelhos. Nenhuma nova alteração de câmera foi justificada.
+
+**Baseline RED (`origin/main@2115d5e2`):** havia `#kill-counter` com o total da partida,
+mas não `#kill-streak`, número, rótulo ou estado acessível. O motor já calculava `mk.life`
+em SP e MP, porém o netcode duplicava a receita e nenhum dos dois caminhos a expunha no HUD.
+
+**Correção:** contador central `SEQUÊNCIA` mostra os abates da vida atual e mantém o total
+`ABATES` no canto. `_playerKillFeedback` é a única transição de sequência para o jogador;
+SP chama após `_kill` e MP chama somente após evento/snapshot autoritativo. Acerto previsto
+não conta. Morte, novo round e primeira fotografia de reconexão zeram/ocultam a sequência,
+sem apagar `player.kills`.
+
+**Régua:** `tools/eval/killstreak-check.mjs` (`npm run eval:killstreak`) cobre DOM e leitura,
+SP, MP, evento previsto, morte, round e reconexão. Mutantes `total`, `previsto`, `sem-round`,
+`sem-morte`, `sem-mp` e `reconnect` reintroduzem cada falha e ficam vermelhos.
+
 ### ~~CTF sumiu do menu da home~~ · CORRIGIDO LOCALMENTE 06/09/2026
 
 **Relato:** "o modo CTF sumiu do menu da home". O redesign removeu o botão

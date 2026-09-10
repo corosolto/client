@@ -1,5 +1,18 @@
 # HANDOFF
 
+## Feedback de combate R2 — sequência autoritativa e prova do headshot (10/09/2026)
+
+Worktree `worktrees/combat-feedback-r2`, branch `codex/combat-feedback-r2`, base
+`origin/main@2115d5e2` (alpha.246). O relato da câmera não se reproduz mais: pela régua
+fortalecida que entra em `_damage`, headshot mantém posição/rotação/FOV e relógio 1:1,
+preservando hitmarker, número de dano, confirmação e locução. Por isso a câmera não mudou.
+
+O RED real foi a ausência de sequência: a main tinha somente o total acumulado `ABATES`.
+`#kill-streak` agora mostra abates da vida atual, alimentados por `_playerKillFeedback` em SP
+e pelos eventos autoritativos no MP. Acerto previsto não conta; morte, round e reconexão
+zeram sem alterar `player.kills`. `eval:killstreak` cobre os dois modos e seis mutantes.
+Relatório e comandos: `docs/reports/COMBAT-FEEDBACK-R2.md`.
+
 ## Correção pós-merge do Sertão — BUG-145 (08/09/2026)
 
 Objetivo: corrigir a rejeição humana posterior ao PR #526 sem reutilizar sua

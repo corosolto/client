@@ -1193,6 +1193,8 @@ export class Game {
       lockHint: $('lock-hint'), hudSpeech: $('hud-speech'), hudSettings: $('hud-settings'),
       pickupHint: $('pickup-hint'), weaponHud: $('weapon-hud'),
     };
+    this.el.killStreak = $('kill-streak');
+    this.el.killStreakCount = $('kill-streak-count');
   }
 
   // IBL: env map procedural HDR-ish (equirect 512×256 em FLOAT) -> scene.environment.
@@ -2214,7 +2216,7 @@ export class Game {
     // por dominação no mesmo frame em que o alvo de bandeiras foi batido, o pedido fica
     // pendurado e mataria a rodada seguinte no primeiro quadro.
     this._roundOverPedido = false;
-    this.mk.life = 0; this.mk.count = 0;
+    this._resetKillSequence();
     this._resetPositions();
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
@@ -3438,26 +3440,12 @@ export class Game {
       // já vem do _damage/_tryShoot). Bot mata não conta — não há balanço a inferir.
       if (attacker.isPlayer && weap) this._wperf[weap] = (this._wperf[weap] || 0) + 1;
       if (attacker.isPlayer) {
-        this.sfx.killConfirm();
-        if (head) attacker.headshots++;
-        const mk = this.mk;
-        if (this.time < mk.until) mk.count++; else mk.count = 1;
-        mk.until = this.time + 4.5; mk.life++;
-        mk.best = Math.max(mk.best || 0, mk.count);
-        const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
-        if (kind) this._mkBanner(MK_LABELS[kind]);
-        // Tier/headshot pertence ao locutor Fish; o abate simples pertence ao personagem.
-        // Sem take próprio, preserva a comemoração da facção e por último a contingência.
-        const announced = kind || head
-          ? this.sfx.general(kind || 'headshot')
-          : this.sfx.characterVoice(attacker.def?.id, 'kill', { fallbackFaction: this._voiceKey(attacker.team) });
-        if (!announced && !this.sfx.general('kill')) this.sfx.voice(this._voiceKey(attacker.team));
-        /* O feedback do headshot é TODO sonoro/HUD daqui pra cima — ver BUG-142. */
+        this._playerKillFeedback(attacker, head);
       }
     }
     if (ent.isPlayer) {
       this._scope(false, true);
-      this.mk.life = 0;
+      this._resetKillSequence();
       this.el.respawn.classList.remove('hidden');
       this.sfx.death(ent.def?.id);
     } else {
@@ -3578,6 +3566,39 @@ export class Game {
     b.classList.add('show');
     clearTimeout(this._mkT);
     this._mkT = setTimeout(() => b.classList.remove('show'), 1900);
+  }
+  _updateKillSequenceHud(pulse = false) {
+    const root = this.el.killStreak, count = this.el.killStreakCount;
+    if (!root || !count) return;
+    const life = Math.max(0, this.mk.life | 0);
+    if (count.textContent !== String(life)) count.textContent = String(life);
+    root.classList.toggle('hidden', life === 0 || !this.player?.alive);
+    if (pulse && life > 0) {
+      root.classList.remove('pulse');
+      void root.offsetWidth;
+      root.classList.add('pulse');
+    }
+  }
+  _resetKillSequence() {
+    this.mk.life = 0; this.mk.count = 0; this.mk.until = 0;
+    this._updateKillSequenceHud();
+    this.el.killStreak?.classList.remove('pulse');
+  }
+  _playerKillFeedback(attacker = this.player, head = false) {
+    try { this.sfx.killConfirm(); } catch { /* contexto de áudio indisponível */ }
+    if (head) attacker.headshots++;
+    const mk = this.mk;
+    if (this.time < mk.until) mk.count++; else mk.count = 1;
+    mk.until = this.time + 4.5; mk.life++;
+    mk.best = Math.max(mk.best || 0, mk.count);
+    const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
+    if (kind) this._mkBanner(MK_LABELS[kind]);
+    this._updateKillSequenceHud(true);
+    // Tier/headshot pertence ao locutor Fish; o abate simples pertence ao personagem.
+    const announced = kind || head
+      ? this.sfx.general(kind || 'headshot')
+      : this.sfx.characterVoice(attacker.def?.id, 'kill', { fallbackFaction: this._voiceKey(attacker.team) });
+    if (!announced && !this.sfx.general('kill')) this.sfx.voice(this._voiceKey(attacker.team));
   }
   // Online o `_damage` não roda no cliente: o feedback do atirador (hitmarker, número) é PREVISTO
   // pelo raio local e o hp vem do snapshot — sem isto o tiro que acerta era mudo (BUG-119).
@@ -7220,6 +7241,7 @@ export class Game {
       this._hudKills = abates;
       this.el.killCount.textContent = String(abates);
     }
+    this._updateKillSequenceHud();
     if (this.el.ammoWeaponArt.dataset.weapon !== p.weapon) {
       this.el.ammoWeaponArt.dataset.weapon = p.weapon;
       this.el.ammoWeaponArt.src = `/img/weapons/${p.weapon}.webp`;
