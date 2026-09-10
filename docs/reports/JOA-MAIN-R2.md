@@ -118,17 +118,17 @@ Capturas executadas em processo Chrome novo, qualidade média, WebGL 2.0 real vi
 
 | Caso | Viewport | Times reais | p50 | p95 | máximo | Erros JS | Assets essenciais ausentes |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| 3:2 | 1536×1024 | 5×5 | 8,4 ms | 17,1 ms | 125,1 ms | 0 | 0 |
-| 16:9 | 1600×900 | 8×8 | 8,4 ms | 17,1 ms | 17,7 ms | 0 | 0 |
+| 3:2 | 1536×1024 | 5×5 | 8,5 ms | 16,8 ms | 17,9 ms | 0 | 0 |
+| 16:9 | 1600×900 | 8×8 | 9,1 ms | 17,4 ms | 18,2 ms | 0 | 0 |
 
-O máximo de 125,1 ms no caso 3:2 é um único outlier acima do p95; não foi apagado nem
-usado para afirmar ausência total de long frame. O caso de maior carga, 8×8, ficou com
-máximo de 17,7 ms nesta amostra.
+As duas medições foram refeitas em processos Chrome frescos depois do deslocamento do
+poste e da nova rota. O hash da fonte capturada é
+`283505d85b094b3a93fbe0c709f1710f332a396fa39a94b117e6324ffcb26349`.
 
 Recibos e PNGs locais ignorados pelo Git:
 
-- `artifacts/joa-main-r2/browser/3x2/capture.json` e nove vistas mais gameplay;
-- `artifacts/joa-main-r2/browser/16x9/capture.json` e nove vistas mais gameplay;
+- `artifacts/joa-main-r2/browser/3x2-fix/capture.json` e nove vistas mais gameplay;
+- `artifacts/joa-main-r2/browser/16x9-fix/capture.json` e nove vistas mais gameplay;
 - `artifacts/joa-main-r2/eval-mansao.log`.
 
 A inspeção das vistas confirma fachada/garagem com volumes apoiados, interior com paredes
