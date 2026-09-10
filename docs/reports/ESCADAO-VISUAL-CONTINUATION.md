@@ -262,3 +262,103 @@ Elevar Escadão (Morro) do PR #436: subida, becos e patamares de um bairro brasi
 - Pausa é transição, não abandono. Meta informada pelo dono: concluir todas as frentes abertas até07/09 por volta de06:55Lisboa. Aguardar despacho antes de retomar produção.
 - Estimativa desta frente:45–90min para resolver/validar grafo emcamadas, mutantes e regressões imediatas;2–4h para candidatoR5 completo com horizonte, navegador/A-B, crítica, preview e build, excluindo fila deCI/revisão. Base da estimativa: caminho inferior econtorno já passam gatesdedicados; restam duas divergências pontuais e uma entrega visual ainda não iniciada. Não é promessa de prazo.
 - Candidato pronto para revisão final: NÃO. Bloqueios de entrega: grafo ainda não aprovado; cabeça/colisão precisam prova espacial/browser comGLBs; horizonte inexistente; preview atual correspondeàR4; documentação/CI/build ainda não atualizados. Terra pode concluir implementação e gates; Astra agrega na crítica visual e, se necessário, diagnóstico do contrato entre camadas. Nenhum worker reiniciado.
+
+## R6 empilhado sobre o degrau 548 (08/09/2026)
+- Objetivo: responder à reprovação do dono — a casa elevada central precisava de janelas reais para escadão e rua dentro da mesma sala, piso contínuo e acesso físico de cima e de baixo; o spawn superior precisava de pontos defensivos acessíveis com contrajogo, sem leitura direta dos slots de nascimento.
+- Isolamento: worktree `worktrees/escadao-r6-stack`, branch `codex/escadao-r6-stack`, base `origin/codex/mapas-stack-548-v2` em `9113ed82`. A worktree R5 antiga não foi editada. PR #558 é supersedido tecnicamente por esta rodada; suas rotas físicas e capturas servidas foram reaproveitadas somente como ponto de partida do novo gate R6.
+- Baseline RED antes da geometria: `escadao-casas-conflito-r2-check` 11/24 (13 falhas); `eval:escadao-rota` reprovou o lance inferior; o gate antigo `eval:escadao-home` ficou verde e não cobria a reclamação. No Astro real da base em 1200×800, o gate R6 salvou oito capturas e reprovou quatro rotas, as duas janelas, as duas casas do mirante, piso central e proteção do spawn. Evidência local em `artifacts/escadao-r6/red/`.
+- Implementação: o molde fechado sobre a laje foi substituído por shell procedural com dois vãos opostos na mesma sala e passagem interna; a laje ganhou os complementos que faltavam e `groundHeightAt` preserva o térreo sob pilotis. As duas casas laterais do mirante agora têm porta externa, interior útil e janela para o centro. Paredes de aproximação impedem spawn kill. Waypoints conectam os quatro acessos.
+- Resultado atual: gate estrutural 24/24; `eval:escadao-rota` 10/10 e zero observadores altos lendo spawn; `eval:escadao-home` verde. A divergência do lance inferior era instrumental: a régua usava raio 0,42 m enquanto jogadores e bots usam 0,38 m no movimento; o raio foi alinhado ao runtime, sem mudar degrau máximo 0,30 m nem geometria para acomodar um corpo falso. Cinco mutantes da casa e dois mutantes da rota voltam a reprovar.
+- O grafo expunha cinco nós em bolsões sem saída sob construções; agora publica somente o maior componente físico, onde ficam spawns e objetivos: 650/650 nós e oito rotas para Deagle. Os mutantes de aresta impossível e queda reprovam; o mutante sem conexão confirma que o corte isola a Deagle.
+- Browser final: quatro rotas físicas completas de ida/volta, quatro linhas LOS com tiro e revide, piso central 2,75 m, zero slots E/B expostos e oito capturas 1200×800. 5×5 confirmou nove bots/dez atores; 8×8, quinze bots/dezesseis atores, com cinco/oito por time. Recibos em `artifacts/escadao-r6/green/`. Os HTTP 404 são áudio/decalques opcionais ausentes nesta worktree; zero erro de página, JS do mapa ou GLB Escadão crítico.
+- Build alpha.240, DOCS1, ARCH1 e comentário passam. `check:fast` ficou em 129/134: áudio/pés sem acervo, autoria que exige commit e dois GLBs Amazônia ausentes são dívidas locais/base; o hash de grafite causado pelo Escadão foi regenerado, sem tocar layouts de outros mapas.
+- Crítica independente rejeitou primeiro os contatos com hash anterior, embora os frames `final2` estivessem corretos. Os contatos foram refeitos diretamente dos dez frames 1200×800 e aprovados: browser SHA-256 `8300ceb056165b779f9e883b017afd1e1ea5bcd9995d39f6d1dae6d393a1d281`, times SHA-256 `facb19116689f4da434d38b82b2efdaacc490f962e1193cd7f944668ae5832e6`, ambos ligados ao mapa `cecdf3857f7226d1f3b6a94980192f09708722c6aebfe1a47bfc0e6abe41036a`.
+- Crítico APPROVE sem bloqueador: duas janelas opostas, acessos central superior/inferior e entradas/interiores das duas casas do topo estão provados. Limites: 5×5/8×8 não mede congestionamento/equilíbrio; leitura visual do acesso inferior combina duas vistas; escala, exposição e combate exigem playtest humano.
+- Checkpoints `a8eb9d602` e `3737d9588` publicados em `codex/escadao-r6-stack`. PR empilhado draft #567 aberto contra `codex/mapas-stack-548-v2`; #558 recebeu comentário de supersessão técnica. `check:deploy` local 37/37 e Vercel/DCO/smoke remotos verdes; `pr-fast` e portão browser ainda executavam no último registro. Playtest humano pendente. Sem merge ou deploy nesta frente.
+- Correção pós-CI da PR #567: o `pr-fast` mediu os quatro slots E com 0,85 m de folga porque as duas paredes estavam em z=25. O checkpoint `ebf723c05` recuou a proteção para z=24,55, afinou sua profundidade e acrescentou uma verga visível acima do vão central; os slots permaneceram nas mesmas posições. MAP2B agora mede pior folga 1,35 m e pior área 58,4 m², com 0/1128 posições altas lendo o spawn e 0/607 oclusores sem malha.
+- Regressões no checkpoint: `eval:invariants` sem falha nova; casas 24/24, rota 10/10, grafo 650/650 com oito rotas, home/fachada/estrutura/descida/detalhes e contrato do mapa verdes. O Astro 8164 serviu o hash `3127dae5580cf6487dc4b69b4ce4d5a54133758099be9b17f53b0a65b0e3edd0`; navegador repetiu quatro rotas ida/volta, quatro linhas de tiro, oito capturas 1200×800 e cenários 5×5/8×8. Build alpha.240 e `check:deploy` 37/37 passam; recibos em `artifacts/escadao-r6/green/map2b-fix/`.
+- Próximo: publicar o ledger, confirmar os checks remotos do novo HEAD da PR #567 e devolver para revisão da coordenação. Playtest humano continua pendente; nenhum merge ou deploy autorizado nesta frente.
+
+## R7 — correção após playtest do dono (09/09/2026)
+- Relato aceito: as portas dos dois sobrados do mirante existiam apenas nas faces externas, contra o limite, e por isso eram impraticáveis no jogo apesar do gate R6 verde. A passarela central tinha uma queda lateral sem guarda; o biombo novo do spawn inferior era desnecessário. O dono também pediu fauna, matos, esgoto com queda/curva e mais fios nos escadões.
+- Implementação na mesma worktree/branch da PR #567: paredes laterais dos sobrados agora são inteiras; cada casa tem porta de 1,35 m na face voltada ao respawn superior, interior transitável e janela aberta na face oposta. Waypoints e o gate usam as rotas naturais do respawn, não a antiga passagem escondida. A passarela recebeu duas guardas e preserva a boca do lance. O biombo inferior saiu e os quatro slots E foram distribuídos atrás dos sobrados existentes.
+- Ambiência: cinco ratos, cinco pombos, dois gatos e cinco baratas carregados como GLB; 33 plantios visíveis nas bordas; 32 ramais de fiação; esgoto visual não sólido com 31 pontos, 95 peças sobre pisos/espelhos e queda de 7,56 m. Nenhum desses elementos entrou em collider, oclusão ou cobertura.
+- Validação atual: `eval:escadao-casas` 33/33; `eval:escadao-rota` 10/10, 0/1128 observadores altos com leitura do spawn; grafo 656/656 e oito rotas; home/structure/descent/details/contract verdes. Browser real na porta 8164 passou quatro rotas ida/volta, quatro linhas de tiro/revide, zero slots E/B expostos, fauna GLTF e dez capturas 1200×800; 5×5 e 8×8 também passam. Build alpha.240 passou com Node 23; aviso conhecido: Vercel usa Node 24.
+- Referências e recibos locais ignorados pelo Git: `artifacts/escadao-r7/reference_manifest.json`, `source_analysis/composition.json`, `browser/receipt.json`, dez capturas e `contact-sheet.png`. Referências orientaram proporção e leitura; nenhuma fotografia foi incorporada como textura ou redistribuída.
+- Base remota: `origin/codex/mapas-stack-548-v2` continua em `9113ed82`; a branch estava cinco commits à frente e zero atrás em 09/09. Próximo: regenerar/confirmar grafite e documentos após o fonte final, repetir browser/build, criar checkpoint DCO, publicar na PR #567 e aguardar checks e novo playtest humano antes do merge.
+
+## R7.1 — atualização de segurança exigida pelo CI (09/09/2026)
+- O primeiro `pr-fast` do HEAD `7bb6cf5f` reprovou somente `eval:deps`: o banco do `npm audit` passou a classificar como altas/crítica as versões travadas de `astro`, `js-yaml`, `sharp` e `svgo`. A falha foi reproduzida localmente sem relação com a geometria do mapa.
+- `npm audit fix --omit=dev` atualizou apenas `package-lock.json`, mantendo os intervalos declarados em `package.json`. O lock foi normalizado com npm 10.9.8, igual ao CI em Node 22, para registrar também os peers WASI opcionais; instalações limpas com npm 10 e 11 retornam zero vulnerabilidades. `eval:deps`, build, `check:deploy` 37/37 e os oito gates estruturais/jogáveis do Escadão passam.
+- Próximo: publicar o lock corrigido, aguardar a nova CI e manter a PR em draft até o dono validar visualmente o candidato R7 na arena local.
+
+## Reteste independente do HEAD da PR #567 (10/09/2026)
+
+A inspeção partiu do checkout limpo `codex/escadao-r6-stack` em
+`867d06a436aabf342bf9eae8241fd17a6e654c0a`, sem portar ou alterar geometria. O
+builder do Escadão tem SHA-256
+`01cdeda0575f9892cb8ee74fdcc04bdc201e936490b64c1bfaeaa79a45bff852`, idêntico
+ao módulo servido pelo Astro em `http://127.0.0.1:8164`.
+
+O jogo real no Chrome/WebGL confirmou a correção já presente: a casa central tem
+acesso superior e inferior, uma janela voltada ao escadão e outra voltada à rua,
+ambas ligadas ao mesmo piso em 2,75 m. Os dois sobrados do mirante têm entrada
+voltada ao respawn superior, interior caminhável e janela oposta. As quatro rotas
+foram percorridas até o interior e de volta; quatro linhas de tiro e revide ficaram
+livres; nenhuma janela expõe diretamente os slots de spawn.
+
+A evidência fresca está em `artifacts/escadao-r7/retest-20260910/`: dez PNGs
+1200×800 e `receipt.json`. `eval:escadao-casas` passou 33/33; rota passou 10/10
+com 0/1128 pontos altos lendo spawn; home, estrutura, descida, detalhes, contrato
+e mapcontract passaram. O jogo servido também carregou 5×5 e 8×8. `build` e
+`check:deploy` passaram, este último em 37/37.
+
+Não foi encontrado um defeito novo que justificasse mexer novamente na geometria.
+O candidato está pronto para feedback humano no URL abaixo, ainda sem aprovação de
+equilíbrio ou merge:
+
+`http://127.0.0.1:8164/?debug=1&map=escadao&auto=B,sertanejo`
+
+Fila de teste: entrar pelas duas rotas da casa central, atirar pelas duas janelas;
+depois entrar em cada sobrado do mirante a partir do respawn superior e testar tiro,
+revide, recuo e saída sob combate. A PR #567 continua draft e não deve ser mergeada
+antes desse retorno.
+
+## R7.2 — reparo reproduzível do lock após nova advisory (10/09/2026)
+
+O `build` remoto do commit `542d76c4d` reprovou somente DEP1 porque o banco do
+`npm audit` passou a marcar `smol-toml <=1.7.0` como vulnerabilidade alta. A falha
+foi reproduzida localmente antes da mudança e não toca geometria ou assets.
+
+O lock foi atualizado dentro dos mesmos intervalos de `package.json`, preservando
+a versão alpha.240 da branch. A resolução fixa `smol-toml` 1.8.0 e mantém as
+entradas opcionais para Linux/WASI. Uma instalação limpa em diretório temporário
+com npm 10.9.2 passou, assim como `npm ci --ignore-scripts` e `eval:deps`, agora
+com zero vulnerabilidades altas não isentas. A correção é apenas de CI; o candidato
+visual e a fila de teste humano acima permanecem os mesmos.
+
+## R7.3 — validação dual-aspect, bots e CTF no HEAD do PR #567 (10/09/2026)
+
+A rodada partiu do HEAD remoto exato `2a54d5c99f76d6244c56322c35a863ee48f05ccd`, em checkout limpo e isolado. O PR #567 estava `MERGEABLE/CLEAN`, draft, com `pr-fast`, `portao-browser`, `smoke`, DCO e Vercel verdes. O builder local e o JavaScript servido em `http://127.0.0.1:8164` têm o mesmo SHA-256: `01cdeda0575f9892cb8ee74fdcc04bdc201e936490b64c1bfaeaa79a45bff852`.
+
+A geometria não foi alterada porque a inspeção e os gates confirmaram a correção presente. No Chrome/WebGL real, as dez vistas 1200×800 mostram a casa central com piso contínuo, acesso inferior e superior e janelas abertas para escada e rua; os dois sobrados do mirante mantêm entrada pelo percurso natural do respawn superior, interior ocupável e janela de contrajogo. As quatro rotas foram percorridas de ida e volta, as quatro linhas de tiro/revide ficaram livres e nenhuma delas lê diretamente um slot de spawn. Evidência ignorada pelo Git em `artifacts/escadao-overnight-20260910-r1/three-two/`.
+
+O gate de equipes deixou de apenas contar atores no mesmo viewport e agora exige:
+
+- 5×5 real em 1200×800 (3:2): 9 bots, 10 atores, 5 por time; os 9 bots se moveram ao menos 0,5 m em 6,01 s e o maior deslocamento foi 20,23 m;
+- 8×8 real em 1280×720 (16:9): 15 bots, 16 atores, 8 por time; os 15 bots se moveram ao menos 0,5 m em 6,01 s e o maior deslocamento foi 22,12 m;
+- posições finitas e dentro dos limites; quatro objetivos CTF, com os rótulos `MIRANTE`, `PATAMAR 2`, `PATAMAR 1` e `RUA`; dimensão, tamanho e SHA-256 de cada PNG; zero erro crítico de página, JavaScript ou GLB do Escadão.
+
+Os recibos e capturas dual-aspect ficam em `artifacts/escadao-overnight-20260910-r3/team-size/`. Os 404 registrados correspondem ao pack opcional de áudio/decalques ausente nesta worktree e não foram classificados como sucesso do mapa nem como regressão da lane.
+
+Os três mutantes novos foram exercitados: `viewport-unico` reprova por não entregar 16:9; `bots-imoveis` reprova com 0/9 bots em movimento; `ctf-ausente` reprova por remover os quatro objetivos. Os cinco mutantes das casas continuam vermelhos (`janela-fechada`, `janela-oposta-fechada`, `piso-reaberto`, `acesso-removido`, `casa-mirante-fechada`); os mutantes `escada-morta`, `sem-abrigo`, `parede` e `sem-guarda-p2` também são detectados. O automutante `sem-conexao-rua` confirma que o corte isola a rota para a Deagle.
+
+Uma amostra independente de navegação livre por 20 s, em 160 leituras, registrou os 7/7 bots com deslocamento significativo. Cada bot atravessou de 50,71 m a 62,58 m em relação ao início, cobrindo lances laterais, mirante e rua. O recibo, trilhas e mapa SVG/PNG estão em `artifacts/escadao-overnight-20260910-r3/bot-routes/`.
+
+O URL de teste humano permanece:
+
+`http://127.0.0.1:8164/?debug=1&map=escadao&auto=B,sertanejo`
+
+Fila humana: percorrer as duas entradas da casa central; atirar e receber revide pelas duas janelas; subir a partir do respawn superior e acessar os dois sobrados pelo percurso natural; testar recuo, congestionamento e exposição em combate 5×5 e 8×8. A evidência técnica está aprovada, mas equilíbrio e leitura visual continuam aguardando o dono. Sem merge ou deploy.
+
+Fechamento local da rodada: `npm run build` passou em alpha.240 e `npm run check:deploy` passou 37/37. O gate legado `eval:escadao-menu`, que não faz parte do `check:deploy`, expirou antes do mapa ao tentar clicar no seletor single-player oculto (`[data-act="sp"]`); a falha é anterior à arena e não foi mascarada nem usada como aprovação. Corrigi-la exigiria tocar o fluxo de menu compartilhado, fora do escopo desta lane.
