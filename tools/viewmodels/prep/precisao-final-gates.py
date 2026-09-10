@@ -526,7 +526,10 @@ def main():
             rel_ads['passa'] = tem_sockets and rel_ads['colinearidade_graus'] < 30
         g['A'] = rel_ads
 
-        g['pronto'] = all(g[k].get('passa') for k in ('T', 'M', 'C', 'F')) and g['A'].get('passa', False)
+        g['mutantes_passam'] = all(v.get('reprova', False) for k, v in g.items()
+                                    if '_mutante' in k)
+        g['pronto'] = (all(g[k].get('passa') for k in ('T', 'M', 'C', 'F'))
+                       and g['A'].get('passa', False) and g['mutantes_passam'])
         gates[arma] = g
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(gates, indent=1, default=float) + '\n')
