@@ -2857,8 +2857,92 @@ export class Game {
       badge.textContent = melee ? 'vm: faca authored' : authored
         ? `vm: authored (${AUTHORED_VM_MODELS[w] || '?'})` : 'vm: fallback legado';
       badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
+      if (QS.get('vmqa') === 'precision') this._ensureVmPrecisionQa();
     }
     return authored || melee;
+  }
+  // Bancada local explícita dos candidatos de precisão. Só existe em partida debug com
+  // `?vmqa=precision`; não altera seleção, HUD ou input do produto. A mesma API é usada
+  // pelo capturador real para que a revisão humana e a evidência automatizada percorram
+  // exatamente as mesmas transições de arma/tiro/recarga/ADS.
+  _ensureVmPrecisionQa() {
+    if (this._vmPrecisionQa) return this._vmPrecisionQa;
+    const settle = () => {
+      this.player.drawUntil = 0;
+      this.player.nextShotAt = 0;
+      this.player.reloadUntil = 0;
+      this._scope(false, true);
+      this._applyVmVisibility();
+    };
+    const equip = (weapon) => {
+      if (!WEAPONS[weapon]) return false;
+      if (!this.player.ammo[weapon] && weapon !== 'knife') {
+        this.player.ammo[weapon] = { mag: WEAPONS[weapon].mag, res: WEAPONS[weapon].reserve };
+      }
+      if (this.player.weapon !== weapon) this._switchWeapon(weapon);
+      settle();
+      return this.player.weapon === weapon;
+    };
+    const api = {
+      equip,
+      shoot: () => {
+        settle();
+        const ammo = this.player.ammo[this.player.weapon];
+        if (ammo) ammo.mag = Math.max(1, ammo.mag);
+        this._tryShoot();
+      },
+      reload: () => {
+        settle();
+        const weapon = this.player.weapon;
+        if (weapon === 'knife') return;
+        const ammo = this.player.ammo[weapon];
+        ammo.mag = 1; ammo.res = Math.max(WEAPONS[weapon].mag, ammo.res || 0);
+        this._startReload();
+      },
+      ads: () => { this.player.reloadUntil = 0; this._scope(!this.player.scoped); },
+      knife: (kind = 'quick') => { equip('knife'); this._tryKnifeAttack(kind); },
+      state: () => ({
+        weapon: this.player.weapon,
+        authored: Boolean(this.vm.authored?.active(this.player.weapon)),
+        melee: Boolean(this.vm.melee?.active),
+        authoredState: this.vm.authored?.state(this.player.weapon) || null,
+        fallback: Boolean(this._vmVisibility?.fallback),
+        visible: { ...(this._vmVisibility || {}) },
+      }),
+    };
+    this._vmPrecisionQa = api;
+    window.__vmPrecisionQa = api;
+
+    const panel = document.createElement('div');
+    panel.id = 'vm-precision-qa';
+    panel.style.cssText = 'position:fixed;left:8px;bottom:120px;z-index:61;width:260px;padding:9px;border:1px solid #65d88788;border-radius:7px;background:#07120eea;color:#eafff0;font:11px ui-monospace,monospace;line-height:1.35';
+    panel.innerHTML = '<strong>VM precisão · QA local</strong><div data-vmqa="weapons"></div><div data-vmqa="actions"></div><div data-vmqa="state" style="margin-top:5px;color:#aee8c0"></div>';
+    const button = (label, onClick) => {
+      const el = document.createElement('button');
+      el.type = 'button'; el.textContent = label;
+      el.style.cssText = 'margin:5px 4px 0 0;padding:3px 6px;border:1px solid #65d88766;border-radius:4px;background:#13281d;color:#eafff0;font:inherit;cursor:pointer';
+      el.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); onClick(); update(); });
+      return el;
+    };
+    const weaponRow = panel.querySelector('[data-vmqa="weapons"]');
+    for (const [label, weapon] of [['AK', 'ak'], ['Faca', 'knife'], ['Mosin', 'mosin'], ['SVD', 'svd'], ['SKS', 'sks'], ['Fallback', 'pistol']]) {
+      weaponRow.appendChild(button(label, () => equip(weapon)));
+    }
+    const actionRow = panel.querySelector('[data-vmqa="actions"]');
+    for (const [label, action] of [['Tiro', api.shoot], ['Recarga', api.reload], ['ADS', api.ads],
+      ['Faca rápida', () => api.knife('quick')], ['Faca pesada', () => api.knife('heavy')]]) {
+      actionRow.appendChild(button(label, action));
+    }
+    const status = panel.querySelector('[data-vmqa="state"]');
+    const update = () => {
+      const current = api.state();
+      status.textContent = `${current.weapon} · ${current.melee ? 'faca authored' : current.authored ? 'authored' : 'fallback'} · ${current.authoredState || 'idle'}`;
+    };
+    panel.addEventListener('pointerdown', (event) => event.stopPropagation());
+    document.body.appendChild(panel);
+    this._vmPrecisionQaTimer = setInterval(update, 150);
+    update();
+    return api;
   }
   _syncVmPresentation(realScope = false, scopeMask = this._scopeMask || 0) {
     const w = this.player.weapon;
@@ -7487,6 +7571,10 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    clearInterval(this._vmPrecisionQaTimer); this._vmPrecisionQaTimer = null;
+    document.getElementById('vm-precision-qa')?.remove();
+    if (window.__vmPrecisionQa === this._vmPrecisionQa) delete window.__vmPrecisionQa;
+    this._vmPrecisionQa = null;
     for (const timer of this._announcerLabTimers || []) clearTimeout(timer);
     this._announcerLabTimers = [];
     try { this._mp?.dispose(); } catch { /* já foi */ }

@@ -64,7 +64,7 @@ const handFiles = [...tracked].filter((file) => file.startsWith('public/models/v
 check(handFiles.length === 48, '48 atlas públicos de mãos estão versionados', String(handFiles.length));
 check(![...tracked].some((file) => file.startsWith('public/private-assets/')), 'nenhum asset privado entrou no Git');
 check(!fs.existsSync(path.join(root, 'public/models/viewmodels/coro/pistol-runtime.glb')), 'PT-38 aprovada permanece fail-closed fora do catálogo público');
-check(![...tracked].some((file) => /models\/viewmodels\/.*(?:mosin|svd|sks)/i.test(file)), 'precisão Mosin/SVD/SKS não foi promovida nesta fase');
+check(![...tracked].some((file) => /models\/viewmodels\/.*(?:mosin|svd|sks)/i.test(file)), 'bytes privados de Mosin/SVD/SKS não foram promovidos ao Git');
 
 const failed = checks.filter((entry) => !entry.ok);
 console.log(JSON.stringify({ ok: failed.length === 0, checks: checks.length, failed: failed.map((entry) => entry.label) }));
