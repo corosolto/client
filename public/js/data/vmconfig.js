@@ -60,7 +60,7 @@ export const VM_WEAPON = {
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
   md97: W('ar', { baked: true, frame: 'family', recoilScale: 1.8 }),
-  carbine: W('ar'),
+  carbine: W('ar', { baked: true, frame: 'family' }),
   m400: W('sniper'),
   mosin: W('bolt', { baked: true }),
   // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
