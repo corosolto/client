@@ -6,6 +6,8 @@ import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchar
 import { weaponModel, weaponCFG, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { VM_FRAME } from './vmattach.js';
+import { KnifeMeleeViewModel } from './meleevm.js';
+import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS } from './authoredvm.js';
 import { vmlabPose, VMLAB_SCOPED, VMLAB_NO_ALIGN } from './vmlab.js';
 import { buildRecoilPattern, RECOIL_PARAMS, RECOIL_PATTERN, RECOIL_CLASS, REC_DEG, REC } from './recoil.js';
 import { GPUParticles } from './gpuparticles.js';
@@ -816,6 +818,22 @@ export class Game {
     this.vmScene = new THREE.Scene();
     this.vmScene.environment = this.scene.environment;   // mesmo IBL do mapa (metais leem)
     this.vmScene.add(this.vm.root);
+    // Fundação authored em rollout fechado. Sem ?vmauthored=1 estes controladores nem
+    // carregam assets e o alpha.246 continua no caminho legado 26/26.
+    if (AUTHORED_VM_ENABLED) {
+      const pal = this.playerDef?.pal || {};
+      const profile = { id: this.playerCharId, faction: this.playerFaction,
+        skin: pal.skin, sleeve: pal.shirt, accent: pal.pants || tons(this.playerFaction).base };
+      this.vm.authored = createAuthoredViewModels(this.vm.root, () => {
+        if (!this._disposed && this.vm) this._applyVmVisibility();
+      }, profile);
+      this.vm.melee = new KnifeMeleeViewModel({ parent: this.vmScene, profile, onReady: () => {
+        if (!this._disposed && this.vm) this._applyVmVisibility();
+      } });
+    } else {
+      this.vm.authored = null;
+      this.vm.melee = null;
+    }
     {
       /* ORÇAMENTO DE LUZ DO VIEWMODEL — MAT2. O rig abaixo (key/fill/sky/rim/bounce+hemi)
          somava 7,60 unidades FIXAS, contra 2,60 (ferro_velho) a 3,60 (praca_poderes) dos mapas:
@@ -1908,6 +1926,7 @@ export class Game {
       }
       if (e.button === 0) { this.mouseDown0 = true; this._tryShoot(); }
       if (e.button === 2) {
+        if (this.player.weapon === 'knife') { this._tryKnifeAttack('heavy'); return; }
         // Sniper (arma com luneta): botão direito ALTERNA e TRAVA a mira — não precisa segurar
         // (pedido de jogador). Demais armas: ADS enquanto segura (iron-sight).
         const w = this.player.weapon;
@@ -2051,8 +2070,9 @@ export class Game {
     on('.touch-ads', () => {
       if (!this._acceptInput()) return;
       const w = this.player.weapon;
+      if (w === 'knife') { this._tryKnifeAttack('heavy'); return; }
       if (WEAPONS[w] && WEAPONS[w].scope) this._scope(!this.player.scoped); else this._scope(true);
-    }, () => { const w = this.player.weapon; if (!(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false); });
+    }, () => { const w = this.player.weapon; if (w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false); });
     on('.touch-crouch', () => { if (this._acceptInput()) this.keys.KeyC = true; }, () => { this.keys.KeyC = false; });
     on('.touch-pause', () => { this.setPaused(!this.paused); });
     // BARRA DE ARMAS (embaixo): primária / pistola / faca / fumaça / granada
@@ -2435,7 +2455,10 @@ export class Game {
     this._applyVmVisibility();
     // BUG-04: início de round/respawn zera o rig e SACA — sem isso o viewmodel podia
     // reaparecer no meio de uma recarga interrompida pela morte.
-    this.vm.rig.reset(); this.vm.rig.startDraw();
+    this.vm.rig.reset();
+    if (this.vm.melee?.active) this.vm.melee.draw();
+    else if (this.vm.authored?.active(this.player.weapon)) this.vm.authored.draw(this.player.weapon, 0.38);
+    else this.vm.rig.startDraw();
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
     const slots = { E: 1, B: 0 };
     for (const b of this.bots) {
@@ -2743,7 +2766,15 @@ export class Game {
   onResize() {
     this.camera.aspect = innerWidth / innerHeight;
     this.camera.updateProjectionMatrix();
-    if (this.vmCamera) { this.vmCamera.aspect = this.camera.aspect; this.vmCamera.fov = vmFovForAspect(this.camera.aspect); this.vmCamera.updateProjectionMatrix(); }
+    if (this.vmCamera) {
+      this.vmCamera.aspect = this.camera.aspect;
+      const melee = this.vm?.melee?.active;
+      const authored = !melee && this.vm?.authored?.active(this.player?.weapon);
+      this.vmCamera.fov = melee ? this.vm.melee.fov(this.camera.aspect)
+        : authored ? this.vm.authored.fov(this.player?.weapon, this.camera.aspect)
+        : vmFovForAspect(this.camera.aspect);
+      this.vmCamera.updateProjectionMatrix();
+    }
   }
 
   /* ================= team switch (M) ================= */
@@ -2757,6 +2788,10 @@ export class Game {
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
     this.playerFaction = this.enemyFaction;
     this.enemyFaction = oldFaction;
+    const handProfile = { id: this.playerCharId, faction: this.playerFaction,
+      skin: this.playerDef?.pal?.skin, sleeve: this.playerDef?.pal?.shirt, accent: this.playerDef?.pal?.pants };
+    this.vm.authored?.setProfile(handProfile);
+    this.vm.melee?.setProfile(handProfile);
     p.team = newTeam;
     // rebalanceia 4×4: um bot do time novo deserta pro time velho
     const candidates = this.bots.filter(b => b.team === newTeam);
@@ -2800,8 +2835,32 @@ export class Game {
   _applyVmVisibility() {
     const w = this.player.weapon;
     this._vmMontarTardio?.(w);   // GLB que chegou depois do construtor (ver _buildViewModels)
-    if (this.vm.arms) this.vm.arms.group.visible = true;
-    for (const k in this.vm.models) this.vm.models[k].visible = k === w;
+    const melee = this.vm.melee?.setWeapon(w) || false;
+    const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
+    if (melee) this.vm.authored?.setWeapon('');
+    // Uma decisão de visibilidade: fallback continua visível enquanto o authored carrega
+    // ou falha; só some depois que o controlador confirma malha ativa.
+    if (this.vm.arms) this.vm.arms.group.visible = !authored && !melee;
+    for (const k in this.vm.models) this.vm.models[k].visible = !authored && !melee && k === w;
+    this.vm.root.visible = !melee;
+    if (this.vmCamera) {
+      this.vmCamera.fov = melee ? this.vm.melee.fov(this.vmCamera.aspect)
+        : authored ? this.vm.authored.fov(w, this.vmCamera.aspect)
+        : vmFovForAspect(this.vmCamera.aspect);
+      this.vmCamera.updateProjectionMatrix();
+    }
+    if (this.testMode && AUTHORED_VM_ENABLED) {
+      let badge = document.getElementById('vm-debug-badge');
+      if (!badge) {
+        badge = document.createElement('div'); badge.id = 'vm-debug-badge';
+        badge.style.cssText = 'position:fixed;left:8px;bottom:96px;z-index:60;font:11px ui-monospace,monospace;padding:2px 7px;border-radius:5px;background:#000a;pointer-events:none';
+        document.body.appendChild(badge);
+      }
+      badge.textContent = melee ? 'vm: faca authored' : authored
+        ? `vm: authored (${AUTHORED_VM_MODELS[w] || '?'})` : 'vm: fallback legado';
+      badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
+    }
+    return authored || melee;
   }
   // ?vmlab=1 usa um viewmodel isolado e criado sob demanda.
   _vmlabEnsure(id) {
@@ -2906,10 +2965,13 @@ export class Game {
     // trocar no meio da recarga. Sem `startSwap` de propósito: o holster do rig exige adiar
     // a TROCA DA MALHA até o fundo do arco, e a malha visível é lida por `poseToWeapon`,
     // pelo flash de boca e pelo ADS a partir de `p.weapon` — adiar isso é outra tarefa.
-    this.vm.rig.startDraw(GUNFEEL ? (DEPLOY[_dcls] || 0.38) : 0.28);
+    const drawDur = GUNFEEL ? (DEPLOY[_dcls] || 0.38) : 0.28;
+    this._applyVmVisibility();
+    if (this.vm.melee?.active) this.vm.melee.draw();
+    else if (this.vm.authored?.active(w)) this.vm.authored.draw(w, drawDur);
+    else this.vm.rig.startDraw(drawDur);
     this.bloom = 0;
     this._scope(false, true);
-    this._applyVmVisibility();
     this.el.weaponName.textContent = WEAPONS[w].name;
     this.el.reloadNote.classList.add('hidden');
     if (pickup) this.sfx.pickup('weapon');
@@ -2962,7 +3024,9 @@ export class Game {
     if (this.online) this._mp?.pedirReload(w);
     // BUG-04: MESMA duração da tabela de armas nos dois lados — o relógio de jogo
     // (reloadUntil, que devolve a munição) e a animação terminam no mesmo quadro.
-    this.vm.rig.startReload(WEAPONS[w].reload);
+    const faltam = Math.max(1, Math.min(WEAPONS[w].mag - a.mag, a.res));
+    if (this.vm.authored?.active(w)) this.vm.authored.reload(w, WEAPONS[w].reload, a.mag === 0, faltam);
+    else this.vm.rig.startReload(WEAPONS[w].reload);
     p.sprayI = 0;   // recarregou = rajada nova (padrão de recuo do tiro 1)
     this.el.reloadNote.classList.remove('hidden');
     this.sfx.reloadStart();
@@ -3042,10 +3106,7 @@ export class Game {
     if (!p.alive || this.state !== 'live') return;
     if (this.time < p.nextShotAt || this._reloading() || this.time < p.drawUntil) return;
     if (p.weapon === 'knife') {
-      p.nextShotAt = this.time + w.rate;
-      this.vm.recoil.kick(1); this.sfx.knife();
-      this.vm.swingAt = this.time;   // dispara o SWING (arco de faca estilo CS)
-      this._meleeHit();
+      this._tryKnifeAttack('quick');
       return;
     }
     const a = p.ammo[p.weapon];
@@ -3053,6 +3114,7 @@ export class Game {
     a.mag--;
     p.nextShotAt = this.time + w.rate;
     p.revealedAt = this.time;
+    this.vm.authored?.shoot(p.weapon);
     if (p.weapon === 'awp') setTimeout(() => this.sfx.bolt(), 420);
     this.sfx.shotWeapon(p.weapon, 0);   // 1ª pessoa = distância 0 no mix do synth
     // spread & direção. GUNFEEL: (a) ADS agora fecha o spread em TODAS as armas — antes só a
@@ -3119,6 +3181,19 @@ export class Game {
     this._ejectCasing();
     // bolt-action snipers drop the scope after each shot (CS-style); autos stay aimed
     if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin' || p.weapon === 'rem700')) this._scope(false, true);
+  }
+  _tryKnifeAttack(kind = 'quick') {
+    const p = this.player, w = WEAPONS.knife;
+    if (p.weapon !== 'knife' || !p.alive || this.state !== 'live') return false;
+    if (this.time < p.nextShotAt || this._reloading() || this.time < p.drawUntil) return false;
+    const heavy = kind === 'heavy';
+    p.nextShotAt = this.time + w.rate * (heavy ? 1.25 : 1);
+    this.vm.recoil.kick(heavy ? 1.15 : 0.72);
+    this.sfx.knife();
+    if (this.vm.melee?.active) this.vm.melee.attack(heavy ? 'heavy' : 'quick');
+    else this.vm.swingAt = this.time;
+    this._meleeHit();
+    return true;
   }
   _meleeHit() {
     const from = this._aimOrigin(new THREE.Vector3());
@@ -3857,6 +3932,8 @@ export class Game {
   // pelo matrixWorld ATUAL do vm.root (com o kick acumulado) e depois pela câmera — usado
   // pelo tracer e pela luz/faísca do mundo no tiro do jogador (R7.6).
   _muzzleWorld(cls) {
+    const authored = this.vm.authored?.muzzleWorld?.(this.player?.weapon, this.camera);
+    if (authored) return authored;
     if (this.camView !== 'first') {
       // A câmera está atrás/acima, então a boca do cano NÃO pode sair dela: a fumaça nascia
       // lá em cima. Sai do OLHO, na direção da mira, descida pra altura da arma na mão.
@@ -5360,7 +5437,7 @@ export class Game {
     const gap = precAds ? 3 : Math.max(3, Math.min(26, 5 + sp * 1.15 + this.vm.kick * 20 - p.crouchF * 2.5 - (p.scoped ? 4 : 0)));
     this.el.crosshair.style.setProperty('--ch', gap.toFixed(1) + 'px');
     // 3ª pessoa esconde os braços/arma FP (o corpo TP tem a própria arma na mão).
-    this.vm.root.visible = this.camView === 'first' && !(realScope && mask > 0.55);   // a arma só sai de cena depois que a luneta cobre
+    this.vm.root.visible = this.camView === 'first' && !this.vm.melee?.active && !(realScope && mask > 0.55);   // a arma só sai de cena depois que a luneta cobre
     // reload completion — RELÓGIO DE JOGO (devolve a munição). A ANIMAÇÃO é do rig e usa a
     // mesma duração da tabela, então as duas pontas chegam no mesmo quadro (BUG-04).
     if (!this._reloading() && p.reloadUntil > 0) {
@@ -5458,11 +5535,25 @@ export class Game {
     // Os ganhos abaixo mantêm a MESMA forma de curva (mesma mola, mesma assinatura por
     // arma), só reduzem a amplitude cosmética. Esta camada NÃO mexe na mira: o recuo de
     // câmera é _shotRecoil/_installRecoil e continua intocado.
-    this.vm.root.position.set(VM_OFF[0] + pose.x * a + bobX + rg.pos.x, vmOffY((this.vmCamera && this.vmCamera.aspect) || this.camera.aspect) + bobY - p.crouchF * 0.02 + pose.y * a + k * 0.015 + rg.pos.y, VM_OFF[2] + k * 0.050 + pose.z * a - swPz + rg.pos.z);
-    this.vm.root.rotation.x = k * 0.070 + pose.rx * a + swRx + rg.rot.x;   // subida do cano + ADS + golpe da faca + rig (recarga/saque/respiração)
-    this.vm.root.rotation.y = ks * k * 0.018 + pose.ry * a + swRy + rg.rot.y;                            // yaw do coice/ADS + varredura da faca
-    this.vm.root.rotation.z = ks * k * 0.022 + swRz + rg.rot.z;                                          // roll do coice + giro da lâmina + sway
-    this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);                                          // scale-down do VM em ADS
+    const meleeActive = this.vm.melee?.active || false;
+    this.vm.melee?.update(dt);
+    const authoredActive = !meleeActive && (this.vm.authored?.active(p.weapon) || false);
+    this.vm.authored?.setAim(p.weapon, a);
+    this.vm.authored?.update(dt, { ads: a, sway: rg, speed: sp,
+      grounded: p.grounded !== false, scoped: !!p.scoped });
+    if (authoredActive || meleeActive) {
+      // O pacote authored possui câmera e movimento próprios; somar o rig legado aqui
+      // mudaria contatos e enquadramento já aprovados.
+      this.vm.root.position.setScalar(0);
+      this.vm.root.rotation.set(0, 0, 0);
+      this.vm.root.scale.setScalar(1);
+    } else {
+      this.vm.root.position.set(VM_OFF[0] + pose.x * a + bobX + rg.pos.x, vmOffY((this.vmCamera && this.vmCamera.aspect) || this.camera.aspect) + bobY - p.crouchF * 0.02 + pose.y * a + k * 0.015 + rg.pos.y, VM_OFF[2] + k * 0.050 + pose.z * a - swPz + rg.pos.z);
+      this.vm.root.rotation.x = k * 0.070 + pose.rx * a + swRx + rg.rot.x;
+      this.vm.root.rotation.y = ks * k * 0.018 + pose.ry * a + swRy + rg.rot.y;
+      this.vm.root.rotation.z = ks * k * 0.022 + swRz + rg.rot.z;
+      this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);
+    }
     /* ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA (RODADA DO GRIP + PITCH).
        O `_adsPose` acima gira o vm.root INTEIRO (rx/ry por classe) e não enxerga a
        inclinação que o `_vmFrame` deu ao GRUPO da arma. Com pitch de ~12° e o ADS entrando,
@@ -5472,14 +5563,14 @@ export class Game {
        não no _vmFrame porque o _vmFrame só roda quando o ASPECTO muda, e o ADS é por frame.
        O ROLL NÃO É ZERADO de propósito: girar em torno do eixo da câmera não desalinha a
        alça, e era assim antes desta rodada. */
-    {
+    if (!authoredActive && !meleeActive) {
       const wg = this.vm.models && this.vm.models[p.weapon];
       const vr = this.vm.rot && this.vm.rot[p.weapon];
       if (wg && vr && vr.ads) wg.rotation.set(vmAdsRot(vr.pitch, a), vmAdsRot(vr.yaw, a), vr.roll);
     }
     // Braços reais: IK trava as mãos na arma visível DEPOIS de todos os transforms do
     // vm.root (kick/dip/ADS/sway/bob/draw) — as mãos acompanham a arma em qualquer estado.
-    if (this.vm.arms && this.vm.root.visible) {
+    if (!authoredActive && !meleeActive && this.vm.arms && this.vm.root.visible) {
       const wg = this.vm.models[p.weapon];
       if (wg) poseToWeapon(this.vm.arms, wg, p.weapon);
     }
@@ -7417,6 +7508,8 @@ export class Game {
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
     this.world.ambience?.dispose();
     this.soundscape?.dispose(); this.soundscape = null;
+    this.vm?.authored?.dispose();
+    this.vm?.melee?.dispose();
     this._pickupFallbackTpl?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
