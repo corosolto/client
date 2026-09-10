@@ -1,22 +1,45 @@
-// Atacadão da Treta: galpão de atacado (paródia) com estacionamento ao sul (spawn E) e loja
-// fechada ao norte (spawn B). Colisão só AABB. Mesmo contrato de build(scene, T) da Loja H.
+// Atacadão da Treta: ARMAZÉM DE CLUBE DE ATAQUE — labirinto de rack de pallet, não
+// átrio de loja. Projeto, lattice e medidas: docs/mapa-atacadao.md. Régua: eval:atacadao.
 import * as THREE from 'three';
-import { placeProp } from './mapprops.js';
+import { placeProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
+import { createFavelaAmbience } from './ambientlife.js';
 
 export const ATACADAO_PROPS = [
-  'gondola_mercado', 'gondola_eletro', 'shopping_cart', 'caixa_cobranca', 'arara_roupas',
-  'manequim', 'painel_tvs', 'cooler', 'pilha_pneus', 'dumpster', 'vw_9150',
+  // armazém (kit atacadao_r3, Mint ~4,5k tris cada)
+  'estante_pallets', 'freezer', 'ilha_caixas',
+  /* chão de loja: os quatro primeiros vieram no pack da Havan (mint-assets.json,
+     `havan_loja_pack`) e este mapa nunca carregou nenhum — a frente de caixa e as
+     gôndolas eram BoxGeometry. `stall` é o molde de feira do acervo antigo. */
+  'caixa_cobranca', 'gondola_mercado', 'gondola_eletro', 'stall',
+  /* seções: lote Replicate de 27/08/2026 (flux-schnell -> hunyuan3d-2), procedência
+     em FONTE.md. `balcao_peixaria`, `cancela_estacionamento` e `lava_rapido` do mesmo
+     lote FICARAM DE FORA — medidos e reprovados, motivo registrado no FONTE.md. */
+  'balcao_acougue', 'balcao_padaria', 'ilha_hortifruti', 'geladeira_bebidas',
+  // estacionamento: moto, banca de sorvete e sombra
+  'moto_cg', 'drinkstand', 'guarda_sol', 'mesa_guardasol',
+  // doca e chão de loja
+  'shopping_cart', 'cooler', 'pilha_pneus', 'dumpster', 'vw_9150',
   // estacionamento + entorno (bairro/cidade de fundo)
   'fileira_carros', 'kombi', 'saveiro', 'opala', 'fiat_uno', 'chevette', 'brasilia_vw', 'fusca',
   'fav_house', 'fav_modular', 'fav_brasileira', 'fachada_comercio',
 ];
 
-const HALF_X = 26, WALL_H = 8, PARK_H = 2.4;
-const ZF = -6;    // fachada (separa estacionamento × loja)
-const ZN = 33;    // fundo da loja (norte)
+const HALF_X = 26, WALL_H = 11, PARK_H = 2.4;   // WALL_H 8 -> 11: pé-direito de galpão
+/* Tudo em múltiplo de 1,6 m: prop a menos de 0,95 m de uma linha de nó apaga o nó.
+   Fileiras nos x ímpares do lattice, corredores nos pares — docs/mapa-atacadao.md. */
+/* 6 fileiras x 9 slots, um vazado por fileira (entrada alternada); meio-bloco de
+   1,15 m = rack GLB + carga paletizada atrás. */
+const FILA_X = [-17.6, -11.2, -4.8, 4.8, 11.2, 17.6];
+const RACK_Z = [1.6, 4.8, 8.0, 11.2, 14.4, 17.6, 20.8, 24.0, 27.2];
+const VAO_PAR = 11.2, VAO_IMPAR = 20.8;
+const RACK_HX = 1.15, RACK_HZ = 1.6, RACK_H = 3.0;
+
+const ZF = -12;   // fachada. Era -6: a praça não cabia no lattice (MC3, 22 nós ilhados)
+const ZN = 36.2; // fundo (norte). Era 33: doca de 3,8 m reprovava a MAP2B (40 m² por slot)
 const ZS = -42;   // fundo do estacionamento (sul, a rua)
+const LOJA_Z0 = ZF, LOJA_Z1 = ZN;   // faixa que a ATA5 chama de "dentro do galpão"
 
 function signTex(bg, fg, title, sub, W = 512, H = 160) {
   const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -32,6 +55,74 @@ function signTex(bg, fg, title, sub, W = 512, H = 160) {
   return t;
 }
 
+/* Cada superfície grande tem canvas próprio (antes: todas em T.concrete, cinza).
+   Cobrado pela ATA8. Tabela e motivo: docs/mapa-atacadao.md. */
+const rng = (s) => () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+function canvasTex(W, H, draw, rx = 1, ry = 1) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  draw(c.getContext('2d'), W, H);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
+  return t;
+}
+const salpico = (x, W, H, n, cores, semente, smin = 1, smax = 3) => {
+  const r = rng(semente);
+  for (let i = 0; i < n; i++) { x.fillStyle = cores[(r() * cores.length) | 0]; const s = smin + r() * (smax - smin); x.fillRect(r() * W, r() * H, s, s); }
+};
+/* Piso de loja: granilite creme com agregado e junta de dilatação. */
+const pisoLojaTex = (rx, ry) => canvasTex(512, 512, (x, W, H) => {
+  x.fillStyle = '#cfc6b2'; x.fillRect(0, 0, W, H);
+  salpico(x, W, H, 6000, ['#a89678', '#e8e1cf', '#8d7f66', '#c3b79c', '#6f6455'], 9311, 1, 3.2);
+  const r = rng(4177);
+  x.globalAlpha = 0.35;                                     // polimento/tráfego
+  for (let i = 0; i < 30; i++) { x.fillStyle = '#b6ab93'; x.beginPath(); x.arc(r() * W, r() * H, 16 + r() * 44, 0, 6.2832); x.fill(); }
+  x.globalAlpha = 1;
+  x.strokeStyle = '#8e836c'; x.lineWidth = 3;               // junta serrada
+  for (let i = 0; i <= 2; i++) { const p = (i * W) / 2; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, H); x.moveTo(0, p); x.lineTo(W, p); x.stroke(); }
+}, rx, ry);
+/* Parede interna de atacarejo: branco em cima, barra azul embaixo, junta de painel. */
+const paredeLojaTex = (rx, ry) => canvasTex(256, 512, (x, W, H) => {
+  x.fillStyle = '#eef1ee'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#1f5fbf'; x.fillRect(0, H * 0.74, W, H * 0.26);           // barra de rodapé
+  x.fillStyle = '#e0b83a'; x.fillRect(0, H * 0.71, W, H * 0.03);           // filete amarelo
+  salpico(x, W, H * 0.7, 900, ['#e2e6e2', '#f6f8f6', '#d6dbd7'], 2251, 1, 2.4);
+  x.strokeStyle = '#cfd5d0'; x.lineWidth = 2;
+  for (let i = 1; i < 4; i++) { const p = (i * W) / 4; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, H * 0.74); x.stroke(); }
+}, rx, ry);
+/* Fachada: identidade de atacarejo — listra vermelha/amarela e painel metálico. */
+const fachadaTex = (rx, ry) => canvasTex(512, 256, (x, W, H) => {
+  x.fillStyle = '#c0392b'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#e0b83a'; x.fillRect(0, H * 0.52, W, H * 0.16);
+  x.fillStyle = '#1f5fbf'; x.fillRect(0, H * 0.68, W, H * 0.10);
+  x.fillStyle = '#a52f22'; for (let i = 0; i < 10; i++) x.fillRect((i * W) / 10, 0, W * 0.012, H * 0.52);  // junta de ACM
+  x.fillStyle = '#d8543f'; x.fillRect(0, 0, W, H * 0.06);
+  salpico(x, W, H, 700, ['#b23324', '#cc4331'], 6607, 1, 2.2);
+}, rx, ry);
+/* Doca/área de serviço: concreto sujo, escuro, com mancha de óleo — NÃO é o piso interno. */
+const docaTex = (rx, ry) => canvasTex(512, 512, (x, W, H) => {
+  x.fillStyle = '#7c766c'; x.fillRect(0, 0, W, H);
+  salpico(x, W, H, 5200, ['#6a655c', '#8d877c', '#5a554d', '#948d80'], 8123, 1, 3.4);
+  const r = rng(3907);
+  x.globalAlpha = 0.55;
+  for (let i = 0; i < 18; i++) { x.fillStyle = '#3a372f'; x.beginPath(); x.arc(r() * W, r() * H, 8 + r() * 30, 0, 6.2832); x.fill(); }   // óleo
+  x.globalAlpha = 1;
+  x.strokeStyle = '#5f5a52'; x.lineWidth = 4;
+  for (let i = 0; i <= 1; i++) { const p = i * W; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, H); x.stroke(); }
+}, rx, ry);
+/* Azulejo branco 20×20 da peixaria. */
+const azulejoTex = (rx, ry) => canvasTex(256, 256, (x, W, H) => {
+  x.fillStyle = '#bcc6c4'; x.fillRect(0, 0, W, H);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { x.fillStyle = (i + j) % 7 === 0 ? '#dfe9e6' : '#f2f6f4'; x.fillRect(i * W / 4 + 2, j * H / 4 + 2, W / 4 - 4, H / 4 - 4); }
+  salpico(x, W, H, 400, ['#e8eeec', '#ffffff'], 1511, 1, 2);
+}, rx, ry);
+/* Inox escovado do açougue. */
+const inoxTex = (rx, ry) => canvasTex(128, 128, (x, W, H) => {
+  x.fillStyle = '#b8bec4'; x.fillRect(0, 0, W, H);
+  const r = rng(7717);
+  for (let i = 0; i < 300; i++) { x.fillStyle = r() > .5 ? '#c9ced3' : '#a3a9af'; x.fillRect(0, r() * H, W, 0.6 + r()); }
+}, rx, ry);
+
 export function buildAtacadao(scene, T) {
   const colliders = [];
   const occluders = [];
@@ -40,15 +131,33 @@ export function buildAtacadao(scene, T) {
   scene.add(root);
 
   const lam = (opts) => new THREE.MeshLambertMaterial(opts);
-  const tex = (k, fallback) => (T && T[k]) ? { map: T[k] } : { color: fallback };
-  const MAT = {
-    piso: lam(tex('concrete', 0xcfd3d8)), parede: lam(tex('concrete', 0xb9bdc2)), metal: lam({ color: 0x9aa0a6 }),
-    pilar: lam(tex('concrete', 0xdfe3e7)), pilarBase: lam({ color: 0xe0b83a }), prat: lam({ color: 0x8a9096 }),
-    caixa: lam({ color: 0x2e6f9e }), esteira: lam({ color: 0x2a2d31 }), faixa: lam({ color: 0xe0b83a }),
-    asfalto: lam(tex('asphalt', 0x2b2e33)), muro: lam(tex('concrete', 0xc2b8a6)), vidro: lam({ color: 0x9fd0e6, transparent: true, opacity: 0.45 }),
-    predio: lam({ color: 0xa7a29a }), janela: lam({ color: 0x35404e }), faixaRua: lam({ color: 0xd8b83a }),
+  /* Cada superfície grande tem canvas PRÓPRIO — nada de cair todo mundo em T.concrete.
+     `superficie()` marca a malha para a ATA8 conferir mapa presente e textura distinta. */
+  const TX = {
+    piso: pisoLojaTex(13, 12),        // 52 × 48 m de loja: ladrilho de ~4 m
+    parede: paredeLojaTex(13, 2),
+    fachada: fachadaTex(8, 1),
+    doca: docaTex(6, 3),
+    pilar: paredeLojaTex(1, 3),       // mesmo desenho, OUTRA instância e outro repeat
+    azulejo: azulejoTex(6, 3),
+    inox: inoxTex(4, 2),
+    muro: docaTex(10, 1),
   };
-  const PROD = [lam({ color: 0xd23b3b }), lam({ color: 0xe0b83a }), lam({ color: 0x2e8b57 }), lam({ color: 0x2e6f9e }), lam({ color: 0xe86a1e }), lam({ color: 0xe8e2d4 })];
+  const MAT = {
+    piso: lam({ map: TX.piso }), parede: lam({ map: TX.parede }), metal: lam({ color: 0x9aa0a6 }),
+    pilar: lam({ map: TX.pilar }), pilarBase: lam({ color: 0xe0b83a }), prat: lam({ color: 0x8a9096 }),
+    caixa: lam({ color: 0x2e6f9e }), esteira: lam({ color: 0x2a2d31 }), faixa: lam({ color: 0xe0b83a }),
+    asfalto: lam((T && T.asphalt) ? { map: T.asphalt } : { map: docaTex(14, 12) }),
+    muro: lam({ map: TX.muro }), vidro: lam({ color: 0x9fd0e6, transparent: true, opacity: 0.45 }),
+    predio: lam({ color: 0xa7a29a }), janela: lam({ color: 0x35404e }), faixaRua: lam({ color: 0xd8b83a }),
+    fachada: lam({ map: TX.fachada }), doca: lam({ map: TX.doca }),
+    azulejo: lam({ map: TX.azulejo }), inox: lam({ map: TX.inox }),
+    frioVidro: lam({ color: 0xbfe4f2, transparent: true, opacity: 0.42 }),
+    hortiVerde: lam({ color: 0x2f7d46 }), padariaMadeira: lam({ color: 0x8a5a2b }), carneVermelho: lam({ color: 0x8d2733 }),
+  };
+  /* Marcação de superfície grande: a ATA8 lê estas malhas e exige mapa + textura única. */
+  const superficies = [];
+  const marcarSuperficie = (m, tipo) => { m.userData.atacadaoSuperficie = tipo; superficies.push(m); return m; };
 
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -60,9 +169,17 @@ export function buildAtacadao(scene, T) {
   }
   function addFloor(w, d, mat, x, z, y = 0.01) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; }
   const col = (x, z, hx, hz, h) => colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: h, minZ: z - hz, maxZ: z + hz });
-  function prop(id, x, z, targetH, ry, hx, hz, h) { const o = placeProp(id, { x, z, y: 0, targetH, ry }); if (o) { root.add(o); occluders.push(o); } if (hx) col(x, z, hx, hz, h); return o; }
+  const worldPropBatch = new PropBatch({ bucket: 18, tag: 'atacadao-entorno', shadowMin: 0.04 });
+  const interiorPropBatch = new PropBatch({ bucket: 0, tag: 'atacadao-interior', shadowMin: 0.04 });
+  function prop(id, x, z, targetH, ry, hx, hz, h) {
+    const params = { x, z, y: 0, targetH, ry };
+    if (!worldPropBatch.add(id, params)) {
+      const o = placeProp(id, params);
+      if (o) { root.add(o); occluders.push(o); }
+    }
+    if (hx) col(x, z, hx, hz, h);
+  }
   const gprop = (id, x, z, h, ry) => { const o = placeProp(id, { x, z, y: 0, targetH: h, ry }); if (o) { root.add(o); occluders.push(o); } return o; };
-  const shelfUnit = (id, x, z) => { if (!gprop(id, x, z, 1.9, Math.PI / 2)) addBox(2.1, 1.9, 1.0, MAT.prat, x, 0, z); col(x, z, 1.05, 0.55, 1.9); };
   const signMesh = (w, h, tx2, x, y, z, ry) => {
     const g = new THREE.Group(); const geo = new THREE.PlaneGeometry(w, h);
     const f = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tx2 })); f.position.z = 0.02;
@@ -72,63 +189,287 @@ export function buildAtacadao(scene, T) {
   const wX = HALF_X - 0.5;
 
   scene.background = new THREE.Color(0xdfe6ec); scene.fog = null;
-  addFloor(HALF_X * 2, ZN - ZF, MAT.piso, 0, (ZF + ZN) / 2);       // loja
-  addFloor(HALF_X * 2, ZF - ZS, MAT.asfalto, 0, (ZS + ZF) / 2);    // estacionamento
+  marcarSuperficie(addFloor(HALF_X * 2, ZN - ZF, MAT.piso, 0, (ZF + ZN) / 2), 'piso');
+  marcarSuperficie(addFloor(HALF_X * 2, ZF - ZS, MAT.asfalto, 0, (ZS + ZF) / 2), 'asfalto');
+  /* Doca é área de serviço, não o salão: 1 cm acima do piso ganha do z-fighting
+     sem virar degrau que o corpo sinta. */
+  marcarSuperficie(addFloor(HALF_X * 2 - 1, 6.2, MAT.doca, 0, ZN - 3.1, 0.02), 'doca');
+  // Faixa de circulação: pintura no chão, sem colisor.
+  for (const fz of [ZF + 12, ZF + 24, ZF + 36]) for (const sx of [-1, 1])
+    addBox(HALF_X * 2 - 4, 0.02, 0.16, MAT.faixa, 0, 0.04, fz + sx * 1.9, { collide: false, cast: false });
+  for (const fx of [-2.2, 2.2]) addBox(0.16, 0.02, ZN - ZF - 6, MAT.faixa, fx, 0.04, (ZF + ZN) / 2 + 1, { collide: false, cast: false });
 
-  addBox(HALF_X * 2, WALL_H, 0.8, MAT.parede, 0, 0, ZN);                          // parede norte
-  for (const sx of [-1, 1]) addBox(0.8, WALL_H, ZN - ZF, MAT.parede, sx * wX, 0, (ZF + ZN) / 2);  // laterais (loja)
-  addBox(HALF_X * 2, 0.4, ZN - ZF, MAT.metal, 0, WALL_H, (ZF + ZN) / 2, { collide: false, cast: false });   // teto
-  { const sky = new THREE.Mesh(new THREE.PlaneGeometry(HALF_X, (ZN - ZF) * 0.5), lam({ color: 0xdff0f7, transparent: true, opacity: 0.4 })); sky.rotation.x = Math.PI / 2; sky.position.set(0, WALL_H - 0.05, (ZF + ZN) / 2); root.add(sky); }
-  for (let z = ZF + 3; z <= ZN; z += 6) addBox(HALF_X * 2, 0.3, 0.3, MAT.metal, 0, WALL_H - 0.4, z, { collide: false, cast: false });   // vigas
-  for (const px of [-18, 18]) for (const pz of [2, 14, 26]) { addBox(0.7, WALL_H, 0.7, MAT.pilar, px, 0, pz); addBox(0.9, 0.5, 0.9, MAT.pilarBase, px, 0, pz, { collide: false }); }
+  /* Perímetro FECHADO: a vitrine de vidro de 5,4 m saiu inteira — era ela que fazia
+     a loja ler como shopping. Sobra alvenaria cega, laje opaca e treliça. */
+  marcarSuperficie(addBox(HALF_X * 2, WALL_H, 0.8, MAT.parede, 0, 0, ZN), 'parede');            // parede norte
+  for (const sx of [-1, 1]) marcarSuperficie(addBox(0.8, WALL_H, ZN - ZF, MAT.parede, sx * wX, 0, (ZF + ZN) / 2), 'parede');
+  addBox(HALF_X * 2, 0.5, ZN - ZF, MAT.metal, 0, WALL_H, (ZF + ZN) / 2, { collide: false, cast: false });   // laje opaca
+  for (let z = ZF + 3; z <= ZN; z += 6.4) addBox(HALF_X * 2, 0.34, 0.34, MAT.metal, 0, WALL_H - 0.5, z, { collide: false, cast: false });
+  /* Tirante de 5 m: o VIGAMENTO onde a pomba pousa (ambiência, adiante). */
+  const vigas = [];
+  for (const z of [1.6, 14.4, 27.2]) vigas.push(addBox(HALF_X * 2 - 2, 0.26, 0.26, MAT.metal, 0, 5.0, z, { collide: false, cast: false }));
+  for (const px of [-22.4, 22.4]) for (const pz of [1.6, 14.4, 27.2]) { addBox(0.7, WALL_H, 0.7, MAT.pilar, px, 0, pz); addBox(0.9, 0.5, 0.9, MAT.pilarBase, px, 0, pz, { collide: false }); }
 
   // A verga (minY=3) sobre os vãos das portas não pode virar colisor: barra o tiro, não o player.
   {
     const gaps = [[-15, -9], [-3, 3], [9, 15]];   // 3 vãos: esq, CENTRO (libera 2ª rota CTF2 pelo corredor central), dir
     let xc = -wX;
     for (const [g0, g1] of gaps) {
-      if (g0 > xc) { addBox(g0 - xc, 2.6, 0.6, MAT.parede, (xc + g0) / 2, 0, ZF); addBox(g0 - xc, WALL_H - 2.6, 0.12, MAT.vidro, (xc + g0) / 2, 2.6, ZF, { collide: false }); }
-      addBox(g1 - g0, WALL_H - 3, 0.6, MAT.parede, (g0 + g1) / 2, 3, ZF, { collide: false });   // verga sobre a porta
+      if (g0 > xc) { addBox(g0 - xc, 2.6, 0.6, MAT.fachada, (xc + g0) / 2, 0, ZF); marcarSuperficie(addBox(g0 - xc, WALL_H - 2.6, 0.6, MAT.fachada, (xc + g0) / 2, 2.6, ZF, { collide: false }), 'fachada'); }
+      addBox(g1 - g0, WALL_H - 3, 0.6, MAT.fachada, (g0 + g1) / 2, 3, ZF, { collide: false });   // verga sobre a porta
       xc = g1;
     }
-    if (wX > xc) { addBox(wX - xc, 2.6, 0.6, MAT.parede, (xc + wX) / 2, 0, ZF); addBox(wX - xc, WALL_H - 2.6, 0.12, MAT.vidro, (xc + wX) / 2, 2.6, ZF, { collide: false }); }
+    if (wX > xc) { addBox(wX - xc, 2.6, 0.6, MAT.fachada, (xc + wX) / 2, 0, ZF); marcarSuperficie(addBox(wX - xc, WALL_H - 2.6, 0.6, MAT.fachada, (xc + wX) / 2, 2.6, ZF, { collide: false }), 'fachada'); }
+    // Marquise e arandelas procedurais dão sombra e volume sem importar outro pack.
+    addBox(HALF_X * 2, 0.5, 2.2, MAT.metal, 0, 4.4, ZF - 1.1, { collide: false, cast: false });
+    const luzFachada = lam({ color: 0xffd38a, emissive: 0xffb347, emissiveIntensity: 0.8 });
+    for (const lx of [-21, -6, 6, 21]) {
+      addBox(0.5, 0.35, 0.35, luzFachada, lx, 3.7, ZF - 1.65, { collide: false, cast: false });
+    }
     // portais de ENTRADA e SAÍDA
     signMesh(5.4, 1.0, signTex('#1f5fbf', '#ffffff', 'ENTRADA', 'ENTRE E TRETE', 640, 160), -12, 3.3, ZF - 0.1, 0);
     signMesh(5.4, 1.0, signTex('#1f5fbf', '#ffffff', 'SAÍDA', 'JÁ VAI?', 640, 160), 12, 3.3, ZF - 0.1, 0);
-    // letreiro grande ATACADÃO acima da vitrine (vê da rua e de dentro)
-    signMesh(16, 3.0, signTex('#c0392b', '#ffd23f', 'ATACADÃO DA TRETA', 'PREÇO DE ATACADO... OU NEM TANTO', 900, 180), 0, 6.4, ZF, 0);
+    // letreiro grande ATACADÃO acima da alvenaria (vê da rua e de dentro)
+    signMesh(16, 3.0, signTex('#c0392b', '#ffd23f', 'ATACADÃO DA TRETA', 'PREÇO DE ATACADO... OU NEM TANTO', 900, 180), 0, 7.4, ZF, 0);
   }
   // parede de fundo (norte) também com o letreiro
-  signMesh(16, 3.0, signTex('#c0392b', '#ffd23f', 'ATACADÃO DA TRETA', 'ABERTO ATÉ A TRETA ACABAR', 900, 180), 0, 5.6, ZN - 0.5, Math.PI);
+  signMesh(16, 3.0, signTex('#c0392b', '#ffd23f', 'ATACADÃO DA TRETA', 'ABERTO ATÉ A TRETA ACABAR', 900, 180), 0, 7.2, ZN - 0.5, Math.PI);
 
-  const PLACA_CORR = ['MERCEARIA', 'BEBIDAS', 'LIMPEZA', 'HORTIFRÚTI', 'BAZAR'];
-  for (let r = 0; r < 5; r++) {
-    const z = 3 + r * 6;                                                          // fileiras z = 3,9,15,21,27
-    const id = r === 2 ? 'gondola_eletro' : 'gondola_mercado';
-    for (const gx of [-7.4, -5.26, -3.12, 3.12, 5.26, 7.4]) shelfUnit(id, gx, z);  // 3+3, vão central x∈[-2,2]
-    signMesh(2.4, 0.7, signTex('#1f5fbf', '#ffffff', PLACA_CORR[r % PLACA_CORR.length], '', 512, 150), 0, 2.9, z, Math.PI / 2);
+  /* LABIRINTO DE RACK. Cada slot é GLB de 3 m + carga paletizada atrás: são os 2,3 m
+     do conjunto que fecham a visada, não o rack de 1,1 m sozinho (docs/mapa-atacadao.md). */
+  const PALLET = [lam({ color: 0x8a6a3c }), lam({ color: 0xb8b2a4 }), lam({ color: 0x2e6f9e }), lam({ color: 0xc0392b })];
+  const racks = [];
+  // Quarenta e oito clones do mesmo GLB custavam centenas de draws no passe
+  // principal e no de sombra. O lote mantém o modelo, escala e pose, mas agrupa
+  // as primitivas iguais em instâncias; o galpão fechado dispensa buckets.
+  const rackBatch = new PropBatch({ bucket: 0, tag: 'atacadao-racks', shadowMin: 0.04 });
+  /* A geometria mora DENTRO do Group marcado: a mutação --mutar=sem-racks remove o
+     Group, e com as malhas soltas no root a ATA5 media a mesma LOS com e sem rack. */
+  const rackBox = (g, w, h, d, mat, dx, dy, dz, sombra = true) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(dx, dy + h / 2, dz); m.castShadow = sombra; m.receiveShadow = true;
+    g.add(m); occluders.push(m); return m;
+  };
+  FILA_X.forEach((fx, fi) => {
+    const vaoDaFila = fi % 2 === 0 ? VAO_PAR : VAO_IMPAR;
+    const paraDentro = fx < 0 ? 1 : -1;     // o rack encara o corredor CENTRAL; a carga fica do lado de fora
+    RACK_Z.forEach((rz, zi) => {
+      if (rz === vaoDaFila) return;         // o vão: entrada alternada
+      const g = new THREE.Group(); g.position.set(fx, 0, rz); root.add(g);
+      // Um GLB detalhado na cabeceira de cada fileira funciona como hero asset;
+      // repetir as 4,5k tris em todos os 48 módulos não muda a leitura em jogo.
+      const batched = zi === 0 && rackBatch.add('estante_pallets', {
+        x: fx - paraDentro * 0.58, z: rz, y: 0, targetH: RACK_H, ry: Math.PI / 2,
+      });
+      if (!batched) rackBox(g, 1.1, RACK_H, 3.1, MAT.prat, -paraDentro * 0.58, 0, 0);
+      // altura alternada dá silhueta e evita parede lisa de 3 m
+      const hCarga = [2.5, 1.9, 2.9][(fi + zi) % 3];
+      rackBox(g, 1.12, hCarga, 2.9, PALLET[(fi + zi) % PALLET.length], paraDentro * 0.58, 0, 0);
+      rackBox(g, 1.16, 0.16, 3.0, MAT.metal, paraDentro * 0.58, hCarga, 0, false);
+      g.userData.atacadaoRack = { fila: fi, indice: zi };
+      g.userData.collider = { minX: fx - RACK_HX, maxX: fx + RACK_HX, minY: 0, maxY: RACK_H, minZ: rz - RACK_HZ, maxZ: rz + RACK_HZ };
+      colliders.push(g.userData.collider);
+      racks.push(g);
+    });
+    // placa de corredor pendurada na cabeceira de cada fileira
+    signMesh(2.6, 0.8, signTex('#1f5fbf', '#ffffff', ['MERCEARIA', 'BEBIDAS', 'LIMPEZA', 'HORTIFRÚTI', 'BAZAR', 'DESCARTÁVEL'][fi], '', 512, 150), fx, 4.2, -0.6, 0);
+  });
+  {
+    const first = root.children.length;
+    rackBatch.build(root);
+    occluders.push(...root.children.slice(first));
   }
-  for (const sx of [-1, 1]) for (const z of [4, 10, 16, 22, 28]) shelfUnit(sx > 0 ? 'gondola_mercado' : 'gondola_eletro', sx * 15, z);   // fileiras laterais
 
-  for (const cx of [-7.5, -3.75, 3.75, 7.5]) {   // caixas fora das portas (±12) E do vão central (x=0) — senão bloqueia a 2ª rota (CTF2)
-    addBox(1.4, 1.0, 2.6, MAT.caixa, cx, 0, ZF + 4);
-    addBox(2.4, 0.06, 0.5, MAT.esteira, cx, 1.0, ZF + 5.4, { collide: false });
-    signMesh(0.7, 1.0, signTex('#111417', '#ff4d4d', 'CAIXA', '99', 260, 360), cx + 0.9, 2.2, ZF + 5.2, 0);
+  /* Espinha central: sem ela o corredor que a rota CTF2 usa vira um tubo de visada
+     limpa da porta até a doca. Estreita (0,9 m) para os nós em x=±1,6 sobreviverem. */
+  for (const tz of [3.2, 9.6, 16.0, 22.4, 28.8]) {
+    addBox(1.8, 2.4, 2.2, PALLET[(tz | 0) % PALLET.length], 0, 0, tz);
+    addBox(1.9, 0.14, 2.3, MAT.metal, 0, 2.4, tz, { collide: false, cast: false });
   }
-  for (const [cx, cz] of [[-9, ZF + 2], [3, ZF + 2.5], [10, ZF + 1.5]]) prop('shopping_cart', cx, cz, 1.0, (cx * 7) % 3, 0.5, 0.6, 0.9);
 
-  prop('painel_tvs', -22, 12, 2.2, Math.PI / 2, 1.2, 0.4, 2.2);
-  prop('gondola_eletro', -22, 18, 2.0, Math.PI / 2, 1.4, 0.6, 2.0);
-  for (const az of [8, 16, 24]) prop('arara_roupas', 22, az, 1.9, -Math.PI / 2, 0.9, 0.6, 1.8);
-  prop('manequim', 20.5, 12, 1.8, -Math.PI / 2, 0.4, 0.4, 1.8);
-  for (const [cx, cz] of [[-22, 28], [22, 30]]) prop('cooler', cx, cz, 1.3, 0, 0.8, 0.6, 1.2);
-  prop('pilha_pneus', 22, 2, 1.5, 0, 1.0, 1.0, 1.4);
+  /* Cover de PEITO (1,15 m): cobre o corpo e não a cabeça, dá para trocar tiro por
+     cima. Fica na boca de cada vão alternado e nas duas pontas do galpão. */
+  const ilhas = [];
+  const ilha = (x, z) => {
+    const batched = interiorPropBatch.add('ilha_caixas', { x, z, y: 0, targetH: 1.15, ry: (x * 3 + z) % 2 ? 0 : Math.PI / 2 });
+    const alvo = addBox(0.9, 1.15, 0.9, PALLET[(Math.abs(x) | 0) % PALLET.length], x, 0, z, { collide: false });
+    if (batched) alvo.visible = false;
+    const c = { minX: x - 0.45, maxX: x + 0.45, minY: 0, maxY: 1.15, minZ: z - 0.45, maxZ: z + 0.45 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoCover = true;
+    ilhas.push(alvo); return alvo;
+  };
+  /* Encostada na face do rack, a 1,5 m do eixo: no corredor de 4,1 m existe UMA linha
+     de nó e apagá-la corta o corredor em dois (MC3, 22 nós na primeira medição). */
+  FILA_X.forEach((fx, fi) => {
+    const vz = fi % 2 === 0 ? VAO_PAR : VAO_IMPAR;
+    const eixo = fx + (fx < 0 ? 3.2 : -3.2);          // eixo do corredor vizinho ao vão
+    ilha(eixo + (fx < 0 ? -1.5 : 1.5), vz);           // encostada na face do rack, na boca do vão
+  });
+  for (const [ix, iz] of [[-6.4, ZF + 8.0], [6.4, ZF + 8.0], [-8.0, 28.8], [8.0, 28.8], [-22.6, 11.2], [-22.6, 20.8]]) ilha(ix, iz);
 
-  for (const [dx, dz] of [[-21, 28], [-21, 24], [21, 28]]) { addBox(1.6, 1.5, 1.6, PROD[(Math.abs(dx) | 0) % PROD.length], dx, 0, dz); addBox(1.7, 0.2, 1.7, MAT.metal, dx, 0, dz, { collide: false }); }
-  prop('dumpster', 21, 24, 1.7, 0, 1.4, 1.0, 1.6);
+  /* Parede fria: corrida de freezer na lateral leste. */
+  const freezers = [];
+  [3.2, 7.2, 11.2, 15.2, 19.2, 23.2].forEach((fz, i) => {
+    const batched = interiorPropBatch.add('freezer', { x: 24.2, z: fz, y: 0, targetH: 2.2, ry: -Math.PI / 2 });
+    const alvo = addBox(1.8, 2.2, 3.4, MAT.metal, 24.2, 0, fz, { collide: false });
+    if (batched) alvo.visible = false;
+    const c = { minX: 23.3, maxX: 25.1, minY: 0, maxY: 2.2, minZ: fz - 1.7, maxZ: fz + 1.7 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoFreezer = i;
+    freezers.push(alvo);
+  });
+  for (const cz of [5.2, 13.2, 21.2]) {                       // luz FRIA da parede de geladeira
+    const luz = new THREE.PointLight(0x9fd8ff, 1.25, 15, 1.5);
+    luz.position.set(22.6, 4.4, cz); luz.userData.mapLight = 'atacadao-frio'; scene.add(luz);
+    addBox(0.5, 0.1, 3.2, lam({ color: 0xdff0ff, emissive: 0x8fd0ff, emissiveIntensity: 0.9 }), 23.4, 4.5, cz, { collide: false, cast: false });
+  }
+  prop('cooler', 21.2, 27.2, 1.3, 0, 0.8, 0.6, 1.2);
 
-  const promo = ['LEVE 3 PAGUE 5', 'ARROZ R$ 49,90', 'SÓ HOJE: MAIS CARO', 'FEIJÃO A OURO'];
-  promo.forEach((t, i) => { const px = [-16, 16, -16, 16][i], pz = [8, 8, 22, 22][i]; addBox(0.1, 1.6, 0.1, MAT.metal, px, 0, pz, { collide: false }); signMesh(2.4, 1.0, signTex('#e0b83a', '#c0392b', t, '', 512, 220), px, 2.2, pz, Math.PI / 2); });
+  /* Seções de perímetro. Peixaria é procedural de propósito (molde reprovado na
+     medição): motivo, moldes e colunas de nó em FONTE.md e docs/mapa-atacadao.md. */
+  const secoes = [];
+  function secao({ nome, sub, cor, mat, x, z, comp, luz, molde, n = 3, hb = 1.05 }) {
+    const lado = Math.sign(x), prof = 2.2;
+    // Colisor sempre pela geometria declarada: régua não depende de GLB ter carregado.
+    let comMolde = false;
+    if (molde) for (let i = 0; i < n; i++) {
+      const iz = z - comp / 2 + (comp * (i + 0.5)) / n;
+      if (interiorPropBatch.add(molde, { x, z: iz, y: 0, targetH: hb, ry: -lado * Math.PI / 2 })) comMolde = true;
+    }
+    if (!comMolde) addBox(prof, hb, comp, mat, x, 0, z, { collide: false });                        // balcão procedural
+    col(x, z, prof / 2, comp / 2, hb);
+    // vidro do refrigerado, testeira, painel de fundo (acima do olho) e marquise
+    addBox(prof * 0.86, 0.5, comp * 0.96, MAT.frioVidro, x - lado * 0.1, hb, z, { collide: false, cast: false });
+    addBox(prof * 0.9, 0.12, comp, MAT.metal, x, hb + 0.5, z, { collide: false, cast: false });
+    addBox(0.25, 2.4, comp, mat, x + lado * 0.95, 1.6, z, { collide: false, cast: false });
+    addBox(prof + 0.5, 0.14, comp, MAT.metal, x - lado * 0.2, 3.4, z, { collide: false, cast: false });
+    const s = signMesh(Math.min(comp, 5.0), 1.15, signTex(cor, '#ffffff', nome, sub, 640, 200), x - lado * 1.3, 3.95, z, -lado * Math.PI / 2);
+    s.userData.atacadaoSecao = nome;
+    secoes.push(s);
+    const pl = new THREE.PointLight(luz, 1.15, 13, 1.6);
+    pl.position.set(x - lado * 1.2, 3.2, z); pl.userData.mapLight = 'atacadao-secao'; scene.add(pl);
+    return s;
+  }
+  secao({ nome: 'HORTIFRÚTI', sub: 'LEGUMES E FRUTAS', cor: '#2f7d46', mat: MAT.hortiVerde, x: -23.9, z: -8.5, comp: 5.0, luz: 0xd8ffcf, molde: 'ilha_hortifruti', n: 4, hb: 1.2 });
+  secao({ nome: 'PEIXARIA', sub: 'PEIXE FRESCO DO DIA', cor: '#1f5fbf', mat: MAT.azulejo, x: -23.9, z: -1.5, comp: 5.0, luz: 0xcfeaff });
+  secao({ nome: 'PADARIA', sub: 'PÃO QUENTE DE HORA EM HORA', cor: '#8a5a2b', mat: MAT.padariaMadeira, x: 23.9, z: -8.5, comp: 5.0, luz: 0xffe0a8, molde: 'balcao_padaria', n: 3, hb: 1.1 });
+  secao({ nome: 'AÇOUGUE', sub: 'CARNE NO OSSO E NA BANDEJA', cor: '#8d2733', mat: MAT.inox, x: 23.9, z: -1.5, comp: 5.0, luz: 0xffd2d2, molde: 'balcao_acougue', n: 4, hb: 1.15 });
+
+  /* `freezer` é ilha HORIZONTAL e não vira expositor de pé; a vertical é molde
+     próprio. São 4 e não uma parede: 22 k tris cada (docs/mapa-atacadao.md). */
+  const geladeiras = [];
+  [10.4, 12.1, 13.8, 19.4].forEach((gz, i) => {
+    const batched = interiorPropBatch.add('geladeira_bebidas', { x: -24.5, z: gz, y: 0, targetH: 2.0, ry: Math.PI / 2 });
+    const alvo = addBox(0.68, 2.0, 1.56, MAT.frioVidro, -24.5, 0, gz, { collide: false });
+    if (batched) alvo.visible = false;
+    const c = { minX: -24.9, maxX: -24.1, minY: 0, maxY: 2.0, minZ: gz - 0.82, maxZ: gz + 0.82 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoGeladeira = i;
+    geladeiras.push(alvo);
+  });
+  {
+    const s = signMesh(4.2, 1.15, signTex('#1f5fbf', '#ffffff', 'BEBIDAS', 'GELADA NA PORTA DE VIDRO', 640, 200), -23.4, 3.95, 13.0, Math.PI / 2);
+    s.userData.atacadaoSecao = 'BEBIDAS';
+    secoes.push(s);
+    const pl = new THREE.PointLight(0x9fd8ff, 1.15, 13, 1.6);
+    pl.position.set(-23.2, 3.2, 13.0); pl.userData.mapLight = 'atacadao-secao'; scene.add(pl);
+  }
+
+  /* Banca de feira: balcão de 1,05 m não fecha visada, `stall` de 2,4 m fecha. */
+  for (const [sx, sz] of [[-21.4, -10.2], [-21.4, -6.6]]) {
+    const o = placeProp('stall', { x: sx, z: sz, y: 0, targetH: 2.4, ry: Math.PI / 2 });
+    if (o) { root.add(o); occluders.push(o); } else addBox(1.88, 2.4, 2.16, MAT.hortiVerde, sx, 0, sz, { collide: false });
+    col(sx, sz, 0.95, 1.1, 2.4);
+  }
+  const ENGRADADO = [lam({ color: 0xd8621f }), lam({ color: 0x2f7d46 }), lam({ color: 0xc0392b }), lam({ color: 0xe0b83a })];
+  for (let i = 0; i < 6; i++) {   // engradado de fruta: a cor é o que lê como hortifrúti
+    const ex = -21.4 + (i % 2 ? 0.62 : -0.62), ez = -9.06 + Math.floor(i / 2) * 0.66;
+    addBox(0.56, 0.3, 0.56, ENGRADADO[i % 4], ex, (i % 3) * 0.3, ez, { collide: false, cast: false });
+  }
+  col(-21.4, -8.4, 1.0, 0.75, 0.9);
+
+  /* Idioma do galpão do campomorro: teto opaco tem luminária local, não fé no sol.
+     15 penduradas, 9 com PointLight — 24 luzes dinâmicas custam mais do que iluminam. */
+  const LUMI = lam({ color: 0xfff4e0, emissive: 0xffe8bc, emissiveIntensity: 0.95 });
+  for (const lx of [-14.4, -8.0, 0, 8.0, 14.4]) for (const lz of [4.8, 14.4, 24.0]) {
+    addBox(0.12, 3.2, 0.12, MAT.metal, lx, 7.8, lz, { collide: false, cast: false });    // haste
+    const lum = addBox(1.5, 0.22, 0.6, LUMI, lx, 7.6, lz, { collide: false, cast: false });
+    lum.userData.atacadaoLuminaire = true;
+    if (lx === 0 || Math.abs(lx) === 14.4) {
+      const luz = new THREE.PointLight(0xffeccc, 1.35, 24, 1.4);
+      luz.position.set(lx, 7.3, lz); luz.userData.mapLight = 'atacadao-galpao'; scene.add(luz);
+    }
+  }
+
+  /* Balcão de 1 m não quebra visada (o olho está a 1,62): quem fecha a praça no eixo
+     X são os painéis de oferta de 2,8 m entre os caixas. */
+  const ZCAIXA = ZF + 5.6, ZPAINEL = ZF + 2.4;   // múltiplos de 3,2: caem no meio de duas linhas de nó
+  /* ARMADILHA: esteira e divisória ficam acima de 0,3 m, então o colisor da baia
+     cobre as duas — foi assim que nasceram os 14 pontos da MAP1 (docs/mapa-atacadao.md). */
+  const caixas = [];
+  for (const cx of [-19.2, -12.8, -6.4, 6.4, 12.8, 19.2]) {
+    const o = placeProp('caixa_cobranca', { x: cx, z: ZCAIXA, y: 0, targetH: 1.1, ry: Math.PI / 2 });
+    const alvo = o || addBox(1.4, 1.1, 1.84, MAT.caixa, cx, 0, ZCAIXA, { collide: false });
+    if (o) { root.add(o); occluders.push(o); }
+    addBox(0.55, 0.08, 1.5, MAT.esteira, cx + 0.78, 0.95, ZCAIXA, { collide: false, cast: false });   // esteira
+    addBox(0.08, 1.1, 1.5, MAT.metal, cx - 0.86, 0, ZCAIXA, { collide: false, cast: false });         // divisória da baia
+    const c = { minX: cx - 1.05, maxX: cx + 1.1, minY: 0, maxY: 1.15, minZ: ZCAIXA - 1.0, maxZ: ZCAIXA + 1.0 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoCaixa = true;
+    caixas.push(alvo);
+    signMesh(0.7, 1.0, signTex('#111417', '#ff4d4d', 'CAIXA', String(90 + Math.abs(cx | 0)), 260, 360), cx + 1.3, 2.2, ZCAIXA, 0);
+  }
+  // Faixa de "PAGUE MENOS" atravessando a frente de caixa, na altura da testeira.
+  signMesh(15, 1.4, signTex('#e0b83a', '#c0392b', 'PAGUE MENOS', 'FEIRA DO MÊS NO ATACADÃO', 900, 200), 0, 5.6, ZCAIXA + 1.6, 0);
+  const PROMO = ['LEVE 3 PAGUE 5', 'ARROZ R$ 49,90', 'SÓ HOJE: MAIS CARO', 'FEIJÃO A OURO', 'FARDO DE TRETA', 'PIX NÃO PARCELA'];
+  [-22.4, -16.0, -6.4, 6.4, 16.0, 22.4].forEach((px, i) => {
+    addBox(3.0, 2.8, 0.5, MAT.parede, px, 0, ZPAINEL);
+    signMesh(2.6, 1.1, signTex('#e0b83a', '#c0392b', PROMO[i], '', 512, 220), px, 2.0, ZPAINEL - 0.3, 0);
+  });
+  for (const [cx, cz] of [[-9.6, ZF + 3.2], [3.2, ZF + 4.0], [9.6, ZF + 1.6]]) prop('shopping_cart', cx, cz, 1.0, (cx * 7) % 3, 0.4, 0.4, 0.9);
+  /* Terceira fila da praça: sem ela a LOS média voltava a 10,46 m contra teto de 10,50.
+     Fica fora da boca das portas (x∈[-15,-9], [-3,3], [9,15]) por causa do CTF2. */
+  /* Colisor medido do molde normalizado (tools/inspect-glb.mjs), não do nome:
+     gondola_mercado @2,4 m -> 2,86 × 1,55; gondola_eletro @2,0 m -> 2,50 × 1,03. */
+  const gondolas = [];
+  const gondola = (id, gx, gz, alturaAlvo, larg, prof, cartaz) => {
+    const o = placeProp(id, { x: gx, z: gz, y: 0, targetH: alturaAlvo, ry: Math.PI / 2 });
+    const alvo = o || addBox(larg, alturaAlvo, prof, PALLET[(Math.abs(gx) | 0) % PALLET.length], gx, 0, gz, { collide: false });
+    if (o) { root.add(o); occluders.push(o); }
+    const c = { minX: gx - larg / 2, maxX: gx + larg / 2, minY: 0, maxY: alturaAlvo, minZ: gz - prof / 2, maxZ: gz + prof / 2 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoGondola = true;
+    gondolas.push(alvo);
+    // splash de preço na ponta da gôndola: é o que faz ler como oferta e não como estante
+    if (cartaz) signMesh(1.5, 0.85, signTex('#ffe11a', '#c0392b', cartaz[0], cartaz[1], 360, 200), gx, alturaAlvo + 0.55, gz, 0);
+    return alvo;
+  };
+  for (const [gx, cartaz] of [[-19.8, ['R$ 9,90', 'O QUILO']], [-6.4, ['3 POR 10', 'ENQUANTO DURAR']],
+                              [6.4, ['LEVE 2', 'PAGUE 4']], [19.8, ['R$ 19,90', 'A CAIXA']]])
+    gondola('gondola_mercado', gx, ZF + 8.8, 2.4, 2.86, 1.6, cartaz);
+  for (const gx of [-19.2, 19.2]) gondola('gondola_eletro', gx, ZF + 2.4, 2.0, 2.5, 1.2, ['OFERTA', 'SÓ HOJE']);
+  /* Cesta encostada no painel: antes havia um caixote enterrado DENTRO do painel
+     em x=±6,4. Cesta baixa não custa LOS — quem fecha é o painel atrás. */
+  for (const bx of [-6.4, 6.4]) {
+    addBox(2.0, 0.95, 1.0, MAT.hortiVerde, bx, 0, ZPAINEL + 1.0);
+    addBox(1.8, 0.12, 0.85, MAT.faixa, bx, 0.95, ZPAINEL + 1.0, { collide: false, cast: false });
+  }
+
+  /* Doca: fundo do galpão, spawn B. */
+  for (const [dx, dh] of [[-19.2, 2.6], [-9.6, 2.2], [3.2, 2.8], [12.8, 2.2], [22.4, 2.6]]) {
+    addBox(2.6, dh, 0.8, PALLET[(Math.abs(dx) | 0) % PALLET.length], dx, 0, 35.4);
+    addBox(2.7, 0.16, 0.9, MAT.metal, dx, dh, 35.4, { collide: false, cast: false });
+  }
+  prop('vw_9150', -25.0, 24.0, 3.0, 0, 0, 0, 0);   // carreta encostada na doca oeste
+  prop('dumpster', 21.6, 32.0, 1.7, 0, 1.0, 0.7, 1.6);
+  /* Fila de fardo: 7 m livres por 51 m de parede a parede é o mesmo átrio, só que no
+     fundo. Largura 2,0 m para a linha de nó vizinha sobrar com 0,6 m de folga. */
+  for (const dx of [-22.4, -12.8, 0, 12.8, 22.4]) {
+    addBox(2.0, 2.4, 1.2, PALLET[(Math.abs(dx) | 0) % PALLET.length], dx, 0, 32.0);
+    addBox(2.1, 0.14, 1.3, MAT.metal, dx, 2.4, 32.0, { collide: false, cast: false });
+  }
+  prop('pilha_pneus', -21.6, 2.4, 1.5, 0, 1.0, 1.0, 1.4);
+
+  /* Flanco oeste: travessas para a pista lateral não virar corredor de 45 m com visada
+     limpa (o flanco leste já é fechado pela parede de freezer). */
+  for (const tz of [6.4, 16.0, 25.6]) addBox(2.7, 2.6, 1.2, MAT.prat, -23.75, 0, tz);
+  for (const tz of [9.6, 22.4]) addBox(1.9, 2.2, 1.2, PALLET[(tz | 0) % PALLET.length], -22.4, 0, tz);
 
   for (const sx of [-1, 1]) addBox(0.6, PARK_H, ZF - ZS, MAT.muro, sx * wX, 0, (ZS + ZF) / 2);   // muros laterais baixos
   // muro do fundo com VÃOS de ENTRADA (x∈[-14,-8]) e SAÍDA (x∈[8,14]): a saída de carro pra rua
@@ -138,11 +479,109 @@ export function buildAtacadao(scene, T) {
     for (let x = -28; x <= 28; x += 4) addBox(2.2, 0.02, 0.35, MAT.faixa, x, 0.03, ZS - 9, { collide: false, cast: false }); }   // faixa central da rua (ao longo de X)
   const cars = ['kombi', 'saveiro', 'opala', 'fiat_uno', 'chevette', 'brasilia_vw'];
   let cix = 0;
-  for (const fz of [ZF - 8, ZF - 16, ZF - 24]) {                                                  // 3 fileiras de vaga
+  /* ZF-6/13/20 e não -8/16/24: com ZF em -12 a terceira fileira engolia a AK do armário
+     do time E em (-9, -35) — VM14, 1 pickup sem alcance. */
+  for (const fz of [ZF - 6, ZF - 13, ZF - 20]) {                                                  // 3 fileiras de vaga
     for (let x = -22; x <= 22; x += 5.2) addBox(0.14, 0.02, 4.4, MAT.faixa, x, 0.03, fz, { collide: false, cast: false });
-    for (let x = -19.5; x <= 19.5; x += 5.2) prop(cars[cix++ % cars.length], x, fz, 1.6, (cix % 2) ? 0 : Math.PI, 1.0, 2.1, 1.5);   // carros COLIDEM (cover)
+    /* A fileira do fundo abre uma BAIA em torno da bandeira E: cheia, ela derrubava o par
+       B->E do CTF2 de 2 rotas separadas para 1. Carro é cover, não funil. */
+    const baia = fz <= ZF - 20;
+    for (let x = -19.5; x <= 19.5; x += 5.2) {
+      if (baia && x > -16 && x < -2) continue;
+      prop(cars[cix++ % cars.length], x, fz, 1.6, (cix % 2) ? 0 : Math.PI, 1.0, 2.1, 1.5);   // carros COLIDEM (cover)
+    }
   }
   prop('fileira_carros', 0, ZS + 3, 2.0, 0, 1.6, 6, 1.9);
+
+  /* Pátio: moto, cancela, lava-rápido e sorvete. Cancela e lava-rápido são
+     procedurais (moldes reprovados na medição — FONTE.md). Números: docs. */
+
+  /* --- vaga de MOTO coberta, flanco leste (q3,0) --------------------------- */
+  const MOTO_X = 22.8, MOTO_Z = [-24.0, -25.1, -26.2, -27.3, -28.4, -29.5, -30.6, -31.7];
+  const motos = [];
+  MOTO_Z.forEach((mz, i) => {
+    addBox(2.4, 0.02, 0.1, MAT.faixa, MOTO_X, 0.03, mz - 0.55, { collide: false, cast: false });   // vaga demarcada
+    const o = placeProp('moto_cg', { x: MOTO_X, z: mz, y: 0, targetH: 1.1, ry: i % 2 ? 0 : Math.PI });
+    const alvo = o || addBox(1.84, 1.1, 0.82, MAT.metal, MOTO_X, 0, mz, { collide: false });
+    if (o) { root.add(o); occluders.push(o); }
+    const c = { minX: MOTO_X - 0.95, maxX: MOTO_X + 0.95, minY: 0, maxY: 1.1, minZ: mz - 0.45, maxZ: mz + 0.45 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoMoto = i;
+    motos.push(alvo);
+  });
+  // cobertura: telha acima da cabeça, sem colisor — não é teto jogável
+  for (const pz of [-23.4, -32.3]) for (const px of [MOTO_X - 1.6, MOTO_X + 1.6]) addBox(0.22, 2.7, 0.22, MAT.metal, px, 0, pz, { collide: false, cast: false });
+  addBox(4.4, 0.16, 9.6, MAT.metal, MOTO_X, 2.7, -27.85, { collide: false, cast: false });
+  signMesh(3.6, 0.9, signTex('#1f5fbf', '#ffffff', 'MOTOS', 'VAGA EXCLUSIVA', 512, 150), MOTO_X, 3.3, -23.2, 0);
+
+  /* --- CANCELA na entrada e na saída (sem molde: estrutura procedural) ------ */
+  const cancelas = [];
+  for (const [cx, txt] of [[-11, 'ENTRADA'], [11, 'SAÍDA']]) {
+    const gx = cx + (cx < 0 ? -4.4 : 4.4);                       // guarita ao lado da pista, fora do eixo do portal
+    addBox(1.5, 2.5, 1.7, MAT.parede, gx, 0, -39.6);             // guarita
+    addBox(1.2, 0.6, 1.4, MAT.vidro, gx, 1.3, -39.6, { collide: false, cast: false });
+    addBox(1.8, 0.14, 2.0, MAT.metal, gx, 2.5, -39.6, { collide: false, cast: false });
+    addBox(0.28, 1.0, 0.28, MAT.metal, cx + (cx < 0 ? -2.4 : 2.4), 0, -39.6, { collide: false });   // base da cancela
+    /* Braço baixado não apaga nó, e TEM colisor: braço acima de 0,3 m sem colisor
+       é o bug do "corpo dentro da esteira" de novo. */
+    const b0 = cx < 0 ? cx - 2.4 : cx + 2.4, b1 = cx;
+    const bm = (b0 + b1) / 2, bw = Math.abs(b1 - b0);
+    addBox(bw, 0.14, 0.16, MAT.faixa, bm, 1.0, -39.6, { collide: false, cast: false });
+    const c = { minX: Math.min(b0, b1) - 0.1, maxX: Math.max(b0, b1) + 0.1, minY: 0, maxY: 1.15, minZ: -40.0, maxZ: -39.2 };
+    colliders.push(c); cancelas.push(c);
+    signMesh(2.0, 0.7, signTex('#e0b83a', '#111417', txt, 'PARE E RETIRE', 400, 140), gx, 3.2, -39.6, 0);
+  }
+
+  /* --- LAVA-RÁPIDO no canto sudoeste (q0,0; sem molde: baia procedural) ----- */
+  {
+    // baia de três paredes, telha, piso molhado, carretel, baldes e carro na lavagem
+    const LX = -22.0, LZ = -37.4;
+    addBox(0.3, 3.0, 6.0, MAT.parede, LX - 2.9, 0, LZ);
+    addBox(0.3, 3.0, 6.0, MAT.parede, LX + 2.9, 0, LZ);
+    addBox(6.1, 3.0, 0.3, MAT.parede, LX, 0, LZ - 2.9);
+    addBox(6.4, 0.18, 6.4, MAT.metal, LX, 3.0, LZ, { collide: false, cast: false });
+    marcarSuperficie(addFloor(5.8, 5.8, MAT.doca, LX, LZ, 0.03), 'doca');
+    addBox(0.5, 1.1, 0.5, MAT.caixa, LX + 2.2, 0, LZ + 1.9, { collide: false });
+    for (const bz of [LZ + 2.0, LZ + 2.6]) addBox(0.42, 0.5, 0.42, MAT.hortiVerde, LX - 2.2, 0, bz, { collide: false, cast: false });
+    prop('fiat_uno', LX, LZ - 0.6, 1.6, Math.PI / 2, 1.0, 2.1, 1.5);
+    signMesh(5.2, 1.3, signTex('#1f5fbf', '#ffffff', 'LAVA-RÁPIDO', 'CARRO E MOTO · A SECO OU NA MANGUEIRA', 700, 190), LX, 3.7, LZ + 2.95, 0);
+  }
+
+  /* --- BANCA DE SORVETE e mesinhas, na ilha entre fileiras de vaga ---------- */
+  /* Cluster vai no extremo LESTE: no meio da pista de 2,8 m ele tampava a rota e
+     E→E/E→MID/E→B caíam para 1 (bisseccionado — docs/mapa-atacadao.md). */
+  gprop('drinkstand', 11.0, -28.5, 2.6);
+  col(11.0, -28.5, 1.15, 1.15, 2.2);
+  signMesh(2.4, 0.8, signTex('#c0392b', '#ffe11a', 'SORVETE', 'PICOLÉ 2 POR 5', 420, 150), 11.0, 3.3, -28.5, 0);
+  gprop('mesa_guardasol', 14.6, -28.5, 2.3);
+  col(14.6, -28.5, 1.0, 1.0, 2.0);
+  gprop('guarda_sol', 17.4, -28.5, 2.4);
+  col(17.4, -28.5, 0.9, 0.9, 2.2);
+  /* Corral de carrinho: o carrinho volta pra algum lugar num atacarejo de verdade. */
+  for (const sx of [-1, 1]) addBox(0.1, 1.0, 2.2, MAT.metal, -19.0 + sx * 0.9, 0, -28.5, { collide: false });
+  for (const cz of [-29.3, -28.5, -27.7]) gprop('shopping_cart', -19.0, cz, 1.0, 0);
+  col(-19.0, -28.5, 1.05, 1.2, 1.05);
+  signMesh(1.8, 0.6, signTex('#1f5fbf', '#ffffff', 'CARRINHOS', '', 380, 130), -19.0, 2.2, -30.1, 0);
+  /* Poste conta como prop na MAP5 (colisor >= 0,60 m) e ocupa 0,46 m²: levanta a
+     densidade de q1,0 sem fechar rota. Sempre no vão entre duas vagas. */
+  /* Coordenada de poste é aritmética do lattice, não estética: x ≡ 0 (mod 3,2) e
+     z em -25,6/-28,8/-35,2 é o MEIO entre linhas de nó (docs/mapa-atacadao.md). */
+  const POSTES = [[-12.8, -25.6], [-6.4, -25.6], [3.2, -25.6], [9.6, -25.6], [14.4, -25.6],
+                  [-16.0, -25.6], [-19.0, -35.2], [19.0, -35.2], [14.4, -19.2]];
+  for (const [px, pz] of POSTES) {
+    addBox(0.28, 5.5, 0.28, MAT.metal, px, 0, pz, { collide: false, cast: false });
+    col(px, pz, 0.34, 0.34, 5.5);
+    addBox(1.5, 0.22, 0.4, lam({ color: 0xfff4e0, emissive: 0xffe8bc, emissiveIntensity: 0.8 }), px, 5.3, pz, { collide: false, cast: false });
+  }
+  /* Balizador de 0,64 m a cada 3,2 m: vão de 2,56 m levanta a densidade de q1,0
+     para 0,49× sem tampar a pista que já custou duas rodadas de CTF2. */
+  for (const [bz2, bx2] of [[-28.8, -12.8], [-28.8, -9.6], [-28.8, -6.4], [-28.8, -3.2]]) {
+    addBox(0.34, 1.0, 0.34, MAT.faixa, bx2, 0, bz2, { collide: false, cast: false });
+    col(bx2, bz2, 0.32, 0.32, 1.0);
+  }
+  for (const [bx, bz] of [[-6.4, -21.0], [-12.8, -21.0], [3.2, -21.0], [-16.0, -21.0]]) {
+    addBox(0.7, 1.05, 0.7, MAT.hortiVerde, bx, 0, bz);   // lixeira
+    addBox(0.78, 0.1, 0.78, MAT.metal, bx, 1.05, bz, { collide: false, cast: false });
+  }
   // faixa de pedestre da fachada (entrada da loja)
   for (let i = -3; i <= 3; i++) addBox(0.5, 0.02, 2.4, lam({ color: 0xd8d2c0 }), i * 0.9, 0.04, ZF - 3, { collide: false, cast: false });
   // portais de ENTRADA/SAÍDA na rua (sul)
@@ -171,6 +610,12 @@ export function buildAtacadao(scene, T) {
     let ri = 0;
     for (let x = -30; x <= 30; x += 6.5) prop(ruaCars[ri++ % ruaCars.length], x, ZS - 9 + (ri % 2 ? 3.2 : -3.2), 1.6, (ri % 2) ? Math.PI / 2 : -Math.PI / 2, 0, 0, 0);
   }
+  {
+    const first = root.children.length;
+    worldPropBatch.build(root);
+    interiorPropBatch.build(root);
+    occluders.push(...root.children.slice(first));
+  }
 
   const GM = { black: lam({ color: 0x1b1d21 }), steel: lam({ color: 0x9aa0a6 }), wood: lam({ color: 0x7a5326 }), tan: lam({ color: 0xb39a63 }), green: lam({ color: 0x16432a }) };
   const gbox = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); return m; };
@@ -194,8 +639,9 @@ export function buildAtacadao(scene, T) {
   // do fundo do estacionamento — colisor x[-1.6..1.6] z[-45..-33]; x=0 enterrava o shotgun).
   const EX = [-12, -9, -6, -3, 3, 6, 9];
   ARSENAL.forEach((k, i) => place(k, EX[i], ZS + 7, 0));
-  // Time B (loja): perto do fundo
-  ARSENAL.forEach((k, i) => place(k, -9 + i * 3, ZN - 4, Math.PI));
+  // Time B (doca): a faixa livre entre a ponta das fileiras (z=28,8) e a parede norte.
+  // Antes ficavam em z=ZN-4=29 espalhados de 3 em 3 — dentro do rack no layout novo.
+  ARSENAL.forEach((k, i) => place(k, -18 + i * 6, 30.4, Math.PI));
   // disputadas na fachada (a porta)
   place('ak', -12, ZF - 1, 0); place('m4', 12, ZF - 1, 0);
 
@@ -214,7 +660,10 @@ export function buildAtacadao(scene, T) {
   const STEP = 3.2;
   const B = { minX: -HALF_X + 2, maxX: HALF_X - 2, minZ: ZS + 2, maxZ: ZN - 2 };
   const blocked = (x, z, inflate) => { for (const c of colliders) if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.6 && c.maxY > 0.15) return true; return false; };
-  for (let gx = B.minX; gx <= B.maxX; gx += STEP) for (let gz = B.minZ; gz <= B.maxZ; gz += STEP) if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz });
+  /* Grade ANCORADA no lattice do armazém, não na borda: ancorada na borda os nós caíam
+     a 0,45 m da face do rack e o corredor inteiro sumia do grafo. */
+  const ancora = (v) => Math.ceil((v - 1.6) / STEP) * STEP + 1.6;
+  for (let gx = ancora(B.minX); gx <= B.maxX; gx += STEP) for (let gz = ancora(B.minZ); gz <= B.maxZ; gz += STEP) if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz });
   const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t; if (blocked(x, z, 0.25)) return false; } return true; };
   for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z, d2 = dx * dx + dz * dz; if (d2 < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
   function nearestWaypoint(x, z) { let best = 0, bd = 1e9; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < bd) { bd = d; best = i; } } return best; }
@@ -239,16 +688,47 @@ export function buildAtacadao(scene, T) {
 
   const spawns = {
     E: [6, 14, -6, -14].map(x => ({ x, z: ZS + 5, yaw: 0 })),     // estacionamento, olhando pra loja
-    B: [-8, -2, 4, 10].map(x => ({ x, z: ZN - 4, yaw: Math.PI })), // loja, olhando pra fachada
+    B: [-17.6, -8.0, 8.0, 17.6].map(x => ({ x, z: 33.2, yaw: Math.PI })), // doca do galpão, olhando pros corredores
   };
 
+  /* BUG-57: pomba NO VIGAMENTO (topo do tirante, y=5,13), rato e barata na doca. Modo
+     continua 'ground' — `flight` é depreciado desde o BUG-57 (AR5). */
+  const ambience = createFavelaAmbience(root, {
+    map: 'atacadao_treta',
+    rats: [
+      { pos: [-16, 0, -27], to: [-13.5, 0, -24.5], phase: .3 },
+      { pos: [-20.8, 0, 30.4], to: [-18.4, 0, 28.8], phase: 1.5 },   // doca, faixa livre atrás das fileiras
+    ],
+    /* vida 1: barata da doca do atacadão (fauna 2) */
+    cockroaches: [
+      { pos: [-20.8, 0, -14], to: [-18.6, 0, -16.2], phase: .8 },
+      { pos: [22.6, 0, 25.6], to: [20.4, 0, 27.2], phase: 2.2 },     // pé da parede fria
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-8.0, 5.13, 14.4], to: [-4.8, 5.13, 14.4], phase: .4 },
+      { mode: 'ground', pos: [8.0, 5.13, 27.2], to: [11.2, 5.13, 27.2], phase: 1.3 },
+      { mode: 'ground', pos: [1.2, 0, -14], phase: .8 },
+    ],
+  });
+
   return {
+    /* O pack público da alpha.246 não contém hum/cidade/PA. Mantemos a fauna visual
+       e ficamos em silêncio até existir um soundscape aprovado e alcançável. */
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     ctfPoints: [
       { id: 'E', label: 'ESTACIONAMENTO', x: -8, z: ZS + 12 },
-      { id: 'MID', label: 'PORTA', x: 10, z: ZF - 2 },
-      { id: 'B', label: 'DOCA', x: -8, z: ZN - 9 },   // corredor entre fileiras; ZN-6 caía dentro da gôndola
+      // O antigo MID (10,-14) ficava junto do estacionamento: 36,3 m para E e
+      // 56,4 m para B. A praça interna (-1,6,-1,6) deixa a diferença em 3,2%.
+      { id: 'MID', label: 'PRAÇA DE CAIXAS', x: -1.6, z: -1.6 },
+      { id: 'B', label: 'DOCA', x: 0, z: 25.6 },   // espinha central entre duas torres de promoção (x=0 é corredor, não fileira)
     ],
+    routeAnchors: [
+      { id: 'OESTE', x: -20.8, z: 14.4 },
+      { id: 'CENTRO', x: 1.6, z: 14.4 },
+      { id: 'LESTE', x: 20.8, z: 14.4 },
+    ],
+    lojaZ: { z0: LOJA_Z0, z1: LOJA_Z1 },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: ZS + 1, maxZ: ZN - 1 },
   };
