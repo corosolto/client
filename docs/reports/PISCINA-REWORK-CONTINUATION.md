@@ -285,3 +285,46 @@ Evidência atual:
 
 O servidor local permanece em `http://127.0.0.1:8152/`. PIS7 continua aguardando nova
 avaliação visual/jogável do dono; não fazer merge/deploy antes dela.
+
+## Reteste da arquitetura atual e fila humana — 10/09/2026
+
+Reteste feito no commit `ad6dbd89e6804c112a70347532628e9010183bdf`, que substitui
+as ilhas e o mirante rejeitados pelo salão central limpo, dois corredores laterais
+fechados e vestiários transversais. Não foi encontrada falha causal de circulação ou
+congestionamento que justificasse nova alteração de geometria nesta rodada.
+
+Evidência estrutural e causal:
+
+- PIS1/PIS2/PIS3/PIS4/PIS6 verdes; os oito mutantes atuais foram `MORDIDO`;
+- grafo com 122 nós e 593 arestas; 24/24 rotas spawn→bandeira passaram com cápsula;
+- rota central 41,32 m, corredor oeste 65,79 m e corredor leste 70,59 m, sem colisão;
+- cada corredor tem nove nós e duas aproximações por spawn; cada vestiário preserva
+  três vãos de 3 m; zero cobertura solta ou submersa no salão central;
+- `eval:mapcontrato`, `map-check piscina_treta` e `eval:ctfwin` verdes.
+
+Chrome/Metal/WebGL2 real, 1200×800, 12 segundos por caso:
+
+- med 5×5: p50 8,3 ms, p95 9,9 ms, máximo 91,8 ms, 0 frames >100 ms;
+- med 8×8: p50 8,3 ms, p95 9,7 ms, máximo 17,4 ms, 0 frames >100 ms;
+- low 5×5: p50 8,3 ms, p95 9,9 ms, máximo 100,0 ms, 0 frames >100 ms;
+- low 8×8: p50 8,3 ms, p95 9,7 ms, máximo 16,7 ms, 0 frames >100 ms;
+- os recibos confirmam `software:false`, elencos reais de 9/15 bots e nenhum erro JS.
+
+As capturas 3:2 e recibos estão em
+`artifacts/piscina-stack/retest-20260910/browser/`. Os quadros principais para revisão
+são `piscina-med-8x8-overview.png`, `piscina-med-8x8-west-corridor.png` e
+`piscina-med-8x8-spawn-flow.png`; a última captura mantém os 15 bots visíveis. A
+evidência espacial está em `artifacts/piscina-stack/retest-20260910/spatial.json` e as
+medições em `perf-med.json/` e `perf-low.json/` no mesmo diretório.
+
+O CI foi reproduzido vermelho antes da correção do lockfile: `eval:deps` acusava Astro,
+js-yaml, sharp, smol-toml e svgo. O lock foi normalizado com as mesmas dependências
+declaradas, `npm ci --ignore-scripts` passou e `eval:deps` ficou verde com zero
+vulnerabilidades altas não isentas. Isso corrige a falha de infraestrutura da PR sem
+alterar o mapa.
+
+Fila objetiva para o dono: abrir
+`http://127.0.0.1:8152/?debug=1&map=piscina_treta&auto=P,mst`, jogar uma rodada 8×8 e
+avaliar (1) saída dos três vãos do vestiário, (2) alternância entre piscina e corredores
+oeste/leste e (3) se a concentração inicial se desfaz sem engarrafar. PIS7 continua
+pendente desse aceite humano; nenhum merge ou deploy foi feito.
