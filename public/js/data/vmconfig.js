@@ -67,7 +67,7 @@ export const VM_WEAPON = {
   // medido desta base; a câmera embutida do doador não é usada como frame.
   rem700: W('bolt', { baked: true, frame: 'family' }),
   lmg: W('lmg'),
-  scar: W('ar'),
+  scar: W('ar', { baked: true, frame: 'family' }),
   tavor: W('ar'),
   famas: W('ar'),
   uzi: W('smg'),
