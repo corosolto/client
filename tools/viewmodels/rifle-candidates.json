@@ -46,6 +46,21 @@
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
       "rebuild": "tools/viewmodels/prep/rifles-scar-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
+    },
+    "famas": {
+      "family": "ar",
+      "file": "viewmodels/ar/famas-baked-runtime.glb",
+      "sourceSha256": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a",
+      "sourceBytes": 284980,
+      "productSha256": "640f3369d7cf586ad7c7f153d556a713e6afcf349ea61d93af6dc792fb180592",
+      "productBytes": 1589920,
+      "sha256": "640f3369d7cf586ad7c7f153d556a713e6afcf349ea61d93af6dc792fb180592",
+      "bytes": 1589920,
+      "mechanism": "rear-bullpup-mag/upper-handle-empty-reload",
+      "ready": false,
+      "sourceBranch": "codex/vm-prep-rifles",
+      "sourceCommit": "ea022c3c0",
+      "rebuild": "tools/viewmodels/prep/rifles-famas-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
     }
   }
 }
