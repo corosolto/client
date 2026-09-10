@@ -260,10 +260,10 @@ histórica; não autorizam transplantar a pilha.
 - **tecnicamente fechadas, aguardando revisão humana:** Mosin, SVD e SKS;
 - **tecnicamente fechadas, aguardando revisão humana:** Rem700 e G3SG1 agora também têm rebuild,
   hashes, mutantes e 24 capturas reais; continuam opt-in e `ready:false`;
-- **tecnicamente fechadas, aguardando revisão humana:** M4 e MD97 com seis clipes próprios,
-  carregadores separados e mãos preservadas por root comum;
+- **tecnicamente fechadas, aguardando revisão humana:** M4, MD97 e SCAR com seis clipes,
+  carregadores separados e mãos preservadas por root comum; a SCAR também move o comando lateral;
 - **reprovadas:** LMG, shotgun e recargas M4 anteriores;
-- **receita sem produto final:** carabina, SCAR, FAMAS e M92;
+- **receita sem produto final:** carabina, FAMAS e M92;
 - **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, AKM, G3, Tavor, M400 e AWP.
 
 O rebuild DMR encontrou um falso verde na branch fonte: os nós rígidos eram anexados contra a bind
@@ -280,8 +280,8 @@ quatro commits preservam os binários fora do Git e não alteram o estado de apr
 
 ## Índice exato para revisão da manhã
 
-Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, Mosin, SVD, SKS, Rem700 e
-G3SG1. Um único
+Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, M4, MD97, SCAR, Mosin,
+SVD, SKS, Rem700 e G3SG1. Um único
 servidor materializa os privados fora do Git e mantém a ativação global desligada:
 
 ```bash
@@ -294,15 +294,28 @@ CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels
 Abrir somente após o comando:
 
 ```text
-http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,mosin,svd,sks,rem700,g3sg1&vmqa=precision
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,mosin,svd,sks,rem700,g3sg1&vmqa=precision
 ```
 
 Índice de revisão: (1) AK idle/reload e troca para faca; (2) fallback ao desativar `vmauthored`;
 (3) M4 equip/shoot/recarga tática/recarga vazia/inspect/ADS; (4) MD97 identidade/pente/
-recargas/inspect/ADS; (5) Mosin shoot/ferrolho/reload/inspect/ADS; (6) SVD 30 trocas ou recargas sem sumir; (7) SKS
-reload/inspect/ADS; (8) Rem700 shoot/ferrolho/reload/ADS; (9) G3SG1 recarga tática/ADS; (10) repetir
+recargas/inspect/ADS; (5) SCAR pente/comando lateral/inspect/ADS; (6) Mosin shoot/ferrolho/reload/inspect/ADS;
+(7) SVD 30 trocas ou recargas sem sumir; (8) SKS reload/inspect/ADS; (9) Rem700 shoot/ferrolho/
+reload/ADS; (10) G3SG1 recarga tática/ADS; (11) repetir
 em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
 proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
+
+## Marco rifles — SCAR reautorada
+
+A SCAR pública agora tem pente completo e comando lateral separados, seis ações, mãos e câmera.
+Os nove mutantes de asset e seis mutantes de lifecycle morderam; o lifecycle passou 30 ciclos/
+540 amostras. As 20 capturas foram refeitas junto das evidências M4/MD97 depois que a lane
+encontrou um falso-verde no ADS do harness: a captura agora usa o controle real do jogador e
+exige `adsAmount > 0.9`. M4 e MD97 mostram alça centralizada; a SCAR usa a linha do trilho da
+malha pública e aguarda julgamento humano nas duas proporções.
+
+Recibo: [`VIEWMODEL-RIFLES-SCAR-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-SCAR-ALPHA246-2026-09-10.md).
+Checkpoints: `9c967e8f6`, `788ec4e8e`, `78465afaa`. Próxima arma: FAMAS.
 
 ## Marco rifles — M4 reautorada
 

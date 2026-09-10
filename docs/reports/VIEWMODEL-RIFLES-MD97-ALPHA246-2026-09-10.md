@@ -30,10 +30,14 @@ Evidência externa:
 
 ```text
 /Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/evidence/rifles-md97-20260910/
-capture.json        5721880254aad6ff5e0965107d32e96600d7fd30882d630fd8a3eeca72b9b2c0
-contact-sheet-3x2   6e5a54d7b70acd98ab531eaf7ffd11f0fc83e61dec37c8bacba682adac6a2491
-contact-sheet-16x9  9adf214da287659ee4c237caa9568f1fca5d89891ef962d3d06f82b4361b9273
+capture.json        147a0699ae2577918532320fe7ea0c7f928c29767d1db50d3360939f483a6e2f
+contact-sheet-3x2   e8d0f0d94418ffb1375598c10dc0e83f01f32d72434c73a2f3f50535ac81765d
+contact-sheet-16x9  3d6e961f3cc541034e0d0e45b13ad8e0b3b71f0b0edc5e4b67cd3eb92d324f56
 ```
+
+O manifesto foi recapturado depois que um falso-verde foi encontrado no harness antigo: chamar
+`setAim` diretamente era desfeito pelo loop do jogo. A versão registrada usa o controle real do
+jogador, exige `adsAmount > 0.9` e mostra a alça centralizada nas duas proporções.
 
 ## Revisão humana pendente
 
@@ -41,4 +45,4 @@ Revisar em ambos os aspectos a leitura do carregador abaixo do receiver, o apoio
 no guarda-mão, as duas trajetórias de recarga e o ADS. O gate técnico não promove a candidata.
 
 Checkpoints: `35ad8e345` (reautoria), `50d00eb39` (gates/capturas) e `c684f12fd`
-(runtime opt-in). Próxima arma: SCAR, com seleção integral do pente e comando lateral próprio.
+(runtime opt-in). A correção da evidência ADS está em `788ec4e8e`.

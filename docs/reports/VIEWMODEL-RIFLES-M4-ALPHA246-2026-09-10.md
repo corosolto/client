@@ -23,9 +23,9 @@ Somente `?vmauthored=1&vmweapon=m4` abre essa candidata.
 |---|---:|---|
 | fonte Blender preservada | 1.515.873 | `c23930c3837b4bda862a71209eaeb1b212b0dd5a6bd34619f72a1398fce3930b` |
 | GLB final normalizado | 1.506.656 | `2d8e00559ad2e640183b45062f13e5a3b77256d5638831957e8c96af9b510233` |
-| folha 3:2 | — | `6a8a4010a6490134fec1edc97947a7d4d39cb8b8eef78334815e82dc765692f6` |
-| folha 16:9 | — | `7dd49011fa2e139bff256fab3ea073ef954ec263aba35ed6bece48501796335d` |
-| manifesto das 20 capturas | — | `4ea6648309451912208cff810ba27dec197b3ff44ba3a7e6023ed1a98a1e8f0b` |
+| folha 3:2 | — | `61b11310560053a0a9a7b23f4a73b146f13649e76bf5739b619f6a17fb48a4b2` |
+| folha 16:9 | — | `79bf81a9af49c5e1b78a90fb82bad97a4efc66ad8ef3b6142463d0194b4246e4` |
+| manifesto das 20 capturas | — | `c499ae7967ad5a8facee1780358e45f164cb62926062380a0c807c6ebc19c492` |
 
 Produto e evidência ficam fora do repositório público:
 
@@ -45,6 +45,10 @@ Produto e evidência ficam fora do repositório público:
 - fundação: 20/20, mantendo 26 armas, AK/faca aprovadas e fronteira privada;
 - jogo real: 20 capturas (idle, equip, tiro, ambas as recargas, inspect e ADS),
   sem `pageerror`, erro WebGL ou erro do loader paid-viewmodel.
+
+O primeiro harness rotulava ADS depois de chamar `setAim` diretamente, mas o loop do jogo
+repunha a pose de quadril no frame seguinte. A evidência acima foi substituída por captura via
+controle real do jogador e assert de `adsAmount > 0.9`; as folhas agora mostram a alça alinhada.
 
 As 84 mensagens não fatais da captura são dívida conhecida do ambiente local:
 404 de conteúdo e CORS do backend de produção em origem `127.0.0.1`. Elas não são
@@ -67,7 +71,7 @@ CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels
 ```
 
 ```text
-http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,mosin,svd,sks,rem700,g3sg1&vmqa=precision
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,mosin,svd,sks,rem700,g3sg1&vmqa=precision
 ```
 
 Checkpoints: `0604f8879` (reautoria), `f1f0b5211` (gates/captura) e
