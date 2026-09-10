@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 M4_SHA = "e4b3fdfcbc6ba4f259fe349d12c58759efdd2669d84056a4c643f6d66359a0fe"
 TAVOR_SHA = "958f09eec9033af88c954d57fef4130827a2b2958109c12f52644e1e7ace573c"
@@ -323,15 +323,20 @@ track.strips.new("reload_empty", 0, release.animation_data.action)
 release.animation_data.action = None
 
 
-def author_package_hold(name: str, frames: int) -> None:
+def author_package_motion(name: str, frames: int, present_reload: bool = False) -> None:
     package.animation_data_create()
     package.animation_data.action = None
     for item in package.animation_data.nla_tracks:
         item.mute = True
-    for frame in (0, frames):
-        package.location = (0.0, 0.0, 0.0)
+    keys = ((0, 0.0), (8, 0.0), (22, 1.0), (48, 1.0), (62, 0.0), (frames, 0.0)) \
+        if present_reload else ((0, 0.0), (frames, 0.0))
+    for frame, amount in keys:
+        # A M4 mantém o receiver baixo durante o reload. Na Tavor isso punha
+        # o pente traseiro inteiro fora do 16:9. A apresentação inclina e
+        # eleva o pacote durante o contato, voltando exatamente ao idle.
+        package.location = (0.0, 0.0, 0.08 * amount)
         package.rotation_mode = "QUATERNION"
-        package.rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
+        package.rotation_quaternion = Quaternion(Vector((1.0, 0.0, 0.0)), 0.20 * amount)
         package.scale = (1.0, 1.0, 1.0)
         package.keyframe_insert("location", frame=frame, group=package.name)
         package.keyframe_insert("rotation_quaternion", frame=frame, group=package.name)
@@ -339,9 +344,9 @@ def author_package_hold(name: str, frames: int) -> None:
     push(package, name)
 
 
-author_package_hold("idle", 1)
-author_package_hold("reload_tactical", FRAMES)
-author_package_hold("reload_empty", FRAMES)
+author_package_motion("idle", 1)
+author_package_motion("reload_tactical", FRAMES, present_reload=True)
+author_package_motion("reload_empty", FRAMES, present_reload=True)
 
 # Sockets calculados na arma própria, já orientada para -X no contrato AR.
 corners = [Vector(point) for point in gun.bound_box]
