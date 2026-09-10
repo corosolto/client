@@ -11,10 +11,27 @@ Mosin, SVD e SKS foram integradas como candidatas privadas e opt-in sobre a fund
 As três famílias continuam `ready:false`, a ativação global continua desligada e nenhum GLB
 privado entrou no Git. O fallback das 26 armas do alpha.246 permanece o comportamento padrão.
 
-Os gates técnicos, a otimização e o lifecycle fecharam. A revisão das capturas reais **reprovou
-a promoção visual**: Mosin e SKS têm uma peça bege dominante que cobre parte relevante da arma;
-a SVD ocupa o quadro com antebraços/mangas grandes demais. Esses defeitos ficam expostos para
-correção da fonte. Não houve substituição de asset, compensação por outro material ou `ready:true`.
+Os gates técnicos, a otimização e o lifecycle fecharam. A Phase 3 corrigiu na fonte a peça bege
+dominante de Mosin/SKS, a terminação das mangas da SVD e o desaparecimento das três armas durante
+`inspect`. A nova revisão interna das capturas não encontrou a dominância anterior, mas a promoção
+continua aguardando aceite humano no jogo. Não houve substituição de asset nem `ready:true`.
+
+## Correções causais da Phase 3
+
+- Mosin/SKS: `JOINTS_0` guarda o slot dentro de `skin.joints`, não o índice global do nó. O builder
+  agora seleciona o slot correto e limita estojos ao envelope físico; candidatos chegam a 55 mm e
+  o mutante de índice errado chega a 181 mm e reprova.
+- SVD: geometria, pesos e joints das mangas foram preservados. Um gradiente de vertex alpha no
+  terço do ombro elimina os anéis abertos que dominavam a câmera; a borda termina em alpha 0. O
+  mutante sem alpha permanece opaco e reprova. Ocupação medida: 14,5% em 3:2 e 11,8% em 16:9.
+- Contato: o polegar direito da SVD recebeu uma correção local de 11,8 × -5,3 × 0,3 mm somente no
+  contato da recarga. No fim do `inspect`, o SKS corrige primeiro `hand_l` e depois calibra
+  `ring_01_l`; o pedido de 49,5 × 18,7 × -1,85 mm no espaço da hierarquia produz cerca de 10 mm de
+  deslocamento no vértice observado. Ambos fecharam `visivel_gt3mm=0` sem esconder mecanismo ou
+  receptor; o código registra os coeficientes reproduzíveis por osso.
+- `inspect`: clipes rígidos agora carregam a pose idle real e rotacionam ao redor do pivô da arma.
+  Antes, tracks ausentes voltavam ao bind e a rotação na origem tirava o conjunto do quadro.
+  Seis capturas adicionais mostram as três armas no ponto de maior rotação, nos dois aspectos.
 
 ## Interfaces e runtime
 
@@ -37,14 +54,15 @@ correção da fonte. Não houve substituição de asset, compensação por outro
 
 | Arma | Fonte | Otimizado | Redução | SHA-256 otimizado |
 |---|---:|---:|---:|---|
-| Mosin | 24.501.456 B | 5.252.988 B | 78,6% | `e8d73477705e142f79da1032bf2d583f149174df659166e1c5408b6053e4b2d3` |
-| SVD | 24.297.360 B | 5.049.432 B | 79,2% | `013c98fa4fdfb586aec9ae4bd4c2ce6c592fddc92628af566b85816d27ff8498` |
-| SKS | 24.633.392 B | 5.379.760 B | 78,2% | `c69a70b220c77ef57ecc729ff12b4bc006f4ee29be9a0526ecc2ef42bb209dd8` |
+| Mosin | 24.548.388 B | 5.298.504 B | 78,4% | `94386beceefde96a481458c296f616178ae56f8a1a70b8ae63be8697841655a2` |
+| SVD | 24.433.936 B | 5.183.236 B | 78,8% | `08058912ca43d521675c4294216dedc3bbc1a2b7b906440acb53db691be5faea` |
+| SKS | 24.729.928 B | 5.473.300 B | 77,9% | `15bf12eb5663a03c49ff09edc31310bfe844416c3a2c7f9f3eec15f316ff8470` |
 
-Cada otimização substituiu nove texturas redundantes de braços. Inputs `.pre-optimize`, outputs e
-recibos ficam em `/Users/ruben/csbrasil-private-assets/generated/viewmodels`; esse caminho resolve
-para o volume privado Zenith e é servido localmente por um symlink interno a `public/private-assets`,
-que está ignorado. O manifesto público versiona somente família, tamanho e hashes.
+Cada otimização substituiu nove texturas redundantes de braços. Mosin/SVD ficam em
+`/Users/ruben/csbrasil-private-assets/generated/viewmodels-phase3/final4-*`; o SKS final fica em
+`final5c-*`. A raiz combinada é `viewmodels-phase3/optimized` e o preview aponta para
+`viewmodels-phase3/preview-root`, fora do repositório. O symlink interno em
+`public/private-assets` está ignorado e o manifesto público versiona somente família, tamanho e hashes.
 
 ## Evidência técnica
 
@@ -57,16 +75,22 @@ que está ignorado. O manifesto público versiona somente família, tamanho e ha
 | `npm run eval:vm-foundation` | 20/20; 26 armas preservadas e privados ausentes do Git |
 | `npm run syntax` | verde com Node 24 |
 | `npm run build` | verde; preview privado não entrou no build público |
-| `npm run check:deploy` | 39/39 com Node 24.19.0 |
+| `npm run check:deploy` | 37/39; somente `docs:check` e `eval:docsautoria` falham pelo CENA3 stale já presente na base |
+
+O recibo combinado final de T/M/C/F/A é
+`/Users/ruben/csbrasil-private-assets/generated/viewmodels-phase3/phase3-final-gates.json`
+(SHA-256 `0f4d342a2924e6b4d63973a84550d5ce8e3c5c7ccf5b26345e87613fed625193`). Ele preserva os
+resultados finais inalterados de Mosin/SVD e substitui somente o SKS pelo regateamento `final5c`.
+O contrato causal visual final tem SHA-256
+`c302b90214247cf8887863545c84321806dff0af60b08aa29a4d723ed8dd604c`.
 
 Recibos locais ignorados:
 
-- fonte: `artifacts/viewmodels/integration/precision/gates-source-{mosin,svd,sks}.json`;
-- otimizado: `artifacts/viewmodels/integration/precision/gates-optimized-{mosin,svd,sks}.json`;
-- hashes dos recibos por arma, iguais entre fonte e otimizado: Mosin
-  `b8543f44203386b32a0dd38baf0d3977c22c6b955120ef0fc50fd7fe1e3c9977`, SVD
-  `ad1bbf8bb24ea800a198e93d76ac5e80b91f92de90bf1827d58e8c726b6287ce`, SKS
-  `494c6505ab0a80bec1978404d03560e5458cebaba113f541f8d3e24f0a55a10d`.
+- Mosin/SVD finais: `/Users/ruben/csbrasil-private-assets/generated/viewmodels-phase3/final4-gates.json`;
+- SKS final fonte e otimizado: `final5c-gates-sks-source.json` e `final5c-gates-sks.json`, ambos com
+  SHA-256 `5fef266a6a7f04af4ca09f4c8359bf80f37de4328002303ba58dc90736adf70d` e conteúdo idêntico;
+- combinação final: `phase3-final-gates.json`, acompanhada por
+  `phase3-final-gates.provenance.json` para registrar a origem de cada arma.
 
 O primeiro regateamento revelou que a raiz C2 indicada no texto antigo não continha o controle
 temporal usado pela fonte: `T_mutante_native` ficou falso. O baseline correto foi recuperado dos
@@ -81,16 +105,20 @@ O capturador abriu o jogo real em `piscina_treta`, sem redimensionar o canvas, e
 - AK em idle/tiro; faca em idle/contato pesado; fallback de pistola em idle/tiro;
 - cada arma de precisão em idle, contato de tiro, contato de recarga, entrada de ADS e ADS coberto.
 
-`capture.json` registra o checkpoint `b824bc58d9d3f57715e9af9e4e1f04678f041a4a`, hashes das
+`capture.json` registra o checkpoint e os hashes das
 fontes, estado de visibilidade e SHA-256 de cada PNG. Foram registrados 84 erros de localhost
 esperados, causados por CORS do backend e recursos opcionais ausentes; nenhum erro WebGL,
 `pageerror` ou `[paid-viewmodel]` ocorreu. Hashes dos agregados:
 
 | Artefato local | SHA-256 |
 |---|---|
-| `artifacts/viewmodels/integration/precision/captures/capture.json` | `8ff01d780c6f87841a4f0e285f076dc20c310da9a431a8a41c70b26035d769e7` |
-| `contact-sheet-1440x960.jpg` | `93ec6c1f7683de5df7afb07ba859836b2c7038eae096c90b9c85a79bbb703335` |
-| `contact-sheet-1440x810.jpg` | `8320f50af00933399f8c11efc98fe86a6448e0b288eeeeb031dbd018618d56fa` |
+| `artifacts/viewmodels/integration/precision/phase3-final-v3/capture.json` | `361aedf04e1eb7bc2bb761de12970abc3f6264fae62ae8a4a71f8bf856c1d3eb` |
+| `contact-sheet-1440x960.jpg` | `88a389b00a90093f4646e8e52520241b73a750b84160904ea0350d087bb62d3a` |
+| `contact-sheet-1440x810.jpg` | `ea21f13e8e32028bcbdf8a216df6cfecfe273634a240276203a18a88f32dedaa` |
+| `before-after-1440x960.jpg` | `d90f20e176eefaf60e679b5150ed031f8317a28bc364adf2c270aa1bdc9bda8f` |
+| `before-after-1440x810.jpg` | `863ee935e2825485a976c6d891bb9e754490671a8b8fac42101be2edfea93788` |
+| `inspect/capture.json` | `d984854d4068f6fcc549d671f4ea4d77c0fed53f833761456c45b542f294d7cd` |
+| `inspect/inspect-sheet.jpg` | `95438e3fd648c91ec62f3a65d22c7487bd834354e1504a6a44dce61ab63b5d07` |
 
 SVD permaneceu authored e visível nos seis frames não cobertos de idle/tiro/recarga/entrada ADS,
 nos dois aspectos. Nos dois frames `ads-covered`, authored e fallback ficaram ocultos porque a
@@ -112,7 +140,8 @@ Na worktree final:
 
 ```sh
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
-npm run preview:vm-precision
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-phase3/preview-root \
+  npm run preview:vm-precision
 ```
 
 O comando verifica os três hashes privados, monta apenas o symlink ignorado e imprime a URL:
@@ -128,8 +157,6 @@ sem arquivos sob `dist/client/private-assets` ou `.vercel/output/static/private-
 
 ## Próximo passo
 
-Corrigir a fonte dos três candidatos sem alterar sua identidade: reduzir a peça bege de
-Mosin/SKS ao elemento real que ela representa, reenquadrar mangas/antebraços da SVD e recapturar a
-matriz completa. Se a correção exigir substituir asset, material ou mecanismo, ela precisa voltar
-à lane de produção; esta integradora permanece fail-closed. Nenhuma família deve receber
-`ready:true` antes de nova folha e aprovação humana.
+Ruben deve revisar a URL acima em 3:2 e 16:9, com atenção a `inspect`, recarga completa e transições
+de ADS. A integradora permanece fail-closed: nenhuma família recebe `ready:true` antes desse aceite,
+e a folha atual não substitui o teste humano contínuo.

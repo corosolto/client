@@ -305,3 +305,30 @@ aberto antes da correção e nova revisão humana.
 
 Evidência, hashes, comandos e limites:
 [`VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md`](VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md).
+
+## Phase 3 executada em 10/09/2026
+
+O builder passou a resolver `JOINTS_0` pelo slot de `skin.joints`; isso removeu os blocos bege de
+Mosin/SKS sem trocar os modelos. A SVD preserva geometria e skinning das mangas e esconde apenas a
+borda aberta do ombro com vertex alpha. Correções locais de contato fecham um vértice visível na
+recarga da SVD e os dois resíduos observados no `inspect` do SKS, mantendo o teto em zero.
+
+Uma captura adicional revelou que o `inspect` autoral voltava ossos ao bind após o crossfade e
+girava o conjunto na origem do rig. Os clipes rígidos agora carregam a pose idle e compensam a
+rotação no pivô da arma. As três armas permanecem no quadro no ponto de maior rotação em 3:2 e
+16:9. A matriz de 42 frames foi recapturada sem erro fatal; os mutantes visuais reprovam.
+
+O estado continua candidato: `ready:false`, ativação global desligada e revisão humana pendente.
+Assets e artefatos permanecem privados/ignorados; o Git contém apenas receita, gates, hashes e
+documentação.
+
+O código causal está no checkpoint `662371b36`. O recibo final combinado T/M/C/F/A tem SHA-256
+`0f4d342a2924e6b4d63973a84550d5ce8e3c5c7ccf5b26345e87613fed625193`; o contrato visual
+tem SHA-256 `c302b90214247cf8887863545c84321806dff0af60b08aa29a4d723ed8dd604c`. A recaptura
+`phase3-final-v3` contém 42 frames, seis inspeções adicionais e comparações antes/depois nas duas
+proporções. Ela não substitui o aceite humano e não muda `ready:false`.
+
+As falhas vistas nos runs `34433700979` e `34433700983` também existem no mesmo conteúdo de
+`origin/main@2115d5e2` (`34402769444` e `34402769523`): `SUPPORT_URL_BR`, 14/53 silhuetas,
+CHR5B, MAP2B do Escadão e CENA3 stale. Os arquivos responsáveis não diferem nesta lane; esses
+itens são dívida da base e não serão mascarados nem corrigidos no PR de viewmodels.
