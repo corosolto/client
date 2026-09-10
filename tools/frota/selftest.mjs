@@ -24,7 +24,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { classificar, ordenar } from './fila.mjs';
+import { classificar, ordenar, depoisDaBase } from './fila.mjs';
 import { tomar, soltar, expirado } from './lock.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
@@ -111,6 +111,31 @@ caso('fila: rascunho vermelho conta como VERMELHO, não como RASCUNHO', () => {
     updatedAt: new Date().toISOString(),
   };
   igual(classificar(pr), 'VERMELHO', 'o vermelho é o que bloqueia, não o rascunho');
+});
+
+caso('fila: dependente nunca vem antes da base (a pilha de mapas)', () => {
+  const ordem = depoisDaBase([
+    { numero: 556, classe: 'PRONTO', bloqueadoPor: 555 },
+    { numero: 555, classe: 'PRONTO', bloqueadoPor: 554 },
+    { numero: 554, classe: 'CONFLITO', bloqueadoPor: null },
+  ]).map((i) => i.numero);
+  igual(ordem, [554, 555, 556], 'trabalhar o de cima antes da raiz é trabalho perdido');
+});
+
+caso('fila: base já fechada não segura ninguém', () => {
+  const ordem = depoisDaBase([
+    { numero: 700, classe: 'PRONTO', bloqueadoPor: 999 },
+    { numero: 701, classe: 'PRONTO', bloqueadoPor: null },
+  ]).map((i) => i.numero);
+  igual(ordem, [700, 701], 'base que não está mais aberta não é bloqueio');
+});
+
+caso('fila: ciclo de dependência não trava a fila', () => {
+  const ordem = depoisDaBase([
+    { numero: 1, classe: 'PRONTO', bloqueadoPor: 2 },
+    { numero: 2, classe: 'PRONTO', bloqueadoPor: 1 },
+  ]).map((i) => i.numero);
+  igual(ordem.length, 2, 'ciclo tem que sair com os dois, não em laço infinito');
 });
 
 const shim = (bin, args) => {
@@ -246,6 +271,20 @@ mutante(
       { classe: 'CONFLITO', falhas: [], dias: 1 },
     ]).map((i) => i.classe);
     return ordem[0] !== 'CONFLITO';
+  },
+);
+
+mutante(
+  'M5 · fila deixa de olhar a base e o dependente sobe na frente',
+  'fila.mjs',
+  [['  return depoisDaBase(base);', '  return base;']],
+  async (temp) => {
+    const m = await import(`file://${temp}`);
+    const ordem = m.ordenar([
+      { numero: 556, classe: 'PRONTO', falhas: [], dias: 3, bloqueadoPor: 555 },
+      { numero: 555, classe: 'PRONTO', falhas: [], dias: 1, bloqueadoPor: 554 },
+    ]).map((i) => i.numero);
+    return ordem[0] === 556;
   },
 );
 

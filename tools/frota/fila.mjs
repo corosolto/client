@@ -24,6 +24,15 @@
                      para o dono decidir entre retomar e fechar, e nunca
                      despacha sozinha (fechar PR é decisão do dono).
 
+   EMPILHAMENTO
+   Um PR pode ter como base OUTRO PR aberto, não a main — a pilha de mapas fazia
+   isso (#555 sobre #554, #560 sobre #556). Trabalhar o de cima antes do de baixo
+   é trabalho perdido: ele vai conflitar de novo quando a base mudar, e o merge
+   dele nem é possível enquanto a base não entrar. A fila marca `bloqueadoPor` e
+   empurra o dependente para depois da base DENTRO da mesma classe. Isso custou
+   uma descoberta em campo: #554 (raiz, em conflito) segurava #555, que aparecia
+   verde e convidativo na fila.
+
    O QUE ELA NÃO FAZ
    Não faz merge, não faz push, não fecha PR. Só lê e ordena. Quem age é o
    `runner.mjs`, e mesmo ele para antes da main — ver `GUARDRAILS.md`.
@@ -41,7 +50,7 @@ import { promisify } from 'node:util';
 const exec = promisify(execFile);
 
 const PARADO_DIAS = 5;
-const CAMPOS = 'number,title,headRefName,isDraft,mergeable,updatedAt,statusCheckRollup,author';
+const CAMPOS = 'number,title,headRefName,baseRefName,isDraft,mergeable,updatedAt,statusCheckRollup,author';
 
 const CLASSES = ['CONFLITO', 'VERMELHO', 'PRONTO', 'RASCUNHO', 'PARADO'];
 const PESO = Object.fromEntries(CLASSES.map((c, i) => [c, i]));
@@ -90,17 +99,33 @@ export function classificar(pr) {
 }
 
 export function ordenar(itens) {
-  return [...itens].sort((a, b) => {
+  const base = [...itens].sort((a, b) => {
     if (PESO[a.classe] !== PESO[b.classe]) return PESO[a.classe] - PESO[b.classe];
     if (a.classe === 'VERMELHO' && a.falhas.length !== b.falhas.length) {
       return b.falhas.length - a.falhas.length;
     }
     return b.dias - a.dias;
   });
+  return depoisDaBase(base);
+}
+
+/** Dependente nunca aparece antes da sua base. Estável e sem laço infinito. */
+export function depoisDaBase(itens) {
+  const restante = [...itens];
+  const saida = [];
+  const numeros = new Set(itens.map((i) => i.numero));
+  while (restante.length) {
+    const i = restante.findIndex(
+      (x) => !x.bloqueadoPor || !numeros.has(x.bloqueadoPor) || saida.some((y) => y.numero === x.bloqueadoPor),
+    );
+    saida.push(...restante.splice(i === -1 ? 0 : i, 1));
+  }
+  return saida;
 }
 
 export async function montarFila() {
   const [prs, worktrees] = await Promise.all([lerPRs(), mapaDeWorktrees()]);
+  const porBranch = new Map(prs.map((pr) => [pr.headRefName, pr.number]));
   const itens = prs.map((pr) => ({
     numero: pr.number,
     titulo: pr.title,
@@ -111,6 +136,8 @@ export async function montarFila() {
     dias: Number(diasParado(pr).toFixed(1)),
     rascunho: pr.isDraft,
     worktree: worktrees.get(pr.headRefName) ?? null,
+    base: pr.baseRefName,
+    bloqueadoPor: pr.baseRefName === 'main' ? null : (porBranch.get(pr.baseRefName) ?? null),
   }));
   return ordenar(itens);
 }
@@ -136,8 +163,13 @@ function tabela(fila) {
       linhas.push(`  ── ${classeAtual} ──`);
     }
     const wt = i.worktree ? i.worktree.split('/').slice(-1)[0] : '— sem worktree —';
-    const motivo =
-      i.classe === 'VERMELHO' ? i.falhas.join(',') : i.classe === 'PARADO' ? `${i.dias}d` : '';
+    const motivo = i.bloqueadoPor
+      ? `↑ espera #${i.bloqueadoPor}`
+      : i.classe === 'VERMELHO'
+        ? i.falhas.join(',')
+        : i.classe === 'PARADO'
+          ? `${i.dias}d`
+          : '';
     linhas.push(
       `  #${String(i.numero).padEnd(4)} ${i.titulo.slice(0, 46).padEnd(46)} ${String(motivo).slice(0, 20).padEnd(20)} ${wt}`,
     );
