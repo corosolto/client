@@ -30,6 +30,8 @@ correção da fonte. Não houve substituição de asset, compensação por outro
   da luneta não cobriu a tela; Promise obsoleta não pode publicar uma arma;
 - a bancada `vmqa=precision` expõe AK, faca, fallback, Mosin, SVD e SKS, além de tiro, recarga e
   ADS, apenas em partida debug.
+- o build recusa o symlink do preview privado; `cleanup:vm-precision` desmonta somente esse link
+  antes de gerar `dist`.
 
 ## Assets privados preservados
 
@@ -54,6 +56,8 @@ que está ignorado. O manifesto público versiona somente família, tamanho e ha
 | `npm run eval:vm-precision-lifecycle` | 10/10; SVD 30 ciclos, 630 amostras alternando 3:2/16:9 |
 | `npm run eval:vm-foundation` | 20/20; 26 armas preservadas e privados ausentes do Git |
 | `npm run syntax` | verde com Node 24 |
+| `npm run build` | verde; preview privado não entrou no build público |
+| `npm run check:deploy` | 39/39 com Node 24.19.0 |
 
 Recibos locais ignorados:
 
@@ -117,7 +121,10 @@ O comando verifica os três hashes privados, monta apenas o symlink ignorado e i
 
 O painel local troca arma e aciona tiro, recarga e ADS. Remover `vmauthored`, `vmready` e
 `vmweapon` mostra o fallback intacto. Para refazer a evidência, manter o preview ativo e executar
-`npm run capture:vm-precision` em outro terminal.
+`npm run capture:vm-precision` em outro terminal. Ao terminar o preview, executar
+`npm run cleanup:vm-precision`; enquanto o symlink estiver montado, `npm run build` falha antes de
+copiar qualquer privado. O mutante de build montado foi rejeitado e o build limpo foi confirmado
+sem arquivos sob `dist/client/private-assets` ou `.vercel/output/static/private-assets`.
 
 ## Próximo passo
 

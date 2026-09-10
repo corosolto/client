@@ -12,6 +12,20 @@ const privateDir = path.join(repo, 'public/private-assets');
 const link = path.join(privateDir, 'viewmodels');
 const linkTarget = path.join(assetRoot, 'viewmodels');
 const sha256 = async (file) => crypto.createHash('sha256').update(await fs.readFile(file)).digest('hex');
+const mode = process.argv[2] || 'prepare';
+
+if (mode === '--cleanup' || mode === '--assert-clean') {
+  const linkStat = await fs.lstat(link).catch(() => null);
+  if (linkStat && !linkStat.isSymbolicLink()) throw new Error(`${link} existe e não é symlink`);
+  if (linkStat) {
+    const current = path.resolve(repo, await fs.readlink(link));
+    if (current !== linkTarget) throw new Error(`${link} aponta para ${current}; não será removido`);
+    if (mode === '--assert-clean') throw new Error(`preview privado montado em ${link}; execute npm run cleanup:vm-precision antes do build`);
+    await fs.unlink(link);
+  }
+  console.log(`PASS preview privado ${mode === '--cleanup' ? 'desmontado' : 'ausente'}`);
+  process.exit(0);
+}
 
 if (!path.relative(repo, assetRoot).startsWith('..')) {
   throw new Error('CSBRASIL_VM_ASSET_ROOT precisa ficar fora do repositório público');
@@ -46,3 +60,4 @@ else {
 }
 console.log(`PASS staging ignorado ${link} -> ${linkTarget}`);
 console.log('TESTE http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=mosin,svd,sks&vmqa=precision');
+console.log('ENCERRAR npm run cleanup:vm-precision');
