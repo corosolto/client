@@ -135,6 +135,30 @@ overview externo como esperado. Isso ainda requer avaliação visual do dono.
 
 ## Limites e próximo passo
 
+### Auditoria dos vermelhos remotos de 10/09
+
+O `build` do PR #582 (run `34473233511`, job `102857869756`) terminou vermelho
+em `MAP2B`, mas a comparação causal distingue o mapa da lane do estado da base:
+
+| Estado | Atacadão MAP2B | Atacadão CTF2 | Vermelho global |
+| --- | --- | --- | --- |
+| `origin/main@2115d5e2` | 1,50 m / 52,1 m² | mínimo 2 | Escadão 0,85 m |
+| PR #582 `db5e51c14` | 1,85 m / 45,0 m² | mínimo 2 | Escadão 0,85 m |
+
+Os comandos foram idênticos e direcionados:
+
+```sh
+node tools/eval/map-check.mjs atacadao_treta
+node tools/eval/map-check.mjs escadao
+```
+
+O CI da própria `main` no mesmo SHA, run `34402769523`, também falha MAP2B e
+lista somente os quatro slots do Escadão. Portanto o Atacadão não introduz o
+vermelho: melhora a folga e preserva duas ou mais rotas. O `portao-browser`
+também falha em `eval:select` tanto nos PRs #579/#582 por 14 personagens contra
+o teto global de 12; os mapas não alteram seleção, personagens ou viewmodels.
+Não foi feita exceção em `KNOWN-RED`, nem alteração de régua para obter verde.
+
 - A alpha.246 falha no setup por 17 arquivos globais de soundscape ausentes.
   Esta lane não altera áudio. O Atacadão fica em silêncio fail-closed e preserva
   a fauna visual, sem música ou voz genérica.
