@@ -30,7 +30,11 @@ let BASE = '';
 let srv = null;
 try {
   const status = execSync('npx astro dev status', { encoding: 'utf8', timeout: 20000 });
-  const running = /running at (http:\/\/[\d.]+:\d+)/.exec(status);
+  // `[\d.]+` só casa IP, e o astro anuncia `http://localhost:PORTA`. A régua
+  // ignorava o servidor do dono e tentava subir o dela — mas a instância é ÚNICA,
+  // o segundo não sobe, e TUDO respondia 404: o vermelho parecia defeito de
+  // serving quando era do instrumento.
+  const running = /running at (http:\/\/[\w.-]+:\d+)/.exec(status);
   if (running) BASE = running[1];
 } catch { /* nenhum servidor vivo */ }
 if (!BASE) {
