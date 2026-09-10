@@ -416,7 +416,7 @@ report = {
         "blend": {"bytes": blend.stat().st_size, "sha256": digest(blend)},
         "glb": {"bytes": glb.stat().st_size, "sha256": digest(glb)},
     },
-    "clips": {"idle": 1 / FPS, "equip_rifle": 1.0, "shoot": 0.5,
+    "clips": {"idle": 1 / FPS, "equip_rifle": 1.0, "shoot": 8 / FPS,
               "reload_tactical": FRAMES / FPS, "reload_empty": FRAMES / FPS,
               "inspect": 1.5},
     "mechanism": "complete rear bullpup magazine and real release paddle on empty reload",
