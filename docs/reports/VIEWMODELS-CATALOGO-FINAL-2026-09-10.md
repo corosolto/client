@@ -199,3 +199,16 @@ Ela corrige duas instruções não executáveis da fonte: o gate atual não acei
 otimizador atual não aceita os nomes `*-baked-runtime.glb`. O próximo marco é implementar essas
 interfaces e os gates vermelhos de assets/lifecycle sobre alpha.246, começando pela regressão
 intermitente de visibilidade da SVD. Nenhum runtime foi alterado neste marco.
+
+## Fundação authored integrada sobre alpha.246
+
+A fase 1 foi implementada em três checkpoints: `8ecb7ab05`, `c8b75444f` e `a6ec3b49c`.
+Ela preserva os 26 IDs, mantém todas as famílias `ready:false` e exige `?vmauthored=1` para
+construir os controladores. AK e faca públicas foram congeladas pelos hashes aprovados; PT-38
+continua fail-closed porque o produto aprovado mora em `public/private-assets` na fonte.
+
+O gate novo passou 20/20, sintaxe/arquitetura/build passaram, e os hashes publicados no build
+batem com a fonte. Ainda faltam captura fresca 3:2/16:9 e revisão humana no Game real. A lista
+de rotas, evidências pendentes, dívidas de aspecto e limites de reconstrução está em
+[`VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md`](VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md).
+A etapa de Mosin/SVD/SKS permanece bloqueada até esse aceite e não foi iniciada.

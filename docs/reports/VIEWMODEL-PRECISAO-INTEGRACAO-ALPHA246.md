@@ -279,3 +279,15 @@ Rollback é por configuração: manter `ready:false`, remover o override de test
 preservar o fallback atual. Não apagar os privados nem alterar a worktree fonte.
 Falhas de hash, otimização, lifecycle da SVD, sincronismo, clipping ou aceite
 visual encerram a rodada antes da arma seguinte.
+
+## Pré-requisito implementado em 10/09/2026
+
+A fundação requerida por este plano foi portada por símbolos nos checkpoints `8ecb7ab05`,
+`c8b75444f` e `a6ec3b49c`. Ela preserva 26 armas, mantém todas as famílias fechadas, centraliza
+a visibilidade com fallback até a malha existir e descarta conclusões assíncronas fora do token
+ativo. AK e faca podem ser avaliadas somente por opt-in; PT-38 permanece fail-closed.
+
+Esse marco não libera a precisão. Ainda faltam capturas frescas 3:2/16:9 da fundação no Game real
+e aceite humano; Mosin/SVD/SKS continuam sem assets publicados, sem `baked:true` e sem override
+de produção. Evidência consolidada:
+[`VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md`](VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md).
