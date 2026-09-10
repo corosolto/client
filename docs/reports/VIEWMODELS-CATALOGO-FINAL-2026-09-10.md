@@ -113,3 +113,51 @@ instalar as dependências do worktree. Draft de acompanhamento: client#572.
 O censo das dezoito worktrees anteriores, incluindo conteúdo local não enviado e assets ignorados,
 está em [`VM-WORKTREES-CENSUS-2026-09-10.md`](VM-WORKTREES-CENSUS-2026-09-10.md). Ele substitui
 a suposição inicial de que os sete PRs continham todas as fontes relevantes.
+
+
+## Preservação P0 antes da consolidação
+
+Snapshot somente de estado Git e código-fonte criado em
+`/Volumes/Zenith/Projects/game/corosolto/csbrasil/checkpoints/viewmodels-p0/20260910T015505Z`.
+Ele fica fora dos checkouts e não contém `public/private-assets`, evidências geradas,
+dependências, builds ou candidatos binários. Nenhuma worktree fonte foi limpa, alterada ou
+promovida durante a captura.
+
+### `vm-lmg-final`
+
+- branch `glm/vm-lmg-final` em `a8a9a8e8965f0f35a0d0441ad4df6922cc943bad`;
+- upstream `origin/glm/vm-lmg-final` em `90ec24d7d47fbcb668608c6eebb6b8357663d3ab`;
+- dois commits locais preservados no bundle; a PR #546 continua apontando para o upstream;
+- dois arquivos versionados modificados foram preservados em patch binário e três arquivos
+  não versionados em arquivo tar comprimido;
+- o estado da LMG continua `ready:false` e reprovado em revisão humana. Este snapshot preserva
+  instrumentos e diagnóstico; não aprova nem promove a candidata anterior.
+
+Arquivos de recuperação:
+
+| Arquivo | SHA-256 |
+|---|---|
+| `vm-lmg-final-local-commits.bundle` | `bb56841d17b5cdaa10ae66fa1f97c00e00c2873ee13709683de85de12600be92` |
+| `vm-lmg-final-working-tree.patch` | `fb02d7df604cf0ff3a2d69cd4644b96110515e0802fddd06c6fd5ff3271c3429` |
+| `vm-lmg-final-untracked.tar.gz` | `026ffc314a81c4c189aacf302c244bcdf1c63fd6cd38ffb02c0be51fda03ec66` |
+| `vm-lmg-final-state.txt` | `348969dca6b27b0543545453310f95646651885809af8090219a74ada1ca4346` |
+
+### `vm-retarget`
+
+- branch `vm-cs16-gabarito` em `6451ecaf5874266e3f3eec35056b8909e4123f38`;
+- upstream `origin/vm-cs16-gabarito` em `9faf8d3011ed75c232bf487fd2a9151519f51ce8`;
+- worktree limpa, doze commits à frente do upstream;
+- os doze commits foram preservados em `vm-retarget-local-commits.bundle`, SHA-256
+  `a6286c8df7383736c66d3e087bace9e680c25f2f5260fc8042b8252d1ac4ecc8`;
+- `vm-retarget-state.txt` registra refs, status e os doze commits, SHA-256
+  `0d41e3f426e72907ccdd08c67603bcc8bc70f5fe4c6aa9aadbcde739ea706879`.
+
+Os dois bundles passaram em `git bundle verify` e registram seus commits-base como
+pré-requisitos. O manifesto legível por máquina é `manifest.json`, SHA-256
+`0c11059aa0ebd3a646fcf466c9c5663e59851782fc9252abaf79ff486dd4be64`; o inventário final de
+checksums é `SHA256SUMS`, SHA-256
+`387966506e85938ea1487141c258ba26dcfcb9cab8fd50d583b27702c2e4b3ee`.
+
+Antes de aplicar qualquer parte na lane final, deve-se inspecionar o manifesto, restaurar em
+refs temporárias e portar somente os símbolos aprovados. O patch e o tar da LMG devem ser
+aplicados apenas sobre o HEAD exato salvo, sem substituir a worktree original.
