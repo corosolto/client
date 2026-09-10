@@ -207,8 +207,9 @@ Ela preserva os 26 IDs, mantém todas as famílias `ready:false` e exige `?vmaut
 construir os controladores. AK e faca públicas foram congeladas pelos hashes aprovados; PT-38
 continua fail-closed porque o produto aprovado mora em `public/private-assets` na fonte.
 
-O gate novo passou 20/20, sintaxe/arquitetura/build passaram, e os hashes publicados no build
-batem com a fonte. Ainda faltam captura fresca 3:2/16:9 e revisão humana no Game real. A lista
-de rotas, evidências pendentes, dívidas de aspecto e limites de reconstrução está em
+O gate novo passou 20/20, `check:deploy` passou 39/39 com Node 24.19.0, o pre-push passou e os
+hashes publicados no build batem com a fonte. O marco foi publicado no draft #572 em
+`0ef681a2e6286c5eb728c386ae9389d3378ed72b`. Ainda faltam captura fresca 3:2/16:9 e revisão
+humana no Game real. A lista de rotas, evidências pendentes, dívidas de aspecto e limites está em
 [`VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md`](VIEWMODEL-FOUNDATION-ALPHA246-2026-09-10.md).
 A etapa de Mosin/SVD/SKS permanece bloqueada até esse aceite e não foi iniciada.

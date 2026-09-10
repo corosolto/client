@@ -61,6 +61,7 @@ como padrão. O time Mítico usa o atlas neutro até existir uma direção visua
 | `npm run eval:vmlabhud` | 6/6 |
 | `npm run eval:vminspect` | verde |
 | `npm run build` | verde; hashes dos dois GLBs preservados em `dist/client` |
+| `npm run check:deploy` | 39/39 com Node 24.19.0; pre-push completo verde |
 | `npm run eval:vm` | 26 armas auditadas; 89 dívidas visuais herdadas do baseline |
 
 `eval:vm` não é gate de aceite authored nesta fase: mede o viewmodel legado e continua
@@ -93,4 +94,10 @@ nas duas proporções.
 
 - `8ecb7ab05` — controles públicos aprovados, atlas, licença e builder da AK;
 - `c8b75444f` — runtime authored integrado com opt-in, fallback e token;
-- `a6ec3b49c` — gate técnico e índice de arquitetura.
+- `a6ec3b49c` — gate técnico e índice de arquitetura;
+- `c6d138ce5` — evidência, receita de teste e lacunas visuais;
+- `7d6770ec2` — gate executável também em Node sem `import.meta.dirname`;
+- `0ef681a2e` — blocos gerados de arquitetura e documentação atualizados.
+
+Branch publicada em `origin/codex/viewmodels-catalog-final`; PR draft `#572`. O checkpoint
+de implementação e documentação gerada é `0ef681a2e6286c5eb728c386ae9389d3378ed72b`.
