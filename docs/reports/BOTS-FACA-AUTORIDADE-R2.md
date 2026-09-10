@@ -6,6 +6,9 @@ Branch: `codex/bot-knife-round-r2`
 Base cliente: `origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb` (`v2.0.0-alpha.246`)  
 Backend auditado sem edição: `corosolto/backend origin/main@17ebd8fb28f15b34a9379f9e8210aeae4633b7b3`
 
+Draft PR: [corosolto/client#580](https://github.com/corosolto/client/pull/580)  
+Checkpoint funcional: `478626b12`
+
 ## Objetivo e definição de pronto
 
 Reproduzir o feedback sobre bots em rodada de faca e verificar seleção de arma, perseguição,
@@ -149,6 +152,6 @@ npm run check:deploy
 
 ## Estado e próximo passo
 
-Correção e gates locais prontos para PR draft. A validação automatizada prova distância,
+Correção e gates locais publicados no draft PR #580. A validação automatizada prova distância,
 combate, objetivos, contadores e autoridade; ainda falta o playtest humano no URL acima para
 avaliar sensação de contato/cadência. Não houve merge, deploy ou mudança em produção.
