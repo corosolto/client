@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "base": "origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb",
+  "candidates": {
+    "m4": {
+      "family": "ar",
+      "file": "viewmodels/ar/m4-baked-runtime.glb",
+      "sourceSha256": "c23930c3837b4bda862a71209eaeb1b212b0dd5a6bd34619f72a1398fce3930b",
+      "sourceBytes": 1515873,
+      "productSha256": "2d8e00559ad2e640183b45062f13e5a3b77256d5638831957e8c96af9b510233",
+      "productBytes": 1506656,
+      "sha256": "2d8e00559ad2e640183b45062f13e5a3b77256d5638831957e8c96af9b510233",
+      "bytes": 1506656,
+      "mechanism": "detachable-mag/bolt-release",
+      "ready": false,
+      "sourceBranch": "codex/vm-prep-rifles",
+      "sourceCommit": "ea022c3c0",
+      "rebuild": "tools/viewmodels/prep/rifles-m4-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
+    }
+  }
+}
