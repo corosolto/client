@@ -239,9 +239,8 @@ export function buildAtacadao(scene, T) {
      do conjunto que fecham a visada, não o rack de 1,1 m sozinho (docs/mapa-atacadao.md). */
   const PALLET = [lam({ color: 0x8a6a3c }), lam({ color: 0xb8b2a4 }), lam({ color: 0x2e6f9e }), lam({ color: 0xc0392b })];
   const racks = [];
-  // Quarenta e oito clones do mesmo GLB custavam centenas de draws no passe
-  // principal e no de sombra. O lote mantém o modelo, escala e pose, mas agrupa
-  // as primitivas iguais em instâncias; o galpão fechado dispensa buckets.
+  /* Instância evita 48 clones do mesmo GLB nos passes principal/sombra;
+     o galpão fechado dispensa buckets. Medição: docs/mapa-atacadao.md. */
   const rackBatch = new PropBatch({ bucket: 0, tag: 'atacadao-racks', shadowMin: 0.04 });
   /* A geometria mora DENTRO do Group marcado: a mutação --mutar=sem-racks remove o
      Group, e com as malhas soltas no root a ATA5 media a mesma LOS com e sem rack. */
