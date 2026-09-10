@@ -20,35 +20,35 @@
       "maxStepM": 0.4,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 7.04,
+      "motionDurationSecs": 7.08,
       "verticalRangeM": 0,
       "video": {
-        "file": "artifacts/carandiru-c4/final/radial-interna.webm",
-        "bytes": 1626967,
-        "sha256": "2cc5c3c85ca63208fa60b7b5c273483c199f5dc285504453abfdf16e746df0ca",
+        "file": "artifacts/carandiru-overnight/c4/radial-interna.webm",
+        "bytes": 1627228,
+        "sha256": "58c83edf4e35218445b28c083b4c456bbd45c05e09e35d8cd8d668646323ee70",
         "width": 1200,
         "height": 800,
-        "durationSecs": 7.2
+        "durationSecs": 7.24
       },
       "captures": [
         {
-          "file": "artifacts/carandiru-c4/final/radial-interna-inicio.png",
-          "bytes": 1110252,
-          "sha256": "73b2b16e6c227fc4aa2a171a3db5ea07978b875bb005733462c2266db8d89324",
+          "file": "artifacts/carandiru-overnight/c4/radial-interna-inicio.png",
+          "bytes": 1110299,
+          "sha256": "830537afed6500c6655870bebe21cb3d4f8e5ec456981a5abd55b4ad83265d43",
           "width": 1200,
           "height": 800
         },
         {
-          "file": "artifacts/carandiru-c4/final/radial-interna-meio.png",
-          "bytes": 1026104,
-          "sha256": "22caf060dccbba7396fb63dc2d977157e48556f931b6f13723f1386be46ac69b",
+          "file": "artifacts/carandiru-overnight/c4/radial-interna-meio.png",
+          "bytes": 1026205,
+          "sha256": "f17dd1ab7bf0f5c5efdb4f3926496d7b0e1e5669bd91723284e8565f477ebd02",
           "width": 1200,
           "height": 800
         },
         {
-          "file": "artifacts/carandiru-c4/final/radial-interna-fim.png",
-          "bytes": 953949,
-          "sha256": "8af55dc5f2e21c4f1274ef7d5722fb652e6ba3a2c8d09819dfc273c325651caa",
+          "file": "artifacts/carandiru-overnight/c4/radial-interna-fim.png",
+          "bytes": 954499,
+          "sha256": "a6d4b3d87f5a8386afcdc90aa93d92cf916769de0b5a70d9e698847d27745132",
           "width": 1200,
           "height": 800
         }
@@ -65,35 +65,35 @@
       "maxStepM": 0.4488,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 7.59,
+      "motionDurationSecs": 7.65,
       "verticalRangeM": 0,
       "video": {
-        "file": "artifacts/carandiru-c4/final/externa-oeste.webm",
-        "bytes": 1049898,
-        "sha256": "86167da619b6c2fc14cd869d7f3fe8bfe613f290bad39780ebe411dd39d31b0c",
+        "file": "artifacts/carandiru-overnight/c4/externa-oeste.webm",
+        "bytes": 1068958,
+        "sha256": "4e7ce82f884e3a5ea296852d04dfb1c540f2698e9a818b94c857980c9afe3315",
         "width": 1200,
         "height": 800,
-        "durationSecs": 7.72
+        "durationSecs": 7.8
       },
       "captures": [
         {
-          "file": "artifacts/carandiru-c4/final/externa-oeste-inicio.png",
-          "bytes": 1090755,
-          "sha256": "abd37bdd15f6604f08c9b8e75679d3bff7e5b94ad5a6f53c7f3e8009630d7a44",
+          "file": "artifacts/carandiru-overnight/c4/externa-oeste-inicio.png",
+          "bytes": 1090991,
+          "sha256": "693e27b5dc68171641e7a77d1d8259a6e0c9df24f992a2aa000a3ba42d7f07af",
           "width": 1200,
           "height": 800
         },
         {
-          "file": "artifacts/carandiru-c4/final/externa-oeste-meio.png",
-          "bytes": 1059619,
-          "sha256": "9349d0c7563ba192a45048612358fe1babc132ab1c3017573b9fe51296163088",
+          "file": "artifacts/carandiru-overnight/c4/externa-oeste-meio.png",
+          "bytes": 1059227,
+          "sha256": "0dce7040bcdc82d0f10130534e11cc88797c44cc8cbba5db3f172006e23622c8",
           "width": 1200,
           "height": 800
         },
         {
-          "file": "artifacts/carandiru-c4/final/externa-oeste-fim.png",
-          "bytes": 1028996,
-          "sha256": "e2776749dfa6230096f3acf2719780fd08b3e633dfd57b30ed85cc865a913a8a",
+          "file": "artifacts/carandiru-overnight/c4/externa-oeste-fim.png",
+          "bytes": 1029246,
+          "sha256": "5d930be31d6720d9aba37a24d8ac8920dbbcc0298b3eb830366dc5428e23cd18",
           "width": 1200,
           "height": 800
         }
@@ -110,35 +110,35 @@
       "maxStepM": 0.45,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 16.19,
+      "motionDurationSecs": 16.2,
       "verticalRangeM": 5.8,
       "video": {
-        "file": "artifacts/carandiru-c4/final/muralha-leste.webm",
-        "bytes": 2572799,
-        "sha256": "fd8d2e6a6e40824da56432e7d1506e92c002a0ebacf7da501049c96ffb37101f",
+        "file": "artifacts/carandiru-overnight/c4/muralha-leste.webm",
+        "bytes": 2593422,
+        "sha256": "837717c9c1d2c56853af39201595b0b563cac0776b847ff151647089418dfff4",
         "width": 1200,
         "height": 800,
         "durationSecs": 16.36
       },
       "captures": [
         {
-          "file": "artifacts/carandiru-c4/final/muralha-leste-inicio.png",
-          "bytes": 1048754,
-          "sha256": "40b036bfd5aa17f1f02e8e713d6050f8b9d2ae3799bdf1cedb3b23fb2b4c7c10",
+          "file": "artifacts/carandiru-overnight/c4/muralha-leste-inicio.png",
+          "bytes": 1049028,
+          "sha256": "7e91b529a1d12d634dc6cec2c57ea16023c1d4dfed71bb38f02b8d576e6071b7",
           "width": 1200,
           "height": 800
         },
         {
-          "file": "artifacts/carandiru-c4/final/muralha-leste-meio.png",
-          "bytes": 1064510,
-          "sha256": "586cae4d60202f13395158d8be1d631bb74cecf532f780129006c1ab46f133fe",
+          "file": "artifacts/carandiru-overnight/c4/muralha-leste-meio.png",
+          "bytes": 1064538,
+          "sha256": "218a17d28d51416fcc6df93e99170316e97a4b620226223068c655d62461acf1",
           "width": 1200,
           "height": 800
         },
         {
-          "file": "artifacts/carandiru-c4/final/muralha-leste-fim.png",
-          "bytes": 1047164,
-          "sha256": "aa12f837b653aa4e68bf2ab8433e6072b2c9ed435b9c69bad48b4103c0589825",
+          "file": "artifacts/carandiru-overnight/c4/muralha-leste-fim.png",
+          "bytes": 1046870,
+          "sha256": "fff022203794c173d33b28e32575e6c2849b83de81f1c6367123a6583b575d18",
           "width": 1200,
           "height": 800
         }
@@ -499,9 +499,9 @@
         7.42,
         -43.5
       ],
-      "file": "artifacts/carandiru-c4/final/carandiru-entrada-guarita-oeste.png",
-      "bytes": 952311,
-      "sha256": "585cfcfa932f26e0ad23f32bb29f4124f1c7efc47121428ab57a6259895608c7",
+      "file": "artifacts/carandiru-overnight/c4/carandiru-entrada-guarita-oeste.png",
+      "bytes": 953314,
+      "sha256": "414d4d7fd4d492928dd36cb5be0cfc480fc967156e86cde86deeb237479d7860",
       "width": 1200,
       "height": 800
     },
@@ -512,9 +512,9 @@
         7.42,
         -43.5
       ],
-      "file": "artifacts/carandiru-c4/final/carandiru-entrada-guarita-leste.png",
-      "bytes": 960465,
-      "sha256": "5c68f50b639cbeffe04e69e41cb05130e6ce4ce417c3695ff8f474409aa5212a",
+      "file": "artifacts/carandiru-overnight/c4/carandiru-entrada-guarita-leste.png",
+      "bytes": 960779,
+      "sha256": "70296107ba096eecc64dc4df3c82fed3b6e1d027763399d705da7ef48d53fae5",
       "width": 1200,
       "height": 800
     },
@@ -525,9 +525,9 @@
         7.42,
         43.5
       ],
-      "file": "artifacts/carandiru-c4/final/carandiru-entrada-guarita-norte-oeste.png",
-      "bytes": 974162,
-      "sha256": "2a7c38edbb0f730609541f4f77d2ed5967a038721f59830e88b37dc46f56cfbe",
+      "file": "artifacts/carandiru-overnight/c4/carandiru-entrada-guarita-norte-oeste.png",
+      "bytes": 974545,
+      "sha256": "335e7fd2082a6c3faa15fb59efd44801c50d6b3971464eff116e35fc44e8ad6e",
       "width": 1200,
       "height": 800
     },
@@ -538,9 +538,9 @@
         7.42,
         43.5
       ],
-      "file": "artifacts/carandiru-c4/final/carandiru-entrada-guarita-norte-leste.png",
-      "bytes": 970045,
-      "sha256": "9ee1ba28a572dee6848b4717b2502731708e75684aca6ec396d65626c3062409",
+      "file": "artifacts/carandiru-overnight/c4/carandiru-entrada-guarita-norte-leste.png",
+      "bytes": 970163,
+      "sha256": "bdb7191a2c536fca4f6d20e6daeaa8dcf4f18a97ca1c6b5caa97346d1085b656",
       "width": 1200,
       "height": 800
     },
@@ -551,9 +551,9 @@
         7.42,
         45.35
       ],
-      "file": "artifacts/carandiru-c4/final/carandiru-entrada-torre-muro-0.png",
-      "bytes": 910781,
-      "sha256": "61d132b9246a9915ad669196bb664ee56a41e9f83d3bbc1d845a4248f41afe95",
+      "file": "artifacts/carandiru-overnight/c4/carandiru-entrada-torre-muro-0.png",
+      "bytes": 911524,
+      "sha256": "572a0958842bd5fb10013863ca3d39fd0f0eb5f148c54a796bee230b08546505",
       "width": 1200,
       "height": 800
     },
@@ -564,17 +564,17 @@
         7.42,
         45.35
       ],
-      "file": "artifacts/carandiru-c4/final/carandiru-entrada-torre-muro-1.png",
-      "bytes": 899702,
-      "sha256": "d122c8f0ee93c8cbb38781c2e1969d46f7227287ae305499b496b7cad9a41230",
+      "file": "artifacts/carandiru-overnight/c4/carandiru-entrada-torre-muro-1.png",
+      "bytes": 900331,
+      "sha256": "a8a5670d9d69ffb488743cd690bf30078ee69c6583bc5d28fe1493a472d26ff6",
       "width": 1200,
       "height": 800
     }
   ],
   "pavilionCapture": {
-    "file": "artifacts/carandiru-c4/final/pavilhao-janelas-com-volume.png",
-    "bytes": 1177140,
-    "sha256": "bee7036680a0fc599aadc39a0bc12b75606497af7362cb2dda1cd281f2dbcb7c",
+    "file": "artifacts/carandiru-overnight/c4/pavilhao-janelas-com-volume.png",
+    "bytes": 1178368,
+    "sha256": "f3e140ac7a6008b2342498d7ecb0f62566d1aec169c200a6d8f3fe85cc2c1748",
     "width": 1200,
     "height": 800
   },
@@ -599,9 +599,9 @@
           5.8,
           -4
         ],
-        "file": "artifacts/carandiru-c4/final/muralha-personagem-10m.png",
-        "bytes": 1070473,
-        "sha256": "437f6953f56d05c9c875665cd83c1251bcf60078360a51a44121018f59731dfe",
+        "file": "artifacts/carandiru-overnight/c4/muralha-personagem-10m.png",
+        "bytes": 1071186,
+        "sha256": "0ff4cc3f4263eb5d6d7d6cee1c78883f3577d9c7f9f6f11d84950bfc5436bc3e",
         "width": 1200,
         "height": 800
       },
@@ -619,9 +619,9 @@
           5.8,
           6
         ],
-        "file": "artifacts/carandiru-c4/final/muralha-personagem-20m.png",
-        "bytes": 1067927,
-        "sha256": "a0ecd9a9ac6b49883ead7724a5ba2a94657ddbf40f10c27a6e1d68c6fb93edde",
+        "file": "artifacts/carandiru-overnight/c4/muralha-personagem-20m.png",
+        "bytes": 1068546,
+        "sha256": "8a0ec35d1fbe439ad45218e0bc0214a276b646c8aecd08b024dad86e397990d0",
         "width": 1200,
         "height": 800
       },
@@ -639,9 +639,9 @@
           5.8,
           16
         ],
-        "file": "artifacts/carandiru-c4/final/muralha-personagem-30m.png",
-        "bytes": 1067162,
-        "sha256": "da4a08599243d1c9c3809c95f12b31a7fff883b9d56ee7033a8b112d841d6c70",
+        "file": "artifacts/carandiru-overnight/c4/muralha-personagem-30m.png",
+        "bytes": 1067674,
+        "sha256": "7ffc11099714f371ca73c74a76e877c9cc66a56d285d35760e44fe085a4bc9a0",
         "width": 1200,
         "height": 800
       }

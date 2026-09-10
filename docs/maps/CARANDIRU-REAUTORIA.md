@@ -319,3 +319,52 @@ Essa dívida é global e alheia ao Carandiru: o diff da PR contra
 `graffiti_layout.js` nem `graffiti-census.mjs`. Nenhum arquivo, limiar ou material
 da Loja H foi modificado nesta lane para mascarar o resultado. A PR deve ser
 reavaliada depois que a dívida da Loja H for corrigida em sua própria frente.
+
+## Auditoria noturna sobre o head remoto da PR #556 — 10/09/2026
+
+A auditoria partiu do head remoto exato `57edb46e60fb05288b5b714597ad0c17d4080fbc`
+em worktree isolada. O relato humano não foi descartado: ele foi reproduzido
+contra o histórico e comparado ao estado posterior a `509fdda8`. A fonte atual já
+continha o conserto geométrico das quatro escadas, seis entradas elevadas e do
+Pavilhão 6. Não houve nova alteração no mapa, runtime, materiais ou assets.
+
+Dois problemas estavam na proteção automatizada. O mutante `spawn-exposto`
+removia uma massa do pavilhão que não participava da visada e, portanto, não
+provava CAR5. Ele agora remove a contracobertura real: o máximo sobe de 2/4 para
+3/4 spawns vistos e somente CAR5 reprova. A régua de fachada contava apenas as
+faces leste/oeste e comparava uma assinatura anterior à correção. PF4 agora mede
+as 12 janelas reais, 24 peitoris/vergas, 12 pontos de tiro com piso e pelo menos
+quatro segmentos físicos de parede para cada vão. `sem-fachada` reprova somente
+PF4 e `cone-restaurado` reprova somente PF2.
+
+O recibo `tools/eval/carandiru-overnight-browser.json` acrescenta CAR10. Em Chrome
+real, 1200×800/5x5 iniciou 9 bots e 1280×720/8x8 iniciou 15; todos se deslocaram
+mais de 0,75 m nos seis segundos medidos. Nos dois enquadramentos, 12/12 percursos
+pátio↔guarita e 2/2 percursos pátio↔galeria chegaram ao destino, as três rotas
+estratégicas e os três pontos CTF permaneceram presentes, o GLB Mint respondeu
+HTTP 200 e não houve erro inesperado. As oito capturas ficam em
+`artifacts/carandiru-overnight/final/`; a revisão técnica confirmou parede ao
+redor das janelas e circulação elevada visível, mas não substitui aprovação
+humana. O mutante `recibo-sem-8x8` remove a amostra maior e reprova somente CAR10.
+
+O recibo C4 foi refeito em 1200×800: três vídeos contínuos, zero correção de
+colisão, 12/12 travessias de guarita e 2/2 do pavilhão. A amostra autônoma de 20 s
+em `artifacts/carandiru-overnight/bot-routes/trails.json` registrou sete bots com
+deslocamento final de 39,74 a 47,21 m e circulação entre as duas metades do mapa.
+CTF fechou por objetivo em 79,6 s, com três capturas e rótulos `ALA SUL`,
+`PAVILHÃO 6` e `ALA NORTE`.
+
+O A/B Chrome fresco manteve o candidato dentro do teto de 15% de chamadas por
+quadro: +10,0% (med/5), +9,8% (med/8), +13,3% (low/5) e +9,9% (low/8), com oito
+amostras `live` e zero erro. `eval:penitenciaria`, `eval:penitenciariavida`,
+`eval:penitenciariapickup`, `eval:mapcontrato`, os gates CTF e o build passaram.
+
+Para o teste humano da manhã, o servidor local serve o mesmo SHA da fonte
+(`3107269e305075a37d9337af327df9ab1d65cdbf830c16e91b475295e14b37d0`) em:
+
+`http://127.0.0.1:8156/?debug=1&auto=P,mst&map=penitenciaria&perfilauto=0&ctf=1`
+
+Percorrer as quatro escadas até as quatro passarelas, entrar nas quatro guaritas
+e duas torres norte, voltar ao pátio, subir e descer o Pavilhão 6 e combater das
+janelas em 5x5 e 8x8. Aprovação visual e de tato continuam pendentes. Não houve
+merge nem deploy.
