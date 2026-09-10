@@ -62,6 +62,21 @@
       "sourceCommit": "ea022c3c0",
       "rebuild": "tools/viewmodels/prep/rifles-famas-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
     },
+    "carbine": {
+      "family": "ar",
+      "file": "viewmodels/ar/carbine-baked-runtime.glb",
+      "sourceSha256": "9bbed4fec57b56c9a0aafe50a74bc4df6c3a138f2671dbb15c0d5cc6a27d4f3f",
+      "sourceBytes": 242868,
+      "productSha256": "a7a1a87b8485527602da7771e8291b64d3bedb68d4a27dcc652da1a3e4721998",
+      "productBytes": 1631536,
+      "sha256": "a7a1a87b8485527602da7771e8291b64d3bedb68d4a27dcc652da1a3e4721998",
+      "bytes": 1631536,
+      "mechanism": "lever-action/right-side-loading-gate/hand-covered-feed",
+      "ready": false,
+      "sourceBranch": "codex/vm-prep-rifles",
+      "sourceCommit": "ea022c3c0",
+      "rebuild": "tools/viewmodels/prep/rifles-carbine-final.py + optimize_paid_family.mjs"
+    },
     "m92": {
       "family": "ak",
       "file": "viewmodels/ak/m92-baked-runtime.glb",
