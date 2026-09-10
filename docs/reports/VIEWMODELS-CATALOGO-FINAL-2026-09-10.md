@@ -220,9 +220,74 @@ Mosin/SVD/SKS foram staged fora do Git, otimizadas e ligadas ao runtime somente 
 implementados com mutantes. Fonte e otimizado passaram T/M/C/F/A e os doze controles vermelhos;
 a matriz da SVD passou 30 ciclos/630 amostras sem desaparecimento.
 
-A captura real produziu 42 frames em 1440×960/1440×810 para AK, faca, fallback e as três armas de
-precisão. A promoção visual foi reprovada: a peça bege de Mosin/SKS domina o quadro, e os
-antebraços/mangas da SVD estão grandes demais. As três famílias continuam `ready:false`, o
-fallback das 26 armas está preservado e nenhum asset privado entrou no Git. O próximo passo é
-corrigir os candidatos na fonte e recapturar a matriz completa; detalhes e comando único estão em
+A primeira captura real produziu 42 frames em 1440×960/1440×810 para AK, faca, fallback e as três
+armas de precisão e encontrou duas causas visuais: slots de skin avaliados por índice errado
+criavam a peça bege dominante em Mosin/SKS, e anéis de ombro da SVD permaneciam opacos. A fase 3
+corrigiu essas causas na assembly, ajustou contatos da recarga/inspeção e recapturou a matriz
+inteira. Os produtos finais passaram T/M/C/F/A, doze mutantes, lifecycle 30× da SVD (630 amostras)
+e inspeção das folhas 3:2/16:9 sem desaparecimento nem a geometria dominante anterior.
+
+As três armas continuam `ready:false`: a inspeção interna elimina os defeitos conhecidos, mas não
+substitui a revisão humana do dono no Game. O fallback das 26 armas está preservado e nenhum asset
+privado entrou no Git. Checkpoints da fase 3: `e133be155`, `e44f1977b`, `662371b36`, `ff5148f15`.
+Evidências, hashes e comando único estão em
 [`VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md`](VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md).
+
+## Marco noturno — inventário atualizado de worktrees e PRs
+
+O inventário foi repetido após `git fetch --prune`, sem escrever nas fontes. A base segue
+`origin/main@2115d5e2c` (`alpha.246`) e esta lane está limpa em `ff5148f15`, sincronizada com o
+draft #572. As contagens de commits exclusivos das branches antigas são sinais de divergência
+histórica; não autorizam transplantar a pilha.
+
+| Fonte | Ref observada | Estado local | PR | Decisão para o catálogo final |
+|---|---|---|---|---|
+| controles | `glm/vm-controles-final@8b31f5dce5` | limpa, publicada | #549 · DIRTY | AK/faca já portadas; PT-38 segue fail-closed pelo asset privado; usar gates, não a branch |
+| DMR | `claude/vm-dmr-final@701e98e44b` | 7 fixtures geradas modificadas | #544 · DIRTY | Rem700/G3SG1 são candidatas; reconstituir por fonte, manter `ready:false` e recapturar |
+| LMG | `glm/vm-lmg-final@a8a9a8e896` | 2 commits adiante + 2 modificados + 3 novos, preservados | #546 · DIRTY | reprovada pelo dono; portar instrumentos apenas e reautorar depois |
+| rifles | `codex/vm-prep-rifles@ea022c3c0e` | limpa, publicada | #509 · UNSTABLE | M4 aprovada somente em idle; recarga reprovada; outras cinco são receitas |
+| precisão offline | `codex/vm-prep-precisao@99a522684a` | limpa, publicada | #513 · draft/UNSTABLE | supersedida funcionalmente pela precisão corrigida no #572 |
+| retarget/gauntlet | `vm-cs16-gabarito@6451ecaf58` | limpa, 12 commits locais preservados | #468 · DIRTY | instrumentos e matemática; nenhum merge/cherry-pick integral |
+| pilha paga histórica | `feat/fps-paid-viewmodels-aaa@c25a14ed01` | dirty fora de VM + privados ignorados | #464 · UNSTABLE | contratos e fixes transversais já extraídos; não promover bytes privados |
+| pesadas piloto | `codex/vm-heavy@062543b12f` | limpa, publicada | sem PR próprio atual | AWP sem aceite; shotgun reprovada; somente builder/régua são reaproveitáveis |
+| placeholders | `vm-prep-{armas-curtas,awp,shotgun}@d35c6658f0` | limpas, sem upstream | — | nenhuma produção final presente |
+| integração final | `codex/viewmodels-catalog-final@ff5148f15` | limpa, sincronizada | #572 · draft/BLOCKED | única lane que escreve runtime e catálogo |
+
+### Cobertura consolidada após o inventário
+
+- **aprovadas pelo dono e integradas opt-in:** AK e faca; PT-38 aprovada na fonte, porém fechada
+  nesta branch porque o produto não é publicável no Git;
+- **tecnicamente fechadas, aguardando revisão humana:** Mosin, SVD e SKS;
+- **candidatas reproduzíveis a revalidar:** Rem700 e G3SG1; os GLBs locais atuais divergem dos
+  hashes registrados em `artifacts/viewmodels/dmr/hashes.json`, portanto nenhum byte é promovido;
+- **parcial:** M4 somente em idle;
+- **reprovadas:** LMG, shotgun e recargas M4 anteriores;
+- **receita sem produto final:** MD97, carabina, SCAR, FAMAS e M92;
+- **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, AKM, G3, Tavor, M400 e AWP.
+
+O próximo marco seguro é reconstruir Rem700/G3SG1 a partir dos seis insumos cujo SHA-256 ainda
+confere, executar os gates no código atual e gerar novas capturas. A branch DMR declarou
+`ready:true` antes do aceite e os produtos locais agora têm hashes diferentes do relatório; por
+isso o catálogo final não copia esses outputs e falha fechado até obter um recibo novo.
+
+## Índice exato para revisão da manhã
+
+Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, Mosin, SVD e SKS. Um único
+servidor materializa os privados fora do Git e mantém a ativação global desligada:
+
+```bash
+cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-phase3/preview-root \
+  npm run preview:vm-precision
+```
+
+Abrir somente após o comando:
+
+```text
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=mosin,svd,sks&vmqa=precision
+```
+
+Índice de revisão: (1) AK idle/reload e troca para faca; (2) fallback ao desativar `vmauthored`;
+(3) Mosin shoot/ferrolho/reload/inspect/ADS; (4) SVD 30 trocas ou recargas sem sumir; (5) SKS
+reload/inspect/ADS; (6) repetir em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
+proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
