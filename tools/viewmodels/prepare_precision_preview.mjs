@@ -68,5 +68,5 @@ else {
   if (current !== linkTarget) throw new Error(`${link} aponta para ${current}; não será substituído`);
 }
 console.log(`PASS staging ignorado ${link} -> ${linkTarget}`);
-console.log('TESTE http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,mosin,svd,sks,rem700,g3sg1&vmqa=precision');
+console.log('TESTE http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,famas,mosin,svd,sks,rem700,g3sg1&vmqa=precision');
 console.log('ENCERRAR npm run cleanup:vm-precision');
