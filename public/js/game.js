@@ -4452,6 +4452,7 @@ export class Game {
       let np = 0, nb = 0;
       for (const c of this.combatants) {
         if (!c.alive) continue;
+        if (this.world.ctfLayerContains?.(pt, c.pos) === false) continue;
         const dx = c.pos.x - pt.x, dz = c.pos.z - pt.z;
         if (dx * dx + dz * dz <= pt.r * pt.r) { if (c.team === 'E') np++; else nb++; }
       }
@@ -4469,6 +4470,7 @@ export class Game {
           this.roundCaps[solo] = (this.roundCaps[solo] || 0) + 1;   // placar DA RODADA (quem leva o round)
           for (const c of this.combatants) {
             if (!c.alive || c.team !== solo) continue;
+            if (this.world.ctfLayerContains?.(pt, c.pos) === false) continue;
             const dx = c.pos.x - pt.x, dz = c.pos.z - pt.z;
             if (dx * dx + dz * dz <= pt.r * pt.r) c.captures = (c.captures || 0) + 1;
           }
@@ -4676,7 +4678,7 @@ export class Game {
        giro contínuo, A* local com nós banidos, checagem física de alcance, raio de chegada
        de 1,5 m (o de 0,7 m era menor que o passo de um frame lento — o bot "chegava" e
        "saía" do nó no mesmo lugar), teto de giro e destravamento por deslize. */
-    if (distPt < pt.r * 0.7) {   // dentro do anel: SEGURA o ponto e vigia as entradas
+    if (distPt < pt.r * 0.7 && W.ctfLayerContains?.(pt, b.pos) !== false) {   // dentro do anel: SEGURA o ponto e vigia as entradas
       b._ctfMoving = 0;
       if (BOT_MOVE2) {
         // varredura por SETORES com dwell: escolhe um rumo, para 1,4-2,8 s olhando pra ele,
@@ -4712,14 +4714,16 @@ export class Game {
       let guard = 0;
       while (b.pathIdx < b.path.length - 1 && guard++ < 8) {
         const c = W.waypoints.nodes[b.path[b.pathIdx]];
-        if (c && Math.hypot(c.x - b.pos.x, c.z - b.pos.z) < 1.5) b.pathIdx++; else break;
+        const mesmaCamada = !W.botLayeredNavigation || Math.abs((c?.y ?? b.pos.y) - b.pos.y) < .20;
+        if (c && mesmaCamada && Math.hypot(c.x - b.pos.x, c.z - b.pos.z) < 1.5) b.pathIdx++; else break;
       }
     }
     const atEnd = !b.path || b.pathIdx >= b.path.length;
-    let tx = pt.x, tz = pt.z;
-    if (!atEnd) { const n = W.waypoints.nodes[b.path[Math.min(b.pathIdx, b.path.length - 1)]]; tx = n.x; tz = n.z; }
+    let tx = pt.x, tz = pt.z, targetNode = null;
+    if (!atEnd) { targetNode = W.waypoints.nodes[b.path[Math.min(b.pathIdx, b.path.length - 1)]]; tx = targetNode.x; tz = targetNode.z; }
     const dx = tx - b.pos.x, dz = tz - b.pos.z, d = Math.hypot(dx, dz);
-    if (!atEnd && d < (BOT_MOVE2 ? 0.35 : 0.7)) { b.pathIdx++; b._ctfMoving = 1; return; }
+    const targetNaCamada = !W.botLayeredNavigation || Math.abs((targetNode?.y ?? b.pos.y) - b.pos.y) < .20;
+    if (!atEnd && targetNaCamada && d < (BOT_MOVE2 ? 0.35 : 0.7)) { b.pathIdx++; b._ctfMoving = 1; return; }
     /* MESMO RUMO SUAVIZADO DO ROAM (b._hdg — ver o comentário lá). O CTF é um caminho de
        movimento SEPARADO, então sem repetir aqui o dono continuaria vendo o zigzag no modo
        em que ele mais joga: trocar de nó teleportava o alvo de rotação, e a menos de 1,2 m
