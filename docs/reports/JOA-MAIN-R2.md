@@ -4,7 +4,8 @@ Data: 10/09/2026
 Lane: `joa-main-r2` / `codex/joa-main-r2`  
 Base confirmada local e remota: `origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb`  
 Fonte seletiva: `v2/mansao-joa-recuperacao@c68f5a7f7703ed17a0a17112142c3bada6bcec40` / PR #561  
-Estado: **tecnicamente verde e pronto para playtest humano; não mergeado e não publicado**.
+Estado: **gates próprios verdes e pronto para playtest humano; CI compartilhado ainda
+vermelho por dívidas herdadas da base; não mergeado e não publicado**.
 
 ## Objetivo e definição de pronto
 
@@ -55,6 +56,7 @@ Checkpoints:
 - `3d8b9b1f1` — gates causais;
 - `1b80ff99e` — documentação derivada regenerada;
 - `2df6cdedf` — captura parametrizada 3:2/16:9, WebGL2 e veto a renderer por software.
+- `9a6e754ef` — libera o slot E(1,5;32) e separa a segunda rota jardim→MEZZO.
 
 ## RED, correções e mutantes
 
@@ -69,12 +71,22 @@ cobertura sem suporte, parede ausente, teto baixo, salto de patamar, times preso
 água bloqueada, piscina sem cuba, planta sobre caminho, hardscape chapado, GLB 2×, asas
 travadas, praia sem areia, horizonte raso, oceano sem depth-fade e oceano sem espuma.
 
+O primeiro CI do draft PR #578 encontrou dois defeitos próprios que as réguas específicas
+ainda não cobravam. `MAP2B` mediu somente 0,80 m de folga no slot E(1,5;32), causada pelo
+poste do jardim em (2,3;32,6). `CTF2` encontrou uma única rota separada de E até a bandeira
+MEZZO: as duas escadas existiam, mas o trajeto completo convergia na entrada oeste. O poste
+foi deslocado para (6,5;32,6) e um eixo físico/navegável contínuo em x=20 liga jardim,
+terraço e porta norte. O runtime gate agora mede todos os slots e exige duas rotas com faixa
+de separação de 6 m. Os mutantes `poste-no-spawn` e `sem-flanco-leste` reproduzem exatamente
+0,80 m e 1/2 rota e ficam vermelhos.
+
 ## Gates e resultados
 
 | Gate | Resultado observado |
 |---|---|
 | instalação limpa | `npm ci`, 404 pacotes, zero vulnerabilidades |
-| `npm run eval:mansao` | verde; 528 nós, 7.110 arestas, zero nó ocupado e zero aresta bloqueada |
+| `npm run eval:mansao` | verde; 545 nós, 7.218 arestas, zero nó ocupado e zero aresta bloqueada |
+| folga de spawn / rotas CTF separadas | verde; pior slot 1,65 m; jardim→MEZZO 2 rotas separadas |
 | CTF vertical | verde; subida contínua até MEZZO: serviço 4,17 s, spawn 20,33 s |
 | carga determinística, 3 seeds × 30 s | 5×5: 9 bots, stuck 2,0%, eff 0,387, spinRoam 0,070; 8×8: 15 bots, stuck 0,9%, eff 0,448, spinRoam 0,057 |
 | `eval:mapid` | verde; 17 mapas e alias/preview coerentes |
@@ -87,6 +99,13 @@ travadas, praia sem areia, horizonte raso, oceano sem depth-fade e oceano sem es
 A primeira execução do portão marcou 38/39: `eval:docsautoria` recusou medir enquanto
 `docs/docs/colaborar.md` e os derivados ainda estavam sem commit. Depois do checkpoint
 `1b80ff99e`, o mesmo portão passou 39/39. Isso não foi mascarado por mudança de limiar.
+
+No CI remoto inicial do PR #578, além dos dois REDs próprios agora corrigidos, o job
+`portao` registrou `SUPPORT_URL_BR is not defined` e 14/53 silhuetas acima do teto em
+`eval:select`. O invariants completo local também conserva `CHR8`, `CHR5B`, `CENA3` e o
+`MAP2B` de Escadão E (0,85 m) como problemas fora da Mansão. A diferença da lane contra a
+base não altera seleção, personagens, Escadão, limites ou `KNOWN-RED.json`; esses resultados
+são registrados como dívida compartilhada e não foram mascarados nesta branch.
 
 ## Browser, desempenho e evidência visual
 
@@ -144,8 +163,8 @@ nomear posição e direção; a geometria volta a RED antes de nova alteração.
 
 ## Continuação
 
-1. Fazer push desta branch e abrir um draft PR que declare supersessão do #561.
-2. Aguardar CI remoto sem corrigir dívida compartilhada fora do escopo.
+1. Draft PR #578 substitui o #561 e recebe os checkpoints desta reconstrução.
+2. Aguardar a nova rodada do CI remoto sem corrigir dívida compartilhada fora do escopo.
 3. O dono testa Joá na URL 8181 e devolve feedback visual/jogável.
 4. Em paralelo humano, testar Piscina na URL 8152; não iniciar nova reautoria estrutural
    antes desse resultado.
