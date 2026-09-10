@@ -343,3 +343,38 @@ branch recebeu somente as entradas ausentes: `@emnapi/core@1.11.3`,
 bindings WASI existentes. Um segundo diretório vazio concluiu `npm ci` com a mesma
 versão do npm; a instalação local, `eval:deps`, build e `check:deploy` também
 passam. A geometria e as evidências 8×8 não mudaram.
+
+## Reteste independente de cobertura arquitetônica, rotas e escala — 10/09/2026
+
+A validação partiu do HEAD remoto exato do PR #566, `3aed96c7eb84c7a7640ce8090cc090fd3ccd6da1`, em `worktrees/piscina-rework-stack`, limpo e idêntico ao upstream. O JavaScript local e o servido em `http://127.0.0.1:8152` têm o mesmo SHA-256: `d272fc1cfd5224759e1784b0f551b7a876ab47560960585416d1aa1108865bbe`.
+
+A arquitetura atual foi confirmada sem nova alteração do mapa:
+
+- dois corredores fechados, um por lateral, cada um com 9 nós, entradas norte/sul e três portais para o salão;
+- três famílias de rota entre as equipes: central 41,32 m, oeste 65,79 m e leste 70,59 m;
+- paredes transversais dos dois vestiários com quatro segmentos e três vãos de 3 m em cada lado;
+- 122 nós, 593 arestas e 24/24 rotas spawn→objetivo alcançáveis com cápsula de raio 0,38 m; zero trecho inacessível e degrau máximo 0,06 m;
+- CTF encerra a rodada após os três objetivos; PIS1, PIS2, PIS3, PIS4 e PIS6 passam e os oito mutantes são mordidos isoladamente.
+
+A leitura de cobertura precisa permanecer explícita: depois da reprovação do layout anterior, ilhas soltas e mirante foram removidos. A proteção atual está ligada ao edifício — paredes dos vestiários, retornos dos portais, armários e bancos dos corredores — e a piscina central fica aberta por contrato. O diagnóstico genérico `map-check` ainda reporta MAP5=99 m e razão de props 0× nos quatro quadrantes centrais; esse número não foi escondido nem declarado verde. O aceite pendente é decidir em jogo se as três saídas e os dois flancos compensam a exposição do salão sem reintroduzir o labirinto rejeitado.
+
+No Chrome/WebGL2/Metal real, quatro casos 1200×800 produziram 28 capturas sem erro JS: med/low em 5×5 e 8×8, com 9/15 bots. Os enquadramentos `overview`, `west-corridor`, `east-corridor`, `west-portal`, `south-vestibule`, `waterline` e `spawn-flow` foram inspecionados; os corredores e portais são legíveis, a água continua sendo o marco dominante e os três vãos de saída aparecem sem gargalo visual. Evidências ignoradas pelo Git em `artifacts/piscina-overnight-20260910/browser/`.
+
+Amostra de navegação livre: 160 leituras em 20 s; 7/7 bots percorreram pelo menos 42,48 m a partir do início. Um bot entrou no corredor oeste (`x<-17`) e outro no leste (`x>17`), enquanto os demais distribuíram-se pelo salão/portais. Trilhas e recibo ficam em `artifacts/piscina-overnight-20260910/bot-routes/`.
+
+Desempenho em 12 s por caso, sem frame acima de 100 ms e sem erro:
+
+| Caso | p50 | p95 | máximo | calls | triângulos |
+|---|---:|---:|---:|---:|---:|
+| med 5×5 | 8,3 ms | 9,4 ms | 10,3 ms | 840 | 943.833 |
+| med 8×8 | 8,3 ms | 9,9 ms | 13,0 ms | 918 | 1.088.572 |
+| low 5×5 | 8,3 ms | 9,4 ms | 65,1 ms | 523 | 448.288 |
+| low 8×8 | 8,3 ms | 9,2 ms | 10,3 ms | 604 | 506.658 |
+
+PIS5 continua vermelho nos tetos absolutos originais de 860 calls/870 mil triângulos: med 5×5 excede triângulos e med 8×8 excede ambos, embora a cadência observada esteja estável. PIS7 continua humano. URL para o teste:
+
+`http://127.0.0.1:8152/?debug=1&map=piscina_treta&auto=P,mst&perfilauto=0`
+
+Fila humana: jogar 8×8, sair por cada um dos três vãos, alternar entre salão e os dois corredores e avaliar se existe cover suficiente ao cruzar até um portal. Não fazer merge/deploy antes desse retorno.
+
+Fechamento local desta revisão independente: `npm run build` passou em alpha.240 e `npm run check:deploy` passou 37/37. A implementação está tecnicamente reproduzível; o centro aberto e os tetos PIS5 permanecem decisões explícitas para o playtest humano, não aprovação implícita.
