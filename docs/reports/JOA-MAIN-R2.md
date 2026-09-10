@@ -107,6 +107,12 @@ No CI remoto inicial do PR #578, além dos dois REDs próprios agora corrigidos,
 base não altera seleção, personagens, Escadão, limites ou `KNOWN-RED.json`; esses resultados
 são registrados como dívida compartilhada e não foram mascarados nesta branch.
 
+Na rodada remota depois do fix (`build` run `34452459876`, `portao` run `34452459879`),
+o build completo passou em 14 min 26 s, confirmando que os REDs próprios de Joá foram
+quitados. O único job vermelho foi novamente `portao`, exclusivamente no passo
+`eval:select`: `SUPPORT_URL_BR is not defined` e 14/53 silhuetas, teto 12. Os demais passos
+do portão continuaram e concluíram; smoke, CodeQL, análises, DCO, ratchet e preview passaram.
+
 ## Browser, desempenho e evidência visual
 
 Servidor local mantido em:
