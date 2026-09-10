@@ -260,10 +260,10 @@ histórica; não autorizam transplantar a pilha.
 - **tecnicamente fechadas, aguardando revisão humana:** Mosin, SVD e SKS;
 - **tecnicamente fechadas, aguardando revisão humana:** Rem700 e G3SG1 agora também têm rebuild,
   hashes, mutantes e 24 capturas reais; continuam opt-in e `ready:false`;
-- **tecnicamente fechada, aguardando revisão humana:** M4 com seis clipes próprios,
-  carregador separado e mãos preservadas por root comum;
+- **tecnicamente fechadas, aguardando revisão humana:** M4 e MD97 com seis clipes próprios,
+  carregadores separados e mãos preservadas por root comum;
 - **reprovadas:** LMG, shotgun e recargas M4 anteriores;
-- **receita sem produto final:** MD97, carabina, SCAR, FAMAS e M92;
+- **receita sem produto final:** carabina, SCAR, FAMAS e M92;
 - **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, AKM, G3, Tavor, M400 e AWP.
 
 O rebuild DMR encontrou um falso verde na branch fonte: os nós rígidos eram anexados contra a bind
@@ -294,13 +294,13 @@ CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels
 Abrir somente após o comando:
 
 ```text
-http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,mosin,svd,sks,rem700,g3sg1&vmqa=precision
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,mosin,svd,sks,rem700,g3sg1&vmqa=precision
 ```
 
 Índice de revisão: (1) AK idle/reload e troca para faca; (2) fallback ao desativar `vmauthored`;
-(3) M4 equip/shoot/recarga tática/recarga vazia/inspect/ADS; (4) Mosin
-shoot/ferrolho/reload/inspect/ADS; (5) SVD 30 trocas ou recargas sem sumir; (6) SKS
-reload/inspect/ADS; (7) Rem700 shoot/ferrolho/reload/ADS; (8) G3SG1 recarga tática/ADS; (9) repetir
+(3) M4 equip/shoot/recarga tática/recarga vazia/inspect/ADS; (4) MD97 identidade/pente/
+recargas/inspect/ADS; (5) Mosin shoot/ferrolho/reload/inspect/ADS; (6) SVD 30 trocas ou recargas sem sumir; (7) SKS
+reload/inspect/ADS; (8) Rem700 shoot/ferrolho/reload/ADS; (9) G3SG1 recarga tática/ADS; (10) repetir
 em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
 proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
 
@@ -319,3 +319,17 @@ off até revisão humana. Recibo completo:
 
 Checkpoints: `0604f8879`, `f1f0b5211`, `7ed7df1ea`. Próxima arma é a MD97, com carregador
 frontal próprio conforme a receita da preparação; não se reutiliza o pente da M4.
+
+## Marco rifles — MD97 reautorada
+
+A MD97 usa seu corpo público próprio e um carregador frontal de 20 tiros reconstruído a partir da
+especificação medida do jogo. A escala final de 1,05 × 0,87 foi aplicada à geometria porque os
+tracks herdados reimpunham a escala M4 durante as ações. O gate específico valida 6.466 vértices
+do corpo, 48 vértices dos dois segmentos do pente, comprimento 0,9135 m e oito mutantes.
+
+Lifecycle passou 30 ciclos/540 amostras e 20 capturas reais cobrem as duas proporções. A candidata
+segue `ready:false`, com AR/global off até revisão humana. Recibo:
+[`VIEWMODEL-RIFLES-MD97-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-MD97-ALPHA246-2026-09-10.md).
+
+Checkpoints: `35ad8e345`, `50d00eb39`, `c684f12fd`. Próxima arma: SCAR; precisa de pente
+integral e comando lateral próprio, sem promover o fragmento reprovado da preparação.
