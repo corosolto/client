@@ -63,7 +63,9 @@ export const VM_WEAPON = {
   carbine: W('ar'),
   m400: W('sniper'),
   mosin: W('bolt', { baked: true }),
-  rem700: W('bolt'),
+  // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
+  // medido desta base; a câmera embutida do doador não é usada como frame.
+  rem700: W('bolt', { baked: true, frame: 'family' }),
   lmg: W('lmg'),
   scar: W('ar'),
   tavor: W('ar'),
@@ -71,6 +73,6 @@ export const VM_WEAPON = {
   uzi: W('smg'),
   p90: W('p90', { recoilScale: 1.6 }),
   svd: W('svd', { baked: true }),
-  g3sg1: W('marksman'),
+  g3sg1: W('g3', { baked: true, frame: 'family' }),
   sks: W('marksman', { baked: true }),
 };
