@@ -119,7 +119,7 @@
       "mechanism": "complete-curved-rock-in-mag/real-magazine-catch/source-no-separable-charging-handle",
       "ready": false,
       "sourceBranch": "codex/viewmodels-catalog-final",
-      "sourceCommit": "pending",
+      "sourceCommit": "d11df56dd",
       "rebuild": "tools/viewmodels/prep/rifles-akm-final.py + optimize_paid_family.mjs"
     }
   }
