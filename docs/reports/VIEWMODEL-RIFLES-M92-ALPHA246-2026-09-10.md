@@ -84,6 +84,6 @@ e registrou os dois hashes, mantendo o produto divergente fail-closed. O preview
 ```bash
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
 export PATH="/Users/ruben/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH"
-CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/ede70146f-8de215ed \
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/dc8b68f04-8de215ed \
   npm run preview:vm-precision
 ```

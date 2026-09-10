@@ -59,7 +59,7 @@ e folha 16:9 `cb8e521a88bc3f78cd7678bc361db13c5ee4d806a82b27af60051ec873e36d07`.
   3:2/16:9 e seis mutantes de lifecycle;
 - `npm run eval:vm-foundation`: verde, 20/20, preservando os 26 IDs, fallback e
   fronteira privada;
-- 26 capturas reais no commit `2f3c777482527bc8d31ebca5d9693ef61d645824`
+- 26 capturas reais no commit `dc8b68f04ff32bbb6592169c1d6528f1bdff63d4`
   cobrem idle, dois pontos do draw, tiro, três fases de cada recarga, fim da
   recarga vazia, inspect e ADS nas duas proporções. Houve zero erro fatal de
   viewmodel/WebGL. Os 84 erros de console são 404/CORS do ambiente local já
@@ -67,9 +67,9 @@ e folha 16:9 `cb8e521a88bc3f78cd7678bc361db13c5ee4d806a82b27af60051ec873e36d07`.
 
 ```text
 /Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/evidence/rifles-carbine-20260910/
-capture.json        243817cdc1ba7ad254734c454ca32d41e88d0536ebe64eb72cffdae9fb74f124
-contact-sheet-3x2   19d2027d3bb78ae89435486d0a147e86859ce635f814f4341781f93d6d027950
-contact-sheet-16x9  5f3e56779cfe2e06210b444a7dfca63bddfed27f69c7fadf1c86f9a343f47e7e
+capture.json        40f24d6764de342b906cb2c83c2607061db258d30f5b9740d5274bde66443637
+contact-sheet-3x2   b56e643d50a4bf562d158ab5db623b9a2e3038288119faa8dbf093497ae278df
+contact-sheet-16x9  baff9d7da52920f700948225eb605d76d6e93ae35df75f73e62b689f44cb39cd
 ```
 
 As folhas mostram a silhueta longa, madeira e aço, ADS centralizado, mão de
@@ -80,7 +80,7 @@ apoio nas recargas e mão forte no ciclo da alavanca nas duas proporções. Aind
 ## Preview isolado e drift da Mosin
 
 O preview usa o snapshot imutável
-`preview-snapshots/ede70146f-8de215ed`, cujo manifesto tem SHA-256
+`preview-snapshots/dc8b68f04-8de215ed`, cujo manifesto tem SHA-256
 `bb10a0eb11e3656d514d4c73e60ed10ede712409c7965d39d69d69943b408069`.
 Ele contém a Mosin validada de 5.298.504 bytes /
 `94386beceefde96a481458c296f616178ae56f8a1a70b8ae63be8697841655a2`.
@@ -92,9 +92,9 @@ sobrescrito ou mascarado.
 ```bash
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
 export PATH="/Users/ruben/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH"
-CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/ede70146f-8de215ed \
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/dc8b68f04-8de215ed \
   npm run preview:vm-precision
 ```
 
 URL impressa pelo comando inclui `vmweapon=carbine`. Checkpoints da Carabina:
-`5899a91d0`, `ede70146f` e `2f3c77748`.
+`20a394bf9`, `1e7549966` e `dd32c516e`.

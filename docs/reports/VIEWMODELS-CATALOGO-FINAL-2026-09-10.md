@@ -287,7 +287,7 @@ rejeitado pelo hash:
 ```bash
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
 export PATH="/Users/ruben/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH"
-CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/ede70146f-8de215ed \
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/dc8b68f04-8de215ed \
   npm run preview:vm-precision
 ```
 
@@ -391,4 +391,4 @@ global off. O preview usa um snapshot isolado com a Mosin validada; o arquivo pr
 continua preservado e rejeitado, com ambos os hashes registrados no recibo.
 
 Recibo: [`VIEWMODEL-RIFLES-CARABINA-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-CARABINA-ALPHA246-2026-09-10.md).
-Checkpoints: `5899a91d0`, `ede70146f`, `2f3c77748`. Próxima arma incompleta da família: Tavor.
+Checkpoints: `20a394bf9`, `1e7549966`, `dd32c516e`. Próxima arma incompleta da família: Tavor.
