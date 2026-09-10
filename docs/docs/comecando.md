@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 46.808 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 46.806 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.428** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.408 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -221,7 +221,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.396 |
+| `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.394 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.154 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.404 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
