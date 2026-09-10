@@ -42,6 +42,18 @@ Blocos NUMÉRICOS do README.md e de docs/ gerados do código (contagem de linhas
 npm run docs
 ```
 
+## `context:check`
+
+Mede somente o tamanho e a data dos JSONL de sessão do Codex, sem abrir o payload.
+Por padrão olha as últimas 24 horas, avisa em 250 MB e reprova em 500 MB. A ação é
+checkpoint em git, handoff curto e nova tarefa — nunca despejar o histórico no chat.
+`--all` audita o histórico inteiro; `--warn-mb`, `--fail-mb` e `--active-hours`
+permitem provar a régua com limiares menores.
+
+```bash
+npm run context:check
+```
+
 ## `prod:coherence`
 
 Mede o que o EDGE está servindo, não o repo: baixa o HTML de produção, segue o import map e verifica que todo import nomeado existe como export no módulo alvo. Nasceu do apagão de 08/08 (cache split-brain: main.js de um deploy com fparms.js de outro — BUG-39). NÃO entra no check:fast (precisa de rede e de produção no ar); quem roda é o prod-watch.yml a cada 15 min. `--selftest` é a mutação que prova que morde.

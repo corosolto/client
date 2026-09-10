@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { MAPS, resolveMapId } from './maps.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
-import { weaponModel, weaponCFG, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
+import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { VM_FRAME } from './vmattach.js';
 import { vmlabPose, VMLAB_SCOPED, VMLAB_NO_ALIGN } from './vmlab.js';
@@ -1508,7 +1508,11 @@ export class Game {
     // grupo (position.z = 0). Ter o grip na origem é o que torna o enquadramento derivável
     // (_vmFrame) e o que dá ao IK/animação um ponto de empunhadura único e confiável — o
     // +0.12 legado era um chute que deslocava o grip e obrigava a compensar em 3 lugares.
+    const semMalha = new Set();
     const mountRw = (g, id) => {
+      /* Sem malha propria nao monta a de outro: `weaponModel` cai na awp e o
+         `alignHands` poe a mao no grip da arma PEDIDA (BUG-76). */
+      if (!hasWeapon(id)) { semMalha.add(id); return null; }
       const rw = weaponModel(id);
       if (!rw) return null;
       rw.name = 'rw';                    // espaço local: grip na origem, cano +Z (IK mira nele)
@@ -1539,6 +1543,21 @@ export class Game {
       alignHands(g, id);
       g.position.copy(awp.position); g.rotation.copy(awp.rotation);
       root.add(g); models[id] = g;
+    }
+    /* O `rw` era montado uma vez so, no boot, com o que estivesse em cache — e a
+       partida pre-carrega so as armas que sorteou. Monta o que faltou quando chega. */
+    if (semMalha.size) {
+      const pendentes = [...semMalha];
+      preloadWeapons(pendentes).then(() => {
+        for (const id of pendentes) {
+          const g = models[id];
+          if (!g || g.getObjectByName('rw') || !hasWeapon(id)) continue;
+          if (!mountRw(g, id)) continue;
+          g.children.forEach((ch) => { if (ch.isMesh) ch.visible = false; });
+          alignHands(g, id);
+        }
+        if (this._vmFrame) this._vmFrame(true);
+      }).catch(() => {});
     }
     for (const k in models) models[k].visible = k === 'awp';
     /* ===== ENQUADRAMENTO DERIVADO (G3-R1) — nenhuma tabela por arma =====

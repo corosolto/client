@@ -51,6 +51,125 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-78 · `trim.pos` por arma era inerte — a âncora do centro cancelava a translação~~ · RESOLVIDO 09/09
+
+**O que era.** `attachMintWeapon` aplicava `trim.pos` na posição do wrap e, logo depois,
+recentrava o holder para o centro da arma Mint coincidir com o centro da arma do pack
+(*"Âncora DEFINITIVA"*). Essa âncora é calculada com o wrap JÁ transladado, então
+cancelava a translação exatamente. O `trim`, documentado no `vmconfig.js` como *"ajuste
+fino do wrap Mint no socket"*, não movia nada — só `mount.pos`, que é por FAMÍLIA, tinha
+efeito.
+
+**Como ficou provado**: `trim.pos = [0, 0, 0.3]` (30 cm) e `[0, -0.03, 0]` deram exatamente
+o mesmo contato medido (1,9 cm) e a mesma bbox da rodada sem trim nenhum. O arquivo servido
+continha o trim — conferido com `curl`.
+
+**Medida antes × depois** (m92, jogo real, `piscina_treta`, 3:2, contato 3D em cm):
+1,9 cm em idle/ADS/disparo → **0,5 cm**, dentro da faixa das aprovadas (ak 0,2, deagle
+0,3–0,5, shotgun 0,2–0,5). Nenhuma outra arma muda: `trim.pos` é `[0,0,0]` em todas as
+demais, e o caminho assado não passa por aqui.
+
+**Causa raiz**: ordem em `public/js/vmweapon.js` — a translação por arma agora entra no
+holder DEPOIS da âncora, do mesmo jeito que `mount.pos`.
+
+**Régua**: `tools/eval/vm-arsenal-check.mjs`, cláusula de contato em CENTÍMETROS. Em
+pixels a medida ordenava errado — o `deagle/ads`, com a mão na coronha (conferido na
+figura), dava a pior razão de todas, porque distância na tela depende de quanto a arma
+ocupa o quadro e da densidade da amostra. Teto 1,0 cm; procedência: ak 0,1–0,2 em todas as
+capturas, deagle 0,3–0,5, shotgun 0,2–0,5, m92 1,2–1,9 antes do conserto. Mutante
+`semcontato` reprova.
+
+**Limite declarado da régua**: é a distância MÍNIMA sobre a nuvem de mão inteira — com a
+mão forte encostada, uma mão de apoio solta não aparece. Separar as duas exige dividir a
+malha `GEO_FP_SK_Glove_01`, que hoje é uma só.
+
+
+### ~~BUG-77 · peça separada (pente/ferrolho) ficava no tamanho pré-normalização — a AKM renderizava 20% maior~~ · RESOLVIDO 09/09
+
+**O que era.** `splitParts` (`public/js/vmweapon.js`) recorta o pente da malha da arma e
+pendura o fragmento num OSSO do braço, congelando a matriz a partir de `mesh.matrixWorld`.
+Ele rodava ANTES de `wrap.scale.setScalar(...)`, a linha que dá a escala final ao wrap — e
+como o fragmento fica pendurado no osso, e não no wrap, ele nunca recebia essa escala.
+
+**Medida antes** (jogo real, `piscina_treta`, 3:2, diâmetro 3D da nuvem de pontos da arma,
+invariante à pose): `akm` 105,8 cm contra **88 cm** declarados em `weapons.js`, e razão
+arma/mão **1,36** contra **1,12** da `ak` aprovada — com as MESMAS mãos (77,8 cm), porque
+as duas são da família `ak`.
+
+**Medida depois**: `akm` 87,1 cm e razão 1,12 — idêntica à `ak`. As outras 24 armas não
+mudaram (só `ak` e `akm` declaram `parts`, e a `ak` é assada, que não passa por este
+caminho).
+
+**Causa raiz**: ordem de `splitParts` em `public/js/vmweapon.js` — separar a peça antes da
+escala final do wrap.
+
+**Régua**: `tools/eval/vm-arsenal-check.mjs`, cláusula de tamanho: o diâmetro 3D medido tem
+de bater com o `len` declarado em `weapons.js` dentro de 8% para arma longa. Procedência do
+teto: 21 das 25 armas batem dentro de 2% (awp 116,1/115, ak 87,2/88, lmg 110,1/110,
+svd 115/115). Arma de UMA MÃO fica de fora da cláusula — o diâmetro vai da boca ao
+calcanhar da coronha e supera o `len` por construção (pistol 30,4/26, revolver38 27,3/24,
+deagle 31,5/30). Mutante `tamanho` infla o diâmetro medido e reprova.
+
+**Por que a régua anterior não pegava**: ela media a diagonal NA TELA, que depende da pose
+e da distância — a mesma arma mediu 624 px numa rodada e 878 px em outra. O diâmetro 3D é
+de corpo rígido e reproduziu idêntico em rodadas seguidas.
+
+**Custo declarado**: nenhum medido. `check:fast` 89/100 com o conserto contra 88/100 na
+base (a diferença é `eval:devport`, intermitente).
+
+
+### ~~BUG-76 · o viewmodel autorado escondia a arma do pack sem ter malha Mint — e servia a AWP no lugar de outras armas~~ · RESOLVIDO 07/09
+
+**Palavras de quem reportou** (07/09, revisão do dono, 19 screenshots 14:03–15:52): a arma
+"flutua sem mãos", e depois: *"nao so LMG mas todas lanes, eu ja testei ,pistola ,faca e ak
+e estao resolvidas, nao testei a M4A1"*.
+
+**O que era.** `attachMintWeapon` (`public/js/vmweapon.js`) chamava `hidePackGun(entry)`
+ANTES de saber se havia malha Mint, e saía por `if (!wrap) return null`. A malha Mint vem do
+modelo de MUNDO, e a partida pré-carrega só as armas que sorteou (`public/js/weapons.js`
+`preloadWeapons`; o resto chega em ocioso). Resultado: a família ficava **sem arma nenhuma**
+— luva segurando o vazio — pelo resto da sessão, e QUAL família caía mudava a cada partida.
+Somado a isso, `weaponModel(id)` cai em `_cache.get('awp')` quando a arma pedida não está
+carregada: com a AWP em cache e a Zastava fora, o wrap saía `mint_weapon_m92` com a malha
+`sniper_1` — a arma gigante e errada do frame `15.51.33`.
+
+**Medida antes** (jogo real, `piscina_treta`, 3:2, 7 capturas por arma):
+`awp`, `shotgun` e `revolver38` com `arma 0/0` e mão em quadro; em outra sessão os mesmos
+zeros caíram em `m4`, `carbine` e `lmg`. Diagonal aparente da `m92`: 857 px contra 552 px da
+`ak` na mesma família (1,55×).
+
+**Medida depois**: `awp` 292/302, `shotgun` 300/302, `revolver38` 306/306 vértices de arma em
+quadro; substituição silenciosa eliminada (`hasWeapon` obrigatório antes do wrap).
+
+**Causa raiz**: `public/js/vmweapon.js:137` (hidePackGun incondicional) + `public/js/weapons.js:338`
+(`|| _cache.get('awp')`).
+
+**Régua**: `tools/eval/vm-attach-fallback-check.mjs` (`npm run eval:vm-attach`, dentro do
+`check:vm`) — bloqueia o GLB de mundo da arma e exige que a família continue com arma em
+quadro E sem wrap de outra arma. Mutantes: `--mutante=escondepack` (reintroduz o estado do
+defeito) e `--mutante=forjawrap` (forja wrap com malha `sniper_1`); os dois reprovam, e a
+régua sai 1 se um deles passar.
+
+**Coleta e portão do arsenal**: `tools/viewmodels/prep/vm-arsenal-frames.mjs` +
+`tools/eval/vm-arsenal-check.mjs`; relatório em
+`docs/reports/VM-ENCAIXE-MINT-2026-09-07.md`.
+
+**O caminho LEGADO tinha a mesma substituição, e pior** (07/09, segunda rodada): o `rw` de
+TODAS as armas é montado uma vez só no boot (`public/js/game.js` `_buildViewModels`), com o
+que estivesse em cache. Régua determinística — libera só `awp.glb` e bloqueia o resto, com
+`awp` montada provando a pré-condição: **25 armas montaram a malha da AWP**, inclusive a
+faca, e `alignHands` punha a mão no grip da arma pedida (por isso `mão 0/312` nas medidas de
+antes). Depois do conserto (`hasWeapon` obrigatório + montagem tardia quando o GLB chega):
+0 substituições, e as 9 armas medidas desenham a própria arma com mão em quadro (60–92 de
+312) e contato 1–7 px. Régua: `npm run eval:vm-attach-legado`, mutante `montaalheia`.
+
+**Custo declarado**: quando o GLB de mundo não chegou, a família desenha a malha do pack
+(licenciada, já dentro do runtime GLB) em vez da Mint, até o modelo chegar — o portão avisa
+`AVISO fallback:` quais armas estão nesse estado. Continuam ABERTOS, com régua vermelha
+medindo: escala em fuga da `m92` (1,49–1,55× a `ak`), contato da mão no `revolver38`
+(53–59 px, teto 40) e `m92/reload` com a mão saindo do quadro.
+
+
 ### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
 
 **Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de

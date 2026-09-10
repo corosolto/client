@@ -53,18 +53,28 @@ export const VM_WEAPON = {
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
   deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
-  m92: W('ak'),
+  /* trim: a mão da família ak fica 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
+     Delta medido no espaço do holder: [-0,2, -0,8, +1,1] cm. */
+  m92: W('ak', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+  akm: W('ak', { parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
+  g3: W('g3'),
   revolver38: W('revolver'),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
   md97: W('ar', { recoilScale: 1.8 }),
-  carbine: W('ar'),
+  /* trim: a mão de apoio flutuava 1,7 cm abaixo do guarda-mão (a ak aprovada mede 0,2). */
+  carbine: W('ar', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+  m400: W('sniper'),
   mosin: W('bolt'),
   lmg: W('lmg'),
   scar: W('ar'),
+  /* trim: mão de apoio a 1,1–1,4 cm do guarda-mão (a ak aprovada mede 0,2). */
+  tavor: W('ar', { trim: { pos: [0, -0.02, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   famas: W('ar'),
   uzi: W('smg'),
   p90: W('p90', { recoilScale: 1.6 }),
   svd: W('svd'),
-  sks: W('marksman'),
+  g3sg1: W('marksman'),
+  /* trim: mão de apoio a 1,5 cm do guarda-mão (a ak aprovada mede 0,2). */
+  sks: W('marksman', { trim: { pos: [0, -0.025, 0], rotDeg: [0, 0, 0], scale: 1 } }),
 };
