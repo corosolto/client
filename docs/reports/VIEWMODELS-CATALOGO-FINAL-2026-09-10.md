@@ -262,10 +262,12 @@ histórica; não autorizam transplantar a pilha.
   hashes, mutantes e 24 capturas reais; continuam opt-in e `ready:false`;
 - **tecnicamente fechadas, aguardando revisão humana:** M4, MD97, SCAR, FAMAS, M92 e carabina com seis
   clipes, carregadores separados e mãos; SCAR, FAMAS e M92 também movem seus comandos próprios;
-- **tecnicamente fechada, aguardando revisão humana:** Tavor com corpo bullpup próprio, carregador
+- **tecnicamente fechadas, aguardando revisão humana:** Tavor com corpo bullpup próprio, carregador
   traseiro completo, paddle real, seis ações, mãos e apresentação corrigida da recarga;
+- **tecnicamente fechada, aguardando revisão humana:** AKM com corpo/pente próprios e trava real;
+  a fonte pública não oferece charging handle separável e a lacuna permanece explícita;
 - **reprovadas:** LMG, shotgun e recargas M4 anteriores;
-- **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, AKM, G3, M400 e AWP.
+- **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, G3, M400 e AWP.
 
 O rebuild DMR encontrou um falso verde na branch fonte: os nós rígidos eram anexados contra a bind
 pose e os materiais copiavam índices sem transportar imagens/texturas. Os gates antigos passavam,
@@ -282,32 +284,33 @@ quatro commits preservam os binários fora do Git e não alteram o estado de apr
 ## Índice exato para revisão da manhã
 
 Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, M4, MD97, SCAR, FAMAS,
-M92, carabina, Tavor, Mosin, SVD, SKS, Rem700 e G3SG1. A preparação do servidor mantém a ativação global
+M92, AKM, carabina, Tavor, Mosin, SVD, SKS, Rem700 e G3SG1. A preparação do servidor mantém a ativação global
 desligada e usa um snapshot imutável; o produto privado divergente da Mosin continua intacto e
 rejeitado pelo hash:
 
 ```bash
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
 export PATH="/Users/ruben/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH"
-CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/3119608cb-e9032640 \
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/726ab95eb-54c72408 \
   npm run preview:vm-precision
 ```
 
 Abrir somente após o comando:
 
 ```text
-http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,famas,m92,carbine,tavor,mosin,svd,sks,rem700,g3sg1&vmqa=precision
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,md97,scar,famas,m92,akm,carbine,tavor,mosin,svd,sks,rem700,g3sg1&vmqa=precision
 ```
 
 Índice de revisão: (1) AK idle/reload e troca para faca;
 (2) fallback ao desativar `vmauthored`;
 (3) M4 equip/shoot/recarga tática/recarga vazia/inspect/ADS; (4) MD97 identidade/pente/
 recargas/inspect/ADS; (5) SCAR pente/comando lateral/inspect/ADS; (6) FAMAS pente traseiro/
-comando superior/ADS; (7) M92 carregador curvo/comando lateral/recargas/inspect/ADS; (8) carabina
-alavanca/portinhola/recargas/inspect/ADS; (9) Tavor carregador traseiro/paddle/recargas/inspect/ADS;
-(10) Mosin shoot/ferrolho/reload/inspect/ADS; (11) SVD 30 trocas ou recargas sem sumir;
-(12) SKS reload/inspect/ADS; (13) Rem700 shoot/ferrolho/reload/ADS;
-(14) G3SG1 recarga tática/ADS; (15) repetir
+comando superior/ADS; (7) M92 carregador curvo/comando lateral/recargas/inspect/ADS; (8) AKM
+silhueta/pente/trava/recargas/inspect/ADS e ausência declarada do charging handle; (9) carabina
+alavanca/portinhola/recargas/inspect/ADS; (10) Tavor carregador traseiro/paddle/recargas/inspect/ADS;
+(11) Mosin shoot/ferrolho/reload/inspect/ADS; (12) SVD 30 trocas ou recargas sem sumir;
+(13) SKS reload/inspect/ADS; (14) Rem700 shoot/ferrolho/reload/ADS;
+(15) G3SG1 recarga tática/ADS; (16) repetir
 em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
 proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
 
@@ -412,3 +415,19 @@ Recibo: [`VIEWMODEL-RIFLES-TAVOR-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-TAVOR
 Checkpoints: `cc643e014`, `83d1124d9`, `3119608cb`. O preview imutável corrente é
 `preview-snapshots/3119608cb-e9032640`; próxima arma ainda sem saída final deve ser escolhida
 entre AKM/G3 e as famílias MP5/SMG/P90, sem reabrir a Mosin divergente.
+
+## Marco rifles — AKM reautorada
+
+A AKM usa somente sua geometria pública visível sobre a fundação AK aprovada. A receita separa
+o carregador curvo completo por um corte bilateral de 407 faces e a trava real do pente por 70
+faces, preservando as 4.221 faces restantes no corpo. A fonte não contém um charging handle
+separável; a candidata registra essa limitação e não mistura o comando da AK doadora.
+
+Seis ações, nove mutantes de asset e seis de lifecycle passaram; o lifecycle cobre 30 ciclos/
+540 amostras. Vinte capturas reais em 3:2/16:9 não tiveram erro fatal e mostram a identidade,
+mãos, ADS e recargas. A revisão humana precisa decidir a apresentação vertical e a lacuna do
+charging handle. A candidata segue `ready:false`, AK/global off.
+
+Recibo: [`VIEWMODEL-RIFLES-AKM-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-AKM-ALPHA246-2026-09-10.md).
+Checkpoints: `d11df56dd`, `726ab95eb`. O preview imutável corrente é
+`preview-snapshots/726ab95eb-54c72408`; próxima arma incompleta: G3.
