@@ -5,7 +5,7 @@ const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(
 const mutantes = [
   'ganho-alto', 'sem-round-mp',
   'sem-fallback-kill-mp', 'sem-voz-propria', 'fish-volta-fallback', 'menu-rejeitada-volta',
-  'memes-historicos-silenciados', 'fala-sintetica-volta',
+  'memes-historicos-silenciados', 'fala-sintetica-volta', 'fu-ia-volta',
 ];
 if (mutante && !mutantes.includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -34,6 +34,12 @@ if (mutante === 'memes-historicos-silenciados') audio = audio.replace(
   "const genericPool = null;",
 );
 if (mutante === 'fala-sintetica-volta') audio += '\nconst regressao = globalThis.speechSynthesis;';
+if (mutante === 'fu-ia-volta') {
+  audio = audio
+    .replace('return allowlist ? pool.filter((file) => allowlist.has(file)) : pool;', 'return pool;')
+    .replace('const rollback = !!LEGACY_VOICE_ALLOWLIST[fallbackFaction];', 'const rollback = false;')
+    .replace('const rollback = !!LEGACY_VOICE_ALLOWLIST[faction];', 'const rollback = false;');
+}
 
 globalThis.location = { search: '', href: 'http://regua/' };
 globalThis.window = globalThis;
@@ -76,12 +82,12 @@ samples.length = 0;
 sfx.pack.voice = {
   ...sfx.pack.voice,
   C: ['audio/memes/palhaco-historico.mp3'],
-  F: ['audio/memes/funkeiro-historico.mp3'],
+  F: ['audio/a/9cef270856898158.mp3'],
 };
 expect(sfx.voice('C', 0) === true && samples.at(-1) === 'audio/memes/palhaco-historico.mp3'
-  && sfx.radioVoice('F') === true && samples.at(-1) === 'audio/memes/funkeiro-historico.mp3'
+  && sfx.radioVoice('F') === true && samples.at(-1) === 'audio/a/9cef270856898158.mp3'
   && sfx.characterVoice('funkeiro-sem-take', 'radio', { fallbackFaction: 'F' }) === true
-  && samples.at(-1) === 'audio/memes/funkeiro-historico.mp3',
+  && samples.at(-1) === 'audio/a/9cef270856898158.mp3',
   'MIX7 takes históricos aprovados não chegam aos eventos ingame de Palhaços/Funkeiros.');
 
 let tiro = NaN;
@@ -96,19 +102,20 @@ expect(audio.includes("get('gunvol')"), 'MIX9 ajuste A/B ?gunvol=N deixou de exi
 samples.length = 0;
 sfx.pack.characterVoice = {
   mandrake: {
-    select: ['audio/characters/mandrake/select/select-01.mp3'],
-    kill: ['audio/characters/mandrake/kill/kill-01.mp3'],
-    radio: ['audio/characters/mandrake/radio/radio-contato.mp3'],
-    round: ['audio/characters/mandrake/round/round-01.mp3'],
+    select: ['audio/rejeitado/mandrake-select.mp3'],
+    kill: ['audio/rejeitado/mandrake-kill.mp3'],
+    radio: ['audio/rejeitado/mandrake-radio.mp3'],
+    round: ['audio/rejeitado/mandrake-round.mp3'],
   },
 };
+sfx.pack.voice.F = ['audio/a/9cef270856898158.mp3'];
 expect(sfx.characterSelectVoice('mandrake', 'F', ['mandrake']) === true
-  && samples.at(-1)?.endsWith('/select/select-01.mp3'),
-  'MIX9b seleção do funkeiro não prioriza a fala própria aprovada.');
+  && samples.at(-1) === 'audio/a/9cef270856898158.mp3',
+  'MIX9b seleção do funkeiro não voltou ao pool histórico aprovado.');
 expect(typeof sfx.characterVoice === 'function'
   && sfx.characterVoice('mandrake', 'kill', { fallbackFaction: 'F' }) === true
-  && samples.at(-1)?.endsWith('/kill/kill-01.mp3'),
-  'MIX9c kill do funkeiro não prioriza a fala própria aprovada.');
+  && samples.at(-1) === 'audio/a/9cef270856898158.mp3',
+  'MIX9c kill do funkeiro ainda alcança a fala estruturada rejeitada.');
 
 expect(netgame.includes("if (!game.sfx.roundNumber(game.roundNum) && !game.sfx.csSound('roundstart'))"),
   'MIX10 countdown multiplayer nao tenta falar o numero do round antes do sting.');

@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troca-clubber-rasta', 'faria-volta-lula', 'pack-antigo', 'manifest-antigo'].includes(mutante)) {
+if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troca-clubber-rasta', 'faria-volta-lula', 'pack-antigo', 'manifest-antigo', 'fu-ia-volta'].includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
@@ -25,6 +25,11 @@ if (mutante === 'auto-fala') {
 }
 if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v8', 'audio-pack-v7');
 if (mutante === 'manifest-antigo') main = main.replace('sfx.loadManifest(VERSION)', 'sfx.loadManifest()');
+if (mutante === 'fu-ia-volta') {
+  audio = audio
+    .replace('return allowlist ? pool.filter((file) => allowlist.has(file)) : pool;', 'return pool;')
+    .replace('const rollback = !!LEGACY_VOICE_ALLOWLIST[faction];', 'const rollback = false;');
+}
 
 const failures = [];
 const expect = (ok, message) => { if (!ok) failures.push(message); };
@@ -55,7 +60,8 @@ expect(packVersion === '8' && main.includes('sfx.loadManifest(VERSION)')
 `VOICE13 o carregador ingame não usa a revisão da release com manifesto revalidável; CDN pode servir catálogo antigo (pack v${packVersion || '?'})`);
 
 globalThis.location ||= { search: '' };
-const { Sfx } = await import('../../public/js/audio.js');
+const moduleUrl = `data:text/javascript;base64,${Buffer.from(audio).toString('base64')}#${mutante || 'normal'}`;
+const { Sfx } = await import(moduleUrl);
 const probe = new Sfx();
 probe.pack = { voice: { T: ['audio/t-0.mp3', 'audio/t-1.mp3', 'audio/t-2.mp3'] } };
 const played = [];
@@ -123,12 +129,12 @@ const identityCases = [
   { id: 'dollynho', faction: 'B', roster: ['caminhoneiro', 'sertanejo', 'coach', 'farialimer', 'bombado', 'dollynho', 'ancap', 'canarinho', 'proerd'], expected: 'audio/a/dc26854fa366d0ec.mp3' },
   { id: 'clubber', faction: 'U', roster: ['emo', 'blackmetal', 'metaleiro', 'punk', 'skatista', 'clubber', 'rapper', 'reggae', 'pagodeiro'], expected: 'audio/a/08290068f8d9935f.mp3' },
   { id: 'reggae', faction: 'U', roster: ['emo', 'blackmetal', 'metaleiro', 'punk', 'skatista', 'clubber', 'rapper', 'reggae', 'pagodeiro'], expected: 'audio/a/f180be207d0b440b.mp3' },
-  { id: 'funkraiz', faction: 'F', roster: ['mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao'], expected: 'audio/approved-funkraiz.mp3' },
+  { id: 'funkraiz', faction: 'F', roster: ['mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao'], expected: 'audio/a/d5b87c3d2638e166.mp3' },
 ];
 const identityProbe = new Sfx();
 identityProbe.pack = { voice, characterVoice: {
   dollynho: 'audio/a/dc26854fa366d0ec.mp3',
-  funkraiz: { select: ['audio/approved-funkraiz.mp3'] },
+  funkraiz: { select: ['audio/rejeitado/funkraiz-gemini.mp3'] },
 } };
 const identityPlayed = [];
 identityProbe._sample = (file) => { identityPlayed.push(file); return { pause() {} }; };

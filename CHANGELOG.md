@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.246`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.247`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,11 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.247] — 2026-09-10
+
+### Corrigido
+- Funkeiros e Tribos Urbanas voltam a usar somente os pools de voz históricos da v7. As 36 falas Gemini rejeitadas deixam de ser alcançáveis pelos resolvers de evento, rádio e seleção; se o pack contiver apenas takes novos sem aprovação, o runtime fica em silêncio. Voz genérica, Web Speech e música removida continuam ausentes.
 
 ## Não lançado — 2026-09-06
 
