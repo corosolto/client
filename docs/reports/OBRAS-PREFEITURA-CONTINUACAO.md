@@ -17,6 +17,7 @@ Corrigir o mapa excessivamente aberto sem descaracterizar o canteiro brasileiro:
 - Worktree: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/obras-prefeitura-estrutura`
 - Branch: `codex/obras-prefeitura-estrutura-r1`
 - Base: `origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb` (`v2.0.0-alpha.246`)
+- Draft PR: [#579](https://github.com/corosolto/client/pull/579)
 - Servidor local: `http://127.0.0.1:8157`
 - URL direta: `http://127.0.0.1:8157/?debug=1&auto=P,mst&map=obras_prefeitura&perfilauto=0&ctf=1`
 - Evidência WebGL ignorada pelo Git: `artifacts/obras-prefeitura/browser/`
@@ -120,6 +121,6 @@ Observação do construtor, sem substituir aprovação humana: os corredores e c
 
 1. `npm run check:deploy`: 39/39 verde após os checkpoints.
 2. `npm run check:fast`: 134/135 verde; somente `audio:check` falhou porque `npm run setup` materializou 442 arquivos enquanto o manifest da alpha.246 declara 66. A lane não executou `npm run audio`, pois isso alteraria o domínio compartilhado de áudio. O gate causal `eval:obras` passou dentro dessa suíte.
-3. Abrir draft PR contra `main` e preservar esta branch sem merge/deploy.
+3. Draft PR #579 aberto contra `main`; preservar esta branch sem merge/deploy.
 4. O dono deve jogar a URL local em 5x5 e 8x8, testar as três rotas dos dois lados, subir nas duas torres e verificar CTF.
 5. Só após aceite estrutural, abrir uma fase visual separada para escala/ancoragem da maquinaria, paleta, iluminação e identidade de prefeitura brasileira.
