@@ -77,6 +77,21 @@
       "sourceCommit": "ea022c3c0",
       "rebuild": "tools/viewmodels/prep/rifles-carbine-final.py + optimize_paid_family.mjs"
     },
+    "tavor": {
+      "family": "ar",
+      "file": "viewmodels/ar/tavor-baked-runtime.glb",
+      "sourceSha256": "958f09eec9033af88c954d57fef4130827a2b2958109c12f52644e1e7ace573c",
+      "sourceBytes": 302180,
+      "productSha256": "de8c10ff6017b310159a8e5f5e1d33b0a17a4feaab0d06473b782070977726f0",
+      "productBytes": 1601776,
+      "sha256": "de8c10ff6017b310159a8e5f5e1d33b0a17a4feaab0d06473b782070977726f0",
+      "bytes": 1601776,
+      "mechanism": "complete-rear-bullpup-mag/rear-bolt-release-paddle",
+      "ready": false,
+      "sourceBranch": "codex/viewmodels-catalog-final",
+      "sourceCommit": "55febca73",
+      "rebuild": "tools/viewmodels/prep/rifles-tavor-final.py + optimize_paid_family.mjs"
+    },
     "m92": {
       "family": "ak",
       "file": "viewmodels/ak/m92-baked-runtime.glb",
