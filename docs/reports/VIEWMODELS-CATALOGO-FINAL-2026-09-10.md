@@ -243,7 +243,7 @@ histórica; não autorizam transplantar a pilha.
 | Fonte | Ref observada | Estado local | PR | Decisão para o catálogo final |
 |---|---|---|---|---|
 | controles | `glm/vm-controles-final@8b31f5dce5` | limpa, publicada | #549 · DIRTY | AK/faca já portadas; PT-38 segue fail-closed pelo asset privado; usar gates, não a branch |
-| DMR | `claude/vm-dmr-final@701e98e44b` | 7 fixtures geradas modificadas | #544 · DIRTY | Rem700/G3SG1 são candidatas; reconstituir por fonte, manter `ready:false` e recapturar |
+| DMR | `claude/vm-dmr-final@701e98e44b` | 7 fixtures geradas modificadas | #544 · DIRTY | fonte reconstituída no #572; falso verde de pose/material corrigido; Rem700/G3SG1 seguem `ready:false` até revisão humana |
 | LMG | `glm/vm-lmg-final@a8a9a8e896` | 2 commits adiante + 2 modificados + 3 novos, preservados | #546 · DIRTY | reprovada pelo dono; portar instrumentos apenas e reautorar depois |
 | rifles | `codex/vm-prep-rifles@ea022c3c0e` | limpa, publicada | #509 · UNSTABLE | M4 aprovada somente em idle; recarga reprovada; outras cinco são receitas |
 | precisão offline | `codex/vm-prep-precisao@99a522684a` | limpa, publicada | #513 · draft/UNSTABLE | supersedida funcionalmente pela precisão corrigida no #572 |
@@ -258,36 +258,45 @@ histórica; não autorizam transplantar a pilha.
 - **aprovadas pelo dono e integradas opt-in:** AK e faca; PT-38 aprovada na fonte, porém fechada
   nesta branch porque o produto não é publicável no Git;
 - **tecnicamente fechadas, aguardando revisão humana:** Mosin, SVD e SKS;
-- **candidatas reproduzíveis a revalidar:** Rem700 e G3SG1; os GLBs locais atuais divergem dos
-  hashes registrados em `artifacts/viewmodels/dmr/hashes.json`, portanto nenhum byte é promovido;
+- **tecnicamente fechadas, aguardando revisão humana:** Rem700 e G3SG1 agora também têm rebuild,
+  hashes, mutantes e 24 capturas reais; continuam opt-in e `ready:false`;
 - **parcial:** M4 somente em idle;
 - **reprovadas:** LMG, shotgun e recargas M4 anteriores;
 - **receita sem produto final:** MD97, carabina, SCAR, FAMAS e M92;
 - **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, AKM, G3, Tavor, M400 e AWP.
 
-O próximo marco seguro é reconstruir Rem700/G3SG1 a partir dos seis insumos cujo SHA-256 ainda
-confere, executar os gates no código atual e gerar novas capturas. A branch DMR declarou
-`ready:true` antes do aceite e os produtos locais agora têm hashes diferentes do relatório; por
-isso o catálogo final não copia esses outputs e falha fechado até obter um recibo novo.
+O rebuild DMR encontrou um falso verde na branch fonte: os nós rígidos eram anexados contra a bind
+pose e os materiais copiavam índices sem transportar imagens/texturas. Os gates antigos passavam,
+mas a primeira captura mostrava armas gigantes e desconectadas. A assembly do #572 passou a usar
+`idle@first-key`, transportar recursos WebP com índices novos e validar os dois defeitos com
+mutantes. As 24 recapturas em 3:2/16:9 mostram Rem700/G3SG1 novamente nas mãos, com material
+próprio. O recibo completo está em
+[`VIEWMODEL-DMR-INTEGRACAO-ALPHA246-2026-09-10.md`](VIEWMODEL-DMR-INTEGRACAO-ALPHA246-2026-09-10.md).
+
+Checkpoints recuperáveis do marco DMR: `a61790562` (rebuild), `287cccc8a` (assembly e recursos),
+`c2d93fa78` (contato/inspeção) e `24c72069f` (runtime opt-in, manifestos, mutantes e preview). Os
+quatro commits preservam os binários fora do Git e não alteram o estado de aprovação.
 
 ## Índice exato para revisão da manhã
 
-Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, Mosin, SVD e SKS. Um único
+Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, Mosin, SVD, SKS, Rem700 e
+G3SG1. Um único
 servidor materializa os privados fora do Git e mantém a ativação global desligada:
 
 ```bash
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
-CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-phase3/preview-root \
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-root \
   npm run preview:vm-precision
 ```
 
 Abrir somente após o comando:
 
 ```text
-http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=mosin,svd,sks&vmqa=precision
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=mosin,svd,sks,rem700,g3sg1&vmqa=precision
 ```
 
 Índice de revisão: (1) AK idle/reload e troca para faca; (2) fallback ao desativar `vmauthored`;
 (3) Mosin shoot/ferrolho/reload/inspect/ADS; (4) SVD 30 trocas ou recargas sem sumir; (5) SKS
-reload/inspect/ADS; (6) repetir em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
+reload/inspect/ADS; (6) Rem700 shoot/ferrolho/reload/ADS; (7) G3SG1 recarga tática/ADS; (8) repetir
+em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
 proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
