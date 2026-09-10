@@ -65,16 +65,19 @@
      --mutar=miolo-aberto ...... o núcleo de escada some           -> OBRAS5
      --mutar=deck-macico ....... o deck deixa de ter vão por baixo -> OBRAS6
      --mutar=rota-fechada ...... a rota leste perde o grafo        -> OBRAS7
+     --mutar=spawn-apertado .... um slot volta a encostar no bunker -> OBRAS8
+     --mutar=ctf-deck .......... bandeiras voltam ao footprint alto -> OBRAS9
    `--mutante=` é aceito como apelido de `--mutar=`.
 
    Uso: node tools/eval/obras-check.mjs [--mutar=<nome>]
    ============================================================================ */
 import { existsSync, readFileSync } from 'node:fs';
 import { THREE, MAPS, initTextures } from './harness.mjs';
+import { rotasSeparadas } from './rotas-separadas.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutar') || arg('mutante');
-const MUTANTES = new Set(['plano', 'sem-bunker', 'terreo-liso', 'sem-grua', 'miolo-aberto', 'deck-macico', 'rota-fechada']);
+const MUTANTES = new Set(['plano', 'sem-bunker', 'terreo-liso', 'sem-grua', 'miolo-aberto', 'deck-macico', 'rota-fechada', 'spawn-apertado', 'ctf-deck']);
 if (MUT && !MUTANTES.has(MUT)) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 let fonte = readFileSync(new URL('../../public/js/map_obras.js', import.meta.url), 'utf8');
@@ -118,6 +121,14 @@ if (MUT === 'rota-fechada') {
   const nos = world.waypoints.nodes;
   const fecha = nos.map((n) => n.x > 10);
   for (let i = 0; i < adj.length; i++) adj[i] = fecha[i] ? [] : adj[i].filter((j) => !fecha[j]);
+}
+if (MUT === 'spawn-apertado') {
+  world.spawns.E[2].x = 10;
+  world.spawns.B[2].x = 10;
+}
+if (MUT === 'ctf-deck') {
+  world.ctfPoints.find((p) => p.id === 'E').z = -14;
+  world.ctfPoints.find((p) => p.id === 'B').z = 14;
 }
 
 /* ================= OBRAS1 · TORRE ESCALÁVEL ================= */
@@ -228,6 +239,26 @@ for (const [team, side] of [['E', -1], ['B', 1]]) {
 }
 const obras7 = routeSets.every(Boolean);
 
+/* ================= OBRAS8 · SALA DE SPAWN =================
+   O container e o saco de areia protegem o nascimento, mas não podem encostar no
+   corpo. Mede a distância plana ao AABB sólido mais próximo na altura do peito. */
+const folgasSpawn = Object.values(world.spawns).flat().map((s) => Math.min(...colliders
+  .filter((c) => c.minY < 1.5 && c.maxY > 0.3)
+  .map((c) => Math.hypot(Math.max(c.minX - s.x, 0, s.x - c.maxX), Math.max(c.minZ - s.z, 0, s.z - c.maxZ)))));
+const piorFolgaSpawn = Math.min(...folgasSpawn);
+const obras8 = piorFolgaSpawn >= 1.20;
+
+/* ================= OBRAS9 · CTF NÃO ANCORA NO DECK =================
+   nearestWaypoint é 2D. Uma bandeira no footprint da torre escolhe o nó do deck
+   e faz todas as rotas convergirem na única rampa, embora a bandeira esteja no chão. */
+const rotasCtf = [];
+for (const team of ['E', 'B']) for (const p of world.ctfPoints) {
+  const s = world.spawns[team][0];
+  const from = world.nearestWaypoint(s.x, s.z), to = world.nearestWaypoint(p.x, p.z);
+  rotasCtf.push({ par: `${team}→${p.id}`, n: rotasSeparadas(nodes, world.waypoints.adj, from, to).length, y: nodes[to]?.y || 0 });
+}
+const obras9 = rotasCtf.every((r) => r.n >= 2 && Math.abs(r.y) < 1);
+
 /* ---------------- veredito ---------------- */
 const marca = MUT ? ` [mutante ${MUT}]` : '';
 const linha = (id, ok, evid) => { console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${evid}${marca}`); return ok; };
@@ -239,10 +270,12 @@ const r = [
   linha('OBRAS5', obras5, `${(fracao * 100).toFixed(1)}% dos ${pares} pares >20 m com linha livre (teto ${(TETO_LIVRE * 100).toFixed(0)}%) · ${olho.length} sólidos de olho (mín. ${MIN_OLHO}) · núcleo ${nucleo ? 'sim' : 'NÃO'} · ${tapumes.length} tapumes`),
   linha('OBRAS6', obras6, `sob a torre: em cima ${vaos.map((v) => v.cima.toFixed(2)).join('/')} m · por baixo ${vaos.map((v) => v.baixo.toFixed(2)).join('/')} m`),
   linha('OBRAS7', obras7, `rotas oeste/centro/leste: ${routeEvidence.join(' · ')}`),
+  linha('OBRAS8', obras8, `pior folga dos 8 slots ${(piorFolgaSpawn || 0).toFixed(2)} m (mín. 1,20 m)`),
+  linha('OBRAS9', obras9, `CTF no térreo com ≥2 rotas separadas: ${rotasCtf.map((r) => `${r.par} ${r.n} rota(s) y=${r.y.toFixed(2)}`).join(' · ')}`),
 ];
 
 const falhas = r.filter((ok) => !ok).length;
 let cega = false;
 if (MUT && !falhas) { console.log(`MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`); cega = true; }
-if (!falhas && !cega) console.log('OBRAS ✓ 7 cláusulas das Obras da Prefeitura (torre, bunker, térreo, gruas, miolo, vão, rotas)');
+if (!falhas && !cega) console.log('OBRAS ✓ 9 cláusulas das Obras da Prefeitura (torre, bunker, térreo, gruas, miolo, vão, rotas, spawn e CTF)');
 process.exit(falhas || cega ? 1 : 0);

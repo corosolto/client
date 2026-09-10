@@ -54,7 +54,7 @@ Nenhum serviço pago foi chamado e nenhum asset novo foi gerado. Os dois arquivo
 
 ## Régua causal
 
-`npm run eval:obras` mede sete invariantes e executa um mutante adversarial por cláusula:
+`npm run eval:obras` mede nove invariantes e executa um mutante adversarial por cláusula:
 
 1. OBRAS1: duas torres, deck alto e nós alcançáveis;
 2. OBRAS2: quatro bunkers e cobertura dos spawns;
@@ -63,6 +63,8 @@ Nenhum serviço pago foi chamado e nenhum asset novo foi gerado. Os dois arquivo
 5. OBRAS5: miolo fechado, no máximo 30% dos pares livres por mais de 20 m;
 6. OBRAS6: passagem sob o deck e suporte em cima dele;
 7. OBRAS7: rotas oeste, centro e leste por spawn, com baixa sobreposição.
+8. OBRAS8: os oito slots mantêm ao menos 1,20 m de folga de sólidos;
+9. OBRAS9: cada spawn alcança cada bandeira térrea por ao menos duas rotas separadas.
 
 Baseline em `origin/main` com a régua final:
 
@@ -83,7 +85,38 @@ Resultado da candidata:
 - OBRAS6: topo a 5,60 m e terreno sob os decks a -0,22/-0,15 m;
 - OBRAS7: rotas com 33/18/23 nós no sentido norte e 31/17/22 no sentido sul; sobreposição máxima 56%/43%.
 
-Os mutantes `plano`, `sem-bunker`, `terreo-liso`, `sem-grua`, `miolo-aberto`, `deck-macico` e `rota-fechada` falharam individualmente no gate esperado.
+Os mutantes `plano`, `sem-bunker`, `terreo-liso`, `sem-grua`, `miolo-aberto`, `deck-macico`, `rota-fechada`, `spawn-apertado` e `ctf-deck` falharam individualmente no gate esperado.
+
+## Fechamento dos vermelhos remotos de 10/09
+
+O job `build` do PR #579 (run `34465436988`, job `102832866214`) reproduziu dois
+vermelhos próprios da candidata: `MAP2B` media 0,80 m nos slots `(10,±31)` e
+`CTF2` encontrava uma única rota nos quatro pares envolvendo E/B. A comparação
+na mesma base `origin/main@2115d5e2` deu 3,45 m/68,3 m² e quatro rotas, provando
+que ambos nasceram nesta lane.
+
+A bissecção geométrica encontrou duas causas:
+
+- o slot x=10 estava a 0,80 m do saco de areia do bunker leste; ele foi movido
+  para x=8, mantendo a formação e elevando a pior folga para 2,50 m no MAP2B;
+- as bandeiras em `(-10,±14)` sobrepunham o footprint das torres. Como
+  `nearestWaypoint(x,z)` é 2D, o alvo virava o deck de 2,8 m e todas as rotas
+  convergiam na única rampa. Em `(-10,±18)` os alvos ficam no térreo e CTF2
+  mede três a quatro rotas separadas em todos os pares.
+
+Comandos causais verdes após a correção:
+
+```sh
+node tools/eval/map-check.mjs obras_prefeitura
+npm run eval:obras
+for m in plano sem-bunker terreo-liso sem-grua miolo-aberto deck-macico rota-fechada spawn-apertado ctf-deck; do
+  node tools/eval/obras-check.mjs --mutar="$m" && exit 1 || true
+done
+```
+
+Os novos mutantes reproduzem exatamente os dois defeitos: `spawn-apertado`
+volta a 0,80 m e acende OBRAS8; `ctf-deck` volta a y=2,80 m/uma rota e acende
+OBRAS9. Nenhum limiar ou gate global foi afrouxado.
 
 ## Bots, CTF e contrato
 

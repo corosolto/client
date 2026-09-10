@@ -416,15 +416,20 @@ export function buildObras(scene, T) {
 
   // Slot 0 é onde o jogador NASCE e onde o armário ancora (game.js _resetPositions):
   // em x=4 o chão do rack (z=±29,4) fica ≥ −0,01 — em x=−8 afundava a −0,11 (VM14).
-  const mk = s => [4, -2, 10, -8].map(x => ({ x, z: (HALF_Z - 4) * s, yaw: s < 0 ? 0 : Math.PI }));
+  /* x=10 ficava a apenas 0,80 m do saco de areia do bunker leste. O slot x=8
+     mantém a formação de quatro jogadores e devolve a folga lateral de esquiva. */
+  const mk = s => [4, -2, 8, -8].map(x => ({ x, z: (HALF_Z - 4) * s, yaw: s < 0 ? 0 : Math.PI }));
   const spawns = { E: mk(-1), B: mk(1) };
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     ctfPoints: [
-      { id: 'E', label: 'CANTEIRO SUL', x: -10, z: -14 },
+      /* As torres novas ocupam x≈-10,z≈±11 em dois níveis. Em z=±14 o seletor
+         2D de waypoint ancorava a bandeira no deck de 2,8 m e todas as rotas
+         convergiam na única rampa. z=±18 mantém o objetivo no térreo livre. */
+      { id: 'E', label: 'CANTEIRO SUL', x: -10, z: -18 },
       { id: 'MID', label: 'A OBRA', x: 9, z: 0 },
-      { id: 'B', label: 'CANTEIRO NORTE', x: -10, z: 14 },
+      { id: 'B', label: 'CANTEIRO NORTE', x: -10, z: 18 },
     ],
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
