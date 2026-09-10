@@ -24,6 +24,7 @@ A lane fica tecnicamente pronta quando:
 - worktree: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/atacadao-estrutura-r1`
 - branch: `codex/atacadao-estrutura-r1`
 - base verificada: `origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb`
+- PR draft: [#582](https://github.com/corosolto/client/pull/582)
 - preview da base: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/previews/atacadao-main-2115d5e`
 - candidata local: `http://localhost:8161/?debug=1&auto=P,mst&map=atacadao_treta&perfilauto=0&ctf=1`
 - base local: `http://localhost:8163/?debug=1&auto=P,mst&map=atacadao_treta&perfilauto=0&ctf=1`
