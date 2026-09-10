@@ -53,7 +53,7 @@ export const VM_WEAPON = {
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
   deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
-  m92: W('ak'),
+  m92: W('ak', { baked: true, frame: 'family' }),
   akm: W('ak'),
   g3: W('g3'),
   revolver38: W('revolver'),
