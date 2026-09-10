@@ -260,7 +260,8 @@ histórica; não autorizam transplantar a pilha.
 - **tecnicamente fechadas, aguardando revisão humana:** Mosin, SVD e SKS;
 - **tecnicamente fechadas, aguardando revisão humana:** Rem700 e G3SG1 agora também têm rebuild,
   hashes, mutantes e 24 capturas reais; continuam opt-in e `ready:false`;
-- **parcial:** M4 somente em idle;
+- **tecnicamente fechada, aguardando revisão humana:** M4 com seis clipes próprios,
+  carregador separado e mãos preservadas por root comum;
 - **reprovadas:** LMG, shotgun e recargas M4 anteriores;
 - **receita sem produto final:** MD97, carabina, SCAR, FAMAS e M92;
 - **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, AKM, G3, Tavor, M400 e AWP.
@@ -293,11 +294,28 @@ CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels
 Abrir somente após o comando:
 
 ```text
-http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=mosin,svd,sks,rem700,g3sg1&vmqa=precision
+http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak&vmweapon=m4,mosin,svd,sks,rem700,g3sg1&vmqa=precision
 ```
 
 Índice de revisão: (1) AK idle/reload e troca para faca; (2) fallback ao desativar `vmauthored`;
-(3) Mosin shoot/ferrolho/reload/inspect/ADS; (4) SVD 30 trocas ou recargas sem sumir; (5) SKS
-reload/inspect/ADS; (6) Rem700 shoot/ferrolho/reload/ADS; (7) G3SG1 recarga tática/ADS; (8) repetir
+(3) M4 equip/shoot/recarga tática/recarga vazia/inspect/ADS; (4) Mosin
+shoot/ferrolho/reload/inspect/ADS; (5) SVD 30 trocas ou recargas sem sumir; (6) SKS
+reload/inspect/ADS; (7) Rem700 shoot/ferrolho/reload/ADS; (8) G3SG1 recarga tática/ADS; (9) repetir
 em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
 proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
+
+## Marco rifles — M4 reautorada
+
+A M4 deixou de ser somente um idle aprovado. A receita final externa preserva a aparência e
+adiciona `equip_rifle`, `shoot`, duas recargas semanticamente distintas e `inspect`. A primeira
+saída foi rejeitada porque o exporter eliminava o movimento do root das mãos no equip; o produto
+atual anima um root comum e mede deriva zero em equip/tiro/inspeção.
+
+O gate de asset passou com sete mutantes, carregador com excursão de 0,4524 m e retorno ao poço.
+O lifecycle passou 30 ciclos/540 amostras alternando 3:2 e 16:9; 20 capturas reais não tiveram
+erro fatal de viewmodel/WebGL. A candidata permanece `ready:false`, família AR fechada e global
+off até revisão humana. Recibo completo:
+[`VIEWMODEL-RIFLES-M4-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-M4-ALPHA246-2026-09-10.md).
+
+Checkpoints: `0604f8879`, `f1f0b5211`, `7ed7df1ea`. Próxima arma é a MD97, com carregador
+frontal próprio conforme a receita da preparação; não se reutiliza o pente da M4.
