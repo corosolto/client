@@ -1,5 +1,5 @@
 {
-  "sourceSha256": "420677078c6d958b4ca4a11ce56077fb680cae7b420737b2dff3e10b1221a4a4",
+  "sourceSha256": "3107269e305075a37d9337af327df9ab1d65cdbf830c16e91b475295e14b37d0",
   "browser": "Google Chrome",
   "viewport": [
     1200,
@@ -13,12 +13,8 @@
     "httpStatus": 200
   },
   "warnings": [
-    "SUPPORT_URL_BR is not defined",
-    "404 /%7B%60/map-preview.css",
-    "404 /%7B%60/js/ops.js",
-    "404 /api/geo-lang",
     "404 /audio/manifest.json",
-    "404 /audio/menu-music/m14.mp3",
+    "404 /audio/menu-music/m10.mp3",
     "404 /audio/manifest.default.json",
     "404 /audio/ambiente/vento.mp3",
     "404 /audio/ambiente/hum-indoor.mp3",

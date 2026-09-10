@@ -16,7 +16,10 @@ const mutant = (process.argv.find((a) => a.startsWith('--mutante=')) || '=').spl
 const selftestMutants = process.argv.includes('--selftest-mutantes');
 const mutants = {
   'muro-sem-acesso': 'CAR2', 'guarita-fechada': 'CAR2',
+  'patamar-desconectado': 'CAR2', 'degrau-alto': 'CAR2',
+  'colisao-bloqueando': 'CAR2', 'guarita-inalcancavel': 'CAR2',
   'pavilhao-solido': 'CAR3', 'escada-decorativa': 'CAR3',
+  'janela-sem-parede': 'CAR3',
   'rota-unica': 'CAR4', 'spawn-exposto': 'CAR5',
   'arame-na-passarela': 'CAR6', 'viatura-procedural': 'CAR7',
 };
@@ -57,8 +60,17 @@ if (selftestMutants) Object.assign(c, {
 });
 if (mutant === 'muro-sem-acesso') c.wallAccesses = [];
 if (mutant === 'guarita-fechada') c.guardEntries = [];
+if (mutant === 'patamar-desconectado' && c.guardRoutes?.[0]) c.guardRoutes[0].points.at(-2)[1] += 1;
+if (mutant === 'degrau-alto' && c.wallAccesses?.[0]?.heights?.[5]) c.wallAccesses[0].heights[5] += .2;
+if (mutant === 'colisao-bloqueando' && c.wallAccesses?.[0]) {
+  const a = c.wallAccesses[0], i = 5, z = a.z0 + a.dz * i;
+  world.colliders.push({ minX: a.x - 1.4, maxX: a.x + 1.4, minY: 0, maxY: 8,
+    minZ: z - .3, maxZ: z + .3, tag: 'mutante-colisao-escada' });
+}
+if (mutant === 'guarita-inalcancavel' && c.guardEntries?.[0]) c.guardEntries[0].reachable = false;
 if (mutant === 'pavilhao-solido') c.pavilionPassages = [];
 if (mutant === 'escada-decorativa') c.pavilionStairs = [];
+if (mutant === 'janela-sem-parede') c.pavilionWindowSupports = [];
 if (mutant === 'rota-unica') c.routes = (c.routes || []).slice(0, 1);
 if (mutant === 'spawn-exposto' && selftestMutants) c.maxSpawnSight = 4;
 if (mutant === 'arame-na-passarela') c.wireClearance = 0;
@@ -79,6 +91,19 @@ const accessSurfaceWorks = (a) => {
     // Um patamar sobreposto pode assumir os últimos degraus; ainda precisa ser
     // alcançável dentro do mesmo limite STEP_H usado pelo movimento real.
     return next + .01 >= expected && rise <= MAX_PLAYER_STEP + .001;
+  });
+};
+const pathWalkable = (points = [], label = '') => {
+  const samples = samplesOf(points, .12);
+  let previous = points[0]?.[1] || 0;
+  return samples.length >= 2 && samples.every((point, index) => {
+    const y = world.groundHeightAt(point.x, point.z, previous), rise = y - previous;
+    const free = capsuleFree(point.x, y, point.z);
+    const ok = Math.abs(y - point.y) <= MAX_PLAYER_STEP + .02 && Math.abs(rise) <= MAX_PLAYER_STEP + .001 && free;
+    if (!ok && process.argv.includes('--debug')) console.error('CAR2 percurso', label, index,
+      { point: [point.x, point.y, point.z], ground: y, previous, rise, free });
+    previous = y;
+    return ok;
   });
 };
 const capsuleFree = (x, y, z, colliders = world.colliders, radius = .38) => {
@@ -163,7 +188,8 @@ const visible = (a, b) => !losColliders.some((box) => {
 });
 const towerSight = selftestMutants ? [] : (c.watchtowers || []).map((tower) => {
   const targets = tower.team === 'E' ? world.spawns.B : world.spawns.E;
-  return { name: tower.name, visible: targets.filter((spawn) => visible(tower.eye, [spawn.x, 1.6, spawn.z])).length };
+  const seen = targets.filter((spawn) => visible(tower.eye, [spawn.x, 1.6, spawn.z]));
+  return { name: tower.name, visible: seen.length, targets: seen.map((spawn) => [spawn.x, spawn.z]) };
 });
 const maxSpawnSight = selftestMutants ? c.maxSpawnSight : towerSight.length ? Math.max(...towerSight.map((row) => row.visible)) : 4;
 const counterfire = selftestMutants ? c.counterfireRoutes : new Set((c.counterfireVantages || []).filter((vantage) =>
@@ -226,25 +252,41 @@ const c4BrowserValid = c4Receipt?.sourceSha256 === sourceHash && c4Receipt?.stat
   && c4Receipt?.wallReadability?.distancesM?.join(',') === '10,20,30'
   && c4Receipt?.wallReadability?.captures?.length === 3
   && c4Receipt.wallReadability.captures.every((capture) => capture.width === 1200 && capture.height === 800)
-  && c4Receipt?.stairTraversal?.length === 10 && c4Receipt.stairTraversal.every((row) => row.reached === true);
+  && c4Receipt?.guardTraversal?.length === 12 && c4Receipt.guardTraversal.every((row) => row.reached === true && row.endErrorM <= .65)
+  && c4Receipt?.stairTraversal?.length === 2 && c4Receipt.stairTraversal.every((row) => row.reached === true && row.endErrorM <= .65)
+  && c4Receipt?.guardCaptures?.length === 6 && c4Receipt.guardCaptures.every((capture) => capture.width === 1200 && capture.height === 800)
+  && c4Receipt?.pavilionCapture?.width === 1200 && c4Receipt?.pavilionCapture?.height === 800;
 const results = [];
 const put = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${detail}`); };
 
 put('CAR1', source.MAPS.penitenciaria?.name === 'Carandiru' && source.MAPS.penitenciaria?.build === MAPS.penitenciaria.build,
   `nome=${source.MAPS.penitenciaria?.name}; ID penitenciaria preservado`);
 const access = c.wallAccesses || [], entries = c.guardEntries || [], walks = c.wallWalkways || [];
+const guardRoutes = c.guardRoutes || [];
+const reachableEntries = entries.filter((entry) => named(entry.name) && entry.reachable === true
+  && Math.abs(world.groundHeightAt(entry.inside[0], entry.inside[2], entry.inside[1]) - entry.inside[1]) <= .01
+  && capsuleFree(entry.inside[0], entry.inside[1], entry.inside[2]));
+const walkableGuardRoutes = guardRoutes.filter((route) => named(route.name) && pathWalkable(route.points, `${route.name}:ida`)
+  && pathWalkable([...route.points].reverse(), `${route.name}:volta`));
 put('CAR2', access.length >= 4 && access.every((a) => named(a.name) && staircaseWorks(a.heights)
-  && stairEnvelopeWorks(a, 2.6, 12) && accessSurfaceWorks(a))
-  && new Set(access.map((a) => a.team)).size === 2 && walks.length >= 3 && walks.every((w) => named(w.name))
-  && entries.length >= 4 && entries.every(named),
+  && stairEnvelopeWorks(a, 2.6, 12) && accessSurfaceWorks(a)
+  && Math.abs(a.heights.at(-1) - a.landingY) <= .01)
+  && new Set(access.map((a) => a.team)).size === 2 && walks.length >= 4 && walks.every((w) => named(w.name))
+  && entries.length >= 6 && reachableEntries.length === entries.length
+  && guardRoutes.length >= 6 && walkableGuardRoutes.length === guardRoutes.length,
   `${access.length}/4 acessos em ${new Set(access.map((a) => a.team)).size}/2 lados de spawn; `
   + `degrau máximo=${Math.max(0, ...access.flatMap((a) => a.heights.map((h, i) => h - (a.heights[i - 1] || 0)))).toFixed(3)} m; `
-  + `largura/run=${(access[0]?.width || 0).toFixed(2)}/${(access[0]?.run || 0).toFixed(2)} m; ${walks.length}/3 passarelas; ${entries.length}/4 guaritas`);
+  + `largura/run=${(access[0]?.width || 0).toFixed(2)}/${(access[0]?.run || 0).toFixed(2)} m; ${walks.length}/4 passarelas; guaritas=${reachableEntries.length}/${entries.length}; rotas contínuas=${walkableGuardRoutes.length}/${guardRoutes.length}`);
 const passages = c.pavilionPassages || [], pStairs = c.pavilionStairs || [], gallery = c.pavilionGallery;
+const windowSupports = c.pavilionWindowSupports || [];
 put('CAR3', passages.length >= 2 && passages.every((p) => p.width >= 2.2 && named(p.name))
   && pStairs.length >= 1 && pStairs.every((s) => named(s.name) && staircaseWorks(s.heights, 3.3)
     && stairEnvelopeWorks(s, 3, 6.5) && accessSurfaceWorks(s))
   && gallery?.connected && named(gallery.name) && (c.pavilionWindows || []).length >= 4
+  && windowSupports.length === (c.pavilionWindows || []).length
+  && windowSupports.every((support) => named(support.window) && named(support.wall)
+    && world.groundHeightAt(support.firing[0], support.firing[2], support.firing[1]) === support.firing[1]
+    && capsuleFree(support.firing[0], support.firing[1], support.firing[2]))
   && !world.colliders.some((x) => x.tag === 'pavilhao'),
   `${passages.length}/2 passagens; ${pStairs.length}/1 escada; `
   + `largura/run=${(pStairs[0]?.width || 0).toFixed(2)}/${(pStairs[0]?.run || 0).toFixed(2)} m; superfície=${!!pStairs[0] && accessSurfaceWorks(pStairs[0])}; galeria=${!!gallery?.connected}`);
@@ -256,6 +298,7 @@ put('CAR4', car4, selftestMutants ? `${(c.routes || []).length}/3 rotas; largura
   : `${routeMetrics.map((r) => `${r.id}: b${r.blocked}${r.firstBlocked?`@${r.firstBlocked}`:''}/s${r.unsupported}/e${r.narrow}${r.firstNarrow?`@${r.firstNarrow}`:''}/${r.connected&&r.midConnected?'ligada':'solta'}`).join('; ')}; altos=${upperNodes.length}; muralha=${wallNodes.length}; 3 saídas/spawn=${spawnRouteAccess}; MID P6=${routesReachMid}`);
 put('CAR5', maxSpawnSight <= 2 && counterfire >= 2 && towerSight.every((row) => named(row.name)),
   `máximo visto=${maxSpawnSight}/4; contrafogo real=${counterfire}/3; ${towerSight.map((row) => `${row.name}:${row.visible}`).join(', ') || 'fixture'}`);
+if (process.argv.includes('--debug')) console.error('CAR5 visadas', JSON.stringify(towerSight));
 put('CAR6', c.elevatedCoverage >= .9 && c.wireClearance >= 1.75,
   `piso ${Math.round((c.elevatedCoverage || 0) * 100)}%; altura livre ${c.wireClearance ?? 'pendente'} m`);
 put('CAR7', c.mintVehicle === true && c.vehicleSource === 'mint' && vehicleGeometryLoaded
@@ -267,7 +310,8 @@ put('CAR8', perfValid, selftestMutants ? `med=${c.cost?.med}; low=${c.cost?.low}
   : `recibo=${perf ? 'presente' : 'ausente'}; amostras=${perfRows.length}/8; fonte=${perf?.sourceSha256 === sourceHash ? 'atual' : 'divergente'}`);
 put('CAR9', c4BrowserValid, `vídeos=${c4Routes.length}/3; rotas=${c4Routes.filter((route) => route.continuous).length}/3; `
   + `muralha=${c4Routes.find((route) => route.id === 'muralha-leste')?.verticalRangeM ?? 'pendente'} m; `
-  + `escadas=${c4Receipt?.stairTraversal?.filter((row) => row.reached).length || 0}/10; `
+  + `guaritas=${c4Receipt?.guardTraversal?.filter((row) => row.reached).length || 0}/12; `
+  + `pavilhão=${c4Receipt?.stairTraversal?.filter((row) => row.reached).length || 0}/2; `
   + `silhuetas=${c4Receipt?.wallReadability?.captures?.length || 0}/3; humano=${c4Receipt?.humanVisualApproval || 'ausente'}`);
 
 const active = checkpoint === 'C1' ? new Set(['CAR1', 'CAR2', 'CAR3', 'CAR6'])

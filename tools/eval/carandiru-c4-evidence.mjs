@@ -159,32 +159,58 @@ try {
     const path = `${out}/muralha-personagem-${distanceM}m.png`; await page.screenshot({ path });
     wallCaptures.push({ distanceM, ...actor, ...pngMeta(path) });
   }
-  const stairTraversal = await page.evaluate(() => {
+  const traversal = await page.evaluate(() => {
     const game = window.__game, player = game.player, rows = [];
-    const run = (id, start, input, frames, mode, targetY) => {
+    const follow = (id, points) => {
+      const start = points[0];
       player.pos.set(...start); player.vel.set(0, 0, 0); player.yaw = 0;
       player.grounded = true; player.crouchF = 0; player.weapon = 'pistol';
       player._spaceHeld = false; player.jumpBufferedUntil = 0; player.coyoteUntil = 0;
-      let minY = player.pos.y, maxY = player.pos.y;
-      for (let i = 0; i < frames; i++) {
-        game.time += 1 / 60;
-        game._moveEntity(player, { ax: input[0], az: input[1], shift: false, crouch: false, jump: false }, 1 / 60);
+      let frames = 0, targetIndex = 1, minY = player.pos.y, maxY = player.pos.y;
+      while (targetIndex < points.length && frames < 7200) {
+        const target = points[targetIndex], dx = target[0] - player.pos.x, dz = target[2] - player.pos.z;
+        const distance = Math.hypot(dx, dz);
+        if (distance < .42 && Math.abs(player.pos.y - target[1]) < .58) { targetIndex++; continue; }
+        game.time += 1 / 60; frames++;
+        game._moveEntity(player, { ax: dx, az: dz, shift: true, crouch: false, jump: false }, 1 / 60);
         minY = Math.min(minY, player.pos.y); maxY = Math.max(maxY, player.pos.y);
       }
-      rows.push({ id, mode, start, end: player.pos.toArray(), minY, maxY,
-        reached: mode === 'up' ? maxY >= targetY - .05 : minY <= targetY + .05 });
+      const endTarget = points.at(-1), endErrorM = Math.hypot(player.pos.x-endTarget[0], player.pos.y-endTarget[1], player.pos.z-endTarget[2]);
+      return { id, start, endTarget, end: player.pos.toArray(), minY, maxY, frames, targetIndex,
+        endErrorM, reached: targetIndex === points.length && endErrorM <= .65 };
     };
-    for (const access of game.world.carandiru.wallAccesses) {
-      const direction = Math.sign(access.dz), topZ = access.z0 + access.dz * (access.heights.length - 1);
-      run(`${access.name}-subida`, [access.x, 0, access.z0 - direction * 1.2], [0, direction], 360, 'up', 5.8);
-      run(`${access.name}-descida`, [access.x, 5.8, topZ + direction * .85], [0, -direction], 360, 'down', 0);
+    const guards = [];
+    for (const route of game.world.carandiru.guardRoutes) {
+      const up = follow(`${route.name}-patio-guarita`, route.points);
+      const down = follow(`${route.name}-guarita-patio`, [...route.points].reverse());
+      guards.push(up, down);
     }
     const stair = game.world.carandiru.pavilionStairs[0], direction = Math.sign(stair.dx);
     const topX = stair.x0 + stair.dx * (stair.heights.length - 1);
-    run(`${stair.name}-subida`, [stair.x0, 0, stair.z], [direction, 0], 300, 'up', 3.4);
-    run(`${stair.name}-descida`, [topX + direction, 3.4, stair.z], [-direction, 0], 300, 'down', 0);
-    return rows;
+    const pavilionPoints = [[stair.x0-direction*.9,0,stair.z],
+      ...stair.heights.map((y,i)=>[stair.x0+i*stair.dx,y,stair.z]), [topX+direction*.55,3.4,stair.z], [0,3.4,1.7]];
+    const pavilion = [follow(`${stair.name}-patio-galeria`, pavilionPoints),
+      follow(`${stair.name}-galeria-patio`, [...pavilionPoints].reverse())];
+    return { guards, pavilion };
   });
+  const guardCaptures = [];
+  for (const entry of prepared.routes.length ? await page.evaluate(() => window.__game.world.carandiru.guardEntries) : []) {
+    const camera = await page.evaluate((entry) => {
+      const game = window.__game;
+      game.camera.position.set(entry.inside[0], entry.inside[1] + 1.62, entry.inside[2]);
+      game.camera.lookAt(0, 2.2, 0); game.camera.updateMatrixWorld(true); game.renderer.render(game.scene, game.camera);
+      return game.camera.position.toArray();
+    }, entry);
+    await page.waitForTimeout(100);
+    const path = `${out}/${entry.name}.png`; await page.screenshot({ path });
+    guardCaptures.push({ entry: entry.name, camera, ...pngMeta(path) });
+  }
+  const pavilionCapturePath = `${out}/pavilhao-janelas-com-volume.png`;
+  await page.evaluate(() => {
+    const game = window.__game; game.camera.position.set(14, 6.3, 13); game.camera.lookAt(0, 4.8, 0);
+    game.camera.updateMatrixWorld(true); game.renderer.render(game.scene, game.camera);
+  });
+  await page.waitForTimeout(100); await page.screenshot({ path: pavilionCapturePath });
   const vehicle = await page.evaluate(async () => {
     const game = window.__game, mint = game.world.root.getObjectByName('carandiru-viatura-mint');
     const fallback = game.world.root.getObjectByName('carandiru-viatura-fallback');
@@ -196,11 +222,12 @@ try {
 
   const receipt = { sourceSha256, browser: 'Google Chrome', viewport: [viewport.width, viewport.height], aspectRatio: '3:2',
     state: prepared.state, evidenceMethod: 'Travessia contínua renderizada em visão de jogador sobre as polilinhas medidas por CAR4; cada amostra também chama Game._collide. Não é playtest humano.',
-    routes, vehicle, stairTraversal, wallReadability: { distancesM: [10, 20, 30], captures: wallCaptures,
+    routes, vehicle, guardTraversal: traversal.guards, stairTraversal: traversal.pavilion,
+    guardCaptures, pavilionCapture: pngMeta(pavilionCapturePath), wallReadability: { distancesM: [10, 20, 30], captures: wallCaptures,
       assessment: 'pending-independent-and-human-review', humanGameplay: 'pending' },
     warnings: unique(warnings), errors: unique(errors), humanVisualApproval: 'pending' };
   writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n');
-  if (receipt.errors.length || stairTraversal.some((row) => !row.reached)
+  if (receipt.errors.length || traversal.guards.some((row) => !row.reached) || traversal.pavilion.some((row) => !row.reached)
     || routes.some((route) => route.collisionCorrections || route.video.width !== 1200 || route.video.height !== 800)) process.exitCode = 1;
 } finally {
   await browser.close();

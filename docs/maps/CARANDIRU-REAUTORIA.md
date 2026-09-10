@@ -252,8 +252,53 @@ anterior não constitui aprovação completa do mapa.
 
 ## Próximo passo
 
-C4 entrega material revisável das três rotas e a correção mensurável das cinco
-escadas. Ainda faltam reteste humano das escadas, movimento e combate, skins de
-contraste baixo, avaliação da cobertura no corredor e aprovação final do dono. Não
-avançar o rótulo visual nem autorizar merge/deploy enquanto esses itens estiverem
-pendentes.
+C4 entrega material revisável das três rotas. O primeiro reteste humano encontrou
+novos bloqueios nas guaritas e no Pavilhão 6; a correção e a evidência posterior
+estão registradas na seção seguinte. A aprovação final do dono continua pendente.
+
+## Correção após o segundo teste humano — guaritas e Pavilhão 6
+
+O segundo teste humano refutou o verde anterior: nenhuma escada dava acesso
+funcional às passarelas e guaritas, e as janelas do prédio central apareciam
+suspensas sem um volume arquitetônico coerente. A investigação reproduziu o falso
+positivo antes da mudança. `guardEntries` eram seis nomes, dos quais somente
+quatro existiam, todos em `Group` vazios; nenhuma das seis rotas era contínua. O
+recibo C4 teleportava o corpo ao início de cada acesso. As guaritas tinham piso em
+6,95 m contra passarela em 5,80 m, sem superfície interna. O pavilhão tinha quatro
+massas de canto e cascas de janela sem suporte verificável.
+
+- As quatro escadas agora terminam alinhadas às quatro passarelas em 5,80 m. Seis
+  rotas começam no pátio, atravessam cada degrau e patamar, contornam os apoios e
+  entram em quatro guaritas de canto e duas torres do muro norte. O mesmo percurso
+  funciona na volta, sem reposicionar o jogador entre trechos.
+- Cada guarita tem piso registrado, entrada livre, cobertura, peitoril e posição
+  jogável. As cascas Mint originais continuam carregadas e registradas por
+  proveniência, mas ocultas: o GLB recuperado é fechado e não oferece interior
+  navegável. A geometria procedural visível e seus colisores formam o espaço
+  autoritativo.
+- Contracobertura física, e não metadado, limita cada torre central a no máximo
+  2/4 spawns visíveis. O raycast também mantém 3/3 posições de contratiro.
+- O Pavilhão 6 passou a ter piso superior completo, fachadas construídas ao redor
+  dos vãos, escada contínua e posições de tiro com parede e piso adjacentes. As
+  janelas deixam de ser faces soltas entre as massas de canto.
+- O obstáculo central que bloqueava a aproximação da escada foi deslocado sem
+  remover cobertura nem alterar spawns, bandeiras ou identidade do mapa.
+
+A régua agora falha causalmente com `patamar-desconectado`, `degrau-alto`,
+`colisao-bloqueando`, `guarita-inalcancavel` e `janela-sem-parede`. Todos os cinco
+mutantes reprovam somente CAR2 ou CAR3. No jogo real, o novo recibo WebGL mede
+12/12 percursos pátio↔guarita e 2/2 pátio↔galeria; o maior erro final é 0,418 m.
+`eval:mapcontrato` mede 1.223 nós, 14.280 arestas e grafo conexo.
+
+As seis vistas internas das guaritas e a vista do pavilhão são PNG 1200×800 em
+`artifacts/carandiru-c4/final/`; o recibo versionado é
+`tools/eval/carandiru-c4-browser.json`. O SHA-256 da fonte validada é
+`3107269e305075a37d9337af327df9ab1d65cdbf830c16e91b475295e14b37d0`.
+O A/B Chrome final aumentou chamadas por quadro em 10,5% (med/5), 8,0% (med/8),
+14,2% (low/5) e 11,4% (low/8), todos dentro do teto de 15%, com oito amostras
+`live` e zero erro inesperado.
+
+A correção está tecnicamente pronta para novo teste humano. Ainda é necessário o
+dono percorrer as seis guaritas com teclado/mouse, combater nas posições elevadas
+e aprovar a leitura visual do pavilhão; CAR9 mantém `humanVisualApproval=pending`.
+Não autorizar merge ou deploy antes desse retorno.

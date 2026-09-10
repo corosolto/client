@@ -1,5 +1,5 @@
 {
-  "sourceSha256": "420677078c6d958b4ca4a11ce56077fb680cae7b420737b2dff3e10b1221a4a4",
+  "sourceSha256": "3107269e305075a37d9337af327df9ab1d65cdbf830c16e91b475295e14b37d0",
   "browser": "Google Chrome",
   "viewport": [
     1200,
@@ -20,35 +20,35 @@
       "maxStepM": 0.4,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 7.63,
+      "motionDurationSecs": 7.04,
       "verticalRangeM": 0,
       "video": {
         "file": "artifacts/carandiru-c4/final/radial-interna.webm",
-        "bytes": 1962138,
-        "sha256": "16a3cf5fa5a14dba05896a3dee8ce2ebe297aab31224823f75878504df9d4ec6",
+        "bytes": 1626967,
+        "sha256": "2cc5c3c85ca63208fa60b7b5c273483c199f5dc285504453abfdf16e746df0ca",
         "width": 1200,
         "height": 800,
-        "durationSecs": 7.76
+        "durationSecs": 7.2
       },
       "captures": [
         {
           "file": "artifacts/carandiru-c4/final/radial-interna-inicio.png",
-          "bytes": 1112780,
-          "sha256": "d246f68dd051c18cc657fa7e0f782ff4e2160392b4063073dfe8a4f709e4143d",
+          "bytes": 1110252,
+          "sha256": "73b2b16e6c227fc4aa2a171a3db5ea07978b875bb005733462c2266db8d89324",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/radial-interna-meio.png",
-          "bytes": 1095609,
-          "sha256": "fed6b3e075e2a4a6500593e4b0380d395cbc0e994c6376fba80e8dac9f231f98",
+          "bytes": 1026104,
+          "sha256": "22caf060dccbba7396fb63dc2d977157e48556f931b6f13723f1386be46ac69b",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/radial-interna-fim.png",
-          "bytes": 990825,
-          "sha256": "a96baa891d865917b15c1f5c4ee874a382b3833a4e17b0fce3b9d4c40f1db98c",
+          "bytes": 953949,
+          "sha256": "8af55dc5f2e21c4f1274ef7d5722fb652e6ba3a2c8d09819dfc273c325651caa",
           "width": 1200,
           "height": 800
         }
@@ -65,35 +65,35 @@
       "maxStepM": 0.4488,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 7.74,
+      "motionDurationSecs": 7.59,
       "verticalRangeM": 0,
       "video": {
         "file": "artifacts/carandiru-c4/final/externa-oeste.webm",
-        "bytes": 1230062,
-        "sha256": "87b62c47c2e80485201f144fb7e6936732b282935a297db865a8784b9f901d48",
+        "bytes": 1049898,
+        "sha256": "86167da619b6c2fc14cd869d7f3fe8bfe613f290bad39780ebe411dd39d31b0c",
         "width": 1200,
         "height": 800,
-        "durationSecs": 7.88
+        "durationSecs": 7.72
       },
       "captures": [
         {
           "file": "artifacts/carandiru-c4/final/externa-oeste-inicio.png",
-          "bytes": 1091818,
-          "sha256": "73c81a2a363141aa7d777c24fc9b2af8e761d2398818c9db2aec90a49c1cd2c3",
+          "bytes": 1090755,
+          "sha256": "abd37bdd15f6604f08c9b8e75679d3bff7e5b94ad5a6f53c7f3e8009630d7a44",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/externa-oeste-meio.png",
-          "bytes": 1061940,
-          "sha256": "986417b5f74239de1f63fe1479a273738a052852858ca8d8804da14d58d07b93",
+          "bytes": 1059619,
+          "sha256": "9349d0c7563ba192a45048612358fe1babc132ab1c3017573b9fe51296163088",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/externa-oeste-fim.png",
-          "bytes": 1040639,
-          "sha256": "fa725ee284df9a451d6901ed876f2126368a9f8ff3be23e151707db629569cca",
+          "bytes": 1028996,
+          "sha256": "e2776749dfa6230096f3acf2719780fd08b3e633dfd57b30ed85cc865a913a8a",
           "width": 1200,
           "height": 800
         }
@@ -110,35 +110,35 @@
       "maxStepM": 0.45,
       "collisionCorrections": 0,
       "maxCollisionCorrectionM": 0,
-      "motionDurationSecs": 16.27,
+      "motionDurationSecs": 16.19,
       "verticalRangeM": 5.8,
       "video": {
         "file": "artifacts/carandiru-c4/final/muralha-leste.webm",
-        "bytes": 2775262,
-        "sha256": "5918b2ee7c710c4d8fcf3800102cac62184ada984f90ea969cc6cb2376f91c22",
+        "bytes": 2572799,
+        "sha256": "fd8d2e6a6e40824da56432e7d1506e92c002a0ebacf7da501049c96ffb37101f",
         "width": 1200,
         "height": 800,
-        "durationSecs": 16.4
+        "durationSecs": 16.36
       },
       "captures": [
         {
           "file": "artifacts/carandiru-c4/final/muralha-leste-inicio.png",
-          "bytes": 1051468,
-          "sha256": "f4b80319947efcb6b322ba44be9286eee720c7ab831c173f732f5d662a963653",
+          "bytes": 1048754,
+          "sha256": "40b036bfd5aa17f1f02e8e713d6050f8b9d2ae3799bdf1cedb3b23fb2b4c7c10",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/muralha-leste-meio.png",
-          "bytes": 1063599,
-          "sha256": "dfaa06b7879743e5311b52e738952236d08ac771c74d2b8e4bbe4aa4ddeae7d9",
+          "bytes": 1064510,
+          "sha256": "586cae4d60202f13395158d8be1d631bb74cecf532f780129006c1ab46f133fe",
           "width": 1200,
           "height": 800
         },
         {
           "file": "artifacts/carandiru-c4/final/muralha-leste-fim.png",
-          "bytes": 1073196,
-          "sha256": "f2efe74d61326e7adad883c054dd5243bcdc2a24737f2f7cc54de21d3a8f673c",
+          "bytes": 1047164,
+          "sha256": "aa12f837b653aa4e68bf2ab8433e6072b2c9ed435b9c69bad48b4103c0589825",
           "width": 1200,
           "height": 800
         }
@@ -151,178 +151,433 @@
     "fallbackVisible": false,
     "httpStatus": 200
   },
-  "stairTraversal": [
+  "guardTraversal": [
     {
-      "id": "carandiru-acesso-muralha-oeste-subida",
-      "mode": "up",
+      "id": "carandiru-rota-guarita-oeste-patio-guarita",
       "start": [
         -35.6,
         0,
-        -25.7
+        -25.45
+      ],
+      "endTarget": [
+        -33.5,
+        5.8,
+        -43.5
       ],
       "end": [
-        -35.6,
+        -33.88553403653484,
         5.8,
-        -40.72
+        -43.461821629763506
       ],
       "minY": 0,
       "maxY": 5.8,
+      "frames": 451,
+      "targetIndex": 17,
+      "endErrorM": 0.38741977399297023,
       "reached": true
     },
     {
-      "id": "carandiru-acesso-muralha-oeste-descida",
-      "mode": "down",
+      "id": "carandiru-rota-guarita-oeste-guarita-patio",
       "start": [
-        -35.6,
+        -33.5,
         5.8,
-        -40.4
+        -43.5
       ],
-      "end": [
-        -35.6,
-        0,
-        -9.090628567987114
-      ],
-      "minY": 0,
-      "maxY": 5.8,
-      "reached": true
-    },
-    {
-      "id": "carandiru-acesso-muralha-leste-subida",
-      "mode": "up",
-      "start": [
-        35.6,
-        0,
-        -25.7
-      ],
-      "end": [
-        35.6,
-        5.8,
-        -40.72
-      ],
-      "minY": 0,
-      "maxY": 5.8,
-      "reached": true
-    },
-    {
-      "id": "carandiru-acesso-muralha-leste-descida",
-      "mode": "down",
-      "start": [
-        35.6,
-        5.8,
-        -40.4
-      ],
-      "end": [
-        35.6,
-        0,
-        -9.090628567987114
-      ],
-      "minY": 0,
-      "maxY": 5.8,
-      "reached": true
-    },
-    {
-      "id": "carandiru-acesso-muralha-norte-oeste-subida",
-      "mode": "up",
-      "start": [
+      "endTarget": [
         -35.6,
         0,
-        25.7
+        -25.45
       ],
       "end": [
+        -35.60000000082015,
+        0,
+        -25.867896566117356
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "frames": 452,
+      "targetIndex": 17,
+      "endErrorM": 0.41789656611735637,
+      "reached": true
+    },
+    {
+      "id": "carandiru-rota-guarita-leste-patio-guarita",
+      "start": [
+        35.6,
+        0,
+        -25.45
+      ],
+      "endTarget": [
+        33.5,
+        5.8,
+        -43.5
+      ],
+      "end": [
+        33.88553403653484,
+        5.8,
+        -43.461821629763506
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "frames": 451,
+      "targetIndex": 17,
+      "endErrorM": 0.38741977399297023,
+      "reached": true
+    },
+    {
+      "id": "carandiru-rota-guarita-leste-guarita-patio",
+      "start": [
+        33.5,
+        5.8,
+        -43.5
+      ],
+      "endTarget": [
+        35.6,
+        0,
+        -25.45
+      ],
+      "end": [
+        35.60000000082015,
+        0,
+        -25.867896566117356
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "frames": 452,
+      "targetIndex": 17,
+      "endErrorM": 0.41789656611735637,
+      "reached": true
+    },
+    {
+      "id": "carandiru-rota-guarita-norte-oeste-patio-guarita",
+      "start": [
         -35.6,
+        0,
+        25.45
+      ],
+      "endTarget": [
+        -33.5,
         5.8,
-        40.72
+        43.5
+      ],
+      "end": [
+        -33.88553403653484,
+        5.8,
+        43.461821629763506
       ],
       "minY": 0,
       "maxY": 5.8,
+      "frames": 451,
+      "targetIndex": 17,
+      "endErrorM": 0.38741977399297023,
       "reached": true
     },
     {
-      "id": "carandiru-acesso-muralha-norte-oeste-descida",
-      "mode": "down",
+      "id": "carandiru-rota-guarita-norte-oeste-guarita-patio",
+      "start": [
+        -33.5,
+        5.8,
+        43.5
+      ],
+      "endTarget": [
+        -35.6,
+        0,
+        25.45
+      ],
+      "end": [
+        -35.60000000082015,
+        0,
+        25.867896566117356
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "frames": 452,
+      "targetIndex": 17,
+      "endErrorM": 0.41789656611735637,
+      "reached": true
+    },
+    {
+      "id": "carandiru-rota-guarita-norte-leste-patio-guarita",
+      "start": [
+        35.6,
+        0,
+        25.45
+      ],
+      "endTarget": [
+        33.5,
+        5.8,
+        43.5
+      ],
+      "end": [
+        33.88553403653484,
+        5.8,
+        43.461821629763506
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "frames": 451,
+      "targetIndex": 17,
+      "endErrorM": 0.38741977399297023,
+      "reached": true
+    },
+    {
+      "id": "carandiru-rota-guarita-norte-leste-guarita-patio",
+      "start": [
+        33.5,
+        5.8,
+        43.5
+      ],
+      "endTarget": [
+        35.6,
+        0,
+        25.45
+      ],
+      "end": [
+        35.60000000082015,
+        0,
+        25.867896566117356
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "frames": 452,
+      "targetIndex": 17,
+      "endErrorM": 0.41789656611735637,
+      "reached": true
+    },
+    {
+      "id": "carandiru-rota-torre-muro-0-patio-guarita",
       "start": [
         -35.6,
+        0,
+        25.45
+      ],
+      "endTarget": [
+        -9,
         5.8,
-        40.4
+        45.35
       ],
       "end": [
+        -9.404242760265682,
+        5.8,
+        45.38868193895506
+      ],
+      "minY": 0,
+      "maxY": 5.8,
+      "frames": 1043,
+      "targetIndex": 21,
+      "endErrorM": 0.4060892779039359,
+      "reached": true
+    },
+    {
+      "id": "carandiru-rota-torre-muro-0-guarita-patio",
+      "start": [
+        -9,
+        5.8,
+        45.35
+      ],
+      "endTarget": [
         -35.6,
         0,
-        9.090628567987114
+        25.45
+      ],
+      "end": [
+        -35.60000000082599,
+        0,
+        25.861355526680555
       ],
       "minY": 0,
       "maxY": 5.8,
+      "frames": 1044,
+      "targetIndex": 21,
+      "endErrorM": 0.4113555266805555,
       "reached": true
     },
     {
-      "id": "carandiru-acesso-muralha-norte-leste-subida",
-      "mode": "up",
+      "id": "carandiru-rota-torre-muro-1-patio-guarita",
       "start": [
         35.6,
         0,
-        25.7
+        25.45
       ],
-      "end": [
-        35.6,
+      "endTarget": [
+        9,
         5.8,
-        40.72
+        45.35
       ],
-      "minY": 0,
-      "maxY": 5.8,
-      "reached": true
-    },
-    {
-      "id": "carandiru-acesso-muralha-norte-leste-descida",
-      "mode": "down",
-      "start": [
-        35.6,
+      "end": [
+        9.404242760265682,
         5.8,
-        40.4
-      ],
-      "end": [
-        35.6,
-        0,
-        9.090628567987114
+        45.38868193895506
       ],
       "minY": 0,
       "maxY": 5.8,
+      "frames": 1043,
+      "targetIndex": 21,
+      "endErrorM": 0.4060892779039359,
       "reached": true
     },
     {
-      "id": "carandiru-pavilhao-escada-leste-subida",
-      "mode": "up",
+      "id": "carandiru-rota-torre-muro-1-guarita-patio",
       "start": [
-        10.5,
+        9,
+        5.8,
+        45.35
+      ],
+      "endTarget": [
+        35.6,
         0,
-        0
+        25.45
       ],
       "end": [
-        -14.844124286346021,
+        35.60000000082599,
         0,
-        0
+        25.861355526680555
       ],
       "minY": 0,
-      "maxY": 3.4,
-      "reached": true
-    },
-    {
-      "id": "carandiru-pavilhao-escada-leste-descida",
-      "mode": "down",
-      "start": [
-        3.5500000000000007,
-        3.4,
-        0
-      ],
-      "end": [
-        10.739642240159728,
-        0.18888888888888888,
-        0
-      ],
-      "minY": 0,
-      "maxY": 3.4,
+      "maxY": 5.8,
+      "frames": 1044,
+      "targetIndex": 21,
+      "endErrorM": 0.4113555266805555,
       "reached": true
     }
   ],
+  "stairTraversal": [
+    {
+      "id": "carandiru-pavilhao-escada-leste-patio-galeria",
+      "start": [
+        11.4,
+        0,
+        0
+      ],
+      "endTarget": [
+        0,
+        3.4,
+        1.7
+      ],
+      "end": [
+        0.35924539680487433,
+        3.4,
+        1.557897829261917
+      ],
+      "minY": 0,
+      "maxY": 3.4,
+      "frames": 250,
+      "targetIndex": 21,
+      "endErrorM": 0.38632924048532347,
+      "reached": true
+    },
+    {
+      "id": "carandiru-pavilhao-escada-leste-galeria-patio",
+      "start": [
+        0,
+        3.4,
+        1.7
+      ],
+      "endTarget": [
+        11.4,
+        0,
+        0
+      ],
+      "end": [
+        11.008452103789688,
+        0,
+        2.0936966849674615e-8
+      ],
+      "minY": 0,
+      "maxY": 3.4,
+      "frames": 250,
+      "targetIndex": 21,
+      "endErrorM": 0.3915478962103128,
+      "reached": true
+    }
+  ],
+  "guardCaptures": [
+    {
+      "entry": "carandiru-entrada-guarita-oeste",
+      "camera": [
+        -33.5,
+        7.42,
+        -43.5
+      ],
+      "file": "artifacts/carandiru-c4/final/carandiru-entrada-guarita-oeste.png",
+      "bytes": 952311,
+      "sha256": "585cfcfa932f26e0ad23f32bb29f4124f1c7efc47121428ab57a6259895608c7",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "entry": "carandiru-entrada-guarita-leste",
+      "camera": [
+        33.5,
+        7.42,
+        -43.5
+      ],
+      "file": "artifacts/carandiru-c4/final/carandiru-entrada-guarita-leste.png",
+      "bytes": 960465,
+      "sha256": "5c68f50b639cbeffe04e69e41cb05130e6ce4ce417c3695ff8f474409aa5212a",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "entry": "carandiru-entrada-guarita-norte-oeste",
+      "camera": [
+        -33.5,
+        7.42,
+        43.5
+      ],
+      "file": "artifacts/carandiru-c4/final/carandiru-entrada-guarita-norte-oeste.png",
+      "bytes": 974162,
+      "sha256": "2a7c38edbb0f730609541f4f77d2ed5967a038721f59830e88b37dc46f56cfbe",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "entry": "carandiru-entrada-guarita-norte-leste",
+      "camera": [
+        33.5,
+        7.42,
+        43.5
+      ],
+      "file": "artifacts/carandiru-c4/final/carandiru-entrada-guarita-norte-leste.png",
+      "bytes": 970045,
+      "sha256": "9ee1ba28a572dee6848b4717b2502731708e75684aca6ec396d65626c3062409",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "entry": "carandiru-entrada-torre-muro-0",
+      "camera": [
+        -9,
+        7.42,
+        45.35
+      ],
+      "file": "artifacts/carandiru-c4/final/carandiru-entrada-torre-muro-0.png",
+      "bytes": 910781,
+      "sha256": "61d132b9246a9915ad669196bb664ee56a41e9f83d3bbc1d845a4248f41afe95",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "entry": "carandiru-entrada-torre-muro-1",
+      "camera": [
+        9,
+        7.42,
+        45.35
+      ],
+      "file": "artifacts/carandiru-c4/final/carandiru-entrada-torre-muro-1.png",
+      "bytes": 899702,
+      "sha256": "d122c8f0ee93c8cbb38781c2e1969d46f7227287ae305499b496b7cad9a41230",
+      "width": 1200,
+      "height": 800
+    }
+  ],
+  "pavilionCapture": {
+    "file": "artifacts/carandiru-c4/final/pavilhao-janelas-com-volume.png",
+    "bytes": 1177140,
+    "sha256": "bee7036680a0fc599aadc39a0bc12b75606497af7362cb2dda1cd281f2dbcb7c",
+    "width": 1200,
+    "height": 800
+  },
   "wallReadability": {
     "distancesM": [
       10,
@@ -345,8 +600,8 @@
           -4
         ],
         "file": "artifacts/carandiru-c4/final/muralha-personagem-10m.png",
-        "bytes": 1070601,
-        "sha256": "01f11898692c2099f5accfb43ce16c1796c3d999fbd73f1285173e0b06606c28",
+        "bytes": 1070473,
+        "sha256": "437f6953f56d05c9c875665cd83c1251bcf60078360a51a44121018f59731dfe",
         "width": 1200,
         "height": 800
       },
@@ -365,8 +620,8 @@
           6
         ],
         "file": "artifacts/carandiru-c4/final/muralha-personagem-20m.png",
-        "bytes": 1068402,
-        "sha256": "009782c15ee91884a036efb4ce5f431c8f5763678f0ca1e14a3efa1c6bd139eb",
+        "bytes": 1067927,
+        "sha256": "a0ecd9a9ac6b49883ead7724a5ba2a94657ddbf40f10c27a6e1d68c6fb93edde",
         "width": 1200,
         "height": 800
       },
@@ -385,8 +640,8 @@
           16
         ],
         "file": "artifacts/carandiru-c4/final/muralha-personagem-30m.png",
-        "bytes": 1067424,
-        "sha256": "802fb97e25832f733329fc2801defeae62e680b19d938843e6357df0640f2f3d",
+        "bytes": 1067162,
+        "sha256": "da4a08599243d1c9c3809c95f12b31a7fff883b9d56ee7033a8b112d841d6c70",
         "width": 1200,
         "height": 800
       }
@@ -395,12 +650,8 @@
     "humanGameplay": "pending"
   },
   "warnings": [
-    "SUPPORT_URL_BR is not defined",
-    "404 /%7B%60/map-preview.css",
-    "404 /%7B%60/js/ops.js",
-    "404 /api/geo-lang",
     "404 /audio/manifest.json",
-    "404 /audio/menu-music/m17.mp3",
+    "404 /audio/menu-music/m14.mp3",
     "404 /audio/manifest.default.json",
     "404 /audio/ambiente/vento.mp3",
     "404 /audio/ambiente/hum-indoor.mp3",
