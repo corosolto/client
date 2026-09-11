@@ -39,12 +39,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--doador", type=Path, default=DONOR)
     parser.add_argument("--arma", type=Path, default=PROJECT_AK)
     parser.add_argument("--saida", type=Path, default=OUT)
+    # A matriz de encaixe abaixo foi calibrada para a AK (88 cm declarados). Como
+    # todo GLB de arma deste repo é unitário (maior eixo ~1), sem este fator TODA
+    # arma sai do mesmo tamanho físico: medido em 11/09/2026, a uzi (47 cm) saía
+    # +143% e a m92 (76 cm) +49% contra a AK. O dono viu as duas jogando.
+    parser.add_argument("--comprimento", type=float, default=88.0,
+                        help="comprimento declarado da arma em cm (weapons.js len*100)")
     parser.add_argument("--publicar", action="store_true")
     return parser.parse_args(argv)
 
 
+ESCALA_LEN = 1.0
+AK_REF_CM = 88.0
+
+
 def configure_paths(args: argparse.Namespace) -> None:
-    global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS
+    global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN
+    ESCALA_LEN = float(args.comprimento) / AK_REF_CM
     DONOR = args.doador.resolve()
     PROJECT_AK = args.arma.resolve()
     OUT = args.saida.resolve()
@@ -401,7 +412,7 @@ def fit_project_ak(
         # forward relative to the trigger hand.
         Matrix.Translation(Vector((-0.1475, -1.6065, -0.3500)))
         @ basis
-        @ Matrix.Diagonal(Vector((0.863, 0.62, 0.808, 1.0)))
+        @ Matrix.Diagonal(Vector((0.863 * ESCALA_LEN, 0.62 * ESCALA_LEN, 0.808 * ESCALA_LEN, 1.0)))
     )
     for obj in (weapon, magazine):
         obj.data.transform(fit)
