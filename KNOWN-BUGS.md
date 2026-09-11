@@ -5014,3 +5014,28 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   fixo. O CHR5B contava ARQUIVO, o jogador via CONSTANTE. Corrigido junto.
 - **C10** — `_freeSpot` (`game.js`) ignora colisores com `minY ≥ 1,5`; no mezanino não empurra
   arma para fora de parede. Não mordeu ainda; é armadilha para o próximo mapa com andar de cima.
+
+### BUG-VM-ESCALA-PISTOLA — o piloto hires da pistola entra 144× maior, 11/09/2026
+
+Marcar `golden: true` na pistola a tira do caminho de família e a manda para o
+piloto versionado em `coro/pistol-hires.glb`. O piloto entra **sem a normalização
+da família** e renderiza fora de escala. Medido no jogo real, 3:2, autorado:
+
+| | com `golden` | caminho de família | declarado |
+|---|---:|---:|---:|
+| arma 3D | 3.743,6 cm | 22,9 cm | 26 cm |
+| mão 3D | 7.125,8 cm | 46,4 cm | — |
+| contato mão↔arma | 14,10 cm | 0,10 cm | ~0,2 (ak) |
+
+**Estado:** contornado — `public/js/data/vmconfig.js` mantém a pistola no caminho
+de família. O piloto `pistol-hires.glb` continua no repo e continua sendo o
+conteúdo aprovado pelo dono em 07/09; ele só não pode ser servido antes de a
+escala ser calibrada, como foi feito nas 13 armas longas (`--comprimento` do
+`build_ak_hires_pilot.py`, alvo `len × vm`).
+
+**Régua:** `node tools/viewmodels/prep/vm-arsenal-frames.mjs --porta=<p>
+--aspecto=32 --modo=autorado --armas=pistol` — o campo `arma_diam3d_cm` do
+`frames.json` denuncia.
+
+**Custo declarado:** a pistola fica no rig KINEMATION enquanto as 13 longas já
+estão no rig do doador da AK, então ela destoa do resto até ser calibrada.
