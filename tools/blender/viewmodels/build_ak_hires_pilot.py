@@ -315,7 +315,7 @@ def load_anatomy_rig() -> bpy.types.Object:
     return rig
 
 
-def componente_do_pente(weapon: bpy.types.Object) -> set[int]:
+def componente_do_pente(weapon: bpy.types.Object, ancora: Vector) -> set[int]:
     """Quais polígonos formam o carregador, achados pela TOPOLOGIA da malha.
 
     A versão anterior usava uma caixa fixa nas coordenadas da AK
@@ -366,26 +366,32 @@ def componente_do_pente(weapon: bpy.types.Object) -> set[int]:
     eixos = caixa_max - caixa_min
     longo = max(range(3), key=lambda k: eixos[k])
 
+    # O componente mais próximo da ÂNCORA DO RIG, não o mais fundo. A heurística
+    # de forma ("o que desce mais") errou três de cinco em 11/09: pegou a alavanca
+    # da carabina, a base do pente da deagle e uma placa chata da m4. O osso
+    # `Mag_metarig` tem posição de repouso — é onde a animação espera o pente.
     melhor = None
     for grupo in componentes:
         fracao = len(grupo) / total
         if fracao < 0.01 or fracao > 0.15:
             continue
         centros = [malha.polygons[i].center for i in grupo]
-        meio = sum((c[longo] for c in centros), 0.0) / len(centros)
-        t = (meio - caixa_min[longo]) / max(1e-9, eixos[longo])
-        # Janela do punho ao longo do cano: exclui coronha, boca e bipé.
-        if t < 0.10 or t > 0.70:
-            continue
-        fundo = min(c.z for c in centros)
-        if melhor is None or fundo < melhor[0]:
-            melhor = (fundo, grupo)
+        centro = Vector((
+            sum(c.x for c in centros) / len(centros),
+            sum(c.y for c in centros) / len(centros),
+            sum(c.z for c in centros) / len(centros),
+        ))
+        dist = (centro - ancora).length
+        if melhor is None or dist < melhor[0]:
+            melhor = (dist, grupo, centro)
     if melhor is None:
         raise RuntimeError("nenhum componente candidato a carregador")
+    print(f"[pente] componente de {len(melhor[1])} de {total} polígonos, "
+          f"a {melhor[0] * 100:.1f} cm da âncora do osso")
     return set(melhor[1])
 
 
-def split_magazine(weapon: bpy.types.Object) -> bpy.types.Object:
+def split_magazine(weapon: bpy.types.Object, ancora: Vector) -> bpy.types.Object:
     bpy.ops.object.select_all(action="DESELECT")
     weapon.select_set(True)
     bpy.context.view_layer.objects.active = weapon
@@ -400,7 +406,7 @@ def split_magazine(weapon: bpy.types.Object) -> bpy.types.Object:
             polygon.select = xmin <= centro.x <= xmax and centro.z <= zmax
             selected += int(polygon.select)
     else:
-        do_pente = componente_do_pente(weapon)
+        do_pente = componente_do_pente(weapon, ancora)
         for polygon in weapon.data.polygons:
             polygon.select = polygon.index in do_pente
             selected += int(polygon.select)
@@ -489,8 +495,21 @@ def fit_project_ak(
         if obj is not weapon and obj.type == "EMPTY":
             bpy.data.objects.remove(obj, do_unlink=True)
     weapon.name = "coro_solto_project_ak_body"
-    magazine = split_magazine(weapon)
-    trim_first_person_stock(weapon)
+
+    # Traz a arma para o REFERENCIAL DA AK antes de qualquer recorte. Tudo o que
+    # vem depois — a caixa do pente, a costura da coronha, o encaixe — foi medido
+    # nas coordenadas nativas da AK e só vale nelas.
+    #
+    # Sem isto, três constantes da AK caíam em lugares errados nas armas de
+    # `rot 90` (m4 mp5 lmg scar famas p90): a arma saía girada 180 (o dono
+    # relatou "invertida" nas seis), a caixa do pente pegava outra peça, e
+    # `trim_first_person_stock` — que apaga cascas com `x < -0.240` — removia a
+    # BOCA DO CANO em vez da coronha, porque nessas armas a coronha está em +X.
+    #
+    # `canon_ak.inverted() @ canon_arma` é identidade na AK: ela sai idêntica.
+    canon_ak = Matrix.Rotation(math.radians(AK_ROT_Y), 4, "Z")
+    canon_arma = Matrix.Rotation(math.radians(ROT_ARMA[1]), 4, "Z")
+    weapon.data.transform(canon_ak.inverted() @ canon_arma)
 
     # Donor rig-local combined gun envelope:
     # x[-.169,-.126], y[-1.729,-1.484], z[-.825,.038].
@@ -504,13 +523,6 @@ def fit_project_ak(
         (-1.0, 0.0, 0.0, 0.0),
         (0.0, 0.0, 0.0, 1.0),
     ))
-    # Orientação canônica por arma. O `basis` acima foi medido PARA A AK; as
-    # outras doze entravam com ele e saíam giradas — o dono relatou "arma
-    # invertida" em famas, m4, mp5, lmg, scar e p90. O yaw de cada arma está em
-    # `CFG` (`public/js/weapons.js`), medido por seção transversal.
-    # `canon_ak.inverted() @ canon_arma` é identidade na AK: ela sai idêntica.
-    canon_ak = Matrix.Rotation(math.radians(AK_ROT_Y), 4, "Z")
-    canon_arma = Matrix.Rotation(math.radians(ROT_ARMA[1]), 4, "Z")
     fit = (
         # Anchor the receiver/magazine well, not the total silhouette. The
         # classic project AK has a different stock-to-muzzle proportion from
@@ -518,10 +530,15 @@ def fit_project_ak(
         # forward relative to the trigger hand.
         Matrix.Translation(Vector((-0.1475, -1.6065, -0.3500)))
         @ basis
-        @ canon_ak.inverted()
-        @ canon_arma
         @ Matrix.Diagonal(Vector((0.863 * ESCALA_LEN, 0.62 * ESCALA_LEN, 0.808 * ESCALA_LEN, 1.0)))
     )
+
+    # O recorte precisa do `fit` para saber ONDE o osso do pente vai cair na
+    # arma: a âncora vem do rig e volta para o espaço nativo por `fit.inverted()`.
+    ancora = fit.inverted() @ rig.data.bones["Mag_metarig"].matrix_local.translation
+    magazine = split_magazine(weapon, ancora)
+    trim_first_person_stock(weapon)
+
     for obj in (weapon, magazine):
         obj.data.transform(fit)
         obj.matrix_world = Matrix.Identity(4)
