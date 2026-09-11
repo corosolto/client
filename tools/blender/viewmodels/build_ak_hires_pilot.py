@@ -43,6 +43,11 @@ def parse_args() -> argparse.Namespace:
     # todo GLB de arma deste repo é unitário (maior eixo ~1), sem este fator TODA
     # arma sai do mesmo tamanho físico: medido em 11/09/2026, a uzi (47 cm) saía
     # +143% e a m92 (76 cm) +49% contra a AK. O dono viu as duas jogando.
+    parser.add_argument("--caixapente", type=str, default="",
+                        help="xmin,xmax,zmax nas coordenadas nativas da arma. A AK "
+                             "aprovada usa a sua; sem isto o pente sai por componente")
+    parser.add_argument("--rot", type=str, default="0,270,0",
+                        help="graus para apontar o cano em +Z, lidos do CFG de weapons.js")
     parser.add_argument("--comprimento", type=float, default=88.0,
                         help="comprimento declarado da arma em cm (weapons.js len*100)")
     parser.add_argument("--publicar", action="store_true")
@@ -51,11 +56,22 @@ def parse_args() -> argparse.Namespace:
 
 ESCALA_LEN = 1.0
 AK_REF_CM = 88.0
+# Graus que apontam o cano em +Z, por arma. Vem do CFG de `public/js/weapons.js`,
+# medido por seção transversal (o cano é fino, a coronha grossa) e não a olho.
+ROT_ARMA = [0.0, 270.0, 0.0]
+AK_ROT_Y = 270.0
+# Caixa do pente EXPLÍCITA, quando a arma tem uma aprovada. A da AK
+# (-0.075, 0.105, 0.041) foi afinada à mão e o dono aprovou o resultado em
+# 31/08; trocá-la por derivação muda o GLB e não há ganho nenhum nisso. O defeito
+# nunca foi a caixa da AK — foi aplicá-la às outras doze.
+CAIXA_PENTE = None
 
 
 def configure_paths(args: argparse.Namespace) -> None:
-    global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN
+    global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN, ROT_ARMA, CAIXA_PENTE
     ESCALA_LEN = float(args.comprimento) / AK_REF_CM
+    ROT_ARMA = [float(v) for v in args.rot.split(",")]
+    CAIXA_PENTE = [float(v) for v in args.caixapente.split(",")] if args.caixapente else None
     DONOR = args.doador.resolve()
     PROJECT_AK = args.arma.resolve()
     OUT = args.saida.resolve()
@@ -299,6 +315,76 @@ def load_anatomy_rig() -> bpy.types.Object:
     return rig
 
 
+def componente_do_pente(weapon: bpy.types.Object) -> set[int]:
+    """Quais polígonos formam o carregador, achados pela TOPOLOGIA da malha.
+
+    A versão anterior usava uma caixa fixa nas coordenadas da AK
+    (`-0.075 <= x <= 0.105 and z <= 0.041`) para as treze armas. Medido em
+    11/09/2026, nos GLB publicados: só na AK a geometria presa ao osso do pente é
+    curta, baixa e atrás do meio. Na AKM ela fica em 86%-97% do comprimento, na
+    altura de 86% (a ponta do cano); na P90 pega 5%-68% da arma; na MD97 e na
+    MOSIN o fundo da peça está na metade da ALTURA, que é o cano. O dono jogou e
+    relatou exatamente isso: *"recarregar tira o cano, não o carregador"* em
+    svd, sks, md97, mosin, lmg, scar e p90, *"tira o trigger"* em famas e mp5.
+
+    O carregador não é uma região do espaço, é uma PEÇA. Esta função acha os
+    componentes conexos da malha e escolhe entre os que têm de 1% a 15% dos
+    polígonos, com centro dentro da janela do punho, o que desce mais. A regra
+    foi conferida contra o pente da AK, conhecido e aprovado desde 31/08.
+    """
+    malha = weapon.data
+    vizinhos: dict[int, list[int]] = {}
+    for poligono in malha.polygons:
+        for vertice in poligono.vertices:
+            vizinhos.setdefault(vertice, []).append(poligono.index)
+
+    visto = [False] * len(malha.polygons)
+    componentes: list[list[int]] = []
+    for inicio in range(len(malha.polygons)):
+        if visto[inicio]:
+            continue
+        pilha = [inicio]
+        visto[inicio] = True
+        grupo = []
+        while pilha:
+            atual = pilha.pop()
+            grupo.append(atual)
+            for vertice in malha.polygons[atual].vertices:
+                for outro in vizinhos.get(vertice, ()):
+                    if not visto[outro]:
+                        visto[outro] = True
+                        pilha.append(outro)
+        componentes.append(grupo)
+
+    total = len(malha.polygons)
+    caixa_min = Vector((min(v.co.x for v in malha.vertices),
+                        min(v.co.y for v in malha.vertices),
+                        min(v.co.z for v in malha.vertices)))
+    caixa_max = Vector((max(v.co.x for v in malha.vertices),
+                        max(v.co.y for v in malha.vertices),
+                        max(v.co.z for v in malha.vertices)))
+    eixos = caixa_max - caixa_min
+    longo = max(range(3), key=lambda k: eixos[k])
+
+    melhor = None
+    for grupo in componentes:
+        fracao = len(grupo) / total
+        if fracao < 0.01 or fracao > 0.15:
+            continue
+        centros = [malha.polygons[i].center for i in grupo]
+        meio = sum((c[longo] for c in centros), 0.0) / len(centros)
+        t = (meio - caixa_min[longo]) / max(1e-9, eixos[longo])
+        # Janela do punho ao longo do cano: exclui coronha, boca e bipé.
+        if t < 0.10 or t > 0.70:
+            continue
+        fundo = min(c.z for c in centros)
+        if melhor is None or fundo < melhor[0]:
+            melhor = (fundo, grupo)
+    if melhor is None:
+        raise RuntimeError("nenhum componente candidato a carregador")
+    return set(melhor[1])
+
+
 def split_magazine(weapon: bpy.types.Object) -> bpy.types.Object:
     bpy.ops.object.select_all(action="DESELECT")
     weapon.select_set(True)
@@ -307,12 +393,25 @@ def split_magazine(weapon: bpy.types.Object) -> bpy.types.Object:
     bpy.ops.mesh.select_all(action="DESELECT")
     bpy.ops.object.mode_set(mode="OBJECT")
     selected = 0
-    for polygon in weapon.data.polygons:
-        center = polygon.center
-        polygon.select = -0.075 <= center.x <= 0.105 and center.z <= 0.041
-        selected += int(polygon.select)
-    if selected < 30:
-        raise RuntimeError(f"Project AK magazine mask too small: {selected}")
+    if CAIXA_PENTE:
+        xmin, xmax, zmax = CAIXA_PENTE
+        for polygon in weapon.data.polygons:
+            centro = polygon.center
+            polygon.select = xmin <= centro.x <= xmax and centro.z <= zmax
+            selected += int(polygon.select)
+    else:
+        do_pente = componente_do_pente(weapon)
+        for polygon in weapon.data.polygons:
+            polygon.select = polygon.index in do_pente
+            selected += int(polygon.select)
+    total = len(weapon.data.polygons)
+    # A guarda antiga só reprovava máscara PEQUENA. Meia arma passava — e passou
+    # nas treze. Um carregador é minoria clara: 1% a 15% dos polígonos.
+    if selected < 30 or selected > total * 0.15:
+        raise RuntimeError(
+            f"máscara de carregador implausível: {selected} de {total} polígonos"
+            f" ({selected / max(1, total) * 100:.1f}%)"
+        )
     before = set(bpy.data.objects)
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.separate(type="SELECTED")
@@ -405,6 +504,13 @@ def fit_project_ak(
         (-1.0, 0.0, 0.0, 0.0),
         (0.0, 0.0, 0.0, 1.0),
     ))
+    # Orientação canônica por arma. O `basis` acima foi medido PARA A AK; as
+    # outras doze entravam com ele e saíam giradas — o dono relatou "arma
+    # invertida" em famas, m4, mp5, lmg, scar e p90. O yaw de cada arma está em
+    # `CFG` (`public/js/weapons.js`), medido por seção transversal.
+    # `canon_ak.inverted() @ canon_arma` é identidade na AK: ela sai idêntica.
+    canon_ak = Matrix.Rotation(math.radians(AK_ROT_Y), 4, "Z")
+    canon_arma = Matrix.Rotation(math.radians(ROT_ARMA[1]), 4, "Z")
     fit = (
         # Anchor the receiver/magazine well, not the total silhouette. The
         # classic project AK has a different stock-to-muzzle proportion from
@@ -412,6 +518,8 @@ def fit_project_ak(
         # forward relative to the trigger hand.
         Matrix.Translation(Vector((-0.1475, -1.6065, -0.3500)))
         @ basis
+        @ canon_ak.inverted()
+        @ canon_arma
         @ Matrix.Diagonal(Vector((0.863 * ESCALA_LEN, 0.62 * ESCALA_LEN, 0.808 * ESCALA_LEN, 1.0)))
     )
     for obj in (weapon, magazine):
