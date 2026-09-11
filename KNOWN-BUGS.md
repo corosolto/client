@@ -2284,6 +2284,80 @@ o rig são de outro doador. É a queixa nº 1 do dono (*"escala de mãos/braços
 por arma"*) congelada num arquivo. Somado ao BUG-VM-ESCALA-PISTOLA, a pistola tem
 **dois** bloqueios para o caminho golden, não um.
 
+**Correção, 11/09 — e ela não é a que o plano previa.** O plano mandava derivar uma
+**caixa** por arma e deixar o `splitParts` recortar por volume. Duas regras de
+derivação foram medidas e as duas falharam:
+
+1. *Perfil de profundidade* (a corrida de fatias em que a silhueta desce). IoU de
+   80,0% na `ak` raspando o piso, 1,7% na `akm`, e caixas sem sentido nas alvo — a
+   da `carbine` caía inteira atrás do grip, na coronha.
+2. *Componente conexo cercado por caixa.* A identificação da **peça** funcionou de
+   primeira: numa malha de 4.576 triângulos a `ak` tem 15 componentes, e o de 379
+   triângulos ocupa `x[-0,008 · 0,025] y[-0,133 · 0,053] z[0,044 · 0,191]` — quem
+   autorou a caixa aprovada em 31/08 estava, sem saber, cercando esse componente.
+   Mas a **caixa em volta dele** arrasta 373 triângulos de OUTRAS peças. Na
+   `carbine` são 328 contra 324 da peça; na `deagle`, 594 contra 373.
+
+A caixa é a ferramenta errada, e não é afinável: o pente e o corpo da arma ocupam
+o mesmo volume. O conserto é recortar **a peça**, não o volume —
+`componenteDoPente` (`public/js/vmweapon.js`), união-busca sobre vértices
+coincidentes, escolhendo o componente entre 1% e 15% dos triângulos, com centro em
+z na janela do punho, que desce mais. A regra foi validada contra o pente da `ak`,
+que é conhecido desde 31/08: ela escolhe o de 379 triângulos.
+
+Ligado em `awp`, `carbine` e `deagle` com `parts: { mag: { peca: true, bone: 'Mag' } }`.
+Sem caixa: por construção o pedaço carregado é exatamente a peça, zero intrusos, e
+nunca corta geometria no meio. Interruptor: `?pentepeca=0`.
+
+**Antes × depois, `vm-pente-carga.mjs`:**
+
+| arma | antes | depois | via | na tela |
+|---|---:|---:|---|---|
+| `carbine` | 0 / 178 | **972 / 1150** | `filho` | `mint_part_mag` |
+| `awp` | 0 / 50 | **528 / 578** | `filho` | `mint_part_mag` |
+| `deagle` | 0 / 123 | **1119 / 1242** | `filho` | `mint_part_mag` |
+
+`eval:vm-consistencia` foi de **14/19 para 17/19**.
+
+**E aí eu OLHEI, e a `carbine` estava errada.** Todos os números dela eram verdes —
+972 vértices visíveis, via `filho`, `mint_part_mag` na lista do que está na tela,
+régua em 17/19. A foto (`carbine-recarga-075.png`) mostra a peça tingida como um
+**laço curvo fino junto ao gatilho**, solto no ar: é a **alavanca**, não um
+carregador.
+
+A causa é anterior ao recorte: a *"CARABINA PAPO DE PEÃO"* é uma carabina **de
+alavanca** e não tem pente destacável. A família `ar` anima um osso `Mag` porque o
+rig do pacote é de um M16A4 — **o rig e a arma são de espécies diferentes**. Nesse
+caso não existe peça certa para pendurar no osso, e qualquer recorte estaria
+errado. `carbine` revertida; ela entra na mesma categoria de `shotgun` e
+`revolver38`.
+
+Fica a lição, e ela custou uma rodada inteira: **todo número desta correção ficou
+verde com a peça errada pendurada no osso**. Contagem de vértices não sabe o que é
+um carregador. Só a figura sabe — lei 3.
+
+**A figura isolada, e o veredito arma a arma.** A foto no jogo também não bastava:
+a `awp` ocupa a borda direita inteira da tela e a peça fica atrás do receptor — em
+cinco quadros não aparece vermelho nenhum. Enquadramento ruim de viewmodel esconde
+defeito de peça; são dois problemas e um tapa o outro. `tools/eval/vm-peca-render.mjs`
+tira a arma da cena: monta `weaponModel(id)` numa cena própria, pinta o componente
+por cor de vértice e renderiza de lado, de baixo e de trás em fundo liso.
+
+| arma | peça escolhida | veredito |
+|---|---|---|
+| `ak` (controle) | 379 tri — **o pente-banana inteiro** | ✓ a regra acerta o caso conhecido |
+| `awp` | 176 tri — caixa curta à frente do guarda-mato | ✓ é o carregador da L96 |
+| `deagle` | 373 tri — **só a BASE do carregador** | ✗ puxá-la deixa o punho oco |
+| `carbine` | 324 tri — **a alavanca** | ✗ arma de alavanca, sem pente |
+
+Ligado só na **`awp`**. `eval:vm-consistencia`: 14/19 → **15/19**, e o ganho é
+inteiro dela.
+
+Sobram `shotgun`, `revolver38`, `carbine` e `deagle`: armas cuja peça móvel não é
+pente, cujo rig não corresponde à arma, ou cujo carregador não é geometria
+separada no modelo Mint. Nenhuma delas se conserta por recorte — e três das quatro
+só se revelaram na figura, com todos os números verdes.
+
 **Réguas novas:**
 
 - `node tools/eval/vm-pente-carga.mjs --porta=<p>` — conta a carga **visível** no

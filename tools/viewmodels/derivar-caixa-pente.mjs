@@ -12,10 +12,25 @@
    8 armas de família recarregam com o carregador colado no corpo. É a queixa do
    dono ao pé da letra: *"a mão puxa o nada"*.
 
-   Escrever 8 caixas à mão é a armadilha que esta frente já pagou com o
+   Escrever as caixas à mão é a armadilha que esta frente já pagou com o
    alinhamento por coronha: uma suposição sobre a silhueta de UMA arma,
-   generalizada no escuro. Então esta ferramenta **deriva** a caixa do perfil de
-   profundidade da própria malha.
+   generalizada no escuro.
+
+   A PRIMEIRA REGRA FALHOU, E ESTÁ REGISTRADO
+   Tentei derivar a caixa do **perfil de profundidade** — a corrida de fatias em
+   que a silhueta desce abaixo da mediana. Deu 80,0% de IoU na `ak` (raspando o
+   piso), 1,7% na `akm`, e caixas sem sentido nas três alvo: a da `carbine` caía
+   inteira ATRÁS do grip (a coronha), a da `awp` era uma lasca de 0,97% e a da
+   `deagle` arrancava 22,8% da arma. Duas tentativas, offline e na página, mesma
+   hipótese: descartada.
+
+   A REGRA QUE VALE: COMPONENTE CONEXO
+   O pente não é uma região do espaço — é uma PEÇA. Numa malha Mint de 4.576
+   triângulos a `ak` tem 15 componentes conexos, e um deles, com 379 triângulos,
+   ocupa `x[-0,008 · 0,025] y[-0,133 · 0,053] z[0,044 · 0,191]`. A caixa aprovada
+   em 31/08 é `x[±0,022] y[-0,145 · 0,020] z[0,005 · 0,200]`: quem a autorou
+   estava, sem saber, cercando esse componente. Achar a peça e usar a caixa DELA
+   nunca corta geometria no meio, que é o risco todo do recorte por caixa.
 
    COMO ELA GANHA O DIREITO DE SER USADA
    Derivando as caixas de `ak` e `akm`, que já são aprovadas, e comparando — mas
@@ -109,63 +124,58 @@ const medido = await page.evaluate(async (armas) => {
       const pts = cen.map(([x, y, z]) => ({ x, y, z }));
       if (pts.length < 100) { saida[id] = { erro: `só ${pts.length} triângulos` }; continue; }
 
-      // Perfil de profundidade: em cada fatia de z, quanto a silhueta desce.
-      let zMin = Infinity; let zMax = -Infinity; let yMax = -Infinity;
-      for (const p of pts) { if (p.z < zMin) zMin = p.z; if (p.z > zMax) zMax = p.z; if (p.y > yMax) yMax = p.y; }
-      const N = 120;
-      const passo = (zMax - zMin) / N;
-      const fundo = new Array(N).fill(Infinity);
-      for (const p of pts) {
-        const k = Math.min(N - 1, Math.max(0, Math.floor((p.z - zMin) / passo)));
-        if (p.y < fundo[k]) fundo[k] = p.y;
+      /* União-busca sobre vértices coincidentes: dois triângulos que dividem uma
+         posição são a mesma peça. É isto que separa o pente do corpo sem cortar
+         nada — a malha Mint é um nó só, mas não é uma peça só. */
+      const Q = 1e5;
+      const chave = (i, k) => {
+        v.fromBufferAttribute(pos, i + k).applyMatrix4(toGun);
+        return `${Math.round(v.x * Q)},${Math.round(v.y * Q)},${Math.round(v.z * Q)}`;
+      };
+      const pai = new Map();
+      const achar = (x) => { while (pai.get(x) !== x) { pai.set(x, pai.get(pai.get(x))); x = pai.get(x); } return x; };
+      const unir = (a, b) => { a = achar(a); b = achar(b); if (a !== b) pai.set(a, b); };
+      const chavesTri = [];
+      for (let i = 0, t = 0; i + 2 < pos.count; i += 3, t += 1) {
+        const ks = [chave(i, 0), chave(i, 1), chave(i, 2)];
+        chavesTri.push(ks);
+        for (const k of ks) if (!pai.has(k)) pai.set(k, k);
       }
-      const validos = fundo.filter((y) => Number.isFinite(y)).slice().sort((a, b) => a - b);
-      const mediana = validos[Math.floor(validos.length / 2)];
+      for (const ks of chavesTri) { unir(ks[0], ks[1]); unir(ks[0], ks[2]); }
 
-      // O carregador é a corrida CONTÍGUA de fatias que desce bem abaixo da
-      // mediana da silhueta. `saliencia` é o quanto ela precisa descer.
-      const saliencia = (yMax - mediana) * 0.28;
-      const abaixo = fundo.map((y) => Number.isFinite(y) && y < mediana - saliencia);
-      let melhor = null; let i = 0;
-      while (i < N) {
-        if (!abaixo[i]) { i += 1; continue; }
-        let j = i;
-        while (j + 1 < N && abaixo[j + 1]) j += 1;
-        let prof = 0;
-        for (let k = i; k <= j; k += 1) prof = Math.max(prof, mediana - fundo[k]);
-        // Entre grip e carregador, fica o mais FUNDO; empate desempata no mais longo.
-        const nota = prof * (j - i + 1) ** 0.25;
-        if (!melhor || nota > melhor.nota) melhor = { i, j, prof, nota };
-        i = j + 1;
-      }
-      if (!melhor) { saida[id] = { erro: 'nenhuma saliência para baixo' }; continue; }
+      const comps = new Map();
+      chavesTri.forEach((ks, t) => {
+        const r = achar(ks[0]);
+        let e = comps.get(r);
+        if (!e) { e = { tris: [], min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] }; comps.set(r, e); }
+        e.tris.push(t);
+        const p = pts[t];
+        const c = [p.x, p.y, p.z];
+        for (let k = 0; k < 3; k += 1) { if (c[k] < e.min[k]) e.min[k] = c[k]; if (c[k] > e.max[k]) e.max[k] = c[k]; }
+      });
 
-      /* A corrida funda acha o CORPO do pente; o poço sobe mais raso e a caixa
-         aprovada da AK o inclui (ela começa em z=0,005, colada no grip). Estende
-         para os dois lados enquanto a silhueta ainda desce meia saliência. */
-      let i0 = melhor.i; let j0 = melhor.j;
-      const raso = mediana - saliencia * 0.4;
-      while (i0 > 0 && Number.isFinite(fundo[i0 - 1]) && fundo[i0 - 1] < raso) i0 -= 1;
-      while (j0 < N - 1 && Number.isFinite(fundo[j0 + 1]) && fundo[j0 + 1] < raso) j0 += 1;
-      const z0 = zMin + i0 * passo;
-      const z1 = zMin + (j0 + 1) * passo;
+      /* Qual componente é o pente. Três filtros, cada um com o motivo:
+         - 1% a 15% dos triângulos: menos é parafuso, mais é corpo da arma;
+         - centro em z dentro da janela do punho: exclui coronha e cano;
+         - entre os que sobram, o que DESCE MAIS. Testado contra o pente da `ak`,
+           que é conhecido: a regra escolhe o componente certo, o de 379 tri. */
+      const total = pts.length;
+      const cands = [...comps.values()].filter((e) => {
+        const f = e.tris.length / total;
+        if (f < 0.01 || f > 0.15) return false;
+        const cz = (e.min[2] + e.max[2]) / 2;
+        return cz > -0.12 && cz < 0.35;
+      });
+      if (!cands.length) { saida[id] = { erro: `nenhum componente candidato entre ${comps.size}` }; continue; }
+      const peca = cands.reduce((a, b) => (b.min[1] < a.min[1] ? b : a));
 
-      /* Extensões só sobre a peça que DESCE. Medir sobre tudo abaixo da mediana
-         puxa receptor e guarda-mato para dentro e deixa o x torto — na AK deu
-         [-0,008 · +0,025] onde a caixa aprovada é simétrica em ±0,022. */
-      let x1abs = 0; let y0 = Infinity; let y1 = -Infinity;
-      let dentro = 0;
-      for (const p of pts) {
-        if (p.z < z0 || p.z > z1) continue;
-        if (p.y > raso) continue;
-        dentro += 1;
-        if (Math.abs(p.x) > x1abs) x1abs = Math.abs(p.x);
-        if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
-      }
-      // Carregador é centrado no plano da arma; caixa torta é ruído de medida.
-      const x0 = -x1abs; const x1 = x1abs;
-      // O topo da caixa acompanha o corpo da arma, não o da fatia funda.
-      y1 = Math.max(y1, mediana);
+      const x0 = -Math.max(Math.abs(peca.min[0]), Math.abs(peca.max[0]));
+      const x1 = -x0;
+      const y0 = peca.min[1]; const y1 = peca.max[1];
+      const z0 = peca.min[2]; const z1 = peca.max[2];
+      const componentes = comps.size;
+      const trisPeca = peca.tris.length;
+
       const dentroDe = (c) => {
         const s = new Set();
         pts.forEach((p, k) => {
@@ -176,6 +186,10 @@ const medido = await page.evaluate(async (armas) => {
       };
       const caixaLocal = { min: [x0, y0, z0], max: [x1, y1, z1] };
       const D = dentroDe(caixaLocal);
+      // Quantos triângulos de OUTRAS peças a caixa leva junto: é o preço de usar
+      // caixa em vez de componente, e precisa ser pequeno.
+      const daPeca = new Set(peca.tris);
+      const intrusos = [...D].filter((k) => !daPeca.has(k)).length;
       let iou = null;
       const gab = window.__gabaritoPente?.[id];
       if (gab) {
@@ -196,6 +210,7 @@ const medido = await page.evaluate(async (armas) => {
         recorta: D.size,
         fracao: +(D.size / pts.length * 100).toFixed(2),
         triangulos: pts.length,
+        componentes, trisPeca, intrusos,
         iou,
       };
     } catch (e) { saida[id] = { erro: String(e).slice(0, 90) }; }
@@ -212,12 +227,13 @@ for (const id of TODAS) {
   const r = medido[id];
   if (!r || r.erro) { console.log(`  ✗ ${id.padEnd(11)} ${r?.erro || 'sem resultado'}`); reprovas += 1; continue; }
   if (!GABARITO[id]) {
-    console.log(`  · ${id.padEnd(11)} min ${cx(r.min)}  max ${cx(r.max)}  recorta ${r.recorta} de ${r.triangulos} triângulos (${r.fracao}%)`);
+    console.log(`  · ${id.padEnd(11)} min ${cx(r.min)}  max ${cx(r.max)}`);
+    console.log(`      peça de ${r.trisPeca} tri entre ${r.componentes} componentes · a caixa recorta ${r.recorta} (${r.fracao}%), sendo ${r.intrusos} de outras peças`);
     continue;
   }
   const ok = (r.iou ?? 0) >= PISO_IOU;
   if (!ok) reprovas += 1;
-  console.log(`  ${ok ? '✓' : '✗'} ${id.padEnd(11)} GABARITO · IoU ${(r.iou * 100).toFixed(1)}% (piso ${(PISO_IOU * 100).toFixed(0)}%) · derivada recorta ${r.recorta}, aprovada ${r.aprovadaRecorta}, de ${r.triangulos}`);
+  console.log(`  ${ok ? '✓' : '✗'} ${id.padEnd(11)} GABARITO · IoU ${(r.iou * 100).toFixed(1)}% (piso ${(PISO_IOU * 100).toFixed(0)}%) · peça de ${r.trisPeca} tri · caixa recorta ${r.recorta} (${r.intrusos} intrusos), aprovada ${r.aprovadaRecorta}, de ${r.triangulos}`);
   console.log(`      derivada  min ${cx(r.min)}  max ${cx(r.max)}`);
   console.log(`      aprovada  min ${cx(GABARITO[id].min)}  max ${cx(GABARITO[id].max)}`);
 }

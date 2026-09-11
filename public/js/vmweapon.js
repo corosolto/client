@@ -18,6 +18,58 @@ const _y = new THREE.Vector3();
 const _z = new THREE.Vector3();
 const _m = new THREE.Matrix4();
 
+/* Recorte do pente POR PEÇA (componente conexo) em vez de por caixa. Medido em
+   11/09: a caixa em volta do pente da AK leva 373 triângulos de OUTRAS peças
+   junto — o pente e o corpo ocupam o mesmo volume. Ver BUG-90.
+   Desligar: `?pentepeca=0`. */
+const PECA_LIGADA = (() => {
+  try { return new URLSearchParams(location.search).get('pentepeca') !== '0'; }
+  catch { return true; }
+})();
+
+/* Qual componente é o pente, entre os da malha. Três filtros, validados contra o
+   pente da AK, que é conhecido desde 31/08: a regra escolhe o de 379 triângulos. */
+const PECA_FRACAO_MIN = 0.01;
+const PECA_FRACAO_MAX = 0.15;
+const PECA_Z_MIN = -0.12;
+const PECA_Z_MAX = 0.35;
+
+// Triângulos que dividem uma posição são a mesma peça. A malha Mint é UM nó, mas
+// não é uma peça só: a ak tem 15 componentes em 4.576 triângulos.
+function componenteDoPente(centroides, cantos, norm) {
+  const idx = new Map();
+  const pai = [];
+  const chave = (k) => { let i = idx.get(k); if (i === undefined) { i = pai.length; idx.set(k, i); pai.push(i); } return i; };
+  const achar = (i) => { while (pai[i] !== i) { pai[i] = pai[pai[i]]; i = pai[i]; } return i; };
+  const unir = (a, b) => { a = achar(a); b = achar(b); if (a !== b) pai[a] = b; };
+  const raizes = [];
+  for (let t = 0; t < cantos.length; t += 1) {
+    const c = cantos[t].map(chave);
+    unir(c[0], c[1]); unir(c[0], c[2]);
+    raizes.push(c[0]);
+  }
+  const grupo = new Map();
+  for (let t = 0; t < raizes.length; t += 1) {
+    const r = achar(raizes[t]);
+    let e = grupo.get(r);
+    if (!e) { e = { tris: [], yMin: Infinity, zMin: Infinity, zMax: -Infinity }; grupo.set(r, e); }
+    e.tris.push(t);
+    const c = centroides[t];
+    if (c.y * norm < e.yMin) e.yMin = c.y * norm;
+    if (c.z * norm < e.zMin) e.zMin = c.z * norm;
+    if (c.z * norm > e.zMax) e.zMax = c.z * norm;
+  }
+  let escolhida = null;
+  for (const e of grupo.values()) {
+    const f = e.tris.length / cantos.length;
+    if (f < PECA_FRACAO_MIN || f > PECA_FRACAO_MAX) continue;
+    const cz = (e.zMin + e.zMax) / 2;
+    if (cz < PECA_Z_MIN || cz > PECA_Z_MAX) continue;
+    if (!escolhida || e.yMin < escolhida.yMin) escolhida = e;
+  }
+  return escolhida ? escolhida.tris : null;
+}
+
 // Raiz da arma do pack no GLB: SOCKET_WEAPON_* (ou a própria rig quando o FBX
 // exporta a armature como raiz). É ela que cavalga o ik_hand_gun desde o M1.
 export function weaponSocketOf(entry) {
@@ -88,7 +140,8 @@ export function splitParts(entry, wrap, partsCfg) {
   if (!socket) return false;
   let did = false;
   for (const [part, spec] of Object.entries(partsCfg)) {
-    if (!spec?.box || !spec.bone) continue;
+    const porPeca = Boolean(spec?.peca) && PECA_LIGADA;
+    if (!spec?.bone || (!spec.box && !porPeca)) continue;
     const bone = entry.scene.getObjectByName(spec.bone);
     const mesh = wrap.getObjectByProperty('isMesh', true);
     if (!bone || !mesh?.geometry) continue;
@@ -96,10 +149,10 @@ export function splitParts(entry, wrap, partsCfg) {
       // A caixa da spec está em METROS gun-space; o teste roda em wrap-local
       // (unidades pré-normalização) — divide pelo norm, como muzzle/sight.
       const norm = wrap.userData.metrics?.norm || 1;
-      const box = new THREE.Box3(
+      const box = spec.box ? new THREE.Box3(
         new THREE.Vector3(...spec.box.min).divideScalar(norm),
         new THREE.Vector3(...spec.box.max).divideScalar(norm),
-      );
+      ) : null;
       const source = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry;
       const pos = source.attributes.position;
       const inside = [];
@@ -109,12 +162,31 @@ export function splitParts(entry, wrap, partsCfg) {
       const a = new THREE.Vector3();
       const b = new THREE.Vector3();
       const c = new THREE.Vector3();
+      const centroides = [];
+      const cantos = porPeca ? [] : null;
+      const Q = 1e5;
       for (let i = 0; i < pos.count; i += 3) {
         a.fromBufferAttribute(pos, i).applyMatrix4(toGun);
         b.fromBufferAttribute(pos, i + 1).applyMatrix4(toGun);
         c.fromBufferAttribute(pos, i + 2).applyMatrix4(toGun);
-        const centroid = a.add(b).add(c).multiplyScalar(1 / 3);
-        (box.containsPoint(centroid) ? inside : outside).push(i);
+        if (cantos) {
+          cantos.push([
+            `${Math.round(a.x * Q)},${Math.round(a.y * Q)},${Math.round(a.z * Q)}`,
+            `${Math.round(b.x * Q)},${Math.round(b.y * Q)},${Math.round(b.z * Q)}`,
+            `${Math.round(c.x * Q)},${Math.round(c.y * Q)},${Math.round(c.z * Q)}`,
+          ]);
+        }
+        centroides.push(a.add(b).add(c).multiplyScalar(1 / 3).clone());
+      }
+      if (porPeca) {
+        const tris = componenteDoPente(centroides, cantos, norm);
+        if (!tris) { console.warn(`[mint-viewmodel] ${part}: nenhum componente candidato`); continue; }
+        const daPeca = new Set(tris);
+        for (let t = 0; t < centroides.length; t += 1) (daPeca.has(t) ? inside : outside).push(t * 3);
+      } else {
+        for (let t = 0; t < centroides.length; t += 1) {
+          (box.containsPoint(centroides[t]) ? inside : outside).push(t * 3);
+        }
       }
       if (!inside.length) continue;
       const build = (triangles) => {

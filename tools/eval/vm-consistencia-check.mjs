@@ -232,7 +232,10 @@ export async function medir() {
       if (MUT === 'goldenvazio' && arma === 'ak') skin = 0;
     }
 
-    linhas.push({ arma, familia, caminho, movidas, skin, temParts: Boolean(parts?.mag?.box), fracao: frac?.fracao ?? null });
+    // `peca: true` recorta por componente conexo e dispensa caixa — a caixa leva
+    // geometria alheia junto (medido: 373 intrusos na ak). Ver BUG-90.
+    linhas.push({ arma, familia, caminho, movidas, skin, porPeca: Boolean(parts?.mag?.peca),
+      temParts: Boolean(parts?.mag?.box || parts?.mag?.peca), fracao: frac?.fracao ?? null });
   }
   return linhas;
 }
@@ -257,6 +260,8 @@ function avaliar(linhas) {
       falhas.push({ regra: 'VM-C1', arma: l.arma, msg: `família ${l.familia} move ${l.movidas.join('/')} na recarga, mas a arma não declara parts.mag — a mão puxa o nada` });
       continue;
     }
+    // Recorte por peça não tem caixa para medir: quem o julga é `vm-pente-carga`.
+    if (l.porPeca) continue;
     if (l.fracao === null) {
       falhas.push({ regra: 'VM-C2', arma: l.arma, msg: 'caixa declarada mas o GLB da arma não pôde ser medido' });
       continue;
@@ -280,7 +285,7 @@ if (process.argv.includes('--json')) {
   console.log('\n  arma         família    caminho     peças movidas na recarga   parts  caixa    skin no pente');
   console.log('  ' + '-'.repeat(98));
   for (const l of linhas) {
-    const f = l.fracao === null ? '—' : `${(l.fracao * 100).toFixed(2)}%`;
+    const f = l.fracao === null ? (l.porPeca ? 'por peça' : '—') : `${(l.fracao * 100).toFixed(2)}%`;
     const deve = l.caminho === 'encaixado' && l.movidas.length > 0;
     console.log(`  ${l.arma.padEnd(12)} ${l.familia.padEnd(10)} ${l.caminho.padEnd(11)} ${(l.movidas.join(',') || '—').slice(0, 25).padEnd(26)} ${(deve ? (l.temParts ? 'sim' : 'NÃO') : '—').padEnd(6)} ${f.padEnd(8)} ${l.skin === null ? '—' : l.skin}`);
   }
