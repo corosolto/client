@@ -372,6 +372,124 @@ o mix da alpha.138 já não está servido e não há purge pendente; o conserto 
 `check:fast` e no `check:deploy`). Cláusula **EP16**, **3 mutações novas**:
 `cache-sem-binding`, `cache-so-ingles` e `cache-sem-especificador` — cada uma apaga uma
 alternativa da regex e acende EP16. Matriz completa: **42 de 42 mordidos**.
+### ~~BUG-151 · arnês de automação apontado para produção abria issue de crash como se fosse bug do jogo, e abria DUAS~~ · RESOLVIDO 11/09 (issues #573 e #574)
+
+**Sintoma (literal, issues abertas pelo `crash-fix.yml` em alpha.246, as duas classe `codigo`,
+com 8 segundos de diferença):**
+
+```
+#574  __game is not defined                                fingerprint b81fb1c4, origem <vazia>
+#573  Falha ao abrir partida: __game is not defined        fingerprint 23f0069c, origem promise
+Stack (idêntica nas duas):
+  ReferenceError: __game is not defined
+      at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:18)
+      at UtilityScript.evaluate (<anonymous>:313:16)
+Migalhas: 04:01:40 ops main pronto em 753ms · 04:01:41 ops carga falhou 404 /audio/manifest.json
+```
+
+**Causa raiz — confirmada.** `UtilityScript`, `eval at predicate` e `next` são a assinatura do
+*poller* que o `page.waitForFunction()` do Playwright injeta **dentro da página**. Alguém
+apontou um arnês de automação para produção com um predicado que lê `__game` **sem o `window.`**.
+`window.__game` é escrito num único sítio, `public/js/main.js:1287`, dentro do `_startGame()` —
+depois do `__CS_MAIN_READY__` (`main.js:2810`) e só quando uma partida começa. Antes disso ele é
+global **não declarado**: `window.__game` devolve `undefined`, mas `__game` pelado **lança**.
+
+A exceção do predicado vira rejeição não tratada **da página**, e daí o caminho é o mesmo da
+BUG-76: `src/pages/index.astro:346` chama `origemDoJogo(null, r.stack, msg)`; a stack do
+Playwright não tem **uma única** URL http, então `viuExterna` fica `false` e o `return
+!viuExterna` (`:219`) devolve **interna**. Com `interna === true`:
+
+1. `:351` `reporta('promise', …, externa=false)` → `b81fb1c4` = **#574**, comendo um slot dos dez
+   de `TETO_SESSAO` em vez do balde de `TETO_EXTERNO`;
+2. `:352` `lancamento.ativo` (etapa `partida`, aberta em `public/js/main.js:1154`) dispara
+   `lancamento.fail(r, 'promise')`;
+3. `:290` `reporta('error', 'Falha ao abrir partida: ' + msg, 'promise', …)` → `23f0069c` =
+   **#573**, e `:292` acende o painel **"A ARENA NÃO ABRIU"**. O prefixo muda o hash FNV, então
+   **um evento vira duas issues** — o mesmo par que a BUG-82 já tinha visto nas #419/#420.
+
+**Prova de que as duas são o mesmo evento, e de qual caminho gerou cada uma:** os dois
+fingerprints publicados reproduzem **byte a byte** a receita de `crashFingerprint`
+(`src/lib/error-provenance.mjs:117-122`), e cada um com o `kind`/`source` do seu caminho —
+`('promise', '__game is not defined', '')` = `b81fb1c4` e `('error', 'Falha ao abrir partida:
+__game is not defined', 'promise')` = `23f0069c`. Não é inferência: é o hash fechando.
+
+**Reprodução:**
+
+```
+STK='ReferenceError: __game is not defined
+    at UtilityScript.evaluate (<anonymous>:313:16)'
+MSG='__game is not defined' SRC='' STK="$STK" node scripts/classify-crash.mjs   # antes: codigo
+```
+
+**O QUE FOI DESCARTADO COM MEDIÇÃO, e são dois.**
+
+**1 · "conserte o predicado na origem."** `git grep` por `waitForFunction` com `__game`
+não-qualificado em **todos os refs** (`upstream/*`, `fork/*`, `origin/*`) devolve **zero**: os
+~60 predicados da árvore são todos `window.__game`. O único `__game` pelado executável era
+`tools/eval/sertao-traversal-check.mjs:68`, dentro de um `page.evaluate` — forma de stack
+diferente, sem os frames `predicate`/`next`. **O script ofensor não está sob controle de
+versão.** Foi endurecido assim mesmo (é a mesma classe), mas não era ele.
+
+**2 · "corte em `__game`, ou em `__\w+__`."** Refutado por três provas já pagas aqui:
+`window.__game` é o **handle público do jogo** (`SECURITY.md:9`, e é por ele que a #382 entrou);
+a BUG-76 **proíbe** o corte genérico `__\w+__` porque sete globais do jogo são dunder; e a
+fixture `naoInjetadoFixtures` da própria régua exige que
+`"…evaluating 'window.__game.start'"` continue `codigo`. Cortar no nome do global calaria crash
+nosso — que é exatamente o que a #382 provou que acontece.
+
+**Correção: corte pelo NOME do injetor, e só na STACK.** `AUTOMACAO_RE`
+(`src/lib/error-provenance.mjs`, espelhada em `src/pages/index.astro` e em
+`api/_lib/error-provenance.mjs` do `corosolto/backend`) vale em `isExternalCrash` no mesmo lugar
+da `PONTE_INJETADA_RE`. Ao contrário da #568, aqui o nome **é** estável: `UtilityScript` é
+identificador do Playwright, não é gerado por sessão. Sensível a caixa, pelo mesmo motivo da
+BUG-76.
+
+**Por que na STACK e não na evidência — e este é o parágrafo que decide o corte.** Medido, não
+suposto: testando contra a `evidence` (mensagem + origem + stack), como faz a
+`PONTE_INJETADA_RE`, aparece **1 falso positivo executado** — a mensagem NOSSA `falha ao
+carregar UtilityScript.glb`, com pilha 100 % em `public/js/glbchars.js`, vira `externo`. Nome de
+injetor só é proveniência quando aparece como **frame**; na mensagem ele é carga do jogo. É o
+mutante `automacao-ampla`.
+
+**Medido** (104 issues `crash-auto` do repositório, `#104`..`#574`, mensagem/origem/stack lidos
+do corpo publicado, helper real contra o helper anterior):
+
+| | antes | depois |
+|---|---|---|
+| payloads que mudam de classe | — | **2 de 104** |
+| e quais | — | exatamente a **#573** e a **#574** |
+| falsos positivos com pilha nossa, executados | 0 | **0 de 5** |
+
+**Custo declarado, medido.** Crash que estourar **dentro** de um arnês apontado para produção
+deixa de abrir issue — a linha continua na telemetria bruta. Aceito porque quem roda o arnês vê
+a falha no próprio terminal, e porque o jogador não consegue produzir esse frame:
+`UtilityScript` não aparece em **nenhum** arquivo de `public/` ou `src/`. Nada mais foi
+silenciado: 102 dos 104 payloads não se movem.
+
+**Régua: `api/reguas/error-provenance-check.mjs` do `corosolto/backend`**
+(`npm run eval:error-origin`, lendo este repositório por `CLIENT_DIR`). Cláusula **EP20**:
+classifica as 4 redações do arnês, executa o `origemDoJogo` **recortado deste fonte** contra as
+5 vizinhas que não podem se mover, ancora os 2 fingerprints publicados, exige o balde de
+`TETO_EXTERNO` e carrega a invariante de honestidade (`jogoSemArnes`) — no dia em que o jogo
+falar com `window.UtilityScript`, EP20 fica vermelha em vez de virar mordaça. **5 mutações
+medidas:** `sem-automacao`, `automacao-ampla`, `automacao-insensivel`, `sem-automacao-cliente` e
+`jogo-com-automacao`, cada uma acendendo EP20. **Matriz completa: 53 de 53 mordidos** (as 48
+anteriores seguem acendendo as suas).
+
+**E fica registrado o buraco que este conserto NÃO fecha.** O coletor de `/api/jserror` **não
+tem guarda nenhuma** contra automação — `navigator.webdriver` não aparece uma vez no
+repositório. Só `tools/ops/probes/browser.mjs:85-94` bloqueia escrita, por `page.route`; as
+demais réguas Playwright, apontadas com `BASE=https://www.csbrasil.online`, injetam os próprios
+crashes na telemetria de produção. O `ops-diag.yml` (cron `17 * * * *`, contra produção) **não**
+é a origem destas duas: ele bloqueia a escrita, e o horário não bate. Merece entrada própria.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a injeção **não foi reproduzida com um
+Playwright de verdade** — a medição é da **classificação**, não da injeção. A tabela `js_error`
+do Supabase não foi consultada, então quantos slots de `TETO_SESSAO` esta classe vinha comendo
+por sessão fica sem número. O script ofensor não foi identificado. E as duas 404 de
+`/audio/manifest.json` nas migalhas são de outra família (o manifesto migrou para Blob privado
+nos PRs #506/#507), não investigadas aqui.
+
 ### ~~BUG-78 · carteira cripto injetada no documento abria issue de crash como se fosse bug do jogo~~ · RESOLVIDO 21/08 (issues #403 e #404)
 
 **Sintoma (literal, issues #403 e #404, abertas pelo `crash-fix.yml` em alpha.172):**

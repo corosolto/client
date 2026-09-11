@@ -65,7 +65,7 @@ try {
  const routes=[];
  for (const [name, ids] of Object.entries(spatial.baseline.SP4.paths)) {
   const report = await page.evaluate(async ({name,ids,mutant})=>{
-   const g=__game,w=g.world,p=g.player,nodes=ids.map(i=>w.waypoints.nodes[i]);
+   const g=window.__game,w=g.world,p=g.player,nodes=ids.map(i=>w.waypoints.nodes[i]);
    if(nodes.some(n=>!n)) throw Error('Grafo browser diverge do contrato Node');
    g.paused=true; p.alive=true;p.hp=100;p.vel.set(0,0,0);p.mantle=null;
    p.pos.set(nodes[0].x,g._spawnY(nodes[0].x,nodes[0].z),nodes[0].z);p.grounded=true;
