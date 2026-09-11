@@ -60,8 +60,10 @@ try {
     { waitUntil: 'load', timeout: 180000 },
   );
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
+  // BUG-87: `mint.active` só existe no caminho ENCAIXADO; no golden a arma vem
+  // assada sem wrap Mint. Espera a ENTRY carregada (entry.scene), válida nos dois.
   await page.waitForFunction(
-    (weapon) => window.__authoredVm?.entry?.(weapon)?.mint?.active,
+    (weapon) => Boolean(window.__authoredVm?.entry?.(weapon)?.scene),
     ARMA, { timeout: 120000 },
   );
   await espera(800);
