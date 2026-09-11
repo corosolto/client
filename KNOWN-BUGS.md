@@ -2165,9 +2165,23 @@ entre quadros dava 0,03 no fim e foi lido como imagem congelada. O SwiftShader
 roda este jogo a **~0,3 FPS** enquanto o Playwright grava a 30: o mesmo quadro do
 jogo se repete dezenas de vezes no arquivo, e a série tinha a assinatura disso
 (0,1 · 0,5 · 0,2 · **15,7** · 6,0 · 0,1). Medido no domínio certo — posição do
-osso em espaço de mundo, dentro da página — a AK golden dá **18,19 cm de curso no
-`Mag_metarig`**, estado `reload`, ação `Reload` tocando. A recarga anima. É a lei
-7 cobrada de quem tinha acabado de citá-la.
+osso em espaço de mundo, dentro da página — a AK golden entra em estado `reload`
+com a ação `Reload` tocando, e o `Mag_metarig` se desloca. É a lei 7 cobrada de
+quem tinha acabado de citá-la.
+
+**E a primeira medida dessa sonda também estava contaminada.** Ela dava 18,19 cm,
+mas o mutante `--mutante=semtecla` — que NÃO aperta R — dava **13,57 cm**, com os
+estados em `fire→idle`. Os quatro tiros que a sonda dá antes (para o jogo aceitar
+recarregar) movem o próprio `Mag_metarig`, e a régua somava esse curso ao da
+recarga: ela media *movimento de osso*, não *recarga*. Consertada em duas
+cláusulas — a linha de base só é tomada depois de o estado voltar a `idle`, e só
+entram na conta as amostras em que `entry.state === 'reload'`. Remedida assim, a
+AK golden dá **20,97 cm**, com 96 de 96 amostras em recarga e base tomada em
+`idle`. Esse é o número honesto.
+
+Três medidas contaminadas nesta rodada, todas pegas por mutante ou por
+instrumento independente. O padrão é o mesmo e vale escrever: **a régua nova é
+tão suspeita quanto o código que ela julga**.
 
 **Causa raiz.** No caminho ENCAIXADO, `hidePackGun` (`public/js/vmweapon.js:35-38`)
 apaga a arma do pack inteira — e é ela que tem o carregador preso ao osso `Mag`

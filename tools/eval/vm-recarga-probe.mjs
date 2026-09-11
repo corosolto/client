@@ -106,6 +106,18 @@ for (const arma of ARMAS) {
       }
       const municaoPosTiro = municao();
 
+      /* Espera o tiro ASSENTAR antes da linha de base. Sem isto a sonda soma o
+         curso do `shoot` ao da recarga: com `--mutante=semtecla` ela dava 13,57 cm
+         SEM apertar R (medido em 11/09) e passava verde — a régua media movimento
+         de osso, não recarga. */
+      const t1 = performance.now();
+      while (performance.now() - t1 < 3000) {
+        await new Promise((r) => setTimeout(r, 50));
+        if (entry.state === 'idle') break;
+      }
+      await new Promise((r) => setTimeout(r, 400));
+      const estadoAntes = entry.state;
+
       const antes = amostra();
       const serie = [];
 
@@ -122,9 +134,14 @@ for (const arma of ARMAS) {
         serie.push({ t: +(performance.now() - t0).toFixed(0), pos: amostra(), estado: entry.state });
       }
 
+      /* Só as amostras em que a RECARGA está tocando entram na conta. É o que
+         separa "o osso andou" de "o osso andou por causa da recarga". */
       let maxCm = 0;
       let quemMax = '';
+      let emRecarga = 0;
       for (const passo of serie) {
+        if (passo.estado !== 'reload') continue;
+        emRecarga += 1;
         passo.pos.forEach((p, i) => {
           const a = antes[i];
           const d = Math.hypot(p.x - a.x, p.y - a.y, p.z - a.z) * 100;
@@ -135,7 +152,9 @@ for (const arma of ARMAS) {
         ossos: ossos.map((o) => o.name),
         clipes,
         estados: [...new Set(serie.map((s) => s.estado))],
+        estadoAntes,
         amostras: serie.length,
+        emRecarga,
         maxCm: +maxCm.toFixed(2),
         quemMax,
         acaoTocando: entry.action?.getClip?.()?.name || null,
@@ -161,7 +180,7 @@ if (JSON_OUT) {
     if (r.erro) { console.log(`  ✗ ${r.arma.padEnd(10)} ${r.erro}`); continue; }
     const ok = r.maxCm >= PISO_CM;
     console.log(`  ${ok ? '✓' : '✗'} ${r.arma.padEnd(10)} ${String(r.maxCm).padStart(7)} cm  ${(r.quemMax || '').padEnd(18)} estados: ${r.estados.join('→')}`);
-    console.log(`    clipes: ${r.clipes.join(', ')} · ação: ${r.acaoTocando || '(nenhuma)'} · munição ${r.municaoInicial}→${r.municaoPosTiro}→${r.municaoFinal} · ${r.amostras} amostras`);
+    console.log(`    clipes: ${r.clipes.join(', ')} · ação: ${r.acaoTocando || '(nenhuma)'} · ${r.emRecarga} de ${r.amostras} amostras em recarga (base no estado ${r.estadoAntes})`);
   }
   console.log('');
 }
