@@ -21,6 +21,7 @@ export const POSTO_PROPS = [
 ];
 
 const HALF_X = 28, HALF_Z = 36;
+const ILHAS = [-10.5, -0.5, 9.5];   // z das 3 ilhas de bomba do GLB; rótulos e colisores seguem daqui
 
 function signTex(bg, fg, title, sub, W = 512, H = 160) {
   const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -134,26 +135,21 @@ export function buildPosto(scene, T) {
   addBox(0.35, 1.4, HALF_Z * 2, MAT.aco, wX, 0, 0);       // guarda-corpo leste: a RODOVIA fica visível além (bounds seguram o player)
   addBox(0.6, 3.2, HALF_Z * 2, MAT.loja, -wX, 0, 0);
 
-  /* ---------------- POSTO IPIRANGO (GLB) — cobertura, ilhas, loja e muro do lote ----------------
-     Entrou no lugar da marquise, das ilhas de bomba e da loja de conveniência procedurais.
-     Fica 1:1: `targetH` é a altura REAL medida do GLB (7,74 m), então placeProp calcula escala
-     1,0 — a régua de metros do repo continua valendo. O modelo já vem pousado em y=0.
-     O GLB não traz colisor NENHUM e colisor girado está proibido (BUG-21), então a pegada é
-     declarada à mão aqui embaixo, medida no mapa de ocupação do modelo na altura do peito.
-     Ela vale mesmo se o GLB não carregar — mesmo contrato dos outros props deste mapa.
-     Deslocamento de +2 em x: a cobertura nasce em x≈2 no modelo, e isso devolve as ilhas ao
-     corredor central de sempre (x = 4), onde mora a bandeira MARQUISE. */
+  /* POSTO IPIRANGO (GLB): entrou no lugar da marquise, das ilhas e da loja procedurais.
+     Escala 1:1, pegada declarada à mão (BUG-21) — por quê e como: docs/maps/POSTO-IPIRANGA.md */
   {
     const PX = 2, ALT = 7.74;
     const est = placeProp('posto_ipiranga', { x: PX, z: 0, y: 0, targetH: ALT });
     if (est) { root.add(est); occluders.push(est); }
-    col(-11.5, -13, 3.5, 7, 5);                            // loja: prédio fechado no canto noroeste do lote
-    col(-15, -0.5, 0.4, 19.7, 3);                          // muro oeste do lote (inteiro)
-    col(5.3, -20, 13.3, 0.4, 3);                           // muro norte do lote (do fim da loja até a saída leste)
-    for (const iz of [-10.5, -0.5, 9.5]) col(4, iz, 3.2, 1, 2.4);   // 3 ilhas de bomba (cover de peito)
-    col(16, 17, 2.2, 2.2, 6);                              // totem do posto + canteiro da base, canto sudeste
-    // letreiro do mapa na fachada leste da loja: o GLB traz a marca do posto, mas o nome do
-    // LUGAR é do mapa e some junto com a loja procedural se ninguém repuser.
+    const PEGADA = {
+      loja: [-11.5, -13, 3.5, 7, 5],
+      muroOeste: [-15, -0.5, 0.4, 19.7, 3],
+      muroNorte: [5.3, -20, 13.3, 0.4, 3],
+      totem: [16, 17, 2.2, 2.2, 6],
+    };
+    for (const [x, z, hx, hz, h] of Object.values(PEGADA)) col(x, z, hx, hz, h);
+    for (const iz of ILHAS) col(4, iz, 3.2, 1, 2.4);
+    // o GLB traz a marca do posto; o nome do LUGAR é do mapa e vai na fachada da loja
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(11, 2.4), new THREE.MeshLambertMaterial({ map: signTex('#111417', '#ffd23f', 'POSTO DA TRETA', 'CONVENIÊNCIA 24H', 792, 172) }));
     sign.position.set(-7.9, 3.6, -13); sign.rotation.y = Math.PI / 2; root.add(sign);
   }
@@ -271,7 +267,7 @@ export function buildPosto(scene, T) {
   // rótulos coloridos nas 3 ilhas de bomba (COMUM / ADITIVADA / DIESEL)
   const rotulos = [['COMUM', '#2e8b57'], ['ADITIVADA', '#c0392b'], ['DIESEL', '#111417']];
   rotulos.forEach(([txt, cor], i) => {
-    const tz = [-10.5, -0.5, 9.5][i];
+    const tz = ILHAS[i];
     signMesh(2.2, 0.7, signTex(cor, '#ffffff', txt, ''), 4, 2.5, tz, -Math.PI / 2);
   });
   // placa em poste: o mastro termina na BASE da placa (não cruza o texto)
@@ -450,12 +446,8 @@ export function buildPosto(scene, T) {
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     // triângulo (NÃO-colinear): MID sob a marquise (x=4), E/B no pátio oeste (x=-10)
-    /* As três bandeiras mudaram de lugar quando a estação virou GLB: a loja do posto ocupa
-       o quadrante noroeste (onde PÁTIO SUL morava) e o pilar central da cobertura nasce
-       exatamente em x=4, z=0 (onde MARQUISE morava) — as duas ficavam DENTRO de colisor,
-       inalcançáveis, sem erro nenhum no console. O `posto-check` (POSTO4) reprova isso agora.
-       O trio novo tem simetria de rotação de 180° em torno de (0,0), que é o padrão de CTF
-       quando o centro do mapa é assimétrico como esta estação. */
+    /* Trio remanejado com simetria de rotação: a estação nova engolia PÁTIO SUL e MARQUISE
+       (POSTO4 reprova bandeira dentro de colisor) — docs/maps/POSTO-IPIRANGA.md */
     ctfPoints: [
       { id: 'E', label: 'PÁTIO SUL', x: 12, z: -12 },
       { id: 'MID', label: 'MARQUISE', x: 0, z: 0 },
