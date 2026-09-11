@@ -24,8 +24,8 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const RAIZ = process.cwd();
-const HIRES = path.join(RAIZ, 'artifacts/viewmodels/hires');
-const REF = path.join(RAIZ, 'artifacts/viewmodels/hires/ak/renders/idle_000.png');
+const HIRES = path.join(RAIZ, 'artifacts/viewmodels/hires-v3');
+const REF = path.join(RAIZ, 'artifacts/viewmodels/hires-v3/ak/renders/idle_000.png');
 const arg = (n, d) => process.argv.find((a) => a.startsWith(`--${n}=`))?.split('=')[1] ?? d;
 const SAIDA = path.join(RAIZ, arg('saida', 'artifacts/folha-hires.html'));
 

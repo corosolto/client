@@ -46,8 +46,8 @@ export const VM_WEAPON = {
   // baked: GLB assado OFFLINE com a Mint dentro (pente separado, sockets
   // nomeados) — o runtime só toca clipes. Caixa MAG: régua eval:cs16.
   ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
-  m4: W('ar'),
-  mp5: W('mp5'),
+  m4: W('ar', { golden: true }),
+  mp5: W('mp5', { golden: true }),
   shotgun: W('shotgun'),
   // O pack autora a Deagle com 23–27° de pitch (hand cannon); no nosso mount o
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
@@ -59,26 +59,26 @@ export const VM_WEAPON = {
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
   /* trim: a mão da família ak fica 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
      Delta medido no espaço do holder: [-0,2, -0,8, +1,1] cm. */
-  m92: W('ak', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+  m92: W('ak', { golden: true, trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   akm: W('ak', { golden: true, parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
   g3: W('g3'),
   revolver38: W('revolver'),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
-  md97: W('ar', { recoilScale: 1.8 }),
+  md97: W('ar', { golden: true, recoilScale: 1.8 }),
   /* trim: a mão de apoio flutuava 1,7 cm abaixo do guarda-mão (a ak aprovada mede 0,2). */
   carbine: W('ar', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   m400: W('sniper'),
-  mosin: W('bolt'),
-  lmg: W('lmg'),
-  scar: W('ar'),
+  mosin: W('bolt', { golden: true }),
+  lmg: W('lmg', { golden: true }),
+  scar: W('ar', { golden: true }),
   /* trim: mão de apoio a 1,1–1,4 cm do guarda-mão (a ak aprovada mede 0,2). */
   tavor: W('ar', { trim: { pos: [0, -0.02, 0], rotDeg: [0, 0, 0], scale: 1 } }),
-  famas: W('ar'),
-  uzi: W('smg'),
-  p90: W('p90', { recoilScale: 1.6 }),
-  svd: W('svd'),
+  famas: W('ar', { golden: true }),
+  uzi: W('smg', { golden: true }),
+  p90: W('p90', { golden: true, recoilScale: 1.6 }),
+  svd: W('svd', { golden: true }),
   g3sg1: W('marksman'),
   /* trim: mão de apoio a 1,5 cm do guarda-mão (a ak aprovada mede 0,2). */
-  sks: W('marksman', { trim: { pos: [0, -0.025, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+  sks: W('marksman', { golden: true, trim: { pos: [0, -0.025, 0], rotDeg: [0, 0, 0], scale: 1 } }),
 };
