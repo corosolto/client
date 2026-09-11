@@ -67,11 +67,10 @@ v_sg552 v_tmp v_ump45 v_usp v_xm1014` (+ granadas, C4, escudo)
 `tools/viewmodels/cs16-timings.json` e `extract_cs16_timings.py`. O `cs16` de
 cada família no `vmconfig.js` sai daqui.
 
-### 2.3 · ARMS.rar (81 MB)
+### 2.3 · ARMS.rar (81 MB) — avaliado e descartado
 
-`ARMS.blend` + texturas `Ch08_1001/1002` (Diffuse, Glossiness, Normal) —
-nomenclatura Mixamo. É um rig de braços em Blender, ainda não avaliado contra o
-`Requests_Studio_Hands` do doador aprovado.
+`ARMS.blend` é um **corpo Mixamo**, não um rig de braço FP: `Ch08_Body` (3.294
+verts) + `Ch08_Hoodie` (1.261), 43 ossos, materiais `Ch08_body`/`Ch08_body1`.
 
 ### 2.4 · Doadores GLB com rig — 45 de 69
 
@@ -113,6 +112,49 @@ AK. Bullpup (`tavor`), carabina curta, shotgun de bomba e sniper de ferrolho nã
 a satisfazem por construção.
 
 ---
+
+## 3b · A mão: comparação das quatro fontes, e a decisão
+
+Medido em 11/09/2026:
+
+| fonte | verts | ossos | materiais | separa p/ skin por time? |
+|---|---:|---:|---|---|
+| **`Requests_Studio_Hands`** (aprovada) | **24.818** | **77** | `CoroSolto_FP_Gloves` + `CoroSolto_Mandrake_Sleeves` | sim |
+| `free_fps_arms_gameready_-_rigged` | 8.112 | 52 | `FPS_Arm`, `FPS_Hand` | sim |
+| `fps_arms_gloved` | 5.126 | 47 | `sleeves`, `gloves` | sim |
+| `ARMS.blend` | 4.555 | 43 | `Ch08_body` ×2 | não — é corpo |
+
+**A aprovada fica.** Ganha de 3 a 5× em geometria e 1,5× em ossos, e nenhuma das
+outras justifica a troca.
+
+O motivo decisivo, porém, é outro: a **skin de mão por time** já funciona hoje por
+`applyTeamHandMaterial(material, profile)` em `authoredvm.js:271`, que tinge
+`profile.skin`, `profile.accent` e `profile.sleeve` **casando pelo NOME do
+material** (`CoroSolto_FP_Gloves`, `CoroSolto_*_Sleeves`). Trocar a fonte de mão
+quebra a skin por time até alguém renomear os materiais da fonte nova.
+
+## 3c · O princípio que organiza o resto
+
+Os doadores de hoje trazem conjuntos de clipes muito mais ricos que os 4 da AK:
+
+| doador | clipes | traz o que a AK não tem |
+|---|---:|---|
+| `uzi__..._2026_remake` | 13 | **Aim_In / Aim_Out** (ADS), Walk, Run, Firemode |
+| `desert_eagle__first_person_animations` | 9 | Reload_Empty, Inspect, Unequip, Walk, Run |
+| `animated_shotgun` | 7 | **ReloadStart / Reload / ReloadEnd** (pump) |
+| `pistol_animated` | 7 | EmptyClipReload, Weild |
+| `fps_animations_sniper_rifle` | 6 | **Shot_sight** (tiro mirado) |
+| `m4a1-s_cs2__first_person_animations` | 5 | as animações da M4 do CS2 |
+
+Usar o doador da classe **inteiro** dá animação melhor e traz de volta a
+inconsistência de mão que o dono reclamou — cada doador tem a sua.
+
+> **Princípio: a mão vem de UMA fonte (a aprovada); a animação vem do melhor
+> doador de cada classe, por retargeting.** O maquinário existe
+> (`tools/merge-anims.mjs`, a trilha de retarget).
+
+Corolário: `carbine`, `g3`, `awp` e `shotgun` não falham por defeito delas —
+falham porque estavam sendo forçadas no molde de uma AK.
 
 ## 4 · Ordem de trabalho proposta
 
@@ -158,12 +200,29 @@ Nada acima substitui isto. A AK só virou golden depois que o dono jogou.
 
 ## 5 · O que este plano NÃO propõe, e por quê
 
-- **Não propõe usar o `ARMS.blend`** antes de compará-lo ao
-  `Requests_Studio_Hands`. Trocar a mão que o dono aprovou exige medição e
-  aprovação, não conveniência.
+- **Não propõe trocar a mão.** Comparado e decidido na seção 3b: a aprovada ganha
+  em geometria e em ossos, e é a única já ligada à skin por time.
 - **Não propõe reautorar animação à mão.** O pack e o CS 1.6 já trazem
   `draw/idle/reload` por arma; o gargalo nunca foi animação.
 - **Não propõe afrouxar a guarda da coronha.**
 - **Não propõe publicar sem hash.** Em 11/09 a AK aprovada foi sobrescrita porque
   a verificação comparava **tamanho** e não **sha256** — dois arquivos diferentes
   tinham os mesmos 3.414.520 bytes. Toda publicação daqui em diante compara hash.
+
+---
+
+## 6 · Requisito do dono, 11/09
+
+> *"no final eu quero skins de mãos diferentes por time ainda, mas deixe tudo na
+> mesma escala"*
+
+Os dois já têm caminho:
+
+- **Skin por time** — funciona hoje, por tintura de material em
+  `applyTeamHandMaterial`. Preservá-la é mais um motivo para a mão não mudar de
+  fonte. Se em algum momento a skin passar de tintura para textura própria por
+  time, o lugar é `MATERIAL_TEXTURE_BASE` (`Hand: T_Arm01`, `Glove: T_Glove01`,
+  `Cloth: T_Cloth01`), que já existe e já é lido do runtime compartilhado.
+- **Mesma escala** — é a Onda C, e o alvo já está medido: a AK em **8,49 px/cm**.
+  A régua de aceitação é dispersão abaixo de ±10% entre as 20 armas do arsenal,
+  contra os 2,8× de dispersão que o baseline de 11/09 mediu.
