@@ -7,6 +7,7 @@ import { grafitar } from './graffiti_pass.js';
 
 // props GLB que este mapa usa (main.js pré-carrega MAPS[id].props)
 export const POSTO_PROPS = [
+  'posto_ipiranga',   // a estação inteira: cobertura, ilhas, loja e totem (ver POSTO IPIRANGO abaixo)
   'kombi', 'saveiro', 'fusca', 'dumpster', 'quiosque', 'botijao_gas',
   'jersey_barrier', 'concrete_roadblock', 'sandbags', 'pilha_pneus', 'tires',
   // fila/congestionamento fora do posto (a treta) + mais carros no pátio
@@ -75,18 +76,10 @@ export function buildPosto(scene, T) {
   const MAT = {
     asfalto: lam(tex('asphalt', 0x2b2e33)),
     apron: lam(tex('concrete', 0x9aa0a6)),     // concreto claro do pátio
-    curb: lam({ color: 0xb7a94a }),            // meio-fio amarelo da ilha de bomba
     loja: lam(tex('concrete', 0xe4dccb)),
-    lojaBanda: lam({ color: 0xc0392b }),
-    marquise: lam(tex('concrete', 0xd7dbe0)),
-    marquiseBaixo: lam(tex('concrete', 0xb8bdc4)),
-    fascia: lam({ color: 0xe03c3c }),
-    pilar: lam({ color: 0xe9ecef }),
-    bomba: lam({ color: 0xcf3b3b }),
     bombaTopo: lam({ color: 0x1b1d21 }),
     aco: lam({ color: 0x8a9096 }),
     grama: lam({ color: 0x596b39 }),
-    vidro: lam({ color: 0x9fd0e6, transparent: true, opacity: 0.5 }),
   };
 
   // addBox: empurra AABB + occluder por padrão (collide:false pula os dois)
@@ -141,49 +134,28 @@ export function buildPosto(scene, T) {
   addBox(0.35, 1.4, HALF_Z * 2, MAT.aco, wX, 0, 0);       // guarda-corpo leste: a RODOVIA fica visível além (bounds seguram o player)
   addBox(0.6, 3.2, HALF_Z * 2, MAT.loja, -wX, 0, 0);
 
-  /* ---------------- LOJA DE CONVENIÊNCIA (corredor oeste, fundo de cover) ----------------
-     Volume de 8×24 encostado no muro oeste, fachada de vidro virada pro pátio (+x). Deixa
-     um vão de porta no centro (z ∈ [-2,2]) pra não virar um paredão de 24 m. */
+  /* ---------------- POSTO IPIRANGO (GLB) — cobertura, ilhas, loja e muro do lote ----------------
+     Entrou no lugar da marquise, das ilhas de bomba e da loja de conveniência procedurais.
+     Fica 1:1: `targetH` é a altura REAL medida do GLB (7,74 m), então placeProp calcula escala
+     1,0 — a régua de metros do repo continua valendo. O modelo já vem pousado em y=0.
+     O GLB não traz colisor NENHUM e colisor girado está proibido (BUG-21), então a pegada é
+     declarada à mão aqui embaixo, medida no mapa de ocupação do modelo na altura do peito.
+     Ela vale mesmo se o GLB não carregar — mesmo contrato dos outros props deste mapa.
+     Deslocamento de +2 em x: a cobertura nasce em x≈2 no modelo, e isso devolve as ilhas ao
+     corredor central de sempre (x = 4), onde mora a bandeira MARQUISE. */
   {
-    const LX = -21, LD = 8, LH = 5;
-    // paredes: duas metades deixando a porta central
-    for (const [z0, z1] of [[-12, -2], [2, 12]]) {
-      const len = z1 - z0, cz = (z0 + z1) / 2;
-      addBox(LD, LH, len, MAT.loja, LX, 0, cz);
-    }
-    addBox(LD, LH, 24, MAT.loja, LX, 0, 0, { collide: false, cast: false });   // fundo/teto visual
-    addBox(LD + 0.6, 0.5, 25, MAT.lojaBanda, LX, LH, 0, { collide: false });   // beiral vermelho
-    // fachada de vidro virada pro pátio (face leste), nas duas metades
-    for (const cz of [-7, 7]) addBox(0.1, 3.2, 9, MAT.vidro, LX + LD / 2, 0.2, cz, { collide: false });
-    // letreiro "POSTO DA TRETA" no topo da fachada (canvas com aspecto casado = não corta)
+    const PX = 2, ALT = 7.74;
+    const est = placeProp('posto_ipiranga', { x: PX, z: 0, y: 0, targetH: ALT });
+    if (est) { root.add(est); occluders.push(est); }
+    col(-11.5, -13, 3.5, 7, 5);                            // loja: prédio fechado no canto noroeste do lote
+    col(-15, -0.5, 0.4, 19.7, 3);                          // muro oeste do lote (inteiro)
+    col(5.3, -20, 13.3, 0.4, 3);                           // muro norte do lote (do fim da loja até a saída leste)
+    for (const iz of [-10.5, -0.5, 9.5]) col(4, iz, 3.2, 1, 2.4);   // 3 ilhas de bomba (cover de peito)
+    col(16, 17, 2.2, 2.2, 6);                              // totem do posto + canteiro da base, canto sudeste
+    // letreiro do mapa na fachada leste da loja: o GLB traz a marca do posto, mas o nome do
+    // LUGAR é do mapa e some junto com a loja procedural se ninguém repuser.
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(11, 2.4), new THREE.MeshLambertMaterial({ map: signTex('#111417', '#ffd23f', 'POSTO DA TRETA', 'CONVENIÊNCIA 24H', 792, 172) }));
-    sign.position.set(LX + LD / 2 + 0.05, 4.2, 0); sign.rotation.y = Math.PI / 2; root.add(sign);
-  }
-
-  /* ---------------- MARQUISE central sobre as ilhas de bomba (corredor central) ----------------
-     Teto plano a 5,5 m sobre 6 pilares. Teto e fáscia collide:false (passa por baixo);
-     os 6 pilares colidem. É o pátio disputado — a bandeira MID mora aqui. */
-  {
-    const CY = 5.5, cx = 4;
-    addBox(20, 0.5, 22, MAT.marquise, cx, CY, 0, { collide: false });
-    addBox(19.2, 0.08, 21.2, MAT.marquiseBaixo, cx, CY - 0.09, 0, { collide: false, cast: false });   // forro
-    for (const bz of [-9, -3, 3, 9]) addBox(19.2, 0.18, 0.2, MAT.aco, cx, CY - 0.2, bz, { collide: false, cast: false });   // vigas do forro
-    for (const s of [-1, 1]) {   // fáscia (borda) N/S e L/O
-      addBox(20, 0.9, 0.4, MAT.fascia, cx, CY - 0.2, s * 11, { collide: false });
-      addBox(0.4, 0.9, 22, MAT.fascia, cx + s * 10, CY - 0.2, 0, { collide: false });
-    }
-    for (const px of [cx - 8, cx + 8]) for (const pz of [-9, 0, 9]) {
-      addBox(0.55, CY, 0.55, MAT.pilar, px, 0, pz);   // pilar (colide)
-    }
-    // 3 ILHAS DE BOMBA sob a marquise (cover de peito): meio-fio + 2 bombas cada
-    for (const iz of [-8, 0, 8]) {
-      addBox(4.4, 0.22, 1.8, MAT.curb, cx, 0, iz, { collide: false });        // meio-fio baixo (não trava tiro)
-      for (const dx of [-1.1, 1.1]) {
-        addBox(0.7, 1.5, 0.55, MAT.bomba, cx + dx, 0.22, iz);                 // corpo da bomba (colide)
-        addBox(0.72, 0.4, 0.57, MAT.bombaTopo, cx + dx, 1.72, iz, { collide: false });   // visor
-        const mang = addBox(0.08, 0.9, 0.08, MAT.aco, cx + dx + 0.4, 0.5, iz, { collide: false }); mang.rotation.z = 0.3;
-      }
-    }
+    sign.position.set(-7.9, 3.6, -13); sign.rotation.y = Math.PI / 2; root.add(sign);
   }
 
   /* ---------------- postes de luz da hora dourada (4 cantos) ---------------- */
@@ -299,7 +271,7 @@ export function buildPosto(scene, T) {
   // rótulos coloridos nas 3 ilhas de bomba (COMUM / ADITIVADA / DIESEL)
   const rotulos = [['COMUM', '#2e8b57'], ['ADITIVADA', '#c0392b'], ['DIESEL', '#111417']];
   rotulos.forEach(([txt, cor], i) => {
-    const tz = [-8, 0, 8][i];
+    const tz = [-10.5, -0.5, 9.5][i];
     signMesh(2.2, 0.7, signTex(cor, '#ffffff', txt, ''), 4, 2.5, tz, -Math.PI / 2);
   });
   // placa em poste: o mastro termina na BASE da placa (não cruza o texto)
@@ -478,10 +450,16 @@ export function buildPosto(scene, T) {
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     // triângulo (NÃO-colinear): MID sob a marquise (x=4), E/B no pátio oeste (x=-10)
+    /* As três bandeiras mudaram de lugar quando a estação virou GLB: a loja do posto ocupa
+       o quadrante noroeste (onde PÁTIO SUL morava) e o pilar central da cobertura nasce
+       exatamente em x=4, z=0 (onde MARQUISE morava) — as duas ficavam DENTRO de colisor,
+       inalcançáveis, sem erro nenhum no console. O `posto-check` (POSTO4) reprova isso agora.
+       O trio novo tem simetria de rotação de 180° em torno de (0,0), que é o padrão de CTF
+       quando o centro do mapa é assimétrico como esta estação. */
     ctfPoints: [
-      { id: 'E', label: 'PÁTIO SUL', x: -10, z: -12 },
-      { id: 'MID', label: 'MARQUISE', x: 4, z: 0 },
-      { id: 'B', label: 'PÁTIO NORTE', x: -10, z: 12 },
+      { id: 'E', label: 'PÁTIO SUL', x: 12, z: -12 },
+      { id: 'MID', label: 'MARQUISE', x: 0, z: 0 },
+      { id: 'B', label: 'PÁTIO NORTE', x: -12, z: 12 },
     ],
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
