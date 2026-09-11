@@ -2154,6 +2154,191 @@ aprovados. **Régua:** `node tools/eval/vm-gauntlet.mjs --modo=golden --armas=ak
 --largura=1440 --altura=810`. Re-enquadrar a golden (congelada por hash em
 contrato e ledger) é decisão do dono.
 
+### BUG-90 · o pente fica soldado na arma durante a recarga — 4 armas jogáveis · RELATADO 11/09
+
+**Palavras do dono, literais:** *"animação 'no ar' — vários rifles puxam o
+carregador mas o pente não sai, fica a mão puxando o nada"*.
+
+**A conclusão anterior estava errada, e vai retratada.** Em 11/09 esta frente
+concluiu, do vídeo de aceite, que *"a AK golden não anima a recarga"*. O RMS
+entre quadros dava 0,03 no fim e foi lido como imagem congelada. O SwiftShader
+roda este jogo a **~0,3 FPS** enquanto o Playwright grava a 30: o mesmo quadro do
+jogo se repete dezenas de vezes no arquivo, e a série tinha a assinatura disso
+(0,1 · 0,5 · 0,2 · **15,7** · 6,0 · 0,1). Medido no domínio certo — posição do
+osso em espaço de mundo, dentro da página — a AK golden dá **18,19 cm de curso no
+`Mag_metarig`**, estado `reload`, ação `Reload` tocando. A recarga anima. É a lei
+7 cobrada de quem tinha acabado de citá-la.
+
+**Causa raiz.** No caminho ENCAIXADO, `hidePackGun` (`public/js/vmweapon.js:35-38`)
+apaga a arma do pack inteira — e é ela que tem o carregador preso ao osso `Mag`
+por skinning. A arma visível é o wrap Mint, pendurado no soquete com o pente
+**soldado ao corpo**. O osso puxa geometria invisível; a peça visível não se
+separa nunca. A queixa do dono é literal.
+
+`splitParts` (`public/js/vmweapon.js:85`) existe exatamente para isso: recorta o
+pente do wrap Mint e o pendura no osso (`bone.add(partMesh)`, `:147`). Ele só roda
+quando a arma declara `parts.mag.box` no `vmconfig.js`, e **só `ak` e `akm`
+declaram** — as duas viraram `golden` em 11/09 01:45, e o caminho golden não passa
+por `attachMintWeapon`. Resultado: hoje o recorte **não roda para arma nenhuma**.
+
+**Medido, 11/09.** Varredura dos GLB servidos (`/tmp/scan-mag.mjs`, contagem de
+vértices com peso não-nulo no osso):
+
+| caminho | armas | pente preso ao osso `Mag` |
+|---|---|---|
+| golden | 14 | todas, por skinning — ak 783 verts, lmg 1.824, sks 1.264, m92 59 |
+| família | awp, carbine, deagle, pistol | preso por skinning (ar 2.616, pistol 1.257, deagle 804, sniper 392) — **e escondido por `hidePackGun`** |
+| família | shotgun, revolver38 | sem osso `Mag`, e correto: `reloadStyle` `pump_loop` e `cylinder` |
+
+A coreografia não é o problema: **toda** família com osso `Mag` o anima em
+`reload_tactical` e `reload_empty`, com translação, rotação e escala.
+
+**Confirmação in-game, 11/09.** `vm-pente-carga.mjs`, coluna de carga **visível**:
+
+| arma | visíveis | presos | caminho | |
+|---|---:|---:|---|---|
+| `ak` | **783** | 783 | `gold#ak` | pente skinnado e na tela |
+| `carbine` | **0** | 178 | `ar` | **carga oculta** |
+| `awp` | **0** | 50 | `sniper` | **carga oculta** |
+| `deagle` | **0** | 123 | `deagle` | **carga oculta**; na tela `deagle_1` (Mint montada) |
+| `pistol` | 197 | 197 | `pistol#pistol` | visível — e é outro defeito, o BUG-91 |
+
+O mecanismo deixa de ser leitura de código e passa a ser medida. A sonda também
+diz o que está na tela, e isso fecha os dois casos de uma vez:
+
+```
+deagle    mint montada: sim · na tela: GEO_FP_SK_Hand, deagle_1
+pistol    mint montada: NÃO · na tela: GEO_FP_SK_Hand, SK_G18, SK_G18_1, SK_G18_2
+ak        na tela: ..._ak_body, ..._ak_charging_handle, ..._ak_magazine
+```
+
+Na AK golden o pente aparece na lista do que está na tela
+(`coro_solto_project_ak_magazine`). Na `deagle` a Mint está montada e o pente
+não está em lugar nenhum. Na `pistol` a arma na tela é a `SK_G18`.
+
+**Correção de magnitude.** A partir da varredura offline eu previ 2.616 vértices
+para a `carbine`; a medida dentro da página deu **178**. A varredura offline conta
+em duplicidade quando vários nós compartilham a mesma skin. Vale o número de
+dentro da página — é o que o jogo carregou. Na AK, onde não há nós repetidos, os
+dois instrumentos deram o mesmo 783.
+
+A própria sonda nasceu com dois defeitos, e o segundo é o que interessa: ela leu
+`BufferAttribute.getComponent`, que não existe nesta versão do Three, e imprimiu
+**"4/4 com carga VISÍVEL · 0 puxando o nada"** com três das quatro armas em erro —
+porque o contador de falhas filtrava `!r.erro`. Placar verde por cima de medição
+que não aconteceu é a forma mais cara de vermelho falso. Corrigido: o rodapé agora
+tem coluna `sem medida`.
+
+**Armas afetadas: 4, e só 4.** `WEAPON_IDS` (`public/js/weapons.js:10-12`) tem 20
+armas jogáveis. Cruzando com o `vmconfig`:
+
+- **13 golden** — `ak m4 mp5 m92 md97 mosin lmg scar famas uzi p90 svd sks`. Pente
+  por skinning, dentro do GLB. Não têm o defeito.
+- **6 de família** — `awp shotgun deagle pistol revolver38 carbine`.
+- **`knife`** corre em `meleevm.js`, fora deste caminho.
+
+Com pente soldado: **`awp` `carbine` `deagle`**. A `pistol` tem o defeito vizinho
+do BUG-91.
+
+**Correção de uma simplificação minha.** Eu escrevi antes que `shotgun` e
+`revolver38` estavam corretas por não terem pente. Corretas quanto ao PENTE — elas
+não têm osso `Mag`, e `pump_loop`/`cylinder` são os estilos certos. Mas a família
+`shotgun` anima `Pump` e a `revolver` anima `Cartridge0..5` e `CylinderRelease`, e
+no caminho encaixado essas peças estão **igualmente soldadas** ao corpo Mint. O
+mecanismo é o mesmo; muda o nome da peça. `splitParts` aceita qualquer nome
+(`Object.entries(partsCfg)`), então o conserto é o mesmo com `parts.pump` e
+`parts.cylinder`. Não estava na lista do dono e não inflo o BUG-90 com isso — fica
+registrado como a extensão natural dele.
+
+`akm`, `g3`, `g3sg1`, `m400` e `tavor` aparecem no `vmconfig` mas **não estão em
+`WEAPON_IDS`** — são o descompasso `vmconfig` × `weapons.js` que o enxugamento de
+26 → 20 armas (31/08) deixou para trás, e não entram na conta porque o jogador não
+as empunha. Elas também não têm entrada em `CFG` (`weapons.js:43-116`), então
+`weaponModel` as cairia em `CFG.awp` — latente, e só latente enquanto não voltarem
+ao roster.
+
+As outras 13 saíram do defeito por consequência da migração golden de 11/09 01:43
+— posterior à queixa. Por isso a queixa descrevia corretamente quase todo o
+arsenal na época em que foi feita.
+
+**E há um segundo defeito na mesma família, já medido.** O piloto
+`coro/pistol-hires.glb`, aprovado pelo dono em 07/09, tem o pente certo
+(`CoroSolto_Pistol_Mag`, malha própria) e a **mão errada**: `armmesh_Mat_0` em 58
+nós, contra `Requests_Studio_Hands` ×2 em 85 nós na AK. Ele preserva o nome de
+material `CoroSolto_FP_Gloves`, então a skin por time funciona — mas a geometria e
+o rig são de outro doador. É a queixa nº 1 do dono (*"escala de mãos/braços varia
+por arma"*) congelada num arquivo. Somado ao BUG-VM-ESCALA-PISTOLA, a pistola tem
+**dois** bloqueios para o caminho golden, não um.
+
+**Réguas novas:**
+
+- `node tools/eval/vm-pente-carga.mjs --porta=<p>` — conta a carga **visível** no
+  osso do pente, por arma, no jogo. Mutantes: `--mutante=sempeso` ignora o
+  skinning e reintroduz o defeito na AK golden; `--mutante=semfilho` ignora o
+  parentesco e reintroduz nas encaixadas.
+- `node tools/eval/vm-recarga-probe.mjs --arma=<a> --porta=<p>` — curso do osso em
+  cm. Mutantes: `--mutante=semtecla` (não aperta R) e `--mutante=semgasto` (não
+  gasta munição antes — é o defeito de instrumento que esta sonda teve na
+  primeira execução: o jogo recusa recarregar pente cheio e a medida vira 0 cm).
+
+**A régua que existia foi consertada, e o conserto quase matou a mordida dela.**
+`tools/eval/vm-consistencia-check.mjs` agora cobra a caixa só de quem passa por
+`attachMintWeapon` — arma **jogável**, sem `golden`, sem `baked` — e a isenção do
+caminho golden virou uma cláusula MEDIDA (VM-C4: o GLB servido tem de ter ≥50
+vértices presos ao osso do pente por skinning), não uma isenção por fé. Placar:
+**14/19**, com 5 reprovas e nenhuma falsa.
+
+No caminho, os três mutantes que já existiam (`semparts`, `caixavazia`,
+`caixatudo`) **pararam de morder**: eles mutam o `parts` da `ak`, e a `ak` virou
+golden em 11/09 — as cláusulas de caixa deixaram de se aplicar a ela e os três
+passaram calados. Consertado pondo a `ak` no caminho encaixado dentro do mutante.
+Fica a lição: mutante que só morde na configuração de ontem não guarda nada, e ele
+não avisa — passa em silêncio.
+
+**O que ela acertava desde o começo.** A mensagem do VM-C1 em
+`tools/eval/vm-consistencia-check.mjs:146` é a queixa do dono ao pé da letra — *"a
+mão puxa o nada"*. Mas ela decide pelo campo `parts.mag` do `vmconfig.js`, que é
+**declaração**, não peça. Das 22 reprovas do placar 2/24, **14 são falsas** (as
+golden, cujo pente funciona por skinning e que nunca vão precisar de `parts`) e
+**8 são verdadeiras** (as de família). O defeito estava apontado desde o começo,
+enterrado em falso vermelho — que é como se ensina a ignorar vermelho. Reescrevê-la
+para medir o GLB servido, e não o campo, é parte do conserto.
+
+### BUG-91 · a pistola em primeira pessoa é a Glock do pacote, não a `pistol.glb` do jogo · MEDIDO 11/09
+
+**Como apareceu.** Investigando o BUG-90, a `pistol` foi a única arma de família a
+medir carga **visível** no osso do pente (197 de 197). Isso só é possível se
+`hidePackGun` nunca rodou — e `hidePackGun` só roda dentro de `attachMintWeapon`.
+
+**Causa raiz, em três linhas de código.**
+
+1. `vmconfig.js` declara `pistol: W('pistol', { baked: true, runtime: 'family', … })`.
+2. `baked: true` faz `entryKeyFor` devolver `pistol#pistol` (`authoredvm.js:245`).
+3. `attachMintWeapon` só é chamado quando a chave **não** tem `#`
+   (`authoredvm.js:526`): `if (entry.family !== 'grenade' && !key.includes('#'))`.
+
+Então o caminho assado assume o comando e procura `MINT_WEAPON_PISTOL`
+(`authoredvm.js:464`). Esse nó **não existe**: com `runtime: 'family'` a URL
+resolvida é a da família (`authoredvm.js:262`), e **nenhum** runtime de família tem
+nó `MINT_WEAPON_*` — verificado em `pistol`, `deagle`, `ar` e `sniper`. O
+`entry.mint` nunca nasce, a arma do pacote nunca é escondida, e o que fica na tela
+é a malha `SK_G18` do KINEMATION.
+
+`baked: true` e `runtime: 'family'` são contraditórios: o primeiro diz *"a Mint já
+está assada dentro do GLB"* e o segundo manda servir o GLB de família, que não tem
+Mint assada nenhuma. A combinação falha **em silêncio** — é a assinatura da lei 6.
+
+**Não foi introduzido agora.** `git log -p -- public/js/data/vmconfig.js` mostra
+`baked: true` na linha da pistola desde antes de 10/09 23:43. A reversão de 11/09
+00:24 (BUG-VM-ESCALA-PISTOLA) devolveu o estado anterior, não criou este.
+
+**Régua:** `node tools/eval/vm-pente-carga.mjs --armas=pistol --porta=<p>` — a linha
+`mint montada:` e `na tela:` dizem qual malha o jogador empunha.
+
+**Custo de consertar.** Tirar `baked: true` põe a pistola no caminho encaixado: a
+`pistol.glb` entra na mão e a `SK_G18` some — mas aí ela herda o BUG-90 (pente
+soldado) e passa a precisar de `parts.mag`. Os dois consertos são o mesmo trabalho.
+
 ### ~~BUG-84 · tiros alheios acendem a luz do viewmodel da faca~~ · CORRIGIDO LOCALMENTE 05/09
 
 Na revisão contínua da faca, o crítico viu clarões isolados nos frames

@@ -413,6 +413,33 @@ extract_paid_unitypackage.py → build_paid_family.py → assemble_paid_family.m
 Servida pelo symlink `public/private-assets/viewmodels` — **gitignored**; sem ele
 tudo cai no legado calado.
 
+## C.3b · Por que o pente sai da arma numa e não na outra
+
+É a diferença que explica a queixa nº 1 do dono, e ela é estrutural, não de
+acabamento.
+
+**Golden** — a arma vem **assada dentro do GLB** e o carregador é geometria
+**skinnada** no osso `Mag_metarig`. O osso anda, a malha anda com ele, e está
+visível. É por isso que a AK aprovada recarrega direito: 18,19 cm de curso
+medidos no jogo (`tools/eval/vm-recarga-probe.mjs`).
+
+**Encaixado (família)** — a arma do pack é **apagada inteira** por `hidePackGun`
+(`public/js/vmweapon.js:35-38`), inclusive o pente skinnado, e no lugar entra o
+wrap Mint pendurado no soquete, com o carregador **soldado ao corpo**. O osso
+continua animando — todas as famílias com osso `Mag` o animam em
+`reload_tactical` e `reload_empty`, com translação, rotação e escala — só que
+puxando geometria invisível.
+
+`splitParts` (`public/js/vmweapon.js:85`) existe para fechar esse buraco: recorta
+o pente do wrap Mint e o pendura no osso (`bone.add(partMesh)`, `:147`). Ele só
+roda para arma que declara `parts.mag.box` no `vmconfig.js`. Em 11/09, só `ak` e
+`akm` declaravam, e as duas foram para o golden na mesma noite — então o recorte
+não roda para arma nenhuma. Ver BUG-90.
+
+**A regra prática:** arma no caminho encaixado precisa de `parts.mag`; arma golden
+não precisa e nunca vai precisar. Régua que exige `parts` das duas produz 14
+vermelhos falsos, que é exatamente o que a `vm-consistencia-check.mjs` faz hoje.
+
 ## C.4 · O contrato normativo
 
 `VIEWMODEL_CONTRACT.md` (220 linhas) fixa o que não se negocia:

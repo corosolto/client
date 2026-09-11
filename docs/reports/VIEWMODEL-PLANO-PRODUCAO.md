@@ -168,14 +168,77 @@ quatro recusas sem tocar no builder.
 
 **Pronto é:** `eval:vm-serving` verde com as famílias novas.
 
-### Onda B — as 22 caixas de pente (a queixa nº 1 do dono)
+### Onda B — as caixas de pente (a queixa nº 1 do dono) — **são 8, não 22**
 
-Derivação já validada: o perfil de profundidade por fatia recupera a caixa
-aprovada da AK (saliência em `x ∈ [0,020 · 0,060]`, `y` até −0,147). Aplicar arma
-a arma e conferir a fração de vértices contra a referência (ak 1,87%, akm 0,91%).
+**Revisado em 11/09 com a causa raiz medida (BUG-90).** Não são 22 caixas: são
+**8**. As 14 armas golden trazem o pente preso ao osso por *skinning* dentro do
+próprio GLB e **nunca vão precisar de `parts`** — a AK golden mede 18,19 cm de
+curso no `Mag_metarig` durante a recarga. E `shotgun`/`revolver38` não têm osso de
+pente porque não têm pente: `pump_loop` e `cylinder`.
 
-**Pronto é:** `eval:vm-consistencia` de 2/24 para 24/24, com os mutantes ainda
-mordendo.
+Sobram **quatro**, e só quatro: `awp` `carbine` `deagle` `pistol`. Nelas
+`hidePackGun` (`public/js/vmweapon.js:35-38`) apaga a arma do pack inteira —
+inclusive o pente skinnado — e a arma visível é o wrap Mint, com o carregador
+soldado ao corpo. O osso puxa o invisível.
+
+Quatro e não oito porque `WEAPON_IDS` (`public/js/weapons.js:10-12`) tem 20 armas
+jogáveis, e `akm` `g3` `g3sg1` `m400` `tavor` não estão nela — ficaram no
+`vmconfig` depois do enxugamento 26 → 20 de 31/08. Trabalhar nelas agora é
+produzir para arma que ninguém empunha.
+
+A coreografia já existe: **toda** família com osso `Mag` o anima em
+`reload_tactical` e `reload_empty`, com translação, rotação e escala.
+
+Ferramenta: `tools/viewmodels/derivar-caixa-pente.mjs`, que deriva a caixa do
+perfil de profundidade da malha **dentro da página**, em cima do `weaponModel()`
+real, e só vale depois de reproduzir as duas caixas já aprovadas (`ak`, `akm`).
+Se não reproduzir, ela sai vermelha em vez de aplicar.
+
+**Pronto é:** `node tools/eval/vm-pente-carga.mjs` com carga **visível** acima do
+piso nas 4, e a `vm-consistencia` reescrita para medir o GLB servido em vez do
+campo `parts` — hoje 14 das 22 reprovas dela são falsas.
+
+**Aviso de régua, pago em 11/09.** A caixa derivada foi conferida de dois jeitos
+contra a aprovada da AKM: por **erro de face** deu 1,97 cm, dentro de qualquer
+tolerância razoável — e por **interseção sobre união dos triângulos recortados**
+deu **10,8%**. Quase aprovei um recorte errado com a régua errada. Caixa de pente
+se confere pelo conjunto de triângulos que ela captura, nunca por distância de
+face. E a derivação precisa rodar DENTRO da página, sobre o `weaponModel()` real:
+a reprodução offline da normalização deu 12,43% dos triângulos para a caixa
+aprovada da AK contra os 1,87% de referência — divergência de reimplementação, que
+é a mesma cegueira da `vm-consistencia-check.mjs`.
+
+### Onda B2 — a pistola, que é um caso à parte (medido em 11/09)
+
+A pistola **não** tem o defeito do pente soldado: ela mede 197 vértices visíveis
+no osso `Mag`. Tem um defeito diferente e maior.
+
+`pistol` declara `baked: true` **e** `runtime: 'family'`. Com `baked`, a chave vira
+`pistol#pistol` (`authoredvm.js:432`) e o `attachMintWeapon` só roda quando a chave
+**não** tem `#` (`:526`). Então ele nunca roda: a arma do pacote nunca é escondida
+e o `MINT_WEAPON_PISTOL` que o caminho assado procura **não existe** em
+`pistol/pistol-runtime.glb` — nenhum runtime de família tem nó `MINT_WEAPON_*`. O
+que o jogador empunha é a `SK_G18` do KINEMATION, não a `pistol.glb` do jogo.
+
+E o piloto que existiria para substituí-la tem dois bloqueios já medidos:
+
+| | `ak-hires.glb` (aprovada) | `pistol-hires.glb` (07/09) |
+|---|---|---|
+| mão | `Requests_Studio_Hands` ×2, 85 nós | **`armmesh_Mat_0`, 58 nós** |
+| material da luva | `CoroSolto_FP_Gloves` | `CoroSolto_FP_Gloves` ✓ |
+| pente próprio | por skinning | `CoroSolto_Pistol_Mag` ✓ |
+| escala | correta | **144× maior** (BUG-VM-ESCALA-PISTOLA) |
+
+**E o retarget por nome de osso está descartado entre os dois doadores:**
+`ak-12animated.glb` (111 nós, clipes `Equip/Idle/Shoot/Reload` separados) e
+`fps_pistol_animated.glb` (79 nós, **um clipe só, `allanims`**) compartilham
+**1** nome de nó — `Sketchfab_model`, que é a raiz do Sketchfab, não um osso. Levar
+a mão aprovada para o rig da pistola exige mapa de ossos explícito, não
+casamento por nome. É por isso que `build_pistol_hires_pilot.py` fatia poses por
+número de quadro.
+
+**Pronto é:** `vm-pente-carga` mostrando a malha da `pistol.glb` na tela em vez da
+`SK_G18`, com a mão aprovada e a escala declarada.
 
 ### Onda C — enquadramento por arma
 
