@@ -1,4 +1,6 @@
-const VIDEO_MAPS = new Set(['lajes']);
+// Mapas com prévia em vídeo no hover. Cada id aqui EXIGE public/video/map-previews/<id>.webm
+// gravado do jogo servido (tools/eval/*-preview-capture.mjs); map-preview-check cobra os dois lados.
+export const VIDEO_MAPS = new Set(['lajes', 'mansao']);
 
 export function createMapPreview(host, { id, version, media = host, isActive = () => true }) {
   const doc = host.ownerDocument, win = doc.defaultView;
