@@ -7358,6 +7358,11 @@ export class Game {
     this._updateFx(dt);
     this._updateDoors(dt);
     this._updateGrenades(dt);
+    /* #295: o main.js fatia frames longos em vários update() — só o ÚLTIMO
+       passo desenha; render no meio multiplicaria custo de GPU em FPS baixo. */
+    if (!render) return;
+    // HUD e radar são DESENHO, não estado: ficam DEPOIS do portão. Antes rodavam em todo passo —
+    // 57 operações de Canvas2D por quadro exibido a 5 FPS (régua tools/eval/passo-sim-check.mjs).
     this._updateHud();
     this._updateRadar();
     // hint de pointer lock: visível só quando o jogo está ativo mas sem lock
@@ -7365,9 +7370,6 @@ export class Game {
       this.el.lockHint.classList.toggle('hidden',
         this.testMode || this.mobile || this.paused || !!document.pointerLockElement || this.espectando() ||
         (this.state !== 'live' && this.state !== 'countdown'));
-    /* #295: o main.js fatia frames longos em vários update() — só o ÚLTIMO
-       passo desenha; render no meio multiplicaria custo de GPU em FPS baixo. */
-    if (!render) return;
     this._rafFrames = (this._rafFrames || 0) + 1;   // fps REAL de render (lido pelo overlay de rede)
     this.renderer.render(this.scene, this.camera);
     // VM overlay SEM pós (quality low / ?bloom=0): o composer não existe, então desenha
