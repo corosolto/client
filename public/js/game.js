@@ -297,6 +297,31 @@ const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multik
    caixa, sem padrão, sem falloff). Existe porque isto muda o COMPORTAMENTO de mira das 26
    armas de uma vez — se algo ficar ruim em produção o dono tem o A/B na querystring. */
 const GUNFEEL = new URLSearchParams(location.search).get('gunfeel') !== '0';
+
+/* CONE DO DISPARO — a MESMA conta no cliente (que desenha) e no servidor (que decide o dano).
+   Duas implementações separadas foi o que deixou a arma laser no multiplayer: docs/MULTIPLAYER.md. */
+export const ADS_RAMPA_S = 0.11;   // contrato do ADS: entrar e sair custam 110 ms (ver _updatePlayer)
+export function coneDoDisparo(estado, W, rnd) {
+  const crouchMul = 1 - 0.5 * (estado.crouchF || 0);
+  const moveMul = GUNFEEL ? (1 + 1.8 * Math.min(1, (estado.sp || 0) / 6.6) + (estado.grounded ? 0 : 2.5)) : 1;
+  const adsF = Math.min(1, Math.max(0, estado.adsF || 0));
+  const spScoped = W.spreadScope ?? W.spreadHip * 0.35;
+  const base = (GUNFEEL
+    ? (W.spreadHip + (spScoped - W.spreadHip) * adsF)
+    : (estado.scoped && W.spreadScope !== undefined ? W.spreadScope : W.spreadHip)) * crouchMul * moveMul;
+  const sp = base * (1 + (estado.bloom || 0));
+  const saida = [];
+  for (let i = 0, n = W.pellets || 1; i < n; i++) {
+    if (GUNFEEL) {
+      // POLAR (disco). A distribuição em caixa do legado fazia os furos formarem um quadrado.
+      const ang = rnd() * Math.PI * 2, rad = sp * 0.5 * Math.sqrt(rnd());
+      saida.push({ x: Math.cos(ang) * rad, y: Math.sin(ang) * rad, z: 0 });
+    } else {
+      saida.push({ x: (rnd() - 0.5) * sp, y: (rnd() - 0.5) * sp, z: (rnd() - 0.5) * sp });
+    }
+  }
+  return saida;
+}
 // Kill-switch: ?blood=0 desliga o sangue (spray + mancha em parede/chão + poça sob o
 // cadáver). Muda o "gore" sentido pelo jogador — flag pro A/B do dono, como ?gunfeel=0.
 const BLOOD = new URLSearchParams(location.search).get('blood') !== '0';
@@ -3079,17 +3104,21 @@ export class Game {
     // tracer só em PARTE dos tiros (CS): 1 em 3 na rajada; sniper/shotgun sempre (o tiro é o
     // evento). Antes TODO tiro deixava rastro — vira "chuva de laser" em full-auto.
     const wantTracer = !GUNFEEL || pellets > 1 || (REC_DEG[p.weapon] ?? 1) > 2.4 || ((p.sprayI || 0) % 3) === 0;
-    for (let i = 0; i < pellets; i++) {
-      const sp = spreadBase * (1 + this.bloom);
-      let dir;
-      if (GUNFEEL) {
-        const ang = Math.random() * Math.PI * 2, rad = sp * 0.5 * Math.sqrt(Math.random());
-        dir = new THREE.Vector3(Math.cos(ang) * rad, Math.sin(ang) * rad, -1).applyQuaternion(this.camera.quaternion).normalize();
-      } else {
-        dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-        dir.x += (Math.random() - .5) * sp; dir.y += (Math.random() - .5) * sp; dir.z += (Math.random() - .5) * sp;
-        dir.normalize();
-      }
+    /* ONLINE o cone é do SERVIDOR (ele sorteia com semente que não sai do nó, para o cliente não
+       poder prever — prever é conhecer, e conhecer o cone é o cheat de "sem dispersão"). Então o
+       cliente para de desenhar traçante e furo a partir de um palpite: quem desenha é o evento
+       `tiro`, que chega com os pontos de impacto verdadeiros. Fogacho, som, coice e pente
+       continuam instantâneos aqui. Servidor velho (sem `ev`) mantém o caminho antigo. */
+    const servidorDesenha = this.online && !!this._mp?._evOn;
+    const cone = servidorDesenha ? [] : coneDoDisparo(
+      { crouchF: p.crouchF, sp: sp0, grounded: p.grounded, adsF, bloom: this.bloom, scoped: p.scoped },
+      w, Math.random);
+    for (let i = 0; i < cone.length; i++) {
+      const o = cone[i];
+      const dir = GUNFEEL
+        ? new THREE.Vector3(o.x, o.y, -1).applyQuaternion(this.camera.quaternion).normalize()
+        : new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      if (!GUNFEEL) { dir.x += o.x; dir.y += o.y; dir.z += o.z; dir.normalize(); }
       this._fireHitscan(this.player, from, dir, w.dmg, true, w.short, p.weapon, wantTracer && i < 2);
     }
     // recuo: CÂMERA (padrão determinístico + mola, ver _shotRecoil) e VIEWMODEL (mola própria

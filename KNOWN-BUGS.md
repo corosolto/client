@@ -109,6 +109,47 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-159 · no multiplayer a arma era laser e a shotgun cobrava 1 dos 9 pellets · CORRIGIDO 12/09
+
+**Sintoma.** O que o jogador vê não era o que causava dano. O cliente desenhava dispersão
+(cone aleatório, 9 pellets na shotgun); o servidor, que é quem decide, atirava um **raio
+perfeito, único**, direto de yaw/pitch — `game/room.js:_serviceShooting` não tinha cone, não
+tinha laço de pellets e não tinha penetração, enquanto `game.js:_tryShoot` tinha os três.
+
+**Consequências, as duas medidas:** toda arma automática era secretamente melhor no MP do que o
+jogador via (mira no alvo = todo tiro acerta, sem o cone que a tela mostra), e a shotgun
+entregava **14 de dano** onde deveria entregar **214** a 4 m — 1 pellet de 9.
+
+**Causa raiz.** Duas implementações do mesmo disparo, coisa que o cabeçalho do próprio
+`room.js` promete não fazer: *"as MESMAS funções do jogo, não uma segunda implementação que
+envelheceria separada"*. Para movimento (`_moveEntity`) e dano (`_shotDamage`) a promessa foi
+cumprida; para o TIRO, nunca.
+
+**Conserto.** `coneDoDisparo(estado, W, rnd)` extraída de `game.js` e chamada pelos dois lados,
+com o laço de pellets no servidor e **um** `_damage` por alvo (nove chamadas gerariam nove
+eventos e estourariam o lote de 32 do `_emitir`, que descartaria `hit`s para caber — killfeed
+errado por excesso de fidelidade).
+
+**Quem sorteia é o nó, e isso não é detalhe.** Se o cliente conseguisse prever o cone, ele
+CONHECERIA o cone — e conhecer o cone antes de atirar é o cheat de "sem dispersão". Não existe
+semente compartilhada que dê previsão sem dar conhecimento. Então a semente sai de
+`HMAC(segredo da partida, id do corpo, bot._shots)`, o segredo nunca é serializado, e o índice é
+o contador do SERVIDOR — nunca o `seq`, que o cliente escolhe. O preço, aceito pelo dono: o
+traçante e o furo aparecem RTT/2 depois do clique (~31 ms no nó `br`). Fogacho, som, coice e
+consumo de pente continuam instantâneos.
+
+**Régua** `game/dispersao-check.mjs` (13 cláusulas): forma do cone igual nos dois lados por arma,
+9 pellets, cone abrindo ao correr e fechando ao mirar, segredo ausente de welcome/listagem/
+snapshot/eventos, semente derivada do contador do servidor, e a rajada acertando (9 acertos)
+e cobrando uma vez (dano somado 214 × 14 de um pellet). Mutantes `sem-cone`, `um-pellet` e
+`semente-no-welcome` reprovam.
+
+**Armadilha que isto quase repetiu (#405, e custou meia hora):** o segredo era sorteado com
+`Math.random()` dentro do `_novaPartida`, ANTES do construtor do `Game` — e a torrente do
+Math.random é semeada e compartilhada com o sorteio de spawn. Um saque a mais deslocou a
+torrente inteira e mudou os spawns: o smoke caiu de 3,39 m para 0,10 m de movimento **com a
+física byte a byte idêntica**. O segredo passou a vir do `crypto`, que não toca a torrente.
+
 ### BUG-158 · seguir a instrução do portão de grafite APAGA arte · MITIGADO 12/09
 
 **Sintoma.** O portão `eval:grafitelayout` reprova quando um `map_*.js` muda e manda, no próprio

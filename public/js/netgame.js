@@ -107,6 +107,8 @@ class Netcode {
     const seq = this.net.sendInput({
       ax: input.ax, az: input.az, crouch: input.crouch, shift: input.shift, jump: input.jump,
       yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
+      // INTENÇÃO de mirar (1 bit). Quem integra o `adsF` — e portanto a precisão — é o servidor.
+      ads: !!p.scoped,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
@@ -425,6 +427,8 @@ class Netcode {
       try { game._feed(att, vic, w, h); } catch { /* HUD */ }
       if (vic === p) { if (att && !this.espectador) game._noteHit(att, w, d, h, dist(att)); }
       else this.morteRemota(vic, att);
+    } else if (e.k === 'tiro') {
+      this.tiroDeRede(att, e);
     } else if (e.k === 'drop') {
       this._dropDeRede(e);
     } else if (e.k === 'gone') {
@@ -620,6 +624,29 @@ class Netcode {
 
   // Tiro posicional de um remoto: som atenuado por distância, com pan pelo lado da câmera, e
   // clarão no cano. Sem isto o mundo do multiplayer é um tiroteio MUDO.
+  /* TIRO com os pontos de impacto que o servidor calculou. Substitui o palpite: no online o
+     cone é sorteado no nó, então traçante e furo desenhados pelo cliente estariam errados.
+     O orçamento de FX é o mesmo dos bots (game.js): perto sai tudo, longe e em qualidade baixa
+     sai menos — o que não muda é o DANO, que já aconteceu no servidor. */
+  tiroDeRede(ent, e) {
+    const game = this.game, p = game.player;
+    if (!ent || !Array.isArray(e.p) || !e.p.length) return;
+    const olho = ent.pos.clone().setY(ent.pos.y + 1.45);
+    const dist = p && p.pos ? Math.hypot(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) : 0;
+    const cheio = ent === p || (dist < 45 && game.settings.quality !== 'low');
+    const tetos = cheio ? 4 : 1;   // shotgun não vira 9 traçantes na tela de ninguém
+    for (let i = 0; i < Math.min(tetos, e.p.length); i++) {
+      const a = e.p[i];
+      const alvo = new THREE.Vector3(+a[0] || 0, +a[1] || 0, +a[2] || 0);
+      try { game._tracer(olho.clone().lerp(alvo, 0.06), alvo); } catch { /* sem fx */ }
+    }
+    const primeiro = e.p[0];
+    if (primeiro) {
+      const dir = new THREE.Vector3(+primeiro[0] || 0, +primeiro[1] || 0, +primeiro[2] || 0).sub(olho).normalize();
+      try { game._flash(olho.clone().addScaledVector(dir, 0.35), dir); } catch { /* sem fx */ }
+    }
+  }
+
   gunshot(ent) {
     const game = this.game;
     const cam = game.camera.position;
