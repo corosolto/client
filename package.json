@@ -244,7 +244,8 @@
     "eval:passosim": "node tools/eval/passo-sim-check.mjs",
     "eval:qualmapas": "node tools/eval/quality-mapas-check.mjs",
     "eval:perfcampo": "node tools/eval/perf-campo-check.mjs",
-    "eval:dificuldade": "node tools/eval/dificuldade-check.mjs"
+    "eval:dificuldade": "node tools/eval/dificuldade-check.mjs",
+    "eval:tiro-mp": "node tools/eval/tiro-mp-browser.mjs"
   },
   "repository": {
     "type": "git",
