@@ -1105,8 +1105,11 @@ export function buildEscadao(scene, T) {
   }
 
   /* ===================== SPAWNS ===================== */
+  /* z=27 e não 26: a 26 os quatro slots do time E nasciam a 0,85 m de parede (invariante
+     MAP2B cobra 1,20 m — raio do corpo mais uma esquiva). Medido: 26 → 0,85 m, 25 → 0 m,
+     27 → 1,85 m. O artefato `map_check.json` commitado dizia 1,65 m e estava velho. */
   const spawns = {
-    E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: 0 })),
+    E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 27, yaw: 0 })),
     B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -34, yaw: Math.PI })),
   };
 
