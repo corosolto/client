@@ -109,6 +109,104 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-151 · o SERVIDOR empurrava o corpo do jogador, e o cliente pagava como "correção de posição" · CORRIGIDO 11/09
+
+**Sintoma (painel de admin, janela de 7 dias de 11/09):** *"Experiência multiplayer: 179 de 259
+sessões medidas ficaram fora da meta (69%). **Causa mais frequente: correção de posição.**"*
+Rounds com gente de sobra tinham `correção p95` de 0,3 a 4 m; rounds de um jogador só, quase
+zero. Ninguém tinha ligado uma coisa à outra.
+
+**Causa raiz.** No servidor autoritativo o slot humano é um bot com a IA desligada — e por isso
+ele passava pela **despenetração de corpos** da IA. `_botSeparation`
+(`public/js/game.js:4331`) resolvia sobreposição escrevendo NA POSIÇÃO DOS DOIS corpos
+(`o.pos.x -= …`), inclusive quando o outro era gente. O cliente não tem como prever esse
+empurrão: ele chega no snapshot seguinte como divergência e vira correção — rubber-band puro,
+proporcional a quantos colegas estão por perto.
+
+**Medição (laço fechado, `Room` real × `Game` real):** slot humano **parado**, sem mandar um
+único comando, num spawn cheio da quebrada: **0,84 m em 3 s**, com `_moveEntity` chamado **0
+vezes** no corpo dele. Achado por trap de escrita em `pos.x/z` — os métodos `set/copy/add` nunca
+eram chamados, a escrita era direta em campo.
+
+**Conserto.** Corpo com dono (`_remote`) não se empurra: quem entra no espaço do outro é quem
+sai, e o bot leva o empurrão inteiro (a separação bot×bot fica como estava). Régua:
+`csbrasil-backend/game/netloop-check.mjs`, cenário *spawn lotado*; mutante `--mutar=empurrao`
+devolve o empurrão e a régua fica **vermelha** (p95 0,141 m a 60 FPS · 0,205 m a 20 FPS).
+
+### BUG-152 · o servidor integrava o comando pelo TICK dele, não pela duração do passo do cliente · CORRIGIDO 11/09
+
+**Sintoma.** Correção de posição **proporcional ao frame time**: quem joga a 60 FPS levava
+pouco; quem joga a 20 FPS levava 5× mais. O painel mostra os dois juntos ("20% das 376 amostras
+válidas ficaram abaixo de 30 FPS"), então a máquina fraca era punida duas vezes — pelo FPS e
+pelo netcode.
+
+**Causa raiz, em duas metades do mesmo mecanismo: o cliente e o servidor tiravam a foto em
+instantes diferentes.**
+1. O cliente prediz o passo do frame dele (≤ 50 ms, `public/js/main.js:2783`); o servidor
+   aplicava o MESMO input a cada tick de 16,7 ms (`game/room.js`, `_updateBot`).
+2. O `ackSeq` do snapshot era o último input **recebido** (`applyInput`), não o último
+   **simulado** — então a pose autoritativa vinha de 1 a 4 ticks à frente da pose que o cliente
+   guardou para aquele `seq`. O cliente media essa diferença como divergência e se empurrava
+   sozinho.
+
+**Medição (laço fechado, rede PERFEITA — latência constante, zero jitter, zero perda, física
+idêntica dos dois lados; qualquer correção aqui é erro estrutural):**
+
+| FPS do cliente | antes (p95) | depois (p95) |
+|---|---|---|
+| 60 | 0,051 m | **0,001 m** |
+| 30 | 0,136 m | **0,001 m** |
+| 20 | 0,263 m | **0,001 m** |
+| 10 | 0,127 m | **0,001 m** |
+
+Rede real (120 ms, jitter 30 ms, 3% de perda): p95 **0,304 m → 0,091 m**.
+
+**Conserto.** O input passa a declarar a DURAÇÃO do passo (`dtms`, teto de 50 ms — o mesmo do
+laço do navegador) e o servidor mantém uma **fila de comandos** com **orçamento de tempo real**
+(250 ms de folga): integra cada comando com o dt dele e só então reconhece o `seq`. Cliente
+velho (sem `dtms`) continua no caminho antigo — o rollout pode ser servidor-primeiro.
+Anti-speedhack é o orçamento, com régua em `game/smoke.mjs` ("quem inunda de comando não anda
+mais que quem joga limpo"). Mutantes `--mutar=dt` e `--mutar=ack` deixam a régua vermelha.
+
+### BUG-153 · entrar na sala (ou renascer) cobrava o teleporte como se fosse divergência · CORRIGIDO 11/09
+
+**Sintoma.** Um pico de **8 a 12 m** de correção por entrada em sala — a distância entre dois
+spawns — registrado na telemetria como desvio do jogador.
+
+**Causa raiz.** Quando a autoridade teleporta o corpo (`imediato` = primeiro snapshot ou
+respawn), `netgame.js` movia `ent.pos` mas deixava o buffer de poses preditas intacto. O ack
+seguinte comparava a pose nova com uma âncora gravada a partir da base ANTIGA.
+
+**Conserto.** `_clearPrediction()` junto com o teleporte. Depois: o degrau de entrada vira
+**velocidade × latência** (0,15–0,38 m, medido: 4,81 m/s × 80 ms = 0,38 m) e assenta em ≤ 0,2 s.
+Mutante `--mutar=ancora` devolve o pico.
+
+### BUG-155 · a virada de round teleportava o jogador, e o cliente DESLIZAVA até o spawn · CORRIGIDO 11/09
+
+**Causa raiz.** No fim da rodada o servidor recoloca todo mundo no spawn (`_resetPositions`), e
+no online a máquina local de rodada está desligada. O cliente só descobria o teleporte pelo erro
+do ack: acima de 6 m ele dava um salto seco; ABAIXO de 6 m ele **suavizava** — o jogador se via
+deslizando pelo mapa sem apertar nada.
+
+**Efeito colateral pior que o visual: métrica envenenada.** O trajeto inteiro entrava na
+telemetria como "correção de posição" do jogador. Medido no laço fechado com o mutante
+`--mutar=virada`: **44 m** de pico por virada de round — num painel que decide prioridade pela
+correção p95, e num jogo em que o round vira a cada ~1m46s.
+
+**Conserto.** Mudança de estado da rodada é reancoragem, como o respawn: `netgame.js` marca
+`imediato` e rebaseia a predição. Depois: reancora em 67-83 ms (um snapshot + latência) e o
+teleporte some da conta de correção (pico ≤ 0,53 m, que é o movimento real do jogador).
+
+### BUG-154 · o mapa escolhido ao criar a sala era o ÚNICO que não podia sair na primeira partida · CORRIGIDO 11/09
+
+**Causa raiz.** `Room._novaPartida` sorteia o mapa **excluindo o atual** (para não repetir o que
+acabou de rodar), e o construtor guardava o mapa pedido justamente em `this.mapId` — então o
+filtro o eliminava. Quem criava sala escolhendo "velho oeste" caía em qualquer outro mapa.
+
+**Conserto.** O mapa pedido vira `_mapaPedido` e é o da PRIMEIRA partida; a rotação assume da
+segunda em diante. Régua: `game/smoke.mjs` ("o mapa pedido é o da PRIMEIRA partida").
+
+
 ### ~~BUG-86 · no multiplayer o corpo TP do próprio jogador ficava DEITADO depois do respawn, arrastado pelo mundo~~ · RESOLVIDO 30/08 (PR #483)
 
 **Sintoma (literal, testador do preview MP contra o nó br, 30/08):** *"o personagem estava
