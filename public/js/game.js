@@ -4329,10 +4329,15 @@ export class Game {
         px += (dx / d) * w; pz += (dz / d) * w;
       }
       if (BOT_CROWD && d2 < BODY2 * BODY2) {             // (b)
-        const d = Math.sqrt(d2), push = (BODY2 - d) * 0.5;
+        /* Corpo com dono não se empurra: no servidor o slot humano é um bot, e o cliente não
+           prediz este empurrão — ele volta como correção (BUG-151). `__mut…`: régua. */
+        const humano = !!o._remote && !this.__mutEmpurraHumano;
+        const d = Math.sqrt(d2), push = (BODY2 - d) * (humano ? 1 : 0.5);
         b.pos.x += (dx / d) * push; b.pos.z += (dz / d) * push;
-        o.pos.x -= (dx / d) * push; o.pos.z -= (dz / d) * push;
-        this._collide(o.pos, 0.38);
+        if (!humano) {
+          o.pos.x -= (dx / d) * push; o.pos.z -= (dz / d) * push;
+          this._collide(o.pos, 0.38);
+        }
       }
     }
     b._crowd = crowd;
