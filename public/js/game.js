@@ -3034,8 +3034,37 @@ export class Game {
   _applyVmVisibility() {
     const w = this.player.weapon;
     this._vmMontarTardio?.(w);   // GLB que chegou depois do construtor (ver _buildViewModels)
-    if (this.vm.arms) this.vm.arms.group.visible = true;
-    for (const k in this.vm.models) this.vm.models[k].visible = k === w;
+    /* Esta troca saiu no merge com a main (a main não conhece o caminho autorado)
+       e sem ela NENHUMA arma montava o viewmodel golden: `authored.weapon` ficava
+       vazio, nada era pedido, e as 26 caíam no legado — modelo antigo e sem mãos.
+       Recuperada de c8b75444f; o crachá agora depende só de `testMode`, porque a
+       constante AUTHORED_VM_ENABLED não existe mais. */
+    const melee = this.vm.melee?.setWeapon(w) || false;
+    const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
+    if (melee) this.vm.authored?.setWeapon('');
+    // Uma decisão de visibilidade: o legado continua visível enquanto o autorado
+    // carrega ou falha; só some depois que o controlador confirma malha ativa.
+    if (this.vm.arms) this.vm.arms.group.visible = !authored && !melee;
+    for (const k in this.vm.models) this.vm.models[k].visible = !authored && !melee && k === w;
+    this.vm.root.visible = !melee;
+    if (this.vmCamera) {
+      this.vmCamera.fov = melee ? this.vm.melee.fov(this.vmCamera.aspect)
+        : authored ? this.vm.authored.fov(w, this.vmCamera.aspect)
+        : vmFovForAspect(this.vmCamera.aspect);
+      this.vmCamera.updateProjectionMatrix();
+    }
+    if (this.testMode) {
+      let badge = document.getElementById('vm-debug-badge');
+      if (!badge) {
+        badge = document.createElement('div'); badge.id = 'vm-debug-badge';
+        badge.style.cssText = 'position:fixed;left:8px;bottom:96px;z-index:60;font:11px ui-monospace,monospace;padding:2px 7px;border-radius:5px;background:#000a;pointer-events:none';
+        document.body.appendChild(badge);
+      }
+      badge.textContent = melee ? `vm: faca autorada · ${w}` : authored
+        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'})` : `vm: legado · ${w}`;
+      badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
+    }
+    return authored || melee;
   }
   // ?vmlab=1 usa um viewmodel isolado e criado sob demanda.
   _vmlabEnsure(id) {

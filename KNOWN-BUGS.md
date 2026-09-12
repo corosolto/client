@@ -7009,3 +7009,47 @@ escala ser calibrada, como foi feito nas 13 armas longas (`--comprimento` do
 
 **Custo declarado:** a pistola fica no rig KINEMATION enquanto as 13 longas já
 estão no rig do doador da AK, então ela destoa do resto até ser calibrada.
+
+### BUG-156 · o merge matou o viewmodel autorado inteiro — 26 armas no legado, sem mãos · MEDIDO 12/09
+
+**Relato do dono (12/09/2026, com print):** *"nao aparece nenhuma mao"*, e antes
+*"quando abro esse link mostram skins antigos nao mostram os mesmos do
+http://localhost:4361/vmtest.html"*.
+
+**Causa raiz.** `_applyVmVisibility` (`public/js/game.js`) voltou à versão da
+main no merge de 555 commits. A main não conhece o caminho autorado, então a
+linha que diz ao controlador qual arma está na mão saiu junto:
+
+```js
+const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
+```
+
+Sem ela `authored.weapon` ficava `''`, `entryKeyFor` devolvia `''`, nenhuma
+entrada era pedida e **as 26 armas caíam no viewmodel legado** — modelo antigo e
+sem mãos. Medido no jogo: `entries` tinha só `grenade`; o GLB golden era baixado
+(`/models/viewmodels/coro/*-hires.glb` aparecia na rede) e nunca montado.
+
+É o oitavo defeito de merge da mesma classe: declaração de um lado, uso do
+outro. `node --check` passa, `check:fast` passa — ele roda o motor em node e
+nunca monta viewmodel.
+
+**Por que nenhuma régua pegou.** Todas mediam o ARQUIVO (malha, material,
+config), e o GLB estava certo o tempo todo. O que falhou foi a LIGAÇÃO. A
+régua antiga que chegou perto foi `vm-arsenal-frames`, que reportou `mao 0/0`
+em todos os estados — e eu descartei como defeito da régua no dia 12/09 de
+manhã, depois de ver mãos na bancada de GLB. **A régua estava certa e eu
+errei:** ela media a tela, a bancada media o arquivo.
+
+**Conserto.** `public/js/game.js`, `_applyVmVisibility` restaurada de
+`c8b75444f`, com o crachá de QA dependendo de `testMode` (a constante
+`AUTHORED_VM_ENABLED` não existe mais).
+
+**Régua nova:** `tools/eval/vm-autorado-vivo.mjs` (`npm run eval:vm-autorado-vivo`).
+Boota o jogo, percorre as armas `golden` do vmconfig e exige, por arma: chave
+resolvida começando em `gold#`, malha de mão na entrada, e mão visível com a
+cadeia de pais inteira.
+
+- antes: 0/14, todas `LEGADO`, `maos 0/0`
+- depois: **14/14 com `gold#<arma>` e `maos 2/2`**
+- mutação `--mutante=semfiacao` (serve o `game.js` sem a linha): 0/3, reproduz
+  o print do dono
