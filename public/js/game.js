@@ -706,8 +706,11 @@ export class Game {
     // facção do INIMIGO (o jogador escolhe o adversário: P/B/U). Default = lado político oposto.
     // Se == playerFaction é um MIRROR (mesmo time dos dois lados) -> o inimigo fica ROXO no HUD.
     this.enemyFaction = enemyFaction || this.enemyTeam;
-    this.playerDef = byId(playerCharId);
-    this.playerCharId = playerCharId;   // usado por _buildViewModels (paleta/braços FP) e _resetPositions (loadout)
+    // id de personagem que não existe (URL velha, elenco renomeado) NÃO pode virar crash na
+    // morte, quadro a quadro, meia hora depois do boot: cai no primeiro válido e avisa.
+    this.playerDef = byId(playerCharId) || CHARACTERS[0];
+    if (!byId(playerCharId)) console.warn(`[elenco] personagem '${playerCharId}' não existe — usando '${this.playerDef.id}'`);
+    this.playerCharId = this.playerDef.id;   // usado por _buildViewModels (paleta/braços FP) e _resetPositions (loadout)
     this.combatants = [];   // scoreboard entries
     /* Servidor dedicado: o `player` que ninguém controla fica FORA do elenco, senão vira corpo
        parado e imortal que os inimigos abatem em loop. Ver docs/MULTIPLAYER.md. */
