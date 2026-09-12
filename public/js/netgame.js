@@ -108,6 +108,9 @@ class Netcode {
       ax: input.ax, az: input.az, crouch: input.crouch, shift: input.shift, jump: input.jump,
       yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
+      // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
+      // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
+      dtms: Math.min(50, Math.max(1, Math.round((Number(dt) || 0) * 100000) / 100)),
       ...(this._pickPendente ? { pick: this._pickPendente } : {}),
       ...(this._pickupWeaponPendente ? { pickupWeapon: this._pickupWeaponPendente } : {}),
       ...(this._reloadPendente ? { reload: this._reloadPendente } : {}),
@@ -218,7 +221,7 @@ class Netcode {
     this.net.sendInput({
       ax: 0, az: 0, crouch: false, shift: false, jump: false,
       yaw: p.yaw, pitch: p.pitch, shoot: false, weapon: p.weapon,
-      px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
+      px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(), dtms: 1,
     });
     this._inputAt = now;
   }
@@ -272,6 +275,9 @@ class Netcode {
        e nada se moveria. */
     const estadoAntes = game.state, placarAntes = game.roundsWon ? { E: game.roundsWon.E, B: game.roundsWon.B } : null;
     game.state = snap.state || game.state;
+    // virada de round é TELEPORTE (o servidor recoloca todos no spawn): reancorar, não suavizar
+    // — senão o jogador se vê deslizando e a telemetria engole o trajeto (BUG-155).
+    const viradaDeRound = !this.__mutSemVirada && estadoAntes !== game.state && (game.state === 'countdown' || game.state === 'live');
     if (Number.isFinite(snap.timeLeft)) game.timeLeft = snap.timeLeft;
     if (Number.isFinite(snap.roundNum)) game.roundNum = snap.roundNum;
     if (game.roundsWon && Number.isFinite(snap.scoreE)) { game.roundsWon.E = snap.scoreE; game.roundsWon.B = snap.scoreB; }
@@ -331,8 +337,10 @@ class Netcode {
         /* O cliente também cria um spawn local. No primeiro snapshot e no respawn ele não é
            uma predição adiantada: é uma posição concorrente, às vezes de outro slot/mapa.
            Nestes dois marcos a autoridade precisa vencer imediatamente, inclusive no Y. */
-        const imediato = primeiroSnap || renasceu;
-        if (imediato) { ent.pos.set(e.x, e.y, e.z); ent.vel.set(0, 0, 0); }
+        const imediato = primeiroSnap || renasceu || viradaDeRound;
+        // teleporte invalida toda pose predita: sem zerar, o ack seguinte cobra a distância
+        // dele como divergência (BUG-153).
+        if (imediato) { ent.pos.set(e.x, e.y, e.z); ent.vel.set(0, 0, 0); this._clearPrediction(); }
         if (e.respawnIn != null) game.player.respawnAt = game.time + e.respawnIn;
         this._srvX = e.x; this._srvY = e.y; this._srvZ = e.z; this._srvHas = 1;   // campos planos: zero alocação no hot path
         this._ackPlayer(e, ent, imediato);
