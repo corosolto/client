@@ -109,6 +109,53 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-157 · o sinal de FPS mais rico do jogo era coletado e jogado fora no servidor · CORRIGIDO 12/09
+
+**Sintoma.** O painel mostra "20% das amostras de FPS abaixo de 30" e sessões inteiras a 4-8 FPS,
+e a pergunta seguinte — **em que mapa?** — não tinha resposta. O "FPS da sessão" que o painel
+exibe é uma média de **um segundo**, medida ~4 s depois do jogo começar.
+
+**Causa raiz — não era falta de coleta.** `public/js/ops.js` já amostra FPS por segundo numa
+janela deslizante de 300 s, descarta aba oculta, separa p50 de p5 e conta quadro travado
+(>100 ms) e congelado (>1 s); `main.js:_perfFinish` já mandava tudo isso no campo `ops` do
+beacon, com um comentário que dizia a verdade sem que ninguém percebesse o tamanho dela: *"o
+backend descarta o que não conhece"*. E descartava: `api/perf.ts` chamava a RPC `track_perf`
+com uma lista fechada de parâmetros, e **nenhum deles era do bloco `ops`** — o campo morria na
+porta. Faltava também o id do mapa no payload, e o DPR enviado era o do **aparelho**, não o que
+o jogo desenha (0,75 no caminho leve, até 2 no alto) — responder outra pergunta que não a que
+se faz é o mesmo defeito do BUG-55, de outra roupa.
+
+**Conserto.** `resumoBeacon()` passa a levar mapa e modo; `_perfFinish` passa a levar o DPR
+efetivo do renderer e o estado do renderer em **três valores** (`sim`/`nao`/`desconhecido` —
+no Firefox a extensão que revela a GPU fica atrás de flag, e gravar "não é software" sem ter
+lido é inventar dado); `api/perf.ts` persiste tudo, com caminho degradado para banco atrasado
+(migration `033`, aplicada à mão fora do repo). Provado de ponta a ponta com o handler real e um
+espião no lugar do banco: `map=quebrada, fps_p50=41, fps_p5=19, travadas=37, congeladas=2`.
+Réguas: `tools/eval/perf-campo-check.mjs` (cliente) e `api/reguas/perf-ops-check.mjs` (servidor)
+— esta última cobra o **uso**, não a declaração: o mutante que declara os parâmetros e não os
+espalha na chamada da RPC deixa a régua vermelha, que é exatamente como o BUG-02 passou verde.
+
+### BUG-156 · "qualidade baixa" não baixava a sombra em 10 dos 17 mapas · CORRIGIDO 12/09
+
+**Causa raiz.** O tamanho do shadow map do sol estava escrito à mão em 10 arquivos de mapa
+(`map_atacadao.js:205`, `map_upa.js:242`, `map_posto.js:388`, `map_parque.js:357`,
+`map_piscina.js:680`, `map_obras.js:182`, `map_penitenciaria.js:229`, `map_velho_oeste.js:262`,
+`map_ferrovelho.js:1711`, `map_json.js:170`) e mais uma vez dentro do pós-processamento. Quem
+escolhia "baixa" nesses mapas pagava 2048 — **quatro vezes os texels** de quem jogava o mesmo
+"baixa" na Havan ou na quebrada, que respeitam o nível. O ferro velho é o caso que mais ensina:
+tem 15 ramificações por `LOWQ` e mesmo assim cravava a sombra.
+
+**A segunda metade, que só morderia no futuro:** `focusSunShadow` (`bloom.js`) subia de volta
+qualquer sombra abaixo de 2048. Com o valor fixo era inofensivo; com qualidade adaptativa, o pós
+desfaria a redução sem avisar ninguém.
+
+**Conserto.** `public/js/mapquality.js` vira a fonte única (`orcamentoSombra()`), lida pelos 17
+mapas e pelo pós, e concentra também a leitura da preferência que 12 arquivos faziam cada um por
+conta própria — foi copiando essa leitura que o número se espalhou. O 2048 de med/high fica: o
+módulo nasceu para tirar o número de 11 lugares, não para mudar o que o jogador vê. Régua
+`tools/eval/quality-mapas-check.mjs` (QMAP1-4), mutante `--mutar=literal`.
+
+
 ### BUG-151 · o SERVIDOR empurrava o corpo do jogador, e o cliente pagava como "correção de posição" · CORRIGIDO 11/09
 
 **Sintoma (painel de admin, janela de 7 dias de 11/09):** *"Experiência multiplayer: 179 de 259

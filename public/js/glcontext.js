@@ -18,6 +18,16 @@ function rendererName(gl) {
   } catch { return ''; }
 }
 
+/* TRÊS ESTADOS, e não um booleano. A extensão que revela a GPU de verdade fica atrás de flag no
+   Firefox; sem ela o `gl.RENDERER` devolve nome genérico, e aí `software: false` está AFIRMANDO
+   o que ninguém leu. Quem decide reduzir qualidade por isso precisa saber a diferença. */
+function estadoSoftware(gl, gpu) {
+  if (SOFTWARE_RE.test(gpu)) return 'sim';
+  let leuDeVerdade = false;
+  try { leuDeVerdade = !!gl.getExtension('WEBGL_debug_renderer_info'); } catch { /* bloqueado */ }
+  return leuDeVerdade ? 'nao' : 'desconhecido';
+}
+
 function lose(gl) {
   try { gl.getExtension('WEBGL_lose_context')?.loseContext(); } catch {}
 }
@@ -72,6 +82,7 @@ export function criaRenderer(base = {}, options = {}) {
           api: name === 'webgl2' ? 'webgl2' : 'webgl',
           tier: tier.rotulo,
           software: SOFTWARE_RE.test(gpu),
+          softwareEstado: estadoSoftware(gl, gpu),
           renderer: gpu.slice(0, 120),
           degraded: compatibility || tier.rotulo !== 'padrao' || name !== 'webgl2' || SOFTWARE_RE.test(gpu),
         });

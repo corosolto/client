@@ -1053,6 +1053,10 @@ function _perfFinish(bootMs, frames) {
     memoryGb: navigator.deviceMemory || null,
     renderer: rendererStr,
     dpr: window.devicePixelRatio || null,
+    // DPR do que o jogo DESENHA (não o do aparelho) e renderer em 3 estados — BUG-157.
+    dprEfetivo: (() => { try { return renderer.getPixelRatio(); } catch { return null; } })(),
+    software: window.__csWebgl?.softwareEstado || 'desconhecido',
+    glTier: window.__csWebgl?.tier || null,
     vw: window.innerWidth, vh: window.innerHeight,
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
