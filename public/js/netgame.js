@@ -400,8 +400,13 @@ class Netcode {
       }
       inserirAmostra(ent, tBuf, e, this.__mutOrdemAntiga);
       ent._netPitch = e.pitch || 0;
-      if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); if (ent.mesh && ent.mesh.isGLB) { try { ent.mesh.ctrl.shoot(); } catch { /* sem clipe */ } } }
-      if (e.voice) this.voice(ent, e.voice);
+      // v5 manda CONTADOR (bandeira de um snapshot some com o pacote); v4 manda bandeira
+      const atirou = e.fireN == null ? !!e.fire : (ent._fireNvisto != null && e.fireN !== ent._fireNvisto);
+      if (e.fireN != null) ent._fireNvisto = e.fireN;
+      if (atirou && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); if (ent.mesh && ent.mesh.isGLB) { try { ent.mesh.ctrl.shoot(); } catch { /* sem clipe */ } } }
+      const falou = e.voiceN == null ? !!e.voice : (ent._voiceNvisto != null && e.voiceN !== ent._voiceNvisto);
+      if (e.voiceN != null) ent._voiceNvisto = e.voiceN;
+      if (falou && e.voice) this.voice(ent, e.voice);
       /* Killfeed do MP: o `_kill` local não roda online — a transição vivo->morto do
          snapshot + `killedBy` é o evento de morte (BUG-90, KNOWN-BUGS.md). */
       if (!this._evOn && !primeiroSnap && wasAlive && !e.alive) {
