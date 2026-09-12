@@ -1,8 +1,8 @@
 // ESCADA DE QUALIDADE ADAPTATIVA — política pura, sem three e sem DOM, para ter régua.
 // O porquê, os limiares e o veto de jogabilidade estão em docs/QUALIDADE-ADAPTATIVA.md.
 
-/* Do mais bonito ao mais leve. `dpr` é multiplicador do DPR base; os outros são passes que o
-   EffectComposer liga e desliga em runtime (pass.enabled), sem reconstruir nada. */
+// Do mais bonito ao mais leve. `dpr` multiplica o DPR base; o resto são passes que o
+// EffectComposer liga e desliga em runtime, sem reconstruir nada.
 export const DEGRAUS = Object.freeze([
   { nome: 'cheio', dpr: 1, ssao: true, aa: true, sombra: 'alta', charmask: true },
   { nome: 'dpr-', dpr: 0.85, ssao: true, aa: true, sombra: 'alta', charmask: true },
@@ -17,13 +17,15 @@ export const DEGRAUS = Object.freeze([
 // quem perde quadro não pode perder também a informação de que precisa para jogar.
 export const CAMPOS_PERMITIDOS = Object.freeze(['nome', 'dpr', 'ssao', 'aa', 'sombra', 'charmask']);
 
-export const JANELA_S = 1;          // agrega por segundo: um quadro ruim não é um jogo ruim
-export const DESCE_APOS_S = 3;      // sofrer 3 s seguidos é problema; 3 quadros é uma granada
-export const SOBE_APOS_S = 12;      // subir é 4× mais lento que descer, de propósito
-export const MARGEM_DESCE = 1.15;   // acima de 115% do orçamento
-export const MARGEM_SOBE = 0.75;    // só volta a subir com 25% de folga — a faixa morta entre
-export const CARENCIA_S = 4;        // as duas é o que impede o vaivém
-export const VIAGENS_MAX = 2;       // depois de 2 idas e voltas, o degrau vira teto da sessão
+// Limiares da histerese: agrega por segundo, desce rápido, sobe devagar, e a faixa morta
+// entre as duas margens é o que impede o vaivém. Os porquês estão no documento.
+export const JANELA_S = 1;
+export const DESCE_APOS_S = 3;
+export const SOBE_APOS_S = 12;
+export const MARGEM_DESCE = 1.15;
+export const MARGEM_SOBE = 0.75;
+export const CARENCIA_S = 4;
+export const VIAGENS_MAX = 2;
 
 export class EscadaAdaptativa {
   constructor({ orcamentoMs = 1000 / 60, degrau = 0, teto = DEGRAUS.length - 1 } = {}) {
@@ -59,9 +61,8 @@ export class EscadaAdaptativa {
     return null;
   }
 
-  /* A catraca: descer DUAS vezes até o mesmo degrau prova que o de cima não se sustenta nesta
-     máquina, e ele vira o piso da sessão. Sem ela o vaivém é eterno, e imagem que troca de
-     nitidez a cada 15 s é pior que jogar um degrau abaixo o tempo todo. */
+  // Catraca: descer duas vezes ao mesmo degrau prova que o de cima não se sustenta aqui, e
+  // ele vira o piso da sessão — vaivém eterno é pior que um degrau abaixo o tempo todo.
   _mover(passo) {
     const antes = this.degrau;
     this.degrau = Math.max(0, Math.min(this.teto, antes + passo));

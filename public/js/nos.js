@@ -31,11 +31,8 @@ export const linkDeConvite = (convite, origem) =>
 /* http do lobby a partir da url ws do nó — o mesmo host, outro esquema. */
 export const httpDoNo = (no) => String(no.url).replace(/^ws/, 'http').replace(/\/ws.*$/, '');
 
-/* ORDEM DA LISTA DE SERVIDORES: ping primeiro e, DENTRO da mesma faixa de ping, o menos cheio.
-   Dois nós no mesmo datacentre têm o mesmo ping — sem o desempate por lotação a lista mandaria
-   todo mundo para o primeiro e o segundo nasceria vazio, que é justamente o problema que ele
-   existe para resolver. A faixa é de 15 ms (abaixo do que se percebe); acima dela manda o ping,
-   porque nó vazio do outro lado do mundo não é oferta, é armadilha. */
+// Ping primeiro e, dentro da mesma faixa, o menos cheio: dois nós no mesmo datacentre empatam
+// no ping, e sem o desempate o segundo nasceria vazio. Acima da faixa, manda o ping.
 export const FAIXA_PING_MS = 15;
 export function ordenarNos(lista) {
   const faixa = (n) => Math.floor((n.ping == null ? 1e9 : n.ping) / FAIXA_PING_MS);

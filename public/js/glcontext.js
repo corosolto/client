@@ -143,10 +143,8 @@ export function avisaSemWebgl(erro) {
   } catch {}
 }
 
-/* AVISO DE RENDERIZADOR DE SOFTWARE — honesto, uma vez, e que NÃO bloqueia.
-   Quem cai aqui desenha por CPU (llvmpipe/SwiftShader) e mede 2 a 8 FPS: o jogo já entrou no
-   degrau mínimo sozinho, e a única coisa que faltava era contar. Barra, e não overlay: a tela
-   cheia de `avisaSemWebgl` é para quem NÃO consegue jogar — este consegue, devagar. */
+// Aviso de renderizador de software: honesto, uma vez, dispensável e sem bloquear. Barra e
+// não overlay — a tela cheia é para quem NÃO consegue jogar; este consegue, devagar.
 export function avisaSoftware(gpu) {
   try {
     if (localStorage.getItem('cs_aviso_software') === 'ok') return;
