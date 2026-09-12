@@ -26,7 +26,7 @@ import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 import { createMapPreview } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { NOS, NO_RE, ordenarNos, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -2932,7 +2932,7 @@ async function obterMpTicket(action) {
   const localMp = new URLSearchParams(location.search).get('mp') || '';
   if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
-  if (!/^[a-z]{2}$/.test(node)) return '';
+  if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
   const r = await fetch(apiUrl('/api/mp-ticket'), {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ node, action, anonId: getAnonId(), sessionId: getSessionId() }),
@@ -2976,8 +2976,8 @@ async function abrirMultiplayer() {
   if (nos) nos.innerHTML = '<div class="mp-vazio">medindo o ping dos servidores…</div>';
   mpEl('mp-salas').innerHTML = '';
   mpNos = await sondarNos(NOS);
-  // ordena por ping: o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono
-  mpNos.sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
+  // o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono (regra em nos.js)
+  mpNos = ordenarNos(mpNos);
   const local = new URLSearchParams(location.search).get('mp');
   if (local) {
     // ?mp=1 é a máquina local; ?mp=host:porta é um servidor apontado à mão (não confundir os dois).

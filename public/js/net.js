@@ -4,7 +4,7 @@
 /* NÓS OFICIAIS. Cada um é um processo do servidor numa região. Acrescentar região é
    acrescentar uma linha aqui e subir a VM com o mesmo script de deploy. */
 // Registro de nós em nos.js: a página de convite do site lê a MESMA lista.
-export { NOS, parseConvite, linkDeConvite, httpDoNo } from './nos.js';
+export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PING_MS } from './nos.js';
 import { NOS } from './nos.js';
 import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
 
