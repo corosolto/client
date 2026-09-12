@@ -35,10 +35,12 @@
   <span id="placar"></span>
 </header>
 <canvas id="lona"></canvas>
-<div id="dica"><b>ak</b> e <b>pistol</b>, em amarelo, são as aprovadas — compare o resto com elas.
-Todas giram pelo <b>mesmo</b> ângulo, o que deita a AK: quem sair com o cano para o lado errado
-está invertida de verdade. Em vermelho, a peça que a recarga arranca: tem de ser o carregador, e
-só ele. Arraste para girar, role para aproximar.</div>
+<div id="dica"><b>ak</b>, em amarelo, é a referência aprovada. O selo verde <b>no jogo</b> diz
+que aquele GLB é o que entra em partida; <b style="color:#e05252">FORA do jogo</b> quer dizer que o
+arquivo existe mas o jogo monta outra coisa — é o caso da <b>pistol</b>, cuja arma aprovada vem do
+pacote. Todas giram pelo <b>mesmo</b> ângulo, o que deita a AK: quem sair com o cano para o lado
+errado está invertida de verdade. Em vermelho, a peça que a recarga arranca: tem de ser o
+carregador, e só ele.</div>
 
 <script type="importmap">
 {"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/addons/"}}
@@ -49,7 +51,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const ARMAS = ['ak','pistol','m4','mp5','scar','famas','p90','lmg','m92',
                'md97','mosin','sks','svd','uzi','akm'];
-const APROVADAS = /^(ak|pistol)$/;
+const APROVADAS = /^ak$/;
 const MAO = /Requests_Studio_Hands|armmesh|glove|sleeve|hand|arm|cloth|skin|forearm/i;
 const COLS = 5, PASSO_X = 1.34, PASSO_Y = 1.16;
 
@@ -84,6 +86,18 @@ lona.addEventListener('wheel', (e) => {
 
 const carregador = new GLTFLoader();
 const fichas = [];
+
+/* Quais destes GLB o JOGO de fato monta. Sem isto a bancada mente por omissão:
+   a `pistol-hires.glb` existe na pasta e NÃO é a arma que entra em partida (o
+   jogo usa a do pacote, que é a aprovada). Foi exatamente a confusão que o dono
+   pegou: "mostram skins antigos, não os mesmos do vmtest". */
+const NO_JOGO = new Set();
+let cfgLido = false;
+try {
+  const vm = await import('/js/data/vmconfig.js');
+  for (const [id, c] of Object.entries(vm.VM_WEAPON || {})) if (c?.golden) NO_JOGO.add(id);
+  cfgLido = true;
+} catch (e) { console.warn('bancada: nao li o vmconfig', e); }
 
 function rotulo(texto, cor) {
   const c = document.createElement('canvas');
@@ -142,8 +156,15 @@ for (let i = 0; i < ARMAS.length; i += 1) {
   celula.position.set((i % COLS - (COLS - 1) / 2) * PASSO_X, -Math.floor(i / COLS) * PASSO_Y, 0);
   cena.add(celula);
   const marca = rotulo(nome, APROVADAS.test(nome) ? '#f0b429' : '#9aa5b4');
-  marca.position.set(0, 0.42, 0);
+  marca.position.set(0, 0.46, 0);
   celula.add(marca);
+  if (cfgLido) {
+    const usa = NO_JOGO.has(nome);
+    const selo = rotulo(usa ? 'no jogo' : 'FORA do jogo', usa ? '#4fae6a' : '#e05252');
+    selo.scale.set(0.30, 0.075, 1);
+    selo.position.set(0, 0.38, 0);
+    celula.add(selo);
+  }
 
   carregador.load(`/models/viewmodels/coro/${nome}-hires.glb`, (gltf) => {
     const raiz = gltf.scene;
