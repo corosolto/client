@@ -82,5 +82,13 @@ const dificil = habilidadeMedia('hard');
 cobra(normal < dificil,
   `DIF5 · o padrão (normal) é mais fácil que o antigo padrão (hard): ${normal.toFixed(2)} < ${dificil.toFixed(2)}`);
 
+/* DIF6 · o seletor tem que PARECER com os irmãos. Achado olhando a figura: sobrou no CSS uma
+   regra `#diff-select` de quando ele moraria noutra tela, e por especificidade ela vencia o
+   container (13px de fonte com 20px de padding dentro de 32px de altura) — o texto "NORMAL"
+   saía cortado ao meio. Régua headless nenhuma pega isso; a figura pegou. */
+const css = fs.readFileSync(path.join(RAIZ, 'public/style.css'), 'utf8');
+cobra(!/#diff-select\s*[,{:]/.test(css),
+  'DIF6 · nenhuma regra por id disputa o estilo com a faixa de opções (foi assim que o texto saiu cortado)');
+
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);
