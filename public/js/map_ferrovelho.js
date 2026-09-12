@@ -7,6 +7,7 @@
 // W no miolo do beco. ?beco=0 restaura o layout antigo. Props otimizados de /Users/ruben/glb
 // (tools/optimize-static.mjs).
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
@@ -1708,7 +1709,7 @@ export function buildFerroVelho(scene, T) {
   // longas atravessando o pátio) e mais quente; hemi acompanha. Era 0xffd39a em (-46,20,32).
   const hemi = new THREE.HemisphereLight(0xffdfb0, 0x5a4530, 0.95); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffc07a, 1.65); sun.position.set(-52, 14, 36); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -50; sun.shadow.camera.right = 50; sun.shadow.camera.top = 50; sun.shadow.camera.bottom = -50; sun.shadow.camera.far = 200; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
+  aplicaSombraSol(sun); sun.shadow.camera.left = -50; sun.shadow.camera.right = 50; sun.shadow.camera.top = 50; sun.shadow.camera.bottom = -50; sun.shadow.camera.far = 200; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
   scene.add(sun);
   /* NÉVOA: o mapa era o único dos quatro sem fog e por isso o fundo colava no primeiro
      plano. A regressão antiga (tela preto-avermelhada com o composer) era com fog denso e

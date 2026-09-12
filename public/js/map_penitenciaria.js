@@ -1,5 +1,6 @@
 // Penitenciária da Treta: pátio central exposto, celas transitáveis e flancos de serviço.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 
 const HALF_X = 38;
 const HALF_Z = 48;
@@ -226,7 +227,7 @@ export function buildPenitenciaria(scene) {
   ['ak','m4','shotgun','deagle'].forEach((kind,i)=>{gun(kind,-15+i*10,-41,0);gun(kind,15-i*10,41,Math.PI);});
 
   const hemi=new THREE.HemisphereLight(0xdbe8eb,0x343a36,1.35);scene.add(hemi);
-  const sun=new THREE.DirectionalLight(0xffe7c7,1.85);sun.position.set(-35,52,-22);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-50;sun.shadow.camera.right=50;sun.shadow.camera.top=58;sun.shadow.camera.bottom=-58;sun.shadow.camera.far=180;sun.shadow.bias=-.0004;scene.add(sun);
+  const sun=new THREE.DirectionalLight(0xffe7c7,1.85);sun.position.set(-35,52,-22);sun.castShadow=true;aplicaSombraSol(sun);sun.shadow.camera.left=-50;sun.shadow.camera.right=50;sun.shadow.camera.top=58;sun.shadow.camera.bottom=-58;sun.shadow.camera.far=180;sun.shadow.bias=-.0004;scene.add(sun);
   const fill=new THREE.DirectionalLight(0x7897ba,.38);fill.position.set(28,24,35);scene.add(fill);
 
   const groundHeightAt=()=>0, slowAt=()=>false;
