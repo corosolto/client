@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { addLajesGround } from './lajes_ground.js';
 import { attachLajesSantosDumont } from './lajes_santos_dumont.js';
 import { placeProp, PropBatch } from './mapprops.js';
@@ -43,7 +44,7 @@ export function buildLajes(scene, T) {
   if (typeof location === 'undefined' || !new URLSearchParams(location.search).has('nofog')) scene.fog = makeAerialFog('lajes', { d: .0045, color: 0xb7c4cb, dir: .35 });
   const hemi = new THREE.HemisphereLight(0xd5e5ed, 0x756654, 1.05); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffe7ca, 1.9); sun.position.set(25, 45, 15); sun.castShadow = true;
-  sun.shadow.mapSize.set(low ? 1024 : 2048, low ? 1024 : 2048);
+  aplicaSombraSol(sun);
   Object.assign(sun.shadow.camera, { left: -42, right: 42, top: 44, bottom: -44, far: 160 }); sun.shadow.bias = -.0005;
   scene.add(sun); scene.add(sun.target);
   const bounds = { minX: -19, maxX: 19, minZ: -32, maxZ: 32 };
