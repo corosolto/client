@@ -11,11 +11,16 @@
  *      um viewmodel que estoura ao ser montado).
  *
  * Mutações:
- *   --mutante=semdebug   entra sem `?debug=1`  → a tecla não faz nada, VERMELHO
- *   --mutante=semtecla   não aperta nada       → 1 arma visitada, VERMELHO
+ *   --mutante=semtrava   apaga a trava `VM_QA_CICLO` do game.js servido → 1 arma
+ *   --mutante=semtecla   não aperta nada                                → 1 arma
+ *
+ * A primeira versão do mutante da trava tirava o `?debug=1` da URL. Era
+ * inválida: sem `debug=1` o `auto=E` não entra na partida, então ela morria no
+ * boot e não provava nada sobre a trava. Mutar o CÓDIGO servido isola de fato.
  *
  *   node tools/eval/vm-ciclo-check.mjs --porta=4361
  */
+import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 
@@ -35,8 +40,16 @@ const pag = await nav.newPage({ viewport: { width: 1200, height: 800 } });
 const erros = [];
 pag.on('pageerror', (e) => erros.push(String(e).split('\n')[0].slice(0, 140)));
 
-const q = new URLSearchParams({ auto: 'E', map: MAPA, armaslazy: '0' });
-if (MUTANTE !== 'semdebug') q.set('debug', '1');
+if (MUTANTE === 'semtrava') {
+  // Serve o game.js com a trava em `false`, mantendo o `?debug=1` que o boot
+  // precisa. Se a régua continuar verde, ela não está medindo a tecla.
+  const fonte = fs.readFileSync('public/js/game.js', 'utf8')
+    .replace("const VM_QA_CICLO = QS.get('debug') === '1';", 'const VM_QA_CICLO = false;');
+  await pag.route('**/js/game.js*', (r) =>
+    r.fulfill({ contentType: 'application/javascript; charset=utf-8', body: fonte }));
+}
+
+const q = new URLSearchParams({ auto: 'E', map: MAPA, armaslazy: '0', debug: '1' });
 await pag.goto(`http://localhost:${PORTA}/?${q}`, { waitUntil: 'load', timeout: 180000 });
 await pag.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
 await pag.waitForTimeout(2000);
