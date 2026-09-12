@@ -43,6 +43,9 @@ def parse_args() -> argparse.Namespace:
     # todo GLB de arma deste repo é unitário (maior eixo ~1), sem este fator TODA
     # arma sai do mesmo tamanho físico: medido em 11/09/2026, a uzi (47 cm) saía
     # +143% e a m92 (76 cm) +49% contra a AK. O dono viu as duas jogando.
+    parser.add_argument("--sempente", action="store_true",
+                        help="a arma tem carregador INTERNO (mosin, sks, md97): nada "
+                             "se solta na recarga, e forcar um recorte arranca o cano")
     parser.add_argument("--caixapente", type=str, default="",
                         help="xmin,xmax,zmax nas coordenadas nativas da arma. A AK "
                              "aprovada usa a sua; sem isto o pente sai por componente")
@@ -65,13 +68,18 @@ AK_ROT_Y = 270.0
 # 31/08; trocá-la por derivação muda o GLB e não há ganho nenhum nisso. O defeito
 # nunca foi a caixa da AK — foi aplicá-la às outras doze.
 CAIXA_PENTE = None
+# Carregador INTERNO: mosin, sks e md97 carregam por pente de carregamento e não
+# soltam caixa nenhuma. O dono relatou nelas "recarregar tira o cano" — porque o
+# construtor era obrigado a separar ALGUMA coisa e separava o guarda-mão.
+SEM_PENTE = False
 
 
 def configure_paths(args: argparse.Namespace) -> None:
-    global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN, ROT_ARMA, CAIXA_PENTE
+    global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN, ROT_ARMA, CAIXA_PENTE, SEM_PENTE
     ESCALA_LEN = float(args.comprimento) / AK_REF_CM
     ROT_ARMA = [float(v) for v in args.rot.split(",")]
     CAIXA_PENTE = [float(v) for v in args.caixapente.split(",")] if args.caixapente else None
+    SEM_PENTE = bool(args.sempente)
     DONOR = args.doador.resolve()
     PROJECT_AK = args.arma.resolve()
     OUT = args.saida.resolve()
@@ -399,7 +407,14 @@ def split_magazine(weapon: bpy.types.Object, ancora: Vector) -> bpy.types.Object
     bpy.ops.mesh.select_all(action="DESELECT")
     bpy.ops.object.mode_set(mode="OBJECT")
     selected = 0
-    if CAIXA_PENTE:
+    if SEM_PENTE:
+        # Separa uma casca mínima só para o contrato de malhas continuar válido;
+        # ela fica DENTRO do corpo e o osso a move sem que nada apareça saindo.
+        alvo = min(weapon.data.polygons, key=lambda p: p.center.z)
+        for polygon in weapon.data.polygons:
+            polygon.select = polygon.index == alvo.index
+        selected = 1
+    elif CAIXA_PENTE:
         xmin, xmax, zmax = CAIXA_PENTE
         for polygon in weapon.data.polygons:
             centro = polygon.center
@@ -413,7 +428,7 @@ def split_magazine(weapon: bpy.types.Object, ancora: Vector) -> bpy.types.Object
     total = len(weapon.data.polygons)
     # A guarda antiga só reprovava máscara PEQUENA. Meia arma passava — e passou
     # nas treze. Um carregador é minoria clara: 1% a 15% dos polígonos.
-    if selected < 30 or selected > total * 0.15:
+    if not SEM_PENTE and (selected < 30 or selected > total * 0.15):
         raise RuntimeError(
             f"máscara de carregador implausível: {selected} de {total} polígonos"
             f" ({selected / max(1, total) * 100:.1f}%)"
