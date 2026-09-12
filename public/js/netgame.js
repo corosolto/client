@@ -10,10 +10,10 @@ export function makeNetcode(game, net) { return new Netcode(game, net); }
 /* Insere a amostra NA ORDEM do tempo do servidor. Com WebSocket o snapshot nunca chega fora
    de ordem; com datagrama, chega — e empurrar no fim faria o boneco andar para trás. */
 const RELOGIO_NOVO_MS = 1000;
-function inserirAmostra(ent, t, e) {
+function inserirAmostra(ent, t, e, semOrdem = false) {
   const at = ent._bufAt, n = at.length;
   let i = n;
-  while (i > 0 && at[i - 1] > t) i--;
+  if (!semOrdem) while (i > 0 && at[i - 1] > t) i--;
   if (i > 0 && at[i - 1] === t) return;   // duplicado: datagrama repetido não vira amostra nova
   if (i === n) {
     at.push(t); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z);
@@ -393,10 +393,12 @@ class Netcode {
       const tBuf = this._relogioSnap(snap, nowMs), nb = ent._bufAt.length;
       // relógio do servidor voltou MUITO = partida nova; passo curto para trás é pacote fora de
       // ordem, rotina em datagrama, e não pode zerar 10 amostras (KNOWN-BUGS BUG-164)
-      if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1] - RELOGIO_NOVO_MS)) {
+      // `__mutOrdemAntiga`: gancho da régua (game/netloop-check.mjs). Zero em produção.
+      const recuo = this.__mutOrdemAntiga ? 0 : RELOGIO_NOVO_MS;
+      if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1] - recuo)) {
         ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; ent._bufPitch.length = 0;
       }
-      inserirAmostra(ent, tBuf, e);
+      inserirAmostra(ent, tBuf, e, this.__mutOrdemAntiga);
       ent._netPitch = e.pitch || 0;
       if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); if (ent.mesh && ent.mesh.isGLB) { try { ent.mesh.ctrl.shoot(); } catch { /* sem clipe */ } } }
       if (e.voice) this.voice(ent, e.voice);
