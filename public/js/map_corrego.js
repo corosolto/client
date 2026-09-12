@@ -290,7 +290,9 @@ export function buildCorrego(scene, T) {
   const PAREDES = [paredeTex('#c4a87a', 0.3, 301), paredeTex('#a89d8a', 0.4, 502),
     paredeTex('#8d6e5a', 0.5, 703), paredeTex('#b0a06a', 0.35, 904)];
 
-  const PB = new PropBatch({ bucket: 24 });
+  /* A grama some além de 42 m: medido, ela custa 4.142 triângulos por tufo e são ~1.700
+     tufos — 7 de cada 8 triângulos do mapa. A 42 m, com a névoa do córrego, não se vê. */
+  const PB = new PropBatch({ bucket: 24, cortes: { grama_corrego_01: 42, grama_corrego_02: 42 } });
   const GLB_ON = QP.get('glb') !== '0';
   function propComFallback(id, x, z, h, ry, fallback) {
     propEscala.push({ id, h });

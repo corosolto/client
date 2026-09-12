@@ -4,18 +4,18 @@
 // Do mais bonito ao mais leve. `dpr` multiplica o DPR base; o resto são passes que o
 // EffectComposer liga e desliga em runtime, sem reconstruir nada.
 export const DEGRAUS = Object.freeze([
-  { nome: 'cheio', dpr: 1, ssao: true, aa: true, sombra: 'alta', charmask: true },
-  { nome: 'dpr-', dpr: 0.85, ssao: true, aa: true, sombra: 'alta', charmask: true },
-  { nome: 'sem-ao', dpr: 0.85, ssao: false, aa: true, sombra: 'alta', charmask: true },
-  { nome: 'dpr--', dpr: 0.7, ssao: false, aa: true, sombra: 'alta', charmask: true },
-  { nome: 'sem-aa', dpr: 0.7, ssao: false, aa: false, sombra: 'alta', charmask: true },
-  { nome: 'sombra-', dpr: 0.7, ssao: false, aa: false, sombra: 'baixa', charmask: true },
-  { nome: 'minimo', dpr: 0.6, ssao: false, aa: false, sombra: 'baixa', charmask: false },
+  { nome: 'cheio', dpr: 1, ssao: true, aa: true, sombra: 'alta', charmask: true, mato: 1 },
+  { nome: 'dpr-', dpr: 0.85, ssao: true, aa: true, sombra: 'alta', charmask: true, mato: 1 },
+  { nome: 'sem-ao', dpr: 0.85, ssao: false, aa: true, sombra: 'alta', charmask: true, mato: 0.8 },
+  { nome: 'dpr--', dpr: 0.7, ssao: false, aa: true, sombra: 'alta', charmask: true, mato: 0.7 },
+  { nome: 'sem-aa', dpr: 0.7, ssao: false, aa: false, sombra: 'alta', charmask: true, mato: 0.6 },
+  { nome: 'sombra-', dpr: 0.7, ssao: false, aa: false, sombra: 'baixa', charmask: true, mato: 0.45 },
+  { nome: 'minimo', dpr: 0.6, ssao: false, aa: false, sombra: 'baixa', charmask: false, mato: 0.3 },
 ]);
 
 // Nenhum degrau pode mexer em JOGABILIDADE (arma no chão, alcance, inimigo legível, HUD):
 // quem perde quadro não pode perder também a informação de que precisa para jogar.
-export const CAMPOS_PERMITIDOS = Object.freeze(['nome', 'dpr', 'ssao', 'aa', 'sombra', 'charmask']);
+export const CAMPOS_PERMITIDOS = Object.freeze(['nome', 'dpr', 'ssao', 'aa', 'sombra', 'charmask', 'mato']);
 
 // Limiares da histerese: agrega por segundo, desce rápido, sobe devagar, e a faixa morta
 // entre as duas margens é o que impede o vaivém. Os porquês estão no documento.

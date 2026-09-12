@@ -1,6 +1,7 @@
 // Core game: FPS controller, weapons, bots, rounds, HUD.
 import * as THREE from 'three';
 import { MAPS, resolveMapId } from './maps.js';
+import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { weaponModel, weaponCFG, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
@@ -7398,6 +7399,8 @@ export class Game {
     /* #295: o main.js fatia frames longos em vários update() — só o ÚLTIMO
        passo desenha; render no meio multiplicaria custo de GPU em FPS baixo. */
     if (!render) return;
+    // vegetação longe some (mapprops `cortes`): é desenho, então mora depois do portão
+    atualizaCortes(this.world.root, this.camera.position.x, this.camera.position.z);
     // HUD e radar são DESENHO, não estado: ficam DEPOIS do portão. Antes rodavam em todo passo —
     // 57 operações de Canvas2D por quadro exibido a 5 FPS (régua tools/eval/passo-sim-check.mjs).
     this._updateHud();

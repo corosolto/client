@@ -20,6 +20,12 @@ export const ehBaixa = () => _q === 'low';
 // preferência salva do jogador — mudança adaptativa não vira configuração (ver DEGRAUS).
 let _sombraDegrau = null;
 export function definirSombraDegrau(d) { _sombraDegrau = d === 'baixa' ? 'low' : null; }
+
+// Fator do corte de vegetação: 1 = a distância que o mapa pediu, 0,3 = um terço dela. Quem
+// escreve é a escada adaptativa; quem lê é o `atualizaCortes` do mapprops.
+let _mato = 1;
+export function definirCorteVegetacao(f) { _mato = Math.max(0.2, Math.min(1, Number(f) || 1)); }
+export const corteVegetacao = () => _mato;
 export const sombraDegrau = () => _sombraDegrau;
 
 // o mapa continua tunando o que é DELE (extensão da câmera, bias); o tamanho é deste orçamento

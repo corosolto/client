@@ -22,7 +22,12 @@
      node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-histerese   # limiar único
      node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-catraca
    ═══════════════════════════════════════════════════════════════════════════════════ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { EscadaAdaptativa, DEGRAUS, CAMPOS_PERMITIDOS, MARGEM_DESCE, MARGEM_SOBE, DESCE_APOS_S, SOBE_APOS_S } from '../../public/js/qualidade-adaptativa.js';
+
+const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 const MUTAR = (process.argv.slice(2).find((a) => a.startsWith('--mutar=')) || '').split('=')[1] || '';
 let ok = 0, falhas = 0;
@@ -119,6 +124,29 @@ cobra(forasteiros.length === 0,
   `QA8 · os degraus só mexem em ${CAMPOS_PERMITIDOS.length} campos de imagem${forasteiros.length ? ` — apareceu ${forasteiros.join(', ')}` : ''}`);
 cobra(DEGRAUS[0].dpr === 1 && DEGRAUS[DEGRAUS.length - 1].dpr < 1 && DEGRAUS.every((d, i) => i === 0 || d.dpr <= DEGRAUS[i - 1].dpr),
   'QA9 · a escada é monótona: nenhum degrau mais fundo desenha MAIS pixels que o anterior');
+
+/* QA10 · O MATO. Medido no `corrego`, que é o mapa mais caro do catálogo: a grama custa
+   4.142 triângulos POR TUFO e são ~1.700 tufos — 7 de cada 8 triângulos do mapa. O degrau
+   mínimo corta a distância dela e leva 8,55 M para 4,76 M (−44%), sem diferença visível na
+   figura A/B: o que some está além de ~30 m, atrás de parede na maior parte do tempo. */
+const matos = DEGRAUS.map((d) => d.mato);
+cobra(matos.every((m) => typeof m === 'number' && m > 0 && m <= 1),
+  `QA10 · todo degrau declara o alcance da vegetação (${matos.join(' → ')})`);
+cobra(matos.every((m, i) => i === 0 || m <= matos[i - 1]) && matos[matos.length - 1] <= 0.5,
+  'QA10b · e ele só encurta degrau abaixo, chegando a menos da metade no mínimo');
+
+/* QA11 · e o corte CHEGA à tela. Lê o uso, não a declaração: uma tabela bonita com um
+   `atualizaCortes` que ninguém chama é a lição do BUG-02 outra vez. */
+const props = fs.readFileSync(path.join(RAIZ, 'public/js/mapprops.js'), 'utf8');
+const game = fs.readFileSync(path.join(RAIZ, 'public/js/game.js'), 'utf8');
+const mainJs = fs.readFileSync(path.join(RAIZ, 'public/js/main.js'), 'utf8');
+const corte = (props.match(/export function atualizaCortes[\s\S]*?\n\}/) || [''])[0];
+cobra(/corteVegetacao\(\)/.test(corte) && /im\.userData\.corte \* f/.test(corte),
+  'QA11 · o corte multiplica a distância do mapa pelo fator do degrau');
+cobra(/atualizaCortes\(this\.world\.root/.test(game) && game.indexOf('atualizaCortes(this.world.root') > game.indexOf('if (!render) return;'),
+  'QA11b · e roda uma vez por quadro DESENHADO, depois do portão de render');
+cobra(/definirCorteVegetacao\(d\.mato/.test(mainJs),
+  'QA11c · quem escreve o fator é a escada, no mesmo lugar que aplica o degrau');
 
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

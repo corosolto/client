@@ -67,7 +67,7 @@ function clearTelemetryGameContext() {
 import { applyNoPostTone, ajustaPos } from './bloom.js';
 import { criaRenderer, avisaSemWebgl, avisaSoftware } from './glcontext.js';
 import { EscadaAdaptativa, DEGRAUS } from './qualidade-adaptativa.js';
-import { definirSombraDegrau, aplicaSombraSol } from './mapquality.js';
+import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol } from './mapquality.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
 const renderer = criaRenderer({}, { compatibility: SAFE_MODE });
@@ -2800,6 +2800,7 @@ function aplicaDegrau(i) {
   renderer.setPixelRatio(dprBase * d.dpr);   // o composer acompanha (bloom.js, cp._dpr)
   ajustaPos({ ssao: d.ssao, aa: d.aa, charmask: d.charmask });
   definirSombraDegrau(d.sombra === 'baixa' ? 'baixa' : null);
+  definirCorteVegetacao(d.mato ?? 1);
   if (game?.world?.sun) aplicaSombraSol(game.world.sun);
   try { console.info(`[perf] qualidade adaptativa → ${d.nome}`); } catch { /* console mudo */ }
 }
