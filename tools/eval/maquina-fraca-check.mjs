@@ -68,8 +68,18 @@ cobra(/SOFTWARE \? 0\.5/.test(linhaDpr),
    cheia é para quem não consegue jogar; este consegue, devagar, e merece saber por quê. */
 cobra(/if \(SOFTWARE\) avisaSoftware/.test(main) && /export function avisaSoftware/.test(glc),
   'MF5 · renderizador de software gera aviso honesto ao jogador');
-cobra(/cs_aviso_software/.test(glc) && /el\.remove\(\)/.test(glc) && !/inset:0/.test(glc.split('avisaSoftware')[2] || ''),
+/* A fatia é o CORPO da função, e isso já mordeu: a primeira versão cortava em `avisaSoftware`,
+   que aparece UMA vez no arquivo — `[2]` era `undefined`, e a cláusula passava sobre o vazio. */
+const avisoSrc = glc.split('export function avisaSoftware')[1] || '';
+cobra(avisoSrc.length > 200 && /cs_aviso_software/.test(avisoSrc) && /el\.remove\(\)/.test(avisoSrc) && !/inset:0/.test(avisoSrc),
   'MF6 · o aviso é dispensável, lembrado, e não é overlay de tela cheia');
+/* MF6b · E NÃO BLOQUEIA O CLIQUE. Escrito depois de o smoke do CI reprovar por causa deste
+   aviso: ele cobre a faixa de baixo da tela, onde mora o `#ms-continue`, e o Playwright ficou
+   397 tentativas esperando "element is visible, enabled and stable" com a barra na frente.
+   "Não bloqueia" é uma promessa sobre o clique, não só sobre a área pintada. */
+cobra(/pointer-events:none/.test(avisoSrc) && /pointer-events:auto/.test(avisoSrc)
+    && !/left:0;right:0/.test(avisoSrc) && !/justify-content:center/.test(avisoSrc),
+  'MF6b · fica no CANTO, não intercepta ponteiro, e só o botão de dispensar aceita clique');
 
 /* MF7 · a telemetria continua com o tri-estado. `software: false` quando ninguém conseguiu ler
    a GPU é AFIRMAR o que não se leu — e o Firefox esconde a extensão atrás de flag. */

@@ -152,12 +152,15 @@ export function avisaSoftware(gpu) {
   try {
     const el = document.createElement('div');
     el.id = 'aviso-software';
-    el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;gap:1rem;'
-      + 'align-items:center;justify-content:center;padding:.7rem 1rem;background:#1a1712ee;color:#f4efe6;'
-      + 'font:13px/1.5 system-ui,sans-serif;text-align:center';
+    /* CANTO, e não faixa: a faixa de baixo centralizada caía em cima do `#ms-continue` (o smoke
+       do CI ficou 397 tentativas esperando). `pointer-events:none` no cartão e `auto` no botão. */
+    el.style.cssText = 'position:fixed;right:12px;bottom:12px;max-width:min(92vw,26rem);z-index:2147483000;'
+      + 'display:flex;gap:.75rem;align-items:center;padding:.6rem .8rem;border-radius:8px;'
+      + 'background:#1a1712f2;color:#f4efe6;font:12px/1.45 system-ui,sans-serif;text-align:left;'
+      + 'box-shadow:0 6px 24px #0008;pointer-events:none';
     el.innerHTML = '<span>Seu navegador está desenhando o 3D <strong>pela CPU</strong>, não pela placa de vídeo — '
       + 'o jogo já entrou no modo mais leve, mas vai ficar lento. Ligar a aceleração por hardware resolve.</span>'
-      + '<button type="button" style="background:#ffc233;color:#090704;border:0;padding:.4rem .9rem;font-weight:800;cursor:pointer">OK</button>';
+      + '<button type="button" style="background:#ffc233;color:#090704;border:0;padding:.35rem .8rem;border-radius:5px;font-weight:800;cursor:pointer;pointer-events:auto;flex:0 0 auto">OK</button>';
     el.title = String(gpu || '').slice(0, 120);
     el.querySelector('button').onclick = () => {
       el.remove();
