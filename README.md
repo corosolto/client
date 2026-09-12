@@ -34,8 +34,8 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 46.892 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7.433** linhas | `wc -l public/js/game.js` |
+| Código do jogo | 46.914 linhas em 93 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7.435** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.481 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 55 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
@@ -306,23 +306,23 @@ Os mapas registrados, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.394 |
+| `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.154 |
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.404 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.405 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
-| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
-| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.345 |
-| `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 391 |
-| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
-| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
-| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
-| `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.060 |
-| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 811 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.965 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.889 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.600 |
+| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.346 |
+| `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 490 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 289 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 241 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 256 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 403 |
+| `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 248 |
 
 **17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 23 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 

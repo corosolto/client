@@ -41,8 +41,8 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 46,892 lines in 93 files | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7,433** lines | `wc -l public/js/game.js` |
+| Game code | 46,914 lines in 93 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7,435** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,481 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 55 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
@@ -223,23 +223,23 @@ The maps registered today, and which mode each one opens in:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,394 |
+| `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,395 |
 | `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,154 |
-| `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,404 |
+| `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,405 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
-| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,964 |
-| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
-| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
-| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,345 |
-| `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 391 |
-| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 489 |
-| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 288 |
-| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 402 |
-| `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 1,060 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 247 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 811 |
+| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,965 |
+| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,889 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,600 |
+| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,346 |
+| `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 392 |
+| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 490 |
+| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 289 |
+| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 241 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 256 |
+| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 403 |
+| `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 1,061 |
+| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 248 |
 
 **17 registered maps** - 2 open in rounds and 15 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 23 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
@@ -282,10 +282,10 @@ And the two gates, with the exact list of what each one runs — straight from `
 {/* BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` */}
 
 ```bash
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:analytics eval:online eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check eval:audioalcance eval:audioespacial eval:audioenvelope eval:audioproc eval:audiocapacidade eval:audiofablocal eval:audioeventos eval:audioannouncer eval:audiovoicemix eval:audioprivate eval:audioruntimeassets eval:menumusicreview audio:inventario:autoteste audio:shortlist:autoteste feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:wflocal eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:netcodecbin eval:movimento eval:botsim-golden eval:replaycam eval:abateshud eval:botfaca eval:escadao-home eval:escadao-conflict-home eval:escadao-casa-central eval:escadao-casas-conflito eval:escadao-mirante-abrigo eval:escadao-structure eval:escadao-descent eval:escadao-details eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife ops:test ops:selftest eval:lajes-layout eval:lajes-rooftop eval:lajes-visual eval:lajes-ruas eval:lajes-identidade eval:lajes-roof-overlap eval:lajes-nav eval:lajes-ctf-surface eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:lajes-vertical eval:lajes-bots eval:lajes-ambiencia eval:lajes-santos eval:lajes-game eval:mappreview eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:sertao eval:sertao-spatial eval:sertao-interiors eval:sertao-wagon eval:sertao-flora eval:sertao-occlusion eval:sertao-fauna eval:calango-quadruped eval:sertao-horizon eval:sertao-distant-birds eval:sertao-integration eval:sertao-livestock eval:sertao-sky-lifecycle eval:amazonia eval:chao eval:miticos-lobisomem eval:mansao
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:analytics eval:online eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:passosim eval:qualmapas eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check eval:audioalcance eval:audioespacial eval:audioenvelope eval:audioproc eval:audiocapacidade eval:audiofablocal eval:audioeventos eval:audioannouncer eval:audiovoicemix eval:audioprivate eval:audioruntimeassets eval:menumusicreview audio:inventario:autoteste audio:shortlist:autoteste feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:wflocal eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:netcodecbin eval:movimento eval:botsim-golden eval:replaycam eval:abateshud eval:botfaca eval:escadao-home eval:escadao-conflict-home eval:escadao-casa-central eval:escadao-casas-conflito eval:escadao-mirante-abrigo eval:escadao-structure eval:escadao-descent eval:escadao-details eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife ops:test ops:selftest eval:lajes-layout eval:lajes-rooftop eval:lajes-visual eval:lajes-ruas eval:lajes-identidade eval:lajes-roof-overlap eval:lajes-nav eval:lajes-ctf-surface eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:lajes-vertical eval:lajes-bots eval:lajes-ambiencia eval:lajes-santos eval:lajes-game eval:mappreview eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:sertao eval:sertao-spatial eval:sertao-interiors eval:sertao-wagon eval:sertao-flora eval:sertao-occlusion eval:sertao-fauna eval:calango-quadruped eval:sertao-horizon eval:sertao-distant-birds eval:sertao-integration eval:sertao-livestock eval:sertao-sky-lifecycle eval:amazonia eval:chao eval:miticos-lobisomem eval:mansao
 ```
 
-`package.json` has **231 scripts**; the reason behind each one lives in `SCRIPTS.md`.
+`package.json` has **233 scripts**; the reason behind each one lives in `SCRIPTS.md`.
 
 > Block generated by `node tools/gen-docs.mjs`. Source: `node -p "Object.keys(require('./package.json').scripts)"`
 

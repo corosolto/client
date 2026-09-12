@@ -1,6 +1,7 @@
 // CÓRREGO (corrego) — spec em plans/13-CORREGO.md. Planta: eixo longo = z, norte = −z;
 // córrego em x ∈ [−3, 3] (água rasa), margens em ±[3, 24], pontes em z = −22, 0, 22.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, hasProp, PropBatch, StaticBatch, InstBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -308,7 +309,7 @@ export function buildCorrego(scene, T) {
 
   /* ===================== CÉU / LUZ ===================== */
   const { hemi, sun } = applyLook(scene, T, 'corrego', { nofog: QP.get('nofog') === '1' });
-  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;

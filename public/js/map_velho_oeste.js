@@ -1,6 +1,7 @@
 // SERTÃO DA TRETA (velho_oeste) — r2: reconstrução do faroeste em arraial de pau
 // a pique (feedback do dono). Gameplay/rotas: eval:velhooeste; identidade: eval:sertao.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { createFavelaAmbience, placeFauna } from './ambientlife.js';
 import { placeProp, hasProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
@@ -259,7 +260,7 @@ export function buildVelhoOeste(scene, T) {
   /* CÉU/NÉVOA/SOL do LOOK['velho_oeste'] (fim de tarde de sertão) — o shadow
      fica aqui porque o builder conhece os limites (idioma do map_mansao.js). */
   const { sun } = applyLook(scene, T, 'velho_oeste');
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -48; sun.shadow.camera.right = 48;
+  aplicaSombraSol(sun); sun.shadow.camera.left = -48; sun.shadow.camera.right = 48;
   sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58; sun.shadow.camera.far = 160; sun.shadow.bias = -.00045;
 
   sertaoLandscape(root, MAT.sand);

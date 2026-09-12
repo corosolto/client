@@ -18,6 +18,7 @@
 //      pós-tonemap no último passe (grain migrou pra lá, senão o sharpen amplifica ruído).
 //  (5) Foco dinâmico do shadow map do sol em volta do jogador: 12.8 cm/texel → ~2.2 cm/texel.
 import * as THREE from 'three';
+import { orcamentoSombra } from './mapquality.js';
 import { EffectComposer } from '../vendor/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from '../vendor/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../vendor/addons/postprocessing/UnrealBloomPass.js';
@@ -710,7 +711,10 @@ export function focusSunShadow(scene, camera, radius) {
       st.dir = new THREE.Vector3().copy(l.position).sub(l.target.position);
       st.dist = Math.max(20, st.dir.length());
       st.dir.normalize();
-      if (l.shadow.mapSize.width < 2048) { l.shadow.mapSize.set(2048, 2048); l.shadow.map = null; }
+      // piso = ORÇAMENTO do nível, não um 2048 cravado: cravado, o pós desfazia a redução de
+      // sombra que o mapa (e a qualidade adaptativa) tivessem pedido. Fonte: mapquality.js.
+      const piso = orcamentoSombra();
+      if (l.shadow.mapSize.width < piso) { l.shadow.mapSize.set(piso, piso); l.shadow.map = null; }
       // guarda o que o MAPA tunou, pra escalar em vez de jogar fora
       st.r0 = Math.max(4, Math.abs(l.shadow.camera.right) || 60);
       st.bias0 = l.shadow.bias;
