@@ -263,7 +263,7 @@ try {
     const st = mp.net.stats || {};
     return {
       eventos, tracersNovos: tracers, puffs,
-      rede: { hz: st.hz | 0, alvo: mp.snapshotHz | 0, kbps: +(st.kbps || 0).toFixed(1), ping: Math.round(st.ping || 0), ents: st.ents | 0, fps: mp._nsFps ?? null },
+      rede: { hz: st.hz | 0, alvo: mp.snapshotHz | 0, kbps: +(st.kbps || 0).toFixed(1), ping: Math.round(st.ping || 0), ents: st.ents | 0, fps: mp._nsFps ?? null, protocolo: mp.net.ws?.protocol || '' },
       pellets: WEAPONS[w]?.pellets || 1, arma: w,
       municao: g.player.ammo?.[g.player.weapon]?.mag,
     };
@@ -302,6 +302,14 @@ try {
   const normais = medida.eventos.reduce((a, e) => a + e.nor, 0);
   cobra(normais >= comMaterial,
     `TB9 · a normal da parede vem no evento e orienta o furo (${normais} normais para ${comMaterial} impactos com material)`);
+  /* TB10 · A BANDA. Medido aqui mesmo, antes e depois da v5, com 10 entidades e 30 Hz:
+     20,8 KB/s contra 13,8 KB/s. O teto é o número novo com folga — ele existe para que
+     ninguém volte a mandar o bloco privado de todo mundo para todo mundo sem perceber. */
+  const TETO_KBPS = 17;
+  cobra(medida.rede.protocolo === 'coro-snapshot-v5',
+    `TB10 · o navegador negociou o protocolo novo (${medida.rede.protocolo || 'nenhum'})`);
+  cobra(medida.rede.ents <= 10 && medida.rede.kbps > 0 && medida.rede.kbps <= TETO_KBPS,
+    `TB10b · ${medida.rede.kbps} KB/s com ${medida.rede.ents} entidades (teto ${TETO_KBPS}; a v4 media 20,8)`);
   cobra(erros.length === 0, `TB7 · nenhuma exceção no console durante a partida${erros.length ? `: ${erros[0]}` : ''}`);
 
   await page.screenshot({ path: FOTO });

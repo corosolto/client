@@ -109,6 +109,35 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-165 · `spectators` negativo derrubava o snapshot binário inteiro · CORRIGIDO 12/09
+
+**Sintoma.** Achado quando o laço fechado (`netloop-check`) passou a serializar pelo codec de
+verdade: `encodeSnapshot` lançava `RangeError: spectators` e a sala inteira cairia para JSON —
+ou, no caminho do nó, para nenhum snapshot.
+
+**Causa.** `spectators: this.clients.size - this.slots.size`. Um slot sem cliente dá número
+NEGATIVO, e o codec valida `u8`. Acontece na régua (que cria slot sem socket) e acontece em
+produção, na janela entre o socket cair e o slot ser devolvido ao bot.
+
+**Conserto.** `Math.max(0, ...)`. Uma linha, e a lição é a do laço: régua que entrega o objeto
+do `snapshot()` direto ao cliente mede um jogo que ninguém joga — em produção ele vira bytes e
+volta, e é na volta que os erros aparecem.
+
+### BUG-164 · snapshot fora de ordem apagava o buffer de interpolação · CORRIGIDO 12/09
+
+**Sintoma.** Nenhum, hoje: com WebSocket o snapshot nunca chega fora de ordem. Com datagrama
+(QUIC/WebTransport, que é para onde o transporte vai) reordenação é ROTINA — e a regra
+"amostra com tempo menor que a última = relógio novo, esvazia tudo" apagaria as 10 amostras do
+buffer. Boneco remoto sem amostra congela e salta.
+
+**Conserto.** Recuo curto = pacote fora de ordem: a amostra entra NA ORDEM (e duplicata é
+ignorada, porque datagrama também duplica). Só recuo maior que 1 s continua sendo partida nova.
+
+**Régua** `game/netloop-check.mjs`, cenário de reordenação: 1 esvaziamento contra 1 (o do
+respawn, legítimo) com o conserto; **37 contra 1** com o mutante `ordem`. A primeira cláusula
+do cenário prova que houve inversão de tick chegando ao cliente — sem ela as outras passariam
+verdes medindo um cenário que não aconteceu.
+
 ### BUG-163 · trocar de qualidade no meio da partida não mudava a resolução do jogo · CORRIGIDO 12/09
 
 **Sintoma.** O menu de qualidade mentia. `med → high` (e vice-versa) trocava sombra e materiais,
