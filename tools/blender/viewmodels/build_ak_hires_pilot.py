@@ -416,6 +416,10 @@ def split_magazine(weapon: bpy.types.Object, ancora: Vector) -> bpy.types.Object
         selected = 1
     elif CAIXA_PENTE:
         xmin, xmax, zmax = CAIXA_PENTE
+        # A caixa e lida na figura do modelo BRUTO, mas aplicada DEPOIS da
+        # canonicalizacao, que gira 180 as de rot 90 e inverte o sinal de x.
+        if abs(ROT_ARMA[1] - AK_ROT_Y) > 90:
+            xmin, xmax = -xmax, -xmin
         for polygon in weapon.data.polygons:
             centro = polygon.center
             polygon.select = xmin <= centro.x <= xmax and centro.z <= zmax
