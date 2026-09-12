@@ -49,6 +49,10 @@ const VMLAB = QS.get('vmlab') === '1';
 // Sonda interna para conferir no navegador as 26 poses já montadas, sem alterar o
 // loadout de uma partida normal. Só é honrada junto de ?debug=1.
 const VM_QA_WEAPON = QS.get('debug') === '1' && WEAPON_IDS.includes(QS.get('vmweapon')) ? QS.get('vmweapon') : null;
+// `?debug=1` libera `[` e `]` para percorrer o arsenal inteiro sem recarregar a
+// página: era um reload por arma para conferir viewmodel, e o dono precisa ver
+// as 26 de uma sentada.
+const VM_QA_CICLO = QS.get('debug') === '1';
 const VM_QA_ADS = QS.get('debug') === '1' && QS.get('vmads') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
    `min(metalness, 0.55)` do viewmodel E o orçamento fixo de 7,60 unidades de luz da vmScene.
@@ -1949,6 +1953,10 @@ export class Game {
       }
       if (e.code === 'KeyM') { if (this.onRequestSwitch) this.onRequestSwitch(); else this._switchTeam(); }
       if (e.code === 'KeyR') this._startReload();
+      if (VM_QA_CICLO && (e.code === 'BracketLeft' || e.code === 'BracketRight')) {
+        this._qaCicloArma(e.code === 'BracketRight' ? 1 : -1);
+        return;
+      }
       if (e.code === 'Digit4') this._throwSmoke();   // fumaça no 4 (convenção CS)
       if (e.code === 'Digit5') this._throwFrag();     // granada de fragmentação no 5
       if (e.code === 'KeyG') this._throwSmoke();      // atalho legado de fumaça
@@ -3111,6 +3119,17 @@ export class Game {
     }
   }
   _fxSet(p) { this._fxTune = { light: 1, flash: 1, spark: 1, ...(this._fxTune || {}), ...(p || {}) }; }
+  /* QA de viewmodel: anda pelo WEAPON_IDS na mão. Sem isto é um reload por
+     arma, e o arsenal tem 26. Só existe com `?debug=1` (`VM_QA_CICLO`). */
+  _qaCicloArma(passo) {
+    const atual = WEAPON_IDS.indexOf(this.player.weapon);
+    const alvo = WEAPON_IDS[(atual + passo + WEAPON_IDS.length) % WEAPON_IDS.length];
+    this._switchWeapon(alvo);
+    // `_switchWeapon` já escreve o nome no HUD (`weapon-name`); o log é para a
+    // régua headless, que lê o console e não o pixel.
+    console.log(`[vmqa] arma: ${alvo}`);
+  }
+
   _switchWeapon(w, { pickup = false } = {}) {
     const p = this.player;
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;

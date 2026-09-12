@@ -1,0 +1,292 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Arsenal golden — todas de uma vez</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#0e1116; color:#e6e9ef; overflow:hidden;
+         font:13px/1.45 system-ui,-apple-system,sans-serif; }
+  header { position:fixed; inset:0 0 auto 0; z-index:2; display:flex; gap:14px; align-items:center;
+           flex-wrap:wrap; padding:9px 16px; background:#0e1116ee;
+           border-bottom:1px solid #232a35; backdrop-filter:blur(6px); }
+  header b { color:#f0b429; letter-spacing:.04em; }
+  label { display:inline-flex; gap:6px; align-items:center; cursor:pointer; user-select:none; }
+  select, button { background:#1a212b; color:#e6e9ef; border:1px solid #2e3846; border-radius:6px;
+                   padding:5px 9px; font:inherit; cursor:pointer; }
+  button:hover, select:hover { border-color:#f0b429; }
+  #lona { display:block; width:100vw; height:100vh; }
+  #dica { position:fixed; left:16px; bottom:12px; z-index:2; opacity:.6; max-width:56ch; }
+  #placar { opacity:.6; font-variant-numeric:tabular-nums; }
+</style>
+<header>
+  <b>ARSENAL GOLDEN</b>
+  <label>clipe
+    <select id="clipe">
+      <option value="Reload">Reload — o carregador sai?</option>
+      <option value="Idle">Idle</option>
+      <option value="Shoot">Shoot</option>
+      <option value="Equip">Equip</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="tinta" checked> pentes em vermelho</label>
+  <label><input type="checkbox" id="maos"> mostrar as mãos</label>
+  <label><input type="checkbox" id="deitar" checked> deitar pelo eixo da AK</label>
+  <button id="pausa">pausar</button>
+  <button id="frente">vista de lado</button>
+  <span id="placar"></span>
+</header>
+<canvas id="lona"></canvas>
+<div id="dica"><b>ak</b> e <b>pistol</b>, em amarelo, são as aprovadas — compare o resto com elas.
+Todas giram pelo <b>mesmo</b> ângulo, o que deita a AK: quem sair com o cano para o lado errado
+está invertida de verdade. Em vermelho, a peça que a recarga arranca: tem de ser o carregador, e
+só ele. Arraste para girar, role para aproximar.</div>
+
+<script type="importmap">
+{"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/addons/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const ARMAS = ['ak','pistol','m4','mp5','scar','famas','p90','lmg','m92',
+               'md97','mosin','sks','svd','uzi','akm'];
+const APROVADAS = /^(ak|pistol)$/;
+const MAO = /Requests_Studio_Hands|armmesh|glove|sleeve|hand|arm|cloth|skin|forearm/i;
+const COLS = 5, PASSO_X = 1.34, PASSO_Y = 1.16;
+
+const lona = document.getElementById('lona');
+const rnd = new THREE.WebGLRenderer({ canvas: lona, antialias: true });
+rnd.setPixelRatio(Math.min(2, devicePixelRatio));
+rnd.toneMapping = THREE.ACESFilmicToneMapping;
+rnd.toneMappingExposure = 1.45;
+const cena = new THREE.Scene();
+cena.background = new THREE.Color(0x0e1116);
+cena.add(new THREE.HemisphereLight(0xffffff, 0x3a4150, 3.4));
+const sol = new THREE.DirectionalLight(0xffffff, 2.6); sol.position.set(2, 4, 3); cena.add(sol);
+const contra = new THREE.DirectionalLight(0xbcd2ff, 1.3); contra.position.set(-3, 1, -2); cena.add(contra);
+
+const cam = new THREE.PerspectiveCamera(36, 1, 0.01, 200);
+// Orbit de bolso: `addons/controls` não está no vendor e não vale baixar arquivo
+// novo só para esta bancada.
+const orbe = { alvo: new THREE.Vector3(), raio: 8.2, teta: 0, fi: 0.10 };
+let arrastando = false, ox = 0, oy = 0;
+lona.addEventListener('pointerdown', (e) => { arrastando = true; ox = e.clientX; oy = e.clientY; });
+addEventListener('pointerup', () => { arrastando = false; });
+addEventListener('pointermove', (e) => {
+  if (!arrastando) return;
+  orbe.teta -= (e.clientX - ox) * 0.006;
+  orbe.fi = Math.max(-1.3, Math.min(1.3, orbe.fi + (e.clientY - oy) * 0.006));
+  ox = e.clientX; oy = e.clientY;
+});
+lona.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  orbe.raio = Math.max(0.4, Math.min(24, orbe.raio * (1 + Math.sign(e.deltaY) * 0.08)));
+}, { passive: false });
+
+const carregador = new GLTFLoader();
+const fichas = [];
+
+function rotulo(texto, cor) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 64;
+  const g = c.getContext('2d');
+  g.font = 'bold 36px ui-monospace,monospace';
+  g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(texto, 128, 34);
+  const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true,
+                                         depthTest: false, depthWrite: false });
+  const s = new THREE.Sprite(mat);
+  s.scale.set(0.44, 0.11, 1);
+  s.renderOrder = 10;                       // o rótulo nunca fica atrás da malha
+  return s;
+}
+
+/* Direção principal da nuvem de vértices da arma (sem as mãos). A caixa
+   envolvente é alinhada aos eixos e por isso não dá direção; a covariância dá.
+   É com ela que a AK define o ângulo que deita TODAS — girar cada arma pelo
+   próprio eixo esconderia justamente a arma invertida. */
+function eixoPrincipal(malhas) {
+  let n = 0; const media = new THREE.Vector3(); const v = new THREE.Vector3();
+  const amostra = [];
+  for (const m of malhas) {
+    const pos = m.geometry?.attributes?.position; if (!pos) continue;
+    const passo = Math.max(1, Math.floor(pos.count / 900));
+    for (let i = 0; i < pos.count; i += passo) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+      amostra.push(v.x, v.y, v.z); media.add(v); n += 1;
+    }
+  }
+  if (n < 12) return new THREE.Vector3(1, 0, 0);
+  media.divideScalar(n);
+  const c = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+  for (let i = 0; i < amostra.length; i += 3) {
+    const d = [amostra[i] - media.x, amostra[i + 1] - media.y, amostra[i + 2] - media.z];
+    for (let a = 0; a < 3; a += 1) for (let b = 0; b < 3; b += 1) c[a * 3 + b] += d[a] * d[b];
+  }
+  // Iteração de potência: 40 passos bastam para o eixo dominante de um objeto
+  // comprido como uma arma.
+  let e = new THREE.Vector3(1, 0.3, 0.2).normalize();
+  for (let k = 0; k < 40; k += 1) {
+    e = new THREE.Vector3(
+      c[0] * e.x + c[1] * e.y + c[2] * e.z,
+      c[3] * e.x + c[4] * e.y + c[5] * e.z,
+      c[6] * e.x + c[7] * e.y + c[8] * e.z).normalize();
+  }
+  return e;
+}
+
+let giroComum = null;                        // definido pela AK, aplicado a todas
+
+for (let i = 0; i < ARMAS.length; i += 1) {
+  const nome = ARMAS[i];
+  const celula = new THREE.Group();
+  celula.position.set((i % COLS - (COLS - 1) / 2) * PASSO_X, -Math.floor(i / COLS) * PASSO_Y, 0);
+  cena.add(celula);
+  const marca = rotulo(nome, APROVADAS.test(nome) ? '#f0b429' : '#9aa5b4');
+  marca.position.set(0, 0.42, 0);
+  celula.add(marca);
+
+  carregador.load(`/models/viewmodels/coro/${nome}-hires.glb`, (gltf) => {
+    const raiz = gltf.scene;
+    raiz.updateMatrixWorld(true);
+    const maos = []; const armaMalhas = []; const pente = [];
+
+    raiz.traverse((o) => {
+      if (!o.isMesh) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      const assinatura = `${o.name} ${o.geometry?.name || ''} ${mats.map((m) => m?.name || '').join(' ')}`;
+      if (MAO.test(assinatura)) { maos.push(o); o.visible = false; return; }
+      armaMalhas.push(o);
+
+      // Pinta o que está preso a um osso `Mag*`: a peça que a recarga arranca.
+      const idx = o.geometry?.attributes?.skinIndex;
+      const w = o.geometry?.attributes?.skinWeight;
+      if (!o.isSkinnedMesh || !idx || !w) return;
+      const alvos = new Set();
+      o.skeleton.bones.forEach((b, k) => { if (/^mag/i.test(b.name || '')) alvos.add(k); });
+      if (!alvos.size) return;
+      const n = idx.count; const cor = new Float32Array(n * 3); cor.fill(0.74);
+      const ai = idx.array, aw = w.array, p = idx.itemSize, pw = w.itemSize;
+      let presos = 0;
+      for (let v = 0; v < n; v += 1) {
+        for (let c = 0; c < p; c += 1) {
+          if (alvos.has(ai[v * p + c]) && aw[v * pw + c] > 0.01) {
+            cor[v * 3] = 0.95; cor[v * 3 + 1] = 0.09; cor[v * 3 + 2] = 0.06; presos += 1; break;
+          }
+        }
+      }
+      if (!presos) return;
+      o.geometry.setAttribute('color', new THREE.BufferAttribute(cor, 3));
+      const m2 = (Array.isArray(o.material) ? o.material[0] : o.material).clone();
+      m2.vertexColors = true; o.material = m2;
+      pente.push({ malha: o, presos, base: m2 });
+    });
+
+    const eixo = eixoPrincipal(armaMalhas);
+    if (nome === 'ak') {
+      // O sinal do eixo dominante é arbitrário; ancora no +X do mundo para que
+      // a AK sempre deite com o cano à direita.
+      if (eixo.x < 0) eixo.negate();
+      giroComum = new THREE.Quaternion().setFromUnitVectors(eixo, new THREE.Vector3(1, 0, 0));
+    }
+
+    const pivo = new THREE.Group();
+    pivo.add(raiz);
+    celula.add(pivo);
+
+    const ficha = { nome, maos, pente, armaMalhas, pivo, raiz, eixo,
+                    mixer: new THREE.AnimationMixer(raiz),
+                    clipes: new Map(gltf.animations.map((c) => [c.name, c])) };
+    fichas.push(ficha);
+    enquadrar(ficha);
+    trocarClipe();
+    atualizarPlacar();
+    if (nome === 'ak') for (const f of fichas) enquadrar(f);   // reenquadra quem chegou antes
+  }, undefined, (e) => {
+    celula.add(rotulo('falhou', '#e05252'));
+    console.error(`bancada: ${nome} nao carregou`, e);
+  });
+}
+
+/* Encaixa a arma na célula: o mesmo giro para todas, e a escala pelo maior lado
+   da caixa da ARMA (as mãos ficam fora da conta ou elas mandariam no tamanho). */
+function enquadrar(f) {
+  const deitar = document.getElementById('deitar').checked;
+  f.pivo.quaternion.copy(deitar && giroComum ? giroComum : new THREE.Quaternion());
+  f.raiz.position.set(0, 0, 0);
+  f.raiz.scale.setScalar(1);
+  f.pivo.updateMatrixWorld(true);
+
+  const bruta = new THREE.Box3();
+  for (const m of f.armaMalhas) bruta.expandByObject(m);
+  if (bruta.isEmpty()) return;
+  const tam = bruta.getSize(new THREE.Vector3());
+  f.raiz.scale.setScalar(1.02 / Math.max(1e-4, Math.max(tam.x, tam.y, tam.z)));
+  f.pivo.updateMatrixWorld(true);
+
+  // O centro sai em coordenadas de mundo; `raiz` não tem rotação própria dentro
+  // de `pivo`, então o centro trazido para o espaço do pivô serve direto como
+  // deslocamento. Medir o centro DEPOIS da escala é o que fecha a conta.
+  const posta = new THREE.Box3();
+  for (const m of f.armaMalhas) posta.expandByObject(m);
+  const centro = f.pivo.worldToLocal(posta.getCenter(new THREE.Vector3()));
+  f.raiz.position.sub(centro);
+}
+
+function trocarClipe() {
+  const alvo = document.getElementById('clipe').value;
+  for (const f of fichas) {
+    f.mixer.stopAllAction();
+    const c = f.clipes.get(alvo) || [...f.clipes.values()][0];
+    if (!c) continue;
+    f.mixer.clipAction(c).reset().setLoop(THREE.LoopRepeat).play();
+  }
+}
+function atualizarPlacar() {
+  const comPente = fichas.filter((f) => f.pente.length).length;
+  const semPente = fichas.filter((f) => !f.pente.length).map((f) => f.nome);
+  document.getElementById('placar').textContent =
+    `${fichas.length}/${ARMAS.length} carregadas · ${comPente} com peça presa ao osso do pente`
+    + (semPente.length ? ` · sem peça: ${semPente.join(' ')}` : '');
+}
+
+document.getElementById('clipe').onchange = trocarClipe;
+document.getElementById('tinta').onchange = (e) => {
+  for (const f of fichas) for (const p of f.pente) {
+    p.malha.material.vertexColors = e.target.checked; p.malha.material.needsUpdate = true;
+  }
+};
+document.getElementById('maos').onchange = (e) => {
+  for (const f of fichas) { for (const m of f.maos) m.visible = e.target.checked; }
+};
+document.getElementById('deitar').onchange = () => { for (const f of fichas) enquadrar(f); };
+let pausado = false;
+document.getElementById('pausa').onclick = (e) => {
+  pausado = !pausado; e.target.textContent = pausado ? 'continuar' : 'pausar';
+};
+document.getElementById('frente').onclick = () => { orbe.teta = 0; orbe.fi = 0.10; orbe.raio = 8.2; };
+
+function dimensionar() {
+  rnd.setSize(innerWidth, innerHeight, false);
+  cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix();
+}
+addEventListener('resize', dimensionar);
+dimensionar();
+orbe.alvo.set(0, -(Math.ceil(ARMAS.length / COLS) - 1) * PASSO_Y / 2, 0);
+orbe.raio = 8.2;
+
+window.__bancada = fichas;   // a regua le daqui
+window.__giro = () => giroComum;
+
+const relogio = new THREE.Clock();
+(function laco() {
+  requestAnimationFrame(laco);
+  const dt = relogio.getDelta();
+  if (!pausado) for (const f of fichas) f.mixer.update(dt);
+  cam.position.set(
+    orbe.alvo.x + orbe.raio * Math.cos(orbe.fi) * Math.sin(orbe.teta),
+    orbe.alvo.y + orbe.raio * Math.sin(orbe.fi),
+    orbe.alvo.z + orbe.raio * Math.cos(orbe.fi) * Math.cos(orbe.teta));
+  cam.lookAt(orbe.alvo);
+  rnd.render(cena, cam);
+})();
+</script>
