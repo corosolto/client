@@ -311,6 +311,7 @@ const RACK_RETA = QS.get('rackreta') === '1';
    A simetria é parte do desenho: vale pra jogador E bots — meia regeneração faria o bot
    virar esponja. Régua: invariante REGEN de `tools/eval/regen-check.mjs`. */
 const REGEN = QS.get('regen') === '1', REGEN_DELAY = 6, REGEN_RATE = 22;
+const TEAM_LABEL = { E: 'TIME E', B: 'TIME B' };
 const RADIO = {
   z: { title: 'COMANDOS', items: ['Bora, bora, bora!', 'Cobre eu!', 'Recua, recua!'] },
   x: { title: 'RESPOSTAS', items: ['Recebido!', 'Negativo!', 'Bonito tiro!'] },
@@ -1562,7 +1563,9 @@ export class Game {
     }
     /* O `rw` era montado uma vez so, no boot, com o que estivesse em cache — e a
        partida pre-carrega so as armas que sorteou. Monta o que faltou quando chega. */
-    if (semMalha.size) {
+    // Em node (arnês) a URL relativa do GLB não resolve e a rejeição vira erro não
+    // tratado: o boot da régua morre antes de medir. No navegador nada muda.
+    if (semMalha.size && !NODE_RUNTIME) {
       const pendentes = [...semMalha];
       preloadWeapons(pendentes).then(() => {
         for (const id of pendentes) {
@@ -5545,6 +5548,7 @@ export class Game {
       // crouch só freia NO CHÃO: crouch-jump não deve perder velocidade no ar (CS)
       ? PLAYER_SPEED * wpnMul * (walking ? WALK_MUL : 1) * (p.scoped ? 0.55 : 1) * (1 - 0.48 * p.crouchF * (p.grounded ? 1 : 0)) * slowMul
       : (sprint && slowMul === 1 ? 6.6 : 4.7) * (p.scoped ? 0.5 : 1) * (1 - 0.5 * p.crouchF) * slowMul;
+    this._maxSp = maxSp;   // lido em `running` (outra função depois do merge com a main)
     let ix = inp.ax, iz = inp.az;
     const il = Math.hypot(ix, iz) || 1; ix /= il; iz /= il;
     const sin = Math.sin(p.yaw), cos = Math.cos(p.yaw);
@@ -5697,7 +5701,9 @@ export class Game {
     if (this.camView !== 'first') this._updatePlayerTP(dt, sp, eye);
     // footsteps + view bob
     const moving = sp > 0.6 && p.grounded;
-    const running = moving && !p.scoped && p.crouchF < 0.2 && slowMul === 1 && sp >= maxSp * 0.88;
+    // `slowMul` vive noutro escopo depois do merge com a main; mesma expressão, local.
+    const semLentidao = !(this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z));
+    const running = moving && !p.scoped && p.crouchF < 0.2 && semLentidao && sp >= (this._maxSp || 6.6) * 0.88;
     this._updateMotocaCharge(dt, running);
     this._recordRoutePoint(moving);
     if (moving) {

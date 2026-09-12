@@ -8,7 +8,7 @@ Números atuais das zonas, do quality gate e do `package.json`:
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 105 arquivos `.js`, 52.210 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `public/` | o **jogo** | 105 arquivos `.js`, 52.208 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
 | `src/` | o **site** | 20 páginas `.astro`, 4 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
 | `tools/` | o **arnês** | 485 scripts em `tools/eval/`, 95 em `tools/` | node puro: sobe o jogo real sem browser |
 
