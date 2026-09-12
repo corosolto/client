@@ -51,8 +51,7 @@ export const VM_WEAPON = {
   shotgun: W('shotgun'),
   // O pack autora a Deagle com 23–27° de pitch (hand cannon); no nosso mount o
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
-  // Sem `parts`: só a BASE do pente é separada, e puxá-la esvazia o punho (BUG-90).
-  deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),
+  deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),  // sem `parts`: BUG-90
   // NÃO marcar `golden` sem calibrar a escala: o piloto entra 144× maior.
   // Medição e antes/depois em KNOWN-BUGS.md, BUG-VM-ESCALA-PISTOLA.
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
