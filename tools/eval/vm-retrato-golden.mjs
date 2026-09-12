@@ -54,7 +54,9 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1100, height: 460 } });
 // A página do jogo só serve para dar Three e o GLTFLoader; nada é jogado aqui.
-await page.goto(`${BASE}/?debug=1`, { waitUntil: 'load', timeout: 120000 });
+// `domcontentloaded` basta: esta ferramenta só precisa do import map, e esperar
+// o `load` da página do jogo inteira dava timeout com o rasterizador carregado.
+await page.goto(`${BASE}/?debug=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => Boolean(document.querySelector('script[type="importmap"]')), null, { timeout: 60000 });
 
 const saida = await page.evaluate(async (lista) => {

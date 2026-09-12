@@ -42,7 +42,9 @@ const browser = await chromium.launch({
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'],
 });
 const page = await browser.newPage({ viewport: { width: 1200, height: 400 } });
-await page.goto(`${BASE}/?debug=1`, { waitUntil: 'load', timeout: 120000 });
+// `domcontentloaded` basta: esta ferramenta só precisa do import map, e esperar
+// o `load` da página do jogo inteira dava timeout com o rasterizador carregado.
+await page.goto(`${BASE}/?debug=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => Boolean(document.querySelector('script[type="importmap"]')), null, { timeout: 60000 });
 
 const armas = fs.readdirSync(DIR).filter((f) => f.endsWith('.glb'))
