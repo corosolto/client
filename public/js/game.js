@@ -49,9 +49,7 @@ const VMLAB = QS.get('vmlab') === '1';
 // Sonda interna para conferir no navegador as 26 poses já montadas, sem alterar o
 // loadout de uma partida normal. Só é honrada junto de ?debug=1.
 const VM_QA_WEAPON = QS.get('debug') === '1' && WEAPON_IDS.includes(QS.get('vmweapon')) ? QS.get('vmweapon') : null;
-// `?debug=1` libera `[` e `]` para percorrer o arsenal inteiro sem recarregar a
-// página: era um reload por arma para conferir viewmodel, e o dono precisa ver
-// as 26 de uma sentada.
+// `?debug=1` libera `[` e `]` para percorrer o arsenal sem recarregar (BUG-156).
 const VM_QA_CICLO = QS.get('debug') === '1';
 const VM_QA_ADS = QS.get('debug') === '1' && QS.get('vmads') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
@@ -3034,11 +3032,8 @@ export class Game {
   _applyVmVisibility() {
     const w = this.player.weapon;
     this._vmMontarTardio?.(w);   // GLB que chegou depois do construtor (ver _buildViewModels)
-    /* Esta troca saiu no merge com a main (a main não conhece o caminho autorado)
-       e sem ela NENHUMA arma montava o viewmodel golden: `authored.weapon` ficava
-       vazio, nada era pedido, e as 26 caíam no legado — modelo antigo e sem mãos.
-       Recuperada de c8b75444f; o crachá agora depende só de `testMode`, porque a
-       constante AUTHORED_VM_ENABLED não existe mais. */
+    /* Esta troca saiu no merge com a main e as 26 armas caíram no legado, sem
+       mãos: causa, medida e régua em KNOWN-BUGS.md, BUG-156. */
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
@@ -3148,15 +3143,12 @@ export class Game {
     }
   }
   _fxSet(p) { this._fxTune = { light: 1, flash: 1, spark: 1, ...(this._fxTune || {}), ...(p || {}) }; }
-  /* QA de viewmodel: anda pelo WEAPON_IDS na mão. Sem isto é um reload por
-     arma, e o arsenal tem 26. Só existe com `?debug=1` (`VM_QA_CICLO`). */
+  /* QA de viewmodel: anda pelo WEAPON_IDS. Só com `?debug=1` (`VM_QA_CICLO`). */
   _qaCicloArma(passo) {
     const atual = WEAPON_IDS.indexOf(this.player.weapon);
     const alvo = WEAPON_IDS[(atual + passo + WEAPON_IDS.length) % WEAPON_IDS.length];
     this._switchWeapon(alvo);
-    // `_switchWeapon` já escreve o nome no HUD (`weapon-name`); o log é para a
-    // régua headless, que lê o console e não o pixel.
-    console.log(`[vmqa] arma: ${alvo}`);
+    console.log(`[vmqa] arma: ${alvo}`);   // o HUD já mostra o nome; o log é da régua
   }
 
   _switchWeapon(w, { pickup = false } = {}) {
