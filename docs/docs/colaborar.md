@@ -246,8 +246,6 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 {/* BEGIN:GERADO:mapas — não edite à mão, rode `npm run docs` */}
 
-linha intrusa que o gerador não escreveu
-
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.394 |
