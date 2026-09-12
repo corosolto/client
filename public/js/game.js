@@ -300,6 +300,12 @@ const GUNFEEL = new URLSearchParams(location.search).get('gunfeel') !== '0';
 
 /* CONE DO DISPARO — a MESMA conta no cliente (que desenha) e no servidor (que decide o dano).
    Duas implementações separadas foi o que deixou a arma laser no multiplayer: docs/MULTIPLAYER.md. */
+// Código de 1 letra do material no impacto, para o evento `tiro` do servidor. Tabela ÚNICA:
+// duas (uma no nó, outra aqui) envelheceriam separadas — foi esse o defeito desta rodada.
+export const SUP_COD = Object.freeze({ concreto: 'c', madeira: 'w', metal: 'm', vidro: 'v', areia: 's', agua: 'g' });
+const SUP_REV = Object.freeze(Object.fromEntries(Object.entries(SUP_COD).map(([k, v]) => [v, k])));
+export const supDeCod = (c) => SUP_REV[c] || null;
+
 export const ADS_RAMPA_S = 0.11;   // contrato do ADS: entrar e sair custam 110 ms (ver _updatePlayer)
 export function coneDoDisparo(estado, W, rnd) {
   const crouchMul = 1 - 0.5 * (estado.crouchF || 0);
@@ -3104,11 +3110,8 @@ export class Game {
     // tracer só em PARTE dos tiros (CS): 1 em 3 na rajada; sniper/shotgun sempre (o tiro é o
     // evento). Antes TODO tiro deixava rastro — vira "chuva de laser" em full-auto.
     const wantTracer = !GUNFEEL || pellets > 1 || (REC_DEG[p.weapon] ?? 1) > 2.4 || ((p.sprayI || 0) % 3) === 0;
-    /* ONLINE o cone é do SERVIDOR (ele sorteia com semente que não sai do nó, para o cliente não
-       poder prever — prever é conhecer, e conhecer o cone é o cheat de "sem dispersão"). Então o
-       cliente para de desenhar traçante e furo a partir de um palpite: quem desenha é o evento
-       `tiro`, que chega com os pontos de impacto verdadeiros. Fogacho, som, coice e pente
-       continuam instantâneos aqui. Servidor velho (sem `ev`) mantém o caminho antigo. */
+    // ONLINE quem sorteia o cone é o nó, e é do evento `tiro` que saem traçante e furo — o
+    // palpite local seria outro cone (KNOWN-BUGS BUG-159). Servidor sem `ev`: caminho antigo.
     const servidorDesenha = this.online && !!this._mp?._evOn;
     const cone = servidorDesenha ? [] : coneDoDisparo(
       { crouchF: p.crouchF, sp: sp0, grounded: p.grounded, adsF, bloom: this.bloom, scoped: p.scoped },

@@ -2,7 +2,7 @@
    arquivo; quem injeta é o main.js. Desenho e decisões: docs/MULTIPLAYER.md. */
 import * as THREE from 'three';
 import { poseCharacter } from './characters.js';
-import { WEAPONS } from './game.js';
+import { WEAPONS, supDeCod } from './game.js';
 import { frase } from './i18n.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
@@ -624,10 +624,8 @@ class Netcode {
 
   // Tiro posicional de um remoto: som atenuado por distância, com pan pelo lado da câmera, e
   // clarão no cano. Sem isto o mundo do multiplayer é um tiroteio MUDO.
-  /* TIRO com os pontos de impacto que o servidor calculou. Substitui o palpite: no online o
-     cone é sorteado no nó, então traçante e furo desenhados pelo cliente estariam errados.
-     O orçamento de FX é o mesmo dos bots (game.js): perto sai tudo, longe e em qualidade baixa
-     sai menos — o que não muda é o DANO, que já aconteceu no servidor. */
+  // Traçante, poeira e furo nos pontos que o NÓ calculou (BUG-159/BUG-161). O orçamento de
+  // FX é o dos bots: perto sai tudo, longe sai menos — o dano já aconteceu no servidor.
   tiroDeRede(ent, e) {
     const game = this.game, p = game.player;
     if (!ent || !Array.isArray(e.p) || !e.p.length) return;
@@ -635,10 +633,20 @@ class Netcode {
     const dist = p && p.pos ? Math.hypot(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) : 0;
     const cheio = ent === p || (dist < 45 && game.settings.quality !== 'low');
     const tetos = cheio ? 4 : 1;   // shotgun não vira 9 traçantes na tela de ninguém
+    const sup = typeof e.s === 'string' ? e.s : '';
     for (let i = 0; i < Math.min(tetos, e.p.length); i++) {
       const a = e.p[i];
       const alvo = new THREE.Vector3(+a[0] || 0, +a[1] || 0, +a[2] || 0);
       try { game._tracer(olho.clone().lerp(alvo, 0.06), alvo); } catch { /* sem fx */ }
+      /* POEIRA E SOM no ponto verdadeiro. Saíam do `_fireHitscan`, que o online não chama
+         mais — sem isto o tiro na parede virou mudo e limpo (o furo sumiu da tela). */
+      const surf = supDeCod(sup[i]);
+      if (sup[i] && sup[i] !== '-') {
+        const nv = Array.isArray(e.n) && Array.isArray(e.n[i]) ? e.n[i] : null;
+        const n = nv ? new THREE.Vector3(+nv[0] || 0, +nv[1] || 0, +nv[2] || 0) : olho.clone().sub(alvo).normalize();
+        try { game._puff(alvo, n, surf); } catch { /* sem fx */ }
+        if (ent === p && i === 0) { try { game._impactSfx(surf, alvo, olho.distanceTo(alvo)); } catch { /* ctx mudo */ } }
+      }
     }
     const primeiro = e.p[0];
     if (primeiro) {

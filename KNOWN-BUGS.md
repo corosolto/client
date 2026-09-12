@@ -109,6 +109,45 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-161 · o tiro que erra terminava 60 m adiante, atravessando a parede · CORRIGIDO 12/09
+
+**Sintoma.** Achado OLHANDO a figura do navegador, com o BUG-159 já consertado e verde. Agora
+que é o servidor quem manda os pontos de impacto, é deles que saem traçante, poeira e furo — e
+para o pellet que **não acerta ninguém** (que é a esmagadora maioria dos tiros) o ponto era
+`origem + direção × 60 m`, ignorando a parede. O traçante do jogador saía pelo outro lado do
+mapa e a poeira nascia dentro da geometria.
+
+**Causa.** `_scanHit` já calculava a parede (`wall`/`wallDist`, para decidir se o corpo estava
+atrás dela) e devolvia **só** o combatente acertado — `null` quando não havia nenhum. Quem
+chamava não tinha como saber onde a bala parava, então chutava 60 m. O dado estava a uma linha
+de distância de quem precisava dele.
+
+**Conserto.** `_scanHit` devolve também o impacto de parede (`{ ent: null, dist, sup, n }`), e o
+evento `tiro` leva por pellet o **material** (uma letra, tabela `SUP_COD` exportada de
+`game.js` e usada pelos dois lados) e a **normal** da face. Com isso o cliente voltou a ter
+poeira com cor de material, faísca em metal e furo deitado na parede — que ele tinha antes e
+perdeu quando parou de fazer o próprio hitscan no online.
+
+**Régua** `game/dispersao-check.mjs` D7/D7b: varre 24 direções do spawn, mede em quantas existe
+parede a menos de 55 m e cobra que **nenhuma** delas tenha impacto além dela, mais o material
+chegando junto. Mutante `parede-longe` reprova. No navegador, `tools/eval/tiro-mp-browser.mjs`
+TB8/TB9 cobram que a poeira e a normal cheguem à tela.
+
+### BUG-160 · o painel de rede do jogo mente quando o FPS está baixo · ABERTO
+
+**Sintoma.** Medido em navegador com renderizador de software (2 FPS): o overlay `NET` mostrava
+`snap 274 Hz /30` e `band 191.9 KB/s`. Com GPU de verdade, o mesmo nó, a mesma sala e o mesmo
+protocolo mostram `snap 30 Hz /30` e `20,8 KB/s` — o número real.
+
+**Causa provável.** A taxa é acumulada por mensagem e dividida pela janela de RENDER: a 2 FPS o
+cliente drena meio segundo de mensagens num quadro só e a divisão infla. O instrumento passa a
+acusar tempestade de rede exatamente quando o problema é de GPU — que é o cenário em que
+alguém vai olhar para ele.
+
+**Por que fica aberto.** É defeito de instrumento, não de jogo, e a rodada tem prioridade
+declarada. A correção é medir a janela em tempo de relógio, não em quadros. Mesma família do
+BUG-55: instrumento que mede uma coisa e responde outra.
+
 ### BUG-159 · no multiplayer a arma era laser e a shotgun cobrava 1 dos 9 pellets · CORRIGIDO 12/09
 
 **Sintoma.** O que o jogador vê não era o que causava dano. O cliente desenhava dispersão
