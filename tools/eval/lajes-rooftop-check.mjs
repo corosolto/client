@@ -13,18 +13,20 @@
 */
 import { bootGame, initTextures } from './harness.mjs';
 
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0 });
+// V4: 4 plataformas, uma antena/varal por plataforma e duas caixas por plataforma.
+// Mutação na cena, antes da mesma medição, não remoção da lista de resultados.
+if (process.argv.includes('--mutante=placas-vazias')) {
+  const targets=[];
+  game.world.root.traverse(obj=>{if(obj.userData?.rooftopDetail && obj.position.x<0 && obj.position.z>0)targets.push(obj);});
+  if(!targets.length)throw Error('MUTANTE NÃO APLICOU: quadrante vazio');
+  for(const obj of targets)obj.removeFromParent();
+}
 const detalhes = [];
 game.world.root.updateMatrixWorld(true);
-game.world.root.traverse((obj) => {
-  if (!obj.userData?.rooftopDetail) return;
-  detalhes.push({ kind: obj.userData.rooftopDetail, x: obj.position.x, z: obj.position.z });
-});
-if (process.argv.includes('--mutante=placas-vazias'))
-  for (let i = detalhes.length - 1; i >= 0; i--) if (detalhes[i].x < 0 && detalhes[i].z > 0) detalhes.splice(i, 1);
-
+game.world.root.traverse(obj=>{if(obj.userData?.rooftopDetail)detalhes.push({kind:obj.userData.rooftopDetail,x:obj.position.x,z:obj.position.z});});
 const quad = ({ x, z }) => `${x < 0 ? 'W' : 'E'}${z < 0 ? 'N' : 'S'}`;
-const exigido = { tank: 8, antenna: 5, clothesline: 4 };
+const exigido = { tank: 8, antenna: 4, clothesline: 4 };
 const falhas = [];
 for (const [kind, minimo] of Object.entries(exigido)) {
   const itens = detalhes.filter((d) => d.kind === kind);

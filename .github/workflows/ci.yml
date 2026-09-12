@@ -31,10 +31,13 @@ jobs:
         run: npm run eval:release
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
-      - name: Telemetria wired, idempotente, atômica e monitorada
-        run: npm run eval:telemetry
-      - name: Proveniência de erros externos
-        run: npm run eval:error-origin
+      # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
+      # corosolto/backend (api/reguas/); aqui fica o portão de que a migração não regride
+      # e o pedaço da proveniência que continua no cliente (hook de console.error).
+      - name: Rotas de banco fora do cliente (18 migradas, 307 em dia)
+        run: npm run eval:apis
+      - name: Proveniência de erros — lado do cliente (hook de console)
+        run: npm run eval:error-console
       - name: UUID compatível com navegadores antigos
         run: npm run eval:uuid
       - name: Acúmulo de armas no chão tem teto
@@ -43,6 +46,21 @@ jobs:
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
       - name: Todo mapa devolve o que o game.js consome
         run: npm run eval:mapcontrato
+      - name: Amazônia acessível e bots entre palafitas
+        run: npm run eval:amazonia
+      - name: Escadão — circulação, estrutura e casa
+        run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
+      - name: Escadão — compatibilidade com pacote de áudio publicado
+        run: node tools/eval/escadao-audio-pack-check.mjs
+      - name: Lajes — geometria, ambiência, integração e preview
+        run: node tools/eval/runner.mjs eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:lajes-raycast eval:mappreview
+      - name: Sertão (tema, rotas, criação e integração)
+        run: |
+          npm run eval:sertao
+          npm run eval:velhooeste
+          npm run eval:sertao-livestock
+          npm run eval:sertao-integration
+          npm run eval:sertao-sky-lifecycle
       - name: Veículos do estacionamento em escala de fábrica
         run: npm run eval:escala
       - name: Orçamento de shader WebGL1

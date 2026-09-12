@@ -6,12 +6,14 @@ import { VERSION } from './version.js';
 const loader = new GLTFLoader();
 const templates = new Map();
 const ASSETS = Object.freeze({
+  pipa: 'models/ambient/pipa.glb',
   rat: 'models/ambient/rat_animated.glb',
   pigeonGround: 'models/ambient/pigeon_ground.glb',
   dog: 'models/ambient/dog_caramelo.glb',
   jacare: 'models/ambient/jacare_corrego.glb',
   capivara: 'models/ambient/capivara_corrego.glb',
   cat: 'models/ambient/cat_telhado.glb',
+  escadaoCat: 'models/props/escadao_cat_r4.glb',
   chicken: 'models/ambient/galinha_campo.glb',
   cow: 'models/ambient/vaca_campo.glb',
   /* vida 1 (plans/22): Mint estático + locomoção procedural — Quaternius não tem
@@ -19,18 +21,54 @@ const ASSETS = Object.freeze({
   armadillo: 'models/ambient/tatu_campo.glb',
   cockroach: 'models/ambient/barata_urbana.glb',
   parrot: 'models/ambient/papagaio_poleiro.glb',
+  /* map2/amazonia (PR #439, geração Mint 25/08 "CS BRASIL - Time Mítico"):
+     9 espécies estáticas — a vida é procedural aqui embaixo. Só entram no
+     preload de quem as usa (AMAZONIA_FAUNA_ASSETS), não no default. */
+  boto: 'models/ambient/boto_amazonia.glb',
+  onca: 'models/ambient/onca_pintada.glb',
+  tucano: 'models/ambient/tucano.glb',
+  preguica: 'models/ambient/preguica.glb',
+  macaco: 'models/ambient/macaco_prego.glb',
+  anta: 'models/ambient/anta.glb',
+  arara: 'models/ambient/arara_vermelha.glb',
+  piranha: 'models/ambient/piranha.glb',
+  carcara: 'models/ambient/carcara.glb',
+  /* map2/velho-oeste: fauna do Sertão só é carregada pelo mapa que a usa. */
+  lagarto: 'models/ambient/lagarto_sertao.glb',
+  calango: 'models/ambient/calango_quadrupede.glb',
+  sertaoGoat: 'models/ambient/sertao_cabra.glb',
+  sertaoHen: 'models/ambient/sertao_galinha.glb',
+  sertaoChick: 'models/ambient/sertao_pintinho.glb',
 });
-export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
-const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
-const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio' });
+/* FAVELA_AMBIENCE_ASSETS era `Object.keys(ASSETS)`; virou lista explícita quando
+   ASSETS passou a abrigar também a fauna da amazonia: mapa sem bicho não baixa
+   bicho (BUG-57) — keys(ASSETS) poria 3 MiB extras no preload de todo mapa. */
+export const FAVELA_AMBIENCE_ASSETS = Object.freeze(['rat', 'pigeonGround', 'dog', 'jacare', 'capivara', 'cat', 'chicken', 'cow', 'armadillo', 'cockroach', 'parrot']);
+export const AMAZONIA_FAUNA_ASSETS = Object.freeze(['boto', 'onca', 'tucano', 'preguica', 'macaco', 'anta', 'arara', 'piranha', 'carcara']);
+const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot', calango: 'calango', boto: 'boto', onca: 'onca', tucano: 'tucano', preguica: 'preguica', macaco: 'macaco', anta: 'anta', arara: 'arara', piranha: 'piranha', carcara: 'carcara' });
+const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', calango: 'calango', boto: 'boto', onca: 'onça-pintada', tucano: 'tucano', preguica: 'preguiça', macaco: 'macaco-prego', anta: 'anta', arara: 'arara-vermelha', piranha: 'piranha', carcara: 'carcará' });
 const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
 const SHOT_REACTION_RADIUS = 13;
 const DOG_IDLE_TIME = 3;
 /* por tipo: duração do susto e velocidade de fuga/caminhada (vaca larga, gato rápido) */
-const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3 });
+const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3, calango: 1.1, boto: 1.5, onca: 2.6, tucano: 1.3, preguica: 4, macaco: 1.6, anta: 2.8, arara: 1.4, piranha: 1.2, carcara: 1.5 });
 const QUAD_SPEED = Object.freeze({
   dog: { walk: 1, flee: 3.2 }, cat: { walk: 1.1, flee: 3.6 }, chicken: { walk: .55, flee: 2.6 }, cow: { walk: .75, flee: 2.4 },
   armadillo: { walk: .4, flee: 1.5 },   // tatu é bicho de passo curto; fuga é um trote rápido
+  anta: { walk: .55, flee: 3 }, carcara: { walk: .35, flee: 2.2 },
+});
+/* map2/amazonia: len/yawFix das 9 espécies Mint (cabeça→−Z), derivados geometricamente
+   e calibrados contra jacare=π/2/capivara=0 — verificação visual 3:2 pendente (PR #439). */
+const AMAZONIA_FAUNA_META = Object.freeze({
+  boto: { len: 2.0, yawFix: Math.PI / 2 },
+  onca: { len: 1.5, yawFix: Math.PI / 2 },
+  tucano: { len: .42, yawFix: Math.PI / 2 },
+  preguica: { len: .65, yawFix: Math.PI / 2 },
+  macaco: { len: .42, yawFix: Math.PI },
+  anta: { len: 1.8, yawFix: Math.PI / 2 },
+  arara: { len: .8, yawFix: Math.PI },
+  piranha: { len: .32, yawFix: Math.PI / 2 },
+  carcara: { len: .5, yawFix: Math.PI / 2 },
 });
 
 const loadGLB = (url) => new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
@@ -41,7 +79,8 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
   if (!ids || !ids.length) ids = FAVELA_AMBIENCE_ASSETS;
   await Promise.all([...new Set(ids)].filter((id) => ASSETS[id] && !templates.has(id)).map(async (id) => {
     try {
-      const gltf = await loadGLB(`${ASSETS[id]}?v=${VERSION}`);
+      const revision = ({ calango: '78cc644d948d', sertaoGoat: 'a89410b7f899', sertaoHen: 'd07aa63bea9d', sertaoChick: 'a2f144c8b9de' })[id] || VERSION;
+      const gltf = await loadGLB(`${ASSETS[id]}?v=${revision}`);
       let skinned = false;
       gltf.scene.traverse((object) => {
         if (!object.isMesh) return;
@@ -162,6 +201,39 @@ function fallbackParrot() {
   return group;
 }
 
+const CALANGO_SKIN = [new THREE.MeshStandardMaterial({ color: 0x8a7c5e, roughness: .9 }),
+  new THREE.MeshStandardMaterial({ color: 0x77705a, roughness: .9 })];
+const CALANGO_STRIPE = new THREE.MeshStandardMaterial({ color: 0x4f4636, roughness: .9 });
+function fallbackCalango(index) {
+  const group = new THREE.Group(), skin = CALANGO_SKIN[index % 2];
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), skin);
+  body.scale.set(.034, .023, .073); body.position.set(0, .036, .018); group.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), skin);
+  head.scale.set(.026, .022, .036); head.position.set(0, .051, .101); group.add(head);
+  for (let leg = 0; leg < 4; leg++) {
+    const side = leg % 2 ? -1 : 1, front = leg < 2, limb = new THREE.Group();
+    limb.userData.calangoLeg = leg;
+    const points = [new THREE.Vector3(side * .025, .038, front ? .061 : -.031),
+      new THREE.Vector3(side * .051, .014, front ? .045 : -.052),
+      new THREE.Vector3(side * .066, .004, front ? .078 : -.027)];
+    for (let n = 0; n < 2; n++) {
+      const delta = points[n + 1].clone().sub(points[n]);
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(.0035, .0055, delta.length(), 6), skin);
+      mesh.position.copy(points[n]).add(points[n + 1]).multiplyScalar(.5);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize()); limb.add(mesh);
+    }
+    const foot = new THREE.Mesh(new THREE.SphereGeometry(1, 7, 5), skin);
+    foot.scale.set(.015, .003, .012); foot.position.copy(points[2]); limb.add(foot); group.add(limb);
+  }
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(.017, .2, 7), skin);
+  tail.rotation.x = -Math.PI / 2; tail.position.set(0, .02, -.135); tail.userData.calangoTail = true; group.add(tail);
+  for (const side of [-1, 1]) {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(.007, .003, .112), CALANGO_STRIPE);
+    stripe.position.set(side * .022, .051, .023); group.add(stripe);
+  }
+  return group;
+}
+
 function cloneAsset(id) {  const template = templates.get(id);
   if (!template) return null;
   return {
@@ -170,14 +242,18 @@ function cloneAsset(id) {  const template = templates.get(id);
   };
 }
 
+export function cloneAmbientLifeAsset(id) { return cloneAsset(id); }
+
 function normalizeModel(id, model) {
   model.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(model);
+  const box = new THREE.Box3().setFromObject(model, id === 'calango');
   const size = box.getSize(new THREE.Vector3());
   /* alvo em metros de mundo: altura para bichos que andam de lado pro jogador,
      comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5. */
-  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34 }[id] || .5;
-  const dimension = ['rat', 'armadillo', 'cockroach'].includes(id) ? Math.max(size.x, size.z) : size.y;
+  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, escadaoCat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34, calango: .38, ...Object.fromEntries(AMAZONIA_FAUNA_ASSETS.map((id) => [id, AMAZONIA_FAUNA_META[id].len])) }[id] || .5;
+  // amazonia: bicho deitado (boto/onça/anta/piranha/preguiça) normaliza por comprimento
+  const HORIZONTAIS = new Set(['rat', 'armadillo', 'cockroach', 'calango', 'boto', 'onca', 'anta', 'piranha', 'preguica']);
+  const dimension = HORIZONTAIS.has(id) ? Math.max(size.x, size.z) : size.y;
   const scale = target / Math.max(.001, dimension);
   // dog: altura 1 m => cernelha ~0,6 (ombro 1,83 de 3,09 de altura no GLB bruto)
   const center = box.getCenter(new THREE.Vector3());
@@ -197,7 +273,7 @@ function distanceToSegment(point, start, end) {
 }
 
 class FavelaAmbience {
-  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [] }) {
+  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [], calangos = [], botos = [], oncas = [], tucanos = [], preguicas = [], macacos = [], antas = [], araras = [], piranhas = [], carcaras = [] }) {
     this.map = map;
     this.low = low;
     this.time = 0;
@@ -216,6 +292,16 @@ class FavelaAmbience {
     const armadilloList = low ? armadillos.slice(0, 1) : armadillos;
     const cockroachList = low ? cockroaches.slice(0, 1) : cockroaches;
     const parrotList = low ? parrots.slice(0, 1) : parrots;
+    const calangoList = low ? calangos.slice(0, 1) : calangos;
+    const botoList = low ? botos.slice(0, 1) : botos;
+    const oncaList = low ? oncas.slice(0, 1) : oncas;
+    const tucanoList = low ? tucanos.slice(0, 1) : tucanos;
+    const preguicaList = low ? preguicas.slice(0, 1) : preguicas;
+    const macacoList = low ? macacos.slice(0, 1) : macacos;
+    const antaList = low ? antas.slice(0, 1) : antas;
+    const araraList = low ? araras.slice(0, 1) : araras;
+    const piranhaList = low ? piranhas.slice(0, 1) : piranhas;
+    const carcaraList = low ? carcaras.slice(0, 1) : carcaras;
     this.animals = [];
     ratList.forEach((config, index) => this._add('rat', config, index));
     pigeonList.forEach((config, index) => this._add('pigeon', config, index));
@@ -226,6 +312,16 @@ class FavelaAmbience {
     armadilloList.forEach((config, index) => this._add('armadillo', config, index));
     cockroachList.forEach((config, index) => this._add('cockroach', config, index));
     parrotList.forEach((config, index) => this._add('parrot', config, index));
+    calangoList.forEach((config, index) => this._add('calango', config, index));
+    botoList.forEach((config, index) => this._add('boto', config, index));
+    oncaList.forEach((config, index) => this._add('onca', config, index));
+    tucanoList.forEach((config, index) => this._add('tucano', config, index));
+    preguicaList.forEach((config, index) => this._add('preguica', config, index));
+    macacoList.forEach((config, index) => this._add('macaco', config, index));
+    antaList.forEach((config, index) => this._add('anta', config, index));
+    araraList.forEach((config, index) => this._add('arara', config, index));
+    piranhaList.forEach((config, index) => this._add('piranha', config, index));
+    carcaraList.forEach((config, index) => this._add('carcara', config, index));
     this.reset();
   }
 
@@ -237,11 +333,12 @@ class FavelaAmbience {
       if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug'))
         console.warn('[ambientlife] mode "flight" depreciado na v2.1 — pombo anda; migre o config para ground (BUG-57)');
     }
-    const assetId = TYPE_ASSET[type] || 'pigeonGround';
+    const assetId = config.assetId || TYPE_ASSET[type] || 'pigeonGround';
     const loaded = cloneAsset(assetId);
     const animalRoot = new THREE.Group();
     animalRoot.name = `${type}:${this.map}:${index}`;
     animalRoot.userData.fauna = FAUNA_NAME[type] || 'pomba';
+    animalRoot.userData.assetId = assetId;
     animalRoot.userData.nonCollider = true;
     animalRoot.userData.motion = 'deterministic-run-idle';
     animalRoot.userData.bodyLength = type === 'rat' ? .142 : undefined;
@@ -257,7 +354,7 @@ class FavelaAmbience {
     } else {
       model = type === 'rat' ? fallbackRat(index) : type === 'dog' ? fallbackDog()
         : type === 'armadillo' ? fallbackArmadillo() : type === 'cockroach' ? fallbackCockroach()
-        : type === 'parrot' ? fallbackParrot() : fallbackPigeon();
+        : type === 'parrot' ? fallbackParrot() : type === 'calango' ? fallbackCalango(index) : fallbackPigeon();
       while (model.children.length) animalRoot.add(model.children[0]);
       model = animalRoot;
     }
@@ -275,9 +372,9 @@ class FavelaAmbience {
       // clipes Quaternius vêm como 'AnimalArmature|Idle'; casa por sufixo, cai no primeiro
       mixer = new THREE.AnimationMixer(model);
       actions = {};
-      for (const [key, pattern] of [['idle', /(^|\|)Idle$/], ['walk', /(^|\|)Walk$/], ['run', /(^|\|)(Run|Gallop)$/]]) {
+      for (const [key, pattern] of [['idle', /(^|\|)Idle$/i], ['walk', /(^|\|)Walk$/i], ['run', /(^|\|)(Run|Gallop)$/i]]) {
         const clip = clips.find((item) => pattern.test(item.name))
-          || (key === 'run' ? clips.find((item) => /(^|\|)Walk$/.test(item.name)) : clips[0]);
+          || (key === 'run' ? clips.find((item) => /(^|\|)Walk$/i.test(item.name)) : clips[0]);
         actions[key] = mixer.clipAction(clip);
       }
       actions.idle.play();
@@ -285,17 +382,20 @@ class FavelaAmbience {
       const clip = clips.find((item) => item.name === (type === 'rat' ? 'Run' : 'Animation')) || clips[0];
       if (clip) {
         mixer = new THREE.AnimationMixer(model);
-        mixer.clipAction(clip).play();
+        const action = mixer.clipAction(clip);
+        if (type === 'calango') actions = { run: action };
+        else action.play();
       }
     }
     const origin = new THREE.Vector3(...config.pos);
     const to = new THREE.Vector3(...(config.to || config.pos));
     this.animals.push({
       id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
-      origin, to, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
+      origin, to, speed: config.speed, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
       source: loaded ? 'gltf' : 'fallback', mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
       alertAt: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
+      calangoGait: 0,
     });
   }
 
@@ -312,11 +412,12 @@ class FavelaAmbience {
       animal.state = 'idle';
       animal.root.position.copy(animal.origin);
       animal.root.rotation.set(0, animal.phase, 0);
-      if (animal.actions) {
+      if (animal.actions?.idle) {
         animal.mixer.stopAllAction();
         animal.actions.idle.reset().play();
         animal.action = 'idle';
       }
+      animal.calangoGait = 0;
       animal.mixer?.setTime(0);
     }
   }
@@ -350,7 +451,13 @@ class FavelaAmbience {
       }
       if (animal.type === 'rat' || animal.type === 'cockroach') this._updateRat(animal, dt);
       else if (animal.type === 'pigeon') this._updatePigeon(animal, dt);
-      else if (animal.type === 'parrot') this._updateParrot(animal, dt);
+      else if (animal.type === 'parrot' || animal.type === 'arara' || animal.type === 'tucano') this._updateParrot(animal, dt);
+      else if (animal.type === 'calango') this._updateCalango(animal, dt);
+      else if (animal.type === 'boto') this._updateBoto(animal);
+      else if (animal.type === 'piranha') this._updatePiranha(animal, dt);
+      else if (animal.type === 'preguica') this._updatePreguica(animal);
+      else if (animal.type === 'macaco') this._updateMacaco(animal);
+      else if (animal.type === 'onca') this._updateOnca(animal);
       else this._updateQuad(animal, dt);
       animal.mixer?.update(dt);
     }
@@ -382,7 +489,7 @@ class FavelaAmbience {
   }
 
   _updateQuad(animal) {
-    const speed = QUAD_SPEED[animal.type] || QUAD_SPEED.dog;
+    const speed = animal.speed || QUAD_SPEED[animal.type] || QUAD_SPEED.dog;
     if (this.time < animal.alertUntil) {
       const elapsed = this.time - animal.alertAt;
       animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(speed.flee * 1.4, elapsed * speed.flee));
@@ -471,6 +578,134 @@ class FavelaAmbience {
     return false;
   }
 
+  /* ── VIDA PROCEDURAL DA AMAZONIA (PR #439): Mint entrega estático, o
+     comportamento mora aqui. Yaw de locomoção = atan2(dir) + yawFix + π
+     (yawFix aponta a cabeça pra −Z, o atan2 trabalha com +Z de frente). ── */
+
+  _updateCalango(animal, dt = .016) {
+    const previous = animal.root.position.clone(), speed = .8;
+    animal.root.rotation.x = 0; animal.root.rotation.z = 0;
+    if (this.time < animal.alertUntil) {
+      const elapsed = Math.max(0, this.time - animal.alertAt);
+      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(3.2, elapsed * 1.2));
+      animal.state = 'flee';
+    } else {
+      const span = animal.origin.distanceTo(animal.to), leg = Math.max(.05, span / speed), cycle = leg + 2.6;
+      const clock = Math.max(0, this.time + animal.phase), phase = clock % cycle;
+      const forward = Math.floor(clock / cycle) % 2 === 0;
+      const from = forward ? animal.origin : animal.to, to = forward ? animal.to : animal.origin;
+      animal.routine.lerpVectors(from, to, Math.min(1, phase / leg));
+      let recovering = animal.recoverUntil > 0 || animal.alertUntil > 0;
+      if (recovering) {
+        const delta = animal.routine.clone().sub(animal.root.position), distance = delta.length(), step = speed * Math.max(0, Math.min(.05, dt));
+        animal.root.position.addScaledVector(delta, Math.min(1, step / Math.max(distance, .000001)));
+        if (distance <= step + .000001) { animal.alertUntil = 0; animal.recoverUntil = 0; recovering = false; }
+      } else animal.root.position.copy(animal.routine);
+      animal.state = recovering ? 'recover' : phase < leg && span > .01 ? 'run' : 'idle';
+    }
+    const displacement = animal.root.position.clone().sub(previous), distance = displacement.length();
+    const moving = distance > .000001, animating = moving && animal.state !== 'idle';
+    if (moving) animal.root.rotation.y = Math.atan2(displacement.x, displacement.z);
+    if (animal.actions?.run) {
+      if (animating) { animal.actions.run.setEffectiveTimeScale(3.2).play(); }
+      else animal.actions.run.stop();
+    }
+    animal.calangoGait = (animal.calangoGait || 0) + distance / .12 * Math.PI * 2;
+    if (animal.source === 'fallback') animal.root.traverse(part => {
+      const leg = part.userData.calangoLeg;
+      if (leg !== undefined) {
+        const angle = animal.calangoGait + (leg === 0 || leg === 3 ? 0 : Math.PI);
+        part.position.set(0, animating ? Math.max(0, Math.sin(angle)) * .008 : 0, animating ? -Math.cos(angle) * .011 : 0);
+      }
+      if (part.userData.calangoTail) part.rotation.z = animating ? Math.sin(animal.calangoGait - .6) * .055 : 0;
+    });
+  }
+
+  _noseYaw(animal, dirX, dirZ) {
+    return Math.atan2(dirX, dirZ) + (AMAZONIA_FAUNA_META[animal.type]?.yawFix || 0) + Math.PI;
+  }
+
+  _updateBoto(animal) {
+    /* boto NADA no igarapé: vai-e-vem lento no canal serpenteando em x; o
+       dorso fura a lâmina no topo da oscilação e afunda de novo. */
+    const t = this.time + animal.phase * 7;
+    const tri = Math.abs(((t / 46) % 2) - 1);            // 0→1→0 em 92 s
+    const zz = THREE.MathUtils.lerp(animal.origin.z, animal.to.z, tri);
+    const dirZ = animal.to.z > animal.origin.z ? 1 : -1;
+    const serp = Math.sin(t * .32 + animal.phase * 2);
+    const xx = animal.origin.x + serp * 2.2;
+    const yy = animal.origin.y + Math.sin(t * .11 + animal.phase) * .2;
+    animal.root.position.set(xx, yy, zz);
+    const dx = Math.cos(t * .32 + animal.phase * 2) * 2.2 * .32;
+    const dz = (this.time < animal.alertUntil ? 1.6 : 1) * (tri < .5 ? dirZ : -dirZ);
+    animal.root.rotation.y = this._noseYaw(animal, dx, dz * .4);
+    animal.root.rotation.x = -Math.cos(t * .11 + animal.phase) * .12;
+    animal.state = this.time < animal.alertUntil ? 'flee' : 'swim';
+  }
+
+  _updatePiranha(animal, dt) {
+    /* CARDUME: cada piranha é um animal do mesmo cardume — centro comum
+       (origin), círculo com raio/fase próprios e mesma rotação; tiro perto
+       aperta o raio (meio metro) e solta devagar. */
+    const t = this.time + animal.phase * 3;
+    const alerta = this.time < animal.alertUntil;
+    const raioAlvo = alerta ? animal.radius[0] * .35 : animal.radius[0];
+    animal.rCur = animal.rCur === undefined ? animal.radius[0] : animal.rCur + (raioAlvo - animal.rCur) * Math.min(1, dt * 1.5);
+    const ang = t * (alerta ? 1.5 : .5);
+    const xx = animal.origin.x + Math.cos(ang) * animal.rCur;
+    const zz = animal.origin.z + Math.sin(ang) * animal.rCur;
+    animal.root.position.set(xx, animal.origin.y + Math.sin(t * 2.3 + animal.phase) * .04, zz);
+    animal.root.rotation.y = this._noseYaw(animal, -Math.sin(ang), Math.cos(ang));
+    animal.state = alerta ? 'flee' : 'school';
+  }
+
+  _updatePreguica(animal) {
+    /* pendurada no beiral: flip de Z (modelo Mint vem em pé), pêndulo
+       lentíssimo — preguiça não foge de tiro, é a piada do bicho. */
+    const t = this.time + animal.phase * 11;
+    animal.root.rotation.z = Math.PI + Math.sin(t * .25) * .04;
+    animal.root.rotation.x = Math.sin(t * .11 + 1) * .02;
+    animal.root.rotation.y = animal.phase + (AMAZONIA_FAUNA_META.preguica.yawFix || 0) + Math.PI + Math.sin(t * .05) * .2;
+    animal.state = 'idle';
+  }
+
+  _updateMacaco(animal) {
+    /* macaco-prego PULA entre dois pontos (config pos/to): idle olhando o
+       alvo, salto parabólico; tiro perto antecipa o salto. */
+    const t = this.time;
+    const mid = animal.origin.clone().add(animal.to).multiplyScalar(.5);
+    if (animal.jumpAt === undefined) {
+      const querSaltar = (t + animal.phase * 5) % 3.5 < .08 && t > (animal.idleUntil || 0);
+      if (this.time < animal.alertUntil || querSaltar) {
+        animal.jumpAt = t;
+        animal.jumpFrom = animal.root.position.clone();
+        animal.jumpTo = (animal.hop ? animal.origin : animal.to).clone();
+      } else {
+        const alvo = (animal.hop ? animal.origin : animal.to).clone().sub(mid).setY(0);
+        animal.root.rotation.y += (this._noseYaw(animal, alvo.x, alvo.z) - animal.root.rotation.y) * .08;
+        animal.state = 'idle';
+      }
+    }
+    if (animal.jumpAt !== undefined) {
+      const u = Math.min(1, (t - animal.jumpAt) / .55);
+      animal.root.position.lerpVectors(animal.jumpFrom, animal.jumpTo, u);
+      animal.root.position.y += Math.sin(u * Math.PI) * 1.35;
+      const dir = animal.jumpTo.clone().sub(animal.jumpFrom);
+      animal.root.rotation.y = this._noseYaw(animal, dir.x, dir.z);
+      animal.state = 'jump';
+      if (u >= 1) { animal.hop = !animal.hop; animal.jumpAt = undefined; animal.idleUntil = t + 2.6; }
+    }
+  }
+
+  _updateOnca(animal) {
+    /* onça DEITADA no tronco: não anda — só respira (escala sutil no root,
+       a base fica no lugar porque o pivô está nos pés). */
+    const breathe = 1 + Math.sin(this.time * 1.9 + animal.phase) * .012;
+    animal.root.scale.setScalar(breathe);
+    animal.root.rotation.y = animal.phase + (AMAZONIA_FAUNA_META.onca.yawFix || 0) + Math.PI;
+    animal.state = 'idle';
+  }
+
   snapshot() {
     return this.animals.map((animal) => ({
       id: animal.id, type: animal.type, state: animal.state,
@@ -496,9 +731,13 @@ class FavelaAmbience {
     const armadillo = this.animals.filter((animal) => animal.type === 'armadillo').length;
     const cockroach = this.animals.filter((animal) => animal.type === 'cockroach').length;
     const parrot = this.animals.filter((animal) => animal.type === 'parrot').length;
+    const calango = this.animals.filter((animal) => animal.type === 'calango').length;
+    const porTipo = {};
+    for (const animal of this.animals) porTipo[animal.type] = (porTipo[animal.type] || 0) + 1;
+    const amazonia = Object.fromEntries(AMAZONIA_FAUNA_ASSETS.map((id) => [id, porTipo[id] || 0]));
     return {
       map: this.map, low: this.low, gltf: this.animals.length > 0 && this.animals.every((animal) => animal.source === 'gltf'),
-      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, total: rat + pigeon + dog + cat + chicken + cow + armadillo + cockroach + parrot }, meshes, triangles: Math.round(triangles),
+      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, calango, total: this.animals.length, ...amazonia }, meshes, triangles: Math.round(triangles),
     };
   }
 
@@ -558,4 +797,155 @@ export function placeFauna(id, { x = 0, y = 0, z = 0, ry = 0, targetLen, submerg
     object.receiveShadow = true;
   });
   return root;
+}
+
+/* PIPA NO CÉU — região append-only. Voo procedural: a linha tem comprimento fixo, o abanar
+   é soma de dois períodos que não fecham e a rabiola é rastro. docs/maps/LAJES-PIPA.md */
+
+/* Só o lajes baixa: pipa em mapa fechado (UPA, Loja H) seria pipa dentro do prédio. */
+export const PIPA_ASSETS = Object.freeze(['pipa']);
+/* envergadura da vela em metros; nós do rastro; quadros entre um nó e o seguinte */
+const PIPA_ENVERGADURA = 1.35, PIPA_RABIOLA_NOS = 14, PIPA_RABIOLA_ATRASO = 3;
+const PIPA_HIST = PIPA_RABIOLA_NOS * PIPA_RABIOLA_ATRASO + 2;
+
+function pipaFallback() {
+  /* Sem GLB (harness node, sem rede) a pipa vira losango e o voo é o mesmo:
+     fallback mudo devolveria céu vazio sem ninguém perceber. */
+  const grupo = new THREE.Group();
+  const vela = new THREE.Mesh(new THREE.PlaneGeometry(PIPA_ENVERGADURA * .82, PIPA_ENVERGADURA),
+    new THREE.MeshStandardMaterial({ color: 0xd63b42, roughness: .85, side: THREE.DoubleSide }));
+  vela.rotation.z = Math.PI / 4; grupo.add(vela);
+  return grupo;
+}
+
+/* Envolve o `update` da ambiência em vez de abrir laço no game.js: pausa, reset e descarte
+   ficam com um dono só — pipa abanando com o jogo pausado denuncia enfeite colado por fora. */
+export function attachPipaSky(ambience, root, configs = []) {
+  if (!ambience || !configs.length) return null;
+  const grupo = new THREE.Group();
+  grupo.name = 'PIPA_SKY';
+  grupo.userData.skyLife = 'pipa';
+  root.add(grupo);
+  const modelo = templates.get('pipa');
+  const pipas = configs.map((config, indice) => {
+    const corpo = modelo ? modelo.scene.clone(true) : pipaFallback();
+    if (modelo) {
+      corpo.updateMatrixWorld(true);
+      const caixa = new THREE.Box3().setFromObject(corpo);
+      const tamanho = caixa.getSize(new THREE.Vector3());
+      corpo.scale.setScalar(PIPA_ENVERGADURA / Math.max(.001, Math.max(tamanho.x, tamanho.y)));
+    }
+    const no = new THREE.Group();
+    no.add(corpo);
+    no.userData.skyLife = 'pipa';
+    no.userData.nonCollider = true;
+    grupo.add(no);
+    // Line, não tubo: 2 draw calls por pipa e nada de geometria refeita por quadro
+    const linha = new THREE.Line(new THREE.BufferGeometry().setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(6), 3)),
+      new THREE.LineBasicMaterial({ color: 0xe8e2d4, transparent: true, opacity: .5 }));
+    linha.frustumCulled = false; grupo.add(linha);
+    const rabiola = new THREE.Line(new THREE.BufferGeometry().setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(PIPA_RABIOLA_NOS * 3), 3)),
+      new THREE.LineBasicMaterial({ color: [0xf0bd2b, 0x2f70c1, 0xd63b42][indice % 3] }));
+    rabiola.frustumCulled = false; grupo.add(rabiola);
+    return {
+      no, linha, rabiola,
+      /* âncora = quem segura a linha, na laje ou no quintal */
+      ancora: new THREE.Vector3(...(config.ancora || [0, 5.2, 0])),
+      alt: config.alt ?? (26 + indice * 5),          // 25–40 m: acima da laje e dos prédios
+      raio: config.raio ?? (9 + indice * 2.5),       // afastamento horizontal da âncora
+      fase: config.fase ?? indice * 2.1,
+      giro: config.giro ?? (.55 + indice * .12),     // amplitude da guinada, em radianos
+      hist: Array.from({ length: PIPA_HIST }, () => new THREE.Vector3()),
+      cursor: 0, iniciado: false, anterior: new THREE.Vector3(),
+    };
+  });
+
+  const passo = (pipa, t) => {
+    /* Períodos que não fecham entre si (7,3 s e 1,73 s): a soma nunca repete o
+       mesmo desenho, que é o que separa "abanando" de "oscilando". */
+    const largo = Math.sin(t / 7.3 * Math.PI * 2 + pipa.fase);
+    const tremido = Math.sin(t / 1.73 * Math.PI * 2 + pipa.fase * 1.7);
+    const azimute = pipa.fase + largo * pipa.giro + tremido * .09;
+    /* A linha esticada é o vínculo: sobe de um lado, a pipa recua do outro. */
+    const subida = largo * .18 + tremido * .05;
+    const alt = pipa.alt + subida * 6;
+    const raio = pipa.raio * Math.sqrt(Math.max(.05, 1 - subida * subida * .8));
+    return new THREE.Vector3(
+      pipa.ancora.x + Math.sin(azimute) * raio,
+      alt,
+      pipa.ancora.z + Math.cos(azimute) * raio);
+  };
+
+  let tempo = 0;
+  const atualizar = (dt) => {
+    tempo += Math.max(0, Math.min(.05, dt));
+    const pos = new THREE.Vector3(), vel = new THREE.Vector3();
+    for (const pipa of pipas) {
+      pos.copy(passo(pipa, tempo));
+      if (!pipa.iniciado) {
+        for (const p of pipa.hist) p.copy(pos);
+        pipa.anterior.copy(pos); pipa.iniciado = true;
+      }
+      vel.copy(pos).sub(pipa.anterior);
+      pipa.anterior.copy(pos);
+      pipa.no.position.copy(pos);
+      /* Aponta para onde VAI e banca para o lado da guinada; sem velocidade (jogo
+         pausado) mantém a pose em vez de saltar para o eixo zero. */
+      if (vel.lengthSq() > 1e-8) {
+        pipa.no.rotation.y = Math.atan2(vel.x, vel.z);
+        pipa.no.rotation.x = -Math.atan2(vel.y, Math.hypot(vel.x, vel.z)) * .6;
+        pipa.no.rotation.z = THREE.MathUtils.clamp(-vel.x * 9, -.5, .5);
+      }
+      pipa.hist[pipa.cursor].copy(pos);
+      const linhaPos = pipa.linha.geometry.attributes.position;
+      linhaPos.setXYZ(0, pipa.ancora.x, pipa.ancora.y, pipa.ancora.z);
+      linhaPos.setXYZ(1, pos.x, pos.y, pos.z);
+      linhaPos.needsUpdate = true;
+      const rabPos = pipa.rabiola.geometry.attributes.position;
+      for (let i = 0; i < PIPA_RABIOLA_NOS; i++) {
+        // cada nó ocupa onde a pipa esteve há i × atraso quadros: o rabo CHEGA depois
+        const p = pipa.hist[(pipa.cursor - i * PIPA_RABIOLA_ATRASO + PIPA_HIST * 4) % PIPA_HIST];
+        rabPos.setXYZ(i, p.x, p.y - i * .012, p.z);
+      }
+      rabPos.needsUpdate = true;
+      pipa.cursor = (pipa.cursor + 1) % PIPA_HIST;
+    }
+  };
+
+  grupo.traverse((objeto) => {
+    if (!objeto.isMesh) return;
+    objeto.castShadow = false;        // 30 m acima da cena: sombra é orçamento sem pixel
+    objeto.receiveShadow = false;
+    objeto.userData.nonSolidSurface = true;
+    objeto.userData.nonCollider = true;
+  });
+  atualizar(0);
+
+  const updateOriginal = ambience.update.bind(ambience);
+  ambience.update = (dt, playerPosition) => {
+    updateOriginal(dt, playerPosition);
+    if (!ambience.paused) atualizar(dt);
+  };
+  const disposeOriginal = ambience.dispose.bind(ambience);
+  let disposed = false;
+  ambience.dispose = () => {
+    if (!disposed) {
+      disposed = true;
+      for (const pipa of pipas) {
+        for (const line of [pipa.linha, pipa.rabiola]) { line.geometry.dispose(); line.material.dispose(); }
+        if (!modelo) pipa.no.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
+      }
+      grupo.removeFromParent();
+    }
+    disposeOriginal();
+  };
+  ambience.pipaSky = {
+    group: grupo, count: pipas.length,
+    snapshot: () => pipas.map((pipa, i) => ({ id: `pipa-${i}`,
+      x: +pipa.no.position.x.toFixed(3), y: +pipa.no.position.y.toFixed(3), z: +pipa.no.position.z.toFixed(3),
+      rabiola: PIPA_RABIOLA_NOS, fonte: modelo ? 'gltf' : 'fallback' })),
+  };
+  return ambience.pipaSky;
 }

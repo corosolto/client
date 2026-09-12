@@ -93,6 +93,19 @@
    "walk1h",
    "walkfire"
   ],
+  "boto": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "cadequinha": [
    "idle",
    "walk",
@@ -106,7 +119,7 @@
    "walk1h",
    "walkfire"
   ],
-  "camera-roxa": [
+  "caipora": [
    "idle",
    "walk",
    "run",
@@ -197,20 +210,7 @@
    "walk1h",
    "walkfire"
   ],
-  "designer-ux": [
-   "idle",
-   "walk",
-   "run",
-   "shoot",
-   "death",
-   "crouch",
-   "crouchwalk",
-   "jump",
-   "idle1h",
-   "walk1h",
-   "walkfire"
-  ],
-  "doidinho-bairro": [
+  "curupira": [
    "idle",
    "walk",
    "run",
@@ -392,7 +392,20 @@
    "walk1h",
    "walkfire"
   ],
-  "lenda-lanhouse": [
+  "lampiao": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "lobisomem": [
    "idle",
    "walk",
    "run",
@@ -418,7 +431,7 @@
    "walk1h",
    "walkfire"
   ],
-  "metaleiro": [
+  "mariabonita": [
    "idle",
    "walk",
    "run",
@@ -431,7 +444,7 @@
    "walk1h",
    "walkfire"
   ],
-  "microfonildo": [
+  "metaleiro": [
    "idle",
    "walk",
    "run",
@@ -458,19 +471,6 @@
    "walkfire"
   ],
   "mixamo": [
-   "idle",
-   "walk",
-   "run",
-   "shoot",
-   "death",
-   "crouch",
-   "crouchwalk",
-   "jump",
-   "idle1h",
-   "walk1h",
-   "walkfire"
-  ],
-  "motoca-cachorro-loko": [
    "idle",
    "walk",
    "run",
@@ -587,32 +587,6 @@
    "walk1h",
    "walkfire"
   ],
-  "profeta-calcada": [
-   "idle",
-   "walk",
-   "run",
-   "shoot",
-   "death",
-   "crouch",
-   "crouchwalk",
-   "jump",
-   "idle1h",
-   "walk1h",
-   "walkfire"
-  ],
-  "programador-virado": [
-   "idle",
-   "walk",
-   "run",
-   "shoot",
-   "death",
-   "crouch",
-   "crouchwalk",
-   "jump",
-   "idle1h",
-   "walk1h",
-   "walkfire"
-  ],
   "punk": [
    "idle",
    "walk",
@@ -653,6 +627,19 @@
    "walkfire"
   ],
   "reggae": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "saci": [
    "idle",
    "walk",
    "run",
@@ -739,6 +726,19 @@
    "crouch",
    "crouchwalk",
    "jump"
+  ],
+  "zumbi": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
   ]
  }
 }

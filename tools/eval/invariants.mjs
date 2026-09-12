@@ -1562,7 +1562,8 @@ function runNode(script, env = {}, args = []) {
       + (P.map((c) => [c.id, c.C2 && c.C2.adereçoAcima]).filter((x) => x[1] > 0.02).sort((a, b) => b[1] - a[1]).slice(0, 3).map((x) => `${x[0]} +${(x[1] * 100).toFixed(0)}cm`).join(', ') || 'nenhum'));
 
     /* ── CHR3 PÉS NO CHÃO ──────────────────────────────────────────────────────
-       MEDE O QUE O JOGO DESENHA, NÃO O QUE O CLIPE TRAZ (04/08).
+       MEDE O QUE O JOGO DESENHA, NÃO O QUE O CLIPE TRAZ (04/08). E MEDE O PÉ, NÃO
+       A BBOX INTEIRA (30/08).
 
        O defeito é do CLIPE: o probe mede `bind = 0.000` nos 44, e o desvio nasce em
        walk/run/crouch. A correção não podia ser no GLB (38 personagens compartilham os
@@ -1576,10 +1577,19 @@ function runNode(script, env = {}, args = []) {
        É a Lei 1 da casa ao contrário: régua que não enxerga a correção também mente.
        Então aqui o desvio efetivo é `desvio + offset aplicado`.
 
-       O que a tabela NÃO corrige continua vermelho, e tem que continuar: os 6 pares acima
-       do teto de 8 cm (proerd/crouch -43 cm, canarinho/crouch -37 cm, ancap em 4 poses)
-       não são pé fora do chão, são clipe descendo a raiz inteira — outro defeito, que
-       exige olhar imagem antes de virar número. Ver tools/gen-foot-offsets.mjs. */
+       A revisão de 30/08 (rodada fix/chr3-pes-no-chao): a régua lia a base da BBOX e
+       por isso chamava de "afundando" dois personagens com os pés PLANTADOS — proerd
+       (-0,43) e canarinho (-0,37) no crouch, onde quem cruza o chão é o RABO, skinado
+       em Hips (pé medido a +0,003 e -0,007). O offset de +43 cm que a leitura antiga
+       sugeriria faria os dois VOAREM. A sonda passou a medir o vértice mais baixo
+       ENTRE OS DE CANELA/PÉ (RX_PE no char-probe.mjs) e a registrar a faixa [min,max]
+       do clipe; o gerador compensa desvio grande SÓ com constância comprovada
+       (amplitude ≤ 2 cm) e nomeia o resto em `suspeitos`. Ver tools/gen-foot-offsets.mjs
+       e a entrada CHR3 do KNOWN-BUGS.md.
+
+       O que a tabela NÃO corrige continua vermelho, e tem que continuar: ancap/walk,
+       ancap/run e esbirro/run têm a raiz OSCILANDO 9-11 cm dentro do ciclo — constante
+       nenhuma resolve sem criar voo; é defeito do clipe, exige clipe novo. */
     const TOL3 = 0.01;
     let footOff = {};
     try {
@@ -1800,6 +1810,14 @@ function runNode(script, env = {}, args = []) {
   if (!existsSync(join(HERE, 'map-check.mjs'))) {
     skip('MAP*', 'geometria de mapa (submerso/respawn/escada/bandeiras)', 'map-check.mjs ausente');
   } else {
+    const raycast = runNode('lajes-raycast-check.mjs');
+    put('LRP1', 'Lajes: raycast conserva impactos e elimina trabalho fora do raio',
+      !raycast.includes('__ERRO__') && raycast.includes('✓ LRP1'),
+      raycast.split('\n').find(line => line.includes('LRP1')) || raycast.slice(-400));
+    const beco = runNode('lajes-spawn-space-check.mjs');
+    const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
+    put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
+      respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
     const out = runNode('map-check.mjs');
     const pj = join(ROOT, 'tools', 'eval', 'map_check.json');
     if (!existsSync(pj)) {
@@ -1917,16 +1935,23 @@ function runNode(script, env = {}, args = []) {
            folga ≥ 1,20 m = raio 0,38 + 0,82 de passo lateral (uma esquiva);
            área ≥ 40 m² num raio de 5 m (teto geométrico π·5² = 78,5) = pouco mais da metade
            do disco, o mínimo pra 4 pessoas nascerem e se espalharem sem se empurrar.
-         Vale pros 4 mapas: fresta de respawn não é característica de mapa nenhum. */
+         Lajes tem contrato próprio de beco aceito pelo dono: LSP1 cobra corpos e saída.
+         A exigência de pátio não se aplica ali; demais mapas preservam ambos os tetos. */
       {
         const ruins = [], evid = [];
         for (const m of (j.mapas || [])) {
           if (m.err) continue;
           evid.push(`${m.map} folga ${m.piorFolga} m / área ${m.piorArea} m²`);
+          // V6 aceita exige respawn em beco; segurança física cobrada por LSP1.
+          // Contrato e medição original: docs/maps/LAJES-V7-SPAWN.md.
+          if (m.map === 'lajes') {
+            if (!respawnBecoValido) ruins.push('lajes: contrato de respawn em beco reprovado');
+            continue;
+          }
           for (const s2 of (m.salaDoSpawn || []))
             if (!s2.okFolga || !s2.okArea) ruins.push(`${m.map}/${s2.team}(${s2.x},${s2.z}) folga ${s2.folgaParede} m área ${s2.areaContigua} m²`);
         }
-        put('MAP2B', 'todo slot de respawn é um LUGAR: ≥ 1,20 m de folga até a parede mais próxima e ≥ 40 m² de chão andável CONTÍGUO num raio de 5 m',
+        put('MAP2B', 'respawn amplo: folga ≥ 1,20 m e área contígua ≥ 40 m²; Lajes em beco exige LSP1',
           !erros.length && !ruins.length,
           `${evid.join(' · ')} | slots fora do teto: ${ruins.length ? ruins.join(' · ') : 0} | ` +
           'critério: 64 direções na altura do peito contra os colisores do jogo + flood-fill a partir do próprio slot (parede do outro lado NÃO conta)');
@@ -2246,6 +2271,7 @@ function runNode(script, env = {}, args = []) {
 // citado aqui NUNCA existiu no git — ponteiro fantasma). O que roda em browser
 // no CI é o portao-browser (boot real + grafite + silhueta da seleção); estas
 // PX continuam pendentes de arnês dedicado (ver KNOWN-BUGS, dívida PX).
+for (const id of ['AMH1','AMH2','AMH3','AMH4']) skip(id, 'Amazônia: apoios, cabanas, tiros e movimento', 'exige browser: HABITAT=1 node tools/eval/amazonia-visual-capture.mjs');
 skip('PX1', 'no ADS o jogador vê a arma E a mira', 'exige browser — sem arnês dedicado (divida PX)');
 skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — sem arnês dedicado (divida PX)');
 skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — sem arnês dedicado (divida PX)');

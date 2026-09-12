@@ -217,7 +217,7 @@ try {
     ['nick + modo captura', () => {
       const n = document.getElementById('nick-input');
       if (n) { n.value = 'REGUA'; n.dispatchEvent(new Event('input', { bubbles: true })); }
-      document.querySelector('[data-act="ctf"]')?.click();
+      document.querySelector('[data-act="sp"]')?.click();   // o menu agora tem MULTIPLAYER e SINGLE PLAYER; o modo se escolhe na tela de mapa
     }, () => !!document.getElementById('menu-setup')?.classList.contains('open')],
     ['JOGAR', () => document.getElementById('btn-jogar')?.click(),
       () => !document.getElementById('team-select')?.classList.contains('hidden')],

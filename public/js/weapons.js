@@ -243,6 +243,9 @@ export async function preloadWeapons(ids) {
 }
 
 export function hasWeapon(id) { return _cache.has(MODEL_ALIAS[id] || id); }
+// Costura da régua (BUG-121): simula o GLB que ainda não chegou. Nada de produção chama isto.
+export function unloadWeaponModel(id) { _cache.delete(MODEL_ALIAS[id] || id); }
+export function setWeaponModel(id, scene) { _cache.set(MODEL_ALIAS[id] || id, scene); }
 
 // Geometry facts for aligning hands/mounts: real length + grip point (fraction from muzzle).
 export function weaponCFG(id) { return CFG[id] || CFG.awp; }
@@ -328,7 +331,9 @@ export function weaponMetrics(id) { return _metrics.get(id) || null; }
 // Returns a THREE.Group holding the weapon, scaled to real size, barrel pointing +Z,
 // grip roughly at the group origin (so it sits in a hand placed at origin).
 export function weaponModel(id) {
-  const tpl = _cache.get(MODEL_ALIAS[id] || id) || _cache.get('awp');
+  const requested = MODEL_ALIAS[id] || id;
+  const source = _cache.has(requested) ? requested : null;
+  const tpl = source ? _cache.get(source) : null;
   if (!tpl) return null;
   const cfg = CFG[id] || CFG.awp;
   const model = tpl.clone(true);
@@ -360,6 +365,8 @@ export function weaponModel(id) {
   const mag = buildMag(id);
   if (mag) { mag.scale.setScalar(1 / s); wrap.add(mag); }
   wrap.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.frustumCulled = false; } });
+  wrap.userData.weaponSource = source;
+  wrap.userData.weaponRequested = requested;
   wrap.userData.metrics = measureGun(id, wrap);   // boca/alça/caixa medidas (ver measureGun)
   return wrap;
 }

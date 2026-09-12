@@ -39,7 +39,7 @@ const PADROES = [
   [/service_role/i, 'service_role'],
   [/db-privado/i, 'db-privado'],
   [/firebase/i, 'firebase'],
-  [/mongodb|mysql|redis/i, 'banco de terceiro'],
+  [/\b(?:mongodb|mysql|redis)\b/i, 'banco de terceiro'],
 ];
 if (!PADROES.length) {
   console.error('  \x1b[31m✗\x1b[0m HINT lista de padrões vazia — régua cega medindo nada');

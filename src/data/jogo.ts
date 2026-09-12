@@ -37,13 +37,19 @@ export interface Arma {
 export const ARMAS: Arma[] = [
   { id: 'awp', nome: 'AWP "DELIBERADOR"', curto: 'AWP', classe: 'Sniper', dano: 400, pente: 5, reserva: 25, cadencia: 1.7, nota: 'Mata com um tiro em qualquer lugar do corpo. É a arma que define a arena - e a que mais castiga quem atira correndo.' },
   { id: 'mosin', nome: 'MOSIN "VOVÓ RUSSA"', curto: 'MOSIN', classe: 'Sniper', dano: 120, pente: 5, reserva: 25, cadencia: 1.5, nota: 'Ferrolho lento, dano brutal. Perdoa menos que a AWP e recompensa mais o agachado.' },
+  { id: 'rem700', nome: 'REM 700 "CAÇADOR"', curto: 'REM', classe: 'Sniper', dano: 130, pente: 5, reserva: 25, cadencia: 1.5, nota: 'A irmã civil da Mosin: mesmo ritmo, um tiquinho mais de dano.' },
   { id: 'svd', nome: 'SVD "VODKA"', curto: 'SVD', classe: 'Sniper semi-auto', dano: 62, pente: 10, reserva: 40, cadencia: 0.28, nota: 'Semi-automática: dois tiros derrubam, e você não perde a mira entre eles.' },
+  { id: 'g3sg1', nome: 'G3SG1 "FRITZ"', curto: 'G3SG1', classe: 'Sniper semi-auto', dano: 55, pente: 20, reserva: 60, cadencia: 0.22, nota: 'Pente de 20 numa sniper semi-auto. A escolha de quem segura ângulo longo sozinho.' },
   { id: 'sks', nome: 'SKS "MILÍCIA"', curto: 'SKS', classe: 'Sniper semi-auto', dano: 48, pente: 10, reserva: 50, cadencia: 0.18, nota: 'A mais rápida das semi-autos. Recompensa quem acerta a segunda no susto.' },
   { id: 'ak', nome: 'AK-47 "BATE-ESTACA"', curto: 'AK', classe: 'Fuzil', dano: 36, pente: 30, reserva: 90, cadencia: 0.1, nota: 'Mata em 3 tiros no corpo. O padrão-ouro de fuzil: dano alto, coice honesto.' },
+  { id: 'akm', nome: 'AKM "KALASH DA VÉIA"', curto: 'AKM', classe: 'Fuzil', dano: 34, pente: 30, reserva: 90, cadencia: 0.105, nota: 'Prima pesada da AK: 4 tiros no corpo, um tico mais lenta.' },
   { id: 'm4', nome: 'M4A1 "REQUINTE"', curto: 'M4', classe: 'Fuzil', dano: 31, pente: 30, reserva: 90, cadencia: 0.09, nota: 'Mais rápida e mais estável que a AK, em troca de dano por tiro.' },
+  { id: 'g3', nome: 'HK G3 "FRITZ"', curto: 'G3', classe: 'Fuzil de batalha', dano: 37, pente: 20, reserva: 80, cadencia: 0.11, nota: 'Pente curto, tiro que dói. Fuzil de quem conta os tiros.' },
   { id: 'md97', nome: 'MD97 "FUZIL DA PÁTRIA"', curto: 'MD97', classe: 'Fuzil de batalha', dano: 38, pente: 20, reserva: 80, cadencia: 0.12, nota: 'O fuzil brasileiro do arsenal. O maior dano por tiro entre os automáticos.' },
+  { id: 'm400', nome: 'M400 "MIRA FINA"', curto: 'M400', classe: 'Fuzil de batalha', dano: 40, pente: 20, reserva: 80, cadencia: 0.11, nota: 'Dano de fuzil de batalha com estabilidade de M4.' },
   { id: 'scar', nome: 'SCAR "PAGA-PAU"', curto: 'SCAR', classe: 'Fuzil de batalha', dano: 37, pente: 20, reserva: 80, cadencia: 0.11, nota: 'Equilibrada até demais - a que menos surpreende, pro bem e pro mal.' },
   { id: 'm92', nome: 'ZASTAVA M92 "IOGUSLAVO"', curto: 'M92', classe: 'Carabina', dano: 32, pente: 30, reserva: 90, cadencia: 0.1, nota: 'AK serrada. Curta, gorda na tela e boa de corredor.' },
+  { id: 'tavor', nome: 'TAVOR "CURTINHO"', curto: 'TAVOR', classe: 'Bullpup', dano: 32, pente: 30, reserva: 90, cadencia: 0.09, nota: 'Bullpup: cano de fuzil num corpo de SMG. Boa em espaço apertado.' },
   { id: 'famas', nome: 'FAMAS "BAGUETE"', curto: 'FAMAS', classe: 'Bullpup', dano: 29, pente: 25, reserva: 90, cadencia: 0.075, nota: 'Cadência altíssima e pente curto. Erra pouco quem controla a rajada.' },
   { id: 'carbine', nome: 'CARABINA "PAPO DE PEÃO"', curto: 'CARB', classe: 'Carabina de alavanca', dano: 42, pente: 10, reserva: 40, cadencia: 0.5, nota: 'Alavanca lenta, dano alto. A arma mais roceira e mais satisfatória do jogo.' },
   { id: 'lmg', nome: 'METRALHA "TRETA PESADA"', curto: 'LMG', classe: 'Metralhadora', dano: 31, pente: 100, reserva: 200, cadencia: 0.085, nota: '100 tiros sem recarregar. Trava corredor inteiro - se você aguentar o peso.' },
@@ -122,8 +128,13 @@ export interface Mapa {
   ctf: boolean;
 }
 
-/** Arenas jogáveis - a ordem é a do registro (public/js/maps.js, objeto MAPS). */
+/** Arenas com apresentação editorial; o registro jogável vive em public/js/maps.js. */
 export const MAPAS: Mapa[] = [
+  {
+    id: 'mansao', nome: 'Mansão do Joá', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Jardim tropical, salão com mezanino e piscina sobre o mar do Joá.',
+    detalhe: 'Duas escadas ligam o salão ao mezanino. As rotas laterais atravessam o jardim e chegam ao terraço, com piscina entrável e vista da praia. Quatro pontos de captura disputam os dois níveis da casa.',
+  },
   {
     id: 'praca_poderes', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
     resumo: 'A arena principal: uma Brasília fictícia com urna gigante quebrada no meio.',
@@ -166,47 +177,12 @@ export const MAPAS: Mapa[] = [
       'ônibus e praça do baile.',
   },
   {
-    id: 'fy_escadao', nome: 'Escadão (Morro)', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Comunidade cortada por uma escadaria monumental de azulejo colorido, com caveirão no patamar central.',
-    detalhe: 'O mapa de verticalidade pura: um time nasce na rua lá embaixo (bar, mercadinho, carros), ' +
-      'o outro nasce no mirante lá em cima (caixa d\'água, mureta). Entre os dois, o escadão - três lances ' +
-      'de escada com patamares de barricada e um caveirão atravessado no meio da subida. Dois becos laterais ' +
-      'sobem por trás das casas e dão rota de flanco sem expor na escada. Cada patamar é um andar de combate: ' +
-      'você só enxerga o próximo lance, nunca o escadão inteiro.',
-  },
-  {
-    id: 'fy_campomorro', nome: 'Campo do Morro', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Campo de várzea no centro de uma comunidade - todos os becos convergem pra ele.',
-    detalhe: 'O mapa de convergência: um time nasce no campo (centro, exposto, dono do meio) e ' +
-      'o outro nasce no galpão do baile funk (periferia, protegido, paredão de som e portão de aço). ' +
-      'Quatro becos descem do morro e desembocam em bordas diferentes do campo - cada um é uma rota ' +
-      'de flanco separada. O campo tem traves, alambrado derrubado, container e arquibancada de cimento. ' +
-      'Segurar o centro é punição e prêmio ao mesmo tempo: cinco bocas de beco para vigiar.',
-  },
-  {
-    id: 'fy_lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Comunidade em duas camadas: lajes em cima, becos embaixo - a luta pela vertical.',
-    detalhe: 'Um time nasce nas lajes (pula de telhado em telhado, vê longe mas se expõe); o outro ' +
-      'nos becos (tem cover mas não vê nada). Quatro escadas conectam as camadas - cada uma é um ' +
-      'ponto de estrangulamento contestável dos dois lados. As lajes têm caixas d\'água e muretas ' +
-      'como cover; os becos têm carros, caçambas e motos encostadas. Prédio central da fileira ' +
-      'norte é mais alto - é a posição de sniper do mapa.',
-  },
-  {
-    id: 'fy_corrego', nome: 'Córrego (Favela de SP)', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Duas margens de palafitas separadas por água poluída e três pontes muito diferentes.',
-    detalhe: 'Mapa de travessia e risco: o córrego corre abaixo das margens, com trechos alagados nas pontas, ' +
-      'pontes de madeira no meio e casas sobre pilotis. A margem leste e a oeste têm rotas próprias entre ' +
-      'palafitas, lixo, motos e barracas; atravessar cedo encurta o ataque, mas expõe o jogador de lado. ' +
-      'Pixação paulistana, zinco, madeira úmida e o céu cinzento separam visualmente este mapa dos morros do Rio.',
-  },
-  {
-    id: 'fy_mansao', nome: 'Mansão do Joá', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Mansão modernista entre jardim tropical e piscina infinita, com interior e mezanino jogáveis.',
-    detalhe: 'O time invasor nasce no portão e avança por um jardim geométrico até garagem, hall, sala e cozinha. ' +
-      'O defensor ocupa o deck e a piscina diante do oceano. O mezanino a 4,5 m é alcançado por uma escada real ' +
-      'e abre linhas verticais sobre o interior; biombos, móveis e paisagismo dividem as visadas sem transformar ' +
-      'a casa em corredor. O horizonte do Joá mostra mar, costão e maciço sob luz dourada.',
+    id: 'lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Becos estreitos entre casas de alvenaria, um campo aberto no centro e combate nas lajes.',
+    detalhe: 'Os dois times começam no térreo. Três caminhos entre as casas ligam os respawns, ' +
+      'e só o campo central oferece uma abertura ampla no chão. Quatro escadas conectam os becos ' +
+      'às duas travessias superiores, com caixas de água, muretas e varais. As quatro bandeiras ' +
+      'ficam nas lajes: subir amplia a visão, mas exige disputar os acessos e a cobertura.',
   },
 ];
 
@@ -229,10 +205,9 @@ export const FACCOES: { id: string; nome: string; lema: string; cor: string; not
   { id: 'urbanas', nome: 'Tribos Urbanas', lema: 'A treta se faz na quebrada!', cor: '#c79bff', nota: 'Facção sem lado político: emo, punk, metaleiro, skatista, rapper e companhia. Entra na treta pelo estilo.' },
   { id: 'palhacos', nome: 'Palhaços', lema: 'A treta se faz no picadeiro!', cor: '#ff8ad1', nota: 'O picadeiro invadiu a arena. Nove palhaços, do clássico de cartola ao que dá medo de verdade.' },
   { id: 'funkeiros', nome: 'Funkeiros', lema: 'A treta se faz no bailão!', cor: '#ffd23f', nota: 'A facção mais nova: mandrake, cria, trap, tamborzão. Ostenta antes, atira depois.' },
-  { id: 'mitico', nome: 'Mítico', lema: 'A treta atravessa os séculos!', cor: '#9d4edd', nota: 'Heróis históricos e folclore brasileiro: Zumbi, Lampião, Saci, Cuca, Curupira. Ninguém da atualidade.' },
 ];
 
-/** 53 personagens (public/js/characters.js). `faccao` casa com FACCOES[].id */
+/** 44 personagens (public/js/characters.js). `faccao` casa com FACCOES[].id */
 export const PERSONAGENS: Personagem[] = [
   { id: 'esquerdomacho', faccao: 'E', nome: 'Esquerdomacho', blurb: 'Barba, tote bag e 47 bottons. Mira acadêmica: analisa a treta antes de atirar.' },
   { id: 'sindicato', faccao: 'E', nome: 'Líder do Sindicato', blurb: 'Boné vermelho, colete de assembleia e megafone. Convoca greve de fogo a cada round.' },
@@ -282,16 +257,6 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'trapfunk', faccao: 'funkeiros', nome: 'Trap Funk', blurb: 'Autotune no grito de guerra e 808 no peito. Trap em dose dupla.' },
   { id: 'fluxo', faccao: 'funkeiros', nome: 'Fluxo', blurb: 'Óculos espelhado e corte na régua. No fluxo, quem corre é a bala.' },
   { id: 'ostentacao', faccao: 'funkeiros', nome: 'Ostentação', blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.' },
-
-  { id: 'mariabonita', faccao: 'mitico', nome: 'Maria Bonita', blurb: 'Cangaceira de precisão. Parou, mirou, acertou - a rainha do primeiro tiro.' },
-  { id: 'saci', faccao: 'mitico', nome: 'Saci-Pererê', blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some - o gorro vermelho é hitbox.' },
-  { id: 'lampiao', faccao: 'mitico', nome: 'Lampião', blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz - Virgem Maria!' },
-  { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.' },
-  { id: 'bandeirante', faccao: 'mitico', nome: 'Bandeirante', blurb: 'Caçador de pegadas. Vê onde o inimigo pisou - o vilão que o time tolera.' },
-  { id: 'boto', faccao: 'mitico', nome: 'Boto Cor de Rosa', blurb: 'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.' },
-  { id: 'zumbi', faccao: 'mitico', nome: 'Zumbi dos Palmares', blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.' },
-  { id: 'cuca', faccao: 'mitico', nome: 'Cuca', blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada - dorme com o medo.' },
-  { id: 'curupira', faccao: 'mitico', nome: 'Curupira', blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.' },
 ];
 
 export interface Controle { tecla: string; acao: string; }

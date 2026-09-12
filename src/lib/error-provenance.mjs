@@ -15,7 +15,7 @@ const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically i
 const RECOVERABLE_RE = /THREE\.[^:]*: Couldn't load texture|THREE\.WebGLState: Type error/i;
 // Abort de mídia: o jogo corta `play()` pendente de propósito (audio.js:97/:119/:159) e a
 // rejeição chega sem stack. ESTREITO de propósito — KNOWN-BUGS.md, BUG-73.
-const MEDIA_ABORT_RE = /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i;
+const MEDIA_ABORT_RE = /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted|The play method is not allowed by the user agent or the platform in the current context|play\(\) failed because the user didn't interact with the document first/i;
 // Capacidade que o navegador não tem: o `lock()` de main.js:1037 rejeita e o jogo segue sem
 // a trava (o overlay "gire o celular" é a rede). ESTREITA — KNOWN-BUGS.md, BUG-80.
 const CAPACIDADE_RE = /screen\.orientation\.lock\(\) is not available on this device/i;

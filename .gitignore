@@ -5,6 +5,7 @@ node_modules
 dist/
 .astro/
 .vercel/
+/artifacts/
 *.tsbuildinfo
 
 # ── Segredos ────────────────────────────────────────────────────────────────
@@ -23,6 +24,25 @@ public/audio/
 # versionada como exceção — `public/audio/ambiente/FONTE.md` entra com
 # `git add -f` (o gitignore não consegue re-incluir arquivo sob dir excluído).
 # Os mp3 shipam pelo audio-pack.zip, nunca pelo git.
+
+# ── Staging privado de asset comprado ───────────────────────────────────────
+# Pacote fonte do piloto Fab (Action Game Sounds Pack, PlaceHolder Inc., Fab
+# Standard License). A licença proíbe redistribuição STANDALONE: o som pode ser
+# incorporado ao jogo, e não pode ser republicado como pacote de sons — e um
+# repositório público é publicação. A listagem ainda diz `Allows usage with AI:
+# No`, então os WAVs também não podem ser entrada de modelo.
+#
+# O que fica versionado é o METADADO: `docs/audio/proveniencia.json` (origem,
+# licença, hash, aprovação) e o inventário que `tools/audio/inventariar.mjs`
+# emite — nome, hash, duração, canais, taxa, pico, loudness. Nunca o áudio.
+# Contrato completo: docs/audio/PROVENIENCIA.md. Réguas: `npm run eval:audioproc`
+# (forma do ledger) e `npm run assert:assets` (PRV5, hash contra a build).
+private-assets/
+audio-src/
+# token de OAuth de loja de asset — segredo, mesma regra do .env
+*.epic-token
+.fab-token
+.egs-token
 
 # ── Skills de terceiros ─────────────────────────────────────────────────────
 # 13 MB de skills de terceiros (incluindo 8 GIFs de demonstração, 3,2 MB o
@@ -213,3 +233,10 @@ scratchpad/*.log
 # runtime pelo symlink public/private-assets. Já estava em .git/info/exclude (local);
 # fica AQUI também porque o repo é PÚBLICO e a regra precisa valer em todo clone.
 /public/private-assets/
+# relatórios da camada operacional (npm run ops:diag) — evidência de rodada, não contrato
+artifacts/ops/
+
+# Capturas e medições locais de Lajes
+artifacts/lajes-visual/
+
+# Local diagnostic captures and isolated preview snapshots.

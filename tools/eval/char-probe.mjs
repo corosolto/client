@@ -117,6 +117,13 @@ const C2_DISPERSAO_MAX = 0.15;
 // C3: pé no chão. 1 cm é a folga que o pickup-check.mjs já usa como "encostado" (0,05)
 // dividida com margem — personagem é mais visível que arma largada.
 const C3_TOL = 0.01;
+/* C3 mede PÉ, não a bbox inteira. Caso que comprou a distinção (medido em 30/08):
+   proerd/crouch tinha a base da bbox a -0,43 m e os PÉS plantados em +0,003 — quem
+   cruzava o chão era o rabo (vértices skinados em Hips). A régua de bbox pedia um
+   offset de +43 cm que faria o boneco VOAR. Canela/pé = Left/RightLeg, Foot, ToeBase
+   (44/44 do elenco: 1 skin, 8 juntas mixamo de perna — conferido). UpLeg fica fora:
+   coxa não é contato com o chão. */
+const RX_PE = /foot|toe|ankle|heel|shin|calf|knee|(?<!up)leg/i;
 
 /* ── ponte do especificador nu `three` (idêntica ao botsim.mjs:88-111) ─────────
    Os módulos do jogo fazem `import * as THREE from 'three'`, resolvido no browser pelo
@@ -813,20 +820,46 @@ for (const r of registros) {
     const g = readGLB(r.file), sc = buildScene(g);
     const bbRaw = bboxOf(skinVerts(sc, g, worldMats(sc), 3));
     const S = TARGET_H / ((bbRaw[4] - bbRaw[1]) || 1);
+    const nomesJuntas = (g.json.skins || []).length === 1
+      ? g.json.skins[0].joints.map((j) => g.json.nodes[j].name) : null;
+    // y do vértice mais baixo ENTRE OS DE CANELA/PÉ (junta dominante). Sem junta de
+    // pé no rig (não acontece no elenco), cai na bbox inteira — comportamento antigo.
+    const peMin = (vs) => {
+      if (!nomesJuntas) return bboxOf(vs)[1];
+      let mn = Infinity;
+      for (const v of vs) {
+        if (!v.j) continue;
+        let dom = 0; for (let c = 1; c < 4; c++) if (v.w[c] > v.w[dom]) dom = c;
+        if (RX_PE.test(nomesJuntas[v.j[dom]] || '') && v.p[1] < mn) mn = v.p[1];
+      }
+      return mn === Infinity ? bboxOf(vs)[1] : mn;
+    };
+    const faixa = {}, corpo = {};
     for (const clipe of ['idle', 'walk', 'run', 'shoot', 'crouch']) {
       const proprio = path.join(DIR_ANIM, r.id, `${clipe}.glb`);
       const comum = path.join(DIR_ANIM, 'mixamo', `${clipe}.glb`);
       const f = fs.existsSync(proprio) ? proprio : (fs.existsSync(comum) ? comum : null);
       if (!f) continue;
-      let pior = 0;
+      let pior = 0, mn = Infinity, mx = -Infinity, piorCorpo = 0;
       for (const t of [0, 0.2, 0.4, 0.6, 0.8]) {
         const Wp = poseWith(sc, f, t);
-        const b = bboxOf(skinVerts(sc, g, Wp, 5));
-        const y0 = (b[1] - bbRaw[1]) * S;
+        const vs = skinVerts(sc, g, Wp, 5);
+        const y0 = (peMin(vs) - bbRaw[1]) * S;
+        const yc = (bboxOf(vs)[1] - bbRaw[1]) * S;
+        if (y0 < mn) mn = y0; if (y0 > mx) mx = y0;
         if (Math.abs(y0) > Math.abs(pior)) pior = y0;
+        if (Math.abs(yc) > Math.abs(piorCorpo)) piorCorpo = yc;
       }
       base[clipe] = pior;
+      // faixa [min,max] do pé no clipe: é ela que separa "desvio constante, offset
+      // constante resolve" de "raiz oscilando, offset troca afundar por flutuar".
+      faixa[clipe] = [mn, mx];
+      // corpo (bbox inteira) só quando diverge do pé: documenta rabo/quadril cruzando
+      // o chão com o pé plantado — outro defeito, que NÃO é "pé fora do chão".
+      if (Math.abs(piorCorpo - pior) > 0.05) corpo[clipe] = piorCorpo;
     }
+    base._faixa = faixa;
+    if (Object.keys(corpo).length) base._corpo = corpo;
   } else if (r._parts) {
     // 8 fases do ciclo, não 4: com 4 dá pra passar por sorte (as fases 0 e 0,5 têm as pernas
     // juntas, onde qualquer implementação acerta). O defeito mora nas fases intermediárias.
@@ -840,12 +873,16 @@ for (const r of registros) {
     }
     poseCharacter(r._parts, 0, 0, 0); r._group.updateMatrixWorld(true);
   }
-  const vals = Object.values(base).filter((v) => v != null && isFinite(v));
   // O SINAL importa e a régua não pode agregá-lo: y < 0 é pé DENTRO do chão (o boneco
   // afunda, e o tiro no pé some); y > 0 é o boneco FLUTUANDO (sombra de contato mentindo).
   // Um "pior desvio" em valor absoluto misturaria os dois num número só.
+  const faixa = base._faixa, corpo = base._corpo;
+  delete base._faixa; delete base._corpo;
+  const vals = Object.values(base).filter((v) => v != null && isFinite(v));
   r.C3 = {
     porPose: base,
+    faixaPorPose: faixa,
+    corpoPorPose: corpo,
     afunda: vals.length ? Math.min(0, ...vals) : null,
     flutua: vals.length ? Math.max(0, ...vals) : null,
     piorDesvio: vals.length ? vals.reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a), 0) : null,

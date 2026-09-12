@@ -1,0 +1,90 @@
+# ops-diag — A DIAGNOSE QUE EXPLICA, AGENDADA.
+#
+# O prod-watch (a cada 15 min) responde verde/vermelho para edge, banco e schema. Este
+# workflow roda a camada operacional inteira (tools/ops/diagnose.mjs — leia o cabeçalho
+# e docs/runbooks/operacao-autonoma.md): boot provado em navegador, /api/* N vezes
+# (5xx constante ≠ intermitente ≠ 4xx), assets no edge pelos registros que a produção
+# serve, partida sintética em todo mapa, e escreve causa provável, evidência, impacto e
+# próximo passo por achado. Antes dele, a explicação morava na cabeça de quem apagava
+# o incêndio às 2 h da manhã; agora mora no artifact e, em vermelho, numa issue.
+#
+# Só lê: GET/HEAD/Range e um navegador que barra toda escrita (a sonda nunca vira
+# jogador no painel nem abre issue crash-auto). No runner não há GPU: o FPS medido é do
+# SwiftShader e o relatório marca — a régua fps-baixo só vale com GPU.
+#
+# EM VERMELHO (saída 1: CRÍTICO ou ALTO): abre UMA issue `ops-diag` com o relatório, ou
+# comenta na que já está aberta. Verde (0) fecha a issue aberta. Inconclusivo (3: rede
+# do runner) fica só no log — não é verde nem vermelho.
+name: ops-diag
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ops-diag
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    # boot no SwiftShader leva ~25 s, a partida ~15 s, as 26 partidas sintéticas ~30 s;
+    # o resto é instalar o Chromium. 25 min é folga, não meta.
+    timeout-minutes: 25
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      # tools/ops é node puro; só o navegador precisa do Playwright (global, como o eval:boot
+      # e o portao-browser: o `npm root -g` é o caminho que browser.mjs procura).
+      - name: Playwright global (mesma versão do devDependency) + Chromium
+        run: |
+          npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
+          npx playwright install --with-deps chromium
+
+      - name: diagnose (produção + árvore + navegador + partida)
+        id: diag
+        run: |
+          set +e
+          node tools/ops/diagnose.mjs --browser --partida --sem-gpu --out=artifacts/ops/ci --timeout=20000
+          echo "codigo=$?" >> "$GITHUB_OUTPUT"
+
+      - name: relatório como artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ops-diag-${{ github.run_id }}
+          path: artifacts/ops/ci/
+          if-no-files-found: warn
+
+      # UMA issue por incêndio: comenta na aberta em vez de abrir outra a cada hora.
+      - name: vermelho → issue ops-diag (abre ou comenta)
+        if: steps.diag.outputs.codigo == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create ops-diag --description "diagnose operacional agendada reprovou" --color B60205 --force >/dev/null 2>&1 || true
+          n=$(gh issue list --label ops-diag --state open --json number -q '.[0].number')
+          { echo "Rodada ${{ github.run_id }} (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}):"; echo; cat artifacts/ops/ci/diagnostico.md; } > /tmp/corpo.md
+          if [ -n "$n" ]; then gh issue comment "$n" --body-file /tmp/corpo.md
+          else gh issue create --title "ops-diag: produção vermelha" --label ops-diag --body-file /tmp/corpo.md; fi
+
+      - name: verde → fecha a issue ops-diag aberta
+        if: steps.diag.outputs.codigo == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          n=$(gh issue list --label ops-diag --state open --json number -q '.[0].number')
+          [ -z "$n" ] || gh issue close "$n" --comment "Rodada ${{ github.run_id }} voltou a verde: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: inconclusivo (rede do runner) fica no log
+        if: steps.diag.outputs.codigo == '3'
+        run: echo "::warning::ops-diag inconclusivo — alvo inalcançável do runner ou régua que não terminou; ver o artifact"

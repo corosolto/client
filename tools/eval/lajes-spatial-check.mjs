@@ -1,28 +1,14 @@
-/* Contrato espacial roof-first comprado pelo teste do dono em 16/08/2026.
-
-   A R18 tinha materiais melhores, mas os dois times nasciam no chão, a travessia
-   curta ficava no beco, as três lajes eram ilhas e o corredor útil passava de 4 m.
-   As réguas anteriores ficaram verdes porque contavam objetos e declarações. Esta
-   sobe o Game real e mede o grafo, colisores, meshes de escada e física de pulo.
-
-   Procedência das faixas: references/favela/lajes-rio/FONTE.md. As medidas reais
-   publicadas de 0,6-1,5 m foram abertas até 1,4-2,4 m para o corpo de 0,76 m.
-
-   Mutantes:
-     spawn-beco   move um time para um ponto baixo realmente livre;
-     rota-unica   corta todas menos uma saída alta do nó inicial;
-     beco-avenida remove fachadas baixas dos colisores;
-     escada-reta  funde os lances da primeira escada;
-     pulo-global  aplica o impulso local também ao mapa-controle.
-*/
+/* V4: spawns e percurso principal no chão, três rotas simples e quatro escadas
+   retas. Aposentadoria explícita de LS1–5 roof-first: LAJES-V4-CONTRATOS-PLANO.md.
+   Mede Game, colisão e apoio; LS6 conserva integralmente o pulo local. */
 import { THREE, bootGame, initTextures } from './harness.mjs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1] || '';
-const conhecidos = new Set(['', 'spawn-beco', 'rota-unica', 'beco-avenida', 'escada-reta', 'pulo-global']);
+const conhecidos = new Set(['', 'spawn-alto', 'rota-unica', 'rota-bloqueada', 'escada-bloqueada', 'pulo-global']);
 if (!conhecidos.has(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
 const textures = initTextures();
-const game = bootGame('fy_lajes', { textures, bots: 0, seed: 16082026 });
+const game = bootGame('lajes', { textures, bots: 0, seed: 16082026 });
 const W = game.world;
 const { nodes = [], adj = [] } = W.waypoints || {};
 
@@ -32,30 +18,20 @@ const livre = (x, z, y) => {
   return Math.hypot(p.x - x, p.z - z) < 1e-3;
 };
 
-function pontoBaixoLivre() {
-  const B = W.bounds;
-  for (let z = B.minZ + 1; z <= B.maxZ - 1; z += 0.5) {
-    for (let x = B.minX + 1; x <= B.maxX - 1; x += 0.5) {
-      const y = W.groundHeightAt(x, z, 0.5);
-      if (y < 1 && livre(x, z, y)) return { x, z };
-    }
-  }
-  throw new Error('sem ponto baixo livre para o mutante spawn-beco');
-}
-
-if (mutante === 'spawn-beco') {
-  const p = pontoBaixoLivre();
-  for (const spawn of W.spawns.E) { spawn.x = p.x; spawn.z = p.z; }
+if(mutante==='spawn-alto') {
+  const n=nodes.find(n=>n.y>1&&livre(n.x,n.z,n.y));
+  if(!n)throw Error('MUTANTE NÃO APLICOU: laje livre ausente');
+  for(const spawn of W.spawns.E){spawn.x=n.x;spawn.z=n.z;}
 }
 
 const spawnY = Object.fromEntries(Object.entries(W.spawns || {}).map(([time, lista]) => [time,
-  lista.map((s) => W.groundHeightAt(s.x, s.z, 100))]));
+  lista.map((s) => game._spawnY(s.x, s.z))]));
 
-const nearest = (spawn, onlyHigh = false) => {
-  const sy = W.groundHeightAt(spawn.x, spawn.z, 100);
+const nearest = (spawn, onlyGround = false) => {
+  const sy = game._spawnY(spawn.x, spawn.z);
   let best = -1, dist = Infinity;
   for (let i = 0; i < nodes.length; i++) {
-    if (onlyHigh && nodes[i].y < 4) continue;
+    if (onlyGround && Math.abs(nodes[i].y)>1e-3) continue;
     const d = Math.hypot(nodes[i].x - spawn.x, nodes[i].z - spawn.z, nodes[i].y - sy);
     if (d < dist) { best = i; dist = d; }
   }
@@ -65,15 +41,15 @@ const nearest = (spawn, onlyHigh = false) => {
 const startSpawn = W.spawns.E?.[0], endSpawn = W.spawns.B?.[0];
 const start = startSpawn ? nearest(startSpawn).index : -1;
 const end = endSpawn ? nearest(endSpawn).index : -1;
-const highStart = startSpawn ? nearest(startSpawn, true) : { index: -1, dist: Infinity };
-const highEnd = endSpawn ? nearest(endSpawn, true) : { index: -1, dist: Infinity };
+const groundStart = startSpawn ? nearest(startSpawn, true) : { index: -1, dist: Infinity };
+const groundEnd = endSpawn ? nearest(endSpawn, true) : { index: -1, dist: Infinity };
 
-if (mutante === 'rota-unica' && highStart.index >= 0) {
-  const vizinhos = adj[highStart.index].filter((n) => nodes[n]?.y >= 4);
+if (mutante === 'rota-unica' && groundStart.index >= 0) {
+  const vizinhos = adj[groundStart.index].filter((n) => Math.abs(nodes[n]?.y)<1e-3);
   if (vizinhos.length < 2) throw new Error('mutante rota-unica não encontrou duas saídas para cortar');
   for (const vizinho of vizinhos.slice(1)) {
-    adj[highStart.index] = adj[highStart.index].filter((n) => n !== vizinho);
-    adj[vizinho] = adj[vizinho].filter((n) => n !== highStart.index);
+    adj[groundStart.index] = adj[groundStart.index].filter((n) => n !== vizinho);
+    adj[vizinho] = adj[vizinho].filter((n) => n !== groundStart.index);
   }
 }
 
@@ -100,9 +76,9 @@ function shortestPath(a, b) {
   return path;
 }
 
-function highNodeDisjointRoutes(source, sink) {
+function groundNodeDisjointRoutes(source, sink) {
   if (source < 0 || sink < 0) return 0;
-  const high = new Set(nodes.map((n, i) => n.y >= 4 ? i : -1).filter((i) => i >= 0));
+  const high = new Set(nodes.map((n, i) => Math.abs(n.y)<1e-3 ? i : -1).filter((i) => i >= 0));
   if (!high.has(source) || !high.has(sink)) return 0;
   const N = nodes.length * 2;
   const cap = Array.from({ length: N }, () => new Int8Array(N));
@@ -124,89 +100,50 @@ function highNodeDisjointRoutes(source, sink) {
 }
 
 const path = shortestPath(start, end);
-let total = 0, highLength = 0;
+let total = 0, groundLength = 0;
 for (let i = 1; i < path.length; i++) {
   const A = nodes[path[i - 1]], B = nodes[path[i]];
   const d = Math.hypot(B.x - A.x, B.z - A.z, B.y - A.y);
   total += d;
-  if (A.y >= 4 && B.y >= 4) highLength += d;
+  if (Math.abs(A.y)<1e-3 && Math.abs(B.y)<1e-3) groundLength += d;
 }
-const highShare = total ? highLength / total : 0;
+const groundShare = total ? groundLength / total : 0;
 
-if (mutante === 'beco-avenida') {
-  const antes = W.colliders.length;
-  W.colliders = W.colliders.filter((c) => !(c.minY <= 0.3 && c.maxY >= 1.8));
-  if (W.colliders.length === antes) throw new Error('mutante beco-avenida não removeu fachada');
+if(mutante==='rota-bloqueada') {
+  const r=W.design.routes.find(r=>r.name==='beco-oeste');
+  if(!r)throw Error('MUTANTE NÃO APLICOU: rota oeste ausente');
+  W.colliders.push({minX:-16,maxX:-14,minZ:-.3,maxZ:.3,minY:0,maxY:2});
 }
-
-const edgeWidths = [];
-const seen = new Set();
-const probeWall = (x, z, nx, nz, y, sign) => {
-  for (let d = 0.05; d <= 6; d += 0.05) if (!livre(x + nx * d * sign, z + nz * d * sign, y)) return d;
-  return 6;
-};
-/* JUNÇÃO não é trecho de beco: onde três corredores se encontram (boca de ramal, cotovelo
-   duplo) a sonda perpendicular corre corredor adentro e lê 8-12 m de "largura" fantasma.
-   A largura do contrato (FONTE.md) mede TRECHO entre curvas. Filtro de instrumento: nó de
-   grau ≥ 3 no térreo é junção; a aresta perto dele não entra na amostra. Teto intacto. */
-const juncoes = new Set();
-for (let i = 0; i < nodes.length; i++) {
-  if (nodes[i].y >= 1) continue;
-  const viz = (adj[i] || []).filter((n) => nodes[n]?.y < 1);
-  if (viz.length >= 3) { juncoes.add(i); continue; }
-  if (viz.length === 2) {   // cotovelo: trecho mede corredor reto, não a praça da curva
-    const A = nodes[viz[0]], B = nodes[viz[1]], C = nodes[i];
-    const ux = A.x - C.x, uz = A.z - C.z, vx = B.x - C.x, vz = B.z - C.z;
-    const dot = (ux * vx + uz * vz) / Math.max(1e-6, Math.hypot(ux, uz) * Math.hypot(vx, vz));
-    if (dot > -0.85) juncoes.add(i);
+const routeEvidence=W.design.routes.map(r=>{
+  const blocked=[];
+  for(let i=1;i<r.points.length;i++){
+    const a=r.points[i-1],b=r.points[i],steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/.19));
+    for(let k=0;k<=steps;k++){
+      const t=k/steps,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;
+      if(!livre(x,z,0)||Math.abs(W.groundHeightAt(x,z,0))>1e-3){blocked.push({x,z});break;}
+    }
   }
-}
-const pertoDeJuncao = (x, z) => {
-  for (const j of juncoes) if (Math.hypot(nodes[j].x - x, nodes[j].z - z) < 2.0) return true;
-  return false;
-};
-for (let a = 0; a < nodes.length; a++) for (const b of adj[a] || []) {
-  if (b <= a || nodes[a].y >= 1 || nodes[b]?.y >= 1) continue;
-  const key = `${a}:${b}`; if (seen.has(key)) continue; seen.add(key);
-  const A = nodes[a], B = nodes[b], dx = B.x - A.x, dz = B.z - A.z, len = Math.hypot(dx, dz);
-  if (len < 0.5) continue;
-  const straightAt = (center, other) => {
-    const neighbors = (adj[center] || []).filter((n) => n !== other && nodes[n]?.y < 1);
-    if (neighbors.length !== 1) return false;
-    const C = nodes[center], O = nodes[other], N = nodes[neighbors[0]];
-    const ux = O.x - C.x, uz = O.z - C.z, vx = N.x - C.x, vz = N.z - C.z;
-    return (ux * vx + uz * vz) / Math.max(1e-6, Math.hypot(ux, uz) * Math.hypot(vx, vz)) < -0.92;
-  };
-  if (!straightAt(a, b) || !straightAt(b, a)) continue;
-  const x = (A.x + B.x) / 2, z = (A.z + B.z) / 2, nx = -dz / len, nz = dx / len;
-  if (pertoDeJuncao(x, z)) continue;
-  if (!livre(x, z, 0)) continue;
-  const width = probeWall(x, z, nx, nz, 0, -1) + probeWall(x, z, nx, nz, 0, 1) + 0.76;
-  edgeWidths.push({ width, x, z });
-}
-edgeWidths.sort((a, b) => a.width - b.width);
-const percentile = (list, q) => list.length ? list[Math.min(list.length - 1, Math.floor((list.length - 1) * q))].width : Infinity;
-const w50 = percentile(edgeWidths, 0.5), w90 = percentile(edgeWidths, 0.9);
-
-if (mutante === 'escada-reta') {
-  const stair = (W.staircases || W.stairs)?.[0];
-  if (!stair?.flights?.length || stair.flights.length < 2) throw new Error('mutante escada-reta sem dois lances para fundir');
-  stair.flights = [{ steps: stair.flights.reduce((n, f) => n + f.steps, 0), direction: stair.flights[0].direction }];
-  stair.landings = [];
-}
-const stairMeshes = new Map();
-W.root.traverse((object) => {
-  const id = object.userData?.lajesStair;
-  if (id) stairMeshes.set(id, (stairMeshes.get(id) || 0) + 1);
+  return {name:r.name,blocked};
 });
-const stairEvidence = (W.staircases || W.stairs || []).map((s) => {
-  const width = Number.isFinite(s.width) ? s.width : Math.min(s.x1 - s.x0, s.z1 - s.z0);
-  const turns = (s.flights || []).slice(1).some((flight, i) => {
-    const a = s.flights[i].direction, b = flight.direction;
-    return a && b && a[0] * b[0] + a[1] * b[1] < 0.5;
-  });
-  return { name: s.nome, width, flights: s.flights?.length || 0, landings: s.landings?.length || 0,
-    maxSteps: Math.max(0, ...(s.flights || []).map((f) => f.steps)), turns, meshes: stairMeshes.get(s.nome) || 0 };
+const probeWall=(x,z,y,sign)=>{
+  for(let d=.025;d<=3;d+=.025)if(!livre(x+d*sign,z,y))return d;
+  return 3;
+};
+if(mutante==='escada-bloqueada'){
+  const s=W.design.stairs[0],z=s.z+s.dirZ*s.run/2;
+  if(!s)throw Error('MUTANTE NÃO APLICOU: escada ausente');
+  W.colliders.push({minX:s.x-s.width/2,maxX:s.x+s.width/2,minZ:z-.3,maxZ:z+.3,minY:s.height/2,maxY:s.height+1.5});
+}
+const stairEvidence=W.design.stairs.map(s=>{
+  let supported=true,bodyFree=true;const heights=[];
+  for(let i=0;i<s.steps;i++){
+    const z=s.z+s.dirZ*(i+.5)*s.run/s.steps,y=W.groundHeightAt(s.x,z,100);
+    heights.push(y);if(Math.abs(y-(i+1)*s.height/s.steps)>1e-3)supported=false;
+    if(!livre(s.x,z,y))bodyFree=false;
+  }
+  const z=s.z+s.dirZ*(Math.floor(s.steps/2)+.5)*s.run/s.steps,y=W.groundHeightAt(s.x,z,100);
+  const width=probeWall(s.x,z,y,-1)+probeWall(s.x,z,y,1)+.76;
+  return {name:s.name,width,steps:heights.length,supported,bodyFree};
 });
 
 function jumpApex(g) {
@@ -234,23 +171,16 @@ if (mutante === 'pulo-global') {
 }
 const lajesApex = jumpApex(game), controlApex = jumpApex(control);
 
-const highRoutes = highNodeDisjointRoutes(highStart.index, highEnd.index);
-const stairsOk = stairEvidence.length >= 3 && stairEvidence.every((s) => s.width >= 1.10 && s.width <= 1.40
-  && s.flights >= 2 && s.landings >= 1 && s.maxSteps <= 16 && s.turns && s.meshes >= s.flights);
+const groundRoutes = groundNodeDisjointRoutes(groundStart.index, groundEnd.index);
+const stairsOk=stairEvidence.length===4&&stairEvidence.every(s=>s.steps===18&&s.width>=2.2&&s.supported&&s.bodyFree);
 const checks = [
-  ['LS1', 'os dois times nascem nas lajes', Object.keys(spawnY).length >= 2 && Object.values(spawnY).flat().every((y) => y >= 4),
-    Object.entries(spawnY).map(([t, ys]) => `${t} ${ys.map((y) => y.toFixed(2)).join('/')}`).join(' · ')],
-  ['LS2', 'duas rotas superiores independentes ligam os spawns', highRoutes >= 2 && highStart.dist <= 3 && highEnd.dist <= 3,
-    `${highRoutes}/2 rotas · encaixe ${highStart.dist.toFixed(2)}/${highEnd.dist.toFixed(2)} m`],
-  ['LS3', 'a travessia curta é roof-first', highShare >= 0.70, `${(highShare * 100).toFixed(1)}% de ${total.toFixed(1)} m acima de 4 m`],
-  ['LS4', 'becos físicos são estreitos sem impedir o corpo', edgeWidths.length >= 12 && w50 >= 1.40 && w50 <= 1.90 && w90 <= 2.40,
-    `${edgeWidths.length} cortes · p50 ${w50.toFixed(2)} m · p90 ${w90.toFixed(2)} m`],
-  ['LS5', 'escadas têm dois lances, patamar, giro e encaixe', stairsOk,
-    stairEvidence.map((s) => `${s.name}:${s.width.toFixed(2)}m/${s.flights}L/${s.landings}P/${s.meshes}M`).join(' · ') || 'sem escada medida'],
-  ['LS6', 'pulo maior existe só em Lajes', lajesApex >= 0.75 && lajesApex <= 0.90 && controlApex >= 0.58 && controlApex <= 0.64,
-    `Lajes ${lajesApex.toFixed(3)} m · controle ${controlApex.toFixed(3)} m`],
+  ['LS1','os dois times nascem no chão',Object.keys(spawnY).length===2&&Object.values(spawnY).flat().length===8&&Object.values(spawnY).flat().every(y=>Math.abs(y)<1e-3),JSON.stringify(spawnY)],
+  ['LS2','duas rotas térreas independentes ligam os spawns',groundRoutes>=2&&groundStart.dist<=3&&groundEnd.dist<=3,`${groundRoutes}/2 rotas · encaixe ${groundStart.dist.toFixed(2)}/${groundEnd.dist.toFixed(2)}m`],
+  ['LS3','travessia curta pelo térreo',groundShare>=.70,`${(groundShare*100).toFixed(1)}% de ${total.toFixed(1)}m no chão`],
+  ['LS4','três percursos autorados apoiados e livres para o corpo',routeEvidence.length===3&&routeEvidence.every(r=>!r.blocked.length),JSON.stringify(routeEvidence)],
+  ['LS5','quatro escadas retas com pisos apoiados e largura útil≥2,2m',stairsOk,JSON.stringify(stairEvidence)],
+  ['LS6','pulo maior existe só em Lajes',lajesApex>=.75&&lajesApex<=.90&&controlApex>=.58&&controlApex<=.64,`Lajes ${lajesApex.toFixed(3)}m · controle ${controlApex.toFixed(3)}m`],
 ];
-
 let falhas = 0;
 for (const [id, desc, ok, evidence] of checks) {
   if (!ok) falhas++;

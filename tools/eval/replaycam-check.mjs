@@ -1,137 +1,155 @@
 #!/usr/bin/env node
 /* ============================================================================
-   replaycam-check.mjs — A REPLAY CAM DO ABATE PERFEITO (PR #364)
+   replaycam-check.mjs — O HEADSHOT NÃO PODE TIRAR A CÂMERA DA MÃO DO JOGADOR
    ----------------------------------------------------------------------------
-   POR QUE EXISTE
-   O #364 põe câmera orbital e hit-stop no headshot do JOGADOR — mudança sentida no
-   corpo, em cima de uma base onde 98% das sessões roda abaixo de 30 FPS. Entrou sem
-   régua: nada media se dispara, se termina, se devolve o FOV ou se o kill-switch
-   desliga. Feature de sensação sem régua é opinião com commit.
+   POR QUE ESTA RÉGUA MUDOU DE LADO
+   O #364 pôs câmera orbital + hit-stop no headshot do JOGADOR, e a versão anterior
+   deste arquivo media se a replay DISPARAVA, se terminava e se devolvia o FOV. O dono
+   pediu o efeito de volta pra caixa: num FPS de rodada, ser arrancado da primeira
+   pessoa 1,36 s depois de um abate é perder o duelo seguinte — e o abate perfeito já
+   tem feedback (hitmarker vermelho, número de dano, killfeed, locutor).
+
+   Apagar a feature sem régua é só empurrar o problema: o próximo agente relê o #364,
+   acha bonito e repõe. Então a régua continua existindo, medindo o CONTRÁRIO.
 
    O QUE ELA MEDE (executando o Game de verdade, sem navegador)
-   RC1 headshot do jogador ARMA a replay; abate de bot e abate sem headshot NÃO armam.
-   RC2 hit-stop: durante a janela o tempo de jogo anda a ~18% do tempo real, e a janela
-       dura 0,2 s REAIS — o acumulador tem de usar dt cru, senão em 30 FPS ela dobra.
-   RC3 a replay termina sozinha e devolve o FOV (senão o jogador fica presoem câmera de
-       terceira pessoa com o FOV do slowmo).
-   RC4 `?replaycam=0` desliga: sem kill-switch, regressão de sensação não tem saída.
+   HS1 depois de um headshot do jogador a CÂMERA continua onde estava: mesma posição,
+       mesma rotação e mesmo FOV, quadro a quadro, por 2 s.
+   HS2 o relógio do jogo anda 1:1 com o tempo real depois do headshot — nada de
+       hit-stop escalando o dt (era 18% por 0,2 s reais).
+   HS3 o viewmodel e a mira continuam VISÍVEIS: a replay escondia os dois, e é isso que
+       transformava o efeito em "perdi o controle".
+   HS4 o abate segue contando: remover o efeito não pode remover o abate. É a cláusula
+       que impede o conserto preguiçoso (matar o `_kill` inteiro fica verde em HS1-3).
 
-   NÚMERO MEDIDO (21/08/2026): a replay dura ~1,36 s REAIS, não os 1,2 s do REPLAY_DUR —
-   `rc.t` acumula o dt JÁ ESCALADO, então o hit-stop estica a própria replay. Não é
-   defeito, é consequência; a régua fixa a faixa para a conta não mudar sem alguém ver.
+   MEDIDO NA ÁRVORE ANTES DO CONSERTO (praca_poderes, seed 4242, 4 bots):
+     câmera saltava 3,54 m no 1º quadro depois do headshot e o FOV ia de 70 para 50;
+     em 0,200 s reais o relógio do jogo andava 0,036 s.
 
-   Mutantes: sem-gatilho, sem-fim, sem-killswitch, hitstop-escalado.
+   Mutantes (repõem o defeito exato que a régua tem de pegar):
+     orbita   — devolve a câmera orbital na vítima
+     hitstop  — devolve o dt escalado por 0,2 s reais
+     esconde  — devolve o "some o viewmodel e a mira"
+     sem-kill — abate deixa de contar (prova que HS4 morde)
    Uso: node tools/eval/replaycam-check.mjs [--mutante=<nome>]
    ============================================================================ */
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['sem-gatilho', 'sem-fim', 'sem-killswitch', 'hitstop-escalado'];
-if (MUT && !MUTANTES.includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
+const MUTANTES = ['orbita', 'hitstop', 'esconde', 'sem-kill'];
+if (MUT && !MUTANTES.includes(MUT)) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
-process.env.SIM_QS = MUT === 'sem-killswitch' ? '' : process.env.SIM_QS || '';
 const h = await import('./harness.mjs');
 
-/* Os mutantes trocam o COMPORTAMENTO na classe carregada — é o defeito que a régua tem de
-   pegar, não um texto que ela lê. `sem-killswitch` mora no SIM_QS, logo acima. */
-if (MUT === 'sem-gatilho') {
-  const orig = h.Game.prototype._kill;
-  h.Game.prototype._kill = function (...a) { const r = orig.apply(this, a); this._replayCam = null; return r; };
-} else if (MUT === 'sem-fim') {
-  const orig = h.Game.prototype._updateReplayCam;
-  h.Game.prototype._updateReplayCam = function (dt) { const rc = this._replayCam; orig.call(this, dt); if (rc) this._replayCam = rc; };
-} else if (MUT === 'hitstop-escalado') {
-  const orig = h.Game.prototype.update;
+/* Os mutantes recolocam o COMPORTAMENTO removido na classe já carregada — é o defeito
+   que a régua tem de pegar, não um texto que ela lê. */
+if (MUT === 'orbita' || MUT === 'hitstop' || MUT === 'esconde') {
+  const origKill = h.Game.prototype._kill;
+  h.Game.prototype._kill = function (ent, attacker, weap, head) {
+    const r = origKill.call(this, ent, attacker, weap, head);
+    if (head && attacker === this.player && ent.pos) this._replayCam = { t: 0, victimPos: ent.pos.clone(), killerYaw: attacker.yaw };
+    return r;
+  };
+  /* O hit-stop escalava o dt ANTES do quadro; a órbita e o "some tudo" vinham DEPOIS de
+     `_updatePlayer` — que reescreve câmera, viewmodel e mira todo quadro. Um mutante que
+     aplicasse o efeito antes seria apagado pelo próprio jogo e passaria verde por engano. */
+  const origUpd = h.Game.prototype.update;
   h.Game.prototype.update = function (dt, render) {
     const rc = this._replayCam;
-    if (rc && (rc._wallT || 0) < 0.2) rc._wallT = (rc._wallT || 0) - dt * (1 - 0.18);   // acumula o dt ESCALADO
-    return orig.call(this, dt, render);
+    if (rc && MUT === 'hitstop') {
+      rc._wallT = (rc._wallT || 0) + dt;
+      if (rc._wallT < 0.2) dt *= 0.18;
+    }
+    const r = origUpd.call(this, dt, render);
+    if (rc) {
+      rc.t = (rc.t || 0) + dt;
+      if (rc.t >= 1.2) this._replayCam = null;
+      else if (MUT === 'orbita') {
+        this.camera.position.set(rc.victimPos.x + 2.6, rc.victimPos.y + 1.7, rc.victimPos.z);
+        this.camera.rotation.set(0, rc.killerYaw + Math.PI, 0);
+        this.camera.fov = 50;
+        this.camera.updateProjectionMatrix();
+      } else if (MUT === 'esconde') {
+        if (this.vm?.root) this.vm.root.visible = false;
+        if (this.el.crosshair) this.el.crosshair.style.display = 'none';
+      }
+    }
+    return r;
+  };
+} else if (MUT === 'sem-kill') {
+  const origKill = h.Game.prototype._kill;
+  h.Game.prototype._kill = function (ent, attacker, weap, head) {
+    const antes = attacker ? attacker.kills : 0;
+    const r = origKill.call(this, ent, attacker, weap, head);
+    if (attacker) attacker.kills = antes;
+    return r;
   };
 }
 
 const DT = 1 / 60;
 const falhas = [];
-let medido = '';
 const num = (v, n = 3) => Number(v).toFixed(n);
 
-function novoJogo() {
-  const textures = h.initTextures(h.renderer);
-  return h.bootGame('praca_poderes', { textures, seed: 4242, bots: 4 });
-}
+const textures = h.initTextures(h.renderer);
+function novoJogo() { return h.bootGame('praca_poderes', { textures, seed: 4242, bots: 4 }); }
 /* Vítima de mentira com o mínimo que o `_kill` toca: sem isto o teste dependeria de o bot
-   certo estar vivo na posição certa, e mediria o sorteio em vez da replay. */
+   certo estar vivo na posição certa, e mediria o sorteio em vez do efeito. */
 function alvo(g) {
   const b = g.bots.find((x) => x.alive && x.team === 'B');
   if (b) { b.hp = 1; return b; }
   return null;
 }
 
-// ---- RC1: quem arma a replay ----
-{
-  const g = novoJogo();
-  const vitima = alvo(g);
-  if (!vitima) falhas.push('RC1 não achei bot vivo do time B para medir');
-  else {
-    g._replayCam = null;
-    g._kill(vitima, g.player, 'AWP', true);
-    const armouHeadshot = !!g._replayCam;
+const g = novoJogo();
+/* AQUECIMENTO OBRIGATÓRIO. O Game nasce com a câmera na origem e só o primeiro
+   `_updatePlayer` a leva pro olho do jogador — 62,90 m de salto no quadro 1, que não tem
+   nada a ver com headshot. Medir a partir do estado NÃO aquecido reprovava de graça (e
+   pior: passaria a reprovar por outro motivo se o spawn mudasse de lugar). */
+g.state = 'live';
+for (let i = 0; i < 90; i++) g.update(DT, false);
 
-    const g2 = novoJogo(); const v2 = alvo(g2);
-    g2._replayCam = null;
-    g2._kill(v2, g2.player, 'AWP', false);
-    const armouSemHead = !!g2._replayCam;
+const vitima = alvo(g);
+if (!vitima) {
+  falhas.push('HS0 não achei bot vivo do time B para medir');
+} else {
+  const cam = g.camera;
+  const p0 = cam.position.clone(), r0 = { x: cam.rotation.x, y: cam.rotation.y, z: cam.rotation.z }, fov0 = cam.fov;
+  const vmVisivel0 = g.vm?.root ? g.vm.root.visible : true;
+  const killsAntes = g.player.kills;
 
-    const g3 = novoJogo(); const v3 = alvo(g3);
-    const botAtacante = g3.bots.find((x) => x.alive && x.team === 'E' && !x.isPlayer);
-    g3._replayCam = null;
-    if (botAtacante) g3._kill(v3, botAtacante, 'AWP', true);
-    const armouBot = !!g3._replayCam;
-
-    if (!armouHeadshot) falhas.push('RC1 headshot do jogador NÃO armou a replay');
-    if (armouSemHead) falhas.push('RC1 abate SEM headshot armou a replay (a promessa é abate perfeito)');
-    if (armouBot) falhas.push('RC1 abate de BOT armou a replay do jogador');
-  }
-}
-
-// ---- RC2/RC3: hit-stop em tempo real, fim da replay e FOV devolvido ----
-{
-  const g = novoJogo();
-  const vitima = alvo(g);
-  const fovAntes = g.camera.fov;
   g._kill(vitima, g.player, 'AWP', true);
-  if (!g._replayCam) falhas.push('RC2 sem replay armada não dá para medir o hit-stop');
-  else {
-    const t0 = g.time;
-    let real = 0, tempoNoSlowmo = null, duracaoReal = null;
-    for (let i = 0; i < 60 * 5 && duracaoReal === null; i++) {
-      g.update(DT, false);
-      real += DT;
-      if (tempoNoSlowmo === null && real >= 0.2 - 1e-9) tempoNoSlowmo = g.time - t0;
-      if (!g._replayCam) duracaoReal = real;
-    }
-    // 0,2 s reais a 18% => ~0,036 s de jogo. Faixa larga o bastante para o passo do laço.
-    if (tempoNoSlowmo === null || tempoNoSlowmo > 0.06)
-      falhas.push(`RC2 hit-stop não segurou o tempo: ${num(tempoNoSlowmo)}s de jogo em 0,200s reais (esperado ~0,036s)`);
-    if (duracaoReal === null) falhas.push('RC3 a replay NÃO terminou em 5 s reais — jogador preso na câmera orbital');
-    else if (duracaoReal < 1.2 || duracaoReal > 1.6)
-      falhas.push(`RC3 duração real da replay fora da faixa medida: ${num(duracaoReal)}s (esperado 1,2-1,6s)`);
-    medido = `hit-stop ${num(tempoNoSlowmo)}s de jogo em 0,200s reais · replay ${num(duracaoReal)}s reais`;
-    if (g.camera.fov !== fovAntes)
-      falhas.push(`RC3 FOV não voltou depois da replay: ${g.camera.fov} (era ${fovAntes})`);
-  }
-}
 
-// ---- RC4: kill-switch ----
-{
-  const { execFileSync } = await import('node:child_process');
-  const saida = execFileSync(process.execPath, [new URL('./replaycam-probe.mjs', import.meta.url).pathname], {
-    encoding: 'utf8', env: { ...process.env, SIM_QS: MUT === 'sem-killswitch' ? '' : '?replaycam=0' },
-  }).trim().split('\n').pop().trim();   // o arnês escreve ruído no stdout; vale a última linha
-  if (saida !== 'desarmada') falhas.push(`RC4 ?replaycam=0 não desligou a replay (sonda devolveu "${saida}")`);
+  if (g.player.kills !== killsAntes + 1)
+    falhas.push(`HS4 o headshot deixou de contar abate: ${killsAntes} -> ${g.player.kills}`);
+
+  const t0 = g.time;
+  let real = 0, saltoPos = 0, saltoRot = 0, piorFov = 0, vmSumiu = false, miraSumiu = false;
+  for (let i = 0; i < 120; i++) {
+    g.update(DT, false);
+    real += DT;
+    saltoPos = Math.max(saltoPos, cam.position.distanceTo(p0));
+    saltoRot = Math.max(saltoRot, Math.abs(cam.rotation.x - r0.x) + Math.abs(cam.rotation.y - r0.y) + Math.abs(cam.rotation.z - r0.z));
+    piorFov = Math.max(piorFov, Math.abs(cam.fov - fov0));
+    if (vmVisivel0 && g.vm?.root && !g.vm.root.visible) vmSumiu = true;
+    if (g.el.crosshair && g.el.crosshair.style.display === 'none') miraSumiu = true;
+  }
+  const andouJogo = g.time - t0;
+
+  // A câmera acompanha o jogador parado: sobra respiração/bob, não corte de plano.
+  if (saltoPos > 0.25) falhas.push(`HS1 a câmera saiu do lugar depois do headshot: ${num(saltoPos)} m (teto 0,250 m)`);
+  if (saltoRot > 0.25) falhas.push(`HS1 a câmera girou sozinha depois do headshot: ${num(saltoRot)} rad (teto 0,250 rad)`);
+  if (piorFov > 0.5) falhas.push(`HS1 o FOV mudou sozinho depois do headshot: Δ${num(piorFov)}° (teto 0,5°)`);
+  if (Math.abs(andouJogo - real) > 0.02)
+    falhas.push(`HS2 hit-stop ainda escala o tempo: ${num(andouJogo)}s de jogo em ${num(real)}s reais`);
+  if (vmSumiu) falhas.push('HS3 o viewmodel sumiu depois do headshot (a replay escondia a arma)');
+  if (miraSumiu) falhas.push('HS3 a mira sumiu depois do headshot (a replay escondia o crosshair)');
+
+  var medido = `câmera Δ${num(saltoPos)} m · Δ${num(saltoRot)} rad · ΔFOV ${num(piorFov)}° · relógio ${num(andouJogo)}s em ${num(real)}s reais`;
 }
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
-if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m RC replay cam: só no headshot do jogador, termina devolvendo o FOV, ?replaycam=0 desliga — ${medido}`);
-if (MUT && !falhas.length) {
+if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m HS headshot não mexe na câmera, no relógio nem esconde a arma, e segue contando abate — ${medido}`);
+const mutacaoCega = !!MUT && !falhas.length;
+if (mutacaoCega) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
-  falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso
+  falhas.push('mutacao-cega');
 }
 process.exit(falhas.length ? 1 : 0);

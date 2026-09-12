@@ -62,7 +62,7 @@ const PREVIEWS = 'public/img/map-previews';
 /* Os ids antigos, escritos aqui de propósito: é a lista contra a qual o M2 cobra a
    cobertura do ALIAS_MAPA. Se um mapa novo for renomeado no futuro, ele entra aqui E no
    alias — e a régua reprova enquanto só um dos dois tiver sido feito. */
-const IDS_ANTIGOS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
+const IDS_ANTIGOS = ['fy_mansao', 'awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
 
 /* A FORMA de um id do Counter-Strike, e não uma lista de nomes. Lista de nome fechada
    envelhece — foi exatamente assim que o `[PBUCF]` dentro de um regex cegou o C3 do
@@ -78,7 +78,7 @@ const IDS_ANTIGOS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_
 const FORMA_CS = /['"`]((?:fy|de|aim|awp)_[a-z0-9_]+)['"`]/g;
 
 const SEM_VARREDURA = [
-  'node_modules', '.git', 'dist', '.vercel', 'graphify-out', 'historico',
+  'node_modules', '.git', 'dist', '.vercel', 'graphify-out', 'historico', 'artifacts',
   /* Worktrees são checkouts paralelos de OUTRAS branches — não são código vivo
      da árvore atual. Sem isto, a régua escaneia `.worktrees/<branch-velha>/` e
      acusa ids antigos que só existem lá, virando vermelha sem defeito. */

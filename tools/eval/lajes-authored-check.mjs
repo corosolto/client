@@ -36,7 +36,7 @@ const lowqMantemArquitetura = /const\s+ARCHITECTURE_ON\s*=\s*true/.test(mapSrc)
 const usaAssets = assets.length >= 4 && assets.every((id) => new RegExp(`['"]${id}['"]`).test(mapSrc));
 const temMarcos = ['ESCADARIA', 'BECO DO VARAL', 'LAJE DA CAIXA'].every((s) => mapSrc.includes(s));
 const temLoops = /export const LAJES_LOOPS\s*=\s*Object\.freeze\(\{[\s\S]*?beco[\s\S]*?laje[\s\S]*?\}\);/.test(mapSrc);
-const tresConexoes = connections.length >= 3;
+const conexoesV4 = connections.length === 6;
 const varalReal = assets.includes('lajes_varal') && /centerProp\s*\(\s*['"]lajes_varal['"]/.test(mapSrc);
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
@@ -58,7 +58,7 @@ const checks = [
   ['LA2', 'runtime não carrega casca nem horizonte radial rejeitados', semCasca, semCasca ? 'sem shell/horizon' : 'casca ou horizonte antigo reapareceu'],
   ['LA3', 'LOWQ conserva a arquitetura autorada', lowqMantemArquitetura, lowqMantemArquitetura ? 'arquitetura sempre ligada' : 'LOWQ ainda pode cair em geometria substituta'],
   ['LA4', 'kit autorado cobre arquitetura, massa e varal', usaAssets && glbsValidos, `${assets.length} assets · ${glbs.map((g) => `${g.id}:${g.existe && !g.erro ? `${g.triangulos}t` : 'inválido'}`).join(' · ')}`],
-  ['LA5', 'planta declara o Beco e três atalhos verticais pelas lajes', temLoops && tresConexoes, `${connections.length} conexões: ${connections.join(', ') || 'nenhuma'}`],
+  ['LA5', 'V4 declara circuito térreo, quatro escadas e duas pontes', temLoops && conexoesV4, `${connections.length} conexões: ${connections.join(', ') || 'nenhuma'}`],
   ['LA6', 'os três marcos nomeiam o percurso e as bandeiras', temMarcos, temMarcos ? 'Escadaria · Beco do Varal · Laje da Caixa' : 'marco ausente'],
   ['LA7', 'varal é o GLB de referência integrado', varalReal, varalReal ? 'lajes_varal colocado no runtime' : 'varal autorado ausente'],
 ];

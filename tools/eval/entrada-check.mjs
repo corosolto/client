@@ -69,22 +69,22 @@ try {
   await page.goto(`${BASE}/?debug=1&assetcheck=1`, { waitUntil: 'load', timeout: 180000 });
   await page.locator('#splash-enter').waitFor({ state: 'visible', timeout: 90000 });
   // a ordem hostil do runner lento, forçada: o foco já está no menu quando a tecla chega
-  await page.evaluate(() => document.querySelector('.cs-item[data-act="jogar"]')?.focus());
+  // MULTIPLAYER é o primeiro item do menu (primeira instância, 30/08) — é nele que o
+  // gesto de entrada cairia se o guarda de ENTRADA_MS não existisse
+  await page.evaluate(() => document.querySelector('.cs-item[data-act="mp"]')?.focus());
   await page.keyboard.press('Enter');
   await page.waitForTimeout(1500);
 
   const estado = await page.evaluate(() => ({
     splash: !!document.getElementById('boot-splash'),
-    subHidden: document.getElementById('cs-modos')?.hidden,
-    expanded: document.querySelector('.cs-item[data-act="jogar"]')?.getAttribute('aria-expanded'),
     ativados: [...document.querySelectorAll('.cs-item[aria-current="true"], .cs-item.is-open')].map((b) => b.dataset.act),
-    paineis: [...document.querySelectorAll('#settings-panel,#howto-panel,#feedback-panel,#ranking-panel')]
+    paineis: [...document.querySelectorAll('#settings-panel,#howto-panel,#feedback-panel,#ranking-panel,#mp-panel')]
       .filter((p) => !p.classList.contains('hidden')).map((p) => p.id),
   }));
 
   if (estado.splash) falhas.push('ENTRADA1a a splash NÃO saiu com o gesto de entrada (jogador preso na porta)');
-  if (estado.subHidden === false || estado.expanded === 'true' || estado.ativados.length)
-    falhas.push(`ENTRADA1b o gesto de entrada APERTOU o menu por baixo (ativados: ${estado.ativados.join(',') || 'submenu aberto'})`);
+  if (estado.ativados.length)
+    falhas.push(`ENTRADA1b o gesto de entrada APERTOU o menu por baixo (ativados: ${estado.ativados.join(',')})`);
   if (estado.paineis.length)
     falhas.push(`ENTRADA1b o gesto de entrada ABRIU painel sozinho (${estado.paineis.join(',')})`);
 } catch (e) {

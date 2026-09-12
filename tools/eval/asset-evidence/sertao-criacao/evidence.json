@@ -1,0 +1,965 @@
+{
+  "capturedAt": "2026-09-06T04:54:26.171Z",
+  "runtime": {
+    "checks": {
+      "LG1": true,
+      "LG2": true,
+      "LG3": true,
+      "LG4": true,
+      "LG5": true,
+      "LG6": true,
+      "LG7": true,
+      "LG8": true
+    },
+    "samples": [
+      {
+        "quality": "med",
+        "presence": [
+          {
+            "type": "goat",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          },
+          {
+            "type": "goat",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          },
+          {
+            "type": "hen",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          },
+          {
+            "type": "chick",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          },
+          {
+            "type": "chick",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          },
+          {
+            "type": "chick",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          }
+        ],
+        "deformation": [
+          0.1513269389007294,
+          0.1577608740923094,
+          0.03953964932149495,
+          0.013756141632241042,
+          0.010527022694341246,
+          0.014873083595595879
+        ],
+        "grounds": [
+          {
+            "min": 2.706134938787961e-10,
+            "max": 0.004305244136911337
+          },
+          {
+            "min": 2.516704382849731e-10,
+            "max": 0.0040038770473275614
+          },
+          {
+            "min": 2.171871069957587e-09,
+            "max": 0.0008219203366024053
+          },
+          {
+            "min": 5.964547811029536e-10,
+            "max": 0.0001235745794431702
+          },
+          {
+            "min": 5.964547811029536e-10,
+            "max": 0.00012357457944317714
+          },
+          {
+            "min": 5.964547811029536e-10,
+            "max": 0.0001235745794431702
+          }
+        ],
+        "distance": [
+          11.090945872135467,
+          7.88234051210654,
+          7.406507386696577,
+          7.406120368807181,
+          7.40500513576928,
+          7.403385200374631
+        ],
+        "blocked": 0,
+        "maxPush": 0,
+        "observed": 14400,
+        "minObjective": 7.645742273265933,
+        "report": {
+          "animals": 6,
+          "missing": [],
+          "meshes": 7,
+          "modelMeshes": 6,
+          "contactPasses": 1,
+          "contactInstances": 6,
+          "triangles": 24240,
+          "casters": 0,
+          "low": false
+        },
+        "reset": true,
+        "solid": 0,
+        "contactDarkenedPixels": 82,
+        "disposal": {
+          "detached": true,
+          "releases": 3,
+          "bones": 6,
+          "rigReleases": 6,
+          "cacheReleases": 0,
+          "positionsRetained": true
+        }
+      },
+      {
+        "quality": "low",
+        "presence": [
+          {
+            "type": "goat",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          },
+          {
+            "type": "hen",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          },
+          {
+            "type": "chick",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          },
+          {
+            "type": "chick",
+            "meshes": 1,
+            "attached": true,
+            "clips": [
+              "Idle",
+              "Walk"
+            ]
+          }
+        ],
+        "deformation": [
+          0.1513269389007294,
+          0.03953964932149495,
+          0.013756141632241042,
+          0.010527022694341246
+        ],
+        "grounds": [
+          {
+            "min": 2.706134938787961e-10,
+            "max": 0.004305244136911337
+          },
+          {
+            "min": 2.171871069957587e-09,
+            "max": 0.0008219203366024053
+          },
+          {
+            "min": 5.964547811029536e-10,
+            "max": 0.0001235745794431702
+          },
+          {
+            "min": 5.964547811029536e-10,
+            "max": 0.00012357457944317714
+          }
+        ],
+        "distance": [
+          11.090945872135467,
+          7.406507386696577,
+          7.406120368807181,
+          7.40500513576928
+        ],
+        "blocked": 0,
+        "maxPush": 0,
+        "observed": 9600,
+        "minObjective": 7.645742273265933,
+        "report": {
+          "animals": 4,
+          "missing": [],
+          "meshes": 5,
+          "modelMeshes": 4,
+          "contactPasses": 1,
+          "contactInstances": 4,
+          "triangles": 16256,
+          "casters": 0,
+          "low": true
+        },
+        "reset": true,
+        "solid": 0,
+        "contactDarkenedPixels": 74,
+        "disposal": {
+          "detached": true,
+          "releases": 3,
+          "bones": 4,
+          "rigReleases": 4,
+          "cacheReleases": 0,
+          "positionsRetained": true
+        }
+      }
+    ],
+    "servedAssets": [
+      {
+        "quality": "med",
+        "name": "cabra",
+        "status": 200,
+        "sha256": "a89410b7f899a14e19d8955cd5935e2222b3f764d36abc48f42f59e68eac0eea"
+      },
+      {
+        "quality": "med",
+        "name": "galinha",
+        "status": 200,
+        "sha256": "d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17"
+      },
+      {
+        "quality": "med",
+        "name": "pintinho",
+        "status": 200,
+        "sha256": "a2f144c8b9de0ff140a2cde29fccc619dd6a2620b7b62d1948b52d94e924bbc0"
+      },
+      {
+        "quality": "low",
+        "name": "cabra",
+        "status": 200,
+        "sha256": "a89410b7f899a14e19d8955cd5935e2222b3f764d36abc48f42f59e68eac0eea"
+      },
+      {
+        "quality": "low",
+        "name": "galinha",
+        "status": 200,
+        "sha256": "d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17"
+      },
+      {
+        "quality": "low",
+        "name": "pintinho",
+        "status": 200,
+        "sha256": "a2f144c8b9de0ff140a2cde29fccc619dd6a2620b7b62d1948b52d94e924bbc0"
+      }
+    ],
+    "errors": [],
+    "failed": []
+  },
+  "assets": {
+    "galinha": {
+      "file": "public/models/ambient/sertao_galinha.glb",
+      "sha256": "d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17",
+      "bytes": 498484,
+      "triangles": 5078,
+      "vertices": 6153,
+      "meshes": 1,
+      "primitives": 1,
+      "materials": 1,
+      "images": [
+        {
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 128933,
+          "mime": "image/jpeg"
+        }
+      ],
+      "clips": [
+        {
+          "name": "Walk",
+          "duration_seconds": 0.800000011920929
+        },
+        {
+          "name": "Idle",
+          "duration_seconds": 3.200000047683716
+        }
+      ],
+      "foot_bones": [
+        "Foot_L",
+        "Foot_R"
+      ],
+      "bounds_gltf": [
+        [
+          -0.10561643540859222,
+          0,
+          -0.1771232932806015
+        ],
+        [
+          0.10561643540859222,
+          0.41999998688697815,
+          0.1771232634782791
+        ]
+      ],
+      "source_coordinate_set_matches_10um": true,
+      "source_coordinate_set_symmetric_difference": 0,
+      "source_max_nearest_coordinate_distance_m": 3.471096900704465e-08
+    },
+    "pintinho": {
+      "file": "public/models/ambient/sertao_pintinho.glb",
+      "sha256": "a2f144c8b9de0ff140a2cde29fccc619dd6a2620b7b62d1948b52d94e924bbc0",
+      "bytes": 288400,
+      "triangles": 3190,
+      "vertices": 3786,
+      "meshes": 1,
+      "primitives": 1,
+      "materials": 1,
+      "images": [
+        {
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 54435,
+          "mime": "image/jpeg"
+        }
+      ],
+      "clips": [
+        {
+          "name": "Walk",
+          "duration_seconds": 0.5666666626930237
+        },
+        {
+          "name": "Idle",
+          "duration_seconds": 3.200000047683716
+        }
+      ],
+      "foot_bones": [
+        "Foot_L",
+        "Foot_R"
+      ],
+      "bounds_gltf": [
+        [
+          -0.04623287543654442,
+          0,
+          -0.07500000298023224
+        ],
+        [
+          0.04623287543654442,
+          0.15012358129024506,
+          0.07502423971891403
+        ]
+      ]
+    },
+    "cabra": {
+      "file": "public/models/ambient/sertao_cabra.glb",
+      "sha256": "a89410b7f899a14e19d8955cd5935e2222b3f764d36abc48f42f59e68eac0eea",
+      "bytes": 495836,
+      "triangles": 4790,
+      "vertices": 5792,
+      "meshes": 1,
+      "primitives": 1,
+      "materials": 1,
+      "images": [
+        {
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 131261,
+          "mime": "image/jpeg"
+        }
+      ],
+      "clips": [
+        {
+          "name": "Walk",
+          "duration_seconds": 1.399999976158142
+        },
+        {
+          "name": "Idle",
+          "duration_seconds": 3.200000047683716
+        }
+      ],
+      "foot_bones": [
+        "Foot_BL",
+        "Foot_BR",
+        "Foot_FL",
+        "Foot_FR"
+      ],
+      "bounds_gltf": [
+        [
+          -0.22495108842849731,
+          0,
+          -0.5499999523162842
+        ],
+        [
+          0.22495104372501373,
+          0.9277886152267456,
+          0.5499999523162842
+        ]
+      ],
+      "source_coordinate_set_matches_10um": false,
+      "source_coordinate_set_symmetric_difference": 42,
+      "source_max_nearest_coordinate_distance_m": 7.875782132290252e-08
+    },
+    "herd": {
+      "triangles": 24228,
+      "mesh_draw_calls": 6,
+      "unique_asset_bytes": 1282720
+    }
+  },
+  "motion": {
+    "phase": "livestock-controlled",
+    "map": "velho_oeste",
+    "bootMs": 12796,
+    "result": {
+      "frames": 3462,
+      "p50ms": 8.300000011920929,
+      "p95ms": 10.100000023841858,
+      "distance": 65.51215384207237,
+      "pathNodes": 25,
+      "reached": 14,
+      "positions": [
+        {
+          "t": 506.10000002384186,
+          "x": 12.889504048828416,
+          "z": 39.957995499931435,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 1010.6000000238419,
+          "x": 14.36940524744232,
+          "z": 38.450091788138224,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 1587.800000011921,
+          "x": 14.28543010312802,
+          "z": 36.52414215932459,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 2086.800000011921,
+          "x": 12.885505996260052,
+          "z": 34.97643120323501,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 2586.600000023842,
+          "x": 12.198380018135019,
+          "z": 33.096817447568846,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 3085.5,
+          "x": 12.116573484061085,
+          "z": 31.026804308630236,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 3585.7000000476837,
+          "x": 13.44984118435759,
+          "z": 29.425194409666418,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 4085.800000011921,
+          "x": 14.825328381387338,
+          "z": 27.855717175945756,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 4586.5,
+          "x": 15.237624417651604,
+          "z": 25.85650214807558,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 5086.600000023842,
+          "x": 15.045537852867069,
+          "z": 23.862354110067958,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 5586.700000047684,
+          "x": 13.670715743894759,
+          "z": 22.29292211564196,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 6087.600000023842,
+          "x": 12.285428875058884,
+          "z": 20.731056470701535,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 6586.5,
+          "x": 10.821842697927675,
+          "z": 19.245759204928877,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 7089.700000047684,
+          "x": 9.354383672821072,
+          "z": 17.76250391347267,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 7586.100000023842,
+          "x": 7.882414389997408,
+          "z": 16.28490779136687,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 8087.100000023842,
+          "x": 6.407131905580219,
+          "z": 14.808253693631402,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 8586.5,
+          "x": 4.931890882176427,
+          "z": 13.332148145065515,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 9085.600000023842,
+          "x": 3.459524067700581,
+          "z": 11.859659877350785,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 9611.300000011921,
+          "x": 1.9080715289113366,
+          "z": 10.308096779873662,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 10127.300000011921,
+          "x": 0.385781989466018,
+          "z": 8.785795661778074,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 10627.200000047684,
+          "x": -1.0901813798435076,
+          "z": 7.3098221302930675,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 11127.300000011921,
+          "x": -2.5664438685812474,
+          "z": 5.833557567463643,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 11627.900000035763,
+          "x": -4.0427069589524285,
+          "z": 4.357293605914405,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 12128.5,
+          "x": -4.787972188586524,
+          "z": 2.5133920711397844,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 12627.800000011921,
+          "x": -5.0161667279688285,
+          "z": 0.4464870919990228,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 13127.300000011921,
+          "x": -6.227078262306447,
+          "z": -1.1396660690013896,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 13627.700000047684,
+          "x": -7.673081038170539,
+          "z": -2.643846317926936,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 14127.400000035763,
+          "x": -9.137820417228086,
+          "z": -4.1291263410003785,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 14627.600000023842,
+          "x": -10.61079103893992,
+          "z": -5.606908394472319,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 15969.700000047684,
+          "x": -10.710069337444102,
+          "z": -5.706510826461366,
+          "state": "live",
+          "hp": 0
+        },
+        {
+          "t": 16628.5,
+          "x": -10.710069337444102,
+          "z": -5.706510826461366,
+          "state": "live",
+          "hp": 0
+        },
+        {
+          "t": 17128.100000023842,
+          "x": -10.710069337444102,
+          "z": -5.706510826461366,
+          "state": "live",
+          "hp": 0
+        },
+        {
+          "t": 17631.400000035763,
+          "x": -11.997628695005357,
+          "z": 40.43325810627963,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 18137.80000001192,
+          "x": -11.98875372708484,
+          "z": 38.312140773275885,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 18636.80000001192,
+          "x": -11.980093455639926,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 19137.400000035763,
+          "x": -11.971780997726393,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 19637,
+          "x": -11.96386148414226,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 20145.5,
+          "x": -11.956186000005246,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 20645.400000035763,
+          "x": -11.948982626795791,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 21147.200000047684,
+          "x": -11.942110129805528,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 21646.5,
+          "x": -11.935559766281628,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 22145.30000001192,
+          "x": -11.92930889589536,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 22644.700000047684,
+          "x": -11.923347423918928,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 23144.700000047684,
+          "x": -11.917665236097411,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 23645.200000047684,
+          "x": -11.912237387127105,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 24145.30000001192,
+          "x": -11.907057899002194,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 24645.400000035763,
+          "x": -11.90212128766288,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 25153,
+          "x": -11.897335914179001,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 25652.600000023842,
+          "x": -11.892854607670527,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 26155,
+          "x": -11.888566239048597,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 26653,
+          "x": -11.884482303063002,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 27154.900000035763,
+          "x": -11.880585922889596,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 27655.200000047684,
+          "x": -11.876871423410197,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 28153.100000023842,
+          "x": -11.873326063286692,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 28653.200000047684,
+          "x": -11.869945535235013,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 29152.900000035763,
+          "x": -11.866719598979968,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        },
+        {
+          "t": 29653.30000001192,
+          "x": -11.863643045743665,
+          "z": 37.605000000000004,
+          "state": "live",
+          "hp": 100
+        }
+      ],
+      "counts": {
+        "calls": 576.5909878682842,
+        "tris": 502805.93731946853,
+        "geometries": 671,
+        "textures": 440
+      },
+      "heap": 85284296,
+      "settings": {
+        "sens": 1,
+        "invertY": false,
+        "vol": 0.7,
+        "quality": "med",
+        "speech": true,
+        "map": "praca_poderes",
+        "wpnMode": "awp",
+        "bots": 4,
+        "rounds": 5,
+        "ctfRounds": 3,
+        "difficulty": "normal"
+      },
+      "roster": [
+        {
+          "id": "caminhoneiro",
+          "weapon": "awp",
+          "team": "B"
+        },
+        {
+          "id": "coach",
+          "weapon": "awp",
+          "team": "B"
+        },
+        {
+          "id": "farialimer",
+          "weapon": "awp",
+          "team": "B"
+        },
+        {
+          "id": "esquerdomacho",
+          "weapon": "awp",
+          "team": "E"
+        },
+        {
+          "id": "sindicato",
+          "weapon": "awp",
+          "team": "E"
+        },
+        {
+          "id": "mst",
+          "weapon": "awp",
+          "team": "E"
+        },
+        {
+          "id": "doutora",
+          "weapon": "awp",
+          "team": "E"
+        }
+      ],
+      "bots": 7,
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)"
+    },
+    "errors": []
+  },
+  "videoReceipt": "artifacts/sertao-astra/livestock-final/video-receipt.json",
+  "mutants": [
+    {
+      "name": "dispose-ausente",
+      "failed": [
+        "LG8"
+      ]
+    },
+    {
+      "name": "low-cheio",
+      "failed": [
+        "LG5"
+      ]
+    },
+    {
+      "name": "parede",
+      "failed": [
+        "LG3"
+      ]
+    },
+    {
+      "name": "patas-paradas",
+      "failed": [
+        "LG2"
+      ]
+    },
+    {
+      "name": "reset-ausente",
+      "failed": [
+        "LG6"
+      ]
+    },
+    {
+      "name": "rig-nao-descartado",
+      "failed": [
+        "LG8"
+      ]
+    },
+    {
+      "name": "sem-caprinos",
+      "failed": [
+        "LG1"
+      ]
+    },
+    {
+      "name": "sem-contato",
+      "failed": [
+        "LG7"
+      ]
+    },
+    {
+      "name": "sombra",
+      "failed": [
+        "LG4"
+      ]
+    }
+  ]
+}

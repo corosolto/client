@@ -39,12 +39,13 @@ export const BIOME_SHOTS = Object.freeze({
 export function createSoundscape(sfx, config) {
   const state = {
     sfx, config: config || null, started: false, paused: false, time: 0,
-    buffers: new Map(), loops: [], shots: [], failed: new Set(),
+    buffers: new Map(), loops: [], shots: [], synthBeds: [], failed: new Set(),
   };
   if (!config) return { update() {}, setPaused() {}, dispose() {}, state };
 
   const wanted = new Set((config.loops || []).map((l) => l.src));
   for (const pool of BIOME_SHOTS[config.bioma] || []) for (const src of pool.srcs) wanted.add(src);
+  for (const pool of config.shots || []) for (const src of pool.srcs || []) wanted.add(src);
 
   async function load(src) {
     if (state.buffers.has(src) || state.failed.has(src)) return state.buffers.get(src);
@@ -77,8 +78,22 @@ export function createSoundscape(sfx, config) {
       src.start();
       state.loops.push({ ...loop, srcNode: src, gain, pan });
     }
+    /* Sem isto o primeiro one-shot só iniciava o fetch quando chegava a hora de tocar e
+       era perdido; em gaps de 30–90 s, o jogador podia sair sem ouvir evento algum. */
+    await Promise.all([...wanted].map((src) => load(src)));
+    if (state.config.synth?.kind === 'indoor-hum') {
+      const gain = state.sfx.ctx.createGain(); gain.gain.value = 0;
+      gain.connect(bus);
+      const nodes = [50, 100].map((frequency, i) => {
+        const osc = state.sfx.ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = frequency;
+        const partial = state.sfx.ctx.createGain(); partial.gain.value = i ? .28 : 1;
+        osc.connect(partial); partial.connect(gain); osc.start();
+        return osc;
+      });
+      state.synthBeds.push({ nodes, gain, vol: state.config.synth.vol ?? .02 });
+    }
     let seed = 2;
-    for (const pool of BIOME_SHOTS[state.config.bioma] || []) {
+    for (const pool of [...(BIOME_SHOTS[state.config.bioma] || []), ...(state.config.shots || [])]) {
       state.shots.push({ ...pool, nextAt: seed += 1.5 + Math.random() * 6 });
     }
   }
@@ -93,11 +108,12 @@ export function createSoundscape(sfx, config) {
     for (const loop of state.loops) {
       const dx = loop.pos[0] - px, dy = (loop.pos[1] ?? 0) - py, dz = loop.pos[2] - pz;
       const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      /* ganho ~vol no centro, 0 na borda do raio; expoente 1.5 segura o meio */
-      const g = (loop.vol ?? .4) * Math.pow(Math.max(0, 1 - d / loop.radius), 1.5) * mudo;
+      /* `global` é o leito do mapa inteiro; fontes locais continuam caindo até a borda. */
+      const g = (loop.vol ?? .4) * (loop.global ? 1 : Math.pow(Math.max(0, 1 - d / loop.radius), 1.5)) * mudo;
       loop.gain.gain.setTargetAtTime(g, state.sfx.ctx.currentTime, .12);
-      if (loop.pan && d > .5) loop.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, -dx / 20)), state.sfx.ctx.currentTime, .2);
+      if (loop.pan && d > .5) loop.pan.pan.setTargetAtTime(loop.global ? 0 : Math.max(-1, Math.min(1, -dx / 20)), state.sfx.ctx.currentTime, .2);
     }
+    for (const bed of state.synthBeds) bed.gain.gain.setTargetAtTime(bed.vol * mudo, state.sfx.ctx.currentTime, .15);
     if (mudo) for (const shot of state.shots) {
       if (state.time < shot.nextAt) continue;
       shot.nextAt = state.time + shot.minGap + Math.random() * (shot.maxGap - shot.minGap);
@@ -123,12 +139,14 @@ export function createSoundscape(sfx, config) {
       const alvo = v ? 0 : (loop.vol ?? .4);
       loop.gain.gain.setTargetAtTime(alvo, state.sfx.ctx.currentTime, .1);
     }
+    for (const bed of state.synthBeds) bed.gain.gain.setTargetAtTime(v ? 0 : bed.vol, state.sfx.ctx.currentTime, .1);
   }
 
   function dispose() {
     state.started = false;
     for (const loop of state.loops) { try { loop.srcNode.stop(); } catch {} }
-    state.loops = []; state.shots = []; state.buffers.clear();
+    for (const bed of state.synthBeds) for (const node of bed.nodes) { try { node.stop(); } catch {} }
+    state.loops = []; state.shots = []; state.synthBeds = []; state.buffers.clear();
   }
 
   return { update, setPaused, dispose, state };

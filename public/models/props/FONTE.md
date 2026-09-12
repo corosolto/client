@@ -1,176 +1,103 @@
+# Props da Amazônia
 
-# Props de cenário
+## Ronda 2 do amazonia (PR #439) — palafita de verdade e mata densa
 
-Acervo de props estáticos dos mapas. O legado (carros, casas do lajes, mobiliário)
-chegou antes da régua de registro existir — regularização fora do escopo da v2.1.
-A partir da frente E da v2.1 (`plans/13-VISUAL-V2.1.md`), todo prop novo entra com
-`source.frente: "v21-e-models"` no `mint-assets.json` e linha aqui — cobrado pelo
-`eval:props-acervo` (mutantes: sem-fonte, sem-sha, arquivo-sumido).
+Kit de revisão r2 (26/08/2026): o dono pediu palafita com travessia na madeira
+e horizonte de floresta. Mint text-to-3D (Meshy), projeto CS BRASIL - Time
+Mítico, prompt próprio — sem copyright de terceiro. Pipeline `gen-asset`
+(dedup + WebP 1024 + prune). Kit: pack `th74btzfmyqgvrwzv97c3svtad8d7shz`,
+chat <https://mint.gg/chat/ph7ajexkae9z6baym58jt1ekf18d73ye>.
 
-## v2.1 — lote 1: vegetação de córrego (frente B)
-
-Pedido do dono (18/08/2026): *"faltou tambem usar os glbs de grama"*. Mint
-text-to-3D (Meshy), licença de uso do assinante Mint Pro (asset original gerado
-por prompt, sem copyright de terceiros). Pipeline reproduzível:
-`node tools/optimize-props-v21.mjs` (dedup/prune + WebP 256²), a partir dos GLBs
-brutos em `references/glb/` (não versionados). Convenção do acervo: GLB
-normalizado ~1 m, pivô central — escalar no call-site como já se faz com
-`caixa_dagua.glb`. Evidência visual (render node, Y corrigido — ver nota do
-render no fim): `tools/eval/asset-evidence/props-v21/`.
-
-- `grama_corrego_01.glb` — "Arching Guinea Grass Tuft", tufo de capim alto de
-  margem (capim-colonião) com palhas secas na base. 4.142 tris. Chat:
-  <https://mint.gg/chat/ph71dz35n7h5sygreq303bjye58crhzj>. Registro:
-  `grama-corrego-01`. Escala sugerida ~0,72 ⇒ ~0,70 m.
-- `grama_corrego_02.glb` — "Urban Creekside Weeds", moita rasteira amarelada
-  com folhas de mato. 4.046 tris. Chat:
-  <https://mint.gg/chat/ph78r1m1pa8zyrhsvw0nwz4b1x8crrg2>. Registro:
-  `grama-corrego-02`. Escala sugerida ~0,6 ⇒ ~0,60 m largo.
-- `planta_corrego_taboa.glb` — "Brown Spike Cattail", taboa (Typha) com duas
-  espigas. 4.861 tris. Chat:
-  <https://mint.gg/chat/ph72y6pxj76ky56x90cwrc1h7h8cs718>. Registro:
-  `planta-corrego-taboa`. Escala sugerida ~1,4 ⇒ ~1,40 m.
-- `planta_corrego_taioba.glb` — "Heart Leaf Taioba", taioba (Xanthosoma) de
-  folhas cordiformes. 4.476 tris. Chat:
-  <https://mint.gg/chat/ph7bt423mvd2mkq60j8xws2an58csnn4> (v2 — a primeira
-  geração falhou no estágio final do Mint). Registro: `planta-corrego-taioba`.
-  Escala sugerida ~0,95 ⇒ ~0,90 m.
-
-## v2.1 — lote 2: caixa d'água (frente A)
-
-Pedido do dono: *"a caixa da agua ta horrivel [...] na laje tao bons, fazer
-variacoes"*. Variações estilo favela da `caixa_dagua.glb` (Tripo, 18,7k tris) —
-as novas ficam em ~4,6-4,8k tris com WebP 512².
-
-- `caixa_dagua_azul.glb` — "Blue Ribbed Water Tank", tanque azul de polietileno
-  com tampa azul-escura e bocal, sobre tábua e blocos de concreto. 4.636 tris.
-  Chat: <https://mint.gg/chat/ph7c3scfqprd8jp9bn92279kwx8csbkq>. Registro:
-  `caixa-dagua-azul`. Escala sugerida ~1,4 ⇒ ~1,40 m com a base.
-- `caixa_dagua_preta.glb` — "Ribbed Black Water Tank", tanque preto com tampa e
-  extravasor, sobre anel de concreto. 4.802 tris. Chat:
-  <https://mint.gg/chat/ph75dwttq4rqsgn45418bf3m458cs3kv>. Registro:
-  `caixa-dagua-preta`. Escala sugerida ~1,2 ⇒ ~1,20 m.
-- `caixa_dagua_fibra.glb` — "Weathered Favela Water Tank", fibrocimento
-  amarelado com escorrido, tampa entreaberta, sobre duas vigas de concreto.
-  4.542 tris. Chat: <https://mint.gg/chat/ph72pgyxr7v54g3vn5w7az62z58csyjg>.
-  Registro: `caixa-dagua-fibra`. Escala sugerida ~1,2 ⇒ ~1,20 m.
-
-## v2.1 — lote 3: varais + vida de céu
-
-Pedidos do dono (19/08/2026): *"as roupas penduradas no corrego, quebrada e
-campinho tao ruins, na laje tao bons, fazer variacoes"* e *"o lajes tem pipa mas
-nao tem animacao do pipa voando, podemos por helicoptero, aviao com faixa da
-praia, no caso da mansao do joa"*. Mesma licença e pipeline dos lotes 1-2, com
-`tools/split-props-v21.mjs` antes do optimize nos três animáveis — o Meshy
-entrega malha única fragmentada (1.155 ilhas no heli), então o split é por
-centróide de triângulo com regra calibrada no render bruto, e o pivô do nó fica
-no eixo de rotação/balanço (o call-site só faz `node.rotation.*`).
-
-- `varal_roupas_01.glb` — "Colorful Laundry Varal", corda com 6 peças coloridas
-  em prendedores entre ganchos. 4.773 tris. Chat:
-  <https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p>. Registro:
-  `varal-roupas-01`. Escala sugerida ~3,0 ⇒ 3,0 m × 0,84 m.
-- `varal_roupas_02.glb` — varal de chão, rack dobrável em X (o crítico corrigiu:
-  não é "em T"), 2 linhas com camisetas, jeans, meias e fronha. 4.818 tris. Chat:
-  <https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg>. Registro:
-  `varal-roupas-02`. Escala sugerida ~1,8 ⇒ 1,8 m × 1,46 m.
-- `pipa_papel.glb` — "Yellow Green Pipa", losango amarelo/verde com varetas e
-  rabiola de 5 lacinhos. 4.983 tris; nó `rabiola` separado (4.452 tris) com
-  pivô na ponta inferior da vela T=(0,14; -0,12; 0,02). Chat:
-  <https://mint.gg/chat/ph77ctevcka9b4khfrkhkpg2wd8cr9b5>. Registro:
-  `pipa-papel`. Escala sugerida ~1,6 ⇒ vela ~0,74 m.
-- `helicoptero_pm.glb` — "Blue White Police Copter", JetRanger azul/branco
-  genérico, **sem logo nem texto** (veto editorial). 4.933 tris; nós
-  `rotor_main` (287 tris, pivô T=(0,08; 0,17; 0), rotação em Y) e `rotor_tail`
-  (75 tris, pivô T=(-0,44; 0,02; -0,05), rotação em Z). Chat:
-  <https://mint.gg/chat/ph76rk8v51359p9cd6rk249j5x8crxq0>. Registro:
-  `helicoptero-pm`. Escala sugerida ~10 ⇒ ~10 m.
-- `aviao_faixa.glb` — "Red Stripe Sky Advertiser", monomotor de aeropublicidade
-  puxando faixa em branco. 4.546 tris; nó `faixa` separado (1.397 tris,
-  T=(0; 0; -0,095)) — a textura do texto é arte 2D via OpenRouter, outra frente
-  (regra 19/08: Mint só 3D). Chat:
-  <https://mint.gg/chat/ph75y9xxqg1t82rhmfjxjkm6cx8crz6r>. Registro:
-  `aviao-faixa`. Escala sugerida ~12 ⇒ envergadura ~10,7 m.
-
-> Nota de evidência: além do espelho em Y já documentado abaixo, o
-> `render-fauna-soft.mjs` também **ignora o `translation` dos nós** (cai no
-> fallback identidade) — nos renders `*-corrigido.png` dos três animáveis o
-> rotor/rabiola/faixa aparece levemente deslocados do encaixe. A prova de
-> montagem é o `getBounds` por nó (rotor_main -0,37..0,50 × 0,15..0,23; rabiola
-> -0,50..-0,12; faixa 0,0..0,50 — todos no lugar) e a árvore de nós impressa
-> pelo `split-props-v21.mjs`.
-
----
-
-> Nota de ferramenta (19/08/2026): `tools/render-fauna-soft.mjs` projeta com o
-> vetor "up" invertido (produto vetorial left-handed) — **toda saída dele é
-> espelhada em Y**, inclusive a evidência de fauna já commitada. Os renders
-> `*-corrigido.png` desta pasta de evidência foram desespelhados com
-> `sharp .flip()`. Consertar o renderer é frente do arnês, não da E.
-
-## Revisão adversarial (19/08, crítico de contexto limpo — skill asset-review)
-
-Veredito: **os 7 vão para o merge, nenhum regenera**. Conferido de fora: SHA × disco
-(todos batem), texturas extraídas dos GLBs (íntegras — a mancha dos renders node é o
-renderer, não o arquivo), `EXT_texture_webp` suportado pelo GLTFLoader r160 vendorizado,
-folhagem OPAQUE+doubleSided, zero vetos. Ressalvas de INTEGRAÇÃO (não de asset):
-grama em InstancedMesh (4k tris/tufo pesa mais que as casas se solto), caixa preta com
-lum ~56 abaixo da banda 86-165 (validar in-game antes de espalhar), caixa azul esguia
-(corrigir com escala X/Z no call-site se na laje parecer magra).
-
-## Revisão adversarial do lote 3 (19/08, crítico de contexto limpo)
-
-Veredito: **os 5 vão para o merge, nenhum regenera**. Verificado de fora: SHA × disco
-nos 5, texturas extraídas (heli/avião/varais sem logo, texto ou brasão — veto editorial
-limpo), plano de rotação dos rotores medido por variância de vértices (rotor_main em Y,
-rotor_tail em Z — eixo fisicamente certo), nós animáveis confirmados NO ARQUIVO.
-Ressalvas de INTEGRAÇÃO (não de asset):
-- `varal_roupas_01`: gancho central pendurado no alto — esticado a 3 m flutua no vazio;
-  esconder ou apontar para um beiral no call-site. Se parecer fino demais, escala Y no
-  call-site, não prompt.
-- `pipa_papel`: 89% dos tris (4.452) estão nos lacinhos de ~5 cm (sub-pixel em jogo) —
-  dentro do teto, mas é o primeiro candidato a decimação.
-- `aviao_faixa`: pivô da faixa z=-0,095 deixa o centro ~0,42 m fora da linha da
-  fuselagem na escala 12 (o correto seria z=-0,06) — imperceptível no céu, anotado.
+- `palafita_pro.glb` — "Palafita com passarela", casa sobre estacas com
+  passarela e escada (~2,0k tris). Registro: `palafita-pro-amazonia`. Colisor,
+  escada andável e corrimões são dados do `map_amazonia.js` (AMZ5).
+- `arvore_mata.glb` — "Árvore de mata densa", dossel do anel do perímetro
+  (~2,6k tris, 25 instâncias). Registro: `arvore-mata-amazonia` (AMZ6).
+- `palmeira_babacu.glb` — "Palmeira babaçu", sub-bosque (~2,3k tris).
+  Registro: `palmeira-babacu-amazonia`.
 
 
-## v2.1 — lote 4: jardim tropical da mansão (frente C, BUG-64)
+### Derivação local Amazônia visual — 2026-09-06
 
-Pedido do dono (20/08/2026): *"o pior de todos é a mansão do joá, o jardim está
-horrível"*. O jardim era 100% primitiva de cor chapada (pirulitos de icosaedro,
-maciços de esfera achatada). Oito espécies tropicais do jardim modernista
-(referência Burle Marx / Joá), mesmo Mint text-to-3D, licença e pipeline dos
-lotes 1-3 (`node tools/optimize-props-v21.mjs`, WebP 512², a partir dos brutos
-`references/glb/*_mint.glb` não versionados). GLB normalizado ~1 m, pivô
-central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
+Sem substituir os GLBs ou criar procedência nova: `map_amazonia.js` clona a
+geometria da árvore para ajustar a seção inferior ao colisor proporcional,
+preserva UV/material e aplica o mesmo ajuste com e sem instancing. Estende
+estacas das nove palafitas herdadas para acompanhar o deck elevado. Duas casas
+procedurais de madeira/chapa usam texturas existentes. Os registros Mint acima
+continuam sendo a origem. Medição atual por índices: árvore 4.334 tri/399.168 bytes,
+palmeira 4.694 tri/529.844 bytes, palafita 3.522 tri/440.420 bytes; substitui apenas
+as estimativas aproximadas anteriores. Referências e limites:
+`docs/reports/AMAZONIA-REFERENCIAS.md`.
 
-- `palmeira_imperial.glb` — "Imperial Grey Palm", palmeira-imperial com tronco
-  anelado cinza e crownshaft verde. 3.637 tris. Tronco escurecido no pipeline
-  (`trunkShade` do optimize: material-clone fator 0,55/0,47/0,40 nos triângulos
-  dos 42% inferiores — o tronco branco-liso foi reprovado pelo crítico v2.1).
-  Chat: <https://mint.gg/chat/ph70gyyyc7qvvem3mm8t0a29y98cv0tw>. Registro:
-  `palmeira-imperial-jardim`.
-- `palmeira_ravenala.glb` — "Dramatic Fan Palm", ravenala (palmeira-leque) em
-  leque vertical. 4.428 tris. Chat:
-  <https://mint.gg/chat/ph7by8184sbqmx1ev8j068pvm58ctqm0>. Registro:
-  `palmeira-ravenala-jardim`.
-- `heliconia.glb` — "Red Claw Heliconia", brácteas vermelho-amarelas pendentes.
-  4.052 tris. Chat: <https://mint.gg/chat/ph7cp8y6gyxt9gg461m4rcg8th8ctwfd>.
-  Registro: `heliconia-jardim`.
-- `costela_adao.glb` — "Perforated Monstera Bush", monstera de folhas
-  fenestradas. 3.472 tris. Chat:
-  <https://mint.gg/chat/ph7byt97jw52ykdjrzezvwhsvn8cvsje>. Registro:
-  `costela-adao-jardim`.
-- `bananeira.glb` — "Drooping Paddle Banana Plant", pseudocaule verde com
-  folhas-pá. 4.684 tris. Chat:
-  <https://mint.gg/chat/ph71fmfkb7fb4433vac33xghd58cttan>. Registro:
-  `bananeira-jardim`.
-- `ixora.glb` — "Crimson Ixora Bloom", arbusto com buquês vermelho-alaranjados.
-  4.496 tris. Chat: <https://mint.gg/chat/ph7dcr7emj3jkafn0yq98gantx8cvtvs>.
-  Registro: `ixora-jardim`.
-- `agave.glb` — "Blue-Green Agave Rosette", roseta azul-esverdeada. 4.688 tris.
-  Chat: <https://mint.gg/chat/ph777k51x3zm7rh2p92m2yferh8cv41j>. Registro:
-  `agave-jardim`.
-- `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
-  3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
-  Registro: `samambaia-jardim`.
+### Feedback de navegação e ambiência — 06/09/2026
+
+Derivados exclusivos da Amazônia, sob a mesma procedência/licença dos originais
+Mint acima. Pipeline reproduzível `tools/amazonia-assets.mjs`; hashes e ligações
+`derivedFrom` no `mint-assets.json`. Os três originais permanecem intactos.
+
+- `palafita_pro_amazonia.glb`: 3.522 → 3.048 triângulos. Retira a escada embutida
+  estreita; builder fornece lance lateral com degraus, piso e colisão até a varanda.
+- `arvore_mata_amazonia.glb`: 4.334 → 3.324 triângulos; simplificação Meshopt.
+- `palmeira_babacu_amazonia.glb`: 4.694 → 2.830 triângulos; simplificação Meshopt.
+- `canoa_rabeta_amazonia.glb`: Teal Stripe Riverboat, Mint / Tripo P1, prompt próprio
+  autorizado em06/09. [Chat](https://mint.gg/project/zd7cbsyxbzmf05b3w084t51ymd8c5hfr?chat=ph741qaase7ng7c5gbq3348t658dwt3n).
+  Licença de uso da conta Mint, sem referência de terceiro. Original4.819tris,
+  derivado3.758tris/360.236bytes: `tools/amazonia-boat-asset.mjs`, Meshopt .78/.004
+  e três mapas WebP1024. Casco+motor estáticos; navegação pertence ao builder.
+
+`arara_voo.glb` foi reutilizada sem modificar bytes da main69555790; procedência
+no FONTE de ambient. As aves usam o módulo skylife idêntico àquela main.
+
+## Galinha e pintinho Mint — preview da Amazônia, 06/09/2026
+
+`galinha_mint_amazonia.glb` e `pintinho_mint_amazonia.glb`: Adult Hen / Baby Chick
+no pack Caatinga Village Animals, conta do usuário, prompt original e Tripo P1.
+Chat: https://mint.gg/project/zd7d9mfmgv0b80ezp3xbykp1ns8dw47r?chat=ph7b9m9y8gfz5j83vkxqsrbvzs8dxgba
+Uso local explicitamente solicitado pelo dono. Originais arquivados em
+`artifacts/amazonia-visual/fauna-round2/{hen,chick}-mint.glb`; URLs/hashes no
+`mint-assets.json`. Derivação reprodutível: `tools/amazonia-yard-assets.mjs`.
+Galinha: 5.078→4.062 triângulos, 370.588 bytes, WebP até1024. Pintinho:
+4.910→3.616 triângulos, 198.532 bytes, WebP até512. Malhas estáticas sem rig;
+não representam animações humanoides adaptadas. Originais preservados.
+Apenas procedência, não concessão de licença: a URL oficial de termos/atribuição
+não foi confirmada. Publicação comercial permanece pendente; não declarar CC0.
+
+### Palafita aberta da Amazônia — 06/09/2026
+
+`palafita_aberta_amazonia.glb` deriva localmente de `palafita_pro_amazonia.glb`.
+Ferramenta: `tools/amazonia-cabin-asset.mjs`. Remove volume fechado e eleva beiral,
+preservando bounds, cume e postes. Piso/porta/janelas e colisores correspondentes
+são construídos por `public/js/amazonia_cabins.js`. Sem nova geração ou licença.
+Final: 2167 triângulos, 352964 bytes, SHA256
+`2d5724305e9dd7e42689692f14cec6fff4a8f84ec8e5b8948825129d276dc954`.
+Origem SHA256 `0acc6dd66fd3e4f25281c124f6b87a96fcd5a7e61c43d4bc21cf473e15b65594`.
+Khronos: zero erros, um aviso de tangent space. Recibo local em
+`artifacts/amazonia-visual/cabin-round/asset.json`. Originais preservados.
+# Props Mint integrados no Escadão
+
+Arquivos preservados da branch `codex/escadao-visual` (072e6d71), com origem e
+processamento completos em `mint-assets.json`. Somente estes sete GLBs foram
+acrescentados ao acervo da main nesta integração.
+
+- `varal_roupas_01.glb` — [Colorful Laundry Varal (varal de corda)](https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p). SHA256: `3ea3085f1c0f0729b0563b3a9c6e9330a39c4a7da720592d931ef1681edb1a52`.
+- `varal_roupas_02.glb` — [Colorful Laundry Varal (varal de chão)](https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg). SHA256: `389993f574d3dcfabca27109268ce50a47438c72618f6b0c057a647ceaf89969`.
+- `samambaia.glb` — [Emerald Feather Clump (samambaia)](https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0). SHA256: `d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c`.
+- `casa_favela_azul.glb` — [Casa de favela azul](https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq). SHA256: `c311fd2a66e7aeeb8c218cfd74b4a8e0dcb79130f62766451eb4b2b5ffc4ae92`.
+- `casa_favela_tijolo.glb` — [Casa de favela tijolo](https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq). SHA256: `c6d26492a9d5a5b2a0676169de4f43ad5e67ac83bafda8ba6f7e0e9171e15016`.
+- `varal_roupas.glb` — [Varal de roupas](https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq). SHA256: `0cd259177b239c7198b8158195c82a493480c69846f210981faeb87eac2c89bf`.
+- `escadao_casa_r3.glb` — [01-escadao-casa-residencial-r3.glb](https://mint.gg/chat/ph76fdb7fh3t30vzjz8ajv01xs8dx139). SHA256: `9bceba38acb38726b1df871b4a22697d5cb988f10e6cde13a972bdbf4eeb3a4b`.
+
+A casa R3 foi gerada em 06/09/2026; licença e seleção documentadas em
+`docs/reports/ESCADAO-MINT-R3.md`. Os outros seis modelos reutilizam o acervo Mint
+anterior, sem alteração dos bytes ou da proveniência. O mato novo rejeitado não
+foi incluído. Demais props usados pelo mapa já existiam na main.
+
+## R4 — gato e detalhes domésticos
+
+Gerados em 06/09/2026 no [projeto Mint do Escadão](https://mint.gg/chat/ph71esgt6wvxqr9ywswh7nr8f58dxycs), pack `th71b3y03ksncsfj8wzt08w5hh8dxjpk`, run `vd7cw36hdpbv3zxwkt19km2d6h8dwz6j`, TRIPO_P1 Standard. Termos e hashes das fontes/finais em `mint-assets.json`; mesma seção 4 dos termos documentados na R3. Nenhuma foto de referência foi incorporada à textura.
+
+- `escadao_cat_r4.glb`: 4.723 triângulos, PBR WebP 1024, rig autoral de 19 ossos com idle/walk/run. Caminhada 0,55 m/s e fuga 1,5 m/s, altura de referência 0,48 m. Substituição restrita ao Escadão.
+- `escadao_varanda_r4.glb`: 4.453 triângulos, cadeira plástica, pano e dois vasos; geometria original preservada.
+- `escadao_eletrica_r4.glb`: 3.470 triângulos, caixa de medição e conduítes; simplificação limitada por erro geométrico.
+
+Pipeline reproduzível em `tools/optimize-escadao-r4.mjs` e `tools/rig-escadao-cat-r4.py`; inspeção do GLB reimportado em `tools/inspect-escadao-cat-r4.py`. Recibos e renders privados em `artifacts/escadao-visual/r4/assets/`.

@@ -55,6 +55,7 @@
    USO
      node tools/eval/pause-check.mjs          # cláusulas 1-6 (node puro, ~5 s)
      node tools/eval/pause-check.mjs --mutante=automenu
+     node tools/eval/pause-check.mjs --mutante=automenu-mp
      node tools/eval/pause-check.mjs --geo    # + a medição de geometria (Chromium)
                                               #   precisa de `node tools/eval/serve.mjs 8123`
    Sai 1 se qualquer cláusula falhar.
@@ -69,7 +70,7 @@ const ROOT = join(HERE, '..', '..');
 const JSON_OUT = process.argv.includes('--json');
 const GEO = process.argv.includes('--geo');
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (MUTANTE && MUTANTE !== 'automenu') {
+if (MUTANTE && MUTANTE !== 'automenu' && MUTANTE !== 'automenu-mp') {
   console.error(`mutante desconhecido: ${MUTANTE}`);
   process.exit(1);
 }
@@ -81,6 +82,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const GAME_JS = readFileSync(join(ROOT, 'public/js/game.js'), 'utf8');
 let MAIN_JS = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
 if (MUTANTE === 'automenu') MAIN_JS += '\nsetTimeout(quitToMenu, 1000); // MUTANTE PAUSA5\n';
+if (MUTANTE === 'automenu-mp') MAIN_JS += '\nsetTimeout(mpSair, 1000); // MUTANTE PAUSA5 (multiplayer)\n';
 
 /* ---------- 1-4: COMPORTAMENTO, na classe Game de verdade -------------------
    Nada de ler declaração de constante: a régua DIRIGE o jogo. Ela derruba o
@@ -139,6 +141,13 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
   const ini = linhas.findIndex((l) => /^\s*function quitToMenu\s*\(/.test(l));
   let fim = -1;
   if (ini >= 0) for (let j = ini + 1; j < linhas.length; j++) if (/^\}/.test(linhas[j])) { fim = j; break; }
+  /* `mpSair()` é o GÊMEO ONLINE do quitToMenu: mesma forma, mesmo regime. O corpo dele
+     é isento pelo `show`, e toda MENÇÃO a `mpSair` continua cobrada como chamada — senão
+     `setTimeout(mpSair, 1000)` criaria o caminho automático que esta cláusula existe para
+     barrar, só que pela porta do multiplayer. */
+  const mpIni = linhas.findIndex((l) => /^\s*function mpSair\s*\(/.test(l));
+  let mpFim = -1;
+  if (mpIni >= 0) for (let j = mpIni + 1; j < linhas.length; j++) if (/^\}/.test(linhas[j])) { mpFim = j; break; }
   const startIni = linhas.findIndex((l) => /^async function startGame\s*\(/.test(l));
   const startFim = linhas.findIndex((l, i) => i > startIni && /^async function _startGame\s*\(/.test(l));
   const startBloco = startIni >= 0 && startFim > startIni ? linhas.slice(startIni, startFim).join('\n') : '';
@@ -159,12 +168,14 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
        callback (`setTimeout(quitToMenu, 1000)`, `.then(quitToMenu)`) é justamente o jeito
        de criar um caminho automático sem escrever um par de parênteses — e foi assim que
        a primeira versão desta cláusula passou verde na própria mutação. */
-    const chamada = /\bquitToMenu\b/.test(L) && !/^\s*function quitToMenu\s*\(/.test(L);
+    const chamada = (/\bquitToMenu\b/.test(L) && !/^\s*function quitToMenu\s*\(/.test(L))
+      || (/\bmpSair\b/.test(L) && !/^\s*function mpSair\s*\(/.test(L));
     if (!chamada && !/show\(\s*['"]main-menu['"]\s*\)/.test(L)) continue;
     if (/^\s*(function|\/\/|\*)/.test(L)) continue;            // a própria definição / comentário
     // dentro do corpo de quitToMenu, só o `show` é isento; uma CHAMADA a quitToMenu ali
     // dentro seria recursão e continua sendo suspeita
     if (!chamada && ini >= 0 && i > ini && i < fim) continue;
+    if (!chamada && mpIni >= 0 && i > mpIni && i < mpFim) continue;
     if (!chamada && fronteiraDeAbertura && i > startIni && i < startFim) continue;
     if (!chamada && inspecaoExplicita && i > inspectIni && i < inspectFim) continue;
     // contexto: o handler pode abrir algumas linhas acima (onclick de bloco)

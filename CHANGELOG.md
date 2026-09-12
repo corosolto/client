@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.196`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.248`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,621 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## Não lançado — 2026-09-06
+
+### Adicionado
+- Contador de ABATES do jogador no HUD, na coluna de estado dele: algarismo grande com rótulo miúdo, conta a PARTIDA (não o abate do time nem o da rodada) e não zera na virada de round — antes o número pessoal só existia atrás do TAB. Régua `eval:abateshud` com quatro mutantes, no `check:fast`.
+- Sertão da Treta substitui o Velho Oeste: casario de taipa, Caatinga, Canudos, calango quadrúpede, aves, cabras e galinha com pintinhos. Preview real com vídeo silencioso ao passar o mouse; criação com caminhada e pausas. O memorial de Padre Cícero permanece fora desta entrega.
+- Camada operacional (`tools/ops/`, `npm run ops:diag`): o jogo diagnostica boot, deploy, assets no edge, APIs, telemetria, ranking e partida sintética e explica cada achado com causa provável, evidência, impacto e próximo passo; separa "tecnicamente verde" de "pronto para lançamento". Mutantes em `ops:selftest` e unidades em `ops:test`, os dois no `check:fast`.
+- `public/js/ops.js`: sinais da sessão no navegador (marcos de boot, FPS em partida, falhas de carga, contexto WebGL, erros de partida, abandono) expostos em `window.__csbOps` e como migalhas do relatório de erro — sem endpoint novo, sem desenhar nada.
+- Runbook `docs/runbooks/operacao-autonoma.md`: como diagnosticar, recuperar por classe de achado e reverter site, edge, backend e banco.
+- `npm run ops:aquecer` e o passo no `prod-watch.yml`: depois do purge de cada deploy, o edge é aquecido com os módulos e todos os assets que a produção pede (111 MISS de 112 logo após a alpha.224 → HIT).
+- `ops-diag.yml`: a diagnose com navegador roda a cada hora e vira issue `ops-diag` em vermelho; `portao-browser.yml` passa a rodar `eval:boot` e as provas de navegador da camada operacional em PR que toca o boot.
+- O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
+
+### Corrigido
+- Lobisomem Mítico deixa de puxar aliados de outras facções, passa a resolver M nas telas de inspeção, usa luva M distinta no viewmodel, ganha animação própria com pés no chão e volta a publicar os retratos de resultado aprovados, que tinham saído do quadro medido no elenco.
+- O pack integrado do Lobisomem passa a servir os clipes próprios na sequência do runtime, com o fallback compartilhado preservado só para comparação e regressão.
+- No Sertão, as três carroças deixam passagem pelos dois flancos e as cinco casas diante dos respawns passam a ter porta, saída lateral, janela com revide e navegação intencional para bots.
+- As casas abertas da Praça da Matriz no Sertão preservam cobertura nas laterais das janelas, circulação interna livre e passagem dos bots junto aos esteios.
+- Em rodada de FACA os bots passam a jogar de faca: fecham até o alcance real da arma (medido 5,98 m e zero golpes em 60 s antes; 1,24 m, 18 golpes e 9 abates depois) e o golpe sai como faca — sem traçante, fogacho de cano nem som de tiro. A banda de distância de arma de fogo continua valendo na rodada normal. Régua `eval:botfaca` com três mutantes, no `check:fast`.
+- O headshot do jogador não arranca mais a câmera da primeira pessoa: a replay orbital e o hit-stop do #364 saíram, e o abate continua contando com hitmarker, dano, killfeed e locutor. Régua `eval:replaycam` passou a medir o contrário, com quatro mutantes.
+- Single Player voltou a abrir o submenu de MATA-MATA e CAPTURE A BANDEIRA (CTF), que segue para a seleção de mapas com o modo escolhido.
+- `eval:boot` voltou a rodar: a fixture do `boot-check.mjs` ancorava na assinatura antiga de `_startGame` (mudada no #489) e reprovava antes de medir; agora ancora no nome da função.
+- Os contadores do menu (`/api/online` e `/api/map-plays`) tentam de novo no cold start do backend (503 na primeira chamada, medido 06/09) em vez de ficar vazios.
+- O proxy da rede de segurança do site repassa a geo da borda (`x-vercel-ip-*`); a diagnose distingue `city` parado com `presence` viva (ingestão parada, corosolto/backend#22) de "ninguém jogou".
+- O build privado volta a carregar os 16 anúncios Fish, as 36 falas finais dos nove Funkeiros e somente as oito músicas aprovadas do menu.
+- Palhaços e Funkeiros sem take próprio deixam de tocar dublagem genérica; os Funkeiros preservam somente as 36 falas aprovadas.
+- A primeira fala de kill não é mais bloqueada por uma seleção ou chamada de rádio imediatamente anterior.
+- O empacotador limpa saídas anteriores e reconhece uma AWP CC0 catalogada sem confundi-la com áudio legado pelo nome.
+- Tiros ficam abaixo das vozes e a contingência original restaura falas, rounds e kill streaks em single-player e multiplayer.
+- O multiplayer reconhece inputs por sequência e suaviza correções sem apagar movimento pendente.
+- Arma, slots, pente, reserva e recarga passam a ser autoritativos no protocolo snapshot v4.
+- Trocas de arma remotas remontam a malha visível; clientes lentos não acumulam snapshots obsoletos.
+- A qualidade envia magnitude das correções para diagnóstico por sessão e round.
+- Multiplayer não vaza mais para a partida single-player depois de voltar ao menu.
+- O primeiro spawn e o respawn online obedecem imediatamente à posição autoritativa.
+- Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
+- Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
+- O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.248] — 2026-09-12
+
+### Mudado
+- fix(multiplayer): a correção de posição não era rede — cinco defeitos, com laço fechado para medir; e escolher os mapas da sala (#588)
+- feat(multiplayer): escolher a dedo os mapas da sala que você cria
+- fix(multiplayer): comando com duração, ack do que foi simulado e corpo de gente sem empurrão
+
+## [2.0.0-alpha.247] — 2026-09-10
+
+### Mudado
+- feat(mansao): reconstruir Joá sobre a main atual (#578)
+- docs(mansao): registrar CI remoto após correção
+- docs(mansao): registrar recaptura após correção
+- docs(mansao): atualizar índices após rota leste
+- chore(mansao): resumir comentário de rota
+- docs(mansao): registrar correção dos gates remotos
+- fix(mansao): separar rota CTF e liberar spawn
+- docs(mansao): registrar reconstrução limpa e fila humana
+- test(mansao): validar Chrome real em 3:2 e 16:9
+- docs(mansao): regenerar contratos na base atual
+- test(mansao): portar gates causais do Joá
+- feat(mansao): integrar Joá ao jogo atual
+- feat(mansao): portar cenário e assets do Joá
+
+## [2.0.0-alpha.246] — 2026-09-09
+
+### Mudado
+- feat(míticos): time Mítico completo — 9 personagens jogáveis (#570)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(deps): lockfile idêntico ao da main, sem npm install por cima
+- fix(deps): regenera o lockfile inteiro para o npm ci do CI voltar a instalar
+- fix(deps): npm audit fix zera as 5 vulnerabilidades que travavam o portão
+- feat(miticos): Caipora entra no lugar da Cuca e o time fecha em 9
+- docs(miticos): a última tentativa da Cuca — 333,4 - 187,0, e ainda não passa
+- feat(miticos): Saci e Zumbi entram consertados, e os avatares viram retrato de verdade
+- fix(regua): a revisão de browser cravava o elenco de M de ontem
+- docs(miticos): Saci é de uma perna, e a viabilidade foi medida antes de decidir
+- feat(miticos): auditoria visual do dono aprova os 7, e a mídia órfã sai do disco
+- fix(miticos): tira os webm de render que a folha de contato deixou para trás
+- fix(miticos): mídia do Lampião regerada do modelo novo, e o enquadramento certo
+- docs(miticos): a regeração da Cuca piorou, e BUG-150 registra o número
+- chore(miticos): tira scratchpad e a costura de peso que não entrou, e registra BUG-150
+- feat(miticos): time Mítico vai de 1 para 7 personagens jogáveis
+- feat(miticos): CHR7 pega quem flutua, aterramento vira genérico e Zumbi ganha clipe próprio
+- docs(miticos): fecha BUG-147 e registra o placar real do portão
+- fix(audio): Lobisomem entra no perfil físico, e comentários voltam ao orçamento
+- fix(miticos): a tela de carregamento respeitava só cinco facções
+- feat(regua): CHR7 — nenhuma malha atravessa o chão na pose assentada
+- chore(docs): bloco derivado e evidência de layout do Lajes
+- fix(menu): portão de browser volta a rodar e o badge de modo troca o painel inteiro
+- fix(miticos): tira do clipe os ossos de curl e devolve o portão de seleção
+- fix(miticos): devolve os retratos de resultado aprovados do Lobisomem
+- fix(miticos): integrate lobisomem assets and review
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs: regenera índices após candidato Mítico
+- feat(miticos): integra Lobisomem como candidato isolado
+- feat(miticos): adiciona mídia aprovada do Lobisomem
+
+## [2.0.0-alpha.245] — 2026-09-09
+
+### Mudado
+- fix(sertao): libera carroças e casas dos respawns (#559)
+- docs(sertao): vincula draft pr 559
+- docs(sertao): registra correcao pos-merge
+- fix(sertao): libera carrocas e casas dos respawns
+- test(sertao): reproduz rejeicao pos-merge
+
+## [2.0.0-alpha.244] — 2026-09-09
+
+### Mudado
+- fix(deps): desbloquear auditoria dos PRs (#571)
+- fix(deps): atualizar smol-toml seguro
+- fix(deps): corrigir auditoria do build
+
+## [2.0.0-alpha.243] — 2026-09-09
+
+### Mudado
+- docs(áudio): registra bloqueio do rollback F/U (#531)
+- docs(viewmodels): registrar bloqueio da recarga M4 (#534)
+- feat(audio): comparativo A/B v7×v8 e rollback determinístico de F/U
+- docs(audio): fontes das vozes antigas de F/U localizadas fora do Git
+- docs(audio): corrige cobertura do rollback de vozes
+- docs(viewmodels): registrar diagnóstico da recarga M4
+- docs(audio): bloqueio do rollback de vozes de Funkeiros e Tribos Urbanas
+
+## [2.0.0-alpha.242] — 2026-09-08
+
+### Mudado
+- feat(escadao): abre duas janelas e casas jogáveis no mirante (#529)
+- chore(escadao): regenerar layout de grafites
+- feat(escadao): abrir casas dos dois lados
+- test(escadao): exigir janelas na mesma sala
+- test(escadao): registrar baseline vermelha das casas
+- docs(escadao): regenera blocos derivados após encurtar comentários
+- style(escadao): comentários da casa central dentro do orçamento de 2 linhas
+- docs(escadao): regenera blocos derivados após o commit da régua
+- docs(escadao): registra a rodada da casa central e o falso positivo
+- test(escadao): régua da casa central exercendo a branch GLB_ON
+- fix(escadao): shell procedural autoritativo na casa central da laje
+- docs(escadao): fecha portoes de push e mede nao-regressao da rota
+- docs(escadao): registra checkpoint de publicacao
+- docs(escadao): registra evidências e limites do PR 529
+- fix(escadao): valida janelas e cobertura a partir do corpo real
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(escadao): cria abrigo disputável no mirante
+- chore(docs): regenera bloco derivado (autofix)
+- feat(escadao): abre janela da casa para a rua
+
+## [2.0.0-alpha.241] — 2026-09-08
+
+### Mudado
+- feat(sertao): finaliza casas, fauna e por do sol com reguas WebGL (#526)
+- chore(docs): sincroniza indices finais do Sertao
+- style(sertao): reduz comentarios de implementacao
+- test(sertao): reposiciona mutante de folga
+- fix(sertao): abre gargalo da rota oeste
+- perf(sertao): agrupa interiores e mede contraste
+- fix(sertao): abre fuga lateral nas casas dos spawns
+- chore(docs): regenera bloco derivado (autofix)
+- docs(sertao): fecha BUG-91 no ledger e regenera blocos gerados
+- test(sertao): verifica captura offline do BUG-91 por raio no enquadramento
+- test(sertao): contrato de interiores estendido às casas dos spawns
+- fix(sertao): platibanda-1 e pedra-7 viram interiores jogáveis (BUG-91)
+- fix(sertao): colisor da carroça espelha a geometria visível (BUG-91)
+- test(sertao): régua das carroças WA1-WA4 reprova o HEAD
+- docs(sertao): registra BUG-91, rejeição humana das carroças e casas fechadas
+- docs(sertao): registra IN7 e restaura limitações pendentes
+- test(sertao): expõe resultado do mutante bolsao
+- test(sertao): cobre mutante bolsao no check de interiores
+- docs(sertao): fecha ledger das casas da praça
+- fix(sertao): preserva folga dos obstáculos fora das casas
+- chore(docs): inclui ferramentas offline no inventário versionado
+- chore(docs): sincroniza índices da validação offline
+- fix(sertao): libera circulação e fecha frestas nas casas
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(sertao): abre casas da praça ao combate
+
+## [2.0.0-alpha.240] — 2026-09-08
+
+### Mudado
+- fix(audio): prevent zero exponential envelopes (#552)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(audio): prevent zero exponential envelopes
+
+## [2.0.0-alpha.239] — 2026-09-07
+
+### Mudado
+- feat(combate): contador de abates, headshot em 1ª pessoa e bot de faca que joga de faca (#536)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(handoff): fecha o ledger com o que foi medido, o que ficou vermelho e o que falta
+- chore(docs): regenera bloco derivado (autofix)
+- docs(gerado): sincroniza índices após feedback de combate
+- docs(combate): registra evidência e mutantes dos três defeitos
+- docs(combate): enxuga o comentário de _meleeRange
+- fix(combate): bot de faca fecha e golpeia; HANDOFF sem build verde falso
+- feat(combate): contador de abates no HUD, headshot em 1ª pessoa e bot de faca
+
+## [2.0.0-alpha.238] — 2026-09-06
+
+### Mudado
+- perf(amazonia): reduz custo 8x8 e vira escada do respawn (#527)
+- chore(amazonia): regenera blocos pós-merge e encurta comentário da estação A
+- docs(amazonia): registra validação pós-merge
+- docs(amazonia): registra resolução dos conflitos
+- fix(amazonia): abre as cabeças da ponte norte e fecha a VM14
+- docs(amazonia): fecha relatório 8x8 com A/B, mutantes e portões
+- docs(amazonia): atualiza scripts e blocos gerados
+- docs(amazonia): atualiza recibo final da simulação
+- test(amazonia): fortalece a simulação final
+- docs(amazonia): atualiza blocos gerados e ledger final
+- test(amazonia): integra réguas de visão e escadas no portão
+- perf(amazonia): acelera visão dos bots e valida todas as escadas
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(amazonia): otimiza rota 8x8 e vira escada B
+
+## [2.0.0-alpha.237] — 2026-09-06
+
+### Mudado
+- feat(combat): add bounded AWP penetration (#535)
+- feat(combat): add bounded AWP penetration
+
+## [2.0.0-alpha.236] — 2026-09-06
+
+### Mudado
+- fix(sertao): restaura grafo de módulos do preview (#525)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(sertao): separa revisão de mídia do preview
+
+## [2.0.0-alpha.235] — 2026-09-06
+
+### Mudado
+- feat(sertao): vila de caatinga com criação animada e preview real (#516)
+- fix(sertao): estabiliza captura da criação no CI
+- chore(docs): regenera bloco derivado (autofix)
+- docs: registra validação alpha.233 do Sertão
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(sertao): restaura loader e índices após rebase
+- fix(sertao): preserva procedência e revisão da criação após rebase
+- fix(maps): regenera grafite e previews após integrar main227
+- fix(audio): inclui Escadão no gerador do laboratório local
+- docs(sertao): registra portões finais e submissão para merge
+- docs(sertao): sincroniza índices e autoria na submissão limpa
+- docs(sertao): registra integração preservada e correção adversarial
+- feat(sertao): preserva menu main e preview real junto ao de Lajes
+- fix(sertao): reutiliza céu procedural por configuração de luz
+- ci(sertao): conecta contratos e evidência de runtime aos portões
+- docs(sertao): registra procedência e pendências explícitas
+- docs(sertao): registra céu horizonte e animação regional
+- docs(sertao): preserva críticas adversariais por rodada
+- docs(sertao): registra referências e régua espacial
+- docs(sertao): registra continuidade e entrega validada
+- docs(sertao): preserva capturas e medições da revisão de mapa
+- docs(sertao): preserva comparações visuais de fauna e horizonte
+- docs(sertao): preserva evidência visual da criação animada
+- build(sertao): preserva derivação reproduzível do calango
+- test(sertao): registra régua de luz e contraste
+- test(sertao): verifica animais e orçamento no jogo servido
+- test(sertao): mede fauna rig e integração sem ampliar preload
+- test(sertao): verifica rotas vegetação e oclusores
+- test(sertao): mede identidade e cobertura competitiva
+- feat(sertao): transforma o arraial preservando rotas e objetivos
+- feat(sertao): integra fauna animada e criação com contato
+- feat(sertao): compõe arquitetura e horizonte de caatinga
+- feat(sertao): adiciona fauna Mint com rig e procedência
+- feat(sertao): adiciona acervo de arquitetura e caatinga
+
+## [2.0.0-alpha.234] — 2026-09-06
+
+### Mudado
+- Escadão: casa frontal conectada e horizonte (#522)
+- docs(escadao): registrar ajuste de passarela
+- fix(escadao): preservar lance sob passarela
+- docs(escadao): registrar casa de disputa R5
+- feat(escadao): abrir casa frontal aos dois lados
+- docs(escadao): registrar contratos R5
+- feat(escadao): adicionar horizonte de morro
+- docs(escadao): registrar prazo e marco para redistribuição
+- wip(escadao): preservar passagens R5 antes da pausa coordenada
+- docs(escadao): registrar merge e evidência final
+
+## [2.0.0-alpha.233] — 2026-09-06
+
+### Mudado
+- fix(lajes): evita travamentos ao aumentar a partida para 8x8 (#517)
+
+## [2.0.0-alpha.232] — 2026-09-06
+
+### Mudado
+- fix(menu): restore Single Player mode submenu (#518)
+- test(smoke): open Single Player before mode
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(skylife): skip bird preload in Node probes
+- chore(docs): regenera bloco derivado (autofix)
+- test(boot): follow Single Player submenu
+- docs: regenerate architecture index
+- docs: update CTF menu checkpoint
+- fix(menu): restore single-player mode submenu
+- docs: record CTF home verification and remaining gates
+- fix(menu): restore direct CTF entry on home
+
+## [2.0.0-alpha.231] — 2026-09-06
+
+### Mudado
+- fix(audio): remover fallback de voz sintetica (#520)
+- docs(audio): atualiza índices após rebase
+- fix(audio): restaurar memes e rounds historicos
+- fix(audio): remover fallback de voz sintetica
+- fix(audio): restaurar memes e rounds historicos
+- chore(docs): regenera bloco derivado (autofix)
+- fix(audio): remover fallback de voz sintetica
+
+## [2.0.0-alpha.230] — 2026-09-06
+
+### Mudado
+- fix(amazonia): restaura rota alternativa do spawn B (#521)
+
+## [2.0.0-alpha.229] — 2026-09-06
+
+### Mudado
+- fix(audio): revalidar manifesto ingame por release (#519)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(audio): revalidar manifesto ingame por release
+
+## [2.0.0-alpha.228] — 2026-09-06
+
+### Mudado
+- feat(amazonia): integrar mapa ribeirinho jogável
+
+## [2.0.0-alpha.227] — 2026-09-06
+
+### Mudado
+- feat(escadao): integrar mapa com becos, casa acessível e fauna (#515)
+- fix(escadao): manter chegada dos becos no grafo físico
+- fix(escadao): completar ambiência do pacote publicado
+- chore(escadao): finalizar mídia e registrar validação do mapa
+- fix(escadao): validar rotas físicas e proteger o patamar do objetivo
+- docs(escadao): atualizar inventário e gates da rodada R4
+- feat(escadao): preview real e provas de navegação e fauna
+- fix(escadao): fechar pisos e abrir casa com circulação e janela
+- feat(escadao): preserve Mint cat rig and domestic props
+- feat(menu): preview atual do Escadão com vídeo sob demanda
+- record verified Astro preview on current main
+- refresh generated documentation for Escadao integration
+- preserve Escadao evidence and main integration report
+- integrate Escadao on main and validate real menu and bot routes
+- import approved Escadao assets onto current main
+
+## [2.0.0-alpha.226] — 2026-09-06
+
+### Mudado
+- feat(lajes): comunidade com becos estreitos, ambiência e preview
+
+## [2.0.0-alpha.225] — 2026-09-06
+
+### Mudado
+- feat(ops): rodada 2 — GPU no Mac, edge aquecido, diagnose agendada, eval:boot no CI, beacon, retry no menu, elenco servido (#514)
+
+## [2.0.0-alpha.224] — 2026-09-06
+
+### Mudado
+- feat(ops): camada de autonomia operacional — diagnose que explica, ops.js e runbook (#512)
+
+## [2.0.0-alpha.223] — 2026-09-06
+
+### Mudado
+- fix(audio): restaurar vozes aprovadas e remover falas genericas (#510)
+
+## [2.0.0-alpha.222] — 2026-09-06
+
+### Mudado
+- fix(telemetry): make browser delivery reliable (#508)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(boot): keep early telemetry fail-silent
+- chore(docs): regenera bloco derivado (autofix)
+- fix(telemetry): make browser delivery reliable
+
+## [2.0.0-alpha.221] — 2026-09-05
+
+### Mudado
+- fix(audio): renovar cache do manifesto privado (#507)
+- fix(audio): renovar cache do manifesto privado
+
+## [2.0.0-alpha.220] — 2026-09-05
+
+### Mudado
+- feat(audio): incorporar pack aprovado via Blob privado (#506)
+- fix(ci): desacoplar gate de assets do three
+- fix(ci): preservar preview sem segredo
+- docs: sincronizar inventario de gates
+- docs(audio): registrar canal privado
+- feat(audio): buscar pack privado no build
+
+## [2.0.0-alpha.219] — 2026-09-05
+
+### Mudado
+- feat(audio): consolidar arsenal e feedback tatil no jogo (#504)
+- docs(audio): fechar handoff do gate de publicação
+- fix(audio): impedir pack restrito fora da allowlist
+- docs(audio): fechar handoff pos-merge
+- docs(audio): registrar seleção e continuação da lane
+- fix(audio): consolidar curadoria e feedback de combate
+- docs(audio): registrar bloqueio do preview
+- docs: atualizar autoria da locucao Fish
+- docs(audio): registrar locucao e bloqueio de direitos
+- feat(audio): adicionar locucao Fish local
+- docs(audio): registrar PR e validacao final
+- docs: registrar gate de eventos de audio
+- docs: sincronizar contratos de audio
+- feat(audio): completar feedback tatil local
+- fix(audio): preservar fallbacks e balancear boom
+- fix(audio): tornar boom padrao no laboratorio
+- docs(audio): registrar boom guns designed para escuta
+- feat(audio): integrar boom guns designed em ab local
+- docs(audio): registrar arsenal cc0 para escuta
+- feat(audio): mapear arsenal para gravacoes cc0
+- docs(audio): registrar rejeicoes da escuta
+- fix(audio): remover sobreposicao e distinguir pistolas
+- docs(audio): registrar escuta de eventos e mapas
+- feat(audio): dar identidade a armas mapas e eventos
+- docs(audio): registrar cobertura e validacao local
+- feat(audio): cobrir arsenal e eventos no jogo local
+- docs(audio): registrar escuta Fab no jogo local
+- feat(audio): ligar laboratorio Fab ao jogo local
+- feat(audio): ampliar escuta local para biblioteca segura
+- test(audio): isolar ledger da fixture PRV13
+- docs(audio): 5ª rodada — BUG-138/139, três camadas com prova automatizada
+- test(audio): prova automatizada do assets-check contra fixture (PRV13)
+- fix(audio): ledger ausente aborta o gerador, nos dois modos (PRV12)
+- docs(audio): resultados da 4ª rodada e audio:check registrado como vermelho
+- docs(audio): registra o escape P0 e corrige o que os docs superdeclaravam
+- fix(audio): P0 fail-closed — allowlist no prefixo derivado, nas três camadas
+- docs(audio): estados por evento, BUG-132..136 e handoff da 3ª rodada
+- feat(audio): legado CS/Valve/UT catalogado e bloqueado, sem fingir substituição
+- feat(audio): gate de capacidade — só se aprova o que o runtime sabe tocar
+- fix(audio): sha256Fonte exige formato E é conferido contra o arquivo real (PRV8)
+- fix(audio): inventariador sinaliza falha POR ARQUIVO, e sai 1
+- fix(audio): rajada com cache frio faz uma requisição, não uma por tiro (ESP9)
+- docs(audio): handoff da 2ª rodada e BUG-128..131 no KNOWN-BUGS
+- feat(audio): shortlist por metadado e escuta A/B local, sem aprovar nada sozinho
+- fix(audio): a decisão do ledger passa a controlar o gerador (PRV7)
+- fix(audio): P0 trava a redistribuição Fab e PRV5 volta a poder disparar
+- fix(audio): sample que não carrega cai no synth, não em silêncio (ESP8)
+- fix(audio): ALC2 era falso-verde — o empacotador morria em toda execução
+- docs(audio): BUG-126 e BUG-127 no KNOWN-BUGS, com régua e reprodução
+- docs(audio): handoff do piloto Fab, SCRIPTS.md e blocos regerados
+- fix(audio): volume do usuário entra uma vez no caminho por sample (ESP7)
+- feat(audio): inventariador local do staging privado — só metadado
+- feat(audio): contrato de procedência por asset — origem, licença, hash e aprovação
+- fix(audio): tiro por sample entra no grafo — pan, propagação e duck do synth
+- test(audio): régua espacial do tiro por sample (ESP) — 3 cláusulas vermelhas
+- fix(audio): ambiente entra no manifest e no pack — ALC 17/17 verde
+- test(audio): régua de alcance do empacotamento (ALC) — vermelha por 17 de 17
+- docs(audio): iniciar piloto Fab
+
+## [2.0.0-alpha.218] — 2026-09-05
+
+### Mudado
+- fix(multiplayer): reconcile authoritative state and quality telemetry (#505)
+
+## [2.0.0-alpha.217] — 2026-09-03
+
+### Mudado
+- feat(multiplayer): granadas online — o 4/5 pede ao servidor, nade/boom desenham sem dano local (fase 3) (#503)
+- feat(multiplayer): granadas online — o 4/5 pede ao servidor, `nade`/`boom` desenham sem dano local (fase 3)
+
+## [2.0.0-alpha.216] — 2026-09-03
+
+### Mudado
+- feat(multiplayer): drops de arma online — cria e some por id do servidor, E pede pick (fase 2) (#502)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(multiplayer): drops de arma online — cria e some por id do servidor, E pede `pick` (fase 2)
+
+## [2.0.0-alpha.215] — 2026-09-03
+
+### Mudado
+- feat(multiplayer): eventos do servidor no cliente — arco, killfeed e painel de morte com o autor real (BUG-90, fase 1) (#501)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(multiplayer): consome os eventos do servidor — arco, killfeed e painel de morte com o autor real (BUG-90, fase 1)
+
+## [2.0.0-alpha.214] — 2026-09-03
+
+### Mudado
+- fix(ci): substitui a action local fantasma do issues-bot pelos passos reais (PR #490 do nfvelten) (#500)
+- chore(docs): regenera blocos com o package.json do PR (eval:wflocal)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge origin/main (alpha.212) em conserta-action-fantasma-issues-bot e regenera blocos
+- chore(docs): regenera bloco derivado (autofix)
+- ci: dispara os checks obrigatórios no head do autofix (PR #490)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(ci): substitui a action local fantasma do issues-bot pelos passos reais
+
+## [2.0.0-alpha.213] — 2026-09-03
+
+### Mudado
+- docs(known-bugs): fechar BUG-117..124, BUG-18 e BUG-41 com o estado real (#499)
+- docs(known-bugs): fechar BUG-117..124 com release e deploy, e as entradas velhas BUG-18 e BUG-41
+
+## [2.0.0-alpha.212] — 2026-09-03
+
+### Mudado
+- fix(multiplayer): paridade com o single player — acerto previsto, killfeed, respawn, fim de partida, viewmodel e [BOT] (BUG-119, 121-124) (#498)
+- fix(multiplayer): paridade com o single player — acerto previsto, killfeed, respawn, fim de partida, caixa do viewmodel e [BOT] (BUG-119, 121-124)
+
+## [2.0.0-alpha.211] — 2026-09-02
+
+### Mudado
+- feat(analytics): correlate player journey and online presence (#495)
+- fix(online): register presence before refreshing count
+- feat(analytics): attach gameplay context to telemetry
+
+## [2.0.0-alpha.210] — 2026-09-02
+
+### Mudado
+- fix(multiplayer): remotos no relógio do servidor e espectador em 3ª pessoa (BUG-117, BUG-118) (#494)
+- fix(multiplayer): remotos no relógio do servidor e espectador em 3ª pessoa (BUG-117, BUG-118)
+
+## [2.0.0-alpha.209] — 2026-09-02
+
+### Mudado
+- fix(multiplayer): virada de partida, animação dos remotos, viewmodel tardio, fim de round, pausa e sons (BUG-110..116) (#493)
+- chore(docs): regenerar blocos gerados e ARCH.md (game.js 7220 linhas)
+- chore(multiplayer): comentários novos no teto de 2 linhas (histórico no KNOWN-BUGS)
+- fix(multiplayer): morte de remoto com som e kill confirm no online
+- fix(multiplayer): pausa não devolve o corpo à IA (input parado a cada 2 s)
+- fix(multiplayer): virada de partida, animação dos remotos, viewmodel tardio e fim de round
+
+## [2.0.0-alpha.208] — 2026-09-02
+
+### Mudado
+- fix(multiplayer): smooth sessions and report client quality (#492)
+- fix(multiplayer): smooth sessions and report client quality
+
+## [2.0.0-alpha.207] — 2026-09-02
+
+### Mudado
+- fix: keep prod watch green during legitimate player idle (#491)
+- fix: do not page on idle telemetry
+
+## [2.0.0-alpha.206] — 2026-09-02
+
+### Mudado
+- fix(multiplayer): estabiliza sessão, bots, CTF e áudio (#489)
+
+## [2.0.0-alpha.205] — 2026-08-30
+
+### Mudado
+- feat(audio): pack v8 — vozes do time Mítico e upgrade dos funkeiros (#487)
+- feat(audio): pack v8 — vozes do time Mítico e upgrade dos funkeiros
+
+## [2.0.0-alpha.204] — 2026-08-30
+
+### Mudado
+- feat(audio): roteiro e gerador de vozes do time Mítico (#485)
+- feat(audio): roteiro e gerador de vozes do time Mítico
+
+## [2.0.0-alpha.203] — 2026-08-30
+
+### Mudado
+- chore: APIs saem do cliente (#462 + main) (#474)
+- fix(smoke): contrato de /api/leaderboard vira o da rede de segurança — 307 pro backend
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado após o merge da alpha.201
+- fix(ci+boot): import do apibase que faltava e workflows apontam para as réguas que restaram
+- chore(docs): regenera bloco derivado após o merge
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(api): as 18 rotas de banco saem do cliente e vão para o backend privado
+
+## [2.0.0-alpha.202] — 2026-08-29
+
+### Mudado
+- fix(chr3): régua mede o PÉ (não a bbox); tabela compensa crouch constante — afundando 5 → 2 (#482)
+- fix(chr3): régua mede o PÉ (não a bbox); tabela compensa crouch constante — afundando 5 → 2
+
+## [2.0.0-alpha.201] — 2026-08-29
+
+### Mudado
+- Dois P0 saem da lista: BUG-36 (Ctrl+W) e BUG-03 (bot mudo) rebaixados com medição (#480)
+- docs(bugs): BUG-36 e BUG-03 saem do P0 — mitigação/conserto já na main, rebaixados com medição
+
+## [2.0.0-alpha.200] — 2026-08-29
+
+### Mudado
+- fix(eval): régua de UI deixa de ser cega a font-size fluida (BUG-05) (#479)
+- fix(eval): régua de UI deixa de ser cega a font-size fluida (BUG-05)
+
+## [2.0.0-alpha.199] — 2026-08-29
+
+### Mudado
+- fix(edge+telemetria): os dois P0 — /js/ sai do TTL de 1 mês no edge (BUG-39) e BUG-51 fecha com evidência (#476)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(edge+telemetria): /js/ sai do TTL de 1 mês no edge e o BUG-51 fecha com evidência
+
+## [2.0.0-alpha.198] — 2026-08-29
+
+### Mudado
+- feat(audio): músicas do menu trocadas pela leva Suno — audio-pack-v7 (#473)
+- feat(audio): menu 100% Suno — pack v7 no ar e a URL aponta pra ele
+
+## [2.0.0-alpha.197] — 2026-08-29
+
+### Mudado
+- fix(armas): o preload do corpo (tecla B) puxava as 26 armas bloqueando (BUG-85) (#478)
+- fix(armas): o preload do corpo (tecla B) puxava as 26 armas bloqueando (BUG-85)
 
 ## [2.0.0-alpha.196] — 2026-08-29
 

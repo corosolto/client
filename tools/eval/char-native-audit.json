@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "2a745b9ab651c7c028738db69c1d3bdf116890f8440f7a4b4af4df78eb472bf6",
-  "weaponMapSha256": "e9691b02ff11169d6421df8148851f983a276ddde6b5e73b8e717def084b5a1e",
-  "review": "Quadros centrais de seleção, vitória e derrota dos 62 personagens comparados em pranchas (asset-evidence/bug59/); pistola, escopeta, submetralhadora, fuzil, metralhadora e rifles de precisão permanecem distinguíveis, os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
-  "regenerate": "BASE=http://127.0.0.1:8124 node tools/eval/char-native-vids.mjs"
+  "mediaSha256": "e8b9f850156b839897dd39d29969fe365fff3bb6d4e3530c8d5f9f23898395a0",
+  "weaponMapSha256": "9cab068f5d37239775395e92308c7f03ead20b153d3909963ee3fb6663bf6b4a",
+  "review": "Lote de mídia dos 54 personagens: os 45 publicados mais os 9 Míticos. Revisado pelo dono em 09/09 e aprovado. A mídia de Lampião, Zumbi, Saci e Caipora foi gerada dos modelos novos por tools/gen-char-video.mjs; formatos VP9 nos quadros nativos do elenco (640x854 busto, 640x640 resultado) e loadout de armas conferidos. A Cuca saiu do lote junto com a mídia órfã dela.",
+  "regenerate": "BASE=http://127.0.0.1:8123 node tools/eval/char-native-vids.mjs"
 }

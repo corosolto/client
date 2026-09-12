@@ -1,0 +1,94 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { MAP_PREVIEWS } from '../../public/js/map_preview_assets.js';
+const preview = { ...MAP_PREVIEWS.escadao };
+if(process.argv.includes('--mutante=preview-antigo'))preview.source='desatualizado';
+const hash=file=>createHash('sha256').update(readFileSync(file)).digest('hex');
+for(const [key,file] of Object.entries({source:'map_escadao.js',home:'map_escadao_home.js',details:'map_escadao_details.js',layout:'graffiti_layout.js'}))
+  assert.equal(preview[key],hash(`public/js/${file}`),`Preview desatualizado: ${file}`);
+assert.ok(Object.keys(preview.assets).length>0,'Manifesto inclui modelos capturados');
+for(const [file,expected] of Object.entries(preview.assets))assert.equal(hash(file),expected,`Modelo mudou: ${file}`);
+for(const key of ['poster','video']){const [file,version]=preview[key].split('?v=');assert.equal(hash(`public${file}`).slice(0,12),version,'Mídia corresponde ao cache-bust');}
+if(process.argv.includes('--procedencia')){console.log('PREVIEW SOURCE PASS: fontes, modelos e mídia atuais');process.exit(0);}
+
+const base = process.env.BASE || 'http://127.0.0.1:8148';
+const out = 'artifacts/escadao-visual/hover-preview';
+const mutant = process.argv.includes('--mutante=sem-hover');
+mkdirSync(out, { recursive: true });
+const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+let applied = false;
+try {
+  const page = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
+  page.setDefaultTimeout(20000);
+  if (mutant) await page.route('**/escadao_preview.js*', async route => {
+    const response = await route.fetch();
+    const source = await response.text();
+    const changed = source.replace('function startPreview(card) {', 'function startPreview(card) { return;');
+    assert.notEqual(changed, source, 'Mutação precisa aplicar');
+    applied = true;
+    await route.fulfill({ response, body: changed });
+  });
+  const requests = [], errors = [];
+  page.on('request', r => { if (r.url().includes('escadao.webm')) requests.push(r.url()); });
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto(`${base}/?tela=mapas&map=escadao&lang=pt`, { waitUntil: 'domcontentloaded' });
+  const card = page.locator('.ms-thumb[data-id="escadao"]');
+  await card.waitFor({ state: 'visible' });
+  await page.mouse.move(0, 0);
+  assert.equal(requests.length, 0, 'Vídeo não pode carregar ao abrir o menu');
+  await page.screenshot({ path: `${out}/selection.png` });
+  await card.hover();
+  await page.waitForFunction(() => document.querySelector('.ms-thumb video')?.currentTime > .15, null, { timeout: 12000 });
+  assert.ok(!mutant, 'Mutação sem hover precisa reprovar');
+  const media = await card.locator('video').evaluate(v => ({ muted: v.muted, loop: v.loop, width: v.videoWidth, height: v.videoHeight, frames: v.getVideoPlaybackQuality().totalVideoFrames }));
+  assert.ok(media.muted && media.loop && media.width === 640 && media.height === 480 && media.frames > 1);
+  await page.screenshot({ path: `${out}/hover.png` });
+  await page.mouse.move(0, 0);
+  assert.equal(await page.locator('.ms-thumb video').count(), 0, 'Sair do card libera o vídeo');
+  await page.keyboard.press('Tab');
+  await card.focus();
+  await page.waitForFunction(() => document.querySelector('.ms-thumb video')?.currentTime > .1);
+  await page.locator('#ms-continue').focus();
+  assert.equal(await page.locator('.ms-thumb video').count(), 0, 'Blur libera o vídeo');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const count = requests.length;
+  await card.hover();
+  await page.waitForTimeout(400);
+  assert.equal(await card.locator('video').count(), 0, 'Movimento reduzido mantém imagem');
+  assert.equal(requests.length, count);
+  await page.mouse.move(0, 0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await card.hover();
+  await page.waitForFunction(() => document.querySelector('.ms-thumb video')?.currentTime > .1);
+  const previous = await card.locator('video').elementHandle();
+  await card.click();
+  assert.ok(await previous.evaluate(v => !v.isConnected && v.paused && !v.getAttribute('src')), 'Rerender libera vídeo anterior');
+  assert.ok(await page.locator('.ms-thumb video').count() <= 1, 'Só uma prévia ativa');
+  await page.mouse.move(0, 0);
+  await card.hover();
+  await page.waitForFunction(() => document.querySelector('.ms-thumb video')?.currentTime > .1);
+  await page.locator('#ms-continue').click();
+  assert.equal(await page.locator('.ms-thumb video').count(), 0, 'Sair da tela libera vídeo');
+  await page.goto(`${base}/?tela=mapas&map=escadao&lang=pt`, { waitUntil: 'domcontentloaded' });
+  await card.waitFor({ state: 'visible' });
+  await page.route('**/escadao.webm*', route => route.abort());
+  await card.hover();
+  await page.waitForFunction(() => !document.querySelector('.ms-thumb video'));
+  assert.ok(await card.locator('img').evaluate(i => i.complete && i.naturalWidth > 0), 'Erro de vídeo mantém poster');
+  await page.close();
+  const touch = await browser.newPage({ viewport: { width: 1024, height: 768 }, isMobile: true, hasTouch: true });
+  const touchRequests = [];
+  touch.on('request', r => { if (r.url().includes('escadao.webm')) touchRequests.push(r.url()); });
+  await touch.goto(`${base}/?tela=mapas&map=escadao&lang=pt`, { waitUntil: 'domcontentloaded' });
+  await touch.locator('.ms-thumb[data-id="escadao"]').tap();
+  await touch.screenshot({ path: `${out}/mobile.png` });
+  assert.equal(touchRequests.length, 0, 'Toque não carrega vídeo');
+  assert.deepEqual(errors, []);
+  writeFileSync(`${out}/behavior.json`, JSON.stringify({ status: 'passed', media, requests, errors }, null, 2));
+  console.log('PREVIEW PASS: carga sob demanda, frames reais, hover/foco, cleanup, movimento reduzido');
+} catch (error) {
+  console.error(JSON.stringify({ status: 'failed', mutant, applied, error: error.message }));
+  process.exitCode = 1;
+} finally { await browser.close(); }

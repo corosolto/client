@@ -1,35 +1,17 @@
-/* Tábuas entre lajes medidas nas Box3 das superfícies realmente desenhadas.
-
-   Substituiu a régua dos vãos puláveis (até 11/08 o desenho era ilha de concreto +
-   salto): o dono jogou e leu "madeiras no ar sem conexão com nada", e bot não pula —
-   ou seja a camada das lajes era visualmente flutuante e mecanicamente fechada.
-   O desenho novo é a tábua de favela: prancha de madeira ANCORADA nos dois telhados,
-   andável a pé (sem salto), com waypoints em cima para o A* dos bots.
-
-   Esta régua cobra, por ligação declarada:
-   1. a tábua existe e toca as DUAS lajes que ela diz ligar (Box3 expandida 0,3 m);
-   2. o convés dela está na mesma cota andável das duas pontas (±0,30 m) — tábua
-      flutuando acima ou afundada abaixo da laje reprova;
-   3. cada prédio declara sua laje (`lajesRoof`), senão a âncora não tem o que medir.
-
-   Identidade por ala (3 marcos, 3 cores) e espessura de cabo aéreo seguem cobrados.
-   Mutantes: `tabua-solta` desloca uma tábua e quebra a ancoragem; `tabua-flutuante`
-   sobe uma tábua 0,6 m; `alas-clonadas`; `cabo-alias`.
-*/
+/* V4: duas pontes reais ancoradas nas quatro plataformas, cotas ±0,30 m.
+   Aposentadoria das 13 ligações e três alas: LAJES-V4-CONTRATOS-PLANO.md.
+   Mutantes deslocam/subem a malha real; inventário vazio reprova. */
 import { THREE, bootGame, initTextures } from './harness.mjs';
 
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0 });
 game.world.root.updateMatrixWorld(true);
-const lajes = new Map(), tabuas = [];
-const edges = [], routes = [], wings = [], cables = [];
-game.world.root.traverse((object) => {
-  if (object.userData?.lajesRoof) lajes.set(object.userData.lajesRoof, object);
-  if (object.userData?.lajesTabua) tabuas.push(object);
-  if (object.userData?.jumpEdge) edges.push(object);
-  if (object.userData?.roofRoute) routes.push(object);
-  if (object.userData?.lajesWing) wings.push(object);
-  if (object.userData?.overheadCable) cables.push(object);
+const tabuas = [], lajes = [], cables = [];
+game.world.root.traverse(object=>{
+  if(object.isMesh && object.userData?.lajesPlatform)lajes.push(object);
+  if(object.isMesh && object.userData?.lajesBridge)tabuas.push(object);
+  if(object.userData?.overheadCable)cables.push(object);
 });
+if(lajes.length!==4 || tabuas.length!==2)throw Error(`V4 inventário: ${lajes.length}/4 lajes, ${tabuas.length}/2 pontes`);
 if (process.argv.includes('--mutante=tabua-solta') && tabuas[0]) {
   /* 1,5 m nas duas direções: maior que a sobreposição da tábua com qualquer laje
      (~0,4 m) + a folga da Box3 (0,3 m) — pelo menos uma ponta TEM que descolar */
@@ -38,50 +20,28 @@ if (process.argv.includes('--mutante=tabua-solta') && tabuas[0]) {
 if (process.argv.includes('--mutante=tabua-flutuante') && tabuas[0]) {
   tabuas[0].position.y += .6; tabuas[0].updateMatrixWorld(true);
 }
-if (process.argv.includes('--mutante=alas-clonadas')) for (const wing of wings) wing.userData.lajesWing = 'same';
+if (process.argv.includes('--mutante=alas-clonadas')) throw Error('Mutante aposentado com as três alas antigas: ver LAJES-V4-CONTRATOS-PLANO.md');
 if (process.argv.includes('--mutante=cabo-alias')) for (const cable of cables) cable.userData.cableDiameter = .01;
 
-const LIGACOES = [
-  'NW-WN', 'WN-WS', 'WS-SW',           // coluna oeste, inclusive o vão do beco central
-  'NE-EN', 'EN-ES', 'ES-SE',           // coluna leste
-  'SW-CS', 'CS-SE',                    // fileira sul (vãos de 6 m)
-  'NW-CN', 'CN-NE',                    // rampas para a laje alta do spawn A
-  'WN-MN', 'MS-SE', 'CS-MS',           // mirantes laterais e retorno do spawn sul
-];
-
-const box = new Map();
-for (const [nome, mesh] of lajes) box.set(nome, new THREE.Box3().setFromObject(mesh));
-const toca = (t, nome) => {
-  const B = box.get(nome);
-  if (!B) return false;
-  const E = B.clone().expandByScalar(0.3);
-  return t.intersectsBox(E);
-};
+// V4 substitui as 13 tábuas antigas pelas duas conexões da planta aprovada.
+const LIGACOES = game.world.design.bridges;
+const box = lajes.map(mesh=>new THREE.Box3().setFromObject(mesh));
 let falhas = 0;
-for (const id of LIGACOES) {
-  const [a, b] = id.split('-');
-  const t = tabuas.find((m) => m.userData.lajesTabua === id);
-  if (!t) { falhas++; console.log(`✗ ${id}: tábua ausente`); continue; }
-  const T = new THREE.Box3().setFromObject(t);
-  const ancorada = toca(T, a) && toca(T, b);
-  /* o convés tem que fechar o intervalo entre as duas cotas (rampa) ou casar com
-     elas (tábua plana): acima do teto mais alto + 0,3 é madeira no ar, abaixo do
-     mais baixo - 0,3 é tábua afundada na laje */
-  const cotas = [a, b].map((n) => box.get(n)?.max.y ?? NaN);
-  const deck = T.max.y;
-  const nivelada = cotas.every(Number.isFinite)
-    && deck >= Math.min(...cotas) - 0.30 && deck <= Math.max(...cotas) + 0.30;
-  const ok = ancorada && nivelada;
-  if (!ok) falhas++;
-  console.log(`${ok ? '✓' : '✗'} ${id}: ancorada ${ancorada ? 'sim' : 'NÃO'} · deck ${deck.toFixed(2)} · cotas ${cotas.map((c) => c.toFixed(2)).join('/')} `);
+for (const bridge of LIGACOES) {
+  const x=(bridge.x0+bridge.x1)/2;
+  const t=tabuas.find(m=>Math.abs(new THREE.Box3().setFromObject(m).getCenter(new THREE.Vector3()).x-x)<1e-3);
+  if(!t){falhas++;console.log(`✗ ${bridge.name}: ponte ausente`);continue;}
+  const T=new THREE.Box3().setFromObject(t);
+  const touching=box.filter(B=>T.intersectsBox(B.clone().expandByScalar(.3)));
+  const ancorada=touching.length===2;
+  const cotas=touching.map(B=>B.max.y), deck=T.max.y;
+  const nivelada=cotas.length===2&&deck>=Math.min(...cotas)-.30&&deck<=Math.max(...cotas)+.30;
+  const ok=ancorada&&nivelada;
+  if(!ok)falhas++;
+  console.log(`${ok?'✓':'✗'} ${bridge.name}: ancorada ${ancorada} · deck ${deck.toFixed(2)} · cotas ${cotas.map(c=>c.toFixed(2)).join('/')}`);
 }
-
-const alas = new Set(wings.map((wing) => wing.userData.lajesWing));
-const coresAlas = new Set(wings.map((wing) => wing.material?.color?.getHex?.()).filter(Number.isFinite));
-if (alas.size < 3 || coresAlas.size < 3) { falhas++; console.log(`✗ identidade por ala: ${alas.size}/3 nomes · ${coresAlas.size}/3 cores`); }
-else console.log(`✓ identidade por ala: ${alas.size}/3 nomes · ${coresAlas.size}/3 cores`);
 if (cables.some((cable) => cable.userData.cableDiameter < .055)) { falhas++; console.log('✗ cabo aéreo abaixo de 5,5 cm'); }
 else console.log(`✓ cabos aéreos: ${cables.length ? 'espessura legível' : 'removidos'}`);
-if (falhas) { console.error(`LAJES-TÁBUAS FALHA: ${falhas}/${LIGACOES.length + 2}`); process.exitCode = 1; }
+if (falhas) { console.error(`LAJES-TÁBUAS FALHA: ${falhas}/${LIGACOES.length + 1}`); process.exitCode = 1; }
 else if (process.argv.some((arg) => arg.startsWith('--mutante='))) { console.error('MUTANTE sobreviveu'); process.exitCode = 1; }
 else console.log('LAJES-TÁBUAS OK');

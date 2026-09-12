@@ -1,5 +1,176 @@
 # HANDOFF
 
+## Correção pós-merge do Sertão — BUG-145 (08/09/2026)
+
+Objetivo: corrigir a rejeição humana posterior ao PR #526 sem reutilizar sua
+branch. Worktree exclusiva `worktrees/sertao-respawn-wagons-fix`, branch
+`codex/sertao-respawn-wagons-fix`, base `origin/main` alpha.242 (`e67addf4`).
+
+Baseline antes do conserto: WA5 vermelho porque duas das três carroças só tinham
+um flanco transitável; IN12/IN13 vermelhos porque `platibanda-0`, `pedra-8` e a
+geminada central continuavam fechadas. Os gates antigos permaneceram verdes e
+demonstraram a lacuna da medição. Artefatos em
+`artifacts/sertao-respawn-fix/*-baseline-red.json`.
+
+Checkpoint funcional `21b0d72d`: cinco casas da fileira dos respawns têm porta,
+saída lateral e janela com LOS recíproca; as três carroças têm ambos os flancos e
+4,9 m de travessia traseira. A grade dos bots não cria nós aleatórios dentro dos
+interiores. SP4 preserva três rotas disjuntas (31/34/29 nós), o golden dos bots
+passa, e 5x5/8x8 mediram 9/15 bots com 1,267%/0,756% de amostras travadas. WebGL
+real 1536×1024: RV1–RV12 verdes, máximo 500 calls/340.530 triângulos; capturas em
+`artifacts/sertao-respawn-fix/runtime-final-source/`. O único gate conhecido
+vermelho é `look-check`, por Amazônia sem horizonte assado; a mesma falha existe
+na base `e67addf4`, enquanto Sertão mede ΔE76=0,0. Relatório:
+`docs/reports/SERTAO-RESPAWN-WAGONS-FIX.md`.
+
+Draft PR #559: `https://github.com/corosolto/client/pull/559`, base `main`.
+Próximo passo: revisão humana adversarial no servidor local e no draft PR. Sem
+merge ou deploy nesta frente.
+
+Build Astro/Vercel verde. `check:fast`: 129/132; todo gate de mapa ficou verde.
+Os três vermelhos eram alheios ao diff: `audio:check` exige a árvore-fonte privada
+e vê órfãos no pack público materializado, `feet:check` também reprova na base
+`e67addf4`; `eval:docsautoria` passou isolado depois do commit documental. Resultado
+efetivo atual: dois vermelhos herdados.
+
+## Admin 08/09: áudio e escalonamento de crashes
+
+- Checkout `worktrees/bug-pipeline-audio`, branch `fix/admin-audio-crash-pipeline`, base
+  `38803801` (alpha.239). O `RangeError` reportado pelo admin foi reproduzido: uma rampa
+  exponencial recebia alvo zero. `Sfx._env` agora limita pico/fim a `0.0001`; a régua
+  `eval:audioenvelope` passa e o mutante `pico-zero` reprova. A régua entrou em `check:fast`.
+- Separadamente, o backend de produção não tem `GH_DISPATCH_TOKEN`; isso impede
+  `repository_dispatch` e explica a ausência de novas issues. A correção de infraestrutura e
+  health fica no checkout irmão `csbrasil-backend/worktrees/bug-crash-dispatch` e ainda exige
+  um token de bot autorizado para publicação. Não confundir com Ollama: o workflow de crash
+  não o utiliza.
+- Não resolvidos neste checkpoint: os timeouts de abertura de partida e `M_ID` precisam de
+  evidência de rede/estado além da mensagem agregada do admin.
+
+## Feedback de combate: contador de abates, replay no headshot e bot de faca — 06/09/2026
+
+Objetivo: fechar as três frentes de leitura de combate pedidas pelo dono — um contador de
+abates legível durante a partida, devolver a câmera ao jogador no headshot (o #364 tirava a
+primeira pessoa por 1,36 s) e fazer o bot RESPEITAR o modo em rodada de faca. Branch
+`claude/combat-feedback-hud-bots`, worktree `claude-combat-feedback`, base `42c01175`.
+
+**Estado inicial medido (`botfaca-check.mjs`, praca_poderes, semente 4242, 4 bots, 60 s):** o
+modo já entregava a faca na mão do bot, mas a cabeça continuava de fuzil. A banda de distância
+com histerese de fuzil (recuo abaixo de 6 m, volta a `mid` só acima de 9,5 m) contra um alcance
+de faca de 2,4 m virava ciclo-limite: **menor distância bot→alvo 5,98 m, ZERO golpes, ZERO
+abates**. Quando por acaso entrava no alcance, o golpe saía pelo caminho de tiro — traçante,
+fogacho de cano e som de arma de fogo.
+
+**Mudança (lógica de jogo em `public/js/game.js`, sem navegador e sem penetração):**
+`_meleeRange(wid)` devolve alcance só de arma branca; quando o bot está em corpo a corpo a
+histerese de fuzil é substituída por "fecha e não recua" (`push` até 0,6× do alcance,
+`approach` nunca negativo) e o gate de ataque roteia para `_botMelee`, que resolve o golpe com
+alcance, ângulo, LOS, dano e `sfx.knife()/knifeHit()` — sem traçante, fogacho ou `shotWeapon`.
+Fora do corpo a corpo a banda de fuzil ficou intacta (é a cláusula BF4).
+
+**Estado final medido (mesma semente):** encostou a **1,24 m** (alcance 2,40), **18 golpes**,
+**9 abates**, 0 traçante/fogacho; rodada normal intacta com menor distância 23,46 m.
+
+**As três réguas foram vistas VERMELHAS no estado defeituoso**, e não só contra mutante: a
+árvore da base `42c01175` foi materializada com `git archive HEAD | tar -x` em `/tmp/csb-head`
+(só leitura, nada de `stash`/`checkout`) e as três rodaram lá. `abateshud` reprovou AB1-AB4
+(`#kill-count` não existia: "<sem elemento>"); `replaycam` reprovou HS1-HS3 (câmera 121,377 m,
+3,440 rad, ΔFOV 20°, relógio 1,836 s em 2,000 s reais, viewmodel e mira escondidos);
+`botfaca` reprovou BF2 (5,98 m, zero golpes, zero abates).
+
+**Mutantes — os 11 reprovaram:** botfaca `recuo` (5,40 m, zero golpes/abates), `tracante`
+(18 traçantes e 18 fogachos) e `corredor` (rodada normal colando a 2,87 m contra o piso de
+4 m); replaycam `orbita`, `hitstop`, `esconde` e `sem-kill`; abateshud `time` (lê 4 com 3
+abates do jogador), `rodada` (3 → 0 no `_startRound`), `congelado` e `miudo` (12 px contra o
+piso de 24 px). Dois mutantes precisaram ser CONSERTADOS porque nasceram cegos e o
+`eval:mutcega` não pega isso: o `corredor` escrevia em `b._range`, que `_updateBot` recalcula
+no topo de todo quadro (agora move a posição depois do quadro), e o `rodada` do abateshud
+zerava o `textContent` em vez do estado (agora embrulha o `_startRound`). O piso da BF4 saiu
+de 1,2 m — número sem procedência — para 4 m, derivado do `dist < 6 ? 'back'` da própria banda
+de fuzil, com 23,46 m medidos limpos contra 2,87 m sob mutante.
+
+**Validações rodadas (node v23.6.0 de `/opt/homebrew/bin`; o `node` do PATH é v16.13.0 e não
+serve para o harness nem para o Astro):**
+
+- `node --check` em `public/js/game.js`: verde.
+- `npm run eval:replaycam`, `npm run eval:abateshud`, `npm run eval:botfaca`: verdes.
+- `npm run arch` / `arch:check` e `npm run docs` / `docs:check`: verdes depois de regerar.
+- `npm run eval:comentario` (base `origin/main`): VERDE. Os comentários herdados do trabalho
+  em curso passavam de duas linhas e a régua só mede o que já está commitado — foram
+  condensados, com a narrativa toda migrada para o KNOWN-BUGS.md.
+- `npm run eval:mutcega`: verde, 14 réguas com modo mutante auditadas.
+- `npm run build`: VERDE (`[build] Complete!`, função Vercel empacotada, 10 arquivos AEO,
+  poda de 0,2 MB). O `node_modules` do worktree só tinha `three`; foi preciso `npm install`
+  para o Astro existir. `package.json` e `package-lock.json` ficaram intactos (a árvore segue
+  limpa depois da instalação).
+- `npm run check:fast`: **122/125 em 269,9 s**, com `eval:replaycam`, `eval:abateshud` e
+  `eval:botfaca` verdes dentro dele.
+
+**Vermelhos PRÉ-EXISTENTES, não introduzidos (`git diff --name-only 42c01175..HEAD` não toca
+nenhum dos dois assuntos):**
+
+- `audio:check` — "0 arquivos no disco · 0 alcançáveis pelo manifest": o pacote privado de
+  áudio não está baixado nesta máquina. Mesmo vermelho já registrado na entrada do CTF abaixo.
+- `eval:grafitelayout` — F2 no `escadao`: o hash de `map_*.js` mudou e o layout não foi
+  regerado (`npm run grafite escadao`). Também já registrado abaixo.
+
+**Commits (todos com DCO e `Agent: Claude Code (Opus 5)`):** `76178362` (HUD + headshot + bot
+de faca e as duas réguas novas), `7e83946b` (`_meleeRange`/`_botMelee`), `dbe7d867` (enxuga
+comentário), `36748eec` (KNOWN-BUGS BUG-142/143/144), `a17cd298` (blocos gerados).
+
+**Artefatos:** logs em `/tmp/csb-logs/check-fast.log` e a árvore da base em `/tmp/csb-head`
+(ambos fora do Git, some no próximo boot). Nada binário entrou no repositório.
+
+**Bloqueios e o que NÃO foi feito:** navegador não foi aberto e nenhuma automação de browser
+rodou — as três réguas executam o `Game` de verdade pelo harness headless com semente fixa,
+que é onde o defeito é mensurável, mas ninguém VIU o contador na tela nem o headshot ao vivo.
+Penetração de tiro não foi implementada, como pedido. `audio:check` e `eval:grafitelayout`
+continuam vermelhos por motivo alheio a esta mudança.
+
+**Próximo passo:** abrir a partida em 1200×800, conferir o `#kill-counter` na coluna do HP
+(legibilidade e não competir com o número de vida), dar um headshot e confirmar que a câmera
+não se mexe, e jogar uma rodada de faca vendo os bots fecharem. Sem merge e sem release.
+
+## CTF no menu da home — 06/09/2026
+
+Objetivo: restaurar o submenu de Single Player com CTF, validar clique e preservação do modo
+ao trocar de mapa. Branch `fix/ctf-home-menu`, base `f7f4402e`, worktree `ctf-home`.
+O submenu foi restaurado sem alterar os caminhos dos modos; traduções acompanham a escolha
+entre mata-mata e CTF. UIR26 reprovou antes e passou depois;
+`ctf-some-home` detectou a remoção. `mode-check.mjs`: 60/60 casos passaram.
+Capturas e logs preservados em `artifacts/ctf-home/` (fora do Git). Navegador em
+1200×800 confirmou o submenu aberto, clique em CTF e seleção de mapas em CTF;
+inglês também conferido. Build e SEO/AEO 6/6 passaram; revisão
+adversarial sem bloqueios. `docs:check` passou após regenerar os contadores de i18n.
+Checkpoint funcional: `2f62741a`. `check:fast` terminou em 289,4 s com 107/111;
+`docs:check` foi corrigido pela regeneração e passou isoladamente. Restam falhas
+fora do diff: `audio:check` (pacote privado ausente), `eval:audiofablocal`
+(`LAB8g` ambiência local do Escadão) e `eval:grafitelayout` (hash do layout do
+Escadão desatualizado). Log completo em `artifacts/ctf-home/ctf-home-check-fast.log`.
+Próximo passo: publicar a correção após autorização e conferir a home publicada.
+Publicação não realizada; depende de autorização do dono.
+
+## Confiabilidade da telemetria browser → admin — 06/09/2026
+
+**Objetivo e pronto:** toda telemetria do jogo precisa atravessar navegador → Cloud Run →
+Supabase → admin, e produção deve acusar a quebra do transporte. Checkout
+`/Users/ruben/csbrasil/worktrees/telemetry-reliability-client`, branch
+`codex/telemetry-reliability-client`, base `93cd8f41`.
+
+**Diagnóstico:** os beacons JSON cross-origin faziam OPTIONS 204, mas não POST, porque
+`sendBeacon` força credenciais e o backend não anunciava `Access-Control-Allow-Credentials`.
+
+**Mudança em validação:** os eventos usam `fetch` com `keepalive: true` e
+`credentials: 'omit'`; clientes antigos continuam cobertos pela correção CORS do backend.
+`eval:telemetrytransport` cobra todas as rotas e tem mutantes. `prod-watch` agora testa o
+preflight real do Cloud Run em vez de inferir saúde apenas pelo pipeline multiplayer.
+
+**Validado localmente:** sintaxe, `eval:telemetrytransport`, três mutantes negativos,
+`eval:analytics`, `eval:apis`, `check:vercel` 4/4 e build Astro/Vercel verdes.
+O primeiro smoke hospedado ainda achou TDZ no pick inicial: `_ensureMusic` chama `_pick`
+antes de `ANON_KEY`; o antigo `try/catch` protegia o menu. O isolamento foi restaurado e TT6
+passou a cobrá-lo antes da nova execução do browser.
+
 Este é o ponto de entrada para continuar trabalho no repositório sem herdar um retrato
 antigo como se fosse o estado atual.
 
@@ -17,3 +188,140 @@ antigo como se fosse o estado atual.
 O handoff detalhado de 04/08/2026 foi preservado em
 `docs/historico/HANDOFF-2026-08-04.md`; ele explica decisões antigas, mas cita mapas,
 telemetria, versão e pipeline que já mudaram.
+
+## Qualidade multiplayer, autoridade de slot e comparação com single-player — 05/09/2026
+
+**Objetivo e definição de pronto:** reduzir a sensação de travada no strafe agachado, impedir
+arma/munição visual divergente e medir a experiência pela causa real, por sessão e por round.
+Pronto para produção exige protocolo compatível, persistência, painel, rollout gradual dos três
+nós e canário com dois clientes; WebRTC só entra depois como experimento comparável contra esta
+linha de base, não como troca de transporte sem medição.
+
+**Checkouts:** cliente `/Users/ruben/csbrasil/worktrees/mp-round-presence`, branch
+`v2/mp-round-presence`, base `dcd8858edc7e` (alpha.217); backend pareado
+`/Users/ruben/csbrasil-backend/worktrees/mp-round-presence`, branch `feat/mp-round-presence`,
+base `00c679a33b9f`; admin `/Users/ruben/csbrasil/worktrees/admin-mp-round-truth`, branch
+`codex/mp-round-player-truth`, base `8a5eedc866e6`. O corte completo foi publicado e validado
+em produção em 05/09/2026. Checkpoint funcional do cliente: `e83af234a61c`; SHA publicada:
+`0090ab82e064d729d2415bf7f281a34562b9203a`.
+
+**Implementado:** `coro-snapshot-v4` leva ACK do input e estado autoritativo de arma, slots,
+pente, reserva e recarga; v3/v2/JSON continuam negociáveis. A reconciliação usa a pose do mesmo
+`seq`, preserva inputs ainda não reconhecidos e assenta correções pequenas progressivamente. O
+cliente envia pedidos de rack/drop/reload; arma de jogador remoto remonta a malha de terceira
+pessoa quando o snapshot muda o equipamento. A cada 10 s seguem eventos, p95 e máximo de
+correção sem repetir a janela anterior.
+
+**Evidência local:** `eval:netcodecbin` 18/18, `eval:netcode` 178/178 e build Astro/Vercel
+verdes. `check:fast` passou 69/70; a única régua vermelha é `audio:check`, também vermelha no
+checkout primário sem estas mudanças porque o gerador antigo interpreta o pacote hasheado v8
+como 275 órfãos. O manifesto não foi regenerado nem esvaziado.
+
+**Persistência e painel:** migration 031 está em
+`/Users/ruben/db-privado/supabase/migrations/031_mp_reconciliation_quality.sql`, SHA-256
+`2a3ba6aa359e4c407e84d16490faf888357f4fb94f2db9b26617a3b6071d1a98`.
+Ela adiciona qualidade/reconciliação a `mp_session` e `mp_round`, preservando os RPCs das
+migrations 029/030. O admin classifica cada round pela causa e compara FPS apenas nos mesmos
+players que têm amostra em single e multiplayer.
+
+**Banco publicado:** migration 031 aplicada em transação explícita; as quatro colunas de sessão
+e oito de round foram conferidas. `anon` não executa `track_mp_sessions`/`track_mp_rounds`,
+`service_role` executa, e os dois RPCs vazios respondem `0`.
+
+**Publicado e validado em produção:** API no Cloud Run `csbrasil-backend-00023-rhr`, 100% do
+tráfego, imagem `d05c00a` (`sha256:5cc832b50017377db6ab1fb9c10a16f517ceb3d4def4424775efc2c9b88fed8f`);
+runtime `runtime-d05c00a` (`sha256:2acc05dde8206ab49c9063db73a2a346491827c77a3889118d032c4e46c3bed5`)
+promovido com zero jogadores por EUA → Madri → São Paulo. Os três nós expõem servidor
+`d05c00a`, cliente `0090ab82`, protocolos 1/2/3/4, `ev`/`slot-state`, simulação 60 Hz e
+snapshot 30 Hz. O cliente Vercel `dpl_HQ7QCZbPaDWbRdhHcsg2msJYQ11C` está nos três aliases;
+`prod-watch` `33942856245` confirmou edge, purge, banco e telemetria.
+
+**Canário controlado:** dois clientes v4, `CANARIO-E` e `CANARIO-B`, ocuparam a mesma sala e
+round; API e site mostraram `online:2/inGame:2`, o round persistiu pico 2, dois participantes,
+36 janelas, FPS 60, RTT p95 209 ms, snapshot 30 Hz e gap 44 ms. Um cliente injetou 18 correções
+para provar a coluna (`p95 0,02 m`, máximo `0,03 m`), o outro permaneceu em zero. Round,
+participantes e sessões sintéticas foram removidos e conferidos em zero. Próxima evidência:
+acompanhar rounds orgânicos; WebRTC permanece um canário posterior comparado à mesma régua.
+
+## Analytics consolidado por jogador — 02/09/2026
+
+**Objetivo inteiro:** dar ao game-admin uma única jornada por `anon_id` em Multiplayer,
+Usuários, Geografia e Picks: single-player × multiplayer, nó/sala oficial × sala criada por
+usuário, tempo, FPS, RTT, mapa/modo e cidade/país, sem armazenar IP. Dados antigos sem
+`game_type` permanecem explicitamente como legado; pronto significa banco, APIs, cliente e
+admin publicados e um evento novo confirmado de ponta a ponta.
+
+**Checkout:** `/private/tmp/csbrasil-client-player-analytics`, branch
+`codex/player-analytics-instrumentation`, rebased sobre `9f13a8c3` (alpha.210). O contexto agora acompanha
+pick, performance e match com o mesmo `sessionId`/`matchEventId`, e é limpo ao sair/trocar de
+modo. A régua `eval:analytics` cobre a separação e a não contaminação.
+
+**Banco validado:** migration 029 aplicada em produção a partir de
+`/Users/ruben/db-privado/supabase/migrations/029_player_analytics_context.sql` (SHA-256
+`222ccfd49f8fd94d5f673973fc1107063adae121b78548fe011c243a8f5ca590`). Funções antigas e novas
+foram chamadas em transação revertida. Nenhum dado de smoke ficou gravado.
+
+**Validado:** syntax, analytics 6/6, online 5/5, netcode 83/83, codec 16/16, `check:vercel`
+4/4 e build Astro/Vercel verdes. Os gates que exigem `sharp`/`@gltf-transform` passaram depois
+de `npm ci`; `audio:check` continua ambientalmente bloqueado porque os áudios privados não
+existem neste worktree (o manifesto não foi refeito vazio). O backend pareado passou o portão
+completo; o admin passou lint, Astro check, 34 testes, hidratação e build. Produção ainda não
+recebeu estes três commits.
+
+**Selo `N online`:** a API e a view estavam respondendo, mas o primeiro refresh concorria com
+o heartbeat e escondia o primeiro visitante por até 60 s. O bootstrap agora espera o POST de
+presença antes de consultar o total; `eval:online` passa 5/5 e o mutante de ordem fica vermelho.
+
+**Pendente imediato:** promover backend → cliente → admin e comprovar no painel um novo pick,
+perf e match tipados. O `createdRoom` do cliente só fica completo após rollout do runtime dos
+nós; `mp_session.created_room` continua sendo a fonte autoritativa durante a transição.
+
+## Incidente de produção — 02/09/2026
+
+**Objetivo inteiro:** estabilizar multiplayer sem tocar na lane de viewmodels: impedir sessão
+online dentro do single-player, eliminar deriva de spawn/respawn/animação, restaurar CTF,
+reduzir a densidade oficial, evitar slots Rubao abandonados e restaurar o catálogo de áudio
+in-game. Definição de pronto para produção inclui canário jogável, painel coerente e rollout
+compatível; os checkpoints enviados ao Git não autorizam deploy.
+
+**Checkout:** `/Users/ruben/csbrasil/worktrees/multiplayer`, branch
+`fix/prod-gameplay-diagnostics`, base `ef801c6a`. O backend correspondente fica em
+`/Users/ruben/csbrasil-backend`, branch `feat/servidor-pre-lancamento`. Checkpoints enviados:
+cliente funcional `6b53f8e2`, documentação gerada/final `acee42fb`; backend funcional
+`1e4682a` (fixado no cliente `acee42fb`).
+
+**Validado localmente:** `eval:netcode` 80/80; `eval:netcodecbin` 16/16; `eval:charvoice`
+verde com mutantes de versão; build Astro verde. No navegador: MP→sair→SP ficou sem overlay
+de rede e a sala CTF exibiu HUD autoritativo. No backend: smoke 74/74, runtime 8/8, protocolo
+5/5, telemetria 38/38 e fronteiras de segurança verdes usando Node moderno.
+
+**Ainda não aceito:** BUG-102 precisa de partida humana contra bot em movimento; BUG-103/104
+precisam de canário em Piscina e Loja H; BUG-105 precisa de aceitação visual; BUG-107 não
+deduplica duas conexões realmente ativas com o mesmo nick; BUG-108 precisa de uma captura real;
+BUG-109 precisa de escuta no canário. A migration 027 e os números do game-admin continuam
+fora deste checkpoint.
+
+**Próximo passo:** publicar primeiro um backend compatível com v3/v2/v1, depois o cliente;
+jogar o roteiro acima no canário, observar `/metrics` e só então promover. Se qualquer etapa
+falhar, manter produção atual e não misturar este trabalho com armas/viewmodels.
+# Continuação ativa — Sertão PR #526 (08/09/2026)
+
+Objetivo: fechar o mapa Sertão com evidência técnica e visual antes de integrar.
+Worktree exclusivo: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/sertao-casas-por-do-sol`;
+branch `astra/sertao-praca-casas-por-do-sol`, integrada com `main` alpha.240 no
+commit `74d6a748`.
+
+Validado: IN1–IN11, 14 mutantes de interiores, SP1–SP9, RV1–RV12 em WebGL
+1536×1024, contraste C18/C18R com inimigo real e mutante sem rim, e fauna Mint
+LG1–LG8 com duas cabras, galinha e três pintinhos. O batch dos interiores reduz
+564 para 499 draw calls e seu mutante reprova RV3. Artefatos ficam sob
+`artifacts/sertao-casas/{runtime-final-v2,livestock-final,contrast-final}` e a
+revalidação pós-main em `artifacts/sertao-casas/final-alpha240/`. Relatório
+completo: `docs/reports/SERTAO-CASAS-SUNSET.md`.
+
+Próximo passo: publicar esta branch, acompanhar os checks remotos e integrar o
+PR #526 quando o GitHub confirmar merge limpo. O build alpha.240 passou; o
+`assert:assets` local continua vermelho pelos 17 áudios legados ausentes no
+pacote oficial v8, enquanto os assets visuais e decalques passam. Riscos restantes são
+de julgamento humano: combate prolongado dentro das casas, amostra de contraste
+de todo o elenco e acabamento low-poly de alguns props do perímetro.

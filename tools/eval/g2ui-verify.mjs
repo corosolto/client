@@ -37,7 +37,7 @@ await page.screenshot({ path: `${OUT}/g2ui-01-menu.png` });
 console.log('shot 01 menu');
 
 /* ---------- 02 setup (perfil + partida, docado à direita) ---------- */
-await page.click('.cs-item[data-act="ctf"]');
+await page.click('.cs-item[data-act="sp"]');   // o menu agora tem MULTIPLAYER e SINGLE PLAYER
 await page.waitForSelector('#menu-setup.open', { timeout: 5000 });
 await page.waitForTimeout(900);
 const setup = await page.evaluate(() => {

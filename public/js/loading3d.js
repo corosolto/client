@@ -3,12 +3,15 @@ import { CHARACTERS, charWeapon } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { criaRenderer } from './glcontext.js';
 
+/* Um por facção, e a facção manda: sem a entrada, o `|| .E` abaixo mostrava GOTINHA
+   para quem escolheu MÍTICO. Régua no `eval:miticos-lobisomem` (mutante `loading`). */
 export const LOADING_CHARACTER_IDS = Object.freeze({
   E: 'gotinha',
   B: 'canarinho',
   U: 'blackmetal',
   C: 'bonzo',
   F: 'mandrake',
+  M: 'lobisomem',
 });
 
 export const LOADING_ACTIONS = Object.freeze([

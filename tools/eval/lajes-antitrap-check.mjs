@@ -42,7 +42,7 @@
    "Não sei medir" custa o mesmo que estar errado.
 
    AT1: 100% das células andáveis (todas as camadas) alcançam algum spawn.
-   Grava o overlay por camada em tools/eval/asset-evidence/maps/fy_lajes/
+   Grava o overlay por camada em tools/eval/asset-evidence/maps/lajes/
    antitrap-overlay.png — OLHE A FIGURA: ilha vermelha é canto preso.
 
    REPRODUZ:  node tools/eval/lajes-antitrap-check.mjs
@@ -55,21 +55,21 @@
 import { THREE, bootGame, initTextures, seedRandom } from './harness.mjs';
 
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1] || '';
-if (mutante && mutante !== 'sela-cando' && mutante !== 'sela-canto') throw new Error(`mutante desconhecido: ${mutante}`);
+if (mutante && mutante !== 'sela-canto') throw new Error(`mutante desconhecido: ${mutante}`);
 
 const STEP_H = 0.55;          // game.js — a fronteira degrau/beirada
 const R = 0.38;               // raio do corpo (game.js _collide)
 const GRID = 0.50;
-const ESCADA = { x0: 3.3, x1: 7.25, z: -10 };   // faixa da ESCADARIA (STAIR_CONFIGS side=1)
 
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0, seed: 19082026 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0, seed: 19082026 });
 const W = game.world;
 
 if (mutante === 'sela-canto') {
-  const antes = W.colliders.length;
-  W.colliders.push({ minX: ESCADA.x0, maxX: ESCADA.x1, minY: 0, maxY: 5.2, minZ: ESCADA.z - .55, maxZ: ESCADA.z + .55 });
-  W.colliders.push({ minX: ESCADA.x0 + 2.7, maxX: ESCADA.x1 + .55, minY: 5.2, maxY: 6.6, minZ: ESCADA.z - .55, maxZ: ESCADA.z + .55 });
-  if (W.colliders.length !== antes + 2) throw new Error('MUTANTE NÃO APLICOU');
+  const s=W.design.stairs[0], antes=W.colliders.length;
+  if(!s)throw Error('MUTANTE NÃO APLICOU: escada ausente');
+  for(const z of [s.z-s.dirZ*.15,s.z+s.dirZ*(s.run+.15)])
+    W.colliders.push({minX:s.x-s.width/2-.3,maxX:s.x+s.width/2+.3,minY:0,maxY:s.height+1.5,minZ:z-.25,maxZ:z+.25});
+  if(W.colliders.length!==antes+2)throw Error('MUTANTE NÃO APLICOU');
 }
 
 /* ---- índice espacial de colisores: mesma matemática do _collide, só com
@@ -143,7 +143,7 @@ const nx = Math.floor((B.maxX - B.minX - 2 * R) / GRID), nz = Math.floor((B.maxZ
 const cx = (i) => B.minX + R + (i + 0.5) * GRID, cz = (k) => B.minZ + R + (k + 0.5) * GRID;
 
 const PROBES = [];
-for (let y = 0; y <= 6.4; y += 0.5) PROBES.push(y);
+for (let y = 0; y <= Math.max(...W.design.platforms.map(p=>p.y))+.55; y += 0.5) PROBES.push(y);
 PROBES.push(1e3);
 
 const p = new THREE.Vector3();
@@ -204,14 +204,15 @@ for (const [ik, lista] of camadas) {
   }
 }
 
-/* spawn: célula-camada mais alta sob cada ponto de spawn (eles nascem na laje) */
+/* V4: alvo é a camada do spawn real, inclusive quando existir ponte acima. */
 const spawnNodes = [];
 for (const team of ['E', 'B']) for (const s of W.spawns[team]) {
   const i = Math.round((s.x - B.minX - R) / GRID - 0.5), k = Math.round((s.z - B.minZ - R) / GRID - 0.5);
   const lista = camadas.get(`${i},${k}`) || camadas.get(`${Math.min(nx - 1, i + 1)},${k}`) || camadas.get(`${i},${Math.min(nz - 1, k + 1)}`);
   if (!lista) throw new Error(`spawn ${team} (${s.x},${s.z}) sem célula andável — régua sem alvo`);
-  const topo = lista[lista.length - 1];
-  spawnNodes.push(key(i, k, topo.key));
+  const spawnY=game._spawnY(s.x,s.z), layer=lista.reduce((a,b)=>Math.abs(a.h-spawnY)<Math.abs(b.h-spawnY)?a:b);
+  if(Math.abs(layer.h-spawnY)>.55)throw Error(`spawn ${team} sem camada correspondente`);
+  spawnNodes.push(key(i,k,layer.key));
 }
 
 /* BFS REVERSO a partir dos spawns: quem alcança spawn (a fuga é dirigida —
@@ -265,10 +266,10 @@ try {
     else if (c === 2) { px[o] = 224; px[o + 1] = 42; px[o + 2] = 42; }
   }
   const { mkdirSync } = await import('node:fs');
-  mkdirSync('tools/eval/asset-evidence/maps/fy_lajes', { recursive: true });
+  mkdirSync('tools/eval/asset-evidence/maps/lajes', { recursive: true });
   await sharp(px, { raw: { width: nx, height: nz, channels: 3 } })
     .resize(nx * 6, nz * 6, { kernel: 'nearest' }).png()
-    .toFile('tools/eval/asset-evidence/maps/fy_lajes/antitrap-overlay.png');
+    .toFile('tools/eval/asset-evidence/maps/lajes/antitrap-overlay.png');
 } catch (e) { console.error('overlay não gravado:', e.message); process.exitCode = 1; }
 
 const fmt = (b) => `${b.cel} cél em (${b.x.toFixed(1)},${b.z.toFixed(1)}) h ${b.hmin.toFixed(1)}–${b.hmax.toFixed(1)}`;

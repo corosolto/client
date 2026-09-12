@@ -1,4 +1,4 @@
-/* Circuito inferior e camadas de fy_lajes — régua comprada pelo relato do dono em 16/08/2026:
+/* Circuito inferior e camadas de lajes — régua comprada pelo relato do dono em 16/08/2026:
    "tem um ponto que eu ficava caindo pra cima da laje de novo e depois no chao" e
    "vários becos parecem passagem e estão bloqueados".
 
@@ -17,7 +17,7 @@
      LC5 nenhum ponto de referência nasce dentro de sólido (_collide não move);
      LC6 toda aproximação ao limite para em colisor (muro visível) antes do clamp.
    Sempre grava o overlay livre/bloqueado/componente em
-   tools/eval/asset-evidence/maps/fy_lajes/terreo-overlay.png (olhe a figura).
+   tools/eval/asset-evidence/maps/lajes/terreo-overlay.png (olhe a figura).
 
    Mutantes:
      ignora-yref          embrulha groundHeightAt descartando o 3º argumento;
@@ -31,7 +31,7 @@ const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split(
 const conhecidos = new Set(['', 'ignora-yref', 'ramal-fechado', 'rota-inferior-partida', 'limite-invisivel']);
 if (!conhecidos.has(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0, seed: 16082026 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0, seed: 16082026 });
 const W = game.world;
 
 if (mutante === 'ignora-yref') {
@@ -40,10 +40,11 @@ if (mutante === 'ignora-yref') {
   W.groundHeightAt = (x, z) => orig(x, z);
 }
 if (mutante === 'ramal-fechado') {
-  W.colliders.push({ minX: 0, maxX: 4, minY: 0, maxY: 3, minZ: -10.4, maxZ: -9.6 });
+  const s=W.design.stairs[0], z=s.z-s.dirZ*.4;
+  W.colliders.push({minX:s.x-s.width/2,maxX:s.x+s.width/2,minY:0,maxY:3,minZ:z-.4,maxZ:z+.4});
 }
 if (mutante === 'rota-inferior-partida') {
-  W.colliders.push({ minX: -15.5, maxX: 15.5, minY: 0, maxY: 3, minZ: -11.6, maxZ: -10.4 });
+  W.colliders.push({minX:W.bounds.minX,maxX:W.bounds.maxX,minY:0,maxY:3,minZ:-.4,maxZ:.4});
 }
 if (mutante === 'limite-invisivel') {
   const BB = W.bounds;
@@ -51,28 +52,26 @@ if (mutante === 'limite-invisivel') {
   W.colliders = W.colliders.filter((c) => !(c.minY < 1
     && (c.minX < BB.minX + 1.2 || c.maxX > BB.maxX - 1.2 || c.minZ < BB.minZ + 1.2 || c.maxZ > BB.maxZ - 1.2)));
   if (W.colliders.length >= antes - 4) throw new Error('MUTANTE NÃO APLICOU: limite-invisivel não achou muros de perímetro');
+  console.log(`MUTANTE limite-invisivel: removeu ${antes - W.colliders.length} colisores de limite`);
 }
 
 /* Pontos de referência, todos medidos no mapa vigente. Os sob-cobertura são os lugares
    onde o dono caiu "pra cima da laje": tábuas WN-WS/ES-SE e os dois mirantes sobre o beco. */
-const SOB_COBERTURA = [
-  ['tábua WN-WS', -10.3, -5.25], ['tábua ES-SE', 10.3, 6.75],
-  ['mirante norte', -3, -11.5], ['mirante sul', 1.5, 24.5],
-];
-const REFERENCIAS = {
-  'pé ESCADARIA': [4.6, -10], 'pé BECO DO VARAL': [-4.6, 2], 'pé ACESSO SUL': [4.6, 22],
-  'beco norte': [0, -23], 'beco meio': [-3, -6], 'beco sul': [-2, 16],
-  'ramal 1 (leste)': [3, -10], 'ramal 2 (oeste)': [-3, 2], 'ramal 3 (leste)': [3, 22],
-};
+const SOB_COBERTURA = W.design.bridges.map(p=>[p.name,(p.x0+p.x1)/2,(p.z0+p.z1)/2]);
+if(SOB_COBERTURA.length!==2 || W.design.stairs.length!==4)throw Error('V4 exige duas pontes e quatro acessos');
+const REFERENCIAS = Object.fromEntries([
+  ...W.design.stairs.map(s=>[`pé ${s.name}`,[s.x,s.z-s.dirZ*.4]]),
+  ...W.design.routes.flatMap(r=>r.points.map((p,i)=>[`${r.name}/${i}`,p])),
+]);
 
 /* LC1 — camadas. Em ponto coberto andável: yRef=0 responde o térreo, yRef=ROOF responde a laje. */
 const lc1Detalhe = [];
 let lc1 = true;
 for (const [nome, x, z] of SOB_COBERTURA) {
-  const baixo = W.groundHeightAt(x, z, 0), alto = W.groundHeightAt(x, z, 5.2);
-  const ok = baixo <= 0.55 && alto >= 4.65;
+  const baixo = W.groundHeightAt(x, z, 0), alto = W.groundHeightAt(x, z, W.design.roofHeight);
+  const ok = Math.abs(baixo)<1e-3 && Math.abs(alto-W.design.roofHeight)<1e-3;
   if (!ok) lc1 = false;
-  lc1Detalhe.push(`${nome} yRef0=${baixo.toFixed(2)} yRef5.2=${alto.toFixed(2)}`);
+  lc1Detalhe.push(`${nome} yRef0=${baixo.toFixed(2)} yRefAlto=${alto.toFixed(2)}`);
 }
 
 /* Flood do térreo com o _collide REAL — mesma física do jogador (game.js:4452). */
@@ -125,33 +124,47 @@ for (const [nome, [x, z]] of Object.entries(REFERENCIAS)) {
 }
 const lc2 = cobertura >= 0.92;
 
-/* LC6 — limite legível: andando para fora a partir de qualquer ponto livre junto ao
-   clamp, o corpo encontra um colisor (o muro de perímetro visível) ANTES da linha dos
-   bounds. Medido com o _collide de produção; o pixel é coberto pelo eval:occluders. */
+/* LC6 usa origens livres do circuito; as coordenadas fixas anteriores ficam dentro
+   das casas V6. Folga e corpo preservados: docs/maps/LAJES-V6-DIRECAO.md. */
 const lc6Detalhe = [];
 let lc6 = true;
-for (const [nome, x, z, dx, dz] of [
-  ['oeste', -14.6, 0, -1, 0], ['leste', 14.6, 0, 1, 0], ['norte', 0, -38.2, 0, -1], ['sul', 0, 38.2, 0, 1],
-  ['noroeste', -14.6, -38.2, -1, -1], ['sudeste', 14.6, 38.2, 1, 1],
+const circuitoLivre = [];
+for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
+  if (livre[i * nz + k] && comp[i * nz + k] === principal)
+    circuitoLivre.push([B.minX + (i + .5) * STEP, B.minZ + (k + .5) * STEP]);
+}
+const spawnZ = Object.values(W.spawns).flat().map(s => s.z);
+if (!spawnZ.length) throw Error('LC6 não sabe medir: spawns ausentes');
+for (const [nome, alvoX, alvoZ, dx, dz] of [
+  ...['oeste', 'leste'].flatMap((nome, i) => [Math.min(...spawnZ), Math.max(...spawnZ)]
+    .map(z => [`${nome}/z${z}`, i ? B.maxX-1.2 : B.minX+1.2, z, i ? 1 : -1, 0])),
+  ['norte', 0, B.minZ+1.2, 0, -1], ['sul', 0, B.maxZ-1.2, 0, 1],
+  ['noroeste', B.minX+1.2, B.minZ+1.2, -1, -1], ['sudeste', B.maxX-1.2, B.maxZ-1.2, 1, 1],
 ]) {
+  const origem = circuitoLivre.reduce((best, q) => !best || Math.hypot(q[0]-alvoX, q[1]-alvoZ)
+    < Math.hypot(best[0]-alvoX, best[1]-alvoZ) ? q : best, null);
+  if (!origem) { lc6 = false; lc6Detalhe.push(`${nome}: origem livre ausente`); continue; }
+  const [x, z] = origem;
   const p6 = new THREE.Vector3(x, 0, z);
-  let andou = 0;
-  for (let s = 0; s < 12; s++) {
+  game._collide(p6, .38);
+  if (Math.hypot(p6.x-x, p6.z-z) > 1e-3 || Math.abs(W.groundHeightAt(x,z,0)) > 1e-3) {
+    lc6 = false; lc6Detalhe.push(`${nome}: origem inválida (${x},${z})`); continue;
+  }
+  let parou = false;
+  const maxPassos = Math.ceil(Math.hypot(B.maxX-B.minX, B.maxZ-B.minZ) / .1) + 1;
+  for (let s = 0; s < maxPassos; s++) {
     const ax = p6.x, az = p6.z;
     p6.x += dx * 0.1; p6.z += dz * 0.1;
     game._collide(p6, 0.38);
-    andou = Math.hypot(p6.x - x, p6.z - z);
-    if (Math.hypot(p6.x - ax, p6.z - az) < 0.05) break;   // travou num colisor
+    if (Math.hypot(p6.x - ax, p6.z - az) < 0.05) { parou = true; break; }
   }
-  const dentro = p6.x > B.minX - 0.01 && p6.x < B.maxX + 0.01 && p6.z > B.minZ - 0.01 && p6.z < B.maxZ + 0.01;
-  void dentro;
   /* o corpo tem que parar ANTES da linha do clamp (bounds - raio) — se encostou no
      clamp, o muro visível não estava lá (é o "não dá pra saber os limites" do dono). */
   const folga = 0.18;
-  const ok = p6.x > B.minX + 0.38 + folga && p6.x < B.maxX - 0.38 - folga
+  const ok = parou && p6.x > B.minX + 0.38 + folga && p6.x < B.maxX - 0.38 - folga
     && p6.z > B.minZ + 0.38 + folga && p6.z < B.maxZ - 0.38 - folga;
   if (!ok) lc6 = false;
-  lc6Detalhe.push(`${nome}: parou em (${p6.x.toFixed(2)},${p6.z.toFixed(2)})`);
+  lc6Detalhe.push(`${nome}: origem (${x.toFixed(2)},${z.toFixed(2)}) → ${parou ? 'parou' : 'não parou'} em (${p6.x.toFixed(2)},${p6.z.toFixed(2)})`);
 }
 
 /* Overlay PNG: verde = circuito principal, amarelo = ilha, vermelho = bloqueado, azul = laje acima. */
@@ -168,10 +181,10 @@ try {
     else { px[o] = 170; px[o + 1] = 40; px[o + 2] = 40; }
   }
   const { mkdirSync } = await import('node:fs');
-  mkdirSync('tools/eval/asset-evidence/maps/fy_lajes', { recursive: true });
+  mkdirSync('tools/eval/asset-evidence/maps/lajes', { recursive: true });
   await sharp(px, { raw: { width: nx, height: nz, channels: 3 } })
     .resize(nx * 6, nz * 6, { kernel: 'nearest' })
-    .png().toFile('tools/eval/asset-evidence/maps/fy_lajes/terreo-overlay.png');
+    .png().toFile('tools/eval/asset-evidence/maps/lajes/terreo-overlay.png');
 } catch (e) {
   console.error('overlay não gravado:', e.message);
   process.exitCode = 1;
@@ -181,8 +194,8 @@ const checks = [
   ['LC1', 'groundHeightAt respeita yRef sob tábuas e mirantes', lc1, lc1Detalhe.join(' · ')],
   ['LC2', 'o térreo é um circuito contínuo', lc2,
     `${sizes.length} componentes · principal cobre ${(cobertura * 100).toFixed(1)}% de ${total} células livres`],
-  ['LC3', 'os três acessos verticais partem do circuito', lc3,
-    ['pé ESCADARIA', 'pé BECO DO VARAL', 'pé ACESSO SUL'].map((n) => `${n}: ${resumo[n]}`).join(' · ')],
+  ['LC3', 'os quatro acessos verticais partem do circuito', lc3,
+    Object.keys(REFERENCIAS).filter(n=>n.startsWith('pé')).map(n=>`${n}: ${resumo[n]}`).join(' · ')],
   ['LC4', 'beco e ramais pertencem ao circuito', lc4,
     Object.entries(resumo).filter(([n]) => !n.startsWith('pé')).map(([n, r]) => `${n}: ${r}`).join(' · ')],
   ['LC5', 'nenhuma referência nasce dentro de sólido', lc5,

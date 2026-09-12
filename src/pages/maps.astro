@@ -10,6 +10,13 @@ import { MAPAS } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 
 const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> = {
+  mansao: {
+    nome: 'Joá’s Mansion',
+    resumo: 'Tropical garden, a hall with mezzanine and a pool above Joá’s sea.',
+    detalhe: 'Two stairways link the hall to the mezzanine. The side routes cross the garden and reach ' +
+      'the terrace, with an enterable pool and a view of the beach. Four capture points contest ' +
+      'the two levels of the house.',
+  },
   praca_poderes: {
     nome: 'Three Powers Plaza',
     resumo: 'The main arena: a fictional Brasília with a giant cracked voting machine in the middle.',
@@ -52,40 +59,13 @@ const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> 
       'that keeps the street from becoming a sniper corridor. Four flags: dirt pitch, corner bar, ' +
       'bus stop and baile square.',
   },
-  fy_escadao: {
-    nome: 'Morro Stairway',
-    resumo: 'A hillside community split by a monumental tiled stairway, with an armored police truck on the central landing.',
-    detalhe: 'Pure vertical combat: one team starts on the street below and the other at the lookout above. ' +
-      'Three stair flights, barricaded landings and two back alleys create distinct elevation bands and flank routes ' +
-      'without exposing the whole climb at once.',
-  },
-  fy_campomorro: {
-    nome: 'Hillside Football Pitch',
-    resumo: 'A dirt football pitch at the heart of a community, where every alley converges.',
-    detalhe: 'One team starts near the exposed pitch and the other by the protected funk-party warehouse. ' +
-      'Four descending alleys reach different edges of the field; goals, broken fencing, a container and concrete ' +
-      'bleachers turn the center into both the reward and the danger.',
-  },
-  fy_lajes: {
-    nome: 'Rooftops Community',
-    resumo: 'A two-layer community: rooftops above, alleys below, and four contested stairways between them.',
-    detalhe: 'The rooftop team gains sightlines but stays exposed; the alley team gains cover but loses information. ' +
-      'Water tanks and parapets shape the upper layer, while cars, dumpsters and motorcycles break up the alleys. ' +
-      'A taller central building becomes the map’s sniper position.',
-  },
-  fy_corrego: {
-    nome: 'São Paulo Creek',
-    resumo: 'Two stilt-house banks divided by polluted water and three very different crossings.',
-    detalhe: 'Wet wood, corrugated metal and São Paulo pixação define a crossing-focused map. Each bank has its own ' +
-      'route through homes, trash, motorcycles and stalls; crossing early shortens the attack but exposes the player ' +
-      'from the side beneath a grey, smoggy skyline.',
-  },
-  fy_mansao: {
-    nome: 'Joá Mansion',
-    resumo: 'A modernist mansion between a tropical garden and an infinity pool, with a playable interior and mezzanine.',
-    detalhe: 'Attackers enter through the gate and move across a geometric garden into the garage, hall, living room ' +
-      'and kitchen. Defenders hold the ocean deck and pool. A real stair reaches the 4.5 m mezzanine, while screens, ' +
-      'furniture and landscaping divide sightlines without reducing the house to corridors.',
+  lajes: {
+    nome: 'Lajes (Community)',
+    resumo: 'Narrow alleys between masonry homes, an open central field and rooftop combat.',
+    detalhe: 'Both teams start at ground level. Three routes between the homes connect the spawns, ' +
+      'with the central field as the only wide opening on the ground. Four stairways lead to two ' +
+      'upper crossings lined with water tanks, parapets and clotheslines. Four rooftop flags reward ' +
+      'the longer view, but getting there means contesting the stairs and their cover.',
   },
 };
 const en = (id: string) => MAP_EN[id];
