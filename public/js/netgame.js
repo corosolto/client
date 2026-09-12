@@ -391,9 +391,8 @@ class Netcode {
       /* BUFFER de amostras (BUG-87, KNOWN-BUGS.md): arrays planos, cap 10 (zero objeto no
          hot path). Teleporte esvazia — interpolar através de respawn varreria o mapa. */
       const tBuf = this._relogioSnap(snap, nowMs), nb = ent._bufAt.length;
-      // relógio do servidor voltou MUITO = partida nova; passo curto para trás é pacote fora de
-      // ordem, rotina em datagrama, e não pode zerar 10 amostras (KNOWN-BUGS BUG-164)
-      // `__mutOrdemAntiga`: gancho da régua (game/netloop-check.mjs). Zero em produção.
+      // recuo grande = partida nova; recuo curto é pacote fora de ordem (BUG-164). O
+      // `__mutOrdemAntiga` é gancho da régua game/netloop-check.mjs; zero em produção.
       const recuo = this.__mutOrdemAntiga ? 0 : RELOGIO_NOVO_MS;
       if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1] - recuo)) {
         ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; ent._bufPitch.length = 0;
