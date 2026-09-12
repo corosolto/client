@@ -7,7 +7,7 @@
 export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PING_MS } from './nos.js';
 import { NOS } from './nos.js';
 import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
-import { TransporteWS } from './transporte.js';
+import { TransporteWS, TransporteWT } from './transporte.js';
 
 export const resolvePlayerSide = (team, faction, online) =>
   online ? (team === 'B' ? 'B' : 'E') : (faction === 'B' ? 'B' : 'E');
@@ -75,9 +75,13 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
 }
 
 export class NetClient {
-  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '' } = {}) {
+  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '', wt = '', wtHashes = null } = {}) {
+    // `sp` leva o subprotocolo para o gateway: quem escolhe a versão do snapshot é quem
+    // vai decodificá-la, e no caminho WebTransport não existe handshake para negociar
     const qs = new URLSearchParams({ team, ...(codigo ? { codigo } : room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}), ...(ticket ? { ticket } : {}) });
     this.url = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
+    this.wtUrl = wt ? `${wt}${wt.includes('?') ? '&' : '?'}${qs}&sp=${encodeURIComponent(SNAPSHOT_PROTOCOLS[0])}` : '';
+    this.wtHashes = wtHashes;
     this.tp = null;
     this.connected = false;
     // `ws` continua legível (overlay de rede, réguas, sonda): é o socket de VERDADE, mas
@@ -120,7 +124,22 @@ export class NetClient {
   }
   stopPing() { if (this._pingTimer) { clearInterval(this._pingTimer); this._pingTimer = null; } }
 
-  connect(timeoutMs = 8000) {
+  /* NEGOCIAÇÃO DE TRANSPORTE. WebSocket continua o PADRÃO: o datagrama só vira padrão
+     depois que o canário provar, e até lá quem pede é `?wt=`. Prazo curto e queda em
+     SILÊNCIO — um gateway fora do ar não pode virar "o jogo não abre". */
+  async connect(timeoutMs = 8000) {
+    if (this.wtUrl && typeof WebTransport === 'function') {
+      try {
+        return await this._conectar(timeoutMs, () => new TransporteWT(this.wtUrl, { hashes: this.wtHashes }));
+      } catch (e) {
+        this.tp = null; this.connected = false;
+        try { console.info('[net] WebTransport falhou, caindo para WebSocket:', e?.message || e); } catch { /* console mudo */ }
+      }
+    }
+    return this._conectar(timeoutMs, () => new TransporteWS(this.url));
+  }
+
+  _conectar(timeoutMs, fabrica) {
     return new Promise((resolve, reject) => {
       let done = false;
       /* Welcome tem PRAZO: um nó que aceita o TCP e nunca responde deixava o connect()
@@ -131,7 +150,7 @@ export class NetClient {
         : null;
       const assenta = (fn, v) => { if (done) return; done = true; if (prazo) clearTimeout(prazo); fn(v); };
       try {
-        this.tp = new TransporteWS(this.url);
+        this.tp = fabrica();
         this.tp.abrir({
           aberto: () => { this.connected = true; },
           erro: (e) => assenta(reject, e),

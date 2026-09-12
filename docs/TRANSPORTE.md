@@ -24,19 +24,34 @@ o que tolera perda é uma decisão de protocolo que não deve nascer no dia da m
 O teto de tamanho (`MAX_SNAPSHOT_BYTES`) é cobrado **dentro do transporte**, antes de alocar ou
 decodificar: frame hostil não vira memória.
 
-## O que NÃO foi feito, e por quê
+## O gateway existe, e foi medido
 
-**O gateway WebTransport não está implementado.** O dono escolheu o desenho (gateway em Go com
-`quic-go/webtransport-go`, canário no nó `us`), e ele continua sendo o certo pelos motivos do
-plano: o addon nativo de Node é descrito pelo próprio autor como "duct tape", e o controle de
-congestionamento do QUIC disputando o event loop que roda a simulação de 60 Hz num e2-small é o
-pior modo de falha possível.
+`csbrasil-backend/wt/` — Go, `quic-go/webtransport-go`, um processo separado. O desenho é o que
+o dono escolheu, e o motivo continua valendo: o controle de congestionamento do QUIC disputando
+o event loop que roda a simulação de 60 Hz num e2-small é o pior modo de falha possível.
 
-O que impediu nesta rodada foi simples: **não há toolchain de Go nesta máquina**. Escrever um
-binário de rede que ninguém compilou nem rodou seria entregar opinião com cara de código — e a
-régua desta casa é a oposta disso.
+**O nó não muda uma linha.** O gateway termina o QUIC e abre um WebSocket local para
+`game/index.js`, com a MESMA query e o MESMO subprotocolo. Para a sala, é mais um cliente.
 
-O que ficou pronto para ele, e é a maior parte do trabalho:
+Medido em 12/09, com o nó real e o protocolo v5:
+
+| prova | número |
+|---|---|
+| soak do cliente Go, 5 min | 8.753 datagramas (29,2/s, 8,2 KB/s), 17.465 inputs, 118 `ev` pelo confiável |
+| memória do gateway ao fim | RSS 19,9 MB, sem crescer entre sessões |
+| **Chrome de verdade, WebTransport** | `TransporteWT`, welcome em **31 ms**, protocolo 5, `yourEnt` recebido, **64 snapshots decodificados** |
+| **Chrome com o gateway morto** | cai para `TransporteWS` em 133 ms e entra igual — o jogador não vê erro |
+
+O `cmd/soak` fica no repositório porque "compila" não é "funciona".
+
+### O ticket é o único portão deste caminho
+
+WebTransport **não manda `Origin`**: o portão de origem do `game/index.js` não existe aqui.
+Então o gateway **recusa subir** com `WT_EXIGE_TICKET=0`, exige que o ticket tenha forma — e
+**não o valida**: o nonce é de uso único, e validar dos dois lados o queimaria antes de a sala
+ver, recusando o jogador por `ticket_reused`.
+
+### O que ficou pronto junto:
 
 - **a interface acima**, com o canal que tolera perda já marcado;
 - **guarda de ordem** no buffer de interpolação (BUG-164): com datagrama, reordenação é rotina,
@@ -46,14 +61,16 @@ O que ficou pronto para ele, e é a maior parte do trabalho:
 - **banda 34% menor** (v5): 20,8 → 13,6 KB/s medidos no navegador, com 10 entidades. Isso vale
   para quem joga de longe HOJE, em cima do WebSocket, sem esperar transporte novo.
 
-## O que falta, na ordem
+## O que falta, e é tudo deploy
 
-1. Gateway Go em UDP 443, com o Caddy perdendo h3 e o certificado montado read-only.
-2. Negociação com prazo curto e queda para WS em silêncio.
-3. Snapshot e input em datagrama; `welcome`, `ev`, `slot` e `partida` no canal confiável.
-4. Delta compression com ack (protocolo v6): é a próxima ordem de grandeza de banda, e é a que
+1. **Caddy perdendo `h3`** — o gateway quer a UDP 443 para ele — e o certificado montado
+   read-only no container.
+2. **Terceiro container no `deploy/startup.sh`**, com a imagem versionada junto da frota.
+3. **Canário no nó `us`** (7 jogadores é o canário mais barato que existe). Até o número provar,
+   o WebSocket continua o PADRÃO: o caminho novo só entra por `?wt=`, e é isso que a cláusula
+   T3 da régua defende.
+4. **Delta compression com ack (protocolo v6)**: a próxima ordem de grandeza de banda. É a que
    PRECISA de máquina de estado por cliente — por isso ficou depois da v5, que não precisa.
 
-**Aviso que vale ouro no dia 1:** WebTransport não manda `Origin`. O portão de origem do
-`game/index.js` simplesmente não existe nesse caminho, e o ticket HMAC vira o único gate.
-Consequência dura: `MP_TICKET_REQUIRED=0` não pode ser permitido no caminho WT.
+O que **não** foi medido aqui, e nenhuma régua local mede: o comportamento em UDP 443 atrás do
+Caddy, numa rede de operadora, com MTU real. Isso é canário, não teste.
