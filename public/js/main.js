@@ -2089,18 +2089,14 @@ for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   card.appendChild(chip);
   const ready = card.dataset.ready === '1' && n > 0;
   card.setAttribute('aria-disabled', String(!ready));
-  card.addEventListener('focus', () => { card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); presentFaction(card); });
-  card.addEventListener('mouseenter', () => presentFaction(card));
+  card.addEventListener('focus', () => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   card.onclick = () => {
     if (!ready) { ui.back(); return; }
     sfx.uiClick(); pickTeam(fac);
   };
 }
-presentFaction(factionCards.find(card => card.dataset.ready === '1') || factionCards[0]);
-if ($('fh-status')) $('fh-status').onclick = () => {
-  const card = factionCards.find(item => item.classList.contains('is-preview'));
-  if (card) card.click();
-};
+/* O dossiê lateral de facção (`presentFaction`, #faction-hero) saiu com o
+   index.astro da branch no merge com a main; ficaram só as chamadas. */
 for (const [id, direction] of [['team-prev', -1], ['team-next', 1]]) {
   const button = $(id);
   if (!button) continue;
