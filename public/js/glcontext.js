@@ -84,6 +84,11 @@ export function criaRenderer(base = {}, options = {}) {
           software: SOFTWARE_RE.test(gpu),
           softwareEstado: estadoSoftware(gl, gpu),
           renderer: gpu.slice(0, 120),
+          /* `degraded` junta QUATRO coisas com custos muito diferentes, e quem consome
+             precisa distinguir: GPU que só recusou MSAA não é GPU que desenha por software. */
+          semWebgl2: name !== 'webgl2',
+          semMsaa: tier.rotulo !== 'padrao',
+          compat: compatibility,
           degraded: compatibility || tier.rotulo !== 'padrao' || name !== 'webgl2' || SOFTWARE_RE.test(gpu),
         });
         renderer.__csWebgl = metadata;
@@ -136,4 +141,30 @@ export function avisaSemWebgl(erro) {
     el.querySelector('[data-webgl-detail]').textContent = String(erro?.message || erro || 'contexto não criado').slice(0, 200);
     (document.body || document.documentElement).appendChild(el);
   } catch {}
+}
+
+/* AVISO DE RENDERIZADOR DE SOFTWARE — honesto, uma vez, e que NÃO bloqueia.
+   Quem cai aqui desenha por CPU (llvmpipe/SwiftShader) e mede 2 a 8 FPS: o jogo já entrou no
+   degrau mínimo sozinho, e a única coisa que faltava era contar. Barra, e não overlay: a tela
+   cheia de `avisaSemWebgl` é para quem NÃO consegue jogar — este consegue, devagar. */
+export function avisaSoftware(gpu) {
+  try {
+    if (localStorage.getItem('cs_aviso_software') === 'ok') return;
+  } catch { /* storage bloqueado: mostra assim mesmo */ }
+  try {
+    const el = document.createElement('div');
+    el.id = 'aviso-software';
+    el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;gap:1rem;'
+      + 'align-items:center;justify-content:center;padding:.7rem 1rem;background:#1a1712ee;color:#f4efe6;'
+      + 'font:13px/1.5 system-ui,sans-serif;text-align:center';
+    el.innerHTML = '<span>Seu navegador está desenhando o 3D <strong>pela CPU</strong>, não pela placa de vídeo — '
+      + 'o jogo já entrou no modo mais leve, mas vai ficar lento. Ligar a aceleração por hardware resolve.</span>'
+      + '<button type="button" style="background:#ffc233;color:#090704;border:0;padding:.4rem .9rem;font-weight:800;cursor:pointer">OK</button>';
+    el.title = String(gpu || '').slice(0, 120);
+    el.querySelector('button').onclick = () => {
+      el.remove();
+      try { localStorage.setItem('cs_aviso_software', 'ok'); } catch { /* storage bloqueado */ }
+    };
+    (document.body || document.documentElement).appendChild(el);
+  } catch { /* sem DOM */ }
 }
