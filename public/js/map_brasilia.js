@@ -4,6 +4,7 @@
 // cover, colliders) is procedural; the landmarks are real GLB models placed and
 // collidered from their actual bounds. Same contract as buildWorld().
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
@@ -1660,8 +1661,7 @@ export function buildBrasilia(scene, T) {
   const sun = new THREE.DirectionalLight(SKY2 ? 0xfff4e2 : 0xfff1d8, SKY2 ? 3.1 : 2.5);
   if (SKY2) sun.position.set(90, 62, -40); else sun.position.set(38, 58, -14);
   sun.castShadow = true;
-  const SM = LOWQ ? 1024 : 2048;
-  sun.shadow.mapSize.set(SM, SM);
+  aplicaSombraSol(sun);
   // A escala nova (mastro 100 m, Congresso 55 m) exige um frustum de sombra maior, senão
   // o mastro e os ministérios sombreiam fora do mapa e aparecem "recortados".
   const SE = BIG ? 110 : 80;

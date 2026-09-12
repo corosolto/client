@@ -1,6 +1,7 @@
 // UPA 24h da Treta: pronto-socorro 100% interno (paródia), salas em cruz no corredor central.
 // E na recepção (sul-oeste), B na emergência (norte-leste). Colisão só AABB. Contrato build(scene, T).
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -239,7 +240,7 @@ export function buildUpa(scene, T) {
   const hemi = new THREE.HemisphereLight(0xf4f8ff, 0xb8c0c8, 1.45); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 0.95);
   sun.position.set(6, 30, -8); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -36; sun.shadow.camera.right = 36; sun.shadow.camera.top = 40; sun.shadow.camera.bottom = -40;
   sun.shadow.camera.far = 90; sun.shadow.bias = -0.0004; scene.add(sun);
 
