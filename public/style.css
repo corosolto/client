@@ -2577,12 +2577,41 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-criar summary::before{content:'▸ ';color:var(--cs)}
 .mp-criar[open] summary::before{content:'▾ '}
 .mp-form{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-3);margin-top:var(--s-3)}
-.mp-form label{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);
+/* `min-width:0`: sem isto a coluna da grid nasce do min-content do <select>, e a opção mais
+   longa ("TODOS (sorteia a cada partida)") empurrava o formulário 61 px para fora do painel —
+   barra de rolagem horizontal no menu, visível só com a seção CRIAR MINHA SALA aberta. */
+.mp-form label{display:flex;flex-direction:column;gap:4px;min-width:0;font-family:var(--mono);
   font-size:var(--fs-50);letter-spacing:var(--tr-1);color:var(--ink3)}
-.mp-form input[type=text],.mp-form select{font-family:var(--mono);font-size:var(--fs-100);
+.mp-form input[type=text],.mp-form select{min-width:0;max-width:100%;font-family:var(--mono);font-size:var(--fs-100);
   color:var(--ink-100);background:rgba(var(--bg-900-rgb),.7);border:1px solid var(--line);padding:6px 8px}
 .mp-form input:focus-visible,.mp-form select:focus-visible{border-color:var(--cs);outline:none}
 .mp-check{flex-direction:row!important;align-items:center;gap:var(--s-2)!important}
+/* mesmo caso do .mp-erro[hidden] logo abaixo: display:flex vence o atributo `hidden`, e o
+   campo SENHA aparecia em sala pública — pedindo senha que ninguém vai usar */
+.mp-form label[hidden]{display:none}
+/* ---- escolher os mapas da sala a dedo ----
+   A rotação por recorte responde "que tipo de mapa"; esta grade responde "quais". Cartão com
+   PÔSTER (o mesmo da tira do single-player): ninguém escolhe mapa por nome de arquivo. */
+.mp-mapas{grid-column:1/-1;min-width:0;display:flex;flex-direction:column;gap:var(--s-2)}
+.mp-mapas[hidden]{display:none}
+.mp-mapas-topo{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
+.mp-mapas-conta{flex:1 1 120px;min-width:0;font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);color:var(--ink3)}
+.mp-mapas-acoes{margin-left:auto;display:flex;gap:var(--s-2)}
+.mp-mapas-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:var(--s-2);
+  min-width:0;max-height:232px;overflow-y:auto;overflow-x:hidden;padding:2px}
+.mp-mapa{position:relative;display:flex;flex-direction:column;gap:2px;padding:0 0 4px;cursor:pointer;
+  background:rgba(var(--bg-900-rgb),.7);border:1px solid var(--line);clip-path:var(--cut-sm);
+  color:var(--ink3);font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);text-align:left}
+.mp-mapa-img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;filter:grayscale(.65) brightness(.72)}
+.mp-mapa-nome{padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-mapa-ctf{position:absolute;top:4px;right:4px;padding:1px 4px;background:rgba(var(--bg-900-rgb),.85);
+  border:1px solid var(--am);color:var(--am);font-size:var(--fs-25,9px)}
+.mp-mapa:hover,.mp-mapa:focus-visible{border-color:var(--ink-100);color:var(--ink-100);outline:none}
+.mp-mapa.on{border-color:var(--cs);color:var(--cs)}
+.mp-mapa.on .mp-mapa-img{filter:none}
+/* o visto tem que ser legível SEM depender de cor (a marca é forma + posição) */
+.mp-mapa.on::after{content:'✓';position:absolute;top:4px;left:4px;width:16px;height:16px;line-height:16px;
+  text-align:center;background:var(--cs);color:var(--dark);font-size:var(--fs-50)}
 .mp-form .btn{grid-column:1/-1}
 .mp-erro{width:100%;font-family:var(--mono);font-size:var(--fs-100);color:var(--crit);
   border:1px solid var(--crit);padding:var(--s-3);clip-path:var(--cut-sm);

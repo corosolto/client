@@ -77,6 +77,33 @@ calculada contra a posição daquele mesmo `seq`, preservando o movimento ainda 
 e aplicada suavemente. Isso substitui o limiar antigo que ignorava tudo até 2,5 m e então
 teleportava — causa direta de travada perceptível no strafe agachado.
 
+### O comando tem DURAÇÃO, e o `ackSeq` é o que já foi SIMULADO
+
+Predizer e reconhecer têm que medir o mesmo intervalo, senão a reconciliação compara duas poses
+tiradas em instantes diferentes e **empurra o jogador por uma divergência que não existe**. Era o
+estado anterior: o cliente predizia o passo do frame dele (≤ 50 ms) e o servidor aplicava aquele
+mesmo input a cada tick de 16,7 ms, reconhecendo o `seq` no momento em que ele CHEGAVA. A conta
+saía errada em 1 a 4 ticks, e o erro crescia com o frame time — quem tinha máquina fraca era
+punido duas vezes.
+
+Hoje o input leva `dtms` (a duração daquele passo, teto de 50 ms — o mesmo do laço do navegador)
+e o nó mantém uma **fila de comandos por slot**: a cada tick ele gasta o que couber num
+**orçamento que só cresce com o tempo real** (folga de 250 ms) e, aí sim, marca o `seq` como
+reconhecido. Slot sem comando na fila NÃO anda: repetir o último adiantava o corpo e cobrava a
+diferença de volta no ack seguinte (overshoot e puxão). O orçamento é o que impede que declarar
+`dtms` vire speedhack — mandar mil comandos anda o que o relógio deixou, não mil vezes.
+
+Cliente sem `dtms` continua no caminho antigo, movido pelo tick: o rollout pode ser
+servidor-primeiro. **Corpo com dono não é empurrado por sistema nenhum do servidor** — a
+despenetração de corpos da IA (`_botSeparation`) escrevia na posição do humano, e isso chegava
+ao cliente como correção pura (BUG-151).
+
+O número que fecha a conta, com rede perfeita e a mesma física dos dois lados: correção p95 de
+**0,051 m → 0,001 m** a 60 FPS e de **0,263 m → 0,001 m** a 20 FPS. Quem mede isso é
+`csbrasil-backend/game/netloop-check.mjs`, que roda a `Room` de verdade contra o `Game` do
+navegador de verdade, ligados por uma rede simulada — e cujos mutantes (`--mutar=dt`, `ack`,
+`ancora`, `empurrao`) devolvem cada um dos defeitos.
+
 Snapshot é estado substituível. Se um socket acumula mais de 256 KiB pendentes, o nó pula o
 snapshot velho e volta no estado mais novo assim que a fila drena; enfileirar posições obsoletas
 só transforma conexão lenta em latência crescente. Eventos continuam confiáveis em JSON.
@@ -114,6 +141,15 @@ entra sozinho:
 
 Salas de usuário: públicas ou privadas com senha, rotação e facções à escolha, teto de 40 por
 nó (sala é RAM e CPU; sem teto um laço de POST derruba o nó e leva junto as três da casa).
+
+**Pool de mapas escolhido a dedo.** A rotação por recorte responde *que tipo* de mapa; quem cria
+a sala quer responder *quais*. `POST /rooms` aceita `mapas: [id, …]` (sanitizado contra o
+catálogo do nó, ordem preservada, sem repetido, teto de 24) e ele tem precedência sobre
+`rotacao`; lista vazia ou toda inválida cai no recorte, porque sala sem mapa nenhum não sobe. A
+tela monta a grade a partir do `/maps` **do nó**, e não do catálogo local: o servidor simula uma
+versão fixada do jogo e pode ter menos mapas que o site — oferecer mapa que o nó não tem é
+prometer sala que não existe. Quando a lista tem um mapa só, a sala não gira: joga sempre nele.
+O mapa pedido é o da PRIMEIRA partida (antes ele era o único excluído do sorteio — BUG-154).
 
 ## O cliente é território inimigo
 
