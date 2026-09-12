@@ -3152,7 +3152,7 @@ export class Game {
     const to = alvo.clone().sub(from);
     const d = to.length();
     const dir = to.clone().normalize();
-    if (d > alcance + 0.6) return;
+    if (d > alcance) return;
     if (dir.dot(new THREE.Vector3(Math.sin(b.yaw), 0, Math.cos(b.yaw))) < 0.5) return;
     if (!this._losClear(from, alvo)) return;
     const mul = e.isPlayer ? (BOT_FAIR ? this._botDmgPlayer : BOT_DMG_PLAYER) : 1;
@@ -6379,7 +6379,7 @@ export class Game {
       }
       // FACA (w.range): bot de faca disparava hitscan a 40m como se fosse rifle — agora só
       // "ataca" no alcance real da arma; longe disso ele avança (o approach acima já faz isso).
-      const inRange = alcanceArma > 0 ? dist <= alcanceArma + 0.6 : true;
+      const inRange = alcanceArma > 0 ? dist <= alcanceArma : true;
       // fire (bloqueado enquanto o alvo está stale/sem LOS — ver aquisição: sem wallhack)
       // TURNO DE DUELO: contra o JOGADOR só atira quem tem o token (ver _duelToken). Fora do
       // turno o bot continua manobrando/avançando — ele não congela, só não soma fogo.

@@ -2093,7 +2093,7 @@ contrário — HS1 câmera parada (teto 0,250 m / 0,250 rad / 0,5°), HS2 relóg
 Δ0,000 rad, ΔFOV 0,000°, 2,000 s de jogo em 2,000 s reais. **Mutantes:** `orbita`,
 `hitstop`, `esconde` e `sem-kill` — os quatro reprovam.
 
-### ~~BUG-143 · em rodada de faca o bot carregava a faca e jogava de fuzil~~ · CORRIGIDO LOCALMENTE 06/09/2026
+### ~~BUG-143 · em rodada de faca o bot carregava a faca e jogava de fuzil~~ · CORRIGIDO; ALCANCE REFINADO 10/09/2026
 
 **Relato do dono (06/09):** em rodadas de faca, os bots precisam respeitar o modo.
 
@@ -2113,14 +2113,21 @@ o alcance, `approach` nunca negativo) e o gate de ataque roteia para `_botMelee`
 alcance, ângulo, LOS e dano tocando `sfx.knife()`/`sfx.knifeHit()`. Fora do corpo a corpo a
 banda de fuzil não mudou.
 
+**Auditoria pós-merge (10/09):** o contato funcionava, mas `inRange` e `_botMelee` ainda
+somavam uma margem escondida de **0,60 m** ao `WEAPONS.knife.range`: 13 golpes da semente
+canônica passaram de 2,48 m e o máximo observado foi **2,98 m** para uma arma declarada com
+2,40 m. A margem foi removida nos dois gates. O mesmo cenário continua com 17 golpes/8
+abates e máximo de 2,40 m; numa matriz 8×8 de 45 s pelos 16 mapas, foram 657 golpes/301
+abates, nenhuma arma errada e nenhum golpe acima de 2,40 m.
+
 **Depois (mesma semente):** encostou a **1,24 m**, **18 golpes**, **9 abates**, **0
 traçantes e 0 fogachos**; rodada normal intacta (menor distância **23,46 m**).
 
-**Régua:** `tools/eval/botfaca-check.mjs` (`npm run eval:botfaca`) — BF1 faca na mão, BF2
-perseguição e combate, BF3 sem enfeite de arma de fogo, BF4 a rodada normal não vira corrida
-(piso de 4 m, derivado do `dist < 6 ? 'back'` da própria banda). **Mutantes:** `recuo`
-(5,40 m, zero golpes), `tracante` (18 traçantes/18 fogachos) e `corredor` (rodada normal
-colando a 2,87 m) — os três reprovam.
+**Régua:** `tools/eval/botfaca-check.mjs` (`npm run eval:botfaca`) — BF1 faca na mão e troca
+manual bloqueada, BF2 perseguição/combate, BF3 contato dentro de 2,40 m sem enfeite de arma
+de fogo, BF4 rodada normal preservada e BF5 reset de rodada/inventário/contadores. Além dos
+mutantes `recuo`, `tracante` e `corredor`, `alcance` devolve os 0,60 m e `troca` tenta equipar
+AWP no modo só faca; os cinco reprovam.
 
 ### ~~BUG-144 · o jogador não conseguia ler os próprios abates durante a partida~~ · CORRIGIDO LOCALMENTE 06/09/2026
 
