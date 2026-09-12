@@ -3130,7 +3130,9 @@ export class Game {
       const d = to.length();
       if (d < bd && to.normalize().dot(dir) > 0.6) { best = b; bd = d; }
     }
-    if (best) { this.sfx.knifeHit(); this._damage(best, WEAPONS.knife.dmg, this.player, 'FACA'); }
+    // Online o servidor já é autoridade da faca (room.js clampa por W.range): aplicar aqui
+    // contaria o dano duas vezes e piscaria vida errada até o snapshot desfazer.
+    if (best) { this.sfx.knifeHit(); if (!this.online) this._damage(best, WEAPONS.knife.dmg, this.player, 'FACA'); }
   }
   /* Alcance de corpo a corpo (0 = arma de fogo). Fonte única de até onde o bot fecha e de
      onde o golpe conecta: em cópias separadas os dois voltam a divergir (BUG-143). */

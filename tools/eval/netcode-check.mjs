@@ -1180,5 +1180,37 @@ function medeRajada(g, net) {
   g2.dispose();
 }
 
+/* AUTORIDADE DA FACA no online. O hitscan já tinha a guarda (`if (!this.online)`); o golpe de
+   faca não tinha, e aplicava dano no cliente enquanto o servidor aplicava o dele — o snapshot
+   desfazia, mas no meio disso a vida do alvo piscava e o killfeed podia mentir. */
+console.log('\n· faca no online: quem aplica o dano é o servidor');
+{
+  /* Espiona a CHAMADA de `_damage`, não o hp: o que a invariante diz é "o cliente não aplica
+     dano de faca no online", e hp depende de modelo de dano, armadura e estado de rodada. */
+  const perto = (g, alvo) => {
+    alvo.pos.copy(g.player.pos); alvo.pos.z -= 1.0; alvo.pos.y = g.player.pos.y; alvo.alive = true;
+    g.player.yaw = 0; g.camera.rotation.set(0, 0, 0); g.camera.quaternion.identity();
+    g.camera.position.set(g.player.pos.x, g.player.pos.y + 1.62, g.player.pos.z);
+  };
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  net.snap = snapshot(900, 1); g._mp.applySnapshot();
+  const alvo = g._mp._netMap.get(6);
+  perto(g, alvo);
+  let chamou = 0; const d0 = g._damage.bind(g); g._damage = (...a) => { chamou++; return d0(...a); };
+  g._meleeHit();
+  cobra(chamou === 0, `online: o cliente NÃO aplica dano de faca (${chamou} chamadas de _damage)`);
+
+  // o contrário também é cobrado: sem a guarda valendo, o modo solo perderia a faca
+  const net2 = fakeNet(1); const g2 = montaJogo(net2);
+  g2.online = false;
+  const vitima = g2.bots.find((b) => b.team !== g2.playerTeam && b.alive);
+  perto(g2, vitima);
+  let chamou2 = 0; const d2 = g2._damage.bind(g2); g2._damage = (...a) => { chamou2++; return d2(...a); };
+  g2._meleeHit();
+  cobra(chamou2 === 1, `offline: a faca continua aplicando dano no cliente (${chamou2} chamada)`);
+  g.dispose(); g2.dispose();
+}
+
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

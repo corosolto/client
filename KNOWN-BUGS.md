@@ -109,6 +109,33 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-158 · seguir a instrução do portão de grafite APAGA arte · MITIGADO 12/09
+
+**Sintoma.** O portão `eval:grafitelayout` reprova quando um `map_*.js` muda e manda, no próprio
+texto do erro, *"Rode 'npm run grafite <id>'"*. Seguir essa instrução apagou **185 peças de
+grafite** numa mudança que não moveu uma parede sequer (o tamanho do shadow map, BUG-156).
+
+**Causas, duas, e as duas medidas:**
+1. **Acervo incompleto apaga em silêncio.** Os decalques são gitignored por procedência. Nesta
+   worktree havia 163 arquivos; no checkout do dono, 352. O gerador coloca o que encontra — e
+   assou 2763 peças contra as 2948 que estão em produção, sem erro nenhum.
+2. **Assar não é operação fiel.** Com o acervo completo (360 arquivos), duas rodadas **idênticas,
+   na mesma árvore**, deram `2769` e `2767` peças (loja_h 300 e 298). A contagem por mapa se
+   move nos DOIS sentidos entre rodadas — ou seja, não é só acervo: a colocação tem ruído.
+
+**Consequência.** A instrução do portão, seguida à risca, troca arte aprovada por churn — e numa
+worktree sem o acervo, apaga. O portão está certo em cobrar frescor; o remédio que ele receita é
+que não serve para mudança que não mexe em geometria.
+
+**Mitigação.** `tools/gen-graffiti-layout.mjs --so-impressao --motivo="…"` reassina as entradas
+**sem** reassar a colocação, exige o motivo e grava o motivo e a data no próprio arquivo, para
+quem abrir depois saber o que foi blessado e por quê. Não serve para mudança de geometria — para
+essa, o remédio continua sendo assar, com o acervo completo.
+
+**Aberto:** o ruído da colocação (item 2) não foi investigado; ele torna qualquer regeneração uma
+troca de arte. Enquanto existir, regerar é decisão de quem cuida da arte, não efeito colateral de
+um portão vermelho.
+
 ### BUG-157 · o sinal de FPS mais rico do jogo era coletado e jogado fora no servidor · CORRIGIDO 12/09
 
 **Sintoma.** O painel mostra "20% das amostras de FPS abaixo de 30" e sessões inteiras a 4-8 FPS,
