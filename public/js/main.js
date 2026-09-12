@@ -23,7 +23,7 @@ import { enableStylize } from './stylize.js';
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
-import { createMapPreview } from './map_preview.js';
+import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
 import { NOS, NO_RE, ordenarNos, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
@@ -1914,7 +1914,7 @@ function renderMapScreen() {
     bindMapPreview(b, b.dataset.id);
     b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
-    if (b.dataset.id === 'lajes') mapCardPreviews.push(createMapPreview(b, {
+    if (VIDEO_MAPS.has(b.dataset.id)) mapCardPreviews.push(createMapPreview(b, {
       id: b.dataset.id, version: VERSION, media: b.querySelector('.ms-thumb-media'),
     }));
   });
