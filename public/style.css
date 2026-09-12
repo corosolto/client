@@ -1487,10 +1487,10 @@ html[data-ui="legacy"] #match-title{font-family:var(--font)}
 .map-arrow:hover,.map-arrow:focus-visible{border-color:var(--sys);color:#fff;background:var(--bg-600)}
 .map-arrow:active{transform:translateY(1px)}
 
-#diff-select{font-family:var(--mono);font-size:var(--fs-200);letter-spacing:var(--tr-1);text-align:center;
-  background:var(--bg-800);border:1px solid var(--line);color:var(--ink-100);padding:10px 12px;outline:none;cursor:pointer;width:100%;
-  transition:border-color var(--t) var(--ease)}
-#diff-select:hover{border-color:var(--line-2)}
+/* O seletor de dificuldade agora mora na faixa de opções da partida e herda o estilo dos irmãos
+   (.ms-match-options select). A regra por id que existia aqui era de quando ele moraria noutra
+   tela: por especificidade ela vencia o container e cortava o texto ao meio — 13px de fonte com
+   20px de padding dentro de 32px de altura. */
 
 /* empilha em telas estreitas */
 @media(max-width:640px){
