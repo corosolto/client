@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Shim de `gh` para a frota. Mesma razão do shim de `git`: prompt não é trava.
+#
+# O QUE ELE RECUSA
+#   gh pr merge          · integrar é do dono
+#   gh pr close          · fechar PR alheio é decisão do dono
+#   gh label ... safe-automerge / gh pr edit --add-label safe-automerge
+#                        · essa label É o botão de merge: o csbrasil-bot-automerge
+#                          mescla sozinho quando ela aparece. Aplicá-la é mesclar.
+#   gh api ... -X DELETE · nada da frota apaga recurso no GitHub
+#   gh repo delete / gh api .../branches/main/protection -X PUT|DELETE
+#
+# Tudo o mais passa: view, list, checks, run view, pr ready, pr comment, api GET.
+
+set -uo pipefail
+
+REAL=""
+for c in /opt/homebrew/bin/gh /usr/bin/gh /usr/local/bin/gh; do
+  [ -x "$c" ] && REAL="$c" && break
+done
+[ -z "$REAL" ] && { echo "frota: gh real não encontrado" >&2; exit 98; }
+
+recusa() {
+  echo "frota: RECUSADO — $1" >&2
+  echo "frota: veja tools/frota/GUARDRAILS.md. Escreva AGUARDANDO DONO no ledger." >&2
+  exit 97
+}
+
+todos="$*"
+
+case "$todos" in
+  *safe-automerge*)
+    recusa "a label safe-automerge é o botão de merge do dono — aplicá-la mescla o PR" ;;
+esac
+
+if [ "${1:-}" = "pr" ]; then
+  case "${2:-}" in
+    merge) recusa "gh pr merge. A frota prepara; quem integra é o dono." ;;
+    close) recusa "gh pr close. Fechar PR é decisão do dono." ;;
+  esac
+fi
+
+if [ "${1:-}" = "repo" ] && [ "${2:-}" = "delete" ]; then
+  recusa "gh repo delete"
+fi
+
+if [ "${1:-}" = "api" ]; then
+  case "$todos" in
+    *"-X DELETE"*|*"--method DELETE"*|*"-X PUT"*|*"--method PUT"*|*"-X PATCH"*|*"--method PATCH"*)
+      recusa "gh api com método de escrita. A frota lê o GitHub, não o reconfigura." ;;
+  esac
+fi
+
+exec "$REAL" "$@"
