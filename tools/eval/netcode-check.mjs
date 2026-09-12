@@ -566,8 +566,27 @@ console.log('\n· server browser mede RTT aquecido, não o custo único de TLS')
   const totalT0 = performance.now();
   const [expirou] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 100, 2);
   const totalDt = performance.now() - totalT0;
-  cobra(!expirou.online && abortsDaSonda >= 1 && totalDt < 300,
+  cobra(abortsDaSonda >= 1 && totalDt < 300,
     `o prazo cobre a sonda inteira e ABORTA as pendências, não reinicia por amostra (${totalDt.toFixed(0)} ms; ${abortsDaSonda} abort)`);
+  /* E A AMOSTRA QUE CHEGOU NÃO SE APAGA. Esta cláusula cobrava `!online` aqui, e com isso
+     CONGELOU um defeito: o prazo é para limitar o TRABALHO, não para invalidar a RESPOSTA.
+     A primeira amostra paga DNS e TLS; quando ela custa mais da metade do prazo, a segunda
+     é abortada — e o nó, que respondeu, aparecia como "fora do ar". Em conexão lenta os três
+     caíam juntos e a tela acusava os servidores (BUG-166, relatado pelo dono com figura). */
+  cobra(expirou.online && expirou.ping > 0,
+    `nó que respondeu UMA vez dentro do prazo fica online, com o ping dela (${expirou.ping} ms)`);
+  globalThis.fetch = fetchReal;
+
+  /* O contrário também tem de valer: nenhuma amostra dentro do prazo = fora do ar de verdade.
+     Sem esta, "sempre online" passaria — e a tela mentiria para o outro lado. */
+  let abortsMudos = 0;
+  globalThis.fetch = async (_url, { signal } = {}) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })), 500);
+    signal?.addEventListener('abort', () => { abortsMudos++; clearTimeout(timer); reject(new DOMException('aborted', 'AbortError')); }, { once: true });
+  });
+  const [mudo] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 100, 2);
+  cobra(!mudo.online && mudo.ping === null && abortsMudos >= 1,
+    'nó que não respondeu NENHUMA vez dentro do prazo continua fora do ar');
   globalThis.fetch = fetchReal;
 }
 

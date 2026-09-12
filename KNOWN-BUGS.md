@@ -109,6 +109,42 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-166 · a tela dizia "SERVIDORES FORA DO AR" com os três servidores no ar · CORRIGIDO 12/09
+
+**Sintoma, relatado pelo dono com figura.** O painel de multiplayer mostrava os três nós
+("Brasil · São Paulo", "EUA · Carolina do Sul", "Europa · Madri") como **fora do ar**, com
+`0 jogando · 0 sala(s)`, e o aviso "Nenhum servidor respondeu. Pode ser a sua conexão, ou os
+servidores estão fora do ar."
+
+**Os servidores estavam no ar.** Conferido por quatro caminhos no mesmo minuto: `curl` nos três
+(`ok:true`, no ar havia 7,6 dias), CORS respondendo 200 para origem de produção e de prévia,
+Chrome de verdade em `www.csbrasil.online` medindo os três online (br 228 ms, us 139, eu 41), e
+Chrome na árvore local idem.
+
+**Causa.** `sondarNos` (public/js/net.js) tira DUAS amostras por nó para dar nota de ping — a
+primeira paga DNS e TLS, a segunda mede a conexão já quente. As duas dividiam **um** prazo de
+2500 ms e **um** `AbortController`:
+
+```js
+for (let i = 0; i < n; i++) h = await j(`${http}/health`, { signal: ctrl.signal });
+return { online: true, ... }   // só chega aqui se AS DUAS passarem
+```
+
+Se a primeira amostra custa mais da metade do prazo — e custa, em rede móvel, hotel, link
+congestionado ou no primeiro contato do dia —, a segunda é abortada, o `catch` roda e o nó é
+marcado **offline tendo respondido**. Como o efeito é por tempo e não por nó, os três caem
+JUNTOS, e a tela acusa os servidores de estarem fora do ar.
+
+**Conserto.** O prazo continua cobrindo a sonda inteira (isso é de propósito e tem cláusula),
+mas amostra que chegou não se apaga: guarda-se a última resposta boa, e o nó só é declarado
+fora do ar quando NENHUMA amostra chegou. Medido com a primeira amostra em 1,6 s e a segunda
+abortada: antes `fora do ar`, agora `online, ping 1602 ms`.
+
+**A régua congelava o defeito**, e isso é o mais instrutivo: a cláusula do prazo cobrava
+`!expirou.online` — ela transformou em contrato o efeito colateral de uma implementação. Agora
+cobra o que realmente defende (prazo global, com abort) e ganhou as duas irmãs: respondeu uma
+vez = online; não respondeu nenhuma = fora do ar.
+
 ### BUG-165 · `spectators` negativo derrubava o snapshot binário inteiro · CORRIGIDO 12/09
 
 **Sintoma.** Achado quando o laço fechado (`netloop-check`) passou a serializar pelo codec de

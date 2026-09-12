@@ -59,18 +59,20 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
     const { http } = mpUrls(no.url);
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    // Amostra que chegou não se apaga: a 1ª paga DNS+TLS e, se estourava o prazo da 2ª, o nó
+    // que RESPONDEU aparecia fora do ar — os três juntos, em rede lenta (BUG-166).
+    let h = null, ping = 0;
     try {
-      let h = null, ping = 0;
       const n = Math.max(1, Math.min(3, amostras | 0));
       for (let i = 0; i < n; i++) {
         const t0 = performance.now();
-        h = await j(`${http}/health`, { signal: ctrl.signal });
-        ping = performance.now() - t0;
+        const r = await j(`${http}/health`, { signal: ctrl.signal });
+        h = r; ping = performance.now() - t0;   // a última que chegou é a mais quente
       }
-      return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0 };
-    } catch {
-      return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
-    } finally { clearTimeout(t); }
+    } catch { /* a amostra que faltou não apaga a que veio */ }
+    finally { clearTimeout(t); }
+    if (!h) return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
+    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0 };
   }));
 }
 
