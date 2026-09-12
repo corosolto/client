@@ -40,6 +40,7 @@ export { WEAPONS };
    ?killcam=0 -> sem painel/câmera de morte
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
+const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 const ANNOUNCER_LAB = ['kills', 'rounds', 'all'].includes(QS.get('announcerlab')) ? QS.get('announcerlab') : '';
 /* Replay cam de headshot (#364) REMOVIDA a pedido do dono: nada aqui pode voltar a mexer em
    câmera, FOV ou dt no abate. Régua do contrário: tools/eval/replaycam-check.mjs */

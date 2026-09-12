@@ -51,8 +51,7 @@ export const VM_WEAPON = {
   shotgun: W('shotgun'),
   // O pack autora a Deagle com 23–27° de pitch (hand cannon); no nosso mount o
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
-  // NÃO ligar `parts` aqui: o único componente separado é a BASE do carregador —
-  // puxá-la deixa o punho oco. Figura em artifacts/pente-bug90/pecas.
+  // Sem `parts`: só a BASE do pente é separada, e puxá-la esvazia o punho (BUG-90).
   deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),
   // NÃO marcar `golden` sem calibrar a escala: o piloto entra 144× maior.
   // Medição e antes/depois em KNOWN-BUGS.md, BUG-VM-ESCALA-PISTOLA.
@@ -67,8 +66,7 @@ export const VM_WEAPON = {
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
   md97: W('ar', { golden: true, recoilScale: 1.8 }),
   /* trim: a mão de apoio flutuava 1,7 cm abaixo do guarda-mão (a ak aprovada mede 0,2). */
-  // NÃO ligar `parts` aqui: a carabina é de ALAVANCA e não tem pente. O recorte
-  // por peça pegou a alavanca e a pendurou no osso. Foto em BUG-90.
+  // Sem `parts`: carabina de ALAVANCA não tem pente; o recorte pegava a alavanca (BUG-90).
   carbine: W('ar', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   m400: W('sniper'),
   mosin: W('bolt', { golden: true }),

@@ -18,10 +18,8 @@ const _y = new THREE.Vector3();
 const _z = new THREE.Vector3();
 const _m = new THREE.Matrix4();
 
-/* Recorte do pente POR PEÇA (componente conexo) em vez de por caixa. Medido em
-   11/09: a caixa em volta do pente da AK leva 373 triângulos de OUTRAS peças
-   junto — o pente e o corpo ocupam o mesmo volume. Ver BUG-90.
-   Desligar: `?pentepeca=0`. */
+// Recorte do pente por PEÇA (componente conexo) em vez de por caixa — BUG-90.
+// Desligar: `?pentepeca=0`.
 const PECA_LIGADA = (() => {
   try { return new URLSearchParams(location.search).get('pentepeca') !== '0'; }
   catch { return true; }
