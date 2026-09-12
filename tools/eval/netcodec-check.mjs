@@ -16,23 +16,30 @@ const cobra = (cond, msg) => {
   else { falhas++; console.log(`  FALHA ${msg}`); }
 };
 
+/* A abertura do socket saiu do net.js e virou `TransporteWS` (public/js/transporte.js) —
+   o seam por onde o WebTransport entra sem reescrever o NetClient. As cláusulas de
+   negociação e de limite passam a ler o arquivo NOVO; as de decodificação continuam no
+   net.js, que é quem decide o que fazer com os bytes. */
 let netSrc = fs.readFileSync('public/js/net.js', 'utf8');
+let tpSrc = fs.readFileSync('public/js/transporte.js', 'utf8');
 if (MUT === 'sem-negociacao') {
-  const before = netSrc;
-  netSrc = netSrc.replace('new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url)');
-  cobra(netSrc !== before, 'mutação sem-negociacao aplicou');
+  const before = tpSrc;
+  tpSrc = tpSrc.replace('new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url)');
+  cobra(tpSrc !== before, 'mutação sem-negociacao aplicou');
 } else if (MUT === 'sem-decoder') {
   const before = netSrc;
-  netSrc = netSrc.replace('decodeSnapshot(ev.data)', 'JSON.parse(ev.data)');
+  netSrc = netSrc.replace('decodeSnapshot(dados)', 'JSON.parse(dados)');
   cobra(netSrc !== before, 'mutação sem-decoder aplicou');
 } else if (MUT && !['sem-negociacao', 'sem-decoder'].includes(MUT)) {
   console.log(`mutante desconhecido: ${MUT}`); process.exit(1);
 }
 
-cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(netSrc), 'cliente negocia v5/v4/v3/v2 binário com fallback v1 JSON');
-cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(netSrc), 'frames binários chegam como ArrayBuffer, não Blob');
-cobra(/decodeSnapshot\(ev\.data\)/.test(netSrc), 'o caminho de produção chama o decoder real');
-cobra(/MAX_SNAPSHOT_BYTES/.test(netSrc), 'cliente limita frame antes de alocar/decodificar');
+cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(tpSrc), 'cliente negocia v5/v4/v3/v2 binário com fallback v1 JSON');
+cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(tpSrc), 'frames binários chegam como ArrayBuffer, não Blob');
+cobra(/decodeSnapshot\(dados\)/.test(netSrc), 'o caminho de produção chama o decoder real');
+cobra(/MAX_SNAPSHOT_BYTES/.test(tpSrc), 'o transporte limita frame antes de alocar/decodificar');
+cobra(/enviarInseguro/.test(tpSrc) && /enviarInseguro/.test(netSrc),
+  'o transporte declara o canal que tolera perda, e o input já sai por ele (é o que vira datagrama)');
 
 let codec = null;
 try { codec = await import('../../public/js/netcodec.js'); }

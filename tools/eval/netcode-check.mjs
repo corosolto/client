@@ -576,10 +576,13 @@ console.log('\n· sair do multiplayer devolve o slot antes do close handshake');
   const { NetClient } = await import('../../public/js/net.js');
   const enviados = [], fechamentos = [];
   const net = new NetClient('wss://eu.example/ws', { room: 'funk-x-palhaco' });
-  net.ws = {
-    readyState: 1,
-    send: (payload) => enviados.push(JSON.parse(payload)),
-    close: (...args) => fechamentos.push(args),
+  /* Injeta um TRANSPORTE de mentira, e não um socket: desde a extração é com ele que o
+     NetClient fala. Testar o socket direto testaria um caminho que o jogo não usa mais. */
+  net.tp = {
+    pronto: true,
+    enviar: (payload) => { enviados.push(JSON.parse(payload)); return true; },
+    enviarInseguro(p) { return this.enviar(p); },
+    fechar: (...args) => fechamentos.push(args),
   };
   net.close();
   cobra(enviados.length === 1 && enviados[0].type === 'leave',
