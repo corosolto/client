@@ -41,8 +41,8 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 52,208 lines in 105 files | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7,845** lines | `wc -l public/js/game.js` |
+| Game code | 52,214 lines in 105 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7,851** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,540 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 64 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
