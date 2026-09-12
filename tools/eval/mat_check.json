@@ -1,5 +1,5 @@
 {
- "gerado": "2026-09-12T09:00:10.764Z",
+ "gerado": "2026-09-12T14:47:27.078Z",
  "renderer": {
   "toneMappingInicial": "ACESFilmicToneMapping",
   "toneMappingExposureInicial": 1.25,
@@ -335,14 +335,14 @@
  ],
  "caminhos": {
   "vm": {
-   "linha": 1475,
+   "linha": 1476,
    "fonte": "(obj) => obj.traverse((o) => { if (!o.isMesh || !o.material) return; if (!VM_MAT_LEGACY && temEnv) return; // MAT1: mesmo GLB, mesmo material, nos 3 caminhos o.material = o.material.clone(); if ('meta",
    "metalFactor": 1,
    "roughFactor": 1,
    "envMapIntensity": 1
   },
   "chao_pickup": {
-   "linha": 670,
+   "linha": 671,
    "mutacoes": []
   },
   "chao_drop": {

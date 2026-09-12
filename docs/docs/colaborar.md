@@ -250,7 +250,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 |---|---|---|---|---:|
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.154 |
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.408 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.407 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 811 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.965 |

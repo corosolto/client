@@ -1,5 +1,5 @@
 {
- "gerado": "2026-09-12T09:00:04.622Z",
+ "gerado": "2026-09-12T14:47:21.113Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -7551,28 +7551,28 @@
     {
      "team": "E",
      "x": -2.4,
-     "z": 27,
+     "z": 26,
      "chao": 0,
      "penetracao": 0.01
     },
     {
      "team": "E",
      "x": -0.8,
-     "z": 27,
+     "z": 26,
      "chao": 0,
      "penetracao": 0.01
     },
     {
      "team": "E",
      "x": 0.8,
-     "z": 27,
+     "z": 26,
      "chao": 0,
      "penetracao": 0.01
     },
     {
      "team": "E",
      "x": 2.4,
-     "z": 27,
+     "z": 26,
      "chao": 0,
      "penetracao": 0.01
     },
@@ -7625,9 +7625,9 @@
     {
      "team": "E",
      "x": -2.4,
-     "z": 27,
+     "z": 26,
      "chao": 0,
-     "obsLonge": 238,
+     "obsLonge": 236,
      "obsVendo": 0,
      "frac": 0,
      "maiorVisada": 0
@@ -7635,9 +7635,9 @@
     {
      "team": "E",
      "x": -0.8,
-     "z": 27,
+     "z": 26,
      "chao": 0,
-     "obsLonge": 237,
+     "obsLonge": 235,
      "obsVendo": 0,
      "frac": 0,
      "maiorVisada": 0
@@ -7645,9 +7645,9 @@
     {
      "team": "E",
      "x": 0.8,
-     "z": 27,
+     "z": 26,
      "chao": 0,
-     "obsLonge": 237,
+     "obsLonge": 236,
      "obsVendo": 0,
      "frac": 0,
      "maiorVisada": 0
@@ -7655,7 +7655,7 @@
     {
      "team": "E",
      "x": 2.4,
-     "z": 27,
+     "z": 26,
      "chao": 0,
      "obsLonge": 236,
      "obsVendo": 0,
@@ -7707,41 +7707,41 @@
     {
      "team": "E",
      "x": -2.4,
-     "z": 27,
-     "folgaParede": 1.85,
-     "dirPior": 264,
-     "areaContigua": 61.9,
-     "okFolga": true,
+     "z": 26,
+     "folgaParede": 0.85,
+     "dirPior": 259,
+     "areaContigua": 58.4,
+     "okFolga": false,
      "okArea": true
     },
     {
      "team": "E",
      "x": -0.8,
-     "z": 27,
-     "folgaParede": 1.85,
-     "dirPior": 264,
-     "areaContigua": 66.3,
-     "okFolga": true,
+     "z": 26,
+     "folgaParede": 0.85,
+     "dirPior": 259,
+     "areaContigua": 62.1,
+     "okFolga": false,
      "okArea": true
     },
     {
      "team": "E",
      "x": 0.8,
-     "z": 27,
-     "folgaParede": 1.85,
-     "dirPior": 264,
-     "areaContigua": 66.3,
-     "okFolga": true,
+     "z": 26,
+     "folgaParede": 0.85,
+     "dirPior": 259,
+     "areaContigua": 62.1,
+     "okFolga": false,
      "okArea": true
     },
     {
      "team": "E",
      "x": 2.4,
-     "z": 27,
-     "folgaParede": 1.85,
-     "dirPior": 264,
-     "areaContigua": 60.4,
-     "okFolga": true,
+     "z": 26,
+     "folgaParede": 0.85,
+     "dirPior": 259,
+     "areaContigua": 57.2,
+     "okFolga": false,
      "okArea": true
     },
     {
@@ -7785,8 +7785,8 @@
      "okArea": true
     }
    ],
-   "piorFolga": 1.85,
-   "piorArea": 60.4,
+   "piorFolga": 0.85,
+   "piorArea": 57.2,
    "escadas": [
     {
      "nome": "lance inferior",
@@ -8232,7 +8232,7 @@
      "label": "PATAMAR 2",
      "x": -7,
      "z": 1.5,
-     "distSpawn": 25.91,
+     "distSpawn": 24.93,
      "timeSpawn": "E",
      "maiorLinhaTiro": 5.6,
      "chao": 5.04,
@@ -8243,7 +8243,7 @@
      "label": "PATAMAR 1",
      "x": 7,
      "z": 9,
-     "distSpawn": 18.58,
+     "distSpawn": 17.61,
      "timeSpawn": "E",
      "maiorLinhaTiro": 17.3,
      "chao": 2.52,
@@ -8254,7 +8254,7 @@
      "label": "RUA",
      "x": -7,
      "z": 28,
-     "distSpawn": 4.71,
+     "distSpawn": 5.02,
      "timeSpawn": "E",
      "maiorLinhaTiro": 24.1,
      "chao": 0,

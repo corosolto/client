@@ -21,7 +21,7 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tag-selvagem.png","persona
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
 
-/* REASSINADO SEM REASSAR em 2026-09-12 — tamanho de shadow map não move parede (BUG-156)
+/* REASSINADO SEM REASSAR em 2026-09-12 — corrego: PropBatch ganhou cortes de vegetação (distância), geometria e bandas de parede intactas
    A colocação não foi tocada: assar de novo não é operação fiel (duas rodadas idênticas
    dão contagens diferentes, e árvore sem o acervo completo de decalques apaga peças). */
-export const GRAFITE_FP = {"pass":"72a446b1c69e9697","maps":{"escadao":"ba3a46ab4903a345","praca_poderes":"a61f8c352eca8377","piscina_treta":"b43d1a561bac01a4","loja_h":"7d35e666ce48c297","ferro_velho":"6ad42bd8fd7f5d76","quebrada":"0aad1c145b713e60","corrego":"79b863f616e1bc09"}};
+export const GRAFITE_FP = {"pass":"72a446b1c69e9697","maps":{"escadao":"ba3a46ab4903a345","praca_poderes":"a61f8c352eca8377","piscina_treta":"b43d1a561bac01a4","loja_h":"7d35e666ce48c297","ferro_velho":"6ad42bd8fd7f5d76","quebrada":"0aad1c145b713e60","corrego":"5b77ec2fd585a8aa"}};
