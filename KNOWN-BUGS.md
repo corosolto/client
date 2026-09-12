@@ -109,6 +109,50 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-163 · trocar de qualidade no meio da partida não mudava a resolução do jogo · CORRIGIDO 12/09
+
+**Sintoma.** O menu de qualidade mentia. `med → high` (e vice-versa) trocava sombra e materiais,
+mas o mundo continuava sendo desenhado na MESMA resolução de antes — o jogador mexia no
+seletor, via a imagem mudar um pouco (sombra) e concluía que o resto era impressão.
+
+**Causa.** `game.js:_applyQuality` chama `renderer.setPixelRatio(...)`, e o `EffectComposer`
+tem os próprios render targets. Eles nasciam com o pixel ratio do boot (`bloom.js`, `forScene`)
+e só eram redimensionados no **resize de janela** — a condição era `cp._w !== innerWidth ||
+cp._h !== innerHeight`. Pixel ratio não aparece aí. Como o composer existe em `med` e `high` e
+só some em `low`, o caminho padrão do jogo era exatamente o que não obedecia.
+
+**Por que importa agora.** A escada de qualidade adaptativa reduz DPR como PRIMEIRO degrau. Sem
+este conserto ela teria mentido do mesmo jeito — mexeria num número que ninguém desenha.
+
+**Conserto.** O composer passa a guardar `cp._dpr` e a comparar com `renderer.getPixelRatio()`
+junto do resize, refazendo alvos, depth e uniforme de texel do AA — a mesma manutenção que o
+resize já fazia. Régua: `tools/eval/qualidade-adaptativa-check.mjs` cobre a política, e a
+verificação de imagem é a figura A/B no navegador.
+
+### BUG-162 · GPU boa que recusou antialias era tratada como máquina sem GPU · CORRIGIDO 12/09
+
+**Sintoma.** O jogador com placa de vídeo real perdia sombra, nitidez (DPR 0,75) e os previews
+animados do menu — sem nada na tela explicando por quê — quando o driver dele recusava MSAA.
+
+**Causa.** `glcontext.js` publicava um único `degraded`, que é `compatibility || tier !==
+'padrao' || api !== 'webgl2' || software`: quatro fatos com custos muito diferentes somados num
+booleano. E `main.js` derivava dele o caminho leve INTEIRO. Recusar antialias é uma opção de
+contexto; desenhar por software é não ter GPU. Tratados igual.
+
+**O que NÃO era o defeito.** A detecção de renderizador de software funciona desde sempre —
+`SOFTWARE_RE` lê `WEBGL_debug_renderer_info`, cai para `gl.RENDERER` quando a extensão não
+existe, e o jogo já rebaixava. As sessões de 4-8 FPS do painel já estavam no caminho mais leve
+que o jogo tinha; o que faltava era o caminho leve ser leve o bastante, e o jogador saber.
+
+**Conserto.** A metadata passa a publicar `software`, `semWebgl2`, `semMsaa` e `compat`
+separados (o `degraded` continua, porque a telemetria antiga o usa). O caminho leve nasce só de
+software, WebGL1 ou modo compatibilidade. Software começa no degrau mínimo (DPR 0,5 em vez de
+0,75 — um quarto dos pixels) em vez de gastar os poucos quadros que tem medindo o que o
+renderizador já disse, e ganha um aviso honesto: barra, uma vez, dispensável, que não bloqueia.
+
+**Régua** `tools/eval/maquina-fraca-check.mjs` (7 cláusulas, no check:fast). Mutantes
+`junta-tudo` e `sem-aviso` reprovam.
+
 ### BUG-161 · o tiro que erra terminava 60 m adiante, atravessando a parede · CORRIGIDO 12/09
 
 **Sintoma.** Achado OLHANDO a figura do navegador, com o BUG-159 já consertado e verde. Agora
