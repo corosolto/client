@@ -101,3 +101,23 @@ Gerados em 06/09/2026 no [projeto Mint do Escadão](https://mint.gg/chat/ph71esg
 - `escadao_eletrica_r4.glb`: 3.470 triângulos, caixa de medição e conduítes; simplificação limitada por erro geométrico.
 
 Pipeline reproduzível em `tools/optimize-escadao-r4.mjs` e `tools/rig-escadao-cat-r4.py`; inspeção do GLB reimportado em `tools/inspect-escadao-cat-r4.py`. Recibos e renders privados em `artifacts/escadao-visual/r4/assets/`.
+
+
+### Estação do Posto da Treta — `posto_ipiranga.glb` (2026-09-11)
+
+Este NÃO é asset gerado: é arquivo de terceiro, baixado do **Fab** (o glTF declara
+`generator: "fab-model-conversion"`) e entregue pelo dono em
+`Archives/downloads/Downloads/posto_ipiranga.glb`, de 28/08/2026.
+SHA-256 do arquivo cru: `20422295b2e240e3b14c9ac4402ada7f40b83a35e798001b7896e76dc82f15e5`.
+
+**Licença: PENDENTE.** A licença do Fab está na conta de quem baixou e não é
+derivável do arquivo — registrar aqui a linha exata (plano e data) antes de tratar
+este asset como publicável. Pelas regras deste arquivo, não atribuir licença nem
+autoria que não foi comprovada. A marca desenhada na textura é "Ipirango", paródia,
+no mesmo idioma do resto do jogo (Loja H, Zé Capivara) — mas isso é nota de estilo,
+não de licença.
+
+Ingestão reproduzível por `npm run ingest:posto` (ver `tools/ingest-posto-ipiranga.mjs`),
+que conserta o export antes do pipeline de props e é seguida de `optimize-props.mjs`
+(dedup + WebP 1024 + prune): 3,67 MB → 509 KB, 4.273 triângulos, 3 draw calls.
+O contrato do resultado é cobrado por `npm run eval:posto`.
