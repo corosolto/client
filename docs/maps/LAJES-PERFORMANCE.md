@@ -101,5 +101,7 @@ Artefatos locais: `artifacts/lajes-performance/`; baseline `browser-*.json`,
 A revisão independente não encontrou bloqueante de código. Build e invariants
 passaram sem falha crítica nova. Check:fast teve 105/108 no primeiro passe; IDs e
 autoria passaram nas verificações posteriores. Audio:check local mantém a limitação
-do pack privado incompleto, sem alterações de áudio nesta correção. PR517 está em
-integração com a nova main alpha.227; a correção ainda não foi publicada.
+do pack privado incompleto, sem alterações de áudio nesta correção. A PR517 foi
+integrada à main em 06/09/2026 pelo merge `b64aa886`, e a correção acompanha a
+release `v2.0.0-alpha.236`. Integração na main não é publicação: nenhum deploy em
+produção foi verificado nesta sessão.
