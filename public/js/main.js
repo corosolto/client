@@ -26,7 +26,7 @@ import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 import { createMapPreview } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { NOS, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -3017,6 +3017,59 @@ function mpCartaoNoHTML(n) {
     + `<span class="mp-ping" data-q="${q}">${ping}</span>`;
 }
 
+/* Mapas da sala escolhidos a dedo. A grade sai do `/maps` DO NÓ, não do catálogo local — o
+   servidor simula uma versão fixada do jogo (docs/MULTIPLAYER.md, "Pool de mapas"). */
+let mpMapasDoNo = [];
+let mpMapasEscolhidos = new Set();
+
+function mpPintarMapas() {
+  const grade = mpEl('mp-mapas-grade'), conta = mpEl('mp-mapas-conta');
+  if (!grade || !conta) return;
+  const ctf = mpEl('mp-modo') && mpEl('mp-modo').value === 'ctf';
+  grade.innerHTML = mpMapasDoNo.map((id) => {
+    const on = mpMapasEscolhidos.has(id);
+    return `<button class="mp-mapa${on ? ' on' : ''}" type="button" data-id="${id}" aria-pressed="${on}" title="${MAPS[id].name}">`
+      + `<img class="mp-mapa-img" loading="lazy" decoding="async" src="${mapPreviewPoster(id, VERSION)}" alt="">`
+      // o crachá CAPTURA só informa quando o modo É captura; senão é ruído em quase todo cartão
+      + (ctf && MAPS[id].ctfMode ? '<span class="mp-mapa-ctf">CAPTURA</span>' : '')
+      + `<span class="mp-mapa-nome">${MAPS[id].name}</span></button>`;
+  }).join('');
+  grade.querySelectorAll('.mp-mapa').forEach((b) => {
+    b.onmouseenter = () => ui.hover();
+    b.onclick = () => {
+      ui.click();
+      const id = b.dataset.id;
+      if (mpMapasEscolhidos.has(id)) mpMapasEscolhidos.delete(id); else mpMapasEscolhidos.add(id);
+      mpPintarMapas();
+    };
+  });
+  const n = mpMapasEscolhidos.size;
+  const fora = MAP_IDS.filter((id) => !mpMapasDoNo.includes(id)).length;
+  conta.textContent = (!mpMapasDoNo.length ? 'esse servidor não respondeu a lista de mapas'
+    : n === 0 ? 'marque pelo menos um mapa'
+      : n === 1 ? 'só 1 mapa: a sala não gira, joga sempre nele'
+        : `${n} mapas na fila, sorteados a cada partida`)
+    + (fora ? ` · ${fora} do jogo ainda não estão neste servidor` : '');
+}
+
+async function mpCarregarMapasDoNo() {
+  if (!mpNoAtual) return;
+  try { mpMapasDoNo = (await listMaps(mpNoAtual.http)).filter((id) => MAPS[id]); }
+  catch { mpMapasDoNo = []; }
+  // mapa que o nó não tem não pode continuar marcado de uma seleção feita noutra região
+  for (const id of [...mpMapasEscolhidos]) if (!mpMapasDoNo.includes(id)) mpMapasEscolhidos.delete(id);
+  mpPintarMapas();
+}
+
+function mpSincronizarMapas() {
+  const rot = mpEl('mp-rotacao'), caixa = mpEl('mp-mapas');
+  if (!rot || !caixa) return;
+  const aDedo = rot.value === 'escolher';
+  caixa.hidden = !aDedo;
+  if (!aDedo) return;
+  if (mpMapasDoNo.length) mpPintarMapas(); else mpCarregarMapasDoNo();
+}
+
 function mpDesenharNos() {
   const box = mpEl('mp-nos'); if (!box) return;
   box.innerHTML = '';
@@ -3033,6 +3086,8 @@ function mpDesenharNos() {
 
 function mpSelecionarNo(no) {
   mpNoAtual = no;
+  mpMapasDoNo = [];              // cada nó tem o catálogo DELE; recarrega ao abrir a grade
+  mpSincronizarMapas();
   if (no.online) mpEstado('on', `ONLINE · ${no.nome.split('·')[0].trim()} · ${no.ping} ms`);
   mpDesenharNos();
   mpAtualizarSalas();
@@ -3065,7 +3120,10 @@ async function mpAtualizarSalas() {
       `<div class="mp-sala-top"><div class="mp-sala-nome">${r.name}${tags}</div>`
       + `<div class="mp-lot"><span class="mp-lot-bar"><i style="width:${Math.round(frac * 100)}%"></i></span>`
       + `<b>${r.players}</b>/${r.max}${r.spectators ? `<span class="mp-lot-spec">+${r.spectators} assistindo</span>` : ''}</div></div>`
-      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}`
+      + (Array.isArray(r.mapas) && r.mapas.length
+        ? ` · ${r.mapas.length === 1 ? 'mapa fixo' : `${r.mapas.length} mapas na fila`}` : '')
+      + '</div>'
       + `<div class="mp-acoes"></div>`;
     const acoes = div.querySelector('.mp-acoes');
     /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
@@ -3174,6 +3232,15 @@ function mpMontarFormulario() {
   }
   const priv = mpEl('mp-privada'), wrap = mpEl('mp-senha-wrap');
   if (priv && wrap) priv.onchange = () => { wrap.hidden = !priv.checked; };
+  const rot = mpEl('mp-rotacao');
+  if (rot && !rot._ok) {
+    rot._ok = true;
+    rot.onchange = () => { ui.click(); mpSincronizarMapas(); };
+    mpEl('mp-modo').addEventListener('change', () => mpSincronizarMapas());   // o crachá CAPTURA depende do modo
+    mpEl('mp-mapas-todos').onclick = () => { ui.click(); mpMapasEscolhidos = new Set(mpMapasDoNo); mpPintarMapas(); };
+    mpEl('mp-mapas-limpar').onclick = () => { ui.click(); mpMapasEscolhidos.clear(); mpPintarMapas(); };
+  }
+  mpSincronizarMapas();
   const criar = mpEl('mp-criar');
   if (criar) criar.onclick = async () => {
     ui.click(); mpErro('');
@@ -3181,10 +3248,16 @@ function mpMontarFormulario() {
     const privada = mpEl('mp-privada').checked;
     const senha = mpEl('mp-senha').value.trim();
     if (privada && !senha) return mpErro('Sala privada precisa de senha.');
+    const aDedo = mpEl('mp-rotacao').value === 'escolher';
+    const escolhidos = [...mpMapasEscolhidos];
+    if (aDedo && !escolhidos.length) return mpErro('Escolha pelo menos um mapa pra sua sala.');
     try {
       const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
-        name: mpEl('mp-nome').value.trim(), rotacao: mpEl('mp-rotacao').value,
+        name: mpEl('mp-nome').value.trim(),
+        // com a lista a dedo a rotação vira só o plano B do servidor (lista inválida = recorte)
+        rotacao: aDedo ? 'todos' : mpEl('mp-rotacao').value,
+        ...(aDedo ? { mapas: escolhidos, mapId: escolhidos[0] } : {}),
         faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
         creatorNick: ($('nick-input').value || '').trim() || null,

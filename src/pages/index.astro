@@ -1130,8 +1130,19 @@ window.__GEO_LANG__ = (function () {
                 <option value="todos">TODOS (sorteia a cada partida)</option>
                 <option value="oficiais">SÓ OFICIAIS</option>
                 <option value="comunidade">SÓ DA COMUNIDADE</option>
+                <option value="escolher">ESCOLHER A DEDO</option>
               </select>
             </label>
+            <div id="mp-mapas" class="mp-mapas" hidden>
+              <div class="mp-mapas-topo">
+                <span id="mp-mapas-conta" class="mp-mapas-conta">marque pelo menos um mapa</span>
+                <span class="mp-mapas-acoes">
+                  <button id="mp-mapas-todos" class="mp-mini" type="button">MARCAR TODOS</button>
+                  <button id="mp-mapas-limpar" class="mp-mini" type="button">LIMPAR</button>
+                </span>
+              </div>
+              <div id="mp-mapas-grade" class="mp-mapas-grade" role="group" aria-label="Mapas que a sala vai girar"></div>
+            </div>
             <label>TIME E <select id="mp-fac-e"></select></label>
             <label>TIME B <select id="mp-fac-b"></select></label>
             <label>MODO
