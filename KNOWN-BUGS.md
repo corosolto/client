@@ -733,6 +733,121 @@ o mix da alpha.138 já não está servido e não há purge pendente; o conserto 
 `check:fast` e no `check:deploy`). Cláusula **EP16**, **3 mutações novas**:
 `cache-sem-binding`, `cache-so-ingles` e `cache-sem-especificador` — cada uma apaga uma
 alternativa da regex e acende EP16. Matriz completa: **42 de 42 mordidos**.
+### BUG-146 · global opaco injetado no documento abre issue de crash, e NÃO é corrigível por classificação · REFUTADO 09/09 (issue #568)
+
+**Sintoma (issue #568, aberta pelo `crash-fix.yml` em alpha.243, classe `codigo`):**
+
+```
+Uncaught TypeError: self.wsd2x7lyyejobzuff is not a function
+#568, alpha.243-5182e7f2b777, fingerprint 9d236bb2, origem https://www.csbrasil.online/:1:80
+Stack: global code@https://www.csbrasil.online/:1:80
+```
+
+**Causa raiz — confirmada.** Script de terceiro injetado inline no documento, com nome gerado
+por sessão. O caminho é o mesmo das BUG-76 e BUG-78: `src/lib/error-provenance.mjs:68`
+(`if (sourceOrigin === ownOrigin) return false;`) inocenta antes de qualquer outra prova, porque
+código injetado carrega a origem da própria página. Nenhuma regex seguinte morde e o
+`classifyCrash` cai no `return 'codigo'` final, que escala e abre issue.
+
+**Prova de que não é nosso, tripla e refeita na alpha.243** (a medição da BUG-76 é da alpha.182):
+
+1. `wsd2x7lyyejobzuff` não existe em nenhum arquivo, e `git log --all -S` não devolve commit.
+   O inventário dos 50 globais que o jogo toca não tem candidato: os mais longos só-minúsculas
+   são `performance` (11), `diagnostics` (11), nenhum com dígito, e os nossos são dunder
+   (`window.__game`, `window.__CS_MAIN_READY__`).
+2. O fingerprint publicado reproduz exatamente
+   `crashFingerprint('error', <mensagem>, 'https://www.csbrasil.online/:1:80')`
+   (`src/lib/error-provenance.mjs:117-122`), o que fixa `e.filename` como sendo o **documento**.
+3. A coluna 80 da linha 1 cai **dentro de um comentário HTML**. Prefixo recomputado do fonte
+   atual (`src/pages/index.astro:18-23`): `<!DOCTYPE html>` 15 + `<html lang="pt-BR">` 19 +
+   `<head>` 6 + `<meta charset="UTF-8">` 22 + comentário 96 + `<script>` 8 = 166. O caractere da
+   coluna 80 é o `r` de "rodar". Nosso código só começa na coluna 167.
+
+Também descartado: não pode ser identificador manglado (as nove tags `<script>` de
+`index.astro` são `is:inline`, `ld+json`, `importmap` ou `type=module` com `src` — nenhuma é
+`<script>` simples, a única forma de o Vite manglar para dentro do HTML), nem hash de build (o
+único gerador é `scripts/module-cache.mjs:29`, alfabeto hex, e o nome tem `w,s,x,y,j,z,u`), nem
+geração dinâmica de nome (zero `toString(36)`, `eval`, `new Function` ou `window[...]` fora de
+`public/docs/`).
+
+**Reprodução:**
+
+```
+MSG='Uncaught TypeError: self.wsd2x7lyyejobzuff is not a function' \
+SRC='https://www.csbrasil.online/:1:80' \
+STK='global code@https://www.csbrasil.online/:1:80' \
+  node scripts/classify-crash.mjs        # classe=codigo
+```
+
+**POR QUE NÃO TEM CONSERTO POR CLASSIFICAÇÃO — e este é o parágrafo que decide a entrada.**
+
+A BUG-76 e a BUG-78 funcionam porque `__gCrWeb`, `__firefox__` e `DarkReader` são nomes
+**estáveis**: o nome É a proveniência. Aqui o nome é aleatório por sessão. Não existe nome para
+cortar, e o que sobra é a forma — que este arquivo já reprovou por medição em BUG-76 (o
+parágrafo "Por que o corte é por NOME e não pela FORMA"), e que a régua trava em fixture
+(`api/reguas/error-provenance-check.mjs`, "`:1:N` NÃO é prova de terceiro").
+
+A regra candidata testada foi
+`/\b(?:self|window|globalThis)\.(?=[a-z0-9]*[0-9])[a-z0-9]{12,}\b/` somada a exigir
+`source` terminando em `/:1:N`. Ela cai por seis medições independentes:
+
+- **Não há posição possível.** Para pegar a #568 a regra tem de ficar ANTES do atalho
+  same-origin de `:68`; ali ela atropela as duas cláusulas que existem para inocentar pilha
+  nossa (`:68` e `:76`, a proteção da BUG-51). Depois de `:68` ela nunca dispara.
+- **Falso positivo com pilha 100% nossa, executado:** `self.rem700barrel is not a function` em
+  `/:1:167` vira `externo` — e `rem700barrel` **já existe** em `public/js/vmattach.js:290`, com
+  `uzimagcover`, `tavorshroud`, `mosinbarrel` e `deagleslide` no mesmo arquivo, todos a um
+  caractere do corte de 12. O jogo já nomeia peça de arma exatamente na forma que a regra
+  chamaria de opaca.
+- **Perde 3 das 4 redações da própria família:** `Can't find variable: <nome>` (#428, #379,
+  #381) não tem o prefixo `self.`.
+- **Monte Carlo, 200 mil nomes por gerador:** `Math.random().toString(36).slice(2)` é pego em
+  **2,45%** dos casos (70% saem com 11 caracteres); `crypto.randomUUID()` em 0,00%. A
+  calibragem estava num único exemplar de 17 caracteres.
+- **Depende de resíduo de build e de URL.** A âncora `/:1:N` morre com query string, e as
+  portas com query estão no nosso fonte (`src/pages/sala/[codigo].astro:84`,
+  `public/js/glcontext.js:116`); e depende da barra final, que `astro.config.mjs:69-72` mantém
+  em `ignore` de propósito, então `/mapa/:1:80` e `/mapa:1:80` classificam diferente.
+- **O espelho no cliente é impossível.** `src/pages/index.astro:326` monta o `loc` com
+  linha:coluna, mas as três chamadas de `origemDoJogo` recebem source **sem** elas: `e.filename`
+  cru (`:336`) ou `null` (`:346`, `:419`). Sem espelho, `interna` continua `true`, o erro vira
+  `erroDoBoot` (`:341`) e dispara `lancamento.fail` (`:342`) — painel falso de "Falha ao abrir a
+  arena" para o jogador — e consome `TETO_SESSAO` em vez de `TETO_EXTERNO` (`:340`). É
+  exatamente o dano que a BUG-76 fechou.
+
+**Medido** (92 payloads do corpus deste arquivo, helper real contra cópia com a regra):
+
+| | antes | depois |
+|---|---|---|
+| payloads que mudam de classe | - | **1 de 92** |
+| e o que muda | - | a própria #568 |
+| falsos positivos com pilha nossa | 0 | **4 executados** |
+| redações da família cobertas | - | 1 de 4 |
+
+Ganho de uma regra que silencia crash real: um caso. Não entra.
+
+**Correção: nenhuma no código.** A #568 fecha à mão como ruído externo, como as #379, #380 e
+#381 foram fechadas antes da BUG-76. O diagnóstico fica aqui porque é ele que impede a próxima
+rodada de tentar de novo o corte por forma.
+
+**Custo declarado, medido:** o custo é real e fica registrado — esta classe **continua abrindo
+issue** a cada fingerprint novo, e cada nome injetado é um fingerprint novo, então a
+deduplicação do `crash-fix.yml` não ajuda. Nada foi silenciado em troca.
+
+**Régua: nenhuma, e há um segundo problema aqui.** A régua desta família saiu deste repositório
+em `de21edac` (27/08) para `corosolto/backend`, em `api/reguas/error-provenance-check.mjs`;
+`grep -c 'eval:error-origin' package.json` devolve **0** e o `check:fast` não a referencia. Um
+portão que a documentação afirma existir não roda mais neste repo. Levantado junto, merece
+entrada própria: a cópia do classificador no backend (`api/_lib/error-provenance.mjs`) já
+divergiu da daqui — está sem `CAPACIDADE_RE` (BUG-80), sem `CONTEXT_LOSS_RE` (BUG-82) e com a
+`RECOVERABLE_RE` desatualizada (BUG-81) — e é a cópia do backend que decide o dispatch em
+produção.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a injeção não foi reproduzida com uma
+extensão real — a medição é da **classificação**, não da injeção. A tabela `js_error` do
+Supabase não foi consultada. E o commit `5182e7f2b777` do carimbo de versão não é commit: é o
+`JS_REV`, hash do manifesto do grafo JS (`src/pages/index.astro:9`).
+
 ### ~~BUG-78 · carteira cripto injetada no documento abria issue de crash como se fosse bug do jogo~~ · RESOLVIDO 21/08 (issues #403 e #404)
 
 **Sintoma (literal, issues #403 e #404, abertas pelo `crash-fix.yml` em alpha.172):**
