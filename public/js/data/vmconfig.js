@@ -42,7 +42,7 @@ const W = (family, extra = {}) => ({
 });
 
 export const VM_WEAPON = {
-  awp: W('sniper', { trim: { pos: [0, 0, 0], rotDeg: [0, 15, 0], scale: 1 } }),
+  awp: W('sniper', { baked: true, frame: 'family' }),
   // baked: GLB assado OFFLINE com a Mint dentro (pente separado, sockets
   // nomeados) — o runtime só toca clipes. Caixa MAG: régua eval:cs16.
   ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),

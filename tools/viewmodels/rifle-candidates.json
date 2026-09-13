@@ -151,6 +151,21 @@
       "sourceBranch": "codex/viewmodels-catalog-final",
       "sourceCommit": "411f9fbbc",
       "rebuild": "tools/viewmodels/prep/rifles-m400-final.py + optimize_paid_family.mjs"
+    },
+    "awp": {
+      "family": "sniper",
+      "file": "viewmodels/sniper/awp-baked-runtime.glb",
+      "sourceSha256": "6a303a1b97dfd23b9e1e9c979700119dffbb0ee3c48551751887f7f86a372a2a",
+      "sourceBytes": 274528,
+      "productSha256": "fb1d0961d96dd28a242f8fa5aa477d32be4ba4407457889a2e9d476280af916b",
+      "productBytes": 2583404,
+      "sha256": "fb1d0961d96dd28a242f8fa5aa477d32be4ba4407457889a2e9d476280af916b",
+      "bytes": 2583404,
+      "mechanism": "complete-detachable-mag/real-right-bolt-handle/source-magazine-release-fused-into-receiver",
+      "ready": false,
+      "sourceBranch": "codex/viewmodels-catalog-final",
+      "sourceCommit": "57bbb8a9b",
+      "rebuild": "tools/viewmodels/prep/rifles-awp-final.py + optimize_paid_family.mjs"
     }
   }
 }
