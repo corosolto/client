@@ -35,6 +35,25 @@ superfície → 0/44) e entrou a **CHR7** (convenção de skin), verde — daí 
 CHR1/CHR3/CHR4 seguem exatamente como estavam (conferido personagem a personagem: a
 lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
+> **`check:fast` de 13/09/2026, A/B do BUG-167 + BUG-168.** Execução completa na base
+> `d4d9c6935` (alpha.250): **129/142**, 13 vermelhas. Execução completa no conserto:
+> **130/144**, 14 vermelhas — a 14ª era `travessao:check`, acesa por dois travessões meus em
+> `index.astro`, consertada e conferida VERDE em seguida, o que põe o conserto em **131/144**.
+> Esse 131 é COMPOSIÇÃO de duas medições, não uma execução única: a execução completa sobre o
+> commit final foi interrompida no passo 53. Sobre o commit final foram conferidos um a um e
+> estão VERDES: `eval:comentario`, `docs:check`, `arch:check`, `changelog:check`,
+> `travessao:check`, `eval:launchwatchdog`, `eval:switchteam`, `eval:error-console`,
+> `eval:webglguard`, `eval:mutcega`, `eval:ctfhud`, `eval:pause`, `eval:ctfwin`, `eval:spawn`
+> e `eval:regen`. Os 13 vermelhos são os
+> MESMOS nos dois lados, conferidos um a um na base: `eval:mapid`, `eval:redesign`,
+> `audio:check`, `eval:pegada`, `anims:merge:check`, `menuwalls:check`, `eval:posters`,
+> `eval:lajes-authored`, `eval:lajes-circuito`, `eval:lajes-antitrap`,
+> `eval:sertao-livestock`, `eval:miticos-lobisomem`, `eval:mansao` — devDep ausente na
+> máquina (`sharp`), asset local não gerado, ou dívida conhecida. Os 2 passos novos
+> (`eval:switchteam`, `eval:launchwatchdog`) são o que leva 142 a 144, os dois VERDES.
+> **Nesta máquina NÃO foram verificados:** `npm run build`, `check:seo` e nenhum portão de
+> navegador (sem `node_modules` completo).
+
 ---
 
 ## Sertão — casas da praça (PR #526, revisão local 06/09)
@@ -108,6 +127,168 @@ evidência WebGL está em `artifacts/sertao-casas/runtime-final-v2/`; a entrega 
 uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
+
+### BUG-167 · "Falha ao abrir partida: tempo limite ao abrir partida" em partida que já tinha aberto · CORRIGIDO 13/09
+
+**Sintoma (do dono, colado do painel de erros):** *"deu esse erro 8h atras no jogo: 40 ·
+Falha ao abrir partida: tempo limite ao abrir partida · launch-watchdog"*, em
+`2.0.0-alpha.250-c2d31b71e5eb`, mapa `upa_24h`, modo `rounds`.
+
+O próprio relatório se contradiz, e é daí que sai o diagnóstico:
+
+```
+00:39:38 clique #mp-quick
+00:39:54 ops live em 35935ms mapa=upa_24h modo=rounds   <<< A PARTIDA ABRIU
+00:39:56 ops congelou 1576ms
+00:46:10 ops contexto WebGL perdido                     <<< SETE MINUTOS DEPOIS
+```
+
+Um tempo limite **de abertura** não pode ser verdade numa sessão que já registrou `live` e
+seguiu nela por seis minutos.
+
+**Causa raiz — confirmada. São dois defeitos no mesmo laço, e os dois são a mesma confusão:
+o watchdog mede o TEMPO com `setTimeout` e mede o SUCESSO com estado movido pelo
+`requestAnimationFrame`.**
+
+1. **O relógio corre com a aba no fundo.** `setTimeout` dispara na aba oculta; o `rAF`
+   **para**. Quem abre o jogo e troca de aba durante os ~36 s de carga volta para a tela
+   amigável de falha: o relógio andou os 60 s, o jogo não andou um quadro, e o watchdog leu
+   o congelamento do `rAF` como travamento (`src/pages/index.astro`, `lancamento.begin`).
+2. **Predicado de vivacidade usado como predicado de conclusão.** O teste era
+   `window.__game.state === 'live'` (`public/js/main.js`), e `live` é só UM dos estados de
+   partida aberta: o motor passa por `countdown` (`public/js/game.js:2255`) e `roundEnd`
+   (`public/js/game.js:4548`, 4 s por rodada) a cada troca de rodada. Junte com a renovação
+   de rede lenta (#241), que pergunta pelo progresso de carga **antes** de perguntar pelo
+   estado: todo tique com asset chegando renovava sem olhar o jogo, o watchdog sobreviveu ao
+   lançamento, e o primeiro tique sem asset novo encontrou o jogo numa transição de rodada.
+   No MP isso é pior porque o servidor gira o mapa (`public/js/net.js:175` → `onPartida` →
+   `mpMontarPartida` → `startGame`) e **rearma** o lançamento no meio da sessão.
+
+**Reprodução:** `node tools/eval/launch-watchdog-check.mjs` (sem navegador: a régua extrai o
+`lancamento` real do `index.astro` e o predicado real do `main.js` e roda os dois num `vm`
+com relógio falso, que é o único jeito de avançar 60 s de `setTimeout` **sem** avançar o
+`rAF` — a assimetria que produz o defeito).
+
+**Medido antes do conserto** (`node tools/eval/launch-watchdog-check.mjs`):
+
+| cláusula | antes | depois |
+|---|---|---|
+| LW1 · aba oculta 180 s durante a carga | 1 falha: *"tempo limite ao abrir partida"* | 0 falhas |
+| LW2 · tique numa troca de rodada | 1 falha: *"tempo limite ao abrir partida"* | 0 falhas |
+| LW4 · 7 min de partida, 6 renovações por asset, 7º tique em `roundEnd` | 1 falha | 0 falhas |
+| LW3 · travamento REAL (aba à frente, 0 quadro, 0 progresso) | 1 falha (correta) | 1 falha (correta) |
+| LW6 · aba oculta 60 s, volta, 180 s à frente sem quadro | — (cláusula nova) | 1 falha (correta) |
+
+**O que foi DESCARTADO com medição, não com palpite:**
+
+- *"o teto de 60 s é curto para rede lenta"* — não. A migalha diz `live em 35935ms`, dentro
+  do teto, e a renovação de #241 já cobre rede lenta com progresso. Subir o teto não teria
+  mudado uma destas 40 linhas.
+- *"é a perda de contexto WebGL que está falhando"* — não. Esse caminho tem mensagem própria
+  (`contexto WebGL perdido`, `public/js/main.js:135`) e fingerprint próprio; a mensagem
+  destas 40 é a do watchdog.
+- *uma trava (`_abriu`) no predicado* — escrita, medida e **removida**: o mutante
+  `--mutante=semtrava` ficou VERDE, provando que era código morto (quando o predicado
+  devolve verdadeiro o `ready()` já desarma o timer). Código que nenhuma mutação acende não
+  guarda nada.
+
+**Correção.** Na causa, nos dois lados da assimetria:
+- `src/pages/index.astro` — o tique **renova** em vez de falhar quando a aba está (ou
+  esteve) oculta, uma renovação por episódio de ocultação; travamento com a aba à frente
+  continua falhando no teto. Um `visibilitychange` faz o latch, porque a aba pode ocultar e
+  voltar antes do tique.
+- `public/js/main.js` — o predicado passa a provar **quadro**, não sub-estado:
+  `if (g && g.time > 0) return true;`, e **antes** da cláusula de rede lenta. `game.time` só
+  anda dentro do `update()` do laço de `rAF` (`public/js/game.js:7346`).
+
+**Custo declarado, medido:** o watchdog deixa de detectar um travamento que aconteça
+**enquanto a aba está oculta** — por desenho, porque nesse estado não existe sinal de
+progresso para distinguir travamento de `rAF` congelado. Ele volta a valer no primeiro tique
+com a aba à frente. A LW3 cobra que esse caso continue falhando.
+
+**Um furo do PRÓPRIO conserto, achado pela régua e não por leitura.** A primeira versão da
+renovação por aba oculta não consumia o latch no `begin`: uma única troca de aba na sessão
+desarmava o watchdog pelo resto dela, e a LW1 ficava verde exatamente do mesmo jeito. Daí
+nasceu a LW6, e com ela o mutante `--mutante=semconsumo`. Fica registrado porque é o modo de
+cegueira nº 1 desta casa: cláusula que só cobra "não falhou" sem cobrar "ainda pode falhar".
+
+**Régua: `tools/eval/launch-watchdog-check.mjs`** (`npm run eval:launchwatchdog`, no
+`check:fast`). 6 cláusulas, 3 mutações medidas, cada uma acendendo cláusula diferente:
+`--mutante=sovivo` (devolve `state === 'live'` na ordem original) acende LW2 e LW4 com a
+mensagem literal da produção; `--mutante=semoculto` (tique ignora a aba oculta) acende LW1;
+`--mutante=semconsumo` (latch nunca consumido) acende LW6. Nas três a LW3 fica VERDE — é ela
+que impede "consertar" o falso positivo desarmando o watchdog.
+
+---
+
+### BUG-168 · troca de lado com personagem fora do elenco corrompia o Game e o crash só aparecia na morte seguinte · CORRIGIDO 13/09
+
+**Sintoma (do painel de erros):** `Uncaught TypeError: Cannot read properties of undefined
+(reading 'id')` em `glbchars.js:368`, pilha
+`buildCharacterModel` ← `_ensurePlayerTP` ← `_tpDeath` ← `_updatePlayer`, em
+`2.0.0-alpha.248`, `posto_treta` / `ctf`.
+
+**Procedência, para não vender mais do que foi medido:** a linha chegou de `localhost:8202`
+— máquina de desenvolvimento, não do site no ar. O caminho defeituoso, porém, é código
+publicado, e o arnês o reproduz.
+
+**Causa raiz — confirmada, e ela não está em nenhuma das quatro linhas da pilha.**
+`buildCharacterModel` recebeu `def === undefined` porque `this.playerDef` já estava undefined
+quando o jogador morreu. Quem o deixou assim foi a troca de lado (tecla M):
+
+```js
+public/js/game.js:2788   if (charId) { this.playerDef = byId(charId); ... }
+```
+
+`byId` é `CHARACTERS.find(...)` (`public/js/characters.js:613`) — devolve **undefined** para
+id fora do elenco. O mesmo campo, no construtor, **já tinha reserva**:
+`byId(playerCharId) || CHARACTERS[0]` (`public/js/game.js:712`, com aviso no `:713`). A
+assimetria entre as duas linhas era o defeito.
+
+**E o que tornou isso caro foi o `catch`** (a assinatura da lei 6 desta casa): em
+`public/js/main.js:2157` a chamada mora em `try { game._switchTeam(id) } catch (e) {
+console.error('switch team failed', e) }`, e logo abaixo vem `game.resume()`. A atribuição
+acontece **antes** da exceção; o `catch` engole a exceção, o `resume()` devolve o jogo ao
+jogador, e o Game segue rodando **corrompido**. A quebra só aparece na morte seguinte, em
+outro arquivo, a quatro quadros da causa — foi assim que ela chegou como "crash no glbchars".
+
+**Reprodução:** `node tools/eval/switchteam-check.mjs` (arnês em node, `posto_treta`/`ctf`).
+
+**Medido antes do conserto** (`node tools/eval/switchteam-check.mjs`):
+
+| cláusula | antes | depois |
+|---|---|---|
+| ST1 · `_switchTeam('id-fora-do-elenco')` | `TypeError` em `game.js:2801`; `playerDef` e `player.def` **undefined**; `playerCharId` = o id inválido | sem exceção; `playerDef='caminhoneiro'`, coerente com `player.def` e `playerCharId` |
+| ST2 · `_tpDeath()` em seguida (o caminho do relatório) | `TypeError: Cannot read properties of undefined (reading 'id')` | não lança |
+| ST4 · atribuições cruas a `this.playerDef` no fonte | 1 (`game.js:2788`) | 0 |
+| ST3 · troca com id VÁLIDO (antivacuidade) | troca de verdade | troca de verdade |
+
+**O que foi DESCARTADO com medição, não com palpite:**
+
+- *"é defeito do `buildCharacterModel`, que deveria tolerar `def` nulo"* — não. Ele **já**
+  devolve `null` sem template (`glbchars.js:369`) e o `_ensurePlayerTP` já trata `null`
+  (`game.js:5110`). Tolerar `def` undefined lá só moveria o crash para o próximo leitor de
+  `def.id` e apagaria o sinal de que o elenco do jogador está inconsistente.
+- *"é defeito do CTF ou do `posto_treta`"* — não. O arnês reproduz em qualquer mapa; o CTF só
+  é onde há troca de lado com frequência.
+
+**Correção.** `public/js/game.js` — a mesma reserva da linha 712, com a diferença de que aqui
+a reserva é um personagem **da facção em que ele está entrando** (`this.enemyFaction`, que
+ainda é a nova nesse ponto) e não `CHARACTERS[0]`: quem troca de lado tem de sair com um
+personagem do lado novo. `playerCharId` passa a vir do def resolvido, não do id pedido.
+
+**Custo declarado, medido:** com id inválido o jogador recebe silenciosamente um personagem
+diferente do que pediu, com aviso só no console (`[elenco] troca de lado pediu …`). É melhor
+do que o Game corrompido, e continua sendo um estado que não deveria existir — se ele
+aparecer em produção, o aviso é o rastro. Nada mais piorou: as outras 4 cláusulas e o
+`check:fast` não se moveram.
+
+**Régua: `tools/eval/switchteam-check.mjs`** (`npm run eval:switchteam`, no `check:fast`).
+4 cláusulas, 2 mutações medidas: `--mutante=semreserva` (devolve `byId(charId)` cru no fonte
+lido pela ST4) acende ST4; `--mutante=defundefined` (põe o Game no estado que o código antigo
+deixava) acende ST2 com a mensagem literal do relatório. Nas duas, a ST3 fica VERDE.
+
+---
 
 ### BUG-166 · a tela dizia "SERVIDORES FORA DO AR" com os três servidores no ar · CORRIGIDO 12/09
 
@@ -4836,6 +5017,29 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatos recentes e resolução
+
+- **Triagem do painel de erros de 13/09/2026 (12 linhas colhidas pelo dono) — 2 defeitos, 10
+  não-defeitos, e os 10 foram MEDIDOS antes de serem descartados.** Os dois defeitos viraram
+  BUG-167 e BUG-168 (P0). O resto fica registrado aqui porque resultado negativo medido
+  economiza a próxima triagem:
+
+  | linha do painel | hits | veredito |
+  |---|---:|---|
+  | `The play method is not allowed by the user agent…` | 122 | **não é defeito.** Já está na `erroIgnoravel` de `src/pages/index.astro` e na `MEDIA_ABORT_RE` de `src/lib/error-provenance.mjs`: cai no balde próprio de mídia (`TETO_MIDIA`), com a linha seguindo no banco **por desenho** (BUG-73). É o autoplay bloqueado antes do 1º gesto — rotina do jogo. |
+  | `404 /img/decals/tag-money.png`, `tag-fina.png` | 115 | **não é defeito de produção.** `curl` em 13/09: `https://www.csbrasil.online/img/decals/tag-money.png` → **200**, `tag-fina.png` → **200**, `or-graf-coro.png` → **200**. Os PNGs ficam fora do git por desenho (`.gitignore:117-130`, acervo reproduzido por `tools/gen-graffiti-decals.mjs`), então quem roda worktree sem gerá-los recebe 404 **em localhost**. A própria linha do painel o denunciava: vinha acompanhada do log do toolbar do Astro (`%cAstro background:…`), que só existe em dev. |
+  | `404 /audio/manifest.json` | — | **mesma classe**: `curl` → **200** em produção. Worktree sem o pacote de áudio. |
+  | `sem_webgl: nenhum contexto foi criado` (llvmpipe/Mesa, e um NVIDIA `0x10de/0x2705`) | 2+16+6+14 | **defeito do cliente, tratado.** `BindToCurrentSequence failed` é o processo de GPU do Chrome caindo. O jogo já tem caminho próprio: `public/js/glcontext.js:118` marca `window.__semWebgl`, `src/pages/index.astro:59` suprime o banner técnico e a tela de fallback explica. O relato **continua sendo enviado de propósito** — é o sinal de "ninguém consegue jogar". Os casos llvmpipe são headless/bot; o NVIDIA é usuário real e não tem conserto do nosso lado. |
+  | `[vite] send was called before connect` | 15 | dev. Servidor de desenvolvimento. |
+  | `Astro … Error while running audit's match function: TypeError: Failed to fetch` | 115 | dev. Toolbar do Astro. |
+  | `carga falhou erro /beacon.min.js/v31edd…` | 122 | externo. Beacon da Cloudflare. |
+  | `network error` | 46 | externo/transitório, já com cota própria (`TETO_EXTERNO`, BUG-51). |
+  | `Falha ao abrir a arena: o código do jogo não chegou (verifique a conexão)` · `boot-watchdog` | 5 | **sem evidência para subir de seção.** Este é o watchdog de BOOT, caminho diferente do BUG-167, e o relatório chegou **sem migalha nenhuma** — não há o que medir. `Régua: nenhuma`. Fica aqui até aparecer um relato com migalha. |
+
+  **O conserto que saiu desta triagem, além dos dois P0:** o relatório passou a carregar
+  `host <location.host>` como primeira migalha (`src/pages/index.astro`, em `contexto()`).
+  Metade das 12 linhas era ruído de máquina de desenvolvimento e o painel não tinha como
+  separar — `version` não serve, porque o build local carrega a mesma string. Custou uma
+  triagem inteira; agora o host vem no relatório.
 
 - **BUG-145 · tiros com volume zero derrubavam o áudio com `RangeError`.**
   **Sintoma literal (admin, 08/09/2026, produção alpha.239):**

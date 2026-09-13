@@ -2785,7 +2785,15 @@ export class Game {
   _switchTeam(charId) {
     if (!this.player.alive || (this.state !== 'live' && this.state !== 'countdown')) return;
     const p = this.player;
-    if (charId) { this.playerDef = byId(charId); this.playerCharId = charId; p.def = this.playerDef; }   // personagem do novo lado
+    /* Reserva igual à da linha 712 (`byId` dá undefined fora do elenco), e da facção em que
+       ele ENTRA. Sem ela o Game seguia corrompido: BUG-168, `eval:switchteam`. */
+    if (charId) {
+      const def = byId(charId);
+      if (!def) console.warn(`[elenco] troca de lado pediu '${charId}', fora do elenco — usando a reserva da facção`);
+      this.playerDef = def || CHARACTERS.find(c => c.team === this.enemyFaction) || this.playerDef;
+      this.playerCharId = this.playerDef.id;
+      p.def = this.playerDef;
+    }
     const oldTeam = this.playerTeam;
     const newTeam = oldTeam === 'E' ? 'B' : 'E';
     const oldFaction = this.playerFaction;

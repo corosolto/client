@@ -97,7 +97,9 @@ window.__GEO_LANG__ = (function () {
   /* Contexto de partida do `window.__game` (main.js:556 já o expõe). Tudo em try:
      ler contexto NUNCA pode ser o que derruba o relatório do erro de verdade. */
   function contexto(){
-    var c = { version: versao(), route: location.pathname, breadcrumbs: migalhas.slice() };
+    /* `host` na 1ª migalha: sem ele o painel não separa ruído de worktree local de defeito
+       no ar, e `version` não serve. Triagem de 13/09 no KNOWN-BUGS.md. */
+    var c = { version: versao(), route: location.pathname, breadcrumbs: ['host ' + location.host].concat(migalhas.slice(-(MIGALHAS - 1))) };
     try{
       // 'cs_anon' é a MESMA chave do `ANON_KEY` de main.js:403 - sem isso o erro não
       // cruza com a telemetria do mesmo navegador, que é metade da utilidade.
@@ -260,13 +262,22 @@ window.__GEO_LANG__ = (function () {
     try { document.getElementById('launch-error-retry').focus(); } catch(_){}
   }
 
+  /* RÉGUA:launch-watchdog início - `tools/eval/launch-watchdog-check.mjs` EXTRAI daqui
+     até o marcador de fim e roda este mesmo código num `vm` com relógio falso. Mexeu no
+     laço? rode `npm run eval:launchwatchdog`: a régua lê o código novo, não uma cópia. */
   var lancamento = {
-    ativo: false, etapa: null, timer: null,
+    ativo: false, etapa: null, timer: null, ocultou: false,
     begin: function(etapa, timeout, concluiu){
       if (this.timer) clearTimeout(this.timer);
       this.ativo = true; this.etapa = etapa;
+      /* CONSOME o latch: de graça uma vez por episódio de ocultação, não para sempre.
+         Sem isto uma troca de aba desarmava o watchdog pelo resto da sessão (LW6). */
+      this.ocultou = document.visibilityState === 'hidden';
       var self = this;
       this.timer = setTimeout(function(){
+        /* `setTimeout` corre com a aba no fundo e o rAF para: falhar aqui mediria o rAF
+           congelado. Uma renovação por ocultação. BUG-167, cláusulas LW1/LW3/LW6. */
+        if (self.ocultou || document.visibilityState === 'hidden') { self.begin(etapa, timeout, concluiu); return; }
         if (concluiu) {
           var v = concluiu();
           /* #241: 'rede-lenta' = ainda há PROGRESSO real (ex.: GLBs chegando), só que
@@ -296,6 +307,10 @@ window.__GEO_LANG__ = (function () {
       mostraFalha({ fp: registro && registro.fp });
     }
   };
+  /* A aba pode ocultar e VOLTAR antes do tique: sem este latch o tempo gasto no fundo (em
+     que o rAF não andou) ainda contaria como teto esgotado. */
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') lancamento.ocultou = true; });
+  /* RÉGUA:launch-watchdog fim */
   window.__gameLaunch = lancamento;
 
   document.addEventListener('DOMContentLoaded', function(){
