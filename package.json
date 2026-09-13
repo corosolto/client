@@ -53,6 +53,8 @@
     "eval:mapcontrato": "node tools/eval/map-contrato-check.mjs",
     "eval:parquewheel": "node tools/eval/parque-wheel-check.mjs",
     "eval:velhooeste": "node tools/eval/velho-oeste-check.mjs",
+    "eval:ferro-estrutura": "node tools/eval/ferro-estrutura-check.mjs",
+    "eval:ferro-browser": "node tools/eval/ferro-browser-check.mjs",
     "eval:sertao": "node tools/eval/sertao-check.mjs",
     "eval:sertao-spatial": "node tools/eval/sertao-spatial-check.mjs",
     "eval:sertao-interiors": "node tools/eval/sertao-interiors-check.mjs",
