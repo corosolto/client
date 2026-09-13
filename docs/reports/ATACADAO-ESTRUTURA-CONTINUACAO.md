@@ -193,3 +193,16 @@ Não foi feita exceção em `KNOWN-RED`, nem alteração de régua para obter ve
 - O próximo passo é o dono jogar 5x5 e 8x8 na URL candidata, conferir largura
   dos corredores, exposição do MID e acesso à doca. Só após esse aceite o PR
   pode sair de draft e ser ordenado em relação ao #562.
+
+## Sincronização com a alpha.254 — 13/09/2026
+
+A branch recebeu `origin/main@3a372fdd0a0d4dc3d0a3e84f18713a4cf58f01f1`
+por merge normal. Os blocos documentais gerados vieram da base atual; os três
+scripts `eval:atacadao*` e a inclusão de `eval:atacadao` em `check:fast` foram
+preservados junto ao novo `eval:sonda`. Não houve rebase, force-push, relaxamento
+de régua ou mudança adicional de geometria.
+
+Nesta base, `ATA1..ATA10` continuam verdes. A medição direcionada mantém MAP2B
+em 1,85 m/45,0 m², MAP5 em 5,16 m e CTF2 com no mínimo duas rotas independentes.
+Assim, a sincronização resolve a divergência da branch sem mascarar as falhas
+globais herdadas já documentadas.
