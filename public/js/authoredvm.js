@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
+import { GOLDEN_VER } from './data/goldenver.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
@@ -248,7 +249,9 @@ const entryKeyFor = (weapon) => {
 const urlForKey = (key) => {
   if (key.startsWith('gold#')) {
     const weapon = key.slice(5);
-    const version = weapon === 'ak' ? 'golden-ak-4' : `golden-${weapon}-1`;
+    // Revisão pelos BYTES (data/goldenver.js, gerado). A string à mão congelava
+    // e o navegador servia o GLB velho da mesma URL — BUG-157.
+    const version = GOLDEN_VER[weapon] || 'sem-versao';
     return `/models/viewmodels/coro/${weapon}-hires.glb?v=${version}`;
   }
   if (key.startsWith('gs#') || key.startsWith('rt#')) {

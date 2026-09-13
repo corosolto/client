@@ -310,7 +310,9 @@
     "spec:check": "node tools/spec.mjs check plans/ && node tools/spec.mjs check --mutante",
     "skills:sync": "node tools/sync-skills.mjs",
     "skills:check": "node tools/sync-skills.mjs --check",
-    "eval:propsuv1": "node tools/eval/props-uv1-check.mjs"
+    "eval:propsuv1": "node tools/eval/props-uv1-check.mjs",
+    "vm:goldenver": "node tools/viewmodels/gen-goldenver.mjs",
+    "eval:vm-cache": "node tools/eval/vm-cache-golden.mjs"
   },
   "repository": {
     "type": "git",

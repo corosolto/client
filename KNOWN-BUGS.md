@@ -7053,3 +7053,43 @@ cadeia de pais inteira.
 - depois: **14/14 com `gold#<arma>` e `maos 2/2`**
 - mutação `--mutante=semfiacao` (serve o `game.js` sem a linha): 0/3, reproduz
   o print do dono
+
+### BUG-157 · o dono testou o GLB de ontem: a URL do golden não mudava com o arquivo · MEDIDO 13/09
+
+**Relato do dono, com print:** *"a p90 nem sequer atira, a uzi ainda está errada
+no recarregar e todos os erros que eu te apontei antes ainda acontecem"*.
+
+**Causa raiz.** `urlForKey` (`public/js/authoredvm.js`) montava a URL do GLB
+golden assim:
+
+```js
+const version = weapon === 'ak' ? 'golden-ak-4' : `golden-${weapon}-1`;
+```
+
+String escrita à mão, congelada em `-1` para toda arma que não fosse a AK.
+Republiquei `m4`, `uzi` e `p90` com o pente consertado na **mesma URL com o
+mesmo `?v=`** e o navegador serviu o arquivo em cache. O conserto estava no
+disco e nunca chegou à tela.
+
+**Por que nenhuma régua pegou.** Todas leem o GLB em disco, e em disco o
+conserto estava lá: `vm-peso-pente` 15/15, `vm-escala-check` 13/15,
+`vm-bancada-check` verde. A fronteira entre o disco e o navegador não tinha
+régua. É a mesma lição do `moduleCacheManifest()`, que já derivava a revisão dos
+bytes para os `.js` — o GLB tinha ficado de fora.
+
+**Conserto.** `tools/viewmodels/gen-goldenver.mjs` gera
+`public/js/data/goldenver.js` com o sha256 de cada GLB publicado, e
+`publicar-hires.mjs` chama no fim de toda publicação. `urlForKey` lê de lá.
+Bump manual deixa de existir.
+
+**Régua nova:** `tools/eval/vm-cache-golden.mjs` (`npm run eval:vm-cache`), duas
+cláusulas — VC1: `urlForKey` usa `GOLDEN_VER` e não string literal; VC2: o
+registrado bate com os bytes reais.
+
+- mutação `--mutante=congelada`: VC1 vermelha
+- mutação `--mutante=desatual`: VC2 vermelha, `m4 (registrado 5ea87fdef5, real deadbeef01)`
+
+**Custo declarado:** o dono gastou uma rodada de teste inteira num arquivo
+velho, e eu afirmei três vezes que o conserto estava publicado. Estava — só não
+chegava.
+

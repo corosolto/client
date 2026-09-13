@@ -27,6 +27,7 @@
    ========================================================================== */
 
 import fs from 'node:fs';
+import { gerar } from './gen-goldenver.mjs';
 import path from 'node:path';
 
 const RAIZ = process.cwd();
@@ -103,4 +104,7 @@ for (const a of aprovadas) {
 }
 fs.writeFileSync(VMCONFIG, cfg);
 
-console.log(`\npublicadas ${aprovadas.length} · golden ligado em ${ligadas}`);
+/* A revisão de cache de cada GLB vem dos BYTES. Sem isto o navegador serve o
+   arquivo velho da mesma URL — aconteceu em 13/09 e o dono testou o de ontem. */
+const { mapa, mudou } = gerar();
+console.log(`\npublicadas ${aprovadas.length} · golden ligado em ${ligadas} · goldenver ${mudou ? 'atualizado' : 'em dia'} (${Object.keys(mapa).length} GLB)`);
