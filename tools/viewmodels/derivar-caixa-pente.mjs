@@ -61,6 +61,8 @@ const arg = (n, d = '') => (process.argv.find((a) => a.startsWith(`--${n}=`)) ||
 const PORTA = arg('porta', '4361');
 const BASE = `http://127.0.0.1:${PORTA}`;
 const JSON_OUT = process.argv.includes('--json');
+// --encaixe=0 volta ao corte cru; o padrão leva a ilha inteira.
+const ENCAIXE_CLI = arg('encaixe', '1') !== '0';
 
 /* As duas aprovadas, copiadas do `vmconfig.js`. São o gabarito: a derivação é
    conferida contra elas antes de valer para qualquer outra arma. */
@@ -87,7 +89,8 @@ const page = await browser.newPage({ viewport: { width: 640, height: 400 } });
 await page.goto(`${BASE}/?debug=1&auto=E&map=brasilia&armaslazy=0`, { waitUntil: 'load', timeout: 180000 });
 await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
 
-await page.evaluate((g) => { window.__gabaritoPente = g; }, GABARITO);
+await page.evaluate(({ g, e }) => { window.__gabaritoPente = g; window.__encaixePente = e; },
+  { g: GABARITO, e: ENCAIXE_CLI });
 const medido = await page.evaluate(async (armas) => {
   // O módulo já está carregado; o import map dá a URL com a versão certa.
   const mapa = JSON.parse(document.querySelector('script[type="importmap"]').textContent).imports;
@@ -185,7 +188,25 @@ const medido = await page.evaluate(async (armas) => {
         return s;
       };
       const caixaLocal = { min: [x0, y0, z0], max: [x1, y1, z1] };
-      const D = dentroDe(caixaLocal);
+      const Dcru = dentroDe(caixaLocal);
+
+      /* ENCAIXE POR ILHA. A caixa recorta o ESPAÇO e o carregador é uma PEÇA:
+         onde a peça não cabe num paralelepípedo a caixa parte componente no meio
+         e sobra metade do pente, ou entra metade do cano — que é o veredito do
+         dono em 13/09 para m4, scar, uzi e m92. Aqui cada componente entra
+         INTEIRO ou não entra: fica quem tem metade ou mais dos triângulos
+         dentro. Medido nos dois modos para comparar sem fé. */
+      const encaixar = (dentro) => {
+        const fora = new Set();
+        const saidaS = new Set();
+        for (const e of comps.values()) {
+          const n = e.tris.reduce((acc, t) => acc + (dentro.has(t) ? 1 : 0), 0);
+          if (n >= 0.5 * e.tris.length) for (const t of e.tris) saidaS.add(t);
+          else for (const t of e.tris) fora.add(t);
+        }
+        return saidaS;
+      };
+      const D = window.__encaixePente ? encaixar(Dcru) : Dcru;
       // Quantos triângulos de OUTRAS peças a caixa leva junto: é o preço de usar
       // caixa em vez de componente, e precisa ser pequeno.
       const daPeca = new Set(peca.tris);
@@ -196,9 +217,13 @@ const medido = await page.evaluate(async (armas) => {
         // A spec do `vmconfig` está em metros gun-space: dividir por norm dá o
         // espaço do wrap, como o `splitParts` faz.
         const A = dentroDe({ min: gab.min.map((n) => n / norm), max: gab.max.map((n) => n / norm) });
-        const inter = [...A].filter((k) => D.has(k)).length;
-        const uni = new Set([...A, ...D]).size;
-        iou = uni ? +(inter / uni).toFixed(3) : 0;
+        const medirIoU = (S) => {
+          const inter = [...A].filter((k) => S.has(k)).length;
+          const uni = new Set([...A, ...S]).size;
+          return uni ? +(inter / uni).toFixed(3) : 0;
+        };
+        iou = medirIoU(D);
+        saida[id] = { ...saida[id], iouCru: medirIoU(Dcru), iouEncaixe: medirIoU(encaixar(Dcru)) };
         saida[id] = { ...saida[id], aprovadaRecorta: A.size };
       }
       saida[id] = {
@@ -207,7 +232,7 @@ const medido = await page.evaluate(async (armas) => {
         // De volta a METROS gun-space, que é a unidade do `vmconfig`.
         min: [x0 * norm, y0 * norm, z0 * norm].map((n) => +n.toFixed(4)),
         max: [x1 * norm, y1 * norm, z1 * norm].map((n) => +n.toFixed(4)),
-        recorta: D.size,
+        recorta: D.size, recortaCru: Dcru.size,
         fracao: +(D.size / pts.length * 100).toFixed(2),
         triangulos: pts.length,
         componentes, trisPeca, intrusos,

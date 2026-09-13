@@ -1,0 +1,153 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Ilhas da arma — qual delas é o carregador?</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#12151a; color:#e6e9ef; font:13px/1.5 system-ui,sans-serif; }
+  #lona { display:block; width:100vw; height:100vh; }
+  #legenda { position:fixed; left:14px; top:12px; z-index:2; background:#12151ad8; padding:10px 12px;
+             border:1px solid #262e3a; border-radius:8px; max-width:260px; backdrop-filter:blur(5px); }
+  #legenda h1 { margin:0 0 6px; font-size:14px; letter-spacing:.05em; color:#f0b429; }
+  .ilha { display:flex; gap:8px; align-items:center; margin:3px 0; font:12px ui-monospace,monospace; }
+  .sw { width:13px; height:13px; border-radius:3px; flex:none; }
+</style>
+<div id="legenda"><h1 id="tit">…</h1><div id="itens"></div></div>
+<canvas id="lona"></canvas>
+<script type="importmap">
+{"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/addons/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const QS = new URLSearchParams(location.search);
+const ARMA = QS.get('arma') || 'm4';
+const VISTA = QS.get('vista') || 'lado';
+const MAX = Number(QS.get('max') || 8);
+// Faixa de tamanho da candidata. O padrao 1%-20% cobre carregador destacavel;
+// abrir e o jeito de descobrir se a peca esta FUNDIDA ao corpo (caso da scar).
+const FMIN = Number(QS.get('fmin') || 0.01);
+const FMAX = Number(QS.get('fmax') || 0.20);
+
+const lona = document.getElementById('lona');
+const rnd = new THREE.WebGLRenderer({ canvas: lona, antialias: true });
+rnd.setPixelRatio(Math.min(2, devicePixelRatio));
+const cena = new THREE.Scene();
+cena.background = new THREE.Color(0x12151a);
+cena.add(new THREE.HemisphereLight(0xffffff, 0x39404d, 3.0));
+const sol = new THREE.DirectionalLight(0xffffff, 2.2); sol.position.set(2, 3, 4); cena.add(sol);
+const cam = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.001, 100);
+
+// Cores fortes e distintas: a pergunta ao crítico é "qual número", e cor
+// parecida entre ilhas vizinhas destrói a resposta.
+const CORES = [0xff3b30, 0x30d158, 0x0a84ff, 0xffd60a, 0xff2d95, 0x64d2ff, 0xff9f0a, 0xbf5af2];
+const CINZA = 0x5a6270;
+
+new GLTFLoader().load(`/models/weapons/${ARMA}.glb`, (gltf) => {
+  const raiz = gltf.scene;
+  raiz.updateMatrixWorld(true);
+  const malhas = [];
+  raiz.traverse((o) => { if (o.isMesh) malhas.push(o); });
+
+  // Ilhas por vértice COINCIDENTE (0,1 mm): costura de UV parte o vértice e a
+  // mesma peça viraria várias ilhas se unisse por índice.
+  const info = [];
+  for (const m of malhas) {
+    const g = m.geometry;
+    const pos = g.attributes.position;
+    const idx = g.index ? g.index.array : null;
+    const n = idx ? idx.length : pos.count;
+    const canon = new Int32Array(pos.count);
+    const mapa = new Map();
+    for (let v = 0; v < pos.count; v += 1) {
+      const k = `${Math.round(pos.getX(v) * 1e4)},${Math.round(pos.getY(v) * 1e4)},${Math.round(pos.getZ(v) * 1e4)}`;
+      if (!mapa.has(k)) mapa.set(k, v);
+      canon[v] = mapa.get(k);
+    }
+    const pai = new Int32Array(pos.count).map((_, i) => i);
+    const acha = (x) => { while (pai[x] !== x) { pai[x] = pai[pai[x]]; x = pai[x]; } return x; };
+    const une = (a, b) => { const ra = acha(a); const rb = acha(b); if (ra !== rb) pai[rb] = ra; };
+    const vi = (t, c) => canon[idx ? idx[t * 3 + c] : t * 3 + c];
+    for (let t = 0; t < n / 3; t += 1) { une(vi(t, 0), vi(t, 1)); une(vi(t, 1), vi(t, 2)); }
+    const grupos = new Map();
+    for (let t = 0; t < n / 3; t += 1) {
+      const r = acha(vi(t, 0));
+      if (!grupos.has(r)) grupos.set(r, []);
+      grupos.get(r).push(t);
+    }
+    for (const tris of grupos.values()) info.push({ malha: m, tris, idx, pos });
+  }
+
+  const totalTris = info.reduce((s, i) => s + i.tris.length, 0);
+  // Empate em contagem de triangulos existe (a p90 tem duas ilhas de 168), e
+  // ordem instavel faria a figura e o construtor numerarem diferente. Desempata
+  // pelo canto minimo da caixa, que e propriedade da geometria.
+  const cantoDe = (i) => {
+    const c = [Infinity, Infinity, Infinity];
+    for (const t of i.tris) for (let k = 0; k < 3; k += 1) {
+      const v = i.idx ? i.idx[t * 3 + k] : t * 3 + k;
+      c[0] = Math.min(c[0], i.pos.getX(v)); c[1] = Math.min(c[1], i.pos.getY(v)); c[2] = Math.min(c[2], i.pos.getZ(v));
+    }
+    return c;
+  };
+  for (const i of info) i.canto = cantoDe(i);
+  info.sort((a, b) => b.tris.length - a.tris.length
+    || a.canto[0] - b.canto[0] || a.canto[1] - b.canto[1] || a.canto[2] - b.canto[2]);
+  // Candidatas: de 1% a 20% da malha. Menos é parafuso, mais é corpo da arma.
+  const cand = info.filter((i) => i.tris.length / totalTris >= FMIN && i.tris.length / totalTris <= FMAX)
+    .slice(0, MAX);
+
+  // Pinta: candidata ganha cor e número, o resto fica cinza.
+  const corDe = new Map();
+  cand.forEach((c, k) => corDe.set(c, CORES[k % CORES.length]));
+  for (const m of malhas) {
+    const g = m.geometry;
+    const cores = new Float32Array(g.attributes.position.count * 3);
+    const base = new THREE.Color(CINZA);
+    for (let v = 0; v < g.attributes.position.count; v += 1) {
+      cores[v * 3] = base.r; cores[v * 3 + 1] = base.g; cores[v * 3 + 2] = base.b;
+    }
+    for (const c of cand) {
+      if (c.malha !== m) continue;
+      const cor = new THREE.Color(corDe.get(c));
+      const idx = c.idx;
+      for (const t of c.tris) for (let k = 0; k < 3; k += 1) {
+        const v = idx ? idx[t * 3 + k] : t * 3 + k;
+        cores[v * 3] = cor.r; cores[v * 3 + 1] = cor.g; cores[v * 3 + 2] = cor.b;
+      }
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(cores, 3));
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.65, metalness: 0.05 });
+    m.material = mat;
+  }
+  cena.add(raiz);
+
+  /* Sem crachá em cima da malha: os centros de ilhas vizinhas caem quase no
+     mesmo pixel e o número acaba pousando sobre a peça errada — na AK o "4"
+     ficou em cima do carregador, que é a ilha 1. Cor + legenda não tem isso. */
+  // Enquadra e escolhe a vista.
+  const caixa = new THREE.Box3().setFromObject(raiz);
+  const tam = caixa.getSize(new THREE.Vector3());
+  const centro = caixa.getCenter(new THREE.Vector3());
+  const raio = Math.max(tam.x, tam.y, tam.z) * 1.25;
+  const dir = VISTA === 'cima' ? new THREE.Vector3(0.05, 1, 0.05)
+    : VISTA === 'baixo' ? new THREE.Vector3(0.05, -1, 0.05)
+    : new THREE.Vector3(0.15, 0.25, 1);
+  cam.position.copy(centro).add(dir.normalize().multiplyScalar(raio));
+  cam.lookAt(centro);
+  cam.updateProjectionMatrix();
+
+  document.getElementById('tit').textContent = `${ARMA} · ${VISTA} · faixa ${(FMIN*100).toFixed(1)}–${(FMAX*100).toFixed(0)}%`;
+  document.getElementById('itens').innerHTML = cand.map((c, k) =>
+    `<div class="ilha"><span class="sw" style="background:#${CORES[k % CORES.length].toString(16).padStart(6, '0')}"></span>`
+    + `${k + 1} — ${c.tris.length} tri (${(c.tris.length / totalTris * 100).toFixed(1)}%)</div>`).join('')
+    + `<div style="opacity:.5;margin-top:6px">cinza = fora da faixa · ${info.length} ilhas no total</div>`;
+  window.__ilhas = { arma: ARMA, total: info.length, candidatas: cand.map((c, k) =>
+    ({ n: k + 1, tris: c.tris.length, fracao: +(c.tris.length / totalTris).toFixed(4) })) };
+  window.__pronto = true;
+}, undefined, (e) => { document.getElementById('tit').textContent = `${ARMA}: FALHOU`; console.error(e); });
+
+function dim() { rnd.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }
+addEventListener('resize', dim); dim();
+(function laco() { requestAnimationFrame(laco); rnd.render(cena, cam); })();
+</script>

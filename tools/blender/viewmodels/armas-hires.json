@@ -1,0 +1,33 @@
+{
+  "_leia": [
+    "RECEITA DE BUILD POR ARMA — o que faltava no repositorio.",
+    "Ate 13/09/2026 os parametros de cada golden existiam so na linha de comando de quem",
+    "rodou o build, e morreram no terminal: os GLB publicados NAO eram reproduzives.",
+    "",
+    "`rot` vem do CFG de public/js/weapons.js e nao se escreve aqui (numero derivavel",
+    "nao se copia). `pente` diz COMO o carregador e separado, e saiu de figura olhada:",
+    "  ilha:<n>   o carregador e uma ilha propria da malha; corta a ilha exata.",
+    "             O <n> e o numero da figura /vmilhas.html?arma=<id>, faixa 1%-20%,",
+    "             ordenada por poligonos desc e desempatada pelo canto minimo.",
+    "  caixa      o carregador esta FUNDIDO ao corpo da arma e nao ha fronteira de",
+    "             malha para respeitar; so resta recortar por caixa, e sobra erro.",
+    "  interno    a arma carrega por pente-pente/cinto: nada se solta na recarga.",
+    "  ausente    o MODELO nao tem carregador nenhum. Nenhum corte resolve — precisa",
+    "             de asset novo. Nao invente recorte aqui: e o que produzia o",
+    "             'recarregar tira o cano' que o dono reportou."
+  ],
+  "armas": {
+    "ak":    { "pente": "ilha:1", "tri": 379, "nota": "aprovada pelo dono em 31/08; e a referencia de tudo" },
+    "m4":    { "pente": "ilha:3", "tri": 226, "nota": "STANAG curvo, ilha propria e inconfundivel na figura" },
+    "uzi":   { "pente": "ilha:8", "tri": 164, "nota": "a peca que sai por baixo do punho; o punho e outra ilha" },
+    "p90":   { "pente": "ilha:7", "tri": 116, "nota": "pente HORIZONTAL em cima do receptor — por isso a ancora herdada da AK, que procura embaixo, nunca o achou" },
+    "scar":  { "pente": "caixa", "nota": "ilha unica com 77% da malha: corpo, cano e pente sao uma peca so" },
+    "m92":   { "pente": "caixa", "nota": "pente fundido ao corpo; os vermelhos da figura sao o guarda-mao" },
+    "mp5":   { "pente": "ausente", "nota": "o modelo NAO tem carregador. O dono: 'sem pente na frente, precisava re-rigar a arma'" },
+    "md97":  { "pente": "ausente", "nota": "o modelo NAO tem carregador sob o receptor. O dono: 'Md97 sem pente'" },
+    "mosin": { "pente": "interno", "nota": "ferrolho, carrega por pente-pente" },
+    "sks":   { "pente": "interno", "nota": "pente interno de 10, carrega por pente-pente" },
+    "lmg":   { "pente": "interno", "nota": "alimenta por cinto; cobrar pente da regua seria cobrar mentira" }
+  },
+  "_pendentes": ["akm", "famas", "svd", "pistol"]
+}

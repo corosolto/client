@@ -46,6 +46,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sempente", action="store_true",
                         help="a arma tem carregador INTERNO (mosin, sks, md97): nada "
                              "se solta na recarga, e forcar um recorte arranca o cano")
+    parser.add_argument("--ilhapente", default="0",
+                        help="numero da ilha que E o carregador, lido na figura de "
+                             "vmilhas.html (1 = maior da faixa 1%-20%). 0 usa a caixa")
     parser.add_argument("--encaixe", default="0.5",
                         help="fracao minima da ilha dentro da caixa para leva-la INTEIRA"
                              " (0 desliga o encaixe e volta ao corte cru por caixa)")
@@ -76,16 +79,19 @@ CAIXA_PENTE = None
 # construtor era obrigado a separar ALGUMA coisa e separava o guarda-mão.
 SEM_PENTE = False
 ENCAIXE_ILHA = 0.5
+ILHA_PENTE = 0
+TETO_ILHA = 0.20
 
 
 def configure_paths(args: argparse.Namespace) -> None:
     global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN, ROT_ARMA, CAIXA_PENTE, SEM_PENTE
-    global ENCAIXE_ILHA
+    global ENCAIXE_ILHA, ILHA_PENTE
     ESCALA_LEN = float(args.comprimento) / AK_REF_CM
     ROT_ARMA = [float(v) for v in args.rot.split(",")]
     CAIXA_PENTE = [float(v) for v in args.caixapente.split(",")] if args.caixapente else None
     SEM_PENTE = bool(args.sempente)
     ENCAIXE_ILHA = float(args.encaixe)
+    ILHA_PENTE = int(args.ilhapente)
     DONOR = args.doador.resolve()
     PROJECT_AK = args.arma.resolve()
     OUT = args.saida.resolve()
@@ -367,6 +373,30 @@ def ilhas_da_malha(malha):
     return grupos
 
 
+def ilha_numerada(weapon, numero):
+    """A n-esima ilha da faixa 1%-20%, na MESMA ordem da figura vmilhas.html.
+
+    Ordena por contagem de poligonos decrescente e desempata pelo canto minimo
+    da caixa: empate existe (a p90 tem duas ilhas de 168) e ordem instavel faria
+    a figura e o construtor numerarem diferente.
+    """
+    malha = weapon.data
+    total = len(malha.polygons)
+    grupos = ilhas_da_malha(malha)
+    faixa = [g for g in grupos if 0.01 <= len(g) / total <= 0.20]
+
+    def canto(grupo):
+        xs = [malha.vertices[v].co for i in grupo for v in malha.polygons[i].vertices]
+        return (min(p.x for p in xs), min(p.y for p in xs), min(p.z for p in xs))
+
+    faixa.sort(key=lambda g: (-len(g),) + canto(g))
+    if not 1 <= numero <= len(faixa):
+        raise RuntimeError(
+            f"ilha {numero} nao existe: a faixa tem {len(faixa)} de {len(grupos)} ilhas"
+        )
+    return set(faixa[numero - 1])
+
+
 def encaixar_nas_ilhas(weapon, limiar):
     """Faz a selecao respeitar a fronteira da peca: leva a ilha INTEIRA ou nada.
 
@@ -378,7 +408,13 @@ def encaixar_nas_ilhas(weapon, limiar):
     """
     malha = weapon.data
     trocadas = 0
+    teto = TETO_ILHA * len(malha.polygons)
     for grupo in ilhas_da_malha(malha):
+        # Ilha grande e o CORPO da arma. Na scar ele tem 77% da malha, com o
+        # carregador fundido dentro: encaixar levaria a arma toda ou jogaria o
+        # pente fora. Nessas o corte cru por caixa continua valendo.
+        if len(grupo) > teto:
+            continue
         dentro = sum(1 for indice in grupo if malha.polygons[indice].select)
         inteira = dentro >= limiar * len(grupo)
         for indice in grupo:
@@ -492,6 +528,14 @@ def split_magazine(weapon: bpy.types.Object, ancora: Vector) -> bpy.types.Object
             trocadas = encaixar_nas_ilhas(weapon, ENCAIXE_ILHA)
             print(f"CORO_ENCAIXE {trocadas} poligonos mudaram de lado pela fronteira da ilha")
         selected = sum(1 for p in weapon.data.polygons if p.select)
+    elif ILHA_PENTE:
+        # A ilha que o critico apontou na figura. Cortar PECA NOMEADA acaba com o
+        # "fica parte do pente" e o "sai parte do cano": a fronteira e a da malha.
+        escolhida = ilha_numerada(weapon, ILHA_PENTE)
+        for polygon in weapon.data.polygons:
+            polygon.select = polygon.index in escolhida
+            selected += int(polygon.select)
+        print(f"CORO_ILHA {ILHA_PENTE} com {selected} poligonos")
     else:
         do_pente = componente_do_pente(weapon, ancora)
         for polygon in weapon.data.polygons:
