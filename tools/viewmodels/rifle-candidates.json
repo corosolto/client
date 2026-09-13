@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "base": "origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb",
+  "base": "origin/main@5c2c5c93e32d0dcc96abbdc93e5ae9c767054fed",
   "candidates": {
     "m4": {
       "family": "ar",
@@ -121,6 +121,21 @@
       "sourceBranch": "codex/viewmodels-catalog-final",
       "sourceCommit": "d11df56dd",
       "rebuild": "tools/viewmodels/prep/rifles-akm-final.py + optimize_paid_family.mjs"
+    },
+    "g3": {
+      "family": "g3",
+      "file": "viewmodels/g3/g3-baked-runtime.glb",
+      "sourceSha256": "b19eb799350ce0a264b6cce90552bb9849ec34fb95260177357c3f53c7b7bb9e",
+      "sourceBytes": 393584,
+      "productSha256": "1d416e5bdf9586088e22d175f877bf01ae48982e5b1adb539426165f5f97df82",
+      "productBytes": 2704620,
+      "sha256": "1d416e5bdf9586088e22d175f877bf01ae48982e5b1adb539426165f5f97df82",
+      "bytes": 2704620,
+      "mechanism": "straight-detachable-mag/bilateral-real-magazine-buttons/source-no-separable-charging-handle",
+      "ready": false,
+      "sourceBranch": "codex/viewmodels-catalog-final",
+      "sourceCommit": "0f7f2cf1e",
+      "rebuild": "tools/viewmodels/prep/rifles-g3-final.py + optimize_paid_family.mjs"
     }
   }
 }

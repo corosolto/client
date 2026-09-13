@@ -267,7 +267,8 @@ histórica; não autorizam transplantar a pilha.
 - **tecnicamente fechada, aguardando revisão humana:** AKM com corpo/pente próprios e trava real;
   a fonte pública não oferece charging handle separável e a lacuna permanece explícita;
 - **reprovadas:** LMG, shotgun e recargas M4 anteriores;
-- **sem saída final localizada:** Deagle, revólver .38, MP5, Uzi, P90, G3, M400 e AWP.
+- **sem saída final localizada naquele inventário:** Deagle, revólver .38, MP5, Uzi, P90,
+  G3, M400 e AWP; a G3 foi fechada depois sobre alpha.252, conforme o marco de 13/09 abaixo.
 
 O rebuild DMR encontrou um falso verde na branch fonte: os nós rígidos eram anexados contra a bind
 pose e os materiais copiavam índices sem transportar imagens/texturas. Os gates antigos passavam,
@@ -284,7 +285,7 @@ quatro commits preservam os binários fora do Git e não alteram o estado de apr
 ## Índice exato para revisão da manhã
 
 Estado tecnicamente mais forte para revisão humana: AK, faca, fallback, M4, MD97, SCAR, FAMAS,
-M92, AKM, carabina, Tavor, Mosin, SVD, SKS, Rem700 e G3SG1. A preparação do servidor mantém a ativação global
+M92, AKM, G3, carabina, Tavor, Mosin, SVD, SKS, Rem700 e G3SG1. A preparação do servidor mantém a ativação global
 desligada e usa um snapshot imutável; o produto privado divergente da Mosin continua intacto e
 rejeitado pelo hash:
 
@@ -310,7 +311,8 @@ silhueta/pente/trava/recargas/inspect/ADS e ausência declarada do charging hand
 alavanca/portinhola/recargas/inspect/ADS; (10) Tavor carregador traseiro/paddle/recargas/inspect/ADS;
 (11) Mosin shoot/ferrolho/reload/inspect/ADS; (12) SVD 30 trocas ou recargas sem sumir;
 (13) SKS reload/inspect/ADS; (14) Rem700 shoot/ferrolho/reload/ADS;
-(15) G3SG1 recarga tática/ADS; (16) repetir
+(15) G3SG1 recarga tática/ADS; (16) G3 pente reto/comandos bilaterais/duas recargas/ADS;
+(17) repetir
 em janela 1440×960 e 1440×810. Aprovação deve registrar arma,
 proporção e ação; até isso ocorrer, todas permanecem `ready:false` e a flag global continua off.
 
@@ -431,3 +433,25 @@ charging handle. A candidata segue `ready:false`, AK/global off.
 Recibo: [`VIEWMODEL-RIFLES-AKM-ALPHA246-2026-09-10.md`](VIEWMODEL-RIFLES-AKM-ALPHA246-2026-09-10.md).
 Checkpoints: `d11df56dd`, `726ab95eb`. O preview imutável corrente é
 `preview-snapshots/726ab95eb-54c72408`; próxima arma incompleta: G3.
+
+## Integração alpha.252 e marco rifles — G3 reautorada
+
+A lane integrou `origin/main@5c2c5c93e` (`alpha.252`) por merge recuperável em
+`38291dc6f`, sem rebase ou force-push. Os conflitos eram somente artefatos gerados de docs e
+arquitetura, regenerados a partir da nova base. O gate UIR15 foi atualizado para medir o fallback
+robusto de troca de time que já veio de `main`; `check:deploy` passou 39/39 após o checkpoint
+`6b80664b6`.
+
+A G3 agora usa sua malha pública própria, carregador reto completo e os dois botões reais de
+retenção do pente. A receita entrega mãos, câmera, muzzle/sight, `idle`, `equip_rifle`, `shoot`,
+`reload_tactical`, `reload_empty`, `inspect` e ADS. A fonte não oferece charging handle
+separável; a limitação continua explícita e nenhum componente da arma doadora aparece como G3.
+
+Nove mutantes de asset e seis de lifecycle morderam. O lifecycle passou 30 ciclos/540 amostras.
+Vinte capturas reais em 3:2/16:9, mais duas folhas de contato, não tiveram erro fatal. A primeira
+captura 16:9 encontrou que o harness alternava a mira e às vezes registrava hip-fire como ADS; o
+capturador passou a definir o estado explicitamente, e as duas recapturas mostram a alça
+centralizada. A candidata segue `ready:false`, família G3/global off até revisão humana.
+
+Recibo: [`VIEWMODEL-RIFLES-G3-ALPHA252-2026-09-13.md`](VIEWMODEL-RIFLES-G3-ALPHA252-2026-09-13.md).
+Gate vermelho: `a41eb9718`; receita recuperável: `0f7f2cf1e`. Próxima arma incompleta: M400.
