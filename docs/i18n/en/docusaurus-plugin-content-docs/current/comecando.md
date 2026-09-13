@@ -50,8 +50,8 @@ this page was aging at the very first commit — see
 | Versioned animation clips | 777 | `git ls-files public/models/anims \| wc -l` |
 | Playable characters | 53, in 6 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 17 | `MAPS` object in `maps.js` |
-| Visual harnesses in HTML | 21 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 489 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Visual harnesses in HTML | 22 | `git ls-files 'public/*.html' \| wc -l` |
+| Harness scripts | 493 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Pipeline scripts | 95 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.0.0-alpha.248` | `public/js/version.js` and `package.json` (match) |
