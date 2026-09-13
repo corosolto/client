@@ -109,6 +109,7 @@
     "eval:vm-rifle-akm-lifecycle": "node tools/eval/viewmodel-rifle-akm-lifecycle-check.mjs",
     "eval:vm-rifle-g3-lifecycle": "node tools/eval/viewmodel-rifle-g3-lifecycle-check.mjs",
     "eval:vm-rifle-m400-lifecycle": "node tools/eval/viewmodel-rifle-m400-lifecycle-check.mjs",
+    "eval:vm-rifle-awp-lifecycle": "node tools/eval/viewmodel-rifle-awp-lifecycle-check.mjs",
     "preview:vm-precision": "node tools/viewmodels/prepare_precision_preview.mjs && astro dev --host 127.0.0.1 --port 4401",
     "cleanup:vm-precision": "node tools/viewmodels/prepare_precision_preview.mjs --cleanup",
     "capture:vm-precision": "node tools/eval/viewmodel-precision-capture.mjs",
