@@ -1164,11 +1164,17 @@ async function startGame(team, charId, enemyFaction, online = false) {
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
      de verdade continua sendo pego. */
+  /* RÉGUA:launch-watchdog início — extraído por `tools/eval/launch-watchdog-check.mjs` */
   let _wp = _lstat.loaded;
   window.__gameLaunch?.begin('partida', 60000, function () {
+    const g = window.__game;
+    /* Conclusão é QUADRO (`time` só anda no update() do rAF), não o sub-estado `live`, que
+       falta em countdown/roundEnd. Antes da rede lenta. BUG-167, `eval:launchwatchdog`. */
+    if (g && g.time > 0) return true;
     if (_lstat.loaded > _wp) { _wp = _lstat.loaded; return 'rede-lenta'; }
-    return !!(window.__game && window.__game.state === 'live');
+    return false;
   });
+  /* RÉGUA:launch-watchdog fim */
   try {
     await _startGame(team, charId, enemyFaction, online);
     window.__gameLaunch?.ready('partida');
