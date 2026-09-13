@@ -500,6 +500,33 @@ def componente_do_pente(weapon: bpy.types.Object, ancora: Vector) -> set[int]:
     return set(melhor[1])
 
 
+def tapar_buraco(objeto) -> int:
+    """Fecha a borda aberta que a separacao deixa nos dois lados.
+
+    O carregador sai como CASCA: medido em 13/09 nos GLB publicados, o pente da
+    AK tem 194 arestas de borda e o da m4 176. Na recarga a peca se afasta e a
+    camera passa a ver o interior sem face — o critico cego descreveu como "um
+    leque de laminas chapadas e afiadas", em cinco armas. O buraco no CORPO e o
+    mesmo problema do outro lado: com o pente fora, ve-se o miolo da arma.
+    """
+    anterior = bpy.context.view_layer.objects.active
+    bpy.context.view_layer.objects.active = objeto
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="DESELECT")
+    bpy.ops.mesh.select_mode(type="EDGE")
+    bpy.ops.mesh.select_non_manifold(extend=False, use_wire=False, use_boundary=True,
+                                     use_multi_face=False, use_non_contiguous=False,
+                                     use_verts=False)
+    try:
+        bpy.ops.mesh.edge_face_add()
+    except RuntimeError:
+        pass
+    bpy.ops.mesh.select_all(action="DESELECT")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.context.view_layer.objects.active = anterior
+    return len(objeto.data.polygons)
+
+
 def split_magazine(weapon: bpy.types.Object, ancora: Vector) -> bpy.types.Object:
     bpy.ops.object.select_all(action="DESELECT")
     weapon.select_set(True)
@@ -555,6 +582,9 @@ def split_magazine(weapon: bpy.types.Object, ancora: Vector) -> bpy.types.Object
     bpy.ops.object.mode_set(mode="OBJECT")
     magazine = next(obj for obj in bpy.data.objects if obj not in before and obj.type == "MESH")
     magazine.name = "coro_solto_project_ak_magazine"
+    tapar_buraco(magazine)
+    # O corpo NAO e tapado aqui: o corte da coronha procura a borda aberta para
+    # achar a casca, e fechar antes faz ele reprovar com "stock mask too small".
     return magazine
 
 

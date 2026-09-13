@@ -14,20 +14,80 @@
     "  interno    a arma carrega por pente-pente/cinto: nada se solta na recarga.",
     "  ausente    o MODELO nao tem carregador nenhum. Nenhum corte resolve — precisa",
     "             de asset novo. Nao invente recorte aqui: e o que produzia o",
-    "             'recarregar tira o cano' que o dono reportou."
+    "             'recarregar tira o cano' que o dono reportou.",
+    "",
+    "`cm` e o --comprimento que o build usa. Ele NAO e len*100 nem len*vm*100: foi",
+    "recuperado por meio-passo contra a regua de escala, porque o valor original",
+    "tinha se perdido. Correcao por razao cheia oscila; meio-passo converge."
   ],
   "armas": {
-    "ak":    { "pente": "ilha:1", "tri": 379, "nota": "aprovada pelo dono em 31/08; e a referencia de tudo" },
-    "m4":    { "pente": "ilha:3", "tri": 226, "nota": "STANAG curvo, ilha propria e inconfundivel na figura" },
-    "uzi":   { "pente": "ilha:8", "tri": 164, "nota": "a peca que sai por baixo do punho; o punho e outra ilha" },
-    "p90":   { "pente": "ilha:7", "tri": 116, "nota": "pente HORIZONTAL em cima do receptor — por isso a ancora herdada da AK, que procura embaixo, nunca o achou" },
-    "scar":  { "pente": "caixa", "nota": "ilha unica com 77% da malha: corpo, cano e pente sao uma peca so" },
-    "m92":   { "pente": "caixa", "nota": "pente fundido ao corpo; os vermelhos da figura sao o guarda-mao" },
-    "mp5":   { "pente": "ausente", "nota": "o modelo NAO tem carregador. O dono: 'sem pente na frente, precisava re-rigar a arma'" },
-    "md97":  { "pente": "ausente", "nota": "o modelo NAO tem carregador sob o receptor. O dono: 'Md97 sem pente'" },
-    "mosin": { "pente": "interno", "nota": "ferrolho, carrega por pente-pente" },
-    "sks":   { "pente": "interno", "nota": "pente interno de 10, carrega por pente-pente" },
-    "lmg":   { "pente": "interno", "nota": "alimenta por cinto; cobrar pente da regua seria cobrar mentira" }
+    "ak": {
+      "pente": "ilha:1",
+      "tri": 379,
+      "nota": "aprovada pelo dono em 31/08; e a referencia de tudo"
+    },
+    "m4": {
+      "pente": "ilha:3",
+      "tri": 226,
+      "nota": "STANAG curvo, ilha propria e inconfundivel na figura",
+      "cm": 84,
+      "borda": "176 arestas abertas antes, 4 depois de tapar o pente"
+    },
+    "uzi": {
+      "pente": "ilha:8",
+      "tri": 164,
+      "nota": "a peca que sai por baixo do punho; o punho e outra ilha",
+      "cm": 31.5,
+      "cm_historico": "47 deu 1,60x · 38 deu 1,30x · 34 deu 1,16x · 31,5 da 1,07x"
+    },
+    "p90": {
+      "pente": "ilha:7",
+      "tri": 116,
+      "nota": "pente HORIZONTAL em cima do receptor — por isso a ancora herdada da AK, que procura embaixo, nunca o achou",
+      "cm": 52
+    },
+    "scar": {
+      "pente": "caixa",
+      "nota": "ilha unica com 77% da malha: corpo, cano e pente sao uma peca so"
+    },
+    "m92": {
+      "pente": "caixa",
+      "nota": "pente fundido ao corpo; os vermelhos da figura sao o guarda-mao"
+    },
+    "mp5": {
+      "pente": "ausente",
+      "nota": "o modelo NAO tem carregador. O dono: 'sem pente na frente, precisava re-rigar a arma'"
+    },
+    "md97": {
+      "pente": "ausente",
+      "nota": "o modelo NAO tem carregador sob o receptor. O dono: 'Md97 sem pente'"
+    },
+    "mosin": {
+      "pente": "interno",
+      "nota": "ferrolho, carrega por pente-pente"
+    },
+    "sks": {
+      "pente": "interno",
+      "nota": "pente interno de 10, carrega por pente-pente"
+    },
+    "lmg": {
+      "pente": "interno",
+      "nota": "alimenta por cinto; cobrar pente da regua seria cobrar mentira"
+    }
   },
-  "_pendentes": ["akm", "famas", "svd", "pistol"]
+  "_pendentes": [
+    "akm",
+    "famas",
+    "svd",
+    "pistol"
+  ],
+  "_refutado": [
+    "PITCH DA FAMILIA nao e a causa do 'aponta pro alto'. A tabela FAMILY_FRAME tem",
+    "deagle em -15,8 graus e shotgun em -8,9 contra +0,6 da AK, e eu ia corrigir o",
+    "numero. O critico cego mediu a figura e disse o contrario: 'nenhuma arma sobe",
+    "mais que a AK; o que varia e a ALTURA DE MONTAGEM, nao o angulo'. A deagle e",
+    "outra coisa — esta ROLADA de topo, aparece o ferrolho de cima e some o perfil.",
+    "A shotgun sobe a 75 graus so DURANTE a recarga, atravessando a mira.",
+    "Bom que a hipotese foi ao critico antes de virar commit."
+  ]
 }
