@@ -47,6 +47,7 @@ ordem.
 | [`QUALITY.md`](QUALITY.md) | Critérios de qualidade do produto. |
 | [`TRIBOS-URBANAS.md`](TRIBOS-URBANAS.md) | O documento de design da facção Tribos Urbanas. |
 | [`ASSETS-PROMPTS.md`](ASSETS-PROMPTS.md) | Prompts usados pra gerar os assets 3D (Mint/Tripo). Pipeline de asset. |
+| [`claude-lanes/README.md`](claude-lanes/README.md) | Prompts auto-contidos para retomar cada lane do sprint com Claude Opus 5 sem disputar worktrees. |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | O que mudou, versão por versão. Também renderizado em `/changelog`. |
 | [`../SECURITY.md`](../SECURITY.md) | Política de reporte de vulnerabilidade. |
 | [`reports/2026-08-11-open-issues-audit.md`](reports/2026-08-11-open-issues-audit.md) | Triagem das 71 issues abertas, ranking e grupos de duplicatas. |
