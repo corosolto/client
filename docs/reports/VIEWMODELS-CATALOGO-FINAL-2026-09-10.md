@@ -475,3 +475,23 @@ quadro antigo que o SwiftShader podia preservar na máscara. A evidência confir
 Recibo: [`VIEWMODEL-RIFLES-M400-ALPHA252-2026-09-13.md`](VIEWMODEL-RIFLES-M400-ALPHA252-2026-09-13.md).
 Gate vermelho: `c16ada823`; receita recuperável: `411f9fbbc`; integração: `7621b8297`.
 O preview imutável corrente é `preview-snapshots/7621b8297-c86d5f2c`. Próxima arma incompleta: AWP.
+
+## Marco de precisão alpha.252 — AWP reautorada
+
+A AWP agora usa sua malha pública própria, carregador destacável completo e alavanca real do
+ferrolho. A receita entrega mãos, câmera, muzzle/sight, `idle`, `equip_rifle`, `shoot`,
+`reload_tactical`, `reload_empty`, `inspect`, ADS físico e cobertura real da luneta. O tiro e a
+recarga vazia ciclam o ferrolho; a tática não. A trava do pente é fundida ao receiver na fonte,
+e essa lacuna continua explícita sem inventar um componente da arma doadora.
+
+Dez mutantes de asset e seis de lifecycle morderam. O lifecycle passou 30 ciclos/540 amostras.
+Vinte e duas capturas reais em 3:2/16:9, mais duas folhas de contato, não tiveram erro fatal. O
+primeiro lote encontrou framebuffer antigo no ADS 16:9 sob SwiftShader; após exigir três frames
+completos, a recaptura confirma a ocular centralizada nos dois aspectos e
+`vmRootVisible:false` dentro do scope. A candidata segue `ready:false`, família sniper/global
+off até revisão humana.
+
+Recibo: [`VIEWMODEL-RIFLES-AWP-ALPHA252-2026-09-14.md`](VIEWMODEL-RIFLES-AWP-ALPHA252-2026-09-14.md).
+Gate vermelho: `1b8d8cc9a`; receita recuperável: `57bbb8a9b`; integração: `66e3a5842`.
+O preview imutável corrente é `preview-snapshots/66e3a5842-fb1d0961`. Próxima arma incompleta:
+PT-38.
