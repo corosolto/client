@@ -5,6 +5,7 @@
    diferente de "caiu agora", que a lista de servidores mostra. */
 export const NOS = [
   { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
+  { id: 'br2', nome: 'Brasil · São Paulo 2', url: 'wss://br2.corosolto.com.br/ws' },
   { id: 'us', nome: 'EUA · Carolina do Sul', url: 'wss://us.corosolto.com.br/ws' },
   { id: 'eu', nome: 'Europa · Madri', url: 'wss://eu.corosolto.com.br/ws' },
 ];
