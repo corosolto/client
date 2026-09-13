@@ -152,7 +152,28 @@ Observação do construtor, sem substituir aprovação humana: os corredores e c
 
 ## Pendências e próximo passo
 
-1. `npm run check:deploy`: 39/39 verde após os checkpoints.
+## Revalidação sobre a alpha.252 — 13/09/2026
+
+A branch recebeu `origin/main@5c2c5c93e32d0dcc96abbdc93e5ae9c767054fed`
+por merge normal, sem rebase nem force-push. Os conflitos eram somente blocos
+gerados/documentação global, `package.json` e o registro Mint; a resolução tomou
+a documentação da `main`, preservou os dois scripts `eval:obras*` e uniu as duas
+entradas locais de assets às 15 entradas novas da Mansão.
+
+Na base atual, antes da candidata, `map-check` mede MAP2B de 3,45 m/68,3 m² e
+CTF2 com quatro rotas em todos os pares. Depois da candidata, MAP2B mede
+2,50 m/56,8 m² e CTF2 mede no mínimo três rotas; portanto os dois contratos
+continuam verdes na mesma alpha.252. A régua `OBRAS1..OBRAS9`, seus nove
+mutantes e `eval:mapcontrato` também passaram após o merge. O build Astro passou
+com Node 23.6.0.
+
+`check:deploy` ficou 38/39 após regenerar os blocos documentais: o único vermelho
+é UIR15 em `eval:redesign`. A execução idêntica em uma worktree destacada da
+própria `origin/main@5c2c5c93e` reprova a mesma cláusula, e a lane não altera os
+arquivos de resultado/personagem inspecionados por ela. Trata-se de dívida
+herdada da base, não de exceção nem de limiar afrouxado.
+
+1. Na alpha.252, `npm run check:deploy`: 38/39; somente UIR15 herdado, reproduzido na `origin/main`.
 2. `npm run check:fast`: 134/135 verde; somente `audio:check` falhou porque `npm run setup` materializou 442 arquivos enquanto o manifest da alpha.246 declara 66. A lane não executou `npm run audio`, pois isso alteraria o domínio compartilhado de áudio. O gate causal `eval:obras` passou dentro dessa suíte.
 3. Draft PR #579 aberto contra `main`; preservar esta branch sem merge/deploy.
 4. O dono deve jogar a URL local em 5x5 e 8x8, testar as três rotas dos dois lados, subir nas duas torres e verificar CTF.
