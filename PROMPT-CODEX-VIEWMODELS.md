@@ -170,6 +170,71 @@ Os modelos **não têm carregador nenhum**. Confirmado na figura de ilhas e pelo
 crítico independentemente. Não invente recorte — foi isso que produziu o
 "recarregar tira o cano". Precisa de asset novo, decisão do dono.
 
+## O que existe para VER — figuras, bancadas e doadores
+
+Você não precisa gerar nada para começar: as figuras já estão renderizadas.
+
+### Figuras prontas em `artifacts/viewmodels/critica/` (fora do git, em disco)
+
+| pasta | o que tem | para que serve |
+|---|---|---|
+| `ilhas/` | 30 PNG — 10 armas × 3 vistas (lado, baixo, cima) + `ilhas.json` | **a mais importante.** Cada ilha candidata da malha pintada de uma cor, com legenda numerada. É aqui que se decide qual peça é o carregador. O número da legenda entra direto em `--ilhapente=<n>` |
+| `frames-golden/` | 63 PNG — 9 armas × 7 estados + `frames.json` | idle, ads, fire e 4 quadros de recarga, capturados no JOGO REAL em 3:2. A recarga é sequência: `f015` começa o gesto, `f085` termina |
+| `frames-familia/` | 42 PNG — 6 armas × 7 estados | idem, para as armas do pacote (awp, shotgun, deagle, revolver38, carbine) |
+| `bancada/` | as 15 lado a lado, e o antes/depois da m4 com o pente tingido | o vermelho é exatamente o que a recarga arranca |
+
+**Atenção nos `frames-golden`:** os 7 quadros da `ak` saíram com um personagem de
+luva AZUL e os outros 56 com luva cinza e manga vermelha. O crítico avisou que
+isso pode invalidar a comparação de mão. Ao recapturar, **trave o personagem**.
+
+### Bancadas vivas (melhor que imagem parada)
+
+Servidor na 4361, abra no navegador:
+
+- `localhost:4361/vmtest.html` — as 15 golden lado a lado, **animando**. Seletor
+  de clipe (Reload é o padrão), o pente pintado de vermelho, mostrar/esconder
+  mãos, e um selo verde `no jogo` / vermelho `FORA do jogo` lido do vmconfig.
+- `localhost:4361/vmilhas.html?arma=<id>&vista=lado` — as ilhas coloridas.
+  Aceita `&fmin=` e `&fmax=` para abrir a faixa de tamanho: foi assim que se
+  descobriu que o pente da `scar` está fundido numa ilha de 77% da malha.
+- `localhost:4361/jogo-teste.html` — o jogo, com `[` e `]` ciclando as 26 armas.
+
+Para gerar figura nova:
+```sh
+node tools/eval/vm-ilhas-figura.mjs --armas=<lista> --vistas=lado,baixo,cima --saida=<dir>
+node tools/viewmodels/prep/vm-arsenal-frames.mjs --porta=4361 --aspecto=32 \
+  --modo=autorado --mapa=brasilia --armas=<lista> --out=<dir>
+node tools/eval/vm-bancada-check.mjs --clipe=Reload --maos=1 --figura=<png>
+```
+
+### Os doadores de animação que o dono baixou
+
+42 GLB de arma em primeira pessoa em `~/Downloads`, inventariados em
+`docs/reports/VM-DOADORES-ANIMACAO.md` (gerado por
+`node tools/viewmodels/inventario-doadores.mjs`). Os mais ricos:
+
+| ossos | clipes | arquivo | observação |
+|---:|---:|---|---|
+| 1072 | 13 | `uzi__first_person_animations_2026_remake.glb` | o acervo de animação mais rico do lote |
+| 1068 | 9 | `desert_eagle__first_person_animations.glb` | a deagle é uma das reprovadas |
+| 89 | 7 | `animated_shotgun.glb` | a shotgun é **a pior de todas** segundo o crítico |
+| 50 | 7 | `ak74u__free_animation..glb` | |
+| 46 | 7 | `pistol_animated.glb` | |
+| 418 | 5 | `m4a1-s_cs2__first_person_animations.glb` | animação CS2 |
+| **77** | 4 | `ak-12animated.glb` | **é o doador em uso**, o rig da AK aprovada |
+
+**Como usar, e o que já foi refutado:** retarget por NOME de osso está morto —
+a sobreposição de nomes com o rig da AK é de 0 a 2%. O que resta é casamento
+ESTRUTURAL, e o primeiro filtro é a contagem: doadores na faixa de 58 a 98 ossos
+têm topologia comparável aos 77 da AK (`animated_shotgun` 89, `scar-h` 85,
+`makarov` 83, `m4a1_low_poly` 80, `fps_animations_sniper_rifle` 79). Os de
+1000+ ossos (uzi, deagle) são outra espécie: trazem 9 a 13 clipes, mas o
+casamento com o rig da AK é trabalho próprio.
+
+Nenhum desses doadores foi usado até hoje além do `ak-12animated.glb`. O dono
+cobrou isso explicitamente: *"todos os glbs que eu trouxe de animação têm vários
+muito bons, também não estamos usando de nada de referência"*.
+
 ## Armadilhas que já custaram caro
 
 1. **Régua verde com o jogo morto.** `check:fast` roda o motor em node e nunca
