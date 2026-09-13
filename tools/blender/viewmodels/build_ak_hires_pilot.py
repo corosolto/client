@@ -46,6 +46,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sempente", action="store_true",
                         help="a arma tem carregador INTERNO (mosin, sks, md97): nada "
                              "se solta na recarga, e forcar um recorte arranca o cano")
+    parser.add_argument("--encaixe", default="0.5",
+                        help="fracao minima da ilha dentro da caixa para leva-la INTEIRA"
+                             " (0 desliga o encaixe e volta ao corte cru por caixa)")
     parser.add_argument("--caixapente", type=str, default="",
                         help="xmin,xmax,zmax nas coordenadas nativas da arma. A AK "
                              "aprovada usa a sua; sem isto o pente sai por componente")
@@ -72,14 +75,17 @@ CAIXA_PENTE = None
 # soltam caixa nenhuma. O dono relatou nelas "recarregar tira o cano" — porque o
 # construtor era obrigado a separar ALGUMA coisa e separava o guarda-mão.
 SEM_PENTE = False
+ENCAIXE_ILHA = 0.5
 
 
 def configure_paths(args: argparse.Namespace) -> None:
     global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN, ROT_ARMA, CAIXA_PENTE, SEM_PENTE
+    global ENCAIXE_ILHA
     ESCALA_LEN = float(args.comprimento) / AK_REF_CM
     ROT_ARMA = [float(v) for v in args.rot.split(",")]
     CAIXA_PENTE = [float(v) for v in args.caixapente.split(",")] if args.caixapente else None
     SEM_PENTE = bool(args.sempente)
+    ENCAIXE_ILHA = float(args.encaixe)
     DONOR = args.doador.resolve()
     PROJECT_AK = args.arma.resolve()
     OUT = args.saida.resolve()
@@ -323,6 +329,65 @@ def load_anatomy_rig() -> bpy.types.Object:
     return rig
 
 
+def ilhas_da_malha(malha):
+    """Componentes conexos da malha, unindo vertices COINCIDENTES (0,1 mm).
+
+    Indice de vertice nao basta: costura de UV parte o vertice e a mesma peca
+    vira varias ilhas. Medido em 13/09 nos 15 GLB publicados: as malhas tem de
+    20 a 68 ilhas e NENHUMA tem o carregador como ilha unica.
+    """
+    canon = {}
+    de_vertice = [0] * len(malha.vertices)
+    for vertice in malha.vertices:
+        chave = (round(vertice.co.x * 1e4), round(vertice.co.y * 1e4), round(vertice.co.z * 1e4))
+        de_vertice[vertice.index] = canon.setdefault(chave, vertice.index)
+
+    vizinhos: dict[int, list[int]] = {}
+    for poligono in malha.polygons:
+        for vertice in poligono.vertices:
+            vizinhos.setdefault(de_vertice[vertice], []).append(poligono.index)
+
+    visto = [False] * len(malha.polygons)
+    grupos: list[list[int]] = []
+    for inicio in range(len(malha.polygons)):
+        if visto[inicio]:
+            continue
+        pilha = [inicio]
+        visto[inicio] = True
+        grupo = []
+        while pilha:
+            atual = pilha.pop()
+            grupo.append(atual)
+            for vertice in malha.polygons[atual].vertices:
+                for outro in vizinhos.get(de_vertice[vertice], ()):
+                    if not visto[outro]:
+                        visto[outro] = True
+                        pilha.append(outro)
+        grupos.append(grupo)
+    return grupos
+
+
+def encaixar_nas_ilhas(weapon, limiar):
+    """Faz a selecao respeitar a fronteira da peca: leva a ilha INTEIRA ou nada.
+
+    Caixa corta o ESPACO, carregador e uma PECA. Onde a peca nao cabe num
+    paralelepipedo a caixa deixa sobra ou leva vizinho: o dono testou as armas
+    novas em 13/09 e o veredito bate sempre nisso — "fica a parte de cima do
+    pente" (m4), "sai parte do cano e fica parte do pente" (scar), "tira so a
+    parte debaixo do pente" (uzi). Detalhe e numeros: KNOWN-BUGS.md BUG-157.
+    """
+    malha = weapon.data
+    trocadas = 0
+    for grupo in ilhas_da_malha(malha):
+        dentro = sum(1 for indice in grupo if malha.polygons[indice].select)
+        inteira = dentro >= limiar * len(grupo)
+        for indice in grupo:
+            if malha.polygons[indice].select != inteira:
+                trocadas += 1
+            malha.polygons[indice].select = inteira
+    return trocadas
+
+
 def componente_do_pente(weapon: bpy.types.Object, ancora: Vector) -> set[int]:
     """Quais polígonos formam o carregador, achados pela TOPOLOGIA da malha.
 
@@ -423,7 +488,10 @@ def split_magazine(weapon: bpy.types.Object, ancora: Vector) -> bpy.types.Object
         for polygon in weapon.data.polygons:
             centro = polygon.center
             polygon.select = xmin <= centro.x <= xmax and centro.z <= zmax
-            selected += int(polygon.select)
+        if ENCAIXE_ILHA > 0:
+            trocadas = encaixar_nas_ilhas(weapon, ENCAIXE_ILHA)
+            print(f"CORO_ENCAIXE {trocadas} poligonos mudaram de lado pela fronteira da ilha")
+        selected = sum(1 for p in weapon.data.polygons if p.select)
     else:
         do_pente = componente_do_pente(weapon, ancora)
         for polygon in weapon.data.polygons:
