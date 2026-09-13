@@ -56,6 +56,29 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## BUG-169 — "SERVIDORES FORA DO AR" com os quatro nós de pé
+
+**Fechado em 13/09/2026.** A tela de multiplayer mostrava os quatro servidores "fora do ar"
+enquanto todos respondiam. Não era rede: `sondarNos` marcava o prazo com
+`setTimeout(abort, 2500)`, que mede **relógio de parede**, e um `fetch` só resolve quando a
+thread principal atende. O boot do jogo (WebGL, GLB, texturas) trava a thread por segundos —
+o prazo vencia sozinho e abortava sonda de nó que tinha respondido em 24 ms. Por isso
+"TENTAR DE NOVO" consertava: na segunda vez o jogo já tinha carregado.
+
+Medido na página de produção, no navegador:
+
+| | br | br2 | us | eu |
+|---|---|---|---|---|
+| thread livre | 220 ms | 216 ms | 119 ms | 24 ms |
+| thread travada 3 s | FORA | FORA | FORA | FORA |
+
+Conserto: `prazoAcordado()` em `public/js/net.js` — tique de 100 ms que, quando volta
+atrasado, cobra o passo e não o relógio; 3 s de travada custam ~200 ms do orçamento.
+Régua `eval:sonda`, mutante `relogio-de-parede`.
+
+Mesma família do BUG-166 (também na sonda) e mecanismo diferente: lá uma amostra apagava a
+outra; aqui o prazo cobra tempo que o código não pôde usar.
+
 ## Sertão — casas da praça (PR #526, revisão local 06/09)
 
 ### ~~BUG-145 · Rejeição humana pós-merge: carroças ainda bloqueiam e a fileira dos respawns ainda tem fachadas fechadas~~ · CORRIGIDO, AGUARDA REVISÃO HUMANA 08/09
