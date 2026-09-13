@@ -101,3 +101,18 @@ Gerados em 06/09/2026 no [projeto Mint do Escadão](https://mint.gg/chat/ph71esg
 - `escadao_eletrica_r4.glb`: 3.470 triângulos, caixa de medição e conduítes; simplificação limitada por erro geométrico.
 
 Pipeline reproduzível em `tools/optimize-escadao-r4.mjs` e `tools/rig-escadao-cat-r4.py`; inspeção do GLB reimportado em `tools/inspect-escadao-cat-r4.py`. Recibos e renders privados em `artifacts/escadao-visual/r4/assets/`.
+
+## Kit estrutural de Obras da Prefeitura
+
+Reaproveitado da frente histórica `map2/obras`; nenhum crédito novo foi consumido.
+Ambos pertencem ao pack Mint `posto_obras_r3`, gerado pela conta do projeto com
+prompt próprio e sob licença de assinante Mint Pro. O registro completo, incluindo
+IDs, chat, hashes e processamento, está em `mint-assets.json`.
+
+- `andaime.glb` — torre tubular com plataformas e travessas; 4.299 triângulos,
+  WebP 1024. Registro `andaime-obras`.
+- `container_escritorio.glb` — container de canteiro com porta e janela; 4.406
+  triângulos, WebP 1024. Registro `container-escritorio-obras`.
+
+Licença de uso da conta Mint; não declarar CC0. Os arquivos continuam sujeitos aos
+termos e direitos de terceiros registrados no manifesto.
