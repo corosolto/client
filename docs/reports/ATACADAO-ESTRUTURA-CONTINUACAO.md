@@ -135,6 +135,28 @@ overview externo como esperado. Isso ainda requer avaliação visual do dono.
 
 ## Limites e próximo passo
 
+### Revalidação sobre a alpha.252 — 13/09/2026
+
+A branch recebeu `origin/main@5c2c5c93e32d0dcc96abbdc93e5ae9c767054fed`
+por merge normal, sem rebase nem force-push. A única colisão de runtime foi no
+import de `map_atacadao.js`: a resolução preserva `PropBatch` da candidata e
+incorpora `aplicaSombraSol` da qualidade adaptativa que entrou na `main`. Os
+conflitos globais tomaram a documentação da base; `package.json` preserva os
+três scripts `eval:atacadao*`, e o registro Mint une os sete assets desta lane
+às 15 entradas novas da Mansão.
+
+Na alpha.252, a candidata passa MAP2B com 1,85 m/45,0 m², CTF2 com no mínimo
+duas rotas, MAP5 com pior espaçamento de 5,16 m, `ATA1..ATA10`, os sete
+mutantes, `eval:mapcontrato` e o build Astro. A base atual continua medindo
+1,50 m/52,1 m² e CTF2 mínimo 2, portanto o contrato próprio segue preservado e
+o mapa melhorou a densidade estrutural sem criar o antigo vermelho remoto.
+
+Depois de regenerar os blocos documentais, `check:deploy` tem como único
+vermelho esperado UIR15 em `eval:redesign`. A mesma cláusula reprova em uma
+worktree destacada da própria `origin/main@5c2c5c93e`; a lane não altera os
+arquivos de resultado/personagem medidos por ela. Nenhuma exceção ou teto foi
+mudado.
+
 ### Auditoria dos vermelhos remotos de 10/09
 
 O `build` do PR #582 (run `34473233511`, job `102857869756`) terminou vermelho
