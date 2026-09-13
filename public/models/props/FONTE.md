@@ -101,3 +101,39 @@ Gerados em 06/09/2026 no [projeto Mint do Escadão](https://mint.gg/chat/ph71esg
 - `escadao_eletrica_r4.glb`: 3.470 triângulos, caixa de medição e conduítes; simplificação limitada por erro geométrico.
 
 Pipeline reproduzível em `tools/optimize-escadao-r4.mjs` e `tools/rig-escadao-cat-r4.py`; inspeção do GLB reimportado em `tools/inspect-escadao-cat-r4.py`. Recibos e renders privados em `artifacts/escadao-visual/r4/assets/`.
+## Atacadão da Treta — assets recuperados com proveniência
+
+Esta lane recupera sete assets já produzidos e versionados em `origin/map2/atacadao`.
+Nenhum serviço pago foi chamado nesta recuperação.
+
+### Pack Mint `atacadao_r3`
+
+Gerado no projeto do dono pelo Mint, pack `th7dnpa6tmkqv43k7s3458exmx8d79aq`,
+chat <https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv>, e otimizado para
+WebP 1024 e aproximadamente 4–5 mil triângulos por molde. Licença de uso do
+assinante Mint Pro; assets originais gerados por prompt, sem conteúdo de terceiros.
+
+- `estante_pallets.glb`: 4.565 tris; registro `estante-pallets`; item
+  `ks7d5h0jrqz526fsqjtmed8d8s8d6780`.
+- `freezer.glb`: 4.486 tris; registro `freezer-atacadao`; item
+  `ks7fwtjj0r7fy6fqce79scb0y18d6yja`.
+- `ilha_caixas.glb`: 4.424 tris; registro `ilha-caixas`; item
+  `ks77jm9rp5ek9an2s31q8608rx8d71a1`.
+
+### Seções do mercado — lote Replicate de 27/08/2026
+
+Este lote não é Mint. Foi gerado na conta Replicate do dono por
+`tools/gen-asset.mjs --provider replicate`: `black-forest-labs/flux-schnell` para
+imagem e `ndreca/hunyuan3d-2` para malha, seguido de dedup/prune e WebP 1024. Os
+registros correspondentes em `mint-assets.json` declaram honestamente
+`source.kind: replicate-gen` e `processing.provider: replicate`.
+
+- `balcao_acougue.glb`: 12.000 tris; quatro instâncias de balcão de meia altura.
+- `balcao_padaria.glb`: 12.000 tris; três ilhas de exposição.
+- `ilha_hortifruti.glb`: 12.000 tris; quatro ilhas de hortifrúti.
+- `geladeira_bebidas.glb`: 22.158 tris; quatro expositores verticais; é o molde
+  mais pesado do lote e deve permanecer limitado a essas quatro instâncias.
+
+Os moldes reprovados `balcao_peixaria`, `cancela_estacionamento` e `lava_rapido`
+continuam ausentes; o mapa usa equivalentes procedurais para não promover malhas
+achatadas ou com ocupação inadequada.
