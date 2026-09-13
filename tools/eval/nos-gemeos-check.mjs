@@ -13,14 +13,16 @@
    O QUE ELA MEDE: os pares (id, nome, url) dos dois arquivos, na mesma ordem.
 
    Mutantes: `--mutante=no-a-mais` acrescenta um nó só de um lado; `--mutante=url-diferente`
-   troca a url de um nó. Os dois devem acender.
+   troca a url de um nó; `--mutante=prefixo-comido` faz o parser casar o id mais CURTO primeiro,
+   que é o bug real de `br` engolir `br2`. Os três devem acender.
 
-   Uso: node tools/eval/nos-gemeos-check.mjs [--mutante=no-a-mais|url-diferente]
+   Uso: node tools/eval/nos-gemeos-check.mjs [--mutante=no-a-mais|url-diferente|prefixo-comido]
    ============================================================================ */
 import { readFileSync } from 'node:fs';
+import { NOS as nosDoJogo, parseConvite } from '../../public/js/nos.js';
 
 const mut = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (mut && !['no-a-mais', 'url-diferente'].includes(mut)) throw new Error(`mutante desconhecido: ${mut}`);
+if (mut && !['no-a-mais', 'url-diferente', 'prefixo-comido'].includes(mut)) throw new Error(`mutante desconhecido: ${mut}`);
 
 let jogo = readFileSync('public/js/nos.js', 'utf8');
 let pagina = readFileSync('src/pages/sala/[codigo].astro', 'utf8');
@@ -52,10 +54,25 @@ for (let i = 0; i < Math.max(a.length, b.length); i++) {
     if (x[campo] !== y[campo]) falhas.push(`nó ${i + 1} (${x.id}): ${campo} "${x[campo]}" no jogo x "${y[campo]}" na página`);
   }
 }
-/* A REGIÃO É O PREFIXO DO CONVITE, e o parser casa exatamente duas letras. Um nó com id fora
-   disso geraria convites que ninguém consegue abrir — o servidor já recusa subir assim, e
-   aqui a lista do cliente é cobrada pela mesma regra. */
-for (const n of a) if (!/^[a-z]{2}$/.test(n.id)) falhas.push(`id de nó "${n.id}" não tem duas letras — não vira prefixo de convite`);
+/* A REGIÃO É O PREFIXO DO CONVITE. Esta cláusula já foi uma CÓPIA do formato (`/^[a-z]{2}$/`
+   escrito aqui à mão) e por isso reprovou o `br2`, um id legítimo, enquanto o parser de
+   verdade o aceitava: a régua media a própria opinião. Agora ela passa cada id pelo
+   `parseConvite` REAL e cobra que o convite volte ao nó de onde saiu — o que também pega o
+   caso que nenhum formato pegaria, o de um id que é prefixo de outro (`br` × `br2`). */
+const parse = mut === 'prefixo-comido'
+  ? (txt) => { const t = String(txt).trim().toUpperCase(); for (const n of [...nosDoJogo].sort((x, y) => x.id.length - y.id.length)) { const p = `${n.id.toUpperCase()}-`; if (t.startsWith(p)) return { no: n, codigo: t.slice(p.length) }; } return null; }
+  : parseConvite;
+for (const n of nosDoJogo) {
+  const ID = n.id.toUpperCase();
+  // As DUAS formas que o parser aceita: o hífen é opcional, e é só na forma sem hífen que um id
+  // engole o outro ("BR27K3M" lido como nó BR com código "27K3M"). Sondar só "BR2-7K3M" é sondar
+  // o caso fácil e jurar que o difícil está coberto.
+  for (const convite of [`${ID}-7K3M`, `${ID}7K3M`]) {
+    const alvo = parse(convite);
+    if (!alvo) falhas.push(`convite "${convite}" não casa com nó nenhum — id "${n.id}" não vira prefixo`);
+    else if (alvo.no.id !== n.id) falhas.push(`convite "${convite}" abre no nó "${alvo.no.id}", não no "${n.id}"`);
+  }
+}
 
 if (falhas.length) {
   console.error('✗ NOS1 a lista de nós de multiplayer divergiu entre o jogo e a página de convite:');
