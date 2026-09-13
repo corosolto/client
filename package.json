@@ -109,6 +109,8 @@
     "eval:posters": "node tools/eval/poster-aspect-check.mjs",
     "eval:ui": "node tools/eval/ui-check.mjs all",
     "eval:mappreview": "node tools/eval/map-preview-check.mjs",
+    "eval:mappreview:browser": "node tools/eval/map-preview-browser-check.mjs",
+    "capture:mansaopreview": "node tools/eval/mansao-preview-capture.mjs",
     "capture:escadaopreview": "node tools/capture-escadao-preview.mjs",
     "eval:redesign": "node tools/eval/redesign-check.mjs",
     "eval:screenquery": "node tools/eval/screen-query-check.mjs",
