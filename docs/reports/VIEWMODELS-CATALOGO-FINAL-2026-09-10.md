@@ -456,3 +456,22 @@ centralizada. A candidata segue `ready:false`, família G3/global off até revis
 Recibo: [`VIEWMODEL-RIFLES-G3-ALPHA252-2026-09-13.md`](VIEWMODEL-RIFLES-G3-ALPHA252-2026-09-13.md).
 Gate vermelho: `a41eb9718`; receita recuperável: `0f7f2cf1e`; integração: `b8e361a69`.
 O preview imutável corrente é `preview-snapshots/b8e361a69-1d416e5b`. Próxima arma incompleta: M400.
+
+## Marco de precisão alpha.252 — M400 reautorada
+
+A M400 agora usa sua malha pública própria, carregador curvo completo, trava real do pente à
+direita e bolt catch real à esquerda. A receita entrega mãos, câmera, muzzle/sight, `idle`,
+`equip_rifle`, `shoot`, `reload_tactical`, `reload_empty`, `inspect`, ADS e cobertura real da
+luneta. A fonte não contém charging handle separável; a limitação fica explícita e nenhum
+componente da arma doadora aparece como M400.
+
+Dez mutantes de asset e seis de lifecycle morderam. O lifecycle passou 30 ciclos/540 amostras.
+Vinte e duas capturas reais em 3:2/16:9, mais duas folhas de contato, não tiveram erro fatal.
+O capturador também passou a aguardar três frames completos após `scopeCovered`, eliminando o
+quadro antigo que o SwiftShader podia preservar na máscara. A evidência confirma
+`vmRootVisible:false` na luneta e a pose física ADS separadamente. A candidata segue
+`ready:false`, família sniper/global off até revisão humana.
+
+Recibo: [`VIEWMODEL-RIFLES-M400-ALPHA252-2026-09-13.md`](VIEWMODEL-RIFLES-M400-ALPHA252-2026-09-13.md).
+Gate vermelho: `c16ada823`; receita recuperável: `411f9fbbc`; integração: `7621b8297`.
+O preview imutável corrente é `preview-snapshots/7621b8297-c86d5f2c`. Próxima arma incompleta: AWP.
