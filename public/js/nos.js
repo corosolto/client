@@ -5,12 +5,11 @@
    diferente de "caiu agora", que a lista de servidores mostra. */
 export const NOS = [
   { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
-  { id: 'br2', nome: 'Brasil · São Paulo 2', url: 'wss://br2.corosolto.com.br/ws' },
   { id: 'us', nome: 'EUA · Carolina do Sul', url: 'wss://us.corosolto.com.br/ws' },
   { id: 'eu', nome: 'Europa · Madri', url: 'wss://eu.corosolto.com.br/ws' },
 ];
 
-/* Um convite é `<REGIAO>-<CODIGO>` (ex.: BR-7K3M, BR2-7K3M). A região não é enfeite: ela diz em
+/* Um convite é `<REGIAO>-<CODIGO>` (ex.: BR-7K3M). A região não é enfeite: ela diz em
    qual nó a sala vive, e sem ela o cliente sondaria todas as regiões para achar a sala. */
 export const NO_RE = /^[a-z]{2}[0-9]?$/;   // igual a api/_lib/no.mjs do backend
 export function parseConvite(txt) {

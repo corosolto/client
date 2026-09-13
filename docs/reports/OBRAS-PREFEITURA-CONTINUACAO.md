@@ -178,3 +178,16 @@ herdada da base, não de exceção nem de limiar afrouxado.
 3. Draft PR #579 aberto contra `main`; preservar esta branch sem merge/deploy.
 4. O dono deve jogar a URL local em 5x5 e 8x8, testar as três rotas dos dois lados, subir nas duas torres e verificar CTF.
 5. Só após aceite estrutural, abrir uma fase visual separada para escala/ancoragem da maquinaria, paleta, iluminação e identidade de prefeitura brasileira.
+
+## Sincronização com a alpha.254 — 13/09/2026
+
+A branch recebeu `origin/main@3a372fdd0a0d4dc3d0a3e84f18713a4cf58f01f1`
+por merge normal. Os conflitos eram novamente blocos gerados e `package.json`;
+a resolução tomou a documentação da base, preservou `eval:obras*`, incorporou
+`eval:sonda` da main e regenerou os blocos.
+
+Após a sincronização, `OBRAS1..OBRAS9` continuam verdes. O MAP2B próprio mede
+2,50 m de folga e 56,8 m² de área contígua; o CTF2 mantém no mínimo três rotas
+separadas em todos os pares. `docs:check` também passa. A atualização não altera
+geometria nem relaxa nenhum gate; serve apenas para remover o conflito do draft
+#579 e manter a candidata comparável à release atual.
