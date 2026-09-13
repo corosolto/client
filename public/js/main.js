@@ -3043,6 +3043,7 @@ async function abrirMultiplayer() {
    WebP local dos SVGs oficiais do Commons — procedência em public/img/flags/FONTE.md. */
 const MP_BANDEIRAS = {
   br: { img: 'br', pais: 'Brasil' },
+  br2: { img: 'br', pais: 'Brasil' },
   us: { img: 'us', pais: 'Estados Unidos' },
   eu: { img: 'es', pais: 'Espanha' },   // o nó "Europa" vive em Madri; nó novo = linha nova
 };
