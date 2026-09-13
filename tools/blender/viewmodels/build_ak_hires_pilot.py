@@ -46,6 +46,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sempente", action="store_true",
                         help="a arma tem carregador INTERNO (mosin, sks, md97): nada "
                              "se solta na recarga, e forcar um recorte arranca o cano")
+    parser.add_argument("--ancora", type=str, default="",
+                        help="dx,dy,dz do encaixe arma-mao. O padrao foi calibrado na "
+                             "AK e vale para todas: e a 5a constante da AK")
     parser.add_argument("--ilhapente", default="0",
                         help="numero da ilha que E o carregador, lido na figura de "
                              "vmilhas.html (1 = maior da faixa 1%-20%). 0 usa a caixa")
@@ -81,17 +84,20 @@ SEM_PENTE = False
 ENCAIXE_ILHA = 0.5
 ILHA_PENTE = 0
 TETO_ILHA = 0.20
+ANCORA = (-0.1475, -1.6065, -0.3500)
 
 
 def configure_paths(args: argparse.Namespace) -> None:
     global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN, ROT_ARMA, CAIXA_PENTE, SEM_PENTE
-    global ENCAIXE_ILHA, ILHA_PENTE
+    global ENCAIXE_ILHA, ILHA_PENTE, ANCORA
     ESCALA_LEN = float(args.comprimento) / AK_REF_CM
     ROT_ARMA = [float(v) for v in args.rot.split(",")]
     CAIXA_PENTE = [float(v) for v in args.caixapente.split(",")] if args.caixapente else None
     SEM_PENTE = bool(args.sempente)
     ENCAIXE_ILHA = float(args.encaixe)
     ILHA_PENTE = int(args.ilhapente)
+    if args.ancora:
+        ANCORA = tuple(float(v) for v in args.ancora.split(','))
     DONOR = args.doador.resolve()
     PROJECT_AK = args.arma.resolve()
     OUT = args.saida.resolve()
@@ -689,7 +695,7 @@ def fit_project_ak(
         # classic project AK has a different stock-to-muzzle proportion from
         # the donor AK-12; bbox centering put its grip about 4 cm too far
         # forward relative to the trigger hand.
-        Matrix.Translation(Vector((-0.1475, -1.6065, -0.3500)))
+        Matrix.Translation(Vector(ANCORA))
         @ basis
         @ Matrix.Diagonal(Vector((0.863 * ESCALA_LEN, 0.62 * ESCALA_LEN, 0.808 * ESCALA_LEN, 1.0)))
     )
