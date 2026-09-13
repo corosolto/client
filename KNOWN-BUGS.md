@@ -56,6 +56,31 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## Encontro no multiplayer — 60% das sessões eram contra bot
+
+**Medido em 13/09/2026** (`mp_metrics_5m` e `mp_session`, 30 dias de produção):
+
+| | |
+|---|---|
+| sessões de multiplayer | 459, de 296 pessoas |
+| dividiram sala com outro humano | 184 — **40%** |
+| contra bot só | 275 — **60%** |
+| janelas de 5 min com 2+ conectados | 129 de 10.332 — **1,2%** |
+| duração mediana da sessão | 2 min 10 s (26% abaixo de 1 min) |
+| RTT p50 / tick acima do orçamento / desconexão por erro | 28,2 ms / 0,010% / **0** |
+
+A rede está saudável: o problema é dispersão. Duas regras do próprio jogo separavam as pessoas.
+
+**`ordenarNos` desempatava pelo nó mais VAZIO** dentro da faixa de 15 ms — regra escrita para
+o `br2` (capacidade, dois nós no mesmo datacentre). Com pico de 12 simultâneos no mundo todo,
+ela manda cada pessoa para uma sala vazia. Invertida.
+
+**O QUICK PLAY lia as salas de um nó só**, o de menor ping: duas pessoas separadas por 12 ms
+nunca se encontravam. Agora `melhorNoParaJogar` (em `public/js/nos.js`) procura gente e
+atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o atraso.
+
+Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
+
 ## BUG-169 — "SERVIDORES FORA DO AR" com os quatro nós de pé
 
 **Fechado em 13/09/2026.** A tela de multiplayer mostrava os quatro servidores "fora do ar"
