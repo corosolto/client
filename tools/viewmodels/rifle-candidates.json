@@ -136,6 +136,21 @@
       "sourceBranch": "codex/viewmodels-catalog-final",
       "sourceCommit": "0f7f2cf1e",
       "rebuild": "tools/viewmodels/prep/rifles-g3-final.py + optimize_paid_family.mjs"
+    },
+    "m400": {
+      "family": "sniper",
+      "file": "viewmodels/sniper/m400-baked-runtime.glb",
+      "sourceSha256": "f5a0bb493381eba107dd23fb5e702c2719bdba2f4f8b01bec62c832467b91109",
+      "sourceBytes": 331016,
+      "productSha256": "c86d5f2ce043db7eba50840f6f68bcabdb5065c45dcc1734d677ee02187b1e5b",
+      "productBytes": 2674164,
+      "sha256": "c86d5f2ce043db7eba50840f6f68bcabdb5065c45dcc1734d677ee02187b1e5b",
+      "bytes": 2674164,
+      "mechanism": "curved-detachable-mag/real-right-mag-release/real-left-bolt-catch/source-no-separable-charging-handle",
+      "ready": false,
+      "sourceBranch": "codex/viewmodels-catalog-final",
+      "sourceCommit": "411f9fbbc",
+      "rebuild": "tools/viewmodels/prep/rifles-m400-final.py + optimize_paid_family.mjs"
     }
   }
 }

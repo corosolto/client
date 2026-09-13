@@ -61,7 +61,7 @@ export const VM_WEAPON = {
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
   md97: W('ar', { baked: true, frame: 'family', recoilScale: 1.8 }),
   carbine: W('ar', { baked: true, frame: 'family' }),
-  m400: W('sniper'),
+  m400: W('sniper', { baked: true, frame: 'family' }),
   mosin: W('bolt', { baked: true }),
   // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
   // medido desta base; a câmera embutida do doador não é usada como frame.
