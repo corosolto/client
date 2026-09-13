@@ -33,11 +33,24 @@
    `quebrada`, que é o mapa com mais arte urbana do jogo — justamente o que mais tem
    a ganhar com um teto. */
 export const MAPAS = [
-  { id: 'praca_poderes', auto: 'P,mst' },
-  { id: 'piscina_treta', auto: 'P,mst' },
-  { id: 'loja_h', auto: 'B,bozo' },
-  { id: 'ferro_velho', auto: 'B,bozo' },
-  { id: 'quebrada', auto: 'B,bozo' },
+  { id: 'praca_poderes', auto: 'E,mst' },
+  { id: 'piscina_treta', auto: 'E,mst' },
+  { id: 'loja_h', auto: 'B,coach' },
+  { id: 'ferro_velho', auto: 'B,coach' },
+  { id: 'quebrada', auto: 'B,coach' },
+  // os 12 que faltavam: 5 de 17 medidos era orçamento para um terço do jogo
+  { id: 'mansao', auto: 'E,mst' },
+  { id: 'amazonia', auto: 'B,coach' },
+  { id: 'escadao', auto: 'B,coach' },
+  { id: 'corrego', auto: 'B,coach' },
+  { id: 'lajes', auto: 'B,coach' },
+  { id: 'posto_treta', auto: 'B,coach' },
+  { id: 'upa_24h', auto: 'E,mst' },
+  { id: 'obras_prefeitura', auto: 'B,coach' },
+  { id: 'atacadao_treta', auto: 'B,coach' },
+  { id: 'parque_treta', auto: 'E,mst' },
+  { id: 'velho_oeste', auto: 'B,coach' },
+  { id: 'penitenciaria', auto: 'E,mst' },
 ];
 
 /* Teto por mapa. `calls` e `tris` são a MÉDIA por frame somando todos os passes do
@@ -71,6 +84,48 @@ export const TETOS = {
      MAPA ENTRAR, este número DESCE para a nova medição. Deixá-lo aqui depois disso seria
      transformar a régua em carimbo. */
   quebrada: { calls: 2060, tris: 1810000 },
+  /* OS 12 QUE FALTAVAM, medidos em 12/09/2026 (`--medir`, alpha.248, Chrome headless com GPU
+     real nesta máquina). Medir 5 de 17 era ter orçamento para um terço do jogo — e os dois
+     mapas mais caros do catálogo estavam justamente entre os não medidos:
+
+       mansao       2065 calls  2.453 k tris   77 fps   <- mais calls que o quebrada
+       corrego       525 calls  8.303 k tris  102 fps   <- 3,4× o segundo pior em triângulos
+       quebrada     1975 calls  1.199 k tris   66 fps   <- o mais lento
+       atacadao     1534 calls    976 k tris  123 fps
+       penitenciaria 1247 calls   773 k tris  136 fps
+       obras        1040 calls  1.399 k tris  135 fps
+       velho_oeste   838 calls  1.043 k tris  136 fps
+       lajes         735 calls  1.192 k tris  143 fps
+       upa_24h       688 calls    799 k tris   96 fps
+       amazonia      629 calls  1.526 k tris  137 fps
+       parque        586 calls    756 k tris  136 fps
+       escadao       393 calls    808 k tris  136 fps
+
+     O `fps` é desta máquina e não é teto (o cabeçalho explica por quê); ele está aqui porque
+     é o que diz QUAIS destes números doem. Os tetos dos 5 antigos ficam como estavam: a
+     medição de hoje veio mais barata em alguns, e baixar teto numa execução só troca portão
+     por ruído. */
+  mansao: { calls: 2380, tris: 2830000 },
+  amazonia: { calls: 730, tris: 1760000 },
+  escadao: { calls: 460, tris: 930000 },
+  corrego: { calls: 610, tris: 9550000 },
+  lajes: { calls: 850, tris: 1380000 },
+  /* posto_treta quase ficou sem teto: a primeira medição NÃO aconteceu. O jogador morria no
+     aquecimento e `_tpDeath` lançava exceção a cada quadro (590 em 30 s) porque o fixture
+     pedia o personagem 'bozo', que virou 'bonzo' numa renomeação de elenco. Corrigidos os
+     dois lados (o fixture e a tolerância do jogo a id inexistente), ele mediu — e é o SEGUNDO
+     mapa mais caro em draw calls do catálogo, 1883, atrás só do mansao. Ninguém sabia. */
+  /* E é o mapa que VARIA: duas execuções no mesmo commit deram 1.989.349 e 2.295.572
+     triângulos (15% de diferença — os props dele são sorteados por partida). O teto saiu da
+     PIOR das duas mais a folga, e não da primeira: teto colado numa medição só reprova por
+     sorteio, e régua que acende por sorteio é régua que o time aprende a ignorar. */
+  posto_treta: { calls: 2170, tris: 2640000 },
+  upa_24h: { calls: 800, tris: 920000 },
+  obras_prefeitura: { calls: 1200, tris: 1610000 },
+  atacadao_treta: { calls: 1770, tris: 1130000 },
+  parque_treta: { calls: 680, tris: 870000 },
+  velho_oeste: { calls: 970, tris: 1200000 },
+  penitenciaria: { calls: 1440, tris: 890000 },
 };
 
 /* Folga aplicada sobre o medido quando `--medir` sugere teto novo.

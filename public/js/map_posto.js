@@ -1,6 +1,7 @@
 // POSTO DA TRETA — posto de gasolina na beira de rodovia. Mesmo contrato build(scene,T) dos outros mapas.
 // Colisão só AABB (sem colisor girado — BUG-21); marquise/beirais collide:false, pilar/bomba/carro colidem.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -385,7 +386,7 @@ export function buildPosto(scene, T) {
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd39a, 1.6);
   sun.position.set(-38, 26, 14); sun.castShadow = true;   // sol baixo no oeste (atrás da loja)
-  sun.shadow.mapSize.set(2048, 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
   sun.shadow.camera.top = 42; sun.shadow.camera.bottom = -42;
   sun.shadow.camera.far = 140; sun.shadow.bias = -0.0004;
