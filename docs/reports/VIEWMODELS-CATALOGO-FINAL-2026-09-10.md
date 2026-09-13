@@ -454,4 +454,5 @@ capturador passou a definir o estado explicitamente, e as duas recapturas mostra
 centralizada. A candidata segue `ready:false`, família G3/global off até revisão humana.
 
 Recibo: [`VIEWMODEL-RIFLES-G3-ALPHA252-2026-09-13.md`](VIEWMODEL-RIFLES-G3-ALPHA252-2026-09-13.md).
-Gate vermelho: `a41eb9718`; receita recuperável: `0f7f2cf1e`. Próxima arma incompleta: M400.
+Gate vermelho: `a41eb9718`; receita recuperável: `0f7f2cf1e`; integração: `b8e361a69`.
+O preview imutável corrente é `preview-snapshots/b8e361a69-1d416e5b`. Próxima arma incompleta: M400.

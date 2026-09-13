@@ -82,10 +82,16 @@ artefatos gerados de documentação/arquitetura; eles foram regenerados. O gate
 UIR15 também foi alinhado ao fallback robusto já presente em `main`, sem mudar
 o runtime, no checkpoint `6b80664b6`. Depois disso, `check:deploy` passou 39/39.
 
+O preview corrente usa o snapshot imutável `preview-snapshots/b8e361a69-1d416e5b`,
+derivado do marco AKM sem alterar os produtos já aceitos. O manifesto do snapshot
+tem SHA-256 `3eb8b8cf227d9e4e2d43950ac5e7c15f764e0a56be70e9bb40bb9544c55665a1`.
+O alias mutável `preview-root` aponta para esse snapshot e o snapshot anterior
+`726ab95eb-54c72408` foi restaurado sem o diretório G3 que havia sido staged nele.
+
 ```bash
 cd /Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/viewmodels-catalog-final
 export PATH="/opt/homebrew/Cellar/node/23.6.0/bin:$PATH"
-CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-root \
+CSBRASIL_VM_ASSET_ROOT=/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-snapshots/b8e361a69-1d416e5b \
   npm run preview:vm-precision
 ```
 
