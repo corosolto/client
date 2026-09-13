@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "source": "codex/viewmodels-catalog-final@662371b36dec5f2a4efe51c7d6e0e0ba3dfd3e66",
+  "candidates": {
+    "mosin": {
+      "family": "bolt",
+      "file": "viewmodels/bolt/mosin-baked-runtime.glb",
+      "sourceBytes": 24548388,
+      "sourceSha256": "e0eff49d747369e43cdde24882ebb2b105150dd62d43e314be5a062f2f8ed73c",
+      "optimizedBytes": 5298504,
+      "optimizedSha256": "94386beceefde96a481458c296f616178ae56f8a1a70b8ae63be8697841655a2"
+    },
+    "svd": {
+      "family": "svd",
+      "file": "viewmodels/svd/svd-baked-runtime.glb",
+      "sourceBytes": 24433936,
+      "sourceSha256": "45df8d0f140e1d8db5ee394c6069bf79c670ba321b19d7d702623e7e054fe3b7",
+      "optimizedBytes": 5183236,
+      "optimizedSha256": "08058912ca43d521675c4294216dedc3bbc1a2b7b906440acb53db691be5faea"
+    },
+    "sks": {
+      "family": "marksman",
+      "file": "viewmodels/marksman/sks-baked-runtime.glb",
+      "sourceBytes": 24729928,
+      "sourceSha256": "fe13c71a93b9966fa8c19025327e8c032b2f4173d1290d392e13a5bd7d138f49",
+      "optimizedBytes": 5473300,
+      "optimizedSha256": "15bf12eb5663a03c49ff09edc31310bfe844416c3a2c7f9f3eec15f316ff8470"
+    }
+  }
+}

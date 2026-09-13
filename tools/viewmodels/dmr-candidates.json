@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "base": "origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb",
+  "candidates": {
+    "rem700": {
+      "family": "bolt",
+      "file": "viewmodels/bolt/rem700-baked-runtime.glb",
+      "sourceSha256": "7d686ab53e23449e750c0b4edee97d7085046653ecc732257deb60877de92c16",
+      "sourceBytes": 4675768,
+      "sha256": "d81a0cbbe82dd29925efecac7a40d00f084d41a7704f6225e7b0e2d066e82d6e",
+      "bytes": 4673620,
+      "mechanism": "bolt-action/internal-5",
+      "ready": false,
+      "sourceBranch": "claude/vm-dmr-final",
+      "sourceCommit": "701e98e44b8944cb9642ff00492740c77e75acf5",
+      "rebuild": "tools/viewmodels/prep/dmr-build.py + dmr-contato.py + dmr-assemble.py + optimize_paid_family.mjs"
+    },
+    "g3sg1": {
+      "family": "g3",
+      "file": "viewmodels/g3/g3sg1-baked-runtime.glb",
+      "sourceSha256": "5169685b0f2932a9a7352375bde90cac117be6b8409590ac79a8006ed1a12088",
+      "sourceBytes": 4037144,
+      "sha256": "10c08eecd3b7d71d5036830f8e4aa5f5c71e2829e89bee48fa225fdad3391a1e",
+      "bytes": 4036252,
+      "mechanism": "detachable-mag/hk-slap",
+      "ready": false,
+      "sourceBranch": "claude/vm-dmr-final",
+      "sourceCommit": "701e98e44b8944cb9642ff00492740c77e75acf5",
+      "rebuild": "tools/viewmodels/prep/dmr-build.py + dmr-contato.py + dmr-assemble.py + optimize_paid_family.mjs"
+    }
+  }
+}
