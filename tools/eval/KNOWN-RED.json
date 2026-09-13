@@ -18,6 +18,7 @@
   "CTF1": "geometria de bandeira fora do critério em mapa(s) legado(s) — ajuste de layout pendente",
   "GRAF1": "grafite: 272 peças com vão atrás em 5 mapas (brasília 68 · quebrada 102 · ferro 51 · loja H 28 · piscina 23) e 145 sobrepostas. Saiu de 698/540 em 07/08 alinhando o limiar das duas réguas; o resto é peça em quina de GLB e em superfície curva. Régua: `npm run eval:grafite:ar`. Ver docs/LICOES.md §1 e §2.",
   "MAT2": "dispersão de luz do viewmodel 1.63× (teto 1.60) — velho_oeste (mapa 3.92 / vm 4.72 = 1.20×) puxa a dispersão. Mapas de comunidade recém-adicionados; ajuste de iluminação pendente.",
-  "TEX1": "penitenciaria: 1 superfície grande e clara sem mapa de albedo (#e6e2cf 7.3 m² em 17,1,-25). Mapa de comunidade recém-adicionado; texturização pendente."
+  "TEX1": "penitenciaria: 1 superfície grande e clara sem mapa de albedo (#e6e2cf 7.3 m² em 17,1,-25). Mapa de comunidade recém-adicionado; texturização pendente.",
+  "MAP2B": "respawn do escadao/E com folga de 0,85 m (teto 1,20). NÃO é número: o slot abraça a parede porque é ela que bloqueia a linha de tiro da casa central (escadao-casa-central-check, cláusula 5). Medido em 12/09: z=27 dá 1,85 m de folga E abre a visada; z=28 idem; mexer em x não muda. Os dois invariantes se contradizem nesse ponto — sair disso é level design (spawn noutro lugar, com cobertura nova). Estava escondido por um map_check.json commitado velho, que dizia 1,65 m; regenerando o artefato na main limpa dá os mesmos 0,85 m."
  }
 }

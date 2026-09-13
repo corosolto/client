@@ -1,5 +1,6 @@
 // Parque da Treta: arena CTF simétrica, colorida e inteiramente procedural.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 
 const HALF_X = 32;
 const HALF_Z = 42;
@@ -354,7 +355,7 @@ export function buildParque(scene, T) {
 
   const hemi = new THREE.HemisphereLight(0xdaf5ff, 0x71a95b, 1.35); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff3d2, 1.35); sun.position.set(-24, 44, -18); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -42; sun.shadow.camera.right = 42; sun.shadow.camera.top = 50; sun.shadow.camera.bottom = -50; sun.shadow.camera.far = 150; sun.shadow.bias = -0.0004; scene.add(sun);
+  aplicaSombraSol(sun); sun.shadow.camera.left = -42; sun.shadow.camera.right = 42; sun.shadow.camera.top = 50; sun.shadow.camera.bottom = -50; sun.shadow.camera.far = 150; sun.shadow.bias = -0.0004; scene.add(sun);
   const fill = new THREE.DirectionalLight(0xbde7ff, 0.45); fill.position.set(30, 22, 28); scene.add(fill);
 
   function update(dt, time) {

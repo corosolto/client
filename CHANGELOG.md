@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.246`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.252`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,51 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.252] — 2026-09-13
+
+### Mudado
+- fix(erros): os 2 defeitos reais do painel de 13/09 — watchdog de lançamento e playerDef undefined (#593)
+
+## [2.0.0-alpha.251] — 2026-09-13
+
+### Mudado
+- feat(nos): br2 entra na lista de servidores (#591)
+
+## [2.0.0-alpha.250] — 2026-09-12
+
+### Mudado
+- perf: qualidade adaptativa, orçamento dos 17 mapas, tiro justo e 34% menos banda
+
+## [2.0.0-alpha.249] — 2026-09-12
+
+### Mudado
+- fix(discord): convite do rodapé estava expirado e a porta da comunidade fechada (#590)
+- fix(discord): convite do rodapé estava expirado e a porta da comunidade fechada
+
+## [2.0.0-alpha.248] — 2026-09-12
+
+### Mudado
+- fix(multiplayer): a correção de posição não era rede — cinco defeitos, com laço fechado para medir; e escolher os mapas da sala (#588)
+- feat(multiplayer): escolher a dedo os mapas da sala que você cria
+- fix(multiplayer): comando com duração, ack do que foi simulado e corpo de gente sem empurrão
+
+## [2.0.0-alpha.247] — 2026-09-10
+
+### Mudado
+- feat(mansao): reconstruir Joá sobre a main atual (#578)
+- docs(mansao): registrar CI remoto após correção
+- docs(mansao): registrar recaptura após correção
+- docs(mansao): atualizar índices após rota leste
+- chore(mansao): resumir comentário de rota
+- docs(mansao): registrar correção dos gates remotos
+- fix(mansao): separar rota CTF e liberar spawn
+- docs(mansao): registrar reconstrução limpa e fila humana
+- test(mansao): validar Chrome real em 3:2 e 16:9
+- docs(mansao): regenerar contratos na base atual
+- test(mansao): portar gates causais do Joá
+- feat(mansao): integrar Joá ao jogo atual
+- feat(mansao): portar cenário e assets do Joá
 
 ## [2.0.0-alpha.246] — 2026-09-09
 
