@@ -43,7 +43,7 @@ const tipoDe = (v) => (Array.isArray(v) ? 'array' : typeof v);
    regressão da main: o grafo do córrego tem bolsões nas margens alagadas que a rota não
    liga. Teto explícito para a dívida não crescer calada; quem mexer no waypoint do
    córrego tem que DERRUBAR este número, nunca subir. */
-const ILHADOS_MAX = { loja_h: 491, ferro_velho: 15, corrego: 15 };
+const ILHADOS_MAX = { loja_h: 0, ferro_velho: 15, corrego: 15 };
 
 /* BFS do nó 0, mesmo critério da validatePlan de map_json.js.
    A varredura de linha malformada é SEPARADA da BFS de propósito: dentro dela, nó de

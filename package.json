@@ -51,6 +51,7 @@
     "eval:escadao-ring": "node tools/eval/escadao-ring-check.mjs",
     "eval:escala-casario": "node tools/eval/escala-casario-check.mjs",
     "eval:mapcontrato": "node tools/eval/map-contrato-check.mjs",
+    "eval:loja-h": "node tools/eval/loja-h-estrutura-check.mjs",
     "eval:parquewheel": "node tools/eval/parque-wheel-check.mjs",
     "eval:velhooeste": "node tools/eval/velho-oeste-check.mjs",
     "eval:sertao": "node tools/eval/sertao-check.mjs",
