@@ -313,7 +313,8 @@
     "eval:vm-p90-lifecycle": "node tools/eval/viewmodel-p90-lifecycle-check.mjs",
     "capture:vm-p90-final": "node tools/viewmodels/prep/p90-final-capture.mjs",
     "eval:vm-shotgun-final": "node tools/viewmodels/prep/shotgun-final-verify.mjs",
-    "eval:vm-shotgun-lifecycle": "node tools/eval/viewmodel-shotgun-lifecycle-check.mjs"
+    "eval:vm-shotgun-lifecycle": "node tools/eval/viewmodel-shotgun-lifecycle-check.mjs",
+    "capture:vm-shotgun-final": "node tools/viewmodels/prep/shotgun-final-capture.mjs"
   },
   "repository": {
     "type": "git",

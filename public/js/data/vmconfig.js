@@ -49,7 +49,8 @@ export const VM_WEAPON = {
   m4: W('ar', { baked: true, frame: 'family' }),
   mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay',
     ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
-  shotgun: W('shotgun'),
+  shotgun: W('shotgun', { baked: true, timing: 'gameplay',
+    ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
   // O pack autora a Deagle com 23–27° de pitch (hand cannon); no nosso mount o
   // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
   deagle: W('deagle', { baked: true, runtime: 'family', timing: 'gameplay', recoilScale: 0.45 }),

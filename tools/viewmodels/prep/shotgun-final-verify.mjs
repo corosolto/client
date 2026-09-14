@@ -60,7 +60,7 @@ check(cfg.ready === false, 'shotgun precisa permanecer ready:false');
 check(createHash('sha256').update(bytes).digest('hex') === cfg.sha256, 'SHA-256 diverge do manifesto');
 check(bytes.length === cfg.bytes, 'tamanho diverge do manifesto');
 for (const name of required) check(clips.has(name), `clip ${name} ausente`);
-check(Boolean(gun?.isMesh), 'malha KXG12 própria não preservada');
+check(Boolean(gun && (gun.isMesh || gun.children.some((child) => child.isMesh))), 'malha KXG12 própria não preservada');
 check(Boolean(mint && muzzle && sight), 'marcador baked e sockets ADS/muzzle ausentes');
 check(Boolean(arms && weapon && shell && pump && trigger), 'rig, munição ou mecanismos próprios incompletos');
 check(Boolean(handL && handR), 'duas mãos completas ausentes');

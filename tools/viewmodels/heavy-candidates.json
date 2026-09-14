@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "alpha.252-heavy-final",
+  "assetRootEnv": "CSBRASIL_VM_ASSET_ROOT",
+  "runtimeBase": "/private-assets",
+  "candidates": {
+    "shotgun": {
+      "weapon": "shotgun",
+      "family": "shotgun",
+      "file": "viewmodels/shotgun/shotgun-baked-runtime.glb",
+      "sourceSha256": "71dd4edd43da77c7a52af01b2481e2f71cca57507bbe88674ce0b674a62986c7",
+      "sourceBytes": 25019108,
+      "productSha256": "f4522831de0500b1fa3ce7d7696981a42f4ceab23b5da33ab2199dc4304f307e",
+      "productBytes": 4093728,
+      "sha256": "f4522831de0500b1fa3ce7d7696981a42f4ceab23b5da33ab2199dc4304f307e",
+      "bytes": 4093728,
+      "mechanism": "shell-loop/pump/trigger",
+      "ready": false,
+      "sourceBranch": "private-generated/viewmodels-candidates/fechamento-ruben-20260914",
+      "sourceCommit": null,
+      "rebuild": "tools/viewmodels/prep/shotgun-final.mjs",
+      "sharedTextureFoundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102"
+    }
+  }
+}
