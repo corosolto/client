@@ -7010,6 +7010,16 @@ sobre aprovações antigas. O registro de execução, artefatos e próximo passo
 | `mp5` | “Mp5 sem pente na frente e com a mao por cima do cano da frente precisava re-rigar a arma” | Carregador presente e mãos rigadas para esta arma. |
 | `shotgun` (M3) | “M3 arma apontado pro alto e segunda mao nao segura o cano na frente” | Orientação coerente e mão de apoio segurando a região dianteira em idle/tiro. |
 
+Placar cego de 14/09 no caminho ativo (`artifacts/viewmodels/fechamento-ruben/placar-dono-20260914/CRITICA.md`,
+crítico sem a justificativa de quem construiu): **REPROVADAS** `shotgun` (nenhuma
+mão encosta; recarga apontada pro alto), `sks`, `uzi`, `md97`; **RESSALVA** `mp5`
+(pente não visível ao sair), `m92` (~125 % da AK); **APROVADAS** pelo crítico
+`svd`, `deagle`, `revolver38`, `m4`, `scar` — o aceite continua sendo do dono.
+No mesmo dia: `md97` perdeu o cilindro solto (alavanca da AK herdada do rig,
+`5dae7b9d1`) e `sks` ganhou a mão de apoio no guarda-mão em idle/tiro e a
+recarga começando/terminando no idle (`3058c8ec0`); a recarga por clip do SKS
+segue "tira no ar". Detalhe em `VM-DIAGNOSTICO-FECHAMENTO.md`, checkpoint 14/09.
+
 Defeito reproduzido e corrigido no instrumento de captura: `MEDIR` agora usa o
 registro de malhas de mão autoradas; `charging_handle` deixa de ser contado como
 mão. A mutação `mao-nome` reintroduz e detecta o falso positivo. Medição de contato também

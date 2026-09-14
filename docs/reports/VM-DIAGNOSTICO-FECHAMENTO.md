@@ -657,3 +657,41 @@ frames/normais e reprovam alvo antigo do mínimo por alcance real HEAD01→HEAD0
 restante da animação. Polegar ainda recebe dobra excessiva; não aceitar por
 resíduo do pad. Captura `md97-grip-v10-live/` e busca de alvo melhor em andamento.
 Ativa continua MD97v4. Mesmo branch/HEAD; sem commit/push/deploy.
+
+### Checkpoint 14/09 (noite): árvore comitada, placar cego das 11 e MD97/SKS sem a alavanca da AK
+
+A sessão anterior encerrou por capacidade do modelo com um dia de trabalho sem
+commit. A árvore foi comitada em cinco checkpoints recuperáveis (`cab706519`,
+`9a504e427`, `f3012e2bb`, `bebb8adf5`, `bae6b2888`) depois de `syntax`,
+`eval:vm-cache`, `authored-attach-check --mutantes`, `authored-transition-check`
+e `eval:vm-autorado-vivo` (14/14) verdes. Nada foi enviado ao remoto.
+
+Placar cego das 11 armas da lista do dono, no caminho ativo, mapa `brasilia`, 3:2
+(`placar-dono-20260914/`, `CRITICA.md`): REPROVADAS shotgun (nenhuma mão encosta;
+recarga apontada pro alto), sks, uzi, md97; RESSALVA mp5 (pente não visível ao
+sair), m92 (~125 % da AK); APROVADAS svd, deagle, revolver38, m4, scar. Sem frames
+de ADS; shotgun sem frame de tiro. A pior: shotgun.
+
+Defeito transversal nomeado pelo crítico em md97 e sks: um cilindro preto solto
+sobre o receptor — é a malha `coro_solto_project_ak_charging_handle` herdada do
+rig doador da AK. `tools/viewmodels/remover-proxy-ak.mjs` (versão com receita do
+`svd-remove-proxy-handle.mjs`) tira só a malha e prova por hash que todos os
+accessors ficam. Ainda carregam a malha: mp5, m92, scar, m4, uzi — não tocadas,
+porque o crítico não a viu nelas.
+
+- MD97: `md97-no-proxy/` → A/B cego contra a ativa (`critica-ab-md97-sks-20260914/`):
+  RESSALVA, sem regressão, cilindro sumiu. Integrada por `integrar-md97-sem-proxy/`
+  (`95724b1b…` → `3bc6e57f…`), hash servido conferido sem override; commit `5dae7b9d1`.
+- SKS: `sks-support-v1` (mão de apoio registrada só em Idle/Equip/Shoot) criava
+  salto em `reload-000`, apontado pelo crítico. `sks-register-support-v2.mjs`
+  aplica a mesma matriz também ao Reload; `sks-support-v2-no-proxy/` → A/B cego
+  (`critica-ab-sks-v2-20260914/`): sem regressão, idle/shoot com a mão no
+  guarda-mão, recarga começa e termina no idle, cilindro sumiu. Integrada por
+  `integrar-sks-apoio-v2/` (`407f44d6…` → `6cf87e45…`), hash servido conferido;
+  commit `3058c8ec0`. Continua REPROVADA por "tira no ar": a recarga por clip
+  (`sks-kinematic-plan/packet.json`) ainda não foi autorada.
+
+Próximos, na ordem do crítico: shotgun (nenhuma mão encosta; v8 do doador não
+instalada por luva atravessando a guarda — `shotgun-push-grip/`), uzi (uma mão só
+e pente; `uzi-native-idle-v1` é só o idle), SKS recarga por clip, mp5 (pente ao
+sair), m92 (escala). Aceite do dono continua obrigatório para todas.
