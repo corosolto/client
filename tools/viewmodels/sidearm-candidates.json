@@ -33,6 +33,22 @@
       "sourceBranch": "claude/vm-unificado",
       "sourceCommit": "012add17b",
       "rebuild": "tools/viewmodels/prep/pistols-deagle-final.mjs"
+    },
+    "revolver38": {
+      "displayName": "REVÓLVER .38 TROVÃO",
+      "family": "revolver",
+      "file": "viewmodels/revolver/revolver-runtime.glb",
+      "sourceSha256": "ddb088750bbdd4db455aa415ea8b74e59d6178733687f172cdf647d32cec1516",
+      "sourceBytes": 3913292,
+      "productSha256": "422b7118403ac56059d0268859cf1486a82760ed014f279791dec26de255ae9d",
+      "productBytes": 3914264,
+      "sha256": "422b7118403ac56059d0268859cf1486a82760ed014f279791dec26de255ae9d",
+      "bytes": 3914264,
+      "mechanism": "swing-out-cylinder/ejector/six-cartridges/hammer/trigger",
+      "ready": false,
+      "sourceBranch": "claude/vm-unificado",
+      "sourceCommit": "012add17b",
+      "rebuild": "tools/viewmodels/prep/pistols-revolver-final.mjs"
     }
   }
 }

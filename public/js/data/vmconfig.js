@@ -56,7 +56,7 @@ export const VM_WEAPON = {
   m92: W('ak', { baked: true, frame: 'family' }),
   akm: W('ak', { baked: true, frame: 'family' }),
   g3: W('g3', { baked: true, frame: 'family' }),
-  revolver38: W('revolver'),
+  revolver38: W('revolver', { baked: true, runtime: 'family', timing: 'gameplay' }),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
   md97: W('ar', { baked: true, frame: 'family', recoilScale: 1.8 }),

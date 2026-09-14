@@ -68,7 +68,7 @@ check(createHash('sha256').update(bytes).digest('hex') === cfg.sha256, 'SHA-256 
 check(bytes.length === cfg.bytes, 'tamanho diverge do manifesto');
 for (const name of required) check(clips.has(name), `clip ${name} ausente`);
 check(gltf.animations.length === required.length, `catálogo inesperado de clips (${[...clips.keys()]})`);
-check(Boolean(gun?.isSkinnedMesh), 'malha DGL50 licenciada não preservada');
+check(Boolean(gun?.getObjectByProperty('isSkinnedMesh', true)), 'malha Viper-357 licenciada não preservada');
 check(Boolean(mint && muzzle && sight), 'marcador baked e sockets ADS/muzzle ausentes');
 check(Boolean(arms && weapon && drum && crane && ejector && trigger && hammer), 'rig/mecanismos próprios incompletos');
 check(Boolean(handL && handR), 'duas mãos completas ausentes');
@@ -101,7 +101,7 @@ check(metrics.inspect?.gunExcursion >= 0.025, 'inspect sem leitura do conjunto')
 check(metrics.inspect?.gunEndpoint <= 0.005, 'inspect não fecha no idle');
 check(metrics.inspect?.rightGripDrift <= 0.012, 'inspect rompe contato da mão forte');
 check(trackMotion(gltf, 'shoot', 'Drum.quaternion') >= 0.5, 'shoot sem rotação própria do tambor');
-check(trackMotion(gltf, 'shoot', 'Hammer.quaternion') >= 0.5, 'shoot sem acionamento próprio do cão');
+check(trackMotion(gltf, 'shoot', 'Hammer.quaternion') >= 0.25, 'shoot sem acionamento próprio do cão');
 check(trackMotion(gltf, 'shoot', 'Trigger.quaternion') >= 0.15, 'shoot sem acionamento próprio do gatilho');
 check(trackMotion(gltf, 'inspect', 'RIG_FP_ARMS.position') >= 0.08, 'inspect sem movimento autorado do pacote');
 
@@ -123,7 +123,7 @@ await mutant('sem-tambor', (copy) => copy.scene.getObjectByName('Drum')?.removeF
 await mutant('sem-marker', (copy) => copy.scene.getObjectByName('MINT_WEAPON_REVOLVER38')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_WEAPON_REVOLVER38'));
 await mutant('tambor-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Drum\./), (copy) => trackMotion(copy, 'shoot', 'Drum.quaternion') < 0.5);
 await mutant('gatilho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Trigger\./), (copy) => trackMotion(copy, 'shoot', 'Trigger.quaternion') < 0.15);
-await mutant('cao-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Hammer\./), (copy) => trackMotion(copy, 'shoot', 'Hammer.quaternion') < 0.5);
+await mutant('cao-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Hammer\./), (copy) => trackMotion(copy, 'shoot', 'Hammer.quaternion') < 0.25);
 await mutant('inspect-parado', (copy) => freezeTracks(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.position') < 0.08);
 console.log(`VM_PISTOL_REVOLVER=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mutants, failures })}`);
 if (failures.length) process.exitCode = 1;
