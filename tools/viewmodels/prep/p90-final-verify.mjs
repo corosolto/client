@@ -60,7 +60,7 @@ const bolt = scene.getObjectByName('Charger');
 const mechanism = scene.getObjectByName('Mechanism');
 const release1 = scene.getObjectByName('Release1');
 const release2 = scene.getObjectByName('Release2');
-const trigger = scene.getObjectByName('MINT_MECH_P90_TRIGGER');
+const trigger = scene.getObjectByName('Trigger');
 const handL = scene.getObjectByName('hand_l');
 const handR = scene.getObjectByName('hand_r');
 check(cfg.ready === false, 'P90 precisa permanecer ready:false');
@@ -68,7 +68,7 @@ check(createHash('sha256').update(bytes).digest('hex') === cfg.sha256, 'SHA-256 
 check(bytes.length === cfg.bytes, 'tamanho diverge do manifesto');
 for (const name of required) check(clips.has(name), `clip ${name} ausente`);
 check(gltf.animations.length >= required.length, `catálogo incompleto de clips (${[...clips.keys()]})`);
-check(Boolean(gun?.isMesh), 'malha P90 própria não preservada');
+check(Boolean(gun && (gun.isMesh || gun.children.some((child) => child.isMesh))), 'malha P90 própria não preservada');
 check(Boolean(mint && muzzle && sight), 'marcador baked e sockets ADS/muzzle ausentes');
 check(Boolean(arms && weapon && mag && bolt && mechanism && release1 && release2 && trigger), 'rig/mecanismos próprios incompletos');
 check(Boolean(handL && handR), 'duas mãos completas ausentes');

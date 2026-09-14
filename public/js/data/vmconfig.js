@@ -73,7 +73,7 @@ export const VM_WEAPON = {
   famas: W('ar', { baked: true, frame: 'family' }),
   uzi: W('smg', { baked: true, timing: 'gameplay',
     ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
-  p90: W('p90', { recoilScale: 1.6 }),
+  p90: W('p90', { baked: true, timing: 'gameplay', recoilScale: 1.6 }),
   svd: W('svd', { baked: true }),
   g3sg1: W('g3', { baked: true, frame: 'family' }),
   sks: W('marksman', { baked: true }),

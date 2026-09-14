@@ -35,6 +35,22 @@
       "sourceBranch": "private-generated/viewmodels/smg+public/models/weapons/uzi.glb",
       "sourceCommit": null,
       "rebuild": "tools/viewmodels/prep/smg-uzi-final.mjs"
+    },
+    "p90": {
+      "displayName": "P90 CHINELÃO",
+      "family": "p90",
+      "file": "viewmodels/p90/p90-baked-runtime.glb",
+      "sourceSha256": "bcc168ba41a001fb0e374b0500215f3f6ebd17aaf63480512a5c547fcf67139b",
+      "sourceBytes": 7855720,
+      "productSha256": "6627a15595ab0e815e5ab7f79ef1cbb0fb6741799b0dddd7f36cfc7898675f2e",
+      "productBytes": 7954068,
+      "sha256": "6627a15595ab0e815e5ab7f79ef1cbb0fb6741799b0dddd7f36cfc7898675f2e",
+      "bytes": 7954068,
+      "mechanism": "top-mag/dual-release/charger/mechanism/trigger",
+      "ready": false,
+      "sourceBranch": "private-generated/viewmodels/p90",
+      "sourceCommit": null,
+      "rebuild": "tools/viewmodels/prep/p90-final.mjs"
     }
   }
 }
