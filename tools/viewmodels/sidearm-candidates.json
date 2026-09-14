@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "base": "origin/main@5c2c5c93e32d0dcc96abbdc93e5ae9c767054fed",
+  "candidates": {
+    "pistol": {
+      "displayName": "PT-38",
+      "family": "pistol",
+      "file": "viewmodels/pistol/pistol-runtime.glb",
+      "sourceSha256": "edb77908eadffd90fa3c2152ac00386372bf3002d20fb2c4d324d15ddad17e05",
+      "sourceBytes": 3005712,
+      "productSha256": "04c126d93148f9cf0ffa07927f4d09cde2067d9abbc9ddcd25d3b811923fa3b8",
+      "productBytes": 3006796,
+      "sha256": "04c126d93148f9cf0ffa07927f4d09cde2067d9abbc9ddcd25d3b811923fa3b8",
+      "bytes": 3006796,
+      "mechanism": "detachable-mag/reciprocating-slider/trigger/cartridge",
+      "ready": false,
+      "sourceBranch": "glm/vm-controles-final",
+      "sourceCommit": "8b31f5dce5",
+      "rebuild": "tools/viewmodels/prep/pistols-pt38-final.mjs + optimize_paid_family.mjs"
+    }
+  }
+}

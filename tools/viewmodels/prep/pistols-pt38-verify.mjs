@@ -60,7 +60,8 @@ check(createHash('sha256').update(bytes).digest('hex') === cfg.sha256, 'SHA-256 
 check(bytes.length === cfg.bytes, 'tamanho diverge do manifesto');
 for (const name of required) check(clips.has(name), `clip ${name} ausente`);
 check(gltf.animations.length === required.length, `catálogo inesperado de clips (${[...clips.keys()]})`);
-check(Boolean(gun && gun.isSkinnedMesh), 'malha licenciada G18 não preservada');
+check(Boolean(gun && (gun.isSkinnedMesh || gun.getObjectByProperty('isSkinnedMesh', true))),
+  'malha licenciada G18 não preservada');
 check(Boolean(mint && muzzle && sight), 'marcador baked e sockets ADS/muzzle ausentes');
 check(Boolean(arms && weapon && mag && slider && trigger), 'rig/mecanismos próprios incompletos');
 check(Boolean(handL && handR), 'duas mãos completas ausentes');
