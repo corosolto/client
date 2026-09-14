@@ -252,7 +252,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
 | `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,395 |
-| `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,154 |
+| `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,192 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,407 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 811 |

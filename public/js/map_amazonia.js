@@ -16,6 +16,22 @@ import { indexLajesRaycast as indexStaticRaycast } from './lajes_raycast_index.j
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
+// AMZ-R3: medium 8×8 preserva a mata e corta só sombras/distância secundárias.
+// `?amzfoliageshadow=1` restaura o controle completo no avaliador por processo.
+export function resolveAmazoniaRenderProfile(settings = {}, query = QP) {
+  const quality = settings.quality || 'med';
+  const crowdedMedium = quality === 'med' && Number(settings.bots || 4) >= 8;
+  const forceFoliageShadows = query?.get?.('amzfoliageshadow') === '1';
+  return Object.freeze({
+    quality,
+    teamSize: Number(settings.bots || 4),
+    crowdedMedium,
+    foliageShadows: quality !== 'low' && (!crowdedMedium || forceFoliageShadows),
+    foliageCutMeters: crowdedMedium && !forceFoliageShadows ? { trees:16, palms:12, grass:8 } : null,
+    fullFoliageOverride: forceFoliageShadows,
+  });
+}
+
 export const HALF_X = 32, HALF_Z = 44;
 export const AMAZONIA_AMBIENCE = Object.freeze([...CORREGO_FAUNA_ASSETS, ...AMAZONIA_FAUNA_ASSETS]);   // + jacaré/capivara e o elenco novo (este mapa baixa)
 
@@ -199,6 +215,9 @@ if (arvoreNoAcesso) arvoreNoAcesso.z = 21.5;
 
 export function buildAmazonia(scene, T) {
   const colliders = [], occluders = [], pickups = [];
+  let storedSettings = {};
+  try { storedSettings = JSON.parse(localStorage.getItem('awpbr_settings') || '{}'); } catch (e) { /* storage bloqueado */ }
+  const renderProfile = resolveAmazoniaRenderProfile(storedSettings);
   const root = new THREE.Group();
   root.name = 'treta-na-amazonia';
   scene.add(root);
@@ -371,13 +390,23 @@ export function buildAmazonia(scene, T) {
   };
   const CS = createCabinShells({root,colliders,occluders,wallMaterial:matDeck,floorMaterial:matDeck});
   const CAIXAS_AGUA = [];
+  const PALAFITA_SUPPORTS = [];
   const estacao = (st) => {
     const [dx, dz] = st.d, [px, pz] = st.p;
     const W = (u, v) => [st.x + dx * u + px * v, st.z + dz * u + pz * v];
     const yaw = Math.atan2(-dz, dx);
     const casaChapa = (st.x === 14 && st.z === -9) || (st.x === -14 && st.z === 6);
     const cabin=CS.add(st,casaChapa);
-    if(hasProp('palafita_aberta_amazonia')&&!casaChapa) PB.add('palafita_aberta_amazonia',{x:st.x,z:st.z,y:PILA_GLB,targetH:6,ry:dx<0?0:Math.PI});
+    if(hasProp('palafita_aberta_amazonia')&&!casaChapa) {
+      PB.add('palafita_aberta_amazonia',{x:st.x,z:st.z,y:PILA_GLB,targetH:6,ry:dx<0?0:Math.PI});
+      // Quatro estacas ligam cada cabana ao chão medido pelo mapa, sem criar
+      // collider invisível; as travessas decorativas do molde ficam intactas.
+      for (const [u, v] of [[-2.55,-2.45],[2.55,-2.45],[-2.55,2.45],[2.55,2.45]]) {
+        const [x, z] = W(u, v), bottom = chaoBase(x, z), top = cabin.floorY;
+        pieceBox(matPoste, .26, top-bottom, .26, x, bottom+(top-bottom)/2, z, yaw);
+        PALAFITA_SUPPORTS.push({ station:[st.x,st.z], x, z, bottom, top });
+      }
+    }
     else {
       for(const [u,v] of [[-2.6,-2.6],[2.6,-2.6],[-2.6,2.6],[2.6,2.6]]){
         const [x,z]=W(u,v);addCyl(.16,cabin.floorY,matPoste,x,0,z,{seg:6});
@@ -626,7 +655,14 @@ export function buildAmazonia(scene, T) {
   /* ── MATA DENSA (molde arvore_mata.glb + palmeira_babacu.glb, kit Mint r2): fileira
       de árvores de verdade por cima da cerca — o horizonte vira floresta, não cidade.
       Instanciado no PropBatch (1 draw call por material) e com tronco-collider. */
-  const PBM = new PropBatch({ bucket: 18, tag: 'amazonia-bosque', shadowMin: 0.02, cast: !LOWQ });
+  const cuts = renderProfile.foliageCutMeters;
+  const PBM = new PropBatch({ bucket: 18, tag: 'amazonia-bosque', shadowMin: 0.02,
+    cast: renderProfile.foliageShadows, cortes: cuts ? {
+      arvore_mata_amazonia: cuts.trees,
+      palmeira_babacu_amazonia: cuts.palms,
+      grama_corrego_01: cuts.grass,
+      grama_corrego_02: cuts.grass,
+    } : undefined });
   const mataPerimetroBatch = new PropBatch({ bucket: 18, tag: 'amazonia-perimetro', cast: false });
   const mataFundoBatch = new PropBatch({ bucket: 18, tag: 'amazonia-fundo', cast: false });
   for (const a of MATA_FUNDO) mataFundoBatch.add('arvore_mata_amazonia', {x:a.x,z:a.z,targetH:a.s,ry:fract(a.z*.31)*6.283});
@@ -724,7 +760,7 @@ export function buildAmazonia(scene, T) {
       const a = i * Math.PI * 2 / 5 + x;
       const copa = new THREE.Mesh(new THREE.SphereGeometry(2.6 * s, 8, 6), matMata);
       copa.position.set(x + Math.cos(a) * 2.4 * s, (8.4 + Math.sin(i * 2.1) * 1.2) * s, z + Math.sin(a) * 2.4 * s);
-      copa.scale.y = 0.62; copa.castShadow = true; copa.receiveShadow = true;
+      copa.scale.y = 0.62; copa.castShadow = renderProfile.foliageShadows; copa.receiveShadow = true;
       root.add(copa); occluders.push(copa);
       colliders.push({ minX: copa.position.x - 2, maxX: copa.position.x + 2, minY: copa.position.y - 1.2, maxY: copa.position.y + 1.2, minZ: copa.position.z - 2, maxZ: copa.position.z + 2 });
     }
@@ -739,14 +775,14 @@ export function buildAmazonia(scene, T) {
   ];
   const moita = (x, z, s) => {
     const m = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55 * s, 1), matMata);
-    m.position.set(x, 0.3 * s, z); m.scale.y = 0.75; m.castShadow = true; m.receiveShadow = true;
+    m.position.set(x, 0.3 * s, z); m.scale.y = 0.75; m.castShadow = renderProfile.foliageShadows; m.receiveShadow = true;
     m.userData.nonSolidSurface = true;
     root.add(m);
   };
   let fi = 0;
   for (const [x, z] of [[-29, -20], [-28.2, -6], [-29.5, 10], [-28, 24], [29, -18], [28.3, -4], [29.4, 12], [28.1, 26], [-12, -32], [12, 33], [-11, 34], [11, -33], [-22, -27], [22, 28], [-20, 28], [19, -28]]) {
     const [id, h] = FX[fi++ % FX.length];
-    if (hasProp(id)) { const p = placeProp(id, { x, z, y: 0, targetH: h * (0.85 + (fi % 4) * 0.1), ry: fi * 1.7 }); if (p) { p.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; }); root.add(p); } }
+    if (hasProp(id)) { const p = placeProp(id, { x, z, y: 0, targetH: h * (0.85 + (fi % 4) * 0.1), ry: fi * 1.7 }); if (p) { p.traverse((o) => { if (o.isMesh) { o.userData.nonSolidSurface = true; o.castShadow = renderProfile.foliageShadows; } }); root.add(p); } }
     else moita(x + 1.2, z + 0.8, h);
     if (fi % 2 === 0) moita(x - 1.4, z - 0.6, h * 0.8);
   }
@@ -1137,6 +1173,8 @@ export function buildAmazonia(scene, T) {
       rotaLateralB: { nodes: rotaLateralBNodos, links: rotaLateralBLigacoes },
       perimetro: { arvores: MATA_ARVORES, palmeiras: MATA_PALMEIRAS, fundo: MATA_FUNDO },
       interior: { arvores: MATA_INTERIOR, palmeiras: BABACU_INTERIOR, subbosque: BABACU_INTERIOR.length + GRAMA_INTERIOR.length },
+      renderProfile,
+      palafitaSupports: PALAFITA_SUPPORTS,
     },
     sound: {
       loops: [
