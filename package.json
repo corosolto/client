@@ -314,7 +314,9 @@
     "capture:vm-p90-final": "node tools/viewmodels/prep/p90-final-capture.mjs",
     "eval:vm-shotgun-final": "node tools/viewmodels/prep/shotgun-final-verify.mjs",
     "eval:vm-shotgun-lifecycle": "node tools/eval/viewmodel-shotgun-lifecycle-check.mjs",
-    "capture:vm-shotgun-final": "node tools/viewmodels/prep/shotgun-final-capture.mjs"
+    "capture:vm-shotgun-final": "node tools/viewmodels/prep/shotgun-final-capture.mjs",
+    "eval:vm-lmg-final": "node tools/viewmodels/prep/lmg-final-verify.mjs",
+    "eval:vm-lmg-lifecycle": "node tools/eval/viewmodel-lmg-lifecycle-check.mjs"
   },
   "repository": {
     "type": "git",
