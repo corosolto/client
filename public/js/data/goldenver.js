@@ -9,7 +9,7 @@ export const GOLDEN_VER = Object.freeze({
   lmg: '56b356d7d6',
   m4: '6623909893',
   m92: 'f8feab9928',
-  md97: '95724b1bd3',
+  md97: '3bc6e57fff',
   mosin: 'e25aa12112',
   mp5: 'f543d986dd',
   p90: '82e8f948a0',
