@@ -14,6 +14,10 @@ globalThis.Image = class {
 };
 globalThis.self = globalThis;
 globalThis.ImageData = class { constructor(data, width, height) { Object.assign(this, { data, width, height }); } };
+const warn = console.warn;
+const error = console.error;
+console.warn = (...args) => !String(args[0] || '').startsWith("THREE.GLTFLoader: Couldn't load texture blob:") && warn(...args);
+console.error = (...args) => String(args[0] || '') !== "THREE.GLTFLoader: Couldn't load texture" && error(...args);
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const ASSET_ROOT = path.resolve(process.env.CSBRASIL_VM_ASSET_ROOT
@@ -41,6 +45,19 @@ const bytes = fs.readFileSync(file);
 const loader = new GLTFLoader();
 const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 const gltf = await loader.parseAsync(buffer, '');
+const trackMotion = (document, clipName, trackName) => {
+  const track = document.animations.find((clip) => clip.name === clipName)?.tracks
+    .find((candidate) => candidate.name === trackName);
+  if (!track) return 0;
+  const stride = track.values.length / track.times.length;
+  let maximum = 0;
+  for (let offset = stride; offset < track.values.length; offset += stride) {
+    let square = 0;
+    for (let lane = 0; lane < stride; lane += 1) square += (track.values[offset + lane] - track.values[lane]) ** 2;
+    maximum = Math.max(maximum, Math.sqrt(square));
+  }
+  return maximum;
+};
 const clips = new Map(gltf.animations.map((clip) => [clip.name, clip]));
 const required = ['idle', 'shoot', 'reload_tactical', 'reload_empty', 'inspect'];
 const scene = gltf.scene;
@@ -109,8 +126,23 @@ check(metrics.reload_empty?.magExcursion >= 0.18, 'reload_empty não remove o pe
 check(metrics.inspect?.gunExcursion >= 0.025, 'inspect sem leitura do conjunto');
 check(metrics.inspect?.gunEndpoint <= 0.005, 'inspect não fecha no idle');
 check(metrics.inspect?.rightGripDrift <= 0.01, 'inspect rompe contato da mão forte');
+check(trackMotion(gltf, 'reload_tactical', 'Mag.position') >= 18, 'reload_tactical sem trajetória própria do pente');
+check(trackMotion(gltf, 'reload_empty', 'Mag.position') >= 18, 'reload_empty sem trajetória própria do pente');
+check(trackMotion(gltf, 'shoot', 'Slider.position') >= 4, 'shoot sem curso próprio do slide');
+check(trackMotion(gltf, 'shoot', 'Trigger.quaternion') >= 0.15, 'shoot sem acionamento próprio do gatilho');
+check(trackMotion(gltf, 'inspect', 'RIG_FP_ARMS.position') >= 0.08, 'inspect sem movimento autorado do pacote');
 
 const mutants = [];
+const freezeTracks = (copy, clipPattern, trackPattern) => {
+  for (const clip of copy.animations.filter((candidate) => clipPattern.test(candidate.name))) {
+    for (const track of clip.tracks.filter((candidate) => trackPattern.test(candidate.name))) {
+      const stride = track.values.length / track.times.length;
+      for (let offset = stride; offset < track.values.length; offset += stride) {
+        for (let lane = 0; lane < stride; lane += 1) track.values[offset + lane] = track.values[lane];
+      }
+    }
+  }
+};
 async function mutant(name, mutate) {
   const copy = await loader.parseAsync(buffer.slice(0), '');
   mutate(copy);
@@ -119,6 +151,13 @@ async function mutant(name, mutate) {
   if (!copy.scene.getObjectByName('SOCKET_MINT_SIGHT')) local.push('sight ausente');
   if (!copy.scene.getObjectByName('GEO_WEAPON_PISTOL_SK_G18')) local.push('arma ausente');
   if (!copy.scene.getObjectByName('Mag')) local.push('pente ausente');
+  if (!copy.scene.getObjectByName('MINT_WEAPON_PISTOL')) local.push('marcador baked ausente');
+  if (!copy.cameras.some((camera) => camera.isPerspectiveCamera)) local.push('câmera ausente');
+  if (trackMotion(copy, 'reload_tactical', 'Mag.position') < 18) local.push('pente tático congelado');
+  if (trackMotion(copy, 'reload_empty', 'Mag.position') < 18) local.push('pente vazio congelado');
+  if (trackMotion(copy, 'shoot', 'Slider.position') < 4) local.push('slide congelado');
+  if (trackMotion(copy, 'shoot', 'Trigger.quaternion') < 0.15) local.push('gatilho congelado');
+  if (trackMotion(copy, 'inspect', 'RIG_FP_ARMS.position') < 0.08) local.push('inspect parado');
   mutants.push({ name, bitten: local.length > 0, firstFailure: local[0] || null });
   if (!local.length) failures.push(`mutante não mordeu: ${name}`);
 }
@@ -126,6 +165,12 @@ await mutant('sem-inspect', (copy) => { copy.animations = copy.animations.filter
 await mutant('sem-sight', (copy) => { copy.scene.getObjectByName('SOCKET_MINT_SIGHT')?.removeFromParent(); });
 await mutant('sem-arma', (copy) => { copy.scene.getObjectByName('GEO_WEAPON_PISTOL_SK_G18')?.removeFromParent(); });
 await mutant('sem-pente', (copy) => { copy.scene.getObjectByName('Mag')?.removeFromParent(); });
+await mutant('sem-marker-baked', (copy) => { copy.scene.getObjectByName('MINT_WEAPON_PISTOL')?.removeFromParent(); });
+await mutant('sem-camera', (copy) => { copy.cameras.length = 0; });
+await mutant('pente-congelado', (copy) => freezeTracks(copy, /^reload_/, /^Mag\./));
+await mutant('slide-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Slider\./));
+await mutant('gatilho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Trigger\./));
+await mutant('inspect-parado', (copy) => freezeTracks(copy, /^inspect$/, /^RIG_FP_ARMS\./));
 
 console.log(`VM_PISTOL_PT38=${JSON.stringify({ ok: failures.length === 0, file,
   bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mutants, failures })}`);
