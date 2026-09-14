@@ -167,8 +167,25 @@ const sourceClips = root.listAnimations().map((clip) => clip.getName()).sort();
 if (sourceClips.join(',') !== ['idle','reload_empty','reload_tactical'].sort().join(',')) {
   throw new Error(`clips da fonte divergiram: ${sourceClips.join(',')}`);
 }
+const idle = root.listAnimations().find((clip) => clip.getName() === 'idle');
+const elementSize = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
+const holdIdlePose = (clip, times, omit = new Set()) => {
+  for (const idleChannel of idle.listChannels()) {
+    const node = idleChannel.getTargetNode();
+    const targetPath = idleChannel.getTargetPath();
+    if (omit.has(`${node.getName()}:${targetPath}`)) continue;
+    const output = idleChannel.getSampler().getOutput();
+    const size = elementSize[output.getType()];
+    if (!size) throw new Error(`canal idle não suportado: ${node.getName()}:${targetPath}:${output.getType()}`);
+    const value = Array.from(output.getArray().slice(0, size));
+    channel(clip, node, targetPath, times, times.flatMap(() => value), output.getType());
+  }
+};
 const shootTimes = [0, 0.045, 0.09, 0.15, 0.22];
 const shoot = document.createAnimation('shoot');
+// Os clips próprios precisam ser autocontidos. Sem a pose completa do idle,
+// shoot/inspect herdavam a última recarga e podiam enquadrar a arma fora da tela.
+holdIdlePose(shoot, shootTimes, new Set([`${arms.getName()}:translation`]));
 channel(shoot, bolt, 'translation', shootTimes, [0.04,0.276,0, 0.01,0.276,0, -0.045,0.276,0, 0.012,0.276,0, 0.04,0.276,0], 'VEC3');
 channel(shoot, trigger, 'rotation', shootTimes, [0,0,-0.0871557,0.9961947, 0,0,-0.16,0.987, 0,0,-0.25,0.9682, 0,0,-0.14,0.9901, 0,0,-0.0871557,0.9961947], 'VEC4');
 channel(shoot, arms, 'translation', shootTimes, [0,0,0, 0.008,0.006,-0.004, 0.025,0.014,-0.010, 0.009,0.005,-0.004, 0,0,0], 'VEC3');
@@ -176,7 +193,10 @@ const empty = root.listAnimations().find((clip) => clip.getName() === 'reload_em
 channel(empty, bolt, 'translation', [0, 3.15, 3.42, 3.72, 4.34], [0.04,0.276,0, 0.04,0.276,0, -0.05,0.276,0, 0.0,0.276,0, 0.04,0.276,0], 'VEC3');
 const inspect = document.createAnimation('inspect');
 const inspectTimes = [0, 0.35, 0.75, 1.10, 1.45, 1.80];
-channel(inspect, arms, 'translation', inspectTimes, [0,0,0, 0.02,0.008,-0.006, 0.07,0.02,-0.014, 0.09,0.024,-0.012, 0.04,0.01,-0.006, 0,0,0], 'VEC3');
+holdIdlePose(inspect, inspectTimes, new Set([
+  `${arms.getName()}:translation`, `${arms.getName()}:rotation`,
+]));
+channel(inspect, arms, 'translation', inspectTimes, [0,0,0, 0.03,0.008,-0.006, 0.09,0.02,-0.014, 0.12,0.024,-0.012, 0.06,0.01,-0.006, 0,0,0], 'VEC3');
 channel(inspect, arms, 'rotation', inspectTimes, [0,0,0,1, 0,0,0.01,0.99995, 0,0,0.02,0.9998, 0,0,0.025,0.999687, 0,0,0.0125,0.999922, 0,0,0,1], 'VEC4');
 
 await fs.mkdir(outputDir, { recursive: true });

@@ -307,7 +307,8 @@
     "eval:noescolha": "node tools/eval/no-escolha-check.mjs",
     "eval:maqfraca": "node tools/eval/maquina-fraca-check.mjs",
     "eval:qualadapt": "node tools/eval/qualidade-adaptativa-check.mjs",
-    "capture:vm-smg-mp5": "node tools/viewmodels/prep/smg-mp5-capture.mjs"
+    "capture:vm-smg-mp5": "node tools/viewmodels/prep/smg-mp5-capture.mjs",
+    "capture:vm-smg-uzi": "node tools/viewmodels/prep/smg-uzi-capture.mjs"
   },
   "repository": {
     "type": "git",
