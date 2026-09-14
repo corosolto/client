@@ -31,6 +31,17 @@ aceite para a campanha: misturar famílias novas com armas antigas quebra a unif
 | Precisão | AWP, M400, Mosin, Remington 700, SVD, G3SG1, SKS |
 | Pesadas | LMG, shotgun |
 
+## Continuação de 14/09 — Deagle
+
+A Deagle foi fechada tecnicamente com produto DGL50 privado, duas mãos, slide/cão/pente
+próprios, cinco ações, ADS, fallback e lifecycle 30x. Vinte capturas reais em 3:2/16:9
+passaram sem erro fatal depois do novo enquadramento. O gate morde oito mutantes e o
+produto de 3.136.132 bytes permanece fora do Git. Família e arma seguem `ready:false`, a
+ativação global continua desligada e a revisão humana ainda é necessária. Recibo:
+[`VIEWMODEL-PISTOL-DEAGLE-ALPHA252-2026-09-14.md`](VIEWMODEL-PISTOL-DEAGLE-ALPHA252-2026-09-14.md).
+
+Próxima arma sequencial: revólver .38.
+
 Fonte derivável: `WEAPONS` em `public/js/data/weapons.js` e `WEAPON_IDS` em
 `public/js/weapons.js`. A contagem é regenerada pela documentação do projeto; este relatório
 registra a obrigação de cobertura, não substitui a fonte.
