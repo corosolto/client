@@ -117,6 +117,8 @@
     "eval:vm-pistol-deagle": "node tools/viewmodels/prep/pistols-deagle-verify.mjs",
     "eval:vm-pistol-deagle-lifecycle": "node tools/eval/viewmodel-pistol-deagle-lifecycle-check.mjs",
     "capture:vm-pistol-deagle": "node tools/viewmodels/prep/pistols-deagle-capture.mjs",
+    "eval:vm-pistol-revolver": "node tools/viewmodels/prep/pistols-revolver-verify.mjs",
+    "eval:vm-pistol-revolver-lifecycle": "node tools/eval/viewmodel-pistol-revolver-lifecycle-check.mjs",
     "cleanup:vm-precision": "node tools/viewmodels/prepare_precision_preview.mjs --cleanup",
     "capture:vm-precision": "node tools/eval/viewmodel-precision-capture.mjs",
     "capture:vm-dmr": "node tools/viewmodels/prep/dmr-capture.mjs",
