@@ -130,6 +130,41 @@ function autoBasis(entry, socket) {
   return new THREE.Quaternion().setFromRotationMatrix(_m);
 }
 
+// Corpo deformado no espaço do socket; peças móveis não definem a âncora.
+// BUG-VM-FECHAMENTO-RUBEN; AUD1A exercita skin, interleaved e reequipar.
+function bodyAnchor(entry, socket, boneName) {
+  entry.scene.updateWorldMatrix(true, false);
+  entry.scene.updateMatrixWorld(true);
+  const inverse = socket.matrixWorld.clone().invert();
+  const point = new THREE.Vector3(), joints = new THREE.Vector4(), weights = new THREE.Vector4();
+  let basis = null;
+  _packBox.makeEmpty();
+  for (const mesh of entry.weaponMeshes) {
+    if (!mesh.isSkinnedMesh || /^UTILITY_/.test(mesh.name)) continue;
+    const neutral = mesh.skeleton.bones.findIndex((bone) => bone.name === boneName);
+    if (neutral < 0) continue;
+    const attributes = mesh.geometry.attributes;
+    mesh.skeleton.update();
+    for (let i = 0; i < attributes.position.count; i++) {
+      joints.fromBufferAttribute(attributes.skinIndex, i);
+      weights.fromBufferAttribute(attributes.skinWeight, i);
+      let weight = 0;
+      for (let c = 0; c < 4; c++) if (joints.getComponent(c) === neutral) weight += weights.getComponent(c);
+      if (weight < 0.99) continue;
+      point.fromBufferAttribute(attributes.position, i);
+      mesh.applyBoneTransform(i, point);
+      _packBox.expandByPoint(point.applyMatrix4(mesh.matrixWorld).applyMatrix4(inverse));
+    }
+    if (!basis) {
+      const transform = inverse.clone().multiply(mesh.matrixWorld).multiply(mesh.bindMatrixInverse)
+        .multiply(mesh.skeleton.bones[neutral].matrixWorld).multiply(mesh.skeleton.boneInverses[neutral])
+        .multiply(mesh.bindMatrix);
+      basis = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(transform));
+    }
+  }
+  return _packBox.isEmpty() ? null : basis;
+}
+
 // Tier 2 (config-gated): separa triângulos dentro da caixa (gun-space, metros)
 // num mesh próprio parentado ao bone da arma do pack (Mag/Charge) — o resto fica.
 export function splitParts(entry, wrap, partsCfg) {
@@ -248,7 +283,8 @@ export function attachMintWeapon(entry, weaponId) {
   }
   if (mint.holder.parent !== socket) socket.add(mint.holder);
 
-  const basis = autoBasis(entry, socket);
+  const bodyBasis = weaponConfig.anchor ? bodyAnchor(entry, socket, weaponConfig.anchor) : null;
+  const basis = bodyBasis || autoBasis(entry, socket);
   socket.getWorldScale(_scale);
   const worldScale = Math.max(1e-6, (_scale.x + _scale.y + _scale.z) / 3);
   const mountRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(
@@ -286,15 +322,16 @@ export function attachMintWeapon(entry, weaponId) {
   mint.weaponId = weaponId;
   mint.active = wrap;
 
-  // Âncora DEFINITIVA: o centro da arma do PACK (oculta) — é onde as mãos
-  // autorais seguram de verdade. O centro do wrap Mint vai para o mesmo lugar.
+  // O centro da referência acompanha o socket; trim conserva o resíduo por arma.
   entry.scene.updateMatrixWorld(true);
-  _packBox.makeEmpty();
-  for (const mesh of entry.weaponMeshes) {
-    if (/^UTILITY_/.test(mesh.name) || !mesh.geometry) continue;
-    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
-    _meshBox.copy(mesh.geometry.boundingBox).applyMatrix4(mesh.matrixWorld);
-    _packBox.union(_meshBox);
+  if (!bodyBasis) {
+    _packBox.makeEmpty();
+    for (const mesh of entry.weaponMeshes) {
+      if (/^UTILITY_/.test(mesh.name) || !mesh.geometry) continue;
+      if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+      _meshBox.copy(mesh.geometry.boundingBox).applyMatrix4(mesh.matrixWorld);
+      _packBox.union(_meshBox);
+    }
   }
   if (!_packBox.isEmpty()) {
     const metrics = wrap.userData.metrics;
@@ -302,7 +339,7 @@ export function attachMintWeapon(entry, weaponId) {
     wrap.updateWorldMatrix(true, false);
     wrap.localToWorld(_mintCenter);
     _packBox.getCenter(_packCenter);
-    socket.worldToLocal(_packCenter);
+    if (!bodyBasis) socket.worldToLocal(_packCenter);
     socket.worldToLocal(_mintCenter);
     mint.holder.position.add(_packCenter).sub(_mintCenter);
   }
@@ -317,6 +354,20 @@ export function attachMintWeapon(entry, weaponId) {
     .applyQuaternion(mint.holder.quaternion)
     .divideScalar(worldScale);
   mint.holder.position.add(_mountOffset);
+  // Peças autoradas preservam a montagem completa antes de seguir o joint; AUD1A.
+  if (weaponConfig.namedParts && !wrap.userData.mintParts) {
+    entry.scene.updateMatrixWorld(true);
+    for (const spec of Object.values(weaponConfig.namedParts)) {
+      const part = wrap.getObjectByName(spec.mesh);
+      const bone = entry.scene.getObjectByName(spec.bone);
+      if (!part?.isMesh || !bone?.isBone) continue;
+      const relative = bone.matrixWorld.clone().invert().multiply(part.matrixWorld);
+      bone.add(part);
+      relative.decompose(part.position, part.quaternion, part.scale);
+      part.frustumCulled = false;
+      (wrap.userData.mintParts ||= []).push(part);
+    }
+  }
   return wrap;
 }
 

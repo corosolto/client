@@ -1181,6 +1181,31 @@ function runNode(script, env = {}, args = []) {
   }
 }
 
+{
+  let audit;
+  try {
+    audit = JSON.parse(execFileSync(process.execPath, [join(ROOT, 'tools/eval/authored-attach-check.mjs')], { encoding: 'utf8' }));
+  } catch (error) {
+    try { audit = JSON.parse(String(error.stdout)); }
+    catch { audit = { ok: false, checks: [{ name: 'execução do encaixe', error: String(error.message).slice(0, 160), ok: false }] }; }
+  }
+  const failed = audit.checks.filter((c) => !c.ok);
+  put('AUD1A', 'encaixe autorado usa corpo deformado e preserva montagem ao reequipar', audit.ok,
+    failed.length ? failed.map((c) => `${c.name}: ${c.error}`).join(' | ') : 'skin, interleaved, reattach e famílias de controle conferem');
+}
+
+{
+  let audit;
+  try {
+    audit = JSON.parse(execFileSync(process.execPath, [join(ROOT, 'tools/eval/authored-transition-check.mjs')], { encoding: 'utf8' }));
+  } catch (error) {
+    try { audit = JSON.parse(String(error.stdout)); }
+    catch { audit = { ok: false, checks: [{ name: 'execução das transições', ok: false }] }; }
+  }
+  put('AUD1B', 'transições autoradas terminam com pose Idle real', audit.ok,
+    audit.checks.filter(c => !c.ok).map(c => c.name).join(' | ') || 'fila, pose visível, oculta e utilitária conferem');
+}
+
 /* ── 2d. VM17 — O ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA ────────────────────────
    POR QUE ESTA INVARIANTE NASCEU JUNTO COM O PITCH: um crítico anterior provou que o ADS
    não tem invariante NENHUMA — mutar `this._adsPose['pistol']` passava 20/22 verde — e que

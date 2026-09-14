@@ -312,7 +312,7 @@
     "skills:check": "node tools/sync-skills.mjs --check",
     "eval:propsuv1": "node tools/eval/props-uv1-check.mjs",
     "vm:goldenver": "node tools/viewmodels/gen-goldenver.mjs",
-    "eval:vm-cache": "node tools/eval/vm-cache-golden.mjs"
+    "eval:vm-cache": "node tools/eval/vm-cache-golden.mjs && node tools/eval/vm-cache-assets.mjs"
   },
   "repository": {
     "type": "git",

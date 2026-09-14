@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 import { GOLDEN_VER } from './data/goldenver.js';
+import { FAMILY_VER } from './data/weaponver.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
@@ -19,7 +20,7 @@ const CATALOG_VERSION = 'paid-aaa-3';
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
-    .map((family) => [family, `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${CATALOG_VERSION}`]),
+    .map((family) => [family, `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${FAMILY_VER[family] || CATALOG_VERSION}`]),
 ));
 
 // ?vmfonte=goldsrc: viewmodel dos moldes CS 1.6 (CC0, FONTE.md) com a arma
@@ -549,7 +550,7 @@ export class AuthoredViewModels {
     this._ctx = ctx;
     if (this.utility) {
       const utility = this.utility;
-      utility.entry.mixer.update(step);
+      this._stepEntry(utility.entry, step);
       utility.elapsed += step;
       if (!utility.released && utility.elapsed >= utility.releaseAt) {
         utility.released = true;
@@ -575,10 +576,10 @@ export class AuthoredViewModels {
     for (const entry of this.entries.values()) {
       if (entry === active && entry.mount.visible) continue;
       // Fila/ação pendente termina mesmo com o mount escondido — sem pose presa.
-      if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) entry.mixer.update(step);
+      if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) this._stepEntry(entry, step);
     }
     if (!active?.mount.visible) return;
-    active.mixer.update(step);
+    this._stepEntry(active, step);
     this._time += step;
     // Dono único do transform do mount: base ∘ arco de draw ∘ recuo (ADS: M6).
     let drawY = 0;
@@ -826,13 +827,30 @@ export class AuthoredViewModels {
     return this._play(entry, names[0], { timeScale, fade: 0.02, preserveQueue: true });
   }
 
+  _stepEntry(entry, step) {
+    entry.updatingMixer = true;
+    try {
+      entry.mixer.update(step);
+    } finally {
+      entry.updatingMixer = false;
+    }
+    const finished = entry.finishedAction;
+    entry.finishedAction = null;
+    if (finished && finished === entry.action) this._continue(entry);
+  }
+
   _continue(entry) {
+    // Trocar ações durante AnimationMixer.update corrompe os bindings; ver AUD1B.
+    if (entry.updatingMixer) {
+      entry.finishedAction = entry.action;
+      return;
+    }
     // Sem guarda de visibilidade: fila encalhada com mount oculto era pose congelada.
     const next = entry.queue.shift();
     if (next) this._play(entry, next.name, { timeScale: next.timeScale, preserveQueue: true });
     // fim de clipe volta ao idle com FADE: o último frame não fecha nos
     // twists do braço e o snap seco era um pop no fim de toda recarga.
-    else this._idle(entry, 0.15);
+    else this._idle(entry, entry.mount.visible ? 0.15 : 0);
   }
 
   _setupGeneralMotion(entry, general) {
@@ -847,6 +865,32 @@ export class AuthoredViewModels {
     }
   }
 
+  _goldenParts(entry, clip) {
+    if (!entry.weaponBoneNames) {
+      entry.weaponBoneNames = new Set();
+      const indices = new THREE.Vector4(), weights = new THREE.Vector4();
+      for (const mesh of entry.weaponMeshes || []) {
+        if (!mesh.isSkinnedMesh) continue;
+        const attributes = mesh.geometry.attributes;
+        for (let i = 0; i < attributes.skinIndex.count; i++) {
+          indices.fromBufferAttribute(attributes.skinIndex, i);
+          weights.fromBufferAttribute(attributes.skinWeight, i);
+          for (let k = 0; k < 4; k++) if (weights.getComponent(k) > 0)
+            entry.weaponBoneNames.add(mesh.skeleton.bones[indices.getComponent(k)].name);
+        }
+      }
+    }
+    entry.splitClips ||= new Map();
+    if (!entry.splitClips.has(clip)) {
+      const rigid = track => entry.weaponBoneNames.has(THREE.PropertyBinding.parseTrackName(track.name).nodeName);
+      entry.splitClips.set(clip, {
+        arms: new THREE.AnimationClip(clip.name, clip.duration, clip.tracks.filter(track => !rigid(track))),
+        weapon: new THREE.AnimationClip(`${clip.name}-weapon`, clip.duration, clip.tracks.filter(rigid)),
+      });
+    }
+    return entry.splitClips.get(clip);
+  }
+
   _idle(entry, fade = 0) {
     const clip = entry.clips.get('idle');
     if (!clip) return false;
@@ -855,13 +899,30 @@ export class AuthoredViewModels {
     const previous = entry.action;
     const action = entry.mixer.clipAction(clip);
     if (entry.golden) {
-      entry.mixer.stopAllAction();
+      const blend = fade > 0 && previous && previous !== action;
+      if (blend && entry.weaponMeshes?.length) {
+        const idle = this._goldenParts(entry, clip), outgoing = this._goldenParts(entry, previous.getClip());
+        const time = previous.time;
+        entry.mixer.stopAllAction();
+        const held = entry.mixer.clipAction(outgoing.arms).reset();
+        held.time = time;
+        held.paused = true;
+        held.play().fadeOut(fade);
+        entry.mixer.clipAction(idle.weapon).reset().setLoop(THREE.LoopRepeat, Infinity).play();
+        const arms = entry.mixer.clipAction(idle.arms).reset().setLoop(THREE.LoopRepeat, Infinity);
+        arms.play().fadeIn(fade);
+        entry.mixer.update(0);
+        entry.action = arms;
+        return true;
+      }
+      if (!blend) entry.mixer.stopAllAction();
       action.reset().setLoop(THREE.LoopRepeat, Infinity);
       action.enabled = true;
       action.paused = false;
       action.setEffectiveWeight(1);
       action.setEffectiveTimeScale(1);
       action.play();
+      if (blend) action.crossFadeFrom(previous, fade, false);
       entry.mixer.update(0);
       entry.action = action;
       return true;

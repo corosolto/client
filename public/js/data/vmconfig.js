@@ -49,9 +49,12 @@ export const VM_WEAPON = {
   m4: W('ar', { golden: true }),
   mp5: W('mp5', { golden: true }),
   shotgun: W('shotgun'),
-  // O pack autora a Deagle com 23–27° de pitch (hand cannon); no nosso mount o
-  // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
-  deagle: W('deagle', { recoilScale: 0.45, trim: { pos: [0, 0, 0], rotDeg: [14, 0, 0], scale: 1 } }),
+  deagle: W('deagle', { recoilScale: 0.45, anchor: 'neutral_bone', namedParts: {
+    magazine: { mesh: 'GEO-deagle-magazine', bone: 'Mag' },
+    slide: { mesh: 'GEO-deagle-slide', bone: 'Slider' },
+    slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
+    hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
+  } }),
   // NÃO marcar `golden` sem calibrar a escala: o piloto entra 144× maior.
   // Medição e antes/depois em KNOWN-BUGS.md, BUG-VM-ESCALA-PISTOLA.
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
@@ -60,7 +63,27 @@ export const VM_WEAPON = {
   m92: W('ak', { golden: true, trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   akm: W('ak', { golden: true, parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
   g3: W('g3'),
-  revolver38: W('revolver'),
+  revolver38: W('revolver', { anchor: 'neutral_bone', namedParts: {
+    cartridge0: { mesh: 'GEO-Cartridge0', bone: 'Cartridge0' },
+    cartridge0_Case: { mesh: 'GEO-Cartridge0_Case', bone: 'Cartridge0' },
+    cartridge1: { mesh: 'GEO-Cartridge1', bone: 'Cartridge1' },
+    cartridge1_Case: { mesh: 'GEO-Cartridge1_Case', bone: 'Cartridge1' },
+    cartridge2: { mesh: 'GEO-Cartridge2', bone: 'Cartridge2' },
+    cartridge2_Case: { mesh: 'GEO-Cartridge2_Case', bone: 'Cartridge2' },
+    cartridge3: { mesh: 'GEO-Cartridge3', bone: 'Cartridge3' },
+    cartridge3_Case: { mesh: 'GEO-Cartridge3_Case', bone: 'Cartridge3' },
+    cartridge4: { mesh: 'GEO-Cartridge4', bone: 'Cartridge4' },
+    cartridge4_Case: { mesh: 'GEO-Cartridge4_Case', bone: 'Cartridge4' },
+    cartridge5: { mesh: 'GEO-Cartridge5', bone: 'Cartridge5' },
+    cartridge5_Case: { mesh: 'GEO-Cartridge5_Case', bone: 'Cartridge5' },
+    drum: { mesh: 'GEO-Drum', bone: 'Drum' },
+    drumCore: { mesh: 'GEO-Drum_InnerCore', bone: 'Drum' },
+    ejector: { mesh: 'GEO-Ejector', bone: 'Ejector' },
+    ejectorShaft: { mesh: 'GEO-Ejector_Shaft', bone: 'Ejector' },
+    crane: { mesh: 'GEO-CraneArm_Link', bone: 'CraneArm' },
+    hammer: { mesh: 'GEO-Hammer', bone: 'Hammer' },
+    trigger: { mesh: 'GEO-Trigger', bone: 'Trigger' },
+  } }),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
   md97: W('ar', { golden: true, recoilScale: 1.8 }),
