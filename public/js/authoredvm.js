@@ -212,7 +212,9 @@ const FAMILY_FRAME = Object.freeze({
   // o wrap montado em runtime e deixava o punho abaixo do quadro.
   deagle:  { x: 0.089, y: 0.000, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
   smg:     { x: 0.206, y: -0.141, z: -0.462, fov: 84, rotDeg: [15.4, 6.0, 0] },
-  p90:     { x: 0.075, y: -0.02, z: -0.141, fov: 84, rotDeg: [0, 0, 0] },
+  // O pacote P90 nasceu 41,56 graus fora do eixo do gabarito. A rolagem final
+  // preserva arma e mãos juntas e devolve a silhueta horizontal ao ombro.
+  p90:     { x: 0.300, y: -0.200, z: -0.600, fov: 84, rotDeg: [15.4, 6.0, -60] },
   // Yaw 15° aprovado em 05/09: VIEWMODEL-ASTRA-PISTOL-HANDOFF.md.
   pistol:  { x: 0.100, y: -0.100, z: -0.220, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 },
   shotgun: { x: 0.057, y: -0.114, z: -0.159, fov: 84, rotDeg: [-8.9, 0, 0] },

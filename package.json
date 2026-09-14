@@ -310,7 +310,8 @@
     "capture:vm-smg-mp5": "node tools/viewmodels/prep/smg-mp5-capture.mjs",
     "capture:vm-smg-uzi": "node tools/viewmodels/prep/smg-uzi-capture.mjs",
     "eval:vm-p90-final": "node tools/viewmodels/prep/p90-final-verify.mjs",
-    "eval:vm-p90-lifecycle": "node tools/eval/viewmodel-p90-lifecycle-check.mjs"
+    "eval:vm-p90-lifecycle": "node tools/eval/viewmodel-p90-lifecycle-check.mjs",
+    "capture:vm-p90-final": "node tools/viewmodels/prep/p90-final-capture.mjs"
   },
   "repository": {
     "type": "git",
