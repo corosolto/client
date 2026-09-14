@@ -1,5 +1,22 @@
 {
   "schemaVersion": 1,
   "base": "origin/main@5c2c5c93e32d0dcc96abbdc93e5ae9c767054fed",
-  "candidates": {}
+  "candidates": {
+    "mp5": {
+      "displayName": "MP5 BATIDÃO",
+      "family": "mp5",
+      "file": "viewmodels/mp5/mp5-runtime.glb",
+      "sourceSha256": "4d08736e615e634b9255f7cb61d8e5d5afdcaedb0d509cd0e56296fe5e968e77",
+      "sourceBytes": 3726964,
+      "productSha256": "2984096b47a1b2a6fec6523e52c8a67b3eb94a707139397be7a7417d8691c489",
+      "productBytes": 3729680,
+      "sha256": "2984096b47a1b2a6fec6523e52c8a67b3eb94a707139397be7a7417d8691c489",
+      "bytes": 3729680,
+      "mechanism": "detachable-mag/bolt/charging-handle/release/trigger",
+      "ready": false,
+      "sourceBranch": "private-generated/viewmodels/mp5",
+      "sourceCommit": null,
+      "rebuild": "tools/viewmodels/prep/smg-mp5-final.mjs"
+    }
+  }
 }
