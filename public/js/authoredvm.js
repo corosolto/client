@@ -208,7 +208,9 @@ const FAMILY_FRAME = Object.freeze({
   ak:      { x: 0.112, y: -0.068, z: -0.199, fov: 84, rotDeg: [0.6, -0.1, -5] },
   ar:      { x: 0.096, y: -0.129, z: -0.198, fov: 84, rotDeg: [-8.0, 0.9, 0] },
   mp5:     { x: 0.091, y: -0.187, z: -0.204, fov: 84, rotDeg: [-10.1, 0, 0] },
-  deagle:  { x: 0.089, y: -0.152, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
+  // O DGL50 final já traz a arma assada no rig. A calibração antiga incluía
+  // o wrap montado em runtime e deixava o punho abaixo do quadro.
+  deagle:  { x: 0.089, y: 0.000, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
   smg:     { x: 0.206, y: -0.141, z: -0.462, fov: 84, rotDeg: [15.4, 6.0, 0] },
   p90:     { x: 0.075, y: -0.02, z: -0.141, fov: 84, rotDeg: [0, 0, 0] },
   // Yaw 15° aprovado em 05/09: VIEWMODEL-ASTRA-PISTOL-HANDOFF.md.
