@@ -17,6 +17,22 @@
       "sourceBranch": "glm/vm-controles-final",
       "sourceCommit": "8b31f5dce5",
       "rebuild": "tools/viewmodels/prep/pistols-pt38-final.mjs + optimize_paid_family.mjs"
+    },
+    "deagle": {
+      "displayName": "DEAGLE MARTELO",
+      "family": "deagle",
+      "file": "viewmodels/deagle/deagle-runtime.glb",
+      "sourceSha256": "9716c72881076b8f1cddbdb72d35232a89fcc2c81538f95885156d2bcb0a7ffc",
+      "sourceBytes": 3135164,
+      "productSha256": "85c38a13dd9a6b218768bd13bddc4813826481ace6f438cb17a338538192cf1d",
+      "productBytes": 3136132,
+      "sha256": "85c38a13dd9a6b218768bd13bddc4813826481ace6f438cb17a338538192cf1d",
+      "bytes": 3136132,
+      "mechanism": "detachable-mag/reciprocating-slider/trigger/hammer",
+      "ready": false,
+      "sourceBranch": "claude/vm-unificado",
+      "sourceCommit": "012add17b",
+      "rebuild": "tools/viewmodels/prep/pistols-deagle-final.mjs"
     }
   }
 }

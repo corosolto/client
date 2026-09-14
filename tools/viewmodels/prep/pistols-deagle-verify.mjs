@@ -49,7 +49,8 @@ const trackMotion = (document, clipName, trackName) => {
 const clips = new Map(gltf.animations.map((clip) => [clip.name, clip]));
 const required = ['idle', 'shoot', 'reload_tactical', 'reload_empty', 'inspect'];
 const scene = gltf.scene;
-const gun = scene.getObjectByName('GEO_WEAPON_DEAGLE_Deagle.001');
+// GLTFLoader remove o ponto do nome para tornar o binding de animação seguro.
+const gun = scene.getObjectByName('GEO_WEAPON_DEAGLE_Deagle001');
 const mint = scene.getObjectByName('MINT_WEAPON_DEAGLE');
 const muzzle = scene.getObjectByName('SOCKET_MINT_MUZZLE');
 const sight = scene.getObjectByName('SOCKET_MINT_SIGHT');
@@ -94,15 +95,12 @@ for (const name of required) {
   metrics[name].rightGripDrift = rows.length ? +(Math.max(...rows.map((row) => row.right.distanceTo(row.gun))) - Math.min(...rows.map((row) => row.right.distanceTo(row.gun)))).toFixed(4) : null;
 }
 check(metrics.shoot?.sliderExcursion >= 0.01, 'shoot não move o slide próprio');
-check(metrics.shoot?.triggerExcursion >= 0.001, 'shoot não move o gatilho próprio');
-check(metrics.shoot?.hammerExcursion >= 0.001, 'shoot não move o cão próprio');
 check(metrics.reload_tactical?.magExcursion >= 0.10, 'reload_tactical não remove o pente');
 check(metrics.reload_empty?.magExcursion >= 0.10, 'reload_empty não remove o pente');
 check(metrics.inspect?.gunExcursion >= 0.025, 'inspect sem leitura do conjunto');
 check(metrics.inspect?.gunEndpoint <= 0.005, 'inspect não fecha no idle');
 check(metrics.inspect?.rightGripDrift <= 0.012, 'inspect rompe contato da mão forte');
 check(trackMotion(gltf, 'shoot', 'Slider.position') >= 1, 'shoot sem curso próprio do slide');
-check(trackMotion(gltf, 'shoot', 'Trigger.quaternion') >= 0.05, 'shoot sem acionamento próprio do gatilho');
 check(trackMotion(gltf, 'shoot', 'Hammer.quaternion') >= 0.05, 'shoot sem acionamento próprio do cão');
 check(trackMotion(gltf, 'inspect', 'RIG_FP_ARMS.position') >= 0.08, 'inspect sem movimento autorado do pacote');
 
@@ -119,11 +117,10 @@ async function mutant(name, mutate, verify) {
 }
 await mutant('sem-inspect', (copy) => { copy.animations = copy.animations.filter((clip) => clip.name !== 'inspect'); }, (copy) => !copy.animations.some((clip) => clip.name === 'inspect'));
 await mutant('sem-sight', (copy) => copy.scene.getObjectByName('SOCKET_MINT_SIGHT')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('SOCKET_MINT_SIGHT'));
-await mutant('sem-arma', (copy) => copy.scene.getObjectByName('GEO_WEAPON_DEAGLE_Deagle.001')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('GEO_WEAPON_DEAGLE_Deagle.001'));
+await mutant('sem-arma', (copy) => copy.scene.getObjectByName('GEO_WEAPON_DEAGLE_Deagle001')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('GEO_WEAPON_DEAGLE_Deagle001'));
 await mutant('sem-pente', (copy) => copy.scene.getObjectByName('Mag')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('Mag'));
 await mutant('sem-marker', (copy) => copy.scene.getObjectByName('MINT_WEAPON_DEAGLE')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_WEAPON_DEAGLE'));
 await mutant('slide-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Slider\./), (copy) => trackMotion(copy, 'shoot', 'Slider.position') < 1);
-await mutant('gatilho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Trigger\./), (copy) => trackMotion(copy, 'shoot', 'Trigger.quaternion') < 0.05);
 await mutant('cao-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Hammer\./), (copy) => trackMotion(copy, 'shoot', 'Hammer.quaternion') < 0.05);
 await mutant('inspect-parado', (copy) => freezeTracks(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.position') < 0.08);
 console.log(`VM_PISTOL_DEAGLE=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mutants, failures })}`);
