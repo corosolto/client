@@ -308,7 +308,9 @@
     "eval:maqfraca": "node tools/eval/maquina-fraca-check.mjs",
     "eval:qualadapt": "node tools/eval/qualidade-adaptativa-check.mjs",
     "capture:vm-smg-mp5": "node tools/viewmodels/prep/smg-mp5-capture.mjs",
-    "capture:vm-smg-uzi": "node tools/viewmodels/prep/smg-uzi-capture.mjs"
+    "capture:vm-smg-uzi": "node tools/viewmodels/prep/smg-uzi-capture.mjs",
+    "eval:vm-p90-final": "node tools/viewmodels/prep/p90-final-verify.mjs",
+    "eval:vm-p90-lifecycle": "node tools/eval/viewmodel-p90-lifecycle-check.mjs"
   },
   "repository": {
     "type": "git",
