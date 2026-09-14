@@ -12,15 +12,20 @@
 > entrada e o do relatório final estão em
 > `.claude/skills/bug-hunt/references/gabaritos.md`.
 
-**Quality gate na data deste arquivo** (`npm run check`, com `eval:vm` antes das invariantes):
+**Última execução local de invariantes — 14/09/2026, lane vm-unificado**
+(`npm run eval:vm` antes de `npm run eval:invariants`; não equivale ao `npm run check` completo):
 
 ```
-CRÍTICAS: 42/55 passam  ← nenhuma falha nova
-DÍVIDAS:  VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19, BOT8, CHR1, CHR3,
-          CHR4, CTF1 (KNOWN-RED.json — não reprovam, mas continuam devidas)
-AVISOS:   VM15, BOT2, CHR5B fora do alvo
-PULADAS:  4 (exigem browser ou arnês ausente)
+CRÍTICAS: 40/59 passam ← VM5, VM18b, CHR8, MAP2B, MAT2, TEX1 reprovam
+DÍVIDAS: VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19, BOT8, CHR1, CHR3, CHR4, CTF1
+AVISOS: VM15, BOT2, BOT3, CHR5B, CENA3 fora do alvo
+PULADAS: 8 (exigem browser ou arnês ausente)
 ```
+
+Log local: `artifacts/viewmodels/fechamento-ruben/eval-invariants-transitions.log`.
+AUD1, AUD1A e AUD1B passaram. As falhas do placar não foram dispensadas nem
+classificadas como regressões desta rodada sem comparação de baseline.
+
 
 Colado de uma execução real de **17/08** (`npm run check`, que roda `eval:vm` antes das
 invariantes — ver BUG-02). **Zero vermelhas reprovando**: as 13 antigas viraram dívida
@@ -6985,6 +6990,42 @@ comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 
 Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.
 
+### BUG-VM-FECHAMENTO-RUBEN — arsenal reprovado pelo dono, retomada 13/09/2026
+
+**ABERTO.** Ruben autorizou prosseguir até terminar. Esta lista tem precedência
+sobre aprovações antigas. O registro de execução, artefatos e próximo passo está em
+[`VM-DIAGNOSTICO-FECHAMENTO.md`](docs/reports/VM-DIAGNOSTICO-FECHAMENTO.md).
+
+| ID do jogo | Relato literal do dono | Aceite |
+|---|---|---|
+| `md97` | “d97 sem pente” | Carregador presente, encaixado e com recarga correspondente. |
+| `m92` (Zastava) | “zastava tira um pouco ainda do cano” | Recarga não move nenhuma parte do cano. |
+| `deagle` | “deagle apontando pra cima” | Enquadramento e orientação conferidos no jogo, inclusive em transições. |
+| `m4` | “m4a1 tira o pente mas a parte de cima do pente fica” | Carregador sai inteiro; distinguir visualmente seu topo do poço fixo da arma. |
+| `scar` | “Scar sai parte do cano e fica parte do pente quando recarrega” | Carregador completo e cano intacto durante a ação. |
+| `sks` | “sks mao fica na frente da arma e recarrega com objeto no meio do ar” | Mão de apoio no guarda-mão; munição manipulada em contato e mecanismo coerente. |
+| `revolver38` | “revolver recarrega com objeto no meio do ar” | Recarga do tambor com munição em contato, sem objeto solto. |
+| `svd` | “SVD recarrega ok, mas mao fica por cima do cano da frente” | Preservar a recarga aceita e corrigir mão de apoio. |
+| `uzi` | “Uzi tira so a parte debaixo do pente e fica parte do pente no recarregar” | Retirar o carregador inteiro sem retirar a empunhadura. |
+| `mp5` | “Mp5 sem pente na frente e com a mao por cima do cano da frente precisava re-rigar a arma” | Carregador presente e mãos rigadas para esta arma. |
+| `shotgun` (M3) | “M3 arma apontado pro alto e segunda mao nao segura o cano na frente” | Orientação coerente e mão de apoio segurando a região dianteira em idle/tiro. |
+
+Defeito reproduzido e corrigido no instrumento de captura: `MEDIR` agora usa o
+registro de malhas de mão autoradas; `charging_handle` deixa de ser contado como
+mão. A mutação `mao-nome` reintroduz e detecta o falso positivo. Medição de contato também
+precisa distinguir mão forte e apoio e as fases em que cada uma deve segurar a arma.
+Não aceitar fechamento por presença de malha ou distância mínima global.
+
+Encaixe Deagle/revólver: o centro era calculado antes do skin e recalibrado contra
+a câmera ao reequipar. `bodyAnchor` mede o corpo influenciado por `neutral_bone`
+no espaço do socket. Atualiza `SkinnedMesh.updateMatrixWorld` antes de deformar,
+pois `updateWorldMatrix` sozinho deixa a matriz inversa de bind antiga. `AUD1A`
+exercita o attach real, atributos interleaved e o primeiro attach sem render prévio;
+`node tools/eval/authored-attach-check.mjs --mutantes` comprova as falhas detectadas.
+A caixa no socket preserva a montagem quando o pai gira; caixa mundial convertida
+após calcular seu centro não tem essa propriedade. A revisão visual e os mecanismos
+de recarga ainda não estão encerrados.
+
 ### BUG-VM-ESCALA-PISTOLA — o piloto hires da pistola entra 144× maior, 11/09/2026
 
 Marcar `golden: true` na pistola a tira do caminho de família e a manda para o
@@ -7093,3 +7134,19 @@ registrado bate com os bytes reais.
 velho, e eu afirmei três vezes que o conserto estava publicado. Estava — só não
 chegava.
 
+
+## Viewmodel autorado retorna estado Idle com esqueleto preso
+
+Reprodução: `node tools/eval/authored-transition-check.mjs` antes da correção,
+com `AuthoredViewModels.update` real e fila de clipes. `finished` disparava durante
+`AnimationMixer.update`, e `_continue` trocava/desativava ações reentrantemente.
+O estado passava a Idle, mas o binding conservava a posição final da recarga.
+Isso foi visto na SVD candidata: apoio correto antes, mão antiga acima do cano
+após recarregar. Evidência local em
+`artifacts/viewmodels/fechamento-ruben/transitions-before.json`.
+
+Correção em `authoredvm.js`: `_stepEntry` resolve fim de ação depois do mixer;
+Idle de arma oculta não inicia fade que deixaria de avançar. AUD1B verifica pose,
+fila e caminhos visível/oculto/utilitário. Mutação `--mutantes` desfaz o adiamento
+e torna a régua vermelha. Captura real e revisão independente em andamento no
+[ledger da frente](docs/reports/VM-DIAGNOSTICO-FECHAMENTO.md).

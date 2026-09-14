@@ -1,5 +1,8 @@
 # Terminar os viewmodels do arsenal — CORO SOLTO / CS BRASIL
 
+Retomada auditada: [diagnóstico e continuidade do fechamento](docs/reports/VM-DIAGNOSTICO-FECHAMENTO.md).
+Leia antes de executar a fila abaixo: registra verificação atual e contradições ainda não resolvidas.
+
 Você assume uma frente com duas semanas de trabalho do dono. Leia tudo antes de
 tocar em qualquer coisa. O que está escrito aqui foi pago com erro.
 
