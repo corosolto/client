@@ -15,7 +15,7 @@ export const GOLDEN_VER = Object.freeze({
   p90: '82e8f948a0',
   pistol: '5089f19efa',
   scar: '1a5b5dde2d',
-  sks: '407f44d609',
+  sks: '6cf87e45ba',
   svd: '5f97bcdb8b',
   uzi: '798dfdf012',
 });
