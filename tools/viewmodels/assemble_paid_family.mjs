@@ -415,6 +415,26 @@ function mergeSamples(document, clipName, samples, targetsByName, duration) {
   return animation;
 }
 
+function idleSample(document, targets, targetsByName, duration) {
+  const idle = document.getRoot().listAnimations().find(a => a.getName() === 'idle');
+  if (!idle) throw new Error('weapon-only fire requires the authored idle pose');
+  const tracks = new Map();
+  for (const name of targets) {
+    const node = targetsByName.get(name), track = {};
+    for (const property of ['translation', 'rotation', 'scale']) {
+      const channel = idle.listChannels().find(c => c.getTargetNode() === node && c.getTargetPath() === property);
+      const sampler = channel?.getSampler();
+      if (sampler?.getInterpolation() === 'CUBICSPLINE') throw new Error('idle spline requires explicit sampling');
+      const width = property === 'rotation' ? 4 : 3;
+      const value = sampler ? Array.from(sampler.getOutput().getArray().slice(0, width))
+        : property === 'translation' ? node.getTranslation() : property === 'rotation' ? node.getRotation() : node.getScale();
+      track[property] = [...value, ...value];
+    }
+    tracks.set(name, track);
+  }
+  return { duration, times: new Float32Array([0, duration]), tracks };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const manifest = JSON.parse(await fs.readFile(path.resolve(args.manifest), 'utf8'));
@@ -458,20 +478,21 @@ async function main() {
   for (const [clipName, tests] of CLIP_PATTERNS) {
     const characterFbx = await findClip(path.join(familyRoot, 'Character'), tests);
     const weaponFbx = await findClip(path.join(familyRoot, 'Weapon'), tests);
-    // Lado da arma é opcional (ex.: Inspect só existe para os braços — a arma
-    // inteira já viaja no ik_hand_gun); sem o lado dos braços não há clipe.
-    if (!characterFbx) continue;
-    const characterGlb = path.join(rawRoot, `${clipName}-arms.glb`);
-    convertFbx(characterFbx, characterGlb);
-    await stripRenderables(characterGlb);
-    const character = await loadAnimation(characterGlb);
-    const armsSample = sampleTargets(character, armsTargets, { foldRoot: true, targetNodes: targetsByName });
-    if (family.supportGrip && clipName === family.supportGrip.sourceClip) {
+    if (!characterFbx && !(clipName === 'shoot' && weaponFbx)) continue;
+    let armsSample = null;
+    if (characterFbx) {
+      const characterGlb = path.join(rawRoot, `${clipName}-arms.glb`);
+      convertFbx(characterFbx, characterGlb);
+      await stripRenderables(characterGlb);
+      const character = await loadAnimation(characterGlb);
+      armsSample = sampleTargets(character, armsTargets, { foldRoot: true, targetNodes: targetsByName });
+    }
+    if (armsSample && family.supportGrip && clipName === family.supportGrip.sourceClip) {
       supportPose = supportPoseAt(armsSample, family.supportGrip.reference);
     }
     if (supportPose && clipName.startsWith('reload')) applySupportPose(armsSample, supportPose, family.supportGrip);
-    if (supportPose && clipName === 'shoot') applySupportPose(armsSample, supportPose);
-    const samples = [armsSample];
+    if (supportPose && clipName === 'shoot' && armsSample) applySupportPose(armsSample, supportPose);
+    const samples = armsSample ? [armsSample] : [];
     let weaponSample = null;
     if (weaponFbx) {
       const weaponGlb = path.join(rawRoot, `${clipName}-weapon.glb`);
@@ -496,13 +517,18 @@ async function main() {
       }
       samples.push(weaponSample);
     }
-    const duration = Math.max(armsSample.duration, weaponSample?.duration ?? 0);
+    const duration = Math.max(armsSample?.duration ?? 0, weaponSample?.duration ?? 0);
+    if (!armsSample) {
+      armsSample = idleSample(document, armsTargets, targetsByName, duration);
+      samples.unshift(armsSample);
+    }
     const animation = mergeSamples(document, clipName, samples, targetsByName, duration);
     report.clips.push({
       name: clipName,
       duration,
       channels: animation.listChannels().length,
       arms: armsSample.tracks.size,
+      armsSource: characterFbx ? 'authored-clip' : 'idle-with-procedural-recoil',
       weapon: weaponSample?.tracks.size ?? 0,
       weaponTimeScale: weaponSample ? duration / weaponSample.duration : null,
       magazineGrip: weaponSample && clipName.startsWith('reload') ? family.magGrip || null : null,

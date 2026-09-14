@@ -52,6 +52,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ilhapente", default="0",
                         help="numero da ilha que E o carregador, lido na figura de "
                              "vmilhas.html (1 = maior da faixa 1%-20%). 0 usa a caixa")
+    parser.add_argument("--malhapente", default="",
+                        help="nome exato da malha separada do carregador na entrada")
     parser.add_argument("--encaixe", default="0.5",
                         help="fracao minima da ilha dentro da caixa para leva-la INTEIRA"
                              " (0 desliga o encaixe e volta ao corte cru por caixa)")
@@ -63,10 +65,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--comprimento", type=float, default=88.0,
                         help="comprimento declarado da arma em cm (weapons.js len*100)")
     parser.add_argument("--publicar", action="store_true")
+    parser.add_argument("--sem-render", action="store_true")
     return parser.parse_args(argv)
 
 
 ESCALA_LEN = 1.0
+SEM_RENDER = False
 AK_REF_CM = 88.0
 # Graus que apontam o cano em +Z, por arma. Vem do CFG de `public/js/weapons.js`,
 # medido por seção transversal (o cano é fino, a coronha grossa) e não a olho.
@@ -83,19 +87,24 @@ CAIXA_PENTE = None
 SEM_PENTE = False
 ENCAIXE_ILHA = 0.5
 ILHA_PENTE = 0
+MALHA_PENTE = ""
 TETO_ILHA = 0.20
 ANCORA = (-0.1475, -1.6065, -0.3500)
 
 
 def configure_paths(args: argparse.Namespace) -> None:
     global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS, ESCALA_LEN, ROT_ARMA, CAIXA_PENTE, SEM_PENTE
-    global ENCAIXE_ILHA, ILHA_PENTE, ANCORA
+    global ENCAIXE_ILHA, ILHA_PENTE, MALHA_PENTE, ANCORA, SEM_RENDER
+    SEM_RENDER = args.sem_render
     ESCALA_LEN = float(args.comprimento) / AK_REF_CM
     ROT_ARMA = [float(v) for v in args.rot.split(",")]
     CAIXA_PENTE = [float(v) for v in args.caixapente.split(",")] if args.caixapente else None
     SEM_PENTE = bool(args.sempente)
     ENCAIXE_ILHA = float(args.encaixe)
     ILHA_PENTE = int(args.ilhapente)
+    MALHA_PENTE = args.malhapente
+    if MALHA_PENTE and (ILHA_PENTE or SEM_PENTE or CAIXA_PENTE):
+        raise ValueError("--malhapente exige selecao exclusiva do carregador")
     if args.ancora:
         ANCORA = tuple(float(v) for v in args.ancora.split(','))
     DONOR = args.doador.resolve()
@@ -657,7 +666,17 @@ def fit_project_ak(
     rig: bpy.types.Object,
 ) -> tuple[bpy.types.Object, bpy.types.Object, bpy.types.Object, bpy.types.Object]:
     imported = import_glb(PROJECT_AK)
-    weapon = next(obj for obj in imported if obj.type == "MESH")
+    meshes = [obj for obj in imported if obj.type == "MESH"]
+    magazine = next((obj for obj in meshes if obj.name == MALHA_PENTE), None)
+    if MALHA_PENTE and magazine is None:
+        raise ValueError(f"Malha de carregador ausente: {MALHA_PENTE}")
+    bodies = [obj for obj in meshes if obj is not magazine]
+    if len(bodies) != 1:
+        raise ValueError("Entrada exige um corpo e, opcionalmente, --malhapente")
+    weapon = bodies[0]
+    if magazine:
+        magazine.data.transform(weapon.matrix_world.inverted() @ magazine.matrix_world)
+        magazine.name = "coro_solto_project_ak_magazine"
     for obj in imported:
         if obj is not weapon and obj.type == "EMPTY":
             bpy.data.objects.remove(obj, do_unlink=True)
@@ -677,6 +696,8 @@ def fit_project_ak(
     canon_ak = Matrix.Rotation(math.radians(AK_ROT_Y), 4, "Z")
     canon_arma = Matrix.Rotation(math.radians(ROT_ARMA[1]), 4, "Z")
     weapon.data.transform(canon_ak.inverted() @ canon_arma)
+    if magazine:
+        magazine.data.transform(canon_ak.inverted() @ canon_arma)
 
     # Donor rig-local combined gun envelope:
     # x[-.169,-.126], y[-1.729,-1.484], z[-.825,.038].
@@ -703,7 +724,8 @@ def fit_project_ak(
     # O recorte precisa do `fit` para saber ONDE o osso do pente vai cair na
     # arma: a âncora vem do rig e volta para o espaço nativo por `fit.inverted()`.
     ancora = fit.inverted() @ rig.data.bones["Mag_metarig"].matrix_local.translation
-    magazine = split_magazine(weapon, ancora)
+    if magazine is None:
+        magazine = split_magazine(weapon, ancora)
     trim_first_person_stock(weapon)
 
     for obj in (weapon, magazine):
@@ -1956,11 +1978,14 @@ def render_action(rig: bpy.types.Object, action_name: str, frames: list[int], pr
         scene.frame_set(frame)
         bpy.context.view_layer.update()
         scene.render.filepath = str(RENDERS / f"{prefix}_{frame:03d}.png")
-        bpy.ops.render.render(write_still=True)
+        if not SEM_RENDER:
+            bpy.ops.render.render(write_still=True)
 
 
 def export(rig: bpy.types.Object) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    for action in bpy.data.actions:
+        action.use_fake_user = True
     bpy.ops.wm.save_as_mainfile(filepath=str(BLEND))
     bpy.ops.object.select_all(action="DESELECT")
     rig.select_set(True)
@@ -2045,6 +2070,7 @@ def main() -> None:
     export(rig)
     report = {
         "builder": str(Path(__file__).resolve()),
+        "recipe": {key: str(value) if isinstance(value, Path) else value for key, value in vars(args).items()},
         "blender": bpy.app.version_string,
         "donor": {"path": str(DONOR), "sha256": sha256(DONOR)},
         "weapon": {"path": str(PROJECT_AK), "sha256": sha256(PROJECT_AK)},
