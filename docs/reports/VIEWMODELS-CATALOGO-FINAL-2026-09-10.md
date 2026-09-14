@@ -495,3 +495,22 @@ Recibo: [`VIEWMODEL-RIFLES-AWP-ALPHA252-2026-09-14.md`](VIEWMODEL-RIFLES-AWP-ALP
 Gate vermelho: `1b8d8cc9a`; receita recuperável: `57bbb8a9b`; integração: `66e3a5842`.
 O preview imutável corrente é `preview-snapshots/66e3a5842-fb1d0961`. Próxima arma incompleta:
 PT-38.
+
+## Marco controles alpha.252 — PT-38 fechada
+
+A PT-38 preserva por hash a X18/G18 aprovada em 07/09, com suas duas mãos,
+materiais e quatro ações originais. A receita acrescenta `inspect` no root comum
+e sockets medidos de muzzle/sight; o saque procedural existente continua
+sincronizado ao gameplay. O produto final contém carregador, slide, gatilho,
+cano e cartucho próprios, além de ADS físico.
+
+Dez mutantes de asset e seis de lifecycle morderam. O lifecycle passou 30 ciclos/
+540 amostras. Vinte capturas reais em 3:2/16:9, mais duas folhas de contato, não
+tiveram erro fatal. A base visual já fora aprovada pelo dono, mas o novo inspect
+e ADS ainda exigem revisão humana; a candidata segue `ready:false`, família
+pistol/global off.
+
+Recibo: [`VIEWMODEL-PISTOL-PT38-ALPHA252-2026-09-14.md`](VIEWMODEL-PISTOL-PT38-ALPHA252-2026-09-14.md).
+Gate vermelho: `a823a4c99`; receita recuperável: `c9795c612`; integração:
+`373b27fec`. O preview imutável corrente é
+`preview-snapshots/c9795c612-04c126d9`. Próxima arma incompleta: Deagle.
