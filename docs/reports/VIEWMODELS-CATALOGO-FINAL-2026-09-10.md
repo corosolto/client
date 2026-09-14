@@ -525,3 +525,37 @@ Recibo: [`VIEWMODEL-PISTOL-PT38-ALPHA252-2026-09-14.md`](VIEWMODEL-PISTOL-PT38-A
 Gate vermelho: `a823a4c99`; receita recuperável: `c9795c612`; integração:
 `373b27fec`. O preview imutável corrente é
 `preview-snapshots/c9795c612-04c126d9`. Próxima arma incompleta: Deagle.
+
+## Marco controles alpha.252 — Deagle fechada
+
+A Deagle usa a DGL50 própria, duas mãos completas, slide, cão, gatilho e carregador
+separados. O pacote entrega cinco ações, ADS físico e draw sincronizado à cadência da
+pistola. Um primeiro enquadramento foi rejeitado internamente porque punho e mãos
+ficavam baixos; o frame final elimina esse corte nos dois aspectos.
+
+Oito mutantes de asset e seis de lifecycle morderam. O lifecycle passou 30 ciclos/
+540 amostras. Vinte capturas reais em 3:2/16:9 não tiveram erro fatal e mostram as
+duas recargas, slide/cão no tiro, inspect e ADS. A candidata segue `ready:false`,
+família pistol/global off até revisão humana.
+
+Recibo: [`VIEWMODEL-PISTOL-DEAGLE-ALPHA252-2026-09-14.md`](VIEWMODEL-PISTOL-DEAGLE-ALPHA252-2026-09-14.md).
+Gate vermelho: `4d30a3365`; integração: `f1a871277`; enquadramento e capturas:
+`9f1d7f5dd`. O preview imutável é `preview-snapshots/f1a871277-85c38a13`.
+Próxima arma incompleta: Revólver .38.
+
+## Marco controles alpha.252 — Revólver .38 fechado
+
+O Revólver .38 congela por hash a Viper-357 própria e entrega duas mãos, tambor,
+braço do tambor, extrator, cão e gatilho próprios. O tiro movimenta os três comandos;
+a recarga abre o tambor, aciona o extrator e mantém contato visível da mão de apoio.
+O pacote também entrega draw, inspect com retorno exato e ADS físico.
+
+Nove mutantes de asset, três mutantes mecânicos independentes e seis de lifecycle
+morderam. O lifecycle passou 30 ciclos/540 amostras. Dezoito capturas reais em
+3:2/16:9 não tiveram erro fatal e confirmam enquadramento, contatos e eixo de mira.
+A candidata segue `ready:false`, família revolver/global off até revisão humana.
+
+Recibo: [`VIEWMODEL-PISTOL-REVOLVER-ALPHA252-2026-09-14.md`](VIEWMODEL-PISTOL-REVOLVER-ALPHA252-2026-09-14.md).
+Gate vermelho: `51d617b60`; integração: `79b91e413`; captura final:
+`cebe82502`. O preview imutável corrente é
+`preview-snapshots/79b91e413-422b7118`. Próxima arma incompleta: MP5.
