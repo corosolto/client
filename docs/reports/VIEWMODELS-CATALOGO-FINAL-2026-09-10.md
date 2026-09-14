@@ -559,3 +559,22 @@ Recibo: [`VIEWMODEL-PISTOL-REVOLVER-ALPHA252-2026-09-14.md`](VIEWMODEL-PISTOL-RE
 Gate vermelho: `51d617b60`; integração: `79b91e413`; captura final:
 `cebe82502`. O preview imutável corrente é
 `preview-snapshots/79b91e413-422b7118`. Próxima arma incompleta: MP5.
+
+## Marco submetralhadoras alpha.252 — MP5 fechada
+
+A MP5 congela por hash a fonte KINEMATION privada e entrega duas mãos, carregador,
+ferrolho, alavanca, retém e gatilho próprios. O pacote tem cinco ações: o tiro cicla
+ferrolho/gatilho, as duas recargas removem o pente, a vazia aciona a alavanca e o
+inspect retorna ao idle sem drift final da pega forte.
+
+Nove mutantes de asset e seis de lifecycle morderam. O lifecycle passou 30 ciclos/
+540 amostras. Vinte e duas capturas reais em 3:2/16:9 não tiveram erro fatal e
+confirmam enquadramento, mecanismos, contatos e pose de ombro. Tentativas de ADS
+automático foram rejeitadas porque a topologia skinned/rest do pacote trazia manga e
+arma para primeiro plano; o candidato final usa calibração de ombro e mantém a
+limitação explícita. A candidata segue `ready:false`, família mp5/global off.
+
+Recibo: [`VIEWMODEL-SMG-MP5-ALPHA252-2026-09-14.md`](VIEWMODEL-SMG-MP5-ALPHA252-2026-09-14.md).
+Gate vermelho: `2e17261e6`; integração: `99305754b`; captura/ADS final:
+`006a0814a`. O preview imutável corrente é
+`preview-snapshots/9ff5f0ecf-14d430b6`. Próxima arma incompleta: Uzi.
