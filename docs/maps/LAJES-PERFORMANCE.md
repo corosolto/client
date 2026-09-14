@@ -93,7 +93,11 @@ node tools/eval/lajes-performance-browser.mjs --teams=8 --seconds=60
 
 Os quatro mutantes devem sair com código 1. O browser aceita `--maps=lajes`,
 `--teams=5,8`, `--quality=low|med|high`, `--seconds=5..180`, `--out=...`,
-`--base=...` e `--linear` (reintrodução do custo anterior somente na sessão de teste).
+`--base=...`, `--width=1536`, `--height=1024` e `--linear` (reintrodução do custo
+anterior somente na sessão de teste). Erros de página e respostas HTTP tornam a execução
+vermelha. `--allow-inherited` libera apenas a lista fechada em
+`tools/eval/lajes-browser-debt.mjs`; erro desconhecido continua vermelho. A contraprova do
+classificador é `node tools/eval/lajes-browser-debt-check.mjs`.
 
 Artefatos locais: `artifacts/lajes-performance/`; baseline `browser-*.json`,
 `after/`, `after-occlusion/`, `sustained/`, `raycast-final.json` e os quatro
@@ -101,5 +105,7 @@ Artefatos locais: `artifacts/lajes-performance/`; baseline `browser-*.json`,
 A revisão independente não encontrou bloqueante de código. Build e invariants
 passaram sem falha crítica nova. Check:fast teve 105/108 no primeiro passe; IDs e
 autoria passaram nas verificações posteriores. Audio:check local mantém a limitação
-do pack privado incompleto, sem alterações de áudio nesta correção. PR517 está em
-integração com a nova main alpha.227; a correção ainda não foi publicada.
+do pack privado incompleto, sem alterações de áudio nesta correção. A PR517 foi
+integrada à main em 06/09/2026 pelo merge `b64aa886`, e a correção acompanha a
+release `v2.0.0-alpha.236`. Integração na main não é publicação: nenhum deploy em
+produção foi verificado nesta sessão.
