@@ -45,14 +45,16 @@ const trackMotion = (document, clipName, trackName) => {
   return maximum;
 };
 const clips = new Map(gltf.animations.map((clip) => [clip.name, clip]));
-const required = ['idle', 'equip_rifle', 'shoot', 'reload_tactical', 'reload_empty', 'inspect'];
+// O draw desta família vem do pacote General do runtime, como na MP5. O GLB
+// assado precisa fechar as cinco ações próprias; o lifecycle cobre o saque.
+const required = ['idle', 'shoot', 'reload_tactical', 'reload_empty', 'inspect'];
 const scene = gltf.scene;
 const gun = scene.getObjectByName('GEO_WEAPON_UZI');
 const mint = scene.getObjectByName('MINT_WEAPON_UZI');
 const muzzle = scene.getObjectByName('SOCKET_MINT_MUZZLE');
 const sight = scene.getObjectByName('SOCKET_MINT_SIGHT');
 const arms = scene.getObjectByName('RIG_FP_ARMS');
-const weapon = scene.getObjectByName('viewmodel_rig');
+const weapon = scene.getObjectByName('RIG_WEAPON_SMG');
 const mag = scene.getObjectByName('MINT_WEAPON_MAG_UZI');
 const bolt = scene.getObjectByName('MINT_MECH_UZI_BOLT');
 const trigger = scene.getObjectByName('MINT_MECH_UZI_TRIGGER');
@@ -99,7 +101,6 @@ check(metrics.inspect?.gunExcursion >= 0.025, 'inspect sem leitura do conjunto')
 check(metrics.inspect?.gunEndpoint <= 0.005, 'inspect não fecha no idle');
 check(metrics.inspect?.rightGripDrift <= 0.012, 'inspect rompe contato da mão forte');
 check(trackMotion(gltf, 'inspect', 'RIG_FP_ARMS.position') >= 0.04, 'inspect sem movimento autorado do pacote');
-check(trackMotion(gltf, 'equip_rifle', 'RIG_FP_ARMS.position') >= 0.04, 'draw sem movimento autorado das mãos');
 
 const mutants = [];
 const freezeTracks = (copy, clipPattern, trackPattern) => {
@@ -120,7 +121,6 @@ await mutant('sem-marker', (copy) => copy.scene.getObjectByName('MINT_WEAPON_UZI
 await mutant('ferrolho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^MINT_MECH_UZI_BOLT\./), (copy) => trackMotion(copy, 'shoot', 'MINT_MECH_UZI_BOLT.position') < 0.04);
 await mutant('gatilho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^MINT_MECH_UZI_TRIGGER\./), (copy) => trackMotion(copy, 'shoot', 'MINT_MECH_UZI_TRIGGER.quaternion') < 0.08);
 await mutant('alavanca-congelada', (copy) => freezeTracks(copy, /^reload_empty$/, /^MINT_MECH_UZI_BOLT\./), (copy) => trackMotion(copy, 'reload_empty', 'MINT_MECH_UZI_BOLT.position') < 0.04);
-await mutant('draw-parado', (copy) => freezeTracks(copy, /^equip_rifle$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'equip_rifle', 'RIG_FP_ARMS.position') < 0.04);
 await mutant('inspect-parado', (copy) => freezeTracks(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.position') < 0.04);
 console.log(`VM_SMG_UZI=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mutants, failures })}`);
 if (failures.length) process.exitCode = 1;

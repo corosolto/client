@@ -71,7 +71,7 @@ export const VM_WEAPON = {
   scar: W('ar', { baked: true, frame: 'family' }),
   tavor: W('ar', { baked: true, frame: 'family' }),
   famas: W('ar', { baked: true, frame: 'family' }),
-  uzi: W('smg'),
+  uzi: W('smg', { baked: true, timing: 'gameplay' }),
   p90: W('p90', { recoilScale: 1.6 }),
   svd: W('svd', { baked: true }),
   g3sg1: W('g3', { baked: true, frame: 'family' }),
