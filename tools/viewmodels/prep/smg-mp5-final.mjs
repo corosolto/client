@@ -35,9 +35,10 @@ const trigger = byName('Trigger');
 for (const name of ['GEO_WEAPON_MP5_MP5.001', 'Bolt', 'ChargingHandle', 'FireSelect', 'Mag', 'ReleaseHandle', 'Trigger', 'hand_l', 'hand_r']) if (!byName(name)) throw new Error(`rig MP5 incompleto: ${name}`);
 if (!socket || !weaponRig || !armsRig || !bolt || !trigger) throw new Error('raízes MP5 incompletas');
 socket.addChild(document.createNode('MINT_WEAPON_MP5'));
-// Pontos medidos no eixo longitudinal real da malha. As unidades do rig são cm.
-weaponRig.addChild(document.createNode('SOCKET_MINT_SIGHT').setTranslation([45.0046, -47.2643, 39.2482]));
-weaponRig.addChild(document.createNode('SOCKET_MINT_MUZZLE').setTranslation([57.3792, -54.2344, 50.3067]));
+// Pontos medidos sobre a malha já deformada no idle: alça no receiver e boca
+// no fim do cano. Foram convertidos de camera-space para o espaço local do rig.
+weaponRig.addChild(document.createNode('SOCKET_MINT_SIGHT').setTranslation([16.4362, -10.3853, 7.6759]));
+weaponRig.addChild(document.createNode('SOCKET_MINT_MUZZLE').setTranslation([-0.5638, 11.3969, -29.0738]));
 
 const buffer = root.listBuffers()[0] || document.createBuffer();
 const accessor = (name, type, values) => document.createAccessor(name).setType(type).setArray(new Float32Array(values)).setBuffer(buffer);
@@ -78,7 +79,7 @@ const outputBytes = await fs.readFile(output);
 const report = { schemaVersion: 1, weapon: 'mp5', displayName: 'MP5 "BATIDÃO"', ready: false,
   source: { file: source, bytes: sourceBytes.length, sha256: SOURCE_SHA },
   preservation: { originalClips: sourceClips, addedClips: ['shoot', 'inspect'], mesh: 'GEO_WEAPON_MP5_MP5.001', armsRig: 'RIG_FP_ARMS', weaponRig: 'RIG_WEAPON_MP5', mechanisms: ['Bolt','ChargingHandle','FireSelect','Mag','ReleaseHandle','Trigger'] },
-  sockets: { muzzleParent: 'RIG_WEAPON_MP5', muzzleLocal: [57.3792,-54.2344,50.3067], sightParent: 'RIG_WEAPON_MP5', sightLocal: [45.0046,-47.2643,39.2482] },
+  sockets: { muzzleParent: 'RIG_WEAPON_MP5', muzzleLocal: [-0.5638,11.3969,-29.0738], sightParent: 'RIG_WEAPON_MP5', sightLocal: [16.4362,-10.3853,7.6759] },
   product: { file: output, bytes: outputBytes.length, sha256: digest(outputBytes) } };
 await fs.writeFile(path.join(outputDir, 'build.json'), `${JSON.stringify(report, null, 2)}\n`);
 console.log(`MP5_FINAL_OK ${JSON.stringify(report)}`);
