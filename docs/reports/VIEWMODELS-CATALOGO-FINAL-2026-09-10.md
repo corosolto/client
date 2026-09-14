@@ -578,3 +578,23 @@ Recibo: [`VIEWMODEL-SMG-MP5-ALPHA252-2026-09-14.md`](VIEWMODEL-SMG-MP5-ALPHA252-
 Gate vermelho: `2e17261e6`; integração: `99305754b`; captura/ADS final:
 `006a0814a`. O preview imutável corrente é
 `preview-snapshots/9ff5f0ecf-14d430b6`. Próxima arma incompleta: Uzi.
+
+## Marco submetralhadoras alpha.252 — Uzi fechada
+
+A Uzi usa sua malha pública própria assada sobre a fundação KINEMATION privada, com
+duas mãos completas. O carregador próprio acompanha o bone `Mag`; ferrolho superior
+e gatilho próprios são visíveis e animados. O tiro e inspect agora congelam a pose
+completa do idle, eliminando a herança indevida da última recarga. As duas recargas
+removem o pente e a vazia também aciona o ferrolho.
+
+Nove mutantes de asset e seis de lifecycle morderam. O lifecycle passou 30 ciclos/
+540 amostras. Vinte e duas capturas reais em 3:2/16:9 não tiveram erro fatal e
+confirmam enquadramento, mecanismos, contatos, draw, inspect e pose de ombro. O
+retarget anterior foi rejeitado por sobreposição das mãos; o ADS automático também
+foi rejeitado porque perdia a cruz. A candidata segue `ready:false`, família
+smg/global off até revisão humana.
+
+Recibo: [`VIEWMODEL-SMG-UZI-ALPHA252-2026-09-14.md`](VIEWMODEL-SMG-UZI-ALPHA252-2026-09-14.md).
+Gate vermelho: `2ea19b608`; primeira integração: `fcb70b30e`; ações/ADS e captura
+final: `d55560c68`. O preview imutável corrente é
+`preview-snapshots/d55560c68-353d0384`. Próxima arma incompleta: P90.
