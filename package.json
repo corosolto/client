@@ -304,7 +304,8 @@
     "eval:tiro-mp": "node tools/eval/tiro-mp-browser.mjs",
     "eval:noescolha": "node tools/eval/no-escolha-check.mjs",
     "eval:maqfraca": "node tools/eval/maquina-fraca-check.mjs",
-    "eval:qualadapt": "node tools/eval/qualidade-adaptativa-check.mjs"
+    "eval:qualadapt": "node tools/eval/qualidade-adaptativa-check.mjs",
+    "capture:vm-smg-mp5": "node tools/viewmodels/prep/smg-mp5-capture.mjs"
   },
   "repository": {
     "type": "git",
