@@ -598,3 +598,43 @@ Recibo: [`VIEWMODEL-SMG-UZI-ALPHA252-2026-09-14.md`](VIEWMODEL-SMG-UZI-ALPHA252-
 Gate vermelho: `2ea19b608`; primeira integração: `fcb70b30e`; ações/ADS e captura
 final: `d55560c68`. O preview imutável corrente é
 `preview-snapshots/d55560c68-353d0384`. Próxima arma incompleta: P90.
+
+## Marco submetralhadoras alpha.252 — P90 fechada
+
+A P90 usa arma, pente superior e mecanismos próprios do pacote KINEMATION montados
+sobre a câmera e as malhas de mãos da fundação SMG; as ações autorais foram
+retargetadas por nome para esse esqueleto. O pacote isolado foi rejeitado porque
+chegava 41,56° fora do eixo do gabarito. O tiro cicla alavanca, mecanismo e gatilho;
+as duas recargas removem o pente superior e a vazia também aciona alavanca e
+mecanismo.
+
+Nove mutantes de asset e seis de lifecycle morderam. O lifecycle passou 30 ciclos/
+540 amostras. Vinte e duas capturas reais em 3:2/16:9 não tiveram erro fatal. O ADS
+automático por sockets foi rejeitado por tirar o cano do quadro; o produto usa pose
+de ombro conservadora. A candidata segue `ready:false`, família smg/global off até
+revisão humana.
+
+Recibo: [`VIEWMODEL-SMG-P90-ALPHA252-2026-09-14.md`](VIEWMODEL-SMG-P90-ALPHA252-2026-09-14.md).
+Gate vermelho: `ec1da3091`; integração: `f30cee9b0`; estabilização e captura final:
+`e21aa2777`. O preview imutável corrente é `preview-snapshots/e21aa2777-85f87b74`.
+Próxima arma incompleta: shotgun.
+
+## Marco pesadas alpha.252 — Shotgun fechada
+
+A M3 Conversa Fiada usa a KXG12 própria do pacote produzido para o catálogo, duas
+mãos completas e ciclo de pump, gatilho e cartucho unitário. O produto entrega
+`idle`, tiro, draw, início de recarga, inserção repetível de cartuchos, fechamento
+e inspect. A receita substitui só os bytes duplicados dos nove atlas de mãos por
+placeholders de mesmo nome (25 MB → 4,1 MB), sem mudar arma, rig, clipes ou
+mecanismos. O resultado anterior reprovado de `codex/vm-heavy` não foi promovido.
+
+Nove mutantes de asset e sete controles de lifecycle morderam. O lifecycle passou
+30 ciclos/540 amostras incluindo oito inserções seguidas. Vinte e seis capturas
+reais em 3:2/16:9 não tiveram erro fatal. O ADS usa pose de ombro conservadora
+porque o alinhamento por sockets aproximava demais o cano. A candidata segue
+`ready:false`, família heavy/global off até revisão humana.
+
+Recibo: [`VIEWMODEL-HEAVY-SHOTGUN-ALPHA252-2026-09-14.md`](VIEWMODEL-HEAVY-SHOTGUN-ALPHA252-2026-09-14.md).
+Gate vermelho: `b6128b842`; integração e captura: `8bedf48ed`. O preview imutável
+corrente é `preview-snapshots/8bedf48ed-f4522831`. Próxima arma incompleta: LMG —
+a última das 26.
