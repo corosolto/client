@@ -37,8 +37,8 @@ if (!socket || !weaponRig || !armsRig || !bolt || !trigger) throw new Error('ra�
 socket.addChild(document.createNode('MINT_WEAPON_MP5'));
 // Pontos medidos sobre a malha já deformada no idle: alça no receiver e boca
 // no fim do cano. Foram convertidos de camera-space para o espaço local do rig.
-weaponRig.addChild(document.createNode('SOCKET_MINT_SIGHT').setTranslation([16.4362, -10.3853, 7.6759]));
-weaponRig.addChild(document.createNode('SOCKET_MINT_MUZZLE').setTranslation([-0.5638, 11.3969, -29.0738]));
+weaponRig.addChild(document.createNode('SOCKET_MINT_SIGHT').setTranslation([23.4362, -29.5770, 18.4777]));
+weaponRig.addChild(document.createNode('SOCKET_MINT_MUZZLE').setTranslation([-0.5638, 4.5054, -30.3013]));
 
 const buffer = root.listBuffers()[0] || document.createBuffer();
 const accessor = (name, type, values) => document.createAccessor(name).setType(type).setArray(new Float32Array(values)).setBuffer(buffer);
@@ -79,7 +79,7 @@ const outputBytes = await fs.readFile(output);
 const report = { schemaVersion: 1, weapon: 'mp5', displayName: 'MP5 "BATIDÃO"', ready: false,
   source: { file: source, bytes: sourceBytes.length, sha256: SOURCE_SHA },
   preservation: { originalClips: sourceClips, addedClips: ['shoot', 'inspect'], mesh: 'GEO_WEAPON_MP5_MP5.001', armsRig: 'RIG_FP_ARMS', weaponRig: 'RIG_WEAPON_MP5', mechanisms: ['Bolt','ChargingHandle','FireSelect','Mag','ReleaseHandle','Trigger'] },
-  sockets: { muzzleParent: 'RIG_WEAPON_MP5', muzzleLocal: [-0.5638,11.3969,-29.0738], sightParent: 'RIG_WEAPON_MP5', sightLocal: [16.4362,-10.3853,7.6759] },
+  sockets: { muzzleParent: 'RIG_WEAPON_MP5', muzzleLocal: [-0.5638,4.5054,-30.3013], sightParent: 'RIG_WEAPON_MP5', sightLocal: [23.4362,-29.5770,18.4777] },
   product: { file: output, bytes: outputBytes.length, sha256: digest(outputBytes) } };
 await fs.writeFile(path.join(outputDir, 'build.json'), `${JSON.stringify(report, null, 2)}\n`);
 console.log(`MP5_FINAL_OK ${JSON.stringify(report)}`);
