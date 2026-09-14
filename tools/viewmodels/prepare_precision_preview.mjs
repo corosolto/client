@@ -10,6 +10,7 @@ const manifests = await Promise.all([
   'dmr-candidates.json',
   'rifle-candidates.json',
   'sidearm-candidates.json',
+  'smg-candidates.json',
 ].map(async (name) => JSON.parse(await fs.readFile(path.join(repo, 'tools/viewmodels', name), 'utf8'))));
 const candidates = Object.assign({}, ...manifests.map((manifest) => manifest.candidates));
 const assetRoot = path.resolve(process.env.CSBRASIL_VM_ASSET_ROOT
@@ -69,5 +70,5 @@ else {
   if (current !== linkTarget) throw new Error(`${link} aponta para ${current}; não será substituído`);
 }
 console.log(`PASS staging ignorado ${link} -> ${linkTarget}`);
-console.log('TESTE http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=ak,pistol&vmweapon=pistol,m4,md97,scar,famas,m92,akm,g3,carbine,tavor,m400,awp,mosin,svd,sks,rem700,g3sg1&vmqa=precision');
+console.log('TESTE http://127.0.0.1:4401/?debug=1&auto=P,mst&map=piscina_treta&vmauthored=1&vmready=mp5&vmweapon=mp5&vmqa=precision');
 console.log('ENCERRAR npm run cleanup:vm-precision');
