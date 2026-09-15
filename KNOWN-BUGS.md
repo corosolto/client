@@ -176,6 +176,61 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-170 · queda de rede do jogador entrava como crash de código e abria issue automática · CORRIGIDO 15/09
+
+**Sintoma:** issue #592, aberta sozinha pelo `crash-fix.yml` em
+`2.0.0-alpha.251-0dd79c32ad74`, classe `codigo`:
+
+```
+Mensagem: Falha ao abrir partida: network error
+Stack:    TypeError: network error
+Origem:   promise
+Migalhas: …17:23:09 clique #mp-panel · 17:23:11 clique button · 17:23:44 clique #mp-panel…
+```
+
+É a **terceira** issue da mesma causa: #125 (`network error`, Firefox) e #201
+(`Falha ao abrir partida: Load failed`, WebKit) já tinham sido fechadas antes. `network
+error`, `Load failed` e `Failed to fetch` são a MESMA falha — um `fetch` que não completou —
+escrita por três engines diferentes. Não é defeito de código e não tem conserto no repo.
+
+**Causa raiz — confirmada. Três degraus, e o corte que existia falhava nos três:**
+
+1. **Sem prova de origem, o cliente assume que a culpa é dele.** Um `fetch` caído rejeita com
+   mensagem crua e **sem quadro de pilha**: `origemDoJogo` (`src/pages/index.astro`) não acha
+   `source`, não acha URL nenhuma na stack, cai no `return !viuExterna` final — e devolve
+   `true`. "Nenhuma evidência" era lido como "é nosso".
+2. **O watchdog converte rejeição de FUNDO em falha de abertura.** Com `interna = true` e o
+   lançamento armado em `partida`, o `unhandledrejection` chamava `lancamento.fail()`, que
+   embrulha a mensagem em `"Falha ao abrir " + etapa + ": " + msg`. Qualquer `fetch` anônimo
+   que caísse na janela de carga virava "Falha ao abrir partida" — e o jogador levava a tela
+   amigável de falha por causa de um pedido de fundo.
+3. **O corte do servidor não alcançava nenhuma das duas formas.** `OPAQUE_RE` até lista
+   `^network error$`, mas `isOpaqueNoise` desiste na primeira linha quando há `source` **ou**
+   `stack`, e o watchdog preenche os dois (`source='promise'`,
+   `stack='TypeError: network error'`). O ramo era **letra morta exatamente no caso que
+   dizia cobrir**: nem #125 (que chegou com stack e sem source) teria sido cortada hoje. E,
+   mesmo que rodasse, a âncora `^…$` já não casaria com o prefixo do watchdog.
+
+**Conserto.** Uma redação só, `REDE_RE`, espelhada nos dois lados — a mesma disciplina da
+`CARTEIRA_RE`/`PONTE_INJETADA_RE` (BUG-76/BUG-78):
+
+- `src/lib/error-provenance.mjs`: `classifyCrash` devolve `recuperavel` (fica na telemetria
+  bruta, **não** consome dispatch, **não** abre issue). Casa a **mensagem inteira**, nunca
+  `evidence` — a stack de um fetch caído é só `TypeError: network error`, e casar nela
+  afrouxaria o corte. Testado **depois** de `CACHE_SPLIT_RE`, para o
+  `Failed to fetch dynamically imported module` continuar sendo cache-split (BUG-39).
+- `src/pages/index.astro`: `erroDeRede` desarma só o `lancamento.fail` do
+  `unhandledrejection`. O `reporta()` **segue enviando** e a linha continua no banco.
+
+**O que continua pegando defeito de verdade:** o teto de 60 s do próprio watchdog segue
+armado — travamento real ainda falha com "tempo limite ao abrir partida" (BUG-167). E o corte
+é ancorado na mensagem inteira, então defeito com mensagem descritiva não passa por ele.
+
+**Régua:** `tools/ops/tests/error-provenance.test.mjs` (`npm run ops:test`), 9 cláusulas com
+os payloads reais de #592, #125 e #201, mais as antivacuidades (cache-split ganha de rede;
+`"Cannot read properties of null (reading 'fetch')"` segue `codigo`; rede citada no MEIO de
+uma mensagem não corta) e o espelho cliente↔servidor byte a byte.
+
 ### BUG-167 · "Falha ao abrir partida: tempo limite ao abrir partida" em partida que já tinha aberto · CORRIGIDO 13/09
 
 **Sintoma (do dono, colado do painel de erros):** *"deu esse erro 8h atras no jogo: 40 ·

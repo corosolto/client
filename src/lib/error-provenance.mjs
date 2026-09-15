@@ -22,6 +22,9 @@ const CAPACIDADE_RE = /screen\.orientation\.lock\(\) is not available on this de
 // Perda de contexto WebGL no MEIO do frame (WebKit, #419/#420): createShader() devolve null
 // antes de o evento webglcontextlost chegar. ESTREITO de propósito — KNOWN-BUGS.md, BUG-82.
 const CONTEXT_LOSS_RE = /to WebGL2?RenderingContext\.\w+ must be an instance of WebGLShader\b/i;
+// Queda de rede do jogador, uma redação por engine (#125/#592 Firefox, #201 WebKit, Chromium).
+// Prefixo opcional = o do launch watchdog. ESTREITA, casa a mensagem INTEIRA — BUG-170.
+const REDE_RE = /^(?:falha ao abrir [^:]{1,40}: )?(?:network error|load failed|failed to fetch|networkerror when attempting to fetch resource\.?)$/i;
 const HTTP_URL_RE = /https?:\/\/[^\s)'"<>]+/gi;
 /* Assinaturas opacas de terceiro/extensão/resposta corrompida: mensagens sem
    pilha e sem nome de arquivo do próprio jogo que o navegador entrega já
@@ -98,6 +101,9 @@ export function classifyCrash(payload = {}, ownOrigin = '') {
   if (MEDIA_ABORT_RE.test(evidence)) return 'recuperavel';
   if (CAPACIDADE_RE.test(evidence)) return 'recuperavel';
   if (CONTEXT_LOSS_RE.test(evidence)) return 'recuperavel';
+  // DEPOIS de CACHE_SPLIT_RE (dele é o "dynamically imported module") e contra a MENSAGEM:
+  // a stack de um fetch caído é só "TypeError: network error". BUG-170.
+  if (REDE_RE.test(String(payload.message || '').trim())) return 'recuperavel';
   return 'codigo';
 }
 
