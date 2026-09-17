@@ -316,7 +316,8 @@
     "eval:vm-shotgun-lifecycle": "node tools/eval/viewmodel-shotgun-lifecycle-check.mjs",
     "capture:vm-shotgun-final": "node tools/viewmodels/prep/shotgun-final-capture.mjs",
     "eval:vm-lmg-final": "node tools/viewmodels/prep/lmg-final-verify.mjs",
-    "eval:vm-lmg-lifecycle": "node tools/eval/viewmodel-lmg-lifecycle-check.mjs"
+    "eval:vm-lmg-lifecycle": "node tools/eval/viewmodel-lmg-lifecycle-check.mjs",
+    "capture:vm-lmg-final": "node tools/viewmodels/prep/lmg-final-capture.mjs"
   },
   "repository": {
     "type": "git",

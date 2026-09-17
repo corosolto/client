@@ -68,7 +68,8 @@ export const VM_WEAPON = {
   // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
   // medido desta base; a câmera embutida do doador não é usada como frame.
   rem700: W('bolt', { baked: true, frame: 'family' }),
-  lmg: W('lmg'),
+  lmg: W('lmg', { baked: true, timing: 'gameplay',
+    ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
   scar: W('ar', { baked: true, frame: 'family' }),
   tavor: W('ar', { baked: true, frame: 'family' }),
   famas: W('ar', { baked: true, frame: 'family' }),

@@ -11,6 +11,7 @@ const manifests = await Promise.all([
   'rifle-candidates.json',
   'sidearm-candidates.json',
   'smg-candidates.json',
+  'heavy-candidates.json',
 ].map(async (name) => JSON.parse(await fs.readFile(path.join(repo, 'tools/viewmodels', name), 'utf8'))));
 const candidates = Object.assign({}, ...manifests.map((manifest) => manifest.candidates));
 const assetRoot = path.resolve(process.env.CSBRASIL_VM_ASSET_ROOT

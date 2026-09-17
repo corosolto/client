@@ -20,6 +20,22 @@
       "sourceCommit": null,
       "rebuild": "tools/viewmodels/prep/shotgun-final.mjs",
       "sharedTextureFoundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102"
+    },
+    "lmg": {
+      "weapon": "lmg",
+      "family": "lmg",
+      "file": "viewmodels/lmg/lmg-baked-runtime.glb",
+      "sourceSha256": "ce9921338a35cf0a5ab0959c451579d32b42e4468624f9c48b42c9e23bf88235",
+      "sourceBytes": 6810720,
+      "productSha256": "2afc8c2603c9b448cb8163c56585c26047608ffe67fdfd29b2ccbe36d4e24b4f",
+      "productBytes": 6601448,
+      "sha256": "2afc8c2603c9b448cb8163c56585c26047608ffe67fdfd29b2ccbe36d4e24b4f",
+      "bytes": 6601448,
+      "mechanism": "belt/box/cover-hinge/feed-tray-hinge/charger",
+      "ready": false,
+      "sourceBranch": "private-generated/viewmodels/lmg (família MGX5 assemblada em 29/08)",
+      "sourceCommit": null,
+      "rebuild": "tools/viewmodels/prep/lmg-final.mjs"
     }
   }
 }

@@ -96,14 +96,40 @@ for (const name of required) {
 check(trackMotion(gltf, 'shoot', 'MINT_AMMO_LMG_BELT.position') >= 0.5, 'shoot não puxa o cinto próprio');
 check(trackMotion(gltf, 'shoot', 'RIG_FP_ARMS.position') >= 0.01, 'shoot sem recuo do conjunto');
 check(metrics.shoot?.rightGripDrift <= 0.02 && metrics.shoot?.leftGripDrift <= 0.02, 'shoot solta uma das mãos da arma');
+// Mecanismo medido no rig da arma (cm): tampa e bandeja são dobradiça no pivô
+// do receiver e não transladam; a caixa sai do poço com módulo limitado. O
+// estado anterior do pacote reprova aqui — 87,79 cm de tampa, 54,32 cm de
+// bandeja e 57,79 cm de caixa punham as peças soltas no meio do quadro.
+const rotationOf = (document, clipName, nodeName) => {
+  const track = document.animations.find((clip) => clip.name === clipName)?.tracks.find((candidate) => candidate.name === `${nodeName}.quaternion`);
+  if (!track) return 0;
+  const first = new THREE.Quaternion(track.values[0], track.values[1], track.values[2], track.values[3]);
+  let maximum = 0;
+  for (let index = 0; index < track.times.length; index += 1) {
+    const current = new THREE.Quaternion(track.values[index * 4], track.values[index * 4 + 1], track.values[index * 4 + 2], track.values[index * 4 + 3]);
+    maximum = Math.max(maximum, first.angleTo(current) * 180 / Math.PI);
+  }
+  return +maximum.toFixed(1);
+};
+const travelOf = (document, clipName, nodeName) => +trackMotion(document, clipName, `${nodeName}.position`).toFixed(2);
+const localRotation = (clipName, nodeName) => rotationOf(gltf, clipName, nodeName);
+const localTravel = (clipName, nodeName) => travelOf(gltf, clipName, nodeName);
+const mechanism = {};
 for (const name of ['reload_tactical', 'reload_empty']) {
-  check(metrics[name]?.boxExcursion >= 0.5, `${name} não troca a caixa própria`);
-  check(metrics[name]?.coverExcursion >= 0.5, `${name} não abre a tampa própria`);
+  mechanism[name] = {
+    coverDeg: localRotation(name, 'MINT_MECH_LMG_COVER'), coverCm: localTravel(name, 'MINT_MECH_LMG_COVER'),
+    trayDeg: localRotation(name, 'MINT_MECH_LMG_FEED_TRAY'), trayCm: localTravel(name, 'MINT_MECH_LMG_FEED_TRAY'),
+    boxDeg: localRotation(name, 'MINT_AMMO_LMG_BOX'), boxCm: localTravel(name, 'MINT_AMMO_LMG_BOX'),
+  };
+  check(mechanism[name].coverDeg >= 45, `${name} não abre a tampa própria`);
+  check(mechanism[name].coverCm <= 1, `${name} arranca a tampa do pivô — ${mechanism[name].coverCm} cm`);
+  check(mechanism[name].trayCm <= 1, `${name} arranca a bandeja do pivô — ${mechanism[name].trayCm} cm`);
+  check(mechanism[name].boxCm >= 8 && mechanism[name].boxCm <= 18, `${name} não troca a caixa dentro do quadro — ${mechanism[name].boxCm} cm`);
   check(metrics[name]?.leftExcursion >= 0.15, `${name} não move a mão de apoio`);
   check(metrics[name]?.rightExcursion >= 0.15, `${name} não move a mão forte`);
   check(metrics[name]?.gunEndpoint <= 0.01 && metrics[name]?.boxEndpoint <= 0.01, `${name} não devolve arma e caixa ao idle`);
 }
-check(metrics.reload_empty?.trayExcursion >= 0.4, 'reload_empty não assenta o cinto na bandeja');
+check(mechanism.reload_empty?.trayDeg >= 20, 'reload_empty não assenta o cinto na bandeja');
 check(metrics.inspect?.gunExcursion >= 0.02, 'inspect sem leitura do conjunto');
 check(metrics.inspect?.gunEndpoint <= 0.01, 'inspect não fecha no idle');
 check(metrics.inspect?.rightGripDrift <= 0.02, 'inspect rompe contato da mão forte');
@@ -122,6 +148,18 @@ const sampleOf = (copy, name, nodeName, count = 50) => {
   action.stop();
   return Math.max(...rows.map((row) => row.distanceTo(rows[0])));
 };
+// Reintroduz translação nas peças: mede o defeito, não só a ausência de movimento.
+const scaleTranslation = (copy, clipPattern, nodeName, factor) => {
+  for (const clip of copy.animations.filter((candidate) => clipPattern.test(candidate.name))) {
+    const track = clip.tracks.find((candidate) => candidate.name === `${nodeName}.position`);
+    if (!track) continue;
+    for (let offset = 3; offset < track.values.length; offset += 3) {
+      for (let lane = 0; lane < 3; lane += 1) {
+        track.values[offset + lane] = track.values[lane] + (track.values[offset + lane] - track.values[lane]) * factor + (lane === 1 ? factor * 0.25 : 0);
+      }
+    }
+  }
+};
 async function mutant(name, mutate, verify) {
   const copy = await loader.parseAsync(buffer.slice(0), ''); mutate(copy);
   const bitten = verify(copy); mutants.push({ name, bitten }); if (!bitten) failures.push(`mutante não mordeu: ${name}`);
@@ -132,9 +170,13 @@ await mutant('sem-arma', (copy) => copy.scene.getObjectByName('GEO_WEAPON_LMG_MG
 await mutant('sem-caixa', (copy) => copy.scene.getObjectByName('MINT_AMMO_LMG_BOX')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_AMMO_LMG_BOX'));
 await mutant('sem-marker', (copy) => copy.scene.getObjectByName('MINT_WEAPON_LMG')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_WEAPON_LMG'));
 await mutant('cinto-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^MINT_AMMO_LMG_BELT\./), (copy) => trackMotion(copy, 'shoot', 'MINT_AMMO_LMG_BELT.position') < 0.5);
-await mutant('caixa-congelada', (copy) => freezeTracks(copy, /^reload_tactical$/, /^MINT_AMMO_LMG_BOX\./), (copy) => sampleOf(copy, 'reload_tactical', 'MINT_AMMO_LMG_BOX') < 0.5);
-await mutant('tampa-congelada', (copy) => freezeTracks(copy, /^reload_empty$/, /^MINT_MECH_LMG_COVER\./), (copy) => sampleOf(copy, 'reload_empty', 'MINT_MECH_LMG_COVER') < 0.5);
+await mutant('caixa-congelada', (copy) => freezeTracks(copy, /^reload_tactical$/, /^MINT_AMMO_LMG_BOX\./), (copy) => travelOf(copy, 'reload_tactical', 'MINT_AMMO_LMG_BOX') < 8);
+await mutant('tampa-congelada', (copy) => freezeTracks(copy, /^reload_empty$/, /^MINT_MECH_LMG_COVER\./), (copy) => rotationOf(copy, 'reload_empty', 'MINT_MECH_LMG_COVER') < 45);
+// Mutantes do defeito que fechou esta arma: as peças voltando a viajar soltas.
+await mutant('tampa-arrancada', (copy) => scaleTranslation(copy, /^reload_tactical$/, 'MINT_MECH_LMG_COVER', 60), (copy) => travelOf(copy, 'reload_tactical', 'MINT_MECH_LMG_COVER') > 1);
+await mutant('caixa-fora-de-quadro', (copy) => scaleTranslation(copy, /^reload_empty$/, 'MINT_AMMO_LMG_BOX', 4), (copy) => travelOf(copy, 'reload_empty', 'MINT_AMMO_LMG_BOX') > 18);
+await mutant('bandeja-arrancada', (copy) => scaleTranslation(copy, /^reload_empty$/, 'MINT_MECH_LMG_FEED_TRAY', 60), (copy) => travelOf(copy, 'reload_empty', 'MINT_MECH_LMG_FEED_TRAY') > 1);
 await mutant('apoio-congelado', (copy) => freezeTracks(copy, /^reload_tactical$/, /^(clavicle|upperarm|lowerarm|hand)_l\./), (copy) => sampleOf(copy, 'reload_tactical', 'hand_l') < 0.15);
 await mutant('inspect-parado', (copy) => freezeTracks(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.quaternion') < 0.02);
-console.log(`VM_HEAVY_LMG=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mutants, failures })}`);
+console.log(`VM_HEAVY_LMG=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mechanism, mutants, failures })}`);
 if (failures.length) process.exitCode = 1;
