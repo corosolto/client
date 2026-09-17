@@ -14,6 +14,8 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras, caixaGirada } from './map_decals.js';   // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';                         // cobertura medida, não coordenada à mão
+import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 // kill-switches (padrão do projeto): ?nofog=1 sem névoa, ?rays=0 sem god rays,
 // ?dust=0 sem poeira em suspensão, ?mato=0 sem vegetação invasora.
@@ -34,6 +36,9 @@ export const FERRO_PROPS = [
   // miúdos
   'dumpster', 'jersey_barrier', 'sandbags', 'concrete_roadblock',
 ];
+/* Somente estes quatro modelos locais entram no preload do Ferro Velho. A lista fica
+   junto do mapa para impedir que uma melhoria de ambiência baixe o catálogo inteiro. */
+export const FERRO_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'cockroach']);
 const SINGLES = ['abandoned_car', 'broken_car', 'carro_danificado', 'junk_car'];   // destroyed_car/broken_car_2 = scans pretos brilhantes ("blob" do crítico) — fora
 
 // ----- texturas canvas ricas (sem low-poly flat: manchas, rachaduras, óleo, pedras) -----
@@ -1091,11 +1096,69 @@ export function buildFerroVelho(scene, T) {
   tireStack(3, 22);
   sandAt(-7, 0);
 
+  /* PASSARELA DE TRIAGEM: duas rampas abrem uma decisão vertical na borda leste;
+     piso e rampas usam groundHeightAt e preservam o corredor baixo x≈18–24. */
+  const PASSARELA = Object.freeze({ x0: 27.0, x1: 30.4, deckZ0: 12, deckZ1: 24, northZ0: 4, southZ1: 32, h: 2.4 });
+  const marcaFerro = (mesh, role, name) => {
+    mesh.userData.ferroRole = role;
+    mesh.name = `ferro-${role}-${name}`;
+    return mesh;
+  };
+  {
+    const px = (PASSARELA.x0 + PASSARELA.x1) / 2;
+    const pw = PASSARELA.x1 - PASSARELA.x0;
+    const deck = marcaFerro(addBox(pw, .18, PASSARELA.deckZ1 - PASSARELA.deckZ0,
+      MAT.zincDark, px, PASSARELA.h - .18, (PASSARELA.deckZ0 + PASSARELA.deckZ1) / 2,
+      { collide: false, skirt: false }), 'elevated-deck', 'triagem');
+    deck.userData.walkableTop = PASSARELA.h;
+
+    const ramp = (z0, z1, sobe, name) => {
+      const run = z1 - z0, len = Math.hypot(run, PASSARELA.h);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(pw, .16, len), MAT.zincDark);
+      m.position.set(px, PASSARELA.h / 2 - .08, (z0 + z1) / 2);
+      m.rotation.x = (sobe ? -1 : 1) * Math.atan2(PASSARELA.h, run);
+      m.castShadow = m.receiveShadow = true;
+      m.userData.nonSolidSurface = true;
+      marcaFerro(m, 'elevated-ramp', name);
+      root.add(m);
+    };
+    ramp(PASSARELA.northZ0, PASSARELA.deckZ0, true, 'galpao');
+    ramp(PASSARELA.deckZ1, PASSARELA.southZ1, false, 'portao');
+
+    // Estrutura aparente de cantoneira e guarda-corpo: dá contato visual e impede queda.
+    for (const z of [13, 18, 23]) for (const x of [PASSARELA.x0, PASSARELA.x1]) {
+      marcaFerro(addBox(.14, PASSARELA.h, .14, MAT.steel, x, 0, z), 'elevated-support', `${x}-${z}`);
+    }
+    for (const x of [PASSARELA.x0, PASSARELA.x1]) for (const y of [.38, .98]) {
+      // Duas barras horizontais deixam a linha de tiro legível. A versão de teste usava
+      // uma chapa contínua de 1,05 m, que protegia mas anulava a função do mirante.
+      marcaFerro(addBox(.10, .10, PASSARELA.deckZ1 - PASSARELA.deckZ0, MAT.steel,
+        x, PASSARELA.h + y, (PASSARELA.deckZ0 + PASSARELA.deckZ1) / 2, { skirt: false }),
+      'elevated-rail', `${x}-${y}`);
+    }
+    for (const z of [PASSARELA.northZ0, PASSARELA.southZ1]) {
+      const s = marcaFerro(addBox(pw + .55, 1.05, .10, MAT.steel, px, 0, z,
+        { collide: false, skirt: false }), 'route-sign', `${z}`);
+      s.position.y = 3.35;
+    }
+
+    // Cobertura do corredor baixo: alternada para formar dois zigue-zagues com vãos ≥3 m.
+    const cover = (x, z, id, h, ry, hw, hd, name) => {
+      const o = placeProp(id, { x, z, targetH: h, ry });
+      const m = o || addBox(hw * 2, h, hd * 2, nextRust(), x, 0, z, { ry });
+      if (o) { vary(o); root.add(o); collide(x, z, hw, hd, h); }
+      marcaFerro(m, 'east-cover', name);
+    };
+    cover(17.0, 5.5, 'jersey_barrier', 1.05, .25, 1.2, .38, 'norte');
+    cover(23.2, 11.0, 'pilha_pneus', 1.2, -.2, .6, .6, 'meio');
+    cover(17.2, 16.0, 'broken_car', 1.45, 1.1, 1.2, 2.2, 'sul');
+  }
+
   /* ===== PROPS DE IDENTIDADE PROCEDURAIS (BAR §4.4) =====
      Empilhadeira, carrinho de mão, baterias, rolos de fio de cobre, cadeira monobloco e
      o CACHORRO vira-lata. Tudo geometria primitiva barata (nenhum GLB novo, nenhum
-     download) e SÓ a empilhadeira ganha collider — os demais são leitura, não cover,
-     e ficam fora da linha de tiro pra não virar ruído (BAR §2.3). */
+     download). Empilhadeira, carrinho e cadeira ganham collider; as peças miúdas são
+     leitura e ficam fora da linha de tiro pra não virar ruído (BAR §2.3). */
   {
     const ymat = lam({ map: rustStageTex(2, 777, '#c3ab63', 1, 1), roughness: 0.8, metalness: 0.2 });   // amarelo calcinado
     const dark = lam({ color: 0x2a2c2e, roughness: 0.6, metalness: 0.4 });
@@ -1133,7 +1196,12 @@ export function buildFerroVelho(scene, T) {
       part(g, new THREE.CylinderGeometry(0.2, 0.2, 0.1, 10), tireMat, 0, 0.2, 0.62, 0, 0, Math.PI / 2);
       g.position.set(bx, 0, bz); g.rotation.y = ry; root.add(g);
     };
-    barrow(3.2, -30.4, 0.6);
+    // Encostado no dumpster, cujo volume já bloqueia este bolso: manter o carrinho na
+    // antiga porta x3 separava seis nós do grafo ao tornar sua silhueta finalmente sólida.
+    barrow(6.0, -31.0, 0.6);
+    // Carrinho e cadeira têm volume até a cintura: sem estes colliders a navegação
+    // marcava o mesmo centímetro como chão livre e o jogador atravessava as peças.
+    collide(6.0, -31.0, .62, .78, 1.0);
     /* BATERIAS empilhadas (terminais esverdeados de sulfato) + ROLOS DE FIO DE COBRE —
        é literalmente o que o ferro velho compra; ficam à sombra do barraco. */
     const batMat = lam({ color: 0x1a1c1e, roughness: 0.75 });
@@ -1149,10 +1217,11 @@ export function buildFerroVelho(scene, T) {
     /* CADEIRA MONOBLOCO branca encardida na porta do escritório (BAR §4.4) */
     {
       const pl = lam({ color: 0xd6d2c4, roughness: 0.72 });
-      mesh(new THREE.BoxGeometry(0.42, 0.05, 0.42), pl, 4.0, 0.44, -29.6, 0.5);
-      mesh(new THREE.BoxGeometry(0.42, 0.5, 0.05), pl, 4.0 + Math.sin(0.5) * 0.19, 0.7, -29.6 - Math.cos(0.5) * 0.19, 0.5);
+      mesh(new THREE.BoxGeometry(0.42, 0.05, 0.42), pl, 6.0, 0.44, -29.6, 0.5);
+      mesh(new THREE.BoxGeometry(0.42, 0.5, 0.05), pl, 6.0 + Math.sin(0.5) * 0.19, 0.7, -29.6 - Math.cos(0.5) * 0.19, 0.5);
       for (const [lx, lz] of [[-0.17, -0.17], [0.17, -0.17], [-0.17, 0.17], [0.17, 0.17]])
-        mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.44, 5), pl, 4.0 + lx, 0.22, -29.6 + lz);
+        mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.44, 5), pl, 6.0 + lx, 0.22, -29.6 + lz);
+      collide(6.0, -29.6, .34, .34, .95);
     }
     /* CACHORRO vira-lata dormindo na sombra — o BAR lista cachorro/gato/galinha como
        marcador de "isso é um ferro velho brasileiro, não um depósito industrial". */
@@ -1265,7 +1334,9 @@ export function buildFerroVelho(scene, T) {
         m.castShadow = true; root.add(m);
       } else {                    // bloco de motor
         const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.32, 0.34), lam({ color: 0x1f1d1b, metalness: 0.75, roughness: 0.26, envMapIntensity: 1.8 }));
-        m.position.set(x + drnd() - 0.5, 0.16, z + drnd() - 0.5); m.rotation.y = drnd() * 6.3; m.castShadow = true; root.add(m);
+        // A carcaça parcialmente enterrada fica abaixo do degrau de 30 cm; histórico e
+        // evidência dos quatro falsos sólidos estão no ledger FERRO-VELHO-ESTRUTURA-R1.
+        m.position.set(x + drnd() - 0.5, 0.14, z + drnd() - 0.5); m.rotation.y = drnd() * 6.3; m.castShadow = true; root.add(m);
       }
     }
     // peças grandes: portas/capôs apoiados nas pilhas + parachoques no chão
@@ -1784,16 +1855,31 @@ export function buildFerroVelho(scene, T) {
     shaft(0, 4.2, HALF_Z - 2, 9, 1.6);                                 // vão do portão
   }
 
-  // ===== ground height (pátio plano) =====
-  const groundHeightAt = () => 0;
+  // ===== ground height: pátio plano + duas rampas e deck da passarela =====
+  const groundHeightAt = (x, z) => {
+    if (x < PASSARELA.x0 || x > PASSARELA.x1) return 0;
+    if (z >= PASSARELA.deckZ0 && z <= PASSARELA.deckZ1) return PASSARELA.h;
+    if (z >= PASSARELA.northZ0 && z < PASSARELA.deckZ0)
+      return PASSARELA.h * (z - PASSARELA.northZ0) / (PASSARELA.deckZ0 - PASSARELA.northZ0);
+    if (z > PASSARELA.deckZ1 && z <= PASSARELA.southZ1)
+      return PASSARELA.h * (PASSARELA.southZ1 - z) / (PASSARELA.southZ1 - PASSARELA.deckZ1);
+    return 0;
+  };
 
   // ===== waypoints + A* =====
   const nodes = [], adj = [], STEP = 3.4;
   const blocked = (x, z, inf) => { for (const c of colliders) { if (x > c.minX - inf && x < c.maxX + inf && z > c.minZ - inf && z < c.maxZ + inf && c.minY < 1.6 && c.maxY > 0.15) return true; } return false; };
   for (let gx = -HALF_X + 2; gx <= HALF_X - 2; gx += STEP)
     for (let gz = -HALF_Z + 2; gz <= HALF_Z - 2; gz += STEP)
-      if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz });
-  const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t; if (blocked(x, z, 0.25)) return false; } return true; };
+      if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, y: groundHeightAt(gx, gz), z: gz });
+  const segClear = (a, b) => {
+    if (Math.abs(a.y - b.y) > 1.2) return false;
+    for (let i = 1; i < 6; i++) {
+      const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+      if (blocked(x, z, 0.25)) return false;
+    }
+    return true;
+  };
   for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
   function nearestWaypoint(x, z) { let b = 0, bd = 1e9; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < bd) { bd = d; b = i; } } return b; }
   const _D = (a, b) => { const dx = nodes[a].x - nodes[b].x, dz = nodes[a].z - nodes[b].z; return Math.sqrt(dx * dx + dz * dz); };
@@ -1815,8 +1901,16 @@ export function buildFerroVelho(scene, T) {
        folha recolhida — o corpo tem 0,38 m de raio, então dois dos quatro jogadores nasciam
        praticamente encostados na chapa de zinco. Dentro do vão a folga vira 1,50 m e os 4
        slots ficam a 2,4 m um do outro. */
-    E: [-3.6, -1.2, 1.2, 3.6].map(x => ({ x, z: HALF_Z - 3, yaw: 0 })),
-    B: [-14, -9, -4, 1].map(x => ({ x, z: -25, yaw: Math.PI })),
+    // Oito slots únicos por equipe, em bolsões medidos pelo MAP2B e com a primeira
+    // decisão oeste/centro/leste visível a partir de cada posição.
+    E: [
+      ...[-3.6, -1.2, 1.2, 3.6].map(x => ({ x, z: HALF_Z - 3, yaw: 0 })),
+      ...[-3.6, -1.2, 1.2, 3.6].map(x => ({ x, z: HALF_Z - 4.8, yaw: 0 })),
+    ],
+    B: [
+      ...[-14, -9, -4, 1].map(x => ({ x, z: -25, yaw: Math.PI })),
+      ...[-16.0, -9, -4, 1].map(x => ({ x, z: -22.6, yaw: Math.PI })),
+    ],
   };
   // 4 bandeiras (dono): 1 CENTRAL + as outras ESPAÇADAS, e NENHUMA no respawn (a antiga
   // 'PORTÃO' 0,31 nascia colada no spawn P z33; a 'GALPÃO' -16,-31 atrás do spawn B z-25).
@@ -1834,6 +1928,27 @@ export function buildFerroVelho(scene, T) {
     { id: 'E', label: 'PÁTIO LESTE', x: 26, z: -16 },
     { id: 'B', label: 'GALPÃO', x: -8, z: -14 },
   ];
+
+  /* Vida local em rotas mortas, longe dos anéis de captura. Os GLBs já pertencem ao
+     acervo versionado do jogo; no harness sem preload, os fallbacks procedurais mantêm
+     a mesma contagem e movimento para a régua não ficar verde por ausência de rede. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'ferro_velho', low: LOWQ,
+    rats: [
+      { pos: [-10.8, 0, -30.0], to: [-8.8, 0, -29.1], phase: .4 },
+      { pos: [19.0, 0, 21.7], to: [20.2, 0, 22.4], phase: 1.8 },
+      { pos: [-28.0, 0, 10.5], to: [-27.4, 0, 12.0], phase: 2.7 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [28.1, PASSARELA.h, 17], to: [29.1, PASSARELA.h, 19], phase: .7 },
+      { mode: 'ground', pos: [-15.0, 0, 32.5], to: [-13.5, 0, 31.8], phase: 2.2 },
+    ],
+    dogs: [{ pos: [4.0, 0, -28.0], to: [7.0, 0, -27.5], phase: 1.1 }],
+    cockroaches: [
+      { pos: [6.4, 0, -30.7], to: [5.8, 0, -30.0], phase: .2 },
+      { pos: [-28.0, 0, -17.5], to: [-27.4, 0, -18.1], phase: 1.6 },
+    ],
+  });
 
   // arsenal: shotgun/rifles no miolo do labirinto, snipers nos cantos, pistolas no spawn
   const gmat = lam({ color: 0x20242a });
@@ -1879,7 +1994,12 @@ export function buildFerroVelho(scene, T) {
   });
 
   return {
-    root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
+    root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
+    sound: { loops: [
+      { src: AMB_LOOPS.cidade, pos: [0, 3, 0], radius: 78, vol: .15, global: true },
+      { src: AMB_LOOPS.vento, pos: [26, 3, 8], radius: 44, vol: .22 },
+    ], bioma: 'urbano' },
+    elevatedRoute: PASSARELA,
     /* DECLARAÇÃO PRA RÉGUA (tools/eval/decal-probe.mjs): a lista COMPLETA contra a qual o
        `paredeAtras` validou cada decalque = colliders + as duas folhas giradas do portão. */
     decalSolids: colliders.concat(decalSolids),
