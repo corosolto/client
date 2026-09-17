@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 47,591 lines in 96 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 47,629 lines in 96 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,483** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,534 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -51,7 +51,7 @@ this page was aging at the very first commit — see
 | Playable characters | 53, in 6 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 17 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 374 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Harness scripts | 377 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Pipeline scripts | 75 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.0.0-alpha.255` | `public/js/version.js` and `package.json` (match) |
@@ -224,7 +224,7 @@ The maps registered today, and which mode each one opens in:
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
 | `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,395 |
-| `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,154 |
+| `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,192 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,407 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 811 |
