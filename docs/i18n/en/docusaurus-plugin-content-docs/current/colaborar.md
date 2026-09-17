@@ -258,7 +258,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 811 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,965 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,889 |
-| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,600 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,652 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,348 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 392 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 490 |
