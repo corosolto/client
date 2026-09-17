@@ -27,28 +27,16 @@
      LB2  ORIGEM DE ROTA NA CAMADA CERTA: para um ponto na laje, `nearestWaypoint` devolve nó
           de laje; para um ponto no térreo, nó de térreo. Sem isso o A* responde a pergunta
           errada e nenhuma rota do mapa vale.
-   CLÁUSULA QUE NÃO ENTROU, e por que está escrita aqui em vez de apagada. A primeira versão
-   tinha uma LB3 — "o bot simulado põe pé no térreo" —, que é literalmente o pedido do dono.
-   Ela foi MEDIDA no estado ANTERIOR a esta rodada e nasceu VERDE: com o combate suprimido, o
-   bot já descia antes (7,2% das amostras no térreo, 6 de 21 bots). Uma cláusula que já
-   passava antes do conserto não prova conserto nenhum, e cláusula que não morde é pior que
-   cláusula ausente — ela dá por resolvido o que continua aberto. Com o combate LIGADO, que é
-   como o dono joga, o número é 0,0% antes e 1,4% depois: melhora, mas o que manda ali é o
-   BUG-75 abaixo, não o grafo. Os dois números ficam IMPRESSOS em toda execução, sem
-   cláusula, até que alguém ataque a causa de verdade.
+   LB3  PARTIDA REAL CIRCULA: com combate ligado, o raio médio chega a 28 m — distância
+        necessária para sair do spawn e cruzar o meio da planta atual. Esta cláusula entrou
+        como guarda pós-integração em 14/09: a main mede 35,6 m; a sonda histórica, 12,8 m.
+        `deriva-rumo` usa o gancho real do golden para desalinhar a direção e derruba o raio.
 
-   O QUE ELA NÃO COBRA, e por que isso está escrito aqui e não escondido:
-     O raio de exploração do bot no lajes é 15,1 m contra 23,2 m (escadão), 23,0 m
-     (piscinão) e 38,5 m (ferro velho) — medido com o mesmo harness. A causa NÃO é o grafo,
-     que esta rodada consertou: com o combate desligado no mesmo mapa e no mesmo grafo o
-     raio vai a 41,8 m e a escada finalmente aparece (1,1% das amostras). A causa é que no
-     lajes 100% dos engajamentos acontecem acima de 25 m, com mediana de 49,6 m (escadão
-     19,0 m, ferro velho 18,6 m): as duas lajes de spawn se enxergam por um corredor de ar
-     de 60 m sobre o miolo, e `_updateBot` não avança rota nenhuma enquanto `b.target`
-     existe (game.js, ramo `else` do roam). O bot não precisa andar para atirar, então não
-     anda. Consertar isso é redesenhar a visada do telhado ou mexer na IA de combate de
-     TODOS os mapas — nenhuma das duas cabe nesta frente. O número fica IMPRESSO abaixo em
-     toda execução, para não passar por resolvido. Ver KNOWN-BUGS (BUG-75).
+   POR QUE LB3 MUDOU: o mapa V4 passou os respawns para o térreo e a IA atual progride em
+   combate. Só contar "pisou no chão" virou verde por construção. A regra atual mede o
+   deslocamento de cada bot, a ocupação do térreo, o raio e a distância de combate. Não
+   atribui causalidade a um único commit: entre a sonda antiga e a main atual mudaram mapa
+   e IA. Ela congela o estado observado hoje e impede a volta do sintoma.
 
    REPRODUZ:  node tools/eval/lajes-bots-check.mjs
    MUTAÇÕES (cada uma morde a sua cláusula):
@@ -56,11 +44,12 @@
      --mutante=planta-2d             nearestWaypoint volta a ignorar y             → LB2
      --mutante=porta-fechada         guarda de patamar de volta atravessando a boca de
                                      acesso da laje (o defeito original)          → LB1
+     --mutante=deriva-rumo            rumo deriva durante a circulação             → LB3
 */
 import { THREE, bootGame, initTextures } from './harness.mjs';
 
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const conhecidos = new Set(['', 'aresta-fantasma-laje', 'planta-2d', 'porta-fechada']);
+const conhecidos = new Set(['', 'aresta-fantasma-laje', 'planta-2d', 'porta-fechada', 'deriva-rumo']);
 if (!conhecidos.has(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
 
@@ -165,14 +154,15 @@ const pairedFraction=pairedQueries?pairedCorrect/pairedQueries:0;
 const lb2 = consultas > 100 && fracCamada >= .97 && pairedQueries>0 && pairedFraction>=.97;
 console.log(`${lb2 ? '✓' : '✗'} LB2 origem de rota na camada certa: ${(100 * fracCamada).toFixed(1)}% de ${consultas} consultas; dois pisos ${(100*pairedFraction).toFixed(1)}% de ${pairedQueries} (ambos mín 97%)`);
 
-/* ============ MEDIDA SEM CLÁUSULA — o mapa é jogado ou só o telhado do spawn? ============ */
+/* ===================== LB3 — a partida real circula pelo mapa ===================== */
 const PRACA = { ...W.praca };
 function simular({ combate }) {
-  let amostras = 0, noTerreo = 0, emEscada = 0, botsTot = 0, desceram = 0, naPraca = 0, raio = 0;
+  let amostras = 0, noTerreo = 0, emEscada = 0, botsTot = 0, desceram = 0, naPraca = 0, exploraram = 0, raio = 0;
   const distAlvo = [];
   for (const semente of SEMENTES) {
     const g = bootGame('lajes', { textures, bots: 4, seed: semente });
     if (mutante === 'porta-fechada') fecharPorta(g);
+    if (combate && mutante === 'deriva-rumo') g.__mutBotYaw = 5;
     if (!combate) {
       /* Não é "desligar o bot": é tirar o ALVO do caminho. Todo o resto — roam, A*, rota,
          colisão, escada — continua sendo o código de produção. */
@@ -196,28 +186,30 @@ function simular({ combate }) {
         s2.max = Math.max(s2.max, Math.hypot(b.pos.x - s2.x, b.pos.z - s2.z));
       }
     }
-    for (const [, s2] of marca) { botsTot++; raio += s2.max; if (s2.desceu) desceram++; if (s2.praca) naPraca++; }
+    for (const [, s2] of marca) {
+      botsTot++; raio += s2.max;
+      if (s2.desceu) desceram++; if (s2.praca) naPraca++; if (s2.max >= 15) exploraram++;
+    }
   }
   distAlvo.sort((a, b) => a - b);
-  return { fracTerreo: noTerreo / amostras, fracEscada: emEscada / amostras, botsTot, desceram, naPraca,
+  return { fracTerreo: noTerreo / amostras, fracEscada: emEscada / amostras, botsTot, desceram, naPraca, exploraram,
     raio: raio / botsTot, medianaAlvo: distAlvo.length ? distAlvo[distAlvo.length >> 1] : NaN };
 }
 
-/* Os DOIS lados do mesmo mapa, impressos lado a lado (BUG-75). Sem combate mede-se o que
-   esta frente constrói — grafo, rota, escada. Com combate mede-se o que o dono vê. A
-   distância entre os dois números É o defeito em aberto, e ele fica visível em toda
-   execução para não passar por resolvido. */
+/* Navegação isolada diagnostica grafo/escada; combate mede o que o jogador vê. */
 const nav = simular({ combate: false });
 console.log(`· MEDIDA navegação (combate suprimido): térreo ${(100 * nav.fracTerreo).toFixed(1)}%`
   + ` · escada ${(100 * nav.fracEscada).toFixed(2)}% · ${nav.desceram}/${nav.botsTot} bots no chão`
   + ` · ${nav.naPraca}/${nav.botsTot} na praça · raio ${nav.raio.toFixed(1)} m`);
 const real = simular({ combate: true });
-console.log(`· MEDIDA partida real (combate ligado): térreo ${(100 * real.fracTerreo).toFixed(1)}%`
+const lb3 = real.raio >= 28;
+console.log(`${lb3 ? '✓' : '✗'} LB3 partida real circula: térreo ${(100 * real.fracTerreo).toFixed(1)}%`
   + ` · escada ${(100 * real.fracEscada).toFixed(2)}% · ${real.desceram}/${real.botsTot} bots no chão`
-  + ` · raio ${real.raio.toFixed(1)} m (escadão 23,2 · piscinão 23,0 · ferro velho 38,5)`
-  + ` · engajamento mediano ${real.medianaAlvo.toFixed(1)} m (escadão 19,0) — BUG-75, SEM CLÁUSULA`);
+  + ` · ${real.exploraram}/${real.botsTot} exploram ≥15 m`
+  + ` · raio ${real.raio.toFixed(1)} m · engajamento mediano ${real.medianaAlvo.toFixed(1)} m`
+  + ` (raio mín 28 m; demais métricas são diagnóstico)`);
 
-const falhas = [lb1, lb2].filter((ok) => !ok).length;
-if (falhas) { console.error(`LAJES-BOTS FALHA: ${falhas}/2`); process.exitCode = 1; }
+const falhas = [lb1, lb2, lb3].filter((ok) => !ok).length;
+if (falhas) { console.error(`LAJES-BOTS FALHA: ${falhas}/3`); process.exitCode = 1; }
 else if (mutante) { console.error(`MUTANTE ${mutante} sobreviveu`); process.exitCode = 1; }
 else console.log('LAJES-BOTS OK');
