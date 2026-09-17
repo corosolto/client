@@ -911,8 +911,10 @@ export function buildHavan(scene, T) {
   // REFORÇO DE RESPAWN B (G2-R6B): gôndola tapando o vão central da fileira z=-27 + peças
   // escalonadas nos flancos (±12) — o spawn da loja vira um bolso de gôndolas. A* contorna
   // pelos lados (corredores ≥4m); LOS spawn↔spawn segue 0 (só adiciona cover alto).
-  if (!gprop('gondola_eletro', 0, -27, 1.8, Math.PI / 2)) addBox(2.1, 1.8, 1.0, MAT.shelf, 0, 0, -27);
-  colliders.push({ minX: -1.05, maxX: 1.05, minY: 0, maxY: 1.8, minZ: -27.55, maxZ: -26.45 });
+  /* O centro da fileira z=-27 fica livre para a TERCEIRA descida do mezanino. A gôndola
+     única que havia aqui tapava a linha reta, mas também transformava o vão de carga do
+     guarda-corpo numa saída sem chão. As seis gôndolas dos flancos (x ±3,12/5,26/7,40)
+     continuam formando o bolso de cobertura; o eixo de 2,6 m entre elas agora é rota. */
   for (const sx of [-1, 1]) {
     if (!gprop('gondola_mercado', sx * 12, -28.5, 1.8, Math.PI / 2)) addBox(2.1, 1.8, 1.0, MAT.shelf, sx * 12, 0, -28.5);
     colliders.push({ minX: sx * 12 - 1.05, maxX: sx * 12 + 1.05, minY: 0, maxY: 1.8, minZ: -29.05, maxZ: -27.95 });
@@ -1029,7 +1031,13 @@ export function buildHavan(scene, T) {
      não encostar na gôndola de x = −7,4 da fileira z = −27. Cada porta do depósito passa a
      ter a SUA descida, que é o que "duas saídas" queria dizer desde o começo. */
   const RAMP2 = { x0: -11.4, x1: -11.4 + ESC.larg, z0: MZ.z1, z1: MZ.z1 + ESC.n * ESC.piso };
-  const RAMPAS = [RAMP, RAMP2];
+  /* TERCEIRA DECISÃO DE ROTA. O guarda-corpo já reservava um vão central de carga em
+     x ∈ [-3,3], mas ele terminava numa queda: jogador podia pular, bot não podia planejar
+     a descida. A escada de carga usa a mesma seção NBR das laterais e desembarca no eixo
+     que ficou livre entre as gôndolas. Assim o spawn B tem oeste / centro / leste e o
+     centro continua sendo a ligação mais curta entre loja e estacionamento. */
+  const RAMP3 = { x0: -ESC.larg / 2, x1: ESC.larg / 2, z0: MZ.z1, z1: MZ.z1 + ESC.n * ESC.piso };
+  const RAMPAS = [RAMP, RAMP2, RAMP3];
   /* PROFUNDIDADE DO DEPÓSITO — 4,80 m -> 6,00 m (map_havan.js:828).
      A rodada anterior deixou o respawn do time B numa FRESTA: parede de portas em
      z = MZ.z0+4,8 e uma chicana-parede de 19 m a 1,80 m atrás dela, com os 4 spawns em
@@ -1082,7 +1090,10 @@ export function buildHavan(scene, T) {
      (maior visada 36,9 m) para 0,0% (0 m). */
   {
     const PORTA = 2.8;
-    const vaos = [[-12.4, -12.4 + PORTA], [12.4 - PORTA, 12.4]];
+    /* Três saídas reais do depósito, alinhadas às três descidas: oeste, carga e leste.
+       A central não abre uma linha de tiro até o spawn porque desemboca atrás da ilha de
+       promoção opaca montada na sacada logo abaixo. */
+    const vaos = [[-12.4, -12.4 + PORTA], [-PORTA / 2, PORTA / 2], [12.4 - PORTA, 12.4]];
     let x = MZ.x0;
     for (const [g0, g1] of vaos) {
       if (g0 > x) addBox(g0 - x, 2.8, 0.25, MAT.wall, (x + g0) / 2, MZ.h, DEP_Z);
@@ -1214,14 +1225,24 @@ export function buildHavan(scene, T) {
     if (!gprop('gondola_eletro', gx, gz, 1.8, Math.PI / 2, MZ.h)) addBox(2.1, 1.8, 1.0, MAT.shelf, gx, MZ.h, gz);
     colliders.push({ minX: gx - 1.05, maxX: gx + 1.05, minY: MZ.h, maxY: MZ.h + 1.8, minZ: gz - 0.55, maxZ: gz + 0.55 });
   }
+  /* ILHA DE PROMOÇÃO da saída de carga. Ela obriga a dobrar para oeste/leste ao cruzar a
+     porta central, bloqueia a visada direta do estacionamento para o depósito e deixa
+     1,2 m livres de cada lado antes do eixo das escadas. É cobertura, não parede cenográfica:
+     o mesmo volume entra em colisor e occluder por `addBox`. */
+  addBox(13.5, 2.8, 0.55, MAT.shelf, 0, MZ.h, MZ.z1 - 1.35);
+  {
+    const retirada = lam({ map: letreiroTex('RETIRA AQUI', 512, 128), roughness: 0.62 });
+    addBox(5.6, 1.15, 0.05, retirada, 0, MZ.h + 0.9, MZ.z1 - 1.04, { collide: false, cast: false });
+    addBox(13.1, 0.10, 0.08, MAT.trim, 0, MZ.h + 0.45, MZ.z1 - 1.02, { collide: false, cast: false });
+  }
   /* PAINEL DE TVs: saiu do canto de trás do depósito (era x 6,6-9,4 / z −40,8..−40,2) e foi
      pra face da SACADA da parede de portas. Motivo medido: encostado no fundo ele fechava,
      junto com o anteparo da porta, a única volta que o grafo tinha entre o miolo do depósito
      e a porta leste — a fileira de waypoints de z = −40,2 morria nele e a de −38,5 morria na
      estante. Onde ele está agora ele também faz mais sentido de loja: é a parede de TVs que
      quem está embaixo, na loja, vê acesa lá em cima. */
-  gprop('painel_tvs', 0, DEP_Z + 0.45, 1.8, Math.PI, MZ.h + 0.2);
-  colliders.push({ minX: -1.4, maxX: 1.4, minY: MZ.h, maxY: MZ.h + 2.0, minZ: DEP_Z + 0.2, maxZ: DEP_Z + 0.7 });
+  gprop('painel_tvs', 4.2, DEP_Z + 0.45, 1.8, Math.PI, MZ.h + 0.2);
+  colliders.push({ minX: 2.8, maxX: 5.6, minY: MZ.h, maxY: MZ.h + 2.0, minZ: DEP_Z + 0.2, maxZ: DEP_Z + 0.7 });
   gprop('manequim', 12, MZ.z0 + 2.5, 1.8, 2.4, MZ.h);
   colliders.push({ minX: 11.7, maxX: 12.3, minY: MZ.h, maxY: MZ.h + 1.8, minZ: MZ.z0 + 2.2, maxZ: MZ.z0 + 2.8 });
   // PAREDE DO FUNDO DA LOJA (crítico: "azul monolítico"): faixa amarela Havan + letreiros
@@ -1770,6 +1791,34 @@ export function buildHavan(scene, T) {
     return true;
   };
   for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
+  /* O grid retangular também gera nós FORA do espaço jogável: atrás da parede do fundo,
+     nos corredores laterais que a fachada sela e em dois bolsões entre carros e muro.
+     Antes eles continuavam no array (147/634 nós em quatro componentes), então um sorteio
+     de roam podia mandar o bot para um destino que `findPath` jamais alcançaria.
+
+     A âncora (0,0) fica no pátio central e a componente dela contém os DOIS spawns, as
+     quatro bandeiras, as três portas e as três escadas. Remover o restante não inventa
+     ligação: elimina destinos inválidos. O gate dedicado confirma, separadamente, que
+     spawns/CTF continuam dentro da componente — uma regressão real não fica escondida. */
+  {
+    let anchor = 0, bd = Infinity;
+    for (let i = 0; i < nodes.length; i++) {
+      const d = nodes[i].x * nodes[i].x + nodes[i].z * nodes[i].z;
+      if (d < bd) { bd = d; anchor = i; }
+    }
+    const keep = new Uint8Array(nodes.length), stack = [anchor]; keep[anchor] = 1;
+    while (stack.length) {
+      const i = stack.pop();
+      for (const j of adj[i]) if (!keep[j]) { keep[j] = 1; stack.push(j); }
+    }
+    const remap = new Int32Array(nodes.length).fill(-1), nextNodes = [];
+    for (let i = 0; i < nodes.length; i++) if (keep[i]) { remap[i] = nextNodes.length; nextNodes.push(nodes[i]); }
+    const nextAdj = nextNodes.map(() => []);
+    for (let i = 0; i < nodes.length; i++) if (keep[i])
+      for (const j of adj[i]) if (keep[j]) nextAdj[remap[i]].push(remap[j]);
+    nodes.splice(0, nodes.length, ...nextNodes);
+    adj.splice(0, adj.length, ...nextAdj);
+  }
   function nearestWaypoint(x, z) { let b = 0, bd = 1e9; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < bd) { bd = d; b = i; } } return b; }
   const _D = (a, b) => { const dx = nodes[a].x - nodes[b].x, dz = nodes[a].z - nodes[b].z; return Math.sqrt(dx * dx + dz * dz); };
   function findPath(fromIdx, toIdx) {
@@ -1958,7 +2007,8 @@ export function buildHavan(scene, T) {
        ser ALCANÇADO a pé e pelo A* — é o que transforma "tem um mezanino" em "dá pra subir
        no mezanino", que foi o defeito real (o mezanino era uma ILHA no grafo). */
     stairs: [{ nome: 'escada L do mezanino', x0: RAMP.x0, x1: RAMP.x1, z0: RAMP.z0, z1: RAMP.z1, topo: MZ.h },
-      { nome: 'escada O do mezanino', x0: RAMP2.x0, x1: RAMP2.x1, z0: RAMP2.z0, z1: RAMP2.z1, topo: MZ.h }],
+      { nome: 'escada O do mezanino', x0: RAMP2.x0, x1: RAMP2.x1, z0: RAMP2.z0, z1: RAMP2.z1, topo: MZ.h },
+      { nome: 'escada central de carga', x0: RAMP3.x0, x1: RAMP3.x1, z0: RAMP3.z0, z1: RAMP3.z1, topo: MZ.h }],
     levels: [{ nome: 'mezanino', x0: MZ.x0, x1: MZ.x1, z0: MZ.z0, z1: MZ.z1, dePartida: 'P' }],
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
   };
