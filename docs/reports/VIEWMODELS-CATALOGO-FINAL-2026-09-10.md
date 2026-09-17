@@ -638,3 +638,36 @@ Recibo: [`VIEWMODEL-HEAVY-SHOTGUN-ALPHA252-2026-09-14.md`](VIEWMODEL-HEAVY-SHOTG
 Gate vermelho: `b6128b842`; integração e captura: `8bedf48ed`. O preview imutável
 corrente é `preview-snapshots/8bedf48ed-f4522831`. Próxima arma incompleta: LMG —
 a última das 26.
+
+## Marco pesadas alpha.252 — LMG fechada, última das 26
+
+A Metralha "Treta Pesada" usa a MGX5 própria do pacote, duas mãos completas e
+mecanismos próprios de caixa, cinto, tampa, bandeja e alavanca. O produto entrega
+`idle`, tiro que avança o cinto um elo, recarga tática, recarga vazia e inspect;
+o saque vem do pacote General, como na P90.
+
+O ciclo achou um defeito que a régua não via porque a régua o premiava. As
+recargas do pacote transladavam a tampa 87,79 cm, a bandeja 54,32 cm e a caixa
+57,79 cm no rig; em primeira pessoa a tampa aparecia pairando no canto superior
+direito, solta no ar. Os limites antigos eram só inferiores
+(`coverExcursion >= 0.5`) e mediam excursão de origem de nó no mundo — mas essas
+peças são ossos sem malha própria, então a medida não descrevia nem contato nem
+enquadramento. A régua passou a medir rotação e translação local em cm: tampa e
+bandeja abrem por dobradiça no pivô do receiver (76,6° e 45,1°, 0 cm de
+translação) e a caixa sai do poço com módulo limitado a 18 cm, preservando a
+trajetória autorada.
+
+Treze mutantes morderam, incluindo três novos que reintroduzem o defeito. O
+lifecycle passou 13 controles/30 ciclos/600 amostras. Trinta e duas capturas
+reais em 3:2/16:9 não tiveram erro fatal e nenhuma fase mostra peça solta no
+quadro. A candidata segue `ready:false`, família lmg/global off.
+
+Recibo: [`VIEWMODEL-HEAVY-LMG-ALPHA252-2026-09-18.md`](VIEWMODEL-HEAVY-LMG-ALPHA252-2026-09-18.md).
+Integração: `abd34869e`. O preview imutável corrente é
+`preview-snapshots/abd34869e-2afc8c26`.
+
+As 26 armas do catálogo agora têm candidata técnica. Nenhuma está aprovada: todas
+seguem `ready:false` com ativação global desligada, e a pendência de contato da
+mão de apoio nas recargas continua aberta para o arsenal inteiro. O próximo marco
+é a etapa 5 da ordem de integração — regressão cruzada, duas proporções, HUD,
+terceira pessoa, build limpo e revisão adversarial —, ainda não executada.
