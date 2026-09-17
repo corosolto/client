@@ -1,12 +1,10 @@
 // UPA 24h da Treta: pronto-socorro 100% interno (paródia), salas em cruz no corredor central.
 // E na recepção (sul-oeste), B na emergência (norte-leste). Colisão só AABB. Contrato build(scene, T).
 import * as THREE from 'three';
-import { aplicaSombraSol } from './mapquality.js';
-import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 
-export const UPA_PROPS = ['manequim', 'gondola_mercado', 'gondola_eletro', 'painel_tvs', 'caixa_cobranca', 'cooler'];
+export const UPA_PROPS = [];
 
 const HALF_X = 30, HALF_Z = 36, CEIL = 4.2, WH = 4.2, WT = 0.3, DH = 2.4;   // pé-direito 4,2 m; porta 2,4 m
 
@@ -28,6 +26,8 @@ export function buildUpa(scene, T) {
   const colliders = [];
   const occluders = [];
   const pickups = [];
+  const upaClinicalCover = [];
+  const upaClinicalSectors = ['recepcao', 'triagem', 'consultorios', 'observacao', 'emergencia', 'farmacia'];
   const root = new THREE.Group();
   scene.add(root);
 
@@ -70,7 +70,7 @@ export function buildUpa(scene, T) {
   }
 
   const MAT = {
-    piso: lam({ map: floorTex() }), parede: lam({ map: wallTex() }), paredeAlta: lam({ color: 0x776f66 }),
+    piso: lam({ map: floorTex() }), parede: lam({ map: wallTex() }), paredeAlta: lam({ color: 0xc8d4d1 }),
     teto: lam({ color: 0x798089 }), maca: lam({ color: 0xf2f5f7 }), aco: lam({ color: 0x9aa0a6 }),
     mesa: lam({ color: 0xc9b896 }), cadeira: lam({ color: 0x2f4a63 }), armario: lam({ color: 0xd6dbe0 }),
     verde: lam({ color: 0x3f9a86 }), vermelho: lam({ color: 0xc0392b }), vidro: lam({ color: 0x9fd0e6, transparent: true, opacity: 0.4 }),
@@ -81,16 +81,26 @@ export function buildUpa(scene, T) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
+    if (opts.name) m.name = opts.name;
     root.add(m);
     if (opts.collide !== false) {
       let hx = w / 2, hz = d / 2;
       if (opts.ry) { const cs = Math.abs(Math.cos(opts.ry)), sn = Math.abs(Math.sin(opts.ry)); hx = w / 2 * cs + d / 2 * sn; hz = w / 2 * sn + d / 2 * cs; }   // AABB gira com o mesh (senão o corpo entra na quina)
-      colliders.push({ minX: x - hx, maxX: x + hx, minY: y, maxY: y + h, minZ: z - hz, maxZ: z + hz }); occluders.push(m);
+      colliders.push({ minX: x - hx, maxX: x + hx, minY: y, maxY: y + h, minZ: z - hz, maxZ: z + hz, tag: opts.name || undefined }); occluders.push(m);
     }
     return m;
   }
   const col = (x, z, hx, hz, h) => colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: h, minZ: z - hz, maxZ: z + hz });
-  function prop(id, x, z, targetH, ry, hx, hz, h) { const o = placeProp(id, { x, z, y: 0, targetH, ry }); if (o) { root.add(o); occluders.push(o); } if (hx) col(x, z, hx, hz, h); return o; }
+  let coverIndex = 0;
+  const cover = (kind, x, z, mesh) => {
+    const name = `upa-cover-${kind}-${++coverIndex}`;
+    if (mesh) mesh.name = name;
+    for (let i = colliders.length - 1; i >= 0; i--) {
+      const c = colliders[i];
+      if (x >= c.minX && x <= c.maxX && z >= c.minZ && z <= c.maxZ) { c.tag = name; break; }
+    }
+    upaClinicalCover.push({ kind, x, z, name });
+  };
   const signMesh = (w, h, tx2, x, y, z, ry) => {
     const g = new THREE.Group(); const geo = new THREE.PlaneGeometry(w, h);
     const f = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tx2 })); f.position.z = 0.02;
@@ -109,12 +119,24 @@ export function buildUpa(scene, T) {
     for (const [d0, d1] of ds) { if (d0 > xc) addBox(d0 - xc, WH, WT, MAT.parede, (xc + d0) / 2, 0, z); addBox(d1 - d0, WH - DH, WT, MAT.paredeAlta, (d0 + d1) / 2, DH, z, { collide: false }); xc = d1; }
     if (x1 > xc) addBox(x1 - xc, WH, WT, MAT.parede, (xc + x1) / 2, 0, z);
   }
-  const label = (txt, x, z, ry, cor = '#3f9a86') => signMesh(3.4, 0.7, signTex(cor, '#ffffff', txt, '', 512, 130), x, 3.1, z, ry);
+  const label = (txt, x, z, ry, cor = '#3f9a86') => {
+    const mesh = signMesh(3.4, 0.7, signTex(cor, '#ffffff', txt, '', 512, 130), x, 3.1, z, ry);
+    mesh.name = `upa-sector-${txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    return mesh;
+  };
 
   scene.background = new THREE.Color(0x14181c); scene.fog = null;
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(HALF_X * 2, HALF_Z * 2), MAT.piso); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; root.add(floor);
   addBox(HALF_X * 2, 0.3, HALF_Z * 2, MAT.teto, 0, CEIL, 0, { collide: false, cast: false });   // laje do teto
-  for (let x = -24; x <= 24; x += 8) for (let z = -30; z <= 30; z += 8) { const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), LUZ); p.rotation.x = Math.PI / 2; p.position.set(x, CEIL - 0.05, z); root.add(p); const pl = new THREE.PointLight(0xf4f8ff, 0.22, 16, 2); pl.position.set(x, CEIL - 0.4, z); root.add(pl); }
+  const panelPositions = [];
+  for (let x = -24; x <= 24; x += 8) for (let z = -30; z <= 30; z += 8) panelPositions.push([x, z]);
+  const panels = new THREE.InstancedMesh(new THREE.PlaneGeometry(2.6, 2.6), LUZ, panelPositions.length);
+  const panelMatrix = new THREE.Matrix4(); const panelQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+  panelPositions.forEach(([x, z], i) => panels.setMatrixAt(i, panelMatrix.compose(new THREE.Vector3(x, CEIL - 0.05, z), panelQuat, new THREE.Vector3(1, 1, 1))));
+  panels.name = 'upa-clinical-ceiling-panels'; root.add(panels);
+  for (const [x, z, color] of [[-18, -23, 0xf0fbff], [18, -23, 0xe9fff4], [-18, 0, 0xf0fbff], [18, 0, 0xfff5e0], [-18, 24, 0xf0fbff], [18, 24, 0xffeeee]]) {
+    const light = new THREE.PointLight(color, 0.32, 24, 2); light.position.set(x, CEIL - 0.35, z); root.add(light);
+  }
 
   const wX = HALF_X - 0.4, wZ = HALF_Z - 0.4;
   // perímetro (entrada principal no sul)
@@ -135,24 +157,24 @@ export function buildUpa(scene, T) {
   wallZ(-3.5, -wZ, wZ, [[-wZ, -23], [-2, 2], [23, 27]]);   // portas: hall sul · consultórios · enfermaria
   wallZ(3.5, -wZ, wZ, [[-wZ, -23], [-2, 2], [23, 27]]);    // portas: hall sul · triagem/raio-x · emergência
   // divisórias das salas (z = ∓14) nos dois lados, com passagem interna
-  wallX(-14, -wX, -3.5, [[-24, -20]]); wallX(14, -wX, -3.5, [[-24, -20]]);   // oeste
-  wallX(-14, 3.5, wX, [[20, 24]]); wallX(14, 3.5, wX, [[20, 24]]);           // leste
+  wallX(-14, -wX, -3.5, [[-24, -20], [-17, -14], [-10, -7]]); wallX(14, -wX, -3.5, [[-24, -20], [-17, -14], [-10, -7]]);   // oeste
+  wallX(-14, 3.5, wX, [[7, 10], [14, 17], [20, 24]]); wallX(14, 3.5, wX, [[7, 10], [14, 17], [20, 24]]);                   // leste
   // sub-divisória dos consultórios (oeste-meio) e triagem/raio-x (leste-meio)
   wallX(0, -wX, -3.5, [[-24, -21]]); wallX(0, 3.5, wX, [[21, 24]]);
 
   // largura 6 (não 9): senão as pontas do letreiro somem ATRÁS das paredes do corredor (x=∓3,5)
   signMesh(6, 1.5, signTex('#c0392b', '#ffffff', 'UPA 24H DA TRETA', 'PRONTO-SOCORRO', 640, 160), 0, 3.35, -wZ + 0.3, 0);
-  label('RECEPÇÃO', -3.3, -25, Math.PI / 2); label('CONSULTÓRIOS', -3.3, 0, Math.PI / 2); label('ENFERMARIA', -3.3, 25, Math.PI / 2);
+  label('RECEPÇÃO', -3.3, -25, Math.PI / 2); label('CONSULTÓRIOS', -3.3, 0, Math.PI / 2); label('OBSERVAÇÃO', -3.3, 25, Math.PI / 2);
   label('FARMÁCIA', 3.3, -25, -Math.PI / 2, '#2f6fb0'); label('TRIAGEM', 3.3, 0, -Math.PI / 2, '#e0902a'); label('EMERGÊNCIA', 3.3, 25, -Math.PI / 2, '#c0392b');
 
   // móveis: todo helper sai com collider REAL — sem colisor, o corpo atravessa o móvel.
-  const maca = (x, z, ry = 0) => { addBox(0.9, 0.7, 2.0, MAT.maca, x, 0.3, z, { ry }); addBox(0.7, 0.15, 0.5, lam({ color: 0xdfe6ec }), x, 1.0, z + Math.cos(ry) * -0.7, { collide: false, ry }); };
+  const maca = (x, z, ry = 0) => { const m = addBox(0.9, 0.7, 2.0, MAT.maca, x, 0.3, z, { ry }); addBox(0.7, 0.15, 0.5, lam({ color: 0xdfe6ec }), x, 1.0, z + Math.cos(ry) * -0.7, { collide: false, ry }); cover('maca', x, z, m); };
   const soro = (x, z) => addBox(0.24, 1.5, 0.24, MAT.aco, x, 0, z);   // suporte de soro (poste)
-  const mesa = (x, z, ry = 0) => { addBox(1.4, 0.75, 0.8, MAT.mesa, x, 0, z, { ry }); const cx = x + Math.sin(ry) * 0.85, cz = z + Math.cos(ry) * 0.85; addBox(0.5, 0.9, 0.5, MAT.cadeira, cx, 0, cz); };   // mesa + cadeira (cadeira colide)
-  const armario = (x, z, ry = 0) => { addBox(1.2, 1.9, 0.6, MAT.armario, x, 0, z, { ry }); addBox(1.24, 0.5, 0.62, MAT.verde, x, 1.9, z, { collide: false, ry }); };
-  const biombo = (x, z, ry = 0) => addBox(0.12, 1.8, 2.2, MAT.armario, x, 0, z, { ry });   // divisória/esconderijo
+  const mesa = (x, z, ry = 0) => { const m = addBox(1.4, 0.75, 0.8, MAT.mesa, x, 0, z, { ry }); const cx = x + Math.sin(ry) * 0.85, cz = z + Math.cos(ry) * 0.85; addBox(0.5, 0.9, 0.5, MAT.cadeira, cx, 0, cz); cover('mesa', x, z, m); };   // mesa + cadeira (cadeira colide)
+  const armario = (x, z, ry = 0) => { const m = addBox(1.2, 1.9, 0.6, MAT.armario, x, 0, z, { ry }); addBox(1.24, 0.5, 0.62, MAT.verde, x, 1.9, z, { collide: false, ry }); cover('armario-clinico', x, z, m); };
+  const biombo = (x, z, ry = 0) => { const m = addBox(0.12, 1.8, 2.2, MAT.armario, x, 0, z, { ry }); cover('biombo', x, z, m); };   // divisória/esconderijo
   const planta = (x, z) => { addBox(0.5, 0.5, 0.5, MAT.armario, x, 0, z); addBox(0.85, 1.0, 0.85, MAT.verde, x, 0.5, z, { collide: false }); };
-  const banco = (x, z, ry = 0) => addBox(2.2, 0.5, 0.55, MAT.cadeira, x, 0, z, { ry });   // banco de espera (colide)
+  const banco = (x, z, ry = 0) => { const m = addBox(2.2, 0.5, 0.55, MAT.cadeira, x, 0, z, { ry }); cover('banco', x, z, m); };   // banco de espera (colide)
   // fileira de cadeiras de espera: o col() da faixa é o bloqueador; os assentos são só visual
   const cadeiras = (x, z, n, ry = 0) => { for (let i = 0; i < n; i++) { const dx = ry ? 0 : (i - (n - 1) / 2) * 0.7, dz = ry ? (i - (n - 1) / 2) * 0.7 : 0; addBox(0.55, 0.45, 0.55, MAT.cadeira, x + dx, 0.15, z + dz, { collide: false }); addBox(0.55, 0.6, 0.08, MAT.cadeira, x + dx, 0.65, z + dz - (ry ? 0 : 0.24), { collide: false, ry }); } col(x, z, ry ? 0.4 : n * 0.35, ry ? n * 0.35 : 0.4, 0.6); };
 
@@ -176,37 +198,41 @@ export function buildUpa(scene, T) {
   // negatoscópio (visor de raio-x aceso na parede)
   const negato = (x, y, z, ry = 0) => addBox(0.95, 0.72, 0.06, LUZ, x, y, z, { collide: false, ry });
 
-  addBox(6, 1.1, 1.0, MAT.armario, -18, 0, -17); addBox(6.2, 0.1, 1.1, MAT.mesa, -18, 1.1, -17, { collide: false });   // balcão
-  prop('caixa_cobranca', -15, -17, 1.1, Math.PI, 0.9, 0.5, 1.1);
+  const balcaoRecepcao = addBox(6, 1.1, 1.0, MAT.armario, -18, 0, -17, { name: 'upa-clinical-recepcao' }); addBox(6.2, 0.1, 1.1, MAT.mesa, -18, 1.1, -17, { collide: false }); cover('balcao-recepcao', -18, -17, balcaoRecepcao);
+  monitor(-15, -17);
   cadeiras(-24, -23, 4); cadeiras(-24, -20, 4);                                        // espera oeste (encostada na parede)
   banco(-9, -24); banco(-9, -21);                                                      // bancos perto da porta do corredor
-  prop('painel_tvs', -28, -22, 2.0, -Math.PI / 2, 0.4, 1.0, 2.0);                      // TV da espera (senha)
+  signMesh(2.2, 1.2, signTex('#111417', '#35e07a', 'CHAMADA', 'SENHA 999', 300, 260), -29.1, 2.2, -22, Math.PI / 2);
   signMesh(2.2, 1.2, signTex('#111417', '#ff4d4d', 'SENHA', '999', 300, 260), -6, 2.4, -16, Math.PI / 2);
-  for (const [mx, mz] of [[-27, -25], [-6, -18], [-21, -24]]) prop('manequim', mx, mz, 1.8, mx % 2 ? 1 : -1, 0.3, 0.3, 1.8);   // pacientes esperando
   cadeiraRodas(-7, -27, 0); planta(-28, -33); planta(-6, -33);
+  armario(-28, -29); armario(-28, -18); armario(-6, -32); cilindroO2(-18, -18); cadeiraRodas(-5, -29, 0);
 
   for (const cz of [-7, 7]) { maca(-25, cz, 0); soro(-23, cz + 1); mesa(-9, cz, Math.PI); armario(-27, cz + 5); biombo(-16, cz); monitor(-22.5, cz); negato(-29.3, 2.1, cz, Math.PI / 2); }
-  balanca(-12, -11); cadeiraRodas(-12, 11, Math.PI); prop('manequim', -21, -6, 1.8, 0, 0.3, 0.3, 1.8); planta(-6, 0);
+  balanca(-12, -11); cadeiraRodas(-12, 11, Math.PI); planta(-6, 0);
 
   for (const mx of [-26, -20, -14, -8]) { maca(mx, 22, 0); soro(mx + 1.0, 20.6); }
   for (const mx of [-26, -18, -10]) { maca(mx, 30, Math.PI); soro(mx + 1.0, 31.6); }
   monitor(-23, 22); monitor(-11, 22); cilindroO2(-28, 26); cilindroO2(-6, 20); negato(-29.3, 2.1, 26, Math.PI / 2);
-  prop('cooler', -28, 33, 1.3, 0, 0.8, 0.6, 1.2); biombo(-4.6, 26); planta(-28, 17);
+  armario(-28, 33); biombo(-4.6, 26); planta(-28, 17);
 
-  for (const gz of [-32, -28, -24, -20]) { prop('gondola_mercado', 11, gz, 1.9, Math.PI / 2, 1.05, 0.55, 1.9); prop('gondola_mercado', 22, gz, 1.9, Math.PI / 2, 1.05, 0.55, 1.9); }
-  addBox(5, 1.1, 1.0, MAT.armario, 16, 0, -16); signMesh(2.4, 0.7, signTex('#2f6fb0', '#fff', 'RETIRE AQUI', '', 512, 150), 16, 2.0, -15.4, 0);
+  for (const gz of [-32, -28, -24, -20]) { armario(11, gz, Math.PI / 2); armario(22, gz, Math.PI / 2); }
+  addBox(5, 1.1, 1.0, MAT.armario, 16, 0, -16); signMesh(3.2, 0.7, signTex('#2f6fb0', '#fff', 'DISPENSA CLÍNICA', '', 640, 150), 16, 2.0, -15.4, 0);
   cilindroO2(28, -18); cilindroO2(6, -14); planta(6, -33); planta(28, -33);
 
-  mesa(10, -9, Math.PI); armario(27, -11); biombo(6, -9); prop('manequim', 14, -6, 1.8, Math.PI, 0.3, 0.3, 1.8);   // triagem
+  mesa(10, -9, Math.PI); armario(27, -11); biombo(6, -9);   // triagem
   balanca(20, -6); monitor(26, -7); cadeiraRodas(8, -12, 0);
   addBox(2.0, 2.4, 1.4, MAT.armario, 24, 0, 8); addBox(1.4, 2.0, 0.9, MAT.aco, 22.2, 0, 8, { collide: false }); maca(16, 8, Math.PI / 2);   // raio-x
   negato(29.3, 2.1, 8, -Math.PI / 2); respirador(8, 11); biombo(19, 10); label('RAIO-X', 12, 12, -Math.PI / 2, '#e0902a'); planta(6, 8);
 
   for (const mx of [8, 14, 20]) { maca(mx, 22, 0); soro(mx + 1.0, 20.6); monitor(mx - 1.2, 22); }   // macas + monitores de sinais vitais
   crashCart(24, 22); respirador(4.6, 20); desfib(29.2, 1.7, 22, -Math.PI / 2);
-  addBox(4, 1.0, 1.5, MAT.armario, 27, 0, 18); biombo(6, 26); prop('gondola_eletro', 26, 16, 1.9, 0, 1.05, 0.55, 1.9);
+  const bancadaEmergencia = addBox(4, 1.0, 1.5, MAT.armario, 27, 0, 18, { name: 'upa-clinical-emergencia' }); cover('bancada-emergencia', 27, 18, bancadaEmergencia); biombo(6, 26); armario(26, 16);
   cadeiraRodas(8, 27, 0);
-  prop('manequim', 22, 26, 1.8, 1, 0.3, 0.3, 1.8); planta(6, 33); planta(28, 33);
+  planta(6, 33); planta(28, 33);
+
+  // Duas ilhas baixas quebram a visada do hall sem bloquear o fluxo dos quatro spawns.
+  const ilhaObservacao = addBox(1.8, 1.05, 0.8, MAT.armario, -7, 0, -19, { name: 'upa-clinical-observacao' }); cover('ilha-enfermagem', -7, -19, ilhaObservacao);
+  const ilhaTriagem = addBox(1.8, 1.05, 0.8, MAT.armario, 7, 0, -19, { name: 'upa-clinical-triagem' }); cover('ilha-enfermagem', 7, -19, ilhaTriagem);
   signMesh(3.4, 1.0, signTex('#c0392b', '#fff', 'CADÊ O MÉDICO?', '', 512, 200), 14, 2.6, wZ - 0.5, Math.PI);
 
   for (const cz of [-20, -8, 8, 20]) { maca(cz % 16 ? -2.6 : 2.6, cz, 0); banco(cz % 16 ? 2.6 : -2.6, cz + 3, Math.PI / 2); }
@@ -237,12 +263,11 @@ export function buildUpa(scene, T) {
   ARSENAL.forEach((k, i) => place(k, 25 - i * 3, 34, Math.PI)); // emergência (Time B), faixa junto à parede norte
   place('ak', -1.6, 3, 0); place('m4', 1.6, -3, 0);            // disputadas no cruzamento central
 
-  const hemi = new THREE.HemisphereLight(0xf4f8ff, 0xb8c0c8, 1.45); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffffff, 0.95);
-  sun.position.set(6, 30, -8); sun.castShadow = true;
-  aplicaSombraSol(sun);
-  sun.shadow.camera.left = -36; sun.shadow.camera.right = 36; sun.shadow.camera.top = 40; sun.shadow.camera.bottom = -40;
-  sun.shadow.camera.far = 90; sun.shadow.bias = -0.0004; scene.add(sun);
+  const hemi = new THREE.HemisphereLight(0xf4f8ff, 0xb8c0c8, 0.92); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.68);
+  // Ambiente integralmente coberto: iluminação setorial dá volume sem redesenhar o mapa
+  // inteiro num shadow pass a cada quadro (diferença relevante no 8×8 WebGL).
+  sun.position.set(6, 30, -8); sun.castShadow = false; scene.add(sun);
 
   const groundHeightAt = () => 0;
   const slowAt = () => false;
@@ -275,6 +300,15 @@ export function buildUpa(scene, T) {
     B: [10, 15, 20, 25].map(x => ({ x, z: 31, yaw: Math.PI })),
   };
 
+  const upaAccesses = [
+    { id: 'oeste-sul-externo', x: -22, z: -14 }, { id: 'oeste-sul-interno', x: -8.5, z: -14 },
+    { id: 'oeste-sul-meio', x: -15.5, z: -14 }, { id: 'oeste-norte-externo', x: -22, z: 14 },
+    { id: 'oeste-norte-meio', x: -15.5, z: 14 }, { id: 'oeste-norte-interno', x: -8.5, z: 14 },
+    { id: 'leste-sul-interno', x: 8.5, z: -14 }, { id: 'leste-sul-meio', x: 15.5, z: -14 },
+    { id: 'leste-sul-externo', x: 22, z: -14 }, { id: 'leste-norte-interno', x: 8.5, z: 14 },
+    { id: 'leste-norte-meio', x: 15.5, z: 14 }, { id: 'leste-norte-externo', x: 22, z: 14 },
+  ];
+
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     // MID fora da diagonal E–B (senão o triângulo é colinear e a régua reprova): puxado pro sul do corredor.
@@ -283,7 +317,7 @@ export function buildUpa(scene, T) {
       { id: 'MID', label: 'CORREDOR', x: 0, z: -8 },
       { id: 'B', label: 'EMERGÊNCIA', x: 18, z: 28 },
     ],
-    waypoints: { nodes, adj }, nearestWaypoint, findPath,
+    waypoints: { nodes, adj }, nearestWaypoint, findPath, upaClinicalSectors, upaClinicalCover, upaAccesses,
     bounds: { minX: -HALF_X + 1, maxX: HALF_X - 1, minZ: -HALF_Z + 1, maxZ: HALF_Z - 1 },
   };
 }
