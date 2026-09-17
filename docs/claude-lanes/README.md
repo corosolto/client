@@ -1,8 +1,10 @@
 # Lanes Claude do sprint de 72 horas
 
-> **Atualização de 07/09/2026:** use primeiro o pacote
-> [`2026-09-07/README.md`](2026-09-07/README.md). Ele substitui os estados e prompts abaixo
-> para novas retomadas. Este arquivo permanece como histórico da rodada anterior.
+> **Atualização de 17/09/2026:** use primeiro o pacote
+> [`2026-09-17/README.md`](2026-09-17/README.md) — Onda 1 da retomada (recuperação do
+> vm-unificado, shotgun, raízes de mapas #540/#554, fila de bugs, MP). O pacote
+> [`2026-09-07/README.md`](2026-09-07/README.md) cobre as demais lanes e permanece
+> válido onde a Onda 1 não supersede. Este arquivo permanece como histórico.
 
 Estes prompts são auto-contidos e podem ser entregues diretamente ao Claude Code. Cada lane
 tem worktree e branch exclusivas. Não mova alterações entre lanes sem PR ou cherry-pick
