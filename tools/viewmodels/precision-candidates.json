@@ -8,7 +8,9 @@
       "sourceBytes": 24548388,
       "sourceSha256": "e0eff49d747369e43cdde24882ebb2b105150dd62d43e314be5a062f2f8ed73c",
       "optimizedBytes": 5298504,
-      "optimizedSha256": "94386beceefde96a481458c296f616178ae56f8a1a70b8ae63be8697841655a2"
+      "optimizedSha256": "94386beceefde96a481458c296f616178ae56f8a1a70b8ae63be8697841655a2",
+      "sha256": "52b8db3adc4415364accf34d5b039d1399df988482268150790b4cc40399c56b",
+      "bytes": 5298468
     },
     "svd": {
       "family": "svd",
@@ -16,7 +18,9 @@
       "sourceBytes": 24433936,
       "sourceSha256": "45df8d0f140e1d8db5ee394c6069bf79c670ba321b19d7d702623e7e054fe3b7",
       "optimizedBytes": 5183236,
-      "optimizedSha256": "08058912ca43d521675c4294216dedc3bbc1a2b7b906440acb53db691be5faea"
+      "optimizedSha256": "08058912ca43d521675c4294216dedc3bbc1a2b7b906440acb53db691be5faea",
+      "sha256": "f44732930d24dcb78a728ea3a1c1458d0d763a23a79749ea8ad54366a9e376e9",
+      "bytes": 5183204
     },
     "sks": {
       "family": "marksman",
@@ -24,7 +28,9 @@
       "sourceBytes": 24729928,
       "sourceSha256": "fe13c71a93b9966fa8c19025327e8c032b2f4173d1290d392e13a5bd7d138f49",
       "optimizedBytes": 5473300,
-      "optimizedSha256": "15bf12eb5663a03c49ff09edc31310bfe844416c3a2c7f9f3eec15f316ff8470"
+      "optimizedSha256": "15bf12eb5663a03c49ff09edc31310bfe844416c3a2c7f9f3eec15f316ff8470",
+      "sha256": "a52560d382cc9c48804bf879e40f5eeed1e248ada22f9f74fa4c12b1cc19d871",
+      "bytes": 5473264
     }
   }
 }
