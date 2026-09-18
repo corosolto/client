@@ -49,6 +49,10 @@ const ASPECTS = { '3x2': 1440 / 960, '16x9': 1440 / 810 };
 // da arma no quadro), aqui exigido nos DOIS aspectos.
 const RAZAO_TOL = +(option('razao-tol', '0.12'));
 const DENTRO_MIN = +(option('dentro-min', '0.85'));
+// Orçamento de tela do braço, em múltiplos da silhueta da AK aprovada. Folga de
+// 40% porque a pose do braço varia legitimamente entre famílias; acima disso a
+// manga passou a ser o assunto do quadro, que é o defeito visto em 18/09.
+const BRACO_MAX = +(option('braco-max', '1.4'));
 
 const { VM_WEAPON } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
 const { weaponCFG } = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
@@ -102,11 +106,16 @@ function weaponPoints(gltf, { pose = 'idle' } = {}) {
   scene.updateMatrixWorld(true);
   const points = [];
   const donos = [];
+  // Mão e manga entram numa lista PRÓPRIA. Elas não podem contaminar a escala
+  // da arma (dependem da pose do braço), mas precisam ser medidas: aproximar a
+  // arma traz o antebraço junto, e foi assim que a calibração de 18/09 deixou
+  // seis armas com a manga dominando a tela.
+  const maos = [];
   const vertex = new THREE.Vector3();
   scene.traverse((object) => {
     if (!object.isMesh) return;
     const materials = Array.isArray(object.material) ? object.material : [object.material];
-    if (materials.some((material) => HAND_MATERIAL.test(material?.name || ''))) return;
+    const ehMao = materials.some((material) => HAND_MATERIAL.test(material?.name || ''));
     const position = object.geometry?.attributes?.position;
     if (!position) return;
     // Amostragem regular: a medida é de silhueta, não precisa de malha inteira.
@@ -118,12 +127,18 @@ function weaponPoints(gltf, { pose = 'idle' } = {}) {
       // rig (0,01 nos pacotes em centímetro) fica de fora e a medida explode.
       if (object.isSkinnedMesh) object.applyBoneTransform(index, vertex);
       vertex.applyMatrix4(object.matrixWorld);
-      points.push(vertex.clone());
-      donos.push(object.name || object.uuid.slice(0, 8));
+      (ehMao ? maos : points).push(vertex.clone());
+      if (!ehMao) donos.push(object.name || object.uuid.slice(0, 8));
     }
   });
   if (!points.length) throw new Error('nenhum vértice de arma amostrado');
-  return { points, donos, fovEmbutido };
+  // Sockets do contrato de mira (R6). Existem nas 24 e nenhuma régua os usava.
+  const socket = (pat) => {
+    let found = null;
+    scene.traverse((object) => { if (!found && pat.test(object.name || '')) found = object; });
+    return found ? found.getWorldPosition(new THREE.Vector3()) : null;
+  };
+  return { points, maos, donos, fovEmbutido, muzzle: socket(/MUZZLE/i), sight: socket(/SIGHT/i) };
 }
 
 /**
@@ -243,9 +258,29 @@ for (const [weapon, cfg] of Object.entries(candidates)) {
   for (const [tag, aspect] of Object.entries(ASPECTS)) {
     const measured = measure(sampled.points, frame, aspect);
     measured.razao = +(measured.diag / (ESCALA_ALVO * comprimento(weapon))).toFixed(3);
+    // R2: o braço é presença de tela e tem de caber no orçamento junto com a
+    // arma. Sem esta coluna, empurrar a arma para o alvo joga a manga por cima
+    // do quadro e a régua aplaude.
+    const braco = sampled.maos.length ? measure(sampled.maos, frame, aspect) : null;
+    measured.bracoDiag = braco?.diag ?? null;
+    measured.bracoRazao = braco ? +(braco.diag / (ESCALA_ALVO * comprimento('ak'))).toFixed(3) : null;
     row.aspectos[tag] = measured;
     if (measured.dentro < DENTRO_MIN) failures.push(`${weapon} ${tag}: só ${(measured.dentro * 100).toFixed(1)}% da arma no quadro`);
     if (Math.abs(measured.razao - 1) > RAZAO_TOL) failures.push(`${weapon} ${tag}: ${measured.razao}× a escala angular do arsenal`);
+    if (measured.bracoRazao !== null && measured.bracoRazao > BRACO_MAX) {
+      failures.push(`${weapon} ${tag}: braço ocupa ${measured.bracoRazao}× a silhueta da AK`);
+    }
+  }
+  // R6: eixo de mira. A boca do cano tem de estar à frente da alça e o eixo
+  // alça→boca tem de apontar para onde a câmera olha, senão a arma mente sobre
+  // a trajetória. Aqui é medida de repouso; o aceite do ADS é etapa própria.
+  if (sampled.sight && sampled.muzzle) {
+    const eixo = sampled.muzzle.clone().sub(sampled.sight).normalize();
+    row.miraGrau = +(eixo.angleTo(new THREE.Vector3(0, 0, -1)) * 180 / Math.PI).toFixed(1);
+    row.canoAFrente = sampled.muzzle.z < sampled.sight.z;
+    if (!row.canoAFrente) failures.push(`${weapon}: boca do cano atrás da alça de mira`);
+  } else {
+    failures.push(`${weapon}: sem socket de mira ou de boca do cano`);
   }
   if (flag('malhas')) {
     // Quem empurra a silhueta: separa a arma de verdade das malhas perdidas.
