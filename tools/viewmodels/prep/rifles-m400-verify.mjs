@@ -80,7 +80,7 @@ function inspect(gltf) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     for (const material of materials) if (/CoroSolto_(FP_|Mandrake_)/i.test(material?.name || '')) handMaterials.add(material.name);
   });
-  check(handMaterials.size >= 2, `camadas de mãos insuficientes (${[...handMaterials]})`);
+  check(handMaterials.size >= 3, `camadas de mãos insuficientes (${[...handMaterials]})`);
 
   const mixer = new THREE.AnimationMixer(scene);
   const sample = (name, count = 30) => {

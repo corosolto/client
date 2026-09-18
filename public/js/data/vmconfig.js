@@ -46,7 +46,11 @@ export const VM_WEAPON = {
   // baked: GLB assado OFFLINE com a Mint dentro (pente separado, sockets
   // nomeados) — o runtime só toca clipes. Caixa MAG: régua eval:cs16.
   ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
-  m4: W('ar', { baked: true, frame: 'family' }),
+  // `frame` aceita objeto para OVERRIDE MANUAL por arma. O enquadramento medido
+  // vive em `vmframe.js`, gerado por `tools/viewmodels/prep/vm-frame-calibra.mjs`:
+  // a família `ar` sozinha ia de 0,93× a 3,03× da escala do arsenal com um único
+  // ponto de câmera, e quatro das seis tinham um terço da arma fora do quadro.
+  m4: W('ar', { baked: true }),
   mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay',
     ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
   shotgun: W('shotgun', { baked: true, timing: 'gameplay',
@@ -61,8 +65,8 @@ export const VM_WEAPON = {
   revolver38: W('revolver', { baked: true, runtime: 'family', timing: 'gameplay' }),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
-  md97: W('ar', { baked: true, frame: 'family', recoilScale: 1.8 }),
-  carbine: W('ar', { baked: true, frame: 'family' }),
+  md97: W('ar', { baked: true, recoilScale: 1.8 }),
+  carbine: W('ar', { baked: true }),
   m400: W('sniper', { baked: true, frame: 'family' }),
   mosin: W('bolt', { baked: true }),
   // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
@@ -70,9 +74,9 @@ export const VM_WEAPON = {
   rem700: W('bolt', { baked: true, frame: 'family' }),
   lmg: W('lmg', { baked: true, timing: 'gameplay',
     ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
-  scar: W('ar', { baked: true, frame: 'family' }),
-  tavor: W('ar', { baked: true, frame: 'family' }),
-  famas: W('ar', { baked: true, frame: 'family' }),
+  scar: W('ar', { baked: true }),
+  tavor: W('ar', { baked: true }),
+  famas: W('ar', { baked: true }),
   uzi: W('smg', { baked: true, timing: 'gameplay',
     ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
   p90: W('p90', { baked: true, timing: 'gameplay', recoilScale: 1.6,

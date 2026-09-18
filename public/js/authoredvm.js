@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
+import { VM_FRAME } from './data/vmframe.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
@@ -313,15 +314,24 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 
   const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
   const golden = sourceKey.startsWith('gold#');
-  // A trilha retarget ainda não tem enquadramento medido: a manga do pack entra
-  // por cima da arma e o C5 só fecha escondendo o cano (VIEWMODEL-INVENTARIO).
+  // Precedência: frame da família ← medida por arma (`vmframe.js`, gerado pela
+  // régua) ← override manual em `VM_WEAPON[arma].frame`. A string `'family'`
+  // segue significando "herda tudo".
+  const weaponId = sourceKey.split('#')[1];
+  const weaponFrame = VM_WEAPON[weaponId]?.frame;
+  const familyFrame = FAMILY_FRAME[family] || FAMILY_FRAME.default;
+  const medido = VM_FRAME[weaponId];
   const frame = golden
     ? { x: 0, y: 0, z: 0, fov: cameraFov }
     : molde
     ? { ...(VM_FONTE === 'goldsrc'
-      ? MOLDE_FRAME[sourceKey.split('#')[1]] || MOLDE_FRAME.default
+      ? MOLDE_FRAME[weaponId] || MOLDE_FRAME.default
       : { x: 0, y: 0, z: 0 }), fov: 74 }
-    : (FAMILY_FRAME[family] || FAMILY_FRAME.default);
+    : {
+      ...familyFrame,
+      ...(medido || {}),
+      ...(weaponFrame && typeof weaponFrame === 'object' ? weaponFrame : {}),
+    };
 
   const mount = new THREE.Group();
   mount.name = `paid_viewmodel_mount_${family}`;
