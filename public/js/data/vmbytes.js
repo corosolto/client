@@ -12,7 +12,7 @@ export const VM_BYTES = Object.freeze({
   g3sg1: '10c08eecd3',   // dmr-candidates.json
   lmg: '2afc8c2603',   // heavy-candidates.json
   m4: '2d8e00559a',   // rifle-candidates.json
-  m400: 'c86d5f2ce0',   // rifle-candidates.json
+  m400: 'f75e4625c1',   // rifle-candidates.json
   m92: '491964e9ef',   // rifle-candidates.json
   md97: 'd0989e2f56',   // rifle-candidates.json
   mosin: '52b8db3adc',   // precision-candidates.json

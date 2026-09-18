@@ -142,15 +142,15 @@
       "file": "viewmodels/sniper/m400-baked-runtime.glb",
       "sourceSha256": "f5a0bb493381eba107dd23fb5e702c2719bdba2f4f8b01bec62c832467b91109",
       "sourceBytes": 331016,
-      "productSha256": "c86d5f2ce043db7eba50840f6f68bcabdb5065c45dcc1734d677ee02187b1e5b",
-      "productBytes": 2674164,
-      "sha256": "c86d5f2ce043db7eba50840f6f68bcabdb5065c45dcc1734d677ee02187b1e5b",
-      "bytes": 2674164,
+      "productSha256": "f75e4625c1199d3fed6fb9f132e5cc59a0c742dc41a92bcac5fa6bcab76f739d",
+      "productBytes": 1537064,
+      "sha256": "f75e4625c1199d3fed6fb9f132e5cc59a0c742dc41a92bcac5fa6bcab76f739d",
+      "bytes": 1537064,
       "mechanism": "curved-detachable-mag/real-right-mag-release/real-left-bolt-catch/source-no-separable-charging-handle",
       "ready": false,
-      "sourceBranch": "codex/viewmodels-catalog-final",
+      "sourceBranch": "codex/viewmodels-catalog-final (rig KINEMATION via m4-final.blend)",
       "sourceCommit": "411f9fbbc",
-      "rebuild": "tools/viewmodels/prep/rifles-m400-final.py + optimize_paid_family.mjs"
+      "rebuild": "tools/viewmodels/prep/rifles-m400-kinemation.py"
     },
     "awp": {
       "family": "sniper",

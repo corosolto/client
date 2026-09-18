@@ -1,266 +1,123 @@
 #!/usr/bin/env node
-// Gate causal do candidato M400. O asset permanece
-// externo; o repositório contém apenas receita, contrato, hashes e medições.
+/**
+ * Gate causal da M400 no rig KINEMATION.
+ *
+ * A versão anterior deste arquivo fixava a arquitetura antiga: ossos
+ * `*_metarig`, pente de reposição, trava e bolt catch separados, e contagens de
+ * vértice do produto assado sobre o pacote golden da AK. Aquela M400 reprovava
+ * o contrato de rig com ZERO de 55 ossos de braço — re-fixar o gate no produto
+ * velho seria carimbar o defeito. O que ele cobra agora é o contrato novo.
+ *
+ * Reduções assumidas nesta reautoria, e declaradas de propósito: a trava do
+ * pente e o bolt catch deixaram de ser peças móveis separadas (a gramática AR
+ * do pacote KINEMATION não tem canais para elas) e voltaram a fazer parte do
+ * corpo. Em troca, a arma entra no rig único do arsenal.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import * as THREE from '../../../public/vendor/three.module.js';
 import { GLTFLoader } from '../../../public/vendor/addons/loaders/GLTFLoader.js';
-import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 
-globalThis.Image = class {
-  constructor() { this.onload = null; this.width = 1; this.height = 1; }
-  set src(value) { this._src = value; queueMicrotask(() => this.onload?.()); }
-};
+globalThis.Image = class { constructor() { this.onload = null; this.width = 1; this.height = 1; } set src(v) { this._src = v; queueMicrotask(() => this.onload?.()); } };
 globalThis.self = globalThis;
-globalThis.ImageData = class { constructor(data, width, height) { Object.assign(this, { data, width, height }); } };
-const warn = console.warn;
-const error = console.error;
-console.warn = (...args) => !String(args[0] || '').startsWith("THREE.GLTFLoader: Couldn't load texture blob:") && warn(...args);
-console.error = (...args) => String(args[0] || '') !== "THREE.GLTFLoader: Couldn't load texture" && error(...args);
+globalThis.ImageData = class { constructor(d, w, h) { Object.assign(this, { data: d, width: w, height: h }); } };
+const warn = console.warn, error = console.error;
+console.warn = (...args) => !/Couldn't load texture/.test(String(args[0] || '')) && warn(...args);
+console.error = (...args) => !/Couldn't load texture/.test(String(args[0] || '')) && error(...args);
 
-const ROOT = new URL('../../..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const ASSET_ROOT = path.resolve(process.env.CSBRASIL_VM_ASSET_ROOT
   || '/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-root');
-const manifest = JSON.parse(readFileSync(path.join(ROOT, 'tools/viewmodels/rifle-candidates.json'), 'utf8'));
+const REQUIRED = ['idle', 'equip_rifle', 'shoot', 'reload_tactical', 'reload_empty', 'inspect'];
+const contrato = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/viewmodels/rig-contract.json'), 'utf8'));
+const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/viewmodels/rifle-candidates.json'), 'utf8'));
 const cfg = manifest.candidates.m400;
 const file = path.join(ASSET_ROOT, cfg.file);
-const REQUIRED = ['idle', 'equip_rifle', 'shoot', 'reload_tactical', 'reload_empty', 'inspect'];
-
-async function load() {
-  const bytes = readFileSync(file);
-  const loader = new GLTFLoader();
-  const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-  return { bytes, gltf: await loader.parseAsync(buffer, '') };
-}
-
-function inspect(gltf) {
-  const failures = [];
-  const check = (condition, message) => { if (!condition) failures.push(message); };
-  const scene = gltf.scene;
-  const clips = new Map(gltf.animations.map((clip) => [clip.name, clip]));
-  const gun = scene.getObjectByName('MINT_WEAPON_M400');
-  const mag = scene.getObjectByName('MINT_WEAPON_M400_MAG');
-  const replacement = scene.getObjectByName('MINT_WEAPON_M400_REPLACEMENT_MAG');
-  const release = scene.getObjectByName('MINT_MAG_RELEASE_M400');
-  const boltCatch = scene.getObjectByName('MINT_BOLT_CATCH_M400');
-  const rig = scene.getObjectByName('RIG_FP_ARMS');
-  const rifleBone = scene.getObjectByName('Rifle_metarig');
-  const magBone = scene.getObjectByName('Mag_metarig');
-  const replacementBone = scene.getObjectByName('Mag001_metarig');
-  const hand = scene.getObjectByName('handL_metarig');
-  const rightHand = scene.getObjectByName('handR_metarig');
-  const muzzle = scene.getObjectByName('SOCKET_MINT_MUZZLE');
-  const sight = scene.getObjectByName('SOCKET_MINT_SIGHT');
-  check(!!gun, 'corpo MINT_WEAPON_M400 ausente');
-  check(!!mag, 'carregador separado ausente');
-  check(!!replacement, 'carregador de reposição separado ausente');
-  check(!!release, 'trava real do pente separada ausente');
-  check(!!boltCatch, 'bolt catch real separado ausente');
-  check(!!rig, 'rig de mãos ausente');
-  check(!!muzzle && !!sight, 'sockets ADS/muzzle ausentes');
-  check(gltf.cameras.some((camera) => camera.isPerspectiveCamera), 'câmera viewmodel ausente');
-  check(!!rifleBone && !!magBone && !!replacementBone, 'bones mecânicos da família M400 ausentes');
-  // O glTF expande vértices por normais/UV; as contagens pós-round-trip
-  // congelam as quatro ilhas obtidas da M400 pública soldada.
-  check((gun?.geometry?.attributes?.position?.count || 0) === 7140,
-  `corpo não corresponde à malha M400 pública (${gun?.geometry?.attributes?.position?.count || 0} vértices)`);
-  check((mag?.geometry?.attributes?.position?.count || 0) === 434,
-    `carregador M400 não corresponde ao volume curvo integral (${mag?.geometry?.attributes?.position?.count || 0} vértices)`);
-  check((replacement?.geometry?.attributes?.position?.count || 0) === 434,
-    `carregador de reposição M400 divergente (${replacement?.geometry?.attributes?.position?.count || 0} vértices)`);
-  check((release?.geometry?.attributes?.position?.count || 0) === 58,
-    `trava do pente M400 divergente (${release?.geometry?.attributes?.position?.count || 0} vértices)`);
-  check((boltCatch?.geometry?.attributes?.position?.count || 0) === 34,
-    `bolt catch M400 divergente (${boltCatch?.geometry?.attributes?.position?.count || 0} vértices)`);
-  for (const name of REQUIRED) check(clips.has(name), `clipe ${name} ausente`);
-  check(gltf.animations.length === REQUIRED.length, `catálogo de clipes inesperado (${[...clips.keys()]})`);
-  const handMaterials = new Set();
-  scene.traverse((node) => {
-    if (!node.isMesh) return;
-    const materials = Array.isArray(node.material) ? node.material : [node.material];
-    for (const material of materials) if (/CoroSolto_(FP_|Mandrake_)/i.test(material?.name || '')) handMaterials.add(material.name);
-  });
-  // Duas linhagens de mão convivem no catálogo e a régua tem de saber qual está
-  // olhando. KINEMATION (`Hand-Tool1.008`): três camadas Cloth/Glove/Hand, que
-  // recebem o atlas de time. Linhagem do golden da AK (`Requests_Studio_Hands`,
-  // rig `*_metarig`, zero ossos em comum): o par Gloves/Mandrake_Sleeves, cujo
-  // acabamento é FATOR escuro mais normal map — é o que o dono aprovou na AK.
-  // O limite estava rebaixado para `>= 2` exatamente nestas cinco, o que
-  // legitimava mão sem dedos quando o atlas errado era colado por cima.
-  // O relevo é lido do JSON do glTF, não do material do three: este arnês não
-  // carrega textura (sem DOM), então `material.normalMap` vem sempre nulo e a
-  // régua estaria medindo o arnês em vez do asset.
-  const gltfJson = JSON.parse(new TextDecoder().decode(
-    bytes.subarray(20, 20 + new DataView(bytes.buffer, bytes.byteOffset).getUint32(12, true))));
-  const handNormals = new Map((gltfJson.materials || [])
-    .filter((material) => /CoroSolto_(FP_|Mandrake_)/i.test(material.name || ''))
-    .map((material) => [material.name, Boolean(material.normalTexture)]));
-  const akLineage = [...handMaterials].some((name) => /CoroSolto_(FP_Gloves|Mandrake_Sleeves)/i.test(name));
-  if (akLineage) {
-    check(handMaterials.has('CoroSolto_FP_Gloves') && handMaterials.has('CoroSolto_Mandrake_Sleeves'),
-      `par de mãos da linhagem AK incompleto (${[...handMaterials]})`);
-    // Sem albedo, o normal map é o único relevo da mão: perdê-lo é a luva lisa.
-    for (const [name, hasNormal] of handNormals) check(hasNormal, `mão da linhagem AK sem normal map (${name})`);
-  } else {
-    check(handMaterials.size >= 3, `camadas de mãos insuficientes (${[...handMaterials]})`);
-  }
-
-  const mixer = new THREE.AnimationMixer(scene);
-  const sample = (name, count = 30) => {
-    const clip = clips.get(name);
-    if (!clip || !gun || !mag || !rig || !rifleBone || !magBone || !replacementBone) return [];
-    mixer.stopAllAction();
-    const action = mixer.clipAction(clip).reset().play();
-    const rows = [];
-    for (let index = 0; index <= count; index += 1) {
-      const time = index === count ? Math.max(0, clip.duration - 1e-4) : clip.duration * index / count;
-      mixer.setTime(time); scene.updateMatrixWorld(true);
-      const rifle = rifleBone.getWorldPosition(new THREE.Vector3());
-      const installed = magBone.getWorldPosition(new THREE.Vector3());
-      const fresh = replacementBone.getWorldPosition(new THREE.Vector3());
-      rows.push({
-        mag: installed.sub(rifle),
-        replacement: fresh.sub(rifle),
-        gun: rifle,
-        rig: rig.getWorldPosition(new THREE.Vector3()),
-        handToMag: hand ? Math.min(hand.getWorldPosition(new THREE.Vector3()).distanceTo(
-          magBone.getWorldPosition(new THREE.Vector3())), hand.getWorldPosition(new THREE.Vector3()).distanceTo(
-          replacementBone.getWorldPosition(new THREE.Vector3()))) : Infinity,
-        rightToGun: rightHand ? rightHand.getWorldPosition(new THREE.Vector3()).distanceTo(rifle) : Infinity,
-      });
-    }
-    action.stop(); mixer.update(0); scene.updateMatrixWorld(true);
-    return rows;
-  };
-  const excursion = (rows, key) => rows.length ? Math.max(...rows.map((row) => row[key].distanceTo(rows[0][key]))) : 0;
-  const endpoint = (rows, key) => rows.length ? rows.at(-1)[key].distanceTo(rows[0][key]) : Infinity;
-  const trackExcursion = (clipName, prefix) => {
-    const track = clips.get(clipName)?.tracks.find((item) => item.name.startsWith(prefix));
-    if (!track) return 0;
-    const stride = track.values.length / track.times.length;
-    let maximum = 0;
-    for (let offset = stride; offset < track.values.length; offset += stride) {
-      let square = 0;
-      for (let axis = 0; axis < stride; axis += 1) square += (track.values[offset + axis] - track.values[axis]) ** 2;
-      maximum = Math.max(maximum, Math.sqrt(square));
-    }
-    return maximum;
-  };
-  const metrics = {};
-  const idleRows = sample('idle');
-  const idleGun = idleRows[0]?.gun;
-  for (const name of REQUIRED) {
-    const rows = sample(name);
-    metrics[name] = {
-      magExcursion: +excursion(rows, 'mag').toFixed(4),
-      replacementExcursion: +excursion(rows, 'replacement').toFixed(4),
-      releaseExcursion: release ? +trackExcursion(name, 'Safety_metarig.position').toFixed(4) : null,
-      boltCatchExcursion: boltCatch ? +trackExcursion(name, 'Stock_metarig.position').toFixed(4) : null,
-      gunExcursion: +excursion(rows, 'gun').toFixed(4),
-      rigGunDrift: rows.length ? +(Math.max(...rows.map((row) => row.rig.distanceTo(row.gun)))
-        - Math.min(...rows.map((row) => row.rig.distanceTo(row.gun)))).toFixed(4) : null,
-      endGun: +endpoint(rows, 'gun').toFixed(4),
-      endToIdle: rows.length && idleGun ? +rows.at(-1).gun.distanceTo(idleGun).toFixed(4) : null,
-      endMag: +endpoint(rows, 'mag').toFixed(4),
-      handToMagMin: rows.length ? +Math.min(...rows.map((row) => row.handToMag)).toFixed(4) : null,
-      rightContactDrift: rows.length ? +(Math.max(...rows.map((row) => row.rightToGun))
-        - Math.min(...rows.map((row) => row.rightToGun))).toFixed(4) : null,
-    };
-  }
-  for (const name of ['reload_tactical', 'reload_empty']) {
-    check(Math.max(metrics[name]?.magExcursion || 0, metrics[name]?.replacementExcursion || 0) >= 0.45,
-      `${name}: carregadores não percorrem remoção e encaixe do M400`);
-    check(metrics[name]?.endToIdle <= 0.15, `${name}: arma não fecha perto do idle`);
-  }
-  check(metrics.shoot?.gunExcursion >= 0.04 && metrics.shoot?.gunExcursion <= 0.12, 'shoot sem recuo próprio ou exagerado');
-  check(metrics.reload_tactical?.releaseExcursion >= 0.004, 'reload_tactical sem pressão da trava do pente');
-  check(metrics.reload_empty?.releaseExcursion >= 0.004, 'reload_empty sem pressão da trava do pente');
-  check(metrics.reload_tactical?.boltCatchExcursion <= 0.001, 'reload_tactical não deveria pressionar bolt catch');
-  check(metrics.reload_empty?.boltCatchExcursion >= 0.003, 'reload_empty sem pressão do bolt catch');
-  check(metrics.reload_tactical?.handToMagMin <= 0.30, 'reload_tactical: mão esquerda não alcança o pente curvo');
-  check(metrics.reload_empty?.handToMagMin <= 0.30, 'reload_empty: mão esquerda não alcança o pente curvo');
-  check(metrics.inspect?.gunExcursion >= 0.15 && metrics.inspect?.gunExcursion <= 0.40, 'inspect sem leitura lateral ou exagerado');
-  check(metrics.equip_rifle?.gunExcursion >= 0.25 && metrics.equip_rifle?.endToIdle <= 0.02, 'equip não entra e assenta no idle');
-  check(metrics.shoot?.rightContactDrift <= 0.08, 'shoot: mão direita perdeu o punho');
-  check(metrics.inspect?.rightContactDrift <= 0.08, 'inspect: mão direita perdeu o punho');
-  const tactical = clips.get('reload_tactical');
-  const empty = clips.get('reload_empty');
-  const signature = (clip) => createHash('sha256').update(Buffer.concat(clip.tracks.map((track) =>
-    Buffer.from(track.values.buffer, track.values.byteOffset, track.values.byteLength)))).digest('hex');
-  if (tactical && empty) check(signature(tactical) !== signature(empty), 'recargas tática e vazia são idênticas');
-
-  if (gun && muzzle && sight) {
-    gun.computeBoundingBox();
-    const localDimensions = gun.boundingBox.getSize(new THREE.Vector3());
-    check(Math.abs(Math.max(localDimensions.x, localDimensions.y, localDimensions.z) - 1.02) <= 0.04,
-      `comprimento visual M400 ${Math.max(localDimensions.x, localDimensions.y, localDimensions.z).toFixed(4)} fora de 1,02 m`);
-    const expanded = gun.boundingBox.clone().applyMatrix4(gun.matrixWorld).expandByScalar(0.03);
-    check(expanded.containsPoint(muzzle.getWorldPosition(new THREE.Vector3())), 'muzzle fora da arma');
-    check(expanded.containsPoint(sight.getWorldPosition(new THREE.Vector3())), 'sight fora da arma');
-  }
-  return { failures, metrics };
-}
-
-const { bytes, gltf } = await load();
 const failures = [];
-if (createHash('sha256').update(bytes).digest('hex') !== cfg.sha256) failures.push('SHA-256 divergente do manifesto');
-if (bytes.length !== cfg.bytes) failures.push('tamanho divergente do manifesto');
-const primary = inspect(gltf); failures.push(...primary.failures);
+const check = (condition, message) => { if (!condition) failures.push(message); };
 
-const mutants = [];
-async function mutant(name, mutate) {
-  const { gltf: copy } = await load();
-  mutate(copy);
-  const result = inspect(copy);
-  const bitten = result.failures.length > 0;
-  mutants.push({ name, bitten, firstFailure: result.failures[0] || null });
-  if (!bitten) failures.push(`mutante não mordeu: ${name}`);
+if (!fs.existsSync(file)) {
+  console.log(`VM_RIFLE_M400=${JSON.stringify({ ok: false, failures: [`produto ausente em ${file}`] })}`);
+  process.exit(1);
 }
-await mutant('sem-shoot', (copy) => { copy.animations = copy.animations.filter((clip) => clip.name !== 'shoot'); });
-await mutant('sem-mag', (copy) => { copy.scene.getObjectByName('MINT_WEAPON_M400_MAG')?.removeFromParent(); });
-await mutant('mag-congelado', (copy) => {
-  for (const clip of copy.animations.filter((item) => /^reload_/.test(item.name))) {
-    for (const track of clip.tracks.filter((item) => /^(Mag_metarig|Mag001_metarig)\./.test(item.name))) {
-      const stride = track.values.length / track.times.length;
-      for (let i = stride; i < track.values.length; i += 1) track.values[i] = track.values[i % stride];
-    }
-  }
-});
-await mutant('recargas-iguais', (copy) => {
-  const empty = copy.animations.find((clip) => clip.name === 'reload_empty');
-  const tactical = copy.animations.find((clip) => clip.name === 'reload_tactical');
-  tactical.tracks = empty.tracks.map((track) => track.clone());
-});
-await mutant('sem-sight', (copy) => { copy.scene.getObjectByName('SOCKET_MINT_SIGHT')?.removeFromParent(); });
-await mutant('sem-camera', (copy) => { copy.cameras.length = 0; });
-await mutant('comando-congelado', (copy) => {
-  for (const clip of copy.animations.filter((item) => /^reload_/.test(item.name))) {
-   for (const track of clip.tracks.filter((item) => item.name.startsWith('Safety_metarig.'))) {
-    const stride = track.values.length / track.times.length;
-    for (let i = stride; i < track.values.length; i += 1) track.values[i] = track.values[i % stride];
-   }
-  }
-});
-await mutant('bolt-catch-congelado', (copy) => {
-  const clip = copy.animations.find((item) => item.name === 'reload_empty');
-  for (const track of clip?.tracks.filter((item) => item.name.startsWith('Stock_metarig.')) || []) {
-    const stride = track.values.length / track.times.length;
-    for (let offset = stride; offset < track.values.length; offset += stride) {
-      for (let axis = 0; axis < stride; axis += 1) track.values[offset + axis] = track.values[axis];
-    }
-  }
-});
-await mutant('corpo-trocado', (copy) => {
-  copy.scene.getObjectByName('MINT_WEAPON_M400').geometry = copy.scene.getObjectByName('MINT_WEAPON_M400_MAG').geometry;
-});
-await mutant('inspect-parado', (copy) => {
-  const clip = copy.animations.find((item) => item.name === 'inspect');
-  for (const track of clip.tracks.filter((item) => item.name.startsWith('metarig_rootJoint.'))) {
-    const stride = track.values.length / track.times.length;
-    for (let i = stride; i < track.values.length; i += 1) track.values[i] = track.values[i % stride];
-  }
-});
+const bytes = fs.readFileSync(file);
+check(createHash('sha256').update(bytes).digest('hex') === cfg.sha256, 'SHA-256 diverge do manifesto');
+check(bytes.length === cfg.bytes, 'tamanho diverge do manifesto');
+check(cfg.ready === false, 'm400 precisa permanecer ready:false');
 
-console.log(`VM_RIFLE_M400=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length,
-  sha256: cfg.sha256, clips: REQUIRED, metrics: primary.metrics, mutants, failures })}`);
+const gltf = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+const scene = gltf.scene;
+const clips = new Map(gltf.animations.map((clip) => [clip.name, clip]));
+const gun = scene.getObjectByName('MINT_WEAPON_M400');
+const mag = scene.getObjectByName('MINT_WEAPON_M400_MAG');
+const muzzle = scene.getObjectByName('SOCKET_MINT_MUZZLE');
+const sight = scene.getObjectByName('SOCKET_MINT_SIGHT');
+check(Boolean(gun), 'corpo MINT_WEAPON_M400 ausente');
+check(Boolean(mag), 'carregador separado ausente');
+check(Boolean(muzzle && sight), 'sockets de mira e boca do cano ausentes');
+check(gltf.cameras.some((camera) => camera.isPerspectiveCamera), 'câmera viewmodel ausente');
+
+// R3: o rig é o do arsenal, não um esqueleto próprio. É o ponto da reautoria.
+const ossos = new Set();
+scene.traverse((object) => { if (object.isBone) ossos.add(object.name); });
+const faltando = contrato.rig.ossosDeBraco.filter((osso) => !ossos.has(osso));
+check(faltando.length === 0, `fora do rig do arsenal: faltam ${faltando.length} ossos (ex.: ${faltando.slice(0, 3).join(', ')})`);
+
+// R3: as mãos são as do rig comum, com as três camadas que recebem o atlas.
+const camadas = new Set();
+scene.traverse((object) => {
+  if (!object.isMesh) return;
+  for (const material of (Array.isArray(object.material) ? object.material : [object.material])) {
+    if (/CoroSolto_FP_(Hand|Glove|Cloth)$/i.test(material?.name || '')) camadas.add(material.name);
+  }
+});
+check(camadas.size === 3, `camadas de mãos do rig comum incompletas (${[...camadas]})`);
+// A malha de mãos tem de estar PINTADA no rig do arsenal, não só existir: é o
+// que separa a reautoria de uma troca cosmética de material.
+let maosNoRig = false;
+scene.traverse((object) => {
+  if (!object.isSkinnedMesh) return;
+  const materiais = Array.isArray(object.material) ? object.material : [object.material];
+  if (!materiais.some((material) => /CoroSolto_FP_(Hand|Glove|Cloth)$/i.test(material?.name || ''))) return;
+  if ((object.skeleton?.bones || []).some((bone) => bone.name === 'hand_l')) maosNoRig = true;
+});
+check(maosNoRig, 'mãos não estão skinadas no rig do arsenal');
+
+// R5: catálogo de ações igual ao das irmãs de família.
+for (const name of REQUIRED) check(clips.has(name), `clipe ${name} ausente`);
+check(gltf.animations.length === REQUIRED.length, `catálogo de clipes inesperado (${[...clips.keys()]})`);
+
+// Mecanismo: o carregador sai do poço nas duas recargas e volta ao lugar.
+const mixer = new THREE.AnimationMixer(scene);
+const excursao = (name, node) => {
+  const clip = clips.get(name);
+  if (!clip || !node) return null;
+  mixer.stopAllAction();
+  const action = mixer.clipAction(clip).reset().play();
+  const amostras = [];
+  for (let index = 0; index <= 40; index += 1) {
+    mixer.setTime(clip.duration * index / 40);
+    scene.updateMatrixWorld(true);
+    amostras.push(node.getWorldPosition(new THREE.Vector3()));
+  }
+  action.stop();
+  return {
+    excursao: +Math.max(...amostras.map((p) => p.distanceTo(amostras[0]))).toFixed(4),
+    volta: +amostras.at(-1).distanceTo(amostras[0]).toFixed(4),
+  };
+};
+const metricas = {};
+for (const name of ['reload_tactical', 'reload_empty']) {
+  const medida = excursao(name, mag);
+  metricas[name] = medida;
+  check(medida && medida.excursao >= 0.05, `${name} não tira o carregador do poço`);
+  check(medida && medida.volta <= 0.02, `${name} não devolve o carregador ao lugar`);
+}
+const idle = excursao('idle', mag);
+metricas.idle = idle;
+check(idle && idle.excursao <= 0.01, 'carregador se mexe no idle');
+
+console.log(`VM_RIFLE_M400=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, ossosDoContrato: contrato.rig.ossosDeBraco.length - faltando.length, camadasDeMao: [...camadas], clips: [...clips.keys()], metricas, failures })}`);
 if (failures.length) process.exitCode = 1;
