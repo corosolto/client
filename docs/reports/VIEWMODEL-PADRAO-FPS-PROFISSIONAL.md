@@ -123,13 +123,13 @@ Cada régua abaixo sai direto de uma regra, e não de gosto:
 |---|---|---|---|
 | `escala angular por metro` | R1/R2 | diagonal aparente ÷ comprimento declarado, contra a AK aprovada | **existe** (`eval:vm-frame`), 13 armas ainda reprovam |
 | `fração no quadro` | R1/R2 | % dos vértices da arma dentro de 3:2 e 16:9 | **existe**, mesmo gate |
-| `fração de quadro do braço` | R2 | % de tela ocupada por mão e manga, junto com a arma | **falta** — é o furo que quebrou 6 armas na minha calibração |
-| `contrato de mira` | **R6** | ângulo entre o eixo câmera→alça e o eixo alça→boca do cano no ADS | **falta**, e os sockets já existem nas 24 |
-| `boca do cano visível` | R6 | a boca está dentro do quadro e não atravessa a mão | **falta** |
+| `fração de quadro do braço` | R2 | tela ocupada por mão e manga, medida à parte da arma | **existe** (`eval:vm-frame`) — shotgun 5,28× a silhueta da AK, mp5 4,92×, deagle 3,84× |
+| `contrato de mira` | **R6** | ângulo do eixo alça→boca contra o olhar da câmera | **existe** (`eval:vm-frame`) — 8 reprovavam, 6 consertadas; sobram p90, rem700 e os fora de faixa mp5/uzi |
+| `boca no lugar` | R6 | a boca do socket é a ponta real da malha, do lado oposto à câmera | **existe** (`vm-socket-repair.mjs`), aplicado |
+| `um rig` | R3 | todo produto usa o mesmo conjunto de ossos de braço | **existe** (`eval:vm-rig`) — reprova akm, awp, g3, m400, m92 com **0 de 55** ossos |
+| `catálogo de ações` | R5 | mesmo conjunto de clipes obrigatórios por arma | **existe** (`eval:vm-rig`) — reprova g3sg1 (sem `shoot` e `inspect`), rem700 (sem `inspect`), revolver38 (sem recarga reconhecida) |
 | `socket de pega` | R3 | existe socket de pega e a mão forte está sobre ele | **falta**, e só 10 de 24 têm o socket |
-| `um rig` | R3 | todo produto usa o mesmo conjunto de ossos de braço | **falta** — reprovaria 5 hoje |
-| `catálogo de ações` | R5 | mesmo conjunto de clipes obrigatórios por arma | **falta** — reprovaria as de 3 e as de 8 |
-| penetração por vértice | R4 | mão dentro da arma | existe **só para mosin, svd, sks** |
+| penetração por vértice | R4 | mão dentro da arma | existe **só para mosin, svd, sks**, e o gate não roda nesta árvore (aponta para um diretório de build ausente) |
 
 Nenhuma delas é opinião. Todas reprovam um estado que já foi visto na imagem.
 

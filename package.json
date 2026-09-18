@@ -319,7 +319,8 @@
     "eval:vm-lmg-lifecycle": "node tools/eval/viewmodel-lmg-lifecycle-check.mjs",
     "capture:vm-lmg-final": "node tools/viewmodels/prep/lmg-final-capture.mjs",
     "capture:vm-arsenal-video": "node tools/viewmodels/prep/arsenal-video-capture.mjs",
-    "eval:vm-frame": "node tools/viewmodels/prep/vm-frame-calibra.mjs --tabela"
+    "eval:vm-frame": "node tools/viewmodels/prep/vm-frame-calibra.mjs --tabela",
+    "eval:vm-rig": "node tools/eval/viewmodel-rig-contract-check.mjs --tabela"
   },
   "repository": {
     "type": "git",
