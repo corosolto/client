@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 import { VM_FRAME } from './data/vmframe.js';
+import { VM_BYTES } from './data/vmbytes.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
@@ -269,8 +270,12 @@ const urlForKey = (key) => {
   }
   if (key.includes('#')) {
     const [family, weapon] = key.split('#');
-    if (VM_WEAPON[weapon]?.runtime === 'family') return AUTHORED_VM_URLS[family];
-    return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${CATALOG_VERSION}`;
+    // Versão pelos BYTES do produto: `CATALOG_VERSION` é global e congelada, e
+    // com ela re-assar uma arma não invalidava o cache do navegador — o jogo
+    // servia o GLB de ontem e o conserto não chegava à tela.
+    const versao = VM_BYTES[weapon] || CATALOG_VERSION;
+    if (VM_WEAPON[weapon]?.runtime === 'family') return `${AUTHORED_VM_URLS[family]}&b=${versao}`;
+    return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${versao}`;
   }
   return AUTHORED_VM_URLS[key];
 };
@@ -572,7 +577,7 @@ export class AuthoredViewModels {
     this._ctx = ctx;
     if (this.utility) {
       const utility = this.utility;
-      utility.entry.mixer.update(step);
+      this._stepEntry(utility.entry, step);
       utility.elapsed += step;
       if (!utility.released && utility.elapsed >= utility.releaseAt) {
         utility.released = true;
@@ -598,10 +603,10 @@ export class AuthoredViewModels {
     for (const entry of this.entries.values()) {
       if (entry === active && entry.mount.visible) continue;
       // Fila/ação pendente termina mesmo com o mount escondido — sem pose presa.
-      if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) entry.mixer.update(step);
+      if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) this._stepEntry(entry, step);
     }
     if (!active?.mount.visible) return;
-    active.mixer.update(step);
+    this._stepEntry(active, step);
     this._time += step;
     // Dono único do transform do mount: base ∘ arco de draw ∘ recuo (ADS: M6).
     let drawY = 0;
@@ -849,13 +854,36 @@ export class AuthoredViewModels {
     return this._play(entry, names[0], { timeScale, fade: 0.02, preserveQueue: true });
   }
 
+  // Trocar ação DENTRO de `AnimationMixer.update` corrompe os bindings: o estado
+  // diz idle e o esqueleto retém a pose final da recarga. O listener `finished`
+  // dispara de dentro do update, então a troca é adiada para fora dele.
+  // Portado de `claude/vm-unificado` (gate AUD1B daquela lane).
+  _stepEntry(entry, step) {
+    entry.updatingMixer = true;
+    try {
+      entry.mixer.update(step);
+    } finally {
+      entry.updatingMixer = false;
+    }
+    const finished = entry.finishedAction;
+    entry.finishedAction = null;
+    if (finished && finished === entry.action) this._continue(entry);
+  }
+
   _continue(entry) {
+    if (entry.updatingMixer) {
+      entry.finishedAction = entry.action;
+      return;
+    }
     // Sem guarda de visibilidade: fila encalhada com mount oculto era pose congelada.
     const next = entry.queue.shift();
     if (next) this._play(entry, next.name, { timeScale: next.timeScale, preserveQueue: true });
-    // fim de clipe volta ao idle com FADE: o último frame não fecha nos
-    // twists do braço e o snap seco era um pop no fim de toda recarga.
-    else this._idle(entry, 0.15);
+    // Fim de clipe volta ao idle com FADE: o último frame não fecha nos twists
+    // do braço e o snap seco era um pop no fim de toda recarga. Mas entry
+    // ESCONDIDA para de receber `update`, então o crossfade nunca completa e a
+    // pose congela no último frame da ação anterior — o estado diz idle e o
+    // esqueleto discorda. Sem mount visível, troca seca.
+    else this._idle(entry, entry.mount.visible ? 0.15 : 0);
   }
 
   _setupGeneralMotion(entry, general) {
