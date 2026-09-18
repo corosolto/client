@@ -59,6 +59,13 @@ const familyFrameLiteral = source.slice(source.indexOf('const FAMILY_FRAME = Obj
 const FAMILY_FRAME = (new Function(`return ${familyFrameLiteral.slice(familyFrameLiteral.indexOf('{'), familyFrameLiteral.indexOf('});') + 1)}`))();
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
 
+// LIMITE CONHECIDO desta régua: ela amostra só a ARMA — materiais de mão são
+// descartados de propósito, para a escala não depender da pose do braço. O
+// preço apareceu na captura: aproximar a arma da câmera traz a manga junto, e
+// em lmg, mosin, sks, svd, shotgun e p90 o antebraço passou a dominar o quadro
+// com a arma dentro do alvo. Por isso a medida só foi aplicada às onze armas
+// validadas na imagem; fechar as outras treze exige medir também a fração de
+// quadro ocupada pelas mãos e resolver as duas coisas juntas.
 const manifests = ['rifle', 'smg', 'sidearm', 'dmr', 'precision', 'heavy']
   .map((name) => path.join(ROOT, 'tools/viewmodels', `${name}-candidates.json`))
   .filter((file) => fs.existsSync(file))

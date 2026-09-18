@@ -36,6 +36,15 @@ const authored = text('public/js/authoredvm.js');
 const game = text('public/js/game.js');
 const vmweapon = text('public/js/vmweapon.js');
 check(authored.includes("_QS?.get('vmauthored') === '1'"), 'ativação exige opt-in explícito ?vmauthored=1');
+// O atlas de time é autorado para o UV de `Hand-Tool1.008` (rig KINEMATION).
+// akm, m92, g3, awp e m400 foram assadas sobre o pacote golden da AK e usam
+// `Requests_Studio_Hands`, sem um osso em comum. Colar o atlas nelas trocava o
+// albedo (identidade vazando para a coronha), branqueava o fator escuro e
+// anulava o normal map — a mão virava luva lisa sem dedos.
+check(authored.includes('HAND_MATERIAL_AK_LINEAGE'),
+  'linhagem de mão da AK é reconhecida no runtime');
+check(authored.includes("&& !HAND_MATERIAL_AK_LINEAGE.test(material?.name || '')"),
+  'mão da linhagem AK não recebe o atlas de time do rig KINEMATION');
 check(game.indexOf('if (AUTHORED_VM_ENABLED)') < game.indexOf('createAuthoredViewModels(this.vm.root'), 'controladores só são criados dentro do portão global');
 const loadingState = viewmodelVisibility({ alive: true, firstPerson: true, authoredReady: false });
 check(loadingState.fallback && !loadingState.authored,

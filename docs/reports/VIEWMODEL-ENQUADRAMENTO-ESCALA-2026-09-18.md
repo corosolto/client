@@ -57,7 +57,23 @@ Medido em 3:2 sobre os 24 produtos assados:
 | dentro da família `ar` | 0,93× a 3,03× (3,3×) | 0,94× a 0,98× |
 | armas com <85% no quadro | 12 de 24 | 3 de 24 |
 | centro da silhueta | [0,26 −0,48] a [2,01 −3,18] | convergido em ~[0,61 −0,66] |
-| passam as duas travas | **2 de 24** | **21 de 24** |
+| passam as duas travas | **2 de 24** | **21 de 24** na medida calculada |
+
+### Correção de 18/09, depois da captura
+
+A medida calculada fechava 21 de 24, mas a **imagem** desmentiu seis: em `lmg`,
+`mosin`, `sks`, `svd`, `shotgun` e `p90` a arma entrou no alvo e o ANTEBRAÇO
+passou a dominar o quadro. A causa é a própria régua: ela amostra só a arma e
+descarta materiais de mão de propósito, para a escala não depender da pose do
+braço. Aproximar a arma traz a manga junto, e isso ela não vê.
+
+Por isso `vmframe.js` aplica a medida a **onze** armas — `awp`, `carbine`,
+`famas`, `g3`, `m4`, `m400`, `m92`, `md97`, `scar`, `tavor`, `uzi` —, todas
+conferidas quadro a quadro. As outras treze seguem no frame da família, com os
+valores anteriores intactos: trocar um defeito por outro não é conserto.
+
+Fechar as treze exige medir também a fração de quadro ocupada pelas mãos e
+resolver arma e braço juntos. Está registrado como limite no cabeçalho da régua.
 
 ## Como a medida entra no runtime
 

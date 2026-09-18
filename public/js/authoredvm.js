@@ -170,6 +170,16 @@ const _adsBlend = new THREE.Quaternion();
 const _adsForward = new THREE.Vector3();
 const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
+// Linhagem do pacote golden da AK: akm, m92, g3, awp e m400 foram autoradas
+// SOBRE ele (ver o cabeçalho de `prep/rifles-akm-final.py`), então herdaram o
+// rig `*_metarig` e a malha `Requests_Studio_Hands` — zero ossos em comum com o
+// rig KINEMATION das outras 19. As mãos dessa linhagem são luva escura por
+// FATOR mais normal map, sem albedo: é o acabamento que o dono aprovou na AK.
+// O atlas de time é autorado para o UV de `Hand-Tool1.008`; aplicá-lo aqui
+// trocava o map (identidade vazando para a coronha), branqueava o fator e
+// anulava o normal — a mão virava luva lisa sem dedos. A AK não quebra porque
+// `golden` já escapa do tint; estas cinco recebem o mesmo tratamento.
+const HAND_MATERIAL_AK_LINEAGE = /CoroSolto_(?:FP_Gloves|Mandrake_Sleeves)/i;
 const CLIP_ALIASES = Object.freeze({
   equip: 'equip_rifle', reload: 'reload_tactical', fire: 'shoot',
   reloadtactical: 'reload_tactical', reloadempty: 'reload_empty',
@@ -367,13 +377,15 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const hand = materialsOf(object).some((material) => HAND_MATERIAL.test(material?.name || ''));
     if (hand) {
       handMeshes.push(object);
-      // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget e AK golden
-      // conservam seus materiais até terem inspeção de UV e aprovação próprias.
+      // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget, AK golden e a
+      // linhagem derivada da AK conservam seus materiais: o UV é outro.
+      const tingivel = (material) => HAND_MATERIAL.test(material?.name || '')
+        && !HAND_MATERIAL_AK_LINEAGE.test(material?.name || '');
       if (!golden) {
         object.material = Array.isArray(object.material)
-          ? object.material.map((material) => HAND_MATERIAL.test(material?.name || '')
+          ? object.material.map((material) => tingivel(material)
             ? tintHandMaterial(material, profile, molde) : material)
-          : tintHandMaterial(object.material, profile, molde);
+          : (tingivel(object.material) ? tintHandMaterial(object.material, profile, molde) : object.material);
       }
       object.userData.authoredCharacterHand = profile.id || 'player';
     } else {

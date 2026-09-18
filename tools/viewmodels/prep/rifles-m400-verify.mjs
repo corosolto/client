@@ -80,7 +80,30 @@ function inspect(gltf) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     for (const material of materials) if (/CoroSolto_(FP_|Mandrake_)/i.test(material?.name || '')) handMaterials.add(material.name);
   });
-  check(handMaterials.size >= 3, `camadas de mãos insuficientes (${[...handMaterials]})`);
+  // Duas linhagens de mão convivem no catálogo e a régua tem de saber qual está
+  // olhando. KINEMATION (`Hand-Tool1.008`): três camadas Cloth/Glove/Hand, que
+  // recebem o atlas de time. Linhagem do golden da AK (`Requests_Studio_Hands`,
+  // rig `*_metarig`, zero ossos em comum): o par Gloves/Mandrake_Sleeves, cujo
+  // acabamento é FATOR escuro mais normal map — é o que o dono aprovou na AK.
+  // O limite estava rebaixado para `>= 2` exatamente nestas cinco, o que
+  // legitimava mão sem dedos quando o atlas errado era colado por cima.
+  // O relevo é lido do JSON do glTF, não do material do three: este arnês não
+  // carrega textura (sem DOM), então `material.normalMap` vem sempre nulo e a
+  // régua estaria medindo o arnês em vez do asset.
+  const gltfJson = JSON.parse(new TextDecoder().decode(
+    bytes.subarray(20, 20 + new DataView(bytes.buffer, bytes.byteOffset).getUint32(12, true))));
+  const handNormals = new Map((gltfJson.materials || [])
+    .filter((material) => /CoroSolto_(FP_|Mandrake_)/i.test(material.name || ''))
+    .map((material) => [material.name, Boolean(material.normalTexture)]));
+  const akLineage = [...handMaterials].some((name) => /CoroSolto_(FP_Gloves|Mandrake_Sleeves)/i.test(name));
+  if (akLineage) {
+    check(handMaterials.has('CoroSolto_FP_Gloves') && handMaterials.has('CoroSolto_Mandrake_Sleeves'),
+      `par de mãos da linhagem AK incompleto (${[...handMaterials]})`);
+    // Sem albedo, o normal map é o único relevo da mão: perdê-lo é a luva lisa.
+    for (const [name, hasNormal] of handNormals) check(hasNormal, `mão da linhagem AK sem normal map (${name})`);
+  } else {
+    check(handMaterials.size >= 3, `camadas de mãos insuficientes (${[...handMaterials]})`);
+  }
 
   const mixer = new THREE.AnimationMixer(scene);
   const sample = (name, count = 30) => {
