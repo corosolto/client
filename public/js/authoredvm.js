@@ -232,9 +232,8 @@ const READY_OVERRIDE = new Set(
     : (_QS?.get('vmready') || '').split(',').filter(Boolean));
 const familyReady = (family) => Boolean(family)
   && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
-// Portão por ARMA dentro da família: `ready:false` em VM_WEAPON segura uma arma no
-// legado mesmo com a família aberta (akm/m92 moram na família `ak`, mas só a AK foi
-// aprovada pelo dono em 07/09). O override ?vmready= abre a família inteira, para A/B.
+// Portão por ARMA dentro da família (KNOWN-BUGS, rollout de 19/09): `ready:false`
+// segura akm/m92 no legado com a família `ak` aberta. ?vmready= abre tudo, para A/B.
 const weaponReady = (weapon, family) => VM_WEAPON[weapon]?.ready !== false || READY_OVERRIDE.has(family);
 const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';

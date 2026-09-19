@@ -58,10 +58,8 @@ export const VM_WEAPON = {
   // NÃO marcar `golden` sem calibrar a escala: o piloto entra 144× maior.
   // Medição e antes/depois em KNOWN-BUGS.md, BUG-VM-ESCALA-PISTOLA.
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
-  /* trim: a mão da família ak fica 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
-     Delta medido no espaço do holder: [-0,2, -0,8, +1,1] cm.
-     ready:false — moram na família `ak` (aberta), mas a aprovação do dono de 07/09
-     cobre só "faca pistola e ak". Sobem uma a uma, com veredito próprio. */
+  /* trim: mão da família ak a 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
+     ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09). */
   m92: W('ak', { golden: true, ready: false, trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
   akm: W('ak', { golden: true, ready: false, parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
   g3: W('g3'),
