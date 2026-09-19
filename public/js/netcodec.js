@@ -1,8 +1,8 @@
 import { WEAPONS } from './data/weapons.js';
 
-export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
+export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
 export const MAX_SNAPSHOT_BYTES = 32768;
-const CURRENT_VERSION = 4;
+const CURRENT_VERSION = 5;
 const KIND_SNAPSHOT = 1;
 const MAX_ENTITIES = 64;
 const MAX_CTF_POINTS = 16;
@@ -60,6 +60,45 @@ class Reader {
   finish() { if (this.offset !== this.bytes.byteLength) throw new RangeError('snapshot_trailing_bytes'); }
 }
 
+/* QUANTIZAÇÃO (v5). A posição do VIZINHO é desenhada, não medida: 15,6 mm de passo é
+   invisível num corpo de 1,8 m, e o servidor continua usando f64 para acertar tiro. A do DONO
+   fica em f32 no reboque, porque é ela que a régua de reconciliação mede em milímetros. */
+const POS_MIN = -512, POS_MAX = 512;
+const ALT_MIN = -64, ALT_MAX = 192;
+const q16 = (v, min, max) => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) throw new TypeError('non_finite');
+  return Math.max(0, Math.min(65535, Math.round(((Math.max(min, Math.min(max, n)) - min) / (max - min)) * 65535)));
+};
+const d16 = (q, min, max) => min + (q / 65535) * (max - min);
+const qAng = (v, amp) => q16(Math.max(-amp, Math.min(amp, Number(v) || 0)), -amp, amp);
+const dAng = (q, amp) => d16(q, -amp, amp);
+const TAU = Math.PI * 2;
+
+/* REBOQUE DE UM CLIENTE SÓ (v5). `ackSeq/mag/res/reloadIn/primary/secondary` iam em TODAS as
+   entidades e só eram lidos para a própria — 14 bytes × N desperdiçados por snapshot. Agora
+   viajam uma vez, no fim, endereçados a quem recebe; e levam junto a posição EXATA do dono. */
+export const TRAILER_V5_BYTES = 30;
+export function encodeTrailerV5(priv = {}) {
+  const w = new Writer();
+  w.u32(integer(priv.id ?? 0, 0xffffffff, 'trailer_id'));
+  w.u32(integer(priv.ackSeq ?? 0, 0xffffffff, 'ack_seq'));
+  w.u16(priv.mag == null ? 65535 : integer(priv.mag, 65534, 'mag'));
+  w.u16(priv.res == null ? 65535 : integer(priv.res, 65534, 'reserve'));
+  w.f32(Math.max(0, Number(priv.reloadIn) || 0));
+  const primary = priv.primary == null ? 255 : WEAPON_INDEX.get(priv.primary);
+  const secondary = priv.secondary == null ? 255 : WEAPON_INDEX.get(priv.secondary);
+  if (primary == null || secondary == null) throw new RangeError('trailer_weapon');
+  w.u8(primary); w.u8(secondary);
+  w.f32(Number(priv.x) || 0); w.f32(Number(priv.y) || 0); w.f32(Number(priv.z) || 0);
+  return w.done();
+}
+export function juntarV5(comum, reboque) {
+  const out = new Uint8Array(comum.byteLength + reboque.byteLength);
+  out.set(comum, 0); out.set(reboque, comum.byteLength);
+  return out;
+}
+
 const integer = (value, max, name) => {
   const n = Number(value);
   if (!Number.isInteger(n) || n < 0 || n > max) throw new RangeError(name);
@@ -68,7 +107,7 @@ const integer = (value, max, name) => {
 
 export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (!snapshot || snapshot.type !== 'snapshot') throw new TypeError('snapshot_required');
-  if (version !== 2 && version !== 3 && version !== 4) throw new TypeError('snapshot_version');
+  if (version < 2 || version > 5) throw new TypeError('snapshot_version');
   const ents = Array.isArray(snapshot.ents) ? snapshot.ents : [];
   if (ents.length > MAX_ENTITIES) throw new RangeError('too_many_entities');
   const w = new Writer();
@@ -108,6 +147,23 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
     if (weapon == null) throw new RangeError('weapon');
     if (primary == null) throw new RangeError('primary');
     if (secondary == null) throw new RangeError('secondary');
+    if (version >= 5) {
+      /* v5: posição do vizinho quantizada, `fire` e `voice` viram CONTADOR (bandeira de um
+         snapshot só some quando o pacote se perde), e o bloco privado saiu daqui. */
+      w.u32(integer(ent.id, 0xffffffff, 'entity_id')); w.str(ent.name);
+      w.u8((ent.team === 'B' ? 1 : 0) | (ent.bot ? 2 : 0) | (ent.alive ? 4 : 0));
+      w.u16(q16(ent.x, POS_MIN, POS_MAX)); w.u16(q16(ent.y, ALT_MIN, ALT_MAX)); w.u16(q16(ent.z, POS_MIN, POS_MAX));
+      w.u16(qAng(ent.yaw > Math.PI || ent.yaw < -Math.PI ? Math.atan2(Math.sin(ent.yaw), Math.cos(ent.yaw)) : ent.yaw, Math.PI));
+      w.u16(qAng(ent.pitch || 0, Math.PI / 2));
+      w.u8(Math.max(0, Math.min(255, Math.round(Number(ent.hp) || 0)))); w.u8(weapon);
+      w.u8(integer(ent.fireN ?? ent.fire ?? 0, 255, 'fire') & 255);
+      const vt = ent.voice === 'radio' ? 1 : ent.voice ? 2 : 0;
+      w.u8((vt & 3) | ((integer(ent.voiceN ?? 0, 63, 'voice_n') & 63) << 2));
+      w.u16(integer(ent.k, 65535, 'kills')); w.u16(integer(ent.d, 65535, 'deaths'));
+      w.u8(Math.max(0, Math.min(255, Math.round((Number(ent.respawnIn) || 0) * 10))));
+      w.str(ent.killedBy);
+      continue;
+    }
     w.u32(integer(ent.id, 0xffffffff, 'entity_id')); w.str(ent.name);
     w.u8((ent.team === 'B' ? 1 : 0) | (ent.bot ? 2 : 0) | (ent.alive ? 4 : 0) | (ent.fire ? 8 : 0));
     w.f32(ent.x); w.f32(ent.y); w.f32(ent.z); w.f32(ent.yaw); w.f32(ent.pitch);
@@ -132,7 +188,7 @@ export function decodeSnapshot(data) {
   const r = new Reader(data);
   if (r.u8() !== 0x43 || r.u8() !== 0x53 || r.u8() !== 0x42 || r.u8() !== 0x32) throw new TypeError('snapshot_magic');
   const version = r.u8();
-  if ((version !== 2 && version !== 3 && version !== 4) || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
+  if (version < 2 || version > 5 || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
   const snapshot = {
     type: 'snapshot', room: r.str(), tick: r.u32(), t: r.f64(), state: r.str(), owner: r.str() || null,
     players: r.u8(), spectators: r.u8(), livre: { E: r.u8(), B: r.u8() },
@@ -157,6 +213,23 @@ export function decodeSnapshot(data) {
   const count = r.u8();
   if (count > MAX_ENTITIES) throw new RangeError('too_many_entities');
   for (let i = 0; i < count; i++) {
+    if (version >= 5) {
+      const id = r.u32(), name = r.str(), flags = r.u8();
+      const x = d16(r.u16(), POS_MIN, POS_MAX), y = d16(r.u16(), ALT_MIN, ALT_MAX), z = d16(r.u16(), POS_MIN, POS_MAX);
+      const yaw = dAng(r.u16(), Math.PI), pitch = dAng(r.u16(), Math.PI / 2);
+      const hp = r.u8(), weaponId = r.u8(), fireN = r.u8(), voiceByte = r.u8();
+      const k = r.u16(), d = r.u16(), respawnIn = r.u8() / 10, killedBy = r.str();
+      if (weaponId !== 255 && !WEAPON_IDS[weaponId]) throw new RangeError('weapon');
+      const vt = voiceByte & 3;
+      snapshot.ents.push({
+        id, name, team: flags & 1 ? 'B' : 'E', bot: flags & 2 ? 1 : 0,
+        x, y, z, yaw, pitch, hp, alive: !!(flags & 4),
+        weapon: weaponId === 255 ? null : WEAPON_IDS[weaponId],
+        fireN, voice: vt === 1 ? 'radio' : vt === 2 ? 'voice' : 0, voiceN: voiceByte >> 2,
+        k, d, respawnIn, ...(killedBy ? { killedBy } : {}),
+      });
+      continue;
+    }
     const id = r.u32(), name = r.str(), flags = r.u8();
     const x = r.f32(), y = r.f32(), z = r.f32(), yaw = r.f32(), pitch = r.f32();
     const hp = r.u16(), weaponId = r.u8(), voiceId = r.u8(), k = r.u16(), d = r.u16();
@@ -183,6 +256,27 @@ export function decodeSnapshot(data) {
       });
     }
     snapshot.ents.push(ent);
+  }
+  /* REBOQUE v5: o bloco privado de QUEM RECEBE. Ele é remontado dentro da própria entidade,
+     então quem consome o snapshot não precisa saber que o formato mudou. */
+  // reboque AUSENTE é legítimo: espectador não tem bloco privado, e o decoder não pode exigir
+  // do formato o que o remetente não tem para dar
+  if (version >= 5 && r.offset < r.bytes.byteLength) {
+    const id = r.u32(), ackSeq = r.u32(), mag = r.u16(), res = r.u16(), reloadIn = r.f32();
+    const primaryId = r.u8(), secondaryId = r.u8();
+    if (primaryId !== 255 && !WEAPON_IDS[primaryId]) throw new RangeError('primary');
+    if (secondaryId !== 255 && !WEAPON_IDS[secondaryId]) throw new RangeError('secondary');
+    const x = r.f32(), y = r.f32(), z = r.f32();
+    const meu = {
+      id, ackSeq, mag: mag === 65535 ? null : mag, res: res === 65535 ? null : res, reloadIn,
+      primary: primaryId === 255 ? null : WEAPON_IDS[primaryId],
+      secondary: secondaryId === 255 ? null : WEAPON_IDS[secondaryId],
+      x, y, z,
+    };
+    snapshot.meu = meu;
+    const dono = id ? snapshot.ents.find((e) => e.id === id) : null;
+    // posição do dono volta em f32: é ela que a régua de reconciliação mede em milímetros
+    if (dono) Object.assign(dono, meu);
   }
   r.finish();
   return snapshot;

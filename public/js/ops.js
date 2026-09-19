@@ -201,6 +201,10 @@ function resumoBeacon() {
     recursos: n(r.recursos.total, 100000), falhas: n(r.recursos.falhas.length, 1000), glPerdidos: n(r.webgl.perdidos, 1000),
     erros: n(r.erros.total, 100000), promessas: n(r.erros.promessas, 100000),
     ultimaFase: u ? String(u.fase || '').slice(0, 12) : null, ultimaSaida: u?.abandono ? String(u.abandono.motivo || '').slice(0, 12) : null,
+    // ONDE o FPS foi medido. Sem isto, "20% abaixo de 30 FPS" não aponta para mapa nenhum, e o
+    // mapa é a variável com 6× de diferença de custo medido entre o mais caro e o mais barato.
+    mapa: r.partida.mapa ? String(r.partida.mapa).slice(0, 24) : null,
+    modo: r.partida.modo ? String(r.partida.modo).slice(0, 12) : null,
   };
 }
 function brief() {

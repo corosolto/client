@@ -31,7 +31,7 @@ import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 import { createMapPreview } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -69,8 +69,10 @@ function clearTelemetryGameContext() {
 /* ---------------- renderer ---------------- */
 // Import extra (top-level, legal em ESM) em vez de mexer no bloco de imports lá de cima:
 // o tom do caminho SEM pós mora no bloom.js, que é o dono da tabela de exposição/piso por mapa.
-import { applyNoPostTone } from './bloom.js';
-import { criaRenderer, avisaSemWebgl } from './glcontext.js';
+import { applyNoPostTone, ajustaPos } from './bloom.js';
+import { criaRenderer, avisaSemWebgl, avisaSoftware } from './glcontext.js';
+import { EscadaAdaptativa, DEGRAUS } from './qualidade-adaptativa.js';
+import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol } from './mapquality.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
 const renderer = criaRenderer({}, { compatibility: SAFE_MODE });
@@ -78,7 +80,12 @@ if (!renderer) {
   avisaSemWebgl('WebGL indisponível neste navegador/driver');
   throw new Error('sem_webgl');
 }
-const COMPAT_MODE = SAFE_MODE || renderer.__csWebgl?.degraded === true;
+/* `degraded` junta MSAA recusado, WebGL1, modo compatibilidade e renderizador de software —
+   e tratar os quatro igual rebaixava para o caminho mais leve do jogo uma GPU boa que só disse
+   não ao antialias. Aqui cada um custa o que custa (KNOWN-BUGS BUG-162). */
+const GLMETA = renderer.__csWebgl || {};
+const SOFTWARE = GLMETA.software === true;      // llvmpipe/swiftshader: 2 a 8 FPS medidos
+const COMPAT_MODE = SAFE_MODE || SOFTWARE || GLMETA.semWebgl2 === true || GLMETA.compat === true;
 if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'; }
 /* AUTO-PERFIL PARA MÁQUINA FRACA: cai pra 'low' por padrão só se o jogador NUNCA escolheu
    qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
@@ -93,10 +100,13 @@ function detectaHwFraco() {
 const WEAK_HW = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && detectaHwFraco();
 if (WEAK_HW) { settings.quality = 'low'; try { console.info('[perf] hardware modesto detectado — qualidade em BAIXA por padrão (mude em Configurações)'); } catch {} }
 const LEAN = COMPAT_MODE || WEAK_HW;   // qualquer caminho leve: previews estáticos + DPR menor
+if (SOFTWARE) avisaSoftware(GLMETA.renderer);   // contar é o que faltava; o jogo já se rebaixou
 const ASSET_CHECK = new URLSearchParams(location.search).get('assetcheck') === '1';
 let staticPreviews = LEAN && !ASSET_CHECK;
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(LEAN ? 0.75 : 1);
+// software já começa no degrau MÍNIMO: medir 8 s para descobrir o que o renderizador já disse
+// é gastar os únicos quadros que essa máquina tem. 0,5 = um quarto dos pixels de 1,0.
+renderer.setPixelRatio(SOFTWARE ? 0.5 : LEAN ? 0.75 : 1);
 renderer.shadowMap.enabled = !COMPAT_MODE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Tonemap. Com o composer ligado three já força NoToneMapping nos materiais (só aplica
@@ -1074,6 +1084,10 @@ function _perfFinish(bootMs, frames) {
     memoryGb: navigator.deviceMemory || null,
     renderer: rendererStr,
     dpr: window.devicePixelRatio || null,
+    // DPR do que o jogo DESENHA (não o do aparelho) e renderer em 3 estados — BUG-157.
+    dprEfetivo: (() => { try { return renderer.getPixelRatio(); } catch { return null; } })(),
+    software: window.__csWebgl?.softwareEstado || 'desconhecido',
+    glTier: window.__csWebgl?.tier || null,
     vw: window.innerWidth, vh: window.innerHeight,
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
@@ -1171,11 +1185,17 @@ async function startGame(team, charId, enemyFaction, online = false) {
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
      de verdade continua sendo pego. */
+  /* RÉGUA:launch-watchdog início — extraído por `tools/eval/launch-watchdog-check.mjs` */
   let _wp = _lstat.loaded;
   window.__gameLaunch?.begin('partida', 60000, function () {
+    const g = window.__game;
+    /* Conclusão é QUADRO (`time` só anda no update() do rAF), não o sub-estado `live`, que
+       falta em countdown/roundEnd. Antes da rede lenta. BUG-167, `eval:launchwatchdog`. */
+    if (g && g.time > 0) return true;
     if (_lstat.loaded > _wp) { _wp = _lstat.loaded; return 'rede-lenta'; }
-    return !!(window.__game && window.__game.state === 'live');
+    return false;
   });
+  /* RÉGUA:launch-watchdog fim */
   try {
     await _startGame(team, charId, enemyFaction, online);
     window.__gameLaunch?.ready('partida');
@@ -2826,9 +2846,36 @@ let menuAngle = 0;
    fatias — máquina que não acompanha descarta o excesso em vez de acumular
    dívida (espiral da morte). */
 const PASSO_TETO = 4;
+
+/* ESCADA ADAPTATIVA. A detecção de máquina fraca roda uma vez no boot; mapa caro, partida
+   cheia e fumaça acontecem depois. Ver docs/QUALIDADE-ADAPTATIVA.md. */
+const ADAPTATIVA = new URLSearchParams(location.search).get('adaptativa') !== '0';
+const escada = new EscadaAdaptativa({
+  orcamentoMs: 1000 / 60,
+  // software já nasceu no fundo: não faz sentido oferecer a ele os degraus de cima
+  degrau: SOFTWARE ? DEGRAUS.length - 1 : 0,
+});
+const dprBase = renderer.getPixelRatio();
+function aplicaDegrau(i) {
+  const d = DEGRAUS[i];
+  renderer.setPixelRatio(dprBase * d.dpr);   // o composer acompanha (bloom.js, cp._dpr)
+  ajustaPos({ ssao: d.ssao, aa: d.aa, charmask: d.charmask });
+  definirSombraDegrau(d.sombra === 'baixa' ? 'baixa' : null);
+  definirCorteVegetacao(d.mato ?? 1);
+  if (game?.world?.sun) aplicaSombraSol(game.world.sun);
+  try { console.info(`[perf] qualidade adaptativa → ${d.nome}`); } catch { /* console mudo */ }
+}
+// mesmo precedente de `__mpConvite`: gancho de sonda/captura, nunca caminho de jogo
+window.__escada = { escada, aplicaDegrau, DEGRAUS, dprBase };
+
 function loop() {
   requestAnimationFrame(loop);
   const dtReal = clock.getDelta();
+  // só mede com partida VIVA: menu e tela de carregamento têm outro custo e enganariam a escada
+  if (ADAPTATIVA && game && game.state === 'live') {
+    const novo = escada.quadro(dtReal * 1000);
+    if (novo !== null) aplicaDegrau(novo);
+  }
   loadingStage.update(Math.min(0.05, dtReal));
   const csOpen = !$('char-select').classList.contains('hidden');
   // A troca com M pausa a partida; o preview 3D visível continua animando nesse estado.
@@ -2983,7 +3030,7 @@ async function obterMpTicket(action) {
   const localMp = new URLSearchParams(location.search).get('mp') || '';
   if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
-  if (!/^[a-z]{2}$/.test(node)) return '';
+  if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
   const r = await fetch(apiUrl('/api/mp-ticket'), {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ node, action, anonId: getAnonId(), sessionId: getSessionId() }),
@@ -3027,8 +3074,8 @@ async function abrirMultiplayer() {
   if (nos) nos.innerHTML = '<div class="mp-vazio">medindo o ping dos servidores…</div>';
   mpEl('mp-salas').innerHTML = '';
   mpNos = await sondarNos(NOS);
-  // ordena por ping: o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono
-  mpNos.sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
+  // o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono (regra em nos.js)
+  mpNos = ordenarNos(mpNos);
   const local = new URLSearchParams(location.search).get('mp');
   if (local) {
     // ?mp=1 é a máquina local; ?mp=host:porta é um servidor apontado à mão (não confundir os dois).
@@ -3342,6 +3389,12 @@ function mpMontarFormulario() {
   if (quick) quick.onclick = async () => {
     ui.click(); mpErro('');
     if (!mpNoAtual || !mpNoAtual.online) return mpErro('Nenhum servidor online agora.');
+    // Quem clica em QUICK PLAY não quer o menor ping, quer gente: sonda de novo (a lotação da
+    // lista pode ter minutos) e vai para o nó onde há alguém, até o teto de 150 ms.
+    mpEstado('conectando', 'PROCURANDO GENTE…');
+    try { mpNos = ordenarNos(await sondarNos(NOS)); mpDesenharNos(); } catch { /* segue com a lista que tem */ }
+    const alvo = melhorNoParaJogar(mpNos);
+    if (alvo && alvo.id !== mpNoAtual.id) mpSelecionarNo(alvo);
     mpEstado('conectando', 'PROCURANDO SALA…');
     let salas = [];
     try { salas = await listRooms(mpNoAtual.http); } catch { /* lista fora = cria sala */ }

@@ -2,10 +2,30 @@
    arquivo; quem injeta é o main.js. Desenho e decisões: docs/MULTIPLAYER.md. */
 import * as THREE from 'three';
 import { poseCharacter } from './characters.js';
-import { WEAPONS } from './game.js';
+import { WEAPONS, supDeCod } from './game.js';
 import { frase } from './i18n.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
+
+/* Insere a amostra NA ORDEM do tempo do servidor. Com WebSocket o snapshot nunca chega fora
+   de ordem; com datagrama, chega — e empurrar no fim faria o boneco andar para trás. */
+const RELOGIO_NOVO_MS = 1000;
+function inserirAmostra(ent, t, e, semOrdem = false) {
+  const at = ent._bufAt, n = at.length;
+  let i = n;
+  if (!semOrdem) while (i > 0 && at[i - 1] > t) i--;
+  if (i > 0 && at[i - 1] === t) return;   // duplicado: datagrama repetido não vira amostra nova
+  if (i === n) {
+    at.push(t); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z);
+    ent._bufYaw.push(e.yaw); ent._bufPitch.push(e.pitch || 0);
+  } else {
+    at.splice(i, 0, t); ent._bufX.splice(i, 0, e.x); ent._bufY.splice(i, 0, e.y); ent._bufZ.splice(i, 0, e.z);
+    ent._bufYaw.splice(i, 0, e.yaw); ent._bufPitch.splice(i, 0, e.pitch || 0);
+  }
+  if (at.length > 10) {
+    at.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); ent._bufPitch.shift();
+  }
+}
 
 class Netcode {
   constructor(game, net) {
@@ -107,6 +127,8 @@ class Netcode {
     const seq = this.net.sendInput({
       ax: input.ax, az: input.az, crouch: input.crouch, shift: input.shift, jump: input.jump,
       yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
+      // INTENÇÃO de mirar (1 bit). Quem integra o `adsF` — e portanto a precisão — é o servidor.
+      ads: !!p.scoped,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
@@ -369,14 +391,21 @@ class Netcode {
       /* BUFFER de amostras (BUG-87, KNOWN-BUGS.md): arrays planos, cap 10 (zero objeto no
          hot path). Teleporte esvazia — interpolar através de respawn varreria o mapa. */
       const tBuf = this._relogioSnap(snap, nowMs), nb = ent._bufAt.length;
-      if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1])) {   // teleporte, ou relógio do servidor voltou (partida nova)
+      // recuo grande = partida nova; recuo curto é pacote fora de ordem (BUG-164). O
+      // `__mutOrdemAntiga` é gancho da régua game/netloop-check.mjs; zero em produção.
+      const recuo = this.__mutOrdemAntiga ? 0 : RELOGIO_NOVO_MS;
+      if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1] - recuo)) {
         ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; ent._bufPitch.length = 0;
       }
-      ent._bufAt.push(tBuf); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z); ent._bufYaw.push(e.yaw); ent._bufPitch.push(e.pitch || 0);
-      if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); ent._bufPitch.shift(); }
+      inserirAmostra(ent, tBuf, e, this.__mutOrdemAntiga);
       ent._netPitch = e.pitch || 0;
-      if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); if (ent.mesh && ent.mesh.isGLB) { try { ent.mesh.ctrl.shoot(); } catch { /* sem clipe */ } } }
-      if (e.voice) this.voice(ent, e.voice);
+      // v5 manda CONTADOR (bandeira de um snapshot some com o pacote); v4 manda bandeira
+      const atirou = e.fireN == null ? !!e.fire : (ent._fireNvisto != null && e.fireN !== ent._fireNvisto);
+      if (e.fireN != null) ent._fireNvisto = e.fireN;
+      if (atirou && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); if (ent.mesh && ent.mesh.isGLB) { try { ent.mesh.ctrl.shoot(); } catch { /* sem clipe */ } } }
+      const falou = e.voiceN == null ? !!e.voice : (ent._voiceNvisto != null && e.voiceN !== ent._voiceNvisto);
+      if (e.voiceN != null) ent._voiceNvisto = e.voiceN;
+      if (falou && e.voice) this.voice(ent, e.voice);
       /* Killfeed do MP: o `_kill` local não roda online — a transição vivo->morto do
          snapshot + `killedBy` é o evento de morte (BUG-90, KNOWN-BUGS.md). */
       if (!this._evOn && !primeiroSnap && wasAlive && !e.alive) {
@@ -425,6 +454,8 @@ class Netcode {
       try { game._feed(att, vic, w, h); } catch { /* HUD */ }
       if (vic === p) { if (att && !this.espectador) game._noteHit(att, w, d, h, dist(att)); }
       else this.morteRemota(vic, att);
+    } else if (e.k === 'tiro') {
+      this.tiroDeRede(att, e);
     } else if (e.k === 'drop') {
       this._dropDeRede(e);
     } else if (e.k === 'gone') {
@@ -620,6 +651,37 @@ class Netcode {
 
   // Tiro posicional de um remoto: som atenuado por distância, com pan pelo lado da câmera, e
   // clarão no cano. Sem isto o mundo do multiplayer é um tiroteio MUDO.
+  // Traçante, poeira e furo nos pontos que o NÓ calculou (BUG-159/BUG-161). O orçamento de
+  // FX é o dos bots: perto sai tudo, longe sai menos — o dano já aconteceu no servidor.
+  tiroDeRede(ent, e) {
+    const game = this.game, p = game.player;
+    if (!ent || !Array.isArray(e.p) || !e.p.length) return;
+    const olho = ent.pos.clone().setY(ent.pos.y + 1.45);
+    const dist = p && p.pos ? Math.hypot(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) : 0;
+    const cheio = ent === p || (dist < 45 && game.settings.quality !== 'low');
+    const tetos = cheio ? 4 : 1;   // shotgun não vira 9 traçantes na tela de ninguém
+    const sup = typeof e.s === 'string' ? e.s : '';
+    for (let i = 0; i < Math.min(tetos, e.p.length); i++) {
+      const a = e.p[i];
+      const alvo = new THREE.Vector3(+a[0] || 0, +a[1] || 0, +a[2] || 0);
+      try { game._tracer(olho.clone().lerp(alvo, 0.06), alvo); } catch { /* sem fx */ }
+      /* POEIRA E SOM no ponto verdadeiro. Saíam do `_fireHitscan`, que o online não chama
+         mais — sem isto o tiro na parede virou mudo e limpo (o furo sumiu da tela). */
+      const surf = supDeCod(sup[i]);
+      if (sup[i] && sup[i] !== '-') {
+        const nv = Array.isArray(e.n) && Array.isArray(e.n[i]) ? e.n[i] : null;
+        const n = nv ? new THREE.Vector3(+nv[0] || 0, +nv[1] || 0, +nv[2] || 0) : olho.clone().sub(alvo).normalize();
+        try { game._puff(alvo, n, surf); } catch { /* sem fx */ }
+        if (ent === p && i === 0) { try { game._impactSfx(surf, alvo, olho.distanceTo(alvo)); } catch { /* ctx mudo */ } }
+      }
+    }
+    const primeiro = e.p[0];
+    if (primeiro) {
+      const dir = new THREE.Vector3(+primeiro[0] || 0, +primeiro[1] || 0, +primeiro[2] || 0).sub(olho).normalize();
+      try { game._flash(olho.clone().addScaledVector(dir, 0.35), dir); } catch { /* sem fx */ }
+    }
+  }
+
   gunshot(ent) {
     const game = this.game;
     const cam = game.camera.position;

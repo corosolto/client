@@ -52,7 +52,74 @@ superfície → 0/44) e entrou a **CHR7** (convenção de skin), verde — daí 
 CHR1/CHR3/CHR4 seguem exatamente como estavam (conferido personagem a personagem: a
 lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
+> **`check:fast` de 13/09/2026, A/B do BUG-167 + BUG-168.** Execução completa na base
+> `d4d9c6935` (alpha.250): **129/142**, 13 vermelhas. Execução completa no conserto:
+> **130/144**, 14 vermelhas — a 14ª era `travessao:check`, acesa por dois travessões meus em
+> `index.astro`, consertada e conferida VERDE em seguida, o que põe o conserto em **131/144**.
+> Esse 131 é COMPOSIÇÃO de duas medições, não uma execução única: a execução completa sobre o
+> commit final foi interrompida no passo 53. Sobre o commit final foram conferidos um a um e
+> estão VERDES: `eval:comentario`, `docs:check`, `arch:check`, `changelog:check`,
+> `travessao:check`, `eval:launchwatchdog`, `eval:switchteam`, `eval:error-console`,
+> `eval:webglguard`, `eval:mutcega`, `eval:ctfhud`, `eval:pause`, `eval:ctfwin`, `eval:spawn`
+> e `eval:regen`. Os 13 vermelhos são os
+> MESMOS nos dois lados, conferidos um a um na base: `eval:mapid`, `eval:redesign`,
+> `audio:check`, `eval:pegada`, `anims:merge:check`, `menuwalls:check`, `eval:posters`,
+> `eval:lajes-authored`, `eval:lajes-circuito`, `eval:lajes-antitrap`,
+> `eval:sertao-livestock`, `eval:miticos-lobisomem`, `eval:mansao` — devDep ausente na
+> máquina (`sharp`), asset local não gerado, ou dívida conhecida. Os 2 passos novos
+> (`eval:switchteam`, `eval:launchwatchdog`) são o que leva 142 a 144, os dois VERDES.
+> **Nesta máquina NÃO foram verificados:** `npm run build`, `check:seo` e nenhum portão de
+> navegador (sem `node_modules` completo).
+
 ---
+
+## Encontro no multiplayer — 60% das sessões eram contra bot
+
+**Medido em 13/09/2026** (`mp_metrics_5m` e `mp_session`, 30 dias de produção):
+
+| | |
+|---|---|
+| sessões de multiplayer | 459, de 296 pessoas |
+| dividiram sala com outro humano | 184 — **40%** |
+| contra bot só | 275 — **60%** |
+| janelas de 5 min com 2+ conectados | 129 de 10.332 — **1,2%** |
+| duração mediana da sessão | 2 min 10 s (26% abaixo de 1 min) |
+| RTT p50 / tick acima do orçamento / desconexão por erro | 28,2 ms / 0,010% / **0** |
+
+A rede está saudável: o problema é dispersão. Duas regras do próprio jogo separavam as pessoas.
+
+**`ordenarNos` desempatava pelo nó mais VAZIO** dentro da faixa de 15 ms — regra escrita para
+o `br2` (capacidade, dois nós no mesmo datacentre). Com pico de 12 simultâneos no mundo todo,
+ela manda cada pessoa para uma sala vazia. Invertida.
+
+**O QUICK PLAY lia as salas de um nó só**, o de menor ping: duas pessoas separadas por 12 ms
+nunca se encontravam. Agora `melhorNoParaJogar` (em `public/js/nos.js`) procura gente e
+atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o atraso.
+
+Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
+
+## BUG-169 — "SERVIDORES FORA DO AR" com os quatro nós de pé
+
+**Fechado em 13/09/2026.** A tela de multiplayer mostrava os quatro servidores "fora do ar"
+enquanto todos respondiam. Não era rede: `sondarNos` marcava o prazo com
+`setTimeout(abort, 2500)`, que mede **relógio de parede**, e um `fetch` só resolve quando a
+thread principal atende. O boot do jogo (WebGL, GLB, texturas) trava a thread por segundos —
+o prazo vencia sozinho e abortava sonda de nó que tinha respondido em 24 ms. Por isso
+"TENTAR DE NOVO" consertava: na segunda vez o jogo já tinha carregado.
+
+Medido na página de produção, no navegador:
+
+| | br | br2 | us | eu |
+|---|---|---|---|---|
+| thread livre | 220 ms | 216 ms | 119 ms | 24 ms |
+| thread travada 3 s | FORA | FORA | FORA | FORA |
+
+Conserto: `prazoAcordado()` em `public/js/net.js` — tique de 100 ms que, quando volta
+atrasado, cobra o passo e não o relógio; 3 s de travada custam ~200 ms do orçamento.
+Régua `eval:sonda`, mutante `relogio-de-parede`.
+
+Mesma família do BUG-166 (também na sonda) e mecanismo diferente: lá uma amostra apagava a
+outra; aqui o prazo cobra tempo que o código não pôde usar.
 
 ## Sertão — casas da praça (PR #526, revisão local 06/09)
 
@@ -125,6 +192,536 @@ evidência WebGL está em `artifacts/sertao-casas/runtime-final-v2/`; a entrega 
 uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
+
+### BUG-172 · o B5 do boot-check injetava erro com stack de arnês e o corte de automação o filtra · CORRIGIDO 18/09
+
+**Sintoma:** `eval:boot` (passo do `portao-browser`) reprovando **B5** — "?debug=1
+preserva o painel técnico" — em toda árvore desde o merge #587 (BUG-151), inclusive na
+`main` (run 35252681261, 17/09 17:25). B1–B4 e B6–B7 verdes.
+
+**Causa raiz — confirmada por stack.** O B5 injetava o diagnóstico com
+`page.evaluate(() => console.error(new Error(...)))` — a stack nasce com os frames
+`UtilityScript.evaluate` do Playwright. O corte `AUTOMACAO_RE` (BUG-151) existe
+EXATAMENTE para classificar esses frames como externos ("arnês apontado para produção
+não é defeito do jogo") — e classificou o sinal do próprio check, que nunca mais
+chegava ao painel. Medido: stack direto casa `UtilityScript`; via callback de
+`setTimeout` agendado pelo evaluate, NÃO casa.
+
+**Conserto:** a injeção do B5 passou a criar o erro em callback de timer — o formato
+de erro de quem depura de verdade (console do navegador nunca carrega frames de
+arnês, e é esse o contrato do painel ?debug=1). Mutante `--mutante=vaza-detalhe`
+continua reprovando: a régua morde igual.
+
+
+### BUG-171 · chapéu de cangaceiro pintado no osso do braço fazia 14 reprovados no portão de seleção · CORRIGIDO 17/09
+
+**Sintoma:** `portao-browser` (eval:select) vermelho em TODA PR e na `main` desde 13/09 —
+14/53 reprovados contra dívida declarada de 12. Lampião 43,2 e Maria Bonita 31,3 ruins/1e4
+(teto 23,6, derivado de mandrake 18,9 × 1,25).
+
+**Causa raiz — confirmada por atribuição por osso.** Toda aresta ruinosa dos dois era
+Head↔Arm: a aba do chapéu, no bind T-pose, fica MAIS PERTO do segmento ombro→cotovelo do
+que do segmento curto da cabeça, e o auto-skin por proximidade (`rig-from-donor.mjs`)
+crava "rígido no mais próximo" — a aba virou carne de `LeftArm`/`RightArm`. O idle abana
+o braço, a aba fica: L0 1,4 → L 23,8 (r = 15,9). Mesma classe do jozo/trapfunk documentada
+na guarda de palma ("auto-skin pendurou no osso um pedaço de malha que não está lá").
+Ablações `semik`/`semtudo`/`semtrans` não movem o número: 100% pintura.
+
+**Por que a lane miticos não pegou:** o merge #570 registrou "lampiao 121,5 -> 42,3,
+dentro da dívida publicada" — a contagem fechava em 12 naquele dia; personagens que
+deixaram a tela de seleção depois empurraram a conta para 14 na main.
+
+**Conserto (`tools/head-zone-repin.mjs`):** cirúrgico, só JOINTS_0/WEIGHTS_0 dos dois GLB.
+Vértice acima da linha do pescoço não carrega peso em subtree de ombro/braço; o peso
+livre vira blend POT (inverso-distância^1,5, a mistura do reskin) sobre a cadeia
+neck→Head→folhas, peso de tronco preservado, suavização de vizinhança com anel de
+fronteira (SUAVIZA=6 no lampiao, 3 na maria). Repintura total do reskin foi medida e
+DESCARTADA: 43,2 → 57,7 (perde o tuning da lane).
+
+**Medido:** lampiao 43,2 → **23,4**; mariabonita 31,3 → **22,8**; portão **12/53, EXIT 0**.
+`check:fast` 141/145 (= baseline da máquina); `eval:chao` CHR7 53/53 na catraca; fotos da
+região da cabeça sem rasgo nem flutuação. Mutante: `git checkout` dos GLB devolve 14/53.
+
+
+### BUG-170 · queda de rede do jogador entrava como crash de código e abria issue automática · CORRIGIDO 15/09
+
+**Sintoma:** issue #592, aberta sozinha pelo `crash-fix.yml` em
+`2.0.0-alpha.251-0dd79c32ad74`, classe `codigo`:
+
+```
+Mensagem: Falha ao abrir partida: network error
+Stack:    TypeError: network error
+Origem:   promise
+Migalhas: …17:23:09 clique #mp-panel · 17:23:11 clique button · 17:23:44 clique #mp-panel…
+```
+
+É a **terceira** issue da mesma causa: #125 (`network error`, Firefox) e #201
+(`Falha ao abrir partida: Load failed`, WebKit) já tinham sido fechadas antes. `network
+error`, `Load failed` e `Failed to fetch` são a MESMA falha — um `fetch` que não completou —
+escrita por três engines diferentes. Não é defeito de código e não tem conserto no repo.
+
+**Causa raiz — confirmada. Três degraus, e o corte que existia falhava nos três:**
+
+1. **Sem prova de origem, o cliente assume que a culpa é dele.** Um `fetch` caído rejeita com
+   mensagem crua e **sem quadro de pilha**: `origemDoJogo` (`src/pages/index.astro`) não acha
+   `source`, não acha URL nenhuma na stack, cai no `return !viuExterna` final — e devolve
+   `true`. "Nenhuma evidência" era lido como "é nosso".
+2. **O watchdog converte rejeição de FUNDO em falha de abertura.** Com `interna = true` e o
+   lançamento armado em `partida`, o `unhandledrejection` chamava `lancamento.fail()`, que
+   embrulha a mensagem em `"Falha ao abrir " + etapa + ": " + msg`. Qualquer `fetch` anônimo
+   que caísse na janela de carga virava "Falha ao abrir partida" — e o jogador levava a tela
+   amigável de falha por causa de um pedido de fundo.
+3. **O corte do servidor não alcançava nenhuma das duas formas.** `OPAQUE_RE` até lista
+   `^network error$`, mas `isOpaqueNoise` desiste na primeira linha quando há `source` **ou**
+   `stack`, e o watchdog preenche os dois (`source='promise'`,
+   `stack='TypeError: network error'`). O ramo era **letra morta exatamente no caso que
+   dizia cobrir**: nem #125 (que chegou com stack e sem source) teria sido cortada hoje. E,
+   mesmo que rodasse, a âncora `^…$` já não casaria com o prefixo do watchdog.
+
+**Conserto.** Uma redação só, `REDE_RE`, espelhada nos dois lados — a mesma disciplina da
+`CARTEIRA_RE`/`PONTE_INJETADA_RE` (BUG-76/BUG-78):
+
+- `src/lib/error-provenance.mjs`: `classifyCrash` devolve `recuperavel` (fica na telemetria
+  bruta, **não** consome dispatch, **não** abre issue). Casa a **mensagem inteira**, nunca
+  `evidence` — a stack de um fetch caído é só `TypeError: network error`, e casar nela
+  afrouxaria o corte. Testado **depois** de `CACHE_SPLIT_RE`, para o
+  `Failed to fetch dynamically imported module` continuar sendo cache-split (BUG-39).
+- `src/pages/index.astro`: `erroDeRede` desarma só o `lancamento.fail` do
+  `unhandledrejection`. O `reporta()` **segue enviando** e a linha continua no banco.
+
+**O que continua pegando defeito de verdade:** o teto de 60 s do próprio watchdog segue
+armado — travamento real ainda falha com "tempo limite ao abrir partida" (BUG-167). E o corte
+é ancorado na mensagem inteira, então defeito com mensagem descritiva não passa por ele.
+
+**Régua:** `tools/ops/tests/error-provenance.test.mjs` (`npm run ops:test`), 9 cláusulas com
+os payloads reais de #592, #125 e #201, mais as antivacuidades (cache-split ganha de rede;
+`"Cannot read properties of null (reading 'fetch')"` segue `codigo`; rede citada no MEIO de
+uma mensagem não corta) e o espelho cliente↔servidor byte a byte.
+
+### BUG-167 · "Falha ao abrir partida: tempo limite ao abrir partida" em partida que já tinha aberto · CORRIGIDO 13/09
+
+**Sintoma (do dono, colado do painel de erros):** *"deu esse erro 8h atras no jogo: 40 ·
+Falha ao abrir partida: tempo limite ao abrir partida · launch-watchdog"*, em
+`2.0.0-alpha.250-c2d31b71e5eb`, mapa `upa_24h`, modo `rounds`.
+
+O próprio relatório se contradiz, e é daí que sai o diagnóstico:
+
+```
+00:39:38 clique #mp-quick
+00:39:54 ops live em 35935ms mapa=upa_24h modo=rounds   <<< A PARTIDA ABRIU
+00:39:56 ops congelou 1576ms
+00:46:10 ops contexto WebGL perdido                     <<< SETE MINUTOS DEPOIS
+```
+
+Um tempo limite **de abertura** não pode ser verdade numa sessão que já registrou `live` e
+seguiu nela por seis minutos.
+
+**Causa raiz — confirmada. São dois defeitos no mesmo laço, e os dois são a mesma confusão:
+o watchdog mede o TEMPO com `setTimeout` e mede o SUCESSO com estado movido pelo
+`requestAnimationFrame`.**
+
+1. **O relógio corre com a aba no fundo.** `setTimeout` dispara na aba oculta; o `rAF`
+   **para**. Quem abre o jogo e troca de aba durante os ~36 s de carga volta para a tela
+   amigável de falha: o relógio andou os 60 s, o jogo não andou um quadro, e o watchdog leu
+   o congelamento do `rAF` como travamento (`src/pages/index.astro`, `lancamento.begin`).
+2. **Predicado de vivacidade usado como predicado de conclusão.** O teste era
+   `window.__game.state === 'live'` (`public/js/main.js`), e `live` é só UM dos estados de
+   partida aberta: o motor passa por `countdown` (`public/js/game.js:2255`) e `roundEnd`
+   (`public/js/game.js:4548`, 4 s por rodada) a cada troca de rodada. Junte com a renovação
+   de rede lenta (#241), que pergunta pelo progresso de carga **antes** de perguntar pelo
+   estado: todo tique com asset chegando renovava sem olhar o jogo, o watchdog sobreviveu ao
+   lançamento, e o primeiro tique sem asset novo encontrou o jogo numa transição de rodada.
+   No MP isso é pior porque o servidor gira o mapa (`public/js/net.js:175` → `onPartida` →
+   `mpMontarPartida` → `startGame`) e **rearma** o lançamento no meio da sessão.
+
+**Reprodução:** `node tools/eval/launch-watchdog-check.mjs` (sem navegador: a régua extrai o
+`lancamento` real do `index.astro` e o predicado real do `main.js` e roda os dois num `vm`
+com relógio falso, que é o único jeito de avançar 60 s de `setTimeout` **sem** avançar o
+`rAF` — a assimetria que produz o defeito).
+
+**Medido antes do conserto** (`node tools/eval/launch-watchdog-check.mjs`):
+
+| cláusula | antes | depois |
+|---|---|---|
+| LW1 · aba oculta 180 s durante a carga | 1 falha: *"tempo limite ao abrir partida"* | 0 falhas |
+| LW2 · tique numa troca de rodada | 1 falha: *"tempo limite ao abrir partida"* | 0 falhas |
+| LW4 · 7 min de partida, 6 renovações por asset, 7º tique em `roundEnd` | 1 falha | 0 falhas |
+| LW3 · travamento REAL (aba à frente, 0 quadro, 0 progresso) | 1 falha (correta) | 1 falha (correta) |
+| LW6 · aba oculta 60 s, volta, 180 s à frente sem quadro | — (cláusula nova) | 1 falha (correta) |
+
+**O que foi DESCARTADO com medição, não com palpite:**
+
+- *"o teto de 60 s é curto para rede lenta"* — não. A migalha diz `live em 35935ms`, dentro
+  do teto, e a renovação de #241 já cobre rede lenta com progresso. Subir o teto não teria
+  mudado uma destas 40 linhas.
+- *"é a perda de contexto WebGL que está falhando"* — não. Esse caminho tem mensagem própria
+  (`contexto WebGL perdido`, `public/js/main.js:135`) e fingerprint próprio; a mensagem
+  destas 40 é a do watchdog.
+- *uma trava (`_abriu`) no predicado* — escrita, medida e **removida**: o mutante
+  `--mutante=semtrava` ficou VERDE, provando que era código morto (quando o predicado
+  devolve verdadeiro o `ready()` já desarma o timer). Código que nenhuma mutação acende não
+  guarda nada.
+
+**Correção.** Na causa, nos dois lados da assimetria:
+- `src/pages/index.astro` — o tique **renova** em vez de falhar quando a aba está (ou
+  esteve) oculta, uma renovação por episódio de ocultação; travamento com a aba à frente
+  continua falhando no teto. Um `visibilitychange` faz o latch, porque a aba pode ocultar e
+  voltar antes do tique.
+- `public/js/main.js` — o predicado passa a provar **quadro**, não sub-estado:
+  `if (g && g.time > 0) return true;`, e **antes** da cláusula de rede lenta. `game.time` só
+  anda dentro do `update()` do laço de `rAF` (`public/js/game.js:7346`).
+
+**Custo declarado, medido:** o watchdog deixa de detectar um travamento que aconteça
+**enquanto a aba está oculta** — por desenho, porque nesse estado não existe sinal de
+progresso para distinguir travamento de `rAF` congelado. Ele volta a valer no primeiro tique
+com a aba à frente. A LW3 cobra que esse caso continue falhando.
+
+**Um furo do PRÓPRIO conserto, achado pela régua e não por leitura.** A primeira versão da
+renovação por aba oculta não consumia o latch no `begin`: uma única troca de aba na sessão
+desarmava o watchdog pelo resto dela, e a LW1 ficava verde exatamente do mesmo jeito. Daí
+nasceu a LW6, e com ela o mutante `--mutante=semconsumo`. Fica registrado porque é o modo de
+cegueira nº 1 desta casa: cláusula que só cobra "não falhou" sem cobrar "ainda pode falhar".
+
+**Régua: `tools/eval/launch-watchdog-check.mjs`** (`npm run eval:launchwatchdog`, no
+`check:fast`). 6 cláusulas, 3 mutações medidas, cada uma acendendo cláusula diferente:
+`--mutante=sovivo` (devolve `state === 'live'` na ordem original) acende LW2 e LW4 com a
+mensagem literal da produção; `--mutante=semoculto` (tique ignora a aba oculta) acende LW1;
+`--mutante=semconsumo` (latch nunca consumido) acende LW6. Nas três a LW3 fica VERDE — é ela
+que impede "consertar" o falso positivo desarmando o watchdog.
+
+---
+
+### BUG-168 · troca de lado com personagem fora do elenco corrompia o Game e o crash só aparecia na morte seguinte · CORRIGIDO 13/09
+
+**Sintoma (do painel de erros):** `Uncaught TypeError: Cannot read properties of undefined
+(reading 'id')` em `glbchars.js:368`, pilha
+`buildCharacterModel` ← `_ensurePlayerTP` ← `_tpDeath` ← `_updatePlayer`, em
+`2.0.0-alpha.248`, `posto_treta` / `ctf`.
+
+**Procedência, para não vender mais do que foi medido:** a linha chegou de `localhost:8202`
+— máquina de desenvolvimento, não do site no ar. O caminho defeituoso, porém, é código
+publicado, e o arnês o reproduz.
+
+**Causa raiz — confirmada, e ela não está em nenhuma das quatro linhas da pilha.**
+`buildCharacterModel` recebeu `def === undefined` porque `this.playerDef` já estava undefined
+quando o jogador morreu. Quem o deixou assim foi a troca de lado (tecla M):
+
+```js
+public/js/game.js:2788   if (charId) { this.playerDef = byId(charId); ... }
+```
+
+`byId` é `CHARACTERS.find(...)` (`public/js/characters.js:613`) — devolve **undefined** para
+id fora do elenco. O mesmo campo, no construtor, **já tinha reserva**:
+`byId(playerCharId) || CHARACTERS[0]` (`public/js/game.js:712`, com aviso no `:713`). A
+assimetria entre as duas linhas era o defeito.
+
+**E o que tornou isso caro foi o `catch`** (a assinatura da lei 6 desta casa): em
+`public/js/main.js:2157` a chamada mora em `try { game._switchTeam(id) } catch (e) {
+console.error('switch team failed', e) }`, e logo abaixo vem `game.resume()`. A atribuição
+acontece **antes** da exceção; o `catch` engole a exceção, o `resume()` devolve o jogo ao
+jogador, e o Game segue rodando **corrompido**. A quebra só aparece na morte seguinte, em
+outro arquivo, a quatro quadros da causa — foi assim que ela chegou como "crash no glbchars".
+
+**Reprodução:** `node tools/eval/switchteam-check.mjs` (arnês em node, `posto_treta`/`ctf`).
+
+**Medido antes do conserto** (`node tools/eval/switchteam-check.mjs`):
+
+| cláusula | antes | depois |
+|---|---|---|
+| ST1 · `_switchTeam('id-fora-do-elenco')` | `TypeError` em `game.js:2801`; `playerDef` e `player.def` **undefined**; `playerCharId` = o id inválido | sem exceção; `playerDef='caminhoneiro'`, coerente com `player.def` e `playerCharId` |
+| ST2 · `_tpDeath()` em seguida (o caminho do relatório) | `TypeError: Cannot read properties of undefined (reading 'id')` | não lança |
+| ST4 · atribuições cruas a `this.playerDef` no fonte | 1 (`game.js:2788`) | 0 |
+| ST3 · troca com id VÁLIDO (antivacuidade) | troca de verdade | troca de verdade |
+
+**O que foi DESCARTADO com medição, não com palpite:**
+
+- *"é defeito do `buildCharacterModel`, que deveria tolerar `def` nulo"* — não. Ele **já**
+  devolve `null` sem template (`glbchars.js:369`) e o `_ensurePlayerTP` já trata `null`
+  (`game.js:5110`). Tolerar `def` undefined lá só moveria o crash para o próximo leitor de
+  `def.id` e apagaria o sinal de que o elenco do jogador está inconsistente.
+- *"é defeito do CTF ou do `posto_treta`"* — não. O arnês reproduz em qualquer mapa; o CTF só
+  é onde há troca de lado com frequência.
+
+**Correção.** `public/js/game.js` — a mesma reserva da linha 712, com a diferença de que aqui
+a reserva é um personagem **da facção em que ele está entrando** (`this.enemyFaction`, que
+ainda é a nova nesse ponto) e não `CHARACTERS[0]`: quem troca de lado tem de sair com um
+personagem do lado novo. `playerCharId` passa a vir do def resolvido, não do id pedido.
+
+**Custo declarado, medido:** com id inválido o jogador recebe silenciosamente um personagem
+diferente do que pediu, com aviso só no console (`[elenco] troca de lado pediu …`). É melhor
+do que o Game corrompido, e continua sendo um estado que não deveria existir — se ele
+aparecer em produção, o aviso é o rastro. Nada mais piorou: as outras 4 cláusulas e o
+`check:fast` não se moveram.
+
+**Régua: `tools/eval/switchteam-check.mjs`** (`npm run eval:switchteam`, no `check:fast`).
+4 cláusulas, 2 mutações medidas: `--mutante=semreserva` (devolve `byId(charId)` cru no fonte
+lido pela ST4) acende ST4; `--mutante=defundefined` (põe o Game no estado que o código antigo
+deixava) acende ST2 com a mensagem literal do relatório. Nas duas, a ST3 fica VERDE.
+
+---
+
+### BUG-166 · a tela dizia "SERVIDORES FORA DO AR" com os três servidores no ar · CORRIGIDO 12/09
+
+**Sintoma, relatado pelo dono com figura.** O painel de multiplayer mostrava os três nós
+("Brasil · São Paulo", "EUA · Carolina do Sul", "Europa · Madri") como **fora do ar**, com
+`0 jogando · 0 sala(s)`, e o aviso "Nenhum servidor respondeu. Pode ser a sua conexão, ou os
+servidores estão fora do ar."
+
+**Os servidores estavam no ar.** Conferido por quatro caminhos no mesmo minuto: `curl` nos três
+(`ok:true`, no ar havia 7,6 dias), CORS respondendo 200 para origem de produção e de prévia,
+Chrome de verdade em `www.csbrasil.online` medindo os três online (br 228 ms, us 139, eu 41), e
+Chrome na árvore local idem.
+
+**Causa.** `sondarNos` (public/js/net.js) tira DUAS amostras por nó para dar nota de ping — a
+primeira paga DNS e TLS, a segunda mede a conexão já quente. As duas dividiam **um** prazo de
+2500 ms e **um** `AbortController`:
+
+```js
+for (let i = 0; i < n; i++) h = await j(`${http}/health`, { signal: ctrl.signal });
+return { online: true, ... }   // só chega aqui se AS DUAS passarem
+```
+
+Se a primeira amostra custa mais da metade do prazo — e custa, em rede móvel, hotel, link
+congestionado ou no primeiro contato do dia —, a segunda é abortada, o `catch` roda e o nó é
+marcado **offline tendo respondido**. Como o efeito é por tempo e não por nó, os três caem
+JUNTOS, e a tela acusa os servidores de estarem fora do ar.
+
+**Conserto.** O prazo continua cobrindo a sonda inteira (isso é de propósito e tem cláusula),
+mas amostra que chegou não se apaga: guarda-se a última resposta boa, e o nó só é declarado
+fora do ar quando NENHUMA amostra chegou. Medido com a primeira amostra em 1,6 s e a segunda
+abortada: antes `fora do ar`, agora `online, ping 1602 ms`.
+
+**A régua congelava o defeito**, e isso é o mais instrutivo: a cláusula do prazo cobrava
+`!expirou.online` — ela transformou em contrato o efeito colateral de uma implementação. Agora
+cobra o que realmente defende (prazo global, com abort) e ganhou as duas irmãs: respondeu uma
+vez = online; não respondeu nenhuma = fora do ar.
+
+### BUG-165 · `spectators` negativo derrubava o snapshot binário inteiro · CORRIGIDO 12/09
+
+**Sintoma.** Achado quando o laço fechado (`netloop-check`) passou a serializar pelo codec de
+verdade: `encodeSnapshot` lançava `RangeError: spectators` e a sala inteira cairia para JSON —
+ou, no caminho do nó, para nenhum snapshot.
+
+**Causa.** `spectators: this.clients.size - this.slots.size`. Um slot sem cliente dá número
+NEGATIVO, e o codec valida `u8`. Acontece na régua (que cria slot sem socket) e acontece em
+produção, na janela entre o socket cair e o slot ser devolvido ao bot.
+
+**Conserto.** `Math.max(0, ...)`. Uma linha, e a lição é a do laço: régua que entrega o objeto
+do `snapshot()` direto ao cliente mede um jogo que ninguém joga — em produção ele vira bytes e
+volta, e é na volta que os erros aparecem.
+
+### BUG-164 · snapshot fora de ordem apagava o buffer de interpolação · CORRIGIDO 12/09
+
+**Sintoma.** Nenhum, hoje: com WebSocket o snapshot nunca chega fora de ordem. Com datagrama
+(QUIC/WebTransport, que é para onde o transporte vai) reordenação é ROTINA — e a regra
+"amostra com tempo menor que a última = relógio novo, esvazia tudo" apagaria as 10 amostras do
+buffer. Boneco remoto sem amostra congela e salta.
+
+**Conserto.** Recuo curto = pacote fora de ordem: a amostra entra NA ORDEM (e duplicata é
+ignorada, porque datagrama também duplica). Só recuo maior que 1 s continua sendo partida nova.
+
+**Régua** `game/netloop-check.mjs`, cenário de reordenação: 1 esvaziamento contra 1 (o do
+respawn, legítimo) com o conserto; **37 contra 1** com o mutante `ordem`. A primeira cláusula
+do cenário prova que houve inversão de tick chegando ao cliente — sem ela as outras passariam
+verdes medindo um cenário que não aconteceu.
+
+### BUG-163 · trocar de qualidade no meio da partida não mudava a resolução do jogo · CORRIGIDO 12/09
+
+**Sintoma.** O menu de qualidade mentia. `med → high` (e vice-versa) trocava sombra e materiais,
+mas o mundo continuava sendo desenhado na MESMA resolução de antes — o jogador mexia no
+seletor, via a imagem mudar um pouco (sombra) e concluía que o resto era impressão.
+
+**Causa.** `game.js:_applyQuality` chama `renderer.setPixelRatio(...)`, e o `EffectComposer`
+tem os próprios render targets. Eles nasciam com o pixel ratio do boot (`bloom.js`, `forScene`)
+e só eram redimensionados no **resize de janela** — a condição era `cp._w !== innerWidth ||
+cp._h !== innerHeight`. Pixel ratio não aparece aí. Como o composer existe em `med` e `high` e
+só some em `low`, o caminho padrão do jogo era exatamente o que não obedecia.
+
+**Por que importa agora.** A escada de qualidade adaptativa reduz DPR como PRIMEIRO degrau. Sem
+este conserto ela teria mentido do mesmo jeito — mexeria num número que ninguém desenha.
+
+**Conserto.** O composer passa a guardar `cp._dpr` e a comparar com `renderer.getPixelRatio()`
+junto do resize, refazendo alvos, depth e uniforme de texel do AA — a mesma manutenção que o
+resize já fazia. Régua: `tools/eval/qualidade-adaptativa-check.mjs` cobre a política, e a
+verificação de imagem é a figura A/B no navegador.
+
+### BUG-162 · GPU boa que recusou antialias era tratada como máquina sem GPU · CORRIGIDO 12/09
+
+**Sintoma.** O jogador com placa de vídeo real perdia sombra, nitidez (DPR 0,75) e os previews
+animados do menu — sem nada na tela explicando por quê — quando o driver dele recusava MSAA.
+
+**Causa.** `glcontext.js` publicava um único `degraded`, que é `compatibility || tier !==
+'padrao' || api !== 'webgl2' || software`: quatro fatos com custos muito diferentes somados num
+booleano. E `main.js` derivava dele o caminho leve INTEIRO. Recusar antialias é uma opção de
+contexto; desenhar por software é não ter GPU. Tratados igual.
+
+**O que NÃO era o defeito.** A detecção de renderizador de software funciona desde sempre —
+`SOFTWARE_RE` lê `WEBGL_debug_renderer_info`, cai para `gl.RENDERER` quando a extensão não
+existe, e o jogo já rebaixava. As sessões de 4-8 FPS do painel já estavam no caminho mais leve
+que o jogo tinha; o que faltava era o caminho leve ser leve o bastante, e o jogador saber.
+
+**Conserto.** A metadata passa a publicar `software`, `semWebgl2`, `semMsaa` e `compat`
+separados (o `degraded` continua, porque a telemetria antiga o usa). O caminho leve nasce só de
+software, WebGL1 ou modo compatibilidade. Software começa no degrau mínimo (DPR 0,5 em vez de
+0,75 — um quarto dos pixels) em vez de gastar os poucos quadros que tem medindo o que o
+renderizador já disse, e ganha um aviso honesto: barra, uma vez, dispensável, que não bloqueia.
+
+**Régua** `tools/eval/maquina-fraca-check.mjs` (7 cláusulas, no check:fast). Mutantes
+`junta-tudo` e `sem-aviso` reprovam.
+
+### BUG-161 · o tiro que erra terminava 60 m adiante, atravessando a parede · CORRIGIDO 12/09
+
+**Sintoma.** Achado OLHANDO a figura do navegador, com o BUG-159 já consertado e verde. Agora
+que é o servidor quem manda os pontos de impacto, é deles que saem traçante, poeira e furo — e
+para o pellet que **não acerta ninguém** (que é a esmagadora maioria dos tiros) o ponto era
+`origem + direção × 60 m`, ignorando a parede. O traçante do jogador saía pelo outro lado do
+mapa e a poeira nascia dentro da geometria.
+
+**Causa.** `_scanHit` já calculava a parede (`wall`/`wallDist`, para decidir se o corpo estava
+atrás dela) e devolvia **só** o combatente acertado — `null` quando não havia nenhum. Quem
+chamava não tinha como saber onde a bala parava, então chutava 60 m. O dado estava a uma linha
+de distância de quem precisava dele.
+
+**Conserto.** `_scanHit` devolve também o impacto de parede (`{ ent: null, dist, sup, n }`), e o
+evento `tiro` leva por pellet o **material** (uma letra, tabela `SUP_COD` exportada de
+`game.js` e usada pelos dois lados) e a **normal** da face. Com isso o cliente voltou a ter
+poeira com cor de material, faísca em metal e furo deitado na parede — que ele tinha antes e
+perdeu quando parou de fazer o próprio hitscan no online.
+
+**Régua** `game/dispersao-check.mjs` D7/D7b: varre 24 direções do spawn, mede em quantas existe
+parede a menos de 55 m e cobra que **nenhuma** delas tenha impacto além dela, mais o material
+chegando junto. Mutante `parede-longe` reprova. No navegador, `tools/eval/tiro-mp-browser.mjs`
+TB8/TB9 cobram que a poeira e a normal cheguem à tela.
+
+### BUG-160 · o painel de rede do jogo mente quando o FPS está baixo · ABERTO
+
+**Sintoma.** Medido em navegador com renderizador de software (2 FPS): o overlay `NET` mostrava
+`snap 274 Hz /30` e `band 191.9 KB/s`. Com GPU de verdade, o mesmo nó, a mesma sala e o mesmo
+protocolo mostram `snap 30 Hz /30` e `20,8 KB/s` — o número real.
+
+**Causa provável.** A taxa é acumulada por mensagem e dividida pela janela de RENDER: a 2 FPS o
+cliente drena meio segundo de mensagens num quadro só e a divisão infla. O instrumento passa a
+acusar tempestade de rede exatamente quando o problema é de GPU — que é o cenário em que
+alguém vai olhar para ele.
+
+**Por que fica aberto.** É defeito de instrumento, não de jogo, e a rodada tem prioridade
+declarada. A correção é medir a janela em tempo de relógio, não em quadros. Mesma família do
+BUG-55: instrumento que mede uma coisa e responde outra.
+
+### BUG-159 · no multiplayer a arma era laser e a shotgun cobrava 1 dos 9 pellets · CORRIGIDO 12/09
+
+**Sintoma.** O que o jogador vê não era o que causava dano. O cliente desenhava dispersão
+(cone aleatório, 9 pellets na shotgun); o servidor, que é quem decide, atirava um **raio
+perfeito, único**, direto de yaw/pitch — `game/room.js:_serviceShooting` não tinha cone, não
+tinha laço de pellets e não tinha penetração, enquanto `game.js:_tryShoot` tinha os três.
+
+**Consequências, as duas medidas:** toda arma automática era secretamente melhor no MP do que o
+jogador via (mira no alvo = todo tiro acerta, sem o cone que a tela mostra), e a shotgun
+entregava **14 de dano** onde deveria entregar **214** a 4 m — 1 pellet de 9.
+
+**Causa raiz.** Duas implementações do mesmo disparo, coisa que o cabeçalho do próprio
+`room.js` promete não fazer: *"as MESMAS funções do jogo, não uma segunda implementação que
+envelheceria separada"*. Para movimento (`_moveEntity`) e dano (`_shotDamage`) a promessa foi
+cumprida; para o TIRO, nunca.
+
+**Conserto.** `coneDoDisparo(estado, W, rnd)` extraída de `game.js` e chamada pelos dois lados,
+com o laço de pellets no servidor e **um** `_damage` por alvo (nove chamadas gerariam nove
+eventos e estourariam o lote de 32 do `_emitir`, que descartaria `hit`s para caber — killfeed
+errado por excesso de fidelidade).
+
+**Quem sorteia é o nó, e isso não é detalhe.** Se o cliente conseguisse prever o cone, ele
+CONHECERIA o cone — e conhecer o cone antes de atirar é o cheat de "sem dispersão". Não existe
+semente compartilhada que dê previsão sem dar conhecimento. Então a semente sai de
+`HMAC(segredo da partida, id do corpo, bot._shots)`, o segredo nunca é serializado, e o índice é
+o contador do SERVIDOR — nunca o `seq`, que o cliente escolhe. O preço, aceito pelo dono: o
+traçante e o furo aparecem RTT/2 depois do clique (~31 ms no nó `br`). Fogacho, som, coice e
+consumo de pente continuam instantâneos.
+
+**Régua** `game/dispersao-check.mjs` (13 cláusulas): forma do cone igual nos dois lados por arma,
+9 pellets, cone abrindo ao correr e fechando ao mirar, segredo ausente de welcome/listagem/
+snapshot/eventos, semente derivada do contador do servidor, e a rajada acertando (9 acertos)
+e cobrando uma vez (dano somado 214 × 14 de um pellet). Mutantes `sem-cone`, `um-pellet` e
+`semente-no-welcome` reprovam.
+
+**Armadilha que isto quase repetiu (#405, e custou meia hora):** o segredo era sorteado com
+`Math.random()` dentro do `_novaPartida`, ANTES do construtor do `Game` — e a torrente do
+Math.random é semeada e compartilhada com o sorteio de spawn. Um saque a mais deslocou a
+torrente inteira e mudou os spawns: o smoke caiu de 3,39 m para 0,10 m de movimento **com a
+física byte a byte idêntica**. O segredo passou a vir do `crypto`, que não toca a torrente.
+
+### BUG-158 · seguir a instrução do portão de grafite APAGA arte · MITIGADO 12/09
+
+**Sintoma.** O portão `eval:grafitelayout` reprova quando um `map_*.js` muda e manda, no próprio
+texto do erro, *"Rode 'npm run grafite <id>'"*. Seguir essa instrução apagou **185 peças de
+grafite** numa mudança que não moveu uma parede sequer (o tamanho do shadow map, BUG-156).
+
+**Causas, duas, e as duas medidas:**
+1. **Acervo incompleto apaga em silêncio.** Os decalques são gitignored por procedência. Nesta
+   worktree havia 163 arquivos; no checkout do dono, 352. O gerador coloca o que encontra — e
+   assou 2763 peças contra as 2948 que estão em produção, sem erro nenhum.
+2. **Assar não é operação fiel.** Com o acervo completo (360 arquivos), duas rodadas **idênticas,
+   na mesma árvore**, deram `2769` e `2767` peças (loja_h 300 e 298). A contagem por mapa se
+   move nos DOIS sentidos entre rodadas — ou seja, não é só acervo: a colocação tem ruído.
+
+**Consequência.** A instrução do portão, seguida à risca, troca arte aprovada por churn — e numa
+worktree sem o acervo, apaga. O portão está certo em cobrar frescor; o remédio que ele receita é
+que não serve para mudança que não mexe em geometria.
+
+**Mitigação.** `tools/gen-graffiti-layout.mjs --so-impressao --motivo="…"` reassina as entradas
+**sem** reassar a colocação, exige o motivo e grava o motivo e a data no próprio arquivo, para
+quem abrir depois saber o que foi blessado e por quê. Não serve para mudança de geometria — para
+essa, o remédio continua sendo assar, com o acervo completo.
+
+**Aberto:** o ruído da colocação (item 2) não foi investigado; ele torna qualquer regeneração uma
+troca de arte. Enquanto existir, regerar é decisão de quem cuida da arte, não efeito colateral de
+um portão vermelho.
+
+### BUG-157 · o sinal de FPS mais rico do jogo era coletado e jogado fora no servidor · CORRIGIDO 12/09
+
+**Sintoma.** O painel mostra "20% das amostras de FPS abaixo de 30" e sessões inteiras a 4-8 FPS,
+e a pergunta seguinte — **em que mapa?** — não tinha resposta. O "FPS da sessão" que o painel
+exibe é uma média de **um segundo**, medida ~4 s depois do jogo começar.
+
+**Causa raiz — não era falta de coleta.** `public/js/ops.js` já amostra FPS por segundo numa
+janela deslizante de 300 s, descarta aba oculta, separa p50 de p5 e conta quadro travado
+(>100 ms) e congelado (>1 s); `main.js:_perfFinish` já mandava tudo isso no campo `ops` do
+beacon, com um comentário que dizia a verdade sem que ninguém percebesse o tamanho dela: *"o
+backend descarta o que não conhece"*. E descartava: `api/perf.ts` chamava a RPC `track_perf`
+com uma lista fechada de parâmetros, e **nenhum deles era do bloco `ops`** — o campo morria na
+porta. Faltava também o id do mapa no payload, e o DPR enviado era o do **aparelho**, não o que
+o jogo desenha (0,75 no caminho leve, até 2 no alto) — responder outra pergunta que não a que
+se faz é o mesmo defeito do BUG-55, de outra roupa.
+
+**Conserto.** `resumoBeacon()` passa a levar mapa e modo; `_perfFinish` passa a levar o DPR
+efetivo do renderer e o estado do renderer em **três valores** (`sim`/`nao`/`desconhecido` —
+no Firefox a extensão que revela a GPU fica atrás de flag, e gravar "não é software" sem ter
+lido é inventar dado); `api/perf.ts` persiste tudo, com caminho degradado para banco atrasado
+(migration `033`, aplicada à mão fora do repo). Provado de ponta a ponta com o handler real e um
+espião no lugar do banco: `map=quebrada, fps_p50=41, fps_p5=19, travadas=37, congeladas=2`.
+Réguas: `tools/eval/perf-campo-check.mjs` (cliente) e `api/reguas/perf-ops-check.mjs` (servidor)
+— esta última cobra o **uso**, não a declaração: o mutante que declara os parâmetros e não os
+espalha na chamada da RPC deixa a régua vermelha, que é exatamente como o BUG-02 passou verde.
+
+### BUG-156 · "qualidade baixa" não baixava a sombra em 10 dos 17 mapas · CORRIGIDO 12/09
+
+**Causa raiz.** O tamanho do shadow map do sol estava escrito à mão em 10 arquivos de mapa
+(`map_atacadao.js:205`, `map_upa.js:242`, `map_posto.js:388`, `map_parque.js:357`,
+`map_piscina.js:680`, `map_obras.js:182`, `map_penitenciaria.js:229`, `map_velho_oeste.js:262`,
+`map_ferrovelho.js:1711`, `map_json.js:170`) e mais uma vez dentro do pós-processamento. Quem
+escolhia "baixa" nesses mapas pagava 2048 — **quatro vezes os texels** de quem jogava o mesmo
+"baixa" na Havan ou na quebrada, que respeitam o nível. O ferro velho é o caso que mais ensina:
+tem 15 ramificações por `LOWQ` e mesmo assim cravava a sombra.
+
+**A segunda metade, que só morderia no futuro:** `focusSunShadow` (`bloom.js`) subia de volta
+qualquer sombra abaixo de 2048. Com o valor fixo era inofensivo; com qualidade adaptativa, o pós
+desfaria a redução sem avisar ninguém.
+
+**Conserto.** `public/js/mapquality.js` vira a fonte única (`orcamentoSombra()`), lida pelos 17
+mapas e pelo pós, e concentra também a leitura da preferência que 12 arquivos faziam cada um por
+conta própria — foi copiando essa leitura que o número se espalhou. O 2048 de med/high fica: o
+módulo nasceu para tirar o número de 11 lugares, não para mudar o que o jogador vê. Régua
+`tools/eval/quality-mapas-check.mjs` (QMAP1-4), mutante `--mutar=literal`.
+
 
 ### BUG-151 · o SERVIDOR empurrava o corpo do jogador, e o cliente pagava como "correção de posição" · CORRIGIDO 11/09
 
@@ -628,6 +1225,239 @@ o mix da alpha.138 já não está servido e não há purge pendente; o conserto 
 `check:fast` e no `check:deploy`). Cláusula **EP16**, **3 mutações novas**:
 `cache-sem-binding`, `cache-so-ingles` e `cache-sem-especificador` — cada uma apaga uma
 alternativa da regex e acende EP16. Matriz completa: **42 de 42 mordidos**.
+### BUG-146 · global opaco injetado no documento abre issue de crash, e NÃO é corrigível por classificação · REFUTADO 09/09 (issue #568)
+
+**Sintoma (issue #568, aberta pelo `crash-fix.yml` em alpha.243, classe `codigo`):**
+
+```
+Uncaught TypeError: self.wsd2x7lyyejobzuff is not a function
+#568, alpha.243-5182e7f2b777, fingerprint 9d236bb2, origem https://www.csbrasil.online/:1:80
+Stack: global code@https://www.csbrasil.online/:1:80
+```
+
+**Causa raiz — confirmada.** Script de terceiro injetado inline no documento, com nome gerado
+por sessão. O caminho é o mesmo das BUG-76 e BUG-78: `src/lib/error-provenance.mjs:68`
+(`if (sourceOrigin === ownOrigin) return false;`) inocenta antes de qualquer outra prova, porque
+código injetado carrega a origem da própria página. Nenhuma regex seguinte morde e o
+`classifyCrash` cai no `return 'codigo'` final, que escala e abre issue.
+
+**Prova de que não é nosso, tripla e refeita na alpha.243** (a medição da BUG-76 é da alpha.182):
+
+1. `wsd2x7lyyejobzuff` não existe em nenhum arquivo, e `git log --all -S` não devolve commit.
+   O inventário dos 50 globais que o jogo toca não tem candidato: os mais longos só-minúsculas
+   são `performance` (11), `diagnostics` (11), nenhum com dígito, e os nossos são dunder
+   (`window.__game`, `window.__CS_MAIN_READY__`).
+2. O fingerprint publicado reproduz exatamente
+   `crashFingerprint('error', <mensagem>, 'https://www.csbrasil.online/:1:80')`
+   (`src/lib/error-provenance.mjs:117-122`), o que fixa `e.filename` como sendo o **documento**.
+3. A coluna 80 da linha 1 cai **dentro de um comentário HTML**. Prefixo recomputado do fonte
+   atual (`src/pages/index.astro:18-23`): `<!DOCTYPE html>` 15 + `<html lang="pt-BR">` 19 +
+   `<head>` 6 + `<meta charset="UTF-8">` 22 + comentário 96 + `<script>` 8 = 166. O caractere da
+   coluna 80 é o `r` de "rodar". Nosso código só começa na coluna 167.
+
+Também descartado: não pode ser identificador manglado (as nove tags `<script>` de
+`index.astro` são `is:inline`, `ld+json`, `importmap` ou `type=module` com `src` — nenhuma é
+`<script>` simples, a única forma de o Vite manglar para dentro do HTML), nem hash de build (o
+único gerador é `scripts/module-cache.mjs:29`, alfabeto hex, e o nome tem `w,s,x,y,j,z,u`), nem
+geração dinâmica de nome (zero `toString(36)`, `eval`, `new Function` ou `window[...]` fora de
+`public/docs/`).
+
+**Reprodução:**
+
+```
+MSG='Uncaught TypeError: self.wsd2x7lyyejobzuff is not a function' \
+SRC='https://www.csbrasil.online/:1:80' \
+STK='global code@https://www.csbrasil.online/:1:80' \
+  node scripts/classify-crash.mjs        # classe=codigo
+```
+
+**POR QUE NÃO TEM CONSERTO POR CLASSIFICAÇÃO — e este é o parágrafo que decide a entrada.**
+
+A BUG-76 e a BUG-78 funcionam porque `__gCrWeb`, `__firefox__` e `DarkReader` são nomes
+**estáveis**: o nome É a proveniência. Aqui o nome é aleatório por sessão. Não existe nome para
+cortar, e o que sobra é a forma — que este arquivo já reprovou por medição em BUG-76 (o
+parágrafo "Por que o corte é por NOME e não pela FORMA"), e que a régua trava em fixture
+(`api/reguas/error-provenance-check.mjs`, "`:1:N` NÃO é prova de terceiro").
+
+A regra candidata testada foi
+`/\b(?:self|window|globalThis)\.(?=[a-z0-9]*[0-9])[a-z0-9]{12,}\b/` somada a exigir
+`source` terminando em `/:1:N`. Ela cai por seis medições independentes:
+
+- **Não há posição possível.** Para pegar a #568 a regra tem de ficar ANTES do atalho
+  same-origin de `:68`; ali ela atropela as duas cláusulas que existem para inocentar pilha
+  nossa (`:68` e `:76`, a proteção da BUG-51). Depois de `:68` ela nunca dispara.
+- **Falso positivo com pilha 100% nossa, executado:** `self.rem700barrel is not a function` em
+  `/:1:167` vira `externo` — e `rem700barrel` **já existe** em `public/js/vmattach.js:290`, com
+  `uzimagcover`, `tavorshroud`, `mosinbarrel` e `deagleslide` no mesmo arquivo, todos a um
+  caractere do corte de 12. O jogo já nomeia peça de arma exatamente na forma que a regra
+  chamaria de opaca.
+- **Perde 3 das 4 redações da própria família:** `Can't find variable: <nome>` (#428, #379,
+  #381) não tem o prefixo `self.`.
+- **Monte Carlo, 200 mil nomes por gerador:** `Math.random().toString(36).slice(2)` é pego em
+  **2,45%** dos casos (70% saem com 11 caracteres); `crypto.randomUUID()` em 0,00%. A
+  calibragem estava num único exemplar de 17 caracteres.
+- **Depende de resíduo de build e de URL.** A âncora `/:1:N` morre com query string, e as
+  portas com query estão no nosso fonte (`src/pages/sala/[codigo].astro:84`,
+  `public/js/glcontext.js:116`); e depende da barra final, que `astro.config.mjs:69-72` mantém
+  em `ignore` de propósito, então `/mapa/:1:80` e `/mapa:1:80` classificam diferente.
+- **O espelho no cliente é impossível.** `src/pages/index.astro:326` monta o `loc` com
+  linha:coluna, mas as três chamadas de `origemDoJogo` recebem source **sem** elas: `e.filename`
+  cru (`:336`) ou `null` (`:346`, `:419`). Sem espelho, `interna` continua `true`, o erro vira
+  `erroDoBoot` (`:341`) e dispara `lancamento.fail` (`:342`) — painel falso de "Falha ao abrir a
+  arena" para o jogador — e consome `TETO_SESSAO` em vez de `TETO_EXTERNO` (`:340`). É
+  exatamente o dano que a BUG-76 fechou.
+
+**Medido** (92 payloads do corpus deste arquivo, helper real contra cópia com a regra):
+
+| | antes | depois |
+|---|---|---|
+| payloads que mudam de classe | - | **1 de 92** |
+| e o que muda | - | a própria #568 |
+| falsos positivos com pilha nossa | 0 | **4 executados** |
+| redações da família cobertas | - | 1 de 4 |
+
+Ganho de uma regra que silencia crash real: um caso. Não entra.
+
+**Correção: nenhuma no código.** A #568 fecha à mão como ruído externo, como as #379, #380 e
+#381 foram fechadas antes da BUG-76. O diagnóstico fica aqui porque é ele que impede a próxima
+rodada de tentar de novo o corte por forma.
+
+**Custo declarado, medido:** o custo é real e fica registrado — esta classe **continua abrindo
+issue** a cada fingerprint novo, e cada nome injetado é um fingerprint novo, então a
+deduplicação do `crash-fix.yml` não ajuda. Nada foi silenciado em troca.
+
+**Régua: nenhuma, e há um segundo problema aqui.** A régua desta família saiu deste repositório
+em `de21edac` (27/08) para `corosolto/backend`, em `api/reguas/error-provenance-check.mjs`;
+`grep -c 'eval:error-origin' package.json` devolve **0** e o `check:fast` não a referencia. Um
+portão que a documentação afirma existir não roda mais neste repo. Levantado junto, merece
+entrada própria: a cópia do classificador no backend (`api/_lib/error-provenance.mjs`) já
+divergiu da daqui — está sem `CAPACIDADE_RE` (BUG-80), sem `CONTEXT_LOSS_RE` (BUG-82) e com a
+`RECOVERABLE_RE` desatualizada (BUG-81) — e é a cópia do backend que decide o dispatch em
+produção.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a injeção não foi reproduzida com uma
+extensão real — a medição é da **classificação**, não da injeção. A tabela `js_error` do
+Supabase não foi consultada. E o commit `5182e7f2b777` do carimbo de versão não é commit: é o
+`JS_REV`, hash do manifesto do grafo JS (`src/pages/index.astro:9`).
+
+### ~~BUG-151 · arnês de automação apontado para produção abria issue de crash como se fosse bug do jogo, e abria DUAS~~ · RESOLVIDO 11/09 (issues #573 e #574)
+
+**Sintoma (literal, issues abertas pelo `crash-fix.yml` em alpha.246, as duas classe `codigo`,
+com 8 segundos de diferença):**
+
+```
+#574  __game is not defined                                fingerprint b81fb1c4, origem <vazia>
+#573  Falha ao abrir partida: __game is not defined        fingerprint 23f0069c, origem promise
+Stack (idêntica nas duas):
+  ReferenceError: __game is not defined
+      at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:18)
+      at UtilityScript.evaluate (<anonymous>:313:16)
+Migalhas: 04:01:40 ops main pronto em 753ms · 04:01:41 ops carga falhou 404 /audio/manifest.json
+```
+
+**Causa raiz — confirmada.** `UtilityScript`, `eval at predicate` e `next` são a assinatura do
+*poller* que o `page.waitForFunction()` do Playwright injeta **dentro da página**. Alguém
+apontou um arnês de automação para produção com um predicado que lê `__game` **sem o `window.`**.
+`window.__game` é escrito num único sítio, `public/js/main.js:1287`, dentro do `_startGame()` —
+depois do `__CS_MAIN_READY__` (`main.js:2810`) e só quando uma partida começa. Antes disso ele é
+global **não declarado**: `window.__game` devolve `undefined`, mas `__game` pelado **lança**.
+
+A exceção do predicado vira rejeição não tratada **da página**, e daí o caminho é o mesmo da
+BUG-76: `src/pages/index.astro:346` chama `origemDoJogo(null, r.stack, msg)`; a stack do
+Playwright não tem **uma única** URL http, então `viuExterna` fica `false` e o `return
+!viuExterna` (`:219`) devolve **interna**. Com `interna === true`:
+
+1. `:351` `reporta('promise', …, externa=false)` → `b81fb1c4` = **#574**, comendo um slot dos dez
+   de `TETO_SESSAO` em vez do balde de `TETO_EXTERNO`;
+2. `:352` `lancamento.ativo` (etapa `partida`, aberta em `public/js/main.js:1154`) dispara
+   `lancamento.fail(r, 'promise')`;
+3. `:290` `reporta('error', 'Falha ao abrir partida: ' + msg, 'promise', …)` → `23f0069c` =
+   **#573**, e `:292` acende o painel **"A ARENA NÃO ABRIU"**. O prefixo muda o hash FNV, então
+   **um evento vira duas issues** — o mesmo par que a BUG-82 já tinha visto nas #419/#420.
+
+**Prova de que as duas são o mesmo evento, e de qual caminho gerou cada uma:** os dois
+fingerprints publicados reproduzem **byte a byte** a receita de `crashFingerprint`
+(`src/lib/error-provenance.mjs:117-122`), e cada um com o `kind`/`source` do seu caminho —
+`('promise', '__game is not defined', '')` = `b81fb1c4` e `('error', 'Falha ao abrir partida:
+__game is not defined', 'promise')` = `23f0069c`. Não é inferência: é o hash fechando.
+
+**Reprodução:**
+
+```
+STK='ReferenceError: __game is not defined
+    at UtilityScript.evaluate (<anonymous>:313:16)'
+MSG='__game is not defined' SRC='' STK="$STK" node scripts/classify-crash.mjs   # antes: codigo
+```
+
+**O QUE FOI DESCARTADO COM MEDIÇÃO, e são dois.**
+
+**1 · "conserte o predicado na origem."** `git grep` por `waitForFunction` com `__game`
+não-qualificado em **todos os refs** (`upstream/*`, `fork/*`, `origin/*`) devolve **zero**: os
+~60 predicados da árvore são todos `window.__game`. O único `__game` pelado executável era
+`tools/eval/sertao-traversal-check.mjs:68`, dentro de um `page.evaluate` — forma de stack
+diferente, sem os frames `predicate`/`next`. **O script ofensor não está sob controle de
+versão.** Foi endurecido assim mesmo (é a mesma classe), mas não era ele.
+
+**2 · "corte em `__game`, ou em `__\w+__`."** Refutado por três provas já pagas aqui:
+`window.__game` é o **handle público do jogo** (`SECURITY.md:9`, e é por ele que a #382 entrou);
+a BUG-76 **proíbe** o corte genérico `__\w+__` porque sete globais do jogo são dunder; e a
+fixture `naoInjetadoFixtures` da própria régua exige que
+`"…evaluating 'window.__game.start'"` continue `codigo`. Cortar no nome do global calaria crash
+nosso — que é exatamente o que a #382 provou que acontece.
+
+**Correção: corte pelo NOME do injetor, e só na STACK.** `AUTOMACAO_RE`
+(`src/lib/error-provenance.mjs`, espelhada em `src/pages/index.astro` e em
+`api/_lib/error-provenance.mjs` do `corosolto/backend`) vale em `isExternalCrash` no mesmo lugar
+da `PONTE_INJETADA_RE`. Ao contrário da #568, aqui o nome **é** estável: `UtilityScript` é
+identificador do Playwright, não é gerado por sessão. Sensível a caixa, pelo mesmo motivo da
+BUG-76.
+
+**Por que na STACK e não na evidência — e este é o parágrafo que decide o corte.** Medido, não
+suposto: testando contra a `evidence` (mensagem + origem + stack), como faz a
+`PONTE_INJETADA_RE`, aparece **1 falso positivo executado** — a mensagem NOSSA `falha ao
+carregar UtilityScript.glb`, com pilha 100 % em `public/js/glbchars.js`, vira `externo`. Nome de
+injetor só é proveniência quando aparece como **frame**; na mensagem ele é carga do jogo. É o
+mutante `automacao-ampla`.
+
+**Medido** (104 issues `crash-auto` do repositório, `#104`..`#574`, mensagem/origem/stack lidos
+do corpo publicado, helper real contra o helper anterior):
+
+| | antes | depois |
+|---|---|---|
+| payloads que mudam de classe | — | **2 de 104** |
+| e quais | — | exatamente a **#573** e a **#574** |
+| falsos positivos com pilha nossa, executados | 0 | **0 de 5** |
+
+**Custo declarado, medido.** Crash que estourar **dentro** de um arnês apontado para produção
+deixa de abrir issue — a linha continua na telemetria bruta. Aceito porque quem roda o arnês vê
+a falha no próprio terminal, e porque o jogador não consegue produzir esse frame:
+`UtilityScript` não aparece em **nenhum** arquivo de `public/` ou `src/`. Nada mais foi
+silenciado: 102 dos 104 payloads não se movem.
+
+**Régua: `api/reguas/error-provenance-check.mjs` do `corosolto/backend`**
+(`npm run eval:error-origin`, lendo este repositório por `CLIENT_DIR`). Cláusula **EP20**:
+classifica as 4 redações do arnês, executa o `origemDoJogo` **recortado deste fonte** contra as
+5 vizinhas que não podem se mover, ancora os 2 fingerprints publicados, exige o balde de
+`TETO_EXTERNO` e carrega a invariante de honestidade (`jogoSemArnes`) — no dia em que o jogo
+falar com `window.UtilityScript`, EP20 fica vermelha em vez de virar mordaça. **5 mutações
+medidas:** `sem-automacao`, `automacao-ampla`, `automacao-insensivel`, `sem-automacao-cliente` e
+`jogo-com-automacao`, cada uma acendendo EP20. **Matriz completa: 53 de 53 mordidos** (as 48
+anteriores seguem acendendo as suas).
+
+**E fica registrado o buraco que este conserto NÃO fecha.** O coletor de `/api/jserror` **não
+tem guarda nenhuma** contra automação — `navigator.webdriver` não aparece uma vez no
+repositório. Só `tools/ops/probes/browser.mjs:85-94` bloqueia escrita, por `page.route`; as
+demais réguas Playwright, apontadas com `BASE=https://www.csbrasil.online`, injetam os próprios
+crashes na telemetria de produção. O `ops-diag.yml` (cron `17 * * * *`, contra produção) **não**
+é a origem destas duas: ele bloqueia a escrita, e o horário não bate. Merece entrada própria.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a injeção **não foi reproduzida com um
+Playwright de verdade** — a medição é da **classificação**, não da injeção. A tabela `js_error`
+do Supabase não foi consultada, então quantos slots de `TETO_SESSAO` esta classe vinha comendo
+por sessão fica sem número. O script ofensor não foi identificado. E as duas 404 de
+`/audio/manifest.json` nas migalhas são de outra família (o manifesto migrou para Blob privado
+nos PRs #506/#507), não investigadas aqui.
+
 ### ~~BUG-78 · carteira cripto injetada no documento abria issue de crash como se fosse bug do jogo~~ · RESOLVIDO 21/08 (issues #403 e #404)
 
 **Sintoma (literal, issues #403 e #404, abertas pelo `crash-fix.yml` em alpha.172):**
@@ -6112,6 +6942,29 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **Triagem do painel de erros de 13/09/2026 (12 linhas colhidas pelo dono) — 2 defeitos, 10
+  não-defeitos, e os 10 foram MEDIDOS antes de serem descartados.** Os dois defeitos viraram
+  BUG-167 e BUG-168 (P0). O resto fica registrado aqui porque resultado negativo medido
+  economiza a próxima triagem:
+
+  | linha do painel | hits | veredito |
+  |---|---:|---|
+  | `The play method is not allowed by the user agent…` | 122 | **não é defeito.** Já está na `erroIgnoravel` de `src/pages/index.astro` e na `MEDIA_ABORT_RE` de `src/lib/error-provenance.mjs`: cai no balde próprio de mídia (`TETO_MIDIA`), com a linha seguindo no banco **por desenho** (BUG-73). É o autoplay bloqueado antes do 1º gesto — rotina do jogo. |
+  | `404 /img/decals/tag-money.png`, `tag-fina.png` | 115 | **não é defeito de produção.** `curl` em 13/09: `https://www.csbrasil.online/img/decals/tag-money.png` → **200**, `tag-fina.png` → **200**, `or-graf-coro.png` → **200**. Os PNGs ficam fora do git por desenho (`.gitignore:117-130`, acervo reproduzido por `tools/gen-graffiti-decals.mjs`), então quem roda worktree sem gerá-los recebe 404 **em localhost**. A própria linha do painel o denunciava: vinha acompanhada do log do toolbar do Astro (`%cAstro background:…`), que só existe em dev. |
+  | `404 /audio/manifest.json` | — | **mesma classe**: `curl` → **200** em produção. Worktree sem o pacote de áudio. |
+  | `sem_webgl: nenhum contexto foi criado` (llvmpipe/Mesa, e um NVIDIA `0x10de/0x2705`) | 2+16+6+14 | **defeito do cliente, tratado.** `BindToCurrentSequence failed` é o processo de GPU do Chrome caindo. O jogo já tem caminho próprio: `public/js/glcontext.js:118` marca `window.__semWebgl`, `src/pages/index.astro:59` suprime o banner técnico e a tela de fallback explica. O relato **continua sendo enviado de propósito** — é o sinal de "ninguém consegue jogar". Os casos llvmpipe são headless/bot; o NVIDIA é usuário real e não tem conserto do nosso lado. |
+  | `[vite] send was called before connect` | 15 | dev. Servidor de desenvolvimento. |
+  | `Astro … Error while running audit's match function: TypeError: Failed to fetch` | 115 | dev. Toolbar do Astro. |
+  | `carga falhou erro /beacon.min.js/v31edd…` | 122 | externo. Beacon da Cloudflare. |
+  | `network error` | 46 | externo/transitório, já com cota própria (`TETO_EXTERNO`, BUG-51). |
+  | `Falha ao abrir a arena: o código do jogo não chegou (verifique a conexão)` · `boot-watchdog` | 5 | **sem evidência para subir de seção.** Este é o watchdog de BOOT, caminho diferente do BUG-167, e o relatório chegou **sem migalha nenhuma** — não há o que medir. `Régua: nenhuma`. Fica aqui até aparecer um relato com migalha. |
+
+  **O conserto que saiu desta triagem, além dos dois P0:** o relatório passou a carregar
+  `host <location.host>` como primeira migalha (`src/pages/index.astro`, em `contexto()`).
+  Metade das 12 linhas era ruído de máquina de desenvolvimento e o painel não tinha como
+  separar — `version` não serve, porque o build local carrega a mesma string. Custou uma
+  triagem inteira; agora o host vem no relatório.
+
 - **BUG-145 · tiros com volume zero derrubavam o áudio com `RangeError`.**
   **Sintoma literal (admin, 08/09/2026, produção alpha.239):**
   `Failed to execute 'exponentialRampToValueAtTime' on 'AudioParam': The target value provided (0) should be greater than 0.`
@@ -6944,9 +7797,9 @@ Na revisão antes do merge, o grafo aceitava142arestas incompatíveis com corpo/
 ### Escadão R5 — acessos aparentes e horizonte (relatado 06/09/2026)
 Relato literal: “existe a lateral que nao liga a lugar nenhum, e passando por baixo da escada principal de quem vem por baixo tem varias areas que nao da pra entrar”; “falta um fundo de horizonte como outros mapas”. Régua: em preparação, ainda não corrigido. Base merge515/mainalpha.227; preservar escadas, casa/janela e fauna já entregues.
 
-## Regressão de Lajes — correção validada localmente
+## Regressão de Lajes — correção integrada na main
 
-### BUG-141 · Lajes trava acima de 5×5 no single player · CORRIGIDO LOCALMENTE 06/09
+### BUG-141 · Lajes trava acima de 5×5 no single player · INTEGRADO NA MAIN 06/09
 
 Relato do dono: “fiz um teste no lajes e acima de 5x5 players mesmo no single player o mapa trava. fiz comparacao com o mapa piscina na treta que funciona numa boa em 8x8...”.
 
@@ -6983,7 +7836,7 @@ mapa; arrays de vértices/índices compartilhados, nenhum lote de render adicion
 O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame completo;
 otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
-`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.
+`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado. A PR517 foi integrada à main em 06/09/2026 pelo merge `b64aa886` e a correção acompanha a release `v2.0.0-alpha.236`; integrar não é publicar, e nenhum deploy em produção foi verificado.
 
 
 ### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527

@@ -1,6 +1,7 @@
 // MANSAO JOÁ (mansao) — spec plans/14-MANSAO_JOA.md. Eixo longo = z; norte = -z
 // (terraço/mar, spawn B), sul = +z (portão/jardim, spawn A); planta e dimensões na spec.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -186,7 +187,7 @@ export function buildMansao(scene, T) {
   /* CÉU */
   const { hemi, sun } = applyLook(scene, T, 'mansao', { nofog: QP.get('nofog') === '1' });
   buildHorizonte(scene, 'mansao');
-  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 150; sun.shadow.bias = -0.0006;
