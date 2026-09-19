@@ -3460,6 +3460,13 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     const m = String(err && err.message || '');
     if (mpNoAtual.online) mpEstado('on', `ONLINE · ${mpNoAtual.nome.split('·')[0].trim()} · ${mpNoAtual.ping} ms`);
     else mpEstado('erro', 'SERVIDORES FORA DO AR');
+    if (m.includes('versao_incompativel')) {
+      // Nó simulando outra versão do jogo (incidente da frota, 11/09). Recarregar resolve
+      // quando é cache do jogador; quando é o nó, a mensagem diz as duas versões.
+      const d = err?.detalhe || {};
+      return mpErro(`Este servidor roda outra versão do jogo (nó ${d.no || '?'} · você ${d.jogo || '?'}). `
+        + 'Recarregue a página; se continuar, escolha outra região.', true);
+    }
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'

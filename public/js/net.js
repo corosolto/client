@@ -8,6 +8,14 @@ export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PI
 import { NOS } from './nos.js';
 import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
 import { TransporteWS, TransporteWT } from './transporte.js';
+import { VERSION } from './version.js';
+
+/* PARIDADE DE SIMULAÇÃO. Protocolo igual não é jogo igual: em 11/09 os nós rodavam
+   alpha.206 com o site em alpha.247 — mesmo formato de pacote, física e mapas diferentes,
+   e ninguém viu por semanas (KNOWN-BUGS: incidente da frota). O nó anuncia no `welcome` a
+   versão do cliente que ele SIMULA; aqui a entrada é recusada quando ela não é a nossa.
+   `?mpversao=0` libera para desenvolvimento local (nó rodando árvore de trabalho). */
+export const versaoCompativel = (doNo, nossa = VERSION) => !doNo || doNo === nossa;
 
 export const resolvePlayerSide = (team, faction, online) =>
   online ? (team === 'B' ? 'B' : 'E') : (faction === 'B' ? 'B' : 'E');
@@ -180,6 +188,14 @@ export class NetClient {
         try { m = binary ? decodeSnapshot(dados) : JSON.parse(dados); }
         catch { if (binary) this.tp.fechar(1002, 'snapshot_invalid'); return; }
         if (m.type === 'welcome') {
+          if (!versaoCompativel(m.clientVersion)
+            && new URLSearchParams(location.search).get('mpversao') !== '0') {
+            const e = new Error('versao_incompativel');
+            e.detalhe = { no: m.clientVersion, jogo: VERSION };
+            this.tp?.fechar(1002, 'versao_incompativel');
+            assenta(reject, e);
+            return;
+          }
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.onWelcome?.(m);
           assenta(resolve, m);

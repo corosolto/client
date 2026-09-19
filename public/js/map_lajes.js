@@ -1,6 +1,7 @@
 // LAJES (fy_lajes) — spec plans/10-LAJES.md: lajes em cima, becos embaixo; a luta é pela VERTICAL.
 // Multinível como no havan: prédio SÓLIDO com topo andável; groundHeightAt dá 3,5 sobre prédio e 0 no beco.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -327,7 +328,7 @@ export function buildLajes(scene, T) {
   if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_lajes');
   const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x6a5c4c, 1.18); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd9a8, 1.75); sun.position.set(25, 45, 15); sun.castShadow = true;
-  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  aplicaSombraSol(sun);   // orçamento único de sombra (mapquality) — QMAP1
   sun.shadow.camera.left = -HALF_X - 5; sun.shadow.camera.right = HALF_X + 5;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;

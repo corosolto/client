@@ -1,6 +1,7 @@
 // CAMPO DO MORRO (fy_campomorro) — campo de varzea rebaixado, oito becos
 // convergentes e galpao do baile elevado. Spec: plans/11-CAMPO-DO-MORRO.md.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { PropBatch, InstBatch, mergeParts, hasProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -234,7 +235,7 @@ export function buildCampoMorro(scene, T = {}) {
   circulo.rotation.x = -Math.PI / 2; circulo.position.y = FIELD_Y + 0.025; root.add(circulo);
 
   const { hemi, sun } = applyLook(scene, T, 'fy_campomorro', { nofog: QP.get('nofog') === '1' });
-  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  aplicaSombraSol(sun);   // orçamento único de sombra (mapquality) — QMAP1
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;
