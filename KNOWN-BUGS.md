@@ -98,6 +98,46 @@ atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o a
 
 Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
 
+## BUG-170 — granada perdeu a animação paga no rewrite do multiplayer
+
+**Fechado em 19/09/2026, branch `claude/vm-integracao`.** `0e3d1cd71` (03/09, granadas
+online) reescreveu `_throwSmoke`/`_throwFrag` sem o `this.vm.authored?.throwUtility(kind,
+1.05, release)` de `558f94926` — o arremesso saía no clique, sem a animação do pack. Zero
+erro no console; a régua `eval:authored-vm` ("smoke e frag aguardam o release da animação")
+estava vermelha na lane `vm-unificado` desde o merge com a main e ninguém leu.
+
+Conserto: `_throwNade(kind, ammoKey)` em `game.js` — o `release` faz `pedirNade` (online)
+ou `_spawnGrenade` (local) só quando a animação libera; sem viewmodel autorado, libera na
+hora como antes. Régua: `eval:authored-vm` (cláusula reescrita para aceitar o helper).
+
+## BUG-171 — `eval:vm-identity` ID6 media 0 B na AK golden (cegueira de instrumento)
+
+**Fechado em 19/09/2026.** "download da família < 8 MiB — 0.0 MiB" para a `ak`. Não era
+peso: o buffer padrão de Resource Timing guarda **250 entradas**, o mapa sozinho estoura
+isso e o GLB do viewmodel (que chega depois do boot) nem entrava em
+`performance.getEntriesByType('resource')`. Segundo defeito no mesmo filtro: só olhava
+`-runtime.glb` (rota de família), nunca `-hires.glb` (rota golden).
+
+Conserto em `tools/eval/authored-identity-check.mjs`: `addInitScript` sobe o buffer para
+5000 e o filtro aceita as duas rotas. Medido: ak 3,3 MiB. `check:vm` 6/6 verde.
+
+## Divergência de câmera (BUG-75, parágrafo "câmera fica fora do GLB") — OBSOLETO desde 28/08
+
+O texto abaixo em BUG-75 ("o export seleciona somente rig e meshes… regra HFOV 90, VFOV
+67,38° em 3:2") descreve o estado de 24/08. Desde `fc32ebb13` o `build_ak_hires_pilot.py`
+exporta a câmera (58°, aspecto 1,5) e `authoredvm.js` lança erro sem ela. O que sobrou no
+tronco da frente até 09/09 foi o clamp `Math.max(cameraFov, 84)`; na lane golden ele já
+era inerte (`frame.fov = cameraFov`) e em 19/09 virou explícito (`golden ? cameraFov`).
+**Régua que fecha o contrato:** `npm run eval:vm-camera` (`tools/eval/vm-camera-check.mjs`)
+mede no navegador que `vmCamera.fov` e a matriz de projeção em 3:2 são as da câmera do GLB
+(15/15 verde: 14 golden a 58°, faca a 50°) e que 16:9 mantém a meia-tangente horizontal.
+Mutante `--mutante=clamp` reintroduz o defeito do tronco e fica vermelho.
+
+Pendência que a régua NÃO cobre: a **pistola aprovada** roda na rota de família
+(`FAMILY_FRAME.pistol`, fov 55 válido em 16:9 → 63,35° em 3:2). Não há câmera Blender por
+trás — a composição foi calibrada no navegador pelo dono. O `pistol-hires.glb` (34°) é o
+piloto que entra 144× maior (BUG-VM-ESCALA-PISTOLA) e **não** é a rota ativa.
+
 ## BUG-169 — "SERVIDORES FORA DO AR" com os quatro nós de pé
 
 **Fechado em 13/09/2026.** A tela de multiplayer mostrava os quatro servidores "fora do ar"
