@@ -10,11 +10,8 @@ import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcod
 import { TransporteWS, TransporteWT } from './transporte.js';
 import { VERSION } from './version.js';
 
-/* PARIDADE DE SIMULAÇÃO. Protocolo igual não é jogo igual: em 11/09 os nós rodavam
-   alpha.206 com o site em alpha.247 — mesmo formato de pacote, física e mapas diferentes,
-   e ninguém viu por semanas (KNOWN-BUGS: incidente da frota). O nó anuncia no `welcome` a
-   versão do cliente que ele SIMULA; aqui a entrada é recusada quando ela não é a nossa.
-   `?mpversao=0` libera para desenvolvimento local (nó rodando árvore de trabalho). */
+/* PARIDADE DE SIMULAÇÃO (incidente da frota, KNOWN-BUGS): protocolo igual não é jogo
+   igual. O nó diz no `welcome` que versão simula; `?mpversao=0` libera no local. */
 export const versaoCompativel = (doNo, nossa = VERSION) => !doNo || doNo === nossa;
 
 export const resolvePlayerSide = (team, faction, online) =>

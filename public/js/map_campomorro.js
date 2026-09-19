@@ -1,7 +1,7 @@
 // CAMPO DO MORRO (fy_campomorro) — campo de varzea rebaixado, oito becos
 // convergentes e galpao do baile elevado. Spec: plans/11-CAMPO-DO-MORRO.md.
 import * as THREE from 'three';
-import { aplicaSombraSol } from './mapquality.js';
+import { aplicaSombraSol, qualidadeAtual } from './mapquality.js';
 import { PropBatch, InstBatch, mergeParts, hasProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -13,7 +13,9 @@ import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
-const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch { return false; } })();
+// Preferência de qualidade vem do módulo único (QMAP4): copiar a leitura do storage
+// por mapa foi como o tamanho de sombra se espalhou por 11 lugares.
+const LOWQ = qualidadeAtual() === 'low';
 
 export const HALF_X = 36, HALF_Z = 30;
 // Piso jogável da VM14: chão ≥ −0,10 m sob todo pickup — FIELD_Y não pode descer mais.

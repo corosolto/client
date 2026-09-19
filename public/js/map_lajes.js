@@ -1,7 +1,7 @@
 // LAJES (fy_lajes) — spec plans/10-LAJES.md: lajes em cima, becos embaixo; a luta é pela VERTICAL.
 // Multinível como no havan: prédio SÓLIDO com topo andável; groundHeightAt dá 3,5 sobre prédio e 0 no beco.
 import * as THREE from 'three';
-import { aplicaSombraSol } from './mapquality.js';
+import { aplicaSombraSol, qualidadeAtual } from './mapquality.js';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -13,7 +13,9 @@ import { loadShell } from './shell.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
-const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
+// Preferência de qualidade vem do módulo único (QMAP4): copiar a leitura do storage
+// por mapa foi como o tamanho de sombra se espalhou por 11 lugares.
+const LOWQ = qualidadeAtual() === 'low';
 
 export const HALF_X = 22, HALF_Z = 38;
 export const LAJES_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
