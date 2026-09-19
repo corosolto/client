@@ -323,7 +323,8 @@
     "eval:noescolha": "node tools/eval/no-escolha-check.mjs",
     "eval:maqfraca": "node tools/eval/maquina-fraca-check.mjs",
     "eval:qualadapt": "node tools/eval/qualidade-adaptativa-check.mjs",
-    "eval:sonda": "node tools/eval/sonda-prazo-check.mjs"
+    "eval:sonda": "node tools/eval/sonda-prazo-check.mjs",
+    "eval:vm-camera": "node tools/eval/vm-camera-check.mjs --porta=8167"
   },
   "repository": {
     "type": "git",

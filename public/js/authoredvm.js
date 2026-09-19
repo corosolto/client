@@ -232,10 +232,14 @@ const READY_OVERRIDE = new Set(
     : (_QS?.get('vmready') || '').split(',').filter(Boolean));
 const familyReady = (family) => Boolean(family)
   && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
+// Portão por ARMA dentro da família: `ready:false` em VM_WEAPON segura uma arma no
+// legado mesmo com a família aberta (akm/m92 moram na família `ak`, mas só a AK foi
+// aprovada pelo dono em 07/09). O override ?vmready= abre a família inteira, para A/B.
+const weaponReady = (weapon, family) => VM_WEAPON[weapon]?.ready !== false || READY_OVERRIDE.has(family);
 const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';
   const family = AUTHORED_VM_MODELS[weapon] || '';
-  return familyReady(family) ? family : '';
+  return familyReady(family) && weaponReady(weapon, family) ? family : '';
 };
 // Arma "baked" tem GLB próprio (Mint assada dentro, offline): entry por ARMA.
 const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
@@ -376,8 +380,10 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const k = weaponLength / alvo;
     if (k > 1.5) mount.scale.multiplyScalar(1 / k);
   }
+  // golden: a câmera do GLB É a composição aprovada (vm-camera-check mede isto no
+  // navegador). O clamp pelo fov da família só vale para o molde goldsrc/retarget.
   return {
-    scene, mount, cameraFov: golden || molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
+    scene, mount, cameraFov: golden ? cameraFov : molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
     frame, handMeshes, weaponMeshes, utilityModels,
   };
 }

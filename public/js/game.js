@@ -4490,27 +4490,24 @@ export class Game {
     this.sfx.grenadeThrow(kind, spatial.vol, spatial.pan, spatial.delay);
   }
 
-  _throwSmoke() {
-    const kind = 'smoke';
+  /* A animação paga da granada (authoredvm.throwUtility) precede o lançamento; o
+     `release` é o que o servidor (online) ou o mundo (local) recebem — foi perdido no
+     rewrite do multiplayer (0e3d1cd71) e a régua eval:authored-vm acusou. */
+  _throwNade(kind, ammoKey) {
     const p = this.player;
-    if (!p.alive || (p.smokes | 0) <= 0 || this.time < (p._nextNade || 0)) return;
-    p.smokes--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
+    if (!p.alive || (p[ammoKey] | 0) <= 0 || this.time < (p._nextNade || 0)) return;
+    p[ammoKey]--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
     this.sfx.grenadePin(kind);
-    if (this._mp?.pedirNade?.(kind)) return;   // online quem lança é o servidor (`nade`/`boom`)
-    const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-    this._spawnGrenade(this.camera.position, dir, kind, p);
+    const release = () => {
+      if (!p.alive) return;
+      if (this._mp?.pedirNade?.(kind)) return;   // online quem lança é o servidor (`nade`/`boom`)
+      const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
+      this._spawnGrenade(this.camera.position, dir, kind, p);
+    };
+    if (!this.vm.authored?.throwUtility(kind, 1.05, release)) release();
   }
-
-  _throwFrag() {
-    const kind = 'frag';
-    const p = this.player;
-    if (!p.alive || (p.frags | 0) <= 0 || this.time < (p._nextNade || 0)) return;
-    p.frags--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
-    this.sfx.grenadePin(kind);
-    if (this._mp?.pedirNade?.(kind)) return;
-    const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-    this._spawnGrenade(this.camera.position, dir, kind, p);
-  }
+  _throwSmoke() { this._throwNade('smoke', 'smokes'); }
+  _throwFrag() { this._throwNade('frag', 'frags'); }
 
   // Explosão de frag: dano em área SÓ nos inimigos do dono (sem fogo amigo, arcade), com
   // falloff radial, estilhaços visuais e clarão. Tremor de tela se o jogador estiver perto.

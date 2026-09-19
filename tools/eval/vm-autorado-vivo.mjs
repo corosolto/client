@@ -53,10 +53,14 @@ await pag.waitForFunction(() => window.__game?.state === 'live', null, { timeout
 await pag.waitForTimeout(2500);
 
 /* A lista golden sai do vmconfig LIDO PELA PÁGINA, não de regex no arquivo: o
-   parser à mão já falhou aqui e devolveu zero armas com o arquivo correto. */
+   parser à mão já falhou aqui e devolveu zero armas com o arquivo correto.
+   Só entram as que o portão de rollout deixa passar (família ready + arma não
+   segurada): as demais caem no legado DE PROPÓSITO e não são defeito. */
 const ALVO = SO.length ? SO : await pag.evaluate(async () => {
   const vm = await import('/js/data/vmconfig.js');
-  return Object.entries(vm.VM_WEAPON || {}).filter(([, c]) => c?.golden).map(([k]) => k);
+  return Object.entries(vm.VM_WEAPON || {})
+    .filter(([, c]) => c?.golden && c.ready !== false && vm.VM_FAMILY?.[c.family]?.ready === true)
+    .map(([k]) => k);
 });
 if (!ALVO.length) {
   await nav.close();

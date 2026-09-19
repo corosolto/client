@@ -45,7 +45,8 @@ check(/authoredCharacterHand/.test(runtime) && /profile\.sleeve/.test(runtime),
 check(/dispose\(\)/.test(runtime), 'GPU resources possuem ciclo de descarte');
 check(/throwUtility/.test(runtime) && /UTILITY_/.test(runtime) && /utilityModels/.test(runtime),
   'pack pago de granadas mantém três modelos e arremesso autorado');
-check(/throwUtility\('smoke'/.test(game) && /throwUtility\('frag'/.test(game),
+check(/throwUtility\((kind|'smoke')/.test(game) && /(_throwNade|throwUtility)\('smoke'/.test(game)
+    && /(_throwNade|throwUtility)\('frag'/.test(game),
   'smoke e frag aguardam o release da animação');
 check(/grenades-world\.glb/.test(game) && /template\.clone\(true\)/.test(game),
   'projétil lançado mantém a geometria paga no mundo');
@@ -62,10 +63,21 @@ const readyFamilies = Object.entries(VM_FAMILY)
   .sort();
 check(readyFamilies.join(',') === 'ak,grenade,pistol',
   'somente AK/pistola golden e granada abrem o portão autorado', readyFamilies.join(', '));
+// Dentro da família aberta, só a arma aprovada sobe: akm/m92 (família ak) ficam
+// `ready:false` no VM_WEAPON até veredito próprio do dono. A pistola aprovada em 07/09
+// é a ROTA DE FAMÍLIA (FAMILY_FRAME calibrado no navegador) — `golden:true` nela
+// entra 144× maior (BUG-VM-ESCALA-PISTOLA).
+const armasServidas = Object.entries(VM_WEAPON)
+  .filter(([, c]) => VM_FAMILY[c.family]?.ready === true && c.ready !== false)
+  .map(([w]) => w).sort();
+check(armasServidas.join(',') === 'ak,pistol',
+  'só ak e pistol chegam ao jogador; akm/m92 seguram no legado', armasServidas.join(', '));
+check(/VM_WEAPON\[weapon\]\?\.ready !== false/.test(runtime),
+  'runtime honra o portão por arma (ready:false em VM_WEAPON)');
 check(mutant !== 'sem-golden' && VM_WEAPON.ak?.golden === true
-    && VM_WEAPON.pistol?.golden === true
+    && VM_WEAPON.pistol?.golden !== true && VM_WEAPON.pistol?.runtime === 'family'
     && /GOLDEN_VM[^;]+vmgolden/.test(runtime) && /gold#/.test(runtime),
-  'AK e pistola prontas selecionam a chave golden atrás de ?vmgolden=0');
+  'AK golden atrás de ?vmgolden=0; pistola aprovada fica na rota de família');
 check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
 check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),
   'setAim(id, amount) consome o blend do botão direito');
