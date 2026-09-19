@@ -61,6 +61,10 @@ try {
   for (const id of ARMAS) {
     const familia = VM_WEAPON[id].family;
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    /* O buffer padrão de Resource Timing guarda 250 entradas; o mapa sozinho passa
+       disso e o GLB do viewmodel (que chega depois) nem entrava na lista — ID6 media
+       0 B e reprovava por cegueira do instrumento, não por peso do arquivo. */
+    await page.addInitScript(() => performance.setResourceTimingBufferSize(5000));
     await page.goto(
       `${BASE}/?debug=1&auto=E&vmweapon=${id}&map=brasilia&armaslazy=0&vmready=${familia}`,
       { waitUntil: 'load', timeout: 180000 },
@@ -164,8 +168,10 @@ try {
           if (width <= 4) maosPlaceholder.push(`${material.name}:${width}px`);
         }
       }
+      // Rota de família baixa `<fam>-runtime.glb`; rota golden baixa `<arma>-hires.glb`.
+      // Sem o segundo padrão a AK golden media 0 B e ID6 ficava vermelha por cegueira.
       const familyBytes = performance.getEntriesByType('resource')
-        .filter((r) => r.name.includes('-runtime.glb') && !r.name.includes('general'))
+        .filter((r) => /-(runtime|hires)\.glb/.test(r.name) && !r.name.includes('general'))
         .reduce((worst, r) => Math.max(worst, r.encodedBodySize || r.transferSize || 0), 0);
 
       /* Lição dos prints do dono (29/08): parado, a mão NÃO pode vagar — o
