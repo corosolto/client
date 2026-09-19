@@ -20,4 +20,4 @@ export const GRAFITE = {"ferro_velho":{"arquivos":["peca-bolha.png","tag-selvage
 
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
-export const GRAFITE_FP = {"pass":"101826ab448fb518","maps":{"escadao":"ba3a46ab4903a345","praca_poderes":"f08bfa72d60fc26e","piscina_treta":"4b51adad1e086574","loja_h":"b9dc4e7558a8a526","ferro_velho":"f68dd1bac22eaca7","quebrada":"7ef08d02a32da944","fy_escadao":"90be613436b7a89f","fy_campomorro":"4839151b965f137f","fy_lajes":"b3d764c6faf27c6e","corrego":"d549ba0ca49224d1","fy_mansao":"bd56ca038eb1d4db"}};
+export const GRAFITE_FP = {"pass":"101826ab448fb518","maps":{"escadao":"ba3a46ab4903a345","praca_poderes":"f08bfa72d60fc26e","piscina_treta":"4b51adad1e086574","loja_h":"b9dc4e7558a8a526","ferro_velho":"f68dd1bac22eaca7","quebrada":"7ef08d02a32da944","fy_escadao":"90be613436b7a89f","fy_campomorro":"b274f58b34468bf7","fy_lajes":"4538c06866b2cc11","corrego":"d549ba0ca49224d1","fy_mansao":"bd56ca038eb1d4db"}};
