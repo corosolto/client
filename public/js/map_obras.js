@@ -85,13 +85,36 @@ export function buildObras(scene, T) {
     return terreno(x, z);
   }
 
+  const boxGeoCache = new Map();
+  const boxGeo = (w, h, d) => {
+    const key = `${w}|${h}|${d}`;
+    if (!boxGeoCache.has(key)) boxGeoCache.set(key, new THREE.BoxGeometry(w, h, d));
+    return boxGeoCache.get(key);
+  };
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const m = new THREE.Mesh(boxGeo(w, h, d), mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry; if (opts.rz) m.rotation.z = opts.rz;
     root.add(m);
     if (opts.collide !== false) { colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 }); occluders.push(m); }
     return m;
+  }
+  const batchedBoxes = new Map(), batchDummy = new THREE.Object3D();
+  function batchBox(w, h, d, mat, x, y, z, opts = {}) {
+    const cast = opts.cast !== false, key = `${w}|${h}|${d}|${mat.uuid}|${cast ? 1 : 0}`;
+    let part = batchedBoxes.get(key);
+    if (!part) { part = { geo: boxGeo(w, h, d), mat, cast, matrices: [] }; batchedBoxes.set(key, part); }
+    batchDummy.position.set(x, y + h / 2, z);
+    batchDummy.rotation.set(0, 0, opts.rz || 0); batchDummy.scale.set(1, 1, 1); batchDummy.updateMatrix();
+    part.matrices.push(batchDummy.matrix.clone());
+  }
+  function flushBatchedBoxes() {
+    for (const part of batchedBoxes.values()) {
+      const mesh = new THREE.InstancedMesh(part.geo, part.mat, part.matrices.length);
+      part.matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
+      mesh.instanceMatrix.needsUpdate = true; mesh.castShadow = part.cast; mesh.receiveShadow = true;
+      mesh.computeBoundingSphere(); root.add(mesh);
+    }
   }
   function addFloor(w, d, mat, x, z, y = 0.01) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; }
   const col = (x, z, hx, hz, h) => { const y0 = gy(x, z); colliders.push({ minX: x - hx, maxX: x + hx, minY: y0, maxY: y0 + h, minZ: z - hz, maxZ: z + hz }); };
@@ -132,8 +155,6 @@ export function buildObras(scene, T) {
   }
   addBox(18, 0.4, 8, MAT.concRaw, 0, 4.2, -8, { collide: false, cast: false });   // laje parcial ao NORTE (não sobre o vão central)
   for (let z = -9; z <= -7; z += 1) addBox(18, 0.12, 0.12, MAT.rebar, 0, 4.7, z, { collide: false, cast: false });   // vergalhões
-  // rampa de tábua de acesso à laje (decorativa)
-  addBox(3, 0.16, 5, MAT.tabua, 9, 1.5, 2, { collide: false, rz: -0.5 });
   // lona verde de obra pendurada num lado da estrutura
   { const lo = new THREE.Mesh(new THREE.PlaneGeometry(9, 5), MAT.lona); lo.position.set(-8.1, 3, -3.5); lo.rotation.y = Math.PI / 2; root.add(lo); }
 
@@ -177,7 +198,7 @@ export function buildObras(scene, T) {
       const n = Math.round((x1 - x0) / 0.8);
       for (let i = 0; i <= n; i++) {
         const px = x0 + (x1 - x0) * i / n;
-        g.add(addBox(0.85, 0.1, 1.8, MAT.tabua, px, alturaDeck(px, tz) - 0.1, tz, { collide: false, cast: false }));
+        batchBox(0.85, 0.1, 1.8, MAT.tabua, px, alturaDeck(px, tz) - 0.1, tz, { cast: false });
       }
     }
     return g;
@@ -196,8 +217,10 @@ export function buildObras(scene, T) {
     if (glb) { b.add(glb); occluders.push(glb); }
     else b.add(addBox(5.1, 3.0, 3.7, MAT.metal, bx, base, bz, { collide: false }));
     col(bx, bz, 2.55, 1.85, 3.0);
-    // degrau da porta + saco de areia na frente (o parapeito do bunker)
-    b.add(addBox(1.2, 0.35, 0.8, MAT.concRaw, bx, base, bz - sz * 2.2, { collide: false }));
+    // O antigo degrau tinha 35 cm e usava a cota do container: em terreno ondulado
+    // ele atravessava o corpo. Aqui segue o chão da porta e fica abaixo do degrau máximo.
+    const stepZ = bz - sz * 2.2, stepBase = terreno(bx, stepZ);
+    b.add(addBox(1.2, 0.27, 0.8, MAT.concRaw, bx, stepBase, stepZ, { collide: false }));
     prop('sandbags', bx - 3.4, bz - sz * 1.2, 0.9, Math.PI / 2, 0.8, 1.6, 0.85);
   }
 
@@ -206,7 +229,7 @@ export function buildObras(scene, T) {
     const b = terreno(x, z);
     for (let i = 0; i < n; i++) for (let j = 0; j < 2; j++) {
       const sx = x + (ry ? 0 : (i - (n - 1) / 2) * 0.78), sz2 = z + (ry ? (i - (n - 1) / 2) * 0.78 : 0);
-      addBox(ry ? 0.55 : 0.72, 0.3, ry ? 0.72 : 0.55, MAT.areia, sx, b + j * 0.32, sz2, { collide: false });
+      batchBox(ry ? 0.55 : 0.72, 0.3, ry ? 0.72 : 0.55, MAT.areia, sx, b + j * 0.32, sz2);
     }
     col(x, z, ry ? 0.4 : n * 0.42, ry ? n * 0.42 : 0.4, 0.95);
   };
@@ -250,7 +273,7 @@ export function buildObras(scene, T) {
     const painel = (x, z, dimX, dimZ) => {
       const t2 = addBox(dimX, 2.6, dimZ, MAT.tapume, x, terreno(x, z), z);
       t2.name = 'obras-tapume-interno';
-      addBox(dimX + 0.05, 0.45, dimZ + 0.05, MAT.hazard, x, terreno(x, z) + 2.15, z, { collide: false });
+      batchBox(dimX + 0.05, 0.45, dimZ + 0.05, MAT.hazard, x, terreno(x, z) + 2.15, z);
       return t2;
     };
     for (const sz of [-1, 1]) {
@@ -278,7 +301,7 @@ export function buildObras(scene, T) {
 
   const monteAreia = (x, z, r) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, r * 0.8, 12), MAT.areia); m.position.set(x, gy(x, z) + r * 0.4, z); m.castShadow = true; root.add(m); col(x, z, r * 0.8, r * 0.8, r * 0.6); };
   const canos = (x, z) => { const b = gy(x, z); for (let i = 0; i < 3; i++) for (let j = 0; j < 2 - (i % 2); j++) { const c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 3.6, 12), MAT.concreto); c2.rotation.x = Math.PI / 2; c2.position.set(x + (j - (i % 2) * 0.5) * 0.75, b + 0.35 + i * 0.62, z); c2.castShadow = true; root.add(c2); } col(x, z, 1.0, 1.8, 1.8); };
-  const blocos = (x, z) => { const b = gy(x, z); addBox(1.6, 1.1, 1.2, MAT.concRaw, x, b, z); addBox(1.2, 0.5, 1.0, RUBB[0], x, b + 1.1, z, { collide: false }); };
+  const blocos = (x, z) => { const b = gy(x, z); addBox(1.6, 1.1, 1.2, MAT.concRaw, x, b, z); batchBox(1.2, 0.5, 1.0, RUBB[0], x, b + 1.1, z); };
   for (const sz of [-1, 1]) {
     monteAreia(-12, sz * 14, 2.4); monteAreia(14, sz * 16, 2.2);
     canos(20, sz * 4); blocos(-4, sz * 12); blocos(6, sz * 18);
@@ -289,6 +312,12 @@ export function buildObras(scene, T) {
     prop('concrete_roadblock', -8, sz * 22, 1.0, 0, 1.2, 0.5, 1.0);
     prop('botijao_gas', 18, sz * 10, 0.9, 0, 1.2, 0.7, 0.9);
   }
+  // Pilhas de material ocupam os seis quadrantes periféricos que tinham mais de
+  // duas arestas do grafo sem cobertura, mantendo cinco peças úteis por setor.
+  for (const [x, z] of [
+    [-24, -30], [-20, -27], [-24, -22], [-16, -20], [-24, 30], [-20, 26],
+    [-4, -27], [-2, -20], [-4, 26], [5, -25], [5, 25], [10, 28], [3, 20],
+  ]) blocos(x, z);
   // guindaste (marco) num canto + caminhão de obra + dumpster de entulho + betoneira
   prop('guindaste', -20, 22, 8, 0.4, 2.0, 2.0, 3.0);
   prop('vw_9150', 20, -22, 3.2, Math.PI / 2, 3.4, 1.2, 3.0);
@@ -305,7 +334,7 @@ export function buildObras(scene, T) {
   const coneMat = lam({ color: 0xe0551e });
   for (const [cx, cz] of [[0, -4], [10, 2], [-2, 6], [8, 14], [2, -14], [-10, 0], [14, -8], [-6, -20]]) {
     const cb = gy(cx, cz); const cone = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.7, 10), coneMat); cone.position.set(cx, cb + 0.35, cz); cone.castShadow = true; root.add(cone);
-    addBox(0.5, 0.05, 0.5, MAT.hazard, cx, cb + 0.02, cz, { collide: false, cast: false });
+    batchBox(0.5, 0.05, 0.5, MAT.hazard, cx, cb + 0.02, cz, { cast: false });
   }
 
   const GM = { black: lam({ color: 0x1b1d21 }), steel: lam({ color: 0x9aa0a6 }), wood: lam({ color: 0x7a5326 }), tan: lam({ color: 0xb39a63 }), green: lam({ color: 0x16432a }) };
@@ -404,6 +433,7 @@ export function buildObras(scene, T) {
     for (let x = -26; x <= 26; x += 8) prop(ruaCars[ri++ % ruaCars.length], x, HALF_Z + 6, 1.6, Math.PI / 2, 0, 0, 0);
   }
 
+  flushBatchedBoxes();
   const D_TAG = decalIds(T, ['tag-fina.png', 'tag-flop.png', 'tag-larga.png', 'tag-selvagem.png', 'or-graf-treta.png', 'or-graf-coro.png']);
   const D_BOMBA = decalIds(T, ['peca-bolha.png', 'alfabeto-bolha.png', 'alfabeto-grosso-01.png', 'tag-flop.png']);
   grafitar({

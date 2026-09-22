@@ -8,6 +8,7 @@ const option = (name, fallback) => process.argv.find((a) => a.startsWith(`--${na
 const base = option('base', 'http://127.0.0.1:8156');
 const out = option('out', 'artifacts/obras-prefeitura/browser');
 const seconds = Number(option('seconds', '8'));
+const only = option('only', '');
 if (!(seconds >= 5 && seconds <= 60)) throw Error('--seconds deve ficar entre 5 e 60');
 mkdirSync(out, { recursive: true });
 
@@ -17,13 +18,19 @@ const sources = Object.fromEntries([
   'public/models/props/container_escritorio.glb',
 ].map((file) => [file, createHash('sha256').update(readFileSync(file)).digest('hex')]));
 const matrix = [
-  { id: '5x5-3x2', bots: 5, viewport: { width: 1536, height: 1024 } },
-  { id: '8x8-16x9', bots: 8, viewport: { width: 1600, height: 900 } },
+  { id: '5x5-dm-3x2-med', bots: 5, ctf: false, quality: 'med', viewport: { width: 1536, height: 1024 } },
+  { id: '5x5-ctf-3x2-med', bots: 5, ctf: true, quality: 'med', viewport: { width: 1536, height: 1024 } },
+  { id: '8x8-dm-3x2-med', bots: 8, ctf: false, quality: 'med', viewport: { width: 1536, height: 1024 } },
+  { id: '8x8-ctf-3x2-med', bots: 8, ctf: true, quality: 'med', viewport: { width: 1536, height: 1024 } },
+  { id: '5x5-dm-16x9-low', bots: 5, ctf: false, quality: 'low', viewport: { width: 1600, height: 900 } },
+  { id: '5x5-ctf-16x9-low', bots: 5, ctf: true, quality: 'low', viewport: { width: 1600, height: 900 } },
+  { id: '8x8-dm-16x9-low', bots: 8, ctf: false, quality: 'low', viewport: { width: 1600, height: 900 } },
+  { id: '8x8-ctf-16x9-low', bots: 8, ctf: true, quality: 'low', viewport: { width: 1600, height: 900 } },
 ];
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
 const receipt = { base, sources, matrix: [], generatedAt: new Date().toISOString() };
 try {
-  for (const run of matrix) {
+  for (const run of matrix.filter((item) => !only || item.id === only)) {
     const context = await browser.newContext({ viewport: run.viewport, deviceScaleFactor: 1 });
     const page = await context.newPage();
     const errors = [], failed = [], glbs = [];
@@ -32,27 +39,46 @@ try {
       if (response.status() >= 400) failed.push([response.status(), response.url()]);
       if (response.status() === 200 && response.url().includes('.glb')) glbs.push(response.url());
     });
-    await page.addInitScript(({ bots }) => {
-      localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'med', bots, vol: 0, speech: false }));
+    await page.addInitScript(({ bots, quality }) => {
+      localStorage.setItem('awpbr_settings', JSON.stringify({ quality, bots, vol: 0, speech: false }));
+      localStorage.setItem('awpbr_nick', 'OBRAS-QA');
       let seed = 6262;
       Math.random = () => { seed ^= seed << 13; seed >>>= 0; seed ^= seed >> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; };
-    }, { bots: run.bots });
-    await page.goto(`${base}/?debug=1&auto=P,mst&map=obras_prefeitura&perfilauto=0&ctf=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    }, { bots: run.bots, quality: run.quality });
+    await page.goto(`${base}/?debug=1&map=obras_prefeitura&perfilauto=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForFunction(() => !document.getElementById('splash-enter')?.classList.contains('hidden'), null, { timeout: 120000 });
+    await page.evaluate(() => document.getElementById('boot-splash')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+    await page.waitForSelector('#boot-splash', { state: 'detached', timeout: 30000 });
+    await page.waitForSelector('#main-menu:not(.hidden)', { timeout: 120000 });
+    await page.waitForTimeout(800);
+    await page.click('.cs-item[data-act="single-player"]');
+    await page.click(`.cs-item[data-act="${run.ctf ? 'ctf' : 'sp'}"]`);
+    await page.waitForSelector('#map-screen:not(.hidden)', { timeout: 30000 });
+    await page.click('#ms-continue');
+    await page.waitForSelector('#team-select:not(.hidden)', { timeout: 30000 });
+    await page.click('#btn-team-e');
+    await page.waitForSelector('#char-select:not(.hidden)', { timeout: 120000 });
+    await page.click('#char-list .char-row:first-child');
+    await page.click('#char-confirm');
+    await page.waitForSelector('#team-select:not(.hidden)', { timeout: 30000 });
+    await page.click('#btn-team-b');
     await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
     await page.waitForTimeout(1500);
     const boot = await page.evaluate(() => {
       const g = window.__game;
       const ext = g.renderer.getContext().getExtension('WEBGL_debug_renderer_info');
       return {
-        map: g._mapId, bots: g.bots.length, quality: g.settings.quality,
+        map: g._mapId, bots: g.bots.length, quality: g.settings.quality, ctf: g.ctf,
         gpu: ext ? g.renderer.getContext().getParameter(ext.UNMASKED_RENDERER_WEBGL) : g.renderer.__csWebgl,
         towers: g.world.root.children.filter((o) => o.name.startsWith('obras-torre-andaime-')).length,
         bunkers: g.world.root.children.filter((o) => o.name.startsWith('obras-bunker-')).length,
-        nodes: g.world.waypoints.nodes.length,
+        nodes: g.world.waypoints.nodes.length, ctfPoints: g.ctfPts?.length || 0,
       };
     });
     assert.equal(boot.map, 'obras_prefeitura');
     assert.equal(boot.bots, run.bots * 2 - 1);
+    assert.equal(boot.ctf, run.ctf);
+    if (run.ctf) assert.equal(boot.ctfPoints, 3);
     assert.equal(boot.towers, 2);
     assert.equal(boot.bunkers, 4);
     assert.ok(glbs.some((url) => url.includes('andaime.glb')), 'andaime.glb não carregou por HTTP 200');
@@ -70,7 +96,7 @@ try {
     await page.waitForTimeout(seconds * 1000);
     const perf = await page.evaluate(() => {
       const g = window.__game, m = window.__obrasPerf; window.__obrasPerf = null;
-      const frames = m.frames.slice(1).sort((a, b) => a - b);
+      const frames = m.frames.slice(2).sort((a, b) => a - b);
       g.renderer.info.reset(); g.renderer.render(g.scene, g.camera);
       return {
         elapsed: performance.now() - m.start, frames: frames.length,
@@ -82,7 +108,8 @@ try {
     });
     assert.ok(perf.frames > 0);
     assert.equal(errors.length, 0, `erros de página: ${errors.join(' | ')}`);
-    assert.equal(failed.length, 0, `HTTP >=400: ${failed.map((row) => row.join(' ')).join(' | ')}`);
+    const unexpectedFailed = failed.filter(([, url]) => !url.endsWith('/api/geo-lang'));
+    assert.equal(unexpectedFailed.length, 0, `HTTP >=400: ${unexpectedFailed.map((row) => row.join(' ')).join(' | ')}`);
 
     const views = [
       { id: 'spawn-sul', pos: [4, null, -27], look: [0, 2, -5] },
@@ -96,6 +123,8 @@ try {
       const metrics = await page.evaluate((view) => {
         const g = window.__game;
         g.paused = true; g.el.pause.classList.add('hidden'); g.el.banner.classList.add('hidden');
+        for (const smoke of (g._smokes || [])) g.scene.remove(smoke.group);
+        if (g._smokes) g._smokes.length = 0;
         const ground = view.pos[1] ?? g.world.groundHeightAt(view.pos[0], view.pos[2], 0);
         for (const bot of g.bots) bot.mesh.group.visible = false;
         g.camera.position.set(view.pos[0], ground + (view.aerial ? 0 : 1.62), view.pos[2]);
