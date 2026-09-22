@@ -26,6 +26,7 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad, m
 check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
 check(VM_FAMILY.mp5.ready === false, 'família mp5 continua ready:false');
 check(VM_WEAPON.mp5.baked === true && VM_WEAPON.mp5.runtime === 'family', 'MP5 usa produto baked canônico da família');
+check(VM_WEAPON.mp5.ads?.auto === true && VM_WEAPON.mp5.ads?.off?.every((value) => value === 0), 'MP5 usa ADS automático pelos sockets próprios');
 const baseline = matrix(); check(baseline.errors.length === 0, 'MP5 atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility }); check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
 const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } }); check(preload.errors.length > 0, 'mutante que cria lacuna pré-load reprova');

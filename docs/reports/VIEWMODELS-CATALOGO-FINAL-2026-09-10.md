@@ -936,3 +936,27 @@ idle, draw, tiro, recargas, inspect e ADS sem erro fatal em
 [`VIEWMODEL-SMG-P90-KINEMATION-2026-09-22.md`](VIEWMODEL-SMG-P90-KINEMATION-2026-09-22.md).
 Próximo diagnóstico produto-first: MP5. PT-38 permanece congelada até comparação
 humana explícita.
+
+### Reautoria SMG — MP5 KINEMATION em 22/09/2026
+
+O produto MP5 `14d430b6…` foi reprovado pelo novo gate causal: a câmera cortava
+mais da metade da arma, a escala angular chegava a 70,159× o alvo e os dez
+grupos de dedos ficavam 72,53–258,48 mm longe da malha. O checkpoint RED é
+`ceda47099`.
+
+A nova receita `smg-mp5-kinemation.py` usa a MP5 pública coerente sobre o rig,
+as três camadas de mãos e as ações da G3 KINEMATION aprovada. O produto privado
+`ac4630c4…` (1.550.620 bytes) preserva arma própria e acrescenta pente curvo,
+retém, alavanca, ferrolho, gatilho e guarda-mão contínuo. Os dez grupos de dedos
+medem 0,00–5,00 mm; mutantes independentes soltam cada mão e reprovam.
+
+A régua passa em 3:2 com 0,970×/97,4% e em 16:9 com 0,936×/97,4%. O gate causal
+passa 11 mutantes; o lifecycle passa 11/11 controles, 30 ciclos/540 amostras;
+HUD e inspect permanecem verdes. O ADS automático pelos sockets próprios
+centraliza a alça sem câmera ou FOV especial.
+
+A captura final produziu 22 PNGs em 1440×960 e 1440×810, sem erro fatal, em
+`evidence/mp5-kinemation-candidate5-auto-ads`. Recibo:
+[`VIEWMODEL-SMG-MP5-KINEMATION-2026-09-22.md`](VIEWMODEL-SMG-MP5-KINEMATION-2026-09-22.md).
+A candidata segue `ready:false`, família/global off e aguarda revisão humana.
+PT-38 permanece congelada até comparação humana explícita.

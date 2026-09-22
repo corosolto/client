@@ -1,5 +1,9 @@
 # MP5 final técnica — alpha.252
 
+> **Superado em 22/09/2026.** O produto descrito abaixo cruzava o plano da
+> câmera e não tinha gate de contato real. A reautoria válida está em
+> [`VIEWMODEL-SMG-MP5-KINEMATION-2026-09-22.md`](VIEWMODEL-SMG-MP5-KINEMATION-2026-09-22.md).
+
 ## Resultado
 
 A MP5 agora usa um produto privado único da KINEMATION, com duas mãos completas,
