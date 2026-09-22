@@ -76,6 +76,7 @@ const ARSENAL = {
       { nome: 'shoot', no: 'RIG_FP_ARMS', min: 0.02, endpoint: 0.005 },
       { nome: 'inspect', no: 'RIG_FP_ARMS', min: 0.05, endpoint: 0.005 },
     ],
+    contato: { dedoMm: 8, polegarMm: 16 },
   },
 };
 
@@ -85,6 +86,9 @@ const DEDOS = {
   anelar: ['ring_01_', 'ring_02_', 'ring_03_'],
   minimo: ['pinky_01_', 'pinky_02_', 'pinky_03_'],
   polegar: ['thumb_01_', 'thumb_02_', 'thumb_03_'],
+};
+const DEDOS_KINEMATION = {
+  indicador: 'f_index', medio: 'f_middle', anelar: 'f_ring', minimo: 'f_pinky', polegar: 'thumb',
 };
 
 const falhas = [];
@@ -163,7 +167,12 @@ function medeContatoDedos(cena, malhasArma) {
       let chave = '';
       for (const [dedo, ossos] of Object.entries(DEDOS)) {
         for (const lado of ['r', 'l']) {
-          if (ossos.some((osso) => boneName === `${osso}${lado}`)) chave = `${dedo}_${lado}`;
+          const letra = lado === 'r' ? 'R' : 'L';
+          const kinemation = DEDOS_KINEMATION[dedo];
+          if (ossos.some((osso) => boneName === `${osso}${lado}`)
+            || [1, 2, 3].some((parte) => boneName === `${kinemation}.${String(parte).padStart(2, '0')}.${letra}_metarig`)) {
+            chave = `${dedo}_${lado}`;
+          }
         }
       }
       if (!chave) continue;
@@ -253,7 +262,8 @@ function inspeciona(gltf, cfg, arma) {
   if (!gltf.userData?.skipContact && cfg.contato) {
     const mutante = gltf.userData?.contactMutant;
     if (mutante) {
-      const hand = cena.getObjectByName(mutante === 'left' ? 'hand_l' : 'hand_r');
+      const hand = cena.getObjectByName(mutante === 'left' ? 'hand_l' : 'hand_r')
+        || cena.getObjectByName(mutante === 'left' ? 'hand.L_metarig' : 'hand.R_metarig');
       if (!hand) throw new Error(`mutação de contato sem ${mutante}`);
       hand.position.x += 20;
       hand.position.y += 20;
@@ -269,7 +279,7 @@ function inspeciona(gltf, cfg, arma) {
     check(Object.keys(tabela).length === 10, `${arma}: contato mediu ${Object.keys(tabela).length}/10 dedos`);
     resultado.contatoIdleMm = tabela;
     resultado.contatoVetoresMm = contato.vetores;
-    const handL = cena.getObjectByName('hand_l');
+    const handL = cena.getObjectByName('hand_l') || cena.getObjectByName('hand.L_metarig');
     const apoio = Object.entries(contato.vetores)
       .filter(([chave]) => chave.endsWith('_l') && !chave.startsWith('polegar_'))
       .map(([, vetor]) => new THREE.Vector3(...vetor).multiplyScalar(0.001));
