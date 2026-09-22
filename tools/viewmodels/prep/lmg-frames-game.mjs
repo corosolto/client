@@ -58,7 +58,21 @@ async function medir(page, cenario, detalhe) {
       return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, fora: p.z > 1 || p.x < -1.05 || p.x > 1.05 || p.y < -1.05 || p.y > 1.05 };
     };
     const V3 = e.mount.position.constructor;
-    const amostra = (meshes, maxPts) => {
+    const ladoDoVertice = (mesh, index) => {
+      if (!mesh.isSkinnedMesh || !mesh.skeleton || !mesh.geometry.attributes.skinIndex) return '';
+      const indices = mesh.geometry.attributes.skinIndex;
+      const pesos = mesh.geometry.attributes.skinWeight;
+      let esquerda = 0, direita = 0;
+      for (let slot = 0; slot < 4; slot += 1) {
+        const indexBone = [indices.getX(index), indices.getY(index), indices.getZ(index), indices.getW(index)][slot];
+        const peso = pesos ? [pesos.getX(index), pesos.getY(index), pesos.getZ(index), pesos.getW(index)][slot] : 0;
+        const bone = mesh.skeleton.bones[indexBone]?.name || '';
+        if (/_l$/i.test(bone)) esquerda += peso;
+        if (/_r$/i.test(bone)) direita += peso;
+      }
+      return esquerda > direita ? 'apoio' : direita > esquerda ? 'forte' : '';
+    };
+    const amostra = (meshes, maxPts, lado = '') => {
       const pts = [];
       const total = meshes.reduce((sum, c) => sum + c.geometry.attributes.position.count, 0) || 1;
       for (const c of meshes) {
@@ -66,6 +80,7 @@ async function medir(page, cenario, detalhe) {
         const step = Math.max(1, Math.floor(total / maxPts));
         const v = new V3();
         for (let i = 0; i < pos.count; i += step) {
+          if (lado && ladoDoVertice(c, i) !== lado) continue;
           v.fromBufferAttribute(pos, i);
           if (c.isSkinnedMesh && c.applyBoneTransform) c.applyBoneTransform(i, v);
           pts.push(v.clone().applyMatrix4(c.matrixWorld));
@@ -84,14 +99,21 @@ async function medir(page, cenario, detalhe) {
       while (!mao && p) { if (/fp-character/i.test(p.name || '')) mao = true; p = p.parent; }
       (mao ? luvas : armas).push(c);
     });
-    const luvaPts = amostra(luvas, 300);
+    const apoioPts = amostra(luvas, 300, 'apoio');
+    const fortePts = amostra(luvas, 300, 'forte');
     const armaPts = amostra(armas, 300);
-    let handIn = 0;
-    const luvaPx = [];
-    for (const p of luvaPts) {
-      const s = px(p);
-      if (!s.fora) { handIn += 1; luvaPx.push(s); }
-    }
+    const projetarMao = (pts) => {
+      let dentro = 0; const pxs = [];
+      for (const p of pts) {
+        const s = px(p);
+        if (!s.fora) { dentro += 1; pxs.push(s); }
+      }
+      return { dentro, pxs };
+    };
+    const apoio = projetarMao(apoioPts);
+    const forte = projetarMao(fortePts);
+    const luvaPx = [...apoio.pxs, ...forte.pxs];
+    let handIn = apoio.dentro + forte.dentro;
     let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, wIn = 0;
     const armaPx = [];
     for (const p of armaPts) {
@@ -115,8 +137,16 @@ async function medir(page, cenario, detalhe) {
       contatoPx = Math.round(contatoPx);
     }
     const diag = (maxX > minX) ? Math.round(Math.hypot(maxX - minX, maxY - minY)) : 0;
+    const contato = (mao) => {
+      if (!mao.length || !armaPx.length) return null;
+      let best = Infinity;
+      for (const a of mao) for (const b of armaPx) best = Math.min(best, Math.hypot(a.x - b.x, a.y - b.y));
+      return Math.round(best);
+    };
     return {
-      handIn, handTotal: luvaPts.length, weaponIn: wIn, weaponTotal: armaPts.length,
+      handIn, handTotal: apoioPts.length + fortePts.length, weaponIn: wIn, weaponTotal: armaPts.length,
+      apoioEmQuadro: apoio.dentro, apoioAmostra: apoioPts.length, apoioContato_px: contato(apoio.pxs),
+      forteEmQuadro: forte.dentro, forteAmostra: fortePts.length, forteContato_px: contato(forte.pxs),
       contato_px: contatoPx, arma_diag_px: diag,
       arma_bbox: maxX > minX ? [Math.round(minX), Math.round(minY), Math.round(maxX), Math.round(maxY)] : null,
     };
