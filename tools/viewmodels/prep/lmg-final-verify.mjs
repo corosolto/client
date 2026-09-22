@@ -17,6 +17,13 @@ const ASSET_ROOT = path.resolve(process.env.CSBRASIL_VM_ASSET_ROOT || '/Users/ru
 const MANIFEST = path.join(ROOT, 'tools/viewmodels/heavy-candidates.json');
 const failures = [];
 const check = (condition, message) => { if (!condition) failures.push(message); };
+const DEDOS = {
+  indicador: ['index_01_', 'index_02_', 'index_03_'],
+  medio: ['middle_01_', 'middle_02_', 'middle_03_'],
+  anelar: ['ring_01_', 'ring_02_', 'ring_03_'],
+  minimo: ['pinky_01_', 'pinky_02_', 'pinky_03_'],
+  polegar: ['thumb_01_', 'thumb_02_', 'thumb_03_'],
+};
 const manifest = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) : {};
 const cfg = manifest.candidates?.lmg;
 check(Boolean(cfg), 'entrada lmg ausente do manifesto');
@@ -68,7 +75,125 @@ check(Boolean(mint && muzzle && sight), 'marcador baked e sockets ADS/muzzle aus
 check(Boolean(arms && weapon && box && belt && cover && tray && charger), 'rig, cinto/caixa ou mecanismos próprios incompletos');
 check(Boolean(handL && handR), 'duas mãos completas ausentes');
 check(gltf.cameras.some((camera) => camera.isPerspectiveCamera), 'câmera viewmodel ausente');
+
+const medeContatoDedos = (document, mutante = '') => {
+  const cena = document.scene;
+  const idle = document.animations.find((clip) => clip.name === 'idle');
+  let idleMixer = null;
+  if (idle) {
+    idleMixer = new THREE.AnimationMixer(cena);
+    idleMixer.clipAction(idle).play();
+    idleMixer.setTime(0);
+  }
+  if (mutante) {
+    const hand = cena.getObjectByName(mutante === 'left' ? 'hand_l' : 'hand_r');
+    if (!hand) throw new Error(`mutante de contato sem mão ${mutante}`);
+    hand.position.addScalar(20);
+  }
+  cena.updateMatrixWorld(true);
+  const product = cena.getObjectByName('VM_PRODUCT_LMG');
+  const productInverse = product ? product.matrixWorld.clone().invert() : new THREE.Matrix4();
+
+  const triangulos = [];
+  const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
+  cena.getObjectByName('RIG_WEAPON_LMG')?.traverse((mesh) => {
+    if (!mesh.isMesh) return;
+    const pos = mesh.geometry?.attributes?.position;
+    if (!pos) return;
+    const index = mesh.geometry.index;
+    const total = index ? index.count : pos.count;
+    for (let offset = 0; offset + 2 < total; offset += 3) {
+      const at = (lane, out) => {
+        const vi = index ? index.getX(offset + lane) : offset + lane;
+        out.fromBufferAttribute(pos, vi);
+        if (mesh.isSkinnedMesh) mesh.applyBoneTransform(vi, out);
+        return out.applyMatrix4(mesh.matrixWorld).applyMatrix4(productInverse).clone();
+      };
+      triangulos.push(new THREE.Triangle(at(0, va), at(1, vb), at(2, vc)));
+    }
+  });
+  if (!triangulos.length) throw new Error('contato LMG sem triângulos de arma');
+
+  const pontos = new Map();
+  cena.traverse((mesh) => {
+    if (!mesh.isSkinnedMesh) return;
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    if (!materials.some((material) => /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i.test(material?.name || ''))) return;
+    const pos = mesh.geometry?.attributes?.position;
+    const indices = mesh.geometry?.attributes?.skinIndex;
+    const weights = mesh.geometry?.attributes?.skinWeight;
+    if (!pos || !indices || !weights) return;
+    mesh.skeleton.update();
+    const boneNames = mesh.skeleton.bones.map((bone) => bone.name || '');
+    for (let vi = 0; vi < pos.count; vi += 1) {
+      const slots = [
+        [indices.getX(vi), weights.getX(vi)], [indices.getY(vi), weights.getY(vi)],
+        [indices.getZ(vi), weights.getZ(vi)], [indices.getW(vi), weights.getW(vi)],
+      ];
+      const dominante = slots.find(([, weight]) => weight > 0.55);
+      if (!dominante) continue;
+      const boneName = boneNames[dominante[0]] || '';
+      let key = '';
+      for (const [finger, bones] of Object.entries(DEDOS)) for (const side of ['r', 'l']) {
+        if (bones.some((bone) => boneName === `${bone}${side}`)) key = `${finger}_${side}`;
+      }
+      if (!key) continue;
+      const point = new THREE.Vector3().fromBufferAttribute(pos, vi);
+      mesh.applyBoneTransform(vi, point);
+      point.applyMatrix4(mesh.matrixWorld).applyMatrix4(productInverse);
+      if (!pontos.has(key)) pontos.set(key, []);
+      pontos.get(key).push(point);
+    }
+  });
+  const closest = new THREE.Vector3();
+  const result = {};
+  for (const [key, vertices] of pontos) {
+    let best = Infinity;
+    for (const point of vertices) for (const triangle of triangulos) {
+      triangle.closestPointToPoint(point, closest);
+      best = Math.min(best, closest.distanceTo(point));
+    }
+    result[key] = +(best * 1000).toFixed(2);
+  }
+  idleMixer?.stopAllAction();
+  idleMixer?.uncacheRoot(cena);
+  return result;
+};
+
+const limiteContato = (finger) => /^(?:minimo|polegar)_/.test(finger) ? 16 : 8;
+const contatoIdleMm = medeContatoDedos(gltf);
+check(Object.keys(contatoIdleMm).length === 10, `contato mediu ${Object.keys(contatoIdleMm).length}/10 dedos`);
+for (const [finger, mm] of Object.entries(contatoIdleMm)) {
+  const limit = limiteContato(finger);
+  check(mm <= limit, `contato ${finger} ${mm.toFixed(1)} mm (> ${limit} mm)`);
+}
+
+const contaTriangulosMangaProximal = (document) => {
+  const cloth = document.scene.getObjectByName('GEO_FP_SK_Cloth_01');
+  const index = cloth?.geometry?.index;
+  const indices = cloth?.geometry?.attributes?.skinIndex;
+  const weights = cloth?.geometry?.attributes?.skinWeight;
+  if (!cloth?.isSkinnedMesh || !index || !indices || !weights) return Infinity;
+  const boneNames = cloth.skeleton.bones.map((bone) => bone.name || '');
+  const dominantBone = (vertex) => {
+    const slots = [
+      [indices.getX(vertex), weights.getX(vertex)], [indices.getY(vertex), weights.getY(vertex)],
+      [indices.getZ(vertex), weights.getZ(vertex)], [indices.getW(vertex), weights.getW(vertex)],
+    ];
+    return boneNames[slots.reduce((best, slot) => slot[1] > best[1] ? slot : best)[0]] || '';
+  };
+  let total = 0;
+  for (let offset = 0; offset + 2 < index.count; offset += 3) {
+    if ([0, 1, 2].some((lane) => /^(?:upperarm_twist_01|lowerarm)_[lr]$/.test(dominantBone(index.getX(offset + lane))))) total += 1;
+  }
+  return total;
+};
+const triangulosMangaProximal = contaTriangulosMangaProximal(gltf);
+check(triangulosMangaProximal === 0, `manga ainda traz ${triangulosMangaProximal} triângulos proximais que dominam o quadro`);
+
 const mixer = new THREE.AnimationMixer(scene);
+const productScale = scene.getObjectByName('VM_PRODUCT_LMG')
+  ?.getWorldScale(new THREE.Vector3()).x || 1;
 const sample = (name, count = 50) => {
   const clip = clips.get(name); if (!clip) return [];
   mixer.stopAllAction(); const action = mixer.clipAction(clip).reset().play(); const rows = [];
@@ -80,9 +205,9 @@ const sample = (name, count = 50) => {
   }
   action.stop(); mixer.update(0); return rows;
 };
-const excursion = (rows, key) => rows.length ? Math.max(...rows.map((row) => row[key].distanceTo(rows[0][key]))) : 0;
-const endpoint = (rows, key) => rows.length ? rows.at(-1)[key].distanceTo(rows[0][key]) : Infinity;
-const drift = (rows, key) => rows.length ? +(Math.max(...rows.map((row) => row[key].distanceTo(row.gun))) - Math.min(...rows.map((row) => row[key].distanceTo(row.gun)))).toFixed(4) : null;
+const excursion = (rows, key) => rows.length ? Math.max(...rows.map((row) => row[key].distanceTo(rows[0][key]))) / productScale : 0;
+const endpoint = (rows, key) => rows.length ? rows.at(-1)[key].distanceTo(rows[0][key]) / productScale : Infinity;
+const drift = (rows, key) => rows.length ? +((Math.max(...rows.map((row) => row[key].distanceTo(row.gun))) - Math.min(...rows.map((row) => row[key].distanceTo(row.gun)))) / productScale).toFixed(4) : null;
 const metrics = {};
 for (const name of required) {
   const rows = sample(name);
@@ -135,10 +260,16 @@ check(metrics.inspect?.gunEndpoint <= 0.01, 'inspect não fecha no idle');
 check(metrics.inspect?.rightGripDrift <= 0.02, 'inspect rompe contato da mão forte');
 const mutants = [];
 const freezeTracks = (copy, clipPattern, trackPattern) => {
+  let frozen = 0;
   for (const clip of copy.animations.filter((candidate) => clipPattern.test(candidate.name))) for (const track of clip.tracks.filter((candidate) => trackPattern.test(candidate.name))) {
     const stride = track.values.length / track.times.length;
     for (let offset = stride; offset < track.values.length; offset += stride) for (let lane = 0; lane < stride; lane += 1) track.values[offset + lane] = track.values[lane];
+    frozen += 1;
   }
+  return frozen;
+};
+const requireFreeze = (copy, clipPattern, trackPattern) => {
+  if (!freezeTracks(copy, clipPattern, trackPattern)) throw new Error(`mutação não aplicou: ${clipPattern}/${trackPattern}`);
 };
 const sampleOf = (copy, name, nodeName, count = 50) => {
   const clip = copy.animations.find((candidate) => candidate.name === name); const node = copy.scene.getObjectByName(nodeName);
@@ -169,14 +300,23 @@ await mutant('sem-sight', (copy) => copy.scene.getObjectByName('SOCKET_MINT_SIGH
 await mutant('sem-arma', (copy) => copy.scene.getObjectByName('GEO_WEAPON_LMG_MGX5')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('GEO_WEAPON_LMG_MGX5'));
 await mutant('sem-caixa', (copy) => copy.scene.getObjectByName('MINT_AMMO_LMG_BOX')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_AMMO_LMG_BOX'));
 await mutant('sem-marker', (copy) => copy.scene.getObjectByName('MINT_WEAPON_LMG')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_WEAPON_LMG'));
-await mutant('cinto-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^MINT_AMMO_LMG_BELT\./), (copy) => trackMotion(copy, 'shoot', 'MINT_AMMO_LMG_BELT.position') < 0.5);
-await mutant('caixa-congelada', (copy) => freezeTracks(copy, /^reload_tactical$/, /^MINT_AMMO_LMG_BOX\./), (copy) => travelOf(copy, 'reload_tactical', 'MINT_AMMO_LMG_BOX') < 8);
-await mutant('tampa-congelada', (copy) => freezeTracks(copy, /^reload_empty$/, /^MINT_MECH_LMG_COVER\./), (copy) => rotationOf(copy, 'reload_empty', 'MINT_MECH_LMG_COVER') < 45);
+await mutant('cinto-congelado', (copy) => requireFreeze(copy, /^shoot$/, /^MINT_AMMO_LMG_BELT\./), (copy) => trackMotion(copy, 'shoot', 'MINT_AMMO_LMG_BELT.position') < 0.5);
+await mutant('caixa-congelada', (copy) => requireFreeze(copy, /^reload_tactical$/, /^MINT_AMMO_LMG_BOX\./), (copy) => travelOf(copy, 'reload_tactical', 'MINT_AMMO_LMG_BOX') < 8);
+await mutant('tampa-congelada', (copy) => requireFreeze(copy, /^reload_empty$/, /^MINT_MECH_LMG_COVER\./), (copy) => rotationOf(copy, 'reload_empty', 'MINT_MECH_LMG_COVER') < 45);
 // Mutantes do defeito que fechou esta arma: as peças voltando a viajar soltas.
 await mutant('tampa-arrancada', (copy) => scaleTranslation(copy, /^reload_tactical$/, 'MINT_MECH_LMG_COVER', 60), (copy) => travelOf(copy, 'reload_tactical', 'MINT_MECH_LMG_COVER') > 1);
 await mutant('caixa-fora-de-quadro', (copy) => scaleTranslation(copy, /^reload_empty$/, 'MINT_AMMO_LMG_BOX', 4), (copy) => travelOf(copy, 'reload_empty', 'MINT_AMMO_LMG_BOX') > 18);
 await mutant('bandeja-arrancada', (copy) => scaleTranslation(copy, /^reload_empty$/, 'MINT_MECH_LMG_FEED_TRAY', 60), (copy) => travelOf(copy, 'reload_empty', 'MINT_MECH_LMG_FEED_TRAY') > 1);
-await mutant('apoio-congelado', (copy) => freezeTracks(copy, /^reload_tactical$/, /^(clavicle|upperarm|lowerarm|hand)_l\./), (copy) => sampleOf(copy, 'reload_tactical', 'hand_l') < 0.15);
-await mutant('inspect-parado', (copy) => freezeTracks(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.quaternion') < 0.02);
-console.log(`VM_HEAVY_LMG=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mechanism, mutants, failures })}`);
+await mutant('apoio-congelado', (copy) => requireFreeze(copy, /^reload_tactical$/, /^(clavicle|upperarm|lowerarm|hand)_l\./), (copy) => sampleOf(copy, 'reload_tactical', 'hand_l') < 0.15);
+await mutant('inspect-parado', (copy) => requireFreeze(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.quaternion') < 0.02);
+await mutant('solta-mao-esquerda', () => {}, (copy) => Object.entries(medeContatoDedos(copy, 'left')).some(([finger, mm]) => finger.endsWith('_l') && mm > limiteContato(finger)));
+await mutant('solta-mao-direita', () => {}, (copy) => Object.entries(medeContatoDedos(copy, 'right')).some(([finger, mm]) => finger.endsWith('_r') && mm > limiteContato(finger)));
+await mutant('manga-proximal-reintroduzida', (copy) => {
+  const cloth = copy.scene.getObjectByName('GEO_FP_SK_Cloth_01');
+  const vertex = cloth.geometry.index.getX(0);
+  const upperarm = cloth.skeleton.bones.findIndex((bone) => bone.name === 'upperarm_twist_01_l');
+  cloth.geometry.attributes.skinIndex.setXYZW(vertex, upperarm, 0, 0, 0);
+  cloth.geometry.attributes.skinWeight.setXYZW(vertex, 1, 0, 0, 0);
+}, (copy) => contaTriangulosMangaProximal(copy) > 0);
+console.log(`VM_HEAVY_LMG=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mechanism, contatoIdleMm, triangulosMangaProximal, mutants, failures })}`);
 if (failures.length) process.exitCode = 1;
