@@ -1105,10 +1105,8 @@ export function buildEscadao(scene, T) {
   }
 
   /* ===================== SPAWNS ===================== */
-  // A parede continua cortando a visada da casa central. No alto, os slots recuam 1,5 m
-  // para o corpo concluir a primeira curva antes de procurar o ramal; embaixo, a posição
-  // original preserva o abrigo comprovado. No A/B de 60 s × 9 sementes, junto do objetivo
-  // de rua desafogado abaixo, os quatro cenários ficam abaixo do teto de travamento.
+  // Preserva o abrigo baixo e recua o spawn alto 1,5 m para liberar a primeira curva.
+  // O A/B de 60 s × 9 sementes fica abaixo do teto nos quatro cenários.
   const spawns = {
     E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: 0 })),
     B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -35.5, yaw: Math.PI })),
@@ -1120,9 +1118,8 @@ export function buildEscadao(scene, T) {
     { id: 'R', label: 'MIRANTE',     x: 7,   z: -25 },
     { id: 'E', label: 'PATAMAR 2',   x: -7,  z: 1.5 },
     { id: 'P', label: 'PATAMAR 1',   x: 7,   z: 9 },
-    // A bandeira da rua fica no bolsão oeste aberto, fora do corredor de 1,2 m da
-    // proteção do spawn. Continua alternada e coberta pelas três rotas, mas deixa
-    // 5×5 e 8×8 ocuparem o objetivo sem empilhar a navegação na única abertura.
+    // O bolsão oeste mantém as três rotas e tira 5×5/8×8 do corredor protegido
+    // do spawn, sem empilhar a navegação na única abertura.
     { id: 'B', label: 'RUA',         x: -14, z: 28 },
   ];
 
