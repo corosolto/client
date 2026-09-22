@@ -710,3 +710,29 @@ G3SG1 sobre a gramática AR KINEMATION, preservando suas malhas e mecanismos;
 depois migrar `m92`, `akm`, `g3` e `awp` do metarig. Cada promoção exige gate
 causal/mutante, lifecycle, enquadramento nas duas proporções e capturas reais
 antes de revisão humana. Nenhuma candidata está aprovada.
+
+### Marco de ações DMR — 22/09/2026 01:00 WEST
+
+As lacunas de ação da Rem700 e G3SG1 foram fechadas como candidatas, ainda sem
+aprovação humana. A receita `dmr-action-contract.mjs` clona os 201 canais do
+`idle` para preservar a pose inteira das mãos e adiciona movimento autorado no
+root; um clipe isolado apenas de root faria o rig cair na bind pose. A Rem700
+passa a ter `inspect` (excursão 7,92 cm, endpoint 0); a G3SG1 passa a ter
+`shoot` (3,34 cm, endpoint 0) e `inspect` (7,92 cm, endpoint 0).
+
+Produtos privados candidatos: Rem700 `8e16a7e8…` (4.695.400 bytes) e G3SG1
+`3334e5a2…` (4.080.224 bytes). O gate DMR passou nove mutantes por arma,
+incluindo remoção específica de shoot/inspect, e preservou ferrolho, pente,
+alavanca, materiais, sockets e alinhamento idle. O lifecycle combinado passou
+11/11 controles, 30 ciclos por arma e 1.020 amostras em 3:2/16:9. O contrato
+do arsenal agora fica vermelho apenas pelos quatro rigs legados: M92, AKM, G3
+e AWP.
+
+A captura no jogo real produziu 36 PNGs em 1440×960 e 1440×810, sem erro fatal,
+mais folhas de contato. Evidência privada:
+`evidence/dmr-actions-20260922-0055`; `capture.json` SHA-256
+`1b1e080774363c49e59ef48b49b046c2d1d8688879beb73519b474762cb8e354`.
+A inspeção técnica não encontrou peça desaparecida nem quebra entre aspectos,
+mas Rem700 e G3SG1 continuam reprovadas pela régua de enquadramento/escala e o
+contato/pose das mãos ainda exige julgamento humano. `ready:false` e flags de
+família/global permanecem desligadas.

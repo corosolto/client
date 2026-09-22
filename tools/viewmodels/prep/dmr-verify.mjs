@@ -46,7 +46,7 @@ const ARSENAL = {
     glb: path.join(ASSET_ROOT, manifest.candidates.rem700.file),
     sha256: manifest.candidates.rem700.sha256,
     len: 1.15,
-    clipes: ['idle', 'shoot', 'reload_start', 'reload_loop', 'reload_end', 'reload_empty'],
+    clipes: ['idle', 'shoot', 'reload_start', 'reload_loop', 'reload_end', 'reload_empty', 'inspect'],
     mecanismo: 'bolt',
     material: 'rem700 Material',
     imagemCor: 'Color_a6cfeee8-6ed7-47e5-9a2c-4228c5baa77e',
@@ -54,12 +54,13 @@ const ARSENAL = {
     // O splice precisa reproduzi-los quando o runtime aplica idle@t0.
     referenciaIdle: { centro: [-0.0469, 1.5641, -0.0091], eixoMaior: 2, tolerancia: 0.08 },
     mecanismos: [{ parte: 'MINT_BOLT_REM700', clipe: 'shoot', min: 0.03, maxVerts: 2000 }],
+    acoes: [{ nome: 'inspect', no: 'RIG_FP_ARMS', min: 0.05, endpoint: 0.005 }],
   },
   g3sg1: {
     glb: path.join(ASSET_ROOT, manifest.candidates.g3sg1.file),
     sha256: manifest.candidates.g3sg1.sha256,
     len: 1.12,
-    clipes: ['idle', 'reload_tactical', 'reload_empty'],
+    clipes: ['idle', 'shoot', 'reload_tactical', 'reload_empty', 'inspect'],
     mecanismo: 'mag',
     material: 'Matte Scope Marksman Material',
     imagemCor: 'Color_edb9974f-fbad-42fd-b4fd-c91f1c470759',
@@ -69,7 +70,11 @@ const ARSENAL = {
       // alavanca de armar (HK slap no fim do reload_empty)
       { parte: 'MINT_ALAVANCA_G3SG1', clipe: 'reload_empty', min: 0.008, maxVerts: 400 },
     ],
-    proibidos: ['shoot', 'reload_start', 'reload_loop', 'reload_end'],
+    proibidos: ['reload_start', 'reload_loop', 'reload_end'],
+    acoes: [
+      { nome: 'shoot', no: 'RIG_FP_ARMS', min: 0.02, endpoint: 0.005 },
+      { nome: 'inspect', no: 'RIG_FP_ARMS', min: 0.05, endpoint: 0.005 },
+    ],
   },
 };
 
@@ -159,7 +164,28 @@ function inspeciona(gltf, cfg, arma) {
     mixer.setTime(0);
     cena.updateMatrixWorld(true);
   }
-  const resultado = { mecanismos: [] };
+  const resultado = { mecanismos: [], acoes: [] };
+
+  // Ação autorada: mede o root do rig em mundo para provar leitura/recuo e
+  // retorno à pose inicial. Só a presença nominal do clipe não basta.
+  for (const acao of cfg.acoes || []) {
+    const alvo = cena.getObjectByName(acao.no);
+    const clipe = clipes.get(acao.nome);
+    if (!check(Boolean(alvo && clipe), `${arma}: ação ${acao.nome} sem ${acao.no}/clipe`)) continue;
+    const mixer = new THREE.AnimationMixer(cena);
+    mixer.clipAction(clipe).reset().play();
+    const pontos = [];
+    for (let i = 0; i <= 40; i += 1) {
+      mixer.setTime(clipe.duration * i / 40);
+      cena.updateMatrixWorld(true);
+      pontos.push(alvo.getWorldPosition(new THREE.Vector3()));
+    }
+    const excursao = Math.max(...pontos.map((p) => p.distanceTo(pontos[0])));
+    const endpoint = pontos.at(-1).distanceTo(pontos[0]);
+    check(excursao >= acao.min, `${arma}: ${acao.nome} sem movimento autorado (${excursao.toFixed(4)} m)`);
+    check(endpoint <= acao.endpoint, `${arma}: ${acao.nome} não fecha no idle (${endpoint.toFixed(4)} m)`);
+    resultado.acoes.push({ nome: acao.nome, excursao: +excursao.toFixed(4), endpoint: +endpoint.toFixed(4) });
+  }
 
   // tamanho real e sockets na pose idle@t0 (a bind pose não é enquadrável).
   const mintNode = cena.getObjectByName(`MINT_WEAPON_${arma.toUpperCase()}`);
@@ -276,6 +302,8 @@ function mutaDocumentoEGuarda(descricao, aplicar, cfg, arma) {
 
 const MUTANTES = {
   remove_clipe: (g) => { g.animations.splice(0, 1); if (g.animations.length === 0) g.animations.push({ name: 'x', duration: 0 }); },
+  remove_inspect: (g) => { g.animations = g.animations.filter((clip) => clip.name !== 'inspect'); },
+  remove_shoot: (g) => { g.animations = g.animations.filter((clip) => clip.name !== 'shoot'); },
   renomeia_mint: (g) => { const n = g.scene.getObjectByName('MINT_WEAPON_REM700') || g.scene.getObjectByName('MINT_WEAPON_G3SG1'); if (!n) throw new Error('mutação não aplicou'); n.name = 'X'; },
   tira_camera: (g) => { const c = g.scene.children.find((o) => o.isPerspectiveCamera); if (!c) throw new Error('mutação não aplicou'); c.fov = 40; },
   desloca_socket: (g) => { const s = g.scene.getObjectByName('SOCKET_MINT_MUZZLE'); if (!s) throw new Error('mutação não aplicou'); s.translateX(0.2); },

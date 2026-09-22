@@ -45,8 +45,10 @@ for (const [weapon, candidate] of Object.entries(candidates)) {
   const stat = await fs.stat(file).catch(() => null);
   if (!stat?.isFile()) throw new Error(`${weapon}: candidato privado ausente em ${file}`);
   const actual = await sha256(file);
-  const expectedBytes = candidate.optimizedBytes ?? candidate.bytes;
-  const expectedSha256 = candidate.optimizedSha256 ?? candidate.sha256;
+  // `bytes`/`sha256` são o produto final depois de reparos de socket e ações.
+  // `optimized*` registra a etapa anterior e não pode bloquear o preview final.
+  const expectedBytes = candidate.bytes ?? candidate.optimizedBytes;
+  const expectedSha256 = candidate.sha256 ?? candidate.optimizedSha256;
   if (stat.size !== expectedBytes || actual !== expectedSha256) {
     throw new Error(`${weapon}: candidato divergiu do manifesto (${stat.size} bytes; ${actual})`);
   }

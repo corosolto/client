@@ -89,6 +89,7 @@
     "eval:vm-precision-lifecycle": "node tools/eval/viewmodel-precision-lifecycle-check.mjs",
     "eval:vm-dmr-tools": "node tools/eval/viewmodel-dmr-tools-check.mjs",
     "eval:vm-dmr-assets": "node tools/viewmodels/prep/dmr-verify.mjs",
+    "eval:vm-dmr-lifecycle": "node tools/eval/viewmodel-dmr-lifecycle-check.mjs",
     "eval:vm-rifle-m4": "node tools/viewmodels/prep/rifles-m4-verify.mjs",
     "eval:vm-rifle-md97": "node tools/viewmodels/prep/rifles-md97-verify.mjs",
     "eval:vm-rifle-scar": "node tools/viewmodels/prep/rifles-scar-verify.mjs",

@@ -18,7 +18,7 @@ const records = [];
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const ARSENAL = {
   rem700: { familia: 'bolt', recarga: ['reload_loop', 'reload_end'], tiros: [0.3, 0.6] },
-  g3sg1: { familia: 'g3', recarga: ['reload_tactical'], tiros: [] },
+  g3sg1: { familia: 'g3', recarga: ['reload_tactical'], tiros: [0.05, 0.11] },
 };
 
 const gRoot = execSync('npm root -g').toString().trim();
@@ -99,6 +99,18 @@ for (const [arma, cfg] of Object.entries(ARSENAL)) {
         }, { w: arma, n: nome, t: fr });
         await snap(`${nome}-t${(fr * 100) | 0}`);
       }
+    }
+
+    // Inspect: prova a nova ação autorada e seu retorno, nas duas proporções.
+    for (const fraction of [0.55, 0.99]) {
+      await page.evaluate(({ w, fraction: f }) => {
+        const e = window.__authoredVm.entry(w);
+        const clip = e.clips.get('inspect');
+        const a = e.mixer.clipAction(clip);
+        a.paused = true; a.play(); a.time = Math.min(f * clip.duration, clip.duration - 1e-4);
+        e.action = a; e.mixer.update(0);
+      }, { w: arma, fraction });
+      await snap(`inspect-t${(fraction * 100) | 0}`);
     }
 
     // ADS: alça no eixo óptico via setAim
