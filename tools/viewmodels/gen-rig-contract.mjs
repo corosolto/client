@@ -4,9 +4,9 @@
  *
  * O padrão da indústria é um esqueleto de braços para o jogo inteiro: exporta-se
  * a malha de braços uma vez e toda arma é skinada usando apenas os ossos que já
- * existem nele. O nosso catálogo tem DOIS rigs — 19 armas no KINEMATION e cinco
- * (akm, awp, g3, m400, m92) num `*_metarig` herdado do pacote golden da AK, com
- * zero ossos em comum. Enquanto isso durar, nenhuma régua produz consistência:
+ * existem nele. O nosso catálogo ainda tem DOIS rigs — a maioria no KINEMATION e quatro
+ * (akm, awp, g3, m92) num `*_metarig` herdado do pacote golden da AK, com zero
+ * ossos em comum. Enquanto isso durar, nenhuma régua produz consistência:
  * ela só mede melhor a inconsistência.
  *
  * O contrato não é inventado: sai da INTERSEÇÃO dos ossos de braço das armas do
@@ -65,9 +65,11 @@ const contrato = {
     // fora da obrigação porque várias famílias tomam o saque do pacote General
     // compartilhado em runtime, e não do próprio produto.
     obrigatorias: ['idle', 'shoot', 'inspect'],
-    // Recarga aceita dois mecanismos: pente único ou carga unitária em laço.
-    recarga: { umDe: [['reload_tactical'], ['reload_start', 'reload_loop', 'reload_end']] },
-    opcionais: ['equip_rifle', 'reload_empty'],
+    // Recarga aceita três catálogos equivalentes: vazia, tática ou carga
+    // unitária em laço. O revólver sempre recarrega vazio e não deve precisar
+    // mentir que possui um pente tático para satisfazer o contrato comum.
+    recarga: { umDe: [['reload_empty'], ['reload_tactical'], ['reload_start', 'reload_loop', 'reload_end']] },
+    opcionais: ['equip_rifle'],
   },
 };
 fs.writeFileSync(path.join(ROOT, 'tools/viewmodels/rig-contract.json'), `${JSON.stringify(contrato, null, 2)}\n`);

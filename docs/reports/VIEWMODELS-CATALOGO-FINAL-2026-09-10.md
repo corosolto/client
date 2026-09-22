@@ -671,3 +671,42 @@ seguem `ready:false` com ativação global desligada, e a pendência de contato 
 mão de apoio nas recargas continua aberta para o arsenal inteiro. O próximo marco
 é a etapa 5 da ordem de integração — regressão cruzada, duas proporções, HUD,
 terceira pessoa, build limpo e revisão adversarial —, ainda não executada.
+
+## Checkpoint de continuidade — 22/09/2026 01:48 WEST
+
+A branch `codex/viewmodels-catalog-final` foi reconciliada por merge com
+`origin/main@7bb2707ef576260b30ceb88c5973b9f6618684cd` sem descartar os checkpoints
+do catálogo. O primeiro commit publicado após a reconciliação é
+`2e44edaef7f1e8a5f45df5954d3f4c3e140281d7`; `check:deploy` passou 40/40 sobre
+a versão `alpha.261`. O PR #572 continua Draft, mergeável, sem `ready:true` e
+sem ativação de família ou global.
+
+O preview privado estava atrasado em relação ao manifesto em dois produtos. Ele
+foi reparado fora do Git, com cópia de segurança do produto anterior:
+
+- M400 promovida para o piloto KINEMATION `f75e4625…` (1.537.064 bytes), com
+  55/55 ossos, três camadas de mãos, seis ações, recargas com excursão 0,3285 m
+  e retorno 0; lifecycle 10/10, 30 ciclos/540 amostras. A M400 também passa a
+  régua de enquadramento (1,006× em 3:2, 0,970× em 16:9, 95,3% visível);
+- LMG restaurada no preview pelo produto fixado `2afc8c26…` (6.601.448 bytes),
+  gate causal verde com 13/13 mutantes e lifecycle 13/13, 30 ciclos/600
+  amostras.
+
+O contrato comum de recarga foi corrigido para reconhecer `reload_empty` como
+uma recarga completa válida. Isso remove o falso vermelho do Revólver .38, cujo
+produto já prova tambor, extrator, cão e gatilho na recarga vazia. O gerador e o
+JSON congelado continuam concordando.
+
+Estado causal corrente de `eval:vm-rig`: 24 produtos privados localizados; 20
+estão no rig KINEMATION. Restam quatro produtos inteiramente no rig legado
+(`m92`, `akm`, `g3`, `awp`) e três lacunas reais de ações (`rem700`: inspect;
+`g3sg1`: shoot e inspect). `eval:vm-frame` agora mede todas as 24 candidatas,
+mas continua vermelho por enquadramento/escala/ordem dos sockets em várias
+famílias; esse vermelho é pendência de produção, não autorização para ligar o
+catálogo.
+
+Próximo passo sequencial: reautorar Rem700 sobre a gramática bolt KINEMATION e
+G3SG1 sobre a gramática AR KINEMATION, preservando suas malhas e mecanismos;
+depois migrar `m92`, `akm`, `g3` e `awp` do metarig. Cada promoção exige gate
+causal/mutante, lifecycle, enquadramento nas duas proporções e capturas reais
+antes de revisão humana. Nenhuma candidata está aprovada.

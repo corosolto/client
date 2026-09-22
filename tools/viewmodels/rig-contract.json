@@ -78,6 +78,9 @@
     "recarga": {
       "umDe": [
         [
+          "reload_empty"
+        ],
+        [
           "reload_tactical"
         ],
         [
@@ -88,8 +91,7 @@
       ]
     },
     "opcionais": [
-      "equip_rifle",
-      "reload_empty"
+      "equip_rifle"
     ]
   }
 }
