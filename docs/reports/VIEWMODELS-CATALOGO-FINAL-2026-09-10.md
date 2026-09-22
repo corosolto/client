@@ -1003,5 +1003,7 @@ O gate causal passa 12 mutantes; o lifecycle passa 11/11 controles, 30 ciclos e
 em 3:2/16:9, incluindo ADS ativo, com zero erro fatal, em
 `evidence/shotgun-product-final-20260922`. Recibo:
 [`VIEWMODEL-HEAVY-SHOTGUN-PRODUCT-FIRST-2026-09-22.md`](VIEWMODEL-HEAVY-SHOTGUN-PRODUCT-FIRST-2026-09-22.md).
+A integração é `3d816f8d7`; o preview imutável é
+`preview-snapshots/3d816f8d7-6c6c1ba3`.
 A candidata segue `ready:false`, família/global off e aguarda revisão humana.
 PT-38 permaneceu intocada.

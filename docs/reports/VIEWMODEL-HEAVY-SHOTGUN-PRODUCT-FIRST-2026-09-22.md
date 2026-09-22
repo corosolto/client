@@ -41,6 +41,8 @@ maquiar dedos afastados nem inflar o movimento dos mecanismos.
   `aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102`;
 - produto: 3.954.632 bytes, SHA-256
   `6c6c1ba3f72d227375650160c911ca72ef798a198a64682558d99c794c431239`;
+- integração: `3d816f8d7`;
+- snapshot imutável: `preview-snapshots/3d816f8d7-6c6c1ba3`;
 - manga: 2.935 → 748 vértices e 5.372 → 1.130 triângulos;
 - receita reproduzível: `tools/viewmodels/prep/shotgun-final.mjs`;
 - produto e texturas permanecem fora do Git.
