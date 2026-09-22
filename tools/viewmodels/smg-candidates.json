@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "base": "origin/main@5c2c5c93e32d0dcc96abbdc93e5ae9c767054fed",
+  "candidates": {
+    "mp5": {
+      "displayName": "MP5 BATIDÃO",
+      "family": "mp5",
+      "file": "viewmodels/mp5/mp5-runtime.glb",
+      "sourceSha256": "c623f27ccc2ca163f9d7b4bb94524ff9bf8b69b805fdafba2fb913e8c1a6382d",
+      "sourceBytes": 281500,
+      "productSha256": "ac4630c4941b33e626ebbee61071c3b5c558de24647338da87da32346cba9903",
+      "productBytes": 1550620,
+      "sha256": "ac4630c4941b33e626ebbee61071c3b5c558de24647338da87da32346cba9903",
+      "bytes": 1550620,
+      "mechanism": "curved-mag/release/charging-handle/bolt/trigger",
+      "ready": false,
+      "sourceBranch": "public/models/weapons/mp5.glb + private g3-kinemation checkpoint",
+      "sourceCommit": null,
+      "rebuild": "tools/viewmodels/prep/smg-mp5-kinemation.py",
+      "foundationSha256": "35f3d2daf6c83096b33b8e1178220ebf6b7b268d1a8017acd376d65a078e0c21",
+      "foundationBytes": 1827612
+    },
+    "uzi": {
+      "displayName": "UZI RA-TA-TA",
+      "family": "smg",
+      "file": "viewmodels/smg/uzi-baked-runtime.glb",
+      "sourceSha256": "213b06a54610f35bf7315d6e85946604688315b9074f01f6040c2c33b3cf5edd",
+      "sourceBytes": 271280,
+      "foundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102",
+      "foundationBytes": 3764304,
+      "productSha256": "353d0384ec60a0e6ffc99ef38b5092a5773c2562e2e4bc401adef1228ef0a9fc",
+      "productBytes": 4267588,
+      "sha256": "353d0384ec60a0e6ffc99ef38b5092a5773c2562e2e4bc401adef1228ef0a9fc",
+      "bytes": 4267588,
+      "mechanism": "detachable-mag/top-bolt/trigger",
+      "ready": false,
+      "sourceBranch": "private-generated/viewmodels/smg+public/models/weapons/uzi.glb",
+      "sourceCommit": null,
+      "rebuild": "tools/viewmodels/prep/smg-uzi-final.mjs"
+    },
+    "p90": {
+      "displayName": "P90 CHINELÃO",
+      "family": "p90",
+      "file": "viewmodels/p90/p90-baked-runtime.glb",
+      "sourceSha256": "6fda87809ab60e1fea7a1e7bf5ebc5355e6ee70d595f7c4610ed88e847560aa2",
+      "sourceBytes": 254312,
+      "productSha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
+      "productBytes": 1477620,
+      "sha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
+      "bytes": 1477620,
+      "mechanism": "top-mag/dual-release/charger/mechanism/trigger",
+      "ready": false,
+      "sourceBranch": "public/models/weapons/p90.glb + private g3-kinemation checkpoint",
+      "sourceCommit": null,
+      "rebuild": "tools/viewmodels/prep/smg-p90-kinemation.py",
+      "foundationSha256": "35f3d2daf6c83096b33b8e1178220ebf6b7b268d1a8017acd376d65a078e0c21",
+      "foundationBytes": 1827612
+    }
+  }
+}

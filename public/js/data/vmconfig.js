@@ -42,66 +42,74 @@ const W = (family, extra = {}) => ({
 });
 
 export const VM_WEAPON = {
-  awp: W('sniper', { trim: { pos: [0, 0, 0], rotDeg: [0, 15, 0], scale: 1 }, parts: { mag: { peca: true, bone: 'Mag' } } }),
-  // baked: GLB assado OFFLINE com a Mint dentro (pente separado, sockets
-  // nomeados) — o runtime só toca clipes. Caixa MAG: régua eval:cs16.
+  // Produto K (KINEMATION, 67 juntas) assado por arma no catálogo privado:
+  // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
+  awp: W('sniper', { baked: true, frame: 'family' }),
+  // AK: único golden público até o rebuild em K (VM-LAUNCH-K-STATUS.md).
+  // Caixa MAG: régua eval:cs16.
   ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
-  m4: W('ar', { golden: true }),
-  mp5: W('mp5', { golden: true }),
-  shotgun: W('shotgun'),
-  deagle: W('deagle', { recoilScale: 0.45, anchor: 'neutral_bone', namedParts: {
-    magazine: { mesh: 'GEO-deagle-magazine', bone: 'Mag' },
-    slide: { mesh: 'GEO-deagle-slide', bone: 'Slider' },
-    slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
-    hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
-  } }),
-  // NÃO marcar `golden` sem calibrar a escala: o piloto entra 144× maior.
-  // Medição e antes/depois em KNOWN-BUGS.md, BUG-VM-ESCALA-PISTOLA.
+  // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
+  // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
+  m4: W('ar', { baked: true }),
+  mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay',
+    ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  shotgun: W('shotgun', { baked: true, timing: 'gameplay',
+    ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
+  // anchor/namedParts valem só na montagem ao vivo (eval authored-attach-check).
+  deagle: W('deagle', { baked: true, runtime: 'family', timing: 'gameplay', recoilScale: 0.45,
+    anchor: 'neutral_bone', namedParts: {
+      magazine: { mesh: 'GEO-deagle-magazine', bone: 'Mag' },
+      slide: { mesh: 'GEO-deagle-slide', bone: 'Slider' },
+      slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
+      hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
+    } }),
+  // PT-38 congelada a 1,796× do enquadramento da AK (auditoria Codex 22/09).
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
-  /* trim: mão da família ak a 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
-     ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09). */
-  m92: W('ak', { golden: true, ready: false, trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
-  akm: W('ak', { golden: true, ready: false, parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
-  g3: W('g3'),
-  revolver38: W('revolver', { anchor: 'neutral_bone', namedParts: {
-    cartridge0: { mesh: 'GEO-Cartridge0', bone: 'Cartridge0' },
-    cartridge0_Case: { mesh: 'GEO-Cartridge0_Case', bone: 'Cartridge0' },
-    cartridge1: { mesh: 'GEO-Cartridge1', bone: 'Cartridge1' },
-    cartridge1_Case: { mesh: 'GEO-Cartridge1_Case', bone: 'Cartridge1' },
-    cartridge2: { mesh: 'GEO-Cartridge2', bone: 'Cartridge2' },
-    cartridge2_Case: { mesh: 'GEO-Cartridge2_Case', bone: 'Cartridge2' },
-    cartridge3: { mesh: 'GEO-Cartridge3', bone: 'Cartridge3' },
-    cartridge3_Case: { mesh: 'GEO-Cartridge3_Case', bone: 'Cartridge3' },
-    cartridge4: { mesh: 'GEO-Cartridge4', bone: 'Cartridge4' },
-    cartridge4_Case: { mesh: 'GEO-Cartridge4_Case', bone: 'Cartridge4' },
-    cartridge5: { mesh: 'GEO-Cartridge5', bone: 'Cartridge5' },
-    cartridge5_Case: { mesh: 'GEO-Cartridge5_Case', bone: 'Cartridge5' },
-    drum: { mesh: 'GEO-Drum', bone: 'Drum' },
-    drumCore: { mesh: 'GEO-Drum_InnerCore', bone: 'Drum' },
-    ejector: { mesh: 'GEO-Ejector', bone: 'Ejector' },
-    ejectorShaft: { mesh: 'GEO-Ejector_Shaft', bone: 'Ejector' },
-    crane: { mesh: 'GEO-CraneArm_Link', bone: 'CraneArm' },
-    hammer: { mesh: 'GEO-Hammer', bone: 'Hammer' },
-    trigger: { mesh: 'GEO-Trigger', bone: 'Trigger' },
-  } }),
+  // ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09).
+  m92: W('ak', { baked: true, frame: 'family', ready: false }),
+  akm: W('ak', { baked: true, frame: 'family', ready: false }),
+  g3: W('g3', { baked: true, frame: 'family' }),
+  revolver38: W('revolver', { baked: true, runtime: 'family', timing: 'gameplay',
+    anchor: 'neutral_bone', namedParts: {
+      cartridge0: { mesh: 'GEO-Cartridge0', bone: 'Cartridge0' },
+      cartridge0_Case: { mesh: 'GEO-Cartridge0_Case', bone: 'Cartridge0' },
+      cartridge1: { mesh: 'GEO-Cartridge1', bone: 'Cartridge1' },
+      cartridge1_Case: { mesh: 'GEO-Cartridge1_Case', bone: 'Cartridge1' },
+      cartridge2: { mesh: 'GEO-Cartridge2', bone: 'Cartridge2' },
+      cartridge2_Case: { mesh: 'GEO-Cartridge2_Case', bone: 'Cartridge2' },
+      cartridge3: { mesh: 'GEO-Cartridge3', bone: 'Cartridge3' },
+      cartridge3_Case: { mesh: 'GEO-Cartridge3_Case', bone: 'Cartridge3' },
+      cartridge4: { mesh: 'GEO-Cartridge4', bone: 'Cartridge4' },
+      cartridge4_Case: { mesh: 'GEO-Cartridge4_Case', bone: 'Cartridge4' },
+      cartridge5: { mesh: 'GEO-Cartridge5', bone: 'Cartridge5' },
+      cartridge5_Case: { mesh: 'GEO-Cartridge5_Case', bone: 'Cartridge5' },
+      drum: { mesh: 'GEO-Drum', bone: 'Drum' },
+      drumCore: { mesh: 'GEO-Drum_InnerCore', bone: 'Drum' },
+      ejector: { mesh: 'GEO-Ejector', bone: 'Ejector' },
+      ejectorShaft: { mesh: 'GEO-Ejector_Shaft', bone: 'Ejector' },
+      crane: { mesh: 'GEO-CraneArm_Link', bone: 'CraneArm' },
+      hammer: { mesh: 'GEO-Hammer', bone: 'Hammer' },
+      trigger: { mesh: 'GEO-Trigger', bone: 'Trigger' },
+    } }),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
-  md97: W('ar', { golden: true, recoilScale: 1.8 }),
-  /* trim: a mão de apoio flutuava 1,7 cm abaixo do guarda-mão (a ak aprovada mede 0,2). */
-  // Sem `parts`: carabina de ALAVANCA não tem pente; o recorte pegava a alavanca (BUG-90).
-  carbine: W('ar', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
-  m400: W('sniper'),
-  mosin: W('bolt', { golden: true }),
-  rem700: W('bolt'),
-  lmg: W('lmg', { golden: true }),
-  scar: W('ar', { golden: true }),
-  /* trim: mão de apoio a 1,1–1,4 cm do guarda-mão (a ak aprovada mede 0,2). */
-  tavor: W('ar', { trim: { pos: [0, -0.02, 0], rotDeg: [0, 0, 0], scale: 1 } }),
-  famas: W('ar', { golden: true }),
-  uzi: W('smg', { golden: true }),
-  p90: W('p90', { golden: true, recoilScale: 1.6 }),
-  svd: W('svd', { golden: true }),
-  g3sg1: W('marksman'),
-  /* trim: mão de apoio a 1,5 cm do guarda-mão (a ak aprovada mede 0,2). */
-  sks: W('marksman', { golden: true, trim: { pos: [0, -0.025, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+  md97: W('ar', { baked: true, recoilScale: 1.8 }),
+  carbine: W('ar', { baked: true }),
+  m400: W('sniper', { baked: true, frame: 'family' }),
+  mosin: W('bolt', { baked: true }),
+  // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
+  // medido desta base; a câmera embutida do doador não é usada como frame.
+  rem700: W('bolt', { baked: true, frame: 'family' }),
+  lmg: W('lmg', { baked: true, timing: 'gameplay',
+    ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
+  scar: W('ar', { baked: true }),
+  tavor: W('ar', { baked: true }),
+  famas: W('ar', { baked: true }),
+  uzi: W('smg', { baked: true, timing: 'gameplay',
+    ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  p90: W('p90', { baked: true, timing: 'gameplay', recoilScale: 1.6,
+    ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  svd: W('svd', { baked: true }),
+  g3sg1: W('g3', { baked: true, frame: 'family' }),
+  sks: W('marksman', { baked: true }),
 };

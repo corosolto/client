@@ -1,6 +1,12 @@
-import * as THREE from 'three';
-import { AuthoredViewModels } from '../../public/js/authoredvm.js';
-import { readFile } from 'node:fs/promises';
+// Gate de TRANSIÇÃO do caminho autorado: fila de clipes, troca de arma, granada e o
+// split golden (braço×peça) terminam em POSE de idle. O módulo só vive com a chave de
+// lançamento ou `?vmauthored=1`; a janela falsa abre o modo de revisão antes do import.
+globalThis.window = {
+  location: { search: '?vmauthored=1&vmready=deagle,revolver,grenade&vmweapon=deagle,revolver38' },
+};
+const THREE = await import('three');
+const { AuthoredViewModels } = await import('../../public/js/authoredvm.js');
+const { readFile } = await import('node:fs/promises');
 
 function fixture(Runtime, golden) {
   const vm = Object.create(Runtime.prototype);
@@ -9,15 +15,16 @@ function fixture(Runtime, golden) {
   vm._time = 0;
   vm.adsAmount = 0;
   vm.recoil = { update: () => ({ px: 0, py: 0, pz: 0, rx: 0, ry: 0, rz: 0, pivot: [0, 0, 0] }) };
-  for (const [key, idlePosition] of [['deagle', 2], ['revolver', -4], ['grenade', -1]]) {
+  // Arma assada vira `familia#arma`; a granada é procurada pela família crua.
+  for (const [key, weapon, idlePosition] of [['deagle#deagle', 'deagle', 2], ['revolver#revolver38', 'revolver38', -4], ['grenade', 'grenade', -1]]) {
     const mount = new THREE.Group(), bone = new THREE.Bone();
     bone.name = 'hand';
     mount.add(bone);
-    mount.visible = key === 'deagle';
+    mount.visible = weapon === 'deagle';
     const clip = (name, end) => new THREE.AnimationClip(name, 0.2, [
       new THREE.VectorKeyframeTrack('hand.position', [0, 0.2], [idlePosition, 0, 0, end, 0, 0]),
     ]);
-    const entry = { key, family: key, golden, mount, scene: mount, bone, idlePosition,
+    const entry = { key, family: key.split('#')[0], weapon, golden, mount, scene: mount, bone, idlePosition,
       mixer: new THREE.AnimationMixer(mount),
       clips: new Map([['idle', clip('Idle', idlePosition)], ['reload', clip('Reload', 8)],
         ['end', clip('End', 5)], ...['throw_start', 'throw_loop', 'throw_end'].map(name => [name, clip(name, 8)])]),
@@ -121,7 +128,7 @@ function audit(Runtime) {
   }
   for (const golden of [true, false]) {
     for (const frames of [10, 20, 30, 40, 43, 48]) {
-      const vm = fixture(Runtime, golden), original = vm.entry(), other = vm.entries.get('revolver');
+      const vm = fixture(Runtime, golden), original = vm.entry(), other = vm.entries.get('revolver#revolver38');
       vm._sequence(original, ['reload', 'end'], 0.4);
       advance(vm, frames);
       const before = snapshot(original), switched = vm.setWeapon('revolver38'), hidden = snapshot(original);

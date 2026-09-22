@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "base": "origin/main@5c2c5c93e32d0dcc96abbdc93e5ae9c767054fed",
+  "candidates": {
+    "pistol": {
+      "displayName": "PT-38",
+      "family": "pistol",
+      "file": "viewmodels/pistol/pistol-runtime.glb",
+      "sourceSha256": "edb77908eadffd90fa3c2152ac00386372bf3002d20fb2c4d324d15ddad17e05",
+      "sourceBytes": 3005712,
+      "productSha256": "04c126d93148f9cf0ffa07927f4d09cde2067d9abbc9ddcd25d3b811923fa3b8",
+      "productBytes": 3006796,
+      "sha256": "04c126d93148f9cf0ffa07927f4d09cde2067d9abbc9ddcd25d3b811923fa3b8",
+      "bytes": 3006796,
+      "mechanism": "detachable-mag/reciprocating-slider/trigger/cartridge",
+      "ready": false,
+      "sourceBranch": "glm/vm-controles-final",
+      "sourceCommit": "8b31f5dce5",
+      "rebuild": "tools/viewmodels/prep/pistols-pt38-final.mjs + optimize_paid_family.mjs"
+    },
+    "deagle": {
+      "displayName": "DEAGLE MARTELO",
+      "family": "deagle",
+      "file": "viewmodels/deagle/deagle-runtime.glb",
+      "sourceSha256": "9716c72881076b8f1cddbdb72d35232a89fcc2c81538f95885156d2bcb0a7ffc",
+      "sourceBytes": 3135164,
+      "productSha256": "d482ff82bceba3690ff4dd5912f95851d538320a55d9d7f37cf56e32fd2c64a4",
+      "productBytes": 3246776,
+      "sha256": "d482ff82bceba3690ff4dd5912f95851d538320a55d9d7f37cf56e32fd2c64a4",
+      "bytes": 3246776,
+      "mechanism": "detachable-mag/reciprocating-slider/trigger/hammer",
+      "ready": false,
+      "sourceBranch": "claude/vm-unificado",
+      "sourceCommit": "012add17b",
+      "rebuild": "tools/viewmodels/prep/pistols-deagle-final.mjs"
+    },
+    "revolver38": {
+      "displayName": "REVÓLVER .38 TROVÃO",
+      "family": "revolver",
+      "file": "viewmodels/revolver/revolver-runtime.glb",
+      "sourceSha256": "ddb088750bbdd4db455aa415ea8b74e59d6178733687f172cdf647d32cec1516",
+      "sourceBytes": 3913292,
+      "productSha256": "c1394590ae640ff32792ac41e78bd3eeca7ccd1163d0a12c071a69d9582bed36",
+      "productBytes": 4074036,
+      "sha256": "c1394590ae640ff32792ac41e78bd3eeca7ccd1163d0a12c071a69d9582bed36",
+      "bytes": 4074036,
+      "mechanism": "swing-out-cylinder/ejector/six-cartridges/hammer/trigger",
+      "ready": false,
+      "sourceBranch": "claude/vm-unificado",
+      "sourceCommit": "012add17b",
+      "rebuild": "tools/viewmodels/prep/pistols-revolver-final.mjs"
+    }
+  }
+}

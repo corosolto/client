@@ -766,7 +766,7 @@ const resultadoEstatico = /--me-art/.test(game)
   && !/video\/resultado|meVideo/.test(game)
   && !/id="me-video"/.test(astro)
   && !/\.me-hero video/.test(css)
-  && /if \(charId\) \{ this\.playerDef = byId\(charId\); this\.playerCharId = charId; p\.def = this\.playerDef; \}/.test(game);
+  && /if \(charId\) \{[\s\S]{0,640}this\.playerCharId = this\.playerDef\.id;[\s\S]{0,80}p\.def = this\.playerDef;[\s\S]{0,20}\}/.test(game);
 const loadingWallpaper = /const loadingWallUrl = \(i\) =>/.test(main)
   && /_lo\.box\.style\.setProperty\('--loading-wall', loadingWallUrl\(_loadWallI\+\+\)\)/.test(main)
   && /splash\.style\.setProperty\('--loading-wall', loadingWallUrl\(_wallK\)\)/.test(main)

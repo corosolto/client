@@ -3,6 +3,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 import { GOLDEN_VER } from './data/goldenver.js';
 import { FAMILY_VER } from './data/weaponver.js';
+import { VM_FRAME } from './data/vmframe.js';
+import { VM_BYTES } from './data/vmbytes.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
@@ -26,20 +28,24 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
 // ?vmfonte=goldsrc: viewmodel dos moldes CS 1.6 (CC0, FONTE.md) com a arma
 // Mint; ?cs16=1 é o atalho que liga todas as famílias + a fonte de uma vez.
 const _QS = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-const CS16_TUDO = _QS?.get('cs16') === '1';
+// Autorado ligado por padrão (#618); `?vmauthored=0` é o kill-switch.
+export const AUTHORED_VM_ENABLED = _QS?.get('vmauthored') !== '0';
+const CS16_TUDO = AUTHORED_VM_ENABLED && _QS?.get('cs16') === '1';
 // ?vmfonte=retarget (?rt=1): braços pagos sobre movimento CS 1.6 retargetado.
 // Evidência e custo da escolha: docs/reports/GOLDEN-AK-DECISION.md.
-const RETARGET_TUDO = _QS?.get('rt') === '1';
+const RETARGET_TUDO = AUTHORED_VM_ENABLED && _QS?.get('rt') === '1';
 const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
 const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
-// Kill-switch global do caminho autorado (?vmauthored=0): tudo cai no legado.
-const AUTHORED_KILLED = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).get('vmauthored') === '0';
+// `vmready`/`vmweapon` abrem armas fora do portão numa sessão de revisão.
+const AUTHORED_KILLED = !AUTHORED_VM_ENABLED;
 
 // Cache de GLTF parseado no nível do módulo: o preload do boot aquece aqui e
 // _loadFamily consome clone — o mesmo download serve qualquer instância de Game.
 const GLTF_CACHE = new Map();
 let skeletonClonePromise = null;
+export function acceptsAuthoredLoad({ request, activeRequest, key, activeKey, utility = false }) {
+  return request === activeRequest && key === activeKey && !utility;
+}
 function loadFamilyGltf(key) {
   if (!GLTF_CACHE.has(key)) {
     GLTF_CACHE.set(key, new GLTFLoader().loadAsync(urlForKey(key)).catch((error) => {
@@ -166,6 +172,9 @@ const _adsBlend = new THREE.Quaternion();
 const _adsForward = new THREE.Vector3();
 const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
+// A linhagem metarig da AK preserva o acabamento aprovado e não recebe o atlas KINEMATION.
+// Causa e medidas: docs/reports/VIEWMODEL-PADRAO-FPS-PROFISSIONAL.md.
+const HAND_MATERIAL_AK_LINEAGE = /CoroSolto_(?:FP_Gloves|Mandrake_Sleeves)/i;
 const CLIP_ALIASES = Object.freeze({
   equip: 'equip_rifle', reload: 'reload_tactical', fire: 'shoot',
   reloadtactical: 'reload_tactical', reloadempty: 'reload_empty',
@@ -206,9 +215,13 @@ const FAMILY_FRAME = Object.freeze({
   ak:      { x: 0.112, y: -0.068, z: -0.199, fov: 84, rotDeg: [0.6, -0.1, -5] },
   ar:      { x: 0.096, y: -0.129, z: -0.198, fov: 84, rotDeg: [-8.0, 0.9, 0] },
   mp5:     { x: 0.091, y: -0.187, z: -0.204, fov: 84, rotDeg: [-10.1, 0, 0] },
-  deagle:  { x: 0.089, y: -0.152, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
+  // O DGL50 final já traz a arma assada no rig. A calibração antiga incluía
+  // o wrap montado em runtime e deixava o punho abaixo do quadro.
+  deagle:  { x: 0.089, y: 0.000, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
   smg:     { x: 0.206, y: -0.141, z: -0.462, fov: 84, rotDeg: [15.4, 6.0, 0] },
-  p90:     { x: 0.075, y: -0.02, z: -0.141, fov: 84, rotDeg: [0, 0, 0] },
+  // O pacote P90 nasceu 41,56 graus fora do eixo do gabarito. A rolagem final
+  // preserva arma e mãos juntas e devolve a silhueta horizontal ao ombro.
+  p90:     { x: 0.300, y: -0.200, z: -0.600, fov: 84, rotDeg: [15.4, 6.0, -60] },
   // Yaw 15° aprovado em 05/09: VIEWMODEL-ASTRA-PISTOL-HANDOFF.md.
   pistol:  { x: 0.100, y: -0.100, z: -0.220, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 },
   shotgun: { x: 0.057, y: -0.114, z: -0.159, fov: 84, rotDeg: [-8.9, 0, 0] },
@@ -216,7 +229,7 @@ const FAMILY_FRAME = Object.freeze({
   bolt:    { x: 0.055, y: -0.083, z: -0.254, fov: 84, rotDeg: [-1.6, -0.3, 0] },
   g3:      { x: 0.117, y: -0.062, z: -0.202, fov: 84, rotDeg: [1.0, -0.2, 0] },
   marksman:{ x: 0.107, y: -0.07, z: -0.187, fov: 84, rotDeg: [0.5, -0.3, 0] },
-  svd:     { x: 0.107, y: -0.06, z: -0.419, fov: 84, rotDeg: [1.9, 0.5, 0] },
+  svd:     { x: 0.107, y: -0.17, z: -0.419, fov: 84, rotDeg: [1.9, 0.5, 0] },
   lmg:     { x: 0.153, y: -0.116, z: -0.409, fov: 84, rotDeg: [-5.2, -0.3, 0] },
   // revolver: sem doador CS 1.6 (não existe no jogo fonte) — fica no olho antigo.
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
@@ -230,6 +243,9 @@ const READY_OVERRIDE = new Set(
   CS16_TUDO || RETARGET_TUDO
     ? Object.keys(VM_FAMILY)
     : (_QS?.get('vmready') || '').split(',').filter(Boolean));
+// Candidato por arma: abre Mosin/SVD/SKS sem abrir as outras armas da mesma
+// família. Continua subordinado ao portão global `vmauthored=1`.
+const WEAPON_OVERRIDE = new Set((_QS?.get('vmweapon') || '').split(',').filter(Boolean));
 const familyReady = (family) => Boolean(family)
   && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
 // Portão por ARMA dentro da família (KNOWN-BUGS, rollout de 19/09): `ready:false`
@@ -238,7 +254,7 @@ const weaponReady = (weapon, family) => VM_WEAPON[weapon]?.ready !== false || RE
 const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';
   const family = AUTHORED_VM_MODELS[weapon] || '';
-  return familyReady(family) && weaponReady(weapon, family) ? family : '';
+  return (familyReady(family) && weaponReady(weapon, family)) || WEAPON_OVERRIDE.has(weapon) ? family : '';
 };
 // Arma "baked" tem GLB próprio (Mint assada dentro, offline): entry por ARMA.
 const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
@@ -264,8 +280,11 @@ const urlForKey = (key) => {
   }
   if (key.includes('#')) {
     const [family, weapon] = key.split('#');
-    if (VM_WEAPON[weapon]?.runtime === 'family') return AUTHORED_VM_URLS[family];
-    return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${CATALOG_VERSION}`;
+    // A versão deriva dos bytes para invalidar o cache após reassar uma arma.
+    // Contrato: docs/reports/VIEWMODEL-PADRAO-FPS-PROFISSIONAL.md.
+    const versao = VM_BYTES[weapon] || 'sem-versao';
+    if (VM_WEAPON[weapon]?.runtime === 'family') return `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${versao}`;
+    return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${versao}`;
   }
   return AUTHORED_VM_URLS[key];
 };
@@ -309,15 +328,23 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 
   const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
   const golden = sourceKey.startsWith('gold#');
-  // A trilha retarget ainda não tem enquadramento medido: a manga do pack entra
-  // por cima da arma e o C5 só fecha escondendo o cano (VIEWMODEL-INVENTARIO).
+  // Precedência: família, medida por arma e override manual; `family` herda tudo.
+  // Medição: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
+  const weaponId = sourceKey.split('#')[1];
+  const weaponFrame = VM_WEAPON[weaponId]?.frame;
+  const familyFrame = FAMILY_FRAME[family] || FAMILY_FRAME.default;
+  const medido = VM_FRAME[weaponId];
   const frame = golden
     ? { x: 0, y: 0, z: 0, fov: cameraFov }
     : molde
     ? { ...(VM_FONTE === 'goldsrc'
-      ? MOLDE_FRAME[sourceKey.split('#')[1]] || MOLDE_FRAME.default
+      ? MOLDE_FRAME[weaponId] || MOLDE_FRAME.default
       : { x: 0, y: 0, z: 0 }), fov: 74 }
-    : (FAMILY_FRAME[family] || FAMILY_FRAME.default);
+    : {
+      ...familyFrame,
+      ...(medido || {}),
+      ...(weaponFrame && typeof weaponFrame === 'object' ? weaponFrame : {}),
+    };
 
   const mount = new THREE.Group();
   mount.name = `paid_viewmodel_mount_${family}`;
@@ -348,13 +375,15 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const hand = materialsOf(object).some((material) => HAND_MATERIAL.test(material?.name || ''));
     if (hand) {
       handMeshes.push(object);
-      // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget e AK golden
-      // conservam seus materiais até terem inspeção de UV e aprovação próprias.
+      // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget, AK golden e a
+      // linhagem derivada da AK conservam seus materiais: o UV é outro.
+      const tingivel = (material) => HAND_MATERIAL.test(material?.name || '')
+        && !HAND_MATERIAL_AK_LINEAGE.test(material?.name || '');
       if (!golden) {
         object.material = Array.isArray(object.material)
-          ? object.material.map((material) => HAND_MATERIAL.test(material?.name || '')
+          ? object.material.map((material) => tingivel(material)
             ? tintHandMaterial(material, profile, molde) : material)
-          : tintHandMaterial(object.material, profile, molde);
+          : (tingivel(object.material) ? tintHandMaterial(object.material, profile, molde) : object.material);
       }
       object.userData.authoredCharacterHand = profile.id || 'player';
     } else {
@@ -404,6 +433,8 @@ export class AuthoredViewModels {
     this.utility = null;
     this._utilityPrime = null;
     this._disposed = false;
+    this._requestSerial = 0;
+    this._activeRequest = 0;
   }
 
   setProfile(profile) {
@@ -428,7 +459,7 @@ export class AuthoredViewModels {
     return this;
   }
 
-  async _loadFamily(key) {
+  async _loadFamily(key, request = this._activeRequest) {
     if (NODE_RUNTIME || AUTHORED_KILLED) return null;
     if (!key || this.entries.has(key)) return this.entries.get(key) || null;
     if (this.pending.has(key)) return this.pending.get(key);
@@ -483,7 +514,8 @@ export class AuthoredViewModels {
           : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family && !weaponBaked(id));
         if (owner) attachMintWeapon(entry, owner);
       }
-      if (entryKeyFor(this.weapon) === key && !this.utility) {
+      if (acceptsAuthoredLoad({ request, activeRequest: this._activeRequest, key,
+        activeKey: entryKeyFor(this.weapon), utility: Boolean(this.utility) })) {
         // Chegada tardia entra SUBINDO pelo arco de draw, nunca trocando no meio do idle.
         entry.mount.visible = true;
         this.draw(this.weapon);
@@ -518,6 +550,8 @@ export class AuthoredViewModels {
   setWeapon(id) {
     const previous = this.weapon;
     this.weapon = id;
+    const request = ++this._requestSerial;
+    this._activeRequest = request;
     const key = entryKeyFor(id);
     for (const entry of this.entries.values()) {
       const visible = this.utility ? entry === this.utility.entry : entry.key === key;
@@ -528,7 +562,7 @@ export class AuthoredViewModels {
     if (!key) return false;
     const entry = this.entries.get(key);
     if (!entry) {
-      this._loadFamily(key);
+      this._loadFamily(key, request);
       return false;
     }
     if (previous !== id) this._idle(entry);
@@ -832,6 +866,8 @@ export class AuthoredViewModels {
     return this._play(entry, names[0], { timeScale, fade: 0.02, preserveQueue: true });
   }
 
+  // O listener `finished` dispara dentro do update; a troca fica para depois do mixer.
+  // Cobertura: tools/eval/authored-transition-check.mjs.
   _stepEntry(entry, step) {
     entry.updatingMixer = true;
     try {
@@ -853,8 +889,8 @@ export class AuthoredViewModels {
     // Sem guarda de visibilidade: fila encalhada com mount oculto era pose congelada.
     const next = entry.queue.shift();
     if (next) this._play(entry, next.name, { timeScale: next.timeScale, preserveQueue: true });
-    // fim de clipe volta ao idle com FADE: o último frame não fecha nos
-    // twists do braço e o snap seco era um pop no fim de toda recarga.
+    // Mount visível volta com fade; oculto usa troca seca para não congelar sem updates.
+    // Cobertura: tools/eval/authored-transition-check.mjs.
     else this._idle(entry, entry.mount.visible ? 0.15 : 0);
   }
 

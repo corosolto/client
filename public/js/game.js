@@ -29,7 +29,8 @@ import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o 
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 import { createSoundscape } from './soundscape.js';        // vida 1: áudio ambiente por mapa (world.sound)
-import { createAuthoredViewModels, AUTHORED_VM_MODELS } from './authoredvm.js';
+import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS } from './authoredvm.js';
+import { viewmodelVisibility } from './vmvisibility.js';
 
 import { WEAPONS } from './data/weapons.js';
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
@@ -892,9 +893,9 @@ export class Game {
     // próprio do Coro Solto e as mãos recebem pele/roupa do personagem selecionado.
     const authoredDef = byId(this.playerCharId);
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
-    this.vm.authored = createAuthoredViewModels(this.vm.root, () => {
+    this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root, () => {
       if (!this._disposed && this.vm) this._applyVmVisibility();
-    }, { id: this.playerCharId, faction: this.playerFaction, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants });
+    }, { id: this.playerCharId, faction: this.playerFaction, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants }) : null;
     {
       /* ORÇAMENTO DE LUZ DO VIEWMODEL — MAT2. O rig abaixo (key/fill/sky/rim/bounce+hemi)
          somava 7,60 unidades FIXAS, contra 2,60 (ferro_velho) a 3,60 (praca_poderes) dos mapas:
@@ -1071,7 +1072,7 @@ export class Game {
     this.scene.userData.vmPass = { scene: this.vmScene, camera: this.vmCamera };
     // Faca melee autossuficiente (piloto knife-hires, BUG-75 M8): o módulo já
     // estava na árvore e o game referenciava vm.melee em 12 pontos sem construí-lo.
-    this.vm.melee = new KnifeMeleeViewModel({
+    this.vm.melee = !AUTHORED_VM_ENABLED ? null : new KnifeMeleeViewModel({
       parent: this.vmScene,
       profile: {
         id: this.playerCharId,
@@ -3080,11 +3081,10 @@ export class Game {
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
-    // Uma decisão de visibilidade: o legado continua visível enquanto o autorado
-    // carrega ou falha; só some depois que o controlador confirma malha ativa.
-    if (this.vm.arms) this.vm.arms.group.visible = !authored && !melee;
-    for (const k in this.vm.models) this.vm.models[k].visible = !authored && !melee && k === w;
-    this.vm.root.visible = !melee;
+    // Uma decisão de visibilidade (vmvisibility.js): o legado continua visível enquanto o
+    // autorado carrega ou falha; só some depois que o controlador confirma malha ativa.
+    this._vmPresentation = { authored, melee };
+    this._syncVmPresentation();
     if (this.vmCamera) {
       this.vmCamera.fov = melee ? this.vm.melee.fov(this.vmCamera.aspect)
         : authored ? this.vm.authored.fov(w, this.vmCamera.aspect)
@@ -3098,11 +3098,111 @@ export class Game {
         badge.style.cssText = 'position:fixed;left:8px;bottom:96px;z-index:60;font:11px ui-monospace,monospace;padding:2px 7px;border-radius:5px;background:#000a;pointer-events:none';
         document.body.appendChild(badge);
       }
-      badge.textContent = melee ? `vm: faca autorada · ${w}` : authored
-        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'})` : `vm: legado · ${w}`;
+      badge.textContent = (melee ? `vm: faca autorada · ${w}` : authored
+        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'})` : `vm: legado · ${w}`);
       badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
+      if (AUTHORED_VM_ENABLED && QS.get('vmqa') === 'precision') this._ensureVmPrecisionQa();
     }
     return authored || melee;
+  }
+  // Bancada local `?vmqa=precision`; o capturador real usa esta mesma API.
+  // Contrato e evidência: docs/reports/VIEWMODEL-PRECISION-CANDIDATES-ALPHA246-2026-09-10.md.
+  _ensureVmPrecisionQa() {
+    if (this._vmPrecisionQa) return this._vmPrecisionQa;
+    const settle = () => {
+      this.player.drawUntil = 0;
+      this.player.nextShotAt = 0;
+      this.player.reloadUntil = 0;
+      this._scope(false, true);
+      this._applyVmVisibility();
+    };
+    const equip = (weapon) => {
+      if (!WEAPONS[weapon]) return false;
+      if (!this.player.ammo[weapon] && weapon !== 'knife') {
+        this.player.ammo[weapon] = { mag: WEAPONS[weapon].mag, res: WEAPONS[weapon].reserve };
+      }
+      if (this.player.weapon !== weapon) this._switchWeapon(weapon);
+      settle();
+      return this.player.weapon === weapon;
+    };
+    const api = {
+      equip,
+      shoot: () => {
+        settle();
+        const ammo = this.player.ammo[this.player.weapon];
+        if (ammo) ammo.mag = Math.max(1, ammo.mag);
+        this._tryShoot();
+      },
+      reload: () => {
+        settle();
+        const weapon = this.player.weapon;
+        if (weapon === 'knife') return;
+        const ammo = this.player.ammo[weapon];
+        ammo.mag = 1; ammo.res = Math.max(WEAPONS[weapon].mag, ammo.res || 0);
+        this._startReload();
+      },
+      ads: () => { this.player.reloadUntil = 0; this._scope(!this.player.scoped); },
+      knife: (kind = 'quick') => { equip('knife'); this._tryKnifeAttack(kind); },
+      state: () => ({
+        weapon: this.player.weapon,
+        authored: Boolean(this.vm.authored?.active(this.player.weapon)),
+        melee: Boolean(this.vm.melee?.active),
+        authoredState: this.vm.authored?.state(this.player.weapon) || null,
+        fallback: Boolean(this._vmVisibility?.fallback),
+        visible: { ...(this._vmVisibility || {}) },
+      }),
+    };
+    this._vmPrecisionQa = api;
+    window.__vmPrecisionQa = api;
+
+    const panel = document.createElement('div');
+    panel.id = 'vm-precision-qa';
+    panel.style.cssText = 'position:fixed;left:8px;bottom:120px;z-index:61;width:260px;padding:9px;border:1px solid #65d88788;border-radius:7px;background:#07120eea;color:#eafff0;font:11px ui-monospace,monospace;line-height:1.35';
+    panel.innerHTML = '<strong>VM precisão · QA local</strong><div data-vmqa="weapons"></div><div data-vmqa="actions"></div><div data-vmqa="state" style="margin-top:5px;color:#aee8c0"></div>';
+    const button = (label, onClick) => {
+      const el = document.createElement('button');
+      el.type = 'button'; el.textContent = label;
+      el.style.cssText = 'margin:5px 4px 0 0;padding:3px 6px;border:1px solid #65d88766;border-radius:4px;background:#13281d;color:#eafff0;font:inherit;cursor:pointer';
+      el.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); onClick(); update(); });
+      return el;
+    };
+    const weaponRow = panel.querySelector('[data-vmqa="weapons"]');
+    for (const [label, weapon] of [['AK', 'ak'], ['Faca', 'knife'], ['M4', 'm4'], ['MD97', 'md97'], ['SCAR', 'scar'], ['FAMAS', 'famas'], ['M92', 'm92'], ['Carabina', 'carbine'], ['Tavor', 'tavor'], ['Mosin', 'mosin'], ['SVD', 'svd'], ['SKS', 'sks'], ['Fallback', 'pistol']]) {
+      weaponRow.appendChild(button(label, () => equip(weapon)));
+    }
+    const actionRow = panel.querySelector('[data-vmqa="actions"]');
+    for (const [label, action] of [['Tiro', api.shoot], ['Recarga', api.reload], ['ADS', api.ads],
+      ['Faca rápida', () => api.knife('quick')], ['Faca pesada', () => api.knife('heavy')]]) {
+      actionRow.appendChild(button(label, action));
+    }
+    const status = panel.querySelector('[data-vmqa="state"]');
+    const update = () => {
+      const current = api.state();
+      status.textContent = `${current.weapon} · ${current.melee ? 'faca authored' : current.authored ? 'authored' : 'fallback'} · ${current.authoredState || 'idle'}`;
+    };
+    panel.addEventListener('pointerdown', (event) => event.stopPropagation());
+    document.body.appendChild(panel);
+    this._vmPrecisionQaTimer = setInterval(update, 150);
+    update();
+    return api;
+  }
+  _syncVmPresentation(realScope = false, scopeMask = this._scopeMask || 0) {
+    const w = this.player.weapon;
+    const presentation = this._vmPresentation || { authored: false, melee: false };
+    const state = viewmodelVisibility({
+      alive: this.player.alive,
+      firstPerson: this.camView === 'first',
+      realScope,
+      scopeMask,
+      meleeReady: presentation.melee,
+      authoredReady: presentation.authored,
+    });
+    this.vm.root.visible = state.root;
+    this.vm.melee?.setSuspended(!state.melee);
+    if (this.vm.arms) this.vm.arms.group.visible = state.fallback;
+    for (const k in this.vm.models) this.vm.models[k].visible = state.fallback && k === w;
+    this._vmVisibility = state;
+    return state;
   }
   // ?vmlab=1 usa um viewmodel isolado e criado sob demanda.
   _vmlabEnsure(id) {
@@ -5847,7 +5947,7 @@ export class Game {
     const gap = precAds ? 3 : Math.max(3, Math.min(26, 5 + sp * 1.15 + this.vm.kick * 20 - p.crouchF * 2.5 - (p.scoped ? 4 : 0)));
     this.el.crosshair.style.setProperty('--ch', gap.toFixed(1) + 'px');
     // 3ª pessoa esconde FP; melee idem; luneta cobre por último.
-    this.vm.root.visible = this.camView === 'first' && !this.vm.melee?.active && !(realScope && mask > 0.55);
+    this._syncVmPresentation(realScope, mask);
     // reload completion — RELÓGIO DE JOGO (devolve a munição). A ANIMAÇÃO é do rig e usa a
     // mesma duração da tabela, então as duas pontas chegam no mesmo quadro (BUG-04).
     if (!this._reloading() && p.reloadUntil > 0) {
@@ -7894,6 +7994,10 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    clearInterval(this._vmPrecisionQaTimer); this._vmPrecisionQaTimer = null;
+    document.getElementById('vm-precision-qa')?.remove();
+    if (window.__vmPrecisionQa === this._vmPrecisionQa) delete window.__vmPrecisionQa;
+    this._vmPrecisionQa = null;
     for (const timer of this._announcerLabTimers || []) clearTimeout(timer);
     this._announcerLabTimers = [];
     try { this._mp?.dispose(); } catch { /* já foi */ }
@@ -7931,6 +8035,8 @@ export class Game {
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
     this.world.ambience?.dispose();
     this.soundscape?.dispose(); this.soundscape = null;
+    this.vm?.authored?.dispose();
+    this.vm?.melee?.dispose();
     this._pickupFallbackTpl?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
