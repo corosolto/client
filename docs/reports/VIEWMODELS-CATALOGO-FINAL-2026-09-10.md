@@ -894,3 +894,24 @@ A captura ligada a `5de60232d` produziu 20 frames da Rem700 em 1440×960 e
 A candidata permanece `ready:false`; família e global continuam desligados.
 Próximo cluster: G3SG1, vermelha somente pela dominância dos braços e sem gate
 causal de contato final.
+
+### Reautoria DMR — G3SG1 KINEMATION em 22/09/2026
+
+A G3SG1 deixou o produto cujas mangas ocupavam 2,901×/2,755× a silhueta da AK
+e foi reautorada sobre a G3 KINEMATION aprovada, sem mudança de câmera, FOV,
+frame de família ou runtime. O produto final `f6959a3a…` (1.523.360 bytes)
+preserva a malha própria, pente completo e alavanca real. Os contatos ficam
+entre 0,00 e 6,22 mm; mutantes independentes soltam cada mão e reprovam.
+
+A régua passa em 3:2 com 1,061×/96,5%/0,646× de braço e em 16:9 com
+1,022×/96,5%/0,608×. Pente, alavanca, shoot e inspect têm excursão real e
+retorno a zero. O gate DMR passa 12 mutantes por arma; o lifecycle passa 11/11
+com 1.020 amostras; o gate das receitas passa 13/13.
+
+A captura real ligada a `f222d4991` produziu 16 PNGs da G3SG1 em 1440×960 e
+1440×810, com HUD `20 / 60` e ADS confirmado por `player.scoped`, sem erro
+fatal. Evidência privada: `evidence/dmr-g3sg1-kinemation-f222d4991`. Recibo:
+[`VIEWMODEL-DMR-G3SG1-KINEMATION-2026-09-22.md`](VIEWMODEL-DMR-G3SG1-KINEMATION-2026-09-22.md).
+A candidata permanece `ready:false`; família G3 e global continuam desligados.
+Aprovação humana de mãos, escala, inclinação, recarga, inspect e ADS permanece
+pendente.
