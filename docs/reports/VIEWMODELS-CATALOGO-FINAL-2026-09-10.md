@@ -984,6 +984,29 @@ Recibo:
 A candidata segue `ready:false`, família/global off e aguarda revisão humana.
 PT-38 permaneceu intocada.
 
+### Correção product-first — Revólver .38 em 22/09/2026
+
+O inventário preservou a Deagle `d482ff82…`, que continua verde, e manteve a
+PT-38 totalmente congelada. O Revólver .38 anterior foi reprovado pelo novo
+gate: escala angular 1,473×/1,454×, braços 3,081×/2,920× e 2.056 triângulos de
+manga proximal. A captura também mostrou que o inspect herdava a recarga e
+desaparecia do quadro. O checkpoint RED é `995969e91`.
+
+A receita remove apenas a manga proximal, rebasa o pacote dentro do GLB e dá ao
+inspect uma pose completa de 201 canais. Câmera, FOV, frame compartilhado e
+runtime não mudaram. O produto privado `c1394590…` (4.074.036 bytes) passa em
+3:2 com 1,109×/100,0%/0,777× de braço e em 16:9 com
+1,096×/100,0%/0,726×. O eixo mede 2,3° com boca à frente.
+
+Os dez grupos de dedos medem 0,00–14,14 mm. O gate causal passa 13 mutantes; o
+lifecycle passa 10/10 controles e 540 amostras; rig, HUD e inspect permanecem
+verdes. A captura ligada a `93c34d8a7` produziu 18 PNGs reais nas duas
+proporções, com ADS ativo, inspect visível e zero erro fatal, em
+`evidence/revolver-product-20260922`. Recibo:
+[`VIEWMODEL-PISTOL-REVOLVER-PRODUCT-FIRST-2026-09-22.md`](VIEWMODEL-PISTOL-REVOLVER-PRODUCT-FIRST-2026-09-22.md).
+A candidata continua `ready:false`, família/global off e aguarda revisão
+humana. PT-38 permaneceu intocada.
+
 ### Correção product-first — LMG em 22/09/2026
 
 A LMG preserva a MGX5, mãos KINEMATION, cinco ações e os cinco mecanismos de
