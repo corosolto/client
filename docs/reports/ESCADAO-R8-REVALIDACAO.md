@@ -6,6 +6,8 @@ Data: 22/09/2026. PR: #567. Branch: `codex/escadao-r6-stack`.
 
 Revalidar o Escadão atual sem reaplicar a geometria antiga do PR. O histórico do PR foi preservado por merge de `origin/main` (`7bb2707ef576260b30ceb88c5973b9f6618684cd`), e a árvore do jogo ficou igual à `main` atual. O único delta de código desta rodada está nos próprios harnesses: eles voltaram a reconhecer a declaração atual do ponto CTF e o submenu atual de Single Player.
 
+A base remota do PR também foi trocada do stack legado para `main`; assim, a revisão mostra somente este checkpoint e os dois reparos de teste, sem reapresentar os commits de mapa que já chegaram ao tronco.
+
 **Resultado:** a casa central, as casas do mirante e os pontos de conflito passam nos contratos físicos e nas capturas reais. A frente ainda não está pronta para merge: há dois vermelhos de bots acima do teto documentado e o checkout público não contém 32 decalques requisitados pelo mapa, impedindo um gate visual local sem 404.
 
 ## Espaço jogável confirmado
