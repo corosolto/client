@@ -191,3 +191,109 @@ Após a sincronização, `OBRAS1..OBRAS9` continuam verdes. O MAP2B próprio med
 separadas em todos os pares. `docs:check` também passa. A atualização não altera
 geometria nem relaxa nenhum gate; serve apenas para remover o conflito do draft
 #579 e manter a candidata comparável à release atual.
+
+## Revalidação sobre a alpha.262 — 22/09/2026
+
+A branch recebeu `origin/main@60ad7501323ef076263f645bfca341e2454fce6b`
+(`v2.0.0-alpha.262`) pelo merge normal `c762a3bbacef144a0a1fdaa6d5115d85a35a4836`,
+sem rebase ou force-push. Os conflitos eram apenas blocos documentais gerados;
+a resolução tomou a base atual e regenerou esses blocos, sem misturar mudanças
+de runtime, materiais compartilhados ou outros mapas.
+
+### Correções causais e orçamento
+
+O replay na alpha.262 expôs dois defeitos próprios desta candidata:
+
+- `MAP1` encontrava 14 amostras de corpo dentro de sólido, com pior penetração
+  de 1,31 m. Uma rampa decorativa sem navegação atravessava o chão alcançável e
+  quatro degraus de bunker usavam a cota do container em vez do terreno da porta.
+  A rampa falsa foi removida; os degraus agora seguem o terreno local e têm
+  0,27 m, abaixo do limite de passo. O replay mede zero corpo dentro e zero
+  submerso.
+- `MAP5` encontrava quadrantes periféricos com até 14,33 m sem prop. Treze pilhas
+  baixas de material, feitas apenas com geometria e materiais já locais, cobrem
+  esses setores sem fechar as rotas. O pior espaçamento caiu para 6,81 m, razão
+  de props 0,79 e razão de waypoints 0,68.
+
+As caixas decorativas repetidas passaram a reutilizar geometria e
+`InstancedMesh` dentro de `map_obras.js`. No mesmo probe 5x5 DM, qualidade média,
+as chamadas caíram de 1.367 para 1.185 e as geometrias de 1.454 para 757, sem
+alterar o total de triângulos nem o contrato de colisão. A régua oficial
+`CENA1..CENA4`, após 30 s de aquecimento, passou com 1.150/1.200 calls,
+1.515.783/1.610.000 triângulos, 133,3 FPS e sem laço de exceção.
+
+### Gates, bots e rotas
+
+- `OBRAS1..OBRAS9`: verde; 2 torres, 20 nós altos alcançáveis, 48 nós de deck,
+  4 bunkers, 61 colisores de meia altura, 4 gruas, 23,5% dos pares longos livres,
+  três rotas por lado e pior folga de spawn 2,45 m.
+- Os nove mutantes `plano`, `sem-bunker`, `terreo-liso`, `sem-grua`,
+  `miolo-aberto`, `deck-macico`, `rota-fechada`, `spawn-apertado` e `ctf-deck`
+  continuam vermelhos no contrato esperado.
+- `eval:mapcontrato`: 320 nós, 1.763 arestas, rota válida e grafo conectado.
+- `map-check`: MAP1 0/0; MAP2 exposição E 40,1% e B 32,1%, linhas máximas
+  68,3/67,7 m; MAP2B 2,50 m e 54,7 m²; MAP4 zero; MAP5 6,81 m; CTF2 mínimo
+  de três rotas separadas.
+- `eval:ctfwin`: três bandeiras declaradas e rodada encerrada exatamente na
+  terceira captura.
+
+Bots determinísticos, 60 s por célula:
+
+| Célula | stuck | spinRoam | eficiência |
+|---|---:|---:|---:|
+| 5x5 DM | 3,256% | 0,091 | 0,159 |
+| 5x5 CTF | 2,633% | 0,084 | 0,176 |
+| 8x8 DM | 2,511% | 0,079 | 0,158 |
+| 8x8 CTF | 1,644% | 0,062 | 0,171 |
+
+### Matriz WebGL final
+
+O harness agora entra pelo fluxo real dos menus e cobre DM/CTF, 5x5/8x8 e as
+duas proporções. As oito células carregaram o mapa, 2 torres, 4 bunkers, os dois
+GLBs por HTTP 200 e, em CTF, três pontos. Nenhuma célula teve erro de página ou
+frame acima de 100 ms.
+
+| Célula | p95 | Calls | Triângulos | Geometrias |
+|---|---:|---:|---:|---:|
+| 5x5 DM · 3:2 média | 10,0 ms | 1.170 | 1.597.389 | 764 |
+| 5x5 CTF · 3:2 média | 10,0 ms | 1.188 | 1.614.634 | 770 |
+| 8x8 DM · 3:2 média | 9,8 ms | 1.262 | 1.743.480 | 775 |
+| 8x8 CTF · 3:2 média | 9,6 ms | 1.257 | 1.757.265 | 784 |
+| 5x5 DM · 16:9 baixa | 9,6 ms | 679 | 758.269 | 743 |
+| 5x5 CTF · 16:9 baixa | 9,5 ms | 729 | 775.785 | 752 |
+| 8x8 DM · 16:9 baixa | 9,5 ms | 750 | 843.329 | 757 |
+| 8x8 CTF · 16:9 baixa | 10,0 ms | 737 | 840.858 | 763 |
+
+Evidência ignorada pelo Git: `artifacts/obras-prefeitura/alpha262-final-r2/`.
+O `receipt.json` tem SHA-256
+`5e5af680ab9ce66fedeeb1b0731bb46f1c5c6152073b3554b1f4f35099aa3653` e
+registra `map_obras.js` com SHA-256
+`25f32325d92dd014a33992a76004f5193c1cd9296dfebfa59ee3c8fd71f80dad`.
+Os contact sheets 3:2 e 16:9 têm SHA-256
+`1f193f9bd5d79f383f451db48ee51b9715d54a91d2ad80b598d940aa55f21458` e
+`8cd7d329d1e7d08b3ad4645d2d1dbfefaed1920b7815096c104b9e4e6eaffef8`.
+
+### Dívidas separadas do GO técnico
+
+Esta candidata está tecnicamente pronta para playtest, mas ainda não tem aceite
+visual/jogável humano. As capturas deixam explícitas quatro dívidas:
+
+- exposição dos spawns ainda é alta (40,1%/32,1%) e as linhas máximas chegam a
+  aproximadamente 68 m; a defesa real precisa ser julgada em combate;
+- escavadeiras, sucata e algumas máquinas do perímetro têm escala dominante e
+  leitura aparente de suspensão;
+- superfícies grandes continuam planas e proceduralmente limpas, com repetição
+  de formas e pouca variação de obra brasileira;
+- a visão aérea é visualmente carregada, enquanto algumas rotas térreas ainda
+  parecem abertas apesar de MAP5, OBRAS5 e CTF estarem verdes.
+
+Nenhum asset novo foi gerado e a licença/proveniência dos dois GLBs Mint continua
+inalterada e registrada. Uma futura passada Astra+Mint deve ser uma branch de
+arte separada, com asset manifest e comparação antes/depois; não deve reabrir a
+geometria estrutural aprovada sem um gate causal.
+
+Playtest mínimo do dono: abrir
+`http://127.0.0.1:8157/?debug=1&map=obras_prefeitura&perfilauto=0`, jogar 5x5 DM
+pelas três rotas nos dois sentidos, depois 8x8 CTF, subir nas duas torres, passar
+sob os dois decks e verificar exposição, escala/apoio das máquinas e legibilidade
+dos corredores em 3:2 e 16:9.

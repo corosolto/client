@@ -263,7 +263,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 392 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 490 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 289 |
-| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 438 |
+| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 468 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 256 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 403 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 1,061 |
