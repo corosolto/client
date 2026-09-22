@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "mcpServers": {
+    "mint": {
+      "type": "http",
+      "url": "https://mcp.mint.gg/mcp",
+      "timeout": 120000,
+      "headers": {
+        "Authorization": "!node \"$HOME/.mint/mint-mcp-token.mjs\"",
+        "MCP-Protocol-Version": "2025-06-18"
+      }
+    }
+  }
+}

@@ -6,6 +6,11 @@ on:
     tags: ['v*']
   pull_request:
 
+# O padrão do repositório pode mudar; todo job começa sem escrita e o job de
+# release eleva apenas `contents` localmente, onde a publicação é necessária.
+permissions:
+  contents: read
+
 concurrency:
   group: pr-fast-${{ github.ref }}
   cancel-in-progress: true

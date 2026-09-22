@@ -9,7 +9,7 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
 import { createWater } from './water.js';
-import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS } from './ambientlife.js';
+import { createFavelaAmbience, placeFauna, faunaProxyAllowed, CORREGO_FAUNA_ASSETS } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -47,7 +47,10 @@ export const CORREGO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fu
   /* Kit de favela que estava no disco sem nenhum mapa consumindo. `fav_house` já era
      pré-carregada e nunca colocada — peso de download por nada. Agora as três entram
      como VOLUME de fundo (ver o bloco FILEIRA C) e as duas pequenas como vocabulário. */
-  'fav_brasileira', 'caixa_dagua', 'botijao_gas', 'uno_mille', 'fiat_uno', 'kombi'];
+  'fav_brasileira', 'caixa_dagua', 'botijao_gas', 'uno_mille', 'fiat_uno', 'kombi',
+  /* Mercadinho e carrinho de catador (rodada de conserto): +1,04 MiB de download (medido
+     nos 3 .glb), e é o que dá comércio à rua do spawn oeste, que era muro + barraco. */
+  'shopping_cart', 'gondola_mercado', 'fachada_comercio'];
 
 export const CORREGO_ARTE_SUBSTITUICOES = Object.freeze({
   'folha-person-02.png': 'or-mitico-mural.png',
@@ -508,7 +511,7 @@ export function buildCorrego(scene, T) {
     /* GLB do Mint no lugar do proxy (BUG-57). Focinho do GLB aponta −X e o yawFix do
        placeFauna o leva a +Z (ver ambientlife.js); sem template (node, ?glb=0) o proxy serve. */
     const jacareGlb = placeFauna('jacare', { x: jx, y: CANAL_FUNDO, z: jz, ry: .22 });
-    root.add(gJacare);
+    if (jacareGlb || faunaProxyAllowed()) root.add(gJacare);
     if (jacareGlb) {
       jacareGlb.userData.fauna = 'jacare'; jacareGlb.userData.nonCollider = true;
       root.add(jacareGlb);
@@ -571,7 +574,7 @@ export function buildCorrego(scene, T) {
        1,0 m comp × 0,58 alt). Pés no chão do alagado (groundHeightAt 0,05 em |z| ≥ 35),
        focinho +Z nativo com o mesmo ry = .35 do proxy. Fallback: proxy procedural. */
     const capivaraGlb = placeFauna('capivara', { x: cx, y: 0.05, z: cz, ry: .35 });
-    root.add(gCap);
+    if (capivaraGlb || faunaProxyAllowed()) root.add(gCap);
     if (capivaraGlb) {
       capivaraGlb.userData.fauna = 'capivara'; capivaraGlb.userData.nonCollider = true;
       root.add(capivaraGlb);
@@ -879,10 +882,44 @@ export function buildCorrego(scene, T) {
     addBoxI(1.5, h, 1.2, matEntulho, x, base, z, { ry, collide: true });
     addBoxI(0.7, 0.5, 0.9, matEntulho, x + 0.5, base + h, z - 0.3, { ry: ry + 0.5 });
   }
+  /* ─── GRADES DE RETENÇÃO DE LIXO — é o dispositivo que corta o TUBO de 76 m do eixo do
+     fundo (medido), e é o objeto que existe em córrego canalizado de SP: entupida de
+     entulho. Massa ALTERNADA de 3,6 m dos 6 m, topo +1,25 m, vão livre de 2,4 m trocando
+     de lado. `addBoxI` e não `addBoxSB`: o lote estático assa a matriz e cega o ORT1. */
+  const GRADES = [[1, -26], [-1, -16], [1, -4], [-1, 6], [1, 20], [-1, 28]];
+  for (const [lado, z] of GRADES) {
+    const x = lado * 1.2, ry = angAnexo() * 0.35;
+    const cs = Math.cos(ry), sn = Math.sin(ry);
+    const gx = (a, b) => x + a * cs + b * sn, gz = (a, b) => z - a * sn + b * cs;
+    // A massa é o ÚNICO colisor da peça: o enfeite entra sem colisor para o MAP5 não
+    // contar a mesma grade como meia dúzia de props.
+    addBoxI(3.6, 3.0, 0.5, matParedeCanal, x, CANAL_FUNDO, z, { collide: true, ry });
+    /* MONTANTE é sempre −z (a água corre para +z, `fluxo:[0,0.06]`): é contra essa face
+       que o lixo se acumula. Amarrar o lado ao `lado` da massa punha o entulho na face
+       de jusante em três das seis — visto da ponte, a peça lia como MURO liso. */
+    const mont = -0.34;
+    addBoxI(3.3, 1.25, 0.3, matEntulho, gx(0, mont), CANAL_FUNDO, gz(0, mont), { ry, cast: false });
+    // barra e travessa nas DUAS faces: de qualquer margem a peça tem de ler como gradil
+    for (const s of [-1, 1]) {
+      for (const k of [-1, 0, 1])
+        addBoxI(0.07, 2.6, 0.07, matHaste, gx(k * 1.45, s * 0.3), CANAL_FUNDO + 0.4, gz(k * 1.45, s * 0.3), { ry, cast: false });
+      for (const yb of [1.08, -0.35])
+        addBoxI(3.5, 0.09, 0.09, matHaste, gx(0, s * 0.3), yb, gz(0, s * 0.3), { ry, cast: false });
+    }
+    addBoxI(1.0, 0.95, 0.28, matPneu, gx(-lado * 1.0, mont * 1.25), CANAL_FUNDO, gz(-lado * 1.0, mont * 1.25), { ry: ry + 0.5, cast: false });
+    addBoxI(0.22, 1.9, 0.06, matMadeiraBruta, gx(lado * 1.2, mont * 1.2), CANAL_FUNDO + 0.1, gz(lado * 1.2, mont * 1.2), { ry: ry + 0.22, rz: 0.2, cast: false });
+    // duas cores só: cada cor de sacola abre um lote de instância a mais (draw call).
+    addBoxI(0.42, 0.36, 0.16, lixoAgua[lado > 0 ? 0 : 3], gx(lado * 0.4, mont), CANAL_FUNDO + 1.35, gz(lado * 0.4, mont), { ry: ry + 0.8, cast: false });
+  }
   /* NO FUNDO DO CANAL. Encostadas nas paredes (|x| ≥ 1,7) para o corredor central
-     continuar passável, e distribuídas nos 80 m para nenhum quadrante ficar deserto. */
+     continuar passável, e distribuídas nos 80 m para nenhum quadrante ficar deserto.
+     3 peças saem (estão dentro da pegada de uma grade) e 5 trocam de lado: é o que
+     LIBERA o vão de 2,4 m — sem isso a chicana fecha a rota do fundo. */
+  const ABSORVIDAS = new Set([3, 6, 19]);
+  const LADO_FUNDO = { 2: 1, 5: -1, 10: 1, 13: -1, 16: 1 };
   for (let k = 0; k < 22; k++) {
-    const z = -35 + k * 3.3, lado = k % 2 ? 1 : -1, x = lado * (1.75 + (k % 3) * 0.25);
+    if (ABSORVIDAS.has(k)) continue;
+    const z = -35 + k * 3.3, lado = LADO_FUNDO[k] ?? (k % 2 ? 1 : -1), x = lado * (1.75 + (k % 3) * 0.25);
     const base = Math.abs(z) > 32 ? CANAL_FUNDO + (Math.abs(z) - 32) / 3 * 1.8 : CANAL_FUNDO;
     if (Math.abs(z) > 33.5) continue;
     if (k % 4 === 0) manilha(x, z, angAnexo(), base);
@@ -949,6 +986,51 @@ export function buildCorrego(scene, T) {
         lado * xv, 2.5 - (k % 3) * 0.1, z - 1.8 + k * 0.66, { ry: (k - 2.5) * 0.05 + angAnexo() * 0.12, cast: false });
   }
 
+  /* ─── VARAL SOBRE O CÓRREGO. Duas funções numa peça só: é foto de manual de favela e é
+     o que mata a linha RASANTE que sai da boca assoreada (olho a 1,67 m, medido) — o
+     vão do canal é o único lugar do mapa sem nada entre 0,9 m e 2,4 m. Sem colisor e
+     sobre o VAZIO: não encosta em rota nenhuma (o corpo no fundo tem a cabeça em 0,05). */
+  /* UMA geometria de roupa por cor, altura por `sy` e giro por matriz: 5 varais custam
+     6 lotes em vez de 30 (a roupa é cor pura, então esticar a UV não custa texel). */
+  function varalCanal(z, bainha, cheio) {
+    const topo = 2.35;
+    addBoxI(6.0, 0.02, 0.02, matCabo, 0, topo, z, { cast: false });
+    for (const sx of [-1, 1]) addBoxI(0.09, topo + 0.12, 0.09, matHaste, sx * 3.25, 0, z, { cast: false });
+    /* Cortina CHEIA nos 5 varais: a lane só fecha se a roupa cobrir os 5,3 m sem vão —
+       foi por um vão de 6 cm entre duas peças que a visada de 39 m passava (medido). */
+    for (let k = 0; k < 9; k++) {
+      const x = -2.66 + k * 0.665;
+      /* A bainha varia PARA BAIXO (peça mais longa), nunca para cima: bainha acima da
+         nominal abre buraco na faixa que a régua mede — foi por um desses que passava a
+         visada de 29 m. O escalonamento também é o que impede a cortina de ler como
+         painel listrado: peça encavalada com topo no mesmo cabo e barra desencontrada. */
+      const h = topo - bainha + (k % 4) * 0.18;
+      /* `sy` escala a geometria de 1,0 m e o centro segue em y+0,5 — a bainha é posta
+         aqui; errar isto pendura a roupa no ar. */
+      addBoxI(0.72, 1.0, 0.03, matRoupa[(k + Math.abs(z | 0)) % matRoupa.length],
+        x, topo - 0.5 - h / 2, z + ((k % 3) - 1) * 0.055, { sy: h, ry: ((k % 5) - 2) * 0.04, cast: false });
+    }
+    // lençol atravessado: peça de LADO, que é a que corta quem olha CRUZANDO o canal.
+    if (!cheio) for (const sx of [-1, 1])
+      addBoxI(0.72, 1.0, 0.03, matRoupa[(sx + 3 + Math.abs(z | 0)) % matRoupa.length],
+        sx * 1.0, topo - 0.5 - (topo - bainha) / 2, z + 0.3, { sy: topo - bainha, ry: Math.PI / 2, cast: false });
+  }
+  // z medido, não escolhido: são os picos do histograma de visadas que cruzam o canal.
+  for (const z of [-14, 4, 24]) varalCanal(z, 1.15, false);
+  // as duas pontas são varal CHEIO: é a boca assoreada que dispara a rasante de 76 m.
+  for (const z of [-30, 30]) varalCanal(z, 0.90, true);
+
+  /* ─── TUBULAÇÃO DE ESGOTO atravessando o vão — gambiarra de infraestrutura, irmã do
+     emaranhado de fios. Termina em 2,97 m (a parede começa em 3,00): nada de geometria
+     pairando sobre célula andável. Repeat calculado como o das manilhas (TEXEL3b). */
+  {
+    const matTubo = lam({ map: repetir(TEX.concrete.map, 0.71, 1.49) || T.concrete, color: 0x9a958a, roughness: 0.95 });
+    const tubo = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 5.94, 12), matTubo);
+    tubo.rotation.z = Math.PI / 2; tubo.position.set(0, 2.0, -6); tubo.castShadow = true;
+    root.add(tubo); occluders.push(tubo);
+    for (const sx of [-1, 1]) addBoxI(0.5, 0.8, 1.1, matReboco, sx * 2.8, 1.2, -6, {});
+  }
+
   /* ===================== COVER NAS MARGENS =====================
      No passeio da beira (|x| ≈ 5,9) e nos becos, não na beirada da queda do canal; um material com mapa por família. */
   for (const [i, x, z] of [[0, 5.9, -15], [1, -5.9, 15]])
@@ -993,6 +1075,38 @@ export function buildCorrego(scene, T) {
   ];
   for (const [id, x, z, h, ry] of propsRua) {
     propComFallback(id, x, z, h, ry, () => addBox(1.35, h, 1.35, PAREDES[(Math.abs(z) / 10 | 0) & 3], x, 0, z));
+  }
+
+  /* ─── COVER DOS QUADRANTES MAGROS DO OESTE + o vocabulário que o dono reconhece.
+     No passeio da beira a peça é ESTREITA (≤ 0,8 m) e fica em |x| = 6,75: o passeio
+     livre tem ~2 m, e prop de 1,3 m ali fecha a lane de 5,9 — é a mesma armadilha do
+     carro na pista de 3,1 m do bloco acima, e foi medida antes de escolher o x. */
+  for (const [id, x, z, h, w, d, ry] of [
+    // passeio da beira oeste: carrinho de catador, moto, botijão, som de rua
+    ['shopping_cart', -6.75, -3.5, 1.05, 0.75, 0.95, 0.6],
+    ['moto_cg', -6.75, -6.5, 1.05, 0.8, 1.9, 1.5],
+    ['botijao_gas', -6.75, -12.0, 0.75, 0.5, 0.5, 0.3],
+    ['caixa_som', -6.75, -17.5, 0.9, 0.6, 0.6, 0.35],
+    ['botijao_gas', -6.75, 22.0, 0.75, 0.5, 0.5, -0.2],
+    ['shopping_cart', -6.75, 24.5, 1.05, 0.75, 0.95, -0.8],
+    ['moto_cg', -6.75, 28.0, 1.05, 0.8, 1.9, 1.6],
+    ['caixa_som', -6.75, 30.2, 0.9, 0.6, 0.6, -0.4],
+    ['guarda_sol', -6.75, 34.5, 2.2, 0.5, 0.5, 0.2],
+    // lixo grande NO LEITO: é a fotografia do córrego de SP, e é cover de agachado
+    ['dumpster', -2.4, -12.5, 1.35, 1.25, 1.9, 0.25],
+    ['pilha_pneus', -2.4, 22.3, 1.10, 1.1, 1.1, -0.3],
+    /* mercadinho encostado na fileira C: a rua do spawn oeste é muro + barraco hoje.
+       Em x = −22,0 ele NÃO entra na lane de −21,0 (medido) nem no barraco de −23,05. */
+    ['fachada_comercio', -22.0, -16.0, 2.8, 0.8, 2.2, Math.PI / 2],
+    ['gondola_mercado', -21.8, -14.2, 1.6, 0.55, 1.5, Math.PI / 2],
+    ['moto_cg', -13.65, -18.0, 1.05, 0.8, 1.9, 0.4],
+    ['kombi', -17.8, 24.0, 2.0, 1.8, 4.3, 0.06],
+    ['arara_roupas', -21.8, 28.0, 1.6, 0.6, 1.4, Math.PI / 2],
+    ['gondola_mercado', -13.65, 33.0, 1.6, 0.55, 1.5, 0.3],
+  ]) {
+    propEscala.push({ id, h });
+    if (!PB.add(id, { x, z, targetH: h, ry })) addBox(w, h, d, PAREDES[Math.abs(z | 0) & 3], x, 0, z, { ry });
+    else colRot(x, z, w / 2, d / 2, 0, h, ry);
   }
 
   /* Empenas de pixo nas paredes cegas altas voltadas aos becos — pixo de empena existe
@@ -1076,6 +1190,8 @@ export function buildCorrego(scene, T) {
      parede dos dois lados; e ela precisa EXISTIR no grafo, senão o bot cai lá e não
      sabe sair (o `stuck%` do botsim é justamente isso). */
   for (const cx of [-1.4, 1.4]) linha(cx, -31, cx, 31, 2.4, 0.3);
+  // vão de 2,4 m de cada grade de retenção: sem nó DENTRO do vão o A* não acha a chicana
+  for (const [lado, z] of GRADES) linha(-lado * 2.1, z - 2.6, -lado * 2.1, z + 2.6, 1.3, 0.26);
   // rampas de acesso: ligam o fundo à margem. Sem nó aqui as duas rotas ficam ilhadas.
   for (const r of RAMPAS) {
     const rx = r.lado * (RAMPA_X0 + RAMPA_X1) / 2;
@@ -1237,13 +1353,20 @@ export function buildCorrego(scene, T) {
       { pos: [-16.6, groundHeightAt(-16.6, -2.5), -2.5], to: [-16.1, groundHeightAt(-16.1, -1.9), -1.9], phase: 1.1 },
       { pos: [17.2, groundHeightAt(17.2, 17.1), 17.1], to: [17.9, groundHeightAt(17.9, 17.8), 17.8], phase: 2.7 },
     ],
+    /* vida 2 (14/09): das duas pombas a 2,1 m uma da outra, uma sai e paga a galinha com
+       pintinho do quintal (−6.928 +5.892 = −1.036 tri). O capote NÃO entrou aqui: o teto
+       AM7 do córrego é 15 DRAWS e com galinha+pinto o mapa fecha em 15 de 15 — ele entra no
+       dia em que a pomba for decimada (a folga é dela, docs/maps/mint/fauna.md §5). */
     pigeons: [
       { mode: 'ground', pos: [8.2, groundHeightAt(8.2, -15), -15], phase: .6 },
-      { mode: 'ground', pos: [6.6, groundHeightAt(6.6, -13.6), -13.6], phase: 1.3 },
     ],
     /* BUG-57 v2.1 (frente D — só o bloco AMBIENCE): gato da margem + galinha de quintal */
     cats: [{ pos: [12, groundHeightAt(12, 8), 8], to: [14.5, groundHeightAt(14.5, 10), 10], phase: .9 }],
     chickens: [{ pos: [10.5, groundHeightAt(10.5, 12), 12], to: [12, groundHeightAt(12, 13.5), 13.5], phase: 2.2 }],
+    /* galinha com pintinho ao lado da galinha animada do quintal: é o par que faz a cena
+       ler como quintal de favela. Folga medida: 3,53 m e 3,18 m. */
+    hens: [{ pos: [9, groundHeightAt(9, 14.5), 14.5], to: [10.2, groundHeightAt(10.2, 15.2), 15.2], phase: .8 }],
+    chicks: [{ pos: [9.6, groundHeightAt(9.6, 14.9), 14.9], to: [9.2, groundHeightAt(9.2, 15.4), 15.4], phase: 2.6 }],
   });
 
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;

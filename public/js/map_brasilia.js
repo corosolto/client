@@ -4,7 +4,7 @@
 // cover, colliders) is procedural; the landmarks are real GLB models placed and
 // collidered from their actual bounds. Same contract as buildWorld().
 import * as THREE from 'three';
-import { placeProp } from './mapprops.js';
+import { placeProp, PropBatch } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
@@ -39,6 +39,38 @@ export const PEGADA_CORPO = {
    Medido (arquivo, targetH 3,1): corpo 9,2 × 2,0 m ao longo do eixo principal,
    centro ≈ origem do arquivo. ryCorr é o delta SOBRE o ry de placement (0,55). */
 export const PEGADA_BUS = { hx: 4.6, hz: 1.0, ryCorr: 0.3263 };
+/* PEGADA DO CORPO **EM METROS DE MUNDO**, no targetH que este mapa usa, no eixo do MODELO.
+   POR QUE EXISTE: `putBuilding` só empurrava colisor/occluder DEPOIS de o GLB carregar, e em
+   node nenhum GLB carrega (map-check.mjs:111) — os 27 props GLB da esplanada não existiam
+   para régua nenhuma, então exposição, visada e MAP5 mediam uma praça literalmente vazia.
+   Com esta tabela o `putProp` do mapa desenha a massa de contingência no lugar do GLB
+   (idioma de map_ferrovelho.js:1033) e a régua passa a medir o mapa do jogador.
+   MEDIDO com a MESMA matemática do `tools/eval/pegada-check.mjs` (centróide de triângulo,
+   percentil 1–99 ponderado por área, faixa de colisão y 0,25–2,05 m). Conferido: as frações
+   recomputadas de tent/stall/drinkstand batem com PEGADA_CORPO acima em ≤0,003.
+   É a pegada do CORPO, nunca o Box3 cheio — caixa maior que a massa visível é a parede
+   fantasma do BUG-21 de volta. Mudou o GLB ou o targetH, re-mede. */
+export const CORPO_M = {
+  tires:            [1.73, 1.6, 1.84],
+  stall:            [2.30, 2.7, 1.16],
+  tent:             [2.06, 1.7, 2.22],
+  urna:             [2.01, 1.2, 3.16],
+  towner:           [3.65, 2.0, 1.55],
+  drinkstand:       [2.27, 3.2, 2.52],
+  onibus_urbano:    [2.79, 3.3, 8.95],   // eixo longo em Z
+  onibus_sptrans:   [9.16, 3.3, 2.33],   // eixo longo em X
+  vw_9150:          [2.19, 3.6, 7.35],   // eixo longo em Z
+  arquibancada:     [7.54, 4.0, 5.12],
+  escultura_jardim: [1.51, 3.4, 1.43],
+};
+/* PROPS QUE ESTE MAPA PRECISA E A LISTA GLOBAL NÃO TEM. `praca_poderes` era o único mapa sem
+   `props:` em maps.js: os ids vinham todos de `MAP_PROPS` (main.js:166), e os cinco abaixo
+   não estão lá. Sem o registro (`props: BRASILIA_PROPS`) o `preloadMapProps` não os carrega,
+   `PB.add` devolve false em toda peça e a caravana inteira vira a caixa de contingência —
+   cinza, no lugar certo, mas cinza. O registro é ADITIVO (main.js:293), então nada do que já
+   funciona sai. */
+export const BRASILIA_PROPS = ['onibus_urbano', 'onibus_sptrans', 'vw_9150', 'escultura_jardim',
+  'caixa_som_baile', 'pipa_papel'];
 
 export function buildBrasilia(scene, T) {
   const colliders = [];   // {minX,minY,minZ,maxX,maxY,maxZ}
@@ -148,6 +180,9 @@ export function buildBrasilia(scene, T) {
   // AO de vértice: `?vao=0` desliga; em 'low' cai de 3 faixas para 1 (ver vao.js)
   const aoMat = aoMatFactory();
   const SKIRT = new ContactSkirt({ low: LOWQ });
+  /* Lote dos props GLB repetidos da rodada de conserto (20 veículos de ato + guarda-sóis):
+     ~1 draw call por material por bloco de 24 m, em vez de um clone solto por peça. */
+  const PB = new PropBatch({ bucket: 24, shadowMin: 0.02 });
 
   /* ---------------- texturas locais do cerrado (NÃO mexer em textures.js) ------------- */
   // textures.js é do agente GRÁFICOS-CORE; tudo que é específico de Brasília nasce aqui.
@@ -529,6 +564,11 @@ export function buildBrasilia(scene, T) {
   }
   MAT.tintaGasta = lam({ map: ctex(faixaTex(), 1, 1), transparent: true, roughness: 0.85, depthWrite: false });
   MAT.mancha = lam({ map: ctex(manchaTex(), 1, 1), transparent: true, opacity: 0.9, roughness: 0.9, depthWrite: false });
+  /* LATARIA e LONA dos veículos/tendas de ato. `roughness` alta e valor médio-escuro de
+     propósito (critério C4/C3): a chicane entra na banda de 0–2 m da lane, e faixa branca de
+     alta frequência na altura do peito apaga a silhueta do inimigo. */
+  MAT.lata = lam({ map: T.truckSide, roughness: 0.84, color: 0xb9b4a8 });
+  MAT.lona = lam({ map: T.tent, roughness: 0.92 });
   function tiledLocal(tex, rx, ry) { const t = tex.clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.needsUpdate = true; return t; }
   // Reveste um GLB do Mint com um dos nossos materiais. Os GLB de arquitetura vêm com UM
   // material só (branco, roughness 1 do default do glTF) para o prédio inteiro — é a origem
@@ -632,6 +672,20 @@ export function buildBrasilia(scene, T) {
       (bb.max.x - bb.min.x) * 0.94, (bb.max.z - bb.min.z) * 0.94, 0);
     return o;
   }
+  /* PROP GLB **OU** CAIXA MEDIDA (idioma de map_ferrovelho.js:1033). Sem este `||` os props
+     GLB só existem no browser: em node não há colisor nem occluder, e a régua mede uma
+     esplanada vazia. A caixa é a pegada do CORPO (CORPO_M), com material COM `map` — caixa
+     lisa sobe SUP1/SUP2 e caixa gorda é a parede fantasma do BUG-21 de volta. */
+  function putProp(id, opts) {
+    const o = putBuilding(id, opts);
+    if (o || opts.solid === false) return o;
+    const c = CORPO_M[id];
+    if (!c) return null;
+    const k = (opts.targetH || c[1]) / c[1];
+    addBox(c[0] * k, c[1] * k, c[2] * k, opts.falta || MAT.concCru, opts.x, opts.y || 0, opts.z,
+      { ry: opts.ry || 0, skirt: false });
+    return null;
+  }
 
   /* ---------------- ground + esplanade ---------------- */
   // Tile the textures (clone + RepeatWrapping) so big surfaces show real detail
@@ -651,7 +705,14 @@ export function buildBrasilia(scene, T) {
   // então nada do layout derivado (espaçamento, Z do Palácio, jardim) se move. Proporção
   // antes de detalhe. `?minsq=0` volta ao bloco gordo.
   const MIN_SQ = (BIG && QP.get('minsq') !== '0') ? 0.72 : 1;
-  let MW = 26, MD = 14;                // fallback se o GLB não carregou
+  /* FALLBACK MEDIDO, não arredondado. `26 × 14` era palpite, e como em node nenhum GLB
+     carrega (map-check.mjs:111) TODA régua media um mapa 21 m mais largo de cada lado que o
+     do jogador (FLANK_X 44 contra 33,45). Razões CRUAS de ministerio.glb lidas do accessor
+     POSITION: x/y 2,5423 · z/y 0,6915. Com o ry = π/2 do placement o x local vira a
+     profundidade do mundo, então MW sai do z e MD sai do x — a 22 m e MIN_SQ 0,72 dá
+     10,95 × 55,93, que é o que o browser mede. Mudou o GLB, re-mede (glb_bbox). */
+  const MIN_RX = 2.5423, MIN_RZ = 0.6915;
+  let MW = Math.max(6, MIN_H * MIN_RZ * MIN_SQ), MD = Math.max(6, MIN_H * MIN_RX);
   {
     const probe = placeProp('ministerio', { x: 0, z: 0, targetH: MIN_H, ry: Math.PI / 2 });
     if (probe) {
@@ -746,6 +807,9 @@ export function buildBrasilia(scene, T) {
   const PAL_X = BIG ? 32 : 22, PAL_H = BIG ? 10 : 6;
   const PAL_OUT = 2.2;                       // avanço da colunata em relação à fachada
   const PAL_EX = BIG ? PAL_OUT + 1.0 : 1.2;  // folga da plataforma em X (cobre a colunata)
+  /* PEGADA MEDIDA do palacio.glb (razões cruas x/y = z/y = 3,5455, accessor POSITION): a
+     10 m de altura o volume é 35,45 × 35,45 m. Usada só quando o GLB não carrega. */
+  const PAL_RSQ = 3.5455, PAL_FP = PAL_H * PAL_RSQ;
   let PAL_ZMAX = PAL_Z + 10;   // borda norte real da Praça, medida (usada pelos marcos)
 
   for (const px of [PAL_X, -PAL_X]) {
@@ -872,6 +936,16 @@ export function buildBrasilia(scene, T) {
         // (o poster do Dollynho saiu do Palácio do Planalto — agora vai só nas fachadas
         //  dos ministérios, abaixo; o Planalto fica limpo, como na Brasília real)
       }
+    } else {
+      /* MASSA DE CONTINGÊNCIA (idioma de map_ferrovelho.js:1033 — prop GLB **ou** caixa).
+         Em node nenhum GLB carrega (map-check.mjs:111): sem isto os dois volumes que FECHAM
+         a Praça não existem pra régua nenhuma e a Esplanada é medida vazia — 82% de
+         exposição num mapa cujo norte é ocupado por 1.256 m² de palácio. Mesma pegada,
+         mesma plataforma e mesmo PAL_ZMAX do caminho com GLB. */
+      PAL_ZMAX = Math.max(PAL_ZMAX, PAL_Z + PAL_FP / 2 + 1.2);
+      addBox(PAL_FP + PAL_EX * 2, PL, PAL_FP + 2.4, MAT.granitoPreto, px, 0, PAL_Z);
+      addBox(PAL_FP + PAL_EX * 2 + 0.3, 0.14, PAL_FP + 2.7, MAT.marmore, px, PL, PAL_Z, { collide: false });
+      addBox(PAL_FP, PAL_H, PAL_FP, MAT.concBranco, px, PL + 0.16, PAL_Z);
     }
   }
   // Ministérios lining the esplanade (reuse the one slab, long axis along Z = lane walls).
@@ -889,11 +963,17 @@ export function buildBrasilia(scene, T) {
   for (const sx of [-1, 1]) for (const mz of MZ) {
     const b = putBuilding('ministerio', { x: sx * MIN_CX, z: mz, targetH: MIN_H, ry: Math.PI / 2, y: PILOTI, solid: !BIG, dress: MAT.concBranco, sq: MIN_SQ });
     ministries.push(b);
-    if (!b) continue;
-    b.updateMatrixWorld(true);
-    const bb = new THREE.Box3().setFromObject(b);
-    const w = bb.max.x - bb.min.x, d = bb.max.z - bb.min.z;
-    const cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
+    /* PILOTIS E FACHADA FORA DO `if (!b)` — em node nenhum GLB carrega (map-check.mjs:111),
+       e enquanto os 96 pilares moravam aqui dentro a rota de flanco (a única alternativa à
+       lane) era medida como campo aberto: 6 dos 16 quadrantes do MAP5 ficavam zerados. A
+       pegada de contingência é MW/MD, que é a mesma que o GLB dá — o browser não muda. */
+    let w = MW, d = MD, cx = sx * MIN_CX, cz = mz;
+    if (b) {
+      b.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(b);
+      w = bb.max.x - bb.min.x; d = bb.max.z - bb.min.z;
+      cx = (bb.min.x + bb.max.x) / 2; cz = (bb.min.z + bb.max.z) / 2;
+    }
     if (!BIG) continue;
     // laje inferior (fecha o vão por baixo e dá sombra dura de meio-dia no piso)
     addBox(w, 0.9, d, MAT.concBranco, cx, PILOTI - 0.9, cz, { collide: false });
@@ -1116,7 +1196,14 @@ export function buildBrasilia(scene, T) {
     {
       // +6 -> +4: o espelho d'água ganhou parapeito e desceu para PAL_ZMAX+14; a +6 o Pombal
       // encostava na borda dele (folga de 15 cm). A +4 sobram ~2 m, sem volume atravessado.
-      const px = -14, pz = PAL_ZMAX + 4;
+      // +4 -> +5,5 (13/09, MEDIDO): a +4 o Pombal deixava só 1,6 m entre a face sul dele e a
+      // borda da plataforma do palácio (z 68,93) — passagem que o CORPO atravessa e a grade
+      // de waypoint não, porque nó exige 0,70 m de folga e a fileira mais próxima cai em
+      // z 71,0. Resultado: a área ATRÁS DO STF inteira (q0,3, 219 m²) ficava sem um único
+      // waypoint e o A* nunca levava bot nenhum lá. A +5,5 a passagem tem 3,1 m, a fileira
+      // de z 71,0 vira nó e a folga até o parapeito do espelho continua de 1,0 m de colisor
+      // (1,2 m de laje visível), que é o que a decisão de cima protege.
+      const px = -14, pz = PAL_ZMAX + 5.5;
       const g = new THREE.Group(); g.position.set(px, 0, pz); root.add(g);
       for (const [ox, oy] of [[0, 5.6], [0, 0]])   // laje de cima e de baixo
         { const s = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.4, 4.4), MAT.concBranco); s.position.set(ox, oy + 0.2, 0); g.add(s); }
@@ -1289,20 +1376,20 @@ export function buildBrasilia(scene, T) {
   // Tire-pile barricades (Mint) as the main lane cover — the protest look.
   for (const [tx, tz, ry] of [[-6, -14, 0.3], [7, 12, -0.4], [-8, 26, 0.8], [9, -26, 0.2],
     [10, 3, 0], [-10, -3, 1.1], [4, 34, 0.5], [-4, -34, -0.3]])
-    putBuilding('tires', { x: tx, z: tz, targetH: 1.6, ry, skirt: false });
+    putProp('tires', { x: tx, z: tz, targetH: 1.6, ry, skirt: false, falta: MAT.asfalto });
   // Barraquinhas de camelô (vendor stalls) — o vão debaixo do toldo é ABERTO
   for (const [sx, sz, sry] of [[-13, -8, Math.PI / 2], [13, 8, -Math.PI / 2], [-10, -23, Math.PI / 2], [9, -21, -Math.PI / 2]])
-    putBuilding('stall', { x: sx, z: sz, targetH: 2.7, ry: sry });
+    putProp('stall', { x: sx, z: sz, targetH: 2.7, ry: sry, falta: MAT.lona });
   // Mini-acampamento de barracas (protest camp) junto aos ministérios oeste
   // (+2 barracas avançadas em direção ao centro: cobertura extra saindo do spawn B)
   for (const [tx, tz, ry] of [[-15, -30, 0.2], [-17, -35, 1.1], [-13, -36, -0.5], [16, 20, 0.6],
     [-6, -27, 0.9], [7, -25, -0.4]])
-    putBuilding('tent', { x: tx, z: tz, targetH: 1.7, ry });
+    putProp('tent', { x: tx, z: tz, targetH: 1.7, ry, falta: MAT.lona });
   // Acampamento (barracas em 2 fileiras) emoldurando a ponta da CATEDRAL (lado time-b),
   // simétrico ao jardim+espelho da ponta do Congresso — backdrop temático atrás do spawn B.
   for (const [tx, tz, ry] of [[-12, -66, 0.15], [-4, -67, -0.2], [4, -66, 0.25], [12, -67, -0.15],
     [-8, -70.5, 0.5], [8, -70.5, -0.5]])
-    putBuilding('tent', { x: tx, z: tz, targetH: 1.7, ry });
+    putProp('tent', { x: tx, z: tz, targetH: 1.7, ry, falta: MAT.lona });
   // a few Correios/SEDEX parcels still around for variety (Brazilian postal boxes)
   const crateMats = [lam({ map: T.crate }), lam({ map: T.crate2 || T.crate })];
   for (const [i, [cx, cz, lv]] of [[11, 2, 0], [-11, 0, 0], [11, 3.6, 1], [-5, 18, 0]].entries())
@@ -1313,7 +1400,7 @@ export function buildBrasilia(scene, T) {
   // solid:false — o colisor do ônibus é o colRot MEDIDO logo abaixo (único, igual em
   // browser e em node); deixar o putBuilding derivar outro do Box3 criava caixa DUPLICADA
   // e mais gorda (o Box3 inteiro conta retrovisor e saia do para-choque).
-  putBuilding('bus', { x: 2.5, z: -4, targetH: 3.1, ry: 0.55, solid: false });
+  const busGLB = putBuilding('bus', { x: 2.5, z: -4, targetH: 3.1, ry: 0.55, solid: false });
   {
     /* COLISÃO DO ÔNIBUS — defeito reportado pelo dono com print: "o mapa não deixa eu andar
        perto do ônibus".
@@ -1362,20 +1449,25 @@ export function buildBrasilia(scene, T) {
        Colisor e occluder ficavam ~20° fora da lataria: fantasma de 3,77 m numa ponta,
        lataria descoberta na outra. Agora o colisor segue o eixo DO CORPO — e a bala
        bate nas malhas do GLB (occMesh do putBuilding), sem caixa de procuração. */
-    colRot(2.5, -4, PEGADA_BUS.hx, PEGADA_BUS.hz, 0, 3.1, 0.55 + PEGADA_BUS.ryCorr);
+    /* SEM GLB (node) a lataria vira caixa: `addBox` com `ry` produz EXATAMENTE o mesmo
+       `colRot` — e de brinde a bala/LOS param na massa, senão o ônibus central não corta
+       nenhum segmento de visada pra régua. Idioma de map_ferrovelho.js:1033. */
+    if (busGLB) colRot(2.5, -4, PEGADA_BUS.hx, PEGADA_BUS.hz, 0, 3.1, 0.55 + PEGADA_BUS.ryCorr);
+    else addBox(PEGADA_BUS.hx * 2, 3.1, PEGADA_BUS.hz * 2, MAT.lata, 2.5, 0, -4,
+      { ry: 0.55 + PEGADA_BUS.ryCorr, skirt: false });
   }
 
   /* ---------------- urna eletrônica (Sketchfab — monumento no MEIO do mapa) ---------------- */
   // Urna no centro da praça (pedido do usuário): cover baixo entre o ônibus e as barracas.
-  putBuilding('urna', { x: 0, z: 0, targetH: 1.2, ry: -0.4 });
+  putProp('urna', { x: 0, z: 0, targetH: 1.2, ry: -0.4, falta: MAT.guia });
 
   /* ---------------- Towner do hotdog (Sketchfab — carrinho de hotdog) ---------------- */
   // Asia Towner/Daihatsu Hijet virou o carrinho de hotdog da praça, no lado time-b.
-  putBuilding('towner', { x: 12, z: -15, targetH: 2.0, ry: -0.9 });
+  putProp('towner', { x: 12, z: -15, targetH: 2.0, ry: -0.9, falta: MAT.lata });
 
   /* ---------------- barraquinha de bebida (Mint GLB — mini-bar c/ guarda-sol) -------------- */
   // Drink stand com cadeiras de plástico e guarda-sol grande, junto às barraquinhas.
-  putBuilding('drinkstand', { x: -14, z: -17, targetH: 3.2, ry: 0.5 });   // guarda-sol é ABERTO embaixo — bala atravessa e para só no balcão/mastro
+  putProp('drinkstand', { x: -14, z: -17, targetH: 3.2, ry: 0.5, falta: MAT.lona });   // guarda-sol é ABERTO embaixo — bala atravessa e para só no balcão/mastro
 
   /* ---------------- barricada improvisada (bloco + chapa + tábuas) ---------------- */
   { // protest barricade near the west tents: concrete block, corrugated sheet, planks.
@@ -1405,6 +1497,254 @@ export function buildBrasilia(scene, T) {
     if (!freeSpot(px, pz, 2.2)) continue;
     addBox(3.4, 0.9, 1.3, MAT.concBranco, px, 0, pz);
     addBox(3, 0.5, 0.9, jardTex, px, 0.9, pz);
+  }
+
+  /* ═══ A ESPLANADA EM DIA DE ATO (rodada de conserto, 13/09) ═══════════════════════════
+     MEDIDO antes: 4 occluders na metade sul inteira (4.200 m²), exposição B 82,1% / E 74,6%,
+     visada de 153,6 m — a maior do jogo — e 7 quadrantes do MAP5 zerados. O que entra aqui é
+     o que a Esplanada REAL tem em semana de ato e o mapa não tinha: fila de ônibus de
+     caravana, canteiro de pátio de ministério entre os pilotis, trio elétrico, palanque,
+     campanário/batistério/Evangelistas (peças do conjunto da Catedral que faltavam),
+     arquibancada do 7 de Setembro e o cordão de ônibus da PM em CHICANE.
+     NADA entra no vazio que é o PROJETO: a lane de 12,4 m continua sem parede permanente, a
+     vista do gramado pro Congresso continua aberta e os três volumes que desenham o lugar
+     (Congresso, Catedral, Palácio/STF) não são tocados. Sem pessoa real, sem partido, sem
+     sigla — as faixas continuam saindo do pool genérico de protesto da passada de grafite. */
+  {
+    /* Caixa nova contra o que já existe: `freeSpot` é ponto+raio e rejeitaria um ônibus de
+       9 m que cabe. `livre` testa a AABB da peça — nada nasce dentro de nada. 15 cm de folga
+       é o bastante pra não haver interpenetração visível e não desperdiça o corredor de
+       21,5 m que sobra entre as plataformas do Planalto e do STF. */
+    const livre = (x, z, hx, hz, m = 0.15) => !colliders.some(c =>
+      x + hx + m > c.minX && x - hx - m < c.maxX && z + hz + m > c.minZ && z - hz - m < c.maxZ && c.maxY > 0.3);
+    // ruído determinístico: o mesmo veículo torto em todo carregamento (ver ORT1, §3.1)
+    const rnd = (n) => { const s = Math.sin(n * 91.7 + 13.1) * 43758.5453; return s - Math.floor(s); };
+    /* `ry` SORTEADO. `FORA_DA_GRADE_GRAUS` = 3 (mapa-novo-gate.mjs:132): abaixo de 3° a massa
+       conta como de esquadro e o ORT1 cai quando entram 20 veículos alinhados. 0,06–0,25 rad
+       = 3,4°–14°. Ônibus de caravana estacionado torto é o real, não a exceção. */
+    const torto = (n) => (rnd(n) < 0.5 ? -1 : 1) * (0.06 + rnd(n + 7.7) * 0.19);
+    /* PROP GLB EM LOTE + CAIXA MEDIDA — idioma de map_campomorro.js:359. O `PropBatch` põe
+       os 20 veículos em ~1 draw call por material por bloco (teto da casa: fy_mansao com
+       2.038 draw calls). A caixa é a pegada do CORPO (CORPO_M) e só fica VISÍVEL quando o
+       GLB não carregou — o caso de toda régua em node (map-check.mjs:111). Com GLB na tela
+       ela sai de `occluders` (BUG-54: a bala bate na malha do lote) e segue valendo de AABB. */
+    const veic = (id, x, z, targetH, ry = 0, falta = MAT.lata) => {
+      const c = CORPO_M[id], k = targetH / c[1];
+      const hx = c[0] * k / 2, hz = c[2] * k / 2;
+      const cs = Math.abs(Math.cos(ry)), sn = Math.abs(Math.sin(ry));
+      if (!livre(x, z, hx * cs + hz * sn, hx * sn + hz * cs)) return false;
+      const usaGLB = PB.add(id, { x, y: 0, z, targetH, ry });
+      const m = addBox(c[0] * k, c[1] * k, c[2] * k, falta, x, 0, z, { ry });
+      if (usaGLB) {
+        m.visible = false;
+        const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1);
+      }
+      return true;
+    };
+
+    /* 1. FILA DE ÔNIBUS DE CARAVANA (romaria/excursão) no gramado entre a calçada e os
+       pilotis. x = ±20,5 porque o vão útil de piloti é 2,97 m entre faces e o ônibus tem
+       3,39 m: não cabe embaixo do bloco. Os z caem nos VÃOS entre os postes (que estão de
+       16 em 16 m a partir de z = −64), então nenhum poste é sacrificado. */
+    let caravana = 0;
+    for (const sx of [-1, 1]) for (const [i, cz] of [-71, -58, -42, -24, -8, 8, 26].entries())
+      if (veic('onibus_urbano', sx * 20.5, cz, 3.3, torto(i * 3.3 + sx * 11))) caravana++;
+    /* 1b. 2ª E 3ª FILEIRAS DO ESTACIONAMENTO DA CARAVANA, na faixa de grama entre a calçada
+       portuguesa (|x| 10,4) e a 1ª fileira (|x| 19,1).
+       POR QUE EXISTEM: MEDIDO, depois da chicane e de todo o resto, a maior visada que
+       sobrava passava por ESSA faixa de 8,7 m — 80,1 m pelo oeste e 94,5 m pelo leste. Nem
+       peça de lane nem peça de piloti a toca, e jardineira de 0,9 m não corta linha na
+       altura do olho (1,62 m). Duas fileiras defasadas 5,5 m, com 2 m de vão entre ônibus:
+       o corredor da alameda entre elas tem 1,4 m, e uma diagonal de spawn (dx/dz ≈ 0,11)
+       só consegue ficar 13 m dentro de um corredor de 1,4 m — menos que o passo de 11 m.
+       A varredura passa pelo mesmo teste `livre`, então as fileiras se encaixam no que já
+       existe (barraca, jardineira, banheiro, poste) em vez de brigar com ele. */
+    for (const sx of [-1, 1]) for (const [r, rx] of [13.2, 17.4].entries())
+      for (let cz = -70 + r * 5.5; cz <= 30; cz += 11)
+        if (veic('onibus_urbano', sx * rx, cz, 3.3, torto(cz * 1.7 + rx + sx))) caravana++;
+
+    /* 2. CANTEIRO DE PÁTIO DE MINISTÉRIO entre os pilares (o jardim de Burle Marx que o
+       pilotis real tem). Cai no VÃO INTERNO (x = ±27,44, entre as fileiras de pilar de 25,4
+       e 29,48) e no MEIO de cada par de pilares em z — a fileira externa (x ±31,5) fica
+       livre, então a rota de flanco continua existindo com cobertura agachado dos dois lados. */
+    const mureta = [], verde = [];
+    for (const sx of [-1, 1]) for (const mz of MZ) {
+      const nz = Math.max(3, Math.round(MD / 7)), passo = (MD - 3) / (nz - 1);
+      for (let j = 0; j < nz - 1; j++) {
+        const cz = mz + (j + 0.5 - (nz - 1) / 2) * passo, cx = sx * (MIN_CX - 2.04);
+        if (Math.abs(cz) > 74 || !livre(cx, cz, 1.3, 2.8)) continue;
+        mureta.push({ x: cx, y: 0.45, z: cz });
+        verde.push({ x: cx, y: 1.15, z: cz });
+        col(cx - 1.3, cx + 1.3, 0, 0.9, cz - 2.8, cz + 2.8);
+      }
+    }
+    addInst(aoBoxGeo(2.6, 0.9, 5.6, { low: LOWQ }), aoMat(MAT.guia), mureta, { occlude: true });
+    addInst(new THREE.BoxGeometry(2.2, 0.5, 5.2), jardTex, verde, { occlude: true });
+
+    /* 3/4. CAMPANÁRIO e BATISTÉRIO da Catedral — as duas peças do conjunto de Niemeyer que
+       faltavam. Marcam o fundo sul, que não tinha NENHUMA massa alta (o h90 de 15,4 m vinha
+       todo do norte), e quebram a rasante do lado leste. */
+    addBox(3.2, 12.0, 3.2, MAT.concBranco, -13, 0, -52, { ry: 0.05 });
+    for (const [by, bh, bs] of [[0, 2.6, 1], [2.6, 1.4, 0.72]])   // chanfro: elipse baixa
+      addBox(6.0 * bs, bh, 4.5 * bs, MAT.concCru, 13, by, -56, { collide: by === 0 });
+    for (let s = 0; s < 4; s++) {   // os 4 sinos no pórtico
+      const sy = 9.4, sxp = -13 + (s % 2 ? 0.8 : -0.8), szp = -52 + (s < 2 ? -0.8 : 0.8);
+      addBox(0.9, 1.1, 0.9, MAT.bronze, sxp, sy, szp, { collide: false });
+    }
+
+    /* 5. OS EVANGELISTAS (Ceschiatti, as 4 figuras de bronze na frente da Catedral) — a
+       primeira cobertura de corpo do spawn B, que nascia em descampado.
+       z MEDIDO, não o da análise: a ±3 m do eixo e a z = −61 as duas figuras do meio ficavam
+       a 0,28 m dos spawns (±3, −62) e o MAP2B caía de 2,65 m de folga para 0,05 m, com área
+       contígua ZERO. A 3,78 m de folga elas continuam sendo a cobertura de quem nasce. */
+    for (const [i, [ex, ez]] of [[-9, -55], [-3, -57.5], [3, -57.5], [9, -55]].entries())
+      veic('escultura_jardim', ex, ez, 3.4, torto(i * 5.1 + 2), MAT.granitoPreto);
+
+    /* 6. FILA DE BANHEIRO QUÍMICO do acampamento — 8 cabines de 1,2 m atravessadas em
+       z = −41, que é a travessia entre o acampamento sul e o miolo da praça. */
+    const cabines = [];
+    for (const cx of [-16.0, -14.6, -13.2, -11.8, 11.8, 13.2, 14.6, 16.0]) {
+      if (!livre(cx, -41, 0.6, 1.15)) continue;
+      cabines.push({ x: cx, y: 1.15, z: -41, ry: (rnd(cx * 3.1) - 0.5) * 0.16 });
+      col(cx - 0.6, cx + 0.6, 0, 2.3, -42.15, -39.85);
+    }
+    addInst(aoBoxGeo(1.2, 2.3, 1.2, { low: LOWQ, base: BASE_FLOATING }), aoMat(MAT.guia), cabines, { occlude: true });
+
+    /* 7/8/11. TRIO ELÉTRICO e CARROS DE SOM. É o objeto que diz "manifestação" sem dizer de
+       quem (veto do dono: sem partido, sem sigla). O `vw_9150` tem o eixo longo em Z —
+       `ry = π/2` atravessa o corredor, `ry = 0` estaciona ao longo dele. */
+    veic('vw_9150', -14, -23, 3.6, 0.09);                  // trio elétrico, corredor oeste
+    veic('vw_9150', -6, -46, 3.6, Math.PI / 2 + 0.07);     // carro de som na travessia sul
+    veic('vw_9150', 6.5, 18, 3.6, 0.07);                   // caminhão de som 2, alça leste
+    // caixas de som na carroceria do trio (decoração: sem colisor, some sem o GLB)
+    for (let s = 0; s < 4; s++) PB.add('caixa_som_baile', { x: -14.6 + (s % 2) * 1.2, y: 2.1, z: -25.4 + Math.floor(s / 2) * 1.3, targetH: 1.1, ry: 0.09 });
+
+    /* 9. PALANQUE COM GRADE. Deck a 1,35 m e fundo de lona: domina a estação sul. NÃO
+       declara cota andável nova (nem `levels` nem `stairs`) — quem sobe, sobe por mantle
+       (MANTLE_H 1,95, game.js:278), que é o que o motor já faz em cima de colisor. */
+    if (livre(5.2, -20.5, 3.0, 2.3)) {
+      addBox(6.0, 1.35, 4.6, MAT.guia, 5.2, 0, -20.5);
+      addBox(6.0, 2.8, 0.5, MAT.lona, 5.2, 0, -23.3);
+    }
+
+    /* 10/13. ESTAÇÃO CENTRAL e ESTAÇÃO SUL — ônibus e caminhão DESENCONTRADOS, nunca lado a
+       lado: dois volumes no mesmo z são um portão, e portão não corta linha de visada. */
+    veic('onibus_sptrans', -5.2, 4, 3.3, 0.07);            // ônibus de excursão na alça
+    /* O par tem que SOBREPOR em x, não só ficar em z diferente: MEDIDO, com o ônibus em
+       x 5,2 sobrava um vão de 2,9 m entre ele e o caminhão, e a diagonal do spawn B (dx/dz
+       0,21, ou seja 0,8 m de deriva nos 4 m de defasagem) passava pelos dois — 69,4 m. */
+    veic('onibus_sptrans', 2.5, -42, 3.3, -0.06);          // par desencontrado do carro de som
+
+    /* 12. CORDÃO DA PM EM CHICANE — A INTERVENÇÃO QUE MATA A VISADA DE 153,6 m.
+       MEDIDO na análise: portão RETO de 3,4 m entre dois ônibus deixa 138 m de linha viva,
+       porque a linha de tiro passa pelo próprio vão. A chicane resolve sem fechar a
+       passagem: o vão entre A e B fica ATRÁS de C, 4,4 m ao norte — exatamente a sombra do
+       vão. Passagem aberta, linha morta.
+       OS z E OS x SÃO CASADOS COM A GRADE DE WAYPOINT, e isso não é preciosismo: a 1ª
+       tentativa (z 29/35) deixou o vão de 3,4 m num lugar SEM NÓ e o `map-contrato-check`
+       acusou o mapa partido em dois (262 nós fora do componente do spawn) — a chicane tinha
+       virado muro para o bot. A grade tem passo 4,4 m em x = −33,45 + 4,4k e z = −72 + 4,4k:
+       A e B ficam centrados entre as fileiras z 29,2 e 33,6 (cada ônibus mede 2,88 m em z e
+       o nó exige 0,70 m de folga: 4,28 de 4,40 — cabe, mas não sobra), C entre 33,6 e 38, e
+       o vão de 1,68 m fica sobre a coluna x = −2,65. A é caminhão (7,35 m) e não ônibus:
+       com 9,16 m ele entraria na plataforma de granito, que começa em x −11,07. */
+    veic('vw_9150', -7.1, 31.4, 3.6, Math.PI / 2);
+    veic('onibus_sptrans', 2.9, 31.4, 3.3, 0);          // de esquadro: com ry sorteado a quina bate na pilha de pneus de (4, 34)
+    /* C é CAMINHÃO (7,35 m) e não ônibus: com 9,16 m ele tampa a coluna de waypoint de
+       x −7,05, que é a única passagem de bot em volta dele — o grafo partia em dois de novo. */
+    veic('vw_9150', -2.5, 35.8, 3.6, Math.PI / 2);
+
+    /* 14. ÔNIBUS DA PM NA ENTRADA DA PRAÇA, também desencontrados. O corredor entre as
+       plataformas do Planalto e do STF tem 22,1 m de largura livre (|x| < 11,07) — estes
+       dois cobrem 9,2 m cada, em z diferentes. */
+    veic('onibus_sptrans', -5.6, 44, 3.3, 0.08);
+    veic('onibus_sptrans', 5.6, 50, 3.3, -0.05);
+
+    /* 15. ARQUIBANCADA DO 7 DE SETEMBRO (montada ali todo ano). targetH 2,4 e não 4,0 — a
+       conta é fechada, não gosto: a pegada medida do GLB é 7,54 × 5,12 a 4 m, e a faixa livre
+       entre a calçada portuguesa (|x| ≥ 6,2) e a plataforma de granito do palácio
+       (|x| ≤ 11,07) tem 4,87 m, e o `ry` sorteado ainda infla a AABB. A 2,3 m ela é
+       4,34 × 2,94 e cabe com folga dos dois lados, sem tocar nem a lane nem o embasamento. */
+    veic('arquibancada', -8.6, 49, 2.3, Math.PI + 0.06, MAT.concCru);
+    veic('arquibancada', 8.6, 53.5, 2.3, -0.07, MAT.concCru);
+
+    /* 16. MASTROS DAS BANDEIRAS DOS ESTADOS — ritmo vertical sem fechar visão nenhuma. */
+    const mastros = [], panos = [];
+    for (const sx of [-1, 1]) for (const mz of [50, 58, 66]) {
+      const mx = sx * 10.85;
+      if (!livre(mx, mz, 0.2, 0.2)) continue;
+      mastros.push({ x: mx, y: 4.5, z: mz });
+      panos.push({ x: mx + sx * 1.0, y: 7.6, z: mz, ry: sx > 0 ? 0.08 : -0.08 });
+      col(mx - 0.18, mx + 0.18, 0, 9, mz - 0.18, mz + 0.18);
+    }
+    addInst(new THREE.CylinderGeometry(0.14, 0.18, 9, 6), MAT.aco, mastros, { occlude: true });
+    addInst(new THREE.PlaneGeometry(1.9, 1.3), MAT.tintaGasta, panos, { shadow: false });
+
+    /* 18. GUARITA + GRADE ATRÁS DO PLANALTO/STF — os dois últimos quadrantes mortos do MAP5.
+       A faixa atrás das plataformas (z > 68,9) é assimétrica e a intervenção acompanha:
+       · OESTE: o Museu deixa 17 m abertos, ou seja ROTA. A grade vai para z = 74 — ENTRE as
+         fileiras de waypoint (71,2 e 75,6). Em z = 71,8 ela caía EM CIMA da fileira e
+         partia o grafo: q0,3 ficava sem um único nó (medido).
+       · LESTE: o Panteão ocupa até x 29,8 e sobra uma nesga de 5,15 m SEM SAÍDA. Ali a grade
+         FECHA — beco de 5 m atrás do palácio é área fora do mapa, não quadrante deserto, e
+         atrás do Planalto é cercado de verdade. */
+    if (livre(-32.4, 76, 1.2, 1.4)) addBox(2.4, 2.8, 2.4, MAT.concBranco, -32.4, 0, 76, { ry: -0.07 });
+    for (const [gx, gz] of [[-32.4, 74], [-27.0, 74], [-21.6, 74], [-32.4, 81]])
+      if (livre(gx, gz, 1.2, 0.3)) addBox(2.2, 1.1, 0.14, MAT.aco, gx, 0, gz, { ry: (rnd(gx + gz) - 0.5) * 0.12 });
+    if (livre(32.4, 76, 1.2, 1.4)) addBox(2.4, 2.8, 2.4, MAT.concBranco, 32.4, 0, 76, { ry: 0.07 });
+    for (const gx of [30.3, 32.5, 34.7])
+      addBox(2.2, 1.1, 0.14, MAT.aco, gx, 0, 70.4, { ry: (rnd(gx) - 0.5) * 0.1 });
+
+    /* 17. ANEL DE GRADE DA PM na Praça (a cerca que existe de verdade desde 2023) — é o
+       detalhe que DATA o mapa, e vale como cobertura agachado no meio do corredor norte. */
+    for (const sx of [-1, 1]) for (const gz of [68, 72])
+      if (livre(sx * 8.2, gz, 1.2, 0.3))
+        addBox(2.2, 1.1, 0.14, MAT.aco, sx * 8.2, 0, gz, { ry: (rnd(gz * 2.2 + sx) - 0.5) * 0.14 });
+
+    /* COMÉRCIO AMBULANTE (§4.3): camelô de bandeira e apito é o comércio real da Praça — e é
+       ele que fecha a ÚLTIMA fresta medida. Depois das três fileiras de ônibus sobrava uma
+       faixa diagonal de 2,4 m entre os props da lane (|x| ≤ 10,9) e a 2ª fileira (|x| ≥ 11,3):
+       a visada de 64,1 m do spawn B e a de 94,5 m do spawn E passavam por ela, sem tocar em
+       nada. Estas quatro peças ficam EM CIMA da diagonal, nos z medidos em que ela cruza a
+       faixa. Barraca de camelô ao longo da fila de ônibus é a imagem da Esplanada em ato. */
+    for (const sx of [-1, 1]) {
+      putProp('stall', { x: sx * 16.5, z: 36, targetH: 2.7, ry: sx * Math.PI / 2, falta: MAT.lona });
+      PB.add('guarda_sol', { x: sx * 18.2, z: 36.4, targetH: 2.4, ry: rnd(sx + 3) * 3 });
+    }
+    for (const [bx, bz] of [[-10.4, -33], [-11.0, -20], [-12.3, -11], [-9.2, 58.6], [9.2, 58.6]])
+      veic('stall', bx, bz, 2.7, torto(bx * 2.3 + bz), MAT.lona);
+    /* ÔNIBUS DA PM NO GRADIL: a fila de ônibus da PM encostada na cerca da Praça é a imagem
+       do lugar desde 2023, e é o que cobre o corredor entre as plataformas na altura do olho
+       — a plataforma de granito tem 1,45 m e o olho está a 1,62 m, então ela NÃO corta linha. */
+    veic('onibus_urbano', 9.2, 38, 3.3, 0.07);   // só o lado leste: a oeste o caminhão da chicane já ocupa a faixa
+
+    /* ACAMPAMENTO (§4.6): as 12 barracas já existiam e agora têm massa; o que faltava era o
+       resto do acampamento — varal, churrasqueira e a pilha de caixote de feira. É o que faz
+       o terço sul deixar de ser gramado vazio: ele tinha 4 occluders em 4.200 m². */
+    const varalP = [], panoV = [];
+    for (const [vx, vz] of [[-16.8, -32.4], [-13.2, -32.4], [11.6, -47.5], [15.2, -47.5]]) {
+      if (!livre(vx, vz, 0.12, 0.12)) continue;
+      varalP.push({ x: vx, y: 1.1, z: vz });
+      col(vx - 0.12, vx + 0.12, 0, 2.2, vz - 0.12, vz + 0.12);
+    }
+    for (const [px2, pz2] of [[-15.0, -32.4], [13.4, -47.5]])
+      for (let i = 0; i < 4; i++) panoV.push({ x: px2 - 1.35 + i * 0.9, y: 1.55, z: pz2, ry: (rnd(px2 + i) - 0.5) * 0.3 });
+    addInst(new THREE.CylinderGeometry(0.05, 0.07, 2.2, 5), MAT.aco, varalP, { occlude: true });
+    addInst(new THREE.PlaneGeometry(0.8, 0.9), MAT.lona, panoV, { shadow: false });
+    if (livre(-13.6, -30.8, 0.7, 0.45)) addBox(1.4, 0.9, 0.9, MAT.aco, -13.6, 0, -30.8, { ry: 0.11 });
+    // PILHA DE CAIXOTE DE FEIRA: 1 colisor por pilha (o de cima é só silhueta)
+    for (const [qx, qz] of [[-9, -50], [-16.5, -52], [4.5, -52], [12, -60], [17, -46],
+      [-14, 12], [-15.5, 22], [10.5, 6]]) {
+      if (!livre(qx, qz, 0.5, 0.5)) continue;
+      addBox(0.9, 0.9, 0.9, crateMats[(qx * 3 | 0) % 2], qx, 0, qz, { ry: (rnd(qx * 1.7 + qz) - 0.5) * 0.5 });
+      addBox(0.82, 0.82, 0.82, crateMats[(qz * 3 | 0) % 2], qx + 0.08, 0.9, qz - 0.06,
+        { ry: (rnd(qz * 2.3) - 0.5) * 0.8, collide: false });
+    }
+
+    /* PIPA DE PAPEL (§4.8): criança soltando pipa no gramado do Eixo. Sem colisor e sem
+       hook de update — o mapa não tem passo por quadro, então a pipa fica no vento parado. */
+    for (const [kx, kz] of [[-20, 30], [19, -30]]) PB.add('pipa_papel', { x: kx, y: 12, z: kz, targetH: 0.9, ry: rnd(kx) * 3 });
+    PB.build(root);
   }
 
   /* ---------------- DENSIDADE: mobiliário urbano + vegetação (task 3) ---------------- */
@@ -1664,7 +2004,14 @@ export function buildBrasilia(scene, T) {
 
   /* ---------------- waypoints graph ---------------- */
   const nodes = [], adj = [];
-  const STEP = 4.4;
+  /* PASSO 2,2 e não 4,4: com 4,4 as COLUNAS caíam exatamente sobre as fileiras de pilar
+     (|x| 25,4 · 29,48 · 33,55, cada uma ±0,55 + 0,70 de folga do bot) e sobre a fila de
+     ônibus de |x| 20,5 — a rota de flanco inteira ficava sem um único nó a oeste (MEDIDO:
+     q0,0 com 1 waypoint contra 12 do simétrico q3,0, porque a grade nasce em −FLANK_X e
+     33,45/4,4 não é inteiro, então os dois lados têm FASE DIFERENTE). Metade do passo
+     PRESERVA todas as colunas antigas (são subconjunto) e acrescenta as de meio-vão, que é
+     onde o piloti e o ônibus deixam passagem. O limiar de aresta acompanha o passo. */
+  const STEP = 2.2;
   const blocked = (x, z, inflate) => {
     for (const c of colliders) {
       if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate &&
@@ -1687,7 +2034,10 @@ export function buildBrasilia(scene, T) {
   // baixo existe uma rota lateral coberta dos dois lados, e o A* passa a usá-la.
   const FLANK_X = BIG ? Math.min(44, LANE_HX + MW - 1.5) : 22;
   for (let gx = -FLANK_X; gx <= FLANK_X; gx += STEP)
-    for (let gz = -60; gz <= 60; gz += STEP)   // grade de waypoints estendida p/ o mapa longo
+    /* z −72..80 e não −60..60: os spawns estão em z ±62, ou seja FORA da grade antiga, e a
+       faixa atrás das plataformas do Planalto/STF (z > 69) não tinha um nó — o A* nunca
+       levava bot nenhum lá, e o MAP5 media razão de waypoint ZERO em q0,3 e q3,3. */
+    for (let gz = -72; gz <= 80; gz += STEP)
       if (!blocked(gx, gz, BOTR + 0.15)) nodes.push({ x: gx, z: gz });
   const segClear = (a, b) => {
     const dist = Math.hypot(b.x - a.x, b.z - a.z), steps = Math.max(5, Math.ceil(dist / 0.9));
@@ -1704,6 +2054,32 @@ export function buildBrasilia(scene, T) {
     for (let j = i + 1; j < nodes.length; j++) {
       const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z;
       if (dx * dx + dz * dz < STEP * STEP * 2.2 && segClear(nodes[i], nodes[j])) { adj[i].push(j); adj[j].push(i); }
+    }
+  }
+  /* BOLSO FECHADO É ARMADILHA PRO A*: `nearestWaypoint` devolve o nó mais PRÓXIMO, e se ele
+     estiver num bolso de 2 m entre dois pilares o bot recebe um destino de onde não sai — é a
+     família do "bot encalhado perto do spawn" que este arquivo já pagou uma vez. Com a grade
+     cobrindo o mapa inteiro apareceram bolsos assim (MEDIDO: `map-contrato-check` MC3 acusou
+     262 nós fora do componente do nó 0). Fica só o MAIOR componente, e as arestas renumeram. */
+  {
+    const comp = new Int32Array(nodes.length).fill(-1);
+    let nc = 0, melhor = -1, melhorN = 0;
+    for (let s = 0; s < nodes.length; s++) {
+      if (comp[s] >= 0) continue;
+      const fila = [s]; comp[s] = nc; let n = 1;
+      for (let h = 0; h < fila.length; h++)
+        for (const j of adj[fila[h]]) if (comp[j] < 0) { comp[j] = nc; n++; fila.push(j); }
+      if (n > melhorN) { melhorN = n; melhor = nc; }
+      nc++;
+    }
+    if (melhorN < nodes.length) {
+      const novoId = new Int32Array(nodes.length).fill(-1);
+      const manter = [];
+      for (let i = 0; i < nodes.length; i++) if (comp[i] === melhor) { novoId[i] = manter.length; manter.push(i); }
+      const nAdj = manter.map(i => adj[i].map(j => novoId[j]).filter(j => j >= 0));
+      const nNodes = manter.map(i => nodes[i]);
+      nodes.length = 0; nodes.push(...nNodes);
+      adj.length = 0; adj.push(...nAdj);
     }
   }
   function nearestWaypoint(x, z) {
@@ -1795,19 +2171,39 @@ export function buildBrasilia(scene, T) {
       { pos: [-18, 0, -30], to: [-15.5, 0, -27], phase: .3 },
       { pos: [17, 0, 24], to: [14.5, 0, 27], phase: 1.7 },
     ],
+    /* vida 2 (14/09): as 6 pombas eram 75% dos 55.124 tri do mapa. Duas saem — a de
+       (9,5 / 17), clone da de (8 / 16) a 1,8 m, e a de (−2,8 / 1) — e uma delas paga o
+       carcará: −13.856 +3.000 = −10.856 tri, o maior saldo desta rodada. */
     pigeons: [
       { mode: 'ground', pos: [-4, 0, -8], phase: .2 }, { mode: 'ground', pos: [11, 0, -6], phase: 1.1 },
       { mode: 'ground', pos: [-2, 0, 10], phase: 2.0 }, { mode: 'ground', pos: [8, 0, 16], phase: 2.9 },
-      { mode: 'ground', pos: [-2.8, 0, 1], phase: .6 }, { mode: 'ground', pos: [9.5, 0, 17], phase: 2.4 },
     ],
+    /* CARCARÁ no teto de um ônibus da caravana (`:1551`, fileira em |x| 19,1/13,5 com
+       targetH 3,3 — topo confirmado por raycast a y=3,30 no miolo do teto). Carcará em poste
+       e em teto de ônibus é a cena do Planalto; e ele NÃO anda (PERCHED no ambientlife). */
+    caracaras: [{ pos: [-13.5, 3.3, 8], phase: 1.4 }],
     /* vida 1: tatu no gramado do eixo — cerrado de Brasília (fauna 2) */
     armadillos: [
-      { pos: [-8, 0, 2], to: [-5, 0, 5], phase: 1.3 }, { pos: [13, 0, -14], to: [10, 0, -11], phase: 2.8 },
+      /* o 2º tatu nascia em (13, −14), que é DENTRO do Towner do hotdog (pegada medida
+         10,26..13,74 × −16,91..−13,09). Ele só não acusava porque o Towner é GLB e em node
+         não existia colisor nenhum; com a pegada de contingência o `eval:ambience-registry`
+         passou a ver o bicho em sólido. Foi 3,4 m para o norte, no gramado livre. */
+      { pos: [-8, 0, 2], to: [-5, 0, 5], phase: 1.3 }, { pos: [14, 0, -11], to: [16.5, 0, -11], phase: 2.8 },
     ],
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:85,vol:.28},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:85,vol:.22}],bioma:'campo'},
+    /* §4.1: o mapa tocava GALO e LATIDO no centro cívico da capital — a pool `campo` do
+       soundscape.js:23. O tráfego do Eixo passa a 40 m dos dois lados (ROAD_IN 39,95), então
+       o bioma é `urbano` (buzina, soundscape.js:31) e entra o loop de cidade. O vento fica:
+       o Planalto Central é ventoso e é o som que o lugar tem de verdade. */
+    ambience,
+    sound: {
+      loops: [{ src: AMB_LOOPS.vento, pos: [0, 3, 0], radius: 85, vol: .28 },
+        { src: AMB_LOOPS.cidade, pos: [0, 3, 0], radius: 120, vol: .18 },
+        { src: AMB_LOOPS.passaros, pos: [0, 3, 0], radius: 85, vol: .14 }],
+      bioma: 'urbano',
+    },
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi,
     /* BANDEIRAS DO CTF — DECLARADAS PELO MAPA (06/08). Os nomes CONGRESSO/ÔNIBUS/CATEDRAL
        moravam no fallback do game.js e vazavam pra QUALQUER mapa sem declaração — o dono

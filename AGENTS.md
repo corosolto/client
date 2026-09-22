@@ -123,6 +123,17 @@ O `commit-msg` **recusa** commit sem o trailer e commit acima de 15 arquivos ou
 800 linhas sem um `Commit-grande:` dizendo por quê. A convenção completa, com a
 medição que comprou o teto, mora em `CONTRIBUTING.md`.
 
+**Credencial nunca entra no índice.** Agente não pode adicionar ao Git, nem em
+fonte, documentação, `HANDOFF.md`, fixture, comentário, mensagem de commit ou
+artefato: senha, token, chave, cookie, URL assinada, identificador de deploy
+efêmero ou qualquer valor que um scanner classifique como credencial. Não importa
+se expira rápido, já foi revogado, é de teste ou não dá acesso permanente. Registre
+só o provedor, o tipo, o caminho e a ação tomada; para exemplos use
+`[REDACTED:<tipo>]` ou o nome da variável de ambiente. Se encontrar um valor assim,
+pare de copiá-lo para prompts/logs e retire-o do *staging*; não use `--no-verify`
+para contornar o bloqueio do scanner. A rotação, revogação ou descarte de um valor
+real é uma decisão do dono e acontece fora do repositório.
+
 ---
 
 ## Onde está cada coisa
@@ -229,7 +240,8 @@ contorne.
   **estenda a `AUD1` junto e prove com mutação**.
 - **Nada de asset com copyright, nada de pessoa real, nada de gore.** É linha editorial e é
   proteção contra takedown — ver [`CONTRIBUTING.md`](CONTRIBUTING.md).
-- **Segredo nunca no git.** `service_role` e `.env` só na Vercel.
+- **Segredo ou credencial efêmera nunca no git.** `service_role` e `.env` só na
+  Vercel; a regra operacional e o bloqueio antes do commit estão acima.
 
 ---
 

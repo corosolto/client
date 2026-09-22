@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-28T07:42:32.300Z",
+ "gerado": "2026-09-13T09:47:27.640Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 62,
@@ -71,13 +71,13 @@
   "porMapa": [
    {
     "mapa": "praca_poderes",
-    "materiais": 103,
-    "map": 75,
-    "normalMap": 16,
-    "roughnessMap": 16,
+    "materiais": 115,
+    "map": 82,
+    "normalMap": 18,
+    "roughnessMap": 18,
     "aoMap": 0,
-    "meshes": 221,
-    "triangulos": 6737
+    "meshes": 340,
+    "triangulos": 11005
    },
    {
     "mapa": "piscina_treta",
@@ -131,33 +131,33 @@
    },
    {
     "mapa": "fy_campomorro",
-    "materiais": 50,
-    "map": 13,
-    "normalMap": 5,
-    "roughnessMap": 5,
+    "materiais": 58,
+    "map": 36,
+    "normalMap": 20,
+    "roughnessMap": 20,
     "aoMap": 0,
-    "meshes": 586,
-    "triangulos": 28180
+    "meshes": 621,
+    "triangulos": 34600
    },
    {
     "mapa": "fy_lajes",
-    "materiais": 174,
-    "map": 106,
+    "materiais": 178,
+    "map": 114,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 1857,
-    "triangulos": 32574
+    "meshes": 1898,
+    "triangulos": 33086
    },
    {
     "mapa": "fy_corrego",
-    "materiais": 140,
-    "map": 94,
-    "normalMap": 9,
-    "roughnessMap": 9,
+    "materiais": 142,
+    "map": 96,
+    "normalMap": 10,
+    "roughnessMap": 10,
     "aoMap": 0,
-    "meshes": 431,
-    "triangulos": 21854
+    "meshes": 466,
+    "triangulos": 22726
    },
    {
     "mapa": "fy_mansao",
@@ -171,80 +171,80 @@
    },
    {
     "mapa": "posto_treta",
-    "materiais": 123,
-    "map": 85,
+    "materiais": 180,
+    "map": 141,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 311,
-    "triangulos": 4424
+    "meshes": 432,
+    "triangulos": 5622
    },
    {
     "mapa": "upa_24h",
-    "materiais": 96,
-    "map": 52,
+    "materiais": 118,
+    "map": 101,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 472,
-    "triangulos": 6426
+    "meshes": 417,
+    "triangulos": 8746
    },
    {
     "mapa": "obras_prefeitura",
-    "materiais": 63,
-    "map": 37,
+    "materiais": 83,
+    "map": 68,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 313,
-    "triangulos": 13232
+    "meshes": 340,
+    "triangulos": 15478
    },
    {
     "mapa": "atacadao_treta",
-    "materiais": 105,
-    "map": 73,
+    "materiais": 134,
+    "map": 105,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 362,
-    "triangulos": 5112
+    "meshes": 493,
+    "triangulos": 7636
    },
    {
     "mapa": "parque_treta",
-    "materiais": 41,
-    "map": 26,
+    "materiais": 49,
+    "map": 35,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 396,
-    "triangulos": 17789
+    "meshes": 506,
+    "triangulos": 19633
    },
    {
     "mapa": "velho_oeste",
-    "materiais": 47,
-    "map": 36,
+    "materiais": 52,
+    "map": 41,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 735,
-    "triangulos": 19092
+    "meshes": 980,
+    "triangulos": 29876
    },
    {
     "mapa": "penitenciaria",
-    "materiais": 27,
-    "map": 6,
-    "normalMap": 0,
-    "roughnessMap": 0,
+    "materiais": 41,
+    "map": 32,
+    "normalMap": 4,
+    "roughnessMap": 4,
     "aoMap": 0,
-    "meshes": 1167,
-    "triangulos": 49966
+    "meshes": 1346,
+    "triangulos": 54674
    }
   ],
   "total": {
-   "materiais": 2653,
-   "map": 1289,
-   "normalMap": 75,
-   "roughnessMap": 75,
+   "materiais": 2834,
+   "map": 1537,
+   "normalMap": 97,
+   "roughnessMap": 97,
    "aoMap": 0
   }
  },

@@ -69,11 +69,40 @@ Measurable gates (per weapon, rendered in-engine):
 - Expected bones present (`Hips, Spine*, Left/RightArm, ForeArm, Hand, UpLeg, Leg, Foot, Head`).
 - No NaN transforms; single skin; shared skeleton across cast (rebind clips by bone name).
 
+## E. Mapas — régua visual de arena (auditoria automática)
+
+Fonte da verdade do loop `map-audit`/`map-improve`. O VLM **não emite veredito**:
+produz evidência estruturada (scores 0–5 + defeitos enumerados por screenshot). A
+decisão de roteamento é da **Laya** (decisão tipada calibrada); o humano decide a
+contact sheet dos borderline e assina todo flip final — mesmo contrato das seções A–D.
+
+Critérios (0 = péssimo, 5 = pronto; julgados multi-ângulo no jogo real, nunca beauty shot):
+
+- **E1 anti-lowpoly** — sem aparência facetada/crua: geometria densa, materiais com
+  sombreado legível, sem primitivas nuas (caixa/cone) expostas como arte final.
+- **E2 iluminação/contraste** — sem estouro no céu, sem áreas chapadas pretas/brancas,
+  direção de luz consistente, sombras coerentes.
+- **E3 densidade de props/cobertura** — arena com cover, pontos de interesse e
+  variedade temática; sem áreas mortas vazias.
+- **E4 legibilidade de rotas** — corredores e sightlines legíveis; jogador entende
+  para onde ir sem minimapa.
+- **E5 horizonte/céu** — skybox sem cortes/emendas visíveis, transição céu↔terreno
+  contínua.
+
+Gates numéricos (sobre a nota_geral do VLM, confirmados pela Laya):
+
+- `nota ≥ 4.0` e nenhum critério `< 3` → **aprovar** (segue pra régua humana final).
+- `2.5 ≤ nota < 4.0` → **melhorar** (entra no loop `map-improve`).
+- `nota < 2.5` → **candidata a descarte** (decisão humana obrigatória antes de sair
+  do registro).
+- Qualquer dúvida calibrada (`sem_humano` falso) → escalona; **desconhecido nunca
+  vira aprovado**.
+
 ---
 
 ## Escalation (where the human decides)
 
-Objective gates A–D auto-pass/fail and auto-reject failures for regeneration. What
+Objective gates A–E auto-pass/fail and auto-reject failures for regeneration. What
 remains — "does the caricature read as *this character*", overall appeal, style match
 to reference board — is presented as a **contact sheet** (grid of candidates +
 numbers). The human judges finalists; their choices calibrate the reference board.

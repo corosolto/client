@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { placeProp, PropBatch } from './mapprops.js';
+import { placeProp, PropBatch, InstBatch } from './mapprops.js';
 import { makeAerialFog } from './bloom.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -122,17 +122,22 @@ export function buildLajes(scene, T) {
   const concrete = externalTexture('/img/textures/concrete_br.webp', 8, 14, T.concrete);
   const brick = externalTexture('/img/textures/lajes_tijolo_baiano_color.webp', 3, 2, T.dirt);
   const corrugated = externalTexture('/img/textures/pbr_corrugatedsteel009_color.webp', 4, 8, concrete);
+  /* Arquivos de 512²: repeat = metros/4 dá os 128 px/m do SUP1. Convés 6,77×2,15 → 1,69×0,54;
+     corrimão 4,8×0,38 → 1,2×0,10; portão de zinco 1,7×2,1 → 0,43×0,53. */
+  const madeira = externalTexture('/img/textures/tex_madeira.webp', 1.69, .54, T.dirt);
+  const madeiraFina = externalTexture('/img/textures/tex_madeira.webp', 1.2, .1, T.dirt);
+  const zinco = externalTexture('/img/textures/tex_zinco.webp', .43, .53, T.metal);
   const mat = (options) => new THREE.MeshStandardMaterial({ roughness: .92, metalness: 0, ...options });
   const MAT = {
     ground: mat({ map: concrete, color: 0x777268 }), alley: mat({ map: concrete, color: 0x5d5d58 }),
     roof: mat({ map: concrete, color: 0xd8d2c8 }), stair: mat({ map: concrete, color: 0xa9a093 }),
     corrugated: mat({ map: corrugated, color: 0xb9b7ae, roughness: .82, metalness: .08 }),
-    brick: mat({ map: brick, color: 0xad765e, roughness: .98 }), wood: mat({ color: 0x6d472b, roughness: .93 }),
-    woodDark: mat({ color: 0x3e291d, roughness: .96 }), metal: mat({ color: 0x252728, metalness: .3, roughness: .75 }),
+    brick: mat({ map: brick, color: 0xad765e, roughness: .98 }), wood: mat({ map: madeira, color: 0x9b6f4a, roughness: .93 }),
+    woodDark: mat({ map: madeiraFina, color: 0x5b3d2a, roughness: .96 }), metal: mat({ map: zinco, color: 0x51555a, metalness: .3, roughness: .75 }),
     proxy: new THREE.MeshBasicMaterial({ visible: false }), water: mat({ color: 0x3d4f43, roughness: .5 }),
     plaster: mat({ map: concrete, color: 0xcfc0a8, roughness: .95 }),
     pool: mat({ color: 0x2877a5, roughness: .55 }), poolWater: mat({ color: 0x62bed1, roughness: .25, transparent: true, opacity: .72 }),
-    charcoal: mat({ color: 0x25211e, roughness: 1 }), kiteRed: mat({ color: 0xd63b42, side: THREE.DoubleSide }),
+    charcoal: mat({ map: corrugated, color: 0x2a2724, roughness: 1 }), kiteRed: mat({ color: 0xd63b42, side: THREE.DoubleSide }),
     kiteBlue: mat({ color: 0x2f70c1, side: THREE.DoubleSide }), kiteYellow: mat({ color: 0xf0bd2b, side: THREE.DoubleSide }),
   };
 
@@ -754,6 +759,38 @@ export function buildLajes(scene, T) {
   };
   [...PLANKS, ...INTERNAL_PLANKS].forEach(addPlank);
 
+  /* PASSARELA COBERTA sobre as 4 tábuas de acesso ao spawn: muro de 1,90 m dos dois lados
+     (topo 7,10 — acima do olho de laje, 6,82) mais telha de zinco. O colisor é GIRADO no
+     padrão do corrimão (:740): AABB no lugar dele sela a laje inteira (medido). */
+  const addPassarela = (id) => {
+    const p = plankSurfaces.find((s) => s.id === id);
+    if (!p) throw new Error(`passarela sem tábua: ${id}`);
+    const { cx, cz, length, width, cos, sin } = p, angle = Math.atan2(sin, cos);
+    const H = 1.9, esp = .14;
+    for (const side of [-1, 1]) {
+      const off = side * (width / 2 + esp / 2);
+      const wx = cx + off * sin, wz = cz + off * cos;
+      const muro = new THREE.Mesh(new THREE.BoxGeometry(length, H, esp), wallMat(MAT.brick, length, H));
+      muro.position.set(wx, ROOF_H + H / 2, wz); muro.rotation.y = angle;
+      muro.castShadow = true; muro.receiveShadow = true; root.add(muro); occluders.push(muro);
+      const hx = length / 2, hz = esp / 2;
+      const ex = Math.abs(cos) * hx + Math.abs(sin) * hz, ez = Math.abs(sin) * hx + Math.abs(cos) * hz;
+      colliders.push({ minX: wx - ex, maxX: wx + ex, minY: ROOF_H, maxY: ROOF_H + H,
+        minZ: wz - ez, maxZ: wz + ez, cx: wx, cz: wz, hx, hz, ry: angle, cos, sin });
+    }
+    const telha = new THREE.Mesh(new THREE.BoxGeometry(length, .14, width + esp * 2), MAT.corrugated);
+    telha.position.set(cx, ROOF_H + H + .07, cz); telha.rotation.y = angle;
+    telha.castShadow = true; root.add(telha); occluders.push(telha);   // para bala; corpo não alcança 7,1 m
+  };
+  ['NW-CN', 'CN-NE', 'SW-CS', 'CS-SE'].forEach(addPassarela);
+  /* PLATIBANDA DO VÃO CENTRAL das duas lajes de spawn: ±1,9 m do eixo é medido, não
+     arredondado — ±1,4 m deixa 3 vazamentos e ±2,2 m estrangula a boca das tábuas.
+     A guarda de 0,44 m dos cantos e das bocas (:865) fica: é a sacada que o mapa declarou.
+     z=∓28,40 (sobre a fáscia, fora da laje) e não ∓28,56: 0,16 m para dentro punha a faixa
+     morta do colisor em cima da saída do funil da passarela e o pescoço caía para 0,40 m —
+     5.475 células sem volta ao spawn na AT1 (medido). Fora da laje, AT1 volta a 100%. */
+  for (const z of [-28.40, 28.40]) addBox(3.8, 1.9, .14, wallMat(MAT.brick, 3.8, 1.9), 0, ROOF_H, z);
+
   const addStaircase = (config) => {
     const width = 1.28, run = 4.2, steps = 15, tread = run / steps, halfRise = ROOF_H / 2;
     const innerX = config.side * 4.6, outerX = config.side * 6.05, topX = config.side * 7.4;
@@ -873,6 +910,47 @@ export function buildLajes(scene, T) {
       const length = Math.min(step + .03, part.z1 - z + step / 2);
       if (groundHeightAt(part.x0 - .34, z) < 4 && !roofAccessOnVertical(part.x0, z)) guard(part.x0, z, false, length, partIndex + 2);
       if (groundHeightAt(part.x1 + .34, z) < 4 && !roofAccessOnVertical(part.x1, z)) guard(part.x1, z, false, length, partIndex + 3);
+    }
+  }
+
+  /* MURO DE DIVISA por vão interno das 8 lajes laterais. O PORTÃO não é constante mágica:
+     é a pegada de CADA tábua que cruza a linha, subtraída do vão (a tábua interna devolve
+     1,80 m em x=±10,3; a WN-MN devolve a boca do mirante — sem isso o mirante fica ilhado,
+     271 células medidas). Colisor girado, para o corpo ver a mesma parede que a bala. */
+  const plankSpanX = (z) => plankSurfaces.flatMap((p) => {
+    const ex = Math.abs(p.cos) * p.length / 2 + Math.abs(p.sin) * p.width / 2;
+    const ez = Math.abs(p.sin) * p.length / 2 + Math.abs(p.cos) * p.width / 2;
+    return (z > p.cz - ez && z < p.cz + ez) ? [[p.cx - ex, p.cx + ex]] : [];
+  });
+  const divisaWalls = [];
+  let divisaIdx = 0;
+  for (const roof of ROOFS) {
+    if (!roof.parts || roof.parts.length < 2) continue;
+    for (let vao = 1; vao < roof.parts.length; vao++) {
+      const z = (roof.parts[vao - 1][1] + roof.parts[vao][0]) / 2;
+      let spans = [[roof.x0, roof.x1]];
+      for (const [bx0, bx1] of plankSpanX(z)) {
+        const next = [];
+        for (const [s0, s1] of spans) {
+          if (bx0 > s0) next.push([s0, Math.min(s1, bx0)]);
+          if (bx1 < s1) next.push([Math.max(s0, bx1), s1]);
+        }
+        spans = next;
+      }
+      for (const [x0, x1] of spans) {
+        const len = x1 - x0;
+        if (len < .3) continue;
+        const ry = (1 + divisaIdx % 10) * (divisaIdx % 2 ? -1 : 1) * Math.PI / 180;
+        const cos = Math.cos(ry), sin = Math.sin(ry), cxm = (x0 + x1) / 2;
+        const muro = new THREE.Mesh(new THREE.BoxGeometry(len, 1.9, .18), wallMat(MAT.brick, len, 1.9));
+        muro.position.set(cxm, ROOF_H + .95, z); muro.rotation.y = ry;
+        muro.castShadow = true; muro.receiveShadow = true; root.add(muro); occluders.push(muro);
+        const hx = len / 2, hz = .09;
+        const ex = Math.abs(cos) * hx + Math.abs(sin) * hz, ez = Math.abs(sin) * hx + Math.abs(cos) * hz;
+        colliders.push({ minX: cxm - ex, maxX: cxm + ex, minY: ROOF_H, maxY: ROOF_H + 1.9,
+          minZ: z - ez, maxZ: z + ez, cx: cxm, cz: z, hx, hz, ry, cos, sin });
+        divisaWalls.push({ x: cxm, z, len }); divisaIdx++;
+      }
     }
   }
 
@@ -1065,6 +1143,50 @@ export function buildLajes(scene, T) {
   root.traverse((o) => { if (o.isInstancedMesh) batchMeshes.push(o); });
   occluders.push(...batchMeshes);
 
+  /* PACOTE ORT1 — massa girada em InstancedMesh (1 draw call por linha), depositado DEPOIS
+     da coleta acima de propósito: ferro de espera de 4 cm e telha encostada não são
+     cobertura, e cada instância no raycast da bala custa (o mesmo motivo do backdrop).
+     Nenhuma das duas leva colisor porque as duas cabem na faixa de 0,38 m que o guarda da
+     borda e o muro de divisa já negam ao corpo — o centro do jogador nunca entra nelas. */
+  {
+    const ort1 = new InstBatch();
+    const ferroGeo = new THREE.BoxGeometry(.04, 1.25, .04);
+    const telhaGeo = new THREE.BoxGeometry(1.15, .05, .85);
+    const mtx = new THREE.Matrix4(), eul = new THREE.Euler(), qua = new THREE.Quaternion();
+    const pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
+    const inst = (geo, material, x, y, z, rx, ry) => {
+      eul.set(rx, ry, 0, 'YXZ'); qua.setFromEuler(eul); pos.set(x, y, z);
+      ort1.add(geo, material, mtx.compose(pos, qua, one));
+    };
+    ROOF_PARTS.forEach((part, i) => {   // ferragem de espera nas duas quinas internas
+      const ry = (5 + (i * 23) % 80) * Math.PI / 180;
+      inst(ferroGeo, MAT.metal, part.x0 + .35, ROOF_H + .625, part.z0 + .35, 0, ry);
+      inst(ferroGeo, MAT.metal, part.x1 - .35, ROOF_H + .625, part.z1 - .35, 0, -ry);
+    });
+    /* Telha tombada 65°, não os 55° da receita: a 55° a chapa avança 0,49 m da face do
+       muro, sai da faixa morta de 0,38 m e passa a exigir colisor (medido: ~220 células). */
+    const encostos = [...divisaWalls.map((w, i) => ({ x: w.x, z: w.z, side: i % 2 ? 1 : -1, i })),
+      { x: 0, z: -28.40, side: -1, i: 20 }, { x: 0, z: 28.40, side: 1, i: 21 }];
+    for (const e of encostos) {
+      const ry = (4 + e.i % 5) * Math.PI / 180 * (e.side > 0 ? 1 : -1);
+      inst(telhaGeo, MAT.corrugated, e.x + ((e.i % 3) - 1) * .35, ROOF_H + .4, e.z + e.side * .19,
+        e.side * 65 * Math.PI / 180, ry);
+    }
+    /* 10 antenas nas lajes que não tinham nenhuma, em batch: as 6 soltas de :1030 custam
+       7 draw calls cada; estas custam 5 no total (mastro, boom e 3 tamanhos de vareta). */
+    const mastroGeo = new THREE.CylinderGeometry(.035, .045, 2.25, 8);
+    const boomGeo = new THREE.BoxGeometry(1.2, .045, .045);
+    const varetaGeo = [.62, .56, .50].map((d) => new THREE.BoxGeometry(.035, .035, d));
+    for (const [z, r] of [[-27, .07], [-13, .19], [0, .31], [12, .40], [24, .48]]) for (const s of [-1, 1]) {
+      const x = s * 12.3, ry = r * s, c = Math.cos(ry), sn = Math.sin(ry);
+      inst(mastroGeo, MAT.metal, x, ROOF_H + 1.125, z, 0, ry);
+      inst(boomGeo, MAT.metal, x, ROOF_H + 2, z, 0, ry);
+      for (let i = -2; i <= 2; i++)
+        inst(varetaGeo[Math.abs(i)], MAT.metal, x + i * .23 * c, ROOF_H + 2, z - i * .23 * sn, 0, ry);
+    }
+    ort1.build(root);
+  }
+
   if (ARCHITECTURE_ON) {
     /* Cenário de fundo em batch PRÓPRIO, fora de `occluders`: 100 instâncias custavam
        0,58 ms/raio no raycast da bala (perf-raycast); o muro de perímetro já para o tiro. */
@@ -1235,11 +1357,14 @@ export function buildLajes(scene, T) {
       { pos: [2.5, 0, 5], to: [2.1, 0, 8], phase: 2.1 }, { pos: [-2, 0, 15], to: [-1.7, 0, 19], phase: 2.8 },
       { pos: [0, 0, 24], to: [1.1, 0, 26], phase: 3.5 }, { pos: [4, 0, 22], to: [2.8, 0, 22], phase: 4.2 },
     ],
+    /* vida 2 (14/09): 7 pombas + 6 ratos eram 13 dos 15 bichos em 2 espécies. TRÊS pombas
+       saem — a de (−11,3 / −19,5), clone da vizinha a 6,5 m na mesma empena oeste; a de
+       (11,2 / −20); e a de (11,4 / 11), cuja PONTA DE LAJE passa a ser do carcará. Isso
+       devolve 20.784 tri e paga carcará + galinha + pintinho (8.892): −11.892 no mapa,
+       74.746 → 62.854 de um teto AM7 de 78.000, com os mesmos 20 draws de 21. */
     pigeons: [
-      { mode: 'ground', pos: [-11.4, ROOF_H, -26], phase: .3 }, { mode: 'ground', pos: [11.2, ROOF_H, -20], phase: 1.3 },
-      { mode: 'ground', pos: [-11.5, ROOF_H, 20], phase: 2.1 }, { mode: 'ground', pos: [11.4, ROOF_H, 11], phase: 2.9 },
-      /* v2.1: os três voos viraram pomba pousada na PONTA de outras lajes (NW/ES/CS) */
-      { mode: 'ground', pos: [-11.3, ROOF_H, -19.5], phase: 4.6 },
+      { mode: 'ground', pos: [-11.4, ROOF_H, -26], phase: .3 },
+      { mode: 'ground', pos: [-11.5, ROOF_H, 20], phase: 2.1 },
       { mode: 'ground', pos: [10.9, ROOF_H, -2.2], phase: 5.3 },
       { mode: 'ground', pos: [1.6, ROOF_H, 30.5], phase: 6.1 },
     ],
@@ -1248,6 +1373,14 @@ export function buildLajes(scene, T) {
     dogs: [{ pos: [-2, 0, 12.5], to: [-2, 0, 18.5], phase: .6 }],
     /* Gato de telhado (BUG-57): ronda a laje do churrasco, parte sul [21.2,27] */
     cats: [{ pos: [-11.5, ROOF_H, 22.2], to: [-9.3, ROOF_H, 24.5], phase: 1.2 }],
+    /* Carcará POUSADO na ponta da laje leste, no lugar exato da pomba que saiu. Rapina
+       pousada não anda (`PERCHED` no ambientlife): balança e vira a cabeça. */
+    caracaras: [{ pos: [11.4, ROOF_H, 11], phase: 1.7 }],
+    /* Quintal do beco: galinha com pintinho a 0,6 m dela — é o par que faz a cena ler como
+       quintal, e é o que o dono descreveu ("galinha no lajes"). Folga medida ao colisor mais
+       próximo: 2,45 m na galinha, 2,22 m no pinto (sonda em /tmp sobre o harness). */
+    hens: [{ pos: [4, 0, 10.4], to: [4, 0, 11.4], phase: .4 }],
+    chicks: [{ pos: [4.4, 0, 10.8], to: [3.9, 0, 11.2], phase: 2.3 }],
   });
 
   return {

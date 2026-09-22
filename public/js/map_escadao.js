@@ -787,11 +787,15 @@ export function buildEscadao(scene, T) {
       { pos: [8.2, groundHeightAt(8.2, 34), 34], to: [9.35, groundHeightAt(9.35, 32.8), 32.8], phase: .45 },
       { pos: [-9.4, groundHeightAt(-9.4, 22.5), 22.5], to: [-8.3, groundHeightAt(-8.3, 21.3), 21.3], phase: 1.7 },
     ],
+    /* vida 2 (14/09): as TRÊS pombas nasciam num raio de 2 m (1,7 m e 1,9 m entre elas) —
+       efeito de clone medido em docs/maps/mint/fauna.md §5. Duas saem e pagam, em triângulo,
+       a galinha com pintinho do quintal do patamar: −13.856 +5.892 = −7.964 tri, e o mapa
+       passa de 2 espécies para 4 (o problema do escadão era variedade, não quantidade). */
     pigeons: [
       { mode: 'ground', pos: [-2, groundHeightAt(-2, -36), -36], phase: .8 },
-      { mode: 'ground', pos: [-3.4, groundHeightAt(-3.4, -35), -35], phase: 1.1 },
-      { mode: 'ground', pos: [-.6, groundHeightAt(-.6, -34.6), -34.6], phase: 2.9 },
     ],
+    hens: [{ pos: [-1.2, groundHeightAt(-1.2, -33.2), -33.2], to: [.2, groundHeightAt(.2, -32.4), -32.4], phase: .5 }],
+    chicks: [{ pos: [-.7, groundHeightAt(-.7, -33.6), -33.6], to: [.1, groundHeightAt(.1, -33), -33], phase: 1.6 }],
   });
 
   return {

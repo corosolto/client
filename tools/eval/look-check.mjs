@@ -44,8 +44,9 @@ const RAIZ = path.resolve(HERE, '../..');
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const TETO_DE = 8;
 // Piloto do RC1 (plans/23): os 3 primeiros mapas do look por mapa. O rollout
-// estende esta lista aos demais mapas com céu webp.
-const MAPAS = ['fy_mansao', 'fy_corrego', 'fy_campomorro'];
+// estende esta lista aos demais mapas com céu webp. 13/09: `obras_prefeitura` entra
+// na primeira vez que ganhou céu (sky_sp, ΔE76 0,00 contra o horizonte assado).
+const MAPAS = ['fy_mansao', 'fy_corrego', 'fy_campomorro', 'obras_prefeitura'];
 
 /* ---------- sRGB -> Lab (D65), ΔE CIE76 ---------- */
 function srgbParaLab(hex) {

@@ -1883,6 +1883,139 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "galinha_hen": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/galinha_hen.glb"
+   ],
+   "source": {
+    "kind": "mint-text-to-3d",
+    "assetId": "ks78e9tgqxzd2wjpv8fwfpttbx8dwggg",
+    "chatUrl": null,
+    "displayName": "Adult Hen",
+    "sha256": "6b89de4486bffb87acf3fca94f69e0611528ce11107eced099bc56353fa2557d",
+    "prompt": null,
+    "notes": "Fauna v2 (14/09/2026): asset JÁ PAGO na conta Mint (ago-set/2026) e nunca baixado — o acervo tinha 418 assets e 33 no jogo. Baixado pelo MCP, otimizado por tools/optimize-ambient-fauna.mjs (simplify 0.6 + textureCompress webp) a partir de references/glb/galinha_hen_mint.glb. ESTÁTICO: list_model_animation_options devolve catálogo Meshy de 673 clipes, TODOS humanoid — quadrúpede e ave não têm animação no pipeline; por isso a seleção é só de bicho cuja pose parada é natural. Locomoção procedural em public/js/ambientlife.js.",
+    "tools": [
+     "mint.gg (MCP)",
+     "tools/optimize-ambient-fauna.mjs"
+    ]
+   }
+  },
+  "pintinho": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/pintinho.glb"
+   ],
+   "source": {
+    "kind": "mint-text-to-3d",
+    "assetId": "ks7ejwy68f4x3ne2jjfbwhcx7d8dxfdz",
+    "chatUrl": null,
+    "displayName": "Baby Chick",
+    "sha256": "5bf1c2cddd50b3871f5b196253ec5ac1a3f5a047dca79e428ee6347866d11361",
+    "prompt": null,
+    "notes": "Fauna v2 (14/09/2026): asset JÁ PAGO na conta Mint (ago-set/2026) e nunca baixado — o acervo tinha 418 assets e 33 no jogo. Baixado pelo MCP, otimizado por tools/optimize-ambient-fauna.mjs (simplify 0.58 + textureCompress webp) a partir de references/glb/pintinho_mint.glb. ESTÁTICO: list_model_animation_options devolve catálogo Meshy de 673 clipes, TODOS humanoid — quadrúpede e ave não têm animação no pipeline; por isso a seleção é só de bicho cuja pose parada é natural. Locomoção procedural em public/js/ambientlife.js.",
+    "tools": [
+     "mint.gg (MCP)",
+     "tools/optimize-ambient-fauna.mjs"
+    ]
+   }
+  },
+  "galinha_angola": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/galinha_angola.glb"
+   ],
+   "source": {
+    "kind": "mint-text-to-3d",
+    "assetId": "ks7crtq8cj2jse86h06wmrrj8s8d66v7",
+    "chatUrl": null,
+    "displayName": "Galinha d'angola",
+    "sha256": "123e4d44dfe17de5fdc785cf1dad685d13202d346461f876925ffd40d07c6233",
+    "prompt": null,
+    "notes": "Fauna v2 (14/09/2026): asset JÁ PAGO na conta Mint (ago-set/2026) e nunca baixado — o acervo tinha 418 assets e 33 no jogo. Baixado pelo MCP, otimizado por tools/optimize-ambient-fauna.mjs (simplify 0.6 + textureCompress webp) a partir de references/glb/galinha_angola_mint.glb. ESTÁTICO: list_model_animation_options devolve catálogo Meshy de 673 clipes, TODOS humanoid — quadrúpede e ave não têm animação no pipeline; por isso a seleção é só de bicho cuja pose parada é natural. Locomoção procedural em public/js/ambientlife.js.",
+    "tools": [
+     "mint.gg (MCP)",
+     "tools/optimize-ambient-fauna.mjs"
+    ]
+   }
+  },
+  "pato_lago": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/pato_lago.glb"
+   ],
+   "source": {
+    "kind": "mint-text-to-3d",
+    "assetId": "ks70r6rydsez0kbkb3rr25fz2d8d7g00",
+    "chatUrl": null,
+    "displayName": "Pato do lago",
+    "sha256": "f67c2093f56c99b48b207ba4ee5eccebdd3bc5d9d8487d3b62aa0bf82acb7c2b",
+    "prompt": null,
+    "notes": "Fauna v2 (14/09/2026): asset JÁ PAGO na conta Mint (ago-set/2026) e nunca baixado — o acervo tinha 418 assets e 33 no jogo. Baixado pelo MCP, otimizado por tools/optimize-ambient-fauna.mjs (simplify 0.6 + textureCompress webp) a partir de references/glb/pato_lago_mint.glb. ESTÁTICO: list_model_animation_options devolve catálogo Meshy de 673 clipes, TODOS humanoid — quadrúpede e ave não têm animação no pipeline; por isso a seleção é só de bicho cuja pose parada é natural. Locomoção procedural em public/js/ambientlife.js.",
+    "tools": [
+     "mint.gg (MCP)",
+     "tools/optimize-ambient-fauna.mjs"
+    ]
+   }
+  },
+  "cavalo_sitio": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/cavalo_sitio.glb"
+   ],
+   "source": {
+    "kind": "mint-text-to-3d",
+    "assetId": "ks7dydcdc7pzs2d5ky37v17bn58d7rjd",
+    "chatUrl": null,
+    "displayName": "Cavalinho de sítio",
+    "sha256": "66da1eff51545f25ff3da1f6618c26eb1184d62b169a7b095e2fd3af87bddd77",
+    "prompt": null,
+    "notes": "Fauna v2 (14/09/2026): asset JÁ PAGO na conta Mint (ago-set/2026) e nunca baixado — o acervo tinha 418 assets e 33 no jogo. Baixado pelo MCP, otimizado por tools/optimize-ambient-fauna.mjs (simplify 0.6 + textureCompress webp) a partir de references/glb/cavalo_sitio_mint.glb. ESTÁTICO: list_model_animation_options devolve catálogo Meshy de 673 clipes, TODOS humanoid — quadrúpede e ave não têm animação no pipeline; por isso a seleção é só de bicho cuja pose parada é natural. Locomoção procedural em public/js/ambientlife.js.",
+    "tools": [
+     "mint.gg (MCP)",
+     "tools/optimize-ambient-fauna.mjs"
+    ]
+   }
+  },
+  "cabra_caatinga": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/cabra_caatinga.glb"
+   ],
+   "source": {
+    "kind": "mint-text-to-3d",
+    "assetId": "ks7fefck8z8g8nt8q207va4wrd8dwp45",
+    "chatUrl": null,
+    "displayName": "Caatinga Goat",
+    "sha256": "0b32215ab82aa5c6327aea820aa42bdd8f0cac6221bc4327929776abf037fc0a",
+    "prompt": null,
+    "notes": "Fauna v2 (14/09/2026): asset JÁ PAGO na conta Mint (ago-set/2026) e nunca baixado — o acervo tinha 418 assets e 33 no jogo. Baixado pelo MCP, otimizado por tools/optimize-ambient-fauna.mjs (simplify 0.6 + textureCompress webp) a partir de references/glb/cabra_caatinga_mint.glb. ESTÁTICO: list_model_animation_options devolve catálogo Meshy de 673 clipes, TODOS humanoid — quadrúpede e ave não têm animação no pipeline; por isso a seleção é só de bicho cuja pose parada é natural. Locomoção procedural em public/js/ambientlife.js.",
+    "tools": [
+     "mint.gg (MCP)",
+     "tools/optimize-ambient-fauna.mjs"
+    ]
+   }
+  },
+  "carcara": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/carcara.glb"
+   ],
+   "source": {
+    "kind": "mint-text-to-3d",
+    "assetId": "ks70zqfdxbtnvqxpjr78s61wb58d45av",
+    "chatUrl": null,
+    "displayName": "Striped Breast Caracara",
+    "sha256": "2b372352a2f81f5649d62ff6e6541038b590babe2b5970aa26b8bfd0592b5836",
+    "prompt": null,
+    "notes": "Fauna v2 (14/09/2026): asset JÁ PAGO na conta Mint (ago-set/2026) e nunca baixado — o acervo tinha 418 assets e 33 no jogo. Baixado pelo MCP, otimizado por tools/optimize-ambient-fauna.mjs (simplify 0.6 + textureCompress webp) a partir de references/glb/carcara_mint.glb. ESTÁTICO: list_model_animation_options devolve catálogo Meshy de 673 clipes, TODOS humanoid — quadrúpede e ave não têm animação no pipeline; por isso a seleção é só de bicho cuja pose parada é natural. Locomoção procedural em public/js/ambientlife.js.",
+    "tools": [
+     "mint.gg (MCP)",
+     "tools/optimize-ambient-fauna.mjs"
+    ]
+   }
   }
  }
 }

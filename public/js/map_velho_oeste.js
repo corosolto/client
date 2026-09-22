@@ -1,12 +1,15 @@
 // Velho Oeste da Treta: cidade de madeira ao pôr do sol, com três rotas e cobertura baixa.
 import * as THREE from 'three';
+import { VAO_BANDS, aoBoxGeo, aoMatFactory, BASE_FLOATING, onGround } from './vao.js';
+import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
+const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
-export function buildVelhoOeste(scene) {
+export function buildVelhoOeste(scene, T) {
   const colliders = [];
   const occluders = [];
   const pickups = [];
@@ -97,7 +100,9 @@ export function buildVelhoOeste(scene) {
   if (typeof window !== 'undefined') {
     TX.wood = realTexture('wood-real-v1.webp', 'oeste-wood-real', 3, 5);
     TX.paleWood = realTexture('wood-real-v1.webp', 'oeste-wood-pale-real', 3, 5);
-    TX.sand = realTexture('dirt-real-v1.webp', 'oeste-sand-real', 12, 14);
+    // tile de 4 m no plano de 150×180: 512 px ÷ 4 m = 128 px/m (era 12,5 m de tile = 41 px/m,
+    // abaixo do piso TEXEL de 64 e, com 82% da área do mapa, era ELE quem fixava a dispersão)
+    TX.sand = realTexture('dirt-real-v1.webp', 'oeste-sand-real', 37.5, 45);
     TX.roof = realTexture('roof-real-v1.webp', 'oeste-roof-real', 4, 7);
     TX.cactus = realTexture('cactus-real-v1.webp', 'oeste-cactus-real', 2, 4);
     TX.hay = realTexture('hay-real-v1.webp', 'oeste-hay-real', 3, 3);
@@ -112,8 +117,13 @@ export function buildVelhoOeste(scene) {
     windowVoid: new THREE.MeshBasicMaterial({ color: 0x1b110b }),
   };
 
+  /* UV EM METROS + AO DE CONTATO (vao.js): o mesmo MAT.wood vestia a fachada de 12 m e o
+     corrimão de 0,22 m. `aoMat` CLONA — o PlaneGeometry do chão segue no material original. */
+  const aoMat = aoMatFactory();
   function addBox(w, h, d, material, x, y, z, opts = {}) {
-    const mesh = new THREE.Mesh(boxGeo(w, h, d), material); mesh.position.set(x, y + h / 2, z);
+    const vao = VAO_BANDS && opts.vao !== false && material && material.visible !== false;
+    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: (onGround(y, h) && !opts.ry) ? undefined : BASE_FLOATING }) : boxGeo(w, h, d);
+    const mesh = new THREE.Mesh(geo, vao ? aoMat(material) : material); mesh.position.set(x, y + h / 2, z);
     if (opts.ry) mesh.rotation.y = opts.ry;
     mesh.castShadow = opts.cast !== false; mesh.receiveShadow = true; root.add(mesh);
     if (opts.name) mesh.name = opts.name;
@@ -200,8 +210,11 @@ export function buildVelhoOeste(scene) {
     return group;
   }
 
-  scene.background = new THREE.Color(0xd88b55);
-  scene.fog = new THREE.Fog(0xc7804e, 68, 150);
+  /* CÉU: era `Color` chapada, então `scene.userData.skyUrl` ficava undefined e o look-check
+     não conseguia nem medir. sky_ferrovelho é o panorama de fim de tarde poeirento já no
+     acervo; a névoa recebe o horizonte MEDIDO dele (b29770), que é o contrato do look-check. */
+  setMapSky(scene, T, '/img/textures/sky_ferrovelho.webp', 0xb29770);
+  scene.fog = new THREE.Fog(0xb29770, 68, 150);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 180), MAT.sand); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
   for (let z = -HALF_Z; z <= HALF_Z; z += 8) addBox(8, .025, .11, MAT.pale, 0, .02, z, { collide: false, cast: false });
 
@@ -216,6 +229,14 @@ export function buildVelhoOeste(scene) {
     for (const wz of [-w * .3, w * .3]) westernWindow(faceX - side * .05, 2.2, z + wz, ry, 1.35, 1.25);
     for (let pz = z - w / 2; pz <= z + w / 2; pz += 2.3) addCylinder(.12, 1.4, MAT.dark, faceX - side * 2.3, 0, pz, { collide: false });
     addBox(.22, .22, w + .8, MAT.pale, faceX - side * 2.2, 1.4, z, { tag: `varanda-${title.toLowerCase()}` });
+    /* FALSA FRENTE: é o gesto construtivo real da rua de boomtown (e a platibanda do
+       sertão, se o retheme entrar) — é ela que dá 9,4-10,4 m de silhueta sobre casa de um
+       pavimento. Massa, não cobertura: tudo `collide:false`. */
+    const pz2 = w / 2 - .4;
+    addBox(1, 9.4 - h, w, MAT.pale, faceX, h, z, { collide: false });
+    for (const dz of [-pz2, pz2]) addBox(.5, 9.8 - h, .5, MAT.trim, faceX, h, z + dz, { collide: false });
+    addBox(1.4, .5, w + 1, MAT.roof, faceX, 9.4, z, { collide: false });
+    addBox(.6, 10.4 - h, .6, MAT.dark, x, h, z, { collide: false });
     addSign(title, title === 'SALOON' ? 'BEBIDA · BARALHO · TRETA' : '', faceX - side * .2, h - .55, z, ry, Math.min(7, w - 1), 1.8);
     return g;
   }
@@ -238,6 +259,8 @@ export function buildVelhoOeste(scene) {
     addBox(.22, .22, 7.6, MAT.pale, faceX - side * 1.05, 1.25, z, { tag: `varanda-${title.toLowerCase()}` });
     addBox(2.3, .22, 8, MAT.roof, faceX - side * 1.05, 3.05, z, { collide: false });
     for (const dz of [-3.35, 3.35]) addBox(.18, 3.05, .18, MAT.dark, faceX - side * 1.9, 0, z + dz, { collide: false });
+    addBox(.5, 4.5, 7.2, MAT.pale, faceX, 4.7, z, { collide: false });
+    for (const dz of [-3.4, 3.4]) addBox(.45, 4.8, .45, MAT.trim, faceX, 4.7, z + dz, { collide: false });
     addSign(title, 'CASA DE MADEIRA', faceX - side * .14, 3.8, z, ry, 4.8, 1.25);
   }
   streetHouse(-1, -20, 'OFICINA', MAT.pale);
@@ -284,7 +307,9 @@ export function buildVelhoOeste(scene) {
       for (let i = 0; i < 8; i++) { const spoke = new THREE.Mesh(boxGeo(.05, 1.2, .05), MAT.dark); spoke.position.set(wx, .75, wz); spoke.rotation.x = i * Math.PI / 4; g.add(spoke); }
     }
     const hx = Math.abs(Math.cos(ry)) * 2.3 + Math.abs(Math.sin(ry)) * 3.2, hz = Math.abs(Math.sin(ry)) * 2.3 + Math.abs(Math.cos(ry)) * 3.2;
-    colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: 2, minZ: z - hz, maxZ: z + hz }); occluders.push(g); return g;
+    colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: 2, minZ: z - hz, maxZ: z + hz });
+    // Group NÃO para bala: o raycast de tiro/LOS é não-recursivo (game.js:3310). Occluder é MALHA.
+    g.traverse(m => { if (m.isMesh) occluders.push(m); }); return g;
   }
   wagon(-6, -20, .18); wagon(7, 2, -2.7); wagon(-5, 25, 2.9);
 
@@ -304,7 +329,7 @@ export function buildVelhoOeste(scene) {
     const worldHX = Math.abs(Math.cos(ry)) * hx + Math.abs(Math.sin(ry)) * hz;
     const worldHZ = Math.abs(Math.sin(ry)) * hx + Math.abs(Math.cos(ry)) * hz;
     colliders.push({ minX: x - worldHX, maxX: x + worldHX, minY: 0, maxY: height, minZ: z - worldHZ, maxZ: z + worldHZ });
-    occluders.push(group); return group;
+    group.traverse(m => { if (m.isMesh) occluders.push(m); }); return group;
   }
 
   // Coberturas do miolo: quatro silhuetas distintas, espaçadas para manter três corredores.
@@ -313,7 +338,8 @@ export function buildVelhoOeste(scene) {
     for (const px of [-2.05, 2.05]) part(.16, .55, 1.35, MAT.pale, px, .28, 0);
     part(3.8, .04, 1.15, MAT.glass, 0, .31, 0); for (const px of [-1.65, 1.65]) part(.18, .5, .18, MAT.dark, px, 0, 0);
   });
-  obstacle('caixas-dinamite', -3, 9, -.12, 1.45, 1.1, 1.75, (part, cylinder) => {
+  // (-3,9) atravessava o depósito do eixo norte; (-6;9,5) fecha a mesma faixa sem interpenetrar.
+  obstacle('caixas-dinamite', -6, 9.5, -.12, 1.45, 1.1, 1.75, (part, cylinder) => {
     part(1.8, 1.05, 1.55, MAT.pale, -.45, 0, 0); part(1.35, .85, 1.35, MAT.wood, .65, 1.02, .05);
     for (const pz of [-.42, 0, .42]) cylinder(.09, .9, MAT.red, .65, 1.43, pz, { rz: Math.PI / 2, segments: 8 });
     part(1.42, .08, .12, MAT.dark, .65, 1.84, 0);
@@ -345,14 +371,86 @@ export function buildVelhoOeste(scene) {
     for (const px of [-2.1, 0, 2.1]) part(.25, 1.65, .28, MAT.dark, px, 0, 0, { rz: px === 0 ? .16 : 0 });
     part(4.7, .22, .24, MAT.pale, 0, .5, 0, { rz: -.12 }); part(4.25, .22, .24, MAT.wood, .15, 1.08, 0, { rz: .2 });
   });
+  /* Os 8 obstáculos acima têm topo 1,05-1,90 m e deixavam x=±6 e x=±10 limpos na altura do
+     olho (1,62 m). Estes quatro fecham essas faixas com topo 1,8-2,6 m e ainda dão agachada
+     por trás. Todos dentro de |x|,|z| ≤ 12, que é o que velho-oeste-check.mjs:60 exige. */
+  obstacle('carroca-tombada', -6, -2.4, .21, 2.1, 1.3, 1.8, (part, cylinder) => {
+    part(3.4, 1.5, 1.9, MAT.pale, 0, .1, 0, { rz: .22 });
+    part(.2, .28, 4.4, MAT.dark, .2, .78, -1.3);
+    for (const pz of [-.8, .8]) cylinder(.72, .16, MAT.dark, -1.2, .7, pz, { rz: Math.PI / 2, segments: 12 });
+  });
+  obstacle('toldo-feira', 4.5, 6, -.17, 1.9, 1.4, 2, (part) => {
+    part(3.6, 1.2, 2.4, MAT.wood, 0, 0, 0); part(3.4, .5, 2.2, MAT.hay, 0, 1.2, 0);
+    for (const px of [-1.7, 1.7]) for (const pz of [-1.2, 1.2]) part(.14, 2, .14, MAT.dark, px, 0, pz);
+    part(4, .16, 2.9, MAT.red, 0, 1.94, 0, { rz: .05 });
+  });
+  obstacle('lenha', -10.5, 6, .13, 1.4, 1.2, 2.6, (part, cylinder) => {
+    part(2.5, 2.2, 2.1, MAT.wood, 0, 0, 0);
+    for (const pz of [-.6, .6]) cylinder(.3, 2.4, MAT.dark, -.9, 0, pz, { segments: 8 });
+    part(2.7, .35, 2.3, MAT.hay, 0, 2.25, 0);
+  });
+  obstacle('pilha-couro', 10.5, -5, -.11, 1.4, 1.2, 2.6, (part) => {
+    part(2.4, .9, 2, MAT.dark, 0, 0, 0); part(2.2, .8, 1.8, MAT.pale, .1, .9, -.05);
+    part(2, .75, 1.7, MAT.wood, -.1, 1.7, .05); part(2.3, .2, 2.1, MAT.hay, 0, 2.45, 0);
+  });
 
-  for (const [x, z] of [[13,-31],[-14,-4],[14,17],[-13,36]]) {
-    for (let i = 0; i < 3; i++) addCylinder(.65, 1.15, MAT.hay, x + (i - 1) * 1.25, 0, z, { collide: true, segments: 14, rz: Math.PI / 2 });
+  const fardoTrio = (x, z) => { for (let i = 0; i < 3; i++) addCylinder(.65, 1.15, MAT.hay, x + (i - 1) * 1.25, 0, z, { collide: true, segments: 14, rz: Math.PI / 2 }); };
+  const barril = (x, z) => { addCylinder(.62, 1, MAT.dark, x, 0, z, { collide: true, segments: 12 }); addCylinder(.67, .1, MAT.metal, x, .98, z, { segments: 12 }); };
+  for (const [x, z] of [[13,-31],[-14,-4],[14,12],[-13,36]]) fardoTrio(x, z);
+  for (const [x, z] of [[-12,-33],[12,-12],[-13,13],[12,34]]) barril(x, z);
+
+  /* BECOS LATERAIS (x 17-25): estavam 100% VAZIOS — 90 m de linha limpa e o pior quadrante
+     do mapa (espaçamento 99 m, razão 0). Os muros de quintal ALTERNAM o lado do beco e se
+     SOBREPÕEM em x (17-21 contra 20,8-25,1): a primeira medição desta rodada deixou 0,8 m
+     de fresta entre as duas famílias e os 90 m de visada continuaram de pé, intactos.
+     Cada muro deixa livre a COLUNA do lattice de waypoint do outro lado (folga ≥0,55 m);
+     vão sem coluna ilha o grafo — foi assim que a 1ª versão da receita desconectou E de B. */
+  // O chapéu (0,16 m) fica abaixo do piso de massa do ALT1 e sem colisor: é silhueta, não cobertura.
+  const muroQuintal = (w, x, z, material) => {
+    addBox(w, 2.4, .8, material, x, 0, z);
+    addBox(w + .3, .16, 1.05, MAT.roof, x, 2.4, z, { collide: false });
+  };
+  const torreDagua = (x, z) => {
+    addBox(3.6, 3.6, 3.6, MAT.pale, x, 7.8, z);   // caixa a 7,8 m: não barra corpo, barra bala e dá silhueta
+    for (const dx of [-1.5, 1.5]) for (const dz of [-1.5, 1.5]) addBox(.34, 9.6, .34, MAT.dark, x + dx, 0, z + dz, { collide: false });
+  };
+  for (const sx of [-1, 1]) {
+    for (const z of [-34.5, -18.6, 5.5, 32.2]) fardoTrio(sx * 21, z);
+    for (const [bx, bz] of [[23.5,-33],[19.5,-26],[23.5,-20.5],[23.5,-12],[19.5,-5],[23.5,12],[19.5,15],[23.5,37.5],[19.5,39]]) barril(sx * bx, bz);
+    for (const z of [-36, -12, 8, 26]) muroQuintal(4, sx * 19, z, MAT.pale);
+    for (const z of [-24, 4, 16, 35]) muroQuintal(4.3, sx * 22.95, z, MAT.wood);
+    barril(sx * 30, 21.5);   // canto morto: era o ponto mais longe de qualquer cobertura
   }
-  for (const [x, z] of [[-12,-33],[12,-12],[-13,13],[12,34]]) {
-    addCylinder(.62, 1, MAT.dark, x, 0, z, { collide: true, segments: 12 });
-    addCylinder(.67, .1, MAT.metal, x, .98, z, { segments: 12 });
-  }
+  torreDagua(21.5, -30); torreDagua(-21.5, 23);
+
+  // Densidade interna: curral do sul, pátio do xerife, pátio do estábulo, fundo da pensão,
+  // beira do barbeiro — os quadrantes que sobravam acima do teto de 7 m de espaçamento.
+  for (const [x, z] of [[-10,-35],[5,-27],[9,32],[-8,32],[10,-35.7]]) fardoTrio(x, z);
+  // (-13,42) deixava o spawn B(-12,41) com 0,55 m de folga (MAP2B pede ≥1,2): saiu para (-16,42).
+  for (const [x, z] of [[-14,-31],[-3,-36],[14,-26],[15.5,29],[-6,15.5],[-10.5,21],[13.5,-14.5],[6,-22],[10,-16],[-16,42],[-3.5,35.5]]) barril(x, z);
+
+  /* ESTAÇÕES DE FEIRA/CURRAL: 3 caixas com 0,7 m de SOBREPOSIÇÃO — fresta entre barracas
+     vira luneta de sniper. Cada estação tranca METADE da rua, então a rota vira S e não
+     corredor. O nome NÃO pode começar com `obstaculo-`: velho-oeste-check.mjs:60 reprova
+     obstáculo fora de |x|,|z| ≤ 12. As duas estações do meio param em |x| 12,1 porque a
+     casa de rua (|x| 12,25-17,75) continua o anteparo dali para fora. */
+  const estacao = (z, sx, xs) => xs.forEach((bx, i) => {
+    const x = sx * bx, bz = z + (i === 1 ? .25 : -.25), ry = i === 1 ? .06 : -.05;
+    addBox(4.2, 2.6, 1.5, i === 1 ? MAT.wood : MAT.pale, x, 0, bz, { ry, name: `feira-${z}-${i}` });
+    addBox(4.6, .18, 2.1, i === 1 ? MAT.red : MAT.blue, x, 2.6, bz, { ry, collide: false });   // toldo: silhueta de feira
+  });
+  estacao(-26.5, -1, [12.2, 8.7, 5.2]); estacao(26.5, 1, [12.2, 8.7, 5.2]);
+  estacao(-18.7, 1, [10, 6.5, 3]); estacao(18.7, -1, [10, 6.5, 3]);
+
+  /* MARCOS DO EIXO: a rua (x≈0) é o único lugar onde não cabe chicane. Capela ao sul,
+     depósito com caixa d'água ao norte — pegada 52 m², então contam como prop no MAP5. */
+  addBox(6.4, 4.2, 8.2, MAT.pale, 0, 0, -13, { ry: .05 });
+  addBox(7.4, .5, 9, MAT.roof, 0, 4.2, -13, { ry: .05, collide: false });
+  addBox(2.6, 9.6, 2.6, MAT.wood, 0, 0, -15.5, { ry: .05 });
+  addBox(3.2, .4, 3.2, MAT.roof, 0, 9.6, -15.5, { ry: .05, collide: false });
+  addBox(6.4, 4.2, 8.2, MAT.wood, 0, 0, 12.5, { ry: -.06 });
+  addBox(7.4, .5, 9, MAT.roof, 0, 4.2, 12.5, { ry: -.06, collide: false });
+  addBox(3.6, 11.4, 3.6, MAT.metal, 0, 0, 15, { ry: -.06 });
 
   // Plantas rolantes: malhas abertas, sem colisão, atravessando a rua com rajadas diferentes.
   const tumbleweeds = [];
@@ -426,10 +524,20 @@ export function buildVelhoOeste(scene) {
       { pos: [-16, 0, -34], to: [-13.5, 0, -31.5], phase: .3 },
       { pos: [16, 0, 34], to: [13.5, 0, 31.5], phase: 1.5 },
     ],
+    /* vida 2 (14/09): a pomba de (−6,8 / −5) era clone da de (−8 / −6) a 1,6 m; sai e paga o
+       carcará (−6.928 +3.000). O mapa prometia "ave de poleiro" em `:520` e entregava três
+       pombas de chão; agora a ave de poleiro existe. */
     pigeons: [
       { mode: 'ground', pos: [-8, 0, -6], phase: .5 }, { mode: 'ground', pos: [4, 0, 14], phase: 1.4 },
-      { mode: 'ground', pos: [-6.8, 0, -5], phase: .9 },
     ],
+    /* Carcará no BEIRAL DA VARANDA da Casa do Pistoleiro (topo medido por raycast: y=3,27;
+       a viga da varanda mora em 1,25..1,47, então o bicho pousa acima dela, não dentro). */
+    caracaras: [{ pos: [11.17, 3.27, 22.5], phase: .9 }],
+    /* CURRAL DO ESTÁBULO (ponto B do CTF, `:546`): cavalo pastando e cabra. O cavalo não
+       tem `to` — a pose do GLB é de cabeça baixa no capim e cavalo pastando não anda.
+       Folga medida ao colisor: 3,6 m no cavalo, 4,1 m na cabra. */
+    horses: [{ pos: [21.5, 0, 22.5], phase: .3 }],
+    goats: [{ pos: [24, 0, 21.5], to: [25.2, 0, 22.1], phase: 1.7 }],
   });
 
   return {
@@ -439,10 +547,13 @@ export function buildVelhoOeste(scene) {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),
     },
+    /* CTF1: E/MID/B eram colineares no eixo da rua (altura do triângulo 0,00 m) e E e B
+       nasciam a 7,0 m do próprio spawn, com a B DENTRO do barril de (12,34). Agora a MID
+       sai do eixo e as pontas vão para os becos: triângulo 7,97 m, 16,9 m de spawn. */
     ctfPoints: [
-      { id: 'E', label: 'SALOON', x: -12, z: -34 },
-      { id: 'MID', label: 'RUA PRINCIPAL', x: 0, z: 0 },
-      { id: 'B', label: 'ESTÁBULO', x: 12, z: 34 },
+      { id: 'E', label: 'BECO DO SALOON', x: -21.5, z: -27 },
+      { id: 'MID', label: 'BEBEDOURO DO LARGO', x: -7, z: 4 },
+      { id: 'B', label: 'CURRAL DO ESTÁBULO', x: 21.5, z: 27 },
     ],
     waypoints: { nodes, adj }, nearestWaypoint, findPath, bounds,
   };

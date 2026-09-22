@@ -45,6 +45,26 @@ const jobs = [
     // o albedo vermelho satura ainda mais (medido na captura). Dessatura pro
     // marrom de barata americana sem perder o lê-no-chão
     brighten: .85, saturate: .5 },
+  /* vida 2 (14/09): 8 bichos que JÁ ESTAVAM PAGOS na conta Mint e nunca tinham sido
+     baixados — o acervo tinha 418 assets e 33 no jogo. Todos estáticos pela mesma razão
+     dos de cima, agora com a causa confirmada por medição: `list_model_animation_options`
+     devolve catálogo Meshy de 673 clipes e TODOS são `humanoid animation`. Quadrúpede e
+     ave não têm animação no pipeline — por isso a seleção abaixo é só de bicho cuja POSE
+     PARADA é natural (ave pousada, bode de cabresto, cavalo pastando, lagarto em muro).
+     simplify 0,6 é o mesmo do tatu/papagaio e o que a casa já usa na frota (medido:
+     ratio 0,6 reproduz byte a byte o arquivo servido). */
+  { src: 'references/glb/galinha_hen_mint.glb', out: `${outDir}/galinha_hen.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  { src: 'references/glb/pintinho_mint.glb', out: `${outDir}/pintinho.glb`, skinned: false, noDecimate: true, simplify: .58 },
+  { src: 'references/glb/galinha_angola_mint.glb', out: `${outDir}/galinha_angola.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  /* o "Pato do lago" é o asset que a §2 do fauna.md REPROVOU por ter a água do lago assada
+     dentro da malha (31,7% da área em laje horizontal). O `dropFlatSlab` tira a laje e o
+     que sobra é o pato nadando — que é a pose certa para espelho d'água. 4.664 -> 4.462
+     crus -> 2.677 servidos, acima do piso POLY1 de 2.500. */
+  { src: 'references/glb/pato_lago_mint.glb', out: `${outDir}/pato_lago.glb`, skinned: false, noDecimate: true, simplify: .6, dropFlatSlab: true },
+  { src: 'references/glb/cavalo_sitio_mint.glb', out: `${outDir}/cavalo_sitio.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  { src: 'references/glb/cabra_caatinga_mint.glb', out: `${outDir}/cabra_caatinga.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  { src: 'references/glb/calango_mint.glb', out: `${outDir}/calango.glb`, skinned: false, noDecimate: true, simplify: .55 },
+  { src: 'references/glb/carcara_mint.glb', out: `${outDir}/carcara.glb`, skinned: false, noDecimate: true, simplify: .6 },
 ];
 
 const filtroArgs = process.argv.slice(2);
@@ -81,6 +101,74 @@ for (const job of jobs) {
       texture.setImage(boosted, 'image/png');
       texture.setMimeType('image/png');
     }
+  }
+  /* `dropFlatSlab`: o Mint assa a ÁGUA dentro do modelo de bicho aquático — no pato são
+     3 componentes conexos 100% horizontais (94+68+40 tri crus) que somam 31,7% da área da
+     malha e viram um disco branco de plástico em volta da ave (medido em
+     docs/maps/mint/fauna.md §2 e reconferido aqui). Só saem componentes CONEXOS cuja área
+     é ≥95% de normal ±Y e cuja espessura em Y é <25% da altura do modelo: asa (26% plana)
+     e corpo (20%) não se enquadram. Roda ANTES do simplify para o orçamento de triângulo
+     ir todo para o pato. */
+  if (job.dropFlatSlab) for (const mesh of doc.getRoot().listMeshes()) for (const prim of mesh.listPrimitives()) {
+    const pos = prim.getAttribute('POSITION');
+    const idx = prim.getIndices();
+    if (!pos || !idx) continue;
+    const nv = pos.getCount(), nt = idx.getCount() / 3;
+    const chave = new Map(), rep = new Int32Array(nv), pai = new Int32Array(nv);
+    const p = [0, 0, 0];
+    for (let i = 0; i < nv; i++) {
+      pos.getElement(i, p);
+      const k = `${Math.round(p[0] * 1e4)},${Math.round(p[1] * 1e4)},${Math.round(p[2] * 1e4)}`;
+      if (!chave.has(k)) chave.set(k, i);
+      rep[i] = chave.get(k); pai[i] = i;
+    }
+    const acha = (a) => { while (pai[a] !== a) { pai[a] = pai[pai[a]]; a = pai[a]; } return a; };
+    const une = (a, b) => { a = acha(a); b = acha(b); if (a !== b) pai[b] = a; };
+    for (let i = 0; i < nt; i++) { une(rep[idx.getScalar(i * 3)], rep[idx.getScalar(i * 3 + 1)]); une(rep[idx.getScalar(i * 3)], rep[idx.getScalar(i * 3 + 2)]); }
+    const grupo = new Map();
+    let minY = Infinity, maxY = -Infinity;
+    const tri = [];
+    for (let i = 0; i < nt; i++) {
+      const ids = [idx.getScalar(i * 3), idx.getScalar(i * 3 + 1), idx.getScalar(i * 3 + 2)];
+      const P = ids.map((id) => pos.getElement(id, [0, 0, 0]));
+      for (const q of P) { if (q[1] < minY) minY = q[1]; if (q[1] > maxY) maxY = q[1]; }
+      const e1 = [P[1][0] - P[0][0], P[1][1] - P[0][1], P[1][2] - P[0][2]];
+      const e2 = [P[2][0] - P[0][0], P[2][1] - P[0][1], P[2][2] - P[0][2]];
+      const cr = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+      const area = Math.hypot(cr[0], cr[1], cr[2]) / 2;
+      const r = acha(rep[ids[0]]);
+      let g = grupo.get(r);
+      if (!g) { g = { area: 0, plana: 0, y0: Infinity, y1: -Infinity }; grupo.set(r, g); }
+      g.area += area;
+      if (area > 1e-12 && Math.abs(cr[1]) / (2 * area) > .9) g.plana += area;
+      for (const q of P) { if (q[1] < g.y0) g.y0 = q[1]; if (q[1] > g.y1) g.y1 = q[1]; }
+      tri.push({ ids, g: r });
+    }
+    const alturaModelo = maxY - minY || 1;
+    const fora = new Set([...grupo.entries()]
+      .filter(([, g]) => g.plana / g.area >= .95 && (g.y1 - g.y0) < alturaModelo * .25)
+      .map(([r]) => r));
+    if (!fora.size) continue;
+    const mantidos = tri.filter((t) => !fora.has(t.g));
+    /* recompacta os vértices: índice novo só com quem sobrou (vértice órfão não é
+       removido nem por `prune` nem por `dedup` — vira KB morto no deploy). */
+    const remap = new Map();
+    const novoIdx = [];
+    for (const t of mantidos) for (const id of t.ids) {
+      if (!remap.has(id)) remap.set(id, remap.size);
+      novoIdx.push(remap.get(id));
+    }
+    const ordem = [...remap.keys()];
+    for (const nome of prim.listSemantics()) {
+      const attr = prim.getAttribute(nome);
+      const n = attr.getElementSize();
+      const dados = new Float32Array(ordem.length * n);
+      const buf = new Array(n);
+      ordem.forEach((id, i) => { attr.getElement(id, buf); dados.set(buf, i * n); });
+      prim.setAttribute(nome, attr.clone().setArray(dados));
+    }
+    prim.setIndices(idx.clone().setArray(new Uint32Array(novoIdx)));
+    console.log(`  dropFlatSlab: ${fora.size} componente(s) horizontal(is) fora — ${nt} -> ${mantidos.length} tri`);
   }
   if (job.simplify) await doc.transform(
     simplify({ simplifier: MeshoptSimplifier, ratio: job.simplify, error: 0.01 }),

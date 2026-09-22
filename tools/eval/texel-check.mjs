@@ -83,6 +83,23 @@ const JSON_OUT = arg('json-out');
 const EM_JSON = !!arg('json') || !!JSON_OUT;
 const NAO_MEDIDO_MAX = 0.05;   // fração da área com textura que pode ficar sem medida
 
+/* ---- MALHA INVISÍVEL NÃO TEM TEXTURA PORQUE NINGUÉM A VÊ (13/09/2026).
+   Medido no fy_lajes: 3.886 m² em 22 caixas `MAT.proxy` (`MeshBasicMaterial({visible:false})`,
+   marcadas `userData.proxyGLB` em map_lajes_authored.js:205) eram 75,8% de toda a "área sem
+   textura" que o SUP2 do mapa-novo-gate cobra. Elas são o CORPO invisível dos blocos — o
+   truque legítimo de dar corpo de bala a um GLB —, e o contrato do mapa (`:612-614`) proíbe
+   apagá-las. Cobrar textura de superfície que não é desenhada é defeito de RÉGUA.
+   O teste é o MESMO do SUP1 (`mapa-novo-gate.mjs:354`: material escolhido com
+   `visible !== false`) mais o marcador `userData.proxyGLB` que a MAP4 já honra
+   (`map-check.mjs`): duas réguas que medem o mesmo conceito compartilham o critério.
+   `--mutante=proxy-contado` devolve essa área para a conta e a TEXEL7 tem que ficar
+   VERMELHA — é a prova de que o pulo é o que move o número, e não a maré. */
+const MUT_PROXY_CONTADO = arg('mutante') === 'proxy-contado';
+if (arg('mutante') && !MUT_PROXY_CONTADO) {
+  console.error(`✗ TEXEL: mutante desconhecido "${arg('mutante')}". O único desta régua é proxy-contado.`);
+  process.exit(2);
+}
+
 /* ---------------------------------------------------------------------------
    1. DIMENSÃO DE IMAGEM LIDA DO CABEÇALHO — sem dependência, sem decodificar.
    Existe só para a camada de arte, que o TextureLoader não resolve em node. Se
@@ -329,14 +346,32 @@ function percentilPorArea(lista, q) {
 
 const IGNORA = /^(sky|ceu|water|agua|fog|luz|light)/i;
 
+/* Superfície INVISÍVEL: material escolhido com `visible === false` (mesmo teste do SUP1 em
+   mapa-novo-gate.mjs:354) ou procuração de GLB marcada na CADEIA de ancestrais (o mesmo
+   `userData.proxyGLB` que a MAP4 pula, e que occluder-ray-check.mjs:184 também testa na
+   cadeia). Devolve o motivo, porque um número sem o porquê manda o leitor caçar a causa. */
+function invisivel(o) {
+  for (let p = o; p; p = p.parent) if (p.userData && p.userData.proxyGLB) return 'proxyGLB';
+  const mats = Array.isArray(o.material) ? o.material : [o.material];
+  const esc = mats.find((x) => x && x.map) || mats[0];
+  if (esc && esc.visible === false) return 'material invisível';
+  return null;
+}
+
 function medirMapa(id, T) {
   const g = bootGame(id, { textures: T });
   const root = g.world?.root || g.scene;
   root.updateMatrixWorld(true);
-  const sup = [], semTextura = [], semMedida = [];
+  const sup = [], semTextura = [], semMedida = [], invisiveis = [];
   root.traverse((o) => {
     if (!o.isMesh || o.visible === false) return;
     if (IGNORA.test(o.name || '')) return;
+    const motivo = invisivel(o);
+    if (motivo) {
+      // o número fica na saída: a área pulada é a diferença entre a régua antiga e esta
+      invisiveis.push({ nome: o.name || '(anon)', motivo, area: areaDe(o) });
+      if (!MUT_PROXY_CONTADO) return;
+    }
     const r = mediraMalha(o);
     if (!r) return;
     if (r.semTextura) { semTextura.push(r); return; }
@@ -380,6 +415,11 @@ function medirMapa(id, T) {
     semMedida: semMedida.length,
     semTextura: semTextura.length,
     areaSemTextura: semTextura.reduce((s, x) => s + x.area, 0),
+    // malha invisível: pulada da conta (ou DEVOLVIDA a ela sob --mutante=proxy-contado)
+    invisiveis: invisiveis.length,
+    areaInvisivel: invisiveis.reduce((s, x) => s + x.area, 0),
+    areaInvisivelContada: MUT_PROXY_CONTADO ? invisiveis.reduce((s, x) => s + x.area, 0) : 0,
+    invisiveisEx: invisiveis.slice(0, 3).map((x) => `${x.nome} [${x.motivo}] ${x.area.toFixed(0)} m²`),
     anisoRuim: anisoRuim.length,
     borrados: borrados.length,
     borradosEx: borrados.slice(0, 3).map((x) => `${x.nome} (span ${x.spanUV.toFixed(1)})`),
@@ -459,6 +499,23 @@ for (const L of linhas) {
       `acima da exceção de hero prop da BAR §1.8. Culpado: ${L.topo[0]?.nome} (${L.topo[0]?.d} px/m).`
     );
 
+  /* TEXEL7 — a cláusula que guarda o PULO. Em operação normal ela é zero por construção;
+     ela existe porque quem apagar o pulo (ou o marcador `proxyGLB` do mapa) faria o SUP2 do
+     fy_lajes saltar ~19 pp sem uma linha de aviso — foi assim que a dívida
+     `SUP2:fy_lajes` andou de 17,2% para 27,9% sem ninguém ver. E é a asserção do
+     `--mutante=proxy-contado`. */
+  if (L.areaInvisivelContada > 0) {
+    const den = L.areaSemTextura + L.areaTotal;
+    falhas.push(
+      `TEXEL7 ${L.id}: ${L.areaInvisivelContada.toFixed(0)} m² de malha INVISÍVEL entraram na ` +
+      `conta de superfície (${L.invisiveis} malhas: ${L.invisiveisEx.join(', ')}). ` +
+      `Isso põe a área sem textura em ${(100 * L.areaSemTextura / den).toFixed(1)}% — o SUP2 do ` +
+      'mapa-novo-gate passa a cobrar textura de superfície que ninguém desenha e ninguém vê. ' +
+      'Malha invisível não tem textura porque não é vista; o critério é o do SUP1 ' +
+      '(mapa-novo-gate.mjs:354) mais o `userData.proxyGLB` da MAP4.'
+    );
+  }
+
   // TEXEL4 — anisotropia no chão (a superfície vista em ângulo rasante)
   if (L.anisoRuim > 0)
     falhas.push(
@@ -501,6 +558,13 @@ for (const L of linhas) {
   if (L.erro) continue;
   if (L.semTextura) console.log(`  · ${L.id}: ${L.semTextura} malhas sem textura nenhuma (${L.areaSemTextura.toFixed(0)} m²) — cor pura, fora da conta.`);
 }
+for (const L of linhas) {
+  if (L.erro || !L.invisiveis) continue;
+  const den = L.areaSemTextura + L.areaTotal + (MUT_PROXY_CONTADO ? 0 : L.areaInvisivel);
+  console.log(`  · ${L.id}: ${L.invisiveis} malhas INVISÍVEIS (${L.areaInvisivel.toFixed(0)} m², ` +
+    `${(100 * L.areaInvisivel / den).toFixed(1)}% da superfície) ${MUT_PROXY_CONTADO ? 'DEVOLVIDAS à conta pelo mutante' : 'fora da conta'} — ` +
+    `${L.invisiveisEx.join(', ')}`);
+}
 
 if (arg('piores') !== null && !EM_JSON) {
   for (const L of linhas) {
@@ -517,8 +581,25 @@ if (EM_JSON) {
 }
 
 console.log('');
+for (const x of falhas) console.error('  ✗ ' + x);
+/* O MUTANTE TEM QUE APLICAR. Se `--mutante=proxy-contado` não devolveu área nenhuma para a
+   conta, ele não exercitou nada e a "prova" seria decoração — o pior tipo de vermelho
+   falso: o que dá confiança por escrito. */
+if (MUT_PROXY_CONTADO) {
+  const devolvida = linhas.reduce((s, L) => s + (L.areaInvisivelContada || 0), 0);
+  if (!(devolvida > 0)) {
+    console.error('  ✗ MUTANTE proxy-contado NAO APLICOU: nenhum mapa do recorte tem malha invisível ' +
+      '(rode com `--mapa=fy_lajes`, que tem 22 caixas MAT.proxy).');
+    process.exit(2);
+  }
+  if (!falhas.some((x) => x.startsWith('TEXEL7'))) {
+    console.error(`  ✗ MUTANTE proxy-contado SOBREVIVEU: ${devolvida.toFixed(0)} m² invisíveis voltaram para a conta e a TEXEL7 não ficou vermelha.`);
+    process.exit(2);
+  }
+  console.error(`  · MUTANTE proxy-contado mordido: ${devolvida.toFixed(0)} m² de malha invisível voltaram para a conta e a TEXEL7 reprovou.`);
+  process.exit(1);
+}
 if (falhas.length) {
-  for (const x of falhas) console.error('  ✗ ' + x);
   console.error(`\n  ✗ TEXEL: ${falhas.length} cláusula(s) vermelha(s) em ${ALVO.length} mapa(s).`);
   process.exit(1);
 }

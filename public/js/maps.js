@@ -1,5 +1,5 @@
 // Map registry — single source of truth for selectable arenas.
-import { buildBrasilia } from './map_brasilia.js';
+import { buildBrasilia, BRASILIA_PROPS } from './map_brasilia.js';
 import { buildPoolDay } from './map_piscina.js';
 import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
@@ -13,9 +13,9 @@ import { buildObras, OBRAS_PROPS } from './map_obras.js';
 import { buildPosto, POSTO_PROPS } from './map_posto.js';
 import { buildUpa, UPA_PROPS } from './map_upa.js';
 import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
-import { buildParque } from './map_parque.js';
+import { buildParque, PARQUE_PROPS } from './map_parque.js';
 import { buildVelhoOeste } from './map_velho_oeste.js';
-import { buildPenitenciaria } from './map_penitenciaria.js';
+import { buildPenitenciaria, PENITENCIARIA_PROPS } from './map_penitenciaria.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -37,7 +37,7 @@ import { buildPenitenciaria } from './map_penitenciaria.js';
    Ver `ALIAS_MAPA` logo abaixo do registro: id antigo continua resolvendo, e o motivo
    de isso não ser opcional está escrito lá. */
 export const MAPS = {
-  praca_poderes: { name: 'Praça dos Três Poderes', build: buildBrasilia }, // Brasília fiel (substitui o clássico)
+  praca_poderes: { name: 'Praça dos Três Poderes', build: buildBrasilia, props: BRASILIA_PROPS }, // Brasília fiel (substitui o clássico)
   /* `praca_old` (a "Praça (clássico)", public/js/map.js) SAIU DO REGISTRO — pedido literal do
      dono: "vamos apagar a praça clássica". Ela era a versão procedural anterior da mesma
      praça que o awp_map já entrega em Brasília fiel, e ficava no menu como um 5º cartaz que
@@ -89,9 +89,9 @@ export const MAPS = {
   // por portas de verdade na fachada. Gôndolas reais (gondola_mercado/eletro), caixas, doca, e um
   // bairro/skyline em volta. A treta é o preço absurdo. Simétrico funcional, A* pelos corredores.
   atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
-  parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
+  parque_treta: { name: 'Parque da Treta', build: buildParque, props: PARQUE_PROPS, ctfMode: true },
   velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
-  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
+  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, props: PENITENCIARIA_PROPS, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';

@@ -1944,18 +1944,56 @@ function runNode(script, env = {}, args = []) {
          TOLERÂNCIA DECLARADA: 0,35 m — menor que o raio do corpo (0,38), ou seja, uma folga
          que o jogador não consegue ocupar não é parede invisível, é margem de colisão.
          LIMITE DECLARADO: em node nenhum GLB carrega, então as procurações de GLB (marcadas
-         com `userData.proxyGLB`) são PULADAS e o número de pulos entra na evidência. */
+         com `userData.proxyGLB`) são PULADAS e o número de pulos entra na evidência.
+         13/09: `InstancedMesh` DEIXOU de ser pulado — cada instância é medida na matriz de
+         mundo dela. No fy_corrego isso trocou 62 occluders pulados por 564 instâncias
+         medidas (43% da superfície do mapa, que a régua não olhava). */
       {
         const ruins = [], evid = [];
         for (const m of (j.mapas || [])) {
           if (m.err) continue;
-          evid.push(`${m.map} ${m.occluderSemMalha.length}/${m.occMedidos} (${(m.fracSemMalha * 100).toFixed(1)}% da superfície, ${m.occPulados} proxy de GLB pulado)`);
+          evid.push(`${m.map} ${m.occluderSemMalha.length}/${m.occMedidos} (${(m.fracSemMalha * 100).toFixed(1)}% da superfície; ${m.occInstancias || 0} instância(s) de ${m.occInstanciados || 0} InstancedMesh; ${m.occPulados} pulado(s): proxy de GLB e Group)`);
           for (const o of (m.occluderSemMalha || []).slice(0, 3))
-            ruins.push(`${m.map} ${(o.frac * 100).toFixed(0)}% vazio até y ${o.alturaPior} m em [${o.caixa.join(' ')}]`);
+            ruins.push(`${m.map} ${(o.frac * 100).toFixed(0)}% vazio até y ${o.alturaPior} m em [${o.caixa.join(' ')}]${o.instancia != null ? ` inst#${o.instancia}` : ''}`);
         }
         put('MAP4', 'todo occluder de bala tem malha VISÍVEL cobrindo-o (tolerância 0,35 m) — sem parede invisível parando tiro no ar',
           !erros.length && !ruins.length,
           `${evid.join(' · ')} | occluders sem malha: ${ruins.length ? ruins.join(' · ') : 0}`);
+      }
+
+      /* ---- MAP7: occluder é MALHA, nunca Group ----
+         O raycast que a bala usa é NÃO-recursivo (`intersectObjects(lista, false)`:
+         game.js:3310, :6445, :6953; LOS de bot :5914; auto-mira :2101) e `Group.raycast` é
+         no-op. `occluders.push(<Group>)` registra objeto SEM GEOMETRIA: o prop fica
+         transparente para tiro e para visão de bot enquanto o jogador o vê. Medido em 12/09
+         no obras_prefeitura: tiro de (4,−31) a (4,+31) atravessava 62 m de mapa; com
+         `occMesh` (o idioma de map_brasilia.js:584) occluders 32 → 188 e exposição de spawn
+         88,5% → 76,1% / 89,1% → 66,7% sem mover uma peça.
+         As DUAS pontas vêm do map_check.json: `occluderSemGeometria` por mapa (o mundo) e
+         `occluderGrupoFonte` (a fonte — em node `placeProp` devolve null, então o Group de
+         GLB NÃO existe aqui e só a leitura do fonte o enxerga). O teto por mapa/arquivo é o
+         `map7Divida` do próprio JSON: teto compartilhado, não copiado. */
+      {
+        const ruins = [], evid = [];
+        const teto = j.map7Divida || {};
+        for (const m of (j.mapas || [])) {
+          if (m.err) continue;
+          const n = (m.occluderSemGeometria || []).length;
+          evid.push(`${m.map} ${n}/${m.occluders}`);
+          if (n > (teto[`mundo:${m.map}`] || 0))
+            ruins.push(`${m.map} ${n} Group(s) em occluders [teto ${teto[`mundo:${m.map}`] || 0}], escondendo ${(m.occluderSemGeometria || []).reduce((a, o) => a + o.malhasPerdidas, 0)} malha(s) da bala`);
+        }
+        const porArq = new Map();
+        for (const s of (j.occluderGrupoFonte || []).filter((x) => x.classe === 'grupo'))
+          porArq.set(s.arquivo, [...(porArq.get(s.arquivo) || []), s]);
+        for (const [arq, lista] of porArq)
+          if (lista.length > (teto[`fonte:${arq}`] || 0))
+            ruins.push(`${lista.map((s) => `${s.arquivo}:${s.linha}`).join(', ')} empurram Group para occluders [teto ${teto[`fonte:${arq}`] || 0}]`);
+        put('MAP7', 'nenhum item de `world.occluders` é Group/Object3D sem geometria — o raycast de bala não é recursivo, então Group não para nada',
+          !erros.length && !ruins.length,
+          `mundo: ${evid.join(' · ')} | fonte: ${(j.occluderGrupoFonte || []).filter((x) => x.classe === 'grupo').length} push de Group ` +
+          `(+${(j.occluderGrupoFonte || []).filter((x) => x.classe === 'so-no-mundo').length} sítio(s) que só o runtime decide) | ` +
+          `acima do teto: ${ruins.length ? ruins.join(' · ') : 0} | conserto: o.traverse(m => { if (m.isMesh) occluders.push(m); })`);
       }
 
       /* ---- MAP5: nenhum quadrante deserto / CTF2: rotas separadas ----

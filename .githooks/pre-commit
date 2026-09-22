@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+# Nenhuma credencial — inclusive efêmera, já revogada ou presente em documentação —
+# pode chegar ao índice. O scanner recebe somente o staging e redige qualquer achado.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks é obrigatório para commitar neste repositório." >&2
+  echo "Instale-o e rode novamente; não use --no-verify." >&2
+  exit 1
+fi
+
+echo "pre-commit: procurando credenciais no índice"
+gitleaks protect --staged --redact=100 --no-banner --no-color

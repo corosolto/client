@@ -134,6 +134,13 @@ Ele existe porque numa única sessão de 12/08/2026 quatro pushes seguidos abrir
 vermelho em portão que roda em **5 segundos** na máquina: `docs:check` duas vezes,
 `arch:check` e `eval:shaderlog`. O portão existia; ninguém rodava.
 
+**Antes de cada commit, o hook `.githooks/pre-commit` roda `gitleaks protect --staged`.**
+Ele bloqueia senha, token, chave, URL assinada e outros valores detectados no índice,
+inclusive valores efêmeros ou já revogados. Não use `--no-verify` para ignorá-lo.
+Remova o valor, use uma variável de ambiente ou `[REDACTED:<tipo>]`, e registre apenas
+o provedor, o tipo, o caminho e a ação tomada. O scanner é uma rede de segurança;
+não é permissão para copiar credenciais que ele ainda não reconheça.
+
 É o `check:deploy` e não o `check:fast` de propósito: 20 passos determinísticos, sem
 browser e sem rede, contra 35. Portão que demora vira portão que se contorna. Quando
 você precisar mesmo passar por cima, `PULAR_PORTAO=1 git push` — e o CI continua

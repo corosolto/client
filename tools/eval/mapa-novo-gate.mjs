@@ -172,8 +172,9 @@ const classeDe = (id) => CLASSE[id] || 'organico';
 export const DIVIDA = {
   // ORT1 — os 4 mapas chapados que o dono reprovou em 12/08.
   'ORT1:fy_escadao': '0,7% de massa girada e 4 ângulos distintos (piso 15% / 20)',
-  'ORT1:fy_campomorro': '0,0% de massa girada e 1 ângulo distinto — grade perfeita',
-  'ORT1:fy_lajes': '4,3% de massa girada e 8 ângulos distintos',
+  'ORT1:fy_lajes': '11,0% de massa girada e 36 ângulos distintos (ângulos já passam; a fração não)',
+  /* ORT1:fy_campomorro QUITADA em 13/09/2026 — 17,3% de massa girada e 38 ângulos
+     distintos, contra 0,0%/1 na entrada. Mesmo motivo da quitação do córrego abaixo. */
   /* ORT1:fy_corrego QUITADA em 12/08/2026 — 66,5% de massa girada e 39 ângulos
      distintos, contra 7,7%/9 na entrada da dívida. A entrada saiu daqui de propósito:
      dívida paga que continua declarada é dívida que deixa de morder se o mapa
@@ -187,22 +188,30 @@ export const DIVIDA = {
   'ALT1:fy_lajes': 'h90 6,0 m',
   // ALT1:fy_corrego QUITADA em 12/08/2026 — h90 9,4 m (era 4,7 m). Mesmo motivo acima.
   'ALT1:fy_mansao': 'h90 4,1 m (casa térrea em plataforma)',
+  /* 13/09/2026 — os 2 mapas que a rodada de conserto deixou fora do piso de ALT1 de
+     propósito: os dois só sobem com COTA ANDÁVEL nova (mezanino, guarita, passarela), que
+     é o passo de risco alto que muda `groundHeightAt`/`stairs`/`levels` e por isso ficou
+     para rodada própria. Sai daqui no dia em que a cota entrar. */
+  'ALT1:upa_24h': 'h90 4,2 m — é o PÉ-DIREITO do prédio: mapa 100% interno, não há céu para subir massa',
+  'ALT1:penitenciaria': 'h90 8,8 m (0,2 m do piso) — a massa que falta é a passarela de guarita andável',
   // SUP1 — teto 40% (média dos 5 maduros hoje é 31,7%).
   'SUP1:loja_h': '67,6% dos materiais sem `map`',
   'SUP1:quebrada': '41,3% dos materiais sem `map`',
   'SUP1:fy_escadao': '63,4% dos materiais sem `map`',
-  'SUP1:fy_campomorro': '50,0% dos materiais sem `map`',
-  'SUP1:fy_lajes': '55,6% dos materiais sem `map`',
-  'SUP1:fy_mansao': '97,4% dos materiais sem `map`',
+  // SUP1:fy_campomorro QUITADA em 13/09/2026 — 30,8% dos materiais sem `map` (era 50,0%).
+  // SUP1:fy_lajes QUITADA em 13/09/2026 — 35,6% dos materiais sem `map` (era 55,6%).
+  // SUP1:fy_mansao QUITADA em 13/09/2026 — 10,9% dos materiais sem `map` (era 95,7% medido).
   // SUP2 — teto 6%, derivado NO CÓRREGO (saia + colisor). Sua transferência para
   // mapa fechado é o elo fraco desta régua e está dito no relatório.
   'SUP2:piscina_treta': '20,0% da área sem textura',
   'SUP2:loja_h': '8,3% da área sem textura',
   'SUP2:quebrada': '7,6% da área sem textura',
   'SUP2:fy_escadao': '13,4% da área sem textura',
-  'SUP2:fy_campomorro': '12,8% da área sem textura',
-  'SUP2:fy_lajes': '17,2% da área sem textura',
-  'SUP2:fy_mansao': '34,9% da área sem textura',
+  // SUP2:fy_campomorro QUITADA em 13/09/2026 — 0,03% da área sem textura (era 12,8%).
+  // SUP2:fy_lajes QUITADA em 13/09/2026 — 1,1% da área sem textura (era 17,2%); parte do
+  // ganho vem do pulo de malha invisível no texel-check, aplicado na mesma rodada.
+  // SUP2:fy_mansao QUITADA em 13/09/2026 — 0,6% da área sem textura (a entrada dizia 34,9%;
+  // a medição de hoje, antes do conserto, era 62,6%).
   // JOG2 — MAP6 do map-check, que já reprova sozinho lá.
   'JOG2:loja_h': '21 bordas de andar alto sem guarda (MAP6 do map-check)',
   // COB2 — as duas baterias com lista à mão. É a MESMA falha do gl-shots que

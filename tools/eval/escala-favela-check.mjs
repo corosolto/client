@@ -52,6 +52,13 @@ const FAIXA_PROP = {
   botijao_gas: [0.70, 0.80], caixa_dagua: [1.10, 1.60], dumpster: [1.20, 1.50],
   moto_cg: [0.95, 1.15], stall: [2.10, 2.50], pilha_pneus: [0.55, 1.25], tires: [0.55, 1.25],
   uno_mille: [1.35, 1.50], fiat_uno: [1.35, 1.50], fusca: [1.35, 1.50], kombi: [1.85, 2.10],
+  /* 6 classes acrescentadas em 13/09 pelo comércio de rua do Córrego. Objeto real:
+     carrinho de supermercado 1,00 m (uso vigente: atacadao 1,0) · caixa de som de baile
+     0,55-1,25 · guarda-sol de feira 2,20 (uso vigente: atacadao/brasilia 2,4, parque 2,5) ·
+     fachada de comércio de esquina 2,40-3,40 · gôndola de mercado 1,30-2,00 · arara de
+     roupa 1,45-1,95. Mesma régua generosa das de cima: a cláusula caça escala de mapa. */
+  shopping_cart: [0.90, 1.15], caixa_som: [0.55, 1.25], guarda_sol: [1.90, 2.50],
+  fachada_comercio: [2.40, 3.40], gondola_mercado: [1.30, 2.00], arara_roupas: [1.45, 1.95],
 };
 
 const game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });

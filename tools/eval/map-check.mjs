@@ -36,7 +36,7 @@
          node tools/eval/map-check.mjs <mapId> --mutante=rota-unica
    ============================================================================ */
 import path from 'node:path';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { THREE, MAPS, initTextures, bootGame } from './harness.mjs';
 
@@ -52,6 +52,12 @@ const MUTANTE_ROTA_UNICA = process.argv.includes('--mutante=rota-unica');
 /* MUTANTE penetracao-injetada: prova que a sonda do MAP1 mede MAGNITUDE, não só presença,
    e que `nonSolidSurface` não virou passe livre — o bloco injetado NÃO leva a marca. */
 const MUTANTE_PENETRACAO = process.argv.includes('--mutante=penetracao-injetada');
+/* MUTANTE instancia-vazada: prova que a MAP4 ciente de instância MORDE. Injeta, em todo mapa,
+   um `InstancedMesh` de 3 cubos de 1,2 m com material invisível a 40 m acima do 1º spawn de
+   cada time e o empurra para `occluders` — occluder instanciado sem UMA malha visível atrás.
+   Com o pulo antigo (`isInstancedMesh` -> occPulados++) ele saía VERDE e contado como "pulado". */
+const MUTANTE_INSTANCIA = process.argv.includes('--mutante=instancia-vazada');
+const INST_VAZADA_Y = 40;    // acima de qualquer massa do acervo (o mais alto mede ~20 m)
 const PEN_INJETADA = 0.90;   // acima do degrau (0,30) e abaixo do peito (1,40): "dentro", não "submerso"
 const SEED = 12345;
 
@@ -108,8 +114,12 @@ const AREA_MIN = 40;            // m² de chão contíguo dentro do disco
    poder envolver folgadamente a silhueta do modelo (senão a bala passa raspando pela quina
    de um GLB e não acerta nada). 0,35 m é menor que o raio do corpo (0,38): uma folga que o
    jogador não consegue ocupar não é "parede invisível", é margem de colisão.
-   LIMITE CONHECIDO: em node nenhum GLB carrega, então as caixas de procuração de GLB são
-   PULADAS (marcadas com `userData.proxyGLB`) e o número de pulos é reportado. */
+   CADA INSTÂNCIA É UM OCCLUDER (13/09): `InstancedMesh` era pulado junto com o Group, e no
+   fy_corrego isso eram 62 occluders / 564 instâncias — 43% da superfície do mapa medida por
+   ninguém (`occMedidos` 108 -> 672, `occPulados` 62 -> 0, `fracSemMalha` 0,0037 -> 0,0021).
+   Medido: `node tools/eval/map-check.mjs fy_corrego`, 11,6 s -> 18,1 s.
+   LIMITE CONHECIDO QUE SOBRA: em node nenhum GLB carrega, então as caixas de procuração de
+   GLB são PULADAS (marcadas com `userData.proxyGLB`) e o número de pulos é reportado. */
 const TOL_MALHA = 0.35;         // folga aceita entre a superfície do occluder e a malha visível
 const PASSO_MALHA = 0.5;        // grade de amostragem na superfície do occluder (m)
 const FRAC_MALHA = 0.10;        // reprova acima de 10% da superfície lateral sem malha visível
@@ -150,10 +160,123 @@ const SEP_ROTA = 6.0;           // m de afastamento pra duas rotas contarem como
    `--mutante=sem-guarda-andar` ignora os colliders e prova que a sonda encontra as bordas. */
 const QUEDA_ANDAR = 2.0;
 
+/* ---- MAP7: occluder que é GRUPO não para bala nem visão de bot.
+   TODO consumidor de `world.occluders` usa `intersectObjects(lista, false)` — NÃO recursivo:
+   bala (game.js:3310, :6445, :6953), LOS de bot (:5914), auto-mira (:2101). `Group.raycast`
+   é no-op. Então `occluders.push(<Group>)` registra um objeto SEM GEOMETRIA: o raio nunca o
+   testa, e o prop fica transparente para tiro e para visão de bot enquanto o jogador o vê.
+   O próprio acervo já escreveu isso duas vezes: `map_brasilia.js:953` ("era LETRA MORTA") e
+   o idioma do conserto, `occMesh` (`map_brasilia.js:584`, `map_quebrada.js:99`,
+   `map_lajes_authored.js:276`): `o.traverse(m => { if (m.isMesh) occluders.push(m); })`.
+   Medido em 12/09 no obras_prefeitura: um tiro de (4,−31) para (4,+31) na altura do olho
+   atravessa 62 m de mapa; com `occMesh`, occluders 32 -> 188 e exposição de spawn
+   88,5% -> 76,1% / 89,1% -> 66,7% sem mover uma peça de geometria.
+
+   DUAS PONTAS, porque uma sozinha é cega:
+     MUNDO  varre `world.occluders` de cada mapa do registro e acusa o que não é Mesh com
+            geometria. Pega o Group PROCEDURAL (carroça do velho_oeste, viatura da
+            penitenciária), que existe igual em node e no navegador.
+     FONTE  varre os `map_*.js` do registro procurando `occluders.push(<ident>)` onde o
+            identificador vem de `placeProp`/`new THREE.Group`. Esta ponta NÃO é luxo: em
+            node nenhum GLB carrega, `placeProp` devolve `null` e o Group nunca entra na
+            lista — `map_obras.js:79` e `map_posto.js:116` são INVISÍVEIS para a ponta do
+            mundo e é justamente no navegador que eles apagam ~60 props cada. Não saber
+            custa o mesmo que estar errado: sítio de fonte que a régua não consegue
+            classificar entra na saída e só é perdoado se o mapa dele foi medido no mundo. */
+const MAP7_FABRICA_GRUPO = /(?:placeProp|centerProp|new THREE\.Group|new Group)\s*\(/;
+const MAP7_FABRICA_MALHA = /(?:new THREE\.(?:Mesh|InstancedMesh|Sprite|Points|Line)|addBox|addFloor|addPlane|occBox|aoBox|mesh|box|cyl|plane|deco)\s*\(/;
+/* DÍVIDA DECLARADA (padrão do KNOWN-RED.json): teto POR mapa/arquivo. Acima do teto REPROVA;
+   abaixo, a régua imprime QUITADA e manda apagar a entrada.
+   A LISTA FECHOU O DIA VAZIA, e isso é o registro do que a cláusula custou: quando ela
+   nasceu (13/09, 12h40) media 8 dívidas — mundo velho_oeste 11 Groups e penitenciaria 1;
+   fonte map_obras.js:79, map_posto.js:116, map_upa.js:94, map_atacadao.js:65 e :66,
+   map_velho_oeste.js:308 e :328, map_penitenciaria.js:200. Os seis mapas receberam o
+   `occMesh` de map_brasilia.js:584 na mesma rodada (o velho_oeste por último: occluders
+   67 -> 339, 0 Group). Teto ZERO em todo o registro: qualquer Group que volte reprova na
+   hora. Se um dia precisar de anistia, ela entra aqui com o número medido e a issue — nunca
+   "pra passar o CI", e nunca subindo o teto para acomodar Group novo. */
+const MAP7_DIVIDA = {};
+const MUTANTE_OCCLUDER_GRUPO = process.argv.includes('--mutante=occluder-grupo');
+
+/* Registro -> arquivo, LIDO de maps.js (nunca uma lista à mão: foi a lista literal do
+   gl-shots que deixou 5 mapas novos sem captura nenhuma por uma rodada inteira). */
+const JS_DIR = path.resolve(HERE, '..', '..', 'public', 'js');
+function fonteDoRegistro() {
+  const src = readFileSync(path.join(JS_DIR, 'maps.js'), 'utf8');
+  const arqDoBuild = new Map();
+  for (const m of src.matchAll(/import\s*\{([^}]*)\}\s*from\s*'\.\/(map_[\w]+\.js)'/g))
+    for (const nome of m[1].split(',')) { const n = nome.trim().split(/\s+/)[0]; if (n) arqDoBuild.set(n, m[2]); }
+  const porId = new Map();
+  for (const linha of src.split('\n')) {
+    const m = /^\s*([a-z_0-9]+):\s*\{.*?build:\s*(\w+)/.exec(linha);
+    if (m && arqDoBuild.has(m[2])) porId.set(m[1], arqDoBuild.get(m[2]));
+  }
+  const faltando = Object.keys(MAPS).filter((id) => !porId.has(id));
+  if (faltando.length) throw new Error(`MAP7: o parse de maps.js não achou o arquivo de ${faltando.join(', ')} — régua que não sabe medir fica vermelha, não calada.`);
+  return porId;
+}
+/* A varredura de FONTE. Devolve um sítio por `occluders.push(<ident>)` que não é malha
+   PROVADA, em duas classes:
+     `grupo`       o identificador vem de `placeProp`/`new THREE.Group` — certeza, e é o
+                   único caso que node NÃO consegue ver (sem GLB, `placeProp` devolve null);
+     `so-no-mundo` o identificador vem de iteração de cena, de helper local ou de coisa que
+                   só o runtime sabe. Fica na saída e é DECIDIDO pela ponta do mundo do
+                   mesmo mapa — não é varrido para baixo do tapete, é encaminhado. */
+function varreFonte(arquivos) {
+  const sitios = [];
+  for (const arq of arquivos) {
+    let fonte = readFileSync(path.join(JS_DIR, arq), 'utf8');
+    /* MUTANTE occluder-grupo (ponta da FONTE): desfaz, EM MEMÓRIA, o idioma `occMesh` do
+       map_quebrada.js:99 — que é o padrão que as receitas mandam copiar. Se a varredura não
+       acusar o arquivo depois disso, ela não lê a fonte, só imprime. */
+    if (MUTANTE_OCCLUDER_GRUPO && arq === 'map_quebrada.js') {
+      const antes = fonte;
+      fonte = fonte.replace('const gprop = (id, x, z, h, ry = 0) => { const o = placeProp(id, { x, z, targetH: h, ry }); if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); } return !!o; };',
+        'const gprop = (id, x, z, h, ry = 0) => { const o = placeProp(id, { x, z, targetH: h, ry }); if (o) { root.add(o); occluders.push(o); } return !!o; };');
+      if (fonte === antes) throw new Error('MUTANTE occluder-grupo NAO APLICOU: o idioma occMesh de map_quebrada.js:99 mudou de texto — reescreva o mutante antes de confiar nele.');
+    }
+    const linhas = fonte.split('\n');
+    let emBloco = false;
+    for (let i = 0; i < linhas.length; i++) {
+      const bruta = linhas[i];
+      // comentário não é código: `map_brasilia.js:953` documenta o defeito em // e não é um
+      if (emBloco) { if (/\*\//.test(bruta)) emBloco = false; continue; }
+      const abre = bruta.indexOf('/*');
+      const L = abre >= 0 ? bruta.slice(0, abre) : bruta.replace(/\/\/.*$/, '');
+      if (abre >= 0 && !/\*\//.test(bruta.slice(abre))) emBloco = true;
+      for (const mm of L.matchAll(/occluders\.push\(\s*(\.\.\.)?([A-Za-z_$][\w$]*)\s*\)/g)) {
+        const id = mm[2];
+        if (/isMesh|isInstancedMesh/.test(L)) continue;          // guarda de malha no próprio sítio
+        let bind = null, ondeBind = 0;
+        for (let k = i; k >= 0 && i - k < 60; k--) {
+          const b = new RegExp(`(?:const|let|var|function)\\s+${id}\\b\\s*(?:=|\\(|of\\b|in\\b)`).exec(linhas[k]);
+          if (b) { bind = linhas[k].slice(b.index); ondeBind = k + 1; break; }
+          const p = new RegExp(`(?<!\\b(?:if|for|while|switch|catch)\\s*)\\(\\s*[\\w$,\\s]*\\b${id}\\b[\\w$,\\s]*\\)\\s*=>`).exec(linhas[k]);
+          if (p) { bind = `PARAM ${linhas[k].trim()}`; ondeBind = k + 1; break; }
+        }
+        const guardado = bind != null && /isMesh|isInstancedMesh/.test(bind);
+        const classe = bind != null && !guardado && MAP7_FABRICA_GRUPO.test(bind) ? 'grupo'
+          : guardado || (bind != null && MAP7_FABRICA_MALHA.test(bind)) ? 'malha'
+          : 'so-no-mundo';
+        if (classe === 'malha') continue;
+        sitios.push({ arquivo: arq, linha: i + 1, ident: id, classe,
+          ligacao: ondeBind ? `:${ondeBind} ${String(bind).trim().slice(0, 100)}` : 'ligação não encontrada em 60 linhas' });
+      }
+    }
+  }
+  return sitios;
+}
+
 const textures = initTextures();
 const MAPAS_NOVOS = ['fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao'];
 const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : ONLY === 'novos' ? MAPAS_NOVOS : [ONLY];
 const down = new THREE.Vector3(0, -1, 0);
+/* A ponta de FONTE varre o REGISTRO INTEIRO em toda execução (inclusive `novos`): o Group
+   que ela caça não aparece em node, então restringi-la aos mapas medidos seria escondê-la
+   justamente de quem roda a régua no portão rápido. */
+const FONTE_POR_ID = fonteDoRegistro();
+const SITIOS_FONTE = varreFonte([...new Set(FONTE_POR_ID.values())].sort());
+const ID_DO_ARQUIVO = new Map([...FONTE_POR_ID].map(([id, arq]) => [arq, id]));
 
 const mapas = [];
 for (const mapId of MAP_IDS) {
@@ -189,6 +312,42 @@ for (const mapId of MAP_IDS) {
       cubo.position.set(s.x, gh(s.x, s.z) + PEN_INJETADA - 0.3, s.z);
       W.root.add(cubo);
     }
+    W.root.updateMatrixWorld(true);
+  }
+  /* MUTANTE instancia-vazada — o occluder instanciado tem que ser MEDIDO, não pulado.
+     Injeta um InstancedMesh invisível (3 instâncias, 1,2 m) bem acima dos spawns e o registra
+     em `occluders`: se a MAP4 não ficar vermelha, ela voltou a pular instância. */
+  if (MUTANTE_INSTANCIA) {
+    const spawns = Object.values(W.spawns || {}).map((ss) => ss && ss[0]).filter(Boolean);
+    if (!spawns.length) throw new Error(`MUTANTE instancia-vazada NAO APLICOU em ${mapId}: mapa sem spawn`);
+    const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1.2, 1.2, 1.2),
+      new THREE.MeshBasicMaterial({ visible: false }), 3);
+    const mt = new THREE.Matrix4();
+    for (let i = 0; i < 3; i++) {
+      const s = spawns[i % spawns.length];
+      mt.makeTranslation(s.x + i * 2, gh(s.x, s.z) + INST_VAZADA_Y, s.z);
+      im.setMatrixAt(i, mt);
+    }
+    im.instanceMatrix.needsUpdate = true;
+    if (!Array.isArray(W.occluders)) throw new Error(`MUTANTE instancia-vazada NAO APLICOU em ${mapId}: world.occluders não é lista`);
+    W.root.add(im); W.occluders.push(im);
+    W.root.updateMatrixWorld(true);
+  }
+  /* MUTANTE occluder-grupo (ponta do MUNDO) — empurra um Group de 3 malhas para
+     `world.occluders`, que é o defeito D1 em laboratório: a bala testa a lista sem recursão
+     e não encontra NADA. Se a MAP7 não ficar vermelha, ela não varre o registro. */
+  if (MUTANTE_OCCLUDER_GRUPO) {
+    if (!Array.isArray(W.occluders)) throw new Error(`MUTANTE occluder-grupo NAO APLICOU em ${mapId}: world.occluders não é lista`);
+    const s = Object.values(W.spawns || {}).map((ss) => ss && ss[0]).filter(Boolean)[0] || { x: 0, z: 0 };
+    const grp = new THREE.Group(); grp.name = 'mutante-grupo-sem-geometria';
+    grp.position.set(s.x + 3, gh(s.x, s.z), s.z + 3);
+    for (let i = 0; i < 3; i++) {
+      const f = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
+      f.position.set(i * 0.6, 0.25, 0); grp.add(f);
+    }
+    const antes = W.occluders.length;
+    W.root.add(grp); W.occluders.push(grp);
+    if (W.occluders.length !== antes + 1) throw new Error(`MUTANTE occluder-grupo NAO APLICOU em ${mapId}`);
     W.root.updateMatrixWorld(true);
   }
   const B = W.bounds;
@@ -533,7 +692,7 @@ for (const mapId of MAP_IDS) {
      Só faces LATERAIS (|n·y| < 0,7): é o que a bala do duelo encontra; topo e base de caixa
      apoiada no chão não produzem "marca no ar". */
   const semMalha = [];
-  let occPulados = 0, occMedidos = 0, amostrasOcc = 0, amostrasVazias = 0;
+  let occPulados = 0, occMedidos = 0, amostrasOcc = 0, amostrasVazias = 0, occInstanciados = 0, occInstancias = 0;
   {
     const visivel = (o) => {
       if (!o || !o.isMesh || o.isSprite) return false;
@@ -543,49 +702,80 @@ for (const mapId of MAP_IDS) {
     };
     const vA = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3();
     const e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), nW = new THREE.Vector3(), pW = new THREE.Vector3();
+    const mW = new THREE.Matrix4(), cxInst = new THREE.Box3();
     for (const oc of (W.occluders || [])) {
-      /* Group de GLB, InstancedMesh e caixa de PROCURAÇÃO de GLB ficam de fora: ou não têm
-         geometria própria, ou representam um modelo que NÃO CARREGA em node (a régua roda
-         sem GPU e sem loader). O número de pulos é reportado — é o limite declarado. */
-      if (!oc.isMesh || oc.isInstancedMesh || !oc.geometry || (oc.userData && oc.userData.proxyGLB)) { occPulados++; continue; }
+      /* Group de GLB e caixa de PROCURAÇÃO de GLB ficam de fora: ou não têm geometria própria,
+         ou representam um modelo que NÃO CARREGA em node (a régua roda sem GPU e sem loader).
+         O número de pulos é reportado — é o limite declarado.
+         `InstancedMesh` SAIU do pulo em 13/09: ele é Mesh, entra no raycast de bala igual
+         (map_brasilia.js:552 diz isso com todas as letras) e no fy_corrego os 62 occluders
+         que a régua pulava eram 564 instâncias — 43% da superfície do mapa medida por
+         ninguém (`occMedidos` 108, `occPulados` 62). Cada instância é medida na matriz de
+         mundo dela (`getMatrixAt` × `matrixWorld`), com a MESMA tolerância e o mesmo passo. */
+      if (!oc.isMesh || !oc.geometry || (oc.userData && oc.userData.proxyGLB)) { occPulados++; continue; }
       const pos = oc.geometry.attributes && oc.geometry.attributes.position;
       if (!pos) { occPulados++; continue; }
       const idx = oc.geometry.index;
       const nTri = idx ? idx.count / 3 : pos.count / 3;
-      occMedidos++;
-      let vazias = 0, total = 0, piorAlt = 0, orc = 900;   // teto de amostras por occluder
-      for (let t = 0; t < nTri && orc > 0; t++) {
-        const i0 = idx ? idx.getX(t * 3) : t * 3, i1 = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, i2 = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
-        vA.fromBufferAttribute(pos, i0).applyMatrix4(oc.matrixWorld);
-        vB.fromBufferAttribute(pos, i1).applyMatrix4(oc.matrixWorld);
-        vC.fromBufferAttribute(pos, i2).applyMatrix4(oc.matrixWorld);
-        e1.subVectors(vB, vA); e2.subVectors(vC, vA);
-        nW.crossVectors(e1, e2);
-        const area = nW.length() / 2;
-        if (area < 1e-4) continue;
-        nW.normalize();
-        if (Math.abs(nW.y) > 0.7) continue;                        // topo/base não é "parede"
-        const n = Math.min(orc, Math.max(1, Math.round(area / (PASSO_MALHA * PASSO_MALHA))));
-        for (let k = 0; k < n; k++) {
-          // amostra baricêntrica regular (centroide quando n=1; grade rala quando n>1)
-          let u = ((k % 7) + 0.5) / 7, v = ((Math.floor(k / 7) % 7) + 0.5) / 7;
-          if (u + v > 1) { u = 1 - u; v = 1 - v; }
-          pW.copy(vA).addScaledVector(e1, u).addScaledVector(e2, v);
-          if (pW.y < 0.15) continue;                               // rente ao chão: o chão é a malha
-          total++; amostrasOcc++; orc--;
-          ray.set(pW.clone().addScaledVector(nW, TOL_MALHA), nW.clone().negate());
-          ray.far = TOL_MALHA * 2;
-          const hits = ray.intersectObject(W.root, true);
-          if (!hits.some((h) => visivel(h.object))) { vazias++; amostrasVazias++; piorAlt = Math.max(piorAlt, pW.y); }
+      const nInst = oc.isInstancedMesh ? oc.count : 1;
+      if (oc.isInstancedMesh) { occInstanciados++; occInstancias += nInst; }
+      for (let ii = 0; ii < nInst; ii++) {
+        if (oc.isInstancedMesh) { oc.getMatrixAt(ii, mW); mW.premultiply(oc.matrixWorld); }
+        else mW.copy(oc.matrixWorld);
+        occMedidos++;
+        let vazias = 0, total = 0, piorAlt = 0, orc = 900;   // teto de amostras por occluder
+        for (let t = 0; t < nTri && orc > 0; t++) {
+          const i0 = idx ? idx.getX(t * 3) : t * 3, i1 = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, i2 = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
+          vA.fromBufferAttribute(pos, i0).applyMatrix4(mW);
+          vB.fromBufferAttribute(pos, i1).applyMatrix4(mW);
+          vC.fromBufferAttribute(pos, i2).applyMatrix4(mW);
+          e1.subVectors(vB, vA); e2.subVectors(vC, vA);
+          nW.crossVectors(e1, e2);
+          const area = nW.length() / 2;
+          if (area < 1e-4) continue;
+          nW.normalize();
+          if (Math.abs(nW.y) > 0.7) continue;                        // topo/base não é "parede"
+          const n = Math.min(orc, Math.max(1, Math.round(area / (PASSO_MALHA * PASSO_MALHA))));
+          for (let k = 0; k < n; k++) {
+            // amostra baricêntrica regular (centroide quando n=1; grade rala quando n>1)
+            let u = ((k % 7) + 0.5) / 7, v = ((Math.floor(k / 7) % 7) + 0.5) / 7;
+            if (u + v > 1) { u = 1 - u; v = 1 - v; }
+            pW.copy(vA).addScaledVector(e1, u).addScaledVector(e2, v);
+            if (pW.y < 0.15) continue;                               // rente ao chão: o chão é a malha
+            total++; amostrasOcc++; orc--;
+            ray.set(pW.clone().addScaledVector(nW, TOL_MALHA), nW.clone().negate());
+            ray.far = TOL_MALHA * 2;
+            const hits = ray.intersectObject(W.root, true);
+            if (!hits.some((h) => visivel(h.object))) { vazias++; amostrasVazias++; piorAlt = Math.max(piorAlt, pW.y); }
+          }
         }
-      }
-      if (total >= 4 && vazias / total > FRAC_MALHA) {
-        const bw = new THREE.Box3().setFromObject(oc);
-        semMalha.push({ frac: +(vazias / total).toFixed(3), amostras: total, alturaPior: +piorAlt.toFixed(1),
-          caixa: [bw.min.x, bw.min.y, bw.min.z, bw.max.x, bw.max.y, bw.max.z].map((n2) => +n2.toFixed(1)) });
+        if (total >= 4 && vazias / total > FRAC_MALHA) {
+          let bw;
+          if (oc.isInstancedMesh) {
+            if (!oc.geometry.boundingBox) oc.geometry.computeBoundingBox();
+            bw = cxInst.copy(oc.geometry.boundingBox).applyMatrix4(mW);
+          } else bw = new THREE.Box3().setFromObject(oc);
+          semMalha.push({ frac: +(vazias / total).toFixed(3), amostras: total, alturaPior: +piorAlt.toFixed(1),
+            instancia: oc.isInstancedMesh ? ii : null,
+            caixa: [bw.min.x, bw.min.y, bw.min.z, bw.max.x, bw.max.y, bw.max.z].map((n2) => +n2.toFixed(1)) });
+        }
       }
     }
     semMalha.sort((a, b) => b.frac - a.frac);
+  }
+
+  /* ================= MAP7 — occluder sem geometria (Group) no registro do mundo ============= */
+  const occSemGeometria = [];
+  for (const oc of (W.occluders || [])) {
+    if (oc && oc.isMesh && oc.geometry && oc.geometry.attributes && oc.geometry.attributes.position) continue;
+    let filhas = 0;
+    if (oc && typeof oc.traverse === 'function') oc.traverse((m) => { if (m !== oc && m.isMesh) filhas++; });
+    occSemGeometria.push({
+      tipo: oc ? oc.type : String(oc), nome: (oc && oc.name) || '',
+      malhasPerdidas: filhas,
+      x: oc && oc.position ? +oc.position.x.toFixed(1) : null,
+      z: oc && oc.position ? +oc.position.z.toFixed(1) : null,
+    });
   }
 
   /* ================= MAP5 — densidade de prop e de waypoint por quadrante ================= */
@@ -741,8 +931,10 @@ for (const mapId of MAP_IDS) {
     // MAP3
     escadas, travessia,
     // MAP4
-    occluderSemMalha: semMalha, occMedidos, occPulados,
+    occluderSemMalha: semMalha, occMedidos, occPulados, occInstanciados, occInstancias,
     fracSemMalha: amostrasOcc ? +(amostrasVazias / amostrasOcc).toFixed(4) : 0,
+    // MAP7
+    occluders: (W.occluders || []).length, occluderSemGeometria: occSemGeometria,
     // MAP5 / CTF2
     quadrantes: [...quadrantes], medianaProp: quadrantes.medianaProp, medianaWp: quadrantes.medianaWp,
     piorRazaoProp: quadrantes.length ? +Math.min(...quadrantes.map((q) => q.razaoProp)).toFixed(2) : 1,
@@ -763,13 +955,16 @@ const saida = {
     map2: `exposição: fração dos pontos andáveis a ≥ ${D_FORA} m com _losClear até a cabeça (${OLHO} m) de quem nasce`,
     map2b: `respawn é lugar: folga até a parede ≥ ${FOLGA_MIN} m e área andável contígua ≥ ${AREA_MIN} m² num raio de ${R_SPAWN} m`,
     map3: `NBR 9077: espelho ${ESPELHO}, piso ${PISO_D}, 2h+p ${BLONDEL}, largura ≥ ${LARG_MIN} m, inclinação ${INCLIN}°`,
-    map4: `occluder com malha visível a ≤ ${TOL_MALHA} m (tolerância declarada); reprova acima de ${FRAC_MALHA * 100}% da face lateral sem malha`,
+    map4: `occluder com malha visível a ≤ ${TOL_MALHA} m (tolerância declarada); reprova acima de ${FRAC_MALHA * 100}% da face lateral sem malha. CADA INSTÂNCIA de InstancedMesh conta como um occluder (matriz de mundo por getMatrixAt); só Group de GLB e caixa marcada userData.proxyGLB são puladas`,
     map5: `espaçamento médio entre props ≤ ${QUAD_ESPAC} m E densidade de prop/waypoint ≥ ${QUAD_FRAC} × a mediana do próprio mapa (grade ${QUAD_N}×${QUAD_N}, só quadrante com ≥ ${QUAD_MIN_AND} m² andáveis)`,
     map6: `toda borda alcançável com queda ≥ ${QUEDA_ANDAR} m empurra o corpo na altura do piso superior`,
+    map7: 'nenhum item de world.occluders é Group/Object3D sem geometria (o raycast de bala é NÃO-recursivo: Group não para nada). Duas pontas: mundo (world.occluders de cada mapa do registro) e fonte (occluders.push de identificador vindo de placeProp/new THREE.Group, que em node nem existe). Teto por mapa/arquivo em MAP7_DIVIDA, com o número medido em 13/09',
     ctf1: 'altura mínima do triângulo das bandeiras, distância ao spawn mais próximo, maior linha de tiro limpa',
     ctf2: `rotas separadas por ≥ ${SEP_ROTA} m entre cada spawn e cada bandeira`,
   },
   mapas,
+  occluderGrupoFonte: SITIOS_FONTE,
+  map7Divida: MAP7_DIVIDA,
 };
 writeFileSync(path.join(HERE, 'map_check.json'), JSON.stringify(saida, null, 1));
 
@@ -783,8 +978,10 @@ for (const m of mapas) {
     console.log(`${''.padEnd(15)} MAP3 ${t.nivel}: ${t.celulasAlcancadas} cel alcançadas, ${t.waypointsNoNivel} wp, A* chega ${t.aEstrelaChega}`);
   console.log(`${''.padEnd(15)} MAP2B pior folga ${m.piorFolga} m [≥${FOLGA_MIN}] · pior área contígua ${m.piorArea} m² [≥${AREA_MIN}] | ` +
     m.salaDoSpawn.filter((s) => !s.okFolga || !s.okArea).map((s) => `${s.team}(${s.x},${s.z}) folga ${s.folgaParede} área ${s.areaContigua}`).join(' · '));
-  console.log(`${''.padEnd(15)} MAP4 ${m.occluderSemMalha.length} occluder(s) sem malha visível de ${m.occMedidos} medidos (${m.occPulados} pulados) | ` +
-    m.occluderSemMalha.slice(0, 4).map((o) => `${(o.frac * 100).toFixed(0)}% vazio até y ${o.alturaPior} m em [${o.caixa.join(' ')}]`).join(' · '));
+  console.log(`${''.padEnd(15)} MAP4 ${m.occluderSemMalha.length} occluder(s) sem malha visível de ${m.occMedidos} medidos (${m.occPulados} pulados, ${m.occInstancias} instância(s) de ${m.occInstanciados} InstancedMesh) | ` +
+    m.occluderSemMalha.slice(0, 4).map((o) => `${(o.frac * 100).toFixed(0)}% vazio até y ${o.alturaPior} m em [${o.caixa.join(' ')}]${o.instancia !== null ? ` inst#${o.instancia}` : ''}`).join(' · '));
+  console.log(`${''.padEnd(15)} MAP7 ${m.occluderSemGeometria.length} occluder(s) sem geometria de ${m.occluders} | ` +
+    m.occluderSemGeometria.slice(0, 6).map((o) => `${o.tipo}${o.nome ? `[${o.nome}]` : ''} em (${o.x},${o.z}) esconde ${o.malhasPerdidas} malha(s) da bala`).join(' · '));
   console.log(`${''.padEnd(15)} MAP5 pior espaçamento ${m.piorEspacamento} m [≤${QUAD_ESPAC}] · pior razão prop ${m.piorRazaoProp}× / wp ${m.piorRazaoWp}× da mediana [≥${QUAD_FRAC}] em ${m.quadrantes.length} quadrantes | ` +
     m.quadrantes.filter((q) => q.razaoProp < QUAD_FRAC || q.razaoWp < QUAD_FRAC || q.espacamento > QUAD_ESPAC).map((q) => `q${q.q}(x${q.x0} z${q.z0}) esp ${q.espacamento} m prop ${q.razaoProp}× wp ${q.razaoWp}×`).join(' · '));
   console.log(`${''.padEnd(15)} MAP6 ${m.bordasSemGuarda.length} borda(s) de andar alto sem guarda | ` +
@@ -795,6 +992,55 @@ for (const m of mapas) {
     m.rotasSpawnBandeira.map((r) => `${r.time}→${r.bandeira} ${r.rotas}`).join(' · '));
 }
 console.log(`MAPCHECK dentro ${mapas.reduce((a, m) => a + (m.corpoDentroDeSolido || 0), 0)} | submersos ${mapas.reduce((a, m) => a + (m.submersosAcimaDoPeito || 0), 0)}`);
+
+/* ===================== MAP7 — o veredito das duas pontas =====================
+   O teto vem do MAP7_DIVIDA (número medido em 13/09). Acima do teto REPROVA; igual é
+   DÍVIDA declarada (avisa); abaixo, o portão manda apagar a entrada — dívida quitada que
+   fica na lista volta a ser mentira com o tempo. */
+{
+  const medidos = new Map(mapas.filter((m) => !m.err).map((m) => [m.map, m]));
+  const falhas = [], avisos = [], quitadas = [];
+  for (const m of medidos.values()) {
+    const teto = MAP7_DIVIDA[`mundo:${m.map}`] || 0;
+    const n = m.occluderSemGeometria.length;
+    const como = m.occluderSemGeometria.slice(0, 4).map((o) => `${o.tipo}[${o.nome}] (${o.x},${o.z}) esconde ${o.malhasPerdidas} malha(s)`).join(' · ');
+    if (n > teto) falhas.push(`${m.map}: ${n} occluder(s) sem geometria [teto ${teto}] — ${como}`);
+    else if (n > 0) avisos.push(`${m.map}: ${n} no teto declarado — ${como}`);
+    else if (teto > 0) quitadas.push(`mundo:${m.map} (teto ${teto}, medido 0)`);
+  }
+  const porArquivo = new Map();
+  for (const s of SITIOS_FONTE.filter((s2) => s2.classe === 'grupo'))
+    porArquivo.set(s.arquivo, [...(porArquivo.get(s.arquivo) || []), s]);
+  for (const arq of new Set([...porArquivo.keys(), ...Object.keys(MAP7_DIVIDA).filter((k) => k.startsWith('fonte:')).map((k) => k.slice(6))])) {
+    const lista = porArquivo.get(arq) || [];
+    const teto = MAP7_DIVIDA[`fonte:${arq}`] || 0;
+    const como = lista.map((s) => `${s.arquivo}:${s.linha} occluders.push(${s.ident}) <- ${s.ligacao}`).join(' · ');
+    if (lista.length > teto) falhas.push(`${arq}: ${lista.length} push de Group na fonte [teto ${teto}] — ${como}`);
+    else if (lista.length > 0) avisos.push(`${arq}: ${lista.length} no teto declarado — ${como}`);
+    else if (teto > 0) quitadas.push(`fonte:${arq} (teto ${teto}, medido 0)`);
+  }
+  /* Sítio que só o runtime decide E cujo mapa não subiu: ninguém mediu. Vermelho, porque
+     não saber custa o mesmo que estar errado. */
+  const cegos = SITIOS_FONTE.filter((s) => s.classe === 'so-no-mundo')
+    .filter((s) => { const id = ID_DO_ARQUIVO.get(s.arquivo); return mapas.some((m) => m.map === id && m.err); });
+  if (cegos.length) falhas.push(`${cegos.length} sítio(s) de fonte indecidíveis em mapa que não subiu: ${cegos.map((s) => `${s.arquivo}:${s.linha}`).join(', ')}`);
+  const soNoMundo = SITIOS_FONTE.filter((s) => s.classe === 'so-no-mundo');
+  console.log(`MAP7 mundo: ${[...medidos.values()].reduce((a, m) => a + m.occluderSemGeometria.length, 0)} occluder(s) sem geometria em ${medidos.size} mapa(s) medido(s) | ` +
+    `fonte: ${SITIOS_FONTE.filter((s) => s.classe === 'grupo').length} push de Group em ${new Set(FONTE_POR_ID.values()).size} arquivo(s) do registro ` +
+    `(+${soNoMundo.length} sítio(s) que só o runtime decide: ${soNoMundo.map((s) => `${s.arquivo}:${s.linha}`).join(', ') || '—'})`);
+  for (const a of avisos) console.log(`MAP7 DÍVIDA ${a}`);
+  for (const q of quitadas) console.log(`MAP7 QUITADA — apague do MAP7_DIVIDA: ${q}`);
+  if (falhas.length) {
+    console.error(`MAP7 FALHA: ${falhas.length} item(ns) acima do teto declarado. Occluder é MALHA, nunca Group — ` +
+      'o conserto é uma linha: `o.traverse(m => { if (m.isMesh) occluders.push(m); })` (map_brasilia.js:584, map_quebrada.js:99). ' +
+      `Sem isso o prop não para bala nem LOS de bot (game.js:3310, :5914, :6445, :6953). ${falhas.join(' | ')}`);
+    process.exitCode = 1;
+    if (MUTANTE_OCCLUDER_GRUPO) console.error('MUTANTE occluder-grupo mordido: o Group injetado no mundo e o occMesh desfeito na fonte ficaram VERMELHOS');
+  } else if (MUTANTE_OCCLUDER_GRUPO) {
+    console.error('MUTANTE occluder-grupo SOBREVIVEU: nem o Group injetado em world.occluders nem o occMesh desfeito em map_quebrada.js:99 mudaram o portão');
+    process.exitCode = 1;
+  }
+}
 const bordasAltasAbertas = mapas.reduce((n, m) => n + (m.bordasSemGuarda?.length || 0), 0);
 const rotasInsuficientes = mapas.flatMap((m) => (m.rotasSpawnBandeira || [])
   .filter((r) => r.rotas < 2)
@@ -871,4 +1117,20 @@ if (MUTANTE_SEM_GUARDA_ANDAR) {
     console.error('MUTANTE sem-guarda-andar sobreviveu: nenhuma borda alta foi exercitada');
     process.exitCode = 1;
   }
+}
+/* MUTANTE instancia-vazada — a cláusula da MAP4 mora no `invariants.mjs` (ela consome o
+   `occluderSemMalha` deste JSON), então o que o mutante tem que provar AQUI é que a medição
+   ciente de instância enxerga o occluder instanciado vazado. Com o pulo antigo as 3
+   instâncias injetadas saíam em `occPulados` e a MAP4 continuava verde. */
+if (MUTANTE_INSTANCIA) {
+  const cegos = mapas.filter((m) => !m.err && !(m.occluderSemMalha || []).some((o) => o.instancia !== null && o.frac > 0.9));
+  const vivos = mapas.filter((m) => !m.err);
+  if (cegos.length === 0 && vivos.length > 0) {
+    console.error(`MUTANTE instancia-vazada mordido: os ${vivos.length} mapa(s) acusaram a instância vazada a ${INST_VAZADA_Y} m ` +
+      `(${vivos.map((m) => `${m.map} ${m.occluderSemMalha.filter((o) => o.instancia !== null).length}/${m.occMedidos}`).join(' · ')})`);
+  } else {
+    console.error(`MUTANTE instancia-vazada SOBREVIVEU em ${cegos.length} mapa(s): ${cegos.map((m) => `${m.map}(medidos ${m.occMedidos}, pulados ${m.occPulados})`).join(', ') || 'nenhum mapa medido'} ` +
+      '— a MAP4 voltou a pular InstancedMesh (o `continue` de occPulados no laço da MAP4).');
+  }
+  process.exitCode = 1;
 }

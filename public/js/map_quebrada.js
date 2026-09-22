@@ -1635,9 +1635,10 @@ export function buildQuebrada(scene, T) {
       { pos: [-1, 0, -15.5], to: [1.5, 0, -13], phase: .3 }, { pos: [4, 0, 13.5], to: [6, 0, 15.5], phase: 1.2 },
       { pos: [-15, 0, 4], to: [-13, 0, 6.5], phase: 2.2 },
     ],
+    /* vida 2 (14/09): a pomba de (8,6 / −7) era clone da de (10 / −8) a 1,7 m; sai e paga a
+       galinha com pintinho do quintal da viela (−6.928 +5.892 = −1.036 tri). */
     pigeons: [
       { mode: 'ground', pos: [10, 0, -8], phase: .5 }, { mode: 'ground', pos: [-21.5, 0, 17.5], phase: 1.6 },
-      { mode: 'ground', pos: [8.6, 0, -7], phase: .9 },
     ],
     dogs: [
       { pos: [-6.5, 0, -23.5], to: [-2.5, 0, -23.5], phase: .5 },
@@ -1645,6 +1646,9 @@ export function buildQuebrada(scene, T) {
     ],
     /* BUG-57 v2.1: gato de telhado da rua do baile (Quaternius CC0) */
     cats: [{ pos: [-12, 0, -12], to: [-11, 0, -10], phase: 1.8 }],
+    /* quintal de morro: galinha com pinto a 0,6 m. Folga medida ao colisor: 2,47 m e 2,3 m. */
+    hens: [{ pos: [-9, 0, -15], to: [-9.6, 0, -16.1], phase: .6 }],
+    chicks: [{ pos: [-9.5, 0, -15.4], to: [-8.9, 0, -15.8], phase: 2.4 }],
   });
 
   return {

@@ -44,8 +44,10 @@ const CARS = HAVAN_PROPS.filter(id => !['statue_liberty', 'shopping_cart', 'onib
 const RY_FIX = { brasilia_vw: Math.PI / 2, saveiro: Math.PI / 2, moto_cg: Math.PI / 2 };
 
 /* Ficha de fábrica [comprimento, altura] em metros — é a REFERÊNCIA da escala dos veículos,
-   conferida por tools/eval/escala-veiculo-check.mjs. Fora da tabela cai no padrão de sedã. */
-const CAR_DIM = {
+   conferida por tools/eval/escala-veiculo-check.mjs. Fora da tabela cai no padrão de sedã.
+   Exportada em 13/09: o atacadão precisava da mesma ficha e tabela copiada é dois números
+   para o mesmo fato — o defeito que a LIÇÃO 2 do docs/LICOES.md nomeia. */
+export const CAR_DIM = {
   moto_cg: [2.02, 1.08],
   fusca: [4.03, 1.50], '1968_volkswagen_beetle': [4.03, 1.50], old_vw_bug: [4.03, 1.50],
   brasilia_vw: [4.03, 1.40], kombi: [4.51, 1.94], opala: [4.60, 1.39],

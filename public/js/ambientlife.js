@@ -19,18 +19,67 @@ const ASSETS = Object.freeze({
   armadillo: 'models/ambient/tatu_campo.glb',
   cockroach: 'models/ambient/barata_urbana.glb',
   parrot: 'models/ambient/papagaio_poleiro.glb',
+  /* vida 2 (14/09): bicho que JÁ ESTAVA PAGO e parado na conta Mint (docs/maps/mint/fauna.md).
+     Todos estáticos pela causa medida naquele levantamento — `list_model_animation_options`
+     devolve 673 clipes e os 673 são `humanoid animation`, então quadrúpede e ave não têm
+     animação neste fornecedor. Por isso a seleção é só de bicho cuja POSE PARADA é honesta,
+     e o carcará entra como PERCHED (não anda; ver `_updatePerched`).
+     O 8º baixado, `calango.glb`, NÃO está aqui: saiu em pose BÍPEDE ERETA (tronco vertical,
+     braços à frente) e lagarto de muro é quadrúpede rente à superfície — figura em
+     /tmp/faunaprobe/calango_3v.png. Sem rig não há conserto, e rig de não-humanoide é
+     justamente o que o Mint não faz. */
+  hen: 'models/ambient/galinha_hen.glb',
+  chick: 'models/ambient/pintinho.glb',
+  guinea: 'models/ambient/galinha_angola.glb',
+  duck: 'models/ambient/pato_lago.glb',
+  horse: 'models/ambient/cavalo_sitio.glb',
+  goat: 'models/ambient/cabra_caatinga.glb',
+  carcara: 'models/ambient/carcara.glb',
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
-const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
-const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio' });
-const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
+const TYPE_ASSET = Object.freeze({
+  rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow',
+  armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot',
+  hen: 'hen', chick: 'chick', guinea: 'guinea', duck: 'duck', horse: 'horse', goat: 'goat', carcara: 'carcara',
+});
+/* ordem canônica: é a ordem em que os bichos nascem e a ordem do censo do `report()` */
+const FAUNA_TYPES = Object.freeze(Object.keys(TYPE_ASSET));
+/* nome da opção que cada tipo lê do `createFavelaAmbience(root, {...})` */
+const TYPE_OPTION = Object.freeze({
+  rat: 'rats', pigeon: 'pigeons', dog: 'dogs', cat: 'cats', chicken: 'chickens', cow: 'cows',
+  armadillo: 'armadillos', cockroach: 'cockroaches', parrot: 'parrots',
+  hen: 'hens', chick: 'chicks', guinea: 'guineas', duck: 'ducks', horse: 'horses', goat: 'goats', carcara: 'caracaras',
+});
+const FAUNA_NAME = Object.freeze({
+  rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca',
+  armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio',
+  hen: 'galinha choca', chick: 'pintinho', guinea: 'galinha d’angola', duck: 'pato',
+  horse: 'cavalo', goat: 'cabra', carcara: 'carcará',
+});
+/* quem ANDA pelo `_updateQuad`. O cavalo entra aqui com `to` ausente de propósito: a pose
+   do GLB é de cabeça baixa pastando, então ele fica no lugar e só reage ao susto. */
+const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo', 'hen', 'chick', 'guinea', 'duck', 'horse', 'goat']);
+/* quem fica no POLEIRO: não anda, balança e vira a cabeça (`_updatePerched`). Carcará é
+   rapina pousada — bicho que passa a vida parado —, então estático aqui não mente. */
+const PERCHED = new Set(['parrot', 'carcara']);
+const PERCH_SWAY = Object.freeze({ parrot: .055, carcara: .03 });
 const SHOT_REACTION_RADIUS = 13;
 const DOG_IDLE_TIME = 3;
 /* por tipo: duração do susto e velocidade de fuga/caminhada (vaca larga, gato rápido) */
-const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3 });
+const ALERT_TIME = Object.freeze({
+  rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3,
+  hen: 2.6, chick: 2.2, guinea: 2.6, duck: 2.4, horse: 3, goat: 2.8, carcara: 1.6,
+});
 const QUAD_SPEED = Object.freeze({
   dog: { walk: 1, flee: 3.2 }, cat: { walk: 1.1, flee: 3.6 }, chicken: { walk: .55, flee: 2.6 }, cow: { walk: .75, flee: 2.4 },
   armadillo: { walk: .4, flee: 1.5 },   // tatu é bicho de passo curto; fuga é um trote rápido
+  /* vida 2: os 6 GLB novos são ESTÁTICOS — não há pata se mexendo para justificar
+     deslocamento grande. `_updateQuad` limita a fuga a `flee × 1,4` m, então estes valores
+     são o quanto de deslize o bicho pode pagar sem virar patinação: galinha 1,7 m, pinto
+     1,4 m, cavalo 0,7 m (pastando, só troca o peso de pata). O pato é o único em que
+     deslizar é CORRETO: pato nadando desliza mesmo. */
+  hen: { walk: .5, flee: 1.2 }, chick: { walk: .35, flee: 1 }, guinea: { walk: .5, flee: 1.4 },
+  duck: { walk: .22, flee: .6 }, horse: { walk: .5, flee: .5 }, goat: { walk: .42, flee: 1.1 },
 });
 
 const loadGLB = (url) => new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
@@ -54,6 +103,37 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
       console.warn('[ambientlife] GLB não carregou', id, error);
     }
   }));
+}
+
+/* ─── FAIL-CLOSED DA FAUNA (13/09/2026) ────────────────────────────────────────────
+   Pedido do dono: "temos que melhorar os animais, nenhum pode ser lowpoly". O bicho
+   low-poly de verdade NÃO é o GLB: é o proxy de esfera+cone abaixo, que nasce quando o
+   GLB não carrega — 176 tri no cachorro contra 1.950 do GLB, 218 na pomba contra 6.928,
+   114 na barata contra 2.124 (medidos no three vendorizado; docs/maps/RELATORIO-LOWPOLY.md
+   §2.3). Fauna é ambientação, não jogabilidade: mapa SEM bicho é melhor que mapa com
+   boneco de esfera, então no browser, sem GLB, o bicho simplesmente NÃO NASCE.
+
+   EM NODE O PROXY CONTINUA, de propósito: no arnês nenhum GLB carrega por desenho
+   (tools/eval/map-check.mjs:111 e corrego-contract-check.mjs:16-19) e régua que perde a
+   fauna perde o CENSO dela — o fail-closed apagaria os ratos e a capivara que a
+   `corrego-contract-check` conta. O ambiente é detectado como no resto da base
+   (`game.js:44`, `authoredvm.js:16`): em node existe `process.versions.node`.
+
+   KILL-SWITCH `?fauna=proxy` devolve o comportamento antigo no browser, do mesmo jeito
+   que `?glb=0` devolve o mapa procedural — é o que permite o A/B.
+   RÉGUA: POLY6 em `tools/eval/poly-check.mjs` (mutante `proxy-vivo`). ─────────────── */
+const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
+/* Sobrescrita de ambiente: o arnês É node, então o caminho do BROWSER só é alcançável
+   forçando-o. Mesmo papel do `registerFaunaTemplate` (:522) — costura de régua, não de
+   jogo; o jogo nunca chama isto. */
+let faunaRuntime = null;
+export function setFaunaRuntime(env) {
+  faunaRuntime = env ? { node: !!env.node, search: env.search || '' } : null;
+}
+export function faunaProxyAllowed() {
+  if (faunaRuntime ? faunaRuntime.node : NODE_RUNTIME) return true;
+  const search = faunaRuntime ? faunaRuntime.search : (typeof location !== 'undefined' ? location.search : '');
+  return new URLSearchParams(search || '').get('fauna') === 'proxy';
 }
 
 function fallbackRat(index) {
@@ -170,22 +250,44 @@ function cloneAsset(id) {  const template = templates.get(id);
   };
 }
 
+/* FRENTE DO MODELO → +Z. É a convenção de `rotation.y = Math.atan2(dx, dz)`, que o
+   controlador usa em TODO bicho que anda, e a mesma de `corrego-contract-check.mjs:78`.
+   Medida por raster ortográfico do GLB SERVIDO (sonda em /tmp sobre @gltf-transform, e para
+   os skinned pela pose que o próprio three monta com `applyBoneTransform`):
+     focinho/bico em +X → yaw −π/2   ·   em −X → yaw +π/2   ·   em +Z → 0
+   CONFERIDA em dois bichos revisados com figura in-game: cachorro e gato apontam +Z
+   nativos e não têm correção — é o que fecha a convenção.
+   CORREÇÃO DE 14/09: rato e tatu apontam −X (não +X) e estavam com −π/2, que leva a frente
+   para −Z: os dois andavam DE COSTAS desde que entraram (rato em 17 mapas, tatu em 2).
+   Figuras: /tmp/faunaprobe/rat_posed.png e /tmp/faunaprobe/tatu_2v.png. */
+const YAW_FIX = Object.freeze({
+  rat: Math.PI / 2, armadillo: Math.PI / 2,
+  hen: -Math.PI / 2, guinea: -Math.PI / 2, carcara: -Math.PI / 2,
+  duck: Math.PI / 2,
+  /* pinto, cavalo e cabra já saíram do Mint com o focinho em +Z (yaw 0) */
+});
+
 function normalizeModel(id, model) {
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   const size = box.getSize(new THREE.Vector3());
   /* alvo em metros de mundo: altura para bichos que andam de lado pro jogador,
-     comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5. */
-  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34 }[id] || .5;
+     comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5.
+     vida 2 — os 7 GLB novos vêm do Mint normalizados em cubo unitário, então o alvo é a
+     ÚNICA coisa que dá tamanho ao bicho. Escolhido pelo bicho real e conferido pela razão
+     do bbox medido (sonda de raster em /tmp, 14/09): galinha 0,45 de altura → 0,38 de
+     comprimento; pinto 0,14; capote 0,50; pato 0,40 de altura → 0,62 do bico à cauda
+     (marreco de verdade: 0,50-0,65); cavalo 1,55 na cernelha → 2,50 de comprimento;
+     cabra 0,75 → 0,89; carcará 0,55 → 0,62 (caracará real: 0,50-0,65). */
+  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34,
+    hen: .45, chick: .14, guinea: .5, duck: .4, horse: 1.55, goat: .75, carcara: .55 }[id] || .5;
   const dimension = ['rat', 'armadillo', 'cockroach'].includes(id) ? Math.max(size.x, size.z) : size.y;
   const scale = target / Math.max(.001, dimension);
   // dog: altura 1 m => cernelha ~0,6 (ombro 1,83 de 3,09 de altura no GLB bruto)
   const center = box.getCenter(new THREE.Vector3());
   model.scale.setScalar(scale);
   model.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
-  /* Mint entrega o tatu com o eixo longo no X — gira pra cara ficar no +Z, mesma
-     correção do rato. A barata já vem no Z (bbox 0,91 × 1,0). */
-  if (['rat', 'armadillo'].includes(id)) model.rotation.y = -Math.PI / 2;
+  model.rotation.y = YAW_FIX[id] || 0;
 }
 
 function distanceToSegment(point, start, end) {
@@ -197,7 +299,8 @@ function distanceToSegment(point, start, end) {
 }
 
 class FavelaAmbience {
-  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [] }) {
+  constructor(root, options) {
+    const { map, low = false } = options;
     this.map = map;
     this.low = low;
     this.time = 0;
@@ -207,25 +310,24 @@ class FavelaAmbience {
     this.group.name = `AMBIENT_LIFE_${map}`;
     this.group.userData.ambientLife = true;
     root.add(this.group);
-    const ratList = low ? rats.slice(0, 1) : rats;
-    const pigeonList = low ? pigeons.slice(0, 1) : pigeons;
-    const dogList = low ? dogs.slice(0, 1) : dogs;
-    const catList = low ? cats.slice(0, 1) : cats;
-    const chickenList = low ? chickens.slice(0, 1) : chickens;
-    const cowList = low ? cows.slice(0, 1) : cows;
-    const armadilloList = low ? armadillos.slice(0, 1) : armadillos;
-    const cockroachList = low ? cockroaches.slice(0, 1) : cockroaches;
-    const parrotList = low ? parrots.slice(0, 1) : parrots;
+    /* nomes dos bichos que o fail-closed engoliu (sem GLB, no browser) — o construtor
+       avisa uma vez e o número fica em `group.userData.faunaFailClosed`. */
+    this.faunaDropped = [];
     this.animals = [];
-    ratList.forEach((config, index) => this._add('rat', config, index));
-    pigeonList.forEach((config, index) => this._add('pigeon', config, index));
-    dogList.forEach((config, index) => this._add('dog', config, index));
-    catList.forEach((config, index) => this._add('cat', config, index));
-    chickenList.forEach((config, index) => this._add('chicken', config, index));
-    cowList.forEach((config, index) => this._add('cow', config, index));
-    armadilloList.forEach((config, index) => this._add('armadillo', config, index));
-    cockroachList.forEach((config, index) => this._add('cockroach', config, index));
-    parrotList.forEach((config, index) => this._add('parrot', config, index));
+    /* uma linha por ESPÉCIE saía do controle com 16 tipos (eram 9 declarações × 3 lugares:
+       destructuring, corte do LOWQ e forEach). A fonte da verdade agora é o TYPE_OPTION. */
+    for (const type of FAUNA_TYPES) {
+      const list = options[TYPE_OPTION[type]] || [];
+      (low ? list.slice(0, 1) : list).forEach((config, index) => this._add(type, config, index));
+    }
+    if (this.faunaDropped.length) {
+      this.group.userData.faunaFailClosed = this.faunaDropped.length;
+      /* Não saber custa o mesmo que estar errado: fauna que não nasce APARECE no console,
+         senão "o mapa não tem bicho" volta a ser mistério. */
+      console.warn(`[ambientlife] ${this.faunaDropped.length} bicho(s) não nasceram em ${map}:`
+        + ` o GLB não carregou e o proxy procedural está desligado no browser (fail-closed,`
+        + ` RELATORIO-LOWPOLY §2.3) — ${this.faunaDropped.join(', ')}. \`?fauna=proxy\` devolve o proxy.`);
+    }
     this.reset();
   }
 
@@ -254,12 +356,17 @@ class FavelaAmbience {
       model = loaded.model;
       normalizeModel(assetId, model);
       animalRoot.add(model);
-    } else {
+    } else if (faunaProxyAllowed()) {
       model = type === 'rat' ? fallbackRat(index) : type === 'dog' ? fallbackDog()
         : type === 'armadillo' ? fallbackArmadillo() : type === 'cockroach' ? fallbackCockroach()
         : type === 'parrot' ? fallbackParrot() : fallbackPigeon();
       while (model.children.length) animalRoot.add(model.children[0]);
       model = animalRoot;
+    } else {
+      /* FAIL-CLOSED: nada entra em `this.group` nem em `this.animals` — o bicho não
+         existe neste quadro. O `animalRoot` criado acima é descartado pelo GC. */
+      this.faunaDropped.push(FAUNA_NAME[type] || type);
+      return;
     }
     animalRoot.traverse((object) => {
       if (!object.isMesh) return;
@@ -350,7 +457,7 @@ class FavelaAmbience {
       }
       if (animal.type === 'rat' || animal.type === 'cockroach') this._updateRat(animal, dt);
       else if (animal.type === 'pigeon') this._updatePigeon(animal, dt);
-      else if (animal.type === 'parrot') this._updateParrot(animal, dt);
+      else if (PERCHED.has(animal.type)) this._updatePerched(animal, dt);
       else this._updateQuad(animal, dt);
       animal.mixer?.update(dt);
     }
@@ -431,9 +538,10 @@ class FavelaAmbience {
     animal.state = recovering ? 'recover' : 'walk';
   }
 
-  _updateParrot(animal) {
-    /* papagaio de POLEIRO (plans/22): não voa; vida = balanço procedural e
-       tiro perto = tremida rápida sem sair do poleiro. */
+  _updatePerched(animal) {
+    /* POLEIRO (plans/22 · vida 2): não voa e NÃO ANDA; vida = balanço procedural e
+       tiro perto = tremida rápida sem sair do poleiro. É o comportamento honesto para GLB
+       estático de ave — carcará deslizando pelo chão seria o defeito, não a solução. */
     const t = this.time + animal.phase * 3;
     if (this.time < animal.alertUntil) {
       animal.root.rotation.z = Math.sin(t * 34) * .1;
@@ -441,8 +549,10 @@ class FavelaAmbience {
       animal.state = 'flee';
       return;
     }
-    animal.root.rotation.z = Math.sin(t * .9) * .055;
-    animal.root.rotation.x = Math.sin(t * .63 + 1) * .035;
+    /* rapina pousada balança bem menos que papagaio em poleiro de gaiola */
+    const sway = PERCH_SWAY[animal.type] ?? .055;
+    animal.root.rotation.z = Math.sin(t * .9) * sway;
+    animal.root.rotation.x = Math.sin(t * .63 + 1) * sway * .64;
     animal.root.position.y = animal.origin.y;
     /* virada de cabeça em degrau: 4 s por rumo, interpolação curta entre eles */
     const rumo = Math.floor(t / 4) % 3 - 1;
@@ -487,18 +597,14 @@ class FavelaAmbience {
       const geometry = object.geometry;
       triangles += (geometry.index?.count || geometry.attributes.position?.count || 0) / 3;
     });
-    const rat = this.animals.filter((animal) => animal.type === 'rat').length;
-    const pigeon = this.animals.filter((animal) => animal.type === 'pigeon').length;
-    const dog = this.animals.filter((animal) => animal.type === 'dog').length;
-    const cat = this.animals.filter((animal) => animal.type === 'cat').length;
-    const chicken = this.animals.filter((animal) => animal.type === 'chicken').length;
-    const cow = this.animals.filter((animal) => animal.type === 'cow').length;
-    const armadillo = this.animals.filter((animal) => animal.type === 'armadillo').length;
-    const cockroach = this.animals.filter((animal) => animal.type === 'cockroach').length;
-    const parrot = this.animals.filter((animal) => animal.type === 'parrot').length;
+    /* toda espécie de FAUNA_TYPES tem chave, mesmo zerada: a AM6 lê `counts.rat` e
+       `counts.pigeon` direto, e chave que some vira `undefined >= 1` silencioso. */
+    const counts = { total: this.animals.length };
+    for (const type of FAUNA_TYPES) counts[type] = 0;
+    for (const animal of this.animals) counts[animal.type]++;
     return {
       map: this.map, low: this.low, gltf: this.animals.length > 0 && this.animals.every((animal) => animal.source === 'gltf'),
-      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, total: rat + pigeon + dog + cat + chicken + cow + armadillo + cockroach + parrot }, meshes, triangles: Math.round(triangles),
+      counts, meshes, triangles: Math.round(triangles),
     };
   }
 

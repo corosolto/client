@@ -1,0 +1,12 @@
+<!-- Recibo da rodada de conserto de 13/09/2026. Índice: ../RODADA-CONSERTO.md -->
+
+> **Nota do Main:** o recibo detalhado deste mapa foi entregue pelo builder em duas partes (recibo + adendo).
+> O que está abaixo é o adendo final dele; os números de antes→depois deste mapa foram **reconferidos por mim**
+> com o instrumento oficial (`node tools/eval/map-check.mjs all` e `node tools/eval/mapa-novo-gate.mjs`,
+> 13/09) e estão na tabela de [`../RODADA-CONSERTO.md`](../RODADA-CONSERTO.md), que é a fonte para praca_poderes.
+
+{
+  "adendo_ao_recibo": "# praça dos três poderes — adendo (regressão apontada pelo Main)\n\n## Aplicado\n\n| item | arquivo:linha | o que entrou |\n|---|---|---|\n| fauna fora de sólido (AR3) | `map_brasilia.js:2181-2185` | tatu 2 de `pos [13,0,−14] / to [10,0,−11]` para `pos [14,0,−11] / to [16.5,0,−11]` + comentário de 4 linhas com a causa |\n\n## Causa (não é regressão de geometria)\n\nO tatu nascia DENTRO do Towner do hotdog (`putBuilding('towner', {x:12, z:-15})`, pegada medida `CORPO_M.towner` = 10,26..13,74 × −16,91..−13,09). Ele já nascia dentro no browser desde sempre; não acusava porque o Towner é GLB e **em node não existia colisor nenhum** (`map-check.mjs:111`). A pegada de contingência desta rodada deu corpo ao prop e a régua passou a ver o que o jogador já via — régua nova mordendo defeito velho.\n\nConserto pelo lado do bicho, não da massa: o carrinho de hotdog é o assunto daquele canto e a intenção do lugar se preserva movendo o tatu 3,4 m para o gramado livre entre o Towner e o ônibus da 2ª fileira.\n\n## Medido depois do conserto\n\n- `npm run eval:ambience-registry`: `ok praca_poderes  10 animais  rat:2 pigeon:6 armadillo:2`; **AR1, AR2, AR3, AR4, AR5, AR6 PASSAM** (17/17 mapas ok). Não escreve artefato rastreado.\n- Sonda própria, sem deriva nenhuma em relação ao recibo: visada B **52,5 m** / E **44,9 m** · exposição B **1,4%** / E **1,3%** · MAP5 pior espaçamento **6,56 m** (razão prop 0,71 · wp 0,39, zero quadrante fora do teto) · MAP1 pior penetração 0,03 m / 0 submersos · MAP2B folga 1,70 m / área 49,4 m² · bounds x ±34,953 = os do browser.\n- `node --check public/js/map_brasilia.js` verde. Nada commitado. Só `public/js/map_brasilia.js` editado por mim."
+}
+
+[You have received this identical output 3 times. Re-reading 'agent://FixPraca' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]
