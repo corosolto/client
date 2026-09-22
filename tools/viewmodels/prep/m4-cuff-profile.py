@@ -14,11 +14,17 @@ assert ROOT.name == 'vm-m4-reload-evidence'
 assert subprocess.check_output(['git', 'branch', '--show-current'], cwd=ROOT, text=True).strip() == 'codex/vm-m4-reload-evidence'
 SOURCE = ROOT.parent / 'vm-prep-rifles/artifacts/viewmodels/prep/rifles/m4-actions-fingers-c1'
 TRANSFER = '--transfer-weights' in sys.argv
-OUT = ROOT / ('artifacts/viewmodels/m4-cuff-weights' if TRANSFER else 'artifacts/viewmodels/m4-cuff-profile')
+ALTERNATE = '--elbow-mag-source' in sys.argv
+if ALTERNATE:
+    SOURCE = ROOT / 'artifacts/viewmodels/m4-elbow-mag-path'
+    assert SOURCE.resolve().is_relative_to(ROOT.resolve())
+stem = 'm4-elbow-mag' if ALTERNATE else 'm4-cuff'
+OUT = ROOT / 'artifacts/viewmodels' / (stem + ('-weights' if TRANSFER else '-profile'))
 assert OUT.resolve().is_relative_to(ROOT.resolve())
 OUT.mkdir(parents=True, exist_ok=True)
 digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
-assert digest(SOURCE / 'm4-actions-runtime.glb') == '20fd7f8b69b9a88238596e1bccb089ca2bafeb5ad479f08c5ebe41f54344be06'
+if not ALTERNATE:
+    assert digest(SOURCE / 'm4-actions-runtime.glb') == '20fd7f8b69b9a88238596e1bccb089ca2bafeb5ad479f08c5ebe41f54344be06'
 bpy.ops.wm.open_mainfile(filepath=str(SOURCE / 'm4-actions.blend'), load_ui=False)
 scene = bpy.context.scene
 rig = bpy.data.objects['RIG_FP_ARMS']
@@ -153,10 +159,35 @@ for frame in range(73):
     profile, wrist, views = sample(frame)
     report['frames'][str(frame)] = profile
 (OUT / 'profile.json').write_text(json.dumps(report, indent=2) + '\n')
-summary = {f: {'visible': report['frames'][str(f)]['visible_skin_vertices'],
-               'cuff': report['frames'][str(f)]['cuff_value']} for f in (0, 13, 45, 62, 72)}
+summary = {'critical_frames': {f: {'visible': report['frames'][str(f)]['visible_skin_vertices'],
+               'cuff': report['frames'][str(f)]['cuff_value']} for f in (0, 13, 25, 30, 35, 45, 62, 72)},
+           'full_cycle_max_visible': {view: max((d['visible_skin_vertices'][view], int(f)) for f, d in report['frames'].items())
+                                      for view in ('front', 'opposite')}}
 (OUT / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
 print('M4_CUFF_PROFILE', json.dumps(summary), flush=True)
+
+if '--export' in sys.argv:
+    assert TRANSFER and ALTERNATE, 'The original weight-only trial is rejected; do not export it.'
+    for obj in bpy.data.objects:
+        for data in (obj, obj.data.shape_keys if obj.type == 'MESH' else None):
+            if data and data.animation_data:
+                data.animation_data.action = None
+                for track in data.animation_data.nla_tracks:
+                    track.mute = False
+    scene.frame_set(0)
+    bpy.ops.wm.save_as_mainfile(filepath=str(OUT / 'm4-actions.blend'))
+    bpy.ops.export_scene.gltf(filepath=str(OUT / 'm4-actions-runtime.glb'), export_format='GLB',
+        export_cameras=True, export_lights=False, export_animations=True,
+        export_animation_mode='NLA_TRACKS', export_merge_animation='NLA_TRACK', export_skins=True,
+        export_materials='EXPORT', export_image_format='WEBP', export_image_quality=82,
+        export_yup=True, export_force_sampling=True, export_optimize_animation_size=True,
+        export_optimize_animation_keep_anim_armature=True, export_optimize_animation_keep_anim_object=True,
+        export_frame_range=False)
+    for obj in bpy.data.objects:
+        for data in (obj, obj.data.shape_keys if obj.type == 'MESH' else None):
+            if data and data.animation_data:
+                for track in data.animation_data.nla_tracks:
+                    track.mute = track.name != 'reload_tactical'
 
 if '--render' in sys.argv:
     scene.render.engine = 'BLENDER_WORKBENCH'
@@ -172,7 +203,7 @@ if '--render' in sys.argv:
     for obj in mesh_objects:
         obj.color = ((.8, .05, .05, 1) if obj == cloth else (.05, .15, .8, 1) if obj == glove
                      else (.15, .85, .2, 1) if obj == skin else (.3, .3, .3, 1))
-    for frame in (0, 13, 25, 35, 45, 62, 72):
+    for frame in (0, 13, 25, 30, 35, 45, 54, 62, 70, 72):
         profile, wrist, views = sample(frame)
         for name, location in views.items():
             cam.location = location
