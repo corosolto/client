@@ -193,12 +193,12 @@ Esse parecer não substitui aprovação visual humana.
   `artifacts/carandiru-c4/rejected-preroll/` e `rejected-fast/` e não alimentam
   o recibo.
 - O lote final em `artifacts/carandiru-c4/final/` registra `radial-interna` em
-  7,40 s/211 amostras, `externa-oeste` em 7,96 s/227 e `muralha-leste` em
-  16,92 s/431. As três chegam ao fim com zero correção, passo máximo entre 0,40
+  7,76 s/211 amostras, `externa-oeste` em 7,88 s/227 e `muralha-leste` em
+  16,40 s/426. As três chegam ao fim com zero correção, passo máximo entre 0,40
   e 0,45 m e sem erro inesperado. A muralha cobre 5,8 m de variação vertical.
-  Os vídeos têm SHA-256 `05bdd6b784f5efa13b4a194892628cf35f5ff24deefc2a201708be3c981a1a9a`,
-  `d971ccab639cd3bb74550c9d30542663076b9085261e09ab7637944ee6a18acf` e
-  `b0d22c5460b868f10880743ed98afc9bff5ae5b231aab89d48236bbf151e1c4e`.
+  Os vídeos têm SHA-256 `16a3cf5fa5a14dba05896a3dee8ce2ebe297aab31224823f75878504df9d4ec6`,
+  `87b62c47c2e80485201f144fb7e6936732b282935a297db865a8784b9f901d48` e
+  `5918b2ee7c710c4d8fcf3800102cac62184ada984f90ea969cc6cb2376f91c22`.
 - O ensaio de leitura usa o GLB real `esquerdomacho` parado no corredor da
   muralha. A silhueta é reconhecível a 10 e 20 m e ainda humana a 30 m, mas a
   amostra clara/vermelha não cobre skins escuras, movimento, oclusão parcial ou
@@ -223,10 +223,148 @@ contrafogo e cobertura no corredor elevado com personagens variados em
 movimento. CAR9 prova a integridade do material entregue, não resolve esses
 juízos humanos.
 
+## Correção após o primeiro teste humano
+
+O dono aprovou a direção visual com a ressalva de que as escadas laterais não
+subiam direito e a subida central era pequena. A inspeção confirmou um defeito
+funcional: cada degrau lateral subia 0,58 m, acima do `STEP_H=0,55` do motor. A
+passarela inteira também continuava devolvendo piso a 5,8 m sobre a projeção das
+escadas, impedindo a descida.
+
+- As quatro laterais passaram de 10 para 12 degraus: 0,483 m por passo, 2,80 m
+  de largura e 14,10 m de desenvolvimento. Um recorte funcional de 2 m separa o
+  acesso da faixa de circulação superior sem abrir buraco visual na passarela.
+- A subida central passou de 10 para 18 degraus, 3,40 m de largura e 6,55 m de
+  desenvolvimento. O topo encontra a borda da galeria e uma arma que ficava sob
+  a subida foi deslocada para a lateral livre.
+- O recibo C4 agora executa a própria `Game._moveEntity` em subida e descida:
+  8/8 travessias laterais chegam a 0/5,8 m e 2/2 travessias centrais chegam a
+  0/3,4 m. A navegação continua conexa, com zero bloqueio, falta de piso ou
+  estreitamento nas três rotas.
+- Os 66 degraus usam duas instâncias de renderização. O A/B Chrome final ficou
+  em -12,7% (med/5), -0,2% (med/8), +5,3% (low/5) e +2,5% (low/8), abaixo do teto
+  de 15%, com oito amostras `live` e zero erro inesperado.
+
+O servidor local 8136 serve a fonte final com SHA-256
+`420677078c6d958b4ca4a11ce56077fb680cae7b420737b2dff3e10b1221a4a4`.
+Ainda é necessária a nova confirmação humana do tato das escadas; a observação
+anterior não constitui aprovação completa do mapa.
+
 ## Próximo passo
 
-C4 entrega material revisável das três rotas e torna explícito o limite da
-muralha. Ainda faltam playtest humano com movimento e combate, skins de contraste
-baixo, avaliação da cobertura no corredor e aprovação visual do dono. Não
-avançar o rótulo visual nem autorizar merge/deploy enquanto esses itens estiverem
-pendentes.
+C4 entrega material revisável das três rotas. O primeiro reteste humano encontrou
+novos bloqueios nas guaritas e no Pavilhão 6; a correção e a evidência posterior
+estão registradas na seção seguinte. A aprovação final do dono continua pendente.
+
+## Correção após o segundo teste humano — guaritas e Pavilhão 6
+
+O segundo teste humano refutou o verde anterior: nenhuma escada dava acesso
+funcional às passarelas e guaritas, e as janelas do prédio central apareciam
+suspensas sem um volume arquitetônico coerente. A investigação reproduziu o falso
+positivo antes da mudança. `guardEntries` eram seis nomes, dos quais somente
+quatro existiam, todos em `Group` vazios; nenhuma das seis rotas era contínua. O
+recibo C4 teleportava o corpo ao início de cada acesso. As guaritas tinham piso em
+6,95 m contra passarela em 5,80 m, sem superfície interna. O pavilhão tinha quatro
+massas de canto e cascas de janela sem suporte verificável.
+
+- As quatro escadas agora terminam alinhadas às quatro passarelas em 5,80 m. Seis
+  rotas começam no pátio, atravessam cada degrau e patamar, contornam os apoios e
+  entram em quatro guaritas de canto e duas torres do muro norte. O mesmo percurso
+  funciona na volta, sem reposicionar o jogador entre trechos.
+- Cada guarita tem piso registrado, entrada livre, cobertura, peitoril e posição
+  jogável. As cascas Mint originais continuam carregadas e registradas por
+  proveniência, mas ocultas: o GLB recuperado é fechado e não oferece interior
+  navegável. A geometria procedural visível e seus colisores formam o espaço
+  autoritativo.
+- Contracobertura física, e não metadado, limita cada torre central a no máximo
+  2/4 spawns visíveis. O raycast também mantém 3/3 posições de contratiro.
+- O Pavilhão 6 passou a ter piso superior completo, fachadas construídas ao redor
+  dos vãos, escada contínua e posições de tiro com parede e piso adjacentes. As
+  janelas deixam de ser faces soltas entre as massas de canto.
+- O obstáculo central que bloqueava a aproximação da escada foi deslocado sem
+  remover cobertura nem alterar spawns, bandeiras ou identidade do mapa.
+
+A régua agora falha causalmente com `patamar-desconectado`, `degrau-alto`,
+`colisao-bloqueando`, `guarita-inalcancavel` e `janela-sem-parede`. Todos os cinco
+mutantes reprovam somente CAR2 ou CAR3. No jogo real, o novo recibo WebGL mede
+12/12 percursos pátio↔guarita e 2/2 pátio↔galeria; o maior erro final é 0,418 m.
+`eval:mapcontrato` mede 1.223 nós, 14.280 arestas e grafo conexo.
+
+As seis vistas internas das guaritas e a vista do pavilhão são PNG 1200×800 em
+`artifacts/carandiru-c4/final/`; o recibo versionado é
+`tools/eval/carandiru-c4-browser.json`. O SHA-256 da fonte validada é
+`3107269e305075a37d9337af327df9ab1d65cdbf830c16e91b475295e14b37d0`.
+O A/B Chrome final aumentou chamadas por quadro em 10,5% (med/5), 8,0% (med/8),
+14,2% (low/5) e 11,4% (low/8), todos dentro do teto de 15%, com oito amostras
+`live` e zero erro inesperado.
+
+A correção está tecnicamente pronta para novo teste humano. Ainda é necessário o
+dono percorrer as seis guaritas com teclado/mouse, combater nas posições elevadas
+e aprovar a leitura visual do pavilhão; CAR9 mantém `humanVisualApproval=pending`.
+Não autorizar merge ou deploy antes desse retorno.
+
+## Reparo do CI após o segundo teste — 10/09/2026
+
+O `build` remoto da PR #556 reproduziu cinco vulnerabilidades de dependências de
+produção (`astro`, `js-yaml`, `sharp`, `smol-toml` e `svgo`). O mapa não causava a
+falha: a branch ainda carregava o lock da base empilhada alpha.240. O lock foi
+atualizado dentro das mesmas faixas declaradas em `package.json`, preservando a
+versão da branch. `npm ci --ignore-scripts` em diretório temporário limpo com npm
+10.9.2 passou; o lock contém as entradas opcionais de Linux e `eval:deps` terminou
+com zero vulnerabilidades altas não isentas.
+
+O `portao` remoto permanece bloqueado por `loja_h` em 48,9% contra meta de 49%.
+Essa dívida é global e alheia ao Carandiru: o diff da PR contra
+`codex/mapas-stack-541-v2` não altera `map_loja_h.js`, `graffiti_pass.js`,
+`graffiti_layout.js` nem `graffiti-census.mjs`. Nenhum arquivo, limiar ou material
+da Loja H foi modificado nesta lane para mascarar o resultado. A PR deve ser
+reavaliada depois que a dívida da Loja H for corrigida em sua própria frente.
+
+## Auditoria noturna sobre o head remoto da PR #556 — 10/09/2026
+
+A auditoria partiu do head remoto exato `57edb46e60fb05288b5b714597ad0c17d4080fbc`
+em worktree isolada. O relato humano não foi descartado: ele foi reproduzido
+contra o histórico e comparado ao estado posterior a `509fdda8`. A fonte atual já
+continha o conserto geométrico das quatro escadas, seis entradas elevadas e do
+Pavilhão 6. Não houve nova alteração no mapa, runtime, materiais ou assets.
+
+Dois problemas estavam na proteção automatizada. O mutante `spawn-exposto`
+removia uma massa do pavilhão que não participava da visada e, portanto, não
+provava CAR5. Ele agora remove a contracobertura real: o máximo sobe de 2/4 para
+3/4 spawns vistos e somente CAR5 reprova. A régua de fachada contava apenas as
+faces leste/oeste e comparava uma assinatura anterior à correção. PF4 agora mede
+as 12 janelas reais, 24 peitoris/vergas, 12 pontos de tiro com piso e pelo menos
+quatro segmentos físicos de parede para cada vão. `sem-fachada` reprova somente
+PF4 e `cone-restaurado` reprova somente PF2.
+
+O recibo `tools/eval/carandiru-overnight-browser.json` acrescenta CAR10. Em Chrome
+real, 1200×800/5x5 iniciou 9 bots e 1280×720/8x8 iniciou 15; todos se deslocaram
+mais de 0,75 m nos seis segundos medidos. Nos dois enquadramentos, 12/12 percursos
+pátio↔guarita e 2/2 percursos pátio↔galeria chegaram ao destino, as três rotas
+estratégicas e os três pontos CTF permaneceram presentes, o GLB Mint respondeu
+HTTP 200 e não houve erro inesperado. As oito capturas ficam em
+`artifacts/carandiru-overnight/final/`; a revisão técnica confirmou parede ao
+redor das janelas e circulação elevada visível, mas não substitui aprovação
+humana. O mutante `recibo-sem-8x8` remove a amostra maior e reprova somente CAR10.
+
+O recibo C4 foi refeito em 1200×800: três vídeos contínuos, zero correção de
+colisão, 12/12 travessias de guarita e 2/2 do pavilhão. A amostra autônoma de 20 s
+em `artifacts/carandiru-overnight/bot-routes/trails.json` registrou sete bots com
+deslocamento final de 39,74 a 47,21 m e circulação entre as duas metades do mapa.
+CTF fechou por objetivo em 79,6 s, com três capturas e rótulos `ALA SUL`,
+`PAVILHÃO 6` e `ALA NORTE`.
+
+O A/B Chrome fresco manteve o candidato dentro do teto de 15% de chamadas por
+quadro: +10,0% (med/5), +9,8% (med/8), +13,3% (low/5) e +9,9% (low/8), com oito
+amostras `live` e zero erro. `eval:penitenciaria`, `eval:penitenciariavida`,
+`eval:penitenciariapickup`, `eval:mapcontrato`, os gates CTF e o build passaram.
+
+Para o teste humano da manhã, o servidor local serve o mesmo SHA da fonte
+(`3107269e305075a37d9337af327df9ab1d65cdbf830c16e91b475295e14b37d0`) em:
+
+`http://127.0.0.1:8156/?debug=1&auto=P,mst&map=penitenciaria&perfilauto=0&ctf=1`
+
+Percorrer as quatro escadas até as quatro passarelas, entrar nas quatro guaritas
+e duas torres norte, voltar ao pátio, subir e descer o Pavilhão 6 e combater das
+janelas em 5x5 e 8x8. Aprovação visual e de tato continuam pendentes. Não houve
+merge nem deploy.

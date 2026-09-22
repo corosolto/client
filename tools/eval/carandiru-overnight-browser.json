@@ -1,0 +1,287 @@
+{
+  "sourceSha256": "3107269e305075a37d9337af327df9ab1d65cdbf830c16e91b475295e14b37d0",
+  "browser": "Google Chrome",
+  "url": "http://127.0.0.1:8156/?debug=1&auto=P,mst&map=penitenciaria&perfilauto=0&ctf=1",
+  "cases": [
+    {
+      "id": "3x2-5x5",
+      "viewport": [
+        1200,
+        800
+      ],
+      "aspectRatio": "3:2",
+      "team": 5,
+      "expectedBots": 9,
+      "scene": {
+        "state": "live",
+        "wallAccesses": 4,
+        "wallWalkways": 4,
+        "guardEntries": 6,
+        "guardRoutes": 6,
+        "pavilionPassages": 2,
+        "pavilionStairs": 1,
+        "pavilionWindows": 12,
+        "pavilionWindowSupports": 12,
+        "strategicRoutes": [
+          "radial-interna",
+          "externa-oeste",
+          "muralha-leste"
+        ],
+        "ctfPoints": [
+          {
+            "id": "E",
+            "label": "ALA SUL"
+          },
+          {
+            "id": "MID",
+            "label": "PAVILHÃO 6"
+          },
+          {
+            "id": "B",
+            "label": "ALA NORTE"
+          }
+        ],
+        "waypoints": 1223,
+        "drawCalls": 1,
+        "triangles": 1,
+        "vehicle": {
+          "source": "mint",
+          "visible": true,
+          "fallbackVisible": false,
+          "httpStatus": 200
+        }
+      },
+      "activity": {
+        "actualBots": 9,
+        "activeBots": 9,
+        "minMovedM": 18.841755971882588,
+        "maxMovedM": 24.300404379792866,
+        "teams": {
+          "E": 4,
+          "B": 5
+        }
+      },
+      "traversal": {
+        "guards": {
+          "attempts": 12,
+          "reached": 12,
+          "maxEndErrorM": 0.41789656611735637,
+          "maxVerticalRangeM": 5.8,
+          "ids": [
+            "carandiru-rota-guarita-oeste-patio-guarita",
+            "carandiru-rota-guarita-oeste-guarita-patio",
+            "carandiru-rota-guarita-leste-patio-guarita",
+            "carandiru-rota-guarita-leste-guarita-patio",
+            "carandiru-rota-guarita-norte-oeste-patio-guarita",
+            "carandiru-rota-guarita-norte-oeste-guarita-patio",
+            "carandiru-rota-guarita-norte-leste-patio-guarita",
+            "carandiru-rota-guarita-norte-leste-guarita-patio",
+            "carandiru-rota-torre-muro-0-patio-guarita",
+            "carandiru-rota-torre-muro-0-guarita-patio",
+            "carandiru-rota-torre-muro-1-patio-guarita",
+            "carandiru-rota-torre-muro-1-guarita-patio"
+          ]
+        },
+        "pavilion": {
+          "attempts": 2,
+          "reached": 2,
+          "maxEndErrorM": 0.3915478962103128,
+          "maxVerticalRangeM": 3.4,
+          "ids": [
+            "carandiru-pavilhao-escada-leste-patio-galeria",
+            "carandiru-pavilhao-escada-leste-galeria-patio"
+          ]
+        }
+      },
+      "captures": [
+        {
+          "id": "muralha-escada",
+          "file": "artifacts/carandiru-overnight/final/3x2-5x5-muralha-escada.png",
+          "bytes": 938635,
+          "sha256": "df42addad6828a4918f14724478bbc7f428573a7b5300fd8c0184839bef69081",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "id": "guarita-interior",
+          "file": "artifacts/carandiru-overnight/final/3x2-5x5-guarita-interior.png",
+          "bytes": 1003371,
+          "sha256": "b9d96e179da6300c078f95a7e6d92430cca5498b954bd7c8e4746730ba2870f7",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "id": "pavilhao-fachada",
+          "file": "artifacts/carandiru-overnight/final/3x2-5x5-pavilhao-fachada.png",
+          "bytes": 1186385,
+          "sha256": "8eab952a1bde310df5523e58fee963df91a4ccb9a79a0a5acf8fcdd758a62bce",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "id": "pavilhao-galeria",
+          "file": "artifacts/carandiru-overnight/final/3x2-5x5-pavilhao-galeria.png",
+          "bytes": 988006,
+          "sha256": "9f409220b1a83e9fa264257e385250f9193b69e3f3264b39654422267b52e392",
+          "width": 1200,
+          "height": 800
+        }
+      ],
+      "warnings": [
+        "404 /audio/manifest.json",
+        "404 /audio/menu-music/m10.mp3",
+        "404 /audio/manifest.default.json",
+        "404 /audio/ambiente/vento.mp3",
+        "404 /audio/ambiente/hum-indoor.mp3",
+        "404 /audio/ambiente/eco-patio.mp3",
+        "404 /audio/ambiente/buzina.mp3",
+        "404 /audio/ambiente/latido-1.mp3",
+        "404 /audio/ambiente/latido-2.mp3",
+        "404 /audio/ambiente/passaro-1.mp3",
+        "404 /audio/ambiente/passaro-2.mp3"
+      ],
+      "errors": []
+    },
+    {
+      "id": "16x9-8x8",
+      "viewport": [
+        1280,
+        720
+      ],
+      "aspectRatio": "16:9",
+      "team": 8,
+      "expectedBots": 15,
+      "scene": {
+        "state": "live",
+        "wallAccesses": 4,
+        "wallWalkways": 4,
+        "guardEntries": 6,
+        "guardRoutes": 6,
+        "pavilionPassages": 2,
+        "pavilionStairs": 1,
+        "pavilionWindows": 12,
+        "pavilionWindowSupports": 12,
+        "strategicRoutes": [
+          "radial-interna",
+          "externa-oeste",
+          "muralha-leste"
+        ],
+        "ctfPoints": [
+          {
+            "id": "E",
+            "label": "ALA SUL"
+          },
+          {
+            "id": "MID",
+            "label": "PAVILHÃO 6"
+          },
+          {
+            "id": "B",
+            "label": "ALA NORTE"
+          }
+        ],
+        "waypoints": 1223,
+        "drawCalls": 1,
+        "triangles": 1,
+        "vehicle": {
+          "source": "mint",
+          "visible": true,
+          "fallbackVisible": false,
+          "httpStatus": 200
+        }
+      },
+      "activity": {
+        "actualBots": 15,
+        "activeBots": 15,
+        "minMovedM": 18.764146521969383,
+        "maxMovedM": 24.257839309865368,
+        "teams": {
+          "E": 7,
+          "B": 8
+        }
+      },
+      "traversal": {
+        "guards": {
+          "attempts": 12,
+          "reached": 12,
+          "maxEndErrorM": 0.41789656611735637,
+          "maxVerticalRangeM": 5.8,
+          "ids": [
+            "carandiru-rota-guarita-oeste-patio-guarita",
+            "carandiru-rota-guarita-oeste-guarita-patio",
+            "carandiru-rota-guarita-leste-patio-guarita",
+            "carandiru-rota-guarita-leste-guarita-patio",
+            "carandiru-rota-guarita-norte-oeste-patio-guarita",
+            "carandiru-rota-guarita-norte-oeste-guarita-patio",
+            "carandiru-rota-guarita-norte-leste-patio-guarita",
+            "carandiru-rota-guarita-norte-leste-guarita-patio",
+            "carandiru-rota-torre-muro-0-patio-guarita",
+            "carandiru-rota-torre-muro-0-guarita-patio",
+            "carandiru-rota-torre-muro-1-patio-guarita",
+            "carandiru-rota-torre-muro-1-guarita-patio"
+          ]
+        },
+        "pavilion": {
+          "attempts": 2,
+          "reached": 2,
+          "maxEndErrorM": 0.3915478962103128,
+          "maxVerticalRangeM": 3.4,
+          "ids": [
+            "carandiru-pavilhao-escada-leste-patio-galeria",
+            "carandiru-pavilhao-escada-leste-galeria-patio"
+          ]
+        }
+      },
+      "captures": [
+        {
+          "id": "muralha-escada",
+          "file": "artifacts/carandiru-overnight/final/16x9-8x8-muralha-escada.png",
+          "bytes": 907455,
+          "sha256": "a199ef9851136811b183ca7a7a6b0f796cd0d7842fd3b583482af056f7b60e80",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "id": "guarita-interior",
+          "file": "artifacts/carandiru-overnight/final/16x9-8x8-guarita-interior.png",
+          "bytes": 975691,
+          "sha256": "35e248a265f7cf1d3e298efe4ec2c9755b408c33eae18bdefd49821cc4933964",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "id": "pavilhao-fachada",
+          "file": "artifacts/carandiru-overnight/final/16x9-8x8-pavilhao-fachada.png",
+          "bytes": 1144428,
+          "sha256": "1650892852fa6d64211bf1c4665246af19d9796fae2632d73183c671574f887f",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "id": "pavilhao-galeria",
+          "file": "artifacts/carandiru-overnight/final/16x9-8x8-pavilhao-galeria.png",
+          "bytes": 960233,
+          "sha256": "0ac3c0c124b3ced493ac783b79a2fbd43f28c9b20d948e9c2af2351de7b11bc0",
+          "width": 1280,
+          "height": 720
+        }
+      ],
+      "warnings": [
+        "404 /audio/manifest.json",
+        "404 /audio/menu-music/m14.mp3",
+        "404 /audio/manifest.default.json",
+        "404 /audio/ambiente/vento.mp3",
+        "404 /audio/ambiente/hum-indoor.mp3",
+        "404 /audio/ambiente/eco-patio.mp3",
+        "404 /audio/ambiente/buzina.mp3",
+        "404 /audio/ambiente/latido-1.mp3",
+        "404 /audio/ambiente/latido-2.mp3",
+        "404 /audio/ambiente/passaro-1.mp3",
+        "404 /audio/ambiente/passaro-2.mp3"
+      ],
+      "errors": []
+    }
+  ],
+  "humanVisualApproval": "pending",
+  "humanGameplayApproval": "pending"
+}

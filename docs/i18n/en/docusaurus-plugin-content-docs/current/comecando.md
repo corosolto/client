@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 46,735 lines in 93 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 46,603 lines in 92 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,423** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,403 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -233,13 +233,13 @@ The maps registered today, and which mode each one opens in:
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,345 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 391 |
-| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 493 |
+| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 489 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 288 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 259 |
-| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 922 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
+| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 815 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 889 |
-| `penitenciaria` | Carandiru | **capture** | `map_penitenciaria.js` | 912 |
+| `penitenciaria` | Carandiru | **capture** | `map_penitenciaria.js` | 1,012 |
 
 **17 registered maps** - 2 open in rounds and 15 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 23 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
