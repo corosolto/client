@@ -37,6 +37,25 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## Posto — loja, bombas e circulação tática (revisão 10/09/2026)
+
+### BUG-151 · o pátio aberto reduz o combate a tiro frontal e a loja não funciona como rota
+
+**Relato literal do dono:** "tem varios mapas que sao todos abertos [...] nao tem corredor ou
+areas estrategicas de protecao/visao/tiro; assim é prefeitura em obra e posto". Ele também
+lembrou que "o posto tinha um glv de posto ipiranga".
+
+**Estado antes da correção:** `origin/main` alpha.246 (`2115d5e2`) mantém a autoria original
+de Emerson Garrido, mas a loja é um volume cenográfico, as bombas são caixas procedurais e o
+pátio conserva corredores longos. O PR #562 só reescala UV em uma pilha contra outra branch.
+O ramo histórico `origin/map2/posto` contém uma solução anterior e dois moldes Mint com
+proveniência; o arquivo `posto_ipiranga.glb` existe somente fora do Git e não será importado.
+
+**Régua:** `tools/eval/posto-check.mjs`, a ser reproduzida em vermelho antes do porte seletivo.
+Resultado e evidência: [POSTO-TATICO-R2](docs/reports/POSTO-TATICO-R2.md).
+
+---
+
 ## Sertão — casas da praça (PR #526, revisão local 06/09)
 
 ### ~~BUG-145 · Rejeição humana pós-merge: carroças ainda bloqueiam e a fileira dos respawns ainda tem fachadas fechadas~~ · CORRIGIDO, AGUARDA REVISÃO HUMANA 08/09
