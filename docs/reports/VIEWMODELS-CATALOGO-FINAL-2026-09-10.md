@@ -853,3 +853,21 @@ sem erro fatal: `evidence/ar-frame-md97-20260922-0510` e
 [`VIEWMODEL-FRAME-AR-MD97-SCAR-2026-09-22.md`](VIEWMODEL-FRAME-AR-MD97-SCAR-2026-09-22.md).
 As candidatas continuam `ready:false`; escala, inclinação, mãos, ADS e ações
 dependem de revisão humana.
+
+### Regressão de enquadramento — cluster Mosin/SVD/SKS em 22/09/2026
+
+Mosin, SVD e SKS deixaram de falhar a régua de escala, visibilidade e
+dominância dos braços sem alteração dos produtos privados. Mosin passa com
+0,977×/92,7%/0,745× em 3:2 e 0,934×/92,7%/0,687× em 16:9. SVD passa com
+1,024×/87,5%/0,639× e 1,023×/87,5%/0,608×. SKS passa com
+1,000×/93,2%/0,665× e 0,955×/93,2%/0,619×. Os três eixos preservam o cano à
+frente da alça.
+
+`eval:vm-rig` permanece verde em 24/24 produtos; o lifecycle de precisão passa
+10/10 com 30 ciclos/630 amostras; o gate de ferramentas e seus mutantes passa
+10/10 quando executado com o Python 3.13/NumPy do Blender. A captura real ligada
+a `6daf117fc` produziu 42 PNGs nas duas proporções, sem erro fatal, em
+`evidence/precision-frame-20260922-0540`. Recibo:
+[`VIEWMODEL-FRAME-PRECISAO-MOSIN-SVD-SKS-2026-09-22.md`](VIEWMODEL-FRAME-PRECISAO-MOSIN-SVD-SKS-2026-09-22.md).
+As mangas e o enquadramento lateral da SVD ainda precisam de julgamento humano;
+nenhuma candidata ou família foi habilitada.
