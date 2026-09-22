@@ -321,18 +321,25 @@ function menuProps(id) {
 let _menuLoadSeq = 0;
 function loadMenuBackdrop() {
   const id = currentMap, seq = ++_menuLoadSeq;
+  /* Fauna só para mapa que a declara. `preloadAmbientLife([])` trata lista vazia como
+     "todas" (BUG-57, ambientlife.js:79) — correto para a PARTIDA, caro para o MENU:
+     a Praça não tem bicho e mesmo assim baixava 3,3 MB de GLB de fauna no boot. */
+  const bichos = (MAPS[id] && MAPS[id].ambience) || [];
   return Promise.all([
     preloadMapProps(menuProps(id)),
-    preloadAmbientLife((MAPS[id] && MAPS[id].ambience) || []),
+    bichos.length ? preloadAmbientLife(bichos) : Promise.resolve(),
   ]).then(() => {
     // O jogador pode trocar de mapa enquanto o GLB baixa. Resultado velho não reconstrói
     // a cena nova; a próxima chamada tem seu próprio preload e sequência.
     if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop();
   });
 }
-// The first backdrop is built before props load; rebuild once they're ready so the
-// menu shows the real Brasília landmarks too. Só então a splash libera a entrada.
-loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
+/* A ENTRADA NÃO ESPERA O CENÁRIO. O backdrop 3D do menu é enfeite atrás do wallpaper
+   (style.css:1507) e custava ~9 MB de GLB antes do primeiro clique — 32% do funil morria
+   na splash sem clicar em nada (funnel `land`→`menu`, medido 22/09). Agora a splash libera
+   assim que o menu existe e os landmarks entram por baixo quando chegarem. */
+_splashSetReady();
+loadMenuBackdrop().catch(() => {});
 
 /* ---------------- screens ---------------- */
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
@@ -2254,7 +2261,12 @@ function setTeamStep(step, myFaction) {
 }
 
 const nickEl = $('nick-input');
-nickEl.value = localStorage.getItem(NICK_KEY) || '';
+/* APELIDO NA PRIMEIRA VISITA. Exigir nick antes de jogar desviava o JOGAR para um passo
+   de perfil — fricção de cadastro num jogo cujo argumento é "sem cadastro". Agora nasce
+   um apelido do próprio universo; trocar continua a um clique no perfil. */
+const APELIDOS = ['CORO', 'TRETA', 'MÍTICO', 'PALHAÇO', 'FUNKEIRO', 'PIVETE', 'MALANDRO', 'ZÉ', 'CAPIVARA', 'PEÃO'];
+nickEl.value = localStorage.getItem(NICK_KEY)
+  || `${APELIDOS[Math.floor(Math.random() * APELIDOS.length)]}${Math.floor(10 + Math.random() * 90)}`;
 nickEl.oninput = () => localStorage.setItem(NICK_KEY, nickEl.value);
 const SOCIAL_NET_KEY = 'awpbr_social_net'; // legado (migração pro multi-redes)
 function sanitizeHandle(v) { return v.replace(/^@+/, '').replace(/[^a-zA-Z0-9._-]/g, ''); }

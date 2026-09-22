@@ -152,12 +152,13 @@ export function avisaSoftware(gpu) {
   try {
     const el = document.createElement('div');
     el.id = 'aviso-software';
-    /* CANTO, e não faixa: a faixa de baixo centralizada caía em cima do `#ms-continue` (o smoke
-       do CI ficou 397 tentativas esperando). `pointer-events:none` no cartão e `auto` no botão. */
-    el.style.cssText = 'position:fixed;right:12px;bottom:12px;max-width:min(92vw,26rem);z-index:2147483000;'
+    /* CANTO SUPERIOR: embaixo à direita ele cobria munição e viewmodel a partida inteira
+       (capturas de 19/09) — e só saía no clique. A faixa centralizada também não serve:
+       caía no `#ms-continue` (o smoke do CI ficou 397 tentativas esperando). */
+    el.style.cssText = 'position:fixed;right:12px;top:12px;max-width:min(92vw,26rem);z-index:2147483000;'
       + 'display:flex;gap:.75rem;align-items:center;padding:.6rem .8rem;border-radius:8px;'
       + 'background:#1a1712f2;color:#f4efe6;font:12px/1.45 system-ui,sans-serif;text-align:left;'
-      + 'box-shadow:0 6px 24px #0008;pointer-events:none';
+      + 'box-shadow:0 6px 24px #0008;pointer-events:none;transition:opacity .4s';
     el.innerHTML = '<span>Seu navegador está desenhando o 3D <strong>pela CPU</strong>, não pela placa de vídeo — '
       + 'o jogo já entrou no modo mais leve, mas vai ficar lento. Ligar a aceleração por hardware resolve.</span>'
       + '<button type="button" style="background:#ffc233;color:#090704;border:0;padding:.35rem .8rem;border-radius:5px;font-weight:800;cursor:pointer;pointer-events:auto;flex:0 0 auto">OK</button>';
@@ -166,6 +167,8 @@ export function avisaSoftware(gpu) {
       el.remove();
       try { localStorage.setItem('cs_aviso_software', 'ok'); } catch { /* storage bloqueado */ }
     };
+    // Some sozinho: quem não clica não fica com o cartaz na tela a partida inteira.
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 12000);
     (document.body || document.documentElement).appendChild(el);
   } catch { /* sem DOM */ }
 }
