@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { prune, unpartition } from '@gltf-transform/functions';
+import * as THREE from '../../../public/vendor/three.module.js';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const SOURCE_SHA = 'ce9921338a35cf0a5ab0959c451579d32b42e4468624f9c48b42c9e23bf88235';
 const SOURCE_BYTES = 6810720;
@@ -20,6 +21,124 @@ const source = path.resolve(option('source'));
 const outputDir = path.resolve(option('output-dir'));
 if (!path.relative(REPO, outputDir).startsWith('..')) throw new Error('output-dir precisa ficar fora do Git');
 const digest = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+
+const trimProximalSleeve = (document) => {
+  const root = document.getRoot();
+  const clothNode = root.listNodes().find((node) => node.getName() === 'GEO_FP_SK_Cloth_01');
+  const skin = clothNode?.getSkin();
+  const primitive = clothNode?.getMesh()?.listPrimitives()[0];
+  const joints = primitive?.getAttribute('JOINTS_0')?.getArray();
+  const weights = primitive?.getAttribute('WEIGHTS_0')?.getArray();
+  const indices = primitive?.getIndices()?.getArray();
+  if (!skin || !primitive || !joints || !weights || !indices || primitive.getMode() !== 4) {
+    throw new Error('manga LMG sem topologia/skin triangular esperada');
+  }
+  const jointNames = skin.listJoints().map((node) => node.getName());
+  const proximal = /^(?:upperarm_twist_01|lowerarm)_[lr]$/;
+  const dominantJoint = (vertex) => {
+    let slot = 0;
+    for (let lane = 1; lane < 4; lane += 1) if (weights[vertex * 4 + lane] > weights[vertex * 4 + slot]) slot = lane;
+    return jointNames[joints[vertex * 4 + slot]] || '';
+  };
+  const kept = [];
+  let removedTriangles = 0;
+  for (let offset = 0; offset + 2 < indices.length; offset += 3) {
+    const triangle = [indices[offset], indices[offset + 1], indices[offset + 2]];
+    if (triangle.some((vertex) => proximal.test(dominantJoint(vertex)))) removedTriangles += 1;
+    else kept.push(...triangle);
+  }
+  if (removedTriangles < 1) throw new Error('manga LMG não expôs faces proximais para correção');
+  const used = [...new Set(kept)].sort((a, b) => a - b);
+  const remap = new Map(used.map((vertex, index) => [vertex, index]));
+  for (const semantic of primitive.listSemantics()) {
+    const accessor = primitive.getAttribute(semantic);
+    const source = accessor.getArray();
+    const stride = accessor.getElementSize();
+    const compact = new source.constructor(used.length * stride);
+    for (let next = 0; next < used.length; next += 1) {
+      const previous = used[next];
+      for (let lane = 0; lane < stride; lane += 1) compact[next * stride + lane] = source[previous * stride + lane];
+    }
+    primitive.setAttribute(semantic, accessor.clone().setArray(compact));
+  }
+  const IndexArray = used.length > 65535 ? Uint32Array : Uint16Array;
+  primitive.setIndices(primitive.getIndices().clone().setArray(new IndexArray(kept.map((vertex) => remap.get(vertex)))));
+  return { beforeVertices: joints.length / 4, afterVertices: used.length,
+    beforeTriangles: indices.length / 3, afterTriangles: kept.length / 3, removedTriangles };
+};
+
+const reframeProduct = (document, arms) => {
+  const root = document.getRoot();
+  const scene = root.listScenes()[0];
+  if (!scene) throw new Error('LMG sem scene para enquadramento do produto');
+  const authoredScale = new THREE.Vector3().fromArray(arms.getScale());
+  const productScale = +(option('root-scale') || '1');
+  const orientation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+    THREE.MathUtils.degToRad(+(option('correction-rx') || '0')),
+    THREE.MathUtils.degToRad(+(option('correction-ry') || '0')),
+    THREE.MathUtils.degToRad(+(option('correction-rz') || '0')),
+  ));
+  const position = new THREE.Vector3(
+    +(option('root-x') || '0'),
+    +(option('root-y') || '0'),
+    +(option('root-z') || '-0.06'),
+  );
+  const scale = authoredScale.multiplyScalar(productScale);
+  if (!(productScale > 0 && Number.isFinite(productScale))) throw new Error('escala LMG inválida');
+  // O rig já é a raiz comum de malhas e joints. Aplicar a translação
+  // diretamente nele preserva o skin bind do pacote. Um pai novo sobre um rig
+  // skinned faz o GLTFLoader recompor bind matrices em outro referencial e
+  // separa visualmente mãos, receiver e cinto.
+  arms.setTranslation(position.toArray()).setRotation(orientation.toArray()).setScale(scale.toArray());
+  for (const clip of root.listAnimations()) {
+    const channels = clip.listChannels().filter((channel) => channel.getTargetNode() === arms);
+    const translation = channels.find((channel) => channel.getTargetPath() === 'translation');
+    const angular = channels.find((channel) => channel.getTargetPath() === 'rotation');
+    if (!translation && !angular) continue;
+    const sourceChannel = translation || angular;
+    const input = sourceChannel.getSampler().getInput();
+    const count = input.getCount();
+    if (translation) {
+      const output = translation.getSampler().getOutput();
+      const values = Array.from(output.getArray());
+      const current = new THREE.Vector3();
+      for (let offset = 0; offset < values.length; offset += 3) {
+        current.fromArray(values, offset).applyQuaternion(orientation).add(position).toArray(values, offset);
+      }
+      output.setArray(new Float32Array(values));
+    } else {
+      const output = accessor(`${clip.getName()}_${arms.getName()}_product_translation`, 'VEC3',
+        Array.from({ length: count }, () => position.toArray()).flat());
+      const sampler = document.createAnimationSampler().setInput(input).setOutput(output).setInterpolation('LINEAR');
+      clip.addSampler(sampler).addChannel(document.createAnimationChannel()
+        .setTargetNode(arms).setTargetPath('translation').setSampler(sampler));
+    }
+    if (angular) {
+      const output = angular.getSampler().getOutput();
+      const values = Array.from(output.getArray());
+      const current = new THREE.Quaternion();
+      for (let offset = 0; offset < values.length; offset += 4) {
+        current.fromArray(values, offset).premultiply(orientation).toArray(values, offset);
+      }
+      output.setArray(new Float32Array(values));
+    } else {
+      const output = accessor(`${clip.getName()}_${arms.getName()}_product_rotation`, 'VEC4',
+        Array.from({ length: count }, () => orientation.toArray()).flat());
+      const sampler = document.createAnimationSampler().setInput(input).setOutput(output).setInterpolation('LINEAR');
+      clip.addSampler(sampler).addChannel(document.createAnimationChannel()
+        .setTargetNode(arms).setTargetPath('rotation').setSampler(sampler));
+    }
+  }
+  const product = document.createNode('VM_PRODUCT_LMG').setExtras({
+    contract: 'product-first-frame', scale: productScale,
+    preservesProjectionScale: true, runtimeFrameUntouched: true,
+    transformOwner: arms.getName(),
+  });
+  scene.addChild(product);
+  const matrix = new THREE.Matrix4().compose(position, orientation, scale);
+  return { node: product.getName(), transformOwner: arms.getName(), scale: productScale,
+    translation: position.toArray(), matrix: matrix.toArray() };
+};
 const sourceBytes = await fs.readFile(source);
 if (sourceBytes.length !== SOURCE_BYTES || digest(sourceBytes) !== SOURCE_SHA) throw new Error('fonte lmg ausente ou divergente');
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
@@ -130,6 +249,8 @@ for (const name of ['reload_tactical', 'reload_empty']) {
     boundTranslation(clip, box, BOX_TRAVEL_CM),
   ] });
 }
+const sleeve = trimProximalSleeve(document);
+const productFrame = reframeProduct(document, arms);
 await fs.mkdir(outputDir, { recursive: true });
 const output = path.join(outputDir, 'lmg-baked-runtime.glb');
 await document.transform(prune({ keepExtras: true }), unpartition());
@@ -140,6 +261,7 @@ const report = {
   source: { file: source, bytes: sourceBytes.length, sha256: SOURCE_SHA },
   preservation: { originalClips: expected, addedClips: ['shoot', 'inspect'], armsRig: arms.getName(), weaponRig: rig.getName(), weaponMesh: gun.getName(), mechanisms: [box.getName(), belt.getName(), cover.getName(), tray.getName(), charger.getName()], beltLinkStep: linkStep.map((lane) => +lane.toFixed(4)) },
   boundedTranslations: { boxTravelCm: BOX_TRAVEL_CM, clips: bounded },
+  productFirst: { sleeve, frame: productFrame },
   product: { file: output, bytes: outputBytes.length, sha256: digest(outputBytes) },
 };
 await fs.writeFile(path.join(outputDir, 'build.json'), `${JSON.stringify(report, null, 2)}\n`);

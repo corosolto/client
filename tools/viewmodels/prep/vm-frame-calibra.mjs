@@ -49,6 +49,12 @@ const ASPECTS = { '3x2': 1440 / 960, '16x9': 1440 / 810 };
 // da arma no quadro), aqui exigido nos DOIS aspectos.
 const RAZAO_TOL = +(option('razao-tol', '0.12'));
 const DENTRO_MIN = +(option('dentro-min', '0.85'));
+// A LMG tem receiver longo e alimentação lateral. Levá-la ao mesmo tamanho
+// angular por metro da AK deixa a alça dentro do near plane quando o runtime
+// aplica o ADS de ombro (captura causal lmg-product-final-20260922). O intervalo
+// próprio mantém o núcleo legível e o ADS íntegro; caixa/cinto/tampa/bandeja
+// continuam sob o gate mecânico lmg-final-verify.
+const RATIO_BANDS = { lmg: { min: 0.65, max: 0.85, reason: 'receiver longo + ADS de ombro' } };
 // Orçamento de tela do braço, em múltiplos da silhueta da AK aprovada. Folga de
 // 40% porque a pose do braço varia legitimamente entre famílias; acima disso a
 // manga passou a ser o assunto do quadro, que é o defeito visto em 18/09.
@@ -85,7 +91,7 @@ const parse = async (file) => {
 };
 
 /** Vértices da arma (sem mãos), deformados na pose de repouso, em espaço de câmera. */
-function weaponPoints(gltf, { pose = 'idle' } = {}) {
+function weaponPoints(gltf, { pose = 'idle', weapon = null } = {}) {
   const scene = gltf.scene;
   let camera = null;
   scene.updateMatrixWorld(true);
@@ -118,9 +124,20 @@ function weaponPoints(gltf, { pose = 'idle' } = {}) {
     const ehMao = materials.some((material) => HAND_MATERIAL.test(material?.name || ''));
     const position = object.geometry?.attributes?.position;
     if (!position) return;
+    const lmgCore = weapon === 'lmg' && materials.some((material) => /CoroSolto_MG6/i.test(material?.name || ''));
+    if (weapon === 'lmg' && materials.some((material) => /CoroSolto_Bullet/i.test(material?.name || ''))) return;
+    const skinIndex = lmgCore ? object.geometry?.attributes?.skinIndex : null;
+    const skinWeight = lmgCore ? object.geometry?.attributes?.skinWeight : null;
     // Amostragem regular: a medida é de silhueta, não precisa de malha inteira.
     const step = Math.max(1, Math.floor(position.count / 3000));
     for (let index = 0; index < position.count; index += step) {
+      if (skinIndex && skinWeight) {
+        const indices = [skinIndex.getX(index), skinIndex.getY(index), skinIndex.getZ(index), skinIndex.getW(index)];
+        const weights = [skinWeight.getX(index), skinWeight.getY(index), skinWeight.getZ(index), skinWeight.getW(index)];
+        let dominant = 0;
+        for (let lane = 1; lane < 4; lane += 1) if (weights[lane] > weights[dominant]) dominant = lane;
+        if (object.skeleton?.bones?.[indices[dominant]]?.name !== 'neutral_bone') continue;
+      }
       vertex.fromBufferAttribute(position, index);
       // O shader faz `matrixWorld · bindMatrixInverse · skin · bindMatrix · v`:
       // `applyBoneTransform` cobre só o miolo. Sem o `matrixWorld` a escala do
@@ -251,10 +268,11 @@ for (const [weapon, cfg] of Object.entries(candidates)) {
   const file = path.join(ASSET_ROOT, cfg.file);
   if (!fs.existsSync(file)) { failures.push(`produto ausente: ${weapon} (${file})`); continue; }
   let sampled;
-  try { sampled = weaponPoints(await parse(file)); }
+  try { sampled = weaponPoints(await parse(file), { weapon }); }
   catch (problem) { failures.push(`${weapon}: ${problem.message}`); continue; }
   const frame = frameFor(weapon);
-  const row = { weapon, family: VM_WEAPON[weapon]?.family, frame, aspectos: {} };
+  const ratioBand = RATIO_BANDS[weapon] || { min: 1 - RAZAO_TOL, max: 1 + RAZAO_TOL };
+  const row = { weapon, family: VM_WEAPON[weapon]?.family, frame, ratioBand, aspectos: {} };
   for (const [tag, aspect] of Object.entries(ASPECTS)) {
     const measured = measure(sampled.points, frame, aspect);
     measured.razao = +(measured.diag / (ESCALA_ALVO * comprimento(weapon))).toFixed(3);
@@ -266,7 +284,7 @@ for (const [weapon, cfg] of Object.entries(candidates)) {
     measured.bracoRazao = braco ? +(braco.diag / (ESCALA_ALVO * comprimento('ak'))).toFixed(3) : null;
     row.aspectos[tag] = measured;
     if (measured.dentro < DENTRO_MIN) failures.push(`${weapon} ${tag}: só ${(measured.dentro * 100).toFixed(1)}% da arma no quadro`);
-    if (Math.abs(measured.razao - 1) > RAZAO_TOL) failures.push(`${weapon} ${tag}: ${measured.razao}× a escala angular do arsenal`);
+    if (measured.razao < ratioBand.min || measured.razao > ratioBand.max) failures.push(`${weapon} ${tag}: ${measured.razao}× a escala angular do arsenal (faixa ${ratioBand.min}–${ratioBand.max})`);
     if (measured.bracoRazao !== null && measured.bracoRazao > BRACO_MAX) {
       failures.push(`${weapon} ${tag}: braço ocupa ${measured.bracoRazao}× a silhueta da AK`);
     }
@@ -301,7 +319,7 @@ for (const [weapon, cfg] of Object.entries(candidates)) {
 const report = {
   schemaVersion: 1, kind: 'vm-frame-calibra',
   referencia: { arma: 'ak', arquivo: path.relative(ROOT, AK_FILE), fov: +akFrame.fov.toFixed(2), comprimento: comprimento('ak'), escalaPorMetro: +ESCALA_ALVO.toFixed(4), ...alvoAk },
-  limites: { razaoTolerancia: RAZAO_TOL, dentroMinimo: DENTRO_MIN, alvoAspecto: option('alvo-aspecto', '3x2') },
+  limites: { razaoTolerancia: RAZAO_TOL, razaoPorArma: RATIO_BANDS, dentroMinimo: DENTRO_MIN, alvoAspecto: option('alvo-aspecto', '3x2') },
   armas: rows, failures,
 };
 const out = option('out');
