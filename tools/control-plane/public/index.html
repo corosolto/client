@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CSBR Control Plane</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="mode" class="mode-banner">OBSERVER-ONLY · NÃO INSTALADO</div>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">CORO SOLTO · OPERAÇÕES</p>
+      <h1>CSBR Control Plane</h1>
+    </div>
+    <div class="top-actions"><span id="live" class="live">atualizando</span><button id="refresh">Atualizar</button></div>
+  </header>
+
+  <main>
+    <section aria-labelledby="health-title">
+      <div class="section-heading"><div><p class="eyebrow">Preflight</p><h2 id="health-title">Saúde</h2></div><p id="updated" class="muted"></p></div>
+      <div id="health" class="health-grid"></div>
+    </section>
+
+    <section aria-labelledby="roadmap-title">
+      <div class="section-heading"><div><p class="eyebrow">Prioridades</p><h2 id="roadmap-title">Roadmap</h2></div><div id="metrics" class="metrics"></div></div>
+      <div id="roadmap" class="roadmap"></div>
+    </section>
+
+    <div class="split">
+      <section aria-labelledby="approval-title">
+        <div class="section-heading"><div><p class="eyebrow">Decisão humana</p><h2 id="approval-title">Aprovações</h2></div></div>
+        <div id="approvals" class="stack"></div>
+      </section>
+      <section aria-labelledby="runs-title">
+        <div class="section-heading"><div><p class="eyebrow">Execução</p><h2 id="runs-title">Agentes</h2></div></div>
+        <div id="runs" class="stack"></div>
+      </section>
+    </div>
+
+    <section aria-labelledby="worktrees-title">
+      <div class="section-heading"><div><p class="eyebrow">Isolamento Git</p><h2 id="worktrees-title">Worktrees</h2></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Lane</th><th>Branch</th><th>HEAD</th><th>Estado</th></tr></thead><tbody id="worktrees"></tbody></table></div>
+    </section>
+
+    <div class="split">
+      <section aria-labelledby="checks-title">
+        <div class="section-heading"><div><p class="eyebrow">Evidência</p><h2 id="checks-title">Gates</h2></div></div>
+        <div id="checks" class="stack"></div>
+      </section>
+      <section aria-labelledby="events-title">
+        <div class="section-heading"><div><p class="eyebrow">Auditoria</p><h2 id="events-title">Eventos</h2></div></div>
+        <div id="events" class="stack"></div>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

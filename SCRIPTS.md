@@ -514,6 +514,42 @@ O LAYOUT ASSADO (public/js/graffiti_layout.js) não envelhece em silêncio (issu
 npm run eval:grafitelayout
 ```
 
+## `eval:controlplane`
+
+Gate autocontido do orquestrador local. Usa uma DB temporária, inicializa o roadmap, inventaria saúde/worktrees, prova persistência entre processos, exercita transições, sobe a API em loopback e exige que Host externo receba 403. O mutante `sem-aprovacao` tenta levar um item com `requires_approval` de `needs_approval` para `done` usando actor agente; CP8 precisa ficar vermelho.
+
+```bash
+npm run eval:controlplane
+node tools/eval/control-plane-check.mjs --mutante=sem-aprovacao
+```
+
+## `control:init` · `control:tick` · `control:snapshot`
+
+Operações locais sobre o SQLite autoritativo em `~/.ai-infra/state`: inicializam o schema/roadmap, reconciliam saúde e worktrees, marcam runs sem heartbeat como stale e imprimem o snapshot JSON. O tick não inicia processo externo, não faz commit, push, merge ou deploy; a execução pertence ao heartbeat do Codex e fica registrada pela CLI.
+
+```bash
+npm run control:init
+npm run control:tick
+npm run control:snapshot
+```
+
+## `control:server`
+
+Dashboard operacional em `127.0.0.1:4180`, sem CDN e sem binding externo. Mostra saúde, roadmap, aprovações, agentes, worktrees, gates e eventos; a API aceita somente GET e recusa Host que não seja loopback.
+
+```bash
+npm run control:server
+```
+
+## `control:install`
+
+Instala uma cópia autocontida do runtime em `~/.ai-infra`, preserva plists/runtime anteriores em backups datados e substitui os dois LaunchAgents quebrados: dashboard KeepAlive e supervisor de reconciliação a cada 5 minutos. Exige Node 22 ou mais novo. `--dry-run` só imprime o plano e não grava nada.
+
+```bash
+npm run control:install -- --dry-run
+npm run control:install
+```
+
 ## `eval:backendhints`
 
 O BUNDLE PÚBLICO NÃO NOMEIA O BACKEND. Decisão do dono (15/08): quem abre o jogo vê o JOGO — 'sem dar pistas se usamos supabase, postgres o que'. Mede no fonte (sem build) toda superfície servida crua: public/js, public/llms.txt, src/pages (corpo .astro, fora do frontmatter de servidor), CHANGELOG.md (renderizado em /changelog). A doc Docusaurus fica FORA, como dívida declarada — virar neutra é decisão editorial. Em 15/08 a primeira corrida achou 8 vazamentos, um deles TEXTO DE UI ('envs do Supabase pendentes'). --mutante=inject prova que morde; lista de padrões vazia se denuncia sozinha.
