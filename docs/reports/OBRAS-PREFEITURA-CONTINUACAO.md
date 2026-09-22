@@ -292,6 +292,13 @@ inalterada e registrada. Uma futura passada Astra+Mint deve ser uma branch de
 arte separada, com asset manifest e comparação antes/depois; não deve reabrir a
 geometria estrutural aprovada sem um gate causal.
 
+`docs:check`, `arch:check` e `npm run build` passaram na alpha.262. O
+`check:deploy` passou 39/40; o único vermelho continua sendo `UIR15` em
+`eval:redesign`, já herdado da base e fora do escopo desta lane. O diff contra
+`origin/main` não toca `game.js`, `main.js`, DOM ou CSS do resultado inspecionado
+por esse gate. Por isso o push normal pode exigir `--no-verify`; isto não torna
+`UIR15` verde nem autoriza reduzir a régua.
+
 Playtest mínimo do dono: abrir
 `http://127.0.0.1:8157/?debug=1&map=obras_prefeitura&perfilauto=0`, jogar 5x5 DM
 pelas três rotas nos dois sentidos, depois 8x8 CTF, subir nas duas torres, passar
