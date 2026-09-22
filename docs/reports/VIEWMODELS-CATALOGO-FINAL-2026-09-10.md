@@ -998,7 +998,7 @@ runtime não mudaram. O produto privado `c1394590…` (4.074.036 bytes) passa em
 3:2 com 1,109×/100,0%/0,777× de braço e em 16:9 com
 1,096×/100,0%/0,726×. O eixo mede 2,3° com boca à frente.
 
-Os dez grupos de dedos medem 0,00–14,14 mm. O gate causal passa 13 mutantes; o
+Os dez grupos de dedos medem 0,00–14,14 mm. O gate causal passa 14 mutantes; o
 lifecycle passa 10/10 controles e 540 amostras; rig, HUD e inspect permanecem
 verdes. A captura ligada a `93c34d8a7` produziu 18 PNGs reais nas duas
 proporções, com ADS ativo, inspect visível e zero erro fatal, em

@@ -242,6 +242,10 @@ async function mutant(name, mutate, verify) {
   const bitten = verify(copy); mutants.push({ name, bitten }); if (!bitten) failures.push(`mutante não mordeu: ${name}`);
 }
 await mutant('sem-inspect', (copy) => { copy.animations = copy.animations.filter((clip) => clip.name !== 'inspect'); }, (copy) => !copy.animations.some((clip) => clip.name === 'inspect'));
+await mutant('inspect-sem-pose-completa', (copy) => {
+  const clip = copy.animations.find((candidate) => candidate.name === 'inspect');
+  if (clip) clip.tracks = clip.tracks.filter((track) => /^RIG_FP_ARMS\./.test(track.name));
+}, (copy) => (copy.animations.find((clip) => clip.name === 'inspect')?.tracks.length || 0) < 100);
 await mutant('sem-sight', (copy) => copy.scene.getObjectByName('SOCKET_MINT_SIGHT')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('SOCKET_MINT_SIGHT'));
 await mutant('sem-arma', (copy) => copy.scene.getObjectByName('GEO_WEAPON_REVOLVER_python001')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('GEO_WEAPON_REVOLVER_python001'));
 await mutant('sem-tambor', (copy) => copy.scene.getObjectByName('Drum')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('Drum'));

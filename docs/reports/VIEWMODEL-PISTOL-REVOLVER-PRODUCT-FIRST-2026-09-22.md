@@ -37,7 +37,7 @@ socket da boca foi reproduzido pela receita no ponto geométrico já validado em
 
 ## Gates causais e lifecycle
 
-`eval:vm-pistol-revolver` passa quatro ações e 13 mutantes. Ausência de arma,
+`eval:vm-pistol-revolver` passa quatro ações e 14 mutantes. Ausência de arma,
 tambor, marker, sight, rebase ou inspect reprova; congelar tambor, gatilho, cão
 ou inspect reprova; deslocar cada mão de forma independente reprova; reintroduzir
 uma face dominada pelo braço superior também reprova.
