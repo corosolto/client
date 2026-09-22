@@ -19,6 +19,16 @@ const ASSET_ROOT = path.resolve(process.env.CSBRASIL_VM_ASSET_ROOT || '/Users/ru
 const MANIFEST = path.join(ROOT, 'tools/viewmodels/smg-candidates.json');
 const failures = [];
 const check = (condition, message) => { if (!condition) failures.push(message); };
+const DEDOS = {
+  indicador: ['index_01_', 'index_02_', 'index_03_'],
+  medio: ['middle_01_', 'middle_02_', 'middle_03_'],
+  anelar: ['ring_01_', 'ring_02_', 'ring_03_'],
+  minimo: ['pinky_01_', 'pinky_02_', 'pinky_03_'],
+  polegar: ['thumb_01_', 'thumb_02_', 'thumb_03_'],
+};
+const DEDOS_KINEMATION = {
+  indicador: 'f_index', medio: 'f_middle', anelar: 'f_ring', minimo: 'f_pinky', polegar: 'thumb',
+};
 const manifest = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) : {};
 const cfg = manifest.candidates?.mp5;
 check(Boolean(cfg), 'entrada MP5 ausente do manifesto');
@@ -71,6 +81,96 @@ check(Boolean(arms && weapon && mag && bolt && charging && release && trigger), 
 check(Boolean(handL && handR), 'duas mãos completas ausentes');
 check(gltf.cameras.some((camera) => camera.isPerspectiveCamera), 'câmera viewmodel ausente');
 
+const medeContatoDedos = (document, mutante = '') => {
+  const cena = document.scene;
+  const idle = document.animations.find((clip) => clip.name === 'idle');
+  if (idle) {
+    const idleMixer = new THREE.AnimationMixer(cena);
+    idleMixer.clipAction(idle).play();
+    idleMixer.setTime(0);
+  }
+  if (mutante) {
+    const hand = cena.getObjectByName(mutante === 'left' ? 'hand_l' : 'hand_r');
+    if (!hand) throw new Error(`mutante de contato sem mão ${mutante}`);
+    hand.position.addScalar(20);
+  }
+  cena.updateMatrixWorld(true);
+
+  const triangulos = [];
+  const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
+  const raizArma = cena.getObjectByName('RIG_WEAPON_MP5');
+  raizArma?.traverse((mesh) => {
+    if (!mesh.isMesh) return;
+    const pos = mesh.geometry?.attributes?.position;
+    if (!pos) return;
+    const index = mesh.geometry.index;
+    const total = index ? index.count : pos.count;
+    for (let offset = 0; offset + 2 < total; offset += 3) {
+      const at = (lane, out) => {
+        const vi = index ? index.getX(offset + lane) : offset + lane;
+        return out.fromBufferAttribute(pos, vi).applyMatrix4(mesh.matrixWorld).clone();
+      };
+      triangulos.push(new THREE.Triangle(at(0, va), at(1, vb), at(2, vc)));
+    }
+  });
+  if (!triangulos.length) throw new Error('contato MP5 sem triângulos de arma');
+
+  const pontos = new Map();
+  cena.traverse((mesh) => {
+    if (!mesh.isSkinnedMesh) return;
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    if (!materials.some((material) => /CoroSolto_(FP_(Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i.test(material?.name || ''))) return;
+    const pos = mesh.geometry?.attributes?.position;
+    const indices = mesh.geometry?.attributes?.skinIndex;
+    const weights = mesh.geometry?.attributes?.skinWeight;
+    if (!pos || !indices || !weights) return;
+    mesh.skeleton.update();
+    const boneNames = mesh.skeleton.bones.map((bone) => bone.name || '');
+    for (let vi = 0; vi < pos.count; vi += 1) {
+      const slots = [
+        [indices.getX(vi), weights.getX(vi)], [indices.getY(vi), weights.getY(vi)],
+        [indices.getZ(vi), weights.getZ(vi)], [indices.getW(vi), weights.getW(vi)],
+      ];
+      const dominante = slots.find(([, weight]) => weight > 0.55);
+      if (!dominante) continue;
+      const boneName = boneNames[dominante[0]] || '';
+      let key = '';
+      for (const [finger, bones] of Object.entries(DEDOS)) {
+        for (const side of ['r', 'l']) {
+          const letter = side === 'r' ? 'R' : 'L';
+          if (bones.some((bone) => boneName === `${bone}${side}`)
+            || [1, 2, 3].some((part) => boneName === `${DEDOS_KINEMATION[finger]}.${String(part).padStart(2, '0')}.${letter}_metarig`)) key = `${finger}_${side}`;
+        }
+      }
+      if (!key) continue;
+      const point = new THREE.Vector3().fromBufferAttribute(pos, vi);
+      mesh.applyBoneTransform(vi, point);
+      point.applyMatrix4(mesh.matrixWorld);
+      if (!pontos.has(key)) pontos.set(key, []);
+      pontos.get(key).push(point);
+    }
+  });
+
+  const closest = new THREE.Vector3();
+  const result = {};
+  for (const [key, vertices] of pontos) {
+    let best = Infinity;
+    for (const point of vertices) for (const triangle of triangulos) {
+      triangle.closestPointToPoint(point, closest);
+      best = Math.min(best, closest.distanceTo(point));
+    }
+    result[key] = +(best * 1000).toFixed(2);
+  }
+  return result;
+};
+
+const contatoIdleMm = medeContatoDedos(gltf);
+check(Object.keys(contatoIdleMm).length === 10, `contato mediu ${Object.keys(contatoIdleMm).length}/10 dedos`);
+for (const [finger, mm] of Object.entries(contatoIdleMm)) {
+  const limit = finger.startsWith('polegar_') ? 16 : 8;
+  check(mm <= limit, `contato ${finger} ${mm.toFixed(1)} mm (> ${limit} mm)`);
+}
+
 const mixer = new THREE.AnimationMixer(scene);
 const sample = (name, count = 50) => {
   const clip = clips.get(name); if (!clip) return [];
@@ -104,10 +204,16 @@ check(trackMotion(gltf, 'inspect', 'RIG_FP_ARMS.position') >= 0.08, 'inspect sem
 
 const mutants = [];
 const freezeTracks = (copy, clipPattern, trackPattern) => {
+  let frozen = 0;
   for (const clip of copy.animations.filter((candidate) => clipPattern.test(candidate.name))) for (const track of clip.tracks.filter((candidate) => trackPattern.test(candidate.name))) {
     const stride = track.values.length / track.times.length;
     for (let offset = stride; offset < track.values.length; offset += stride) for (let lane = 0; lane < stride; lane += 1) track.values[offset + lane] = track.values[lane];
+    frozen += 1;
   }
+  return frozen;
+};
+const requireFreeze = (copy, clipPattern, trackPattern) => {
+  if (!freezeTracks(copy, clipPattern, trackPattern)) throw new Error(`mutação não aplicou: ${clipPattern}/${trackPattern}`);
 };
 async function mutant(name, mutate, verify) {
   const copy = await loader.parseAsync(buffer.slice(0), ''); mutate(copy);
@@ -118,9 +224,11 @@ await mutant('sem-sight', (copy) => copy.scene.getObjectByName('SOCKET_MINT_SIGH
 await mutant('sem-arma', (copy) => copy.scene.getObjectByName('GEO_WEAPON_MP5_MP5001')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('GEO_WEAPON_MP5_MP5001'));
 await mutant('sem-pente', (copy) => copy.scene.getObjectByName('Mag')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('Mag'));
 await mutant('sem-marker', (copy) => copy.scene.getObjectByName('MINT_WEAPON_MP5')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_WEAPON_MP5'));
-await mutant('ferrolho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Bolt\./), (copy) => trackMotion(copy, 'shoot', 'Bolt.position') < 15);
-await mutant('gatilho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Trigger\./), (copy) => trackMotion(copy, 'shoot', 'Trigger.quaternion') < 0.10);
-await mutant('alavanca-congelada', (copy) => freezeTracks(copy, /^reload_empty$/, /^ChargingHandle\./), (copy) => trackMotion(copy, 'reload_empty', 'ChargingHandle.position') < 40);
-await mutant('inspect-parado', (copy) => freezeTracks(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.position') < 0.08);
-console.log(`VM_SMG_MP5=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, mutants, failures })}`);
+await mutant('ferrolho-congelado', (copy) => requireFreeze(copy, /^shoot$/, /^Bolt\./), (copy) => trackMotion(copy, 'shoot', 'Bolt.position') < 15);
+await mutant('gatilho-congelado', (copy) => requireFreeze(copy, /^shoot$/, /^Trigger\./), (copy) => trackMotion(copy, 'shoot', 'Trigger.quaternion') < 0.10);
+await mutant('alavanca-congelada', (copy) => requireFreeze(copy, /^reload_empty$/, /^ChargingHandle\./), (copy) => trackMotion(copy, 'reload_empty', 'ChargingHandle.position') < 40);
+await mutant('inspect-parado', (copy) => requireFreeze(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.position') < 0.08);
+await mutant('solta-mao-esquerda', () => {}, (copy) => Object.entries(medeContatoDedos(copy, 'left')).some(([finger, mm]) => finger.endsWith('_l') && mm > 8));
+await mutant('solta-mao-direita', () => {}, (copy) => Object.entries(medeContatoDedos(copy, 'right')).some(([finger, mm]) => finger.endsWith('_r') && mm > 8));
+console.log(`VM_SMG_MP5=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, contatoIdleMm, mutants, failures })}`);
 if (failures.length) process.exitCode = 1;
