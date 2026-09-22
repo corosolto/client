@@ -16,7 +16,14 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const SOURCES = {
-  rem700: { sha256: 'd81a0cbbe82dd29925efecac7a40d00f084d41a7704f6225e7b0e2d066e82d6e', output: 'rem700-baked-runtime.glb' },
+  rem700: {
+    sha256: '088ea869a4bed472bf2ce798bf83b0dae581d6ea3a0bbc78473624c9ef9f5b4d',
+    output: 'rem700-baked-runtime.glb',
+    // Pose autorada no produto, em espaço do pacote original. Corresponde ao
+    // delta de câmera medido pela régua 3:2, convertido pela câmera embutida;
+    // câmera/FOV e FAMILY_FRAME permanecem intactos.
+    packageTranslation: [0.1289, 0.0774, 0.024],
+  },
   g3sg1: { sha256: '10c08eecd3b7d71d5036830f8e4aa5f5c71e2829e89bee48fa225fdad3391a1e', output: 'g3sg1-baked-runtime.glb' },
 };
 const option = (name) => (process.argv.find((arg) => arg.startsWith(`--${name}=`)) || '').slice(name.length + 3);
@@ -38,6 +45,14 @@ const buffer = root.listBuffers()[0] || document.createBuffer();
 const idle = root.listAnimations().find((clip) => clip.getName() === 'idle');
 const arms = root.listNodes().find((node) => node.getName() === 'RIG_FP_ARMS');
 if (!idle || !arms) throw new Error(`${weapon}: idle/rig de braços ausente`);
+
+if (SOURCES[weapon].packageTranslation) {
+  const scene = root.getDefaultScene() || root.listScenes()[0];
+  const packageNode = document.createNode(`VM_PACKAGE_${weapon.toUpperCase()}`)
+    .setTranslation(SOURCES[weapon].packageTranslation);
+  scene.addChild(packageNode);
+  packageNode.addChild(arms);
+}
 
 const cloneIdle = (name) => {
   if (root.listAnimations().some((clip) => clip.getName() === name)) throw new Error(`${weapon}: clipe ${name} já existe`);

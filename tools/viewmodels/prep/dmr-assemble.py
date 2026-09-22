@@ -455,7 +455,9 @@ def montar(arma, cfg):
                 bv = base_doc['bufferViews'][acc['bufferView']]
                 base_off = bv.get('byteOffset', 0) + acc.get('byteOffset', 0)
                 n = acc['count']
-                dx, dy, dz, dw = pacote['deltas'][nome_no]
+                # Blender serializa Quaternion como (w, x, y, z). Manter a
+                # ordem explícita evita transformar o escalar em eixo no GLB.
+                dw, dx, dy, dz = pacote['deltas'][nome_no]
                 import struct as _s2
                 pedaco = bytearray(bin_final[base_off:base_off + n * 16])
                 for i in range(n):
@@ -467,6 +469,30 @@ def montar(arma, cfg):
                     nw = dw * qw - dx * qx - dy * qy - dz * qz
                     _s2.pack_into('<ffff', pedaco, i * 16, nx, ny, nz, nw)
                 bin_final = bin_final[:base_off] + bytes(pedaco) + bin_final[base_off + n * 16:]
+                aplicados += 1
+        # Correção de pose do pulso de apoio, no mesmo referencial local que
+        # os tracks de translation. É intencionalmente separada dos curls:
+        # mover a arma reabriria a mão forte que já está em contato.
+        translations = pacote.get('translations', {})
+        for anim in base_doc.get('animations', []):
+            if anim.get('name') not in pacote.get('clipes', []):
+                continue
+            for canal in anim.get('channels', []):
+                alvo = canal.get('target', {})
+                nome_no = nome_por_indice.get(alvo.get('node'), '')
+                if alvo.get('path') != 'translation' or nome_no not in translations:
+                    continue
+                sampler = anim['samplers'][canal['sampler']]
+                acc = base_doc['accessors'][sampler['output']]
+                bv = base_doc['bufferViews'][acc['bufferView']]
+                base_off = bv.get('byteOffset', 0) + acc.get('byteOffset', 0)
+                dx, dy, dz = translations[nome_no]
+                pedaco = bytearray(bin_final[base_off:base_off + acc['count'] * 12])
+                for i in range(acc['count']):
+                    x, y, z = struct.unpack_from('<fff', pedaco, i * 12)
+                    struct.pack_into('<fff', pedaco, i * 12, x + dx, y + dy, z + dz)
+                bin_final = (bin_final[:base_off] + bytes(pedaco)
+                             + bin_final[base_off + acc['count'] * 12:])
                 aplicados += 1
         relatorio['curls'] = {'tracks': aplicados, 'clipes': pacote.get('clipes')}
         print('DMR_CURLS', arma, aplicados, 'tracks')

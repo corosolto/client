@@ -58,9 +58,24 @@ for (const [arma, cfg] of Object.entries(ARSENAL)) {
       const runtime = await page.evaluate((w) => {
         const vm = window.__authoredVm;
         const entry = vm?.entry?.(w);
+        const ammo = window.__game?.player?.ammo?.[w];
+        const art = document.getElementById('ammo-weapon-art');
         return { weapon: vm?.weapon, key: entry?.key, visible: entry?.mount?.visible,
-          mint: entry?.mint?.active?.name, clips: entry ? [...entry.clips.keys()] : [] };
+          mint: entry?.mint?.active?.name, clips: entry ? [...entry.clips.keys()] : [],
+          hud: {
+            weapon: art?.dataset?.weapon || null,
+            src: art?.getAttribute('src') || null,
+            mag: document.getElementById('ammo-mag')?.textContent?.trim() || null,
+            reserve: document.getElementById('ammo-reserve')?.textContent?.trim() || null,
+            expectedMag: ammo?.mag ?? null,
+            expectedReserve: ammo?.res ?? null,
+          } };
       }, arma);
+      if (runtime.hud.weapon !== arma || runtime.hud.src !== `/img/weapons/${arma}.webp`
+        || Number(runtime.hud.mag) !== runtime.hud.expectedMag
+        || (runtime.hud.reserve !== '∞' && Number(runtime.hud.reserve) !== runtime.hud.expectedReserve)) {
+        throw new Error(`${arma}/${state}/${tag}: HUD divergiu do armamento equipado: ${JSON.stringify(runtime.hud)}`);
+      }
       await page.screenshot({ path: file });
       records.push({ arma, viewport: { width: vw, height: vh }, state, runtime,
         file: path.relative(OUT, file), bytes: fs.statSync(file).size, sha256: sha256(file) });

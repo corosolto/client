@@ -115,15 +115,19 @@ def estagio_montar(arma, cfg):
     dsp = dmx - dmn
     eixo = max(range(3), key=lambda i: dsp[i])
 
-    def espessura(pts):
-        a, b = (eixo + 1) % 3, (eixo + 2) % 3
-        ca = [list(p)[a] for p in pts]
-        cb = [list(p)[b] for p in pts]
-        return max(max(ca) - min(ca), max(cb) - min(cb))
-
     lo = [v for v in dvs if abs(list(v)[eixo] - dmn[eixo]) < 0.03]
     hi = [v for v in dvs if abs(list(v)[eixo] - dmx[eixo]) < 0.03]
-    boca_no_max = espessura(hi) < espessura(lo)
+    # A heurística antiga escolhia a ponta mais fina. Na Kar98K o recorte da
+    # coronha é mais fino que a amostra da boca e a Rem700 inteira foi montada
+    # ao contrário, mesmo com os sockets internamente colineares. A câmera
+    # autorada já define o contrato do runtime: frente é -Z no espaço dela.
+    camera = next(o for o in bpy.data.objects if o.type == 'CAMERA')
+    camera_inv = camera.matrix_world.inverted()
+    centro_lo = sum(lo, Vector()) / len(lo)
+    centro_hi = sum(hi, Vector()) / len(hi)
+    camera_z_lo = (camera_inv @ centro_lo).z
+    camera_z_hi = (camera_inv @ centro_hi).z
+    boca_no_max = camera_z_hi < camera_z_lo
     if eixo == 0:
         dir_cano = Vector((1 if boca_no_max else -1, 0, 0))
     elif eixo == 1:
@@ -167,11 +171,17 @@ def estagio_montar(arma, cfg):
     # conserva o comprimento REAL dela (escala já aplicada) — só a POSIÇÃO
     # se alinha à arma do doador (boca na boca, seções centradas)
     centro_doador = (dmn + dmx) / 2
-    # monta: alinha centros; a coincidência das BOCAS é medida EM MUNDO em
-    # segunda passada (a Mint carrega matriz interna de conversão do import —
-    # alinhar analiticamente no espaço cru erra a extremidade).
-    reg = (Matrix.Translation(centro_doador) @ m_map @ m_perm @ m_esc @
-           Matrix.Translation(-centro_mint))
+    # A Rem700 invertida havia sido afinada por coincidência de caixas, então
+    # corrigir apenas o sinal deixava o punho 30 cm longe da mão forte. Para a
+    # arma bolt, registra o ponto de empunhadura próprio diretamente no head de
+    # hand_r. A escala continua física e o eixo vem da câmera acima. A G3SG1
+    # preserva aqui sua montagem já aprovada até a rodada própria de mangas.
+    if arma == 'rem700':
+        reg = (Matrix.Translation(grip_doador) @ m_map @ m_perm @ m_esc @
+               Matrix.Translation(-grip_mint))
+    else:
+        reg = (Matrix.Translation(centro_doador) @ m_map @ m_perm @ m_esc @
+               Matrix.Translation(-centro_mint))
     mint_root.matrix_world = reg
     bpy.context.view_layer.update()
     provisorios = [mint_mesh.matrix_world @ v.co.copy() for v in mint_mesh.data.vertices]
@@ -179,7 +189,8 @@ def estagio_montar(arma, cfg):
     mint_boca_proj = max(proj) if boca_no_max else min(proj)
     proj_doador = [v.dot(dir_cano) for v in dvs]
     boca_doador_proj = max(proj_doador) if boca_no_max else min(proj_doador)
-    reg = Matrix.Translation(dir_cano * (boca_doador_proj - mint_boca_proj)) @ reg
+    if arma != 'rem700':
+        reg = Matrix.Translation(dir_cano * (boca_doador_proj - mint_boca_proj)) @ reg
     mint_root.matrix_world = reg
     bpy.context.view_layer.update()
 
@@ -215,6 +226,7 @@ def estagio_montar(arma, cfg):
     nmn, nmx = bbox(nvs)
     print('DMR_MONTAR', arma, json.dumps({
         'donor_bbox': [list(dmn), list(dmx)], 'eixo_cano': eixo, 'boca_no_max': boca_no_max,
+        'camera_z_extremos': [round(camera_z_lo, 4), round(camera_z_hi, 4)],
         'grip_doador': list(grip_doador), 'mint_bbox_reg': [list(round(c, 3) for c in nmn), list(round(c, 3) for c in nmx)],
         'escala': round(escala, 5),
     }))

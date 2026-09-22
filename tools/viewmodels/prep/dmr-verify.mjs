@@ -52,9 +52,10 @@ const ARSENAL = {
     imagemCor: 'Color_a6cfeee8-6ed7-47e5-9a2c-4228c5baa77e',
     // Centro e eixo do corpo na pose de referência do assembly Blender.
     // O splice precisa reproduzi-los quando o runtime aplica idle@t0.
-    referenciaIdle: { centro: [-0.0469, 1.5641, -0.0091], eixoMaior: 2, tolerancia: 0.08 },
+    referenciaIdle: { centro: [0.0149, 1.6107, 0.1765], eixoMaior: 2, tolerancia: 0.08 },
     mecanismos: [{ parte: 'MINT_BOLT_REM700', clipe: 'shoot', min: 0.03, maxVerts: 2000 }],
     acoes: [{ nome: 'inspect', no: 'RIG_FP_ARMS', min: 0.05, endpoint: 0.005 }],
+    contato: { dedoMm: 8, polegarMm: 16 },
   },
   g3sg1: {
     glb: path.join(ASSET_ROOT, manifest.candidates.g3sg1.file),
@@ -76,6 +77,14 @@ const ARSENAL = {
       { nome: 'inspect', no: 'RIG_FP_ARMS', min: 0.05, endpoint: 0.005 },
     ],
   },
+};
+
+const DEDOS = {
+  indicador: ['index_01_', 'index_02_', 'index_03_'],
+  medio: ['middle_01_', 'middle_02_', 'middle_03_'],
+  anelar: ['ring_01_', 'ring_02_', 'ring_03_'],
+  minimo: ['pinky_01_', 'pinky_02_', 'pinky_03_'],
+  polegar: ['thumb_01_', 'thumb_02_', 'thumb_03_'],
 };
 
 const falhas = [];
@@ -112,6 +121,80 @@ function inspecionaRecursos(doc, cfg, arma) {
     check(!!image && image.name === cfg.imagemCor,
       `${arma}: imagem de cor própria ausente ou índice cruzado (${image?.name || 'nenhuma'})`);
   }
+}
+
+function medeContatoDedos(cena, malhasArma) {
+  const triangulos = [];
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  for (const mesh of malhasArma.filter((item) => /^MINT_/.test(item.name || ''))) {
+    const pos = mesh.geometry?.attributes?.position;
+    if (!pos) continue;
+    const index = mesh.geometry.index;
+    const total = index ? index.count : pos.count;
+    for (let i = 0; i + 2 < total; i += 3) {
+      const at = (offset, out) => {
+        const vi = index ? index.getX(i + offset) : i + offset;
+        return out.fromBufferAttribute(pos, vi).applyMatrix4(mesh.matrixWorld).clone();
+      };
+      triangulos.push(new THREE.Triangle(at(0, a), at(1, b), at(2, c)));
+    }
+  }
+  if (!triangulos.length) throw new Error('contato: triângulos MINT ausentes');
+
+  const pontos = new Map();
+  cena.traverse((mesh) => {
+    if (!mesh.isSkinnedMesh) return;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    if (!mats.some((material) => /CoroSolto_(FP_(Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i.test(material?.name || ''))) return;
+    const pos = mesh.geometry?.attributes?.position;
+    const indices = mesh.geometry?.attributes?.skinIndex;
+    const pesos = mesh.geometry?.attributes?.skinWeight;
+    if (!pos || !indices || !pesos) return;
+    mesh.skeleton.update();
+    const boneNames = mesh.skeleton.bones.map((bone) => bone.name || '');
+    for (let vi = 0; vi < pos.count; vi += 1) {
+      const slots = [
+        [indices.getX(vi), pesos.getX(vi)], [indices.getY(vi), pesos.getY(vi)],
+        [indices.getZ(vi), pesos.getZ(vi)], [indices.getW(vi), pesos.getW(vi)],
+      ];
+      const dominante = slots.find(([, peso]) => peso > 0.55);
+      if (!dominante) continue;
+      const boneName = boneNames[dominante[0]] || '';
+      let chave = '';
+      for (const [dedo, ossos] of Object.entries(DEDOS)) {
+        for (const lado of ['r', 'l']) {
+          if (ossos.some((osso) => boneName === `${osso}${lado}`)) chave = `${dedo}_${lado}`;
+        }
+      }
+      if (!chave) continue;
+      const ponto = new THREE.Vector3().fromBufferAttribute(pos, vi);
+      mesh.applyBoneTransform(vi, ponto);
+      ponto.applyMatrix4(mesh.matrixWorld);
+      if (!pontos.has(chave)) pontos.set(chave, []);
+      pontos.get(chave).push(ponto);
+    }
+  });
+
+  const perto = new THREE.Vector3();
+  const tabela = {};
+  const vetores = {};
+  for (const [chave, vertices] of pontos) {
+    let melhor = Infinity;
+    let melhorVetor = new THREE.Vector3();
+    for (const ponto of vertices) {
+      for (const tri of triangulos) {
+        tri.closestPointToPoint(ponto, perto);
+        const distancia = perto.distanceTo(ponto);
+        if (distancia < melhor) {
+          melhor = distancia;
+          melhorVetor = perto.clone().sub(ponto);
+        }
+      }
+    }
+    tabela[chave] = +(melhor * 1000).toFixed(2);
+    vetores[chave] = melhorVetor.multiplyScalar(1000).toArray().map((value) => +value.toFixed(2));
+  }
+  return { tabela, vetores };
 }
 
 function inspeciona(gltf, cfg, arma) {
@@ -166,6 +249,37 @@ function inspeciona(gltf, cfg, arma) {
     cena.updateMatrixWorld(true);
   }
   const resultado = { mecanismos: [], acoes: [] };
+
+  if (!gltf.userData?.skipContact && cfg.contato) {
+    const mutante = gltf.userData?.contactMutant;
+    if (mutante) {
+      const hand = cena.getObjectByName(mutante === 'left' ? 'hand_l' : 'hand_r');
+      if (!hand) throw new Error(`mutação de contato sem ${mutante}`);
+      hand.position.x += 20;
+      hand.position.y += 20;
+      hand.position.z += 20;
+      cena.updateMatrixWorld(true);
+    }
+    const contato = medeContatoDedos(cena, malhasArma);
+    const tabela = contato.tabela;
+    for (const [chave, mm] of Object.entries(tabela)) {
+      const max = chave.startsWith('polegar_') ? cfg.contato.polegarMm : cfg.contato.dedoMm;
+      check(mm <= max, `${arma}: contato ${chave} ${mm.toFixed(1)} mm (> ${max} mm)`);
+    }
+    check(Object.keys(tabela).length === 10, `${arma}: contato mediu ${Object.keys(tabela).length}/10 dedos`);
+    resultado.contatoIdleMm = tabela;
+    resultado.contatoVetoresMm = contato.vetores;
+    const handL = cena.getObjectByName('hand_l');
+    const apoio = Object.entries(contato.vetores)
+      .filter(([chave]) => chave.endsWith('_l') && !chave.startsWith('polegar_'))
+      .map(([, vetor]) => new THREE.Vector3(...vetor).multiplyScalar(0.001));
+    if (handL?.parent && apoio.length) {
+      const mundo = apoio.reduce((sum, vetor) => sum.add(vetor), new THREE.Vector3()).multiplyScalar(1 / apoio.length);
+      const paiLinearInv = new THREE.Matrix3().setFromMatrix4(handL.parent.matrixWorld).invert();
+      resultado.contatoCorrecaoLocal = mundo.clone().applyMatrix3(paiLinearInv)
+        .toArray().map((value) => +value.toFixed(4));
+    }
+  }
 
   // Ação autorada: mede o root do rig em mundo para provar leitura/recuo e
   // retorno à pose inicial. Só a presença nominal do clipe não basta.
@@ -251,7 +365,10 @@ function inspeciona(gltf, cfg, arma) {
         `${arma}: corpo deslocado ${distancia.toFixed(3)} m de idle@t0 (> ${cfg.referenciaIdle.tolerancia} m)`);
       check(eixoMaior === cfg.referenciaIdle.eixoMaior,
         `${arma}: eixo maior ${eixoMaior} em idle@t0 (esperado ${cfg.referenciaIdle.eixoMaior})`);
-      resultado.alinhamentoIdle = { distancia: +distancia.toFixed(4), eixoMaior };
+      resultado.alinhamentoIdle = {
+        centro: centro.toArray().map((value) => +value.toFixed(4)),
+        distancia: +distancia.toFixed(4), eixoMaior,
+      };
     }
   }
 
@@ -293,6 +410,7 @@ function inspeciona(gltf, cfg, arma) {
 // ---------------------------------------------------------------- mutantes
 async function mutaEGuarda(descricao, aplicar, cfg, arma) {
   const gltf = await parseGlb(cfg.glb);
+  gltf.userData.skipContact = !descricao.startsWith('solta_mao_');
   const antes = falhas.length;
   aplicar(gltf, cfg, arma);
   inspeciona(gltf, cfg, arma);
@@ -319,7 +437,7 @@ const MUTANTES = {
   remove_shoot: (g) => { g.animations = g.animations.filter((clip) => clip.name !== 'shoot'); },
   renomeia_mint: (g) => { const n = g.scene.getObjectByName('MINT_WEAPON_REM700') || g.scene.getObjectByName('MINT_WEAPON_G3SG1'); if (!n) throw new Error('mutação não aplicou'); n.name = 'X'; },
   tira_camera: (g) => { const c = g.scene.children.find((o) => o.isPerspectiveCamera); if (!c) throw new Error('mutação não aplicou'); c.fov = 40; },
-  desloca_socket: (g) => { const s = g.scene.getObjectByName('SOCKET_MINT_MUZZLE'); if (!s) throw new Error('mutação não aplicou'); s.translateX(0.2); },
+  desloca_socket: (g) => { const s = g.scene.getObjectByName('SOCKET_MINT_MUZZLE'); if (!s) throw new Error('mutação não aplicou'); s.translateX(2); },
   troca_sockets: (g) => {
     // Controle adversarial para o erro real da Rem700: o gate geométrico
     // antigo seguia o nome do socket e aceitava as duas extremidades trocadas.
@@ -348,6 +466,8 @@ const MUTANTES = {
     corpo.attach(parte);
     if (parte.parent === paiAntes) throw new Error('mutação não aplicou (pai não mudou)');
   },
+  solta_mao_esquerda: (g) => { g.userData.contactMutant = 'left'; },
+  solta_mao_direita: (g) => { g.userData.contactMutant = 'right'; },
 };
 
 const resumo = {};
@@ -364,6 +484,7 @@ for (const [arma, cfg] of Object.entries(ARSENAL)) {
   const mutantes = {};
   for (const [nome, fn] of Object.entries(MUTANTES)) {
     if (nome === 'congela_peca' && !mec.mecanismos?.length) continue;
+    if (nome.startsWith('solta_mao_') && !cfg.contato) continue;
     try {
       mutantes[nome] = await mutaEGuarda(nome, fn, cfg, arma);
     } catch (e) {
