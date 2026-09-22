@@ -871,3 +871,26 @@ a `6daf117fc` produziu 42 PNGs nas duas proporções, sem erro fatal, em
 [`VIEWMODEL-FRAME-PRECISAO-MOSIN-SVD-SKS-2026-09-22.md`](VIEWMODEL-FRAME-PRECISAO-MOSIN-SVD-SKS-2026-09-22.md).
 As mangas e o enquadramento lateral da SVD ainda precisam de julgamento humano;
 nenhuma candidata ou família foi habilitada.
+
+
+### Correção causal DMR — Rem700 em 22/09/2026
+
+A Rem700 deixou de apontar para trás sem mudança de câmera, FOV ou frame de
+família. O gate RED mediu boca em `Z=0,6441` atrás da alça em `Z=0,1715`; o
+produto corrigido mede boca em `Z=-0,6915` à frente da alça em `Z=0,3640`.
+`troca_sockets` e `desloca_socket` reproduzem e reprovam o defeito.
+
+A pose das mãos agora parte da fonte limpa, usa a ordem correta `(w,x,y,z)` do
+Blender e transporta curls/tradução pelos seis clipes. Dez dedos ficam entre
+0,07 e 5,96 mm da malha Mint; mutantes independentes soltam cada mão e
+reprovam. Ferrolho, inspect, ADS, lifecycle (11/11, 1.020 amostras), HUD e
+fallback permanecem verdes. A régua passa em 3:2 (0,939×/86,4%/0,925× de
+braço) e 16:9 (0,889×/87,0%/0,867×).
+
+A captura ligada a `5de60232d` produziu 20 frames da Rem700 em 1440×960 e
+1440×810, com HUD `5 / 25`, zero erro fatal e evidência privada em
+`evidence/dmr-rem700-axis-5de60232d`. Recibo:
+[`VIEWMODEL-DMR-REM700-EIXO-CONTATO-2026-09-22.md`](VIEWMODEL-DMR-REM700-EIXO-CONTATO-2026-09-22.md).
+A candidata permanece `ready:false`; família e global continuam desligados.
+Próximo cluster: G3SG1, vermelha somente pela dominância dos braços e sem gate
+causal de contato final.
