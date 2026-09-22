@@ -100,27 +100,30 @@ export function buildCampoMorro(scene, T = {}) {
     roof: lam({ color: 0x777a76, metalness: 0.32, roughness: 0.75 }),
     galpaoRoof: lam({ color: 0x426f78, emissive: 0x0b1b20, emissiveIntensity: .12, metalness: 0.42, roughness: 0.58 }),
     galpaoFloor: lam({ map: texturaPisoGalpao, color: 0xa6a298, roughness: 0.92 }),
-    galpaoCeiling: lam({ map: texturaForroGalpao, color: 0x9aa8a9, emissive: 0x17282a, emissiveIntensity: .18, roughness: .8 }),
+    galpaoCeiling: lam({ map: texturaForroGalpao, color: 0xbac6c6, emissive: 0x2b4148, emissiveIntensity: .32, roughness: .78 }),
     sound: lam({ color: 0x252b2f, metalness: 0.14, roughness: 0.76 }),
     soundRing: lam({ color: 0xd8a928, metalness: 0.2, roughness: 0.55 }),
     exitLight: lam({ color: 0xffc95c, emissive: 0xff9f28, emissiveIntensity: .82, roughness: .48 }),
     proxy: lam({ color: 0x6f6256, roughness: 0.92 }),
     gun: lam({ color: 0x20242a }),
   };
+  let PBR_REBOCO = null;
   if (typeof document !== 'undefined') {
     const loader = new THREE.TextureLoader();
-    const external = (mat, url, rx, ry) => {
-      const tex = loader.load(url, () => {
-        mat.map = tex;
-        const det = detailFor(tex);
-        if (det && det.normalMap) { mat.normalMap = det.normalMap; mat.normalScale.set(0.55, 0.55); }
-        if (det && det.roughnessMap) mat.roughnessMap = det.roughnessMap;
-        mat.needsUpdate = true;
-      });
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(rx, ry);
-    };
+  const external = (mat, url, rx, ry) => {
+    // `mat.map` já na chamada (síncrono): `repetido()`/`parede()` clonam a Source antes
+    // do decode — antes daqui muralha e morro ficavam sem textura no browser.
+    const tex = loader.load(url, () => {
+      const det = detailFor(tex);
+      if (det && det.normalMap) { mat.normalMap = det.normalMap; mat.normalScale.set(0.55, 0.55); }
+      if (det && det.roughnessMap) mat.roughnessMap = det.roughnessMap;
+      mat.needsUpdate = true;
+    });
+    mat.map = tex;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(rx, ry);
+  };
     external(MAT.dirt, '/img/textures/dirt_field.webp', 8, 7);
     external(MAT.asphalt, '/img/textures/asphalt_br.webp', 5, 5);
     external(MAT.wall, '/img/textures/favela_wall.webp', 3, 3);
@@ -128,7 +131,16 @@ export function buildCampoMorro(scene, T = {}) {
     external(MAT.roof, '/img/textures/tex_zinco.webp', 3, 3);
     MAT.baile = lam({ map: MAT.wall.map, roughness: 1 });
     external(MAT.baile, '/img/textures/campomorro_streetart_baile.webp', 1.5, 1);
-  } else MAT.baile = MAT.wall;
+    MAT.madeira = lam({ roughness: .9 });
+    external(MAT.madeira, '/img/textures/tex_madeira.webp', 1, 1);
+    // Reboco PBR: o mesmo kit paintedplaster017 (CC0 ambientCG) do ?kit=pbr do lajes.
+    const L = (suf, espaco) => {
+      const t = loader.load(`/img/textures/pbr_paintedplaster017_${suf}.webp`);
+      t.colorSpace = espaco; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      return t;
+    };
+    PBR_REBOCO = { map: L('color', THREE.SRGBColorSpace), normalMap: L('normal', THREE.NoColorSpace), roughnessMap: L('rough', THREE.NoColorSpace) };
+  } else { MAT.baile = MAT.wall; MAT.madeira = lam({ map: T.dirt, color: 0xa9855c, roughness: .9 }); }
 
   /* Superfície grande usa material próprio com repetição ajustada (TEXEL2): o clone
      divide a `Source` do bitmap, então não custa upload novo nem afeta os outros mapas. */
@@ -143,6 +155,29 @@ export function buildCampoMorro(scene, T = {}) {
   };
   MAT.muralha = repetido(MAT.concrete, 20, 3);
   MAT.morroFundo = repetido(MAT.wall, 3, 2);
+  /* AUDITORIA v2.2 (defeito 1): a mesma favela_wall 3×3 nas seis faces do galpão
+     desenhava um xadrez de losangos contínuo. Repeat e FASE por parede desalinham a
+     trama entre faces vizinhas; faixa de tinta e repilos de reboco quebram o perto. */
+  const parede = (rx, ry, ox, oy, tint = 0xffffff) => {
+    const t = MAT.wall.map ? MAT.wall.map.clone() : T.concrete;
+    if (MAT.wall.map) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.offset.set(ox, oy); t.needsUpdate = true; }
+    return lam({ map: t, color: tint, roughness: .94 });
+  };
+  const matReboco = (rx, ry, tint, rough = .92) => {
+    if (PBR_REBOCO) {
+      const cl = (src) => { const t = src.clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.needsUpdate = true; return t; };
+      return lam({ map: cl(PBR_REBOCO.map), normalMap: cl(PBR_REBOCO.normalMap), roughnessMap: cl(PBR_REBOCO.roughnessMap), color: tint, roughness: rough });
+    }
+    return lam({ map: T.concrete, color: tint, roughness: rough });   // arnês node: concreto simples
+  };
+  const posterMat = (rx, ry, ox, oy, rough, tint = 0xffffff) => {
+    const t = MAT.baile.map ? MAT.baile.map.clone() : T.concrete;
+    if (MAT.baile.map) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.offset.set(ox, oy); t.needsUpdate = true; }
+    return lam({ map: t, color: tint, roughness: rough });
+  };
+  // Fachadas do beco: um tom por casa tira a leitura de "salas de tijolo idênticas".
+  const matCasa = [0xffffff, 0xe3d3b7, 0xcaa98c, 0xb6c4b1, 0xd8c795, 0xa9c2c6]
+    .map((tint, i) => parede(2.7 + (i % 3) * .35, 2.3 + (i % 2) * .5, (i * .37) % 1, (i * .61) % 1, tint));
 
   const addBox = (w, h, d, mat, x, y, z, opts = {}) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -338,7 +373,7 @@ export function buildCampoMorro(scene, T = {}) {
     // Casa de morro ganha laje: quem está no alto do flanco cresce mais um pavimento.
     // É o que faz a encosta LER como favela empilhada em vez de fileira de blocos.
     const h = 3.6 + ((x + z) & 1) + (base > 2 ? 2.7 : 0);
-    addBox(w, h, d, MAT.wall, x, base, z);
+    addBox(w, h, d, matCasa[i % matCasa.length], x, base, z);
     fachadaCasa(x, z, w, d, h, i, base);
     if (i % 4 === 1) {
       const tanque = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.66, 1.15, 12), MAT.proxy);
@@ -356,12 +391,30 @@ export function buildCampoMorro(scene, T = {}) {
   // A revisão em 3:2 media teto, paredão e piso quase no mesmo preto.
   const pisoGalpao = addBox(11.4, .045, 9.4, MAT.galpaoFloor, 28, 1.005, -21, { collide: false, cast: false });
   pisoGalpao.userData.galpaoSurface = 'floor';
-  addBox(0.35, 3.2, 10, MAT.wall, GALPAO.x1, GALPAO.y, -21);
-  addBox(12, 3.2, 0.35, MAT.wall, 28, GALPAO.y, GALPAO.z0);
-  addBox(0.35, 3.2, 3.7, MAT.wall, GALPAO.x0, GALPAO.y, -24.15);
-  addBox(0.35, 3.2, 3.7, MAT.wall, GALPAO.x0, GALPAO.y, -17.85);
-  addBox(3.8, 3.2, 0.35, MAT.wall, 24.1, GALPAO.y, GALPAO.z1);
-  addBox(3.8, 3.2, 0.35, MAT.wall, 31.9, GALPAO.y, GALPAO.z1);
+  addBox(0.35, 3.2, 10, parede(2.7, 3.05, .17, .29), GALPAO.x1, GALPAO.y, -21);
+  addBox(12, 3.2, 0.35, parede(3.35, 2.4, .43, .11), 28, GALPAO.y, GALPAO.z0);
+  addBox(0.35, 3.2, 3.7, parede(1.05, 3.1, .66, .5), GALPAO.x0, GALPAO.y, -24.15);
+  addBox(0.35, 3.2, 3.7, parede(1.05, 2.85, .08, .77), GALPAO.x0, GALPAO.y, -17.85);
+  addBox(3.8, 3.2, 0.35, parede(1.15, 2.7, .31, .62), 24.1, GALPAO.y, GALPAO.z1);
+  addBox(3.8, 3.2, 0.35, parede(1.2, 2.55, .72, .24), 31.9, GALPAO.y, GALPAO.z1);
+  // Meia-parede lavável (reboco pintado) + friso: mata o tiling do primeiro metro,
+  // que é onde a câmera mora, e dá a leitura de galpão de baile pintado.
+  const tintaBaixo = matReboco(3, .55, 0x6f8a72, .88), frisoBaixo = matReboco(3, .06, 0x53655a, .9);
+  for (const [w, d, x, z] of [[.06, 10, 33.8, -21], [12, .06, 28, -25.8], [.06, 3.55, 22.19, -24.14],
+    [.06, 3.55, 22.19, -17.86], [3.65, .06, 24.07, -16.2], [3.65, .06, 31.92, -16.2]]) {
+    addBox(w, .98, d, tintaBaixo, x, GALPAO.y, z, { collide: false, cast: false });
+    addBox(w + .015, .075, d + .015, frisoBaixo, x, GALPAO.y + .985, z, { collide: false, cast: false });
+  }
+  // Pilastras dividem as paredes longas em panos: ritmo vertical e sombra própria.
+  const matPilar = matReboco(.6, 2.2, 0xb9b2a4);
+  for (const x of [26, 30]) addBox(.44, 3.2, .18, matPilar, x, GALPAO.y, -25.73, { collide: false });
+  for (const z of [-24.6, -17.4]) addBox(.18, 3.2, .44, matPilar, 33.73, GALPAO.y, z, { collide: false });
+  // Repilos de reboco: remendos de idade em alturas e tons desencontrados.
+  for (const [w, h, d, x, y, z, tint] of [
+    [.05, 1.15, 1.85, 33.79, 2.15, -23.7, 0xd8d1bf], [.05, .85, 1.25, 33.79, 1.75, -18.85, 0xc9d0c2],
+    [1.6, .95, .05, 26.7, 2.3, -25.79, 0xd6cfbd], [2.2, 1.3, .05, 31.6, 1.95, -25.79, 0xc6baa5],
+    [1.45, .95, .05, 23.7, 2.35, -16.21, 0xcfd4c6], [.05, 1.05, 1.55, 22.21, 2, -24.9, 0xd8d1bf]])
+    addBox(w, h, d, matReboco(.8, .5, tint), x, y, z, { collide: false, cast: false });
   for (const [x, z] of [[23.2, -21], [28, -17.2], [31.4, -23.2]]) {
     const luz = new THREE.PointLight(0xffd6a0, 1.65, 16, 1.55);
     luz.position.set(x, 3.2, z); luz.userData.mapLight = 'galpao'; scene.add(luz);
@@ -375,6 +428,39 @@ export function buildCampoMorro(scene, T = {}) {
   for (const [w,d,x,z,id] of [[.22,.3,21.73,-22.32,'west-a'],[.22,.3,21.73,-19.68,'west-b'],
     [.3,.22,25.98,-15.73,'south-a'],[.3,.22,30.02,-15.73,'south-b']]) {
     const frame = addBox(w,3.2,d,MAT.steelRust,x,1,z,{ collide:false, bala:true }); frame.userData.galpaoFrame = id;
+  }
+  /* TETO (defeito 5): forro mais claro (MAT.galpaoCeiling) + vigas, calha e UMA fonte
+     fria de preenchimento — teto preto chapado e contraste quente/frio eram a nota baixa. */
+  for (const z of [-23.75, -20.35, -18.55]) {
+    addBox(11.7, .3, .14, MAT.steel, 28, 3.72, z, { collide: false });
+    addBox(11.7, .05, .3, MAT.steelRust, 28, 3.67, z, { collide: false, cast: false });
+  }
+  addBox(.34, .1, 9.3, MAT.steelRust, 32.6, 3.98, -21, { collide: false });
+  const luzFria = new THREE.PointLight(0xcfe3ec, .95, 19, 1.6);
+  luzFria.position.set(28, 3.62, -20.9); luzFria.userData.mapLight = 'galpao'; scene.add(luzFria);
+  const painelFrio = addBox(1.7, .05, .42, lam({ color: 0xdfeef2, emissive: 0x9fc4d4, emissiveIntensity: .55, roughness: .5 }), 28, 3.9, -21, { collide: false, cast: false });
+  painelFrio.userData.galpaoLuminaire = true;
+  for (const [x, z] of [[23.2, -21], [28, -17.2], [31.4, -23.2], [28, -21]])
+    addBox(.045, .14, .045, MAT.steel, x, 3.93, z, { collide: false, cast: false });
+  // Bandeirolas: duas cordas cruzam o salão — identidade de baile no vazio alto.
+  {
+    const cores = [0xc2534a, 0xd8a13c, 0x4f7d5b, 0x4a6f8f].map((c) =>
+      new THREE.MeshStandardMaterial({ color: c, roughness: .92, side: THREE.DoubleSide }));
+    const tri = (x, y, z, ry) => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute([-.13, 0, 0, .13, 0, 0, 0, -.3, 0], 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute([0, 0, 1, 0, 0, 1, 0, 0, 1], 3));
+      g.setIndex([0, 2, 1]); g.translate(x, y, z); g.rotateY(ry);
+      return g;
+    };
+    for (const x of [24.4, 30.2]) {
+      const porCor = [[], [], [], []];
+      for (let i = 0; i < 9; i++) {
+        const t = i / 8, z = -24.3 + t * 7, y = 3.72 - .15 * Math.sin(Math.PI * t);
+        porCor[i % 4].push(tri(x, y, z, (i % 2) * Math.PI / 2));
+      }
+      porCor.forEach((lista, c) => { if (lista.length) root.add(new THREE.Mesh(mergeParts(lista), cores[c])); });
+    }
   }
   addBox(12, 0.18, 10, MAT.steel, 28, 4.2, -21, { collide: false, cast: false });
   const forro = addBox(11.45,.06,9.45,MAT.galpaoCeiling,28,4.08,-21,{ collide:false,cast:false });
@@ -394,6 +480,20 @@ export function buildCampoMorro(scene, T = {}) {
   addBox(8.4, 0.18, 1.35, MAT.steelRust, 28, 3.55, -15.55, { collide: false });
   addBox(6.8, 0.85, 0.08, MAT.baile, 28, 2.35, -15.29, { collide: false, cast: false });
   addBox(0.05, 2.65, 6.2, MAT.baile, GALPAO.x1 - 0.2, GALPAO.y + 0.25, -21, { collide: false, cast: false });
+  // Lambe-lambe com moldura e RASGOS em relevo (defeito 4): recortes diferentes da
+  // mesma arte, rotações leves e roughness desencontrada — nada de chapa esticada única.
+  addBox(.1, .1, 6.5, MAT.steelRust, 33.76, 3.95, -21, { collide: false, cast: false });
+  addBox(.1, .1, 6.5, MAT.steelRust, 33.76, 1.15, -21, { collide: false, cast: false });
+  addBox(.1, 2.9, .1, MAT.steelRust, 33.76, 2.55, -24.13, { collide: false, cast: false });
+  addBox(.1, 2.9, .1, MAT.steelRust, 33.76, 2.55, -17.87, { collide: false, cast: false });
+  const rasgo = (w, h, y, z, rx, rz, ox, oy, tw, th, rough, tint = 0xffffff) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), posterMat(tw, th, ox, oy, rough, tint));
+    m.position.set(33.768, y, z); m.rotation.set(rx, -Math.PI / 2, rz);
+    m.receiveShadow = true; root.add(m);
+  };
+  rasgo(2, 1.3, 2.95, -22.7, .02, .03, .18, .52, .55, .75, .42);
+  rasgo(1.6, 1.05, 1.85, -19.5, -.015, -.04, .62, .1, .8, .6, .9, 0xdfe8ea);
+  rasgo(1.15, .85, 2.3, -23.4, .01, .05, .35, .78, .65, .5, .68);
   addBox(5.1, 2.4, 0.05, MAT.baile, -32, 0.45, 20.26, { collide: false, cast: false });
   // A fachada oeste encara o campo: duas torres de som prolongam as paredes existentes,
   // enquanto o letreiro alto cruza somente o vazio acima da passagem jogável.
@@ -413,6 +513,23 @@ export function buildCampoMorro(scene, T = {}) {
     addBox(0.6, 1.05, 0.6, MAT.roof, GALPAO.x0, GALPAO.y + 6.28, z, { collide: false });
   prop('caixa_som_baile', { x: 26, y: GALPAO.y, z: -21, targetH: 2.8 }, [2.4, 2.8, 4.4]);
   prop('pilha_pneus', { x: 23.5, y: GALPAO.y, z: -24, targetH: 1.2 }, [1.4, 1.2, 1.4]);
+  /* COVER DO SALÃO (defeito 3): balcão de cobrança, mesa de som, caixotes e pallets —
+     leitura tática sem tocar nas rotas das duas saídas nem nos spawns do B. */
+  addBox(2.9, .96, .5, MAT.madeira, 23.45, GALPAO.y, -16.62);
+  addBox(3.05, .07, .68, MAT.madeira, 23.42, GALPAO.y + .96, -16.64, { collide: false });
+  addBox(.52, .34, .42, MAT.steel, 24.2, GALPAO.y + 1.03, -16.64, { collide: false });
+  addBox(1.5, .72, .6, MAT.madeira, 27.6, GALPAO.y, -25.3);
+  addBox(1.75, .07, .85, MAT.madeira, 27.6, GALPAO.y + .72, -25.28, { collide: false });
+  addBox(.55, .3, .4, MAT.sound, 27.3, GALPAO.y + .79, -25.3, { collide: false });
+  addBox(1.05, 1.05, 1.05, MAT.madeira, 31.9, GALPAO.y, -24.6);
+  addBox(.88, .88, .88, MAT.madeira, 33.2, GALPAO.y, -22.6);
+  for (const [s, x, y, z, ry] of [[.92, 32.02, 2.51, -24.5, .21], [.58, 33.28, 2.17, -22.52, -.35]]) {
+    const caixa = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), MAT.madeira);
+    caixa.position.set(x, y, z); caixa.rotation.y = ry;
+    caixa.castShadow = caixa.receiveShadow = true; root.add(caixa);
+  }
+  for (const y of [GALPAO.y, GALPAO.y + .14, GALPAO.y + .28])
+    addBox(1.25, .13, .95, MAT.madeira, 32.2, y, -16.75);
 
   // Três marcos volumétricos e cromaticamente distintos orientam as alas sem
   // depender da repetição dos mesmos decals assados.
@@ -688,14 +805,16 @@ export function buildCampoMorro(scene, T = {}) {
   const hashP = (i) => { const s = Math.sin(i * 269.3 + 117.7) * 43758.5453; return s - Math.floor(s); };
   function updatePoeira(dt) {
     poeiraT += dt;
-    while (poeiraT > 0.14) {
-      poeiraT -= 0.14;
+    while (poeiraT > 0.2) {
+      poeiraT -= 0.2;
       const r = RUAS_POEIRA[poeiraN % RUAS_POEIRA.length], t = hashP(poeiraN * 3 + 1), h2 = hashP(poeiraN * 7 + 2);
       const x = r.x0 + (r.x1 - r.x0) * t, z = r.z0 + (r.z1 - r.z0) * t;
       const dx = Math.sign(r.x1 - r.x0), dz = Math.sign(r.z1 - r.z0);
-      poeira.spawn({ x, y: groundHeightAt(x, z) + 0.25 + h2 * 1.3, z }, {
-        vel: new THREE.Vector3(dx * (0.5 + h2 * 0.7), 0.06 + h2 * 0.1, dz * (0.5 + hashP(poeiraN * 5) * 0.7)),
-        life: 5 + h2 * 4, size: 0.45 + h2 * 0.55, grow: 0.09,
+      // Defeito 2: mota baixa, curta e rala — a nuvem branca na altura do olho cobria
+      // metade da tela nas views laterais e lavava a leitura das bocas.
+      poeira.spawn({ x, y: groundHeightAt(x, z) + 0.12 + h2 * 0.5, z }, {
+        vel: new THREE.Vector3(dx * (0.3 + h2 * 0.45), 0.05 + h2 * 0.06, dz * (0.3 + hashP(poeiraN * 5) * 0.45)),
+        life: 2.6 + h2 * 1.6, size: 0.3 + h2 * 0.28, grow: 0.035,
       });
       poeiraN++;
     }
