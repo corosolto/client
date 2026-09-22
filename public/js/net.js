@@ -4,7 +4,7 @@
 /* NÓS OFICIAIS. Cada um é um processo do servidor numa região. Acrescentar região é
    acrescentar uma linha aqui e subir a VM com o mesmo script de deploy. */
 // Registro de nós em nos.js: a página de convite do site lê a MESMA lista.
-export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PING_MS } from './nos.js';
+export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PING_MS, melhorNoParaJogar, TETO_COMPANHIA_MS } from './nos.js';
 import { NOS } from './nos.js';
 import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
 import { TransporteWS, TransporteWT } from './transporte.js';
@@ -54,11 +54,26 @@ export const createRoom = (httpBase, cfg, ticket = '') => j(`${httpBase}/rooms`,
 /* Sonda TODOS os nós em paralelo e devolve cada um com ping e lotação. É a coluna de ping do
    server browser — sem ela o jogador não tem como saber que o nó da Europa é o dele. Nó que
    não responde volta com ping null e NÃO some da lista: sumir esconde a queda do servidor. */
+// Prazo que só anda quando o navegador dá a vez: thread travada não pode consumi-lo.
+// `setTimeout` mede relógio de parede e derrubava a sonda inteira no boot — BUG-169.
+const PASSO_MS = 100;
+export function prazoAcordado(ms, aoEstourar) {
+  let resta = ms, antes = performance.now();
+  const id = setInterval(() => {
+    const agora = performance.now(), dt = agora - antes;
+    antes = agora;
+    // tique muito mais longo que o passo é tempo CONGELADO: cobra-se o passo, não o relógio
+    resta -= Math.min(dt, PASSO_MS * 2);
+    if (resta <= 0) { clearInterval(id); aoEstourar(); }
+  }, PASSO_MS);
+  return () => clearInterval(id);
+}
+
 export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
   return Promise.all(nos.map(async (no) => {
     const { http } = mpUrls(no.url);
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const cancelaPrazo = prazoAcordado(timeoutMs, () => ctrl.abort());
     // Amostra que chegou não se apaga: a 1ª paga DNS+TLS e, se estourava o prazo da 2ª, o nó
     // que RESPONDEU aparecia fora do ar — os três juntos, em rede lenta (BUG-166).
     let h = null, ping = 0;
@@ -70,7 +85,7 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
         h = r; ping = performance.now() - t0;   // a última que chegou é a mais quente
       }
     } catch { /* a amostra que faltou não apaga a que veio */ }
-    finally { clearTimeout(t); }
+    finally { cancelaPrazo(); }
     if (!h) return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
     return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0 };
   }));

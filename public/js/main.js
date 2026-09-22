@@ -26,7 +26,7 @@ import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 import { createMapPreview } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, NO_RE, ordenarNos, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -3334,6 +3334,12 @@ function mpMontarFormulario() {
   if (quick) quick.onclick = async () => {
     ui.click(); mpErro('');
     if (!mpNoAtual || !mpNoAtual.online) return mpErro('Nenhum servidor online agora.');
+    // Quem clica em QUICK PLAY não quer o menor ping, quer gente: sonda de novo (a lotação da
+    // lista pode ter minutos) e vai para o nó onde há alguém, até o teto de 150 ms.
+    mpEstado('conectando', 'PROCURANDO GENTE…');
+    try { mpNos = ordenarNos(await sondarNos(NOS)); mpDesenharNos(); } catch { /* segue com a lista que tem */ }
+    const alvo = melhorNoParaJogar(mpNos);
+    if (alvo && alvo.id !== mpNoAtual.id) mpSelecionarNo(alvo);
     mpEstado('conectando', 'PROCURANDO SALA…');
     let salas = [];
     try { salas = await listRooms(mpNoAtual.http); } catch { /* lista fora = cria sala */ }
