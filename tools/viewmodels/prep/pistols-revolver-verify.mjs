@@ -70,15 +70,20 @@ const trigger = scene.getObjectByName('Trigger');
 const hammer = scene.getObjectByName('Hammer');
 const handL = scene.getObjectByName('hand_l');
 const handR = scene.getObjectByName('hand_r');
+const productRebase = scene.getObjectByName('PRODUCT_REBASE_REVOLVER38');
 check(cfg.ready === false, 'Revólver .38 precisa permanecer ready:false');
 check(createHash('sha256').update(bytes).digest('hex') === cfg.sha256, 'SHA-256 diverge do manifesto');
 check(bytes.length === cfg.bytes, 'tamanho diverge do manifesto');
 for (const name of required) check(clips.has(name), `clip ${name} ausente`);
 check(gltf.animations.length === required.length, `catálogo inesperado de clips (${[...clips.keys()]})`);
+check((clips.get('inspect')?.tracks.length || 0) >= 100, 'inspect não congela uma pose completa e pode herdar a recarga');
 check(Boolean(gun?.getObjectByProperty('isSkinnedMesh', true)), 'malha Viper-357 licenciada não preservada');
 check(Boolean(mint && muzzle && sight), 'marcador baked e sockets ADS/muzzle ausentes');
 check(Boolean(arms && weapon && drum && crane && ejector && trigger && hammer), 'rig/mecanismos próprios incompletos');
 check(Boolean(handL && handR), 'duas mãos completas ausentes');
+check(Boolean(productRebase), 'rebase intrínseco do produto ausente');
+check(productRebase?.position.distanceTo(new THREE.Vector3(-0.025, -0.04, 0.115)) <= 1e-5,
+  'rebase intrínseco do produto divergente');
 check(gltf.cameras.some((camera) => camera.isPerspectiveCamera), 'câmera viewmodel ausente');
 
 const medeContatoDedos = (document, mutante = '') => {
@@ -241,6 +246,8 @@ await mutant('sem-sight', (copy) => copy.scene.getObjectByName('SOCKET_MINT_SIGH
 await mutant('sem-arma', (copy) => copy.scene.getObjectByName('GEO_WEAPON_REVOLVER_python001')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('GEO_WEAPON_REVOLVER_python001'));
 await mutant('sem-tambor', (copy) => copy.scene.getObjectByName('Drum')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('Drum'));
 await mutant('sem-marker', (copy) => copy.scene.getObjectByName('MINT_WEAPON_REVOLVER38')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_WEAPON_REVOLVER38'));
+await mutant('sem-rebase-produto', (copy) => copy.scene.getObjectByName('PRODUCT_REBASE_REVOLVER38')?.position.set(0, 0, 0),
+  (copy) => copy.scene.getObjectByName('PRODUCT_REBASE_REVOLVER38')?.position.length() < 1e-5);
 await mutant('tambor-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Drum\./), (copy) => trackMotion(copy, 'shoot', 'Drum.quaternion') < 0.5);
 await mutant('gatilho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Trigger\./), (copy) => trackMotion(copy, 'shoot', 'Trigger.quaternion') < 0.15);
 await mutant('cao-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^Hammer\./), (copy) => trackMotion(copy, 'shoot', 'Hammer.quaternion') < 0.25);
