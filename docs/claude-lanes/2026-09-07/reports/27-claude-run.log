@@ -1,0 +1,49 @@
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(grep 'from.*""\\.\\./' src/engine/orchestrator.ts src/intelligence/*.ts src/stages/*.ts) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(cp /Users/ruben/work/elendil/elendil-spec-engine-master/engine/prompts/prompt_forge/*.md /Users/ruben/work/elendil/src/engine/prompts/prompt_forge/) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(cp /Users/ruben/work/elendil/elendil-spec-engine-master/engine/prompts/pair_review/*.md /Users/ruben/work/elendil/src/engine/prompts/pair_review/) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(cp /Users/ruben/work/elendil/elendil-spec-engine-master/engine/prompts/cross_pair/*.md /Users/ruben/work/elendil/src/engine/prompts/cross_pair/) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(cp /Users/ruben/work/elendil/elendil-spec-engine-master/engine/prompts/final/*.md /Users/ruben/work/elendil/src/engine/prompts/final/) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(grep -r "FREEZE\\|prompt.*refine\\|super.*merge.*3\\|majority.*vote\\|three.*way" src/ --include=*.ts) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(cp -r /tmp/elendil-web-tmp/* /tmp/elendil-web-tmp/.* /Users/ruben/work/elendil/web/) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(grep -n "export.*EdgeProps\\|interface EdgeProps\\|type EdgeProps" node_modules/@xyflow/react/dist/esm/types/*.d.ts node_modules/@xyflow/system/dist/esm/types/*.d.ts) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(grep -r "console\\.log\\|console\\.error\\|window\\.location\\|history\\.push\\|fetch.*analytics\\|POST.*analytics\\|GET.*analytics" /Users/ruben/work/aeochecker/app --include=*.ts --include=*.tsx) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(find ~/recovered_photos* -type f) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(cp /Users/ruben/work/quantum/quantum-eth/config/dev/node*.key vendor/config/dev/) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(cp /Users/ruben/work/quantum/quantum-eth/config/dev/node*.key config/dev/) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Permission allow rule (/Users/ruben/.claude/settings.json): Bash(find /Users/ruben/work/autoresearcher* -name "*.md" -type f) has a wildcard before the rest of the command, so it also matches any options inserted at that position and approves them without a prompt. Replace that * with the exact value you mean, or only use * after the subcommand.
+Auditoria concluída. Relatório em `docs/claude-lanes/2026-09-07/reports/27-fable51-auditoria.md` (448 linhas). Worktree alvo intacta (`fd58f492`, só os 3 diretórios ignorados de sempre); nenhum merge, cherry-pick, commit, push ou PR.
+
+## Veredicto
+
+**A branch não tem nada a extrair — ela já está inteira dentro do checkpoint, por ancestralidade.**
+
+`fd58f492` **é ancestral** de `d35c6658`:
+
+```
+git rev-list --left-right --count HEAD...d35c6658  →  0    19
+```
+
+Zero commits exclusivos da lane; 19 a mais no checkpoint. Os 7 commits estão lá com os mesmos hashes, o handoff é **o mesmo blob**, e o conserto causal (`Math.SQRT1_2` no socket) está verbatim em `assemble_paid_family.mjs`. Merge seria no-op; qualquer "voltar ao estado da Fable" derrubaria 96 arquivos / 3 487 linhas de trabalho posterior.
+
+**O candidato foi superado, não perdido.** O piloto Astra assumiu a linhagem (`base fd58f492`), testou yaw isolado e o Ruben aprovou **15°** em 05/09. O candidato H da Fable (yaw 20°) hoje é literalmente a definição de dois mutantes do contrato — `--mutante-quadro-antigo` e `--mutante-runtime-quadro-antigo`.
+
+## Verificação independente que fiz hoje
+
+Rodei `vm-glb-inventory.mjs` contra o GLB servido, saída em `/tmp`. O conserto é real e está no asset:
+
+| medida | hoje | handoff 04/09 |
+|---|---|---|
+| socket rotação | `[0.7071, 0, 0, 0.7071]` | `[√½,0,0,√½]` ✅ |
+| slide `finish_dark` AABB | `0,0260 · 0,0341 · 0,1855` (eixo longo **Z**) | `0,026 · 0,034 · 0,186` ✅ |
+| boca − slide | +0,0299 m | +0,030 m ✅ |
+| GLB `edb77908…` | 3 005 712 B, mtime 04/09 02:29 | idem ✅ |
+
+## Três coisas que a lane 10 precisa saber
+
+1. **🔴 `public/private-assets/viewmodels` na worktree Fable é symlink para o acervo compartilhado** — rodar builder ali reescreve o GLB que três handoffs referenciam por SHA. Astra e `vm-controles-final` usam cópia local; a Fable, não.
+2. **A evidência `fable51-*` (182 MB, gitignored) está velha** — medida em yaw 20°, `final.json` registra `rotDeg: [0,20,-5]`. Contra o padrão atual reprovaria. A vigente é `astra-pistol/approved-runtime/`.
+3. **Nada disso está em `main`** — `authoredvm.js`, `vm-gauntlet.mjs`, `pistol-viewmodel-contract.mjs` sequer existem lá. É assunto do prompt 11, mas invalida ler "a pistola já está em produção".
+
+Não rodei gates de navegador nem contact sheet: exigem escrita em worktree (servidor de dev, cache, `artifacts/`), proibida nesta rodada. Deixei os comandos exatos em §8, para rodar de `vm-controles-final` — incluindo os mutantes esperados vermelhos, a regressão obrigatória da AK golden, e o aviso de que o **P4 em 16:9 (BUG-75)** e as 4 falhas de `eval:authored-vm` são preexistentes.
+
+Recomendação: lane 10 segue de `d35c6658`, branch fica como marco histórico sem PR, e a primeira medição na pistola deve ser o BUG-75 — contato de superfícies deformadas, não distância entre pivôs.

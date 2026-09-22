@@ -1,0 +1,29 @@
+# lane|prompt|owner|worktree|pr|ledger-relpath
+01|01-VIEWMODEL-M4.md|GLM-thread-1 (dono ativo, diff local)|vm-prep-rifles|509|docs/reports/VM-PREP-RIFLES.md
+02|02-VIEWMODEL-PRECISAO.md|GLM/ZCode-fila|vm-prep-precisao|513|docs/reports/VM-PREP-PRECISAO.md
+03|03-VIEWMODEL-AWP.md|Claude-fila|vm-prep-awp||docs/reports/VM-PREP-AWP.md
+04|04-VIEWMODEL-SHOTGUN.md|Claude-fila|vm-prep-shotgun||docs/reports/VM-PREP-SHOTGUN.md
+05|05-VIEWMODEL-CURTAS.md|GLM/ZCode-fila|vm-prep-armas-curtas||docs/reports/VM-PREP-CURTAS.md
+06|06-VIEWMODEL-RIFLES.md|GLM/ZCode-fila|vm-rifles-restantes||docs/reports/VM-RIFLES-RESTANTES.md
+07|07-VIEWMODEL-SMGS.md|GLM/ZCode-fila|vm-smgs-final||docs/reports/VM-SMGS-FINAL.md
+08|08-VIEWMODEL-DMR.md|Claude-ativo|vm-dmr-final||docs/reports/VM-DMR-FINAL.md
+09|09-VIEWMODEL-LMG.md|GLM-thread-2 (branch glm/*)|vm-lmg-final||docs/reports/VM-LMG-FINAL.md
+10|10-VIEWMODEL-CONTROLES.md|GLM-thread-3 (branch glm/*)|vm-controles-final||docs/reports/VM-CONTROLES-FINAL.md
+11|11-VIEWMODEL-INTEGRACAO.md|Claude-fila|vm-catalogo-integracao||docs/reports/VM-CATALOGO-INTEGRACAO.md
+12|12-MITICOS.md|Claude-ativo|miticos-integracao-priority|532|docs/reports/MITICOS-LEDGER.md
+13|13-MAPAS-POLISH-INTEGRAL.md|Claude-ativo|mapas-polish-integral|538|docs/maps/POLISH-CATALOGO-CONTINUIDADE.md
+14|14-AUDIO-ROLLBACK.md|GLM/orquestrador — AGUARDA DECISÃO v7/v8 do dono|claude-audio-rollback|531|docs/reports/AUDIO-ROLLBACK-LEDGER.md
+15|15-MAPAS-PRS-ABERTOS.md|fila|mapas-prs-abertos||docs/reports/MAPAS-PRS-LEDGER.md
+16|16-MOBILE.md|fila|mobile-pr496||docs/reports/MOBILE-LEDGER.md
+17|17-AUDIO-MITICOS.md|fila|audio-miticos-pr486||docs/reports/AUDIO-MITICOS-LEDGER.md
+18|18-VIEWMODELS-HISTORICOS.md|GLM/ZCode-bg|somente-leitura|464;468;534|docs/claude-lanes/2026-09-07/reports/18-historicos-matriz.md
+19|19-AMAZONIA-NOVA-RODADA.md|fila|amazonia-nova||docs/reports/AMAZONIA-NOVA-LEDGER.md
+20|20-PRACA-PODERES.md|fila|praca-poderes-claude||docs/reports/PRACA-PODERES-LEDGER.md
+21|21-OPERACAO-TELEMETRIA.md|fila|operacao-telemetria||docs/reports/TELEMETRIA-LEDGER.md
+22|22-AUDIO-RUNTIME.md|fila|audio-runtime||docs/reports/AUDIO-RUNTIME-LEDGER.md
+23|23-COMBATE-POS-MERGE.md|fila|somente-leitura||docs/reports/COMBATE-POS-MERGE.md
+24|24-MULTIPLAYER.md|fila|multiplayer-consolidacao||docs/reports/MULTIPLAYER-LEDGER.md
+25|25-ADMIN-RETENTION.md|fila|admin-retention||docs/reports/ADMIN-RETENTION-LEDGER.md
+26|26-AUDIO-FAB-PILOT.md|fila|audio-fab-pilot||docs/reports/AUDIO-FAB-PILOT-LEDGER.md
+27|27-VIEWMODEL-PISTOLA-FABLE.md|Claude-bg|vm-fable51-pistol||docs/claude-lanes/2026-09-07/reports/27-fable51-auditoria.md
+28|28-RELEASE-PACOTE-1.md|fila|release-pacote-1||docs/reports/RELEASE-PACOTE-1-LEDGER.md
