@@ -64,7 +64,10 @@ try {
   const help = run('python3', [gates, '--help']);
   check(help.status === 0 && ['--asset-root', '--baseline-root', '--mutant-root', '--output']
     .every((flag) => help.stdout.includes(flag)), 'gate publica todas as raízes configuráveis');
-  const missingRoot = path.join(tmp, 'raiz-mutante-ausente');
+  // macOS exposes /tmp through the /private/tmp symlink. Python Path.resolve()
+  // reports the canonical path in the expected failure, so canonicalize the
+  // fixture root before asserting that --asset-root governed the read.
+  const missingRoot = path.join(await fs.realpath(tmp), 'raiz-mutante-ausente');
   const missing = run('python3', [gates, `--asset-root=${missingRoot}`,
     `--baseline-root=${tmp}`, `--output=${path.join(tmp, 'gates.json')}`, '--weapons=mosin']);
   check(missing.status !== 0 && `${missing.stderr}${missing.stdout}`.includes(missingRoot),
