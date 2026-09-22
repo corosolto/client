@@ -1225,7 +1225,7 @@ export function buildBrasilia(scene, T) {
        e ônibus queimado aqui é lambe de campanha, stencil e pixação de manifestação.
        Por isso pool separado do `D_MURAL` — mesma passada, vocabulário diferente. */
     const D_LAMBE = decalIds(T, ['cartaz-america-latina.png', 'cartaz-medo.png',
-      'cartaz-neutro.png', 'dont-overthink.png', 'gratidao-sol.png', 'meio-ano.png',
+      'cartaz-neutro.png', 'gratidao-sol.png', 'meio-ano.png',
       'pra-gringo.png', 'folha-lambes.png', 'folha-stenci.png']);
     const D_TAG = decalIds(T, ['tag-fina.png', 'tag-flop.png', 'tag-larga.png',
       'tag-money.png', 'tag-pingo.png', 'tag-selvagem.png', 'tags-treino-02.png',
@@ -1298,8 +1298,11 @@ export function buildBrasilia(scene, T) {
     // (MIN_ALT_PAREDE) e o layout regerado apagava as 28 do assado de 17/08 (ledger da Praça)
     for (const f of PLAT_FACES) {
       const lado = f.ry < 0 ? -1 : 1;   // normal da face: -x (leste) ou +x (oeste)
-      for (let z = f.z0 + 2.4; z < f.z1 - 1.8; z += 4.6)
-        decal(f.x + lado * 0.03, 0.22, z + (_dmix(Math.round(z * 7)) % 100) / 100 - 0.5, f.ry, 1.0, 1.7, D_LAMBE.concat(D_TAG));
+      for (let z = f.z0 + 2.4; z < f.z1 - 1.8; z += 4.6) {
+        const zz = z + (_dmix(Math.round(z * 7)) % 100) / 100 - 0.5;
+        if (!freeSpot(f.x + lado * 1.1, zz, 1.0)) continue;   // floreira/banco na frente esconde metade
+        decal(f.x + lado * 0.03, 0.22, zz, f.ry, 1.0, 1.7, D_LAMBE.concat(D_TAG));
+      }
     }
   }
 
@@ -1733,7 +1736,7 @@ export function buildBrasilia(scene, T) {
   if (QP.get('agua') !== '0') {
     aguaEspelho = createWater(scene, T, 'praca_poderes', {
       nivel: 0.55, centro: [0, GARDEN_Z], tamanho: [26.4, 8.6], segmentos: 8,
-      raso: 0x4a6d80, fundo: 0x2b4a5c, marLonge: 0x7d9cbb,   // ACES do jogo clareia: dá L* ≈ 58 de perto
+      raso: 0x3c5868, fundo: 0x223b4a, marLonge: 0x7d9cbb,   // ACES do jogo clareia: alvo L* ≈ 50 de perto
       profEscala: 0.6, espumaFaixa: 0.22, espumaMiolo: 0.06, profFallback: 0.5,
       fluxo: [0, 0], ampEscala: 0.05, parent: root,
     });
