@@ -229,28 +229,30 @@ A correção ficou inteiramente em `map_atacadao.js`:
   raycast pelas centenas de malhas decorativas durante o raciocínio dos bots.
 
 O A/B pareado foi repetido em processos Chrome frescos e na mesma janela de
-carga da máquina. Isso é necessário porque, durante a medição, processos Lean,
-Spotlight e Parsec elevaram tanto a base quanto a candidata de cerca de 10 ms
-para 16–18 ms no perfil médio. Comparar a base ociosa com a candidata sob essa
-carga produziria um falso vermelho.
+carga da máquina. Isso é necessário porque uma passagem anterior, com Lean,
+Spotlight e Parsec ativos, elevou tanto a base quanto a candidata para 16–18 ms
+no perfil médio. Na passagem final, `8x8 CTF 3:2` ainda oscilou uma vez para
+16,6 ms; a célula foi repetida sozinha em Chrome fresco e fechou em 10,2 ms.
+O recibo pareado registra esse retry em vez de comparar amostras sob cargas
+diferentes.
 
 | Célula | p95 base → candidata | Calls base → candidata | Tris base → candidata | >100 ms |
 | --- | ---: | ---: | ---: | ---: |
-| 5x5 DM, 3:2 médio | 16,7 → 17,7 ms (+6,0%) | 1.488 → 1.040 | 1.571.737 → 2.085.905 | 0 → 0 |
-| 5x5 CTF, 3:2 médio | 16,7 → 18,1 ms (+8,4%) | 1.488 → 1.038 | 1.554.434 → 2.086.841 | 0 → 0 |
-| 8x8 DM, 3:2 médio | 17,0 → 17,8 ms (+4,7%) | 1.607 → 1.063 | 1.670.658 → 2.227.461 | 0 → 0 |
-| 8x8 CTF, 3:2 médio | 17,9 → 17,8 ms (-0,6%) | 1.561 → 1.131 | 1.692.602 → 2.240.321 | 0 → 0 |
-| 5x5 DM, 16:9 baixo | 9,9 → 10,1 ms (+2,0%) | 691 → 667 | 701.567 → 1.045.445 | 0 → 0 |
-| 5x5 CTF, 16:9 baixo | 10,1 → 10,0 ms (-1,0%) | 698 → 718 | 708.665 → 1.057.780 | 0 → 0 |
-| 8x8 DM, 16:9 baixo | 9,8 → 10,0 ms (+2,0%) | 833 → 729 | 759.606 → 1.086.830 | 0 → 0 |
-| 8x8 CTF, 16:9 baixo | 9,9 → 10,2 ms (+3,0%) | 780 → 751 | 751.851 → 1.104.244 | 0 → 0 |
+| 5x5 DM, 3:2 médio | 9,9 → 9,9 ms (0,0%) | 1.390 → 957 | 1.513.731 → 2.037.369 | 0 → 0 |
+| 5x5 CTF, 3:2 médio | 9,8 → 9,6 ms (-2,0%) | 1.392 → 950 | 1.538.193 → 2.014.287 | 0 → 0 |
+| 8x8 DM, 3:2 médio | 9,7 → 9,8 ms (+1,0%) | 1.511 → 1.008 | 1.616.644 → 2.160.573 | 0 → 0 |
+| 8x8 CTF, 3:2 médio | 9,8 → 10,2 ms (+4,1%) | 1.565 → 1.002 | 1.644.390 → 2.151.913 | 0 → 0 |
+| 5x5 DM, 16:9 baixo | 9,8 → 10,1 ms (+3,1%) | 690 → 664 | 706.374 → 1.006.443 | 0 → 0 |
+| 5x5 CTF, 16:9 baixo | 10,0 → 9,9 ms (-1,0%) | 698 → 684 | 707.259 → 1.023.660 | 0 → 0 |
+| 8x8 DM, 16:9 baixo | 9,8 → 10,0 ms (+2,0%) | 710 → 693 | 764.144 → 1.067.833 | 0 → 0 |
+| 8x8 CTF, 16:9 baixo | 9,7 → 9,7 ms (0,0%) | 716 → 700 | 766.640 → 1.055.492 | 0 → 0 |
 
 Recibos locais ignorados pelo Git:
 
 - `artifacts/atacadao/alpha262-paired-baseline/receipt.json`, SHA-256
-  `17dc038f5c372fd745b0bd6e48fb8ba5ae17aa60485a552e424a703d99e7cd9f`;
+  `e6a417947af6a5c0f61f82818a396961c14ccea3ef47c5416de2d9fd4d52e8aa`;
 - `artifacts/atacadao/alpha262-paired-candidate/receipt.json`, SHA-256
-  `2d9d7c141115faaffc5d7c77981554594328489713689e7f04001999a5c0b6ab`.
+  `0311e2689d26a9d64285ed79d01d252f2f955ee01b1b6b5cd75d59258ac58e0b`.
 
 O replay visual final, com fumaça removida apenas do harness e fachada útil no
 lugar do antigo plano de telhado, passou nas oito células. Todos os cenários
@@ -260,13 +262,13 @@ com HTTP 200. O único 404 foi `/api/geo-lang` no servidor estático local; não
 houve `pageerror` e ele não participa do mapa.
 
 - mapa servido/local, SHA-256
-  `7153344ea9f746a4796da1c0982dcd6c8444ea0642c5911f23915d91acda1fd8`;
+  `27b41784600d91a9e8294e02c177d1059093fa202ba9cbf0aa5e4d0c96493aee`;
 - `artifacts/atacadao/alpha262-final-captures/receipt.json`, SHA-256
-  `50d05293af54426d3b88a1a9c4b30892d4400e2128c378d7ece2b5439f7230a6`;
+  `8d89a91c69fcc53fc5cf8d2e36b3bd8c80e54b4545bfcc2b86fb4c4486e126c9`;
 - `artifacts/atacadao/alpha262-final-contact-3x2.png`, SHA-256
-  `a2c1a1a8f2ef1818bc1cee3208cafef19b495ff33e001b9af794626c770bde18`;
+  `4abdf04174175df3bd6e1a9d9fb7e62a4a6ef7b0dbc631e543954484cbe9ff90`;
 - `artifacts/atacadao/alpha262-final-contact-16x9.png`, SHA-256
-  `21157ab7c0471a5ee4ec426fca50c8e130da8d2141e68b5613531202dc67b3fc`.
+  `2df7499e34bf55b6d0cc67c15c420bfb18f043990f36acefc5116fcfea001f66`.
 
 ### Gates finais e dívidas separadas
 
@@ -275,6 +277,10 @@ estão verdes. O mapa tem MAP1 zero, MAP2B 1,85 m/45 m², MAP4 zero occluder
 invisível, MAP5 pior 5,16 m e CTF2 com pelo menos duas rotas. Bots de 60 s
 passaram nas quatro células: stuck 2,089%/1,322% em 5x5 DM/CTF e
 2,533%/1,011% em 8x8 DM/CTF, com `spinRoam` entre 0,024 e 0,034.
+`docs:check`, `arch:check`, build e o portão de comentários também passam. O
+`check:deploy` conserva apenas UIR15 vermelho em `eval:redesign`; o diff deste
+PR não toca `game.js`, DOM/CSS de resultado ou assets de personagem medidos por
+UIR15, logo é dívida global herdada e não foi maquiada nesta lane.
 
 O aceite humano continua necessário e não é substituído pelos gates:
 

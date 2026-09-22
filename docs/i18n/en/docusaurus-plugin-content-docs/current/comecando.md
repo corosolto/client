@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 48,882 lines in 96 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 48,880 lines in 96 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,483** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,534 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -236,7 +236,7 @@ The maps registered today, and which mode each one opens in:
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 490 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 289 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 241 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 787 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 785 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 403 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 1,061 |
 | `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 1,008 |
