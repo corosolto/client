@@ -760,3 +760,29 @@ aspectos, mas mãos, contato, ADS e movimento ainda dependem de revisão humana.
 Recibo:
 [`VIEWMODEL-RIFLES-M92-KINEMATION-2026-09-22.md`](VIEWMODEL-RIFLES-M92-KINEMATION-2026-09-22.md).
 `ready:false`, família AK e global permanecem desligados. Próximo rig: AKM.
+
+### Marco de rig legado — AKM KINEMATION em 22/09/2026
+
+A AKM deixou o rig `*_metarig` e foi reautorada sobre o checkpoint final da M4
+KINEMATION. O produto `ebcfd0d3…` (1.487.308 bytes) mantém a malha pública
+própria, o pente curvo completo e a trava real do pente, agora com 55/55 ossos
+do contrato e três camadas de mãos skinadas. As seis ações estão presentes; as
+duas recargas percorrem 0,3873 m com o pente e 0,0056 m com a trava, retornando
+as duas peças a zero. A fonte não possui alavanca de manejo separável, e a
+receita não inventa uma.
+
+O gate causal passou 13 mutantes. O lifecycle passou 10/10 controles, 30
+ciclos/540 amostras. A calibração individual passou nas duas proporções:
+0,913× e 93,5% visível em 3:2; 0,905× e 93,5% visível em 16:9, com o braço
+abaixo do orçamento de 1,4×. O contrato do arsenal agora fica vermelho somente
+por G3 e AWP.
+
+A captura real ligada ao checkpoint `22db178b6` produziu 20 PNGs em 1440×960 e
+1440×810, sem erro fatal. Evidência privada:
+`evidence/akm-kinemation-20260922-0426`; `capture.json` SHA-256
+`0ed39d63d10607b1787cac7944e710d6c4797a93a425adcadcd514b943ca1467`.
+As folhas de contato não mostram desaparecimento, inversão ou quebra entre
+aspectos. A inclinação do eixo, mãos, contatos, ADS e movimento ainda dependem
+de revisão humana. Recibo:
+[`VIEWMODEL-RIFLES-AKM-KINEMATION-2026-09-22.md`](VIEWMODEL-RIFLES-AKM-KINEMATION-2026-09-22.md).
+`ready:false`, família AK e global permanecem desligados. Próximo rig: G3.

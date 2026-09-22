@@ -119,7 +119,7 @@
       "mechanism": "complete-curved-rock-in-mag/real-magazine-catch/source-no-separable-charging-handle",
       "ready": false,
       "sourceBranch": "codex/viewmodels-catalog-final (rig KINEMATION via m4-final.blend)",
-      "sourceCommit": "pending",
+      "sourceCommit": "22db178b6",
       "rebuild": "tools/viewmodels/prep/rifles-akm-final.py"
     },
     "g3": {
