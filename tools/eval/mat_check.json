@@ -1,5 +1,5 @@
 {
- "gerado": "2026-09-01T12:11:37.535Z",
+ "gerado": "2026-09-07T04:04:26.539Z",
  "renderer": {
   "toneMappingInicial": "ACESFilmicToneMapping",
   "toneMappingExposureInicial": 1.25,
@@ -346,7 +346,7 @@
  ],
  "caminhos": {
   "vm": {
-   "linha": 1497,
+   "linha": 1498,
    "fonte": "(obj) => obj.traverse((o) => { if (!o.isMesh || !o.material) return; if (!VM_MAT_LEGACY && temEnv) return; // MAT1: mesmo GLB, mesmo material, nos 3 caminhos o.material = o.material.clone(); if ('meta",
    "metalFactor": 1,
    "roughFactor": 1,
@@ -357,7 +357,7 @@
    "mutacoes": []
   },
   "chao_drop": {
-   "linha": 5949,
+   "linha": 5954,
    "mutacoes": []
   },
   "tp_mount": {
@@ -511,14 +511,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.993,
+    "opacidadeSprite": 0.998,
     "escalaSprite": [
-     3.12,
-     5.06
+     3.02,
+     5.04
     ],
     "spritesCobrindoCentro": 9,
-    "alfaAcumuladoCentro": 0.9383,
-    "maiorAlfaSprite": 0.612,
+    "alfaAcumuladoCentro": 0.9752,
+    "maiorAlfaSprite": 0.559,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -846,14 +846,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#81a3c4",
-    "opacidadeSprite": 0.995,
+    "opacidadeSprite": 0.988,
     "escalaSprite": [
-     3,
-     4.98
+     3.1,
+     5.04
     ],
-    "spritesCobrindoCentro": 12,
-    "alfaAcumuladoCentro": 0.9935,
-    "maiorAlfaSprite": 0.655,
+    "spritesCobrindoCentro": 13,
+    "alfaAcumuladoCentro": 0.9997,
+    "maiorAlfaSprite": 0.678,
     "radianciaFumaca": 0.3467,
     "radianciaCeu": 0.4623,
     "razaoFumacaCeu": 0.75,
@@ -1070,14 +1070,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#8facca",
-    "opacidadeSprite": 0.993,
+    "opacidadeSprite": 0.975,
     "escalaSprite": [
-     3.08,
-     5.06
+     3,
+     5.14
     ],
-    "spritesCobrindoCentro": 4,
-    "alfaAcumuladoCentro": 0.8727,
-    "maiorAlfaSprite": 0.651,
+    "spritesCobrindoCentro": 15,
+    "alfaAcumuladoCentro": 0.9997,
+    "maiorAlfaSprite": 0.71,
     "radianciaFumaca": 0.3969,
     "radianciaCeu": 0.5292,
     "razaoFumacaCeu": 0.75,
@@ -1231,14 +1231,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#91adca",
-    "opacidadeSprite": 0.989,
+    "opacidadeSprite": 0.987,
     "escalaSprite": [
-     3.18,
-     4.9
+     3.02,
+     4.94
     ],
-    "spritesCobrindoCentro": 14,
-    "alfaAcumuladoCentro": 0.9996,
-    "maiorAlfaSprite": 0.759,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.9952,
+    "maiorAlfaSprite": 0.745,
     "radianciaFumaca": 0.4019,
     "radianciaCeu": 0.5359,
     "razaoFumacaCeu": 0.75,
@@ -1419,14 +1419,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#9f7d69",
-    "opacidadeSprite": 0.998,
+    "opacidadeSprite": 0.97,
     "escalaSprite": [
-     3.02,
-     5.1
+     3.06,
+     5.16
     ],
-    "spritesCobrindoCentro": 10,
-    "alfaAcumuladoCentro": 0.9991,
-    "maiorAlfaSprite": 0.831,
+    "spritesCobrindoCentro": 13,
+    "alfaAcumuladoCentro": 0.9998,
+    "maiorAlfaSprite": 0.713,
     "radianciaFumaca": 0.2312,
     "radianciaCeu": 0.3082,
     "razaoFumacaCeu": 0.75,
@@ -1776,14 +1776,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#a3846f",
-    "opacidadeSprite": 0.992,
+    "opacidadeSprite": 0.984,
     "escalaSprite": [
-     3,
-     5.08
+     3.02,
+     5.18
     ],
-    "spritesCobrindoCentro": 9,
-    "alfaAcumuladoCentro": 0.9977,
-    "maiorAlfaSprite": 0.77,
+    "spritesCobrindoCentro": 7,
+    "alfaAcumuladoCentro": 0.971,
+    "maiorAlfaSprite": 0.536,
     "radianciaFumaca": 0.2548,
     "radianciaCeu": 0.3398,
     "razaoFumacaCeu": 0.75,
@@ -2309,14 +2309,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#a3c0d2",
-    "opacidadeSprite": 0.994,
+    "opacidadeSprite": 0.988,
     "escalaSprite": [
-     3.18,
-     5.12
+     3.12,
+     5.16
     ],
-    "spritesCobrindoCentro": 10,
-    "alfaAcumuladoCentro": 0.9922,
-    "maiorAlfaSprite": 0.697,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.9988,
+    "maiorAlfaSprite": 0.663,
     "radianciaFumaca": 0.4997,
     "radianciaCeu": 0.6663,
     "razaoFumacaCeu": 0.75,
@@ -2523,14 +2523,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#9b7d6a",
-    "opacidadeSprite": 0.993,
+    "opacidadeSprite": 0.988,
     "escalaSprite": [
-     3.14,
-     5.06
+     3.02,
+     4.98
     ],
-    "spritesCobrindoCentro": 9,
-    "alfaAcumuladoCentro": 0.9781,
-    "maiorAlfaSprite": 0.692,
+    "spritesCobrindoCentro": 12,
+    "alfaAcumuladoCentro": 0.9993,
+    "maiorAlfaSprite": 0.764,
     "radianciaFumaca": 0.2278,
     "radianciaCeu": 0.3037,
     "razaoFumacaCeu": 0.75,
@@ -2698,14 +2698,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#bcc0bf",
-    "opacidadeSprite": 0.997,
+    "opacidadeSprite": 0.985,
     "escalaSprite": [
-     3.06,
-     5.16
+     3.04,
+     4.98
     ],
-    "spritesCobrindoCentro": 15,
-    "alfaAcumuladoCentro": 0.9997,
-    "maiorAlfaSprite": 0.875,
+    "spritesCobrindoCentro": 9,
+    "alfaAcumuladoCentro": 0.9853,
+    "maiorAlfaSprite": 0.678,
     "radianciaFumaca": 0.5209,
     "radianciaCeu": 0.6945,
     "razaoFumacaCeu": 0.75,
@@ -3190,14 +3190,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#af8f69",
-    "opacidadeSprite": 0.978,
+    "opacidadeSprite": 0.996,
     "escalaSprite": [
-     3.12,
-     5.18
+     3,
+     5.16
     ],
-    "spritesCobrindoCentro": 14,
-    "alfaAcumuladoCentro": 0.9998,
-    "maiorAlfaSprite": 0.856,
+    "spritesCobrindoCentro": 13,
+    "alfaAcumuladoCentro": 0.9981,
+    "maiorAlfaSprite": 0.692,
     "radianciaFumaca": 0.2977,
     "radianciaCeu": 0.3969,
     "razaoFumacaCeu": 0.75,
@@ -3492,14 +3492,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.986,
+    "opacidadeSprite": 0.982,
     "escalaSprite": [
-     3.08,
-     5.18
+     3.18,
+     4.96
     ],
-    "spritesCobrindoCentro": 13,
-    "alfaAcumuladoCentro": 0.9998,
-    "maiorAlfaSprite": 0.867,
+    "spritesCobrindoCentro": 8,
+    "alfaAcumuladoCentro": 0.9621,
+    "maiorAlfaSprite": 0.554,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -4302,14 +4302,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.976,
+    "opacidadeSprite": 0.995,
     "escalaSprite": [
-     3.04,
+     3.14,
      5.18
     ],
-    "spritesCobrindoCentro": 14,
-    "alfaAcumuladoCentro": 0.9993,
-    "maiorAlfaSprite": 0.742,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.998,
+    "maiorAlfaSprite": 0.752,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -5543,14 +5543,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.973,
+    "opacidadeSprite": 0.991,
     "escalaSprite": [
-     3.14,
+     3,
      5.06
     ],
     "spritesCobrindoCentro": 12,
-    "alfaAcumuladoCentro": 0.9968,
-    "maiorAlfaSprite": 0.575,
+    "alfaAcumuladoCentro": 0.9985,
+    "maiorAlfaSprite": 0.611,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -6514,14 +6514,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.967,
+    "opacidadeSprite": 0.996,
     "escalaSprite": [
-     3.04,
-     4.9
+     3.24,
+     5.18
     ],
-    "spritesCobrindoCentro": 10,
-    "alfaAcumuladoCentro": 0.9874,
-    "maiorAlfaSprite": 0.663,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.9929,
+    "maiorAlfaSprite": 0.661,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -6675,14 +6675,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.991,
+    "opacidadeSprite": 0.984,
     "escalaSprite": [
-     3,
-     5.16
+     3.14,
+     5.2
     ],
     "spritesCobrindoCentro": 10,
-    "alfaAcumuladoCentro": 0.9985,
-    "maiorAlfaSprite": 0.825,
+    "alfaAcumuladoCentro": 0.982,
+    "maiorAlfaSprite": 0.627,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -6845,14 +6845,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.993,
+    "opacidadeSprite": 0.992,
     "escalaSprite": [
-     3.04,
-     5.18
+     3.1,
+     5.02
     ],
-    "spritesCobrindoCentro": 9,
-    "alfaAcumuladoCentro": 0.999,
-    "maiorAlfaSprite": 0.78,
+    "spritesCobrindoCentro": 13,
+    "alfaAcumuladoCentro": 0.9858,
+    "maiorAlfaSprite": 0.641,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -7015,14 +7015,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.993,
+    "opacidadeSprite": 0.995,
     "escalaSprite": [
-     3.04,
-     5.08
+     3.06,
+     5.16
     ],
     "spritesCobrindoCentro": 12,
-    "alfaAcumuladoCentro": 0.9975,
-    "maiorAlfaSprite": 0.701,
+    "alfaAcumuladoCentro": 0.9943,
+    "maiorAlfaSprite": 0.863,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
