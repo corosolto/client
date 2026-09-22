@@ -18,15 +18,15 @@
     "g3sg1": {
       "family": "g3",
       "file": "viewmodels/g3/g3sg1-baked-runtime.glb",
-      "sourceSha256": "5169685b0f2932a9a7352375bde90cac117be6b8409590ac79a8006ed1a12088",
-      "sourceBytes": 4037144,
-      "sha256": "3334e5a272db8576ba9c6ca43f8ec13a5adbf55fcbb4ec2847c4e578743681be",
-      "bytes": 4080224,
+      "sourceSha256": "6fdfdd487b303266f62f0ebcea1717327634d7135c8337200478ad475a3c8a92",
+      "sourceBytes": 1896875,
+      "sha256": "f6959a3ae2efbc4191ac48bc77f9e10b4ddf220d8acf979f5598cfff5047002c",
+      "bytes": 1523360,
       "mechanism": "detachable-mag/hk-slap",
       "ready": false,
       "sourceBranch": "claude/vm-dmr-final",
       "sourceCommit": "701e98e44b8944cb9642ff00492740c77e75acf5",
-      "rebuild": "tools/viewmodels/prep/dmr-build.py + dmr-contato.py + dmr-assemble.py + optimize_paid_family.mjs + dmr-action-contract.mjs"
+      "rebuild": "tools/viewmodels/prep/dmr-g3sg1-final.py + dmr-g3sg1-contact.mjs"
     }
   }
 }

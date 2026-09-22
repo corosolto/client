@@ -49,6 +49,16 @@ check(assembler.includes('pose_primeira_chave') && assembler.includes('mundo_do_
   && assembler.includes('recursosMint') && assembler.includes('EXT_texture_webp'),
   'assembly usa idle@t0 e transporta os recursos de material próprios');
 
+const g3Recipe = fs.readFileSync(path.join(root, 'tools/viewmodels/prep/dmr-g3sg1-final.py'), 'utf8');
+check(g3Recipe.includes('G3_KINEMATION_SHA') && g3Recipe.includes('VM_PRODUCT_G3SG1')
+  && g3Recipe.includes('MINT_ALAVANCA_G3SG1') && g3Recipe.includes('output-dir deve ficar fora do Git'),
+  'receita G3SG1 trava fontes, produto, mecanismo próprio e saída privada');
+const g3Contact = fs.readFileSync(path.join(root, 'tools/viewmodels/prep/dmr-g3sg1-contact.mjs'), 'utf8');
+check(g3Contact.includes('SOURCE_SHA') && g3Contact.includes('HAND_L_DELTA')
+  && g3Contact.includes("clips.join(',') !== 'idle,reload_tactical,reload_empty'")
+  && g3Contact.includes('output-dir precisa ficar fora do Git'),
+  'receita de contato G3SG1 trava fonte e aplica a mão somente nos três clips previstos');
+
 const failed = checks.filter((entry) => !entry.ok);
 console.log(JSON.stringify({ ok: failed.length === 0, checks: checks.length,
   failed: failed.map((entry) => entry.label) }));

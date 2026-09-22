@@ -45,6 +45,7 @@ const ARSENAL = {
   rem700: {
     glb: path.join(ASSET_ROOT, manifest.candidates.rem700.file),
     sha256: manifest.candidates.rem700.sha256,
+    cameraFov: 80,
     len: 1.15,
     clipes: ['idle', 'shoot', 'reload_start', 'reload_loop', 'reload_end', 'reload_empty', 'inspect'],
     mecanismo: 'bolt',
@@ -60,12 +61,13 @@ const ARSENAL = {
   g3sg1: {
     glb: path.join(ASSET_ROOT, manifest.candidates.g3sg1.file),
     sha256: manifest.candidates.g3sg1.sha256,
+    cameraFov: 74,
     len: 1.12,
     clipes: ['idle', 'shoot', 'reload_tactical', 'reload_empty', 'inspect'],
     mecanismo: 'mag',
     material: 'Matte Scope Marksman Material',
     imagemCor: 'Color_edb9974f-fbad-42fd-b4fd-c91f1c470759',
-    referenciaIdle: { centro: [-0.0496, 1.5352, 0.3408], eixoMaior: 2, tolerancia: 0.08 },
+    referenciaIdle: { centro: [0.039, 1.7456, 0.4394], eixoMaior: 2, tolerancia: 0.08 },
     mecanismos: [
       { parte: 'MINT_MAG_G3SG1', clipe: 'reload_tactical', min: 0.08, maxVerts: 800 },
       // alavanca de armar (HK slap no fim do reload_empty)
@@ -222,7 +224,8 @@ function inspeciona(gltf, cfg, arma) {
   check(!!camera, `${arma}: câmera VIEWMODEL ausente`);
   const cameraInverse = camera?.matrixWorld.clone().invert() || null;
   if (camera) {
-    check(Math.abs(camera.fov - 80) < 0.5, `${arma}: fov da câmera ${camera.fov} ≠ 80`);
+    check(Math.abs(camera.fov - cfg.cameraFov) < 0.5,
+      `${arma}: fov da câmera ${camera.fov} ≠ ${cfg.cameraFov}`);
   }
   const maoMateriais = [];
   const malhasArma = [];
@@ -473,6 +476,14 @@ const MUTANTES = {
     const corpo = cena.getObjectByName(`MINT_WEAPON_${arma.toUpperCase()}`);
     if (!parte || !parte.parent || !corpo) throw new Error('mutação não aplicou (peça/corpo ausente)');
     const paiAntes = parte.parent;
+    if (paiAntes === corpo) {
+      const clipe = g.animations.find((animacao) => animacao.name === cfg.mecanismos[0].clipe);
+      const total = clipe?.tracks?.length || 0;
+      if (!clipe) throw new Error('mutação não aplicou (clipe ausente)');
+      clipe.tracks = clipe.tracks.filter((track) => !track.name.startsWith(`${parte.name}.`));
+      if (clipe.tracks.length === total) throw new Error('mutação não aplicou (track da peça ausente)');
+      return;
+    }
     corpo.attach(parte);
     if (parte.parent === paiAntes) throw new Error('mutação não aplicou (pai não mudou)');
   },

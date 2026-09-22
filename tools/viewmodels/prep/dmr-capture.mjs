@@ -69,13 +69,15 @@ for (const [arma, cfg] of Object.entries(ARSENAL)) {
             reserve: document.getElementById('ammo-reserve')?.textContent?.trim() || null,
             expectedMag: ammo?.mag ?? null,
             expectedReserve: ammo?.res ?? null,
-          } };
+          },
+          scoped: Boolean(window.__game?.player?.scoped) };
       }, arma);
       if (runtime.hud.weapon !== arma || runtime.hud.src !== `/img/weapons/${arma}.webp`
         || Number(runtime.hud.mag) !== runtime.hud.expectedMag
         || (runtime.hud.reserve !== '∞' && Number(runtime.hud.reserve) !== runtime.hud.expectedReserve)) {
         throw new Error(`${arma}/${state}/${tag}: HUD divergiu do armamento equipado: ${JSON.stringify(runtime.hud)}`);
       }
+      if (state === 'ads' && !runtime.scoped) throw new Error(`${arma}/${tag}: captura ADS sem scope ativo`);
       await page.screenshot({ path: file });
       records.push({ arma, viewport: { width: vw, height: vh }, state, runtime,
         file: path.relative(OUT, file), bytes: fs.statSync(file).size, sha256: sha256(file) });
@@ -129,7 +131,8 @@ for (const [arma, cfg] of Object.entries(ARSENAL)) {
     }
 
     // ADS: alça no eixo óptico via setAim
-    await page.evaluate((w) => { window.__authoredVm.setAim(w, 1); }, arma);
+    await page.evaluate(() => { window.__vmPrecisionQa.ads(); });
+    await page.waitForFunction(() => window.__game?.player?.scoped === true, null, { timeout: 5000 });
     await page.waitForTimeout(400);
     await snap('ads');
     await page.close();
