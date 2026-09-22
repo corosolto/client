@@ -35,7 +35,7 @@ try {
     if(r.url().includes('/melee/knife-hires.glb'))knifeUrl=r.url();
     if(r.status()>=400&&/viewmodels|vmhands/.test(r.url()))report.errors.push(`${r.status()} ${r.url()}`);
   });
-  const response=await page.goto(`${base}/?debug=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`,{waitUntil:'commit',timeout:180000});
+  const response=await page.goto(`${base}/?debug=1&vmauthored=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`,{waitUntil:'commit',timeout:180000});
   if(!response?.ok())throw Error(`HTML do jogo: HTTP ${response?.status()}`);
   await page.waitForFunction(()=>window.__game?.state==='live'&&window.__game?.vm?.melee?.loaded,null,{timeout:180000});
   await page.evaluate(()=>{

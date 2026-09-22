@@ -94,7 +94,7 @@ const resultados = [];
 for (const arma of ARMAS) {
   const page = await browser.newPage({ viewport: { width: 640, height: 400 } });
   try {
-    await page.goto(`${BASE}/?debug=1&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0`,
+    await page.goto(`${BASE}/?debug=1&vmauthored=1&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0`,
       { waitUntil: 'load', timeout: 180000 });
     await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
     await page.waitForFunction((w) => Boolean(window.__authoredVm?.entry?.(w)?.scene), arma, { timeout: 120000 });

@@ -62,7 +62,7 @@ try {
       const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
       const ads = MUT === 'sem-ads' ? '' : '&vmads=1';
       await page.goto(
-        `${BASE}/?debug=1&auto=E&vmweapon=${id}&map=brasilia&armaslazy=0&vmready=${familia}${ads}`,
+        `${BASE}/?debug=1&auto=E&vmauthored=1&vmweapon=${id}&map=brasilia&armaslazy=0&vmready=${familia}${ads}`,
         { waitUntil: 'load', timeout: 180000 },
       );
       await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });

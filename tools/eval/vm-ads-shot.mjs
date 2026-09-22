@@ -27,7 +27,7 @@ await fs.mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 try {
-  await page.goto(`http://127.0.0.1:${PORTA}/?debug=1&auto=E&vmweapon=${ARMA}&map=brasilia&armaslazy=0&cs16=1`,
+  await page.goto(`http://127.0.0.1:${PORTA}/?debug=1&vmauthored=1&auto=E&vmweapon=${ARMA}&map=brasilia&armaslazy=0&cs16=1`,
     { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.waitForFunction((w) => window.__authoredVm?.entry?.(w)?.mint?.active, ARMA, { timeout: 120000 });

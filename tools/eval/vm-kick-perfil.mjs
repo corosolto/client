@@ -95,7 +95,7 @@ const browser = await chromium.launch({
 for (const arma of ARMAS) {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
   try {
-    await page.goto(`${BASE}/?debug=1&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0&${QS_MODO}`,
+    await page.goto(`${BASE}/?debug=1&vmauthored=1&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0&${QS_MODO}`,
       { waitUntil: 'load', timeout: 180000 });
     await page.waitForFunction(() => window.__game?.player, null, { timeout: 180000 });
     await page.waitForFunction((w) => window.__authoredVm?.entry?.(w), arma, { timeout: 180000 });

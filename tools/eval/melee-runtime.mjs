@@ -74,7 +74,7 @@ try {
     if (/\/viewmodels\/|\/js\/meleevm\.js/.test(response.url())) report.errors.push(text);
   });
   console.log('melee: abrindo jogo e carregando GLB');
-  const response = await page.goto(`${base}/?debug=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`, { waitUntil: 'commit', timeout: 180000 });
+  const response = await page.goto(`${base}/?debug=1&vmauthored=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`, { waitUntil: 'commit', timeout: 180000 });
   if (!response?.ok()) throw Error(`HTML do jogo: HTTP ${response?.status()}`);
   console.log('melee: HTML recebido; aguardando Game live e GLB ativo');
   await page.waitForFunction(() => window.__game?.state === 'live' && window.__game?.vm?.melee?.active, null, { timeout: 180000 });
