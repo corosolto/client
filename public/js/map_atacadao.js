@@ -160,9 +160,8 @@ export function buildAtacadao(scene, T) {
   const superficies = [];
   const marcarSuperficie = (m, tipo) => { m.userData.atacadaoSuperficie = tipo; superficies.push(m); return m; };
 
-  // O layout repete centenas de caixas com as mesmas medidas. Reutilizar a
-  // geometria mantém cada material/transformação independente e evita upload,
-  // binding e coleta de centenas de buffers idênticos no perfil médio.
+  // Reutilizar geometrias iguais preserva materiais/transformações e evita
+  // upload, binding e coleta de centenas de buffers repetidos.
   const boxGeoCache = new Map(), planeGeoCache = new Map();
   const boxGeo = (w, h, d) => {
     const key = `${w}|${h}|${d}`;
@@ -686,9 +685,8 @@ export function buildAtacadao(scene, T) {
 
   const groundHeightAt = () => 0;
   const slowAt = () => false;
-  // Bots consultam LOS muitas vezes por frame. O layout já mantém AABBs autoritativas
-  // para cada parede, rack, caixa e cover; o slab test evita percorrer centenas de
-  // meshes decorativas sem mudar os volumes sólidos que bloqueiam a visão tática.
+  // O slab test usa os AABBs autoritativos e evita percorrer centenas de malhas
+  // decorativas sem mudar os volumes sólidos que bloqueiam a visão tática.
   const rayOccluded = (raycaster) => {
     const o = raycaster.ray.origin, d = raycaster.ray.direction;
     const near = Math.max(0, raycaster.near || 0), far = raycaster.far;
