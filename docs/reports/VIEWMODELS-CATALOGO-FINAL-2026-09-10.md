@@ -786,3 +786,29 @@ aspectos. A inclinação do eixo, mãos, contatos, ADS e movimento ainda depende
 de revisão humana. Recibo:
 [`VIEWMODEL-RIFLES-AKM-KINEMATION-2026-09-22.md`](VIEWMODEL-RIFLES-AKM-KINEMATION-2026-09-22.md).
 `ready:false`, família AK e global permanecem desligados. Próximo rig: G3.
+
+### Marco de rig legado — G3 KINEMATION em 22/09/2026
+
+A G3 deixou o rig `*_metarig` e foi reautorada sobre o checkpoint final da M4
+KINEMATION. O produto `6a4cd484…` (1.607.272 bytes) mantém a malha pública
+própria, o pente reto completo e os dois botões reais de retenção, agora com
+55/55 ossos do contrato e três camadas de mãos skinadas. As seis ações estão
+presentes; as duas recargas percorrem 0,3873 m com o pente e 0,0056 m com os
+botões, retornando as peças a zero. A fonte não possui alavanca de manejo
+separável, e a receita não inventa uma.
+
+O gate causal passou 13 mutantes. O lifecycle passou 10/10 controles, 30
+ciclos/540 amostras. A calibração individual passou nas duas proporções:
+1,038× e 97,6% visível em 3:2; 1,006× e 97,6% visível em 16:9, com o braço
+abaixo do orçamento de 1,4×. O contrato do arsenal agora fica vermelho somente
+por AWP.
+
+A captura real ligada ao checkpoint `d0037ac08` produziu 20 PNGs em 1440×960 e
+1440×810, sem erro fatal. Evidência privada:
+`evidence/g3-kinemation-20260922-0440`; `capture.json` SHA-256
+`7f662ff1045a7fd3830532f2087b0d8eb4b58dc7158a816a04b52cbb80b16c84`.
+As folhas de contato não mostram desaparecimento, inversão ou quebra entre
+aspectos. A inclinação do eixo, mãos, contatos, ADS e movimento ainda dependem
+de revisão humana. Recibo:
+[`VIEWMODEL-RIFLES-G3-KINEMATION-2026-09-22.md`](VIEWMODEL-RIFLES-G3-KINEMATION-2026-09-22.md).
+`ready:false`, família G3 e global permanecem desligados. Próximo rig: AWP.

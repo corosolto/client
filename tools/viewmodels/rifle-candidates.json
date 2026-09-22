@@ -134,7 +134,7 @@
       "mechanism": "straight-detachable-mag/bilateral-real-magazine-buttons/source-no-separable-charging-handle",
       "ready": false,
       "sourceBranch": "codex/viewmodels-catalog-final (rig KINEMATION via m4-final.blend)",
-      "sourceCommit": "pending",
+      "sourceCommit": "d0037ac08",
       "rebuild": "tools/viewmodels/prep/rifles-g3-final.py"
     },
     "m400": {
