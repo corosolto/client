@@ -128,6 +128,7 @@ function inspeciona(gltf, cfg, arma) {
   let camera = null;
   cena.traverse((o) => { if (!camera && o.isPerspectiveCamera) camera = o; });
   check(!!camera, `${arma}: câmera VIEWMODEL ausente`);
+  const cameraInverse = camera?.matrixWorld.clone().invert() || null;
   if (camera) {
     check(Math.abs(camera.fov - 80) < 0.5, `${arma}: fov da câmera ${camera.fov} ≠ 80`);
   }
@@ -211,7 +212,16 @@ function inspeciona(gltf, cfg, arma) {
     {
       const m_ = cena.getObjectByName('SOCKET_MINT_MUZZLE');
       const s_ = cena.getObjectByName('SOCKET_MINT_SIGHT');
-      if (m_ && s_ && !box.isEmpty()) {
+      if (m_ && s_ && !box.isEmpty() && cameraInverse) {
+        // O runtime remove a câmera embutida e transforma o pacote por sua
+        // inversa antes de montar o viewmodel. O teste antigo escolhia o sinal
+        // do eixo a partir do próprio socket chamado "muzzle": um produto
+        // inteiro invertido continuava verde. Em câmera, frente é -Z.
+        const bocaCamera = m_.getWorldPosition(new THREE.Vector3()).applyMatrix4(cameraInverse);
+        const miraCamera = s_.getWorldPosition(new THREE.Vector3()).applyMatrix4(cameraInverse);
+        const bocaAFrente = bocaCamera.z < miraCamera.z - 0.02;
+        check(bocaAFrente,
+          `${arma}: muzzle não fica à frente da sight na câmera autorada (${bocaCamera.z.toFixed(3)} >= ${miraCamera.z.toFixed(3)})`);
         const eixoArma = box.getSize(new THREE.Vector3());
         const maior = new THREE.Vector3(
           eixoArma.x >= eixoArma.y && eixoArma.x >= eixoArma.z ? 1 : 0,
@@ -225,6 +235,9 @@ function inspeciona(gltf, cfg, arma) {
           .sub(s_.getWorldPosition(new THREE.Vector3())).normalize();
         eixoAds = ads.angleTo(maior) * 57.2958;
         check(eixoAds < 12, `${arma}: eixo ADS ${eixoAds.toFixed(1)}° do cano (>12°)`);
+        resultado.socketCamera = {
+          muzzleZ: +bocaCamera.z.toFixed(4), sightZ: +miraCamera.z.toFixed(4), bocaAFrente,
+        };
       }
     }
 
@@ -307,6 +320,17 @@ const MUTANTES = {
   renomeia_mint: (g) => { const n = g.scene.getObjectByName('MINT_WEAPON_REM700') || g.scene.getObjectByName('MINT_WEAPON_G3SG1'); if (!n) throw new Error('mutação não aplicou'); n.name = 'X'; },
   tira_camera: (g) => { const c = g.scene.children.find((o) => o.isPerspectiveCamera); if (!c) throw new Error('mutação não aplicou'); c.fov = 40; },
   desloca_socket: (g) => { const s = g.scene.getObjectByName('SOCKET_MINT_MUZZLE'); if (!s) throw new Error('mutação não aplicou'); s.translateX(0.2); },
+  troca_sockets: (g) => {
+    // Controle adversarial para o erro real da Rem700: o gate geométrico
+    // antigo seguia o nome do socket e aceitava as duas extremidades trocadas.
+    const m = g.scene.getObjectByName('SOCKET_MINT_MUZZLE');
+    const s = g.scene.getObjectByName('SOCKET_MINT_SIGHT');
+    if (!m || !s || m.parent !== s.parent) throw new Error('mutação não aplicou (sockets/pais)');
+    const p = m.position.clone();
+    m.position.copy(s.position);
+    s.position.copy(p);
+    g.scene.updateMatrixWorld(true);
+  },
   desalinha_corpo_idle: (g) => {
     const n = g.scene.getObjectByName('MINT_WEAPON_REM700') || g.scene.getObjectByName('MINT_WEAPON_G3SG1');
     if (!n) throw new Error('mutação não aplicou');
