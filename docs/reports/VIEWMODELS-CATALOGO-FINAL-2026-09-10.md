@@ -1051,3 +1051,19 @@ A integração é `3d816f8d7`; o preview imutável é
 `preview-snapshots/3d816f8d7-6c6c1ba3`.
 A candidata segue `ready:false`, família/global off e aguarda revisão humana.
 PT-38 permaneceu intocada.
+
+## Auditoria final técnica — 22/09/2026
+
+O inventário final fecha em 26 armas: 24 produtos privados e os controles públicos AK/faca.
+Vinte e três produtos privados passam produto, mãos KINEMATION, ações, mecanismo, contatos,
+ADS, HUD/fallback, lifecycle e enquadramento 3:2/16:9. A PT-38 permanece congelada: seus gates
+funcionais passam, mas enquadramento e ocupação dos braços continuam vermelhos. Nenhuma flag
+`ready:true` foi criada; famílias e portão global continuam desligados.
+
+O `eval:vm-precision-tools` tinha um falso negativo no macOS pela diferença `/tmp` versus
+`/private/tmp`; `4e7ba20b2` canonicaliza somente o fixture e devolve 10/10 sem alterar produto ou
+runtime. A régua cruzada passa 23/23 quando exclui explicitamente a PT-38 congelada. Todos os 24
+produtos têm capturas reais 3:2/16:9 sem erro fatal, e AK/faca aparecem como controles reais.
+
+Inventário por arma, hashes, gates, evidências, CI e as cinco URLs de revisão por família estão em
+[`VIEWMODELS-AUDITORIA-FINAL-2026-09-22.md`](VIEWMODELS-AUDITORIA-FINAL-2026-09-22.md).
