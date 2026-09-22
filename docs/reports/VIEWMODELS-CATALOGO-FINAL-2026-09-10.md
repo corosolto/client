@@ -984,6 +984,27 @@ Recibo:
 A candidata segue `ready:false`, família/global off e aguarda revisão humana.
 PT-38 permaneceu intocada.
 
+### Correção product-first — LMG em 22/09/2026
+
+A LMG preserva a MGX5, mãos KINEMATION, cinco ações e os cinco mecanismos de
+alimentação. A receita remove 4.050 triângulos de manga proximal e aproxima o
+produto 6 cm, sem câmera, FOV, frame de família ou runtime. O produto privado
+`3552c724…` (6.466.928 bytes) mantém os dez grupos de dedos a 0,01–0,16 mm.
+
+A régua agora mede o núcleo rígido da LMG separadamente dos mecanismos
+animados, que continuam no gate mecânico. O núcleo passa em 3:2 com
+0,723×/94,89%/0,608× de braço e em 16:9 com 0,691×/94,89%/0,586×. A faixa
+própria `0,65–0,85×` foi fixada pela captura causal: forçar a escala da AK
+atravessava o ADS pelo near plane. O eixo mede 8,2°, com boca à frente.
+
+O gate LMG passa 16 mutantes; o lifecycle passa 13/13 controles e 600 amostras;
+rig, HUD, inspect e foundation permanecem verdes. A captura ligada a
+`184ae76b7` produziu 32 PNGs nas duas proporções, sem erro fatal, em
+`evidence/lmg-product-final-184ae76b7`. Recibo:
+[`VIEWMODEL-HEAVY-LMG-PRODUCT-FIRST-2026-09-22.md`](VIEWMODEL-HEAVY-LMG-PRODUCT-FIRST-2026-09-22.md).
+A candidata continua `ready:false`, família/global off. A mão de apoio durante
+as recargas ainda depende de revisão humana. PT-38 permaneceu intocada.
+
 ### Correção product-first — Shotgun em 22/09/2026
 
 O gate RED `5ce180160` reprovou o falso verde da Shotgun anterior: 4.242 faces
