@@ -2,7 +2,11 @@
 
 ## Revalidação R8 em 22/09/2026
 - Estado atual, gates, mutantes, matriz 5×5/8×8 e roteiro humano: `docs/reports/ESCADAO-R8-REVALIDACAO.md`.
-- A geometria/circulação atual passa; bots DM 8×8 e CTF 5×5 e 32 decalques locais ausentes continuam bloqueando conclusão.
+- Base `v2.0.0-alpha.262` integrada; correção map-local `38541cecf` recua o spawn alto e desloca o objetivo `RUA` para o bolsão oeste, sem runtime/material compartilhado.
+- Geometria, circulação, janelas, casas e CTF passam. A matriz de nove sementes ficou abaixo de 4% nas quatro células: DM 5×5 1,944%, DM 8×8 1,089%, CTF 5×5 3,467% e CTF 8×8 3,511%.
+- Chrome real: EV0–EV7, três mutantes de runtime, anéis e três mutantes de anel verdes; CENA 380/460 calls e 809.447/930.000 triângulos.
+- Dívida herdada reproduzida: 45 requisições 404, 44 paths únicos (32 PNG, 10 MP3, dois manifests); `quality-mapas` também herda QMAP1/QMAP3 de Carandiru em `main`.
+- Próximo: playtest humano no servidor 8148, aceite visual/competitivo e revisão independente. PR #567 permanece draft e sem automerge.
 
 ## Estado ativo após atualização de 06/09/2026
 - Branch ativa: `codex/escadao-main`, sobre `origin/main` 69555790 (alpha.223), na mesma worktree. A branch anterior `codex/escadao-visual` permanece em 072e6d71. Registros R1–R3 abaixo são históricos.
