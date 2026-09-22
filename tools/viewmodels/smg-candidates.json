@@ -40,19 +40,19 @@
       "displayName": "P90 CHINELÃO",
       "family": "p90",
       "file": "viewmodels/p90/p90-baked-runtime.glb",
-      "sourceSha256": "bcc168ba41a001fb0e374b0500215f3f6ebd17aaf63480512a5c547fcf67139b",
-      "sourceBytes": 7855720,
-      "productSha256": "85f87b74df8207e8c6ae27a47a7844eb960d76f238299dbf26551886da0aac74",
-      "productBytes": 10904196,
-      "sha256": "85f87b74df8207e8c6ae27a47a7844eb960d76f238299dbf26551886da0aac74",
-      "bytes": 10904196,
+      "sourceSha256": "6fda87809ab60e1fea7a1e7bf5ebc5355e6ee70d595f7c4610ed88e847560aa2",
+      "sourceBytes": 254312,
+      "productSha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
+      "productBytes": 1477620,
+      "sha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
+      "bytes": 1477620,
       "mechanism": "top-mag/dual-release/charger/mechanism/trigger",
       "ready": false,
-      "sourceBranch": "private-generated/viewmodels/p90",
+      "sourceBranch": "public/models/weapons/p90.glb + private g3-kinemation checkpoint",
       "sourceCommit": null,
-      "rebuild": "tools/viewmodels/prep/p90-final.mjs",
-      "foundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102",
-      "foundationBytes": 3764304
+      "rebuild": "tools/viewmodels/prep/smg-p90-kinemation.py",
+      "foundationSha256": "35f3d2daf6c83096b33b8e1178220ebf6b7b268d1a8017acd376d65a078e0c21",
+      "foundationBytes": 1827612
     }
   }
 }

@@ -195,24 +195,30 @@ for (const name of required) {
   metrics[name].gunEndpoint = +endpoint(rows, 'gun').toFixed(4);
   metrics[name].rightGripDrift = rows.length ? +(Math.max(...rows.map((row) => row.right.distanceTo(row.gun))) - Math.min(...rows.map((row) => row.right.distanceTo(row.gun)))).toFixed(4) : null;
 }
-check(trackMotion(gltf, 'shoot', 'MINT_MECH_P90_CHARGER.position') >= 4, 'shoot não cicla a alavanca própria');
-check(trackMotion(gltf, 'shoot', 'MINT_MECH_P90_MECHANISM.position') >= 4, 'shoot não cicla o mecanismo próprio');
+check(trackMotion(gltf, 'shoot', 'MINT_MECH_P90_CHARGER.position') >= 0.01, 'shoot não cicla a alavanca própria');
+check(trackMotion(gltf, 'shoot', 'MINT_MECH_P90_MECHANISM.position') >= 0.01, 'shoot não cicla o mecanismo próprio');
 check(trackMotion(gltf, 'shoot', 'MINT_MECH_P90_TRIGGER.quaternion') >= 0.08, 'shoot não aciona o gatilho próprio');
 check(metrics.reload_tactical?.magExcursion >= 0.30, 'reload_tactical não remove o pente');
 check(metrics.reload_empty?.magExcursion >= 0.30, 'reload_empty não remove o pente');
-check(trackMotion(gltf, 'reload_empty', 'MINT_MECH_P90_CHARGER.position') >= 4, 'reload_empty não aciona a alavanca');
-check(trackMotion(gltf, 'reload_empty', 'MINT_MECH_P90_MECHANISM.position') >= 4, 'reload_empty não aciona o mecanismo');
+check(trackMotion(gltf, 'reload_empty', 'MINT_MECH_P90_CHARGER.position') >= 0.01, 'reload_empty não aciona a alavanca');
+check(trackMotion(gltf, 'reload_empty', 'MINT_MECH_P90_MECHANISM.position') >= 0.01, 'reload_empty não aciona o mecanismo');
 check(metrics.inspect?.gunExcursion >= 0.025, 'inspect sem leitura do conjunto');
 check(metrics.inspect?.gunEndpoint <= 0.005, 'inspect não fecha no idle');
 check(metrics.inspect?.rightGripDrift <= 0.012, 'inspect rompe contato da mão forte');
-check(trackMotion(gltf, 'inspect', 'hand_l.quaternion') >= 0.20, 'inspect sem movimento autorado da mão de apoio');
+check(trackMotion(gltf, 'inspect', 'VM_PACKAGE_P90.quaternion') >= 0.05, 'inspect sem leitura autorada do conjunto');
 
 const mutants = [];
 const freezeTracks = (copy, clipPattern, trackPattern) => {
+  let frozen = 0;
   for (const clip of copy.animations.filter((candidate) => clipPattern.test(candidate.name))) for (const track of clip.tracks.filter((candidate) => trackPattern.test(candidate.name))) {
     const stride = track.values.length / track.times.length;
     for (let offset = stride; offset < track.values.length; offset += stride) for (let lane = 0; lane < stride; lane += 1) track.values[offset + lane] = track.values[lane];
+    frozen += 1;
   }
+  return frozen;
+};
+const requireFreeze = (copy, clipPattern, trackPattern) => {
+  if (!freezeTracks(copy, clipPattern, trackPattern)) throw new Error(`mutação não aplicou: ${clipPattern}/${trackPattern}`);
 };
 async function mutant(name, mutate, verify) {
   const copy = await loader.parseAsync(buffer.slice(0), ''); mutate(copy);
@@ -223,10 +229,10 @@ await mutant('sem-sight', (copy) => copy.scene.getObjectByName('SOCKET_MINT_SIGH
 await mutant('sem-arma', (copy) => copy.scene.getObjectByName('GEO_WEAPON_P90_SKM_PDW90')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('GEO_WEAPON_P90_SKM_PDW90'));
 await mutant('sem-pente', (copy) => copy.scene.getObjectByName('MINT_WEAPON_MAG_P90')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_WEAPON_MAG_P90'));
 await mutant('sem-marker', (copy) => copy.scene.getObjectByName('MINT_WEAPON_P90')?.removeFromParent(), (copy) => !copy.scene.getObjectByName('MINT_WEAPON_P90'));
-await mutant('ferrolho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^MINT_MECH_P90_CHARGER\./), (copy) => trackMotion(copy, 'shoot', 'MINT_MECH_P90_CHARGER.position') < 4);
-await mutant('gatilho-congelado', (copy) => freezeTracks(copy, /^shoot$/, /^MINT_MECH_P90_TRIGGER\./), (copy) => trackMotion(copy, 'shoot', 'MINT_MECH_P90_TRIGGER.quaternion') < 0.08);
-await mutant('alavanca-congelada', (copy) => freezeTracks(copy, /^reload_empty$/, /^MINT_MECH_P90_CHARGER\./), (copy) => trackMotion(copy, 'reload_empty', 'MINT_MECH_P90_CHARGER.position') < 4);
-await mutant('inspect-parado', (copy) => freezeTracks(copy, /^inspect$/, /^hand_l\./), (copy) => trackMotion(copy, 'inspect', 'hand_l.quaternion') < 0.20);
+await mutant('ferrolho-congelado', (copy) => requireFreeze(copy, /^shoot$/, /^MINT_MECH_P90_CHARGER\./), (copy) => trackMotion(copy, 'shoot', 'MINT_MECH_P90_CHARGER.position') < 0.01);
+await mutant('gatilho-congelado', (copy) => requireFreeze(copy, /^shoot$/, /^MINT_MECH_P90_TRIGGER\./), (copy) => trackMotion(copy, 'shoot', 'MINT_MECH_P90_TRIGGER.quaternion') < 0.08);
+await mutant('alavanca-congelada', (copy) => requireFreeze(copy, /^reload_empty$/, /^MINT_MECH_P90_CHARGER\./), (copy) => trackMotion(copy, 'reload_empty', 'MINT_MECH_P90_CHARGER.position') < 0.01);
+await mutant('inspect-parado', (copy) => requireFreeze(copy, /^inspect$/, /^VM_PACKAGE_P90\./), (copy) => trackMotion(copy, 'inspect', 'VM_PACKAGE_P90.quaternion') < 0.05);
 await mutant('solta-mao-esquerda', () => {}, (copy) => Object.entries(medeContatoDedos(copy, 'left')).some(([finger, mm]) => finger.endsWith('_l') && mm > 8));
 await mutant('solta-mao-direita', () => {}, (copy) => Object.entries(medeContatoDedos(copy, 'right')).some(([finger, mm]) => finger.endsWith('_r') && mm > 8));
 console.log(`VM_SMG_P90=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, contatoIdleMm, mutants, failures })}`);

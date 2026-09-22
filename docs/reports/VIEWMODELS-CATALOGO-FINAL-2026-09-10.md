@@ -915,3 +915,24 @@ fatal. Evidência privada: `evidence/dmr-g3sg1-kinemation-f222d4991`. Recibo:
 A candidata permanece `ready:false`; família G3 e global continuam desligados.
 Aprovação humana de mãos, escala, inclinação, recarga, inspect e ADS permanece
 pendente.
+
+### Reautoria SMG — P90 KINEMATION em 22/09/2026
+
+O produto P90 anterior foi reprovado por imagem e por um novo gate causal: a
+arma estava desmontada, o eixo apontava para trás e as mãos ficavam até 154,93
+mm longe da malha. O checkpoint RED é `93f215487`.
+
+A nova receita `smg-p90-kinemation.py` usa a P90 pública coerente sobre o rig,
+as três camadas de mãos e as ações da G3 KINEMATION aprovada. O produto preserva
+pente superior, reténs bilaterais, alavanca, mecanismo e gatilho próprios. A
+régua fecha em 0,988×/97,3% no 3:2 e 0,934×/97,3% no 16:9, braço 0,627×/0,600×,
+eixo de 11° com boca à frente. Os dez grupos de dedos medem 0,00–0,09 mm e os
+mutantes independentes soltam cada mão e reprovam.
+
+O lifecycle passa 30 ciclos/540 amostras. Foram geradas 22 capturas reais de
+idle, draw, tiro, recargas, inspect e ADS sem erro fatal em
+`evidence/p90-kinemation-candidate7` (fora do Git). A candidata continua
+`ready:false`, família P90/global off e aguarda revisão humana. Recibo:
+[`VIEWMODEL-SMG-P90-KINEMATION-2026-09-22.md`](VIEWMODEL-SMG-P90-KINEMATION-2026-09-22.md).
+Próximo diagnóstico produto-first: MP5. PT-38 permanece congelada até comparação
+humana explícita.
