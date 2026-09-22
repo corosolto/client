@@ -164,7 +164,7 @@
       "mechanism": "complete-detachable-mag/real-right-bolt-handle/source-magazine-release-fused-into-receiver",
       "ready": false,
       "sourceBranch": "codex/viewmodels-catalog-final (rig KINEMATION via m4-final.blend)",
-      "sourceCommit": "pending",
+      "sourceCommit": "920d2e6ca",
       "rebuild": "tools/viewmodels/prep/rifles-awp-final.py"
     }
   }

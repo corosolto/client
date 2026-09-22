@@ -812,3 +812,30 @@ aspectos. A inclinação do eixo, mãos, contatos, ADS e movimento ainda depende
 de revisão humana. Recibo:
 [`VIEWMODEL-RIFLES-G3-KINEMATION-2026-09-22.md`](VIEWMODEL-RIFLES-G3-KINEMATION-2026-09-22.md).
 `ready:false`, família G3 e global permanecem desligados. Próximo rig: AWP.
+
+### Marco de rig legado — AWP KINEMATION em 22/09/2026
+
+A AWP deixou o rig `*_metarig` e foi reautorada sobre o checkpoint final da M4
+KINEMATION. O produto `3e6b77e4…` (1.486.132 bytes) mantém a malha pública
+própria, o pente completo e a alavanca real do ferrolho, agora com 55/55 ossos
+do contrato e três camadas de mãos skinadas. As seis ações estão presentes; as
+duas recargas percorrem 0,3873 m com o pente, o ferrolho percorre 0,1000 m no
+tiro e na recarga vazia e fica fechado na tática. A trava do pente é fundida ao
+receiver da fonte, e a receita não inventa uma.
+
+O gate causal passou 14 mutantes, com mutantes próprios para cada ciclo do
+ferrolho. O lifecycle passou 10/10 controles, 30 ciclos/540 amostras. A
+calibração individual passou nas duas proporções: 0,936× e 95,3% visível em
+3:2; 0,890× e 96,0% visível em 16:9, com o braço abaixo do orçamento de 1,4×.
+O contrato `eval:vm-rig` agora fica verde nas 24 candidatas medidas: não resta
+rig legado nem ação obrigatória faltando.
+
+A captura real ligada ao checkpoint `920d2e6ca` produziu 22 PNGs em 1440×960 e
+1440×810, incluindo ADS e scope, sem erro fatal. Evidência privada:
+`evidence/awp-kinemation-20260922-0455`; `capture.json` SHA-256
+`76dd0608011347825c8a8e9b9eb2faca86089e9a3d5bc7a2467b4a6491e9c665`.
+As folhas de contato não mostram desaparecimento, inversão ou quebra entre
+aspectos, mas mãos, contatos, ADS/scope e movimento ainda dependem de revisão
+humana. Recibo:
+[`VIEWMODEL-RIFLES-AWP-KINEMATION-2026-09-22.md`](VIEWMODEL-RIFLES-AWP-KINEMATION-2026-09-22.md).
+`ready:false`, família sniper e global permanecem desligados.
