@@ -112,15 +112,15 @@
       "file": "viewmodels/ak/akm-baked-runtime.glb",
       "sourceSha256": "3b835674db9d5c11d75f8652ef3edc9794e529091bff91795eb3e08881bfd0b3",
       "sourceBytes": 273828,
-      "productSha256": "54c72408d40dfc9bf7c37beddffa4411c7ecc8ba9f20f8ce7b7c4ce8b270a378",
-      "productBytes": 2614644,
-      "sha256": "54c72408d40dfc9bf7c37beddffa4411c7ecc8ba9f20f8ce7b7c4ce8b270a378",
-      "bytes": 2614644,
+      "productSha256": "ebcfd0d3b7874bdb0420040ae65f055408210f34162ab227041d9b29e898dda2",
+      "productBytes": 1487308,
+      "sha256": "ebcfd0d3b7874bdb0420040ae65f055408210f34162ab227041d9b29e898dda2",
+      "bytes": 1487308,
       "mechanism": "complete-curved-rock-in-mag/real-magazine-catch/source-no-separable-charging-handle",
       "ready": false,
-      "sourceBranch": "codex/viewmodels-catalog-final",
-      "sourceCommit": "d11df56dd",
-      "rebuild": "tools/viewmodels/prep/rifles-akm-final.py + optimize_paid_family.mjs"
+      "sourceBranch": "codex/viewmodels-catalog-final (rig KINEMATION via m4-final.blend)",
+      "sourceCommit": "pending",
+      "rebuild": "tools/viewmodels/prep/rifles-akm-final.py"
     },
     "g3": {
       "family": "g3",
