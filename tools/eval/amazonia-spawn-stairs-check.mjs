@@ -3,7 +3,7 @@ import { THREE, MAPS, bootGame, initTextures } from './harness.mjs';
 import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.slice(10) || '';
-if (mutant && !['virar-b', 'bloquear-lance', 'fechar-janela'].includes(mutant)) throw Error('Mutante desconhecido');
+if (mutant && !['virar-b', 'bloquear-lance', 'fechar-janela', 'fechar-janela-e'].includes(mutant)) throw Error('Mutante desconhecido');
 if (mutant === 'virar-b') {
   const source = new URL('../../public/js/map_amazonia.js', import.meta.url), target = new URL(`../../public/js/.amz-stairs-${process.pid}.mjs`, import.meta.url);
   const before = '{ x: 17, z: 29, d: [-1, 0], e: 1 }', text = readFileSync(source, 'utf8');
@@ -17,8 +17,11 @@ if (mutant === 'bloquear-lance') {
   const f = stationB.peEscada, z = f.z + Math.sign(stationB.patamar.z-f.z);
   world.colliders.push({ minX:f.x-1, maxX:f.x+1, minZ:z-.2, maxZ:z+.2, minY:0, maxY:8 });
 }
-const cabin = world.cabins.find(c => c.x === 17 && c.z === 29), window = cabin.windows.find(w => w.wall === 'left');
-if (mutant === 'fechar-janela') {
+const spawnCabins = [[14,-27,'E'],[17,29,'B']].map(([x,z,team]) => {
+  const cabin = world.cabins.find(c => c.x === x && c.z === z);
+  return { team, cabin, window:cabin.windows.find(w => w.wall === 'left') };
+});
+for (const {team,window} of spawnCabins) if ((mutant === 'fechar-janela' && team === 'B') || (mutant === 'fechar-janela-e' && team === 'E')) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(.16, window.top-window.bottom, window.width), new THREE.MeshBasicMaterial());
   mesh.position.fromArray(window.center); world.root.add(mesh); world.occluders.push(mesh); mesh.updateMatrixWorld(true);
 }
@@ -38,13 +41,16 @@ const records = stations.map(station => {
   return { station:[station.x,station.z], foot, top, spawn, facing, ticks, end:p.pos.toArray(),
     facingRespawn:facing>0, climbed:ticks<600 && Math.abs(p.pos.y-world.amazonia.deckY)<.05 };
 });
-const origin = new THREE.Vector3(window.center[0]+.6, cabin.floorY+1.6, window.center[2]);
-const views = [-.4,0,.4].map(dz => {
-  const target = new THREE.Vector3(0,-.12,origin.z+dz), dir = target.clone().sub(origin), dist = dir.length();
-  const hits = new THREE.Raycaster(origin,dir.normalize(),0,dist-.05).intersectObjects(world.occluders,true);
-  return { target:target.toArray(), hits:hits.length, first:hits[0] ? {name:hits[0].object.name,distance:hits[0].distance} : null };
+const riverViews = spawnCabins.map(({team,cabin,window}) => {
+  const origin = new THREE.Vector3(window.center[0]+.6, cabin.floorY+1.6, window.center[2]);
+  const views = [-.4,0,.4].map(dz => {
+    const target = new THREE.Vector3(0,-.12,origin.z+dz), dir = target.clone().sub(origin), dist = dir.length();
+    const hits = new THREE.Raycaster(origin,dir.normalize(),0,dist-.05).intersectObjects(world.occluders,true);
+    return { target:target.toArray(), hits:hits.length, first:hits[0] ? {name:hits[0].object.name,distance:hits[0].distance} : null };
+  });
+  return {team,station:[cabin.x,cabin.z],windowOrigin:origin.toArray(),views,clear:views.every(v=>v.hits===0)};
 });
-const valid = records.length === world.cabins.length-1 && records.every(r => r.facingRespawn && r.climbed) && views.every(v=>v.hits===0);
-const report = { valid, mutant, scope:'Geometria procedural e física reais no arnês Node; GLBs e imagem WebGL não medidos.', records, windowOrigin:origin.toArray(), views };
+const valid = records.length === world.cabins.length-1 && records.every(r => r.facingRespawn && r.climbed) && riverViews.every(v=>v.clear);
+const report = { valid, mutant, scope:'Geometria procedural e física reais no arnês Node; GLBs e imagem WebGL não medidos.', records, riverViews };
 const out = process.argv.find(a=>a.startsWith('--out='))?.slice(6); if(out)writeFileSync(out,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report,null,2)); game.dispose(); process.exit(valid ? 0 : 1);

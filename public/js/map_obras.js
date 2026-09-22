@@ -1,6 +1,7 @@
 // Obras da Prefeitura: canteiro de obra eterna (paródia), simétrico em z=0 (E ao sul, B ao
 // norte). Colisão só AABB. Mesmo contrato build(scene, T) da Loja H.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -179,7 +180,7 @@ export function buildObras(scene, T) {
   const hemi = new THREE.HemisphereLight(0xfff0d8, 0x4a4030, 1.05); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff0d0, 1.5);
   sun.position.set(24, 40, -14); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -38; sun.shadow.camera.right = 38; sun.shadow.camera.top = 44; sun.shadow.camera.bottom = -44;
   sun.shadow.camera.far = 150; sun.shadow.bias = -0.0004; scene.add(sun);
   const fill = new THREE.DirectionalLight(0xdfeeff, 0.4); fill.position.set(-18, 30, 12); scene.add(fill);
