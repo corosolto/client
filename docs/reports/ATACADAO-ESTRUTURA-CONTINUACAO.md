@@ -1,6 +1,6 @@
 # Atacadão da Treta — continuação da revisão estrutural
 
-Atualizado em 10/09/2026. Esta é a fonte de continuidade da lane isolada do
+Atualizado em 22/09/2026. Esta é a fonte de continuidade da lane isolada do
 Atacadão. Ela não autoriza merge nem deploy e não substitui a aprovação visual
 humana.
 
@@ -23,10 +23,10 @@ A lane fica tecnicamente pronta quando:
 
 - worktree: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/atacadao-estrutura-r1`
 - branch: `codex/atacadao-estrutura-r1`
-- base verificada: `origin/main@2115d5e2c29eefb4491ae63b0f1600c200a750bb`
+- base verificada: `origin/main@60ad7501323ef076263f645bfca341e2454fce6b`
 - PR draft: [#582](https://github.com/corosolto/client/pull/582)
 - preview da base: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/previews/atacadao-main-2115d5e`
-- candidata local: `http://localhost:8161/?debug=1&auto=P,mst&map=atacadao_treta&perfilauto=0&ctf=1`
+- candidata local: `http://127.0.0.1:8161/?debug=1&map=atacadao_treta&perfilauto=0`
 - base local: `http://localhost:8163/?debug=1&auto=P,mst&map=atacadao_treta&perfilauto=0&ctf=1`
 
 ## Inventário de autoria e PRs
@@ -64,8 +64,10 @@ Resultado atual:
 - 265 nós, 1.038 arestas, grafo conectado; 66 pickups válidos.
 
 O detalhe repetido usa `PropBatch`. Há um rack GLB hero por cabeceira e módulos
-procedurais no miolo. Isso mantém a silhueta, os colliders e a leitura de estoque,
-sem repetir o custo do mesmo molde 48 vezes.
+procedurais instanciados no miolo. Cada um dos 48 módulos preserva um marcador e
+colisor autoritativo próprio; as malhas visuais repetidas compartilham geometria e
+`InstancedMesh`. Isso mantém a silhueta, a causalidade dos mutantes e a leitura de
+estoque sem repetir os buffers e draw calls de cada peça.
 
 ## Assets e proveniência
 
@@ -206,3 +208,87 @@ Nesta base, `ATA1..ATA10` continuam verdes. A medição direcionada mantém MAP2
 em 1,85 m/45,0 m², MAP5 em 5,16 m e CTF2 com no mínimo duas rotas independentes.
 Assim, a sincronização resolve a divergência da branch sem mascarar as falhas
 globais herdadas já documentadas.
+
+## Fechamento técnico sobre a alpha.262 — 22/09/2026
+
+A branch recebeu `origin/main@60ad7501323ef076263f645bfca341e2454fce6b`
+por merge normal, sem rebase ou force-push. Os únicos conflitos eram blocos
+documentais gerados; a resolução tomou os blocos atuais da `main`, e `npm run
+docs`/`npm run arch` os regeneram depois deste ledger. Não entrou asset novo,
+material compartilhado ou mudança no runtime global.
+
+### Correção causal de performance
+
+O primeiro replay sobre a alpha.262 mostrou regressão de CPU no perfil médio.
+A correção ficou inteiramente em `map_atacadao.js`:
+
+- geometrias `BoxGeometry`/`PlaneGeometry` de mesmas dimensões são reutilizadas;
+- as peças procedurais repetidas dos racks usam `InstancedMesh`, mantendo os 48
+  marcadores, colliders e o lote visível removível pelos mutantes;
+- o mapa expõe `rayOccluded` por AABB contra os colliders autoritativos, evitando
+  raycast pelas centenas de malhas decorativas durante o raciocínio dos bots.
+
+O A/B pareado foi repetido em processos Chrome frescos e na mesma janela de
+carga da máquina. Isso é necessário porque, durante a medição, processos Lean,
+Spotlight e Parsec elevaram tanto a base quanto a candidata de cerca de 10 ms
+para 16–18 ms no perfil médio. Comparar a base ociosa com a candidata sob essa
+carga produziria um falso vermelho.
+
+| Célula | p95 base → candidata | Calls base → candidata | Tris base → candidata | >100 ms |
+| --- | ---: | ---: | ---: | ---: |
+| 5x5 DM, 3:2 médio | 16,7 → 17,7 ms (+6,0%) | 1.488 → 1.040 | 1.571.737 → 2.085.905 | 0 → 0 |
+| 5x5 CTF, 3:2 médio | 16,7 → 18,1 ms (+8,4%) | 1.488 → 1.038 | 1.554.434 → 2.086.841 | 0 → 0 |
+| 8x8 DM, 3:2 médio | 17,0 → 17,8 ms (+4,7%) | 1.607 → 1.063 | 1.670.658 → 2.227.461 | 0 → 0 |
+| 8x8 CTF, 3:2 médio | 17,9 → 17,8 ms (-0,6%) | 1.561 → 1.131 | 1.692.602 → 2.240.321 | 0 → 0 |
+| 5x5 DM, 16:9 baixo | 9,9 → 10,1 ms (+2,0%) | 691 → 667 | 701.567 → 1.045.445 | 0 → 0 |
+| 5x5 CTF, 16:9 baixo | 10,1 → 10,0 ms (-1,0%) | 698 → 718 | 708.665 → 1.057.780 | 0 → 0 |
+| 8x8 DM, 16:9 baixo | 9,8 → 10,0 ms (+2,0%) | 833 → 729 | 759.606 → 1.086.830 | 0 → 0 |
+| 8x8 CTF, 16:9 baixo | 9,9 → 10,2 ms (+3,0%) | 780 → 751 | 751.851 → 1.104.244 | 0 → 0 |
+
+Recibos locais ignorados pelo Git:
+
+- `artifacts/atacadao/alpha262-paired-baseline/receipt.json`, SHA-256
+  `17dc038f5c372fd745b0bd6e48fb8ba5ae17aa60485a552e424a703d99e7cd9f`;
+- `artifacts/atacadao/alpha262-paired-candidate/receipt.json`, SHA-256
+  `2d9d7c141115faaffc5d7c77981554594328489713689e7f04001999a5c0b6ab`.
+
+O replay visual final, com fumaça removida apenas do harness e fachada útil no
+lugar do antigo plano de telhado, passou nas oito células. Todos os cenários
+carregaram o mapa, a contagem correta de bots, DM/CTF correto, 265 nós, 48
+racks, 12 coberturas, seis freezers, cinco seções, seis caixas e os sete GLBs
+com HTTP 200. O único 404 foi `/api/geo-lang` no servidor estático local; não
+houve `pageerror` e ele não participa do mapa.
+
+- mapa servido/local, SHA-256
+  `7153344ea9f746a4796da1c0982dcd6c8444ea0642c5911f23915d91acda1fd8`;
+- `artifacts/atacadao/alpha262-final-captures/receipt.json`, SHA-256
+  `50d05293af54426d3b88a1a9c4b30892d4400e2128c378d7ece2b5439f7230a6`;
+- `artifacts/atacadao/alpha262-final-contact-3x2.png`, SHA-256
+  `a2c1a1a8f2ef1818bc1cee3208cafef19b495ff33e001b9af794626c770bde18`;
+- `artifacts/atacadao/alpha262-final-contact-16x9.png`, SHA-256
+  `21157ab7c0471a5ee4ec426fca50c8e130da8d2141e68b5613531202dc67b3fc`.
+
+### Gates finais e dívidas separadas
+
+`ATA1..ATA10`, os sete mutantes, `eval:mapcontrato`, `map-check` e `eval:ctfwin`
+estão verdes. O mapa tem MAP1 zero, MAP2B 1,85 m/45 m², MAP4 zero occluder
+invisível, MAP5 pior 5,16 m e CTF2 com pelo menos duas rotas. Bots de 60 s
+passaram nas quatro células: stuck 2,089%/1,322% em 5x5 DM/CTF e
+2,533%/1,011% em 8x8 DM/CTF, com `spinRoam` entre 0,024 e 0,034.
+
+O aceite humano continua necessário e não é substituído pelos gates:
+
+1. jogar 5x5 DM e confirmar largura dos corredores, caixa central e acesso à doca;
+2. jogar 8x8 CTF e confirmar fluxo oeste/centro/leste e o MID;
+3. observar a assimetria MAP2 dos spawns (E exposto 18,8%, B 3,6%) e decidir se
+   ela cria defesa interessante ou vantagem indevida;
+4. revisar fachada e os contatos 3:2/16:9: o atacarejo está reconhecível e as
+   rotas são legíveis, mas módulos cinza, repetição de grafites/placas e a
+   iluminação muito limpa ainda são dívidas visuais reais.
+
+Não há bloqueio de licença conhecido para os sete assets já versionados: os
+três itens Mint têm pack/chat/item e licença Mint Pro registrados; os quatro
+itens Replicate têm conta, provider e pipeline registrados em `mint-assets.json`
+e `public/models/props/FONTE.md`. Qualquer novo asset deve abrir novo registro
+de proveniência antes de entrar. O PR deve permanecer draft, com automerge
+desativado, até esse playtest visual/jogável.
