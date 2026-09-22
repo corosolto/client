@@ -1,5 +1,9 @@
 # Deagle final técnica — alpha.252
 
+> **Superado em 22/09/2026.** O produto mantinha 2.056 faces da manga presas ao
+> `upperarm_twist`, ocupando 3,837×/3,736× a silhueta da AK. O recibo atual é
+> [`VIEWMODEL-PISTOL-DEAGLE-PRODUCT-FIRST-2026-09-22.md`](VIEWMODEL-PISTOL-DEAGLE-PRODUCT-FIRST-2026-09-22.md).
+
 ## Resultado
 
 A Deagle agora tem um produto privado único com a DGL50 própria, duas mãos completas,

@@ -960,3 +960,26 @@ A captura final produziu 22 PNGs em 1440×960 e 1440×810, sem erro fatal, em
 [`VIEWMODEL-SMG-MP5-KINEMATION-2026-09-22.md`](VIEWMODEL-SMG-MP5-KINEMATION-2026-09-22.md).
 A candidata segue `ready:false`, família/global off e aguarda revisão humana.
 PT-38 permanece congelada até comparação humana explícita.
+
+### Correção product-first — Deagle em 22/09/2026
+
+O gate RED `1e196b91a` expôs o falso verde do produto anterior: 2.056 faces da
+manga ainda eram dominadas pelos ossos do braço superior, levando a ocupação
+dos braços a 3,837×/3,736× a silhueta da AK. A arma em si já passava escala,
+visibilidade e eixo.
+
+A receita da Deagle agora remove somente essas faces proximais e compacta a
+malha skinada, preservando antebraços, luvas, mãos, cinco ações e mecanismos.
+O produto privado `d482ff82…` (3.246.776 bytes) passa em 3:2 com
+0,927×/100,0%/1,329× de braço e em 16:9 com 0,911×/100,0%/1,292×. O eixo
+mede 7,1° com boca à frente da alça, sem mudança de câmera ou FOV.
+
+O gate causal passa 11 mutantes, incluindo contatos independentes, movimentos
+congelados e reintrodução de manga proximal. A mão forte mede 0,00–0,01 mm e a
+mão de apoio 0,00–19,50 mm. O lifecycle passa 10/10 controles e 540 amostras;
+HUD e inspect permanecem verdes. A captura real gerou 20 PNGs em 3:2/16:9,
+com ADS ativo e zero erro fatal, em `evidence/deagle-product-20260922`.
+Recibo:
+[`VIEWMODEL-PISTOL-DEAGLE-PRODUCT-FIRST-2026-09-22.md`](VIEWMODEL-PISTOL-DEAGLE-PRODUCT-FIRST-2026-09-22.md).
+A candidata segue `ready:false`, família/global off e aguarda revisão humana.
+PT-38 permaneceu intocada.
