@@ -26,9 +26,8 @@
 // shower stalls, a glass skylight roof — and rows of weapons on the deck.
 // Same buildWorld contract as map.js.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { decalIds, paredeAtras } from './map_decals.js';
-import { applyAniso } from './textures.js';
-import { fabricasUV } from './map_uv.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
 
 const HALF_X = 17, HALF_Z = 25;   // interior half-extents (walls sit just outside)
@@ -36,7 +35,7 @@ const WALL_H = 7, CEIL = 7;
 
 /* ---------- inline procedural tile textures ---------- */
 function mkTex(c, rx = 1, rz = 1, clamp = false) {
-  const t = applyAniso(new THREE.CanvasTexture(c));
+  const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter;
   t.wrapS = t.wrapT = clamp ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
   t.repeat.set(rx, rz);
@@ -74,10 +73,8 @@ export function buildPoolDay(scene, T) {
   scene.add(root);
 
   const lam = (opts) => new THREE.MeshLambertMaterial(opts);
-  /* UV em metros (map_uv.js): densidade de texel pelo tamanho no mundo. */
-  const { box: geoBox, plano: geoPlano, cilindro: geoCil } = fabricasUV();
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
-    const m = new THREE.Mesh(geoBox(w, h, d, mat), mat);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set(x, y + h / 2, z);
     m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
@@ -94,7 +91,7 @@ export function buildPoolDay(scene, T) {
     return m;
   }
   function addPlane(w, h, mat, x, y, z, ry = 0, rx = 0) {
-    const m = new THREE.Mesh(geoPlano(w, h, mat), mat);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
     m.position.set(x, y, z); m.rotation.y = ry; m.rotation.x = rx;
     m.receiveShadow = true; root.add(m); return m;
   }
@@ -149,7 +146,7 @@ export function buildPoolDay(scene, T) {
   }
 
   /* ---------------- floor tiles framing the pool hole ---------------- */
-  const addFloor = (w, d, x, z) => { const m = new THREE.Mesh(geoPlano(w, d, MAT.floor), MAT.floor); m.rotation.x = -Math.PI / 2; m.position.set(x, 0, z); m.receiveShadow = true; root.add(m); };
+  const addFloor = (w, d, x, z) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), MAT.floor); m.rotation.x = -Math.PI / 2; m.position.set(x, 0, z); m.receiveShadow = true; root.add(m); };
   addFloor(HALF_X * 2, HALF_Z - nZ, 0, (nZ + HALF_Z) / 2);
   addFloor(HALF_X * 2, sZ + HALF_Z, 0, (sZ - HALF_Z) / 2);
   addFloor(HALF_X - nX, nZ - sZ, (nX + HALF_X) / 2, POOL.cz);
@@ -157,7 +154,7 @@ export function buildPoolDay(scene, T) {
 
   /* ---------------- the pool ---------------- */
   {
-    const fl = new THREE.Mesh(geoPlano(POOL.hx * 2, POOL.hz * 2, MAT.pool), MAT.pool);
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(POOL.hx * 2, POOL.hz * 2), MAT.pool);
     fl.rotation.x = -Math.PI / 2; fl.position.set(POOL.cx, -POOL.depth + 0.02, POOL.cz); fl.receiveShadow = true; root.add(fl);
     const ang = Math.atan2(POOL.depth, POOL.m), L = Math.hypot(POOL.depth, POOL.m);
     addBox(POOL.hx * 2, 0.1, L, MAT.pool, POOL.cx, -POOL.depth / 2, POOL.cz + POOL.hz + POOL.m / 2, { collide: false, rx: -ang, cast: false });
@@ -540,8 +537,8 @@ export function buildPoolDay(scene, T) {
 
   /* ---------------- fy_ weapons: rows of guns on the deck ---------------- */
   const GM = { black: lam({ color: 0x1b1d21 }), steel: lam({ color: 0x9aa0a6 }), wood: lam({ color: 0x7a5326 }), tan: lam({ color: 0xb39a63 }), green: lam({ color: 0x16432a }) };
-  const box = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(geoBox(w, h, d, mat), mat); m.position.set(x, y, z); return m; };
-  const cyl = (r, len, mat, x, y, z) => { const m = new THREE.Mesh(geoCil(r, len, 8, mat), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); return m; };
+  const box = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); return m; };
+  const cyl = (r, len, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 8), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); return m; };
   function buildGun(kind, x, z, yaw) {
     const g = new THREE.Group(); const add = (...ms) => ms.forEach(m => g.add(m));
     switch (kind) {
@@ -681,7 +678,7 @@ export function buildPoolDay(scene, T) {
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 1.4);
   sun.position.set(10, 45, -6); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -30; sun.shadow.camera.right = 30;
   sun.shadow.camera.top = 30; sun.shadow.camera.bottom = -30;
   sun.shadow.camera.far = 110; sun.shadow.bias = -0.0004;

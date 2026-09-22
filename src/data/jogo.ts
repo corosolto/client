@@ -131,6 +131,11 @@ export interface Mapa {
 /** Arenas com apresentação editorial; o registro jogável vive em public/js/maps.js. */
 export const MAPAS: Mapa[] = [
   {
+    id: 'mansao', nome: 'Mansão do Joá', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Jardim tropical, salão com mezanino e piscina sobre o mar do Joá.',
+    detalhe: 'Duas escadas ligam o salão ao mezanino. As rotas laterais atravessam o jardim e chegam ao terraço, com piscina entrável e vista da praia. Quatro pontos de captura disputam os dois níveis da casa.',
+  },
+  {
     id: 'praca_poderes', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
     resumo: 'A arena principal: uma Brasília fictícia com urna gigante quebrada no meio.',
     detalhe: 'Reinterpretação do praca_poderes do CS 1.6 em versão Brasília. Duas plataformas altas se encaram, ' +
@@ -159,11 +164,6 @@ export const MAPAS: Mapa[] = [
     detalhe: 'Pilhas de carros formam paredes de verdade. O flanco oeste é o BECO OESTE: um cânion reto ' +
       'de muros duplos de carros, com duas saídas laterais pro miolo e uma placa suspensa na boca sul. ' +
       'Luz baixa e quente, sombras longas. Quatro bandeiras, todas alcançáveis dos dois spawns.',
-  },
-  {
-    id: 'campomorro', nome: 'Campinho do Morro', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Campo de várzea cercado por casas e oito becos do morro.',
-    detalhe: 'Mapa próprio com terreno em encosta, arquibancada e torcida, galpão do baile e rotas entre o casario.',
   },
   {
     id: 'quebrada', nome: 'Quebrada (Rua do Baile)', modo: 'CTF · rounds opcional', ctf: true,

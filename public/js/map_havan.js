@@ -6,11 +6,11 @@
 // no ESTACIONAMENTO (carros GLB texturizados + Estátua da Liberdade). 3 bandeiras:
 // estacionamento, estátua, gôndolas. Contrato buildWorld + A*. Props de /Users/ruben/glb.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, PropBatch, StaticBatch, PROP_BATCH } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
-import { metrosPorUV, caixaUVPorNormal } from './map_uv.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
-import { detailFor, registerDetail, applyAniso } from './textures.js';   // normal+rough por Sobel (ver lam)
+import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras } from './map_decals.js';     // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';               // cobertura medida, não coordenada à mão
 
@@ -132,7 +132,7 @@ function tileTex(base, line, n, rx, rz) {
   const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
   x.fillStyle = base; x.fillRect(0, 0, 128, 128); x.strokeStyle = line; x.lineWidth = 3;
   const s = 128 / n; for (let i = 0; i <= n; i++) { x.beginPath(); x.moveTo(i * s, 0); x.lineTo(i * s, 128); x.stroke(); x.beginPath(); x.moveTo(0, i * s); x.lineTo(128, i * s); x.stroke(); }
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
 }
 // textura rica: manchas + rachaduras + pontos (asfalto/concreto pintado, sem cara de low-poly)
 function noiseTex(base, blotches, rx, rz, opts = {}) {
@@ -160,7 +160,7 @@ function noiseTex(base, blotches, rx, rz, opts = {}) {
     for (let i = 0; i < 240; i++) { x.globalAlpha = 0.25 + rnd() * 0.3; x.fillStyle = rnd() > 0.5 ? opts.pebbles : base; x.fillRect(rnd() * S, rnd() * S, 1.6, 1.6); }
   }
   x.globalAlpha = 1;
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz);
   // registra normal+roughness derivados DESTE canvas (textures.js `registerDetail`): sem
   // isto o `detailFor` do `lam()` nao acha nada, porque as texturas deste mapa sao canvas
@@ -178,7 +178,7 @@ function acmTex(rx, rz) {
   x.strokeStyle = 'rgba(20,26,60,0.5)'; x.beginPath(); x.moveTo(0, S / 2); x.lineTo(S, S / 2); x.stroke();
   const gr = x.createLinearGradient(0, S * 0.8, 0, S); gr.addColorStop(0, 'rgba(10,14,30,0)'); gr.addColorStop(1, 'rgba(10,14,30,0.45)');
   x.fillStyle = gr; x.fillRect(0, S * 0.8, S, S * 0.2);
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz);
   return registerDetail(t, c, 1.8, 0.35, 0.80);   // ACM e chapa pintada: relevo baixo, lustro alto
 }
@@ -226,7 +226,7 @@ function asfaltoTex(rx, rz) {
     for (let j = 0; j < 6; j++) { px += (rnd() - 0.5) * S * 0.18; py += (rnd() - 0.5) * S * 0.18; x.lineTo(px, py); }
     x.stroke();
   }
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz);
   return registerDetail(t, c, 2.6, 0.66, 0.99);   // asfalto: brita da mais relevo e menos lustro
 }
@@ -245,7 +245,7 @@ function reboco(rx, rz) {
     const px = rnd() * S; x.fillRect(px, rnd() * S * 0.4, 1 + rnd() * 3, S * (0.3 + rnd() * 0.6));
   }
   x.globalAlpha = 1;
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz);
   return registerDetail(t, c, 2.0, 0.70, 0.99);   // reboco: mottle vira micro-relevo
 }
@@ -261,7 +261,7 @@ function caneluraTex() {
     g.addColorStop(0.7, 'rgba(255,255,255,0.10)'); g.addColorStop(1, 'rgba(150,146,134,0.55)');
     x.fillStyle = g; x.fillRect(i * s, 0, s, H);
   }
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
 /* ===== MURO DO ESTACIONAMENTO — reescrito (B1 / B5 / B6) =====
@@ -330,7 +330,7 @@ function muroTex(seed0) {
     g.addColorStop(0, `rgba(102,100,86,${0.14 + rnd() * 0.2})`); g.addColorStop(1, 'rgba(102,100,86,0)');
     x.fillStyle = g; x.fillRect(px, py, 1 + rnd() * 4, 26 + rnd() * 120);
   }
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
   // o muro ja usa este MESMO canvas como bumpMap (ver MAT.muro); o normal derivado troca o
   // bump por um mapa de normal de verdade, que responde a luz lateral em vez de so a frontal
@@ -348,7 +348,7 @@ function tintaTex(color) {
     x.beginPath(); x.ellipse(rnd() * W, rnd() * H, 1 + rnd() * 5, 1 + rnd() * 7, rnd() * 3, 0, Math.PI * 2); x.fill();
   }
   x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
 // LETREIRO HAVAN: caixa azul com letras AMARELAS (a identidade nº1 da loja, e o que
@@ -368,7 +368,7 @@ function letreiroTex(txt, w, h) {
   while (x.measureText(txt).width > w * 0.88 && px > 12) { px -= 4; x.font = `bold ${px}px "Arial Black",Impact,sans-serif`; }
   x.lineWidth = Math.max(2, px * 0.06); x.strokeStyle = '#ffffff'; x.strokeText(txt, w / 2, h * 0.54);
   x.fillStyle = '#f4c020'; x.fillText(txt, w / 2, h * 0.54);
-  const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
 export function buildHavan(scene, T) {
@@ -531,8 +531,8 @@ export function buildHavan(scene, T) {
     // `solo` é geométrico, não depende do gate de faixas — assim `?vao=skirt` (A/B do
     // agente de captura) ainda emite a saia. SKIRT.add já checa o próprio kill-switch.
     const solo = onGround(y, h) && !opts.rx && !opts.rz;
-    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING, material: mat })
-      : caixaUVPorNormal(new THREE.BoxGeometry(w, h, d), w, h, d, metrosPorUV(mat));
+    const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
+      : new THREE.BoxGeometry(w, h, d);
     const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
@@ -784,7 +784,7 @@ export function buildHavan(scene, T) {
         x2.save(); x2.translate(ox + 128, 256); x2.rotate(-Math.PI / 2);
         x2.font = 'bold 76px "Arial Black",Impact,sans-serif'; x2.fillText(label, 0, 27); x2.restore();
       });
-      const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
     })();
     /* Os 8 banners eram 8 clones de textura + 8 materiais + 8 draw calls. Como todos
        saem do MESMO atlas, dá pra assar o recorte no UV da própria geometria — aí os 8
@@ -1242,7 +1242,7 @@ export function buildHavan(scene, T) {
         while (x.measureText(title).width > 466 && px > 24) { px -= 4; x.font = `bold ${px}px "Arial Black",Impact,sans-serif`; }
         x.fillText(title, 256, i * 128 + 82);
       });
-      const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
     })();
     // igual aos banners: o recorte do atlas vai pro UV da geometria em vez de virar 4
     // clones de textura + 4 materiais. Um material, um draw call pras 4 placas.
@@ -1303,7 +1303,6 @@ export function buildHavan(scene, T) {
   // em 8 faixas de altura pra o gradiente de AO ter onde interpolar
   const muroBox = (w, h, d, mat, mx, mz) => {
     const geo = new THREE.BoxGeometry(w, h, d, 1, 8, 1); bakeMuroAO(geo, h);
-    caixaUVPorNormal(geo, w, h, d, metrosPorUV(mat));
     const m = new THREE.Mesh(geo, mat); m.position.set(mx, h / 2, mz);
     m.castShadow = m.receiveShadow = true; root.add(m);
     // o bakeMuroAO já resolve o LADO DA PAREDE; a saia resolve o lado do ASFALTO — sem os
@@ -1449,7 +1448,7 @@ export function buildHavan(scene, T) {
       const c = document.createElement('canvas'); c.width = 128; c.height = 16; const x = c.getContext('2d');
       x.fillStyle = '#e8c22a'; x.fillRect(0, 0, 128, 16);
       x.fillStyle = '#26282c'; for (let i = 0; i < 4; i++) x.fillRect(i * 32, 0, 16, 16);
-      const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
       t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 1); return t;
     })();
     const zm = lam({ map: zebra, roughness: 0.85 });
@@ -1463,7 +1462,7 @@ export function buildHavan(scene, T) {
     const g = cx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
     g.addColorStop(0, 'rgba(14,15,18,0.85)'); g.addColorStop(0.55, 'rgba(20,22,26,0.45)'); g.addColorStop(1, 'rgba(20,22,26,0)');
     cx.fillStyle = g; cx.fillRect(0, 0, S, S);
-    const t = applyAniso(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
     const oilMat = new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false });
     for (const [x, z, r, sd] of [[-14, 26, 1.9, 1], [8, 40, 1.3, 2], [22, 16, 2.1, 3], [-26, 46, 1.5, 4], [4, 8, 1.2, 5], [-19, 12, 1.6, 6], [30, 38, 1.4, 7]]) {
       const p = new THREE.Mesh(new THREE.PlaneGeometry(r * 2, r * 2 * (0.7 + (sd % 3) * 0.15)), oilMat);
@@ -1634,7 +1633,7 @@ export function buildHavan(scene, T) {
      Meio-dia de cidade média brasileira é exatamente isto: sombra curta, dura e legível. */
   const hemi = new THREE.HemisphereLight(0xcfe0f5, 0x6d6455, 0.82); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff0d2, 2.02); sun.position.set(18, 55, 20); sun.castShadow = true;
-  sun.shadow.mapSize.set(_q === 'low' ? 1024 : 2048, _q === 'low' ? 1024 : 2048); sun.shadow.camera.left = -60; sun.shadow.camera.right = 60; sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60; sun.shadow.camera.far = 200; sun.shadow.bias = -0.0004;
+  aplicaSombraSol(sun); sun.shadow.camera.left = -60; sun.shadow.camera.right = 60; sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60; sun.shadow.camera.far = 200; sun.shadow.bias = -0.0004;
   scene.add(sun);
 
   // ===== ground height (mezanino elevado + rampa) =====

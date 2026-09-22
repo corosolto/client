@@ -1,5 +1,38 @@
 # HANDOFF
 
+## Correção pós-merge do Sertão — BUG-145 (08/09/2026)
+
+Objetivo: corrigir a rejeição humana posterior ao PR #526 sem reutilizar sua
+branch. Worktree exclusiva `worktrees/sertao-respawn-wagons-fix`, branch
+`codex/sertao-respawn-wagons-fix`, base `origin/main` alpha.242 (`e67addf4`).
+
+Baseline antes do conserto: WA5 vermelho porque duas das três carroças só tinham
+um flanco transitável; IN12/IN13 vermelhos porque `platibanda-0`, `pedra-8` e a
+geminada central continuavam fechadas. Os gates antigos permaneceram verdes e
+demonstraram a lacuna da medição. Artefatos em
+`artifacts/sertao-respawn-fix/*-baseline-red.json`.
+
+Checkpoint funcional `21b0d72d`: cinco casas da fileira dos respawns têm porta,
+saída lateral e janela com LOS recíproca; as três carroças têm ambos os flancos e
+4,9 m de travessia traseira. A grade dos bots não cria nós aleatórios dentro dos
+interiores. SP4 preserva três rotas disjuntas (31/34/29 nós), o golden dos bots
+passa, e 5x5/8x8 mediram 9/15 bots com 1,267%/0,756% de amostras travadas. WebGL
+real 1536×1024: RV1–RV12 verdes, máximo 500 calls/340.530 triângulos; capturas em
+`artifacts/sertao-respawn-fix/runtime-final-source/`. O único gate conhecido
+vermelho é `look-check`, por Amazônia sem horizonte assado; a mesma falha existe
+na base `e67addf4`, enquanto Sertão mede ΔE76=0,0. Relatório:
+`docs/reports/SERTAO-RESPAWN-WAGONS-FIX.md`.
+
+Draft PR #559: `https://github.com/corosolto/client/pull/559`, base `main`.
+Próximo passo: revisão humana adversarial no servidor local e no draft PR. Sem
+merge ou deploy nesta frente.
+
+Build Astro/Vercel verde. `check:fast`: 129/132; todo gate de mapa ficou verde.
+Os três vermelhos eram alheios ao diff: `audio:check` exige a árvore-fonte privada
+e vê órfãos no pack público materializado, `feet:check` também reprova na base
+`e67addf4`; `eval:docsautoria` passou isolado depois do commit documental. Resultado
+efetivo atual: dois vermelhos herdados.
+
 ## Admin 08/09: áudio e escalonamento de crashes
 
 - Checkout `worktrees/bug-pipeline-audio`, branch `fix/admin-audio-crash-pipeline`, base
@@ -271,3 +304,24 @@ fora deste checkpoint.
 **Próximo passo:** publicar primeiro um backend compatível com v3/v2/v1, depois o cliente;
 jogar o roteiro acima no canário, observar `/metrics` e só então promover. Se qualquer etapa
 falhar, manter produção atual e não misturar este trabalho com armas/viewmodels.
+# Continuação ativa — Sertão PR #526 (08/09/2026)
+
+Objetivo: fechar o mapa Sertão com evidência técnica e visual antes de integrar.
+Worktree exclusivo: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/sertao-casas-por-do-sol`;
+branch `astra/sertao-praca-casas-por-do-sol`, integrada com `main` alpha.240 no
+commit `74d6a748`.
+
+Validado: IN1–IN11, 14 mutantes de interiores, SP1–SP9, RV1–RV12 em WebGL
+1536×1024, contraste C18/C18R com inimigo real e mutante sem rim, e fauna Mint
+LG1–LG8 com duas cabras, galinha e três pintinhos. O batch dos interiores reduz
+564 para 499 draw calls e seu mutante reprova RV3. Artefatos ficam sob
+`artifacts/sertao-casas/{runtime-final-v2,livestock-final,contrast-final}` e a
+revalidação pós-main em `artifacts/sertao-casas/final-alpha240/`. Relatório
+completo: `docs/reports/SERTAO-CASAS-SUNSET.md`.
+
+Próximo passo: publicar esta branch, acompanhar os checks remotos e integrar o
+PR #526 quando o GitHub confirmar merge limpo. O build alpha.240 passou; o
+`assert:assets` local continua vermelho pelos 17 áudios legados ausentes no
+pacote oficial v8, enquanto os assets visuais e decalques passam. Riscos restantes são
+de julgamento humano: combate prolongado dentro das casas, amostra de contraste
+de todo o elenco e acabamento low-poly de alguns props do perímetro.

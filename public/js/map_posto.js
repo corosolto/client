@@ -1,10 +1,10 @@
 // POSTO DA TRETA — posto de gasolina na beira de rodovia. Mesmo contrato build(scene,T) dos outros mapas.
 // Colisão só AABB (sem colisor girado — BUG-21); marquise/beirais collide:false, pilar/bomba/carro colidem.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
-import { fabricasUV } from './map_uv.js';
 
 // props GLB que este mapa usa (main.js pré-carrega MAPS[id].props)
 export const POSTO_PROPS = [
@@ -91,11 +91,8 @@ export function buildPosto(scene, T) {
   };
 
   // addBox: empurra AABB + occluder por padrão (collide:false pula os dois)
-  /* UV em metros (map_uv.js): densidade de texel pelo tamanho no mundo.
-     Só muda UV — geometria, posição e colisor do autor ficam intactos. */
-  const { box: geoBox, plano: geoPlano } = fabricasUV();
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
-    const m = new THREE.Mesh(geoBox(w, h, d, mat), mat);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set(x, y + h / 2, z);
     m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
@@ -107,7 +104,7 @@ export function buildPosto(scene, T) {
     return m;
   }
   function addFloor(w, d, mat, x, z, y = 0.01) {
-    const m = new THREE.Mesh(geoPlano(w, d, mat), mat);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
     m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m;
   }
   // col: colisor AABB SEM malha (pros props GLB — colisão vale mesmo se o GLB não carregar)
@@ -247,7 +244,7 @@ export function buildPosto(scene, T) {
   }
   // RODOVIA a leste (asfalto + faixas) + fila de caminhão da greve + carros
   const hwFaixa = lam({ color: 0xd8d2c0 });
-  const hw = new THREE.Mesh(geoPlano(22, HALF_Z * 2, MAT.asfalto), MAT.asfalto);
+  const hw = new THREE.Mesh(new THREE.PlaneGeometry(22, HALF_Z * 2), MAT.asfalto);
   hw.rotation.x = -Math.PI / 2; hw.position.set(HALF_X + 11, 0.02, 0); root.add(hw);
   for (let z = -34; z <= 34; z += 4) addBox(0.3, 0.02, 2.2, hwFaixa, HALF_X + 11, 0.03, z, { collide: false, cast: false });
   const hwPool = ['vw_9150', 'bus', 'onibus_urbano', 'vw_9150'];
@@ -389,7 +386,7 @@ export function buildPosto(scene, T) {
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd39a, 1.6);
   sun.position.set(-38, 26, 14); sun.castShadow = true;   // sol baixo no oeste (atrás da loja)
-  sun.shadow.mapSize.set(2048, 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
   sun.shadow.camera.top = 42; sun.shadow.camera.bottom = -42;
   sun.shadow.camera.far = 140; sun.shadow.bias = -0.0004;

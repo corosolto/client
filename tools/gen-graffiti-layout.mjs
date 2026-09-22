@@ -37,7 +37,19 @@ import { impressao, MAP_SOURCES } from './eval/graffiti-fingerprint.mjs';
 const BASE = process.env.BASE || 'http://localhost:8123';
 const SAIDA = 'public/js/graffiti_layout.js';
 const MAPAS = Object.keys(MAP_SOURCES);
-const ONLY = process.argv[2];
+const ARGS = process.argv.slice(2);
+const ONLY = ARGS.find((a) => !a.startsWith('--'));
+/* SÓ A IMPRESSÃO: reassina as entradas SEM reassar a colocação. Existe porque assar não é
+   operação fiel — duas rodadas idênticas na mesma árvore deram 2769 e 2767 peças (loja_h 300 e
+   298), e uma árvore sem o acervo completo de decalques apaga ~180 peças em silêncio. Para
+   mudança que PROVADAMENTE não move parede (tamanho de sombra, por exemplo), reassar troca arte
+   aprovada por churn. Exige motivo, e o motivo fica gravado no arquivo. Ver KNOWN-BUGS BUG-158. */
+const SO_IMPRESSAO = ARGS.includes('--so-impressao');
+const MOTIVO = (ARGS.find((a) => a.startsWith('--motivo=')) || '').slice(9);
+if (SO_IMPRESSAO && !MOTIVO) {
+  console.error('--so-impressao exige --motivo="por que a colocação não muda"');
+  process.exit(1);
+}
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -51,6 +63,22 @@ if (existsSync(SAIDA)) {
   const json = txt.match(/^export const GRAFITE = (.+);$/m)?.[1];
   if (!json) throw Error('Layout anterior não reconhecido; regeneração cancelada');
   Object.assign(anterior, JSON.parse(json));
+}
+
+/* Reassinar sem reassar: nenhuma peça muda, só a impressão das entradas. Sai antes do
+   navegador — o custo do gerador é o browser, e aqui ele não é preciso. */
+if (SO_IMPRESSAO) {
+  const fpNovo = impressao();
+  const txt = readFileSync(SAIDA, 'utf8');
+  const marca = `\n/* REASSINADO SEM REASSAR em ${new Date().toISOString().slice(0, 10)} — ${MOTIVO}\n`
+    + `   A colocação não foi tocada: assar de novo não é operação fiel (duas rodadas idênticas\n`
+    + `   dão contagens diferentes, e árvore sem o acervo completo de decalques apaga peças). */\n`;
+  const semFp = txt.replace(/\n\/\* REASSINADO SEM REASSAR[\s\S]*?\*\/\n/g, '')
+    .replace(/export const GRAFITE_FP = .*;\n/, '');
+  writeFileSync(SAIDA, semFp + marca + `export const GRAFITE_FP = ${JSON.stringify(fpNovo)};\n`);
+  const pecas = (txt.match(/(\d+) peças no total/) || [])[1];
+  console.log(`-> ${SAIDA}  impressão reassinada, ${pecas} peças INTACTAS (motivo: ${MOTIVO})`);
+  process.exit(0);
 }
 
 const browser = await chromium.launch({

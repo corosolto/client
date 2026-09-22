@@ -32,6 +32,8 @@ if (htmlFile) {
     await page.waitForFunction(() => document.querySelector('#boot-splash')?.textContent.includes('100%'));
     await page.keyboard.press('Enter');
     await page.locator('#boot-splash').waitFor({ state: 'detached' });
+    await page.locator('[data-act="single-player"]').click();
+    await page.locator('#cs-modos').waitFor({ state: 'visible' });
     await page.locator('[data-act="sp"]').click();
     await page.locator('#ms-continue').click();
     await page.locator('#nick-input').fill('Teste local Escadão');

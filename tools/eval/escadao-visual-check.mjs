@@ -24,7 +24,10 @@ const mapSource = fs.readFileSync(path.join(root, 'public/js/map_escadao.js'), '
 const physics = {
   stepHeight: Number(gameSource.match(/const STEP_H\s*=\s*([\d.]+)/)?.[1]),
   riserHeight: Number(mapSource.match(/const ESC\s*=\s*\{[^}]*espelho:\s*([\d.]+)/)?.[1]),
-  ctfRadius: Number(gameSource.match(/return \{ id, label, x, z, r:\s*([\d.]+)/)?.[1]),
+  // O ponto CTF passou de retorno inline para `const point = { ... }`; a
+  // constante medida continua sendo a mesma. O gate deve seguir o contrato
+  // estrutural do objeto, sem depender da forma como a função o retorna.
+  ctfRadius: Number(gameSource.match(/\{\s*id,\s*label,\s*x,\s*z,\s*r:\s*([\d.]+)/)?.[1]),
 };
 if (!Object.values(physics).every(v => Number.isFinite(v) && v > 0)) throw Error('Constantes físicas não reconhecidas: não inventar limiares');
 const routeContractSource = fs.readFileSync(path.join(root, 'tools/eval/escadao-rota-check.mjs'), 'utf8');

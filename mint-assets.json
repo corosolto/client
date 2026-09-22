@@ -947,264 +947,343 @@
         "notes": "Blender: escala em metros, Y-up/frente+Z, rig animal e Walk/Idle locais; albedo JPEG1024. Geometria dos adultos preservada; pintinho simplificado, silhueta comparada em quatro vistas."
       }
     },
-    "coreto-praca-parque": {
+    "mansao_jardim_pack": {
+      "files": [
+        "public/models/props/banco_jardim.glb",
+        "public/models/props/poste_jardim.glb",
+        "public/models/props/escultura_jardim.glb",
+        "public/models/props/vaso_tropical.glb",
+        "public/models/props/lounge_externo.glb",
+        "public/models/props/lampiao_fachada.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th72555dzek1m12a075crrrsbx8cp6zg",
+        "chatUrl": "https://mint.gg/chat/ph7c8dwhs8tg2vc9yapr267gy18cqdyx",
+        "displayName": "Mansão do Joá — jardim e casa",
+        "notes": "6 props (banco modernista, poste de jardim, escultura abstrata, vaso tropical, lounge externo, lampião de fachada). BUG-56: dono pediu models Mint pro jardim/casa. Otimizados via tools/optimize-props.mjs (webp 1024, ~1.6MB total, 1 material cada). Previews em tools/eval/asset-evidence/bug56-mint/."
+      }
+    },
+    "palmeira-imperial-jardim": {
       "artifactType": "model/gltf-binary",
       "files": [
-        "public/models/props/parque_coreto.glb"
+        "public/models/props/palmeira_imperial.glb"
       ],
       "source": {
         "kind": "mint-model",
-        "assetId": "ks75c1dfd2g0hcxytvzkgeqghs8d4qja",
-        "chatUrl": "https://mint.gg/chat/ph74qprnsd4nzq113248a9sd6s8d4zhk",
-        "displayName": "Festive Green Coreto (coreto de praça)",
-        "frente": "map2-parque",
-        "notes": "Coreto octogonal com colunas de ferro e bandeirolas (4.742 tris). Prop herói do rebuild USANTOS do parque_treta. GLB normalizado ~1 m, pivô central; escala no call-site (targetH 4,4 / targetLen 7,2)."
+        "assetId": "ks7epscg489gta2x7zzm7he5398cvnfj",
+        "chatUrl": "https://mint.gg/chat/ph70gyyyc7qvvem3mm8t0a29y98cv0tw",
+        "displayName": "Imperial Grey Palm (palmeira-imperial)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Palmeira-imperial com tronco anelado cinza e crownshaft verde (3.637 tris). Substitui as árvores pirulito do jardim (BUG-64). GLB normalizado ~1 m, pivô central; escala no call-site. Tronco escurecido no pipeline (trunkShade 0,55/0,47/0,40 nos 42% inferiores — tronco branco-liso reprovado pelo crítico)."
       },
       "processing": {
         "provider": "mint",
         "model": "mint text-to-3d (normalized original_glb)",
         "tools": [
           "mint.gg",
-          "tools/optimize-props.mjs"
+          "tools/optimize-props-v21.mjs"
         ],
-        "finalSha256": "7278c6deb242234459b27c966af1d92afc0fcf425901075d99f237c29e194ae0"
+        "finalSha256": "d7d109d83dd0be4ab9e8a4df384cadac9d4e9099405fb8a899251e42ef42e625"
       }
     },
-    "roda-gigante-roda-parque": {
+    "palmeira-ravenala-jardim": {
       "artifactType": "model/gltf-binary",
       "files": [
-        "public/models/props/roda_gigante_roda.glb"
+        "public/models/props/palmeira_ravenala.glb"
       ],
       "source": {
         "kind": "mint-model",
-        "assetId": "ks74m3x604r82xbtnxt126sqbx8d754g",
-        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
-        "displayName": "Ferris Wheel — parte rotativa (aro+raios+gôndolas)",
-        "frente": "map2-parque",
-        "notes": "Split Blender (2.871 tris) do roda_gigante.glb por componentes conexos: aro duplo, raios e gôndolas. Gira como filha do grupo 'roda-gigante' (rotação procedural do update). Escala no call-site: targetH 24,1, cubo na origem via Box3 (hubFrac 0,537)."
-      },
-      "processing": {
-        "provider": "mint",
-        "model": "mint text-to-3d",
-        "tools": [
-          "mint.gg",
-          "tools/optimize-props.mjs",
-          "tools/blender-split-roda-gigante.py"
-        ],
-        "finalSha256": "b5ba3713bb23cdbb3b617d691532adf79b2e9b31683413d5d5f6df39a2fa205f"
-      }
-    },
-    "roda-gigante-base-parque": {
-      "artifactType": "model/gltf-binary",
-      "files": [
-        "public/models/props/roda_gigante_base.glb"
-      ],
-      "source": {
-        "kind": "mint-model",
-        "assetId": "ks74m3x604r82xbtnxt126sqbx8d754g",
-        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
-        "displayName": "Ferris Wheel — base estática (pernas A+plataforma)",
-        "frente": "map2-parque",
-        "notes": "Split Blender (1.042 tris) do roda_gigante.glb: pernas em A com pés, plataforma cercada e cabine do operador. Estática, pés em y=0; targetH 19,9 casa o cubo da base com o da parte rotativa (escala comum 25,7 m/un)."
-      },
-      "processing": {
-        "provider": "mint",
-        "model": "mint text-to-3d",
-        "tools": [
-          "mint.gg",
-          "tools/optimize-props.mjs",
-          "tools/blender-split-roda-gigante.py"
-        ],
-        "finalSha256": "cbe7321c54a64f87a5935ee4718f5c5e9de3ad595b652092dc3053015a947792"
-      }
-    },
-    "carrossel-parque": {
-      "artifactType": "model/gltf-binary",
-      "files": [
-        "public/models/props/carrossel.glb"
-      ],
-      "source": {
-        "kind": "mint-model",
-        "assetId": "ks7dba32rp93p94y1582xt4cqx8d7z0t",
-        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
-        "displayName": "Carousel (carrossel de parque)",
-        "frente": "map2-parque",
-        "notes": "Carrossel completo com cavalos e cobertura (4.419 tris). Filho do grupo 'carrossel-giratorio' — gira junto com a rotação procedural; targetH 8,5 no call-site."
-      },
-      "processing": {
-        "provider": "mint",
-        "model": "mint text-to-3d",
-        "tools": [
-          "mint.gg",
-          "tools/optimize-props.mjs"
-        ],
-        "finalSha256": "0a96f3a605ef36eefe8aa483c13c610391525144bdf96916da5f6f735843c340"
-      }
-    },
-    "barraca-quermesse-parque": {
-      "artifactType": "model/gltf-binary",
-      "files": [
-        "public/models/props/barraca_quermesse.glb"
-      ],
-      "source": {
-        "kind": "mint-model",
-        "assetId": "ks77wmwqmw4ef5dm24h3mbhfas8d6xh0",
-        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
-        "displayName": "Quermesse Tent (barraca de quermesse)",
-        "frente": "map2-parque",
-        "notes": "Barraca de quermesse (4.419 tris) substituindo os 4 quiosques-caixa do parque_treta (PIPOCA/ALGODÃO DOCE/PESCARIA/ARGOLA); placas signTexture e colisores procedurais mantidos. targetH 3,2."
-      },
-      "processing": {
-        "provider": "mint",
-        "model": "mint text-to-3d",
-        "tools": [
-          "mint.gg",
-          "tools/optimize-props.mjs"
-        ],
-        "finalSha256": "bef57d0ea1310119356cb9104c0d916fdcf6f7b82b9981f18136e4405bc3f204"
-      }
-    },
-    "predio-artdeco-entorno-parque": {
-      "artifactType": "model/gltf-binary",
-      "files": [
-        "public/models/props/predio_artdeco.glb"
-      ],
-      "source": {
-        "kind": "mint-model",
-        "assetId": "ks7a5tm3psp3hb90m50mq548m18d6bpa",
-        "chatUrl": "https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn",
-        "displayName": "Art Deco Building (prédio de entorno)",
-        "frente": "map2-parque",
-        "notes": "Prédio art-déco (4.297 tris) instanciado 8× fora dos bounds jogáveis do parque_treta, fechando o quarteirão; rotações e alturas variadas (15–19 m), sem colisor."
-      },
-      "processing": {
-        "provider": "mint",
-        "model": "mint text-to-3d",
-        "tools": [
-          "mint.gg",
-          "tools/optimize-props.mjs"
-        ],
-        "finalSha256": "54772ff857273da0630f46d9fe7b0f67dfbc3dad71ed123eb1f085e7ca7717cc"
-      }
-    },
-    "torre-vigilancia-penitenciaria": {
-      "artifactType": "model/gltf-binary",
-      "files": [
-        "public/models/props/torre_vigilancia.glb"
-      ],
-      "source": {
-        "kind": "mint-model",
-        "assetId": "ks79j7c9xgqs48qz8r4cf6gf6d8d6398",
-        "chatUrl": "https://mint.gg/chat/ph73cszyryt8jreekq64vj4s1x8d66ef",
-        "displayName": "Prison Guard Tower (torre_vigilancia)",
-        "frente": "map2-penitenciaria",
-        "notes": "Torre de vigilância com pernas de concreto em treliça X, escada, varanda com guarda-corpo e cabine envidraçada (4.535 tris). Substitui o visual das 4 guaritas de canto do muro (USANTOS-R2); a guarita GLB anterior segue no acervo. GLB normalizado ~1 m, pivô central; escala no call-site (targetH 9,6 / targetLen 5,6)."
+        "assetId": "ks72t6bgnx7ww5azs74rvbbpnh8cvv8a",
+        "chatUrl": "https://mint.gg/chat/ph7by8184sbqmx1ev8j068pvm58ctqm0",
+        "displayName": "Dramatic Fan Palm (ravenala, palmeira-leque)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Ravenala em leque vertical (4.428 tris). Par assimétrico enquadrando a fachada sul (BUG-64). GLB normalizado ~1 m, pivô central."
       },
       "processing": {
         "provider": "mint",
         "model": "mint text-to-3d (normalized original_glb)",
         "tools": [
           "mint.gg",
-          "tools/optimize-props.mjs"
+          "tools/optimize-props-v21.mjs"
         ],
-        "finalSha256": "45943077f7b998cbc3daa5ab5ef6788a0e7483999b2ef161ec126c45128ac31d"
+        "finalSha256": "c707dc3fbcec4d63ec2313f93eeecf29dcc1d5aaef5ba1de6fc889f336047d85"
       }
     },
-    "bloco-celas-carandiru": {
+    "costela-adao-jardim": {
       "artifactType": "model/gltf-binary",
       "files": [
-        "public/models/props/bloco_celas.glb"
+        "public/models/props/costela_adao.glb"
       ],
       "source": {
         "kind": "mint-model",
-        "assetId": "ks7ad5wz2hcf78xfnwtxb1xfkd8d69pv",
-        "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt",
-        "displayName": "Bloco de celas (kit carandiru_r3b)",
-        "frente": "map2-penitenciaria",
-        "notes": "Pavilhão de celas de 2 pavimentos com galeria e grades (3.988 tris, texturas WebP 1024). Pavilhão central do mapa penitenciária (referência Carandiru, dono 27/08/2026): o jogador circula pela galeria externa gradeada ao redor do bloco. Item do pack carandiru_r3b (packAssetId th7fkxdza9fd93fxc84xrnemy18d6r1v). GLB normalizado ~1 m, pivô central; escala não-uniforme no call-site (9 × 15 m de planta, 6,6 m)."
+        "assetId": "ks7csdx865mvkee2aa3chszfns8ct9qv",
+        "chatUrl": "https://mint.gg/chat/ph7byt97jw52ykdjrzezvwhsvn8cvsje",
+        "displayName": "Perforated Monstera Bush (costela-de-adão)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Monstera deliciosa de folhas fenestradas (3.472 tris). Massa de dossel dos maciços (BUG-64). GLB normalizado ~1 m, pivô central."
       },
       "processing": {
         "provider": "mint",
         "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "82c5f004f3e8497398c0ba7299ed6239ffe514c461b9886ad933e8526246a277"
+      }
+    },
+    "bananeira-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/bananeira.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7b9rr467gcfq4yrk6bv9ds0x8cva40",
+        "chatUrl": "https://mint.gg/chat/ph71fmfkb7fb4433vac33xghd58cttan",
+        "displayName": "Drooping Paddle Banana Plant (bananeira)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Bananeira de pseudocaule verde e folhas-pá (4.684 tris). Substitui as bananeiras de esferas achatadas (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "b4b5e40537b248a02a4442803baf34c648bfcd035179f7abac0edfb7bcce4d5d"
+      }
+    },
+    "ixora-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/ixora.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7f812b4388pzarx4wekxf8g98ct1en",
+        "chatUrl": "https://mint.gg/chat/ph7dcr7emj3jkafn0yq98gantx8cvtvs",
+        "displayName": "Crimson Ixora Bloom (ixora)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Ixora arbustiva com buquês vermelho-alaranjados (4.496 tris). Manchas floridas nos canteiros, no lugar das bromélias de cone (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "b2bcbf7458f5f3052b35805cf57c9955177f2f52adaa23112762e6a973eb0710"
+      }
+    },
+    "agave-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/agave.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks79jrvhxqhgpb3nc92vtbz7v58cthdg",
+        "chatUrl": "https://mint.gg/chat/ph777k51x3zm7rh2p92m2yferh8cv41j",
+        "displayName": "Blue-Green Agave Rosette (agave)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Agave azul-esverdeada em roseta (4.688 tris). Acentos esculturais dos maciços e encosta (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "2f0c046535ee11fda49d4f2d8c40300e7946c4454fa89675196d843cb7ad314d"
+      }
+    },
+    "mansao-sofa": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/mansao_sofa.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7e8mz9xaahxwezbp8fs6hq7h8d74jk",
+        "packAssetId": "th789df01rjqd0qzj2mfe8zjw18d7b1c",
+        "chatUrl": "https://mint.gg/chat/ph701643a4t37097hg56aw5rfx8d6ggk",
+        "displayName": "mansao_sofa",
+        "frente": "r2-mapas",
+        "notes": "Kit Mint `mansao_interior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Sofá de couro de 3 lugares (sala). Serve `mobilia()` no map_mansao.js com alturaAlvo 0,95 -> malha de mundo 2,20x1,00, dentro do colisor 2,30x1,10 (tools/eval/mansao-glb-fit.mjs). Frente do molde para +Z, medida em tools/blender-prop-orient-render.py."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
         "tools": [
           "mint.gg"
         ],
-        "finalSha256": "1560055af1eb9268ad7257843890ab28974d64f94634b54cb0f09d58873b5a4d"
+        "finalSha256": "926dea2a4e0ff695cf5e96ddd0ce79404fd3f9b4cf3854b8c3941b85d9673197"
       }
     },
-    "portao-penitenciaria-carandiru": {
+    "mansao-lustre": {
       "artifactType": "model/gltf-binary",
       "files": [
-        "public/models/props/portao_penitenciaria.glb"
+        "public/models/props/mansao_lustre.glb"
       ],
       "source": {
         "kind": "mint-model",
-        "assetId": "ks75stmhnwxtapdam0mz8mqmgn8d6013",
-        "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt",
-        "displayName": "Portão de penitenciária (kit carandiru_r3b)",
-        "frente": "map2-penitenciaria",
-        "notes": "Portão principal de penitenciária com pilastras e folha de grade fechada (4.491 tris, texturas WebP 1024). Embutido no muro norte do mapa penitenciária (referência Carandiru) — portão fechado, o colisor sela o vão. Item do pack carandiru_r3b (packAssetId th7fkxdza9fd93fxc84xrnemy18d6r1v). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 5,6 / targetLen 11)."
+        "assetId": "ks7968911swqbrasqxt023eqqn8d7vzw",
+        "packAssetId": "th789df01rjqd0qzj2mfe8zjw18d7b1c",
+        "chatUrl": "https://mint.gg/chat/ph701643a4t37097hg56aw5rfx8d6ggk",
+        "displayName": "mansao_lustre",
+        "frente": "r2-mapas",
+        "notes": "Kit Mint `mansao_interior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Lustre de latão com cristais e roseta de teto. Pendurado pelo TOPO: `placeProp` ancora pela base, então y = 4,05 - 1,10. Fora de occluders (cristal não para bala)."
       },
       "processing": {
         "provider": "mint",
-        "model": "mint text-to-3d (normalized original_glb)",
+        "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
         "tools": [
           "mint.gg"
         ],
-        "finalSha256": "df2052512e03649fbec7dd85ee12beaabe17ca2d2e422d67bd0a4b7bf078e669"
+        "finalSha256": "7222d24fc10c2d7a1da69514f4c8aa2d30b4a1f2b44a689a31c884386f18d755"
       }
     },
-    "guarita-muro-carandiru": {
+    "mansao-poltrona": {
       "artifactType": "model/gltf-binary",
       "files": [
-        "public/models/props/guarita_muro.glb"
+        "public/models/props/mansao_poltrona.glb"
       ],
       "source": {
         "kind": "mint-model",
-        "assetId": "ks7a33yhwearthy8y6gmh98f358d7jtv",
-        "chatUrl": "https://mint.gg/chat/ph77vksqsbvk24d8gv6zkytdtn8d7f7t",
-        "displayName": "Guarita de muro (carandiru_r3b, item solto)",
-        "frente": "map2-penitenciaria",
-        "notes": "Guarita de muro de presídio com cabine envidraçada sobre estrutura de concreto (4.827 tris, texturas WebP 1024). Duas instâncias flanqueando o portão norte do mapa penitenciária — a frente não tinha vigia entre as 4 guaritas de canto (torre_vigilancia). Modelo solto da onda carandiru_r3b (chat próprio). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 8,2 / targetLen 5,6, ry=π)."
+        "assetId": "ks79p2vv2cf5d7fzab1t5vnhzx8d7a0e",
+        "packAssetId": "th789df01rjqd0qzj2mfe8zjw18d7b1c",
+        "chatUrl": "https://mint.gg/chat/ph701643a4t37097hg56aw5rfx8d6ggk",
+        "displayName": "mansao_poltrona",
+        "frente": "r2-mapas",
+        "notes": "Kit Mint `mansao_interior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Poltrona de madeira e couro capitonê. Serve as 4 do home theater, as 2 de luxo da sala e as 2 novas do escritório do mezanino. alturaAlvo 0,98 -> 0,94x0,90 dentro do colisor 1,08x1,02."
       },
       "processing": {
         "provider": "mint",
-        "model": "mint text-to-3d (normalized original_glb)",
+        "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
         "tools": [
           "mint.gg"
         ],
-        "finalSha256": "26a8a5fcac3089a955f204e9e3b265dd1084cbba5ff4317a47f4ea9cacd5006d"
+        "finalSha256": "9630e545dd2e7a9765e9ba67472ca51507df8338cb79415e319a797c59ab30ad"
       }
     },
-    "carandiru-viatura-1990": {
+    "mansao-mesa-centro": {
       "artifactType": "model/gltf-binary",
       "files": [
-        "public/models/props/carandiru_viatura_1990.glb"
+        "public/models/props/mansao_mesa_centro.glb"
       ],
       "source": {
         "kind": "mint-model",
-        "assetId": "p97a1j1skm2w33wjyv8pkw92n18e0g2j",
-        "chatUrl": "https://mint.gg/project/zd7agpw4xxat6kytnxka8kj19h8e1969?chat=ph7ev8zdhy23p8v1ec4vtjyt058e1r4k",
-        "projectId": "zd7agpw4xxat6kytnxka8kj19h8e1969",
-        "chatId": "ph7ev8zdhy23p8v1ec4vtjyt058e1r4k",
-        "displayName": "Weathered Grey Patrol Wagon",
-        "prompt": "Crie UM asset 3D estático game-ready: uma perua policial brasileira genérica de fim dos anos 1980/início dos anos 1990 para um mapa histórico fictício inspirado na arquitetura do Carandiru. Carroceria quadrada cinza-clara, quatro portas, para-choques pretos simples, rodas fixas, vidro escurecido e giroflex baixo vermelho/azul no teto. Aparência de uso severo, pintura fosca envelhecida, pequenas marcas de sujeira e ferrugem, mas veículo inteiro e reconhecível. Sem SUV moderno, sem pessoas, sem armas, sem sangue, sem cena de violência, sem logotipo, sem brasão, sem placa legível e sem copiar um modelo ou fotografia específica. Um único veículo isolado, fundo neutro. Dimensões-alvo no jogo: 4,6 m de comprimento, 1,75 m de largura e 1,75 m de altura. Origem/pivô no centro do piso entre as rodas, frente claramente orientada no eixo longitudinal. Até 8.000 triângulos, PBR estilizado-realista, no máximo um atlas 1024, silhueta limpa para leitura a 20 m. Não inclua chão, cenário, colisor, rig ou animação.",
-        "licenseBasis": "Gerado na conta Mint do usuário para este projeto; uso local autorizado. Termos públicos e publicação comercial ainda exigem verificação; não declarar CC0.",
-        "notes": "Perua policial brasileira genérica 1980–1990, sem marca, pessoa ou violência. Asset original do Tripo P1; escala no call-site: 4,6 m de comprimento e 1,75 m de altura. Colisor e navegação permanecem procedurais."
+        "assetId": "ks7abc1zgnf3d45dcv1jqs95898d76as",
+        "packAssetId": "th789df01rjqd0qzj2mfe8zjw18d7b1c",
+        "chatUrl": "https://mint.gg/chat/ph701643a4t37097hg56aw5rfx8d6ggk",
+        "displayName": "mansao_mesa_centro",
+        "frente": "r2-mapas",
+        "notes": "Kit Mint `mansao_interior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Mesa de centro de madeira torneada com gaveta. 4ª família de `luxo-prop` (o teto do mansao-water-check é 3-5). alturaAlvo 0,45 -> 0,99x0,59 dentro do colisor 1,00x0,60."
       },
       "processing": {
         "provider": "mint",
-        "model": "Tripo P1",
+        "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
         "tools": [
-          "mint.gg",
-          "@gltf-transform/functions dedup/prune/textureCompress"
+          "mint.gg"
         ],
-        "originalSha256": "26c04d5b950633e7882e98826cc454a4bb4cab0e204dcad0a747815a0671d752",
-        "finalSha256": "5251a70e9e63a1652f129d945a79d901d0b0e2d7b7394414ca393fe64062f2bf",
-        "originalBytes": 1043988,
-        "finalBytes": 415268,
-        "triangles": 4840,
-        "textures": 3
+        "finalSha256": "2683b62c9a1ceb73642dcd07da1a6e733a3c6ffaf0390f9e6ec34fb00430a7ee"
+      }
+    },
+    "coqueiro": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/coqueiro.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks70kgvnr356rb8v8hk06v3dys8d62jz",
+        "packAssetId": "th72ef577hwy32a3de33eyymrs8d7vgc",
+        "chatUrl": "https://mint.gg/chat/ph70czc6er55wjdad98yn53dx58d73qt",
+        "displayName": "coqueiro",
+        "frente": "r2-mapas",
+        "notes": "Kit Mint `mansao_exterior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Coqueiro de tronco curvo com cocos, para a faixa de praia do Joá (dono r2: \"coqueiros low poly\"). Oito instâncias com altura, giro e escala variados sobre a palma procedural, que vira fallback de node/?glb=0. Inclinação da copa medida NO ARQUIVO em 14,0° com a vertical (mínimo 8°, mesmo limiar da cláusula B3 do mansao-beach-check)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "8a384ba903c55e228cfdeebc6b019a946061b809d6698cf833473664b96c4e2f"
+      }
+    },
+    "arara-voo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/mansao_arara_voo.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks771w92vb973f6pj7acx41y7x8d7088",
+        "packAssetId": "th73jczawhd93sgrq9p7e10h118d68nv",
+        "chatUrl": "https://mint.gg/chat/ph7ajvsqfqtnafkh23jjd5dpsh8d6709",
+        "displayName": "arara_voo",
+        "frente": "r2-mapas",
+        "notes": "Kit Mint `aves_voo` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Arara-vermelha em pose de voo, asas abertas. Fauna de céu do Joá; locomoção procedural com banking no ambientlife.js."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "3e386353f48fdee2b186194dd5839ab7a56ddc8b6932847cb66e155b8d9759ab"
+      }
+    },
+    "passaro-voo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/passaro_voo.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7dsk0738faf0ytv09jyt7amh8d62kx",
+        "packAssetId": "th73jczawhd93sgrq9p7e10h118d68nv",
+        "chatUrl": "https://mint.gg/chat/ph7ajvsqfqtnafkh23jjd5dpsh8d6709",
+        "displayName": "passaro_voo",
+        "frente": "r2-mapas",
+        "notes": "Kit Mint `aves_voo` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Pássaro pequeno em pose de voo, asas abertas. Bando de 5-8 no céu do Joá; locomoção procedural no ambientlife.js."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "323fe81e0bca831611db2e4c5fded13a0211e19d876f37bcb4adf832fe54d197"
+      }
+    },
+    "faixa-aviao-propaganda": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/textures/faixa_aviao.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": null,
+        "chatUrl": null,
+        "displayName": "Faixa de aviao — propaganda \"RADIO TRETA FM 99\"",
+        "prompt": "A long horizontal aerial advertising banner as towed behind a small plane, photographed straight-on, flat and fully readable. (...) large bold clean sans-serif capital letters in bright red and blue reading exactly: RADIO TRETA FM 99. (...) no logos, no plane, no sky, no background scenery.",
+        "notes": "Emissora FICTICIA — veto editorial de marca real vale aqui como vale no grafite. Duas variacoes geradas e OLHADAS; a v1 foi recortada na faixa de letras e centralizada em tela branca no aspecto da MALHA da faixa (0,510 x 0,094 medidos no aviao_faixa.glb com gltf-transform), para a letra nao esticar. Aplicada em runtime pelo `pintaFaixa()` do ambientlife.js, que reescreve as UV por projecao planar XY em vez de reaproveitar a ilha do atlas do Mint. Recibo visual: render Blender do GLB com a textura, sem browser."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3-pro-image",
+        "tools": [
+          "tools/gen-image.mjs",
+          "PIL"
+        ],
+        "finalSha256": "7063c08031efea12eef11bca050aea05d20dc97a11ee3684bbec188f875232f9"
       }
     }
   }

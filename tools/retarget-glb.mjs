@@ -135,7 +135,19 @@ for (const state of STATES) {
   // precompute source rest world quats
   const srcRestW = new Map(); for (const g of SG.values()) srcRestW.set(g.name, restWorldQ(g));
 
-  const mappedTgt = tgtOrder.filter(g => SG.has(g.name));   // identity map: same Meshy bone names
+  /* `Curl_*` FORA DO RETARGET, SEMPRE. Esses ossos não são de animação: são o atuador do
+     fechamento da mão, escrito UMA vez pelo `buildCharacterModel` (glbchars.js, bloco
+     "Grip curl") com o ângulo medido da espessura da arma. Canal de clipe neles é
+     sobrescrita por quadro — o grip curl morre e a arma fica na mão aberta.
+     Nos rigs humanos o estrago parava aí, porque o rest do `Curl_*` da fonte e do alvo
+     coincidem e o delta de mundo saía IDENTIDADE (medido: 0,0000 rad nos 13). Na pata do
+     Lobisomem os rests divergem e a mesma fórmula assou 0,8763 rad de TORÇÃO (y=-0,544,
+     z=-0,621) numa folha que carrega 12,55% do peso de skin: p99 0,694 e ruins/1e4 36,2
+     no `npm run eval:select`, contra teto de 0,675 e 23,6. Excluir aqui é no-op para os
+     13 rigs humanos (o canal que eles perdem é identidade) e barra a recorrência na
+     origem. O conserto dos GLB já no disco é o `tools/strip-curl-tracks.mjs`. */
+  const OSSOS_DE_RUNTIME = /^Curl_/;
+  const mappedTgt = tgtOrder.filter(g => SG.has(g.name) && !OSSOS_DE_RUNTIME.test(g.name));   // identity map: same Meshy bone names
   /* CLIPE SEM OSSO É ARQUIVO MENTINDO. Sem esta guarda o tool gravava GLB válido, sem
      nenhuma track de rotação, e imprimia "COMPLETO" — o personagem carregava o clipe e
      ficava congelado em bind. Falhar alto vale mais que 11 arquivos inúteis no disco. */
