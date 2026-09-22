@@ -104,7 +104,7 @@
       "mechanism": "complete-curved-rock-in-mag/right-side-handle-empty-reload",
       "ready": false,
       "sourceBranch": "codex/viewmodels-catalog-final (rig KINEMATION via m4-final.blend)",
-      "sourceCommit": "pending",
+      "sourceCommit": "fb443673a",
       "rebuild": "tools/viewmodels/prep/rifles-m92-final.py"
     },
     "akm": {

@@ -736,3 +736,27 @@ A inspeção técnica não encontrou peça desaparecida nem quebra entre aspecto
 mas Rem700 e G3SG1 continuam reprovadas pela régua de enquadramento/escala e o
 contato/pose das mãos ainda exige julgamento humano. `ready:false` e flags de
 família/global permanecem desligadas.
+
+### Marco de rig legado — M92 KINEMATION em 22/09/2026
+
+A M92 deixou o rig `*_metarig` e foi reautorada sobre o checkpoint final da M4
+KINEMATION. O produto `95b0445b…` (1.654.024 bytes) mantém a malha pública
+própria, pente curvo separado e alavanca lateral real, agora com 55/55 ossos do
+contrato e três camadas de mãos skinadas. As seis ações estão presentes; as
+duas recargas percorrem 0,3873 m com o pente e retornam a zero, e somente a
+recarga vazia aciona a alavanca por 0,0446 m, também com retorno a zero.
+
+O gate causal passou 13 mutantes. O lifecycle passou 10/10 controles, 30
+ciclos/540 amostras. A calibração individual passou nas duas proporções:
+0,987× e 95,9% visível em 3:2; 0,942× e 95,9% visível em 16:9. O contrato do
+arsenal agora fica vermelho somente por AKM, G3 e AWP.
+
+A captura real ligada ao checkpoint `fb443673a` produziu 20 PNGs em 1440×960 e
+1440×810, sem erro fatal. Evidência privada:
+`evidence/m92-kinemation-20260922-0340`; `capture.json` SHA-256
+`4ee05b41b81093289dafcf09b22de4873d621d6b5a2b6e2cf54dae1bc7885d37`.
+As folhas de contato não mostram desaparecimento, inversão ou quebra entre
+aspectos, mas mãos, contato, ADS e movimento ainda dependem de revisão humana.
+Recibo:
+[`VIEWMODEL-RIFLES-M92-KINEMATION-2026-09-22.md`](VIEWMODEL-RIFLES-M92-KINEMATION-2026-09-22.md).
+`ready:false`, família AK e global permanecem desligados. Próximo rig: AKM.
