@@ -9,6 +9,8 @@ const mode = option('mode', 'candidate');
 const base = option('base', 'http://127.0.0.1:8160');
 const out = option('out', `artifacts/atacadao/browser/${mode}`);
 const seconds = Number(option('seconds', '8'));
+const only = option('only', '');
+const profileCpu = option('profile', '0') === '1';
 if (!['baseline', 'candidate'].includes(mode)) throw Error('--mode deve ser baseline ou candidate');
 if (!(seconds >= 5 && seconds <= 60)) throw Error('--seconds deve ficar entre 5 e 60');
 mkdirSync(out, { recursive: true });
@@ -25,12 +27,18 @@ const sourceFiles = mode === 'candidate' ? [
 ] : ['public/js/map_atacadao.js'];
 const sources = Object.fromEntries(sourceFiles.map((file) => [file, createHash('sha256').update(readFileSync(file)).digest('hex')]));
 const matrix = [
-  { id: '5x5-3x2-med', bots: 5, quality: 'med', viewport: { width: 1536, height: 1024 } },
-  { id: '8x8-16x9-low', bots: 8, quality: 'low', viewport: { width: 1600, height: 900 } },
+  { id: '5x5-dm-3x2-med', bots: 5, ctf: false, quality: 'med', viewport: { width: 1536, height: 1024 } },
+  { id: '5x5-ctf-3x2-med', bots: 5, ctf: true, quality: 'med', viewport: { width: 1536, height: 1024 } },
+  { id: '8x8-dm-3x2-med', bots: 8, ctf: false, quality: 'med', viewport: { width: 1536, height: 1024 } },
+  { id: '8x8-ctf-3x2-med', bots: 8, ctf: true, quality: 'med', viewport: { width: 1536, height: 1024 } },
+  { id: '5x5-dm-16x9-low', bots: 5, ctf: false, quality: 'low', viewport: { width: 1600, height: 900 } },
+  { id: '5x5-ctf-16x9-low', bots: 5, ctf: true, quality: 'low', viewport: { width: 1600, height: 900 } },
+  { id: '8x8-dm-16x9-low', bots: 8, ctf: false, quality: 'low', viewport: { width: 1600, height: 900 } },
+  { id: '8x8-ctf-16x9-low', bots: 8, ctf: true, quality: 'low', viewport: { width: 1600, height: 900 } },
 ];
 const receipt = { mode, base, sources, matrix: [], generatedAt: new Date().toISOString() };
 
-for (const run of matrix) {
+for (const run of matrix.filter((item) => !only || item.id === only)) {
   const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
   const context = await browser.newContext({ viewport: run.viewport, deviceScaleFactor: 1 });
   const page = await context.newPage();
@@ -43,10 +51,27 @@ for (const run of matrix) {
   try {
     await page.addInitScript(({ bots, quality }) => {
       localStorage.setItem('awpbr_settings', JSON.stringify({ quality, bots, vol: 0, speech: false }));
+      localStorage.setItem('awpbr_nick', 'ATACADAO-QA');
       let seed = 7474;
       Math.random = () => { seed ^= seed << 13; seed >>>= 0; seed ^= seed >> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; };
     }, { bots: run.bots, quality: run.quality });
-    await page.goto(`${base}/?debug=1&auto=P,mst&map=atacadao_treta&perfilauto=0&ctf=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.goto(`${base}/?debug=1&map=atacadao_treta&perfilauto=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForFunction(() => !document.getElementById('splash-enter')?.classList.contains('hidden'), null, { timeout: 120000 });
+    await page.evaluate(() => document.getElementById('boot-splash')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+    await page.waitForSelector('#boot-splash', { state: 'detached', timeout: 30000 });
+    await page.waitForSelector('#main-menu:not(.hidden)', { timeout: 120000 });
+    await page.waitForTimeout(800);
+    await page.click('.cs-item[data-act="single-player"]');
+    await page.click(`.cs-item[data-act="${run.ctf ? 'ctf' : 'sp'}"]`);
+    await page.waitForSelector('#map-screen:not(.hidden)', { timeout: 30000 });
+    await page.click('#ms-continue');
+    await page.waitForSelector('#team-select:not(.hidden)', { timeout: 30000 });
+    await page.click('#btn-team-e');
+    await page.waitForSelector('#char-select:not(.hidden)', { timeout: 120000 });
+    await page.click('#char-list .char-row:first-child');
+    await page.click('#char-confirm');
+    await page.waitForSelector('#team-select:not(.hidden)', { timeout: 30000 });
+    await page.click('#btn-team-b');
     await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
     await page.waitForTimeout(1500);
     const boot = await page.evaluate(() => {
@@ -61,13 +86,18 @@ for (const run of matrix) {
         if (o.userData?.atacadaoCaixa) counts.checkouts++;
       });
       return {
-        map: g._mapId, bots: g.bots.length, quality: g.settings.quality,
+        map: g._mapId, bots: g.bots.length, quality: g.settings.quality, ctf: g.ctf,
         gpu: ext ? g.renderer.getContext().getParameter(ext.UNMASKED_RENDERER_WEBGL) : g.renderer.__csWebgl,
-        nodes: g.world.waypoints.nodes.length, anchors: g.world.routeAnchors?.length || 0, ...counts,
+        nodes: g.world.waypoints.nodes.length, anchors: g.world.routeAnchors?.length || 0,
+        colliders: g.world.colliders.length, occluders: g.world.occluders.length,
+        indexedLos: typeof g.world.rayOccluded === 'function',
+        ctfPoints: g.ctfPts?.length || 0, ...counts,
       };
     });
     assert.equal(boot.map, 'atacadao_treta');
     assert.equal(boot.bots, run.bots * 2 - 1);
+    assert.equal(boot.ctf, run.ctf);
+    if (run.ctf) assert.equal(boot.ctfPoints, 3);
     if (mode === 'candidate') {
       assert.equal(boot.racks, 48); assert.equal(boot.covers, 12); assert.equal(boot.freezers, 6);
       assert.ok(boot.sections >= 5); assert.ok(boot.checkouts >= 6); assert.equal(boot.anchors, 3);
@@ -77,6 +107,11 @@ for (const run of matrix) {
       }
     }
 
+    let cdp = null;
+    if (profileCpu) {
+      cdp = await context.newCDPSession(page);
+      await cdp.send('Profiler.enable'); await cdp.send('Profiler.start');
+    }
     await page.evaluate(() => {
       const g = window.__game;
       g.player.hp = 1e9; g.timeLeft = 1e6; g.ctfMatchLeft = 1e6;
@@ -86,9 +121,14 @@ for (const run of matrix) {
       window.__atacPerf = { frames, start }; requestAnimationFrame(loop);
     });
     await page.waitForTimeout(seconds * 1000);
+    if (cdp) {
+      const { profile } = await cdp.send('Profiler.stop');
+      writeFileSync(`${out}/${run.id}-cpu-profile.json`, JSON.stringify(profile));
+      await cdp.detach();
+    }
     const perf = await page.evaluate(() => {
       const g = window.__game, m = window.__atacPerf; window.__atacPerf = null;
-      const frames = m.frames.slice(1).sort((a, b) => a - b);
+      const frames = m.frames.slice(2).sort((a, b) => a - b);
       g.renderer.info.reset(); g.renderer.render(g.scene, g.camera);
       return {
         elapsed: performance.now() - m.start, frames: frames.length,
@@ -118,12 +158,14 @@ for (const run of matrix) {
       // O eixo x=0,z=32 contém um fardo de cobertura; a câmera antiga nascia
       // colada nele e registrava o decal em macro em vez da rota da doca.
       { id: 'doca', pos: [6.4, null, 34.4], look: [1.6, 1.5, 18] },
-      { id: 'overview', pos: [35, 28, 43], look: [0, 1, 0], aerial: true },
+      { id: 'fachada', pos: [0, 8, -55], look: [0, 3.2, -10], aerial: true },
     ];
     const photos = [];
     for (const view of views) {
       const metrics = await page.evaluate((view) => {
         const g = window.__game; g.paused = true;
+        for (const smoke of (g._smokes || [])) g.scene.remove(smoke.group);
+        if (g._smokes) g._smokes.length = 0;
         g.el.pause.classList.add('hidden'); g.el.banner.classList.add('hidden');
         const ground = view.pos[1] ?? g.world.groundHeightAt(view.pos[0], view.pos[2], 0);
         for (const bot of g.bots) bot.mesh.group.visible = false;

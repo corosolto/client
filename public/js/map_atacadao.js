@@ -160,15 +160,30 @@ export function buildAtacadao(scene, T) {
   const superficies = [];
   const marcarSuperficie = (m, tipo) => { m.userData.atacadaoSuperficie = tipo; superficies.push(m); return m; };
 
+  // O layout repete centenas de caixas com as mesmas medidas. Reutilizar a
+  // geometria mantém cada material/transformação independente e evita upload,
+  // binding e coleta de centenas de buffers idênticos no perfil médio.
+  const boxGeoCache = new Map(), planeGeoCache = new Map();
+  const boxGeo = (w, h, d) => {
+    const key = `${w}|${h}|${d}`;
+    if (!boxGeoCache.has(key)) boxGeoCache.set(key, new THREE.BoxGeometry(w, h, d));
+    return boxGeoCache.get(key);
+  };
+  const planeGeo = (w, h) => {
+    const key = `${w}|${h}`;
+    if (!planeGeoCache.has(key)) planeGeoCache.set(key, new THREE.PlaneGeometry(w, h));
+    return planeGeoCache.get(key);
+  };
+
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const m = new THREE.Mesh(boxGeo(w, h, d), mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
     root.add(m);
     if (opts.collide !== false) { colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 }); occluders.push(m); }
     return m;
   }
-  function addFloor(w, d, mat, x, z, y = 0.01) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; }
+  function addFloor(w, d, mat, x, z, y = 0.01) { const m = new THREE.Mesh(planeGeo(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; }
   const col = (x, z, hx, hz, h) => colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: h, minZ: z - hz, maxZ: z + hz });
   const worldPropBatch = new PropBatch({ bucket: 18, tag: 'atacadao-entorno', shadowMin: 0.04 });
   const interiorPropBatch = new PropBatch({ bucket: 0, tag: 'atacadao-interior', shadowMin: 0.04 });
@@ -182,7 +197,7 @@ export function buildAtacadao(scene, T) {
   }
   const gprop = (id, x, z, h, ry) => { const o = placeProp(id, { x, z, y: 0, targetH: h, ry }); if (o) { root.add(o); occluders.push(o); } return o; };
   const signMesh = (w, h, tx2, x, y, z, ry) => {
-    const g = new THREE.Group(); const geo = new THREE.PlaneGeometry(w, h);
+    const g = new THREE.Group(); const geo = planeGeo(w, h);
     const f = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tx2 })); f.position.z = 0.02;
     const bk = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tx2 })); bk.position.z = -0.02; bk.rotation.y = Math.PI;
     g.add(f, bk); g.position.set(x, y, z); g.rotation.y = ry; root.add(g); return g;
@@ -243,12 +258,18 @@ export function buildAtacadao(scene, T) {
   /* Instância evita 48 clones do mesmo GLB nos passes principal/sombra;
      o galpão fechado dispensa buckets. Medição: docs/mapa-atacadao.md. */
   const rackBatch = new PropBatch({ bucket: 0, tag: 'atacadao-racks', shadowMin: 0.04 });
-  /* A geometria mora DENTRO do Group marcado: a mutação --mutar=sem-racks remove o
-     Group, e com as malhas soltas no root a ATA5 media a mesma LOS com e sem rack. */
+  const rackVisuals = new THREE.Group();
+  rackVisuals.userData.atacadaoRackBatch = true; root.add(rackVisuals);
+  const rackParts = new Map(), rackDummy = new THREE.Object3D();
+  /* Os módulos preservam Groups marcados para contrato/colisão; a geometria repetida
+     fica em um lote também marcado, para o mutante remover os dois lados juntos. */
   const rackBox = (g, w, h, d, mat, dx, dy, dz, sombra = true) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    m.position.set(dx, dy + h / 2, dz); m.castShadow = sombra; m.receiveShadow = true;
-    g.add(m); occluders.push(m); return m;
+    const key = `${w}|${h}|${d}|${mat.uuid}|${sombra ? 1 : 0}`;
+    let part = rackParts.get(key);
+    if (!part) { part = { geo: boxGeo(w, h, d), mat, sombra, matrices: [] }; rackParts.set(key, part); }
+    rackDummy.position.set(g.position.x + dx, dy + h / 2, g.position.z + dz);
+    rackDummy.rotation.set(0, 0, 0); rackDummy.scale.set(1, 1, 1); rackDummy.updateMatrix();
+    part.matrices.push(rackDummy.matrix.clone());
   };
   FILA_X.forEach((fx, fi) => {
     const vaoDaFila = fi % 2 === 0 ? VAO_PAR : VAO_IMPAR;
@@ -266,6 +287,10 @@ export function buildAtacadao(scene, T) {
       const hCarga = [2.5, 1.9, 2.9][(fi + zi) % 3];
       rackBox(g, 1.12, hCarga, 2.9, PALLET[(fi + zi) % PALLET.length], paraDentro * 0.58, 0, 0);
       rackBox(g, 1.16, 0.16, 3.0, MAT.metal, paraDentro * 0.58, hCarga, 0, false);
+      // Proxy só para medição/contrato do módulo individual; não desenha nem entra
+      // na lista de raycast. As malhas visuais são instanciadas logo abaixo.
+      const boundsProxy = new THREE.Mesh(boxGeo(RACK_HX * 2, RACK_H, RACK_HZ * 2), MAT.parede);
+      boundsProxy.position.y = RACK_H / 2; boundsProxy.visible = false; g.add(boundsProxy);
       g.userData.atacadaoRack = { fila: fi, indice: zi };
       g.userData.collider = { minX: fx - RACK_HX, maxX: fx + RACK_HX, minY: 0, maxY: RACK_H, minZ: rz - RACK_HZ, maxZ: rz + RACK_HZ };
       colliders.push(g.userData.collider);
@@ -274,6 +299,12 @@ export function buildAtacadao(scene, T) {
     // placa de corredor pendurada na cabeceira de cada fileira
     signMesh(2.6, 0.8, signTex('#1f5fbf', '#ffffff', ['MERCEARIA', 'BEBIDAS', 'LIMPEZA', 'HORTIFRÚTI', 'BAZAR', 'DESCARTÁVEL'][fi], '', 512, 150), fx, 4.2, -0.6, 0);
   });
+  for (const part of rackParts.values()) {
+    const mesh = new THREE.InstancedMesh(part.geo, part.mat, part.matrices.length);
+    part.matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
+    mesh.instanceMatrix.needsUpdate = true; mesh.castShadow = part.sombra; mesh.receiveShadow = true;
+    mesh.computeBoundingSphere(); rackVisuals.add(mesh); occluders.push(mesh);
+  }
   {
     const first = root.children.length;
     rackBatch.build(root);
@@ -618,7 +649,7 @@ export function buildAtacadao(scene, T) {
   }
 
   const GM = { black: lam({ color: 0x1b1d21 }), steel: lam({ color: 0x9aa0a6 }), wood: lam({ color: 0x7a5326 }), tan: lam({ color: 0xb39a63 }), green: lam({ color: 0x16432a }) };
-  const gbox = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); return m; };
+  const gbox = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(boxGeo(w, h, d), mat); m.position.set(x, y, z); return m; };
   const gcyl = (r, len, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 8), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); return m; };
   function buildGun(kind, x, z, yaw) {
     const g = new THREE.Group(); const add = (...ms) => ms.forEach(m => g.add(m));
@@ -655,6 +686,27 @@ export function buildAtacadao(scene, T) {
 
   const groundHeightAt = () => 0;
   const slowAt = () => false;
+  // Bots consultam LOS muitas vezes por frame. O layout já mantém AABBs autoritativas
+  // para cada parede, rack, caixa e cover; o slab test evita percorrer centenas de
+  // meshes decorativas sem mudar os volumes sólidos que bloqueiam a visão tática.
+  const rayOccluded = (raycaster) => {
+    const o = raycaster.ray.origin, d = raycaster.ray.direction;
+    const near = Math.max(0, raycaster.near || 0), far = raycaster.far;
+    outer: for (const c of colliders) {
+      let t0 = near, t1 = far;
+      for (const [origin, direction, lo, hi] of [
+        [o.x, d.x, c.minX, c.maxX], [o.y, d.y, c.minY, c.maxY], [o.z, d.z, c.minZ, c.maxZ],
+      ]) {
+        if (Math.abs(direction) < 1e-8) { if (origin < lo || origin > hi) continue outer; continue; }
+        let a = (lo - origin) / direction, b = (hi - origin) / direction;
+        if (a > b) [a, b] = [b, a];
+        t0 = Math.max(t0, a); t1 = Math.min(t1, b);
+        if (t1 < t0) continue outer;
+      }
+      return true;
+    }
+    return false;
+  };
 
   const nodes = [], adj = [];
   const STEP = 3.2;
@@ -715,7 +767,7 @@ export function buildAtacadao(scene, T) {
     /* O pack público da alpha.246 não contém hum/cidade/PA. Mantemos a fauna visual
        e ficamos em silêncio até existir um soundscape aprovado e alcançável. */
     ambience,
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
+    root, colliders, occluders, rayOccluded, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     ctfPoints: [
       { id: 'E', label: 'ESTACIONAMENTO', x: -8, z: ZS + 12 },
       // O antigo MID (10,-14) ficava junto do estacionamento: 36,3 m para E e

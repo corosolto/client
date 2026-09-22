@@ -95,10 +95,11 @@ const W = game.world;
 game.scene.updateMatrixWorld(true);
 W.root.updateMatrixWorld(true);
 
-const racks = [], ilhas = [], freezers = [], luminarias = [], luzesGalpao = [], luzesFrias = [];
+const racks = [], rackBatches = [], ilhas = [], freezers = [], luminarias = [], luzesGalpao = [], luzesFrias = [];
 const secoes = [], caixas = [], superficies = [];
 W.root.traverse((o) => {
   if (o.userData?.atacadaoRack) racks.push(o);
+  if (o.userData?.atacadaoRackBatch) rackBatches.push(o);
   if (o.userData?.atacadaoCover) ilhas.push(o);
   if (o.userData?.atacadaoFreezer !== undefined) freezers.push(o);
   if (o.userData?.atacadaoLuminaire) luminarias.push(o);
@@ -124,8 +125,8 @@ function sumir(lista) {
   }
   lista.length = 0;
 }
-if (MUTAR === 'sem-racks') sumir(racks);
-if (MUTAR === 'aberto') { sumir(racks); sumir(ilhas); }
+if (MUTAR === 'sem-racks') { sumir(racks); sumir(rackBatches); }
+if (MUTAR === 'aberto') { sumir(racks); sumir(rackBatches); sumir(ilhas); }
 if (MUTAR === 'sem-secoes') sumir(secoes);
 if (MUTAR === 'sem-caixas') sumir(caixas);
 if (MUTAR === 'cinza') {
