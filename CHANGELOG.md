@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.261`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.262`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,19 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.262] — 2026-09-22
+
+### Mudado
+- feat(maps): reconstrói Carandiru sobre a main atual (#611)
+- fix(maps): keep Carandiru bot graph connected
+- docs(maps): close Carandiru validation ledger
+- docs: refresh generated metrics for Carandiru
+- docs(maps): refresh Carandiru alpha.261 evidence
+- fix(maps): normalize Carandiru map-local identity
+- docs(maps): record Carandiru reconstruction evidence
+- test(maps): add Carandiru causal and WebGL gates
+- feat(maps): reconstruct Carandiru map-local
 
 ## [2.0.0-alpha.261] — 2026-09-17
 
