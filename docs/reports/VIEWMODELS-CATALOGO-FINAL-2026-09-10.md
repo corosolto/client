@@ -839,3 +839,17 @@ aspectos, mas mãos, contatos, ADS/scope e movimento ainda dependem de revisão
 humana. Recibo:
 [`VIEWMODEL-RIFLES-AWP-KINEMATION-2026-09-22.md`](VIEWMODEL-RIFLES-AWP-KINEMATION-2026-09-22.md).
 `ready:false`, família sniper e global permanecem desligados.
+
+### Regressão de enquadramento — cluster AR MD97/SCAR em 22/09/2026
+
+Os dois vermelhos residuais da família AR foram removidos sem trocar produto.
+A MD97 passa a régua com 0,944×/86,8% visível/1,385× de braço em 3:2 e
+0,891×/92,7%/1,288× em 16:9. A SCAR passa com 0,972×/94,4%/0,929× e
+0,900×/95,5%/0,866×. Seus gates causais e lifecycles continuam verdes.
+
+As capturas reais ligadas a `d60469593` produziram 20 PNGs por arma e aspecto,
+sem erro fatal: `evidence/ar-frame-md97-20260922-0510` e
+`evidence/ar-frame-scar-20260922-0512`. Recibo:
+[`VIEWMODEL-FRAME-AR-MD97-SCAR-2026-09-22.md`](VIEWMODEL-FRAME-AR-MD97-SCAR-2026-09-22.md).
+As candidatas continuam `ready:false`; escala, inclinação, mãos, ADS e ações
+dependem de revisão humana.
