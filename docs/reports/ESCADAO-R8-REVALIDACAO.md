@@ -3,6 +3,7 @@
 Data: 22/09/2026. PR: #567. Branch: `codex/escadao-r6-stack`.
 Base integrada: `60ad7501323ef076263f645bfca341e2454fce6b` (`v2.0.0-alpha.262`).
 Correção map-local: `38541cecfd1a9215076ab0caf0d3d34fe15a83f1`.
+Normalização de comentários: `37af6d5eb8e112ce9f3567d772d5d8458272c208`.
 
 ## Resultado e escopo
 
@@ -62,7 +63,7 @@ No Chrome/WebGL real:
 - Mutantes `varal-na-rota`, `escada-bloqueada` e `sem-abrigo`: 3/3 mordidos.
 - Mutantes dos anéis `anel-plano`, `anel-enterrado` e `anel-colapsado`: 3/3 mordidos.
 - Fonte local e servida em 8148: SHA-256
-  `d984d2e5fc5dcdd609a9aecf44907d20b852abc38db67ed83e2ef4fb3062e1aa`.
+  `368651b2c269addaa42f84b64d93af1dae6ef373f4f75d9cad7195071eecb5a7`.
 
 ## Evidência visual e orçamento
 
@@ -72,13 +73,13 @@ retornos. A revisão automatizada confirma geometria e enquadramento; aprovaçã
 continua humana.
 
 - 3:2: `artifacts/escadao-r8-alpha262/browser/escadao-alpha262-3x2-contact.jpg`,
-  SHA-256 `c66339f22f80ef935254e5b6c81404427398e5fe4c28dfca21ba40a41e9e2a34`.
+  SHA-256 `c82c1471ad2b955de9ef63bfc5cc213c860433c4b1d4d04b3620d1d8555ca96d`.
 - 16:9: `artifacts/escadao-r8-alpha262/browser/escadao-alpha262-16x9-contact.jpg`,
-  SHA-256 `827522c9b5058ad9b0e7881ac8a2fc434030e221228dccb153842e728a24a23c`.
+  SHA-256 `7f47f97b8013091484429cf19e43741687d32cc757fc63ef76215089e7c5350e`.
 - Runtime EV0–EV7: SHA-256
-  `c916721a5dde612abf9bc0e2feb7491f78a70e425de8514a68a47ab4c568dbd5`.
+  `d416df47772fe42ce286cb349091b34f321ccce1b6d5506db6ab4d2b78eb336a`.
 - Anéis CTF: SHA-256
-  `c33ba99635a9a1f36bb860082e8a9373854ab64a785d2512aef3f21fb3f50920`.
+  `db23307f6df84205824ae27dcb76c73fe5ab52078cfd35ec522d86674d2663c1`.
 
 `CENA` mediu o Escadão após 30 s: 380/460 draw calls e 809.447/930.000 triângulos,
 com CENA1–CENA4 verdes. A sonda de agendamento em CTF 8×8 registrou p95 16,3 ms em
@@ -97,6 +98,10 @@ duas vezes. O recibo completo é
 Essa dívida já existe em `origin/main`; a branch não removeu, copiou nem adicionou asset
 privado/Mint. Por isso as capturas terminam com o inventário de 404 explícito, embora as
 21 poses, GLBs, movimento, janela de tiro e geometria sejam produzidos antes da asserção.
+
+O `check:deploy` também herda UIR15 vermelho de `origin/main`: o delta desta frente não
+toca `game.js`, DOM ou CSS. `eval:comentario`, docs, arquitetura e build próprios passam;
+UIR15 permanece dívida externa e não deve ser maquiada nesta lane de mapa.
 
 ## Teste humano pedido
 
