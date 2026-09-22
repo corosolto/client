@@ -1,28 +1,34 @@
-/* RÉGUA DA ESCOLHA DE NÓ — o segundo nó de uma região só serve se a tela mandar gente nele.
+/* RÉGUA DA ESCOLHA DE NÓ — o jogo tem de mandar o jogador para onde tem GENTE.
    ═══════════════════════════════════════════════════════════════════════════════════
-   O painel de multiplayer diz que o nó `br` atende 275 dos 327 jogadores numa e2-small só:
-   é o problema de capacidade e o de raio de dano na mesma linha. A resposta acordada com o
-   dono é um segundo nó em São Paulo (`br2`), e preparar isso é mais do que criar a VM.
+   Esta régua já existiu com a premissa invertida. Ela nasceu para um segundo nó em São Paulo,
+   citando "275 dos 327 jogadores no br": esse número é o TOTAL DA JANELA do painel, não gente
+   ao mesmo tempo. Medido em `mp_metrics_5m` (30 dias, 13/09/2026): pico de **12 simultâneos**
+   no `br`, 4 no `eu`, 1 no `us`. O segundo nó foi criado e apagado no mesmo dia.
 
-   Duas coisas quebrariam CALADAS se ninguém cobrasse:
+   Com 12 pessoas no mundo todo e três nós, o inimigo não é lotação, é DISPERSÃO. Medido nas
+   mesmas 30 dias: **60% das sessões de multiplayer foram contra bot só** (275 de 459), e em
+   apenas 1,2% das janelas de 5 minutos havia duas pessoas conectadas ao mesmo tempo.
 
-   1. **A lista ordenava só por ping.** Dois nós no mesmo datacentre respondem no mesmo ping,
-      e `Array.sort` é estável: todo mundo continuaria caindo no `br`, o `br2` nasceria vazio,
-      e o dono pagaria US$ 26/mês por uma máquina ociosa enquanto a outra segue lotada.
-   2. **O id de nó era `[a-z]{2}` em nove lugares**, e em dois deles a recusa é silenciosa:
-      `api/match.ts` e `api/perf.ts` gravam `p_node: null` quando o id não casa. O `br2`
-      entregaria telemetria anônima e o painel continuaria dizendo que o `br` tem 84% dos
-      jogadores — porque metade deles viraria `null`.
+   Duas regras, e as duas quebrariam CALADAS se ninguém cobrasse:
+
+   1. **O desempate da lista.** Dentro da mesma faixa de ping, o nó MAIS CHEIO vem primeiro.
+      A versão anterior fazia o contrário — ela servia à capacidade, e mandava cada pessoa
+      para o nó mais vazio, que é literalmente entregar uma sala vazia.
+   2. **Para onde o QUICK PLAY manda.** Ele lia as salas de UM nó, o de menor ping. Duas
+      pessoas separadas por 12 ms de diferença nunca se encontravam. Agora ele procura gente
+      e atravessa de nó, até o teto de 150 ms — acima disso a companhia não paga o atraso.
 
    USO
      node tools/eval/no-escolha-check.mjs
-     node tools/eval/no-escolha-check.mjs --mutar=so-ping     # volta a ordenar só por ping
-     node tools/eval/no-escolha-check.mjs --mutar=id-curto    # volta o id de duas letras
+     node tools/eval/no-escolha-check.mjs --mutar=so-ping      # ordenar só por ping
+     node tools/eval/no-escolha-check.mjs --mutar=mais-vazio   # o desempate ANTIGO (capacidade)
+     node tools/eval/no-escolha-check.mjs --mutar=so-perto     # quick play volta a ignorar gente
+     node tools/eval/no-escolha-check.mjs --mutar=id-curto     # volta o id de duas letras
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ordenarNos, parseConvite, NOS, NO_RE, FAIXA_PING_MS } from '../../public/js/nos.js';
+import { ordenarNos, melhorNoParaJogar, parseConvite, NOS, NO_RE, FAIXA_PING_MS, TETO_COMPANHIA_MS } from '../../public/js/nos.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(HERE, '../..');
@@ -33,38 +39,94 @@ const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { fa
 
 // o mutante troca a função pela versão antiga, sem tocar no arquivo em disco
 const soPing = (lista) => [...lista].sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
-const ordena = MUTAR === 'so-ping' ? soPing : ordenarNos;
+// o desempate ANTIGO, que existia para capacidade: dentro da faixa, o mais vazio primeiro
+const maisVazio = (lista) => {
+  const faixa = (n) => Math.floor((n.ping == null ? 1e9 : n.ping) / FAIXA_PING_MS);
+  return [...lista].sort((a, b) => faixa(a) - faixa(b)
+    || (a.jogadores | 0) - (b.jogadores | 0)
+    || (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
+};
+// o quick play ANTIGO: o nó de menor ping, sem olhar se há alguém nele
+const soPerto = (lista) => [...lista.filter((n) => n.online)]
+  .sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping))[0] || null;
+const ordena = MUTAR === 'so-ping' ? soPing : MUTAR === 'mais-vazio' ? maisVazio : ordenarNos;
+const escolhe = MUTAR === 'so-perto' ? soPerto : melhorNoParaJogar;
 const forma = MUTAR === 'id-curto' ? /^[a-z]{2}$/ : NO_RE;
 if (MUTAR) console.log(`\n  [MUTANTE: ${MUTAR}] — a régua TEM que reprovar`);
 
 console.log('\n· a lista de servidores manda o jogador para o nó certo');
 
-/* NE1 · MESMO DATACENTRE, O MENOS CHEIO PRIMEIRO. É a cláusula que faz o segundo nó existir
-   de fato: sem ela, subir `br2` é comprar uma VM para ficar olhando. */
-const doisBr = [
-  { id: 'br', ping: 28, jogadores: 275, online: true },
-  { id: 'br2', ping: 29, jogadores: 12, online: true },
+/* NE1 · MESMA FAIXA, O MAIS CHEIO PRIMEIRO. É a cláusula que junta as pessoas: com 12
+   simultâneos no mundo todo, o nó vazio mais perto é uma sala vazia.
+   A fixture é de propósito o caso em que as três regras DISCORDAM — o nó com gente é o de
+   ping MAIOR dentro da mesma faixa. Com o cheio também sendo o mais perto, ordenar só por
+   ping dava a mesma resposta e o mutante `so-ping` passava sem a régua ver nada. */
+const empatados = [
+  { id: 'br', ping: 16, jogadores: 0, online: true },
+  { id: 'us', ping: 29, jogadores: 4, online: true },
 ];
-cobra(ordena(doisBr)[0].id === 'br2',
-  `NE1 · com o mesmo ping, o nó mais vazio vem primeiro (${ordena(doisBr).map((n) => `${n.id}:${n.jogadores}`).join(' ')})`);
+cobra(ordena(empatados)[0].id === 'us',
+  `NE1 · com o mesmo ping, o nó com gente vem primeiro (${ordena(empatados).map((n) => `${n.id}:${n.jogadores}`).join(' ')})`);
 
-/* NE2 · MAS NÃO A QUALQUER PREÇO. Nó vazio do outro lado do mundo não é oferta, é armadilha:
-   acima da faixa de ping quem manda é o ping, e o dono desta regra é o jogador do Brasil que
-   não pode ser empurrado para a Europa porque lá está vazio. */
+/* NE2 · MAS NÃO A QUALQUER PREÇO. A LISTA é de quem escolhe, e quem escolhe quer ver o ping:
+   acima da faixa quem manda é o ping, mesmo que a gente esteja toda do outro lado. Quem quer
+   companhia a qualquer custo clica em QUICK PLAY, e é o `melhorNoParaJogar` que decide lá. */
 const longe = [
-  { id: 'br', ping: 28, jogadores: 275, online: true },
-  { id: 'eu', ping: 178, jogadores: 0, online: true },
+  { id: 'br', ping: 28, jogadores: 0, online: true },
+  { id: 'eu', ping: 178, jogadores: 8, online: true },
 ];
 cobra(ordena(longe)[0].id === 'br',
-  `NE2 · ping fora da faixa de ${FAIXA_PING_MS} ms manda mais que lotação (${ordena(longe)[0].id} primeiro)`);
+  `NE2 · na LISTA, ping fora da faixa de ${FAIXA_PING_MS} ms manda mais que lotação (${ordena(longe)[0].id} primeiro)`);
 
 // NE3 · nó fora do ar continua na lista (sumir esconde queda) mas vai para o fim
 const caido = [
   { id: 'us', ping: null, jogadores: 0, online: false },
-  { id: 'br', ping: 28, jogadores: 275, online: true },
+  { id: 'br', ping: 28, jogadores: 3, online: true },
 ];
 cobra(ordena(caido)[0].id === 'br' && ordena(caido).length === 2,
   'NE3 · nó fora do ar fica na lista, mas por último');
+
+console.log('\n· o QUICK PLAY procura gente, não o menor ping');
+
+/* NE7 · A CLÁUSULA QUE VALE. 60% das sessões medidas foram contra bot; a causa é esta escolha.
+   Jogador no Brasil, duas pessoas na Europa dentro do teto: o Quick Play atravessa. */
+const genteLonge = [
+  { id: 'br', ping: 28, jogadores: 0, online: true },
+  { id: 'us', ping: 120, jogadores: 0, online: true },
+  { id: 'eu', ping: 40, jogadores: 2, online: true },
+];
+cobra(escolhe(genteLonge)?.id === 'eu',
+  `NE7 · com gente só no eu, o quick play vai no eu (${escolhe(genteLonge)?.id})`);
+
+/* NE8 · O TETO. Companhia não paga qualquer atraso: acima de ${TETO_COMPANHIA_MS} ms o jogo
+   prefere o vazio perto. Sem esta cláusula, NE7 sozinha mandaria todo mundo para o outro
+   hemisfério atrás de uma pessoa. */
+const genteLongeDemais = [
+  { id: 'br', ping: 28, jogadores: 0, online: true },
+  { id: 'us', ping: 210, jogadores: 4, online: true },
+];
+cobra(escolhe(genteLongeDemais)?.id === 'br',
+  `NE8 · gente acima de ${TETO_COMPANHIA_MS} ms não puxa o jogador (${escolhe(genteLongeDemais)?.id})`);
+
+// NE9 · ninguém em lugar nenhum: aí o ping é o único critério que sobra, e é o certo
+const todosVazios = [
+  { id: 'br', ping: 28, jogadores: 0, online: true },
+  { id: 'eu', ping: 40, jogadores: 0, online: true },
+];
+cobra(escolhe(todosVazios)?.id === 'br',
+  `NE9 · com tudo vazio, o quick play volta a ser o menor ping (${escolhe(todosVazios)?.id})`);
+
+// NE10 · nó fora do ar não recebe ninguém, nem se o número de jogadores dele for alto
+const cheioEcaido = [
+  { id: 'us', ping: 30, jogadores: 9, online: false },
+  { id: 'br', ping: 28, jogadores: 1, online: true },
+];
+cobra(escolhe(cheioEcaido)?.id === 'br',
+  `NE10 · nó fora do ar não recebe ninguém (${escolhe(cheioEcaido)?.id})`);
+
+// NE11 · e sem nó nenhum de pé, devolve null em vez de inventar destino
+cobra(escolhe([{ id: 'br', ping: null, jogadores: 0, online: false }]) === null,
+  'NE11 · sem nó de pé, o quick play não inventa destino');
 
 console.log('\n· o convite do nó novo abre no nó novo');
 
