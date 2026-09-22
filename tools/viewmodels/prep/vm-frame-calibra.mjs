@@ -316,17 +316,12 @@ if (escrever) {
   for (const row of rows) {
     const s = row.sugestao;
     if (!s || s.inalcancavel) continue;
-    linhas.push(`  ${row.weapon}: { x: ${s.x}, y: ${s.y}, z: ${s.z} },   // resíduo ${s.residuo.razao}×`);
+    linhas.push(`  ${row.weapon}: { x: ${s.x}, y: ${s.y}, z: ${s.z} },`);
   }
   const naoFechadas = rows.filter((row) => row.sugestao?.inalcancavel)
     .map((row) => `//   ${row.weapon}: ${row.sugestao.inalcancavel}`);
   const corpo = `// GERADO por tools/viewmodels/prep/vm-frame-calibra.mjs — não editar à mão.
 // Enquadramento por ARMA, medido na câmera real do runtime em repouso.
-// Referência: AK golden (${path.relative(ROOT, AK_FILE)}), fov ${akFrame.fov.toFixed(1)},
-// escala angular alvo ${ESCALA_ALVO.toFixed(4)} de diagonal NDC por metro de arma,
-// centro alvo [${alvoAk.centro}] no aspecto ${option('alvo-aspecto', '3x2')}.
-// Antes deste arquivo o enquadramento era só por FAMÍLIA: a família \`ar\` ia de
-// 0,93× a 3,03× da escala do arsenal com um único ponto de câmera.
 ${naoFechadas.length ? `// Não fecharam pela geometria do próprio produto (asset, não enquadramento):\n${naoFechadas.join('\n')}\n` : ''}
 export const VM_FRAME = Object.freeze({
 ${linhas.join('\n')}

@@ -170,15 +170,8 @@ const _adsBlend = new THREE.Quaternion();
 const _adsForward = new THREE.Vector3();
 const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
-// Linhagem do pacote golden da AK: akm, m92, g3, awp e m400 foram autoradas
-// SOBRE ele (ver o cabeçalho de `prep/rifles-akm-final.py`), então herdaram o
-// rig `*_metarig` e a malha `Requests_Studio_Hands` — zero ossos em comum com o
-// rig KINEMATION das outras 19. As mãos dessa linhagem são luva escura por
-// FATOR mais normal map, sem albedo: é o acabamento que o dono aprovou na AK.
-// O atlas de time é autorado para o UV de `Hand-Tool1.008`; aplicá-lo aqui
-// trocava o map (identidade vazando para a coronha), branqueava o fator e
-// anulava o normal — a mão virava luva lisa sem dedos. A AK não quebra porque
-// `golden` já escapa do tint; estas cinco recebem o mesmo tratamento.
+// A linhagem metarig da AK preserva o acabamento aprovado e não recebe o atlas KINEMATION.
+// Causa e medidas: docs/reports/VIEWMODEL-PADRAO-FPS-PROFISSIONAL.md.
 const HAND_MATERIAL_AK_LINEAGE = /CoroSolto_(?:FP_Gloves|Mandrake_Sleeves)/i;
 const CLIP_ALIASES = Object.freeze({
   equip: 'equip_rifle', reload: 'reload_tactical', fire: 'shoot',
@@ -280,9 +273,8 @@ const urlForKey = (key) => {
   }
   if (key.includes('#')) {
     const [family, weapon] = key.split('#');
-    // Versão pelos BYTES do produto: `CATALOG_VERSION` é global e congelada, e
-    // com ela re-assar uma arma não invalidava o cache do navegador — o jogo
-    // servia o GLB de ontem e o conserto não chegava à tela.
+    // A versão deriva dos bytes para invalidar o cache após reassar uma arma.
+    // Contrato: docs/reports/VIEWMODEL-PADRAO-FPS-PROFISSIONAL.md.
     const versao = VM_BYTES[weapon] || CATALOG_VERSION;
     if (VM_WEAPON[weapon]?.runtime === 'family') return `${AUTHORED_VM_URLS[family]}&b=${versao}`;
     return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${versao}`;
@@ -329,9 +321,8 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 
   const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
   const golden = sourceKey.startsWith('gold#');
-  // Precedência: frame da família ← medida por arma (`vmframe.js`, gerado pela
-  // régua) ← override manual em `VM_WEAPON[arma].frame`. A string `'family'`
-  // segue significando "herda tudo".
+  // Precedência: família, medida por arma e override manual; `family` herda tudo.
+  // Medição: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   const weaponId = sourceKey.split('#')[1];
   const weaponFrame = VM_WEAPON[weaponId]?.frame;
   const familyFrame = FAMILY_FRAME[family] || FAMILY_FRAME.default;
@@ -866,10 +857,8 @@ export class AuthoredViewModels {
     return this._play(entry, names[0], { timeScale, fade: 0.02, preserveQueue: true });
   }
 
-  // Trocar ação DENTRO de `AnimationMixer.update` corrompe os bindings: o estado
-  // diz idle e o esqueleto retém a pose final da recarga. O listener `finished`
-  // dispara de dentro do update, então a troca é adiada para fora dele.
-  // Portado de `claude/vm-unificado` (gate AUD1B daquela lane).
+  // O listener `finished` dispara dentro do update; a troca fica para depois do mixer.
+  // Cobertura: tools/eval/authored-transition-check.mjs.
   _stepEntry(entry, step) {
     entry.updatingMixer = true;
     try {
@@ -890,11 +879,8 @@ export class AuthoredViewModels {
     // Sem guarda de visibilidade: fila encalhada com mount oculto era pose congelada.
     const next = entry.queue.shift();
     if (next) this._play(entry, next.name, { timeScale: next.timeScale, preserveQueue: true });
-    // Fim de clipe volta ao idle com FADE: o último frame não fecha nos twists
-    // do braço e o snap seco era um pop no fim de toda recarga. Mas entry
-    // ESCONDIDA para de receber `update`, então o crossfade nunca completa e a
-    // pose congela no último frame da ação anterior — o estado diz idle e o
-    // esqueleto discorda. Sem mount visível, troca seca.
+    // Mount visível volta com fade; oculto usa troca seca para não congelar sem updates.
+    // Cobertura: tools/eval/authored-transition-check.mjs.
     else this._idle(entry, entry.mount.visible ? 0.15 : 0);
   }
 

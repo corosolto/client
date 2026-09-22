@@ -33,10 +33,8 @@ for (const name of MANIFESTS) {
 entries.sort((a, b) => a[0].localeCompare(b[0]));
 const corpo = `// GERADO por tools/viewmodels/gen-vmbytes.mjs — não editar à mão.
 // Versão de URL por BYTES do produto assado, lida dos manifestos \`*-candidates.json\`.
-// Com \`?v=\` congelado numa string global, re-assar uma arma não invalidava o
-// cache do navegador e o conserto não chegava à tela.
 export const VM_BYTES = Object.freeze({
-${entries.map(([weapon, sha, origem]) => `  ${weapon}: '${sha}',   // ${origem}-candidates.json`).join('\n')}
+${entries.map(([weapon, sha]) => `  ${weapon}: '${sha}',`).join('\n')}
 });
 `;
 const out = path.join(ROOT, 'public/js/data/vmbytes.js');

@@ -46,10 +46,8 @@ export const VM_WEAPON = {
   // baked: GLB assado OFFLINE com a Mint dentro (pente separado, sockets
   // nomeados) — o runtime só toca clipes. Caixa MAG: régua eval:cs16.
   ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
-  // `frame` aceita objeto para OVERRIDE MANUAL por arma. O enquadramento medido
-  // vive em `vmframe.js`, gerado por `tools/viewmodels/prep/vm-frame-calibra.mjs`:
-  // a família `ar` sozinha ia de 0,93× a 3,03× da escala do arsenal com um único
-  // ponto de câmera, e quatro das seis tinham um terço da arma fora do quadro.
+  // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
+  // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),
   mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay',
     ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
