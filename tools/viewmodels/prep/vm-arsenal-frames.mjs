@@ -64,7 +64,10 @@ const erros = [];
 page.on('pageerror', (e) => erros.push(String(e).slice(0, 160)));
 try {
   const q = new URLSearchParams({ debug: '1', auto: 'E', map: MAPA, armaslazy: '0' });
-  if (MODO === 'autorado') q.set('vmready', 'ak,ar,mp5,smg,p90,g3,marksman,svd,sniper,bolt,deagle,pistol,revolver,shotgun,lmg');
+  if (MODO === 'autorado') {
+    q.set('vmauthored', '1');
+    q.set('vmready', 'ak,ar,mp5,smg,p90,g3,marksman,svd,sniper,bolt,deagle,pistol,revolver,shotgun,lmg');
+  }
   await page.goto(`${BASE}/?${q}`, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.waitForTimeout(2500);

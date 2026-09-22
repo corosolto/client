@@ -96,6 +96,8 @@ jobs:
         run: node tools/eval/vm-kick-sim.mjs
       - name: Faca construída e transições sem bind pose
         run: npm run eval:melee-vm
+      - name: Chave tudo-ou-nada do viewmodel (sem ativação parcial)
+        run: npm run eval:vm-launch
       - name: Navegação dos bots (60 s × 5 mapas, sementes fixas)
         run: node tools/eval/botsim.mjs 60 all
 

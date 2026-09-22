@@ -30,6 +30,7 @@ import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepç
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 import { createSoundscape } from './soundscape.js';        // vida 1: áudio ambiente por mapa (world.sound)
 import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS } from './authoredvm.js';
+import { VM_RUNTIME } from './vmlaunch.js';
 import { viewmodelVisibility } from './vmvisibility.js';
 
 import { WEAPONS } from './data/weapons.js';
@@ -891,6 +892,8 @@ export class Game {
     this.vmScene.add(this.vm.root);
     // BUG-75: o pacote CC0 doa somente rig/clip. A arma visível continua sendo o GLB próprio
     // próprio do Coro Solto e as mãos recebem pele/roupa do personagem selecionado.
+    // Tudo-ou-nada (vmlaunch.js): fora da chave nenhum controlador nasce e as 26 armas,
+    // faca e granada ficam no legado fparms.
     const authoredDef = byId(this.playerCharId);
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
     this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root, () => {
@@ -3099,7 +3102,7 @@ export class Game {
         document.body.appendChild(badge);
       }
       badge.textContent = (melee ? `vm: faca autorada · ${w}` : authored
-        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'})` : `vm: legado · ${w}`);
+        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'})` : `vm: legado · ${w}`) + ` · ${VM_RUNTIME.mode}`;
       badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
       if (AUTHORED_VM_ENABLED && QS.get('vmqa') === 'precision') this._ensureVmPrecisionQa();
     }

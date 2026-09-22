@@ -30,7 +30,8 @@ function check(ok, label, evidence = '') {
 }
 
 check(/import \{ KnifeMeleeViewModel \} from '\.\/meleevm\.js'/.test(game)
-  && /this\.vm\.melee = new KnifeMeleeViewModel\(\{/.test(game),
+  // A construção fica atrás da chave tudo-ou-nada (eval:vm-launch), nunca some.
+  && /this\.vm\.melee = (?:!AUTHORED_VM_ENABLED \? null : )?new KnifeMeleeViewModel\(\{/.test(game),
 'MV1 game.js constrói this.vm.melee com o piloto');
 
 const glbPath = 'public/models/viewmodels/coro/melee/knife-hires.glb';

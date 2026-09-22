@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { WEAPON_IDS } from '../../public/js/weapons.js';
-import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
+import { VM_WEAPON, VM_LAUNCH } from '../../public/js/data/vmconfig.js';
 import { acceptsAuthoredLoad, AUTHORED_VM_ENABLED } from '../../public/js/authoredvm.js';
 import { viewmodelVisibility } from '../../public/js/vmvisibility.js';
 
@@ -29,13 +29,14 @@ const gunIds = WEAPON_IDS.filter((id) => id !== 'knife');
 check(WEAPON_IDS.length === 26, 'catálogo alpha.246 preserva 26 armas', WEAPON_IDS.join(','));
 check(gunIds.every((id) => VM_WEAPON[id]), '25 armas de fogo têm família authored declarada');
 check(Object.keys(VM_WEAPON).every((id) => gunIds.includes(id)), 'configuração não inventa armas fora do catálogo');
-check(Object.values(VM_FAMILY).every((family) => family.ready === false), 'todas as famílias permanecem fechadas no Git');
+// Tudo-ou-nada (eval:vm-launch): as flags `ready` são do dono; o que mantém o legado é a chave.
+check(VM_LAUNCH === false, 'chave de lançamento desligada no Git');
 check(AUTHORED_VM_ENABLED === false, 'runtime Node confirma ativação global desligada por padrão');
 
 const authored = text('public/js/authoredvm.js');
 const game = text('public/js/game.js');
 const vmweapon = text('public/js/vmweapon.js');
-check(authored.includes("_QS?.get('vmauthored') === '1'"), 'ativação exige opt-in explícito ?vmauthored=1');
+check(authored.includes('export const AUTHORED_VM_ENABLED = VM_RUNTIME.active;'), 'ativação vem só da chave única (vmlaunch.js) ou de ?vmauthored=1');
 // O atlas de time é autorado para o UV de `Hand-Tool1.008` (rig KINEMATION).
 // akm, m92, g3, awp e m400 foram assadas sobre o pacote golden da AK e usam
 // `Requests_Studio_Hands`, sem um osso em comum. Colar o atlas nelas trocava o
@@ -45,7 +46,9 @@ check(authored.includes('HAND_MATERIAL_AK_LINEAGE'),
   'linhagem de mão da AK é reconhecida no runtime');
 check(authored.includes("&& !HAND_MATERIAL_AK_LINEAGE.test(material?.name || '')"),
   'mão da linhagem AK não recebe o atlas de time do rig KINEMATION');
-check(game.indexOf('if (AUTHORED_VM_ENABLED)') < game.indexOf('createAuthoredViewModels(this.vm.root'), 'controladores só são criados dentro do portão global');
+check(game.includes('this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root')
+  && game.includes('this.vm.melee = !AUTHORED_VM_ENABLED ? null : new KnifeMeleeViewModel('),
+'controladores só são criados dentro do portão global');
 const loadingState = viewmodelVisibility({ alive: true, firstPerson: true, authoredReady: false });
 check(loadingState.fallback && !loadingState.authored,
   'uma decisão mantém o fallback até existir controlador ativo');

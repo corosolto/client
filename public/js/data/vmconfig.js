@@ -1,5 +1,16 @@
 // Tabela pura do viewmodel autorado (BUG-75): famílias KINEMATION + as 26 armas.
-// `ready` é o portão de rollout — false = a arma continua no caminho legado.
+// `ready` é o portão por arma; em produção o autorado só liga com VM_LAUNCH e as 26
+// prontas (tudo-ou-nada, decidido em vmlaunch.js e medido por eval:vm-launch).
+
+// Chave de lançamento. Só o dono vira: com qualquer arma fora de `ready`, a
+// régua reprova e o runtime continua 100% no legado (fparms).
+export const VM_LAUNCH = false;
+
+// A faca não tem família de fogo: o portão dela mora aqui (meleevm.js). `true`
+// preserva o veredito do dono registrado no #618 (faca, pistola e AK).
+export const VM_MELEE = {
+  knife: { ready: true },
+};
 
 // Por família: mount (socket→gun-space, +Z=cano, autorado no editor), equip
 // (par General rifle|pistol), camShake (preset do recoil.json), reloadStyle.

@@ -58,7 +58,8 @@ async function abrir(viewport) {
     await pag.route('**/js/authoredvm.js*', (r) =>
       r.fulfill({ contentType: 'application/javascript; charset=utf-8', body: fonte }));
   }
-  await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0`,
+  // Revisão explícita: sem a chave de lançamento o jogo nasce no legado (eval:vm-launch).
+  await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0&vmauthored=1`,
     { waitUntil: 'load', timeout: 180000 });
   await pag.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await pag.waitForTimeout(2000);

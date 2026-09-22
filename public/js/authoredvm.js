@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
+import { VM_RUNTIME } from './vmlaunch.js';
 import { GOLDEN_VER } from './data/goldenver.js';
 import { FAMILY_VER } from './data/weaponver.js';
 import { VM_FRAME } from './data/vmframe.js';
@@ -28,15 +29,16 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
 // ?vmfonte=goldsrc: viewmodel dos moldes CS 1.6 (CC0, FONTE.md) com a arma
 // Mint; ?cs16=1 é o atalho que liga todas as famílias + a fonte de uma vez.
 const _QS = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-// Autorado ligado por padrão (#618); `?vmauthored=0` é o kill-switch.
-export const AUTHORED_VM_ENABLED = _QS?.get('vmauthored') !== '0';
+// Fonte única: chave de lançamento tudo-ou-nada (vmlaunch.js) ou revisão `?vmauthored=1`.
+export const AUTHORED_VM_ENABLED = VM_RUNTIME.active;
 const CS16_TUDO = AUTHORED_VM_ENABLED && _QS?.get('cs16') === '1';
 // ?vmfonte=retarget (?rt=1): braços pagos sobre movimento CS 1.6 retargetado.
 // Evidência e custo da escolha: docs/reports/GOLDEN-AK-DECISION.md.
 const RETARGET_TUDO = AUTHORED_VM_ENABLED && _QS?.get('rt') === '1';
 const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
 const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
-// `vmready`/`vmweapon` abrem armas fora do portão numa sessão de revisão.
+// Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
+// só abrem armas numa sessão de revisão.
 const AUTHORED_KILLED = !AUTHORED_VM_ENABLED;
 
 // Cache de GLTF parseado no nível do módulo: o preload do boot aquece aqui e
@@ -160,7 +162,7 @@ export function preloadAuthoredFamilies(keys = []) {
 // própria — família#arma) + granada, se aberta.
 export function authoredBootFamilies(weaponIds = []) {
   const keys = new Set(weaponIds.map((id) => entryKeyFor(id)).filter(Boolean));
-  if (familyReady('grenade')) keys.add('grenade');
+  if (!AUTHORED_KILLED && familyReady('grenade')) keys.add('grenade');
   return [...keys];
 }
 
