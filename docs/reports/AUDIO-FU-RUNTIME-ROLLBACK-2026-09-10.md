@@ -126,3 +126,34 @@ deve ser transformado em um falso verde por regeneração local.
 - manifest só com paths novos deixa F/U em silêncio;
 - outras facções, música, armas e ambiente não mudam;
 - gate causal, mutantes, build e checks do repositório passam.
+
+## Revalidação em 22/09/2026
+
+O draft foi trazido por merge, sem rebase, para
+`origin/main@60ad7501323ef076263f645bfca341e2454fce6b` (alpha.262). A base não havia
+alterado `public/js/audio.js` desde a alpha.246; os conflitos ficaram restritos a versão,
+scripts e documentação gerada e foram resolvidos preservando a alpha.262.
+
+O manifesto de produção foi consultado novamente pelo gate, sem reprodução ou download
+dos arquivos de áudio. O estado observado continua sendo 9 Funkeiros com quatro eventos
+estruturados, zero Tribos Urbanas estruturada, 44 caminhos únicos F e 11 U pertencentes à
+allowlist v7. O resolvedor candidato devolveu o pool v7 para Mandrake e os bordões v7 de
+Funkraiz e Clubber.
+
+Uma sonda separada confirmou HTTP 200 nos 55 caminhos únicos F/U. Para os três bordões
+com identidade fixa, os bytes servidos conferem com os sha-256 registrados no A/B:
+Funkraiz `ec346c570699…bfcd6`, Clubber `583dbee1e543…8339` e Reggae
+`013f23ce3b09…e52`.
+
+Passaram na base atual: `eval:audiofurollback`, o mutante `fu-ia-volta` (seis cláusulas
+vermelhas), `eval:audiovoicemix`, `eval:charvoice`, `eval:audioproc`,
+`eval:audiocapacidade`, `eval:audioprivate`, `eval:audioruntimeassets`,
+`eval:menumusicreview`, os mutantes de staging `hash-trocado`/`extra-solta`,
+`docs:check` e `arch:check`. O A/B privado permanece fora do Git e seu manifesto mede
+sha-256 `3823b15be08df3ef57f37291b99ffbe38c147091afed44714047aa00eac5318b`.
+
+O ZIP v8 bruto, antes mantido sob `/tmp`, não está mais disponível depois do reinício;
+assim, o modo `fu-rollback-verify --fontes` informa a ausência dessa fonte. O fato é
+registrado como limite da evidência para uma futura reconstrução do pack, não como verde.
+Este PR só altera a seleção em runtime e não contém nem publica áudio. A promoção segue
+dependente de escuta humana no jogo.

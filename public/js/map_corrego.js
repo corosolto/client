@@ -1,6 +1,7 @@
 // CÓRREGO (corrego) — spec em plans/13-CORREGO.md. Planta: eixo longo = z, norte = −z;
 // córrego em x ∈ [−3, 3] (água rasa), margens em ±[3, 24], pontes em z = −22, 0, 22.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, hasProp, PropBatch, StaticBatch, InstBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -289,7 +290,9 @@ export function buildCorrego(scene, T) {
   const PAREDES = [paredeTex('#c4a87a', 0.3, 301), paredeTex('#a89d8a', 0.4, 502),
     paredeTex('#8d6e5a', 0.5, 703), paredeTex('#b0a06a', 0.35, 904)];
 
-  const PB = new PropBatch({ bucket: 24 });
+  /* A grama some além de 42 m: medido, ela custa 4.142 triângulos por tufo e são ~1.700
+     tufos — 7 de cada 8 triângulos do mapa. A 42 m, com a névoa do córrego, não se vê. */
+  const PB = new PropBatch({ bucket: 24, cortes: { grama_corrego_01: 42, grama_corrego_02: 42 } });
   const GLB_ON = QP.get('glb') !== '0';
   function propComFallback(id, x, z, h, ry, fallback) {
     propEscala.push({ id, h });
@@ -308,7 +311,7 @@ export function buildCorrego(scene, T) {
 
   /* ===================== CÉU / LUZ ===================== */
   const { hemi, sun } = applyLook(scene, T, 'corrego', { nofog: QP.get('nofog') === '1' });
-  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;

@@ -97,7 +97,9 @@ window.__GEO_LANG__ = (function () {
   /* Contexto de partida do `window.__game` (main.js:556 já o expõe). Tudo em try:
      ler contexto NUNCA pode ser o que derruba o relatório do erro de verdade. */
   function contexto(){
-    var c = { version: versao(), route: location.pathname, breadcrumbs: migalhas.slice() };
+    /* `host` na 1ª migalha: sem ele o painel não separa ruído de worktree local de defeito
+       no ar, e `version` não serve. Triagem de 13/09 no KNOWN-BUGS.md. */
+    var c = { version: versao(), route: location.pathname, breadcrumbs: ['host ' + location.host].concat(migalhas.slice(-(MIGALHAS - 1))) };
     try{
       // 'cs_anon' é a MESMA chave do `ANON_KEY` de main.js:403 - sem isso o erro não
       // cruza com a telemetria do mesmo navegador, que é metade da utilidade.
@@ -179,6 +181,11 @@ window.__GEO_LANG__ = (function () {
   function erroDeContexto(m){
     return /to WebGL2?RenderingContext\.\w+ must be an instance of WebGLShader\b/i.test(String(m || ''));
   }
+  /* MESMA redação da `REDE_RE` de `src/lib/error-provenance.mjs`: divergir devolve a queda de
+     rede ao painel de launch aqui, ou à issue automática lá. KNOWN-BUGS.md, BUG-170. */
+  function erroDeRede(m){
+    return /^(?:falha ao abrir [^:]{1,40}: )?(?:network error|load failed|failed to fetch|networkerror when attempting to fetch resource\.?)$/i.test(String(m || '').trim());
+  }
   /* URL http só prova origem em source/stack; na mensagem ela é payload do
      jogo ("falha ao carregar https://api..."). Esquema de extensão vale em
      qualquer campo: o navegador reporta frame injetado até na mensagem (#157). */
@@ -198,6 +205,10 @@ window.__GEO_LANG__ = (function () {
     // lados discordarem, a ponte come cota aqui ou volta a abrir issue lá (BUG-76).
     var injetado = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|webkit\.messageHandlers)\b/;
     if (injetado.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
+    // MESMA redação da `AUTOMACAO_RE` de `src/lib/error-provenance.mjs`: se os dois lados
+    // discordarem, o arnês come cota aqui ou volta a abrir issue lá (BUG-151).
+    var automacao = /\bUtilityScript\b|\b__puppeteer_evaluation_script__\b|\bpptr:[/][/]/;
+    if (automacao.test(String(stack || ''))) return false;
     var propria = location.origin;
     if (sourceText && /^https?:\/\//i.test(sourceText)) {
       try {
@@ -256,13 +267,22 @@ window.__GEO_LANG__ = (function () {
     try { document.getElementById('launch-error-retry').focus(); } catch(_){}
   }
 
+  /* RÉGUA:launch-watchdog início - `tools/eval/launch-watchdog-check.mjs` EXTRAI daqui
+     até o marcador de fim e roda este mesmo código num `vm` com relógio falso. Mexeu no
+     laço? rode `npm run eval:launchwatchdog`: a régua lê o código novo, não uma cópia. */
   var lancamento = {
-    ativo: false, etapa: null, timer: null,
+    ativo: false, etapa: null, timer: null, ocultou: false,
     begin: function(etapa, timeout, concluiu){
       if (this.timer) clearTimeout(this.timer);
       this.ativo = true; this.etapa = etapa;
+      /* CONSOME o latch: de graça uma vez por episódio de ocultação, não para sempre.
+         Sem isto uma troca de aba desarmava o watchdog pelo resto da sessão (LW6). */
+      this.ocultou = document.visibilityState === 'hidden';
       var self = this;
       this.timer = setTimeout(function(){
+        /* `setTimeout` corre com a aba no fundo e o rAF para: falhar aqui mediria o rAF
+           congelado. Uma renovação por ocultação. BUG-167, cláusulas LW1/LW3/LW6. */
+        if (self.ocultou || document.visibilityState === 'hidden') { self.begin(etapa, timeout, concluiu); return; }
         if (concluiu) {
           var v = concluiu();
           /* #241: 'rede-lenta' = ainda há PROGRESSO real (ex.: GLBs chegando), só que
@@ -292,6 +312,10 @@ window.__GEO_LANG__ = (function () {
       mostraFalha({ fp: registro && registro.fp });
     }
   };
+  /* A aba pode ocultar e VOLTAR antes do tique: sem este latch o tempo gasto no fundo (em
+     que o rAF não andou) ainda contaria como teto esgotado. */
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') lancamento.ocultou = true; });
+  /* RÉGUA:launch-watchdog fim */
   window.__gameLaunch = lancamento;
 
   document.addEventListener('DOMContentLoaded', function(){
@@ -349,7 +373,7 @@ window.__GEO_LANG__ = (function () {
     }
     if (interna) showDebug('promise', (r && r.message) || String(r), r && r.stack);
     reporta('promise', (r && r.message) || String(r), null, r && r.stack, !interna);
-    if (lancamento.ativo && interna && !erroIgnoravel(r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
+    if (lancamento.ativo && interna && !erroIgnoravel(r) && !erroDeRede((r && r.message) || r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
   });
 
   /* Um erro global sozinho não prova que o jogo parou (extensões de carteira injetam
@@ -862,6 +886,8 @@ window.__GEO_LANG__ = (function () {
             <option value="5">5</option><option value="7">7</option>
           </select>
         </label>
+        <!-- vazio de propósito: quem preenche e ordena é o main.js, dono da lista e do salvo -->
+        <label><span>DIFICULDADE</span><select id="diff-select"></select></label>
       </div>
     </header>
   </div>
@@ -1126,8 +1152,19 @@ window.__GEO_LANG__ = (function () {
                 <option value="todos">TODOS (sorteia a cada partida)</option>
                 <option value="oficiais">SÓ OFICIAIS</option>
                 <option value="comunidade">SÓ DA COMUNIDADE</option>
+                <option value="escolher">ESCOLHER A DEDO</option>
               </select>
             </label>
+            <div id="mp-mapas" class="mp-mapas" hidden>
+              <div class="mp-mapas-topo">
+                <span id="mp-mapas-conta" class="mp-mapas-conta">marque pelo menos um mapa</span>
+                <span class="mp-mapas-acoes">
+                  <button id="mp-mapas-todos" class="mp-mini" type="button">MARCAR TODOS</button>
+                  <button id="mp-mapas-limpar" class="mp-mini" type="button">LIMPAR</button>
+                </span>
+              </div>
+              <div id="mp-mapas-grade" class="mp-mapas-grade" role="group" aria-label="Mapas que a sala vai girar"></div>
+            </div>
             <label>TIME E <select id="mp-fac-e"></select></label>
             <label>TIME B <select id="mp-fac-b"></select></label>
             <label>MODO

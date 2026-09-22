@@ -6,6 +6,7 @@
 // no ESTACIONAMENTO (carros GLB texturizados + Estátua da Liberdade). 3 bandeiras:
 // estacionamento, estátua, gôndolas. Contrato buildWorld + A*. Props de /Users/ruben/glb.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, PropBatch, StaticBatch, PROP_BATCH } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
@@ -1632,7 +1633,7 @@ export function buildHavan(scene, T) {
      Meio-dia de cidade média brasileira é exatamente isto: sombra curta, dura e legível. */
   const hemi = new THREE.HemisphereLight(0xcfe0f5, 0x6d6455, 0.82); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff0d2, 2.02); sun.position.set(18, 55, 20); sun.castShadow = true;
-  sun.shadow.mapSize.set(_q === 'low' ? 1024 : 2048, _q === 'low' ? 1024 : 2048); sun.shadow.camera.left = -60; sun.shadow.camera.right = 60; sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60; sun.shadow.camera.far = 200; sun.shadow.bias = -0.0004;
+  aplicaSombraSol(sun); sun.shadow.camera.left = -60; sun.shadow.camera.right = 60; sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60; sun.shadow.camera.far = 200; sun.shadow.bias = -0.0004;
   scene.add(sun);
 
   // ===== ground height (mezanino elevado + rampa) =====
