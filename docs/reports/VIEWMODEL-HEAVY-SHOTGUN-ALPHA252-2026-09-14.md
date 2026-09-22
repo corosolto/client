@@ -1,5 +1,7 @@
 # Shotgun final técnica — alpha.252
 
+> **Superado em 22/09/2026:** o fechamento product-first corrige manga, base métrica, ADS e eixo do cano. Veja [`VIEWMODEL-HEAVY-SHOTGUN-PRODUCT-FIRST-2026-09-22.md`](VIEWMODEL-HEAVY-SHOTGUN-PRODUCT-FIRST-2026-09-22.md).
+
 ## Resultado
 
 A M3 Conversa Fiada agora usa a KXG12 própria do pacote produzido para o catálogo,

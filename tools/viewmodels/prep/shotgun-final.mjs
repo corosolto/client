@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { prune, unpartition } from '@gltf-transform/functions';
+import * as THREE from '../../../public/vendor/three.module.js';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const SOURCE_SHA = '71dd4edd43da77c7a52af01b2481e2f71cca57507bbe88674ce0b674a62986c7';
 const FOUNDATION_SHA = 'aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102';
@@ -17,6 +18,89 @@ const foundation = path.resolve(option('foundation'));
 const outputDir = path.resolve(option('output-dir'));
 if (!path.relative(REPO, outputDir).startsWith('..')) throw new Error('output-dir precisa ficar fora do Git');
 const digest = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+
+/**
+ * A KXG12 traz a manga até o braço superior e uma faixa longa do antebraço.
+ * Essas faces ficam entre a câmera e a arma e dominam o quadro. Mantemos o
+ * punho da manga, as luvas e as mãos; removemos somente os triângulos cuja
+ * influência dominante pertence ao braço proximal. A correção mora na malha.
+ */
+const trimProximalSleeve = (document) => {
+  const root = document.getRoot();
+  const clothNode = root.listNodes().find((node) => node.getName() === 'GEO_FP_SK_Cloth_01');
+  const skin = clothNode?.getSkin();
+  const primitive = clothNode?.getMesh()?.listPrimitives()[0];
+  const joints = primitive?.getAttribute('JOINTS_0')?.getArray();
+  const weights = primitive?.getAttribute('WEIGHTS_0')?.getArray();
+  const indices = primitive?.getIndices()?.getArray();
+  if (!skin || !primitive || !joints || !weights || !indices || primitive.getMode() !== 4) {
+    throw new Error('manga Shotgun sem topologia/skin triangular esperada');
+  }
+  const jointNames = skin.listJoints().map((node) => node.getName());
+  const proximal = /^(?:upperarm_twist_01|lowerarm)_[lr]$/;
+  const dominantJoint = (vertex) => {
+    let slot = 0;
+    for (let lane = 1; lane < 4; lane += 1) if (weights[vertex * 4 + lane] > weights[vertex * 4 + slot]) slot = lane;
+    return jointNames[joints[vertex * 4 + slot]] || '';
+  };
+  const kept = [];
+  let removedTriangles = 0;
+  for (let offset = 0; offset + 2 < indices.length; offset += 3) {
+    const triangle = [indices[offset], indices[offset + 1], indices[offset + 2]];
+    if (triangle.some((vertex) => proximal.test(dominantJoint(vertex)))) removedTriangles += 1;
+    else kept.push(...triangle);
+  }
+  if (removedTriangles < 1) throw new Error('manga Shotgun não expôs faces proximais para correção');
+  const used = [...new Set(kept)].sort((a, b) => a - b);
+  const remap = new Map(used.map((vertex, index) => [vertex, index]));
+  for (const semantic of primitive.listSemantics()) {
+    const accessor = primitive.getAttribute(semantic);
+    const source = accessor.getArray();
+    const stride = accessor.getElementSize();
+    const compact = new source.constructor(used.length * stride);
+    for (let next = 0; next < used.length; next += 1) {
+      const previous = used[next];
+      for (let lane = 0; lane < stride; lane += 1) compact[next * stride + lane] = source[previous * stride + lane];
+    }
+    primitive.setAttribute(semantic, accessor.clone().setArray(compact));
+  }
+  const IndexArray = used.length > 65535 ? Uint32Array : Uint16Array;
+  primitive.setIndices(primitive.getIndices().clone().setArray(new IndexArray(kept.map((vertex) => remap.get(vertex)))));
+  return { beforeVertices: joints.length / 4, afterVertices: used.length,
+    beforeTriangles: indices.length / 3, afterTriangles: kept.length / 3, removedTriangles };
+};
+
+/**
+ * O doador está numa base curta em espaço de câmera. O pull de ADS do contrato
+ * (4 cm) ficava maior que a distância aparente do produto e aproximava a arma
+ * até cortar mecanismo e mãos. Rebaseamos o conjunto no próprio GLB: escala e
+ * distância crescem na mesma proporção, logo o idle projetado não muda, mas o
+ * deslocamento métrico do ADS passa a ter a proporção esperada. Nenhuma câmera,
+ * FOV, frame compartilhado ou configuração de runtime é alterada.
+ */
+const reframeProduct = (document, arms) => {
+  const root = document.getRoot();
+  const scene = root.listScenes()[0];
+  const cameraNode = root.listNodes().find((node) => node.getCamera());
+  if (!scene || !cameraNode) throw new Error('Shotgun sem scene/câmera para rebase do produto');
+  const cameraWorld = new THREE.Matrix4().fromArray(cameraNode.getWorldMatrix());
+  const rotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(-8.9), 0, 0));
+  const runtimeFrame = new THREE.Matrix4().compose(
+    new THREE.Vector3(0.057, -0.114, -0.159), rotation, new THREE.Vector3(1, 1, 1));
+  const productScale = 5;
+  const effectiveFrame = new THREE.Matrix4().compose(
+    new THREE.Vector3(-0.0402, 0.0107, -0.1739).multiplyScalar(productScale),
+    rotation, new THREE.Vector3(productScale, productScale, productScale));
+  const matrix = cameraWorld.clone().multiply(runtimeFrame.clone().invert())
+    .multiply(effectiveFrame).multiply(cameraWorld.clone().invert());
+  const product = document.createNode('VM_PRODUCT_SHOTGUN').setMatrix(matrix.toArray()).setExtras({
+    contract: 'product-first-frame', scale: productScale,
+    preservesIdleProjection: true, runtimeFrameUntouched: true,
+  });
+  product.addChild(arms);
+  scene.addChild(product);
+  return { node: product.getName(), scale: productScale, matrix: matrix.toArray() };
+};
 const sourceBytes = await fs.readFile(source);
 const foundationBytes = await fs.readFile(foundation);
 if (sourceBytes.length !== 25019108 || digest(sourceBytes) !== SOURCE_SHA) throw new Error('fonte shotgun ausente ou divergente');
@@ -44,7 +128,11 @@ for (const texture of root.listTextures()) {
   if (placeholder) texture.setImage(placeholder.getImage()).setMimeType(placeholder.getMimeType());
 }
 rig.addChild(document.createNode('MINT_WEAPON_SHOTGUN').setExtras({ contract: 'baked-marker' }));
-rig.addChild(document.createNode('SOCKET_MINT_MUZZLE').setTranslation([0, 0, -80]).setExtras({ contract: 'muzzle' }));
+// O rig da KXG12 está rotacionado em relação ao eixo do arquivo. A boca real,
+// medida na extremidade do cano, fica neste ponto local; usar `z=-80` apontava
+// o contrato para trás apesar de a malha visível estar correta.
+rig.addChild(document.createNode('SOCKET_MINT_MUZZLE')
+  .setTranslation([-1.150224, -6.009773, 34.933628]).setExtras({ contract: 'muzzle' }));
 rig.addChild(document.createNode('SOCKET_MINT_SIGHT').setTranslation([0, 0, -22]).setExtras({ contract: 'sight' }));
 const buffer = root.listBuffers()[0] || document.createBuffer();
 const accessor = (name, type, values) => document.createAccessor(name).setType(type).setArray(new Float32Array(values)).setBuffer(buffer);
@@ -98,6 +186,8 @@ const inspectEuler = [[0,0,0],[-2,-5,2],[-4,-12,5],[-2,9,-4],[0,4,-1],[0,0,0]];
 const inspectRotations = inspectEuler.flatMap(([x,y,z]) => multiply(multiply(qx(x), qy(y)), qz(z)));
 addChannel(inspect, arms, 'translation', inspectTimes, [0,0,0, 0.008,0.004,-0.004, 0.020,0.012,-0.010, 0.014,0.008,-0.007, 0.005,0.002,-0.002, 0,0,0], 'VEC3');
 addChannel(inspect, arms, 'rotation', inspectTimes, inspectRotations, 'VEC4');
+const sleeve = trimProximalSleeve(document);
+const productFrame = reframeProduct(document, arms);
 await fs.mkdir(outputDir, { recursive: true });
 const output = path.join(outputDir, 'shotgun-baked-runtime.glb');
 await document.transform(prune({ keepExtras: true }), unpartition());
@@ -108,6 +198,7 @@ const report = {
   source: { file: source, bytes: sourceBytes.length, sha256: SOURCE_SHA },
   sharedTextureFoundation: { file: foundation, bytes: foundationBytes.length, sha256: FOUNDATION_SHA },
   preservation: { originalClips: expected, addedClips: ['inspect'], armsRig: arms.getName(), weaponRig: rig.getName(), weaponMesh: gun.getName(), mechanisms: [shell.getName(), pump.getName(), trigger.getName()] },
+  productFirst: { sleeve, frame: productFrame },
   product: { file: output, bytes: outputBytes.length, sha256: digest(outputBytes) },
 };
 await fs.writeFile(path.join(outputDir, 'build.json'), `${JSON.stringify(report, null, 2)}\n`);

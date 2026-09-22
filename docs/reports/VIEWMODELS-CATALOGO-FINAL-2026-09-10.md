@@ -983,3 +983,25 @@ Recibo:
 [`VIEWMODEL-PISTOL-DEAGLE-PRODUCT-FIRST-2026-09-22.md`](VIEWMODEL-PISTOL-DEAGLE-PRODUCT-FIRST-2026-09-22.md).
 A candidata segue `ready:false`, família/global off e aguarda revisão humana.
 PT-38 permaneceu intocada.
+
+### Correção product-first — Shotgun em 22/09/2026
+
+O gate RED `5ce180160` reprovou o falso verde da Shotgun anterior: 4.242 faces
+da manga eram dominadas por ossos proximais e o pull métrico do ADS era grande
+demais para a base curta do doador. A receita agora remove somente essas faces,
+preserva punho, luvas, mãos e sete ações e rebasa escala/distância dentro do
+GLB. Idle permanece com a mesma projeção; câmera, FOV, frame compartilhado e
+runtime não mudaram.
+
+O produto privado `6c6c1ba3…` (3.954.632 bytes) passa a régua em 3:2 com
+1,001×/91,0%/1,109× de braço e em 16:9 com 0,941×/92,4%/1,052×. Os dez grupos
+de dedos medem 0,00–13,93 mm no espaço intrínseco. O socket de boca também
+passou ao ponto real da KXG12, deixando o cano à frente da alça.
+
+O gate causal passa 12 mutantes; o lifecycle passa 11/11 controles, 30 ciclos e
+540 amostras; HUD e inspect permanecem verdes. A captura real produziu 26 PNGs
+em 3:2/16:9, incluindo ADS ativo, com zero erro fatal, em
+`evidence/shotgun-product-final-20260922`. Recibo:
+[`VIEWMODEL-HEAVY-SHOTGUN-PRODUCT-FIRST-2026-09-22.md`](VIEWMODEL-HEAVY-SHOTGUN-PRODUCT-FIRST-2026-09-22.md).
+A candidata segue `ready:false`, família/global off e aguarda revisão humana.
+PT-38 permaneceu intocada.

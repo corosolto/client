@@ -88,6 +88,11 @@ const medeContatoDedos = (document, mutante = '') => {
     hand.position.addScalar(20);
   }
   cena.updateMatrixWorld(true);
+  // A raiz de produto rebasa escala/distância para que o pull métrico de ADS
+  // tenha a proporção correta. Contato é propriedade da malha/rig, então a
+  // medida volta ao espaço intrínseco do produto antes de calcular distâncias.
+  const product = cena.getObjectByName('VM_PRODUCT_SHOTGUN');
+  const productInverse = product ? product.matrixWorld.clone().invert() : new THREE.Matrix4();
 
   const triangulos = [];
   const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
@@ -102,7 +107,7 @@ const medeContatoDedos = (document, mutante = '') => {
         const vi = index ? index.getX(offset + lane) : offset + lane;
         out.fromBufferAttribute(pos, vi);
         if (mesh.isSkinnedMesh) mesh.applyBoneTransform(vi, out);
-        return out.applyMatrix4(mesh.matrixWorld).clone();
+        return out.applyMatrix4(mesh.matrixWorld).applyMatrix4(productInverse).clone();
       };
       triangulos.push(new THREE.Triangle(at(0, va), at(1, vb), at(2, vc)));
     }
@@ -135,7 +140,7 @@ const medeContatoDedos = (document, mutante = '') => {
       if (!key) continue;
       const point = new THREE.Vector3().fromBufferAttribute(pos, vi);
       mesh.applyBoneTransform(vi, point);
-      point.applyMatrix4(mesh.matrixWorld);
+      point.applyMatrix4(mesh.matrixWorld).applyMatrix4(productInverse);
       if (!pontos.has(key)) pontos.set(key, []);
       pontos.get(key).push(point);
     }
@@ -187,6 +192,8 @@ const triangulosMangaProximal = contaTriangulosMangaProximal(gltf);
 check(triangulosMangaProximal === 0, `manga ainda traz ${triangulosMangaProximal} triângulos proximais que dominam o quadro`);
 
 const mixer = new THREE.AnimationMixer(scene);
+const productScale = scene.getObjectByName('VM_PRODUCT_SHOTGUN')
+  ?.getWorldScale(new THREE.Vector3()).x || 1;
 const sample = (name, count = 50) => {
   const clip = clips.get(name); if (!clip) return [];
   mixer.stopAllAction(); const action = mixer.clipAction(clip).reset().play(); const rows = [];
@@ -198,14 +205,14 @@ const sample = (name, count = 50) => {
   }
   action.stop(); mixer.update(0); return rows;
 };
-const excursion = (rows, key) => rows.length ? Math.max(...rows.map((row) => row[key].distanceTo(rows[0][key]))) : 0;
-const endpoint = (rows, key) => rows.length ? rows.at(-1)[key].distanceTo(rows[0][key]) : Infinity;
+const excursion = (rows, key) => rows.length ? Math.max(...rows.map((row) => row[key].distanceTo(rows[0][key]))) / productScale : 0;
+const endpoint = (rows, key) => rows.length ? rows.at(-1)[key].distanceTo(rows[0][key]) / productScale : Infinity;
 const metrics = {};
 for (const name of required) {
   const rows = sample(name);
   metrics[name] = Object.fromEntries(['gun','shell','pump','trigger','left','right'].map((key) => [`${key}Excursion`, +excursion(rows, key).toFixed(4)]));
   metrics[name].gunEndpoint = +endpoint(rows, 'gun').toFixed(4);
-  metrics[name].rightGripDrift = rows.length ? +(Math.max(...rows.map((row) => row.right.distanceTo(row.gun))) - Math.min(...rows.map((row) => row.right.distanceTo(row.gun)))).toFixed(4) : null;
+  metrics[name].rightGripDrift = rows.length ? +((Math.max(...rows.map((row) => row.right.distanceTo(row.gun))) - Math.min(...rows.map((row) => row.right.distanceTo(row.gun)))) / productScale).toFixed(4) : null;
 }
 check(trackMotion(gltf, 'shoot', 'MINT_MECH_SHOTGUN_PUMP.position') >= 0.05, 'shoot não cicla o pump próprio');
 check(trackMotion(gltf, 'shoot', 'MINT_MECH_SHOTGUN_TRIGGER.quaternion') >= 0.02, 'shoot não aciona o gatilho próprio');
