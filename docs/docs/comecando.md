@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 47.591 linhas em 96 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 48.351 linhas em 96 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.483** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.534 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -49,10 +49,10 @@ esta página envelhecia no primeiro commit — ver
 | Personagens jogáveis | 53, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 17 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 374 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 378 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 76 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.261` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.262` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -237,7 +237,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 256 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 403 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
-| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 248 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 1.008 |
 
 **17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 23 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
