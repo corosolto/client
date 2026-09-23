@@ -40,8 +40,7 @@ export const VM_FAMILY = {
 };
 
 // Por arma (faca fica no melee): trim = ajuste fino do wrap Mint no socket;
-// ads = auto (alça medida) + resíduo; linhaDeMira = abertura da alça e topo da massa (nó + ponto
-// local) quando o socket `sight` não está nela; parts = Tier 2 (carregador/ferrolho móveis).
+// ads = auto (alça medida) + resíduo; parts = Tier 2 (carregador/ferrolho móveis).
 const W = (family, extra = {}) => ({
   family,
   trim: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 },
@@ -113,8 +112,8 @@ export const VM_WEAPON = {
     } }),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
-  // Socket `sight` abaixo da linha alça–massa: o resíduo põe as duas na cruz (vmads-sim.mjs).
   md97: W('ar', { baked: true, recoilScale: 1.8,
+    // linhaDeMira = alça e massa (nó + ponto local): o socket `sight` fica abaixo da alça.
     ads: { auto: true, off: [-0.006, 0, 0], rotDeg: [-4.31, 0.51, 0], pull: 0.05, fovScale: 1,
       linhaDeMira: { ref: 'MINT_WEAPON_MD97', alca: [0.24, 0.112, -0.0095], massa: [-0.265, 0.107, -0.010] } } }),
   carbine: W('ar', { baked: true }),
