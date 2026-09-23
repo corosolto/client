@@ -60,10 +60,10 @@
       "file": "viewmodels/p90/p90-baked-runtime.glb",
       "sourceSha256": "6fda87809ab60e1fea7a1e7bf5ebc5355e6ee70d595f7c4610ed88e847560aa2",
       "sourceBytes": 254312,
-      "productSha256": "5d2c51a7b66ebb11adaacc8abbe86280bc75a78bdaa7622dbeb583c171a4c590",
-      "productBytes": 1946532,
-      "sha256": "5d2c51a7b66ebb11adaacc8abbe86280bc75a78bdaa7622dbeb583c171a4c590",
-      "bytes": 1946532,
+      "productSha256": "1484c03ba7bedd8a4ebdc52e7d2da336729b6f6f7e5acbed888c681dcf2092fe",
+      "productBytes": 1469436,
+      "sha256": "1484c03ba7bedd8a4ebdc52e7d2da336729b6f6f7e5acbed888c681dcf2092fe",
+      "bytes": 1469436,
       "mechanism": "top-mag/dual-release/charger/mechanism/trigger",
       "ready": false,
       "sourceBranch": "public/models/weapons/p90.glb + private g3-kinemation checkpoint",
@@ -75,12 +75,6 @@
         "sourceSha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
         "sourceBytes": 1477620,
         "recipe": "tools/viewmodels/prep/mag-na-mao.mjs --arma=p90"
-      },
-      "w3Blender": {
-        "sourceSha256": "1484c03ba7bedd8a4ebdc52e7d2da336729b6f6f7e5acbed888c681dcf2092fe",
-        "sourceBytes": 1469436,
-        "recipe": "tools/viewmodels/prep/recarga-k.mjs --arma=p90",
-        "fila": "B12"
       }
     }
   }
