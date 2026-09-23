@@ -876,6 +876,14 @@ npm run eval:sertao-livestock
 BASE=http://localhost:8149 npm run eval:sertao-livestock-runtime
 ```
 
+## `eval:vm-orientacao`
+
+Malha da arma de trás para frente (classe "arma invertida" do crítico cego). Pose idle t=0 do produto servido: eixo longo da malha MINT por PCA orientado para o socket `MUZZLE`, altura da seção em 10 fatias; reprova se a altura das 2 fatias de trás ÷ 2 fatias da boca ficar abaixo de 1,0 (corretas 1,14–10,7; invertidas 0,31–0,79, medidas pela própria régua em 23/09). Cobre m4, scar, famas, carbine, tavor, g3, g3sg1, awp, rem700, mosin, svd, m400 e sks. `--mutantes` (o que o script do npm roda) lê também o catálogo Codex antes de `desvira-malha.mjs`/`sks-desvira.mjs` e cobra mosin, svd, m400 e sks vermelhas. Não mede rolagem (a rem700 rolada 90° passava). Requer os produtos privados: fora de `check:fast` e do CI.
+
+```bash
+npm run eval:vm-orientacao
+```
+
 ## `eval:vm-pegada-k`
 
 Pegada do produto K com esqueleto aplicado (FK + skinning offline, `tools/viewmodels/prep/vmpose.mjs`). Por arma: m92 PG1/PG3; md97 PG1/PG3/PG4/PG6; shotgun PG1/PG2/PG3/PG6; revolver38 PG2/PG5/PG6/PG7. PG1 = centro do punho de apoio dentro do corte real da malha; PG2 = gatilho a ≤ 4 cm da junta distal do indicador; PG3 = manga até o ombro; PG4 = pente não branco; PG5 = pinça do cartucho na recarga vazia; PG6 = alça e massa de `ads.linhaDeMira` na cruz no ADS simulado (`vmads-sim.mjs`); PG7 = arma visível acima das luvas no ADS. Nasceu da rodada r2 do crítico cego da revisão L1. `--mutantes` roda os produtos reprovados do catálogo (m92 cai em PG1, md97 em PG1/PG4/PG6, shotgun em PG2/PG3/PG6, revolver38 em PG5; nem toda cláusula tem mutante próprio), o revólver no frame antigo da família e o ADS sem resíduo. PG6/PG7 medem o simulador; quem prova o ADS no runtime é o `eval:vm-ads`. Requer os produtos privados em `public/private-assets` e o catálogo em `~/csbrasil-private-assets`: fica fora de `check:fast` e do CI, como as outras réguas de produto K.

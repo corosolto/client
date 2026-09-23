@@ -403,7 +403,9 @@
     "eval:vm-pegada-k": "node tools/eval/vm-pegada-k-check.mjs --mutantes",
     "eval:vm-rig": "node tools/eval/viewmodel-rig-contract-check.mjs --tabela",
     "//eval:vm-manga-oca": "ponta da manga K nunca no quadro, em todo clipe e no arco de saque (crítico cego r2, 23/09/2026); mutantes sem-extensao e extensao-curta ficam vermelhos",
-    "eval:vm-manga-oca": "node tools/eval/vm-manga-oca-check.mjs --tabela"
+    "eval:vm-manga-oca": "node tools/eval/vm-manga-oca-check.mjs --tabela",
+    "//eval:vm-orientacao": "malha da arma de trás para frente (ICP girado 180°: sks/mosin/svd/m400, crítico cego L3–L5 23/09/2026); mutante original = catálogo Codex fica vermelho",
+    "eval:vm-orientacao": "node tools/eval/vm-orientacao-check.mjs --mutantes"
   },
   "repository": {
     "type": "git",
