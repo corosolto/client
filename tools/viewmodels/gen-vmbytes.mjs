@@ -18,7 +18,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const MANIFESTS = ['rifle', 'smg', 'sidearm', 'dmr', 'precision', 'heavy'];
+// `melee` só versiona URL: a faca não entra nas réguas de fogo (frame, rig).
+const MANIFESTS = ['rifle', 'smg', 'sidearm', 'dmr', 'precision', 'heavy', 'melee'];
 const entries = [];
 for (const name of MANIFESTS) {
   const file = path.join(ROOT, 'tools/viewmodels', `${name}-candidates.json`);

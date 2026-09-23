@@ -239,7 +239,7 @@ const FAMILY_FRAME = Object.freeze({
   lmg:     { x: 0.153, y: -0.116, z: -0.409, fov: 84, rotDeg: [-5.2, -0.3, 0] },
   // revolver: sem doador CS 1.6 (não existe no jogo fonte) — fica no olho antigo.
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
-  grenade: { x: 0.045, y: -0.035, z: -0.080, fov: 84 },
+  grenade: { x: -0.050, y: 0.000, z: -0.080, fov: 84 },
   default: { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
 });
 

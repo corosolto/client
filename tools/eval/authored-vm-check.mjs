@@ -74,10 +74,13 @@ check(armasServidas.join(',') === 'ak,pistol',
   'só ak e pistol chegam ao jogador; akm/m92 seguram no legado', armasServidas.join(', '));
 check(/VM_WEAPON\[weapon\]\?\.ready !== false/.test(runtime),
   'runtime honra o portão por arma (ready:false em VM_WEAPON)');
-check(mutant !== 'sem-golden' && VM_WEAPON.ak?.golden === true
-    && VM_WEAPON.pistol?.golden !== true && VM_WEAPON.pistol?.runtime === 'family'
-    && /GOLDEN_VM[^;]+vmgolden/.test(runtime) && /gold#/.test(runtime),
-  'AK golden atrás de ?vmgolden=0; pistola aprovada fica na rota de família');
+// Um rig só (K) em toda arma de fogo: nenhuma volta ao golden metarig sem decisão.
+const goldenFogo = Object.entries(VM_WEAPON).filter(([, c]) => c.golden === true).map(([w]) => w);
+check(mutant !== 'ak-golden' && goldenFogo.length === 0
+    && VM_WEAPON.ak?.baked === true && VM_WEAPON.ak?.runtime !== 'family'
+    && VM_WEAPON.pistol?.runtime === 'family',
+  'AK e pistola servidas pelo catálogo K (produto por arma e rota de família); nenhuma arma golden',
+  goldenFogo.join(', '));
 check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
 check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),
   'setAim(id, amount) consome o blend do botão direito');
