@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "bash scripts/fetch-audio.sh && bash scripts/fetch-decals.sh && npm run strip:decalbg && npm run assert:assets && npm run check:vercel && npm run build",
+  "buildCommand": "bash scripts/fetch-audio.sh && bash scripts/fetch-decals.sh && bash scripts/fetch-viewmodels.sh && npm run strip:decalbg && npm run assert:assets && npm run check:vercel && npm run build",
   "redirects": [
     {
       "source": "/discord",
@@ -85,6 +85,51 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/private-assets/viewmodels/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    },
+    {
+      "source": "/private-assets/viewmodels/(.*)\\.glb",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "model/gltf-binary"
+        }
+      ]
+    },
+    {
+      "source": "/private-assets/viewmodels/((?!shared/)[^/]+/[^/]+-runtime\\.glb)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/private-assets/viewmodels/shared/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/private-assets/viewmodels/recoil.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     },
