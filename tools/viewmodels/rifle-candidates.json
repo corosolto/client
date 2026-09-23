@@ -146,10 +146,10 @@
       "file": "viewmodels/sniper/m400-baked-runtime.glb",
       "sourceSha256": "f5a0bb493381eba107dd23fb5e702c2719bdba2f4f8b01bec62c832467b91109",
       "sourceBytes": 331016,
-      "productSha256": "1aba50ea9349057c5e6fbd6af7002ebd5a6f64f24069ac5f507ef2def3038ba7",
-      "productBytes": 1519320,
-      "sha256": "1aba50ea9349057c5e6fbd6af7002ebd5a6f64f24069ac5f507ef2def3038ba7",
-      "bytes": 1519320,
+      "productSha256": "0528562f9a0044053c8a8b29d0cc2234cb9878dd393c208e996d0bc70889979b",
+      "productBytes": 1908952,
+      "sha256": "0528562f9a0044053c8a8b29d0cc2234cb9878dd393c208e996d0bc70889979b",
+      "bytes": 1908952,
       "mechanism": "curved-detachable-mag/real-right-mag-release/real-left-bolt-catch/source-no-separable-charging-handle",
       "ready": false,
       "sourceBranch": "codex/viewmodels-catalog-final (rig KINEMATION via m4-final.blend)",
@@ -158,7 +158,7 @@
       "fixL3L5": {
         "sourceSha256": "f75e4625c1199d3fed6fb9f132e5cc59a0c742dc41a92bcac5fa6bcab76f739d",
         "sourceBytes": 1537064,
-        "recipe": "tools/viewmodels/prep/desvira-malha.mjs --arma=m400"
+        "recipe": "tools/viewmodels/prep/desvira-malha.mjs --arma=m400 && tools/viewmodels/prep/inspect-com-pose.mjs --arma=m400"
       }
     },
     "awp": {

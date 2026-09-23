@@ -12,7 +12,7 @@ export const VM_BYTES = Object.freeze({
   knife: '93028919ee',
   lmg: '025a99f2f5',
   m4: '2d8e00559a',
-  m400: '1aba50ea93',
+  m400: '0528562f9a',
   m92: 'bd938017a7',
   md97: '4cd468a65f',
   mosin: 'c5a980a7cf',
