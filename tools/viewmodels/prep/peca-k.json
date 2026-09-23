@@ -1,0 +1,111 @@
+{
+  "g3sg1": {
+    "file": "viewmodels/g3/g3sg1-baked-runtime.glb",
+    "sourceSha256": "f6959a3ae2efbc4191ac48bc77f9e10b4ddf220d8acf979f5598cfff5047002c",
+    "corpo": "MINT_WEAPON_G3SG1",
+    "passos": [
+      {
+        "de": "MINT_MAG_G3SG1",
+        "para": "MINT_WEAPON_G3SG1",
+        "caixa": {"min": [0.08, -0.165, -0.02], "max": [0.275, -0.035, 0.035]},
+        "triangulos": 152,
+        "nota": "punho e guarda-mato marcados como pente"
+      },
+      {
+        "de": "MINT_WEAPON_G3SG1",
+        "para": "MINT_MAG_G3SG1",
+        "caixa": {"min": [-0.035, -0.17, -0.015], "max": [0.085, 0.01, 0.025]},
+        "triangulos": 10,
+        "nota": "placa longa: o pente real"
+      }
+    ],
+    "fundir": ["MINT_MAG_G3SG1", "MINT_WEAPON_G3SG1"]
+  },
+  "scar": {
+    "file": "viewmodels/ar/scar-baked-runtime.glb",
+    "sourceSha256": "958a0223cb2efa703ffe200f17044308a7bf1a9016d786b816e3b1cdc053c20c",
+    "corpo": "MINT_WEAPON_SCAR",
+    "passos": [],
+    "materiais": [
+      {
+        "no": "MINT_WEAPON_SCAR_MAG",
+        "nome": "CoroSolto_SCAR_Pente",
+        "base": [0.26, 0.26, 0.26, 1],
+        "metal": 0.45,
+        "rugosidade": 0.8,
+        "nota": "pente cinza-metal lia como placa prateada; polímero preto do SCAR"
+      }
+    ]
+  },
+  "shotgun": {
+    "file": "viewmodels/shotgun/shotgun-baked-runtime.glb",
+    "sourceSha256": "48f292b918c7168951c315d1dbdab3b509806b4e926edebd5c8f27bbef7a5021",
+    "corpo": "RIG_WEAPON_SHOTGUN",
+    "zonas": [
+      {
+        "no": "GEO_WEAPON_SHOTGUN_KXG12",
+        "material": "CoroSolto_KSG_Body",
+        "nota": "KSG chapada: um material só, sem UV; separa polímero, trilhos/tubos e peças pequenas",
+        "regras": [
+          {
+            "nome": "CoroSolto_KSG_Trilho",
+            "minTris": 120,
+            "maxTris": 1000,
+            "alongado": 6,
+            "base": [0.2, 0.205, 0.21, 1],
+            "metal": 0.85,
+            "rugosidade": 0.36
+          },
+          {"nome": "CoroSolto_KSG_Pecas", "maxTris": 100, "base": [0.26, 0.26, 0.27, 1], "metal": 0.9, "rugosidade": 0.3},
+          {"nome": "CoroSolto_KSG_Polimero", "base": [0.06, 0.063, 0.068, 1], "metal": 0.0, "rugosidade": 0.78}
+        ]
+      }
+    ]
+  },
+  "md97": {
+    "file": "viewmodels/ar/md97-baked-runtime.glb",
+    "sourceSha256": "4cd468a65fffa13414d4f47dc8fd7a1f6070d7c26ef9f9dc2784f39ea3bfe7dc",
+    "corpo": "MINT_WEAPON_MD97",
+    "nervuras": [
+      {
+        "no": "MINT_WEAPON_MD97_MAG",
+        "nota": "pente liso (caixa de 24 triângulos): duas nervuras estampadas em cada face larga, ao longo do comprimento",
+        "tiras": [
+          {"de": [-0.0558, -0.1358, 0.0131], "ate": [-0.0732, 0.0057, 0.0131], "normal": [0, 0, 1], "largura": 0.006, "altura": 0.0015},
+          {"de": [-0.0209, -0.1316, 0.0131], "ate": [-0.0383, 0.01, 0.0131], "normal": [0, 0, 1], "largura": 0.006, "altura": 0.0015},
+          {"de": [-0.0558, -0.1358, -0.0345], "ate": [-0.0732, 0.0057, -0.0345], "normal": [0, 0, -1], "largura": 0.006, "altura": 0.0015},
+          {"de": [-0.0209, -0.1316, -0.0345], "ate": [-0.0383, 0.01, -0.0345], "normal": [0, 0, -1], "largura": 0.006, "altura": 0.0015}
+        ]
+      }
+    ]
+  },
+  "uzi": {
+    "file": "viewmodels/smg/uzi-baked-runtime.glb",
+    "sourceSha256": "f5c2da77aa1a5f6ee4343a13620ce636ebeb22fa07c6da4a97a2e4d58169ff5a",
+    "corpo": "MINT_WEAPON_UZI",
+    "prismas": [
+      {
+        "no": "MINT_WEAPON_MAG_UZI",
+        "nota": "pente roliço (prisma de 84 triângulos, seção octogonal girada) lia tubo na mão; vira caixa chanfrada com chapa de fundo",
+        "encolhe": 0.82,
+        "chapa": 0.05,
+        "material": {"nome": "CoroSolto_UZI_Pente", "base": [0.055, 0.055, 0.06, 1], "metal": 0.75, "rugosidade": 0.42}
+      }
+    ],
+    "nervuras": []
+  },
+  "lmg": {
+    "file": "viewmodels/lmg/lmg-baked-runtime.glb",
+    "sourceSha256": "025a99f2f5f969e513ebafb7678f87f8bd726149d9d924cde6d6941ae367a179",
+    "corpo": "MINT_WEAPON_LMG",
+    "repousos": [
+      {
+        "clipe": "reload_tactical",
+        "u": 0,
+        "nos": "^(MINT_AMMO_LMG_BELT|bullet_0\\d\\d)$",
+        "manter": ["reload_tactical", "reload_empty"],
+        "nota": "fita reta de lado no idle (ossos bullet_0xx no repouso da ligação); a recarga começa e termina com a fita caindo na caixa"
+      }
+    ]
+  }
+}
