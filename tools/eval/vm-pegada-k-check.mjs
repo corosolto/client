@@ -20,6 +20,14 @@
  *              cruz em 1440×960 (vmads-sim.mjs).
  *  PG7 ads     no ADS a arma ocupa ≥ 0,4% da tela sem as mãos na frente (PT-38 no frame
  *              novo: 0,63%; revólver reprovado: 0,14% = o "toco de 40 px acima das luvas").
+ *  PG8 cabo    centro do punho DIREITO dentro do corte horizontal do cabo, folga 1,5 cm (m92 do
+ *              pacote M4 fechava ~19 cm à frente do cabo, atrás do pente; ak/akm ~9 cm).
+ *  PG9 luvas   no ADS simulado as luvas ocupam ≤ 8% da tela: PT-38 aprovada 5,2%; revólver
+ *              reprovado (r2 e fix-grips, "luvas ~1,8× as da pistola") 10,5%.
+ *  PG10 à vista a luva de apoio aparece ≥ 60% na câmera do runtime (pixels com a arma ÷ sem a
+ *              arma, sem a manga estendida do runtime): m4 0,85, md97 0,77; shotgun do catálogo 0,39.
+ *  PG11 enterra juntas dos dedos de apoio no máximo 1 cm dentro da malha (paridade de 5 raios
+ *              + distância ao triângulo, dedo com luva = 0,9 cm): shotgun reprovada 1,74 cm.
  *
  * Tetos: 1,5 cm e 4 cm são meia largura de dedo / uma falange (rig KINEMATION, junta
  * distal→ponta 2,2 cm); 4,5 cm fica abaixo dos 6,2 cm medidos no produto reprovado;
@@ -33,6 +41,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { carregar, THREE } from '../viewmodels/prep/vmpose.mjs';
 import { simularAds } from '../viewmodels/prep/vmads-sim.mjs';
+import { frameDa } from '../viewmodels/prep/vmpose-preview.mjs';
+import { desenhar } from '../viewmodels/prep/vmpose.mjs';
 import { VM_WEAPON } from '../../public/js/data/vmconfig.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -40,26 +50,36 @@ const opt = (n, d = '') => { const h = process.argv.find((v) => v.startsWith(`--
 const SERVIDO = path.join(ROOT, 'public/private-assets/viewmodels');
 const CATALOGO = path.resolve(opt('catalogo',
   '/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-root/viewmodels'));
+// A AK K não existe no catálogo Codex: o produto reprovado dela é o do vm/k-rebuild.
+const K_REBUILD = path.resolve(opt('k-rebuild',
+  '/Users/ruben/csbrasil-private-assets/generated/viewmodels-k-rebuild/overlay/viewmodels'));
 const { Vector3 } = THREE;
 
 // ref = nó cujo espaço local tem o cano num eixo; alça/massa vêm de VM_WEAPON[arma].ads.linhaDeMira.
+// cabo = eixo vertical do nó da arma para o corte horizontal do PG8.
 export const ARMAS = {
-  m92: { arquivo: 'ak/m92-baked-runtime.glb', malha: 'MINT_WEAPON_M92', ref: 'MINT_WEAPON_M92', eixo: 0, checks: ['PG1', 'PG3'] },
+  ak: { arquivo: 'ak/ak-baked-runtime.glb', malha: 'MINT_WEAPON_AK', ref: 'MINT_WEAPON_AK', eixo: 0, cabo: 1, antes: K_REBUILD,
+    checks: ['PG1', 'PG3', 'PG8', 'PG10'] },
+  akm: { arquivo: 'ak/akm-baked-runtime.glb', malha: 'MINT_WEAPON_AKM', ref: 'MINT_WEAPON_AKM', eixo: 0, cabo: 1,
+    checks: ['PG1', 'PG3', 'PG8', 'PG10'] },
+  m92: { arquivo: 'ak/m92-baked-runtime.glb', malha: 'MINT_WEAPON_M92', ref: 'MINT_WEAPON_M92', eixo: 0, cabo: 1,
+    checks: ['PG1', 'PG3', 'PG6', 'PG8', 'PG10'] },
   md97: { arquivo: 'ar/md97-baked-runtime.glb', malha: 'MINT_WEAPON_MD97', ref: 'MINT_WEAPON_MD97', eixo: 0,
-    pente: 'MD97 Magazine', checks: ['PG1', 'PG3', 'PG4', 'PG6'] },
+    pente: 'MD97 Magazine', checks: ['PG1', 'PG3', 'PG4', 'PG6', 'PG10'] },
   shotgun: { arquivo: 'shotgun/shotgun-baked-runtime.glb', malha: 'GEO_WEAPON_SHOTGUN_KXG12', ref: 'RIG_WEAPON_SHOTGUN', eixo: 2,
-    gatilho: 'MINT_MECH_SHOTGUN_TRIGGER', checks: ['PG1', 'PG2', 'PG3', 'PG6'] },
+    gatilho: 'MINT_MECH_SHOTGUN_TRIGGER', checks: ['PG1', 'PG2', 'PG3', 'PG6', 'PG10', 'PG11'] },
   revolver38: { arquivo: 'revolver/revolver-runtime.glb', ref: 'RIG_WEAPON_REVOLVER', gatilho: 'Trigger',
-    checks: ['PG2', 'PG5', 'PG6', 'PG7'] },
+    checks: ['PG2', 'PG5', 'PG6', 'PG7', 'PG9'] },
 };
 
 const pos = (m) => new Vector3().setFromMatrixPosition(m);
-const DEDOS = ['index', 'middle', 'ring', 'pinky'].flatMap((d) => ['01', '02', '03'].map((k) => `${d}_${k}_l`));
+const dedos = (lado) => ['index', 'middle', 'ring', 'pinky'].flatMap((d) => ['01', '02', '03'].map((k) => `${d}_${k}_${lado}`));
 
 // Centro do punho: círculo (mínimos quadrados) das juntas dos quatro dedos no plano ⟂ aos nós.
-function centroPunho(pose, W) {
+function centroPunho(pose, W, lado = 'l') {
+  const DEDOS = dedos(lado);
   const P = (n) => pos(W[pose.byName.get(n)]);
-  const eixo = P('pinky_01_l').sub(P('index_01_l')).normalize();
+  const eixo = P(`pinky_01_${lado}`).sub(P(`index_01_${lado}`)).normalize();
   const u = new Vector3(1, 0, 0); if (Math.abs(u.dot(eixo)) > 0.9) u.set(0, 1, 0);
   u.sub(eixo.clone().multiplyScalar(u.dot(eixo))).normalize();
   const v = new Vector3().crossVectors(eixo, u);
@@ -81,13 +101,14 @@ export async function medir(arma, raiz) {
   const W = pose.mundo(pose.local('idle', 0));
   const metro = new Vector3().setFromMatrixScale(W[pose.byName.get('hand_r')]).x / 0.01;
   const out = { arma, arquivo };
-  if (cfg.checks.includes('PG1')) {
+  // Corte real da malha no plano ⟂ ao eixo A que passa pelo centro do punho do lado dado.
+  const corte = (lado, A) => {
     const refInv = W[pose.byName.get(cfg.ref)].clone().invert();
     const escalaRef = new Vector3().setFromMatrixScale(W[pose.byName.get(cfg.ref)]).x;
-    const c = centroPunho(pose, W).applyMatrix4(refInv);
-    const A = cfg.eixo, B = (A + 1) % 3, C = (A + 2) % 3;
-    // Corte real da malha no plano do punho: segmentos triângulo×plano. Dentro = paridade de
-    // cruzamentos de um raio +B; fora, vale a distância ao segmento mais próximo.
+    const c = centroPunho(pose, W, lado).applyMatrix4(refInv);
+    const B = (A + 1) % 3, C = (A + 2) % 3;
+    // Corte real da malha no plano do punho: segmentos triângulo×plano. Dentro = paridade ímpar
+    // em ≥3 de 4 raios (±B, ±C: face duplicada não vira fora); fora, vale a distância ao segmento.
     const segs = [];
     for (const t of pose.triangulos(W).filter((t) => t.no === cfg.malha)) {
       const v = [0, 3, 6].map((k) => new Vector3(t.p[k], t.p[k + 1], t.p[k + 2]).applyMatrix4(refInv).toArray());
@@ -101,17 +122,53 @@ export async function medir(arma, raiz) {
       if (pts.length >= 2) segs.push([pts[0], pts[1]]);
     }
     const [cb, cc] = [c.getComponent(B), c.getComponent(C)];
-    let cruzamentos = 0, dmin = Infinity;
+    const raios = [0, 0, 0, 0];
+    let dmin = Infinity;
     for (const [[b1, c1], [b2, c2]] of segs) {
-      if ((c1 > cc) !== (c2 > cc)) { const bx = b1 + (cc - c1) / (c2 - c1) * (b2 - b1); if (bx > cb) cruzamentos++; }
+      if ((c1 > cc) !== (c2 > cc)) { const bx = b1 + (cc - c1) / (c2 - c1) * (b2 - b1); raios[bx > cb ? 0 : 1]++; }
+      if ((b1 > cb) !== (b2 > cb)) { const cx = c1 + (cb - b1) / (b2 - b1) * (c2 - c1); raios[cx > cc ? 2 : 3]++; }
       const L = (b2 - b1) ** 2 + (c2 - c1) ** 2;
       const u = L > 0 ? Math.max(0, Math.min(1, ((cb - b1) * (b2 - b1) + (cc - c1) * (c2 - c1)) / L)) : 0;
       dmin = Math.min(dmin, Math.hypot(cb - (b1 + u * (b2 - b1)), cc - (c1 + u * (c2 - c1))));
     }
-    const dentro = cruzamentos % 2 === 1;
+    const dentro = raios.filter((n) => n % 2 === 1).length >= 3;
     const distCm = dentro ? 0 : dmin * escalaRef / metro * 100;
-    out.PG1 = { cm: +distCm.toFixed(2), dentro, centro: c.toArray().map((x) => +x.toFixed(3)), segmentos: segs.length,
+    return { cm: +distCm.toFixed(2), dentro, centro: c.toArray().map((x) => +x.toFixed(3)), segmentos: segs.length,
       ok: segs.length > 0 && distCm <= 1.5 };
+  };
+  if (cfg.checks.includes('PG1')) out.PG1 = corte('l', cfg.eixo);
+  if (cfg.checks.includes('PG8')) out.PG8 = corte('r', cfg.cabo);
+  if (cfg.checks.includes('PG10')) {
+    // Luva esquerda = triângulos de luva mais perto de hand_l que de hand_r.
+    const frame = await frameDa(arma);
+    const hl = pos(W[pose.byName.get('hand_l')]), hr = pos(W[pose.byName.get('hand_r')]);
+    const tris = pose.triangulos(W).map((t) => {
+      if (!/Glove/i.test(t.mat)) return t;
+      const c = new Vector3((t.p[0] + t.p[3] + t.p[6]) / 3, (t.p[1] + t.p[4] + t.p[7]) / 3, (t.p[2] + t.p[5] + t.p[8]) / 3);
+      return c.distanceTo(hl) < c.distanceTo(hr) ? t : { ...t, mat: 'OutraMao' };
+    });
+    const view = pose.camera(W, frame), fov = pose.fovTela(frame.fov, 1.5);
+    const com = await desenhar(tris, view, { fov });
+    const sem = await desenhar(tris.filter((t) => /Glove|Cloth|Hand|OutraMao/i.test(t.mat)), view, { fov });
+    const visivel = sem.luva > 0 ? com.luva / sem.luva : 0;
+    out.PG10 = { visivel: +visivel.toFixed(3), ok: visivel >= 0.6 };
+  }
+  if (cfg.checks.includes('PG11')) {
+    const malha = pose.triangulos(W).filter((t) => t.no === cfg.malha)
+      .map((t) => new THREE.Triangle(new Vector3(t.p[0], t.p[1], t.p[2]), new Vector3(t.p[3], t.p[4], t.p[5]), new Vector3(t.p[6], t.p[7], t.p[8])));
+    const R = 0.009 * metro;
+    const raios = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0]].map((d) => new Vector3(...d));
+    const ray = new THREE.Ray(), hit = new Vector3(), cp = new Vector3();
+    let pior = { junta: null, cm: 0 };
+    for (const nome of [...dedos('l'), 'thumb_02_l', 'thumb_03_l']) {
+      const p = pos(W[pose.byName.get(nome)]);
+      let d = Infinity, votos = 0;
+      for (const tr of malha) { tr.closestPointToPoint(p, cp); d = Math.min(d, cp.distanceTo(p)); }
+      for (const dir of raios) { ray.set(p, dir); let k = 0; for (const tr of malha) if (ray.intersectTriangle(tr.a, tr.b, tr.c, false, hit)) k++; if (k % 2) votos++; }
+      const cm = (votos >= 3 ? d + R : Math.max(0, R - d)) / metro * 100;
+      if (cm > pior.cm) pior = { junta: nome, cm: +cm.toFixed(2) };
+    }
+    out.PG11 = { ...pior, ok: pior.cm <= 1 };
   }
   if (cfg.checks.includes('PG2')) {
     const d = pos(W[pose.byName.get(cfg.gatilho)]).distanceTo(pos(W[pose.byName.get('index_03_r')])) / metro * 100;
@@ -157,24 +214,27 @@ export async function medir(arma, raiz) {
   return out;
 }
 
-export async function mira(arma, raiz, ads = {}, frame = {}) {
+export async function mira(arma, raiz, ads = {}, frame = {}, poseAds = true) {
   const cfg = ARMAS[arma];
   const linha = VM_WEAPON[arma].ads.linhaDeMira;
   if (!linha) throw new Error(`${arma}: ads.linhaDeMira ausente no vmconfig`);
-  const r = await simularAds({ arquivo: path.join(raiz, cfg.arquivo), arma, ref: linha.ref, alca: linha.alca, massa: linha.massa, ads, frame, cobertura: true });
+  const r = await simularAds({ arquivo: path.join(raiz, cfg.arquivo), arma, ref: linha.ref, alca: linha.alca, massa: linha.massa, ads, frame, cobertura: true, poseAds });
   const px = Math.max(Math.hypot(r.alca[0], r.alca[1]), Math.hypot(r.massa[0], r.massa[1]));
   return { alca: r.alca.slice(0, 2), massa: r.massa.slice(0, 2), piorPx: +px.toFixed(1), ok: px <= 12,
-    PG7: { armaVisivel: +(r.cobertura.arma * 100).toFixed(2), ok: r.cobertura.arma >= 0.004 } };
+    PG7: { armaVisivel: +(r.cobertura.arma * 100).toFixed(2), ok: r.cobertura.arma >= 0.004 },
+    PG9: { luvas: +(r.cobertura.luva * 100).toFixed(2), ok: r.cobertura.luva <= 0.08 } };
 }
 
 async function rodada(raiz, adsMutante = null) {
   const linhas = [];
   for (const arma of Object.keys(ARMAS)) {
-    const m = await medir(arma, raiz);
+    const r = raiz === CATALOGO && ARMAS[arma].antes ? ARMAS[arma].antes : raiz;
+    const m = await medir(arma, r);
     if (ARMAS[arma].checks.includes('PG6')) {
-      const { PG7, ...pg6 } = await mira(arma, raiz, adsMutante ? adsMutante(arma) : {});
+      const { PG7, PG9, ...pg6 } = await mira(arma, r, adsMutante ? adsMutante(arma) : {});
       m.PG6 = pg6;
       if (ARMAS[arma].checks.includes('PG7')) m.PG7 = PG7;
+      if (ARMAS[arma].checks.includes('PG9')) m.PG9 = PG9;
     }
     const falhas = ARMAS[arma].checks.filter((k) => !m[k].ok);
     linhas.push({ ...m, falhas });
@@ -204,8 +264,14 @@ if (process.argv.includes('--mutantes')) {
     console.log(`MUTANTE revolver-frame-familia ${r.PG7.ok ? 'VERDE (CEGA)' : 'VERMELHO (mordeu)'} armaVisivel=${r.PG7.armaVisivel}%`);
     ok &&= !r.PG7.ok;
   }
+  // Mutante 4: runtime que ignora o clipe `ads` do produto (pose de ADS própria) — PG9 tem de reprovar.
+  {
+    const r = await mira('revolver38', SERVIDO, {}, {}, false);
+    console.log(`MUTANTE revolver-sem-pose-ads ${r.PG9.ok ? 'VERDE (CEGA)' : 'VERMELHO (mordeu)'} luvas=${r.PG9.luvas}%`);
+    ok &&= !r.PG9.ok;
+  }
   // Mutante 2: produto novo com o ADS sem resíduo (só o socket `sight`) — PG6 tem de reprovar.
-  for (const arma of ['md97', 'shotgun']) {
+  for (const arma of ['md97', 'shotgun', 'm92']) {
     const r = await mira(arma, SERVIDO, { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0.05 });
     console.log(`MUTANTE ads-sem-residuo ${arma.padEnd(11)} ${r.ok ? 'VERDE (CEGA)' : 'VERMELHO (mordeu)'} piorPx=${r.piorPx}`);
     ok &&= !r.ok;
