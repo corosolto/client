@@ -92,8 +92,9 @@ async function gameProbe(gameSource, search) {
 }
 
 // Caminho servido de cada id, espelho do `urlForKey` (authoredvm.js) e do meleevm.js.
+const FACA_SERVIDA = /const KNIFE_URL = [`'"]\/([^?`'"]+)/.exec(fs.readFileSync(path.join(JS, 'meleevm.js'), 'utf8'))?.[1] || '?';
 function assetDe(id, config) {
-  if (id === 'knife') return 'public/models/viewmodels/coro/melee/knife-hires.glb';
+  if (id === 'knife') return `public/${FACA_SERVIDA}`;
   if (id === 'grenade') return 'public/private-assets/viewmodels/grenade/grenade-runtime.glb';
   const c = config.VM_WEAPON[id];
   if (!c) return null;

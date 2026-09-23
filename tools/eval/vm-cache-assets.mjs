@@ -11,7 +11,7 @@ import { SHARED_REQUIRED } from '../viewmodels/gen-vmsharedver.mjs';
 const arg = n => process.argv.find(a => a.startsWith(`--${n}=`))?.split('=').slice(1).join('=');
 const mutant = arg('mutante');
 const MUTANTS = ['world-congelado', 'private-congelado', 'familia-congelada', 'private-bypass', 'bytes-alterados',
-  'entrada-ausente', 'produto-reassado', 'shared-congelado', 'shared-reexportado'];
+  'entrada-ausente', 'produto-reassado', 'shared-congelado', 'shared-reexportado', 'faca-reassada'];
 if (process.argv.includes('--mutantes')) {
   const vivos = MUTANTS.filter((m) => spawnSync(process.execPath, [new URL(import.meta.url).pathname, `--mutante=${m}`], { encoding: 'utf8' }).status === 0);
   const base = spawnSync(process.execPath, [new URL(import.meta.url).pathname], { encoding: 'utf8' });
@@ -45,6 +45,7 @@ const hash = file => {
   if (mutant === 'bytes-alterados' && file === 'public/models/weapons/deagle.glb') bytes = Buffer.concat([bytes, Buffer.from('mutacao')]);
   if (mutant === 'produto-reassado' && file.endsWith('/uzi-baked-runtime.glb')) bytes = Buffer.concat([bytes, Buffer.from('mutacao')]);
   if (mutant === 'shared-reexportado' && file.endsWith('/shared/general-runtime.glb')) bytes = Buffer.concat([bytes, Buffer.from('mutacao')]);
+  if (mutant === 'faca-reassada' && file.endsWith('/knife-baked-runtime.glb')) bytes = Buffer.concat([bytes, Buffer.from('mutacao')]);
   return crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 10);
 };
 const failures = [], requests = [];
@@ -108,5 +109,11 @@ for (const name of SHARED_REQUIRED) {
   if (fs.existsSync(file) && SHARED_VER[name] !== hash(file)) failures.push(`bytes:shared:${name}`);
 }
 requests.push(...sharedRequests);
+// Faca K (meleevm.js): mesma regra — URL versionada pelos bytes do produto servido.
+const melee = fs.readFileSync('public/js/meleevm.js', 'utf8');
+const knifeUrl = /const KNIFE_URL = `\/([^?`]+)\?v=\$\{VM_BYTES\.knife \|\| 'sem-versao'\}`/.exec(melee);
+if (!knifeUrl) failures.push('use:melee:knife');
+else if (!VM_BYTES.knife) failures.push('use:melee:knife-sem-versao');
+else if (fs.existsSync(`public/${knifeUrl[1]}`) && VM_BYTES.knife !== hash(`public/${knifeUrl[1]}`)) failures.push('bytes:melee:knife');
 console.log(JSON.stringify({ ok: !failures.length, mutant, requests, failures }, null, 2));
 if (failures.length) process.exitCode = 1;

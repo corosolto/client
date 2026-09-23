@@ -55,9 +55,10 @@ export const VM_WEAPON = {
   // Produto K (KINEMATION, 67 juntas) assado por arma no catálogo privado:
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
-  // AK: único golden público até o rebuild em K (VM-LAUNCH-K-STATUS.md).
-  // Caixa MAG: régua eval:cs16.
-  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
+  // AK em K (rifles-ak-final.py). Frame: a silhueta mais próxima da AK golden em 3:2
+  // que cabe na faixa do eval:vm-frame (VM-LAUNCH-K-STATUS.md).
+  ak: W('ak', { baked: true,
+    frame: { x: 0.0825, y: 0.01, z: -0.2844, fov: 57, rotDeg: [1.69, 7.69, 6.19] } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),
@@ -77,8 +78,11 @@ export const VM_WEAPON = {
       slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
       hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
     } }),
-  // PT-38 congelada a 1,796× do enquadramento da AK (auditoria Codex 22/09).
-  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
+  // PT-38: o pacote recua até a escala angular da AK (eval:vm-frame) sem mudar pega,
+  // yaw nem fov; pull e drawDrop compensam a distância para ADS e saque ficarem iguais.
+  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay',
+    frame: { x: 0.1648, y: -0.19, z: -0.5664, drawDrop: 0.875 },
+    ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0.3964, fovScale: 1 } }),
   // ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09).
   m92: W('ak', { baked: true, frame: 'family', ready: false }),
   akm: W('ak', { baked: true, frame: 'family', ready: false }),

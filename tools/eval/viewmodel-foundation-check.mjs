@@ -77,6 +77,9 @@ const handFiles = [...tracked].filter((file) => file.startsWith('public/models/v
 check(handFiles.length === 48, '48 atlas públicos de mãos estão versionados', String(handFiles.length));
 check(![...tracked].some((file) => file.startsWith('public/private-assets/')), 'nenhum asset privado entrou no Git');
 check(!fs.existsSync(path.join(root, 'public/models/viewmodels/coro/pistol-runtime.glb')), 'PT-38 aprovada permanece fail-closed fora do catálogo público');
+// vm/k-rebuild: AK, faca e granada em K são binários licenciados (braços KINEMATION).
+check(![...tracked].some((file) => /(?:^|\/)(?:ak-baked-runtime|knife-baked-runtime|grenade-runtime)\.glb$/.test(file)),
+  'produtos K de AK, faca e granada ficam fora do Git');
 // Os `coro/<arma>-hires.glb` são a linhagem golden pública (doador CC0, FONTE.md, GOLDEN_VER);
 // produto K privado é qualquer outro arquivo dessas armas.
 check(![...tracked].some((file) => /models\/viewmodels\/.*(?:mosin|svd|sks)/i.test(file)

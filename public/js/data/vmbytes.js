@@ -1,6 +1,7 @@
 // GERADO por tools/viewmodels/gen-vmbytes.mjs — não editar à mão.
 // Versão de URL por BYTES do produto assado, lida dos manifestos `*-candidates.json`.
 export const VM_BYTES = Object.freeze({
+  ak: 'ff797a835b',
   akm: 'ebcfd0d3b7',
   awp: '3e6b77e457',
   carbine: '8de215edb1',
@@ -8,6 +9,7 @@ export const VM_BYTES = Object.freeze({
   famas: '640f3369d7',
   g3: '6a4cd484a8',
   g3sg1: 'f6959a3ae2',
+  knife: '93028919ee',
   lmg: '025a99f2f5',
   m4: '2d8e00559a',
   m400: 'f75e4625c1',
