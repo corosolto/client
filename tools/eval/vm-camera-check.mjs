@@ -53,8 +53,12 @@ async function abrir(viewport) {
   if (MUTANTE === 'clamp') {
     // Reproduz o defeito do tronco (fc32ebb13…c25a14ed0): fov da família por cima da câmera.
     const fonte = fs.readFileSync('public/js/authoredvm.js', 'utf8')
-      .replace('? { x: 0, y: 0, z: 0, fov: cameraFov }', '? { x: 0, y: 0, z: 0, fov: Math.max(cameraFov, 84) }');
-    if (!fonte.includes('Math.max(cameraFov, 84) }')) throw new Error('mutante clamp não encontrou a linha');
+      .replace('? { x: 0, y: 0, z: 0, fov: cameraFov }', '? { x: 0, y: 0, z: 0, fov: Math.max(cameraFov, 84) }')
+      // O fov projetado sai do `return` do pacote, não do `frame`: só o frame deixava o mutante cego.
+      .replace('cameraFov: golden ? cameraFov :', 'cameraFov: golden ? Math.max(cameraFov, 84) :');
+    if (!fonte.includes('Math.max(cameraFov, 84) }') || !fonte.includes('golden ? Math.max(cameraFov, 84) :')) {
+      throw new Error('mutante clamp não encontrou a linha');
+    }
     await pag.route('**/js/authoredvm.js*', (r) =>
       r.fulfill({ contentType: 'application/javascript; charset=utf-8', body: fonte }));
   }
