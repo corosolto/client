@@ -63,7 +63,6 @@ export const VM_WEAPON = {
       linhaDeMira: { ref: 'MINT_WEAPON_AK', alca: [-0.06, 0.153, 0.005], massa: [-0.48, 0.155, 0.005] } } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
-  // Resíduos de ADS da onda 3 (vm/w3-config): aparelho visto na cruz, medido no eval:vm-mira em 3:2 e 16:9.
   m4: W('ar', { baked: true, ads: { auto: true, off: [-0.0053, -0.0533, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
   // Quadril: +18° de rolagem deita o cano (eixo na tela 141° → 149°, AK 155°; o crítico via
   // "pitch 39° vs 26°"). ADS desfaz a rolagem e o resíduo leva o aro da massa à cruz (eval:vm-mira 44 → 0 px).
