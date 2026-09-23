@@ -399,7 +399,9 @@
     "capture:vm-arsenal-video": "node tools/viewmodels/prep/arsenal-video-capture.mjs",
     "eval:vm-frame": "node tools/viewmodels/prep/vm-frame-calibra.mjs --tabela",
     "eval:vm-pegada-k": "node tools/eval/vm-pegada-k-check.mjs --mutantes",
-    "eval:vm-rig": "node tools/eval/viewmodel-rig-contract-check.mjs --tabela"
+    "eval:vm-rig": "node tools/eval/viewmodel-rig-contract-check.mjs --tabela",
+    "//eval:vm-manga-oca": "ponta da manga K nunca no quadro, em todo clipe e no arco de saque (crítico cego r2, 23/09/2026); mutantes sem-extensao e extensao-curta ficam vermelhos",
+    "eval:vm-manga-oca": "node tools/eval/vm-manga-oca-check.mjs --tabela"
   },
   "repository": {
     "type": "git",
