@@ -2877,7 +2877,9 @@ function loop() {
     if (novo !== null) aplicaDegrau(novo);
   }
   loadingStage.update(Math.min(0.05, dtReal));
-  const csOpen = !$('char-select').classList.contains('hidden');
+  // BUG-177: sem #char-select no DOM (extensão/tradutor que reescreve o body) o `loop`
+  // lançava a cada quadro e congelava o jogo — ausente conta como fechada.
+  const csOpen = $('char-select')?.classList.contains('hidden') === false;
   // A troca com M pausa a partida; o preview 3D visível continua animando nesse estado.
   if (game && !csOpen) {
     let resto = dtReal;
@@ -2957,7 +2959,7 @@ async function openInspectionScreen(target) {
   if (target.screen === 'character') {
     pickTeam(faction);
     if (target.character) {
-      for (let i = 0; i < 180 && $('char-select').classList.contains('hidden'); i++) {
+      for (let i = 0; i < 180 && $('char-select')?.classList.contains('hidden') !== false; i++) {
         await new Promise((resolve) => requestAnimationFrame(resolve));
       }
       const roster = CHARACTERS.filter((c) => c.team === faction);
