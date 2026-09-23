@@ -1,6 +1,6 @@
 {
  "gerado": "2026-09-23",
- "aspecto": "3x2",
+ "aspecto": "16x9",
  "entradas": "2a3825a60b5b6e26",
  "resultados": {
   "awp": {
@@ -11,8 +11,8 @@
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "1.43× AK",
-    "msg": "arma gigante: 143% da AK (faixa 0.8–1.25, classe longa); braço 1.47× a área do braço da AK (teto 1.4) — tamanho 1.43× AK, rolagem -17° da AK (informativa), eixo +1° da AK, braço 1.47×, cruz 0 px, olho 1.03 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "1.37× AK",
+    "msg": "arma gigante: 137% da AK (faixa 0.8–1.25, classe longa); braço 1.48× a área do braço da AK (teto 1.4) — tamanho 1.37× AK, rolagem -17° da AK (informativa), eixo +4° da AK, braço 1.48×, cruz 0 px, olho 1.04 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -34,12 +34,12 @@
    "mira": {
     "estado": "VERDE",
     "valor": "11 px",
-    "msg": "massa a 11 px da cruz (+6, -9); teto 30 px; eixo no ADS +3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 11 px do aparelho visto · socket sight (o que o AD1 lê) 0.143 NDC"
+    "msg": "massa a 11 px da cruz (+6, -9); teto 30 px; eixo no ADS +4° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 11 px do aparelho visto · socket sight (o que o AD1 lê) 0.170 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.93× AK",
-    "msg": "tamanho 0.93× AK, rolagem +16° da AK (informativa), eixo -3° da AK, braço 0.79×, cruz 0 px, olho 3.05 palma, ADS cobre 7.4% (teto 18.5%)"
+    "valor": "0.92× AK",
+    "msg": "tamanho 0.92× AK, rolagem +16° da AK (informativa), eixo -4° da AK, braço 0.68×, cruz 0 px, olho 3.10 palma, ADS cobre 5.9% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -54,19 +54,19 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma"
    }
   },
   "m4": {
    "mira": {
     "estado": "VERMELHO",
     "valor": "43 px",
-    "msg": "mira fora da cruz a 43 px — massa a 43 px da cruz (+5, -43); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+    "msg": "mira fora da cruz a 43 px — massa a 43 px da cruz (+5, -43); teto 30 px; eixo no ADS +0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "1.01× AK",
-    "msg": "tamanho 1.01× AK, rolagem +5° da AK (informativa), eixo +7° da AK, braço 0.79×, cruz 0 px, olho 1.36 palma, ADS cobre 10.3% (teto 18.5%)"
+    "valor": "0.97× AK",
+    "msg": "tamanho 0.97× AK, rolagem +4° da AK (informativa), eixo +7° da AK, braço 0.66×, cruz 0 px, olho 1.38 palma, ADS cobre 7.7% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -81,19 +81,19 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma"
    }
   },
   "mp5": {
    "mira": {
     "estado": "VERDE",
     "valor": "1 px",
-    "msg": "aro a 1 px da cruz (-0, -0); teto 30 px; eixo no ADS +2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.101 NDC"
+    "msg": "aro a 1 px da cruz (-0, -0); teto 30 px; eixo no ADS +2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.119 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.79× AK",
-    "msg": "tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.90×, cruz 0 px, olho 2.49 palma, ADS cobre 9.0% (teto 18.5%)"
+    "valor": "0.78× AK",
+    "msg": "tamanho 0.78× AK, rolagem +12° da AK (informativa), eixo -5° da AK, braço 1.05×, cruz 0 px, olho 2.48 palma, ADS cobre 4.3% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -115,12 +115,12 @@
    "mira": {
     "estado": "VERDE",
     "valor": "7 px",
-    "msg": "massa a 7 px da cruz (+2, -7); teto 30 px; eixo no ADS -3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 10 px do aparelho visto · socket sight (o que o AD1 lê) 0.013 NDC"
+    "msg": "massa a 7 px da cruz (+2, -7); teto 30 px; eixo no ADS -3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 10 px do aparelho visto · socket sight (o que o AD1 lê) 0.015 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "1.06× AK",
-    "msg": "tamanho 1.06× AK, rolagem +20° da AK (informativa), eixo -6° da AK, braço 1.28×, cruz 0 px, olho 0.99 palma, ADS cobre 12.7% (teto 18.5%)"
+    "valor": "0.99× AK",
+    "msg": "tamanho 0.99× AK, rolagem +20° da AK (informativa), eixo -5° da AK, braço 1.28×, cruz 0 px, olho 1.02 palma, ADS cobre 10.6% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -142,7 +142,7 @@
    "mira": {
     "estado": "VERDE",
     "valor": "10 px",
-    "msg": "massa a 10 px da cruz (-10, +1); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.082 NDC"
+    "msg": "massa a 10 px da cruz (-10, +1); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.095 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
@@ -189,7 +189,7 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:fora vazia0.38:mao vazia0.46:mao vazia0.54:arma vazia0.62:arma vazia0.69:fora vazia0.77:fora vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:fora tatica0.71:fora tatica0.86:fora"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:fora vazia0.31:fora vazia0.38:mao vazia0.46:arma vazia0.54:mao vazia0.62:mao vazia0.69:fora vazia0.77:fora vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:mao tatica0.71:fora tatica0.86:fora"
    }
   },
   "knife": {
@@ -223,12 +223,12 @@
    "mira": {
     "estado": "VERDE",
     "valor": "17 px",
-    "msg": "massa a 17 px da cruz (+16, -7); teto 30 px; eixo no ADS +1° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 18 px do aparelho visto · socket sight (o que o AD1 lê) 0.127 NDC"
+    "msg": "massa a 17 px da cruz (+16, -7); teto 30 px; eixo no ADS +1° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 18 px do aparelho visto · socket sight (o que o AD1 lê) 0.150 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "1.15× AK",
-    "msg": "tamanho 1.15× AK, rolagem +14° da AK (informativa), eixo +10° da AK, braço 1.16×, cruz 0 px, olho 3.13 palma, ADS cobre 7.4% (teto 18.5%)"
+    "valor": "1.18× AK",
+    "msg": "tamanho 1.18× AK, rolagem +13° da AK (informativa), eixo +5° da AK, braço 1.02×, cruz 0 px, olho 3.13 palma, ADS cobre 6.3% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -243,19 +243,19 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma"
    }
   },
   "akm": {
    "mira": {
     "estado": "VERDE",
     "valor": "19 px",
-    "msg": "massa a 19 px da cruz (+15, -11); teto 30 px; eixo no ADS +8° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 19 px do aparelho visto · socket sight (o que o AD1 lê) 0.157 NDC"
+    "msg": "massa a 19 px da cruz (+15, -11); teto 30 px; eixo no ADS +8° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 19 px do aparelho visto · socket sight (o que o AD1 lê) 0.184 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.93× AK",
-    "msg": "tamanho 0.93× AK, rolagem +3° da AK (informativa), eixo +0° da AK, braço 0.99×, cruz 0 px, olho 2.88 palma, ADS cobre 7.5% (teto 18.5%)"
+    "valor": "0.94× AK",
+    "msg": "tamanho 0.94× AK, rolagem +3° da AK (informativa), eixo -1° da AK, braço 0.86×, cruz 0 px, olho 2.90 palma, ADS cobre 6.2% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -270,7 +270,7 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma"
    }
   },
   "g3": {
@@ -281,8 +281,8 @@
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "1.06× AK",
-    "msg": "braço 1.41× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela 142° contra 155° da AK (-14°, teto ±12°) — tamanho 1.06× AK, rolagem +34° da AK (informativa), eixo -14° da AK, braço 1.41×, cruz 0 px, olho 1.38 palma, ADS cobre 14.1% (teto 18.5%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "0.98× AK",
+    "msg": "braço 1.52× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela 144° contra 157° da AK (-13°, teto ±12°) — tamanho 0.98× AK, rolagem +34° da AK (informativa), eixo -13° da AK, braço 1.52×, cruz 0 px, olho 1.52 palma, ADS cobre 11.6% (teto 18.2%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -304,7 +304,7 @@
    "mira": {
     "estado": "VERDE",
     "valor": "9 px",
-    "msg": "massa a 9 px da cruz (-9, +1); teto 30 px; eixo no ADS -6° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 9 px do aparelho visto · socket sight (o que o AD1 lê) 0.018 NDC"
+    "msg": "massa a 9 px da cruz (-9, +1); teto 30 px; eixo no ADS -6° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 9 px do aparelho visto · socket sight (o que o AD1 lê) 0.022 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
@@ -330,13 +330,13 @@
   "md97": {
    "mira": {
     "estado": "VERDE",
-    "valor": "16 px",
-    "msg": "massa a 16 px da cruz (-8, -14); teto 30 px; eixo no ADS +3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 13 px do aparelho visto · socket sight (o que o AD1 lê) 0.093 NDC"
+    "valor": "13 px",
+    "msg": "massa a 13 px da cruz (-5, -12); teto 30 px; eixo no ADS +2° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 10 px do aparelho visto · socket sight (o que o AD1 lê) 0.107 NDC"
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "1.04× AK",
-    "msg": "braço 1.61× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela -176° contra 155° da AK (+29°, teto ±12°) — tamanho 1.04× AK, rolagem -114° da AK (informativa), eixo +29° da AK, braço 1.61×, cruz 0 px, olho 1.53 palma, ADS cobre 8.7% (teto 18.5%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "1.08× AK",
+    "msg": "braço 1.64× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela -175° contra 157° da AK (+28°, teto ±12°) — tamanho 1.08× AK, rolagem -114° da AK (informativa), eixo +28° da AK, braço 1.64×, cruz 0 px, olho 1.53 palma, ADS cobre 7.6% (teto 18.2%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -358,12 +358,12 @@
    "mira": {
     "estado": "VERDE",
     "valor": "16 px",
-    "msg": "massa a 16 px da cruz (+0, -16); teto 30 px; eixo no ADS +0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "msg": "massa a 16 px da cruz (+0, -16); teto 30 px; eixo no ADS -0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.94× AK",
-    "msg": "tamanho 0.94× AK, rolagem +15° da AK (informativa), eixo -4° da AK, braço 1.26×, cruz 0 px, olho 1.46 palma, ADS cobre 11.5% (teto 18.5%)"
+    "valor": "0.89× AK",
+    "msg": "tamanho 0.89× AK, rolagem +15° da AK (informativa), eixo -2° da AK, braço 1.22×, cruz 0 px, olho 1.47 palma, ADS cobre 9.3% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -389,8 +389,8 @@
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "0.91× AK",
-    "msg": "ângulo esquisito: eixo da arma na tela 133° contra 155° da AK (-22°, teto ±12°) — tamanho 0.91× AK, rolagem +44° da AK (informativa), eixo -22° da AK, braço 0.73×, cruz 0 px, olho 1.90 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "0.84× AK",
+    "msg": "ângulo esquisito: eixo da arma na tela 132° contra 157° da AK (-25°, teto ±12°) — tamanho 0.84× AK, rolagem +33° da AK (informativa), eixo -25° da AK, braço 0.72×, cruz 0 px, olho 2.20 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -416,8 +416,8 @@
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "1.13× AK",
-    "msg": "braço 2.44× a área do braço da AK (teto 1.4); 3479 px de arma/braço sobre a cruz no quadril — tamanho 1.13× AK, rolagem +25° da AK (informativa), eixo -11° da AK, braço 2.44×, cruz 3479 px, olho 0.76 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "1.03× AK",
+    "msg": "braço 3.13× a área do braço da AK (teto 1.4); 3479 px de arma/braço sobre a cruz no quadril — tamanho 1.03× AK, rolagem +25° da AK (informativa), eixo -12° da AK, braço 3.13×, cruz 3479 px, olho 0.84 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -443,8 +443,8 @@
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "1.07× AK",
-    "msg": "2205 px de arma/braço sobre a cruz no quadril — tamanho 1.07× AK, rolagem +21° da AK (informativa), eixo -7° da AK, braço 1.01×, cruz 2205 px, olho 1.19 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "0.94× AK",
+    "msg": "2205 px de arma/braço sobre a cruz no quadril — tamanho 0.94× AK, rolagem +20° da AK (informativa), eixo -9° da AK, braço 1.17×, cruz 2205 px, olho 1.37 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -470,8 +470,8 @@
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "0.50× AK",
-    "msg": "arma pequena: 50% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 98° contra 155° da AK (-57°, teto ±12°) — tamanho 0.50× AK, rolagem +44° da AK (informativa), eixo -57° da AK, braço 1.15×, cruz 0 px, olho 1.83 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "0.43× AK",
+    "msg": "arma pequena: 43% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 98° contra 157° da AK (-59°, teto ±12°) — tamanho 0.43× AK, rolagem +38° da AK (informativa), eixo -59° da AK, braço 1.19×, cruz 0 px, olho 2.13 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -497,8 +497,8 @@
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "1.06× AK",
-    "msg": "ângulo esquisito: eixo da arma na tela 135° contra 155° da AK (-21°, teto ±12°) — tamanho 1.06× AK, rolagem +37° da AK (informativa), eixo -21° da AK, braço 1.08×, cruz 0 px, olho 1.44 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "1.00× AK",
+    "msg": "ângulo esquisito: eixo da arma na tela 136° contra 157° da AK (-21°, teto ±12°) — tamanho 1.00× AK, rolagem +35° da AK (informativa), eixo -21° da AK, braço 1.23×, cruz 0 px, olho 1.64 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -524,8 +524,8 @@
    },
    "cobertura": {
     "estado": "VERMELHO",
-    "valor": "0.64× AK",
-    "msg": "arma pequena: 64% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 138° contra 155° da AK (-17°, teto ±12°) — tamanho 0.64× AK, rolagem +9° da AK (informativa), eixo -17° da AK, braço 0.64×, cruz 0 px, olho 2.01 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+    "valor": "0.58× AK",
+    "msg": "arma pequena: 58% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 138° contra 157° da AK (-19°, teto ±12°) — tamanho 0.58× AK, rolagem +7° da AK (informativa), eixo -19° da AK, braço 0.59×, cruz 0 px, olho 2.52 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -547,12 +547,12 @@
    "mira": {
     "estado": "VERMELHO",
     "valor": "31 px",
-    "msg": "mira fora da cruz a 31 px — massa a 31 px da cruz (+31, -3); teto 30 px; eixo no ADS +7° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+    "msg": "mira fora da cruz a 31 px — massa a 31 px da cruz (+31, -3); teto 30 px; eixo no ADS +8° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.75× AK",
-    "msg": "tamanho 0.75× AK, rolagem +0° da AK (informativa), eixo -12° da AK, braço 0.62×, cruz 0 px, olho 1.58 palma, ADS cobre 9.6% (teto 18.5%)"
+    "valor": "0.72× AK",
+    "msg": "tamanho 0.72× AK, rolagem +1° da AK (informativa), eixo -9° da AK, braço 0.54×, cruz 0 px, olho 2.21 palma, ADS cobre 7.8% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -574,12 +574,12 @@
    "mira": {
     "estado": "VERMELHO",
     "valor": "99 px",
-    "msg": "mira fora da cruz a 99 px; ângulo esquisito no ADS: arma tombada +29° da vertical — massa a 99 px da cruz (+36, -92); teto 30 px; eixo no ADS +29° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+    "msg": "mira fora da cruz a 99 px; ângulo esquisito no ADS: arma tombada +28° da vertical — massa a 99 px da cruz (+36, -92); teto 30 px; eixo no ADS +28° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "1.20× AK",
-    "msg": "tamanho 1.20× AK, rolagem +11° da AK (informativa), eixo +5° da AK, braço 0.82×, cruz 0 px, olho 1.03 palma, ADS cobre 17.9% (teto 18.5%)"
+    "valor": "1.18× AK",
+    "msg": "tamanho 1.18× AK, rolagem +11° da AK (informativa), eixo +5° da AK, braço 0.75×, cruz 0 px, olho 1.03 palma, ADS cobre 16.4% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -594,19 +594,19 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma"
    }
   },
   "tavor": {
    "mira": {
     "estado": "VERMELHO",
     "valor": "41 px",
-    "msg": "mira fora da cruz a 41 px — massa a 41 px da cruz (+1, -41); teto 30 px; eixo no ADS -9° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+    "msg": "mira fora da cruz a 41 px — massa a 41 px da cruz (+1, -41); teto 30 px; eixo no ADS -10° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "1.04× AK",
-    "msg": "tamanho 1.04× AK, rolagem +12° da AK (informativa), eixo +7° da AK, braço 0.46×, cruz 0 px, olho 1.83 palma, ADS cobre 9.5% (teto 18.5%)"
+    "valor": "0.98× AK",
+    "msg": "tamanho 0.98× AK, rolagem +12° da AK (informativa), eixo +9° da AK, braço 0.39×, cruz 0 px, olho 1.83 palma, ADS cobre 7.3% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -632,8 +632,8 @@
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.91× AK",
-    "msg": "tamanho 0.91× AK, rolagem -8° da AK (informativa), eixo -2° da AK, braço 0.78×, cruz 0 px, olho 1.72 palma, ADS cobre 13.0% (teto 18.5%)"
+    "valor": "0.87× AK",
+    "msg": "tamanho 0.87× AK, rolagem -8° da AK (informativa), eixo -1° da AK, braço 0.66×, cruz 0 px, olho 1.74 palma, ADS cobre 10.3% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -659,8 +659,8 @@
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.53× AK",
-    "msg": "tamanho 0.53× AK, rolagem -3° da AK (informativa), eixo +0° da AK, braço 0.25×, cruz 0 px, olho ? palma, ADS cobre 3.4% (teto 18.5%)"
+    "valor": "0.55× AK",
+    "msg": "tamanho 0.55× AK, rolagem -3° da AK (informativa), eixo -2° da AK, braço 0.21×, cruz 0 px, olho ? palma, ADS cobre 3.2% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -682,12 +682,12 @@
    "mira": {
     "estado": "VERMELHO",
     "valor": "71 px",
-    "msg": "mira fora da cruz a 71 px — aro a 71 px da cruz (-29, +65); teto 30 px; eixo no ADS +4° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.108 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+    "msg": "mira fora da cruz a 71 px — aro a 71 px da cruz (-29, +65); teto 30 px; eixo no ADS +4° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.128 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.68× AK",
-    "msg": "tamanho 0.68× AK, rolagem +49° da AK (informativa), eixo -7° da AK, braço 0.38×, cruz 0 px, olho 4.16 palma, ADS cobre 10.5% (teto 18.5%)"
+    "valor": "0.64× AK",
+    "msg": "tamanho 0.64× AK, rolagem +49° da AK (informativa), eixo -6° da AK, braço 0.29×, cruz 0 px, olho 4.23 palma, ADS cobre 8.8% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -705,14 +705,5 @@
     "msg": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
    }
   }
- },
- "parcial": {
-  "reguas": [
-   "mira"
-  ],
-  "armas": [
-   "mp5"
-  ],
-  "base": "2026-09-23"
  }
 }

@@ -40,13 +40,15 @@ export function entradasDoPlacar(raiz = process.cwd()) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const mut = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+  // 3:2 é obrigatório; 16:9 (vm-reguas-placar-16x9.json, integração K) é cobrado quando existe.
   const placarArq = 'tools/eval/vm-reguas-placar.json';
+  const extras = ['tools/eval/vm-reguas-placar-16x9.json'].filter((f) => fs.existsSync(f));
   const falhas = [];
   if (!fs.existsSync(placarArq)) {
     console.log(`FALHA P1: ${placarArq} ausente — rode \`npm run eval:vm-reguas -- --placar\` com o catálogo privado.`);
     process.exit(1);
   }
-  const placar = JSON.parse(fs.readFileSync(placarArq, 'utf8'));
+  const placares = [placarArq, ...extras].map((f) => ({ arq: f, ...JSON.parse(fs.readFileSync(f, 'utf8')) }));
   const DIV = 'tools/eval/vm-reguas-divida.json';
   const divida = fs.existsSync(DIV) ? JSON.parse(fs.readFileSync(DIV, 'utf8')).dividas || {} : {};
   let { VM_LAUNCH } = await import(pathToFileURL(path.resolve('public/js/data/vmconfig.js')).href);
@@ -54,19 +56,22 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   if (mut === 'placar-velho') atual = `${atual.slice(0, -1)}x`;
   if (mut === 'chave-ligada') VM_LAUNCH = true;
   if (mut === 'sem-dono') { const r = Object.keys(divida)[0]; delete divida[r][Object.keys(divida[r])[0]]; }
-  if (placar.entradas !== atual) {
-    falhas.push(`P1 placar velho: medido sobre ${placar.entradas}, entradas atuais ${atual} (${entradasDoPlacar().arquivos.join(', ')} ou FAMILY_FRAME mudou). Re-meça: \`npm run eval:vm-reguas -- --placar\`.`);
-  }
   let verm = 0;
-  for (const [arma, rr] of Object.entries(placar.resultados)) {
-    for (const [r, x] of Object.entries(rr)) {
-      if (r.startsWith('__') || !['VERMELHO', 'NAO_MEDE'].includes(x.estado)) continue;
-      verm++;
-      if (!divida[r]?.[arma]) falhas.push(`P2 ${r}/${arma} vermelho sem dono em vm-reguas-divida.json — ${x.msg.slice(0, 140)}`);
-      if (VM_LAUNCH) falhas.push(`P3 VM_LAUNCH=true com ${r}/${arma} vermelho na imagem — ${x.msg.slice(0, 140)}`);
+  for (const placar of placares) {
+    const asp = placar.aspecto || '3x2';
+    if (placar.entradas !== atual) {
+      falhas.push(`P1 placar ${asp} velho: medido sobre ${placar.entradas}, entradas atuais ${atual} (${entradasDoPlacar().arquivos.join(', ')} ou FAMILY_FRAME mudou). Re-meça: \`npm run eval:vm-reguas -- --placar${asp === '3x2' ? '' : ` --aspecto=${asp}`}\`.`);
+    }
+    for (const [arma, rr] of Object.entries(placar.resultados)) {
+      for (const [r, x] of Object.entries(rr)) {
+        if (r.startsWith('__') || !['VERMELHO', 'NAO_MEDE'].includes(x.estado)) continue;
+        verm++;
+        if (!divida[r]?.[arma]) falhas.push(`P2 ${asp} ${r}/${arma} vermelho sem dono em vm-reguas-divida.json — ${x.msg.slice(0, 140)}`);
+        if (VM_LAUNCH) falhas.push(`P3 VM_LAUNCH=true com ${r}/${arma} (${asp}) vermelho na imagem — ${x.msg.slice(0, 140)}`);
+      }
     }
   }
   for (const f of falhas) console.log(`FALHA ${f}`);
-  console.log(`vm-placar: ${Object.keys(placar.resultados).length} armas, ${verm} célula(s) vermelha(s) com dono, ${falhas.length} falha(s)${mut ? ` [mutante ${mut}]` : ''}`);
+  console.log(`vm-placar: ${placares.map((p) => `${p.aspecto || '3x2'} ${Object.keys(p.resultados).length} armas`).join(' + ')}, ${verm} célula(s) vermelha(s) com dono, ${falhas.length} falha(s)${mut ? ` [mutante ${mut}]` : ''}`);
   process.exit(falhas.length ? 1 : 0);
 }

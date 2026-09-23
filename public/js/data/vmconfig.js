@@ -75,22 +75,18 @@ export const VM_WEAPON = {
     ads: { auto: true, off: [-0.005, 0.238, 0], rotDeg: [-9.74, 0.62, -4], pull: 0.05, fovScale: 1,
       linhaDeMira: { ref: 'RIG_WEAPON_SHOTGUN', alca: [0, 13.6, -5.5], massa: [0, 13.8, 21.5] } } }),
   // anchor/namedParts valem só na montagem ao vivo (eval authored-attach-check).
-  // Frame de curta (decisão do dono, integração K: curtas contra a PT-38 aprovada): fov 55 e
-  // yaw 15° da PT-38, z −0,25. Raster: 0,63× → 1,13× da PT-38 por metro, desvio 129 → 42 px,
-  // ADS 49% → 121%; o resíduo de ADS devolve a massa à cruz (eval:vm-mira 47 → 10 px).
   deagle: W('deagle', { baked: true, runtime: 'family', timing: 'gameplay', recoilScale: 0.45,
     frame: { x: 0.1, y: -0.1, z: -0.25, fov: 55, rotDeg: [-5, 15, -5] },
     ads: { auto: true, off: [0.012, -0.02, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 },
+    // Frame de curta contra a PT-38 aprovada (docs/reports/VM-INTEGRACAO-K.md).
     anchor: 'neutral_bone', namedParts: {
       magazine: { mesh: 'GEO-deagle-magazine', bone: 'Mag' },
       slide: { mesh: 'GEO-deagle-slide', bone: 'Slider' },
       slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
       hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
     } }),
-  // PT-38 no enquadramento APROVADO pelo dono (FAMILY_FRAME.pistol: z -0,22, fov 55, yaw 15°).
-  // Decisão do dono (integração K, 23/09): as curtas (pistol/deagle/revolver38) medem-se contra
-  // esta PT-38, não contra a AK — faixa ARMAS_CURTAS em tools/eval/lib/vm-limiares.mjs. A
-  // reescala do #631 (z -0,566, pull 0,396) foi revertida.
+  // PT-38 no enquadramento APROVADO (FAMILY_FRAME.pistol); a reescala do #631 foi revertida.
+  // As curtas medem-se contra ela: ARMAS_CURTAS em tools/eval/lib/vm-limiares.mjs.
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
   // ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09). M92: arma até o
   // punho (grip-support.mjs), cabo na borda e ADS pela alça tangente (sockets 10° fora da linha).
@@ -142,9 +138,8 @@ export const VM_WEAPON = {
   // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
   // medido desta base; a câmera embutida do doador não é usada como frame.
   rem700: W('bolt', { baked: true, frame: 'family' }),
-  // ADS automático (alça medida no eixo): o manual deixava a alça fora da cruz (AD1, revisão L1).
-  // Frame: opção B do #632 escolhida pelo dono (z −0,409 → −0,375: 0,72× → 0,877× da escala da AK
-  // em 3:2); o teto da faixa própria da lmg subiu junto (FAIXA_ESCALA.lmg em vm-limiares.mjs).
+  // ADS automático (alça medida no eixo). Frame: opção B do #632, decisão do dono (0,877× da AK;
+  // faixa própria em FAIXA_ESCALA.lmg, vm-limiares.mjs).
   lmg: W('lmg', { baked: true, timing: 'gameplay', frame: { z: -0.375 } }),
   scar: W('ar', { baked: true }),
   tavor: W('ar', { baked: true }),

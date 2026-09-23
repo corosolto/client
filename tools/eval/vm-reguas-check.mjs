@@ -139,7 +139,9 @@ if (PLACAR && !MUT) {
   const entradas = entradasDoPlacar();
   // Placar parcial (--regua=<algumas> ou --armas=<algumas>) ATUALIZA as células medidas e
   // guarda as outras; `parcial` registra o que foi re-medido sob as entradas atuais.
-  const ARQ = 'tools/eval/vm-reguas-placar.json';
+  // 3:2 (o quadro do dono) é o placar principal; 16:9 vai em arquivo próprio e o
+  // eval:vm-placar cobra os dois (integração K, 23/09).
+  const ARQ = ASPECTO === '3x2' ? 'tools/eval/vm-reguas-placar.json' : `tools/eval/vm-reguas-placar-${ASPECTO}.json`;
   const antigo = fs.existsSync(ARQ) ? JSON.parse(fs.readFileSync(ARQ, 'utf8')) : null;
   const completo = reguas.length === REGUAS.length && armas.length === TODAS.length;
   const junto = completo || !antigo ? resultados : Object.fromEntries(Object.entries(antigo.resultados).map(([a, rr]) => [a, { ...rr, ...(resultados[a] || {}) }]));
@@ -147,8 +149,9 @@ if (PLACAR && !MUT) {
     ...(completo ? {} : { parcial: { reguas, armas: armas.length === TODAS.length ? 'todas' : armas, base: antigo?.gerado } }) };
   fs.writeFileSync(ARQ, `${JSON.stringify(placar, null, 1)}\n`);
   fs.mkdirSync('artifacts/vm-reguas', { recursive: true });
-  fs.writeFileSync('artifacts/vm-reguas/PLACAR.md', placarMd(placar));
-  console.log('placar: tools/eval/vm-reguas-placar.json + artifacts/vm-reguas/PLACAR.md');
+  const MD = ASPECTO === '3x2' ? 'artifacts/vm-reguas/PLACAR.md' : `artifacts/vm-reguas/PLACAR-${ASPECTO}.md`;
+  fs.writeFileSync(MD, placarMd(placar));
+  console.log(`placar: ${ARQ} + ${MD}`);
 }
 
 for (const a of avisos) console.log(`AVISO ${a}`);
