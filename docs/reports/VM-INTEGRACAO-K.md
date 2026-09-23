@@ -171,6 +171,7 @@ Células instáveis sob carga (a máquina estava com load ~40). Cada uma foi re-
 - mira/mp5 em 3:2: 192 px, depois 1 px nas duas re-medidas.
 - cobertura/ak: 0,46× e 0,57× na re-medida final, depois 0,95× e 0,94×; em todas as outras rodadas deu 0,93–0,95×.
 - carregador/shotgun: oscila. Vermelho em 3:2 quando medido depois da AK na mesma sessão, verde isolado e em 16:9. Fica como dívida com nota.
+- carregador/pistol: verde nos dois placares, mas vermelho no `eval:vm-reguas` do `check:vm` e em 1 de 3 re-medidas isoladas (tática 57%, 0,88 palma). A PT-38 aprovada não mudou; é a régua. Fica como dívida com dono vm-reguas (fila R1).
 
 `eval:vm-ads` rodado nas 25 armas: o AD1 fica diferente de 0 onde há resíduo de ADS (mp5 e p90 desde o #636, deagle agora) e nas armas de luneta. Isso é esperado. A régua é prova de pipeline, a imagem de mira é o `eval:vm-mira`, e o `check:vm` roda o padrão (ak, revolver38), que dá verde.
 
@@ -199,8 +200,8 @@ Células instáveis sob carga (a máquina estava com load ~40). Cada uma foi re-
 
 ## 6. Fila
 
-`docs/reports/VM-INTEGRACAO-K-FILA-CORRECAO.md`: 42 itens, sendo 13 de config, 16 de pose/IK e
-13 de Blender/clipe. Junta as filas L1, L3–L5, os restos do #634 e do #637 e o que o placar mediu.
+`docs/reports/VM-INTEGRACAO-K-FILA-CORRECAO.md`: 43 itens, sendo 13 de config, 16 de pose/IK,
+13 de Blender/clipe e 1 de régua (`eval:vm-carregador` intermitente em pistol e shotgun). Junta as filas L1, L3–L5, os restos do #634 e do #637 e o que o placar mediu.
 
 ## 7. Revisão do dono
 

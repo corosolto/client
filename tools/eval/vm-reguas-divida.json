@@ -93,6 +93,16 @@
      "3x2"
     ],
     "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
+   },
+   "pistol": {
+    "valor": "1 falha(s) (intermitente)",
+    "dono": "vm-reguas (régua instável: a amostra da recarga tática 57% não é determinística com o relógio segurado)",
+    "medido": "recarrega com objeto no meio do ar: tatica 57% — 0.88 palma da mão, deslocado 1.58 do encaixe (teto 0,7). Verde nos dois placares e em 2 de 3 re-medidas isoladas; produto e frame da PT-38 aprovada, sem mudança",
+    "aspectos": [
+     "3x2"
+    ],
+    "fila": "régua (R1)",
+    "nota": "intermitente: não é defeito do produto; conserto é na régua"
    }
   },
   "cobertura": {

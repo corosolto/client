@@ -76,6 +76,12 @@ Todo item deixa verdes: `eval:vm-rig`, `eval:vm-frame`, `eval:vm-launch`, `eval:
 | B12 | uzi, p90 | uzi: pente com cara de tubo na vazia 15%; p90: a peça na mão não parece o bloco que sai do topo | fix-mags |
 | B13 | awp, m400 | awp: punho rosa sem luva no saque; m400: recarga parada (só a mão anda) | L3L5 |
 
+## régua (1)
+
+| # | Arma | Defeito | Medida | Origem |
+|---|---|---|---|---|
+| R1 | pistol, shotgun | `eval:vm-carregador` intermitente com o relógio segurado: a mesma arma sem mudança oscila entre verde e vermelho (pistol na tática 57%, 1 em 3 isoladas; shotgun na vazia 23% conforme a ordem da sessão). Os dois estão na dívida com nota; o conserto é tornar a amostra determinística, não mexer no teto | re-medidas isoladas da integração | integração |
+
 ## Já resolvido e fora da fila
 
 Manga oca (#632, `eval:vm-manga-oca` 25/25), arma invertida de sks/mosin/svd/m400 (#634/#635,
