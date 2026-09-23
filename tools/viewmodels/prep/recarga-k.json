@@ -1,0 +1,397 @@
+{
+  "p90": {
+    "file": "viewmodels/p90/p90-baked-runtime.glb",
+    "sourceSha256": "1484c03ba7bedd8a4ebdc52e7d2da336729b6f6f7e5acbed888c681dcf2092fe",
+    "corpo": "GEO_WEAPON_P90_SKM_PDW90",
+    "peca": "MINT_WEAPON_MAG_P90",
+    "clipes": {
+      "reload_empty": {
+        "arma": [{"u": 0}, {"u": 0.15, "rot": [0, 0, -35], "pos": [-0.3, 0.2, 0]}, {"u": 0.8, "rot": [0, 0, -35], "pos": [-0.3, 0.2, 0]}, {"u": 1}],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.08, "idle": true, "arma": [0.03, 0.04, 0.02], "fecho": 0.6},
+          {"u": 0.18, "arma": [0.2, 0.26, 0.03], "fecho": 0.3, "palma": [0, -1, 0], "dedos": "braco"},
+          {"u": 0.25, "arma": [0.19, 0.195, 0.01], "fecho": 0.85, "palma": [0, -1, 0], "dedos": "braco"},
+          {"u": 0.33, "arma": [0.3, 0.27, 0.04], "fecho": 0.85, "palma": [0, -1, 0], "dedos": "braco"},
+          {
+            "u": 0.38,
+            "arma": [0.32, 0.2, 0.1],
+            "fecho": 0.85,
+            "palma": [0, -1, 0],
+            "dedos": "braco",
+            "pecaOri": {"x": [1, 0, 0], "y": [0.0, -1.0, 0.3]}
+          },
+          {
+            "u": 0.45,
+            "arma": [0.35, -0.25, 0.3],
+            "fecho": 0.85,
+            "palma": [0, -1, 0],
+            "dedos": "braco",
+            "pecaOri": {"x": [1, 0, 0], "y": [0.0, -1.0, 0.3]}
+          },
+          {
+            "u": 0.52,
+            "arma": [0.35, -0.25, 0.3],
+            "fecho": 0.85,
+            "palma": [0, -1, 0],
+            "dedos": "braco",
+            "pecaOri": {"x": [1, 0, 0], "y": [0.0, -1.0, 0.3]}
+          },
+          {
+            "u": 0.6,
+            "arma": [0.21, 0.26, 0.03],
+            "fecho": 0.85,
+            "palma": [0, -1, 0],
+            "dedos": "braco",
+            "pecaOri": {"x": [1, 0, 0], "y": [0.0, -1.0, 0.3]}
+          },
+          {"u": 0.68, "arma": [0.19, 0.195, 0.01], "fecho": 0.85, "palma": [0, -1, 0], "dedos": "braco"},
+          {"u": 0.7, "arma": [0.19, 0.195, 0.01], "fecho": 0.4, "palma": [0, -1, 0], "dedos": "braco"},
+          {"u": 0.75, "de": "MINT_MECH_P90_CHARGER", "arma": [0.0, 0.02, 0.05], "fecho": 0.4, "palma": [0, -0.3, -1], "dedos": [-1, 0.2, 0]},
+          {"u": 0.79, "de": "MINT_MECH_P90_CHARGER", "arma": [0.0, 0.0, 0.035], "fecho": 0.9, "palma": [0, -0.3, -1], "dedos": [-1, 0.2, 0]},
+          {"u": 0.85, "de": "MINT_MECH_P90_CHARGER", "arma": [0.0, 0.0, 0.035], "fecho": 0.9, "palma": [0, -0.3, -1], "dedos": [-1, 0.2, 0]},
+          {"u": 0.88, "de": "MINT_MECH_P90_CHARGER", "arma": [0.0, 0.02, 0.05], "fecho": 0.5, "palma": [0, -0.3, -1], "dedos": [-1, 0.2, 0]},
+          {"u": 1.0, "idle": true}
+        ],
+        "peca": [{"u": 0, "estado": "arma"}, {"u": 0.25, "estado": "mao"}, {"u": 0.68, "estado": "arma"}],
+        "mecanismos": {
+          "MINT_MECH_P90_CHARGER": [
+            {"u": 0, "d": [0, 0, 0]},
+            {"u": 0.79, "d": [0, 0, 0]},
+            {"u": 0.85, "d": [0.04, 0, 0]},
+            {"u": 0.87, "d": [0, 0, 0]},
+            {"u": 1, "d": [0, 0, 0]}
+          ]
+        },
+        "doClipe": ["MINT_MECH_P90_MECHANISM"],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.08, "w": 1}, {"u": 0.9, "w": 1}, {"u": 1, "w": 0}]
+      },
+      "reload_tactical": {
+        "arma": [{"u": 0}, {"u": 0.15, "rot": [0, 0, -35], "pos": [-0.3, 0.2, 0]}, {"u": 0.8, "rot": [0, 0, -35], "pos": [-0.3, 0.2, 0]}, {"u": 1}],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.08, "idle": true, "arma": [0.03, 0.04, 0.02], "fecho": 0.6},
+          {"u": 0.18, "arma": [0.2, 0.26, 0.03], "fecho": 0.3, "palma": [0, -1, 0], "dedos": "braco"},
+          {"u": 0.25, "arma": [0.19, 0.195, 0.01], "fecho": 0.85, "palma": [0, -1, 0], "dedos": "braco"},
+          {"u": 0.33, "arma": [0.3, 0.27, 0.04], "fecho": 0.85, "palma": [0, -1, 0], "dedos": "braco"},
+          {
+            "u": 0.38,
+            "arma": [0.32, 0.2, 0.1],
+            "fecho": 0.85,
+            "palma": [0, -1, 0],
+            "dedos": "braco",
+            "pecaOri": {"x": [1, 0, 0], "y": [0.0, -1.0, 0.3]}
+          },
+          {
+            "u": 0.45,
+            "arma": [0.35, -0.25, 0.3],
+            "fecho": 0.85,
+            "palma": [0, -1, 0],
+            "dedos": "braco",
+            "pecaOri": {"x": [1, 0, 0], "y": [0.0, -1.0, 0.3]}
+          },
+          {
+            "u": 0.53,
+            "arma": [0.35, -0.25, 0.3],
+            "fecho": 0.85,
+            "palma": [0, -1, 0],
+            "dedos": "braco",
+            "pecaOri": {"x": [1, 0, 0], "y": [0.0, -1.0, 0.3]}
+          },
+          {
+            "u": 0.63,
+            "arma": [0.21, 0.26, 0.03],
+            "fecho": 0.85,
+            "palma": [0, -1, 0],
+            "dedos": "braco",
+            "pecaOri": {"x": [1, 0, 0], "y": [0.0, -1.0, 0.3]}
+          },
+          {"u": 0.73, "arma": [0.19, 0.195, 0.01], "fecho": 0.85, "palma": [0, -1, 0], "dedos": "braco"},
+          {"u": 0.77, "arma": [0.19, 0.21, 0.02], "fecho": 0.4, "palma": [0, -1, 0], "dedos": "braco"},
+          {"u": 0.93, "idle": true},
+          {"u": 1.0, "idle": true}
+        ],
+        "peca": [{"u": 0, "estado": "arma"}, {"u": 0.25, "estado": "mao"}, {"u": 0.73, "estado": "arma"}],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.08, "w": 1}, {"u": 0.9, "w": 1}, {"u": 1, "w": 0}]
+      }
+    },
+    "medirCaixas": ["MINT_MECH_P90_CHARGER", "MINT_MECH_P90_RELEASE_L", "MINT_MECH_P90_RELEASE_R"]
+  },
+  "tavor": {
+    "file": "viewmodels/ar/tavor-baked-runtime.glb",
+    "corpo": "MINT_WEAPON_TAVOR",
+    "peca": "MINT_WEAPON_TAVOR_MAG",
+    "medirCaixas": ["MINT_BOLT_RELEASE_TAVOR"],
+    "clipes": {
+      "reload_empty": {
+        "arma": [{"u": 0}, {"u": 0.15, "rot": [0, 10, 20], "pos": [-0.1, 0.08, -0.1]}, {"u": 0.82, "rot": [0, 10, 20], "pos": [-0.1, 0.08, -0.1]}, {"u": 1}],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.07, "idle": true, "arma": [0.02, -0.04, 0.03], "fecho": 0.6},
+          {"u": 0.17, "arma": [0.14, -0.22, 0.05], "fecho": 0.3, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.24, "arma": [0.14, -0.175, 0.02], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.32, "arma": [0.14, -0.32, 0.04], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.43, "arma": [0.1, -0.4, 0.25], "fecho": 0.9, "pecaOri": {"x": [1, 0, 0], "y": [0, 1, 0]}, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.5, "arma": [0.1, -0.4, 0.25], "fecho": 0.9, "pecaOri": {"x": [1, 0, 0], "y": [0, 1, 0]}, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.6, "arma": [0.14, -0.33, 0.04], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.68, "arma": [0.14, -0.175, 0.02], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.71, "arma": [0.14, -0.175, 0.02], "fecho": 0.3, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.76, "arma": [0.22, -0.07, 0.05], "fecho": 0.4, "palma": [0.3, 0.2, -1], "dedos": "braco"},
+          {"u": 0.8, "arma": [0.22, -0.05, 0.035], "fecho": 0.8, "palma": [0.3, 0.2, -1], "dedos": "braco"},
+          {"u": 0.84, "arma": [0.2, -0.09, 0.06], "fecho": 0.5, "palma": [0.3, 0.2, -1], "dedos": "braco"},
+          {"u": 1.0, "idle": true}
+        ],
+        "peca": [{"u": 0, "estado": "arma"}, {"u": 0.24, "estado": "mao"}, {"u": 0.68, "estado": "arma"}],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.07, "w": 1}, {"u": 0.9, "w": 1}, {"u": 1, "w": 0}],
+        "mecanismos": {
+          "MINT_BOLT_RELEASE_TAVOR": [
+            {"u": 0, "d": [0, 0, 0]},
+            {"u": 0.77, "d": [0, 0, 0]},
+            {"u": 0.8, "d": [0, 0, -0.0166]},
+            {"u": 0.84, "d": [0, 0, -0.0166]},
+            {"u": 0.87, "d": [0, 0, 0]},
+            {"u": 1, "d": [0, 0, 0]}
+          ]
+        }
+      },
+      "reload_tactical": {
+        "arma": [{"u": 0}, {"u": 0.15, "rot": [0, 10, 20], "pos": [-0.1, 0.08, -0.1]}, {"u": 0.82, "rot": [0, 10, 20], "pos": [-0.1, 0.08, -0.1]}, {"u": 1}],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.07, "idle": true, "arma": [0.02, -0.04, 0.03], "fecho": 0.6},
+          {"u": 0.17, "arma": [0.14, -0.22, 0.05], "fecho": 0.3, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.24, "arma": [0.14, -0.175, 0.02], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.32, "arma": [0.14, -0.32, 0.04], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.43, "arma": [0.1, -0.4, 0.25], "fecho": 0.9, "pecaOri": {"x": [1, 0, 0], "y": [0, 1, 0]}, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.5, "arma": [0.1, -0.4, 0.25], "fecho": 0.9, "pecaOri": {"x": [1, 0, 0], "y": [0, 1, 0]}, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.6, "arma": [0.14, -0.33, 0.04], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.68, "arma": [0.14, -0.175, 0.02], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.74, "arma": [0.14, -0.2, 0.04], "fecho": 0.4, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.95, "idle": true},
+          {"u": 1.0, "idle": true}
+        ],
+        "peca": [{"u": 0, "estado": "arma"}, {"u": 0.24, "estado": "mao"}, {"u": 0.68, "estado": "arma"}],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.07, "w": 1}, {"u": 0.9, "w": 1}, {"u": 1, "w": 0}]
+      }
+    },
+    "sourceSha256": "e90326406e6619f8b9799516474857db88f1785f1d56c52f56420cf0cec5ed0f"
+  },
+  "famas": {
+    "file": "viewmodels/ar/famas-baked-runtime.glb",
+    "corpo": "MINT_WEAPON_FAMAS",
+    "peca": "MINT_WEAPON_FAMAS_MAG",
+    "medirCaixas": ["MINT_CHARGING_FAMAS"],
+    "clipes": {
+      "reload_empty": {
+        "arma": [{"u": 0}, {"u": 0.15, "rot": [0, 10, 20], "pos": [-0.1, 0.08, -0.1]}, {"u": 0.82, "rot": [0, 10, 20], "pos": [-0.1, 0.08, -0.1]}, {"u": 1}],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.07, "idle": true, "arma": [0.02, -0.04, 0.03], "fecho": 0.6},
+          {"u": 0.17, "arma": [0.178, -0.19, 0.05], "fecho": 0.3, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.24, "arma": [0.178, -0.145, 0.02], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.32, "arma": [0.178, -0.29000000000000004, 0.04], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.43, "arma": [0.1, -0.4, 0.25], "fecho": 0.9, "pecaOri": {"x": [1, 0, 0], "y": [0, 1, 0]}, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.5, "arma": [0.1, -0.4, 0.25], "fecho": 0.9, "pecaOri": {"x": [1, 0, 0], "y": [0, 1, 0]}, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.6, "arma": [0.178, -0.30000000000000004, 0.04], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.68, "arma": [0.178, -0.145, 0.02], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.71, "arma": [0.178, -0.145, 0.02], "fecho": 0.3, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.77, "arma": [-0.02, 0.16, 0.06], "fecho": 0.4, "palma": [0, -1, -0.3], "dedos": "braco"},
+          {"u": 0.81, "arma": [-0.015, 0.12, 0.03], "fecho": 0.85, "palma": [0, -1, -0.3], "dedos": "braco"},
+          {"u": 0.865, "arma": [0.03, 0.12, 0.03], "fecho": 0.85, "palma": [0, -1, -0.3], "dedos": "braco"},
+          {"u": 0.9, "arma": [0.03, 0.16, 0.06], "fecho": 0.4, "palma": [0, -1, -0.3], "dedos": "braco"},
+          {"u": 1.0, "idle": true}
+        ],
+        "peca": [{"u": 0, "estado": "arma"}, {"u": 0.24, "estado": "mao"}, {"u": 0.68, "estado": "arma"}],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.07, "w": 1}, {"u": 0.9, "w": 1}, {"u": 1, "w": 0}],
+        "mecanismos": {
+          "MINT_CHARGING_FAMAS": [
+            {"u": 0, "d": [0, 0, 0]},
+            {"u": 0.81, "d": [0, 0, 0]},
+            {"u": 0.845, "d": [0.05, 0, 0]},
+            {"u": 0.865, "d": [0.05, 0, 0]},
+            {"u": 0.885, "d": [0, 0, 0]},
+            {"u": 1, "d": [0, 0, 0]}
+          ]
+        }
+      },
+      "reload_tactical": {
+        "arma": [{"u": 0}, {"u": 0.15, "rot": [0, 10, 20], "pos": [-0.1, 0.08, -0.1]}, {"u": 0.82, "rot": [0, 10, 20], "pos": [-0.1, 0.08, -0.1]}, {"u": 1}],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.07, "idle": true, "arma": [0.02, -0.04, 0.03], "fecho": 0.6},
+          {"u": 0.17, "arma": [0.178, -0.19, 0.05], "fecho": 0.3, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.24, "arma": [0.178, -0.145, 0.02], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.32, "arma": [0.178, -0.29000000000000004, 0.04], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.43, "arma": [0.1, -0.4, 0.25], "fecho": 0.9, "pecaOri": {"x": [1, 0, 0], "y": [0, 1, 0]}, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.5, "arma": [0.1, -0.4, 0.25], "fecho": 0.9, "pecaOri": {"x": [1, 0, 0], "y": [0, 1, 0]}, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.6, "arma": [0.178, -0.30000000000000004, 0.04], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.68, "arma": [0.178, -0.145, 0.02], "fecho": 0.9, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.74, "arma": [0.178, -0.17, 0.04], "fecho": 0.4, "palma": [0, 1, 0], "dedos": "braco"},
+          {"u": 0.95, "idle": true},
+          {"u": 1.0, "idle": true}
+        ],
+        "peca": [{"u": 0, "estado": "arma"}, {"u": 0.24, "estado": "mao"}, {"u": 0.68, "estado": "arma"}],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.07, "w": 1}, {"u": 0.9, "w": 1}, {"u": 1, "w": 0}]
+      }
+    },
+    "sourceSha256": "640f3369d7cf586ad7c7f153d556a713e6afcf349ea61d93af6dc792fb180592"
+  },
+  "carbine": {
+    "file": "viewmodels/ar/carbine-baked-runtime.glb",
+    "corpo": "MINT_WEAPON_CARBINE",
+    "medirCaixas": ["MINT_LEVER_CARBINE", "MINT_LOADING_GATE_CARBINE"],
+    "clipes": {
+      "reload_empty": {
+        "arma": [
+          {"u": 0},
+          {"u": 0.12, "rot": [5, 25, -5], "pos": [-0.04, 0.04, 0]},
+          {"u": 0.76, "rot": [5, 25, -5], "pos": [-0.04, 0.04, 0]},
+          {"u": 0.86},
+          {"u": 1}
+        ],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.08, "idle": true, "arma": [0.02, -0.04, 0.0], "fecho": 0.6},
+          {"u": 0.19, "arma": [0.05, -0.14, -0.12], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.27, "arma": [0.042, 0.0, -0.075], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.32, "arma": [0.042, 0.035, -0.03], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.35, "arma": [0.042, 0.035, -0.03], "fecho": 0.6, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.38, "arma": [0.05, -0.14, -0.12], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.46, "arma": [0.042, 0.0, -0.075], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.51, "arma": [0.042, 0.035, -0.03], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.54, "arma": [0.042, 0.035, -0.03], "fecho": 0.6, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.5700000000000001, "arma": [0.05, -0.14, -0.12], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.65, "arma": [0.042, 0.0, -0.075], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.7, "arma": [0.042, 0.035, -0.03], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.73, "arma": [0.042, 0.035, -0.03], "fecho": 0.6, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.82, "idle": true},
+          {"u": 1.0, "idle": true}
+        ],
+        "cartucho": [
+          {"u": 0, "v": 0},
+          {"u": 0.12, "v": 1},
+          {"u": 0.335, "v": 0},
+          {"u": 0.4, "v": 1},
+          {"u": 0.525, "v": 0},
+          {"u": 0.59, "v": 1},
+          {"u": 0.715, "v": 0}
+        ],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.08, "w": 1}, {"u": 0.8, "w": 1}, {"u": 0.9, "w": 0}],
+        "doClipe": ["MINT_LOADING_GATE_CARBINE", "MINT_LEVER_CARBINE"]
+      },
+      "reload_tactical": {
+        "arma": [
+          {"u": 0},
+          {"u": 0.12, "rot": [5, 25, -5], "pos": [-0.04, 0.04, 0]},
+          {"u": 0.76, "rot": [5, 25, -5], "pos": [-0.04, 0.04, 0]},
+          {"u": 0.86},
+          {"u": 1}
+        ],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.08, "idle": true, "arma": [0.02, -0.04, 0.0], "fecho": 0.6},
+          {"u": 0.19, "arma": [0.05, -0.14, -0.12], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.27, "arma": [0.042, 0.0, -0.075], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.32, "arma": [0.042, 0.035, -0.03], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.35, "arma": [0.042, 0.035, -0.03], "fecho": 0.6, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.38, "arma": [0.05, -0.14, -0.12], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.46, "arma": [0.042, 0.0, -0.075], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.51, "arma": [0.042, 0.035, -0.03], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.54, "arma": [0.042, 0.035, -0.03], "fecho": 0.6, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.5700000000000001, "arma": [0.05, -0.14, -0.12], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.65, "arma": [0.042, 0.0, -0.075], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.7, "arma": [0.042, 0.035, -0.03], "fecho": 0.75, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.73, "arma": [0.042, 0.035, -0.03], "fecho": 0.6, "palma": [0, 0.4, 1], "dedos": "braco"},
+          {"u": 0.86, "idle": true},
+          {"u": 1.0, "idle": true}
+        ],
+        "cartucho": [
+          {"u": 0, "v": 0},
+          {"u": 0.12, "v": 1},
+          {"u": 0.335, "v": 0},
+          {"u": 0.4, "v": 1},
+          {"u": 0.525, "v": 0},
+          {"u": 0.59, "v": 1},
+          {"u": 0.715, "v": 0}
+        ],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.08, "w": 1}, {"u": 0.8, "w": 1}, {"u": 0.9, "w": 0}],
+        "doClipe": ["MINT_LOADING_GATE_CARBINE"]
+      }
+    },
+    "sourceSha256": "8de215edb19630a187143cbc0c09e5a3596d3ed816a3dfe7d741d842cb9834f0",
+    "cartucho": {"nome": "GEO_PROC_CARTUCHO_CARBINE", "raio": 0.0056, "comprimento": 0.051, "ponta": 0.013}
+  },
+  "revolver38": {
+    "file": "viewmodels/revolver/revolver-runtime.glb",
+    "corpo": "SOCKET_WEAPON_REVOLVER",
+    "clipes": {
+      "inspect": {
+        "arma": [
+          {"u": 0},
+          {"u": 0.28, "rot": [5, 20, -60], "pos": [-0.05, 0.05, 0.02]},
+          {"u": 0.42, "rot": [5, 20, -60], "pos": [-0.05, 0.05, 0.02]},
+          {"u": 0.68, "rot": [0, 40, 30], "pos": [-0.04, 0.08, 0.02]},
+          {"u": 0.8, "rot": [0, 40, 30], "pos": [-0.04, 0.08, 0.02]},
+          {"u": 1}
+        ],
+        "mao": [
+          {"u": 0, "idle": true},
+          {"u": 0.12, "idle": true},
+          {"u": 0.3, "cam": [-0.1, -0.34, -0.32], "fecho": 0.7, "palma": [0.5, 0, -1], "dedos": [0, 1, 0], "camOri": true},
+          {"u": 0.78, "cam": [-0.1, -0.34, -0.32], "fecho": 0.7, "palma": [0.5, 0, -1], "dedos": [0, 1, 0], "camOri": true},
+          {"u": 0.95, "idle": true},
+          {"u": 1, "idle": true}
+        ],
+        "punho": [{"u": 0, "w": 0}, {"u": 0.2, "w": 1}, {"u": 0.85, "w": 1}, {"u": 1, "w": 0}],
+        "doClipe": ["RIG_FP_ARMS"]
+      }
+    },
+    "sourceSha256": "10c6a073c7813e94af252ce321fec7e0e1de33de08fe7ef11c6441a6641f2243",
+    "sourceNota": "saída de estojos-k.mjs --arma=revolver38 sobre o produto da integração K (40b53e2fba)"
+  },
+  "mosin": {
+    "file": "viewmodels/bolt/mosin-baked-runtime.glb",
+    "sourceSha256": "69c750bb5b1037c92ced0108fd43657934f229ff0da850dcb76f3882187bf5b6",
+    "corpo": "MINT_WEAPON_MOSIN",
+    "clipes": {
+      "reload_loop": {
+        "somenteCartucho": true,
+        "esconder": ["GEO_PROC_Cartridge"],
+        "pecasNaMao": {
+          "lado": "r",
+          "ancora": "Clip",
+          "pecas": [
+            "GEO_PROC_Clip",
+            "GEO_PROC_CartridgeClip0",
+            "GEO_PROC_CartridgeClip1",
+            "GEO_PROC_CartridgeClip2",
+            "GEO_PROC_CartridgeClip3",
+            "GEO_PROC_CartridgeClip4"
+          ],
+          "rotArma": [0, 0, 0],
+          "desloc": [0, 0, 0],
+          "janela": [{"u": 0, "v": 0}, {"u": 0.06, "v": 1}, {"u": 0.42, "v": 0}]
+        }
+      }
+    }
+  },
+  "rem700": {
+    "file": "viewmodels/bolt/rem700-baked-runtime.glb",
+    "sourceSha256": "314cf08a945e69801749bdd0d7be2df72dd5e0f3807113e16816f56cbf323fd0",
+    "corpo": "MINT_WEAPON_REM700",
+    "clipes": {
+      "reload_loop": {
+        "somenteCartucho": true,
+        "esconder": ["PROPS_Cartridge"],
+        "pecasNaMao": {
+          "lado": "r",
+          "ancora": "Clip",
+          "pecas": ["PROPS_Clip", "PROPS_CartridgeClip0", "PROPS_CartridgeClip1", "PROPS_CartridgeClip2", "PROPS_CartridgeClip3", "PROPS_CartridgeClip4"],
+          "rotArma": [0, 0, 0],
+          "desloc": [0, 0, 0],
+          "janela": [{"u": 0, "v": 0}, {"u": 0.06, "v": 1}, {"u": 0.42, "v": 0}]
+        }
+      }
+    }
+  }
+}
