@@ -24,36 +24,6 @@
     ],
     "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
    },
-   "p90": {
-    "valor": "1 falha(s)",
-    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
-    "medido": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
-   },
-   "shotgun": {
-    "dono": "vm-fix-grips-r2 (cartucho da KSG solto na recarga vazia; o #637 trocou o produto) — fila pose/IK",
-    "valor": "4 falha(s)",
-    "medido": "recarrega com objeto no meio do ar: vazia 23% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no ",
-    "aspectos": [
-     "3x2"
-    ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)",
-    "nota": "instável: 3:2 vermelho medido depois da AK na mesma sessão, verde isolado e em 16:9 (vazia 23% a 0,98 palma, teto 0,7)"
-   },
-   "svd": {
-    "valor": "2 falha(s)",
-    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
-    "medido": "tira carregador fantasma: a peça do carregador mede 100% da arma; tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
-   },
    "tavor": {
     "valor": "1 falha(s)",
     "dono": "vm-fix-l3l5 fila (Blender: recarga do tavor; pente fora do quadro com a mão na tela)",
@@ -65,14 +35,14 @@
     "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
    },
    "uzi": {
-    "valor": "2 falha(s)",
+    "valor": "1 falha(s)",
     "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
-    "medido": "em repouso o carregador não encosta na arma (Infinity palma); tira carregador fantasma: a peça do carregador mede 100% da arma. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.",
+    "medido": "em repouso o carregador não encosta na arma (Infinity palma) — medido com o relógio segurado logo depois do saque (arco procedural da uzi); na recarga, com o pente assentado, dArma 0,00. O \"fantasma 100%\" saiu: a peça indexava ~110 vértices de um acessor de 6,6 mil compartilhado com o corpo (compacta-peca.mjs).",
     "aspectos": [
      "16x9",
      "3x2"
     ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
+    "fila": "régua (repouso amostrado durante o saque) — vm-reguas"
    },
    "pistol": {
     "valor": "1 falha(s) (intermitente)",

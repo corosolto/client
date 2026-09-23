@@ -105,6 +105,11 @@
         "middle_02_l",
         "index_02_l",
         "ring_02_l"
+      ],
+      "deslocCam": [
+        0,
+        0.06,
+        0.04
       ]
     },
     "clips": {
