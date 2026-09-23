@@ -15,7 +15,7 @@ export const VM_BYTES = Object.freeze({
   md97: 'd0989e2f56',
   mosin: '52b8db3adc',
   mp5: 'b548817afd',
-  p90: '0de4972b68',
+  p90: '1484c03ba7',
   pistol: '04c126d931',
   rem700: '439a4859d8',
   revolver38: 'c1394590ae',
