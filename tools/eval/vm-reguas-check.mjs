@@ -21,6 +21,7 @@
      --faixa-pistola=0.8,1.25  faixa das curtas contra a pistola (decisão pendente do dono)
      --variante='{"arma":{"frame":{...},"ads":{...}}}'  experimento de config ao vivo, sem tocar arquivo
      --assar-pistola          regrava tools/eval/vm-pistola-aprovada.json (só com decisão do dono)
+     --ref-ak=viva / --assar-ak  idem para a AK (padrão: retrato da golden APROVADA, pré-#631)
    Saída ≠ 0: vermelho fora da dívida declarada (vm-reguas-divida.json) ou
    "não sei medir". Com VM_LAUNCH=true a dívida não desculpa nada.
    Requer private-assets e navegador — régua LOCAL (check:vm), fora do check:fast;
@@ -62,7 +63,8 @@ const resultados = {};
 let refs = {};
 try {
   const { page, erros, width } = await P.abrirJogo(browser, srv.base, ASPECTO);
-  refs = await coletarReferencias(page, reguas, { pistola: arg('ref-pistola', 'aprovada'), aspecto: ASPECTO, assarPistola: flag('assar-pistola') });
+  refs = await coletarReferencias(page, reguas, { pistola: arg('ref-pistola', 'aprovada'), ak: arg('ref-ak', 'aprovada'),
+    aspecto: ASPECTO, assarPistola: flag('assar-pistola'), assarAk: flag('assar-ak') });
   refs.largura = width;
   if (arg('faixa-pistola')) { const [min, max] = arg('faixa-pistola').split(',').map(Number); refs.faixaPistola = { min, max }; }
   for (const arma of armas) {

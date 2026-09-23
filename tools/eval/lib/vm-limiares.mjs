@@ -29,8 +29,8 @@ export const MIRA_MAX_PX = 30;
 // Mesmo teto do ângulo em quadril (COBERTURA_ANGULO_MAX): mesma grandeza.
 export const MIRA_INCLINACAO_MAX = 12;
 
-/* COBERTURA (eval:vm-cobertura), em quadril, contra a AK golden medida na mesma
-   sessão. `tamanho` = raiz(área da arma ÷ área da AK) — tamanho LINEAR na tela,
+/* COBERTURA (eval:vm-cobertura), em quadril, contra o retrato da AK golden
+   APROVADA (tools/eval/vm-ak-aprovada.json, medido antes do #631). `tamanho` = raiz(área da arma ÷ área da AK) — tamanho LINEAR na tela,
    a mesma grandeza que o crítico dá em "uns 60% da AK".
    Faixas por classe: arma longa 0,80–1,25 (shotgun 1,61 e akm 0,71 reprovam;
    carbine/scar 1,20 passam no limite); compacta (mp5/uzi/p90) 0,50–1,00, porque
@@ -51,7 +51,8 @@ export const COBERTURA_CRUZ_RAIO = 0.03;
 // Câmera dentro da arma: a parte mais perto da arma que aparece (percentil 2 da
 // profundidade) a ≥ 0,6 palma do olho. Produtos K medidos em 23/09: shotgun 0,37
 // ("tubo octogonal oco", FILA item 2) e rem700 0,54; o resto ≥ 0,77 (mosin),
-// m4 1,36. A AK golden é de outro rig (palma 2× maior) e fica fora deste item.
+// m4 1,36. A AK golden é de outro rig (palma 2× maior) e fica fora deste item; a AK em K
+// (#631) entra.
 export const COBERTURA_OLHO_MIN = 0.6;
 // Ângulo na tela: eixo coronha→boca (pela profundidade, vm-analise eixoNaTela)
 // em quadril a ±12° do da AK. Crítico r2: mp5 "pitch ~39° vs 26° da AK" (13°,

@@ -47,11 +47,11 @@ const rigDe = (arma) => (VM_WEAPON[arma]?.golden ? 'metarig' : 'k');
 
 // Peça do carregador por arma (nome de malha ou osso do produto K, 23/09).
 export const CARREGADOR_PECA = {
-  ak: { malhas: 'magazine' },
+  ak: { malhas: 'magazine|_MAG$' },   // golden (metarig) e K (#631)
   m4: { malhas: '_MAG$' }, md97: { malhas: '_MAG$' }, scar: { malhas: '_MAG$' }, famas: { malhas: '_MAG$' },
   tavor: { malhas: '_MAG$' }, m92: { malhas: '_MAG$' }, akm: { malhas: '_MAG$' }, g3: { malhas: '_MAG$' },
   awp: { malhas: '_MAG$' }, m400: { malhas: '_MAG$' }, g3sg1: { malhas: '^MINT_MAG_G3SG1$' },
-  mp5: { malhas: 'MAG_MP5$' }, uzi: { malhas: 'MAG_UZI$' }, p90: { malhas: 'MAG_P90$' },
+  mp5: { malhas: 'MAG_MP5$' }, uzi: { malhas: 'MAG_UZI$' }, p90: { malhas: 'MAG_P90$|^P90_MAG_MESH' },   // P90_MAG_MESH*: produto do #634
   deagle: { osso: 'Mag' }, pistol: { osso: 'Mag' }, svd: { osso: 'Mag' },
   // clipe-pente (stripper): só aparece na recarga; escondido em repouso é legítimo.
   sks: { malhas: 'Clip', clipe: true }, mosin: { malhas: 'Clip', clipe: true }, rem700: { malhas: 'Clip', clipe: true },
@@ -117,6 +117,20 @@ export async function coletar(page, arma, { reguas, mut = null, fotos = '', vari
         const p = s.getWorldPosition(e.scene.position.clone()).project(g.vmCamera); return [p.x, p.y];
       }, arma);
       c.mira.escala = m.w / L.LARGURA_REF;
+      // #633 (vm-fix-grips) declara `ads.linhaDeMira` (alça e massa como pontos locais de um nó) e o
+      // eval:vm-ads passa a medir nela. Aqui os dois pontos declarados são projetados no MESMO quadro e
+      // comparados com o aparelho visto: ponto declarado que não cai sobre a imagem é outro socket cego.
+      const linha = VM_WEAPON[arma]?.ads?.linhaDeMira;
+      if (linha) {
+        c.mira.linha = await page.evaluate(({ x, linha }) => {
+          const g = window.__game; const e = window.__authoredVm.entry(x); const ref = e?.scene.getObjectByName(linha.ref);
+          if (!ref) return { erro: `nó ${linha.ref} ausente` };
+          ref.updateWorldMatrix(true, false);
+          const px = (loc) => { const p = ref.localToWorld(e.scene.position.clone().set(...loc)).project(g.vmCamera);
+            return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight]; };
+          return { alca: px(linha.alca), massa: px(linha.massa) };
+        }, { x: arma, linha });
+      }
       c.mira.eixo = m.nArma > 0 ? A.eixoNaTela(m) : null;
     }
     if (fotos) {
@@ -228,16 +242,25 @@ export const JUIZ = {
     const inclTxt = incl === null ? '' : `; eixo no ADS ${incl > 0 ? '+' : ''}${incl.toFixed(0)}° da vertical (teto ±${L.MIRA_INCLINACAO_MAX}°)`;
     const falhas = [];
     if (px > lim) falhas.push(`mira fora da cruz a ${px.toFixed(0)} px`);
+    let linhaTxt = '';
+    if (m.linha) {
+      if (m.linha.erro) falhas.push(`ads.linhaDeMira declarada e ${m.linha.erro}`);
+      else {
+        const d = Math.hypot(m.linha.massa[0] - m.ponto.x, m.linha.massa[1] - m.ponto.y);
+        linhaTxt = `; linhaDeMira (#633): massa declarada a ${d.toFixed(0)} px do aparelho visto`;
+        if (d > lim) falhas.push(`ads.linhaDeMira não bate com a imagem: a massa declarada fica a ${d.toFixed(0)} px do aparelho que aparece`);
+      }
+    }
     if (incl !== null && Math.abs(incl) > L.MIRA_INCLINACAO_MAX) falhas.push(`ângulo esquisito no ADS: arma tombada ${incl > 0 ? '+' : ''}${incl.toFixed(0)}° da vertical`);
-    if (!falhas.length) return V(`${px.toFixed(0)} px`, txt + inclTxt + ad1);
-    return R(`${px.toFixed(0)} px`, `${falhas.join('; ')} — ${txt}${inclTxt}${ad1}. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).`);
+    if (!falhas.length) return V(`${px.toFixed(0)} px`, txt + inclTxt + linhaTxt + ad1);
+    return R(`${px.toFixed(0)} px`, `${falhas.join('; ')} — ${txt}${inclTxt}${linhaTxt}${ad1}. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).`);
   },
 
   cobertura(c, refs) {
     if (c.classe === 'faca') return NA('faca: meleevm, régua própria (melee-framing)');
     if (c.classe === 'curta') return NA('arma curta: medida contra a pistola em eval:vm-pistola-ref');
     const ak = refs.ak?.quadril;
-    if (!ak?.areaArma) return NM('referência AK não medida');
+    if (!ak?.areaArma) return NM(`referência da AK ausente (${AK_APROVADA_ARQ} sem este aspecto; --assar-ak ou --ref-ak=viva)`);
     const q = c.quadril;
     if (!q) return NM('não coletado');
     const faixa = L.COBERTURA_FAIXA[c.classe];
@@ -250,7 +273,7 @@ export const JUIZ = {
     if (q.cruz > 0) falhas.push(`${q.cruz} px de arma/braço sobre a cruz no quadril`);
     const dAng = q.eixo && ak.eixo ? ((q.eixo.graus - ak.eixo.graus + 540) % 360) - 180 : null;
     if (dAng !== null && Math.abs(dAng) > L.COBERTURA_ANGULO_MAX) falhas.push(`ângulo esquisito: eixo da arma na tela ${q.eixo.graus.toFixed(0)}° contra ${ak.eixo.graus.toFixed(0)}° da AK (${dAng > 0 ? '+' : ''}${dAng.toFixed(0)}°, teto ±${L.COBERTURA_ANGULO_MAX}°)`);
-    if (q.olho !== null && q.olho !== undefined && c.arma !== 'ak' && q.olho < L.COBERTURA_OLHO_MIN) falhas.push(`câmera dentro da arma: a parte mais perto está a ${q.olho.toFixed(2)} palma do olho (mínimo ${L.COBERTURA_OLHO_MIN})`);
+    if (q.olho !== null && q.olho !== undefined && rigDe(c.arma) !== 'metarig' && q.olho < L.COBERTURA_OLHO_MIN) falhas.push(`câmera dentro da arma: a parte mais perto está a ${q.olho.toFixed(2)} palma do olho (mínimo ${L.COBERTURA_OLHO_MIN})`);
     let adsTxt = 'ADS: viewmodel some (luneta)';
     if (c.ads && c.ads.areaTotal > 0) {
       const teto = L.COBERTURA_ADS_MAX_VS_AK * ak.areaTotal;
@@ -440,9 +463,28 @@ export const MUTANTES = {
    #631); `pistola: 'viva'` mede a PT-38 do branch, e `assarPistola` regrava o
    retrato. */
 export const PISTOLA_APROVADA_ARQ = 'tools/eval/vm-pistola-aprovada.json';
-export async function coletarReferencias(page, reguas, { pistola = 'aprovada', aspecto = '3x2', assarPistola = false } = {}) {
+export const AK_APROVADA_ARQ = 'tools/eval/vm-ak-aprovada.json';
+export async function coletarReferencias(page, reguas, { pistola = 'aprovada', ak = 'aprovada', aspecto = '3x2', assarPistola = false, assarAk = false } = {}) {
   const refs = {};
-  if (reguas.includes('cobertura')) refs.ak = await coletar(page, 'ak', { reguas: ['cobertura'] });
+  if (reguas.includes('cobertura')) {
+    // AK: a APROVADA é a golden (metarig). Com o #631 a AK vira produto K e passa a ser
+    // CANDIDATA; a régua continua ancorada no retrato da golden (vm-ak-aprovada.json).
+    const fs = await import('node:fs');
+    if (ak === 'viva' || assarAk) {
+      const c = await coletar(page, 'ak', { reguas: ['cobertura'] });
+      const q = c.quadril;
+      refs.ak = { quadril: { areaArma: q.areaArma, areaBraco: q.areaBraco, areaTotal: q.areaTotal, eixo: q.eixo, rolagem: q.rolagem }, fonte: 'viva' };
+      if (assarAk) {
+        const atual = fs.existsSync(AK_APROVADA_ARQ) ? JSON.parse(fs.readFileSync(AK_APROVADA_ARQ, 'utf8')) : {};
+        atual.o_que_e = 'Retrato da AK golden APROVADA (antes do rebuild em K do #631) no quadro renderizado: referência do eval:vm-cobertura. Regravar só com decisão do dono (--assar-ak).';
+        atual[aspecto] = { ...refs.ak, fonte: undefined, medido: new Date().toISOString().slice(0, 10) };
+        fs.writeFileSync(AK_APROVADA_ARQ, `${JSON.stringify(atual, null, 1)}\n`);
+      }
+    } else {
+      const assado = fs.existsSync(AK_APROVADA_ARQ) ? JSON.parse(fs.readFileSync(AK_APROVADA_ARQ, 'utf8'))[aspecto] : null;
+      refs.ak = assado ? { ...assado, fonte: 'aprovada' } : null;
+    }
+  }
   if (reguas.includes('pistola-ref')) {
     const fs = await import('node:fs');
     if (pistola === 'viva' || assarPistola) {
