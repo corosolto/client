@@ -9,7 +9,7 @@ Retrato datado. O estado vivo é o que as réguas citadas imprimem.
 
 **Causa medida.** A manga KINEMATION (`CoroSolto_FP_Cloth`) termina aberta: nos produtos de
 fuzil, no deltoide, a poucos centímetros **atrás** da câmera embutida (sks: laço em
-z = +0,03 m, raio 0,096 m); na lmg e na shotgun, cortada no cotovelo (`lmg-final.mjs` apara a
+z = +0,03 m, raio 0,096 m); na lmg e na shotgun, cortada no pulso (`lmg-final.mjs` apara a
 manga proximal de propósito) e à frente da câmera. O `FAMILY_FRAME`/`VM_FRAME` empurra o pacote
 inteiro para a frente (sks z −0,369, lmg −0,409, p90 −0,600) para caber o tamanho da AK, e a boca
 aberta da manga entra no quadro. Não é textura, `side` de material nem near plane: é geometria
@@ -28,6 +28,12 @@ a ponta. O repouso de cada anel é resolvido na pose do `idle` (a pose padrão d
 1,9 m abaixo da câmera). Vale para os 24 produtos e para qualquer re-assado futuro dos outros
 agentes, sem re-hash de asset. AK golden e trilhas goldsrc/retarget ficam de fora (UV e rig
 próprios).
+
+Boca no pulso (lmg e shotgun, cuja manga o produto apara no antebraço): a extensão refaz o
+antebraço e o braço pelas juntas posadas — metade do antebraço, cotovelo (`lowerarm`), ombro
+(`upperarm`) — antes de sair para trás. A primeira versão (reta para trás a partir do pulso) virou,
+no crítico r1, "placa vermelha" na shotgun e "tubo reto terminando em toco" na lmg; a segunda sai em
+diagonal como braço (`artifacts/fix-mesh/depois-r2/`).
 
 **Depois:** 24/24 verdes; mutantes `sem-extensao` (20 vermelhas) e `extensao-curta` (8 vermelhas)
 mordem.

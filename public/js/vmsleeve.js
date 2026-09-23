@@ -62,6 +62,37 @@ function anchorBone(skeleton, dominant) {
   return -1;
 }
 
+const boneIndex = (skeleton, bone) => skeleton.bones.indexOf(bone);
+function ancestor(skeleton, start, pattern) {
+  for (let bone = skeleton.bones[start]; bone; bone = bone.parent) if (pattern.test(bone.name)) return bone;
+  return null;
+}
+
+// Boca no deltoide: segue direto para trás. Boca no pulso (lmg, shotgun: antebraço aparado no
+// produto): refaz antebraço e braço pelas juntas posadas (cotovelo, ombro) antes de sair do quadro.
+function sleevePath(skeleton, dominant, anchor, centre, back, length, toSpaceWorld) {
+  const at = (bone) => bone.getWorldPosition(new THREE.Vector3()).applyMatrix4(toSpaceWorld);
+  const name = skeleton.bones[dominant]?.name || '';
+  const lower = /upperarm/i.test(name) ? null : ancestor(skeleton, dominant, /^lowerarm_[lr]$/i);
+  const upper = lower && ancestor(skeleton, dominant, /^upperarm_[lr]$/i);
+  if (!lower || !upper) {
+    const reach = length + Math.max(0, -centre.z);
+    return Array.from({ length: RINGS }, (_, r) => {
+      const f = (r + 1) / RINGS;
+      return { offset: back.clone().multiplyScalar(reach * f), bones: [[anchor, 1]], keep: 1 - f };
+    });
+  }
+  const elbow = at(lower).sub(centre), shoulder = at(upper).sub(centre);
+  const tail = shoulder.clone().addScaledVector(back, length + Math.max(0, -(centre.z + shoulder.z)));
+  const li = boneIndex(skeleton, lower), ui = boneIndex(skeleton, upper);
+  return [
+    { offset: elbow.clone().multiplyScalar(0.5), bones: [[li, 1]], keep: 0.5 },
+    { offset: elbow, bones: [[li, 0.5], [ui, 0.5]], keep: 0 },
+    { offset: shoulder, bones: [[ui, 1]], keep: 0 },
+    { offset: tail, bones: [[anchor, 1]], keep: 0 },
+  ];
+}
+
 // Prolonga cada boca `length` m atrás da câmera (+z de `space`), pele indo ao tronco, ponta fechada;
 // repouso resolvido na pose do idle. Caso e números: docs/reports/VM-FIX-MESH-2026-09-23.md.
 export function extendSleeveOpenings(mesh, { space = null, length = 0.9, pose = null } = {}) {
@@ -92,6 +123,7 @@ function extendAtCurrentPose(mesh, source, loops, representative, space, length)
   for (const bone of mesh.skeleton.bones) bone.updateWorldMatrix(true, false);
   const toSpace = new THREE.Matrix4();
   if (space) toSpace.copy(space.matrixWorld).invert();
+  const toSpaceWorld = toSpace.clone();
   toSpace.multiply(mesh.matrixWorld);
   const boneMatrix = (index) => new THREE.Matrix4().multiplyMatrices(mesh.skeleton.bones[index].matrixWorld, mesh.skeleton.boneInverses[index]);
   const names = Object.keys(source.attributes);
@@ -134,16 +166,16 @@ function extendAtCurrentPose(mesh, source, loops, representative, space, length)
     const anchor = dominant === undefined ? -1 : anchorBone(mesh.skeleton, dominant);
     if (anchor < 0) continue;
     const start = ring.map(posed);
-    // Boca à frente da câmera (antebraço cortado no cotovelo: lmg, shotgun) ganha a distância que falta.
-    const reach = length + Math.max(0, -start.reduce((z, p) => Math.min(z, p.z), Infinity));
+    const centre = start.reduce((sum, p) => sum.add(p), new THREE.Vector3()).divideScalar(start.length);
+    const plan = sleevePath(mesh.skeleton, dominant, anchor, centre, back, length, toSpaceWorld);
     let previous = ring;
-    for (let r = 1; r <= RINGS; r += 1) {
-      const f = r / RINGS;
+    for (const step of plan) {
       const current = ring.map((i, k) => {
-        const blend = new Map([[anchor, f]]);
-        for (const [b, w] of skinOf(i)) blend.set(b, (blend.get(b) || 0) + w * (1 - f));
-        const skin = [...blend].sort((a, b) => b[1] - a[1]).slice(0, 4);
-        const sum = skin.reduce((s, [, w]) => s + w, 0);
+        const blend = new Map();
+        for (const [b, w] of step.bones) blend.set(b, (blend.get(b) || 0) + w * (1 - step.keep));
+        for (const [b, w] of skinOf(i)) blend.set(b, (blend.get(b) || 0) + w * step.keep);
+        const skin = [...blend].filter(([, w]) => w > 0).sort((a, b) => b[1] - a[1]).slice(0, 4);
+        const sum = skin.reduce((acc, [, w]) => acc + w, 0);
         skin.forEach((pair) => { pair[1] /= sum; });
         while (skin.length < 4) skin.push([0, 0]);
         const mixed = new THREE.Matrix4().set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -153,7 +185,7 @@ function extendAtCurrentPose(mesh, source, loops, representative, space, length)
           for (let e = 0; e < 16; e += 1) mixed.elements[e] += m.elements[e] * w;
         }
         const full = new THREE.Matrix4().copy(toSpace).multiply(mesh.bindMatrixInverse).multiply(mixed).multiply(mesh.bindMatrix);
-        const rest = start[k].clone().addScaledVector(back, reach * f).applyMatrix4(full.invert());
+        const rest = start[k].clone().add(step.offset).applyMatrix4(full.invert());
         return push(i, rest.toArray(), skin);
       });
       for (let k = 0; k < ring.length; k += 1) {
