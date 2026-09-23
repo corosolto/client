@@ -55,10 +55,12 @@ export const VM_WEAPON = {
   // Produto K (KINEMATION, 67 juntas) assado por arma no catálogo privado:
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
-  // AK em K (rifles-ak-final.py). Frame: a silhueta mais próxima da AK golden em 3:2
-  // que cabe na faixa do eval:vm-frame (VM-LAUNCH-K-STATUS.md).
+  // AK/AKM K (rifles-ak-final.py + grip-support.mjs): frame pelo retrato da golden (vm-gauntlet:
+  // mão/arma 0,74 contra 0,73) dentro da faixa do eval:vm-frame; ADS pela alça e massa.
   ak: W('ak', { baked: true,
-    frame: { x: 0.0825, y: 0.01, z: -0.2844, fov: 57, rotDeg: [1.69, 7.69, 6.19] } }),
+    frame: { x: 0.065, y: 0.04, z: -0.203, fov: 57, rotDeg: [1.69, 7.69, 6.19] },
+    ads: { auto: true, off: [-0.001, 0.0009, 0], rotDeg: [-6.12, -0.71, 0], pull: 0.05, fovScale: 1,
+      linhaDeMira: { ref: 'MINT_WEAPON_AK', alca: [-0.06, 0.153, 0.005], massa: [-0.48, 0.155, 0.005] } } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),
@@ -68,7 +70,7 @@ export const VM_WEAPON = {
   // fica acima do cano; o resíduo de ADS põe alça e massa na cruz (vmads-sim.mjs).
   shotgun: W('shotgun', { baked: true, timing: 'gameplay',
     frame: { x: 0.65, y: -0.72, z: -1.0, rotDeg: [8, 4, -5] },
-    ads: { auto: true, off: [0.013, 0.238, 0], rotDeg: [-9.74, 0.62, 0], pull: 0.05, fovScale: 1,
+    ads: { auto: true, off: [-0.005, 0.238, 0], rotDeg: [-9.74, 0.62, -4], pull: 0.05, fovScale: 1,
       linhaDeMira: { ref: 'RIG_WEAPON_SHOTGUN', alca: [0, 13.6, -5.5], massa: [0, 13.8, 21.5] } } }),
   // anchor/namedParts valem só na montagem ao vivo (eval authored-attach-check).
   deagle: W('deagle', { baked: true, runtime: 'family', timing: 'gameplay', recoilScale: 0.45,
@@ -83,15 +85,22 @@ export const VM_WEAPON = {
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay',
     frame: { x: 0.1648, y: -0.19, z: -0.5664, drawDrop: 0.875 },
     ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0.3964, fovScale: 1 } }),
-  // ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09).
-  m92: W('ak', { baked: true, frame: 'family', ready: false }),
-  akm: W('ak', { baked: true, frame: 'family', ready: false }),
+  // ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09). M92: arma até o
+  // punho (grip-support.mjs), cabo na borda e ADS pela alça tangente (sockets 10° fora da linha).
+  m92: W('ak', { baked: true, ready: false,
+    frame: { x: 0.0948, y: 0.0409, z: -0.1014, fov: 57, rotDeg: [6, 15, 2] },
+    ads: { auto: true, off: [-0.0007, 0.0526, 0], rotDeg: [-10.89, -0.77, 0], pull: 0.05, fovScale: 1,
+      linhaDeMira: { ref: 'MINT_WEAPON_M92', alca: [0.04, 0.188, 0.021], massa: [-0.3, 0.193, 0.021] } } }),
+  akm: W('ak', { baked: true, ready: false,
+    frame: { x: 0.065, y: 0.04, z: -0.203, fov: 57, rotDeg: [1.69, 7.69, 6.19] },
+    ads: { auto: true, off: [0.0106, -0.0035, 0], rotDeg: [-5.49, -0.64, 0], pull: 0.05, fovScale: 1,
+      linhaDeMira: { ref: 'MINT_WEAPON_AKM', alca: [-0.06, 0.15, 0.012], massa: [-0.48, 0.152, 0.012] } } }),
   g3: W('g3', { baked: true, frame: 'family' }),
-  // Pose de duas mãos aponta ~55° para cima no frame da família: o pacote gira de lado
-  // (yaw 25°, pitch −10°) no fov da pistola; alça e massa na cruz (vmads-sim.mjs).
+  // Pose de duas mãos aponta ~55° para cima no frame da família: o pacote gira (yaw 16°, cano
+  // ~15° como a PT-38) no fov da pistola; o ADS usa o clipe `ads` do produto (ads-pose.mjs).
   revolver38: W('revolver', { baked: true, runtime: 'family', timing: 'gameplay',
-    frame: { x: 0.28, y: -0.08, z: -0.46, fov: 55, rotDeg: [-10, 25, -10] },
-    ads: { auto: true, off: [-0.001, -0.001, 0], rotDeg: [-0.44, -0.19, 0], pull: 0.52, fovScale: 1,
+    frame: { x: 0.2, y: -0.08, z: -0.4, fov: 55, rotDeg: [-10, 16, -5] },
+    ads: { auto: true, off: [-0.0129, -0.0099, 0], rotDeg: [0.5, -1.33, 0], pull: 0.46, fovScale: 1,
       linhaDeMira: { ref: 'RIG_WEAPON_REVOLVER', alca: [0, 1.55, -1.0], massa: [0, 1.85, -14.15] } },
     anchor: 'neutral_bone', namedParts: {
       cartridge0: { mesh: 'GEO-Cartridge0', bone: 'Cartridge0' },
