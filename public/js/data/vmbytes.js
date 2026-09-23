@@ -15,7 +15,7 @@ export const VM_BYTES = Object.freeze({
   m400: '0528562f9a',
   m92: 'bd938017a7',
   md97: '4cd468a65f',
-  mosin: 'c5a980a7cf',
+  mosin: '79fe8ce9a3',
   mp5: 'b548817afd',
   p90: '1484c03ba7',
   pistol: '04c126d931',
@@ -24,7 +24,7 @@ export const VM_BYTES = Object.freeze({
   scar: '958a0223cb',
   shotgun: '04fd6daca2',
   sks: '0e5d0ff138',
-  svd: '81b6d48251',
+  svd: 'ab9a7f6af6',
   tavor: 'e90326406e',
   uzi: 'f5c2da77aa',
 });

@@ -11,6 +11,9 @@
  * pelas duas palmas (punho e guarda-mão ficam na mão; o contato dos dedos é o que o verify DMR cobra).
  * `apoio`: depois do giro a mão esquerda do pacote fica no cano nu, além do guarda-mão; a pegada vai
  * para o centro da seção do guarda-mão (z 0,36 local) pelo IK do grip-support.mjs (#633).
+ * `apoio` na mosin: virada, a mão esquerda ficava na boca do cano; vai ao centro do guarda-mão.
+ * `fixaNaArma` (svd): o osso `Mag` do doador G3SG1 carrega o pente virado para longe das mãos (0,10 m
+ * no melhor quadro; o crítico viu a peça parada no ar). Até existir pose de mão, o pente fica na arma.
  * `esconde`: peças do pacote (clipe de cartuchos, cartucho) que em nenhum clipe chegam a 0,45 m de
  * uma mão ficam flutuando longe na tela; saem com escala zero, estacionadas no centro da arma.
  * Diagnóstico e antes/depois: docs/reports/VM-FIX-L3L5.md.
@@ -28,9 +31,11 @@ import { Pose, THREE, duration, gravarClipe } from './fk-gltf.mjs';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const ARMAS = {
   mosin: { sha: '52b8db3adc4415364accf34d5b039d1399df988482268150790b4cc40399c56b', arquivo: 'mosin-baked-runtime.glb',
-    arma: 'MINT_WEAPON_MOSIN', malha: 'GEO_MINT_MOSIN', pecas: ['MINT_MOSIN_BOLT'], esconde: /^GEO_PROC_(Clip|Cartridge)/ },
+    arma: 'MINT_WEAPON_MOSIN', malha: 'GEO_MINT_MOSIN', pecas: ['MINT_MOSIN_BOLT'], esconde: /^GEO_PROC_(Clip|Cartridge)/,
+    apoio: { corpo: 'MINT_WEAPON_MOSIN', alvo: [-0.09, 0.041, 0.021], rolagem: 0, fecho: 1,
+      clipes: ['idle', 'shoot', 'inspect', 'equip_rifle', 'reload_empty', 'reload_start', 'reload_loop', 'reload_end'] } },
   svd: { sha: 'f44732930d24dcb78a728ea3a1c1458d0d763a23a79749ea8ad54366a9e376e9', arquivo: 'svd-baked-runtime.glb',
-    arma: 'MINT_WEAPON_SVD', malha: 'GEO_MINT_SVD', pecas: ['MINT_SVD_MAG'] },
+    arma: 'MINT_WEAPON_SVD', malha: 'GEO_MINT_SVD', pecas: ['MINT_SVD_MAG'], fixaNaArma: ['MINT_SVD_MAG'] },
   m400: { sha: 'f75e4625c1199d3fed6fb9f132e5cc59a0c742dc41a92bcac5fa6bcab76f739d', arquivo: 'm400-baked-runtime.glb',
     arma: 'MINT_WEAPON_M400', malha: 'MINT_WEAPON_M400', pecas: [], vertices: ['MINT_WEAPON_M400', 'MINT_WEAPON_M400_MAG'], conjuga: ['MINT_WEAPON_M400_MAG'] },
   rem700: { sha: '439a4859d840b241680cd6a566bf62b989b7a63c01bbf89d45c7d3b24f1e79fa', arquivo: 'rem700-baked-runtime.glb',
@@ -147,6 +152,18 @@ if (cfg.esconde) {
   }
   P.cache = new Map();
   relatorio.escondidas = alvo.map((n) => n.getName());
+}
+if (cfg.fixaNaArma) {
+  P.set('idle', 0); const armaW0inv = P.world(cfg.arma).invert();
+  const rel = new Map(cfg.fixaNaArma.map((nome) => [P.node(nome), armaW0inv.clone().multiply(P.world(nome))]));
+  for (const an of P.root.listAnimations()) {
+    const d = duration(an); const ts = []; for (let t = 0; t < d - 1e-6; t += 1 / 30) ts.push(+t.toFixed(5)); ts.push(+d.toFixed(5));
+    const faixas = new Map([...rel.keys()].map((n) => [n, []]));
+    for (const t of ts) { P.set(an.getName(), t); const A = P.world(cfg.arma); for (const [n, R] of rel) faixas.get(n).push(P.localFor(n, A.clone().multiply(R))); }
+    gravarClipe(doc, an.getName(), ts, faixas);
+  }
+  P.cache = new Map();
+  relatorio.fixasNaArma = cfg.fixaNaArma;
 }
 // Boca da malha: ponta do eixo longo mais perto do socket MUZZLE (tem que ficar a ~0 m).
 const boca = P.pos('SOCKET_MINT_MUZZLE');
