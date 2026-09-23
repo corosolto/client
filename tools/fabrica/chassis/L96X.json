@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "nome": "L96X",
+  "tipo": "ferrolho",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/L96X/Weapon/L96X.FBX",
+    "poseFbx": "Animations/L96X/Character/A_FP_L96X_Pose.FBX",
+    "armaSha256": "b44ae664b8d69bf7ec9909dda233daab6ee51debef890e7d5d164daa51dd7d2d",
+    "poseSha256": "c716d62659bbc470623af53b3f658ddffd38fe7a327a1b2f3f348160ef01f772",
+    "prefab": "Prefabs/L96X.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.051,
+      -0.0709
+    ],
+    "raizCm": [
+      0,
+      7.09,
+      5.1
+    ],
+    "conferencia": "altura da mira 5.1 cm × topo da arma 3.22 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/L96X_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.12
+    ],
+    "adsBlend": 0.576,
+    "fireRate": 200,
+    "ammo": 6,
+    "aimFov": 60,
+    "fullAuto": false,
+    "useFireClip": true
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -5.454,
+      -82.244,
+      -15.755
+    ],
+    "max": [
+      4.445,
+      48.355,
+      3.22
+    ],
+    "n": 9922
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -4.009,
+        15.087,
+        -10.389
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -3.144,
+          9.095,
+          -15.34
+        ],
+        "max": [
+          2.114,
+          21.393,
+          -3.794
+        ],
+        "n": 421
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        3.263,
+        -15.883,
+        -8.185
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -2.042,
+          -16.237,
+          -4.814
+        ],
+        "max": [
+          2.114,
+          -9.993,
+          -1.382
+        ],
+        "n": 27
+      }
+    },
+    "ossosMoveis": {
+      "Mag": {
+        "min": [
+          -1.616,
+          -8.114,
+          -11.907
+        ],
+        "max": [
+          1.616,
+          1.956,
+          -2.177
+        ],
+        "n": 392
+      },
+      "Trigger": {
+        "min": [
+          -0.385,
+          6.726,
+          -8.461
+        ],
+        "max": [
+          0.385,
+          8.225,
+          -4.888
+        ],
+        "n": 66
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0,
+        -82.244,
+        0.954
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        27.087,
+        -2.89
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -48.355
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -2.718,
+        3.22
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -3.207,
+          -43.631,
+          -4.814
+        ],
+        "max": [
+          3.207,
+          -9.993,
+          3.22
+        ],
+        "n": 1454
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Trigger",
+    "Mag",
+    "Ammo",
+    "Charger",
+    "Handle",
+    "ReleaseHandle"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_L96X_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_L96X_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_L96X_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_L96X_Reload_Empty.FBX"
+    },
+    "shoot": {
+      "braco": "Character/A_FP_L96X_Fire.FBX",
+      "arma": "Weapon/A_W_L96X_Fire.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_L96X_Fire.FBX",
+    "A_FP_L96X_Pose.FBX",
+    "A_FP_L96X_Reload_Empty.FBX",
+    "A_FP_L96X_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_L96X_Fire.FBX",
+    "A_W_L96X_Pose.FBX",
+    "A_W_L96X_Reload_Empty.FBX",
+    "A_W_L96X_Reload_Tac.FBX",
+    "L96X.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/L96X/Weapon/Materials_URP",
+    "texturas": {
+      "6fdccd90bff3fb449b094ef7c1955819": "Animations/L96X/Weapon/Textures/L96X_color.TGA",
+      "8e54c8dd05de55245b88950d07f1792a": "Animations/L96X/Weapon/Textures/L96X_Ammo_Color.TGA"
+    }
+  }
+}

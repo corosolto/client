@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "nome": "Kolibri",
+  "tipo": "smg",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/Kolibri/Weapon/Kolibri.FBX",
+    "poseFbx": "Animations/Kolibri/Character/A_FP_Kolibri_Pose.FBX",
+    "armaSha256": "00efe6773a9597e899f64803feb1f4f842a6353184127c57cd5ed3a531687d3a",
+    "poseSha256": "564c99ae63734529ac803bf41d1a1ffce722fff5d2a4833e24ce2cd97ea7c9df",
+    "prefab": "Prefabs/Kolibri.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      -0.0026,
+      -0.0123
+    ],
+    "raizCm": [
+      0,
+      1.23,
+      -0.26
+    ],
+    "conferencia": "altura da mira -0.26 cm × topo da arma -0.227 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Kolibri_Settings.asset",
+    "ikOffset": [
+      0,
+      0.01,
+      0.03
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.1
+    ],
+    "adsBlend": 0.271,
+    "fireRate": 600,
+    "ammo": 6,
+    "aimFov": 60,
+    "fullAuto": false,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -0.614,
+      -5.879,
+      -5.528
+    ],
+    "max": [
+      0.614,
+      1.621,
+      -0.227
+    ],
+    "n": 6015
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -10.083,
+        1.013,
+        -5.396
+      ],
+      "raioCm": 7,
+      "caixa": null
+    },
+    "maoApoio": {
+      "palmaCm": [
+        20.486,
+        10.231,
+        -36.293
+      ],
+      "raioCm": 7,
+      "caixa": null
+    },
+    "ossosMoveis": {
+      "Cartridge": {
+        "min": [
+          -0.153,
+          -1.782,
+          -5.122
+        ],
+        "max": [
+          0.153,
+          0.023,
+          -1.533
+        ],
+        "n": 1584
+      },
+      "Charge": {
+        "min": [
+          -0.371,
+          -2.151,
+          -1.579
+        ],
+        "max": [
+          0.371,
+          1.621,
+          -0.227
+        ],
+        "n": 1015
+      },
+      "Mag": {
+        "min": [
+          -0.256,
+          -1.917,
+          -5.528
+        ],
+        "max": [
+          0.256,
+          0.488,
+          -1.594
+        ],
+        "n": 972
+      },
+      "Safety": {
+        "min": [
+          -0.499,
+          0.567,
+          -1.885
+        ],
+        "max": [
+          -0.357,
+          0.955,
+          -1.052
+        ],
+        "n": 111
+      },
+      "Trigger": {
+        "min": [
+          -0.112,
+          -3.383,
+          -3.422
+        ],
+        "max": [
+          0.112,
+          -2.181,
+          -1.649
+        ],
+        "n": 101
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        -0.002,
+        -5.879,
+        -0.984
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        13.013,
+        -5.396
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -1.562
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -0.607,
+        -0.35
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -0.614,
+          -1.868,
+          -5.189
+        ],
+        "max": [
+          0.614,
+          1.562,
+          -0.668
+        ],
+        "n": 1026
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Trigger",
+    "Charge",
+    "Safety",
+    "Mag",
+    "Cartridge"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_Kolibri_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_Kolibri_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_Kolibri_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_Kolibri_Reload_Empty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_Kolibri_Equip.FBX",
+    "A_FP_Kolibri_Pose.FBX",
+    "A_FP_Kolibri_Reload_Empty.FBX",
+    "A_FP_Kolibri_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_Kolibri_Equip.FBX",
+    "A_W_Kolibri_Pose.FBX",
+    "A_W_Kolibri_Reload_Empty.FBX",
+    "A_W_Kolibri_Reload_Tac.FBX",
+    "Kolibri.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/Kolibri/Weapon/Materials_URP",
+    "texturas": {
+      "3acddb7fc8cc91544bc01aa4643c0002": "Animations/Kolibri/Weapon/Textures/Kolibri_Cartridge_Color.TGA",
+      "dd5196b1c2eb89046a4f8258968d8990": "Animations/Kolibri/Weapon/Textures/Kolibri_Body_Color.TGA"
+    }
+  }
+}

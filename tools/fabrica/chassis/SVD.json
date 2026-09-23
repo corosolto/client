@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "nome": "SVD",
+  "tipo": "fuzil",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/SVD/Weapon/SVD.FBX",
+    "poseFbx": "Animations/SVD/Character/A_FP_SVD_Pose.FBX",
+    "armaSha256": "7ed69523788ef38b463ccc0777ba527d4170e81ca6dcf83f22a8dfdef730234f",
+    "poseSha256": "52d65ad1342d2d0375f78a078c7df4d61ae650696d3397d4ee0446f692810e89",
+    "prefab": "Prefabs/SVD.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0.0017,
+      0.0295,
+      0.1313
+    ],
+    "raizCm": [
+      -0.17,
+      -13.13,
+      2.95
+    ],
+    "conferencia": "altura da mira 2.95 cm × topo da arma 4.085 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/SVD_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.34
+    ],
+    "adsBlend": 0.592,
+    "fireRate": 400,
+    "ammo": 12,
+    "aimFov": 60,
+    "fullAuto": false,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -4.526,
+      -82.746,
+      -12.915
+    ],
+    "max": [
+      2.937,
+      39.572,
+      4.085
+    ],
+    "n": 20438
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -4.373,
+        17.039,
+        -8.122
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -2.193,
+          10.878,
+          -12.787
+        ],
+        "max": [
+          1.408,
+          20.85,
+          -1.786
+        ],
+        "n": 427
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        2.892,
+        -22.859,
+        -4.935
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -2.244,
+          -27.699,
+          -3.724
+        ],
+        "max": [
+          1.873,
+          -17.182,
+          1.827
+        ],
+        "n": 489
+      }
+    },
+    "ossosMoveis": {
+      "Bolt": {
+        "min": [
+          -4.526,
+          -13.938,
+          -1.745
+        ],
+        "max": [
+          1.437,
+          -1.085,
+          1.547
+        ],
+        "n": 970
+      },
+      "Mag": {
+        "min": [
+          -1.415,
+          -10.446,
+          -12.25
+        ],
+        "max": [
+          1.044,
+          -0.839,
+          -1.008
+        ],
+        "n": 2678
+      },
+      "MagRelease": {
+        "min": [
+          -0.819,
+          -1.309,
+          -8.1
+        ],
+        "max": [
+          0.448,
+          -0.393,
+          -5.296
+        ],
+        "n": 88
+      },
+      "Safety": {
+        "min": [
+          -2.584,
+          -3.053,
+          -4.17
+        ],
+        "max": [
+          -1.691,
+          7.548,
+          -0.407
+        ],
+        "n": 532
+      },
+      "Trigger": {
+        "min": [
+          -0.652,
+          7.045,
+          -7.71
+        ],
+        "max": [
+          0.281,
+          8.159,
+          -2.594
+        ],
+        "n": 224
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        -0.186,
+        -82.746,
+        -0.726
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        29.039,
+        -3.37
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -39.572
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -5.437,
+        1.896
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -2.244,
+          -76.04,
+          -3.724
+        ],
+        "max": [
+          1.873,
+          -16.957,
+          4.085
+        ],
+        "n": 3983
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Trigger",
+    "Safety",
+    "Mag",
+    "Bolt",
+    "MagRelease"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_SVD_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_SVD_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_SVD_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_SVD_Reload_Empty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_SVD_Pose.FBX",
+    "A_FP_SVD_Reload_Empty.FBX",
+    "A_FP_SVD_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_SVD_Pose.FBX",
+    "A_W_SVD_Reload_Empty.FBX",
+    "A_W_SVD_Reload_Tac.FBX",
+    "SVD.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/SVD/Weapon/Materials_URP",
+    "texturas": {}
+  }
+}

@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 1,
+  "nome": "DGL50",
+  "tipo": "pistola",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/DGL50/Weapon/DGL50.FBX",
+    "poseFbx": "Animations/DGL50/Character/A_FP_DGL50_Pose.FBX",
+    "armaSha256": "bbe897d831d2b11bd82a4fc05922ddc73e6263c336b516498279acb3aba99b61",
+    "poseSha256": "a72c9670abdfb9f5e46188bdc8f09701bf9826f566d9f9c49cd6ac09a59ba003",
+    "prefab": "Prefabs/DGL50.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.022999972,
+      -0.0292
+    ],
+    "raizCm": [
+      0,
+      2.92,
+      2.3
+    ],
+    "conferencia": "altura da mira 2.3 cm × topo da arma 2.413 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/DGL50_Settings.asset",
+    "ikOffset": [
+      0,
+      0.015,
+      0.01
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.2
+    ],
+    "adsBlend": 0.822,
+    "fireRate": 600,
+    "ammo": 7,
+    "aimFov": 60,
+    "fullAuto": false,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -2.297,
+      -20.29,
+      -13.739
+    ],
+    "max": [
+      2.297,
+      7.783,
+      2.413
+    ],
+    "n": 7780
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.269,
+        4.274,
+        -7.826
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.848,
+          -2.163,
+          -13.739
+        ],
+        "max": [
+          1.848,
+          7.783,
+          -1.421
+        ],
+        "n": 1343
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        2.518,
+        -0.293,
+        -12.179
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.848,
+          -3.553,
+          -13.739
+        ],
+        "max": [
+          1.848,
+          6.29,
+          -5.678
+        ],
+        "n": 750
+      }
+    },
+    "ossosMoveis": {
+      "Hammer": {
+        "min": [
+          -0.467,
+          3.488,
+          -2.704
+        ],
+        "max": [
+          0.471,
+          6.456,
+          0.7
+        ],
+        "n": 90
+      },
+      "Mag": {
+        "min": [
+          -1.098,
+          -2.061,
+          -13.739
+        ],
+        "max": [
+          1.101,
+          5.107,
+          -0.543
+        ],
+        "n": 804
+      },
+      "Slider": {
+        "min": [
+          -2.297,
+          -17.191,
+          -2.268
+        ],
+        "max": [
+          2.297,
+          5.5,
+          2.406
+        ],
+        "n": 2688
+      },
+      "Trigger": {
+        "min": [
+          -0.396,
+          -3.818,
+          -6.177
+        ],
+        "max": [
+          0.396,
+          -2.705,
+          -2.78
+        ],
+        "n": 58
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0.003,
+        -20.29,
+        0.297
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        16.274,
+        -7.826
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -7.783
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        1.619,
+        -0.418
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -1.848,
+          -16.087,
+          -13.267
+        ],
+        "max": [
+          2.185,
+          5.667,
+          1.901
+        ],
+        "n": 2949
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Trigger",
+    "Mag",
+    "Bullet",
+    "Slider",
+    "Hammer"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_DGL50_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_DGL50_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_DGL50_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_DGL50_Empty_Reload.FBX"
+    },
+    "shoot": {
+      "braco": null,
+      "arma": "Weapon/A_W_DGL50_Fire.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_DGL50_Pose.FBX",
+    "A_FP_DGL50_Reload_Empty.FBX",
+    "A_FP_DGL50_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_DGL50_Empty_Reload.FBX",
+    "A_W_DGL50_Fire.FBX",
+    "A_W_DGL50_Reload_Tac.FBX",
+    "A_W_DGL50_pose.FBX",
+    "DGL50.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/DGL50/Weapon/Materials_URP",
+    "texturas": {
+      "d63cb6cfdf538fd47b27adc89d071444": "Animations/DGL50/Weapon/Textures/DE_Color.TGA"
+    }
+  }
+}

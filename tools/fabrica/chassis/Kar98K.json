@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "nome": "Kar98K",
+  "tipo": "ferrolho",
+  "nota": "o pack não traz FBX de malha avulsa; a malha vem dentro de A_W_Kar98K_Pose.FBX",
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/Kar98K/Weapon/A_W_Kar98K_Pose.FBX",
+    "poseFbx": "Animations/Kar98K/Character/A_FP_Kar98K_Pose.FBX",
+    "armaSha256": "a8a54443bff630ec5c696b6069a98a8648513407693c781885a377a788b54306",
+    "poseSha256": "4d139d101d63ef90c4db007ef1217aa704a54cf5382259d4cd15e0d10e68f535",
+    "prefab": "Prefabs/Kar98k.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      -1
+    ],
+    "direita": [
+      1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.0249,
+      0.2359
+    ],
+    "raizCm": [
+      0,
+      -23.59,
+      -2.49
+    ],
+    "conferencia": "altura da mira -2.49 cm × topo da arma 17.525 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Kar98k_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.4
+    ],
+    "adsBlend": 0.549,
+    "fireRate": 200,
+    "ammo": 5,
+    "aimFov": 60,
+    "fullAuto": false,
+    "useFireClip": true
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -3.842,
+      -71.269,
+      -17.341
+    ],
+    "max": [
+      2.291,
+      41.364,
+      17.525
+    ],
+    "n": 8286
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.984,
+        15.504,
+        -5.955
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.693,
+          9.782,
+          -10.202
+        ],
+        "max": [
+          1.541,
+          21.487,
+          -1.556
+        ],
+        "n": 142
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        2.362,
+        -23.858,
+        -6.277
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -0.94,
+          -25.16,
+          -0.787
+        ],
+        "max": [
+          1.442,
+          -24.763,
+          0.382
+        ],
+        "n": 37
+      }
+    },
+    "ossosMoveis": {
+      "Bolt": {
+        "min": [
+          -3.842,
+          -11.024,
+          -4.001
+        ],
+        "max": [
+          0.883,
+          4.562,
+          1.293
+        ],
+        "n": 239
+      },
+      "Cartridge": {
+        "min": [
+          -0.504,
+          -6.974,
+          7.368
+        ],
+        "max": [
+          0.534,
+          1.005,
+          8.622
+        ],
+        "n": 260
+      },
+      "Trigger": {
+        "min": [
+          -0.209,
+          5.479,
+          -8.064
+        ],
+        "max": [
+          0.26,
+          6.394,
+          -5.208
+        ],
+        "n": 59
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0.021,
+        -71.269,
+        -0.057
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        27.504,
+        -7.617
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -41.364
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        7.504,
+        -8.849
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -1.397,
+          -66.957,
+          -3.177
+        ],
+        "max": [
+          2.291,
+          -18.145,
+          2.544
+        ],
+        "n": 1921
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "StaticBolt",
+    "Bolt",
+    "Trigger",
+    "Cartridge",
+    "Clip",
+    "CartridgeClip4",
+    "CartridgeClip0",
+    "CartridgeClip1",
+    "CartridgeClip2",
+    "CartridgeClip3"
+  ],
+  "clipes": {
+    "reload_empty": {
+      "braco": "Character/A_FP_Kar98K_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_Kar98K_Empty_Reload.FBX"
+    },
+    "reload_start": {
+      "braco": "Character/A_FP_Kar98K_Reload_Start.FBX",
+      "arma": "Weapon/A_W_Kar98K_Reload_Start.FBX"
+    },
+    "reload_loop": {
+      "braco": "Character/A_FP_Kar98K_Reload_Loop.FBX",
+      "arma": "Weapon/A_W_Kar98K_Reload_Loop.FBX"
+    },
+    "reload_end": {
+      "braco": "Character/A_FP_Kar98K_Reload_End.FBX",
+      "arma": "Weapon/A_W_Kar98K_Reload_End.FBX"
+    },
+    "shoot": {
+      "braco": "Character/A_FP_Kar98K_Fire.FBX",
+      "arma": "Weapon/A_W_Kar98K_Firing.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_Kar98K_Fire.FBX",
+    "A_FP_Kar98K_Pose.FBX",
+    "A_FP_Kar98K_Reload_Empty.FBX",
+    "A_FP_Kar98K_Reload_End.FBX",
+    "A_FP_Kar98K_Reload_Loop.FBX",
+    "A_FP_Kar98K_Reload_Start.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_Kar98K_Empty_Reload.FBX",
+    "A_W_Kar98K_Firing.FBX",
+    "A_W_Kar98K_Pose.FBX",
+    "A_W_Kar98K_Reload_End.FBX",
+    "A_W_Kar98K_Reload_Loop.FBX",
+    "A_W_Kar98K_Reload_Start.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/Kar98K/Weapon/Materials_URP",
+    "texturas": {
+      "209ecd09e9550144da85569658d3bd6f": "Animations/Kar98K/Weapon/Textures/KAR98K_Base_Color.TGA",
+      "7f6795dc555c4024b9064ca7a7f81f18": "Animations/Kar98K/Weapon/Textures/Clip_Base_Color.TGA"
+    }
+  }
+}

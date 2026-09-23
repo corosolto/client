@@ -24,7 +24,8 @@ for (const nome of nomes) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `fabrica-chassi-${nome}-`));
   const entrada = path.join(tmp, 'entrada.json');
   const medida = path.join(tmp, 'medida.json');
-  gravarJson(entrada, { personagem: path.join(PACK_RAIZ, 'Character'), armaFbx, poseFbx });
+  const prefab0 = lerPrefab(def.prefab);
+  gravarJson(entrada, { personagem: path.join(PACK_RAIZ, 'Character'), armaFbx, poseFbx, aimUp: prefab0.aimPoint[1] });
   rodarBlender(path.join(RAIZ_REPO, 'tools/fabrica/blender/chassi.py'), [entrada, medida], { marcador: 'FABRICA_CHASSI=' });
   const geo = lerJson(medida);
 

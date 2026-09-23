@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "nome": "PDW90",
+  "tipo": "smg",
+  "nota": "sem pose dedicada; o primeiro quadro de A_FP_PDW90_Inspect é a pose de mão",
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/PDW90/Weapon/PDW90.FBX",
+    "poseFbx": "Animations/PDW90/Character/A_FP_PDW90_Inspect.FBX",
+    "armaSha256": "8fe9f4525853a080b9fb93657b824bb241caa20d71981e2952aa3924abcc2068",
+    "poseSha256": "59be13483eea1e9d5a85df30863e86105059fec16c95695462062706c0e76539",
+    "prefab": "Prefabs/PDW90.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.1273,
+      0.1644
+    ],
+    "raizCm": [
+      0,
+      -16.44,
+      12.73
+    ],
+    "conferencia": "altura da mira 12.73 cm × topo da arma 14.086 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/PDW90_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.3
+    ],
+    "adsBlend": 0.41,
+    "fireRate": 900,
+    "ammo": 50,
+    "aimFov": 70,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -2.791,
+      -44.685,
+      -11.065
+    ],
+    "max": [
+      2.791,
+      27.577,
+      14.086
+    ],
+    "n": 30475
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.519,
+        -2.425,
+        -6.901
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -2.203,
+          -8.839,
+          -10.871
+        ],
+        "max": [
+          1.359,
+          3.909,
+          -0.83
+        ],
+        "n": 888
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        3.362,
+        -16.173,
+        -8.705
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.359,
+          -22.321,
+          -11.038
+        ],
+        "max": [
+          1.359,
+          -9.899,
+          -2.27
+        ],
+        "n": 804
+      }
+    },
+    "ossosMoveis": {
+      "Trigger": {
+        "min": [
+          -0.422,
+          -14.108,
+          -5.049
+        ],
+        "max": [
+          0.428,
+          -6.81,
+          -1.576
+        ],
+        "n": 145
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        -0.009,
+        -44.685,
+        0.225
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        9.575,
+        2.767
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -27.577
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -10.425,
+        11.75
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -2.586,
+          -28.268,
+          -11.038
+        ],
+        "max": [
+          2.586,
+          -10.181,
+          14.086
+        ],
+        "n": 7478
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Magazine",
+    "Mechanism",
+    "Spring",
+    "BulletBottom",
+    "Bullet_028",
+    "Bullet_029",
+    "Bullet_030",
+    "Bullet_031",
+    "Bullet_032",
+    "Bullet_033",
+    "Bullet_034",
+    "Bullet_035",
+    "Bullet_036",
+    "Bullet_037",
+    "Bullet_038",
+    "Bullet_039",
+    "Bullet_040",
+    "Bullet_041",
+    "Bullet_0421",
+    "Bullet_043",
+    "Bullet_044",
+    "Bullet_045",
+    "Bullet_046",
+    "Bullet_047",
+    "Bullet_048",
+    "Charger",
+    "Trigger",
+    "Release1",
+    "Release2",
+    "BulletTop",
+    "Bullet",
+    "Bullet_001",
+    "Bullet_002",
+    "Bullet_003",
+    "Bullet_004",
+    "Bullet_005",
+    "Bullet_006",
+    "Bullet_007",
+    "Bullet_008",
+    "Bullet_009",
+    "Bullet_010",
+    "Bullet_011",
+    "Bullet_012",
+    "Bullet_013",
+    "Bullet_014",
+    "Bullet_015",
+    "Bullet_016",
+    "Bullet_017",
+    "Bullet_018",
+    "Bullet_019",
+    "Bullet_020",
+    "Bullet_022",
+    "Bullet_023",
+    "Bullet_024",
+    "Bullet_025",
+    "Bullet_026",
+    "Bullet_027",
+    "Bullet_049",
+    "Bullet_021"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_PDW90_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_PDW90_Tac_Reload.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_PDW90_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_PDW90_Empty_Reload.FBX"
+    },
+    "inspect": {
+      "braco": "Character/A_FP_PDW90_Inspect.FBX",
+      "arma": null
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_PDW90_Inspect.FBX",
+    "A_FP_PDW90_Reload_Empty.FBX",
+    "A_FP_PDW90_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_PDW90_Bullets.FBX",
+    "A_W_PDW90_Empty_Reload.FBX",
+    "A_W_PDW90_Tac_Reload.FBX",
+    "PDW90.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/PDW90/Weapon/Materials_URP",
+    "texturas": {
+      "d0ee62a67e464304d90bc75535d2311d": "Animations/PDW90/Weapon/Materials_URP/T_Body_Color.TGA",
+      "0678fd35b19c1ef4cb848fce32f96e5f": "Animations/PDW90/Weapon/Materials_URP/T_Bullet_Color.TGA",
+      "f5b03faddf19233419f8bb35534ec7eb": "Animations/PDW90/Weapon/Materials_URP/T_Magazine_Color.TGA",
+      "83db6654aa03bf64ca865a5e4b6b679c": "Animations/PDW90/Weapon/Materials_URP/T_Magazine2_Color.TGA",
+      "6e35caeb16c6b6c47b53f48d018b8725": "Animations/PDW90/Weapon/Materials_URP/T_Silencer_Body.TGA"
+    }
+  }
+}

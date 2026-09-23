@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "nome": "Striker-V",
+  "tipo": "smg",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/Striker-V/Weapon/SKM_Striker-V.fbx",
+    "poseFbx": "Animations/Striker-V/Character/A_FP_Striker-V_Pose.FBX",
+    "armaSha256": "ec7b72cedbb9b9893b3dd75d0c056b24a981a9461e64bbde973fa7153f067db4",
+    "poseSha256": "29a8b7c2bdd6a159484d00214a443977b3e9f8697db4d519c57d5b27b84a5f67",
+    "prefab": "Prefabs/Striker-V.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.073,
+      -0.101
+    ],
+    "raizCm": [
+      0,
+      10.1,
+      7.3
+    ],
+    "conferencia": "altura da mira 7.3 cm × topo da arma 7.744 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Striker-V_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.12
+    ],
+    "adsBlend": 0.41,
+    "fireRate": 900,
+    "ammo": 28,
+    "aimFov": 60,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -3.064,
+      -48.462,
+      -22.771
+    ],
+    "max": [
+      4.314,
+      44.687,
+      7.744
+    ],
+    "n": 14894
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.335,
+        13.619,
+        -4.599
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -3.064,
+          7.839,
+          -10.344
+        ],
+        "max": [
+          1.383,
+          15.426,
+          1.231
+        ],
+        "n": 335
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        3.825,
+        -14.446,
+        -8.963
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.699,
+          -17.513,
+          -12.618
+        ],
+        "max": [
+          1.699,
+          -12.143,
+          -3.072
+        ],
+        "n": 933
+      }
+    },
+    "ossosMoveis": {
+      "Mag": {
+        "min": [
+          -1.346,
+          -8.412,
+          -22.771
+        ],
+        "max": [
+          1.346,
+          2.573,
+          -1.941
+        ],
+        "n": 297
+      },
+      "MagRelease": {
+        "min": [
+          1.06,
+          -7.899,
+          -6.762
+        ],
+        "max": [
+          1.659,
+          -6.473,
+          -4.924
+        ],
+        "n": 88
+      },
+      "Trigger": {
+        "min": [
+          -0.332,
+          6.216,
+          -2.426
+        ],
+        "max": [
+          0.332,
+          8.541,
+          0.407
+        ],
+        "n": 124
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0,
+        -48.462,
+        -1.098
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        25.619,
+        1.157
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -44.687
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -2.112,
+        4.065
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -1.796,
+          -20.885,
+          -12.618
+        ],
+        "max": [
+          4.314,
+          -8.447,
+          6.992
+        ],
+        "n": 5288
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Trigger",
+    "Trigger_end",
+    "MagRelease",
+    "MagRelease_end",
+    "Handle",
+    "Handle_end",
+    "StaticCharging",
+    "ActiveCharging",
+    "ActiveCharging_end",
+    "Mag",
+    "Bullet",
+    "Bullet_end"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_Striker-V_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_Striker-V_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_Striker-V_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_Striker-V_Reload_Empty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_Striker-V_Pose.FBX",
+    "A_FP_Striker-V_Reload_Empty.FBX",
+    "A_FP_Striker-V_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_Striker-V_Pose.FBX",
+    "A_W_Striker-V_Reload_Empty.FBX",
+    "A_W_Striker-V_Reload_Tac.FBX",
+    "SKM_Striker-V.fbx"
+  ],
+  "materiais": {
+    "pasta": "Animations/Striker-V/Weapon/Materials_URP",
+    "texturas": {
+      "7013a984bfade0a4daf196c46de9dffd": "Animations/Striker-V/Weapon/Textures/krissvector_bullet.TGA",
+      "3cd5a4a3806e50c44af560f5a15c3497": "Animations/Striker-V/Weapon/Textures/krissvector_color.TGA"
+    }
+  }
+}

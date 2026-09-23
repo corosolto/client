@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "nome": "MPS5",
+  "tipo": "smg",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/MPS5/Weapon/MPS5.FBX",
+    "poseFbx": "Animations/MPS5/Character/A_FP_MPS5_Pose.FBX",
+    "armaSha256": "8558c7a41e10748bd107e9894d123c4e3e834d9dde71f77633b6923b029bddf4",
+    "poseSha256": "673c364541d299e36acd025634f6dcfa1eb3eb3b85f90c0b56134de980c572a7",
+    "prefab": "Prefabs/MPS5.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.054,
+      -0.0488
+    ],
+    "raizCm": [
+      0,
+      4.88,
+      5.4
+    ],
+    "conferencia": "altura da mira 5.4 cm × topo da arma 6.613 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/MPS5_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.1
+    ],
+    "adsBlend": 0.297,
+    "fireRate": 800,
+    "ammo": 30,
+    "aimFov": 60,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -3.108,
+      -34.089,
+      -20.305
+    ],
+    "max": [
+      3.125,
+      32.608,
+      6.613
+    ],
+    "n": 15771
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.163,
+        4.071,
+        -11.123
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.591,
+          -1.546,
+          -16.171
+        ],
+        "max": [
+          1.591,
+          9.386,
+          -4.591
+        ],
+        "n": 523
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        2.81,
+        -21.869,
+        -4.269
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          0.874,
+          -27.208,
+          -0.103
+        ],
+        "max": [
+          2.54,
+          -20.335,
+          2.558
+        ],
+        "n": 132
+      }
+    },
+    "ossosMoveis": {
+      "Bolt": {
+        "min": [
+          -1.666,
+          -12.55,
+          -0.95
+        ],
+        "max": [
+          1.666,
+          -2.746,
+          3.589
+        ],
+        "n": 1617
+      },
+      "ChargingHandle": {
+        "min": [
+          -0.766,
+          -29.045,
+          1.894
+        ],
+        "max": [
+          2.629,
+          -12.636,
+          3.388
+        ],
+        "n": 446
+      },
+      "Mag": {
+        "min": [
+          -1.08,
+          -17.003,
+          -20.305
+        ],
+        "max": [
+          1.08,
+          -7.313,
+          -0.803
+        ],
+        "n": 1936
+      },
+      "Trigger": {
+        "min": [
+          -0.608,
+          -1.642,
+          -9.589
+        ],
+        "max": [
+          0.608,
+          0.705,
+          -4.899
+        ],
+        "n": 358
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0,
+        -34.089,
+        0
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        16.071,
+        -0.364
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -32.608
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -11.471,
+        3.774
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -1.711,
+          -29.977,
+          -1.415
+        ],
+        "max": [
+          1.993,
+          -16.252,
+          6.613
+        ],
+        "n": 1838
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Trigger",
+    "ReleaseHandle",
+    "Mag",
+    "9mm",
+    "ChargingHandle",
+    "Bolt",
+    "FireSelect"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_MPS5_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_MPS5_ReloadTac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_MPS5_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_MPS5_ReloadEmpty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_MPS5_Pose.FBX",
+    "A_FP_MPS5_Reload_Empty.FBX",
+    "A_FP_MPS5_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_MPS5_Pose.FBX",
+    "A_W_MPS5_ReloadEmpty.FBX",
+    "A_W_MPS5_ReloadTac.FBX",
+    "MPS5.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/MPS5/Weapon/Materials_URP",
+    "texturas": {}
+  }
+}

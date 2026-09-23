@@ -3808,6 +3808,12 @@ O acabamento/contato da faca e vídeo contínuo seguem pendentes. Não publicado
 
 ### BUG-75 · mãos genéricas, encaixe torto e anatomia deformada — REABERTO 24/08
 
+> **23/09 — política revogada pelo dono.** A regra "pacote é doador, nunca aparência" (arma do
+> pack escondida por `hidePackGun`, Mint encaixada por cima) deixa de valer: na fábrica de armas
+> (`tools/fabrica/`, `docs/reports/VM-FABRICA.md`) a arma KINEMATION aparece como autorada e a
+> identidade vem de skin, nome e variante de zona livre. Os produtos da fábrica (`?vmfabrica=`)
+> não passam por `attachMintWeapon`/`hidePackGun`; os produtos antigos continuam como estão.
+
 **Sintoma (do dono):** *"mãos genéricas que não se parecem nada com mãos, mal encaixe nas
 armas, recarregar some com a arma ao invés de mostrá-la, péssimas animações, péssima
 inclinação das armas"*. O pedido inclui todas as famílias e explicitamente a faca.

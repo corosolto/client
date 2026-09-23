@@ -1,0 +1,14 @@
+{
+  "descricao": "Exemplo do modo animador (plano B): recarga curta com a mão esquerda indo ao Mag2 estacionado fora da tela. Só demonstra o fluxo; nenhum produto do lote 1 usa.",
+  "clipes": {
+    "reload_demo": {
+      "quadros": 48,
+      "chaves": [
+        { "q": 0, "ossos": { "hand_l": { "rot": [0, 0, 0] }, "Mag2": { "loc": [8, 20, -30] } } },
+        { "q": 24, "ossos": { "hand_l": { "rot": [25, 0, -15] }, "Mag2": { "loc": [2, 6, -10] } } },
+        { "q": 48, "ossos": { "hand_l": { "rot": [0, 0, 0] }, "Mag2": { "loc": [8, 20, -30] } } }
+      ]
+    }
+  },
+  "pente2": { "estacionamentoCm": [8, 20, -30] }
+}

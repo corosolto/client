@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "nome": "ASVal",
+  "tipo": "fuzil",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/ASVal/Weapon/AS_Val.FBX",
+    "poseFbx": "Animations/ASVal/Character/A_FP_Val_Pose.FBX",
+    "armaSha256": "3989129224b1d476d4a342e49e34212ee422d8847a84a6beded3c1584dcc50f3",
+    "poseSha256": "93b396c30be500199e1dd0dec474e5592cfe6e62d2198acace219504a496011d",
+    "prefab": "Prefabs/ASVal.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.029,
+      0.2044
+    ],
+    "raizCm": [
+      0,
+      -20.44,
+      2.9
+    ],
+    "conferencia": "altura da mira 2.9 cm × topo da arma 3.56 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/ASVal_Settings.asset",
+    "ikOffset": [
+      -0.02,
+      0.005,
+      -0.01
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.4
+    ],
+    "adsBlend": 0.533,
+    "fireRate": 850,
+    "ammo": 30,
+    "aimFov": 60,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -3.8,
+      -60.185,
+      -21.015
+    ],
+    "max": [
+      2.529,
+      47.462,
+      3.56
+    ],
+    "n": 17581
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.12,
+        10.89,
+        -10.196
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.436,
+          5.227,
+          -16.373
+        ],
+        "max": [
+          1.632,
+          14.44,
+          -5.071
+        ],
+        "n": 623
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        3.599,
+        -16.732,
+        -5.692
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.544,
+          -21.607,
+          -6.423
+        ],
+        "max": [
+          2.529,
+          -9.96,
+          0.029
+        ],
+        "n": 171
+      }
+    },
+    "ossosMoveis": {
+      "Bolt": {
+        "min": [
+          -3.8,
+          -8.74,
+          -1.254
+        ],
+        "max": [
+          0.005,
+          -0.215,
+          1.542
+        ],
+        "n": 255
+      },
+      "FireSelector": {
+        "min": [
+          -2.391,
+          -2.074,
+          -3.731
+        ],
+        "max": [
+          -1.632,
+          7.196,
+          -1.219
+        ],
+        "n": 882
+      },
+      "Mag": {
+        "min": [
+          -1.446,
+          -13.024,
+          -21.015
+        ],
+        "max": [
+          1.446,
+          -1.685,
+          -3.411
+        ],
+        "n": 2949
+      },
+      "Trigger": {
+        "min": [
+          -0.536,
+          2.425,
+          -7.1
+        ],
+        "max": [
+          0.536,
+          4.272,
+          -3.193
+        ],
+        "n": 124
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        -0.001,
+        -60.185,
+        0.896
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        22.89,
+        -5.324
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -47.462
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -7.147,
+        2.346
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -2.529,
+          -54.881,
+          -6.294
+        ],
+        "max": [
+          2.529,
+          -11.121,
+          2.985
+        ],
+        "n": 2529
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Mag",
+    "Bullets",
+    "ReleaseHandle",
+    "Trigger",
+    "FireSelector",
+    "Bolt"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_Val_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_Val_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_Val_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_Val_Reload_Empty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_Val_Pose.FBX",
+    "A_FP_Val_Reload_Empty.FBX",
+    "A_FP_Val_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "AS_Val.FBX",
+    "A_W_Val_Pose.FBX",
+    "A_W_Val_Reload_Empty.FBX",
+    "A_W_Val_Reload_Tac.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/ASVal/Weapon/Materials_URP",
+    "texturas": {
+      "be2969436d7964947b4600ea11ee2bea": "Animations/ASVal/Weapon/Textures/Main_ASVal_Color.TGA",
+      "69798a05c6696e24194cdeedfad2e81d": "Animations/ASVal/Weapon/Textures/Bullet_ASVal_Color.TGA"
+    }
+  }
+}

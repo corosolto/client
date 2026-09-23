@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "nome": "MGX5",
+  "tipo": "lmg",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/MGX5/Weapon/MGX5.FBX",
+    "poseFbx": "Animations/MGX5/Character/A_FP_MGX5_Idle.FBX",
+    "armaSha256": "7836e63c9536f83b248661f9edb48477c756d1bfeec71daf1a9d049abb8e32cb",
+    "poseSha256": "61ef170d8561e53b31f8200046c548dac48db8786eb00e88e02af6ec3222f37c",
+    "prefab": "Prefabs/MGX5.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0.0002,
+      0.0754,
+      -0.215
+    ],
+    "raizCm": [
+      -0.02,
+      21.5,
+      7.54
+    ],
+    "conferencia": "altura da mira 7.54 cm × topo da arma 10.819 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/MGX5_Settings.asset",
+    "ikOffset": [
+      -0.01,
+      0.02,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.07
+    ],
+    "adsBlend": 0.558,
+    "fireRate": 700,
+    "ammo": 100,
+    "aimFov": 60,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -6.369,
+      -63.69,
+      -19.746
+    ],
+    "max": [
+      17.893,
+      49.32,
+      10.819
+    ],
+    "n": 24880
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.273,
+        11.877,
+        -13.56
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.596,
+          5.644,
+          -18.285
+        ],
+        "max": [
+          1.595,
+          15.848,
+          -6.815
+        ],
+        "n": 324
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        1.758,
+        -17.2,
+        -11.096
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -2.257,
+          -22.454,
+          -9.176
+        ],
+        "max": [
+          2.467,
+          -11.647,
+          -4.655
+        ],
+        "n": 455
+      }
+    },
+    "ossosMoveis": {}
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0,
+        -63.69,
+        -0.586
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        23.877,
+        -2.038
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -49.32
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        3.877,
+        3.99
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -6.031,
+          -59.453,
+          -9.176
+        ],
+        "max": [
+          3.005,
+          -11.2,
+          6.314
+        ],
+        "n": 9999
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Top",
+    "Top_Catch",
+    "Switch",
+    "Feed_Tray",
+    "Lever",
+    "Rail",
+    "Bag",
+    "bullet",
+    "bullet_001",
+    "bullet_002",
+    "bullet_003",
+    "bullet_004",
+    "bullet_005",
+    "bullet_006",
+    "bullet_007",
+    "bullet_008",
+    "bullet_009",
+    "bullet_010",
+    "bullet_011",
+    "bullet_012",
+    "bullet_013",
+    "bullet_014",
+    "bullet_015",
+    "bullet_016",
+    "bullet_017",
+    "bullet_018",
+    "bullet_019",
+    "bullet_020",
+    "bullet_021"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_MGX5_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_MGX5_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_MGX5_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_MGX5_Reload_Empty.FBX"
+    },
+    "shoot": {
+      "braco": null,
+      "arma": "Weapon/A_W_MGX5_Fire.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_MGX5_Idle.FBX",
+    "A_FP_MGX5_Reload_Empty.FBX",
+    "A_FP_MGX5_Reload_Tac.FBX",
+    "A_FP_MGX5_Reload_Tac_Less.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_MGX5_Belt_Sprint.FBX",
+    "A_W_MGX5_Belt_Walk.FBX",
+    "A_W_MGX5_Fire.FBX",
+    "A_W_MGX5_Idle.FBX",
+    "A_W_MGX5_Reload_Empty.FBX",
+    "A_W_MGX5_Reload_Tac.FBX",
+    "A_W_MGX5_Reload_Tac_Less.FBX",
+    "MGX5.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/MGX5/Weapon/Materials_URP",
+    "texturas": {
+      "49d4cb2123722634c87a2d7a59840837": "Animations/MGX5/Weapon/Textures/Bullet_Color.TGA",
+      "baef0877cd0947b4ca84ceb712fe3c79": "Animations/MGX5/Weapon/Textures/MGX5_Color.TGA"
+    }
+  }
+}

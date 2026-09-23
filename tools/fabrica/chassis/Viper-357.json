@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "nome": "Viper-357",
+  "tipo": "revolver",
+  "nota": "o pack não traz pose de braço; o quadro 0 da recarga vazia é a pose",
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/Viper-357/Weapon/Viper-357.FBX",
+    "poseFbx": "Animations/Viper-357/Character/A_FP_Viper-357_Reload_Empty.FBX",
+    "armaSha256": "cf98b2385fe8b51e06ed49578e1c10329070193d57c0cae90a1901d1ed35cfac",
+    "poseSha256": "06a92e6d18de0677c7db9482f4db41587697a575eef6b6343d20ec70ca56ab74",
+    "prefab": "Prefabs/Viper-357.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.0209,
+      -0.011
+    ],
+    "raizCm": [
+      0,
+      1.1,
+      2.09
+    ],
+    "conferencia": "altura da mira 2.09 cm × topo da arma 2.163 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Viper-357_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.2
+    ],
+    "adsBlend": 0.832,
+    "fireRate": 300,
+    "ammo": 6,
+    "aimFov": 60,
+    "fullAuto": false,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -1.924,
+      -19.337,
+      -12.134
+    ],
+    "max": [
+      1.924,
+      9.979,
+      2.163
+    ],
+    "n": 4935
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.473,
+        6.779,
+        -6.964
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.624,
+          0.576,
+          -12.134
+        ],
+        "max": [
+          1.624,
+          9.979,
+          -0.884
+        ],
+        "n": 1085
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        2.507,
+        5.838,
+        -12.257
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.624,
+          3.719,
+          -12.134
+        ],
+        "max": [
+          1.624,
+          9.979,
+          -5.492
+        ],
+        "n": 452
+      }
+    },
+    "ossosMoveis": {
+      "Drum": {
+        "min": [
+          -1.924,
+          -4.118,
+          -3.143
+        ],
+        "max": [
+          1.924,
+          -0.226,
+          0.706
+        ],
+        "n": 768
+      },
+      "Hammer": {
+        "min": [
+          -0.67,
+          1.07,
+          -3.586
+        ],
+        "max": [
+          0.67,
+          6.307,
+          0.357
+        ],
+        "n": 178
+      },
+      "Trigger": {
+        "min": [
+          -0.8,
+          -1.153,
+          -7.164
+        ],
+        "max": [
+          0.557,
+          0.94,
+          -2.5
+        ],
+        "n": 134
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0,
+        -19.337,
+        0.468
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        18.779,
+        -6.964
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -9.979
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -1.221,
+        2.163
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -1.624,
+          -13.798,
+          -12.134
+        ],
+        "max": [
+          1.624,
+          9.979,
+          2.163
+        ],
+        "n": 3701
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Trigger",
+    "CylinderRelease",
+    "Hammer",
+    "CraneArm",
+    "Ejector",
+    "Drum",
+    "Cartridge5",
+    "Cartridge0",
+    "Cartridge1",
+    "Cartridge2",
+    "Cartridge3",
+    "Cartridge4"
+  ],
+  "clipes": {
+    "reload_empty": {
+      "braco": "Character/A_FP_Viper-357_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_Viper-357_Reload_Empty.FBX"
+    },
+    "shoot": {
+      "braco": null,
+      "arma": "Weapon/A_W_Viper-357_Fire.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_Viper-357_Reload_Empty.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_Viper-357_Fire.FBX",
+    "A_W_Viper-357_Pose.FBX",
+    "A_W_Viper-357_Reload_Empty.FBX",
+    "Viper-357.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/Viper-357/Weapon/Materials_URP",
+    "texturas": {}
+  }
+}

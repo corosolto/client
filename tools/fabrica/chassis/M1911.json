@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "nome": "M1911",
+  "tipo": "pistola",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/M1911/Weapon/M1911.FBX",
+    "poseFbx": "Animations/M1911/Character/A_FP_M1911_Idle.FBX",
+    "armaSha256": "28772765cc10f1492e32de94e4a69f00c745274f66998ab6db6aafbe52dd7775",
+    "poseSha256": "ed196e0b9a7784da2924402487c9c4a879238cb52d7d1aa387eed01133e83d11",
+    "prefab": "Prefabs/M1911.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.0154,
+      -0.0452
+    ],
+    "raizCm": [
+      0,
+      4.52,
+      1.54
+    ],
+    "conferencia": "altura da mira 1.54 cm × topo da arma 1.636 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/M1911_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.2
+    ],
+    "adsBlend": 0.496,
+    "fireRate": 450,
+    "ammo": 7,
+    "aimFov": 60,
+    "fullAuto": false,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -1.698,
+      -13.152,
+      -12.211
+    ],
+    "max": [
+      1.916,
+      9.51,
+      1.636
+    ],
+    "n": 6749
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.666,
+        5.758,
+        -8.378
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.698,
+          0.567,
+          -12.211
+        ],
+        "max": [
+          1.698,
+          9.51,
+          -1.996
+        ],
+        "n": 2153
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        2.092,
+        2.286,
+        -11.73
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.698,
+          0.083,
+          -12.211
+        ],
+        "max": [
+          1.698,
+          9.115,
+          -5.001
+        ],
+        "n": 955
+      }
+    },
+    "ossosMoveis": {
+      "Hammer": {
+        "min": [
+          -0.392,
+          5.129,
+          -2.848
+        ],
+        "max": [
+          0.392,
+          8.147,
+          0.589
+        ],
+        "n": 192
+      },
+      "Mag": {
+        "min": [
+          -0.687,
+          0.833,
+          -12.211
+        ],
+        "max": [
+          0.687,
+          7.394,
+          -0.621
+        ],
+        "n": 432
+      },
+      "Safety": {
+        "min": [
+          -1.125,
+          5.179,
+          -3.465
+        ],
+        "max": [
+          1.916,
+          7.558,
+          -1.211
+        ],
+        "n": 179
+      },
+      "Slider": {
+        "min": [
+          -1.163,
+          -12.727,
+          -2.7
+        ],
+        "max": [
+          1.163,
+          6.749,
+          1.636
+        ],
+        "n": 2107
+      },
+      "Trigger": {
+        "min": [
+          -0.789,
+          -0.526,
+          -5.441
+        ],
+        "max": [
+          0.789,
+          5.033,
+          -3.155
+        ],
+        "n": 245
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0,
+        -13.152,
+        0
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        17.758,
+        -8.378
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -9.51
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        3.755,
+        0.274
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -1.698,
+          -8.309,
+          -12.181
+        ],
+        "max": [
+          1.698,
+          8.237,
+          0.888
+        ],
+        "n": 3448
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Trigger",
+    "Mag",
+    "Safety",
+    "Hammer",
+    "Slider"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_M1911_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_M1911_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_M1911_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_M1911_Reload_Empty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_M1911_Idle.FBX",
+    "A_FP_M1911_Reload_Empty.FBX",
+    "A_FP_M1911_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_M1911_Idle.FBX",
+    "A_W_M1911_Reload_Empty.FBX",
+    "A_W_M1911_Reload_Tac.FBX",
+    "M1911.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/M1911/Weapon/Materials_URP",
+    "texturas": {}
+  }
+}

@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "nome": "Mk14EBR",
+  "tipo": "fuzil",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/Mk14EBR/Weapon/MK14.FBX",
+    "poseFbx": "Animations/Mk14EBR/Character/A_FP_MK14_Idle.FBX",
+    "armaSha256": "eaa6c85c032b1c14aa9b4a7476e751b5f83e88fd7d708b07598d5b9bbf81dfc7",
+    "poseSha256": "9644151e1f59023162299a7e2edfe46717f4c617f9bc3d9624ce888b263225d5",
+    "prefab": "Prefabs/Mk14EBR.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0.0007,
+      0.035,
+      -0.1362
+    ],
+    "raizCm": [
+      -0.07,
+      13.62,
+      3.5
+    ],
+    "conferencia": "altura da mira 3.5 cm × topo da arma 4.077 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Mk14EBR_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.1
+    ],
+    "adsBlend": 0.496,
+    "fireRate": 700,
+    "ammo": 12,
+    "aimFov": 60,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -4.383,
+      -61.22,
+      -15.74
+    ],
+    "max": [
+      3.64,
+      36.204,
+      4.077
+    ],
+    "n": 26576
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.117,
+        23.14,
+        -11.649
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -3.614,
+          18.013,
+          -15.308
+        ],
+        "max": [
+          1.457,
+          26.396,
+          -4.708
+        ],
+        "n": 290
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        1.848,
+        -11.761,
+        -7.521
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -2.751,
+          -18.246,
+          -6.032
+        ],
+        "max": [
+          2.194,
+          -5.245,
+          -0.97
+        ],
+        "n": 2531
+      }
+    },
+    "ossosMoveis": {
+      "Bolt": {
+        "min": [
+          -2.122,
+          -0.28,
+          -0.919
+        ],
+        "max": [
+          1.535,
+          8.3,
+          0.903
+        ],
+        "n": 676
+      },
+      "Mag": {
+        "min": [
+          -1.313,
+          -1.113,
+          -15.74
+        ],
+        "max": [
+          1.313,
+          8,
+          -0.47
+        ],
+        "n": 626
+      },
+      "Trigger": {
+        "min": [
+          -1.203,
+          13.359,
+          -8.506
+        ],
+        "max": [
+          1.203,
+          15.795,
+          -4.141
+        ],
+        "n": 145
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0,
+        -61.22,
+        0.114
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        35.14,
+        -8.201
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -36.204
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        3.403,
+        1.571
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -3.085,
+          -57.088,
+          -6.032
+        ],
+        "max": [
+          3.085,
+          -5.772,
+          3.358
+        ],
+        "n": 12879
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Mag",
+    "ReleaseHandle",
+    "Trigger",
+    "Sight",
+    "Handle",
+    "Bolt"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_MK14_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_MK14_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_MK14_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_MK14_Reload_Empty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_MK14_Idle.FBX",
+    "A_FP_MK14_Reload_Empty.FBX",
+    "A_FP_MK14_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_MK14_Idle.FBX",
+    "A_W_MK14_Reload_Empty.FBX",
+    "A_W_MK14_Reload_Tac.FBX",
+    "MK14.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/Mk14EBR/Weapon/Materials_URP",
+    "texturas": {}
+  }
+}

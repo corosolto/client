@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "nome": "RPG",
+  "tipo": "lancador",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/RPG/Weapon/RPG7.FBX",
+    "poseFbx": "Animations/RPG/Character/A_FP_RPG7_Pose.FBX",
+    "armaSha256": "43aa7d85825fe0418b83535fbf8f13a5c4772672b283d0701902e9f516b05534",
+    "poseSha256": "062bb2fd5d2ca09508e7607ebcf5b6686e55cd8d4dcd6bf9f0faf49d8126b3fc",
+    "prefab": "Prefabs/RPG.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      -0.0189,
+      0.0953,
+      -0.0127
+    ],
+    "raizCm": [
+      -1.89,
+      -1.27,
+      9.53
+    ],
+    "conferencia": "altura da mira 9.53 cm × topo da arma 11.802 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/RPG_Settings.asset",
+    "ikOffset": [
+      0,
+      0,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.1
+    ],
+    "adsBlend": 0.752,
+    "fireRate": 300,
+    "ammo": 1,
+    "aimFov": 60,
+    "fullAuto": false,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -8.226,
+      -85.591,
+      -21.516
+    ],
+    "max": [
+      8.21,
+      78.844,
+      11.802
+    ],
+    "n": 6479
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -4.111,
+        -14.338,
+        -16.627
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.355,
+          -18.883,
+          -21.516
+        ],
+        "max": [
+          1.074,
+          -11.155,
+          -10.298
+        ],
+        "n": 159
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        3.481,
+        2.188,
+        -13.815
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.095,
+          -0.479,
+          -18.45
+        ],
+        "max": [
+          1.079,
+          4.79,
+          -8.374
+        ],
+        "n": 94
+      }
+    },
+    "ossosMoveis": {
+      "Trigger": {
+        "min": [
+          -0.343,
+          -20.893,
+          -10.41
+        ],
+        "max": [
+          0.327,
+          -18.165,
+          -6.376
+        ],
+        "n": 60
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        -0.139,
+        78.844,
+        -1.52
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        -26.338,
+        -1.621
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -85.591
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -6.338,
+        5.718
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -5.023,
+          -3.737,
+          -18.45
+        ],
+        "max": [
+          5.006,
+          72.019,
+          11.802
+        ],
+        "n": 2014
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Rocket",
+    "Trigger",
+    "Handle"
+  ],
+  "clipes": {
+    "reload_empty": {
+      "braco": "Character/A_FP_RPG7_Reload_Empty.FBX",
+      "arma": null
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_RPG7_Pose.FBX",
+    "A_FP_RPG7_Reload_Empty.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_RPG7_Pose.FBX",
+    "A_W_RPG7_Reload.FBX",
+    "RPG7.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/RPG/Weapon/Materials_URP",
+    "texturas": {
+      "eedc3666064ac054696b6ef2d520f573": "Animations/RPG/Weapon/Textures/RPG7_Body_Color.TGA"
+    }
+  }
+}

@@ -5,8 +5,8 @@ Uso (chamado por tools/fabrica/chassi.mjs):
 
 Tudo é medido no espaço da RAIZ da arma (SOCKET_WEAPON_*, o nó que cavalga o
 ik_hand_gun), em centímetros, na pose de idle do próprio pack. Os eixos são
-conferidos pela geometria, não assumidos: frente = lado da boca (longe da mão
-forte), cima = oposto ao pente.
+conferidos, não assumidos: frente = lado da boca (longe da mão forte, pela
+geometria); cima = o lado em que o AimPoint do prefab cai no alto da arma.
 """
 
 from __future__ import annotations
@@ -93,12 +93,13 @@ def main():
     # Eixos pela geometria: a boca é o extremo em Y mais longe da mão forte.
     y_min, y_max = geral["min"][1], geral["max"][1]
     frente = Vector((0, 1, 0)) if abs(y_max - mao_forte.y) > abs(mao_forte.y - y_min) else Vector((0, -1, 0))
+    # Cima: o AimPoint do prefab fica sempre no alto da arma (linha de visada). Com
+    # +Z como cima ele cai perto do topo; com -Z, perto do fundo — vale o mais perto.
+    # (A heurística antiga "pente abaixo da palma" virava G3/Mk14/SVD/MPS5/M1911: o punho
+    # desce mais que o pente.)
     pente = por_osso.get("Mag") or por_osso.get("mag")
-    cima = Vector((0, 0, 1))
-    if pente:
-        cz = sum(p.z for p in pente) / len(pente)
-        if cz > mao_forte.z:
-            cima = Vector((0, 0, -1))
+    alto = 100.0 * entrada.get("aimUp", 0.0)
+    cima = Vector((0, 0, 1)) if abs(alto - geral["max"][2]) <= abs(-alto - geral["min"][2]) else Vector((0, 0, -1))
 
     def fatia(pontos, eixo_val, largura=1.5):
         return [p for p in pontos if abs(p.dot(frente) - eixo_val) <= largura]
