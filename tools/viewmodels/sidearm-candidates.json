@@ -24,15 +24,20 @@
       "file": "viewmodels/deagle/deagle-runtime.glb",
       "sourceSha256": "9716c72881076b8f1cddbdb72d35232a89fcc2c81538f95885156d2bcb0a7ffc",
       "sourceBytes": 3135164,
-      "productSha256": "d482ff82bceba3690ff4dd5912f95851d538320a55d9d7f37cf56e32fd2c64a4",
-      "productBytes": 3246776,
-      "sha256": "d482ff82bceba3690ff4dd5912f95851d538320a55d9d7f37cf56e32fd2c64a4",
-      "bytes": 3246776,
+      "productSha256": "e480f69e76f892b5b7ad3d49d1a69f24fe0c8515735faa1c7cd86de7a2583c97",
+      "productBytes": 3443296,
+      "sha256": "e480f69e76f892b5b7ad3d49d1a69f24fe0c8515735faa1c7cd86de7a2583c97",
+      "bytes": 3443296,
       "mechanism": "detachable-mag/reciprocating-slider/trigger/hammer",
       "ready": false,
       "sourceBranch": "claude/vm-unificado",
       "sourceCommit": "012add17b",
-      "rebuild": "tools/viewmodels/prep/pistols-deagle-final.mjs"
+      "rebuild": "tools/viewmodels/prep/pistols-deagle-final.mjs",
+      "fixL3L5": {
+        "sourceSha256": "d482ff82bceba3690ff4dd5912f95851d538320a55d9d7f37cf56e32fd2c64a4",
+        "sourceBytes": 3246776,
+        "recipe": "tools/viewmodels/prep/inspect-com-pose.mjs --arma=deagle"
+      }
     },
     "revolver38": {
       "displayName": "REVÓLVER .38 TROVÃO",
