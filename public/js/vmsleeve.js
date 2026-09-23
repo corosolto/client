@@ -62,11 +62,8 @@ function anchorBone(skeleton, dominant) {
   return -1;
 }
 
-/**
- * Prolonga cada boca da manga até `length` metros atrás do plano da câmera (+z de `space`),
- * em anéis cuja pele passa da borda ao tronco, e fecha a ponta. O repouso de cada anel é
- * resolvido pela pose corrente: a ponta fica atrás da câmera e não gira com o ombro.
- */
+// Prolonga cada boca `length` m atrás da câmera (+z de `space`), pele indo ao tronco, ponta fechada;
+// repouso resolvido na pose do idle. Caso e números: docs/reports/VM-FIX-MESH-2026-09-23.md.
 export function extendSleeveOpenings(mesh, { space = null, length = 0.9, pose = null } = {}) {
   const source = mesh.geometry;
   if (!mesh.isSkinnedMesh || !source?.attributes?.position || mesh.userData.sleeveExtended) return 0;
