@@ -75,7 +75,7 @@ const CARREGADOR_NA = {
    COLETA: tudo que as cinco réguas leem de UMA arma, numa passada do jogo.
    `mut` = mutante ativo ({ regua, arma, fase, aplicar }) ou null.
    --------------------------------------------------------------------------- */
-export async function coletar(page, arma, { reguas, mut = null, fotos = '', variante = null } = {}) {
+export async function coletar(page, arma, { reguas, mut = null, fotos = '', variante = null, quadroEntre = false } = {}) {
   const c = { arma, classe: classe(arma) };
   if (arma === 'knife') return c;
   const quer = (r) => reguas.includes(r);
@@ -148,7 +148,7 @@ export async function coletar(page, arma, { reguas, mut = null, fotos = '', vari
     }
     if (!semAds) await P.sairAds(page);
   }
-  if (quer('carregador') && CARREGADOR_PECA[arma]) c.carregador = await coletarCarregador(page, arma, aplicar);
+  if (quer('carregador') && CARREGADOR_PECA[arma]) c.carregador = await coletarCarregador(page, arma, aplicar, quadroEntre);
   return c;
 }
 
@@ -193,7 +193,8 @@ function pixelsNaCruz(m) {
   return n;
 }
 
-async function coletarCarregador(page, arma, aplicar) {
+// `quadroEntre`: render entre o passo e a medida; a amostra tem de sair igual com e sem ele (R1).
+async function coletarCarregador(page, arma, aplicar, quadroEntre = false) {
   const spec = CARREGADOR_PECA[arma];
   const rig = rigDe(arma);
   const amostras = [];
@@ -209,6 +210,7 @@ async function coletarCarregador(page, arma, aplicar) {
     for (let k = 1; k <= n; k++) {
       const f = k / (n + 1);
       await P.passo(page, dur * (f - prev)); prev = f;
+      if (quadroEntre) await P.esperarQuadro(page);
       await aplicar('amostra');
       const r = await P.pecaCarregador(page, arma, spec, rig);
       r.px = await pixelsDaPeca(page, arma, spec, r);

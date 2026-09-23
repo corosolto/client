@@ -70,6 +70,13 @@ function INSTALAR() {
     vm.__cap = cap;
   }
   const g = window.__game;
+  // bindMatrixInverse do skinned só atualiza em updateMatrixWorld (render): sem isto a medida lia o
+  // quadro anterior (R1, tools/eval/vm-carregador-repete.mjs). __palcoPoseVelha = mutante pose-velha.
+  window.__palcoPoseFresca = (e) => {
+    e.scene.updateWorldMatrix(true, false);
+    if (!window.__palcoPoseVelha) e.scene.updateMatrixWorld(true);
+    else e.scene.updateWorldMatrix(false, true);
+  };
   window.__palcoCalmo = () => {
     for (const b of g?.bots || []) { b.nextShotAt = Infinity; b.target = null; }
     g.player.hp = 100; g.player.alive = true; g.timeLeft = 600;
@@ -366,6 +373,7 @@ export async function contatoMao(page, arma, { lado = 'l', excluir = '', rig = '
     const T = window.__palcoThree;
     const e = window.__authoredVm.entry(arma);
     if (!e) return { erro: 'sem entry' };
+    window.__palcoPoseFresca(e);
     const no = (n) => { const o = e.scene.getObjectByName(n); if (!o) return null; o.updateWorldMatrix(true, false); return o.getWorldPosition(new T.Vector3()); };
     const palmaNos = nomes.palma.map(no);
     if (palmaNos.some((p) => !p)) return { erro: `ossos da mão ${lado} ausentes` };
@@ -446,7 +454,7 @@ export async function pecaCarregador(page, arma, spec, rig = 'k') {
     const g = window.__game;
     const e = window.__authoredVm.entry(arma);
     if (!e) return { erro: 'sem entry' };
-    e.scene.updateWorldMatrix(true, true);
+    window.__palcoPoseFresca(e);
     g.vmCamera.updateMatrixWorld(true);
     const inv = g.vmCamera.matrixWorldInverse;
     const no = (n) => { const o = e.scene.getObjectByName(n); return o ? o.getWorldPosition(new T.Vector3()) : null; };

@@ -313,6 +313,8 @@
     "eval:vm-pistola-ref": "node tools/eval/vm-reguas-check.mjs --regua=pistola-ref",
     "eval:vm-maos": "node tools/eval/vm-reguas-check.mjs --regua=maos",
     "eval:vm-carregador": "node tools/eval/vm-reguas-check.mjs --regua=carregador",
+    "//eval:vm-carregador-repete": "R1 da fila K: a amostra do carregador sai igual com e sem render entre o passo e a medida (bindMatrixInverse velho); mutante pose-velha",
+    "eval:vm-carregador-repete": "node tools/eval/vm-carregador-repete.mjs --mutantes",
     "eval:vm-reguas": "node tools/eval/vm-reguas-check.mjs --regua=todas",
     "eval:vm-placar": "node tools/eval/vm-placar-check.mjs",
     "eval:vm-serving": "node tools/eval/authored-serving-check.mjs",
