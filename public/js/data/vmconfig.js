@@ -55,9 +55,10 @@ export const VM_WEAPON = {
   // Produto K (KINEMATION, 67 juntas) assado por arma no catálogo privado:
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
-  // AK: único golden público até o rebuild em K (VM-LAUNCH-K-STATUS.md).
-  // Caixa MAG: régua eval:cs16.
-  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
+  // AK em K (rifles-ak-final.py). Frame: a silhueta mais próxima da AK golden em 3:2
+  // que cabe na faixa do eval:vm-frame (VM-LAUNCH-K-STATUS.md).
+  ak: W('ak', { baked: true,
+    frame: { x: 0.0825, y: 0.01, z: -0.2844, fov: 57, rotDeg: [1.69, 7.69, 6.19] } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),

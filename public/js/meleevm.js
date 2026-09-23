@@ -1,14 +1,18 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
+import { VM_BYTES } from './data/vmbytes.js';
 
-const KNIFE_URL = '/models/viewmodels/coro/melee/knife-hires.glb?v=knife-motion-d-frame50-2';
+// Faca K (braços KINEMATION) do catálogo privado, na mesma composição da faca L aprovada
+// (receita tools/viewmodels/prep/knife-k-build.py); a versão da URL vem dos bytes (BUG-157).
+const KNIFE_URL = `/private-assets/viewmodels/knife/knife-baked-runtime.glb?v=${VM_BYTES.knife || 'sem-versao'}`;
 const REQUIRED_CLIPS = Object.freeze(['Idle', 'Draw', 'Slash', 'Stab', 'QuickThrust', 'HeavyStab']);
+const OPTIONAL_CLIPS = Object.freeze(['Inspect']);
 const QA_SLOW_MOTION = typeof location !== 'undefined'
   && new URLSearchParams(location.search).get('meleeqa') === '1';
 const ACTION_SECONDS = Object.freeze(QA_SLOW_MOTION
-  ? { Draw: 2.0, Slash: 4.0, Stab: 4.0 }
-  : { Draw: 0.28, Slash: 0.52, Stab: 0.52 });
+  ? { Draw: 2.0, Slash: 4.0, Stab: 4.0, Inspect: 4.4 }
+  : { Draw: 0.28, Slash: 0.52, Stab: 0.52, Inspect: 2.2 });
 // O enquadramento v12 acertou os contatos, mas ocupava tela demais. Escalar o pacote
 // completo preserva rigorosamente arma, mãos, rig e câmera relativa.
 const PACKAGE_SCALE = 0.0135;
@@ -18,10 +22,14 @@ const STAB_PROFILES = Object.freeze({
   heavy: Object.freeze({ clip: 'HeavyStab', seconds: QA_SLOW_MOTION ? 5.0 : 0.62, depth: 0 }),
 });
 const APPROVED_GLOVE_MATERIAL = /CoroSolto_FP_Gloves/i;
+// Mãos K usam o atlas de time do UV KINEMATION (layout 'pistol'), como as armas de fogo.
+const K_HAND_MATERIAL = /CoroSolto_FP_(?:Hand|Glove|Cloth)$/i;
+const handLayoutOf = (material) => APPROVED_GLOVE_MATERIAL.test(material?.name || '') ? 'knife'
+  : K_HAND_MATERIAL.test(material?.name || '') ? 'pistol' : '';
 
 function approvedGloveMaterial(material, profile) {
-  if (!APPROVED_GLOVE_MATERIAL.test(material?.name || '')) return material;
-  return applyTeamHandMaterial(material, profile, 'knife');
+  const layout = handLayoutOf(material);
+  return layout ? applyTeamHandMaterial(material, profile, layout) : material;
 }
 
 export class KnifeMeleeViewModel {
@@ -41,6 +49,7 @@ export class KnifeMeleeViewModel {
     this.basePosition = PACKAGE_OFFSET.clone();
     this.suspended = false;
     this.error = null;
+    this.handLayout = 'knife';
     // Harness em Node boota o Game sem rede: sem load, a faca fica no fallback.
     if (typeof process !== 'undefined' && process.versions?.node) return;
     new GLTFLoader().load(KNIFE_URL, (gltf) => this._accept(gltf), undefined, (error) => {
@@ -63,7 +72,7 @@ export class KnifeMeleeViewModel {
     this.profile = profile;
     const meshes = [];
     this.scene?.traverse((object) => { if (object.isMesh) meshes.push(object); });
-    refreshTeamHands(meshes, profile, 'knife');
+    refreshTeamHands(meshes, profile, this.handLayout);
   }
 
   _accept(gltf) {
@@ -84,6 +93,8 @@ export class KnifeMeleeViewModel {
     scene.traverse((object) => {
       object.frustumCulled = false;
       if (!object.isMesh) return;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      if (materials.some((material) => handLayoutOf(material) === 'pistol')) this.handLayout = 'pistol';
       object.castShadow = false;
       object.receiveShadow = false;
       object.material = Array.isArray(object.material)
@@ -104,7 +115,9 @@ export class KnifeMeleeViewModel {
     this.scene = scene;
     this.packageRoot = packageRoot;
     this.mixer = new THREE.AnimationMixer(scene);
-    for (const name of REQUIRED_CLIPS) this.actions.set(name, this.mixer.clipAction(clips.get(name)));
+    for (const name of [...REQUIRED_CLIPS, ...OPTIONAL_CLIPS]) {
+      if (clips.has(name)) this.actions.set(name, this.mixer.clipAction(clips.get(name)));
+    }
     this.mixer.addEventListener('finished', ({ action }) => {
       if (action !== this.current) return; // término de ação substituída não encerra a atual
       this.attackMotion = null;
@@ -156,7 +169,9 @@ export class KnifeMeleeViewModel {
     return this._play(profile.clip, profile.seconds);
   }
 
-  playState(name) { return this.active && REQUIRED_CLIPS.includes(name) && this._play(name); }
+  playState(name) { return this.active && this.actions.has(name) && this._play(name); }
+
+  inspect() { return this.playState('Inspect'); }
 
   update(dt) {
     if (this.active && !this.suspended) {

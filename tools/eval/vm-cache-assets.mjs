@@ -31,6 +31,7 @@ const hash = file => {
   let bytes = fs.readFileSync(file);
   if (mutant === 'bytes-alterados' && file === 'public/models/weapons/deagle.glb') bytes = Buffer.concat([bytes, Buffer.from('mutacao')]);
   if (mutant === 'produto-reassado' && file.endsWith('/uzi-baked-runtime.glb')) bytes = Buffer.concat([bytes, Buffer.from('mutacao')]);
+  if (mutant === 'faca-reassada' && file.endsWith('/knife-baked-runtime.glb')) bytes = Buffer.concat([bytes, Buffer.from('mutacao')]);
   return crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 10);
 };
 const failures = [], requests = [];
@@ -68,5 +69,11 @@ for (const [weapon, config] of baked) {
   const file = `public/private-assets/viewmodels/${config.family}/${name}`;
   if (fs.existsSync(file) && VM_BYTES[weapon] !== hash(file)) failures.push(`bytes:product:${weapon}`);
 }
+// Faca K (meleevm.js): mesma regra — URL versionada pelos bytes do produto servido.
+const melee = fs.readFileSync('public/js/meleevm.js', 'utf8');
+const knifeUrl = /const KNIFE_URL = `\/([^?`]+)\?v=\$\{VM_BYTES\.knife \|\| 'sem-versao'\}`/.exec(melee);
+if (!knifeUrl) failures.push('use:melee:knife');
+else if (!VM_BYTES.knife) failures.push('use:melee:knife-sem-versao');
+else if (fs.existsSync(`public/${knifeUrl[1]}`) && VM_BYTES.knife !== hash(`public/${knifeUrl[1]}`)) failures.push('bytes:melee:knife');
 console.log(JSON.stringify({ ok: !failures.length, mutant, requests, failures }, null, 2));
 if (failures.length) process.exitCode = 1;
