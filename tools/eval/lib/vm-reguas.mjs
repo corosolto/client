@@ -25,6 +25,11 @@ import * as P from './vm-palco.mjs';
 import * as A from './vm-analise.mjs';
 import * as L from './vm-limiares.mjs';
 import { aplicarVariante } from './vm-variante.mjs';
+// Faixa de tamanho da cobertura: por ARMA quando o dono decidiu (m92, escala real), senão pela classe.
+const faixaCobertura = (c) => L.COBERTURA_FAIXA[c.arma] || L.COBERTURA_FAIXA[c.classe];
+// Tamanho linear POR METRO contra a PT-38 aprovada (mesma grandeza em cobertura e pistola-ref).
+const lenCurta = (w) => weaponCFG(w).len || 0.26;
+const tamanhoCurta = (q, p, arma) => Math.sqrt(q.areaArma / p.quadril.areaArma) / (lenCurta(arma) / lenCurta('pistol'));
 
 const ROOT = process.cwd();
 const { WEAPONS } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/weapons.js')).href);
@@ -32,7 +37,9 @@ const { VM_WEAPON } = await import(pathToFileURL(path.join(ROOT, 'public/js/data
 const { weaponCFG } = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
 
 export const TODAS = Object.keys(WEAPONS);   // 26, com a faca
-export const CURTAS = ['pistol', 'deagle', 'revolver38'];
+// Curtas: medidas contra a PT-38 APROVADA (decisão do dono, integração K) — a lista mora
+// nos limiares, junto da faixa, para vm-frame e réguas de imagem lerem a mesma.
+export const CURTAS = L.ARMAS_CURTAS;
 export const COMPACTAS = ['mp5', 'uzi', 'p90'];
 
 export function classe(arma) {
@@ -222,6 +229,28 @@ const R = (valor, msg) => ({ estado: 'VERMELHO', valor, msg });
 const NA = (msg) => ({ estado: 'N/A', valor: '—', msg });
 const NM = (msg) => ({ estado: 'NAO_MEDE', valor: '?', msg });
 
+/* Cobertura das CURTAS (decisão do dono, integração K): tamanho por metro contra a
+   PT-38 APROVADA na faixa L.PISTOLA_APROVADA.faixa (o mesmo número do pistola-ref e
+   do vm-frame), cruz livre e câmera fora da arma. Braço, ângulo e ADS contra a AK
+   não se aplicam: a pistola aprovada tem outra pose (uma mão, yaw 15°), e o ADS das
+   curtas é cobrado pelo pistola-ref contra a mesma pistola. */
+function coberturaCurta(c, refs) {
+  const p = refs.pistol;
+  if (!p?.quadril?.areaArma) return NM(`referência da pistola ausente (${PISTOLA_APROVADA_ARQ} sem este aspecto)`);
+  const q = c.quadril;
+  if (!q?.areaArma) return NM('arma curta sem pixel de arma no quadril');
+  const faixa = L.PISTOLA_APROVADA.faixa;
+  const tam = tamanhoCurta(q, p, c.arma);
+  const falhas = [];
+  if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da PT-38 ${p.fonte} por metro (faixa das curtas ${faixa.min}–${faixa.max})`);
+  if (tam > faixa.max) falhas.push(`arma gigante: ${(tam * 100).toFixed(0)}% da PT-38 ${p.fonte} por metro (faixa das curtas ${faixa.min}–${faixa.max})`);
+  if (q.cruz > 0) falhas.push(`${q.cruz} px de arma/braço sobre a cruz no quadril`);
+  if (q.olho !== null && q.olho !== undefined && q.olho < L.COBERTURA_OLHO_MIN) falhas.push(`câmera dentro da arma: a parte mais perto está a ${q.olho.toFixed(2)} palma do olho (mínimo ${L.COBERTURA_OLHO_MIN})`);
+  const valor = `${tam.toFixed(2)}× PT-38`;
+  const txt = `curta: tamanho ${valor} ${p.fonte} por metro (faixa ${faixa.min}–${faixa.max}), cruz ${q.cruz} px, olho ${q.olho?.toFixed(2) ?? '?'} palma`;
+  return falhas.length ? R(valor, `${falhas.join('; ')} — ${txt}. Conserto: frame da arma curta (vmconfig/FAMILY_FRAME), contra a PT-38 aprovada.`) : V(valor, txt);
+}
+
 export const JUIZ = {
   mira(c) {
     if (c.classe === 'faca') return NA('faca: sem ADS');
@@ -258,17 +287,18 @@ export const JUIZ = {
 
   cobertura(c, refs) {
     if (c.classe === 'faca') return NA('faca: meleevm, régua própria (melee-framing)');
-    if (c.classe === 'curta') return NA('arma curta: medida contra a pistola em eval:vm-pistola-ref');
+    if (c.classe === 'curta') return coberturaCurta(c, refs);
     const ak = refs.ak?.quadril;
     if (!ak?.areaArma) return NM(`referência da AK ausente (${AK_APROVADA_ARQ} sem este aspecto; --assar-ak ou --ref-ak=viva)`);
     const q = c.quadril;
     if (!q) return NM('não coletado');
-    const faixa = L.COBERTURA_FAIXA[c.classe];
+    const faixa = faixaCobertura(c);
     const tam = Math.sqrt(q.areaArma / ak.areaArma);
     const braco = ak.areaBraco ? q.areaBraco / ak.areaBraco : 0;
     const falhas = [];
-    if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da AK (faixa ${faixa.min}–${faixa.max}, classe ${c.classe})`);
-    if (tam > faixa.max) falhas.push(`arma gigante: ${(tam * 100).toFixed(0)}% da AK (faixa ${faixa.min}–${faixa.max}, classe ${c.classe})`);
+    const qual = L.COBERTURA_FAIXA[c.arma] ? `faixa própria da ${c.arma}` : `classe ${c.classe}`;
+    if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da AK (faixa ${faixa.min}–${faixa.max}, ${qual})`);
+    if (tam > faixa.max) falhas.push(`arma gigante: ${(tam * 100).toFixed(0)}% da AK (faixa ${faixa.min}–${faixa.max}, ${qual})`);
     if (braco > L.COBERTURA_BRACO_MAX) falhas.push(`braço ${braco.toFixed(2)}× a área do braço da AK (teto ${L.COBERTURA_BRACO_MAX})`);
     if (q.cruz > 0) falhas.push(`${q.cruz} px de arma/braço sobre a cruz no quadril`);
     const dAng = q.eixo && ak.eixo ? ((q.eixo.graus - ak.eixo.graus + 540) % 360) - 180 : null;
@@ -297,8 +327,7 @@ export const JUIZ = {
     const q = c.quadril;
     if (!q?.arma) return NM('arma curta sem pixel de arma no quadril');
     // comprimento declarado (weaponCFG.len): o mesmo "por metro" do vm-frame-calibra.
-    const len = (w) => weaponCFG(w).len || 0.26;
-    const tam = Math.sqrt(q.areaArma / p.quadril.areaArma) / (len(c.arma) / len('pistol'));
+    const tam = tamanhoCurta(q, p, c.arma);
     const cen = (b) => [(b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2];
     const [x1, y1] = cen(q.arma); const [x0, y0] = cen(p.quadril.arma);
     const dpos = Math.hypot(x1 - x0, y1 - y0);
@@ -437,6 +466,12 @@ export const MUTANTES = {
   'arma-gigante': { regua: 'cobertura', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
     const r = raizesDe(e); for (const m of r) { m.scale.multiplyScalar(1.6); m.updateMatrixWorld(true); }
     return { aplicou: r.length > 0, malhas: r.map((m) => m.name) };`), arma) },
+  // A PT-38 com o frame da reescala do #631 (z −0,566), que o dono REVERTEU: a
+  // cobertura das curtas mede contra a PT-38 aprovada e tem de reprovar (~0,55×).
+  'pistola-631': { regua: 'cobertura', arma: 'pistol', fase: 'idle', aplicar: async (page, arma) => {
+    const r = await aplicarVariante(page, arma, { frame: { x: 0.1648, y: -0.19, z: -0.5664 } });
+    return { aplicou: r?.frame?.z === -0.5664, frame: r?.frame };
+  } },
   // A PT-38 com a malha a 55% (o revólver da revisão L1: ~60% da pistola).
   encolhe: { regua: 'pistola-ref', arma: 'pistol', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
     const alvos = e.weaponMeshes.some((m) => m.isSkinnedMesh) ? ossosRaiz(e) : raizesDe(e);
@@ -487,7 +522,8 @@ export async function coletarReferencias(page, reguas, { pistola = 'aprovada', a
       refs.ak = assado ? { ...assado, fonte: 'aprovada' } : null;
     }
   }
-  if (reguas.includes('pistola-ref')) {
+  // A cobertura das curtas também mede contra a PT-38 aprovada (decisão do dono).
+  if (reguas.includes('pistola-ref') || reguas.includes('cobertura')) {
     const fs = await import('node:fs');
     if (pistola === 'viva' || assarPistola) {
       const c = await coletar(page, 'pistol', { reguas: ['pistola-ref'] });

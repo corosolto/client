@@ -25,6 +25,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as THREE from '../../../public/vendor/three.module.js';
 import { GLTFLoader } from '../../../public/vendor/addons/loaders/GLTFLoader.js';
+import { spawnSync } from 'node:child_process';
+import * as L from '../../eval/lib/vm-limiares.mjs';
 
 globalThis.Image = class { constructor() { this.onload = null; this.width = 1; this.height = 1; } set src(value) { this._src = value; queueMicrotask(() => this.onload?.()); } };
 globalThis.self = globalThis;
@@ -54,7 +56,33 @@ const DENTRO_MIN = +(option('dentro-min', '0.85'));
 // aplica o ADS de ombro (captura causal lmg-product-final-20260922). O intervalo
 // próprio mantém o núcleo legível e o ADS íntegro; caixa/cinto/tampa/bandeja
 // continuam sob o gate mecânico lmg-final-verify.
-const RATIO_BANDS = { lmg: { min: 0.65, max: 0.85, reason: 'receiver longo + ADS de ombro' } };
+// As faixas por arma moram em tools/eval/lib/vm-limiares.mjs (FAIXA_ESCALA), junto
+// das réguas de imagem que medem a mesma coisa: lmg (opção B do #632) e m92 (escala
+// real), decisões do dono na integração K (23/09).
+const RATIO_BANDS = L.FAIXA_ESCALA;
+// Armas curtas: contra a PT-38 APROVADA (L.PISTOLA_APROVADA), não contra a AK.
+const CURTAS = new Set(L.ARMAS_CURTAS);
+// Raster manda (L.VM_FRAME_INFORMATIVO): razão e braço destas saem como informativos.
+const INFORMATIVO = new Set(L.VM_FRAME_INFORMATIVO);
+// Mutantes (--mutantes roda todos; cada um TEM de reprovar):
+//   pistola-631        a PT-38 com o frame da reescala do #631 (z −0,566): 0,55× da aprovada.
+//   curta-na-ak        as curtas voltam a ser medidas contra a AK: a aprovada dá 1,80×.
+//   raster-desligado   akm/m92/mp5 deixam de ser informativas: a akm reprova (0,56×).
+const MUTANTE = option('mutante');
+const MUTANTES_FRAME = { 'pistola-631': 'pistol', 'curta-na-ak': 'pistol', 'raster-desligado': 'akm' };
+if (MUTANTE && !MUTANTES_FRAME[MUTANTE]) throw new Error(`mutante desconhecido: ${MUTANTE} (há: ${Object.keys(MUTANTES_FRAME).join(', ')})`);
+if (flag('mutantes')) {
+  let vivos = 0;
+  for (const [nome, arma] of Object.entries(MUTANTES_FRAME)) {
+    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), `--mutante=${nome}`, `--armas=${arma}`], { encoding: 'utf8', env: process.env });
+    const linha = (r.stdout.match(/VM_FRAME_CALIBRA=(.*)/) || [])[1] || '{}';
+    const falhas = JSON.parse(linha).failures || [];
+    const mordeu = r.status !== 0 && falhas.some((f) => f.startsWith(`${arma} `));
+    if (!mordeu) vivos += 1;
+    console.log(`  mutante ${nome.padEnd(17)} ${mordeu ? 'VERMELHO (mordeu)' : 'VERDE — NÃO MORDEU'}  ${falhas.filter((f) => f.startsWith(`${arma} `))[0] || ''}`);
+  }
+  if (vivos) { console.log(`vm-frame: ${vivos} mutante(s) não morderam`); process.exit(1); }
+}
 // Orçamento de tela do braço, em múltiplos da silhueta da AK aprovada. Folga de
 // 40% porque a pose do braço varia legitimamente entre famílias; acima disso a
 // manga passou a ser o assunto do quadro, que é o defeito visto em 18/09.
@@ -260,9 +288,29 @@ const alvoAk = measure(reference.points, akFrame, alvoAspect);
 const ESCALA_ALVO = alvoAk.diag / comprimento('ak');
 const alvoPara = (weapon) => ({ ...alvoAk, diag: +(ESCALA_ALVO * comprimento(weapon)).toFixed(4) });
 
+// Referência das curtas: o produto da PT-38 APROVADA no frame aprovado, por aspecto
+// (a pistola aprovada dá 1,000 nos dois). Produto com outro sha256 não é a aprovada.
+const pistolaRef = {};
+{
+  const cfg = candidates.pistol;
+  const file = cfg ? path.join(ASSET_ROOT, cfg.file) : null;
+  const sha = cfg?.sha256 || cfg?.productSha256 || '';
+  if (!file || !fs.existsSync(file)) pistolaRef.erro = 'produto da PT-38 ausente: sem referência para as curtas';
+  else if (!sha.startsWith(L.PISTOLA_APROVADA.produto)) pistolaRef.erro = `PT-38 do manifesto (${sha.slice(0, 10)}) não é a aprovada (${L.PISTOLA_APROVADA.produto}): referência das curtas inválida`;
+  else {
+    const p = weaponPoints(await parse(file), { weapon: 'pistol' });
+    for (const [tag, aspect] of Object.entries(ASPECTS)) {
+      const m = measure(p.points, L.PISTOLA_APROVADA.frame, aspect);
+      const b = p.maos.length ? measure(p.maos, L.PISTOLA_APROVADA.frame, aspect) : null;
+      pistolaRef[tag] = { escala: m.diag / comprimento('pistol'), bracoDiag: b?.diag ?? null };
+    }
+  }
+}
+
 const only = option('armas') ? new Set(option('armas').split(',').filter(Boolean)) : null;
 const rows = [];
 const failures = [];
+const informativos = [];
 for (const [weapon, cfg] of Object.entries(candidates)) {
   if (only && !only.has(weapon)) continue;
   const file = path.join(ASSET_ROOT, cfg.file);
@@ -271,22 +319,32 @@ for (const [weapon, cfg] of Object.entries(candidates)) {
   try { sampled = weaponPoints(await parse(file), { weapon }); }
   catch (problem) { failures.push(`${weapon}: ${problem.message}`); continue; }
   const frame = frameFor(weapon);
-  const ratioBand = RATIO_BANDS[weapon] || { min: 1 - RAZAO_TOL, max: 1 + RAZAO_TOL };
-  const row = { weapon, family: VM_WEAPON[weapon]?.family, frame, ratioBand, aspectos: {} };
+  if (MUTANTE === 'pistola-631' && weapon === 'pistol') Object.assign(frame, { x: 0.1648, y: -0.19, z: -0.5664 });
+  const curta = CURTAS.has(weapon) && MUTANTE !== 'curta-na-ak';
+  const informativo = INFORMATIVO.has(weapon) && MUTANTE !== 'raster-desligado';
+  const ratioBand = curta ? { ...L.PISTOLA_APROVADA.faixa, reason: 'curta: por metro contra a PT-38 aprovada (dono, 23/09)' }
+    : RATIO_BANDS[weapon] || { min: 1 - RAZAO_TOL, max: 1 + RAZAO_TOL };
+  const row = { weapon, family: VM_WEAPON[weapon]?.family, frame, ratioBand, referencia: curta ? 'pistol-aprovada' : 'ak', informativo, aspectos: {} };
+  // Reprovação de tamanho/braço de arma informativa vira nota: o raster do #636 manda.
+  const reprova = (msg) => (informativo ? informativos : failures).push(msg);
   for (const [tag, aspect] of Object.entries(ASPECTS)) {
     const measured = measure(sampled.points, frame, aspect);
-    measured.razao = +(measured.diag / (ESCALA_ALVO * comprimento(weapon))).toFixed(3);
+    if (curta && pistolaRef.erro) { failures.push(`${weapon} ${tag}: ${pistolaRef.erro}`); row.aspectos[tag] = measured; continue; }
+    const escala = curta ? pistolaRef[tag].escala : ESCALA_ALVO;
+    measured.razao = +(measured.diag / (escala * comprimento(weapon))).toFixed(3);
     // R2: o braço é presença de tela e tem de caber no orçamento junto com a
     // arma. Sem esta coluna, empurrar a arma para o alvo joga a manga por cima
-    // do quadro e a régua aplaude.
+    // do quadro e a régua aplaude. Curtas: contra o braço da PT-38 aprovada.
     const braco = sampled.maos.length ? measure(sampled.maos, frame, aspect) : null;
     measured.bracoDiag = braco?.diag ?? null;
-    measured.bracoRazao = braco ? +(braco.diag / (ESCALA_ALVO * comprimento('ak'))).toFixed(3) : null;
+    const bracoRef = curta ? pistolaRef[tag].bracoDiag : ESCALA_ALVO * comprimento('ak');
+    measured.bracoRazao = braco && bracoRef ? +(braco.diag / bracoRef).toFixed(3) : null;
     row.aspectos[tag] = measured;
+    const quem = curta ? 'da PT-38 aprovada' : 'da AK';
     if (measured.dentro < DENTRO_MIN) failures.push(`${weapon} ${tag}: só ${(measured.dentro * 100).toFixed(1)}% da arma no quadro`);
-    if (measured.razao < ratioBand.min || measured.razao > ratioBand.max) failures.push(`${weapon} ${tag}: ${measured.razao}× a escala angular do arsenal (faixa ${ratioBand.min}–${ratioBand.max})`);
+    if (measured.razao < ratioBand.min || measured.razao > ratioBand.max) reprova(`${weapon} ${tag}: ${measured.razao}× a escala angular por metro ${curta ? 'da PT-38 aprovada' : 'do arsenal'} (faixa ${ratioBand.min}–${ratioBand.max})`);
     if (measured.bracoRazao !== null && measured.bracoRazao > BRACO_MAX) {
-      failures.push(`${weapon} ${tag}: braço ocupa ${measured.bracoRazao}× a silhueta da AK`);
+      reprova(`${weapon} ${tag}: braço ocupa ${measured.bracoRazao}× a silhueta ${quem}`);
     }
   }
   // R6: eixo de mira. A boca do cano tem de estar à frente da alça e o eixo
@@ -319,8 +377,8 @@ for (const [weapon, cfg] of Object.entries(candidates)) {
 const report = {
   schemaVersion: 1, kind: 'vm-frame-calibra',
   referencia: { arma: 'ak', arquivo: path.relative(ROOT, AK_FILE), fov: +akFrame.fov.toFixed(2), comprimento: comprimento('ak'), escalaPorMetro: +ESCALA_ALVO.toFixed(4), ...alvoAk },
-  limites: { razaoTolerancia: RAZAO_TOL, razaoPorArma: RATIO_BANDS, dentroMinimo: DENTRO_MIN, alvoAspecto: option('alvo-aspecto', '3x2') },
-  armas: rows, failures,
+  limites: { razaoTolerancia: RAZAO_TOL, razaoPorArma: RATIO_BANDS, curtas: { armas: [...CURTAS], ...L.PISTOLA_APROVADA }, informativas: [...INFORMATIVO], dentroMinimo: DENTRO_MIN, alvoAspecto: option('alvo-aspecto', '3x2') },
+  armas: rows, failures, informativos,
 };
 const out = option('out');
 if (out) fs.writeFileSync(path.resolve(out), `${JSON.stringify(report, null, 2)}\n`);
@@ -348,13 +406,16 @@ ${linhas.join('\n')}
   fs.writeFileSync(path.resolve(ROOT, escrever), corpo);
   console.log(`escrito ${escrever} com ${linhas.length} armas`);
 }
-console.log(`VM_FRAME_CALIBRA=${JSON.stringify({ ok: failures.length === 0, armas: rows.length, failures })}`);
+console.log(`VM_FRAME_CALIBRA=${JSON.stringify({ ok: failures.length === 0, armas: rows.length, failures, informativos, ...(MUTANTE ? { mutante: MUTANTE } : {}) })}`);
 if (flag('tabela')) {
   console.log(`\nreferência AK: diag ${alvoAk.diag} por ${comprimento('ak')} m → ${ESCALA_ALVO.toFixed(4)}/m · centro [${alvoAk.centro}] · fov ${akFrame.fov.toFixed(1)}\n`);
-  console.log('arma        fam       razão3x2 dentro3x2 razão16x9 dentro16x9  centro3x2');
+  if (pistolaRef['3x2']) console.log(`referência das curtas: PT-38 aprovada (${L.PISTOLA_APROVADA.produto}, frame z ${L.PISTOLA_APROVADA.frame.z}) → ${pistolaRef['3x2'].escala.toFixed(4)}/m em 3:2, ${(pistolaRef['3x2'].escala / ESCALA_ALVO).toFixed(3)}× a da AK\n`);
+  console.log('arma        fam       razão3x2 dentro3x2 razão16x9 dentro16x9  centro3x2        contra');
   for (const row of rows.sort((a, b) => a.aspectos['3x2'].razao - b.aspectos['3x2'].razao)) {
     const a = row.aspectos['3x2'], b = row.aspectos['16x9'];
-    console.log(`${row.weapon.padEnd(11)} ${String(row.family).padEnd(9)} ${String(a.razao).padStart(7)} ${String((a.dentro * 100).toFixed(1) + '%').padStart(9)} ${String(b.razao).padStart(9)} ${String((b.dentro * 100).toFixed(1) + '%').padStart(10)}  [${a.centro}]`);
+    const contra = row.referencia === 'pistol-aprovada' ? 'PT-38 aprovada' : row.informativo ? 'AK (informativa: raster manda)' : RATIO_BANDS[row.weapon] ? `AK (faixa ${row.ratioBand.min}–${row.ratioBand.max})` : 'AK';
+    console.log(`${row.weapon.padEnd(11)} ${String(row.family).padEnd(9)} ${String(a.razao).padStart(7)} ${String((a.dentro * 100).toFixed(1) + '%').padStart(9)} ${String(b.razao).padStart(9)} ${String((b.dentro * 100).toFixed(1) + '%').padStart(10)}  [${a.centro}]  ${contra}`);
   }
+  for (const nota of informativos) console.log(`INFORMATIVO (raster manda) ${nota}`);
 }
 if (failures.length) process.exitCode = 1;
