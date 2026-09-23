@@ -203,7 +203,7 @@ export async function desenhar(tris, view, { fov = 84, w = 720, h = 480, arquivo
         const o = y * w + x;
         if (d >= z[o]) continue;
         z[o] = d;
-        dono[o] = PALETA.some(([re]) => re.test(t.mat)) ? 2 : 1;
+        dono[o] = /Glove/i.test(t.mat) ? 3 : PALETA.some(([re]) => re.test(t.mat)) ? 2 : 1;
         img[o * 3] = Math.min(255, base[0] * luz * 255);
         img[o * 3 + 1] = Math.min(255, base[1] * luz * 255);
         img[o * 3 + 2] = Math.min(255, base[2] * luz * 255);
@@ -225,7 +225,7 @@ export async function desenhar(tris, view, { fov = 84, w = 720, h = 480, arquivo
     for (const [x, y] of [[cx + d, cy], [cx, cy + d]]) { const o = y * w + x; img[o * 3] = 0; img[o * 3 + 1] = 160; img[o * 3 + 2] = 160; }
   }
   if (arquivo) await sharp(img, { raw: { width: w, height: h, channels: 3 } }).png().toFile(arquivo);
-  let arma = 0, braco = 0;
-  for (const v of dono) { if (v === 1) arma++; else if (v === 2) braco++; }
-  return { arma: arma / (w * h), braco: braco / (w * h) };
+  let arma = 0, braco = 0, luva = 0;
+  for (const v of dono) { if (v === 1) arma++; else if (v >= 2) braco++; if (v === 3) luva++; }
+  return { arma: arma / (w * h), braco: braco / (w * h), luva: luva / (w * h) };
 }

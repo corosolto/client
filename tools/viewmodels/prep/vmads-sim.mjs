@@ -11,12 +11,25 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const opt = (n, d = '') => { const h = process.argv.find((v) => v.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d; };
 const D2R = Math.PI / 180;
 
-export async function simularAds({ arquivo, arma, ref, alca, massa, ads: adsExtra = {}, frame: frameExtra = {}, aspecto = 1.5, figura = '', cobertura = false }) {
+// Pose do ADS = idle no quadro 0 com os canais do clipe `ads` por cima (o delta que o runtime soma).
+export function trsDoAds(pose, poseAds = true) {
+  const trs = pose.local('idle', 0);
+  if (!poseAds || !pose.anims.has('ads')) return trs;
+  const ads = pose.local('ads', 0);
+  for (const ch of pose.anims.get('ads').listChannels()) {
+    const i = pose.index.get(ch.getTargetNode());
+    const k = { translation: 't', rotation: 'r', scale: 's' }[ch.getTargetPath()];
+    if (k) trs[i][k] = ads[i][k];
+  }
+  return trs;
+}
+
+export async function simularAds({ arquivo, arma, ref, alca, massa, ads: adsExtra = {}, frame: frameExtra = {}, aspecto = 1.5, figura = '', cobertura = false, poseAds = true }) {
   const { VM_WEAPON } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
   const ads = { ...VM_WEAPON[arma].ads, ...adsExtra };
   const frame = { ...(await frameDa(arma)), ...frameExtra };
   const pose = await carregar(arquivo);
-  const W = pose.mundo(pose.local('idle', 0));
+  const W = pose.mundo(trsDoAds(pose, poseAds));
   const cam = W[pose.byName.get('VIEWMODEL_CAMERA')].clone().invert();
   const refW = W[pose.byName.get(ref)];
   const cena = (v) => new THREE.Vector3(...v).applyMatrix4(refW).applyMatrix4(cam);
