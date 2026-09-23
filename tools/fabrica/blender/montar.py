@@ -198,8 +198,22 @@ def aplicar_skin_arma(objs: list, chassi: dict, skin: dict | None) -> dict:
 
 
 def raiz_da_arma(objs: list, rig, nome: str):
+    """Nó raiz do ARQUIVO FBX da arma (é ele que o prefab do Unity põe no ik_hand_gun).
+    Quando o FBX não tem vazio de raiz (KXG12_fixed), a armadura vem no topo com a
+    própria rotação (180° em Z) e escala 0,01: cria-se o vazio equivalente na origem,
+    senão a solda no osso apagaria essa rotação e a arma montaria de trás para a frente."""
     vazia = next((o for o in objs if o.parent is None and o.type == "EMPTY"), None)
-    return vazia or rig
+    if vazia is not None:
+        return vazia
+    raiz = bpy.data.objects.new(f"FBX_RAIZ_{nome}", None)
+    bpy.context.collection.objects.link(raiz)
+    raiz.scale = rig.matrix_world.to_scale()
+    bpy.context.view_layer.update()
+    mw = rig.matrix_world.copy()
+    rig.parent = raiz
+    rig.matrix_world = mw
+    objs.append(raiz)
+    return raiz
 
 
 OSSO_ARMA = "Arma"

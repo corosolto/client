@@ -204,8 +204,8 @@
       "chassi": "KXG12",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/shotgun-fabrica.glb",
-      "bytes": 3028608,
-      "sha256": "cdcb472a4c103f23e70101aa31d2bcf17a5dc4e34639769a15bd146da426e7b4",
+      "bytes": 3028732,
+      "sha256": "46990c2d6fbe8a3964ebbefafd5dec2aacca82b06de5421d7ec3e18234ae51bd",
       "clipes": [
         {
           "nome": "idle",
@@ -261,12 +261,12 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 9,
+      "segundos": 10,
       "file": "viewmodels/fabrica/shotgun-fabrica.glb",
       "ficha": "tools/fabrica/fichas/shotgun.json",
       "insumos": {
         "ficha": "d31258ad2f20b62e3f96fdf21860979cc511df58761851d2e3c01669c7f47479",
-        "chassi": "6b29c0cca3ebe99d6d702e8d8dce7f906ad8ecdd2d4bbe7028fd5d599a3cfa7d",
+        "chassi": "0933790279a7cb4c8156158c8b1475dd638e837018d350052b0d86ab9474bd98",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "3050e8d1b6a617685feda650ce477ca7b125f1bf0f05c63f24acc17379c22311",
         "poseFbx": "b3e1b8108da8bd75f582173b656eaa43f4040b21f2f8faaece8a62c9a84b6321",

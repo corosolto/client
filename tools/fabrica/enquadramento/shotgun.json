@@ -10,8 +10,8 @@
   },
   "frameBase": {
     "x": 0.065,
-    "y": 0.04,
-    "z": -0.203,
+    "y": -0.1,
+    "z": -0.303,
     "fov": 57,
     "rotDeg": [
       1.69,
@@ -20,28 +20,28 @@
     ]
   },
   "antes": {
-    "tamanhoVsAk": 1.36,
-    "bracoVsAk": 1.87,
-    "eixo": 27.9,
+    "tamanhoVsAk": 0.751,
+    "bracoVsAk": 0.498,
+    "eixo": 41.6,
     "cruz": 0,
     "centro": [
-      0.825,
-      0.634
+      0.688,
+      0.844
     ]
   },
   "frame": {
-    "x": 0.065,
-    "y": -0.1,
-    "z": -0.303
+    "x": 0.155,
+    "y": -0.04,
+    "z": -0.333
   },
   "depois": {
-    "tamanhoVsAk": 0.957,
-    "bracoVsAk": 0.598,
+    "tamanhoVsAk": 0.959,
+    "bracoVsAk": 1.071,
     "eixo": 28.7,
     "cruz": 0,
     "centro": [
-      0.737,
-      0.843
+      0.826,
+      0.769
     ]
   }
 }

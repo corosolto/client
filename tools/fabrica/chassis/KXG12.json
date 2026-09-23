@@ -40,7 +40,7 @@
       -2.44,
       7.8
     ],
-    "conferencia": "altura da mira 7.8 cm × topo estático 10.355 cm"
+    "conferencia": "altura da mira 7.8 cm × topo da arma 8.221 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/KXG12_Settings.asset",
@@ -74,13 +74,13 @@
   "geral": {
     "min": [
       -2.849,
-      -35.134,
-      -13.575
+      -33.807,
+      -15.709
     ],
     "max": [
       2.849,
-      33.807,
-      10.355
+      35.134,
+      8.221
     ],
     "n": 5508
   },
@@ -92,7 +92,19 @@
         -10.851
       ],
       "raioCm": 7,
-      "caixa": null
+      "caixa": {
+        "min": [
+          -2.183,
+          2.679,
+          -15.709
+        ],
+        "max": [
+          1.43,
+          10.729,
+          -4.335
+        ],
+        "n": 525
+      }
     },
     "maoApoio": {
       "palmaCm": [
@@ -101,45 +113,57 @@
         -9.748
       ],
       "raioCm": 7,
-      "caixa": null
+      "caixa": {
+        "min": [
+          -1.4,
+          -26.086,
+          -12.315
+        ],
+        "max": [
+          1.83,
+          -20.414,
+          -2.969
+        ],
+        "n": 94
+      }
     },
     "ossosMoveis": {
       "Gauge": {
         "min": [
           -0.961,
-          5.526,
-          2.817
+          -11.196,
+          0.682
         ],
         "max": [
           0.961,
-          11.196,
-          4.738
+          -5.526,
+          2.604
         ],
         "n": 72
       },
       "Pump": {
         "min": [
           -2.843,
-          2.019,
-          -10.181
+          -30.519,
+          -12.315
         ],
         "max": [
           2.843,
-          30.519,
-          5.786
+          -2.019,
+          3.652
         ],
         "n": 1586
       },
       "Trigger": {
         "min": [
           -0.312,
-          -2.133,
-          -5.487
+          -0.37,
+          -7.621
         ],
         "max": [
           0.312,
-          0.37,
-          -2.251
+          2.133,
+          -4.385
         ],
         "n": 20
       }
@@ -148,9 +172,9 @@
   "ancoras": {
     "boca": {
       "raizCm": [
-        0,
-        -35.134,
-        -0.045
+        -0.002,
+        -33.807,
+        0.778
       ],
       "origem": "extremo estático no eixo do cano"
     },
@@ -158,32 +182,32 @@
       "raizCm": [
         0,
         19.786,
-        6.931
+        -2.949
       ],
       "origem": "12 cm atrás da palma forte, altura média da fatia",
-      "traseiraCm": -33.807
+      "traseiraCm": -35.134
     },
     "trilhoSuperior": {
       "raizCm": [
         0,
         -0.214,
-        7.081
+        7.804
       ],
       "origem": "ponto mais alto da fatia sobre o poço do pente"
     },
     "guardaMao": {
       "caixa": {
         "min": [
-          -2.849,
-          -31.091,
-          -6.297
+          -1.345,
+          -29.751,
+          4.105
         ],
         "max": [
-          2.849,
-          -18.35,
-          5.961
+          1.345,
+          -17.683,
+          7.717
         ],
-        "n": 454
+        "n": 215
       },
       "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
     }
