@@ -34,21 +34,22 @@ sks/uzi/mp5/p90 ← fix-mags). Origem de cada arquivo em `viewmodels-fix-l3l5/ov
 
 | Arma | Antes | Depois | O que mudou | O que resta |
 |---|---|---|---|---|
-| m400 | REPROVADA (invertida, braços do teto no tiro) | **RESSALVA** | malha girada; tiro/inspeção/saque partem da pose do idle | yaw forte; mão do gatilho pouco legível |
+| m400 | REPROVADA (invertida, braços do teto no tiro) | **RESSALVA** | malha girada; tiro/inspeção/saque partem da pose do idle; mão de apoio no guarda-mão | yaw forte; mão do gatilho pouco legível |
 | deagle | REPROVADA (inspeção sem arma nem mão) | **RESSALVA** | inspeção com a arma na mão | arma escondida pelas mãos no idle |
 | mosin | REPROVADA (invertida) | REPROVADA | não está mais invertida; mão de apoio no guarda-mão | mão direita some no tiro/saque (regressão); recarga sem munição |
-| svd | REPROVADA (invertida) | REPROVADA | não está mais invertida (nada piorou na 2ª rodada) | sem pente; arma centrada em escorço |
+| svd | REPROVADA (invertida) | REPROVADA | não está mais invertida; mão de apoio no guarda-mão | sem pente ("tira no ar"); arma centrada, que agora mostra a coronha grossa no centro-baixo |
 | rem700 | REPROVADA (tombada 90°, gigante, clipe flutuando) | REPROVADA | orientação, rolagem e escala certas; nada flutua | **regressão:** braço direito cobre 40–60% da tela na recarga/saque |
 | g3 | REPROVADA (pro alto, ADS 70 px acima) | REPROVADA | idle mais baixo, perto da AK | ADS igual; antebraço de apoio mais deitado |
 | g3sg1 | REPROVADA (recarga tira a peça errada) | REPROVADA | tentativa de frame **revertida** | — |
 | awp | REPROVADA (gigante, vista pela coronha) | REPROVADA | tentativa de frame **revertida** | — |
 | m4 | REPROVADA (ADS: mangas sem luva, tubo no centro) | — | sem conserto nesta frente | fila |
 | scar | REPROVADA (ADS sem mira, pente fantasma) | — | sem conserto | fila |
-| carbine | REPROVADA (mãos rasgadas na recarga) | — | sem conserto | fila |
+| carbine | REPROVADA (mãos rasgadas na recarga) | REPROVADA | frame novo pela `vm-cobertura` (braço 1,97× → 1,26×); nada piorou, recarga menos coberta | mãos rasgadas na recarga, vão na pegada |
 | tavor | REPROVADA (braço gigante na recarga) | — | sem conserto | fila |
 | famas | REPROVADA (braço inflado na recarga vazia) | — | sem conserto | fila |
 
-Textos completos: `artifacts/review-L3L5/critico/{antes,depois,depois2,rejeitado-*}/<arma>/veredito.txt`
+Textos completos: `artifacts/review-L3L5/critico/{antes,depois,depois2,depois3,rejeitado-*}/<arma>/veredito.txt`
+(depois3 = rodada depois das réguas da #636: svd, m400, carbine)
 (não versionados).
 
 ## Consertos
@@ -94,6 +95,37 @@ socket), piso 1,0. Corretas 1,16 (akm)–5,37 (famas); invertidas do catálogo C
 original se ele reprovar exatamente essas quatro por inversão. Não mede rolagem nem direção
 absoluta (malha e socket invertidos juntos passariam).
 
+## Réguas de imagem da #636 (antes → depois)
+
+Depois do primeiro round, a branch trouxe `origin/vm/reguas` (#636: `eval:vm-mira`, `-cobertura`, `-maos`,
+`-carregador`, `-pistola-ref`, medidas no quadro renderizado, limiares em `tools/eval/lib/vm-limiares.mjs`).
+"Antes" = base composta do `PLACAR.md` da #636 (launch-k + #630–#634, sem L3–L5); "depois" = este branch
+(`npm run eval:vm-reguas -- --placar`, 3:2, re-medindo isolado as células que caíram por carga).
+
+| Arma | mira | cobertura | pistola-ref | maos | carregador |
+|---|---|---|---|---|---|
+| mosin | n/a → n/a | VERM 0.64× AK → **VERM** 1.13× AK | n/a → n/a | verde 0.01 → verde 0.03 | VERM 14 falha(s) → **VERM** 1 falha(s) |
+| svd | n/a → n/a | VERM 0.36× AK → **VERM** 0.50× AK | n/a → n/a | verde 0.06 → verde 0.01 | VERM 1 falha(s) → **VERM** 2 falha(s) |
+| m400 | n/a → n/a | VERM 0.77× AK → **VERM** 0.91× AK | n/a → n/a | verde 0.06 → verde 0.01 | verde ok → verde ok |
+| rem700 | n/a → n/a | VERM 1.47× AK → **VERM** 1.07× AK | n/a → n/a | VERM 0.22 → verde 0.04 | VERM 5 falha(s) → **VERM** 1 falha(s) |
+| deagle | verde 30 px → verde 30 px | n/a → n/a | VERM 0.63× pistola aprovada → **VERM** 0.63× pistola aprovada | n/a → n/a | VERM 1 falha(s) → **VERM** 2 falha(s) |
+| g3 | VERM 90 px → **VERM** 89 px | VERM 1.04× AK → **VERM** 1.06× AK | n/a → n/a | VERM 0.40 → **VERM** 0.40 | verde ok → verde ok |
+| g3sg1 | n/a → n/a | VERM 1.06× AK → **VERM** 1.06× AK | n/a → n/a | verde 0.03 → verde 0.03 | verde ok → verde ok |
+| awp | n/a → n/a | VERM 1.43× AK → **VERM** 1.43× AK | n/a → n/a | verde 0.08 → verde 0.08 | verde ok → verde ok |
+| m4 | VERM 43 px → **VERM** 43 px | verde 1.01× AK → verde 1.01× AK | n/a → n/a | verde 0.00 → verde 0.00 | verde ok → verde ok |
+| scar | VERM 99 px → **VERM** 99 px | verde 1.20× AK → verde 1.20× AK | n/a → n/a | VERM 0.44 → **VERM** 0.44 | verde ok → verde ok |
+| carbine | verde 16 px → verde 16 px | VERM 1.20× AK → verde 0.94× AK | n/a → n/a | VERM 0.38 → **VERM** 0.38 | n/a → n/a |
+| tavor | VERM 41 px → **VERM** 41 px | verde 1.04× AK → verde 1.04× AK | n/a → n/a | VERM 0.30 → **VERM** 0.30 | VERM 1 falha(s) → **VERM** 1 falha(s) |
+| famas | VERM 64 px → **VERM** 64 px | verde 0.91× AK → verde 0.91× AK | n/a → n/a | verde 0.19 → verde 0.19 | VERM 1 falha(s) → **VERM** 1 falha(s) |
+
+Guiados por elas: mão de apoio de svd e m400 levada ao guarda-mão (IK; 0,25/0,32 palma → verde; as
+viradas tinham tirado a mão da arma) e o frame da carbine (braço 1,97× → 1,26× a AK, vindo da extensão
+de manga do #632). Os dois `carregador` que subiram: svd 1 → 2 porque o pente ficou preso à arma na 2ª
+iteração (troca consciente de "objeto no ar" por "tira no ar"; o "fantasma 100%" já estava na dívida) e
+deagle 1 → 2 com a mesma peça em mais um instante da recarga tática, em clipes que esta frente não tocou.
+`eval:vm-placar` verde: placar re-medido e todo vermelho com dono em
+`vm-reguas-divida.json` (quatro vermelhos novos vieram das frentes fundidas e ganharam o dono delas).
+
 ## Portões (`CSBRASIL_VM_ASSET_ROOT` no overlay desta frente)
 
 Verdes antes e depois: `eval:vm-rig`, `eval:vm-launch`, `eval:vm-cache`, `eval:vm-pegada-k`,
@@ -104,8 +136,8 @@ e `-lifecycle`, `eval:vm-pistol-deagle` e `-lifecycle`, `eval:vm-dmr-assets`, `-
 famas; antes o navegador foi derrubado por outra sessão no meio da régua). Logs em
 `artifacts/review-L3L5/gates/{antes,depois}/`.
 
-Vermelhos que não são desta frente: `eval:vm-frame` só pela akm (0,573×/0,551×, já vermelha logo
-depois da fusão das quatro branches; é lane de vm-fix-grips-r2); `eval:vm-precision-assets` e
+Vermelhos que não são desta frente: `eval:vm-frame` pela akm (0,573×/0,551×, já vermelha logo
+depois da fusão das quatro branches; lane vm-fix-grips-r2) e pela mp5 (0,827×, rolagem de 18° da #636); `eval:vm-precision-assets` e
 `-visual` (NumPy ausente no Python do ambiente) e `eval:vm-precision-tools` (os mesmos 2 checks
 vermelhos antes e depois).
 
