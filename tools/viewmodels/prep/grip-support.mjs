@@ -25,8 +25,20 @@ const opt = (n, d = '') => { const h = process.argv.find((v) => v.startsWith(`--
 // (o antebraço passa na frente do pente em vez de atravessá-lo — md97).
 // fecho = fração da curva original dos dedos (1 = como veio; <1 abre o punho).
 export const GRIPS = {
-  m92: { corpo: 'MINT_WEAPON_M92', alvo: [-0.17, 0.105, 0.021], rolagem: 0, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'],
+  // M92: 2º passe leva o punho direito (fechava ~19 cm à frente, atrás do pente) ao cabo real.
+  m92: [{ corpo: 'MINT_WEAPON_M92', alvo: [-0.17, 0.105, 0.021], rolagem: 0, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'],
     dedosDireitosFechados: ['reload_tactical', 'reload_empty'] },
+  // O punho direito é rígido na arma em todos os clipes e o ombro fica sobre o cabo: quem anda é a
+  // arma (d no espaço dela: centro do punho → cabo a 3,5 cm do guarda-mato); o braço esquerdo vai junto, sem IK.
+  { tipo: 'deslocar', corpo: 'MINT_WEAPON_M92', d: [-0.224, -0.038, -0.025], lado: 'l' }],
+  // AK e AKM K: o pacote M4 fecha a mão esquerda abaixo do guarda-mão, na frente do pente, e o
+  // punho direito ~9 cm à frente do cabo (mesmo braço da M92); a arma anda até o punho.
+  ak: [{ corpo: 'MINT_WEAPON_AK', alvo: [-0.15, 0.08, 0.011], rolagem: 0, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'],
+    dedosDireitosFechados: ['reload_tactical', 'reload_empty'] },
+    { tipo: 'deslocar', corpo: 'MINT_WEAPON_AK', d: [-0.105, -0.038, -0.014], lado: 'l' }],
+  akm: [{ corpo: 'MINT_WEAPON_AKM', alvo: [-0.15, 0.08, 0.009], rolagem: 0, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'],
+    dedosDireitosFechados: ['reload_tactical', 'reload_empty'] },
+    { tipo: 'deslocar', corpo: 'MINT_WEAPON_AKM', d: [-0.117, -0.038, -0.013], lado: 'l' }],
   // Pente MD97 veio sem UV nem textura (0,8 cinza fosco = bloco branco na tela): herda
   // a média do atlas da própria arma (Color 0,32/0,30/0,28 sRGB, ORM rug. 0,48 metal 0,80).
   md97: { corpo: 'MINT_WEAPON_MD97', alvo: [-0.19, 0.049, -0.01], rolagem: 30, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'],
@@ -36,7 +48,9 @@ export const GRIPS = {
   // osso da bomba para correr junto no tiro. Alvo em RIG_WEAPON_SHOTGUN (unidades do rig).
   shotgun: { corpo: 'RIG_WEAPON_SHOTGUN', referencia: 'MINT_MECH_SHOTGUN_PUMP', frenteLocal: [0, 0, 1], cimaLocal: [0, 1, 0],
     // No tiro a mão original corre com a bomba virada: fica presa à bomba o clipe inteiro.
-    alvo: [0, -2.5, 14.5], eixo: 'vertical', rolagem: -60, fecho: 1, sempreNaArma: ['idle', 'shoot', 'inspect', 'equip_rifle'], poloFixo: true,
+    // Punho 1 cm à frente e 0,3 cm abaixo, dedos abertos (fecho 0,7) e polegar girado: as falanges
+    // médias entravam 1,7 cm no punho da bomba ("mão enterrada"); ficam 0,7 cm (vm-pegada-k PG11).
+    alvo: [0, -2.8, 15.5], eixo: 'vertical', rolagem: -70, fecho: 0.7, sempreNaArma: ['idle', 'shoot', 'inspect', 'equip_rifle'], poloFixo: true,
     clipes: ['idle', 'shoot', 'equip_rifle', 'reload_start', 'reload_loop', 'reload_end', 'inspect'] },
 };
 
@@ -80,7 +94,7 @@ function base(eixo, lado) {
 function smooth(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
 
 // IK de dois ossos no espaço de mundo; devolve rotações de mundo novas de braço e antebraço.
-function ik(S, E, H, alvo, qUpper, qLower, polo = null) {
+export function ik(S, E, H, alvo, qUpper, qLower, polo = null) {
   const L1 = E.distanceTo(S), L2 = H.distanceTo(E);
   const toT = alvo.clone().sub(S);
   const d = Math.min(toT.length(), (L1 + L2) * 0.999);
@@ -155,7 +169,64 @@ function fecharDedosDireitos(pose, clipes, trsIdle) {
   return { clipes, canais };
 }
 
+// Arma andando `d` no próprio espaço (B' = B·T_d) em todos os clipes; o braço `lado` recebe a mesma
+// translação de mundo pela clavícula, então mão, pente e alavanca continuam onde estavam na arma.
+export async function deslocar({ arma, entrada, saida, cfg }) {
+  const pose = await carregar(entrada);
+  const doc = pose.doc;
+  const buffer = doc.getRoot().listBuffers()[0];
+  const iB = pose.byName.get(cfg.corpo), iC = pose.byName.get(`clavicle_${cfg.lado}`);
+  if (iB == null || iC == null) throw new Error(`${arma}: corpo ou clavícula ausente`);
+  const [nB, nC] = [pose.nodes[iB], pose.nodes[iC]];
+  const d = new Vector3(...cfg.d);
+  const novaT = (trs, i, W) => {
+    if (i === iB) return new Vector3(...trs[iB].t).add(d.clone().multiply(new Vector3(...trs[iB].s)).applyQuaternion(new Quaternion(...trs[iB].r)));
+    const delta = d.clone().applyMatrix4(W[iB]).sub(pos(W[iB]));
+    const pai = W[pose.parent[iC]];
+    const local = delta.applyQuaternion(rot(pai).invert()).divide(new Vector3().setFromMatrixScale(pai));
+    return new Vector3(...trs[iC].t).add(local);
+  };
+  const relatorio = { arma, tipo: 'deslocar', d: cfg.d, clipes: {} };
+  let repouso = null;
+  for (const [clipe, anim] of pose.anims) {
+    const canal = (n, p) => anim.listChannels().find((c) => c.getTargetNode() === n && c.getTargetPath() === p);
+    const alvos = [[iB, nB], [iC, nC]].filter(([, n]) => canal(n, 'translation') || canal(n, 'rotation'));
+    if (!alvos.length) continue;
+    const tempos = [...new Set([nB, nC].flatMap((n) => ['translation', 'rotation'].map((p) => canal(n, p)).filter(Boolean)
+      .flatMap((c) => Array.from(c.getSampler().getInput().getArray()))))].sort((a, b) => a - b);
+    const out = [new Float32Array(tempos.length * 3), new Float32Array(tempos.length * 3)];
+    tempos.forEach((t, k) => {
+      const trs = pose.local(clipe, t);
+      const W = pose.mundo(trs);
+      out[0].set(novaT(trs, iB, W).toArray(), k * 3);
+      out[1].set(novaT(trs, iC, W).toArray(), k * 3);
+    });
+    const input = doc.createAccessor(`${clipe}_desloca_t`).setType('SCALAR').setArray(new Float32Array(tempos)).setBuffer(buffer);
+    [nB, nC].forEach((n, j) => {
+      const nova = doc.createAnimationSampler(`${clipe}_desloca_${j}`).setInput(input).setInterpolation('LINEAR')
+        .setOutput(doc.createAccessor().setType('VEC3').setArray(out[j]).setBuffer(buffer));
+      anim.addSampler(nova);
+      const c = canal(n, 'translation');
+      if (c) {
+        const s = c.getSampler();
+        c.setSampler(nova);
+        if (s.listParents().filter((p) => p.propertyType === 'AnimationChannel').length === 0) s.dispose();
+      } else anim.addChannel(doc.createAnimationChannel().setTargetNode(n).setTargetPath('translation').setSampler(nova));
+    });
+    if (clipe === 'idle') repouso = [Array.from(out[0].slice(0, 3)), Array.from(out[1].slice(0, 3))];
+    relatorio.clipes[clipe] = { quadros: tempos.length };
+  }
+  if (repouso) { nB.setTranslation(repouso[0]); nC.setTranslation(repouso[1]); }
+  // Clipes que só animam o pacote (tiro, saque, inspeção) usam o repouso: tem de ser o do idle.
+  if (!pose.anims.has('idle')) throw new Error(`${arma}: deslocar pede o clipe idle`);
+  await io.write(saida, doc);
+  const bytes = fs.readFileSync(saida);
+  relatorio.saida = { arquivo: saida, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+  return relatorio;
+}
+
 export async function aplicar({ arma, entrada, saida, cfg = GRIPS[arma], extra = {} }) {
+  if (cfg.tipo === 'deslocar') return deslocar({ arma, entrada, saida, cfg });
   cfg = { ...cfg, ...extra };
   const pose = await carregar(entrada);
   const I = (n) => { const i = pose.byName.get(n); if (i == null) throw new Error(`${arma}: nó ${n} ausente`); return i; };

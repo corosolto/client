@@ -75,7 +75,11 @@ check(cfg.ready === false, 'Revólver .38 precisa permanecer ready:false');
 check(createHash('sha256').update(bytes).digest('hex') === cfg.sha256, 'SHA-256 diverge do manifesto');
 check(bytes.length === cfg.bytes, 'tamanho diverge do manifesto');
 for (const name of required) check(clips.has(name), `clip ${name} ausente`);
-check(gltf.animations.length === required.length, `catálogo inesperado de clips (${[...clips.keys()]})`);
+// `ads`: pose de ADS de um quadro (ads-pose.mjs) que o runtime soma ao idle; só braço e arma.
+check(clips.has('ads'), 'clipe ads (pose de ADS própria) ausente');
+check(gltf.animations.length === required.length + 1, `catálogo inesperado de clips (${[...clips.keys()]})`);
+check(!clips.has('ads') || clips.get('ads').tracks.every((t) => /^(ik_hand_gun|upperarm_[lr]|lowerarm_[lr]|hand_[lr])\./.test(t.name)),
+  'clipe ads mexe fora do braço e da arma');
 check((clips.get('inspect')?.tracks.length || 0) >= 100, 'inspect não congela uma pose completa e pode herdar a recarga');
 check(Boolean(gun?.getObjectByProperty('isSkinnedMesh', true)), 'malha Viper-357 licenciada não preservada');
 check(Boolean(mint && muzzle && sight), 'marcador baked e sockets ADS/muzzle ausentes');

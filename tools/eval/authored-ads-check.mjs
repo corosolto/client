@@ -25,6 +25,9 @@
    ADS automático do shotgun (sockets invertidos) também ficava verde. AD1/AD3
    provam que o PIPELINE do ADS rodou; a imagem de mira é o `eval:vm-mira`
    (tools/eval/vm-reguas-check.mjs --regua=mira), medida no quadro desenhado.
+   AD4: produto com clipe `ads` (pose de ADS própria, ads-pose.mjs) tem os nós
+   do clipe na pose dele com o ADS assentado (≤1° e ≤1 mm); --mutante=sem-pose-ads
+   desliga a pose no runtime e tem de reprovar (--armas=revolver38).
    Uso: node tools/eval/authored-ads-check.mjs [--armas=ak] [--porta=8156]
    Requer private-assets — régua LOCAL (check:vm), fora do check:fast.
    ============================================================================ */
@@ -35,10 +38,12 @@ import { VM_WEAPON } from '../../public/js/data/vmconfig.js';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
-if (MUT && !['sem-ads', 'socket'].includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
+if (MUT && !['sem-ads', 'socket', 'sem-pose-ads'].includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
 const PORTA = arg('porta') || '8156';
 const BASE = `http://127.0.0.1:${PORTA}`;
-const ARMAS = (arg('armas') || 'ak').split(',').filter(Boolean);
+const ARMAS = (arg('armas') || 'ak,revolver38').split(',').filter(Boolean);
+// Produtos que TÊM de trazer a pose de ADS própria (clipe `ads`, ads-pose.mjs).
+const POSE_ADS = new Set(['revolver38']);
 const VIEWPORTS = [
   { name: '16:9', width: 1280, height: 720 },
   { name: '3:2', width: 1290, height: 860 },
@@ -84,6 +89,7 @@ try {
         (weapon) => window.__authoredVm?.entry?.(weapon),
         id, { timeout: 120000 },
       );
+      if (MUT === 'sem-pose-ads') await page.evaluate((weapon) => { const e = window.__authoredVm.entry(weapon); e.adsAction?.stop(); e.adsAction = null; }, id);
       await page.waitForTimeout(1200);   // blend do ADS + draw assentados
 
       // Arma que declara a linha de mira (alça + massa) é medida nela, não no socket:
@@ -170,7 +176,29 @@ try {
         }
         const clip = (value) => Math.min(1, Math.max(-1, value));
         const areaFrac = ((clip(maxX) - clip(minX)) / 2) * ((clip(maxY) - clip(minY)) / 2);
-        return { medivel, ndcX, ndcY, areaFrac, adsF: g.vm.adsF ?? 0, barrelAngleDeg, linhaDeMira: Boolean(linha) };
+        // AD4: nós do clipe `ads` no valor dele (o idle do runtime fica no quadro 0).
+        const clipAds = entry.clips?.get('ads');
+        let pose = null;
+        if (clipAds) {
+          pose = { grau: 0, mm: 0, nos: 0 };
+          const metro = (entry.scene.getObjectByName('hand_r')?.getWorldScale(entry.scene.position.clone()).x || 0.01) / 0.01;
+          for (const track of clipAds.tracks) {
+            const [nome, prop] = track.name.split('.');
+            const node = entry.scene.getObjectByName(nome);
+            if (!node) continue;
+            pose.nos += 1;
+            const val = track.values;
+            if (prop === 'quaternion') {
+              const q = node.quaternion;
+              const dot = Math.abs(q.x * val[0] + q.y * val[1] + q.z * val[2] + q.w * val[3]);
+              pose.grau = Math.max(pose.grau, 2 * Math.acos(Math.min(1, dot)) * 180 / Math.PI);
+            } else if (prop === 'position') {
+              const escala = node.parent ? node.parent.getWorldScale(entry.scene.position.clone()).x : 1;
+              pose.mm = Math.max(pose.mm, Math.hypot(node.position.x - val[0], node.position.y - val[1], node.position.z - val[2]) * escala / metro * 1000);
+            }
+          }
+        }
+        return { medivel, ndcX, ndcY, areaFrac, adsF: g.vm.adsF ?? 0, barrelAngleDeg, linhaDeMira: Boolean(linha), pose };
       }, { weapon: id, linha });
 
       const label = `${id}@${viewport.name}`;
@@ -210,6 +238,12 @@ try {
           check(medida.barrelAngleDeg <= 2, `AD3 ${label}: cano COLINEAR com o eixo óptico`,
             `${medida.barrelAngleDeg.toFixed(2)}°`);
         }
+      }
+      if (medida.pose || MUT === 'sem-pose-ads' || POSE_ADS.has(id)) {
+        const p = medida.pose;
+        const naPose = Boolean(p && p.nos > 0 && p.grau <= 1 && p.mm <= 1);
+        if (MUT === 'sem-pose-ads') check(p && !naPose, `AD4 ${label}: sem a pose de ADS o braço sai da pose (mutante)`, p ? `${p.grau.toFixed(1)}° ${p.mm.toFixed(1)} mm` : 'sem clipe ads');
+        else check(naPose, `AD4 ${label}: pose de ADS própria aplicada`, `${p.nos} canais, ${p.grau.toFixed(2)}° ${p.mm.toFixed(2)} mm`);
       }
       const offCenterGravado = medida.medivel && Number.isFinite(medida.ndcX)
         ? Number(Math.hypot(medida.ndcX, medida.ndcY).toFixed(4)) : null;
