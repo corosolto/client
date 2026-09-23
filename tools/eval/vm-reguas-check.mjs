@@ -57,12 +57,12 @@ const DIVIDA_ARQ = 'tools/eval/vm-reguas-divida.json';
 const divida = fs.existsSync(DIVIDA_ARQ) ? JSON.parse(fs.readFileSync(DIVIDA_ARQ, 'utf8')).dividas || {} : {};
 
 const srv = await P.subirServidor(PORTA);
-const browser = await P.abrirNavegador();
+let browser = await P.abrirNavegador();
 const t0 = Date.now();
 const resultados = {};
 let refs = {};
 try {
-  const { page, erros, width } = await P.abrirJogo(browser, srv.base, ASPECTO);
+  let { page, erros, width } = await P.abrirJogo(browser, srv.base, ASPECTO);
   refs = await coletarReferencias(page, reguas, { pistola: arg('ref-pistola', 'aprovada'), ak: arg('ref-ak', 'aprovada'),
     aspecto: ASPECTO, assarPistola: flag('assar-pistola'), assarAk: flag('assar-ak') });
   refs.largura = width;
@@ -70,11 +70,24 @@ try {
   for (const arma of armas) {
     const t = Date.now();
     let c;
-    try {
-      c = await coletar(page, arma, { reguas, mut: MUT, fotos: FOTOS, variante: VARIANTE });
-    } catch (e) {
-      if (/MUTANTE NAO APLICOU/.test(e.message)) throw e;
-      c = { arma, erro: String(e.message || e).slice(0, 300) };
+    for (let tentativa = 0; tentativa < 2; tentativa++) {
+      try {
+        c = await coletar(page, arma, { reguas, mut: MUT, fotos: FOTOS, variante: VARIANTE });
+        break;
+      } catch (e) {
+        if (/MUTANTE NAO APLICOU/.test(e.message)) throw e;
+        c = { arma, erro: String(e.message || e).slice(0, 300) };
+        // Navegador/aba caiu (swiftshader sob carga de outras sessões): sobe de novo e
+        // mede a arma outra vez; a segunda queda fica registrada como NÃO MEDE.
+        if (tentativa === 0 && /closed|crash|Target/i.test(c.erro)) {
+          console.log(`… ${arma}: aba caiu (${c.erro.slice(0, 80)}), reabrindo`);
+          await browser.close().catch(() => {});
+          browser = await P.abrirNavegador();
+          ({ page, erros, width } = await P.abrirJogo(browser, srv.base, ASPECTO));
+          continue;
+        }
+        break;
+      }
     }
     resultados[arma] = {};
     for (const r of reguas) {
@@ -124,8 +137,15 @@ if (MUT) {
 
 if (PLACAR && !MUT) {
   const entradas = entradasDoPlacar();
-  const placar = { gerado: new Date().toISOString().slice(0, 10), aspecto: ASPECTO, entradas: entradas.hash, resultados };
-  fs.writeFileSync('tools/eval/vm-reguas-placar.json', `${JSON.stringify(placar, null, 1)}\n`);
+  // Placar parcial (--regua=<algumas> ou --armas=<algumas>) ATUALIZA as células medidas e
+  // guarda as outras; `parcial` registra o que foi re-medido sob as entradas atuais.
+  const ARQ = 'tools/eval/vm-reguas-placar.json';
+  const antigo = fs.existsSync(ARQ) ? JSON.parse(fs.readFileSync(ARQ, 'utf8')) : null;
+  const completo = reguas.length === REGUAS.length && armas.length === TODAS.length;
+  const junto = completo || !antigo ? resultados : Object.fromEntries(Object.entries(antigo.resultados).map(([a, rr]) => [a, { ...rr, ...(resultados[a] || {}) }]));
+  const placar = { gerado: new Date().toISOString().slice(0, 10), aspecto: ASPECTO, entradas: entradas.hash, resultados: junto,
+    ...(completo ? {} : { parcial: { reguas, armas: armas.length === TODAS.length ? 'todas' : armas, base: antigo?.gerado } }) };
+  fs.writeFileSync(ARQ, `${JSON.stringify(placar, null, 1)}\n`);
   fs.mkdirSync('artifacts/vm-reguas', { recursive: true });
   fs.writeFileSync('artifacts/vm-reguas/PLACAR.md', placarMd(placar));
   console.log('placar: tools/eval/vm-reguas-placar.json + artifacts/vm-reguas/PLACAR.md');

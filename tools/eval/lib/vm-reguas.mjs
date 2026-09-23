@@ -358,7 +358,9 @@ export const JUIZ = {
       } else {
         const desloc = r0.local && a.local ? Math.hypot(a.local[0] - r0.local[0], a.local[1] - r0.local[1], a.local[2] - r0.local[2]) : Infinity;
         a.desloc = desloc;
-        if (!k.clipe && repousoNaArma && desloc <= T.deslocMax) e = 'arma';
+        // Na arma: no encaixe, ou saindo/entrando dele ainda encostada no corpo (a PT-38
+        // aprovada solta o pente a 0,44 palma do encaixe aos 15%, raspando no punho).
+        if (!k.clipe && repousoNaArma && (desloc <= T.deslocMax || (desloc <= T.encaixeMax && a.dArma <= T.encostaMax))) e = 'arma';
         else if (a.dMao <= T.maoMax) e = 'mao';
         else if (k.clipe && a.dArma <= T.encostaMax) e = 'arma';
         else if (Number.isFinite(yAnt) && a.vista && a.vista[1] - yAnt <= -T.quedaMin) e = 'caindo';

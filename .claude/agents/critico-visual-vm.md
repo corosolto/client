@@ -76,7 +76,7 @@ de 1440 px de largura; se o seu olho discordar do número, diga os dois.
 - **arma pequena / gigante**: arma longa fora de **80–125%** da AK (tamanho
   linear); compacta (mp5, uzi, p90) fora de **50–100%**; lmg fora de **65–85%**;
   curta fora de **80–125%** da pistola (por comprimento da arma).
-- **mão de apoio não encosta**: dedos a mais de ~**1,5–2 cm** (0,15 palma) da arma.
+- **mão de apoio não encosta**: dedos a mais de ~**2–2,5 cm** (0,20 palma) da arma.
 - **objeto no meio do ar**: peça visível a mais de uma palma e meia (0,7 palma
   de junta) de qualquer mão e fora do encaixe, sem estar caindo.
 
