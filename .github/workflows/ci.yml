@@ -98,6 +98,10 @@ jobs:
         run: npm run eval:melee-vm
       - name: Chave tudo-ou-nada do viewmodel (sem ativação parcial)
         run: npm run eval:vm-launch
+      # As réguas de imagem (mira, cobertura, pistola-ref, mãos, carregador) pedem o
+      # catálogo privado e navegador; aqui o CI cobra o RESULTADO assado delas.
+      - name: Placar das réguas de imagem do viewmodel em dia
+        run: npm run eval:vm-placar
       - name: Navegação dos bots (60 s × 5 mapas, sementes fixas)
         run: node tools/eval/botsim.mjs 60 all
 
