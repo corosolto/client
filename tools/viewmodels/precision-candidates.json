@@ -9,13 +9,15 @@
       "sourceSha256": "e0eff49d747369e43cdde24882ebb2b105150dd62d43e314be5a062f2f8ed73c",
       "optimizedBytes": 5298504,
       "optimizedSha256": "94386beceefde96a481458c296f616178ae56f8a1a70b8ae63be8697841655a2",
-      "sha256": "69c750bb5b1037c92ced0108fd43657934f229ff0da850dcb76f3882187bf5b6",
-      "bytes": 5669200,
+      "sha256": "ea1195452048dfc352948d135f84805b8d295ca2a3a50e2e4e21cfc3cb6caca7",
+      "bytes": 5492332,
       "fixL3L5": {
         "sourceSha256": "52b8db3adc4415364accf34d5b039d1399df988482268150790b4cc40399c56b",
         "sourceBytes": 5298468,
         "recipe": "tools/viewmodels/prep/desvira-malha.mjs --arma=mosin"
-      }
+      },
+      "postProcess": "node tools/viewmodels/prep/saque-do-idle.mjs --arma=mosin --in=<vm/integracao-k>/bolt/mosin-baked-runtime.glb --out=<privado>/bolt/mosin-baked-runtime.glb && node tools/viewmodels/prep/municao-na-mao.mjs --arma=mosin --in=<privado>/bolt/mosin-baked-runtime.glb --out=<privado>/bolt/mosin-baked-runtime.glb",
+      "postProcessInputSha256": "69c750bb5b1037c92ced0108fd43657934f229ff0da850dcb76f3882187bf5b6"
     },
     "svd": {
       "family": "svd",
