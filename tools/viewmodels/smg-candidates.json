@@ -8,17 +8,22 @@
       "file": "viewmodels/mp5/mp5-runtime.glb",
       "sourceSha256": "c623f27ccc2ca163f9d7b4bb94524ff9bf8b69b805fdafba2fb913e8c1a6382d",
       "sourceBytes": 281500,
-      "productSha256": "ac4630c4941b33e626ebbee61071c3b5c558de24647338da87da32346cba9903",
-      "productBytes": 1550620,
-      "sha256": "ac4630c4941b33e626ebbee61071c3b5c558de24647338da87da32346cba9903",
-      "bytes": 1550620,
+      "productSha256": "b548817afd0725ef52ac8ba11834fd44acf4e48678785adb15fa425f6161fd58",
+      "productBytes": 1540288,
+      "sha256": "b548817afd0725ef52ac8ba11834fd44acf4e48678785adb15fa425f6161fd58",
+      "bytes": 1540288,
       "mechanism": "curved-mag/release/charging-handle/bolt/trigger",
       "ready": false,
       "sourceBranch": "public/models/weapons/mp5.glb + private g3-kinemation checkpoint",
       "sourceCommit": null,
       "rebuild": "tools/viewmodels/prep/smg-mp5-kinemation.py",
       "foundationSha256": "35f3d2daf6c83096b33b8e1178220ebf6b7b268d1a8017acd376d65a078e0c21",
-      "foundationBytes": 1827612
+      "foundationBytes": 1827612,
+      "fixMags": {
+        "sourceSha256": "ac4630c4941b33e626ebbee61071c3b5c558de24647338da87da32346cba9903",
+        "sourceBytes": 1550620,
+        "recipe": "tools/viewmodels/prep/mag-na-mao.mjs --arma=mp5"
+      }
     },
     "uzi": {
       "displayName": "UZI RA-TA-TA",
@@ -28,15 +33,20 @@
       "sourceBytes": 271280,
       "foundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102",
       "foundationBytes": 3764304,
-      "productSha256": "353d0384ec60a0e6ffc99ef38b5092a5773c2562e2e4bc401adef1228ef0a9fc",
-      "productBytes": 4267588,
-      "sha256": "353d0384ec60a0e6ffc99ef38b5092a5773c2562e2e4bc401adef1228ef0a9fc",
-      "bytes": 4267588,
+      "productSha256": "f5c2da77aa1a5f6ee4343a13620ce636ebeb22fa07c6da4a97a2e4d58169ff5a",
+      "productBytes": 5138408,
+      "sha256": "f5c2da77aa1a5f6ee4343a13620ce636ebeb22fa07c6da4a97a2e4d58169ff5a",
+      "bytes": 5138408,
       "mechanism": "detachable-mag/top-bolt/trigger",
       "ready": false,
       "sourceBranch": "private-generated/viewmodels/smg+public/models/weapons/uzi.glb",
       "sourceCommit": null,
-      "rebuild": "tools/viewmodels/prep/smg-uzi-final.mjs"
+      "rebuild": "tools/viewmodels/prep/smg-uzi-final.mjs",
+      "fixMags": {
+        "sourceSha256": "353d0384ec60a0e6ffc99ef38b5092a5773c2562e2e4bc401adef1228ef0a9fc",
+        "sourceBytes": 4267588,
+        "recipe": "tools/viewmodels/prep/uzi-uma-mao.mjs (doador pistol-runtime.glb)"
+      }
     },
     "p90": {
       "displayName": "P90 CHINELÃO",
@@ -44,17 +54,22 @@
       "file": "viewmodels/p90/p90-baked-runtime.glb",
       "sourceSha256": "6fda87809ab60e1fea7a1e7bf5ebc5355e6ee70d595f7c4610ed88e847560aa2",
       "sourceBytes": 254312,
-      "productSha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
-      "productBytes": 1477620,
-      "sha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
-      "bytes": 1477620,
+      "productSha256": "0de4972b68e2f8ddb6ae2721d5d0ac880004df40157cb5989d643e8c4c22dbae",
+      "productBytes": 1469436,
+      "sha256": "0de4972b68e2f8ddb6ae2721d5d0ac880004df40157cb5989d643e8c4c22dbae",
+      "bytes": 1469436,
       "mechanism": "top-mag/dual-release/charger/mechanism/trigger",
       "ready": false,
       "sourceBranch": "public/models/weapons/p90.glb + private g3-kinemation checkpoint",
       "sourceCommit": null,
       "rebuild": "tools/viewmodels/prep/smg-p90-kinemation.py",
       "foundationSha256": "35f3d2daf6c83096b33b8e1178220ebf6b7b268d1a8017acd376d65a078e0c21",
-      "foundationBytes": 1827612
+      "foundationBytes": 1827612,
+      "fixMags": {
+        "sourceSha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
+        "sourceBytes": 1477620,
+        "recipe": "tools/viewmodels/prep/mag-na-mao.mjs --arma=p90"
+      }
     }
   }
 }
