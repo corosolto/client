@@ -25,7 +25,10 @@ const ARMAS = {
     clipes: { inspect: 5 } },
   // Entrada = saída de desvira-malha.mjs --arma=m400.
   m400: { sha: 'b73dbd0171aee188e11fb861651ea5ae2e9eb2f50b6f50d9a41ea518a323ef7c', arquivo: 'm400-baked-runtime.glb', arma: 'MINT_WEAPON_M400',
-    clipes: { shoot: 1, inspect: 1, equip_rifle: 1 }, sobreORepouso: 'VM_PACKAGE_M400' },
+    clipes: { shoot: 1, inspect: 1, equip_rifle: 1 }, sobreORepouso: 'VM_PACKAGE_M400',
+    // Virada, a mão esquerda do pacote fica 8 cm abaixo do guarda-mão (eval:vm-maos 0,32 palma): IK do grip-support.
+    apoio: { corpo: 'MINT_WEAPON_M400', alvo: [-0.2, 0.04, 0.015], rolagem: 0, fecho: 1,
+      clipes: ['idle', 'shoot', 'inspect', 'equip_rifle', 'reload_empty', 'reload_tactical'] } },
 };
 const option = (name) => (process.argv.find((value) => value.startsWith(`--${name}=`)) || '').slice(name.length + 3);
 const cfg = ARMAS[option('arma')];
@@ -83,6 +86,11 @@ for (const [nome, ganho] of Object.entries(cfg.clipes)) {
 await fs.mkdir(outputDir, { recursive: true });
 const output = path.join(outputDir, cfg.arquivo);
 await io.write(output, doc);
+if (cfg.apoio) {
+  const { aplicar } = await import('./grip-support.mjs');
+  const r = await aplicar({ arma: option('arma'), entrada: output, saida: output, cfg: cfg.apoio });
+  resumo.apoio = Object.fromEntries(Object.entries(r.clipes).map(([k, v]) => [k, [v.pesoMin, v.pesoMax, v.alcanceMax]]));
+}
 const outputBytes = await fs.readFile(output);
 const report = { schemaVersion: 1, weapon: option('arma'), clipes: resumo, idleEmLaco: dIdle,
   source: { bytes: sourceBytes.length, sha256: cfg.sha }, product: { file: output, bytes: outputBytes.length, sha256: digest(outputBytes) } };

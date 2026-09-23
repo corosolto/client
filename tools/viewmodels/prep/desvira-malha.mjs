@@ -11,7 +11,8 @@
  * pelas duas palmas (punho e guarda-mão ficam na mão; o contato dos dedos é o que o verify DMR cobra).
  * `apoio`: depois do giro a mão esquerda do pacote fica no cano nu, além do guarda-mão; a pegada vai
  * para o centro da seção do guarda-mão (z 0,36 local) pelo IK do grip-support.mjs (#633).
- * `apoio` na mosin: virada, a mão esquerda ficava na boca do cano; vai ao centro do guarda-mão.
+ * `apoio` na mosin/svd: virada, a mão esquerda ficava na boca do cano; vai ao centro do guarda-mão
+ * (eval:vm-maos da #636: svd 0,25 palma sem isso).
  * `fixaNaArma` (svd): o osso `Mag` do doador G3SG1 carrega o pente virado para longe das mãos (0,10 m
  * no melhor quadro; o crítico viu a peça parada no ar). Até existir pose de mão, o pente fica na arma.
  * `giraMira`/`bocaNaPonta`: o SOCKET_MINT_SIGHT tinha sido posto sobre a malha virada e gira junto;
@@ -37,7 +38,9 @@ const ARMAS = {
     apoio: { corpo: 'MINT_WEAPON_MOSIN', alvo: [-0.09, 0.041, 0.021], rolagem: 0, fecho: 1,
       clipes: ['idle', 'shoot', 'inspect', 'equip_rifle', 'reload_empty', 'reload_start', 'reload_loop', 'reload_end'] } },
   svd: { sha: 'f44732930d24dcb78a728ea3a1c1458d0d763a23a79749ea8ad54366a9e376e9', arquivo: 'svd-baked-runtime.glb',
-    arma: 'MINT_WEAPON_SVD', malha: 'GEO_MINT_SVD', pecas: ['MINT_SVD_MAG'], giraMira: true, bocaNaPonta: true, fixaNaArma: ['MINT_SVD_MAG'] },
+    arma: 'MINT_WEAPON_SVD', malha: 'GEO_MINT_SVD', pecas: ['MINT_SVD_MAG'], giraMira: true, bocaNaPonta: true, fixaNaArma: ['MINT_SVD_MAG'],
+    apoio: { corpo: 'MINT_WEAPON_SVD', alvo: [-0.08, 0.025, -0.01], rolagem: 0, fecho: 1,
+      clipes: ['idle', 'shoot', 'inspect', 'equip_rifle', 'reload_empty', 'reload_tactical'] } },
   m400: { sha: 'f75e4625c1199d3fed6fb9f132e5cc59a0c742dc41a92bcac5fa6bcab76f739d', arquivo: 'm400-baked-runtime.glb',
     arma: 'MINT_WEAPON_M400', malha: 'MINT_WEAPON_M400', pecas: [], bocaNaPonta: true, vertices: ['MINT_WEAPON_M400', 'MINT_WEAPON_M400_MAG'], conjuga: ['MINT_WEAPON_M400_MAG'] },
   rem700: { sha: '439a4859d840b241680cd6a566bf62b989b7a63c01bbf89d45c7d3b24f1e79fa', arquivo: 'rem700-baked-runtime.glb',
