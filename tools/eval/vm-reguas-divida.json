@@ -24,30 +24,10 @@
     ],
     "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
    },
-   "mosin": {
-    "valor": "1 falha(s)",
-    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
-    "medido": "tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
-   },
    "p90": {
     "valor": "1 falha(s)",
     "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
     "medido": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
-   },
-   "rem700": {
-    "valor": "1 falha(s)",
-    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
-    "medido": "tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.",
     "aspectos": [
      "16x9",
      "3x2"
@@ -195,39 +175,18 @@
      "3x2"
     ],
     "fila": "config (frame) — se o frame sozinho piora, pose/IK"
+   },
+   "scar": {
+    "valor": "1.20× AK",
+    "dono": "vm/w3-config (fila C1: ADS da scar tombado +28°, sem aparelho de mira)",
+    "medido": "no ADS arma+braço cobrem 19.3% da tela (teto 18.5%) — era 17.9% com a mão de apoio no poço do pente; a pegada no guarda-mão (grip-support, P1/P15) põe o antebraço de apoio no quadro do ADS. Quadril: braço 1.01× AK, cruz 0 px.",
+    "aspectos": [
+     "3x2"
+    ],
+    "fila": "config (C1): o ADS da scar é reenquadrado pela vm/w3-config; re-medir depois dele"
    }
   },
   "maos": {
-   "carbine": {
-    "valor": "0.38",
-    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
-    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.38 palma da malha da arma (palma 0.70); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (grip-support)"
-   },
-   "g3": {
-    "valor": "0.40",
-    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
-    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.40 palma da malha da arma (palma 0.74); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (grip-support)"
-   },
-   "scar": {
-    "valor": "0.44",
-    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
-    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.44 palma da malha da arma (palma 0.79); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (grip-support)"
-   },
    "tavor": {
     "valor": "0.30",
     "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
@@ -236,7 +195,7 @@
      "16x9",
      "3x2"
     ],
-    "fila": "pose/IK (grip-support)"
+    "fila": "Blender/clipe (B1): pegada por grip-support revertida — o idle novo muda o tubo da manga na recarga (crítico A/B vm/w3-pose: PIOROU 2x)"
    }
   },
   "mira": {

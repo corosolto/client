@@ -70,6 +70,10 @@ export const ARMAS = {
     gatilho: 'MINT_MECH_SHOTGUN_TRIGGER', checks: ['PG1', 'PG2', 'PG3', 'PG6', 'PG10', 'PG11'] },
   revolver38: { arquivo: 'revolver/revolver-runtime.glb', ref: 'RIG_WEAPON_REVOLVER', gatilho: 'Trigger',
     checks: ['PG2', 'PG5', 'PG6', 'PG7', 'PG9'] },
+  // Fila P1/P11/P15 (vm/w3-pose): punho vertical do pacote M4 abaixo do guarda-mão → grip-support.
+  scar: { arquivo: 'ar/scar-baked-runtime.glb', malha: 'MINT_WEAPON_SCAR', ref: 'MINT_WEAPON_SCAR', eixo: 0, checks: ['PG1', 'PG3', 'PG10'] },
+  carbine: { arquivo: 'ar/carbine-baked-runtime.glb', malha: 'MINT_WEAPON_CARBINE', ref: 'MINT_WEAPON_CARBINE', eixo: 0, checks: ['PG1', 'PG3', 'PG10'] },
+  g3: { arquivo: 'g3/g3-baked-runtime.glb', malha: 'MINT_WEAPON_G3', ref: 'MINT_WEAPON_G3', eixo: 0, checks: ['PG1', 'PG3', 'PG10'] },
 };
 
 const pos = (m) => new Vector3().setFromMatrixPosition(m);
@@ -252,7 +256,8 @@ if (process.argv.includes('--mutantes')) {
   else {
     const velhos = await rodada(CATALOGO, () => ({ auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0] }));
     // Cada produto reprovado tem de cair na cláusula que o conserto dele move, não em qualquer uma.
-    const MORDE = { ak: ['PG1', 'PG8'], akm: ['PG1', 'PG8'], m92: ['PG1', 'PG8'], md97: ['PG1', 'PG4'], shotgun: ['PG10', 'PG11'], revolver38: ['PG5', 'PG9'] };
+    const MORDE = { ak: ['PG1', 'PG8'], akm: ['PG1', 'PG8'], m92: ['PG1', 'PG8'], md97: ['PG1', 'PG4'], shotgun: ['PG10', 'PG11'], revolver38: ['PG5', 'PG9'],
+      scar: ['PG1'], carbine: ['PG1'], g3: ['PG1'] };
     for (const l of velhos) {
       const mordeu = (MORDE[l.arma] || []).every((k) => l.falhas.includes(k)) && l.falhas.length > 0;
       console.log(`MUTANTE produto-reprovado ${l.arma.padEnd(11)} ${mordeu ? 'VERMELHO (mordeu)' : 'VERDE (CEGA)'} falhas=${l.falhas.join(',')}`);
