@@ -270,8 +270,12 @@ const hasGoldenRuntime = /ak:\s*\{\s*ready:\s*true/.test(vmconfigSource)
   && /ak:\s*W\('ak',\s*\{\s*baked:\s*true,\s*golden:\s*true/.test(vmconfigSource)
   && /return `gold#\$\{weapon\}`/.test(authoredVmSource)
   && /cameraAspect\s*=\s*authoredCamera\.aspect/.test(authoredVmSource);
-check(isAkm || hasGoldenRuntime,
-  'AK golden não está ligada como ready ao GLB/câmera embutida no runtime');
+// Desde o vm/k-rebuild a AK do jogo é o produto K (rifles-ak-final.py); o golden
+// segue versionado como referência visual e este contrato continua medindo o GLB.
+const hasKRuntime = /ak:\s*\{\s*ready:\s*true/.test(vmconfigSource)
+  && /ak:\s*W\('ak',\s*\{\s*baked:\s*true,(?![^)]*golden)/.test(vmconfigSource);
+check(isAkm || hasGoldenRuntime || hasKRuntime,
+  'AK não está ligada como ready nem ao golden (GLB/câmera embutida) nem ao produto K');
 
 const idleMagazineScale = animationTrack('Idle', 'Mag_metarig', 'scale')[0];
 const shootMagazineScale = animationTrack('Shoot', 'Mag_metarig', 'scale')

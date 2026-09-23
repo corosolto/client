@@ -34,7 +34,7 @@ export const FAMILY_VER = Object.freeze({
   "bolt": "a6b2a701ac",
   "deagle": "9716c72881",
   "g3": "51dfcacd14",
-  "grenade": "5b785ea19a",
+  "grenade": "f6033daefb",
   "lmg": "ce9921338a",
   "marksman": "bc4e8a11cc",
   "mp5": "4d08736e61",

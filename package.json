@@ -122,6 +122,8 @@
     "eval:vm-pistol-revolver-lifecycle": "node tools/eval/viewmodel-pistol-revolver-lifecycle-check.mjs",
     "capture:vm-pistol-revolver": "node tools/viewmodels/prep/pistols-revolver-capture.mjs",
     "eval:vm-smg-mp5": "node tools/viewmodels/prep/smg-mp5-verify.mjs",
+    "//eval:vm-pente-na-mao": "carregador/clipe visível na mão durante a recarga, no jogo real, com piso medido na AK golden (VM-FIX-MAGS)",
+    "eval:vm-pente-na-mao": "node tools/eval/vm-pente-na-mao.mjs",
     "eval:vm-smg-mp5-lifecycle": "node tools/eval/viewmodel-smg-mp5-lifecycle-check.mjs",
     "eval:vm-smg-uzi": "node tools/viewmodels/prep/smg-uzi-verify.mjs",
     "eval:vm-smg-uzi-lifecycle": "node tools/eval/viewmodel-smg-uzi-lifecycle-check.mjs",
@@ -405,7 +407,12 @@
     "capture:vm-lmg-final": "node tools/viewmodels/prep/lmg-final-capture.mjs",
     "capture:vm-arsenal-video": "node tools/viewmodels/prep/arsenal-video-capture.mjs",
     "eval:vm-frame": "node tools/viewmodels/prep/vm-frame-calibra.mjs --tabela",
-    "eval:vm-rig": "node tools/eval/viewmodel-rig-contract-check.mjs --tabela"
+    "eval:vm-pegada-k": "node tools/eval/vm-pegada-k-check.mjs --mutantes",
+    "eval:vm-rig": "node tools/eval/viewmodel-rig-contract-check.mjs --tabela",
+    "//eval:vm-manga-oca": "ponta da manga K nunca no quadro, em todo clipe e no arco de saque (crítico cego r2, 23/09/2026); mutantes sem-extensao e extensao-curta ficam vermelhos",
+    "eval:vm-manga-oca": "node tools/eval/vm-manga-oca-check.mjs --tabela",
+    "//eval:vm-orientacao": "malha da arma de trás para frente (ICP girado 180°: sks/mosin/svd/m400, crítico cego L3–L5 23/09/2026); mutante original = catálogo Codex fica vermelho",
+    "eval:vm-orientacao": "node tools/eval/vm-orientacao-check.mjs --mutantes"
   },
   "repository": {
     "type": "git",

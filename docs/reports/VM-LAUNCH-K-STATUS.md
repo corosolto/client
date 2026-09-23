@@ -38,9 +38,9 @@ humana pendente.
 
 | Arma | Rig | Asset servido | Clipes no GLB | R | V | F (3:2 / 16:9) | Codex | Defeito conhecido / falta |
 |---|---|---|---|---|---|---|---|---|
-| ak | **golden público** (metarig AK, 77 juntas) | `models/viewmodels/coro/ak-hires.glb` | Equip, Idle, Reload, Shoot | sim | sim | referência (câmera do GLB 58,00°) | G/H | **rebuild em K pendente**; sem inspect/reload_empty |
-| knife | **golden público** (52 juntas) | `models/viewmodels/coro/melee/knife-hires.glb` | Idle, Draw, Slash, Stab, QuickThrust, HeavyStab | sim (`VM_MELEE`) | câmera 50,00° ok | n/a | G/H | **rebuild em K pendente** |
-| pistol (PT-38) | K | `pistol/pistol-runtime.glb` | idle, inspect, reload_empty, reload_tactical, shoot | sim | sim | **1,796× / 1,773×** (braço 2,25× / 2,17×) | F/P | **reescala ao enquadramento da AK pendente** (única falha do `eval:vm-frame`) |
+| ak | **K** (vm/k-rebuild) | `ak/ak-baked-runtime.glb` | equip_rifle, idle, inspect, reload_empty, reload_tactical, shoot | sim* | sim | 1,063 / 0,962 | — | **re-aprovação do dono no K**; golden segue no Git só como referência |
+| knife | **K** (vm/k-rebuild) | `knife/knife-baked-runtime.glb` | Idle, Draw, Slash, Stab, QuickThrust, HeavyStab, Inspect | sim* (`VM_MELEE`) | câmera 50,00° ok | n/a | — | **re-aprovação do dono no K**; palma 1,35× maior que a da faca L na tela |
+| pistol (PT-38) | K | `pistol/pistol-runtime.glb` | idle, inspect, reload_empty, reload_tactical, shoot | sim* | sim | 0,999 / 0,985 (braço 0,93× / 0,89×) | F/P | **re-aprovação do dono** do novo enquadramento (pega e clipes intocados) |
 | deagle | K | `deagle/deagle-runtime.glb` | idle, inspect, reload_empty, reload_tactical, shoot | não | sim | 0,927 / 0,911 | G/H/P | sem `equip_rifle` próprio (saque pelo clipe geral) |
 | revolver38 | K | `revolver/revolver-runtime.glb` | idle, inspect, reload_empty, shoot | não | sim | 1,109 / 1,096 | G/H/P | sem `equip_rifle` |
 | m4 | K | `ar/m4-baked-runtime.glb` | equip_rifle, idle, inspect, reload_empty, reload_tactical, shoot | não | sim | 0,946 / 0,881 | G/H/P | — |
@@ -64,39 +64,88 @@ humana pendente.
 | sks | K | `marksman/sks-baked-runtime.glb` | equip_rifle, idle, inspect, reload_empty, reload_start/loop/end, shoot | não | sim | 1,000 / 0,955 | G/H/P | — |
 | shotgun | K | `shotgun/shotgun-baked-runtime.glb` | equip_rifle, idle, inspect, reload_start/loop/end, shoot | não | sim | 1,001 / 0,941 | G/H/P | em idle a arma ocupa a metade direita com uma peça vermelha na boca do cano; igual ao recibo Codex, pede olho do dono |
 | lmg | K | `lmg/lmg-baked-runtime.glb` | idle, inspect, reload_empty, reload_tactical, shoot | não | sim | 0,723 / 0,691 (faixa própria 0,65–0,85) | G/H/P | sem `equip_rifle` |
-| grenade | **sem produto K** | `grenade/grenade-runtime.glb` **ausente (404)** | — | sim (família, desde o #618) | n/a | n/a | — | **asset K inexistente em `~/csbrasil-private-assets`**; com a chave ligada o VL6 reprova |
+| grenade | **K** (vm/k-rebuild) | `grenade/grenade-runtime.glb` + `grenades-world.glb` | idle, equip, throw_start, throw_loop, throw_end | sim* (família) | n/a | n/a | — | **re-aprovação do dono no K** (antes: 404, arremesso no legado) |
+
+\* **As quatro flags `ready:true` de AK, pistola, faca e granada são vereditos do dono sobre as
+versões ANTERIORES** (AK e faca golden, PT-38 no enquadramento antigo, granada inexistente).
+O `vm/k-rebuild` não mexeu em nenhuma flag: as quatro precisam de **RE-APROVAÇÃO do dono no K**
+antes de qualquer `VM_LAUNCH=true`. Nos manifestos (`rifle-`, `sidearm-`, `melee-candidates.json`)
+os produtos continuam `ready:false`, que é o estado de produto aguardando o dono.
 
 Caminhos relativos a `public/private-assets/viewmodels/` (catálogo privado, layout idêntico ao
-`preview-root` do Codex) salvo os dois golden em `public/`. As versões de URL dos produtos K
-saem de `data/vmbytes.js` (sha256 dos manifestos `tools/viewmodels/*-candidates.json`); os 24
+`preview-root` do Codex). As versões de URL dos produtos K
+saem de `data/vmbytes.js` (sha256 dos manifestos `tools/viewmodels/*-candidates.json`); os
 arquivos locais batem com o hash (`eval:vm-cache`, mutante `produto-reassado`).
 
 ## Pendências para o dono ligar a chave
 
-1. **AK em K**: hoje é o golden público na linhagem metarig (outro rig, outro atlas de mão).
-2. **Faca em K**: idem (knife-hires, 52 juntas).
-3. **PT-38**: reescalar ao enquadramento da AK (1,796× → faixa 0,88–1,12) e braço (2,25×).
-4. **Granada**: não existe produto K; construir `grenade-runtime.glb` com `UTILITY_HE/FLASH/SMOKE`
-   e os clipes `throw_start/loop/end`.
-5. **Veredito visual por arma** e as flags `ready` (m92/akm estão `false` por decisão do #618;
+1. **Re-aprovação no K** de AK, faca, PT-38 e granada (seção abaixo e folhas antes/depois em
+   `artifacts/vm-k-rebuild/sheets/`, não versionadas).
+2. **Veredito visual por arma** e as flags `ready` (m92/akm estão `false` por decisão do #618;
    as demais famílias fechadas). A fila humana da auditoria Codex segue valendo, agora com
    `?vmauthored=1` na URL.
-6. **Entrega em produção** do catálogo privado (frente `vm-blob-delivery`, `scripts/fetch-viewmodels.sh`);
+3. **Entrega em produção** do catálogo privado (frente `vm-blob-delivery`, `scripts/fetch-viewmodels.sh`);
    o layout de URL aqui é o do preview-root.
+
+## vm/k-rebuild: AK, faca, PT-38 e granada no rig K
+
+Todas as receitas partem do checkpoint Codex `m4-final.blend` (sha256 `e4b3fdfc…`) ou do pack
+extraído, escrevem só fora do Git e têm gate causal com mutantes.
+
+| Arma | Receita | Gate | O que mudou em relação à versão aprovada |
+|---|---|---|---|
+| PT-38 | só `VM_WEAPON.pistol.frame` + `ads.pull` | `eval:vm-frame` | pacote recua de z -0,22 para -0,566 m mantendo a alça no mesmo ponto da tela; fov 55, yaw 15°, pega e clipes iguais; `pull` 0,396 devolve o ADS à profundidade antiga |
+| granada | `build_paid_grenade.py` → `bind_paid_grenade.mjs` → `finish_paid_grenade.mjs` → `optimize_paid_family.mjs --familia=grenade` | `eval:vm-launch` VL6, `eval:vm-cache` | clipes crus somavam 6,4 s tocados em 1,05 s; agora throw_start ×0,5, espera 0,1 s, pino e argola vão para os dedos da mão esquerda, a granada some da mão no arremesso; enquadramento x -0,05 / y 0 |
+| AK | `tools/viewmodels/prep/rifles-ak-final.py` | `rifles-ak-verify.mjs` (14 mutantes) | ak.glb pública sobre o rig K; pente curvo, trava e manivela reais; coice do pacote ×3,5 para a tela andar como a golden; frame buscado para a silhueta da golden dentro da faixa do `eval:vm-frame` |
+| faca | `knife-k-alvos.mjs` → `knife-k-build.py` → `optimize_paid_family.mjs --familia=knife` | `knife-k-verify.mjs` (6 mutantes) | movimento amostrado da faca L aprovada, mãos K por IK analítico; Inspect novo; palma 1,35× maior na tela (braço K curto); 6% dos quadros de ataque esticam o braço no limite |
+
+Medidas contra a referência aprovada, no jogo (3:2, `vm-gauntlet`, sonda de cores):
+
+| Medida | AK golden | AK K |
+|---|---|---|
+| diagonal da arma / diagonal da tela | 0,440 | 0,414 |
+| arma como fração do quadro | 0,0628 | 0,0650 |
+| pixels de mão / pixels de arma | 0,73 | 0,49 |
+| centro da arma (px) | 1226, 720 | 1209, 734 |
+| ADS | sem alinhamento (zoom de FOV) | alça no eixo, 0,000 / 0,00° (`eval:vm-ads`) |
+
+A mão de apoio K segura o guarda-mão por baixo (pose do doador M4), por isso ocupa menos
+pixels que a luva golden; enquadramento não resolve isso sem mexer na pose.
 
 ## Riscos e dívidas abertas
 
 - Arquivos compartilhados (`shared/general-runtime.glb`, os 9 atlas `T_*`, `recoil.json`) e as
   trilhas goldsrc/retarget ainda versionam por `paid-aaa-3`: re-exportar um deles sem trocar a
   string serve cache velho (classe BUG-157). Precisa de hash desses arquivos num manifesto versionado.
-- Os golden públicos de m4, mp5, akm, m92, md97, mosin, lmg, scar, famas, uzi, p90, svd e sks
-  ficaram sem uso no runtime (≈46 MB em `public/models/viewmodels/coro/`, com a AK). Removê-los é
+- Os golden públicos de ak, m4, mp5, akm, m92, md97, mosin, lmg, scar, famas, uzi, p90, svd e sks
+  e a faca `melee/knife-hires.glb` ficaram sem uso no runtime (AK e faca seguem como referência
+  visual e fonte do movimento da faca K). Removê-los é
   decisão do dono; a régua `vm-cache-golden` continua conferindo o hash de todos.
 - 18 ferramentas de figura/probe do viewmodel e as réguas de navegador (`eval:vm-ads`,
   `eval:vm-identity`, `eval:vm-camera`, `eval:vm-autorado-vivo`) agora pedem `?vmauthored=1`
   explicitamente; ferramenta nova que esquecer isso mede o legado sem avisar.
 
 ## Evidência deste branch
+
+### vm/k-rebuild: réguas e crítico cego (23/09)
+
+- Catálogo de revisão: `~/csbrasil-private-assets/generated/viewmodels-k-rebuild/overlay` (cópia do
+  preview-root + AK, faca e granada K). `eval:vm-frame` 25/25, `eval:vm-rig` 25/25,
+  `eval:vm-foundation` 23/23, `eval:vm-launch` verde com VL6 sem faltantes (27 ids, granada e faca
+  inclusive), `eval:vm-camera` 1/1 (faca 50°, mutante `clamp` vermelho), `vm-autorado-vivo --todas`
+  25/25, `authored-attach-check --mutantes` e `authored-transition-check --mutantes` verdes,
+  `eval:vm-cache` verde (mutante `faca-reassada` vermelho), `eval:vm-ads` AK e PT-38 com a alça no
+  eixo (0,000 / 0,00°) em 16:9 e 3:2, `eval:authored-vm`, `eval:melee-vm` e `eval:cs16` verdes.
+- Crítico cego (`vm-critico-visual`, figuras 3:2 e 16:9 antes/depois): **PT-38 REPROVADA** (arma
+  ~40% do tamanho antigo na tela, mãos dominando o ADS; o inspect sai do quadro também na versão
+  antiga), **faca REPROVADA → corrigida** no Inspect (punho esticado; giro reduzido em e32b0314c,
+  não re-julgado) e RESSALVA na mão de apoio grande no centro, **granada RESSALVA** (granada
+  tampada pelos dedos; argola na mão esquerda lida como solta), **AK RESSALVA** (mão de apoio no
+  pente em vez do guarda-mão, pose do doador M4; recarga limpa e sem "arma pro alto").
+- A PT-38 menor é o que o `eval:vm-frame` pede (escala angular por metro da AK); o crítico lê isso
+  como regressão contra a pistola aprovada. É decisão do dono: aceitar a régua ou abrir faixa
+  própria para pistolas, como a LMG tem.
+
 
 - `eval:vm-launch` VERDE (7 mutantes vermelhos); `eval:vm-camera` 2/2 (AK 58,00°, faca 50,00°;
   mutante `clamp` consertado e agora vermelho); `vm-autorado-vivo --todas` 25/25 com mão visível;

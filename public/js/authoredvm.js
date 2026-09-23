@@ -6,10 +6,12 @@ import { GOLDEN_VER } from './data/goldenver.js';
 import { FAMILY_VER } from './data/weaponver.js';
 import { VM_FRAME } from './data/vmframe.js';
 import { VM_BYTES } from './data/vmbytes.js';
+import { SHARED_VER } from './data/vmsharedver.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
 import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
+import { extendSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -20,6 +22,8 @@ export const AUTHORED_VM_MODELS = Object.freeze(Object.fromEntries(
 ));
 
 const CATALOG_VERSION = 'paid-aaa-3';
+// Compartilhados (atlas, general, recoil, trilhas gs/rt) versionam pelos bytes: BUG-157.
+const sharedUrl = (name) => `/private-assets/viewmodels/${name}?v=${SHARED_VER[name] || 'sem-versao'}`;
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
@@ -77,7 +81,7 @@ function sharedArmTextures() {
   if (!sharedArmPromise) {
     const loader = new THREE.TextureLoader();
     sharedArmPromise = Promise.all(SHARED_ARM_TEXTURES.map((name) => loader
-      .loadAsync(`/private-assets/viewmodels/shared/${name}.webp?v=${CATALOG_VERSION}`)
+      .loadAsync(sharedUrl(`shared/${name}.webp`))
       .then((texture) => {
         texture.name = name;
         texture.flipY = false;
@@ -121,7 +125,7 @@ function generalMotions() {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
   if (!generalMotionsPromise) {
     generalMotionsPromise = new GLTFLoader()
-      .loadAsync(`/private-assets/viewmodels/shared/general-runtime.glb?v=${CATALOG_VERSION}`)
+      .loadAsync(sharedUrl('shared/general-runtime.glb'))
       .then((gltf) => new Map(gltf.animations.map((clip) => [clip.name, clip])))
       .catch((error) => {
         console.error('[paid-viewmodel] general-runtime', error);
@@ -136,7 +140,7 @@ let recoilParamsPromise = null;
 function recoilParams() {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
   if (!recoilParamsPromise) {
-    recoilParamsPromise = fetch(`/private-assets/viewmodels/recoil.json?v=${CATALOG_VERSION}`)
+    recoilParamsPromise = fetch(sharedUrl('recoil.json'))
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => data?.families || null)
       .catch((error) => {
@@ -235,7 +239,7 @@ const FAMILY_FRAME = Object.freeze({
   lmg:     { x: 0.153, y: -0.116, z: -0.409, fov: 84, rotDeg: [-5.2, -0.3, 0] },
   // revolver: sem doador CS 1.6 (não existe no jogo fonte) — fica no olho antigo.
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
-  grenade: { x: 0.045, y: -0.035, z: -0.080, fov: 84 },
+  grenade: { x: -0.050, y: 0.000, z: -0.080, fov: 84 },
   default: { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
 });
 
@@ -278,7 +282,7 @@ const urlForKey = (key) => {
   }
   if (key.startsWith('gs#') || key.startsWith('rt#')) {
     const dir = key.startsWith('rt#') ? 'retarget-vm' : 'goldsrc-vm';
-    return `/private-assets/viewmodels/${dir}/${key.slice(3)}-runtime.glb?v=${CATALOG_VERSION}`;
+    return sharedUrl(`${dir}/${key.slice(3)}-runtime.glb`);
   }
   if (key.includes('#')) {
     const [family, weapon] = key.split('#');
@@ -362,6 +366,7 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 
   const handMeshes = [];
   const weaponMeshes = [];
+  const idleClip = (gltf.animations || []).find((clip) => clipKey(clip.name) === 'idle') || null;
   const utilityModels = new Map();
   const caixaArma = new THREE.Box3();
   scene.traverse((object) => {
@@ -388,6 +393,7 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
           : (tingivel(object.material) ? tintHandMaterial(object.material, profile, molde) : object.material);
       }
       object.userData.authoredCharacterHand = profile.id || 'player';
+      if (!golden && !molde && materialsOf(object).some((m) => SLEEVE_MATERIAL.test(m?.name || ''))) extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });
     } else {
       weaponMeshes.push(object);
       if (molde && !/MAG/i.test(object.name)) {

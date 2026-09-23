@@ -7,13 +7,18 @@
       "file": "viewmodels/bolt/rem700-baked-runtime.glb",
       "sourceSha256": "5cfa20b4e2d85fcce1b012f5e24b616d90c795c12add3c3c0e0d646d8286bea3",
       "sourceBytes": 4675672,
-      "sha256": "439a4859d840b241680cd6a566bf62b989b7a63c01bbf89d45c7d3b24f1e79fa",
-      "bytes": 4695384,
+      "sha256": "314cf08a945e69801749bdd0d7be2df72dd5e0f3807113e16816f56cbf323fd0",
+      "bytes": 5018724,
       "mechanism": "bolt-action/internal-5",
       "ready": false,
       "sourceBranch": "claude/vm-dmr-final",
       "sourceCommit": "701e98e44b8944cb9642ff00492740c77e75acf5",
-      "rebuild": "tools/viewmodels/prep/dmr-build.py + dmr-contato.py + dmr-assemble.py + optimize_paid_family.mjs + dmr-action-contract.mjs"
+      "rebuild": "tools/viewmodels/prep/dmr-build.py + dmr-contato.py + dmr-assemble.py + optimize_paid_family.mjs + dmr-action-contract.mjs",
+      "fixL3L5": {
+        "sourceSha256": "439a4859d840b241680cd6a566bf62b989b7a63c01bbf89d45c7d3b24f1e79fa",
+        "sourceBytes": 4695384,
+        "recipe": "tools/viewmodels/prep/desvira-malha.mjs --arma=rem700"
+      }
     },
     "g3sg1": {
       "family": "g3",

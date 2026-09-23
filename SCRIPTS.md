@@ -876,6 +876,22 @@ npm run eval:sertao-livestock
 BASE=http://localhost:8149 npm run eval:sertao-livestock-runtime
 ```
 
+## `eval:vm-orientacao`
+
+Malha da arma de trás para frente (classe "arma invertida" do crítico cego). Varre todo produto dos manifestos `*-candidates.json` com malha MINT principal (`GEO_MINT_*` ou `MINT_WEAPON_*`) e socket `MUZZLE` (skinados ficam em `fora`); pose idle t=0: eixo longo por PCA orientado para o socket, altura da seção em 10 fatias; reprova se a média das 2 fatias de trás ÷ 2 fatias da boca (vazias fora da média) ficar abaixo de 1,0 (corretas 1,16–5,37, 17 produtos; invertidas 0,31–0,79, medidas pela própria régua em 23/09) ou se menos de 10 produtos forem medidos. `--mutantes` (o que o script do npm roda) lê também o catálogo Codex antes de `desvira-malha.mjs`/`sks-desvira.mjs` e só aceita o mutante se ele reprovar exatamente mosin, svd, m400 e sks por inversão. Não mede rolagem (a rem700 rolada 90° passava) nem direção absoluta (malha e socket invertidos juntos passam). Requer os produtos privados: fora de `check:fast` e do CI.
+
+```bash
+npm run eval:vm-orientacao
+```
+
+## `eval:vm-pegada-k`
+
+Pegada do produto K com esqueleto aplicado (FK + skinning offline, `tools/viewmodels/prep/vmpose.mjs`). Por arma: m92 PG1/PG3; md97 PG1/PG3/PG4/PG6; shotgun PG1/PG2/PG3/PG6; revolver38 PG2/PG5/PG6/PG7. PG1 = centro do punho de apoio dentro do corte real da malha; PG2 = gatilho a ≤ 4 cm da junta distal do indicador; PG3 = manga até o ombro; PG4 = pente não branco; PG5 = pinça do cartucho na recarga vazia; PG6 = alça e massa de `ads.linhaDeMira` na cruz no ADS simulado (`vmads-sim.mjs`); PG7 = arma visível acima das luvas no ADS. Nasceu da rodada r2 do crítico cego da revisão L1. `--mutantes` roda os produtos reprovados do catálogo (m92 cai em PG1, md97 em PG1/PG4/PG6, shotgun em PG2/PG3/PG6, revolver38 em PG5; nem toda cláusula tem mutante próprio), o revólver no frame antigo da família e o ADS sem resíduo. PG6/PG7 medem o simulador; quem prova o ADS no runtime é o `eval:vm-ads`. Requer os produtos privados em `public/private-assets` e o catálogo em `~/csbrasil-private-assets`: fica fora de `check:fast` e do CI, como as outras réguas de produto K.
+
+```bash
+npm run eval:vm-pegada-k
+```
+
 ## `eval:vm-reguas` (e `eval:vm-mira`, `eval:vm-cobertura`, `eval:vm-pistola-ref`, `eval:vm-maos`, `eval:vm-carregador`)
 
 Réguas de IMAGEM do viewmodel, medidas no quadro que o jogo acabou de desenhar (`tools/eval/vm-reguas-check.mjs`, palco em `tools/eval/lib/vm-palco.mjs`): a vmScene é renderizada pela vmCamera com a arma em vermelho e o braço em verde, mais profundidade e normais, com o relógio do controlador segurado (mesmo caminho do capturador da revisão L1). Nasceram da revisão L1 (23/09): o crítico cego reprovou 10/10 armas com os portões verdes. `mira` = aro/massa VISTOS a ≤ 30 px da cruz e ADS sem tombar (o AD1 do `eval:vm-ads` mede o socket que o ADS automático centra: md97/m92/mp5/akm 0,000 com a mira 40–90 px fora); `cobertura` = tamanho, ângulo, braço, cruz livre e câmera fora da arma contra a AK (o vm-frame media diagonal de vértice); `pistola-ref` = curtas contra o retrato da PT-38 APROVADA (`tools/eval/vm-pistola-aprovada.json`, pré-#631; `--ref-pistola=viva`, `--faixa-pistola=min,max`); a cobertura também mede contra o retrato da AK golden aprovada (`tools/eval/vm-ak-aprovada.json`; `--ref-ak=viva`), porque com o #631 a AK vira produto K e passa a ser candidata; arma com `ads.linhaDeMira` (#633) tem a massa declarada conferida contra o aparelho visto; `maos` = dedos da mão de apoio até a malha da arma; `carregador` = a peça do carregador em cada quadro da recarga (na arma, na mão, caindo — nunca no ar, nunca some com a mão na tela, nem fantasma nem toco). Limiares compartilhados com o crítico em `tools/eval/lib/vm-limiares.mjs`. Vermelho fora de `tools/eval/vm-reguas-divida.json` reprova; com `VM_LAUNCH=true` a dívida não vale. Mutantes: `--mutante=sockets-acima|sem-ads|aproxima|arma-gigante|encolhe|arma-sobe|solta|esconde`. `--placar` grava `tools/eval/vm-reguas-placar.json` e `artifacts/vm-reguas/PLACAR.md` (com `--regua`/`--armas` parciais só as células medidas são trocadas e o placar registra `parcial`); a aba que cai sob carga é reaberta e a arma medida de novo uma vez; `--variante='{"arma":{"frame":{...},"ads":{...}}}'` experimenta config ao vivo sem tocar arquivo. Requer os produtos privados e navegador: entra no `check:vm`, fora do `check:fast`.

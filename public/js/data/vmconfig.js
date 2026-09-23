@@ -55,9 +55,10 @@ export const VM_WEAPON = {
   // Produto K (KINEMATION, 67 juntas) assado por arma no catálogo privado:
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
-  // AK: único golden público até o rebuild em K (VM-LAUNCH-K-STATUS.md).
-  // Caixa MAG: régua eval:cs16.
-  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
+  // AK em K (rifles-ak-final.py). Frame: a silhueta mais próxima da AK golden em 3:2
+  // que cabe na faixa do eval:vm-frame (VM-LAUNCH-K-STATUS.md).
+  ak: W('ak', { baked: true,
+    frame: { x: 0.0825, y: 0.01, z: -0.2844, fov: 57, rotDeg: [1.69, 7.69, 6.19] } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),
@@ -65,8 +66,12 @@ export const VM_WEAPON = {
   // "pitch 39° vs 26°"). ADS desfaz a rolagem e o resíduo leva o aro da massa à cruz (eval:vm-mira 44 → 0 px).
   mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay', frame: { rotDeg: [-10.1, 0, 18] },
     ads: { auto: true, off: [-0.0925, 0.0245, 0], rotDeg: [0, 0, -18], pull: 0.05, fovScale: 1 } }),
+  // KSG girada no produto (shotgun-k-fix.mjs): pacote 5× recua ao tamanho da AK e a alça
+  // fica acima do cano; o resíduo de ADS põe alça e massa na cruz (vmads-sim.mjs).
   shotgun: W('shotgun', { baked: true, timing: 'gameplay',
-    ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
+    frame: { x: 0.65, y: -0.72, z: -1.0, rotDeg: [8, 4, -5] },
+    ads: { auto: true, off: [0.013, 0.238, 0], rotDeg: [-9.74, 0.62, 0], pull: 0.05, fovScale: 1,
+      linhaDeMira: { ref: 'RIG_WEAPON_SHOTGUN', alca: [0, 13.6, -5.5], massa: [0, 13.8, 21.5] } } }),
   // anchor/namedParts valem só na montagem ao vivo (eval authored-attach-check).
   deagle: W('deagle', { baked: true, runtime: 'family', timing: 'gameplay', recoilScale: 0.45,
     anchor: 'neutral_bone', namedParts: {
@@ -75,13 +80,21 @@ export const VM_WEAPON = {
       slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
       hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
     } }),
-  // PT-38 congelada a 1,796× do enquadramento da AK (auditoria Codex 22/09).
-  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
+  // PT-38: o pacote recua até a escala angular da AK (eval:vm-frame) sem mudar pega,
+  // yaw nem fov; pull e drawDrop compensam a distância para ADS e saque ficarem iguais.
+  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay',
+    frame: { x: 0.1648, y: -0.19, z: -0.5664, drawDrop: 0.875 },
+    ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0.3964, fovScale: 1 } }),
   // ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09).
   m92: W('ak', { baked: true, frame: 'family', ready: false }),
   akm: W('ak', { baked: true, frame: 'family', ready: false }),
   g3: W('g3', { baked: true, frame: 'family' }),
+  // Pose de duas mãos aponta ~55° para cima no frame da família: o pacote gira de lado
+  // (yaw 25°, pitch −10°) no fov da pistola; alça e massa na cruz (vmads-sim.mjs).
   revolver38: W('revolver', { baked: true, runtime: 'family', timing: 'gameplay',
+    frame: { x: 0.28, y: -0.08, z: -0.46, fov: 55, rotDeg: [-10, 25, -10] },
+    ads: { auto: true, off: [-0.001, -0.001, 0], rotDeg: [-0.44, -0.19, 0], pull: 0.52, fovScale: 1,
+      linhaDeMira: { ref: 'RIG_WEAPON_REVOLVER', alca: [0, 1.55, -1.0], massa: [0, 1.85, -14.15] } },
     anchor: 'neutral_bone', namedParts: {
       cartridge0: { mesh: 'GEO-Cartridge0', bone: 'Cartridge0' },
       cartridge0_Case: { mesh: 'GEO-Cartridge0_Case', bone: 'Cartridge0' },
@@ -105,7 +118,10 @@ export const VM_WEAPON = {
     } }),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
-  md97: W('ar', { baked: true, recoilScale: 1.8 }),
+  md97: W('ar', { baked: true, recoilScale: 1.8,
+    // linhaDeMira = alça e massa (nó + ponto local): o socket `sight` fica abaixo da alça.
+    ads: { auto: true, off: [-0.006, 0, 0], rotDeg: [-4.31, 0.51, 0], pull: 0.05, fovScale: 1,
+      linhaDeMira: { ref: 'MINT_WEAPON_MD97', alca: [0.24, 0.112, -0.0095], massa: [-0.265, 0.107, -0.010] } } }),
   carbine: W('ar', { baked: true }),
   m400: W('sniper', { baked: true, frame: 'family' }),
   mosin: W('bolt', { baked: true }),

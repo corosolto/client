@@ -188,8 +188,11 @@ const contaTriangulosMangaProximal = (document) => {
   }
   return total;
 };
+// Revisão L1 (crítico r2): a manga cortada no antebraço virou o "punho oco vermelho na boca
+// do cano". O braço tem de ir inteiro até o ombro; o teto de tela do braço é do eval:vm-frame.
 const triangulosMangaProximal = contaTriangulosMangaProximal(gltf);
-check(triangulosMangaProximal === 0, `manga ainda traz ${triangulosMangaProximal} triângulos proximais que dominam o quadro`);
+check(Number.isFinite(triangulosMangaProximal) && triangulosMangaProximal >= 2000,
+  `manga cortada ou ausente: ${triangulosMangaProximal} triângulos no braço/antebraço (punho oco)`);
 
 const mixer = new THREE.AnimationMixer(scene);
 const productScale = scene.getObjectByName('VM_PRODUCT_SHOTGUN')
@@ -249,12 +252,14 @@ await mutant('cartucho-congelado', (copy) => requireFreeze(copy, /^reload_loop$/
 await mutant('inspect-parado', (copy) => requireFreeze(copy, /^inspect$/, /^RIG_FP_ARMS\./), (copy) => trackMotion(copy, 'inspect', 'RIG_FP_ARMS.quaternion') < 0.02);
 await mutant('solta-mao-esquerda', () => {}, (copy) => Object.entries(medeContatoDedos(copy, 'left')).some(([finger, mm]) => finger.endsWith('_l') && mm > limiteContato(finger)));
 await mutant('solta-mao-direita', () => {}, (copy) => Object.entries(medeContatoDedos(copy, 'right')).some(([finger, mm]) => finger.endsWith('_r') && mm > limiteContato(finger)));
-await mutant('manga-proximal-reintroduzida', (copy) => {
+await mutant('manga-cortada', (copy) => {
   const cloth = copy.scene.getObjectByName('GEO_FP_SK_Cloth_01');
-  const vertex = cloth.geometry.index.getX(0);
-  const upperarm = cloth.skeleton.bones.findIndex((bone) => bone.name === 'upperarm_twist_01_l');
-  cloth.geometry.attributes.skinIndex.setXYZW(vertex, upperarm, 0, 0, 0);
-  cloth.geometry.attributes.skinWeight.setXYZW(vertex, 1, 0, 0, 0);
-}, (copy) => contaTriangulosMangaProximal(copy) > 0);
+  const antebraco = cloth.skeleton.bones.findIndex((bone) => bone.name === 'lowerarm_twist_01_l');
+  const { skinIndex, skinWeight } = cloth.geometry.attributes;
+  for (let vertex = 0; vertex < skinIndex.count; vertex += 1) {
+    skinIndex.setXYZW(vertex, antebraco, 0, 0, 0);
+    skinWeight.setXYZW(vertex, 1, 0, 0, 0);
+  }
+}, (copy) => contaTriangulosMangaProximal(copy) < 2000);
 console.log(`VM_HEAVY_SHOTGUN=${JSON.stringify({ ok: failures.length === 0, file, bytes: bytes.length, sha256: cfg.sha256, clips: required, metrics, contatoIdleMm, triangulosMangaProximal, mutants, failures })}`);
 if (failures.length) process.exitCode = 1;
