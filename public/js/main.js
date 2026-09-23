@@ -26,7 +26,7 @@ import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 import { createMapPreview } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -64,8 +64,10 @@ function clearTelemetryGameContext() {
 /* ---------------- renderer ---------------- */
 // Import extra (top-level, legal em ESM) em vez de mexer no bloco de imports lá de cima:
 // o tom do caminho SEM pós mora no bloom.js, que é o dono da tabela de exposição/piso por mapa.
-import { applyNoPostTone } from './bloom.js';
-import { criaRenderer, avisaSemWebgl } from './glcontext.js';
+import { applyNoPostTone, ajustaPos } from './bloom.js';
+import { criaRenderer, avisaSemWebgl, avisaSoftware } from './glcontext.js';
+import { EscadaAdaptativa, DEGRAUS } from './qualidade-adaptativa.js';
+import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol } from './mapquality.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
 const renderer = criaRenderer({}, { compatibility: SAFE_MODE });
@@ -73,7 +75,12 @@ if (!renderer) {
   avisaSemWebgl('WebGL indisponível neste navegador/driver');
   throw new Error('sem_webgl');
 }
-const COMPAT_MODE = SAFE_MODE || renderer.__csWebgl?.degraded === true;
+/* `degraded` junta MSAA recusado, WebGL1, modo compatibilidade e renderizador de software —
+   e tratar os quatro igual rebaixava para o caminho mais leve do jogo uma GPU boa que só disse
+   não ao antialias. Aqui cada um custa o que custa (KNOWN-BUGS BUG-162). */
+const GLMETA = renderer.__csWebgl || {};
+const SOFTWARE = GLMETA.software === true;      // llvmpipe/swiftshader: 2 a 8 FPS medidos
+const COMPAT_MODE = SAFE_MODE || SOFTWARE || GLMETA.semWebgl2 === true || GLMETA.compat === true;
 if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'; }
 /* AUTO-PERFIL PARA MÁQUINA FRACA: cai pra 'low' por padrão só se o jogador NUNCA escolheu
    qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
@@ -88,10 +95,13 @@ function detectaHwFraco() {
 const WEAK_HW = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && detectaHwFraco();
 if (WEAK_HW) { settings.quality = 'low'; try { console.info('[perf] hardware modesto detectado — qualidade em BAIXA por padrão (mude em Configurações)'); } catch {} }
 const LEAN = COMPAT_MODE || WEAK_HW;   // qualquer caminho leve: previews estáticos + DPR menor
+if (SOFTWARE) avisaSoftware(GLMETA.renderer);   // contar é o que faltava; o jogo já se rebaixou
 const ASSET_CHECK = new URLSearchParams(location.search).get('assetcheck') === '1';
 let staticPreviews = LEAN && !ASSET_CHECK;
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(LEAN ? 0.75 : 1);
+// software já começa no degrau MÍNIMO: medir 8 s para descobrir o que o renderizador já disse
+// é gastar os únicos quadros que essa máquina tem. 0,5 = um quarto dos pixels de 1,0.
+renderer.setPixelRatio(SOFTWARE ? 0.5 : LEAN ? 0.75 : 1);
 renderer.shadowMap.enabled = !COMPAT_MODE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Tonemap. Com o composer ligado three já força NoToneMapping nos materiais (só aplica
@@ -1053,6 +1063,10 @@ function _perfFinish(bootMs, frames) {
     memoryGb: navigator.deviceMemory || null,
     renderer: rendererStr,
     dpr: window.devicePixelRatio || null,
+    // DPR do que o jogo DESENHA (não o do aparelho) e renderer em 3 estados — BUG-157.
+    dprEfetivo: (() => { try { return renderer.getPixelRatio(); } catch { return null; } })(),
+    software: window.__csWebgl?.softwareEstado || 'desconhecido',
+    glTier: window.__csWebgl?.tier || null,
     vw: window.innerWidth, vh: window.innerHeight,
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
@@ -1150,11 +1164,17 @@ async function startGame(team, charId, enemyFaction, online = false) {
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
      de verdade continua sendo pego. */
+  /* RÉGUA:launch-watchdog início — extraído por `tools/eval/launch-watchdog-check.mjs` */
   let _wp = _lstat.loaded;
   window.__gameLaunch?.begin('partida', 60000, function () {
+    const g = window.__game;
+    /* Conclusão é QUADRO (`time` só anda no update() do rAF), não o sub-estado `live`, que
+       falta em countdown/roundEnd. Antes da rede lenta. BUG-167, `eval:launchwatchdog`. */
+    if (g && g.time > 0) return true;
     if (_lstat.loaded > _wp) { _wp = _lstat.loaded; return 'rede-lenta'; }
-    return !!(window.__game && window.__game.state === 'live');
+    return false;
   });
+  /* RÉGUA:launch-watchdog fim */
   try {
     await _startGame(team, charId, enemyFaction, online);
     window.__gameLaunch?.ready('partida');
@@ -1263,6 +1283,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
            no fallback procedural sem textura — verde na régua de registro, feio na tela.
            Foi literalmente o BUG-57. Lista vazia é tratada como "tudo" no ambientlife. */
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
+        MAPS[currentMap]?.preload?.(),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
     }
@@ -2770,11 +2791,40 @@ let menuAngle = 0;
    fatias — máquina que não acompanha descarta o excesso em vez de acumular
    dívida (espiral da morte). */
 const PASSO_TETO = 4;
+
+/* ESCADA ADAPTATIVA. A detecção de máquina fraca roda uma vez no boot; mapa caro, partida
+   cheia e fumaça acontecem depois. Ver docs/QUALIDADE-ADAPTATIVA.md. */
+const ADAPTATIVA = new URLSearchParams(location.search).get('adaptativa') !== '0';
+const escada = new EscadaAdaptativa({
+  orcamentoMs: 1000 / 60,
+  // software já nasceu no fundo: não faz sentido oferecer a ele os degraus de cima
+  degrau: SOFTWARE ? DEGRAUS.length - 1 : 0,
+});
+const dprBase = renderer.getPixelRatio();
+function aplicaDegrau(i) {
+  const d = DEGRAUS[i];
+  renderer.setPixelRatio(dprBase * d.dpr);   // o composer acompanha (bloom.js, cp._dpr)
+  ajustaPos({ ssao: d.ssao, aa: d.aa, charmask: d.charmask });
+  definirSombraDegrau(d.sombra === 'baixa' ? 'baixa' : null);
+  definirCorteVegetacao(d.mato ?? 1);
+  if (game?.world?.sun) aplicaSombraSol(game.world.sun);
+  try { console.info(`[perf] qualidade adaptativa → ${d.nome}`); } catch { /* console mudo */ }
+}
+// mesmo precedente de `__mpConvite`: gancho de sonda/captura, nunca caminho de jogo
+window.__escada = { escada, aplicaDegrau, DEGRAUS, dprBase };
+
 function loop() {
   requestAnimationFrame(loop);
   const dtReal = clock.getDelta();
+  // só mede com partida VIVA: menu e tela de carregamento têm outro custo e enganariam a escada
+  if (ADAPTATIVA && game && game.state === 'live') {
+    const novo = escada.quadro(dtReal * 1000);
+    if (novo !== null) aplicaDegrau(novo);
+  }
   loadingStage.update(Math.min(0.05, dtReal));
-  const csOpen = !$('char-select').classList.contains('hidden');
+  // BUG-177: sem #char-select no DOM (extensão/tradutor que reescreve o body) o `loop`
+  // lançava a cada quadro e congelava o jogo — ausente conta como fechada.
+  const csOpen = $('char-select')?.classList.contains('hidden') === false;
   // A troca com M pausa a partida; o preview 3D visível continua animando nesse estado.
   if (game && !csOpen) {
     let resto = dtReal;
@@ -2854,7 +2904,7 @@ async function openInspectionScreen(target) {
   if (target.screen === 'character') {
     pickTeam(faction);
     if (target.character) {
-      for (let i = 0; i < 180 && $('char-select').classList.contains('hidden'); i++) {
+      for (let i = 0; i < 180 && $('char-select')?.classList.contains('hidden') !== false; i++) {
         await new Promise((resolve) => requestAnimationFrame(resolve));
       }
       const roster = CHARACTERS.filter((c) => c.team === faction);
@@ -2927,7 +2977,7 @@ async function obterMpTicket(action) {
   const localMp = new URLSearchParams(location.search).get('mp') || '';
   if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
-  if (!/^[a-z]{2}$/.test(node)) return '';
+  if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
   const r = await fetch(apiUrl('/api/mp-ticket'), {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ node, action, anonId: getAnonId(), sessionId: getSessionId() }),
@@ -2971,8 +3021,8 @@ async function abrirMultiplayer() {
   if (nos) nos.innerHTML = '<div class="mp-vazio">medindo o ping dos servidores…</div>';
   mpEl('mp-salas').innerHTML = '';
   mpNos = await sondarNos(NOS);
-  // ordena por ping: o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono
-  mpNos.sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
+  // o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono (regra em nos.js)
+  mpNos = ordenarNos(mpNos);
   const local = new URLSearchParams(location.search).get('mp');
   if (local) {
     // ?mp=1 é a máquina local; ?mp=host:porta é um servidor apontado à mão (não confundir os dois).
@@ -3016,6 +3066,59 @@ function mpCartaoNoHTML(n) {
     + `<span class="mp-ping" data-q="${q}">${ping}</span>`;
 }
 
+/* Mapas da sala escolhidos a dedo. A grade sai do `/maps` DO NÓ, não do catálogo local — o
+   servidor simula uma versão fixada do jogo (docs/MULTIPLAYER.md, "Pool de mapas"). */
+let mpMapasDoNo = [];
+let mpMapasEscolhidos = new Set();
+
+function mpPintarMapas() {
+  const grade = mpEl('mp-mapas-grade'), conta = mpEl('mp-mapas-conta');
+  if (!grade || !conta) return;
+  const ctf = mpEl('mp-modo') && mpEl('mp-modo').value === 'ctf';
+  grade.innerHTML = mpMapasDoNo.map((id) => {
+    const on = mpMapasEscolhidos.has(id);
+    return `<button class="mp-mapa${on ? ' on' : ''}" type="button" data-id="${id}" aria-pressed="${on}" title="${MAPS[id].name}">`
+      + `<img class="mp-mapa-img" loading="lazy" decoding="async" src="${mapPreviewPoster(id, VERSION)}" alt="">`
+      // o crachá CAPTURA só informa quando o modo É captura; senão é ruído em quase todo cartão
+      + (ctf && MAPS[id].ctfMode ? '<span class="mp-mapa-ctf">CAPTURA</span>' : '')
+      + `<span class="mp-mapa-nome">${MAPS[id].name}</span></button>`;
+  }).join('');
+  grade.querySelectorAll('.mp-mapa').forEach((b) => {
+    b.onmouseenter = () => ui.hover();
+    b.onclick = () => {
+      ui.click();
+      const id = b.dataset.id;
+      if (mpMapasEscolhidos.has(id)) mpMapasEscolhidos.delete(id); else mpMapasEscolhidos.add(id);
+      mpPintarMapas();
+    };
+  });
+  const n = mpMapasEscolhidos.size;
+  const fora = MAP_IDS.filter((id) => !mpMapasDoNo.includes(id)).length;
+  conta.textContent = (!mpMapasDoNo.length ? 'esse servidor não respondeu a lista de mapas'
+    : n === 0 ? 'marque pelo menos um mapa'
+      : n === 1 ? 'só 1 mapa: a sala não gira, joga sempre nele'
+        : `${n} mapas na fila, sorteados a cada partida`)
+    + (fora ? ` · ${fora} do jogo ainda não estão neste servidor` : '');
+}
+
+async function mpCarregarMapasDoNo() {
+  if (!mpNoAtual) return;
+  try { mpMapasDoNo = (await listMaps(mpNoAtual.http)).filter((id) => MAPS[id]); }
+  catch { mpMapasDoNo = []; }
+  // mapa que o nó não tem não pode continuar marcado de uma seleção feita noutra região
+  for (const id of [...mpMapasEscolhidos]) if (!mpMapasDoNo.includes(id)) mpMapasEscolhidos.delete(id);
+  mpPintarMapas();
+}
+
+function mpSincronizarMapas() {
+  const rot = mpEl('mp-rotacao'), caixa = mpEl('mp-mapas');
+  if (!rot || !caixa) return;
+  const aDedo = rot.value === 'escolher';
+  caixa.hidden = !aDedo;
+  if (!aDedo) return;
+  if (mpMapasDoNo.length) mpPintarMapas(); else mpCarregarMapasDoNo();
+}
+
 function mpDesenharNos() {
   const box = mpEl('mp-nos'); if (!box) return;
   box.innerHTML = '';
@@ -3032,6 +3135,8 @@ function mpDesenharNos() {
 
 function mpSelecionarNo(no) {
   mpNoAtual = no;
+  mpMapasDoNo = [];              // cada nó tem o catálogo DELE; recarrega ao abrir a grade
+  mpSincronizarMapas();
   if (no.online) mpEstado('on', `ONLINE · ${no.nome.split('·')[0].trim()} · ${no.ping} ms`);
   mpDesenharNos();
   mpAtualizarSalas();
@@ -3064,7 +3169,10 @@ async function mpAtualizarSalas() {
       `<div class="mp-sala-top"><div class="mp-sala-nome">${r.name}${tags}</div>`
       + `<div class="mp-lot"><span class="mp-lot-bar"><i style="width:${Math.round(frac * 100)}%"></i></span>`
       + `<b>${r.players}</b>/${r.max}${r.spectators ? `<span class="mp-lot-spec">+${r.spectators} assistindo</span>` : ''}</div></div>`
-      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}`
+      + (Array.isArray(r.mapas) && r.mapas.length
+        ? ` · ${r.mapas.length === 1 ? 'mapa fixo' : `${r.mapas.length} mapas na fila`}` : '')
+      + '</div>'
       + `<div class="mp-acoes"></div>`;
     const acoes = div.querySelector('.mp-acoes');
     /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
@@ -3173,6 +3281,15 @@ function mpMontarFormulario() {
   }
   const priv = mpEl('mp-privada'), wrap = mpEl('mp-senha-wrap');
   if (priv && wrap) priv.onchange = () => { wrap.hidden = !priv.checked; };
+  const rot = mpEl('mp-rotacao');
+  if (rot && !rot._ok) {
+    rot._ok = true;
+    rot.onchange = () => { ui.click(); mpSincronizarMapas(); };
+    mpEl('mp-modo').addEventListener('change', () => mpSincronizarMapas());   // o crachá CAPTURA depende do modo
+    mpEl('mp-mapas-todos').onclick = () => { ui.click(); mpMapasEscolhidos = new Set(mpMapasDoNo); mpPintarMapas(); };
+    mpEl('mp-mapas-limpar').onclick = () => { ui.click(); mpMapasEscolhidos.clear(); mpPintarMapas(); };
+  }
+  mpSincronizarMapas();
   const criar = mpEl('mp-criar');
   if (criar) criar.onclick = async () => {
     ui.click(); mpErro('');
@@ -3180,10 +3297,16 @@ function mpMontarFormulario() {
     const privada = mpEl('mp-privada').checked;
     const senha = mpEl('mp-senha').value.trim();
     if (privada && !senha) return mpErro('Sala privada precisa de senha.');
+    const aDedo = mpEl('mp-rotacao').value === 'escolher';
+    const escolhidos = [...mpMapasEscolhidos];
+    if (aDedo && !escolhidos.length) return mpErro('Escolha pelo menos um mapa pra sua sala.');
     try {
       const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
-        name: mpEl('mp-nome').value.trim(), rotacao: mpEl('mp-rotacao').value,
+        name: mpEl('mp-nome').value.trim(),
+        // com a lista a dedo a rotação vira só o plano B do servidor (lista inválida = recorte)
+        rotacao: aDedo ? 'todos' : mpEl('mp-rotacao').value,
+        ...(aDedo ? { mapas: escolhidos, mapId: escolhidos[0] } : {}),
         faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
         creatorNick: ($('nick-input').value || '').trim() || null,
@@ -3213,6 +3336,12 @@ function mpMontarFormulario() {
   if (quick) quick.onclick = async () => {
     ui.click(); mpErro('');
     if (!mpNoAtual || !mpNoAtual.online) return mpErro('Nenhum servidor online agora.');
+    // Quem clica em QUICK PLAY não quer o menor ping, quer gente: sonda de novo (a lotação da
+    // lista pode ter minutos) e vai para o nó onde há alguém, até o teto de 150 ms.
+    mpEstado('conectando', 'PROCURANDO GENTE…');
+    try { mpNos = ordenarNos(await sondarNos(NOS)); mpDesenharNos(); } catch { /* segue com a lista que tem */ }
+    const alvo = melhorNoParaJogar(mpNos);
+    if (alvo && alvo.id !== mpNoAtual.id) mpSelecionarNo(alvo);
     mpEstado('conectando', 'PROCURANDO SALA…');
     let salas = [];
     try { salas = await listRooms(mpNoAtual.http); } catch { /* lista fora = cria sala */ }

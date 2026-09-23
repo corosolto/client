@@ -1,6 +1,7 @@
 // ESCADÃO (escadao) — spec plans/12-ESCADAO.md. Invariante CTF2: os dois becos laterais
 // têm escada própria rua → patamar 1, separados ≥ 6 m do eixo central (2+ rotas spawn→bandeira).
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, InstBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
@@ -325,7 +326,7 @@ export function buildEscadao(scene, T) {
   if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('escadao');
   const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x54483c, 0.9); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd9a8, 1.65); sun.position.set(25, 40, 20); sun.castShadow = true;
-  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -HALF_X - 5; sun.shadow.camera.right = HALF_X + 5;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;
@@ -1104,6 +1105,8 @@ export function buildEscadao(scene, T) {
   }
 
   /* ===================== SPAWNS ===================== */
+  // O spawn ABRAÇA a parede de propósito: é ela que tira a visada da casa central. O preço é
+  // folga de 0,85 m contra o 1,20 da MAP2B — invariantes em conflito, ver KNOWN-RED.json.
   const spawns = {
     E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: 0 })),
     B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -34, yaw: Math.PI })),
