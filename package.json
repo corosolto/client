@@ -306,6 +306,8 @@
     "eval:vm-catalog": "node tools/viewmodels/validate_paid_catalog.mjs",
     "eval:vm-identity": "node tools/eval/authored-identity-check.mjs",
     "eval:vm-ads": "node tools/eval/authored-ads-check.mjs",
+    "//eval:vm-mira": "imagem de mira no QUADRO desenhado (aro/massa na cruz, ADS sem tombar): o AD1 do eval:vm-ads mede o socket que o ADS automático centra e dava 0,000 com a mira 40–90 px fora (revisão L1, 23/09)",
+    "eval:vm-mira": "node tools/eval/vm-reguas-check.mjs --regua=mira",
     "eval:vm-serving": "node tools/eval/authored-serving-check.mjs",
     "eval:vm-consistencia": "node tools/eval/vm-consistencia-check.mjs",
     "eval:vm-attach": "node tools/eval/vm-attach-fallback-check.mjs",
