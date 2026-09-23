@@ -110,15 +110,13 @@ export const VM_WEAPON = {
   // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
   // medido desta base; a câmera embutida do doador não é usada como frame.
   rem700: W('bolt', { baked: true, frame: 'family' }),
-  lmg: W('lmg', { baked: true, timing: 'gameplay',
-    ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
+  // ADS automático (alça medida no eixo): o manual deixava a alça fora da cruz (AD1, revisão L1).
+  lmg: W('lmg', { baked: true, timing: 'gameplay' }),
   scar: W('ar', { baked: true }),
   tavor: W('ar', { baked: true }),
   famas: W('ar', { baked: true }),
-  uzi: W('smg', { baked: true, timing: 'gameplay',
-    ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
-  p90: W('p90', { baked: true, timing: 'gameplay', recoilScale: 1.6,
-    ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  uzi: W('smg', { baked: true, timing: 'gameplay' }),
+  p90: W('p90', { baked: true, timing: 'gameplay', recoilScale: 1.6 }),
   svd: W('svd', { baked: true }),
   g3sg1: W('g3', { baked: true, frame: 'family' }),
   sks: W('marksman', { baked: true }),
