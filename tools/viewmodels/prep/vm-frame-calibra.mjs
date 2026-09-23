@@ -154,6 +154,8 @@ function weaponPoints(gltf, { pose = 'idle', weapon = null } = {}) {
     if (!position) return;
     const lmgCore = weapon === 'lmg' && materials.some((material) => /CoroSolto_MG6/i.test(material?.name || ''));
     if (weapon === 'lmg' && materials.some((material) => /CoroSolto_Bullet/i.test(material?.name || ''))) return;
+    // Malha com escala 0 no repouso (cartucho procedural da recarga) não está na tela.
+    if (Math.abs(object.matrixWorld.determinant()) < 1e-12) return;
     const skinIndex = lmgCore ? object.geometry?.attributes?.skinIndex : null;
     const skinWeight = lmgCore ? object.geometry?.attributes?.skinWeight : null;
     // Amostragem regular: a medida é de silhueta, não precisa de malha inteira.

@@ -64,6 +64,13 @@ export const CARREGADOR_PECA = {
   sks: { malhas: 'Clip', clipe: true }, mosin: { malhas: 'Clip', clipe: true }, rem700: { malhas: 'Clip', clipe: true },
   shotgun: { osso: 'MINT_AMMO_SHOTGUN_GAUGE', clipe: true },
 };
+// Produtos da fábrica (VM_PALCO_QS=vmfabrica=…): o pente é o osso Mag do chassi do pack numa
+// malha única; na KXG12 o cartucho que a mão leva ao tubo é o osso Gauge (só aparece na recarga).
+export const FABRICA_NA_REGUA = /(?:^|&)vmfabrica=/.test(process.env.VM_PALCO_QS || '');
+if (FABRICA_NA_REGUA) {
+  for (const arma of ['ak', 'm4', 'pistol', 'famas']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
+  CARREGADOR_PECA.shotgun = { osso: 'Gauge', clipe: true };
+}
 const CARREGADOR_NA = {
   knife: 'faca: sem carregador',
   revolver38: 'cilindro: tambor e cartuchos são do eval:vm-pistol-revolver',
@@ -75,7 +82,7 @@ const CARREGADOR_NA = {
    COLETA: tudo que as cinco réguas leem de UMA arma, numa passada do jogo.
    `mut` = mutante ativo ({ regua, arma, fase, aplicar }) ou null.
    --------------------------------------------------------------------------- */
-export async function coletar(page, arma, { reguas, mut = null, fotos = '', variante = null } = {}) {
+export async function coletar(page, arma, { reguas, mut = null, fotos = '', variante = null, quadroEntre = false } = {}) {
   const c = { arma, classe: classe(arma) };
   if (arma === 'knife') return c;
   const quer = (r) => reguas.includes(r);
@@ -127,7 +134,7 @@ export async function coletar(page, arma, { reguas, mut = null, fotos = '', vari
       // #633 (vm-fix-grips) declara `ads.linhaDeMira` (alça e massa como pontos locais de um nó) e o
       // eval:vm-ads passa a medir nela. Aqui os dois pontos declarados são projetados no MESMO quadro e
       // comparados com o aparelho visto: ponto declarado que não cai sobre a imagem é outro socket cego.
-      const linha = VM_WEAPON[arma]?.ads?.linhaDeMira;
+      const linha = FABRICA_NA_REGUA ? null : VM_WEAPON[arma]?.ads?.linhaDeMira;   // fábrica: mira = AimPoint do pack
       if (linha) {
         c.mira.linha = await page.evaluate(({ x, linha }) => {
           const g = window.__game; const e = window.__authoredVm.entry(x); const ref = e?.scene.getObjectByName(linha.ref);
@@ -148,7 +155,7 @@ export async function coletar(page, arma, { reguas, mut = null, fotos = '', vari
     }
     if (!semAds) await P.sairAds(page);
   }
-  if (quer('carregador') && CARREGADOR_PECA[arma]) c.carregador = await coletarCarregador(page, arma, aplicar);
+  if (quer('carregador') && CARREGADOR_PECA[arma]) c.carregador = await coletarCarregador(page, arma, aplicar, quadroEntre);
   return c;
 }
 
@@ -193,7 +200,8 @@ function pixelsNaCruz(m) {
   return n;
 }
 
-async function coletarCarregador(page, arma, aplicar) {
+// `quadroEntre`: render entre o passo e a medida; a amostra tem de sair igual com e sem ele (R1).
+async function coletarCarregador(page, arma, aplicar, quadroEntre = false) {
   const spec = CARREGADOR_PECA[arma];
   const rig = rigDe(arma);
   const amostras = [];
@@ -209,6 +217,7 @@ async function coletarCarregador(page, arma, aplicar) {
     for (let k = 1; k <= n; k++) {
       const f = k / (n + 1);
       await P.passo(page, dur * (f - prev)); prev = f;
+      if (quadroEntre) await P.esperarQuadro(page);
       await aplicar('amostra');
       const r = await P.pecaCarregador(page, arma, spec, rig);
       r.px = await pixelsDaPeca(page, arma, spec, r);

@@ -1,0 +1,13 @@
+{
+  "id": "pt38",
+  "descricao": "Identidade da PT-38 aprovada sobre o X18 do pack: a mesma receita de cor/metal/rugosidade que o build_paid_family.py aplicava na pistola aprovada (PISTOL_MATERIALS).",
+  "origem": "tools/blender/viewmodels/build_paid_family.py (PISTOL_MATERIALS)",
+  "materiais": {
+    "polymer": { "cor": "111820", "metal": 0.08, "rugosidade": 0.58 },
+    "finish_dark": { "cor": "171d24", "metal": 0.5, "rugosidade": 0.42 },
+    "finish_barrel": { "cor": "323a43", "metal": 0.78, "rugosidade": 0.34 },
+    "primer": { "cor": "8a5c18", "metal": 0.7, "rugosidade": 0.35 },
+    "casing": { "cor": "8a5c18", "metal": 0.7, "rugosidade": 0.35 }
+  },
+  "padrao": { "cor": "252c34", "metal": 0.5, "rugosidade": 0.44 }
+}

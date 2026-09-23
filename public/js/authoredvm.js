@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
+import { VM_FAMILY, VM_WEAPON, VM_FABRICA, VM_FABRICA_FRAME } from './data/vmconfig.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { GOLDEN_VER } from './data/goldenver.js';
 import { FAMILY_VER } from './data/weaponver.js';
 import { VM_FRAME } from './data/vmframe.js';
 import { VM_BYTES } from './data/vmbytes.js';
+import { VM_FABRICA_BYTES, VM_FABRICA_POS } from './data/vmfabrica.js';
 import { SHARED_VER } from './data/vmsharedver.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
@@ -177,6 +178,8 @@ const _adsAlign = new THREE.Quaternion();
 const _adsBlend = new THREE.Quaternion();
 const _adsForward = new THREE.Vector3();
 const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
+const _ADS_ROLL = new THREE.Vector3(0, 0, 1);
+const _adsRoll = new THREE.Quaternion();
 // Pose de ADS autoral: clipe `ads` de um quadro (tools/viewmodels/prep/ads-pose.mjs) vira camada
 // aditiva sobre o quadro 0 do idle, com peso = ADS; o mixer compõe e só reescreve o que mudou.
 function adsActionOf(entry) {
@@ -265,6 +268,12 @@ const READY_OVERRIDE = new Set(
 // Candidato por arma: abre Mosin/SVD/SKS sem abrir as outras armas da mesma
 // família. Continua subordinado ao portão global `vmauthored=1`.
 const WEAPON_OVERRIDE = new Set((_QS?.get('vmweapon') || '').split(',').filter(Boolean));
+// Produto da fábrica por arma (revisão): ?vmfabrica=ak,m4 ou =1 para todos os de VM_FABRICA.
+const FABRICA_QS = (_QS?.get('vmfabrica') || '').split(',').filter(Boolean);
+const fabricaAtiva = (weapon) => !AUTHORED_KILLED && Boolean(VM_FABRICA[weapon])
+  && (FABRICA_QS.includes('1') || FABRICA_QS.includes(weapon));
+// Config efetiva da arma: a da fábrica quando o produto dela está em cena.
+const cfgArma = (weapon) => (fabricaAtiva(weapon) ? VM_FABRICA[weapon] : VM_WEAPON[weapon]);
 const familyReady = (family) => Boolean(family)
   && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
 // Portão por ARMA dentro da família (KNOWN-BUGS, rollout de 19/09): `ready:false`
@@ -272,6 +281,7 @@ const familyReady = (family) => Boolean(family)
 const weaponReady = (weapon, family) => VM_WEAPON[weapon]?.ready !== false || READY_OVERRIDE.has(family);
 const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';
+  if (fabricaAtiva(weapon)) return VM_FABRICA[weapon].familia;
   const family = AUTHORED_VM_MODELS[weapon] || '';
   return (familyReady(family) && weaponReady(weapon, family)) || WEAPON_OVERRIDE.has(weapon) ? family : '';
 };
@@ -280,12 +290,17 @@ const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
 const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
+  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
   if (GOLDEN_VM && VM_WEAPON[weapon]?.golden === true) return `gold#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 const urlForKey = (key) => {
+  if (key.startsWith('fab#')) {
+    const weapon = key.slice(4);
+    return `/private-assets/viewmodels/fabrica/${weapon}-fabrica.glb?v=${VM_FABRICA_BYTES[weapon] || 'sem-versao'}`;
+  }
   if (key.startsWith('gold#')) {
     const weapon = key.slice(5);
     // Revisão pelos BYTES (data/goldenver.js, gerado). A string à mão congelava
@@ -347,13 +362,16 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 
   const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
   const golden = sourceKey.startsWith('gold#');
+  const fabrica = sourceKey.startsWith('fab#');
   // Precedência: família, medida por arma e override manual; `family` herda tudo.
   // Medição: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   const weaponId = sourceKey.split('#')[1];
   const weaponFrame = VM_WEAPON[weaponId]?.frame;
   const familyFrame = FAMILY_FRAME[family] || FAMILY_FRAME.default;
   const medido = VM_FRAME[weaponId];
-  const frame = golden
+  const frame = fabrica
+    ? { ...VM_FABRICA_FRAME, ...(VM_FABRICA_POS[weaponId] || {}), ...(VM_FABRICA[weaponId]?.frame || {}) }
+    : golden
     ? { x: 0, y: 0, z: 0, fov: cameraFov }
     : molde
     ? { ...(VM_FONTE === 'goldsrc'
@@ -406,7 +424,8 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
           : (tingivel(object.material) ? tintHandMaterial(object.material, profile, molde) : object.material);
       }
       object.userData.authoredCharacterHand = profile.id || 'player';
-      if (!golden && !molde && materialsOf(object).some((m) => SLEEVE_MATERIAL.test(m?.name || ''))) extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });
+      const mangaRuntime = !fabrica || VM_FABRICA[weaponId]?.manga !== false;
+      if (!golden && !molde && mangaRuntime && materialsOf(object).some((m) => SLEEVE_MATERIAL.test(m?.name || ''))) extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });
     } else {
       weaponMeshes.push(object);
       if (molde && !/MAG/i.test(object.name)) {
@@ -488,7 +507,8 @@ export class AuthoredViewModels {
     // VM_FAMILY dava undefined e nada da família valia (31/08).
     const bruta = key.split('#')[0];
     const armaDaChave = key.includes('#') ? key.split('#')[1] : '';
-    const family = (bruta === 'gs' || bruta === 'rt' || bruta === 'gold')
+    const family = bruta === 'fab' ? VM_FABRICA[armaDaChave]?.familia
+      : (bruta === 'gs' || bruta === 'rt' || bruta === 'gold')
       ? (VM_WEAPON[armaDaChave]?.family || bruta) : bruta;
     const bakedWeapon = key.includes('#') ? key.split('#')[1] : '';
     const golden = key.startsWith('gold#');
@@ -520,7 +540,18 @@ export class AuthoredViewModels {
       this.entries.set(key, entry);
       this.pending.delete(key);
       this._idle(entry);
-      if (bakedWeapon) {
+      if (key.startsWith('fab#')) {
+        // Fábrica: a arma É a do pack (política do BUG-75 revogada pelo dono em 23/09);
+        // mira e boca vêm dos sockets da ficha do chassi.
+        const raiz = visual.scene.getObjectByName(`SOCKET_WEAPON_${bakedWeapon.toUpperCase()}`);
+        entry.mint = { active: raiz, wraps: new Map(), weaponId: bakedWeapon, fabrica: true };
+        entry.sockets = {
+          muzzle: visual.scene.getObjectByName('SOCKET_FAB_MUZZLE') || null,
+          sight: visual.scene.getObjectByName('SOCKET_FAB_SIGHT') || null,
+          up: visual.scene.getObjectByName('SOCKET_FAB_UP') || null,
+          boca: visual.scene.getObjectByName('SOCKET_FAB_BARREL') || null,
+        };
+      } else if (bakedWeapon) {
         // GLB assado: a Mint já está DENTRO (offline) com sockets nomeados —
         // nada de montagem ao vivo; só referencia os nós do contrato.
         const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`);
@@ -597,7 +628,7 @@ export class AuthoredViewModels {
     const family = familyFor(this.weapon);
     if (!family || !this._recoilParams || family === this._recoilFamily) return;
     this._recoilFamily = family;
-    this.recoil.setFamily(this._recoilParams, family, VM_WEAPON[this.weapon]?.recoilScale ?? 1);
+    this.recoil.setFamily(this._recoilParams, family, cfgArma(this.weapon)?.recoilScale ?? 1);
   }
 
   setAim(id = this.weapon, amount = 0) {
@@ -676,7 +707,7 @@ export class AuthoredViewModels {
     // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
-    const adsConfig = VM_WEAPON[this.weapon]?.ads;
+    const adsConfig = cfgArma(this.weapon)?.ads;
     const wrap = active.mint?.active;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {
@@ -692,10 +723,21 @@ export class AuthoredViewModels {
           _adsQuat.setFromEuler(active.mount.rotation).premultiply(_adsBlend);
           active.mount.rotation.setFromQuaternion(_adsQuat);
           active.mount.updateWorldMatrix(true, true);
+          // Rolagem: o ADS do pack alinha a rotação inteira do AimPoint, não só o cano.
+          const up = active.sockets?.up && mintPointScene(active, 'up');
+          const alca = up && mintPointScene(active, 'sight');
+          if (up && alca) {
+            const rolagem = Math.atan2(up.x - alca.x, up.y - alca.y);
+            _adsQuat.setFromEuler(active.mount.rotation).premultiply(_adsRoll.setFromAxisAngle(_ADS_ROLL, rolagem * ads));
+            active.mount.rotation.setFromQuaternion(_adsQuat);
+            active.mount.updateWorldMatrix(true, true);
+          }
           const sight = mintPointScene(active, 'sight');
           if (sight) {
             active.mount.position.x += -sight.x * ads;
             active.mount.position.y += -sight.y * ads;
+            // Alívio de olho do pack (aimPointOffset do Settings): alça a `alivio` m do olho.
+            if (adsConfig.alivio) active.mount.position.z += (-adsConfig.alivio - sight.z) * ads;
             // Recuar a alça para distância-alvo joga a arma fora do quadro
             // (testado 31/08): calibração fina por família, não fórmula.
           }
@@ -715,6 +757,7 @@ export class AuthoredViewModels {
   muzzleWorld(id = this.weapon, camera = null) {
     const entry = this.entry(id);
     if (!entry?.mount.visible || !camera) return null;
+    if (entry.sockets?.boca) return camera.localToWorld(entry.sockets.boca.getWorldPosition(new THREE.Vector3()));
     // Arma Mint montada tem boca MEDIDA (weaponMetrics); o bbox é só fallback.
     const mint = mintPointWorld(entry, 'muzzle', camera);
     if (mint) return mint;
@@ -785,7 +828,7 @@ export class AuthoredViewModels {
     }
     // Pistolas cs16: o arco procedural É o estado draw — cadência do QC e
     // expiração no update (não há clipe para "terminar"). Revisão 29/08.
-    const useGameplayTiming = VM_WEAPON[id]?.timing === 'gameplay';
+    const useGameplayTiming = cfgArma(id)?.timing === 'gameplay';
     entry.drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.12, duration || 0.32);
     entry.drawTime = 0;
     entry.state = 'draw';
@@ -840,7 +883,7 @@ export class AuthoredViewModels {
       entry.state = 'fire';
       return this._play(entry, 'shoot', { fade: 0.01 });
     }
-    if (cs16 && VM_WEAPON[id]?.timing !== 'gameplay') {
+    if (cs16 && cfgArma(id)?.timing !== 'gameplay') {
       // Máquina de 6 estados do QC: shoot1→2→3 cicla como as três sequências.
       // O recuo do mount voltou com a escala em metro (antes era invisível).
       this.recoil.shoot(this._time);

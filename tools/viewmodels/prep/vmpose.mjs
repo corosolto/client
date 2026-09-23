@@ -43,9 +43,18 @@ export class Pose {
     const trs = this.nodes.map((n) => ({ t: n.getTranslation().slice(), r: n.getRotation().slice(), s: n.getScale().slice() }));
     const a = clip ? this.anims.get(clip) : null;
     if (clip && !a) throw new Error(`clipe ${clip} ausente`);
+    this.pesos = new Map();
     for (const ch of a ? a.listChannels() : []) {
       const i = this.index.get(ch.getTargetNode());
       const path = ch.getTargetPath();
+      if (path === 'weights') {
+        const n = ch.getTargetNode().getMesh()?.listPrimitives()[0]?.listTargets().length || 1;
+        const x = ch.getSampler().getInput().getArray();
+        const y = ch.getSampler().getOutput().getArray();
+        let k = 0; while (k < x.length - 1 && x[k + 1] <= t) k++;
+        this.pesos.set(i, Array.from(y.slice(k * n, k * n + n)));
+        continue;
+      }
       if (!['translation', 'rotation', 'scale'].includes(path)) continue;
       const v = amostra(ch.getSampler(), t, path === 'rotation');
       trs[i][path === 'translation' ? 't' : path === 'rotation' ? 'r' : 's'] = v;
@@ -81,7 +90,16 @@ export class Pose {
           .multiply(new Matrix4().fromArray(ibm, k * 16)));
       }
       for (const prim of mesh.listPrimitives()) {
-        const pos = prim.getAttribute('POSITION').getArray();
+        let pos = prim.getAttribute('POSITION').getArray();
+        // Chaves de forma amostradas pelo último `local()` (punho da manga na recarga).
+        const pesos = this.pesos?.get(i);
+        if (pesos?.some((w) => w)) {
+          pos = Float32Array.from(pos);
+          prim.listTargets().forEach((alvo, k) => {
+            const d = alvo.getAttribute('POSITION')?.getArray();
+            if (d && pesos[k]) for (let q = 0; q < pos.length; q++) pos[q] += d[q] * pesos[k];
+          });
+        }
         const J = prim.getAttribute('JOINTS_0')?.getArray();
         const W = prim.getAttribute('WEIGHTS_0')?.getArray();
         const idx = prim.getIndices()?.getArray();

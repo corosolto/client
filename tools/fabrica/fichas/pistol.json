@@ -4,7 +4,7 @@
   "chassi": "X18",
   "descricao": "PT-38 = X18 do pack como autorada: chassi puro + braço único coro-ak. Sem o magTranslationScale/magGrip da PT-38 antiga (zona de contato como autorada).",
   "skinBraco": "coro-ak",
-  "skinArma": null,
+  "skinArma": "pt38",
   "zonaLivre": [],
   "clipes": {
     "reload_tactical": "pack:reload_tactical",
@@ -14,5 +14,8 @@
     "inspect": "ausente"
   },
   "saque": "arco procedural do runtime (o pack não tem equip de pistola; A_FP_Pistol_UnEquip é só a saída)",
-  "recuo": { "familia": "pistol", "fonte": "recoil.json ← Animations/X18/X18.asset + clipe A_FP_X18_Fire do pack" }
+  "recuo": {
+    "familia": "pistol",
+    "fonte": "recoil.json ← Animations/X18/X18.asset + clipe A_FP_X18_Fire do pack"
+  }
 }

@@ -33,17 +33,32 @@ export const GRIPS = {
   { tipo: 'deslocar', corpo: 'MINT_WEAPON_M92', d: [-0.224, -0.038, -0.025], lado: 'l' }],
   // AK e AKM K: o pacote M4 fecha a mão esquerda abaixo do guarda-mão, na frente do pente, e o
   // punho direito ~9 cm à frente do cabo (mesmo braço da M92); a arma anda até o punho.
+  // retorno (P12): a mão sai do ferrolho a 80% da vazia e volta ao guarda-mão entre 84% e 95%.
   ak: [{ corpo: 'MINT_WEAPON_AK', alvo: [-0.15, 0.08, 0.011], rolagem: 0, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'],
-    dedosDireitosFechados: ['reload_tactical', 'reload_empty'] },
+    dedosDireitosFechados: ['reload_tactical', 'reload_empty'], retorno: { reload_empty: [0.84, 0.95] } },
     { tipo: 'deslocar', corpo: 'MINT_WEAPON_AK', d: [-0.105, -0.038, -0.014], lado: 'l' }],
   akm: [{ corpo: 'MINT_WEAPON_AKM', alvo: [-0.15, 0.08, 0.009], rolagem: 0, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'],
-    dedosDireitosFechados: ['reload_tactical', 'reload_empty'] },
+    dedosDireitosFechados: ['reload_tactical', 'reload_empty'], retorno: { reload_empty: [0.84, 0.95] } },
     { tipo: 'deslocar', corpo: 'MINT_WEAPON_AKM', d: [-0.117, -0.038, -0.013], lado: 'l' }],
   // Pente MD97 veio sem UV nem textura (0,8 cinza fosco = bloco branco na tela): herda
   // a média do atlas da própria arma (Color 0,32/0,30/0,28 sRGB, ORM rug. 0,48 metal 0,80).
   md97: { corpo: 'MINT_WEAPON_MD97', alvo: [-0.19, 0.049, -0.01], rolagem: 30, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'],
     poloFixo: 'apoio', poloDir: [0.7, -1, 0],
     materiais: { 'MD97 Magazine': { base: [0.084, 0.075, 0.064, 1], metal: 0.8, rugosidade: 0.48 } } },
+  // Fila P1/P11/P15 (integração K): mesmo punho vertical do pacote M4 fechado ~11 cm abaixo do
+  // guarda-mão (eval:vm-maos 0,30–0,44 palma). Alvo = centro da seção da malha do guarda-mão à
+  // frente do poço do pente (x −0,22…−0,30 no nó da arma; −X é a boca), baixado 2–3 cm e puxado para o
+  // lado da câmera até a luva aparecer (vm-pegada-k PG10 ≥ 60%: scar 0,50 → 0,74, g3 0,59 → 0,75).
+  // Carabina em x −0,22: o braço estendido até −0,24 media 1,40× o da AK (vm-cobertura, teto 1,4); fica
+  // 1,37×. A carabina de alavanca anima a mão de apoio também no tiro. awp (P11) fica de fora: o guarda-mão
+  // (x ≤ −0,26) está além do alcance do braço (IK > 1, a recarga passou a cobrir a tela, vm-manga-tela 92%)
+  // e em x −0,22 a mão fica no ferrolho, igual ao antes (crítico A/B: IGUAL) — é enquadramento (fila C5).
+  // tavor (P1) também fica de fora: a manga estendida do runtime é resolvida na pose do idle, então
+  // qualquer idle novo muda o tubo da recarga (que já gira a arma 70–90°, fila B1). Duas rodadas do
+  // crítico A/B deram PIOROU (manga cobrindo o dobro na tática 55, ADS sem luva): espera a re-animação.
+  scar: { corpo: 'MINT_WEAPON_SCAR', alvo: [-0.22, 0.075, 0], rolagem: 0, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'] },
+  carbine: { corpo: 'MINT_WEAPON_CARBINE', alvo: [-0.22, 0.06, 0.005], rolagem: 0, fecho: 0.9, clipes: ['idle', 'shoot', 'reload_tactical', 'reload_empty'] },
+  g3: { corpo: 'MINT_WEAPON_G3', alvo: [-0.24, 0.05, 0.004], rolagem: 0, fecho: 0.9, clipes: ['idle', 'reload_tactical', 'reload_empty'] },
   // KSG já girada (shotgun-k-fix.mjs): mão esquerda no punho vertical da bomba, presa ao
   // osso da bomba para correr junto no tiro. Alvo em RIG_WEAPON_SHOTGUN (unidades do rig).
   shotgun: { corpo: 'RIG_WEAPON_SHOTGUN', referencia: 'MINT_MECH_SHOTGUN_PUMP', frenteLocal: [0, 0, 1], cimaLocal: [0, 1, 0],
@@ -306,7 +321,11 @@ export async function aplicar({ arma, entrada, saida, cfg = GRIPS[arma], extra =
       const refT = W[iRef];
       const desvio = centroT.clone().applyMatrix4(refT.clone().invert()).sub(centroRef0)
         .multiply(new Vector3().setFromMatrixScale(refT)).length() / escala;
-      const peso = cfg.sempreNaArma?.includes(clipe) ? 1 : 1 - smooth(0.02, 0.08, desvio);
+      // retorno: no fim da recarga vazia o pacote M4 deixa a mão no pente até o último quadro
+      // (fila P12, "mão volta ao pente a 95%"); nessa janela a pegada volta ao guarda-mão.
+      const janela = cfg.retorno?.[clipe];
+      const volta = janela ? smooth(janela[0], janela[1], t / pose.duracao(clipe)) : 0;
+      const peso = cfg.sempreNaArma?.includes(clipe) ? 1 : Math.max(volta, 1 - smooth(0.02, 0.08, desvio));
       pesoMax = Math.max(pesoMax, peso); pesoMin = Math.min(pesoMin, peso);
       const qHand = rot(W[iH]);
       const qAlvo = rot(refT).multiply(qMaoRef);

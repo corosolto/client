@@ -19,7 +19,7 @@ import { dedup, prune, resample, textureCompress } from '@gltf-transform/functio
 import sharp from 'sharp';
 
 import {
-  ARQUIVO_PRODUTO, MANIFESTO, RAIZ_REPO, TRABALHO, URL_PRODUTO, foraDoRepo, gravarJson, lerJson, rodarBlender, sha256,
+  ARQUIVO_PRODUTO, MANIFESTO, RAIZ_REPO, TRABALHO, URL_PRODUTO, foraDoRepo, gerarVmFabricaJs, gravarJson, lerJson, rodarBlender, sha256,
 } from './lib/comum.mjs';
 import { montarPlano } from './lib/plano.mjs';
 import { PACK_RAIZ } from './lib/pack.mjs';
@@ -117,13 +117,7 @@ if (publicar) {
   };
   manifesto.candidates = Object.fromEntries(Object.entries(manifesto.candidates).sort(([a], [b]) => a.localeCompare(b)));
   gravarJson(MANIFESTO, manifesto);
-  const corpo = `// GERADO por tools/fabrica/build.mjs — não editar à mão.
-// Versão de URL por BYTES dos produtos da fábrica (tools/fabrica/fabrica-candidates.json).
-export const VM_FABRICA_BYTES = Object.freeze({
-${Object.entries(manifesto.candidates).map(([id, c]) => `  ${id}: '${c.sha256.slice(0, 10)}',`).join('\n')}
-});
-`;
-  fs.writeFileSync(path.join(RAIZ_REPO, 'public/js/data/vmfabrica.js'), corpo);
+  gerarVmFabricaJs();
   etapa(`publicado ${URL_PRODUTO(ficha.id)} (${(bytes / 1048576).toFixed(2)} MiB, ${sha.slice(0, 10)})`);
 }
 console.log(`FABRICA_BUILD=${JSON.stringify({ id: ficha.id, bytes, sha256: sha, clipes: relatorio.clipes.map((c) => c.nome) })}`);

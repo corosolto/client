@@ -1,0 +1,47 @@
+{
+  "id": "ak",
+  "curta": false,
+  "golden": {
+    "eixo": 28.7,
+    "centro": [
+      0.835,
+      0.767
+    ]
+  },
+  "frameBase": {
+    "x": 0.065,
+    "y": 0.04,
+    "z": -0.203,
+    "fov": 57,
+    "rotDeg": [
+      1.69,
+      7.69,
+      6.19
+    ]
+  },
+  "antes": {
+    "tamanhoVsAk": 1.259,
+    "bracoVsAk": 1.857,
+    "eixo": 29.7,
+    "cruz": 215,
+    "centro": [
+      0.783,
+      0.756
+    ]
+  },
+  "frame": {
+    "x": 0.285,
+    "y": -0.05,
+    "z": -0.163
+  },
+  "depois": {
+    "tamanhoVsAk": 0.903,
+    "bracoVsAk": 0.97,
+    "eixo": 29.7,
+    "cruz": 0,
+    "centro": [
+      0.857,
+      0.755
+    ]
+  }
+}

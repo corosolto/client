@@ -1,0 +1,11 @@
+{
+  "id": "ak47",
+  "descricao": "Identidade AK-47 do jogo sobre o AK-200 do pack: coronha/guarda-mão de madeira, aço escuro, pente de aço. Só material — a malha é a do pack.",
+  "materiais": {
+    "M_Polymer_Furniture": { "cor": "6e3f1f", "metal": 0.0, "rugosidade": 0.58 },
+    "M_Finish": { "cor": "2b2d31", "metal": 0.65, "rugosidade": 0.42 },
+    "M_Finish_Milled": { "cor": "3a3d42", "metal": 0.7, "rugosidade": 0.36 },
+    "M_Polymer_Mag": { "cor": "2e2b28", "metal": 0.55, "rugosidade": 0.45 },
+    "M_Mag_Translucent": { "cor": "2e2b28", "metal": 0.55, "rugosidade": 0.45 }
+  }
+}

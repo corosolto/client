@@ -41,3 +41,23 @@ export const gravarJson = (arquivo, dado) => {
   fs.mkdirSync(path.dirname(arquivo), { recursive: true });
   fs.writeFileSync(arquivo, `${JSON.stringify(dado, null, 2)}\n`);
 };
+
+// public/js/data/vmfabrica.js: versão por bytes (manifesto) + frame resolvido (enquadrar.mjs).
+export function gerarVmFabricaJs() {
+  const manifesto = fs.existsSync(MANIFESTO) ? lerJson(MANIFESTO) : { candidates: {} };
+  const dirEnq = path.join(RAIZ_REPO, 'tools/fabrica/enquadramento');
+  const frames = fs.existsSync(dirEnq) ? fs.readdirSync(dirEnq).filter((f) => f.endsWith('.json')).sort()
+    .map((f) => lerJson(path.join(dirEnq, f))).filter((e) => !e.curta) : [];
+  const corpo = `// GERADO por tools/fabrica (build.mjs e enquadrar.mjs) — não editar à mão.
+// Versão de URL por BYTES dos produtos da fábrica (tools/fabrica/fabrica-candidates.json).
+export const VM_FABRICA_BYTES = Object.freeze({
+${Object.entries(manifesto.candidates).map(([id, c]) => `  ${id}: '${c.sha256.slice(0, 10)}',`).join('\n')}
+});
+// Posição do pacote por chassi contra a AK golden (tools/fabrica/enquadramento/<id>.json);
+// rotação e FOV ficam os de VM_FABRICA_FRAME, iguais para todas as armas.
+export const VM_FABRICA_POS = Object.freeze({
+${frames.map((e) => `  ${e.id}: { x: ${e.frame.x}, y: ${e.frame.y}, z: ${e.frame.z} },`).join('\n')}
+});
+`;
+  fs.writeFileSync(path.join(RAIZ_REPO, 'public/js/data/vmfabrica.js'), corpo);
+}

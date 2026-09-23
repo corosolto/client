@@ -8,8 +8,8 @@
       "chassi": "AK",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/ak-fabrica.glb",
-      "bytes": 3758748,
-      "sha256": "289b38e1ca9f9ffbfd58a247c9e5aed62184bdd9c6205c05ae51d65024d33c35",
+      "bytes": 3758732,
+      "sha256": "fc35d572e23b6b273d8bdb19ea3565856f2af203918e88656209375769a0cec6",
       "clipes": [
         {
           "nome": "idle",
@@ -47,11 +47,11 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 4,
+      "segundos": 11,
       "file": "viewmodels/fabrica/ak-fabrica.glb",
       "ficha": "tools/fabrica/fichas/ak.json",
       "insumos": {
-        "ficha": "524f3682d6b9378d9dea38d7012994f25772a3f82e8554c708bb7678fa37910c",
+        "ficha": "f4c2021f64bf17e1eb09df58f05ec2b67acea6cc0e9363a5986505112bd3a1b0",
         "chassi": "90cb0a520321d4cd4b1c489aa16a9e874eedc6b99c0feb74fbeb5bf919d03508",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "aad275438cb295aca9c875743a435bbd4fd6994208a9b8dcce2539f4b44e8504",
@@ -73,8 +73,8 @@
       "chassi": "MX16A4",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/m4-fabrica.glb",
-      "bytes": 4162420,
-      "sha256": "9d2644f4ec2d4d7b263e690c300d63fb56de43237362601888a280140d4304a9",
+      "bytes": 4162644,
+      "sha256": "c500cfe6320ac063d72c60750adecce0a91179b8b53881f3b48e30f6918a2a9a",
       "clipes": [
         {
           "nome": "idle",
@@ -112,7 +112,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 4,
+      "segundos": 5,
       "file": "viewmodels/fabrica/m4-fabrica.glb",
       "ficha": "tools/fabrica/fichas/m4.json",
       "insumos": {
@@ -138,8 +138,8 @@
       "chassi": "X18",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/pistol-fabrica.glb",
-      "bytes": 2727628,
-      "sha256": "fb25cb1bbb0a0589efc97f06fa945bedcb3e76ce3c9b65900453f67a5794a27b",
+      "bytes": 2727384,
+      "sha256": "4c9e3a1a29908310c9e6d555c3dadf783e75d5858c646bd10060081aaabe7f6a",
       "clipes": [
         {
           "nome": "idle",
@@ -177,11 +177,11 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 4,
+      "segundos": 6,
       "file": "viewmodels/fabrica/pistol-fabrica.glb",
       "ficha": "tools/fabrica/fichas/pistol.json",
       "insumos": {
-        "ficha": "4e1870228f5ca0050f6cba9719631c62dcb94ba0c4dc156261a17200aff9fe2a",
+        "ficha": "7a363a289c2144cfab4c76e804f72ac0d42cda2e3a6ae1024d4495ed64c53aa8",
         "chassi": "72f6d5ff86c4c8487ef5f288a4d1b4bf9da49a920895165434183c500cd34a48",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "39c5726a277e95b9aaf5bbe14c6fc7fd4742b2a0d8db6111c13c60c11b82f925",
@@ -204,8 +204,8 @@
       "chassi": "KXG12",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/shotgun-fabrica.glb",
-      "bytes": 3028408,
-      "sha256": "736b513c7127a1ed09744f64aa82b47c359adbee2b03298b56454e1a4570531a",
+      "bytes": 3028608,
+      "sha256": "cdcb472a4c103f23e70101aa31d2bcf17a5dc4e34639769a15bd146da426e7b4",
       "clipes": [
         {
           "nome": "idle",
@@ -261,7 +261,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 8,
+      "segundos": 9,
       "file": "viewmodels/fabrica/shotgun-fabrica.glb",
       "ficha": "tools/fabrica/fichas/shotgun.json",
       "insumos": {

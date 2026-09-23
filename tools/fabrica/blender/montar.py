@@ -154,8 +154,10 @@ def unity_mat(path: Path):
     met = re.search(r"- _Metallic: ([\d.eE+-]+)", txt)
     liso = re.search(r"- _Smoothness: ([\d.eE+-]+)", txt)
     tex = re.search(r"_BaseMap:\s*\n\s*m_Texture: \{fileID: \d+, guid: ([0-9a-f]+)", txt)
+    # O Unity serializa a cor do material em gama (sRGB); o Principled quer linear.
+    lin = lambda c: c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
     return (
-        [float(v) for v in cor.groups()] if cor else [0.18, 0.18, 0.18],
+        [lin(float(v)) for v in cor.groups()] if cor else [0.03, 0.03, 0.03],
         float(met.group(1)) if met else 0.0,
         float(liso.group(1)) if liso else 0.45,
         tex.group(1) if tex else None,
@@ -469,6 +471,7 @@ def main() -> None:
     vazio(f"SOCKET_WEAPON_{nome}", rig_braco, em_rig)
     vazio("SOCKET_FAB_SIGHT", rig_braco, em_rig @ Matrix.Translation(mira))
     vazio("SOCKET_FAB_MUZZLE", rig_braco, em_rig @ Matrix.Translation(mira + frente * 40.0))
+    vazio("SOCKET_FAB_UP", rig_braco, em_rig @ Matrix.Translation(mira + Vector(chassi["eixos"]["cima"]) * 10.0))
     boca = chassi.get("ancoras", {}).get("boca")
     if boca:
         vazio("SOCKET_FAB_BARREL", rig_braco, em_rig @ Matrix.Translation(Vector(boca["raizCm"])))
