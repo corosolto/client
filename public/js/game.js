@@ -890,10 +890,8 @@ export class Game {
     this.vmScene = new THREE.Scene();
     this.vmScene.environment = this.scene.environment;   // mesmo IBL do mapa (metais leem)
     this.vmScene.add(this.vm.root);
-    // BUG-75: o pacote CC0 doa somente rig/clip. A arma visível continua sendo o GLB próprio
-    // próprio do Coro Solto e as mãos recebem pele/roupa do personagem selecionado.
-    // Tudo-ou-nada (vmlaunch.js): fora da chave nenhum controlador nasce e as 26 armas,
-    // faca e granada ficam no legado fparms.
+    // BUG-75: arma visível é o GLB do Coro Solto; mãos com pele/roupa do personagem.
+    // Tudo-ou-nada (vmlaunch.js): sem a chave nenhum controlador nasce e tudo fica no fparms.
     const authoredDef = byId(this.playerCharId);
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
     this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root, () => {

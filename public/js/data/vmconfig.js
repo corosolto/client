@@ -1,6 +1,5 @@
 // Tabela pura do viewmodel autorado (BUG-75): famílias KINEMATION + as 26 armas.
-// `ready` é o portão por arma; em produção o autorado só liga com VM_LAUNCH e as 26
-// prontas (tudo-ou-nada, decidido em vmlaunch.js e medido por eval:vm-launch).
+// `ready` é portão por arma; produção só liga com VM_LAUNCH e todas prontas (vmlaunch.js).
 
 // Chave de lançamento. Só o dono vira: com qualquer arma fora de `ready`, a
 // régua reprova e o runtime continua 100% no legado (fparms).
