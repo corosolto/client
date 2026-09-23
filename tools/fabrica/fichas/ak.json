@@ -1,0 +1,17 @@
+{
+  "id": "ak",
+  "arma": "ak",
+  "chassi": "AK",
+  "descricao": "AK do pack como autorada (AK-200): chassi puro + braço único coro-ak.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "clipes": {
+    "reload_tactical": "pack:reload_tactical",
+    "reload_empty": "pack:reload_empty",
+    "equip_rifle": "geral:rifle_equip",
+    "shoot": "procedural",
+    "inspect": "ausente"
+  },
+  "recuo": { "familia": "ak", "fonte": "recoil.json ← Animations/AK/AK.asset (KINEMATION RecoilAnimData)" }
+}

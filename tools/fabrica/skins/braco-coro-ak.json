@@ -1,0 +1,10 @@
+{
+  "id": "coro-ak",
+  "descricao": "Braço único da fábrica: a aparência da AK aprovada pelo dono (manga azul Mandrake, luva escura).",
+  "origem": "public/models/viewmodels/coro/ak-hires.glb — fatores de cor e rugosidade dos materiais CoroSolto_FP_Gloves e CoroSolto_Mandrake_Sleeves (lidos do GLB, espaço linear)",
+  "nota": "Os UVs do SK_Arms_Mono não são os do rig da ak-hires: a cor e a rugosidade vêm da aprovada; o relevo (normal map) é o do próprio pack, na mesma malha.",
+  "manga": { "material": "CoroSolto_Mandrake_Sleeves", "cor": [0.018, 0.045, 0.075], "rugosidade": 0.74, "normal": "T_Cloth01_N", "forcaNormal": 1.0 },
+  "luva": { "material": "CoroSolto_FP_Gloves", "cor": [0.018, 0.028, 0.04], "rugosidade": 0.7, "normal": "T_Glove01_N", "forcaNormal": 1.0 },
+  "pulso": { "material": "CoroSolto_FP_Gloves_Pulso", "cor": [0.018, 0.028, 0.04], "rugosidade": 0.7, "normal": "T_Arm01_N", "forcaNormal": 0.6 },
+  "resolucaoNormal": 1024
+}
