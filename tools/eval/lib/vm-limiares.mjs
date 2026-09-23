@@ -60,3 +60,12 @@ export const COBERTURA_ANGULO_MAX = 12;
 // ADS: arma+braço cobrem no máximo 1,5× o que a AK cobre em quadril (12,3% → 18,5%).
 // O crítico reprovou o shotgun no ADS por "cobrir ~40% da tela".
 export const COBERTURA_ADS_MAX_VS_AK = 1.5;
+
+/* PISTOLA-REF (eval:vm-pistola-ref): armas curtas contra a PT-38 aprovada.
+   `tamanho` por metro (mesmo conceito do vm-frame: uma Deagle maior que uma
+   pistola), faixa 0,80–1,25 como a longa. Posição: centro da arma a no máximo
+   6% da largura (86 px) do centro da pistola. ADS: arma visível ≥ 50% da área
+   da pistola em ADS (o revólver deixa "40 px acima das luvas"). */
+export const PISTOLA_FAIXA = { min: 0.80, max: 1.25 };
+export const PISTOLA_POS_MAX = 0.06;
+export const PISTOLA_ADS_MIN = 0.5;

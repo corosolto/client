@@ -267,6 +267,30 @@ export const JUIZ = {
     return falhas.length ? R(valor, `${falhas.join('; ')} — ${txt}. Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).`) : V(valor, txt);
   },
 
+  'pistola-ref'(c, refs) {
+    if (c.classe !== 'curta') return NA('só armas curtas');
+    const p = refs.pistol;
+    if (!p?.quadril?.arma || !p.ads) return NM(`referência da pistola ausente (${PISTOLA_APROVADA_ARQ} sem este aspecto; --assar-pistola ou --ref-pistola=viva)`);
+    const q = c.quadril;
+    if (!q?.arma) return NM('arma curta sem pixel de arma no quadril');
+    // comprimento declarado (weaponCFG.len): o mesmo "por metro" do vm-frame-calibra.
+    const len = (w) => weaponCFG(w).len || 0.26;
+    const tam = Math.sqrt(q.areaArma / p.quadril.areaArma) / (len(c.arma) / len('pistol'));
+    const cen = (b) => [(b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2];
+    const [x1, y1] = cen(q.arma); const [x0, y0] = cen(p.quadril.arma);
+    const dpos = Math.hypot(x1 - x0, y1 - y0);
+    const posMax = L.PISTOLA_POS_MAX * (refs.largura || L.LARGURA_REF);
+    const adsRaz = p.ads.areaArma ? (c.ads?.areaArma || 0) / p.ads.areaArma : 0;
+    const faixa = refs.faixaPistola || L.PISTOLA_FAIXA;
+    const falhas = [];
+    if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da pistola ${p.fonte} por metro (faixa ${faixa.min}–${faixa.max})`);
+    if (tam > faixa.max) falhas.push(`arma gigante: ${(tam * 100).toFixed(0)}% da pistola ${p.fonte} por metro (faixa ${faixa.min}–${faixa.max})`);
+    if (dpos > posMax) falhas.push(`posição: centro da arma a ${dpos.toFixed(0)} px do da pistola (${(x1 - x0).toFixed(0)}, ${(y1 - y0).toFixed(0)}; teto ${posMax.toFixed(0)})`);
+    if (adsRaz < L.PISTOLA_ADS_MIN) falhas.push(`ADS: só ${(adsRaz * 100).toFixed(0)}% da arma visível contra a pistola (mínimo ${L.PISTOLA_ADS_MIN * 100}%)`);
+    const valor = `${tam.toFixed(2)}× pistola ${p.fonte}`;
+    const txt = `tamanho ${valor}, desvio ${dpos.toFixed(0)} px, ADS ${(adsRaz * 100).toFixed(0)}%`;
+    return falhas.length ? R(valor, `${falhas.join('; ')} — ${txt}. Conserto: FAMILY_FRAME/VM_FRAME da família curta (escala/offset/rotDeg).`) : V(valor, txt);
+  },
 
 
 };
@@ -322,6 +346,11 @@ export const MUTANTES = {
   'arma-gigante': { regua: 'cobertura', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
     const r = raizesDe(e); for (const m of r) { m.scale.multiplyScalar(1.6); m.updateMatrixWorld(true); }
     return { aplicou: r.length > 0, malhas: r.map((m) => m.name) };`), arma) },
+  // A PT-38 com a malha a 55% (o revólver da revisão L1: ~60% da pistola).
+  encolhe: { regua: 'pistola-ref', arma: 'pistol', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const alvos = e.weaponMeshes.some((m) => m.isSkinnedMesh) ? ossosRaiz(e) : raizesDe(e);
+    for (const m of alvos) { m.scale.multiplyScalar(0.55); m.updateMatrixWorld(true); }
+    return { aplicou: alvos.length > 0, alvos: alvos.map((m) => m.name) };`), arma) },
 };
 
 /* Referências. AK: medida NA MESMA SESSÃO (é a referência viva do arsenal).

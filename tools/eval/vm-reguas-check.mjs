@@ -16,7 +16,10 @@
      node tools/eval/vm-reguas-check.mjs --mutante=alca-deslocada   (tem de REPROVAR)
      --fotos=<dir>  grava as máscaras rotuladas (arma vermelha, braço verde, cruz)
      --aspecto=16x9 (padrão 3x2, o do dono)
+     --ref-pistola=viva      mede a PT-38 do branch (padrão: retrato da APROVADA, pré-#631)
+     --faixa-pistola=0.8,1.25  faixa das curtas contra a pistola (decisão pendente do dono)
      --variante='{"arma":{"frame":{...},"ads":{...}}}'  experimento de config ao vivo, sem tocar arquivo
+     --assar-pistola          regrava tools/eval/vm-pistola-aprovada.json (só com decisão do dono)
    Saída ≠ 0: vermelho fora da dívida declarada (vm-reguas-divida.json) ou
    "não sei medir". Com VM_LAUNCH=true a dívida não desculpa nada.
    Requer private-assets e navegador — régua LOCAL, fora do check:fast.

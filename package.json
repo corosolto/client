@@ -310,6 +310,8 @@
     "eval:vm-mira": "node tools/eval/vm-reguas-check.mjs --regua=mira",
     "//eval:vm-cobertura": "tamanho, ângulo, braço, cruz livre e câmera fora da arma na silhueta RENDERIZADA contra a AK: o vm-frame media diagonal de vértice (shotgun 1,001 a ~160% da AK na tela; akm 0,50× só pelo percentil)",
     "eval:vm-cobertura": "node tools/eval/vm-reguas-check.mjs --regua=cobertura",
+    "//eval:vm-pistola-ref": "armas curtas contra a PT-38 APROVADA (retrato pré-#631 em vm-pistola-aprovada.json): o vm-frame comparava o revólver com a AK (1,109, dentro) e o crítico via 60% da pistola",
+    "eval:vm-pistola-ref": "node tools/eval/vm-reguas-check.mjs --regua=pistola-ref",
     "eval:vm-serving": "node tools/eval/authored-serving-check.mjs",
     "eval:vm-consistencia": "node tools/eval/vm-consistencia-check.mjs",
     "eval:vm-attach": "node tools/eval/vm-attach-fallback-check.mjs",
