@@ -115,3 +115,22 @@ Rodados com `CSBRASIL_VM_ASSET_ROOT` apontando para o overlay privado desta fren
 | `eval:vm-rifle-akm-lifecycle` | vermelho **pré-existente** ("família AK continua ready:false", igual na base) |
 | `eval:vm-frame` | vermelho: pistola (pré-existente, outro agente) + **akm** (item 3) |
 | `eval:vm-dmr-assets`, `eval:vm-dmr-lifecycle`, `eval:vm-smg-mp5`, `eval:vm-shotgun-final` | verdes |
+
+## Crítico cego (contexto limpo, só pixel, duas rodadas)
+
+Figuras: `artifacts/fix-mesh/critico/` (r1: shotgun, sks, lmg, mp5, akm + opções) e
+`artifacts/fix-mesh/critico-r2/` (r2: lmg, shotgun depois da extensão pelas juntas). Não versionadas.
+
+| Arma | Antes → depois | Manga oca antes / depois | O que segue reprovando (dono de cada coisa) |
+|---|---|---|---|
+| sks | MELHOROU pouco | sim / não | ângulo de lado, arma ~40 % da AK, pente de lâmina solto no ar, braços grossos pelo frame (Codex, vm-fix-mags) |
+| shotgun | IGUAL no principal | sim / não (r2: tubo até fora do quadro; toco dobrado em vazia-55) | "arma invertida" + "arma gigante" (Codex); mão de apoio enterrada na arma (vm-fix-grips) |
+| lmg | MELHOROU | sim / não | mão de apoio sem luva fora da recarga; fita rígida saindo de lado no idle, visível agora que caixa/fita voltaram ao lugar |
+| mp5 | IGUAL | não / não | recarga sem pente, ADS em pé (vm-fix-mags, Codex) |
+| akm | MELHOROU ("deixou de apontar pro alto") | não / não | mão de apoio no ar à esquerda do carregador; ~80–85 % da AK; ADS com coronha no centro |
+
+LMG, recarga: r1 e r2 confirmam tampa abrindo, caixa sob a culatra e fita na mão (antes: "tira no ar").
+Opção B de enquadramento da lmg: o crítico prefere "por pouco" a maior (~5–10 %), mas diz que
+nenhuma lê como metralhadora pesada; decisão fica com o dono. Opção B da akm (1,4×): o crítico prefere
+(105–115 % da AK, mão de apoio encosta no alojamento do carregador) — contradiz a medida de contato
+do socket `support_l`; decisão do dono, arquivo em `candidatos/akm-x1.4/`.
