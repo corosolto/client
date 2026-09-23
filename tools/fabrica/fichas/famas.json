@@ -1,0 +1,148 @@
+{
+  "id": "famas",
+  "arma": "famas",
+  "chassi": "MX16A4",
+  "descricao": "Primeira VARIANTE: FAMAS sobre o chassi MX16A4. Zona de contato do MX16A4 intacta (punho, gatilho, mão de apoio no guarda-mão, pente e poço à frente do punho, ferrolho/alavanca); zona livre trocada pela alça de transporte (com as miras) e pela soleira da FAMAS Mint do próprio jogo (public/models/weapons/famas.glb, 0 crédito Mint).",
+  "limite": "Não é bullpup: na FAMAS de verdade o pente fica atrás do punho. Isso é zona de contato — trocar exigiria outro chassi/animação (plano B). A variante lê como FAMAS pela alça e pela soleira, com o pente do M4 à frente do punho.",
+  "skinBraco": "coro-ak",
+  "skinArma": "famas",
+  "removerZonaLivre": [
+    {
+      "nome": "alca-e-massa-traseira-m4",
+      "min": [
+        -4,
+        -5.5,
+        1.5
+      ],
+      "max": [
+        4,
+        12.5,
+        7
+      ]
+    },
+    {
+      "nome": "massa-dianteira-m4",
+      "min": [
+        -4,
+        -44,
+        0.5
+      ],
+      "max": [
+        4,
+        -37,
+        7
+      ]
+    },
+    {
+      "nome": "coronha-m4",
+      "min": [
+        -5,
+        17.5,
+        -17
+      ],
+      "max": [
+        5,
+        43,
+        5
+      ]
+    },
+    {
+      "nome": "coronha-m4-junta",
+      "min": [
+        -5,
+        14.5,
+        -5
+      ],
+      "max": [
+        5,
+        17.5,
+        5
+      ]
+    }
+  ],
+  "zonaLivre": [
+    {
+      "peca": "alca",
+      "fonte": "public/models/weapons/famas.glb",
+      "origem": "Mint (modelo de mundo da FAMAS do jogo)",
+      "recorte": {
+        "min": [
+          -0.26,
+          -1,
+          0.055
+        ],
+        "max": [
+          0.21,
+          1,
+          1
+        ]
+      },
+      "centrar": [
+        "max",
+        "center",
+        "min"
+      ],
+      "ancora": {
+        "pos": [
+          0,
+          12.0,
+          0.8
+        ],
+        "rotDeg": [
+          0,
+          0,
+          90
+        ],
+        "escala": 0.758
+      }
+    },
+    {
+      "peca": "soleira",
+      "fonte": "public/models/weapons/famas.glb",
+      "origem": "Mint (modelo de mundo da FAMAS do jogo)",
+      "recorte": {
+        "min": [
+          0.215,
+          -1,
+          -0.045
+        ],
+        "max": [
+          0.5,
+          1,
+          0.075
+        ]
+      },
+      "centrar": [
+        "min",
+        "center",
+        "center"
+      ],
+      "ancora": {
+        "pos": [
+          0,
+          14.8,
+          -4.2
+        ],
+        "rotDeg": [
+          0,
+          0,
+          90
+        ],
+        "escala": 0.758
+      },
+      "nota": "topo da soleira abaixo da linha de visada (a bochecheira da FAMAS subia na frente do olho)"
+    }
+  ],
+  "clipes": {
+    "reload_tactical": "pack:reload_tactical",
+    "reload_empty": "pack:reload_empty",
+    "equip_rifle": "geral:rifle_equip",
+    "shoot": "procedural",
+    "inspect": "ausente"
+  },
+  "recuo": {
+    "familia": "ar",
+    "fonte": "recoil.json ← MX16A4 (chassi)"
+  },
+  "enquadramentoDe": "m4"
+}

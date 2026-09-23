@@ -66,6 +66,73 @@
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/ak.json"
     },
+    "famas": {
+      "schemaVersion": 1,
+      "id": "famas",
+      "arma": "famas",
+      "chassi": "MX16A4",
+      "variante": true,
+      "url": "/private-assets/viewmodels/fabrica/famas-fabrica.glb",
+      "bytes": 4217936,
+      "sha256": "86a8cfc7b8fef9482aef48b2b263e0e11235073b06550c721745e98e2c99486a",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_MX16A4_Pose.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.7,
+          "braco": "A_FP_MX16A4_Reload_Tac.FBX",
+          "arma": "A_W_MX16A4_Reload_Tac.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 3.2,
+          "braco": "A_FP_MX16A4_Reload_Empty.FBX",
+          "arma": "A_W_MX16A4_Reload_Empty.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural",
+        "inspect": "ausente"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 10,
+      "file": "viewmodels/fabrica/famas-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/famas.json",
+      "insumos": {
+        "ficha": "0434f2f11511dd805b1f522ff84c68499b44794bb9dfea5be632b25fea4e10da",
+        "chassi": "2d0ba35935a13db7374099648f405aa5245c25e32915da1aaa141f8c00af3356",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",
+        "poseFbx": "e880a476b6d93b953db983910692cf4d3457557b31b3b3eba138a5993f5a8896",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_tactical:braco": "0de0a1a76e25b01c90c2b08c7d2ac41f1126114d47197badb75083954a60a0ea",
+        "clipe:reload_tactical:arma": "4956e4e65f0046b492e89ba164ac2883030b073d05c8d3acfb4de7d9ec385f32",
+        "clipe:reload_empty:braco": "177a8f713f37d480c4cd537e17b1df85b13f67b229902a6894c51ff1ead2e812",
+        "clipe:reload_empty:arma": "53c258665b1e69389927fab72afac08f32b51447dff0254e4c8bc498969c2cc6",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "zonaLivre:alca": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a",
+        "zonaLivre:soleira": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/famas.json"
+    },
     "m4": {
       "schemaVersion": 1,
       "id": "m4",

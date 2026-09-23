@@ -52,7 +52,7 @@ export function montarPlano(fichaArquivo) {
   const dir = path.join(TRABALHO, ficha.id);
   const clipes = resolverClipes(ficha, chassi);
   const ancoraDe = (a) => {
-    if (typeof a === 'object' && a.pos) return a;
+    if (typeof a === 'object' && a.pos) return { nome: a.nome || 'livre', ...a };
     const nome = typeof a === 'string' ? a : a.nome;
     const base = chassi.ancoras[nome]?.raizCm || (nome === 'mira' ? chassi.mira.raizCm : null);
     if (!base) throw new Error(`âncora desconhecida no chassi ${chassi.nome}: ${nome}`);
@@ -79,7 +79,7 @@ export function montarPlano(fichaArquivo) {
       poseFbx: path.join(PACK_RAIZ, chassi.fonte.poseFbx),
       pastaMateriais: path.join(PACK_RAIZ, chassi.materiais.pasta),
       texturasPorGuid,
-      mira: chassi.mira,
+      mira: ficha.mira ? { ...chassi.mira, raizCm: ficha.mira.raizCm, origem: ficha.mira.origem } : chassi.mira,
       eixos: chassi.eixos,
       ancoras: chassi.ancoras,
     },
@@ -88,6 +88,10 @@ export function montarPlano(fichaArquivo) {
     skinArma,
     zonaLivre,
     removerZonaLivre: ficha.removerZonaLivre || [],
+    // Zona de contato do chassi com 1 cm de folga: a remoção de zona livre nunca a toca.
+    protecao: [chassi.zonaContato.maoForte.caixa, chassi.zonaContato.maoApoio.caixa,
+      ...Object.values(chassi.zonaContato.ossosMoveis)].filter(Boolean)
+      .map((c) => ({ min: c.min.map((v) => v - 1), max: c.max.map((v) => v + 1) })),
     clipes,
     saida: { dir },
   };

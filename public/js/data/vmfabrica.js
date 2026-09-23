@@ -2,6 +2,7 @@
 // Versão de URL por BYTES dos produtos da fábrica (tools/fabrica/fabrica-candidates.json).
 export const VM_FABRICA_BYTES = Object.freeze({
   ak: 'fc35d572e2',
+  famas: '86a8cfc7b8',
   m4: 'c500cfe632',
   pistol: '4c9e3a1a29',
   shotgun: '46990c2d6f',
@@ -12,4 +13,5 @@ export const VM_FABRICA_POS = Object.freeze({
   ak: { x: 0.285, y: -0.05, z: -0.163 },
   m4: { x: 0.245, y: -0.08, z: -0.233 },
   shotgun: { x: 0.155, y: -0.04, z: -0.333 },
+  famas: { x: 0.245, y: -0.08, z: -0.233 },
 });

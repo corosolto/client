@@ -48,6 +48,13 @@ export function gerarVmFabricaJs() {
   const dirEnq = path.join(RAIZ_REPO, 'tools/fabrica/enquadramento');
   const frames = fs.existsSync(dirEnq) ? fs.readdirSync(dirEnq).filter((f) => f.endsWith('.json')).sort()
     .map((f) => lerJson(path.join(dirEnq, f))).filter((e) => !e.curta) : [];
+  // Variante herda o enquadramento do produto puro do mesmo chassi (ficha.enquadramentoDe).
+  const dirFichas = path.join(RAIZ_REPO, 'tools/fabrica/fichas');
+  const porId = new Map(frames.map((e) => [e.id, e]));
+  for (const f of fs.readdirSync(dirFichas).filter((n) => n.endsWith('.json')).sort()) {
+    const ficha = lerJson(path.join(dirFichas, f));
+    if (ficha.enquadramentoDe && porId.has(ficha.enquadramentoDe)) frames.push({ ...porId.get(ficha.enquadramentoDe), id: ficha.id });
+  }
   const corpo = `// GERADO por tools/fabrica (build.mjs e enquadrar.mjs) — não editar à mão.
 // Versão de URL por BYTES dos produtos da fábrica (tools/fabrica/fabrica-candidates.json).
 export const VM_FABRICA_BYTES = Object.freeze({

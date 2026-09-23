@@ -322,11 +322,14 @@ def para_raiz(braco, malha, em_rig) -> Matrix:
     return em_rig.inverted() @ braco.data.bones[OSSO_ARMA].matrix_local.inverted() @ braco.matrix_world.inverted() @ malha.matrix_world
 
 
-def remover_regioes(braco, malhas: list, regioes: list, em_rig) -> list:
+def remover_regioes(braco, malhas: list, regioes: list, em_rig, protecao: list = ()) -> list:
     """Zona livre do chassi que a variante substitui: apaga vértices RÍGIDOS (peso
-    só no osso Arma) dentro de caixas no referencial da arma (cm). Vértice com peso
-    em osso móvel (pente, ferrolho, bomba, gatilho) nunca sai: é zona de contato."""
+    só no osso Arma) dentro de caixas no referencial da arma (cm). Nunca sai: vértice
+    com peso em osso móvel (pente, ferrolho, bomba, gatilho) e vértice dentro das
+    caixas de proteção (zona de contato do chassi: mão forte, mão de apoio, ossos
+    móveis, com folga). O relatório conta o que a proteção segurou."""
     relatorio = []
+    guarda = [(Vector(c["min"]), Vector(c["max"])) for c in protecao]
     for o in malhas:
         m = para_raiz(braco, o, em_rig)
         arma = o.vertex_groups.get(OSSO_ARMA)
@@ -336,15 +339,20 @@ def remover_regioes(braco, malhas: list, regioes: list, em_rig) -> list:
         for regiao in regioes:
             mn, mx = Vector(regiao["min"]), Vector(regiao["max"])
             alvo = []
+            protegidos = 0
             for v in bm.verts:
                 p = m @ v.co
                 if not all(mn[i] <= p[i] <= mx[i] for i in range(3)):
                     continue
                 if any(w > 0.01 and g != arma.index for g, w in v[deform].items()):
+                    protegidos += 1
+                    continue
+                if any(all(a[i] <= p[i] <= b[i] for i in range(3)) for a, b in guarda):
+                    protegidos += 1
                     continue
                 alvo.append(v)
             bmesh.ops.delete(bm, geom=alvo, context="VERTS")
-            relatorio.append({"regiao": regiao.get("nome"), "malha": o.name, "vertices": len(alvo)})
+            relatorio.append({"regiao": regiao.get("nome"), "malha": o.name, "vertices": len(alvo), "protegidos": protegidos})
         bm.to_mesh(o.data)
         bm.free()
     return relatorio
@@ -472,7 +480,7 @@ def main() -> None:
 
     rig_braco.data.pose_position = "REST"
     bpy.context.view_layer.update()
-    removidos = remover_regioes(rig_braco, malhas_arma, plano.get("removerZonaLivre", []), em_rig)
+    removidos = remover_regioes(rig_braco, malhas_arma, plano.get("removerZonaLivre", []), em_rig, plano.get("protecao", []))
     pecas = [importar_peca(p, rig_braco, em_rig) for p in plano.get("zonaLivre", [])]
     rig_braco.data.pose_position = "POSE"
     cena.frame_set(int(relatorio_clipes["idle"]["quadros"][0]))
