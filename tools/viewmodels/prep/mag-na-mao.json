@@ -1,0 +1,181 @@
+{
+  "mp5": {
+    "file": "viewmodels/mp5/mp5-runtime.glb",
+    "sourceSha256": "ac4630c4941b33e626ebbee61071c3b5c558de24647338da87da32346cba9903",
+    "node": "MINT_WEAPON_MAG_MP5",
+    "hand": "hand_l",
+    "clips": {
+      "reload_empty": {
+        "ancora": 1.0,
+        "tempos": [
+          0.5,
+          0.8,
+          1.15,
+          1.45
+        ]
+      },
+      "reload_tactical": {
+        "ancora": 1.0,
+        "tempos": [
+          0.5,
+          0.8,
+          1.15,
+          1.45
+        ]
+      }
+    },
+    "desenho": {
+      "desce": [
+        0,
+        -1,
+        0
+      ],
+      "frente": [
+        0,
+        0,
+        1
+      ],
+      "pega": [
+        -0.075,
+        -0.2,
+        -0.014
+      ],
+      "baixo": [
+        -0.35,
+        -1,
+        0
+      ],
+      "olha": [
+        0,
+        0,
+        1
+      ],
+      "centro": [
+        "middle_01_l",
+        "middle_02_l",
+        "index_02_l",
+        "ring_02_l"
+      ],
+      "tela": [
+        -10.1,
+        0,
+        0
+      ]
+    }
+  },
+  "p90": {
+    "file": "viewmodels/p90/p90-baked-runtime.glb",
+    "sourceSha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
+    "node": "MINT_WEAPON_MAG_P90",
+    "hand": "hand_l",
+    "fora": "repouso",
+    "desenho": {
+      "desce": [
+        1,
+        0,
+        0
+      ],
+      "frente": [
+        0,
+        1,
+        1
+      ],
+      "pega": [
+        0.215,
+        0.106,
+        0
+      ],
+      "baixo": [
+        -0.8,
+        -0.5,
+        0.3
+      ],
+      "olha": [
+        -0.1,
+        0.45,
+        0.89
+      ],
+      "tela": [
+        15.4,
+        6.0,
+        -60
+      ],
+      "centro": [
+        "middle_01_l",
+        "middle_02_l",
+        "index_02_l",
+        "ring_02_l"
+      ]
+    },
+    "clips": {
+      "reload_empty": {
+        "ancora": 1.0,
+        "tempos": [
+          0.45,
+          0.75,
+          1.4,
+          1.62
+        ],
+        "arco": 0.12
+      },
+      "reload_tactical": {
+        "ancora": 1.0,
+        "tempos": [
+          0.45,
+          0.75,
+          1.4,
+          1.62
+        ],
+        "arco": 0.12
+      }
+    },
+    "corpo": {
+      "min": [
+        0.055,
+        0.084,
+        -0.023
+      ],
+      "max": [
+        0.228,
+        0.128,
+        0.023
+      ],
+      "chanfro": 0.007,
+      "material": "CoroSolto_P90_Pente",
+      "cor": [
+        0.16,
+        0.165,
+        0.17,
+        1
+      ],
+      "aspereza": 0.38,
+      "metal": 0.85
+    }
+  },
+  "sks": {
+    "file": "viewmodels/marksman/sks-baked-runtime.glb",
+    "sourceSha256": "a52560d382cc9c48804bf879e40f5eeed1e248ada22f9f74fa4c12b1cc19d871",
+    "topoReceptor": [
+      0.075,
+      0.06,
+      0
+    ],
+    "refOrientacao": 2.0,
+    "cursoCartuchosCm": 5.0,
+    "janela": {
+      "aparece": 1.15,
+      "encaixa": 1.5,
+      "empurra": [
+        1.7,
+        2.4
+      ],
+      "solta": 2.6,
+      "some": 3.05
+    },
+    "giroDeg": [
+      0,
+      0,
+      90
+    ]
+  }
+}

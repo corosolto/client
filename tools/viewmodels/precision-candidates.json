@@ -29,8 +29,13 @@
       "sourceSha256": "fe13c71a93b9966fa8c19025327e8c032b2f4173d1290d392e13a5bd7d138f49",
       "optimizedBytes": 5473300,
       "optimizedSha256": "15bf12eb5663a03c49ff09edc31310bfe844416c3a2c7f9f3eec15f316ff8470",
-      "sha256": "a52560d382cc9c48804bf879e40f5eeed1e248ada22f9f74fa4c12b1cc19d871",
-      "bytes": 5473264
+      "sha256": "0e5d0ff138a73371e090ddb5a21fee7cd2b07b03742675543b036e1b2648fc4a",
+      "bytes": 5629224,
+      "fixMags": {
+        "sourceSha256": "a52560d382cc9c48804bf879e40f5eeed1e248ada22f9f74fa4c12b1cc19d871",
+        "sourceBytes": 5473264,
+        "recipe": "tools/viewmodels/prep/sks-desvira.mjs"
+      }
     }
   }
 }
