@@ -292,7 +292,73 @@ export const JUIZ = {
     return falhas.length ? R(valor, `${falhas.join('; ')} — ${txt}. Conserto: FAMILY_FRAME/VM_FRAME da família curta (escala/offset/rotDeg).`) : V(valor, txt);
   },
 
+  maos(c) {
+    if (c.classe === 'faca') return NA('faca');
+    if (c.classe === 'curta') return NA('curta: mão de apoio envolve a outra mão, não a arma');
+    if (c.arma === 'uzi') return NA('uzi: uma mão só (decisão do dono); mão de apoio é da vm-fix-grips');
+    const m = c.maos;
+    if (!m) return NM('não coletado');
+    if (m.erro) return NM(m.erro);
+    const d = m.dedos / m.compPalma;
+    const p = m.palma / m.compPalma;
+    const txt = `dedos da mão de apoio a ${d.toFixed(2)} palma da malha da arma (palma ${p.toFixed(2)}); teto ${L.MAOS_DEDOS_MAX}`;
+    if (d <= L.MAOS_DEDOS_MAX) return V(d.toFixed(2), txt);
+    return R(d.toFixed(2), `mão de apoio não encosta / fica no ar: ${txt}. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config.`);
+  },
 
+  carregador(c) {
+    if (CARREGADOR_NA[c.arma]) return NA(CARREGADOR_NA[c.arma]);
+    const k = c.carregador;
+    if (!k) return NM('não coletado');
+    if (k.erro) return NM(k.erro);
+    const T = L.CARREGADOR;
+    const r0 = k.repouso;
+    const falhas = [];
+    const repousoNaArma = r0.visivel && r0.dArma <= T.encostaMax;
+    if (!k.clipe && !repousoNaArma) falhas.push(r0.visivel ? `em repouso o carregador não encosta na arma (${r0.dArma.toFixed(2)} palma)` : 'em repouso o carregador está invisível');
+    if (k.clipe && r0.visivel && r0.dArma > T.encostaMax && r0.dMao > T.maoMax) falhas.push(`em repouso o clipe está solto no quadro (${r0.dMao.toFixed(2)} palma da mão, ${Number.isFinite(r0.dArma) ? r0.dArma.toFixed(2) : '∞'} da arma)`);
+    if (r0.visivel && r0.tamCorpo && r0.tamPeca / r0.tamCorpo > T.fantasmaMax) falhas.push(`tira carregador fantasma: a peça do carregador mede ${(100 * r0.tamPeca / r0.tamCorpo).toFixed(0)}% da arma`);
+    let naMao = 0;
+    const estados = [];
+    let yAnt = r0.vista?.[1];
+    let tipoAnt = '';
+    for (const a of k.amostras) {
+      if (a.erro) { falhas.push(`${a.tipo}: ${a.erro}`); continue; }
+      if (a.tipo !== tipoAnt) { yAnt = r0.vista?.[1]; tipoAnt = a.tipo; }
+      const pc = `${a.tipo} ${Math.round(a.f * 100)}%`;
+      let e;
+      const naTela = a.visivel && a.px >= T.pxMin;
+      if (!naTela) {
+        // Fora do quadro/escondido: só é defeito se a mão de apoio está NA TELA e a
+        // peça não está nela — o dono vê a mão fechada vazia (p90 da revisão L1).
+        e = a.maoNaTela && !(a.visivel && a.dMao <= T.maoMax) ? 'mao-vazia' : 'fora';
+      } else {
+        const desloc = r0.local && a.local ? Math.hypot(a.local[0] - r0.local[0], a.local[1] - r0.local[1], a.local[2] - r0.local[2]) : Infinity;
+        a.desloc = desloc;
+        if (!k.clipe && repousoNaArma && desloc <= T.deslocMax) e = 'arma';
+        else if (a.dMao <= T.maoMax) e = 'mao';
+        else if (k.clipe && a.dArma <= T.encostaMax) e = 'arma';
+        else if (Number.isFinite(yAnt) && a.vista && a.vista[1] - yAnt <= -T.quedaMin) e = 'caindo';
+        else e = 'solto';
+      }
+      if (a.vista) yAnt = a.vista[1];
+      if (e === 'mao') naMao++;
+      a.estado = e;
+      estados.push(`${a.tipo}${a.f}:${e}`);
+      if (e === 'solto') falhas.push(`recarrega com objeto no meio do ar: ${pc} — ${a.dMao.toFixed(2)} palma da mão, deslocado ${Number.isFinite(a.desloc) ? a.desloc.toFixed(2) : '∞'} do encaixe, ${a.px === Infinity ? 'na tela' : `${a.px} px na tela`}`);
+      if (e === 'mao-vazia' && !k.clipe) falhas.push(`mão vazia: ${pc} — mão de apoio na tela e o carregador ${a.visivel ? `a ${a.dMao.toFixed(2)} palma dela, fora do quadro` : 'invisível'}`);
+    }
+    // Toco: com a peça na mão, a fração dela que APARECE (contra ela sozinha em
+    // repouso) nunca passa de tocoMin — a mp5 da revisão L1 ("a mão segura um toco
+    // de 15–20 px; nunca aparece pente inteiro").
+    const fr = k.amostras.filter((a) => a.estado === 'mao' && Number.isFinite(a.px) && r0.pxSo).map((a) => a.px / r0.pxSo);
+    if (fr.length && Math.max(...fr) < T.tocoMin) falhas.push(`tira carregador fantasma (toco): com o pente na mão aparece no máximo ${(100 * Math.max(...fr)).toFixed(0)}% dele (mínimo ${T.tocoMin * 100}%)`);
+    if (!naMao) falhas.push('tira no ar: em nenhum quadro da recarga a peça está na mão');
+    const valor = `${falhas.length ? falhas.length + ' falha(s)' : 'ok'}`;
+    const txt = `${estados.join(' ')}`;
+    if (!falhas.length) return V(valor, txt);
+    return R(valor, `${[...new Set(falhas)].slice(0, 4).join('; ')}${falhas.length > 4 ? ` (+${falhas.length - 4})` : ''}. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.`);
+  },
 };
 
 export const REGUAS = Object.keys(JUIZ);
@@ -351,6 +417,19 @@ export const MUTANTES = {
     const alvos = e.weaponMeshes.some((m) => m.isSkinnedMesh) ? ossosRaiz(e) : raizesDe(e);
     for (const m of alvos) { m.scale.multiplyScalar(0.55); m.updateMatrixWorld(true); }
     return { aplicou: alvos.length > 0, alvos: alvos.map((m) => m.name) };`), arma) },
+  // A arma sobe 2,5 palmas e a mão de apoio fica no ar (a m92 da revisão L1).
+  'arma-sobe': { regua: 'maos', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const d = palmaDe(e) * 2.5; const r = raizesDe(e); for (const m of r) mover(m, 0, d, 0);
+    return { aplicou: r.length > 0, sobe: d, malhas: r.map((m) => m.name) };`), arma) },
+  // O pente sai da mão e fica no ar (uzi 15%, sks 35% da revisão L1).
+  solta: { regua: 'carregador', arma: 'm4', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const mag = e.weaponMeshes.find((m) => /_MAG$/i.test(m.name)); if (!mag) return { aplicou: false };
+    const antes = mag.position.clone(); mover(mag, 0, palmaDe(e) * 2, 0);
+    return { aplicou: !mag.position.equals(antes) };`), arma) },
+  // O pente some no meio da recarga com a mão na tela (p90 da revisão L1).
+  esconde: { regua: 'carregador', arma: 'm4', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const mag = e.weaponMeshes.find((m) => /_MAG$/i.test(m.name)); if (!mag) return { aplicou: false };
+    mag.visible = false; return { aplicou: true };`), arma) },
 };
 
 /* Referências. AK: medida NA MESMA SESSÃO (é a referência viva do arsenal).

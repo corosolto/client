@@ -69,3 +69,25 @@ export const COBERTURA_ADS_MAX_VS_AK = 1.5;
 export const PISTOLA_FAIXA = { min: 0.80, max: 1.25 };
 export const PISTOLA_POS_MAX = 0.06;
 export const PISTOLA_ADS_MIN = 0.5;
+
+/* MÃOS (eval:vm-maos): distância dos dedos da mão de APOIO à superfície da malha
+   da arma, em comprimentos de palma (junta hand→middle_01; a escala de cena
+   varia por produto). Aprovadas no olho: m4 0,00, mp5 0,01, p90 0,06, pistola
+   0,10, lmg 0,13; m92 (mão fechada no ar, crítico r2) 0,70. Corte 0,15 palma
+   (≈1,5–2 cm de palma real). */
+export const MAOS_DEDOS_MAX = 0.15;
+
+/* CARREGADOR (eval:vm-carregador), em comprimentos de palma:
+   na arma = deslocado ≤ 0,25 do repouso no referencial do corpo E o repouso
+   encosta no corpo (≤ 0,12); na mão = ≤ 0,7 de uma JUNTA de mão (a junta fica no
+   meio do osso: pente preso na ponta dos dedos fica a ~0,5; as referências
+   aprovadas medem até 0,66 — PT-38 trazendo o pente novo — e 0,46 na AK golden;
+   o p90 que "nunca aparece na mão" mede 1,05, a uzi 2,2, o clipe da sks 4+).
+   Fora dos dois = "recarrega com objeto no meio do ar", salvo se está CAINDO
+   (desce ≥ 0,5 palma entre amostras: pente vazio largado, como na PT-38).
+   Fora do quadro com a mão de apoio NA tela e sem o pente = "mão vazia".
+   Fantasma: a peça maior que 60% da arma é a arma, não o pente (uzi 100%).
+   Toco: na mão, a parte visível do pente nunca passa de 35% dele sozinho em
+   repouso (mp5 16%; m4 62%, m92 69%, md97 50% — o crítico aceitou a mecânica
+   da md97). Na tela = ≥ 30 px visíveis. */
+export const CARREGADOR = { deslocMax: 0.25, encostaMax: 0.12, maoMax: 0.7, fantasmaMax: 0.6, quedaMin: 0.5, pxMin: 30, tocoMin: 0.35 };
