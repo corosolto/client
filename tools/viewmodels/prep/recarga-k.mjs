@@ -171,7 +171,9 @@ export async function reanimar({ arma, entrada, saida, receita, medir = false })
     const nos = pos(W0[I(`pinky_01_${ladoC}`)]).sub(pos(W0[I(`index_01_${ladoC}`)])).normalize();
     const eixo = nos.applyQuaternion(qMao.clone().invert()).normalize();
     const qLocal = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), eixo);
-    const pinca = pos0Pinca(W0, ladoC).applyMatrix4(W0[iHl].clone().invert());
+    // `avanco` (m, mundo): o cartucho sai da pinça na direção dos dedos, para ficar à vista.
+    const dedosW = pos(W0[I(`middle_03_${ladoC}`)]).sub(pos(W0[iHl])).normalize();
+    const pinca = pos0Pinca(W0, ladoC).add(dedosW.multiplyScalar(c.avanco || 0)).applyMatrix4(W0[iHl].clone().invert());
     // Repouso escondido no centro da arma (dentro da silhueta: a régua de enquadramento conta vértice
     // de malha com escala 0); nos clipes da receita a translação vai à pinça.
     const centroArma = pos(W0[iGun]).applyMatrix4(W0[iHl].clone().invert());
