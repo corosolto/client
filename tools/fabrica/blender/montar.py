@@ -127,11 +127,8 @@ def srgb_linear(hexa: str):
 
 
 def aplicar_skin_braco(objs: list, skin: dict) -> dict:
-    """Skin única de braço (a aparência da AK aprovada: manga azul, luva escura).
-
-    Os nomes CoroSolto_FP_Gloves* / CoroSolto_Mandrake_Sleeves são os da linhagem
-    aprovada: o runtime os reconhece como mão e NÃO os tinge por time
-    (HAND_MATERIAL_AK_LINEAGE em authoredvm.js)."""
+    """Base neutra do braço (aparência da AK aprovada). Os nomes CoroSolto_FP_{Cloth,
+    Glove,Hand} fazem o runtime reconhecer a mão e tingir por time (vmhands.js)."""
     feitos = {}
     for o in objs:
         if o.type != "MESH":
@@ -223,7 +220,9 @@ def fundir_arma(braco, rig_arma, raiz, malhas: list, osso: str = "ik_hand_gun") 
     raiz.matrix_world = repouso  # já traz a escala 0,01 do FBX (cm → m), como o import
     bpy.context.view_layer.update()
 
-    # Osso raiz no referencial da RAIZ do FBX da arma (onde vivem mira e âncoras).
+    # Osso Arma = referencial da ARMADURA da arma (os clipes do pack animam os ossos
+    # nesse referencial; outro referencial espelharia o deslocamento do pente).
+    # Mira e âncoras do chassi vivem no referencial da RAIZ do FBX: `em_rig` converte.
     em_rig = rig_arma.matrix_world.inverted() @ raiz.matrix_world
     bpy.ops.object.select_all(action="DESELECT")
     bpy.context.view_layer.objects.active = rig_arma
@@ -234,7 +233,6 @@ def fundir_arma(braco, rig_arma, raiz, malhas: list, osso: str = "ik_hand_gun") 
     novo = eb.new(OSSO_ARMA)
     novo.head = (0.0, 0.0, 0.0)
     novo.tail = (0.0, 10.0, 0.0)
-    novo.matrix = em_rig.normalized()
     for b in raizes:
         b.parent = novo
         b.use_connect = False
@@ -257,6 +255,7 @@ def fundir_arma(braco, rig_arma, raiz, malhas: list, osso: str = "ik_hand_gun") 
             if mod.type == "ARMATURE":
                 mod.object = braco
     ossos = [b.name for b in rig_arma.data.bones]
+    vazia = raiz if raiz.type == "EMPTY" else None
     bpy.ops.object.select_all(action="DESELECT")
     rig_arma.select_set(True)
     braco.select_set(True)
@@ -267,23 +266,24 @@ def fundir_arma(braco, rig_arma, raiz, malhas: list, osso: str = "ik_hand_gun") 
     eb[OSSO_ARMA].parent = eb[osso]
     eb[OSSO_ARMA].use_connect = False
     bpy.ops.object.mode_set(mode="OBJECT")
-    if raiz.type == "EMPTY" and raiz.name in bpy.data.objects:
-        bpy.data.objects.remove(raiz, do_unlink=True)
+    if vazia is not None:
+        bpy.data.objects.remove(vazia, do_unlink=True)
     for pb in braco.pose.bones:
         if pb.name in ossos:
             pb.matrix_basis = Matrix.Identity(4)
     braco.data.pose_position = "POSE"
     bpy.context.view_layer.update()
-    return ossos
+    return ossos, em_rig
 
 
 def pendurar_no_osso(obj, braco, osso: str, local_cm=None) -> None:
-    """Objeto preso a osso com a posição local (cm) no referencial do osso; o
+    """Objeto preso a osso com posição (cm) ou matriz local no referencial do osso; o
     Blender pendura filho de osso na CAUDA, o parent_inverse compensa."""
     pb = braco.pose.bones.get(osso)
     if pb is None:
         raise RuntimeError(f"rig sem {osso}")
-    alvo = braco.matrix_world @ pb.matrix @ Matrix.Translation(Vector(local_cm or (0, 0, 0)))
+    local = local_cm if isinstance(local_cm, Matrix) else Matrix.Translation(Vector(local_cm or (0, 0, 0)))
+    alvo = braco.matrix_world @ pb.matrix @ local
     obj.parent = braco
     obj.parent_type = "BONE"
     obj.parent_bone = osso
@@ -301,18 +301,18 @@ def vazio(nome: str, braco, local_cm) -> bpy.types.Object:
     return o
 
 
-def para_arma(braco, malha) -> Matrix:
-    """Espaço da malha (repouso) → referencial do osso Arma, em cm."""
-    return braco.data.bones[OSSO_ARMA].matrix_local.inverted() @ braco.matrix_world.inverted() @ malha.matrix_world
+def para_raiz(braco, malha, em_rig) -> Matrix:
+    """Espaço da malha (repouso) → referencial da RAIZ do FBX da arma, em cm."""
+    return em_rig.inverted() @ braco.data.bones[OSSO_ARMA].matrix_local.inverted() @ braco.matrix_world.inverted() @ malha.matrix_world
 
 
-def remover_regioes(braco, malhas: list, regioes: list) -> list:
+def remover_regioes(braco, malhas: list, regioes: list, em_rig) -> list:
     """Zona livre do chassi que a variante substitui: apaga vértices RÍGIDOS (peso
     só no osso Arma) dentro de caixas no referencial da arma (cm). Vértice com peso
     em osso móvel (pente, ferrolho, bomba, gatilho) nunca sai: é zona de contato."""
     relatorio = []
     for o in malhas:
-        m = para_arma(braco, o)
+        m = para_raiz(braco, o, em_rig)
         arma = o.vertex_groups.get(OSSO_ARMA)
         bm = bmesh.new()
         bm.from_mesh(o.data)
@@ -334,7 +334,7 @@ def remover_regioes(braco, malhas: list, regioes: list) -> list:
     return relatorio
 
 
-def importar_peca(peca: dict, braco) -> dict:
+def importar_peca(peca: dict, braco, em_rig) -> dict:
     """Peça de zona livre: rígida, 100% no osso Arma, posta na âncora (cm) no repouso."""
     antes = set(bpy.data.objects)
     bpy.ops.import_scene.gltf(filepath=peca["fonte"])
@@ -378,7 +378,7 @@ def importar_peca(peca: dict, braco) -> dict:
     local = (Matrix.Translation(Vector(ancora["pos"])) @ Euler(rot).to_matrix().to_4x4()
              @ Matrix.Scale(ancora.get("escala", 1.0) * 100.0, 4))
     obj.parent = None
-    obj.matrix_world = braco.matrix_world @ braco.data.bones[OSSO_ARMA].matrix_local @ local
+    obj.matrix_world = braco.matrix_world @ braco.data.bones[OSSO_ARMA].matrix_local @ em_rig @ local
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
@@ -452,12 +452,12 @@ def main() -> None:
     for o in malhas_arma:
         o.name = f"GEO_WEAPON_{nome}_{o.name}"
     skin_arma = aplicar_skin_arma(arma, chassi, plano.get("skinArma"))
-    ossos_arma = fundir_arma(rig_braco, rig_arma, raiz, malhas_arma, chassi.get("ossoArma", "ik_hand_gun"))
+    ossos_arma, em_rig = fundir_arma(rig_braco, rig_arma, raiz, malhas_arma, chassi.get("ossoArma", "ik_hand_gun"))
 
     rig_braco.data.pose_position = "REST"
     bpy.context.view_layer.update()
-    removidos = remover_regioes(rig_braco, malhas_arma, plano.get("removerZonaLivre", []))
-    pecas = [importar_peca(p, rig_braco) for p in plano.get("zonaLivre", [])]
+    removidos = remover_regioes(rig_braco, malhas_arma, plano.get("removerZonaLivre", []), em_rig)
+    pecas = [importar_peca(p, rig_braco, em_rig) for p in plano.get("zonaLivre", [])]
     rig_braco.data.pose_position = "POSE"
     cena.frame_set(int(relatorio_clipes["idle"]["quadros"][0]))
     bpy.context.view_layer.update()
@@ -466,12 +466,12 @@ def main() -> None:
     # segundo ponto adiante no eixo do cano; o ADS "auto" do runtime alinha os dois.
     mira = Vector(chassi["mira"]["raizCm"])
     frente = Vector(chassi["eixos"]["frente"])
-    vazio(f"SOCKET_WEAPON_{nome}", rig_braco, (0, 0, 0))
-    vazio("SOCKET_FAB_SIGHT", rig_braco, mira)
-    vazio("SOCKET_FAB_MUZZLE", rig_braco, mira + frente * 40.0)
+    vazio(f"SOCKET_WEAPON_{nome}", rig_braco, em_rig)
+    vazio("SOCKET_FAB_SIGHT", rig_braco, em_rig @ Matrix.Translation(mira))
+    vazio("SOCKET_FAB_MUZZLE", rig_braco, em_rig @ Matrix.Translation(mira + frente * 40.0))
     boca = chassi.get("ancoras", {}).get("boca")
     if boca:
-        vazio("SOCKET_FAB_BARREL", rig_braco, Vector(boca["raizCm"]))
+        vazio("SOCKET_FAB_BARREL", rig_braco, em_rig @ Matrix.Translation(Vector(boca["raizCm"])))
 
     cam = camera_do_pack(plano["camera"])
     cena["fabrica_id"] = plano["id"]

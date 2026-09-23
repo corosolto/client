@@ -1,0 +1,17 @@
+{
+  "id": "m4",
+  "arma": "m4",
+  "chassi": "MX16A4",
+  "descricao": "M4 do pack como autorada (MX16A4): chassi puro + braço único coro-ak.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "clipes": {
+    "reload_tactical": "pack:reload_tactical",
+    "reload_empty": "pack:reload_empty",
+    "equip_rifle": "geral:rifle_equip",
+    "shoot": "procedural",
+    "inspect": "ausente"
+  },
+  "recuo": { "familia": "ar", "fonte": "recoil.json ← Animations/MX16A4/MX16A4.asset (RecoilAnimData)" }
+}

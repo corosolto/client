@@ -18,7 +18,7 @@ export function lerChassi(nome) {
 // Valor de um clipe na ficha: "pack:<nome do pack>" | "geral:rifle_equip" | "procedural" | "ausente".
 export function resolverClipes(ficha, chassi) {
   const padrao = {};
-  for (const [nome, fonte] of Object.entries(chassi.clipes)) padrao[nome] = `pack:${nome}`;
+  for (const nome of Object.keys(chassi.clipes)) if (CLIPES_DO_JOGO.includes(nome)) padrao[nome] = `pack:${nome}`;
   if (!padrao.shoot) padrao.shoot = 'procedural';
   if (EQUIP_GERAL[chassi.tipo]) padrao.equip_rifle = 'geral:rifle_equip';
   const pedido = { ...padrao, ...(ficha.clipes || {}) };

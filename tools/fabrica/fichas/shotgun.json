@@ -1,0 +1,20 @@
+{
+  "id": "shotgun",
+  "arma": "shotgun",
+  "chassi": "KXG12",
+  "descricao": "Escopeta = KXG12 do pack como autorada (KXG12_fixed): chassi puro + braço único coro-ak; recarga cartucho a cartucho (start/loop/end) e bomba do pack.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "clipes": {
+    "reload_start": "pack:reload_start",
+    "reload_loop": "pack:reload_loop",
+    "reload_end": "pack:reload_end",
+    "pump": "pack:pump",
+    "pump_empty": "pack:pump_empty",
+    "equip_rifle": "geral:rifle_equip",
+    "shoot": "procedural",
+    "inspect": "ausente"
+  },
+  "recuo": { "familia": "shotgun", "fonte": "recoil.json ← Animations/KXG12/KXG12.asset; o tiro toca a bomba do pack (useFireClip=1 no Settings)" }
+}

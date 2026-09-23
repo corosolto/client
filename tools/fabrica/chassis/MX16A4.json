@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "nome": "MX16A4",
+  "tipo": "fuzil",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/MX16A4/Weapon/MX16A4.FBX",
+    "poseFbx": "Animations/MX16A4/Character/A_FP_MX16A4_Pose.FBX",
+    "armaSha256": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",
+    "poseSha256": "e880a476b6d93b953db983910692cf4d3457557b31b3b3eba138a5993f5a8896",
+    "prefab": "Prefabs/MX16A4.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.049999982,
+      -0.1003
+    ],
+    "raizCm": [
+      0,
+      10.03,
+      5
+    ],
+    "conferencia": "altura da mira 5 cm × topo estático 5.647 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/MX16A4_Settings.asset",
+    "ikOffset": [
+      -0.01,
+      0,
+      -0.02
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.1
+    ],
+    "adsBlend": 0.307,
+    "fireRate": 750,
+    "ammo": 30,
+    "aimFov": 60,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -3.241,
+      -59.627,
+      -19.975
+    ],
+    "max": [
+      3.08,
+      42.676,
+      5.647
+    ],
+    "n": 32250
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -2.164,
+        14.59,
+        -10.255
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.593,
+          7.843,
+          -15.598
+        ],
+        "max": [
+          1.593,
+          17.512,
+          -3.647
+        ],
+        "n": 781
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        3.383,
+        -18.535,
+        -6.231
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -2.6,
+          -24.57,
+          -4.623
+        ],
+        "max": [
+          3.08,
+          -12.57,
+          0.431
+        ],
+        "n": 3104
+      }
+    },
+    "ossosMoveis": {
+      "Bolt": {
+        "min": [
+          -1.146,
+          -3.393,
+          -2.547
+        ],
+        "max": [
+          1.146,
+          13.366,
+          0.927
+        ],
+        "n": 1346
+      },
+      "BoltRelease": {
+        "min": [
+          1.397,
+          3.177,
+          -4.358
+        ],
+        "max": [
+          1.893,
+          4.283,
+          -1.241
+        ],
+        "n": 102
+      },
+      "Cartridge": {
+        "min": [
+          -0.439,
+          -3.256,
+          -2.761
+        ],
+        "max": [
+          0.439,
+          2.484,
+          -1.906
+        ],
+        "n": 459
+      },
+      "ChargingHandle": {
+        "min": [
+          -2.4,
+          -2.788,
+          -0.46
+        ],
+        "max": [
+          2.4,
+          14,
+          1.429
+        ],
+        "n": 481
+      },
+      "DustCover": {
+        "min": [
+          -1.814,
+          -3.408,
+          -2.571
+        ],
+        "max": [
+          -0.652,
+          4.508,
+          -0.236
+        ],
+        "n": 666
+      },
+      "FireSelector": {
+        "min": [
+          -1.215,
+          9.362,
+          -6.451
+        ],
+        "max": [
+          1.505,
+          10.479,
+          -3.935
+        ],
+        "n": 106
+      },
+      "Mag": {
+        "min": [
+          -1.176,
+          -4.951,
+          -19.975
+        ],
+        "max": [
+          1.292,
+          3.237,
+          -2.3
+        ],
+        "n": 2616
+      },
+      "MagRelease": {
+        "min": [
+          -1.608,
+          0.543,
+          -5.632
+        ],
+        "max": [
+          1.535,
+          4.221,
+          -4.369
+        ],
+        "n": 262
+      },
+      "Trigger": {
+        "min": [
+          -0.304,
+          5.319,
+          -8.348
+        ],
+        "max": [
+          0.304,
+          9.659,
+          -5.111
+        ],
+        "n": 212
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        -0.008,
+        -59.627,
+        -1.075
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        26.59,
+        -3.538
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -42.676
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        -0.157,
+        2.005
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -3.08,
+          -55.58,
+          -4.86
+        ],
+        "max": [
+          3.08,
+          -12.547,
+          5.647
+        ],
+        "n": 11171
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Mag",
+    "Cartridge",
+    "DustCover",
+    "Trigger",
+    "FireSelector",
+    "BoltRelease",
+    "MagRelease",
+    "ChargingHandle",
+    "Bolt"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_MX16A4_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_MX16A4_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_MX16A4_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_MX16A4_Reload_Empty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_MX16A4_Pose.FBX",
+    "A_FP_MX16A4_Reload_Empty.FBX",
+    "A_FP_MX16A4_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_MX16A4_Pose.FBX",
+    "A_W_MX16A4_Reload_Empty.FBX",
+    "A_W_MX16A4_Reload_Tac.FBX",
+    "MX16A4.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/MX16A4/Weapon/Materials_URP",
+    "texturas": {}
+  }
+}

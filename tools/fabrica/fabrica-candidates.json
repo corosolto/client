@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "candidates": {
+    "ak": {
+      "schemaVersion": 1,
+      "id": "ak",
+      "arma": "ak",
+      "chassi": "AK",
+      "variante": false,
+      "url": "/private-assets/viewmodels/fabrica/ak-fabrica.glb",
+      "bytes": 3758748,
+      "sha256": "289b38e1ca9f9ffbfd58a247c9e5aed62184bdd9c6205c05ae51d65024d33c35",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_AKX_Idle.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.55,
+          "braco": "A_FP_AKX_Reload_Tac.FBX",
+          "arma": "A_W_AKX_Reload_Tac.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 3.0833,
+          "braco": "A_FP_AKX_Reload_Empty.FBX",
+          "arma": "A_W_AKX200_Reload_Empty.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural",
+        "inspect": "ausente"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 4,
+      "file": "viewmodels/fabrica/ak-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/ak.json",
+      "insumos": {
+        "ficha": "524f3682d6b9378d9dea38d7012994f25772a3f82e8554c708bb7678fa37910c",
+        "chassi": "90cb0a520321d4cd4b1c489aa16a9e874eedc6b99c0feb74fbeb5bf919d03508",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "aad275438cb295aca9c875743a435bbd4fd6994208a9b8dcce2539f4b44e8504",
+        "poseFbx": "ef079242d7f2541b07efed816771e5bfeb3a595777a8d3ecfa45f71c1b7680ce",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_tactical:braco": "a3aa41130c44e6ae77c71df8370c466469134b69a14d1baba08eb3087439c8d6",
+        "clipe:reload_tactical:arma": "339f0be413a22408ac046bd029f50319cc6677de7f2d2f09adb9ebde8f89bb11",
+        "clipe:reload_empty:braco": "488b04750ab61937c97717b7191806fc7cd47019db2607d33143bac6232fcb77",
+        "clipe:reload_empty:arma": "61ade5b0548d0fd895ee4c39bc2f5b2d0bfe063332bae589a65adf5eee64f171",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/ak.json"
+    },
+    "m4": {
+      "schemaVersion": 1,
+      "id": "m4",
+      "arma": "m4",
+      "chassi": "MX16A4",
+      "variante": false,
+      "url": "/private-assets/viewmodels/fabrica/m4-fabrica.glb",
+      "bytes": 4162420,
+      "sha256": "9d2644f4ec2d4d7b263e690c300d63fb56de43237362601888a280140d4304a9",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_MX16A4_Pose.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.7,
+          "braco": "A_FP_MX16A4_Reload_Tac.FBX",
+          "arma": "A_W_MX16A4_Reload_Tac.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 3.2,
+          "braco": "A_FP_MX16A4_Reload_Empty.FBX",
+          "arma": "A_W_MX16A4_Reload_Empty.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural",
+        "inspect": "ausente"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 4,
+      "file": "viewmodels/fabrica/m4-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/m4.json",
+      "insumos": {
+        "ficha": "67e3bfe19701ea628f1266293365f658f87c9ebe84a6de3302ff95fcb51c1560",
+        "chassi": "2d0ba35935a13db7374099648f405aa5245c25e32915da1aaa141f8c00af3356",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",
+        "poseFbx": "e880a476b6d93b953db983910692cf4d3457557b31b3b3eba138a5993f5a8896",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_tactical:braco": "0de0a1a76e25b01c90c2b08c7d2ac41f1126114d47197badb75083954a60a0ea",
+        "clipe:reload_tactical:arma": "4956e4e65f0046b492e89ba164ac2883030b073d05c8d3acfb4de7d9ec385f32",
+        "clipe:reload_empty:braco": "177a8f713f37d480c4cd537e17b1df85b13f67b229902a6894c51ff1ead2e812",
+        "clipe:reload_empty:arma": "53c258665b1e69389927fab72afac08f32b51447dff0254e4c8bc498969c2cc6",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/m4.json"
+    },
+    "pistol": {
+      "schemaVersion": 1,
+      "id": "pistol",
+      "arma": "pistol",
+      "chassi": "X18",
+      "variante": false,
+      "url": "/private-assets/viewmodels/fabrica/pistol-fabrica.glb",
+      "bytes": 2727628,
+      "sha256": "fb25cb1bbb0a0589efc97f06fa945bedcb3e76ce3c9b65900453f67a5794a27b",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_X18_Pose.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.3167,
+          "braco": "A_FP_X18_Reload_Tac.FBX",
+          "arma": "A_X18_Reload_Tac.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 2.5833,
+          "braco": "A_FP_X18_Reload_Empty.FBX",
+          "arma": "A_X18_Reload_Empty.FBX"
+        },
+        {
+          "nome": "shoot",
+          "duracao": 0.45,
+          "braco": "A_FP_X18_Fire.FBX",
+          "arma": "A_X18_Fire.FBX"
+        }
+      ],
+      "clipesRuntime": {
+        "equip_rifle": "ausente",
+        "inspect": "ausente"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 4,
+      "file": "viewmodels/fabrica/pistol-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/pistol.json",
+      "insumos": {
+        "ficha": "4e1870228f5ca0050f6cba9719631c62dcb94ba0c4dc156261a17200aff9fe2a",
+        "chassi": "72f6d5ff86c4c8487ef5f288a4d1b4bf9da49a920895165434183c500cd34a48",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "39c5726a277e95b9aaf5bbe14c6fc7fd4742b2a0d8db6111c13c60c11b82f925",
+        "poseFbx": "670a23d9240ca27cf1164276559f5aacb0521d4dbfd72d5d57ff405077a91c61",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_tactical:braco": "01dae795e5670ad10723d1fd4e14abe86e0e351040293abd8ea03a9593427eb0",
+        "clipe:reload_tactical:arma": "395da14b0a638b9d7beb850e714d7038cf8c3a30dd10bd2c62b7df7702f1c98d",
+        "clipe:reload_empty:braco": "fc753195492ab2615338febc12facc2bc3fbd62a2d0e3d71229dd5a8c20897cf",
+        "clipe:reload_empty:arma": "ce821f3166d7c1b4715fc6d652b14ac191cfbee22b44f55a82c88bfd3f704d42",
+        "clipe:shoot:braco": "d618da3fbf3945c73fdaf65a4283ded823306e22e3c230312a953cfbdcbd18aa",
+        "clipe:shoot:arma": "b2bd6347f93d5a8d8dee151d43871e1903a7eb50115a145e102f921a73c0b7e7"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/pistol.json"
+    },
+    "shotgun": {
+      "schemaVersion": 1,
+      "id": "shotgun",
+      "arma": "shotgun",
+      "chassi": "KXG12",
+      "variante": false,
+      "url": "/private-assets/viewmodels/fabrica/shotgun-fabrica.glb",
+      "bytes": 3028408,
+      "sha256": "736b513c7127a1ed09744f64aa82b47c359adbee2b03298b56454e1a4570531a",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_KXG12_Pose.FBX"
+        },
+        {
+          "nome": "reload_start",
+          "duracao": 0.8333,
+          "braco": "A_FP_KXG12_Reload_Start.FBX",
+          "arma": "A_W_KXG12_Reload_Start.FBX"
+        },
+        {
+          "nome": "reload_loop",
+          "duracao": 0.8,
+          "braco": "A_FP_KXG12_Reload_Loop.FBX",
+          "arma": "A_W_KXG12_Reload_Loop.FBX"
+        },
+        {
+          "nome": "reload_end",
+          "duracao": 1.2,
+          "braco": "A_FP_KXG12_Reload_End.FBX",
+          "arma": "A_W_KXG12_Reload_End.FBX"
+        },
+        {
+          "nome": "pump_empty",
+          "duracao": 2.5333,
+          "braco": "A_FP_KXG12_Pump_Empty.FBX",
+          "arma": "A_W_KXG12_Pump_Empty.FBX"
+        },
+        {
+          "nome": "pump",
+          "duracao": 0.7,
+          "braco": "A_FP_KXG12_Pump.FBX",
+          "arma": "A_W_KXG12_Pump.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural",
+        "inspect": "ausente"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 8,
+      "file": "viewmodels/fabrica/shotgun-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/shotgun.json",
+      "insumos": {
+        "ficha": "d31258ad2f20b62e3f96fdf21860979cc511df58761851d2e3c01669c7f47479",
+        "chassi": "6b29c0cca3ebe99d6d702e8d8dce7f906ad8ecdd2d4bbe7028fd5d599a3cfa7d",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "3050e8d1b6a617685feda650ce477ca7b125f1bf0f05c63f24acc17379c22311",
+        "poseFbx": "b3e1b8108da8bd75f582173b656eaa43f4040b21f2f8faaece8a62c9a84b6321",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_start:braco": "7fc5f9ff731bd977858eb1696800781f9c931c891ee78175d75d38f6ca859970",
+        "clipe:reload_start:arma": "93a859071bbdd959b73b85c2a218c9415655ede904b437662a3158b79cf86c7f",
+        "clipe:reload_loop:braco": "bc52cca9b6a99f2d22be089834df9dc74f0db7178a41e024caa4e65f12d793a6",
+        "clipe:reload_loop:arma": "732a70a1304e3a1727aedd6ee41636228448c2c340b11426a000108e03ea9263",
+        "clipe:reload_end:braco": "d4549d485ad518a179c3d8602e0a45dbb47c784d8d040f1cdf68d9b544da61e9",
+        "clipe:reload_end:arma": "b2df1f4e6d002e7e951264e17861effa5788bd9457ef20268e7865f789511c0f",
+        "clipe:pump_empty:braco": "a73b5f30e1c3331f8609338751b538965f1710f87eabdbd225f1e05f4e71ff22",
+        "clipe:pump_empty:arma": "6fc511f626a3bd84e17cc2981a666f1218e299a68fe97053f2cb2a47a30f62f6",
+        "clipe:pump:braco": "b11995cd6dc57d0f9ed5307fd52d00c6a4014de2b68d7bc9a6987a0b675749eb",
+        "clipe:pump:arma": "df6dd98478b6b2af3b6a6a77052893b507427e9f45c24224af0ecf5e4eb7ce29",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/shotgun.json"
+    }
+  }
+}

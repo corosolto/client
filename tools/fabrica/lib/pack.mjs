@@ -44,8 +44,26 @@ export function lerPrefab(nome) {
   const mira = [...transforms.values()].find((t) => t.nome === 'AimPoint');
   if (!mira) throw new Error(`${nome}.prefab sem AimPoint`);
   const raiz = [...transforms.entries()].find(([, t]) => t.pai === '0');
-  if (mira.pai !== raiz?.[0]) throw new Error(`${nome}.prefab: AimPoint não é filho direto da raiz`);
-  return { arquivo, aimPoint: mira.pos, aimRot: mira.rot };
+  let viaFbx = null;
+  if (mira.pai !== raiz?.[0]) {
+    // AimPoint filho da instância do FBX: vale se a instância nasce na raiz com identidade.
+    const pai = blocos.get(mira.pai);
+    const inst = /m_PrefabInstance: \{fileID: (-?\d+)\}/.exec(pai?.corpo || '')?.[1];
+    const corpo = blocos.get(inst)?.corpo || '';
+    const paiInst = /m_TransformParent: \{fileID: (-?\d+)\}/.exec(corpo)?.[1];
+    const valor = (prop) => {
+      const m = new RegExp(`propertyPath: ${prop.replace('.', '\\.')}\\s*\\n\\s*value: ([-\\d.eE]+)`).exec(corpo);
+      return m ? Number(m[1]) : null;
+    };
+    const pose = ['m_LocalPosition.x', 'm_LocalPosition.y', 'm_LocalPosition.z', 'm_LocalRotation.x',
+      'm_LocalRotation.y', 'm_LocalRotation.z', 'm_LocalRotation.w'].map(valor);
+    const identidade = pose.every((v, i) => v !== null && Math.abs(v - (i === 6 ? 1 : 0)) < 1e-6);
+    if (paiInst !== raiz?.[0] || !identidade) {
+      throw new Error(`${nome}.prefab: AimPoint fora da raiz e a instância do FBX não está em identidade (${pose})`);
+    }
+    viaFbx = 'AimPoint filho da raiz do FBX, instanciada na raiz do prefab com identidade';
+  }
+  return { arquivo, aimPoint: mira.pos, aimRot: mira.rot, viaFbx };
 }
 
 export function lerSettings(nome) {

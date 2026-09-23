@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "nome": "X18",
+  "tipo": "pistola",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/X18/Weapon/SK_X18.FBX",
+    "poseFbx": "Animations/X18/Character/A_FP_X18_Pose.FBX",
+    "armaSha256": "39c5726a277e95b9aaf5bbe14c6fc7fd4742b2a0d8db6111c13c60c11b82f925",
+    "poseSha256": "670a23d9240ca27cf1164276559f5aacb0521d4dbfd72d5d57ff405077a91c61",
+    "prefab": "Prefabs/X18.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0,
+      0.0145,
+      -0.0635
+    ],
+    "raizCm": [
+      0,
+      6.35,
+      1.45
+    ],
+    "conferencia": "altura da mira 1.45 cm × topo estático -0.586 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/X18_Settings.asset",
+    "ikOffset": [
+      0,
+      0.02,
+      0.03
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.2
+    ],
+    "adsBlend": 1,
+    "fireRate": 900,
+    "ammo": 17,
+    "aimFov": 60,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -1.791,
+      -11.549,
+      -12.857
+    ],
+    "max": [
+      1.798,
+      8.869,
+      1.488
+    ],
+    "n": 8432
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.395,
+        5.237,
+        -6.622
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.791,
+          -0.911,
+          -12.857
+        ],
+        "max": [
+          1.791,
+          8.869,
+          -0.37
+        ],
+        "n": 2972
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        1.488,
+        1.875,
+        -10.459
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.669,
+          -2.039,
+          -12.857
+        ],
+        "max": [
+          1.791,
+          8.76,
+          -3.692
+        ],
+        "n": 1758
+      }
+    },
+    "ossosMoveis": {
+      "Barrel": {
+        "min": [
+          -0.849,
+          -11.549,
+          -1.471
+        ],
+        "max": [
+          0.849,
+          -0.114,
+          1.037
+        ],
+        "n": 398
+      },
+      "Cartridge": {
+        "min": [
+          -0.485,
+          0.101,
+          -1.307
+        ],
+        "max": [
+          0.485,
+          3.07,
+          -0.361
+        ],
+        "n": 302
+      },
+      "CartridgeBed": {
+        "min": [
+          -0.5,
+          0.152,
+          -1.672
+        ],
+        "max": [
+          0.5,
+          3.018,
+          -0.883
+        ],
+        "n": 99
+      },
+      "FireSelector": {
+        "min": [
+          0.45,
+          4.563,
+          -1.035
+        ],
+        "max": [
+          1.7,
+          6.082,
+          0.484
+        ],
+        "n": 98
+      },
+      "Mag": {
+        "min": [
+          -1.424,
+          -0.029,
+          -12.857
+        ],
+        "max": [
+          1.424,
+          7.692,
+          -0.778
+        ],
+        "n": 1257
+      },
+      "Slider": {
+        "min": [
+          -1.275,
+          -11.366,
+          -2.355
+        ],
+        "max": [
+          1.275,
+          7.215,
+          1.488
+        ],
+        "n": 2376
+      },
+      "Trigger": {
+        "min": [
+          -0.478,
+          -2.101,
+          -5.22
+        ],
+        "max": [
+          0.478,
+          0.099,
+          -2.032
+        ],
+        "n": 300
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        -0.001,
+        -11.366,
+        -1.919
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        17.237,
+        -6.622
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -8.869
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        4.434,
+        -0.586
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -1.791,
+          -6.575,
+          -11.617
+        ],
+        "max": [
+          1.798,
+          7.843,
+          -0.586
+        ],
+        "n": 3312
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Slider",
+    "FireSelector",
+    "Mag",
+    "CartridgeBed",
+    "Cartridge",
+    "Trigger",
+    "Barrel"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_X18_Reload_Tac.FBX",
+      "arma": "Weapon/A_X18_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_X18_Reload_Empty.FBX",
+      "arma": "Weapon/A_X18_Reload_Empty.FBX"
+    },
+    "shoot": {
+      "braco": "Character/A_FP_X18_Fire.FBX",
+      "arma": "Weapon/A_X18_Fire.FBX"
+    },
+    "shoot_empty": {
+      "braco": null,
+      "arma": "Weapon/A_X18_Fire_Empty.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_X18_Fire.FBX",
+    "A_FP_X18_Pose.FBX",
+    "A_FP_X18_Reload_Empty.FBX",
+    "A_FP_X18_Reload_Tac.FBX"
+  ],
+  "arquivosArma": [
+    "A_X18_Fire.FBX",
+    "A_X18_Fire_Empty.FBX",
+    "A_X18_Reload_Empty.FBX",
+    "A_X18_Reload_Tac.FBX",
+    "SK_X18.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/X18/Weapon/Materials_URP",
+    "texturas": {}
+  }
+}
