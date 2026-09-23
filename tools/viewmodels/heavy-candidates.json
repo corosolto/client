@@ -27,15 +27,16 @@
       "file": "viewmodels/lmg/lmg-baked-runtime.glb",
       "sourceSha256": "ce9921338a35cf0a5ab0959c451579d32b42e4468624f9c48b42c9e23bf88235",
       "sourceBytes": 6810720,
-      "productSha256": "3552c724aee62b11cb7bf9b67e069bb2c6c28cfffc89a8a42c84257b9fca536f",
-      "productBytes": 6466928,
-      "sha256": "3552c724aee62b11cb7bf9b67e069bb2c6c28cfffc89a8a42c84257b9fca536f",
-      "bytes": 6466928,
+      "productSha256": "025a99f2f5f969e513ebafb7678f87f8bd726149d9d924cde6d6941ae367a179",
+      "productBytes": 6467236,
+      "sha256": "025a99f2f5f969e513ebafb7678f87f8bd726149d9d924cde6d6941ae367a179",
+      "bytes": 6467236,
       "mechanism": "belt/box/cover-hinge/feed-tray-hinge/charger",
       "ready": false,
       "sourceBranch": "private-generated/viewmodels/lmg (família MGX5 assemblada em 29/08)",
       "sourceCommit": null,
-      "rebuild": "tools/viewmodels/prep/lmg-final.mjs"
+      "rebuild": "tools/viewmodels/prep/lmg-final.mjs",
+      "postProcess": "tools/viewmodels/prep/lmg-part-parent-fix.mjs"
     }
   }
 }
