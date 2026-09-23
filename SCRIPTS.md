@@ -876,6 +876,14 @@ npm run eval:sertao-livestock
 BASE=http://localhost:8149 npm run eval:sertao-livestock-runtime
 ```
 
+## `eval:vm-funil-luva`
+
+"Funil da luva" do crítico cego (fila B4 da integração K, faca no Inspect): quanto cada vértice da luva pesado no lado pedido se afasta do pulso no clipe, contra o idle (FK + skinning offline de `vmpose.mjs`, 41 quadros). Produto K da integração (`93028919ee`) 13,4 cm, o funil reprovado no #637; produto de `torcao-k.mjs` 2,3 cm; teto 3 cm. O script do npm também roda o mutante `torcao-dobra` (o osso `lowerarm_twist_01_r` volta a dobrar 90° em Y: 10,7 cm) e exige que ele reprove. Requer os produtos privados (`CSBRASIL_VM_ASSET_ROOT` ou `public/private-assets`): fora de `check:fast` e do CI.
+
+```bash
+npm run eval:vm-funil-luva
+```
+
 ## `eval:vm-orientacao`
 
 Malha da arma de trás para frente (classe "arma invertida" do crítico cego). Varre todo produto dos manifestos `*-candidates.json` com malha MINT principal (`GEO_MINT_*` ou `MINT_WEAPON_*`) e socket `MUZZLE` (skinados ficam em `fora`); pose idle t=0: eixo longo por PCA orientado para o socket, altura da seção em 10 fatias; reprova se a média das 2 fatias de trás ÷ 2 fatias da boca (vazias fora da média) ficar abaixo de 1,0 (corretas 1,16–5,37, 17 produtos; invertidas 0,31–0,79, medidas pela própria régua em 23/09) ou se menos de 10 produtos forem medidos. `--mutantes` (o que o script do npm roda) lê também o catálogo Codex antes de `desvira-malha.mjs`/`sks-desvira.mjs` e só aceita o mutante se ele reprovar exatamente mosin, svd, m400 e sks por inversão. Não mede rolagem (a rem700 rolada 90° passava) nem direção absoluta (malha e socket invertidos juntos passam). Requer os produtos privados: fora de `check:fast` e do CI.
