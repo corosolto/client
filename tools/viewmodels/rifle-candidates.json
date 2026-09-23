@@ -22,77 +22,107 @@
       "file": "viewmodels/ar/md97-baked-runtime.glb",
       "sourceSha256": "16dd73c34583cd96ec6bfe71771ad32fe98caadf3966bb70f15c6d43d67ec9d5",
       "sourceBytes": 280416,
-      "productSha256": "4cd468a65fffa13414d4f47dc8fd7a1f6070d7c26ef9f9dc2784f39ea3bfe7dc",
-      "productBytes": 1518536,
-      "sha256": "4cd468a65fffa13414d4f47dc8fd7a1f6070d7c26ef9f9dc2784f39ea3bfe7dc",
-      "bytes": 1518536,
+      "productSha256": "8bfcbc63dda729562770f8a5b2782f0ea209ca7ca1cc12cf0a00a84614c36ad8",
+      "productBytes": 1519884,
+      "sha256": "8bfcbc63dda729562770f8a5b2782f0ea209ca7ca1cc12cf0a00a84614c36ad8",
+      "bytes": 1519884,
       "mechanism": "front-20-round-detachable-mag/bolt-release",
       "ready": false,
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
       "rebuild": "tools/viewmodels/prep/rifles-md97-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs",
       "postProcess": "node tools/viewmodels/prep/grip-support.mjs --arma=md97 --in=<catálogo>/ar/md97-baked-runtime.glb --out=<privado>/ar/md97-baked-runtime.glb",
-      "postProcessInputSha256": "d0989e2f5688ad44d3338cf541fe2345036cea12d57c4695250344362059567f"
+      "postProcessInputSha256": "d0989e2f5688ad44d3338cf541fe2345036cea12d57c4695250344362059567f",
+      "w3Blender": {
+        "sourceSha256": "4cd468a65fffa13414d4f47dc8fd7a1f6070d7c26ef9f9dc2784f39ea3bfe7dc",
+        "sourceBytes": 1518536,
+        "recipe": "tools/viewmodels/prep/peca-k.mjs --arma=md97",
+        "fila": "B10"
+      }
     },
     "scar": {
       "family": "ar",
       "file": "viewmodels/ar/scar-baked-runtime.glb",
       "sourceSha256": "16f0bc90aba6cb1c236e95e45acd51d6e9f1fdf6fd328b313ab46d033eebd99f",
       "sourceBytes": 335392,
-      "productSha256": "958a0223cb2efa703ffe200f17044308a7bf1a9016d786b816e3b1cdc053c20c",
-      "productBytes": 1526788,
-      "sha256": "958a0223cb2efa703ffe200f17044308a7bf1a9016d786b816e3b1cdc053c20c",
-      "bytes": 1526788,
+      "productSha256": "73d3f5c55826c22929513b454e4cadc2f03737e1190cd7560be1a4c076cb294b",
+      "productBytes": 1527044,
+      "sha256": "73d3f5c55826c22929513b454e4cadc2f03737e1190cd7560be1a4c076cb294b",
+      "bytes": 1527044,
       "mechanism": "complete-detachable-mag/reciprocating-side-handle",
       "ready": false,
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
-      "rebuild": "tools/viewmodels/prep/rifles-scar-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
+      "rebuild": "tools/viewmodels/prep/rifles-scar-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs",
+      "w3Blender": {
+        "sourceSha256": "958a0223cb2efa703ffe200f17044308a7bf1a9016d786b816e3b1cdc053c20c",
+        "sourceBytes": 1526788,
+        "recipe": "tools/viewmodels/prep/peca-k.mjs --arma=scar",
+        "fila": "B3"
+      }
     },
     "famas": {
       "family": "ar",
       "file": "viewmodels/ar/famas-baked-runtime.glb",
       "sourceSha256": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a",
       "sourceBytes": 284980,
-      "productSha256": "640f3369d7cf586ad7c7f153d556a713e6afcf349ea61d93af6dc792fb180592",
-      "productBytes": 1589920,
-      "sha256": "640f3369d7cf586ad7c7f153d556a713e6afcf349ea61d93af6dc792fb180592",
-      "bytes": 1589920,
+      "productSha256": "0e73c1d339cc28ea8661f9e1de5b3b67ecea6d857297a06a33d5230e3d2d8f0a",
+      "productBytes": 2060096,
+      "sha256": "0e73c1d339cc28ea8661f9e1de5b3b67ecea6d857297a06a33d5230e3d2d8f0a",
+      "bytes": 2060096,
       "mechanism": "rear-bullpup-mag/upper-handle-empty-reload",
       "ready": false,
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
-      "rebuild": "tools/viewmodels/prep/rifles-famas-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs"
+      "rebuild": "tools/viewmodels/prep/rifles-famas-final.py + rifles-m4-normalize.mjs + optimize_paid_family.mjs",
+      "w3Blender": {
+        "sourceSha256": "640f3369d7cf586ad7c7f153d556a713e6afcf349ea61d93af6dc792fb180592",
+        "sourceBytes": 1589920,
+        "recipe": "tools/viewmodels/prep/recarga-k.mjs --arma=famas",
+        "fila": "B1+B3"
+      }
     },
     "carbine": {
       "family": "ar",
       "file": "viewmodels/ar/carbine-baked-runtime.glb",
       "sourceSha256": "9bbed4fec57b56c9a0aafe50a74bc4df6c3a138f2671dbb15c0d5cc6a27d4f3f",
       "sourceBytes": 242868,
-      "productSha256": "8de215edb19630a187143cbc0c09e5a3596d3ed816a3dfe7d741d842cb9834f0",
-      "productBytes": 1631536,
-      "sha256": "8de215edb19630a187143cbc0c09e5a3596d3ed816a3dfe7d741d842cb9834f0",
-      "bytes": 1631536,
+      "productSha256": "9bcfa1617b51c44d658997fe680c045e69585bf829de31e8b52d39bdc5c0fc4f",
+      "productBytes": 2176404,
+      "sha256": "9bcfa1617b51c44d658997fe680c045e69585bf829de31e8b52d39bdc5c0fc4f",
+      "bytes": 2176404,
       "mechanism": "lever-action/right-side-loading-gate/hand-covered-feed",
       "ready": false,
       "sourceBranch": "codex/vm-prep-rifles",
       "sourceCommit": "ea022c3c0",
-      "rebuild": "tools/viewmodels/prep/rifles-carbine-final.py + optimize_paid_family.mjs"
+      "rebuild": "tools/viewmodels/prep/rifles-carbine-final.py + optimize_paid_family.mjs",
+      "w3Blender": {
+        "sourceSha256": "8de215edb19630a187143cbc0c09e5a3596d3ed816a3dfe7d741d842cb9834f0",
+        "sourceBytes": 1631536,
+        "recipe": "tools/viewmodels/prep/recarga-k.mjs --arma=carbine",
+        "fila": "B1"
+      }
     },
     "tavor": {
       "family": "ar",
       "file": "viewmodels/ar/tavor-baked-runtime.glb",
       "sourceSha256": "958f09eec9033af88c954d57fef4130827a2b2958109c12f52644e1e7ace573c",
       "sourceBytes": 302180,
-      "productSha256": "e90326406e6619f8b9799516474857db88f1785f1d56c52f56420cf0cec5ed0f",
-      "productBytes": 1603920,
-      "sha256": "e90326406e6619f8b9799516474857db88f1785f1d56c52f56420cf0cec5ed0f",
-      "bytes": 1603920,
+      "productSha256": "41de1d1ce94ab8170810728ae22709a856bed4f967d0c086bbcfa3e435cf27a0",
+      "productBytes": 2063548,
+      "sha256": "41de1d1ce94ab8170810728ae22709a856bed4f967d0c086bbcfa3e435cf27a0",
+      "bytes": 2063548,
       "mechanism": "complete-rear-bullpup-mag/rear-bolt-release-paddle",
       "ready": false,
       "sourceBranch": "codex/viewmodels-catalog-final",
       "sourceCommit": "55febca73",
-      "rebuild": "tools/viewmodels/prep/rifles-tavor-final.py + optimize_paid_family.mjs"
+      "rebuild": "tools/viewmodels/prep/rifles-tavor-final.py + optimize_paid_family.mjs",
+      "w3Blender": {
+        "sourceSha256": "e90326406e6619f8b9799516474857db88f1785f1d56c52f56420cf0cec5ed0f",
+        "sourceBytes": 1603920,
+        "recipe": "tools/viewmodels/prep/recarga-k.mjs --arma=tavor",
+        "fila": "B1"
+      }
     },
     "m92": {
       "family": "ak",

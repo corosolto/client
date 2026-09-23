@@ -10,10 +10,10 @@
       "file": "viewmodels/shotgun/shotgun-baked-runtime.glb",
       "sourceSha256": "71dd4edd43da77c7a52af01b2481e2f71cca57507bbe88674ce0b674a62986c7",
       "sourceBytes": 25019108,
-      "productSha256": "48f292b918c7168951c315d1dbdab3b509806b4e926edebd5c8f27bbef7a5021",
-      "productBytes": 4309100,
-      "sha256": "48f292b918c7168951c315d1dbdab3b509806b4e926edebd5c8f27bbef7a5021",
-      "bytes": 4309100,
+      "productSha256": "a0f2a884f713bd0e02aaaa8fe61e3cc8d90a9d80ca5cd523b865550bdbda8345",
+      "productBytes": 4429256,
+      "sha256": "a0f2a884f713bd0e02aaaa8fe61e3cc8d90a9d80ca5cd523b865550bdbda8345",
+      "bytes": 4429256,
       "mechanism": "shell-loop/pump/trigger",
       "ready": false,
       "sourceBranch": "private-generated/viewmodels-candidates/fechamento-ruben-20260914",
@@ -21,7 +21,13 @@
       "rebuild": "tools/viewmodels/prep/shotgun-final.mjs",
       "sharedTextureFoundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102",
       "postProcess": "node tools/viewmodels/prep/shotgun-k-fix.mjs --in=<catálogo>/shotgun/shotgun-baked-runtime.glb --doador-manga=<catálogo>/ar/m4-baked-runtime.glb --out=<privado>/shotgun/shotgun-baked-runtime.glb",
-      "postProcessInputSha256": "6c6c1ba3f72d227375650160c911ca72ef798a198a64682558d99c794c431239"
+      "postProcessInputSha256": "6c6c1ba3f72d227375650160c911ca72ef798a198a64682558d99c794c431239",
+      "w3Blender": {
+        "sourceSha256": "48f292b918c7168951c315d1dbdab3b509806b4e926edebd5c8f27bbef7a5021",
+        "sourceBytes": 4309100,
+        "recipe": "tools/viewmodels/prep/peca-k.mjs --arma=shotgun",
+        "fila": "B10"
+      }
     },
     "lmg": {
       "weapon": "lmg",
@@ -29,16 +35,22 @@
       "file": "viewmodels/lmg/lmg-baked-runtime.glb",
       "sourceSha256": "ce9921338a35cf0a5ab0959c451579d32b42e4468624f9c48b42c9e23bf88235",
       "sourceBytes": 6810720,
-      "productSha256": "025a99f2f5f969e513ebafb7678f87f8bd726149d9d924cde6d6941ae367a179",
-      "productBytes": 6467236,
-      "sha256": "025a99f2f5f969e513ebafb7678f87f8bd726149d9d924cde6d6941ae367a179",
-      "bytes": 6467236,
+      "productSha256": "97c54bb4355599a5e06b17ea135d2402c0c665eba449d3bdc4ff8042893d4890",
+      "productBytes": 6469364,
+      "sha256": "97c54bb4355599a5e06b17ea135d2402c0c665eba449d3bdc4ff8042893d4890",
+      "bytes": 6469364,
       "mechanism": "belt/box/cover-hinge/feed-tray-hinge/charger",
       "ready": false,
       "sourceBranch": "private-generated/viewmodels/lmg (família MGX5 assemblada em 29/08)",
       "sourceCommit": null,
       "rebuild": "tools/viewmodels/prep/lmg-final.mjs",
-      "postProcess": "tools/viewmodels/prep/lmg-part-parent-fix.mjs"
+      "postProcess": "tools/viewmodels/prep/lmg-part-parent-fix.mjs",
+      "w3Blender": {
+        "sourceSha256": "025a99f2f5f969e513ebafb7678f87f8bd726149d9d924cde6d6941ae367a179",
+        "sourceBytes": 6467236,
+        "recipe": "tools/viewmodels/prep/peca-k.mjs --arma=lmg",
+        "fila": "B8"
+      }
     }
   }
 }

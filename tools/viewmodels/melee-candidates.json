@@ -7,15 +7,21 @@
       "file": "viewmodels/knife/knife-baked-runtime.glb",
       "sourceSha256": "3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621",
       "sourceBytes": 1131064,
-      "productSha256": "93028919ee74f46ed8ef77c8e34ceec314f4e76b2e069b4686b65d1cb84f0556",
-      "productBytes": 1487908,
-      "sha256": "93028919ee74f46ed8ef77c8e34ceec314f4e76b2e069b4686b65d1cb84f0556",
-      "bytes": 1487908,
+      "productSha256": "981f0d68834be0964169649b8acefa8ebcd1de57c83b1941f72ed3fdb979383e",
+      "productBytes": 1491784,
+      "sha256": "981f0d68834be0964169649b8acefa8ebcd1de57c83b1941f72ed3fdb979383e",
+      "bytes": 1491784,
       "mechanism": "one-handed-knife/open-guard-left-hand/inspect-blade-turn",
       "ready": false,
       "sourceBranch": "vm/k-rebuild",
       "sourceCommit": "vm/k-rebuild",
-      "rebuild": "tools/viewmodels/prep/knife-k-alvos.mjs + knife-k-build.py (m4-final.blend e4b3fdfc…, grenade.blend throw_loop) + optimize_paid_family.mjs --familia=knife"
+      "rebuild": "tools/viewmodels/prep/knife-k-alvos.mjs + knife-k-build.py (m4-final.blend e4b3fdfc…, grenade.blend throw_loop) + optimize_paid_family.mjs --familia=knife",
+      "w3Blender": {
+        "sourceSha256": "93028919ee74f46ed8ef77c8e34ceec314f4e76b2e069b4686b65d1cb84f0556",
+        "sourceBytes": 1487908,
+        "recipe": "tools/viewmodels/prep/torcao-k.mjs --arma=knife",
+        "fila": "B4"
+      }
     }
   }
 }

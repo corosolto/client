@@ -9,12 +9,18 @@
       "sourceSha256": "e0eff49d747369e43cdde24882ebb2b105150dd62d43e314be5a062f2f8ed73c",
       "optimizedBytes": 5298504,
       "optimizedSha256": "94386beceefde96a481458c296f616178ae56f8a1a70b8ae63be8697841655a2",
-      "sha256": "69c750bb5b1037c92ced0108fd43657934f229ff0da850dcb76f3882187bf5b6",
-      "bytes": 5669200,
+      "sha256": "7ad47e19db29212873c146f498e8ad59d37182007bf34c291831f1887237f8fc",
+      "bytes": 5675896,
       "fixL3L5": {
         "sourceSha256": "52b8db3adc4415364accf34d5b039d1399df988482268150790b4cc40399c56b",
         "sourceBytes": 5298468,
         "recipe": "tools/viewmodels/prep/desvira-malha.mjs --arma=mosin"
+      },
+      "w3Blender": {
+        "sourceSha256": "69c750bb5b1037c92ced0108fd43657934f229ff0da850dcb76f3882187bf5b6",
+        "sourceBytes": 5669200,
+        "recipe": "tools/viewmodels/prep/recarga-k.mjs --arma=mosin",
+        "fila": "B2"
       }
     },
     "svd": {
