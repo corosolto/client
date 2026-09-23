@@ -122,6 +122,8 @@
     "eval:vm-pistol-revolver-lifecycle": "node tools/eval/viewmodel-pistol-revolver-lifecycle-check.mjs",
     "capture:vm-pistol-revolver": "node tools/viewmodels/prep/pistols-revolver-capture.mjs",
     "eval:vm-smg-mp5": "node tools/viewmodels/prep/smg-mp5-verify.mjs",
+    "//eval:vm-pente-na-mao": "carregador/clipe visível na mão durante a recarga, no jogo real, com piso medido na AK golden (VM-FIX-MAGS)",
+    "eval:vm-pente-na-mao": "node tools/eval/vm-pente-na-mao.mjs",
     "eval:vm-smg-mp5-lifecycle": "node tools/eval/viewmodel-smg-mp5-lifecycle-check.mjs",
     "eval:vm-smg-uzi": "node tools/viewmodels/prep/smg-uzi-verify.mjs",
     "eval:vm-smg-uzi-lifecycle": "node tools/eval/viewmodel-smg-uzi-lifecycle-check.mjs",
