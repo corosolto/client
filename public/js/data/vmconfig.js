@@ -63,7 +63,8 @@ export const VM_WEAPON = {
       linhaDeMira: { ref: 'MINT_WEAPON_AK', alca: [-0.06, 0.153, 0.005], massa: [-0.48, 0.155, 0.005] } } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
-  m4: W('ar', { baked: true }),
+  // Resíduos de ADS da onda 3 (vm/w3-config): aparelho visto na cruz, medido no eval:vm-mira em 3:2 e 16:9.
+  m4: W('ar', { baked: true, ads: { auto: true, off: [-0.0053, -0.0533, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
   // Quadril: +18° de rolagem deita o cano (eixo na tela 141° → 149°, AK 155°; o crítico via
   // "pitch 39° vs 26°"). ADS desfaz a rolagem e o resíduo leva o aro da massa à cruz (eval:vm-mira 44 → 0 px).
   mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay', frame: { rotDeg: [-10.1, 0, 18] },
@@ -77,7 +78,7 @@ export const VM_WEAPON = {
   // anchor/namedParts valem só na montagem ao vivo (eval authored-attach-check).
   deagle: W('deagle', { baked: true, runtime: 'family', timing: 'gameplay', recoilScale: 0.45,
     frame: { x: 0.1, y: -0.1, z: -0.25, fov: 55, rotDeg: [-5, 15, -5] },
-    ads: { auto: true, off: [0.012, -0.02, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 },
+    ads: { auto: true, off: [0.006, -0.024, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 },
     // Frame de curta contra a PT-38 aprovada (docs/reports/VM-INTEGRACAO-K.md).
     anchor: 'neutral_bone', namedParts: {
       magazine: { mesh: 'GEO-deagle-magazine', bone: 'Mag' },
@@ -98,7 +99,7 @@ export const VM_WEAPON = {
     frame: { x: 0.065, y: 0.04, z: -0.203, fov: 57, rotDeg: [1.69, 7.69, 6.19] },
     ads: { auto: true, off: [0.0106, -0.0035, 0], rotDeg: [-5.49, -0.64, 0], pull: 0.05, fovScale: 1,
       linhaDeMira: { ref: 'MINT_WEAPON_AKM', alca: [-0.06, 0.15, 0.012], massa: [-0.48, 0.152, 0.012] } } }),
-  g3: W('g3', { baked: true, frame: 'family' }),
+  g3: W('g3', { baked: true, frame: 'family', ads: { auto: true, off: [-0.01, -0.107, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
   // Pose de duas mãos aponta ~55° para cima no frame da família: o pacote gira (yaw 16°, cano
   // ~15° como a PT-38) no fov da pistola; o ADS usa o clipe `ads` do produto (ads-pose.mjs).
   revolver38: W('revolver', { baked: true, runtime: 'family', timing: 'gameplay',
@@ -140,15 +141,15 @@ export const VM_WEAPON = {
   rem700: W('bolt', { baked: true, frame: 'family' }),
   // ADS automático (alça medida no eixo). Frame: opção B do #632, decisão do dono (0,877× da AK;
   // faixa própria em FAIXA_ESCALA.lmg, vm-limiares.mjs).
-  lmg: W('lmg', { baked: true, timing: 'gameplay', frame: { z: -0.375 } }),
-  scar: W('ar', { baked: true }),
-  tavor: W('ar', { baked: true }),
-  famas: W('ar', { baked: true }),
-  uzi: W('smg', { baked: true, timing: 'gameplay' }),
+  lmg: W('lmg', { baked: true, timing: 'gameplay', frame: { z: -0.375 }, ads: { auto: true, off: [-0.022, -0.003, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  scar: W('ar', { baked: true, ads: { auto: true, off: [0.0109, -0.0464, 0], rotDeg: [0, 0, -14], pull: 0.05, fovScale: 1 } }),
+  tavor: W('ar', { baked: true, ads: { auto: true, off: [0, -0.051, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  famas: W('ar', { baked: true, ads: { auto: true, off: [-0.0019, -0.063, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  uzi: W('smg', { baked: true, timing: 'gameplay', ads: { auto: true, off: [-0.02, -0.03, 0], rotDeg: [0, 0, -15], pull: 0.05, fovScale: 1 } }),
   // ADS: o anel da óptica ficava ~60 px acima da cruz (crítico L1 50–55; eval:vm-mira 60 → 3 px). A
   // rolagem do quadril (−60° no FAMILY_FRAME) fica: −40° desenquadrou a arma e borrou o anel no A/B cego.
   p90: W('p90', { baked: true, timing: 'gameplay', recoilScale: 1.6,
-    ads: { auto: true, off: [0.0029, -0.053, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+    ads: { auto: true, off: [-0.0058, -0.068, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
   svd: W('svd', { baked: true }),
   g3sg1: W('g3', { baked: true, frame: 'family' }),
   sks: W('marksman', { baked: true }),
