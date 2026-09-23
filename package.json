@@ -308,6 +308,8 @@
     "eval:vm-ads": "node tools/eval/authored-ads-check.mjs",
     "//eval:vm-mira": "imagem de mira no QUADRO desenhado (aro/massa na cruz, ADS sem tombar): o AD1 do eval:vm-ads mede o socket que o ADS automático centra e dava 0,000 com a mira 40–90 px fora (revisão L1, 23/09)",
     "eval:vm-mira": "node tools/eval/vm-reguas-check.mjs --regua=mira",
+    "//eval:vm-cobertura": "tamanho, ângulo, braço, cruz livre e câmera fora da arma na silhueta RENDERIZADA contra a AK: o vm-frame media diagonal de vértice (shotgun 1,001 a ~160% da AK na tela; akm 0,50× só pelo percentil)",
+    "eval:vm-cobertura": "node tools/eval/vm-reguas-check.mjs --regua=cobertura",
     "eval:vm-serving": "node tools/eval/authored-serving-check.mjs",
     "eval:vm-consistencia": "node tools/eval/vm-consistencia-check.mjs",
     "eval:vm-attach": "node tools/eval/vm-attach-fallback-check.mjs",

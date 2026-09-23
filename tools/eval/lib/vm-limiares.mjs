@@ -28,3 +28,35 @@ export const MIRA_MAX_PX = 30;
 // ADS tombado: eixo coronha→boca (pela profundidade) a mais de 12° da vertical.
 // Mesmo teto do ângulo em quadril (COBERTURA_ANGULO_MAX): mesma grandeza.
 export const MIRA_INCLINACAO_MAX = 12;
+
+/* COBERTURA (eval:vm-cobertura), em quadril, contra a AK golden medida na mesma
+   sessão. `tamanho` = raiz(área da arma ÷ área da AK) — tamanho LINEAR na tela,
+   a mesma grandeza que o crítico dá em "uns 60% da AK".
+   Faixas por classe: arma longa 0,80–1,25 (shotgun 1,61 e akm 0,71 reprovam;
+   carbine/scar 1,20 passam no limite); compacta (mp5/uzi/p90) 0,50–1,00, porque
+   o crítico aceitou uzi "~55% da AK, escala ok" e mp5 "70–80%, ok"; lmg herda a
+   faixa PRÓPRIA do vm-frame-calibra (RATIO_BANDS.lmg 0,65–0,85) — mesmo conceito,
+   mesma faixa. */
+export const COBERTURA_FAIXA = {
+  longa: { min: 0.80, max: 1.25 },
+  compacta: { min: 0.50, max: 1.00 },
+  lmg: { min: 0.65, max: 0.85 },
+};
+// Braço: área renderizada de braço+mão ≤ 1,4× a da AK. É o BRACO_MAX do
+// vm-frame-calibra (R2), agora medido na imagem em vez de vértice.
+export const COBERTURA_BRACO_MAX = 1.4;
+// Cruz livre no quadril: nenhum pixel de arma/braço a menos de 3% da largura do
+// centro (43 px) — "inspeção cobre a cruz" e "arma atravessa a tela" do crítico.
+export const COBERTURA_CRUZ_RAIO = 0.03;
+// Câmera dentro da arma: a parte mais perto da arma que aparece (percentil 2 da
+// profundidade) a ≥ 0,6 palma do olho. Produtos K medidos em 23/09: shotgun 0,37
+// ("tubo octogonal oco", FILA item 2) e rem700 0,54; o resto ≥ 0,77 (mosin),
+// m4 1,36. A AK golden é de outro rig (palma 2× maior) e fica fora deste item.
+export const COBERTURA_OLHO_MIN = 0.6;
+// Ângulo na tela: eixo coronha→boca (pela profundidade, vm-analise eixoNaTela)
+// em quadril a ±12° do da AK. Crítico r2: mp5 "pitch ~39° vs 26° da AK" (13°,
+// reprovada), md97 "mais horizontal com a traseira alta".
+export const COBERTURA_ANGULO_MAX = 12;
+// ADS: arma+braço cobrem no máximo 1,5× o que a AK cobre em quadril (12,3% → 18,5%).
+// O crítico reprovou o shotgun no ADS por "cobrir ~40% da tela".
+export const COBERTURA_ADS_MAX_VS_AK = 1.5;

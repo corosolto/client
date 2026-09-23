@@ -233,6 +233,39 @@ export const JUIZ = {
     return R(`${px.toFixed(0)} px`, `${falhas.join('; ')} — ${txt}${inclTxt}${ad1}. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).`);
   },
 
+  cobertura(c, refs) {
+    if (c.classe === 'faca') return NA('faca: meleevm, régua própria (melee-framing)');
+    if (c.classe === 'curta') return NA('arma curta: medida contra a pistola em eval:vm-pistola-ref');
+    const ak = refs.ak?.quadril;
+    if (!ak?.areaArma) return NM('referência AK não medida');
+    const q = c.quadril;
+    if (!q) return NM('não coletado');
+    const faixa = L.COBERTURA_FAIXA[c.classe];
+    const tam = Math.sqrt(q.areaArma / ak.areaArma);
+    const braco = ak.areaBraco ? q.areaBraco / ak.areaBraco : 0;
+    const falhas = [];
+    if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da AK (faixa ${faixa.min}–${faixa.max}, classe ${c.classe})`);
+    if (tam > faixa.max) falhas.push(`arma gigante: ${(tam * 100).toFixed(0)}% da AK (faixa ${faixa.min}–${faixa.max}, classe ${c.classe})`);
+    if (braco > L.COBERTURA_BRACO_MAX) falhas.push(`braço ${braco.toFixed(2)}× a área do braço da AK (teto ${L.COBERTURA_BRACO_MAX})`);
+    if (q.cruz > 0) falhas.push(`${q.cruz} px de arma/braço sobre a cruz no quadril`);
+    const dAng = q.eixo && ak.eixo ? ((q.eixo.graus - ak.eixo.graus + 540) % 360) - 180 : null;
+    if (dAng !== null && Math.abs(dAng) > L.COBERTURA_ANGULO_MAX) falhas.push(`ângulo esquisito: eixo da arma na tela ${q.eixo.graus.toFixed(0)}° contra ${ak.eixo.graus.toFixed(0)}° da AK (${dAng > 0 ? '+' : ''}${dAng.toFixed(0)}°, teto ±${L.COBERTURA_ANGULO_MAX}°)`);
+    if (q.olho !== null && q.olho !== undefined && c.arma !== 'ak' && q.olho < L.COBERTURA_OLHO_MIN) falhas.push(`câmera dentro da arma: a parte mais perto está a ${q.olho.toFixed(2)} palma do olho (mínimo ${L.COBERTURA_OLHO_MIN})`);
+    let adsTxt = 'ADS: viewmodel some (luneta)';
+    if (c.ads && c.ads.areaTotal > 0) {
+      const teto = L.COBERTURA_ADS_MAX_VS_AK * ak.areaTotal;
+      adsTxt = `ADS cobre ${(c.ads.areaTotal * 100).toFixed(1)}% (teto ${(teto * 100).toFixed(1)}%)`;
+      if (c.ads.areaTotal > teto) falhas.push(`no ADS arma+braço cobrem ${(c.ads.areaTotal * 100).toFixed(1)}% da tela (teto ${(teto * 100).toFixed(1)}%)`);
+    } else if (!luneta(c.arma)) falhas.push('no ADS a arma sumiu (sem luneta)');
+    const valor = `${tam.toFixed(2)}× AK`;
+    // Rolagem: INFORMATIVA, não reprova. Bate com o crítico no p90 (+28° da AK com
+    // o z −60 do FAMILY_FRAME), mas lê m92/mp5 a +22/+23° sem queixa do crítico e o
+    // mutante de rolagem −20° na m4 não moveu o número (a borda de cima some):
+    // régua que não morde não entra no portão (skill regua).
+    const dRol = q.rolagem !== null && q.rolagem !== undefined && ak.rolagem !== null && ak.rolagem !== undefined ? q.rolagem - ak.rolagem : null;
+    const txt = `tamanho ${valor}${dRol === null ? '' : `, rolagem ${dRol > 0 ? '+' : ''}${dRol.toFixed(0)}° da AK (informativa)`}, eixo ${dAng === null ? '?' : `${dAng > 0 ? '+' : ''}${dAng.toFixed(0)}°`} da AK, braço ${braco.toFixed(2)}×, cruz ${q.cruz} px, olho ${q.olho?.toFixed(2) ?? '?'} palma, ${adsTxt}`;
+    return falhas.length ? R(valor, `${falhas.join('; ')} — ${txt}. Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).`) : V(valor, txt);
+  },
 
 
 
@@ -274,6 +307,21 @@ export const MUTANTES = {
     mover(s.sight, 0, d, 0); mover(s.muzzle, 0, d, 0);
     return { aplicou: s.sight.getWorldPosition(s.sight.position.clone()).y - y0 > d * 0.9, sobe: d };`), arma) },
   'sem-ads': { regua: 'mira', arma: 'carbine', fase: 'antesAds', aplicar: async () => ({ aplicou: true }) },
+  // FILA-CORRECAO shotgun item 2: "mutante que aproxima a arma e reprova" —
+  // 2,2 palmas (~26 cm de mão real) para o olho: a m4 fica com a câmera dentro
+  // da coronha, o "tubo octogonal oco" do shotgun.
+  aproxima: { regua: 'cobertura', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
+    // No espaço de MUNDO, em direção à câmera (o pai do mount não é o espaço da câmera).
+    const cam = window.__game.vmCamera.getWorldPosition(e.mount.position.clone());
+    const w = e.mount.getWorldPosition(e.mount.position.clone()); const d0 = w.distanceTo(cam);
+    const ancora = raizesDe(e)[0].getWorldPosition(w.clone());
+    const dir = cam.clone().sub(ancora).normalize().multiplyScalar(palmaDe(e) * 2.2);
+    mover(e.mount, dir.x, dir.y, dir.z);
+    return { aplicou: e.mount.getWorldPosition(w.clone()).distanceTo(cam) !== d0, passo: dir.length() };`), arma) },
+  // Malha da arma 1,6× com as mesmas mãos: o shotgun ("arma gigante") da revisão L1.
+  'arma-gigante': { regua: 'cobertura', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const r = raizesDe(e); for (const m of r) { m.scale.multiplyScalar(1.6); m.updateMatrixWorld(true); }
+    return { aplicou: r.length > 0, malhas: r.map((m) => m.name) };`), arma) },
 };
 
 /* Referências. AK: medida NA MESMA SESSÃO (é a referência viva do arsenal).
