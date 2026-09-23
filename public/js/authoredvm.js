@@ -177,6 +177,17 @@ const _adsAlign = new THREE.Quaternion();
 const _adsBlend = new THREE.Quaternion();
 const _adsForward = new THREE.Vector3();
 const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
+// Pose de ADS autoral: clipe `ads` de um quadro (tools/viewmodels/prep/ads-pose.mjs) vira camada
+// aditiva sobre o quadro 0 do idle, com peso = ADS; o mixer compõe e só reescreve o que mudou.
+function adsActionOf(entry) {
+  const clip = entry.clips.get('ads');
+  const idle = entry.clips.get('idle');
+  if (!clip || !idle || entry.golden) return null;
+  const action = entry.mixer.clipAction(THREE.AnimationUtils.makeClipAdditive(clip.clone(), 0, idle));
+  action.blendMode = THREE.AdditiveAnimationBlendMode;
+  action.setEffectiveWeight(0);
+  return action;
+}
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
 // A linhagem metarig da AK preserva o acabamento aprovado e não recebe o atlas KINEMATION.
 // Causa e medidas: docs/reports/VIEWMODEL-PADRAO-FPS-PROFISSIONAL.md.
@@ -502,6 +513,7 @@ export class AuthoredViewModels {
       mixer.addEventListener('finished', (event) => {
         if (event.action === entry.action) this._continue(entry);
       });
+      entry.adsAction = adsActionOf(entry);
       this._setupGeneralMotion(entry, general);
       this.entries.set(key, entry);
       this.pending.delete(key);
@@ -626,6 +638,11 @@ export class AuthoredViewModels {
       if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) this._stepEntry(entry, step);
     }
     if (!active?.mount.visible) return;
+    if (active.adsAction) {
+      // _idle pode ter parado todas as ações (stopAllAction): a camada volta a tocar aqui.
+      if (!active.adsAction.isRunning()) active.adsAction.play();
+      active.adsAction.setEffectiveWeight(this.adsAmount);
+    }
     this._stepEntry(active, step);
     this._time += step;
     // Dono único do transform do mount: base ∘ arco de draw ∘ recuo (ADS: M6).
