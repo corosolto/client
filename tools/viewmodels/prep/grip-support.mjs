@@ -187,6 +187,7 @@ export async function deslocar({ arma, entrada, saida, cfg }) {
     return new Vector3(...trs[iC].t).add(local);
   };
   const relatorio = { arma, tipo: 'deslocar', d: cfg.d, clipes: {} };
+  let repouso = null;
   for (const [clipe, anim] of pose.anims) {
     const canal = (n, p) => anim.listChannels().find((c) => c.getTargetNode() === n && c.getTargetPath() === p);
     const alvos = [[iB, nB], [iC, nC]].filter(([, n]) => canal(n, 'translation') || canal(n, 'rotation'));
@@ -212,9 +213,10 @@ export async function deslocar({ arma, entrada, saida, cfg }) {
         if (s.listParents().filter((p) => p.propertyType === 'AnimationChannel').length === 0) s.dispose();
       } else anim.addChannel(doc.createAnimationChannel().setTargetNode(n).setTargetPath('translation').setSampler(nova));
     });
-    if (clipe === 'idle') { nB.setTranslation(Array.from(out[0].slice(0, 3))); nC.setTranslation(Array.from(out[1].slice(0, 3))); }
+    if (clipe === 'idle') repouso = [Array.from(out[0].slice(0, 3)), Array.from(out[1].slice(0, 3))];
     relatorio.clipes[clipe] = { quadros: tempos.length };
   }
+  if (repouso) { nB.setTranslation(repouso[0]); nC.setTranslation(repouso[1]); }
   // Clipes que só animam o pacote (tiro, saque, inspeção) usam o repouso: tem de ser o do idle.
   if (!pose.anims.has('idle')) throw new Error(`${arma}: deslocar pede o clipe idle`);
   await io.write(saida, doc);
@@ -263,10 +265,7 @@ export async function aplicar({ arma, entrada, saida, cfg = GRIPS[arma], extra =
   const R = base(eixoAlvo, palmaAlvo).multiply(base(knuckleAxis, palma).invert());
   // guinada: dedos em diagonal sobre o guarda-mão (graus, em torno do eixo vertical da arma).
   // manterOrientacao: só translada o punho (mão do gatilho que já tem a pegada certa, no lugar errado).
-  // girar: [x, y, z, graus] no espaço do corpo, somado a manterOrientacao (punho da M92 no cabo inclinado).
-  const qGiro = cfg.girar ? new Quaternion().setFromAxisAngle(new Vector3(...cfg.girar.slice(0, 3)).transformDirection(body), (cfg.girar[3] * Math.PI) / 180)
-    : new Quaternion();
-  const qR = cfg.manterOrientacao ? qGiro
+  const qR = cfg.manterOrientacao ? new Quaternion()
     : new Quaternion().setFromAxisAngle(palmaAlvo, ((cfg.guinada || 0) * Math.PI) / 180).multiply(rot(R));
   const alvo = cfg.alvo ? new Vector3(...cfg.alvo).applyMatrix4(body) : null;
   if (!alvo) throw new Error(`${arma}: alvo do guarda-mão não calibrado`);

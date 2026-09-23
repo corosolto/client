@@ -40,7 +40,9 @@ da entrada declarada.
   ADS sem resíduo da m92 (PG6).
 - **`eval:vm-ads` AD4**: com clipe `ads`, os nós dele ficam na pose do clipe com o ADS assentado
   (revólver: 0,03°, 0,00 mm); `--mutante=sem-pose-ads` morde (28,6°, 130 mm).
-- **`eval:vm-pistol-revolver`** aceita o clipe `ads` só com canais de braço e arma.
+- **`eval:vm-pistol-revolver`** exige o clipe `ads`, só com canais de braço e arma; `eval:vm-ads` roda
+  ak e revolver38 por padrão e reprova o revólver sem a pose. O runtime recusa clipe `ads` com trilha
+  sem par no idle. Os mutantes de produto reprovado exigem a cláusula própria de cada arma.
 - `vmads-sim.mjs` aplica a pose `ads`; `vmpose.mjs` separa pixels de luva.
 
 ## Réguas de imagem do #636 (arquivos trazidos só para medir, não versionados aqui)

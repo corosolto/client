@@ -34,7 +34,9 @@ const MUT = arg('mutante');
 if (MUT && !['sem-ads', 'socket', 'sem-pose-ads'].includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
 const PORTA = arg('porta') || '8156';
 const BASE = `http://127.0.0.1:${PORTA}`;
-const ARMAS = (arg('armas') || 'ak').split(',').filter(Boolean);
+const ARMAS = (arg('armas') || 'ak,revolver38').split(',').filter(Boolean);
+// Produtos que TÊM de trazer a pose de ADS própria (clipe `ads`, ads-pose.mjs).
+const POSE_ADS = new Set(['revolver38']);
 const VIEWPORTS = [
   { name: '16:9', width: 1280, height: 720 },
   { name: '3:2', width: 1290, height: 860 },
@@ -230,7 +232,7 @@ try {
             `${medida.barrelAngleDeg.toFixed(2)}°`);
         }
       }
-      if (medida.pose || MUT === 'sem-pose-ads') {
+      if (medida.pose || MUT === 'sem-pose-ads' || POSE_ADS.has(id)) {
         const p = medida.pose;
         const naPose = Boolean(p && p.nos > 0 && p.grau <= 1 && p.mm <= 1);
         if (MUT === 'sem-pose-ads') check(p && !naPose, `AD4 ${label}: sem a pose de ADS o braço sai da pose (mutante)`, p ? `${p.grau.toFixed(1)}° ${p.mm.toFixed(1)} mm` : 'sem clipe ads');

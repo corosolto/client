@@ -168,7 +168,7 @@ export async function medir(arma, raiz) {
       const cm = (votos >= 3 ? d + R : Math.max(0, R - d)) / metro * 100;
       if (cm > pior.cm) pior = { junta: nome, cm: +cm.toFixed(2) };
     }
-    out.PG11 = { ...pior, ok: pior.cm <= 1 };
+    out.PG11 = { ...pior, triangulos: malha.length, ok: malha.length > 0 && pior.cm <= 1 };
   }
   if (cfg.checks.includes('PG2')) {
     const d = pos(W[pose.byName.get(cfg.gatilho)]).distanceTo(pos(W[pose.byName.get('index_03_r')])) / metro * 100;
@@ -251,8 +251,10 @@ if (process.argv.includes('--mutantes')) {
   if (!fs.existsSync(CATALOGO)) { console.log(`MUTANTE ignorado: catálogo ausente em ${CATALOGO}`); ok = false; }
   else {
     const velhos = await rodada(CATALOGO, () => ({ auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0] }));
+    // Cada produto reprovado tem de cair na cláusula que o conserto dele move, não em qualquer uma.
+    const MORDE = { ak: ['PG1', 'PG8'], akm: ['PG1', 'PG8'], m92: ['PG1', 'PG8'], md97: ['PG1', 'PG4'], shotgun: ['PG10', 'PG11'], revolver38: ['PG5', 'PG9'] };
     for (const l of velhos) {
-      const mordeu = l.falhas.length > 0;
+      const mordeu = (MORDE[l.arma] || []).every((k) => l.falhas.includes(k)) && l.falhas.length > 0;
       console.log(`MUTANTE produto-reprovado ${l.arma.padEnd(11)} ${mordeu ? 'VERMELHO (mordeu)' : 'VERDE (CEGA)'} falhas=${l.falhas.join(',')}`);
       ok &&= mordeu;
     }

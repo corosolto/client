@@ -183,6 +183,8 @@ function adsActionOf(entry) {
   const clip = entry.clips.get('ads');
   const idle = entry.clips.get('idle');
   if (!clip || !idle || entry.golden) return null;
+  // Trilha sem par no idle ficaria absoluta na camada aditiva (posição somada duas vezes).
+  if (clip.tracks.some((t) => !idle.tracks.some((r) => r.name === t.name))) return null;
   const action = entry.mixer.clipAction(THREE.AnimationUtils.makeClipAdditive(clip.clone(), 0, idle));
   action.blendMode = THREE.AdditiveAnimationBlendMode;
   action.setEffectiveWeight(0);
