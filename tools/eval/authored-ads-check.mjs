@@ -16,6 +16,13 @@
    imprimem NOTA explícita em AD1/AD3 — o ADS delas é o pull residual do
    vmconfig. Sob mutante, entrada não mensurável reprova (a régua nunca
    passa em silêncio).
+   CEGUEIRA CONHECIDA (revisão L1, 23/09): com `ads.auto` o runtime leva ao
+   centro EXATAMENTE o socket `sight` que o AD1 projeta, e alinha o eixo
+   sight→muzzle que o AD3 mede. Os dois são verdadeiros por construção: md97,
+   m92, mp5 e akm davam AD1 0,000 / AD3 0° com a mira 40–90 px fora da cruz, e o
+   ADS automático do shotgun (sockets invertidos) também ficava verde. AD1/AD3
+   provam que o PIPELINE do ADS rodou; a imagem de mira é o `eval:vm-mira`
+   (tools/eval/vm-reguas-check.mjs --regua=mira), medida no quadro desenhado.
    Uso: node tools/eval/authored-ads-check.mjs [--armas=ak] [--porta=8156]
    Requer private-assets — régua LOCAL (check:vm), fora do check:fast.
    ============================================================================ */
@@ -171,8 +178,8 @@ try {
           check(offCenter > 0.035, `AD1 ${label}: SEM ads a alça fica fora do centro (mutante)`,
             `desvio ${offCenter.toFixed(3)}`);
         } else {
-          check(offCenter <= 0.035, `AD1 ${label}: alça no eixo da câmera`,
-            `desvio ${offCenter.toFixed(3)} (adsF ${medida.adsF.toFixed(2)})`);
+          check(offCenter <= 0.035, `AD1 ${label}: socket sight no eixo da câmera (pipeline; a imagem de mira é o eval:vm-mira)`,
+            `desvio ${offCenter.toFixed(3)} (adsF ${medida.adsF.toFixed(2)})${VM_WEAPON[id]?.ads?.auto ? ' — ads.auto: verdadeiro por construção' : ''}`);
         }
       }
       check(medida.areaFrac >= 0.02, `AD2 ${label}: arma na tela`, `área ${(medida.areaFrac * 100).toFixed(1)}%`);

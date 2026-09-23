@@ -1,0 +1,716 @@
+{
+ "gerado": "2026-09-23",
+ "aspecto": "3x2",
+ "entradas": "e3f6af324d7cc9c1",
+ "resultados": {
+  "awp": {
+   "mira": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "luneta: no ADS o viewmodel some e entra o overlay 2D"
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "1.43× AK",
+    "msg": "arma gigante: 143% da AK (faixa 0.8–1.25, classe longa) — tamanho 1.43× AK, rolagem -17° da AK (informativa), eixo +1° da AK, braço 0.72×, cruz 0 px, olho 1.03 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.08",
+    "msg": "dedos da mão de apoio a 0.08 palma da malha da arma (palma 0.26); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:fora vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "ak": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "213 px",
+    "msg": "mira fora da cruz a 213 px; ângulo esquisito no ADS: arma tombada +65° da vertical — aro a 213 px da cruz (+199, +75); teto 30 px; eixo no ADS +65° da vertical (teto ±12°). Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "0.97× AK",
+    "msg": "tamanho 0.97× AK, rolagem +4° da AK (informativa), eixo -1° da AK, braço 0.76×, cruz 0 px, olho 3.00 palma, ADS cobre 12.3% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.19",
+    "msg": "dedos da mão de apoio a 0.19 palma da malha da arma (palma 0.35); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:arma vazia0.31:mao vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:mao vazia0.69:mao vazia0.77:fora vazia0.85:mao vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:mao tatica0.86:arma"
+   }
+  },
+  "m4": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "43 px",
+    "msg": "mira fora da cruz a 43 px — massa a 43 px da cruz (+5, -43); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "1.01× AK",
+    "msg": "tamanho 1.01× AK, rolagem +5° da AK (informativa), eixo +7° da AK, braço 0.79×, cruz 0 px, olho 1.36 palma, ADS cobre 9.2% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.00",
+    "msg": "dedos da mão de apoio a 0.00 palma da malha da arma (palma 0.08); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "mp5": {
+   "mira": {
+    "estado": "VERDE",
+    "valor": "1 px",
+    "msg": "aro a 1 px da cruz (-0, -0); teto 30 px; eixo no ADS +2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.101 NDC"
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "0.79× AK",
+    "msg": "tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.77×, cruz 0 px, olho 2.49 palma, ADS cobre 5.5% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.01",
+    "msg": "dedos da mão de apoio a 0.01 palma da malha da arma (palma 0.22); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "1 falha(s)",
+    "msg": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 16% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "shotgun": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "67 px",
+    "msg": "mira fora da cruz a 67 px; ângulo esquisito no ADS: arma tombada +64° da vertical — aro a 67 px da cruz (+67, -5); teto 30 px; eixo no ADS +64° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.464 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "1.61× AK",
+    "msg": "arma gigante: 161% da AK (faixa 0.8–1.25, classe longa); câmera dentro da arma: a parte mais perto está a 0.37 palma do olho (mínimo 0.6); no ADS arma+braço cobrem 28.5% da tela (teto 18.5%) — tamanho 1.61× AK, rolagem -15° da AK (informativa), eixo +8° da AK, braço 0.21×, cruz 0 px, olho 0.37 palma, ADS cobre 28.5% (teto 18.5%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.03",
+    "msg": "dedos da mão de apoio a 0.03 palma da malha da arma (palma 0.01); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:mao-vazia vazia0.23:mao vazia0.31:fora vazia0.38:mao-vazia vazia0.46:mao vazia0.54:fora vazia0.62:mao-vazia vazia0.69:mao vazia0.77:fora vazia0.85:mao-vazia vazia0.92:mao tatica0.14:mao tatica0.29:fora tatica0.43:mao-vazia tatica0.57:mao-vazia tatica0.71:mao tatica0.86:mao"
+   }
+  },
+  "deagle": {
+   "mira": {
+    "estado": "VERDE",
+    "valor": "30 px",
+    "msg": "massa a 30 px da cruz (+24, -18); teto 30 px; eixo no ADS +0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+   },
+   "cobertura": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "arma curta: medida contra a pistola em eval:vm-pistola-ref"
+   },
+   "pistola-ref": {
+    "estado": "VERMELHO",
+    "valor": "0.63× pistola aprovada",
+    "msg": "arma pequena: 63% da pistola aprovada por metro (faixa 0.8–1.25); posição: centro da arma a 129 px do da pistola (33, -125; teto 86); ADS: só 49% da arma visível contra a pistola (mínimo 50%) — tamanho 0.63× pistola aprovada, desvio 129 px, ADS 49%. Conserto: FAMILY_FRAME/VM_FRAME da família curta (escala/offset/rotDeg)."
+   },
+   "maos": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "curta: mão de apoio envolve a outra mão, não a arma"
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "1 falha(s)",
+    "msg": "recarrega com objeto no meio do ar: vazia 15% — 2.30 palma da mão, deslocado 3.04 do encaixe, na tela. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "pistol": {
+   "mira": {
+    "estado": "VERDE",
+    "valor": "20 px",
+    "msg": "massa a 20 px da cruz (+0, -20); teto 30 px; eixo no ADS -4° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+   },
+   "cobertura": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "arma curta: medida contra a pistola em eval:vm-pistola-ref"
+   },
+   "pistola-ref": {
+    "estado": "VERDE",
+    "valor": "1.00× pistola aprovada",
+    "msg": "tamanho 1.00× pistola aprovada, desvio 0 px, ADS 100%"
+   },
+   "maos": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "curta: mão de apoio envolve a outra mão, não a arma"
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:fora vazia0.38:mao vazia0.46:arma vazia0.54:mao vazia0.62:mao vazia0.69:mao vazia0.77:fora vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:mao tatica0.71:mao tatica0.86:arma"
+   }
+  },
+  "knife": {
+   "mira": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "faca: sem ADS"
+   },
+   "cobertura": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "faca: meleevm, régua própria (melee-framing)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "faca"
+   },
+   "carregador": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "faca: sem carregador"
+   }
+  },
+  "m92": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "79 px",
+    "msg": "mira fora da cruz a 79 px — massa a 79 px da cruz (+8, -79); teto 30 px; eixo no ADS -8° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "0.99× AK",
+    "msg": "tamanho 0.99× AK, rolagem +22° da AK (informativa), eixo -1° da AK, braço 0.62×, cruz 0 px, olho 2.09 palma, ADS cobre 8.3% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERMELHO",
+    "valor": "0.70",
+    "msg": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.70 palma da malha da arma (palma 1.00); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "akm": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "107 px",
+    "msg": "mira fora da cruz a 107 px; ângulo esquisito no ADS: arma tombada -21° da vertical — massa a 107 px da cruz (-15, -106); teto 30 px; eixo no ADS -21° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "0.71× AK",
+    "msg": "arma pequena: 71% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 115° contra 155° da AK (-40°, teto ±12°) — tamanho 0.71× AK, rolagem +24° da AK (informativa), eixo -40° da AK, braço 0.46×, cruz 0 px, olho 2.76 palma, ADS cobre 13.8% (teto 18.5%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERMELHO",
+    "valor": "0.60",
+    "msg": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.60 palma da malha da arma (palma 0.74); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "g3": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "90 px",
+    "msg": "mira fora da cruz a 90 px — massa a 90 px da cruz (+3, -90); teto 30 px; eixo no ADS +8° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "1.04× AK",
+    "msg": "ângulo esquisito: eixo da arma na tela 138° contra 155° da AK (-17°, teto ±12°) — tamanho 1.04× AK, rolagem +32° da AK (informativa), eixo -17° da AK, braço 1.01×, cruz 0 px, olho 1.69 palma, ADS cobre 11.7% (teto 18.5%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERMELHO",
+    "valor": "0.40",
+    "msg": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.40 palma da malha da arma (palma 0.74); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:fora vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "revolver38": {
+   "mira": {
+    "estado": "VERDE",
+    "valor": "5 px",
+    "msg": "massa a 5 px da cruz (+1, -5); teto 30 px; eixo no ADS -2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+   },
+   "cobertura": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "arma curta: medida contra a pistola em eval:vm-pistola-ref"
+   },
+   "pistola-ref": {
+    "estado": "VERMELHO",
+    "valor": "0.64× pistola aprovada",
+    "msg": "arma pequena: 64% da pistola aprovada por metro (faixa 0.8–1.25); posição: centro da arma a 125 px do da pistola (0, -125; teto 86); ADS: só 23% da arma visível contra a pistola (mínimo 50%) — tamanho 0.64× pistola aprovada, desvio 125 px, ADS 23%. Conserto: FAMILY_FRAME/VM_FRAME da família curta (escala/offset/rotDeg)."
+   },
+   "maos": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "curta: mão de apoio envolve a outra mão, não a arma"
+   },
+   "carregador": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "cilindro: tambor e cartuchos são do eval:vm-pistol-revolver"
+   }
+  },
+  "md97": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "54 px",
+    "msg": "mira fora da cruz a 54 px — massa a 54 px da cruz (+10, -53); teto 30 px; eixo no ADS +9° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "1.06× AK",
+    "msg": "braço 1.50× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela 179° contra 155° da AK (+24°, teto ±12°) — tamanho 1.06× AK, rolagem -116° da AK (informativa), eixo +24° da AK, braço 1.50×, cruz 0 px, olho 1.53 palma, ADS cobre 12.1% (teto 18.5%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERMELHO",
+    "valor": "0.25",
+    "msg": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.25 palma da malha da arma (palma 0.60); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:fora vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "carbine": {
+   "mira": {
+    "estado": "VERDE",
+    "valor": "16 px",
+    "msg": "massa a 16 px da cruz (+0, -16); teto 30 px; eixo no ADS -0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "1.20× AK",
+    "msg": "tamanho 1.20× AK, rolagem +5° da AK (informativa), eixo +0° da AK, braço 1.23×, cruz 0 px, olho 0.97 palma, ADS cobre 7.9% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERMELHO",
+    "valor": "0.38",
+    "msg": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.38 palma da malha da arma (palma 0.70); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carregador": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "alavanca com cartucho solto pela janela: sem peça de carregador no produto"
+   }
+  },
+  "m400": {
+   "mira": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "luneta: no ADS o viewmodel some e entra o overlay 2D"
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "0.77× AK",
+    "msg": "arma pequena: 77% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 133° contra 155° da AK (-22°, teto ±12°) — tamanho 0.77× AK, rolagem +19° da AK (informativa), eixo -22° da AK, braço 0.66×, cruz 0 px, olho 2.08 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.06",
+    "msg": "dedos da mão de apoio a 0.06 palma da malha da arma (palma 0.10); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:fora vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "mosin": {
+   "mira": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "luneta: no ADS o viewmodel some e entra o overlay 2D"
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "0.64× AK",
+    "msg": "arma pequena: 64% da AK (faixa 0.8–1.25, classe longa); 162 px de arma/braço sobre a cruz no quadril; ângulo esquisito: eixo da arma na tela -177° contra 155° da AK (+28°, teto ±12°) — tamanho 0.64× AK, rolagem -71° da AK (informativa), eixo +28° da AK, braço 1.23×, cruz 162 px, olho 0.77 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.01",
+    "msg": "dedos da mão de apoio a 0.01 palma da malha da arma (palma 0.01); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "14 falha(s)",
+    "msg": "em repouso o clipe está solto no quadro (3.99 palma da mão, ∞ da arma); recarrega com objeto no meio do ar: vazia 23% — 7.31 palma da mão, deslocado 4.16 do encaixe, 96 px na tela; recarrega com objeto no meio do ar: vazia 31% — 6.99 palma da mão, deslocado 4.16 do encaixe, 101 px na tela; recarrega com objeto no meio do ar: vazia 38% — 7.31 palma da mão, deslocado 4.16 do encaixe, 98 px na tela (+10). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "rem700": {
+   "mira": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "luneta: no ADS o viewmodel some e entra o overlay 2D"
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "1.47× AK",
+    "msg": "arma gigante: 147% da AK (faixa 0.8–1.25, classe longa); 222 px de arma/braço sobre a cruz no quadril; ângulo esquisito: eixo da arma na tela 53° contra 155° da AK (-102°, teto ±12°); câmera dentro da arma: a parte mais perto está a 0.54 palma do olho (mínimo 0.6) — tamanho 1.47× AK, rolagem +5° da AK (informativa), eixo -102° da AK, braço 0.95×, cruz 222 px, olho 0.54 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERMELHO",
+    "valor": "0.22",
+    "msg": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.22 palma da malha da arma (palma 0.55); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "5 falha(s)",
+    "msg": "em repouso o clipe está solto no quadro (1.47 palma da mão, 0.20 da arma); recarrega com objeto no meio do ar: vazia 15% — 2.58 palma da mão, deslocado 4.62 do encaixe, 112 px na tela; recarrega com objeto no meio do ar: vazia 31% — 2.69 palma da mão, deslocado 4.62 do encaixe, 96 px na tela; recarrega com objeto no meio do ar: vazia 54% — 2.69 palma da mão, deslocado 4.62 do encaixe, 97 px na tela (+1). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "svd": {
+   "mira": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "luneta: no ADS o viewmodel some e entra o overlay 2D"
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "0.36× AK",
+    "msg": "arma pequena: 36% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 94° contra 155° da AK (-61°, teto ±12°) — tamanho 0.36× AK, rolagem +42° da AK (informativa), eixo -61° da AK, braço 0.61×, cruz 0 px, olho 1.66 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.06",
+    "msg": "dedos da mão de apoio a 0.06 palma da malha da arma (palma 0.22); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "1 falha(s)",
+    "msg": "tira carregador fantasma: a peça do carregador mede 100% da arma. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "g3sg1": {
+   "mira": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "luneta: no ADS o viewmodel some e entra o overlay 2D"
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "1.06× AK",
+    "msg": "ângulo esquisito: eixo da arma na tela 135° contra 155° da AK (-21°, teto ±12°) — tamanho 1.06× AK, rolagem +37° da AK (informativa), eixo -21° da AK, braço 0.48×, cruz 0 px, olho 1.44 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.03",
+    "msg": "dedos da mão de apoio a 0.03 palma da malha da arma (palma 0.01); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "sks": {
+   "mira": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "luneta: no ADS o viewmodel some e entra o overlay 2D"
+   },
+   "cobertura": {
+    "estado": "VERMELHO",
+    "valor": "0.43× AK",
+    "msg": "arma pequena: 43% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela -178° contra 155° da AK (+27°, teto ±12°) — tamanho 0.43× AK, rolagem -25° da AK (informativa), eixo +27° da AK, braço 0.87×, cruz 0 px, olho 1.92 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh)."
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.02",
+    "msg": "dedos da mão de apoio a 0.02 palma da malha da arma (palma 0.05); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "9 falha(s)",
+    "msg": "em repouso o clipe está solto no quadro (3.99 palma da mão, ∞ da arma); recarrega com objeto no meio do ar: vazia 31% — 4.07 palma da mão, deslocado 2.26 do encaixe, 4250 px na tela; recarrega com objeto no meio do ar: vazia 46% — 5.42 palma da mão, deslocado 1.23 do encaixe, 3249 px na tela; recarrega com objeto no meio do ar: vazia 62% — 4.27 palma da mão, deslocado 4.06 do encaixe, 969 px na tela (+5). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "lmg": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "3 px",
+    "msg": "ângulo esquisito no ADS: arma tombada -31° da vertical — massa a 3 px da cruz (-1, -3); teto 30 px; eixo no ADS -31° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "0.71× AK",
+    "msg": "tamanho 0.71× AK, rolagem +5° da AK (informativa), eixo -5° da AK, braço 0.32×, cruz 0 px, olho 1.42 palma, ADS cobre 3.5% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.13",
+    "msg": "dedos da mão de apoio a 0.13 palma da malha da arma (palma 0.18); teto 0.2"
+   },
+   "carregador": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "fita/caixa: eval:vm-lmg-final (tampa/caixa/fita)"
+   }
+  },
+  "scar": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "99 px",
+    "msg": "mira fora da cruz a 99 px; ângulo esquisito no ADS: arma tombada +29° da vertical — massa a 99 px da cruz (+36, -92); teto 30 px; eixo no ADS +29° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "1.20× AK",
+    "msg": "tamanho 1.20× AK, rolagem +11° da AK (informativa), eixo +5° da AK, braço 0.82×, cruz 0 px, olho 1.03 palma, ADS cobre 14.5% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERMELHO",
+    "valor": "0.44",
+    "msg": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.44 palma da malha da arma (palma 0.79); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "tavor": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "41 px",
+    "msg": "mira fora da cruz a 41 px — massa a 41 px da cruz (+1, -41); teto 30 px; eixo no ADS -9° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "1.04× AK",
+    "msg": "tamanho 1.04× AK, rolagem +12° da AK (informativa), eixo +7° da AK, braço 0.46×, cruz 0 px, olho 1.83 palma, ADS cobre 8.4% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERMELHO",
+    "valor": "0.30",
+    "msg": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.30 palma da malha da arma (palma 0.60); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carregador": {
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:caindo vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:mao vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
+   }
+  },
+  "famas": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "64 px",
+    "msg": "mira fora da cruz a 64 px — massa a 64 px da cruz (-8, -63); teto 30 px; eixo no ADS -5° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "0.91× AK",
+    "msg": "tamanho 0.91× AK, rolagem -8° da AK (informativa), eixo -2° da AK, braço 0.78×, cruz 0 px, olho 1.72 palma, ADS cobre 10.7% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.19",
+    "msg": "dedos da mão de apoio a 0.19 palma da malha da arma (palma 0.51); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "1 falha(s)",
+    "msg": "mão vazia: vazia 38% — mão de apoio na tela e o carregador a 0.85 palma dela, fora do quadro. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "uzi": {
+   "mira": {
+    "estado": "VERMELHO",
+    "valor": "25 px",
+    "msg": "ângulo esquisito no ADS: arma tombada +14° da vertical — massa a 25 px da cruz (+5, -25); teto 30 px; eixo no ADS +14° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "0.54× AK",
+    "msg": "tamanho 0.54× AK, rolagem -4° da AK (informativa), eixo +0° da AK, braço 0.50×, cruz 0 px, olho 4.54 palma, ADS cobre 6.8% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "uzi: uma mão só (decisão do dono); mão de apoio é da vm-fix-grips"
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "4 falha(s)",
+    "msg": "tira carregador fantasma: a peça do carregador mede 100% da arma; recarrega com objeto no meio do ar: vazia 15% — 2.18 palma da mão, deslocado 3.11 do encaixe, 4340 px na tela; recarrega com objeto no meio do ar: tatica 14% — 3.27 palma da mão, deslocado 4.19 do encaixe, 6117 px na tela; tira carregador fantasma (toco): com o pente na mão aparece no máximo 28% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "p90": {
+   "mira": {
+    "estado": "VERDE",
+    "valor": "3 px",
+    "msg": "aro a 3 px da cruz (+0, -3); teto 30 px; eixo no ADS +4° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.108 NDC"
+   },
+   "cobertura": {
+    "estado": "VERDE",
+    "valor": "0.66× AK",
+    "msg": "tamanho 0.66× AK, rolagem +28° da AK (informativa), eixo -8° da AK, braço 0.38×, cruz 0 px, olho 4.16 palma, ADS cobre 6.6% (teto 18.5%)"
+   },
+   "pistola-ref": {
+    "estado": "N/A",
+    "valor": "—",
+    "msg": "só armas curtas"
+   },
+   "maos": {
+    "estado": "VERDE",
+    "valor": "0.06",
+    "msg": "dedos da mão de apoio a 0.06 palma da malha da arma (palma 0.12); teto 0.2"
+   },
+   "carregador": {
+    "estado": "VERMELHO",
+    "valor": "1 falha(s)",
+    "msg": "recarrega com objeto no meio do ar: vazia 46% — 1.05 palma da mão, deslocado 3.36 do encaixe, 431 px na tela. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  }
+ },
+ "parcial": {
+  "reguas": [
+   "maos"
+  ],
+  "armas": "todas",
+  "base": "2026-09-23"
+ }
+}

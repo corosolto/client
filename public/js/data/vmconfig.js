@@ -61,8 +61,10 @@ export const VM_WEAPON = {
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),
-  mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay',
-    ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  // Quadril: +18° de rolagem deita o cano (eixo na tela 141° → 149°, AK 155°; o crítico via
+  // "pitch 39° vs 26°"). ADS desfaz a rolagem e o resíduo leva o aro da massa à cruz (eval:vm-mira 44 → 0 px).
+  mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay', frame: { rotDeg: [-10.1, 0, 18] },
+    ads: { auto: true, off: [-0.0925, 0.0245, 0], rotDeg: [0, 0, -18], pull: 0.05, fovScale: 1 } }),
   shotgun: W('shotgun', { baked: true, timing: 'gameplay',
     ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
   // anchor/namedParts valem só na montagem ao vivo (eval authored-attach-check).
@@ -110,15 +112,16 @@ export const VM_WEAPON = {
   // Candidata DMR assada por arma. `frame:family` preserva o enquadramento
   // medido desta base; a câmera embutida do doador não é usada como frame.
   rem700: W('bolt', { baked: true, frame: 'family' }),
-  lmg: W('lmg', { baked: true, timing: 'gameplay',
-    ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
+  // ADS automático (alça medida no eixo): o manual deixava a alça fora da cruz (AD1, revisão L1).
+  lmg: W('lmg', { baked: true, timing: 'gameplay' }),
   scar: W('ar', { baked: true }),
   tavor: W('ar', { baked: true }),
   famas: W('ar', { baked: true }),
-  uzi: W('smg', { baked: true, timing: 'gameplay',
-    ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  uzi: W('smg', { baked: true, timing: 'gameplay' }),
+  // ADS: o anel da óptica ficava ~60 px acima da cruz (crítico L1 50–55; eval:vm-mira 60 → 3 px). A
+  // rolagem do quadril (−60° no FAMILY_FRAME) fica: −40° desenquadrou a arma e borrou o anel no A/B cego.
   p90: W('p90', { baked: true, timing: 'gameplay', recoilScale: 1.6,
-    ads: { auto: false, off: [-0.12, 0.18, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+    ads: { auto: true, off: [0.0029, -0.053, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
   svd: W('svd', { baked: true }),
   g3sg1: W('g3', { baked: true, frame: 'family' }),
   sks: W('marksman', { baked: true }),

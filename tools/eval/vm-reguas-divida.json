@@ -1,0 +1,227 @@
+{
+ "o_que_e": "Vermelhos CONHECIDOS das réguas de imagem do viewmodel (eval:vm-reguas). Cada entrada vira DÍVIDA (aviso) em vez de reprovar, e só enquanto VM_LAUNCH=false. Não entre aqui para passar o portão: só com dono e o número medido. Régua que ficar verde avisa para remover a entrada.",
+ "gerado": "2026-09-23",
+ "placar": "e3f6af324d7cc9c1",
+ "dividas": {
+  "cobertura": {
+   "awp": {
+    "valor": "1.43× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "arma gigante: 143% da AK (faixa 0.8–1.25, classe longa) — tamanho 1.43× AK, rolagem -17° da AK (informativa), eixo +1° da AK, braço 0.72×, cruz 0 px, olho 1.03 palma, ADS: viewmodel some (luneta). Conserto: z/escala do f"
+   },
+   "shotgun": {
+    "valor": "1.61× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "arma gigante: 161% da AK (faixa 0.8–1.25, classe longa); câmera dentro da arma: a parte mais perto está a 0.37 palma do olho (mínimo 0.6); no ADS arma+braço cobrem 28.5% da tela (teto 18.5%) — tamanho 1.61× AK, rolagem -"
+   },
+   "akm": {
+    "valor": "0.71× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "arma pequena: 71% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 115° contra 155° da AK (-40°, teto ±12°) — tamanho 0.71× AK, rolagem +24° da AK (informativa), eixo -40° da AK, braço 0.46×, "
+   },
+   "g3": {
+    "valor": "1.04× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "ângulo esquisito: eixo da arma na tela 138° contra 155° da AK (-17°, teto ±12°) — tamanho 1.04× AK, rolagem +32° da AK (informativa), eixo -17° da AK, braço 1.01×, cruz 0 px, olho 1.69 palma, ADS cobre 11.7% (teto 18.5%)"
+   },
+   "md97": {
+    "valor": "1.06× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "braço 1.50× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela 179° contra 155° da AK (+24°, teto ±12°) — tamanho 1.06× AK, rolagem -116° da AK (informativa), eixo +24° da AK, braço 1.50×, cruz 0 px"
+   },
+   "m400": {
+    "valor": "0.77× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "arma pequena: 77% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 133° contra 155° da AK (-22°, teto ±12°) — tamanho 0.77× AK, rolagem +19° da AK (informativa), eixo -22° da AK, braço 0.66×, "
+   },
+   "mosin": {
+    "valor": "0.64× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "arma pequena: 64% da AK (faixa 0.8–1.25, classe longa); 162 px de arma/braço sobre a cruz no quadril; ângulo esquisito: eixo da arma na tela -177° contra 155° da AK (+28°, teto ±12°) — tamanho 0.64× AK, rolagem -71° da A"
+   },
+   "rem700": {
+    "valor": "1.47× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "arma gigante: 147% da AK (faixa 0.8–1.25, classe longa); 222 px de arma/braço sobre a cruz no quadril; ângulo esquisito: eixo da arma na tela 53° contra 155° da AK (-102°, teto ±12°); câmera dentro da arma: a parte mais "
+   },
+   "svd": {
+    "valor": "0.36× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "arma pequena: 36% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 94° contra 155° da AK (-61°, teto ±12°) — tamanho 0.36× AK, rolagem +42° da AK (informativa), eixo -61° da AK, braço 0.61×, c"
+   },
+   "g3sg1": {
+    "valor": "1.06× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "ângulo esquisito: eixo da arma na tela 135° contra 155° da AK (-21°, teto ±12°) — tamanho 1.06× AK, rolagem +37° da AK (informativa), eixo -21° da AK, braço 0.48×, cruz 0 px, olho 1.44 palma, ADS: viewmodel some (luneta)"
+   },
+   "sks": {
+    "valor": "0.43× AK",
+    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
+    "medido": "arma pequena: 43% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela -178° contra 155° da AK (+27°, teto ±12°) — tamanho 0.43× AK, rolagem -25° da AK (informativa), eixo +27° da AK, braço 0.87×,"
+   }
+  },
+  "mira": {
+   "ak": {
+    "valor": "213 px",
+    "dono": "vm-k-rebuild (#631)",
+    "medido": "mira fora da cruz a 213 px; ângulo esquisito no ADS: arma tombada +65° da vertical — aro a 213 px da cruz (+199, +75); teto 30 px; eixo no ADS +65° da vertical (teto ±12°). Conserto: ads.off/rotDeg da arma (vmconfig) ou "
+   },
+   "m4": {
+    "valor": "43 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 43 px — massa a 43 px da cruz (+5, -43); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_M"
+   },
+   "shotgun": {
+    "valor": "67 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 67 px; ângulo esquisito no ADS: arma tombada +64° da vertical — aro a 67 px da cruz (+67, -5); teto 30 px; eixo no ADS +64° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.464 NDC. Conserto:"
+   },
+   "m92": {
+    "valor": "79 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 79 px — massa a 79 px da cruz (+8, -79); teto 30 px; eixo no ADS -8° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_M"
+   },
+   "akm": {
+    "valor": "107 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 107 px; ângulo esquisito no ADS: arma tombada -21° da vertical — massa a 107 px da cruz (-15, -106); teto 30 px; eixo no ADS -21° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Con"
+   },
+   "g3": {
+    "valor": "90 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 90 px — massa a 90 px da cruz (+3, -90); teto 30 px; eixo no ADS +8° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_M"
+   },
+   "md97": {
+    "valor": "54 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 54 px — massa a 54 px da cruz (+10, -53); teto 30 px; eixo no ADS +9° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_"
+   },
+   "lmg": {
+    "valor": "3 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "ângulo esquisito no ADS: arma tombada -31° da vertical — massa a 3 px da cruz (-1, -3); teto 30 px; eixo no ADS -31° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vm"
+   },
+   "scar": {
+    "valor": "99 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 99 px; ângulo esquisito no ADS: arma tombada +29° da vertical — massa a 99 px da cruz (+36, -92); teto 30 px; eixo no ADS +29° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conser"
+   },
+   "tavor": {
+    "valor": "41 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 41 px — massa a 41 px da cruz (+1, -41); teto 30 px; eixo no ADS -9° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_M"
+   },
+   "famas": {
+    "valor": "64 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "mira fora da cruz a 64 px — massa a 64 px da cruz (-8, -63); teto 30 px; eixo no ADS -5° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_M"
+   },
+   "uzi": {
+    "valor": "25 px",
+    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
+    "medido": "ângulo esquisito no ADS: arma tombada +14° da vertical — massa a 25 px da cruz (+5, -25); teto 30 px; eixo no ADS +14° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma ("
+   }
+  },
+  "carregador": {
+   "mp5": {
+    "valor": "1 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 16% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   },
+   "deagle": {
+    "valor": "1 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "recarrega com objeto no meio do ar: vazia 15% — 2.30 palma da mão, deslocado 3.04 do encaixe, na tela. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   },
+   "mosin": {
+    "valor": "14 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "em repouso o clipe está solto no quadro (3.99 palma da mão, ∞ da arma); recarrega com objeto no meio do ar: vazia 23% — 7.31 palma da mão, deslocado 4.16 do encaixe, 96 px na tela; recarrega com objeto no meio do ar: vaz"
+   },
+   "rem700": {
+    "valor": "5 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "em repouso o clipe está solto no quadro (1.47 palma da mão, 0.20 da arma); recarrega com objeto no meio do ar: vazia 15% — 2.58 palma da mão, deslocado 4.62 do encaixe, 112 px na tela; recarrega com objeto no meio do ar:"
+   },
+   "svd": {
+    "valor": "1 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "tira carregador fantasma: a peça do carregador mede 100% da arma. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   },
+   "sks": {
+    "valor": "9 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "em repouso o clipe está solto no quadro (3.99 palma da mão, ∞ da arma); recarrega com objeto no meio do ar: vazia 31% — 4.07 palma da mão, deslocado 2.26 do encaixe, 4250 px na tela; recarrega com objeto no meio do ar: v"
+   },
+   "famas": {
+    "valor": "1 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "mão vazia: vazia 38% — mão de apoio na tela e o carregador a 0.85 palma dela, fora do quadro. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   },
+   "uzi": {
+    "valor": "4 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "tira carregador fantasma: a peça do carregador mede 100% da arma; recarrega com objeto no meio do ar: vazia 15% — 2.18 palma da mão, deslocado 3.11 do encaixe, 4340 px na tela; recarrega com objeto no meio do ar: tatica "
+   },
+   "p90": {
+    "valor": "1 falha(s)",
+    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
+    "medido": "recarrega com objeto no meio do ar: vazia 46% — 1.05 palma da mão, deslocado 3.36 do encaixe, 431 px na tela. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+   }
+  },
+  "pistola-ref": {
+   "deagle": {
+    "valor": "0.63× pistola aprovada",
+    "dono": "vm-fix-grips (frame da família curta) — faixa das curtas é decisão do dono",
+    "medido": "arma pequena: 63% da pistola aprovada por metro (faixa 0.8–1.25); posição: centro da arma a 129 px do da pistola (33, -125; teto 86); ADS: só 49% da arma visível contra a pistola (mínimo 50%) — tamanho 0.63× pistola apro"
+   },
+   "revolver38": {
+    "valor": "0.64× pistola aprovada",
+    "dono": "vm-fix-grips (frame da família curta) — faixa das curtas é decisão do dono",
+    "medido": "arma pequena: 64% da pistola aprovada por metro (faixa 0.8–1.25); posição: centro da arma a 125 px do da pistola (0, -125; teto 86); ADS: só 23% da arma visível contra a pistola (mínimo 50%) — tamanho 0.64× pistola aprov"
+   }
+  },
+  "maos": {
+   "m92": {
+    "valor": "0.70",
+    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
+    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.70 palma da malha da arma (palma 1.00); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "akm": {
+    "valor": "0.60",
+    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
+    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.60 palma da malha da arma (palma 0.74); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "g3": {
+    "valor": "0.40",
+    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
+    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.40 palma da malha da arma (palma 0.74); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "md97": {
+    "valor": "0.25",
+    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
+    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.25 palma da malha da arma (palma 0.60); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "carbine": {
+    "valor": "0.38",
+    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
+    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.38 palma da malha da arma (palma 0.70); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "rem700": {
+    "valor": "0.22",
+    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
+    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.22 palma da malha da arma (palma 0.55); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "scar": {
+    "valor": "0.44",
+    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
+    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.44 palma da malha da arma (palma 0.79); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   },
+   "tavor": {
+    "valor": "0.30",
+    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
+    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.30 palma da malha da arma (palma 0.60); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config."
+   }
+  }
+ }
+}
