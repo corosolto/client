@@ -63,10 +63,15 @@ Textos completos: `artifacts/review-L3L5/critico/{antes,depois,depois2,rejeitado
   do pacote de ferrolho a têm no Y. Giro rígido de −90° em torno da linha das palmas (o contato dos
   dedos do `dmr-verify` continua verde) e mão esquerda no centro do guarda-mão pelo IK do
   `grip-support.mjs` (#633), com o alvo medido pela seção da malha.
-- **Peças flutuando (mosin, rem700)** — clipe de cartuchos e cartucho do pacote a 0,5–2 m das mãos
-  em todos os clipes: escala zero, estacionados no centro da arma (`esconde`).
+- **Peças flutuando (mosin, rem700)** — clipe de cartuchos e cartucho do pacote parados longe das
+  mãos (no idle, perto da cruz): quadro a quadro, pelo centro da malha, a munição só aparece em
+  clipe de recarga a ≤ 0,2 m de uma mão; fora disso escala zero, no centro da arma (`esconde`).
+  Revisão antes do push: a 1ª versão media a origem do nó e escondia a munição também na recarga.
+- **Sockets depois do giro (mosin, svd, m400)** — o `SOCKET_MINT_SIGHT` fora posto sobre a malha
+  virada e gira junto (mosin/svd); o `MUZZLE` vai ao centro da seção da ponta do cano (ficava
+  3–11 cm fora dela: clarão e traçador saem de lá).
 - **Clipes que só animam o nó-raiz (deagle, m400)** — `tools/viewmodels/prep/inspect-com-pose.mjs`.
-  Na deagle, a inspeção anima só `RIG_FP_ARMS` e deixa 66 ossos na pose de ligação: preenche com o
+  Na deagle, a inspeção anima só `RIG_FP_ARMS` e deixa os 67 nós que o idle anima na pose de ligação: preenche com o
   idle e amplia o giro 5× com pivô na arma (verify pede excursão ≥ 2,5 cm). Na m400,
   `VM_PACKAGE_M400` repousa na pose de saque abaixada que o idle não anima: tiro/inspeção/saque
   passam a ser compostos sobre o repouso (a arma anda como nas armas `ar`).
@@ -82,17 +87,21 @@ receitas conferem o SHA da fonte.
 
 ## Régua nova: `eval:vm-orientacao`
 
-`tools/eval/vm-orientacao-check.mjs`: razão entre a altura das 2 fatias de trás e das 2 da boca ao
-longo do eixo da malha MINT (orientado para o socket MUZZLE), piso 1,0. Corretas 1,14–10,7;
-invertidas do catálogo Codex 0,31 (svd), 0,47 (mosin), 0,53 (m400), 0,79 (sks). `--mutantes`
-(o script do npm) cobra base verde e o catálogo original vermelho nas quatro. Não mede rolagem.
+`tools/eval/vm-orientacao-check.mjs`: varre os 17 produtos com malha MINT e socket MUZZLE; razão
+entre a altura das 2 fatias de trás e das 2 da boca ao longo do eixo da malha (orientado para o
+socket), piso 1,0. Corretas 1,16 (akm)–5,37 (famas); invertidas do catálogo Codex 0,31 (svd),
+0,47 (mosin), 0,53 (m400), 0,79 (sks). `--mutantes` (o script do npm) só aceita o catálogo
+original se ele reprovar exatamente essas quatro por inversão. Não mede rolagem nem direção
+absoluta (malha e socket invertidos juntos passariam).
 
 ## Portões (`CSBRASIL_VM_ASSET_ROOT` no overlay desta frente)
 
 Verdes antes e depois: `eval:vm-rig`, `eval:vm-launch`, `eval:vm-cache`, `eval:vm-pegada-k`,
-`eval:vm-manga-oca`, `eval:vm-orientacao`, `eval:vm-rifle-{m4,scar,famas,carbine,tavor,g3,m400,awp}`
+`eval:vm-manga-oca`, `eval:vm-rifle-{m4,scar,famas,carbine,tavor,g3,m400,awp}`
 e `-lifecycle`, `eval:vm-pistol-deagle` e `-lifecycle`, `eval:vm-dmr-assets`, `-lifecycle`, `-tools`,
-`eval:vm-precision-lifecycle`, `eval:vm-autorado-vivo --todas`, `eval:vm-pente-na-mao`. Logs em
+`eval:vm-precision-lifecycle`, `eval:vm-autorado-vivo --todas`, `eval:vm-pente-na-mao`. Depois:
+`eval:vm-orientacao` (nova) e `eval:vm-ads` nas 7 sem luneta (m4, scar, deagle, g3, carbine, tavor,
+famas; antes o navegador foi derrubado por outra sessão no meio da régua). Logs em
 `artifacts/review-L3L5/gates/{antes,depois}/`.
 
 Vermelhos que não são desta frente: `eval:vm-frame` só pela akm (0,573×/0,551×, já vermelha logo
