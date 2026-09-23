@@ -127,6 +127,26 @@ pixels que a luva golden; enquadramento não resolve isso sem mexer na pose.
 
 ## Evidência deste branch
 
+### vm/k-rebuild: réguas e crítico cego (23/09)
+
+- Catálogo de revisão: `~/csbrasil-private-assets/generated/viewmodels-k-rebuild/overlay` (cópia do
+  preview-root + AK, faca e granada K). `eval:vm-frame` 25/25, `eval:vm-rig` 25/25,
+  `eval:vm-foundation` 23/23, `eval:vm-launch` verde com VL6 sem faltantes (27 ids, granada e faca
+  inclusive), `eval:vm-camera` 1/1 (faca 50°, mutante `clamp` vermelho), `vm-autorado-vivo --todas`
+  25/25, `authored-attach-check --mutantes` e `authored-transition-check --mutantes` verdes,
+  `eval:vm-cache` verde (mutante `faca-reassada` vermelho), `eval:vm-ads` AK e PT-38 com a alça no
+  eixo (0,000 / 0,00°) em 16:9 e 3:2, `eval:authored-vm`, `eval:melee-vm` e `eval:cs16` verdes.
+- Crítico cego (`vm-critico-visual`, figuras 3:2 e 16:9 antes/depois): **PT-38 REPROVADA** (arma
+  ~40% do tamanho antigo na tela, mãos dominando o ADS; o inspect sai do quadro também na versão
+  antiga), **faca REPROVADA → corrigida** no Inspect (punho esticado; giro reduzido em e32b0314c,
+  não re-julgado) e RESSALVA na mão de apoio grande no centro, **granada RESSALVA** (granada
+  tampada pelos dedos; argola na mão esquerda lida como solta), **AK RESSALVA** (mão de apoio no
+  pente em vez do guarda-mão, pose do doador M4; recarga limpa e sem "arma pro alto").
+- A PT-38 menor é o que o `eval:vm-frame` pede (escala angular por metro da AK); o crítico lê isso
+  como regressão contra a pistola aprovada. É decisão do dono: aceitar a régua ou abrir faixa
+  própria para pistolas, como a LMG tem.
+
+
 - `eval:vm-launch` VERDE (7 mutantes vermelhos); `eval:vm-camera` 2/2 (AK 58,00°, faca 50,00°;
   mutante `clamp` consertado e agora vermelho); `vm-autorado-vivo --todas` 25/25 com mão visível;
   `eval:vm-rig` 24/24; `eval:vm-foundation` 22/22; `eval:vm-frame` 23/24 (só PT-38);
