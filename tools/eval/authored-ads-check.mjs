@@ -51,6 +51,7 @@ for (let i = 0; i < 60; i++) {
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const falhas = [];
 const resultados = [];
+let medidasNaLinha = 0;
 function check(ok, label, evidence = '') {
   console.log(`${ok ? 'PASSA' : 'FALHA'} ${label}${evidence ? ` — ${evidence}` : ''}`);
   if (!ok) falhas.push(label);
@@ -166,7 +167,10 @@ try {
       }, { weapon: id, linha });
 
       const label = `${id}@${viewport.name}`;
-      if (!medida.medivel) {
+      if (VM_WEAPON[id]?.ads?.linhaDeMira) medidasNaLinha += 1;
+      if (linha && !medida.medivel) {
+        check(false, `AD1 ${label}: linhaDeMira declarada e nó ${linha.ref} ausente na cena`);
+      } else if (!medida.medivel) {
         // Golden AK e pistola assada não têm wrap Mint nem sockets de mira:
         // o ADS delas é o pull residual do vmconfig, sem alinhamento de alça.
         // Nota explícita — sob mutante isso vira falha para a régua nunca
@@ -210,6 +214,7 @@ try {
   await browser.close();
   srv.kill();
 }
+if (MUT === 'socket' && medidasNaLinha === 0) check(false, 'mutante socket não mediu nenhuma arma com linhaDeMira (use --armas=md97,shotgun)');
 
 console.log(JSON.stringify({ mutante: MUT || null, resultados, falhas }, null, 2));
 process.exit(falhas.length ? 1 : 0);

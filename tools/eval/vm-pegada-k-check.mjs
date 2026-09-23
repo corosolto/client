@@ -9,8 +9,8 @@
  * ADS" (revolver38). A `vm-contato-mao.mjs` antiga lia o buffer cru, sem skin, e não
  * valida. Esta resolve FK + skinning do clipe (tools/viewmodels/prep/vmpose.mjs):
  *
- *  PG1 apoio   centro do punho esquerdo (círculo dos dedos) DENTRO do corte da arma na
- *              mesma posição do cano, com folga de 1,5 cm — a mão envolve o guarda-mão.
+ *  PG1 apoio   centro do punho esquerdo (círculo dos dedos) DENTRO do corte real da malha
+ *              no plano do punho, com folga de 1,5 cm — a mão envolve o guarda-mão.
  *  PG2 gatilho osso do gatilho a ≤ 4 cm da junta distal do indicador direito (idle).
  *  PG3 manga   a manga cobre o braço (pesos em upperarm_twist); a manga cortada no
  *              antebraço (748 vértices) é o punho oco.
@@ -40,7 +40,7 @@ const opt = (n, d = '') => { const h = process.argv.find((v) => v.startsWith(`--
 const SERVIDO = path.join(ROOT, 'public/private-assets/viewmodels');
 const CATALOGO = path.resolve(opt('catalogo',
   '/Users/ruben/csbrasil-private-assets/generated/viewmodels-catalog-final/preview-root/viewmodels'));
-const { Vector3, Box3 } = THREE;
+const { Vector3 } = THREE;
 
 // ref = nó cujo espaço local tem o cano num eixo; alça/massa vêm de VM_WEAPON[arma].ads.linhaDeMira.
 export const ARMAS = {
@@ -86,22 +86,32 @@ export async function medir(arma, raiz) {
     const escalaRef = new Vector3().setFromMatrixScale(W[pose.byName.get(cfg.ref)]).x;
     const c = centroPunho(pose, W).applyMatrix4(refInv);
     const A = cfg.eixo, B = (A + 1) % 3, C = (A + 2) % 3;
-    const corte = { b: [Infinity, -Infinity], c: [Infinity, -Infinity] };
-    const inv = refInv;
+    // Corte real da malha no plano do punho: segmentos triângulo×plano. Dentro = paridade de
+    // cruzamentos de um raio +B; fora, vale a distância ao segmento mais próximo.
+    const segs = [];
     for (const t of pose.triangulos(W).filter((t) => t.no === cfg.malha)) {
-      const v = [0, 3, 6].map((k) => new Vector3(t.p[k], t.p[k + 1], t.p[k + 2]).applyMatrix4(inv).toArray());
+      const v = [0, 3, 6].map((k) => new Vector3(t.p[k], t.p[k + 1], t.p[k + 2]).applyMatrix4(refInv).toArray());
+      const pts = [];
       for (let e = 0; e < 3; e++) {
         const p = v[e], q = v[(e + 1) % 3], alvo = c.getComponent(A);
         if ((p[A] - alvo) * (q[A] - alvo) > 0 || p[A] === q[A]) continue;
-        const s = (alvo - p[A]) / (q[A] - p[A]);
-        const vb = p[B] + s * (q[B] - p[B]), vc = p[C] + s * (q[C] - p[C]);
-        corte.b = [Math.min(corte.b[0], vb), Math.max(corte.b[1], vb)];
-        corte.c = [Math.min(corte.c[0], vc), Math.max(corte.c[1], vc)];
+        const u = (alvo - p[A]) / (q[A] - p[A]);
+        pts.push([p[B] + u * (q[B] - p[B]), p[C] + u * (q[C] - p[C])]);
       }
+      if (pts.length >= 2) segs.push([pts[0], pts[1]]);
     }
-    const fora = (x, [lo, hi]) => Math.max(0, lo - x, x - hi);
-    const distCm = Math.hypot(fora(c.getComponent(B), corte.b), fora(c.getComponent(C), corte.c)) * escalaRef / metro * 100;
-    out.PG1 = { cm: +distCm.toFixed(2), centro: c.toArray().map((x) => +x.toFixed(3)), corte: [corte.b, corte.c].map((r) => r.map((x) => +x.toFixed(3))), ok: Number.isFinite(distCm) && corte.b[0] < Infinity && distCm <= 1.5 };
+    const [cb, cc] = [c.getComponent(B), c.getComponent(C)];
+    let cruzamentos = 0, dmin = Infinity;
+    for (const [[b1, c1], [b2, c2]] of segs) {
+      if ((c1 > cc) !== (c2 > cc)) { const bx = b1 + (cc - c1) / (c2 - c1) * (b2 - b1); if (bx > cb) cruzamentos++; }
+      const L = (b2 - b1) ** 2 + (c2 - c1) ** 2;
+      const u = L > 0 ? Math.max(0, Math.min(1, ((cb - b1) * (b2 - b1) + (cc - c1) * (c2 - c1)) / L)) : 0;
+      dmin = Math.min(dmin, Math.hypot(cb - (b1 + u * (b2 - b1)), cc - (c1 + u * (c2 - c1))));
+    }
+    const dentro = cruzamentos % 2 === 1;
+    const distCm = dentro ? 0 : dmin * escalaRef / metro * 100;
+    out.PG1 = { cm: +distCm.toFixed(2), dentro, centro: c.toArray().map((x) => +x.toFixed(3)), segmentos: segs.length,
+      ok: segs.length > 0 && distCm <= 1.5 };
   }
   if (cfg.checks.includes('PG2')) {
     const d = pos(W[pose.byName.get(cfg.gatilho)]).distanceTo(pos(W[pose.byName.get('index_03_r')])) / metro * 100;

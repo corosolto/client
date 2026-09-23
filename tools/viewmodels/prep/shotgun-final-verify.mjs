@@ -191,7 +191,8 @@ const contaTriangulosMangaProximal = (document) => {
 // Revisão L1 (crítico r2): a manga cortada no antebraço virou o "punho oco vermelho na boca
 // do cano". O braço tem de ir inteiro até o ombro; o teto de tela do braço é do eval:vm-frame.
 const triangulosMangaProximal = contaTriangulosMangaProximal(gltf);
-check(triangulosMangaProximal >= 2000, `manga cortada: só ${triangulosMangaProximal} triângulos no braço/antebraço (punho oco)`);
+check(Number.isFinite(triangulosMangaProximal) && triangulosMangaProximal >= 2000,
+  `manga cortada ou ausente: ${triangulosMangaProximal} triângulos no braço/antebraço (punho oco)`);
 
 const mixer = new THREE.AnimationMixer(scene);
 const productScale = scene.getObjectByName('VM_PRODUCT_SHOTGUN')

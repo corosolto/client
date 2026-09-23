@@ -22,14 +22,18 @@ runtime; a figura que decide continua sendo o jogo (`capture-l1.mjs`).
 
 ## Réguas
 
-- **`eval:vm-pegada-k`** (nova): apoio dentro do corte do guarda-mão (PG1), dedo no gatilho (PG2),
-  manga até o ombro (PG3), pente não branco (PG4), pinça do cartucho (PG5), alça e massa na cruz no
-  ADS simulado (PG6), arma visível acima das luvas no ADS (PG7). `--mutantes`: os quatro produtos
-  reprovados do catálogo ficam vermelhos, o revólver no frame da família e o ADS sem resíduo também.
+- **`eval:vm-pegada-k`** (nova): apoio dentro do corte real do guarda-mão (PG1), dedo no gatilho
+  (PG2), manga até o ombro (PG3), pente não branco (PG4), pinça do cartucho (PG5), alça e massa na
+  cruz no ADS simulado (PG6), arma visível acima das luvas no ADS (PG7); cláusulas por arma no
+  `SCRIPTS.md`. `--mutantes`: os quatro produtos reprovados ficam vermelhos (m92 PG1, md97
+  PG1/PG4/PG6, shotgun PG2/PG3/PG6, revolver38 PG5), o revólver no frame da família e o ADS sem
+  resíduo também. Nem toda cláusula tem mutante próprio, e a régua pede os ativos privados: fica
+  fora de `check:fast` e do CI, como as outras réguas de produto K.
 - **`eval:vm-ads`**: arma com `ads.linhaDeMira` mede alça e massa, não o socket (achado transversal
-  da fila L1). `--mutante=socket --armas=md97,shotgun` volta ao socket e reprova.
+  da fila L1); `ref` ausente na cena reprova. `--mutante=socket --armas=md97,shotgun` volta ao socket
+  e reprova; sem arma com `linhaDeMira` o mutante também reprova (não passa medindo nada).
 - **`eval:vm-shotgun-final`**: a regra antiga exigia a manga cortada (zero triângulos proximais);
-  agora exige a manga inteira. Mutante `manga-cortada`.
+  agora exige a manga inteira (manga ausente também reprova). Mutante `manga-cortada`.
 
 Portões desta branch (logs em `artifacts/fix-grips/gates/`, não versionados): `eval:vm-rig`,
 `eval:vm-cache`, `eval:vm-launch`, `eval:vm-pegada-k`, `eval:vm-ads` (4 armas, 3:2 e 16:9),
