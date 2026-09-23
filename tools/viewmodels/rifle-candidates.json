@@ -166,6 +166,21 @@
       "sourceBranch": "codex/viewmodels-catalog-final (rig KINEMATION via m4-final.blend)",
       "sourceCommit": "920d2e6ca",
       "rebuild": "tools/viewmodels/prep/rifles-awp-final.py"
+    },
+    "ak": {
+      "family": "ak",
+      "file": "viewmodels/ak/ak-baked-runtime.glb",
+      "sourceSha256": "aae400d6e93372ddd0e138b6ac24b2cd4b8efc7cd0169483ac0755703a456eca",
+      "sourceBytes": 275892,
+      "productSha256": "ff797a835b1d0433a2202533ffa630dcde3b0d795ff144edb56a65840d1a29fd",
+      "productBytes": 1492532,
+      "sha256": "ff797a835b1d0433a2202533ffa630dcde3b0d795ff144edb56a65840d1a29fd",
+      "bytes": 1492532,
+      "mechanism": "complete-curved-rock-in-mag/real-magazine-catch/right-side-handle-empty-reload",
+      "ready": false,
+      "sourceBranch": "vm/k-rebuild",
+      "sourceCommit": "vm/k-rebuild",
+      "rebuild": "tools/viewmodels/prep/rifles-ak-final.py (m4-final.blend e4b3fdfc…)"
     }
   }
 }
