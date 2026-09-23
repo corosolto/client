@@ -398,6 +398,7 @@
     "capture:vm-lmg-final": "node tools/viewmodels/prep/lmg-final-capture.mjs",
     "capture:vm-arsenal-video": "node tools/viewmodels/prep/arsenal-video-capture.mjs",
     "eval:vm-frame": "node tools/viewmodels/prep/vm-frame-calibra.mjs --tabela",
+    "eval:vm-pegada-k": "node tools/eval/vm-pegada-k-check.mjs --mutantes",
     "eval:vm-rig": "node tools/eval/viewmodel-rig-contract-check.mjs --tabela"
   },
   "repository": {

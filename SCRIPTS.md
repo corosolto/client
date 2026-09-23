@@ -875,3 +875,11 @@ Mutantes: `sem-caprinos`, `patas-paradas`, `parede`, `sombra`, `low-cheio`,
 npm run eval:sertao-livestock
 BASE=http://localhost:8149 npm run eval:sertao-livestock-runtime
 ```
+
+## `eval:vm-pegada-k`
+
+Pegada do produto K com esqueleto aplicado (FK + skinning offline, `tools/viewmodels/prep/vmpose.mjs`) para m92, md97, shotgun e revolver38: mão de apoio dentro do corte do guarda-mão, dedo no gatilho, manga inteira até o ombro, pente sem branco liso, pinça do cartucho na recarga vazia e ADS simulado (alça e massa de `ads.linhaDeMira` na cruz, arma visível acima das luvas). Nasceu da rodada r2 do crítico cego da revisão L1, que reprovou as quatro por defeitos que nenhuma régua via. `--mutantes` roda os produtos reprovados do catálogo (têm de ficar vermelhos), o revólver no frame da família e o ADS sem resíduo. Requer os produtos privados em `public/private-assets` e o catálogo em `~/csbrasil-private-assets`.
+
+```bash
+npm run eval:vm-pegada-k
+```
