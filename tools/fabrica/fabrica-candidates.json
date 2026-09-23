@@ -73,8 +73,8 @@
       "chassi": "MX16A4",
       "variante": true,
       "url": "/private-assets/viewmodels/fabrica/famas-fabrica.glb",
-      "bytes": 4217936,
-      "sha256": "86a8cfc7b8fef9482aef48b2b263e0e11235073b06550c721745e98e2c99486a",
+      "bytes": 4168044,
+      "sha256": "0a30d2d41b53017fb011b9c1fb0e4af55f835340bed2a59a209cb199adc1c013",
       "clipes": [
         {
           "nome": "idle",
@@ -112,11 +112,11 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 10,
+      "segundos": 4,
       "file": "viewmodels/fabrica/famas-fabrica.glb",
       "ficha": "tools/fabrica/fichas/famas.json",
       "insumos": {
-        "ficha": "0434f2f11511dd805b1f522ff84c68499b44794bb9dfea5be632b25fea4e10da",
+        "ficha": "1cbf833be73ad64ea0c6f8e3de9606f47ec76f52b352d73414a6a33a2db0a9f9",
         "chassi": "2d0ba35935a13db7374099648f405aa5245c25e32915da1aaa141f8c00af3356",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",

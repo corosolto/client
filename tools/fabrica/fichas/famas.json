@@ -72,7 +72,7 @@
           0.055
         ],
         "max": [
-          0.21,
+          0.17,
           1,
           1
         ]
@@ -85,7 +85,7 @@
       "ancora": {
         "pos": [
           0,
-          12.0,
+          9.0,
           0.8
         ],
         "rotDeg": [
@@ -94,7 +94,8 @@
           90
         ],
         "escala": 0.758
-      }
+      },
+      "nota": "sem o pilar traseiro da alça (tapava o olho no ADS); a âncora recua 3 cm para a alça ficar no mesmo lugar"
     },
     {
       "peca": "soleira",
@@ -144,5 +145,13 @@
     "familia": "ar",
     "fonte": "recoil.json ← MX16A4 (chassi)"
   },
-  "enquadramentoDe": "m4"
+  "enquadramentoDe": "m4",
+  "mira": {
+    "raizCm": [
+      0,
+      8.0,
+      10.4
+    ],
+    "origem": "FAMAS mira por cima da alça: régua de mira no jogo achou a massa 112 px acima da linha a 4,9 cm (≈ +5,5 cm a 37 cm do olho) → 10,4 cm"
+  }
 }

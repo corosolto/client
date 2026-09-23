@@ -42,6 +42,8 @@ const query = new URLSearchParams({
   vmauthored: '1', vmqa: 'precision',
   vmready: families.join(','),
   vmweapon: Object.keys(VM_WEAPON).join(','),
+  // VM_PALCO_QS: parâmetros de revisão extras (ex.: vmfabrica=ak grava o produto da fábrica).
+  ...Object.fromEntries(new URLSearchParams(process.env.VM_PALCO_QS || '')),
 }).toString();
 
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
