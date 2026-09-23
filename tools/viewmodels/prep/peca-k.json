@@ -30,10 +30,10 @@
       {
         "no": "MINT_WEAPON_SCAR_MAG",
         "nome": "CoroSolto_SCAR_Pente",
-        "base": [0.26, 0.26, 0.26, 1],
+        "base": [0.045, 0.045, 0.047, 1],
         "metal": 0.45,
         "rugosidade": 0.8,
-        "nota": "pente cinza-metal lia como placa prateada; polímero preto do SCAR"
+        "nota": "pente lia placa prateada: fator de cor linear 0,045 (≈ #3d3d3e sRGB) sobre a textura bege; 0,26 linear virou #8b8b8b no jogo e o crítico r2 não viu mudança"
       }
     ]
   },
@@ -45,19 +45,19 @@
       {
         "no": "GEO_WEAPON_SHOTGUN_KXG12",
         "material": "CoroSolto_KSG_Body",
-        "nota": "KSG chapada: um material só, sem UV; separa polímero, trilhos/tubos e peças pequenas",
+        "nota": "KSG chapada (um material, sem UV): polímero, trilhos/tubos e peças pequenas por componente. Fatores lineares: 0,06 linear virou #45474a no jogo e o crítico r2 ainda leu 'chapada'",
         "regras": [
           {
             "nome": "CoroSolto_KSG_Trilho",
             "minTris": 120,
             "maxTris": 1000,
             "alongado": 6,
-            "base": [0.2, 0.205, 0.21, 1],
+            "base": [0.05, 0.052, 0.055, 1],
             "metal": 0.85,
             "rugosidade": 0.36
           },
-          {"nome": "CoroSolto_KSG_Pecas", "maxTris": 100, "base": [0.26, 0.26, 0.27, 1], "metal": 0.9, "rugosidade": 0.3},
-          {"nome": "CoroSolto_KSG_Polimero", "base": [0.06, 0.063, 0.068, 1], "metal": 0.0, "rugosidade": 0.78}
+          {"nome": "CoroSolto_KSG_Pecas", "maxTris": 100, "base": [0.09, 0.09, 0.095, 1], "metal": 0.9, "rugosidade": 0.3},
+          {"nome": "CoroSolto_KSG_Polimero", "base": [0.016, 0.017, 0.019, 1], "metal": 0.0, "rugosidade": 0.78}
         ]
       }
     ]
