@@ -40,7 +40,8 @@ export const VM_FAMILY = {
 };
 
 // Por arma (faca fica no melee): trim = ajuste fino do wrap Mint no socket;
-// ads = auto (alça medida) + resíduo; parts = Tier 2 (carregador/ferrolho móveis).
+// ads = auto (alça medida) + resíduo; linhaDeMira = abertura da alça e topo da massa (nó + ponto
+// local) quando o socket `sight` não está nela; parts = Tier 2 (carregador/ferrolho móveis).
 const W = (family, extra = {}) => ({
   family,
   trim: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 },
@@ -63,8 +64,12 @@ export const VM_WEAPON = {
   m4: W('ar', { baked: true }),
   mp5: W('mp5', { baked: true, runtime: 'family', timing: 'gameplay',
     ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  // KSG girada no produto (shotgun-k-fix.mjs): pacote 5× recua ao tamanho da AK e a alça
+  // fica acima do cano; o resíduo de ADS põe alça e massa na cruz (vmads-sim.mjs).
   shotgun: W('shotgun', { baked: true, timing: 'gameplay',
-    ads: { auto: false, off: [-0.10, 0.12, 0], rotDeg: [0, 0, 0], pull: 0.04, fovScale: 1 } }),
+    frame: { x: 0.65, y: -0.72, z: -1.0, rotDeg: [8, 4, -5] },
+    ads: { auto: true, off: [0.013, 0.238, 0], rotDeg: [-9.74, 0.62, 0], pull: 0.05, fovScale: 1,
+      linhaDeMira: { ref: 'RIG_WEAPON_SHOTGUN', alca: [0, 13.6, -5.5], massa: [0, 13.8, 21.5] } } }),
   // anchor/namedParts valem só na montagem ao vivo (eval authored-attach-check).
   deagle: W('deagle', { baked: true, runtime: 'family', timing: 'gameplay', recoilScale: 0.45,
     anchor: 'neutral_bone', namedParts: {
@@ -79,7 +84,12 @@ export const VM_WEAPON = {
   m92: W('ak', { baked: true, frame: 'family', ready: false }),
   akm: W('ak', { baked: true, frame: 'family', ready: false }),
   g3: W('g3', { baked: true, frame: 'family' }),
+  // Pose de duas mãos aponta ~55° para cima no frame da família: o pacote gira de lado
+  // (yaw 25°, pitch −10°) no fov da pistola; alça e massa na cruz (vmads-sim.mjs).
   revolver38: W('revolver', { baked: true, runtime: 'family', timing: 'gameplay',
+    frame: { x: 0.28, y: -0.08, z: -0.46, fov: 55, rotDeg: [-10, 25, -10] },
+    ads: { auto: true, off: [-0.001, -0.001, 0], rotDeg: [-0.44, -0.19, 0], pull: 0.52, fovScale: 1,
+      linhaDeMira: { ref: 'RIG_WEAPON_REVOLVER', alca: [0, 1.55, -1.0], massa: [0, 1.85, -14.15] } },
     anchor: 'neutral_bone', namedParts: {
       cartridge0: { mesh: 'GEO-Cartridge0', bone: 'Cartridge0' },
       cartridge0_Case: { mesh: 'GEO-Cartridge0_Case', bone: 'Cartridge0' },
@@ -103,7 +113,10 @@ export const VM_WEAPON = {
     } }),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
-  md97: W('ar', { baked: true, recoilScale: 1.8 }),
+  // Socket `sight` abaixo da linha alça–massa: o resíduo põe as duas na cruz (vmads-sim.mjs).
+  md97: W('ar', { baked: true, recoilScale: 1.8,
+    ads: { auto: true, off: [-0.006, 0, 0], rotDeg: [-4.31, 0.51, 0], pull: 0.05, fovScale: 1,
+      linhaDeMira: { ref: 'MINT_WEAPON_MD97', alca: [0.24, 0.112, -0.0095], massa: [-0.265, 0.107, -0.010] } } }),
   carbine: W('ar', { baked: true }),
   m400: W('sniper', { baked: true, frame: 'family' }),
   mosin: W('bolt', { baked: true }),

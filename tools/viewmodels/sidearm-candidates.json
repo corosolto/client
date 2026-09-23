@@ -40,15 +40,17 @@
       "file": "viewmodels/revolver/revolver-runtime.glb",
       "sourceSha256": "ddb088750bbdd4db455aa415ea8b74e59d6178733687f172cdf647d32cec1516",
       "sourceBytes": 3913292,
-      "productSha256": "c1394590ae640ff32792ac41e78bd3eeca7ccd1163d0a12c071a69d9582bed36",
-      "productBytes": 4074036,
-      "sha256": "c1394590ae640ff32792ac41e78bd3eeca7ccd1163d0a12c071a69d9582bed36",
-      "bytes": 4074036,
+      "productSha256": "1804417648fc6ef58c3abce966f22ddce388a4a757988bd90366ebffa4669d87",
+      "productBytes": 4184772,
+      "sha256": "1804417648fc6ef58c3abce966f22ddce388a4a757988bd90366ebffa4669d87",
+      "bytes": 4184772,
       "mechanism": "swing-out-cylinder/ejector/six-cartridges/hammer/trigger",
       "ready": false,
       "sourceBranch": "claude/vm-unificado",
       "sourceCommit": "012add17b",
-      "rebuild": "tools/viewmodels/prep/pistols-revolver-final.mjs"
+      "rebuild": "tools/viewmodels/prep/pistols-revolver-final.mjs",
+      "postProcess": "node tools/viewmodels/prep/revolver-pinch.mjs --in=<catálogo>/revolver/revolver-runtime.glb --out=<privado>/revolver/revolver-runtime.glb",
+      "postProcessInputSha256": "c1394590ae640ff32792ac41e78bd3eeca7ccd1163d0a12c071a69d9582bed36"
     }
   }
 }

@@ -10,16 +10,18 @@
       "file": "viewmodels/shotgun/shotgun-baked-runtime.glb",
       "sourceSha256": "71dd4edd43da77c7a52af01b2481e2f71cca57507bbe88674ce0b674a62986c7",
       "sourceBytes": 25019108,
-      "productSha256": "6c6c1ba3f72d227375650160c911ca72ef798a198a64682558d99c794c431239",
-      "productBytes": 3954632,
-      "sha256": "6c6c1ba3f72d227375650160c911ca72ef798a198a64682558d99c794c431239",
-      "bytes": 3954632,
+      "productSha256": "04fd6daca27a2e310b44f1d1cca4b3248b864e2b40840fd1b338e2ab918c2be3",
+      "productBytes": 4309096,
+      "sha256": "04fd6daca27a2e310b44f1d1cca4b3248b864e2b40840fd1b338e2ab918c2be3",
+      "bytes": 4309096,
       "mechanism": "shell-loop/pump/trigger",
       "ready": false,
       "sourceBranch": "private-generated/viewmodels-candidates/fechamento-ruben-20260914",
       "sourceCommit": null,
       "rebuild": "tools/viewmodels/prep/shotgun-final.mjs",
-      "sharedTextureFoundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102"
+      "sharedTextureFoundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102",
+      "postProcess": "node tools/viewmodels/prep/shotgun-k-fix.mjs --in=<catálogo>/shotgun/shotgun-baked-runtime.glb --doador-manga=<catálogo>/ar/m4-baked-runtime.glb --out=<privado>/shotgun/shotgun-baked-runtime.glb",
+      "postProcessInputSha256": "6c6c1ba3f72d227375650160c911ca72ef798a198a64682558d99c794c431239"
     },
     "lmg": {
       "weapon": "lmg",
