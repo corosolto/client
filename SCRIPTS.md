@@ -875,3 +875,11 @@ Mutantes: `sem-caprinos`, `patas-paradas`, `parede`, `sombra`, `low-cheio`,
 npm run eval:sertao-livestock
 BASE=http://localhost:8149 npm run eval:sertao-livestock-runtime
 ```
+
+## `eval:vm-pegada-k`
+
+Pegada do produto K com esqueleto aplicado (FK + skinning offline, `tools/viewmodels/prep/vmpose.mjs`). Por arma: m92 PG1/PG3; md97 PG1/PG3/PG4/PG6; shotgun PG1/PG2/PG3/PG6; revolver38 PG2/PG5/PG6/PG7. PG1 = centro do punho de apoio dentro do corte real da malha; PG2 = gatilho a ≤ 4 cm da junta distal do indicador; PG3 = manga até o ombro; PG4 = pente não branco; PG5 = pinça do cartucho na recarga vazia; PG6 = alça e massa de `ads.linhaDeMira` na cruz no ADS simulado (`vmads-sim.mjs`); PG7 = arma visível acima das luvas no ADS. Nasceu da rodada r2 do crítico cego da revisão L1. `--mutantes` roda os produtos reprovados do catálogo (m92 cai em PG1, md97 em PG1/PG4/PG6, shotgun em PG2/PG3/PG6, revolver38 em PG5; nem toda cláusula tem mutante próprio), o revólver no frame antigo da família e o ADS sem resíduo. PG6/PG7 medem o simulador; quem prova o ADS no runtime é o `eval:vm-ads`. Requer os produtos privados em `public/private-assets` e o catálogo em `~/csbrasil-private-assets`: fica fora de `check:fast` e do CI, como as outras réguas de produto K.
+
+```bash
+npm run eval:vm-pegada-k
+```
