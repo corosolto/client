@@ -12,6 +12,9 @@
  *   VL3 decisão       tabela-verdade de vmLaunchDecision (lançamento/revisão/kill)
  *   VL4 seletor       authoredvm.js obedece a chave: 0 ou TODAS as chaves de boot
  *   VL5 jogo real     Game em node: sem chave não nasce controlador autorado nem faca
+ *   VL6 asset         com VM_LAUNCH=true, o GLB de cada arma existe no catálogo servido
+ *                     (sem catálogo privado não dá para medir → VERMELHO; com a chave
+ *                     desligada vira só relatório — a granada K não existe hoje)
  *
  *   node tools/eval/vm-launch-check.mjs              # régua no estado do repo
  *   node tools/eval/vm-launch-check.mjs --mutantes   # prova que ela morde
@@ -88,7 +91,21 @@ async function gameProbe(gameSource, search) {
   return JSON.parse(line.slice('VM_LAUNCH_JOGO='.length));
 }
 
-async function audit(sources, { jogo = true } = {}) {
+// Caminho servido de cada id, espelho do `urlForKey` (authoredvm.js) e do meleevm.js.
+function assetDe(id, config) {
+  if (id === 'knife') return 'public/models/viewmodels/coro/melee/knife-hires.glb';
+  if (id === 'grenade') return 'public/private-assets/viewmodels/grenade/grenade-runtime.glb';
+  const c = config.VM_WEAPON[id];
+  if (!c) return null;
+  if (c.golden) return `public/models/viewmodels/coro/${id}-hires.glb`;
+  if (c.runtime === 'family' || !c.baked) return `public/private-assets/viewmodels/${c.family}/${c.family}-runtime.glb`;
+  return `public/private-assets/viewmodels/${c.family}/${id}-baked-runtime.glb`;
+}
+const COMPARTILHADOS = ['shared/general-runtime.glb', 'recoil.json',
+  ...['Arm01', 'Cloth01', 'Glove01'].flatMap((b) => ['B', 'N', 'ORM'].map((m) => `shared/T_${b}_${m}.webp`))]
+  .map((f) => `public/private-assets/viewmodels/${f}`);
+
+async function audit(sources, { jogo = true, catalogo = true } = {}) {
   const checks = [];
   const check = (id, ok, detail) => checks.push({ id, ok: Boolean(ok), ...detail });
   const { config, launch, authored } = await load(sources);
@@ -144,6 +161,18 @@ async function audit(sources, { jogo = true } = {}) {
   check('VL4', vl4.every((c) => c.ok), { cenarios: vl4,
     msg: 'authoredvm.js não obedece a chave: ativação parcial ou seletor desligado de vmlaunch.js' });
 
+  const catalogoPresente = catalogo && fs.existsSync(path.join(ROOT, 'public/private-assets/viewmodels'));
+  const faltando = catalogoPresente ? [
+    ...launch.VM_LAUNCH_IDS.map((id) => [id, assetDe(id, config)]).filter(([, f]) => !f || !fs.existsSync(path.join(ROOT, f))),
+    ...COMPARTILHADOS.filter((f) => !fs.existsSync(path.join(ROOT, f))).map((f) => ['compartilhado', f]),
+  ].map(([id, f]) => `${id}:${f || '?'}`) : null;
+  check('VL6', config.VM_LAUNCH !== true || (catalogoPresente && faltando.length === 0), {
+    medido: catalogoPresente, faltando, informativo: config.VM_LAUNCH !== true,
+    msg: catalogoPresente
+      ? `VM_LAUNCH=true com ${faltando.length} asset(s) ausente(s) (${faltando.slice(0, 4).join(', ')}) — o jogador veria o legado nessas armas`
+      : 'VM_LAUNCH=true sem catálogo privado em public/private-assets/viewmodels: não dá para provar que os GLB existem',
+  });
+
   if (jogo) {
     const semChave = await gameProbe(sources.game !== read('game') ? sources.game : '', '');
     const revisao = await gameProbe(sources.game !== read('game') ? sources.game : '', '?vmauthored=1');
@@ -198,10 +227,11 @@ if (process.argv.includes('--mutantes')) {
     ['faca-fora-da-chave', ['VL5'], mut('game', 'this.vm.melee = !AUTHORED_VM_ENABLED ? null : new KnifeMeleeViewModel({',
       'this.vm.melee = new KnifeMeleeViewModel({')],
     ['granada-fora-da-chave', ['VL1'], mut('launch', "[...WEAPON_IDS, 'grenade']", '[...WEAPON_IDS]')],
+    ['chave-sem-asset', ['VL6'], { ...base, config: allReady(base.config, { launch: true }) }, { catalogo: false }],
   ];
   result.mutantes = [];
-  for (const [nome, espera, sources] of mutantes) {
-    const r = await audit(sources, { jogo: espera.includes('VL5') });
+  for (const [nome, espera, sources, opcoes = {}] of mutantes) {
+    const r = await audit(sources, { jogo: espera.includes('VL5'), ...opcoes });
     const vermelhas = r.checks.filter((c) => !c.ok).map((c) => c.id);
     const mordeu = espera.every((id) => vermelhas.includes(id));
     result.mutantes.push({ nome, mordeu, espera, vermelhas });
