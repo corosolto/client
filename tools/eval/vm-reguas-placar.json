@@ -1,7 +1,7 @@
 {
  "gerado": "2026-09-23",
  "aspecto": "3x2",
- "entradas": "2a3825a60b5b6e26",
+ "entradas": "0525a3c8517685fc",
  "resultados": {
   "awp": {
    "mira": {
@@ -33,13 +33,13 @@
   "ak": {
    "mira": {
     "estado": "VERDE",
-    "valor": "11 px",
-    "msg": "massa a 11 px da cruz (+6, -9); teto 30 px; eixo no ADS +3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 11 px do aparelho visto · socket sight (o que o AD1 lê) 0.143 NDC"
+    "valor": "29 px",
+    "msg": "massa a 29 px da cruz (+6, -28); teto 30 px; eixo no ADS -0° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 17 px do aparelho visto · socket sight (o que o AD1 lê) 0.123 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.93× AK",
-    "msg": "tamanho 0.93× AK, rolagem +16° da AK (informativa), eixo -3° da AK, braço 0.79×, cruz 0 px, olho 3.05 palma, ADS cobre 7.4% (teto 18.5%)"
+    "valor": "0.95× AK",
+    "msg": "tamanho 0.95× AK, rolagem +13° da AK (informativa), eixo -1° da AK, braço 0.94×, cruz 0 px, olho 2.86 palma, ADS cobre 7.4% (teto 18.5%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -93,7 +93,7 @@
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.79× AK",
-    "msg": "tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.90×, cruz 0 px, olho 2.49 palma, ADS cobre 9.0% (teto 18.5%)"
+    "msg": "tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.90×, cruz 0 px, olho 2.49 palma, ADS cobre 5.6% (teto 18.5%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -135,7 +135,7 @@
    "carregador": {
     "estado": "VERMELHO",
     "valor": "4 falha(s)",
-    "msg": "recarrega com objeto no meio do ar: vazia 23% — 1.03 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 1.03 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 69% — 1.03 palma da mão, deslocado 0.77 do encaixe, na tela; tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+    "msg": "recarrega com objeto no meio do ar: vazia 23% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 69% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
    }
   },
   "deagle": {
@@ -189,7 +189,7 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:fora vazia0.38:mao vazia0.46:mao vazia0.54:arma vazia0.62:arma vazia0.69:fora vazia0.77:fora vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:fora tatica0.71:fora tatica0.86:fora"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:fora vazia0.38:mao vazia0.46:arma vazia0.54:mao vazia0.62:mao vazia0.69:mao vazia0.77:fora vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:mao tatica0.71:mao tatica0.86:arma"
    }
   },
   "knife": {
@@ -708,10 +708,12 @@
  },
  "parcial": {
   "reguas": [
-   "mira"
+   "cobertura",
+   "carregador"
   ],
   "armas": [
-   "mp5"
+   "ak",
+   "shotgun"
   ],
   "base": "2026-09-23"
  }

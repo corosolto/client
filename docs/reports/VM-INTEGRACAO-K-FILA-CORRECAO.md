@@ -33,9 +33,9 @@ Todo item deixa verdes: `eval:vm-rig`, `eval:vm-frame`, `eval:vm-launch`, `eval:
 | C8 | md97 | braço grande e eixo com a traseira alta | `eval:vm-cobertura` braço 1,50×, +24° | L1, placar |
 | C9 | mosin, rem700 | arma/braço sobre a cruz no quadril; mosin coice em guinada | `eval:vm-cobertura` cruz 3479 / 2205 px, mosin braço 3,13× | L3L5, placar |
 | C10 | famas | a arma sai do quadro na recarga vazia 35% | crítico L3L5 | L3L5 |
-| C11 | deagle | **aplicado nesta integração** (frame de curta, fov 55): falta o veredito do dono | raster 0,63× → 1,13× da PT-38, mira 10 px; AD1 do `eval:vm-ads` ≠ 0 por construção (resíduo) | decisão (a) |
+| C11 | deagle | frame de curta aplicado nesta integração (crítico A/B: MELHOROU, REPROVADA → RESSALVA); restam a alça ~30 px à direita no ADS e a arma abaixo do quadro na vazia 75% | raster 0,63× → 1,13× da PT-38; `eval:vm-mira` 10 px (a régua lê a massa, o crítico a alça); AD1 do `eval:vm-ads` ≠ 0 por construção (resíduo) | decisão (a), crítico |
 | C12 | revolver38 | vm-frame 0,62× contra raster 0,83× da PT-38: estendi a regra "raster manda" a ele | `VM_FRAME_INFORMATIVO` | decisão (a)+(d), **dono confirma** |
-| C13 | lmg | confirmar a opção B no olho (o crítico do #632 preferiu "por pouco") | vm-frame 0,877×/0,837×, raster 0,75× AK | decisão (b) |
+| C13 | lmg | a opção B não aumenta a LMG que se vê: vm-frame 0,72× → 0,877×, raster 0,78× → 0,75× (mais arma sai do quadro); o crítico A/B não viu mudança de tamanho. Crescer de verdade pede x/y além de z | `eval:vm-cobertura --variante` z −0,409 × −0,375 | decisão (b), **dono decide** |
 
 ## pose/IK (16)
 
@@ -54,7 +54,7 @@ Todo item deixa verdes: `eval:vm-rig`, `eval:vm-frame`, `eval:vm-launch`, `eval:
 | P11 | awp, svd, g3 | braço de apoio fora do guarda-mão (awp no ferrolho; svd/g3 deitado) | crítico L3L5 | L3L5 |
 | P12 | ak, akm | mão de apoio volta ao pente a 95% da recarga vazia (a IK desvanece) | crítico r2 r3 | fix-grips-r2 |
 | P13 | revolver38 | revólver pequeno no ADS contra a pistola | crítico r2 r3 | fix-grips-r2 |
-| P14 | m4, tavor | pose de ADS: mangas sem luva (m4), mão presa ao receptor (tavor); tavor sem mão no punho na inspeção | crítico L3L5 | L3L5 |
+| P14 | m4, tavor, lmg | pose de ADS: mangas sem luva (m4; lmg em V, luvas atrás do receptor), mão presa ao receptor (tavor); tavor sem mão no punho na inspeção | crítico L3L5, A/B lmg da integração | L3L5, integração |
 | P15 | scar, carbine | mão de apoio no poço do carregador (scar); vão na pegada (carbine) | crítico L3L5 | L3L5 |
 | P16 | PT-38 | inspeção só com `RIG_FP_ARMS` (mesmo caso da deagle): `inspect-com-pose.mjs` serve. **A PT-38 aprovada não muda sem o dono** | L3L5 | L3L5 |
 

@@ -1,7 +1,7 @@
 {
  "o_que_e": "Vermelhos CONHECIDOS das réguas de imagem do viewmodel (eval:vm-reguas). Cada entrada vira DÍVIDA (aviso) em vez de reprovar, e só enquanto VM_LAUNCH=false. Não entre aqui para passar o portão: só com dono e o número medido. Régua que ficar verde avisa para remover a entrada.",
  "gerado": "2026-09-23",
- "placar": "2a3825a60b5b6e26",
+ "placar": "0525a3c8517685fc",
  "dividas": {
   "carregador": {
    "deagle": {
@@ -57,12 +57,12 @@
    "shotgun": {
     "dono": "vm-fix-grips-r2 (cartucho da KSG solto na recarga vazia; o #637 trocou o produto) — fila pose/IK",
     "valor": "4 falha(s)",
-    "medido": "recarrega com objeto no meio do ar: vazia 23% — 1.03 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 1.03 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no ",
+    "medido": "recarrega com objeto no meio do ar: vazia 23% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no ",
     "aspectos": [
-     "16x9",
      "3x2"
     ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
+    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)",
+    "nota": "instável: 3:2 vermelho medido depois da AK na mesma sessão, verde isolado e em 16:9 (vazia 23% a 0,98 palma, teto 0,7)"
    },
    "svd": {
     "valor": "2 falha(s)",

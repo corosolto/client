@@ -1,13 +1,13 @@
 # PLACAR das réguas de imagem do viewmodel
 
 Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-23, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `2a3825a60b5b6e26`.
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `0525a3c8517685fc`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
 |---|---|---|---|---|---|
 | awp | n/a | **VERMELHO** 1.43× AK | n/a | verde 0.08 | verde ok |
-| ak | verde 11 px | verde 0.93× AK | n/a | verde 0.01 | verde ok |
+| ak | verde 29 px | verde 0.95× AK | n/a | verde 0.01 | verde ok |
 | m4 | **VERMELHO** 43 px | verde 1.01× AK | n/a | verde 0.00 | verde ok |
 | mp5 | verde 1 px | verde 0.79× AK | n/a | verde 0.01 | verde ok |
 | shotgun | verde 7 px | verde 1.06× AK | n/a | verde 0.02 | **VERMELHO** 4 falha(s) |
@@ -38,7 +38,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 ## mira
 
 - **awp** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
-- **ak** VERDE — massa a 11 px da cruz (+6, -9); teto 30 px; eixo no ADS +3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 11 px do aparelho visto · socket sight (o que o AD1 lê) 0.143 NDC
+- **ak** VERDE — massa a 29 px da cruz (+6, -28); teto 30 px; eixo no ADS -0° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 17 px do aparelho visto · socket sight (o que o AD1 lê) 0.123 NDC
 - **m4** VERMELHO — mira fora da cruz a 43 px — massa a 43 px da cruz (+5, -43); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
 - **mp5** VERDE — aro a 1 px da cruz (-0, -0); teto 30 px; eixo no ADS +2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.101 NDC
 - **shotgun** VERDE — massa a 7 px da cruz (+2, -7); teto 30 px; eixo no ADS -3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 10 px do aparelho visto · socket sight (o que o AD1 lê) 0.013 NDC
@@ -67,9 +67,9 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 ## cobertura
 
 - **awp** VERMELHO — arma gigante: 143% da AK (faixa 0.8–1.25, classe longa); braço 1.47× a área do braço da AK (teto 1.4) — tamanho 1.43× AK, rolagem -17° da AK (informativa), eixo +1° da AK, braço 1.47×, cruz 0 px, olho 1.03 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).
-- **ak** VERDE — tamanho 0.93× AK, rolagem +16° da AK (informativa), eixo -3° da AK, braço 0.79×, cruz 0 px, olho 3.05 palma, ADS cobre 7.4% (teto 18.5%)
+- **ak** VERDE — tamanho 0.95× AK, rolagem +13° da AK (informativa), eixo -1° da AK, braço 0.94×, cruz 0 px, olho 2.86 palma, ADS cobre 7.4% (teto 18.5%)
 - **m4** VERDE — tamanho 1.01× AK, rolagem +5° da AK (informativa), eixo +7° da AK, braço 0.79×, cruz 0 px, olho 1.36 palma, ADS cobre 10.3% (teto 18.5%)
-- **mp5** VERDE — tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.90×, cruz 0 px, olho 2.49 palma, ADS cobre 9.0% (teto 18.5%)
+- **mp5** VERDE — tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.90×, cruz 0 px, olho 2.49 palma, ADS cobre 5.6% (teto 18.5%)
 - **shotgun** VERDE — tamanho 1.06× AK, rolagem +20° da AK (informativa), eixo -6° da AK, braço 1.28×, cruz 0 px, olho 0.99 palma, ADS cobre 12.7% (teto 18.5%)
 - **deagle** VERDE — curta: tamanho 1.13× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.30 palma
 - **pistol** VERDE — curta: tamanho 1.00× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.36 palma
@@ -157,9 +157,9 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **ak** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 - **m4** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 - **mp5** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
-- **shotgun** VERMELHO — recarrega com objeto no meio do ar: vazia 23% — 1.03 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 1.03 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 69% — 1.03 palma da mão, deslocado 0.77 do encaixe, na tela; tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
+- **shotgun** VERMELHO — recarrega com objeto no meio do ar: vazia 23% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 69% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
 - **deagle** VERMELHO — recarrega com objeto no meio do ar: vazia 15% — 3.64 palma da mão, deslocado 3.04 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 38% — 1.20 palma da mão, deslocado 0.84 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 1.18 palma da mão, deslocado 0.95 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 54% — 1.98 palma da mão, deslocado 1.43 do encaixe, na tela (+5). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
-- **pistol** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:fora vazia0.38:mao vazia0.46:mao vazia0.54:arma vazia0.62:arma vazia0.69:fora vazia0.77:fora vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:fora tatica0.71:fora tatica0.86:fora
+- **pistol** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:fora vazia0.38:mao vazia0.46:arma vazia0.54:mao vazia0.62:mao vazia0.69:mao vazia0.77:fora vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:mao tatica0.71:mao tatica0.86:arma
 - **knife** N/A — faca: sem carregador
 - **m92** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 - **akm** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma
