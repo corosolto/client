@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "base": "vm/launch-k@1b5858568",
+  "candidates": {
+    "knife": {
+      "family": "knife",
+      "file": "viewmodels/knife/knife-baked-runtime.glb",
+      "sourceSha256": "3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621",
+      "sourceBytes": 1131064,
+      "productSha256": "cf4dcf954bbcdf6465216fa82cae45588c7706645f73f916e8840775482c5739",
+      "productBytes": 1487908,
+      "sha256": "cf4dcf954bbcdf6465216fa82cae45588c7706645f73f916e8840775482c5739",
+      "bytes": 1487908,
+      "mechanism": "one-handed-knife/open-guard-left-hand/inspect-blade-turn",
+      "ready": false,
+      "sourceBranch": "vm/k-rebuild",
+      "sourceCommit": "vm/k-rebuild",
+      "rebuild": "tools/viewmodels/prep/knife-k-alvos.mjs + knife-k-build.py (m4-final.blend e4b3fdfc…, grenade.blend throw_loop) + optimize_paid_family.mjs --familia=knife"
+    }
+  }
+}
