@@ -175,7 +175,7 @@ count = round(INSPECT_SECONDS * fps)
 for frame in range(count + 1):
     t = frame / count
     ease = 0.5 - 0.5 * math.cos(2 * math.pi * t)
-    turn = math.radians(115) * math.sin(math.pi * min(1.0, t / 0.55)) if t < 0.55 else math.radians(-70) * math.sin(math.pi * (t - 0.55) / 0.45)
+    turn = math.radians(65) * math.sin(math.pi * min(1.0, t / 0.55)) if t < 0.55 else math.radians(-35) * math.sin(math.pi * (t - 0.55) / 0.45)
     pivot = r0.translation
     motion = (Matrix.Translation(Vector((-0.12, 0.10, 0.06)) * ease)
               @ Matrix.Translation(pivot) @ Matrix.Rotation(turn, 4, blade)
