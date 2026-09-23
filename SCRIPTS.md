@@ -875,3 +875,22 @@ Mutantes: `sem-caprinos`, `patas-paradas`, `parede`, `sombra`, `low-cheio`,
 npm run eval:sertao-livestock
 BASE=http://localhost:8149 npm run eval:sertao-livestock-runtime
 ```
+
+## `eval:vm-reguas` (e `eval:vm-mira`, `eval:vm-cobertura`, `eval:vm-pistola-ref`, `eval:vm-maos`, `eval:vm-carregador`)
+
+Réguas de IMAGEM do viewmodel, medidas no quadro que o jogo acabou de desenhar (`tools/eval/vm-reguas-check.mjs`, palco em `tools/eval/lib/vm-palco.mjs`): a vmScene é renderizada pela vmCamera com a arma em vermelho e o braço em verde, mais profundidade e normais, com o relógio do controlador segurado (mesmo caminho do capturador da revisão L1). Nasceram da revisão L1 (23/09): o crítico cego reprovou 10/10 armas com os portões verdes. `mira` = aro/massa VISTOS a ≤ 30 px da cruz e ADS sem tombar (o AD1 do `eval:vm-ads` mede o socket que o ADS automático centra: md97/m92/mp5/akm 0,000 com a mira 40–90 px fora); `cobertura` = tamanho, ângulo, braço, cruz livre e câmera fora da arma contra a AK (o vm-frame media diagonal de vértice); `pistola-ref` = curtas contra o retrato da PT-38 APROVADA (`tools/eval/vm-pistola-aprovada.json`, pré-#631; `--ref-pistola=viva`, `--faixa-pistola=min,max`); `maos` = dedos da mão de apoio até a malha da arma; `carregador` = a peça do carregador em cada quadro da recarga (na arma, na mão, caindo — nunca no ar, nunca some com a mão na tela, nem fantasma nem toco). Limiares compartilhados com o crítico em `tools/eval/lib/vm-limiares.mjs`. Vermelho fora de `tools/eval/vm-reguas-divida.json` reprova; com `VM_LAUNCH=true` a dívida não vale. Mutantes: `--mutante=sockets-acima|sem-ads|aproxima|arma-gigante|encolhe|arma-sobe|solta|esconde`. `--placar` grava `tools/eval/vm-reguas-placar.json` e `artifacts/vm-reguas/PLACAR.md`; `--variante='{"arma":{"frame":{...},"ads":{...}}}'` experimenta config ao vivo sem tocar arquivo. Requer os produtos privados e navegador: entra no `check:vm`, fora do `check:fast`.
+
+```bash
+npm run eval:vm-reguas -- --placar
+npm run eval:vm-mira -- --armas=md97,uzi --fotos=/tmp/mira
+node tools/eval/vm-reguas-check.mjs --mutante=sockets-acima
+```
+
+## `eval:vm-placar`
+
+Node puro, no CI e no `check:vm`: o placar assado das réguas de imagem (`tools/eval/vm-reguas-placar.json`) foi medido sobre as entradas atuais (hash de vmconfig, vmframe, vmbytes, FAMILY_FRAME e das réguas — `VM_LAUNCH` fora do hash), todo vermelho do placar tem dono em `vm-reguas-divida.json`, e `VM_LAUNCH=true` com qualquer vermelho reprova. Existe porque o CI não tem o catálogo privado nem navegador para rodar as réguas: cobra o resultado delas. Conserto do placar velho: `npm run eval:vm-reguas -- --placar` com o catálogo. Mutantes `placar-velho`, `sem-dono`, `chave-ligada`.
+
+```bash
+npm run eval:vm-placar
+node tools/eval/vm-placar-check.mjs --mutante=chave-ligada
+```
