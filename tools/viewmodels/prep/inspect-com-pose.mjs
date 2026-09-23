@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Inspeção que só anima `RIG_FP_ARMS`: os 66 ossos de braço/mão ficam na pose de ligação e a arma
+ * Inspeção que só anima `RIG_FP_ARMS`: os 67 nós que o idle anima ficam na pose de ligação e a arma
  * sai do quadro (crítico cego L3–L5: "não aparece nenhuma mão" na deagle; a PT-38 tem o mesmo clipe).
  * Preenche o clipe `inspect` com os canais do `idle` (em laço) para todo nó que o idle anima e o
  * inspect não. O giro de `RIG_FP_ARMS` do pacote (2,8°) não se lê na tela: é multiplicado por `ganhoGiro`
@@ -24,7 +24,7 @@ const ARMAS = {
   deagle: { sha: 'd482ff82bceba3690ff4dd5912f95851d538320a55d9d7f37cf56e32fd2c64a4', arquivo: 'deagle-runtime.glb', arma: 'MINT_WEAPON_DEAGLE',
     clipes: { inspect: 5 } },
   // Entrada = saída de desvira-malha.mjs --arma=m400.
-  m400: { sha: '1aba50ea9349057c5e6fbd6af7002ebd5a6f64f24069ac5f507ef2def3038ba7', arquivo: 'm400-baked-runtime.glb', arma: 'MINT_WEAPON_M400',
+  m400: { sha: 'b73dbd0171aee188e11fb861651ea5ae2e9eb2f50b6f50d9a41ea518a323ef7c', arquivo: 'm400-baked-runtime.glb', arma: 'MINT_WEAPON_M400',
     clipes: { shoot: 1, inspect: 1, equip_rifle: 1 }, sobreORepouso: 'VM_PACKAGE_M400' },
 };
 const option = (name) => (process.argv.find((value) => value.startsWith(`--${name}=`)) || '').slice(name.length + 3);

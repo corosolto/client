@@ -14,11 +14,13 @@
  * `apoio` na mosin: virada, a mão esquerda ficava na boca do cano; vai ao centro do guarda-mão.
  * `fixaNaArma` (svd): o osso `Mag` do doador G3SG1 carrega o pente virado para longe das mãos (0,10 m
  * no melhor quadro; o crítico viu a peça parada no ar). Até existir pose de mão, o pente fica na arma.
+ * `giraMira`/`bocaNaPonta`: o SOCKET_MINT_SIGHT tinha sido posto sobre a malha virada e gira junto;
+ * o MUZZLE vai ao centro da seção da ponta do cano (ficava 3–7 cm fora dela: clarão/traçador).
  * `esconde`: peças do pacote (clipe de cartuchos, cartucho) que em nenhum clipe chegam a 0,45 m de
  * uma mão ficam flutuando longe na tela; saem com escala zero, estacionadas no centro da arma.
  * Diagnóstico e antes/depois: docs/reports/VM-FIX-L3L5.md.
  *
- * Uso: node tools/viewmodels/prep/desvira-malha.mjs --arma=mosin|svd --source=<glb> --output-dir=<fora-do-git>
+ * Uso: node tools/viewmodels/prep/desvira-malha.mjs --arma=mosin|svd|m400|rem700 --source=<glb> --output-dir=<fora-do-git>
  */
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
@@ -31,13 +33,13 @@ import { Pose, THREE, duration, gravarClipe } from './fk-gltf.mjs';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const ARMAS = {
   mosin: { sha: '52b8db3adc4415364accf34d5b039d1399df988482268150790b4cc40399c56b', arquivo: 'mosin-baked-runtime.glb',
-    arma: 'MINT_WEAPON_MOSIN', malha: 'GEO_MINT_MOSIN', pecas: ['MINT_MOSIN_BOLT'], esconde: /^GEO_PROC_(Clip|Cartridge)/,
+    arma: 'MINT_WEAPON_MOSIN', malha: 'GEO_MINT_MOSIN', pecas: ['MINT_MOSIN_BOLT'], giraMira: true, bocaNaPonta: true, esconde: /^GEO_PROC_(Clip|Cartridge)/,
     apoio: { corpo: 'MINT_WEAPON_MOSIN', alvo: [-0.09, 0.041, 0.021], rolagem: 0, fecho: 1,
       clipes: ['idle', 'shoot', 'inspect', 'equip_rifle', 'reload_empty', 'reload_start', 'reload_loop', 'reload_end'] } },
   svd: { sha: 'f44732930d24dcb78a728ea3a1c1458d0d763a23a79749ea8ad54366a9e376e9', arquivo: 'svd-baked-runtime.glb',
-    arma: 'MINT_WEAPON_SVD', malha: 'GEO_MINT_SVD', pecas: ['MINT_SVD_MAG'], fixaNaArma: ['MINT_SVD_MAG'] },
+    arma: 'MINT_WEAPON_SVD', malha: 'GEO_MINT_SVD', pecas: ['MINT_SVD_MAG'], giraMira: true, bocaNaPonta: true, fixaNaArma: ['MINT_SVD_MAG'] },
   m400: { sha: 'f75e4625c1199d3fed6fb9f132e5cc59a0c742dc41a92bcac5fa6bcab76f739d', arquivo: 'm400-baked-runtime.glb',
-    arma: 'MINT_WEAPON_M400', malha: 'MINT_WEAPON_M400', pecas: [], vertices: ['MINT_WEAPON_M400', 'MINT_WEAPON_M400_MAG'], conjuga: ['MINT_WEAPON_M400_MAG'] },
+    arma: 'MINT_WEAPON_M400', malha: 'MINT_WEAPON_M400', pecas: [], bocaNaPonta: true, vertices: ['MINT_WEAPON_M400', 'MINT_WEAPON_M400_MAG'], conjuga: ['MINT_WEAPON_M400_MAG'] },
   rem700: { sha: '439a4859d840b241680cd6a566bf62b989b7a63c01bbf89d45c7d3b24f1e79fa', arquivo: 'rem700-baked-runtime.glb',
     arma: 'MINT_WEAPON_REM700', malha: 'MINT_WEAPON_REM700', pecas: [], rola: { graus: -90, pelasMaos: true, nos: ['MINT_WEAPON_REM700', 'MINT_BOLT_REM700'] }, esconde: /^PROPS_(Clip|Cartridge)/,
     apoio: { corpo: 'MINT_WEAPON_REM700', alvo: [-0.163, 1.558, 0.36], rolagem: 0, fecho: 1,
@@ -137,21 +139,43 @@ if (cfg.rola) {
 } else compoe(malha, localMalha.clone().multiply(giro));
 for (const [p, W, paiW] of pecasW) compoe(P.node(p), paiW.clone().invert().multiply(giroMundo).multiply(W));
 P.cache = new Map();
+if (cfg.giraMira) {
+  const s0 = P.node('SOCKET_MINT_SIGHT'); P.set('idle', 0);
+  compoe(s0, P.world(P.parent.get(s0)).invert().multiply(giroMundo).multiply(P.world(s0)));
+  P.cache = new Map();
+  relatorio.mira = { socket: 'SOCKET_MINT_SIGHT', novoLocal: s0.getTranslation().map((v) => +v.toFixed(4)) };
+}
+if (cfg.bocaNaPonta) {
+  // Centro da seção dos 2 cm da ponta do cano (lado do MUZZLE), no referencial da arma.
+  P.set('idle', 0);
+  const bocaNo = P.node('SOCKET_MINT_MUZZLE'); const Ainv = P.world(cfg.arma).invert(); const Mm = P.world(malha);
+  const pts = []; for (const prim of malha.getMesh().listPrimitives()) { const pos = prim.getAttribute('POSITION'); for (let i = 0; i < pos.getCount(); i += 1) pts.push(V(...pos.getElement(i, [])).applyMatrix4(Mm).applyMatrix4(Ainv)); }
+  const b0 = V(...bocaNo.getTranslation()); const k = [0, 1, 2].reduce((a, i) => (Math.abs(b0.getComponent(i)) > Math.abs(b0.getComponent(a)) ? i : a), 0);
+  const sinal = Math.sign(b0.getComponent(k)); const ponta = sinal < 0 ? Math.min(...pts.map((p) => p.getComponent(k))) : Math.max(...pts.map((p) => p.getComponent(k)));
+  const caixa = new THREE.Box3(); for (const p of pts) if (Math.abs(p.getComponent(k) - ponta) < 0.02) caixa.expandByPoint(p);
+  const c = caixa.getCenter(V()); c.setComponent(k, ponta);
+  if (P.parent.get(bocaNo) !== P.node(cfg.arma)) throw new Error('MUZZLE fora do nó da arma');
+  bocaNo.setTranslation(c.toArray()); P.cache = new Map();
+  relatorio.boca = { antes: b0.toArray().map((v) => +v.toFixed(4)), depois: c.toArray().map((v) => +v.toFixed(4)) };
+}
 for (const p of cfg.pecas) relatorio.pecas[p] = { antes: antes[p], depois: { centroAteOsso: +centro(p).distanceTo(P.pos(P.parent.get(P.node(p)))).toFixed(3), maoMaisPerto: nasMaos(p) } };
 if (cfg.esconde) {
+  // Quadro a quadro, pelo CENTRO DA MALHA (a origem do nó fica longe da geometria): munição só
+  // aparece em clipe de recarga e a ≤ LIMIAR de uma mão; fora disso escala zero, no centro da arma.
+  const LIMIAR = 0.2;
   const nos = P.root.listNodes().filter((n) => cfg.esconde.test(n.getName()) && n.getMesh());
-  const perto = (n) => { let mn = Infinity; for (const an of P.root.listAnimations()) { const d = duration(an);
-    for (let t = 0; t <= d + 1e-6; t += 1 / 15) { P.set(an.getName(), t); const p = P.pos(n); mn = Math.min(mn, p.distanceTo(P.pos('hand_l')), p.distanceTo(P.pos('hand_r'))); } } return mn; };
-  const alvo = nos.filter((n) => perto(n) > 0.45);
+  const resumo = {};
   for (const an of P.root.listAnimations()) {
     const d = duration(an); const ts = []; for (let t = 0; t < d - 1e-6; t += 1 / 30) ts.push(+t.toFixed(5)); ts.push(+d.toFixed(5));
-    const faixas = new Map(alvo.map((n) => [n, []]));
-    for (const t of ts) { P.set(an.getName(), t); const centro = P.world(cfg.arma);
-      for (const n of alvo) faixas.get(n).push({ ...P.localFor(n, centro), scale: [0, 0, 0] }); }
+    const faixas = new Map(nos.map((n) => [n, []])); const vis = new Map(nos.map((n) => [n, 0]));
+    for (const t of ts) { P.set(an.getName(), t); const armaW = P.world(cfg.arma);
+      for (const n of nos) { const c = centro(n); const dist = Math.min(c.distanceTo(P.pos('hand_l')), c.distanceTo(P.pos('hand_r')));
+        if (/^reload/.test(an.getName()) && dist <= LIMIAR) { faixas.get(n).push(P.trs(n)); vis.set(n, vis.get(n) + 1); } else faixas.get(n).push({ ...P.localFor(n, armaW), scale: [0, 0, 0] }); } }
     gravarClipe(doc, an.getName(), ts, faixas);
+    resumo[an.getName()] = Object.fromEntries(nos.map((n) => [n.getName(), `${vis.get(n)}/${ts.length}`]));
   }
   P.cache = new Map();
-  relatorio.escondidas = alvo.map((n) => n.getName());
+  relatorio.escondidas = { limiarM: LIMIAR, quadrosVisiveis: resumo };
 }
 if (cfg.fixaNaArma) {
   P.set('idle', 0); const armaW0inv = P.world(cfg.arma).invert();

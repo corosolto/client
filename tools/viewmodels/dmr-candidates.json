@@ -7,7 +7,7 @@
       "file": "viewmodels/bolt/rem700-baked-runtime.glb",
       "sourceSha256": "5cfa20b4e2d85fcce1b012f5e24b616d90c795c12add3c3c0e0d646d8286bea3",
       "sourceBytes": 4675672,
-      "sha256": "8d5a966bb2debfa2f88256827c1b4bd566a581b0ffac4cbfb5ca5ff1955c8d1e",
+      "sha256": "314cf08a945e69801749bdd0d7be2df72dd5e0f3807113e16816f56cbf323fd0",
       "bytes": 5018724,
       "mechanism": "bolt-action/internal-5",
       "ready": false,
