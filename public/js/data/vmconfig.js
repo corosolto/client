@@ -176,7 +176,7 @@ export const VM_FABRICA = Object.freeze({
   mosin: F('bolt', 'Kar98K', { ads: A(0.4) }),
   mp5: F('mp5', 'MPS5', { ads: A(0.1) }),
   p90: F('p90', 'PDW90', { manga: true, ads: A(0.3) }),
-  lmg: F('lmg', 'MGX5', { ads: A(0.07) }),
+  lmg: F('lmg', 'MGX5', { frame: { x: 0.375, y: 0, z: -0.203, rotDeg: [1.69, 0, 6.19] }, ads: A(0.3) }),
   shotgun: F('shotgun', 'KXG12', { manga: true, ads: A(0.1) }),
   pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.2) }),
   deagle: F('deagle', 'DGL50', { frame: CURTA, ads: A(0.2) }),

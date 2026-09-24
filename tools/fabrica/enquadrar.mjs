@@ -52,7 +52,7 @@ const golden = await montar('ak', path.join(RAIZ_REPO, 'public/models/viewmodels
 golden.clipes.set('idle', golden.clipes.get('Idle'));
 const ref = await medir(golden, {});
 const palco = await montar(id, arquivoFabrica(id), { fabrica: true });
-const base = { ...palco.entry.frame };
+const base = { ...palco.entry.frame, rotDeg: [...palco.entry.frame.rotDeg] };
 const curta = VM_FABRICA[id].familia === 'pistol';
 
 // Alvos com procedência nos limiares do jogo (tools/eval/lib/vm-limiares.mjs): arma na faixa
@@ -69,9 +69,13 @@ let melhor = { frame: { ...base }, m: antes, c: custo(antes) };
 if (!curta) {
   // Busca por coordenadas: z (distância) primeiro, depois x/y; três passadas afinando o passo.
   for (const passo of [0.16, 0.08, 0.03, 0.01]) {
-    for (const eixo of ['z', 'x', 'y', 'z']) {
+    // --girar: o chassi cuja pose do pack fica achatada na tela (MGX5: +14° da AK) ganha resíduo de
+    // guinada (rotDeg[1]); os outros mantêm a rotação única da fábrica.
+    for (const eixo of process.argv.includes('--girar') ? ['z', 'x', 'y', 'ry', 'z'] : ['z', 'x', 'y', 'z']) {
       for (const d of [-3, -2, -1, 1, 2, 3]) {
-        const f = { ...melhor.frame, [eixo]: +(melhor.frame[eixo] + d * passo).toFixed(4) };
+        const f = eixo === 'ry'
+          ? { ...melhor.frame, rotDeg: [melhor.frame.rotDeg[0], +(melhor.frame.rotDeg[1] + d * passo * 50).toFixed(2), melhor.frame.rotDeg[2]] }
+          : { ...melhor.frame, [eixo]: +(melhor.frame[eixo] + d * passo).toFixed(4) };
         if (f.z > -0.12) continue;   // o pacote não pode vir para trás do olho
         const m = await medir(palco, f);
         const c = custo(m);
@@ -91,7 +95,7 @@ const r = (m) => ({ tamanhoVsAk: +Math.sqrt(m.arma / ref.arma).toFixed(3), braco
   eixo: +m.eixo.toFixed(1), cruz: m.cruz, centro: [+m.cx.toFixed(3), +m.cy.toFixed(3)] });
 const saida = {
   id, curta, golden: { eixo: +ref.eixo.toFixed(1), centro: [+ref.cx.toFixed(3), +ref.cy.toFixed(3)] },
-  frameBase: base, antes: r(antes), frame: { x: melhor.frame.x, y: melhor.frame.y, z: melhor.frame.z }, depois: r(melhor.m),
+  frameBase: base, antes: r(antes), frame: { x: melhor.frame.x, y: melhor.frame.y, z: melhor.frame.z, ...(melhor.frame.rotDeg[1] !== base.rotDeg[1] ? { rotDeg: melhor.frame.rotDeg } : {}) }, depois: r(melhor.m),
 };
 console.log(JSON.stringify(saida, null, 1));
 if (process.argv.includes('--aplicar')) {
