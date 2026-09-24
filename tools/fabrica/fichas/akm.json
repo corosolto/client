@@ -1,0 +1,13 @@
+{
+  "id": "akm",
+  "arma": "akm",
+  "chassi": "AK",
+  "descricao": "AKM = AK-200 do pack como autorado (a AK aprovada fica a golden, decisão do dono 24/09) + skin AK-47.",
+  "skinBraco": "coro-ak",
+  "skinArma": "ak47",
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "ak",
+    "fonte": "recoil.json ← Animations/AK (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}

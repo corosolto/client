@@ -47,7 +47,9 @@ export async function abrirJogo(browser, base, aspecto = '3x2') {
   const { VM_WEAPON } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
   const familias = [...new Set(Object.values(VM_WEAPON).map((e) => e.family))];
   const query = new URLSearchParams({ debug: '1', auto: 'P,mst', map: 'piscina_treta', armaslazy: '0',
-    vmauthored: '1', vmqa: 'precision', vmready: familias.join(','), vmweapon: Object.keys(VM_WEAPON).join(',') }).toString();
+    vmauthored: '1', vmqa: 'precision', vmready: familias.join(','), vmweapon: Object.keys(VM_WEAPON).join(','),
+    // VM_PALCO_QS: parâmetros extras de revisão (ex.: vmfabrica=1 mede os produtos da fábrica).
+    ...Object.fromEntries(new URLSearchParams(process.env.VM_PALCO_QS || '')) }).toString();
   const [width, height] = ASPECTOS[aspecto];
   const page = await browser.newPage({ viewport: { width, height } });
   const erros = [];
@@ -70,6 +72,13 @@ function INSTALAR() {
     vm.__cap = cap;
   }
   const g = window.__game;
+  // bindMatrixInverse do skinned só atualiza em updateMatrixWorld (render): sem isto a medida lia o
+  // quadro anterior (R1, tools/eval/vm-carregador-repete.mjs). __palcoPoseVelha = mutante pose-velha.
+  window.__palcoPoseFresca = (e) => {
+    e.scene.updateWorldMatrix(true, false);
+    if (!window.__palcoPoseVelha) e.scene.updateMatrixWorld(true);
+    else e.scene.updateWorldMatrix(false, true);
+  };
   window.__palcoCalmo = () => {
     for (const b of g?.bots || []) { b.nextShotAt = Infinity; b.target = null; }
     g.player.hp = 100; g.player.alive = true; g.timeLeft = 600;
@@ -366,6 +375,7 @@ export async function contatoMao(page, arma, { lado = 'l', excluir = '', rig = '
     const T = window.__palcoThree;
     const e = window.__authoredVm.entry(arma);
     if (!e) return { erro: 'sem entry' };
+    window.__palcoPoseFresca(e);
     const no = (n) => { const o = e.scene.getObjectByName(n); if (!o) return null; o.updateWorldMatrix(true, false); return o.getWorldPosition(new T.Vector3()); };
     const palmaNos = nomes.palma.map(no);
     if (palmaNos.some((p) => !p)) return { erro: `ossos da mão ${lado} ausentes` };
@@ -446,7 +456,7 @@ export async function pecaCarregador(page, arma, spec, rig = 'k') {
     const g = window.__game;
     const e = window.__authoredVm.entry(arma);
     if (!e) return { erro: 'sem entry' };
-    e.scene.updateWorldMatrix(true, true);
+    window.__palcoPoseFresca(e);
     g.vmCamera.updateMatrixWorld(true);
     const inv = g.vmCamera.matrixWorldInverse;
     const no = (n) => { const o = e.scene.getObjectByName(n); return o ? o.getWorldPosition(new T.Vector3()) : null; };
