@@ -275,7 +275,7 @@ saque, folha de contato) e `render.py --frame` (Blender, sem navegador).
 
 Produtos (overlay privada `…/generated/viewmodels-fabrica-bullpup/overlay/viewmodels/fabrica/`;
 hardlink da overlay da fábrica + os dois produtos), reprodutíveis (rebuild byte a byte igual):
-famas `ba7e959875` 2,16 MiB · tavor `04f28b170b` 2,16 MiB. Recarga 2,4 s (FAMAS) e 2,3 s (TAVOR),
+famas `29f877cdb2` 2,16 MiB · tavor `403658a972` 2,16 MiB (sobre `vm/fabrica` com o lote 2). Recarga 2,4 s (FAMAS) e 2,3 s (TAVOR),
 o tempo de `weapons.js`: o runtime toca o clipe em ≈1×.
 
 Réguas (`node tools/fabrica/qa.mjs famas,tavor --lote=fabrica-bullpup`), 3:2 / 16:9:
@@ -286,9 +286,10 @@ Réguas (`node tools/fabrica/qa.mjs famas,tavor --lote=fabrica-bullpup`), 3:2 / 
 | tavor | ✓ | ✓ | ✓ 9% | ✓✓ 17 px | ✓✓ 0,93/0,96× AK, braço 1,29× | ✓✓ 0,08 | ✓✓ | ✓ |
 
 Mutantes: `cache-velho`, `sem-socket`, `invertida`, `mao-solta` (produto) e `reserva-solta`,
-`reserva-some` (carregador com reserva) — os seis mordem. Regressão: `eval:vm-cache`,
+`reserva-some`, `pente-pisca` (carregador com reserva) — os sete mordem. Regressão: `eval:vm-cache`,
 `eval:vm-launch`, `eval:vm-orientacao`, `eval:vm-manga-oca`, `eval:vm-placar` verdes; placar do
-#636 re-medido nas 26 armas (16:9 igual; 3:2 só a cobertura da awp 0,95→0,93×, verde);
+#636 re-medido nas 26 armas (16:9: p90 carregador vermelho→verde, produto antigo sem reserva; 3:2: awp
+cobertura oscila 0,93↔0,95×, verde);
 `eval:vm-rig` vermelho igual na base ("ak: produto ausente", §8). Sob carga (load ~35) a régua
 `mira` 16:9 mediu duas vezes o quadril como ADS (230 px, +67°, socket 0,96 NDC) — a mesma
 assinatura intermitente da M4 no lote 1; re-medida com a máquina mais leve: verde.
@@ -306,6 +307,13 @@ O crítico registra como certo nas duas: idle a ~1° do eixo da AK, mão de apoi
 na tática a mão tira o velho e traz o novo, sem pente duplo nem peça solta; ADS da TAVOR com o
 aro na cruz. Não decidiu o ADS da FAMAS (topo da massa a ~15 px; um anel abaixo a ~45 px que
 pode ser o protetor da massa). Fora do viewmodel: o HUD enche o pente já aos ~25% da recarga.
+
+Revisão antes do push (contexto limpo) achou e ficou consertado: o Mag2 contava como "corpo da
+arma" na régua (repouso nunca reprovava por deslocamento), o caminho com reserva não tinha
+fantasma nem gravava o estado (o `vm-carregador-repete` comparava vazio), "surge na tela" só
+valia com a mão de apoio na tela, e a câmera do jogo usava a ordem de Euler do Blender (0,88°).
+Aberto: as checagens de tela do animador usam o centro da peça; `FABRICA_PRIVADO` é o único
+isolamento entre worktrees (sem ele o build escreve na overlay do lote 1).
 
 **O plano B serve para outras variantes?** Sim, como ferramenta: montar (malha própria por
 ilhas) → animador (IK, câmera do jogo, segundo pente, régua do laço) → réguas verdes saiu em
