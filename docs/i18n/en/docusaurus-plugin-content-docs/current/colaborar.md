@@ -256,7 +256,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,407 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 1,041 |
-| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,965 |
+| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,015 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,889 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,600 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,348 |
