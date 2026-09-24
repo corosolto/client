@@ -139,6 +139,28 @@ jobs:
           fi
           git diff --name-only --diff-filter=U > /tmp/conflitos.txt
           echo "conflitos:"; cat /tmp/conflitos.txt
+          # `package.json` é PROIBIDO no allowlist, e com razão: o bot não pode
+          # sobrescrever manifesto em bloco. Só que ele conflita em TODO release —
+          # a main bumpa `version`, o PR acrescentou um script — e era o ÚNICO
+          # arquivo fora da lista em sete PRs travados ao mesmo tempo (24/09), com
+          # o autofix recusando cada um a cada disparo. O resolvedor abaixo trata
+          # exatamente essa forma (versão da base + união de scripts) e RECUSA
+          # qualquer outra: dependência mexida, script comum divergente, agregador
+          # que perderia token. Recusar devolve ao caminho de hoje, nada afrouxa.
+          # Vem da BASE pelo mesmo motivo do allowlist: PR que reescrevesse o
+          # resolvedor liberaria a si mesmo.
+          if grep -qx 'package.json' /tmp/conflitos.txt; then
+            git show "base/$BASE:scripts/ci/autofix_package_json.py" > /tmp/pkg-base.py \
+              || git show FETCH_HEAD:scripts/ci/autofix_package_json.py > /tmp/pkg-base.py
+            # A régua se prova antes de medir, como o dco_check e o agente_check já
+            # fazem no ci.yml. Selftest vermelho => nem tenta resolver, cai no
+            # caminho de hoje (allowlist reprova, bot devolve para gente).
+            if python3 /tmp/pkg-base.py --selftest && python3 /tmp/pkg-base.py; then
+              git add package.json
+              grep -vx 'package.json' /tmp/conflitos.txt > /tmp/conflitos-sem-pkg.txt || true
+              mv /tmp/conflitos-sem-pkg.txt /tmp/conflitos.txt
+            fi
+          fi
           if ! python3 /tmp/allowlist-base.py --caminhos < /tmp/conflitos.txt; then
             git merge --abort
             echo "humano=1" >> "$GITHUB_OUTPUT"

@@ -141,8 +141,11 @@ jobs:
           route = json.load(open('/tmp/pr-route.json'))
           coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
           payload = {
-              'files': pr.get('files', []),
-              'changedFiles': pr.get('changedFiles', 0),
+              # Sem `or []`: `files: null` (PR grande demais para a API) precisa chegar
+              # NULO no pr_comment.py, que declara a lista incompleta em vez de fingir
+              # que o PR não mudou nada.
+              'files': pr.get('files'),
+              'changedFiles': pr.get('changedFiles'),
               'labels_add': sorted(set(labels.get('labels_add', []) + coderabbit.get('labels_add', []))),
               'baseRefName': pr.get('baseRefName'),
               'author_login': ((pr.get('author') or {}).get('login')),
@@ -151,6 +154,7 @@ jobs:
           }
           pathlib.Path('/tmp/pr-comment-payload.json').write_text(json.dumps(payload))
           PY
+          python3 scripts/ci/pr_comment.py --selftest
           python3 scripts/ci/pr_comment.py < /tmp/pr-comment-payload.json > /tmp/pr-comment.md
           python3 - <<'PY'
           import json, os, subprocess

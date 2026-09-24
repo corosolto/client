@@ -18,23 +18,47 @@ def check_rollup_ok(rollup: list[dict]) -> bool:
 
 
 def decide(pr: dict) -> dict:
-    labels = {l["name"] for l in pr.get("labels", [])}
-    files = [f.get("path", "") for f in pr.get("files", [])]
+    """PR grande demais devolve `files: null` — não uma lista vazia.
+
+    A leitura anterior (`pr.get("files", [])`) só cobria a CHAVE AUSENTE: com a chave
+    presente e nula o `default` não vale e o `decide` morria de TypeError, que é check
+    vermelho por defeito da régua, não por defeito do PR (medido no #623, 1720
+    arquivos). Mesmo defeito e mesmo conserto do pr_classify.py (#624).
+
+    E o remendo óbvio — `or []` e segue — é pior que o erro: sem a lista, o
+    `touches_workflows` nunca acende e um PR que mexe em `.github/workflows/` sai
+    ELEGÍVEL. Lista incompleta é DESCONHECIMENTO, e desconhecimento aqui trava: sem
+    saber o que o diff encosta, nada de `pronto-pra-merge`. Este bot só ACRESCENTA
+    etiqueta, então travar de graça custa uma etiqueta; liberar de graça custa um PR
+    vermelho com o carimbo de pronto.
+
+    `statusCheckRollup` nulo entra na mesma conta pelo mesmo motivo: rollup que não deu
+    para ler não é rollup verde.
+    """
+    labels = {l["name"] for l in (pr.get("labels") or [])}
+    arquivos_brutos = pr.get("files")
+    rollup_bruto = pr.get("statusCheckRollup")
+    files = [f.get("path", "") for f in arquivos_brutos] if arquivos_brutos else []
+    changed_files = int(pr.get("changedFiles") if pr.get("changedFiles") is not None else len(files))
+    lista_incompleta = arquivos_brutos is None or changed_files > len(files)
+    desconhecido = lista_incompleta or rollup_bruto is None
     touches_workflows = any(path.startswith(".github/workflows/") for path in files)
     coderabbit_blocked = "needs-coderabbit-resolution" in labels and "coderabbit-resolved" not in labels
     eligible = (
-        not pr.get("isDraft", False)
+        not desconhecido
+        and not pr.get("isDraft", False)
         and "safe-automerge" in labels
         and not touches_workflows
         and not coderabbit_blocked
         and pr.get("reviewDecision") != "CHANGES_REQUESTED"
         and pr.get("mergeStateStatus") in {"CLEAN", "HAS_HOOKS"}
-        and check_rollup_ok(pr.get("statusCheckRollup", []))
+        and check_rollup_ok(rollup_bruto or [])
     )
     return {
         "eligible": eligible,
         "coderabbit_blocked": coderabbit_blocked,
         "touches_workflows": touches_workflows,
+        "lista_incompleta": lista_incompleta,
     }
 
 
@@ -80,6 +104,13 @@ def selftest() -> int:
         ("skipped e neutral não bloqueiam",
          com(statusCheckRollup=[{"__typename": "CheckRun", "conclusion": "SKIPPED"},
                                 {"__typename": "CheckRun", "conclusion": "NEUTRAL"}]), True),
+        ("lista de arquivos nula (PR grande) não mescla",
+         com(files=None, changedFiles=1720), False),
+        ("lista truncada conta como desconhecida",
+         com(files=[{"path": "docs/a.md"}], changedFiles=300), False),
+        ("lista completa e declarada mescla",
+         com(files=[{"path": "docs/a.md"}], changedFiles=1), True),
+        ("rollup nulo não mescla", com(statusCheckRollup=None), False),
     ]
     erros = 0
     for nome, pr, esperado in casos:

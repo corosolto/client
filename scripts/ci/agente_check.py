@@ -38,6 +38,21 @@ def coautoria_re() -> re.Pattern[str]:
     return re.compile(texto, re.IGNORECASE | re.MULTILINE)
 
 
+def sem_merges(registros: list[tuple[str, int, str]]) -> list[tuple[str, str]]:
+    """Mesma isenção do dco_check.py, pelo mesmo motivo e no mesmo portão.
+
+    Merge não escreve linha: o que ele carrega veio de commits que esta régua já
+    cobrou um a um. E o "Merge pull request #N" do botão do GitHub não aceita
+    trailer — o docstring acima diz que este portão existe para o "commit feito
+    pela interface do GitHub", e ESSE é o único caso em que a interface não deixa
+    consertar. A `main` deste repo tem 19 merges sem sign-off/Agent nos últimos 200
+    commits.
+
+    Só 2+ pais saem. Commit comum (1 pai) e raiz (0 pais) continuam cobrados.
+    """
+    return [(sha, corpo) for sha, pais, corpo in registros if pais < 2]
+
+
 def faltando(commits: list[tuple[str, str]]) -> list[str]:
     return [sha for sha, body in commits if not AGENT_RE.search(body)]
 
@@ -54,14 +69,21 @@ def commits_do_intervalo(base: str, head: str) -> list[tuple[str, str]]:
     termine na linha do separador parte o registro e desgruda o trailer do sha
     (greptile, PR #207). Sha vem de uma lista, e o corpo de cada um é pedido
     separado — não existe delimitador para colidir.
+
+    O número de pais vem do MESMO `git log` (`%P`), não de uma segunda passada.
     """
-    shas = subprocess.check_output(
-        ["git", "log", "--format=%H", f"{base}..{head}"], text=True
-    ).split()
-    return [
-        (sha, subprocess.check_output(["git", "show", "-s", "--format=%B", sha], text=True))
-        for sha in shas
-    ]
+    linhas = subprocess.check_output(
+        ["git", "log", "--format=%H %P", f"{base}..{head}"], text=True
+    ).splitlines()
+    registros = []
+    for linha in linhas:
+        campos = linha.split()
+        if not campos:
+            continue
+        sha = campos[0]
+        corpo = subprocess.check_output(["git", "show", "-s", "--format=%B", sha], text=True)
+        registros.append((sha, len(campos) - 1, corpo))
+    return sem_merges(registros)
 
 
 MEDIR_AWK = "scripts/medir-commit.awk"
@@ -99,6 +121,15 @@ def selftest() -> int:
         ("humano continua valendo", [("a5", "fix: x\n\nCo-authored-by: Maria Silva <maria@exemplo.com>\n")], []),
         ("Agent: Claude sozinho não casa", [("a6", "fix: x\n\nAgent: Claude Code (Opus 5)\n")], []),
     ]
+    # A isenção de merge tem que ser ESTREITA: vazando para commit comum, o portão
+    # vira decoração. O par é medido junto — merge sem trailer passa, commit sem
+    # trailer no MESMO intervalo continua reprovando.
+    merges = [
+        ("merge do botão sai do intervalo", [("m", 2, "Merge pull request #566 from o/b\n")], []),
+        ("polvo (3 pais) também sai", [("p", 3, "Merge branches a, b e c\n")], []),
+        ("commit comum (1 pai) continua cobrado", [("n", 1, "fix: x\n")], [("n", "fix: x\n")]),
+        ("raiz (0 pais) continua cobrada", [("r", 0, "chore: raiz\n")], [("r", "chore: raiz\n")]),
+    ]
     erros = 0
     for nome, commits, esperado in coautoria:
         obtido = com_coautoria_ia(commits)
@@ -115,6 +146,17 @@ def selftest() -> int:
         ok = obtido == esperado
         erros += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FALHOU'} teto/{nome}: {obtido} (esperado {esperado})")
+    for nome, registros, esperado in merges:
+        obtido = sem_merges(registros)
+        ok = obtido == esperado
+        erros += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FALHOU'} merge/{nome}: {obtido}")
+    intervalo = [("m2", 2, "Merge pull request #570\n"), ("n2", 1, "fix: z\n"),
+                 ("t2", 1, "fix: w\n\nAgent: Codex\n")]
+    obtido = faltando(sem_merges(intervalo))
+    ok = obtido == ["n2"]
+    erros += 0 if ok else 1
+    print(f"  {'ok  ' if ok else 'FALHOU'} merge/portão inteiro: {obtido}")
     return 0 if not erros else 1
 
 
