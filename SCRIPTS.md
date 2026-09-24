@@ -698,6 +698,14 @@ O BUNDLE PÚBLICO NÃO NOMEIA O BACKEND. Decisão do dono (15/08): quem abre o j
 npm run eval:backendhints
 ```
 
+## `eval:dautelemetria`
+
+QUEM JOGOU ENTRA NA CONTA, UMA VEZ SÓ (backend#22). O painel tinha 1.1K `game_start` (Vercel Analytics) para 215 `match_end` e o banco nenhum início; sair do multiplayer (`mpSair`/`mpDesconectou`) nunca chamava `sendTelemetry`, então quem só jogou online não entrava em player_daily; e mp_session gravava o SHA do cliente vendorizado no nó. Cobra a saída do MP antes de limpar o contexto, 1 envio por partida (sair + fechar a aba + fim, simulado com a função real extraída do main.js), event/gameType/matchEventId e mapa/modo do JOGO, `game_started` no início (e não na troca de vaga da mesma partida online) e o `csha` hex do build no join. Mutantes: --mutante=mp-sem-telemetria|sem-trava|sem-inicio|inicio-na-troca|contexto-novo|csha-livre.
+
+```bash
+npm run eval:dautelemetria
+```
+
 ## `eval:geoproxy`
 
 A GEO DO JOGADOR CHEGA AO BACKEND (backend#22). Desde 30/08/2026 o jogo chamava o Cloud Run direto (run.app, sem borda): o `geoFrom` do backend nunca mais viu país/cidade, city_daily congelou em 2026-08-30T02:41:50Z e 88,9% da presença ficou sem geo — tudo respondendo 200. Cobra que telemetry/presence/heartbeat/submit-match/perf vão pelo proxy same-origin (`apibase.js` VIA_SITE), que o proxy sobe UMA fonte de geo por requisição (cf-* só com salto de faixa da Cloudflare; x-vercel-ip-* fora dela, porque atrás da Cloudflare ele descreve o PoP) e que `API_PROXY_SECRET` sobe como prova. Mutantes: --mutante=geo-direto|pop-como-cidade|cf-forjado|sem-segredo|rota-fora-do-proxy|fetch-cru.

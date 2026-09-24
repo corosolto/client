@@ -92,10 +92,10 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
 }
 
 export class NetClient {
-  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '', wt = '', wtHashes = null } = {}) {
+  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '', wt = '', wtHashes = null, csha = '' } = {}) {
     // `sp` leva o subprotocolo para o gateway: quem escolhe a versão do snapshot é quem
     // vai decodificá-la, e no caminho WebTransport não existe handshake para negociar
-    const qs = new URLSearchParams({ team, ...(codigo ? { codigo } : room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}), ...(ticket ? { ticket } : {}) });
+    const qs = new URLSearchParams({ team, ...(codigo ? { codigo } : room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}), ...(ticket ? { ticket } : {}), ...(/^[a-f0-9]{7,40}$/.test(csha) ? { csha } : {}) });
     this.url = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
     this.wtUrl = wt ? `${wt}${wt.includes('?') ? '&' : '?'}${qs}&sp=${encodeURIComponent(SNAPSHOT_PROTOCOLS[0])}` : '';
     this.wtHashes = wtHashes;

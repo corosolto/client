@@ -5,6 +5,8 @@ import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL
 /* ESTÁTICA de propósito: o Stateloop não publica SSR e `prerender = false` aqui
    fazia o build não emitir dist/client/index.html. Idioma por país: /api/geo-lang. */
 const V = pkg.version;
+// Commit do deploy (Vercel expõe no build); o multiplayer grava o build do navegador com ele.
+const GIT_SHA = /^[a-f0-9]{40}$/.test(import.meta.env.VERCEL_GIT_COMMIT_SHA || '') ? import.meta.env.VERCEL_GIT_COMMIT_SHA : '';
 declare const __MANIFESTO_JS__: { modules: string[]; revision: string };
 const { modules: MODULOS, revision: JS_REV } = __MANIFESTO_JS__;
 const IMPORTMAP = JSON.stringify({
@@ -25,6 +27,9 @@ const IMPORTMAP = JSON.stringify({
    O jogo é zero-build e não lê import.meta.env: sem isto, um override de
    PUBLIC_SUPPORT_URL_* mudava o /apoie e não o menu do jogo (CodeRabbit, PR #284). */
 window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
+</script>
+<script is:inline define:vars={{ GIT_SHA }}>
+window.__CS_BUILD = { sha: GIT_SHA };
 </script>
 <script is:inline>
 /* Fetch do /api/geo-lang ANTES dos módulos; o i18n consome a promise no boot.

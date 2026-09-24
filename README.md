@@ -34,9 +34,9 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 48.937 linhas em 96 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7.505** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.571 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 48.942 linhas em 96 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7.483** linhas | `wc -l public/js/game.js` |
+| `main.js` | 3.587 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 55 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 173 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
