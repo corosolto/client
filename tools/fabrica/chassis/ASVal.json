@@ -282,6 +282,11 @@
   ],
   "materiais": {
     "pasta": "Animations/ASVal/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/ASVal/Weapon/Materials_URP/M_ASVal_Body.mat",
+      "Animations/ASVal/Weapon/Materials_URP/M_ASVal_Bullet.mat"
+    ],
+    "porNome": {},
     "texturas": {
       "be2969436d7964947b4600ea11ee2bea": "Animations/ASVal/Weapon/Textures/Main_ASVal_Color.TGA",
       "69798a05c6696e24194cdeedfad2e81d": "Animations/ASVal/Weapon/Textures/Bullet_ASVal_Color.TGA"

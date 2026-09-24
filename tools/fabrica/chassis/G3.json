@@ -295,6 +295,21 @@
   ],
   "materiais": {
     "pasta": "Animations/G3/Weapon/Materials_URP",
+    "porSlot": [],
+    "porNome": {
+      "Brass": "Animations/G3/Weapon/Materials_URP/Brass.mat",
+      "Primer": "Animations/G3/Weapon/Materials_URP/Primer.mat",
+      "jacket": "Animations/G3/Weapon/Materials_URP/jacket.mat",
+      "metal_bolt": "Animations/G3/Weapon/Materials_URP/metal_bolt.mat",
+      "metal_bright": "Animations/G3/Weapon/Materials_URP/metal_bright.mat",
+      "metal_dark": "Animations/G3/Weapon/Materials_URP/metal_dark.mat",
+      "metal_different": "Animations/G3/Weapon/Materials_URP/metal_different.mat",
+      "metal_finish": "Animations/G3/Weapon/Materials_URP/metal_finish.mat",
+      "polymer_grip": "Animations/G3/Weapon/Materials_URP/polymer_grip.mat",
+      "polymer_stock": "Animations/G3/Weapon/Materials_URP/polymer_stock.mat",
+      "red": "Animations/G3/Weapon/Materials_URP/red.mat",
+      "white": "Animations/G3/Weapon/Materials_URP/white.mat"
+    },
     "texturas": {}
   }
 }

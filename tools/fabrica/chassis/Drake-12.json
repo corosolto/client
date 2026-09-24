@@ -256,6 +256,11 @@
   ],
   "materiais": {
     "pasta": "Animations/Drake-12/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/Drake-12/Weapon/Materials_URP/M_Drake-12.mat",
+      "Animations/Drake-12/Weapon/Materials_URP/M_Drake-12.mat"
+    ],
+    "porNome": {},
     "texturas": {
       "d3197290c2b383744b85cba40c53bbbc": "Animations/Drake-12/Weapon/Textures/CZ_Drake_Color.TGA"
     }

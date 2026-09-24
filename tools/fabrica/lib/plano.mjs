@@ -84,6 +84,8 @@ export function montarPlano(fichaArquivo) {
       armaFbx: path.join(PACK_RAIZ, chassi.fonte.armaFbx),
       poseFbx: path.join(PACK_RAIZ, chassi.fonte.poseFbx),
       pastaMateriais: path.join(PACK_RAIZ, chassi.materiais.pasta),
+      matPorNome: Object.fromEntries(Object.entries(chassi.materiais.porNome || {}).map(([n, p]) => [n, path.join(PACK_RAIZ, p)])),
+      matPorSlot: (chassi.materiais.porSlot || []).map((p) => (p ? path.join(PACK_RAIZ, p) : null)),
       texturasPorGuid,
       mira: ficha.mira ? { ...chassi.mira, raizCm: ficha.mira.raizCm, origem: ficha.mira.origem } : chassi.mira,
       eixos: chassi.eixos,

@@ -240,6 +240,23 @@
   ],
   "materiais": {
     "pasta": "Animations/AK/Weapon/Materials_URP",
+    "porSlot": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "Animations/AK/Weapon/Materials_URP/M_Finish.mat"
+    ],
+    "porNome": {
+      "M_Finish": "Animations/AK/Weapon/Materials_URP/M_Finish.mat",
+      "M_Finish_Milled": "Animations/AK/Weapon/Materials_URP/M_Finish_Milled.mat",
+      "M_Follower_Indicator": "Animations/AK/Weapon/Materials_URP/M_Follower_Indicator.mat",
+      "M_Mag_Translucent": "Animations/AK/Weapon/Materials_URP/M_Mag_Translucent.mat",
+      "M_Polymer_Furniture": "Animations/AK/Weapon/Materials_URP/M_Polymer_Furniture.mat",
+      "M_Polymer_Mag": "Animations/AK/Weapon/Materials_URP/M_Polymer_Mag.mat"
+    },
     "texturas": {}
   }
 }

@@ -306,6 +306,18 @@
   ],
   "materiais": {
     "pasta": "Animations/X18/Weapon/Materials_URP",
+    "porSlot": [],
+    "porNome": {
+      "Fbx Default Material 1": "Animations/X18/Weapon/Materials_URP/Fbx Default Material 1.mat",
+      "Fbx Default Material 2": "Animations/X18/Weapon/Materials_URP/Fbx Default Material 2.mat",
+      "Fbx Default Material 4": "Animations/X18/Weapon/Materials_URP/Fbx Default Material 4.mat",
+      "Fbx Default Material 8": "Animations/X18/Weapon/Materials_URP/Fbx Default Material 8.mat",
+      "casing": "Animations/X18/Weapon/Materials_URP/casing.mat",
+      "finish_barrel": "Animations/X18/Weapon/Materials_URP/finish_barrel.mat",
+      "finish_dark": "Animations/X18/Weapon/Materials_URP/finish_dark.mat",
+      "polymer": "Animations/X18/Weapon/Materials_URP/polymer.mat",
+      "primer": "Animations/X18/Weapon/Materials_URP/primer.mat"
+    },
     "texturas": {}
   }
 }

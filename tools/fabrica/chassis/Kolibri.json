@@ -246,6 +246,11 @@
   ],
   "materiais": {
     "pasta": "Animations/Kolibri/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/Kolibri/Weapon/Materials_URP/M_Kolibri_Body.mat",
+      "Animations/Kolibri/Weapon/Materials_URP/M_Kolibri_Ammo.mat"
+    ],
+    "porNome": {},
     "texturas": {
       "3acddb7fc8cc91544bc01aa4643c0002": "Animations/Kolibri/Weapon/Textures/Kolibri_Cartridge_Color.TGA",
       "dd5196b1c2eb89046a4f8258968d8990": "Animations/Kolibri/Weapon/Textures/Kolibri_Body_Color.TGA"

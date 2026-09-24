@@ -324,6 +324,23 @@
   ],
   "materiais": {
     "pasta": "Animations/MX16A4/Weapon/Materials_URP",
+    "porSlot": [],
+    "porNome": {
+      "Brass": "Animations/MX16A4/Weapon/Materials_URP/Brass.mat",
+      "Fbx Default Material 11": "Animations/MX16A4/Weapon/Materials_URP/Fbx Default Material 11.mat",
+      "Fbx Default Material 12": "Animations/MX16A4/Weapon/Materials_URP/Fbx Default Material 12.mat",
+      "Fbx Default Material 7": "Animations/MX16A4/Weapon/Materials_URP/Fbx Default Material 7.mat",
+      "Fbx Default Material 8": "Animations/MX16A4/Weapon/Materials_URP/Fbx Default Material 8.mat",
+      "bolt": "Animations/MX16A4/Weapon/Materials_URP/bolt.mat",
+      "chromed": "Animations/MX16A4/Weapon/Materials_URP/chromed.mat",
+      "finish": "Animations/MX16A4/Weapon/Materials_URP/finish.mat",
+      "finish_alu": "Animations/MX16A4/Weapon/Materials_URP/finish_alu.mat",
+      "finish_dark": "Animations/MX16A4/Weapon/Materials_URP/finish_dark.mat",
+      "mag": "Animations/MX16A4/Weapon/Materials_URP/mag.mat",
+      "polymer": "Animations/MX16A4/Weapon/Materials_URP/polymer.mat",
+      "polymer_grip": "Animations/MX16A4/Weapon/Materials_URP/polymer_grip.mat",
+      "primer": "Animations/MX16A4/Weapon/Materials_URP/primer.mat"
+    },
     "texturas": {}
   }
 }

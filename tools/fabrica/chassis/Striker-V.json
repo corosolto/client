@@ -301,6 +301,11 @@
   ],
   "materiais": {
     "pasta": "Animations/Striker-V/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/Striker-V/Weapon/Materials_URP/M_Striker-V_Ammo.mat",
+      "Animations/Striker-V/Weapon/Materials_URP/M_Striker-V_Body.mat"
+    ],
+    "porNome": {},
     "texturas": {
       "7013a984bfade0a4daf196c46de9dffd": "Animations/Striker-V/Weapon/Textures/krissvector_bullet.TGA",
       "3cd5a4a3806e50c44af560f5a15c3497": "Animations/Striker-V/Weapon/Textures/krissvector_color.TGA"
