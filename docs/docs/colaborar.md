@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**14 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `rubenmarcus`, `Ruben`, `Emerson Garrido`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `nunreasonable`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**14 identidades de autoria humana** assinam commit no histórico **desta branch**: `rubenmarcus`, `ruben-cytonic`, `Ruben Marcus`, `Ruben`, `Emerson Garrido`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `nunreasonable`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -251,22 +251,22 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.192 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.407 |
-| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 811 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.965 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.889 |
-| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.600 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.834 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 875 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.014 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.922 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.657 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.348 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 753 |
-| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 289 |
-| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 241 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 256 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 403 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 303 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 258 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 277 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 427 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
-| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 1.008 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 1.009 |
 
-**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 23 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
