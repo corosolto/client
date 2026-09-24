@@ -1390,10 +1390,14 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
-  game.onPauseChange = (paused) => {
-    resetConfirms();
-    applyCinematicScreen(paused ? 'pause-menu' : null);
-  };
+  /* `applyCinematicScreen` NUNCA existiu neste repositório — nem aqui, nem na main:
+     o chrome cinematográfico (#cine-chrome, CINE_SCREEN_META, .cine-surface) não
+     chegou a entrar e só as CHAMADAS vieram junto num merge, como aconteceu com o
+     `presentFaction` mais abaixo. Chamada órfã em callback do jogo não é enfeite
+     faltando: é ReferenceError DENTRO de setPaused(true). O M no meio da partida
+     morria aí, antes do pickTeam, e a tela de troca de time nunca abria — o
+     tests/smoke/web-smoke.spec.js pega isso em "#char-select toBeVisible". */
+  game.onPauseChange = () => resetConfirms();
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -1590,7 +1594,6 @@ function setSetupStep(step) {
     if (st) st.textContent = tr(matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA');
     if (tt) tt.textContent = tr(setupTitle);
   }
-  if (document.body.dataset.cineScreen === 'main-menu') applyCinematicScreen('main-menu');
 }
 const openSetup = (mode, title, act) => {
   if (mode) { matchMode = mode; modoEscolhido = true; }   // veio de SINGLE PLAYER/CAPTURE THE FLAG = escolha explícita
@@ -2142,12 +2145,16 @@ for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
   if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
-  const ready = card.dataset.ready === '1' && n > 0;
-  card.setAttribute('aria-disabled', String(!ready));
+  // Facção sem elenco é INDISPONÍVEL, e indisponível é ESTADO, não surpresa no
+  // clique: aria-disabled fecha o card pro leitor de tela e pro arnês. A conta
+  // antiga pedia `card.dataset.ready === '1'` — atributo que NINGUÉM escreve
+  // nestes cards (só o canvas do loading3d usa esse nome), então todo card
+  // nascia desligado e a tela de facção virava beco sem saída.
+  card.setAttribute('aria-disabled', String(!n));
   card.addEventListener('focus', () => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   card.onclick = () => {
-    if (!ready) { ui.back(); return; }
-    sfx.uiClick(); pickTeam(fac);
+    if (!n) { ui.back(); return; }
+    sfx.uiClick(); pickTeam(f.toUpperCase());
   };
 }
 /* O dossiê lateral de facção (`presentFaction`, #faction-hero) saiu com o
@@ -2161,12 +2168,6 @@ for (const [id, direction] of [['team-prev', -1], ['team-next', 1]]) {
     rail?.scrollBy({ top: direction * Math.max(92, rail.clientHeight * .56), behavior: 'smooth' });
   };
 }
-$('btn-team-e').onclick = () => { sfx.uiClick(); pickTeam('E'); };
-$('btn-team-b').onclick = () => { sfx.uiClick(); pickTeam('B'); };
-$('btn-team-u') && ($('btn-team-u').onclick = () => { sfx.uiClick(); pickTeam('U'); });
-$('btn-team-c') && ($('btn-team-c').onclick = () => { sfx.uiClick(); pickTeam('C'); });
-$('btn-team-f') && ($('btn-team-f').onclick = () => { sfx.uiClick(); pickTeam('F'); });
-$('btn-team-m') && ($('btn-team-m').onclick = () => { sfx.uiClick(); pickTeam('M'); });
 $('btn-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
 $('btn-pause-settings').onclick = () => { sfx.uiClick(); settingsReturn = 'pause-menu'; show('settings-panel'); };
 $('btn-pause-controls').onclick = () => { sfx.uiClick(); howtoReturn = 'pause-menu'; show('howto-panel'); };
@@ -2285,7 +2286,6 @@ function setTeamStep(step, myFaction) {
     if (tt) tt.textContent = tr('ESCOLHA SEU LADO DA TRETA');
     if (hint) hint.textContent = tr('Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.');
   }
-  if (document.body.dataset.cineScreen === 'team-select') applyCinematicScreen('team-select');
 }
 
 const nickEl = $('nick-input');
@@ -2445,7 +2445,6 @@ function loadStats() {
     JSON.parse(localStorage.getItem(STATS_KEY) || '{}'));
 }
 async function recordMatchStats(s) {
-  applyCinematicScreen('match-end');
   submitted = true;
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
