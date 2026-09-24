@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.264`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.268`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,78 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.268] — 2026-09-24
+
+### Mudado
+- feat(posto): loja jogável, bombas e três rotas por spawn (#596)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(posto): fecha contagem e divida herdada
+- docs(posto): registra candidato alpha 262
+- fix(eval): renderiza variaveis Astro no servidor local
+- fix(posto): libera corredores sem perder cobertura
+- docs(posto): atualiza blocos gerados apos sync
+- docs(posto): registra evidências e receita de produção
+- perf(posto): instancia decoração repetida
+- chore(posto): mantém catálogo de scripts compartilhado intacto
+- feat(posto): fecha rotas carga e captura WebGL
+- test(posto): régua eval:posto com 6 cláusulas e 6 mutações
+- chore(posto): proveniência dos dois moldes do kit posto_obras_r3
+- feat(posto): molde de bomba e de loja, cobertura metálica e pátio menos aberto
+
+## [2.0.0-alpha.267] — 2026-09-24
+
+### Mudado
+- feat(frota): a camada que INTEGRA — fila por risco, ledger entre turnos e travas no PATH (#583)
+- fix(frota): trava para o mutante órfão que um turno morto deixa na árvore
+- fix(frota): a fila não via PR empilhado em PR, e mentia sobre o que está pronto
+- feat(frota): o runner que fecha o laço 24/7
+- feat(frota): missão derivada da classe, com a mutação que prova cada trava
+- feat(frota): a trava é o PATH, não o prompt
+- feat(frota): ledger que sobrevive ao turno e lock do recurso de um agente só
+- feat(frota): a fila ordenada por risco de apodrecer
+
+## [2.0.0-alpha.266] — 2026-09-24
+
+### Mudado
+- fix(régua): UIR15 media a sincronia da troca de lado, não o texto de uma linha (#620)
+- fix(pre-push): o motivo do bloqueio apontava uma régua que PASSOU (#622)
+- fix(classify): PR grande devolve files:null e a régua morria de TypeError (#624)
+- fix(autofix): PR de fork regenerava a doc com o manifesto da BASE — DOCS1 preso em vermelho (#621)
+- fix(telemetria): rotas de geo pelo proxy do site, com a geo certa e prova de origem (backend#22) (#625)
+- docs(míticos): registra bloqueio da recuperação do Lobisomem (#528)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(classify): PR grande devolve files:null e a régua morria de TypeError
+- fix(api-proxy): prazo no fetch, cidade já codificada passa, ordem de publicação explícita
+- chore(docs): blocos gerados contam a régua nova (379 scripts de avaliação)
+- fix(pre-push): o motivo do bloqueio apontava uma régua que PASSOU
+- fix(autofix): PR de fork regenerava a doc com o manifesto da BASE — DOCS1 preso em vermelho
+- fix(régua): UIR15 media o texto de uma linha, não a sincronia da troca de lado
+- docs(api): a geo tinha se perdido; runbook do remendo e do conserto definitivo
+- fix(telemetria): rotas de geo pelo proxy do site, com a geo certa e prova de origem
+- docs(miticos): documenta bloqueio da recuperacao do patch de Lobisomem
+
+## [2.0.0-alpha.265] — 2026-09-23
+
+### Mudado
+- fix(crash): lançamento de partida que perde a corrida desiste em vez … (#627)
+- chore(docs): regenera blocos derivados com o eval:launchrace do PR
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados sobre a alpha.264
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados com o package.json do PR (243 scripts)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados (DOCS1) para o novo script
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados (DOCS1/ARCH1)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados do eval:launchrace
+- chore(docs): regenera bloco derivado (autofix)
+- fix(crash): lançamento de partida que perde a corrida desiste em vez de mexer em `game` nulo (#609, #608)
 
 ## [2.0.0-alpha.264] — 2026-09-23
 
