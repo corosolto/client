@@ -39,25 +39,25 @@
           Medido no estado atual: 5 (penitenciaria-aco-enferrujado,
           -caixa-municao, -concreto, -concreto-escuro, -patio-concreto-gasto).
           O rebuild adiciona reboco, galvanizado, arame, grade, poça e pisos.
-     NV7  molde real nas guaritas (dono, 26/08/2026, com estas palavras:
-          "todos os mapas do usantos continuam low poly sem moldes 3d bons"):
-          ≥ 4 wrappers 'penitenciaria-guarita-*' com userData.molde ===
-          'torre_vigilancia' gravado PELO BUILD (a régua lê o uso registrado,
-          não a declaração — BUG-02) E 'torre_vigilancia' em
-          PENITENCIARIA_PROPS E public/models/props/torre_vigilancia.glb em
-          disco. Mutante: --mutante=sem-moldes.
-     NV8  CARANDIRU (dono, 27/08/2026: "o penitenciaria podia ter carandiru
-          como referencia"): pavilhão central 'penitenciaria-pavilhao' com
-          userData.molde='bloco_celas' + portão 'penitenciaria-portao' +
-          ≥2 torres 'penitenciaria-torre-muro-*' (molde guarita_muro), todos
-          em PENITENCIARIA_PROPS com GLB em disco; GALERIA EXTERNA PERCORRÍVEL
-          — ≥6 segmentos 'penitenciaria-galeria-grade-*' E 8 sondas do anel
-          (faces do colisor 'pavilhao' + 1,1 m, quatro lados e quatro quinas)
-          fora de qualquer sólido: grade que fecha o anel reprova; e o campo
-          do Carandiru: ≥6 decalques 'penitenciaria-pichacao-*' no pátio
+     NV7  CARANDIRU (dono, 27/08/2026: "o penitenciaria podia ter carandiru
+          como referencia"): pavilhão central 'penitenciaria-pavilhao' +
+          portão 'penitenciaria-portao' + ≥2 torres
+          'penitenciaria-torre-muro-*'; GALERIA EXTERNA PERCORRÍVEL — ≥6
+          segmentos 'penitenciaria-galeria-grade-*' E 8 sondas do anel (faces
+          da pegada 'pavilhao*' + 1,1 m, quatro lados e quatro quinas) fora de
+          qualquer sólido: grade que fecha o anel reprova; e o campo do
+          Carandiru: ≥6 decalques 'penitenciaria-pichacao-*' no pátio
           (pichado, sem trave — a PEN4 segue proibindo quadra/gol).
-          Mutantes: --mutante=sem-carandiru (zera os moldes do kit) e
-          --mutante=galeria-fechada (muro cobre o anel da galeria).
+          Mutante: --mutante=galeria-fechada (muro cobre o anel da galeria).
+
+   MOLDE MINT FORA DE CLÁUSULA: a versão anterior desta régua cobrava
+   userData.molde='torre_vigilancia'/'bloco_celas'/'portao_penitenciaria'/
+   'guarita_muro' nos wrappers. O Carandiru da main não usa geometria Mint por
+   decisão registrada em docs/reports/CARANDIRU-MAIN-R3.md:16 — "O asset Mint
+   do PR #556 não entra: a própria descrição registra termos comerciais ainda
+   pendentes" — e o CR3-1 da carandiru-main-r3-check cobra essa ausência.
+   Régua que exigisse o molde exigiria quebrar aquela. Os GLB seguem no acervo
+   (public/models/props/FONTE.md) até os termos fecharem.
 
    FALHA = NÃO SABER MEDIR (lição 5): build que lança, textura de muro sem
    pixels legíveis em node ou update ausente reprovam com mensagem de conserto.
@@ -67,18 +67,28 @@
      node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-reboco      # NV1
      node tools/eval/penitenciaria-vida-check.mjs --mutante=holofote-parado # NV2
      node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-varanda     # NV3
-     node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-moldes      # NV7
-     node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-carandiru   # NV8
-     node tools/eval/penitenciaria-vida-check.mjs --mutante=galeria-fechada # NV8
+     node tools/eval/penitenciaria-vida-check.mjs --mutante=galeria-fechada # NV7
    ============================================================================ */
 import fs from 'node:fs';
 import { THREE, MAPS, initTextures } from './harness.mjs';
 import { LOOK } from '../../public/js/look.js';
-import { PENITENCIARIA_PROPS } from '../../public/js/map_penitenciaria.js';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-reboco', 'holofote-parado', 'sem-varanda', 'sem-moldes', 'sem-carandiru', 'galeria-fechada']);
+const conhecidos = new Set(['sem-reboco', 'holofote-parado', 'sem-varanda', 'galeria-fechada']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+
+/* Pegada do pavilhão central = união dos colisores 'pavilhao*'. O bloco já foi um
+   volume cheio ('pavilhao') e hoje são quatro cantos ('pavilhao-canto-*') que abrem o
+   cruzamento térreo; a união dá a MESMA caixa nos dois casos, e é dela que saem as
+   sondas do anel. Ler um colisor só amarraria a régua à decomposição, não à pegada. */
+function pavilhaoFootprint(W) {
+  const partes = (W.colliders || []).filter((c) => String(c.tag || '').startsWith('pavilhao'));
+  if (!partes.length) return null;
+  return partes.reduce((a, c) => ({
+    minX: Math.min(a.minX, c.minX), maxX: Math.max(a.maxX, c.maxX),
+    minZ: Math.min(a.minZ, c.minZ), maxZ: Math.max(a.maxZ, c.maxZ),
+  }), { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity });
+}
 
 const MIN_TEXTURAS = 12;
 
@@ -115,25 +125,9 @@ if (MUTANTE === 'sem-reboco') {
   W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-varanda-')) alvos.push(o); });
   mutanteAplicou = alvos.length > 0;
   for (const o of alvos) o.parent.remove(o);
-} else if (MUTANTE === 'sem-moldes') {
-  let n = 0;
-  W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-guarita-') && o.userData?.molde) { delete o.userData.molde; n++; } });
-  const i = PENITENCIARIA_PROPS.indexOf('torre_vigilancia');
-  if (i >= 0) PENITENCIARIA_PROPS.splice(i, 1);
-  mutanteAplicou = n > 0;
-} else if (MUTANTE === 'sem-carandiru') {
-  let n = 0;
-  W.root.traverse((o) => {
-    if (/^penitenciaria-(pavilhao|portao|torre-muro-)/.test(o.name || '') && o.userData?.molde) { delete o.userData.molde; n++; }
-  });
-  for (const id of ['bloco_celas', 'portao_penitenciaria', 'guarita_muro']) {
-    const i = PENITENCIARIA_PROPS.indexOf(id);
-    if (i >= 0) PENITENCIARIA_PROPS.splice(i, 1);
-  }
-  mutanteAplicou = n > 0;
 } else if (MUTANTE === 'galeria-fechada') {
-  /* muro de obra tapando o anel inteiro da galeria (as 8 sondas da NV8 caem dentro) */
-  mutanteAplicou = (W.colliders || []).some((c) => c.tag === 'pavilhao');
+  /* muro de obra tapando o anel inteiro da galeria (as 8 sondas da NV7 caem dentro) */
+  mutanteAplicou = !!pavilhaoFootprint(W);
   if (mutanteAplicou) W.colliders.push({ minX: -6.8, maxX: 6.8, minY: 0, maxY: 1.2, minZ: -9.8, maxZ: 9.8, tag: 'mutante-galeria' });
 }
 if (MUTANTE && !mutanteAplicou) {
@@ -271,49 +265,22 @@ if (MUTANTE && !mutanteAplicou) {
     : `${nomes.size}/${MIN_TEXTURAS} texturas distintas (${[...nomes].sort().join(', ') || 'nenhuma'}) — 5 canvas repetidos é a cara low poly; crie superfícies novas (reboco, galvanizado, arame, grade, poça…)`);
 }
 
-/* ---- NV7 molde real nas guaritas ---- */
-{
-  const wrappers = [];
-  W.root.traverse((o) => { if (/^penitenciaria-guarita-\d+$/.test(o.name || '')) wrappers.push(o); });
-  const comMolde = wrappers.filter((o) => o.userData?.molde === 'torre_vigilancia');
-  const glbPath = new URL('../../public/models/props/torre_vigilancia.glb', import.meta.url);
-  const falta = [];
-  if (comMolde.length < 4) falta.push(`${comMolde.length}/4 wrappers 'penitenciaria-guarita-*' com userData.molde='torre_vigilancia' — guarita procedural/caixa é a cara low poly que o dono nomeou; registre o molde no wrapper no build`);
-  if (!PENITENCIARIA_PROPS.includes('torre_vigilancia')) falta.push(`PENITENCIARIA_PROPS sem 'torre_vigilancia' (${PENITENCIARIA_PROPS.join(', ') || 'vazia'}) — sem o id o main.js não pré-carrega o GLB`);
-  if (!fs.existsSync(glbPath)) falta.push('public/models/props/torre_vigilancia.glb ausente em disco');
-  put('NV7', !falta.length, falta.length ? falta.join(' · ') : '4 guaritas com molde torre_vigilancia registrado + prop pré-carregado + GLB em disco');
-}
-
-/* ---- NV8 carandiru: pavilhão com galeria percorrível + portão + torres + campo pichado ---- */
+/* ---- NV7 carandiru: pavilhão com galeria percorrível + portão + torres + campo pichado ---- */
 {
   const falta = [];
-  const glbExiste = (id) => fs.existsSync(new URL(`../../public/models/props/${id}.glb`, import.meta.url));
-  const moldeOk = (nome, id) => {
-    const o = W.root.getObjectByName(nome);
-    if (!o) { falta.push(`grupo '${nome}' ausente no build`); return; }
-    if (o.userData?.molde !== id) { falta.push(`${nome} sem userData.molde="${id}" — a régua lê o USO registrado (BUG-02)`); return; }
-    if (!PENITENCIARIA_PROPS.includes(id)) { falta.push(`'${id}' fora de PENITENCIARIA_PROPS — sem o slot o main.js não pré-carrega o GLB`); return; }
-    if (!glbExiste(id)) falta.push(`public/models/props/${id}.glb ausente em disco`);
-  };
-  moldeOk('penitenciaria-pavilhao', 'bloco_celas');
-  moldeOk('penitenciaria-portao', 'portao_penitenciaria');
+  for (const nome of ['penitenciaria-pavilhao', 'penitenciaria-portao']) {
+    if (!W.root.getObjectByName(nome)) falta.push(`grupo '${nome}' ausente no build`);
+  }
   const torres = [];
   W.root.traverse((o) => { if (/^penitenciaria-torre-muro-\d+$/.test(o.name || '')) torres.push(o); });
   if (torres.length < 2) falta.push(`${torres.length}/2 torres 'penitenciaria-torre-muro-*' — a frente (muro do portão) sem vigia entre as guaritas das quinas`);
-  else for (const t of torres) {
-    if (t.userData?.molde !== 'guarita_muro') { falta.push(`${t.name} sem userData.molde="guarita_muro"`); break; }
-  }
-  if (torres.length >= 2 && torres.every((t) => t.userData?.molde === 'guarita_muro')) {
-    if (!PENITENCIARIA_PROPS.includes('guarita_muro')) falta.push(`'guarita_muro' fora de PENITENCIARIA_PROPS`);
-    else if (!glbExiste('guarita_muro')) falta.push('public/models/props/guarita_muro.glb ausente em disco');
-  }
   // galeria percorrível: anel entre o colisor do pavilhão e a grade, 8 sondas
   const grades = [];
   W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-galeria-grade-')) grades.push(o); });
   if (grades.length < 6) falta.push(`${grades.length}/6 segmentos 'penitenciaria-galeria-grade-*' — a galeria externa gradeada é a circulação do pátio do Carandiru`);
-  const pav = (W.colliders || []).find((c) => c.tag === 'pavilhao');
+  const pav = pavilhaoFootprint(W);
   if (!pav) {
-    falta.push(`não sei medir: colisor tag 'pavilhao' ausente — sem o bloco central não há anel para sondar`);
+    falta.push(`não sei medir: nenhum colisor 'pavilhao*' — sem o bloco central não há anel para sondar`);
   } else {
     const livre = (x, z) => !(W.colliders || []).some((c) => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && c.minY < 1.7 && c.maxY > .1);
     const sondas = [];
@@ -328,13 +295,13 @@ if (MUTANTE && !mutanteAplicou) {
   const pichacoes = [];
   W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-pichacao-')) pichacoes.push(o); });
   if (pichacoes.length < 6) falta.push(`${pichacoes.length}/6 decalques 'penitenciaria-pichacao-*' — o campo pichado do pátio é a cena do Carandiru (faixas, meio, círculo, áreas)`);
-  put('NV8', !falta.length, falta.length ? falta.join(' · ')
-    : `pavilhão bloco_celas + portão + ${torres.length} torres-muro registrados · galeria com ${grades.length} grades e 8/8 sondas livres · ${pichacoes.length} decalques pichados`);
+  put('NV7', !falta.length, falta.length ? falta.join(' · ')
+    : `pavilhão + portão + ${torres.length} torres-muro · galeria com ${grades.length} grades e 8/8 sondas livres · ${pichacoes.length} decalques pichados`);
 }
 
 /* ---- placar e veredito dos mutantes ---- */
 const vermelhas = clausulas.filter((c) => !c.ok);
-const ALVO = { 'sem-reboco': 'NV1', 'holofote-parado': 'NV2', 'sem-varanda': 'NV3', 'sem-moldes': 'NV7', 'sem-carandiru': 'NV8', 'galeria-fechada': 'NV8' };
+const ALVO = { 'sem-reboco': 'NV1', 'holofote-parado': 'NV2', 'sem-varanda': 'NV3', 'galeria-fechada': 'NV7' };
 if (MUTANTE) {
   const esperado = ALVO[MUTANTE];
   const acertou = vermelhas.some((c) => c.id === esperado);
@@ -344,5 +311,5 @@ if (MUTANTE) {
   console.log(`\nMUTANTE MORDIDO: ${MUTANTE} -> ${esperado}`);
   process.exit(0);
 }
-console.log(`\nPENITENCIARIA-VIDA ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · NV1-NV8'}`);
+console.log(`\nPENITENCIARIA-VIDA ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · NV1-NV7'}`);
 process.exit(vermelhas.length ? 1 : 0);

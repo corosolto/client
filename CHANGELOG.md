@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.240`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.266`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -36,6 +36,10 @@
 - O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
 
 ### Corrigido
+- Lobisomem Mítico deixa de puxar aliados de outras facções, passa a resolver M nas telas de inspeção, usa luva M distinta no viewmodel, ganha animação própria com pés no chão e volta a publicar os retratos de resultado aprovados, que tinham saído do quadro medido no elenco.
+- O pack integrado do Lobisomem passa a servir os clipes próprios na sequência do runtime, com o fallback compartilhado preservado só para comparação e regressão.
+- No Sertão, as três carroças deixam passagem pelos dois flancos e as cinco casas diante dos respawns passam a ter porta, saída lateral, janela com revide e navegação intencional para bots.
+- As casas abertas da Praça da Matriz no Sertão preservam cobertura nas laterais das janelas, circulação interna livre e passagem dos bots junto aos esteios.
 - Em rodada de FACA os bots passam a jogar de faca: fecham até o alcance real da arma (medido 5,98 m e zero golpes em 60 s antes; 1,24 m, 18 golpes e 9 abates depois) e o golpe sai como faca — sem traçante, fogacho de cano nem som de tiro. A banda de distância de arma de fogo continua valendo na rodada normal. Régua `eval:botfaca` com três mutantes, no `check:fast`.
 - O headshot do jogador não arranca mais a câmera da primeira pessoa: a replay orbital e o hit-stop do #364 saíram, e o abate continua contando com hitmarker, dano, killfeed e locutor. Régua `eval:replaycam` passou a medir o contrário, com quatro mutantes.
 - Single Player voltou a abrir o submenu de MATA-MATA e CAPTURE A BANDEIRA (CTF), que segue para a seleção de mapas com o modo escolhido.
@@ -56,6 +60,289 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.266] — 2026-09-24
+
+### Mudado
+- fix(régua): UIR15 media a sincronia da troca de lado, não o texto de uma linha (#620)
+- fix(pre-push): o motivo do bloqueio apontava uma régua que PASSOU (#622)
+- fix(classify): PR grande devolve files:null e a régua morria de TypeError (#624)
+- fix(autofix): PR de fork regenerava a doc com o manifesto da BASE — DOCS1 preso em vermelho (#621)
+- fix(telemetria): rotas de geo pelo proxy do site, com a geo certa e prova de origem (backend#22) (#625)
+- docs(míticos): registra bloqueio da recuperação do Lobisomem (#528)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(classify): PR grande devolve files:null e a régua morria de TypeError
+- fix(api-proxy): prazo no fetch, cidade já codificada passa, ordem de publicação explícita
+- chore(docs): blocos gerados contam a régua nova (379 scripts de avaliação)
+- fix(pre-push): o motivo do bloqueio apontava uma régua que PASSOU
+- fix(autofix): PR de fork regenerava a doc com o manifesto da BASE — DOCS1 preso em vermelho
+- fix(régua): UIR15 media o texto de uma linha, não a sincronia da troca de lado
+- docs(api): a geo tinha se perdido; runbook do remendo e do conserto definitivo
+- fix(telemetria): rotas de geo pelo proxy do site, com a geo certa e prova de origem
+- docs(miticos): documenta bloqueio da recuperacao do patch de Lobisomem
+
+## [2.0.0-alpha.265] — 2026-09-23
+
+### Mudado
+- fix(crash): lançamento de partida que perde a corrida desiste em vez … (#627)
+- chore(docs): regenera blocos derivados com o eval:launchrace do PR
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados sobre a alpha.264
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados com o package.json do PR (243 scripts)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados (DOCS1) para o novo script
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados (DOCS1/ARCH1)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera blocos derivados do eval:launchrace
+- chore(docs): regenera bloco derivado (autofix)
+- fix(crash): lançamento de partida que perde a corrida desiste em vez de mexer em `game` nulo (#609, #608)
+
+## [2.0.0-alpha.264] — 2026-09-23
+
+### Mudado
+- fix(loop): #char-select ausente congelava o jogo a cada quadro (BUG-177) (#619)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(loop): #char-select ausente congelava o jogo a cada quadro (BUG-177, #617)
+
+## [2.0.0-alpha.263] — 2026-09-22
+
+### Mudado
+- fix(amazonia): estabiliza 8x8 e apoia palafitas (#603)
+- docs(amazonia): registrar revalidacao alpha.262
+- docs(amazonia): record final gate status
+- chore(amazonia): satisfy comment and docs gates
+- docs(amazonia): refresh generated references
+- fix(amazonia): stabilize medium 8x8 and ground palafitas
+
+## [2.0.0-alpha.262] — 2026-09-22
+
+### Mudado
+- feat(maps): reconstrói Carandiru sobre a main atual (#611)
+- fix(maps): keep Carandiru bot graph connected
+- docs(maps): close Carandiru validation ledger
+- docs: refresh generated metrics for Carandiru
+- docs(maps): refresh Carandiru alpha.261 evidence
+- fix(maps): normalize Carandiru map-local identity
+- docs(maps): record Carandiru reconstruction evidence
+- test(maps): add Carandiru causal and WebGL gates
+- feat(maps): reconstruct Carandiru map-local
+
+## [2.0.0-alpha.261] — 2026-09-17
+
+### Mudado
+- fix(miticos): chapéu pintado no braço tirava 14 reprovados no portão de seleção (BUG-171) (#607)
+- fix(boot-check): B5 injeta erro em callback de timer, não direto no evaluate (BUG-172)
+- fix(miticos): chapéu pintado no braço tirava 14 reprovados no portão de seleção (BUG-171)
+
+## [2.0.0-alpha.260] — 2026-09-17
+
+### Mudado
+- fix(crash): arnes de automacao apontado para producao nao e crash do … (#587)
+- fix(crash): arnes de automacao apontado para producao nao e crash do jogo (#573, #574)
+
+## [2.0.0-alpha.259] — 2026-09-17
+
+### Mudado
+- fix(crash): queda de rede do jogador não é defeito de código — para de abrir issue automática (#592)
+- fix(crash): queda de rede do jogador não é defeito de código — para de abrir issue automática (#592) (#606)
+
+## [2.0.0-alpha.258] — 2026-09-17
+
+### Mudado
+- docs(crash): global opaco injetado nao tem conserto por classificacao (#568)
+- docs(crash): global opaco injetado nao tem conserto por classificacao… (#569)
+
+## [2.0.0-alpha.257] — 2026-09-17
+
+### Mudado
+- Publicação 2.0.0-alpha.257
+
+## [2.0.0-alpha.256] — 2026-09-17
+
+### Mudado
+- docs(lajes): corrige estado do BUG-141 para integrado na main (#539)
+- docs(lajes): corrige estado do BUG-141 para integrado na main
+
+## [2.0.0-alpha.255] — 2026-09-13
+
+### Mudado
+- feat(mp): o jogo passa a mandar o jogador para onde tem GENTE, não para o nó mais vazio (#598)
+
+## [2.0.0-alpha.254] — 2026-09-13
+
+### Mudado
+- revert(nos): br2 sai da lista — o pico real do br é 12 simultâneos, não 275 (#595)
+
+## [2.0.0-alpha.253] — 2026-09-13
+
+### Mudado
+- fix(mp): "SERVIDORES FORA DO AR" com os quatro nós de pé — o prazo contava tempo congelado (#594)
+
+## [2.0.0-alpha.252] — 2026-09-13
+
+### Mudado
+- fix(erros): os 2 defeitos reais do painel de 13/09 — watchdog de lançamento e playerDef undefined (#593)
+
+## [2.0.0-alpha.251] — 2026-09-13
+
+### Mudado
+- feat(nos): br2 entra na lista de servidores (#591)
+
+## [2.0.0-alpha.250] — 2026-09-12
+
+### Mudado
+- perf: qualidade adaptativa, orçamento dos 17 mapas, tiro justo e 34% menos banda
+
+## [2.0.0-alpha.249] — 2026-09-12
+
+### Mudado
+- fix(discord): convite do rodapé estava expirado e a porta da comunidade fechada (#590)
+- fix(discord): convite do rodapé estava expirado e a porta da comunidade fechada
+
+## [2.0.0-alpha.248] — 2026-09-12
+
+### Mudado
+- fix(multiplayer): a correção de posição não era rede — cinco defeitos, com laço fechado para medir; e escolher os mapas da sala (#588)
+- feat(multiplayer): escolher a dedo os mapas da sala que você cria
+- fix(multiplayer): comando com duração, ack do que foi simulado e corpo de gente sem empurrão
+
+## [2.0.0-alpha.247] — 2026-09-10
+
+### Mudado
+- feat(mansao): reconstruir Joá sobre a main atual (#578)
+- docs(mansao): registrar CI remoto após correção
+- docs(mansao): registrar recaptura após correção
+- docs(mansao): atualizar índices após rota leste
+- chore(mansao): resumir comentário de rota
+- docs(mansao): registrar correção dos gates remotos
+- fix(mansao): separar rota CTF e liberar spawn
+- docs(mansao): registrar reconstrução limpa e fila humana
+- test(mansao): validar Chrome real em 3:2 e 16:9
+- docs(mansao): regenerar contratos na base atual
+- test(mansao): portar gates causais do Joá
+- feat(mansao): integrar Joá ao jogo atual
+- feat(mansao): portar cenário e assets do Joá
+
+## [2.0.0-alpha.246] — 2026-09-09
+
+### Mudado
+- feat(míticos): time Mítico completo — 9 personagens jogáveis (#570)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(deps): lockfile idêntico ao da main, sem npm install por cima
+- fix(deps): regenera o lockfile inteiro para o npm ci do CI voltar a instalar
+- fix(deps): npm audit fix zera as 5 vulnerabilidades que travavam o portão
+- feat(miticos): Caipora entra no lugar da Cuca e o time fecha em 9
+- docs(miticos): a última tentativa da Cuca — 333,4 - 187,0, e ainda não passa
+- feat(miticos): Saci e Zumbi entram consertados, e os avatares viram retrato de verdade
+- fix(regua): a revisão de browser cravava o elenco de M de ontem
+- docs(miticos): Saci é de uma perna, e a viabilidade foi medida antes de decidir
+- feat(miticos): auditoria visual do dono aprova os 7, e a mídia órfã sai do disco
+- fix(miticos): tira os webm de render que a folha de contato deixou para trás
+- fix(miticos): mídia do Lampião regerada do modelo novo, e o enquadramento certo
+- docs(miticos): a regeração da Cuca piorou, e BUG-150 registra o número
+- chore(miticos): tira scratchpad e a costura de peso que não entrou, e registra BUG-150
+- feat(miticos): time Mítico vai de 1 para 7 personagens jogáveis
+- feat(miticos): CHR7 pega quem flutua, aterramento vira genérico e Zumbi ganha clipe próprio
+- docs(miticos): fecha BUG-147 e registra o placar real do portão
+- fix(audio): Lobisomem entra no perfil físico, e comentários voltam ao orçamento
+- fix(miticos): a tela de carregamento respeitava só cinco facções
+- feat(regua): CHR7 — nenhuma malha atravessa o chão na pose assentada
+- chore(docs): bloco derivado e evidência de layout do Lajes
+- fix(menu): portão de browser volta a rodar e o badge de modo troca o painel inteiro
+- fix(miticos): tira do clipe os ossos de curl e devolve o portão de seleção
+- fix(miticos): devolve os retratos de resultado aprovados do Lobisomem
+- fix(miticos): integrate lobisomem assets and review
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs: regenera índices após candidato Mítico
+- feat(miticos): integra Lobisomem como candidato isolado
+- feat(miticos): adiciona mídia aprovada do Lobisomem
+
+## [2.0.0-alpha.245] — 2026-09-09
+
+### Mudado
+- fix(sertao): libera carroças e casas dos respawns (#559)
+- docs(sertao): vincula draft pr 559
+- docs(sertao): registra correcao pos-merge
+- fix(sertao): libera carrocas e casas dos respawns
+- test(sertao): reproduz rejeicao pos-merge
+
+## [2.0.0-alpha.244] — 2026-09-09
+
+### Mudado
+- fix(deps): desbloquear auditoria dos PRs (#571)
+- fix(deps): atualizar smol-toml seguro
+- fix(deps): corrigir auditoria do build
+
+## [2.0.0-alpha.243] — 2026-09-09
+
+### Mudado
+- docs(áudio): registra bloqueio do rollback F/U (#531)
+- docs(viewmodels): registrar bloqueio da recarga M4 (#534)
+- feat(audio): comparativo A/B v7×v8 e rollback determinístico de F/U
+- docs(audio): fontes das vozes antigas de F/U localizadas fora do Git
+- docs(audio): corrige cobertura do rollback de vozes
+- docs(viewmodels): registrar diagnóstico da recarga M4
+- docs(audio): bloqueio do rollback de vozes de Funkeiros e Tribos Urbanas
+
+## [2.0.0-alpha.242] — 2026-09-08
+
+### Mudado
+- feat(escadao): abre duas janelas e casas jogáveis no mirante (#529)
+- chore(escadao): regenerar layout de grafites
+- feat(escadao): abrir casas dos dois lados
+- test(escadao): exigir janelas na mesma sala
+- test(escadao): registrar baseline vermelha das casas
+- docs(escadao): regenera blocos derivados após encurtar comentários
+- style(escadao): comentários da casa central dentro do orçamento de 2 linhas
+- docs(escadao): regenera blocos derivados após o commit da régua
+- docs(escadao): registra a rodada da casa central e o falso positivo
+- test(escadao): régua da casa central exercendo a branch GLB_ON
+- fix(escadao): shell procedural autoritativo na casa central da laje
+- docs(escadao): fecha portoes de push e mede nao-regressao da rota
+- docs(escadao): registra checkpoint de publicacao
+- docs(escadao): registra evidências e limites do PR 529
+- fix(escadao): valida janelas e cobertura a partir do corpo real
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(escadao): cria abrigo disputável no mirante
+- chore(docs): regenera bloco derivado (autofix)
+- feat(escadao): abre janela da casa para a rua
+
+## [2.0.0-alpha.241] — 2026-09-08
+
+### Mudado
+- feat(sertao): finaliza casas, fauna e por do sol com reguas WebGL (#526)
+- chore(docs): sincroniza indices finais do Sertao
+- style(sertao): reduz comentarios de implementacao
+- test(sertao): reposiciona mutante de folga
+- fix(sertao): abre gargalo da rota oeste
+- perf(sertao): agrupa interiores e mede contraste
+- fix(sertao): abre fuga lateral nas casas dos spawns
+- chore(docs): regenera bloco derivado (autofix)
+- docs(sertao): fecha BUG-91 no ledger e regenera blocos gerados
+- test(sertao): verifica captura offline do BUG-91 por raio no enquadramento
+- test(sertao): contrato de interiores estendido às casas dos spawns
+- fix(sertao): platibanda-1 e pedra-7 viram interiores jogáveis (BUG-91)
+- fix(sertao): colisor da carroça espelha a geometria visível (BUG-91)
+- test(sertao): régua das carroças WA1-WA4 reprova o HEAD
+- docs(sertao): registra BUG-91, rejeição humana das carroças e casas fechadas
+- docs(sertao): registra IN7 e restaura limitações pendentes
+- test(sertao): expõe resultado do mutante bolsao
+- test(sertao): cobre mutante bolsao no check de interiores
+- docs(sertao): fecha ledger das casas da praça
+- fix(sertao): preserva folga dos obstáculos fora das casas
+- chore(docs): inclui ferramentas offline no inventário versionado
+- chore(docs): sincroniza índices da validação offline
+- fix(sertao): libera circulação e fecha frestas nas casas
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(sertao): abre casas da praça ao combate
 
 ## [2.0.0-alpha.240] — 2026-09-08
 

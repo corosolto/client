@@ -110,9 +110,13 @@ triângulos por vista**, não 48 malhas novas.
 | vistas fixas, calls | 712 · 614 · 567 · 653 | 715 · 619 · 570 · 656 |
 | low: calls/quadro · triângulos | — | 464 · 518.079 |
 
-Na raiz v2, `PF5` usa o hash `57052d4b94a8` depois de o BUG-146 trocar o volume cheio
-das guaritas pelos oito apoios. O passe de UV e janelas preserva esse contrato de
-**colisão, navegação, spawns, CTF e pickups**. Verdes: `eval:penitenciaria`, `penitenciariavida`, `penitenciariafacade`,
+Na raiz v2, `PF5` usava o hash `57052d4b94a8` depois de o BUG-146 trocar o volume cheio
+das guaritas pelos oito apoios. **A cláusula foi aposentada** no merge com a `main` de
+24/09/2026: a `main` reconstruiu o Carandiru (`feat(maps): reconstruct Carandiru
+map-local`) e um sha256 de colliders+spawns+CTF+waypoints+pickups só sabia dizer "o mapa
+mudou". Quem mede alcance de pickup — o defeito que o BUG-146 fechou — é a
+`pickup-check` (VM14), verde neste merge: 66 pickups, sem alcance 0, pior distância
+andável 0,14 m. Verdes: `eval:penitenciaria`, `penitenciariavida`, `penitenciariafacade`,
 `mapcontrato`, `spawn`, `ctfround`, `ctfwin`, `shaderbudget`, `cena`. Zero erro JS em med e
 low. Capturas em `artifacts/mapas-polish/lote-b/pen-depois{,-low}/`.
 

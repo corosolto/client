@@ -1,21 +1,27 @@
-/* Regressões vistas nas capturas 3:2 do PR441 recuperado: cascas aditivas dos
-   holofotes pareciam paredes e o caminho GLB escondia todas as janelas laterais.
-   Esta régua força placeProp a devolver um molde: fallback sozinho não prova nada.
-   Não prova aparência fotográfica: a aprovação visual continua no navegador.
-   node tools/eval/penitenciaria-facade-check.mjs [--mutante=sem-fachada|cone-restaurado]
+/* Regressões vistas nas capturas 3:2 do PR441 recuperado: as cascas aditivas dos
+   holofotes pareciam paredes. Esta régua mede o mundo real do build, não a aparência
+   fotográfica — a aprovação visual continua no navegador.
+
+   PF1, PF4 e PF5 FORAM APOSENTADAS nesta base, e o motivo importa mais que as cláusulas:
+     · PF1 forçava `placeProp('bloco_celas')` a devolver molde. O Carandiru da `main` não
+       usa geometria Mint por decisão registrada em docs/reports/CARANDIRU-MAIN-R3.md:16
+       — "O asset Mint do PR #556 não entra: a própria descrição registra termos
+       comerciais ainda pendentes" — e o CR3-1 da carandiru-main-r3-check cobra
+       justamente essa ausência. Manter PF1 seria exigir que uma régua quebrasse a outra.
+     · PF4 cravava 16 janelas e 32 peitoris/vergas, o ritmo do pavilhão cheio. O pavilhão
+       reconstruído é oco, com 12 janelas em parede real; quem mede janela sustentada
+       hoje é o CR3-3 (parede, peitoril, verga, piso e posição de tiro).
+     · PF5 era um sha256 de colliders+spawns+ctf+waypoints+pickups: pino de implementação
+       que só sabia dizer "o mapa mudou". Alcance de pickup — o defeito que ela cercava —
+       é medido de verdade pela pickup-check (VM14), que roda por mapa.
+
+   node tools/eval/penitenciaria-facade-check.mjs [--mutante=cone-restaurado]
 */
-import { createHash } from 'node:crypto';
 import { THREE, MAPS, initTextures } from './harness.mjs';
-import { registerPropTemplate } from '../../public/js/mapprops.js';
 
 const mutant = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1];
-if (mutant && !['sem-fachada', 'cone-restaurado'].includes(mutant)) throw new Error(`Mutante desconhecido: ${mutant}`);
-const fixture = new THREE.Group();
-fixture.name = 'facade-fixture-bloco-celas';
-fixture.add(new THREE.Mesh(new THREE.BoxGeometry(.3886, .4472, .998), new THREE.MeshStandardMaterial()));
-registerPropTemplate('bloco_celas', fixture);
+if (mutant && !['cone-restaurado'].includes(mutant)) throw new Error(`Mutante desconhecido: ${mutant}`);
 const world = MAPS.penitenciaria.build(new THREE.Scene(), await initTextures());
-registerPropTemplate('bloco_celas', null);
 world.root.updateMatrixWorld(true);
 const meshes = [], lights = [], heads = [];
 world.root.traverse((o) => {
@@ -24,11 +30,8 @@ world.root.traverse((o) => {
   if (/^penitenciaria-holofote-\d+$/.test(o.name)) heads.push(o);
 });
 const visible = (o) => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
-const prefix = (s) => meshes.filter((m) => m.name.startsWith(s));
 let applied = false;
-if (mutant === 'sem-fachada') {
-  for (const m of prefix('penitenciaria-pavilhao-janela-')) { m.visible = false; applied = true; }
-} else if (mutant === 'cone-restaurado') {
+if (mutant === 'cone-restaurado') {
   if (!heads.length) throw new Error('Não sei aplicar mutante: holofote ausente');
   const cone = new THREE.Mesh(new THREE.ConeGeometry(3.4, 30, 12, 1, true),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: .055, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
@@ -36,7 +39,6 @@ if (mutant === 'sem-fachada') {
 }
 const results = [];
 const check = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} ${ok ? 'PASSA' : 'FALHA'} — ${detail}`); };
-check('PF1', !!world.root.getObjectByName(fixture.name), 'build real usa fixture registrada de bloco_celas (ramo GLB)');
 
 const shells = meshes.filter((m) => {
   const materials = Array.isArray(m.material) ? m.material : [m.material];
@@ -53,38 +55,10 @@ const moving = lights.filter((l, i) => JSON.stringify(l.target.position.toArray(
 const lenses = heads.filter((h) => h.children.some((o) => o.isMesh && o.geometry.type === 'CircleGeometry' && visible(o))).length;
 check('PF3', lights.length === 4 && moving === 4 && lenses === 4, `${lights.length} spots, ${moving} alvos móveis, ${lenses} lentes visíveis`);
 
-const windows = prefix('penitenciaria-pavilhao-janela-').filter(visible);
-const validWindow = (m) => {
-  const box = new THREE.Box3().setFromObject(m), s = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-  const outside = c.x < 0 ? box.max.x < -4.5 : box.min.x > 4.5;
-  return outside && Math.abs(c.x) < 4.7 && Math.abs(c.z) < 6 && c.y > 1.8 && c.y < 5.6
-    && s.y >= 1.29 && s.z >= 1.69 && m.material.map?.name === 'penitenciaria-grade-cela';
-};
-const rhythm = new Set(windows.map((m) => `${Math.sign(m.position.x)}:${m.position.y.toFixed(2)}:${m.position.z.toFixed(2)}`));
-const trims = [...prefix('penitenciaria-pavilhao-peitoril-'), ...prefix('penitenciaria-pavilhao-verga-')].filter(visible);
-const validTrim = (m) => {
-  const b = new THREE.Box3().setFromObject(m), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
-  return Math.abs(c.x) > 4.5 && Math.abs(c.x) < 4.8 && s.x >= .2 && s.x <= .4 && s.z >= 1.8 && s.y <= .2;
-};
-check('PF4', windows.length === 16 && windows.every(validWindow) && rhythm.size === 16
-  && trims.length === 32 && trims.every(validTrim),
-`${windows.length}/16 janelas de grade visíveis fora do GLB, ${rhythm.size} posições distintas, ${trims.length}/32 peitoris/vergas com relevo`);
-
-// Assinatura anterior ao conserto: inclui os contratos funcionais do PR441, não
-// o mapa simplificado anterior à recuperação. O acabamento não desloca circulação.
-const signature = { colliders: world.colliders, spawns: world.spawns, ctfPoints: world.ctfPoints,
-  waypoints: world.waypoints, bounds: world.bounds, pickups: world.pickups.map(({ x, z, kind }) => ({ x, z, kind })) };
-const hash = createHash('sha256').update(JSON.stringify(signature)).digest('hex');
-const apoios = world.colliders.filter((c) => String(c.tag).startsWith('torre-muro-apoio-'));
-const torreCheia = world.colliders.some((c) => c.tag === 'torre-muro');
-check('PF5', hash === '57052d4b94a824b9a89b1ababdc52243a99004a72f05519c2881abcb95aa2962'
-  && apoios.length === 8 && !torreCheia,
-`contratos preservados com 8 apoios e sem volume cheio da guarita, BUG-146 (${hash.slice(0, 12)})`);
 const failed = results.filter((r) => !r.ok).map((r) => r.id);
 if (mutant) {
-  const target = mutant === 'sem-fachada' ? 'PF4' : 'PF2';
-  if (!applied || !failed.includes(target)) throw new Error(`Mutante ${mutant} não foi detectado por ${target}`);
-  console.log(`Mutante ${mutant} aplicado e detectado em ${target}`);
+  if (!applied || !failed.includes('PF2')) throw new Error(`Mutante ${mutant} não foi detectado por PF2`);
+  console.log(`Mutante ${mutant} aplicado e detectado em PF2`);
 }
-console.log(`PENITENCIARIA-FACADE ${failed.length ? `VERMELHA: ${failed.join(', ')}` : 'ok: PF1–PF5'}`);
+console.log(`PENITENCIARIA-FACADE ${failed.length ? `VERMELHA: ${failed.join(', ')}` : 'ok: PF2–PF3'}`);
 process.exitCode = failed.length ? 1 : 0;

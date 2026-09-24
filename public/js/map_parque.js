@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { InstBatch, mergeParts, placeProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
+import { aplicaSombraSol } from './mapquality.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
@@ -249,9 +250,10 @@ export function buildParque(scene, T) {
   }
 
   /* Look de fim de tarde (LOOK.parque_treta): céu/fog/sol/hemi de uma fonte só;
-     o shadow fica no builder porque ele conhece os limites do mapa. */
+     o shadow fica no builder porque ele conhece os limites do mapa. O TAMANHO do
+     mapa de sombra não: sai de aplicaSombraSol (orçamento único, QMAP1). */
   const { hemi, sun } = applyLook(scene, T, 'parque_treta');
-  sun.shadow.mapSize.set(2048, 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -46; sun.shadow.camera.right = 46;
   sun.shadow.camera.top = 54; sun.shadow.camera.bottom = -54;
   sun.shadow.camera.far = 220; sun.shadow.bias = -0.0005;
@@ -747,6 +749,7 @@ export function buildParque(scene, T) {
     }
     return [fromIdx];
   }
+
 
   function update(dt, time) {
     SURFACE.water.offset.x = time * 0.018;

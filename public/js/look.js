@@ -11,14 +11,25 @@ export const LOOK = {
     grade: { exposicao: 1.50, piso: 0.0050, expAces: 1.60 },
   },
 
-  fy_mansao: {   // Joá: sol de fim de tarde sobre o mar
+  mansao: {   // Joá: sol de fim de tarde sobre o mar
     sky: '/img/textures/sky_joa.webp',
-    horizonte: 0xc7a378,   // look-horizonte.py sobre sky_joa.webp (banda 498-510 de 1024)
-    zenite: 0x7fadc7,
+    horizonte: 0xe9c58c,   // look-horizonte.py sobre sky_joa.webp (banda 322-334 de 672)
+    zenite: 0x718ca2,
     sol: { cor: 0xffefd8, i: 1.8, pos: [15, 30, -15] },
     hemi: { ceu: 0xf6f3ea, chao: 0x665c50, i: 1.02 },
     neblina: { d: 0.0068, solDir: [30, 32, 24], forca: 0.94 },
     grade: { exposicao: 1.36, piso: 0.0043, expAces: 1.46 },
+    horizonte3d: {
+      ilhas: [{ az: -1.02, dist: 128, r: 20, h: 14, cor: 0x3f5a42, mistura: 0.10, praia: 0xc0b49b }],
+      morros: [
+        { az: -2.55, dist: 172, r: 50, h: 28, cor: 0x3a5540, mistura: 0.16 },
+        { az: -0.38, dist: 158, r: 44, h: 25, cor: 0x3a5340, mistura: 0.13 },
+        { az: -1.95, dist: 258, r: 90, h: 62, cor: 0x445c46, mistura: 0.36 },
+        { az: -0.82, dist: 222, r: 74, h: 46, cor: 0x3d5742, mistura: 0.28 },
+        { az: -1.42, dist: 298, r: 115, h: 84, cor: 0x4a604c, mistura: 0.46 },
+      ],
+      bruma: { cor: 0xe2be89, y: 2.4, raio: 330, altura: 17, opacidade: 0.34 },
+    },
   },
   corrego: {   // SP abafado: céu cinza de chuva que não cai
     sky: '/img/textures/sky_sp.webp',
@@ -40,11 +51,11 @@ export const LOOK = {
   },
   velho_oeste: {   // sertão (map2 retheme): fim de tarde quente, sol baixo raspando, ar seco
     sky: { kind: 'procedural', model: 'dry-afternoon', horizonHold: 0.10, curve: 0.55,
-      halo: 0xe9d0aa, haloStrength: 0.48, haloFocus: 7 },
-    horizonte: 0xc7b59b,   // eval:look mede a banda da DataTexture usada pelo jogo
-    zenite: 0x7896ad,
-    sol: { cor: 0xffe0b5, i: 1.9, pos: [-30, 14, -18] },
-    hemi: { ceu: 0xdce6ee, chao: 0x7e6a50, i: 1.16 },
+      halo: 0xffcf9e, haloStrength: 0.56, haloFocus: 7 },
+    horizonte: 0xd7a477,   // banda baixa laranja; fog deriva deste mesmo horizonte
+    zenite: 0x6d86a3,
+    sol: { cor: 0xffd0a0, i: 1.9, pos: [-30, 14, -18] },
+    hemi: { ceu: 0xf0d0b2, chao: 0x73523a, i: 1.16 },
     neblina: { d: 0.0056, solDir: [-30, 14, -18], forca: 0 },
     grade: { exposicao: 1.48, piso: 0.0050, expAces: 1.58 },
   },
