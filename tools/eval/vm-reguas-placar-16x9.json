@@ -1,7 +1,7 @@
 {
- "gerado": "2026-09-23",
+ "gerado": "2026-09-24",
  "aspecto": "16x9",
- "entradas": "a028e101a3a30c2e",
+ "entradas": "293e037380a423ac",
  "resultados": {
   "awp": {
    "mira": {
@@ -600,13 +600,13 @@
   "tavor": {
    "mira": {
     "estado": "VERMELHO",
-    "valor": "260 px",
-    "msg": "mira fora da cruz a 260 px; ângulo esquisito no ADS: arma tombada +76° da vertical — massa a 260 px da cruz (+238, +104); teto 30 px; eixo no ADS +76° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.507 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+    "valor": "41 px",
+    "msg": "mira fora da cruz a 41 px — massa a 41 px da cruz (+1, -41); teto 30 px; eixo no ADS -10° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.98× AK",
-    "msg": "tamanho 0.98× AK, rolagem +12° da AK (informativa), eixo +9° da AK, braço 0.39×, cruz 0 px, olho 1.83 palma, ADS cobre 9.6% (teto 18.2%)"
+    "msg": "tamanho 0.98× AK, rolagem +12° da AK (informativa), eixo +9° da AK, braço 0.39×, cruz 0 px, olho 1.83 palma, ADS cobre 7.3% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",

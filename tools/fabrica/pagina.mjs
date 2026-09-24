@@ -75,9 +75,10 @@ const card = (id) => {
   <p class="open"><a href="${esc(url(id))}" target="_blank" rel="noopener">▶ abrir no jogo (fábrica)</a> · <a href="${esc(urlAntes(id))}" target="_blank" rel="noopener">produto atual (antes)</a></p>
   <div class="chips">${chips(id)}</div>
   <p class="ref">${vermelhos.length ? `vermelho em: <span class="bad">${esc(vermelhos.join(', '))}</span>` : '<span class="okt">réguas verdes</span>'}</p>
-  <div class="tabs"><button class="on" data-a="3x2">3:2</button><button data-a="16x9">16:9</button><button data-a="ref">aprovada (${id === 'pistol' ? 'PT-38' : 'AK golden'})</button></div>
+  <div class="tabs"><button class="on" data-a="3x2">3:2</button><button data-a="16x9">16:9</button><button data-a="regua">quadril/ADS (régua)</button><button data-a="ref">aprovada (${id === 'pistol' ? 'PT-38' : 'AK golden'})</button></div>
   <div class="grid" data-aspect="3x2">${grade(id, '3x2')}</div>
   <div class="grid" data-aspect="16x9" hidden>${grade(id, '16x9')}</div>
+  <div class="grid" data-aspect="regua" hidden>${['quadril', 'ads'].map((k) => `<figure><a href="reguas-3x2/${id}-${k}.png" data-lb><img loading="lazy" src="reguas-3x2/${id}-${k}.png" alt=""></a><figcaption>${k} (quadro da régua, 3:2)</figcaption></figure>`).join('')}</div>
   <div class="grid" data-aspect="ref" hidden>${refs(id)}</div>
   <div class="vids">${video(id)}</div>
   ${cr.texto ? `<details><summary>parecer do crítico cego</summary><pre>${esc(cr.texto)}</pre></details>` : ''}

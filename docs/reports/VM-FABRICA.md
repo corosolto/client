@@ -273,8 +273,25 @@ deagle, coerentes com a pose fresca do #641); `eval:vm-placar`, `eval:vm-cache`,
 vermelho **igual na base** `vm/integracao-k` sem as mudanças ("ak: produto ausente" — o
 catálogo da integração não tem o `ak/ak-runtime.glb` que a régua procura); não é desta branch.
 
-**Crítico cego** (agente `critico-visual-vm`, só pixel): ver `artifacts/fabrica-lote1/critico/`
-e a página do dono (seção 8.1).
+### 8.1 Crítico cego (agente `critico-visual-vm`, só pixel, contexto limpo, duas rodadas)
+
+| arma | rodada 2 | o que ele viu |
+|---|---|---|
+| m4 | **APROVADA** | eixo 30,3° × 30,1° da AK; recarga tira o pente inteiro, traz o novo na mão e encaixa; aro do ADS na cruz |
+| pistol | **APROVADA** | "indistinguível da PT-38 aprovada" em idle, ADS e queda do pente |
+| shotgun | RESSALVA | a mão direita abre sobre a janela sem cartucho (f60); no ADS quase não aparece mão; na recarga a arma cruza a tela para a esquerda |
+| famas | REPROVADA | "é uma M4 com a alça da FAMAS": pente à frente do punho — o limite declarado (seção 10) |
+| ak | REPROVADA | não é a AK aprovada (é o AK-200 do pack, com skin) e o pente velho fica de pé no ar aos 15% da recarga vazia |
+
+A rodada 1 foi descartada para ADS/tiro: a captura (`kcap`) entrava em ADS pelo botão direito do
+mouse, que não funciona sem pointer lock — ADS igual ao idle. A rodada 2 julgou o ADS pelos
+quadros das réguas; as capturas de tiro de M4, FAMAS, escopeta e pistola ainda saem em ADS e o
+tiro dessas quatro **não foi julgado**. A rodada 1 também viu uma "peça laranja solta" na M4: é
+uma arma no chão do mapa (a máscara de viewmodel do carregador da M4 está verde).
+
+**AK:** a pergunta é do dono — manter a golden (braço diferente das outras) ou padronizar no pack;
+se padronizar, a recarga vazia do AK-200 deixa o pente velho à vista, e o jeito limpo é o plano B
+(truque do segundo pente) só para essa recarga.
 
 ## 9. Mapeamento das 26 armas
 
