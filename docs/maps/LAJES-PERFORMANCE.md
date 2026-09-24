@@ -93,7 +93,11 @@ node tools/eval/lajes-performance-browser.mjs --teams=8 --seconds=60
 
 Os quatro mutantes devem sair com código 1. O browser aceita `--maps=lajes`,
 `--teams=5,8`, `--quality=low|med|high`, `--seconds=5..180`, `--out=...`,
-`--base=...` e `--linear` (reintrodução do custo anterior somente na sessão de teste).
+`--base=...`, `--width=1536`, `--height=1024` e `--linear` (reintrodução do custo
+anterior somente na sessão de teste). Erros de página e respostas HTTP tornam a execução
+vermelha. `--allow-inherited` libera apenas a lista fechada em
+`tools/eval/lajes-browser-debt.mjs`; erro desconhecido continua vermelho. A contraprova do
+classificador é `node tools/eval/lajes-browser-debt-check.mjs`.
 
 Artefatos locais: `artifacts/lajes-performance/`; baseline `browser-*.json`,
 `after/`, `after-occlusion/`, `sustained/`, `raycast-final.json` e os quatro

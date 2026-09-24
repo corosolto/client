@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.268`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.270`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,102 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.270] — 2026-09-24
+
+### Mudado
+- test(lajes): fechar aceite de bots e WebGL (#604)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(lajes): registrar replay na alpha.262
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(lajes): registrar draft e gate final
+- docs: atualizar contagem dos gates de Lajes
+- test(lajes): fechar aceite de bots e browser
+
+## [2.0.0-alpha.269] — 2026-09-24
+
+### Mudado
+- feat(mapa): revalidar Piscina da Treta na main (#612)
+- test(escadao): fechar evidências R5 na main (#558)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(piscina): record inherited UI gate
+- docs(piscina): refresh generated inventories
+- docs(piscina): record final performance evidence
+- perf(piscina): batch static geometry and restore graffiti budget
+- docs(piscina): registrar gate herdado da alpha.262
+- docs(piscina): regenerar blocos após isolamento
+- docs(piscina): registrar sucessor do PR 566
+- test(piscina): revalidar rotas e orçamento na main
+- docs(piscina): registrar reteste de rotas e escala
+- fix(ci): regenerate Piscina lock cleanly
+- test(piscina): validate current 8x8 architecture
+- feat(mapa): rebuild Piscina architectural layout
+- feat(mapa): polish Piscina visual finish
+- docs: record Piscina stacked PR validation
+- fix(mapa): isolate Piscina graffiti layout
+- docs: regenera derivados da piscina empilhada
+- fix(mapa): validar travessia e captura da piscina
+- fix(mapa): cobrir superficies novas da piscina
+- feat(mapa): concluir rework da piscina
+- test: add red Piscina rework ruler
+- docs: prepare Piscina rework pilot
+- docs(maps): registra crítica adversarial do degrau 548
+- feat(maps): aplica UV em metros em três mapas
+- fix(maps): aplica anisotropia nas fábricas locais
+- docs(maps): fecha recibo runtime do degrau 545
+- feat(maps): restaura escala do Posto e Atacadão
+- feat(maps): restaura Madureira no degrau 542
+- docs: refresh Carandiru C4 authorship
+- test(carandiru): record C4 route evidence
+- test(carandiru): gate C4 route evidence
+- docs: refresh Carandiru authorship
+- feat(carandiru): deepen C3 institutional identity
+- assets(carandiru): add traced Mint patrol wagon
+- test(carandiru): gate C3 Mint identity
+- test(escadao): fechar evidências R5
+- docs: refresh generated authorship
+- docs(carandiru): checkpoint C2 evidence
+- feat(carandiru): close competitive C2 routes
+- test(carandiru): prove C2 mutation operators
+- docs(mapas): fecha evidência técnica do C1 Carandiru
+- docs(mapas): registra checkpoint C1 do Carandiru
+- feat(mapas): abre blockout jogável do Carandiru
+- test(mapas): cria régua vermelha do Carandiru
+- docs(mapas): fecha gates pré-push da #541
+- docs(mapas): registra integração do degrau #541
+- feat(maps): UV em metros e vão fundo das janelas na Penitenciária
+- docs(mapas): registra integração alpha.240
+- docs(mapas): prepara publicação da raiz v2
+- docs(mapas): fecha próximo passo da raiz
+- docs(bugs): desambigua VM14 como BUG-145
+- docs(mapas): registra checkpoint da raiz #540
+- chore(docs): atualiza gerados após encurtar os comentários
+- style(maps): encurta comentários novos ao teto do CM1
+- fix(maps): corrige contagem de draw calls do capturador e registra retomada
+- docs(maps): registra parada recuperável e validação dos candidatos
+- docs(maps): prepara prompts individuais do restante do catálogo
+- docs(maps): prepara prompts GLM Claude Mint dos lotes prioritários
+- chore(maps): substitui passe básico e prepara capturas dos candidatos
+- fix(maps): integra candidatos recuperados ao catálogo
+- test(maps): valida fachadas e vida da Penitenciária
+- fix(maps): recupera Penitenciária e corrige fachadas e refletores
+- fix(maps): recupera Parque e eleva copas fora das rotas
+- test(maps): restaura contratos e contexto do Campinho
+- fix(maps): recupera Campinho do Morro como mapa independente
+- feat(maps): recupera acervo dos PRs de Parque e Carandiru com origem
+- docs(maps): corrige Campinho independente e recupera contexto dos PRs
+- docs(maps): fecha evidências e continuidade do primeiro lote
+- docs(maps): atualiza contadores gerados do lote visual
+- feat(maps): aplica primeiro passe de superfícies e entorno urbano
+- docs(maps): inventaria catálogo e organiza passes de polish
 
 ## [2.0.0-alpha.268] — 2026-09-24
 
