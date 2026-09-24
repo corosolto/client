@@ -1,5 +1,25 @@
 # Carandiru — continuação C1→C4
 
+> **LANE SUPERADA (24/09/2026).** A lane `codex/carandiru-main-r3` da `main`, mergeada
+> em 22/09/2026, reconstruiu o Carandiru sobre a `main` atual e absorveu a estrutura
+> desta lane — passarelas de muralha, quatro acessos, Pavilhão 6 oco, galeria e
+> janelas em parede real. O dossiê dela (`docs/reports/CARANDIRU-MAIN-R3.md:16`)
+> deixou de fora, de propósito, o asset Mint: *"O asset Mint do PR #556 não entra: a
+> própria descrição registra termos comerciais ainda pendentes"*. O `public/js/map_penitenciaria.js`
+> desta pilha passou a ser o da `main` no merge desta branch.
+>
+> Com o mapa da lane substituído, as réguas C1→C4 (`tools/eval/carandiru-jogabilidade-check.mjs`
+> e as três de evidência de navegador, com seus recibos `.json`) e os cinco scripts
+> `eval:carandiru*` foram REMOVIDOS no commit que traz esta nota. Elas mediam o mapa
+> antigo: a CAR4 divergia porque a `main` moveu o MID do CTF para fora do Pavilhão 6
+> de propósito, a CAR8/CAR9/CAR10 porque os recibos de navegador estavam presos à
+> geometria antiga, e a CAR7 já reprovava ANTES de qualquer merge porque
+> `carandiru_viatura_1990.glb` nunca entrou no repositório. Nenhuma delas era chamada
+> por `check:fast`, `check:deploy`, `check:web` ou por workflow algum.
+>
+> Quem mede o Carandiru hoje é `tools/eval/carandiru-main-r3-check.mjs` (CR3-1..6),
+> verde nesta árvore. O texto abaixo fica como histórico da lane.
+
 ## Objetivo e aceite
 
 Reautorar o mapa exibido como **Carandiru**, preservando o ID técnico
