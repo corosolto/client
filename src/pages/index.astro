@@ -1061,6 +1061,14 @@ window.__GEO_LANG__ = (function () {
           <option value="high">Padrão ouro</option>
         </select>
       </label>
+      <!-- Clarão dos tiros configurável (BUG-174, relato 21/09): o _fxTune era só de dev. -->
+      <label class="set-row" data-section="video">CLARÃO DOS TIROS
+        <select id="set-fxflash">
+          <option value="normal" selected>Normal</option>
+          <option value="reduzido">Reduzido</option>
+          <option value="minimo">Mínimo</option>
+        </select>
+      </label>
       <label class="set-row" data-section="controls">SENSIBILIDADE DO MOUSE
         <span class="set-range"><input id="set-sens" type="range" min="0.2" max="3" step="0.1" value="1"><b id="set-sens-val">1.0</b></span>
       </label>
@@ -1174,6 +1182,20 @@ window.__GEO_LANG__ = (function () {
             <label>TIME B <select id="mp-fac-b"></select></label>
             <label>MODO
               <select id="mp-modo"><option value="rounds">MATA-MATA</option><option value="ctf">CAPTURE A BANDEIRA</option></select>
+            </label>
+            <label>JOGADORES POR TIME
+              <!-- teamSize no POST /rooms (backend PR #29): bots completam o que falta de
+                   gente; 1 com dois humanos = X1 puro. Relato do jogador, 21/09. -->
+              <select id="mp-teamsize" aria-label="Jogadores por time (bots completam)">
+                <option value="1">1 - X1 SEM BOTS</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5 (padrão)</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+              </select>
             </label>
             <label class="mp-check"><input id="mp-privada" type="checkbox" /> SALA PRIVADA (só com senha)</label>
             <label id="mp-senha-wrap" hidden>SENHA <input id="mp-senha" type="text" maxlength="32" /></label>
