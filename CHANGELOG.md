@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.268`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.279`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,258 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.279] — 2026-09-24
+
+### Mudado
+- feat(config): CLARÃO DOS TIROS nas configurações - normal/reduzido/mínimo (BUG-174) (#614)
+- feat(mp): seletor de JOGADORES POR TIME no criar sala - X1 sem bots (BUG-173) (#613)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(fx): comentario do clarao em duas linhas para o portao eval:comentario
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(config): CLARÃO DOS TIROS nas configurações - normal/reduzido/mínimo (BUG-174)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(mp): seletor de JOGADORES POR TIME no criar sala — X1 sem bots (BUG-173)
+
+## [2.0.0-alpha.278] — 2026-09-24
+
+### Mudado
+- fix(maps): corrige orçamento e nome do Carandiru (#615)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(carandiru): record independent review
+- docs(carandiru): refresh final evidence ledger
+- docs(maps): record Carandiru PR integrity repair
+- chore(maps): keep Carandiru follow-up scoped
+- docs(maps): record Carandiru follow-up state
+- fix(maps): centralize Carandiru shadow budget
+
+## [2.0.0-alpha.277] — 2026-09-24
+
+### Mudado
+- feat(praca): qualificar flancos, água e horizonte (#616)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(generated): refresh praca bot gate index
+- docs(map): record praca causal revalidation
+- fix(map): close praca cover and evidence blockers
+- docs(praca): registrar draft PR
+- docs(praca): registrar gate herdado
+- docs: realinhar inventario da Praça R2
+- docs(praca): alinhar hashes finais
+- style(praca): adequar comentarios ao gate
+- docs(praca): registrar candidato e evidencias
+- docs: regenerar inventario da Praça R2
+- test(praca): cobrir matriz WebGL e evidencias
+- feat(praca): qualificar flancos e espelho d'agua
+- docs(praca): registrar baseline e escopo R2
+
+## [2.0.0-alpha.276] — 2026-09-24
+
+### Mudado
+- feat(loja-h): abre terceira rota e conecta navegação (#601)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(loja-h): regenera blocos derivados apos merge da alpha.263
+- docs(loja-h): registra pendencia de indices gerados
+- feat(loja-h): abre terceira rota e conecta navegacao
+
+## [2.0.0-alpha.275] — 2026-09-24
+
+### Mudado
+- fix(telemetria): saída do MP conta uma vez, game_started no banco, build do navegador no join (backend#22) (#626)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): blocos gerados contam a régua nova (379 scripts de avaliação)
+- fix(telemetria): saída do MP conta, uma vez só; início de partida no banco; build do navegador no join
+
+## [2.0.0-alpha.274] — 2026-09-24
+
+### Mudado
+- fix(ci): grafo de módulos da árvore vira portão antes do deploy (#524)
+- fix(ci): grafo de módulos da árvore vira portão antes do deploy (#524) (#642)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+
+## [2.0.0-alpha.273] — 2026-09-24
+
+### Mudado
+- feat(mansao): prévia em vídeo no hover do card do Joá (#585)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs: regenera blocos derivados depois da base alpha.247
+- docs(mansao): registra a prévia em vídeo, as réguas e a pendência do poster
+- test(mappreview): réguas cobram mídia real e card ligado ao allow-list
+- fix(mapas): card de mapa ligava a prévia por id cravado, não pelo allow-list
+- feat(mansao): grava a prévia de 12 s do Joá a partir do mapa servido
+- fix(mapid): relatório do Joá derrubava a régua de id na main
+
+## [2.0.0-alpha.272] — 2026-09-24
+
+### Mudado
+- fix(bot): files:null de PR grande derrubava o classify e o automerge (#644)
+- fix(bots): respeitar alcance real da faca (#580)
+- docs: inventário medido dos seis mapas legados (#538)
+- fix(classify): files:null derrubava o comentário do bot, e o job inteiro junto
+- fix(automerge): PR grande devolve files:null e a régua morria de TypeError
+- docs(bots): registrar PR e checkpoint da lane
+- fix(bots): respeitar alcance real da faca
+- docs: substitui o esboço dos mapas legados por inventário medido
+- docs: add legacy maps status ledger
+- docs: inclui lote Emerson na frente de mapas
+- docs: define frente Claude para mapas legados
+
+## [2.0.0-alpha.271] — 2026-09-24
+
+### Mudado
+- fix(autofix): package.json prendia PR em CONFLICTING para sempre (#646)
+- fix(ci): dco e agente_check param de cobrar commit de merge (#645)
+- fix(autofix): package.json prendia PR em CONFLICTING para sempre
+- fix(hooks): pre-push para de cobrar trailer em commit de merge
+- fix(ci): dco e agente_check param de cobrar commit de merge
+
+## [2.0.0-alpha.270] — 2026-09-24
+
+### Mudado
+- test(lajes): fechar aceite de bots e WebGL (#604)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(lajes): registrar replay na alpha.262
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(lajes): registrar draft e gate final
+- docs: atualizar contagem dos gates de Lajes
+- test(lajes): fechar aceite de bots e browser
+
+## [2.0.0-alpha.269] — 2026-09-24
+
+### Mudado
+- feat(mapa): revalidar Piscina da Treta na main (#612)
+- test(escadao): fechar evidências R5 na main (#558)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(piscina): record inherited UI gate
+- docs(piscina): refresh generated inventories
+- docs(piscina): record final performance evidence
+- perf(piscina): batch static geometry and restore graffiti budget
+- docs(piscina): registrar gate herdado da alpha.262
+- docs(piscina): regenerar blocos após isolamento
+- docs(piscina): registrar sucessor do PR 566
+- test(piscina): revalidar rotas e orçamento na main
+- docs(piscina): registrar reteste de rotas e escala
+- fix(ci): regenerate Piscina lock cleanly
+- test(piscina): validate current 8x8 architecture
+- feat(mapa): rebuild Piscina architectural layout
+- feat(mapa): polish Piscina visual finish
+- docs: record Piscina stacked PR validation
+- fix(mapa): isolate Piscina graffiti layout
+- docs: regenera derivados da piscina empilhada
+- fix(mapa): validar travessia e captura da piscina
+- fix(mapa): cobrir superficies novas da piscina
+- feat(mapa): concluir rework da piscina
+- test: add red Piscina rework ruler
+- docs: prepare Piscina rework pilot
+- docs(maps): registra crítica adversarial do degrau 548
+- feat(maps): aplica UV em metros em três mapas
+- fix(maps): aplica anisotropia nas fábricas locais
+- docs(maps): fecha recibo runtime do degrau 545
+- feat(maps): restaura escala do Posto e Atacadão
+- feat(maps): restaura Madureira no degrau 542
+- docs: refresh Carandiru C4 authorship
+- test(carandiru): record C4 route evidence
+- test(carandiru): gate C4 route evidence
+- docs: refresh Carandiru authorship
+- feat(carandiru): deepen C3 institutional identity
+- assets(carandiru): add traced Mint patrol wagon
+- test(carandiru): gate C3 Mint identity
+- test(escadao): fechar evidências R5
+- docs: refresh generated authorship
+- docs(carandiru): checkpoint C2 evidence
+- feat(carandiru): close competitive C2 routes
+- test(carandiru): prove C2 mutation operators
+- docs(mapas): fecha evidência técnica do C1 Carandiru
+- docs(mapas): registra checkpoint C1 do Carandiru
+- feat(mapas): abre blockout jogável do Carandiru
+- test(mapas): cria régua vermelha do Carandiru
+- docs(mapas): fecha gates pré-push da #541
+- docs(mapas): registra integração do degrau #541
+- feat(maps): UV em metros e vão fundo das janelas na Penitenciária
+- docs(mapas): registra integração alpha.240
+- docs(mapas): prepara publicação da raiz v2
+- docs(mapas): fecha próximo passo da raiz
+- docs(bugs): desambigua VM14 como BUG-145
+- docs(mapas): registra checkpoint da raiz #540
+- chore(docs): atualiza gerados após encurtar os comentários
+- style(maps): encurta comentários novos ao teto do CM1
+- fix(maps): corrige contagem de draw calls do capturador e registra retomada
+- docs(maps): registra parada recuperável e validação dos candidatos
+- docs(maps): prepara prompts individuais do restante do catálogo
+- docs(maps): prepara prompts GLM Claude Mint dos lotes prioritários
+- chore(maps): substitui passe básico e prepara capturas dos candidatos
+- fix(maps): integra candidatos recuperados ao catálogo
+- test(maps): valida fachadas e vida da Penitenciária
+- fix(maps): recupera Penitenciária e corrige fachadas e refletores
+- fix(maps): recupera Parque e eleva copas fora das rotas
+- test(maps): restaura contratos e contexto do Campinho
+- fix(maps): recupera Campinho do Morro como mapa independente
+- feat(maps): recupera acervo dos PRs de Parque e Carandiru com origem
+- docs(maps): corrige Campinho independente e recupera contexto dos PRs
+- docs(maps): fecha evidências e continuidade do primeiro lote
+- docs(maps): atualiza contadores gerados do lote visual
+- feat(maps): aplica primeiro passe de superfícies e entorno urbano
+- docs(maps): inventaria catálogo e organiza passes de polish
 
 ## [2.0.0-alpha.268] — 2026-09-24
 

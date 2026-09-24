@@ -23,7 +23,7 @@ import { enableStylize } from './stylize.js';
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
-import { createMapPreview } from './map_preview.js';
+import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
 import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
@@ -34,7 +34,7 @@ import { FACCAO_NOME_UI } from './mapcat.js';
 const SETTINGS_KEY = 'awpbr_settings';
 const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 if (savedSettings.invertY == null && savedSettings.invY != null) savedSettings.invertY = savedSettings.invY;
-const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal' }, savedSettings);
+const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal' }, savedSettings);
 let preferredQuality = null;
 const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify({
   ...settings,
@@ -909,13 +909,23 @@ function sendTelemetry() {
   const g = game;
   const payload = {
     anonId: getAnonId(),
-    map: currentMap,
-    mode: matchMode,
+    map: g._mapId || currentMap,
+    mode: g.ctf ? 'ctf' : 'rounds',
     seconds: Math.round(g.time || 0),
     rounds: (g.roundsWon?.E || 0) + (g.roundsWon?.B || 0),
     nick: registeredNick || null,
+    event: 'match_end', gameType: telemetryGameContext.gameType, matchEventId: _matchEventId,
   };
   sendJsonKeepalive('/api/telemetry', payload);
+}
+/* Início no NOSSO banco (antes só na Vercel Analytics): DAU conta quem começou e fechou a aba. */
+function sendGameStarted() {
+  if (testMode || !game) return;
+  sendJsonKeepalive('/api/telemetry', {
+    anonId: getAnonId(), map: game._mapId || currentMap, mode: game.ctf ? 'ctf' : 'rounds',
+    nick: registeredNick || null,
+    event: 'game_started', gameType: telemetryGameContext.gameType, matchEventId: _matchEventId,
+  });
 }
 let registeredNick = ''; // nick canônico devolvido pelo registro do UID
 let rankingBloqueado = ''; // erro do register da sessão (nick de outro dono, charset…) — vira aviso claro no fim da partida
@@ -1218,6 +1228,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const sessao = online ? mpSessao : null;
   const metaMp = sessao?.net?.meta || {};
   const salaMp = sessao?.sala || {};
+  // Trocar de vaga/espectador na MESMA partida online remonta o jogo, mas não é partida nova.
+  const continuaPartida = online && telemetryGameContext.gameType === 'multiplayer'
+    && telemetryGameContext.roomId === (metaMp.room || salaMp.id || salaMp.room || null) && game?._mapId === currentMap;
+  if (!continuaPartida) sendTelemetry();   // revanche/reinício e mapa girando no MP fecham a anterior
   telemetryGameContext = online ? {
     gameType: 'multiplayer',
     node: String(metaMp.regiao || sessao?.no?.ticketNode || sessao?.no?.id || '').toLowerCase() || null,
@@ -1358,6 +1372,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
   _funnel('match_start');    // funil: começou a jogar (017)
+  if (!continuaPartida) sendGameStarted();
   retryPending();
   armSwitchHook();
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
@@ -1956,7 +1971,7 @@ function renderMapScreen() {
     bindMapPreview(b, b.dataset.id);
     b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
-    if (b.dataset.id === 'lajes') mapCardPreviews.push(createMapPreview(b, {
+    if (VIDEO_MAPS.has(b.dataset.id)) mapCardPreviews.push(createMapPreview(b, {
       id: b.dataset.id, version: VERSION, media: b.querySelector('.ms-thumb-media'),
     }));
   });
@@ -2690,6 +2705,14 @@ sensEl.oninput = () => { settings.sens = +sensEl.value; updLabels(); saveSetting
 invertEl.onchange = () => { settings.invertY = invertEl.checked; saveSettings(); ui.click(); };
 volEl.oninput = () => { settings.vol = +volEl.value; sfx.setVolume(settings.vol); updLabels(); saveSettings(); };
 qualEl.onchange = () => { settings.quality = qualEl.value; saveSettings(); if (game) game.applySettings(); };
+// Clarão dos tiros (BUG-174): mesma disciplina da qualidade - persiste e aplica AO VIVO,
+// porque quem reclama do clarão está COM A ARMA NA MÃO quando procura o ajuste.
+const fxFlashEl = $('set-fxflash');
+if (fxFlashEl) {
+  fxFlashEl.value = settings.fxFlash || 'normal';
+  if (!fxFlashEl.value) fxFlashEl.value = 'normal';
+  fxFlashEl.onchange = () => { settings.fxFlash = fxFlashEl.value; saveSettings(); if (game) game.applySettings(); ui.click(); };
+}
 // Cor da mira: a mira sai do sistema de cor do HUD (ciano = sistema, âmbar = objetivo,
 // vermelho = crítico) e passa a ser escolha do jogador — puro CSS var, sem custo por frame.
 // PADRÃO = CIANO, não branco. O branco foi medido em 1,28:1 contra a parede clara do
@@ -3345,6 +3368,7 @@ function mpMontarFormulario() {
         ...(aDedo ? { mapas: escolhidos, mapId: escolhidos[0] } : {}),
         faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
+        teamSize: +mpEl('mp-teamsize').value || 5,   // teamSize do criador: 1 = X1 sem bots (backend #29, relato 21/09)
         creatorNick: ($('nick-input').value || '').trim() || null,
       }, ticket);
       let cheia = { ...sala, id: sala.room || sala.id };
@@ -3432,6 +3456,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   }
   const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
     nome: nick || null, room: sala.id, pw: senha, team, ticket,
+    csha: String(window.__CS_BUILD?.sha || ''),   // mp_session grava o build do navegador (backend#22)
   });
   /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
      mensagem lê como "cliquei e não aconteceu nada" (BUG-88). O prazo é do net.connect(). */
@@ -3498,7 +3523,7 @@ async function mpMontarPartida(net, m) {
    o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
 function mpDesconectou() {
   if (!mpSessao) return;
-  try { if (game) sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia a saída */ }
+  try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
   mpSessao = null;
   clearTelemetryGameContext();
   mpFecharBarraSpec();
@@ -3562,7 +3587,7 @@ function mpEncerrarSessao() {
 /* Sair da partida online. Fecha o socket ANTES de derrubar o jogo: o servidor precisa
    liberar o corpo (senão fica um manequim segurando vaga até o heartbeat derrubar). */
 function mpSair() {
-  try { if (game) sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia a saída */ }
+  try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
   mpEncerrarSessao();
   clearTelemetryGameContext();
   try { if (game) game.dispose(); } catch { /* já foi */ }

@@ -36,7 +36,10 @@ do código atual. `package-lock.json` permaneceu exatamente o da `main` desta la
   texturas, dois GLBs de fauna e 17 GLBs de props.
 - Proveniência e contratos: plano da Mansão, documentos de imagens/props, manifesto de
   recuperação e somente as 15 entradas Joá adicionadas ao `mint-assets.json` atual.
-- Registro atual: `mansao` no catálogo e alias legado `fy_mansao`.
+- Registro atual: `mansao` no catálogo, com o id antigo do Joá (prefixo `fy_`) resolvido
+  por `ALIAS_MAPA` em `maps.js` — o M2 da régua `eval:mapid` cobra esse alias. O literal
+  não é escrito aqui de propósito: o M1 varre `.md` e reprova id em forma de CS fora do
+  registro, e foi assim que a main ficou vermelha depois do merge do #578.
 - Look: somente o bloco antigo do Joá foi atualizado para o pôr do sol e horizonte 3D da
   Mansão; materiais dos demais mapas foram preservados.
 - Preload: uma chamada opcional `MAPS[currentMap]?.preload?.()` foi encaixada no fluxo
