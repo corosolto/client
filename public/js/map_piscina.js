@@ -633,13 +633,8 @@ export function buildPoolDay(scene, T) {
       const a = T.decalAspects[i] || 1;
       let h = alt, w = alt * a;
       if (w > larg) { w = larg; h = larg / a; }    // encolhe inteiro; NUNCA estica
-      /* lambe em cima de lambe no MESMO plano lê como bug — mas o audit de 14/08 contou
-         29 PARES com sobreposição > 50%, e é esse o alvo: os dois retângulos se mordendo,
-         não um adesivo encostando na quina de um cartaz. Rejeitar qualquer toque tirava
-         119 das 618 peças do salão e derrubava a cobertura MEDIDA de 83,3% para 71,4%,
-         abaixo da meta de 76% do eval:grafite — matava peça boa para matar o par ruim.
-         Por isso o corte é sobre a MAIOR das duas: a vaga só tem dona quando as duas
-         peças ocupam praticamente a mesma área. */
+      /* Lambe em cima de lambe: o alvo é o par com sobreposição > 50% do audit de 14/08,
+         não o encosto de quina — rejeitar tudo custava 119 peças (BUG-179 em KNOWN-BUGS). */
       const nx = Math.sin(ry), nz = Math.cos(ry), lx = Math.cos(ry), lz = -Math.sin(ry);
       const yc = y0 + h / 2, sc = x * lx + z * lz, dc = x * nx + z * nz;
       const _interseca = (c1, e1, c2, e2) => Math.max(0, Math.min(c1 + e1 / 2, c2 + e2 / 2) - Math.max(c1 - e1 / 2, c2 - e2 / 2));

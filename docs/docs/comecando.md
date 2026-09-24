@@ -39,9 +39,9 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 54.638 linhas em 108 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7.959** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.663 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 54.624 linhas em 108 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7.955** linhas | `wc -l public/js/game.js` |
+| `main.js` | 3.658 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 64 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 184 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -225,9 +225,9 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.192 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.407 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.102 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.097 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.064 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.922 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.924 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.657 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.348 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |

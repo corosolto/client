@@ -1609,13 +1609,9 @@ export class Game {
        partida pre-carrega so as armas que sorteou. Monta o que faltou quando chega. */
     // Em node (arnês) a URL relativa do GLB não resolve e a rejeição vira erro não
     // tratado: o boot da régua morre antes de medir. No navegador nada muda.
-    /* EM OCIOSO, NUNCA NO CONSTRUTOR. Este bloco roda dentro de `new Game(...)`, antes
-       de `window.__game` existir — ou seja, dentro da janela BLOQUEANTE que a régua
-       eval:armas mede. Pedindo aqui, as 18 armas que a partida NÃO sorteou entravam
-       junto com as 8 sorteadas e a ARM1 lia 26 no teto de 12; e como não sobrava nada
-       para depois, a ARM3 ("a carga tardia chegou") apagava no mesmo movimento. A malha
-       só é necessária antes da TROCA de arma, que é evento de partida, não de boot —
-       é a mesma espera ociosa que o main.js usa para o resto do arsenal. */
+
+    /* EM OCIOSO, nunca no construtor: aqui ainda não existe `window.__game` e o pedido
+       caía na janela bloqueante da eval:armas (ARM1/ARM3 — ver BUG-179 em KNOWN-BUGS). */
     if (semMalha.size && !NODE_RUNTIME) {
       const pendentes = [...semMalha];
       const ocioso = (typeof requestIdleCallback === 'function')

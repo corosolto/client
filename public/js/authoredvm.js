@@ -242,7 +242,7 @@ const familyFor = (weapon) => {
 };
 // Arma "baked" tem GLB próprio (Mint assada dentro, offline): entry por ARMA.
 const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
-const entryKeyFor = (weapon) => {
+export const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;

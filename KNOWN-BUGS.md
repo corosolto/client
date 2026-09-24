@@ -98,6 +98,79 @@ atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o a
 
 Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
 
+## BUG-179 — cinco portões que a `vm/blob-delivery` acendeu sozinha (#623)
+
+**Fechado em 24/09/2026, na reconciliação do #623 com a alpha.278.** Cinco defeitos
+independentes, todos da branch e todos verdes na main. Ficam juntos porque a causa comum é a
+mesma: mudança de branch longa que ninguém mediu contra a régua que ela quebrava.
+
+**1 · card de facção nasce `aria-disabled` (smoke, `eval:boot`).** O laço do contador de
+elenco em `main.js` decidia prontidão por `card.dataset.ready === '1'`. Esse atributo só
+existia no `index.astro` data-driven da branch (`eb1491b23`); o merge com a main devolveu os
+seis cards estáticos, sem `data-ready`, e a expressão virou `false` para TODAS as facções. O
+atributo é escrito uma vez, na avaliação do módulo, então o estado nunca mudava:
+
+```
+waiting for locator('#btn-team-e')
+  - locator resolved to <button id="btn-team-e" aria-disabled="true" …>
+  - element is not enabled
+```
+
+`web-smoke.spec.js:73`, `web-assets.spec.js:36` e a BOOT0 esperavam até o teto (15,2 min no
+`web-assets`). O jogo estava intransponível a partir do passo 2, em produção. Prontidão agora
+é o sinal real — ter elenco (`n > 0`) — e o clique tem guarda única no `pickTeam()`. Mesma
+classe de defeito que o `data-ready` nunca escrito do #638.
+
+**2 · lambe-lambe da piscina (`eval:grafite`).** O anti-sobreposição novo do `decal()` em
+`map_piscina.js` rejeitava QUALQUER encosto entre dois retângulos do mesmo plano, enquanto o
+audit que ele cita conta "29 pares > 50%". Medido nesta árvore: com o `map_piscina.js` da
+main, 83,3% (758/910 placas, 618 peças); com o da branch, 71,4% (650/910, 499) contra meta de
+76%. O critério passou a ser área de sobreposição acima de metade da MAIOR das duas peças:
+76,8% (699/910, 569 peças), com o par ruim ainda barrado.
+
+**3 · carrinho de mão na porta do escritório (`eval:mapcontrato` MC3).** A pegada nova do
+BUG-54 ficou parada em (3,2, -30,4) no `map_ferrovelho.js` — exatamente o vão da porta do
+barraco. Comia o waypoint (4,0, -30,6) e cortava a única aresta que ligava o miolo ao pátio:
+296 nós · 1482 arestas · 15 ilhados viravam 295 · 1478 · 21, acima do teto de 15. O carrinho
+continua com pegada (sem ela o jogador atravessava o carrinho inteiro); mudou de lugar para
+(2,5, -33,0), encostado no trecho de parede ao norte da porta.
+
+**4 · arsenal inteiro no preload bloqueante (`eval:armas` ARM1/ARM3).** O remendo de malha do
+`_buildViewModels` chamava `preloadWeapons(pendentes)` DENTRO do construtor do `Game`, antes
+de `window.__game` existir — dentro da janela que a régua mede. Pilha capturada por CDP:
+`preloadWeapons <- Game._buildViewModels (game.js:1614) <- new Game <- _startGame`. As 18
+armas não sorteadas subiam com as 8 da partida (`ARM1 preload bloqueante com 26 armas, teto
+12`) e não sobrava carga tardia (`ARM3 parou em 26 armas`). O pedido agora espera o ocioso,
+como o resto do arsenal já fazia no `main.js`: ARM1 9, ARM3 26 em 2 s, 6/6 verde.
+
+**5 · régua de transição autorada MORRENDO em vez de medir (`AUD1B`).** O fixture de
+`tools/eval/authored-transition-check.mjs` chaveava as entradas por `'deagle'`/`'revolver38'`,
+mas depois do rollout golden (`7fc989e7d`) o `entryKeyFor` responde `''` para essas duas e
+`'gold#ak'`/`'pistol#pistol'` para as aprovadas. `vm.entry()` voltava `undefined` e a régua
+estourava em `TypeError: Cannot read properties of undefined (reading 'scene')`
+(authored-transition-check.mjs:55) — vermelha pelo motivo errado, medindo zero. O fixture
+agora deriva a chave do próprio `entryKeyFor` e escolhe as duas primeiras armas do rollout:
+27 cláusulas, todas verdes.
+
+### Dívida que este fechamento ABRIU: a pose da pistola
+
+As três mudanças de `VM_FRAME` em `public/js/vmattach.js` foram REVERTIDAS para os valores da
+main (`sniper.roll` 0.580 → -0.055, a entrada inteira da classe `pistol`, e `zMul`
+`{uzi:1.34,p90:1.16,mp5:1.08}` → `{}`). Motivo: com os valores da branch, SETE das 26 armas
+caíam abaixo do piso de 4% de `areaPct` da VM5/VM18b — deagle 3,07/2,68 · revolver38 3,85/3,6
+· mosin 3,14/2,87 · rem700 4,23/3,85 · uzi 4,14/3,5 · g3sg1 4,21/3,81 · sks 3,3/2,98. Com os
+da main, as 26 ficam dentro da faixa 4-16%. Invariante medida sobre 26 armas, com piso
+declarado, vale mais que uma queixa visual sobre uma arma que ninguém consegue remedir — e o
+`zMul` a própria main descreve como dívida que ela já tinha zerado.
+
+**A queixa continua de pé e é isto que ela diz, na palavra de quem escreveu a pose:** "a pose
+27°/32° fazia a PT-38 atravessar a tela e esconder a mão do cabo". Veio junto com a entrada
+`pistol: { roll: -0.105, pitch: 0.1745, yaw: 0.3142, tanH: 0.285, minz: 0.3500, fwdTan: 1.45 }`.
+**Restrição para quem for consertar:** o conserto NÃO pode custar tamanho aparente. `minz`
+afasta a arma da lente e `fwdTan` encolhe o avanço do cano — os dois derrubam `areaPct` direto.
+Quem mexer aqui roda `node tools/eval/vm-mint-audit.mjs` e prova as 26 dentro de 4-16% ANTES
+de propor a pose.
+
 ## BUG-178 — a main publicou import sem export e só o prod-watch viu (#524)
 
 **Fechado em 23/09/2026.** O #524 (fingerprint `producao-inconsistente`) juntou duas causas
