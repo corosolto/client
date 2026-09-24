@@ -9,13 +9,15 @@ import { execSync } from 'node:child_process';
 
 import { MANIFESTO, RAIZ_REPO, lerJson } from './lib/comum.mjs';
 
-const LOTE = path.join(RAIZ_REPO, 'artifacts/fabrica-lote1');
-const PORTA = process.argv[2] || '4671';
+const opt = (n, d) => process.argv.find((a) => a.startsWith(`--${n}=`))?.split('=')[1] || d;
+const LOTE = path.join(RAIZ_REPO, 'artifacts', opt('lote', 'fabrica-lote1'));
+const PORTA = process.argv.slice(2).find((a) => !a.startsWith('--')) || '4671';
 const rj = (f, d) => { try { return lerJson(f); } catch { return d; } };
 const rt = (f) => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const manifesto = lerJson(MANIFESTO);
-const ORDEM = ['ak', 'm4', 'famas', 'shotgun', 'pistol'].filter((id) => manifesto.candidates[id]);
+const ORDEM = opt('armas', 'ak,m4,famas,shotgun,pistol').split(',').filter((id) => manifesto.candidates[id]);
+const TITULO = opt('titulo', 'lote 1 (AK, M4, FAMAS, escopeta, pistola)').replaceAll('_', ' ');
 const resumo = rj(path.join(LOTE, 'qa/resumo.json'), { porArma: {}, regressao: {}, mutantesDoProduto: [] });
 const rev = execSync('git rev-parse --short HEAD', { cwd: RAIZ_REPO }).toString().trim();
 const url = (w) => `http://127.0.0.1:${PORTA}/?debug=1&auto=P,mst&map=piscina_treta&armaslazy=0&vmauthored=1&vmqa=precision&vmfabrica=${w}`;
@@ -89,12 +91,15 @@ const linhas = ORDEM.map((id) => { const f = ficha(id); const cr = critico(id); 
   return `<tr><td><a href="#${id}">${id}</a></td><td>${esc(f.chassi)}${f.zonaLivre?.length ? ' (variante)' : ''}</td><td class="${vclass(cr.v)}">${esc(cr.v)}</td><td>${v.length ? `<span class="bad">${esc(v.join(', '))}</span>` : '<span class="okt">verde</span>'}</td></tr>`; }).join('');
 const reg = Object.entries(resumo.regressao || {}).map(([k, v]) => `<span class="chip ${v.ok ? 'ok' : 'bad'}">${esc(k)} ${v.ok ? '✓' : '✗'}</span>`).join('');
 const mut = (resumo.mutantesDoProduto || []).map((m) => `<span class="chip ${m.mordeu ? 'ok' : 'bad'}">mutante ${esc(m.mutante)} ${m.mordeu ? 'mordeu' : 'NÃO mordeu'}</span>`).join('');
+const refLote1 = fs.existsSync(path.join(LOTE, 'ref-lote1')) ? `<div class="box"><b>Referências aprovadas (no topo)</b><p class="ref">AK golden aprovada (rig A — decisão do dono: a 'ak' fica a golden) e as aprovadas da fábrica no lote 1 (m4 e pistola, crítico APROVADA).</p>
+<div class="grid">${['../ref/REF-ak-idle.png|AK golden (aprovada)', 'ref-lote1/m4-idle.png|m4 fábrica (lote 1, aprovada)', 'ref-lote1/pistol-idle.png|pistola fábrica (lote 1, aprovada)', 'ref-lote1/m4-ads.png|m4 ADS']
+  .map((x) => x.split('|')).map(([f, l]) => `<figure><a href="${f.replace('../', '')}" data-lb><img src="${f.replace('../', '')}" alt="${l}"></a><figcaption>${l}</figcaption></figure>`).join('')}</div></div>` : '';
 const duasAks = `<div class="box"><b>Decisão pendente: duas AKs</b><p class="ref">À esquerda a AK golden aprovada (rig A, braço próprio). À direita a AK do pack com a skin AK-47 e o braço do pack — o braço que as outras armas da fábrica usam. Manter a golden deixa a AK com um braço diferente das outras; padronizar troca a golden pela do pack.</p>
 <div class="duas"><figure><img src="ref/REF-ak-idle.png" alt="AK golden aprovada"><figcaption>AK golden aprovada (rig A)</figcaption></figure>
 <figure><img src="capturas/3x2/ak-idle.png" alt="AK do pack"><figcaption>AK do pack (fábrica)</figcaption></figure></div></div>`;
 
 const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fábrica de armas — lote 1</title>
+<title>Fábrica de armas</title>
 <style>
 :root{--bg:#f6f5f2;--fg:#1d1d1b;--mut:#6b6960;--card:#fff;--line:#dedbd2;--ok:#1d7a3e;--bad:#b3261e;--warn:#a15c00;--acc:#1f5fbf}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141413;--fg:#ecebe6;--mut:#9d9a90;--card:#1e1e1c;--line:#34332f;--ok:#5fcf86;--bad:#ff8a80;--warn:#f0b35a;--acc:#8ab4ff}}
@@ -124,7 +129,7 @@ details pre{white-space:pre-wrap;font:12px ui-monospace,monospace;background:var
 textarea{width:100%;min-height:110px;font:12px ui-monospace,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px}
 #lb{position:fixed;inset:0;background:#000d;display:none;place-items:center;z-index:9;cursor:zoom-out}#lb img{max-width:98vw;max-height:96vh}.ref{color:var(--mut);font-size:13px}
 </style></head><body><main>
-<h1>Fábrica de armas — lote 1 (AK, M4, FAMAS, escopeta, pistola)</h1>
+<h1>Fábrica de armas — ${esc(TITULO)}</h1>
 <div class="top">
  <div class="box"><b>O que é</b><p class="ref" style="margin:4px 0">Cada arma é o pack KINEMATION <b>como autorado</b> na zona de contato (braço, arma, pose e recargas do próprio pack); só a zona livre varia (a FAMAS troca alça e soleira) e a identidade vem de skin. Servidor: <code>node tools/eval/serve.mjs ${PORTA}</code> no worktree <code>vm-fabrica</code> (branch <code>vm/fabrica</code> @ ${esc(rev)}). No jogo: <code>?vmauthored=1&amp;vmfabrica=&lt;arma&gt;</code>. Nenhuma flag <code>ready</code> nem <code>VM_LAUNCH</code> foi mudada.</p>
  <p class="ref" style="margin:4px 0"><b>Política revogada (confirmar):</b> desde 24/08 (BUG-75) a arma do pack ficava escondida e a Mint era encaixada por cima ("pacote é doador, nunca aparência"). A fábrica mostra a arma do pack; a identidade do jogo vem de skin, nome e variante de zona livre.</p>
@@ -133,7 +138,7 @@ textarea{width:100%;min-height:110px;font:12px ui-monospace,monospace;background
  <div class="box"><b>Veredito do dono (colar)</b><textarea id="out" readonly></textarea><button id="cp" style="margin-top:6px">copiar</button>
  <div class="chips" style="margin-top:8px">${mut}${reg}</div></div>
 </div>
-${duasAks}
+${refLote1 || duasAks}
 <div class="box"><table><thead><tr><th>arma</th><th>chassi</th><th>crítico cego</th><th>réguas vermelhas (3:2 e 16:9)</th></tr></thead><tbody>${linhas}</tbody></table></div>
 ${ORDEM.map(card).join('\n')}
 </main><div id="lb"><img alt=""></div>

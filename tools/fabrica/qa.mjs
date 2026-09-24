@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Fábrica — estágio de QA (gauntlet por arma): réguas, capturas, pacote do crítico, regressão.
  *
- *   node tools/fabrica/qa.mjs <id|todas> [--porta=4671] [--sem-capturas] [--sem-regressao]
+ *   node tools/fabrica/qa.mjs <id|todas> [--porta=4671] [--lote=fabrica-lote2] [--sem-capturas] [--sem-regressao]
  *
  * 1. réguas do produto (tools/fabrica/reguas.mjs, com mutantes);
  * 2. manga: eval:vm-manga-oca e eval:vm-manga-tela no modo --fabrica (a extensão do vmsleeve
@@ -30,7 +30,7 @@ const PORTA = opt('porta', '4671');
 const manifesto = lerJson(MANIFESTO);
 const pedido = args.find((a) => !a.startsWith('--')) || 'todas';
 const ids = pedido === 'todas' ? Object.keys(manifesto.candidates) : pedido.split(',');
-const LOTE = path.join(RAIZ_REPO, 'artifacts/fabrica-lote1');
+const LOTE = path.join(RAIZ_REPO, 'artifacts', opt('lote', 'fabrica-lote1'));
 const QA = path.join(LOTE, 'qa');
 fs.mkdirSync(QA, { recursive: true });
 
@@ -137,10 +137,11 @@ for (const id of ids) {
   resultado[id].vermelhos = vermelhos(id);
   gravarJson(path.join(QA, `${id}.json`), resultado[id]);
 }
+const anterior = fs.existsSync(path.join(QA, 'resumo.json')) ? lerJson(path.join(QA, 'resumo.json')) : {};
 const resumo = {
-  schemaVersion: 1, gerado: new Date().toISOString(), porta: PORTA, ids,
+  schemaVersion: 1, gerado: new Date().toISOString(), porta: PORTA, ids: [...new Set([...(anterior.ids || []), ...ids])],
   mutantesDoProduto: mutantes.map((m) => ({ mutante: m.mutante, mordeu: m.mordeu })),
-  porArma: Object.fromEntries(ids.map((id) => [id, resultado[id].vermelhos])),
+  porArma: { ...(anterior.porArma || {}), ...Object.fromEntries(ids.map((id) => [id, resultado[id].vermelhos])) },
   regressao,
 };
 gravarJson(path.join(QA, 'resumo.json'), resumo);
