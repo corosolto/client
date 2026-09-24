@@ -258,7 +258,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.600 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.348 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
-| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 490 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 753 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 289 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 241 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 256 |

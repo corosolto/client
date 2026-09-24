@@ -18,7 +18,7 @@ PR (`.github/workflows/ci.yml`).
 {/* BEGIN:GERADO:invariantes — não edite à mão, rode `npm run docs` */}
 
 - `tools/eval/invariants.mjs`: **2,322 lines**, **68 declared invariant identifiers**, with **29** declared `skip()` paths.
-- The harness contains **382 scripts** in `tools/eval/`, plus **76 pipeline scripts** in `tools/`.
+- The harness contains **388 scripts** in `tools/eval/`, plus **76 pipeline scripts** in `tools/`.
 - The number of critical checks in one run depends on the inputs present on that machine; dated results belong in `KNOWN-BUGS.md`.
 
 ```bash
