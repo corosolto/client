@@ -1145,7 +1145,7 @@ export function buildFerroVelho(scene, T) {
       // A cuba chega a 0,89 m: sem pegada o jogador atravessava o carrinho inteiro.
       collide(bx, bz, 0.72, 0.82, 0.95);
     };
-    barrow(3.2, -30.4, 0.6);
+    barrow(2.5, -33.0, 0.6);
     /* BATERIAS empilhadas (terminais esverdeados de sulfato) + ROLOS DE FIO DE COBRE —
        é literalmente o que o ferro velho compra; ficam à sombra do barraco. */
     const batMat = lam({ color: 0x1a1c1e, roughness: 0.75 });

@@ -633,13 +633,21 @@ export function buildPoolDay(scene, T) {
       const a = T.decalAspects[i] || 1;
       let h = alt, w = alt * a;
       if (w > larg) { w = larg; h = larg / a; }    // encolhe inteiro; NUNCA estica
-      /* lambe em cima de lambe no MESMO plano lê como bug (audit: 29 pares > 50% em
-         14/08): mesma parede, retângulos se mordendo → a vaga já tem dona, pula. */
+      /* lambe em cima de lambe no MESMO plano lê como bug — mas o audit de 14/08 contou
+         29 PARES com sobreposição > 50%, e é esse o alvo: os dois retângulos se mordendo,
+         não um adesivo encostando na quina de um cartaz. Rejeitar qualquer toque tirava
+         119 das 618 peças do salão e derrubava a cobertura MEDIDA de 83,3% para 71,4%,
+         abaixo da meta de 76% do eval:grafite — matava peça boa para matar o par ruim.
+         Por isso o corte é sobre a MAIOR das duas: a vaga só tem dona quando as duas
+         peças ocupam praticamente a mesma área. */
       const nx = Math.sin(ry), nz = Math.cos(ry), lx = Math.cos(ry), lz = -Math.sin(ry);
       const yc = y0 + h / 2, sc = x * lx + z * lz, dc = x * nx + z * nz;
-      if (_usados.some((u) => Math.abs(u.d - dc) < 0.3
-        && Math.abs(u.s - sc) < (u.w + w) / 2 - 0.02
-        && Math.abs(u.y - yc) < (u.h + h) / 2 - 0.02)) return null;
+      const _interseca = (c1, e1, c2, e2) => Math.max(0, Math.min(c1 + e1 / 2, c2 + e2 / 2) - Math.max(c1 - e1 / 2, c2 - e2 / 2));
+      if (_usados.some((u) => {
+        if (Math.abs(u.d - dc) >= 0.3) return false;   // planos diferentes não disputam vaga
+        const area = _interseca(u.s, u.w, sc, w) * _interseca(u.y, u.h, yc, h);
+        return area > 0.5 * Math.max(u.w * u.h, w * h);
+      })) return null;
       // parede atrás ANTES de desenhar (map_decals.js) — sem sólido, não vira tinta
       /* `[root]` e não `colliders`: o critério mede a MALHA DESENHADA (map_decals.js). A
          lista de caixas declarava parede onde havia vão de piloti e onde havia vidro —
