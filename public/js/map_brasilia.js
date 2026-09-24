@@ -11,6 +11,7 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras } from './map_decals.js';   // pool por NOME + raycast na MALHA
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';             // cobertura medida, não coordenada à mão
+import { createWater } from './water.js';
 
 /* PEGADA NA ALTURA DO CORPO (reprovação do dono, 05/08: "problemas com o box do ônibus
    e barracas"). O colisor derivado do Box3 do GLB INTEIRO conta como parede coisas que só
@@ -143,6 +144,21 @@ export function buildBrasilia(scene, T) {
   const DETAIL = QP.get('props') === '0' ? 0 : (LOWQ ? 1 : 2);   // 0=nada, 1=essencial, 2=cheio
   const BIG = QP.get('bigscale') !== '0';   // ?bigscale=0 volta à escala antiga dos landmarks
   const SKY2 = QP.get('sky') !== '0';       // ?sky=0 volta ao céu/luz antigos
+  // Malhas puramente visuais não podem deslocar a sequência global usada depois pelos bots.
+  // Three gera UUIDs com Math.random; logo acrescentar um prédio de fundo mudava a mesma
+  // partida sem alterar navegação. A produção R2 nasce sob RNG local e devolve o gerador
+  // global exatamente no mesmo estado. `budget` preserva as 12 chamadas que o antigo plano
+  // de água (material + geometria + mesh) fazia antes de esta lane existir.
+  const comRngLocal = (semente, fn, budget = 0) => {
+    const global = Math.random;
+    let s = semente >>> 0;
+    Math.random = () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+    try { return fn(); }
+    finally {
+      Math.random = global;
+      for (let i = 0; i < budget; i++) global();
+    }
+  };
   // AO de vértice: `?vao=0` desliga; em 'low' cai de 3 faixas para 1 (ver vao.js)
   const aoMat = aoMatFactory();
   const SKIRT = new ContactSkirt({ low: LOWQ });
@@ -500,9 +516,6 @@ export function buildBrasilia(scene, T) {
     aco: lam({ color: 0x9aa0a6, roughness: 0.32, metalness: 0.85, envMapIntensity: 1.8 }),
     pintBranca: lam({ color: 0xdedbd2, roughness: 0.7 }),
     asfalto: lam({ map: ctex(asfaltoTex(), 8, 40), roughness: 0.95 }),
-    // lâmina d'água do espelho: 0.06 = espelho perfeito de uma fonte pontual = ponto
-    // invisível. 0.24 abre o rastro de sol na água (o "glitter path") pra vários pixels.
-    agua: lam({ color: 0x2f6ea0, roughness: 0.24, metalness: 0.55, envMapIntensity: 2.2, transparent: true, opacity: 0.88 }),
     bronze: lam({ color: 0x5d6b4e, roughness: 0.40, metalness: 0.78, envMapIntensity: 1.7 }),   // pátina verde-escura
   };
   // mármore polido da colunata: o mapa de veio já quebra o hotspot chapado (r2), então aqui
@@ -1066,7 +1079,12 @@ export function buildBrasilia(scene, T) {
   const GARDEN_Z = BIG ? Math.max(76, PAL_ZMAX + 14) : 50;
   {
     const PAR_H = 1.05, HW = 14.2, HD = 5.1;   // meia-largura / meia-profundidade do parapeito
-    addPlane(26.4, 8.6, MAT.agua, 0, 0.55, GARDEN_Z, 0, -Math.PI / 2);
+    // O fundo dá profundidade ao shader de água criado depois da luz; não existe uma
+    // segunda lâmina Standard na mesma cota, portanto não há z-fight.
+    // Fundo mineral azul-acinzentado: o granito quase preto apagava a lâmina rasa mesmo
+    // vista de cima, fazendo o espelho parecer um buraco. Continua sóbrio e institucional.
+    addPlane(HW * 2 - 0.8, HD * 2 - 0.8, lam({ color: 0x5b7480, roughness: 0.82 }),
+      0, 0.06, GARDEN_Z, 0, -Math.PI / 2);
     // parapeito fechado nos 4 lados: granito no corpo + soleira de mármore no topo (a linha
     // clara é o que faz a borda LER a 30 m, mesmo contra o piso claro da praça)
     for (const rz of [GARDEN_Z - HD, GARDEN_Z + HD]) {
@@ -1429,6 +1447,49 @@ export function buildBrasilia(scene, T) {
     addBox(3, 0.5, 0.9, jardTex, px, 0.9, pz);
   }
 
+  // Jardineiras na altura do peito quebram a visada sob os pilotis sem fechar o flanco.
+  // Elas ficam fora da coluna de navegação x=±35,2 da grade (STEP 4,4): na primeira versão,
+  // o centro x=±34 fazia o bot receber um waypoint válido logo na quina do collider.
+  // `?coberturaCol=0` mantém a malha e remove SÓ estes dez colliders para o A/B causal.
+  const coberturaColide = QP.get('coberturaCol') !== '0';
+  comRngLocal(0x50524132, () => {
+    for (const sx of [-1, 1]) for (const z of [-48, -24, 0, 24, 48]) {
+      // `?coberturaAntiga=1` é o mutante: recoloca o centro em 34 m sobre a coluna da grade.
+      const antiga = QP.get('coberturaAntiga') === '1';
+      const x = sx * (antiga ? 34 : 37.4);
+      const antes = colliders.length;
+      const jardineira = addBox(antiga ? 3.2 : 1.1, 1.25, antiga ? 1.1 : 3.2,
+        MAT.concCru, x, 0, z, { collide: coberturaColide });
+      jardineira.userData.pracaR2 = true;
+      addBox(antiga ? 2.75 : 0.78, 0.22, antiga ? 0.78 : 2.75,
+        jardTex, x, 1.25, z, { collide: false, shadow: false });
+      for (let i = antes; i < colliders.length; i++) colliders[i].pracaR2 = true;
+    }
+
+    // Oito defensas baixas e descontínuas protegem o primeiro passo dos quatro spawns.
+    // Cada peça fica alinhada com um spawn, mas os vãos de 3,6 m preservam três saídas;
+    // z=±53,4 cai entre duas linhas da grade e não cria waypoint dentro do volume.
+    for (const sz of [-1, 1]) for (const x of [-9, -3, 3, 9]) {
+      const z = sz * 53.4;
+      const antes = colliders.length;
+      const defensa = addBox(2.4, 1.85, 0.85, MAT.concCru, x, 0, z);
+      defensa.userData.pracaSpawnCover = true;
+      addBox(2.05, 0.13, 0.58, jardTex, x, 1.85, z, { collide: false, shadow: false });
+      for (let i = antes; i < colliders.length; i++) colliders[i].pracaSpawnCover = true;
+    }
+
+    // Balizadores de segurança ocupam os três quadrantes externos que antes tinham um
+    // único prop em ~880 m². Ficam junto ao limite, fora das três rotas de combate; dão
+    // escala humana ao vazio sem transformar o conjunto monumental em labirinto.
+    for (const sx of [-1, 1]) for (const z of [-68, 16, 68]) {
+      const x = sx * 42;
+      const antes = colliders.length;
+      const balizador = addBox(0.8, 1.05, 0.8, MAT.concCru, x, 0, z);
+      balizador.userData.pracaDensidade = true;
+      for (let i = antes; i < colliders.length; i++) colliders[i].pracaDensidade = true;
+    }
+  });
+
   /* ---------------- DENSIDADE: mobiliário urbano + vegetação (task 3) ---------------- */
   // Tudo aqui é InstancedMesh: o frame ganha detalhe secundário sem estourar draw call
   // (≈14 draw calls no total pra ~500 objetos). ?props=0 desliga; quality low corta pela metade.
@@ -1616,6 +1677,64 @@ export function buildBrasilia(scene, T) {
     }
   }
 
+  // Duas InstancedMesh sem colisão/sombra fecham o horizonte visto sob os pilotis;
+  // `?horizonte=0` preserva a contraprova visual.
+  if (QP.get('horizonte') !== '0') comRngLocal(0x48525a32, () => {
+    const ROAD_OUT = ROAD_IN + ROAD_W;
+    const ruido = (n) => {
+      const valor = Math.sin(n * 91.7 + 13.1) * 43758.5453;
+      return valor - Math.floor(valor);
+    };
+    const fachada = (andares, variante = 0) => {
+      const tamanho = 256;
+      const canvas = cvs(tamanho, tamanho);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = variante ? '#c7c2b4' : '#d8d6cc';
+      ctx.fillRect(0, 0, tamanho, tamanho);
+      const altura = tamanho / andares;
+      for (let i = 0; i < andares; i++) {
+        const y = i * altura;
+        const bays = variante ? 5 : 7;
+        const passo = tamanho / bays;
+        for (let b = 0; b < bays; b++) {
+          // Janelas individuais e alguns panos cegos: elimina as faixas horizontais que
+          // dominavam o horizonte e denunciavam a repetição do mesmo canvas.
+          if ((i * 3 + b * 5 + variante) % 11 === 0) continue;
+          ctx.fillStyle = (i + b + variante) % 4 === 0 ? '#566067' : '#354047';
+          ctx.fillRect(b * passo + passo * 0.16, y + altura * 0.28, passo * 0.66, altura * 0.42);
+          ctx.fillStyle = 'rgba(255,255,255,.22)';
+          ctx.fillRect(b * passo + passo * 0.19, y + altura * 0.31, passo * 0.58, 1.5);
+        }
+        ctx.fillStyle = 'rgba(70,65,56,.16)'; ctx.fillRect(0, y + altura * 0.82, tamanho, 2);
+      }
+      return canvas;
+    };
+    const anexos = [];
+    const setores = [];
+    for (const sx of [-1, 1]) {
+      for (let i = 0; i < 6; i++) {
+        const z = -132 + i * 52 + (ruido(i + sx * 9) - 0.5) * 12;
+        const comprimento = 20 + ruido(i * 3 + sx) * 16;
+        const altura = 8 + ruido(i * 7 + sx * 2) * 7;
+        anexos.push({ x: sx * (ROAD_OUT + 22 + ruido(i + sx * 4) * 7), y: altura / 2, z,
+          sx: 8 + ruido(i * 13 + sx) * 7, sy: altura, sz: comprimento });
+      }
+      for (let i = 0; i < 4; i++) {
+        const z = -112 + i * 74 + (ruido(i * 5 + sx * 3) - 0.5) * 28;
+        const altura = 19 + ruido(i * 11 + sx) * 17;
+        setores.push({ x: sx * (ROAD_OUT + 64 + ruido(i + sx * 7) * 24), y: altura / 2, z,
+          sx: 13 + ruido(i * 2) * 14, sy: altura, sz: 16 + ruido(i * 4 + sx) * 18 });
+      }
+    }
+    for (const horizonte of [
+      addInst(new THREE.BoxGeometry(1, 1, 1), lam({ map: ctex(fachada(4, 0)), roughness: 0.94 }), anexos, { shadow: false }),
+      addInst(new THREE.BoxGeometry(1, 1, 1), lam({ map: ctex(fachada(9, 1)), roughness: 0.94 }), setores, { shadow: false }),
+    ]) if (horizonte) {
+      horizonte.userData.pracaHorizonte = true;
+      horizonte.receiveShadow = false;
+    }
+  });
+
   /* ---------------- lighting & sky ---------------- */
   // Céu do Planalto Central (BAR §4.1): azul PROFUNDO no zênite (1.172 m de altitude, ar
   // seco), clareando muito rápido perto do horizonte, e a poeira da seca deixando a faixa
@@ -1673,6 +1792,30 @@ export function buildBrasilia(scene, T) {
   // Rebote: no cerrado seco o rebote dominante vem do CHÃO (palha/laterita), não do céu.
   const fill = new THREE.DirectionalLight(SKY2 ? 0xc9b98f : 0xaecbe8, SKY2 ? 0.20 : 0.35);
   fill.position.set(-32, 22, 28); scene.add(fill);
+
+  // A água usa o mesmo contrato já exercitado pelo Córrego, mas toda a configuração é
+  // local à Praça. A bacia é rasa e parada; a ondulação existe apenas para refletir o céu.
+  let aguaEspelho = null;
+  if (QP.get('agua') !== '0') {
+    aguaEspelho = comRngLocal(0x41475541, () => createWater(scene, T, 'praca_poderes', {
+      nivel: 0.55, centro: [0, GARDEN_Z], tamanho: [26.4, 8.6], segmentos: 8,
+      raso: 0x75a6bc, fundo: 0x355f73, marLonge: 0xa0bbca,
+      profEscala: 0.6, espumaFaixa: 0.22, espumaMiolo: 0.06, profFallback: 0.5,
+      fluxo: [0, 0], ampEscala: 0.05, parent: root,
+    }), 12);
+    const uniforms = aguaEspelho.material.uniforms;
+    uniforms.uSolDir.value.copy(sun.position).normalize();
+    uniforms.uSolCor.value.copy(sun.color);
+    uniforms.uCeuCor.value.set(SKY2 ? 0x9fbdd2 : 0xbfd8ee);
+    if (scene.fog) {
+      uniforms.uFogCor.value.copy(scene.fog.color);
+      if (scene.fog.isFogExp2) uniforms.uFogD.value = scene.fog.density;
+    }
+    aguaEspelho.mesh.userData.nonSolidSurface = true;
+  } else {
+    comRngLocal(0x41475541, () => addPlane(26.4, 8.6, lam({ color: 0x2f6ea0, roughness: 0.24, metalness: 0.55,
+      envMapIntensity: 2.2, transparent: true, opacity: 0.88 }), 0, 0.55, GARDEN_Z, 0, -Math.PI / 2), 12);
+  }
 
   /* ---------------- ground height (flat) ---------------- */
   function groundHeightAt() { return 0; }
@@ -1805,6 +1948,7 @@ export function buildBrasilia(scene, T) {
 
   return {
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi,
+    update(dt) { if (aguaEspelho) aguaEspelho.update(dt); },
     /* BANDEIRAS DO CTF — DECLARADAS PELO MAPA (06/08). Os nomes CONGRESSO/ÔNIBUS/CATEDRAL
        moravam no fallback do game.js e vazavam pra QUALQUER mapa sem declaração — o dono
        viu "CONGRESSO" jogando na piscina. Agora o nome mora onde o monumento mora.
