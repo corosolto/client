@@ -6,12 +6,19 @@ import { readFile } from 'node:fs/promises';
 
 const path = new URL('../../public/js/map_preview.js', import.meta.url);
 let source = await readFile(path, 'utf8');
+const mutante = nome => process.argv.includes(`--mutante=${nome}`);
+if (mutante('video-ausente')) {
+  // upa_24h e não 'havan': 'havan' é o mapa estático do MP11, e mutante não pode derrubar cenário alheio.
+  const alvo = source.replace("new Set(['lajes'", "new Set(['upa_24h', 'lajes'");
+  assert.notEqual(alvo, source, 'MUTANTE NÃO APLICOU');
+  source = alvo;
+}
 if (process.argv.includes('--mutante=aba-oculta')) {
   const mutant = source.replace('doc.hidden ||', 'false ||');
   assert.notEqual(mutant, source, 'MUTANTE NÃO APLICOU');
   source = mutant;
 }
-const { createMapPreview } = await import(`data:text/javascript,${encodeURIComponent(source)}`);
+const { createMapPreview, VIDEO_MAPS } = await import(`data:text/javascript,${encodeURIComponent(source)}`);
 let checks = 0;
 class Surface extends EventTarget {
   constructor(doc) {
@@ -135,5 +142,29 @@ await scenario('troca de mapa elimina vídeo anterior e outros mapas seguem est�
   fire(s.host, 'pointerenter'); await flush(); assert.equal(s.videos.length, 1);
   s.controller.setMap('lajes'); fire(s.host, 'focusin'); await flush(); assert.equal(s.videos.length, 2);
   s.controller.dispose();
+});
+await scenario('todo mapa do allow-list tem webm real gravado e poster de repouso', async () => {
+  const EBML = Buffer.from([0x1a, 0x45, 0xdf, 0xa3]);        // assinatura de container WebM/Matroska
+  for (const id of VIDEO_MAPS) {
+    const video = new URL(`../../public/video/map-previews/${id}.webm`, import.meta.url);
+    const poster = new URL(`../../public/img/map-previews/${id}.jpg`, import.meta.url);
+    const bytes = await readFile(video).catch(() => null);
+    assert.ok(bytes, `${id} está no allow-list de vídeo mas não tem public/video/map-previews/${id}.webm`);
+    assert.ok(bytes.subarray(0, 4).equals(EBML), `${id}.webm não é WebM (assinatura EBML ausente)`);
+    // 200 KB: abaixo disso não cabe um giro de 12 s em 960×640 — é esboço, não captura.
+    assert.ok(bytes.length > 200_000, `${id}.webm tem só ${bytes.length} bytes; captura real não é tão pequena`);
+    assert.ok(await readFile(poster).catch(() => null), `${id} sem poster de repouso em public/img/map-previews/${id}.jpg`);
+  }
+});
+await scenario('tela de mapas liga o card pelo allow-list, não por id fixo', async () => {
+  let main = await readFile(new URL('../../public/js/main.js', import.meta.url), 'utf8');
+  if (mutante('card-fixo')) {
+    const alvo = main.replace('VIDEO_MAPS.has(b.dataset.id)', "b.dataset.id === 'lajes'");
+    assert.notEqual(alvo, main, 'MUTANTE NÃO APLICOU');
+    main = alvo;
+  }
+  assert.match(main, /import \{[^}]*VIDEO_MAPS[^}]*\} from '\.\/map_preview\.js'/, 'main.js não importa o allow-list');
+  assert.match(main, /VIDEO_MAPS\.has\(b\.dataset\.id\)\s*\)\s*mapCardPreviews\.push/,
+    'card de mapa preso a um id fixo: mapa novo no allow-list entraria sem hover');
 });
 console.log(`${checks}/${checks} contratos de preview aprovados; codec e pixels exigem browser.`);
