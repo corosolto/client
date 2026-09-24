@@ -47,12 +47,12 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 11,
+      "segundos": 8,
       "file": "viewmodels/fabrica/ak-fabrica.glb",
       "ficha": "tools/fabrica/fichas/ak.json",
       "insumos": {
         "ficha": "f4c2021f64bf17e1eb09df58f05ec2b67acea6cc0e9363a5986505112bd3a1b0",
-        "chassi": "90cb0a520321d4cd4b1c489aa16a9e874eedc6b99c0feb74fbeb5bf919d03508",
+        "chassi": "21f4270b64c23f9d0e5340dc172217e31f2049cc70e143353f92bb878dce0536",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "aad275438cb295aca9c875743a435bbd4fd6994208a9b8dcce2539f4b44e8504",
         "poseFbx": "ef079242d7f2541b07efed816771e5bfeb3a595777a8d3ecfa45f71c1b7680ce",
@@ -112,12 +112,12 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 4,
+      "segundos": 6,
       "file": "viewmodels/fabrica/famas-fabrica.glb",
       "ficha": "tools/fabrica/fichas/famas.json",
       "insumos": {
         "ficha": "1cbf833be73ad64ea0c6f8e3de9606f47ec76f52b352d73414a6a33a2db0a9f9",
-        "chassi": "2d0ba35935a13db7374099648f405aa5245c25e32915da1aaa141f8c00af3356",
+        "chassi": "9bb7dd20c60055298eb52641e26f707e2f038ed71a2ea0bcbb590d24dd8fb2ee",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",
         "poseFbx": "e880a476b6d93b953db983910692cf4d3457557b31b3b3eba138a5993f5a8896",
@@ -179,12 +179,12 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 5,
+      "segundos": 8,
       "file": "viewmodels/fabrica/m4-fabrica.glb",
       "ficha": "tools/fabrica/fichas/m4.json",
       "insumos": {
         "ficha": "67e3bfe19701ea628f1266293365f658f87c9ebe84a6de3302ff95fcb51c1560",
-        "chassi": "2d0ba35935a13db7374099648f405aa5245c25e32915da1aaa141f8c00af3356",
+        "chassi": "9bb7dd20c60055298eb52641e26f707e2f038ed71a2ea0bcbb590d24dd8fb2ee",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",
         "poseFbx": "e880a476b6d93b953db983910692cf4d3457557b31b3b3eba138a5993f5a8896",
@@ -244,12 +244,12 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 6,
+      "segundos": 7,
       "file": "viewmodels/fabrica/pistol-fabrica.glb",
       "ficha": "tools/fabrica/fichas/pistol.json",
       "insumos": {
         "ficha": "7a363a289c2144cfab4c76e804f72ac0d42cda2e3a6ae1024d4495ed64c53aa8",
-        "chassi": "72f6d5ff86c4c8487ef5f288a4d1b4bf9da49a920895165434183c500cd34a48",
+        "chassi": "49c6ffccdd081baec53ca0bff67ef83f0ef80710c19bf87d390bd642ba9077c5",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "39c5726a277e95b9aaf5bbe14c6fc7fd4742b2a0d8db6111c13c60c11b82f925",
         "poseFbx": "670a23d9240ca27cf1164276559f5aacb0521d4dbfd72d5d57ff405077a91c61",
@@ -328,7 +328,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 10,
+      "segundos": 9,
       "file": "viewmodels/fabrica/shotgun-fabrica.glb",
       "ficha": "tools/fabrica/fichas/shotgun.json",
       "insumos": {

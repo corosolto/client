@@ -41,8 +41,8 @@ node tools/fabrica/enquadrar.mjs ak --aplicar    # posição do pacote contra a 
 node tools/fabrica/qa.mjs ak                     # gauntlet: réguas, capturas, crítico, regressão
 ```
 
-Um build leva 4–12 s. É reprodutível: o mesmo insumo gera o mesmo sha256 (a escopeta saiu
-`cdcb472a4c` duas vezes seguidas), e o manifesto `tools/fabrica/fabrica-candidates.json`
+Um build leva 4–12 s. É reprodutível: o mesmo insumo gera o mesmo sha256 (as cinco do lote 1 foram
+reconstruídas e saíram byte a byte iguais), e o manifesto `tools/fabrica/fabrica-candidates.json`
 grava o sha256 de cada insumo (FBX do pack, ficha, chassi, skin, peça de zona livre).
 
 **Onde fica cada coisa.** Pack extraído (privado, nunca commitado):
@@ -236,7 +236,45 @@ flutuando ou sumindo **visível**) — com mutante.
 
 ## 8. Lote 1
 
-(preenchido pelo `qa.mjs` — ver `artifacts/fabrica-lote1/qa/resumo.json` e a página do dono.)
+Produtos (overlay privada `…/viewmodels-fabrica/overlay/viewmodels/fabrica/`), reprodutíveis
+(rebuild byte a byte igual): ak `fc35d572e2` 3,58 MiB · m4 `c500cfe632` 3,97 MiB · famas
+`0a30d2d41b` 3,97 MiB · shotgun `46990c2d6f` 2,89 MiB · pistol `4c9e3a1a29` 2,60 MiB.
+
+Réguas (`node tools/fabrica/qa.mjs todas`, 24/09). ✓ verde · ✗ vermelho · · n/a. Célula = 3:2 / 16:9.
+
+| arma | produto FB1–4 | manga-oca | manga-tela | mira | cobertura | pistola-ref | mãos | carregador |
+|---|---|---|---|---|---|---|---|---|
+| ak | ✓ | ✓ | ✓ | ✓✓ 2 px | ✓✓ 0,90× AK | ·· | ✓✓ 0,10 | ✗✗ |
+| m4 | ✓ | ✓ | ✓ | ✓ ✗* 2 px | ✓✓ 0,89× | ·· | ✓✓ 0,08 | ✓✓ |
+| famas | ✓ | ✓ | ✓ | ✗✗ 26 px, eixo −23° | ✓✓ 0,91× | ·· | ✓✓ 0,08 | ✓✓ |
+| shotgun | ✓ | ✗ | ✓ | ✓✓ 3 px | ✓✓ 0,96× | ·· | ✓✓ 0,04 | ✗✗ |
+| pistol | ✓ | ✓ | ✓ | ✓✓ 1 px | ✓✓ 0,99× PT-38 | ✓✓ 0,99× | ·· | ✓ ✗† |
+
+- **ak carregador:** a recarga vazia do pack deixa o pente velho cair à vista (15%: 2,8 palmas da
+  mão, fora do encaixe) — "objeto no meio do ar" para a régua; é o pack como autorado.
+- **\* m4 mira 16:9:** intermitente — 1 de 3 medições reprovou, sempre com a mesma assinatura
+  (234 px, eixo +64°, socket da alça a 0,83 NDC): é o quadril medido como ADS (a arma ainda não
+  tinha entrado em mira no quadro amostrado). As outras duas: 2 px, +1°.
+- **famas mira:** massa a 26 px (dentro do teto de 30), mas a régua lê a arma tombada 23–26° no
+  ADS: a linha de visada da FAMAS passa por cima da alça, 10 cm acima do cano, e o que aparece no
+  ADS é a alça em perspectiva.
+- **shotgun manga-oca:** 1 vértice da boca da manga entra na borda do quadro em `reload_loop` 62%
+  (3:2); com a extensão do `vmsleeve` desligada. **shotgun carregador:** o cartucho (osso `Gauge`)
+  fica a 1,3 palma da mão aos 43% da recarga tática, na tela.
+- **† pistol carregador 16:9:** "tira no ar" — a mesma régua instável já registrada para a PT-38
+  aprovada (fila R1); em 3:2 verde e `eval:vm-carregador-repete` verde.
+- `eval:vm-carregador-repete` (#641): verde nas cinco (diferença 0,000 palma com e sem render).
+- Mutantes do produto: `cache-velho`, `sem-socket`, `invertida`, `mao-solta` — os quatro mordem.
+
+**Regressão do arsenal** (o que já existia): placar do #636 re-medido nas 26 armas depois das
+mudanças — 16:9 igual (0 de 130 células mudou), 3:2 com duas melhoras (carregador de shotgun e
+deagle, coerentes com a pose fresca do #641); `eval:vm-placar`, `eval:vm-cache`,
+`eval:vm-launch` (VL6), `eval:vm-orientacao` e `eval:vm-manga-oca` verdes. `eval:vm-rig`
+vermelho **igual na base** `vm/integracao-k` sem as mudanças ("ak: produto ausente" — o
+catálogo da integração não tem o `ak/ak-runtime.glb` que a régua procura); não é desta branch.
+
+**Crítico cego** (agente `critico-visual-vm`, só pixel): ver `artifacts/fabrica-lote1/critico/`
+e a página do dono (seção 8.1).
 
 ## 9. Mapeamento das 26 armas
 
