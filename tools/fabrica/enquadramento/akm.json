@@ -9,9 +9,9 @@
     ]
   },
   "frameBase": {
-    "x": 0.285,
+    "x": 0.215,
     "y": -0.05,
-    "z": -0.163,
+    "z": -0.173,
     "fov": 57,
     "rotDeg": [
       1.69,
@@ -20,13 +20,14 @@
     ]
   },
   "antes": {
-    "tamanhoVsAk": 0.903,
-    "bracoVsAk": 0.97,
-    "eixo": 29.7,
+    "tamanhoVsAk": 0.958,
+    "bracoVsAk": 1.054,
+    "eixo": 29,
     "cruz": 0,
+    "mangaNoQuadro": 0,
     "centro": [
-      0.857,
-      0.755
+      0.817,
+      0.779
     ]
   },
   "frame": {
@@ -39,6 +40,7 @@
     "bracoVsAk": 1.054,
     "eixo": 29,
     "cruz": 0,
+    "mangaNoQuadro": 0,
     "centro": [
       0.817,
       0.779

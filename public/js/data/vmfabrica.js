@@ -20,14 +20,14 @@ export const VM_FABRICA_BYTES = Object.freeze({
 // rotação e FOV ficam os de VM_FABRICA_FRAME, iguais para todas as armas.
 export const VM_FABRICA_POS = Object.freeze({
   akm: { x: 0.215, y: -0.05, z: -0.173 },
-  awp: { x: 0.245, y: -0.01, z: -0.543 },
-  g3: { x: 0.195, y: -0.07, z: -0.353 },
+  awp: { x: 0.235, y: -0.03, z: -0.253, fov: 44 },
+  g3: { x: 0.155, y: -0.06, z: -0.313 },
   lmg: { x: 0.375, y: 0, z: -0.203, rotDeg: [1.69, 0, 6.19] },
   m4: { x: 0.245, y: -0.08, z: -0.233 },
-  mosin: { x: 0.175, y: -0.04, z: -0.123 },
-  mp5: { x: 0.185, y: -0.08, z: -0.133 },
-  p90: { x: 0.275, y: -0.01, z: -0.383 },
-  shotgun: { x: 0.155, y: -0.04, z: -0.333 },
-  svd: { x: 0.155, y: -0.05, z: -0.333 },
+  mosin: { x: 0.155, y: -0.03, z: -0.123, fov: 50 },
+  mp5: { x: 0.175, y: -0.07, z: -0.133 },
+  p90: { x: 0.275, y: -0.01, z: -0.223 },
+  shotgun: { x: 0.155, y: -0.04, z: -0.323 },
+  svd: { x: 0.175, y: -0.05, z: -0.143 },
   famas: { x: 0.245, y: -0.08, z: -0.233 },
 });
