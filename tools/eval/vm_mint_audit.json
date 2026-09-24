@@ -1,5 +1,5 @@
 {
- "gerado": "2026-09-01T12:08:51.475Z",
+ "gerado": "2026-09-24T19:55:30.802Z",
  "lente": {
   "V0deg": 42,
   "halfTanH": 0.6824,
@@ -979,7 +979,7 @@
   "deagle": {
    "classe": "pistol",
    "cano": {
-    "rFrente": 0.015,
+    "rFrente": 0.013,
     "rTras": 0.015,
     "canoEmZmais": true
    },
@@ -991,8 +991,8 @@
    "alcanceApoio": null,
    "len": 0.3,
    "gripZ": 0.7,
-   "vm": 0.84,
-   "escalaVM": 0.605,
+   "vm": 0.94,
+   "escalaVM": 0.677,
    "gunSpace": {
     "bboxMin": [
      -0.026,
@@ -1006,13 +1006,13 @@
     ],
     "boca": [
      -0.004,
-     0.074,
-     0.208
+     0.067,
+     0.209
     ],
     "alca": [
-     -0.004,
+     -0.003,
      0.084,
-     0.062
+     0.063
     ]
    },
    "viewSpace": {
@@ -1022,57 +1022,57 @@
      -0.525
     ],
     "boca": [
-     0.148,
-     -0.068,
-     -0.637
+     0.143,
+     -0.065,
+     -0.652
     ],
     "alca": [
-     0.175,
-     -0.077,
-     -0.554
+     0.174,
+     -0.07,
+     -0.557
     ]
    },
-   "coronhaZ": -0.471,
+   "coronhaZ": -0.464,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.175,
-    0.077,
+    -0.174,
+    0.07,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.655,
-     "bordaDir": 0.817,
-     "topo": 0.624,
-     "base": 0.995,
-     "areaPct": 2.54,
-     "silBordaEsq": 0.654,
-     "anguloEixoGraus": 61.86,
+     "bordaEsq": 0.646,
+     "bordaDir": 0.825,
+     "topo": 0.604,
+     "base": 1.016,
+     "areaPct": 3.07,
+     "silBordaEsq": 0.646,
+     "anguloEixoGraus": 61.23,
      "foraPct": 0,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.031,
-     "frenteVisivel": 1.061,
-     "trasVisivel": 0.699,
-     "gordura": 0.547,
+     "fatiaBaixo": 0.051,
+     "frenteVisivel": 1.085,
+     "trasVisivel": 0.705,
+     "gordura": 0.576,
      "ads": {
-      "areaPct": 1.3,
-      "silBordaEsq": 0.619,
-      "anguloEixoGraus": 86.07,
+      "areaPct": 1.63,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 86.21,
       "gripTela": [
        0.657,
        0.768
       ],
       "bocaTela": [
-       0.635,
-       0.635
+       0.633,
+       0.631
       ],
-      "frenteVisivel": 1.111,
-      "trasVisivel": 1.084,
-      "gordura": 0.465,
+      "frenteVisivel": 1.153,
+      "trasVisivel": 1.177,
+      "gordura": 0.491,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": false,
+     "cruzaBaixo": true,
      "gripTela": [
       0.751,
       0.83
@@ -1080,8 +1080,8 @@
      "bracoBordaDir": 2.349,
      "bracoBordaBaixo": 12.234,
      "bocaTela": [
-      0.67,
-      0.639
+      0.661,
+      0.63
      ],
      "adsAlcaTela": [
       0.5,
@@ -1089,34 +1089,34 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.655,
-     "bordaDir": 0.817,
-     "topo": 0.637,
-     "base": 0.959,
-     "areaPct": 2.18,
-     "silBordaEsq": 0.654,
-     "anguloEixoGraus": 62.41,
+     "bordaEsq": 0.646,
+     "bordaDir": 0.825,
+     "topo": 0.62,
+     "base": 0.977,
+     "areaPct": 2.68,
+     "silBordaEsq": 0.646,
+     "anguloEixoGraus": 63.06,
      "foraPct": 0,
      "fatiaDir": 0,
      "fatiaBaixo": 0,
-     "frenteVisivel": 1.058,
-     "trasVisivel": 0.695,
-     "gordura": 0.525,
+     "frenteVisivel": 1.076,
+     "trasVisivel": 0.745,
+     "gordura": 0.542,
      "ads": {
-      "areaPct": 1.13,
-      "silBordaEsq": 0.619,
-      "anguloEixoGraus": 85.2,
+      "areaPct": 1.41,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 85.74,
       "gripTela": [
        0.657,
        0.763
       ],
       "bocaTela": [
-       0.635,
-       0.643
+       0.633,
+       0.64
       ],
-      "frenteVisivel": 1.101,
-      "trasVisivel": 1.038,
-      "gordura": 0.439,
+      "frenteVisivel": 1.147,
+      "trasVisivel": 1.145,
+      "gordura": 0.462,
       "fatiaDir": 0
      },
      "cruzaDir": false,
@@ -1128,8 +1128,8 @@
      "bracoBordaDir": 2.349,
      "bracoBordaBaixo": 11.066,
      "bocaTela": [
-      0.67,
-      0.649
+      0.661,
+      0.641
      ],
      "adsAlcaTela": [
       0.5,
@@ -1153,8 +1153,8 @@
    "alcanceApoio": null,
    "len": 0.26,
    "gripZ": 0.7,
-   "vm": 0.8,
-   "escalaVM": 0.576,
+   "vm": 1.1,
+   "escalaVM": 0.792,
    "gunSpace": {
     "bboxMin": [
      -0.024,
@@ -1184,53 +1184,53 @@
      -0.525
     ],
     "boca": [
-     0.152,
-     -0.083,
-     -0.617
+     0.141,
+     -0.064,
+     -0.652
     ],
     "alca": [
      0.179,
-     -0.076,
-     -0.548
+     -0.054,
+     -0.556
     ]
    },
-   "coronhaZ": -0.48,
+   "coronhaZ": -0.463,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
     -0.179,
-    0.076,
+    0.054,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.671,
-     "bordaDir": 0.813,
-     "topo": 0.632,
-     "base": 1.002,
-     "areaPct": 2.61,
-     "silBordaEsq": 0.67,
-     "anguloEixoGraus": 68.65,
-     "foraPct": 0,
+     "bordaEsq": 0.646,
+     "bordaDir": 0.838,
+     "topo": 0.57,
+     "base": 1.072,
+     "areaPct": 4.35,
+     "silBordaEsq": 0.646,
+     "anguloEixoGraus": 64.66,
+     "foraPct": 8.61,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.035,
-     "frenteVisivel": 1.173,
-     "trasVisivel": 0.841,
-     "gordura": 0.626,
+     "fatiaBaixo": 0.086,
+     "frenteVisivel": 1.178,
+     "trasVisivel": 0.764,
+     "gordura": 0.671,
      "ads": {
-      "areaPct": 1.38,
-      "silBordaEsq": 0.627,
-      "anguloEixoGraus": 88.03,
+      "areaPct": 2.56,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 89.2,
       "gripTela": [
        0.657,
        0.768
       ],
       "bocaTela": [
-       0.637,
-       0.662
+       0.631,
+       0.63
       ],
-      "frenteVisivel": 1.356,
-      "trasVisivel": 1.399,
-      "gordura": 0.515,
+      "frenteVisivel": 1.363,
+      "trasVisivel": 1.513,
+      "gordura": 0.54,
       "fatiaDir": 0
      },
      "cruzaDir": false,
@@ -1242,47 +1242,47 @@
      "bracoBordaDir": 2.349,
      "bracoBordaBaixo": 12.234,
      "bocaTela": [
-      0.68,
-      0.675
+      0.659,
+      0.629
      ],
      "adsAlcaTela": [
-      0.501,
+      0.5,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.671,
-     "bordaDir": 0.813,
-     "topo": 0.645,
-     "base": 0.965,
-     "areaPct": 2.22,
-     "silBordaEsq": 0.67,
-     "anguloEixoGraus": 68.87,
-     "foraPct": 0,
+     "bordaEsq": 0.646,
+     "bordaDir": 0.838,
+     "topo": 0.591,
+     "base": 1.025,
+     "areaPct": 4.01,
+     "silBordaEsq": 0.646,
+     "anguloEixoGraus": 69.73,
+     "foraPct": 0.97,
      "fatiaDir": 0,
-     "fatiaBaixo": 0,
-     "frenteVisivel": 1.171,
-     "trasVisivel": 0.843,
-     "gordura": 0.598,
+     "fatiaBaixo": 0.078,
+     "frenteVisivel": 1.174,
+     "trasVisivel": 0.867,
+     "gordura": 0.639,
      "ads": {
-      "areaPct": 1.19,
-      "silBordaEsq": 0.627,
-      "anguloEixoGraus": 87.44,
+      "areaPct": 2.2,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 88.73,
       "gripTela": [
        0.657,
        0.763
       ],
       "bocaTela": [
-       0.637,
-       0.667
+       0.631,
+       0.638
       ],
-      "frenteVisivel": 1.337,
-      "trasVisivel": 1.351,
-      "gordura": 0.487,
+      "frenteVisivel": 1.329,
+      "trasVisivel": 1.454,
+      "gordura": 0.514,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": false,
+     "cruzaBaixo": true,
      "gripTela": [
       0.751,
       0.817
@@ -1290,11 +1290,11 @@
      "bracoBordaDir": 2.349,
      "bracoBordaBaixo": 11.066,
      "bocaTela": [
-      0.68,
-      0.681
+      0.659,
+      0.64
      ],
      "adsAlcaTela": [
-      0.501,
+      0.5,
       0.5
      ]
     }
@@ -1315,8 +1315,8 @@
    "alcanceApoio": null,
    "len": 0.3,
    "gripZ": 0.6,
-   "vm": 1.15,
-   "escalaVM": 0.828,
+   "vm": 2.2,
+   "escalaVM": 1.584,
    "gunSpace": {
     "bboxMin": [
      -0.013,
@@ -1346,57 +1346,57 @@
      -0.465
     ],
     "boca": [
-     0.073,
-     -0.133,
-     -0.595
+     0.01,
+     -0.141,
+     -0.714
     ],
     "alca": [
-     0.13,
-     -0.11,
-     -0.511
+     0.119,
+     -0.096,
+     -0.552
     ]
    },
-   "coronhaZ": -0.366,
+   "coronhaZ": -0.275,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.13,
-    0.11,
+    -0.119,
+    0.096,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.588,
-     "bordaDir": 0.875,
-     "topo": 0.776,
-     "base": 0.958,
-     "areaPct": 2.76,
-     "silBordaEsq": 0.588,
-     "anguloEixoGraus": 11.1,
-     "foraPct": 0,
-     "fatiaDir": 0,
-     "fatiaBaixo": 0,
-     "frenteVisivel": 1.011,
-     "trasVisivel": 1.113,
-     "gordura": 0.257,
+     "bordaEsq": 0.508,
+     "bordaDir": 1.084,
+     "topo": 0.717,
+     "base": 1.113,
+     "areaPct": 9.11,
+     "silBordaEsq": 0.51,
+     "anguloEixoGraus": 8.73,
+     "foraPct": 20.6,
+     "fatiaDir": 0.191,
+     "fatiaBaixo": 0.156,
+     "frenteVisivel": 1.002,
+     "trasVisivel": 1.308,
+     "gordura": 0.304,
      "ads": {
-      "areaPct": 1.5,
-      "silBordaEsq": 0.643,
-      "anguloEixoGraus": 48.41,
+      "areaPct": 4.86,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 33.66,
       "gripTela": [
        0.687,
        0.824
       ],
       "bocaTela": [
-       0.645,
-       0.739
+       0.621,
+       0.69
       ],
-      "frenteVisivel": 1.039,
-      "trasVisivel": 1.43,
-      "gordura": 0.458,
+      "frenteVisivel": 1.013,
+      "trasVisivel": 1.884,
+      "gordura": 0.513,
       "fatiaDir": 0
      },
-     "cruzaDir": false,
-     "cruzaBaixo": false,
+     "cruzaDir": true,
+     "cruzaBaixo": true,
      "gripTela": [
       0.723,
       0.849
@@ -1404,8 +1404,8 @@
      "bracoBordaDir": 2.127,
      "bracoBordaBaixo": 11.066,
      "bocaTela": [
-      0.589,
-      0.792
+      0.51,
+      0.758
      ],
      "adsAlcaTela": [
       0.5,
@@ -1413,38 +1413,38 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.588,
-     "bordaDir": 0.875,
-     "topo": 0.77,
-     "base": 0.94,
-     "areaPct": 2.38,
-     "silBordaEsq": 0.588,
-     "anguloEixoGraus": 13.78,
-     "foraPct": 0,
-     "fatiaDir": 0,
-     "fatiaBaixo": 0,
-     "frenteVisivel": 1.012,
-     "trasVisivel": 1.117,
-     "gordura": 0.257,
+     "bordaEsq": 0.508,
+     "bordaDir": 1.084,
+     "topo": 0.724,
+     "base": 1.085,
+     "areaPct": 7.97,
+     "silBordaEsq": 0.51,
+     "anguloEixoGraus": 12,
+     "foraPct": 19.29,
+     "fatiaDir": 0.18,
+     "fatiaBaixo": 0.066,
+     "frenteVisivel": 1.002,
+     "trasVisivel": 1.324,
+     "gordura": 0.3,
      "ads": {
-      "areaPct": 1.34,
-      "silBordaEsq": 0.643,
-      "anguloEixoGraus": 52.36,
+      "areaPct": 4.52,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 40.93,
       "gripTela": [
        0.687,
        0.816
       ],
       "bocaTela": [
-       0.645,
-       0.734
+       0.621,
+       0.687
       ],
-      "frenteVisivel": 1.032,
-      "trasVisivel": 1.402,
-      "gordura": 0.427,
+      "frenteVisivel": 1.016,
+      "trasVisivel": 1.87,
+      "gordura": 0.47,
       "fatiaDir": 0
      },
-     "cruzaDir": false,
-     "cruzaBaixo": false,
+     "cruzaDir": true,
+     "cruzaBaixo": true,
      "gripTela": [
       0.723,
       0.838
@@ -1452,8 +1452,8 @@
      "bracoBordaDir": 2.127,
      "bracoBordaBaixo": 10.024,
      "bocaTela": [
-      0.589,
-      0.781
+      0.51,
+      0.746
      ],
      "adsAlcaTela": [
       0.5,
@@ -1634,6 +1634,350 @@
     }
    }
   },
+  "akm": {
+   "classe": "rifle",
+   "cano": {
+    "rFrente": 0.018,
+    "rTras": 0.042,
+    "canoEmZmais": true
+   },
+   "alcanceBraco": {
+    "dist": 0.595,
+    "max": 0.606,
+    "folga": 0.011
+   },
+   "alcanceApoio": {
+    "foreT": 0.11,
+    "dist": 0.645,
+    "max": 0.577,
+    "folga": -0.069,
+    "guardaMao": [
+     0.203,
+     -0.151,
+     -0.558
+    ]
+   },
+   "len": 0.88,
+   "gripZ": 0.62,
+   "vm": 1,
+   "escalaVM": 0.72,
+   "gunSpace": {
+    "bboxMin": [
+     -0.035,
+     -0.132,
+     -0.334
+    ],
+    "bboxMax": [
+     0.035,
+     0.132,
+     0.546
+    ],
+    "boca": [
+     0.009,
+     0.073,
+     0.533
+    ],
+    "alca": [
+     0.008,
+     0.132,
+     0.16
+    ]
+   },
+   "viewSpace": {
+    "grip": [
+     0.216,
+     -0.141,
+     -0.517
+    ],
+    "boca": [
+     0.108,
+     -0.031,
+     -0.873
+    ],
+    "alca": [
+     0.186,
+     -0.03,
+     -0.612
+    ]
+   },
+   "coronhaZ": -0.277,
+   "anguloCanoGraus": 12.41,
+   "adsDelta": [
+    -0.186,
+    0.03,
+    0.02
+   ],
+   "aspectos": {
+    "16:9": {
+     "bordaEsq": 0.584,
+     "bordaDir": 1.252,
+     "topo": 0.488,
+     "base": 1.315,
+     "areaPct": 7.75,
+     "silBordaEsq": 0.584,
+     "anguloEixoGraus": 30.38,
+     "foraPct": 45.8,
+     "fatiaDir": 0.141,
+     "fatiaBaixo": 0.164,
+     "frenteVisivel": 1.073,
+     "trasVisivel": 0.722,
+     "gordura": 0.472,
+     "ads": {
+      "areaPct": 7.64,
+      "silBordaEsq": 0.65,
+      "anguloEixoGraus": 28.46,
+      "gripTela": [
+       0.772,
+       0.832
+      ],
+      "bocaTela": [
+       0.655,
+       0.617
+      ],
+      "frenteVisivel": 1.14,
+      "trasVisivel": 1.336,
+      "gordura": 0.635,
+      "fatiaDir": 0.168
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.806,
+      0.855
+     ],
+     "bracoBordaDir": 2.021,
+     "bracoBordaBaixo": 9.235,
+     "bocaTela": [
+      0.59,
+      0.547
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    },
+    "3:2": {
+     "bordaEsq": 0.584,
+     "bordaDir": 1.252,
+     "topo": 0.513,
+     "base": 1.257,
+     "areaPct": 6.83,
+     "silBordaEsq": 0.584,
+     "anguloEixoGraus": 34.32,
+     "foraPct": 43.84,
+     "fatiaDir": 0.145,
+     "fatiaBaixo": 0.164,
+     "frenteVisivel": 1.071,
+     "trasVisivel": 0.757,
+     "gordura": 0.441,
+     "ads": {
+      "areaPct": 6.67,
+      "silBordaEsq": 0.65,
+      "anguloEixoGraus": 34.05,
+      "gripTela": [
+       0.772,
+       0.819
+      ],
+      "bocaTela": [
+       0.655,
+       0.621
+      ],
+      "frenteVisivel": 1.142,
+      "trasVisivel": 1.363,
+      "gordura": 0.576,
+      "fatiaDir": 0.152
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.806,
+      0.839
+     ],
+     "bracoBordaDir": 2.021,
+     "bracoBordaBaixo": 8.369,
+     "bocaTela": [
+      0.59,
+      0.563
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    }
+   }
+  },
+  "g3": {
+   "classe": "rifle",
+   "cano": {
+    "rFrente": 0.013,
+    "rTras": 0.067,
+    "canoEmZmais": true
+   },
+   "alcanceBraco": {
+    "dist": 0.595,
+    "max": 0.606,
+    "folga": 0.011
+   },
+   "alcanceApoio": {
+    "foreT": 0.11,
+    "dist": 0.643,
+    "max": 0.577,
+    "folga": -0.066,
+    "guardaMao": [
+     0.206,
+     -0.148,
+     -0.554
+    ]
+   },
+   "len": 1.1,
+   "gripZ": 0.58,
+   "vm": 0.75,
+   "escalaVM": 0.54,
+   "gunSpace": {
+    "bboxMin": [
+     -0.048,
+     -0.141,
+     -0.462
+    ],
+    "bboxMax": [
+     0.048,
+     0.141,
+     0.638
+    ],
+    "boca": [
+     -0.011,
+     0.058,
+     0.634
+    ],
+    "alca": [
+     -0.001,
+     0.109,
+     0.19
+    ]
+   },
+   "viewSpace": {
+    "grip": [
+     0.216,
+     -0.141,
+     -0.517
+    ],
+    "boca": [
+     0.13,
+     -0.059,
+     -0.84
+    ],
+    "alca": [
+     0.193,
+     -0.068,
+     -0.607
+    ]
+   },
+   "coronhaZ": -0.268,
+   "anguloCanoGraus": 12.41,
+   "adsDelta": [
+    -0.193,
+    0.068,
+    0.02
+   ],
+   "aspectos": {
+    "16:9": {
+     "bordaEsq": 0.607,
+     "bordaDir": 1.294,
+     "topo": 0.547,
+     "base": 1.485,
+     "areaPct": 6.72,
+     "silBordaEsq": 0.607,
+     "anguloEixoGraus": 29.83,
+     "foraPct": 57.06,
+     "fatiaDir": 0.094,
+     "fatiaBaixo": 0.234,
+     "frenteVisivel": 1.029,
+     "trasVisivel": 0.826,
+     "gordura": 0.448,
+     "ads": {
+      "areaPct": 6.04,
+      "silBordaEsq": 0.666,
+      "anguloEixoGraus": 30.69,
+      "gripTela": [
+       0.772,
+       0.832
+      ],
+      "bocaTela": [
+       0.672,
+       0.656
+      ],
+      "frenteVisivel": 1.089,
+      "trasVisivel": 1.608,
+      "gordura": 0.545,
+      "fatiaDir": 0.086
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.806,
+      0.855
+     ],
+     "bracoBordaDir": 2.021,
+     "bracoBordaBaixo": 9.235,
+     "bocaTela": [
+      0.613,
+      0.591
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    },
+    "3:2": {
+     "bordaEsq": 0.607,
+     "bordaDir": 1.294,
+     "topo": 0.567,
+     "base": 1.402,
+     "areaPct": 6.02,
+     "silBordaEsq": 0.607,
+     "anguloEixoGraus": 33.67,
+     "foraPct": 54.85,
+     "fatiaDir": 0.105,
+     "fatiaBaixo": 0.16,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.863,
+     "gordura": 0.424,
+     "ads": {
+      "areaPct": 5.57,
+      "silBordaEsq": 0.666,
+      "anguloEixoGraus": 36.58,
+      "gripTela": [
+       0.772,
+       0.819
+      ],
+      "bocaTela": [
+       0.672,
+       0.655
+      ],
+      "frenteVisivel": 1.082,
+      "trasVisivel": 1.628,
+      "gordura": 0.501,
+      "fatiaDir": 0.086
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.806,
+      0.839
+     ],
+     "bracoBordaDir": 2.021,
+     "bracoBordaBaixo": 8.369,
+     "bocaTela": [
+      0.613,
+      0.601
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    }
+   }
+  },
   "revolver38": {
    "classe": "pistol",
    "cano": {
@@ -1649,8 +1993,8 @@
    "alcanceApoio": null,
    "len": 0.24,
    "gripZ": 0.68,
-   "vm": 0.92,
-   "escalaVM": 0.662,
+   "vm": 1.3,
+   "escalaVM": 0.936,
    "gunSpace": {
     "bboxMin": [
      -0.025,
@@ -1680,53 +2024,53 @@
      -0.525
     ],
     "boca": [
-     0.15,
-     -0.074,
-     -0.619
+     0.138,
+     -0.05,
+     -0.658
     ],
     "alca": [
-     0.175,
-     -0.077,
-     -0.548
+     0.173,
+     -0.054,
+     -0.557
     ]
    },
-   "coronhaZ": -0.474,
+   "coronhaZ": -0.453,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.175,
-    0.077,
+    -0.173,
+    0.054,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.669,
-     "bordaDir": 0.801,
-     "topo": 0.633,
-     "base": 1.018,
-     "areaPct": 2.29,
-     "silBordaEsq": 0.67,
-     "anguloEixoGraus": 64.18,
-     "foraPct": 0,
+     "bordaEsq": 0.642,
+     "bordaDir": 0.823,
+     "topo": 0.568,
+     "base": 1.105,
+     "areaPct": 3.85,
+     "silBordaEsq": 0.643,
+     "anguloEixoGraus": 59.98,
+     "foraPct": 14.52,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.051,
-     "frenteVisivel": 1.08,
-     "trasVisivel": 0.86,
-     "gordura": 0.464,
+     "fatiaBaixo": 0.082,
+     "frenteVisivel": 1.084,
+     "trasVisivel": 0.733,
+     "gordura": 0.474,
      "ads": {
-      "areaPct": 1.36,
-      "silBordaEsq": 0.627,
-      "anguloEixoGraus": 83.91,
+      "areaPct": 2.65,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 84.48,
       "gripTela": [
        0.657,
        0.768
       ],
       "bocaTela": [
-       0.636,
-       0.644
+       0.629,
+       0.604
       ],
-      "frenteVisivel": 1.162,
-      "trasVisivel": 1.277,
-      "gordura": 0.408,
+      "frenteVisivel": 1.172,
+      "trasVisivel": 1.381,
+      "gordura": 0.414,
       "fatiaDir": 0
      },
      "cruzaDir": false,
@@ -1738,8 +2082,8 @@
      "bracoBordaDir": 2.349,
      "bracoBordaBaixo": 12.234,
      "bocaTela": [
-      0.678,
-      0.656
+      0.654,
+      0.599
      ],
      "adsAlcaTela": [
       0.5,
@@ -1747,38 +2091,38 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.669,
-     "bordaDir": 0.801,
-     "topo": 0.645,
-     "base": 0.979,
-     "areaPct": 2.01,
-     "silBordaEsq": 0.67,
-     "anguloEixoGraus": 65.33,
-     "foraPct": 0,
+     "bordaEsq": 0.642,
+     "bordaDir": 0.823,
+     "topo": 0.588,
+     "base": 1.054,
+     "areaPct": 3.6,
+     "silBordaEsq": 0.643,
+     "anguloEixoGraus": 63.87,
+     "foraPct": 5.92,
      "fatiaDir": 0,
-     "fatiaBaixo": 0,
-     "frenteVisivel": 1.08,
-     "trasVisivel": 0.891,
-     "gordura": 0.436,
+     "fatiaBaixo": 0.09,
+     "frenteVisivel": 1.085,
+     "trasVisivel": 0.842,
+     "gordura": 0.484,
      "ads": {
-      "areaPct": 1.18,
-      "silBordaEsq": 0.627,
-      "anguloEixoGraus": 83.84,
+      "areaPct": 2.3,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 84.42,
       "gripTela": [
        0.657,
        0.763
       ],
       "bocaTela": [
-       0.636,
-       0.652
+       0.629,
+       0.616
       ],
       "frenteVisivel": 1.151,
-      "trasVisivel": 1.248,
-      "gordura": 0.389,
+      "trasVisivel": 1.368,
+      "gordura": 0.394,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": false,
+     "cruzaBaixo": true,
      "gripTela": [
       0.751,
       0.817
@@ -1786,8 +2130,8 @@
      "bracoBordaDir": 2.349,
      "bracoBordaBaixo": 11.066,
      "bocaTela": [
-      0.678,
-      0.665
+      0.654,
+      0.614
      ],
      "adsAlcaTela": [
       0.5,
@@ -2140,6 +2484,178 @@
     }
    }
   },
+  "m400": {
+   "classe": "sniper",
+   "cano": {
+    "rFrente": 0.013,
+    "rTras": 0.036,
+    "canoEmZmais": true
+   },
+   "alcanceBraco": {
+    "dist": 0.58,
+    "max": 0.606,
+    "folga": 0.026
+   },
+   "alcanceApoio": {
+    "foreT": 0.11,
+    "dist": 0.634,
+    "max": 0.577,
+    "folga": -0.057,
+    "guardaMao": [
+     0.211,
+     -0.147,
+     -0.541
+    ]
+   },
+   "len": 0.92,
+   "gripZ": 0.62,
+   "vm": 0.85,
+   "escalaVM": 0.612,
+   "gunSpace": {
+    "bboxMin": [
+     -0.048,
+     -0.168,
+     -0.35
+    ],
+    "bboxMax": [
+     0.048,
+     0.168,
+     0.57
+    ],
+    "boca": [
+     0.013,
+     0.05,
+     0.568
+    ],
+    "alca": [
+     0.017,
+     0.168,
+     0.17
+    ]
+   },
+   "viewSpace": {
+    "grip": [
+     0.211,
+     -0.14,
+     -0.503
+    ],
+    "boca": [
+     0.116,
+     -0.066,
+     -0.83
+    ],
+    "alca": [
+     0.125,
+     -0.047,
+     -0.577
+    ]
+   },
+   "coronhaZ": -0.289,
+   "anguloCanoGraus": 12.41,
+   "adsDelta": [
+    -0.125,
+    0.047,
+    0.02
+   ],
+   "aspectos": {
+    "16:9": {
+     "bordaEsq": 0.594,
+     "bordaDir": 1.164,
+     "topo": 0.591,
+     "base": 1.399,
+     "areaPct": 5.32,
+     "silBordaEsq": 0.596,
+     "anguloEixoGraus": 36.17,
+     "foraPct": 49.02,
+     "fatiaDir": 0.008,
+     "fatiaBaixo": 0.195,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.781,
+     "gordura": 0.286,
+     "ads": {
+      "areaPct": 4.75,
+      "silBordaEsq": 0.635,
+      "anguloEixoGraus": 36.96,
+      "gripTela": [
+       0.772,
+       0.839
+      ],
+      "bocaTela": [
+       0.642,
+       0.67
+      ],
+      "frenteVisivel": 1.055,
+      "trasVisivel": 1.271,
+      "gordura": 0.341,
+      "fatiaDir": 0
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.808,
+      0.862
+     ],
+     "bracoBordaDir": 2.09,
+     "bracoBordaBaixo": 9.704,
+     "bocaTela": [
+      0.602,
+      0.604
+     ],
+     "adsAlcaTela": [
+      0.501,
+      0.5
+     ]
+    },
+    "3:2": {
+     "bordaEsq": 0.594,
+     "bordaDir": 1.164,
+     "topo": 0.601,
+     "base": 1.326,
+     "areaPct": 4.87,
+     "silBordaEsq": 0.596,
+     "anguloEixoGraus": 38.62,
+     "foraPct": 44.08,
+     "fatiaDir": 0.027,
+     "fatiaBaixo": 0.172,
+     "frenteVisivel": 1.028,
+     "trasVisivel": 0.826,
+     "gordura": 0.274,
+     "ads": {
+      "areaPct": 4.26,
+      "silBordaEsq": 0.635,
+      "anguloEixoGraus": 40.86,
+      "gripTela": [
+       0.772,
+       0.825
+      ],
+      "bocaTela": [
+       0.642,
+       0.667
+      ],
+      "frenteVisivel": 1.048,
+      "trasVisivel": 1.323,
+      "gordura": 0.318,
+      "fatiaDir": 0
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.808,
+      0.846
+     ],
+     "bracoBordaDir": 2.09,
+     "bracoBordaBaixo": 8.792,
+     "bocaTela": [
+      0.602,
+      0.613
+     ],
+     "adsAlcaTela": [
+      0.501,
+      0.5
+     ]
+    }
+   }
+  },
   "mosin": {
    "classe": "sniper",
    "cano": {
@@ -2304,6 +2820,178 @@
      "bocaTela": [
       0.572,
       0.582
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    }
+   }
+  },
+  "rem700": {
+   "classe": "sniper",
+   "cano": {
+    "rFrente": 0.009,
+    "rTras": 0.069,
+    "canoEmZmais": true
+   },
+   "alcanceBraco": {
+    "dist": 0.58,
+    "max": 0.606,
+    "folga": 0.026
+   },
+   "alcanceApoio": {
+    "foreT": 0.11,
+    "dist": 0.64,
+    "max": 0.577,
+    "folga": -0.063,
+    "guardaMao": [
+     0.207,
+     -0.144,
+     -0.548
+    ]
+   },
+   "len": 1.15,
+   "gripZ": 0.66,
+   "vm": 0.78,
+   "escalaVM": 0.562,
+   "gunSpace": {
+    "bboxMin": [
+     -0.069,
+     -0.165,
+     -0.391
+    ],
+    "bboxMax": [
+     0.069,
+     0.165,
+     0.759
+    ],
+    "boca": [
+     0.025,
+     0.077,
+     0.755
+    ],
+    "alca": [
+     0.025,
+     0.165,
+     0.226
+    ]
+   },
+   "viewSpace": {
+    "grip": [
+     0.211,
+     -0.14,
+     -0.503
+    ],
+    "boca": [
+     0.088,
+     -0.048,
+     -0.9
+    ],
+    "alca": [
+     0.123,
+     -0.053,
+     -0.602
+    ]
+   },
+   "coronhaZ": -0.283,
+   "anguloCanoGraus": 12.41,
+   "adsDelta": [
+    -0.123,
+    0.053,
+    0.02
+   ],
+   "aspectos": {
+    "16:9": {
+     "bordaEsq": 0.565,
+     "bordaDir": 1.198,
+     "topo": 0.557,
+     "base": 1.569,
+     "areaPct": 4.23,
+     "silBordaEsq": 0.564,
+     "anguloEixoGraus": 39.28,
+     "foraPct": 63.87,
+     "fatiaDir": 0,
+     "fatiaBaixo": 0.102,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.484,
+     "gordura": 0.237,
+     "ads": {
+      "areaPct": 3.37,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 43.15,
+      "gripTela": [
+       0.772,
+       0.839
+      ],
+      "bocaTela": [
+       0.622,
+       0.646
+      ],
+      "frenteVisivel": 1.041,
+      "trasVisivel": 0.863,
+      "gordura": 0.311,
+      "fatiaDir": 0
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.808,
+      0.862
+     ],
+     "bracoBordaDir": 2.09,
+     "bracoBordaBaixo": 9.704,
+     "bocaTela": [
+      0.572,
+      0.569
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    },
+    "3:2": {
+     "bordaEsq": 0.565,
+     "bordaDir": 1.198,
+     "topo": 0.57,
+     "base": 1.467,
+     "areaPct": 3.85,
+     "silBordaEsq": 0.564,
+     "anguloEixoGraus": 41.45,
+     "foraPct": 60.79,
+     "fatiaDir": 0,
+     "fatiaBaixo": 0.105,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.586,
+     "gordura": 0.225,
+     "ads": {
+      "areaPct": 3.16,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 45.51,
+      "gripTela": [
+       0.772,
+       0.825
+      ],
+      "bocaTela": [
+       0.622,
+       0.645
+      ],
+      "frenteVisivel": 1.04,
+      "trasVisivel": 0.99,
+      "gordura": 0.299,
+      "fatiaDir": 0
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.808,
+      0.846
+     ],
+     "bracoBordaDir": 2.09,
+     "bracoBordaBaixo": 8.792,
+     "bocaTela": [
+      0.572,
+      0.581
      ],
      "adsAlcaTela": [
       0.5,
@@ -2651,6 +3339,178 @@
      ],
      "adsAlcaTela": [
       0.499,
+      0.5
+     ]
+    }
+   }
+  },
+  "tavor": {
+   "classe": "rifle",
+   "cano": {
+    "rFrente": 0.011,
+    "rTras": 0.049,
+    "canoEmZmais": true
+   },
+   "alcanceBraco": {
+    "dist": 0.595,
+    "max": 0.606,
+    "folga": 0.011
+   },
+   "alcanceApoio": {
+    "foreT": 0.11,
+    "dist": 0.633,
+    "max": 0.577,
+    "folga": -0.057,
+    "guardaMao": [
+     0.207,
+     -0.154,
+     -0.544
+    ]
+   },
+   "len": 0.72,
+   "gripZ": 0.5,
+   "vm": 0.96,
+   "escalaVM": 0.691,
+   "gunSpace": {
+    "bboxMin": [
+     -0.039,
+     -0.15,
+     -0.36
+    ],
+    "bboxMax": [
+     0.039,
+     0.15,
+     0.36
+    ],
+    "boca": [
+     0.01,
+     0.055,
+     0.355
+    ],
+    "alca": [
+     0.009,
+     0.111,
+     0.107
+    ]
+   },
+   "viewSpace": {
+    "grip": [
+     0.216,
+     -0.141,
+     -0.517
+    ],
+    "boca": [
+     0.145,
+     -0.066,
+     -0.744
+    ],
+    "alca": [
+     0.195,
+     -0.054,
+     -0.575
+    ]
+   },
+   "coronhaZ": -0.269,
+   "anguloCanoGraus": 12.41,
+   "adsDelta": [
+    -0.195,
+    0.054,
+    0.02
+   ],
+   "aspectos": {
+    "16:9": {
+     "bordaEsq": 0.632,
+     "bordaDir": 1.295,
+     "topo": 0.539,
+     "base": 1.47,
+     "areaPct": 8.46,
+     "silBordaEsq": 0.631,
+     "anguloEixoGraus": 29.12,
+     "foraPct": 64.37,
+     "fatiaDir": 0.195,
+     "fatiaBaixo": 0.25,
+     "frenteVisivel": 1.044,
+     "trasVisivel": 0.942,
+     "gordura": 0.572,
+     "ads": {
+      "areaPct": 9.22,
+      "silBordaEsq": 0.67,
+      "anguloEixoGraus": 25.59,
+      "gripTela": [
+       0.772,
+       0.832
+      ],
+      "bocaTela": [
+       0.682,
+       0.662
+      ],
+      "frenteVisivel": 1.164,
+      "trasVisivel": 1.701,
+      "gordura": 0.735,
+      "fatiaDir": 0.227
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.806,
+      0.855
+     ],
+     "bracoBordaDir": 2.021,
+     "bracoBordaBaixo": 9.235,
+     "bocaTela": [
+      0.643,
+      0.616
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    },
+    "3:2": {
+     "bordaEsq": 0.632,
+     "bordaDir": 1.295,
+     "topo": 0.566,
+     "base": 1.389,
+     "areaPct": 7.8,
+     "silBordaEsq": 0.631,
+     "anguloEixoGraus": 34.65,
+     "foraPct": 61.34,
+     "fatiaDir": 0.191,
+     "fatiaBaixo": 0.211,
+     "frenteVisivel": 1.048,
+     "trasVisivel": 0.989,
+     "gordura": 0.546,
+     "ads": {
+      "areaPct": 8.34,
+      "silBordaEsq": 0.67,
+      "anguloEixoGraus": 33.45,
+      "gripTela": [
+       0.772,
+       0.819
+      ],
+      "bocaTela": [
+       0.682,
+       0.663
+      ],
+      "frenteVisivel": 1.147,
+      "trasVisivel": 1.74,
+      "gordura": 0.675,
+      "fatiaDir": 0.199
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.806,
+      0.839
+     ],
+     "bracoBordaDir": 2.021,
+     "bracoBordaBaixo": 8.369,
+     "bocaTela": [
+      0.643,
+      0.625
+     ],
+     "adsAlcaTela": [
+      0.5,
       0.5
      ]
     }
@@ -3344,6 +4204,178 @@
     }
    }
   },
+  "g3sg1": {
+   "classe": "sniper",
+   "cano": {
+    "rFrente": 0.012,
+    "rTras": 0.053,
+    "canoEmZmais": true
+   },
+   "alcanceBraco": {
+    "dist": 0.58,
+    "max": 0.606,
+    "folga": 0.026
+   },
+   "alcanceApoio": {
+    "foreT": 0.11,
+    "dist": 0.632,
+    "max": 0.577,
+    "folga": -0.055,
+    "guardaMao": [
+     0.211,
+     -0.146,
+     -0.539
+    ]
+   },
+   "len": 1.12,
+   "gripZ": 0.58,
+   "vm": 0.71,
+   "escalaVM": 0.511,
+   "gunSpace": {
+    "bboxMin": [
+     -0.036,
+     -0.159,
+     -0.47
+    ],
+    "bboxMax": [
+     0.036,
+     0.159,
+     0.65
+    ],
+    "boca": [
+     0.006,
+     0.032,
+     0.647
+    ],
+    "alca": [
+     0.005,
+     0.159,
+     0.194
+    ]
+   },
+   "viewSpace": {
+    "grip": [
+     0.211,
+     -0.14,
+     -0.503
+    ],
+    "boca": [
+     0.131,
+     -0.078,
+     -0.818
+    ],
+    "alca": [
+     0.145,
+     -0.06,
+     -0.578
+    ]
+   },
+   "coronhaZ": -0.262,
+   "anguloCanoGraus": 12.41,
+   "adsDelta": [
+    -0.145,
+    0.06,
+    0.02
+   ],
+   "aspectos": {
+    "16:9": {
+     "bordaEsq": 0.611,
+     "bordaDir": 1.247,
+     "topo": 0.609,
+     "base": 1.51,
+     "areaPct": 4.21,
+     "silBordaEsq": 0.611,
+     "anguloEixoGraus": 37.15,
+     "foraPct": 60,
+     "fatiaDir": 0,
+     "fatiaBaixo": 0.164,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.816,
+     "gordura": 0.276,
+     "ads": {
+      "areaPct": 3.85,
+      "silBordaEsq": 0.65,
+      "anguloEixoGraus": 37.59,
+      "gripTela": [
+       0.772,
+       0.839
+      ],
+      "bocaTela": [
+       0.656,
+       0.688
+      ],
+      "frenteVisivel": 1.087,
+      "trasVisivel": 1.459,
+      "gordura": 0.313,
+      "fatiaDir": 0
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.808,
+      0.862
+     ],
+     "bracoBordaDir": 2.09,
+     "bracoBordaBaixo": 9.704,
+     "bocaTela": [
+      0.617,
+      0.624
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    },
+    "3:2": {
+     "bordaEsq": 0.611,
+     "bordaDir": 1.247,
+     "topo": 0.619,
+     "base": 1.424,
+     "areaPct": 3.81,
+     "silBordaEsq": 0.611,
+     "anguloEixoGraus": 38.97,
+     "foraPct": 56.17,
+     "fatiaDir": 0.016,
+     "fatiaBaixo": 0.129,
+     "frenteVisivel": 1.03,
+     "trasVisivel": 0.891,
+     "gordura": 0.248,
+     "ads": {
+      "areaPct": 3.43,
+      "silBordaEsq": 0.65,
+      "anguloEixoGraus": 40.92,
+      "gripTela": [
+       0.772,
+       0.825
+      ],
+      "bocaTela": [
+       0.656,
+       0.682
+      ],
+      "frenteVisivel": 1.083,
+      "trasVisivel": 1.507,
+      "gordura": 0.269,
+      "fatiaDir": 0
+     },
+     "cruzaDir": true,
+     "cruzaBaixo": true,
+     "gripTela": [
+      0.808,
+      0.846
+     ],
+     "bracoBordaDir": 2.09,
+     "bracoBordaBaixo": 8.792,
+     "bocaTela": [
+      0.617,
+      0.629
+     ],
+     "adsAlcaTela": [
+      0.5,
+      0.5
+     ]
+    }
+   }
+  },
   "sks": {
    "classe": "sniper",
    "cano": {
@@ -3540,57 +4572,54 @@
   "awp 16:9: fatia na borda direita 0.012 (ref 0,053-0,095)",
   "mp5 16:9: borda esq da silhueta 0.604 (ref 0,520-0,565)",
   "mp5 3:2: borda esq da silhueta 0.604 (ref 0,520-0,565)",
-  "deagle 16:9: borda esq da silhueta 0.654 (ref 0,520-0,565)",
-  "deagle 16:9: eixo 61.86° (ref CS 27,3° e 34,8°)",
+  "deagle 16:9: borda esq da silhueta 0.646 (ref 0,520-0,565)",
+  "deagle 16:9: eixo 61.23° (ref CS 27,3° e 34,8°)",
   "deagle 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "deagle 16:9: área 2.54% (alvo 4-16, ref 9,76-13,09; gordura 0.547)",
-  "deagle 16:9: boca a 0.333 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
-  "deagle 3:2: borda esq da silhueta 0.654 (ref 0,520-0,565)",
-  "deagle 3:2: eixo 62.41° (ref CS 27,3° e 34,8°)",
+  "deagle 16:9: área 3.07% (alvo 4-16, ref 9,76-13,09; gordura 0.576)",
+  "deagle 16:9: boca a 0.314 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "deagle 3:2: borda esq da silhueta 0.646 (ref 0,520-0,565)",
+  "deagle 3:2: eixo 63.06° (ref CS 27,3° e 34,8°)",
   "deagle 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
-  "deagle 3:2: área 2.18% (alvo 4-16, ref 9,76-13,09; gordura 0.525)",
-  "deagle 3:2: boca a 0.295 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
-  "pistol 16:9: borda esq da silhueta 0.67 (ref 0,520-0,565)",
-  "pistol 16:9: eixo 68.65° (ref CS 27,3° e 34,8°)",
+  "deagle 3:2: área 2.68% (alvo 4-16, ref 9,76-13,09; gordura 0.542)",
+  "pistol 16:9: borda esq da silhueta 0.646 (ref 0,520-0,565)",
+  "pistol 16:9: eixo 64.66° (ref CS 27,3° e 34,8°)",
   "pistol 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "pistol 16:9: área 2.61% (alvo 4-16, ref 9,76-13,09; gordura 0.626)",
-  "pistol 16:9: boca a 0.365 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
-  "pistol 3:2: borda esq da silhueta 0.67 (ref 0,520-0,565)",
-  "pistol 3:2: eixo 68.87° (ref CS 27,3° e 34,8°)",
+  "pistol 16:9: boca a 0.311 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "pistol 3:2: borda esq da silhueta 0.646 (ref 0,520-0,565)",
+  "pistol 3:2: eixo 69.73° (ref CS 27,3° e 34,8°)",
   "pistol 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
-  "pistol 3:2: área 2.22% (alvo 4-16, ref 9,76-13,09; gordura 0.598)",
-  "pistol 3:2: boca a 0.325 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
-  "knife 16:9: eixo 11.1° (ref CS 27,3° e 34,8°)",
-  "knife 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "knife 16:9: área 2.76% (alvo 4-16, ref 9,76-13,09; gordura 0.257)",
-  "knife 16:9: boca a 0.332 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
-  "knife 3:2: eixo 13.78° (ref CS 27,3° e 34,8°)",
-  "knife 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
-  "knife 3:2: área 2.38% (alvo 4-16, ref 9,76-13,09; gordura 0.257)",
-  "knife 3:2: boca a 0.311 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "knife 16:9: eixo 8.73° (ref CS 27,3° e 34,8°)",
+  "knife 3:2: eixo 12° (ref CS 27,3° e 34,8°)",
   "m92 16:9: borda esq da silhueta 0.611 (ref 0,520-0,565)",
   "m92 16:9: fatia na borda direita 0.289 (ref 0,053-0,095)",
   "m92 3:2: borda esq da silhueta 0.611 (ref 0,520-0,565)",
   "m92 3:2: fatia na borda direita 0.27 (ref 0,053-0,095)",
-  "revolver38 16:9: borda esq da silhueta 0.67 (ref 0,520-0,565)",
-  "revolver38 16:9: eixo 64.18° (ref CS 27,3° e 34,8°)",
+  "g3 16:9: borda esq da silhueta 0.607 (ref 0,520-0,565)",
+  "g3 3:2: borda esq da silhueta 0.607 (ref 0,520-0,565)",
+  "revolver38 16:9: borda esq da silhueta 0.643 (ref 0,520-0,565)",
+  "revolver38 16:9: eixo 59.98° (ref CS 27,3° e 34,8°)",
   "revolver38 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "revolver38 16:9: área 2.29% (alvo 4-16, ref 9,76-13,09; gordura 0.464)",
-  "revolver38 16:9: boca a 0.353 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
-  "revolver38 3:2: borda esq da silhueta 0.67 (ref 0,520-0,565)",
-  "revolver38 3:2: eixo 65.33° (ref CS 27,3° e 34,8°)",
+  "revolver38 16:9: área 3.85% (alvo 4-16, ref 9,76-13,09; gordura 0.474)",
+  "revolver38 16:9: boca a 0.291 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "revolver38 3:2: borda esq da silhueta 0.643 (ref 0,520-0,565)",
+  "revolver38 3:2: eixo 63.87° (ref CS 27,3° e 34,8°)",
   "revolver38 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
-  "revolver38 3:2: área 2.01% (alvo 4-16, ref 9,76-13,09; gordura 0.436)",
-  "revolver38 3:2: boca a 0.314 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "revolver38 3:2: área 3.6% (alvo 4-16, ref 9,76-13,09; gordura 0.484)",
+  "m400 16:9: fatia na borda direita 0.008 (ref 0,053-0,095)",
   "mosin 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
   "mosin 16:9: área 3.14% (alvo 4-16, ref 9,76-13,09; gordura 0.214)",
   "mosin 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
   "mosin 3:2: área 2.87% (alvo 4-16, ref 9,76-13,09; gordura 0.207)",
+  "rem700 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
+  "rem700 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
+  "rem700 3:2: área 3.85% (alvo 4-16, ref 9,76-13,09; gordura 0.225)",
   "lmg 16:9: borda esq da silhueta 0.607 (ref 0,520-0,565)",
   "lmg 16:9: eixo 21.82° (ref CS 27,3° e 34,8°)",
   "lmg 3:2: borda esq da silhueta 0.607 (ref 0,520-0,565)",
   "scar 16:9: fatia na borda direita 0.246 (ref 0,053-0,095)",
   "scar 3:2: fatia na borda direita 0.207 (ref 0,053-0,095)",
+  "tavor 16:9: borda esq da silhueta 0.631 (ref 0,520-0,565)",
+  "tavor 3:2: borda esq da silhueta 0.631 (ref 0,520-0,565)",
   "famas 16:9: borda esq da silhueta 0.639 (ref 0,520-0,565)",
   "famas 16:9: boca a 0.297 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
   "famas 3:2: borda esq da silhueta 0.639 (ref 0,520-0,565)",
@@ -3604,6 +4633,11 @@
   "p90 16:9: borda esq da silhueta 0.607 (ref 0,520-0,565)",
   "p90 3:2: borda esq da silhueta 0.607 (ref 0,520-0,565)",
   "svd 16:9: fatia na borda direita 0.016 (ref 0,053-0,095)",
+  "g3sg1 16:9: borda esq da silhueta 0.611 (ref 0,520-0,565)",
+  "g3sg1 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
+  "g3sg1 3:2: borda esq da silhueta 0.611 (ref 0,520-0,565)",
+  "g3sg1 3:2: fatia na borda direita 0.016 (ref 0,053-0,095)",
+  "g3sg1 3:2: área 3.81% (alvo 4-16, ref 9,76-13,09; gordura 0.248)",
   "sks 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
   "sks 16:9: área 3.3% (alvo 4-16, ref 9,76-13,09; gordura 0.215)",
   "sks 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
@@ -3621,16 +4655,24 @@
   "pistol: grip fora do alcance do braço R (folga 0.01 m) -> MÃO SOLTA NO AR",
   "m92: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "m92: guarda-mão fora do alcance do braço L (folga -0.061 m) -> MÃO SOLTA NO AR",
+  "akm: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
+  "akm: guarda-mão fora do alcance do braço L (folga -0.069 m) -> MÃO SOLTA NO AR",
+  "g3: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
+  "g3: guarda-mão fora do alcance do braço L (folga -0.066 m) -> MÃO SOLTA NO AR",
   "revolver38: grip fora do alcance do braço R (folga 0.01 m) -> MÃO SOLTA NO AR",
   "md97: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "md97: guarda-mão fora do alcance do braço L (folga -0.07 m) -> MÃO SOLTA NO AR",
   "carbine: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "carbine: guarda-mão fora do alcance do braço L (folga -0.069 m) -> MÃO SOLTA NO AR",
+  "m400: guarda-mão fora do alcance do braço L (folga -0.057 m) -> MÃO SOLTA NO AR",
   "mosin: guarda-mão fora do alcance do braço L (folga -0.063 m) -> MÃO SOLTA NO AR",
+  "rem700: guarda-mão fora do alcance do braço L (folga -0.063 m) -> MÃO SOLTA NO AR",
   "lmg: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "lmg: guarda-mão fora do alcance do braço L (folga -0.065 m) -> MÃO SOLTA NO AR",
   "scar: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "scar: guarda-mão fora do alcance do braço L (folga -0.071 m) -> MÃO SOLTA NO AR",
+  "tavor: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
+  "tavor: guarda-mão fora do alcance do braço L (folga -0.057 m) -> MÃO SOLTA NO AR",
   "famas: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "famas: guarda-mão fora do alcance do braço L (folga -0.056 m) -> MÃO SOLTA NO AR",
   "uzi: grip fora do alcance do braço R (folga -0.179 m) -> MÃO SOLTA NO AR",
@@ -3638,6 +4680,7 @@
   "p90: grip fora do alcance do braço R (folga -0.082 m) -> MÃO SOLTA NO AR",
   "p90: guarda-mão fora do alcance do braço L (folga -0.152 m) -> MÃO SOLTA NO AR",
   "svd: guarda-mão fora do alcance do braço L (folga -0.064 m) -> MÃO SOLTA NO AR",
+  "g3sg1: guarda-mão fora do alcance do braço L (folga -0.055 m) -> MÃO SOLTA NO AR",
   "sks: guarda-mão fora do alcance do braço L (folga -0.058 m) -> MÃO SOLTA NO AR"
  ]
 }
