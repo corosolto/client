@@ -3,7 +3,7 @@
    colisão, objeto, CTF ou ambiência do mundo real e precisa derrubar uma única
    cláusula. */
 import { execFileSync } from 'node:child_process';
-import { THREE, bootGame, initTextures } from './harness.mjs';
+import { THREE, MAPS, bootGame, initTextures } from './harness.mjs';
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '=').split('=')[1];
 const selftest = process.argv.includes('--selftest-mutantes');
@@ -189,8 +189,8 @@ const put = (id, ok, detail) => { results.push({ id, ok }); console.log(`${id} $
 const access = spec.wallAccesses, entries = spec.guardEntries, guardRoutes = spec.guardRoutes;
 put('CR3-1', named('carandiru-placa-casa-de-detencao') && named('carandiru-placa-pavilhao-6-sul')
   && named('carandiru-placa-pavilhao-6-norte') && named('carandiru-viatura-fallback')
-  && world.root.name === 'carandiru',
-  'identidade física, Pavilhão 6 e viatura procedural local');
+  && world.root.name === 'carandiru' && MAPS.penitenciaria?.name === 'CARANDIRU',
+  `identidade física, Pavilhão 6, viatura procedural e menu=${MAPS.penitenciaria?.name}`);
 const validAccess = access.filter((a) => named(a.name) && staircaseWorks(a, 5.7)
   && a.width >= 2.6 && a.run >= 12 && pathWalkable(stairPoints(a)));
 const validEntries = entries.filter((entry) => named(entry.name) && named(entry.floor)

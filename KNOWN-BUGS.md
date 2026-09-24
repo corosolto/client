@@ -98,6 +98,28 @@ atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o a
 
 Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
 
+## BUG-178 — a main publicou import sem export e só o prod-watch viu (#524)
+
+**Fechado em 23/09/2026.** O #524 (fingerprint `producao-inconsistente`) juntou duas causas
+diferentes, porque o prod-watch manda a mesma mensagem para as três sondas:
+
+| execuções | sonda | saída |
+|---|---|---|
+| 34026616277, 34026690701, 34027471924, 34037057333 (06/09, 10:09–13:45 UTC) | edge | `sertao_map_preview.js importa 'SERTAO_PREVIEW' de ./map_preview_media.js, mas … não exporta` |
+| 34751897547 (13/09 10:27) | banco | `/api/health` → `database:false, telemetrySchema:false`; a execução seguinte (14:35) passou |
+
+A de 06/09 **não era cache**, e por isso o purge feito antes de cada sonda não resolveu. O
+`f95dcac0c` pôs em `sertao_map_preview.js` um import de `SERTAO_PREVIEW` vindo de
+`map_preview_media.js`. Só que esse arquivo não exportava o símbolo, porque dois capturadores
+(Sertão e Amazônia) escreviam o mesmo módulo. A main ficou quebrada na origem, alpha.235
+(`42c01175a`) incluída, até o `20430018b` (OPS-523) separar `sertao_preview_media.js`. A régua
+para essa classe já existia (`sondaBootLocal`, do `ops:diag`), mas ninguém a chamava no CI.
+
+Régua: `eval:modgraph` (`tools/eval/module-graph-check.mjs`), no `pr-fast`, no `check:deploy`
+e no `check:fast`. Ela reprova `42c01175a` com a mesma linha do prod-watch, passa na alpha.265 e
+o mutante `--mutante=06-09` reprova.
+O 13/09 foi uma queda de banco que se recuperou sozinha, e não tem conserto no cliente.
+
 ## BUG-170 — granada perdeu a animação paga no rewrite do multiplayer
 
 **Fechado em 19/09/2026, branch `claude/vm-integracao`.** `0e3d1cd71` (03/09, granadas
@@ -404,6 +426,52 @@ então o laço continua, mas nada depois da linha roda: sem `game.update`, sem r
 `char-select` do deep link. Régua `LOOP1` em `tools/eval/invariants.mjs`: nenhum
 `$('…').` sem `?.` no corpo de `loop()`. Mutante: o `main.js` da alpha.262 reprova
 (`char-select`).
+
+
+### BUG-174 · clarão dos tiros sem controle do jogador atrapalhava a mira · CORRIGIDO 22/09
+
+**Sintoma (relato do jogador, 21/09):** "algumas armas soltam um flash cada vez que voce
+atira, isso atrapalha demais".
+
+**Causa.** O clarão (estrela + núcleo + point light do `_flash`, e a `_vmFlashLight` da
+cena do viewmodel) tinha ajuste SÓ de dev — `_fxTune` via dev.html. Nenhum controle
+chegava ao jogador, e o fator era sempre 1.
+
+**Conserto.** CONFIGURAÇÕES > VÍDEO ganha CLARÃO DOS TIROS: Normal (1,0 — o de hoje) /
+Reduzido (0,45) / Mínimo (0,15). Fatores medidos no dev.html. `FX_CLARAO` no game.js
+aplica em `_fxTune.flash` (estrela/núcleo) e `_fxTune.light` (as duas luzes); faíscas e
+fumaça intocadas — o relato é do clarão. `applySettings()` repassa AO VIVO (mesma
+disciplina da qualidade gráfica); persiste no settings salvo; padrão `normal` = quem não
+procura o ajuste não vê mudança nenhuma.
+
+**Régua:** `eval:fxFlash` (`fx-flash-check.mjs`, no `check:fast`) — boot da Game real por
+opção conferindo o multiplicador que o `_flash` multiplica, aplicação ao vivo, padrão
+intacto, e cláusulas de fonte do seletor/binder. **Reprovou 13 cláusulas no estado
+anterior**; mutante `--mutante=sem-seletor` vermelho (5).
+
+### BUG-173 · não dava para tirar os bots no mata-mata online nem escolher quantos por time · CORRIGIDO 22/09
+
+**Sintoma (relato do jogador, 21/09):** "estava jogando com meu amigo, eu queria tirar x1
+com ele e não encontrei um jeito de tirar os bots no mata mata, ou escolher quantos bots
+queremos em cada time".
+
+**Causa raiz.** Dupla: o `POST /rooms` do servidor **cravava `teamSize: 5`** e nem lia o
+campo do corpo (`game/index.js`), e o formulário de criar sala do cliente não oferecia
+controle nenhum. O `Room` sempre soube (`teamSize` 1–8, bots completam o que falta de
+gente; quem sai vira bot) — era só a porta de entrada que não existia.
+
+**Conserto em dois repos.** Backend (PR corosolto/backend#29): handler aceita `teamSize`
+(int, clamp 1–8, padrão 5 retrocompatível). Cliente: seletor JOGADORES POR TIME no criar
+sala (1 = "X1 SEM BOTS", padrão 5) e o cfg do `createRoom` leva o valor; o JOGO RÁPIDO
+segue sem o campo. Com 1 e dois humanos: 2 corpos, ZERO bots, lobby sem vaga de bot.
+
+**Réguas.** Backend: seção "tamanho de time do criador" no `game/smoke.mjs` — 7 cláusulas
+que REPROVAVAM antes (welcome 5, 10 corpos, 8 bots, vagas) e passam depois; smoke 81/0.
+Cliente: `eval:mpRoomOptions` (`mp-room-options-check.mjs`, no `check:fast`), 5 cláusulas
+com 4 mutantes (`sem-campo`, `fixo`, `sem-x1`, `padrao-1`) — todos vermelhos.
+
+**Dependência de deploy:** o nó de produção roda imagem com CLIENT_REF fixado; o recurso
+só chega ao jogador depois do redeploy do nó + este cliente.
 
 ### BUG-172 · o B5 do boot-check injetava erro com stack de arnês e o corte de automação o filtra · CORRIGIDO 18/09
 

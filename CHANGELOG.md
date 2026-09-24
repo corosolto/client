@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.273`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.278`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,92 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.278] — 2026-09-24
+
+### Mudado
+- fix(maps): corrige orçamento e nome do Carandiru (#615)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(carandiru): record independent review
+- docs(carandiru): refresh final evidence ledger
+- docs(maps): record Carandiru PR integrity repair
+- chore(maps): keep Carandiru follow-up scoped
+- docs(maps): record Carandiru follow-up state
+- fix(maps): centralize Carandiru shadow budget
+
+## [2.0.0-alpha.277] — 2026-09-24
+
+### Mudado
+- feat(praca): qualificar flancos, água e horizonte (#616)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(generated): refresh praca bot gate index
+- docs(map): record praca causal revalidation
+- fix(map): close praca cover and evidence blockers
+- docs(praca): registrar draft PR
+- docs(praca): registrar gate herdado
+- docs: realinhar inventario da Praça R2
+- docs(praca): alinhar hashes finais
+- style(praca): adequar comentarios ao gate
+- docs(praca): registrar candidato e evidencias
+- docs: regenerar inventario da Praça R2
+- test(praca): cobrir matriz WebGL e evidencias
+- feat(praca): qualificar flancos e espelho d'agua
+- docs(praca): registrar baseline e escopo R2
+
+## [2.0.0-alpha.276] — 2026-09-24
+
+### Mudado
+- feat(loja-h): abre terceira rota e conecta navegação (#601)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(loja-h): regenera blocos derivados apos merge da alpha.263
+- docs(loja-h): registra pendencia de indices gerados
+- feat(loja-h): abre terceira rota e conecta navegacao
+
+## [2.0.0-alpha.275] — 2026-09-24
+
+### Mudado
+- fix(telemetria): saída do MP conta uma vez, game_started no banco, build do navegador no join (backend#22) (#626)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): blocos gerados contam a régua nova (379 scripts de avaliação)
+- fix(telemetria): saída do MP conta, uma vez só; início de partida no banco; build do navegador no join
+
+## [2.0.0-alpha.274] — 2026-09-24
+
+### Mudado
+- fix(ci): grafo de módulos da árvore vira portão antes do deploy (#524)
+- fix(ci): grafo de módulos da árvore vira portão antes do deploy (#524) (#642)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
 
 ## [2.0.0-alpha.273] — 2026-09-24
 
