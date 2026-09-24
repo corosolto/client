@@ -14,6 +14,7 @@
 
    Uso: node tools/eval/quality-mapas-check.mjs
         node tools/eval/quality-mapas-check.mjs --mutar=literal   # devolve um 2048 cravado
+        node tools/eval/quality-mapas-check.mjs --mutar=carandiru-sombra-solta
 */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -46,6 +47,13 @@ if (MUTAR === 'literal') {
   // devolve o estado anterior num arquivo só: basta um para a régua morder
   fonte.set('map_upa.js', fonte.get('map_upa.js').replace('aplicaSombraSol(sun);', 'sun.shadow.mapSize.set(2048, 2048);'));
   console.log('\n  [MUTANTE: literal] — a régua TEM que reprovar');
+}
+if (MUTAR === 'carandiru-sombra-solta') {
+  // Contraprova da regressão do PR #611: devolve o literal e tira a delegação.
+  fonte.set('map_penitenciaria.js', fonte.get('map_penitenciaria.js')
+    .replace("import { aplicaSombraSol } from './mapquality.js';\n", '')
+    .replace('aplicaSombraSol(sun);', 'sun.shadow.mapSize.set(2048, 2048);'));
+  console.log('\n  [MUTANTE: carandiru-sombra-solta] — QMAP1 e QMAP3 TÊM que reprovar');
 }
 
 console.log('\n· tamanho de sombra: um lugar só');

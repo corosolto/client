@@ -254,9 +254,9 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,395 |
 | `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,192 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,407 |
-| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
+| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,974 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 1,041 |
-| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,965 |
+| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,015 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,889 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,600 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,348 |
@@ -267,7 +267,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 256 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 403 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 1,061 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 1,008 |
+| `penitenciaria` | CARANDIRU | **capture** | `map_penitenciaria.js` | 1,009 |
 
 **17 registered maps** - 2 open in rounds and 15 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 23 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
