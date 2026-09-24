@@ -1390,13 +1390,8 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
-  /* `applyCinematicScreen` NUNCA existiu neste repositório — nem aqui, nem na main:
-     o chrome cinematográfico (#cine-chrome, CINE_SCREEN_META, .cine-surface) não
-     chegou a entrar e só as CHAMADAS vieram junto num merge, como aconteceu com o
-     `presentFaction` mais abaixo. Chamada órfã em callback do jogo não é enfeite
-     faltando: é ReferenceError DENTRO de setPaused(true). O M no meio da partida
-     morria aí, antes do pickTeam, e a tela de troca de time nunca abria — o
-     tests/smoke/web-smoke.spec.js pega isso em "#char-select toBeVisible". */
+  // applyCinematicScreen nunca existiu: chamada órfã aqui era ReferenceError dentro de setPaused(true)
+  // e o M no meio da partida não abria a troca de time (tests/smoke/web-smoke.spec.js).
   game.onPauseChange = () => resetConfirms();
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
@@ -2145,11 +2140,8 @@ for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
   if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
-  // Facção sem elenco é INDISPONÍVEL, e indisponível é ESTADO, não surpresa no
-  // clique: aria-disabled fecha o card pro leitor de tela e pro arnês. A conta
-  // antiga pedia `card.dataset.ready === '1'` — atributo que NINGUÉM escreve
-  // nestes cards (só o canvas do loading3d usa esse nome), então todo card
-  // nascia desligado e a tela de facção virava beco sem saída.
+  // sem elenco = INDISPONÍVEL como estado (aria-disabled); o antigo `dataset.ready` ninguém escrevia
+  // nestes cards, e toda facção nascia desligada.
   card.setAttribute('aria-disabled', String(!n));
   card.addEventListener('focus', () => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   card.onclick = () => {
