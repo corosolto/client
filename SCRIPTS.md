@@ -50,6 +50,14 @@ Mede o que o EDGE está servindo, não o repo: baixa o HTML de produção, segue
 npm run prod:coherence
 ```
 
+## `eval:modgraph`
+
+O `prod:coherence` rodando contra a ÁRVORE, antes do deploy: sobe `public/` com o mesmo import map do index.astro (`servidorEstaticoDePublic`, do `ops:diag`) e exige que todo import nomeado tenha export no alvo. Nasceu do #524 (BUG-178): em 06/09 a main publicou `sertao_map_preview.js` importando `SERTAO_PREVIEW` de um `map_preview_media.js` que não o exportava. O CI ficou verde e só o prod-watch pegou. Leva ~0,5 s e não usa rede, por isso roda no `pr-fast` (ci.yml) e no `check:deploy`, e não só no `check:fast`: o `check:fast` não é portão de CI. A segunda metade roda o mutante `--mutante=06-09`, que devolve a linha de import de 06/09 numa cópia temporária e TEM que sair vermelho.
+
+```bash
+npm run eval:modgraph
+```
+
 ## `ops:diag`
 
 A camada operacional: o jogo se diagnostica e explica. Encadeia boot (HTML → import map → main.js → version.js → grafo via prod-coherence), APIs (`/api/health` campo a campo e rotas leves N vezes, para separar 5xx constante de intermitente — o cold start do Cloud Run medido em 06/09/2026), ranking (flag × backend × página), assets no edge (Range GET com prova de cabeçalho), a árvore (versão, index.astro, grafo local, assets) e a partida sintética (Game real em node, todo mapa × modo). Escreve causa provável, evidência, impacto e próximo passo por achado, e separa "tecnicamente verde" de "pronto para lançamento". Só lê: nenhum POST. `--browser` acrescenta o Chromium (o main.js AVALIA?) e o snapshot do `public/js/ops.js`. Fica FORA do check:fast por precisar de rede; quem roda é gente ou o prod-watch. Runbook: docs/runbooks/operacao-autonoma.md.

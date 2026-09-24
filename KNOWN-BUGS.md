@@ -81,6 +81,28 @@ atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o a
 
 Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
 
+## BUG-178 — a main publicou import sem export e só o prod-watch viu (#524)
+
+**Fechado em 23/09/2026.** O #524 (fingerprint `producao-inconsistente`) juntou duas causas
+diferentes, porque o prod-watch manda a mesma mensagem para as três sondas:
+
+| execuções | sonda | saída |
+|---|---|---|
+| 34026616277, 34026690701, 34027471924, 34037057333 (06/09, 10:09–13:45 UTC) | edge | `sertao_map_preview.js importa 'SERTAO_PREVIEW' de ./map_preview_media.js, mas … não exporta` |
+| 34751897547 (13/09 10:27) | banco | `/api/health` → `database:false, telemetrySchema:false`; a execução seguinte (14:35) passou |
+
+A de 06/09 **não era cache**, e por isso o purge feito antes de cada sonda não resolveu. O
+`f95dcac0c` pôs em `sertao_map_preview.js` um import de `SERTAO_PREVIEW` vindo de
+`map_preview_media.js`. Só que esse arquivo não exportava o símbolo, porque dois capturadores
+(Sertão e Amazônia) escreviam o mesmo módulo. A main ficou quebrada na origem, alpha.235
+(`42c01175a`) incluída, até o `20430018b` (OPS-523) separar `sertao_preview_media.js`. A régua
+para essa classe já existia (`sondaBootLocal`, do `ops:diag`), mas ninguém a chamava no CI.
+
+Régua: `eval:modgraph` (`tools/eval/module-graph-check.mjs`), no `pr-fast`, no `check:deploy`
+e no `check:fast`. Ela reprova `42c01175a` com a mesma linha do prod-watch, passa na alpha.265 e
+o mutante `--mutante=06-09` reprova.
+O 13/09 foi uma queda de banco que se recuperou sozinha, e não tem conserto no cliente.
+
 ## BUG-169 — "SERVIDORES FORA DO AR" com os quatro nós de pé
 
 **Fechado em 13/09/2026.** A tela de multiplayer mostrava os quatro servidores "fora do ar"
