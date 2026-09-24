@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**15 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `rubenmarcus`, `Ruben`, `Emerson Garrido`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `nunreasonable`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `t`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**15 identidades de autoria humana** assinam commit no histórico **desta branch**: `rubenmarcus`, `ruben-cytonic`, `Ruben`, `Emerson Garrido`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `nunreasonable`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `t`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -259,7 +259,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.348 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 753 |
-| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 289 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 325 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 241 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 256 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 403 |
