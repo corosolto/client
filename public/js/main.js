@@ -909,13 +909,23 @@ function sendTelemetry() {
   const g = game;
   const payload = {
     anonId: getAnonId(),
-    map: currentMap,
-    mode: matchMode,
+    map: g._mapId || currentMap,
+    mode: g.ctf ? 'ctf' : 'rounds',
     seconds: Math.round(g.time || 0),
     rounds: (g.roundsWon?.E || 0) + (g.roundsWon?.B || 0),
     nick: registeredNick || null,
+    event: 'match_end', gameType: telemetryGameContext.gameType, matchEventId: _matchEventId,
   };
   sendJsonKeepalive('/api/telemetry', payload);
+}
+/* Início no NOSSO banco (antes só na Vercel Analytics): DAU conta quem começou e fechou a aba. */
+function sendGameStarted() {
+  if (testMode || !game) return;
+  sendJsonKeepalive('/api/telemetry', {
+    anonId: getAnonId(), map: game._mapId || currentMap, mode: game.ctf ? 'ctf' : 'rounds',
+    nick: registeredNick || null,
+    event: 'game_started', gameType: telemetryGameContext.gameType, matchEventId: _matchEventId,
+  });
 }
 let registeredNick = ''; // nick canônico devolvido pelo registro do UID
 let rankingBloqueado = ''; // erro do register da sessão (nick de outro dono, charset…) — vira aviso claro no fim da partida
@@ -1218,6 +1228,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const sessao = online ? mpSessao : null;
   const metaMp = sessao?.net?.meta || {};
   const salaMp = sessao?.sala || {};
+  // Trocar de vaga/espectador na MESMA partida online remonta o jogo, mas não é partida nova.
+  const continuaPartida = online && telemetryGameContext.gameType === 'multiplayer'
+    && telemetryGameContext.roomId === (metaMp.room || salaMp.id || salaMp.room || null) && game?._mapId === currentMap;
+  if (!continuaPartida) sendTelemetry();   // revanche/reinício e mapa girando no MP fecham a anterior
   telemetryGameContext = online ? {
     gameType: 'multiplayer',
     node: String(metaMp.regiao || sessao?.no?.ticketNode || sessao?.no?.id || '').toLowerCase() || null,
@@ -1358,6 +1372,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
   _funnel('match_start');    // funil: começou a jogar (017)
+  if (!continuaPartida) sendGameStarted();
   retryPending();
   armSwitchHook();
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
@@ -3431,6 +3446,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   }
   const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
     nome: nick || null, room: sala.id, pw: senha, team, ticket,
+    csha: String(window.__CS_BUILD?.sha || ''),   // mp_session grava o build do navegador (backend#22)
   });
   /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
      mensagem lê como "cliquei e não aconteceu nada" (BUG-88). O prazo é do net.connect(). */
@@ -3497,7 +3513,7 @@ async function mpMontarPartida(net, m) {
    o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
 function mpDesconectou() {
   if (!mpSessao) return;
-  try { if (game) sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia a saída */ }
+  try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
   mpSessao = null;
   clearTelemetryGameContext();
   mpFecharBarraSpec();
@@ -3561,7 +3577,7 @@ function mpEncerrarSessao() {
 /* Sair da partida online. Fecha o socket ANTES de derrubar o jogo: o servidor precisa
    liberar o corpo (senão fica um manequim segurando vaga até o heartbeat derrubar). */
 function mpSair() {
-  try { if (game) sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia a saída */ }
+  try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
   mpEncerrarSessao();
   clearTelemetryGameContext();
   try { if (game) game.dispose(); } catch { /* já foi */ }
