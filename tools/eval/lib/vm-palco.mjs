@@ -102,17 +102,28 @@ export async function equipar(page, w) {
   if (!await page.evaluate((x) => window.__vmPrecisionQa.equip(x), w)) throw new Error(`${w}: não equipou`);
   await page.waitForFunction((x) => { const e = window.__authoredVm.entry(x); return e && (e.golden || e.mint?.active || e.weaponMeshes?.length) && e.mount.visible; }, w, { timeout: 120000 });
   await page.waitForTimeout(1800);   // saque + idle assentados em tempo real
+  // Sob swiftshader lento o saque ainda toca depois de 1,8 s e o ADS entra por cima do equip
+  // (escopeta da fábrica em 16:9, 24/09): espera o estado sair de 'draw'.
+  await page.waitForFunction((x) => window.__authoredVm.state(x) !== 'draw', w, { timeout: 20000 }).catch(() => null);
   await page.evaluate(() => window.__palcoCalmo());
 }
 
 // ADS em tempo real (estado estável), depois congela. Devolve se ficou escopado.
 export async function entrarAds(page) {
-  await segurar(page, false);
-  await page.evaluate(() => { if (!window.__game.player.scoped) window.__vmPrecisionQa.ads(); });
-  await page.waitForTimeout(1300);
-  await segurar(page, true);
-  await esperarQuadro(page);
-  return page.evaluate(() => ({ scoped: Boolean(window.__game.player.scoped), ads: +(window.__authoredVm.adsAmount || 0).toFixed(3) }));
+  // Até 3 tentativas: o ADS às vezes cai entre o toggle e o congelamento (quadro de quadril
+  // medido como ADS: escopeta da fábrica, 277 px intermitente em 24/09). Só congela assentado.
+  let est = null;
+  for (let t = 0; t < 3; t += 1) {
+    await segurar(page, false);
+    await page.evaluate(() => { if (!window.__game.player.scoped) window.__vmPrecisionQa.ads(); });
+    await page.waitForTimeout(1300);
+    await segurar(page, true);
+    await esperarQuadro(page);
+    est = await page.evaluate(() => ({ scoped: Boolean(window.__game.player.scoped), ads: +(window.__authoredVm.adsAmount || 0).toFixed(3) }));
+    if (est.scoped && est.ads >= 0.99) break;
+  }
+  await esperarQuadro(page);   // um quadro a mais desenhado depois do congelamento: sem ele a
+  return est;                  // máscara às vezes saía com o mount do quadril (2 em 3, 24/09)
 }
 
 export async function sairAds(page) {
