@@ -614,6 +614,10 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
   return Array.from({ length: Math.max(1, teamSize) * 2 }, um);
 }
 
+/* Clarão dos tiros por opção do jogador (CONFIGURAÇÕES > VÍDEO). Fatores medidos no
+   dev.html: reduzido ~metade do pico percebido; mínimo deixa rastro sem estourar. */
+const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
+
 export class Game {
   constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
     this._ctfOpt = ctf;
@@ -1022,7 +1026,10 @@ export class Game {
       this._vmFlashLight.position.set(0.1, -0.06, -0.75);   // boca do cano em view space (pose GAUNTLET 2.0)
       this.vmScene.add(this._vmFlashLight);
       this._vmFlash = { t: 1, life: 0.045, peak: 1.6 };
-      this._fxTune = { light: 1, flash: 1, spark: 1, smoke: 1 };   // multiplicadores de FX (dev.html game-backed)
+      // Clarão dos tiros por opção do jogador; faíscas e fumaça ficam de fora (BUG-174).
+      // Fatores medidos no dev.html. Régua: eval:fxFlash.
+      const _fx = FX_CLARAO[this.settings.fxFlash] ?? 1;
+      this._fxTune = { light: _fx, flash: _fx, spark: 1, smoke: 1 };   // multiplicadores de FX (dev.html game-backed)
     }
     this.scene.userData.vmPass = { scene: this.vmScene, camera: this.vmCamera };
 
@@ -2761,6 +2768,9 @@ export class Game {
     this.sfx.speechEnabled = this.settings.speech !== false;
     if (this.el?.hudSpeech) this.el.hudSpeech.textContent = this.settings.speech === false ? '🔇' : '🔊';
     this._applyQuality();
+    // clarão dos tiros ao vivo (mesma disciplina da qualidade: mudou em partida, aplicou)
+    const _fx = FX_CLARAO[this.settings.fxFlash] ?? 1;
+    this._fxSet({ light: _fx, flash: _fx });
   }
   _applyQuality() {
     const q = this.settings.quality;
