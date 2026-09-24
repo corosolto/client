@@ -20,6 +20,7 @@ const CHARACTER_EVAL_SHELL = `<!doctype html>
 
 async function renderIndex() {
   const src = await readFile('src/pages/index.astro', 'utf8');
+  const site = await readFile('src/lib/site.ts', 'utf8');
   const V = JSON.parse(await readFile('package.json', 'utf8')).version;
   const { modules: modulos, revision: JS_REV } = moduleCacheManifest(join(ROOT, 'js'));
   const CSS_REV = createHash('sha256')
@@ -67,9 +68,12 @@ async function renderIndex() {
      ReferenceError e derruba o boot de `/` no arnês (introduzido pelo wiring do
      link de apoio, PR #284). Variável conhecida = linha na tabela; desconhecida
      vaza intacta para o erro ser legível, como no `attrs` acima. */
-  const site = await readFile('src/lib/site.ts', 'utf8');
-  const envConst = (nome) => site.match(new RegExp(`export const ${nome} = import\\.meta\\.env\\.\\w+ \\|\\| '([^']+)'`))?.[1] || '';
-  const DEFINE_VARS = { SUPPORT_URL_BR: envConst('SUPPORT_URL_BR'), SUPPORT_URL_INTL: envConst('SUPPORT_URL_INTL') };
+  /* Precedência do ambiente ANTES do fallback do site.ts: veio da main junto com o
+     `siteUrl`, e é o que deixa o arnês apontar para uma URL de apoio de teste sem
+     editar fonte. O fallback continua sendo o do src/lib/site.ts. */
+  const envConst = (nome, envName) => process.env[envName]
+    || site.match(new RegExp(`export const ${nome} = [^\\n]+\\|\\| '([^']+)'`))?.[1] || '';
+  const DEFINE_VARS = { SUPPORT_URL_BR: envConst('SUPPORT_URL_BR', 'PUBLIC_SUPPORT_URL_BR'), SUPPORT_URL_INTL: envConst('SUPPORT_URL_INTL', 'PUBLIC_SUPPORT_URL_INTL') };
   const defineVars = (s) => s.replace(/<script([^>]*?) define:vars=\{\{([^}]+)\}\}>/g, (todo, attrsScript, nomes) => {
     const linhas = nomes.split(',').map((n) => n.trim()).filter(Boolean)
       .map((n) => (DEFINE_VARS[n] ? `const ${n}=${JSON.stringify(DEFINE_VARS[n])};` : null));

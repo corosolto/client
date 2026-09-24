@@ -261,7 +261,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,657 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,348 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 392 |
-| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 507 |
+| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 753 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 303 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 258 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 277 |
