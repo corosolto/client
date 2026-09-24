@@ -176,6 +176,163 @@ uma publicação de produção.
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-173 · a cauda do lançamento de partida acordava depois da saída e mexia num `game` nulo · CORRIGIDO 19/09
+
+**Sintoma (literal, issues #609 e #608, abertas sozinhas pelo `crash-fix.yml` em 18/09 14:31Z,
+`2.0.0-alpha.261-c690c8831dea`, classe `codigo`):**
+
+```
+#609  Falha ao abrir partida: Cannot read properties of null (reading '_requestLock')   fp 706a428c
+#608  falha ao abrir a partida Cannot read properties of null (reading '_requestLock')  fp 9680a228
+
+TypeError: Cannot read properties of null (reading '_requestLock')
+    at _startGame (main.js:1376:23)
+    at async startGame (main.js:1179:5)
+    at async mpMontarPartida (main.js:3455:3)
+    at async net.onPartida (main.js:3440:5)
+Migalhas: 19 cliques em #game-container entre 14:03:43 e 14:03:52
+```
+
+**As duas issues são um crash só, contado duas vezes.** Mesma linha, mesma pilha: a #608 é o
+`console.error('falha ao abrir a partida', e)` e a #609 é o `__gameLaunch.fail(e,
+'main.js:startGame')` — os dois no MESMO `catch` do `startGame` (`main.js:1181-1189` em
+alpha.261). Fingerprints diferentes porque o watchdog prefixa a mensagem; causa idêntica.
+
+**Causa raiz — confirmada pela pilha, e o lugar é o que importa.** `game` é CONSTRUÍDO 80
+linhas acima da linha que estourou, na mesma função. Para ser nulo na 1376, alguém tem que
+tê-lo soltado no meio — e o meio existe: `_startGame` é `async`, e entre `game = new Game(…)`
+e `game._requestLock()` mora o `await` dos dois `requestAnimationFrame`; antes dele, o `await`
+do preload, que leva **segundos**.
+
+Lançar partida é uma **corrida**, e três eventos chegam nessa janela sem precisar de sorte —
+os três zeravam `game` em quatro lugares diferentes, nenhum deles sabendo que havia um
+lançamento em voo:
+
+| quem chega | caminho | o que fazia |
+|---|---|---|
+| saída pelo menu | `quitToMenu` (`:1408`) / `mpSair` (`:3531`) | `game = null` |
+| queda do socket | `net.onClose` → `mpDesconectou` (`:3468`) | `game = null` |
+| remontagem (mapa girou) | `net.onPartida` → `mpMontarPartida` → `startGame` | derruba e remonta |
+
+A pilha das duas issues entra por `net.onPartida`: é a **remontagem**, e a migalha casa com
+ela (19 cliques em 9 s é gente clicando numa tela que não responde, não gente saindo).
+
+**O crash é o MENOS grave dos quatro estragos**, e é o único que aparecia no painel. A cauda
+perdida também: chamava `hideLoading()` por cima da tela de loading do lançamento **novo**,
+descobrindo cena pela metade (o "minecraft" que o comentário do `showLoading` proíbe); mandava
+`game_start` de partida que não existe, inflando o funil; e, na guarda do preload, construía um
+`Game` inteiro **depois** da desconexão — zumbi rodando atrás do menu. De quebra, `show()` não
+mexe no overlay (`:319`): queda no meio do preload deixava o menu atrás de um "CARREGANDO
+MODELOS 3D…" eterno.
+
+**Refutados com medição, não com palpite:**
+
+- *`game?._requestLock()`* — cala o TypeError e deixa os outros três estragos de pé: cobre a
+  linha do relatório, não o defeito. **A régua NÃO distingue `game.` de `game?.`** (medido: com
+  o `?.` aplicado por cima do conserto ela fica 10/10 verde, porque a guarda já impede a cauda
+  perdida de chegar lá e o `?.` vira redundância). Quem refuta o `?.` sozinho são as LR2/LR7/LR8,
+  que medem os OUTROS estragos — não a linha do `_requestLock`.
+- *comparar identidade, `game !== meuJogo`* — **passa verde no caminho que produziu as
+  issues**, e é a cláusula LR2 que mede isso: o lançamento novo derruba o antigo
+  (`if (game) game.dispose()`) e só atribui o `game` novo ao fim do **próprio** preload,
+  segundos depois. Nessa janela `game` AINDA é o objeto da cauda velha, já descartado.
+- *é a queda de rede do BUG-170/#592* — não. Aquela é `TypeError: network error`, sem quadro
+  de pilha, classificada `recuperavel`. Esta tem pilha, linha e função, e a linha é nossa.
+
+**Conserto (`public/js/main.js`): nº de lançamento, um dono só para soltar a partida.**
+`_lancamento` nasce em `novoLancamento()` no topo de `startGame`; `lancamentoPerdeu(n)` é a
+guarda, posta depois dos `await` que precedem um uso de `game`; e as quatro solturas passaram a
+chamar um `soltarPartida()` único, que zera `game`/`window.__game`, **invalida o lançamento em
+voo** e baixa a tela de loading. Quem perdeu a corrida desiste sem tocar em nada.
+
+**O crítico adversarial achou dois furos, e os dois viraram cláusula.** Régua verde da 1ª
+rodada não era prova (`AGENTS.md`, "quem constrói nunca dá a nota"):
+
+1. *A LR6 é TEXTUAL e portanto cega.* `if (lancamentoPerdeu(n) && false) return;` mantém o
+   token, mata o efeito, devolve o Game zumbi — e a régua ficava **6/6 verde**. Pior: o
+   mutante `sempreload`, que deveria pegar isso, se autodesarmava (arrancava uma guarda que
+   já não fazia nada). Resposta: as guardas ganharam cláusula **EXECUTÁVEL** (LR7/LR7b, região
+   `nascimento`), e o mutante `guardafalsa` ficou no arquivo para documentar a cegueira.
+2. *O `catch` do `startGame` derrubava lançamento alheio.* `soltarPartida()` incondicional
+   invalida **qualquer** lançamento em voo: se a abertura A falhasse depois de a B ter
+   nascido (`onSlot` e `onPartida` são callbacks de socket independentes, sem mutex), o
+   `catch` de A matava B e ainda mandava `show('main-menu')` — o jogador ficava no menu com a
+   partida que o servidor mandou montar nunca subindo. Resposta: o teardown do `catch` virou
+   condicional ao lançamento ser o corrente (LR8), com a antivacuidade que exige que a
+   abertura quebrada **corrente** continue voltando pro menu (LR8b, que é o BUG-42).
+
+**Uma SEGUNDA rodada de crítica, contra o conserto já corrigido, achou mais dois — e um deles
+era pior que o defeito original:**
+
+3. *O `fail` do watchdog ficou FORA da guarda que a rodada 1 criou.* O teardown virou
+   condicional e o `__gameLaunch.fail(e)` não: o lançamento velho abria o modal
+   `#launch-error` — **irrecuperável, só "TENTAR DE NOVO", que recarrega a página**
+   (`index.astro:240`) — por cima da partida nova rodando bem, e de quebra desarmava o
+   watchdog dela (`fail` chama `ready`, `index.astro:304`). Resposta: o `fail` entrou na
+   guarda e o `console.error` **ficou fora**, porque ele é coletado (`index.astro:426`) e é o
+   caminho da própria #608. Mesma disciplina do BUG-170: corta o modal, nunca a telemetria.
+   Mutante `modalfora`, cláusula LR8.
+4. *A LR6 prometia mais do que media.* Ela só olhava o **primeiro** uso de `game` depois de
+   cada `await`; esse já estava protegido, e qualquer uso seguinte era invisível —
+   acrescentar `game._requestLock()` depois da guarda existente passava verde. Virou varredura
+   em ordem com estado: o `await` arma, a guarda desarma, todo `game` tocado com o gatilho
+   armado acende.
+
+**Medido (A/B pela mutação, que é o código de alpha.261 de volta):**
+
+| | antes (`--mutante=semguarda`) | depois |
+|---|---|---|
+| saída entre os dois quadros | `TypeError: Cannot read properties of null (reading '_requestLock')` | nenhuma exceção |
+| remontagem: `hideLoading` roubado / `game_start` fantasma | 1× / 1 | 0 / 0 |
+| `await` de lançamento sem guarda antes de tocar em `game` | 1 de 3 (`sempreload`: 2 de 3) | 0 de 3 |
+| lançamento normal entrega a partida (antivacuidade LR3) | sim | sim |
+
+**Régua: `tools/eval/launch-race-check.mjs`** (`npm run eval:launchrace`, no `check:fast`
+depois do `eval:launchwatchdog`), **10 cláusulas**. Ela **extrai** do `main.js` as quatro
+regiões `RÉGUA:launch-race` — estado do lançamento, nascimento (guarda do preload + `new
+Game`), cauda e queda (o `catch`) — e as roda num `vm` com `requestAnimationFrame` sob
+controle, para interromper exatamente entre os dois quadros. **7 mutantes, os sete mordem**, e
+LR3/LR7b (as antivacuidades) ficam verdes nos sete:
+
+| mutante | o que arranca | acende |
+|---|---|---|
+| `semguarda` | a guarda da cauda (= alpha.261) | LR1, LR2, LR6 · a LR1 reproduz a mensagem da issue |
+| `sempreload` | a guarda do preload (o Game zumbi) | LR6, LR7 |
+| `semepoca` | a invalidação do lançamento em `soltarPartida` | LR1, LR4, LR7 |
+| `semtela` | o `hideLoading` de `soltarPartida` | LR4, LR8b |
+| `guardafalsa` | o EFEITO da guarda, mantendo o token | LR1, LR2, LR7 — **LR6 fica verde** |
+| `quedacega` | a condição do teardown do `catch` | LR8 |
+| `modalfora` | só o `fail` escapa da guarda do `catch` | LR8 |
+
+**Limite medido da régua:** régua de REGIÃO não impede código acrescentado FORA dos
+marcadores. A LR6 cobre o corpo inteiro do `_startGame` contra uso de `game`, mas uma linha
+nova dentro do `catch` do `startGame` passa por ela (o 2º crítico demonstrou sete mutações
+de uma linha, fora das regiões, com a régua verde). Quem cobre caminho automático para o
+menu, em `main.js` inteiro, é a **PAUSA5** do `pause-check`.
+
+**Custo declarado.** `soltarPartida()` passou a baixar o loading em TODA saída, inclusive nas
+três que já saíam com o overlay escondido — chamada idempotente
+(`classList.add('hidden')`), zero efeito visível. A LR6 continua sendo textual e o
+`guardafalsa` prova que ela é cega sozinha: ela está no arquivo pelo await de amanhã, não
+pela guarda de hoje. E `tools/eval/pause-check.mjs` teve a cláusula **PAUSA5** ajustada: ela
+reconhecia a fronteira do `catch` de `startGame` pelo literal `game = null`, que virou
+`soltarPartida()` — acendeu por RENOMEAÇÃO, e vermelho que não é defeito ensina a ignorar
+vermelho. O corte novo aceita as duas formas; os mutantes `automenu` e `automenu-mp` continuam
+acendendo a PAUSA5 (conferido: 5/6 nos dois).
+
+**Não coberto, de propósito.** Depois de uma remontagem, a cauda velha retorna e o `startGame`
+dela chama `__gameLaunch.ready('partida')`, que desarma o watchdog **do lançamento novo**
+(`ready` só compara o nome da etapa, `index.astro:297`). Consequência: se o lançamento novo
+travar de verdade, ninguém reporta. Não foi consertado aqui porque a alternativa — não chamar
+`ready` — devolve o falso positivo "tempo limite ao abrir partida" que o BUG-167 acabou de
+fechar, e a correção certa (identidade de lançamento dentro do watchdog) mexe na região marcada
+do `index.astro` e na régua dele. Fica registrado como dívida.
+
+**Não verificado:** nenhum portão de navegador — `playwright` não está instalado nesta máquina,
+e a corrida é de dois quadros (repro manual confiável não existe; foi por isso que a régua
+virou `vm` com rAF sob controle, e não `crash-watch`). `npm run build` e `check:seo` também não
+rodaram aqui. A recorrência em produção não foi medida: a tabela `js_error` é schema privado,
+sem credencial nesta máquina.
 ### BUG-177 · `loop()` lia `#char-select` sem guarda e congelava o jogo quando o elemento sumia · CORRIGIDO 23/09
 
 **Sintoma:** crash automático #617 em produção (alpha.262), `TypeError: Cannot read

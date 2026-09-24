@@ -835,6 +835,21 @@ let game = null, currentTeam = 'E', currentFaction = 'E', currentChar = CHARACTE
 let pickingEnemy = false, currentEnemyFaction = null;   // 2º passo do team-select: escolher o adversário
 let submitted = true;   // stats da partida atual já enviados?
 
+/* RÉGUA:launch-race início — extraído por `tools/eval/launch-race-check.mjs` */
+let _lancamento = 0;
+/* Lançar partida é CORRIDA: saída pelo menu, queda de socket e remontagem do servidor chegam
+   no meio de um `await` de `_startGame`. Quem perdeu a corrida desiste (#608/#609). */
+const novoLancamento = () => ++_lancamento;
+const lancamentoPerdeu = (n) => n !== _lancamento;
+function soltarPartida() {
+  game = null; window.__game = null;
+  _lancamento++;
+  /* A tela de loading morre COM a partida: `show()` não mexe no overlay, e uma queda no meio
+     do preload deixava o menu atrás de um "CARREGANDO MODELOS 3D…" eterno. */
+  try { hideLoading(); } catch { /* overlay ainda não existe */ }
+}
+/* RÉGUA:launch-race fim */
+
 /* ---------------- TELEMETRIA ANÔNIMA (contrato em tools/eval/telemetry-check) --------------
    O ranking está desligado (src/lib/site.ts, RANKING_ON) mas a MEDIÇÃO não: o dono
    quer saber quanto tempo se joga e em que mapa.
@@ -1175,21 +1190,31 @@ async function startGame(team, charId, enemyFaction, online = false) {
     return false;
   });
   /* RÉGUA:launch-watchdog fim */
+  const meuLancamento = novoLancamento();
   try {
-    await _startGame(team, charId, enemyFaction, online);
+    await _startGame(meuLancamento, team, charId, enemyFaction, online);
     window.__gameLaunch?.ready('partida');
   } catch (e) {
-    try { hideLoading(); } catch {}
-    try { if (game) game.dispose(); } catch {}
-    game = null; window.__game = null;
-    try { if (document.pointerLockElement) document.exitPointerLock(); } catch {}
-    try { if (document.fullscreenElement) document.exitFullscreen()?.catch?.(() => {}); } catch {}
-    try { show('main-menu'); } catch {}
+    /* RÉGUA:launch-race queda início — extraído por `tools/eval/launch-race-check.mjs` */
+    /* Só quem ainda é o lançamento corrente limpa a tela: o `catch` de uma abertura velha
+       derrubava a partida NOVA que já estava subindo por cima dela. */
+    if (!lancamentoPerdeu(meuLancamento)) {
+      try { if (game) game.dispose(); } catch {}
+      soltarPartida();
+      try { if (document.pointerLockElement) document.exitPointerLock(); } catch {}
+      try { if (document.fullscreenElement) document.exitFullscreen()?.catch?.(() => {}); } catch {}
+      try { show('main-menu'); } catch {}
+      /* O modal de falha é IRRECUPERÁVEL (só "TENTAR DE NOVO", que recarrega) e o `fail`
+         desarma o watchdog: abrir isso por cima da partida que assumiu é pior que o #609. */
+      window.__gameLaunch?.fail(e, 'main.js:startGame');
+    }
+    /* O relatório segue saindo nos dois casos — `console.error` é coletado
+       (`index.astro:426`). Mesma disciplina do BUG-170: corta o modal, nunca a telemetria. */
     console.error('falha ao abrir a partida', e);
-    window.__gameLaunch?.fail(e, 'main.js:startGame');
+    /* RÉGUA:launch-race queda fim */
   }
 }
-async function _startGame(team, charId, enemyFaction, online = false) {
+async function _startGame(meuLancamento, team, charId, enemyFaction, online = false) {
   const sessao = online ? mpSessao : null;
   const metaMp = sessao?.net?.meta || {};
   const salaMp = sessao?.sala || {};
@@ -1288,6 +1313,10 @@ async function _startGame(team, charId, enemyFaction, online = false) {
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
+  /* RÉGUA:launch-race nascimento início — extraído por `tools/eval/launch-race-check.mjs` */
+  /* O preload leva segundos: sem esta saída, uma queda de socket no meio dele fazia nascer um
+     Game zumbi por cima do menu que a desconexão já havia aberto. */
+  if (lancamentoPerdeu(meuLancamento)) return;
   if (_lstat.phase) _lstat.phase.set(1);
   game = new Game({
     renderer, textures, sfx,
@@ -1306,6 +1335,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
     onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
+  /* RÉGUA:launch-race nascimento fim */
   /* Resto das armas em ocioso: o drop do chão e a troca no meio da partida precisam de malha
      real, senão vira caixa procedural. Falha calada — é disponibilidade, não requisito. */
   if (!navOnly && params.get('armaslazy') !== '0') {
@@ -1341,9 +1371,13 @@ async function _startGame(team, charId, enemyFaction, online = false) {
     $('set-speech').checked = settings.speech;
     return settings.speech;
   };
+  /* RÉGUA:launch-race cauda início — extraído por `tools/eval/launch-race-check.mjs` */
   game.start();
   // esconde o loading só depois do 1º frame REAL da partida renderizado
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  /* Nestes dois quadros cabe uma saída, uma queda ou uma remontagem: quem perdeu a corrida não
+     toca em `game` (era nulo em #608/#609) nem na tela do lançamento que assumiu. */
+  if (lancamentoPerdeu(meuLancamento)) return;
   hideLoading();
   // registra nick no ranking global (silencioso se a API não estiver no ar)
   const nick = $('nick-input').value.trim();
@@ -1374,6 +1408,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
      o `game._requestLock()` já fazia — e a duplicata é que deixava a trava de atalhos sem
      lugar pra morar no começo da partida (o RETOMAR passava pelo funil, o COMEÇAR não). */
   if (!testMode) game._requestLock();
+  /* RÉGUA:launch-race cauda fim */
 }
 function quitToMenu() {
   // corta a vinheta de round ao sair da partida (pedido do dono): o teto de 25 s do
@@ -1405,7 +1440,7 @@ function quitToMenu() {
   // dispose protegido: se a limpeza da partida falhar, o menu volta MESMO assim
   // (antes, uma exceção aqui deixava o botão "SAIR PRO MENU" morto e o jogo zumbi)
   try { if (game) game.dispose(); } catch (e) { console.error('dispose falhou ao sair pro menu', e); }
-  game = null; window.__game = null;
+  soltarPartida();
   if (document.pointerLockElement) document.exitPointerLock();
   // a tela cheia era da PARTIDA (pré-requisito da trava de Ctrl+W); no menu ela não serve
   // pra nada e prender o jogador nela é rude. O `dispose()` acima já soltou os atalhos.
@@ -3467,7 +3502,7 @@ function mpDesconectou() {
   clearTelemetryGameContext();
   mpFecharBarraSpec();
   try { if (game) game.dispose(); } catch { /* já foi */ }
-  game = null; window.__game = null;
+  soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('mp-panel');
   /* o aviso entra DEPOIS da sondagem: abrirMultiplayer começa com mpErro('') — na ordem
@@ -3530,7 +3565,7 @@ function mpSair() {
   mpEncerrarSessao();
   clearTelemetryGameContext();
   try { if (game) game.dispose(); } catch { /* já foi */ }
-  game = null; window.__game = null;
+  soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('main-menu');
 }
