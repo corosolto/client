@@ -262,13 +262,13 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,600 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,348 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 392 |
-| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 753 |
+| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 757 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 289 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 241 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 256 |
-| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 818 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 260 |
+| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 925 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 1,061 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 1,008 |
+| `penitenciaria` | Carandiru | **capture** | `map_penitenciaria.js` | 1,008 |
 
 **18 registered maps** - 2 open in rounds and 16 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 24 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
