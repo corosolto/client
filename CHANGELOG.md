@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.278`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.281`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,56 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.281] — 2026-09-24
+
+### Mudado
+- fix(eval): arnês local resolve qualquer define:vars do index.astro (#648)
+- fix(eval): arnês local resolve qualquer define:vars do index.astro
+
+## [2.0.0-alpha.280] — 2026-09-24
+
+### Mudado
+- feat(upa): cria setores clínicos e amplia rotas (#605)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(upa): registrar segunda critica independente
+- docs(upa): fechar replay dos gates
+- docs(upa): registrar revalidacao alpha.262
+- chore(upa): resumir justificativa das margens
+- fix(upa): afastar rotas de obstaculos clinicos
+- docs(upa): registra gate herdado de deploy
+- docs(upa): atualiza evidencias do candidato
+- feat(upa): cria setores clinicos e amplia rotas
+
+## [2.0.0-alpha.279] — 2026-09-24
+
+### Mudado
+- feat(config): CLARÃO DOS TIROS nas configurações - normal/reduzido/mínimo (BUG-174) (#614)
+- feat(mp): seletor de JOGADORES POR TIME no criar sala - X1 sem bots (BUG-173) (#613)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(fx): comentario do clarao em duas linhas para o portao eval:comentario
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(config): CLARÃO DOS TIROS nas configurações - normal/reduzido/mínimo (BUG-174)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(mp): seletor de JOGADORES POR TIME no criar sala — X1 sem bots (BUG-173)
 
 ## [2.0.0-alpha.278] — 2026-09-24
 
