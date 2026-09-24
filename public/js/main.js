@@ -34,7 +34,7 @@ import { FACCAO_NOME_UI } from './mapcat.js';
 const SETTINGS_KEY = 'awpbr_settings';
 const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 if (savedSettings.invertY == null && savedSettings.invY != null) savedSettings.invertY = savedSettings.invY;
-const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal' }, savedSettings);
+const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal' }, savedSettings);
 let preferredQuality = null;
 const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify({
   ...settings,
@@ -2704,6 +2704,14 @@ sensEl.oninput = () => { settings.sens = +sensEl.value; updLabels(); saveSetting
 invertEl.onchange = () => { settings.invertY = invertEl.checked; saveSettings(); ui.click(); };
 volEl.oninput = () => { settings.vol = +volEl.value; sfx.setVolume(settings.vol); updLabels(); saveSettings(); };
 qualEl.onchange = () => { settings.quality = qualEl.value; saveSettings(); if (game) game.applySettings(); };
+// Clarão dos tiros (BUG-174): mesma disciplina da qualidade - persiste e aplica AO VIVO,
+// porque quem reclama do clarão está COM A ARMA NA MÃO quando procura o ajuste.
+const fxFlashEl = $('set-fxflash');
+if (fxFlashEl) {
+  fxFlashEl.value = settings.fxFlash || 'normal';
+  if (!fxFlashEl.value) fxFlashEl.value = 'normal';
+  fxFlashEl.onchange = () => { settings.fxFlash = fxFlashEl.value; saveSettings(); if (game) game.applySettings(); ui.click(); };
+}
 // Cor da mira: a mira sai do sistema de cor do HUD (ciano = sistema, âmbar = objetivo,
 // vermelho = crítico) e passa a ser escolha do jogador — puro CSS var, sem custo por frame.
 // PADRÃO = CIANO, não branco. O branco foi medido em 1,28:1 contra a parede clara do
@@ -3359,6 +3367,7 @@ function mpMontarFormulario() {
         ...(aDedo ? { mapas: escolhidos, mapId: escolhidos[0] } : {}),
         faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
+        teamSize: +mpEl('mp-teamsize').value || 5,   // teamSize do criador: 1 = X1 sem bots (backend #29, relato 21/09)
         creatorNick: ($('nick-input').value || '').trim() || null,
       }, ticket);
       let cheia = { ...sala, id: sala.room || sala.id };
