@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 48.933 linhas em 96 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 48.924 linhas em 96 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.483** linhas | `wc -l public/js/game.js` |
 | `main.js` | 3.571 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -227,7 +227,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.041 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.965 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.892 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.889 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.600 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.348 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |

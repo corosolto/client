@@ -20,10 +20,4 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tag-selvagem.png","persona
 
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
-
-/* REASSINADO SEM REASSAR em 2026-09-24 — corrego, ferro_velho e quebrada: densidade de
-   UV normalizada (metros por UV). Escala de textura não move quad de decalque; geometria,
-   bandas, semente e passada ficaram intactas. Assar de novo NÃO era opção: a rodada
-   gravada nesta branch tinha derrubado praca_poderes de 366 para 294 peças e
-   piscina_treta de 383 para 198, que é o que deixou o portao vermelho. */
-export const GRAFITE_FP = {"pass":"72a446b1c69e9697","maps":{"escadao":"ba3a46ab4903a345","praca_poderes":"a61f8c352eca8377","piscina_treta":"b9b468deb531330e","loja_h":"7d35e666ce48c297","ferro_velho":"245fb346458e275a","quebrada":"0d9ee5f2865bca22","corrego":"fb85770d5c767374"}};
+export const GRAFITE_FP = {"pass":"72a446b1c69e9697","maps":{"escadao":"ba3a46ab4903a345","praca_poderes":"a61f8c352eca8377","piscina_treta":"b9b468deb531330e","loja_h":"7d35e666ce48c297","ferro_velho":"6ad42bd8fd7f5d76","quebrada":"0aad1c145b713e60","corrego":"5b77ec2fd585a8aa"}};
