@@ -46,7 +46,9 @@ import { pathToFileURL } from 'node:url';
 import { writeFileSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
-const ONLY = process.argv[2];
+const ARGS = process.argv.slice(2);
+const ONLY = ARGS.find((arg) => !arg.startsWith('--'));
+const MUTANTE = ARGS.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
 const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada'];
 /* As metas do dono (07/08), em cobertura de placa de parede. Quebrada e Piscina são
    "os mapas mais degradados" e vão a 90%; Brasília é cidade oficial e vai a 60%;
@@ -272,6 +274,20 @@ const reprovados = [];
 for (const id of MAPS) {
   if (ONLY && id !== ONLY) continue;
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
+  if (MUTANTE === 'sem-layout-piscina' && id === 'piscina_treta') {
+    await page.route('**/js/graffiti_layout.js*', async (route) => {
+      const response = await route.fetch();
+      const source = await response.text();
+      const encoded = source.match(/^export const GRAFITE = (.+);$/m)?.[1];
+      if (!encoded) throw new Error('layout de grafite não reconhecido pelo mutante');
+      const layout = JSON.parse(encoded);
+      layout.piscina_treta = { ...layout.piscina_treta, pecas: [], murais: [] };
+      await route.fulfill({ response, body: source.replace(
+        /^export const GRAFITE = .+;$/m,
+        `export const GRAFITE = ${JSON.stringify(layout)};`,
+      ) });
+    });
+  }
   page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
   await page.goto(`${BASE}/mapview.html?map=${id}`, { waitUntil: 'networkidle' });
   // o 2º argumento é o ARG da função, não as opções — sem o `null` o timeout vira
