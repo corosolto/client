@@ -160,6 +160,12 @@ jobs:
       # — o commit do autofix deixava o branch vermelho no próprio docs:check, em loop.
       # A proteção anti-fork não se aplica: quem abre PR de branch da casa já tem write
       # no repo e pode editar este workflow diretamente.
+      # O MESMO LOOP no fork (22/09, #610): aqui o package.json da base continuava valendo
+      # NA HORA DE GERAR, então o gen-docs escrevia 242 scripts numa árvore com 243 e o bot
+      # commitava o número errado por cima do certo — DOCS1 vermelho para sempre, e o autor
+      # do fork sem como consertar, porque quem regenera é o bot. O manifesto do fork volta
+      # ao seu lugar DEPOIS da instalação e ANTES dos geradores (passo abaixo): quem instala
+      # dependência continua sendo o manifesto da BASE, e quem é MEDIDO passa a ser o do PR.
       - name: Restaura as ferramentas da base (somente fork)
         if: env.pular != '1' && env.HEAD_REPO != env.REPO
         run: |
@@ -192,6 +198,13 @@ jobs:
           gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
             "🤖 **autofix**: a base andou e o conflito encostou em arquivo de código — não é meu para resolver. Os arquivos em conflito estão no log do run; rode \`git merge origin/${{ github.event.pull_request.base.ref || 'main' }}\` e decida."
 
+      # O manifesto do fork volta antes de gerar: o que a doc afirma é o que a ÁRVORE tem.
+      # Seguro porque a instalação já aconteceu (com o lock da base) e os dois geradores
+      # importam só builtin de node — nada de package.json do fork chega a ser executado.
+      - name: Devolve o manifesto do PR antes de gerar (somente fork)
+        if: env.pular != '1' && env.HEAD_REPO != env.REPO && steps.merge.outputs.humano != '1'
+        run: git checkout HEAD -- package.json package-lock.json
+
       - name: Conserta o mecânico
         if: env.pular != '1' && steps.merge.outputs.humano != '1'
         run: |
@@ -199,10 +212,10 @@ jobs:
           node tools/gen-arch.mjs   || echo "::warning::gen-arch falhou"
 
       # As ferramentas foram restauradas da base só para rodar; o que volta ao PR é
-      # apenas o resultado delas.
+      # apenas o resultado delas. (O manifesto já voltou no passo anterior aos geradores.)
       - name: Devolve as ferramentas ao estado do PR
         if: env.pular != '1' && env.HEAD_REPO != env.REPO && steps.merge.outputs.humano != '1'
-        run: git checkout HEAD -- tools/ scripts/ package.json package-lock.json
+        run: git checkout HEAD -- tools/ scripts/
 
       - name: A trava — só arquivo gerado pode virar commit
         if: env.pular != '1' && steps.merge.outputs.humano != '1'

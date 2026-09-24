@@ -249,7 +249,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
-| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.154 |
+| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.192 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.407 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 811 |
@@ -264,7 +264,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 256 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 403 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
-| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 248 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 1.008 |
 
 **17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 23 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 

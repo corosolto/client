@@ -181,6 +181,11 @@ window.__GEO_LANG__ = (function () {
   function erroDeContexto(m){
     return /to WebGL2?RenderingContext\.\w+ must be an instance of WebGLShader\b/i.test(String(m || ''));
   }
+  /* MESMA redação da `REDE_RE` de `src/lib/error-provenance.mjs`: divergir devolve a queda de
+     rede ao painel de launch aqui, ou à issue automática lá. KNOWN-BUGS.md, BUG-170. */
+  function erroDeRede(m){
+    return /^(?:falha ao abrir [^:]{1,40}: )?(?:network error|load failed|failed to fetch|networkerror when attempting to fetch resource\.?)$/i.test(String(m || '').trim());
+  }
   /* URL http só prova origem em source/stack; na mensagem ela é payload do
      jogo ("falha ao carregar https://api..."). Esquema de extensão vale em
      qualquer campo: o navegador reporta frame injetado até na mensagem (#157). */
@@ -200,6 +205,10 @@ window.__GEO_LANG__ = (function () {
     // lados discordarem, a ponte come cota aqui ou volta a abrir issue lá (BUG-76).
     var injetado = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|webkit\.messageHandlers)\b/;
     if (injetado.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
+    // MESMA redação da `AUTOMACAO_RE` de `src/lib/error-provenance.mjs`: se os dois lados
+    // discordarem, o arnês come cota aqui ou volta a abrir issue lá (BUG-151).
+    var automacao = /\bUtilityScript\b|\b__puppeteer_evaluation_script__\b|\bpptr:[/][/]/;
+    if (automacao.test(String(stack || ''))) return false;
     var propria = location.origin;
     if (sourceText && /^https?:\/\//i.test(sourceText)) {
       try {
@@ -364,7 +373,7 @@ window.__GEO_LANG__ = (function () {
     }
     if (interna) showDebug('promise', (r && r.message) || String(r), r && r.stack);
     reporta('promise', (r && r.message) || String(r), null, r && r.stack, !interna);
-    if (lancamento.ativo && interna && !erroIgnoravel(r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
+    if (lancamento.ativo && interna && !erroIgnoravel(r) && !erroDeRede((r && r.message) || r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
   });
 
   /* Um erro global sozinho não prova que o jogo parou (extensões de carteira injetam
