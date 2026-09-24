@@ -65,35 +65,31 @@ compartilhada por todos os mapas: é decisão do dono, não de quem conserta.)
 **Metade das vagas de spawn no térreo.** Levava o bot ao chão de verdade (0,0% → 7,3% das
 amostras) e reprovava a `LS1` — *"os dois times nascem nas lajes"* é contrato do mapa.
 
-## O que continua aberto — BUG-75
+## BUG-75 da frente Lajes · RESOLVIDO NA MAIN 14/09/2026
 
-Com o combate **ligado**, que é como o dono joga, o raio de exploração do bot no lajes é
-**12,8 m**, contra 23,2 m no escadão, 23,0 m no piscinão e 38,5 m no ferro velho.
+O texto abaixo permaneceu aberto depois de a árvore de produção mudar. A sonda de 14/09 na
+`main` alpha.255 (`dffcf1f5`), com o mesmo `_updateBot`, três sementes, 60 segundos e sete
+bots por semente, mediu o estado atual:
 
-A causa **não é o grafo**. Com o combate suprimido, no mesmo grafo, o raio vai a **44,1 m** e
-a escada finalmente aparece no rastro. A causa é esta:
+| partida real, combate ligado | sonda antiga | main atual |
+|---|---:|---:|
+| bots que exploram ao menos 15 m | não medido | **21 de 21** |
+| amostras no térreo | **0,0%** | **91,4%** |
+| raio médio de exploração | **12,8 m** | **35,6 m** |
+| engajamento mediano | **49,9 m** | **15,0 m** |
 
-- no lajes **100% dos engajamentos acontecem acima de 25 m**, com mediana de **49,9 m**
-  (escadão 19,0 m, ferro velho 18,6 m) — as duas lajes de spawn se enxergam por um corredor
-  de ar sobre o miolo do mapa;
-- e `_updateBot` **não avança rota nenhuma enquanto `b.target` existe** (`game.js`, ramo
-  `else` do roam).
+A planta V4 também moveu os respawns reais para o térreo. Por isso, a antiga candidata a
+cláusula “pisou no chão” perdeu poder: ela passa no instante do nascimento. A LB3 agora
+exige raio médio de 28 m, o necessário para sair do spawn e cruzar o meio da planta. O
+mutante `deriva-rumo` usa o mesmo gancho real do `botsim-golden`: o raio cai a 24,3 m. As
+demais métricas continuam impressas como diagnóstico, sem fingir quatro regras independentes.
 
-Somando: o bot não precisa andar para atirar, então não anda. Ele congela onde viu o
-primeiro inimigo, que é a poucos metros do respawn.
+Esta comparação prova o comportamento da árvore atual; não atribui a melhora a um único
+commit. Entre as duas sondas mudaram tanto a planta de Lajes quanto a IA compartilhada. A
+frente de fechamento preserva a geometria V7 aprovada e transforma o resultado atual em
+regra de regressão.
 
-Consertar isso é **redesenhar a visada do telhado** (quebrar o corredor spawn↔spawn, o que
-mexe no visual que o dono aprovou) ou **mexer na IA de combate de todos os mapas** (deixar o
-bot progredir na rota com alvo distante em mãos). Nenhuma das duas cabe numa frente de mapa,
-e as duas precisam da chamada do dono.
-
-Uma tentativa parcial foi medida: massa de cobertura na frente das duas lajes de spawn levou
-o engajamento mediano de 48,6 m para 41,9 m e o térreo de 7,3% para 12,8%, mas o raio caiu
-(15,1 → 13,0 m). Não é o conserto.
-
-Enquanto isso, `eval:lajes-bots` **imprime os dois números em toda execução, sem cláusula** —
-navegação (combate suprimido) e partida real, lado a lado. A distância entre eles É o defeito
-em aberto. Uma cláusula "o bot põe pé no térreo" chegou a ser escrita e foi **descartada**:
-medida no estado anterior à rodada, ela nascia VERDE (7,2% das amostras, com combate
-suprimido). Régua que não morde é pior que régua ausente — ela dá por resolvido o que
-continua aberto.
+Esta é uma guarda pós-integração: LB3 já nasce verde nesta lane porque a correção está na
+main; a sonda histórica de 12,8 m é a baseline vermelha preservada, não uma execução A/B
+fabricada agora. Reprodução: `npm run eval:lajes-bots` e
+`node tools/eval/lajes-bots-check.mjs --mutante=deriva-rumo`.

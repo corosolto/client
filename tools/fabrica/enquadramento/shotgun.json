@@ -1,0 +1,47 @@
+{
+  "id": "shotgun",
+  "curta": false,
+  "golden": {
+    "eixo": 28.7,
+    "centro": [
+      0.835,
+      0.767
+    ]
+  },
+  "frameBase": {
+    "x": 0.065,
+    "y": -0.1,
+    "z": -0.303,
+    "fov": 57,
+    "rotDeg": [
+      1.69,
+      7.69,
+      6.19
+    ]
+  },
+  "antes": {
+    "tamanhoVsAk": 0.751,
+    "bracoVsAk": 0.498,
+    "eixo": 41.6,
+    "cruz": 0,
+    "centro": [
+      0.688,
+      0.844
+    ]
+  },
+  "frame": {
+    "x": 0.155,
+    "y": -0.04,
+    "z": -0.333
+  },
+  "depois": {
+    "tamanhoVsAk": 0.959,
+    "bracoVsAk": 1.071,
+    "eixo": 28.7,
+    "cruz": 0,
+    "centro": [
+      0.826,
+      0.769
+    ]
+  }
+}

@@ -20,24 +20,30 @@
          Faca não tem cano nem projétil — o traçante é a arma de fogo aparecendo.
 
    O QUE ESTA RÉGUA MEDE (Game de verdade, sem navegador, semente fixa)
-   BF1 em modo faca TODO bot nasce com 'knife' (a garantia que já existia, presa aqui
-       pra ninguém consertar (a)/(b) e quebrar isto de lado).
+   BF1 em modo faca TODO combatente nasce com 'knife', e trocar para uma arma de fogo
+       pelos slots 1/2 é recusado. A seleção do modo não pode ser só cosmética.
    BF2 PERSEGUIÇÃO: em 60 s de partida os bots encostam — a menor distância bot->alvo
        cai dentro do alcance da faca — e o combate ACONTECE (há abates).
-   BF3 SEM ARMA DE FOGO: durante os golpes de faca não sai traçante nem fogacho, e o
-       som é o da faca.
+   BF3 CONTATO REAL: o golpe respeita os 2,4 m declarados por WEAPONS.knife.range (com
+       só 8 cm de tolerância para o passo discreto da simulação), sem a margem escondida
+       de 0,6 m que dava ao bot 25% mais alcance que o jogador. Durante o golpe não sai
+       traçante nem fogacho, e o som é o da faca.
    BF4 o modo 'all' (rodada normal) NÃO muda: os bots continuam abrindo distância (piso de
        4 m, derivado do 'back' abaixo de 6 m da própria banda de fuzil). É a cláusula que
        impede "consertar" a faca transformando todo bot num corredor.
+   BF5 a virada de rodada preserva arma e placar individual, transfere os abates do time
+       uma vez para o acumulado e não deixa rack/drop de arma furar o modo.
 
    Mutantes:
      recuo    — devolve a banda de recuo de fuzil pro bot de faca (defeito (a))
      tracante — devolve traçante/fogacho no golpe de faca (defeito (b))
      corredor — tira a banda de distância de TODO bot, inclusive de fuzil (prova BF4)
+     alcance  — devolve os 0,6 m extras ao golpe do bot (prova BF3)
+     troca    — deixa o jogador equipar arma de fogo no modo só faca (prova BF1)
    Uso: node tools/eval/botfaca-check.mjs [--mutante=<nome>]
    ============================================================================ */
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['recuo', 'tracante', 'corredor'];
+const MUTANTES = ['recuo', 'tracante', 'corredor', 'alcance', 'troca'];
 if (MUT && !MUTANTES.includes(MUT)) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const h = await import('./harness.mjs');
@@ -68,6 +74,20 @@ function jogo(wpnMode, seed) {
 
 /* Os mutantes voltam o defeito por cima do jogo já construído — comportamento, não texto. */
 function planta(g) {
+  if (MUT === 'troca') {
+    const orig = g._switchWeapon.bind(g);
+    g._switchWeapon = (wid, ...args) => {
+      const mode = g.settings.wpnMode;
+      g.settings.wpnMode = 'all';
+      const out = orig(wid, ...args);
+      g.settings.wpnMode = mode;
+      return out;
+    };
+  }
+  if (MUT === 'alcance') {
+    const orig = g._meleeRange.bind(g);
+    g._meleeRange = (wid) => orig(wid) + (wid === 'knife' ? 0.6 : 0);
+  }
   /* Os dois mexem na POSIÇÃO depois do quadro, não em `b._range`: a banda é recalculada no
      topo de todo `_updateBot`, então escrever nela por fora não muda deslocamento nenhum — o
      mutante passaria verde sem reproduzir defeito algum. */
@@ -130,6 +150,12 @@ const mk = instrumenta(gk);
 
 const semFaca = gk.bots.filter((b) => b.weapon !== 'knife');
 if (semFaca.length) falhas.push(`BF1 ${semFaca.length}/${gk.bots.length} bots nasceram com arma de fogo em rodada de faca (${[...new Set(semFaca.map((b) => b.weapon))].join(', ')})`);
+if (gk.player.weapon !== 'knife') falhas.push(`BF1 jogador nasceu com ${gk.player.weapon}, não com faca`);
+gk._switchWeapon('awp');
+if (gk.player.weapon !== 'knife') falhas.push(`BF1 slot de arma furou o modo só faca: jogador equipou ${gk.player.weapon}`);
+/* O mutante deixa a arma proibida ativa; restaura o cenário para BF2/BF3 medirem a IA,
+   e não a consequência secundária de um player armado no meio da rodada. */
+if (gk.player.weapon !== 'knife') gk._switchWeapon('knife');
 
 roda(gk, mk, 60);
 
@@ -141,14 +167,35 @@ if (!mk.golpes.length)
 if (!abates)
   falhas.push('BF2 zero abates em 60 s de rodada de faca — a rodada não acontece');
 
-const longe = mk.golpes.filter((x) => x.d > ALCANCE + 1.0);
-if (longe.length) falhas.push(`BF3 ${longe.length} golpes de faca fora do alcance (até ${num(Math.max(...longe.map((x) => x.d)))} m) — ainda é hitscan de arma de fogo`);
+/* Um quadro a 60 Hz desloca o bot em ~5 cm; 8 cm absorvem essa discretização sem
+   transformar tolerância técnica em alcance de gameplay. Medido antes do conserto:
+   2,99 m para uma arma declarada com 2,40 m. */
+const MARGEM_PASSO = 0.08;
+const longe = mk.golpes.filter((x) => x.d > ALCANCE + MARGEM_PASSO);
+if (longe.length) falhas.push(`BF3 ${longe.length} golpes de faca fora do alcance declarado (até ${num(Math.max(...longe.map((x) => x.d)))} m, máximo ${num(ALCANCE + MARGEM_PASSO)} m)`);
 if (mk.tracers) falhas.push(`BF3 ${mk.tracers} traçantes numa rodada de faca — faca não tem projétil`);
 if (mk.flashes) falhas.push(`BF3 ${mk.flashes} fogachos de cano numa rodada de faca — faca não tem cano`);
 const tiros = mk.sons.filter((s) => s.startsWith('shotWeapon'));
 if (tiros.length) falhas.push(`BF3 ${tiros.length} chamadas de som de TIRO numa rodada de faca (${[...new Set(tiros)].join(', ')}) — o golpe deve tocar knife/knifeHit`);
 if (mk.golpes.length && !mk.sons.some((s) => s === 'knife' || s === 'knifeHit'))
   falhas.push('BF3 houve golpe de faca e nenhum som de faca — o ataque saiu mudo');
+
+/* ---------------- BF5: continuidade entre rodadas ---------------- */
+const roundAntes = { ...gk.roundKills };
+const matchAntes = { ...gk.matchKills };
+const individuais = gk.combatants.map((c) => c.kills);
+gk._startRound();
+const armadosDepois = gk.bots.filter((b) => b.weapon !== 'knife');
+if (gk.player.weapon !== 'knife' || armadosDepois.length)
+  falhas.push(`BF5 rodada nova furou o modo faca (player=${gk.player.weapon}, bots armados=${armadosDepois.length})`);
+if (gk.roundKills.E !== 0 || gk.roundKills.B !== 0)
+  falhas.push(`BF5 placar da rodada não zerou (${gk.roundKills.E}×${gk.roundKills.B})`);
+if (gk.matchKills.E !== matchAntes.E + roundAntes.E || gk.matchKills.B !== matchAntes.B + roundAntes.B)
+  falhas.push('BF5 abates do round não foram transferidos exatamente uma vez para matchKills');
+if (gk.combatants.some((c, i) => c.kills !== individuais[i]))
+  falhas.push('BF5 a virada zerou/alterou o contador individual de abates');
+if ((gk.world.pickups?.length || 0) || gk.drops.length)
+  falhas.push(`BF5 modo faca deixou armas coletáveis após reset (mapa=${gk.world.pickups?.length || 0}, drops=${gk.drops.length})`);
 
 /* ---------------- BF4: a rodada normal não vira corrida ---------------- */
 const ga = planta(jogo('all', 4242));

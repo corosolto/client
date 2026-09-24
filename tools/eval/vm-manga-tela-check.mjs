@@ -21,7 +21,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { VM_WEAPON, arquivoDa, montar, pousar, rasterizar } from '../viewmodels/prep/vm-palco-offline.mjs';
+import { VM_FABRICA, VM_WEAPON, arquivoDa, arquivoFabrica, montar, pousar, rasterizar } from '../viewmodels/prep/vm-palco-offline.mjs';
 
 export const MANGA_TELA_MAX = 0.30;
 // Vermelhos conhecidos com dono (não desculpam arma nova). tavor: a recarga gira a arma 70–90° e o
@@ -38,14 +38,17 @@ const mut = arg('mutante');
 if (mut && !MUTANTES[mut]) throw new Error(`mutante desconhecido ${mut} (há: ${Object.keys(MUTANTES).join(', ')})`);
 const aspecto = arg('aspecto', '3x2');
 const PASSOS = 12;
+// --fabrica: produtos da fábrica (chave fab#<arma>); --com-extensao liga o vmsleeve neles (A/B).
+const FABRICA = process.argv.includes('--fabrica');
 const armas = mut ? [MUTANTES[mut].arma] : (arg('armas') ? arg('armas').split(',')
+  : FABRICA ? Object.keys(VM_FABRICA)
   : Object.entries(VM_WEAPON).filter(([, c]) => c.baked && !c.golden).map(([id]) => id));
 
 const linhas = [];
 for (const arma of armas) {
-  const glb = mut ? MUTANTES[mut].glb : arquivoDa(arma);
+  const glb = mut ? MUTANTES[mut].glb : FABRICA ? arquivoFabrica(arma) : arquivoDa(arma);
   if (!fs.existsSync(glb)) { linhas.push({ arma, ok: false, erro: `ausente ${path.relative(ROOT, glb)}` }); continue; }
-  const palco = await montar(arma, glb);
+  const palco = await montar(arma, glb, { fabrica: FABRICA && !mut });
   let pior = { manga: -1 };
   for (const clipe of palco.clipes.keys()) {
     if (clipe === 'ads') continue;

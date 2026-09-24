@@ -51,7 +51,10 @@ function pathToHref(p) { return new URL(`file://${p}`).href; }
 const replacements = mutante === 'sem-extensao' ? [['extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });', ';']]
   : mutante === 'extensao-curta' ? [['extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });', 'extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip }, length: 0.05 });']] : [];
 const { cameraSpacePackage } = await runtimeModule('public/js/authoredvm.js', replacements, '\nexport { cameraSpacePackage };');
-const { VM_WEAPON } = await import(pathToHref(path.join(ROOT, 'public/js/data/vmconfig.js')));
+const { VM_WEAPON, VM_FABRICA } = await import(pathToHref(path.join(ROOT, 'public/js/data/vmconfig.js')));
+// --fabrica: produtos da fábrica (tools/fabrica), chave fab#<arma>, manga SEM a extensão do runtime
+// quando a ficha diz `manga:false` — é o que prova que o braço inteiro do pack dispensa o vmsleeve.
+const FABRICA = process.argv.includes('--fabrica');
 const { sleeveOpenings, SLEEVE_MATERIAL } = await import(pathToHref(path.join(ROOT, 'public/js/vmsleeve.js')));
 
 const loader = new GLTFLoader();
@@ -76,14 +79,16 @@ const fovFor = (entry, aspect) => {
 };
 
 const rows = [];
-const weapons = Object.entries(VM_WEAPON).filter(([id, c]) => c.baked && !c.golden && (!only.length || only.includes(id)));
+const weapons = FABRICA
+  ? Object.entries(VM_FABRICA).filter(([id]) => !only.length || only.includes(id)).map(([id, c]) => [id, { ...c, family: c.familia }])
+  : Object.entries(VM_WEAPON).filter(([id, c]) => c.baked && !c.golden && (!only.length || only.includes(id)));
 for (const [weapon, config] of weapons) {
   const name = config.runtime === 'family' ? `${config.family}-runtime.glb` : `${weapon}-baked-runtime.glb`;
-  const file = path.join(ASSETS, config.family, name);
+  const file = FABRICA ? path.join(ASSETS, 'fabrica', `${weapon}-fabrica.glb`) : path.join(ASSETS, config.family, name);
   if (!fs.existsSync(file)) { rows.push({ weapon, ok: false, erro: `ausente ${file}` }); continue; }
   const gltf = await parse(file);
   const parent = new THREE.Group();
-  const entry = cameraSpacePackage(gltf, { id: 'regua', faction: 'E' }, parent, config.family, `${config.family}#${weapon}`);
+  const entry = cameraSpacePackage(gltf, { id: 'regua', faction: 'E' }, parent, config.family, `${FABRICA ? 'fab' : config.family}#${weapon}`);
   const sleeves = entry.handMeshes.filter((m) => materialsOf(m).some((mat) => SLEEVE_MATERIAL.test(mat?.name || '')));
   const ends = sleeves.map((mesh) => ({ mesh, idx: sleeveEnds(mesh) }));
   const clips = [...gltf.animations];
@@ -136,5 +141,5 @@ const ok = rows.length > 0 && rows.every((r) => r.ok);
 if (process.argv.includes('--tabela')) {
   for (const r of rows) console.log(`${r.ok ? 'OK   ' : 'FALHA'} ${r.weapon.padEnd(11)} ${r.erro || `mangas ${r.mangas} ponta ${r.pontas} vért · pior ${r.pior.visiveis} no quadro${r.pior.clip ? ` (${r.pior.clip} t=${r.pior.t} ${r.pior.aspecto})` : ''}`}`);
 }
-console.log(JSON.stringify({ regua: 'vm-manga-oca', mutante: mutante || null, ok, falhas: rows.filter((r) => !r.ok).map((r) => r.weapon) }));
+console.log(JSON.stringify({ regua: 'vm-manga-oca', fabrica: FABRICA, mutante: mutante || null, ok, falhas: rows.filter((r) => !r.ok).map((r) => r.weapon) }));
 process.exitCode = ok ? 0 : 1;

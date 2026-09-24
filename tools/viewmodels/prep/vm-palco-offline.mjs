@@ -40,11 +40,13 @@ async function runtimeModule(file, extra) {
   let source = fs.readFileSync(path.join(ROOT, file), 'utf8');
   // --sem-extensao: diagnóstico (o que é manga do produto e o que é o tubo do runtime).
   if (process.argv.includes('--sem-extensao')) source = source.replace('extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });', ';');
+  // --com-extensao: liga a extensão de manga também nos produtos da fábrica (A/B da flag `manga`).
+  if (process.argv.includes('--com-extensao')) source = source.replace("VM_FABRICA[weaponId]?.manga !== false", 'true');
   source = source.replace(/from (['"])([^'"]+)\1/g, (_, q, spec) => `from ${q}${spec.startsWith('.') ? new URL(spec, base).href : import.meta.resolve(spec)}${q}`);
   return import(`data:text/javascript;base64,${Buffer.from(source + extra).toString('base64')}`);
 }
 const { cameraSpacePackage } = await runtimeModule('public/js/authoredvm.js', '\nexport { cameraSpacePackage };');
-export const { VM_WEAPON } = await import(href(path.join(ROOT, 'public/js/data/vmconfig.js')));
+export const { VM_WEAPON, VM_FABRICA } = await import(href(path.join(ROOT, 'public/js/data/vmconfig.js')));
 
 const loader = new GLTFLoader();
 const parse = (file) => { const b = fs.readFileSync(file); return loader.parseAsync(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength), ''); };
@@ -55,12 +57,15 @@ export function arquivoDa(arma) {
   return path.join(ASSETS, c.family, c.runtime === 'family' ? `${c.family}-runtime.glb` : `${arma}-baked-runtime.glb`);
 }
 
-export async function montar(arma, glb = arquivoDa(arma)) {
-  const config = VM_WEAPON[arma];
+// Produto da fábrica (tools/fabrica): chave fab#<arma>, família da ficha.
+export const arquivoFabrica = (arma) => path.join(ASSETS, 'fabrica', `${arma}-fabrica.glb`);
+
+export async function montar(arma, glb = arquivoDa(arma), { fabrica = false, chave = '' } = {}) {
+  const config = fabrica ? { ...VM_FABRICA[arma], family: VM_FABRICA[arma].familia } : VM_WEAPON[arma];
   const gltf = await parse(glb);
   gltf.scene.traverse((o) => { if (o.isMesh) o.userData.__mats = materialsOf(o).map((m) => m?.name || ''); });
   const parent = new THREE.Group();
-  const entry = cameraSpacePackage(gltf, { id: 'palco', faction: 'E' }, parent, config.family, `${config.family}#${arma}`);
+  const entry = cameraSpacePackage(gltf, { id: 'palco', faction: 'E' }, parent, config.family, chave || `${fabrica ? 'fab' : config.family}#${arma}`);
   entry.mount.visible = true;
   const clipes = new Map(gltf.animations.map((c) => [c.name, c]));
   if (!clipes.has('equip_rifle')) {
@@ -101,9 +106,9 @@ const COR = { 1: [0.62, 0.2, 0.26], 2: [0.28, 0.32, 0.4], 3: [0.82, 0.6, 0.47], 
 const LADOS = process.argv.includes('--lados');
 
 // Raster com z-buffer; devolve frações por classe e a figura (opcional).
-export async function rasterizar(palco, { aspecto = '3x2', arquivo = '' } = {}) {
+export async function rasterizar(palco, { aspecto = '3x2', arquivo = '', dono: querDono = false, tamanho = null } = {}) {
   const { entry } = palco;
-  const [w, h] = ASPECTOS[aspecto];
+  const [w, h] = tamanho || ASPECTOS[aspecto];
   const asp = w / h;
   const half = Math.tan(fovFor(entry, asp) / 2);
   const z = new Float32Array(w * h).fill(Infinity);
@@ -192,7 +197,8 @@ export async function rasterizar(palco, { aspecto = '3x2', arquivo = '' } = {}) 
     await sharp(img, { raw: { width: w, height: h, channels: 3 } }).png().toFile(arquivo);
   }
   const t = w * h;
-  return { manga: conta[1] / t, luva: conta[2] / t, pele: conta[3] / t, arma: conta[4] / t, mangaCentro: mangaCentro / (t / 2) };
+  return { manga: conta[1] / t, luva: conta[2] / t, pele: conta[3] / t, arma: conta[4] / t, mangaCentro: mangaCentro / (t / 2),
+    ...(querDono ? { dono, w, h } : {}) };
 }
 
 if (process.argv[1] && import.meta.url === href(path.resolve(process.argv[1]))) {

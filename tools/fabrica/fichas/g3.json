@@ -1,0 +1,13 @@
+{
+  "id": "g3",
+  "arma": "g3",
+  "chassi": "G3",
+  "descricao": "G3 do pack como autorada.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "g3",
+    "fonte": "recoil.json ← Animations/G3 (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}
