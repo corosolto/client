@@ -1,0 +1,47 @@
+{
+  "id": "svd",
+  "curta": false,
+  "golden": {
+    "eixo": 28.7,
+    "centro": [
+      0.835,
+      0.767
+    ]
+  },
+  "frameBase": {
+    "x": 0.245,
+    "y": -0.03,
+    "z": -0.253,
+    "fov": 57,
+    "rotDeg": [
+      1.69,
+      7.69,
+      6.19
+    ]
+  },
+  "antes": {
+    "tamanhoVsAk": 0.818,
+    "bracoVsAk": 1.32,
+    "eixo": 29.1,
+    "cruz": 0,
+    "centro": [
+      0.849,
+      0.703
+    ]
+  },
+  "frame": {
+    "x": 0.155,
+    "y": -0.05,
+    "z": -0.333
+  },
+  "depois": {
+    "tamanhoVsAk": 0.92,
+    "bracoVsAk": 1.263,
+    "eixo": 30.4,
+    "cruz": 0,
+    "centro": [
+      0.82,
+      0.796
+    ]
+  }
+}

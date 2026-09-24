@@ -153,3 +153,32 @@ export const VM_WEAPON = {
   g3sg1: W('g3', { baked: true, frame: 'family' }),
   sks: W('marksman', { baked: true }),
 };
+
+// Fábrica (docs/reports/VM-FABRICA.md): só na revisão ?vmauthored=1&vmfabrica=<ids>|1, sem `ready`.
+// Frame único = o da AK K (ajustado contra a golden); a curta usa o da PT-38 aprovada.
+export const VM_FABRICA_FRAME = Object.freeze({ x: 0.065, y: 0.04, z: -0.203, fov: 57, rotDeg: [1.69, 7.69, 6.19] });
+// alivio = distância olho→alça no ADS, do aimPointOffset do Settings do pack (m).
+const F = (familia, chassi, extra = {}) => ({
+  familia, chassi, manga: false, recoilScale: 1, timing: 'gameplay',
+  ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.3 },
+  ...extra,
+});
+// A 'ak' fica fora: o dono manteve a golden aprovada (24/09); o chassi AK do pack serve a 'akm'.
+const A = (alivio) => ({ auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio });
+const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 };
+export const VM_FABRICA = Object.freeze({
+  akm: F('ak', 'AK', { ads: A(0.3) }),
+  m4: F('ar', 'MX16A4', { ads: A(0.1) }),
+  famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
+  g3: F('g3', 'G3', { manga: true, ads: A(0.1) }),
+  svd: F('svd', 'SVD', { manga: true, ads: A(0.34) }),
+  awp: F('sniper', 'L96X', { manga: true, ads: A(0.12) }),
+  mosin: F('bolt', 'Kar98K', { ads: A(0.4) }),
+  mp5: F('mp5', 'MPS5', { ads: A(0.1) }),
+  p90: F('p90', 'PDW90', { manga: true, ads: A(0.3) }),
+  lmg: F('lmg', 'MGX5', { ads: A(0.07) }),
+  shotgun: F('shotgun', 'KXG12', { manga: true, ads: A(0.1) }),
+  pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.2) }),
+  deagle: F('deagle', 'DGL50', { frame: CURTA, ads: A(0.2) }),
+  revolver38: F('revolver', 'Viper-357', { frame: CURTA, ads: A(0.2) }),
+});

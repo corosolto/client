@@ -64,6 +64,15 @@ export const CARREGADOR_PECA = {
   sks: { malhas: 'Clip', clipe: true }, mosin: { malhas: 'Clip', clipe: true }, rem700: { malhas: 'Clip', clipe: true },
   shotgun: { osso: 'MINT_AMMO_SHOTGUN_GAUGE', clipe: true },
 };
+// Produtos da fábrica (VM_PALCO_QS=vmfabrica=…): o pente é o osso Mag do chassi do pack numa
+// malha única; na KXG12 o cartucho que a mão leva ao tubo é o osso Gauge (só aparece na recarga).
+export const FABRICA_NA_REGUA = /(?:^|&)vmfabrica=/.test(process.env.VM_PALCO_QS || '');
+if (FABRICA_NA_REGUA) {
+  for (const arma of ['akm', 'm4', 'famas', 'pistol', 'g3', 'svd', 'awp', 'mp5', 'deagle']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
+  CARREGADOR_PECA.p90 = { osso: 'Magazine' };
+  CARREGADOR_PECA.mosin = { osso: 'Cartridge', clipe: true };   // recarga em laço: o cartucho solto, não o clipe
+  CARREGADOR_PECA.shotgun = { osso: 'Gauge', clipe: true };
+}
 const CARREGADOR_NA = {
   knife: 'faca: sem carregador',
   revolver38: 'cilindro: tambor e cartuchos são do eval:vm-pistol-revolver',
@@ -127,7 +136,7 @@ export async function coletar(page, arma, { reguas, mut = null, fotos = '', vari
       // #633 (vm-fix-grips) declara `ads.linhaDeMira` (alça e massa como pontos locais de um nó) e o
       // eval:vm-ads passa a medir nela. Aqui os dois pontos declarados são projetados no MESMO quadro e
       // comparados com o aparelho visto: ponto declarado que não cai sobre a imagem é outro socket cego.
-      const linha = VM_WEAPON[arma]?.ads?.linhaDeMira;
+      const linha = FABRICA_NA_REGUA ? null : VM_WEAPON[arma]?.ads?.linhaDeMira;   // fábrica: mira = AimPoint do pack
       if (linha) {
         c.mira.linha = await page.evaluate(({ x, linha }) => {
           const g = window.__game; const e = window.__authoredVm.entry(x); const ref = e?.scene.getObjectByName(linha.ref);

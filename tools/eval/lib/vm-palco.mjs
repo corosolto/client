@@ -47,7 +47,9 @@ export async function abrirJogo(browser, base, aspecto = '3x2') {
   const { VM_WEAPON } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
   const familias = [...new Set(Object.values(VM_WEAPON).map((e) => e.family))];
   const query = new URLSearchParams({ debug: '1', auto: 'P,mst', map: 'piscina_treta', armaslazy: '0',
-    vmauthored: '1', vmqa: 'precision', vmready: familias.join(','), vmweapon: Object.keys(VM_WEAPON).join(',') }).toString();
+    vmauthored: '1', vmqa: 'precision', vmready: familias.join(','), vmweapon: Object.keys(VM_WEAPON).join(','),
+    // VM_PALCO_QS: parâmetros extras de revisão (ex.: vmfabrica=1 mede os produtos da fábrica).
+    ...Object.fromEntries(new URLSearchParams(process.env.VM_PALCO_QS || '')) }).toString();
   const [width, height] = ASPECTOS[aspecto];
   const page = await browser.newPage({ viewport: { width, height } });
   const erros = [];
