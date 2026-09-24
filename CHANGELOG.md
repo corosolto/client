@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.271`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.272`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,21 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.272] — 2026-09-24
+
+### Mudado
+- fix(bot): files:null de PR grande derrubava o classify e o automerge (#644)
+- fix(bots): respeitar alcance real da faca (#580)
+- docs: inventário medido dos seis mapas legados (#538)
+- fix(classify): files:null derrubava o comentário do bot, e o job inteiro junto
+- fix(automerge): PR grande devolve files:null e a régua morria de TypeError
+- docs(bots): registrar PR e checkpoint da lane
+- fix(bots): respeitar alcance real da faca
+- docs: substitui o esboço dos mapas legados por inventário medido
+- docs: add legacy maps status ledger
+- docs: inclui lote Emerson na frente de mapas
+- docs: define frente Claude para mapas legados
 
 ## [2.0.0-alpha.271] — 2026-09-24
 
