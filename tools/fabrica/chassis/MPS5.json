@@ -40,7 +40,7 @@
       4.88,
       5.4
     ],
-    "conferencia": "altura da mira 5.4 cm × topo da arma 6.613 cm"
+    "conferencia": "altura da mira 5.4 cm × topo da carcaça 6.613 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/MPS5_Settings.asset",
@@ -128,6 +128,19 @@
       }
     },
     "ossosMoveis": {
+      "9mm": {
+        "min": [
+          -0.497,
+          -10.534,
+          -1.678
+        ],
+        "max": [
+          0.497,
+          -7.494,
+          -0.709
+        ],
+        "n": 99
+      },
       "Bolt": {
         "min": [
           -1.666,
@@ -154,6 +167,19 @@
         ],
         "n": 446
       },
+      "FireSelect": {
+        "min": [
+          -1.764,
+          -0.035,
+          -4.693
+        ],
+        "max": [
+          1.764,
+          3.243,
+          -3.079
+        ],
+        "n": 142
+      },
       "Mag": {
         "min": [
           -1.08,
@@ -166,6 +192,19 @@
           -0.803
         ],
         "n": 1936
+      },
+      "ReleaseHandle": {
+        "min": [
+          -0.753,
+          -7.481,
+          -7.81
+        ],
+        "max": [
+          0.753,
+          -6.311,
+          -5.554
+        ],
+        "n": 124
       },
       "Trigger": {
         "min": [

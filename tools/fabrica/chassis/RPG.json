@@ -40,7 +40,7 @@
       -1.27,
       9.53
     ],
-    "conferencia": "altura da mira 9.53 cm × topo da arma 11.802 cm"
+    "conferencia": "altura da mira 9.53 cm × topo da carcaça 11.802 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/RPG_Settings.asset",
@@ -128,6 +128,32 @@
       }
     },
     "ossosMoveis": {
+      "Handle": {
+        "min": [
+          -0.737,
+          -14.293,
+          -10.867
+        ],
+        "max": [
+          0.721,
+          -9.387,
+          -7.113
+        ],
+        "n": 172
+      },
+      "Rocket": {
+        "min": [
+          -3.557,
+          -85.591,
+          -5.086
+        ],
+        "max": [
+          3.541,
+          0.633,
+          2.012
+        ],
+        "n": 1170
+      },
       "Trigger": {
         "min": [
           -0.343,
@@ -159,7 +185,7 @@
         -1.621
       ],
       "origem": "12 cm atrás da palma forte, altura média da fatia",
-      "traseiraCm": -85.591
+      "traseiraCm": -39.265
     },
     "trilhoSuperior": {
       "raizCm": [
@@ -181,7 +207,7 @@
           72.019,
           11.802
         ],
-        "n": 2014
+        "n": 1986
       },
       "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
     }

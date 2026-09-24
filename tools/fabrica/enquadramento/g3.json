@@ -1,5 +1,5 @@
 {
-  "id": "ak",
+  "id": "g3",
   "curta": false,
   "golden": {
     "eixo": 28.7,
@@ -9,9 +9,9 @@
     ]
   },
   "frameBase": {
-    "x": 0.065,
-    "y": 0.04,
-    "z": -0.203,
+    "x": 0.485,
+    "y": -0.13,
+    "z": -0.433,
     "fov": 57,
     "rotDeg": [
       1.69,
@@ -20,28 +20,28 @@
     ]
   },
   "antes": {
-    "tamanhoVsAk": 1.259,
-    "bracoVsAk": 1.857,
-    "eixo": 29.7,
-    "cruz": 215,
+    "tamanhoVsAk": 0.652,
+    "bracoVsAk": 0.8,
+    "eixo": 27.8,
+    "cruz": 0,
     "centro": [
-      0.783,
-      0.756
+      0.886,
+      0.753
     ]
   },
   "frame": {
-    "x": 0.285,
-    "y": -0.05,
-    "z": -0.163
+    "x": 0.195,
+    "y": -0.07,
+    "z": -0.353
   },
   "depois": {
-    "tamanhoVsAk": 0.903,
-    "bracoVsAk": 0.97,
-    "eixo": 29.7,
+    "tamanhoVsAk": 0.909,
+    "bracoVsAk": 1.161,
+    "eixo": 27.7,
     "cruz": 0,
     "centro": [
-      0.857,
-      0.755
+      0.812,
+      0.792
     ]
   }
 }

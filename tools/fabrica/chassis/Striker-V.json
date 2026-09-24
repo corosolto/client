@@ -40,7 +40,7 @@
       10.1,
       7.3
     ],
-    "conferencia": "altura da mira 7.3 cm × topo da arma 7.744 cm"
+    "conferencia": "altura da mira 7.3 cm × topo da carcaça 7.744 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Striker-V_Settings.asset",
@@ -128,6 +128,45 @@
       }
     },
     "ossosMoveis": {
+      "ActiveCharging": {
+        "min": [
+          0.317,
+          -16.242,
+          0.254
+        ],
+        "max": [
+          4.314,
+          -9.133,
+          1.177
+        ],
+        "n": 217
+      },
+      "Bullet": {
+        "min": [
+          -0.465,
+          -8.508,
+          -1.853
+        ],
+        "max": [
+          0.465,
+          -5.61,
+          -0.924
+        ],
+        "n": 156
+      },
+      "Handle": {
+        "min": [
+          1.938,
+          -8.073,
+          -1.801
+        ],
+        "max": [
+          2.195,
+          -4.225,
+          -0.549
+        ],
+        "n": 123
+      },
       "Mag": {
         "min": [
           -1.346,
@@ -153,6 +192,19 @@
           -4.924
         ],
         "n": 88
+      },
+      "StaticCharging": {
+        "min": [
+          0.773,
+          -15.677,
+          -0.279
+        ],
+        "max": [
+          1.023,
+          -4.917,
+          0.457
+        ],
+        "n": 104
       },
       "Trigger": {
         "min": [
@@ -203,11 +255,11 @@
           -12.618
         ],
         "max": [
-          4.314,
+          2.091,
           -8.447,
           6.992
         ],
-        "n": 5288
+        "n": 4993
       },
       "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
     }

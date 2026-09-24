@@ -40,7 +40,7 @@
       2.92,
       2.3
     ],
-    "conferencia": "altura da mira 2.3 cm × topo da arma 2.413 cm"
+    "conferencia": "altura da mira 2.3 cm × topo da carcaça 2.413 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/DGL50_Settings.asset",
@@ -128,6 +128,19 @@
       }
     },
     "ossosMoveis": {
+      "Bullet": {
+        "min": [
+          -0.676,
+          -1.733,
+          -1.795
+        ],
+        "max": [
+          0.701,
+          1.835,
+          -0.418
+        ],
+        "n": 167
+      },
       "Hammer": {
         "min": [
           -0.467,
@@ -204,7 +217,7 @@
       "raizCm": [
         0,
         1.619,
-        -0.418
+        -0.427
       ],
       "origem": "ponto mais alto da fatia sobre o poço do pente"
     },
@@ -220,7 +233,7 @@
           5.667,
           1.901
         ],
-        "n": 2949
+        "n": 2782
       },
       "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
     }

@@ -1,0 +1,14 @@
+{
+  "id": "mosin",
+  "arma": "mosin",
+  "chassi": "Kar98K",
+  "descricao": "Mosin = Kar98K do pack; recarga cartucho a cartucho. O idle da arma é o quadro 0 da reload_start do pack (clipe e cartucho guardados fora de vista); o FBX de pose é só o repouso, com a munição flutuando.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "idleArma": "reload_start",
+  "recuo": {
+    "familia": "bolt",
+    "fonte": "recoil.json ← Animations/Kar98K (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}

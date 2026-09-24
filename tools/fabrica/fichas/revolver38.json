@@ -1,0 +1,13 @@
+{
+  "id": "revolver38",
+  "arma": "revolver38",
+  "chassi": "Viper-357",
+  "descricao": ".38 = Viper-357 do pack; sem pose de braço no pack (quadro 0 da recarga vazia).",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "revolver",
+    "fonte": "recoil.json ← Animations/Viper-357 (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}

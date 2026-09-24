@@ -1,0 +1,13 @@
+{
+  "id": "mp5",
+  "arma": "mp5",
+  "chassi": "MPS5",
+  "descricao": "MP5 = MPS5 do pack como autorada.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "mp5",
+    "fonte": "recoil.json ← Animations/MPS5 (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}

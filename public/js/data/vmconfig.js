@@ -163,11 +163,22 @@ const F = (familia, chassi, extra = {}) => ({
   ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.3 },
   ...extra,
 });
+// A 'ak' fica fora: o dono manteve a golden aprovada (24/09); o chassi AK do pack serve a 'akm'.
+const A = (alivio) => ({ auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio });
+const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 };
 export const VM_FABRICA = Object.freeze({
-  ak: F('ak', 'AK'),
-  m4: F('ar', 'MX16A4', { ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.1 } }),
-  pistol: F('pistol', 'X18', { frame: { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 },
-    ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.2 } }),
-  shotgun: F('shotgun', 'KXG12', { ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.1 } }),
-  famas: F('ar', 'MX16A4', { variante: true, ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.1 } }),
+  akm: F('ak', 'AK', { ads: A(0.3) }),
+  m4: F('ar', 'MX16A4', { ads: A(0.1) }),
+  famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
+  g3: F('g3', 'G3', { ads: A(0.1) }),
+  svd: F('svd', 'SVD', { ads: A(0.34) }),
+  awp: F('sniper', 'L96X', { ads: A(0.12) }),
+  mosin: F('bolt', 'Kar98K', { ads: A(0.4) }),
+  mp5: F('mp5', 'MPS5', { ads: A(0.1) }),
+  p90: F('p90', 'PDW90', { ads: A(0.3) }),
+  lmg: F('lmg', 'MGX5', { ads: A(0.07) }),
+  shotgun: F('shotgun', 'KXG12', { manga: true, ads: A(0.1) }),
+  pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.2) }),
+  deagle: F('deagle', 'DGL50', { frame: CURTA, ads: A(0.2) }),
+  revolver38: F('revolver', 'Viper-357', { frame: CURTA, ads: A(0.2) }),
 });

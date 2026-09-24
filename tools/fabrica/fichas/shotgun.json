@@ -16,5 +16,17 @@
     "shoot": "procedural",
     "inspect": "ausente"
   },
-  "recuo": { "familia": "shotgun", "fonte": "recoil.json ← Animations/KXG12/KXG12.asset; o tiro toca a bomba do pack (useFireClip=1 no Settings)" }
+  "recuo": {
+    "familia": "shotgun",
+    "fonte": "recoil.json ← Animations/KXG12/KXG12.asset; o tiro toca a bomba do pack (useFireClip=1 no Settings)"
+  },
+  "ocultar": [
+    {
+      "osso": "Gauge",
+      "clipe": "reload_loop",
+      "de": 0.73,
+      "ate": 0.88,
+      "motivo": "o pack devolve o cartucho ao ponto de pega (borda de baixo do quadro no jogo) ~15% antes de a mão chegar; medido por mão→cartucho a cada 2% do laço (1,4 palma aos 80%)"
+    }
+  ]
 }

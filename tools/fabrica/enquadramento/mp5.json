@@ -1,0 +1,47 @@
+{
+  "id": "mp5",
+  "curta": false,
+  "golden": {
+    "eixo": 28.7,
+    "centro": [
+      0.835,
+      0.767
+    ]
+  },
+  "frameBase": {
+    "x": 0.235,
+    "y": -0.09,
+    "z": -0.143,
+    "fov": 57,
+    "rotDeg": [
+      1.69,
+      7.69,
+      6.19
+    ]
+  },
+  "antes": {
+    "tamanhoVsAk": 0.86,
+    "bracoVsAk": 0.802,
+    "eixo": 28.1,
+    "cruz": 0,
+    "centro": [
+      0.858,
+      0.825
+    ]
+  },
+  "frame": {
+    "x": 0.185,
+    "y": -0.08,
+    "z": -0.133
+  },
+  "depois": {
+    "tamanhoVsAk": 0.919,
+    "bracoVsAk": 0.827,
+    "eixo": 27.7,
+    "cruz": 0,
+    "centro": [
+      0.828,
+      0.833
+    ]
+  }
+}

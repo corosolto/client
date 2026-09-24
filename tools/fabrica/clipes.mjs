@@ -308,6 +308,27 @@ async function main() {
   const alvosArma = juntas.filter((n) => ossosArma.has(n) && n !== montagem.arma.ossoRaiz);
   const relatorio = { schemaVersion: 1, id: plano.id, fps: FPS, clipes: [] };
 
+  if (plano.clipes.idle?.arma) {
+    // Pose de idle da ARMA do pack: entra no clipe idle já exportado (o braço veio do Blender).
+    const glb = path.join(cru, 'idle-arma.glb');
+    blenderArma(path.join(pasta, plano.clipes.idle.arma), glb);
+    await soAnimacao(glb);
+    const a = amostrarArma(await carregarAnimacao(glb), alvosArma, { nos, raizAlvo: montagem.arma.ossoRaiz });
+    const idle = raiz.listAnimations().find((x) => x.getName() === 'idle');
+    const buffer = raiz.listBuffers()[0];
+    if (plano.clipes.idle.quadro0) {   // só o quadro 0, constante
+      a.tempos = new Float32Array([0, 0.1]);
+      for (const tr of a.trilhas.values()) { tr.t = [...tr.t.slice(0, 3), ...tr.t.slice(0, 3)]; tr.r = [...tr.r.slice(0, 4), ...tr.r.slice(0, 4)]; tr.s = [...tr.s.slice(0, 3), ...tr.s.slice(0, 3)]; }
+    }
+    for (const [n, tr] of a.trilhas) {
+      for (const c of idle.listChannels().filter((c) => c.getTargetNode() === nos.get(n))) { idle.removeChannel(c); c.dispose(); }
+      trilha(doc, idle, buffer, nos.get(n), 'translation', a.tempos, tr.t);
+      trilha(doc, idle, buffer, nos.get(n), 'rotation', a.tempos, tr.r);
+      trilha(doc, idle, buffer, nos.get(n), 'scale', a.tempos, tr.s);
+    }
+    relatorio.idleArma = { fonte: path.basename(plano.clipes.idle.arma), ossos: a.trilhas.size, residuoCm: a.residuoCm };
+  }
+
   for (const [nomeJogo, fonte] of Object.entries(plano.clipes)) {
     if (nomeJogo === 'idle' || !fonte || fonte.tipo === 'procedural' || fonte.tipo === 'ausente') continue;
     const fbxBraco = fonte.braco ? path.join(fonte.geral ? plano.packAnimacoes : pasta, fonte.braco) : null;
@@ -325,6 +346,24 @@ async function main() {
       blenderArma(fbxArma, glb);
       await soAnimacao(glb);
       arma = amostrarArma(await carregarAnimacao(glb), alvosArma, { nos, raizAlvo: montagem.arma.ossoRaiz });
+    }
+    // Clipe em LAÇO (recarga cartucho a cartucho) repete N vezes: braço e arma com durações
+    // diferentes saem de fase a cada volta. A ficha pede o alinhamento da arma ao braço.
+    if (braco && arma && (plano.alinharTempo || []).includes(nomeJogo)) {
+      const k = braco.duracao / arma.duracao;
+      arma.tempos = Float32Array.from(arma.tempos, (t) => t * k);
+      arma.duracao = braco.duracao;
+    }
+    // ocultar: peça do pack escondida (escala ~0) numa janela do clipe — o "segundo pente" para
+    // munição que o pack devolve ao ponto de pega antes de a mão chegar (KXG12, laço 73–88%).
+    for (const o of (plano.ocultar || []).filter((x) => x.clipe === nomeJogo)) {
+      const tr = arma?.trilhas.get(o.osso);
+      if (!tr) throw new Error(`ocultar: ${o.osso} sem trilha em ${nomeJogo}`);
+      const n = arma.tempos.length;
+      for (let i = 0; i < n; i += 1) {
+        const f = arma.tempos[i] / arma.duracao;
+        if (f >= o.de && f <= o.ate) tr.s.splice(i * 3, 3, 1e-4, 1e-4, 1e-4);
+      }
     }
     const duracao = Math.max(braco?.duracao ?? 0, arma?.duracao ?? 0);
     const amostras = [

@@ -1,0 +1,13 @@
+{
+  "id": "svd",
+  "arma": "svd",
+  "chassi": "SVD",
+  "descricao": "SVD do pack como autorada.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "svd",
+    "fonte": "recoil.json ← Animations/SVD (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}

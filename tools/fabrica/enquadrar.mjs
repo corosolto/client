@@ -57,8 +57,10 @@ const curta = VM_FABRICA[id].familia === 'pistol';
 
 // Alvos com procedência nos limiares do jogo (tools/eval/lib/vm-limiares.mjs): arma na faixa
 // 0,8–1,25× da AK (mira o meio, 0,95) e braço abaixo do teto COBERTURA_BRACO_MAX (1,4 — mira 1,3).
-const custo = (m) => (curta ? 0 : 4 * (Math.sqrt(m.arma / ref.arma) - 0.95) ** 2)
+const custo = (m) => (curta ? 0 : 8 * (Math.sqrt(m.arma / ref.arma) - 0.95) ** 2)
   + 3 * Math.max(0, m.braco / ref.braco - 1.3) ** 2
+  // Braço some do quadro = pose sem mão (P90/Mosin empurradas para fora na 1ª versão): piso 0,6× da AK.
+  + 6 * Math.max(0, 0.6 - m.braco / ref.braco) ** 2
   + ((m.eixo - ref.eixo) / 15) ** 2 + (m.cruz > 0 ? 1 + m.cruz / 50 : 0)
   + 2 * ((m.cx - ref.cx) ** 2 + (m.cy - ref.cy) ** 2);
 
@@ -66,10 +68,11 @@ const antes = await medir(palco, base);
 let melhor = { frame: { ...base }, m: antes, c: custo(antes) };
 if (!curta) {
   // Busca por coordenadas: z (distância) primeiro, depois x/y; três passadas afinando o passo.
-  for (const passo of [0.08, 0.03, 0.01]) {
+  for (const passo of [0.16, 0.08, 0.03, 0.01]) {
     for (const eixo of ['z', 'x', 'y', 'z']) {
       for (const d of [-3, -2, -1, 1, 2, 3]) {
         const f = { ...melhor.frame, [eixo]: +(melhor.frame[eixo] + d * passo).toFixed(4) };
+        if (f.z > -0.12) continue;   // o pacote não pode vir para trás do olho
         const m = await medir(palco, f);
         const c = custo(m);
         if (c < melhor.c) melhor = { frame: f, m, c };

@@ -22,7 +22,13 @@ export function resolverClipes(ficha, chassi) {
   if (!padrao.shoot) padrao.shoot = 'procedural';
   if (EQUIP_GERAL[chassi.tipo]) padrao.equip_rifle = 'geral:rifle_equip';
   const pedido = { ...padrao, ...(ficha.clipes || {}) };
-  const saida = { idle: { tipo: 'pack', braco: chassi.fonte.poseFbx } };
+  // idleArma: "pack" (A_W_*_Pose/Idle) ou "<clipe do pack>" (quadro 0 dele). No Kar98K o FBX de
+  // pose é só o repouso (munição flutuando); o arranjo de idle do pack é o quadro 0 da reload_start.
+  let poseArma = null;
+  if (ficha.idleArma === 'pack') poseArma = chassi.arquivosArma.find((n) => /^A_W_.*_(Pose|Idle)\.fbx$/i.test(n));
+  else if (ficha.idleArma) poseArma = chassi.clipes[ficha.idleArma]?.arma?.replace(/^Weapon\//, '');
+  if (ficha.idleArma && !poseArma) throw new Error(`${chassi.nome}: sem pose de arma para idleArma=${ficha.idleArma}`);
+  const saida = { idle: { tipo: 'pack', braco: chassi.fonte.poseFbx, arma: poseArma ? `Weapon/${poseArma}` : null, quadro0: Boolean(ficha.idleArma && ficha.idleArma !== 'pack') } };
   for (const [nome, valor] of Object.entries(pedido)) {
     if (nome === 'idle') continue;
     if (!CLIPES_DO_JOGO.includes(nome)) throw new Error(`clipe desconhecido na ficha: ${nome}`);
@@ -93,6 +99,8 @@ export function montarPlano(fichaArquivo) {
       ...Object.values(chassi.zonaContato.ossosMoveis)].filter(Boolean)
       .map((c) => ({ min: c.min.map((v) => v - 1), max: c.max.map((v) => v + 1) })),
     clipes,
+    alinharTempo: ficha.alinharTempo || [],
+    ocultar: ficha.ocultar || [],
     saida: { dir },
   };
   const entradas = {

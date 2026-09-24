@@ -40,7 +40,7 @@
       1.1,
       2.09
     ],
-    "conferencia": "altura da mira 2.09 cm × topo da arma 2.163 cm"
+    "conferencia": "altura da mira 2.09 cm × topo da carcaça 2.163 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Viper-357_Settings.asset",
@@ -128,6 +128,110 @@
       }
     },
     "ossosMoveis": {
+      "Cartridge0": {
+        "min": [
+          -0.545,
+          -4.113,
+          -0.559
+        ],
+        "max": [
+          0.545,
+          -0.074,
+          0.504
+        ],
+        "n": 161
+      },
+      "Cartridge1": {
+        "min": [
+          0.535,
+          -4.113,
+          -1.162
+        ],
+        "max": [
+          1.613,
+          -0.074,
+          -0.075
+        ],
+        "n": 161
+      },
+      "Cartridge2": {
+        "min": [
+          0.535,
+          -4.113,
+          -2.362
+        ],
+        "max": [
+          1.613,
+          -0.074,
+          -1.275
+        ],
+        "n": 161
+      },
+      "Cartridge3": {
+        "min": [
+          -0.545,
+          -4.113,
+          -2.941
+        ],
+        "max": [
+          0.545,
+          -0.074,
+          -1.878
+        ],
+        "n": 161
+      },
+      "Cartridge4": {
+        "min": [
+          -1.613,
+          -4.113,
+          -2.362
+        ],
+        "max": [
+          -0.535,
+          -0.074,
+          -1.275
+        ],
+        "n": 161
+      },
+      "Cartridge5": {
+        "min": [
+          -1.613,
+          -4.113,
+          -1.162
+        ],
+        "max": [
+          -0.535,
+          -0.074,
+          -0.075
+        ],
+        "n": 161
+      },
+      "CraneArm": {
+        "min": [
+          -0.484,
+          -5.953,
+          -4.311
+        ],
+        "max": [
+          0.934,
+          -0.863,
+          -0.649
+        ],
+        "n": 145
+      },
+      "CylinderRelease": {
+        "min": [
+          0.728,
+          -0.08,
+          -2.219
+        ],
+        "max": [
+          1.222,
+          2.088,
+          0.182
+        ],
+        "n": 37
+      },
       "Drum": {
         "min": [
           -1.924,
@@ -140,6 +244,19 @@
           0.706
         ],
         "n": 768
+      },
+      "Ejector": {
+        "min": [
+          -1.356,
+          -9.184,
+          -2.516
+        ],
+        "max": [
+          1.356,
+          0,
+          0.079
+        ],
+        "n": 474
       },
       "Hammer": {
         "min": [
@@ -207,7 +324,7 @@
           9.979,
           2.163
         ],
-        "n": 3701
+        "n": 2079
       },
       "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
     }

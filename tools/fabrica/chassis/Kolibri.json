@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "nome": "Kolibri",
-  "tipo": "smg",
-  "nota": null,
+  "tipo": "pistola",
+  "nota": "a Kolibri é a micropistola de 2,7 mm (8 cm de comprimento medido), não uma submetralhadora",
   "fonte": {
     "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
     "armaFbx": "Animations/Kolibri/Weapon/Kolibri.FBX",
@@ -40,7 +40,7 @@
       1.23,
       -0.26
     ],
-    "conferencia": "altura da mira -0.26 cm × topo da arma -0.227 cm"
+    "conferencia": "altura da mira -0.26 cm × topo da carcaça -0.35 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Kolibri_Settings.asset",

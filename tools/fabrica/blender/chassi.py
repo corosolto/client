@@ -74,7 +74,9 @@ def main():
             p = m @ v.co
             todos.append(p)
             pesos = sorted(((g.weight, grupos.get(g.group)) for g in v.groups if g.weight > 0.01), reverse=True)
-            if pesos and pesos[0][1] and pesos[0][1].lower() in MOVEIS:
+            # Todo vértice com peso num osso do pack é peça móvel/solta (pente, clipe de munição,
+            # cartucho); a carcaça do pack não tem peso. MOVEIS fica como documentação.
+            if pesos and pesos[0][1]:
                 por_osso.setdefault(pesos[0][1], []).append(p)
             else:
                 estaticos.append(p)
@@ -99,7 +101,8 @@ def main():
     # desce mais que o pente.)
     pente = por_osso.get("Mag") or por_osso.get("mag")
     alto = 100.0 * entrada.get("aimUp", 0.0)
-    cima = Vector((0, 0, 1)) if abs(alto - geral["max"][2]) <= abs(-alto - geral["min"][2]) else Vector((0, 0, -1))
+    est = caixa(estaticos) or geral   # carcaça: a munição solta do Kar98K flutua acima
+    cima = Vector((0, 0, 1)) if abs(alto - est["max"][2]) <= abs(-alto - est["min"][2]) else Vector((0, 0, -1))
 
     def fatia(pontos, eixo_val, largura=1.5):
         return [p for p in pontos if abs(p.dot(frente) - eixo_val) <= largura]

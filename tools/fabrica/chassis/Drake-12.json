@@ -40,7 +40,7 @@
       5.36,
       3.1
     ],
-    "conferencia": "altura da mira 3.1 cm × topo da arma 2.939 cm"
+    "conferencia": "altura da mira 3.1 cm × topo da carcaça 2.257 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Drake-12_Settings.asset",
@@ -128,6 +128,32 @@
       }
     },
     "ossosMoveis": {
+      "12Gauge0": {
+        "min": [
+          -0.854,
+          -0.933,
+          -1.903
+        ],
+        "max": [
+          0.854,
+          6.05,
+          -0.196
+        ],
+        "n": 164
+      },
+      "12Gauge1": {
+        "min": [
+          -0.854,
+          -0.933,
+          0.222
+        ],
+        "max": [
+          0.854,
+          6.05,
+          1.93
+        ],
+        "n": 163
+      },
       "Barrel": {
         "min": [
           -1.771,
@@ -140,15 +166,41 @@
           2.939
         ],
         "n": 2320
+      },
+      "Lever": {
+        "min": [
+          -0.612,
+          7.158,
+          0.543
+        ],
+        "max": [
+          0.612,
+          13.267,
+          2.051
+        ],
+        "n": 167
+      },
+      "Trigger1": {
+        "min": [
+          -0.232,
+          11.598,
+          -7.763
+        ],
+        "max": [
+          0.232,
+          14.031,
+          -4.412
+        ],
+        "n": 103
       }
     }
   },
   "ancoras": {
     "boca": {
       "raizCm": [
-        -0.013,
+        -0.003,
         -1.822,
-        -2.19
+        -2.819
       ],
       "origem": "extremo estático no eixo do cano"
     },
@@ -165,7 +217,7 @@
       "raizCm": [
         0,
         11.736,
-        1.385
+        1.273
       ],
       "origem": "ponto mais alto da fatia sobre o poço do pente"
     },

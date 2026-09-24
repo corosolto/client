@@ -40,7 +40,7 @@
       -20.44,
       2.9
     ],
-    "conferencia": "altura da mira 2.9 cm × topo da arma 3.56 cm"
+    "conferencia": "altura da mira 2.9 cm × topo da carcaça 3.56 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/ASVal_Settings.asset",
@@ -141,6 +141,19 @@
         ],
         "n": 255
       },
+      "Bullets": {
+        "min": [
+          -0.983,
+          -8.035,
+          -5.001
+        ],
+        "max": [
+          0.783,
+          -2.328,
+          -3.443
+        ],
+        "n": 1095
+      },
       "FireSelector": {
         "min": [
           -2.391,
@@ -166,6 +179,19 @@
           -3.411
         ],
         "n": 2949
+      },
+      "ReleaseHandle": {
+        "min": [
+          -0.787,
+          -1.908,
+          -9.428
+        ],
+        "max": [
+          0.787,
+          -0.09,
+          -3.886
+        ],
+        "n": 102
       },
       "Trigger": {
         "min": [

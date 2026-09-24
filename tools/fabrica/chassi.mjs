@@ -34,7 +34,7 @@ for (const nome of nomes) {
   // Unity (x direita, y cima, z frente) → raiz da arma no Blender, em cm, pelos eixos MEDIDOS.
   const f = geo.eixos.frente, c = geo.eixos.cima, d = geo.eixos.direita;
   const miraCm = [0, 1, 2].map((i) => 100 * (ux * d[i] + uy * c[i] + uz * f[i]));
-  const topoNaMira = geo.geral.max[2];
+  const topoNaMira = geo.estatico.max[2];
   const clipes = clipesDoPack(nome);
   const settings = lerSettings(def.settings);
   const pastaMateriais = path.join(pasta, 'Weapon/Materials_URP');
@@ -57,7 +57,7 @@ for (const nome of nomes) {
     mira: {
       aimPointUnity: prefab.aimPoint,
       raizCm: r3(miraCm),
-      conferencia: `altura da mira ${r3([miraCm[2]])[0]} cm × topo da arma ${topoNaMira} cm`,
+      conferencia: `altura da mira ${r3([miraCm[2]])[0]} cm × topo da carcaça ${topoNaMira} cm`,
     },
     settings,
     camera: lerCameraDoPlayer(),

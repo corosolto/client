@@ -46,6 +46,8 @@ const q = new URLSearchParams({ debug: '1', auto: 'E', map: 'piscina_treta', arm
 for (const [k, v] of new URLSearchParams(EXTRA)) q.set(k, v);
 await page.goto(`http://127.0.0.1:${PORTA}/?${q}`, { waitUntil: 'load', timeout: 180000 });
 await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
+// Painel de QA e aviso de CPU cobriam o canto da arma nas figuras do crítico.
+await page.addStyleTag({ content: 'astro-dev-toolbar,#vm-precision-qa,#crash-overlay,#aviso-software,.tutorial-overlay,[data-vmqa]{display:none!important}' });
 await page.waitForTimeout(3000);
 // Congela bots e o relógio do round: a figura não pode depender de quem entra no quadro.
 await page.evaluate(() => {
@@ -66,6 +68,9 @@ const calmo = () => page.evaluate(() => {
   for (const b of g.bots || []) { b.nextShotAt = Infinity; b.target = null; }
   g.player.hp = 100; g.player.alive = true;
 });
+// Quadros DESENHADOS pelo jogo (contador de render), não só tempo.
+const quadros = async (n) => { const f0 = await page.evaluate(() => window.__game._rafFrames || 0);
+  await page.waitForFunction((f) => (window.__game._rafFrames || 0) >= f, f0 + n, { timeout: 20000 }).catch(() => null); };
 const slow = (v) => page.evaluate((x) => { window.__vmSlow = x; }, v);
 const waitFor = async (fn, arg0, ms = 15000) => page.waitForFunction(fn, arg0, { timeout: ms, polling: 16 }).catch(() => null);
 const settle = async (ms = 2600) => page.waitForTimeout(ms);
@@ -132,20 +137,26 @@ for (const arma of ARMAS) {
   await page.waitForTimeout(800);
   await calmo();
   await shot(`${arma}-idle`);
-  // ADS pelo gancho de QA do jogo (o botão direito do mouse não entra sem pointer lock).
-  await page.evaluate(() => { if (!window.__game.player.scoped) (window.__vmPrecisionQa?.ads?.() ?? null); });
-  await waitFor(() => (window.__authoredVm?.adsAmount ?? 1) >= 0.99, null, 8000);
-  await page.waitForTimeout(400);
+  // ADS pelo gancho de QA do jogo (o botão direito não entra sem pointer lock). O adsAmount
+  // chega a 1 antes de o quadro ser DESENHADO sob swiftshader: espera quadros renderizados.
+  await page.evaluate(() => { if (!window.__game.player.scoped) window.__vmPrecisionQa?.ads?.(); });
+  await waitFor(() => window.__game.player.scoped && (window.__authoredVm?.adsAmount ?? 0) >= 0.99, null, 8000);
+  await quadros(12); await page.waitForTimeout(500); await quadros(4);
   await calmo();
   await shot(`${arma}-ads`);
   await page.evaluate(() => { if (window.__game.player.scoped) window.__vmPrecisionQa?.ads?.(); });
-  await waitFor(() => (window.__authoredVm?.adsAmount ?? 0) <= 0.01, null, 8000);
-  await page.waitForTimeout(600);
+  await waitFor(() => !window.__game.player.scoped && (window.__authoredVm?.adsAmount ?? 0) <= 0.01, null, 8000);
+  await quadros(12); await page.waitForTimeout(600);
+  // Tiro no QUADRIL: o shoot() do gancho sai do ADS antes (settle) e dispara; câmera lenta
+  // para o quadro pegar coice e clarão (~60 ms de jogo).
   await page.evaluate(() => { const p = window.__game.player; p.ammo[p.weapon].mag = Math.max(p.ammo[p.weapon].mag, 5); });
   await slow(0.1);
-  await page.mouse.down({ button: 'left' }); await page.waitForTimeout(70);
+  await page.evaluate(() => window.__vmPrecisionQa.shoot());
+  await quadros(6);
   await shot(`${arma}-fire`);
-  await page.mouse.up({ button: 'left' }); await page.waitForTimeout(900);
+  await page.waitForTimeout(400); await quadros(4);
+  await shot(`${arma}-fire-b`);
+  await slow(1); await page.waitForTimeout(900);
   await calmo();
   await page.evaluate(() => { const g = window.__game, p = g.player; p.ammo[p.weapon].mag = 0; p.ammo[p.weapon].res = Math.max(60, p.ammo[p.weapon].res); g._startReload(); });
   for (const f of [0.15, 0.35, 0.6, 0.85]) { await atClip(f); await shot(`${arma}-reload-empty-f${String(Math.round(f * 100)).padStart(3, '0')}`); }

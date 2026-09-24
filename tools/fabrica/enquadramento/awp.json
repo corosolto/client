@@ -1,0 +1,47 @@
+{
+  "id": "awp",
+  "curta": false,
+  "golden": {
+    "eixo": 28.7,
+    "centro": [
+      0.835,
+      0.767
+    ]
+  },
+  "frameBase": {
+    "x": 0.245,
+    "y": -0.01,
+    "z": -0.543,
+    "fov": 57,
+    "rotDeg": [
+      1.69,
+      7.69,
+      6.19
+    ]
+  },
+  "antes": {
+    "tamanhoVsAk": 0.954,
+    "bracoVsAk": 1.302,
+    "eixo": 29,
+    "cruz": 0,
+    "centro": [
+      0.85,
+      0.728
+    ]
+  },
+  "frame": {
+    "x": 0.245,
+    "y": -0.01,
+    "z": -0.543
+  },
+  "depois": {
+    "tamanhoVsAk": 0.954,
+    "bracoVsAk": 1.302,
+    "eixo": 29,
+    "cruz": 0,
+    "centro": [
+      0.85,
+      0.728
+    ]
+  }
+}

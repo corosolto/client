@@ -40,7 +40,7 @@
       13.62,
       3.5
     ],
-    "conferencia": "altura da mira 3.5 cm × topo da arma 4.077 cm"
+    "conferencia": "altura da mira 3.5 cm × topo da carcaça 3.358 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Mk14EBR_Settings.asset",
@@ -141,6 +141,19 @@
         ],
         "n": 676
       },
+      "Handle": {
+        "min": [
+          -4.383,
+          -30.869,
+          -2.982
+        ],
+        "max": [
+          0.829,
+          3.172,
+          1.543
+        ],
+        "n": 350
+      },
       "Mag": {
         "min": [
           -1.313,
@@ -153,6 +166,32 @@
           -0.47
         ],
         "n": 626
+      },
+      "ReleaseHandle": {
+        "min": [
+          -0.68,
+          7.169,
+          -7.992
+        ],
+        "max": [
+          0.68,
+          8.255,
+          -3.455
+        ],
+        "n": 64
+      },
+      "Sight": {
+        "min": [
+          -0.602,
+          10.195,
+          1.04
+        ],
+        "max": [
+          0.602,
+          13.981,
+          4.077
+        ],
+        "n": 286
       },
       "Trigger": {
         "min": [
@@ -207,7 +246,7 @@
           -5.772,
           3.358
         ],
-        "n": 12879
+        "n": 12709
       },
       "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
     }

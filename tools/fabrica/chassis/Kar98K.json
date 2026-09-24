@@ -21,10 +21,10 @@
     "cima": [
       0,
       0,
-      -1
+      1
     ],
     "direita": [
-      1,
+      -1,
       0,
       0
     ]
@@ -38,9 +38,9 @@
     "raizCm": [
       0,
       -23.59,
-      -2.49
+      2.49
     ],
-    "conferencia": "altura da mira -2.49 cm × topo da arma 17.525 cm"
+    "conferencia": "altura da mira 2.49 cm × topo da carcaça 2.817 cm"
   },
   "settings": {
     "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/Kar98k_Settings.asset",
@@ -154,6 +154,97 @@
         ],
         "n": 260
       },
+      "CartridgeClip0": {
+        "min": [
+          -0.491,
+          -7.25,
+          16.017
+        ],
+        "max": [
+          0.549,
+          0.753,
+          17.525
+        ],
+        "n": 292
+      },
+      "CartridgeClip1": {
+        "min": [
+          -0.494,
+          -7.196,
+          14.9
+        ],
+        "max": [
+          0.546,
+          0.799,
+          16.214
+        ],
+        "n": 284
+      },
+      "CartridgeClip2": {
+        "min": [
+          -0.497,
+          -7.187,
+          13.643
+        ],
+        "max": [
+          0.543,
+          0.8,
+          14.896
+        ],
+        "n": 286
+      },
+      "CartridgeClip3": {
+        "min": [
+          -0.5,
+          -7.223,
+          12.319
+        ],
+        "max": [
+          0.54,
+          0.779,
+          13.754
+        ],
+        "n": 280
+      },
+      "CartridgeClip4": {
+        "min": [
+          -0.503,
+          -7.308,
+          11.062
+        ],
+        "max": [
+          0.537,
+          0.695,
+          12.637
+        ],
+        "n": 280
+      },
+      "Clip": {
+        "min": [
+          -0.648,
+          0.503,
+          11.32
+        ],
+        "max": [
+          0.687,
+          1.031,
+          17.349
+        ],
+        "n": 112
+      },
+      "StaticBolt": {
+        "min": [
+          -1.436,
+          4.294,
+          -1.138
+        ],
+        "max": [
+          1.481,
+          8.764,
+          1.816
+        ],
+        "n": 877
+      },
       "Trigger": {
         "min": [
           -0.209,
@@ -191,7 +282,7 @@
       "raizCm": [
         0,
         7.504,
-        -8.849
+        -0.75
       ],
       "origem": "ponto mais alto da fatia sobre o poço do pente"
     },

@@ -1,0 +1,47 @@
+{
+  "id": "p90",
+  "curta": false,
+  "golden": {
+    "eixo": 28.7,
+    "centro": [
+      0.835,
+      0.767
+    ]
+  },
+  "frameBase": {
+    "x": 0.235,
+    "y": -0.12,
+    "z": 0.027,
+    "fov": 57,
+    "rotDeg": [
+      1.69,
+      7.69,
+      6.19
+    ]
+  },
+  "antes": {
+    "tamanhoVsAk": 0.929,
+    "bracoVsAk": 0.078,
+    "eixo": 28.4,
+    "cruz": 0,
+    "centro": [
+      0.849,
+      0.849
+    ]
+  },
+  "frame": {
+    "x": 0.275,
+    "y": -0.01,
+    "z": -0.383
+  },
+  "depois": {
+    "tamanhoVsAk": 0.947,
+    "bracoVsAk": 1.144,
+    "eixo": 29.2,
+    "cruz": 0,
+    "centro": [
+      0.847,
+      0.699
+    ]
+  }
+}
