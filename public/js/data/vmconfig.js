@@ -154,9 +154,8 @@ export const VM_WEAPON = {
   sks: W('marksman', { baked: true }),
 };
 
-// Fábrica de armas (tools/fabrica; docs/reports/VM-FABRICA.md): o pack KINEMATION como autorado
-// na zona de contato. Só entra na revisão (?vmauthored=1&vmfabrica=<ids>|1); não tem `ready`.
-// Frame único da fábrica = o frame da AK K, ajustado contra a golden; curta usa o da PT-38 aprovada.
+// Fábrica (docs/reports/VM-FABRICA.md): só na revisão ?vmauthored=1&vmfabrica=<ids>|1, sem `ready`.
+// Frame único = o da AK K (ajustado contra a golden); a curta usa o da PT-38 aprovada.
 export const VM_FABRICA_FRAME = Object.freeze({ x: 0.065, y: 0.04, z: -0.203, fov: 57, rotDeg: [1.69, 7.69, 6.19] });
 // alivio = distância olho→alça no ADS, do aimPointOffset do Settings do pack (m).
 const F = (familia, chassi, extra = {}) => ({
