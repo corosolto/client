@@ -25,6 +25,9 @@ import { montarPlano } from './lib/plano.mjs';
 import { PACK_RAIZ } from './lib/pack.mjs';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import crypto from 'node:crypto';
+
+const sha256Texto = (t) => crypto.createHash('sha256').update(t).digest('hex');
 
 const args = process.argv.slice(2);
 const fichaArquivo = path.resolve(args.find((a) => !a.startsWith('--')) || '');
@@ -66,6 +69,7 @@ if (plano.animador) {
   const pos = (await import(`${pathToFileURL(path.join(RAIZ_REPO, 'public/js/data/vmfabrica.js')).href}?t=${Date.now()}`)).VM_FABRICA_POS;
   const frame = { ...cfg.VM_FABRICA_FRAME, ...(pos[ficha.id] || pos[ficha.enquadramentoDe] || {}), ...(cfg.VM_FABRICA[ficha.id]?.frame || {}) };
   gravarJson(path.join(plano.saida.dir, 'frame-jogo.json'), frame);
+  insumos.frameJogo = { arquivo: 'VM_FABRICA_FRAME+VM_FABRICA_POS+VM_FABRICA[id].frame', sha256: sha256Texto(JSON.stringify(frame)) };
   const out = rodarBlender(path.join(RAIZ_REPO, 'tools/fabrica/blender/animador.py'),
     [`--poses=${plano.animador}`, `--saida=${plano.saida.dir}`, `--frame=${JSON.stringify(frame)}`],
     { marcador: 'FABRICA_ANIMADOR=', blend: path.join(plano.saida.dir, 'base.blend') });

@@ -42,7 +42,7 @@ def main():
     if a.frame:
         from mathutils import Euler, Matrix, Vector
         fr = json.loads(a.frame)
-        mount = Matrix.Translation(Vector((fr["x"], fr["y"], fr["z"]))) @ Euler([math.radians(v) for v in fr.get("rotDeg", [0, 0, 0])], "XYZ").to_matrix().to_4x4()
+        mount = Matrix.Translation(Vector((fr["x"], fr["y"], fr["z"]))) @ Euler([math.radians(v) for v in fr.get("rotDeg", [0, 0, 0])], "ZYX").to_matrix().to_4x4()
         cam.matrix_world = cam.matrix_world @ mount.inverted()
         a.fov = a.fov or fr["fov"]
     ref = 16 / 9

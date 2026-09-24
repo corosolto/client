@@ -150,7 +150,9 @@ class Animador:
         self.cam_obj = cam
         # Câmera do jogo = autoria ∘ inverso do mount (authoredvm.js: posição x,y,z em m, giro XYZ em graus).
         fr = spec.get("_frame") or {"x": 0, "y": 0, "z": 0, "rotDeg": [0, 0, 0], "fov": math.degrees(cam.data.angle_y)}
-        mount = Matrix.Translation(Vector((fr["x"], fr["y"], fr["z"])) * 100.0) @ rot_graus(fr.get("rotDeg"))
+        # three.js Euler 'XYZ' = Rx·Ry·Rz, que no Blender é a ordem 'ZYX'
+        giro = Euler([math.radians(v) for v in fr.get("rotDeg", [0, 0, 0])], "ZYX").to_matrix().to_4x4()
+        mount = Matrix.Translation(Vector((fr["x"], fr["y"], fr["z"])) * 100.0) @ giro
         self.cam_jogo = self.cam @ mount.inverted()
         self.meia_h = math.atan(math.tan(math.radians(fr["fov"]) / 2) * 16 / 9)
         self.malhas = [o for o in bpy.data.objects if o.type == "MESH" and o.name.startswith("GEO_WEAPON_")]
