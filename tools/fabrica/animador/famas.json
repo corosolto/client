@@ -1,0 +1,106 @@
+{
+  "idle": {
+    "maoApoio": {"palmaCm": [2.9, -6.0, -6.3]}
+  },
+  "pegaPente": {"palmaCm": [3.6, 23.0, -13.0], "rotDeg": [0, -43, 0]},
+  "clipes": {
+    "reload_empty": {
+      "segundos": 2.4,
+      "arma": [
+        {"u": 0},
+        {"u": 0.18, "rotDeg": [-10, 5, -22], "camCm": [-18, 15, -14]},
+        {"u": 0.6, "rotDeg": [-10, 5, -22], "camCm": [-18, 15, -14]},
+        {"u": 0.63, "rotDeg": [-9, 5, -21], "camCm": [-18, 16, -14]},
+        {"u": 0.7, "rotDeg": [-5, -20, 5], "camCm": [-4, 9, -3]},
+        {"u": 0.84, "rotDeg": [-5, -20, 5], "camCm": [-4, 9, -3]},
+        {"u": 0.95}
+      ],
+      "mao": [
+        {"u": 0, "idle": true},
+        {"u": 0.06, "idle": true, "fecho": 0.6},
+        {"u": 0.2, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.24, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.3, "poco": [7, 1, -13]},
+        {"u": 0.37, "poco": [5, 1, -10]},
+        {"u": 0.43, "poco": [3, 0, -6]},
+        {"u": 0.5, "poco": [0, 0, -5]},
+        {"u": 0.58, "poco": [0, 0, -0.5]},
+        {"u": 0.62, "poco": [0, 0, 0]},
+        {"u": 0.65, "poco": [0, 0, 0], "fecho": 0.3},
+        {"u": 0.72, "armaCm": [4.5, 0.5, 4.0], "rotDeg": [0, -43, 0], "fecho": 0.4},
+        {"u": 0.75, "armaCm": [4.5, 0.5, 4.0], "rotDeg": [0, -43, 0], "fecho": 0.9},
+        {"u": 0.8, "armaCm": [4.5, 7.5, 4.0], "rotDeg": [0, -43, 0], "fecho": 0.9},
+        {"u": 0.83, "armaCm": [4.5, 7.5, 4.0], "rotDeg": [0, -43, 0], "fecho": 0.3},
+        {"u": 0.95, "idle": true},
+        {"u": 1, "idle": true}
+      ],
+      "pentes": {
+        "Mag": [
+          {"u": 0, "estado": "arma"},
+          {"u": 0.4, "estado": "arma"},
+          {"u": 0.43, "estado": "arma", "deslocCm": [0, 0, -2.5]},
+          {"u": 0.44, "estado": "cai", "velCm": [-60, -20, -80], "giroGrausS": 200},
+          {"u": 0.62, "estado": "escondido"},
+          {"u": 0.66, "estado": "arma"}
+        ],
+        "Mag2": [{"u": 0, "estado": "arma"}, {"u": 0.02, "estado": "escondido"}, {"u": 0.22, "estado": "mao"}, {"u": 0.62, "estado": "arma"}]
+      },
+      "mecanismos": {
+        "ChargingHandle": [
+          {"u": 0, "cm": [0, 0, 0]},
+          {"u": 0.76, "cm": [0, 0, 0]},
+          {"u": 0.8, "cm": [0, 7.5, 0]},
+          {"u": 0.815, "cm": [0, 7.5, 0]},
+          {"u": 0.83, "cm": [0, 0, 0]}
+        ]
+      }
+    },
+    "reload_tactical": {
+      "segundos": 2.4,
+      "arma": [
+        {"u": 0},
+        {"u": 0.18, "rotDeg": [-10, 5, -22], "camCm": [-18, 15, -14]},
+        {"u": 0.6, "rotDeg": [-10, 5, -22], "camCm": [-18, 15, -14]},
+        {"u": 0.63, "rotDeg": [-9, 5, -21], "camCm": [-18, 16, -14]},
+        {"u": 0.85},
+        {"u": 1}
+      ],
+      "mao": [
+        {"u": 0, "idle": true},
+        {"u": 0.06, "idle": true, "fecho": 0.6},
+        {"u": 0.2, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.24, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.3, "poco": [7, 1, -13]},
+        {"u": 0.37, "poco": [5, 1, -10]},
+        {"u": 0.43, "poco": [3, 0, -6]},
+        {"u": 0.5, "poco": [0, 0, -5]},
+        {"u": 0.58, "poco": [0, 0, -0.5]},
+        {"u": 0.62, "poco": [0, 0, 0]},
+        {"u": 0.65, "poco": [0, 0, 0], "fecho": 0.3},
+        {"u": 0.85, "idle": true},
+        {"u": 1, "idle": true}
+      ],
+      "pentes": {
+        "Mag": [
+          {"u": 0, "estado": "arma"},
+          {"u": 0.4, "estado": "arma"},
+          {"u": 0.43, "estado": "arma", "deslocCm": [0, 0, -2.5]},
+          {"u": 0.44, "estado": "cai", "velCm": [-60, -20, -80], "giroGrausS": 200},
+          {"u": 0.62, "estado": "escondido"},
+          {"u": 0.66, "estado": "arma"}
+        ],
+        "Mag2": [{"u": 0, "estado": "arma"}, {"u": 0.02, "estado": "escondido"}, {"u": 0.22, "estado": "mao"}, {"u": 0.62, "estado": "arma"}]
+      }
+    }
+  },
+  "sondas": {
+    "penteTopo": [0, 25, -1.5],
+    "penteFundo": [0, 25, -19.4],
+    "palmaForte": [-2.16, 14.6, -10.3],
+    "apoio": [2.9, -6, -6.3],
+    "boca": [0, -34.2, -0.5],
+    "alavanca": [0, -2, 9],
+    "coronha": [0, 41, -2],
+    "ombroL": [26.4, 37, -14.4]
+  }
+}

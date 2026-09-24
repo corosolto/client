@@ -2,156 +2,52 @@
   "id": "famas",
   "arma": "famas",
   "chassi": "MX16A4",
-  "descricao": "Primeira VARIANTE: FAMAS sobre o chassi MX16A4. Zona de contato do MX16A4 intacta (punho, gatilho, mão de apoio no guarda-mão, pente e poço à frente do punho, ferrolho/alavanca); zona livre trocada pela alça de transporte (com as miras) e pela soleira da FAMAS Mint do próprio jogo (public/models/weapons/famas.glb, 0 crédito Mint).",
-  "limite": "Não é bullpup: na FAMAS de verdade o pente fica atrás do punho. Isso é zona de contato — trocar exigiria outro chassi/animação (plano B). A variante lê como FAMAS pela alça e pela soleira, com o pente do M4 à frente do punho.",
+  "descricao": "FAMAS bullpup de verdade (plano B). Do chassi MX16A4 ficam só o braço SK_Arms_Mono, a pose da mão forte, a câmera e o saque geral; a arma é a FAMAS do jogo (public/models/weapons/famas.glb, 0 crédito Mint) com o pente ATRÁS do punho em osso próprio, e a mão de apoio, a recarga tática e a vazia são re-autoradas pelo animador (tools/fabrica/animador/famas.json).",
+  "planoB": "no MX16A4 o pente fica à frente do punho e é zona de contato; a variante de zona livre (lote 1) lia como 'M4 com alça de FAMAS' (crítico REPROVADA)",
   "skinBraco": "coro-ak",
-  "skinArma": "famas",
-  "removerZonaLivre": [
-    {
-      "nome": "alca-e-massa-traseira-m4",
-      "min": [
-        -4,
-        -5.5,
-        1.5
-      ],
-      "max": [
-        4,
-        12.5,
-        7
-      ]
-    },
-    {
-      "nome": "massa-dianteira-m4",
-      "min": [
-        -4,
-        -44,
-        0.5
-      ],
-      "max": [
-        4,
-        -37,
-        7
-      ]
-    },
-    {
-      "nome": "coronha-m4",
-      "min": [
-        -5,
-        17.5,
-        -17
-      ],
-      "max": [
-        5,
-        43,
-        5
-      ]
-    },
-    {
-      "nome": "coronha-m4-junta",
-      "min": [
-        -5,
-        14.5,
-        -5
-      ],
-      "max": [
-        5,
-        17.5,
-        5
-      ]
+  "skinArma": null,
+  "malhaPropria": {
+    "fonte": "public/models/weapons/famas.glb",
+    "origem": "Mint (modelo de mundo da FAMAS do jogo)",
+    "escala": 0.758,
+    "rotDeg": [0, 0, 90],
+    "posCm": [-0.57, 3.6, -4.95],
+    "alinhamento": "palma forte do MX16A4 (-2,16; 14,59; -10,26) no meio do punho da FAMAS (x=0,145, z=-0,07 no GLB), eixo do cano no plano x=0; comprimento real 757 mm",
+    "pecas": [
+      {
+        "nome": "pente",
+        "osso": "Mag",
+        "caixa": {"min": [0.22, -0.04, -0.2], "max": [0.34, 0.02, 0.05]},
+        "abaixoDe": -0.03,
+        "vertices": 220
+      },
+      {
+        "nome": "alavanca",
+        "osso": "ChargingHandle",
+        "caixa": {"min": [-0.06, -0.03, 0.09], "max": [0.005, 0.01, 0.145]},
+        "vertices": 54
+      }
+    ],
+    "material": {
+      "tom": [0.42, 0.43, 0.45],
+      "metal": 0.15,
+      "rugosidade": 0.62,
+      "nota": "polímero escuro da FAMAS; a textura base do modelo de mundo fica"
     }
-  ],
-  "zonaLivre": [
-    {
-      "peca": "alca",
-      "fonte": "public/models/weapons/famas.glb",
-      "origem": "Mint (modelo de mundo da FAMAS do jogo)",
-      "recorte": {
-        "min": [
-          -0.26,
-          -1,
-          0.055
-        ],
-        "max": [
-          0.17,
-          1,
-          1
-        ]
-      },
-      "centrar": [
-        "max",
-        "center",
-        "min"
-      ],
-      "ancora": {
-        "pos": [
-          0,
-          9.0,
-          0.8
-        ],
-        "rotDeg": [
-          0,
-          0,
-          90
-        ],
-        "escala": 0.758
-      },
-      "nota": "sem o pilar traseiro da alça (tapava o olho no ADS); a âncora recua 3 cm para a alça ficar no mesmo lugar"
-    },
-    {
-      "peca": "soleira",
-      "fonte": "public/models/weapons/famas.glb",
-      "origem": "Mint (modelo de mundo da FAMAS do jogo)",
-      "recorte": {
-        "min": [
-          0.215,
-          -1,
-          -0.045
-        ],
-        "max": [
-          0.5,
-          1,
-          0.075
-        ]
-      },
-      "centrar": [
-        "min",
-        "center",
-        "center"
-      ],
-      "ancora": {
-        "pos": [
-          0,
-          14.8,
-          -4.2
-        ],
-        "rotDeg": [
-          0,
-          0,
-          90
-        ],
-        "escala": 0.758
-      },
-      "nota": "topo da soleira abaixo da linha de visada (a bochecheira da FAMAS subia na frente do olho)"
-    }
-  ],
+  },
+  "mira": {
+    "raizCm": [0.04, 17.6, 9.6],
+    "origem": "alça (ilha x 0,181–0,188, z 0,155–0,183 do GLB) e massa (z 0,171): linha z 0,170 × 0,758 − 4,95 = 7,94; +1,7 cm pela régua mira no jogo (aro 40 px acima da cruz a ~23 px/cm)"
+  },
+  "boca": {"raizCm": [0, -34.2, -0.52], "origem": "quebra-chamas da FAMAS (x −0,499, z 0,058 do GLB)"},
+  "animador": "tools/fabrica/animador/famas.json",
   "clipes": {
-    "reload_tactical": "pack:reload_tactical",
-    "reload_empty": "pack:reload_empty",
+    "reload_tactical": "animador",
+    "reload_empty": "animador",
     "equip_rifle": "geral:rifle_equip",
     "shoot": "procedural",
     "inspect": "ausente"
   },
-  "recuo": {
-    "familia": "ar",
-    "fonte": "recoil.json ← MX16A4 (chassi)"
-  },
-  "enquadramentoDe": "m4",
-  "mira": {
-    "raizCm": [
-      0,
-      8.0,
-      10.4
-    ],
-    "origem": "FAMAS mira por cima da alça: régua de mira no jogo achou a massa 112 px acima da linha a 4,9 cm (≈ +5,5 cm a 37 cm do olho) → 10,4 cm"
-  }
+  "recuo": {"familia": "ar", "fonte": "recoil.json ← MX16A4 (chassi)"},
+  "enquadramentoDe": "m4"
 }
