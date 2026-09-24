@@ -4,15 +4,15 @@
 
 - Worktree: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/carandiru-main-r3`.
 - Branch: `codex/carandiru-main-r3`.
-- Base atualizada: `origin/main@7bb2707ef576260b30ceb88c5973b9f6618684cd` (`v2.0.0-alpha.261`). O checkpoint inicial nasceu em `dffcf1f581` (`alpha.255`) e foi integrado sem conflito.
+- Base atualizada por merge, sem rebase, para `origin/main@60ad7501323ef076263f645bfca341e2454fce6b` (`v2.0.0-alpha.262`). O checkpoint inicial nasceu em `dffcf1f581` (`alpha.255`); a primeira atualização passou por `7bb2707ef` (`alpha.261`).
 - Mapa: id técnico `penitenciaria`, identidade pretendida **Carandiru**.
 - Prioridade: o inventário do PR #538 mede a pior densidade visual e custo de cena do grupo legado; o teste humano mais recente relatou escadas da muralha e guaritas inacessíveis e janelas suspensas no pavilhão. Obras, Parque, Atacadão, Posto, Piscina, Quebrada, Ferro Velho, Loja H e Córrego já têm candidatos atuais em draft; a UPA pertence a outra lane.
 - Origem a preservar: builder original do Emerson Garrido e reautoria estrutural válida do PR #556. A nova lane extrai somente geometria, navegação, identidade procedural e gates que funcionem sobre a `main` atual.
 
 ## Restrições
 
-- Somente `public/js/map_penitenciaria.js`, gates específicos e este dossiê.
-- Sem runtime, materiais compartilhados, registro global de mapas, áudio compartilhado, Mint/Astra, assets privados, merge, deploy ou force-push.
+- O delta autoral fica restrito a `public/js/map_penitenciaria.js`, ao nome declarativo em `public/js/maps.js`, a dois gates específicos e a este dossiê. Nove blocos derivados de documentação entram apenas porque `docs:check` exige sua regeneração a partir do estado atual.
+- Sem lógica de runtime, materiais compartilhados, mudança estrutural no registro de mapas, áudio compartilhado, Mint/Astra, assets privados, merge, deploy ou force-push.
 - O asset Mint do PR #556 não entra: a própria descrição registra termos comerciais ainda pendentes. O mapa deve funcionar e manter identidade com geometria procedural e assets locais já licenciados.
 - Aprovação visual humana não será presumida.
 
@@ -63,17 +63,22 @@ O self-test exige a cláusula exata para nove mutantes de mundo: `sem-identidade
 
 ## Validação técnica
 
-Comandos reexecutados em 22/09/2026 sobre a base `alpha.261`:
+Comandos reexecutados em 22/09/2026 sobre a base `alpha.262`:
 
 ```text
 npm run syntax                                                    PASS
 npm run build                                                     PASS
+npm run docs:check                                                PASS
+npm run arch:check                                                PASS
 npm run eval:penitenciaria                                       PASS
 node tools/eval/carandiru-main-r3-check.mjs                       PASS (CR3-1..6)
 node tools/eval/carandiru-main-r3-check.mjs --selftest-mutantes   PASS (9/9)
 node tools/eval/carandiru-browser-matrix.mjs --self-test          PASS
 node tools/eval/ctf-win-check.mjs penitenciaria                   PASS (3ª bandeira encerra)
 npm run eval:mapcontrato -- --map penitenciaria                  PASS (1.229/1.229 conectados)
+npm run eval:qualmapas                                           PASS (QMAP1–QMAP4)
+node tools/eval/quality-mapas-check.mjs --mutar=carandiru-sombra-solta
+                                                                  REPROVA QMAP1/QMAP3 como esperado
 ```
 
 `npm run check:deploy` fechou **39/40** depois da atualização dos blocos de documentação gerados. A única falha é `eval:redesign` / UIR15 (`resultado usa exclusivamente arte estática do personagem atual`), herdada da `main` e fora do diff deste mapa: a lane não altera `public/js/game.js`, CSS/DOM de UI, `src/pages/index.astro` nem a régua de redesign.
@@ -90,22 +95,23 @@ A execução usou o harness Playwright/WebGL do próprio repositório com Chrome
 
 | Caso | p95 ms | calls | tris |
 | --- | ---: | ---: | ---: |
-| 3:2 5x5 DM | 9,1 | 892 | 920.827 |
-| 3:2 5x5 CTF | 9,8 | 890 | 920.851 |
-| 3:2 8x8 DM | 9,1 | 946 | 1.068.065 |
-| 3:2 8x8 CTF | 9,1 | 946 | 1.067.111 |
-| 16:9 5x5 DM | 9,1 | 897 | 919.393 |
-| 16:9 5x5 CTF | 9,2 | 899 | 923.271 |
-| 16:9 8x8 DM | 9,9 | 953 | 1.063.696 |
-| 16:9 8x8 CTF | 9,9 | 955 | 1.066.524 |
+| 3:2 5x5 DM | 10,1 | 900 | 919.411 |
+| 3:2 5x5 CTF | 10,1 | 890 | 921.023 |
+| 3:2 8x8 DM | 10,0 | 951 | 1.062.818 |
+| 3:2 8x8 CTF | 10,0 | 949 | 1.066.847 |
+| 16:9 5x5 DM | 9,8 | 896 | 919.383 |
+| 16:9 5x5 CTF | 10,1 | 903 | 921.306 |
+| 16:9 8x8 DM | 16,6 | 959 | 1.064.885 |
+| 16:9 8x8 CTF | 16,7 | 968 | 1.071.911 |
 
-O A/B arquivado em DM contra `origin/main@dffcf1f581` mostrou draw calls 27%–33% menores, triângulos 21%–25% maiores e p95 equivalente. A `main@7bb2707ef` conserva o mesmo arquivo de mapa baseline (hash `0c7759794db25f0a639ac5bd604e96ed11152029a76718fabe2fa3eb8ea2acaf`), mas o aceite atual usa a matriz completa acima após a atualização do runtime. A primeira amostra 3:2/5x5/CTF teve um único quadro transitório acima de 100 ms; a célula foi repetida isoladamente e passou com zero pausas. Hash atual do candidato: `28c2e5fee3fde420511bcedfb91d4307012cd4829db3870504c8b4087d2c6e0b`.
+O A/B arquivado em DM contra `origin/main@dffcf1f581` mostrou draw calls 27%–33% menores, triângulos 21%–25% maiores e p95 equivalente. A `main@7bb2707ef` conservava o mesmo arquivo de mapa baseline (hash `0c7759794db25f0a639ac5bd604e96ed11152029a76718fabe2fa3eb8ea2acaf`); o aceite atual usa a matriz completa acima sobre `alpha.262`. A execução inicial registrou duas pausas transitórias em cada uma das células 3:2/8x8/CTF e 16:9/5x5/DM. Ambas foram repetidas isoladamente em processos Chrome frescos e passaram com zero quadro acima de 100 ms; o recibo inicial foi preservado ao lado da matriz final. Hash atual do candidato: `4bdf523666ca15ff91a9adeae213dc70b69e43765cd358f9dc2187e8fdd37d82`.
 
 Recibos ignorados pelo Git ficam em:
 
-- `artifacts/carandiru-main-r3/webgl-matrix/matrix.json` — matriz final 8/8.
+- `artifacts/carandiru-main-r3/webgl-matrix/matrix.json` — matriz final 8/8, SHA-256 `0a85142bc88698461f8e177b277cdaae237054bc7854112b058a7bddcc262fa7`.
+- `artifacts/carandiru-main-r3/webgl-matrix/matrix-initial-with-transients.json` — recibo inicial preservado para as duas repetições.
 - `artifacts/carandiru-main-r3/baseline-main/matrix.json` — A/B da `main`.
-- `artifacts/carandiru-main-r3/evidence/captures.json` — manifesto das 14 capturas e hashes.
+- `artifacts/carandiru-main-r3/evidence/captures.json` — manifesto das 14 capturas e hashes, SHA-256 `b1fc3acb0246cfe3e6dd3b5f47591ddde8082876e6b64c8e4f313cc348dcc11d`.
 
 ## Revisão visual
 
@@ -117,13 +123,18 @@ URL local do candidato:
 
 ## Dívidas e fronteiras
 
-- A raiz map-local agora se chama `carandiru`, e toda a geometria/identidade interna usa Carandiru. O seletor, descrição e minimapa ainda exibem “Penitenciária da Treta”; essas strings vivem em registros compartilhados (`maps.js`/`main.js`) e a troca global foi deliberadamente deixada fora desta lane map-local.
+- A raiz map-local se chama `carandiru`, toda a geometria/identidade interna usa Carandiru e o único metadado de nome do registro agora é `CARANDIRU`. Menu, loading, seletor multiplayer e minimapa já consomem `MAPS[id].name`; nenhuma lógica compartilhada de runtime precisou mudar. A descrição existente em `main.js` não continha o nome antigo e foi preservada.
+- A sombra do sol agora usa `aplicaSombraSol(sun)`, o mesmo orçamento central aprovado nos demais mapas. A contraprova `carandiru-sombra-solta` restaura o literal local e remove a delegação; QMAP1 e QMAP3 mordem exatamente a regressão.
 - A dívida genérica MAP1/exposição e a queda de eficiência do botsim estão registradas acima e precisam de teste humano antes de promoção.
-- A crítica adversarial independente não foi executada: as quatro vagas de agentes estavam ocupadas pelas lanes prioritárias. Ela continua sendo gate de promoção, junto com o playtest humano.
+- A crítica adversarial independente do HEAD `fc250f47f` concluiu **GO técnico**: diff de 14 arquivos íntegro, hashes do mapa/matriz/capturas coincidentes, docs/build e gates causais verdes. A matriz independente também viu duas pausas transitórias, em células diferentes da execução desta lane; ambas passaram ao serem repetidas em processos Chrome isolados, sem dívida inesperada. MAP1, exposição e eficiência dos bots continuam exigindo playtest humano antes de aprovação final de gameplay/visual.
 - O gate agregado de deploy está em 39/40 pela falha herdada de redesign UIR15 descrita acima; corrigir essa UI compartilhada nesta lane violaria a fronteira map-local.
 - Não houve consumo de Mint/Astra nem inclusão de assets privados. O PR #556 permanece como fonte histórica; esta branch não o carrega como stack.
 - Merge, deploy e aprovação visual humana não fazem parte desta entrega.
 
 ## Estado
 
-Implementação, régua causal, build, CTF, bots, matriz WebGL e capturas concluídos na `main@alpha.261`. O draft pode ser aberto com a promoção bloqueada por aprovação visual/jogável humana e por crítica adversarial independente.
+No PR #611, a identidade `rubenmarcus` marcou o draft como pronto em 22/09/2026 às 01:21:00 UTC e o mergeou em 22/09/2026 às 01:24:30 UTC, produzindo `7de72e010`. A timeline não contém evento de auto-merge. Isso ocorreu antes de a correção QMAP ficar pronta; a `main` resultante virou `alpha.262`. O commit `530dfea55` com orçamento de sombra e nome declarativo ficou fora desse merge e segue isolado no draft #615, com auto-merge desativado.
+
+A integridade do #615 foi refeita por merge, sem rebase, de `origin/main@60ad75013` no commit `158fa963c`. O diff autoral contém cinco arquivos: builder, metadado `MAPS`, dois gates e este ledger. A regeneração necessária para deixar `docs:check` verde acrescenta exatamente nove blocos derivados (`ARCH.generated.md`, `README.md`, `STATUS.md`, três páginas PT-BR e os três espelhos EN). Não há `package*`, versão, CHANGELOG nem artefato de release no diff.
+
+Implementação, régua causal, build, CTF, bots, matriz WebGL, nome declarativo, orçamento de sombra, capturas e crítica independente estão concluídos. O draft #615 permanece sem promoção; a aprovação final de gameplay/visual depende do playtest humano, especialmente para MAP1, exposição e eficiência dos bots.
