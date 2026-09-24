@@ -26,9 +26,16 @@ echo "pre-push: portões locais (syntax/docs/arch/travessão/mapcontrato via che
 # Trailer `Agent:` em TODO commit que sobe: o commit-msg não roda em rebase nem em
 # clone sem `npm run setup`. Merge que traz a main injeta história alheia no
 # intervalo — `--not --remotes` só cobra o que o remoto AINDA não tem.
+#
+# `--no-merges` pelo mesmo motivo do dco_check.py/agente_check.py: merge não escreve
+# linha, e o "Merge pull request #N" do botão do GitHub não aceita trailer. Sem isto o
+# hook era MAIS ESTRITO que o portão que ele espelha — o CI aprovava e o hook barrava,
+# e a única saída era `--no-verify`, que pula TODOS os portões, inclusive os que mordem.
+# Visto na #642: commits d2eb269a (Merge pull request #528) e 2b943df5 (Merge pull
+# request #625), os dois merges da própria main, barrando um push que o CI aprovou.
 while read -r _local_ref local_sha _remote_ref remote_sha; do
   [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
-  intervalo=$(git rev-list "$local_sha" --not --remotes="$remoto")
+  intervalo=$(git rev-list --no-merges "$local_sha" --not --remotes="$remoto")
   for sha in $intervalo; do
     if ! git show -s --format='%B' "$sha" | grep -Eqi '^Agent:[[:space:]]*[^[:space:]]'; then
       falhas+=("commit ${sha:0:8} sem trailer 'Agent:' — $(git show -s --format='%s' "$sha" | cut -c1-50)")
