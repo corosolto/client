@@ -1,140 +1,140 @@
 {
- "ferro_velho": {
-  "pecas": 1275,
-  "arquivos": 58,
-  "murais": 8,
-  "hMin": 0.45,
-  "hMax": 2.8,
-  "hMed": 1.1,
-  "placas": 842,
-  "pintadas": 806,
+ "piscina_treta": {
+  "pecas": 618,
+  "arquivos": 54,
+  "murais": 2,
+  "hMin": 0.38,
+  "hMax": 3,
+  "hMed": 1.5,
+  "placas": 910,
+  "pintadas": 758,
+  "bandas": [
+   {
+    "alt": 1.6,
+    "t": 318,
+    "p": 291,
+    "pct": 91.5
+   },
+   {
+    "alt": 3.2,
+    "t": 296,
+    "p": 228,
+    "pct": 77
+   },
+   {
+    "alt": 5,
+    "t": 296,
+    "p": 239,
+    "pct": 80.7
+   }
+  ],
   "pelados": [
    [
+    "piscina:static-batch[inst]",
+    143
+   ],
+   [
     "Mesh",
-    14
-   ],
-   [
-    "Muro_de_carros_esmagados_1",
-    13
-   ],
-   [
-    "Guindaste_com_eletroímã_1",
-    5
-   ],
-   [
-    "Mesh[inst]",
-    4
+    9
    ]
   ],
   "amostraPelada": [
    {
-    "x": -29.1,
+    "x": -10.5,
     "y": 1.6,
-    "z": -33.1,
-    "ry": -1.96,
-    "quem": "Mesh"
+    "z": -15.1,
+    "ry": -1.57,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -29,
-    "y": 1.6,
-    "z": -32.9,
-    "ry": -0.39,
-    "quem": "Mesh"
+    "x": -12.8,
+    "y": 3.2,
+    "z": -25,
+    "ry": 0,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -27.2,
-    "y": 1.6,
-    "z": 10.8,
-    "ry": 0.05,
-    "quem": "Muro_de_carros_esmagados_1"
+    "x": -15,
+    "y": 3.2,
+    "z": -25,
+    "ry": 0,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -27.5,
-    "y": 1.6,
-    "z": 23.1,
-    "ry": -2.65,
-    "quem": "Muro_de_carros_esmagados_1"
+    "x": -17,
+    "y": 3.2,
+    "z": -12,
+    "ry": 1.57,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -28.7,
-    "y": 1.6,
-    "z": 27.5,
-    "ry": -1.14,
-    "quem": "Mesh[inst]"
+    "x": -17,
+    "y": 3.2,
+    "z": -10.8,
+    "ry": 1.57,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -28.9,
-    "y": 1.6,
-    "z": -33,
-    "ry": 1.96,
-    "quem": "Mesh"
+    "x": -10.4,
+    "y": 5,
+    "z": -14.7,
+    "ry": 0,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -28.9,
-    "y": 1.6,
-    "z": -32.9,
-    "ry": 1.18,
-    "quem": "Mesh"
+    "x": -17,
+    "y": 3.2,
+    "z": -9.4,
+    "ry": 1.57,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -19.5,
-    "y": 1.6,
-    "z": -22.3,
-    "ry": -1.73,
-    "quem": "Muro_de_carros_esmagados_1"
+    "x": -17,
+    "y": 3.2,
+    "z": -4.6,
+    "ry": 1.57,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -26.4,
+    "x": -20.3,
     "y": 1.6,
-    "z": -3.2,
-    "ry": 0.02,
-    "quem": "Muro_de_carros_esmagados_1"
+    "z": -1.4,
+    "ry": 0,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -19.5,
-    "y": 1.6,
-    "z": 8.7,
-    "ry": -1.53,
-    "quem": "Muro_de_carros_esmagados_1"
+    "x": -17,
+    "y": 3.2,
+    "z": 9.6,
+    "ry": 3.14,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -19.2,
-    "y": 1.6,
-    "z": 16.4,
-    "ry": 0.05,
-    "quem": "Muro_de_carros_esmagados_1"
+    "x": -17,
+    "y": 3.2,
+    "z": 12.4,
+    "ry": 1.57,
+    "quem": "piscina:static-batch[inst]"
    },
    {
-    "x": -19.5,
-    "y": 1.6,
-    "z": 25.3,
-    "ry": -1.73,
-    "quem": "Muro_de_carros_esmagados_1"
+    "x": -17,
+    "y": 5,
+    "z": 9.6,
+    "ry": 3.14,
+    "quem": "piscina:static-batch[inst]"
    }
   ],
-  "cobertura": 95.7,
-  "peladas": [
-   {
-    "xz": "24,-8",
-    "t": 5,
-    "p": 1,
-    "pct": 20
-   },
-   {
-    "xz": "24,0",
-    "t": 4,
-    "p": 2,
-    "pct": 50
-   },
-   {
-    "xz": "8,-32",
-    "t": 9,
-    "p": 5,
-    "pct": 56
-   }
-  ],
+  "cobertura": 83.3,
+  "peladas": [],
   "usados": [
+   "decal:alfabeto-bolha.png",
+   "decal:alfabeto-bolha2.png",
+   "decal:alfabeto-grosso-01.png",
+   "decal:alfabeto-reto-05.png",
+   "decal:alfabeto-reto-07.png",
+   "decal:cartaz-america-latina.png",
    "decal:cartaz-medo.png",
+   "decal:cartaz-neutro.png",
    "decal:dont-overthink.png",
    "decal:gratidao-sol.png",
    "decal:meio-ano.png",
@@ -143,18 +143,9 @@
    "decal:or-stencil-capivara.png",
    "decal:or-stencil-pomba.png",
    "decal:peca-bolha.png",
-   "decal:personagem-muro.png",
-   "decal:personagens-graffiti-01.png",
-   "decal:personagens-graffiti-02.png",
-   "decal:personagens-graffiti-03.png",
-   "decal:personagens-graffiti-04.png",
-   "decal:personagens-graffiti-05.png",
-   "decal:personagens-graffiti-06.png",
-   "decal:personagens-graffiti-07.png",
    "decal:poster:25c9112229edfcfbb1eae4137ecc151a.jpg",
    "decal:poster:26268061ca13b4dc4a871c1163cbeb6d.jpg",
    "decal:poster:3300c39038dd97ad6a20342038c008b0.jpg",
-   "decal:poster:51edbafcf2eebbb2dc157f66bb1a2d66.jpg",
    "decal:poster:574381edb80801aaff5e9a1cdd88bc4b.jpg",
    "decal:poster:6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg",
    "decal:poster:78c38b895431ac393f96036507060be1.jpg",
@@ -176,6 +167,7 @@
    "decal:poster:or-compro-ouro.jpg",
    "decal:poster:or-quebrada-vive.jpg",
    "decal:poster:or-show-funk.jpg",
+   "decal:pra-gringo.png",
    "decal:tag-fina.png",
    "decal:tag-flop.png",
    "decal:tag-larga.png",
@@ -183,16 +175,13 @@
    "decal:tag-pingo.png",
    "decal:tag-selvagem.png",
    "decal:tags-treino-02.png",
+   "decal:tags-treino-03.png",
+   "decal:tags-treino-04.png",
    "decal:tags-treino-05.png",
-   "mural:homenagem-champignon",
-   "mural:homenagem-chico",
-   "mural:homenagem-chorao",
-   "mural:homenagem-raul",
-   "mural:homenagem-rita-lee",
-   "mural:homenagem-sabotage",
-   "mural:homenagem-tim-maia",
-   "mural:homenagem-yuka"
+   "decal:tags-treino-06.png",
+   "mural:eternamente",
+   "mural:leste-vive"
   ],
-  "waypoints": 296
+  "waypoints": 122
  }
 }
