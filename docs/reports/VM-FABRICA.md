@@ -66,8 +66,11 @@ enxerga por `public/private-assets/viewmodels`.
    ferrolho, bomba e gatilho mantêm o osso do pack). O exportador glTF espalhava a arma quando
    ela era uma armadura pendurada num vazio preso a osso: ossos a ~80 cm e vértice sem peso
    colapsado na raiz. O `ak-runtime.glb` antigo do catálogo tem o mesmo defeito.
-4. Skins: braço (seção 4) e arma (receita por material; sem receita, a cor do `.mat` do Unity,
-   **convertida de gama para linear** — lida crua, a AK saía cinza-clara).
+4. Skins: braço (seção 4) e arma (receita por material; sem receita, o `.mat` do Unity — cor
+   **convertida de gama para linear** e textura pelo GUID). O `.mat` de cada material do FBX sai
+   do mapa do próprio Unity: `externalObjects` do `.meta` do FBX (nome → `.mat`), depois
+   `m_Materials` do prefab (slot → `.mat`), e só por último o nome igual. Sem isso KXG12, L96X,
+   PDW90, MGX5 e DGL50 saíam cinza (o nome no FBX — `MG6`, `KSG_Body` — não é o do `.mat`).
 5. Zona livre (variante): apaga vértices rígidos em caixas da ficha — **nunca** vértice de osso
    móvel nem dentro das caixas da zona de contato do chassi (+1 cm); importa as peças, recorta,
    posiciona na âncora e pesa 100% no osso `Arma`.
@@ -108,7 +111,8 @@ Três armadilhas do pack, cada uma virou código com comentário:
 
 ### 2.3 Runtime (`public/js/authoredvm.js`, `data/vmconfig.js`, `data/vmfabrica.js`)
 
-- **Só na revisão:** `/?vmauthored=1&vmfabrica=ak,m4` (ou `=1` para todos de `VM_FABRICA`).
+- **Só na revisão:** `/?vmauthored=1&vmfabrica=m4,g3` (ou `=1` para todos de `VM_FABRICA`). A
+  `ak` não está em `VM_FABRICA`: o dono manteve a golden aprovada (24/09).
   Sem `ready`, `VM_LAUNCH` continua `false`; fora do parâmetro nada muda.
 - Chave `fab#<arma>` → `/private-assets/viewmodels/fabrica/<arma>-fabrica.glb?v=<VM_FABRICA_BYTES>`.
 - **Frame:** rotação e FOV **únicos** para todas as armas (`VM_FABRICA_FRAME`, o frame da AK K,
@@ -149,6 +153,11 @@ Três armadilhas do pack, cada uma virou código com comentário:
   } ],
   "mira": { "raizCm": [0, 8.0, 10.4] },   // opcional: linha de visada da variante (substitui o AimPoint)
   "enquadramentoDe": "m4",                // opcional: variante herda a posição do produto puro
+  "idleArma": "reload_start",             // opcional: pose de idle da ARMA do pack ("pack" = A_W_*_Pose/Idle;
+                                          //   "<clipe>" = quadro 0 dele — Kar98K guarda a munição assim)
+  "ocultar": [ { "osso": "Gauge", "clipe": "reload_loop", "de": 0.73, "ate": 0.88 } ],
+                                          // opcional: peça do pack escondida (escala ~0) numa janela do clipe
+  "alinharTempo": ["reload_loop"],        // opcional: arma no comprimento do braço (clipe em laço)
   "recuo": { "familia": "ar" }
 }
 ```
@@ -301,32 +310,32 @@ mecanismo a recarga opera (medido em `tools/fabrica/chassis/*.json`).
 
 | Arma | Chassi | Tipo | Observação |
 |---|---|---|---|
-| ak | AK | puro + skin AK-47 | lote 1 |
-| akm | AK | variante (skin; soleira fixa) | mesmo contato |
+| ak | — | **fica a golden aprovada** (rig A) | decisão do dono 24/09 |
+| akm | AK | puro + skin AK-47 | lote 2 (o AK-200 do pack) |
 | m92 | AK | variante (cano/guarda-mão curtos da M92 Mint) | Krinkov: AK encurtada |
 | m4 | MX16A4 | puro | lote 1 |
-| famas | MX16A4 | variante (alça e soleira Mint) | lote 1; **não é bullpup** (seção 10) |
-| tavor | MX16A4 | variante (casca bullpup) | mesmo limite da FAMAS |
+| famas | MX16A4 → plano B | variante bullpup | lote 1 reprovado; plano B em `vm/fabrica-bullpup` (outro agente) |
+| tavor | plano B | variante bullpup | `vm/fabrica-bullpup` (outro agente) |
 | md97 | MX16A4 | variante (IMBEL: guarda-mão e coronha) | AR-15 brasileiro |
 | scar | Mk14EBR | variante (casca SCAR) | pente à frente, contato de fuzil de batalha |
-| g3 | G3 | puro | |
+| g3 | G3 | puro | lote 2 |
 | g3sg1 | G3 | variante (luneta, coronha) | |
-| svd | SVD | puro | |
+| svd | SVD | puro | lote 2 |
 | sks | SVD | variante (madeira) | pente fixo da SKS = mudança de contato; alternativa Mk14 |
-| awp | L96X | puro | a L96X é o Accuracy International que a AWP é |
+| awp | L96X | puro | lote 2; a L96X é o Accuracy International que a AWP é |
 | rem700 | L96X | variante | ferrolho com pente |
 | m400 | L96X | variante | |
-| mosin | Kar98K | variante (skin, cano) | recarga cartucho a cartucho; conferir chassi Kar98K |
+| mosin | Kar98K | puro | lote 2; recarga cartucho a cartucho; idle da arma = quadro 0 da reload_start |
 | carbine | Kar98K | variante | alavanca ≠ ferrolho: gesto de contato diferente (plano B se o dono não aceitar) |
-| mp5 | MPS5 | puro | |
+| mp5 | MPS5 | puro | lote 2 |
 | uzi | MPS5 | variante (casca UZI) | na UZI o pente é no punho — o MPS5 põe à frente; Kolibri é micropistola, não serve |
-| p90 | PDW90 | puro | pose é o quadro 0 da inspeção |
-| lmg | MGX5 | puro | cinto/caixa, sem pente destacável |
-| shotgun | KXG12 | puro | lote 1; a M3 do jogo é bomba como a KXG12; Drake-12 é de dois canos |
-| deagle | DGL50 | puro | |
-| revolver38 | Viper-357 | puro | sem pose de braço no pack (quadro 0 da recarga) |
+| p90 | PDW90 | puro | lote 2; pose = quadro 0 da inspeção |
+| lmg | MGX5 | puro | lote 2; alívio 0,3 m e guinada 0 |
+| shotgun | KXG12 | puro | lotes 1–2; cartucho oculto na espera do laço |
+| deagle | DGL50 | puro | lote 2 |
+| revolver38 | Viper-357 | puro | lote 2; sem pose de braço no pack (quadro 0 da recarga) |
 | pistol | X18 | puro + skin PT-38 | lote 1 |
-| grenade | Grenade | pack (braço) | granada K atual; arremesso start/loop/end |
+| grenade | Grenade | já é pack como autorado | a granada K atual (SK_Arms_Mono + arremesso do pack, `ready`) — não refeita |
 | knife | — | fica a aprovada | o pack não tem faca |
 
 **Estimativa para as 26.** Medido no lote 1: build 4–12 s; enquadramento ~2 s; `qa.mjs` por
