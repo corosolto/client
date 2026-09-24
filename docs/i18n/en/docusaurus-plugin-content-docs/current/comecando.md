@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 49,158 lines in 96 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 49,192 lines in 96 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,493** lines | `wc -l public/js/game.js` |
 | `main.js` | 3,596 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -51,7 +51,7 @@ this page was aging at the very first commit — see
 | Playable characters | 53, in 6 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 17 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 407 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Harness scripts | 409 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Pipeline scripts | 76 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.0.0-alpha.279` | `public/js/version.js` and `package.json` (match) |
@@ -225,7 +225,7 @@ The maps registered today, and which mode each one opens in:
 |---|---|---|---|---:|
 | `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,395 |
 | `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,192 |
-| `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,409 |
+| `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,407 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,974 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 1,041 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,015 |
@@ -234,7 +234,7 @@ The maps registered today, and which mode each one opens in:
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,348 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 392 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 753 |
-| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 289 |
+| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 325 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 241 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 256 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 403 |
