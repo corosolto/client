@@ -20,6 +20,7 @@ const CHARACTER_EVAL_SHELL = `<!doctype html>
 
 async function renderIndex() {
   const src = await readFile('src/pages/index.astro', 'utf8');
+  const site = await readFile('src/lib/site.ts', 'utf8');
   const V = JSON.parse(await readFile('package.json', 'utf8')).version;
   const { modules: modulos, revision: JS_REV } = moduleCacheManifest(join(ROOT, 'js'));
   const CSS_REV = createHash('sha256')
@@ -57,6 +58,10 @@ async function renderIndex() {
      index.astro é acrescentar uma linha aqui, e o que não estiver na tabela é
      deixado intacto em vez de virar texto quebrado.
 
+     É a varredura que cobre `map-preview.css` e `ops.js`, que a main acrescentou ao
+     index.astro por regra própria: os dois só usam `${V}` e `${JS_REV}`, já na
+     tabela, então não precisam de linha nenhuma aqui — que é exatamente o ponto.
+
      LIMITE DECLARADO: isto não é o Astro. Expressão que depende de escopo de
      runtime — `${f.crest}` dentro de um `.map()` — não tem como ser resolvida aqui
      e continua vazando de propósito. São imagens decorativas (brasão), não fatais
@@ -66,10 +71,22 @@ async function renderIndex() {
   /* `define:vars` do Astro não é renderizado aqui: o script inline executa com
      ReferenceError e derruba o boot de `/` no arnês (introduzido pelo wiring do
      link de apoio, PR #284). Variável conhecida = linha na tabela; desconhecida
-     vaza intacta para o erro ser legível, como no `attrs` acima. */
-  const site = await readFile('src/lib/site.ts', 'utf8');
-  const envConst = (nome) => site.match(new RegExp(`export const ${nome} = import\\.meta\\.env\\.\\w+ \\|\\| '([^']+)'`))?.[1] || '';
-  const DEFINE_VARS = { SUPPORT_URL_BR: envConst('SUPPORT_URL_BR'), SUPPORT_URL_INTL: envConst('SUPPORT_URL_INTL') };
+     vaza intacta para o erro ser legível, como no `attrs` acima.
+
+     A leitura do valor é a da main: `PUBLIC_*` do ambiente ganha do código, e
+     constante sem fallback LEVANTA em vez de virar string vazia — vazio aqui
+     rendia um `define:vars` não renderizado, ou seja, o mesmo boot quebrado que
+     este bloco existe para evitar. */
+  const siteUrl = (name, envName) => {
+    if (process.env[envName]) return process.env[envName];
+    const match = site.match(new RegExp(`export const ${name} = [^\\n]+\\|\\| '([^']+)'`));
+    if (!match) throw new Error(`${name} sem fallback em src/lib/site.ts`);
+    return match[1];
+  };
+  const DEFINE_VARS = {
+    SUPPORT_URL_BR: siteUrl('SUPPORT_URL_BR', 'PUBLIC_SUPPORT_URL_BR'),
+    SUPPORT_URL_INTL: siteUrl('SUPPORT_URL_INTL', 'PUBLIC_SUPPORT_URL_INTL'),
+  };
   const defineVars = (s) => s.replace(/<script([^>]*?) define:vars=\{\{([^}]+)\}\}>/g, (todo, attrsScript, nomes) => {
     const linhas = nomes.split(',').map((n) => n.trim()).filter(Boolean)
       .map((n) => (DEFINE_VARS[n] ? `const ${n}=${JSON.stringify(DEFINE_VARS[n])};` : null));
