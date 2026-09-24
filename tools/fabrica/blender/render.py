@@ -26,6 +26,7 @@ def args_():
     p.add_argument("--largura", type=int, default=1440)
     p.add_argument("--altura", type=int, default=960)
     p.add_argument("--fov", type=float, default=0.0)
+    p.add_argument("--frame", default="", help="frame da fábrica (JSON x,y,z,rotDeg,fov): renderiza pela câmera do JOGO")
     return p.parse_args(argv)
 
 
@@ -38,6 +39,12 @@ def main():
     if cam is None:
         raise SystemExit("GLB sem câmera de autoria")
     cena.camera = cam
+    if a.frame:
+        from mathutils import Euler, Matrix, Vector
+        fr = json.loads(a.frame)
+        mount = Matrix.Translation(Vector((fr["x"], fr["y"], fr["z"]))) @ Euler([math.radians(v) for v in fr.get("rotDeg", [0, 0, 0])], "XYZ").to_matrix().to_4x4()
+        cam.matrix_world = cam.matrix_world @ mount.inverted()
+        a.fov = a.fov or fr["fov"]
     ref = 16 / 9
     vfov16 = math.radians(a.fov) if a.fov > 0 else cam.data.angle_y if cam.data.sensor_fit == "VERTICAL" else cam.data.angle
     meia_h = math.atan(math.tan(vfov16 / 2) * ref)

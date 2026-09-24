@@ -26,8 +26,8 @@ export function foraDoRepo(alvo) {
 
 export const sha256 = (arquivo) => crypto.createHash('sha256').update(fs.readFileSync(arquivo)).digest('hex');
 
-export function rodarBlender(script, args, { marcador } = {}) {
-  const r = spawnSync(BLENDER, ['-b', '--python-exit-code', '1', '--python', script, '--', ...args], {
+export function rodarBlender(script, args, { marcador, blend } = {}) {
+  const r = spawnSync(BLENDER, ['-b', ...(blend ? [blend] : []), '--python-exit-code', '1', '--python', script, '--', ...args], {
     encoding: 'utf8', maxBuffer: 256 * 1024 * 1024,
   });
   if (r.status !== 0 || (marcador && !r.stdout.includes(marcador))) {

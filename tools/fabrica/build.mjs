@@ -24,6 +24,7 @@ import {
 import { montarPlano } from './lib/plano.mjs';
 import { PACK_RAIZ } from './lib/pack.mjs';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2);
 const fichaArquivo = path.resolve(args.find((a) => !a.startsWith('--')) || '');
@@ -57,6 +58,22 @@ etapa('plano');
 rodarBlender(path.join(RAIZ_REPO, 'tools/fabrica/blender/montar.py'), [planoArquivo], { marcador: 'FABRICA_MONTAGEM=' });
 etapa('montagem Blender');
 
+// Plano B: clipes re-autorados (animador.py) sobre a base; regrava base.glb com idle_pack para o saque.
+let animador = null;
+if (plano.animador) {
+  // Câmera do JOGO (frame da fábrica) para o animador pôr "fora da tela" onde o jogador não vê.
+  const cfg = await import(`${pathToFileURL(path.join(RAIZ_REPO, 'public/js/data/vmconfig.js')).href}?t=${Date.now()}`);
+  const pos = (await import(`${pathToFileURL(path.join(RAIZ_REPO, 'public/js/data/vmfabrica.js')).href}?t=${Date.now()}`)).VM_FABRICA_POS;
+  const frame = { ...cfg.VM_FABRICA_FRAME, ...(pos[ficha.id] || pos[ficha.enquadramentoDe] || {}), ...(cfg.VM_FABRICA[ficha.id]?.frame || {}) };
+  gravarJson(path.join(plano.saida.dir, 'frame-jogo.json'), frame);
+  const out = rodarBlender(path.join(RAIZ_REPO, 'tools/fabrica/blender/animador.py'),
+    [`--poses=${plano.animador}`, `--saida=${plano.saida.dir}`, `--frame=${JSON.stringify(frame)}`],
+    { marcador: 'FABRICA_ANIMADOR=', blend: path.join(plano.saida.dir, 'base.blend') });
+  animador = JSON.parse(out.split('FABRICA_ANIMADOR=')[1].split('\n')[0]);
+  if (animador.falhas.length) throw new Error(`animador: ${animador.falhas.join(' | ')}`);
+  etapa(`animador (${animador.clipes.join(', ')})`);
+}
+
 const r = spawnSync(process.execPath, [path.join(RAIZ_REPO, 'tools/fabrica/clipes.mjs'), planoArquivo], {
   encoding: 'utf8', cwd: RAIZ_REPO, maxBuffer: 64 * 1024 * 1024,
 });
@@ -66,6 +83,13 @@ etapa('clipes');
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({});
 const doc = await io.read(path.join(plano.saida.dir, 'clipes.glb'));
 doc.getRoot().getAsset().generator = `CoroSolto fabrica (${path.relative(RAIZ_REPO, fichaArquivo)})`;
+// Plano B: acabamento da malha do jogo (o metálico 1 do modelo de mundo sai cromado no viewmodel).
+const acab = ficha.malhaPropria?.material;
+if (acab) {
+  for (const m of doc.getRoot().listMaterials().filter((x) => x.getName().startsWith('CoroSolto_MP_'))) {
+    m.setBaseColorFactor([...acab.tom, 1]).setMetallicFactor(acab.metal).setRoughnessFactor(acab.rugosidade).setMetallicRoughnessTexture(null);
+  }
+}
 await doc.transform(
   dedup(),
   resample({ tolerance: 1e-5 }),
@@ -91,7 +115,8 @@ const relatorio = {
   sha256: sha,
   insumos,
   clipes: [{ nome: 'idle', braco: montagem.bracos.clipes.idle.fonte },
-    ...clipes.clipes.map(({ nome, duracao, braco, arma }) => ({ nome, duracao: +duracao.toFixed(4), braco, arma }))],
+    ...clipes.clipes.map(({ nome, duracao, braco, arma }) => ({ nome, duracao: +duracao.toFixed(4), braco, arma })),
+    ...(clipes.animador || []).map(({ nome, duracao }) => ({ nome, duracao: +duracao.toFixed(4), braco: 'animador', arma: 'animador' }))],
   clipesRuntime: Object.fromEntries(Object.entries(plano.clipes).filter(([, c]) => c.tipo === 'procedural' || c.tipo === 'ausente')
     .map(([n, c]) => [n, c.tipo])),
   camera: montagem.camera,
@@ -104,6 +129,7 @@ gravarJson(path.join(plano.saida.dir, 'build-report.json'), relatorio);
 if (publicar) {
   const destino = foraDoRepo(ARQUIVO_PRODUTO(ficha.id));
   fs.mkdirSync(path.dirname(destino), { recursive: true });
+  if (fs.existsSync(destino)) fs.unlinkSync(destino); // a overlay é hardlink de outra: nunca escrever por cima
   fs.copyFileSync(produtoTrabalho, destino);
   const manifesto = fs.existsSync(MANIFESTO) ? lerJson(MANIFESTO) : { schemaVersion: 1, candidates: {} };
   const { insumos: _i, zonaLivre: _z, materiaisArma: _m, ...resumo } = relatorio;
