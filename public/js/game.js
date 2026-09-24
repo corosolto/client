@@ -614,6 +614,10 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
   return Array.from({ length: Math.max(1, teamSize) * 2 }, um);
 }
 
+/* Clarão dos tiros por opção do jogador (CONFIGURAÇÕES > VÍDEO). Fatores medidos no
+   dev.html: reduzido ~metade do pico percebido; mínimo deixa rastro sem estourar. */
+const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
+
 export class Game {
   constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
     this._ctfOpt = ctf;
@@ -1022,7 +1026,10 @@ export class Game {
       this._vmFlashLight.position.set(0.1, -0.06, -0.75);   // boca do cano em view space (pose GAUNTLET 2.0)
       this.vmScene.add(this._vmFlashLight);
       this._vmFlash = { t: 1, life: 0.045, peak: 1.6 };
-      this._fxTune = { light: 1, flash: 1, spark: 1, smoke: 1 };   // multiplicadores de FX (dev.html game-backed)
+      // Clarão dos tiros por opção do jogador; faíscas e fumaça ficam de fora (BUG-174).
+      // Fatores medidos no dev.html. Régua: eval:fxFlash.
+      const _fx = FX_CLARAO[this.settings.fxFlash] ?? 1;
+      this._fxTune = { light: _fx, flash: _fx, spark: 1, smoke: 1 };   // multiplicadores de FX (dev.html game-backed)
     }
     this.scene.userData.vmPass = { scene: this.vmScene, camera: this.vmCamera };
 
@@ -2761,6 +2768,9 @@ export class Game {
     this.sfx.speechEnabled = this.settings.speech !== false;
     if (this.el?.hudSpeech) this.el.hudSpeech.textContent = this.settings.speech === false ? '🔇' : '🔊';
     this._applyQuality();
+    // clarão dos tiros ao vivo (mesma disciplina da qualidade: mudou em partida, aplicou)
+    const _fx = FX_CLARAO[this.settings.fxFlash] ?? 1;
+    this._fxSet({ light: _fx, flash: _fx });
   }
   _applyQuality() {
     const q = this.settings.quality;
@@ -3198,7 +3208,7 @@ export class Game {
     const to = alvo.clone().sub(from);
     const d = to.length();
     const dir = to.clone().normalize();
-    if (d > alcance + 0.6) return;
+    if (d > alcance) return;
     if (dir.dot(new THREE.Vector3(Math.sin(b.yaw), 0, Math.cos(b.yaw))) < 0.5) return;
     if (!this._losClear(from, alvo)) return;
     const mul = e.isPlayer ? (BOT_FAIR ? this._botDmgPlayer : BOT_DMG_PLAYER) : 1;
@@ -6426,7 +6436,7 @@ export class Game {
       }
       // FACA (w.range): bot de faca disparava hitscan a 40m como se fosse rifle — agora só
       // "ataca" no alcance real da arma; longe disso ele avança (o approach acima já faz isso).
-      const inRange = alcanceArma > 0 ? dist <= alcanceArma + 0.6 : true;
+      const inRange = alcanceArma > 0 ? dist <= alcanceArma : true;
       // fire (bloqueado enquanto o alvo está stale/sem LOS — ver aquisição: sem wallhack)
       // TURNO DE DUELO: contra o JOGADOR só atira quem tem o token (ver _duelToken). Fora do
       // turno o bot continua manobrando/avançando — ele não congela, só não soma fogo.

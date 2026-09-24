@@ -81,6 +81,28 @@ atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o a
 
 Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
 
+## BUG-178 — a main publicou import sem export e só o prod-watch viu (#524)
+
+**Fechado em 23/09/2026.** O #524 (fingerprint `producao-inconsistente`) juntou duas causas
+diferentes, porque o prod-watch manda a mesma mensagem para as três sondas:
+
+| execuções | sonda | saída |
+|---|---|---|
+| 34026616277, 34026690701, 34027471924, 34037057333 (06/09, 10:09–13:45 UTC) | edge | `sertao_map_preview.js importa 'SERTAO_PREVIEW' de ./map_preview_media.js, mas … não exporta` |
+| 34751897547 (13/09 10:27) | banco | `/api/health` → `database:false, telemetrySchema:false`; a execução seguinte (14:35) passou |
+
+A de 06/09 **não era cache**, e por isso o purge feito antes de cada sonda não resolveu. O
+`f95dcac0c` pôs em `sertao_map_preview.js` um import de `SERTAO_PREVIEW` vindo de
+`map_preview_media.js`. Só que esse arquivo não exportava o símbolo, porque dois capturadores
+(Sertão e Amazônia) escreviam o mesmo módulo. A main ficou quebrada na origem, alpha.235
+(`42c01175a`) incluída, até o `20430018b` (OPS-523) separar `sertao_preview_media.js`. A régua
+para essa classe já existia (`sondaBootLocal`, do `ops:diag`), mas ninguém a chamava no CI.
+
+Régua: `eval:modgraph` (`tools/eval/module-graph-check.mjs`), no `pr-fast`, no `check:deploy`
+e no `check:fast`. Ela reprova `42c01175a` com a mesma linha do prod-watch, passa na alpha.265 e
+o mutante `--mutante=06-09` reprova.
+O 13/09 foi uma queda de banco que se recuperou sozinha, e não tem conserto no cliente.
+
 ## BUG-169 — "SERVIDORES FORA DO AR" com os quatro nós de pé
 
 **Fechado em 13/09/2026.** A tela de multiplayer mostrava os quatro servidores "fora do ar"
@@ -347,6 +369,52 @@ então o laço continua, mas nada depois da linha roda: sem `game.update`, sem r
 `char-select` do deep link. Régua `LOOP1` em `tools/eval/invariants.mjs`: nenhum
 `$('…').` sem `?.` no corpo de `loop()`. Mutante: o `main.js` da alpha.262 reprova
 (`char-select`).
+
+
+### BUG-174 · clarão dos tiros sem controle do jogador atrapalhava a mira · CORRIGIDO 22/09
+
+**Sintoma (relato do jogador, 21/09):** "algumas armas soltam um flash cada vez que voce
+atira, isso atrapalha demais".
+
+**Causa.** O clarão (estrela + núcleo + point light do `_flash`, e a `_vmFlashLight` da
+cena do viewmodel) tinha ajuste SÓ de dev — `_fxTune` via dev.html. Nenhum controle
+chegava ao jogador, e o fator era sempre 1.
+
+**Conserto.** CONFIGURAÇÕES > VÍDEO ganha CLARÃO DOS TIROS: Normal (1,0 — o de hoje) /
+Reduzido (0,45) / Mínimo (0,15). Fatores medidos no dev.html. `FX_CLARAO` no game.js
+aplica em `_fxTune.flash` (estrela/núcleo) e `_fxTune.light` (as duas luzes); faíscas e
+fumaça intocadas — o relato é do clarão. `applySettings()` repassa AO VIVO (mesma
+disciplina da qualidade gráfica); persiste no settings salvo; padrão `normal` = quem não
+procura o ajuste não vê mudança nenhuma.
+
+**Régua:** `eval:fxFlash` (`fx-flash-check.mjs`, no `check:fast`) — boot da Game real por
+opção conferindo o multiplicador que o `_flash` multiplica, aplicação ao vivo, padrão
+intacto, e cláusulas de fonte do seletor/binder. **Reprovou 13 cláusulas no estado
+anterior**; mutante `--mutante=sem-seletor` vermelho (5).
+
+### BUG-173 · não dava para tirar os bots no mata-mata online nem escolher quantos por time · CORRIGIDO 22/09
+
+**Sintoma (relato do jogador, 21/09):** "estava jogando com meu amigo, eu queria tirar x1
+com ele e não encontrei um jeito de tirar os bots no mata mata, ou escolher quantos bots
+queremos em cada time".
+
+**Causa raiz.** Dupla: o `POST /rooms` do servidor **cravava `teamSize: 5`** e nem lia o
+campo do corpo (`game/index.js`), e o formulário de criar sala do cliente não oferecia
+controle nenhum. O `Room` sempre soube (`teamSize` 1–8, bots completam o que falta de
+gente; quem sai vira bot) — era só a porta de entrada que não existia.
+
+**Conserto em dois repos.** Backend (PR corosolto/backend#29): handler aceita `teamSize`
+(int, clamp 1–8, padrão 5 retrocompatível). Cliente: seletor JOGADORES POR TIME no criar
+sala (1 = "X1 SEM BOTS", padrão 5) e o cfg do `createRoom` leva o valor; o JOGO RÁPIDO
+segue sem o campo. Com 1 e dois humanos: 2 corpos, ZERO bots, lobby sem vaga de bot.
+
+**Réguas.** Backend: seção "tamanho de time do criador" no `game/smoke.mjs` — 7 cláusulas
+que REPROVAVAM antes (welcome 5, 10 corpos, 8 bots, vagas) e passam depois; smoke 81/0.
+Cliente: `eval:mpRoomOptions` (`mp-room-options-check.mjs`, no `check:fast`), 5 cláusulas
+com 4 mutantes (`sem-campo`, `fixo`, `sem-x1`, `padrao-1`) — todos vermelhos.
+
+**Dependência de deploy:** o nó de produção roda imagem com CLIENT_REF fixado; o recurso
+só chega ao jogador depois do redeploy do nó + este cliente.
 
 ### BUG-172 · o B5 do boot-check injetava erro com stack de arnês e o corte de automação o filtra · CORRIGIDO 18/09
 
@@ -3095,7 +3163,7 @@ contrário — HS1 câmera parada (teto 0,250 m / 0,250 rad / 0,5°), HS2 relóg
 Δ0,000 rad, ΔFOV 0,000°, 2,000 s de jogo em 2,000 s reais. **Mutantes:** `orbita`,
 `hitstop`, `esconde` e `sem-kill` — os quatro reprovam.
 
-### ~~BUG-143 · em rodada de faca o bot carregava a faca e jogava de fuzil~~ · CORRIGIDO LOCALMENTE 06/09/2026
+### ~~BUG-143 · em rodada de faca o bot carregava a faca e jogava de fuzil~~ · CORRIGIDO; ALCANCE REFINADO 10/09/2026
 
 **Relato do dono (06/09):** em rodadas de faca, os bots precisam respeitar o modo.
 
@@ -3115,14 +3183,21 @@ o alcance, `approach` nunca negativo) e o gate de ataque roteia para `_botMelee`
 alcance, ângulo, LOS e dano tocando `sfx.knife()`/`sfx.knifeHit()`. Fora do corpo a corpo a
 banda de fuzil não mudou.
 
+**Auditoria pós-merge (10/09):** o contato funcionava, mas `inRange` e `_botMelee` ainda
+somavam uma margem escondida de **0,60 m** ao `WEAPONS.knife.range`: 13 golpes da semente
+canônica passaram de 2,48 m e o máximo observado foi **2,98 m** para uma arma declarada com
+2,40 m. A margem foi removida nos dois gates. O mesmo cenário continua com 17 golpes/8
+abates e máximo de 2,40 m; numa matriz 8×8 de 45 s pelos 16 mapas, foram 657 golpes/301
+abates, nenhuma arma errada e nenhum golpe acima de 2,40 m.
+
 **Depois (mesma semente):** encostou a **1,24 m**, **18 golpes**, **9 abates**, **0
 traçantes e 0 fogachos**; rodada normal intacta (menor distância **23,46 m**).
 
-**Régua:** `tools/eval/botfaca-check.mjs` (`npm run eval:botfaca`) — BF1 faca na mão, BF2
-perseguição e combate, BF3 sem enfeite de arma de fogo, BF4 a rodada normal não vira corrida
-(piso de 4 m, derivado do `dist < 6 ? 'back'` da própria banda). **Mutantes:** `recuo`
-(5,40 m, zero golpes), `tracante` (18 traçantes/18 fogachos) e `corredor` (rodada normal
-colando a 2,87 m) — os três reprovam.
+**Régua:** `tools/eval/botfaca-check.mjs` (`npm run eval:botfaca`) — BF1 faca na mão e troca
+manual bloqueada, BF2 perseguição/combate, BF3 contato dentro de 2,40 m sem enfeite de arma
+de fogo, BF4 rodada normal preservada e BF5 reset de rodada/inventário/contadores. Além dos
+mutantes `recuo`, `tracante` e `corredor`, `alcance` devolve os 0,60 m e `troca` tenta equipar
+AWP no modo só faca; os cinco reprovam.
 
 ### ~~BUG-144 · o jogador não conseguia ler os próprios abates durante a partida~~ · CORRIGIDO LOCALMENTE 06/09/2026
 

@@ -25,6 +25,30 @@ try {
     return {state:g.state,fauna:g.world.ambience.report(),details:g.world.root.children.filter(o=>o.userData.escadaoDomestic).map(o=>o.name)};
   });
   assert.equal(receipt.fixture.details.length,2,'Dois detalhes Mint carregados');
+  receipt.routes=await page.evaluate(()=>{
+    const g=window.__game,p=g.player;
+    const drive=(id,points)=>{
+      p.pos.set(points[0][0],g.world.groundHeightAt(points[0][0],points[0][1]),points[0][1]);
+      p.vel.set(0,0,0);p.grounded=true;p.mantle=null;p.crouchF=0;p.scoped=false;
+      const start=p.pos.toArray(),checkpoints=[];let frames=0,maxDistance=0;
+      for(const [x,z] of points.slice(1)){
+        let leg=0;
+        while(Math.hypot(x-p.pos.x,z-p.pos.z)>.15&&leg++<420){
+          p.yaw=Math.atan2(p.pos.x-x,p.pos.z-z);p.pitch=0;g.keys={KeyW:true};g.time+=1/60;g._updatePlayer(1/60);frames++;
+          maxDistance=Math.max(maxDistance,Math.hypot(p.pos.x-start[0],p.pos.z-start[2]));
+        }
+        if(leg>=420)throw Error(`Rota ${id} travou em ${p.pos.toArray()} rumo ${x},${z}`);
+        checkpoints.push(p.pos.toArray());
+      }
+      g.keys={};return{id,frames,start,end:p.pos.toArray(),maxDistance,checkpoints};
+    };
+    return [
+      drive('sob-patamar-oeste',[[-6,13],[-6,8.5],[-6,5],[-8,5],[-6,5],[-6,8.5],[-6,13]]),
+      drive('casa-mirante-oeste',[[-16.5,-26],[-14.55,-26],[-12,-26],[-14.55,-26],[-16.5,-26]]),
+      drive('casa-mirante-leste',[[16.5,-27],[14.55,-27],[12,-27],[14.55,-27],[16.5,-27]]),
+    ];
+  });
+  assert.ok(receipt.routes.every(route=>route.frames>0&&route.end.every(Number.isFinite)),'Rotas físicas finitas');
   const views=[
     {id:'entrada-oeste',pos:[-6,0,13],look:[-6,1.62,7]},
     {id:'sob-patamar',pos:[-6,0,8.5],look:[6,1.62,8.5]},
@@ -33,6 +57,8 @@ try {
     {id:'lateral-oeste',pos:[-16,0,1],look:[-16,1.62,-8]},
     {id:'horizonte-norte',pos:[0,7.56,-32],look:[0,17,-120]},
     {id:'horizonte-sul',pos:[0,7.56,-9],look:[0,8,75]},
+    {id:'porta-mirante-oeste-exterior',pos:[-17,7.56,-23.8],look:[-14,8.65,-26]},
+    {id:'porta-mirante-leste-exterior',pos:[17,7.56,-24.8],look:[14,8.65,-27]},
     {id:'rua',pos:[0,0,25],look:[3,4,15]},
   ];
   for(const view of views){
@@ -45,6 +71,7 @@ try {
     },view);
     assert.ok(pose.rendered);await page.screenshot({path:`${out}/${view.id}.png`});receipt.photos.push({...view,...pose});
   }
-  receipt.status='captured';console.log(`R5: ${views.length} capturas reais`);
+  assert.equal(receipt.errors.length,0,JSON.stringify(receipt.errors));
+  receipt.status='passed';console.log(`R5 PASS: ${views.length} capturas reais; ${receipt.routes.length} rotas físicas`);
 } catch(error){receipt.status='failed';receipt.error=error.stack;console.error(error.message);process.exitCode=1;}
 finally{writeFileSync(`${out}/receipt.json`,JSON.stringify(receipt,null,2));await browser.close();}
