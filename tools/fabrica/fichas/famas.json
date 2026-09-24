@@ -36,8 +36,8 @@
     }
   },
   "mira": {
-    "raizCm": [0.04, 17.6, 9.6],
-    "origem": "alça (ilha x 0,181–0,188, z 0,155–0,183 do GLB) e massa (z 0,171): linha z 0,170 × 0,758 − 4,95 = 7,94; +1,7 cm pela régua mira no jogo (aro 40 px acima da cruz a ~23 px/cm)"
+    "raizCm": [0.04, 17.6, 9.3],
+    "origem": "alça (ilha x 0,181–0,188, z 0,155–0,183 do GLB) e massa (z 0,171): linha z 0,170 × 0,758 − 4,95 = 7,94; ajustada no jogo entre o aro (crítico: 80 px abaixo em 9,6) e o topo da massa (régua mira: 40 px acima em 7,94)"
   },
   "boca": {"raizCm": [0, -34.2, -0.52], "origem": "quebra-chamas da FAMAS (x −0,499, z 0,058 do GLB)"},
   "animador": "tools/fabrica/animador/famas.json",

@@ -1,16 +1,14 @@
 {
-  "idle": {
-    "maoApoio": {"palmaCm": [2.9, -6.0, -6.3]}
-  },
+  "idle": {"maoApoio": {"palmaCm": [2.9, -6.0, -6.3]}},
   "pegaPente": {"palmaCm": [3.6, 23.0, -13.0], "rotDeg": [0, -43, 0]},
   "clipes": {
     "reload_empty": {
       "segundos": 2.4,
       "arma": [
         {"u": 0},
-        {"u": 0.18, "rotDeg": [-10, 5, -22], "camCm": [-18, 15, -14]},
-        {"u": 0.6, "rotDeg": [-10, 5, -22], "camCm": [-18, 15, -14]},
-        {"u": 0.63, "rotDeg": [-9, 5, -21], "camCm": [-18, 16, -14]},
+        {"u": 0.18, "rotDeg": [-9, 3, -20], "camCm": [-16, 13, -17]},
+        {"u": 0.6, "rotDeg": [-9, 3, -20], "camCm": [-16, 13, -17]},
+        {"u": 0.63, "rotDeg": [-9, 3, -20], "camCm": [-16, 13, -17]},
         {"u": 0.7, "rotDeg": [-5, -20, 5], "camCm": [-4, 9, -3]},
         {"u": 0.84, "rotDeg": [-5, -20, 5], "camCm": [-4, 9, -3]},
         {"u": 0.95}
@@ -19,11 +17,10 @@
         {"u": 0, "idle": true},
         {"u": 0.06, "idle": true, "fecho": 0.6},
         {"u": 0.2, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
-        {"u": 0.24, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
-        {"u": 0.3, "poco": [7, 1, -13]},
-        {"u": 0.37, "poco": [5, 1, -10]},
-        {"u": 0.43, "poco": [3, 0, -6]},
-        {"u": 0.5, "poco": [0, 0, -5]},
+        {"u": 0.3, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.4, "poco": [10, -1, -8]},
+        {"u": 0.46, "poco": [4, 0, -7]},
+        {"u": 0.52, "poco": [0, 0, -4]},
         {"u": 0.58, "poco": [0, 0, -0.5]},
         {"u": 0.62, "poco": [0, 0, 0]},
         {"u": 0.65, "poco": [0, 0, 0], "fecho": 0.3},
@@ -37,13 +34,13 @@
       "pentes": {
         "Mag": [
           {"u": 0, "estado": "arma"},
-          {"u": 0.4, "estado": "arma"},
-          {"u": 0.43, "estado": "arma", "deslocCm": [0, 0, -2.5]},
-          {"u": 0.44, "estado": "cai", "velCm": [-60, -20, -80], "giroGrausS": 200},
-          {"u": 0.62, "estado": "escondido"},
+          {"u": 0.22, "estado": "arma"},
+          {"u": 0.25, "estado": "arma", "deslocCm": [0, 0, -3]},
+          {"u": 0.26, "estado": "cai", "velCm": [-15, 0, -10], "giroGrausS": 60},
+          {"u": 0.56, "estado": "escondido"},
           {"u": 0.66, "estado": "arma"}
         ],
-        "Mag2": [{"u": 0, "estado": "arma"}, {"u": 0.02, "estado": "escondido"}, {"u": 0.22, "estado": "mao"}, {"u": 0.62, "estado": "arma"}]
+        "Mag2": [{"u": 0, "estado": "arma"}, {"u": 0.02, "estado": "escondido"}, {"u": 0.28, "estado": "mao"}, {"u": 0.62, "estado": "arma"}]
       },
       "mecanismos": {
         "ChargingHandle": [
@@ -59,21 +56,22 @@
       "segundos": 2.4,
       "arma": [
         {"u": 0},
-        {"u": 0.18, "rotDeg": [-10, 5, -22], "camCm": [-18, 15, -14]},
-        {"u": 0.6, "rotDeg": [-10, 5, -22], "camCm": [-18, 15, -14]},
-        {"u": 0.63, "rotDeg": [-9, 5, -21], "camCm": [-18, 16, -14]},
+        {"u": 0.18, "rotDeg": [-9, 3, -20], "camCm": [-16, 13, -17]},
+        {"u": 0.6, "rotDeg": [-9, 3, -20], "camCm": [-16, 13, -17]},
+        {"u": 0.63, "rotDeg": [-9, 3, -20], "camCm": [-16, 13, -17]},
         {"u": 0.85},
         {"u": 1}
       ],
       "mao": [
         {"u": 0, "idle": true},
         {"u": 0.06, "idle": true, "fecho": 0.6},
-        {"u": 0.2, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
-        {"u": 0.24, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
-        {"u": 0.3, "poco": [7, 1, -13]},
-        {"u": 0.37, "poco": [5, 1, -10]},
-        {"u": 0.43, "poco": [3, 0, -6]},
-        {"u": 0.5, "poco": [0, 0, -5]},
+        {"u": 0.18, "poco": [0, 0, -1], "fecho": 0.5},
+        {"u": 0.22, "poco": [0, 0, 0]},
+        {"u": 0.28, "poco": [0, 0, -9]},
+        {"u": 0.36, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.4, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.47, "poco": [8, -1, -8]},
+        {"u": 0.52, "poco": [0, 0, -4]},
         {"u": 0.58, "poco": [0, 0, -0.5]},
         {"u": 0.62, "poco": [0, 0, 0]},
         {"u": 0.65, "poco": [0, 0, 0], "fecho": 0.3},
@@ -83,13 +81,12 @@
       "pentes": {
         "Mag": [
           {"u": 0, "estado": "arma"},
-          {"u": 0.4, "estado": "arma"},
-          {"u": 0.43, "estado": "arma", "deslocCm": [0, 0, -2.5]},
-          {"u": 0.44, "estado": "cai", "velCm": [-60, -20, -80], "giroGrausS": 200},
-          {"u": 0.62, "estado": "escondido"},
+          {"u": 0.22, "estado": "mao"},
+          {"u": 0.38, "estado": "largado"},
+          {"u": 0.6, "estado": "escondido"},
           {"u": 0.66, "estado": "arma"}
         ],
-        "Mag2": [{"u": 0, "estado": "arma"}, {"u": 0.02, "estado": "escondido"}, {"u": 0.22, "estado": "mao"}, {"u": 0.62, "estado": "arma"}]
+        "Mag2": [{"u": 0, "estado": "arma"}, {"u": 0.02, "estado": "escondido"}, {"u": 0.38, "estado": "mao"}, {"u": 0.62, "estado": "arma"}]
       }
     }
   },

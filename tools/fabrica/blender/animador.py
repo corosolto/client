@@ -300,6 +300,8 @@ class Animador:
                 c0 = M0.translation.copy()
                 M = girar_em_torno(M0, c0, giro)
                 M.translation = c0 + v0 * dt + GRAVIDADE * (0.5 * dt * dt)
+            elif est == "largado":  # fica onde a mão soltou (fora da tela), visível
+                M = ini["M0"] or seat
             elif est == "escondido":
                 M = None
             else:
