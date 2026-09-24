@@ -1,7 +1,7 @@
 {
  "gerado": "2026-09-23",
  "aspecto": "3x2",
- "entradas": "0525a3c8517685fc",
+ "entradas": "a028e101a3a30c2e",
  "resultados": {
   "awp": {
    "mira": {
@@ -33,8 +33,8 @@
   "ak": {
    "mira": {
     "estado": "VERDE",
-    "valor": "29 px",
-    "msg": "massa a 29 px da cruz (+6, -28); teto 30 px; eixo no ADS -0° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 17 px do aparelho visto · socket sight (o que o AD1 lê) 0.123 NDC"
+    "valor": "11 px",
+    "msg": "massa a 11 px da cruz (+6, -9); teto 30 px; eixo no ADS +3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 11 px do aparelho visto · socket sight (o que o AD1 lê) 0.143 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
@@ -133,9 +133,9 @@
     "msg": "dedos da mão de apoio a 0.02 palma da malha da arma (palma 0.32); teto 0.2"
    },
    "carregador": {
-    "estado": "VERMELHO",
-    "valor": "4 falha(s)",
-    "msg": "recarrega com objeto no meio do ar: vazia 23% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 69% — 0.98 palma da mão, deslocado 0.77 do encaixe, na tela; tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:mao vazia0.15:mao-vazia vazia0.23:mao vazia0.31:mao-vazia vazia0.38:mao-vazia vazia0.46:mao vazia0.54:mao-vazia vazia0.62:mao-vazia vazia0.69:mao vazia0.77:mao-vazia vazia0.85:mao-vazia vazia0.92:mao tatica0.14:mao tatica0.29:mao-vazia tatica0.43:mao-vazia tatica0.57:mao-vazia tatica0.71:mao tatica0.86:mao"
    }
   },
   "deagle": {
@@ -160,9 +160,9 @@
     "msg": "curta: mão de apoio envolve a outra mão, não a arma"
    },
    "carregador": {
-    "estado": "VERMELHO",
-    "valor": "9 falha(s)",
-    "msg": "recarrega com objeto no meio do ar: vazia 15% — 3.64 palma da mão, deslocado 3.04 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 38% — 1.20 palma da mão, deslocado 0.84 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 1.18 palma da mão, deslocado 0.95 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 54% — 1.98 palma da mão, deslocado 1.43 do encaixe, na tela (+5). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:caindo vazia0.23:fora vazia0.31:fora vazia0.38:mao vazia0.46:arma vazia0.54:arma vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:fora tatica0.43:mao tatica0.57:arma tatica0.71:arma tatica0.86:arma"
    }
   },
   "pistol": {
@@ -189,7 +189,7 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:fora vazia0.38:mao vazia0.46:arma vazia0.54:mao vazia0.62:mao vazia0.69:mao vazia0.77:fora vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:mao tatica0.71:mao tatica0.86:arma"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:fora vazia0.31:fora vazia0.38:fora vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:fora vazia0.77:fora vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:fora tatica0.71:fora tatica0.86:arma"
    }
   },
   "knife": {
@@ -705,16 +705,5 @@
     "msg": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
    }
   }
- },
- "parcial": {
-  "reguas": [
-   "cobertura",
-   "carregador"
-  ],
-  "armas": [
-   "ak",
-   "shotgun"
-  ],
-  "base": "2026-09-23"
  }
 }

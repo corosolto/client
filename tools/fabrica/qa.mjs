@@ -116,7 +116,8 @@ if (!flag('sem-capturas')) {
   }
 }
 
-const regressao = {};
+// --sem-regressao preserva a regressão da última rodada completa (ela não depende do produto).
+const regressao = flag('sem-regressao') ? (fs.existsSync(path.join(QA, 'resumo.json')) ? lerJson(path.join(QA, 'resumo.json')).regressao || {} : {}) : {};
 if (!flag('sem-regressao')) {
   for (const s of ['eval:vm-cache', 'eval:vm-launch', 'eval:vm-rig', 'eval:vm-orientacao', 'eval:vm-manga-oca', 'eval:vm-placar']) {
     const r = rodar(`regressao-${s.replace(/[:]/g, '_')}`, 'npm', ['run', '-s', s]);

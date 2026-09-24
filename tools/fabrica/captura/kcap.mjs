@@ -42,7 +42,7 @@ const shot = async (nome) => {
   await page.screenshot({ path: path.join(OUT, `${nome}.png`) });
   console.log('png', nome);
 };
-const q = new URLSearchParams({ debug: '1', auto: 'E', map: 'piscina_treta', armaslazy: '0', vmauthored: '1' });
+const q = new URLSearchParams({ debug: '1', auto: 'E', map: 'piscina_treta', armaslazy: '0', vmauthored: '1', vmqa: 'precision' });
 for (const [k, v] of new URLSearchParams(EXTRA)) q.set(k, v);
 await page.goto(`http://127.0.0.1:${PORTA}/?${q}`, { waitUntil: 'load', timeout: 180000 });
 await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
@@ -58,6 +58,13 @@ await page.evaluate(() => {
   const a = window.__authoredVm; const m = window.__game.vm.melee;
   if (a && !a.__slow) { const o = a.update.bind(a); a.update = (dt, ctx) => o(dt * window.__vmSlow, ctx); a.__slow = true; }
   if (m && !m.__slow) { const o = m.update.bind(m); m.update = (dt) => o(dt * window.__vmSlow); m.__slow = true; }
+});
+// Figura sem bot atirando nem fumaça na frente: mata quem não é o jogador a cada foto.
+const calmo = () => page.evaluate(() => {
+  const g = window.__game;
+  for (const c of g.combatants || []) if (c !== g.player) { c.alive = false; if (c.mesh) c.mesh.visible = false; }
+  for (const b of g.bots || []) { b.nextShotAt = Infinity; b.target = null; }
+  g.player.hp = 100; g.player.alive = true;
 });
 const slow = (v) => page.evaluate((x) => { window.__vmSlow = x; }, v);
 const waitFor = async (fn, arg0, ms = 15000) => page.waitForFunction(fn, arg0, { timeout: ms, polling: 16 }).catch(() => null);
@@ -123,12 +130,15 @@ for (const arma of ARMAS) {
   await settle();
   await waitFor(() => { const e = window.__authoredVm?.entry?.(window.__game.player.weapon); return !e || (e.drawTime >= e.drawDuration && e.state === 'idle'); }, null, 10000);
   await page.waitForTimeout(800);
+  await calmo();
   await shot(`${arma}-idle`);
-  await page.mouse.down({ button: 'right' });
+  // ADS pelo gancho de QA do jogo (o botão direito do mouse não entra sem pointer lock).
+  await page.evaluate(() => { if (!window.__game.player.scoped) (window.__vmPrecisionQa?.ads?.() ?? null); });
   await waitFor(() => (window.__authoredVm?.adsAmount ?? 1) >= 0.99, null, 8000);
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
+  await calmo();
   await shot(`${arma}-ads`);
-  await page.mouse.up({ button: 'right' });
+  await page.evaluate(() => { if (window.__game.player.scoped) window.__vmPrecisionQa?.ads?.(); });
   await waitFor(() => (window.__authoredVm?.adsAmount ?? 0) <= 0.01, null, 8000);
   await page.waitForTimeout(600);
   await page.evaluate(() => { const p = window.__game.player; p.ammo[p.weapon].mag = Math.max(p.ammo[p.weapon].mag, 5); });
@@ -136,6 +146,7 @@ for (const arma of ARMAS) {
   await page.mouse.down({ button: 'left' }); await page.waitForTimeout(70);
   await shot(`${arma}-fire`);
   await page.mouse.up({ button: 'left' }); await page.waitForTimeout(900);
+  await calmo();
   await page.evaluate(() => { const g = window.__game, p = g.player; p.ammo[p.weapon].mag = 0; p.ammo[p.weapon].res = Math.max(60, p.ammo[p.weapon].res); g._startReload(); });
   for (const f of [0.15, 0.35, 0.6, 0.85]) { await atClip(f); await shot(`${arma}-reload-empty-f${String(Math.round(f * 100)).padStart(3, '0')}`); }
   await settle(2000);

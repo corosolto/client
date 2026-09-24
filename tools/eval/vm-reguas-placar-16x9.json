@@ -1,7 +1,7 @@
 {
  "gerado": "2026-09-23",
  "aspecto": "16x9",
- "entradas": "0525a3c8517685fc",
+ "entradas": "a028e101a3a30c2e",
  "resultados": {
   "awp": {
    "mira": {
@@ -33,8 +33,8 @@
   "ak": {
    "mira": {
     "estado": "VERDE",
-    "valor": "16 px",
-    "msg": "massa a 16 px da cruz (+7, -14); teto 30 px; eixo no ADS +3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 13 px do aparelho visto · socket sight (o que o AD1 lê) 0.164 NDC"
+    "valor": "11 px",
+    "msg": "massa a 11 px da cruz (+6, -9); teto 30 px; eixo no ADS +4° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 11 px do aparelho visto · socket sight (o que o AD1 lê) 0.170 NDC"
    },
    "cobertura": {
     "estado": "VERDE",
@@ -161,8 +161,8 @@
    },
    "carregador": {
     "estado": "VERMELHO",
-    "valor": "9 falha(s)",
-    "msg": "recarrega com objeto no meio do ar: vazia 15% — 3.64 palma da mão, deslocado 3.04 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 38% — 1.20 palma da mão, deslocado 0.84 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 46% — 1.18 palma da mão, deslocado 0.95 do encaixe, na tela; recarrega com objeto no meio do ar: vazia 54% — 1.98 palma da mão, deslocado 1.43 do encaixe, na tela (+5). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+    "valor": "1 falha(s)",
+    "msg": "tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
    }
   },
   "pistol": {
@@ -189,7 +189,7 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:fora vazia0.31:fora vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:mao vazia0.69:fora vazia0.77:fora vazia0.85:fora vazia0.92:fora tatica0.14:fora tatica0.29:fora tatica0.43:fora tatica0.57:fora tatica0.71:fora tatica0.86:fora"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:fora vazia0.31:fora vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:arma vazia0.69:fora vazia0.77:fora vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:fora tatica0.71:fora tatica0.86:fora"
    }
   },
   "knife": {
@@ -600,13 +600,13 @@
   "tavor": {
    "mira": {
     "estado": "VERMELHO",
-    "valor": "41 px",
-    "msg": "mira fora da cruz a 41 px — massa a 41 px da cruz (+1, -41); teto 30 px; eixo no ADS -10° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
+    "valor": "260 px",
+    "msg": "mira fora da cruz a 260 px; ângulo esquisito no ADS: arma tombada +76° da vertical — massa a 260 px da cruz (+238, +104); teto 30 px; eixo no ADS +76° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.507 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh)."
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.98× AK",
-    "msg": "tamanho 0.98× AK, rolagem +12° da AK (informativa), eixo +9° da AK, braço 0.39×, cruz 0 px, olho 1.83 palma, ADS cobre 7.3% (teto 18.2%)"
+    "msg": "tamanho 0.98× AK, rolagem +12° da AK (informativa), eixo +9° da AK, braço 0.39×, cruz 0 px, olho 1.83 palma, ADS cobre 9.6% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -705,16 +705,5 @@
     "msg": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
    }
   }
- },
- "parcial": {
-  "reguas": [
-   "cobertura",
-   "carregador"
-  ],
-  "armas": [
-   "ak",
-   "shotgun"
-  ],
-  "base": "2026-09-23"
  }
 }
