@@ -34,6 +34,7 @@
 //     waypoints: { step, inset } }             // parâmetros da grade do grafo
 // ============================================================================
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 
 const num = (v, def) => (typeof v === 'number' && isFinite(v) ? v : def);
 
@@ -167,7 +168,7 @@ export function buildMapFromJSON(scene, _T, spec) {
   const hemi = new THREE.HemisphereLight(0xf2fbff, 0xb9c6d0, 1.2); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 1.4);
   sun.position.set(10, 45, -6); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -Math.max(plan.half.x, plan.half.z) - 6;
   sun.shadow.camera.right = Math.max(plan.half.x, plan.half.z) + 6;
   sun.shadow.camera.top = Math.max(plan.half.x, plan.half.z) + 6;

@@ -2,7 +2,6 @@
    multiplayer leem daqui. Dados puros, importável do browser e do node. Ver docs/MULTIPLAYER.md. */
 /* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE. OFICIAL é o autor da casa. */
 const MAP_CATS = {
-  campomorro: ['FAVELA'],
   amazonia: ['FAVELA'],
   escadao: ['FAVELA'],
   praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
@@ -16,7 +15,6 @@ const MAP_CATS = {
   obras_prefeitura: ['ARENA', 'COMUNIDADE'],
 };
 const MAP_AUTOR = {
-  campomorro: 'Ruben Marcus',
   amazonia: 'Ruben Marcus',
   praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
   lajes: 'Ruben Marcus',
@@ -56,4 +54,4 @@ export { MAP_CATS, MAP_AUTOR, MAP_DATA, CAT_DESC, AUTOR_CASA, catsDe, autorDe, o
 /* Nomes de facção como a TELA os escreve. Mora aqui, junto do catálogo, porque o servidor
    de multiplayer mostra os mesmos rótulos na lista de salas — dois dicionários virariam
    "PALHAÇOS" numa tela e "Palhaços" na outra. Espelha game.js:_teamName. */
-export const FACCAO_NOME_UI = { E: 'TIME E', B: 'TIME B', F: 'FUNKEIROS', C: 'PALHAÇOS', U: 'TRIBOS URBANAS' };
+export const FACCAO_NOME_UI = { E: 'TIME E', B: 'TIME B', F: 'FUNKEIROS', C: 'PALHAÇOS', U: 'TRIBOS URBANAS', M: 'MÍTICO' };

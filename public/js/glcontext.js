@@ -18,6 +18,16 @@ function rendererName(gl) {
   } catch { return ''; }
 }
 
+/* TRÊS ESTADOS, e não um booleano. A extensão que revela a GPU de verdade fica atrás de flag no
+   Firefox; sem ela o `gl.RENDERER` devolve nome genérico, e aí `software: false` está AFIRMANDO
+   o que ninguém leu. Quem decide reduzir qualidade por isso precisa saber a diferença. */
+function estadoSoftware(gl, gpu) {
+  if (SOFTWARE_RE.test(gpu)) return 'sim';
+  let leuDeVerdade = false;
+  try { leuDeVerdade = !!gl.getExtension('WEBGL_debug_renderer_info'); } catch { /* bloqueado */ }
+  return leuDeVerdade ? 'nao' : 'desconhecido';
+}
+
 function lose(gl) {
   try { gl.getExtension('WEBGL_lose_context')?.loseContext(); } catch {}
 }
@@ -72,7 +82,13 @@ export function criaRenderer(base = {}, options = {}) {
           api: name === 'webgl2' ? 'webgl2' : 'webgl',
           tier: tier.rotulo,
           software: SOFTWARE_RE.test(gpu),
+          softwareEstado: estadoSoftware(gl, gpu),
           renderer: gpu.slice(0, 120),
+          /* `degraded` junta QUATRO coisas com custos muito diferentes, e quem consome
+             precisa distinguir: GPU que só recusou MSAA não é GPU que desenha por software. */
+          semWebgl2: name !== 'webgl2',
+          semMsaa: tier.rotulo !== 'padrao',
+          compat: compatibility,
           degraded: compatibility || tier.rotulo !== 'padrao' || name !== 'webgl2' || SOFTWARE_RE.test(gpu),
         });
         renderer.__csWebgl = metadata;
@@ -125,4 +141,31 @@ export function avisaSemWebgl(erro) {
     el.querySelector('[data-webgl-detail]').textContent = String(erro?.message || erro || 'contexto não criado').slice(0, 200);
     (document.body || document.documentElement).appendChild(el);
   } catch {}
+}
+
+// Aviso de renderizador de software: honesto, uma vez, dispensável e sem bloquear. Barra e
+// não overlay — a tela cheia é para quem NÃO consegue jogar; este consegue, devagar.
+export function avisaSoftware(gpu) {
+  try {
+    if (localStorage.getItem('cs_aviso_software') === 'ok') return;
+  } catch { /* storage bloqueado: mostra assim mesmo */ }
+  try {
+    const el = document.createElement('div');
+    el.id = 'aviso-software';
+    /* CANTO, e não faixa: a faixa de baixo centralizada caía em cima do `#ms-continue` (o smoke
+       do CI ficou 397 tentativas esperando). `pointer-events:none` no cartão e `auto` no botão. */
+    el.style.cssText = 'position:fixed;right:12px;bottom:12px;max-width:min(92vw,26rem);z-index:2147483000;'
+      + 'display:flex;gap:.75rem;align-items:center;padding:.6rem .8rem;border-radius:8px;'
+      + 'background:#1a1712f2;color:#f4efe6;font:12px/1.45 system-ui,sans-serif;text-align:left;'
+      + 'box-shadow:0 6px 24px #0008;pointer-events:none';
+    el.innerHTML = '<span>Seu navegador está desenhando o 3D <strong>pela CPU</strong>, não pela placa de vídeo — '
+      + 'o jogo já entrou no modo mais leve, mas vai ficar lento. Ligar a aceleração por hardware resolve.</span>'
+      + '<button type="button" style="background:#ffc233;color:#090704;border:0;padding:.35rem .8rem;border-radius:5px;font-weight:800;cursor:pointer;pointer-events:auto;flex:0 0 auto">OK</button>';
+    el.title = String(gpu || '').slice(0, 120);
+    el.querySelector('button').onclick = () => {
+      el.remove();
+      try { localStorage.setItem('cs_aviso_software', 'ok'); } catch { /* storage bloqueado */ }
+    };
+    (document.body || document.documentElement).appendChild(el);
+  } catch { /* sem DOM */ }
 }

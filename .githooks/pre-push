@@ -51,7 +51,14 @@ fi
 
 for portao in eval:mapcontrato check:deploy; do
   if ! npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
-    falhas+=("$portao — $(grep -m1 -E '✗|FALHA|error' /tmp/prepush-$$.log | cut -c1-90)")
+    # O motivo tem de ser a linha que REPROVOU. O padrão anterior incluía `error`
+    # solto e casava com `eval:error-console verde: ...` — uma régua que PASSOU —
+    # então o hook acusava o portão errado e mandava o dono caçar no lugar errado.
+    # Aqui só marcador de reprovação; sem nenhum, o fim do log é mais honesto que
+    # uma linha verde escolhida a esmo.
+    motivo=$(grep -m1 -E '✗|REPROV|FALHA|VERMELHO|ERRO:|Error:' /tmp/prepush-$$.log | cut -c1-90)
+    [ -z "$motivo" ] && motivo=$(tail -n1 /tmp/prepush-$$.log | cut -c1-90)
+    falhas+=("$portao — $motivo")
   fi
 done
 rm -f /tmp/prepush-$$.log

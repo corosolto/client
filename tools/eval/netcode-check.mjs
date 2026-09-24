@@ -566,8 +566,27 @@ console.log('\n· server browser mede RTT aquecido, não o custo único de TLS')
   const totalT0 = performance.now();
   const [expirou] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 100, 2);
   const totalDt = performance.now() - totalT0;
-  cobra(!expirou.online && abortsDaSonda >= 1 && totalDt < 300,
+  cobra(abortsDaSonda >= 1 && totalDt < 300,
     `o prazo cobre a sonda inteira e ABORTA as pendências, não reinicia por amostra (${totalDt.toFixed(0)} ms; ${abortsDaSonda} abort)`);
+  /* E A AMOSTRA QUE CHEGOU NÃO SE APAGA. Esta cláusula cobrava `!online` aqui, e com isso
+     CONGELOU um defeito: o prazo é para limitar o TRABALHO, não para invalidar a RESPOSTA.
+     A primeira amostra paga DNS e TLS; quando ela custa mais da metade do prazo, a segunda
+     é abortada — e o nó, que respondeu, aparecia como "fora do ar". Em conexão lenta os três
+     caíam juntos e a tela acusava os servidores (BUG-166, relatado pelo dono com figura). */
+  cobra(expirou.online && expirou.ping > 0,
+    `nó que respondeu UMA vez dentro do prazo fica online, com o ping dela (${expirou.ping} ms)`);
+  globalThis.fetch = fetchReal;
+
+  /* O contrário também tem de valer: nenhuma amostra dentro do prazo = fora do ar de verdade.
+     Sem esta, "sempre online" passaria — e a tela mentiria para o outro lado. */
+  let abortsMudos = 0;
+  globalThis.fetch = async (_url, { signal } = {}) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })), 500);
+    signal?.addEventListener('abort', () => { abortsMudos++; clearTimeout(timer); reject(new DOMException('aborted', 'AbortError')); }, { once: true });
+  });
+  const [mudo] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 100, 2);
+  cobra(!mudo.online && mudo.ping === null && abortsMudos >= 1,
+    'nó que não respondeu NENHUMA vez dentro do prazo continua fora do ar');
   globalThis.fetch = fetchReal;
 }
 
@@ -576,10 +595,13 @@ console.log('\n· sair do multiplayer devolve o slot antes do close handshake');
   const { NetClient } = await import('../../public/js/net.js');
   const enviados = [], fechamentos = [];
   const net = new NetClient('wss://eu.example/ws', { room: 'funk-x-palhaco' });
-  net.ws = {
-    readyState: 1,
-    send: (payload) => enviados.push(JSON.parse(payload)),
-    close: (...args) => fechamentos.push(args),
+  /* Injeta um TRANSPORTE de mentira, e não um socket: desde a extração é com ele que o
+     NetClient fala. Testar o socket direto testaria um caminho que o jogo não usa mais. */
+  net.tp = {
+    pronto: true,
+    enviar: (payload) => { enviados.push(JSON.parse(payload)); return true; },
+    enviarInseguro(p) { return this.enviar(p); },
+    fechar: (...args) => fechamentos.push(args),
   };
   net.close();
   cobra(enviados.length === 1 && enviados[0].type === 'leave',
@@ -1178,6 +1200,38 @@ function medeRajada(g, net) {
   cobra(!(m2.min > m2.esperado * 0.7 && m2.max < m2.esperado * 1.3),
     `MUTANTE no relógio de chegada sai da faixa (${(m2.min * 1000).toFixed(1)}–${(m2.max * 1000).toFixed(1)} mm) — a cláusula morde`);
   g2.dispose();
+}
+
+/* AUTORIDADE DA FACA no online. O hitscan já tinha a guarda (`if (!this.online)`); o golpe de
+   faca não tinha, e aplicava dano no cliente enquanto o servidor aplicava o dele — o snapshot
+   desfazia, mas no meio disso a vida do alvo piscava e o killfeed podia mentir. */
+console.log('\n· faca no online: quem aplica o dano é o servidor');
+{
+  /* Espiona a CHAMADA de `_damage`, não o hp: o que a invariante diz é "o cliente não aplica
+     dano de faca no online", e hp depende de modelo de dano, armadura e estado de rodada. */
+  const perto = (g, alvo) => {
+    alvo.pos.copy(g.player.pos); alvo.pos.z -= 1.0; alvo.pos.y = g.player.pos.y; alvo.alive = true;
+    g.player.yaw = 0; g.camera.rotation.set(0, 0, 0); g.camera.quaternion.identity();
+    g.camera.position.set(g.player.pos.x, g.player.pos.y + 1.62, g.player.pos.z);
+  };
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  net.snap = snapshot(900, 1); g._mp.applySnapshot();
+  const alvo = g._mp._netMap.get(6);
+  perto(g, alvo);
+  let chamou = 0; const d0 = g._damage.bind(g); g._damage = (...a) => { chamou++; return d0(...a); };
+  g._meleeHit();
+  cobra(chamou === 0, `online: o cliente NÃO aplica dano de faca (${chamou} chamadas de _damage)`);
+
+  // o contrário também é cobrado: sem a guarda valendo, o modo solo perderia a faca
+  const net2 = fakeNet(1); const g2 = montaJogo(net2);
+  g2.online = false;
+  const vitima = g2.bots.find((b) => b.team !== g2.playerTeam && b.alive);
+  perto(g2, vitima);
+  let chamou2 = 0; const d2 = g2._damage.bind(g2); g2._damage = (...a) => { chamou2++; return d2(...a); };
+  g2._meleeHit();
+  cobra(chamou2 === 1, `offline: a faca continua aplicando dano no cliente (${chamou2} chamada)`);
+  g.dispose(); g2.dispose();
 }
 
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);

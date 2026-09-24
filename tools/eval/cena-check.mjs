@@ -280,9 +280,30 @@ try {
   console.log(`   ${naoMediu.length ? naoMediu.map((r) => `${r.mapa}: ${r.fatal || 'sem número'}`).join(' | ') : `${medidos.length}/${medidos.length} medidos`}`);
   console.log(`   ${c3 ? 'PASSA' : 'FALHA'}\n`);
 
-  const passou = c1 && c2 && c3;
+  /* CENA4 · EXCEÇÃO QUADRO A QUADRO. Achado ao estender a régua para os 17 mapas: no
+     `posto_treta` a morte do jogador lançava `Cannot read properties of undefined` 590 vezes
+     em 30 s — e nada reprovava, porque o mapa continuava desenhando. Erro repetido é laço,
+     e laço de exceção come quadro em silêncio. Um erro solto não acende (extensão de
+     navegador injeta vários, e o CORS da API pública aparece em toda execução local). */
+  const REPETE_MAX = 10;
+  const repetidos = [];
+  for (const r of medidos) {
+    const conta = new Map();
+    for (const e of r.erros || []) {
+      if (!/^\[pageerror\]/.test(e)) continue;
+      const chave = String(e).slice(0, 80);
+      conta.set(chave, (conta.get(chave) || 0) + 1);
+    }
+    for (const [chave, n] of conta) if (n > REPETE_MAX) repetidos.push({ mapa: r.mapa, n, chave });
+  }
+  const c4 = repetidos.length === 0;
+  console.log(`CENA4 · nenhum mapa lança a mesma exceção mais de ${REPETE_MAX} vezes`);
+  console.log(`   ${repetidos.length ? repetidos.map((r) => `${r.mapa}: ${r.n}× ${r.chave}`).join(' | ') : `${medidos.length}/${medidos.length} sem laço de exceção`}`);
+  console.log(`   ${c4 ? 'PASSA' : 'FALHA'}\n`);
+
+  const passou = c1 && c2 && c3 && c4;
   console.log(passou
-    ? '✓ CENA  custo de cena dentro do teto nos 5 mapas'
+    ? `✓ CENA  custo de cena dentro do teto nos ${medidos.length} mapas`
     : '✗ CENA  CUSTO DE CENA ESTOUROU — ver acima qual mapa e contra qual teto');
   console.log(`  probe: ${destino}`);
   await browser.close(); browser = null;

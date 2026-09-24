@@ -1751,6 +1751,27 @@ function runNode(script, env = {}, args = []) {
   }
 }
 
+// ── 8b1. LOOP1 — O QUADRO NÃO DEPENDE DE ELEMENTO QUE PODE SUMIR ─────────────
+/* BUG-177 (issue #617, alpha.262): `loop()` lia `$('char-select').classList` a cada
+   quadro; sem o elemento (extensão/tradutor reescrevendo o body) o TypeError se
+   repetia 60×/s e o jogo congelava. O `requestAnimationFrame(loop)` vem ANTES, então
+   o erro não para o laço — só o envenena. Regra: dentro do corpo de `loop()` todo
+   `$('…')` é acessado com `?.` ou guardado. Mutante: devolver `$('char-select').` à
+   linha do `csOpen` reprova. */
+{
+  const src = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
+  const ini = src.indexOf('\nfunction loop() {');
+  const fim = ini < 0 ? -1 : src.indexOf('\nloop();', ini);
+  if (ini < 0 || fim < 0) {
+    skip('LOOP1', 'o laço de quadro não quebra sem elemento do DOM', 'function loop() / loop(); não encontrados em main.js');
+  } else {
+    const corpo = src.slice(ini, fim).split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+    const nus = [...corpo.matchAll(/\$\('([^']+)'\)\.(?!\?)/g)].map((m) => m[1]);
+    put('LOOP1', 'o laço de quadro não quebra quando um elemento do DOM some (acesso por `?.`)',
+      nus.length === 0, nus.length ? `acesso sem guarda em loop(): ${nus.join(', ')}` : '0 acessos sem guarda');
+  }
+}
+
 // ── 8b2. PAUSA — A PARTIDA NÃO ACABA SOZINHA (pause-check.mjs) ───────────────
 /* "pela quinta vez o jogo reiniciou sozinho, eu estava no meio de uma partida e ele foi
    pro menu principal sozinho" (dono, 04/08). Não era caminho automático: `quitToMenu()`

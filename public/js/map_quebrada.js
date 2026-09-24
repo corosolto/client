@@ -17,6 +17,7 @@
 //
 // Contrato buildWorld idêntico ao map_ferrovelho.js / map_havan.js.
 import * as THREE from 'three';
+import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds, paredeAtras, medirParede } from './map_decals.js';   // pool por NOME + medição de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
@@ -200,7 +201,7 @@ export function buildQuebrada(scene, T) {
   if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('quebrada');
   const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x54483c, 0.9); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd9a8, 1.5); sun.position.set(38, 30, -22); sun.castShadow = true;
-  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 160; sun.shadow.bias = -0.0006;

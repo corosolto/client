@@ -5,6 +5,8 @@ import { proxyApiRequest } from '../../lib/api-proxy.mjs';
 export const prerender = false;
 
 const BACKEND = import.meta.env.PUBLIC_API_BASE || 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
+// Prova ao backend que a geo/IP vieram deste proxy (api/_lib/borda.mjs no backend).
+const SEGREDO = import.meta.env.API_PROXY_SECRET || '';
 
 const MIGRADAS = new Set([
   'acquisition', 'avatar', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
@@ -23,6 +25,8 @@ const handler: APIRoute = async ({ params, url, request, clientAddress }) => {
     request,
     `${BACKEND.replace(/\/$/, '')}/api/${rota}${url.search}`,
     clientAddress,
+    fetch,
+    { segredo: SEGREDO },
   );
 };
 
