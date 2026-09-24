@@ -1,7 +1,7 @@
 {
  "gerado": "2026-09-24",
  "aspecto": "3x2",
- "entradas": "43e98e62c9228f29",
+ "entradas": "8a27db38d3eb3fd7",
  "resultados": {
   "awp": {
    "mira": {
@@ -38,8 +38,8 @@
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.93× AK",
-    "msg": "tamanho 0.93× AK, rolagem +17° da AK (informativa), eixo -3° da AK, braço 0.76×, cruz 0 px, olho 3.08 palma, ADS cobre 7.4% (teto 18.5%)"
+    "valor": "0.95× AK",
+    "msg": "tamanho 0.95× AK, rolagem +13° da AK (informativa), eixo -1° da AK, braço 0.94×, cruz 0 px, olho 2.86 palma, ADS cobre 7.4% (teto 18.5%)"
    },
    "pistola-ref": {
     "estado": "N/A",
