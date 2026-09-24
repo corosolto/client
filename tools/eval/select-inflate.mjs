@@ -54,6 +54,13 @@
      --mutate=curl   fecha os ossos de dedo 2,2 rad
                      -> pagodeiro 3,82 -> 15,52 %>25, VERMELHO. mandrake NÃO muda, e está
                         certo: o rig dele não tem osso `Curl_*` (conferido no GLB).
+     --mutate=curltwist  TORCE os ossos de curl no eixo ERRADO, com o delta medido nos
+                     clipes do Lobisomem em 06/09 (0,8763 rad: x=0,293 y=-0,544 z=-0,621).
+                     -> lobisomem 14,5 -> 44,6 ruins/1e4 e p99 0,511 -> 0,808, VERMELHO.
+                        mandrake/pagodeiro NÃO mudam (o rig deles não tem `Curl_*`), e está
+                        certo. É a classe que faltava aqui: o `curl` acima exagera a
+                        MAGNITUDE no eixo certo; esta erra o EIXO, que é o defeito que o
+                        `retarget-glb.mjs` produzia e que passou pelo portão em 06/09.
 
    O QUE NÃO MORDE, E POR QUÊ (resultado negativo, medido — não é buraco de régua)
      --mutate=ik     estraga o alvo da mão de apoio. Fica VERDE nos dois. Duas medições
@@ -140,6 +147,21 @@ for (const id of alvos) {
     if (mut === 'ik' && m.ctrl.ikL) m.ctrl.ikL.fore.set(-m.ctrl.ikL.fore.x, m.ctrl.ikL.fore.y - 0.9, m.ctrl.ikL.fore.z - 1.4);
     if (mut === 'semik') m.ctrl.ikL = null;   // DIAGNÓSTICO (não é mutação): quanto do balão é do CCD?
     if (mut === 'curl') m.group.traverse((o) => { if (o.isBone && /^Curl_/.test(o.name)) o.rotation.x += 2.2; });
+    /* mut=curltwist — devolve a TORÇÃO que os clipes retargetados do Lobisomem escreviam
+       nos PRÓPRIOS ossos de curl. Não é ângulo inventado: é o delta medido no GLB antes do
+       conserto (`Curl_R` |delta|max 0,8763 rad, x=0,293 y=-0,544 z=-0,621; `Curl_L` espelhado),
+       assado pelo `retarget-glb.mjs` porque o rest do `Curl_*` da pata não coincide com o do
+       rig doador. Foi ele o 13º reprovado de 06/09 (lobisomem p99 0,694 / ruins 36,2 contra
+       teto 0,675 / 23,6) e é ele que o `tools/strip-curl-tracks.mjs` tirou do disco.
+       POR QUE ESTE MUTANTE É DIFERENTE DO `curl`: o `curl` fecha o dedo no eixo certo e só
+       exagera a magnitude; este torce no eixo ERRADO, que é a classe de defeito que o
+       retarget produz e a que nenhum mutante daqui pegava. Morde só quem tem `Curl_*` com
+       peso de skin — 14 dos 45; nos outros 31 é no-op, e isso é correto, não buraco. */
+    if (mut === 'curltwist') m.group.traverse((o) => {
+      if (!o.isBone || !/^Curl_/.test(o.name)) return;
+      const s = /_L$/.test(o.name) ? -1 : 1;
+      o.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0.293, -0.544 * s, -0.621 * s, 'XYZ')));
+    });
     /* mut=skin — devolve EXATAMENTE o off-by-one que o 88144c4 consertou: a carne do
        antebraço volta a obedecer ao punho. Se a régua não ficar vermelha aqui, ela não
        enxerga a causa raiz que ela existe para vigiar. */

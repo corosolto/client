@@ -1,22 +1,20 @@
-// Penitenciária da Treta: pátio central exposto, celas transitáveis e flancos de serviço.
-// Rebuild USANTOS (25/08/2026): reboco, holofotes, varandas, hélice de arame — ver eval:penitenciariavida.
-// Ajuste Codex (07/09/2026): fachada do molde visível e holofotes sem casca opaca aparente; autoria do rebuild preservada.
+// Carandiru: pátio central exposto, celas transitáveis e flancos de serviço.
+// Reautoria estrutural preservada do PR #556; esta versão usa somente geometria procedural local.
 import * as THREE from 'three';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
-import { applyLook } from './map_sky.js';
-import { placeProp } from './mapprops.js';
+import { setMapSky } from './map_sky.js';
 
 const HALF_X = 38;
 const HALF_Z = 48;
 
 /* Subset da fauna que o main.js pré-carrega para este mapa (maps.js ambience). */
 export const PENITENCIARIA_AMBIENCE = ['rat', 'pigeonGround'];
-export const PENITENCIARIA_PROPS = ['torre_vigilancia', 'bloco_celas', 'portao_penitenciaria', 'guarita_muro', 'carandiru_viatura_1990'];
+export const PENITENCIARIA_PROPS = [];
 
 export function buildPenitenciaria(scene, T) {
   const root = new THREE.Group();
-  root.name = 'penitenciaria-da-treta';
+  root.name = 'carandiru';
   scene.add(root);
   const colliders = [], occluders = [], pickups = [];
   const elevatedSurfaces = [];
@@ -329,7 +327,11 @@ export function buildPenitenciaria(scene, T) {
 
   /* Look de fim de tarde azul-chumbo (LOOK.penitenciaria): céu/fog/sol/hemi de uma
      fonte só; o shadow fica no builder porque ele conhece os limites do mapa. */
-  const { hemi, sun } = applyLook(scene, T, 'penitenciaria');
+  setMapSky(scene, T, '/img/textures/sky_sp.webp', 0x9aa7a8);
+  scene.fog = new THREE.Fog(0x8f9698, 90, 175);
+  const hemi = new THREE.HemisphereLight(0xb9cad8, 0x4b514d, 1.05);
+  const sun = new THREE.DirectionalLight(0xffd7a8, 1.15);
+  sun.position.set(-28, 38, -42); scene.add(hemi); scene.add(sun); scene.add(sun.target);
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.left = -50; sun.shadow.camera.right = 50;
   sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58;
@@ -376,7 +378,9 @@ export function buildPenitenciaria(scene, T) {
     ['oeste', 'z', -HALF_X, 0, -HALF_Z, HALF_Z], ['leste', 'z', HALF_X, 0, -HALF_Z, HALF_Z],
   ]) {
     const turns = (to - from) / .7;
-    const tube = new THREE.Mesh(new THREE.TubeGeometry(new HelixCurve(axis, from, to, .34, .7), Math.ceil(turns) * 8, .028, 4, false), MAT.arame);
+    /* Quatro amostras por volta preservam a leitura serrilhada do arame sem pagar
+       duas vezes pela silhueta distante. O teto canônico CENA2 mede essa escolha. */
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(new HelixCurve(axis, from, to, .34, .7), Math.ceil(turns) * 4, .028, 4, false), MAT.arame);
     tube.name = `penitenciaria-arame-${name}`;
     tube.position.set(mx, 8.45, mz); tube.castShadow = false; root.add(tube);
   }
@@ -424,12 +428,7 @@ export function buildPenitenciaria(scene, T) {
   const holofotes = [];
   function guardTower(index, x, z) {
     const group = new THREE.Group(); group.name = `penitenciaria-guarita-${index}`; root.add(group);
-    group.userData.molde = 'torre_vigilancia';   // NV7: a régua lê o USO registrado, não a declaração
     const sx = Math.sign(x), sz = Math.sign(z);
-    /* GLB da torre (Mint, FONTE.md): no arnês node placeProp devolve null e a
-       torre procedural cobre — colisores idênticos nos dois mundos (lição 3). */
-    const glb = placeProp('torre_vigilancia', { x, y: 0, z, targetH: 9.6, targetLen: 5.6, ry: Math.atan2(-x, -z) });
-    if (glb) { glb.visible = false; root.add(glb); }
     const pecas = [];
     for (const dx of [-1.8, 1.8]) for (const dz of [-1.8, 1.8]) pecas.push(addBox(.38, 7.2, .38, MAT.steel, x+dx, 0, z+dz, { tag: `guarita-${index}` }));
     const floorName = `carandiru-guarita-${index}-piso`;
@@ -583,10 +582,8 @@ export function buildPenitenciaria(scene, T) {
     part(2.38,.72,.08,MAT.glass,0,1.35,-1.35); part(2.38,.72,.08,MAT.glass,0,1.35,1.35);
     for(const sx of [-1,1]) for(const sz of [-1.75,1.75]) { const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.28,16),MAT.rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(sx*1.35,.55,sz);fallback.add(wheel); }
     part(1.45,.18,.28,MAT.black,0,2.2,0); part(.65,.22,.3,MAT.red,-.42,2.35,0); part(.65,.22,.3,MAT.blue,.42,2.35,0);
-    const glb = placeProp('carandiru_viatura_1990', { x: 0, y: 0, z: 0, targetH: 1.75, targetLen: 4.6 });
-    if (glb) { glb.name = 'carandiru-viatura-mint'; group.add(glb); fallback.visible = false; }
-    carandiru.mintVehicle = !!glb; carandiru.vehicleSource = glb ? 'mint' : 'fallback';
-    carandiru.vehicleFallback = true; carandiru.vehicleCollider = true; carandiru.vehiclePropId = 'carandiru_viatura_1990';
+    carandiru.vehicleSource = 'procedural-local';
+    carandiru.vehicleFallback = true; carandiru.vehicleCollider = true;
     const hx=Math.abs(Math.cos(ry))*1.55+Math.abs(Math.sin(ry))*2.8,hz=Math.abs(Math.sin(ry))*1.55+Math.abs(Math.cos(ry))*2.8;
     const collider={minX:x-hx,maxX:x+hx,minY:0,maxY:2.5,minZ:z-hz,maxZ:z+hz,tag:'carro-policia'};colliders.push(collider);group.userData.collider=collider;occluders.push(group);
   }
@@ -651,15 +648,12 @@ export function buildPenitenciaria(scene, T) {
     fio.castShadow = false; root.add(fio);
   }
 
-  /* ===== CARANDIRU (r3) — moldes do kit carandiru_r3b (FONTE.md); no arnês o
-     procedural cobre, colisores idênticos. A cláusula NV8 conta o porquê. ===== */
+  /* O bloco central, o portão e as torres usam a linguagem procedural deste
+     mapa; nenhuma geometria privada participa de colisão, navegação ou visual. */
   {
-    // Pavilhão central (bloco_celas.glb): massa de 2 pavimentos; o jogador circula
-    // pela galeria de 2,2 m entre o bloco e a grade.
-    const pav = new THREE.Group(); pav.name = 'penitenciaria-pavilhao'; pav.userData.molde = 'bloco_celas'; root.add(pav);
+    const pav = new THREE.Group(); pav.name = 'penitenciaria-pavilhao'; root.add(pav);
     /* O volume cheio antigo virava uma parede invisível. Quatro cantos deixam um
        cruzamento térreo N-S/E-O e sustentam a galeria superior. */
-    const glbPav = placeProp('bloco_celas', { x: 0, y: 0, z: 0 });
     const pecasPav = [
       ...[-1, 1].flatMap((sx) => [-1, 1].map((sz) =>
         addBox(2.5, 3.4, 4.5, MAT.concrete, sx * 3.25, 0, sz * 5.25, { tag: `pavilhao-canto-${sx}-${sz}` }))),
@@ -763,17 +757,6 @@ export function buildPenitenciaria(scene, T) {
       placa.name = `carandiru-placa-pavilhao-6-${sz < 0 ? 'sul' : 'norte'}`;
       placa.position.set(0, 2.72, sz * 7.72); placa.rotation.y = sz < 0 ? Math.PI : 0; root.add(placa);
     }
-    if (glbPav) {
-      /* molde normalizado (~1 m) esticado ao volume do pavilhão: 9 × 15 m de planta,
-         6,6 m — medidas nativas do accessor POSITION (mesmo padrão do galpão do gelo). */
-      const NAT = { minY: -0.2236, sizeX: 0.3886, sizeY: 0.4472, sizeZ: 0.998 };
-      const sy = 6.6 / NAT.sizeY;
-      glbPav.scale.set(9 / NAT.sizeX, sy, 15 / NAT.sizeZ);
-      glbPav.position.y = -NAT.minY * sy;
-      /* O molde recuperado é uma massa fechada. Em C1 ele fica registrado, mas
-         oculto até C3 ganhar vãos compatíveis; não pode selar as rotas novas. */
-      pav.add(glbPav); glbPav.visible = false;
-    }
     occluders.push(...pecasPav);
 
     // Galeria externa gradeada: anel de 2,2 m entre o pavilhão e a grade de 1,1 m,
@@ -785,32 +768,26 @@ export function buildPenitenciaria(scene, T) {
       gradeGaleria(.12, 5.6, sz * 6.7, -3.9); gradeGaleria(.12, 5.6, sz * 6.7, 3.9);
     }
 
-    // Portão principal no muro norte (portao_penitenciaria.glb): portão fechado —
-    // visual embutido no muro e o colisor sela o vão (a prisão não abre).
-    const portao = new THREE.Group(); portao.name = 'penitenciaria-portao'; portao.userData.molde = 'portao_penitenciaria'; root.add(portao);
+    const portao = new THREE.Group(); portao.name = 'penitenciaria-portao'; root.add(portao);
     colliders.push({ minX: -5.5, maxX: 5.5, minY: 0, maxY: 5.6, minZ: 46.3, maxZ: 47.6, tag: 'portao' });
-    const glbPort = placeProp('portao_penitenciaria', { x: 0, y: 0, z: 47.2, targetH: 5.6, targetLen: 11 });
     const pecasPort = [
       addBox(.8, 5.6, 1.2, MAT.concrete, -5.1, 0, 47.2, { collide: false }),
       addBox(.8, 5.6, 1.2, MAT.concrete, 5.1, 0, 47.2, { collide: false }),
       addBox(9.4, 4.6, .18, MAT.grade, 0, 0, 47.2, { collide: false, cast: false }),
       addBox(11, .5, 1.4, MAT.darkConcrete, 0, 5.6, 47.2, { collide: false }),
     ];
-    if (glbPort) { portao.add(glbPort); occluders.push(glbPort); for (const p of pecasPort) p.visible = false; }
-    else occluders.push(...pecasPort);
+    occluders.push(...pecasPort);
     const placaDetencao = placaTexto('CASA DE DETENÇÃO', 8.4, .92);
     placaDetencao.name = 'carandiru-placa-casa-de-detencao';
     placaDetencao.position.set(0, 6.72, 46.48); placaDetencao.rotation.y = Math.PI; root.add(placaDetencao);
 
-    // Torres de muro flanqueando o portão (guarita_muro.glb): a frente não tinha
-    // vigia entre as guaritas das quinas.
+    // Torres de muro flanqueiam o portão e ampliam o jogo na muralha.
     for (const [i, tx] of [[0, -9], [1, 9]]) {
-      const torre = new THREE.Group(); torre.name = `penitenciaria-torre-muro-${i}`; torre.userData.molde = 'guarita_muro'; root.add(torre);
+      const torre = new THREE.Group(); torre.name = `penitenciaria-torre-muro-${i}`; root.add(torre);
       for (const dx of [-2.2, 2.2]) for (const dz of [-1, 1]) colliders.push({
         minX: tx + dx - .15, maxX: tx + dx + .15, minY: 0, maxY: 7,
         minZ: 45.35 + dz - .15, maxZ: 45.35 + dz + .15, tag: `torre-muro-apoio-${i}`,
       });
-      const glbTorre = placeProp('guarita_muro', { x: tx, y: 0, z: 45.35, targetH: 8.2, targetLen: 5.6, ry: Math.PI });
       const floorName = `carandiru-torre-muro-${i}-piso`;
       addBox(5.2, .22, 2.6, MAT.galvanizado, tx, 5.58, 45.35, { name: floorName, collide: false });
       elevatedSurfaces.push({ minX: tx-2.6, maxX: tx+2.6, minZ: 44.05, maxZ: 46.65, y: MURO_H, kind: 'guard-floor' });
@@ -833,7 +810,6 @@ export function buildPenitenciaria(scene, T) {
         [cornerX, MURO_H, 43.5], [cornerX, MURO_H, 46.2],
         [towerApproachX, MURO_H, 46.2], [towerApproachX, MURO_H, 45.35], inside,
       ] });
-      if (glbTorre) { glbTorre.visible = false; torre.add(glbTorre); }
       const pecas = [];
       for (const dx of [-2.2, 2.2]) for (const dz of [-1, 1]) pecas.push(addBox(.3, 7, .3, MAT.galvanizado, tx + dx, 0, 45.35 + dz, { collide: false }));
       pecas.push(addBox(5.2, .9, .18, MAT.steel, tx, MURO_H, 46.55, { collide: false }));
@@ -851,21 +827,12 @@ export function buildPenitenciaria(scene, T) {
     addBox(.9, 8.4, .45, MAT.darkConcrete, -7.35, 0, 35, { name: 'carandiru-contracobertura-torre-0', tag: 'torre-contracobertura' });
     addBox(.9, 8.4, .45, MAT.darkConcrete, 7.35, 0, 35, { name: 'carandiru-contracobertura-torre-1', tag: 'torre-contracobertura' });
 
-    /* Duas massas de pavilhão além da muralha dão ao mapa o perfil institucional
-       cinzento. Reusam a casca Mint recuperada e nunca entram em colisão/LOS. */
+    /* Duas massas além da muralha completam o perfil institucional paulista. */
     for (const [i, x] of [[0, -55], [1, 55]]) {
-      const shell = placeProp('bloco_celas', { x, y: 0, z: 2, targetH: 15, targetLen: 24, ry: Math.PI / 2 });
-      if (shell) {
-        shell.name = `carandiru-pavilhao-fundo-mint-${i}`;
-        shell.traverse((node) => { if (node.isMesh) node.material = MAT.concrete; });
-        root.add(shell);
-      }
-      else {
-        addBox(10, 14, 27, MAT.concrete, x, 0, 2,
-          { name: `carandiru-pavilhao-fundo-fallback-${i}`, collide: false });
-        for (const yy of [3, 6, 9, 12]) for (const zz of [-9, -3, 3, 9])
-          addBox(.06, 1.2, 1.7, fundoVao, x + (x < 0 ? 5.03 : -5.03), yy, 2 + zz, { collide: false, cast: false });
-      }
+      addBox(10, 14, 27, MAT.concrete, x, 0, 2,
+        { name: `carandiru-pavilhao-fundo-${i}`, collide: false });
+      for (const yy of [3, 6, 9, 12]) for (const zz of [-9, -3, 3, 9])
+        addBox(.06, 1.2, 1.7, fundoVao, x + (x < 0 ? 5.03 : -5.03), yy, 2 + zz, { collide: false, cast: false });
     }
 
     // O campo do Carandiru: marcações de futebol PICHADAS no concreto do pátio
@@ -904,6 +871,18 @@ export function buildPenitenciaria(scene, T) {
     gun(kind,i%2?10.4:-10.4,i===3?-2.2:-4.9+i*1.4,i*.42));
   ['ak','m4','shotgun','deagle'].forEach((kind,i)=>{gun(kind,-15+i*10,-41,0);gun(kind,15-i*10,41,Math.PI);});
 
+  /* As alas de spawn ocupavam dois quadrantes praticamente vazios em cada
+     extremidade. Barreiras baixas, agrupadas em duas InstancedMeshes, criam
+     avanço por saltos sem fechar os quatro pontos de nascimento. */
+  const coverColumns=[[-34,-29],[-12,-6],[6,12],[20,24]], coverRows=[28,33,37.5,46];
+  let spawnCoverCount=0;
+  for(const side of [-1,1])for(const columns of coverColumns)for(let row=0;row<coverRows.length;row++)for(let column=0;column<columns.length;column++){
+    const x=columns[column],z=side*coverRows[row],alongX=(row+column+(side>0?1:0))%2===0;
+    ibox(alongX?1.8:.55,1.05,alongX?0.55:1.8,row%2?MAT.darkConcrete:MAT.galvanizado,x,0,z,
+      {collide:true,tag:`carandiru-cover-ala-${side<0?'sul':'norte'}-${spawnCoverCount++}`,cast:false});
+  }
+  carandiru.spawnCoverCount=spawnCoverCount;
+
   buildInstanced();
 
   /* Varredura LENTA dos holofotes (NV2): cada cabeça gira num quadrante do pátio,
@@ -929,7 +908,10 @@ export function buildPenitenciaria(scene, T) {
     return best;
   }, slowAt=()=>false;
   const spawns={E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))};
-  const ctfPoints=[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PAVILHÃO 6',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}];
+  /* O MID deslocado cria um triângulo CTF real: as três bandeiras deixam de
+     compartilhar a mesma linha do pátio e obrigam a defesa a cobrir o flanco
+     oeste do pavilhão. */
+  const ctfPoints=[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PAVILHÃO 6',x:-8,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}];
   const stairPoints = (team, side) => {
     const a = carandiru.wallAccesses.find((item) => item.team === team && item.side === side);
     return a.heights.map((y, i) => [a.x, y, a.z0 + a.dz * i]);
@@ -941,14 +923,14 @@ export function buildPenitenciaria(scene, T) {
   external.push([-22.5,0,39],[-15,0,42]);
   const southStair = stairPoints('sul','leste'), northStair = stairPoints('norte','leste');
   const southTop = southStair.at(-1)[2], northTop = northStair.at(-1)[2];
-  const elevated = [[15,0,-42],[24,0,-42],[24,0,-39],[35.6,0,-39],[35.6,0,-26.7],
+  const elevated = [[15,0,-42],[24,0,-42],[24,0,-39],[35.6,0,-39],[35.6,0,-25.2],
     ...southStair,[36.7,5.8,southTop]];
   for (let z = southTop + 2.4; z <= northTop - 2.4; z += 2.4) elevated.push([36.7,5.8,z]);
-  elevated.push([36.7,5.8,northTop],...northStair.reverse(),[35.6,0,26.7],[35.6,0,36],[29,0,39],[24,0,42],[15,0,42]);
+  elevated.push([36.7,5.8,northTop],...northStair.reverse(),[35.6,0,25.2],[35.6,0,36],[29,0,39],[24,0,42],[15,0,42]);
   carandiru.routes.push(
-    { id:'radial-interna', layer:'ground', points:internal, midBranch:[[0,0,0]] },
-    { id:'externa-oeste', layer:'ground', points:external, midBranch:[[-22.5,0,0],[-14,0,0],[-7,0,0],[0,0,0]] },
-    { id:'muralha-leste', layer:'elevated', points:elevated, midBranch:[[35.6,0,26.7],[24,0,26],[12,0,18],[0,0,0]] },
+    { id:'radial-interna', layer:'ground', points:internal, midBranch:[[0,0,0],[-8,0,0]] },
+    { id:'externa-oeste', layer:'ground', points:external, midBranch:[[-22.5,0,0],[-20.1,0,-1.3],[-16.9,0,-4.5],[-13.7,0,-4.5],[-10.5,0,-1.3],[-8,0,0]] },
+    { id:'muralha-leste', layer:'elevated', points:elevated, midBranch:[[35.6,0,25.2],[31.1,0,24.3],[27.9,0,24.3],[24.7,0,24.3],[20.31,0,23.54],[16.62,0,21.08],[11.9,0,21.1],[8.7,0,17.9],[5.5,0,17.9],[2.3,0,17.9],[-.9,0,14.7],[-.9,0,11.5],[0,0,7],[0,0,3],[-3.43,0,0],[-8,0,0]] },
   );
   carandiru.counterfireVantages.push(
     { route:'radial-interna', eye:[0,1.6,30] },
@@ -985,28 +967,42 @@ export function buildPenitenciaria(scene, T) {
   const clear=(a,b)=>{const distance=Math.hypot(b.x-a.x,b.z-a.z),steps=Math.max(1,Math.ceil(distance/.25));let previous=a.y;for(let i=1;i<=steps;i++){const t=i/steps,x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t,y=groundHeightAt(x,z,previous);if(blocked(x,z,.38,previous)||Math.abs(y-previous)>.65)return false;previous=y;}return Math.abs(previous-b.y)<.36;};
   for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,dz=nodes[i].z-nodes[j].z;if(dx*dx+dz*dz<=step*step*2.3&&Math.abs(dy)<=.65&&clear(nodes[i],nodes[j])){adj[i].push(j);adj[j].push(i);}}
   for(let i=0;i<nodes.length;i++)if(!adj[i].length){let nearest=-1,distance=Infinity;for(let j=0;j<nodes.length;j++){if(i===j||Math.abs(nodes[i].y-nodes[j].y)>.65||!clear(nodes[i],nodes[j]))continue;const d=(nodes[i].x-nodes[j].x)**2+(nodes[i].z-nodes[j].z)**2;if(d<distance){distance=d;nearest=j;}}if(nearest>=0){adj[i].push(nearest);adj[nearest].push(i);}}
+  /* Descarta bolsões decorativos sem entrada; mantém e remapeia o maior componente,
+     que contém spawns, pátio, rotas, escadas e galerias. */
+  const compactNavigation=()=>{
+    const seen=new Uint8Array(nodes.length),components=[];
+    for(let start=0;start<nodes.length;start++)if(!seen[start]){
+      const queue=[start],component=[];seen[start]=1;
+      while(queue.length){const current=queue.pop();component.push(current);for(const next of adj[current])if(!seen[next]){seen[next]=1;queue.push(next);}}
+      components.push(component);
+    }
+    const keep=components.reduce((largest,current)=>current.length>largest.length?current:largest,[]);
+    if(keep.length===nodes.length)return{components:1,removed:0};
+    const remap=new Int32Array(nodes.length).fill(-1);
+    keep.forEach((old,index)=>{remap[old]=index;});
+    const nextNodes=keep.map((old)=>nodes[old]);
+    const nextAdj=keep.map((old)=>adj[old].map((target)=>remap[target]).filter((target)=>target>=0));
+    const removed=nodes.length-nextNodes.length;
+    nodes.splice(0,nodes.length,...nextNodes);adj.splice(0,adj.length,...nextAdj);
+    return{components:components.length,removed};
+  };
+  carandiru.navigationCompaction=compactNavigation();
   function nearestWaypoint(x,z,yRef){const y=groundHeightAt(x,z,yRef);let best=0,distance=Infinity;for(let i=0;i<nodes.length;i++){const dx=nodes[i].x-x,dy=nodes[i].y-y,dz=nodes[i].z-z,d=dx*dx+dz*dz+dy*dy*16;if(d<distance){distance=d;best=i;}}return best;}
   function findPath(fromIdx,toIdx){if(fromIdx===toIdx)return[toIdx];const prev=new Int16Array(nodes.length).fill(-1),queue=[fromIdx];prev[fromIdx]=fromIdx;while(queue.length){const n=queue.shift();for(const next of adj[n])if(prev[next]<0){prev[next]=n;if(next===toIdx){const path=[next];let p=n;while(p!==fromIdx){path.unshift(p);p=prev[p];}path.unshift(fromIdx);return path;}queue.push(next);}}return[fromIdx];}
   /* BUG-57: pombo de pátio de presídio e rato de cela. r3 Carandiru: o bando
      toma o campo pichado do pátio norte; o rato do miolo saiu do pé do pavilhão. */
   const ambience = createFavelaAmbience(root, {
     map: 'penitenciaria',
-    rats: [
-      { pos: [-18, 0, -38], to: [-15.5, 0, -35.5], phase: .3 },
-      { pos: [18, 0, 38], to: [15.5, 0, 35.5], phase: 1.4 },
-      { pos: [-12, 0, 8], to: [-9.5, 0, 10.5], phase: 2.2 },
-    ],
+    /* Três indivíduos bastam para duas leituras de fauna. Os GLBs locais custam
+       ~17,5 k tris; o bando anterior (11) sozinho custava ~66 k tris. */
+    rats: [{ pos: [-18, 0, -38], to: [-15.5, 0, -35.5], phase: .3 }],
     pigeons: [
       { mode: 'ground', pos: [-12, 0, 6], phase: .5 }, { mode: 'ground', pos: [12, 0, -6], phase: 1.6 },
-      { mode: 'ground', pos: [-10.8, 0, 5], phase: .8 },
-      { mode: 'ground', pos: [0, 0, 15], phase: .1 }, { mode: 'ground', pos: [3, 0, 19.5], phase: 1.1 },
-      { mode: 'ground', pos: [-4, 0, 20], phase: 2.0 }, { mode: 'ground', pos: [6, 0, 14], phase: 2.7 },
-      { mode: 'ground', pos: [-2, 0, 22.5], phase: 3.3 },
     ],
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16},{src:AMB_LOOPS.eco,pos:[0,4,0],radius:55,vol:.13}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,update,pickups,sun,hemi,carandiru,
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16},{src:AMB_LOOPS.cidade,pos:[0,4,0],radius:55,vol:.13}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,update,pickups,sun,hemi,carandiru,
     layeredNavigation:true,botLayeredNavigation:true,snapDownSteps:true,spawns,ctfPoints,
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};
 }

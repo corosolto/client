@@ -35,9 +35,946 @@ superfície → 0/44) e entrou a **CHR7** (convenção de skin), verde — daí 
 CHR1/CHR3/CHR4 seguem exatamente como estavam (conferido personagem a personagem: a
 lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
+> **`check:fast` de 13/09/2026, A/B do BUG-167 + BUG-168.** Execução completa na base
+> `d4d9c6935` (alpha.250): **129/142**, 13 vermelhas. Execução completa no conserto:
+> **130/144**, 14 vermelhas — a 14ª era `travessao:check`, acesa por dois travessões meus em
+> `index.astro`, consertada e conferida VERDE em seguida, o que põe o conserto em **131/144**.
+> Esse 131 é COMPOSIÇÃO de duas medições, não uma execução única: a execução completa sobre o
+> commit final foi interrompida no passo 53. Sobre o commit final foram conferidos um a um e
+> estão VERDES: `eval:comentario`, `docs:check`, `arch:check`, `changelog:check`,
+> `travessao:check`, `eval:launchwatchdog`, `eval:switchteam`, `eval:error-console`,
+> `eval:webglguard`, `eval:mutcega`, `eval:ctfhud`, `eval:pause`, `eval:ctfwin`, `eval:spawn`
+> e `eval:regen`. Os 13 vermelhos são os
+> MESMOS nos dois lados, conferidos um a um na base: `eval:mapid`, `eval:redesign`,
+> `audio:check`, `eval:pegada`, `anims:merge:check`, `menuwalls:check`, `eval:posters`,
+> `eval:lajes-authored`, `eval:lajes-circuito`, `eval:lajes-antitrap`,
+> `eval:sertao-livestock`, `eval:miticos-lobisomem`, `eval:mansao` — devDep ausente na
+> máquina (`sharp`), asset local não gerado, ou dívida conhecida. Os 2 passos novos
+> (`eval:switchteam`, `eval:launchwatchdog`) são o que leva 142 a 144, os dois VERDES.
+> **Nesta máquina NÃO foram verificados:** `npm run build`, `check:seo` e nenhum portão de
+> navegador (sem `node_modules` completo).
+
 ---
 
+## Encontro no multiplayer — 60% das sessões eram contra bot
+
+**Medido em 13/09/2026** (`mp_metrics_5m` e `mp_session`, 30 dias de produção):
+
+| | |
+|---|---|
+| sessões de multiplayer | 459, de 296 pessoas |
+| dividiram sala com outro humano | 184 — **40%** |
+| contra bot só | 275 — **60%** |
+| janelas de 5 min com 2+ conectados | 129 de 10.332 — **1,2%** |
+| duração mediana da sessão | 2 min 10 s (26% abaixo de 1 min) |
+| RTT p50 / tick acima do orçamento / desconexão por erro | 28,2 ms / 0,010% / **0** |
+
+A rede está saudável: o problema é dispersão. Duas regras do próprio jogo separavam as pessoas.
+
+**`ordenarNos` desempatava pelo nó mais VAZIO** dentro da faixa de 15 ms — regra escrita para
+o `br2` (capacidade, dois nós no mesmo datacentre). Com pico de 12 simultâneos no mundo todo,
+ela manda cada pessoa para uma sala vazia. Invertida.
+
+**O QUICK PLAY lia as salas de um nó só**, o de menor ping: duas pessoas separadas por 12 ms
+nunca se encontravam. Agora `melhorNoParaJogar` (em `public/js/nos.js`) procura gente e
+atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o atraso.
+
+Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
+
+## BUG-169 — "SERVIDORES FORA DO AR" com os quatro nós de pé
+
+**Fechado em 13/09/2026.** A tela de multiplayer mostrava os quatro servidores "fora do ar"
+enquanto todos respondiam. Não era rede: `sondarNos` marcava o prazo com
+`setTimeout(abort, 2500)`, que mede **relógio de parede**, e um `fetch` só resolve quando a
+thread principal atende. O boot do jogo (WebGL, GLB, texturas) trava a thread por segundos —
+o prazo vencia sozinho e abortava sonda de nó que tinha respondido em 24 ms. Por isso
+"TENTAR DE NOVO" consertava: na segunda vez o jogo já tinha carregado.
+
+Medido na página de produção, no navegador:
+
+| | br | br2 | us | eu |
+|---|---|---|---|---|
+| thread livre | 220 ms | 216 ms | 119 ms | 24 ms |
+| thread travada 3 s | FORA | FORA | FORA | FORA |
+
+Conserto: `prazoAcordado()` em `public/js/net.js` — tique de 100 ms que, quando volta
+atrasado, cobra o passo e não o relógio; 3 s de travada custam ~200 ms do orçamento.
+Régua `eval:sonda`, mutante `relogio-de-parede`.
+
+Mesma família do BUG-166 (também na sonda) e mecanismo diferente: lá uma amostra apagava a
+outra; aqui o prazo cobra tempo que o código não pôde usar.
+
+## Sertão — casas da praça (PR #526, revisão local 06/09)
+
+### ~~BUG-145 · Rejeição humana pós-merge: carroças ainda bloqueiam e a fileira dos respawns ainda tem fachadas fechadas~~ · CORRIGIDO, AGUARDA REVISÃO HUMANA 08/09
+
+**Relato literal recebido depois do merge do PR #526:** "carroças ainda bloqueiam
+passagem e as casas diante dos dois spawns continuam fechadas/inúteis". Os gates
+anteriores respondiam outra pergunta: WA2 aceitava um único flanco livre por carroça,
+e IN1/IN2 cobravam apenas uma das duas fachadas de cada fileira de respawn.
+
+**Baseline vermelha em `origin/main` alpha.242 (`e67addf4`):** WA5 encontra o
+flanco leste da carroça `(7,2)` e o oeste da `(-14,2;25,4)` bloqueados. IN12/IN13
+encontram somente duas das quatro fachadas jogáveis: `platibanda-0` desloca a
+cápsula 3,68 m na entrada e `pedra-8`, 3,43 m; ambas estão ausentes de
+`interiorHouses` e falham na visada recíproca pela janela. Evidência:
+`artifacts/sertao-respawn-fix/{wagon,interiors}-baseline-red.json`.
+
+**Depois:** WA5 exige os dois flancos das três carroças e mede 4,9 m de travessia
+traseira em todas. IN12/IN13 cobrem cinco casas das fileiras: entrada, saída
+lateral e LOS recíproca pela janela, sem deslocamento da cápsula. A geminada
+central também foi aberta; os interiores de pedra mantêm os 6,1×6,2 m da família
+original para não estrangular a rota leste. A grade dos bots exclui o interior e
+adiciona centro/soleira intencionais, removendo a oscilação que apareceu no
+primeiro golden pós-correção.
+
+**Réguas e prova negativa:** `sertao-wagon-check.mjs` mata
+`carroca-bloqueadora` em WA5; `sertao-interiors-check.mjs` mata
+`fechar-casa-respawn` em IN12 e `fechar-janela-respawn` em IN13. Os 16 mutantes
+de interiores, três de carroça e 14 espaciais foram mordidos. SP4 mantém três
+rotas disjuntas de 31/34/29 nós. Capturas WebGL 1536×1024 e resultados completos:
+[SERTAO-RESPAWN-WAGONS-FIX](docs/reports/SERTAO-RESPAWN-WAGONS-FIX.md). O estado
+continua em draft até o dono atravessar as carroças e entrar nas casas na partida.
+
+### ~~BUG-91 · Rejeição humana em runtime 3:2: jogador não passa junto às carroças e as casas diante dos spawns continuam fechadas~~ · RESOLVIDO E VALIDADO EM WEBGL 08/09
+
+**Relato literal do dono (runtime 3:2, capturas de 06→07/09 23h52–00h00)**: (1) há
+trechos em que o jogador não passa junto às carroças; (2) as casas diante dos spawns
+continuam cenográficas e fechadas — ele quer entrar nelas e usar janelas como posição
+tática. O quality gate estava verde (IN1–IN7, TR1/TR3, SP1–SP9): pelo corolário da lei 1
+da `bug-hunt`, o defeito é do quality gate — nenhuma régua media corredor junto às
+carroças nem interiores diante dos spawns.
+
+**Inspeção inicial (`public/js/map_velho_oeste.js`)**: `wagon()` empurra AABB
+conservador de meia-largura 2,3×3,2 quando a carroceria visível é 1,9 de largura ×
+1,1 de corpo (+ rodas até 1,71 em z) e a lança tem colisor próprio sobreposto — parede
+invisível de ~1,5 m na traseira e cantos inflamados pela rotação. O PR #526 abriu só as
+duas `casaDaPraca` em z=15; as `CASAS` diante dos spawns (platibanda 0/1 ao norte,
+pedra 7/8 e geminada 9 ao sul) mantêm colisor único fechando a planta.
+
+Régua: `tools/eval/sertao-wagon-check.mjs` (WA1–WA4) + `sertao-interiors-check.mjs`
+estendido às 4 casas. **Antes:** WA1 19–30 m² de área invisível por carroça,
+WA2/WA3 zero; casas dos spawns sem interior. **Depois:** WA1–WA4 e IN1–IN7
+verdes; mutantes `aabb-conservador`, `barreira-spawn`, `fechar-porta-casa`,
+`fechar-janela-casa` (+8 anteriores, +17 espaciais) mordendo. De carona:
+`sertao-spatial-check` truncava stdout em pipe (`process.exit` → `exitCode`).
+Antes/depois, custos e comandos: [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+**WebGL 3:2:** RV1–RV12 verdes em 1536×1024; imagens reais abertas e examinadas.
+O agrupamento dos interiores reduz o pico de 564 para 499 draw calls e o mutante
+sem batch deixa RV3 vermelho. IN8–IN11 cobrem saída lateral, tiro tático, seis
+coberturas da praça. Cabras, galinha e pintinhos foram conferidos no runtime por
+LG1–LG8. O julgamento final da sensação de combate permanece humano.
+
+Frestas laterais, obstáculos internos e uma aresta bloqueada por esteio foram
+reproduzidos e corrigidos. Régua: `tools/eval/sertao-interiors-check.mjs`,
+`IN3/IN4/IN5` vermelhas antes e verdes depois, com mutantes. Evidência, custo e
+continuação em [SERTAO-CASAS-SUNSET](docs/reports/SERTAO-CASAS-SUNSET.md).
+A coordenada exata do relato original permanece sem reprodução localizada; a
+varredura IN7 confirma zero bolsões livres inacessíveis no mapa inteiro. A
+evidência WebGL está em `artifacts/sertao-casas/runtime-final-v2/`; a entrega não é
+uma publicação de produção.
+
 ## P0 — quebram o jogo ou mentem para quem mede
+
+### BUG-173 · a cauda do lançamento de partida acordava depois da saída e mexia num `game` nulo · CORRIGIDO 19/09
+
+**Sintoma (literal, issues #609 e #608, abertas sozinhas pelo `crash-fix.yml` em 18/09 14:31Z,
+`2.0.0-alpha.261-c690c8831dea`, classe `codigo`):**
+
+```
+#609  Falha ao abrir partida: Cannot read properties of null (reading '_requestLock')   fp 706a428c
+#608  falha ao abrir a partida Cannot read properties of null (reading '_requestLock')  fp 9680a228
+
+TypeError: Cannot read properties of null (reading '_requestLock')
+    at _startGame (main.js:1376:23)
+    at async startGame (main.js:1179:5)
+    at async mpMontarPartida (main.js:3455:3)
+    at async net.onPartida (main.js:3440:5)
+Migalhas: 19 cliques em #game-container entre 14:03:43 e 14:03:52
+```
+
+**As duas issues são um crash só, contado duas vezes.** Mesma linha, mesma pilha: a #608 é o
+`console.error('falha ao abrir a partida', e)` e a #609 é o `__gameLaunch.fail(e,
+'main.js:startGame')` — os dois no MESMO `catch` do `startGame` (`main.js:1181-1189` em
+alpha.261). Fingerprints diferentes porque o watchdog prefixa a mensagem; causa idêntica.
+
+**Causa raiz — confirmada pela pilha, e o lugar é o que importa.** `game` é CONSTRUÍDO 80
+linhas acima da linha que estourou, na mesma função. Para ser nulo na 1376, alguém tem que
+tê-lo soltado no meio — e o meio existe: `_startGame` é `async`, e entre `game = new Game(…)`
+e `game._requestLock()` mora o `await` dos dois `requestAnimationFrame`; antes dele, o `await`
+do preload, que leva **segundos**.
+
+Lançar partida é uma **corrida**, e três eventos chegam nessa janela sem precisar de sorte —
+os três zeravam `game` em quatro lugares diferentes, nenhum deles sabendo que havia um
+lançamento em voo:
+
+| quem chega | caminho | o que fazia |
+|---|---|---|
+| saída pelo menu | `quitToMenu` (`:1408`) / `mpSair` (`:3531`) | `game = null` |
+| queda do socket | `net.onClose` → `mpDesconectou` (`:3468`) | `game = null` |
+| remontagem (mapa girou) | `net.onPartida` → `mpMontarPartida` → `startGame` | derruba e remonta |
+
+A pilha das duas issues entra por `net.onPartida`: é a **remontagem**, e a migalha casa com
+ela (19 cliques em 9 s é gente clicando numa tela que não responde, não gente saindo).
+
+**O crash é o MENOS grave dos quatro estragos**, e é o único que aparecia no painel. A cauda
+perdida também: chamava `hideLoading()` por cima da tela de loading do lançamento **novo**,
+descobrindo cena pela metade (o "minecraft" que o comentário do `showLoading` proíbe); mandava
+`game_start` de partida que não existe, inflando o funil; e, na guarda do preload, construía um
+`Game` inteiro **depois** da desconexão — zumbi rodando atrás do menu. De quebra, `show()` não
+mexe no overlay (`:319`): queda no meio do preload deixava o menu atrás de um "CARREGANDO
+MODELOS 3D…" eterno.
+
+**Refutados com medição, não com palpite:**
+
+- *`game?._requestLock()`* — cala o TypeError e deixa os outros três estragos de pé: cobre a
+  linha do relatório, não o defeito. **A régua NÃO distingue `game.` de `game?.`** (medido: com
+  o `?.` aplicado por cima do conserto ela fica 10/10 verde, porque a guarda já impede a cauda
+  perdida de chegar lá e o `?.` vira redundância). Quem refuta o `?.` sozinho são as LR2/LR7/LR8,
+  que medem os OUTROS estragos — não a linha do `_requestLock`.
+- *comparar identidade, `game !== meuJogo`* — **passa verde no caminho que produziu as
+  issues**, e é a cláusula LR2 que mede isso: o lançamento novo derruba o antigo
+  (`if (game) game.dispose()`) e só atribui o `game` novo ao fim do **próprio** preload,
+  segundos depois. Nessa janela `game` AINDA é o objeto da cauda velha, já descartado.
+- *é a queda de rede do BUG-170/#592* — não. Aquela é `TypeError: network error`, sem quadro
+  de pilha, classificada `recuperavel`. Esta tem pilha, linha e função, e a linha é nossa.
+
+**Conserto (`public/js/main.js`): nº de lançamento, um dono só para soltar a partida.**
+`_lancamento` nasce em `novoLancamento()` no topo de `startGame`; `lancamentoPerdeu(n)` é a
+guarda, posta depois dos `await` que precedem um uso de `game`; e as quatro solturas passaram a
+chamar um `soltarPartida()` único, que zera `game`/`window.__game`, **invalida o lançamento em
+voo** e baixa a tela de loading. Quem perdeu a corrida desiste sem tocar em nada.
+
+**O crítico adversarial achou dois furos, e os dois viraram cláusula.** Régua verde da 1ª
+rodada não era prova (`AGENTS.md`, "quem constrói nunca dá a nota"):
+
+1. *A LR6 é TEXTUAL e portanto cega.* `if (lancamentoPerdeu(n) && false) return;` mantém o
+   token, mata o efeito, devolve o Game zumbi — e a régua ficava **6/6 verde**. Pior: o
+   mutante `sempreload`, que deveria pegar isso, se autodesarmava (arrancava uma guarda que
+   já não fazia nada). Resposta: as guardas ganharam cláusula **EXECUTÁVEL** (LR7/LR7b, região
+   `nascimento`), e o mutante `guardafalsa` ficou no arquivo para documentar a cegueira.
+2. *O `catch` do `startGame` derrubava lançamento alheio.* `soltarPartida()` incondicional
+   invalida **qualquer** lançamento em voo: se a abertura A falhasse depois de a B ter
+   nascido (`onSlot` e `onPartida` são callbacks de socket independentes, sem mutex), o
+   `catch` de A matava B e ainda mandava `show('main-menu')` — o jogador ficava no menu com a
+   partida que o servidor mandou montar nunca subindo. Resposta: o teardown do `catch` virou
+   condicional ao lançamento ser o corrente (LR8), com a antivacuidade que exige que a
+   abertura quebrada **corrente** continue voltando pro menu (LR8b, que é o BUG-42).
+
+**Uma SEGUNDA rodada de crítica, contra o conserto já corrigido, achou mais dois — e um deles
+era pior que o defeito original:**
+
+3. *O `fail` do watchdog ficou FORA da guarda que a rodada 1 criou.* O teardown virou
+   condicional e o `__gameLaunch.fail(e)` não: o lançamento velho abria o modal
+   `#launch-error` — **irrecuperável, só "TENTAR DE NOVO", que recarrega a página**
+   (`index.astro:240`) — por cima da partida nova rodando bem, e de quebra desarmava o
+   watchdog dela (`fail` chama `ready`, `index.astro:304`). Resposta: o `fail` entrou na
+   guarda e o `console.error` **ficou fora**, porque ele é coletado (`index.astro:426`) e é o
+   caminho da própria #608. Mesma disciplina do BUG-170: corta o modal, nunca a telemetria.
+   Mutante `modalfora`, cláusula LR8.
+4. *A LR6 prometia mais do que media.* Ela só olhava o **primeiro** uso de `game` depois de
+   cada `await`; esse já estava protegido, e qualquer uso seguinte era invisível —
+   acrescentar `game._requestLock()` depois da guarda existente passava verde. Virou varredura
+   em ordem com estado: o `await` arma, a guarda desarma, todo `game` tocado com o gatilho
+   armado acende.
+
+**Medido (A/B pela mutação, que é o código de alpha.261 de volta):**
+
+| | antes (`--mutante=semguarda`) | depois |
+|---|---|---|
+| saída entre os dois quadros | `TypeError: Cannot read properties of null (reading '_requestLock')` | nenhuma exceção |
+| remontagem: `hideLoading` roubado / `game_start` fantasma | 1× / 1 | 0 / 0 |
+| `await` de lançamento sem guarda antes de tocar em `game` | 1 de 3 (`sempreload`: 2 de 3) | 0 de 3 |
+| lançamento normal entrega a partida (antivacuidade LR3) | sim | sim |
+
+**Régua: `tools/eval/launch-race-check.mjs`** (`npm run eval:launchrace`, no `check:fast`
+depois do `eval:launchwatchdog`), **10 cláusulas**. Ela **extrai** do `main.js` as quatro
+regiões `RÉGUA:launch-race` — estado do lançamento, nascimento (guarda do preload + `new
+Game`), cauda e queda (o `catch`) — e as roda num `vm` com `requestAnimationFrame` sob
+controle, para interromper exatamente entre os dois quadros. **7 mutantes, os sete mordem**, e
+LR3/LR7b (as antivacuidades) ficam verdes nos sete:
+
+| mutante | o que arranca | acende |
+|---|---|---|
+| `semguarda` | a guarda da cauda (= alpha.261) | LR1, LR2, LR6 · a LR1 reproduz a mensagem da issue |
+| `sempreload` | a guarda do preload (o Game zumbi) | LR6, LR7 |
+| `semepoca` | a invalidação do lançamento em `soltarPartida` | LR1, LR4, LR7 |
+| `semtela` | o `hideLoading` de `soltarPartida` | LR4, LR8b |
+| `guardafalsa` | o EFEITO da guarda, mantendo o token | LR1, LR2, LR7 — **LR6 fica verde** |
+| `quedacega` | a condição do teardown do `catch` | LR8 |
+| `modalfora` | só o `fail` escapa da guarda do `catch` | LR8 |
+
+**Limite medido da régua:** régua de REGIÃO não impede código acrescentado FORA dos
+marcadores. A LR6 cobre o corpo inteiro do `_startGame` contra uso de `game`, mas uma linha
+nova dentro do `catch` do `startGame` passa por ela (o 2º crítico demonstrou sete mutações
+de uma linha, fora das regiões, com a régua verde). Quem cobre caminho automático para o
+menu, em `main.js` inteiro, é a **PAUSA5** do `pause-check`.
+
+**Custo declarado.** `soltarPartida()` passou a baixar o loading em TODA saída, inclusive nas
+três que já saíam com o overlay escondido — chamada idempotente
+(`classList.add('hidden')`), zero efeito visível. A LR6 continua sendo textual e o
+`guardafalsa` prova que ela é cega sozinha: ela está no arquivo pelo await de amanhã, não
+pela guarda de hoje. E `tools/eval/pause-check.mjs` teve a cláusula **PAUSA5** ajustada: ela
+reconhecia a fronteira do `catch` de `startGame` pelo literal `game = null`, que virou
+`soltarPartida()` — acendeu por RENOMEAÇÃO, e vermelho que não é defeito ensina a ignorar
+vermelho. O corte novo aceita as duas formas; os mutantes `automenu` e `automenu-mp` continuam
+acendendo a PAUSA5 (conferido: 5/6 nos dois).
+
+**Não coberto, de propósito.** Depois de uma remontagem, a cauda velha retorna e o `startGame`
+dela chama `__gameLaunch.ready('partida')`, que desarma o watchdog **do lançamento novo**
+(`ready` só compara o nome da etapa, `index.astro:297`). Consequência: se o lançamento novo
+travar de verdade, ninguém reporta. Não foi consertado aqui porque a alternativa — não chamar
+`ready` — devolve o falso positivo "tempo limite ao abrir partida" que o BUG-167 acabou de
+fechar, e a correção certa (identidade de lançamento dentro do watchdog) mexe na região marcada
+do `index.astro` e na régua dele. Fica registrado como dívida.
+
+**Não verificado:** nenhum portão de navegador — `playwright` não está instalado nesta máquina,
+e a corrida é de dois quadros (repro manual confiável não existe; foi por isso que a régua
+virou `vm` com rAF sob controle, e não `crash-watch`). `npm run build` e `check:seo` também não
+rodaram aqui. A recorrência em produção não foi medida: a tabela `js_error` é schema privado,
+sem credencial nesta máquina.
+### BUG-177 · `loop()` lia `#char-select` sem guarda e congelava o jogo quando o elemento sumia · CORRIGIDO 23/09
+
+**Sintoma:** crash automático #617 em produção (alpha.262), `TypeError: Cannot read
+properties of null (reading 'classList')` em `main.js:2825` dentro de `loop`.
+
+**Causa raiz:** `loop()` roda a cada quadro e fazia `$('char-select').classList` sem
+checar null. Quando `#char-select` não está no DOM (extensão ou tradutor que reescreve o
+body), o TypeError se repete a cada quadro — `requestAnimationFrame(loop)` vem antes,
+então o laço continua, mas nada depois da linha roda: sem `game.update`, sem render.
+
+**Conserto:** acesso por `?.` no `csOpen` (ausente = fechada) e na espera do
+`char-select` do deep link. Régua `LOOP1` em `tools/eval/invariants.mjs`: nenhum
+`$('…').` sem `?.` no corpo de `loop()`. Mutante: o `main.js` da alpha.262 reprova
+(`char-select`).
+
+### BUG-172 · o B5 do boot-check injetava erro com stack de arnês e o corte de automação o filtra · CORRIGIDO 18/09
+
+**Sintoma:** `eval:boot` (passo do `portao-browser`) reprovando **B5** — "?debug=1
+preserva o painel técnico" — em toda árvore desde o merge #587 (BUG-151), inclusive na
+`main` (run 35252681261, 17/09 17:25). B1–B4 e B6–B7 verdes.
+
+**Causa raiz — confirmada por stack.** O B5 injetava o diagnóstico com
+`page.evaluate(() => console.error(new Error(...)))` — a stack nasce com os frames
+`UtilityScript.evaluate` do Playwright. O corte `AUTOMACAO_RE` (BUG-151) existe
+EXATAMENTE para classificar esses frames como externos ("arnês apontado para produção
+não é defeito do jogo") — e classificou o sinal do próprio check, que nunca mais
+chegava ao painel. Medido: stack direto casa `UtilityScript`; via callback de
+`setTimeout` agendado pelo evaluate, NÃO casa.
+
+**Conserto:** a injeção do B5 passou a criar o erro em callback de timer — o formato
+de erro de quem depura de verdade (console do navegador nunca carrega frames de
+arnês, e é esse o contrato do painel ?debug=1). Mutante `--mutante=vaza-detalhe`
+continua reprovando: a régua morde igual.
+
+
+### BUG-171 · chapéu de cangaceiro pintado no osso do braço fazia 14 reprovados no portão de seleção · CORRIGIDO 17/09
+
+**Sintoma:** `portao-browser` (eval:select) vermelho em TODA PR e na `main` desde 13/09 —
+14/53 reprovados contra dívida declarada de 12. Lampião 43,2 e Maria Bonita 31,3 ruins/1e4
+(teto 23,6, derivado de mandrake 18,9 × 1,25).
+
+**Causa raiz — confirmada por atribuição por osso.** Toda aresta ruinosa dos dois era
+Head↔Arm: a aba do chapéu, no bind T-pose, fica MAIS PERTO do segmento ombro→cotovelo do
+que do segmento curto da cabeça, e o auto-skin por proximidade (`rig-from-donor.mjs`)
+crava "rígido no mais próximo" — a aba virou carne de `LeftArm`/`RightArm`. O idle abana
+o braço, a aba fica: L0 1,4 → L 23,8 (r = 15,9). Mesma classe do jozo/trapfunk documentada
+na guarda de palma ("auto-skin pendurou no osso um pedaço de malha que não está lá").
+Ablações `semik`/`semtudo`/`semtrans` não movem o número: 100% pintura.
+
+**Por que a lane miticos não pegou:** o merge #570 registrou "lampiao 121,5 -> 42,3,
+dentro da dívida publicada" — a contagem fechava em 12 naquele dia; personagens que
+deixaram a tela de seleção depois empurraram a conta para 14 na main.
+
+**Conserto (`tools/head-zone-repin.mjs`):** cirúrgico, só JOINTS_0/WEIGHTS_0 dos dois GLB.
+Vértice acima da linha do pescoço não carrega peso em subtree de ombro/braço; o peso
+livre vira blend POT (inverso-distância^1,5, a mistura do reskin) sobre a cadeia
+neck→Head→folhas, peso de tronco preservado, suavização de vizinhança com anel de
+fronteira (SUAVIZA=6 no lampiao, 3 na maria). Repintura total do reskin foi medida e
+DESCARTADA: 43,2 → 57,7 (perde o tuning da lane).
+
+**Medido:** lampiao 43,2 → **23,4**; mariabonita 31,3 → **22,8**; portão **12/53, EXIT 0**.
+`check:fast` 141/145 (= baseline da máquina); `eval:chao` CHR7 53/53 na catraca; fotos da
+região da cabeça sem rasgo nem flutuação. Mutante: `git checkout` dos GLB devolve 14/53.
+
+
+### BUG-170 · queda de rede do jogador entrava como crash de código e abria issue automática · CORRIGIDO 15/09
+
+**Sintoma:** issue #592, aberta sozinha pelo `crash-fix.yml` em
+`2.0.0-alpha.251-0dd79c32ad74`, classe `codigo`:
+
+```
+Mensagem: Falha ao abrir partida: network error
+Stack:    TypeError: network error
+Origem:   promise
+Migalhas: …17:23:09 clique #mp-panel · 17:23:11 clique button · 17:23:44 clique #mp-panel…
+```
+
+É a **terceira** issue da mesma causa: #125 (`network error`, Firefox) e #201
+(`Falha ao abrir partida: Load failed`, WebKit) já tinham sido fechadas antes. `network
+error`, `Load failed` e `Failed to fetch` são a MESMA falha — um `fetch` que não completou —
+escrita por três engines diferentes. Não é defeito de código e não tem conserto no repo.
+
+**Causa raiz — confirmada. Três degraus, e o corte que existia falhava nos três:**
+
+1. **Sem prova de origem, o cliente assume que a culpa é dele.** Um `fetch` caído rejeita com
+   mensagem crua e **sem quadro de pilha**: `origemDoJogo` (`src/pages/index.astro`) não acha
+   `source`, não acha URL nenhuma na stack, cai no `return !viuExterna` final — e devolve
+   `true`. "Nenhuma evidência" era lido como "é nosso".
+2. **O watchdog converte rejeição de FUNDO em falha de abertura.** Com `interna = true` e o
+   lançamento armado em `partida`, o `unhandledrejection` chamava `lancamento.fail()`, que
+   embrulha a mensagem em `"Falha ao abrir " + etapa + ": " + msg`. Qualquer `fetch` anônimo
+   que caísse na janela de carga virava "Falha ao abrir partida" — e o jogador levava a tela
+   amigável de falha por causa de um pedido de fundo.
+3. **O corte do servidor não alcançava nenhuma das duas formas.** `OPAQUE_RE` até lista
+   `^network error$`, mas `isOpaqueNoise` desiste na primeira linha quando há `source` **ou**
+   `stack`, e o watchdog preenche os dois (`source='promise'`,
+   `stack='TypeError: network error'`). O ramo era **letra morta exatamente no caso que
+   dizia cobrir**: nem #125 (que chegou com stack e sem source) teria sido cortada hoje. E,
+   mesmo que rodasse, a âncora `^…$` já não casaria com o prefixo do watchdog.
+
+**Conserto.** Uma redação só, `REDE_RE`, espelhada nos dois lados — a mesma disciplina da
+`CARTEIRA_RE`/`PONTE_INJETADA_RE` (BUG-76/BUG-78):
+
+- `src/lib/error-provenance.mjs`: `classifyCrash` devolve `recuperavel` (fica na telemetria
+  bruta, **não** consome dispatch, **não** abre issue). Casa a **mensagem inteira**, nunca
+  `evidence` — a stack de um fetch caído é só `TypeError: network error`, e casar nela
+  afrouxaria o corte. Testado **depois** de `CACHE_SPLIT_RE`, para o
+  `Failed to fetch dynamically imported module` continuar sendo cache-split (BUG-39).
+- `src/pages/index.astro`: `erroDeRede` desarma só o `lancamento.fail` do
+  `unhandledrejection`. O `reporta()` **segue enviando** e a linha continua no banco.
+
+**O que continua pegando defeito de verdade:** o teto de 60 s do próprio watchdog segue
+armado — travamento real ainda falha com "tempo limite ao abrir partida" (BUG-167). E o corte
+é ancorado na mensagem inteira, então defeito com mensagem descritiva não passa por ele.
+
+**Régua:** `tools/ops/tests/error-provenance.test.mjs` (`npm run ops:test`), 9 cláusulas com
+os payloads reais de #592, #125 e #201, mais as antivacuidades (cache-split ganha de rede;
+`"Cannot read properties of null (reading 'fetch')"` segue `codigo`; rede citada no MEIO de
+uma mensagem não corta) e o espelho cliente↔servidor byte a byte.
+
+### BUG-167 · "Falha ao abrir partida: tempo limite ao abrir partida" em partida que já tinha aberto · CORRIGIDO 13/09
+
+**Sintoma (do dono, colado do painel de erros):** *"deu esse erro 8h atras no jogo: 40 ·
+Falha ao abrir partida: tempo limite ao abrir partida · launch-watchdog"*, em
+`2.0.0-alpha.250-c2d31b71e5eb`, mapa `upa_24h`, modo `rounds`.
+
+O próprio relatório se contradiz, e é daí que sai o diagnóstico:
+
+```
+00:39:38 clique #mp-quick
+00:39:54 ops live em 35935ms mapa=upa_24h modo=rounds   <<< A PARTIDA ABRIU
+00:39:56 ops congelou 1576ms
+00:46:10 ops contexto WebGL perdido                     <<< SETE MINUTOS DEPOIS
+```
+
+Um tempo limite **de abertura** não pode ser verdade numa sessão que já registrou `live` e
+seguiu nela por seis minutos.
+
+**Causa raiz — confirmada. São dois defeitos no mesmo laço, e os dois são a mesma confusão:
+o watchdog mede o TEMPO com `setTimeout` e mede o SUCESSO com estado movido pelo
+`requestAnimationFrame`.**
+
+1. **O relógio corre com a aba no fundo.** `setTimeout` dispara na aba oculta; o `rAF`
+   **para**. Quem abre o jogo e troca de aba durante os ~36 s de carga volta para a tela
+   amigável de falha: o relógio andou os 60 s, o jogo não andou um quadro, e o watchdog leu
+   o congelamento do `rAF` como travamento (`src/pages/index.astro`, `lancamento.begin`).
+2. **Predicado de vivacidade usado como predicado de conclusão.** O teste era
+   `window.__game.state === 'live'` (`public/js/main.js`), e `live` é só UM dos estados de
+   partida aberta: o motor passa por `countdown` (`public/js/game.js:2255`) e `roundEnd`
+   (`public/js/game.js:4548`, 4 s por rodada) a cada troca de rodada. Junte com a renovação
+   de rede lenta (#241), que pergunta pelo progresso de carga **antes** de perguntar pelo
+   estado: todo tique com asset chegando renovava sem olhar o jogo, o watchdog sobreviveu ao
+   lançamento, e o primeiro tique sem asset novo encontrou o jogo numa transição de rodada.
+   No MP isso é pior porque o servidor gira o mapa (`public/js/net.js:175` → `onPartida` →
+   `mpMontarPartida` → `startGame`) e **rearma** o lançamento no meio da sessão.
+
+**Reprodução:** `node tools/eval/launch-watchdog-check.mjs` (sem navegador: a régua extrai o
+`lancamento` real do `index.astro` e o predicado real do `main.js` e roda os dois num `vm`
+com relógio falso, que é o único jeito de avançar 60 s de `setTimeout` **sem** avançar o
+`rAF` — a assimetria que produz o defeito).
+
+**Medido antes do conserto** (`node tools/eval/launch-watchdog-check.mjs`):
+
+| cláusula | antes | depois |
+|---|---|---|
+| LW1 · aba oculta 180 s durante a carga | 1 falha: *"tempo limite ao abrir partida"* | 0 falhas |
+| LW2 · tique numa troca de rodada | 1 falha: *"tempo limite ao abrir partida"* | 0 falhas |
+| LW4 · 7 min de partida, 6 renovações por asset, 7º tique em `roundEnd` | 1 falha | 0 falhas |
+| LW3 · travamento REAL (aba à frente, 0 quadro, 0 progresso) | 1 falha (correta) | 1 falha (correta) |
+| LW6 · aba oculta 60 s, volta, 180 s à frente sem quadro | — (cláusula nova) | 1 falha (correta) |
+
+**O que foi DESCARTADO com medição, não com palpite:**
+
+- *"o teto de 60 s é curto para rede lenta"* — não. A migalha diz `live em 35935ms`, dentro
+  do teto, e a renovação de #241 já cobre rede lenta com progresso. Subir o teto não teria
+  mudado uma destas 40 linhas.
+- *"é a perda de contexto WebGL que está falhando"* — não. Esse caminho tem mensagem própria
+  (`contexto WebGL perdido`, `public/js/main.js:135`) e fingerprint próprio; a mensagem
+  destas 40 é a do watchdog.
+- *uma trava (`_abriu`) no predicado* — escrita, medida e **removida**: o mutante
+  `--mutante=semtrava` ficou VERDE, provando que era código morto (quando o predicado
+  devolve verdadeiro o `ready()` já desarma o timer). Código que nenhuma mutação acende não
+  guarda nada.
+
+**Correção.** Na causa, nos dois lados da assimetria:
+- `src/pages/index.astro` — o tique **renova** em vez de falhar quando a aba está (ou
+  esteve) oculta, uma renovação por episódio de ocultação; travamento com a aba à frente
+  continua falhando no teto. Um `visibilitychange` faz o latch, porque a aba pode ocultar e
+  voltar antes do tique.
+- `public/js/main.js` — o predicado passa a provar **quadro**, não sub-estado:
+  `if (g && g.time > 0) return true;`, e **antes** da cláusula de rede lenta. `game.time` só
+  anda dentro do `update()` do laço de `rAF` (`public/js/game.js:7346`).
+
+**Custo declarado, medido:** o watchdog deixa de detectar um travamento que aconteça
+**enquanto a aba está oculta** — por desenho, porque nesse estado não existe sinal de
+progresso para distinguir travamento de `rAF` congelado. Ele volta a valer no primeiro tique
+com a aba à frente. A LW3 cobra que esse caso continue falhando.
+
+**Um furo do PRÓPRIO conserto, achado pela régua e não por leitura.** A primeira versão da
+renovação por aba oculta não consumia o latch no `begin`: uma única troca de aba na sessão
+desarmava o watchdog pelo resto dela, e a LW1 ficava verde exatamente do mesmo jeito. Daí
+nasceu a LW6, e com ela o mutante `--mutante=semconsumo`. Fica registrado porque é o modo de
+cegueira nº 1 desta casa: cláusula que só cobra "não falhou" sem cobrar "ainda pode falhar".
+
+**Régua: `tools/eval/launch-watchdog-check.mjs`** (`npm run eval:launchwatchdog`, no
+`check:fast`). 6 cláusulas, 3 mutações medidas, cada uma acendendo cláusula diferente:
+`--mutante=sovivo` (devolve `state === 'live'` na ordem original) acende LW2 e LW4 com a
+mensagem literal da produção; `--mutante=semoculto` (tique ignora a aba oculta) acende LW1;
+`--mutante=semconsumo` (latch nunca consumido) acende LW6. Nas três a LW3 fica VERDE — é ela
+que impede "consertar" o falso positivo desarmando o watchdog.
+
+---
+
+### BUG-168 · troca de lado com personagem fora do elenco corrompia o Game e o crash só aparecia na morte seguinte · CORRIGIDO 13/09
+
+**Sintoma (do painel de erros):** `Uncaught TypeError: Cannot read properties of undefined
+(reading 'id')` em `glbchars.js:368`, pilha
+`buildCharacterModel` ← `_ensurePlayerTP` ← `_tpDeath` ← `_updatePlayer`, em
+`2.0.0-alpha.248`, `posto_treta` / `ctf`.
+
+**Procedência, para não vender mais do que foi medido:** a linha chegou de `localhost:8202`
+— máquina de desenvolvimento, não do site no ar. O caminho defeituoso, porém, é código
+publicado, e o arnês o reproduz.
+
+**Causa raiz — confirmada, e ela não está em nenhuma das quatro linhas da pilha.**
+`buildCharacterModel` recebeu `def === undefined` porque `this.playerDef` já estava undefined
+quando o jogador morreu. Quem o deixou assim foi a troca de lado (tecla M):
+
+```js
+public/js/game.js:2788   if (charId) { this.playerDef = byId(charId); ... }
+```
+
+`byId` é `CHARACTERS.find(...)` (`public/js/characters.js:613`) — devolve **undefined** para
+id fora do elenco. O mesmo campo, no construtor, **já tinha reserva**:
+`byId(playerCharId) || CHARACTERS[0]` (`public/js/game.js:712`, com aviso no `:713`). A
+assimetria entre as duas linhas era o defeito.
+
+**E o que tornou isso caro foi o `catch`** (a assinatura da lei 6 desta casa): em
+`public/js/main.js:2157` a chamada mora em `try { game._switchTeam(id) } catch (e) {
+console.error('switch team failed', e) }`, e logo abaixo vem `game.resume()`. A atribuição
+acontece **antes** da exceção; o `catch` engole a exceção, o `resume()` devolve o jogo ao
+jogador, e o Game segue rodando **corrompido**. A quebra só aparece na morte seguinte, em
+outro arquivo, a quatro quadros da causa — foi assim que ela chegou como "crash no glbchars".
+
+**Reprodução:** `node tools/eval/switchteam-check.mjs` (arnês em node, `posto_treta`/`ctf`).
+
+**Medido antes do conserto** (`node tools/eval/switchteam-check.mjs`):
+
+| cláusula | antes | depois |
+|---|---|---|
+| ST1 · `_switchTeam('id-fora-do-elenco')` | `TypeError` em `game.js:2801`; `playerDef` e `player.def` **undefined**; `playerCharId` = o id inválido | sem exceção; `playerDef='caminhoneiro'`, coerente com `player.def` e `playerCharId` |
+| ST2 · `_tpDeath()` em seguida (o caminho do relatório) | `TypeError: Cannot read properties of undefined (reading 'id')` | não lança |
+| ST4 · atribuições cruas a `this.playerDef` no fonte | 1 (`game.js:2788`) | 0 |
+| ST3 · troca com id VÁLIDO (antivacuidade) | troca de verdade | troca de verdade |
+
+**O que foi DESCARTADO com medição, não com palpite:**
+
+- *"é defeito do `buildCharacterModel`, que deveria tolerar `def` nulo"* — não. Ele **já**
+  devolve `null` sem template (`glbchars.js:369`) e o `_ensurePlayerTP` já trata `null`
+  (`game.js:5110`). Tolerar `def` undefined lá só moveria o crash para o próximo leitor de
+  `def.id` e apagaria o sinal de que o elenco do jogador está inconsistente.
+- *"é defeito do CTF ou do `posto_treta`"* — não. O arnês reproduz em qualquer mapa; o CTF só
+  é onde há troca de lado com frequência.
+
+**Correção.** `public/js/game.js` — a mesma reserva da linha 712, com a diferença de que aqui
+a reserva é um personagem **da facção em que ele está entrando** (`this.enemyFaction`, que
+ainda é a nova nesse ponto) e não `CHARACTERS[0]`: quem troca de lado tem de sair com um
+personagem do lado novo. `playerCharId` passa a vir do def resolvido, não do id pedido.
+
+**Custo declarado, medido:** com id inválido o jogador recebe silenciosamente um personagem
+diferente do que pediu, com aviso só no console (`[elenco] troca de lado pediu …`). É melhor
+do que o Game corrompido, e continua sendo um estado que não deveria existir — se ele
+aparecer em produção, o aviso é o rastro. Nada mais piorou: as outras 4 cláusulas e o
+`check:fast` não se moveram.
+
+**Régua: `tools/eval/switchteam-check.mjs`** (`npm run eval:switchteam`, no `check:fast`).
+4 cláusulas, 2 mutações medidas: `--mutante=semreserva` (devolve `byId(charId)` cru no fonte
+lido pela ST4) acende ST4; `--mutante=defundefined` (põe o Game no estado que o código antigo
+deixava) acende ST2 com a mensagem literal do relatório. Nas duas, a ST3 fica VERDE.
+
+---
+
+### BUG-166 · a tela dizia "SERVIDORES FORA DO AR" com os três servidores no ar · CORRIGIDO 12/09
+
+**Sintoma, relatado pelo dono com figura.** O painel de multiplayer mostrava os três nós
+("Brasil · São Paulo", "EUA · Carolina do Sul", "Europa · Madri") como **fora do ar**, com
+`0 jogando · 0 sala(s)`, e o aviso "Nenhum servidor respondeu. Pode ser a sua conexão, ou os
+servidores estão fora do ar."
+
+**Os servidores estavam no ar.** Conferido por quatro caminhos no mesmo minuto: `curl` nos três
+(`ok:true`, no ar havia 7,6 dias), CORS respondendo 200 para origem de produção e de prévia,
+Chrome de verdade em `www.csbrasil.online` medindo os três online (br 228 ms, us 139, eu 41), e
+Chrome na árvore local idem.
+
+**Causa.** `sondarNos` (public/js/net.js) tira DUAS amostras por nó para dar nota de ping — a
+primeira paga DNS e TLS, a segunda mede a conexão já quente. As duas dividiam **um** prazo de
+2500 ms e **um** `AbortController`:
+
+```js
+for (let i = 0; i < n; i++) h = await j(`${http}/health`, { signal: ctrl.signal });
+return { online: true, ... }   // só chega aqui se AS DUAS passarem
+```
+
+Se a primeira amostra custa mais da metade do prazo — e custa, em rede móvel, hotel, link
+congestionado ou no primeiro contato do dia —, a segunda é abortada, o `catch` roda e o nó é
+marcado **offline tendo respondido**. Como o efeito é por tempo e não por nó, os três caem
+JUNTOS, e a tela acusa os servidores de estarem fora do ar.
+
+**Conserto.** O prazo continua cobrindo a sonda inteira (isso é de propósito e tem cláusula),
+mas amostra que chegou não se apaga: guarda-se a última resposta boa, e o nó só é declarado
+fora do ar quando NENHUMA amostra chegou. Medido com a primeira amostra em 1,6 s e a segunda
+abortada: antes `fora do ar`, agora `online, ping 1602 ms`.
+
+**A régua congelava o defeito**, e isso é o mais instrutivo: a cláusula do prazo cobrava
+`!expirou.online` — ela transformou em contrato o efeito colateral de uma implementação. Agora
+cobra o que realmente defende (prazo global, com abort) e ganhou as duas irmãs: respondeu uma
+vez = online; não respondeu nenhuma = fora do ar.
+
+### BUG-165 · `spectators` negativo derrubava o snapshot binário inteiro · CORRIGIDO 12/09
+
+**Sintoma.** Achado quando o laço fechado (`netloop-check`) passou a serializar pelo codec de
+verdade: `encodeSnapshot` lançava `RangeError: spectators` e a sala inteira cairia para JSON —
+ou, no caminho do nó, para nenhum snapshot.
+
+**Causa.** `spectators: this.clients.size - this.slots.size`. Um slot sem cliente dá número
+NEGATIVO, e o codec valida `u8`. Acontece na régua (que cria slot sem socket) e acontece em
+produção, na janela entre o socket cair e o slot ser devolvido ao bot.
+
+**Conserto.** `Math.max(0, ...)`. Uma linha, e a lição é a do laço: régua que entrega o objeto
+do `snapshot()` direto ao cliente mede um jogo que ninguém joga — em produção ele vira bytes e
+volta, e é na volta que os erros aparecem.
+
+### BUG-164 · snapshot fora de ordem apagava o buffer de interpolação · CORRIGIDO 12/09
+
+**Sintoma.** Nenhum, hoje: com WebSocket o snapshot nunca chega fora de ordem. Com datagrama
+(QUIC/WebTransport, que é para onde o transporte vai) reordenação é ROTINA — e a regra
+"amostra com tempo menor que a última = relógio novo, esvazia tudo" apagaria as 10 amostras do
+buffer. Boneco remoto sem amostra congela e salta.
+
+**Conserto.** Recuo curto = pacote fora de ordem: a amostra entra NA ORDEM (e duplicata é
+ignorada, porque datagrama também duplica). Só recuo maior que 1 s continua sendo partida nova.
+
+**Régua** `game/netloop-check.mjs`, cenário de reordenação: 1 esvaziamento contra 1 (o do
+respawn, legítimo) com o conserto; **37 contra 1** com o mutante `ordem`. A primeira cláusula
+do cenário prova que houve inversão de tick chegando ao cliente — sem ela as outras passariam
+verdes medindo um cenário que não aconteceu.
+
+### BUG-163 · trocar de qualidade no meio da partida não mudava a resolução do jogo · CORRIGIDO 12/09
+
+**Sintoma.** O menu de qualidade mentia. `med → high` (e vice-versa) trocava sombra e materiais,
+mas o mundo continuava sendo desenhado na MESMA resolução de antes — o jogador mexia no
+seletor, via a imagem mudar um pouco (sombra) e concluía que o resto era impressão.
+
+**Causa.** `game.js:_applyQuality` chama `renderer.setPixelRatio(...)`, e o `EffectComposer`
+tem os próprios render targets. Eles nasciam com o pixel ratio do boot (`bloom.js`, `forScene`)
+e só eram redimensionados no **resize de janela** — a condição era `cp._w !== innerWidth ||
+cp._h !== innerHeight`. Pixel ratio não aparece aí. Como o composer existe em `med` e `high` e
+só some em `low`, o caminho padrão do jogo era exatamente o que não obedecia.
+
+**Por que importa agora.** A escada de qualidade adaptativa reduz DPR como PRIMEIRO degrau. Sem
+este conserto ela teria mentido do mesmo jeito — mexeria num número que ninguém desenha.
+
+**Conserto.** O composer passa a guardar `cp._dpr` e a comparar com `renderer.getPixelRatio()`
+junto do resize, refazendo alvos, depth e uniforme de texel do AA — a mesma manutenção que o
+resize já fazia. Régua: `tools/eval/qualidade-adaptativa-check.mjs` cobre a política, e a
+verificação de imagem é a figura A/B no navegador.
+
+### BUG-162 · GPU boa que recusou antialias era tratada como máquina sem GPU · CORRIGIDO 12/09
+
+**Sintoma.** O jogador com placa de vídeo real perdia sombra, nitidez (DPR 0,75) e os previews
+animados do menu — sem nada na tela explicando por quê — quando o driver dele recusava MSAA.
+
+**Causa.** `glcontext.js` publicava um único `degraded`, que é `compatibility || tier !==
+'padrao' || api !== 'webgl2' || software`: quatro fatos com custos muito diferentes somados num
+booleano. E `main.js` derivava dele o caminho leve INTEIRO. Recusar antialias é uma opção de
+contexto; desenhar por software é não ter GPU. Tratados igual.
+
+**O que NÃO era o defeito.** A detecção de renderizador de software funciona desde sempre —
+`SOFTWARE_RE` lê `WEBGL_debug_renderer_info`, cai para `gl.RENDERER` quando a extensão não
+existe, e o jogo já rebaixava. As sessões de 4-8 FPS do painel já estavam no caminho mais leve
+que o jogo tinha; o que faltava era o caminho leve ser leve o bastante, e o jogador saber.
+
+**Conserto.** A metadata passa a publicar `software`, `semWebgl2`, `semMsaa` e `compat`
+separados (o `degraded` continua, porque a telemetria antiga o usa). O caminho leve nasce só de
+software, WebGL1 ou modo compatibilidade. Software começa no degrau mínimo (DPR 0,5 em vez de
+0,75 — um quarto dos pixels) em vez de gastar os poucos quadros que tem medindo o que o
+renderizador já disse, e ganha um aviso honesto: barra, uma vez, dispensável, que não bloqueia.
+
+**Régua** `tools/eval/maquina-fraca-check.mjs` (7 cláusulas, no check:fast). Mutantes
+`junta-tudo` e `sem-aviso` reprovam.
+
+### BUG-161 · o tiro que erra terminava 60 m adiante, atravessando a parede · CORRIGIDO 12/09
+
+**Sintoma.** Achado OLHANDO a figura do navegador, com o BUG-159 já consertado e verde. Agora
+que é o servidor quem manda os pontos de impacto, é deles que saem traçante, poeira e furo — e
+para o pellet que **não acerta ninguém** (que é a esmagadora maioria dos tiros) o ponto era
+`origem + direção × 60 m`, ignorando a parede. O traçante do jogador saía pelo outro lado do
+mapa e a poeira nascia dentro da geometria.
+
+**Causa.** `_scanHit` já calculava a parede (`wall`/`wallDist`, para decidir se o corpo estava
+atrás dela) e devolvia **só** o combatente acertado — `null` quando não havia nenhum. Quem
+chamava não tinha como saber onde a bala parava, então chutava 60 m. O dado estava a uma linha
+de distância de quem precisava dele.
+
+**Conserto.** `_scanHit` devolve também o impacto de parede (`{ ent: null, dist, sup, n }`), e o
+evento `tiro` leva por pellet o **material** (uma letra, tabela `SUP_COD` exportada de
+`game.js` e usada pelos dois lados) e a **normal** da face. Com isso o cliente voltou a ter
+poeira com cor de material, faísca em metal e furo deitado na parede — que ele tinha antes e
+perdeu quando parou de fazer o próprio hitscan no online.
+
+**Régua** `game/dispersao-check.mjs` D7/D7b: varre 24 direções do spawn, mede em quantas existe
+parede a menos de 55 m e cobra que **nenhuma** delas tenha impacto além dela, mais o material
+chegando junto. Mutante `parede-longe` reprova. No navegador, `tools/eval/tiro-mp-browser.mjs`
+TB8/TB9 cobram que a poeira e a normal cheguem à tela.
+
+### BUG-160 · o painel de rede do jogo mente quando o FPS está baixo · ABERTO
+
+**Sintoma.** Medido em navegador com renderizador de software (2 FPS): o overlay `NET` mostrava
+`snap 274 Hz /30` e `band 191.9 KB/s`. Com GPU de verdade, o mesmo nó, a mesma sala e o mesmo
+protocolo mostram `snap 30 Hz /30` e `20,8 KB/s` — o número real.
+
+**Causa provável.** A taxa é acumulada por mensagem e dividida pela janela de RENDER: a 2 FPS o
+cliente drena meio segundo de mensagens num quadro só e a divisão infla. O instrumento passa a
+acusar tempestade de rede exatamente quando o problema é de GPU — que é o cenário em que
+alguém vai olhar para ele.
+
+**Por que fica aberto.** É defeito de instrumento, não de jogo, e a rodada tem prioridade
+declarada. A correção é medir a janela em tempo de relógio, não em quadros. Mesma família do
+BUG-55: instrumento que mede uma coisa e responde outra.
+
+### BUG-159 · no multiplayer a arma era laser e a shotgun cobrava 1 dos 9 pellets · CORRIGIDO 12/09
+
+**Sintoma.** O que o jogador vê não era o que causava dano. O cliente desenhava dispersão
+(cone aleatório, 9 pellets na shotgun); o servidor, que é quem decide, atirava um **raio
+perfeito, único**, direto de yaw/pitch — `game/room.js:_serviceShooting` não tinha cone, não
+tinha laço de pellets e não tinha penetração, enquanto `game.js:_tryShoot` tinha os três.
+
+**Consequências, as duas medidas:** toda arma automática era secretamente melhor no MP do que o
+jogador via (mira no alvo = todo tiro acerta, sem o cone que a tela mostra), e a shotgun
+entregava **14 de dano** onde deveria entregar **214** a 4 m — 1 pellet de 9.
+
+**Causa raiz.** Duas implementações do mesmo disparo, coisa que o cabeçalho do próprio
+`room.js` promete não fazer: *"as MESMAS funções do jogo, não uma segunda implementação que
+envelheceria separada"*. Para movimento (`_moveEntity`) e dano (`_shotDamage`) a promessa foi
+cumprida; para o TIRO, nunca.
+
+**Conserto.** `coneDoDisparo(estado, W, rnd)` extraída de `game.js` e chamada pelos dois lados,
+com o laço de pellets no servidor e **um** `_damage` por alvo (nove chamadas gerariam nove
+eventos e estourariam o lote de 32 do `_emitir`, que descartaria `hit`s para caber — killfeed
+errado por excesso de fidelidade).
+
+**Quem sorteia é o nó, e isso não é detalhe.** Se o cliente conseguisse prever o cone, ele
+CONHECERIA o cone — e conhecer o cone antes de atirar é o cheat de "sem dispersão". Não existe
+semente compartilhada que dê previsão sem dar conhecimento. Então a semente sai de
+`HMAC(segredo da partida, id do corpo, bot._shots)`, o segredo nunca é serializado, e o índice é
+o contador do SERVIDOR — nunca o `seq`, que o cliente escolhe. O preço, aceito pelo dono: o
+traçante e o furo aparecem RTT/2 depois do clique (~31 ms no nó `br`). Fogacho, som, coice e
+consumo de pente continuam instantâneos.
+
+**Régua** `game/dispersao-check.mjs` (13 cláusulas): forma do cone igual nos dois lados por arma,
+9 pellets, cone abrindo ao correr e fechando ao mirar, segredo ausente de welcome/listagem/
+snapshot/eventos, semente derivada do contador do servidor, e a rajada acertando (9 acertos)
+e cobrando uma vez (dano somado 214 × 14 de um pellet). Mutantes `sem-cone`, `um-pellet` e
+`semente-no-welcome` reprovam.
+
+**Armadilha que isto quase repetiu (#405, e custou meia hora):** o segredo era sorteado com
+`Math.random()` dentro do `_novaPartida`, ANTES do construtor do `Game` — e a torrente do
+Math.random é semeada e compartilhada com o sorteio de spawn. Um saque a mais deslocou a
+torrente inteira e mudou os spawns: o smoke caiu de 3,39 m para 0,10 m de movimento **com a
+física byte a byte idêntica**. O segredo passou a vir do `crypto`, que não toca a torrente.
+
+### BUG-158 · seguir a instrução do portão de grafite APAGA arte · MITIGADO 12/09
+
+**Sintoma.** O portão `eval:grafitelayout` reprova quando um `map_*.js` muda e manda, no próprio
+texto do erro, *"Rode 'npm run grafite <id>'"*. Seguir essa instrução apagou **185 peças de
+grafite** numa mudança que não moveu uma parede sequer (o tamanho do shadow map, BUG-156).
+
+**Causas, duas, e as duas medidas:**
+1. **Acervo incompleto apaga em silêncio.** Os decalques são gitignored por procedência. Nesta
+   worktree havia 163 arquivos; no checkout do dono, 352. O gerador coloca o que encontra — e
+   assou 2763 peças contra as 2948 que estão em produção, sem erro nenhum.
+2. **Assar não é operação fiel.** Com o acervo completo (360 arquivos), duas rodadas **idênticas,
+   na mesma árvore**, deram `2769` e `2767` peças (loja_h 300 e 298). A contagem por mapa se
+   move nos DOIS sentidos entre rodadas — ou seja, não é só acervo: a colocação tem ruído.
+
+**Consequência.** A instrução do portão, seguida à risca, troca arte aprovada por churn — e numa
+worktree sem o acervo, apaga. O portão está certo em cobrar frescor; o remédio que ele receita é
+que não serve para mudança que não mexe em geometria.
+
+**Mitigação.** `tools/gen-graffiti-layout.mjs --so-impressao --motivo="…"` reassina as entradas
+**sem** reassar a colocação, exige o motivo e grava o motivo e a data no próprio arquivo, para
+quem abrir depois saber o que foi blessado e por quê. Não serve para mudança de geometria — para
+essa, o remédio continua sendo assar, com o acervo completo.
+
+**Aberto:** o ruído da colocação (item 2) não foi investigado; ele torna qualquer regeneração uma
+troca de arte. Enquanto existir, regerar é decisão de quem cuida da arte, não efeito colateral de
+um portão vermelho.
+
+### BUG-157 · o sinal de FPS mais rico do jogo era coletado e jogado fora no servidor · CORRIGIDO 12/09
+
+**Sintoma.** O painel mostra "20% das amostras de FPS abaixo de 30" e sessões inteiras a 4-8 FPS,
+e a pergunta seguinte — **em que mapa?** — não tinha resposta. O "FPS da sessão" que o painel
+exibe é uma média de **um segundo**, medida ~4 s depois do jogo começar.
+
+**Causa raiz — não era falta de coleta.** `public/js/ops.js` já amostra FPS por segundo numa
+janela deslizante de 300 s, descarta aba oculta, separa p50 de p5 e conta quadro travado
+(>100 ms) e congelado (>1 s); `main.js:_perfFinish` já mandava tudo isso no campo `ops` do
+beacon, com um comentário que dizia a verdade sem que ninguém percebesse o tamanho dela: *"o
+backend descarta o que não conhece"*. E descartava: `api/perf.ts` chamava a RPC `track_perf`
+com uma lista fechada de parâmetros, e **nenhum deles era do bloco `ops`** — o campo morria na
+porta. Faltava também o id do mapa no payload, e o DPR enviado era o do **aparelho**, não o que
+o jogo desenha (0,75 no caminho leve, até 2 no alto) — responder outra pergunta que não a que
+se faz é o mesmo defeito do BUG-55, de outra roupa.
+
+**Conserto.** `resumoBeacon()` passa a levar mapa e modo; `_perfFinish` passa a levar o DPR
+efetivo do renderer e o estado do renderer em **três valores** (`sim`/`nao`/`desconhecido` —
+no Firefox a extensão que revela a GPU fica atrás de flag, e gravar "não é software" sem ter
+lido é inventar dado); `api/perf.ts` persiste tudo, com caminho degradado para banco atrasado
+(migration `033`, aplicada à mão fora do repo). Provado de ponta a ponta com o handler real e um
+espião no lugar do banco: `map=quebrada, fps_p50=41, fps_p5=19, travadas=37, congeladas=2`.
+Réguas: `tools/eval/perf-campo-check.mjs` (cliente) e `api/reguas/perf-ops-check.mjs` (servidor)
+— esta última cobra o **uso**, não a declaração: o mutante que declara os parâmetros e não os
+espalha na chamada da RPC deixa a régua vermelha, que é exatamente como o BUG-02 passou verde.
+
+### BUG-156 · "qualidade baixa" não baixava a sombra em 10 dos 17 mapas · CORRIGIDO 12/09
+
+**Causa raiz.** O tamanho do shadow map do sol estava escrito à mão em 10 arquivos de mapa
+(`map_atacadao.js:205`, `map_upa.js:242`, `map_posto.js:388`, `map_parque.js:357`,
+`map_piscina.js:680`, `map_obras.js:182`, `map_penitenciaria.js:229`, `map_velho_oeste.js:262`,
+`map_ferrovelho.js:1711`, `map_json.js:170`) e mais uma vez dentro do pós-processamento. Quem
+escolhia "baixa" nesses mapas pagava 2048 — **quatro vezes os texels** de quem jogava o mesmo
+"baixa" na Havan ou na quebrada, que respeitam o nível. O ferro velho é o caso que mais ensina:
+tem 15 ramificações por `LOWQ` e mesmo assim cravava a sombra.
+
+**A segunda metade, que só morderia no futuro:** `focusSunShadow` (`bloom.js`) subia de volta
+qualquer sombra abaixo de 2048. Com o valor fixo era inofensivo; com qualidade adaptativa, o pós
+desfaria a redução sem avisar ninguém.
+
+**Conserto.** `public/js/mapquality.js` vira a fonte única (`orcamentoSombra()`), lida pelos 17
+mapas e pelo pós, e concentra também a leitura da preferência que 12 arquivos faziam cada um por
+conta própria — foi copiando essa leitura que o número se espalhou. O 2048 de med/high fica: o
+módulo nasceu para tirar o número de 11 lugares, não para mudar o que o jogador vê. Régua
+`tools/eval/quality-mapas-check.mjs` (QMAP1-4), mutante `--mutar=literal`.
+
+
+### BUG-151 · o SERVIDOR empurrava o corpo do jogador, e o cliente pagava como "correção de posição" · CORRIGIDO 11/09
+
+**Sintoma (painel de admin, janela de 7 dias de 11/09):** *"Experiência multiplayer: 179 de 259
+sessões medidas ficaram fora da meta (69%). **Causa mais frequente: correção de posição.**"*
+Rounds com gente de sobra tinham `correção p95` de 0,3 a 4 m; rounds de um jogador só, quase
+zero. Ninguém tinha ligado uma coisa à outra.
+
+**Causa raiz.** No servidor autoritativo o slot humano é um bot com a IA desligada — e por isso
+ele passava pela **despenetração de corpos** da IA. `_botSeparation`
+(`public/js/game.js:4331`) resolvia sobreposição escrevendo NA POSIÇÃO DOS DOIS corpos
+(`o.pos.x -= …`), inclusive quando o outro era gente. O cliente não tem como prever esse
+empurrão: ele chega no snapshot seguinte como divergência e vira correção — rubber-band puro,
+proporcional a quantos colegas estão por perto.
+
+**Medição (laço fechado, `Room` real × `Game` real):** slot humano **parado**, sem mandar um
+único comando, num spawn cheio da quebrada: **0,84 m em 3 s**, com `_moveEntity` chamado **0
+vezes** no corpo dele. Achado por trap de escrita em `pos.x/z` — os métodos `set/copy/add` nunca
+eram chamados, a escrita era direta em campo.
+
+**Conserto.** Corpo com dono (`_remote`) não se empurra: quem entra no espaço do outro é quem
+sai, e o bot leva o empurrão inteiro (a separação bot×bot fica como estava). Régua:
+`csbrasil-backend/game/netloop-check.mjs`, cenário *spawn lotado*; mutante `--mutar=empurrao`
+devolve o empurrão e a régua fica **vermelha** (p95 0,141 m a 60 FPS · 0,205 m a 20 FPS).
+
+### BUG-152 · o servidor integrava o comando pelo TICK dele, não pela duração do passo do cliente · CORRIGIDO 11/09
+
+**Sintoma.** Correção de posição **proporcional ao frame time**: quem joga a 60 FPS levava
+pouco; quem joga a 20 FPS levava 5× mais. O painel mostra os dois juntos ("20% das 376 amostras
+válidas ficaram abaixo de 30 FPS"), então a máquina fraca era punida duas vezes — pelo FPS e
+pelo netcode.
+
+**Causa raiz, em duas metades do mesmo mecanismo: o cliente e o servidor tiravam a foto em
+instantes diferentes.**
+1. O cliente prediz o passo do frame dele (≤ 50 ms, `public/js/main.js:2783`); o servidor
+   aplicava o MESMO input a cada tick de 16,7 ms (`game/room.js`, `_updateBot`).
+2. O `ackSeq` do snapshot era o último input **recebido** (`applyInput`), não o último
+   **simulado** — então a pose autoritativa vinha de 1 a 4 ticks à frente da pose que o cliente
+   guardou para aquele `seq`. O cliente media essa diferença como divergência e se empurrava
+   sozinho.
+
+**Medição (laço fechado, rede PERFEITA — latência constante, zero jitter, zero perda, física
+idêntica dos dois lados; qualquer correção aqui é erro estrutural):**
+
+| FPS do cliente | antes (p95) | depois (p95) |
+|---|---|---|
+| 60 | 0,051 m | **0,001 m** |
+| 30 | 0,136 m | **0,001 m** |
+| 20 | 0,263 m | **0,001 m** |
+| 10 | 0,127 m | **0,001 m** |
+
+Rede real (120 ms, jitter 30 ms, 3% de perda): p95 **0,304 m → 0,091 m**.
+
+**Conserto.** O input passa a declarar a DURAÇÃO do passo (`dtms`, teto de 50 ms — o mesmo do
+laço do navegador) e o servidor mantém uma **fila de comandos** com **orçamento de tempo real**
+(250 ms de folga): integra cada comando com o dt dele e só então reconhece o `seq`. Cliente
+velho (sem `dtms`) continua no caminho antigo — o rollout pode ser servidor-primeiro.
+Anti-speedhack é o orçamento, com régua em `game/smoke.mjs` ("quem inunda de comando não anda
+mais que quem joga limpo"). Mutantes `--mutar=dt` e `--mutar=ack` deixam a régua vermelha.
+
+### BUG-153 · entrar na sala (ou renascer) cobrava o teleporte como se fosse divergência · CORRIGIDO 11/09
+
+**Sintoma.** Um pico de **8 a 12 m** de correção por entrada em sala — a distância entre dois
+spawns — registrado na telemetria como desvio do jogador.
+
+**Causa raiz.** Quando a autoridade teleporta o corpo (`imediato` = primeiro snapshot ou
+respawn), `netgame.js` movia `ent.pos` mas deixava o buffer de poses preditas intacto. O ack
+seguinte comparava a pose nova com uma âncora gravada a partir da base ANTIGA.
+
+**Conserto.** `_clearPrediction()` junto com o teleporte. Depois: o degrau de entrada vira
+**velocidade × latência** (0,15–0,38 m, medido: 4,81 m/s × 80 ms = 0,38 m) e assenta em ≤ 0,2 s.
+Mutante `--mutar=ancora` devolve o pico.
+
+### BUG-155 · a virada de round teleportava o jogador, e o cliente DESLIZAVA até o spawn · CORRIGIDO 11/09
+
+**Causa raiz.** No fim da rodada o servidor recoloca todo mundo no spawn (`_resetPositions`), e
+no online a máquina local de rodada está desligada. O cliente só descobria o teleporte pelo erro
+do ack: acima de 6 m ele dava um salto seco; ABAIXO de 6 m ele **suavizava** — o jogador se via
+deslizando pelo mapa sem apertar nada.
+
+**Efeito colateral pior que o visual: métrica envenenada.** O trajeto inteiro entrava na
+telemetria como "correção de posição" do jogador. Medido no laço fechado com o mutante
+`--mutar=virada`: **44 m** de pico por virada de round — num painel que decide prioridade pela
+correção p95, e num jogo em que o round vira a cada ~1m46s.
+
+**Conserto.** Mudança de estado da rodada é reancoragem, como o respawn: `netgame.js` marca
+`imediato` e rebaseia a predição. Depois: reancora em 67-83 ms (um snapshot + latência) e o
+teleporte some da conta de correção (pico ≤ 0,53 m, que é o movimento real do jogador).
+
+### BUG-154 · o mapa escolhido ao criar a sala era o ÚNICO que não podia sair na primeira partida · CORRIGIDO 11/09
+
+**Causa raiz.** `Room._novaPartida` sorteia o mapa **excluindo o atual** (para não repetir o que
+acabou de rodar), e o construtor guardava o mapa pedido justamente em `this.mapId` — então o
+filtro o eliminava. Quem criava sala escolhendo "velho oeste" caía em qualquer outro mapa.
+
+**Conserto.** O mapa pedido vira `_mapaPedido` e é o da PRIMEIRA partida; a rotação assume da
+segunda em diante. Régua: `game/smoke.mjs` ("o mapa pedido é o da PRIMEIRA partida").
+
 
 ### ~~BUG-86 · no multiplayer o corpo TP do próprio jogador ficava DEITADO depois do respawn, arrastado pelo mundo~~ · RESOLVIDO 30/08 (PR #483)
 
@@ -302,6 +1239,239 @@ o mix da alpha.138 já não está servido e não há purge pendente; o conserto 
 `check:fast` e no `check:deploy`). Cláusula **EP16**, **3 mutações novas**:
 `cache-sem-binding`, `cache-so-ingles` e `cache-sem-especificador` — cada uma apaga uma
 alternativa da regex e acende EP16. Matriz completa: **42 de 42 mordidos**.
+### BUG-146 · global opaco injetado no documento abre issue de crash, e NÃO é corrigível por classificação · REFUTADO 09/09 (issue #568)
+
+**Sintoma (issue #568, aberta pelo `crash-fix.yml` em alpha.243, classe `codigo`):**
+
+```
+Uncaught TypeError: self.wsd2x7lyyejobzuff is not a function
+#568, alpha.243-5182e7f2b777, fingerprint 9d236bb2, origem https://www.csbrasil.online/:1:80
+Stack: global code@https://www.csbrasil.online/:1:80
+```
+
+**Causa raiz — confirmada.** Script de terceiro injetado inline no documento, com nome gerado
+por sessão. O caminho é o mesmo das BUG-76 e BUG-78: `src/lib/error-provenance.mjs:68`
+(`if (sourceOrigin === ownOrigin) return false;`) inocenta antes de qualquer outra prova, porque
+código injetado carrega a origem da própria página. Nenhuma regex seguinte morde e o
+`classifyCrash` cai no `return 'codigo'` final, que escala e abre issue.
+
+**Prova de que não é nosso, tripla e refeita na alpha.243** (a medição da BUG-76 é da alpha.182):
+
+1. `wsd2x7lyyejobzuff` não existe em nenhum arquivo, e `git log --all -S` não devolve commit.
+   O inventário dos 50 globais que o jogo toca não tem candidato: os mais longos só-minúsculas
+   são `performance` (11), `diagnostics` (11), nenhum com dígito, e os nossos são dunder
+   (`window.__game`, `window.__CS_MAIN_READY__`).
+2. O fingerprint publicado reproduz exatamente
+   `crashFingerprint('error', <mensagem>, 'https://www.csbrasil.online/:1:80')`
+   (`src/lib/error-provenance.mjs:117-122`), o que fixa `e.filename` como sendo o **documento**.
+3. A coluna 80 da linha 1 cai **dentro de um comentário HTML**. Prefixo recomputado do fonte
+   atual (`src/pages/index.astro:18-23`): `<!DOCTYPE html>` 15 + `<html lang="pt-BR">` 19 +
+   `<head>` 6 + `<meta charset="UTF-8">` 22 + comentário 96 + `<script>` 8 = 166. O caractere da
+   coluna 80 é o `r` de "rodar". Nosso código só começa na coluna 167.
+
+Também descartado: não pode ser identificador manglado (as nove tags `<script>` de
+`index.astro` são `is:inline`, `ld+json`, `importmap` ou `type=module` com `src` — nenhuma é
+`<script>` simples, a única forma de o Vite manglar para dentro do HTML), nem hash de build (o
+único gerador é `scripts/module-cache.mjs:29`, alfabeto hex, e o nome tem `w,s,x,y,j,z,u`), nem
+geração dinâmica de nome (zero `toString(36)`, `eval`, `new Function` ou `window[...]` fora de
+`public/docs/`).
+
+**Reprodução:**
+
+```
+MSG='Uncaught TypeError: self.wsd2x7lyyejobzuff is not a function' \
+SRC='https://www.csbrasil.online/:1:80' \
+STK='global code@https://www.csbrasil.online/:1:80' \
+  node scripts/classify-crash.mjs        # classe=codigo
+```
+
+**POR QUE NÃO TEM CONSERTO POR CLASSIFICAÇÃO — e este é o parágrafo que decide a entrada.**
+
+A BUG-76 e a BUG-78 funcionam porque `__gCrWeb`, `__firefox__` e `DarkReader` são nomes
+**estáveis**: o nome É a proveniência. Aqui o nome é aleatório por sessão. Não existe nome para
+cortar, e o que sobra é a forma — que este arquivo já reprovou por medição em BUG-76 (o
+parágrafo "Por que o corte é por NOME e não pela FORMA"), e que a régua trava em fixture
+(`api/reguas/error-provenance-check.mjs`, "`:1:N` NÃO é prova de terceiro").
+
+A regra candidata testada foi
+`/\b(?:self|window|globalThis)\.(?=[a-z0-9]*[0-9])[a-z0-9]{12,}\b/` somada a exigir
+`source` terminando em `/:1:N`. Ela cai por seis medições independentes:
+
+- **Não há posição possível.** Para pegar a #568 a regra tem de ficar ANTES do atalho
+  same-origin de `:68`; ali ela atropela as duas cláusulas que existem para inocentar pilha
+  nossa (`:68` e `:76`, a proteção da BUG-51). Depois de `:68` ela nunca dispara.
+- **Falso positivo com pilha 100% nossa, executado:** `self.rem700barrel is not a function` em
+  `/:1:167` vira `externo` — e `rem700barrel` **já existe** em `public/js/vmattach.js:290`, com
+  `uzimagcover`, `tavorshroud`, `mosinbarrel` e `deagleslide` no mesmo arquivo, todos a um
+  caractere do corte de 12. O jogo já nomeia peça de arma exatamente na forma que a regra
+  chamaria de opaca.
+- **Perde 3 das 4 redações da própria família:** `Can't find variable: <nome>` (#428, #379,
+  #381) não tem o prefixo `self.`.
+- **Monte Carlo, 200 mil nomes por gerador:** `Math.random().toString(36).slice(2)` é pego em
+  **2,45%** dos casos (70% saem com 11 caracteres); `crypto.randomUUID()` em 0,00%. A
+  calibragem estava num único exemplar de 17 caracteres.
+- **Depende de resíduo de build e de URL.** A âncora `/:1:N` morre com query string, e as
+  portas com query estão no nosso fonte (`src/pages/sala/[codigo].astro:84`,
+  `public/js/glcontext.js:116`); e depende da barra final, que `astro.config.mjs:69-72` mantém
+  em `ignore` de propósito, então `/mapa/:1:80` e `/mapa:1:80` classificam diferente.
+- **O espelho no cliente é impossível.** `src/pages/index.astro:326` monta o `loc` com
+  linha:coluna, mas as três chamadas de `origemDoJogo` recebem source **sem** elas: `e.filename`
+  cru (`:336`) ou `null` (`:346`, `:419`). Sem espelho, `interna` continua `true`, o erro vira
+  `erroDoBoot` (`:341`) e dispara `lancamento.fail` (`:342`) — painel falso de "Falha ao abrir a
+  arena" para o jogador — e consome `TETO_SESSAO` em vez de `TETO_EXTERNO` (`:340`). É
+  exatamente o dano que a BUG-76 fechou.
+
+**Medido** (92 payloads do corpus deste arquivo, helper real contra cópia com a regra):
+
+| | antes | depois |
+|---|---|---|
+| payloads que mudam de classe | - | **1 de 92** |
+| e o que muda | - | a própria #568 |
+| falsos positivos com pilha nossa | 0 | **4 executados** |
+| redações da família cobertas | - | 1 de 4 |
+
+Ganho de uma regra que silencia crash real: um caso. Não entra.
+
+**Correção: nenhuma no código.** A #568 fecha à mão como ruído externo, como as #379, #380 e
+#381 foram fechadas antes da BUG-76. O diagnóstico fica aqui porque é ele que impede a próxima
+rodada de tentar de novo o corte por forma.
+
+**Custo declarado, medido:** o custo é real e fica registrado — esta classe **continua abrindo
+issue** a cada fingerprint novo, e cada nome injetado é um fingerprint novo, então a
+deduplicação do `crash-fix.yml` não ajuda. Nada foi silenciado em troca.
+
+**Régua: nenhuma, e há um segundo problema aqui.** A régua desta família saiu deste repositório
+em `de21edac` (27/08) para `corosolto/backend`, em `api/reguas/error-provenance-check.mjs`;
+`grep -c 'eval:error-origin' package.json` devolve **0** e o `check:fast` não a referencia. Um
+portão que a documentação afirma existir não roda mais neste repo. Levantado junto, merece
+entrada própria: a cópia do classificador no backend (`api/_lib/error-provenance.mjs`) já
+divergiu da daqui — está sem `CAPACIDADE_RE` (BUG-80), sem `CONTEXT_LOSS_RE` (BUG-82) e com a
+`RECOVERABLE_RE` desatualizada (BUG-81) — e é a cópia do backend que decide o dispatch em
+produção.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a injeção não foi reproduzida com uma
+extensão real — a medição é da **classificação**, não da injeção. A tabela `js_error` do
+Supabase não foi consultada. E o commit `5182e7f2b777` do carimbo de versão não é commit: é o
+`JS_REV`, hash do manifesto do grafo JS (`src/pages/index.astro:9`).
+
+### ~~BUG-151 · arnês de automação apontado para produção abria issue de crash como se fosse bug do jogo, e abria DUAS~~ · RESOLVIDO 11/09 (issues #573 e #574)
+
+**Sintoma (literal, issues abertas pelo `crash-fix.yml` em alpha.246, as duas classe `codigo`,
+com 8 segundos de diferença):**
+
+```
+#574  __game is not defined                                fingerprint b81fb1c4, origem <vazia>
+#573  Falha ao abrir partida: __game is not defined        fingerprint 23f0069c, origem promise
+Stack (idêntica nas duas):
+  ReferenceError: __game is not defined
+      at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:18)
+      at UtilityScript.evaluate (<anonymous>:313:16)
+Migalhas: 04:01:40 ops main pronto em 753ms · 04:01:41 ops carga falhou 404 /audio/manifest.json
+```
+
+**Causa raiz — confirmada.** `UtilityScript`, `eval at predicate` e `next` são a assinatura do
+*poller* que o `page.waitForFunction()` do Playwright injeta **dentro da página**. Alguém
+apontou um arnês de automação para produção com um predicado que lê `__game` **sem o `window.`**.
+`window.__game` é escrito num único sítio, `public/js/main.js:1287`, dentro do `_startGame()` —
+depois do `__CS_MAIN_READY__` (`main.js:2810`) e só quando uma partida começa. Antes disso ele é
+global **não declarado**: `window.__game` devolve `undefined`, mas `__game` pelado **lança**.
+
+A exceção do predicado vira rejeição não tratada **da página**, e daí o caminho é o mesmo da
+BUG-76: `src/pages/index.astro:346` chama `origemDoJogo(null, r.stack, msg)`; a stack do
+Playwright não tem **uma única** URL http, então `viuExterna` fica `false` e o `return
+!viuExterna` (`:219`) devolve **interna**. Com `interna === true`:
+
+1. `:351` `reporta('promise', …, externa=false)` → `b81fb1c4` = **#574**, comendo um slot dos dez
+   de `TETO_SESSAO` em vez do balde de `TETO_EXTERNO`;
+2. `:352` `lancamento.ativo` (etapa `partida`, aberta em `public/js/main.js:1154`) dispara
+   `lancamento.fail(r, 'promise')`;
+3. `:290` `reporta('error', 'Falha ao abrir partida: ' + msg, 'promise', …)` → `23f0069c` =
+   **#573**, e `:292` acende o painel **"A ARENA NÃO ABRIU"**. O prefixo muda o hash FNV, então
+   **um evento vira duas issues** — o mesmo par que a BUG-82 já tinha visto nas #419/#420.
+
+**Prova de que as duas são o mesmo evento, e de qual caminho gerou cada uma:** os dois
+fingerprints publicados reproduzem **byte a byte** a receita de `crashFingerprint`
+(`src/lib/error-provenance.mjs:117-122`), e cada um com o `kind`/`source` do seu caminho —
+`('promise', '__game is not defined', '')` = `b81fb1c4` e `('error', 'Falha ao abrir partida:
+__game is not defined', 'promise')` = `23f0069c`. Não é inferência: é o hash fechando.
+
+**Reprodução:**
+
+```
+STK='ReferenceError: __game is not defined
+    at UtilityScript.evaluate (<anonymous>:313:16)'
+MSG='__game is not defined' SRC='' STK="$STK" node scripts/classify-crash.mjs   # antes: codigo
+```
+
+**O QUE FOI DESCARTADO COM MEDIÇÃO, e são dois.**
+
+**1 · "conserte o predicado na origem."** `git grep` por `waitForFunction` com `__game`
+não-qualificado em **todos os refs** (`upstream/*`, `fork/*`, `origin/*`) devolve **zero**: os
+~60 predicados da árvore são todos `window.__game`. O único `__game` pelado executável era
+`tools/eval/sertao-traversal-check.mjs:68`, dentro de um `page.evaluate` — forma de stack
+diferente, sem os frames `predicate`/`next`. **O script ofensor não está sob controle de
+versão.** Foi endurecido assim mesmo (é a mesma classe), mas não era ele.
+
+**2 · "corte em `__game`, ou em `__\w+__`."** Refutado por três provas já pagas aqui:
+`window.__game` é o **handle público do jogo** (`SECURITY.md:9`, e é por ele que a #382 entrou);
+a BUG-76 **proíbe** o corte genérico `__\w+__` porque sete globais do jogo são dunder; e a
+fixture `naoInjetadoFixtures` da própria régua exige que
+`"…evaluating 'window.__game.start'"` continue `codigo`. Cortar no nome do global calaria crash
+nosso — que é exatamente o que a #382 provou que acontece.
+
+**Correção: corte pelo NOME do injetor, e só na STACK.** `AUTOMACAO_RE`
+(`src/lib/error-provenance.mjs`, espelhada em `src/pages/index.astro` e em
+`api/_lib/error-provenance.mjs` do `corosolto/backend`) vale em `isExternalCrash` no mesmo lugar
+da `PONTE_INJETADA_RE`. Ao contrário da #568, aqui o nome **é** estável: `UtilityScript` é
+identificador do Playwright, não é gerado por sessão. Sensível a caixa, pelo mesmo motivo da
+BUG-76.
+
+**Por que na STACK e não na evidência — e este é o parágrafo que decide o corte.** Medido, não
+suposto: testando contra a `evidence` (mensagem + origem + stack), como faz a
+`PONTE_INJETADA_RE`, aparece **1 falso positivo executado** — a mensagem NOSSA `falha ao
+carregar UtilityScript.glb`, com pilha 100 % em `public/js/glbchars.js`, vira `externo`. Nome de
+injetor só é proveniência quando aparece como **frame**; na mensagem ele é carga do jogo. É o
+mutante `automacao-ampla`.
+
+**Medido** (104 issues `crash-auto` do repositório, `#104`..`#574`, mensagem/origem/stack lidos
+do corpo publicado, helper real contra o helper anterior):
+
+| | antes | depois |
+|---|---|---|
+| payloads que mudam de classe | — | **2 de 104** |
+| e quais | — | exatamente a **#573** e a **#574** |
+| falsos positivos com pilha nossa, executados | 0 | **0 de 5** |
+
+**Custo declarado, medido.** Crash que estourar **dentro** de um arnês apontado para produção
+deixa de abrir issue — a linha continua na telemetria bruta. Aceito porque quem roda o arnês vê
+a falha no próprio terminal, e porque o jogador não consegue produzir esse frame:
+`UtilityScript` não aparece em **nenhum** arquivo de `public/` ou `src/`. Nada mais foi
+silenciado: 102 dos 104 payloads não se movem.
+
+**Régua: `api/reguas/error-provenance-check.mjs` do `corosolto/backend`**
+(`npm run eval:error-origin`, lendo este repositório por `CLIENT_DIR`). Cláusula **EP20**:
+classifica as 4 redações do arnês, executa o `origemDoJogo` **recortado deste fonte** contra as
+5 vizinhas que não podem se mover, ancora os 2 fingerprints publicados, exige o balde de
+`TETO_EXTERNO` e carrega a invariante de honestidade (`jogoSemArnes`) — no dia em que o jogo
+falar com `window.UtilityScript`, EP20 fica vermelha em vez de virar mordaça. **5 mutações
+medidas:** `sem-automacao`, `automacao-ampla`, `automacao-insensivel`, `sem-automacao-cliente` e
+`jogo-com-automacao`, cada uma acendendo EP20. **Matriz completa: 53 de 53 mordidos** (as 48
+anteriores seguem acendendo as suas).
+
+**E fica registrado o buraco que este conserto NÃO fecha.** O coletor de `/api/jserror` **não
+tem guarda nenhuma** contra automação — `navigator.webdriver` não aparece uma vez no
+repositório. Só `tools/ops/probes/browser.mjs:85-94` bloqueia escrita, por `page.route`; as
+demais réguas Playwright, apontadas com `BASE=https://www.csbrasil.online`, injetam os próprios
+crashes na telemetria de produção. O `ops-diag.yml` (cron `17 * * * *`, contra produção) **não**
+é a origem destas duas: ele bloqueia a escrita, e o horário não bate. Merece entrada própria.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a injeção **não foi reproduzida com um
+Playwright de verdade** — a medição é da **classificação**, não da injeção. A tabela `js_error`
+do Supabase não foi consultada, então quantos slots de `TETO_SESSAO` esta classe vinha comendo
+por sessão fica sem número. O script ofensor não foi identificado. E as duas 404 de
+`/audio/manifest.json` nas migalhas são de outra família (o manifesto migrou para Blob privado
+nos PRs #506/#507), não investigadas aqui.
+
 ### ~~BUG-78 · carteira cripto injetada no documento abria issue de crash como se fosse bug do jogo~~ · RESOLVIDO 21/08 (issues #403 e #404)
 
 **Sintoma (literal, issues #403 e #404, abertas pelo `crash-fix.yml` em alpha.172):**
@@ -3524,6 +4694,220 @@ hipótese de escorço foram **refutadas com número**. Nenhum parâmetro de câm
 malha: o caminho é **malha nova ou outra família de pose**. Não gaste rodada procurando
 parâmetro.
 
+### BUG-145 · Lobisomem em FP com mãos ligadas continua com escala ruim
+
+O modo padrão do Lobisomem segue `weaponOnly=true`, porque o rig compartilhado de mãos
+mostra proporção ruim quando habilitado: a arma encaixa, mas a mão extra fica grande e
+desancorada. A revisão local trata isso como limitação herdada do viewmodel opcional, não
+como regressão da facção M. Evidência: `artifacts/miticos-review/hands/arms.glb-0.png` e
+`artifacts/miticos-review/after/fp-32.png`.
+
+### BUG-146 · Render offline do Lobisomem publica brilho, não pelagem
+
+O GLB do Lobisomem é `metallic=1` com albedo escuro; o rig offline
+(`tools/eval/miticos-render-review.py`) usa Principled dielétrico, então o especular das
+áreas de luz domina a imagem. Medido: baixar o albedo 3,3× (tint branco → `baseColorFactor`
+0,3/0,32/0,36) moveu a luma do retrato só de 88,8 para 82,0, e a pelagem continua invisível.
+Reduzir a luz para o nível do modo padrão corrige a luma (43,9) mas derruba `contraste` para
+20,8 e `cores` para 332, abaixo do mínimo dos 88 retratos aprovados (26,1 e 473). Enquanto o
+rig não reproduzir o material metálico, retrato de Mítico sai de mídia aprovada, não de
+render offline. Medição e folha comparativa em
+`docs/reports/MITICOS-LOBISOMEM-INTEGRATION.md`.
+
+### ~~BUG-147 · Lobisomem não tem perfil físico de áudio~~ · CORRIGIDO 07/09/2026
+
+`CHARACTER_IDS` em `tools/audio/fab-game-local.mjs` listava 44 ids e não incluía
+`lobisomem`, então `characterPhysical.byCharacter` não cobria o personagem e
+`eval:audiofablocal` reprovava em `LAB8e` com 44/45.
+
+**Fonte corrigida:** o id entrou na lista (45) e em `CREATURE_CHARACTERS`, ao lado de
+`gotinha`/`dollynho`/`et`/`canarinho`/`proerd` — `physicalByCharacter` é derivado só
+dessas duas listas, sem depender de nenhum byte de áudio.
+
+**`eval:audiofablocal` ficou VERDE com essa única edição.** A previsão de que ficaria
+vermelho até o pacote Fab chegar estava errada: o `audio-fab-local-check.mjs` monta as
+fixtures e roda o gerador num diretório temporário próprio, então `LAB8e` não depende do
+`manifest.json` publicado. Quem depende do pacote é o `audio:check`, que continua vermelho
+neste worktree pelo motivo de sempre (`manifest.json DEFASADO em relação ao disco`) e não
+tem relação com o Lobisomem.
+
+
+### BUG-148 · malha atravessa o chão na morte e no agachado, e nada media isso
+
+**Classe do elenco inteiro, não regressão da facção M.** O contato de pé (CHR3,
+`gen-foot-offsets.mjs`, e o `*-feet` do `miticos-runtime-review.mjs`) mede o vértice mais
+baixo dos ossos de PERNA. O resto do corpo nunca teve régua. O Lobisomem passou 30/30 no
+review com a pata em `0,0000 m` e o quadril 45 cm abaixo do chão na morte — o cadáver
+afunda em vez de deitar.
+
+Medido em 07/09 nos 45 personagens com GLB (`node tools/eval/chao-check.mjs`, o mesmo
+`buildCharacterModel` da tela, 60 Hz, quadro assentado; metros, 0 = chão):
+
+| estado | pior do elenco | mediana | lobisomem |
+| --- | --- | --- | --- |
+| `idle` | -0,0075 (cadequinha) | -0,0001 | **0,0000** (o melhor do elenco) |
+| `crouch` | -0,4313 (proerd) | -0,0004 | -0,1158 |
+| `death` | -0,7771 (proerd) | -0,0677 | -0,4518 |
+
+`proerd` e `canarinho` — **dois personagens que já estão no ar** — enterram 75 cm de corpo
+na morte. O Lobisomem é o terceiro pior, dentro do envelope que já é publicado.
+
+A causa é a malha, não o esqueleto: no mesmo clipe de morte o `Hips` para na mesma altura
+nos dois (`0,138` no lobo, `0,129` no mandrake), mas o corpo do lobo desce `0,59 m` abaixo
+do próprio quadril contra `0,18 m` do mandrake. A morte e o salto não são aterrados de
+propósito (`ground-anims.mjs` preserva a trajetória), então nada corrige o que
+sobra embaixo.
+
+**Régua:** `npm run eval:chao` (CHR7), no `check:fast`, 3,6 s para os 45. Catraca por
+personagem em `tools/eval/chao_check.json` — piorar reprova; melhorar pede `--escreve`.
+`idle` tem teto absoluto de 1,5 cm porque é a pose que a seleção, o menu e o retrato
+mostram. Mutante `--mutate=afunda` (raiz 5 cm para baixo) reprova 135 casos.
+
+**Não consertado nesta lane, de propósito.** Aterrar a morte do lobo pelo mínimo da malha
+o levantaria 45 cm e o deixaria o único do elenco deitado certo, com `proerd` e `canarinho`
+piores e sem régua para eles; e mexer no clipe arrisca o contato de pata que hoje está em
+`1e-7 m`. A catraca impede que piore enquanto a classe não for atacada de uma vez.
+
+
+### ~~BUG-149 · o retarget assava torção nos ossos de curl e matava o fechamento da pata~~ · CORRIGIDO 07/09/2026
+
+`Curl_L`/`Curl_R` não são ossos de animação: são o **atuador de runtime** do fechamento da
+mão, escrito UMA vez pelo `buildCharacterModel` (`glbchars.js`, bloco "Grip curl") com o
+ângulo tirado da espessura medida da arma. Canal de clipe neles é sobrescrita por quadro —
+o grip curl morre e a arma fica na pata aberta.
+
+O `retarget-glb.mjs` montava o delta de rotação de mundo para **todo osso de nome igual**,
+`Curl_*` incluído. Nos 13 rigs humanos com esses ossos o rest da fonte e o do alvo
+coincidem e o delta saía **identidade** (`|delta|max = 0,0000 rad`): inerte, e por isso
+nenhuma régua de asset acusava. Na pata do Lobisomem os rests divergem:
+
+    lobisomem  Curl_R  |delta|max = 0,8763 rad   x=0,293  y=-0,544  z=-0,621
+    (os outros 13)     |delta|max = 0,0000 rad
+
+O eixo dominante é **torção** (y/z), não o `x` do curl — numa folha que carrega 12,55% do
+peso de skin do modelo, a maior região de curl do elenco (P95 a 22,6 cm do osso, contra
+15,0-20,5 cm dos outros 13).
+
+**Estrago, na régua do portão** (`npm run eval:select`, o caminho da tela de seleção):
+
+| | p99 | ruins/1e4 | |
+| --- | --- | --- | --- |
+| com a torção do clipe | 0,694 | 36,2 | REPROVA (teto 0,675 / 23,6) |
+| sem as tracks de Curl | 0,511 | 14,5 | passa — melhor que o `mandrake` (0,540 / 18,9) |
+
+Era o 13º reprovado num portão que declara no máximo 12.
+
+**Conserto em duas pontas:** `tools/strip-curl-tracks.mjs` tira o canal dos GLB já no
+disco (mede antes de tirar, e tem `--check`); `retarget-glb.mjs` nunca mais emite `Curl_*`
+— no-op nos 13 rigs humanos, porque o canal que eles perdem é identidade. Remover em vez
+de regerar foi deliberado: regerar refaria também o contato de pata assado pelo
+`ground-anims.mjs` e a CHR3 junto.
+
+**Mutantes:** `select-inflate.mjs --mutate=curltwist` devolve a torção medida (lobisomem
+p99 0,511 → 0,808, ruins 14,5 → 44,6, VERMELHO; `mandrake`/`pagodeiro` não se movem, e
+está certo — o rig deles não tem `Curl_*` com peso). `miticos-lobisomem-integration-check
+--mutate=curltwist` RECONSTRÓI o canal no documento e o portão o acha sozinho.
+
+**`CURL_MAX` (`glbchars.js`) é LIMITE, não conserto — e hoje não morde.** Com a shotgun
+que o Lobisomem carrega, `curlPara` já devolve 0,35, o piso da faixa, então
+`min(0,35, 0,50)` = 0,35. Ele existe porque a faixa 0,35-0,80 é calibrada em MÃO HUMANA
+("fecha ~0,8 rad em volta de 3 cm") e o lobo tem PATA: arco é r·θ, pata longa precisa de
+MENOS ângulo, e o `curlPara` não tem como saber porque mede a ARMA, nunca a mão. Varrido
+com os clipes já limpos (teto p99 0,675 / ruins 23,6):
+
+| teto | p99 | ruins/1e4 | |
+| --- | --- | --- | --- |
+| 0,35 (o de hoje) | 0,510 | 14,5 | passa |
+| **0,50 (o escrito)** | 0,554 | 16,9 | passa |
+| 0,55 | 0,561 | 21,7 | passa |
+| 0,60 | 0,572 | 24,1 | REPROVA |
+
+O joelho está entre 0,55 e 0,60. Trocar a arma do lobo por uma mais FINA sobe o `curlPara`
+(no limite 0,80 → ruins 35,0) e derrubaria o portão sem ninguém ter tocado no lobo; 0,50
+para essa queda com 28% de folga. Tabela explícita, com um nome só, para o valor não
+vazar para os outros 44.
+
+
+### BUG-150 · Saci e Cuca deformam 12× e 27× o teto, e ficam fora do elenco
+
+Os dois únicos Míticos que o pipeline por personagem NÃO salvou. Medido em
+`npm run eval:select` (teto 23,6 ruins/1e4), depois de retarget + aterramento + strip curl:
+
+| | antes | depois do pipeline |
+| --- | --- | --- |
+| `saci` | 607,1 | ~630 |
+| `cuca` | 316,8 | 284,9 |
+
+Para comparação, o mesmo passo levou o `bandeirante` de 93,1 para **7,3**.
+
+**O que já foi tentado e NÃO resolveu** (resultado negativo, medido — para ninguém repetir):
+
+- **`reskin-glb`**: trocou o dominante em **0 de 7446 vértices (0%)**. Os pesos já são o que
+  a proximidade produziria; a convenção junta→filho está correta nos dois.
+- **Costura de peso entre ossos distantes.** Os dois são os únicos do elenco acima de 8% de
+  vértices com peso repartido entre ossos a mais de 3 arestas no grafo (saci 8,9%, cuca
+  10,8%, contra 0,14-1,5% de todo o resto) — a correlação é real na ponta. Tirar esse peso
+  e renormalizar levou a **cuca de 316,8 para 245,8** (22% melhor, ainda 10× o teto) e o
+  **saci de 607,1 para 629,6** (pior). Na cuca ainda quebrou o contato de chão: o crouch
+  foi para **-1,05 m** e a morte para **-1,38 m**. Os dois consertos foram revertidos e a
+  ferramenta não entrou na árvore.
+**SEIS TENTATIVAS MEDIDAS (08-09/09), teto 23,6 ruins/1e4:**
+
+| tentativa | ruins/1e4 |
+| --- | --- |
+| v1, o modelo herdado | 316,8 |
+| v2, regerada HUMANOIDE (T-pose + rig do Mint) | 412 |
+| v4, regerada JACARÉ BÍPEDE (mesma receita) | 333,4 |
+| **v4 + `reskin-glb` (LOCAL=0)** | **187,0** ← melhor |
+| v4 + `reskin-glb` LOCAL=1 | 254,4 |
+| v4 + `reskin-glb` LOCAL=2 | 262,5 |
+
+**O dono estava certo sobre a identidade, e isso foi separado da causa.** Ele apontou que
+a Cuca é jacaré, não humanoide, e que forçá-la humana descaracteriza. Verdade — e o
+LOBISOMEM prova que bicho passa: focinho, pelo e cauda, com **14,5**, a melhor nota do
+elenco. A restrição nunca foi "ser humanoide", é **plano corporal** (dois braços, duas
+pernas, membros de comprimento humano). A v4 já é jacaré e mesmo assim reprova.
+
+**O que o reskin consertou, medido:** o auto-skin do Mint prendeu o braço e parte do ombro
+ao osso do COTOVELO — `LeftArm` com ZERO vértices dominados e `LeftForeArm` com 1934, o
+centroide a 0,298 m do próprio osso. O `reskin-glb` trocou o dominante em 81% dos vértices
+(4554 de 5598) e levou 333,4 -> 187,0, com o p99 caindo de 22,9 para 1,33 (o mandrake é
+0,54). O antebraço foi para 0,132.
+
+**O que sobra, e por que para aqui:** o pior agora é o `RightLeg` (joelho) dominando 250
+vértices com o pior deles a **1,49 m do osso**. Não é ilha de geometria solta (razão
+máx/p99 = 1,3), é a forma: a malha dela é espalhada — p50 0,46 e p99 1,39 de distância ao
+centro, contra 0,38/0,84 do Saci e 0,70/1,27 do Lobisomem. Focinho longo mais vestido longo
+mais braços abertos é forma ingrata para rig humanoide. Consertar isso é repintar peso à
+mão no Blender, em volta do joelho e da barra do vestido — horas de autoria com julgamento
+visual, não script.
+
+**Fica fora do elenco com 187,0**, oito vezes o teto. O GLB da v4 + reskin está no disco.
+
+
+**Fora do registro, não do disco.** Os GLB seguem em `public/models/characters/`; o que
+saiu foi a entrada em `characters.js`/`GLB_CHARS`/`CHAR_WEAPON`. A invariante de roster do
+`eval:miticos-lobisomem` barra os dois por nome, com mutante.
+
+**O Saci é de UMA PERNA — decidido pelo dono em 08/09**, e é tecnicamente viável. A
+pergunta dele foi a certa ("se for possível ele andar no jogo"), e a resposta foi medida
+antes de gastar geração:
+
+O truque é separar MALHA de ESQUELETO. O rig continua com as duas pernas — é o que os 11
+clipes compartilhados animam —, e só a GEOMETRIA de uma delas some. Provado no Saci atual:
+removendo os triângulos cujos vértices são dominados por `LeftUpLeg|LeftLeg|LeftFoot|
+LeftToeBase` saem 752 de 4975 triângulos (15,1%), o personagem fica de uma perna só, o
+clipe de caminhada toca (RMSE ~2000 entre quadros, medido) e o pé pisa no chão pelo
+`ground-anims`.
+
+O que continua em aberto é ESTÉTICO, não técnico: o ciclo foi autorado para duas pernas,
+então na fase em que a perna que sumiu seria o apoio o corpo fica sem suporte visível.
+Lido de perto isso vira ou um pulinho — que é o Saci — ou um deslize. Um ciclo de pulo
+próprio resolveria de vez, e é trabalho de autoria.
+
+Nada disso é aproveitável enquanto o modelo do Saci reprovar por 27×: a perna é decisão
+de identidade para o Saci REGERADO, não para este.
+
 ---
 
 ### ~~BUG-24 · "as armas estão 1,5x do tamanho que deveriam"~~ · RESOLVIDO 04/08
@@ -4087,6 +5471,29 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatos recentes e resolução
+
+- **Triagem do painel de erros de 13/09/2026 (12 linhas colhidas pelo dono) — 2 defeitos, 10
+  não-defeitos, e os 10 foram MEDIDOS antes de serem descartados.** Os dois defeitos viraram
+  BUG-167 e BUG-168 (P0). O resto fica registrado aqui porque resultado negativo medido
+  economiza a próxima triagem:
+
+  | linha do painel | hits | veredito |
+  |---|---:|---|
+  | `The play method is not allowed by the user agent…` | 122 | **não é defeito.** Já está na `erroIgnoravel` de `src/pages/index.astro` e na `MEDIA_ABORT_RE` de `src/lib/error-provenance.mjs`: cai no balde próprio de mídia (`TETO_MIDIA`), com a linha seguindo no banco **por desenho** (BUG-73). É o autoplay bloqueado antes do 1º gesto — rotina do jogo. |
+  | `404 /img/decals/tag-money.png`, `tag-fina.png` | 115 | **não é defeito de produção.** `curl` em 13/09: `https://www.csbrasil.online/img/decals/tag-money.png` → **200**, `tag-fina.png` → **200**, `or-graf-coro.png` → **200**. Os PNGs ficam fora do git por desenho (`.gitignore:117-130`, acervo reproduzido por `tools/gen-graffiti-decals.mjs`), então quem roda worktree sem gerá-los recebe 404 **em localhost**. A própria linha do painel o denunciava: vinha acompanhada do log do toolbar do Astro (`%cAstro background:…`), que só existe em dev. |
+  | `404 /audio/manifest.json` | — | **mesma classe**: `curl` → **200** em produção. Worktree sem o pacote de áudio. |
+  | `sem_webgl: nenhum contexto foi criado` (llvmpipe/Mesa, e um NVIDIA `0x10de/0x2705`) | 2+16+6+14 | **defeito do cliente, tratado.** `BindToCurrentSequence failed` é o processo de GPU do Chrome caindo. O jogo já tem caminho próprio: `public/js/glcontext.js:118` marca `window.__semWebgl`, `src/pages/index.astro:59` suprime o banner técnico e a tela de fallback explica. O relato **continua sendo enviado de propósito** — é o sinal de "ninguém consegue jogar". Os casos llvmpipe são headless/bot; o NVIDIA é usuário real e não tem conserto do nosso lado. |
+  | `[vite] send was called before connect` | 15 | dev. Servidor de desenvolvimento. |
+  | `Astro … Error while running audit's match function: TypeError: Failed to fetch` | 115 | dev. Toolbar do Astro. |
+  | `carga falhou erro /beacon.min.js/v31edd…` | 122 | externo. Beacon da Cloudflare. |
+  | `network error` | 46 | externo/transitório, já com cota própria (`TETO_EXTERNO`, BUG-51). |
+  | `Falha ao abrir a arena: o código do jogo não chegou (verifique a conexão)` · `boot-watchdog` | 5 | **sem evidência para subir de seção.** Este é o watchdog de BOOT, caminho diferente do BUG-167, e o relatório chegou **sem migalha nenhuma** — não há o que medir. `Régua: nenhuma`. Fica aqui até aparecer um relato com migalha. |
+
+  **O conserto que saiu desta triagem, além dos dois P0:** o relatório passou a carregar
+  `host <location.host>` como primeira migalha (`src/pages/index.astro`, em `contexto()`).
+  Metade das 12 linhas era ruído de máquina de desenvolvimento e o painel não tinha como
+  separar — `version` não serve, porque o build local carrega a mesma string. Custou uma
+  triagem inteira; agora o host vem no relatório.
 
 - **BUG-145 · tiros com volume zero derrubavam o áudio com `RangeError`.**
   **Sintoma literal (admin, 08/09/2026, produção alpha.239):**
@@ -4920,9 +6327,9 @@ Na revisão antes do merge, o grafo aceitava142arestas incompatíveis com corpo/
 ### Escadão R5 — acessos aparentes e horizonte (relatado 06/09/2026)
 Relato literal: “existe a lateral que nao liga a lugar nenhum, e passando por baixo da escada principal de quem vem por baixo tem varias areas que nao da pra entrar”; “falta um fundo de horizonte como outros mapas”. Régua: em preparação, ainda não corrigido. Base merge515/mainalpha.227; preservar escadas, casa/janela e fauna já entregues.
 
-## Regressão de Lajes — correção validada localmente
+## Regressão de Lajes — correção integrada na main
 
-### BUG-141 · Lajes trava acima de 5×5 no single player · CORRIGIDO LOCALMENTE 06/09
+### BUG-141 · Lajes trava acima de 5×5 no single player · INTEGRADO NA MAIN 06/09
 
 Relato do dono: “fiz um teste no lajes e acima de 5x5 players mesmo no single player o mapa trava. fiz comparacao com o mapa piscina na treta que funciona numa boa em 8x8...”.
 
@@ -4959,7 +6366,7 @@ mapa; arrays de vértices/índices compartilhados, nenhum lote de render adicion
 O browser60s ainda vê até1.041draw calls/1.248.982triângulos por frame completo;
 otimização de GPU não foi o objetivo nem foi declarada pronta. Evidências e
 comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
-`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado; integração remota em andamento na PR517.
+`artifacts/lajes-performance/`. Build e invariants sem falha crítica nova. Audio:check local mantém limitação do pack privado. A PR517 foi integrada à main em 06/09/2026 pelo merge `b64aa886` e a correção acompanha a release `v2.0.0-alpha.236`; integrar não é publicar, e nenhum deploy em produção foi verificado.
 
 
 ### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527

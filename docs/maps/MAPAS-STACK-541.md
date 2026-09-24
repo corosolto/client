@@ -21,9 +21,11 @@ Os conflitos ficaram restritos aos nove documentos gerados. Eles foram regenerad
 contra alpha.240. `public/js/map_penitenciaria.js` combinou sem conflito o UV em
 metros e os vãos profundos da #541 com os oito apoios de guarita do BUG-146.
 
-O texto histórico da #541 citava o hash PF5 anterior à correção VM14. Nesta base,
-o contrato correto é `57052d4b94a8`: o passe visual preserva colisão, navegação,
-spawns, CTF e pickups depois da troca do volume cheio pelos apoios.
+O texto histórico da #541 citava o hash PF5 anterior à correção VM14, e a base dele era
+`57052d4b94a8`. O merge com a `main` de 24/09/2026 aposentou a cláusula PF5 junto com o
+`map_penitenciaria.js` antigo: a `main` reconstruiu o Carandiru inteiro e o contrato de
+colisão/navegação/spawns/CTF/pickups passou a ser medido pelas réguas que rodam por mapa
+(`pickup-check` VM14, `mapcontrato`, `carandiru-main-r3-check`), não por um sha256.
 
 ## Validação
 

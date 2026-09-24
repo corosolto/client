@@ -88,6 +88,51 @@ vento/vegetação de favela já existente no pack, sem criar asset nem caminho n
 - `main` ocupou BUG-145 nesse delta para o defeito de envelope de áudio; VM14 foi
   desambiguado novamente como BUG-146, sem mudar sua régua ou correção.
 
+## Merge da `main` de 24/09/2026 (alpha.266+)
+
+`main` andou muito entre alpha.240 e alpha.266. O que cada conflito real virou:
+
+- **`public/js/map_penitenciaria.js` — a `main` ganhou.** Ela reconstruiu o Carandiru
+  (`1c12e0129 feat(maps): reconstruct Carandiru map-local`, 800 linhas novas) com
+  passarelas, quatro acessos à muralha, pavilhão oco e grafo de bots conectado. Essa
+  versão JÁ preserva o que a raiz tinha entregue — reboco, holofotes que varrem,
+  varandas, arame contínuo, janelas — e JÁ entrega a correção VM14: `pickup-check
+  penitenciaria` mede 66 pickups, sem alcance 0, pior distância andável 0,14 m, o mesmo
+  número que a raiz publicou. O que ela não traz são os moldes Mint, por decisão
+  registrada em `docs/reports/CARANDIRU-MAIN-R3.md:16`: *"O asset Mint do PR #556 não
+  entra: a própria descrição registra termos comerciais ainda pendentes"*. A régua
+  `carandiru-main-r3-check` (CR3-1) cobra essa ausência.
+- **Réguas da raiz, ajustadas ao mapa que existe.** `penitenciaria-vida-check` perdeu a
+  NV7 (molde `torre_vigilancia` nas guaritas) e as cláusulas de molde da NV8, que virou a
+  NV7 atual: pavilhão, portão, torres, galeria percorrível e campo pichado seguem
+  medidos. A pegada do pavilhão passou a sair da UNIÃO dos colisores `pavilhao*` — a
+  `main` trocou o volume cheio por quatro cantos para abrir o cruzamento térreo, e a
+  união dá a mesma caixa. `penitenciaria-facade-check` perdeu PF1 (forçava `placeProp`),
+  PF4 (cravava 16 janelas do pavilhão cheio; o oco tem 12 em parede real, medidas pela
+  CR3-3) e PF5 (sha256 do contrato inteiro — pino de implementação). PF2 e PF3 ficaram, e
+  o mutante `cone-restaurado` continua mordendo a PF2.
+- **`public/js/map_parque.js` — as duas mãos.** A raiz trouxe o rebuild com `applyLook`;
+  a `main` trouxe `aplicaSombraSol`. O merge usa o `applyLook` da raiz e manda o tamanho
+  da sombra pelo orçamento, sem o `mapSize.set(2048)` cravado que a QMAP1 proíbe.
+- **`public/js/map_campomorro.js`** perdeu o `LOWQ` próprio (leitura de `awpbr_settings`)
+  e usa `aplicaSombraSol`: era o único arquivo desta pilha a estourar QMAP1, QMAP3 e a
+  catraca da QMAP4.
+- **`public/js/maps.js` e `tools/audio/extend-map-soundscapes.mjs` — união.** Campinho do
+  Morro (raiz) e Mansão do Joá (`main`) convivem no registro, no alias e na extensão do
+  pack de áudio.
+- **`mint-assets.json` — união.** 56 entradas da `main` + 10 da raiz = 66, sem colisão de
+  chave.
+- **`public/js/graffiti_layout.js` — união com a assinatura da `main`.** Os sete mapas da
+  `main` vêm dela (ela reassinou sem reassar em 12/09), mais o `campomorro` da raiz: 2.985
+  peças, `eval:grafitelayout` verde com entradas frescas.
+- **`tools/eval/cena_probe.json` e os nove documentos gerados** vieram da `main` e foram
+  regerados (`npm run docs` + `npm run arch`).
+
+Conhecido e NÃO introduzido aqui: `eval:qualmapas` já reprova na `main` limpa (QMAP1 e
+QMAP3 em `map_penitenciaria.js:335`) e `eval:mapid` também (M1 acha `fy_mansao` em
+`docs/reports/JOA-MAIN-R2.md:39`). Os dois reproduzem idênticos num worktree de
+`origin/main` sem esta branch.
+
 ## Próximo passo
 
 Fazer o teste manual da passagem sob a guarita e revisar a raiz local. Depois da

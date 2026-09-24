@@ -20,4 +20,12 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tag-selvagem.png","persona
 
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
-export const GRAFITE_FP = {"pass":"72a446b1c69e9697","maps":{"campomorro":"b35d3d997619edba","escadao":"5532fd1e72d35022","praca_poderes":"a3462da08b82184e","piscina_treta":"a22c72167b618b36","loja_h":"fd01e108687108d6","ferro_velho":"0d77f26d29b0b663","quebrada":"05eb0fb8df2a5a36","corrego":"8008343b4035da83"}};
+
+/* REASSINADO SEM REASSAR em 2026-09-12 — corrego: PropBatch ganhou cortes de vegetação (distância), geometria e bandas de parede intactas
+   A colocação não foi tocada: assar de novo não é operação fiel (duas rodadas idênticas
+   dão contagens diferentes, e árvore sem o acervo completo de decalques apaga peças). */
+
+/* REASSINADO SEM REASSAR em 2026-09-24 — campomorro: a sombra do sol passou a sair do
+   orçamento (aplicaSombraSol) e o LOWQ próprio do mapa saiu. Tamanho de mapa de sombra
+   não entra na colocação do grafite: geometria, bandas, semente e passada intactas. */
+export const GRAFITE_FP = {"pass":"72a446b1c69e9697","maps":{"campomorro":"f58d49c10e717e30","escadao":"ba3a46ab4903a345","praca_poderes":"a61f8c352eca8377","piscina_treta":"b43d1a561bac01a4","loja_h":"7d35e666ce48c297","ferro_velho":"6ad42bd8fd7f5d76","quebrada":"0aad1c145b713e60","corrego":"5b77ec2fd585a8aa"}};

@@ -724,6 +724,14 @@ O BUNDLE PÚBLICO NÃO NOMEIA O BACKEND. Decisão do dono (15/08): quem abre o j
 npm run eval:backendhints
 ```
 
+## `eval:geoproxy`
+
+A GEO DO JOGADOR CHEGA AO BACKEND (backend#22). Desde 30/08/2026 o jogo chamava o Cloud Run direto (run.app, sem borda): o `geoFrom` do backend nunca mais viu país/cidade, city_daily congelou em 2026-08-30T02:41:50Z e 88,9% da presença ficou sem geo — tudo respondendo 200. Cobra que telemetry/presence/heartbeat/submit-match/perf vão pelo proxy same-origin (`apibase.js` VIA_SITE), que o proxy sobe UMA fonte de geo por requisição (cf-* só com salto de faixa da Cloudflare; x-vercel-ip-* fora dela, porque atrás da Cloudflare ele descreve o PoP) e que `API_PROXY_SECRET` sobe como prova. Mutantes: --mutante=geo-direto|pop-como-cidade|cf-forjado|sem-segredo|rota-fora-do-proxy|fetch-cru.
+
+```bash
+npm run eval:geoproxy
+```
+
 ## `changelog:check`
 
 A seção do CHANGELOG da versão corrente é a NOTA do release — não pode linkar o release nela mesma (o ponteiro circular vivia no topo de toda entrada desde o início e apontava pro domínio pré-migração), não pode citar rubenmarcus/csbrasil (o repo é corosolto/client desde a migração; redirect existe, mas régua se escreve no domínio canônico) e, quando há tags locais, a contagem de (#N) tem que bater com os merges reais do git na faixa vAnterior..vAtual — entra no release.yml via sync-changelog e o que é gerado por robô se verifica por robô. Clone sem tags (build da Vercel): a contagem PULA declarada, a estrutura morde igual. Mutantes: --mutante=selflink|dominio-velho|pr-sumido.

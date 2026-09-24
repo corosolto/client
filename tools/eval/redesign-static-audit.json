@@ -1,8 +1,8 @@
 {
-  "resultImagesSha256": "eb77e196be8199146e4cf3d3d297063c9ae37603bf825125acf62111367ce058",
+  "resultImagesSha256": "b0a69b52c4b39c94d32a4b993c82773d551f18793e3f5de00a9df872fcbe68d4",
   "punkAvatarSha256": "cb642e6968b6d45e07425874cf8827a407bd464d0f29ae1b7ac51010e39841e3",
   "gotinhaAvatarSha256": "1743f2dff0ccd39a3f7be9ee1fde376694cf75cd1a5ad08c54fc2cd87cf637a3",
   "avatarReference": "public/video/chars/{punk,gotinha}.webm@1.0s",
-  "reviewedAt": "2026-08-16",
-  "review": "Os 44 personagens do elenco atual foram comparados à seleção e aos GLBs: corpo inteiro, alpha limpo, folga superior/inferior e identidade preservada. Punk e Sindicato vêm dos próprios GLBs; nenhuma figura nova ou fictícia foi criada para o resultado."
+  "reviewedAt": "2026-09-09",
+  "review": "Elenco de 54: os 45 publicados mais os 9 Míticos (Lobisomem, Lampião, Bandeirante, Boto Cor de Rosa, Zumbi dos Palmares, Curupira, Maria Bonita, Saci-Pererê e Caipora). O dono revisou os retratos de resultado e os avatares e aprovou. Os nove passaram pelo gen-char-realista.mjs, o mesmo tratamento de busto dos 45 publicados, com a identidade travada pelo render do GLB real. Vitória e derrota seguem sendo o mesmo recorte alpha por personagem, a convenção de 44 dos 45 pares publicados; o desfecho vive no .webm. LIMITE ACEITO: o retrato do Curupira sai como ADULTO em duas tentativas, enquanto o modelo dele é um moleque estilizado — o pipeline fotorrealista não segura personagem cartunesco. Aprovado assim, com a troca pelo render do GLB em aberto para uma rodada de arte. A Cuca não entra: reprova a régua de deformação em seis tentativas medidas (BUG-150) e foi substituída pela Caipora por decisão do dono."
 }

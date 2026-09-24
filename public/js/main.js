@@ -26,7 +26,7 @@ import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 import { createMapPreview } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -64,8 +64,10 @@ function clearTelemetryGameContext() {
 /* ---------------- renderer ---------------- */
 // Import extra (top-level, legal em ESM) em vez de mexer no bloco de imports lá de cima:
 // o tom do caminho SEM pós mora no bloom.js, que é o dono da tabela de exposição/piso por mapa.
-import { applyNoPostTone } from './bloom.js';
-import { criaRenderer, avisaSemWebgl } from './glcontext.js';
+import { applyNoPostTone, ajustaPos } from './bloom.js';
+import { criaRenderer, avisaSemWebgl, avisaSoftware } from './glcontext.js';
+import { EscadaAdaptativa, DEGRAUS } from './qualidade-adaptativa.js';
+import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol } from './mapquality.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
 const renderer = criaRenderer({}, { compatibility: SAFE_MODE });
@@ -73,7 +75,12 @@ if (!renderer) {
   avisaSemWebgl('WebGL indisponível neste navegador/driver');
   throw new Error('sem_webgl');
 }
-const COMPAT_MODE = SAFE_MODE || renderer.__csWebgl?.degraded === true;
+/* `degraded` junta MSAA recusado, WebGL1, modo compatibilidade e renderizador de software —
+   e tratar os quatro igual rebaixava para o caminho mais leve do jogo uma GPU boa que só disse
+   não ao antialias. Aqui cada um custa o que custa (KNOWN-BUGS BUG-162). */
+const GLMETA = renderer.__csWebgl || {};
+const SOFTWARE = GLMETA.software === true;      // llvmpipe/swiftshader: 2 a 8 FPS medidos
+const COMPAT_MODE = SAFE_MODE || SOFTWARE || GLMETA.semWebgl2 === true || GLMETA.compat === true;
 if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'; }
 /* AUTO-PERFIL PARA MÁQUINA FRACA: cai pra 'low' por padrão só se o jogador NUNCA escolheu
    qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
@@ -88,10 +95,13 @@ function detectaHwFraco() {
 const WEAK_HW = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && detectaHwFraco();
 if (WEAK_HW) { settings.quality = 'low'; try { console.info('[perf] hardware modesto detectado — qualidade em BAIXA por padrão (mude em Configurações)'); } catch {} }
 const LEAN = COMPAT_MODE || WEAK_HW;   // qualquer caminho leve: previews estáticos + DPR menor
+if (SOFTWARE) avisaSoftware(GLMETA.renderer);   // contar é o que faltava; o jogo já se rebaixou
 const ASSET_CHECK = new URLSearchParams(location.search).get('assetcheck') === '1';
 let staticPreviews = LEAN && !ASSET_CHECK;
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(LEAN ? 0.75 : 1);
+// software já começa no degrau MÍNIMO: medir 8 s para descobrir o que o renderizador já disse
+// é gastar os únicos quadros que essa máquina tem. 0,5 = um quarto dos pixels de 1,0.
+renderer.setPixelRatio(SOFTWARE ? 0.5 : LEAN ? 0.75 : 1);
 renderer.shadowMap.enabled = !COMPAT_MODE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Tonemap. Com o composer ligado three já força NoToneMapping nos materiais (só aplica
@@ -320,7 +330,7 @@ function show(id) {
   if (id === 'main-menu') setTimeout(focusMenu, 40);   // teclado: ↑/↓ navegam assim que a home aparece
 }
 const $ = id => document.getElementById(id);
-const FACTION_ART_URLS = ['/img/faccoes/time-e.webp', '/img/faccoes/time-b.webp', '/img/faccoes/tribos.webp', '/img/faccoes/palhacos.webp', '/img/faccoes/funkeiros.webp'];
+const FACTION_ART_URLS = ['/img/faccoes/time-e.webp', '/img/faccoes/time-b.webp', '/img/faccoes/tribos.webp', '/img/faccoes/palhacos.webp', '/img/faccoes/funkeiros.webp', '/img/faccoes/mitico.webp'];
 const factionArtImages = FACTION_ART_URLS.map((src) => {
   const image = new Image();
   image.decoding = 'async';
@@ -825,6 +835,21 @@ let game = null, currentTeam = 'E', currentFaction = 'E', currentChar = CHARACTE
 let pickingEnemy = false, currentEnemyFaction = null;   // 2º passo do team-select: escolher o adversário
 let submitted = true;   // stats da partida atual já enviados?
 
+/* RÉGUA:launch-race início — extraído por `tools/eval/launch-race-check.mjs` */
+let _lancamento = 0;
+/* Lançar partida é CORRIDA: saída pelo menu, queda de socket e remontagem do servidor chegam
+   no meio de um `await` de `_startGame`. Quem perdeu a corrida desiste (#608/#609). */
+const novoLancamento = () => ++_lancamento;
+const lancamentoPerdeu = (n) => n !== _lancamento;
+function soltarPartida() {
+  game = null; window.__game = null;
+  _lancamento++;
+  /* A tela de loading morre COM a partida: `show()` não mexe no overlay, e uma queda no meio
+     do preload deixava o menu atrás de um "CARREGANDO MODELOS 3D…" eterno. */
+  try { hideLoading(); } catch { /* overlay ainda não existe */ }
+}
+/* RÉGUA:launch-race fim */
+
 /* ---------------- TELEMETRIA ANÔNIMA (contrato em tools/eval/telemetry-check) --------------
    O ranking está desligado (src/lib/site.ts, RANKING_ON) mas a MEDIÇÃO não: o dono
    quer saber quanto tempo se joga e em que mapa.
@@ -1053,6 +1078,10 @@ function _perfFinish(bootMs, frames) {
     memoryGb: navigator.deviceMemory || null,
     renderer: rendererStr,
     dpr: window.devicePixelRatio || null,
+    // DPR do que o jogo DESENHA (não o do aparelho) e renderer em 3 estados — BUG-157.
+    dprEfetivo: (() => { try { return renderer.getPixelRatio(); } catch { return null; } })(),
+    software: window.__csWebgl?.softwareEstado || 'desconhecido',
+    glTier: window.__csWebgl?.tier || null,
     vw: window.innerWidth, vh: window.innerHeight,
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
@@ -1150,26 +1179,42 @@ async function startGame(team, charId, enemyFaction, online = false) {
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
      de verdade continua sendo pego. */
+  /* RÉGUA:launch-watchdog início — extraído por `tools/eval/launch-watchdog-check.mjs` */
   let _wp = _lstat.loaded;
   window.__gameLaunch?.begin('partida', 60000, function () {
+    const g = window.__game;
+    /* Conclusão é QUADRO (`time` só anda no update() do rAF), não o sub-estado `live`, que
+       falta em countdown/roundEnd. Antes da rede lenta. BUG-167, `eval:launchwatchdog`. */
+    if (g && g.time > 0) return true;
     if (_lstat.loaded > _wp) { _wp = _lstat.loaded; return 'rede-lenta'; }
-    return !!(window.__game && window.__game.state === 'live');
+    return false;
   });
+  /* RÉGUA:launch-watchdog fim */
+  const meuLancamento = novoLancamento();
   try {
-    await _startGame(team, charId, enemyFaction, online);
+    await _startGame(meuLancamento, team, charId, enemyFaction, online);
     window.__gameLaunch?.ready('partida');
   } catch (e) {
-    try { hideLoading(); } catch {}
-    try { if (game) game.dispose(); } catch {}
-    game = null; window.__game = null;
-    try { if (document.pointerLockElement) document.exitPointerLock(); } catch {}
-    try { if (document.fullscreenElement) document.exitFullscreen()?.catch?.(() => {}); } catch {}
-    try { show('main-menu'); } catch {}
+    /* RÉGUA:launch-race queda início — extraído por `tools/eval/launch-race-check.mjs` */
+    /* Só quem ainda é o lançamento corrente limpa a tela: o `catch` de uma abertura velha
+       derrubava a partida NOVA que já estava subindo por cima dela. */
+    if (!lancamentoPerdeu(meuLancamento)) {
+      try { if (game) game.dispose(); } catch {}
+      soltarPartida();
+      try { if (document.pointerLockElement) document.exitPointerLock(); } catch {}
+      try { if (document.fullscreenElement) document.exitFullscreen()?.catch?.(() => {}); } catch {}
+      try { show('main-menu'); } catch {}
+      /* O modal de falha é IRRECUPERÁVEL (só "TENTAR DE NOVO", que recarrega) e o `fail`
+         desarma o watchdog: abrir isso por cima da partida que assumiu é pior que o #609. */
+      window.__gameLaunch?.fail(e, 'main.js:startGame');
+    }
+    /* O relatório segue saindo nos dois casos — `console.error` é coletado
+       (`index.astro:426`). Mesma disciplina do BUG-170: corta o modal, nunca a telemetria. */
     console.error('falha ao abrir a partida', e);
-    window.__gameLaunch?.fail(e, 'main.js:startGame');
+    /* RÉGUA:launch-race queda fim */
   }
 }
-async function _startGame(team, charId, enemyFaction, online = false) {
+async function _startGame(meuLancamento, team, charId, enemyFaction, online = false) {
   const sessao = online ? mpSessao : null;
   const metaMp = sessao?.net?.meta || {};
   const salaMp = sessao?.sala || {};
@@ -1263,10 +1308,15 @@ async function _startGame(team, charId, enemyFaction, online = false) {
            no fallback procedural sem textura — verde na régua de registro, feio na tela.
            Foi literalmente o BUG-57. Lista vazia é tratada como "tudo" no ambientlife. */
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
+        MAPS[currentMap]?.preload?.(),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
+  /* RÉGUA:launch-race nascimento início — extraído por `tools/eval/launch-race-check.mjs` */
+  /* O preload leva segundos: sem esta saída, uma queda de socket no meio dele fazia nascer um
+     Game zumbi por cima do menu que a desconexão já havia aberto. */
+  if (lancamentoPerdeu(meuLancamento)) return;
   if (_lstat.phase) _lstat.phase.set(1);
   game = new Game({
     renderer, textures, sfx,
@@ -1285,6 +1335,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
     onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
+  /* RÉGUA:launch-race nascimento fim */
   /* Resto das armas em ocioso: o drop do chão e a troca no meio da partida precisam de malha
      real, senão vira caixa procedural. Falha calada — é disponibilidade, não requisito. */
   if (!navOnly && params.get('armaslazy') !== '0') {
@@ -1320,9 +1371,13 @@ async function _startGame(team, charId, enemyFaction, online = false) {
     $('set-speech').checked = settings.speech;
     return settings.speech;
   };
+  /* RÉGUA:launch-race cauda início — extraído por `tools/eval/launch-race-check.mjs` */
   game.start();
   // esconde o loading só depois do 1º frame REAL da partida renderizado
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  /* Nestes dois quadros cabe uma saída, uma queda ou uma remontagem: quem perdeu a corrida não
+     toca em `game` (era nulo em #608/#609) nem na tela do lançamento que assumiu. */
+  if (lancamentoPerdeu(meuLancamento)) return;
   hideLoading();
   // registra nick no ranking global (silencioso se a API não estiver no ar)
   const nick = $('nick-input').value.trim();
@@ -1353,6 +1408,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
      o `game._requestLock()` já fazia — e a duplicata é que deixava a trava de atalhos sem
      lugar pra morar no começo da partida (o RETOMAR passava pelo funil, o COMEÇAR não). */
   if (!testMode) game._requestLock();
+  /* RÉGUA:launch-race cauda fim */
 }
 function quitToMenu() {
   // corta a vinheta de round ao sair da partida (pedido do dono): o teto de 25 s do
@@ -1384,7 +1440,7 @@ function quitToMenu() {
   // dispose protegido: se a limpeza da partida falhar, o menu volta MESMO assim
   // (antes, uma exceção aqui deixava o botão "SAIR PRO MENU" morto e o jogo zumbi)
   try { if (game) game.dispose(); } catch (e) { console.error('dispose falhou ao sair pro menu', e); }
-  game = null; window.__game = null;
+  soltarPartida();
   if (document.pointerLockElement) document.exitPointerLock();
   // a tela cheia era da PARTIDA (pré-requisito da trava de Ctrl+W); no menu ela não serve
   // pra nada e prender o jogador nela é rude. O `dispose()` acima já soltou os atalhos.
@@ -1748,8 +1804,12 @@ function setMapMode() {
     matchMode = matchMode === 'ctf' ? 'rounds' : 'ctf';
     modoEscolhido = true;   // alternar no badge também é escolha do jogador
     ui.click();
+    /* O badge troca o modo INTEIRO: sem isto o título contradizia o eyebrow e a tela
+       cheia mostrava os rounds do outro modo. Medido no `eval:screenquery:browser`. */
+    setupTitle = matchMode === 'ctf' ? 'CAPTURE THE FLAG' : 'MATA-MATA';
     setMapMode();
     setSetupStep('match');   // o eyebrow do passo carrega o modo (PARTIDA / PARTIDA (CTF))
+    renderMapScreen();       // a tela cheia acompanha o modo (rounds por modo, ficha)
   });
 }
 let mapIdx = Math.max(0, MAP_IDS.indexOf(currentMap));
@@ -2042,7 +2102,7 @@ const stripStep = (dir) => {
 $('strip-up').onclick = () => { ui.click(); stripStep(-1); };
 $('strip-down').onclick = () => { ui.click(); stripStep(1); };
 // Contador de elenco nos cards de facção ("8 PERSONAGENS" — referência telas/02)
-for (const f of ['e', 'b', 'u', 'c', 'f']) {
+for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   const n = CHARACTERS.filter(c => c.team === f.toUpperCase()).length;
   const card = $('btn-team-' + f);
   if (!card) continue;
@@ -2056,6 +2116,7 @@ $('btn-team-b').onclick = () => { sfx.uiClick(); pickTeam('B'); };
 $('btn-team-u') && ($('btn-team-u').onclick = () => { sfx.uiClick(); pickTeam('U'); });
 $('btn-team-c') && ($('btn-team-c').onclick = () => { sfx.uiClick(); pickTeam('C'); });
 $('btn-team-f') && ($('btn-team-f').onclick = () => { sfx.uiClick(); pickTeam('F'); });
+$('btn-team-m') && ($('btn-team-m').onclick = () => { sfx.uiClick(); pickTeam('M'); });
 $('btn-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
 $('btn-pause-settings').onclick = () => { sfx.uiClick(); settingsReturn = 'pause-menu'; show('settings-panel'); };
 $('btn-pause-controls').onclick = () => { sfx.uiClick(); howtoReturn = 'pause-menu'; show('howto-panel'); };
@@ -2152,7 +2213,7 @@ $('char-confirm').onclick = () => {
 
 // Esconde/mostra o card da sua facção na tela de adversário (btn-team-e/b/u).
 function setEnemyPickMode(on, myFaction) {
-  for (const f of ['e', 'b', 'u', 'c', 'f']) {
+  for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
     const b = $('btn-team-' + f);
     if (b) b.classList.toggle('hidden', !!(on && f.toUpperCase() === myFaction));
   }
@@ -2162,7 +2223,7 @@ function setEnemyPickMode(on, myFaction) {
    ficava com cara de formulário ("escolha o adversário" e três caixas iguais).
    Agora o passo é um estado (data-step) que a tela inteira lê: eyebrow, título, dica
    e o texto da barra de ação de cada placa (ver .team-cta no style.css). */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS' };
+const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS', M: 'MÍTICO' };
 function setTeamStep(step, myFaction) {
   const ts = $('team-select'); if (ts) ts.dataset.step = step;
   const st = $('team-step'), tt = $('team-title'), hint = $('team-hint');
@@ -2474,7 +2535,7 @@ let teamPreviewsDone = false;
 function ensureTeamPreviews() {
   if (teamPreviewsDone) return;
   teamPreviewsDone = true;
-  for (const [btn, fac] of [['btn-team-e', 'E'], ['btn-team-b', 'B'], ['btn-team-u', 'U'], ['btn-team-c', 'C'], ['btn-team-f', 'F']]) {
+  for (const [btn, fac] of [['btn-team-e', 'E'], ['btn-team-b', 'B'], ['btn-team-u', 'U'], ['btn-team-c', 'C'], ['btn-team-f', 'F'], ['btn-team-m', 'M']]) {
     const box = document.querySelector(`#${btn} .team-chars`);
     if (!box) continue;
     const chars = CHARACTERS.filter(c => c.team === fac && GLB_CHARS.has(c.id)).slice(0, 4);
@@ -2504,7 +2565,7 @@ function pickTeam(faction) {
   currentFaction = faction;
   currentTeam = faction === 'B' ? 'B' : 'E';
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
-  for (const f of ['e', 'b', 'u', 'c', 'f']) {
+  for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
     const b = $('btn-team-' + f);
     if (b) b.setAttribute('aria-pressed', String(f.toUpperCase() === faction));
   }
@@ -2766,11 +2827,40 @@ let menuAngle = 0;
    fatias — máquina que não acompanha descarta o excesso em vez de acumular
    dívida (espiral da morte). */
 const PASSO_TETO = 4;
+
+/* ESCADA ADAPTATIVA. A detecção de máquina fraca roda uma vez no boot; mapa caro, partida
+   cheia e fumaça acontecem depois. Ver docs/QUALIDADE-ADAPTATIVA.md. */
+const ADAPTATIVA = new URLSearchParams(location.search).get('adaptativa') !== '0';
+const escada = new EscadaAdaptativa({
+  orcamentoMs: 1000 / 60,
+  // software já nasceu no fundo: não faz sentido oferecer a ele os degraus de cima
+  degrau: SOFTWARE ? DEGRAUS.length - 1 : 0,
+});
+const dprBase = renderer.getPixelRatio();
+function aplicaDegrau(i) {
+  const d = DEGRAUS[i];
+  renderer.setPixelRatio(dprBase * d.dpr);   // o composer acompanha (bloom.js, cp._dpr)
+  ajustaPos({ ssao: d.ssao, aa: d.aa, charmask: d.charmask });
+  definirSombraDegrau(d.sombra === 'baixa' ? 'baixa' : null);
+  definirCorteVegetacao(d.mato ?? 1);
+  if (game?.world?.sun) aplicaSombraSol(game.world.sun);
+  try { console.info(`[perf] qualidade adaptativa → ${d.nome}`); } catch { /* console mudo */ }
+}
+// mesmo precedente de `__mpConvite`: gancho de sonda/captura, nunca caminho de jogo
+window.__escada = { escada, aplicaDegrau, DEGRAUS, dprBase };
+
 function loop() {
   requestAnimationFrame(loop);
   const dtReal = clock.getDelta();
+  // só mede com partida VIVA: menu e tela de carregamento têm outro custo e enganariam a escada
+  if (ADAPTATIVA && game && game.state === 'live') {
+    const novo = escada.quadro(dtReal * 1000);
+    if (novo !== null) aplicaDegrau(novo);
+  }
   loadingStage.update(Math.min(0.05, dtReal));
-  const csOpen = !$('char-select').classList.contains('hidden');
+  // BUG-177: sem #char-select no DOM (extensão/tradutor que reescreve o body) o `loop`
+  // lançava a cada quadro e congelava o jogo — ausente conta como fechada.
+  const csOpen = $('char-select')?.classList.contains('hidden') === false;
   // A troca com M pausa a partida; o preview 3D visível continua animando nesse estado.
   if (game && !csOpen) {
     let resto = dtReal;
@@ -2850,7 +2940,7 @@ async function openInspectionScreen(target) {
   if (target.screen === 'character') {
     pickTeam(faction);
     if (target.character) {
-      for (let i = 0; i < 180 && $('char-select').classList.contains('hidden'); i++) {
+      for (let i = 0; i < 180 && $('char-select')?.classList.contains('hidden') !== false; i++) {
         await new Promise((resolve) => requestAnimationFrame(resolve));
       }
       const roster = CHARACTERS.filter((c) => c.team === faction);
@@ -2923,7 +3013,7 @@ async function obterMpTicket(action) {
   const localMp = new URLSearchParams(location.search).get('mp') || '';
   if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
-  if (!/^[a-z]{2}$/.test(node)) return '';
+  if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
   const r = await fetch(apiUrl('/api/mp-ticket'), {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ node, action, anonId: getAnonId(), sessionId: getSessionId() }),
@@ -2967,8 +3057,8 @@ async function abrirMultiplayer() {
   if (nos) nos.innerHTML = '<div class="mp-vazio">medindo o ping dos servidores…</div>';
   mpEl('mp-salas').innerHTML = '';
   mpNos = await sondarNos(NOS);
-  // ordena por ping: o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono
-  mpNos.sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
+  // o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono (regra em nos.js)
+  mpNos = ordenarNos(mpNos);
   const local = new URLSearchParams(location.search).get('mp');
   if (local) {
     // ?mp=1 é a máquina local; ?mp=host:porta é um servidor apontado à mão (não confundir os dois).
@@ -3012,6 +3102,59 @@ function mpCartaoNoHTML(n) {
     + `<span class="mp-ping" data-q="${q}">${ping}</span>`;
 }
 
+/* Mapas da sala escolhidos a dedo. A grade sai do `/maps` DO NÓ, não do catálogo local — o
+   servidor simula uma versão fixada do jogo (docs/MULTIPLAYER.md, "Pool de mapas"). */
+let mpMapasDoNo = [];
+let mpMapasEscolhidos = new Set();
+
+function mpPintarMapas() {
+  const grade = mpEl('mp-mapas-grade'), conta = mpEl('mp-mapas-conta');
+  if (!grade || !conta) return;
+  const ctf = mpEl('mp-modo') && mpEl('mp-modo').value === 'ctf';
+  grade.innerHTML = mpMapasDoNo.map((id) => {
+    const on = mpMapasEscolhidos.has(id);
+    return `<button class="mp-mapa${on ? ' on' : ''}" type="button" data-id="${id}" aria-pressed="${on}" title="${MAPS[id].name}">`
+      + `<img class="mp-mapa-img" loading="lazy" decoding="async" src="${mapPreviewPoster(id, VERSION)}" alt="">`
+      // o crachá CAPTURA só informa quando o modo É captura; senão é ruído em quase todo cartão
+      + (ctf && MAPS[id].ctfMode ? '<span class="mp-mapa-ctf">CAPTURA</span>' : '')
+      + `<span class="mp-mapa-nome">${MAPS[id].name}</span></button>`;
+  }).join('');
+  grade.querySelectorAll('.mp-mapa').forEach((b) => {
+    b.onmouseenter = () => ui.hover();
+    b.onclick = () => {
+      ui.click();
+      const id = b.dataset.id;
+      if (mpMapasEscolhidos.has(id)) mpMapasEscolhidos.delete(id); else mpMapasEscolhidos.add(id);
+      mpPintarMapas();
+    };
+  });
+  const n = mpMapasEscolhidos.size;
+  const fora = MAP_IDS.filter((id) => !mpMapasDoNo.includes(id)).length;
+  conta.textContent = (!mpMapasDoNo.length ? 'esse servidor não respondeu a lista de mapas'
+    : n === 0 ? 'marque pelo menos um mapa'
+      : n === 1 ? 'só 1 mapa: a sala não gira, joga sempre nele'
+        : `${n} mapas na fila, sorteados a cada partida`)
+    + (fora ? ` · ${fora} do jogo ainda não estão neste servidor` : '');
+}
+
+async function mpCarregarMapasDoNo() {
+  if (!mpNoAtual) return;
+  try { mpMapasDoNo = (await listMaps(mpNoAtual.http)).filter((id) => MAPS[id]); }
+  catch { mpMapasDoNo = []; }
+  // mapa que o nó não tem não pode continuar marcado de uma seleção feita noutra região
+  for (const id of [...mpMapasEscolhidos]) if (!mpMapasDoNo.includes(id)) mpMapasEscolhidos.delete(id);
+  mpPintarMapas();
+}
+
+function mpSincronizarMapas() {
+  const rot = mpEl('mp-rotacao'), caixa = mpEl('mp-mapas');
+  if (!rot || !caixa) return;
+  const aDedo = rot.value === 'escolher';
+  caixa.hidden = !aDedo;
+  if (!aDedo) return;
+  if (mpMapasDoNo.length) mpPintarMapas(); else mpCarregarMapasDoNo();
+}
+
 function mpDesenharNos() {
   const box = mpEl('mp-nos'); if (!box) return;
   box.innerHTML = '';
@@ -3028,6 +3171,8 @@ function mpDesenharNos() {
 
 function mpSelecionarNo(no) {
   mpNoAtual = no;
+  mpMapasDoNo = [];              // cada nó tem o catálogo DELE; recarrega ao abrir a grade
+  mpSincronizarMapas();
   if (no.online) mpEstado('on', `ONLINE · ${no.nome.split('·')[0].trim()} · ${no.ping} ms`);
   mpDesenharNos();
   mpAtualizarSalas();
@@ -3060,7 +3205,10 @@ async function mpAtualizarSalas() {
       `<div class="mp-sala-top"><div class="mp-sala-nome">${r.name}${tags}</div>`
       + `<div class="mp-lot"><span class="mp-lot-bar"><i style="width:${Math.round(frac * 100)}%"></i></span>`
       + `<b>${r.players}</b>/${r.max}${r.spectators ? `<span class="mp-lot-spec">+${r.spectators} assistindo</span>` : ''}</div></div>`
-      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}`
+      + (Array.isArray(r.mapas) && r.mapas.length
+        ? ` · ${r.mapas.length === 1 ? 'mapa fixo' : `${r.mapas.length} mapas na fila`}` : '')
+      + '</div>'
       + `<div class="mp-acoes"></div>`;
     const acoes = div.querySelector('.mp-acoes');
     /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
@@ -3169,6 +3317,15 @@ function mpMontarFormulario() {
   }
   const priv = mpEl('mp-privada'), wrap = mpEl('mp-senha-wrap');
   if (priv && wrap) priv.onchange = () => { wrap.hidden = !priv.checked; };
+  const rot = mpEl('mp-rotacao');
+  if (rot && !rot._ok) {
+    rot._ok = true;
+    rot.onchange = () => { ui.click(); mpSincronizarMapas(); };
+    mpEl('mp-modo').addEventListener('change', () => mpSincronizarMapas());   // o crachá CAPTURA depende do modo
+    mpEl('mp-mapas-todos').onclick = () => { ui.click(); mpMapasEscolhidos = new Set(mpMapasDoNo); mpPintarMapas(); };
+    mpEl('mp-mapas-limpar').onclick = () => { ui.click(); mpMapasEscolhidos.clear(); mpPintarMapas(); };
+  }
+  mpSincronizarMapas();
   const criar = mpEl('mp-criar');
   if (criar) criar.onclick = async () => {
     ui.click(); mpErro('');
@@ -3176,10 +3333,16 @@ function mpMontarFormulario() {
     const privada = mpEl('mp-privada').checked;
     const senha = mpEl('mp-senha').value.trim();
     if (privada && !senha) return mpErro('Sala privada precisa de senha.');
+    const aDedo = mpEl('mp-rotacao').value === 'escolher';
+    const escolhidos = [...mpMapasEscolhidos];
+    if (aDedo && !escolhidos.length) return mpErro('Escolha pelo menos um mapa pra sua sala.');
     try {
       const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
-        name: mpEl('mp-nome').value.trim(), rotacao: mpEl('mp-rotacao').value,
+        name: mpEl('mp-nome').value.trim(),
+        // com a lista a dedo a rotação vira só o plano B do servidor (lista inválida = recorte)
+        rotacao: aDedo ? 'todos' : mpEl('mp-rotacao').value,
+        ...(aDedo ? { mapas: escolhidos, mapId: escolhidos[0] } : {}),
         faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
         creatorNick: ($('nick-input').value || '').trim() || null,
@@ -3209,6 +3372,12 @@ function mpMontarFormulario() {
   if (quick) quick.onclick = async () => {
     ui.click(); mpErro('');
     if (!mpNoAtual || !mpNoAtual.online) return mpErro('Nenhum servidor online agora.');
+    // Quem clica em QUICK PLAY não quer o menor ping, quer gente: sonda de novo (a lotação da
+    // lista pode ter minutos) e vai para o nó onde há alguém, até o teto de 150 ms.
+    mpEstado('conectando', 'PROCURANDO GENTE…');
+    try { mpNos = ordenarNos(await sondarNos(NOS)); mpDesenharNos(); } catch { /* segue com a lista que tem */ }
+    const alvo = melhorNoParaJogar(mpNos);
+    if (alvo && alvo.id !== mpNoAtual.id) mpSelecionarNo(alvo);
     mpEstado('conectando', 'PROCURANDO SALA…');
     let salas = [];
     try { salas = await listRooms(mpNoAtual.http); } catch { /* lista fora = cria sala */ }
@@ -3334,7 +3503,7 @@ function mpDesconectou() {
   clearTelemetryGameContext();
   mpFecharBarraSpec();
   try { if (game) game.dispose(); } catch { /* já foi */ }
-  game = null; window.__game = null;
+  soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('mp-panel');
   /* o aviso entra DEPOIS da sondagem: abrirMultiplayer começa com mpErro('') — na ordem
@@ -3397,7 +3566,7 @@ function mpSair() {
   mpEncerrarSessao();
   clearTelemetryGameContext();
   try { if (game) game.dispose(); } catch { /* já foi */ }
-  game = null; window.__game = null;
+  soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('main-menu');
 }

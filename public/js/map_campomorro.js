@@ -6,12 +6,12 @@ import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
+import { aplicaSombraSol } from './mapquality.js';
 import { aplicaVento, updateVento } from './wind.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
-const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch { return false; } })();
 
 export const HALF_X = 36, HALF_Z = 30;
 // Piso jogável da VM14: chão ≥ −0,10 m sob todo pickup — FIELD_Y não pode descer mais.
@@ -236,7 +236,7 @@ export function buildCampoMorro(scene, T = {}) {
   circulo.rotation.x = -Math.PI / 2; circulo.position.y = FIELD_Y + 0.025; root.add(circulo);
 
   const { hemi, sun } = applyLook(scene, T, 'campomorro', { nofog: QP.get('nofog') === '1' });
-  sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
+  aplicaSombraSol(sun);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;
