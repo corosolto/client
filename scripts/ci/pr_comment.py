@@ -45,8 +45,16 @@ def area_de(path: str) -> tuple[str, str]:
 
 def render(payload: dict) -> str:
     labels_add = payload.get("labels_add", [])
-    files = payload.get("files", [])
-    changed = payload.get("changedFiles", len(files))
+    # `files: null` (PR grande demais para a API) não é lista vazia: `payload.get("files", [])`
+    # só cobre a chave AUSENTE, então o `len(files)` morria de TypeError e derrubava o job
+    # `classify` inteiro — medido no #623, 1720 arquivos. Mesmo defeito do pr_classify.py
+    # (#624) e do check_automerge.py. E aqui não basta não quebrar: sem a lista o mapa por
+    # área sai VAZIO, e comentário que mostra "nada mudou" num PR de 1720 arquivos mente
+    # para quem revisa. Lista faltando ou truncada é DECLARADA no corpo.
+    arquivos_brutos = payload.get("files")
+    files = arquivos_brutos or []
+    changed = int(payload.get("changedFiles") if payload.get("changedFiles") is not None else len(files))
+    lista_incompleta = arquivos_brutos is None or changed > len(files)
     base_branch = payload.get("baseRefName", "main")
     author = payload.get("author_login")
     assignee = payload.get("add_assignee")
@@ -71,6 +79,9 @@ def render(payload: dict) -> str:
     resumo = [f"{quem} {tamanho}, base **{base_branch}**."]
     if retarget:
         resumo.append(f"Reencaminhada automaticamente para **{retarget}**.")
+    if lista_incompleta:
+        resumo.append("A API devolveu a **lista de arquivos incompleta** (PR grande demais), "
+                      "então o mapa por área abaixo não cobre a mudança inteira.")
     caixa = "\n".join(f"> {l}" for l in resumo)
 
     # ── mapa da mudança: área → quantos arquivos, com amostra ─────────────
@@ -147,6 +158,15 @@ def selftest() -> int:
     casos += [
         ("sem arquivo não quebra", "0 arquivo(s)" in q),
         ("bloqueio coderabbit em CAUTION", "> [!CAUTION]" in q),
+    ]
+    r = render({"files": None, "changedFiles": 1720, "baseRefName": "main",
+                "author_login": "ruben", "labels_add": ["needs-staging"]})
+    t = render({"files": [{"path": "docs/a.md", "additions": 1, "deletions": 0}],
+                "changedFiles": 300, "baseRefName": "main", "labels_add": []})
+    casos += [
+        ("lista nula não quebra e mantém o total", "1720 arquivo(s)" in r),
+        ("lista nula é declarada no corpo", "lista de arquivos incompleta" in r),
+        ("lista truncada é declarada no corpo", "lista de arquivos incompleta" in t),
     ]
     erros = 0
     for nome, ok in casos:

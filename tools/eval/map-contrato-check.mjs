@@ -39,12 +39,21 @@ const tipoDe = (v) => (Array.isArray(v) ? 'array' : typeof v);
 /* Teto de nós INALCANÇÁVEIS por mapa. Contar alcançados deixaria a dívida crescer:
    mapa que ganha nós ilhados mantendo o componente atual passaria. Mapa fora da
    lista tem de ser conexo. Ver docs/quality-gates.md.
-   Tetos por mapa = dívida explícita que só pode DESCER (corrego 15: bolsões nas
-   margens alagadas; fy_lajes 241: grafo em camadas do roof-first). */
-const ILHADOS_MAX = {
-  loja_h: 493, ferro_velho: 21,
-  fy_escadao: 6, fy_lajes: 241, corrego: 15,
-};
+   Teto por mapa = dívida explícita que só pode DESCER: quem mexer no waypoint tem
+   que DERRUBAR o número, nunca subir. Os três abaixo são os MEDIDOS na geometria já
+   fundida (`npm run eval:mapcontrato`, merge da main alpha.278 nesta branch):
+   · loja_h 0 — a main fechou o grafo no rework dela (491 -> 0) e o rework sobreviveu
+     ao merge: medido `conexo`. O teto fica em 0 para não deixar a dívida voltar.
+   · ferro_velho 21 — dívida DESTA branch, não da main: o ferro velho daqui tem 77
+     linhas de geometria a mais e 6 nós ilhados a mais que o da main (que nunca saiu
+     de 15 e nunca viu esta geometria). Quem mexer no waypoint do ferro velho tem que
+     derrubar 21, nunca subir.
+   · corrego 15 — bolsões nas margens alagadas que a rota não liga; veio junto com o
+     mapa, não é regressão.
+   `fy_escadao`/`fy_lajes` saíram: `fy_lajes` é só ALIAS de `lajes` (maps.js:134) e
+   `fy_escadao` não é nem alias — a régua varre id de REGISTRO, então eram teto morto,
+   e hoje `escadao` e `lajes` medem conexo. */
+const ILHADOS_MAX = { loja_h: 0, ferro_velho: 21, corrego: 15 };
 
 /* BFS do nó 0, mesmo critério da validatePlan de map_json.js.
    A varredura de linha malformada é SEPARADA da BFS de propósito: dentro dela, nó de

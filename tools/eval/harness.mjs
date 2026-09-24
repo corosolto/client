@@ -159,11 +159,11 @@ export function seedRandom(seed) {
 
 /* Game com o round JÁ INICIADO: antes do _startRound não existem spawns aplicados nem
    armário montado, e medir ali seria medir o mapa vazio. */
-export function bootGame(mapId, { textures, ctf = false, seed = 12345, bots = 4, playerCharId = PCHAR, roundsMax } = {}) {
+export function bootGame(mapId, { textures, ctf = false, seed = 12345, bots = 4, playerCharId = PCHAR, roundsMax, settings: settingsExtra = {} } = {}) {
   seedRandom(seed);
   const playerDef = CHARACTERS.find(c => c.id === playerCharId) || CHARACTERS.find(c => c.id === PCHAR);
   const g = new Game({
-    renderer, textures, sfx, settings: { bots, quality: 'low', difficulty: 'normal', sens: 1 },
+    renderer, textures, sfx, settings: { bots, quality: 'low', difficulty: 'normal', sens: 1, ...settingsExtra },
     playerCharId: playerDef.id, playerTeam: 'E', playerFaction: playerDef.team, enemyFaction: 'B',
     nickname: 'SIM', mapId, ctf, roundsMax, testMode: true, onQuit() {}, onMatchEnd() {},
   });
