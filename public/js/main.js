@@ -2157,13 +2157,14 @@ for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
   if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
-  const ready = card.dataset.ready === '1' && n > 0;
-  card.setAttribute('aria-disabled', String(!ready));
+  /* PRONTIDÃO = TER ELENCO. A versão anterior lia `card.dataset.ready`, atributo que só
+     existia no index.astro data-driven desta branch; o merge com a main trouxe de volta os
+     seis cards estáticos, sem `data-ready`, e a expressão virou `false` para TODOS —
+     `aria-disabled="true"` eterno em #btn-team-e/#btn-team-c, e nem o smoke nem o eval:boot
+     conseguiam sair da tela de facção. O sinal real é o roster: facção cancelada tem n = 0.
+     O clique em si é gateado no pickTeam(), que cobre também teclado e os handlers abaixo. */
+  card.setAttribute('aria-disabled', String(!(n > 0)));
   card.addEventListener('focus', () => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
-  card.onclick = () => {
-    if (!ready) { ui.back(); return; }
-    sfx.uiClick(); pickTeam(fac);
-  };
 }
 /* O dossiê lateral de facção (`presentFaction`, #faction-hero) saiu com o
    index.astro da branch no merge com a main; ficaram só as chamadas. */
@@ -2618,6 +2619,10 @@ function ensureTeamPreviews() {
   }
 }
 function pickTeam(faction) {
+  /* Facção sem elenco (as canceladas, que saíram junto com a mídia órfã) não abre nada: o
+     card já nasce `aria-disabled`, e aqui o clique/teclado volta em vez de montar uma lista
+     de personagens vazia da qual não há como sair. Único ponto de guarda. */
+  if (!CHARACTERS.some(c => c.team === faction)) { ui.back(); return; }
   // 2º passo: se está escolhendo o ADVERSÁRIO, grava e começa a partida.
   // (o card da sua facção fica escondido nessa tela — adversário é sempre um dos outros 2)
   if (pickingEnemy) {
