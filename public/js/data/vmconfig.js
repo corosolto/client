@@ -163,22 +163,23 @@ const F = (familia, chassi, extra = {}) => ({
   ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.3 },
   ...extra,
 });
+// recoilScale: coice de quadril ≥ 4% da diagonal da arma (captura/coice.mjs; golden AK 3,6% só no mount).
 // A 'ak' fica fora: o dono manteve a golden aprovada (24/09); o chassi AK do pack serve a 'akm'.
 const A = (alivio) => ({ auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio });
 const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 };
 export const VM_FABRICA = Object.freeze({
-  akm: F('ak', 'AK', { ads: A(0.3) }),
-  m4: F('ar', 'MX16A4', { ads: A(0.1) }),
+  akm: F('ak', 'AK', { recoilScale: 3.5, ads: A(0.3) }),
+  m4: F('ar', 'MX16A4', { recoilScale: 3.8, ads: A(0.1) }),
   famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
-  g3: F('g3', 'G3', { ads: A(0.1) }),
-  svd: F('svd', 'SVD', { ads: A(0.34) }),
-  awp: F('sniper', 'L96X', { ads: A(0.12) }),
-  mosin: F('bolt', 'Kar98K', { ads: A(0.4) }),
-  mp5: F('mp5', 'MPS5', { ads: A(0.1) }),
-  p90: F('p90', 'PDW90', { ads: A(0.3) }),
-  lmg: F('lmg', 'MGX5', { frame: { x: 0.375, y: 0, z: -0.203, rotDeg: [1.69, 0, 6.19] }, ads: A(0.3) }),
-  shotgun: F('shotgun', 'KXG12', { ads: A(0.1) }),
+  g3: F('g3', 'G3', { recoilScale: 5, ads: A(0.1) }),
+  svd: F('svd', 'SVD', { recoilScale: 2.2, ads: A(0.34) }),
+  awp: F('sniper', 'L96X', { recoilScale: 3.5, ads: A(0.12) }),
+  mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, ads: A(0.4) }),
+  mp5: F('mp5', 'MPS5', { recoilScale: 2.3, ads: A(0.1) }),
+  p90: F('p90', 'PDW90', { recoilScale: 2.4, ads: A(0.3) }),
+  lmg: F('lmg', 'MGX5', { recoilScale: 2.2, frame: { x: 0.375, y: 0, z: -0.203, rotDeg: [1.69, 0, 6.19] }, ads: A(0.3) }),
+  shotgun: F('shotgun', 'KXG12', { recoilScale: 1.3, ads: A(0.1) }),
   pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.2) }),
-  deagle: F('deagle', 'DGL50', { frame: CURTA, ads: A(0.2) }),
+  deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: A(0.2) }),
   revolver38: F('revolver', 'Viper-357', { frame: CURTA, ads: A(0.2) }),
 });
