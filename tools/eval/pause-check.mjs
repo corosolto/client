@@ -151,8 +151,12 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
   const startIni = linhas.findIndex((l) => /^async function startGame\s*\(/.test(l));
   const startFim = linhas.findIndex((l, i) => i > startIni && /^async function _startGame\s*\(/.test(l));
   const startBloco = startIni >= 0 && startFim > startIni ? linhas.slice(startIni, startFim).join('\n') : '';
+  /* A soltura da partida quebrada conta nas DUAS formas: `game = null` à mão (até
+     alpha.261) e `soltarPartida()`, o dono único que o BUG-173 criou. Exigir só a primeira
+     fazia esta cláusula acender por RENOMEAÇÃO, e vermelho que não é defeito ensina a
+     ignorar vermelho. */
   const fronteiraDeAbertura = /__gameLaunch\?\.begin/.test(startBloco)
-    && /catch\s*\(/.test(startBloco) && /game = null/.test(startBloco)
+    && /catch\s*\(/.test(startBloco) && /game = null|soltarPartida\(\)/.test(startBloco)
     && /__gameLaunch\?\.fail/.test(startBloco);
   const inspectIni = linhas.findIndex((l) => /^async function openInspectionScreen\s*\(/.test(l));
   let inspectFim = -1;

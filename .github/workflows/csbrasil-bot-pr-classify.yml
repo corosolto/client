@@ -107,7 +107,9 @@ jobs:
       - name: Refresh PR metadata after routing
         run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
       - name: Classify PR
-        run: python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
+        run: |
+          python3 scripts/ci/pr_classify.py --selftest
+          python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
       - name: Gate on CodeRabbit presence
         run: |
           gh pr view "$PR_NUMBER" --json comments,statusCheckRollup > /tmp/pr-coderabbit.json
