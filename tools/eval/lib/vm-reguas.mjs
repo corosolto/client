@@ -379,7 +379,9 @@ export const JUIZ = {
     const falhas = [];
     const repousoNaArma = r0.visivel && r0.dArma <= T.encostaMax;
     if (!k.clipe && !repousoNaArma) falhas.push(r0.visivel ? `em repouso o carregador não encosta na arma (${r0.dArma.toFixed(2)} palma)` : 'em repouso o carregador está invisível');
-    if (k.clipe && r0.visivel && r0.dArma > T.encostaMax && r0.dMao > T.maoMax) falhas.push(`em repouso o clipe está solto no quadro (${r0.dMao.toFixed(2)} palma da mão, ${Number.isFinite(r0.dArma) ? r0.dArma.toFixed(2) : '∞'} da arma)`);
+    // Peça-clipe (munição/clipe) estacionada FORA DO QUADRO em repouso é o "segundo pente" do
+    // pack (Kar98K: 55 cm abaixo da arma); só reprova se estiver solta DENTRO do quadro.
+    if (k.clipe && r0.visivel && r0.px > 0 && r0.dArma > T.encostaMax && r0.dMao > T.maoMax) falhas.push(`em repouso o clipe está solto no quadro (${r0.dMao.toFixed(2)} palma da mão, ${Number.isFinite(r0.dArma) ? r0.dArma.toFixed(2) : '∞'} da arma)`);
     if (r0.visivel && r0.tamCorpo && r0.tamPeca / r0.tamCorpo > T.fantasmaMax) falhas.push(`tira carregador fantasma: a peça do carregador mede ${(100 * r0.tamPeca / r0.tamCorpo).toFixed(0)}% da arma`);
     let naMao = 0;
     const estados = [];
@@ -498,6 +500,14 @@ export const MUTANTES = {
     const antes = mag.position.clone(); mover(mag, 0, palmaDe(e) * 2, 0);
     return { aplicou: !mag.position.equals(antes) };`), arma) },
   // O pente some no meio da recarga com a mão na tela (p90 da revisão L1).
+  // Munição estacionada fora do quadro é legítima; a mesma peça parada NO quadro, solta acima
+  // da arma, tem de reprovar (produto da fábrica: rode com VM_PALCO_QS=vmfabrica=mosin).
+  'clipe-no-quadro': { regua: 'carregador', arma: 'mosin', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const b = e?.scene.getObjectByName('Cartridge'); const a = e?.scene.getObjectByName('Arma');
+    if (!b || !a) return { aplicou: false, motivo: 'sem Cartridge/Arma' };
+    const alvo = a.getWorldPosition(a.position.clone()).add(a.position.clone().set(0, palmaDe(e) * 1.5, 0));
+    b.position.copy(b.parent.worldToLocal(alvo)); b.updateMatrixWorld(true);
+    return { aplicou: true };`), arma) },
   esconde: { regua: 'carregador', arma: 'm4', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
     const mag = e.weaponMeshes.find((m) => /_MAG$/i.test(m.name)); if (!mag) return { aplicou: false };
     mag.visible = false; return { aplicou: true };`), arma) },
