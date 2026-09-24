@@ -39,20 +39,20 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 54.423 linhas em 111 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 54.668 linhas em 111 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **8.045** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.633 linhas | `wc -l public/js/main.js` |
+| `main.js` | 3.632 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 64 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props em GLB | 182 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props em GLB | 184 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 777 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 53, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 17 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 22 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 556 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 560 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 96 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.266` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.268` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -231,7 +231,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.657 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.348 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
-| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 507 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 753 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 303 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 258 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 277 |

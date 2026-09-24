@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.266`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.268`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -60,6 +60,37 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.268] — 2026-09-24
+
+### Mudado
+- feat(posto): loja jogável, bombas e três rotas por spawn (#596)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(posto): fecha contagem e divida herdada
+- docs(posto): registra candidato alpha 262
+- fix(eval): renderiza variaveis Astro no servidor local
+- fix(posto): libera corredores sem perder cobertura
+- docs(posto): atualiza blocos gerados apos sync
+- docs(posto): registra evidências e receita de produção
+- perf(posto): instancia decoração repetida
+- chore(posto): mantém catálogo de scripts compartilhado intacto
+- feat(posto): fecha rotas carga e captura WebGL
+- test(posto): régua eval:posto com 6 cláusulas e 6 mutações
+- chore(posto): proveniência dos dois moldes do kit posto_obras_r3
+- feat(posto): molde de bomba e de loja, cobertura metálica e pátio menos aberto
+
+## [2.0.0-alpha.267] — 2026-09-24
+
+### Mudado
+- feat(frota): a camada que INTEGRA — fila por risco, ledger entre turnos e travas no PATH (#583)
+- fix(frota): trava para o mutante órfão que um turno morto deixa na árvore
+- fix(frota): a fila não via PR empilhado em PR, e mentia sobre o que está pronto
+- feat(frota): o runner que fecha o laço 24/7
+- feat(frota): missão derivada da classe, com a mutação que prova cada trava
+- feat(frota): a trava é o PATH, não o prompt
+- feat(frota): ledger que sobrevive ao turno e lock do recurso de um agente só
+- feat(frota): a fila ordenada por risco de apodrecer
 
 ## [2.0.0-alpha.266] — 2026-09-24
 
