@@ -210,9 +210,10 @@ async function coletarCarregador(page, arma, aplicar, quadroEntre = false) {
   const rig = rigDe(arma);
   const amostras = [];
   await P.segurar(page, true);
-  const reserva = spec.reserva ? { ...spec, osso: spec.reserva } : null;
+  const reserva = spec.reserva ? { ...spec, osso: spec.reserva, gemeo: spec.osso } : null;
+  const principal = spec.reserva ? { ...spec, gemeo: spec.reserva } : spec;
   const medir = async () => {
-    const r = await P.pecaCarregador(page, arma, spec, rig);
+    const r = await P.pecaCarregador(page, arma, principal, rig);
     r.px = await pixelsDaPeca(page, arma, spec, r);
     if (reserva && !r.erro) {
       r.reserva = await P.pecaCarregador(page, arma, reserva, rig);
@@ -459,6 +460,9 @@ function carregadorComReserva(k) {
   const r0 = k.repouso;
   const r0b = r0.reserva;
   if (!(r0.visivel && r0.dArma <= T.encostaMax)) falhas.push('em repouso o pente não está no encaixe');
+  for (const [x, nome] of [[r0, 'pente'], [r0b, 'reserva']]) {
+    if (x?.visivel && x.tamCorpo && x.tamPeca / x.tamCorpo > T.fantasmaMax) falhas.push(`tira carregador fantasma: o ${nome} mede ${(100 * x.tamPeca / x.tamCorpo).toFixed(0)}% da arma`);
+  }
   const coincide = (a, b) => a?.visivel && b?.visivel && a.local && b.local && Math.hypot(...a.local.map((v, i) => v - b.local[i])) <= T.deslocMax;
   if (r0b?.visivel && !coincide(r0, r0b) && r0b.px >= T.pxMin) falhas.push('em repouso o pente reserva está à vista fora do encaixe');
   const estados = [];
@@ -479,6 +483,7 @@ function carregadorComReserva(k) {
       if (e === 'solto') falhas.push(`recarrega com objeto no meio do ar: ${pc} — ${nome} a ${x.dMao.toFixed(2)} palma da mão, deslocado ${Number.isFinite(x.desloc) ? x.desloc.toFixed(2) : '∞'} do encaixe`);
       return e;
     });
+    a.estado = final.join('/');
     if (final.includes('mao')) naMao++;
     if (a.maoNaTela && !final.includes('mao') && !final.includes('arma')) falhas.push(`mão vazia: ${pc} — mão de apoio na tela, nenhum pente na mão nem no encaixe`);
     if (ant) {
@@ -486,7 +491,9 @@ function carregadorComReserva(k) {
         const estavaNaTela = xa?.visivel && xa.px >= T.pxMin;
         const estaNaTela = x?.visivel && x.px >= T.pxMin;
         if (estavaNaTela && !x?.visivel && !coincide(xa, xa === ant ? ant.reserva : ant)) falhas.push(`${nome} some na tela: ${pc}`);
-        if (!xa?.visivel && estaNaTela && !coincide(x, outro) && ant.maoNaTela) falhas.push(`${nome} surge na tela: ${pc}`);
+        // surgir na mão só é truque aceito se a mão vinha de fora do quadro; fora da mão, nunca
+        const naMaoAgora = x === a ? final[0] === 'mao' : final[1] === 'mao';
+        if (!xa?.visivel && estaNaTela && !coincide(x, outro) && (!naMaoAgora || ant.maoNaTela)) falhas.push(`${nome} surge na tela: ${pc}`);
       }
     }
     estados.push(`${a.tipo}${a.f}:${final.join('/')}`);
@@ -573,6 +580,11 @@ export const MUTANTES = {
   'reserva-solta': { regua: 'carregador', arma: 'famas', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
     const b = e.scene.getObjectByName('Mag2'); if (!b) return { aplicou: false };
     mover(b, palmaDe(e) * 2.5, palmaDe(e) * 1.5, 0); return { aplicou: true };`), arma) },
+  // O pente pisca (some e volta) na tela entre amostras: exercita "some/surge na tela".
+  'pente-pisca': { regua: 'carregador', arma: 'famas', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const m = e.scene.getObjectByName('Mag'); if (!m) return { aplicou: false };
+    window.__pisca = (window.__pisca || 0) + 1; m.scale.setScalar(window.__pisca % 2 ? 0 : 1); m.updateMatrixWorld(true);
+    return { aplicou: true };`), arma) },
   'reserva-some': { regua: 'carregador', arma: 'famas', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
     const b = e.scene.getObjectByName('Mag2'); const m = e.scene.getObjectByName('Mag'); if (!b || !m) return { aplicou: false };
     b.scale.setScalar(0); m.scale.setScalar(0); b.updateMatrixWorld(true); m.updateMatrixWorld(true); return { aplicou: true };`), arma) },

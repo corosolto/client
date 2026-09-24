@@ -495,6 +495,8 @@ export async function pecaCarregador(page, arma, spec, rig = 'k') {
       const vis = efetivo(m);
       const pos = m.geometry.attributes.position;
       const boneIdx = spec.osso && m.isSkinnedMesh ? m.skeleton.bones.findIndex((b) => b.name === spec.osso) : -1;
+      // gêmeo (pente reserva coincidente, plano B): não é peça nem "resto da arma"
+      const gemeoIdx = spec.gemeo && m.isSkinnedMesh ? m.skeleton.bones.findIndex((b) => b.name === spec.gemeo) : -1;
       const inteira = ehMalhaPeca(m);
       if (inteira) {
         temPeca = true;
@@ -510,6 +512,7 @@ export async function pecaCarregador(page, arma, spec, rig = 'k') {
         if (si && sw) {
           const is = [si.getX(i), si.getY(i), si.getZ(i), si.getW(i)]; const ws = [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)];
           if (boneIdx >= 0) for (let k = 0; k < 4; k++) if (is[k] === boneIdx && ws[k] >= 0.5) ehPeca = true;
+          if (gemeoIdx >= 0 && [0, 1, 2, 3].some((k) => is[k] === gemeoIdx && ws[k] >= 0.5)) continue;
           if (ehPeca && boneIdx >= 0) { temPeca = true; visivel = true; }
           if (m === corpo && !ehPeca) for (let k = 0; k < 4; k++) pesoOsso.set(is[k], (pesoOsso.get(is[k]) || 0) + ws[k]);
         }
