@@ -33,13 +33,14 @@ casa seria misturar dois riscos.
 ## Como o cliente escolhe o destino
 
 `public/js/apibase.js` — `apiUrl('/api/x')` devolve o Cloud Run do backend para as migradas em
-produção e caminho relativo nos previews `*.vercel.app`. Rota desconhecida cai em relativo de
+produção (menos as cinco de geo, que vão pelo proxy do site — ver abaixo) e caminho relativo nos
+previews `*.vercel.app`. Rota desconhecida cai em relativo de
 propósito: o padrão seguro é "fica onde sempre esteve". `?api=1` aponta para
 `localhost:8080`; `?api=<url>` para outro backend. A régua cobra os dois caminhos.
 
 `src/pages/api/[rota].ts` é rede de segurança para cliente antigo e o caminho normal do
 preview: faz proxy server-side para o backend, preservando método, corpo e query. Só repassa
-`content-type` e o IP obtido pelo SSR; cookies, `authorization` e headers arbitrários do
+`content-type`, o IP e a geo do jogador (seção abaixo) e a prova de origem; cookies, `authorization` e headers arbitrários do
 navegador não atravessam. Assim o preview usa caminho relativo — inclusive com Deployment
 Protection — sem abrir o CORS do Cloud Run para origens dinâmicas e sem receber credencial do
 Supabase.
@@ -48,13 +49,28 @@ Ela é `[rota]` e não `[...rota]` porque o coringa de múltiplos segmentos **en
 `og/<tipo>.png` e `badge/<...>.png` — medido: o 404 que voltava vinha dela. Um segmento só
 nunca alcança subpasta.
 
-## O geo não se perdeu
+## A geo se perdeu — e o remendo (backend#22)
 
-Cinco rotas migradas leem país/cidade. Fora da borda da Vercel elas ficariam cegas — e essa era
-a parte cara desta mudança, porque falharia **em silêncio**: telemetria continua respondendo 200
-e para de saber de onde vem. O backend fica atrás do proxy da Cloudflare, que injeta
-`CF-IPCountry`, e o `geoFrom` de lá lê Cloudflare **antes** de Vercel. Durante a transição as
-duas fontes existem, e vale a de quem atendeu.
+Cinco rotas migradas gravam país/cidade ou usam o IP no rate limit: `telemetry`, `presence`,
+`heartbeat`, `submit-match` e `perf`. Este documento dizia que o backend ficava atrás da
+Cloudflare; **não fica**: o jogo chamava o `run.app` direto, sem borda nenhuma, e o `geoFrom` do
+backend (que só lê header de borda) nunca mais viu país nem cidade. `city_daily` congelou em
+2026-08-30T02:41:50Z e 88,9% das linhas de presença ficaram sem geo — tudo respondendo 200.
+
+**Remendo em vigor:** `apiUrl` manda essas cinco (`VIA_SITE` em `apibase.js`) pelo proxy
+same-origin (`src/lib/api-proxy.mjs`). O proxy sobe **uma** fonte de geo por requisição:
+
+- salto vindo de faixa da Cloudflare (o site fica atrás dela): IP = `cf-connecting-ip`, geo =
+  `cf-ipcountry` e, se o Managed Transform "Add visitor location headers" estiver ligado na zona
+  do site, `cf-ipcity`/lat/lon. O `x-vercel-ip-*` desse salto descreve o PoP e **não** sobe;
+- fora das faixas da Cloudflare (preview `*.vercel.app`): `x-vercel-ip-*` e o IP da Vercel.
+
+O proxy prova a origem com `x-csb-proxy-auth` = `API_PROXY_SECRET` (env da Vercel, mesmo valor
+do Secret Manager `api-proxy-secret` do backend). Com o segredo configurado no backend, chamada
+direta ao `run.app` perde a geo e não escolhe IP. Régua: `npm run eval:geoproxy`.
+
+**Conserto definitivo** (API atrás da Cloudflare, ingress travado): passo a passo em
+[`docs/reports/GEO-CLOUDFLARE-RUNBOOK.md`](reports/GEO-CLOUDFLARE-RUNBOOK.md).
 
 ## O que esta migração NÃO resolveu
 
