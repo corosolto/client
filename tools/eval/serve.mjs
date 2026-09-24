@@ -14,6 +14,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
 
 async function renderIndex() {
   const src = await readFile('src/pages/index.astro', 'utf8');
+  const site = await readFile('src/lib/site.ts', 'utf8');
   const V = JSON.parse(await readFile('package.json', 'utf8')).version;
   const { modules: modulos, revision: JS_REV } = moduleCacheManifest(join(ROOT, 'js'));
   const CSS_REV = createHash('sha256')
@@ -26,7 +27,18 @@ async function renderIndex() {
       ...Object.fromEntries(modulos.map((mod) => [`./js/${mod}`, `./js/${mod}?v=${V}-${JS_REV}`])),
     },
   });
+  const siteUrl = (name, envName) => {
+    if (process.env[envName]) return process.env[envName];
+    const match = site.match(new RegExp(`export const ${name} = [^\\n]+\\|\\| '([^']+)'`));
+    if (!match) throw new Error(`${name} sem fallback em src/lib/site.ts`);
+    return match[1];
+  };
+  const supportVars = `const SUPPORT_URL_BR = ${JSON.stringify(siteUrl('SUPPORT_URL_BR', 'PUBLIC_SUPPORT_URL_BR'))}; const SUPPORT_URL_INTL = ${JSON.stringify(siteUrl('SUPPORT_URL_INTL', 'PUBLIC_SUPPORT_URL_INTL'))};`;
   return src
+    .replace(
+      '<script is:inline define:vars={{ SUPPORT_URL_BR, SUPPORT_URL_INTL }}>',
+      `<script>${supportVars}`,
+    )
     .replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`)
     /* O hash do CONTEÚDO entra junto da versão, e não é capricho: o main.js já vem
        com `${V}-${JS_REV}` (revisão calculada do conteúdo de public/js), mas o CSS
@@ -37,6 +49,14 @@ async function renderIndex() {
        release sobe a versão; é um buraco só do laço de desenvolvimento, que é
        exatamente onde ele custa caro. */
     .replace(/href=\{`\/style\.css\?v=\$\{V\}`\}/, `href="/style.css?v=${V}-${CSS_REV}"`)
+    .replaceAll(
+      'href={`/map-preview.css?v=${V}-${JS_REV}`}',
+      `href="/map-preview.css?v=${V}-${JS_REV}"`,
+    )
+    .replace(
+      'src={`/js/ops.js?v=${V}-${JS_REV}`}',
+      `src="/js/ops.js?v=${V}-${JS_REV}"`,
+    )
     .replace(/src=\{`\/js\/main\.js\?v=\$\{V\}-\$\{JS_REV\}`\}/, `src="/js/main.js?v=${V}-${JS_REV}"`);
 }
 
