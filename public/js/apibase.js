@@ -8,11 +8,17 @@ const NO_BACKEND = new Set([
   'submit-match', 'telemetry', 'train-frames',
 ]);
 
+/* Estas gravam país/cidade e usam o IP no rate limit: o run.app não tem borda que injete geo,
+   então elas passam pelo proxy same-origin da Vercel (src/lib/api-proxy.mjs). backend#22. */
+const VIA_SITE = new Set(['heartbeat', 'perf', 'presence', 'submit-match', 'telemetry']);
+
 // Ficam no site: og, badge (imagens DO SITE) e geo-lang (lê o header da borda da Vercel).
+
+let forcado = '';
+try { forcado = new URLSearchParams(location.search).get('api') || ''; } catch { /* sem location (harness) */ }
 
 const BASE = (() => {
   try {
-    const forcado = new URLSearchParams(location.search).get('api');
     if (forcado) return forcado === '1' ? 'http://localhost:8080' : forcado.replace(/\/$/, '');
     if (location.hostname?.endsWith('.vercel.app')) return '';
   } catch { /* sem location (harness) */ }
@@ -21,10 +27,13 @@ const BASE = (() => {
 
 export function apiUrl(caminho) {
   const nome = String(caminho).replace(/^\/api\//, '').split(/[/?]/)[0];
-  return NO_BACKEND.has(nome) ? `${BASE}${caminho}` : caminho;
+  if (!NO_BACKEND.has(nome)) return caminho;
+  if (VIA_SITE.has(nome) && !forcado) return caminho;
+  return `${BASE}${caminho}`;
 }
 
 export const ROTAS_NO_BACKEND = NO_BACKEND;
+export const ROTAS_VIA_SITE = VIA_SITE;
 
 /* GET com nova tentativa em 5xx ou falha de rede — o cold start do Cloud Run (medido em
    06/09/2026: /api/online e /api/map-plays 503 na 1ª chamada da página, 200 na seguinte)
