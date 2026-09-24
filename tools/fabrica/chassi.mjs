@@ -8,7 +8,7 @@ import path from 'node:path';
 
 import { CHASSIS_PACK } from './lib/chassis-pack.mjs';
 import { RAIZ_REPO, gravarJson, lerJson, rodarBlender, sha256 } from './lib/comum.mjs';
-import { PACK_RAIZ, clipesDoPack, lerCameraDoPlayer, lerPrefab, lerSettings, texturasDosMateriais } from './lib/pack.mjs';
+import { PACK_RAIZ, clipesDoPack, lerCameraDoPlayer, lerPrefab, lerSettings, mapaDeGuids, texturasDosMateriais } from './lib/pack.mjs';
 
 const nomes = process.argv.includes('--todos') ? Object.keys(CHASSIS_PACK) : process.argv.slice(2);
 if (!nomes.length) throw new Error('uso: node tools/fabrica/chassi.mjs <CHASSI…> | --todos');
@@ -70,6 +70,11 @@ for (const nome of nomes) {
     arquivosArma: clipes.arma,
     materiais: {
       pasta: path.relative(PACK_RAIZ, pastaMateriais),
+      porSlot: (prefab.materiaisPorSlot || []).map((g) => (g && mapaDeGuids().get(g) ? path.relative(PACK_RAIZ, mapaDeGuids().get(g)) : null)),
+      // externalObjects do .meta do FBX: nome do material no FBX → .mat que o Unity usa.
+      porNome: Object.fromEntries([...fs.readFileSync(`${armaFbx}.meta`, 'utf8')
+        .matchAll(/name: (.+)\r?\n\s*second: \{fileID: \d+, guid: ([0-9a-f]+)/g)]
+        .filter(([, , g]) => mapaDeGuids().has(g)).map(([, n, g]) => [n.trim(), path.relative(PACK_RAIZ, mapaDeGuids().get(g))])),
       texturas: Object.fromEntries(Object.entries(texturasDosMateriais(pastaMateriais))
         .map(([g, p]) => [g, path.relative(PACK_RAIZ, p)])),
     },

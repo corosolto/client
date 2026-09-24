@@ -268,6 +268,25 @@
   ],
   "materiais": {
     "pasta": "Animations/SVD/Weapon/Materials_URP",
+    "porSlot": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "Animations/SVD/Weapon/Materials_URP/finish.mat",
+      "Animations/SVD/Weapon/Materials_URP/Fbx Default Material 10.mat",
+      "Animations/Mk14EBR/Weapon/Materials_URP/M_Translusent.mat",
+      "Animations/SVD/Weapon/Materials_URP/Fbx Default Material 10.mat"
+    ],
+    "porNome": {
+      "Bullet": "Animations/SVD/Weapon/Materials_URP/Bullet.mat",
+      "Fbx Default Material 10": "Animations/SVD/Weapon/Materials_URP/Fbx Default Material 10.mat",
+      "finish": "Animations/SVD/Weapon/Materials_URP/finish.mat",
+      "finish_bright": "Animations/SVD/Weapon/Materials_URP/finish_bright.mat",
+      "wood": "Animations/SVD/Weapon/Materials_URP/wood.mat"
+    },
     "texturas": {}
   }
 }

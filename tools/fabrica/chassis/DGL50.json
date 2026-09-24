@@ -273,6 +273,12 @@
   ],
   "materiais": {
     "pasta": "Animations/DGL50/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/DGL50/Weapon/Materials_URP/M_DGL50.mat"
+    ],
+    "porNome": {
+      "BODY": "Animations/DGL50/Weapon/Materials_URP/M_DGL50.mat"
+    },
     "texturas": {
       "d63cb6cfdf538fd47b27adc89d071444": "Animations/DGL50/Weapon/Textures/DE_Color.TGA"
     }

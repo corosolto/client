@@ -989,6 +989,14 @@
   ],
   "materiais": {
     "pasta": "Animations/PDW90/Weapon/Materials_URP",
+    "porSlot": [],
+    "porNome": {
+      "M_PDW90_Body_Color_Mat": "Animations/PDW90/Weapon/Materials_URP/M_PDW90_Body.mat",
+      "M_PDW90_Bullet_Color_Mat": "Animations/PDW90/Weapon/Materials_URP/M_PDW90_Bullet.mat",
+      "M_PDW90_Magazine2_Color_Mat": "Animations/PDW90/Weapon/Materials_URP/M_PDW90_Magazine2.mat",
+      "M_PDW90_Magazine_Color_Mat": "Animations/PDW90/Weapon/Materials_URP/M_PDW90_Magazine.mat",
+      "M_PDW90_Silencer_Body_Mat": "Animations/PDW90/Weapon/Materials_URP/M_PDW90_Silencer.mat"
+    },
     "texturas": {
       "d0ee62a67e464304d90bc75535d2311d": "Animations/PDW90/Weapon/Materials_URP/T_Body_Color.TGA",
       "0678fd35b19c1ef4cb848fce32f96e5f": "Animations/PDW90/Weapon/Materials_URP/T_Bullet_Color.TGA",

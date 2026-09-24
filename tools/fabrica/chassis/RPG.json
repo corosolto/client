@@ -234,6 +234,10 @@
   ],
   "materiais": {
     "pasta": "Animations/RPG/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/RPG/Weapon/Materials_URP/M_RPG7_Body.mat"
+    ],
+    "porNome": {},
     "texturas": {
       "eedc3666064ac054696b6ef2d520f573": "Animations/RPG/Weapon/Textures/RPG7_Body_Color.TGA"
     }

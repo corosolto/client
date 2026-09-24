@@ -70,7 +70,7 @@ export const FABRICA_NA_REGUA = /(?:^|&)vmfabrica=/.test(process.env.VM_PALCO_QS
 if (FABRICA_NA_REGUA) {
   for (const arma of ['akm', 'm4', 'famas', 'pistol', 'g3', 'svd', 'awp', 'mp5', 'deagle']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
   CARREGADOR_PECA.p90 = { osso: 'Magazine' };
-  CARREGADOR_PECA.mosin = { osso: 'Clip', clipe: true };
+  CARREGADOR_PECA.mosin = { osso: 'Cartridge', clipe: true };   // recarga em laço: o cartucho solto, não o clipe
   CARREGADOR_PECA.shotgun = { osso: 'Gauge', clipe: true };
 }
 const CARREGADOR_NA = {

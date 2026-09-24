@@ -296,6 +296,16 @@
   ],
   "materiais": {
     "pasta": "Animations/MPS5/Weapon/Materials_URP",
+    "porSlot": [],
+    "porNome": {
+      "casing": "Animations/MPS5/Weapon/Materials_URP/casing.mat",
+      "finish": "Animations/MPS5/Weapon/Materials_URP/finish.mat",
+      "finish_bright": "Animations/MPS5/Weapon/Materials_URP/finish_bright.mat",
+      "finish_secondary": "Animations/MPS5/Weapon/Materials_URP/finish_secondary.mat",
+      "jacket": "Animations/MPS5/Weapon/Materials_URP/jacket.mat",
+      "polymer": "Animations/MPS5/Weapon/Materials_URP/polymer.mat",
+      "primer": "Animations/MPS5/Weapon/Materials_URP/primer.mat"
+    },
     "texturas": {}
   }
 }

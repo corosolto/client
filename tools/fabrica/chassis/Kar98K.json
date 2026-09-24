@@ -355,6 +355,11 @@
   ],
   "materiais": {
     "pasta": "Animations/Kar98K/Weapon/Materials_URP",
+    "porSlot": [],
+    "porNome": {
+      "M_Kar98K_Body": "Animations/Kar98K/Weapon/Materials_URP/M_Kar98k_Body.mat",
+      "M_Kar98K_Clip": "Animations/Kar98K/Weapon/Materials_URP/M_Kar98k_Clip.mat"
+    },
     "texturas": {
       "209ecd09e9550144da85569658d3bd6f": "Animations/Kar98K/Weapon/Textures/KAR98K_Base_Color.TGA",
       "7f6795dc555c4024b9064ca7a7f81f18": "Animations/Kar98K/Weapon/Textures/Clip_Base_Color.TGA"

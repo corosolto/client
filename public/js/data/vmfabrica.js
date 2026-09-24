@@ -1,19 +1,19 @@
 // GERADO por tools/fabrica (build.mjs e enquadrar.mjs) — não editar à mão.
 // Versão de URL por BYTES dos produtos da fábrica (tools/fabrica/fabrica-candidates.json).
 export const VM_FABRICA_BYTES = Object.freeze({
-  akm: 'a6c6b9de8c',
-  awp: '2f65177fc9',
-  deagle: 'd183611bbd',
+  akm: 'e03fd1001c',
+  awp: '9cff130457',
+  deagle: 'a08149fe73',
   famas: '0a30d2d41b',
   g3: '41e72be5d8',
-  lmg: '0b49b1f11b',
+  lmg: '2f030d550f',
   m4: 'c500cfe632',
   mosin: 'bd5794e7d0',
   mp5: 'd26da9f0ab',
-  p90: '5c20475699',
+  p90: 'f0ab213493',
   pistol: '4c9e3a1a29',
   revolver38: '27bf8cb5fb',
-  shotgun: '20f7ac1bd5',
+  shotgun: '168a53d23a',
   svd: '3efcb8065b',
 });
 // Posição do pacote por chassi contra a AK golden (tools/fabrica/enquadramento/<id>.json);

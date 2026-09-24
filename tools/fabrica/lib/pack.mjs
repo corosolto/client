@@ -27,7 +27,7 @@ const campo = (corpo, nome) => new RegExp(`^\\s*${nome}: (.*)$`, 'm').exec(corpo
 // identidade dentro do ik_hand_gun — FPSPlayer.cs, Instantiate(prefab, weaponBone)).
 export function lerPrefab(nome) {
   const arquivo = path.join(PACK_RAIZ, 'Prefabs', `${nome}.prefab`);
-  const blocos = blocosUnity(fs.readFileSync(arquivo, 'utf8'));
+  const blocos = blocosUnity(fs.readFileSync(arquivo, 'utf8').replace(/\r\n/g, '\n'));
   const nomes = new Map();
   for (const [id, b] of blocos) if (b.tipo === '1') nomes.set(id, campo(b.corpo, 'm_Name'));
   const transforms = new Map();
@@ -63,7 +63,17 @@ export function lerPrefab(nome) {
     }
     viaFbx = 'AimPoint filho da raiz do FBX, instanciada na raiz do prefab com identidade';
   }
-  return { arquivo, aimPoint: mira.pos, aimRot: mira.rot, viaFbx };
+  // Materiais do renderer da arma por SLOT (o prefab sobrescreve m_Materials.Array.data[i]):
+  // o nome do material no FBX (MG6, KSG_Body…) não é o do .mat (M_MGX5_Body…).
+  const texto = fs.readFileSync(arquivo, 'utf8').replace(/\r\n/g, '\n');
+  const porAlvo = new Map();
+  for (const m of texto.matchAll(/target: \{fileID: (-?\d+), guid: [0-9a-f]+,?\s*(?:type: \d+)?\}?\s*\n\s*propertyPath: m_Materials\.Array\.data\[(\d+)\]\s*\n\s*value:\s*\n\s*objectReference: \{fileID: \d+, guid: ([0-9a-f]+)/g)) {
+    const [, alvo, slot, guid] = m;
+    if (!porAlvo.has(alvo)) porAlvo.set(alvo, []);
+    porAlvo.get(alvo)[Number(slot)] = guid;
+  }
+  const materiaisPorSlot = [...porAlvo.values()].sort((a, b) => b.length - a.length)[0] || [];
+  return { arquivo, aimPoint: mira.pos, aimRot: mira.rot, viaFbx, materiaisPorSlot };
 }
 
 export function lerSettings(nome) {

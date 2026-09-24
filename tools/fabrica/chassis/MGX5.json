@@ -613,6 +613,11 @@
   ],
   "materiais": {
     "pasta": "Animations/MGX5/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/MGX5/Weapon/Materials_URP/M_MGX5_Ammo.mat",
+      "Animations/MGX5/Weapon/Materials_URP/M_MGX5_Body.mat"
+    ],
+    "porNome": {},
     "texturas": {
       "49d4cb2123722634c87a2d7a59840837": "Animations/MGX5/Weapon/Textures/Bullet_Color.TGA",
       "baef0877cd0947b4ca84ceb712fe3c79": "Animations/MGX5/Weapon/Textures/MGX5_Color.TGA"

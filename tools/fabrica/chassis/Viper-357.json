@@ -364,6 +364,15 @@
   ],
   "materiais": {
     "pasta": "Animations/Viper-357/Weapon/Materials_URP",
+    "porSlot": [],
+    "porNome": {
+      "brass_001": "Animations/Viper-357/Weapon/Materials_URP/brass_001.mat",
+      "chrome": "Animations/Viper-357/Weapon/Materials_URP/chrome.mat",
+      "finish": "Animations/Viper-357/Weapon/Materials_URP/finish.mat",
+      "jacket": "Animations/Viper-357/Weapon/Materials_URP/jacket.mat",
+      "primer": "Animations/Viper-357/Weapon/Materials_URP/primer.mat",
+      "wood_walnut": "Animations/Viper-357/Weapon/Materials_URP/wood_walnut.mat"
+    },
     "texturas": {}
   }
 }

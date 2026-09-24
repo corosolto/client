@@ -282,6 +282,27 @@
   ],
   "materiais": {
     "pasta": "Animations/Mk14EBR/Weapon/Materials_URP",
+    "porSlot": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      "Animations/Mk14EBR/Weapon/Materials_URP/M_Translusent.mat",
+      null,
+      "Animations/Mk14EBR/Weapon/Materials_URP/M_Translusent.mat"
+    ],
+    "porNome": {
+      "Brass": "Animations/Mk14EBR/Weapon/Materials_URP/Brass.mat",
+      "Bullet": "Animations/Mk14EBR/Weapon/Materials_URP/Bullet.mat",
+      "Primer": "Animations/Mk14EBR/Weapon/Materials_URP/Primer.mat",
+      "finish": "Animations/Mk14EBR/Weapon/Materials_URP/finish.mat",
+      "finish2": "Animations/Mk14EBR/Weapon/Materials_URP/finish2.mat",
+      "finish_bright": "Animations/Mk14EBR/Weapon/Materials_URP/finish_bright.mat",
+      "finish_chassis": "Animations/Mk14EBR/Weapon/Materials_URP/finish_chassis.mat",
+      "polymer": "Animations/Mk14EBR/Weapon/Materials_URP/polymer.mat",
+      "spring": "Animations/Mk14EBR/Weapon/Materials_URP/spring.mat"
+    },
     "texturas": {}
   }
 }

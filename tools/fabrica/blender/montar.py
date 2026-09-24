@@ -175,7 +175,7 @@ def aplicar_skin_arma(objs: list, chassi: dict, skin: dict | None) -> dict:
     for o in objs:
         if o.type != "MESH":
             continue
-        for mat in o.data.materials:
+        for slot, mat in enumerate(o.data.materials):
             if not mat or mat.name.startswith("CoroSolto_"):
                 continue
             chave = mat.name.lower()
@@ -184,7 +184,10 @@ def aplicar_skin_arma(objs: list, chassi: dict, skin: dict | None) -> dict:
                 material_liso(mat, srgb_linear(receita["cor"]), receita.get("metal", 0.5), receita.get("rugosidade", 0.5))
                 usados[mat.name] = "ficha"
             else:
-                fonte = arquivos.get(chave)
+                # Unity: externalObjects do .meta do FBX (nome) > m_Materials do prefab (slot) > nome igual.
+                por_nome = chassi.get("matPorNome", {}).get(mat.name)
+                por_slot = (chassi.get("matPorSlot") or [None] * (slot + 1))[slot] if slot < len(chassi.get("matPorSlot") or []) else None
+                fonte = Path(por_nome) if por_nome else Path(por_slot) if por_slot else arquivos.get(chave)
                 cor, metal, liso, guid = unity_mat(fonte) if fonte else ([0.12, 0.13, 0.14], 0.55, 0.45, None)
                 tex = guias.get(guid) if guid else None
                 if tex:

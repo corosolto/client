@@ -288,6 +288,11 @@
   ],
   "materiais": {
     "pasta": "Animations/L96X/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/L96X/Weapon/Materials_URP/M_L96X.mat",
+      "Animations/L96X/Weapon/Materials_URP/M_L96X_Ammo.mat"
+    ],
+    "porNome": {},
     "texturas": {
       "6fdccd90bff3fb449b094ef7c1955819": "Animations/L96X/Weapon/Textures/L96X_color.TGA",
       "8e54c8dd05de55245b88950d07f1792a": "Animations/L96X/Weapon/Textures/L96X_Ammo_Color.TGA"

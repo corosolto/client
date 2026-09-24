@@ -262,6 +262,11 @@
   ],
   "materiais": {
     "pasta": "Animations/KXG12/Weapon/Materials_URP",
+    "porSlot": [],
+    "porNome": {
+      "KSG_Ammo": "Animations/KXG12/Weapon/Materials_URP/M_KXG12_Ammo.mat",
+      "KSG_Body": "Animations/KXG12/Weapon/Materials_URP/M_KXG12_Body.mat"
+    },
     "texturas": {
       "4252092cfce8137469b6af029285a657": "Animations/KXG12/Weapon/Textures/KXG12_Ammo_Color.TGA",
       "9609cc5c328b18747b39db0c7b21c244": "Animations/KXG12/Weapon/Textures/KXG12_Body_Color.TGA"

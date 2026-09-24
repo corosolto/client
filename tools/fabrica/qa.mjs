@@ -130,7 +130,15 @@ const vermelhos = (id) => {
   const lista = [];
   if (!r.produto?.ok) lista.push('produto');
   for (const k of ['manga-oca', 'manga-tela']) if (!r[k]?.ok) lista.push(k);
-  for (const a of ['3x2', '16x9']) for (const [regua, v] of Object.entries(r[`imagem-${a}`] || {})) if (v.estado === 'VERMELHO') lista.push(`${regua}@${a}`);
+  // Silêncio não é verde: régua de imagem sem medida (navegador que não subiu, aba que caiu)
+  // entra como vermelha `sem-medida`; o mesmo para captura vazia.
+  for (const a of ['3x2', '16x9']) {
+    const img = r[`imagem-${a}`];
+    if (!img || img.erro || !Object.keys(img).length) lista.push(`sem-medida@${a}`);
+    for (const [regua, v] of Object.entries(img || {})) if (v.estado === 'VERMELHO') lista.push(`${regua}@${a}`);
+  }
+  if (!flag('sem-capturas') && !(r['capturas-3x2'] || []).length) lista.push('sem-captura');
+  if (r['carregador-repete'] && !r['carregador-repete'].ok) lista.push('carregador-repete');
   return lista;
 };
 for (const id of ids) {
