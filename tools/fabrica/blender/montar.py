@@ -452,6 +452,7 @@ def ilhas(me) -> list:
 def malha_propria(spec: dict, braco, malhas_pack: list, em_rig) -> dict:
     """Plano B: a arma do pack sai e entra a malha do jogo, rígida no osso Arma, com as peças móveis
     (ilhas) no osso do pack que o animador anima. Formato: docs/reports/VM-FABRICA.md §7."""
+    mantidas = [manter_do_pack(item, braco, malhas_pack, em_rig) for item in spec.get("manterPack", [])]
     for o in malhas_pack:
         bpy.data.objects.remove(o, do_unlink=True)
     antes = set(bpy.data.objects)
@@ -526,21 +527,99 @@ def malha_propria(spec: dict, braco, malhas_pack: list, em_rig) -> dict:
     for mat in me.materials:
         if mat and not mat.name.startswith("CoroSolto_"):
             mat.name = f"CoroSolto_MP_{mat.name}"
-    # Pivô de cada osso móvel no alto da própria peça (o pente gira pela boca do poço).
+    # Pivô de cada osso móvel no alto da própria peça (o pente gira pela boca do poço) — para o
+    # animador. Com `pivos: "pack"` o osso fica no repouso do pack: os clipes do PACK (clipes.mjs)
+    # conferem o repouso e reaplicam a deformação do osso, que move a peça nova como a do pack.
     para_arm = braco.matrix_world.inverted() @ fonte.matrix_world
     bpy.context.view_layer.objects.active = braco
     bpy.ops.object.mode_set(mode="EDIT")
     eb = braco.data.edit_bones
-    for osso in set(dono.values()):
-        pts = [para_arm @ me.vertices[i].co for i, d in dono.items() if d == osso]
-        c = sum(pts, Vector()) / len(pts)
-        topo = max(pts, key=lambda p: p.z).z if osso == "Mag" else c.z
-        cabeca = Vector((c.x, c.y, topo))
+    pivo_glb = {p["osso"]: p["pivoGlb"] for p in spec.get("pecas", []) if p.get("pivoGlb")}
+    for osso in (set() if spec.get("pivos") == "pack" else set(dono.values())):
+        if osso in pivo_glb:
+            # Peça que GIRA (alavanca): o pivô é a dobradiça, medida no GLB (m), não o centro da ilha.
+            cabeca = braco.matrix_world.inverted() @ (braco.matrix_world @ braco.data.bones[OSSO_ARMA].matrix_local
+                                                     @ em_rig @ local @ Vector(pivo_glb[osso]))
+        else:
+            pts = [para_arm @ me.vertices[i].co for i, d in dono.items() if d == osso]
+            c = sum(pts, Vector()) / len(pts)
+            topo = max(pts, key=lambda p: p.z).z if osso == "Mag" else c.z
+            cabeca = Vector((c.x, c.y, topo))
         desloc = cabeca - eb[osso].head
         eb[osso].head += desloc
         eb[osso].tail += desloc
     bpy.ops.object.mode_set(mode="OBJECT")
-    return {"fonte": spec["fonte"], "objeto": fonte.name, "vertices": len(me.vertices), "pecas": rel_pecas}
+    return {"fonte": spec["fonte"], "objeto": fonte.name, "vertices": len(me.vertices), "pecas": rel_pecas,
+            "mantidasDoPack": mantidas}
+
+
+def manter_do_pack(item: dict, braco, malhas_pack: list, em_rig) -> dict:
+    """Plano B: peça do PACK que fica ao lado da malha do jogo (o cartucho do Kar98K na carabina de
+    alavanca, que não tem munição solta no modelo de mundo). Os vértices com peso dominante em
+    `osso` viram um objeto próprio no osso `novoOsso` (criado sob Arma se faltar); a peça e o osso
+    vão juntos para `posCm`/`rotDeg` (raiz do FBX, cm), girando em torno da cabeça do osso."""
+    osso, novo = item["osso"], item.get("novoOsso", item["osso"])
+    W = braco.matrix_world @ braco.data.bones[OSSO_ARMA].matrix_local @ em_rig   # raiz (cm) → mundo
+    cab_root = W.inverted() @ (braco.matrix_world @ braco.data.bones[osso].head_local)
+    from mathutils import Euler
+    M_root = (Matrix.Translation(Vector(item["posCm"])) @ Euler([math.radians(a) for a in item.get("rotDeg", [0, 0, 0])]).to_matrix().to_4x4()
+              @ Matrix.Translation(-cab_root))
+    M_w = W @ M_root @ W.inverted()
+    pedacos = []
+    for o in malhas_pack:
+        g = o.vertex_groups.get(osso)
+        if g is None:
+            continue
+        copia = o.copy()
+        copia.data = o.data.copy()
+        bpy.context.collection.objects.link(copia)
+        bm = bmesh.new()
+        bm.from_mesh(copia.data)
+        deform = bm.verts.layers.deform.verify()
+        fora = [v for v in bm.verts if max(v[deform].items(), key=lambda x: x[1], default=(-1, 0))[0] != g.index]
+        bmesh.ops.delete(bm, geom=fora, context="VERTS")
+        bm.to_mesh(copia.data)
+        bm.free()
+        if not copia.data.vertices:
+            bpy.data.objects.remove(copia, do_unlink=True)
+            continue
+        pedacos.append(copia)
+    if not pedacos:
+        raise RuntimeError(f"manterPack: nenhum vértice no osso {osso}")
+    bpy.context.view_layer.objects.active = braco
+    bpy.ops.object.mode_set(mode="EDIT")
+    eb = braco.data.edit_bones
+    if novo not in eb:
+        b = eb.new(novo)
+        b.head, b.tail, b.roll = eb[osso].head.copy(), eb[osso].tail.copy(), eb[osso].roll
+        b.parent = eb[OSSO_ARMA]
+    A = braco.matrix_world.inverted() @ M_w @ braco.matrix_world
+    eb[novo].transform(A)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    n = 0
+    for copia in pedacos:
+        mods = [m for m in copia.modifiers if m.type == "ARMATURE"]
+        for m in mods:
+            copia.modifiers.remove(m)
+        mw = copia.matrix_world.copy()
+        copia.parent = None
+        copia.matrix_world = M_w @ mw
+        bpy.ops.object.select_all(action="DESELECT")
+        copia.select_set(True)
+        bpy.context.view_layer.objects.active = copia
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        for vg in list(copia.vertex_groups):
+            copia.vertex_groups.remove(vg)
+        grupo = copia.vertex_groups.new(name=novo)
+        grupo.add([v.index for v in copia.data.vertices], 1.0, "REPLACE")
+        copia.name = f"GEO_WEAPON_PACK_{novo.upper()}"
+        mw = copia.matrix_world.copy()
+        copia.parent = braco
+        copia.matrix_world = mw
+        mod = copia.modifiers.new("Armature", "ARMATURE")
+        mod.object = braco
+        n += len(copia.data.vertices)
+    return {"osso": osso, "novoOsso": novo, "vertices": n, "posCm": list(item["posCm"])}
 
 
 def camera_do_pack(cam_spec: dict):
@@ -614,11 +693,14 @@ def main() -> None:
     # Linha de visada do pack: AimPoint do prefab no referencial da arma (cm) e um
     # segundo ponto adiante no eixo do cano; o ADS "auto" do runtime alinha os dois.
     mira = Vector(chassi["mira"]["raizCm"])
-    frente = Vector(chassi["eixos"]["frente"])
+    # Malha própria girada em relação ao chassi (UZI no punho inclinado do X18): a linha de visada
+    # é a da arma nova (ficha.mira.frente/cima), não o eixo do chassi.
+    frente = Vector(chassi["mira"].get("frente") or chassi["eixos"]["frente"]).normalized()
+    cima = Vector(chassi["mira"].get("cima") or chassi["eixos"]["cima"]).normalized()
     vazio(f"SOCKET_WEAPON_{nome}", rig_braco, em_rig)
     vazio("SOCKET_FAB_SIGHT", rig_braco, em_rig @ Matrix.Translation(mira))
     vazio("SOCKET_FAB_MUZZLE", rig_braco, em_rig @ Matrix.Translation(mira + frente * 40.0))
-    vazio("SOCKET_FAB_UP", rig_braco, em_rig @ Matrix.Translation(mira + Vector(chassi["eixos"]["cima"]) * 10.0))
+    vazio("SOCKET_FAB_UP", rig_braco, em_rig @ Matrix.Translation(mira + cima * 10.0))
     boca = plano.get("boca") or chassi.get("ancoras", {}).get("boca")
     if boca:
         vazio("SOCKET_FAB_BARREL", rig_braco, em_rig @ Matrix.Translation(Vector(boca["raizCm"])))

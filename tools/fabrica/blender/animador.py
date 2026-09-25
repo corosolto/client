@@ -139,6 +139,7 @@ class Animador:
     def __init__(self, spec):
         cena = bpy.context.scene
         self.spec = spec
+        self.osso_pente = spec.get("pente", "Mag")   # carabina: o cartucho mantido do pack
         self.fps = cena.render.fps
         self.rig = bpy.data.objects["RIG_FP_ARMS"]
         self.pose = Pose(self.rig)
@@ -209,13 +210,13 @@ class Animador:
             self.pega_rot_raiz = rot_graus(pega.get("rotDeg")).to_3x3() @ rot_raiz
             self.pega_palma_raiz = Vector(pega["palmaCm"])
             Hm = self.mao_em_raiz(self.pega_palma_raiz, self.pega_rot_raiz, R0)
-            self.pega = Hm.inverted() @ p.mat("Mag")  # pente na mão: relação fixa (punho → pente assentado)
+            self.pega = Hm.inverted() @ p.mat(self.osso_pente)  # pente na mão: relação fixa (punho → pente assentado)
         Rinv = R0.inverted()
         eixos = lambda l: {"palma": list(so_rot(Rinv) @ (p.pos(f"middle_01_{l}") - p.pos(f"hand_{l}")).cross(p.pos(f"index_01_{l}") - p.pos(f"pinky_01_{l}")).normalized()),
                            "dedos": list(so_rot(Rinv) @ (p.pos(f"middle_01_{l}") - p.pos(f"hand_{l}")).normalized()),
                            "palmaCm": list(Rinv @ self.palma(l)), "ombroCm": list(Rinv @ p.pos(f"upperarm_{l}"))}
         self.diagnostico = {"maoApoioPack": eixos("l"), "maoFortePack": eixos("r"), "camCm": list(Rinv @ self.cam.translation),
-                            "pente": list(Rinv @ p.pos("Mag"))}
+                            "pente": list(Rinv @ p.pos(self.osso_pente))}
         self.polo_l = p.pos("lowerarm_l") - (p.pos("upperarm_l") + p.pos("hand_l")) * 0.5
         self.polo_r = p.pos("lowerarm_r") - (p.pos("upperarm_r") + p.pos("hand_r")) * 0.5
 
@@ -252,10 +253,32 @@ class Animador:
         Mg = Matrix.Translation(so_rot(self.cam_jogo) @ ap[1]) @ Mg
         p.por("ik_hand_gun", Mg)
         R = self.raiz()
-        # 2) mão forte presa ao punho
+        # 2) mecanismos (alavanca, retém): deslocamento em cm (`cm`) e/ou giro (`rotDeg`, eixos da raiz)
+        #    em torno da cabeça do osso — antes da mão forte, que pode seguir a alavanca.
+        mec_delta = {}
+        for osso, ks in (clipe.get("mecanismos") or {}).items():
+            d, g = por_chaves(ks, u, lambda a, b, s: (Vector(a.get("cm", (0, 0, 0))).lerp(Vector(b.get("cm", (0, 0, 0))), s),
+                                                      Vector(a.get("rotDeg", (0, 0, 0))).lerp(Vector(b.get("rotDeg", (0, 0, 0))), s)))
+            M0 = p.mat(osso)
+            cab = M0.translation.copy()
+            if g.length > 1e-9:
+                giro = so_rot(R) @ rot_graus(g).to_3x3() @ so_rot(R).transposed()
+                M = Matrix.Translation(so_rot(R) @ d) @ girar_em_torno(M0, cab, giro)
+            else:   # só translação: a mesma conta de antes (FAMAS/TAVOR reconstroem byte a byte)
+                M = Matrix.Translation(so_rot(R) @ d) @ M0
+            p.por(osso, M)
+            mec_delta[osso] = M @ M0.inverted()
+        # 3) mão forte presa ao punho — ou levada pela alavanca (`maoForte`: [{u, alavanca: 0..1}],
+        #    osso da alavanca em spec.alavanca.osso): a mão gira junto com a alavanca de uma carabina.
         hr = p.mat("ik_hand_gun") @ self.mao_r_na_arma
+        alav = (self.spec.get("alavanca") or {}).get("osso")
+        if clipe.get("maoForte") and alav in mec_delta:
+            w = por_chaves(clipe["maoForte"], u, lambda a, b, s: a.get("alavanca", 0) + (b.get("alavanca", 0) - a.get("alavanca", 0)) * s)
+            h1 = mec_delta[alav] @ hr
+            q = hr.to_quaternion().slerp(h1.to_quaternion(), w)
+            hr = compor(hr.translation.lerp(h1.translation, w), q.to_matrix())
         err_r = ik_braco(p, "r", hr, hr.translation + self.polo_r)
-        # 3) mão de apoio
+        # 4) mão de apoio
         chaves = clipe["mao"]
 
         def mistura(a, b, s):
@@ -270,10 +293,6 @@ class Animador:
                 q = Quaternion().slerp(b0.to_quaternion(), max(0.0, min(1.0, fecho)))
                 p.base[n] = q.to_matrix().to_4x4()
         p._cache = {}
-        # 4) mecanismos (alavanca, retém): deslocamento em cm na raiz
-        for osso, ks in (clipe.get("mecanismos") or {}).items():
-            d = por_chaves(ks, u, lambda a, b, s: Vector(a["cm"]).lerp(Vector(b["cm"]), s))
-            p.por(osso, Matrix.Translation(so_rot(R) @ d) @ p.mat(osso))
         # 5) pentes: estado da última chave com u <= agora
         mats = {}
         for osso, ks in (clipe.get("pentes") or {}).items():
@@ -467,23 +486,23 @@ def medir(an, nome, quadros, rest_por_osso, pentes):
     return linhas, falhas
 
 
-def segundo_pente(rig, malhas):
+def segundo_pente(rig, malhas, osso="Mag"):
     """Mag2: cópia do pente num osso irmão, COINCIDENTE com o pente no repouso (invisível)."""
     bpy.context.view_layer.objects.active = rig
     rig.select_set(True)
     bpy.ops.object.mode_set(mode="EDIT")
     eb = rig.data.edit_bones
-    novo = eb.new("Mag2")
-    base = eb["Mag"]
+    novo = eb.new(f"{osso}2")
+    base = eb[osso]
     novo.head, novo.tail, novo.roll = base.head.copy(), base.tail.copy(), base.roll
     novo.parent = eb["Arma"]
     bpy.ops.object.mode_set(mode="OBJECT")
     copiados = 0
     for m in malhas:
-        g_mag = m.vertex_groups.get("Mag")
+        g_mag = m.vertex_groups.get(osso)
         if g_mag is None:
             continue
-        g2 = m.vertex_groups.get("Mag2") or m.vertex_groups.new(name="Mag2")
+        g2 = m.vertex_groups.get(f"{osso}2") or m.vertex_groups.new(name=f"{osso}2")
         bm = bmesh.new()
         bm.from_mesh(m.data)
         deform = bm.verts.layers.deform.verify()
@@ -509,7 +528,8 @@ def main():
     rig = bpy.data.objects["RIG_FP_ARMS"]
     malhas = [o for o in bpy.data.objects if o.type == "MESH" and o.name.startswith("GEO_WEAPON_")]
     rel = {"clipes": {}, "falhas": []}
-    rel["pente2"] = {"vertices": segundo_pente(rig, malhas)}
+    osso_pente = spec.get("pente", "Mag")
+    rel["pente2"] = {"vertices": segundo_pente(rig, malhas, osso_pente)}
     an = Animador(spec)
     an.pose = Pose(rig)
     an.preparar()
@@ -523,7 +543,7 @@ def main():
                           for k, v in an.diagnostico.items()}
     an.base0 = an.base0_novo
     rest = vertices_por_osso(rig, malhas)
-    pentes = ["Mag", "Mag2"]
+    pentes = [osso_pente, f"{osso_pente}2"]
     for nome, clipe in spec["clipes"].items():
         quadros, n = an.assar(nome, clipe)
         an.gravar(nome, quadros, n)

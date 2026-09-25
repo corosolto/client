@@ -94,6 +94,15 @@ if (acab) {
     m.setBaseColorFactor([...acab.tom, 1]).setMetallicFactor(acab.metal).setRoughnessFactor(acab.rugosidade).setMetallicRoughnessTexture(null);
   }
 }
+// Zona livre: o mesmo defeito — as peças do modelo de mundo trazem metálico 1 × textura MR e saem
+// cromadas ao lado do pack. `acabamentoZonaLivre` fixa metal/rugosidade (e o tom, se pedido) e mantém a cor base.
+const acabZl = ficha.acabamentoZonaLivre;
+if (acabZl) {
+  for (const m of doc.getRoot().listMaterials().filter((x) => x.getName().startsWith('CoroSolto_ZL_'))) {
+    if (acabZl.tom) m.setBaseColorFactor([...acabZl.tom, 1]);
+    m.setMetallicFactor(acabZl.metal).setRoughnessFactor(acabZl.rugosidade).setMetallicRoughnessTexture(null);
+  }
+}
 await doc.transform(
   dedup(),
   resample({ tolerance: 1e-5 }),
