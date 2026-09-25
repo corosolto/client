@@ -1,7 +1,7 @@
 # PLACAR das réguas de imagem do viewmodel
 
-Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-24, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `8a27db38d3eb3fd7`.
+Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-25, quadro 3x2
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `3eb81b5a54856440`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
