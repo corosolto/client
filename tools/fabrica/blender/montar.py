@@ -589,6 +589,9 @@ def manter_do_pack(item: dict, braco, malhas_pack: list, em_rig) -> dict:
     bpy.context.view_layer.objects.active = braco
     bpy.ops.object.mode_set(mode="EDIT")
     eb = braco.data.edit_bones
+    if novo != osso and novo in eb:
+        bpy.ops.object.mode_set(mode="OBJECT")
+        raise RuntimeError(f"manterPack: osso {novo} já existe no rig (a peça iria para o repouso errado)")
     if novo not in eb:
         b = eb.new(novo)
         b.head, b.tail, b.roll = eb[osso].head.copy(), eb[osso].tail.copy(), eb[osso].roll

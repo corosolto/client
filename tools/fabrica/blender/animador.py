@@ -272,7 +272,9 @@ class Animador:
         #    osso da alavanca em spec.alavanca.osso): a mão gira junto com a alavanca de uma carabina.
         hr = p.mat("ik_hand_gun") @ self.mao_r_na_arma
         alav = (self.spec.get("alavanca") or {}).get("osso")
-        if clipe.get("maoForte") and alav in mec_delta:
+        if clipe.get("maoForte") and alav not in mec_delta:
+            raise RuntimeError(f"maoForte sem a alavanca ({alav}) nos mecanismos do clipe")
+        if clipe.get("maoForte"):
             w = por_chaves(clipe["maoForte"], u, lambda a, b, s: a.get("alavanca", 0) + (b.get("alavanca", 0) - a.get("alavanca", 0)) * s)
             h1 = mec_delta[alav] @ hr
             q = hr.to_quaternion().slerp(h1.to_quaternion(), w)

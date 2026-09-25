@@ -89,8 +89,13 @@ const doc = await io.read(path.join(plano.saida.dir, 'clipes.glb'));
 doc.getRoot().getAsset().generator = `CoroSolto fabrica (${path.relative(RAIZ_REPO, fichaArquivo)})`;
 // Plano B: acabamento da malha do jogo (o metálico 1 do modelo de mundo sai cromado no viewmodel).
 const acab = ficha.malhaPropria?.material;
+const doTipo = (prefixo, pedido) => {
+  const ms = doc.getRoot().listMaterials().filter((x) => x.getName().startsWith(prefixo));
+  if (pedido && !ms.length) throw new Error(`acabamento pedido e nenhum material ${prefixo}* no produto`);
+  return ms;
+};
 if (acab) {
-  for (const m of doc.getRoot().listMaterials().filter((x) => x.getName().startsWith('CoroSolto_MP_'))) {
+  for (const m of doTipo('CoroSolto_MP_', acab)) {
     m.setBaseColorFactor([...acab.tom, 1]).setMetallicFactor(acab.metal).setRoughnessFactor(acab.rugosidade).setMetallicRoughnessTexture(null);
   }
 }
@@ -98,7 +103,7 @@ if (acab) {
 // cromadas ao lado do pack. `acabamentoZonaLivre` fixa metal/rugosidade (e o tom, se pedido) e mantém a cor base.
 const acabZl = ficha.acabamentoZonaLivre;
 if (acabZl) {
-  for (const m of doc.getRoot().listMaterials().filter((x) => x.getName().startsWith('CoroSolto_ZL_'))) {
+  for (const m of doTipo('CoroSolto_ZL_', acabZl)) {
     if (acabZl.tom) m.setBaseColorFactor([...acabZl.tom, 1]);
     m.setMetallicFactor(acabZl.metal).setRoughnessFactor(acabZl.rugosidade).setMetallicRoughnessTexture(null);
   }

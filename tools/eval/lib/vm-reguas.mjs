@@ -67,6 +67,9 @@ export const CARREGADOR_PECA = {
 // Produtos da fábrica (VM_PALCO_QS=vmfabrica=…): o pente é o osso Mag do chassi do pack numa
 // malha única; na KXG12 o cartucho que a mão leva ao tubo é o osso Gauge (só aparece na recarga).
 export const FABRICA_NA_REGUA = /(?:^|&)vmfabrica=/.test(process.env.VM_PALCO_QS || '');
+// Só as armas pedidas no vmfabrica= trocam de peça: as outras do mesmo processo são o produto antigo.
+const NA_FABRICA = new Set((new URLSearchParams(process.env.VM_PALCO_QS || '').get('vmfabrica') || '').split(','));
+const soFabrica = (arma) => NA_FABRICA.has('1') || NA_FABRICA.has(arma);
 if (FABRICA_NA_REGUA) {
   for (const arma of ['akm', 'm4', 'pistol', 'g3', 'svd', 'awp', 'mp5', 'deagle']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
   CARREGADOR_PECA.p90 = { osso: 'Magazine' };
@@ -77,11 +80,12 @@ if (FABRICA_NA_REGUA) {
   // Variantes (fábrica-variantes): o pente do chassi do pack (zona de contato como autorada); a UZI
   // é plano B (uma mão; pente reserva Mag2); REM 700 recarrega em laço como a Mosin; a SKS
   // carrega pela lâmina do Kar98K (recarga vazia do pack), o carregador é a lâmina.
-  for (const arma of ['g3sg1', 'md97', 'm400', 'scar', 'm92']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
-  CARREGADOR_PECA.uzi = { osso: 'Mag', reserva: 'Mag2' };   // plano B: pente reserva como FAMAS/TAVOR
-  CARREGADOR_PECA.carbine = { osso: 'Mag', reserva: 'Mag2' };   // plano B: o cartucho mantido do Kar98K, pela lateral
-  CARREGADOR_PECA.rem700 = { osso: 'Cartridge', clipe: true };
-  CARREGADOR_PECA.sks = { osso: 'Clip', clipe: true };
+  const variantes = {
+    g3sg1: { osso: 'Mag' }, md97: { osso: 'Mag' }, m400: { osso: 'Mag' }, scar: { osso: 'Mag' }, m92: { osso: 'Mag' },
+    uzi: { osso: 'Mag', reserva: 'Mag2' }, carbine: { osso: 'Mag', reserva: 'Mag2' },
+    rem700: { osso: 'Cartridge', clipe: true }, sks: { osso: 'Clip', clipe: true },
+  };
+  for (const [arma, spec] of Object.entries(variantes)) if (soFabrica(arma)) CARREGADOR_PECA[arma] = spec;
 }
 const CARREGADOR_NA = {
   knife: 'faca: sem carregador',
@@ -90,7 +94,7 @@ const CARREGADOR_NA = {
   lmg: 'fita/caixa: eval:vm-lmg-final (tampa/caixa/fita)',
 };
 // Fábrica: a carabina de alavanca (plano B) tem o cartucho do Kar98K como peça (CARREGADOR_PECA acima).
-if (FABRICA_NA_REGUA) delete CARREGADOR_NA.carbine;
+if (FABRICA_NA_REGUA && soFabrica('carbine')) delete CARREGADOR_NA.carbine;
 
 /* ---------------------------------------------------------------------------
    COLETA: tudo que as cinco réguas leem de UMA arma, numa passada do jogo.
