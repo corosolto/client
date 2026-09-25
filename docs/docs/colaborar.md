@@ -250,9 +250,9 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 |---|---|---|---|---:|
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.192 |
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.407 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.409 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.100 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.104 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.064 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.025 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.709 |
@@ -261,7 +261,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 753 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 338 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 258 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 277 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 785 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 974 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
 | `penitenciaria` | CARANDIRU | **captura** | `map_penitenciaria.js` | 1.009 |
