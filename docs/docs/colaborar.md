@@ -256,7 +256,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.015 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.009 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.652 |
-| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.348 |
+| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.772 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 753 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 325 |
