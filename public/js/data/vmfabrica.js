@@ -23,6 +23,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   sks: '39c44f6e41',
   svd: '3efcb8065b',
   tavor: '403658a972',
+  uzi: '2ba354354b',
 });
 // Posição do pacote por chassi contra a AK golden (tools/fabrica/enquadramento/<id>.json);
 // rotação e FOV ficam os de VM_FABRICA_FRAME, iguais para todas as armas.

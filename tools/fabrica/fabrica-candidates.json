@@ -1500,6 +1500,69 @@
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/tavor.json"
+    },
+    "uzi": {
+      "schemaVersion": 1,
+      "id": "uzi",
+      "arma": "uzi",
+      "chassi": "X18",
+      "variante": true,
+      "url": "/private-assets/viewmodels/fabrica/uzi-fabrica.glb",
+      "bytes": 2164192,
+      "sha256": "2ba354354bbf5bd32728f0b949f37e912c77391befc7710ac938ea8f523e1815",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_X18_Pose.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.08,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 2.08,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 0.88,
+          "braco": "animador",
+          "arma": "animador"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural",
+        "inspect": "ausente"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 7,
+      "file": "viewmodels/fabrica/uzi-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/uzi.json",
+      "insumos": {
+        "ficha": "990fc6d71fa01916c03a52e750ce486eae3b0117addbf716678de217a3cec887",
+        "chassi": "e2d99093a2fc72aeb229a4d9a7e8b45b2a169051b5e1aadfd085aa5a035db44a",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "39c5726a277e95b9aaf5bbe14c6fc7fd4742b2a0d8db6111c13c60c11b82f925",
+        "poseFbx": "670a23d9240ca27cf1164276559f5aacb0521d4dbfd72d5d57ff405077a91c61",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "malhaPropria": "213b06a54610f35bf7315d6e85946604688315b9074f01f6040c2c33b3cf5edd",
+        "animador": "f6ec3a743a603d78c93b686f24bc4459c0aae8c7df8a24098537260bca37242a",
+        "frameJogo": "29007d84289a94eb257b53ff2639f0341c54337d9c8df0ababd8449d501c00f5"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/uzi.json"
     }
   }
 }
