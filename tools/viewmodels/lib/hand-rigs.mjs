@@ -173,10 +173,17 @@ export function pintar({ fields, size }, pintura, style) {
       if (cuff) { color = sleeve; if (inStar(x, (y + 0.15) * 1.4)) color = accent; }
       if (handPanel && inStar(x, (y - 0.49) * 1.1)) color = accent;
     }
-    if (!exposed && (cuff || handPanel) && style.motif === 'trama') {
-      // Trançado de palha/fibra (Míticos): diagonais cruzadas, no passo do xadrez da U.
-      const a = Math.sin((x + y) * 28), b = Math.sin((x - y) * 28);
+    // Motivos novos em volta do eixo do braço (ângulo × comprimento): no punho visto de lado o
+    // plano x·y degenera e o padrão vira mancha (crítico cego, rodada 1).
+    const volta = Math.atan2(z, x) * 0.3, noEixo = Math.hypot(x, z) < 0.12;
+    if (!exposed && !isSleeve && !noEixo && (cuff || handPanel) && style.motif === 'trama') {
+      const a = Math.sin((volta + y) * 28), b = Math.sin((volta - y) * 28);
       if (Math.max(a, b) > 0.8) color = accent;
+    }
+    if (!exposed && !isSleeve && !noEixo && style.motif === 'corrente') {
+      // Cordão de ouro no pulso e nos nós dos dedos: elos alternados em volta do braço.
+      const elo = (yc, w) => Math.abs(y - yc) < w && Math.cos(volta * 60) * (Math.abs(y - yc) / w < 0.55 ? 1 : -1) > -0.2;
+      if (elo(-0.06, 0.05) || (elo(0.9, 0.035) && Math.abs(x) < 0.34)) color = accent;
     }
     if (style.fingerless && pintura !== 'skin' && tip > 0.38) {
       const t = smooth(0.465, 0.505, tip);
