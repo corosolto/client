@@ -4,7 +4,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   akm: 'e03fd1001c',
   awp: '9cff130457',
   deagle: 'a08149fe73',
-  famas: '29f877cdb2',
+  famas: '6afcd1c37a',
   g3: '41e72be5d8',
   lmg: '2f030d550f',
   m4: 'c500cfe632',
@@ -15,7 +15,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   revolver38: '27bf8cb5fb',
   shotgun: '8b3c8639ca',
   svd: '3efcb8065b',
-  tavor: '403658a972',
+  tavor: '2c47a86b1a',
 });
 // Posição do pacote por chassi contra a AK golden (tools/fabrica/enquadramento/<id>.json);
 // rotação e FOV ficam os de VM_FABRICA_FRAME, iguais para todas as armas.

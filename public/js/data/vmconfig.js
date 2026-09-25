@@ -170,15 +170,15 @@ const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDro
 export const VM_FABRICA = Object.freeze({
   akm: F('ak', 'AK', { recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
   m4: F('ar', 'MX16A4', { recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.1) }),
-  famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
-  tavor: F('ar', 'MX16A4', { variante: true, frame: { x: 0.235, y: -0.06, z: -0.24 }, ads: A(0.1) }),
+  famas: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.28) }),
+  tavor: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, frame: { x: 0.235, y: -0.06, z: -0.24 }, ads: A(0.28) }),
   // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
   // entra; nesses três a extensão não fura a câmera (crítico, rodada 1).
-  g3: F('g3', 'G3', { manga: true, recoilScale: 7, recoilLoc: 1.5, ads: A(0.1) }),
+  g3: F('g3', 'G3', { manga: true, recoilScale: 9, recoilLoc: 1.5, ads: A(0.1) }),
   svd: F('svd', 'SVD', { manga: true, recoilScale: 3, recoilLoc: 1.5, ads: A(0.34) }),
   awp: F('sniper', 'L96X', { manga: true, recoilScale: 3.5, ads: A(0.12) }),
   mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, ads: A(0.4) }),
-  mp5: F('mp5', 'MPS5', { recoilScale: 6, recoilLoc: 1.5, ads: A(0.1) }),
+  mp5: F('mp5', 'MPS5', { recoilScale: 7, recoilLoc: 0.6, ads: A(0.1) }),
   p90: F('p90', 'PDW90', { recoilScale: 8, recoilLoc: 1.5, ads: A(0.3) }),
   lmg: F('lmg', 'MGX5', { recoilScale: 4, recoilLoc: 1.5, frame: { x: 0.335, y: -0.04, z: -0.18, rotDeg: [1.69, 0, -8] }, ads: A(0.3) }),
   shotgun: F('shotgun', 'KXG12', { recoilScale: 2.8, recoilLoc: 1.2, ads: A(0.1) }),
