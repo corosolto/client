@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.287`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.288`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,24 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.288] — 2026-09-25
+
+### Mudado
+- fix(audio): restaura vozes v7 de Funkeiros e Urbanas (#576)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado após restaurar a união
+- fix(merge): restaura a união perdida na rodada anterior
+- chore(docs): regenera bloco derivado
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- merge(main): realinha com v2.0.0-alpha.279
+- chore(docs): regenera bloco derivado (autofix)
+- fix(audio): restaura pools v7 de Funkeiros e Urbanas
 
 ## [2.0.0-alpha.287] — 2026-09-25
 
