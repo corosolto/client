@@ -223,5 +223,6 @@ function extendAtCurrentPose(mesh, source, loops, representative, space, length)
   mesh.geometry = out;
   mesh.userData.sleeveExtended = loops.length;
   mesh.userData.sleeveEnds = ends;
+  mesh.userData.sleeveBase = source.attributes.position.count;   // vértices ≥ base = extensão (eval:vm-manga-tela)
   return loops.length;
 }
