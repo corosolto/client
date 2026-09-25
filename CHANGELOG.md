@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.287`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.288`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -37,6 +37,7 @@
 
 ### Corrigido
 - O Campinho da Quebrada ganha cobertura nos dois portões e nas laterais, placar de várzea e navegação contínua nas quinas, preservando duas rotas separadas em CTF e partidas 5x5/8x8.
+- Funkeiros e Tribos Urbanas voltam a usar somente os pools de voz históricos da v7. As 36 falas Gemini rejeitadas deixam de ser alcançáveis pelos resolvers de evento, rádio e seleção; se o pack contiver apenas takes novos sem aprovação, o runtime fica em silêncio. Voz genérica, Web Speech e música removida continuam ausentes.
 - Lobisomem Mítico deixa de puxar aliados de outras facções, passa a resolver M nas telas de inspeção, usa luva M distinta no viewmodel, ganha animação própria com pés no chão e volta a publicar os retratos de resultado aprovados, que tinham saído do quadro medido no elenco.
 - O pack integrado do Lobisomem passa a servir os clipes próprios na sequência do runtime, com o fallback compartilhado preservado só para comparação e regressão.
 - No Sertão, as três carroças deixam passagem pelos dois flancos e as cinco casas diante dos respawns passam a ter porta, saída lateral, janela com revide e navegação intencional para bots.
@@ -61,6 +62,24 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.288] — 2026-09-25
+
+### Mudado
+- fix(audio): restaura vozes v7 de Funkeiros e Urbanas (#576)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado após restaurar a união
+- fix(merge): restaura a união perdida na rodada anterior
+- chore(docs): regenera bloco derivado
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- merge(main): realinha com v2.0.0-alpha.279
+- chore(docs): regenera bloco derivado (autofix)
+- fix(audio): restaura pools v7 de Funkeiros e Urbanas
 
 ## [2.0.0-alpha.287] — 2026-09-25
 
