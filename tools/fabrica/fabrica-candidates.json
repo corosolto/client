@@ -135,6 +135,83 @@
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/awp.json"
     },
+    "carbine": {
+      "schemaVersion": 1,
+      "id": "carbine",
+      "arma": "carbine",
+      "chassi": "Kar98K",
+      "variante": false,
+      "url": "/private-assets/viewmodels/fabrica/carbine-fabrica.glb",
+      "bytes": 2305360,
+      "sha256": "e7f8bede7ac5ac4d52028897980fc1c843087a57732f8d57543d2b0af139c71b",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_Kar98K_Pose.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        },
+        {
+          "nome": "reload_start",
+          "duracao": 0.5,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "reload_loop",
+          "duracao": 0.5,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "reload_end",
+          "duracao": 0.5,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "pump",
+          "duracao": 0.4667,
+          "braco": "animador",
+          "arma": "animador"
+        }
+      ],
+      "clipesRuntime": {
+        "reload_empty": "ausente",
+        "shoot": "procedural",
+        "inspect": "ausente"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 6,
+      "file": "viewmodels/fabrica/carbine-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/carbine.json",
+      "insumos": {
+        "ficha": "54dbffd8ed30bf1a18e82869636f226083254b4fae1a301089331b7a0a839d66",
+        "chassi": "7c905ea1c8233b518da5ee11d33bc76f6cf7398e4ba3566a5e14d80a645ac314",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "a8a54443bff630ec5c696b6069a98a8648513407693c781885a377a788b54306",
+        "poseFbx": "4d139d101d63ef90c4db007ef1217aa704a54cf5382259d4cd15e0d10e68f535",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "malhaPropria": "9bbed4fec57b56c9a0aafe50a74bc4df6c3a138f2671dbb15c0d5cc6a27d4f3f",
+        "animador": "376941b09c3bd42f232bc079576712eb9e3fc121b299ebe2cc40756f9834a1fa",
+        "frameJogo": "f827d99c04b72adb68c9c8180756c3e2cdfdf59dbb3b3803e271ab92902bb073"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/carbine.json"
+    },
     "deagle": {
       "schemaVersion": 1,
       "id": "deagle",
