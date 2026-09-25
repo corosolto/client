@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.288`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.289`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,39 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.289] — 2026-09-25
+
+### Mudado
+- feat(atacadao): cria corredores e rotas de atacarejo (#582)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(atacadao): refresh final evidence hashes
+- chore(atacadao): satisfy comment density gate
+- docs(atacadao): record alpha.262 replay and review debt
+- perf(atacadao): batch rack geometry and index LOS
+- docs(atacadao): revalida candidata na alpha.252
+- docs(atacadao): isola vermelho global do CI
+- docs(atacadao): registra PR draft
+- docs(atacadao): registra limites dos gates
+- docs: sincroniza contagens da revisão
+- fix(atacadao): ajusta comentário de instancing
+- docs: atualiza blocos gerados do Atacadão
+- test(atacadao): registra WebGL e continuidade
+- test(atacadao): mede estrutura e rotas
+- feat(atacadao): cria rotas de atacarejo
+- feat(atacadao): restaura kit licenciado
 
 ## [2.0.0-alpha.288] — 2026-09-25
 
