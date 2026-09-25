@@ -265,7 +265,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 757 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 325 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 241 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 260 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 791 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 981 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 1,061 |
 | `penitenciaria` | CARANDIRU | **capture** | `map_penitenciaria.js` | 1,009 |
