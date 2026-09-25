@@ -2,44 +2,13 @@
   "id": "mosin",
   "arma": "mosin",
   "chassi": "Kar98K",
-  "descricao": "Mosin = Kar98K do pack; recarga cartucho a cartucho pelo PLANO B (tools/fabrica/animador/kar98k-laco.json, a mesma da REM 700): a do pack girava o fuzil de lado cruzando a cruz (crítico). Aqui a arma só sobe e rola 12°, a mão forte sai do punho, levanta e puxa o ferrolho, a mão de apoio põe um cartucho por laço na janela aberta, e o ferrolho fecha. O cartucho é o do pack, guardado no depósito (moverPack); a lâmina do pack sai (removerOssos). O tiro continua o do pack (ciclo do ferrolho).",
+  "descricao": "Mosin = Kar98K do pack; recarga cartucho a cartucho. O idle da arma é o quadro 0 da reload_start do pack (clipe e cartucho guardados fora de vista); o FBX de pose é só o repouso, com a munição flutuando.",
   "skinBraco": "coro-ak",
   "skinArma": null,
   "zonaLivre": [],
+  "idleArma": "reload_start",
   "recuo": {
     "familia": "bolt",
     "fonte": "recoil.json ← Animations/Kar98K (RecoilAnimData); clipe de tiro do pack onde existe"
-  },
-  "animador": "tools/fabrica/animador/kar98k-laco.json",
-  "clipes": {
-    "reload_start": "animador",
-    "reload_loop": "animador",
-    "reload_end": "animador",
-    "reload_empty": "ausente",
-    "equip_rifle": "geral:rifle_equip"
-  },
-  "moverPack": [
-    {
-      "osso": "Cartridge",
-      "novoOsso": "Mag",
-      "posCm": [
-        0,
-        -3,
-        -1.2
-      ],
-      "rotDeg": [
-        0,
-        0,
-        0
-      ]
-    }
-  ],
-  "removerOssos": [
-    "Clip",
-    "CartridgeClip0",
-    "CartridgeClip1",
-    "CartridgeClip2",
-    "CartridgeClip3",
-    "CartridgeClip4"
-  ]
+  }
 }

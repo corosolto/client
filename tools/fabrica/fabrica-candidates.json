@@ -799,12 +799,36 @@
       "chassi": "Kar98K",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/mosin-fabrica.glb",
-      "bytes": 2480916,
-      "sha256": "2d19b4a42edff97ae094b2a028aaebc85e46b1949fd12a63ba8709cffec36909",
+      "bytes": 2912724,
+      "sha256": "bd5794e7d094d12581b68ad96e7983db1977b68d76cd06c6e9ba4aa369c99b52",
       "clipes": [
         {
           "nome": "idle",
           "braco": "A_FP_Kar98K_Pose.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 4.7,
+          "braco": "A_FP_Kar98K_Reload_Empty.FBX",
+          "arma": "A_W_Kar98K_Empty_Reload.FBX"
+        },
+        {
+          "nome": "reload_start",
+          "duracao": 1.3,
+          "braco": "A_FP_Kar98K_Reload_Start.FBX",
+          "arma": "A_W_Kar98K_Reload_Start.FBX"
+        },
+        {
+          "nome": "reload_loop",
+          "duracao": 0.8,
+          "braco": "A_FP_Kar98K_Reload_Loop.FBX",
+          "arma": "A_W_Kar98K_Reload_Loop.FBX"
+        },
+        {
+          "nome": "reload_end",
+          "duracao": 2.0333,
+          "braco": "A_FP_Kar98K_Reload_End.FBX",
+          "arma": "A_W_Kar98K_Reload_End.FBX"
         },
         {
           "nome": "shoot",
@@ -817,29 +841,9 @@
           "duracao": 1,
           "braco": "A_FP_Rifle_Equip.FBX",
           "arma": "idle congelado"
-        },
-        {
-          "nome": "reload_start",
-          "duracao": 0.8,
-          "braco": "animador",
-          "arma": "animador"
-        },
-        {
-          "nome": "reload_loop",
-          "duracao": 0.6,
-          "braco": "animador",
-          "arma": "animador"
-        },
-        {
-          "nome": "reload_end",
-          "duracao": 0.8,
-          "braco": "animador",
-          "arma": "animador"
         }
       ],
-      "clipesRuntime": {
-        "reload_empty": "ausente"
-      },
+      "clipesRuntime": {},
       "camera": {
         "fov": 80,
         "posicao": [
@@ -849,21 +853,28 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 9,
+      "segundos": 13,
       "file": "viewmodels/fabrica/mosin-fabrica.glb",
       "ficha": "tools/fabrica/fichas/mosin.json",
       "insumos": {
-        "ficha": "e544e884a2ae16de7f3384d089b1270347185f3563c5660580d8d4a901591cae",
+        "ficha": "89ba151eb1a14a8779976df0eb8fca6eaeaa4930bcbae5a32d6b19dfb5a2d46a",
         "chassi": "7c905ea1c8233b518da5ee11d33bc76f6cf7398e4ba3566a5e14d80a645ac314",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "a8a54443bff630ec5c696b6069a98a8648513407693c781885a377a788b54306",
         "poseFbx": "4d139d101d63ef90c4db007ef1217aa704a54cf5382259d4cd15e0d10e68f535",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:idle:arma": "eac07c23814e543d3e9c35b2244554d64ed58c4c4f09f70778d8eaa65dd18528",
+        "clipe:reload_empty:braco": "44177317fdf1aa274cfb006c61a5ec0c211a2f35858b25939e21cade56785f39",
+        "clipe:reload_empty:arma": "45239ca811c525712f07fdb2550a40639d14a064619428c74766bf9449f9c59f",
+        "clipe:reload_start:braco": "3073868914e3f48296d37a34cdc52d94d0ded112aeaf7809442379117fa116a6",
+        "clipe:reload_start:arma": "eac07c23814e543d3e9c35b2244554d64ed58c4c4f09f70778d8eaa65dd18528",
+        "clipe:reload_loop:braco": "384587444eb0cbbf9b7c02ce4eb40f5b35e29b1281731fa384d26442759c1645",
+        "clipe:reload_loop:arma": "f0c6a5ac37c3cff01ee8f6a001e398e4c01033ef8ac55cfd4b72a948a6d53883",
+        "clipe:reload_end:braco": "86722b1453069a3d0a593898d6ecb1d012dbcba328c43e427dce71e7206d332f",
+        "clipe:reload_end:arma": "aaae0003e4ede22a97df0cefc982562fac6c4b680f3f05b4523dde8558126f42",
         "clipe:shoot:braco": "56f288cf6510ea263cdbe9afcfc3c9e1163e1be7933e2145490d52b10a7b1b16",
         "clipe:shoot:arma": "3b9dc4357ef2fb0ca4dd527764054c963a10cad0ebf9ddf6fa9bed22df47ddd0",
-        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
-        "animador": "c172855ee504a822345d65b8f6f2179b404815685fa9fa572fac5706f5352903",
-        "frameJogo": "06be2733663a83230bf8f53cc1581facbb274354844e8d99c96661470e1fe5fd"
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad"
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/mosin.json"

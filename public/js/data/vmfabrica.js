@@ -13,7 +13,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   m400: 'a9f4bce104',
   m92: 'c8fcfb1276',
   md97: 'f17921e1c1',
-  mosin: '2d19b4a42e',
+  mosin: 'bd5794e7d0',
   mp5: 'd26da9f0ab',
   p90: 'f0ab213493',
   pistol: '4c9e3a1a29',
