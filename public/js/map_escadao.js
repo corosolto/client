@@ -1105,11 +1105,11 @@ export function buildEscadao(scene, T) {
   }
 
   /* ===================== SPAWNS ===================== */
-  // O spawn ABRAÇA a parede de propósito: é ela que tira a visada da casa central. O preço é
-  // folga de 0,85 m contra o 1,20 da MAP2B — invariantes em conflito, ver KNOWN-RED.json.
+  // Preserva o abrigo baixo e recua o spawn alto 1,5 m para liberar a primeira curva.
+  // O A/B de 60 s × 9 sementes fica abaixo do teto nos quatro cenários.
   const spawns = {
     E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: 0 })),
-    B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -34, yaw: Math.PI })),
+    B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -35.5, yaw: Math.PI })),
   };
 
   /* ===================== CTF — 4 BANDEIRAS =====================
@@ -1118,7 +1118,9 @@ export function buildEscadao(scene, T) {
     { id: 'R', label: 'MIRANTE',     x: 7,   z: -25 },
     { id: 'E', label: 'PATAMAR 2',   x: -7,  z: 1.5 },
     { id: 'P', label: 'PATAMAR 1',   x: 7,   z: 9 },
-    { id: 'B', label: 'RUA',         x: -7,  z: 28 },
+    // O bolsão oeste mantém as três rotas e tira 5×5/8×8 do corredor protegido
+    // do spawn, sem empilhar a navegação na única abertura.
+    { id: 'B', label: 'RUA',         x: -14, z: 28 },
   ];
 
   /* ===================== ARSENAL NO CHÃO ===================== */
