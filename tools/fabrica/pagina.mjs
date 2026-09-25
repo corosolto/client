@@ -26,7 +26,10 @@ const vclass = (v) => `v-${esc(String(v || 'PENDENTE').split(/[ (]/)[0])}`;
 const ficha = (id) => rj(path.join(RAIZ_REPO, 'tools/fabrica/fichas', `${id}.json`), {});
 const critico = (id) => {
   const t = rt(path.join(LOTE, 'critico', id, 'veredito.txt')).trim();
-  const v = /VEREDITO:\s*([A-ZÇÃ-]+)/.exec(t)?.[1] || (t ? t.split('\n')[0].slice(0, 40) : 'PENDENTE');
+  // Veredito = a pior linha (o crítico escreve uma linha por defeito, com a classe dela).
+  const v = /VEREDITO:\s*([A-ZÇÃ-]+)/.exec(t)?.[1]
+    || ['REPROVADA', 'RESSALVA', 'APROVADA'].find((k) => new RegExp(`^\\S+\\s+${k}\\b`, 'm').test(t))
+    || (t ? t.split('\n')[0].slice(0, 40) : 'PENDENTE');
   return { v, texto: t };
 };
 const ROTULO = (f) => f.replace(/\.png$/, '').replace(/^[a-z0-9]+-/, '').replace('reload-empty-f', 'rec. vazia ').replace('inspect-f', 'inspeção ');
