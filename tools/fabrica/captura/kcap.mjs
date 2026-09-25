@@ -56,6 +56,15 @@ await page.waitForTimeout(3000);
 await page.evaluate(() => {
   const g = window.__game;
   for (const c of g.combatants || []) if (c !== g.player) { c.alive = false; if (c.mesh) c.mesh.visible = false; }
+  // O visual do bot é mesh.group (o mesh é o controlador) e o halo mora solto na cena. Bot que renasce colado na câmera entrava nas figuras (rodadas 4–5): esconde todo
+  // combatente que não é o jogador antes de CADA render do jogo.
+  const r = g.renderer;
+  if (r && !r.__semBots) {
+    const orig = r.render.bind(r);
+    const some = () => { for (const b of g.bots || []) { if (b.mesh?.group) b.mesh.group.visible = false; if (b._mark?.halo) b._mark.halo.visible = false; } };
+    r.render = (scene, cam) => { some(); return orig(scene, cam); };
+    r.__semBots = true;
+  }
 });
 // Câmera lenta só no viewmodel: o screenshot custa mais que o clipe inteiro.
 await page.evaluate(() => {
@@ -171,10 +180,10 @@ for (const arma of ARMAS) {
   await slow(1); await page.waitForTimeout(900);
   await calmo();
   await page.evaluate(() => { const g = window.__game, p = g.player; p.ammo[p.weapon].mag = 0; p.ammo[p.weapon].res = Math.max(60, p.ammo[p.weapon].res); g._startReload(); });
-  // Oito frações em câmera lenta: com quatro, a troca do pente (ou o cartucho na mão) caía
-  // entre as figuras e o crítico via "tira no ar" onde a régua via a peça na mão.
+  // Dez frações em câmera lenta, mais densas no começo: com quatro, a troca do pente caía entre
+  // as figuras; com oito, o pente velho caindo aos 20% ficava num quadro só ("no ar"?).
   await slow(0.15);
-  for (const f of [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9]) { await atClip(f); await shot(`${arma}-reload-empty-f${String(Math.round(f * 100)).padStart(3, '0')}`); }
+  for (const f of [0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9]) { await atClip(f); await shot(`${arma}-reload-empty-f${String(Math.round(f * 100)).padStart(3, '0')}`); }
   await slow(1);
   await settle(2000);
   const insp = await page.evaluate(() => window.__authoredVm?.inspect?.(window.__game.player.weapon) || false);
