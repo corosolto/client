@@ -200,13 +200,13 @@
    "redistribuicao": "proibida-standalone",
    "usoComIA": "sim",
    "stagingPrivado": "private-assets/audio/character-voices-gemini-final",
-   "notas": "Lote final copiado com verificacao de hash do commit 282ff734cb2d5da5de363c4efaa234d7b80e65b4 da lane feat/audio-voices-test. Os recibos registram google/gemini-3.1-flash-tts-preview via OpenRouter, sem clonagem de voz. Preserva exatamente os 36 takes ja ouvidos; esta lane nao regenera nem troca timbre.",
+   "notas": "Lote copiado com verificacao de hash do commit 282ff734cb2d5da5de363c4efaa234d7b80e65b4 da lane feat/audio-voices-test. Os recibos registram google/gemini-3.1-flash-tts-preview via OpenRouter, sem clonagem de voz. Os 36 takes foram rejeitados pelo dono em 10/09/2026; permanecem catalogados para auditoria, mas o runtime F/U os bloqueia e novos builds nao podem incorpora-los.",
    "deployPrivado": {
     "armazenamento": true,
-    "build": true,
+    "build": false,
     "autorizadoPor": "Ruben",
-    "data": "2026-09-06",
-    "escopo": "9 Funkeiros, com um take final de select, kill, radio e round por personagem"
+    "data": "2026-09-10",
+    "escopo": "armazenamento historico somente; autorizacao de build revogada para os 36 takes de Funkeiros"
    }
   },
   "legado-nominal-cs-valve-ut": {
