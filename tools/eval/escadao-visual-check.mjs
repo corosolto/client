@@ -26,7 +26,9 @@ const physics = {
   riserHeight: Number(mapSource.match(/const ESC\s*=\s*\{[^}]*espelho:\s*([\d.]+)/)?.[1]),
   // `_initCTF` passou a montar `point` antes do return para o mapa poder configurá-lo.
   // Deriva o raio da declaração real; não mantém uma segunda constante no harness.
-  ctfRadius: Number(gameSource.match(/const point\s*=\s*\{\s*id,\s*label,\s*x,\s*z,\s*r:\s*([\d.]+)/)?.[1]),
+  // O casamento segue o contrato estrutural do objeto, sem depender da forma como a
+  // função o devolve (retorno inline ou `const point = { ... }`).
+  ctfRadius: Number(gameSource.match(/\{\s*id,\s*label,\s*x,\s*z,\s*r:\s*([\d.]+)/)?.[1]),
 };
 if (!Object.values(physics).every(v => Number.isFinite(v) && v > 0)) throw Error('Constantes físicas não reconhecidas: não inventar limiares');
 const routeContractSource = fs.readFileSync(path.join(root, 'tools/eval/escadao-rota-check.mjs'), 'utf8');
