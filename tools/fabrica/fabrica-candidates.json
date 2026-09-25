@@ -459,6 +459,70 @@
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/m4.json"
     },
+    "md97": {
+      "schemaVersion": 1,
+      "id": "md97",
+      "arma": "md97",
+      "chassi": "MX16A4",
+      "variante": false,
+      "url": "/private-assets/viewmodels/fabrica/md97-fabrica.glb",
+      "bytes": 4162572,
+      "sha256": "f17921e1c1db424f9bd18f651fe5fa5a25cd795732936d47b139945948914e26",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_MX16A4_Pose.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.7,
+          "braco": "A_FP_MX16A4_Reload_Tac.FBX",
+          "arma": "A_W_MX16A4_Reload_Tac.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 3.2,
+          "braco": "A_FP_MX16A4_Reload_Empty.FBX",
+          "arma": "A_W_MX16A4_Reload_Empty.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 6,
+      "file": "viewmodels/fabrica/md97-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/md97.json",
+      "insumos": {
+        "ficha": "d8cac4ba0698d3b0634c7ab2fe17d8430e1f8e04b82f5b4e753a118b8f89ec62",
+        "chassi": "34835595604477b6c4db7aed381e2ae8329606886d5a2bb6fbad296e1abbb416",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",
+        "poseFbx": "e880a476b6d93b953db983910692cf4d3457557b31b3b3eba138a5993f5a8896",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_tactical:braco": "0de0a1a76e25b01c90c2b08c7d2ac41f1126114d47197badb75083954a60a0ea",
+        "clipe:reload_tactical:arma": "4956e4e65f0046b492e89ba164ac2883030b073d05c8d3acfb4de7d9ec385f32",
+        "clipe:reload_empty:braco": "177a8f713f37d480c4cd537e17b1df85b13f67b229902a6894c51ff1ead2e812",
+        "clipe:reload_empty:arma": "53c258665b1e69389927fab72afac08f32b51447dff0254e4c8bc498969c2cc6",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/md97.json"
+    },
     "mosin": {
       "schemaVersion": 1,
       "id": "mosin",

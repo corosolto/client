@@ -170,6 +170,7 @@ const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDro
 export const VM_FABRICA = Object.freeze({
   akm: F('ak', 'AK', { recoilScale: 3.5, ads: A(0.3) }),
   m4: F('ar', 'MX16A4', { recoilScale: 3.8, ads: A(0.1) }),
+  md97: F('ar', 'MX16A4', { variante: true, recoilScale: 3.8, ads: A(0.1) }),
   famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
   g3: F('g3', 'G3', { recoilScale: 5, ads: A(0.1) }),
   svd: F('svd', 'SVD', { recoilScale: 2.2, ads: A(0.34) }),
