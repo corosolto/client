@@ -9,6 +9,10 @@ export const TEXEL_ALVO = 128;
 export function metrosPorUV(material, alvo = TEXEL_ALVO) {
   const map = material?.map, largura = map?.image?.width;
   if (!largura) return null;
+  /* Textura presa na borda não pode passar de uma volta: fora dela o WebGL repete a
+     última coluna de texels e mural/placa viram borrão esticado (TEXEL6). */
+  const repete = (w) => w === THREE.RepeatWrapping || w === THREE.MirroredRepeatWrapping;
+  if (!repete(map.wrapS) || !repete(map.wrapT)) return null;
   return {
     u: (largura * (map.repeat?.x || 1)) / alvo,
     v: ((map.image.height || largura) * (map.repeat?.y || 1)) / alvo,
