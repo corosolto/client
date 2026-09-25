@@ -1,7 +1,7 @@
 // GERADO por tools/fabrica (build.mjs e enquadrar.mjs) — não editar à mão.
 // Versão de URL por BYTES dos produtos da fábrica (tools/fabrica/fabrica-candidates.json).
 export const VM_FABRICA_BYTES = Object.freeze({
-  akm: 'e03fd1001c',
+  akm: '91ee56bd36',
   awp: '9cff130457',
   carbine: 'e7f8bede7a',
   deagle: 'a08149fe73',
