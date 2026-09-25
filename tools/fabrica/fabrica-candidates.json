@@ -204,8 +204,8 @@
       "chassi": "MX16A4",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/famas-fabrica.glb",
-      "bytes": 2267324,
-      "sha256": "6afcd1c37a4608c9323c031979e94d9a746483e39632c10059ed73cdeff788b4",
+      "bytes": 2267792,
+      "sha256": "ba4dbf38653619bc982e5e802c32173434253b9a0e25c154b40ccd4ca0470a98",
       "clipes": [
         {
           "nome": "idle",
@@ -255,7 +255,7 @@
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "malhaPropria": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a",
-        "animador": "c619b39d04ba510fb604103ef4646e6a00cabda3ebd3030c9bfcf59ab5bce0ae",
+        "animador": "00ec67f3d07d40dbfbd896adc53a1ee5e5f8b321ddd33652278507dd03500dba",
         "frameJogo": "2f367ba5ae75380191fb3717c63df1f6d547dd5c6047861b2e1f987e8ded4c0b"
       },
       "ready": false,
