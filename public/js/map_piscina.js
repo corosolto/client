@@ -634,19 +634,23 @@ export function buildPoolDay(scene, T) {
       let h = alt, w = alt * a;
       if (w > larg) { w = larg; h = larg / a; }    // encolhe inteiro; NUNCA estica
       /* lambe em cima de lambe no MESMO plano lê como bug (audit: 29 pares > 50% em
-         14/08): mesma parede, retângulos se mordendo → a vaga já tem dona, pula. */
-      const nx = Math.sin(ry), nz = Math.cos(ry), lx = Math.cos(ry), lz = -Math.sin(ry);
-      const yc = y0 + h / 2, sc = x * lx + z * lz, dc = x * nx + z * nz;
-      if (_usados.some((u) => Math.abs(u.d - dc) < 0.3
-        && Math.abs(u.s - sc) < (u.w + w) / 2 - 0.02
-        && Math.abs(u.y - yc) < (u.h + h) / 2 - 0.02)) return null;
+         14/08). Predicado e limite são os da régua: graffiti-audit.mjs LIMITE_SOBREPOR. */
+      const ax = Math.cos(ry), az = -Math.sin(ry), anx = Math.sin(ry), anz = Math.cos(ry);
+      const yc = y0 + h / 2;
+      if (_usados.some((u) => {
+        if (Math.abs(Math.cos(u.ry - ry)) < 0.9) return false;                 // outro plano
+        const dx = u.x - x, dy = u.y - yc, dz = u.z - z;
+        if (Math.abs(dx * anx + dz * anz) > 0.35) return false;                // parede diferente
+        const ou = (w + u.w) / 2 - Math.abs(dx * ax + dz * az), ov = (h + u.h) / 2 - Math.abs(dy);
+        return ou > 0 && ov > 0 && (ou * ov) / Math.min(w * h, u.w * u.h) > 0.12;
+      })) return null;
       // parede atrás ANTES de desenhar (map_decals.js) — sem sólido, não vira tinta
       /* `[root]` e não `colliders`: o critério mede a MALHA DESENHADA (map_decals.js). A
          lista de caixas declarava parede onde havia vão de piloti e onde havia vidro —
          as 72 peças daqui passam nos dois critérios, e é isso que prova que o novo não
          mata peça boa: medido antes 72, depois 72. */
       if (!paredeAtras([root], x, y0 + h / 2, z, ry, w, h)) return null;
-      _usados.push({ i, x, z, w, h, y: yc, s: sc, d: dc });
+      _usados.push({ i, x, z, w, h, y: yc, ry });
       let m = _dmat.get(i);
       if (!m) {
         m = new THREE.MeshLambertMaterial({

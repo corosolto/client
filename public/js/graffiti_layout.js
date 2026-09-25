@@ -23,4 +23,4 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tag-selvagem.png","persona
 
 /* REASSINADO SEM REASSAR no merge da main: colocação da main nos 7 mapas que ela também
    assa, da branch nos 4 fy_*; só a impressão das entradas foi recalculada. Ver KNOWN-BUGS. */
-export const GRAFITE_FP = {"pass":"101826ab448fb518","maps":{"escadao":"ba3a46ab4903a345","praca_poderes":"2ce0609dca07b170","piscina_treta":"97669b98a38bd7ed","loja_h":"3f50aaa3ee8b94d5","ferro_velho":"7ac52ee37b182971","quebrada":"1d164de47f476e19","fy_escadao":"90be613436b7a89f","fy_campomorro":"b274f58b34468bf7","fy_lajes":"4538c06866b2cc11","corrego":"16cb4db4a953aac1","fy_mansao":"bd56ca038eb1d4db"}};
+export const GRAFITE_FP = {"pass":"101826ab448fb518","maps":{"escadao":"e7fcedea031200f1","praca_poderes":"2ce0609dca07b170","piscina_treta":"56280d7c9ffe830b","loja_h":"3f50aaa3ee8b94d5","ferro_velho":"7ac52ee37b182971","quebrada":"1d164de47f476e19","fy_escadao":"5c6b949b2ca9058b","fy_campomorro":"b274f58b34468bf7","fy_lajes":"4538c06866b2cc11","corrego":"16cb4db4a953aac1","fy_mansao":"bd56ca038eb1d4db"}};
