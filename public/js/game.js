@@ -1613,16 +1613,21 @@ export class Game {
     // tratado: o boot da régua morre antes de medir. No navegador nada muda.
     if (semMalha.size && !NODE_RUNTIME) {
       const pendentes = [...semMalha];
-      preloadWeapons(pendentes).then(() => {
-        for (const id of pendentes) {
-          const g = models[id];
-          if (!g || g.getObjectByName('rw') || !hasWeapon(id)) continue;
-          if (!mountRw(g, id)) continue;
-          g.children.forEach((ch) => { if (ch.isMesh) ch.visible = false; });
-          alignHands(g, id);
-        }
-        if (this._vmFrame) this._vmFrame(true);
-      }).catch(() => {});
+      // Em OCIOSO, não no construtor: pedir aqui as malhas que a partida não sorteou punha
+      // 19 downloads na janela de boot do ARM1 (teto 12) e competia com a partida.
+      const ocioso = globalThis.requestIdleCallback || ((f) => setTimeout(f, 1200));
+      ocioso(() => {
+        preloadWeapons(pendentes).then(() => {
+          for (const id of pendentes) {
+            const g = models[id];
+            if (!g || g.getObjectByName('rw') || !hasWeapon(id)) continue;
+            if (!mountRw(g, id)) continue;
+            g.children.forEach((ch) => { if (ch.isMesh) ch.visible = false; });
+            alignHands(g, id);
+          }
+          if (this._vmFrame) this._vmFrame(true);
+        }).catch(() => {});
+      });
     }
     for (const k in models) models[k].visible = k === 'awp';
     /* ===== ENQUADRAMENTO DERIVADO (G3-R1) — nenhuma tabela por arma =====
