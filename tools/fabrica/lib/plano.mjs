@@ -113,6 +113,8 @@ export function montarPlano(fichaArquivo) {
       fonte: path.resolve(RAIZ_REPO, ficha.malhaPropria.fonte) } : null,
     boca: ficha.boca || null,
     animador: ficha.animador ? path.resolve(RAIZ_REPO, ficha.animador) : null,
+    moverPack: ficha.moverPack || [],
+    removerOssos: ficha.removerOssos || [],
     saida: { dir },
   };
   const entradas = {

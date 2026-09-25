@@ -83,9 +83,16 @@ if (FABRICA_NA_REGUA) {
   const variantes = {
     g3sg1: { osso: 'Mag' }, md97: { osso: 'Mag' }, m400: { osso: 'Mag' }, scar: { osso: 'Mag' }, m92: { osso: 'Mag' },
     uzi: { osso: 'Mag', reserva: 'Mag2' }, carbine: { osso: 'Mag', reserva: 'Mag2' },
-    rem700: { osso: 'Cartridge', clipe: true }, sks: { osso: 'Clip', clipe: true },
+    sks: { osso: 'Clip', clipe: true },
   };
   for (const [arma, spec] of Object.entries(variantes)) if (soFabrica(arma)) CARREGADOR_PECA[arma] = spec;
+  // Recargas do pack reprovadas refeitas pelo plano B (rodada final): pente reserva Mag2 / cartucho reserva.
+  const planoB = {
+    akm: { osso: 'Mag', reserva: 'Mag2' }, awp: { osso: 'Mag', reserva: 'Mag2' },
+    mosin: { osso: 'Mag', reserva: 'Mag2' }, rem700: { osso: 'Mag', reserva: 'Mag2' },
+    revolver38: { osso: 'Cartridge0', reserva: 'Cartridge02' },
+  };
+  for (const [arma, spec] of Object.entries(planoB)) if (soFabrica(arma)) CARREGADOR_PECA[arma] = spec;
 }
 const CARREGADOR_NA = {
   knife: 'faca: sem carregador',
@@ -95,6 +102,7 @@ const CARREGADOR_NA = {
 };
 // Fábrica: a carabina de alavanca (plano B) tem o cartucho do Kar98K como peça (CARREGADOR_PECA acima).
 if (FABRICA_NA_REGUA && soFabrica('carbine')) delete CARREGADOR_NA.carbine;
+if (FABRICA_NA_REGUA && soFabrica('revolver38')) delete CARREGADOR_NA.revolver38;
 
 /* ---------------------------------------------------------------------------
    COLETA: tudo que as cinco réguas leem de UMA arma, numa passada do jogo.

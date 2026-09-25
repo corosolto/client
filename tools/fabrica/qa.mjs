@@ -84,7 +84,7 @@ for (const aspecto of ['3x2', '16x9']) {
 {
   // #641: a amostra do carregador tem de sair igual com e sem render entre passo e medida.
   // Sem peça de carregador (fita da LMG, tambor do revólver) a régua do carregador é N/A: não repete.
-  const semPeca = new Set(['lmg', 'revolver38', 'knife']);
+  const semPeca = new Set(['lmg', 'knife']);   // revólver da fábrica: cartucho + reserva (plano B)
   const comPeca = ids.filter((id) => !semPeca.has(id));
   if (comPeca.length) {
     const r = rodar('carregador-repete', process.execPath, ['tools/eval/vm-carregador-repete.mjs', `--armas=${comPeca.join(',')}`, `--porta=${PORTA}`],

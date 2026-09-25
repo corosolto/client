@@ -260,7 +260,8 @@ class Animador:
             d, g = por_chaves(ks, u, lambda a, b, s: (Vector(a.get("cm", (0, 0, 0))).lerp(Vector(b.get("cm", (0, 0, 0))), s),
                                                       Vector(a.get("rotDeg", (0, 0, 0))).lerp(Vector(b.get("rotDeg", (0, 0, 0))), s)))
             M0 = p.mat(osso)
-            cab = M0.translation.copy()
+            pivo = ks[0].get("pivoCm")   # pivô do giro na raiz (cm); sem ele, a cabeça do osso
+            cab = R @ Vector(pivo) if pivo else M0.translation.copy()
             if g.length > 1e-9:
                 giro = so_rot(R) @ rot_graus(g).to_3x3() @ so_rot(R).transposed()
                 M = Matrix.Translation(so_rot(R) @ d) @ girar_em_torno(M0, cab, giro)
@@ -276,7 +277,12 @@ class Animador:
             raise RuntimeError(f"maoForte sem a alavanca ({alav}) nos mecanismos do clipe")
         if clipe.get("maoForte"):
             w = por_chaves(clipe["maoForte"], u, lambda a, b, s: a.get("alavanca", 0) + (b.get("alavanca", 0) - a.get("alavanca", 0)) * s)
-            h1 = mec_delta[alav] @ hr
+            pega = (self.spec.get("alavanca") or {}).get("palmaCm")
+            if pega:   # ferrolho: a mão forte sai do punho e pega a alavanca do ferrolho (relação fixa)
+                R3 = so_rot(R) @ rot_graus((self.spec["alavanca"].get("rotDeg"))).to_3x3() @ so_rot(R).transposed() @ so_rot(hr)
+                h1 = mec_delta[alav] @ self.mao_por_palma(R3, R @ Vector(pega), "r")
+            else:
+                h1 = mec_delta[alav] @ hr
             q = hr.to_quaternion().slerp(h1.to_quaternion(), w)
             hr = compor(hr.translation.lerp(h1.translation, w), q.to_matrix())
         err_r = ik_braco(p, "r", hr, hr.translation + self.polo_r)

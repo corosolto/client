@@ -553,6 +553,26 @@ def malha_propria(spec: dict, braco, malhas_pack: list, em_rig) -> dict:
             "mantidasDoPack": mantidas}
 
 
+def apagar_osso(malhas: list, osso: str) -> int:
+    """Apaga os vértices com peso dominante em `osso` (peça do pack que o plano B não usa)."""
+    n = 0
+    for o in malhas:
+        g = o.vertex_groups.get(osso)
+        if g is None:
+            continue
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        deform = bm.verts.layers.deform.verify()
+        alvo = [v for v in bm.verts if max(v[deform].items(), key=lambda x: x[1], default=(-1, 0))[0] == g.index]
+        n += len(alvo)
+        bmesh.ops.delete(bm, geom=alvo, context="VERTS")
+        bm.to_mesh(o.data)
+        bm.free()
+    if not n:
+        raise RuntimeError(f"apagar_osso: nenhum vértice no osso {osso}")
+    return n
+
+
 def manter_do_pack(item: dict, braco, malhas_pack: list, em_rig) -> dict:
     """Plano B: peça do PACK que fica ao lado da malha do jogo (o cartucho do Kar98K na carabina de
     alavanca, que não tem munição solta no modelo de mundo). Os vértices com peso dominante em
@@ -687,6 +707,16 @@ def main() -> None:
     if plano.get("malhaPropria"):
         propria = malha_propria(plano["malhaPropria"], rig_braco, malhas_arma, em_rig)
         malhas_arma = [bpy.data.objects[propria["objeto"]]]
+    movidas = []
+    if not plano.get("malhaPropria"):
+        # Plano B sobre a malha do PACK: peça do pack em osso novo e lugar novo (o cartucho do Kar98K
+        # no depósito, não flutuando sobre a caixa) e ossos do pack que o plano B não usa (a lâmina).
+        movidas = [manter_do_pack(item, rig_braco, malhas_arma, em_rig) for item in plano.get("moverPack", [])]
+        for item in plano.get("moverPack", []):
+            apagar_osso(malhas_arma, item["osso"])
+        for osso in plano.get("removerOssos", []):
+            apagar_osso(malhas_arma, osso)
+        malhas_arma = malhas_arma + [bpy.data.objects[f"GEO_WEAPON_PACK_{m['novoOsso'].upper()}"] for m in movidas]
     removidos = remover_regioes(rig_braco, malhas_arma, plano.get("removerZonaLivre", []), em_rig, plano.get("protecao", []))
     pecas = [importar_peca(p, rig_braco, em_rig) for p in plano.get("zonaLivre", [])]
     rig_braco.data.pose_position = "POSE"
@@ -744,6 +774,7 @@ def main() -> None:
         "arma": {"ossos": ossos_arma, "ossoRaiz": OSSO_ARMA, "materiais": skin_arma},
         "zonaLivre": {"removido": removidos, "pecas": pecas},
         "malhaPropria": propria,
+        "movidasDoPack": movidas,
     }
     (saida / "montagem.json").write_text(json.dumps(relatorio, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print("FABRICA_MONTAGEM=" + json.dumps({"glb": str(glb), "id": plano["id"]}))
