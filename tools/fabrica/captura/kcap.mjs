@@ -180,10 +180,10 @@ for (const arma of ARMAS) {
   await slow(1); await page.waitForTimeout(900);
   await calmo();
   await page.evaluate(() => { const g = window.__game, p = g.player; p.ammo[p.weapon].mag = 0; p.ammo[p.weapon].res = Math.max(60, p.ammo[p.weapon].res); g._startReload(); });
-  // Dez frações em câmera lenta, mais densas no começo: com quatro, a troca do pente caía entre
-  // as figuras; com oito, o pente velho caindo aos 20% ficava num quadro só ("no ar"?).
+  // Doze frações em câmera lenta, densas até 40%: o pente velho cai em ~0,1 do clipe (FAMAS/TAVOR
+  // 0,30–0,40; deagle arremessa em 0,125–0,2) e sem 0,35/0,125 o crítico não via ele sair.
   await slow(0.15);
-  for (const f of [0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9]) { await atClip(f); await shot(`${arma}-reload-empty-f${String(Math.round(f * 100)).padStart(3, '0')}`); }
+  for (const f of [0.1, 0.125, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.75, 0.9]) { await atClip(f); await shot(`${arma}-reload-empty-f${String(Math.round(f * 100)).padStart(3, '0')}`); }
   await slow(1);
   await settle(2000);
   const insp = await page.evaluate(() => window.__authoredVm?.inspect?.(window.__game.player.weapon) || false);
