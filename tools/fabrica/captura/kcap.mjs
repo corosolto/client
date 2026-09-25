@@ -155,13 +155,13 @@ for (const arma of ARMAS) {
   await page.evaluate(() => { const p = window.__game.player; p.ammo[p.weapon].mag = Math.max(p.ammo[p.weapon].mag, 5); });
   await slow(0.1);
   await page.evaluate(() => window.__vmPrecisionQa.shoot());
-  // 'fire' no PICO do coice procedural (a saída do VmRecoil começa a cair), não num número
-  // fixo de quadros: com 6 quadros a figura podia sair antes do pico e o crítico via idle.
+  // 'fire' no PICO do giro do coice (o cano no alto), não num número fixo de quadros: com 6
+  // quadros a figura saía antes ou depois do pico e o crítico via idle.
   let pico = 0;
   for (let k = 0; k < 40; k += 1) {
     await quadros(1);
     const m = await page.evaluate(() => { const o = window.__authoredVm?.recoil?.out; if (!o) return -1;
-      return Math.abs(o.rx) + Math.abs(o.ry) + Math.abs(o.rz) + 10 * (Math.abs(o.px) + Math.abs(o.py) + Math.abs(o.pz)); });
+      return Math.abs(o.rx) + 0.3 * (Math.abs(o.ry) + Math.abs(o.rz)) + (Math.abs(o.rx) < 1e-4 ? 10 * Math.abs(o.py) : 0); });
     if (m < 0) { await quadros(5); break; }
     if (m > pico) pico = m; else if (pico > 0 && m < 0.95 * pico) break;
   }

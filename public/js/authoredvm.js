@@ -628,9 +628,10 @@ export class AuthoredViewModels {
     const family = familyFor(this.weapon);
     // A escala entra na chave: ak (golden) e akm (fábrica) dividem a família e não o coice.
     const scale = cfgArma(this.weapon)?.recoilScale ?? 1;
-    if (!family || !this._recoilParams || `${family}@${scale}` === this._recoilFamily) return;
-    this._recoilFamily = `${family}@${scale}`;
-    this.recoil.setFamily(this._recoilParams, family, scale);
+    const locScale = cfgArma(this.weapon)?.recoilLoc ?? scale;
+    if (!family || !this._recoilParams || `${family}@${scale}@${locScale}` === this._recoilFamily) return;
+    this._recoilFamily = `${family}@${scale}@${locScale}`;
+    this.recoil.setFamily(this._recoilParams, family, scale, locScale);
   }
 
   setAim(id = this.weapon, amount = 0) {
