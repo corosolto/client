@@ -23,6 +23,43 @@ export const CHARACTER_SELECT_VOICE = Object.freeze({
   funkraiz: 'audio/a/d5b87c3d2638e166.mp3',
 });
 
+/* Rollback F/U: filtra o pack v8 pelos pools v7; take novo falha fechado.
+   A ordem e as duplicatas recebidas do manifest são preservadas. */
+const LEGACY_VOICE_ALLOWLIST = Object.freeze({
+  F: new Set([
+    'audio/a/9cef270856898158.mp3', 'audio/a/4329db27852691d2.mp3',
+    'audio/a/748d29b120ec101a.mp3', 'audio/a/8739926e33a4e7c1.mp3',
+    'audio/a/9dc9797e88094f17.mp3', 'audio/a/f97622e12fe31d31.mp3',
+    'audio/a/5824ce67c28f9b0e.mp3', 'audio/a/5468d1161dc1da1e.mp3',
+    'audio/a/ba0cf9e4cd794621.mp3', 'audio/a/7ab54e035e2be080.mp3',
+    'audio/a/d5b87c3d2638e166.mp3', 'audio/a/48e83152141f91b7.mp3',
+    'audio/a/6db24de21da0ca82.mp3', 'audio/a/0e9451d1f5a2174a.mp3',
+    'audio/a/f19a37f2d06cf8ef.mp3', 'audio/a/0a57eedb07836de4.mp3',
+    'audio/a/9b617a6fd31a98b9.mp3', 'audio/a/28d5bdc927f162a7.mp3',
+    'audio/a/e76ae10d7b6c30b0.mp3', 'audio/a/00f1e9f4e1b52ba0.mp3',
+    'audio/a/22ea0a990319b85b.mp3', 'audio/a/0015464679b48b76.mp3',
+    'audio/a/d663ebd512b44699.mp3', 'audio/a/c95fcc3368ff290a.mp3',
+    'audio/a/1b39bab78b2720ad.mp3', 'audio/a/2203ff93a77a4378.mp3',
+    'audio/a/660c6b040b0e7583.mp3', 'audio/a/8883d7404a463131.mp3',
+    'audio/a/2aebb1a30bdf8808.mp3', 'audio/a/b7604e2286189528.mp3',
+    'audio/a/9682aad266ae6928.mp3', 'audio/a/47bd9d61c0410211.mp3',
+    'audio/a/ef7402df86f73b2e.mp3', 'audio/a/7e9c1558252af761.mp3',
+    'audio/a/de1b167416bc7d93.mp3', 'audio/a/0f598a9a70653c33.mp3',
+    'audio/a/5ee5fb6f04a014db.mp3', 'audio/a/2b041ccd5f859c9e.mp3',
+    'audio/a/5198523854ca7cc7.mp3', 'audio/a/4ceb7330c3c1dbc2.mp3',
+    'audio/a/ba210fbcabee6b8d.mp3', 'audio/a/98ee21c04e6380c6.mp3',
+    'audio/a/fe97e85edb73c193.mp3', 'audio/a/a7ffbbfbfb0c7c61.mp3',
+  ]),
+  U: new Set([
+    'audio/a/b5242f85607ebaab.mp3', 'audio/a/9da8f773246c8a52.mp3',
+    'audio/a/08290068f8d9935f.mp3', 'audio/a/68f5020a85ddcc19.mp3',
+    'audio/a/367e076ce5f06810.mp3', 'audio/a/f180be207d0b440b.mp3',
+    'audio/a/c8ac59c01c879673.mp3', 'audio/a/328140743c79f962.mp3',
+    'audio/a/bbc7294183784969.mp3', 'audio/a/fe496d769d8c6dc8.mp3',
+    'audio/a/d983d18b544ff48a.mp3',
+  ]),
+});
+
 export class Sfx {
   constructor() {
     this.ctx = null; this.master = null; this.vol = 0.7;
@@ -87,13 +124,19 @@ export class Sfx {
     if (this.onDuck) { try { this.onDuck(amt, hold); } catch {} }
   }
   _pick(arr) { return arr && arr.length ? arr[(Math.random() * arr.length) | 0] : null; }
+  _voicePool(team) {
+    const pool = this.pack?.voice?.[team];
+    if (!Array.isArray(pool)) return [];
+    const allowlist = LEGACY_VOICE_ALLOWLIST[team];
+    return allowlist ? pool.filter((file) => allowlist.has(file)) : pool;
+  }
 
   // team voice line (kill celebration / random), throttled
   voice(team, minGap = 3.5) {
     if (!this.speechEnabled) return false;
     const now = performance.now();
     if (this._lastVoice > 0 && now - this._lastVoice < minGap * 1000) return false;
-    const arr = this.pack?.voice?.[team];
+    const arr = this._voicePool(team);
     // IN-GAME (grito de kill): prioriza clipes CURTOS. O array vem ordenado do mais curto
     // pro mais longo (por tamanho no manifest); random*random puxa o sorteio pro início.
     const f = arr?.length ? arr[Math.floor(Math.random() * Math.random() * arr.length)] : null;
@@ -104,7 +147,7 @@ export class Sfx {
   // player-triggered radio line (CS-style) — always plays, stops previous
   radioVoice(team) {
     if (!this.speechEnabled) return false;
-    const f = this._pick(this.pack?.voice?.[team]);
+    const f = this._pick(this._voicePool(team));
     if (f) {
       if (this._radioAudio) this._radioAudio.pause();
       this._radioAudio = this._sample(f);
@@ -117,8 +160,9 @@ export class Sfx {
     if (!this.speechEnabled) return false;
     const now = performance.now();
     if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
-    const own = this.pack?.characterVoice?.[characterId]?.[event];
-    const genericPool = this.pack?.voice?.[fallbackFaction];
+    const rollback = !!LEGACY_VOICE_ALLOWLIST[fallbackFaction];
+    const own = rollback ? null : this.pack?.characterVoice?.[characterId]?.[event];
+    const genericPool = this._voicePool(fallbackFaction);
     const file = this._pick(own?.length ? own : genericPool);
     if (file) {
       if (interrupt && this._characterAudio) this._characterAudio.pause();
@@ -138,7 +182,8 @@ export class Sfx {
     if (!this.speechEnabled) return false;
     const rosterSlot = rosterIds?.indexOf(characterId) ?? -1;
     if (rosterSlot < 0) return false;
-    const ownSelect = this.pack?.characterVoice?.[characterId]?.select;
+    const rollback = !!LEGACY_VOICE_ALLOWLIST[faction];
+    const ownSelect = rollback ? null : this.pack?.characterVoice?.[characterId]?.select;
     if (ownSelect?.length) {
       if (this._characterSelectAudio) this._characterSelectAudio.pause();
       const file = ownSelect[rosterSlot % ownSelect.length];
@@ -149,8 +194,8 @@ export class Sfx {
       }
       return !!this._characterSelectAudio;
     }
-    const pool = this.pack?.voice?.[faction];
-    const configuredVoice = this.pack?.characterVoice || {};
+    const pool = this._voicePool(faction);
+    const configuredVoice = rollback ? {} : (this.pack?.characterVoice || {});
     const flatConfigured = Object.fromEntries(Object.entries(configuredVoice)
       .filter(([, value]) => typeof value === 'string'));
     const characterVoice = { ...CHARACTER_SELECT_VOICE, ...flatConfigured };
