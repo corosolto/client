@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.289`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.290`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,39 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.290] — 2026-09-25
+
+### Mudado
+- test(escadao): revalidar casas e conflitos na main (#567)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(escadao): atualizar hashes finais de evidencia
+- style(escadao): encurtar comentarios do ajuste
+- docs(escadao): fechar evidencias alpha 262
+- fix(escadao): destravar spawns e objetivo CTF
+- docs(escadao): registrar base main do PR
+- chore(escadao): reexecutar CI contra main
+- test(escadao): validar equipes em dois formatos
+- fix(ci): refresh Escadao dependency lock
+- docs(escadao): registrar reteste jogavel do r7
+- fix(deps): normalizar lock para npm 10
+- chore(deps): corrigir auditoria do build
+- fix(escadao): torna casas do mirante acessiveis
+- docs(escadao): registrar correção do gate de spawn
+- fix(escadao): liberar folga dos spawns inferiores
+- docs(escadao): registrar pr r6
+- docs(escadao): registrar evidencias r6
+- fix(escadao): abrir casas e contrajogo do mirante
 
 ## [2.0.0-alpha.289] — 2026-09-25
 
