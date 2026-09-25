@@ -21,11 +21,6 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tag-selvagem.png","persona
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
 
-/* REASSINADO SEM REASSAR em 2026-09-25 — merge da main (alpha.287) na vm/integracao-k: os 7 mapas
-   que a main também assa (praca_poderes, piscina_treta, loja_h, ferro_velho, quebrada, corrego,
-   escadao) ficaram com a COLOCAÇÃO da main; fy_escadao, fy_campomorro, fy_lajes e fy_mansao só
-   existem nesta branch e ficaram com a colocação dela. Nenhuma peça foi reassada — só a
-   impressão das entradas foi recalculada (tools/eval/graffiti-fingerprint.mjs) para a árvore
-   do merge. Assar de novo não é operação fiel: duas rodadas idênticas dão contagens diferentes,
-   e árvore sem o acervo completo de decalques apaga peças. */
+/* REASSINADO SEM REASSAR no merge da main: colocação da main nos 7 mapas que ela também
+   assa, da branch nos 4 fy_*; só a impressão das entradas foi recalculada. Ver KNOWN-BUGS. */
 export const GRAFITE_FP = {"pass":"101826ab448fb518","maps":{"escadao":"ba3a46ab4903a345","praca_poderes":"2ce0609dca07b170","piscina_treta":"97669b98a38bd7ed","loja_h":"3f50aaa3ee8b94d5","ferro_velho":"7ac52ee37b182971","quebrada":"1d164de47f476e19","fy_escadao":"90be613436b7a89f","fy_campomorro":"b274f58b34468bf7","fy_lajes":"4538c06866b2cc11","corrego":"16cb4db4a953aac1","fy_mansao":"bd56ca038eb1d4db"}};
