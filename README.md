@@ -34,17 +34,17 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 49.235 linhas em 96 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7.532** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.600 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 50.529 linhas em 98 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7.533** linhas | `wc -l public/js/game.js` |
+| `main.js` | 3.601 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 55 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props em GLB | 173 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props em GLB | 183 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 53, em 6 facções | array `CHARACTERS` de `characters.js` |
-| Mapas no registro | 17 | objeto `MAPS` de `maps.js` |
+| Mapas no registro | 18 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 409 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 417 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 80 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.282` | `public/js/version.js` e `package.json` (batem) |
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 96 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 98 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -100,7 +100,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **157** importam Playwright, **58** importam gltf-transform e **10** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **158** importam Playwright, **58** importam gltf-transform e **10** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -279,7 +279,7 @@ projeto.
 | Regra | Valor | Constante |
 |---|---|---|
 | Facções · personagens | 6 · 53 (B 9 · C 9 · E 8 · F 9 · M 9 · U 9) | `CHARACTERS` |
-| Mapas no menu | 17 — 2 abrem em rodadas, **15 em captura** | `MAPS` / `ctfMode` |
+| Mapas no menu | 18 — 2 abrem em rodadas, **16 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
 | Captura | alvo = **todas as bandeiras do mapa**, 2 rodadas (rede de segurança 480 s) | `capsToWin = ctfPts.length` / `CTF_ROUNDS_TO_WIN` |
@@ -306,6 +306,7 @@ Os mapas registrados, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
+| `campomorro` | Campinho do Morro | **captura** | `map_campomorro.js` | 815 |
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.192 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.407 |
@@ -320,11 +321,11 @@ Os mapas registrados, e em que modo cada um abre:
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 325 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 241 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 256 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 403 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 818 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
 | `penitenciaria` | CARANDIRU | **captura** | `map_penitenciaria.js` | 1.009 |
 
-**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 23 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 24 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
