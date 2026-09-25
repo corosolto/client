@@ -107,6 +107,15 @@ const custo = (m) => (curta ? 0 : 8 * (Math.sqrt(m.arma / ref.arma) - 0.95) ** 2
 
 preparaManga(palco);
 const medirTudo = async (frame) => { const m = await medir(palco, frame); m.manga = mangaNoQuadro(palco, frame); return m; };
+// --medir=x,y,z[,fov]: só mede estes quadros (separados por ';') e sai — para varrer à mão.
+if (opt('medir')) {
+  for (const q of opt('medir').split(';')) {
+    const [x, y, z, fov] = q.split(',').map(Number);
+    const m = await medirTudo({ ...base, x, y, z, ...(fov ? { fov } : {}) });
+    console.log(q, JSON.stringify({ tam: +Math.sqrt(m.arma / ref.arma).toFixed(3), braco: +(m.braco / ref.braco).toFixed(3), manga: m.manga, c: +custo(m).toFixed(3) }));
+  }
+  process.exit(0);
+}
 const antes = await medirTudo(base);
 let melhor = { frame: { ...base }, m: antes, c: custo(antes) };
 if (!curta) {

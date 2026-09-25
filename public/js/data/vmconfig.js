@@ -163,33 +163,35 @@ const F = (familia, chassi, extra = {}) => ({
   ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.3 },
   ...extra,
 });
-// recoilScale: coice de quadril ≥ 4% da diagonal da arma (captura/coice.mjs; golden AK 3,6% só no mount).
 // A 'ak' fica fora: o dono manteve a golden aprovada (24/09); o chassi AK do pack serve a 'akm'.
 const A = (alivio) => ({ auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio });
 const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 };
+// recoilScale gira o cano ~7° no quadril (~120 px, como a golden); recoilLoc (kickback/kickUp) fica ~1,5.
 export const VM_FABRICA = Object.freeze({
-  akm: F('ak', 'AK', { recoilScale: 3.5, ads: A(0.3) }),
-  m92: F('ak', 'AK', { variante: true, recoilScale: 3.5, ads: A(0.3) }),
-  m4: F('ar', 'MX16A4', { recoilScale: 3.8, ads: A(0.1) }),
-  md97: F('ar', 'MX16A4', { variante: true, recoilScale: 3.8, ads: A(0.1) }),
-  m400: F('ar', 'MX16A4', { variante: true, recoilScale: 3.8, ads: A(0.1) }),
+  akm: F('ak', 'AK', { recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
+  m4: F('ar', 'MX16A4', { recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.1) }),
   famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
-  g3: F('g3', 'G3', { recoilScale: 5, ads: A(0.1) }),
-  g3sg1: F('g3', 'G3', { variante: true, recoilScale: 5, ads: A(0.1) }),
-  scar: F('marksman', 'Mk14EBR', { variante: true, recoilScale: 3, frame: { x: 0.2, y: -0.06, z: -0.3 }, ads: A(0.1) }),
-  svd: F('svd', 'SVD', { recoilScale: 2.2, ads: A(0.34) }),
-  awp: F('sniper', 'L96X', { recoilScale: 3.5, ads: A(0.12) }),
+  // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
+  // entra; nesses três a extensão não fura a câmera (crítico, rodada 1).
+  g3: F('g3', 'G3', { manga: true, recoilScale: 7, recoilLoc: 1.5, ads: A(0.1) }),
+  svd: F('svd', 'SVD', { manga: true, recoilScale: 3, recoilLoc: 1.5, ads: A(0.34) }),
+  awp: F('sniper', 'L96X', { manga: true, recoilScale: 3.5, ads: A(0.12) }),
   mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, ads: A(0.4) }),
+  mp5: F('mp5', 'MPS5', { recoilScale: 6, recoilLoc: 1.5, ads: A(0.1) }),
+  p90: F('p90', 'PDW90', { recoilScale: 8, recoilLoc: 1.5, ads: A(0.3) }),
+  lmg: F('lmg', 'MGX5', { recoilScale: 4, recoilLoc: 1.5, frame: { x: 0.335, y: -0.04, z: -0.18, rotDeg: [1.69, 0, -8] }, ads: A(0.3) }),
+  shotgun: F('shotgun', 'KXG12', { recoilScale: 2.8, recoilLoc: 1.2, ads: A(0.1) }),
+  pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.38) }),
+  deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: A(0.38) }),
+  revolver38: F('revolver', 'Viper-357', { frame: CURTA, ads: A(0.38) }),
+  m92: F('ak', 'AK', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
+  md97: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.1) }),
+  m400: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.1) }),
+  g3sg1: F('g3', 'G3', { variante: true, recoilScale: 7, recoilLoc: 1.5, ads: A(0.1) }),
+  scar: F('marksman', 'Mk14EBR', { variante: true, recoilScale: 3, frame: { x: 0.2, y: -0.06, z: -0.3 }, ads: A(0.1) }),
   sks: F('marksman', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.2, y: -0.05, z: -0.2, fov: 50 }, ads: A(0.4) }),
   rem700: F('bolt', 'Kar98K', { variante: true, recoilScale: 3.3, ads: A(0.4) }),
   carbine: F('bolt', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.115, y: -0.04, z: -0.123, fov: 50 }, ads: A(0.3) }),
-  mp5: F('mp5', 'MPS5', { recoilScale: 2.3, ads: A(0.1) }),
   uzi: F('smg', 'X18', { variante: true, manga: true, recoilScale: 3, frame: { ...CURTA, x: 0.24, y: -0.17, z: -0.36, rotDeg: [21, 15, 5] }, ads: A(0.2) }),
-  p90: F('p90', 'PDW90', { recoilScale: 2.4, ads: A(0.3) }),
-  lmg: F('lmg', 'MGX5', { recoilScale: 2.2, frame: { x: 0.295, y: -0.04, z: -0.213, rotDeg: [1.69, 0, 6.19] }, ads: A(0.3) }),
-  shotgun: F('shotgun', 'KXG12', { recoilScale: 1.3, ads: A(0.1) }),
   tavor: F('ar', 'MX16A4', { variante: true, frame: { x: 0.235, y: -0.06, z: -0.24 }, ads: A(0.1) }),
-  pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.2) }),
-  deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: A(0.2) }),
-  revolver38: F('revolver', 'Viper-357', { frame: CURTA, ads: A(0.2) }),
 });

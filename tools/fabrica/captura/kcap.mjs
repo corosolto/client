@@ -35,6 +35,9 @@ page.on('pageerror', (e) => erros.push(String(e).slice(0, 200)));
 page.on('console', (m) => { if (/paid-viewmodel|melee-vm/.test(m.text())) erros.push(m.text().slice(0, 200)); });
 const shot = async (nome) => {
   await page.evaluate(() => {
+    // Bot que renasce no meio da recarga entrava na frente da arma (rodada 2 do crítico).
+    const g = window.__game;
+    for (const c of g?.combatants || []) if (c !== g.player) { c.alive = false; if (c.mesh) c.mesh.visible = false; }
     for (const el of document.querySelectorAll('body *')) {
       if (el.children.length < 6 && /DEBUG \(console\)/.test(el.textContent || '') && el.offsetHeight > 40) el.style.display = 'none';
     }
@@ -148,18 +151,31 @@ for (const arma of ARMAS) {
   await waitFor(() => !window.__game.player.scoped && (window.__authoredVm?.adsAmount ?? 0) <= 0.01, null, 8000);
   await quadros(12); await page.waitForTimeout(600);
   // Tiro no QUADRIL: o shoot() do gancho sai do ADS antes (settle) e dispara; câmera lenta
-  // para o quadro pegar coice e clarão (~60 ms de jogo).
+  // para o quadro pegar coice e clarão.
   await page.evaluate(() => { const p = window.__game.player; p.ammo[p.weapon].mag = Math.max(p.ammo[p.weapon].mag, 5); });
   await slow(0.1);
   await page.evaluate(() => window.__vmPrecisionQa.shoot());
-  await quadros(6);
+  // 'fire' no PICO do giro do coice (o cano no alto), não num número fixo de quadros: com 6
+  // quadros a figura saía antes ou depois do pico e o crítico via idle.
+  let pico = 0;
+  for (let k = 0; k < 40; k += 1) {
+    await quadros(1);
+    const m = await page.evaluate(() => { const o = window.__authoredVm?.recoil?.out; if (!o) return -1;
+      return Math.abs(o.rx) + 0.3 * (Math.abs(o.ry) + Math.abs(o.rz)) + (Math.abs(o.rx) < 1e-4 ? 10 * Math.abs(o.py) : 0); });
+    if (m < 0) { await quadros(5); break; }
+    if (m > pico) pico = m; else if (pico > 0 && m < 0.95 * pico) break;
+  }
   await shot(`${arma}-fire`);
   await page.waitForTimeout(400); await quadros(4);
   await shot(`${arma}-fire-b`);
   await slow(1); await page.waitForTimeout(900);
   await calmo();
   await page.evaluate(() => { const g = window.__game, p = g.player; p.ammo[p.weapon].mag = 0; p.ammo[p.weapon].res = Math.max(60, p.ammo[p.weapon].res); g._startReload(); });
-  for (const f of [0.15, 0.35, 0.6, 0.85]) { await atClip(f); await shot(`${arma}-reload-empty-f${String(Math.round(f * 100)).padStart(3, '0')}`); }
+  // Oito frações em câmera lenta: com quatro, a troca do pente (ou o cartucho na mão) caía
+  // entre as figuras e o crítico via "tira no ar" onde a régua via a peça na mão.
+  await slow(0.15);
+  for (const f of [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9]) { await atClip(f); await shot(`${arma}-reload-empty-f${String(Math.round(f * 100)).padStart(3, '0')}`); }
+  await slow(1);
   await settle(2000);
   const insp = await page.evaluate(() => window.__authoredVm?.inspect?.(window.__game.player.weapon) || false);
   if (insp) for (const f of [0.2, 0.45, 0.7]) { await atClip(f); await shot(`${arma}-inspect-f${String(Math.round(f * 100)).padStart(3, '0')}`); }

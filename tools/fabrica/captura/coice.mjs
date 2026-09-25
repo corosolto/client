@@ -2,7 +2,7 @@
 // Coice no QUADRIL legível? Mede a excursão do centro projetado da ARMA (vértices com
 // skin, pela vmCamera) após um tiro em câmera lenta, em % da diagonal da arma na tela.
 // Referência: P7 do vm-gauntlet (≥ 4%); a AK golden mede ~9%.
-// Uso: node tools/fabrica/captura/coice.mjs --armas=ak,m4 [--query=vmfabrica=m4] [--porta=4671]
+// Uso: node tools/fabrica/captura/coice.mjs --armas=ak,m4 [--query=vmfabrica=m4] [--porta=4671] [--total]
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
@@ -21,7 +21,7 @@ for (const [k, v] of new URLSearchParams(EXTRA)) q.set(k, v);
 await page.goto(`http://127.0.0.1:${PORTA}/?${q}`, { waitUntil: 'load', timeout: 180000 });
 await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
 await page.waitForTimeout(3000);
-await page.evaluate(() => {
+await page.evaluate((total) => { window.__coiceModoTotal = total;
   const g = window.__game;
   for (const c of g.combatants || []) if (c !== g.player) { c.alive = false; if (c.mesh) c.mesh.visible = false; }
   const a = window.__authoredVm;
@@ -58,13 +58,32 @@ await page.evaluate(() => {
     const r = window.__coiceMede();
     return { ...r, diag: Math.hypot((x1 - x0) * cam.aspect, y1 - y0) };
   };
+  // --total: centro dos vértices NA TELA a cada quadro (entra o clipe de tiro da golden).
+  window.__coiceTotal = () => {
+    const e = window.__coiceE; const cam = g.vmCamera; cam.updateMatrixWorld();
+    const V = e.mount.position.constructor; const v = new V();
+    let sx = 0; let sy = 0; let n = 0;
+    for (const m of e.weaponMeshes || []) {
+      if (!m.visible || !m.geometry?.attributes?.position) continue;
+      m.updateMatrixWorld();
+      const cnt = m.geometry.attributes.position.count;
+      for (let i = 0; i < cnt; i += 7) {
+        if (m.isSkinnedMesh) m.getVertexPosition(i, v); else v.fromBufferAttribute(m.geometry.attributes.position, i);
+        v.applyMatrix4(m.matrixWorld).project(cam);
+        if (v.z > 1 || v.z < -1 || Math.abs(v.x) > 1.2 || Math.abs(v.y) > 1.2) continue;
+        sx += v.x; sy += v.y; n += 1;
+      }
+    }
+    return { cx: (sx / n) * cam.aspect, cy: sy / n };
+  };
   window.__coiceMede = () => {
+    if (window.__coiceModoTotal) return window.__coiceTotal();
     const e = window.__coiceE; const cam = g.vmCamera;
     cam.updateMatrixWorld(); e.mount.updateMatrixWorld();
     const p = e.mount.localToWorld(window.__coiceC.clone()).project(cam);
     return { cx: p.x * cam.aspect, cy: p.y };
   };
-});
+}, process.argv.includes('--total'));
 const quadros = async (n) => { const f0 = await page.evaluate(() => window.__game._rafFrames || 0);
   await page.waitForFunction((f) => (window.__game._rafFrames || 0) >= f, f0 + n, { timeout: 20000 }).catch(() => null); };
 const saida = {};

@@ -700,9 +700,9 @@
     "msg": "dedos da mão de apoio a 0.06 palma da malha da arma (palma 0.12); teto 0.2"
    },
    "carregador": {
-    "estado": "VERMELHO",
-    "valor": "1 falha(s)",
-    "msg": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+    "estado": "VERDE",
+    "valor": "ok",
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:arma vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma"
    }
   }
  }

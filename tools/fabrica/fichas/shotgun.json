@@ -4,7 +4,7 @@
   "chassi": "KXG12",
   "descricao": "Escopeta = KXG12 do pack como autorada (KXG12_fixed): chassi puro + braço único coro-ak; recarga cartucho a cartucho (start/loop/end) e bomba do pack.",
   "skinBraco": "coro-ak",
-  "skinArma": null,
+  "skinArma": "escopeta",
   "zonaLivre": [],
   "clipes": {
     "reload_start": "pack:reload_start",

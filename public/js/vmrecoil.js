@@ -25,6 +25,7 @@ export class VmRecoil {
   constructor() {
     this.params = null;
     this.scale = 1;
+    this.locScale = 1;
     this.t = Infinity;
     this.auto = false;
     this.lastShot = -Infinity;
@@ -33,9 +34,12 @@ export class VmRecoil {
     this.out = { rx: 0, ry: 0, rz: 0, px: 0, py: 0, pz: 0, pivot: [0, 0, 0] };
   }
 
-  setFamily(allParams, family, scale = 1) {
+  // locScale separa o recuo em metros (kickback/kickUp) do giro: na fábrica o cano precisa
+  // subir sem a arma vir para o rosto. Omitido, vale a mesma escala (produtos K).
+  setFamily(allParams, family, scale = 1, locScale = scale) {
     this.params = allParams?.[family] || allParams?.[FALLBACK[family]] || allParams?.ar || null;
     this.scale = scale;
+    this.locScale = locScale;
     this.t = Infinity;
     for (const key of Object.keys(this.residual)) this.residual[key] = 0;
   }
@@ -54,9 +58,9 @@ export class VmRecoil {
       rx: -randRange2(p.pitch) * DEG * s,
       ry: randRange4(p.yaw) * DEG * s,
       rz: randRange4(p.roll) * DEG * s,
-      px: randRange2(p.kickRight) * s,
-      py: randRange2(p.kickUp) * s,
-      pz: randRange2(p.kickback) * s,
+      px: randRange2(p.kickRight) * this.locScale,
+      py: randRange2(p.kickUp) * this.locScale,
+      pz: randRange2(p.kickback) * this.locScale,
     };
     return true;
   }
