@@ -17,7 +17,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 96 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 97 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -127,7 +127,7 @@ hipotético:
 | **Meshy** | props 3D por texto (alternativa) e rig | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
 | **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
-`mint-assets.json` registra **60 assets** gerados via Mint (28 `mint-model` · 13 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative` · 1 `openrouter-image-concept`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
+`mint-assets.json` registra **64 assets** gerados via Mint (32 `mint-model` · 13 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative` · 1 `openrouter-image-concept`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
 
 As três chaves de API vivem em `.env` na raiz — **gitignored, modo 600, nunca em `argv`** (argv vaza no `ps` de qualquer processo da máquina). Sem elas o jogo roda igual: o pipeline de geração é offline, o resultado é que entra no repositório.
 
