@@ -28,6 +28,8 @@
 import * as THREE from 'three';
 import { decalIds, paredeAtras } from './map_decals.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
+import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { aplicaSombraSol } from './mapquality.js';
 
@@ -210,7 +212,7 @@ export function buildPoolDay(scene, T) {
       const ez = (opts.ry || opts.rz) ? Math.max(w, d) / 2 : d / 2;
       colliders.push({ minX: x - ex - pad, maxX: x + ex + pad, minY: y, maxY: y + h, minZ: z - ez - pad, maxZ: z + ez + pad });
       occluders.push(m);
-    } else if (opts.occlude === true) occluders.push(m);
+    } else if (opts.bala || opts.occlude === true) occluders.push(m);   // visível dentro de colisor alheio: a bala para nele (BUG-54)
     return m;
   }
 
@@ -297,6 +299,36 @@ export function buildPoolDay(scene, T) {
     ceil: lam({ map: tileTex('#e4ebef', '#c6cfd6', 4, 10, 6) }),
   };
 
+  /* ENTORNO DO CLUBE — cenário puro, 18 cm abaixo do salão. Antes as paredes externas
+     terminavam diretamente no céu e o mapa aéreo lia como uma caixa branca flutuante.
+     Estes dois planos não têm collider nem waypoint; servem apenas de chão para o horizonte. */
+  {
+    const grassTex = T.grass.clone(); grassTex.wrapS = grassTex.wrapT = THREE.RepeatWrapping; grassTex.repeat.set(18, 22);
+    const courtTex = T.concreteDark.clone(); courtTex.wrapS = courtTex.wrapT = THREE.RepeatWrapping; courtTex.repeat.set(10, 20);
+    const grassMat = lam({ map: grassTex, color: 0x77935d });
+    const courtMat = lam({ map: courtTex, color: 0xa7aaa8 });
+    const patch = (w, d, x, z, y, mat) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+      m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m);
+    };
+    // Anéis, nunca planos inteiros: o miolo precisa ficar vazio porque a piscina desce 1,5 m.
+    for (const sz of [-1, 1]) patch(72, 20, 0, sz * 36, -0.20, grassMat);
+    for (const sx of [-1, 1]) patch(18, 52, sx * 27, 0, -0.20, grassMat);
+    for (const sz of [-1, 1]) patch(46, 9, 0, sz * 30.5, -0.16, courtMat);
+    for (const sx of [-1, 1]) patch(5, 52, sx * 20.5, 0, -0.16, courtMat);
+    // Coqueiros e coroas de folhas dão escala de clube tropical à caixa vista do exterior.
+    const trunk = lam({ color: 0x76552f });
+    const leaf = new THREE.MeshBasicMaterial({ color: 0x285b38, side: THREE.DoubleSide });
+    for (const [px, pz] of [[-27, -31], [27, -31], [-27, 31], [27, 31]]) {
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.32, 5.8, 8), trunk);
+      t.position.set(px, 2.7, pz); t.castShadow = true; root.add(t);
+      for (let i = 0; i < 6; i++) {
+        const f = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 0.65), leaf);
+        f.position.set(px, 5.65, pz); f.rotation.x = -Math.PI / 2; f.rotation.z = i * Math.PI / 3; root.add(f);
+      }
+    }
+  }
+
   /* ---------------- pool basin (recessed, sloped sides) ----------------
      GEOMETRIA REFEITA (04/08) — pedido do dono: "o respawn tinha que ser maior, assim como
      os corredores laterais".
@@ -349,7 +381,8 @@ export function buildPoolDay(scene, T) {
     const water = new THREE.Mesh(new THREE.PlaneGeometry(OUTX * 2 - 0.3, OUTZ * 2 - 0.3),
       new THREE.MeshLambertMaterial({ map: waterTex(), color: 0xd7fbff, transparent: true,
         opacity: 0.76 }));
-    water.rotation.x = -Math.PI / 2; water.position.set(POOL.cx, -0.4, POOL.cz); root.add(water);
+    water.rotation.x = -Math.PI / 2; water.position.set(POOL.cx, -0.4, POOL.cz);
+    water.userData.nonSolidSurface = true; root.add(water);
     // navy tile border
     addBox(OUTX * 2 + 0.7, 0.16, 0.5, MAT.navy, POOL.cx, 0, nZ + 0.15, { collide: false });
     addBox(OUTX * 2 + 0.7, 0.16, 0.5, MAT.navy, POOL.cx, 0, sZ - 0.15, { collide: false });
@@ -392,7 +425,7 @@ export function buildPoolDay(scene, T) {
      prancha valia um nó de navegação a mais para o BOL. Em |z|=13,7 nenhum lado perde nó. */
   addBox(0.3, 1.3, 0.3, MAT.steel, POOL.cx - 0.8, 0, nZ + 1.7);
   addBox(0.3, 1.3, 0.3, MAT.steel, POOL.cx + 0.8, 0, nZ + 1.7);
-  addBox(1.4, 0.15, 4.0, MAT.white, POOL.cx, 1.3, nZ - 0.4, { collide: false });
+  addBox(1.4, 0.15, 4.0, MAT.white, POOL.cx, 1.3, nZ - 0.4, { collide: false, bala: true });
 
   /* ---------------- walls: white tile + navy accent band ---------------- */
   const wX = HALF_X + 0.5, wZ = HALF_Z + 0.5;
@@ -600,13 +633,23 @@ export function buildPoolDay(scene, T) {
       const a = T.decalAspects[i] || 1;
       let h = alt, w = alt * a;
       if (w > larg) { w = larg; h = larg / a; }    // encolhe inteiro; NUNCA estica
+      /* Lambe em cima de lambe: o alvo é o par com sobreposição > 50% do audit de 14/08,
+         não o encosto de quina — rejeitar tudo custava 119 peças (BUG-179 em KNOWN-BUGS). */
+      const nx = Math.sin(ry), nz = Math.cos(ry), lx = Math.cos(ry), lz = -Math.sin(ry);
+      const yc = y0 + h / 2, sc = x * lx + z * lz, dc = x * nx + z * nz;
+      const _interseca = (c1, e1, c2, e2) => Math.max(0, Math.min(c1 + e1 / 2, c2 + e2 / 2) - Math.max(c1 - e1 / 2, c2 - e2 / 2));
+      if (_usados.some((u) => {
+        if (Math.abs(u.d - dc) >= 0.3) return false;   // planos diferentes não disputam vaga
+        const area = _interseca(u.s, u.w, sc, w) * _interseca(u.y, u.h, yc, h);
+        return area > 0.5 * Math.max(u.w * u.h, w * h);
+      })) return null;
       // parede atrás ANTES de desenhar (map_decals.js) — sem sólido, não vira tinta
       /* `[root]` e não `colliders`: o critério mede a MALHA DESENHADA (map_decals.js). A
          lista de caixas declarava parede onde havia vão de piloti e onde havia vidro —
          as 72 peças daqui passam nos dois critérios, e é isso que prova que o novo não
          mata peça boa: medido antes 72, depois 72. */
       if (!paredeAtras([root], x, y0 + h / 2, z, ry, w, h)) return null;
-      _usados.push({ i, x, z });
+      _usados.push({ i, x, z, w, h, y: yc, s: sc, d: dc });
       let m = _dmat.get(i);
       if (!m) {
         m = new THREE.MeshLambertMaterial({
@@ -873,7 +916,7 @@ export function buildPoolDay(scene, T) {
   for (const bx of [-0.8, 0.8]) addBox(0.6, 0.75, 0.6, MAT.white, bx, 0, sZ - 1.7);
 
   /* ---------------- lighting: bright, even, indoor ---------------- */
-  scene.background = T.sky;
+  setMapSky(scene, T, '/img/textures/sky_pool.webp', 0x9fd4ee);
   scene.fog = null;
   const hemi = new THREE.HemisphereLight(0xf2fbff, 0xb9c6d0, 1.3);
   scene.add(hemi);
@@ -890,7 +933,7 @@ export function buildPoolDay(scene, T) {
   /* ---------------- ground height ---------------- */
   function groundHeightAt(x, z) { return poolDepth(x, z); }
 
-  /* ---------------- waypoints (deck only) ---------------- */
+  /* ---------------- waypoints (deck + rampas + fundo da piscina) ---------------- */
   const nodes = [], adj = [];
   const STEP = 3.4;
   const blocked = (x, z, inflate) => {
@@ -921,10 +964,13 @@ export function buildPoolDay(scene, T) {
   for (const z of [-13, -11.5, -10.5, -9.5, -6.5, -3.5, -0.5, 2.5, 5.5, 8.5, 9.5, 10.5, 11.5, 13, 14])
     if (!blocked(0, z, 0.18)) nodes.push({ x: 0, z });
   const segClear = (a, b) => {
+    let prevY = groundHeightAt(a.x, a.z);
     for (let i = 1; i < 6; i++) {
       const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
       if (blocked(x, z, 0.25)) return false;
-      if (Math.abs(groundHeightAt(x, z) - groundHeightAt(a.x, a.z)) > 0.65) return false;
+      const y = groundHeightAt(x, z);
+      if (Math.abs(y - prevY) > 0.40) return false;
+      prevY = y;
     }
     return true;
   };
@@ -966,12 +1012,8 @@ export function buildPoolDay(scene, T) {
   const mk = s => [-9, -3, 3, 9].map(x => ({ x, z: (HALF_Z - 4) * s, yaw: s < 0 ? 0 : Math.PI }));
   const spawns = { E: mk(-1), B: mk(1) };
 
-  // slowAt: contrato novo do game.js (andar dentro d'água custa velocidade e troca o
-  // som do passo). Aqui a piscina é FUNDA e intransponível — ninguém vadeia nela —,
-  // então devolve sempre false em vez de undefined: o game.js já guarda com
-  // `this.world.slowAt && ...`, mas declarar explicitamente evita que a próxima
-  // pessoa ache que ficou faltando.
-  const slowAt = () => false;
+  // Jogador e bots usam o mesmo chão, A* e penalidade dentro d'água.
+  const slowAt = (x, z) => groundHeightAt(x, z) < -0.35;
 
   /* ═══ PASSADA DE GRAFITE (07/08) ══════════════════════════════════════════
      Reprovação do dono: "na piscina ainda tem muito muro e obstáculos e armários
@@ -1007,11 +1049,25 @@ export function buildPoolDay(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 53, separacao: 11 },
   });
 
+  /* BUG-57: pombo de borda de piscina + rato de vestiário. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'piscina_treta',
+    rats: [
+      { pos: [-14, 0, -20], to: [-12, 0, -17.5], phase: .4 },
+      { pos: [13.5, 0, 19], to: [11.5, 0, 21.5], phase: 1.6 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-13, 0, 10], phase: .3 }, { mode: 'ground', pos: [12, 0, -12], phase: 1.4 },
+      { mode: 'ground', pos: [-11.8, 0, 9], phase: .8 },
+    ],
+  });
+
   /* A passada viva precisa enxergar cada parede/armário como malha separada. O lote entra
      somente depois dela: preserva o bake e troca N caixas repetidas por uma chamada. */
   batchStaticBoxes();
 
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt,
     spawns, sun, hemi, pickups,
     /* BANDEIRAS DO CTF — DECLARADAS (06/08, defeito do dono: "bandeiras com nome do pátio

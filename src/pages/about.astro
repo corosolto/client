@@ -6,6 +6,7 @@
 // Redirecionamento por idioma: cada página manda pro par quando o idioma
 // resolvido não bate (mesmas regras do public/js/i18n.js).
 import Layout from '../layouts/Layout.astro';
+import pkg from '../../package.json';
 import { ARMAS, MAPAS, PERSONAGENS, FACCOES } from '../data/jogo';
 import { BRAND_FULL, BRAND_ALT, GAME_ID, abs } from '../lib/site';
 
@@ -16,7 +17,7 @@ const DESC_LONG_EN =
   'satirical Brasília. Team E, Team B, Urban Tribes, Clowns and Funkeiros, ' +
   '5 maps, 26 weapons, bots, rounds, CTF, scoreboard and voice radio. No install, no sign-up.';
 const FAC_NOME_EN: Record<string, string> = {
-  E: 'Team E', B: 'Team B', urbanas: 'Urban Tribes', palhacos: 'Clowns', funkeiros: 'Funkeiros',
+  E: 'Team E', B: 'Team B', urbanas: 'Urban Tribes', palhacos: 'Clowns', funkeiros: 'Funkeiros', mitico: 'Mythic',
 };
 
 const jsonld = [
@@ -67,6 +68,7 @@ const jsonld = [
     <a class="btn-cta btn-2" href="/how-to-play">How to play</a>
   </div>
   <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Runs in a desktop browser. No installation, no sign-up.</p>
+  <p style="font-size:12px;color:var(--bone-dim);margin-top:4px">Current version: {pkg.version}</p>
 
   <div class="tstat" style="margin-top:26px">
     <div><b>{PERSONAGENS.length}</b><span>characters</span></div>

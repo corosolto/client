@@ -10,7 +10,7 @@
 import { weaponCFG } from './weapons.js';
 
 // snipers de luneta: a arma some no ADS e a luneta cobre (o jogo já trata a máscara).
-export const VMLAB_SCOPED = new Set(['awp', 'svd', 'g3sg1', 'sks', 'mosin', 'rem700', 'm400']);
+export const VMLAB_SCOPED = new Set(['awp', 'svd', 'sks', 'mosin']);
 // armas cujo mirado é POSICIONADO À MÃO (sem auto-centrar a alça medida).
 export const VMLAB_NO_ALIGN = new Set(['pistol']);
 

@@ -6,8 +6,18 @@ on:
     tags: ['v*']
   pull_request:
 
+# A chave precisa ser POR COMMIT na main e POR PR no pull_request. Com
+# `github.ref` ela virava `refs/heads/main` em TODO push da main — um grupo só
+# para a branch inteira — e, como cada merge é seguido do commit de release ~90 s
+# depois, o run do merge morria cancelado pelo run do release, e o do release
+# morria no merge seguinte. Medido: 18 de 29 runs de push na main cancelados, e
+# foi assim que o #605 entrou sem nenhuma rodada de invariantes chegar ao fim
+# (run do merge c14f87198 cancelado 23:19:56, run do release alpha.280 cancelado
+# 23:21:31). Em PR `github.ref` já era único (refs/pull/N/merge), então o efeito
+# desejado — run novo do MESMO PR cancela o velho — continua igual. Mesmo padrão
+# que o autofix.yml já usa.
 concurrency:
-  group: pr-fast-${{ github.ref }}
+  group: pr-fast-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -96,6 +106,8 @@ jobs:
         run: node tools/eval/invariants.mjs
       - name: Coice do viewmodel (near plane + pitch em rajada)
         run: node tools/eval/vm-kick-sim.mjs
+      - name: Faca construída e transições sem bind pose
+        run: npm run eval:melee-vm
       - name: Navegação dos bots (60 s × 5 mapas, sementes fixas)
         run: node tools/eval/botsim.mjs 60 all
 

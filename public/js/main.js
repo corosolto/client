@@ -10,7 +10,8 @@ import { apiUrl, fetchComRetry } from './apibase.js';   // rotas /api de banco m
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
-import { preloadWeapons } from './weapons.js';
+import { preloadWeapons, WEAPON_IDS } from './weapons.js';
+import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
 import { VERSION } from './version.js';
@@ -20,6 +21,10 @@ const mapPreviewPoster = (id, version) => escadaoMapPreviewPoster(id, `${version
 import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
+import { FACTIONS } from './factions.js';
+/* Literal exigido pela régua UIR1 (redesign-check lê a declaração, não o uso);
+   a fonte dos nomes é factions.js — mantenha os dois em sincronia. */
+const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
@@ -310,9 +315,24 @@ function rebuildMenuBackdrop() {
   menuScene = new THREE.Scene();
   MAPS[currentMap].build(menuScene, textures);
 }
+function menuProps(id) {
+  return [...MAP_PROPS, ...((MAPS[id] && MAPS[id].props) || [])];
+}
+let _menuLoadSeq = 0;
+function loadMenuBackdrop() {
+  const id = currentMap, seq = ++_menuLoadSeq;
+  return Promise.all([
+    preloadMapProps(menuProps(id)),
+    preloadAmbientLife((MAPS[id] && MAPS[id].ambience) || []),
+  ]).then(() => {
+    // O jogador pode trocar de mapa enquanto o GLB baixa. Resultado velho não reconstrói
+    // a cena nova; a próxima chamada tem seu próprio preload e sequência.
+    if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop();
+  });
+}
 // The first backdrop is built before props load; rebuild once they're ready so the
 // menu shows the real Brasília landmarks too. Só então a splash libera a entrada.
-preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady(); }).catch(() => _splashSetReady());
+loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 
 /* ---------------- screens ---------------- */
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
@@ -344,7 +364,7 @@ const factionArtReady = Promise.all(factionArtImages.map((image) => (
   })
 ))).catch((error) => console.warn('[facções] preload parcial', error));
 
-/* Wallpapers rotativos (wall-1..9): 1 por tela no fluxo home→setup→lado→personagem, sem
+/* Wallpapers rotativos (wall-10..28): 1 por tela no fluxo home→setup→lado→personagem, sem
    repetir; o offset rotaciona a cada acesso (localStorage) pra variar entre visitas.
 
    Estes arrays são fallback do primeiro quadro. A fonte de verdade é
@@ -354,9 +374,11 @@ const factionArtReady = Promise.all(factionArtImages.map((image) => (
    Servidos em .webp desde 07/08: os PNG de 2–2,6 MB viraram ~250 KB (ffmpeg libwebp q85,
    comparado lado a lado antes da troca — texto do cartaz e grão idênticos). Os .png ficam
    na pasta como fonte; wallpaper novo entra como PNG e vira .webp no mesmo commit. */
-const WALLS = ['/img/wall-1.webp', '/img/wall-2.webp', '/img/wall-3.webp', '/img/wall-4.webp',
-  '/img/wall-5.webp', '/img/wall-6.webp', '/img/wall-7.webp', '/img/wall-8.webp',
-  '/img/wall-9.webp'];
+const WALLS = ['/img/wall-10.webp', '/img/wall-11.webp', '/img/wall-12.webp', '/img/wall-13.webp',
+  '/img/wall-14.webp', '/img/wall-15.webp', '/img/wall-16.webp', '/img/wall-17.webp',
+  '/img/wall-18.webp', '/img/wall-19.webp', '/img/wall-20.webp', '/img/wall-21.webp',
+  '/img/wall-22.webp', '/img/wall-23.webp', '/img/wall-24.webp', '/img/wall-25.webp',
+  '/img/wall-26.webp', '/img/wall-27.webp', '/img/wall-28.webp'];
 let _wallVisit = 0;
 try {
   _wallVisit = parseInt(localStorage.getItem('cs_wallK') || '-1', 10) + 1;
@@ -934,7 +956,6 @@ let heartbeatOff = false;
 /* CONTADOR "N ONLINE" do rodapé do menu (pedido do dono, 06/08). GET /api/online lê a
    view online_now (heartbeat < 2 min). `hidden` até ter número: rodapé nunca mostra
    zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
-{ const v = document.getElementById('mf-ver'); if (v) v.textContent = `CORO SOLTO v${VERSION}`; }
 // o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
 await resolveGeoLang();
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
@@ -1311,7 +1332,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const matchWeapons = sessao
     ? sessao.net.meta.roster.map((r) => r.weapon).filter(Boolean)
     : pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: tamanhoTime });
-  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons])].filter(Boolean);
+  // A sonda de QA do viewmodel inclui a arma pedida no preload; sem isso a HUD podia
+  // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
+  const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
+  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon])].filter(Boolean);
   try {
     if (!navOnly) {
       await Promise.all([
@@ -1324,6 +1348,9 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         MAPS[currentMap]?.preload?.(),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
+        // Famílias PRONTAS do loadout + texturas de braço compartilhadas (~3 MB
+        // pós-de-dup): mata o pop legado→autorado do primeiro saque (BUG-75 M4).
+        preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
@@ -1378,6 +1405,8 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
+  /* `applyCinematicScreen` morreu no 495a6d889 e a chamada ficou: o `ReferenceError` dentro
+     de `setPaused(true)` matava o M em partida (pilha no BUG-179, item 7). */
   game.onPauseChange = () => resetConfirms();
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
@@ -1840,6 +1869,7 @@ function gotoMap(i) {
   if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
   setMapMode();
   rebuildMenuBackdrop();
+  loadMenuBackdrop().catch(() => {});
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
 }
 function stepMap(dir, ids = MAP_IDS) {
@@ -1866,6 +1896,7 @@ const MAP_DESC = {
   quebrada: 'Rua de baile: muros baixos, beco cego e o paredão marcando o compasso do round.',
   posto_treta: 'Posto de combustível na beira da BR: loja de conveniência, bombas de cobertura e treta no fluorescente.',
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
+  campomorro: 'Campo de várzea cercado pelo morro: oito becos, arquibancada com torcida e galpão do baile.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
   velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
   penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
@@ -2123,7 +2154,23 @@ for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   const chip = document.createElement('span');
   chip.className = 'team-count';
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
+  if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
+  /* PRONTIDÃO = TER ELENCO, não `dataset.ready` (atributo que o index.astro da main não
+     escreve): com ele o card nascia desabilitado para sempre — BUG-179 em KNOWN-BUGS. */
+  card.setAttribute('aria-disabled', String(!(n > 0)));
+  card.addEventListener('focus', () => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+}
+/* O dossiê lateral de facção (`presentFaction`, #faction-hero) saiu com o
+   index.astro da branch no merge com a main; ficaram só as chamadas. */
+for (const [id, direction] of [['team-prev', -1], ['team-next', 1]]) {
+  const button = $(id);
+  if (!button) continue;
+  button.onclick = () => {
+    ui.click();
+    const rail = document.querySelector('.team-row');
+    rail?.scrollBy({ top: direction * Math.max(92, rail.clientHeight * .56), behavior: 'smooth' });
+  };
 }
 $('btn-team-e').onclick = () => { sfx.uiClick(); pickTeam('E'); };
 $('btn-team-b').onclick = () => { sfx.uiClick(); pickTeam('B'); };
@@ -2225,7 +2272,7 @@ $('char-confirm').onclick = () => {
   }
 };
 
-// Esconde/mostra o card da sua facção na tela de adversário (btn-team-e/b/u).
+// Esconde/mostra o card da sua facção na tela de adversário; os demais continuam juntos.
 function setEnemyPickMode(on, myFaction) {
   for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
     const b = $('btn-team-' + f);
@@ -2237,7 +2284,6 @@ function setEnemyPickMode(on, myFaction) {
    ficava com cara de formulário ("escolha o adversário" e três caixas iguais).
    Agora o passo é um estado (data-step) que a tela inteira lê: eyebrow, título, dica
    e o texto da barra de ação de cada placa (ver .team-cta no style.css). */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS', M: 'MÍTICO' };
 function setTeamStep(step, myFaction) {
   const ts = $('team-select'); if (ts) ts.dataset.step = step;
   const st = $('team-step'), tt = $('team-title'), hint = $('team-hint');
@@ -2566,6 +2612,9 @@ function ensureTeamPreviews() {
   }
 }
 function pickTeam(faction) {
+  /* Facção sem elenco não abre lista vazia: guarda única, cobre clique e teclado
+     (o card já nasce `aria-disabled` no laço do contador). */
+  if (!CHARACTERS.some(c => c.team === faction)) { ui.back(); return; }
   // 2º passo: se está escolhendo o ADVERSÁRIO, grava e começa a partida.
   // (o card da sua facção fica escondido nessa tela — adversário é sempre um dos outros 2)
   if (pickingEnemy) {
@@ -2683,6 +2732,9 @@ function selectChar(c, row) {
   $('char-info-name').textContent = c.name;
   $('char-info-blurb').textContent = tr(c.blurb);
   renderCharAttrs(c);
+  sfxReady.then(() => {
+    if (selChar?.id === c.id) sfx.characterVoice(c.id, 'select', { fallbackFaction: c.team, interrupt: true });
+  });
 }
 
 function selectCharacterFromAvatar(c, row, roster) {
@@ -3471,6 +3523,13 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     const m = String(err && err.message || '');
     if (mpNoAtual.online) mpEstado('on', `ONLINE · ${mpNoAtual.nome.split('·')[0].trim()} · ${mpNoAtual.ping} ms`);
     else mpEstado('erro', 'SERVIDORES FORA DO AR');
+    if (m.includes('versao_incompativel')) {
+      // Nó simulando outra versão do jogo (incidente da frota, 11/09). Recarregar resolve
+      // quando é cache do jogador; quando é o nó, a mensagem diz as duas versões.
+      const d = err?.detalhe || {};
+      return mpErro(`Este servidor roda outra versão do jogo (nó ${d.no || '?'} · você ${d.jogo || '?'}). `
+        + 'Recarregue a página; se continuar, escolha outra região.', true);
+    }
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'

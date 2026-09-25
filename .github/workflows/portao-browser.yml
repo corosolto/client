@@ -65,8 +65,13 @@ on:
       - '.github/workflows/portao-browser.yml'
   workflow_dispatch:
 
+# Mesmo defeito que o ci.yml tinha: com `github.ref` a chave virava
+# `refs/heads/main` em todo push da main, um grupo só para a branch inteira, e o
+# portão LENTO era o mais penalizado (20 de 29 runs de push na main cancelados —
+# 45 min de render por software jogados fora e nenhum veredito). Por commit na
+# main, por PR no pull_request.
 concurrency:
-  group: portao-browser-${{ github.ref }}
+  group: portao-browser-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:

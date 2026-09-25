@@ -2,7 +2,7 @@
 // Each source model is normalized to ~1 unit on its longest axis, so we scale each
 // to a real-world length and rotate so the barrel points +Z (game forward).
 import * as THREE from 'three';
-import { VERSION } from './version.js';
+import { WORLD_VER } from './data/weaponver.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
@@ -237,7 +237,7 @@ export async function preloadWeapons(ids) {
   await Promise.all((ids && ids.length ? ids : WEAPON_IDS).map(async (id) => {
     const src = MODEL_ALIAS[id] || id;    // snipers reusadas carregam a malha da arma-fonte
     if (_cache.has(src)) return;
-    try { const g = await loadGLB(`models/weapons/${src}.glb?v=${VERSION}`); _cache.set(src, g.scene); }
+    try { const g = await loadGLB(`models/weapons/${src}.glb?v=${WORLD_VER[src] || 'sem-versao'}`); _cache.set(src, g.scene); }
     catch (e) { console.warn('weapon load failed', src, e); }
   }));
 }

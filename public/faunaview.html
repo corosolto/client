@@ -1,0 +1,68 @@
+<!doctype html>
+<!-- DEV-ONLY fauna GLB viewer for asset evidence (BUG-57). Not linked from the game. -->
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>CS BRASIL — fauna viewer (dev)</title>
+<style>html,body{margin:0;height:100%;background:#8ea6b8;overflow:hidden}#hud{position:fixed;top:8px;left:8px;font:14px monospace;color:#fff;text-shadow:0 1px 2px #000}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=a47c475b7bea", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">loading…</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const qp = new URLSearchParams(location.search);
+const src = qp.get('src');
+const dist = parseFloat(qp.get('dist') || '4');
+const play = qp.get('play') !== '0';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8ea6b8);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.15));
+const sun = new THREE.DirectionalLight(0xffffff, 1.7);
+sun.position.set(3, 6, 4); scene.add(sun);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: 0x7a8a72, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; scene.add(ground);
+const grid = new THREE.GridHelper(40, 40, 0x223, 0x334); grid.position.y = .002; scene.add(grid);
+
+const loader = new GLTFLoader();
+const hud = document.getElementById('hud');
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, .05, 200);
+let mixer = null;
+loader.load(src, (gltf) => {
+  const model = gltf.scene;
+  model.traverse((o) => { if (o.isMesh) { o.material.metalness = 0; o.castShadow = o.receiveShadow = true; } });
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  model.position.sub(center).setY(-box.min.y);
+  const root = new THREE.Group(); root.add(model); scene.add(root);
+  const camH = Math.max(.35, size.y * .8);
+  camera.position.set(dist * .35, camH + dist * .12, dist);
+  camera.lookAt(0, camH * .6, 0);
+  const clips = gltf.animations || [];
+  hud.textContent = `${src} · ${Math.round(size.x * 1000)}×${Math.round(size.y * 1000)}×${Math.round(size.z * 1000)} mm · ${clips.map((c) => c.name).join(', ') || 'estático'}`;
+  if (play && clips.length) { mixer = new THREE.AnimationMixer(model); mixer.clipAction(clips[0]).play(); }
+  window.__READY = true;
+  window.__CLIPS = clips.map((c) => ({ name: c.name, duration: +c.duration.toFixed(2) }));
+  window.__SIZE = [+size.x.toFixed(3), +size.y.toFixed(3), +size.z.toFixed(3)];
+}, undefined, (e) => { hud.textContent = 'ERRO ' + (e?.message || e); window.__READY = true; window.__ERROR = String(e); });
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => { mixer?.update(clock.getDelta()); renderer.render(scene, camera); });
+window.__STEP = () => mixer?.update(1 / 30);
+window.__RENDER = () => renderer.render(scene, camera);
+</script>
+</body>
+</html>

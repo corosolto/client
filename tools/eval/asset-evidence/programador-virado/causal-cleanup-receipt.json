@@ -1,0 +1,336 @@
+{
+  "mode": "programador",
+  "source": "/Users/ruben/game/tools/eval/asset-evidence/programador-virado/programador-before-causal-cleanup.glb",
+  "sourceSha256": "4913e7261d43b2313eaa45e7cd711f109c4830a8e7ceb6e11456d609526167b1",
+  "blender": "5.2.0 LTS",
+  "beforeFacesByMaterial": {
+    "Material_1": 11842,
+    "LAN_MugSteel": 252,
+    "LAN_MugDark": 60,
+    "LAN_Mouse_Rev2": 440,
+    "LAN_Trackball_Red": 288,
+    "LAN_Mouse_Buttons": 48,
+    "LAN_Keyboard_Shell": 12,
+    "LAN_Keyboard_Keys": 180,
+    "LAN_Keyboard_Mount": 24,
+    "LAN_Mug_BeltClip": 40
+  },
+  "beforeBones": [
+    "Curl_L",
+    "Curl_L_Tip",
+    "Curl_R",
+    "Curl_R_Tip",
+    "Head",
+    "Hips",
+    "LeftArm",
+    "LeftFoot",
+    "LeftForeArm",
+    "LeftHand",
+    "LeftLeg",
+    "LeftShoulder",
+    "LeftToeBase",
+    "LeftUpLeg",
+    "RightArm",
+    "RightFoot",
+    "RightForeArm",
+    "RightHand",
+    "RightLeg",
+    "RightShoulder",
+    "RightToeBase",
+    "RightUpLeg",
+    "Spine",
+    "Spine01",
+    "Spine02",
+    "head_end",
+    "headfront",
+    "neck"
+  ],
+  "beforeAnimations": [],
+  "operation": "delete connected legacy keyboard/wing/stem components; delete legacy mouse/trackball/low buttons",
+  "componentLabels": [
+    {
+      "component": 111,
+      "faces": 216,
+      "vertices": 135,
+      "materials": {
+        "Material_1": 216
+      },
+      "bounds": {
+        "x": [
+          -0.032263871282339096,
+          0.17804238200187683
+        ],
+        "y": [
+          0.10352664440870285,
+          0.2092953771352768
+        ],
+        "z": [
+          0.9227992296218872,
+          1.254538893699646
+        ]
+      },
+      "rank": 11
+    },
+    {
+      "component": 176,
+      "faces": 192,
+      "vertices": 120,
+      "materials": {
+        "Material_1": 192
+      },
+      "bounds": {
+        "x": [
+          0.11918667703866959,
+          0.28748637437820435
+        ],
+        "y": [
+          0.08259861916303635,
+          0.1815902292728424
+        ],
+        "z": [
+          1.2121118307113647,
+          1.5857212543487549
+        ]
+      },
+      "rank": 14
+    },
+    {
+      "component": 93,
+      "faces": 150,
+      "vertices": 99,
+      "materials": {
+        "Material_1": 150
+      },
+      "bounds": {
+        "x": [
+          -0.10232004523277283,
+          0.1985146552324295
+        ],
+        "y": [
+          0.052930936217308044,
+          0.14481332898139954
+        ],
+        "z": [
+          1.2357522249221802,
+          1.4001281261444092
+        ]
+      },
+      "rank": 22
+    },
+    {
+      "component": 155,
+      "faces": 111,
+      "vertices": 76,
+      "materials": {
+        "Material_1": 111
+      },
+      "bounds": {
+        "x": [
+          0.06539792567491531,
+          0.19125162065029144
+        ],
+        "y": [
+          0.005544515326619148,
+          0.11850545555353165
+        ],
+        "z": [
+          0.9443169236183167,
+          1.2153563499450684
+        ]
+      },
+      "rank": 33
+    },
+    {
+      "component": 179,
+      "faces": 69,
+      "vertices": 47,
+      "materials": {
+        "Material_1": 69
+      },
+      "bounds": {
+        "x": [
+          0.13437247276306152,
+          0.28748637437820435
+        ],
+        "y": [
+          0.10964176803827286,
+          0.14933441579341888
+        ],
+        "z": [
+          1.362873911857605,
+          1.5857212543487549
+        ]
+      },
+      "rank": 46
+    },
+    {
+      "component": 177,
+      "faces": 59,
+      "vertices": 44,
+      "materials": {
+        "Material_1": 59
+      },
+      "bounds": {
+        "x": [
+          0.0938992127776146,
+          0.2417978197336197
+        ],
+        "y": [
+          0.1328303962945938,
+          0.2092953771352768
+        ],
+        "z": [
+          0.9250079393386841,
+          1.273334264755249
+        ]
+      },
+      "rank": 55
+    },
+    {
+      "component": 166,
+      "faces": 46,
+      "vertices": 37,
+      "materials": {
+        "Material_1": 46
+      },
+      "bounds": {
+        "x": [
+          0.086614690721035,
+          0.24274925887584686
+        ],
+        "y": [
+          0.14836175739765167,
+          0.19411198794841766
+        ],
+        "z": [
+          1.0873513221740723,
+          1.2810851335525513
+        ]
+      },
+      "rank": 64
+    },
+    {
+      "component": 187,
+      "faces": 38,
+      "vertices": 33,
+      "materials": {
+        "Material_1": 38
+      },
+      "bounds": {
+        "x": [
+          0.13827694952487946,
+          0.20162644982337952
+        ],
+        "y": [
+          0.062289685010910034,
+          0.1508035957813263
+        ],
+        "z": [
+          0.9276523590087891,
+          1.0675697326660156
+        ]
+      },
+      "rank": 76
+    },
+    {
+      "component": 170,
+      "faces": 29,
+      "vertices": 25,
+      "materials": {
+        "Material_1": 29
+      },
+      "bounds": {
+        "x": [
+          0.09017828106880188,
+          0.2138921618461609
+        ],
+        "y": [
+          0.1099405586719513,
+          0.14081059396266937
+        ],
+        "z": [
+          1.010852575302124,
+          1.2438113689422607
+        ]
+      },
+      "rank": 96
+    },
+    {
+      "component": 158,
+      "faces": 11,
+      "vertices": 12,
+      "materials": {
+        "Material_1": 11
+      },
+      "bounds": {
+        "x": [
+          0.06746219843626022,
+          0.17368514835834503
+        ],
+        "y": [
+          0.11502210050821304,
+          0.14416655898094177
+        ],
+        "z": [
+          0.9300401210784912,
+          1.0272531509399414
+        ]
+      },
+      "rank": 154
+    }
+  ],
+  "removedComponentRanks": [
+    11,
+    14,
+    22,
+    33,
+    46,
+    55,
+    64,
+    76,
+    96,
+    154
+  ],
+  "removedNamedFaces": {
+    "LAN_Mouse_Rev2": 440,
+    "LAN_Trackball_Red": 288,
+    "LAN_Mouse_Buttons": 24,
+    "LAN_Keyboard_Shell": 12,
+    "LAN_Keyboard_Keys": 180,
+    "LAN_Keyboard_Mount": 24
+  },
+  "removedFaces": 1889,
+  "newKeyboard": {
+    "objects": 23,
+    "boundsBlender": {
+      "x": [
+        -0.1,
+        0.16
+      ],
+      "y": [
+        0.09,
+        0.197
+      ],
+      "z": [
+        1.2875,
+        1.4225
+      ]
+    },
+    "socket": "Spine"
+  },
+  "output": "/Users/ruben/game/public/models/characters/programador-virado.glb",
+  "outputSha256": "438d16d45809a77d8435f49354b81a9de6fccd9b080a1d3a67117e803c51c807",
+  "afterFacesByMaterial": {
+    "Material_1": 10921,
+    "LAN_MugSteel": 252,
+    "LAN_MugDark": 60,
+    "LAN_Mouse_Buttons": 24,
+    "LAN_Mug_BeltClip": 40,
+    "LAN_Keyboard_Shell": 6,
+    "LAN_Keyboard_Keys": 120,
+    "LAN_Keyboard_Mount": 12
+  },
+  "boneHierarchyPreserved": 28,
+  "meshValidationChanged": false,
+  "scope": "Programador: legacy props only; Motoca: helmet/visor only. M4/body/bag/phone/rig/anims untouched."
+}

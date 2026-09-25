@@ -1,0 +1,30 @@
+{
+  "char": "profeta-calcada",
+  "mutanteAplicado": true,
+  "props": [
+    {
+      "nome": "PROP_PC_PLACARD_CYAN",
+      "acertouProp": false,
+      "primeiro": "PROP_PC_PLACARD_ORANGE"
+    },
+    {
+      "nome": "PROP_PC_PLACARD_GREEN",
+      "acertouProp": true,
+      "primeiro": "PROP_PC_PLACARD_GREEN"
+    },
+    {
+      "nome": "PROP_PC_PLACARD_ORANGE",
+      "acertouProp": true,
+      "primeiro": "PROP_PC_PLACARD_ORANGE"
+    },
+    {
+      "nome": "PROP_PC_CASE",
+      "acertouProp": true,
+      "primeiro": "PROP_PC_CASE"
+    }
+  ],
+  "armasIgnoradasNoEscopo": 1,
+  "corpoOk": true,
+  "cabecaOk": true,
+  "propLivre": false
+}

@@ -14,6 +14,22 @@ const ROOT = 'public';
 const ASTRO = 'src/pages/index.astro';
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.glb': 'model/gltf-binary', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.wasm': 'application/wasm', '.txt': 'text/plain' };
 
+/* SHELL VIRTUAL DO ARNÊS DE PERSONAGEM (`/eval-character.html`).
+   As sondas de seleção (select-inflate, select-mount, char-escala) medem MALHA, não
+   menu: abrir `/` fazia a playlist do menu (BUG-19) segurar a medição por 120 s antes
+   do primeiro personagem. Este shell entrega SÓ o import map, que é o que um
+   `import('three')` dentro de `page.evaluate` precisa para resolver o especificador
+   nu. Sem ele o arnês morre em "Failed to resolve module specifier three" — foi
+   exatamente o que voltou quando um merge trouxe este arquivo inteiro da main e
+   levou o shell junto. Os módulos do jogo entram por caminho relativo
+   (`./js/glbchars.js`), que não precisa de mapa. */
+const CHARACTER_EVAL_SHELL = `<!doctype html>
+<meta charset="utf-8">
+<title>character eval shell</title>
+<script type="importmap">
+{"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/addons/"}}
+</script>`;
+
 /* POR QUE O FRONTMATTER É AVALIADO AQUI
    O arnês não roda o Astro: ele serve o `.astro` cru com algumas substituições. Cada
    `define:vars={{ ... }}` é uma ponte do servidor para um inline, e sem o Astro esses
@@ -133,6 +149,10 @@ http.createServer(async (req, res) => {
   try {
     let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (p === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(await renderIndex()); }
+    if (p === '/eval-character.html') {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      return res.end(CHARACTER_EVAL_SHELL);
+    }
     const file = normalize(join(ROOT, p));
     if (!file.startsWith(ROOT)) throw new Error('path');
     const data = await readFile(file);

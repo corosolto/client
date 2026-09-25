@@ -1,0 +1,102 @@
+{
+  "character": "public/models/characters/camera-roxa.glb",
+  "characterSha256": "a976efb8e5731bef14a5111185ec74709ba4b380151812e9953128e65feb44f4",
+  "weapon": "m4",
+  "weaponFile": "public/models/weapons/m4.glb",
+  "weaponSha256": "b03516d557e2ecb61de3997e339d59be9e35d69bc3b5e23c09cb7dd69cb7a677",
+  "animations": {
+    "walk": {
+      "file": "public/models/anims/camera-roxa/walk.glb",
+      "sha256": "323fba5fe45fe863bba81f936d4da4b9427a6840498e72f2b9b9f34b41d0529a"
+    },
+    "crouch": {
+      "file": "public/models/anims/camera-roxa/crouch.glb",
+      "sha256": "24cdf86b99048e45ac47121f8ad5b2e6c658621bf5eec04cea83a32a953157da"
+    }
+  },
+  "blender": "5.2.0 LTS",
+  "method": "clipe glTF importado no armature; M4 em 0,84 m; IK posicional dos dois braços até anchors de empunhadura/guarda-mão",
+  "limitation": "evidência offline de asset/clipe/pegada; o porte cruzado reproduz o contrato de mount+IK, mas não substitui recaptura do runtime no browser",
+  "poses": {
+    "walk": {
+      "clip": "walk",
+      "frame": 15,
+      "handSpan": 0.30723,
+      "weaponScale": 0.841644,
+      "rightHand": [
+        -0.228907,
+        -0.170704,
+        0.87404
+      ],
+      "leftHand": [
+        -0.084041,
+        -0.439762,
+        0.842231
+      ],
+      "rightAnchor": [
+        -0.228907,
+        -0.170704,
+        0.87404
+      ],
+      "leftAnchor": [
+        -0.102636,
+        -0.444779,
+        0.846793
+      ],
+      "rightDistance": 0.0,
+      "leftDistance": 0.019792,
+      "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-walk-m4.png",
+      "gripRender": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-grip-a-m4.png",
+      "mutant": {
+        "operation": "weapon.location += [0, 0.18, 0.05]",
+        "offset": [
+          0.0,
+          0.18,
+          0.05
+        ],
+        "rightAnchor": [
+          -0.228907,
+          0.009296,
+          0.92404
+        ],
+        "leftAnchor": [
+          -0.102636,
+          -0.264779,
+          0.896793
+        ],
+        "rightDistance": 0.186815,
+        "leftDistance": 0.184233,
+        "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-grip-b-mutant-m4.png"
+      }
+    },
+    "crouch": {
+      "clip": "crouch",
+      "frame": 15,
+      "handSpan": 0.309474,
+      "weaponScale": 0.841644,
+      "rightHand": [
+        -0.223293,
+        -0.241377,
+        0.527313
+      ],
+      "leftHand": [
+        -0.13745,
+        -0.538079,
+        0.546639
+      ],
+      "rightAnchor": [
+        -0.223293,
+        -0.241377,
+        0.527313
+      ],
+      "leftAnchor": [
+        -0.125828,
+        -0.527938,
+        0.541011
+      ],
+      "rightDistance": 0.0,
+      "leftDistance": 0.016419,
+      "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-crouch-m4.png"
+    }
+  }
+}

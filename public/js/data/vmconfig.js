@@ -1,0 +1,107 @@
+// Tabela pura do viewmodel autorado (BUG-75): famílias KINEMATION + as 26 armas.
+// `ready` é o portão de rollout — false = a arma continua no caminho legado.
+
+// Por família: mount (socket→gun-space, +Z=cano, autorado no editor), equip
+// (par General rifle|pistol), camShake (preset do recoil.json), reloadStyle.
+export const VM_FAMILY = {
+  // mount/trim = resíduo arma↔mão; inclinação do PACOTE vive no FAMILY_FRAME.
+  // cs16 = máquina de 6 estados dos QC (cadências: tools/viewmodels/cs16-timings.json).
+  ak:       { ready: true, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 2.432, shoot: 0.8 } },
+  ar:       { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 3.054, shoot: 1.5 } },
+  mp5:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 0.857, reload: 2.632, shoot: 0.667 } },
+  smg:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 0.909, reload: 3.143, shoot: 0.926 } },
+  p90:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 3.375, shoot: 0.467 } },
+  // g3/marksman/svd: doador COMPARTILHADO v_g3sg1 (não existem no CS 1.6).
+  g3:       { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Heavy', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 4.667, shoot: 0.5 } },
+  marksman: { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Heavy', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 4.667, shoot: 0.5 } },
+  svd:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Heavy', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 4.667, shoot: 0.5 } },
+  sniper:   { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Sniper', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 2.9, shoot: 1.171 } },
+  bolt:     { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Sniper', reloadStyle: 'bolt_loop', cs16: { draw: 1.0, reload: 2.0, shoot: 1.286 } },
+  deagle:   { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'pistol', camShake: 'Pistol_Heavy', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 2.167, shoot: 0.575 } },
+  pistol:   { ready: true, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'pistol', camShake: 'Pistol', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 2.703, shoot: 1.0 } },
+  revolver: { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'pistol', camShake: 'Pistol_Heavy', reloadStyle: 'cylinder' },
+  shotgun:  { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Shotgun', reloadStyle: 'pump_loop', cs16: { draw: 1.0, shoot: 1.156 } },
+  // belt: a M249 alimenta por cinto/caixa — não há pente destacável para a mão
+  // buscar, e cobrar um da régua seria cobrar mentira.
+  lmg:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Heavy', reloadStyle: 'belt', cs16: { draw: 1.0, reload: 4.667, shoot: 0.5 } },
+  // A granada já funcionava antes deste conserto (bind no hand_r, sem o bug do
+  // socket) — nasce ready para não regredir o arremesso que o jogo usa hoje.
+  grenade:  { ready: true, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Pistol', reloadStyle: 'mag' },
+};
+
+// Por arma (faca fica no melee): trim = ajuste fino do wrap Mint no socket;
+// ads = auto (alça medida) + resíduo; parts = Tier 2 (carregador/ferrolho móveis).
+const W = (family, extra = {}) => ({
+  family,
+  trim: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 },
+  ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 },
+  recoilScale: 1,
+  parts: null,
+  eject: null,
+  ...extra,
+});
+
+export const VM_WEAPON = {
+  awp: W('sniper', { trim: { pos: [0, 0, 0], rotDeg: [0, 15, 0], scale: 1 }, parts: { mag: { peca: true, bone: 'Mag' } } }),
+  // baked: GLB assado OFFLINE com a Mint dentro (pente separado, sockets
+  // nomeados) — o runtime só toca clipes. Caixa MAG: régua eval:cs16.
+  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
+  m4: W('ar', { golden: true }),
+  mp5: W('mp5', { golden: true }),
+  shotgun: W('shotgun'),
+  deagle: W('deagle', { recoilScale: 0.45, anchor: 'neutral_bone', namedParts: {
+    magazine: { mesh: 'GEO-deagle-magazine', bone: 'Mag' },
+    slide: { mesh: 'GEO-deagle-slide', bone: 'Slider' },
+    slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
+    hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
+  } }),
+  // NÃO marcar `golden` sem calibrar a escala: o piloto entra 144× maior.
+  // Medição e antes/depois em KNOWN-BUGS.md, BUG-VM-ESCALA-PISTOLA.
+  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
+  /* trim: mão da família ak a 1,2–1,9 cm da m92 (a ak aprovada mede 0,1–0,2).
+     ready:false: só "faca pistola e ak" têm veredito do dono (KNOWN-BUGS, 19/09). */
+  m92: W('ak', { golden: true, ready: false, trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+  akm: W('ak', { golden: true, ready: false, parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
+  g3: W('g3'),
+  revolver38: W('revolver', { anchor: 'neutral_bone', namedParts: {
+    cartridge0: { mesh: 'GEO-Cartridge0', bone: 'Cartridge0' },
+    cartridge0_Case: { mesh: 'GEO-Cartridge0_Case', bone: 'Cartridge0' },
+    cartridge1: { mesh: 'GEO-Cartridge1', bone: 'Cartridge1' },
+    cartridge1_Case: { mesh: 'GEO-Cartridge1_Case', bone: 'Cartridge1' },
+    cartridge2: { mesh: 'GEO-Cartridge2', bone: 'Cartridge2' },
+    cartridge2_Case: { mesh: 'GEO-Cartridge2_Case', bone: 'Cartridge2' },
+    cartridge3: { mesh: 'GEO-Cartridge3', bone: 'Cartridge3' },
+    cartridge3_Case: { mesh: 'GEO-Cartridge3_Case', bone: 'Cartridge3' },
+    cartridge4: { mesh: 'GEO-Cartridge4', bone: 'Cartridge4' },
+    cartridge4_Case: { mesh: 'GEO-Cartridge4_Case', bone: 'Cartridge4' },
+    cartridge5: { mesh: 'GEO-Cartridge5', bone: 'Cartridge5' },
+    cartridge5_Case: { mesh: 'GEO-Cartridge5_Case', bone: 'Cartridge5' },
+    drum: { mesh: 'GEO-Drum', bone: 'Drum' },
+    drumCore: { mesh: 'GEO-Drum_InnerCore', bone: 'Drum' },
+    ejector: { mesh: 'GEO-Ejector', bone: 'Ejector' },
+    ejectorShaft: { mesh: 'GEO-Ejector_Shaft', bone: 'Ejector' },
+    crane: { mesh: 'GEO-CraneArm_Link', bone: 'CraneArm' },
+    hammer: { mesh: 'GEO-Hammer', bone: 'Hammer' },
+    trigger: { mesh: 'GEO-Trigger', bone: 'Trigger' },
+  } }),
+  // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
+  // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
+  md97: W('ar', { golden: true, recoilScale: 1.8 }),
+  /* trim: a mão de apoio flutuava 1,7 cm abaixo do guarda-mão (a ak aprovada mede 0,2). */
+  // Sem `parts`: carabina de ALAVANCA não tem pente; o recorte pegava a alavanca (BUG-90).
+  carbine: W('ar', { trim: { pos: [0, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+  m400: W('sniper'),
+  mosin: W('bolt', { golden: true }),
+  rem700: W('bolt'),
+  lmg: W('lmg', { golden: true }),
+  scar: W('ar', { golden: true }),
+  /* trim: mão de apoio a 1,1–1,4 cm do guarda-mão (a ak aprovada mede 0,2). */
+  tavor: W('ar', { trim: { pos: [0, -0.02, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+  famas: W('ar', { golden: true }),
+  uzi: W('smg', { golden: true }),
+  p90: W('p90', { golden: true, recoilScale: 1.6 }),
+  svd: W('svd', { golden: true }),
+  g3sg1: W('marksman'),
+  /* trim: mão de apoio a 1,5 cm do guarda-mão (a ak aprovada mede 0,2). */
+  sks: W('marksman', { golden: true, trim: { pos: [0, -0.025, 0], rotDeg: [0, 0, 0], scale: 1 } }),
+};

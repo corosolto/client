@@ -1,0 +1,396 @@
+// Identidade Mint no viewmodel pago (BUG-75 M3): a malha da PRÓPRIA arma entra
+// no socket da mão do pack; a genérica KINEMATION fica oculta atrás dela.
+import * as THREE from 'three';
+import { hasWeapon, preloadWeapons, weaponModel } from './weapons.js';
+import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
+
+const DEG = Math.PI / 180;
+const _q = new THREE.Quaternion();
+const _scale = new THREE.Vector3();
+const _palmWorld = new THREE.Vector3();
+const _mountOffset = new THREE.Vector3();
+const _packBox = new THREE.Box3();
+const _meshBox = new THREE.Box3();
+const _mintCenter = new THREE.Vector3();
+const _packCenter = new THREE.Vector3();
+const _x = new THREE.Vector3();
+const _y = new THREE.Vector3();
+const _z = new THREE.Vector3();
+const _m = new THREE.Matrix4();
+
+// Recorte do pente por PEÇA (componente conexo) em vez de por caixa — BUG-90.
+// Desligar: `?pentepeca=0`.
+const PECA_LIGADA = (() => {
+  try { return new URLSearchParams(location.search).get('pentepeca') !== '0'; }
+  catch { return true; }
+})();
+
+/* Qual componente é o pente, entre os da malha. Três filtros, validados contra o
+   pente da AK, que é conhecido desde 31/08: a regra escolhe o de 379 triângulos. */
+const PECA_FRACAO_MIN = 0.01;
+const PECA_FRACAO_MAX = 0.15;
+const PECA_Z_MIN = -0.12;
+const PECA_Z_MAX = 0.35;
+
+// Triângulos que dividem uma posição são a mesma peça. A malha Mint é UM nó, mas
+// não é uma peça só: a ak tem 15 componentes em 4.576 triângulos.
+function componenteDoPente(centroides, cantos, norm) {
+  const idx = new Map();
+  const pai = [];
+  const chave = (k) => { let i = idx.get(k); if (i === undefined) { i = pai.length; idx.set(k, i); pai.push(i); } return i; };
+  const achar = (i) => { while (pai[i] !== i) { pai[i] = pai[pai[i]]; i = pai[i]; } return i; };
+  const unir = (a, b) => { a = achar(a); b = achar(b); if (a !== b) pai[a] = b; };
+  const raizes = [];
+  for (let t = 0; t < cantos.length; t += 1) {
+    const c = cantos[t].map(chave);
+    unir(c[0], c[1]); unir(c[0], c[2]);
+    raizes.push(c[0]);
+  }
+  const grupo = new Map();
+  for (let t = 0; t < raizes.length; t += 1) {
+    const r = achar(raizes[t]);
+    let e = grupo.get(r);
+    if (!e) { e = { tris: [], yMin: Infinity, zMin: Infinity, zMax: -Infinity }; grupo.set(r, e); }
+    e.tris.push(t);
+    const c = centroides[t];
+    if (c.y * norm < e.yMin) e.yMin = c.y * norm;
+    if (c.z * norm < e.zMin) e.zMin = c.z * norm;
+    if (c.z * norm > e.zMax) e.zMax = c.z * norm;
+  }
+  let escolhida = null;
+  for (const e of grupo.values()) {
+    const f = e.tris.length / cantos.length;
+    if (f < PECA_FRACAO_MIN || f > PECA_FRACAO_MAX) continue;
+    const cz = (e.zMin + e.zMax) / 2;
+    if (cz < PECA_Z_MIN || cz > PECA_Z_MAX) continue;
+    if (!escolhida || e.yMin < escolhida.yMin) escolhida = e;
+  }
+  return escolhida ? escolhida.tris : null;
+}
+
+// Raiz da arma do pack no GLB: SOCKET_WEAPON_* (ou a própria rig quando o FBX
+// exporta a armature como raiz). É ela que cavalga o ik_hand_gun desde o M1.
+export function weaponSocketOf(entry) {
+  if (entry._weaponSocket !== undefined) return entry._weaponSocket;
+  let socket = null;
+  let rig = null;
+  entry.scene.traverse((node) => {
+    if (!socket && /^SOCKET_WEAPON_/.test(node.name)) socket = node;
+    if (!rig && /^RIG_WEAPON_/.test(node.name)) rig = node;
+  });
+  entry._weaponSocket = socket || rig || null;
+  return entry._weaponSocket;
+}
+
+function hidePackGun(entry) {
+  for (const mesh of entry.weaponMeshes) {
+    if (!/^UTILITY_/.test(mesh.name)) mesh.visible = false;
+  }
+}
+
+// Devolve o pack e apaga wrap de OUTRA arma que tenha ficado na mao (BUG-76).
+function fallbackParaOPack(entry) {
+  for (const mesh of entry.weaponMeshes || []) {
+    if (!/^UTILITY_/.test(mesh.name)) mesh.visible = true;
+  }
+  const mint = entry.mint;
+  if (!mint) return;
+  for (const [, candidate] of mint.wraps) {
+    candidate.visible = false;
+    for (const part of candidate.userData.mintParts || []) part.visible = false;
+  }
+  mint.active = null;
+  mint.weaponId = '';
+}
+
+const _pedidosDeModelo = new Set();
+/* Pede o GLB que faltou e reencaixa quando chega — attachMintWeapon so roda no
+   equip. BUG-76; régua tools/eval/vm-attach-fallback-check.mjs. */
+function pedirModeloDeMundo(entry, weaponId) {
+  const chave = `${entry.family || '?'}:${weaponId}`;
+  if (_pedidosDeModelo.has(chave)) return;
+  _pedidosDeModelo.add(chave);
+  preloadWeapons([weaponId])
+    .then(() => { if (weaponModel(weaponId)) attachMintWeapon(entry, weaponId); })
+    .catch(() => {})
+    .finally(() => _pedidosDeModelo.delete(chave));
+}
+
+// Base automática do encaixe: leva o -Z (cano) e +Y da câmera para o LOCAL do
+// socket no idle — alinha o wrap Mint sem calibração; mount/trim são resíduo.
+function autoBasis(entry, socket) {
+  entry.scene.updateMatrixWorld(true);
+  socket.getWorldQuaternion(_q);
+  const inverse = _q.clone().invert();
+  _z.set(0, 0, -1).applyQuaternion(inverse).normalize();
+  _y.set(0, 1, 0).applyQuaternion(inverse);
+  _y.addScaledVector(_z, -_y.dot(_z)).normalize();
+  _x.crossVectors(_y, _z).normalize();
+  _m.makeBasis(_x, _y, _z);
+  return new THREE.Quaternion().setFromRotationMatrix(_m);
+}
+
+// Corpo deformado no espaço do socket; peças móveis não definem a âncora.
+// BUG-VM-FECHAMENTO-RUBEN; AUD1A exercita skin, interleaved e reequipar.
+function bodyAnchor(entry, socket, boneName) {
+  entry.scene.updateWorldMatrix(true, false);
+  entry.scene.updateMatrixWorld(true);
+  const inverse = socket.matrixWorld.clone().invert();
+  const point = new THREE.Vector3(), joints = new THREE.Vector4(), weights = new THREE.Vector4();
+  let basis = null;
+  _packBox.makeEmpty();
+  for (const mesh of entry.weaponMeshes) {
+    if (!mesh.isSkinnedMesh || /^UTILITY_/.test(mesh.name)) continue;
+    const neutral = mesh.skeleton.bones.findIndex((bone) => bone.name === boneName);
+    if (neutral < 0) continue;
+    const attributes = mesh.geometry.attributes;
+    mesh.skeleton.update();
+    for (let i = 0; i < attributes.position.count; i++) {
+      joints.fromBufferAttribute(attributes.skinIndex, i);
+      weights.fromBufferAttribute(attributes.skinWeight, i);
+      let weight = 0;
+      for (let c = 0; c < 4; c++) if (joints.getComponent(c) === neutral) weight += weights.getComponent(c);
+      if (weight < 0.99) continue;
+      point.fromBufferAttribute(attributes.position, i);
+      mesh.applyBoneTransform(i, point);
+      _packBox.expandByPoint(point.applyMatrix4(mesh.matrixWorld).applyMatrix4(inverse));
+    }
+    if (!basis) {
+      const transform = inverse.clone().multiply(mesh.matrixWorld).multiply(mesh.bindMatrixInverse)
+        .multiply(mesh.skeleton.bones[neutral].matrixWorld).multiply(mesh.skeleton.boneInverses[neutral])
+        .multiply(mesh.bindMatrix);
+      basis = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(transform));
+    }
+  }
+  return _packBox.isEmpty() ? null : basis;
+}
+
+// Tier 2 (config-gated): separa triângulos dentro da caixa (gun-space, metros)
+// num mesh próprio parentado ao bone da arma do pack (Mag/Charge) — o resto fica.
+export function splitParts(entry, wrap, partsCfg) {
+  if (!partsCfg) return false;
+  const socket = weaponSocketOf(entry);
+  if (!socket) return false;
+  let did = false;
+  for (const [part, spec] of Object.entries(partsCfg)) {
+    const porPeca = Boolean(spec?.peca) && PECA_LIGADA;
+    if (!spec?.bone || (!spec.box && !porPeca)) continue;
+    const bone = entry.scene.getObjectByName(spec.bone);
+    const mesh = wrap.getObjectByProperty('isMesh', true);
+    if (!bone || !mesh?.geometry) continue;
+    try {
+      // A caixa da spec está em METROS gun-space; o teste roda em wrap-local
+      // (unidades pré-normalização) — divide pelo norm, como muzzle/sight.
+      const norm = wrap.userData.metrics?.norm || 1;
+      const box = spec.box ? new THREE.Box3(
+        new THREE.Vector3(...spec.box.min).divideScalar(norm),
+        new THREE.Vector3(...spec.box.max).divideScalar(norm),
+      ) : null;
+      const source = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry;
+      const pos = source.attributes.position;
+      const inside = [];
+      const outside = [];
+      wrap.updateMatrixWorld(true);
+      const toGun = wrap.matrixWorld.clone().invert().multiply(mesh.matrixWorld);
+      const a = new THREE.Vector3();
+      const b = new THREE.Vector3();
+      const c = new THREE.Vector3();
+      const centroides = [];
+      const cantos = porPeca ? [] : null;
+      const Q = 1e5;
+      for (let i = 0; i < pos.count; i += 3) {
+        a.fromBufferAttribute(pos, i).applyMatrix4(toGun);
+        b.fromBufferAttribute(pos, i + 1).applyMatrix4(toGun);
+        c.fromBufferAttribute(pos, i + 2).applyMatrix4(toGun);
+        if (cantos) {
+          cantos.push([
+            `${Math.round(a.x * Q)},${Math.round(a.y * Q)},${Math.round(a.z * Q)}`,
+            `${Math.round(b.x * Q)},${Math.round(b.y * Q)},${Math.round(b.z * Q)}`,
+            `${Math.round(c.x * Q)},${Math.round(c.y * Q)},${Math.round(c.z * Q)}`,
+          ]);
+        }
+        centroides.push(a.add(b).add(c).multiplyScalar(1 / 3).clone());
+      }
+      if (porPeca) {
+        const tris = componenteDoPente(centroides, cantos, norm);
+        if (!tris) { console.warn(`[mint-viewmodel] ${part}: nenhum componente candidato`); continue; }
+        const daPeca = new Set(tris);
+        for (let t = 0; t < centroides.length; t += 1) (daPeca.has(t) ? inside : outside).push(t * 3);
+      } else {
+        for (let t = 0; t < centroides.length; t += 1) {
+          (box.containsPoint(centroides[t]) ? inside : outside).push(t * 3);
+        }
+      }
+      if (!inside.length) continue;
+      const build = (triangles) => {
+        const geometry = new THREE.BufferGeometry();
+        for (const [name, attribute] of Object.entries(source.attributes)) {
+          const item = attribute.itemSize;
+          const array = new attribute.array.constructor(triangles.length * 3 * item);
+          let cursor = 0;
+          for (const start of triangles) {
+            for (let vertex = 0; vertex < 3; vertex += 1) {
+              for (let lane = 0; lane < item; lane += 1) {
+                array[cursor] = attribute.array[(start + vertex) * item + lane];
+                cursor += 1;
+              }
+            }
+          }
+          geometry.setAttribute(name, new THREE.BufferAttribute(array, item));
+        }
+        return geometry;
+      };
+      mesh.geometry = build(outside);
+      const partMesh = new THREE.Mesh(build(inside), mesh.material);
+      partMesh.name = `mint_part_${part}`;
+      partMesh.frustumCulled = false;
+      partMesh.castShadow = false;
+      // O fragmento nasce no espaço do bone com o mesmo transform visual do wrap.
+      bone.updateWorldMatrix(true, false);
+      partMesh.matrix.copy(bone.matrixWorld.clone().invert().multiply(mesh.matrixWorld));
+      partMesh.matrix.decompose(partMesh.position, partMesh.quaternion, partMesh.scale);
+      bone.add(partMesh);
+      wrap.userData.mintParts = wrap.userData.mintParts || [];
+      wrap.userData.mintParts.push(partMesh);
+      did = true;
+    } catch (error) {
+      console.warn(`[mint-viewmodel] Tier 2 falhou em ${part}; segue Tier 1`, error);
+    }
+  }
+  return did;
+}
+
+// Monta (ou troca) a arma Mint do jogador no socket da família. Wraps ficam em
+// cache por entry — ak→akm troca de malha sem recarregar a família.
+export function attachMintWeapon(entry, weaponId) {
+  const weaponConfig = VM_WEAPON[weaponId];
+  const familyConfig = weaponConfig && VM_FAMILY[weaponConfig.family];
+  const socket = weaponSocketOf(entry);
+  if (!weaponConfig || !familyConfig || !socket) return null;
+  /* O pack só sai de cena quando há malha Mint desta arma para pôr no lugar:
+     esconder antes deixava a família sem arma a sessão inteira (BUG-76). */
+  /* `hasWeapon` obrigatório: sem ele `weaponModel` devolve a malha da AWP com o
+     nome da arma pedida, e a mão segura a arma de outro (BUG-76). */
+  const jaCacheado = entry.mint?.wraps?.get(weaponId) || null;
+  const recemCriado = (jaCacheado || !hasWeapon(weaponId)) ? null : weaponModel(weaponId);
+  if (!jaCacheado && !recemCriado) { fallbackParaOPack(entry); pedirModeloDeMundo(entry, weaponId); return null; }
+  hidePackGun(entry);
+
+  let mint = entry.mint;
+  if (!mint) {
+    mint = entry.mint = { holder: new THREE.Group(), wraps: new Map(), weaponId: '' };
+    mint.holder.name = 'mint_weapon_holder';
+  }
+  if (mint.holder.parent !== socket) socket.add(mint.holder);
+
+  const bodyBasis = weaponConfig.anchor ? bodyAnchor(entry, socket, weaponConfig.anchor) : null;
+  const basis = bodyBasis || autoBasis(entry, socket);
+  socket.getWorldScale(_scale);
+  const worldScale = Math.max(1e-6, (_scale.x + _scale.y + _scale.z) / 3);
+  const mountRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+    familyConfig.mount.rotDeg[0] * DEG,
+    familyConfig.mount.rotDeg[1] * DEG,
+    familyConfig.mount.rotDeg[2] * DEG,
+  ));
+  mint.holder.quaternion.copy(basis.multiply(mountRot));
+  mint.holder.position.set(0, 0, 0);
+  mint.holder.scale.setScalar(familyConfig.mount.scale / worldScale);
+
+  let wrap = jaCacheado;
+  if (!wrap) {
+    wrap = recemCriado;
+    wrap.name = `mint_weapon_${weaponId}`;
+    mint.wraps.set(weaponId, wrap);
+    mint.holder.add(wrap);
+  }
+  // Trim reaplicado a cada attach: o editor calibra ao vivo mutando o vmconfig.
+  const trim = weaponConfig.trim;
+  wrap.position.set(0, 0, 0);   // a translação por arma é aplicada no holder, após a âncora
+  wrap.rotation.set(trim.rotDeg[0] * DEG, trim.rotDeg[1] * DEG, trim.rotDeg[2] * DEG);
+  wrap.scale.setScalar((wrap.userData.metrics?.norm || 1) * trim.scale);
+  /* O fragmento (pente/ferrolho) nasce pendurado num OSSO com a matriz congelada de
+     `mesh.matrixWorld`: separar antes da escala final o deixava no tamanho pré-
+     normalização (akm 105,8 cm contra 88 declarados). BUG-77. */
+  if (weaponConfig.parts && !wrap.userData.mintParts) {
+    wrap.updateWorldMatrix(true, true);
+    splitParts(entry, wrap, weaponConfig.parts);
+  }
+  for (const [id, candidate] of mint.wraps) {
+    candidate.visible = id === weaponId;
+    for (const part of candidate.userData.mintParts || []) part.visible = id === weaponId;
+  }
+  mint.weaponId = weaponId;
+  mint.active = wrap;
+
+  // O centro da referência acompanha o socket; trim conserva o resíduo por arma.
+  entry.scene.updateMatrixWorld(true);
+  if (!bodyBasis) {
+    _packBox.makeEmpty();
+    for (const mesh of entry.weaponMeshes) {
+      if (/^UTILITY_/.test(mesh.name) || !mesh.geometry) continue;
+      if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+      _meshBox.copy(mesh.geometry.boundingBox).applyMatrix4(mesh.matrixWorld);
+      _packBox.union(_meshBox);
+    }
+  }
+  if (!_packBox.isEmpty()) {
+    const metrics = wrap.userData.metrics;
+    _mintCenter.copy(metrics.box.getCenter(_palmWorld)).divideScalar(metrics.norm || 1);
+    wrap.updateWorldMatrix(true, false);
+    wrap.localToWorld(_mintCenter);
+    _packBox.getCenter(_packCenter);
+    if (!bodyBasis) socket.worldToLocal(_packCenter);
+    socket.worldToLocal(_mintCenter);
+    mint.holder.position.add(_packCenter).sub(_mintCenter);
+  }
+  // mount.pos em METROS no EIXO DA ARMA (+Z = cano): resíduo manual por cima.
+  _mountOffset.set(...familyConfig.mount.pos)
+    .applyQuaternion(mint.holder.quaternion)
+    .divideScalar(worldScale);
+  mint.holder.position.add(_mountOffset);
+  /* trim.pos POR ARMA entra aqui, e não no wrap: a âncora acima recentra o holder pelo
+     centro da arma do pack e cancelava exatamente a translação do wrap (BUG-78). */
+  _mountOffset.set(...trim.pos)
+    .applyQuaternion(mint.holder.quaternion)
+    .divideScalar(worldScale);
+  mint.holder.position.add(_mountOffset);
+  // Peças autoradas preservam a montagem completa antes de seguir o joint; AUD1A.
+  if (weaponConfig.namedParts && !wrap.userData.mintParts) {
+    entry.scene.updateMatrixWorld(true);
+    for (const spec of Object.values(weaponConfig.namedParts)) {
+      const part = wrap.getObjectByName(spec.mesh);
+      const bone = entry.scene.getObjectByName(spec.bone);
+      if (!part?.isMesh || !bone?.isBone) continue;
+      const relative = bone.matrixWorld.clone().invert().multiply(part.matrixWorld);
+      bone.add(part);
+      relative.decompose(part.position, part.quaternion, part.scale);
+      part.frustumCulled = false;
+      (wrap.userData.mintParts ||= []).push(part);
+    }
+  }
+  return wrap;
+}
+
+// Ponto medido (muzzle|sight) da arma Mint ativa no espaço da CÂMERA (vmScene).
+// GLB assado traz sockets NOMEADOS do contrato; senão, métricas do wrap ÷ norm.
+export function mintPointScene(entry, kind) {
+  const socket = entry.sockets?.[kind];
+  if (socket) {
+    socket.updateWorldMatrix(true, false);
+    return socket.getWorldPosition(new THREE.Vector3());
+  }
+  const wrap = entry.mint?.active;
+  const metrics = wrap?.userData?.metrics;
+  if (!wrap || !metrics) return null;
+  const point = (kind === 'sight' ? metrics.sight : metrics.muzzle).clone()
+    .divideScalar(metrics.norm || 1);
+  wrap.updateWorldMatrix(true, false);
+  return wrap.localToWorld(point);   // vmScene == espaço da câmera
+}
+
+// Mesmo ponto em espaço de MUNDO — flash e tracer nascem da arma visível.
+export function mintPointWorld(entry, kind, camera) {
+  if (!camera) return null;
+  const point = mintPointScene(entry, kind);
+  return point ? camera.localToWorld(point) : null;
+}

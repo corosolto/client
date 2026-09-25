@@ -1,0 +1,680 @@
+{
+  "provider": "openrouter",
+  "model": "openai/whisper-large-v3",
+  "generatedAt": "2026-08-11T18:05:12.301Z",
+  "note": "STT prova conteúdo aproximado; timbre, interpretação e aprovação continuam humanos.",
+  "results": [
+    {
+      "characterId": "camera-roxa",
+      "key": "select-01",
+      "file": "audio/characters/camera-roxa/select/select-01.mp3",
+      "expected": "Câmera pronta. A transmissão começou.",
+      "transcript": "Câmera pronta. A transmissão começou.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.4,
+        "silenceSeconds": 0.718,
+        "silenceRatio": 0.211,
+        "maxVolumeDb": -2.1,
+        "meanVolumeDb": -16.9
+      },
+      "usage": {
+        "seconds": 3.4,
+        "cost": 0.000085
+      }
+    },
+    {
+      "characterId": "camera-roxa",
+      "key": "select-02",
+      "file": "audio/characters/camera-roxa/select/select-02.mp3",
+      "expected": "Enquadramento firme. Vamos ao vivo.",
+      "transcript": "Enquadramento firme. Vamos ao vivo.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.2,
+        "silenceSeconds": 1.044,
+        "silenceRatio": 0.326,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -16.5
+      },
+      "usage": {
+        "seconds": 3.2,
+        "cost": 0.00008
+      }
+    },
+    {
+      "characterId": "camera-roxa",
+      "key": "kill-01",
+      "file": "audio/characters/camera-roxa/kill/kill-01.mp3",
+      "expected": "Corta para o replay. Quadro limpo.",
+      "transcript": "Corta para o replay. Quadro limpo.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3,
+        "silenceSeconds": 1.12,
+        "silenceRatio": 0.373,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -16.6
+      },
+      "usage": {
+        "seconds": 3,
+        "cost": 0.000075
+      }
+    },
+    {
+      "characterId": "camera-roxa",
+      "key": "kill-02",
+      "file": "audio/characters/camera-roxa/kill/kill-02.mp3",
+      "expected": "Foco certo. Próximo plano.",
+      "transcript": "Foco certo. Próximo plano.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.84,
+        "silenceSeconds": 1.167,
+        "silenceRatio": 0.411,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -19.9
+      },
+      "usage": {
+        "seconds": 2.84,
+        "cost": 0.000071
+      }
+    },
+    {
+      "characterId": "camera-roxa",
+      "key": "kill-03",
+      "file": "audio/characters/camera-roxa/kill/kill-03.mp3",
+      "expected": "Tomada definitiva.",
+      "transcript": "Tomada definitiva.",
+      "wordEdits": 0,
+      "expectedWords": 2,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.2,
+        "silenceSeconds": 0.562,
+        "silenceRatio": 0.256,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -17.5
+      },
+      "usage": {
+        "seconds": 2.2,
+        "cost": 0.000055
+      }
+    },
+    {
+      "characterId": "camera-roxa",
+      "key": "radio-contato",
+      "file": "audio/characters/camera-roxa/radio/radio-contato.mp3",
+      "expected": "Contato no quadro!",
+      "transcript": "Contato no quadro.",
+      "wordEdits": 0,
+      "expectedWords": 3,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 1.92,
+        "silenceSeconds": 0.633,
+        "silenceRatio": 0.329,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -18.5
+      },
+      "usage": {
+        "seconds": 1.92,
+        "cost": 0.000048
+      }
+    },
+    {
+      "characterId": "camera-roxa",
+      "key": "radio-avanco",
+      "file": "audio/characters/camera-roxa/radio/radio-avanco.mp3",
+      "expected": "Avançando com a câmera.",
+      "transcript": "Avançando com a câmera.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.28,
+        "silenceSeconds": 0.585,
+        "silenceRatio": 0.256,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18.3
+      },
+      "usage": {
+        "seconds": 2.28,
+        "cost": 0.000057
+      }
+    },
+    {
+      "characterId": "camera-roxa",
+      "key": "radio-cobertura",
+      "file": "audio/characters/camera-roxa/radio/radio-cobertura.mp3",
+      "expected": "Segura a luz. Eu cubro.",
+      "transcript": "Segura a luz. Eu cubro.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.48,
+        "silenceSeconds": 0.895,
+        "silenceRatio": 0.361,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -17.4
+      },
+      "usage": {
+        "seconds": 2.48,
+        "cost": 0.000062
+      }
+    },
+    {
+      "characterId": "programador-virado",
+      "key": "select-01",
+      "file": "audio/characters/programador-virado/select/select-01.mp3",
+      "expected": "Só mais um commit. Depois eu durmo.",
+      "transcript": "Só mais um comit. Depois eu durmo.",
+      "wordEdits": 1,
+      "expectedWords": 7,
+      "wordErrorRate": 0.143,
+      "audio": {
+        "durationSeconds": 3.44,
+        "silenceSeconds": 0.852,
+        "silenceRatio": 0.248,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -17
+      },
+      "usage": {
+        "seconds": 3.44,
+        "cost": 0.000086
+      }
+    },
+    {
+      "characterId": "programador-virado",
+      "key": "select-02",
+      "file": "audio/characters/programador-virado/select/select-02.mp3",
+      "expected": "Cafeína compilada. Pode iniciar.",
+      "transcript": "Cafeína compilada. Pode iniciar.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.12,
+        "silenceSeconds": 0.967,
+        "silenceRatio": 0.31,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -17.2
+      },
+      "usage": {
+        "seconds": 3.12,
+        "cost": 0.000078
+      }
+    },
+    {
+      "characterId": "programador-virado",
+      "key": "kill-01",
+      "file": "audio/characters/programador-virado/kill/kill-01.mp3",
+      "expected": "Processo encerrado sem aviso prévio.",
+      "transcript": "Processo encerrado sem aviso prévio.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3,
+        "silenceSeconds": 0.604,
+        "silenceRatio": 0.201,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -16.6
+      },
+      "usage": {
+        "seconds": 3,
+        "cost": 0.000075
+      }
+    },
+    {
+      "characterId": "programador-virado",
+      "key": "kill-02",
+      "file": "audio/characters/programador-virado/kill/kill-02.mp3",
+      "expected": "Seu ping venceu a sua mira.",
+      "transcript": "Seu ping venceu a sua mira.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.68,
+        "silenceSeconds": 0.805,
+        "silenceRatio": 0.3,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18
+      },
+      "usage": {
+        "seconds": 2.68,
+        "cost": 0.000067
+      }
+    },
+    {
+      "characterId": "programador-virado",
+      "key": "kill-03",
+      "file": "audio/characters/programador-virado/kill/kill-03.mp3",
+      "expected": "Passou no meu teste!",
+      "transcript": "Passou no meu teste.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 1.92,
+        "silenceSeconds": 0.634,
+        "silenceRatio": 0.33,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -19.7
+      },
+      "usage": {
+        "seconds": 1.92,
+        "cost": 0.000048
+      }
+    },
+    {
+      "characterId": "programador-virado",
+      "key": "radio-contato",
+      "file": "audio/characters/programador-virado/radio/radio-contato.mp3",
+      "expected": "Stack trace apontou contato.",
+      "transcript": "Stacktrace apontou contato.",
+      "wordEdits": 2,
+      "expectedWords": 4,
+      "wordErrorRate": 0.5,
+      "audio": {
+        "durationSeconds": 2.64,
+        "silenceSeconds": 0.594,
+        "silenceRatio": 0.225,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18.1
+      },
+      "usage": {
+        "seconds": 2.64,
+        "cost": 0.000066
+      }
+    },
+    {
+      "characterId": "programador-virado",
+      "key": "radio-avanco",
+      "file": "audio/characters/programador-virado/radio/radio-avanco.mp3",
+      "expected": "Subiu pra produção. Avança.",
+      "transcript": "Subiu para a produção. Avança!",
+      "wordEdits": 2,
+      "expectedWords": 4,
+      "wordErrorRate": 0.5,
+      "audio": {
+        "durationSeconds": 2.8,
+        "silenceSeconds": 1.002,
+        "silenceRatio": 0.358,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -21.8
+      },
+      "usage": {
+        "seconds": 2.8,
+        "cost": 0.00007
+      }
+    },
+    {
+      "characterId": "programador-virado",
+      "key": "radio-cobertura",
+      "file": "audio/characters/programador-virado/radio/radio-cobertura.mp3",
+      "expected": "Segura a branch. Eu cubro.",
+      "transcript": "Segura a brancha. Eu cubro.",
+      "wordEdits": 1,
+      "expectedWords": 5,
+      "wordErrorRate": 0.2,
+      "audio": {
+        "durationSeconds": 2.52,
+        "silenceSeconds": 0.896,
+        "silenceRatio": 0.355,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -19.8
+      },
+      "usage": {
+        "seconds": 2.52,
+        "cost": 0.000063
+      }
+    },
+    {
+      "characterId": "motoca-cachorro-loko",
+      "key": "select-01",
+      "file": "audio/characters/motoca-cachorro-loko/select/select-01.mp3",
+      "expected": "Endereço confirmado. Partiu entrega.",
+      "transcript": "Endereço confirmado. Partiu entrega.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.28,
+        "silenceSeconds": 0.992,
+        "silenceRatio": 0.302,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -17.1
+      },
+      "usage": {
+        "seconds": 3.28,
+        "cost": 0.000082
+      }
+    },
+    {
+      "characterId": "motoca-cachorro-loko",
+      "key": "select-02",
+      "file": "audio/characters/motoca-cachorro-loko/select/select-02.mp3",
+      "expected": "Capacete fechado. Rota na tela.",
+      "transcript": "Capacete fechado. Rota na tela.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.24,
+        "silenceSeconds": 1.077,
+        "silenceRatio": 0.332,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18.9
+      },
+      "usage": {
+        "seconds": 3.24025,
+        "cost": 0.00008100625
+      }
+    },
+    {
+      "characterId": "motoca-cachorro-loko",
+      "key": "kill-01",
+      "file": "audio/characters/motoca-cachorro-loko/kill/kill-01.mp3",
+      "expected": "Entrega concluída!",
+      "transcript": "Entrega concluída.",
+      "wordEdits": 0,
+      "expectedWords": 2,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.04,
+        "silenceSeconds": 0.527,
+        "silenceRatio": 0.258,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -17.3
+      },
+      "usage": {
+        "seconds": 2.04,
+        "cost": 0.000051
+      }
+    },
+    {
+      "characterId": "motoca-cachorro-loko",
+      "key": "kill-02",
+      "file": "audio/characters/motoca-cachorro-loko/kill/kill-02.mp3",
+      "expected": "Cheguei antes do seu reflexo.",
+      "transcript": "Cheguei antes do seu reflexo.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.76,
+        "silenceSeconds": 0.579,
+        "silenceRatio": 0.21,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -18.5
+      },
+      "usage": {
+        "seconds": 2.76,
+        "cost": 0.000069
+      }
+    },
+    {
+      "characterId": "motoca-cachorro-loko",
+      "key": "kill-03",
+      "file": "audio/characters/motoca-cachorro-loko/kill/kill-03.mp3",
+      "expected": "Cancelou o pedido tarde demais.",
+      "transcript": "Cancelou o pedido tarde demais.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.88,
+        "silenceSeconds": 0.71,
+        "silenceRatio": 0.246,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -17.8
+      },
+      "usage": {
+        "seconds": 2.88,
+        "cost": 0.000072
+      }
+    },
+    {
+      "characterId": "motoca-cachorro-loko",
+      "key": "radio-contato",
+      "file": "audio/characters/motoca-cachorro-loko/radio/radio-contato.mp3",
+      "expected": "Contato na próxima esquina.",
+      "transcript": "Contato na próxima esquina.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.36,
+        "silenceSeconds": 0.59,
+        "silenceRatio": 0.25,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -20.1
+      },
+      "usage": {
+        "seconds": 2.36,
+        "cost": 0.000059
+      }
+    },
+    {
+      "characterId": "motoca-cachorro-loko",
+      "key": "radio-avanco",
+      "file": "audio/characters/motoca-cachorro-loko/radio/radio-avanco.mp3",
+      "expected": "Rota livre. Avançando.",
+      "transcript": "Rota livre. Avançando.",
+      "wordEdits": 0,
+      "expectedWords": 3,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.72,
+        "silenceSeconds": 0.937,
+        "silenceRatio": 0.344,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -21.4
+      },
+      "usage": {
+        "seconds": 2.72,
+        "cost": 0.000068
+      }
+    },
+    {
+      "characterId": "motoca-cachorro-loko",
+      "key": "radio-cobertura",
+      "file": "audio/characters/motoca-cachorro-loko/radio/radio-cobertura.mp3",
+      "expected": "Segura aí que eu cubro.",
+      "transcript": "Segura aí que eu cubro.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 1.92,
+        "silenceSeconds": 0.548,
+        "silenceRatio": 0.286,
+        "maxVolumeDb": -2.1,
+        "meanVolumeDb": -18.2
+      },
+      "usage": {
+        "seconds": 1.92,
+        "cost": 0.000048
+      }
+    },
+    {
+      "characterId": "doidinho-bairro",
+      "key": "select-01",
+      "file": "audio/characters/doidinho-bairro/select/select-01.mp3",
+      "expected": "Hoje eu tô calibrado!",
+      "transcript": "Hoje eu estou calibrado.",
+      "wordEdits": 1,
+      "expectedWords": 4,
+      "wordErrorRate": 0.25,
+      "audio": {
+        "durationSeconds": 2.64,
+        "silenceSeconds": 0.706,
+        "silenceRatio": 0.267,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -19.9
+      },
+      "usage": {
+        "seconds": 2.64,
+        "cost": 0.000066
+      }
+    },
+    {
+      "characterId": "doidinho-bairro",
+      "key": "select-02",
+      "file": "audio/characters/doidinho-bairro/select/select-02.mp3",
+      "expected": "Trouxe a peça certa. Eu acho.",
+      "transcript": "trouxe a peça certa, eu acho.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.84,
+        "silenceSeconds": 0.908,
+        "silenceRatio": 0.32,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -23
+      },
+      "usage": {
+        "seconds": 2.84,
+        "cost": 0.000071
+      }
+    },
+    {
+      "characterId": "doidinho-bairro",
+      "key": "kill-01",
+      "file": "audio/characters/doidinho-bairro/kill/kill-01.mp3",
+      "expected": "A fita isolante segurou!",
+      "transcript": "A fita isolante segurou.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.64,
+        "silenceSeconds": 0.662,
+        "silenceRatio": 0.251,
+        "maxVolumeDb": -2.8,
+        "meanVolumeDb": -16.9
+      },
+      "usage": {
+        "seconds": 2.64,
+        "cost": 0.000066
+      }
+    },
+    {
+      "characterId": "doidinho-bairro",
+      "key": "kill-02",
+      "file": "audio/characters/doidinho-bairro/kill/kill-02.mp3",
+      "expected": "Funcionou. Quase.",
+      "transcript": "Funcionou! Quase!",
+      "wordEdits": 0,
+      "expectedWords": 2,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.24,
+        "silenceSeconds": 1.108,
+        "silenceRatio": 0.495,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -20.1
+      },
+      "usage": {
+        "seconds": 2.24,
+        "cost": 0.000056
+      }
+    },
+    {
+      "characterId": "doidinho-bairro",
+      "key": "kill-03",
+      "file": "audio/characters/doidinho-bairro/kill/kill-03.mp3",
+      "expected": "A gambiarra tinha garantia.",
+      "transcript": "A gambiarra tinha garantia.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.64,
+        "silenceSeconds": 0.701,
+        "silenceRatio": 0.265,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -20.5
+      },
+      "usage": {
+        "seconds": 2.64,
+        "cost": 0.000066
+      }
+    },
+    {
+      "characterId": "doidinho-bairro",
+      "key": "radio-contato",
+      "file": "audio/characters/doidinho-bairro/radio/radio-contato.mp3",
+      "expected": "Tem um ali, perto da emenda!",
+      "transcript": "Tem um ali, perto da emenda.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.4,
+        "silenceSeconds": 0.67,
+        "silenceRatio": 0.279,
+        "maxVolumeDb": -2.8,
+        "meanVolumeDb": -16.8
+      },
+      "usage": {
+        "seconds": 2.4,
+        "cost": 0.00006
+      }
+    },
+    {
+      "characterId": "doidinho-bairro",
+      "key": "radio-avanco",
+      "file": "audio/characters/doidinho-bairro/radio/radio-avanco.mp3",
+      "expected": "Montei um caminho. Bora!",
+      "transcript": "Montei um caminho. Bora!",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.68,
+        "silenceSeconds": 1.107,
+        "silenceRatio": 0.413,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -19.6
+      },
+      "usage": {
+        "seconds": 2.68,
+        "cost": 0.000067
+      }
+    },
+    {
+      "characterId": "doidinho-bairro",
+      "key": "radio-cobertura",
+      "file": "audio/characters/doidinho-bairro/radio/radio-cobertura.mp3",
+      "expected": "Segura essa ponta. Eu resolvo.",
+      "transcript": "Segura essa ponta. Eu resolvo.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.6,
+        "silenceSeconds": 0.887,
+        "silenceRatio": 0.341,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -20.2
+      },
+      "usage": {
+        "seconds": 2.6,
+        "cost": 0.000065
+      }
+    }
+  ]
+}

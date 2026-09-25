@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.288`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.297`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -26,6 +26,7 @@
 ## Não lançado — 2026-09-06
 
 ### Adicionado
+- Contador central de SEQUÊNCIA mostra os abates da vida atual confirmados pelo jogo/servidor, com identidade visual do CSBrasil; morte, round e reconexão o zeram sem apagar o total da partida. Régua `eval:killstreak` cobre SP e MP com seis mutantes.
 - Contador de ABATES do jogador no HUD, na coluna de estado dele: algarismo grande com rótulo miúdo, conta a PARTIDA (não o abate do time nem o da rodada) e não zera na virada de round — antes o número pessoal só existia atrás do TAB. Régua `eval:abateshud` com quatro mutantes, no `check:fast`.
 - Sertão da Treta substitui o Velho Oeste: casario de taipa, Caatinga, Canudos, calango quadrúpede, aves, cabras e galinha com pintinhos. Preview real com vídeo silencioso ao passar o mouse; criação com caminhada e pausas. O memorial de Padre Cícero permanece fora desta entrega.
 - Camada operacional (`tools/ops/`, `npm run ops:diag`): o jogo diagnostica boot, deploy, assets no edge, APIs, telemetria, ranking e partida sintética e explica cada achado com causa provável, evidência, impacto e próximo passo; separa "tecnicamente verde" de "pronto para lançamento". Mutantes em `ops:selftest` e unidades em `ops:test`, os dois no `check:fast`.
@@ -62,6 +63,167 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.297] — 2026-09-25
+
+### Mudado
+- viewmodel: entrega privada em produção (Blob) — recriado do #623 com sign-off (#655)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- viewmodel: entrega privada em produção (Blob) — recriado do #623 com sign-off
+
+## [2.0.0-alpha.296] — 2026-09-25
+
+### Mudado
+- fix(git): mailmap devolve a autoria dos 39 commits que saíram como 't@t' (#654)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(git): mailmap devolve a autoria dos 39 commits que sairam como 't@t'
+
+## [2.0.0-alpha.295] — 2026-09-25
+
+### Mudado
+- feat(combat): sequência autoritativa de abates (#581)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(combat): record PR and validation handoff
+- docs: refresh generated project ledgers
+- feat(combat): add authoritative kill streak HUD
+
+## [2.0.0-alpha.294] — 2026-09-25
+
+### Mudado
+- fix(maps): recupera raiz #540 sobre main e corrige VM14 (#554)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+
+## [2.0.0-alpha.293] — 2026-09-25
+
+### Mudado
+- fix(ci): chave de concorrência por commit na main (a main não tinha rodada de invariantes garantida) (#651)
+- fix(ci): chave de concorrencia por commit na main, nao por branch
+
+## [2.0.0-alpha.292] — 2026-09-25
+
+### Mudado
+- feat(maps): restaura escala do Posto e Atacadão (#562)
+- feat(maps): integra UV e vãos da Penitenciária sobre #554 (#555)
+- feat(maps): restaura Madureira no degrau 542 (#560)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(carandiru): remove as reguas C1-C4 da lane superada
+- chore(docs): regenera bloco derivado apos integrar a raiz
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado apos o merge da alpha.267
+- chore(docs): regenera bloco derivado (autofix)
+- docs: refresh generated repository inventory
+- docs(carandiru): record overnight browser evidence
+- test(carandiru): harden wall and pavilion acceptance
+- fix(ci): refresh Carandiru dependency lock
+- fix(carandiru): tornar guaritas e pavilhao jogaveis
+- docs: refresh Carandiru stair authorship
+- fix(carandiru): make all stairs traversable
+
+## [2.0.0-alpha.291] — 2026-09-25
+
+### Mudado
+- fix(upa): devolve a segunda rota do setor de emergência (CTF2 fora do fio da navalha) (#650)
+- fix(upa): devolve a segunda rota do setor de emergencia
+
+## [2.0.0-alpha.290] — 2026-09-25
+
+### Mudado
+- test(escadao): revalidar casas e conflitos na main (#567)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(escadao): atualizar hashes finais de evidencia
+- style(escadao): encurtar comentarios do ajuste
+- docs(escadao): fechar evidencias alpha 262
+- fix(escadao): destravar spawns e objetivo CTF
+- docs(escadao): registrar base main do PR
+- chore(escadao): reexecutar CI contra main
+- test(escadao): validar equipes em dois formatos
+- fix(ci): refresh Escadao dependency lock
+- docs(escadao): registrar reteste jogavel do r7
+- fix(deps): normalizar lock para npm 10
+- chore(deps): corrigir auditoria do build
+- fix(escadao): torna casas do mirante acessiveis
+- docs(escadao): registrar correção do gate de spawn
+- fix(escadao): liberar folga dos spawns inferiores
+- docs(escadao): registrar pr r6
+- docs(escadao): registrar evidencias r6
+- fix(escadao): abrir casas e contrajogo do mirante
+
+## [2.0.0-alpha.289] — 2026-09-25
+
+### Mudado
+- feat(atacadao): cria corredores e rotas de atacarejo (#582)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(atacadao): refresh final evidence hashes
+- chore(atacadao): satisfy comment density gate
+- docs(atacadao): record alpha.262 replay and review debt
+- perf(atacadao): batch rack geometry and index LOS
+- docs(atacadao): revalida candidata na alpha.252
+- docs(atacadao): isola vermelho global do CI
+- docs(atacadao): registra PR draft
+- docs(atacadao): registra limites dos gates
+- docs: sincroniza contagens da revisão
+- fix(atacadao): ajusta comentário de instancing
+- docs: atualiza blocos gerados do Atacadão
+- test(atacadao): registra WebGL e continuidade
+- test(atacadao): mede estrutura e rotas
+- feat(atacadao): cria rotas de atacarejo
+- feat(atacadao): restaura kit licenciado
 
 ## [2.0.0-alpha.288] — 2026-09-25
 

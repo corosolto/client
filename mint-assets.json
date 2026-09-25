@@ -1472,6 +1472,285 @@
         "finalSha256": "2a471a5a5ceee2e27c117ecffe58b8c0a7bf5a0255db282001424353a6883826"
       }
     },
+    "torre-vigilancia-penitenciaria": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/torre_vigilancia.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks79j7c9xgqs48qz8r4cf6gf6d8d6398",
+        "chatUrl": "https://mint.gg/chat/ph73cszyryt8jreekq64vj4s1x8d66ef",
+        "displayName": "Prison Guard Tower (torre_vigilancia)",
+        "frente": "map2-penitenciaria",
+        "notes": "Torre de vigilância com pernas de concreto em treliça X, escada, varanda com guarda-corpo e cabine envidraçada (4.535 tris). Substitui o visual das 4 guaritas de canto do muro (USANTOS-R2); a guarita GLB anterior segue no acervo. GLB normalizado ~1 m, pivô central; escala no call-site (targetH 9,6 / targetLen 5,6)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props.mjs"
+        ],
+        "finalSha256": "45943077f7b998cbc3daa5ab5ef6788a0e7483999b2ef161ec126c45128ac31d"
+      }
+    },
+    "bloco-celas-carandiru": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/bloco_celas.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7ad5wz2hcf78xfnwtxb1xfkd8d69pv",
+        "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt",
+        "displayName": "Bloco de celas (kit carandiru_r3b)",
+        "frente": "map2-penitenciaria",
+        "notes": "Pavilhão de celas de 2 pavimentos com galeria e grades (3.988 tris, texturas WebP 1024). Pavilhão central do mapa penitenciária (referência Carandiru, dono 27/08/2026): o jogador circula pela galeria externa gradeada ao redor do bloco. Item do pack carandiru_r3b (packAssetId th7fkxdza9fd93fxc84xrnemy18d6r1v). GLB normalizado ~1 m, pivô central; escala não-uniforme no call-site (9 × 15 m de planta, 6,6 m)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "1560055af1eb9268ad7257843890ab28974d64f94634b54cb0f09d58873b5a4d"
+      }
+    },
+    "portao-penitenciaria-carandiru": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/portao_penitenciaria.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75stmhnwxtapdam0mz8mqmgn8d6013",
+        "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt",
+        "displayName": "Portão de penitenciária (kit carandiru_r3b)",
+        "frente": "map2-penitenciaria",
+        "notes": "Portão principal de penitenciária com pilastras e folha de grade fechada (4.491 tris, texturas WebP 1024). Embutido no muro norte do mapa penitenciária (referência Carandiru) — portão fechado, o colisor sela o vão. Item do pack carandiru_r3b (packAssetId th7fkxdza9fd93fxc84xrnemy18d6r1v). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 5,6 / targetLen 11)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "df2052512e03649fbec7dd85ee12beaabe17ca2d2e422d67bd0a4b7bf078e669"
+      }
+    },
+    "guarita-muro-carandiru": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/guarita_muro.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7a33yhwearthy8y6gmh98f358d7jtv",
+        "chatUrl": "https://mint.gg/chat/ph77vksqsbvk24d8gv6zkytdtn8d7f7t",
+        "displayName": "Guarita de muro (carandiru_r3b, item solto)",
+        "frente": "map2-penitenciaria",
+        "notes": "Guarita de muro de presídio com cabine envidraçada sobre estrutura de concreto (4.827 tris, texturas WebP 1024). Duas instâncias flanqueando o portão norte do mapa penitenciária — a frente não tinha vigia entre as 4 guaritas de canto (torre_vigilancia). Modelo solto da onda carandiru_r3b (chat próprio). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 8,2 / targetLen 5,6, ry=π)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "26a8a5fcac3089a955f204e9e3b265dd1084cbba5ff4317a47f4ea9cacd5006d"
+      }
+    },
+    "balcao-acougue": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/balcao_acougue.glb"
+      ],
+      "source": {
+        "kind": "replicate-gen",
+        "displayName": "Balcão de açougue (atacadão)",
+        "frente": "atacadao-secoes",
+        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção AÇOUGUE (4 instâncias, targetH 1,15 m => 1,13 × 0,89 m cada). Proporção medida 0,908 × 0,925 × 0,715 e distribuição de geometria em linha com o acervo bom (31% de face horizontal, banda 10-90 de 76%). 12.000 tris."
+      },
+      "processing": {
+        "provider": "replicate",
+        "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
+        "tools": [
+          "tools/gen-asset.mjs --provider replicate",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "54162fc6a9f5151f2264de2c4df63388508cee5b327b1efc3a91e8e45f3698e3"
+      }
+    },
+    "balcao-padaria": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/balcao_padaria.glb"
+      ],
+      "source": {
+        "kind": "replicate-gen",
+        "displayName": "Balcão/ilha de padaria (atacadão)",
+        "frente": "atacadao-secoes",
+        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção PADARIA (3 instâncias, targetH 1,10 m). Proporção medida 0,284 × 0,151 × 0,285: planta QUADRADA e meia-altura, então entra como ILHA de exposição, que é o que a malha é de fato — não como balcão linear. 12.000 tris."
+      },
+      "processing": {
+        "provider": "replicate",
+        "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
+        "tools": [
+          "tools/gen-asset.mjs --provider replicate",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "8f2a25fa9c02b2d5958c48353a2a645a0c7931657098d32dc01c518ee0fc4242"
+      }
+    },
+    "estante-pallets": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/estante_pallets.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack-item",
+        "frente": "v21-e-models",
+        "assetId": "ks7d5h0jrqz526fsqjtmed8d8s8d6780",
+        "packAssetId": "th7dnpa6tmkqv43k7s3458exmx8d79aq",
+        "chatUrl": "https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv",
+        "displayName": "Estante de pallets de atacadão",
+        "prompt": "Rack de pallet de clube de atacado: estrutura metálica laranja de três níveis com pallets de madeira carregados de fardos e caixas encolhidas em filme stretch, desgaste de empilhadeira nas colunas. Normalizado ~1 m de altura, pivô na base.",
+        "notes": "Molde das 6 fileiras do labirinto do Atacadão da Treta (48 instâncias). Colocado com targetH 3,0 e ry=PI/2 — o eixo longo do GLB é o X, então a fileira corre em Z. A carga paletizada atrás do rack é BoxGeometry do mapa, não GLB: o bloco de 2,3 m que fecha a linha de visão é rack + carga, medido pela ATA1 de tools/eval/atacadao-check.mjs."
+      },
+      "processing": {
+        "modelProvider": "mint.gg",
+        "pack": "atacadao_r3",
+        "tools": [
+          "mint.gg text-to-3D",
+          "otimização do pack r3-parte2 (WebP 1024, ~4-5k tris)"
+        ],
+        "finalSha256": "7c49c3a17a7118437fd4804397305c6a024e6c5d3da1ac7a99e2f11735c14368"
+      }
+    },
+    "freezer-atacadao": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/freezer.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack-item",
+        "frente": "v21-e-models",
+        "assetId": "ks7fwtjj0r7fy6fqce79scb0y18d6yja",
+        "packAssetId": "th7dnpa6tmkqv43k7s3458exmx8d79aq",
+        "chatUrl": "https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv",
+        "displayName": "Freezer horizontal de ilha fria",
+        "prompt": "Freezer horizontal de supermercado brasileiro: gabinete branco esmaltado com tampa de vidro corrediça, moldura de alumínio, adesivos de promoção descascando e grade de condensador na base. Normalizado ~1 m de altura, pivô na base.",
+        "notes": "Parede fria da lateral leste do Atacadão da Treta (6 instâncias em x=24,2, targetH 2,2, ry=-PI/2). Cobrado pela ATA3 de tools/eval/atacadao-check.mjs junto das 3 luzes frias."
+      },
+      "processing": {
+        "modelProvider": "mint.gg",
+        "pack": "atacadao_r3",
+        "tools": [
+          "mint.gg text-to-3D",
+          "otimização do pack r3-parte2 (WebP 1024, ~4-5k tris)"
+        ],
+        "finalSha256": "86d7cbd7f7b9441d26576cec93b8364b3239f41fd21649d93d166cf75d0d077e"
+      }
+    },
+    "geladeira-bebidas": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/geladeira_bebidas.glb"
+      ],
+      "source": {
+        "kind": "replicate-gen",
+        "displayName": "Geladeira vertical de bebidas (atacadão)",
+        "frente": "atacadao-secoes",
+        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, parede de BEBIDAS (4 instâncias, targetH 2,00 m => 1,56 × 0,67 m cada). Pedido explícito do dono (\"precisa de geladeiras de bebidas\"). Proporção medida 0,770 × 0,990 × 0,334: mais alta que larga e rasa, que é a proporção certa de expositor de porta de vidro — o `freezer` do acervo é ilha HORIZONTAL e não serve para isso. CUSTO: 22.158 tris, ~5× um prop do kit Mint; por isso 4 instâncias e não uma parede inteira (89 k tris no total)."
+      },
+      "processing": {
+        "provider": "replicate",
+        "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
+        "tools": [
+          "tools/gen-asset.mjs --provider replicate",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "0521658c629dd048f0be681cbbf41505c016ec9f9d0a647192c9d21e018563bd"
+      }
+    },
+    "ilha-caixas": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/ilha_caixas.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack-item",
+        "frente": "v21-e-models",
+        "assetId": "ks77jm9rp5ek9an2s31q8608rx8d71a1",
+        "packAssetId": "th7dnpa6tmkqv43k7s3458exmx8d79aq",
+        "chatUrl": "https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv",
+        "displayName": "Ilha de caixas de promoção",
+        "prompt": "Ilha de promoção de atacado: caixas de papelão abertas empilhadas sobre pallet baixo, produtos aparecendo na boca das caixas, cantoneira de papelão amassada. Normalizado ~1 m de altura, pivô na base.",
+        "notes": "Cover de meia-altura (targetH 1,15) na boca dos vãos alternados e nas pontas do galpão (12 instâncias). Cobrado pela ATA2 de tools/eval/atacadao-check.mjs, que exige altura de mundo entre 0,85 e 1,45 m e colisor que empurra o corpo de raio 0,38."
+      },
+      "processing": {
+        "modelProvider": "mint.gg",
+        "pack": "atacadao_r3",
+        "tools": [
+          "mint.gg text-to-3D",
+          "otimização do pack r3-parte2 (WebP 1024, ~4-5k tris)"
+        ],
+        "finalSha256": "d8332cc0d92c122abe01d9a840eac85e1e4fe7b4085dda3244f1e58d766e4c5b"
+      }
+    },
+    "ilha-hortifruti": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/ilha_hortifruti.glb"
+      ],
+      "source": {
+        "kind": "replicate-gen",
+        "displayName": "Ilha de hortifrúti (atacadão)",
+        "frente": "atacadao-secoes",
+        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção HORTIFRÚTI (4 instâncias, targetH 1,20 m). Bbox cúbico 0,989³, banda 10-90 de 96%: malha cheia e bem distribuída. 12.000 tris."
+      },
+      "processing": {
+        "provider": "replicate",
+        "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
+        "tools": [
+          "tools/gen-asset.mjs --provider replicate",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "01d1c0736151491050b15dde70085133894d343850787e9d24ad42f0d51422ad"
+      }
+    },
+    "carandiru-viatura-1990": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/carandiru_viatura_1990.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "p97a1j1skm2w33wjyv8pkw92n18e0g2j",
+        "chatUrl": "https://mint.gg/project/zd7agpw4xxat6kytnxka8kj19h8e1969?chat=ph7ev8zdhy23p8v1ec4vtjyt058e1r4k",
+        "projectId": "zd7agpw4xxat6kytnxka8kj19h8e1969",
+        "chatId": "ph7ev8zdhy23p8v1ec4vtjyt058e1r4k",
+        "displayName": "Weathered Grey Patrol Wagon",
+        "prompt": "Crie UM asset 3D estático game-ready: uma perua policial brasileira genérica de fim dos anos 1980/início dos anos 1990 para um mapa histórico fictício inspirado na arquitetura do Carandiru. Carroceria quadrada cinza-clara, quatro portas, para-choques pretos simples, rodas fixas, vidro escurecido e giroflex baixo vermelho/azul no teto. Aparência de uso severo, pintura fosca envelhecida, pequenas marcas de sujeira e ferrugem, mas veículo inteiro e reconhecível. Sem SUV moderno, sem pessoas, sem armas, sem sangue, sem cena de violência, sem logotipo, sem brasão, sem placa legível e sem copiar um modelo ou fotografia específica. Um único veículo isolado, fundo neutro. Dimensões-alvo no jogo: 4,6 m de comprimento, 1,75 m de largura e 1,75 m de altura. Origem/pivô no centro do piso entre as rodas, frente claramente orientada no eixo longitudinal. Até 8.000 triângulos, PBR estilizado-realista, no máximo um atlas 1024, silhueta limpa para leitura a 20 m. Não inclua chão, cenário, colisor, rig ou animação.",
+        "licenseBasis": "Gerado na conta Mint do usuário para este projeto; uso local autorizado. Termos públicos e publicação comercial ainda exigem verificação; não declarar CC0.",
+        "notes": "Perua policial brasileira genérica 1980–1990, sem marca, pessoa ou violência. Asset original do Tripo P1; escala no call-site: 4,6 m de comprimento e 1,75 m de altura. Colisor e navegação permanecem procedurais."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "Tripo P1",
+        "tools": [
+          "mint.gg",
+          "@gltf-transform/functions dedup/prune/textureCompress"
+        ],
+        "originalSha256": "26c04d5b950633e7882e98826cc454a4bb4cab0e204dcad0a747815a0671d752",
+        "finalSha256": "5251a70e9e63a1652f129d945a79d901d0b0e2d7b7394414ca393fe64062f2bf",
+        "originalBytes": 1043988,
+        "finalBytes": 415268,
+        "triangles": 4840,
+        "textures": 3
+      }
+    },
     "andaime-obras": {
       "artifactType": "model/gltf-binary",
       "files": [

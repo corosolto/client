@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "version": "2.0.0-alpha.62",
+  "capturedAt": "2026-08-11T20:57:18Z",
+  "base": "http://127.0.0.1:4321",
+  "server": {
+    "kind": "astro-ssr",
+    "origin": "http://127.0.0.1:4321",
+    "dom": {
+      "teamCards": 10,
+      "rawAstroTokens": false
+    }
+  },
+  "viewport": {
+    "width": 1536,
+    "height": 1024,
+    "aspect": "3:2"
+  },
+  "sources": {
+    "src/pages/index.astro": "023d323d6f573fdc1e4ae4d4df0e92563317d9437324a5f410979f78e79882a5",
+    "public/style.css": "69866222cdbe8ad610c7378e46021124797448039084e1657e0a56437a0f9b04",
+    "public/js/main.js": "ffb526a81451c77b33b51a70008f25a1de8d53cf1b59b0c1ac792244df6aacae",
+    "public/js/version.js": "4b38af2313df498e43b516b0f56fd86abbb675727fb42ca36afb6266ade1c72d"
+  },
+  "frames": [
+    {
+      "id": "01-menu",
+      "screen": "main-menu",
+      "file": "/Users/ruben/game/tools/eval/asset-evidence/ui-cinematic/01-menu.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "26eaddbfdad9beed079c012cf034cb25a43bddb1ea7cccf753a5ca36046ea221"
+    },
+    {
+      "id": "02-setup",
+      "screen": "menu-setup",
+      "file": "/Users/ruben/game/tools/eval/asset-evidence/ui-cinematic/02-setup.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1cd0f7dda4967b716905ccc6f7db403138cf5169d312af419a29397011e9bb61"
+    },
+    {
+      "id": "03-faccao",
+      "screen": "team-select",
+      "file": "/Users/ruben/game/tools/eval/asset-evidence/ui-cinematic/03-faccao.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "894156a0d7486b5797f67dfa4e5814eec1a1b318d54a0f3c5835c9bcbd037ce5"
+    },
+    {
+      "id": "04-personagem",
+      "screen": "char-select",
+      "file": "/Users/ruben/game/tools/eval/asset-evidence/ui-cinematic/04-personagem.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "40835c2a8dce6e89dce451acea37cba2a1c5c676365571d3eb0dab213d71fe74"
+    },
+    {
+      "id": "05-mapa",
+      "screen": "map-screen",
+      "file": "/Users/ruben/game/tools/eval/asset-evidence/ui-cinematic/05-mapa.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "13c301f77c08e32b995871b4a3809400fa7a9d680b8266e528112746d3a9ea83"
+    },
+    {
+      "id": "06-configuracoes",
+      "screen": "settings-panel",
+      "file": "/Users/ruben/game/tools/eval/asset-evidence/ui-cinematic/06-configuracoes.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "be9e762fb69f6f5e4527131fdb1fd5f1b976a8a42b285508f3cc3af7891335b7"
+    }
+  ],
+  "contactSheet": {
+    "file": "/Users/ruben/game/tools/eval/asset-evidence/ui-cinematic/contact-sheet.jpg",
+    "width": 1024,
+    "height": 1023,
+    "sha256": "4f9e7edab6e653a270a0e3aa4aba5d31e6ddf0fed6c513e56506f8d93c75ab6a"
+  }
+}

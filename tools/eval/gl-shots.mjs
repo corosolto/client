@@ -1,7 +1,7 @@
 // GAUNTLET LOOP — bateria de capturas (menu + in-game em todos os mapas, 2 aspectos).
 // Uso: node tools/eval/gl-shots.mjs <outDir> [set]   set = menu|game|all
 import { execSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const OUT = process.argv[2] || '/root/shots/base';
@@ -65,13 +65,26 @@ async function menuShots() {
 }
 
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
-const MAPS = [
-  ['praca_poderes', 'P,mst'],
-  ['piscina_treta', 'P,mst'],
-  ['loja_h', 'B,bozo'],
-  ['ferro_velho', 'B,bozo'],
-  ['quebrada', 'B,sertanejo'],
-];
+/* A lista de mapas é LIDA DO REGISTRO, não repetida aqui — e a razão é cara.
+
+   Até 12/08 esta era uma lista literal. Ela ficou em 5 enquanto o jogo foi para 10, e
+   por isso os 5 mapas novos (escadão, campo do morro, lajes, córrego, mansão) entraram
+   sem NUNCA passar por uma captura. Foi assim que chegaram chapados e injogáveis na tela
+   do dono: mapa que não é fotografado não é criticado, e o que não é criticado regride
+   calado. A prova disso está no código dos mapas — `map_ferrovelho.js` tem comentários
+   citando crítico do gauntlet ("horizonte vazio", "crítico R6") e tem skyline em camadas;
+   os 5 novos não tinham uma linha de horizonte.
+
+   Uma lista à mão só adia a próxima defasagem. Aqui o registro é a única verdade: mapa
+   novo em `maps.js` entra na bateria sozinho. `AUTO` é só a escolha de time/personagem,
+   com um padrão para quem não estiver na tabela — esquecer de preencher `AUTO` custa um
+   personagem diferente na foto, não um mapa invisível. */
+const REG = readFileSync('public/js/maps.js', 'utf8');
+const BLOCO = REG.slice(REG.indexOf('export const MAPS'), REG.indexOf('\n};', REG.indexOf('export const MAPS')));
+const IDS = [...BLOCO.matchAll(/^\s{2}([a-z][a-z0-9_]*)\s*:\s*\{/gm)].map((m) => m[1]);
+if (IDS.length < 2) throw new Error('gl-shots: registro de mapas não parseado de public/js/maps.js — falhar alto é melhor que capturar meio jogo em silêncio');
+const AUTO = { praca_poderes: 'P,mst', piscina_treta: 'P,mst', loja_h: 'B,bozo', ferro_velho: 'B,bozo' };
+const MAPS = IDS.map((id) => [id, AUTO[id] || 'B,sertanejo']);
 
 async function gameShots() {
   for (const [map, auto] of MAPS.filter(x => !ONLY || ONLY.includes(x[0]))) {

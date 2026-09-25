@@ -34,8 +34,8 @@ const url = abs(`/faccoes/${faccao.id}`);
    um import cruzado entre duas páginas por uma tabela de nome de arquivo é pior
    de achar do que a duplicação. Se virar 3 lugares, aí vai pro data/jogo.ts. */
 const PLACA: Record<string, string> = {
-  P: 'petistas', B: 'bolsonaristas', urbanas: 'tribos',
-  palhacos: 'palhacos', funkeiros: 'funkeiros',
+  E: 'petistas', B: 'bolsonaristas', urbanas: 'tribos',
+  palhacos: 'palhacos', funkeiros: 'funkeiros', mitico: 'mitico',
 };
 const placa = PLACA[faccao.id] ? `/img/team-${PLACA[faccao.id]}.webp` : null;
 
