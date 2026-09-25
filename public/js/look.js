@@ -59,7 +59,7 @@ export const LOOK = {
     neblina: { d: 0.0056, solDir: [-30, 14, -18], forca: 0 },
     grade: { exposicao: 1.48, piso: 0.0050, expAces: 1.58 },
   },
-  parque_treta: {   // fim de tarde no parque: sol baixo a oeste, sombras longas
+  parque_treta: {   // Madureira no fim de tarde: sol baixo, céu roxo e sombras longas
     sky: '/img/textures/sky_parque.webp',
     horizonte: 0x7b739a,   // look-horizonte.py sobre sky_parque.webp (banda 498-510 de 1024)
     zenite: 0x193660,
@@ -81,5 +81,4 @@ export const LOOK = {
        piso·exposicao ≈ 0,022 segura blk < 1 % (mesma receita do loja_h R9). */
     grade: { exposicao: 2.60, piso: 0.0085, expAces: 2.80 },
   },
-
 };
