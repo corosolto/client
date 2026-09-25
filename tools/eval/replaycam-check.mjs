@@ -19,8 +19,8 @@
        hit-stop escalando o dt (era 18% por 0,2 s reais).
    HS3 o viewmodel e a mira continuam VISÍVEIS: a replay escondia os dois, e é isso que
        transformava o efeito em "perdi o controle".
-   HS4 o abate segue contando: remover o efeito não pode remover o abate. É a cláusula
-       que impede o conserto preguiçoso (matar o `_kill` inteiro fica verde em HS1-3).
+   HS4 o abate e seus retornos seguem acontecendo pelo caminho real de `_damage`: hitmarker,
+       número de dano, confirmação e locução. Remover o efeito não pode silenciar o acerto.
 
    MEDIDO NA ÁRVORE ANTES DO CONSERTO (praca_poderes, seed 4242, 4 bots):
      câmera saltava 3,54 m no 1º quadro depois do headshot e o FOV ia de 70 para 50;
@@ -113,12 +113,19 @@ if (!vitima) {
   const cam = g.camera;
   const p0 = cam.position.clone(), r0 = { x: cam.rotation.x, y: cam.rotation.y, z: cam.rotation.z }, fov0 = cam.fov;
   const vmVisivel0 = g.vm?.root ? g.vm.root.visible : true;
-  const killsAntes = g.player.kills;
+  const killsAntes = g.player.kills, numsAntes = g.el.dmgNums.children.length;
+  const sons = [];
+  g.sfx = new Proxy({}, { get: (_, nome) => (...args) => { sons.push([String(nome), ...args]); return nome === 'general'; } });
 
-  g._kill(vitima, g.player, 'AWP', true);
+  const pontoVisivel = cam.getWorldDirection(p0.clone()).multiplyScalar(5).add(cam.position);
+  g._damage(vitima, 999, g.player, 'AWP', true, pontoVisivel);
 
   if (g.player.kills !== killsAntes + 1)
     falhas.push(`HS4 o headshot deixou de contar abate: ${killsAntes} -> ${g.player.kills}`);
+  if (!g.el.hitmarker.classList.contains('show')) falhas.push('HS4 o headshot perdeu o hitmarker visual');
+  if (g.el.dmgNums.children.length <= numsAntes) falhas.push('HS4 o headshot perdeu o número de dano');
+  if (!sons.some(([nome]) => nome === 'killConfirm')) falhas.push('HS4 o headshot perdeu a confirmação sonora de abate');
+  if (!sons.some(([nome, tipo]) => nome === 'general' && tipo === 'headshot')) falhas.push('HS4 o headshot perdeu a locução de headshot');
 
   const t0 = g.time;
   let real = 0, saltoPos = 0, saltoRot = 0, piorFov = 0, vmSumiu = false, miraSumiu = false;
