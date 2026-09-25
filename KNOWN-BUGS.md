@@ -152,6 +152,56 @@ estourava em `TypeError: Cannot read properties of undefined (reading 'scene')`
 agora deriva a chave do próprio `entryKeyFor` e escolhe as duas primeiras armas do rollout:
 27 cláusulas, todas verdes.
 
+### Reincidência na reconciliação com a alpha.287: mais três portões, a mesma causa
+
+**Fechado em 25/09/2026.** Três defeitos novos, todos da branch, todos verdes na main — e
+dois deles são literalmente a causa comum descrita acima (merge que traz um arquivo inteiro
+da main e leva junto a parte que só existia aqui).
+
+**6 · `/eval-character.html` sem import map (`eval:select`, portão).** As três sondas de
+personagem (`select-inflate`, `select-mount`, `char-escala`) abrem o shell virtual
+`/eval-character.html`, que existe no `tools/eval/serve.mjs` desde o `eb1491b23` e serve SÓ o
+import map — medir malha não pode esperar a playlist do menu (BUG-19) segurar 120 s. Um merge
+trouxe o `serve.mjs` inteiro da main e levou o shell junto: a rota caiu no 404 genérico, a
+página ficou sem import map e o `import('three')` de dentro do `page.evaluate` parou de
+resolver o especificador nu.
+
+```
+page.evaluate: TypeError: Failed to resolve module specifier "three".
+    at tools/eval/select-inflate.mjs:118:45
+```
+
+O shell voltou. Medido: `eval:select` sai 0, 12 de 53 dentro do teto declarado (12).
+
+**7 · `applyCinematicScreen` chamada depois de morta (smoke `web-smoke.spec.js:97`).** O
+`495a6d889` alinhou a estrutura visual do menu à da main e tirou a barra cinematográfica —
+a função e a marcação `#cine-section`/`#cine-step`/`#cine-progress` foram embora, quatro
+chamadas ficaram. Uma delas mora no `game.onPauseChange`, ou seja, DENTRO de
+`setPaused(true)`: apertar M em partida estourava `ReferenceError`, o `pickTeam()` logo
+abaixo nunca rodava e a tela que o smoke cobra não abria.
+
+```
+Erro global não tratado ReferenceError: applyCinematicScreen is not defined
+    at game.onPauseChange (main.js:1410) <- Game.setPaused (game.js:2982) <- game.onRequestSwitch (main.js:2242)
+expect(locator('#char-select')).toBeVisible() -> <div id="char-select" class="screen hidden">
+```
+
+As quatro chamadas saíram (as duas condicionais já eram código morto: `dataset.cineScreen`
+não tinha mais quem escrevesse). Medido: `web-smoke` + `web-assets` 2 passed.
+
+**8 · fatores de material fora do padrão do arsenal (`MAT1`).** O `deagle.glb` e o
+`revolver38.glb` reconstruídos trouxeram cinco materiais de interior (`Reconstructed barrel
+steel`, `Reconstructed slide interior`, `Cartridge brass`, `Interior steel`, `Frame inner
+steel`) que gravam metal/rugosidade em FATOR, sem mapa — 0,75/0,34 e 0,80/0,38. Os outros 27
+materiais das 26 armas declaram 1/1 e tiram o valor do mapa `metallicRoughness`. A MAT1 cobra
+exatamente essa igualdade (`26 GLB declaram metallicFactor 1 / roughnessFactor 1 COM mapa
+metallicRoughness (5 fora do padrão)`), e ela é da main: a branch só trouxe os dois GLB.
+Corrigido no ASSET, não na régua: cada par virou um mapa `metallicRoughness` de 1 × 1 px com o
+MESMO valor (G = rugosidade, B = metalicidade) e o fator foi a 1. Aparência idêntica nos três
+caminhos, a menos de 1/255. As duas primitivas do cano do deagle que não tinham `TEXCOORD_0`
+receberam UV zerada — com mapa de 1 px qualquer UV amostra o mesmo texel. Medido:
+`mat-check.mjs` → 32 materiais, 0 divergentes, nenhum sem mapa MR.
+
 ### Dívida que este fechamento ABRIU: a pose da pistola
 
 As três mudanças de `VM_FRAME` em `public/js/vmattach.js` foram REVERTIDAS para os valores da

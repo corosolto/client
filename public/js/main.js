@@ -1405,10 +1405,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
-  game.onPauseChange = (paused) => {
-    resetConfirms();
-    applyCinematicScreen(paused ? 'pause-menu' : null);
-  };
+  /* `applyCinematicScreen` morreu com a barra cinematográfica no 495a6d889 (alinhamento
+     da estrutura visual com a main). A chamada ficou para trás e estourava
+     `ReferenceError` DENTRO de `setPaused(true)` — o M em partida abria o pause-menu e
+     nunca chegava ao `pickTeam`, que é o #char-select que o smoke cobra. */
+  game.onPauseChange = () => resetConfirms();
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -1605,7 +1606,6 @@ function setSetupStep(step) {
     if (st) st.textContent = tr(matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA');
     if (tt) tt.textContent = tr(setupTitle);
   }
-  if (document.body.dataset.cineScreen === 'main-menu') applyCinematicScreen('main-menu');
 }
 const openSetup = (mode, title, act) => {
   if (mode) { matchMode = mode; modoEscolhido = true; }   // veio de SINGLE PLAYER/CAPTURE THE FLAG = escolha explícita
@@ -2297,7 +2297,6 @@ function setTeamStep(step, myFaction) {
     if (tt) tt.textContent = tr('ESCOLHA SEU LADO DA TRETA');
     if (hint) hint.textContent = tr('Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.');
   }
-  if (document.body.dataset.cineScreen === 'team-select') applyCinematicScreen('team-select');
 }
 
 const nickEl = $('nick-input');
@@ -2457,7 +2456,6 @@ function loadStats() {
     JSON.parse(localStorage.getItem(STATS_KEY) || '{}'));
 }
 async function recordMatchStats(s) {
-  applyCinematicScreen('match-end');
   submitted = true;
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
