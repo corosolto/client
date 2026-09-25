@@ -96,6 +96,8 @@ for (const aspecto of ['3x2', '16x9']) {
 if (!flag('sem-capturas')) {
   for (const [aspecto, arg] of [['3x2', '32'], ['16x9', '169']]) {
     const dir = path.join(LOTE, 'capturas', aspecto);
+    // Figuras de rodada anterior (outras frações) não entram no pacote do crítico.
+    if (fs.existsSync(dir)) for (const f of fs.readdirSync(dir)) if (ids.some((id) => f.startsWith(`${id}-`))) fs.rmSync(path.join(dir, f));
     rodar(`capturas-${aspecto}`, process.execPath, ['tools/fabrica/captura/kcap.mjs', `--porta=${PORTA}`, `--aspecto=${arg}`,
       `--armas=${ids.join(',')}`, `--out=${dir}`, `--query=vmfabrica=${ids.join(',')}`]);
     for (const id of ids) resultado[id][`capturas-${aspecto}`] = fs.existsSync(dir)

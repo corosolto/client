@@ -166,21 +166,21 @@ const F = (familia, chassi, extra = {}) => ({
 // A 'ak' fica fora: o dono manteve a golden aprovada (24/09); o chassi AK do pack serve a 'akm'.
 const A = (alivio) => ({ auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio });
 const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 };
-// recoilScale: coice de quadril ≥ 4% da diagonal da arma (captura/coice.mjs; golden AK 3,6% só no mount).
+// recoilScale: coice de quadril ~8% da diagonal da arma (captura/coice.mjs --total; golden AK 11%).
 export const VM_FABRICA = Object.freeze({
-  akm: F('ak', 'AK', { recoilScale: 3.5, ads: A(0.3) }),
-  m4: F('ar', 'MX16A4', { recoilScale: 3.8, ads: A(0.1) }),
+  akm: F('ak', 'AK', { recoilScale: 5.5, ads: A(0.3) }),
+  m4: F('ar', 'MX16A4', { recoilScale: 6, ads: A(0.1) }),
   famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
   // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
   // entra; nesses três a extensão não fura a câmera (crítico, rodada 1).
-  g3: F('g3', 'G3', { manga: true, recoilScale: 5, ads: A(0.1) }),
-  svd: F('svd', 'SVD', { manga: true, recoilScale: 2.8, ads: A(0.34) }),
+  g3: F('g3', 'G3', { manga: true, recoilScale: 8, ads: A(0.1) }),
+  svd: F('svd', 'SVD', { manga: true, recoilScale: 4.5, ads: A(0.34) }),
   awp: F('sniper', 'L96X', { manga: true, recoilScale: 3.5, ads: A(0.12) }),
   mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, ads: A(0.4) }),
-  mp5: F('mp5', 'MPS5', { recoilScale: 2.3, ads: A(0.1) }),
-  p90: F('p90', 'PDW90', { recoilScale: 2.4, ads: A(0.3) }),
+  mp5: F('mp5', 'MPS5', { recoilScale: 3.7, ads: A(0.1) }),
+  p90: F('p90', 'PDW90', { recoilScale: 3.8, ads: A(0.3) }),
   lmg: F('lmg', 'MGX5', { recoilScale: 2.2, frame: { x: 0.335, y: -0.04, z: -0.18, rotDeg: [1.69, 0, -8] }, ads: A(0.3) }),
-  shotgun: F('shotgun', 'KXG12', { recoilScale: 1.3, ads: A(0.1) }),
+  shotgun: F('shotgun', 'KXG12', { recoilScale: 2.1, ads: A(0.1) }),
   pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.2) }),
   deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: A(0.2) }),
   revolver38: F('revolver', 'Viper-357', { frame: CURTA, ads: A(0.2) }),
