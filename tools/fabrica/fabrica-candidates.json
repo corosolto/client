@@ -202,32 +202,32 @@
       "id": "famas",
       "arma": "famas",
       "chassi": "MX16A4",
-      "variante": true,
+      "variante": false,
       "url": "/private-assets/viewmodels/fabrica/famas-fabrica.glb",
-      "bytes": 4168044,
-      "sha256": "0a30d2d41b53017fb011b9c1fb0e4af55f835340bed2a59a209cb199adc1c013",
+      "bytes": 2266832,
+      "sha256": "29f877cdb2caf6f83e60116af04fda382efc5c91a6c305938e392cdb150d2093",
       "clipes": [
         {
           "nome": "idle",
           "braco": "A_FP_MX16A4_Pose.FBX"
         },
         {
-          "nome": "reload_tactical",
-          "duracao": 2.7,
-          "braco": "A_FP_MX16A4_Reload_Tac.FBX",
-          "arma": "A_W_MX16A4_Reload_Tac.FBX"
-        },
-        {
-          "nome": "reload_empty",
-          "duracao": 3.2,
-          "braco": "A_FP_MX16A4_Reload_Empty.FBX",
-          "arma": "A_W_MX16A4_Reload_Empty.FBX"
-        },
-        {
           "nome": "equip_rifle",
           "duracao": 1,
           "braco": "A_FP_Rifle_Equip.FBX",
           "arma": "idle congelado"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.4,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 2.4,
+          "braco": "animador",
+          "arma": "animador"
         }
       ],
       "clipesRuntime": {
@@ -243,23 +243,20 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 6,
+      "segundos": 8,
       "file": "viewmodels/fabrica/famas-fabrica.glb",
       "ficha": "tools/fabrica/fichas/famas.json",
       "insumos": {
-        "ficha": "1cbf833be73ad64ea0c6f8e3de9606f47ec76f52b352d73414a6a33a2db0a9f9",
+        "ficha": "ac593a3c95f497bfb5ff10d8bf33158d11ea914c9911168fbf25c08f6b46c582",
         "chassi": "34835595604477b6c4db7aed381e2ae8329606886d5a2bb6fbad296e1abbb416",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",
         "poseFbx": "e880a476b6d93b953db983910692cf4d3457557b31b3b3eba138a5993f5a8896",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
-        "clipe:reload_tactical:braco": "0de0a1a76e25b01c90c2b08c7d2ac41f1126114d47197badb75083954a60a0ea",
-        "clipe:reload_tactical:arma": "4956e4e65f0046b492e89ba164ac2883030b073d05c8d3acfb4de7d9ec385f32",
-        "clipe:reload_empty:braco": "177a8f713f37d480c4cd537e17b1df85b13f67b229902a6894c51ff1ead2e812",
-        "clipe:reload_empty:arma": "53c258665b1e69389927fab72afac08f32b51447dff0254e4c8bc498969c2cc6",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
-        "zonaLivre:alca": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a",
-        "zonaLivre:soleira": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a"
+        "malhaPropria": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a",
+        "animador": "99e778c8f9ed4e66ff8d3ca40b9fed0a176870fb71dc69141ceac7119217ff0c",
+        "frameJogo": "2f367ba5ae75380191fb3717c63df1f6d547dd5c6047861b2e1f987e8ded4c0b"
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/famas.json"
@@ -956,6 +953,70 @@
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/svd.json"
+    },
+    "tavor": {
+      "schemaVersion": 1,
+      "id": "tavor",
+      "arma": "tavor",
+      "chassi": "MX16A4",
+      "variante": false,
+      "url": "/private-assets/viewmodels/fabrica/tavor-fabrica.glb",
+      "bytes": 2263232,
+      "sha256": "403658a972a9d1d2b45e0d8c0bcfe578391920fedd41a64eb1d8546f23352831",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_MX16A4_Pose.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.28,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 2.28,
+          "braco": "animador",
+          "arma": "animador"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural",
+        "inspect": "ausente"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 5,
+      "file": "viewmodels/fabrica/tavor-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/tavor.json",
+      "insumos": {
+        "ficha": "a1b0e6e89a8c93274cb7d7420891ce1fe10412c3ec72d0255f6dd87e19552a4b",
+        "chassi": "34835595604477b6c4db7aed381e2ae8329606886d5a2bb6fbad296e1abbb416",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "c81ddc84f9f6ab9f3d633825f398de4b5a3f7cbcddd43a34fd345bcdc0ad18b6",
+        "poseFbx": "e880a476b6d93b953db983910692cf4d3457557b31b3b3eba138a5993f5a8896",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "malhaPropria": "958f09eec9033af88c954d57fef4130827a2b2958109c12f52644e1e7ace573c",
+        "animador": "cee409c92e359039514a2b635f46aaff07c000434026e4c3634dd6763300b8fd",
+        "frameJogo": "ac7d3c93ef2689dd2f42c344ac2b56907a361c6dde54478f2fda500e5ddcfb1e"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/tavor.json"
     }
   }
 }

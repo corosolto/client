@@ -1,0 +1,101 @@
+{
+  "idle": {"maoApoio": {"palmaCm": [2.9, -3.0, -6.8]}},
+  "pegaPente": {"palmaCm": [3.4, 23.5, -13.5], "rotDeg": [0, -43, 0]},
+  "clipes": {
+    "reload_empty": {
+      "segundos": 2.3,
+      "arma": [
+        {"u": 0},
+        {"u": 0.18, "rotDeg": [-9, 3, -20], "camCm": [-16, 11, -17]},
+        {"u": 0.6, "rotDeg": [-9, 3, -20], "camCm": [-16, 11, -17]},
+        {"u": 0.63, "rotDeg": [-9, 3, -20], "camCm": [-16, 11, -17]},
+        {"u": 0.74, "rotDeg": [-9, 13, -26], "camCm": [-21, 13, -21]},
+        {"u": 0.76, "rotDeg": [-7, 13, -25], "camCm": [-21, 15, -21]},
+        {"u": 0.8, "rotDeg": [-9, 13, -26], "camCm": [-21, 13, -21]},
+        {"u": 0.93},
+        {"u": 1}
+      ],
+      "mao": [
+        {"u": 0, "idle": true},
+        {"u": 0.06, "idle": true, "fecho": 0.6},
+        {"u": 0.2, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.3, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.4, "poco": [10, -1, -8]},
+        {"u": 0.46, "poco": [4, 0, -7]},
+        {"u": 0.52, "poco": [0, 0, -4]},
+        {"u": 0.58, "poco": [0, 0, -0.5]},
+        {"u": 0.62, "poco": [0, 0, 0]},
+        {"u": 0.65, "poco": [0, 0, 0], "fecho": 0.3},
+        {"u": 0.71, "armaCm": [1.5, 33.5, -11.5], "fecho": 0.3},
+        {"u": 0.75, "armaCm": [1.5, 33.5, -8.8], "fecho": 0.2},
+        {"u": 0.78, "armaCm": [1.5, 33.5, -11.0], "fecho": 0.3},
+        {"u": 0.93, "idle": true},
+        {"u": 1, "idle": true}
+      ],
+      "pentes": {
+        "Mag": [
+          {"u": 0, "estado": "arma"},
+          {"u": 0.22, "estado": "arma"},
+          {"u": 0.25, "estado": "arma", "deslocCm": [0, 0, -3]},
+          {"u": 0.26, "estado": "cai", "velCm": [-15, 0, -10], "giroGrausS": 60},
+          {"u": 0.56, "estado": "escondido"},
+          {"u": 0.66, "estado": "arma"}
+        ],
+        "Mag2": [{"u": 0, "estado": "arma"}, {"u": 0.02, "estado": "escondido"}, {"u": 0.28, "estado": "mao"}, {"u": 0.62, "estado": "arma"}]
+      },
+      "mecanismos": {
+        "BoltRelease": [
+          {"u": 0, "cm": [0, 0, 0]},
+          {"u": 0.74, "cm": [0, 0, 0]},
+          {"u": 0.75, "cm": [0, 0, 0.8]},
+          {"u": 0.77, "cm": [0, 0, 0.8]},
+          {"u": 0.79, "cm": [0, 0, 0]}
+        ]
+      }
+    },
+    "reload_tactical": {
+      "segundos": 2.3,
+      "arma": [
+        {"u": 0},
+        {"u": 0.18, "rotDeg": [-9, 3, -20], "camCm": [-16, 11, -17]},
+        {"u": 0.6, "rotDeg": [-9, 3, -20], "camCm": [-16, 11, -17]},
+        {"u": 0.63, "rotDeg": [-9, 3, -20], "camCm": [-16, 11, -17]},
+        {"u": 0.85},
+        {"u": 1}
+      ],
+      "mao": [
+        {"u": 0, "idle": true},
+        {"u": 0.06, "idle": true, "fecho": 0.6},
+        {"u": 0.18, "poco": [0, 0, -1], "fecho": 0.5},
+        {"u": 0.22, "poco": [0, 0, 0]},
+        {"u": 0.28, "poco": [0, 0, -9]},
+        {"u": 0.36, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.4, "camCm": [8, -48, -30], "rotDeg": [0, -43, 0], "fecho": 0.8},
+        {"u": 0.47, "poco": [8, -1, -8]},
+        {"u": 0.52, "poco": [0, 0, -4]},
+        {"u": 0.58, "poco": [0, 0, -0.5]},
+        {"u": 0.62, "poco": [0, 0, 0]},
+        {"u": 0.65, "poco": [0, 0, 0], "fecho": 0.3},
+        {"u": 0.85, "idle": true},
+        {"u": 1, "idle": true}
+      ],
+      "pentes": {
+        "Mag": [
+          {"u": 0, "estado": "arma"},
+          {"u": 0.22, "estado": "mao"},
+          {"u": 0.38, "estado": "largado"},
+          {"u": 0.6, "estado": "escondido"},
+          {"u": 0.66, "estado": "arma"}
+        ],
+        "Mag2": [{"u": 0, "estado": "arma"}, {"u": 0.02, "estado": "escondido"}, {"u": 0.38, "estado": "mao"}, {"u": 0.62, "estado": "arma"}]
+      }
+    }
+  },
+  "sondas": {
+    "penteTopo": [0, 25, -1.5],
+    "penteFundo": [0, 25, -20],
+    "retem": [0, 33.5, -7.7],
+    "apoio": [2.9, -3, -6.8],
+    "boca": [0, -25.2, 0.15]
+  }
+}

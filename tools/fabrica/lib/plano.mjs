@@ -41,6 +41,10 @@ export function resolverClipes(ficha, chassi) {
       const equip = EQUIP_GERAL[chassi.tipo];
       if (!equip) throw new Error(`${chassi.tipo} não tem saque geral no pack`);
       saida[nome] = { tipo, ref, braco: equip, arma: null, geral: true };
+    } else if (tipo === 'animador') {
+      // Plano B: re-autorado por tools/fabrica/blender/animador.py (ficha.animador).
+      if (!ficha.animador) throw new Error(`${nome}: clipe "animador" sem ficha.animador`);
+      saida[nome] = { tipo };
     } else if (tipo === 'procedural' || tipo === 'ausente') {
       saida[nome] = { tipo };
     } else throw new Error(`fonte de clipe inválida: ${valor}`);
@@ -103,6 +107,11 @@ export function montarPlano(fichaArquivo) {
     clipes,
     alinharTempo: ficha.alinharTempo || [],
     ocultar: ficha.ocultar || [],
+    // Plano B: malha do jogo no lugar da arma do pack (montar.py malha_propria) e boca própria.
+    malhaPropria: ficha.malhaPropria ? { ...ficha.malhaPropria, nome: ficha.id,
+      fonte: path.resolve(RAIZ_REPO, ficha.malhaPropria.fonte) } : null,
+    boca: ficha.boca || null,
+    animador: ficha.animador ? path.resolve(RAIZ_REPO, ficha.animador) : null,
     saida: { dir },
   };
   const entradas = {
@@ -118,6 +127,8 @@ export function montarPlano(fichaArquivo) {
     if (c.arma) entradas[`clipe:${nome}:arma`] = path.join(pasta, c.arma);
   }
   for (const p of zonaLivre) entradas[`zonaLivre:${p.peca}`] = p.fonte;
+  if (plano.malhaPropria) entradas.malhaPropria = plano.malhaPropria.fonte;
+  if (plano.animador) entradas.animador = plano.animador;
   const insumos = Object.fromEntries(Object.entries(entradas).map(([k, f]) => [k, {
     arquivo: f.startsWith(RAIZ_REPO) ? path.relative(RAIZ_REPO, f) : f.replace(process.env.HOME, '~'),
     sha256: sha256(f),

@@ -179,6 +179,7 @@ export const VM_FABRICA = Object.freeze({
   p90: F('p90', 'PDW90', { recoilScale: 2.4, ads: A(0.3) }),
   lmg: F('lmg', 'MGX5', { recoilScale: 2.2, frame: { x: 0.295, y: -0.04, z: -0.213, rotDeg: [1.69, 0, 6.19] }, ads: A(0.3) }),
   shotgun: F('shotgun', 'KXG12', { recoilScale: 1.3, ads: A(0.1) }),
+  tavor: F('ar', 'MX16A4', { variante: true, frame: { x: 0.235, y: -0.06, z: -0.24 }, ads: A(0.1) }),
   pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.2) }),
   deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: A(0.2) }),
   revolver38: F('revolver', 'Viper-357', { frame: CURTA, ads: A(0.2) }),
