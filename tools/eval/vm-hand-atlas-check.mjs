@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // BUG-85: amostra o WebP servido no UV real; identidade declarada não detecta punho nu.
-// Landmarks Blender de 06/09 em hand-continuity/inspection.json; UV espelhado é compartilhado.
+// Landmarks K/L: Blender de 06/09 (hand-continuity/inspection.json); UV espelhado é compartilhado.
 import sharp from 'sharp';
 import path from 'node:path';
 import { TEAM_HANDS } from '../../public/js/vmhands.js';
@@ -15,6 +15,11 @@ const landmarks = [
   { layout: 'knife', role: 'combined', part: 'wrist-lr', face: 8718, uv: [.362979, .758996] },
   { layout: 'knife', role: 'combined', part: 'tip-r', face: 6898, uv: [.170617, .561062] },
   { layout: 'knife', role: 'combined', part: 'tip-l', face: 2672, uv: [.414327, .821607] },
+  // Rig A (AK golden), faces da luva lidas do GLB por tools/viewmodels/lib/hand-rigs.mjs.
+  { layout: 'ak', role: 'glove', part: 'wrist-l', face: 20292, uv: [.28809, .877717] },
+  { layout: 'ak', role: 'glove', part: 'wrist-r', face: 3090, uv: [.331697, .85609] },
+  { layout: 'ak', role: 'glove', part: 'tip-l', face: 18, uv: [.297267, .348223] },
+  { layout: 'ak', role: 'glove', part: 'tip-r', face: 72, uv: [.962543, .37037] },
 ];
 const skin = [183, 137, 104];
 const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));

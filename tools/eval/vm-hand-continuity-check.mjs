@@ -2,7 +2,7 @@
 // BUG-85: chama os aplicadores REAIS de cada rota, incluindo o bind assíncrono.
 import fs from 'node:fs';
 import * as THREE from 'three';
-import { applyTeamHandMaterial, teamHandStyle } from '../../public/js/vmhands.js';
+import { applyTeamHandMaterial, teamHandStyle, handLayoutOfMesh, refreshTeamHands } from '../../public/js/vmhands.js';
 import { KnifeMeleeViewModel } from '../../public/js/meleevm.js';
 import { AuthoredViewModels } from '../../public/js/authoredvm.js';
 const source = fs.readFileSync(new URL('../../public/js/authoredvm.js', import.meta.url), 'utf8');
@@ -54,6 +54,12 @@ for (const faction of ['E','B','C','F','U']) {
   bind([{material:legacy}],new Map([['T_Glove01_B',donor],['T_Glove01_N',normal],['T_Glove01_ORM',orm]]));
   checks.push({name:'UV legado mantém donor e PBR próprios',ok:legacy.map===donor&&legacy.normalMap===normal&&legacy.roughnessMap===orm&&!legacy.userData.teamHands});
   checks.push({name:'UV legado mantém tint anterior',ok:legacy.color.equals(new THREE.Color(0x202735).lerp(new THREE.Color(0xffffff),.45))});
+}
+for (const [bone, material, layout, key] of [['handR_metarig','CoroSolto_Mandrake_Sleeves','ak','ak/cloth-U'],['handR_metarig','CoroSolto_FP_Gloves','ak','ak/glove-U'],['R_wrist_026','CoroSolto_FP_Gloves','knife','knife/combined-U']]) {
+  const b=new THREE.Bone();b.name=bone;const m=new THREE.MeshStandardMaterial();m.name=material;
+  const mesh=new THREE.SkinnedMesh(new THREE.BoxGeometry(),m);mesh.bind(new THREE.Skeleton([b]));
+  const found=handLayoutOfMesh(mesh);mesh.material=applyTeamHandMaterial(m,{faction:'E'},found);refreshTeamHands([mesh],{faction:'U'});
+  checks.push({name:`${material} em ${bone}: atlas do rig ${layout} e troca de time no mesmo rig`,ok:found===layout&&mesh.material.userData.teamHands?.key===key});
 }
 const game = fs.readFileSync(new URL('../../public/js/game.js',import.meta.url),'utf8');
 checks.push({name:'Game passa facção para as duas rotas',ok:(game.match(/faction: this\.playerFaction/g)||[]).length>=2});

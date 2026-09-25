@@ -6,16 +6,32 @@ export const TEAM_HANDS = Object.freeze({
   C: Object.freeze({ id: 'C', glove: '#dad8cd', sleeve: '#493544', accent: '#ba3544', motif: 'plain', fingerless: false }),
   F: Object.freeze({ id: 'F', glove: '#34363a', sleeve: '#292b30', accent: '#696b70', motif: 'plain', fingerless: true }),
   U: Object.freeze({ id: 'U', glove: '#34363a', sleeve: '#292b30', accent: '#d9d7cf', motif: 'checker', fingerless: true }),
+  M: Object.freeze({ id: 'M', glove: '#4a3b28', sleeve: '#3d1f66', accent: '#b8914a', motif: 'trama', fingerless: false }),
 });
-const NEUTRAL_HANDS = Object.freeze({ id: 'neutral', glove: '#34363a', sleeve: '#363a40', accent: '#797d80', motif: 'plain', fingerless: false });
+// Neutro = base da fábrica (braco-coro-ak.json): luva e manga Mandrake da AK aprovada, em sRGB.
+const NEUTRAL_HANDS = Object.freeze({ id: 'neutral', glove: '#242f38', sleeve: '#243c4d', accent: '#797d80', motif: 'plain', fingerless: false });
 export const teamHandStyle = (faction) => TEAM_HANDS[faction] || NEUTRAL_HANDS;
+export const HAND_ATLAS_VERSION = 'team-hands-6';
 
-export function refreshTeamHands(meshes, profile, layout) {
+// Rig do braço → pasta de atlas (UVs distintos, pintura comum). O GLTFLoader tira os pontos
+// dos nomes de osso (hand.R_metarig → handR_metarig).
+const RIG_BONES = Object.freeze([
+  ['ak', /^hand\.?R_metarig$/],   // rig A: AK golden e demais coro/*-hires de metarig
+  ['knife', /^R_wrist_026$/],       // rig L: faca aprovada e PT-38 golden
+  ['pistol', /^hand_r$/],           // rig K: SK_Arms_Mono (fábrica, catálogo K, granada)
+]);
+export function handLayoutOfMesh(mesh) {
+  const bones = mesh?.skeleton?.bones || [];
+  return RIG_BONES.find(([, re]) => bones.some((bone) => re.test(bone.name)))?.[0] || '';
+}
+
+export function refreshTeamHands(meshes, profile) {
   for (const mesh of meshes) {
     const update = (material) => {
-      if (!material?.userData.teamHands) return material;
-      if (material.userData.teamHands.faction === teamHandStyle(profile.faction).id) return material;
-      const next = applyTeamHandMaterial(material, profile, layout);
+      const current = material?.userData.teamHands;
+      if (!current) return material;
+      if (current.faction === teamHandStyle(profile.faction).id) return material;
+      const next = applyTeamHandMaterial(material, profile, current.layout);
       material.dispose(); // o material pertence ao controlador; atlas compartilhados ficam no cache
       return next;
     };
@@ -41,12 +57,12 @@ export function applyTeamHandMaterial(material, profile, layout) {
   // Os atlas têm UVs distintos; só a identidade é comum. Não colar UV de um rig no outro.
   if (typeof document !== 'undefined' && !(typeof process !== 'undefined' && process.versions?.node)) {
     if (!maps.has(key)) {
-      const map = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}.webp?v=team-hands-5`, undefined, undefined,
+      const map = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}.webp?v=${HAND_ATLAS_VERSION}`, undefined, undefined,
         (error) => console.error(`[viewmodel-hands] ${key}`, error));
       map.flipY = false;
       map.colorSpace = THREE.SRGBColorSpace;
       maps.set(key, map);
-      const bump = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}-height.webp?v=team-hands-5`, undefined, undefined,
+      const bump = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}-height.webp?v=${HAND_ATLAS_VERSION}`, undefined, undefined,
         (error) => console.error(`[viewmodel-hands] altura ${key}`, error));
       bump.flipY = false;
       maps.set(`${key}:height`, bump);

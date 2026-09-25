@@ -11,7 +11,7 @@ import { SHARED_VER } from './data/vmsharedver.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
-import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
+import { applyTeamHandMaterial, refreshTeamHands, handLayoutOfMesh } from './vmhands.js';
 import { extendSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
 
 const DEG2RAD = Math.PI / 180;
@@ -42,6 +42,8 @@ const CS16_TUDO = AUTHORED_VM_ENABLED && _QS?.get('cs16') === '1';
 const RETARGET_TUDO = AUTHORED_VM_ENABLED && _QS?.get('rt') === '1';
 const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
 const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
+// Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
+const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
 // Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
 // só abrem armas numa sessão de revisão.
 const AUTHORED_KILLED = !AUTHORED_VM_ENABLED;
@@ -194,8 +196,7 @@ function adsActionOf(entry) {
   return action;
 }
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
-// A linhagem metarig da AK preserva o acabamento aprovado e não recebe o atlas KINEMATION.
-// Causa e medidas: docs/reports/VIEWMODEL-PADRAO-FPS-PROFISSIONAL.md.
+// Moldes GoldSrc/retarget com materiais da linhagem metarig mantêm o acabamento próprio.
 const HAND_MATERIAL_AK_LINEAGE = /CoroSolto_(?:FP_Gloves|Mandrake_Sleeves)/i;
 const CLIP_ALIASES = Object.freeze({
   equip: 'equip_rifle', reload: 'reload_tactical', fire: 'shoot',
@@ -293,7 +294,7 @@ const entryKeyFor = (weapon) => {
   if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
-  if (GOLDEN_VM && VM_WEAPON[weapon]?.golden === true) return `gold#${weapon}`;
+  if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 const urlForKey = (key) => {
@@ -328,8 +329,8 @@ const clipKey = (name = '') => {
 };
 const materialsOf = (object) => Array.isArray(object.material) ? object.material : [object.material];
 
-function tintHandMaterial(material, profile, legacy = false) {
-  if (!legacy) return applyTeamHandMaterial(material, profile, 'pistol');
+function tintHandMaterial(material, profile, legacy = false, layout = 'pistol') {
+  if (!legacy) return applyTeamHandMaterial(material, profile, layout);
   // Preserva o tratamento antigo dos UVs GoldSrc/retarget até sua rodada própria.
   const copy = material.clone();
   if (copy.color) {
@@ -413,16 +414,14 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const hand = materialsOf(object).some((material) => HAND_MATERIAL.test(material?.name || ''));
     if (hand) {
       handMeshes.push(object);
-      // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget, AK golden e a
-      // linhagem derivada da AK conservam seus materiais: o UV é outro.
-      const tingivel = (material) => HAND_MATERIAL.test(material?.name || '')
-        && !HAND_MATERIAL_AK_LINEAGE.test(material?.name || '');
-      if (!golden) {
-        object.material = Array.isArray(object.material)
-          ? object.material.map((material) => tingivel(material)
-            ? tintHandMaterial(material, profile, molde) : material)
-          : (tingivel(object.material) ? tintHandMaterial(object.material, profile, molde) : object.material);
-      }
+      // Atlas de time por rig (K, L, A: vmhands.js); o molde GoldSrc/retarget fica no tint antigo.
+      const layout = molde ? 'pistol' : handLayoutOfMesh(object);
+      const tingivel = (material) => HAND_MATERIAL.test(material?.name || '') && Boolean(layout)
+        && !(molde && HAND_MATERIAL_AK_LINEAGE.test(material?.name || ''));
+      object.material = Array.isArray(object.material)
+        ? object.material.map((material) => tingivel(material)
+          ? tintHandMaterial(material, profile, molde, layout) : material)
+        : (tingivel(object.material) ? tintHandMaterial(object.material, profile, molde, layout) : object.material);
       object.userData.authoredCharacterHand = profile.id || 'player';
       const mangaRuntime = !fabrica || VM_FABRICA[weaponId]?.manga !== false;
       if (!golden && !molde && mangaRuntime && materialsOf(object).some((m) => SLEEVE_MATERIAL.test(m?.name || ''))) extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });
@@ -479,7 +478,7 @@ export class AuthoredViewModels {
 
   setProfile(profile) {
     this.profile = profile;
-    for (const entry of this.entries.values()) refreshTeamHands(entry.handMeshes, profile, 'pistol');
+    for (const entry of this.entries.values()) refreshTeamHands(entry.handMeshes, profile);
   }
 
   async load() {
