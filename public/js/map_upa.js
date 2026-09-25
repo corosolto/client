@@ -3,6 +3,8 @@
 import * as THREE from 'three';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
+import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 export const UPA_PROPS = [];
 
@@ -302,6 +304,16 @@ export function buildUpa(scene, T) {
     B: [10, 15, 20, 25].map(x => ({ x, z: 31, yaw: Math.PI })),
   };
 
+  /* BUG-57: UPA é interna — rato de corredor, sem pombo (não há céu). */
+  const ambience = createFavelaAmbience(root, {
+    map: 'upa_24h',
+    rats: [
+      { pos: [-20, 0, -28], to: [-17.5, 0, -25.5], phase: .3 },
+      { pos: [20, 0, 28], to: [17.5, 0, 25.5], phase: 1.4 },
+      { pos: [-3, 0, 2], to: [-.5, 0, 4.5], phase: 2.3 },
+    ],
+    pigeons: [],
+  });
   const upaAccesses = [
     { id: 'oeste-sul-externo', x: -22, z: -14 }, { id: 'oeste-sul-interno', x: -8.5, z: -14 },
     { id: 'oeste-sul-meio', x: -15.5, z: -14 }, { id: 'oeste-norte-externo', x: -22, z: 14 },
@@ -312,6 +324,7 @@ export function buildUpa(scene, T) {
   ];
 
   return {
+    ambience,sound:{loops:[{src:AMB_LOOPS.hum,pos:[0,3,0],radius:45,vol:.22}],bioma:'indoor'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     // MID fora da diagonal E–B (senão o triângulo é colinear e a régua reprova): puxado pro sul do corredor.
     ctfPoints: [

@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-08-11T22:11:02.941Z",
+  "approvalScope": "candidato 3D v2 aprovado em pre-integracao; runtime ainda pendente do critico externo",
+  "character": {
+    "file": "public/models/characters/microfonildo.glb",
+    "bytes": 1228052,
+    "sha256": "7e45cde94e8faf3afcd133832440af2a015b8aabc9cb711eb65dfcdfe057e609",
+    "source": "references/tv/microfonildo/3d/blender-v2/microfonildo-final-opt.glb",
+    "sourceByteIdentical": true
+  },
+  "weapon": {
+    "id": "m4",
+    "file": "public/models/weapons/m4.glb",
+    "sha256": "b03516d557e2ecb61de3997e339d59be9e35d69bc3b5e23c09cb7dd69cb7a677"
+  },
+  "animations": {
+    "idle": "06f274bc9f4f4e5111b7ffa0fee2f87b460ce8fb27dfdf314de91b7a5bc4c58f",
+    "walk": "ae4288276c06bf374128d7753c264f58a20b70e2ef4ab809446150f49a74e78d",
+    "run": "bab7a235574997da94ae032bbdf76a9c98e95ea2e025e3228bbc294b2b84fbe2",
+    "shoot": "36aeb1af7bab3fa21bebd85ba7047288d9724db8fe85f79ea38905ce07c3c2c3",
+    "death": "1f53f5b5947a3d0734b2783a66c1bd24a9a0e8769e00f0c6563e18ac65616bf0",
+    "crouch": "952fa6451c91b47194a1bd37de7674153b2d76b40ca11167350de141cbd82545",
+    "crouchwalk": "908b950e78cab418131e2700bd3cf077c5e125f8247020eb2ff3a4990585036f",
+    "jump": "53cc90d1c302e03f2c2dfc8130b7d53a066e95e5b18d507c9609cb288aca1548",
+    "idle1h": "3389fe2b7137d1926a75f84b29cabc9923aaeb27c9d1bd77dad0783ac5f5401a",
+    "walk1h": "7adf246ce5bad1396c6da0ae5a83c2c19dbe6f2966442a0e637ba92a86dc58f3",
+    "walkfire": "88e6d90a512af77fcbf12615adff7848eb2383e7f3691022d2701f15352719f6",
+    "merged": {
+      "file": "public/models/anims/microfonildo.glb",
+      "bytes": 350004,
+      "sha256": "95fffec3b6c891c89060647f1b1eeb61054316f0029e4ab977a5739c02d6c57e"
+    }
+  },
+  "feet": {
+    "bind": 0,
+    "offsetsMeters": {
+      "idle": -0.023,
+      "walk": 0.0699,
+      "run": 0.0322,
+      "shoot": -0.0249,
+      "crouch": 0.0369
+    },
+    "source": "tools/eval/char_probe.json",
+    "table": "public/models/anims/foot-offsets.json"
+  },
+  "gates": {
+    "pilotSystem": "clean pass; 8 causal mutants fail",
+    "pilotGrip": "clean pass; microfonildo-arma-deslocada fail",
+    "gripReceipt": "tools/eval/asset-evidence/microfonildo/grip/microfonildo-grip-evidence.json",
+    "khronos": "13 GLBs (modelo, 11 clipes, merged): 0 errors, 1 warning",
+    "mintAssetIntegrity": "24 final artifacts match finalSha256"
+  }
+}

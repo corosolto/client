@@ -52,6 +52,10 @@ const birdOk = wingMotion >= 0.25;
 let meshCount = 0, texturedCount = 0;
 world.root.traverse(object => {
   if (!object.isMesh) return;
+  /* a fauna (AMBIENT_LIFE) não é superfície de mapa: no arnês node os GLBs não
+     baixam e os fallbacks procedurais sem textura entravam na razão — vida 1
+     derrubou a cobertura 82,5%→80,8% só com os 8 meshes dos 2 papagaios */
+  for (let p = object; p; p = p.parent) if (p.userData?.ambientLife) return;
   meshCount++;
   const materials = Array.isArray(object.material) ? object.material : [object.material];
   if (materials.some(material => material?.map)) texturedCount++;

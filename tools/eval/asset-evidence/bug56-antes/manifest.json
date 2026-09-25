@@ -1,0 +1,319 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-18T04:16:06.645Z",
+  "viewport": {
+    "width": 1536,
+    "height": 1024,
+    "aspect": "3:2"
+  },
+  "mapOrder": [
+    "fy_escadao",
+    "fy_campomorro",
+    "fy_lajes",
+    "fy_corrego",
+    "fy_mansao"
+  ],
+  "shots": [
+    {
+      "map": "fy_mansao",
+      "name": "garden-eye",
+      "from": [
+        3,
+        1.65,
+        27.2
+      ],
+      "look": [
+        0,
+        1.5,
+        8
+      ],
+      "proves": "maciços tropicais assimetricos e pergolado ancorado vistos a 1,65 m dentro do jardim",
+      "file": "tools/eval/asset-evidence/bug56-antes/fy_mansao/garden-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "4c451114d181852d46795d17bc234a511a1e4bf0220841b334493b0f2a1550e9",
+      "cameraSha256": "2ab1cb4a73d37b81752fd3c5b8b756381103d8f6682ff51d51f891a2049a9224",
+      "imageSha256": "bab790255f7124677b4f9e5e3f7392a7d74b03e2d0b1d302c022116f3d6bb855",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "cars-front-close",
+      "from": [
+        0,
+        1.55,
+        16.4
+      ],
+      "look": [
+        0,
+        0.68,
+        11
+      ],
+      "proves": "rodas dianteiras, vidros, grades e tres silhuetas esportivas originais em close",
+      "file": "tools/eval/asset-evidence/bug56-antes/fy_mansao/cars-front-close.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "4c451114d181852d46795d17bc234a511a1e4bf0220841b334493b0f2a1550e9",
+      "cameraSha256": "f49c55e2ddc0048e9e7b80dc04fd63e4fc3ee3a57df30499c079a769190d5c81",
+      "imageSha256": "fe592e1fb6f6bd33c3d7a4499b0919b289b888fe6386be06ba841603eba98a1b",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "facade-garden",
+      "from": [
+        0,
+        6,
+        38
+      ],
+      "look": [
+        -1.4,
+        2.2,
+        2
+      ],
+      "proves": "jardim tropical assimetrico, espelho deslocado e fachada modernista",
+      "file": "tools/eval/asset-evidence/bug56-antes/fy_mansao/facade-garden.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "4c451114d181852d46795d17bc234a511a1e4bf0220841b334493b0f2a1550e9",
+      "cameraSha256": "30d8e51cc5ddde754636b7422f4df12b872733766eb92110f45559d49b431ccd",
+      "imageSha256": "2ea79f6d2d069484b1c6e1d02ceaa9578b8498173d82473b8ac2ee561f7d3b3f",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "interior",
+      "from": [
+        11.5,
+        2.4,
+        4.8
+      ],
+      "look": [
+        -4,
+        1.1,
+        -7.5
+      ],
+      "proves": "dois grupos de estar, piso de placas grandes, divisoria e mezanino jogaveis",
+      "file": "tools/eval/asset-evidence/bug56-antes/fy_mansao/interior.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "4c451114d181852d46795d17bc234a511a1e4bf0220841b334493b0f2a1550e9",
+      "cameraSha256": "981b87817a89259c66165d3cb40775869d95113c174fd1f531f46bd67df551be",
+      "imageSha256": "659085f80ebc546f9ec29ffab59d5f1687ab9d22decdf56b5a1ed3e22b1b05b0",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "gourmet-eye",
+      "from": [
+        -13.2,
+        1.65,
+        -8.15
+      ],
+      "look": [
+        -8,
+        1.05,
+        -10
+      ],
+      "proves": "ilha gourmet inteira vista de dentro da cozinha, sem parede/escada no primeiro plano: bancada, cooktop, cuba, torneira, tres banquetas e pendentes",
+      "file": "tools/eval/asset-evidence/bug56-antes/fy_mansao/gourmet-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "4c451114d181852d46795d17bc234a511a1e4bf0220841b334493b0f2a1550e9",
+      "cameraSha256": "d1e3da057655e966056928cbbb3faf50e8e336dbb7b45d726c51ecddeffdc052",
+      "imageSha256": "d739c59b3cf4149c4ed56994bad3239784a3925e6ee62c93a65fe68be3b6cda0",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "theater-eye",
+      "from": [
+        4.2,
+        1.65,
+        -7.2
+      ],
+      "look": [
+        9,
+        1.1,
+        -13.8
+      ],
+      "proves": "home theater com tela, console, quatro recliners e paineis acusticos",
+      "file": "tools/eval/asset-evidence/bug56-antes/fy_mansao/theater-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "4c451114d181852d46795d17bc234a511a1e4bf0220841b334493b0f2a1550e9",
+      "cameraSha256": "95c9473fb54cf029bfad50696126c1a736848ab62452336afb14c76bc5805ab6",
+      "imageSha256": "7cbbc4021c9dd10ac55633b8096da05dea9546885a6b33fc52fde5909f0d3095",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "infinity-pool",
+      "from": [
+        0,
+        4.2,
+        -19
+      ],
+      "look": [
+        0,
+        0.2,
+        -44
+      ],
+      "proves": "piscina infinita alinhada ao oceano do panorama original",
+      "file": "tools/eval/asset-evidence/bug56-antes/fy_mansao/infinity-pool.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "4c451114d181852d46795d17bc234a511a1e4bf0220841b334493b0f2a1550e9",
+      "cameraSha256": "e1e32a596ee49ffba3575b24b285beabc432385ea5fbecf851f50806cefe1484",
+      "imageSha256": "412d2400635a6ddb037d64b419e2c1a92d9b93abccc576661e6b97fd5a27f1f6",
+      "errors": []
+    }
+  ]
+}

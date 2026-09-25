@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "provider": "openrouter",
+  "modelId": "google/gemini-3.1-flash-tts-preview",
+  "startedAt": "2026-08-11T21:36:04.557Z",
+  "completedAt": "2026-08-11T21:36:18.113Z",
+  "status": "complete",
+  "maxCostUsd": 6,
+  "totalCostUsd": 0.000766,
+  "plannedJobs": 1,
+  "plannedCharacters": [
+    "chroma-rex"
+  ],
+  "preflight": {
+    "checkedAt": "2026-08-11T21:36:04.557Z",
+    "modelId": "google/gemini-3.1-flash-tts-preview",
+    "modelName": "Google: Gemini 3.1 Flash TTS Preview",
+    "pricing": {
+      "prompt": "0.000001",
+      "completion": "0.00002",
+      "discount": 0
+    },
+    "endpointCount": 1,
+    "providers": [
+      "Google"
+    ],
+    "balanceUsd": 13.61790561,
+    "capUsd": 6
+  },
+  "note": "Vozes sintéticas originais; nenhuma clonagem. Status generated exige escuta humana posterior.",
+  "completed": [
+    {
+      "characterId": "chroma-rex",
+      "key": "radio-avanco",
+      "event": "radio",
+      "file": "audio/characters/chroma-rex/radio/radio-avanco.mp3",
+      "sha256": "3d6122cc2584f72766c1cd9534cd094cabc305f3bdfb1404450576858fe41a56",
+      "duration": 1.52,
+      "generationId": "gen-tts-1786484165-V7V6820Pbu3I6fqXQ9Zl",
+      "costUsd": 0.000766,
+      "usage": 0.000766,
+      "generatedAt": "2026-08-11T21:36:18.111Z"
+    }
+  ],
+  "failures": []
+}

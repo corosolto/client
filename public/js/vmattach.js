@@ -576,6 +576,8 @@ export const VM_FRAME = {
     sniper:  { roll: -0.055, pitch: 0.1571, yaw: 0.2094, tanH: 0.360, clear: 0.020, minz: 0.3350, fwdTan: 1.60 },
     shotgun: { roll: -0.078, pitch: 0.1047, yaw: 0.3491, tanH: 0.360, clear: 0.020, minz: 0.3450, fwdTan: 1.60 },
     smg:     { roll: -0.085, pitch: 0.4189, yaw: 0.4887, tanH: 0.360, clear: 0.020, minz: 0.3500, fwdTan: 1.60 },
+    // Pose da main: o cant leve desta branch punha deagle/revolver38 abaixo do piso de
+    // areaPct da VM5 (BUG-179 em KNOWN-BUGS, com a queixa da PT-38 que ficou em aberto).
     pistol:  { roll: -0.050, pitch: 0.4712, yaw: 0.5585, tanH: 0.280, clear: 0.020, minz: 0.2700, fwdTan: 1.60 },
     knife:   { roll: 0, pitch: 0.000, yaw: 0.000, tanH: 0.240, clear: 0.020, minz: 0.3100, fwdTan: 1.60 },   // pitch/yaw n/a: a faca usa knifeRot
   },
@@ -607,7 +609,9 @@ export const VM_FRAME = {
      A RÉGUA QUE FALTA e que este defeito exige: nenhuma invariante mede direção de lâmina.
      Enquanto não existir, qualquer solver que mexer aqui pode virar a faca de novo e passar
      verde. É o item de maior risco de regressão do viewmodel. */
-  knifeRot: [0.45, 0.90, -0.30],
+  // Lâmina lateral e baixa: punho no canto direito, ponta voltada para dentro da
+  // tela.  Menos yaw que a revisão anterior evita a faca "deitada" na diagonal.
+  knifeRot: [-0.10, 0.50, -0.48],
   /* zMul VAZIO — as 5 exceções por arma (m92/p90/uzi/famas/tavor) FORAM REMOVIDAS, não
      substituídas. Elas empurravam armas atarracadas p/ o fundo para corrigir tamanho
      aparente; com minz uniforme o Zg já é o mesmo (0,500-0,503) para as 26, e cada entrada

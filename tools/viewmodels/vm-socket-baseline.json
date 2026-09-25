@@ -1,0 +1,168 @@
+{
+  "ak": {
+    "node": "SOCKET_WEAPON_AK",
+    "worldIdlePos": [
+      -0.060464,
+      1.566412,
+      0.374486
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "ar": {
+    "node": "SOCKET_WEAPON_AR",
+    "worldIdlePos": [
+      -0.077632,
+      1.588331,
+      0.32483
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "bolt": {
+    "node": "RIG_WEAPON_BOLT",
+    "worldIdlePos": [
+      -0.08591,
+      1.588951,
+      0.279467
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "deagle": {
+    "node": "SOCKET_WEAPON_DEAGLE",
+    "worldIdlePos": [
+      -0.057307,
+      1.599844,
+      0.296958
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "g3": {
+    "node": "SOCKET_WEAPON_G3",
+    "worldIdlePos": [
+      -0.056263,
+      1.578406,
+      0.352335
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "grenade": null,
+  "lmg": {
+    "node": "SOCKET_WEAPON_LMG",
+    "worldIdlePos": [
+      -0.096788,
+      1.53871,
+      0.380132
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "marksman": {
+    "node": "SOCKET_WEAPON_MARKSMAN",
+    "worldIdlePos": [
+      -0.070792,
+      1.581742,
+      0.378271
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "mp5": {
+    "node": "SOCKET_WEAPON_MP5",
+    "worldIdlePos": [
+      -0.082638,
+      1.57025,
+      0.318159
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "p90": {
+    "node": "RIG_WEAPON_P90",
+    "worldIdlePos": [
+      -0.068604,
+      1.539777,
+      0.307377
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "pistol": {
+    "node": "SOCKET_WEAPON_PISTOL",
+    "worldIdlePos": [
+      -0.048943,
+      1.603377,
+      0.320936
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "revolver": {
+    "node": "SOCKET_WEAPON_REVOLVER",
+    "worldIdlePos": [
+      -0.040153,
+      1.598433,
+      0.302028
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "shotgun": {
+    "node": "RIG_WEAPON_SHOTGUN",
+    "worldIdlePos": [
+      -0.101819,
+      1.553545,
+      0.278203
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "smg": {
+    "node": "RIG_WEAPON_SMG",
+    "worldIdlePos": [
+      -0.085762,
+      1.569294,
+      0.35038
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "sniper": {
+    "node": "SOCKET_WEAPON_SNIPER",
+    "worldIdlePos": [
+      -0.093288,
+      1.568435,
+      0.332012
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  },
+  "svd": {
+    "node": "SOCKET_WEAPON_SVD",
+    "worldIdlePos": [
+      -0.069629,
+      1.59471,
+      0.277595
+    ],
+    "preM1Ancestors": [
+      "RIG_FP_ARMS"
+    ]
+  }
+}

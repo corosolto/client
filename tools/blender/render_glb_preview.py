@@ -1,0 +1,90 @@
+import math
+import os
+import sys
+
+import bpy
+from mathutils import Vector
+
+
+def reset_scene():
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    for datablocks in (bpy.data.meshes, bpy.data.materials, bpy.data.images,
+                       bpy.data.cameras, bpy.data.lights):
+        for block in list(datablocks):
+            if block.users == 0:
+                datablocks.remove(block)
+
+
+def world_bounds(objects):
+    points = [obj.matrix_world @ Vector(corner)
+              for obj in objects if hasattr(obj, 'bound_box')
+              for corner in obj.bound_box]
+    if not points:
+        return Vector((-1, -1, -1)), Vector((1, 1, 1))
+    return (Vector(tuple(min(p[i] for p in points) for i in range(3))),
+            Vector(tuple(max(p[i] for p in points) for i in range(3))))
+
+
+def look_at(obj, target):
+    obj.rotation_euler = (Vector(target) - obj.location).to_track_quat('-Z', 'Y').to_euler()
+
+
+def render_asset(src, out_dir):
+    reset_scene()
+    bpy.ops.import_scene.gltf(filepath=src)
+    meshes = [obj for obj in bpy.context.scene.objects if obj.type == 'MESH']
+    lo, hi = world_bounds(meshes)
+    center = (lo + hi) * 0.5
+    size = hi - lo
+    radius = max(size.length * 0.58, 1.0)
+
+    floor_z = lo.z - max(size.z * 0.015, 0.01)
+    bpy.ops.mesh.primitive_plane_add(size=max(radius * 5, 10), location=(center.x, center.y, floor_z))
+    floor = bpy.context.object
+    floor.name = 'preview_floor'
+    mat = bpy.data.materials.new('preview_floor')
+    mat.diffuse_color = (0.12, 0.13, 0.15, 1)
+    mat.roughness = 0.9
+    floor.data.materials.append(mat)
+
+    bpy.ops.object.camera_add(location=(center.x + radius * 1.7,
+                                        center.y - radius * 2.1,
+                                        center.z + radius * 1.25))
+    camera = bpy.context.object
+    look_at(camera, center + Vector((0, 0, size.z * 0.04)))
+    camera.data.lens = 58
+    bpy.context.scene.camera = camera
+
+    for location, energy, size_lamp, color in (
+        ((center.x - radius, center.y - radius, center.z + radius * 2.5), 1300, radius * 1.4, (1.0, 0.86, 0.72)),
+        ((center.x + radius * 2, center.y + radius, center.z + radius), 900, radius * 1.2, (0.55, 0.72, 1.0)),
+    ):
+        bpy.ops.object.light_add(type='AREA', location=location)
+        lamp = bpy.context.object
+        lamp.data.energy = energy
+        lamp.data.shape = 'DISK'
+        lamp.data.size = size_lamp
+        lamp.data.color = color
+        look_at(lamp, center)
+
+    scene = bpy.context.scene
+    scene.render.engine = 'BLENDER_EEVEE'
+    scene.render.resolution_x = 900
+    scene.render.resolution_y = 900
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = 'PNG'
+    scene.render.film_transparent = False
+    scene.world.color = (0.025, 0.03, 0.04)
+    scene.view_settings.look = 'AgX - Medium High Contrast'
+    scene.view_settings.exposure = 2.25
+    scene.render.filepath = os.path.join(out_dir, os.path.basename(src).rsplit('.', 1)[0] + '.png')
+    bpy.ops.render.render(write_still=True)
+    print(f'RENDER {scene.render.filepath} bounds={tuple(round(v, 3) for v in size)}')
+
+
+args = sys.argv[sys.argv.index('--') + 1:]
+out = os.path.abspath(args[0])
+os.makedirs(out, exist_ok=True)
+for asset in args[1:]:
+    render_asset(os.path.abspath(asset), out)

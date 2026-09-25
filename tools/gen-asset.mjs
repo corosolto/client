@@ -66,6 +66,7 @@ const flag = (name) => argv.includes(`--${name}`);
 
 const PROVIDER = (arg('provider', 'tripo') || 'tripo').toLowerCase();
 const PROMPT = arg('prompt');
+const TEXTURE_PROMPT = arg('texture-prompt');
 const ID = arg('id');
 const RESUME = arg('resume');
 const OUT_DIR = arg('out', 'public/models/props');
@@ -162,6 +163,20 @@ const PROVIDERS = {
         url, raw: j,
       };
     },
+    async refine(previewTaskId, texturePrompt) {
+      const body = {
+        mode: 'refine', preview_task_id: previewTaskId,
+        enable_pbr: true, texture_resolution: '2k',
+        target_formats: ['glb'], ai_model: 'latest',
+        auto_size: true, origin_at: 'bottom', remove_lighting: true,
+      };
+      if (texturePrompt) body.texture_prompt = texturePrompt;
+      const j = await apiFetch('https://api.meshy.ai/openapi/v2/text-to-3d', {
+        method: 'POST', body: JSON.stringify(body),
+      });
+      if (!j.result) die(`resposta inesperada do Meshy refine: ${JSON.stringify(j).slice(0, 400)}`);
+      return j.result;
+    },
   },
 };
 
@@ -183,21 +198,31 @@ mkdirSync(RAW_DIR, { recursive: true });
 mkdirSync(OUT_DIR, { recursive: true });
 
 const P = PROVIDERS[PROVIDER];
-const taskId = RESUME || await P.start(PROMPT);
-say(`[${PROVIDER}] task ${taskId}${RESUME ? ' (retomada)' : ''}`);
-
-const t0 = Date.now();
-let last = '';
-let result = null;
-while ((Date.now() - t0) / 1000 < TIMEOUT_S) {
-  const st = await P.poll(taskId);
-  const line = `${st.status} ${st.progress}%`;
-  if (line !== last) { say(`  ${((Date.now() - t0) / 1000) | 0}s · ${line}`); last = line; }
-  if (st.done) { result = st; break; }
-  if (st.failed) die(`tarefa ${taskId} terminou em "${st.status}": ${JSON.stringify(st.raw).slice(0, 500)}`);
-  await sleep(6000);
+async function pollUntil(taskId) {
+  const t0 = Date.now();
+  let last = '';
+  while ((Date.now() - t0) / 1000 < TIMEOUT_S) {
+    const st = await P.poll(taskId);
+    const line = `${st.status} ${st.progress}%`;
+    if (line !== last) { say(`  ${((Date.now() - t0) / 1000) | 0}s · ${line}`); last = line; }
+    if (st.done) return st;
+    if (st.failed) die(`tarefa ${taskId} terminou em "${st.status}": ${JSON.stringify(st.raw).slice(0, 500)}`);
+    await sleep(6000);
+  }
+  die(`timeout de ${TIMEOUT_S}s esperando a tarefa ${taskId} (retome com --resume ${taskId})`);
 }
-if (!result) die(`timeout de ${TIMEOUT_S}s esperando a tarefa ${taskId} (retome com --resume ${taskId})`);
+
+let taskId = RESUME || await P.start(PROMPT);
+say(`[${PROVIDER}] task ${taskId}${RESUME ? ' (retomada)' : ''}`);
+let result = await pollUntil(taskId);
+let previewTaskId = null, refineTaskId = null;
+if (PROVIDER === 'meshy' && result.raw?.type !== 'text-to-3d-refine') {
+  previewTaskId = taskId;
+  refineTaskId = await P.refine(previewTaskId, TEXTURE_PROMPT || PROMPT || result.raw?.prompt);
+  say(`[meshy] refine task ${refineTaskId} (PBR 2K)`);
+  result = await pollUntil(refineTaskId);
+  taskId = refineTaskId;
+}
 
 // URL assinada do Tripo expira em ~5 min: baixa AGORA, antes de qualquer otimização.
 const rawPath = `${RAW_DIR}/${ID}.glb`;
