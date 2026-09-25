@@ -138,8 +138,8 @@
       "chassi": "Kar98K",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/carbine-fabrica.glb",
-      "bytes": 2305360,
-      "sha256": "e7f8bede7ac5ac4d52028897980fc1c843087a57732f8d57543d2b0af139c71b",
+      "bytes": 2306700,
+      "sha256": "d9c3907371d7f5879a8c2156dc284520bf77a4e25d84b72e19e30f9a7c073290",
       "clipes": [
         {
           "nome": "idle",
@@ -190,7 +190,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 6,
+      "segundos": 9,
       "file": "viewmodels/fabrica/carbine-fabrica.glb",
       "ficha": "tools/fabrica/fichas/carbine.json",
       "insumos": {
@@ -202,7 +202,7 @@
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "malhaPropria": "9bbed4fec57b56c9a0aafe50a74bc4df6c3a138f2671dbb15c0d5cc6a27d4f3f",
-        "animador": "376941b09c3bd42f232bc079576712eb9e3fc121b299ebe2cc40756f9834a1fa",
+        "animador": "06a944d909503f55b657764ef08818478c3ce1ee93f6cffa622ba16990ca7386",
         "frameJogo": "f827d99c04b72adb68c9c8180756c3e2cdfdf59dbb3b3803e271ab92902bb073"
       },
       "ready": false,

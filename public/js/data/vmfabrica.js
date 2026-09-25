@@ -3,7 +3,7 @@
 export const VM_FABRICA_BYTES = Object.freeze({
   akm: '91ee56bd36',
   awp: '4b212338f1',
-  carbine: 'e7f8bede7a',
+  carbine: 'd9c3907371',
   deagle: 'a08149fe73',
   famas: '29f877cdb2',
   g3: '41e72be5d8',
