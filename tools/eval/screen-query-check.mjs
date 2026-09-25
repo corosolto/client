@@ -48,7 +48,7 @@ if (mutant === 'resultado-time-b') {
   main = changed;
 }
 if (mutant === 'mapa-sem-consumo') {
-  const changed = main.replace('if (target.map) currentMap = resolveMapId(target.map);', 'void target.map;');
+  const changed = main.replace('if (target.map) currentMap = mapaDaSessao({ urlMap: target.map, oficina });', 'void target.map;');
   if (changed === main) throw new Error('MUTAÇÃO IMPOSSÍVEL: consumo do mapa não encontrado');
   main = changed;
 }
@@ -108,7 +108,9 @@ const sq3 = resolveInspectionScreen(new URLSearchParams()) === null
   && resolveInspectionScreen(new URLSearchParams({ tela: 'nao-existe' })) === null;
 const sq4 = /import \{ resolveInspectionScreen \} from '\.\/screenquery\.js';/.test(main)
   && /const inspectionScreen = resolveInspectionScreen\(params\);/.test(main)
-  && /const testMode = params\.get\('debug'\) === '1' \|\| !!inspectionScreen;/.test(main)
+  /* `oficina` entra no testMode junto com debug e inspeção: refazer mapa parado é sessão
+     de teste e não pode alimentar ranking, telemetria nem contagem de partidas. */
+  && /const testMode = params\.get\('debug'\) === '1' \|\| !!inspectionScreen \|\| oficina;/.test(main)
   && /if \(inspectionScreen\) \{[\s\S]{0,120}openInspectionScreen\(inspectionScreen\)\.catch/.test(main)
   && /async function openInspectionScreen\(target\)/.test(main);
 const sq5 = /function showInspectionResult\(won, character\)/.test(main)
@@ -118,7 +120,9 @@ const sq6 = /const playerOnE = currentTeam === 'E';/.test(main)
   && /const roundsE = playerOnE \? playerRounds : enemyRounds;/.test(main)
   && /const roundsB = playerOnE \? enemyRounds : playerRounds;/.test(main)
   && /frase\('statsFim', roundsE, roundsB,/.test(main);
-const sq7 = /if \(target\.map\) currentMap = resolveMapId\(target\.map\);/.test(main)
+/* O mapa da query passa por `mapaDaSessao`, não por `resolveMapId` cru: é a mesma guarda
+   do `?map=`, e sem ela um mapa parado para retrabalho abria por esta porta. */
+const sq7 = /if \(target\.map\) currentMap = mapaDaSessao\(\{ urlMap: target\.map, oficina \}\);/.test(main)
   && /if \(target\.screen === 'maps'\) \{ renderMapScreen\(\); show\('map-screen'\); return; \}/.test(main);
 const lowHud = resolveInspectionScreen(new URLSearchParams({ tela: 'hud', vida: '23' }));
 const sq8 = lowHud?.hp === 23

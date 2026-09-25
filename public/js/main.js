@@ -7,7 +7,7 @@ import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
 import { apiUrl, fetchComRetry } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
-import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
+import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
@@ -183,7 +183,11 @@ const sfxReady = sfx.loadManifest(VERSION);
 
 /* ---------------- selected map ---------------- */
 const urlMap = new URLSearchParams(location.search).get('map');
-let currentMap = mapaDaSessao({ urlMap, savedMap: settings.map, pinned: settings.mapPinned });
+/* Oficina (`?oficina=1`): devolve os mapas parados ao menu para retrabalho.
+   Contrato em docs/maps/MAPAS-PARADOS.md. */
+const oficina = new URLSearchParams(location.search).get('oficina') === '1';
+const MAPAS_MENU = mapasDoMenu(oficina);
+let currentMap = mapaDaSessao({ urlMap, savedMap: settings.map, pinned: settings.mapPinned, oficina });
 // sem save a rotação não avança; com ?map= o save pisaria a escolha fixada do jogador
 if (!urlMap) { settings.map = currentMap; saveSettings(); }
 
@@ -364,8 +368,9 @@ const factionArtReady = Promise.all(factionArtImages.map((image) => (
   })
 ))).catch((error) => console.warn('[facções] preload parcial', error));
 
-/* Wallpapers rotativos (wall-10..28): 1 por tela no fluxo home→setup→lado→personagem, sem
-   repetir; o offset rotaciona a cada acesso (localStorage) pra variar entre visitas.
+/* Wallpapers rotativos (wall-10..28, menos os estacionados): 1 por tela no fluxo
+   home→setup→lado→personagem, sem repetir; o offset rotaciona a cada acesso
+   (localStorage) pra variar entre visitas.
 
    Estes arrays são fallback do primeiro quadro. A fonte de verdade é
    public/img/walls.json, gerado por `npm run media` a partir do disco. O manifesto
@@ -373,12 +378,17 @@ const factionArtReady = Promise.all(factionArtImages.map((image) => (
 
    Servidos em .webp desde 07/08: os PNG de 2–2,6 MB viraram ~250 KB (ffmpeg libwebp q85,
    comparado lado a lado antes da troca — texto do cartaz e grão idênticos). Os .png ficam
-   na pasta como fonte; wallpaper novo entra como PNG e vira .webp no mesmo commit. */
+   na pasta como fonte; wallpaper novo entra como PNG e vira .webp no mesmo commit.
+
+   wall-27 (a Cuca) saiu da rotação em 25/09 a pedido do dono. A arte não foi apagada:
+   os três arquivos estão inteiros em public/img/parados/, fora do alcance dos
+   geradores (`listWebp` e o glob do menuwalls leem só o topo de public/img/). Volta
+   com `git mv` de volta + `npm run media && npm run menuwalls`. */
 const WALLS = ['/img/wall-10.webp', '/img/wall-11.webp', '/img/wall-12.webp', '/img/wall-13.webp',
   '/img/wall-14.webp', '/img/wall-15.webp', '/img/wall-16.webp', '/img/wall-17.webp',
   '/img/wall-18.webp', '/img/wall-19.webp', '/img/wall-20.webp', '/img/wall-21.webp',
   '/img/wall-22.webp', '/img/wall-23.webp', '/img/wall-24.webp', '/img/wall-25.webp',
-  '/img/wall-26.webp', '/img/wall-27.webp', '/img/wall-28.webp'];
+  '/img/wall-26.webp', '/img/wall-28.webp'];
 let _wallVisit = 0;
 try {
   _wallVisit = parseInt(localStorage.getItem('cs_wallK') || '-1', 10) + 1;
@@ -1179,7 +1189,9 @@ const inspectionScreen = resolveInspectionScreen(params);
 // A curadoria é uma sessão de teste, mas mantemos a expressão canônica abaixo porque
 // screenquery-check também prova a integração do modo de inspeção por query.
 if (MENU_MUSIC_REVIEW) params.set('debug', '1');
-const testMode = params.get('debug') === '1' || !!inspectionScreen;
+/* `oficina` entra aqui: retrabalho é sessão de teste, senão cada volta de conserto
+   viraria partida no ranking e linha de telemetria. */
+const testMode = params.get('debug') === '1' || !!inspectionScreen || oficina;
 // ?nav=1 isola transições de tela; web-assets.spec.js cobre preload e render 3D.
 const navOnly = params.get('nav') === '1';
 
@@ -1836,7 +1848,7 @@ function setMapMode() {
     m.dataset.mode = matchMode;
   }
   const d = $('map-dots');
-  if (d) d.innerHTML = MAP_IDS.map((_, i) => `<i class="${i === mapIdx ? 'on' : ''}"></i>`).join('');
+  if (d) d.innerHTML = MAPAS_MENU.map((_, i) => `<i class="${i === mapIdx ? 'on' : ''}"></i>`).join('');
   setMapMeta();
 }
 // O badge de modo virou BOTÃO: pedido do dono ("os mapas todos podem ser rounds ou CTF,
@@ -1856,10 +1868,10 @@ function setMapMode() {
     renderMapScreen();       // a tela cheia acompanha o modo (rounds por modo, ficha)
   });
 }
-let mapIdx = Math.max(0, MAP_IDS.indexOf(currentMap));
+let mapIdx = Math.max(0, MAPAS_MENU.indexOf(currentMap));
 function gotoMap(i) {
-  mapIdx = (i + MAP_IDS.length) % MAP_IDS.length;
-  currentMap = resolveMapId(MAP_IDS[mapIdx]);
+  mapIdx = (i + MAPAS_MENU.length) % MAPAS_MENU.length;
+  currentMap = resolveMapId(MAPAS_MENU[mapIdx]);
   settings.map = currentMap; settings.mapPinned = true; saveSettings();   // escolha explícita sai da rotação
   mapNameEl.textContent = MAPS[currentMap].name;
   setMapThumb();
@@ -1872,10 +1884,10 @@ function gotoMap(i) {
   loadMenuBackdrop().catch(() => {});
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
 }
-function stepMap(dir, ids = MAP_IDS) {
-  const pool = ids.length ? ids : MAP_IDS;
+function stepMap(dir, ids = MAPAS_MENU) {
+  const pool = ids.length ? ids : MAPAS_MENU;
   const nextId = pool[(Math.max(0, pool.indexOf(currentMap)) + dir + pool.length) % pool.length];
-  ui.click(); gotoMap(MAP_IDS.indexOf(nextId));
+  ui.click(); gotoMap(MAPAS_MENU.indexOf(nextId));
 }
 mapNameEl.textContent = MAPS[currentMap].name;
 setMapThumb();
@@ -1909,7 +1921,7 @@ import { MAP_CATS, MAP_AUTOR, MAP_DATA, CAT_DESC, AUTOR_CASA, catsDe, autorDe, o
 let mapCategory = 'TODOS';
 let mapAutorFiltro = 'TODOS';
 function autoresDeComunidade() {
-  return [...new Set(MAP_IDS.filter((id) => catsDe(id).includes('COMUNIDADE')).map(autorDe))].sort();
+  return [...new Set(MAPAS_MENU.filter((id) => catsDe(id).includes('COMUNIDADE')).map(autorDe))].sort();
 }
 /* Quantas vezes cada mapa foi escolhido, do contador que o /api/pick alimenta desde
    06/08 (picks_daily). Chega TARDE, por rede, e pode nunca chegar: a tela abre sem ele,
@@ -1929,10 +1941,10 @@ function visibleMapIds() {
      que é estável — `sort` sem desempate deixava a lista dançar entre renders).
      OFICIAIS e COMUNIDADE são recortes por categoria e mantêm a ordem do catálogo. */
   if (mapCategory === 'TODOS') {
-    return MAP_IDS.slice().sort((a, b) => playsDe(b) - playsDe(a) || MAP_IDS.indexOf(a) - MAP_IDS.indexOf(b));
+    return MAPAS_MENU.slice().sort((a, b) => playsDe(b) - playsDe(a) || MAPAS_MENU.indexOf(a) - MAPAS_MENU.indexOf(b));
   }
-  if (mapCategory === 'OFICIAIS') return MAP_IDS.filter((id) => !catsDe(id).includes('COMUNIDADE'));
-  return MAP_IDS.filter((id) => catsDe(id).includes(mapCategory));
+  if (mapCategory === 'OFICIAIS') return MAPAS_MENU.filter((id) => !catsDe(id).includes('COMUNIDADE'));
+  return MAPAS_MENU.filter((id) => catsDe(id).includes(mapCategory));
 }
 function renderMapScreen() {
   stopMapPreviews();
@@ -1961,11 +1973,14 @@ function renderMapScreen() {
   const catEl = $('ms-cat');
   catEl.innerHTML = cats.map((c) => `<span data-cat="${c}">${tr(c)}</span>`).join('<span class="ms-sep">·</span>');
   const byline = $('ms-byline');
+  /* Crachá EM OBRAS: sem ele o mapa parado fica indistinguível do jogável na oficina. */
+  const parado = MAPAS_PARADOS.has(currentMap);
   if (byline) byline.innerHTML = `${tr('por')} <strong>${autorDe(currentMap)}</strong> · ${MAP_DATA[currentMap] || ''}` +
-    (oficialDe(currentMap) ? ` <span class="ms-badge-oficial">${tr('OFICIAL')}</span>` : ` <span class="ms-badge-comunidade">${tr('COMUNIDADE')}</span>`);
+    (oficialDe(currentMap) ? ` <span class="ms-badge-oficial">${tr('OFICIAL')}</span>` : ` <span class="ms-badge-comunidade">${tr('COMUNIDADE')}</span>`) +
+    (parado ? ` <span class="ms-badge-parado">${tr('EM OBRAS')}</span>` : '');
   const desc = $('ms-cat-desc');
   if (desc) desc.textContent = CAT_DESC[mapCategory] ? tr(CAT_DESC[mapCategory]) : '';
-  $('ms-count').textContent = `${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`;
+  $('ms-count').textContent = `${tr('MAPA')} ${MAPAS_MENU.indexOf(currentMap) + 1} ${tr('DE')} ${MAPAS_MENU.length}`;
   /* Estatística de partidas: só aparece quando o número EXISTE. Escrever "0 PARTIDAS"
      num mapa que ninguém mediu é afirmar o que não se sabe — sem o contador, o crachá some. */
   const plays = $('ms-plays');
@@ -1999,7 +2014,7 @@ function renderMapScreen() {
     b.addEventListener('pointerenter', stopOtherPreview);
     b.addEventListener('focusin', stopOtherPreview);
     bindMapPreview(b, b.dataset.id);
-    b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
+    b.onclick = () => { ui.click(); gotoMap(MAPAS_MENU.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
     if (VIDEO_MAPS.has(b.dataset.id)) mapCardPreviews.push(createMapPreview(b, {
       id: b.dataset.id, version: VERSION, media: b.querySelector('.ms-thumb-media'),
@@ -2017,7 +2032,7 @@ document.querySelectorAll('.ms-tab').forEach((tab) => {
   tab.onclick = () => {
     ui.click(); mapCategory = tab.dataset.cat || 'TODOS';
     const first = visibleMapIds()[0];
-    if (first && !visibleMapIds().includes(currentMap)) gotoMap(MAP_IDS.indexOf(first));
+    if (first && !visibleMapIds().includes(currentMap)) gotoMap(MAPAS_MENU.indexOf(first));
     else renderMapScreen();
   };
 });
@@ -3006,8 +3021,10 @@ async function openInspectionScreen(target) {
   currentTeam = faction === 'B' ? 'B' : 'E';
   currentChar = character.id;
   currentEnemyFaction = faction === 'B' ? 'E' : 'B';
-  if (target.map) currentMap = resolveMapId(target.map);
-  mapIdx = Math.max(0, MAP_IDS.indexOf(currentMap));
+  /* `?tela=…&map=` é uma SEGUNDA porta para o mapa e precisa da mesma guarda do `?map=`:
+     sem ela o mapa parado abria pela tela de inspeção (medido no smoke de 25/09). */
+  if (target.map) currentMap = mapaDaSessao({ urlMap: target.map, oficina });
+  mapIdx = Math.max(0, MAPAS_MENU.indexOf(currentMap));
 
   if (target.screen === 'menu') { show('main-menu'); return; }
   if (target.screen === 'maps') { renderMapScreen(); show('map-screen'); return; }
@@ -3207,7 +3224,7 @@ function mpPintarMapas() {
     };
   });
   const n = mpMapasEscolhidos.size;
-  const fora = MAP_IDS.filter((id) => !mpMapasDoNo.includes(id)).length;
+  const fora = MAPAS_MENU.filter((id) => !mpMapasDoNo.includes(id)).length;
   conta.textContent = (!mpMapasDoNo.length ? 'esse servidor não respondeu a lista de mapas'
     : n === 0 ? 'marque pelo menos um mapa'
       : n === 1 ? 'só 1 mapa: a sala não gira, joga sempre nele'
@@ -3217,7 +3234,9 @@ function mpPintarMapas() {
 
 async function mpCarregarMapasDoNo() {
   if (!mpNoAtual) return;
-  try { mpMapasDoNo = (await listMaps(mpNoAtual.http)).filter((id) => MAPS[id]); }
+  // Mapa PARADO não entra na grade do multiplayer nem se o nó ainda o servir: fora da
+  // oficina ele não existe para o jogador, e um nó desatualizado não pode reintroduzi-lo.
+  try { mpMapasDoNo = (await listMaps(mpNoAtual.http)).filter((id) => MAPS[id] && MAPAS_MENU.includes(id)); }
   catch { mpMapasDoNo = []; }
   // mapa que o nó não tem não pode continuar marcado de uma seleção feita noutra região
   for (const id of [...mpMapasEscolhidos]) if (!mpMapasDoNo.includes(id)) mpMapasEscolhidos.delete(id);

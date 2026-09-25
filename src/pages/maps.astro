@@ -10,13 +10,8 @@ import { MAPAS } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 
 const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> = {
-  mansao: {
-    nome: 'Joá’s Mansion',
-    resumo: 'Tropical garden, a hall with mezzanine and a pool above Joá’s sea.',
-    detalhe: 'Two stairways link the hall to the mezzanine. The side routes cross the garden and reach ' +
-      'the terrace, with an enterable pool and a view of the beach. Four capture points contest ' +
-      'the two levels of the house.',
-  },
+  /* `mansao` e `campomorro` saíram da vitrine: estão PARADOS para retrabalho e
+     fora do menu. O registro jogável vive em public/js/maps.js (MAPAS_PARADOS). */
   praca_poderes: {
     nome: 'Three Powers Plaza',
     resumo: 'The main arena: a fictional Brasília with a giant cracked voting machine in the middle.',
@@ -48,7 +43,6 @@ const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> 
       'of double car walls, with two side exits into the core and a hanging sign at the south mouth. ' +
       'Low, warm light, long shadows. Four flags, all reachable from both spawns.',
   },
-  campomorro: { nome: 'Campinho do Morro', resumo: 'A hillside football pitch connected by eight alleys.', detalhe: 'A separate map with hillside houses, a covered stand, a crowd and a baile hall.' },
   quebrada: {
     nome: 'Quebrada (Baile Street)',
     resumo: 'A long straight outskirts street, with the baile rotunda at one end and the dirt pitch at the other.',
@@ -73,6 +67,7 @@ const en = (id: string) => MAP_EN[id];
 
 const nCtf = MAPAS.filter(m => m.ctf).length;
 const nRounds = MAPAS.length - nCtf;
+const CTF_NOMES = MAPAS.filter(m => m.ctf).map(m => en(m.id).nome);
 const plural = (n: number, um: string, muitos: string) => (n === 1 ? um : muitos);
 
 /* Mesma regra do /mapas: a captura casa pelo id do mapa, nunca por lista à mão. */
@@ -157,8 +152,8 @@ const jsonld = [
     <li><strong>Rounds:</strong> 4v4 by default (the menu goes from 1 to 8 per side), with a 2.2 s
       respawn. 1:39 rounds; the team with the most kills when the clock hits zero takes the round;
       3 rounds win the match, and the 5th round is the cap.</li>
-    <li><strong>Capture the Flag:</strong> four flags spread across the arena. The geometry of the
-      H Store, the Junkyard and the Quebrada was designed around them - that’s why those three open
+    <li><strong>Capture the Flag:</strong> four flags spread across the arena. The geometry of
+      {' '}{CTF_NOMES.join(', ')} was designed around them - that’s why those {nCtf} open
       in CTF. In CTF the round ends by capture, not by the clock.</li>
     <li>The map is drawn or picked on the selection screen, before the match starts.</li>
   </ul>
