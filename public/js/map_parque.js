@@ -1,7 +1,7 @@
 // Parque da Treta: arena CTF simétrica em fim de tarde, inteiramente procedural.
 // Rebuild USANTOS (régua: tools/eval/parque-vida-check.mjs).
 import * as THREE from 'three';
-import { InstBatch, mergeParts, placeProp } from './mapprops.js';
+import { InstBatch, PropBatch, mergeParts, placeProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
 import { aplicaSombraSol } from './mapquality.js';
 import { createFavelaAmbience } from './ambientlife.js';
@@ -33,6 +33,7 @@ export function buildParque(scene, T) {
   const root = new THREE.Group();
   root.name = 'parque-da-treta';
   scene.add(root);
+  const propBatch = new PropBatch({ bucket: 0, tag: 'parque', shadowMin: 0.025 });
 
   function surfaceTexture(kind, base, accent, repeat = 4) {
     const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
@@ -149,6 +150,16 @@ export function buildParque(scene, T) {
   const COLORS = [MAT.pink, MAT.blue, MAT.yellow, MAT.purple, MAT.green, MAT.red];
   const animated = { wheel: null, cabins: [], carousel: null, horses: [], clouds: [], birds: [] };
   const geometryCache = new Map();
+  const buildBatch = (batch, name, { nonSolid = false } = {}) => {
+    const before = root.children.length;
+    batch.build(root);
+    const built = root.children.slice(before);
+    for (const mesh of built) {
+      if (name) mesh.name = name;
+      if (nonSolid) mesh.userData.nonSolidSurface = true;
+    }
+    return built;
+  };
   /* UV em metros (map_uv.js): a densidade de texel deixa de depender do tamanho da
      malha. Antes o chão media 17,5 px/m em 5.376 m². */
   const boxGeometry = (w, h, d, material) => {
@@ -185,13 +196,16 @@ export function buildParque(scene, T) {
 
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
     const mesh = new THREE.Mesh(boxGeometry(w, h, d, mat), mat);
+    if (opts.name) mesh.name = opts.name;
+    if (opts.role) mesh.userData.parqueRole = opts.role;
     mesh.position.set(x, y + h / 2, z);
     mesh.castShadow = opts.cast !== false;
     mesh.receiveShadow = opts.receive !== false;
     if (opts.ry) mesh.rotation.y = opts.ry;
     root.add(mesh);
     if (opts.collide !== false) {
-      colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 });
+      const collider = { minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 };
+      colliders.push(collider); mesh.userData.collider = collider;
       occluders.push(mesh);
     }
     return mesh;
@@ -208,12 +222,15 @@ export function buildParque(scene, T) {
 
   function addCylinder(r, h, mat, x, y, z, opts = {}) {
     const mesh = new THREE.Mesh(cylinderGeometry(r, h, opts.segments || 16, mat), mat);
+    if (opts.name) mesh.name = opts.name;
+    if (opts.role) mesh.userData.parqueRole = opts.role;
     mesh.position.set(x, y + h / 2, z);
     mesh.castShadow = opts.cast !== false;
     mesh.receiveShadow = true;
     root.add(mesh);
     if (opts.collide !== false) {
-      colliders.push({ minX: x - r, maxX: x + r, minY: y, maxY: y + h, minZ: z - r, maxZ: z + r });
+      const collider = { minX: x - r, maxX: x + r, minY: y, maxY: y + h, minZ: z - r, maxZ: z + r };
+      colliders.push(collider); mesh.userData.collider = collider;
       occluders.push(mesh);
     }
     return mesh;
@@ -274,8 +291,7 @@ export function buildParque(scene, T) {
   }
 
   /* Look de fim de tarde (LOOK.parque_treta): céu/fog/sol/hemi de uma fonte só;
-     o shadow fica no builder porque ele conhece os limites do mapa. O TAMANHO do
-     mapa de sombra não: sai de aplicaSombraSol (orçamento único, QMAP1). */
+     o shadow fica no builder porque ele conhece os limites do mapa. */
   const { hemi, sun } = applyLook(scene, T, 'parque_treta');
   aplicaSombraSol(sun);
   sun.shadow.camera.left = -46; sun.shadow.camera.right = 46;
@@ -325,15 +341,18 @@ export function buildParque(scene, T) {
   ];
   PREDIOS.forEach(([px, pz, ry, h], i) => {
     const wrap = new THREE.Group(); wrap.name = `parque-molde-predio-${i}`; root.add(wrap);
-    const glb = placeProp('predio_artdeco', { x: px, y: 0, z: pz, targetH: h, ry });
-    if (glb) wrap.add(glb);
+    const batched = propBatch.add('predio_artdeco', { x: px, y: 0, z: pz, targetH: h, ry });
+    if (!batched) {
+      const glb = placeProp('predio_artdeco', { x: px, y: 0, z: pz, targetH: h, ry });
+      if (glb) wrap.add(glb);
+    }
   });
 
   // Portal de entrada em cada base.
   for (const sz of [-1, 1]) {
     for (const sx of [-1, 1]) addBox(1.1, 7, 1.1, sx < 0 ? MAT.pink : MAT.blue, sx * 7, 0, sz * 35);
     addBox(15, 1.1, 1.1, MAT.yellow, 0, 7, sz * 35, { collide: false });
-    const board = new THREE.Mesh(new THREE.PlaneGeometry(10, 3.1), new THREE.MeshLambertMaterial({ map: signTexture('PARQUE DA TRETA', sz < 0 ? 'ENTRADA DO TIME E' : 'ENTRADA DO TIME B', '#6b3fc5', '#fff7a8') }));
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(10, 3.1), new THREE.MeshLambertMaterial({ map: signTexture('PARQUE MADUREIRA', sz < 0 ? 'TRETA CARIOCA · PORTAL E' : 'TRETA CARIOCA · PORTAL B', '#6b3fc5', '#fff7a8') }));
     board.position.set(0, 6.5, sz * 34.4); board.rotation.y = sz > 0 ? Math.PI : 0; root.add(board);
   }
 
@@ -371,7 +390,7 @@ export function buildParque(scene, T) {
     const lamp = new THREE.Mesh(sphereGeometry(0.38, 10, 7, MAT.yellow), MAT.yellow); lamp.position.set(x, 4.25, z); root.add(lamp);
   }
   for (const [x, z] of [[-16, -12], [16, -12], [-16, 12], [16, 12]]) {
-    addCylinder(1.25, 0.45, MAT.wood, x, 0, z, { collide: false, segments: 12 });
+    addCylinder(1.25, 0.45, MAT.wood, x, 0, z, { segments: 12 });
     for (let i = 0; i < 5; i++) {
       const a = i * Math.PI * 0.4;
       const matFlor = lam({ color: COLORS[(i + (x > 0 ? 2 : 0)) % COLORS.length].color, map: SURFACE.folha, roughness: 0.85 });
@@ -430,7 +449,7 @@ export function buildParque(scene, T) {
     for (const dx of [-2.2, 0, 2.2]) addBox(0.09, 4.35, 0.06, MAT.purple, cx + dx, 0.02, cz - 3.72, { collide: false, cast: false });
     for (const dx of [-1.6, 1.6]) {
       const bocal = new THREE.Mesh(cylGeoT(0.42, 0.5, 0.9, 10, MAT.blue), MAT.blue);
-      bocal.rotation.x = Math.PI / 2; bocal.position.set(cx + dx, 0.5, cz - 4.15); bocal.castShadow = true; root.add(bocal);
+      bocal.rotation.x = Math.PI / 2; bocal.position.set(cx + dx, 0.5, cz - 3.58); bocal.castShadow = true; root.add(bocal);
     }
   }
 
@@ -446,17 +465,19 @@ export function buildParque(scene, T) {
   // Quiosques espelhados dão cobertura de cintura e quebram linhas de tiro; toldo e balcão tiram a cara de caixa.
   function kiosk(x, z, mat, title, idx) {
     const wrap = new THREE.Group(); wrap.name = `parque-molde-barraca-${idx}`; root.add(wrap);
-    const glb = placeProp('barraca_quermesse', { x, y: 0, z, targetH: 3.2, ry: z < 0 ? 0 : Math.PI });
-    if (glb) wrap.add(glb);
-    const caixa = addBox(5.2, 2.6, 3.8, mat, x, 0, z); caixa.visible = !glb;
-    const toldo = addBox(6.0, 0.4, 4.6, MAT.white, x, 2.6, z, { collide: false }); toldo.visible = !glb;
+    const batched = propBatch.add('barraca_quermesse', { x, y: 0, z, targetH: 3.2, ry: z < 0 ? 0 : Math.PI });
+    let glb = null;
+    if (!batched) { glb = placeProp('barraca_quermesse', { x, y: 0, z, targetH: 3.2, ry: z < 0 ? 0 : Math.PI }); if (glb) wrap.add(glb); }
+    const molde = batched || glb;
+    const caixa = addBox(5.2, 2.6, 3.8, mat, x, 0, z); caixa.visible = !molde;
+    const toldo = addBox(6.0, 0.4, 4.6, MAT.white, x, 2.6, z, { collide: false }); toldo.visible = !molde;
     const front = z < 0 ? 1 : -1;
-    const balcao = addBox(4.6, 0.9, 0.5, MAT.wood, x, 0, z + front * 2.05); balcao.visible = !glb;
+    const balcao = addBox(4.6, 0.9, 0.5, MAT.wood, x, 0, z + front * 2.05); balcao.visible = !molde;
     const awning = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.7), new THREE.MeshStandardMaterial({ map: SURFACE.lona, roughness: 0.7, side: THREE.DoubleSide }));
-    awning.position.set(x, 2.85, z + front * 2.35); awning.rotation.x = front * 1.12; awning.castShadow = true; awning.visible = !glb; root.add(awning);
-    for (const sx of [-1, 1]) addCylinder(0.05, 2.5, MAT.dark, x + sx * 2.6, 0, z + front * 2.9, { collide: false, segments: 6 }).visible = !glb;
+    awning.position.set(x, 2.85, z + front * 2.35); awning.rotation.x = front * 1.12; awning.castShadow = true; awning.visible = !molde; root.add(awning);
+    for (const sx of [-1, 1]) addCylinder(0.05, 2.5, MAT.dark, x + sx * 2.6, 0, z + front * 2.9, { collide: false, segments: 6 }).visible = !molde;
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 1.0), new THREE.MeshLambertMaterial({ map: signTexture(title, 'É AQUI!', '#ff4f9a', '#fff7e8') }));
-    sign.position.set(x, 2.15, z + (z < 0 ? 1.93 : -1.93)); sign.rotation.y = z < 0 ? 0 : Math.PI; root.add(sign);
+    sign.position.set(x, 2.15, z + (z < 0 ? 1.93 : -1.93)); sign.rotation.y = z < 0 ? 0 : Math.PI; sign.visible = !molde; root.add(sign);
   }
   kiosk(-13, -19, MAT.blue, 'PIPOCA', 0); kiosk(13, 19, MAT.green, 'ALGODÃO DOCE', 1);
   kiosk(13, -19, MAT.pink, 'PESCARIA', 2); kiosk(-13, 19, MAT.yellow, 'ARGOLA', 3);
@@ -464,6 +485,30 @@ export function buildParque(scene, T) {
   // Barreiras de fila formam três rotas legíveis, sem labirinto.
   for (const sz of [-1, 1]) {
     for (const x of [-8, 8]) for (const z of [13, 17, 25, 29]) addBox(3.2, 1.15, 0.55, MAT.white, x, 0, sz * z);
+  }
+
+  /* Bilheterias de spawn e jardins em chicana: quebram a visada longitudinal sem
+     transformar a base em caixa. Cada time continua saindo por três faixas —
+     roda/coreto a oeste, alameda central e castelo/estação a leste. */
+  const bilheteriaSign = new THREE.MeshLambertMaterial({ map: signTexture('MADUREIRA', 'BILHETERIA · ZONA NORTE', '#1f5f7a', '#fff4bb') });
+  for (const sz of [-1, 1]) {
+    const cor = sz < 0 ? MAT.pink : MAT.blue;
+    for (const [side, x] of [['oeste', -3.9], ['leste', 3.9]]) {
+      const id = `parque-bilheteria-${sz < 0 ? 'e' : 'b'}-${side}`;
+      addBox(5.0, 2.25, 0.75, cor, x, 0, sz * 33.0, { name: id, role: 'spawn-screen' });
+      addBox(5.55, .22, 1.35, MAT.white, x, 2.25, sz * 33.0, { collide: false, name: `${id}-marquise` });
+      addBox(3.25, .86, .06, MAT.dark, x, .78, sz * (33.0 + .405), { collide: false, name: `${id}-guiche` });
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.8, .78), bilheteriaSign);
+      sign.name = `${id}-placa`; sign.position.set(x, 1.78, sz * (33.0 + .41));
+      sign.rotation.y = sz < 0 ? Math.PI : 0; root.add(sign);
+    }
+    addBox(2.8, 1.2, 0.9, MAT.stone, -5.0, 0, sz * 26.5, { name: 'parque-jardim-tatico', role: 'cover' });
+    addBox(2.8, 1.2, 0.9, MAT.stone, 5.0, 0, sz * 23.0, { name: 'parque-jardim-tatico', role: 'cover' });
+    addBox(2.4, 1.0, 0.8, MAT.wood, -10.8, 0, sz * 31.5, { name: 'parque-caixote-feira', role: 'cover' });
+    addBox(2.4, 1.0, 0.8, MAT.wood, 10.8, 0, sz * 28.0, { name: 'parque-caixote-feira', role: 'cover' });
+  }
+  for (const [x, z, ry] of [[-8.5, -8, .28], [8.5, -8, -.28], [-8.5, 8, -.28], [8.5, 8, .28]]) {
+    addBox(3.0, 1.25, 0.85, MAT.hedge, x, 0, z, { ry, name: 'parque-jardim-central', role: 'cover-central' });
   }
   for (const [x, z, mat] of [[-18, -10, MAT.pink], [18, 10, MAT.blue], [18, -10, MAT.yellow], [-18, 10, MAT.green]]) {
     addCylinder(0.18, 4.4, MAT.dark, x, 0, z);
@@ -473,13 +518,13 @@ export function buildParque(scene, T) {
   // Espelhos d'água rasos decoram as bases sem alterar navegação.
   for (const sz of [-1, 1]) {
     const pond = new THREE.Mesh(new THREE.CircleGeometry(3.2, 24), MAT.water); pond.rotation.x = -Math.PI / 2; pond.position.set(-19, 0.045, sz * 29); root.add(pond);
-    for (let i = 0; i < 4; i++) addCylinder(0.32, 0.7 + i * 0.18, MAT.white, -20.8 + i * 1.25, 0, sz * 29, { collide: false, segments: 8 });
+    for (let i = 0; i < 4; i++) addCylinder(0.32, 0.7 + i * 0.18, MAT.white, -20.8 + i * 1.25, 0, sz * 29, { segments: 8 });
   }
 
   // Coreto no quadrante sudoeste: palco octogonal, 8 colunas, telhado e bandeirolas.
   {
     const g = new THREE.Group(); g.name = 'parque-coreto'; g.position.set(CORETO.x, 0, CORETO.z); root.add(g);
-    colliders.push({ minX: CORETO.x - 2.9, maxX: CORETO.x + 2.9, minY: 0, maxY: 0.45, minZ: CORETO.z - 2.9, maxZ: CORETO.z + 2.9 });
+    colliders.push({ minX: CORETO.x - 3.65, maxX: CORETO.x + 3.65, minY: 0, maxY: 0.45, minZ: CORETO.z - 3.65, maxZ: CORETO.z + 3.65 });
     const glb = placeProp('parque_coreto', { x: 0, y: 0, z: 0, targetH: 4.4, targetLen: 7.2 });
     if (glb) g.add(glb);
     const stage = new THREE.Mesh(cylGeoT(3.4, 3.65, 0.45, 8, MAT.stone), MAT.stone);
@@ -546,7 +591,7 @@ export function buildParque(scene, T) {
       dormBatch.add(boxGeometry(1.05, 0.07, 0.26, MAT.wood), MAT.wood, dummy.matrix);
     }
   }
-  dormBatch.build(root);
+  buildBatch(dormBatch, 'parque-dormentes');
   {
     const g = new THREE.Group(); g.name = 'parque-estacao'; g.position.set(ESTACAO.x, 0, ESTACAO.z); root.add(g);
     const platform = new THREE.Mesh(boxGeometry(3.2, 0.4, 2.2, MAT.asphalt), MAT.asphalt);
@@ -578,7 +623,7 @@ export function buildParque(scene, T) {
       colliders.push({ minX: x - 0.32, maxX: x + 0.32, minY: 0, maxY: 0.92, minZ: z - 0.32, maxZ: z + 0.32 });
     });
   }
-  occluders.push(...binBatch.build(root));
+  occluders.push(...buildBatch(binBatch, 'parque-lixeira-lote'));
 
   const BANCOS = [
     { x: -22, z: 12, ry: Math.PI / 2 }, { x: 22, z: -12, ry: -Math.PI / 2 },
@@ -604,7 +649,9 @@ export function buildParque(scene, T) {
       const back = new THREE.Mesh(boxGeometry(1.8, 0.15, 0.05, MAT.wood), MAT.wood);
       back.position.set(0, 0.78 + p * 0.22, -0.32); back.rotation.x = -0.14; back.castShadow = true; g.add(back);
     }
-    colliders.push({ minX: cfg.x - 0.95, maxX: cfg.x + 0.95, minY: 0, maxY: 0.52, minZ: cfg.z - 0.35, maxZ: cfg.z + 0.35 });
+    const gira = Math.abs(Math.sin(cfg.ry || 0)) > 0.5;
+    const hx = gira ? 0.35 : 0.95, hz = gira ? 0.95 : 0.35;
+    colliders.push({ minX: cfg.x - hx, maxX: cfg.x + hx, minY: 0, maxY: 0.52, minZ: cfg.z - hz, maxZ: cfg.z + hz });
     occluders.push(g.children[2]);
   });
 
@@ -730,13 +777,13 @@ export function buildParque(scene, T) {
     const ss = 0.75 + vrnd() * 0.7; dummy.scale.set(ss, ss * (0.8 + vrnd() * 0.4), ss); dummy.updateMatrix();
     (vrnd() < 0.8 ? batArbA : batArbB).add(shrubGeo, MAT.leaf, dummy.matrix, vrnd() < 0.8 ? 0x2c7a38 : 0x9e6fb8);
   }
-  occluders.push(...batPainT.build(root));
-  batPainC.build(root);
-  for (const branch of batPainB.build(root)) branch.userData.nonCollider = true;
-  occluders.push(...batPalmT.build(root));
-  batPalmC.build(root);
-  batArbA.build(root);
-  batArbB.build(root);
+  occluders.push(...buildBatch(batPainT, 'parque-arvores-paineira'));
+  buildBatch(batPainC, 'parque-copas-paineira', { nonSolid: true });
+  for (const branch of buildBatch(batPainB, 'parque-ramos-paineira', { nonSolid: true })) branch.userData.nonCollider = true;
+  occluders.push(...buildBatch(batPalmT, 'parque-arvores-palmeira'));
+  buildBatch(batPalmC, 'parque-copas-palmeira', { nonSolid: true });
+  buildBatch(batArbA, 'parque-arbustos-buxinho', { nonSolid: true });
+  buildBatch(batArbB, 'parque-arbustos-flor', { nonSolid: true });
 
   /* Entorno de Madureira: pérgola de concreto pintado e alameda de palmeiras
      imperiais. Fica FORA da cerca viva, sem colisor nem occluder — identidade do
@@ -808,16 +855,23 @@ export function buildParque(scene, T) {
     for (const sx of [-1, 1]) for (let z = -36; z <= 36.01; z += 9) plantaPalmeira(sx * 38.5, z);
     for (const sz of [-1, 1]) for (const x of [-24, -12, 0, 12, 24]) plantaPalmeira(x, sz * 48.5);
     /* Alameda interna: planta só onde a própria regra do mapa libera — mesma guarda
-       de nó de rota, colisor e trilho que as árvores existentes já respeitam. */
+       de nó de rota, colisor e trilho que as árvores existentes já respeitam.
+       A faixa autoral é x=±9,6. Os jardins em chicana (parque-jardim-central, x=±8,5
+       e meia-largura 1,5) chegaram depois e ocupam x 7,0–10,0: com a folga de 1,2 da
+       guarda eles esterilizavam TODA a alameda (0 palmeiras). Onde a chicana tomou o
+       chão a fileira recua para o primeiro x livre dela (10,0 + 1,2 = 11,2 -> 11,4),
+       ainda dentro do vão entre os bancos (x até 9,6) e os quiosques (x a partir de
+       10,4 só em z≈±19). Nenhuma geometria das duas autorias sai do lugar, e quem
+       decide continua sendo a guarda. */
     let nAlameda = 0;
     for (const sx of [-1, 1]) for (let z = -28; z <= 28.01; z += 7) {
-      const x = sx * 9.6;
+      const x = livreVeg(sx * 9.6, z, 1.2) ? sx * 9.6 : sx * 11.4;
       if (livreVeg(x, z, 1.2)) { plantaPalmeira(x, z); nAlameda++; }
     }
     root.userData.alamedaPalmeiras = nAlameda;
     pergola.scale.setScalar(1);
-    batPergola.build(root); batRipas.build(root);
-    batPalmImpT.build(root); batPalmImpC.build(root);
+    buildBatch(batPergola, 'parque-pergola'); buildBatch(batRipas, 'parque-pergola-ripas');
+    buildBatch(batPalmImpT, 'parque-palmeira-imperial'); buildBatch(batPalmImpC, 'parque-palmeira-imperial-copa', { nonSolid: true });
   }
 
   const GM = { black: lam({ color: 0x202735 }), steel: lam({ color: 0xaab4c0 }), wood: MAT.wood, green: lam({ color: 0x315b43 }) };
@@ -833,6 +887,9 @@ export function buildParque(scene, T) {
   const arsenal = ['awp', 'ak', 'm4', 'shotgun', 'mp5', 'deagle', 'pistol'];
   for (const sz of [-1, 1]) arsenal.forEach((kind, i) => place(kind, -12 + i * 4, sz * 37.5, sz < 0 ? 0 : Math.PI));
   place('ak', -9, -7, 0); place('m4', 9, 7, Math.PI); place('shotgun', 9, -7, 0); place('mp5', -9, 7, Math.PI);
+
+  // Fecha os lotes GLB estáticos depois que todas as instâncias foram declaradas.
+  propBatch.build(root);
 
   const blocked = (x, z, inflate = 0.45) => colliders.some(c => c.minY < 1.6 && c.maxY > 0.15 && x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate);
   const nodes = [], adj = [], STEP = 3.2;
@@ -856,7 +913,6 @@ export function buildParque(scene, T) {
     }
     return [fromIdx];
   }
-
 
   function update(dt, time) {
     SURFACE.water.offset.x = time * 0.018;
@@ -908,7 +964,7 @@ export function buildParque(scene, T) {
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.28},{src:AMB_LOOPS.grilos,pos:[0,3,0],radius:70,vol:.16}],bioma:'campo'},
+    ambience,sound:{loops:[{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.28},{src:AMB_LOOPS.vento,pos:[0,4,0],radius:75,vol:.12}],bioma:'campo'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt: () => 0, slowAt: () => false, update, sun, hemi, pickups,
     spawns: {
       E: [-9, -3, 3, 9].map(x => ({ x, z: -38.5, yaw: 0 })),

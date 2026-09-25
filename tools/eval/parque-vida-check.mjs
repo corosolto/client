@@ -42,7 +42,7 @@
           node ficam vazios). Mede: ≥ 14 wrappers parque-molde-* no mundo
           buildado — contagem real do build: 8 prédios + 4 barracas + roda +
           roda-base + carrossel = 15 (public/js/map_parque.js, blocos
-          PREDIOS/kiosk/roda-gigante/carrossel); PARQUE_PROPS contém os 5 ids
+          PREDIOS/kiosk/roda-gigante/carrossel); PARQUE_PROPS contém os 6 ids
           novos; e cada models/props/<id>.glb existe em disco. O mutante
           --mutante=sem-moldes filtra os wrappers do traverse e esvazia os ids
           em memória → PV6 tem que ficar vermelha.
@@ -69,7 +69,7 @@ if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: 
 const MIN_LIXEIRAS = 6, MIN_BANCOS = 6, MIN_DORMENTES = 100;
 const MIN_ARVORES = 40, MIN_ARBUSTOS = 60, MIN_TEXTURAS = 16;
 const MIN_MOLDES = 14;
-const MOLDE_IDS = ['roda_gigante_roda', 'roda_gigante_base', 'carrossel', 'barraca_quermesse', 'predio_artdeco'];
+const MOLDE_IDS = ['parque_coreto', 'roda_gigante_roda', 'roda_gigante_base', 'carrossel', 'barraca_quermesse', 'predio_artdeco'];
 
 /* instâncias sob um prefixo de nome: InstancedMesh conta `count`, o resto conta 1
    (um Grupo nomeado parque-banco-3 é UM banco, suas tábuas não têm nome) */
