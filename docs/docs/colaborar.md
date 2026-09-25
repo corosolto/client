@@ -254,7 +254,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.097 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.064 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.028 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.026 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.709 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.772 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
