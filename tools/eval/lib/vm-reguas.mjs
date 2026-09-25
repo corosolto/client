@@ -74,6 +74,14 @@ if (FABRICA_NA_REGUA) {
   // Plano B (bullpup): pente reserva Mag2 coincidente no repouso, pego fora da tela (VM-FABRICA.md §7).
   for (const arma of ['famas', 'tavor']) CARREGADOR_PECA[arma] = { osso: 'Mag', reserva: 'Mag2' };
   CARREGADOR_PECA.shotgun = { osso: 'Gauge', clipe: true };
+  // Variantes (fábrica-variantes): o pente do chassi do pack (zona de contato como autorada); a UZI
+  // é plano B (uma mão; pente reserva Mag2); REM 700 recarrega em laço como a Mosin; a SKS
+  // carrega pela lâmina do Kar98K (recarga vazia do pack), o carregador é a lâmina.
+  for (const arma of ['g3sg1', 'md97', 'm400', 'scar', 'm92']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
+  CARREGADOR_PECA.uzi = { osso: 'Mag', reserva: 'Mag2' };   // plano B: pente reserva como FAMAS/TAVOR
+  CARREGADOR_PECA.carbine = { osso: 'Mag', reserva: 'Mag2' };   // plano B: o cartucho mantido do Kar98K, pela lateral
+  CARREGADOR_PECA.rem700 = { osso: 'Cartridge', clipe: true };
+  CARREGADOR_PECA.sks = { osso: 'Clip', clipe: true };
 }
 const CARREGADOR_NA = {
   knife: 'faca: sem carregador',
@@ -81,6 +89,8 @@ const CARREGADOR_NA = {
   carbine: 'alavanca com cartucho solto pela janela: sem peça de carregador no produto',
   lmg: 'fita/caixa: eval:vm-lmg-final (tampa/caixa/fita)',
 };
+// Fábrica: a carabina de alavanca (plano B) tem o cartucho do Kar98K como peça (CARREGADOR_PECA acima).
+if (FABRICA_NA_REGUA) delete CARREGADOR_NA.carbine;
 
 /* ---------------------------------------------------------------------------
    COLETA: tudo que as cinco réguas leem de UMA arma, numa passada do jogo.
