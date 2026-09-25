@@ -160,4 +160,4 @@ const lb=document.getElementById('lb');document.querySelectorAll('[data-lb]').fo
 render();
 </script></body></html>`;
 fs.writeFileSync(path.join(LOTE, 'index.html'), html);
-console.log(`PAGINA ${path.join(LOTE, 'index.html')} → http://127.0.0.1:${PORTA}/artifacts/fabrica-lote1/index.html`);
+console.log(`PAGINA ${path.join(LOTE, 'index.html')} → http://127.0.0.1:${PORTA}/artifacts/${path.basename(LOTE)}/index.html`);

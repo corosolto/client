@@ -322,6 +322,34 @@ do pack vira a `akm`; FAMAS e Tavor vão para o plano B em `vm/fabrica-bullpup` 
 Produtos novos: akm, g3, svd, awp, mosin, mp5, p90, lmg, deagle, revolver38. A granada já é o
 pack como autorado (produto K, `ready`) e não foi refeita.
 
+**Resultado (25/09).** Réguas de imagem mira · cobertura · pistola-ref · mãos · carregador
+(✓ verde, ✗ vermelho, · n/a); célula = 3:2 / 16:9. Crítico cego = última rodada da arma.
+
+| arma | chassi | 3:2 | 16:9 | crítico | o que pesa |
+|---|---|---|---|---|---|
+| m4 (lote 1) | MX16A4 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | quadro do lote 1 mantido |
+| shotgun | KXG12 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | era RESSALVA no lote 1 (cartucho oculto na volta + cartucho amarelo) |
+| pistol (lote 1) | X18 | ✓✓✓·✓ | ✓✓✓·✗ | APROVADA | 16:9 carregador = dívida R1 da PT-38 |
+| akm | AK | ✓✓·✓✗ | ✓✓·✓✗ | RESSALVA | o AK-200 solta o pente velho à vista (plano B); mão direita deformada em f075 |
+| g3 | G3 | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | coice com metade da amplitude da AK; mão de apoio por cima do guarda-mão |
+| svd | SVD | ·✓·✓✓ | ·✓·✓✓ | RESSALVA | pente velho solto ao lado da culatra em f020 |
+| mp5 | MPS5 | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | coice empurra de lado, cano pouco sobe |
+| p90 | PDW90 | ✗✓·✓✓ | ✗✓·✓✓ | RESSALVA | pente some sob a mão (pack); mira lida pela massa, reflex na cruz |
+| lmg | MGX5 | ✗✓·✓· | ✗✓·✓· | RESSALVA | cinto velho não sai (pack); mira lida pela massa, óptica na cruz |
+| deagle | DGL50 | ✓✓✓·✓ | ✓✓✓·✓ | RESSALVA | 135–140% da PT-38 (a Desert Eagle é maior; decisão do dono) |
+| awp | L96X | ·✓·✓✓ | ·✓·✓✓ | REPROVADA | recarga do pack: arma aponta pro alto, mão grande sobre o ferrolho, sem luneta no modelo |
+| mosin | Kar98K | ·✓·✓✓ | ·✓·✓✓ | REPROVADA | recarga do pack: fuzil gira de lado atravessando a mira; cartucho não lido |
+| revolver38 | Viper-357 | ✓✓✓·· | ✓✓✓·· | REPROVADA | f010: mão direita sobe aberta até a cruz (pack); mãos grandes no ADS |
+
+Os três REPROVADOS são recargas **do pack como autorado** (a fábrica pura não muda a zona de
+contato): ficam para variante/plano B com o dono. Vereditos por rodada em
+`artifacts/fabrica-lote2/critico-r{2,3,4}/` e `critico/<id>/veredito.txt`.
+
+**Regressão do arsenal:** placar das 26 armas re-medido depois do lote 2 nas duas proporções:
+0 falha; células vermelhas com dono 57 → 56. `eval:vm-cache`, `vm-launch`, `vm-orientacao`,
+`vm-manga-oca`, `vmrecoil`, `vm-catalog` verdes; `eval:vm-rig` vermelho igual na base ("ak: produto
+ausente").
+
 **O que o lote 2 ensinou**
 
 - **Manga × pente.** Sem a extensão do `vmsleeve`, a boca da manga do `SK_Arms_Mono` entra no

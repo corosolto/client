@@ -1,7 +1,7 @@
 # PLACAR das réguas de imagem do viewmodel
 
-Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-24, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `293e037380a423ac`.
+Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-25, quadro 3x2
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `a95da85e69f16072`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
@@ -31,7 +31,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 | tavor | **VERMELHO** 41 px | verde 1.04× AK | n/a | **VERMELHO** 0.30 | **VERMELHO** 1 falha(s) |
 | famas | **VERMELHO** 64 px | verde 0.91× AK | n/a | verde 0.19 | **VERMELHO** 1 falha(s) |
 | uzi | **VERMELHO** 25 px | verde 0.53× AK | n/a | n/a | **VERMELHO** 2 falha(s) |
-| p90 | **VERMELHO** 71 px | verde 0.68× AK | n/a | verde 0.06 | **VERMELHO** 1 falha(s) |
+| p90 | **VERMELHO** 71 px | verde 0.68× AK | n/a | verde 0.06 | verde ok |
 
 **Vermelhas na máquina:** 17 de 26 — awp, m4, g3, md97, carbine, m400, mosin, rem700, svd, g3sg1, sks, lmg, scar, tavor, famas, uzi, p90.
 
@@ -178,5 +178,5 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **tavor** VERMELHO — mão vazia: vazia 38% — mão de apoio na tela e o carregador a 0.89 palma dela, fora do quadro. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
 - **famas** VERMELHO — mão vazia: vazia 38% — mão de apoio na tela e o carregador a 0.85 palma dela, fora do quadro. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
 - **uzi** VERMELHO — em repouso o carregador não encosta na arma (Infinity palma); tira carregador fantasma: a peça do carregador mede 100% da arma. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
-- **p90** VERMELHO — tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
+- **p90** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:arma vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 
