@@ -39,6 +39,9 @@ function bindImport(clause, mod) {
 }
 
 async function loadModule(spec, fromDir) {
+  /* Builtin do Node roda no frontmatter como em qualquer módulo do servidor; resolver
+     `node:fs` como caminho quebra o render e derruba o arnês inteiro. Antes do .json. */
+  if (spec.startsWith('node:')) return await import(spec);
   const base = resolve(fromDir, spec);
   if (base.endsWith('.json')) return { default: JSON.parse(await readFile(base, 'utf8')) };
   for (const candidate of [`${base}.ts`, `${base}.mjs`, `${base}.js`, join(base, 'index.ts')]) {
@@ -113,7 +116,8 @@ async function renderIndex() {
        nada", com o F5 normal não resolvendo. Em produção não aparece porque o
        release sobe a versão; é um buraco só do laço de desenvolvimento, que é
        exatamente onde ele custa caro. */
-    .replace(/href=\{`\/style\.css\?v=\$\{V\}`\}/, `href="/style.css?v=${V}-${CSS_REV}"`)
+    // Se o próprio frontmatter já declara CSS_REV, vale o dele; o daqui é só o fallback.
+    .replace(/href=\{`\/style\.css\?v=\$\{V\}(?:-\$\{CSS_REV\})?`\}/, `href="/style.css?v=${V}-${scope.CSS_REV || CSS_REV}"`)
     .replaceAll(
       'href={`/map-preview.css?v=${V}-${JS_REV}`}',
       `href="/map-preview.css?v=${V}-${JS_REV}"`,
