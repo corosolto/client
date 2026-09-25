@@ -36,7 +36,7 @@
 - O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
 
 ### Corrigido
-- Funkeiros e Tribos Urbanas voltam a usar somente os pools de voz históricos da v7. As 36 falas Gemini rejeitadas deixam de ser alcançáveis pelos resolvers de evento, rádio e seleção; se o pack contiver apenas takes novos sem aprovação, o runtime fica em silêncio. Voz genérica, Web Speech e música removida continuam ausentes.
+- O Campinho da Quebrada ganha cobertura nos dois portões e nas laterais, placar de várzea e navegação contínua nas quinas, preservando duas rotas separadas em CTF e partidas 5x5/8x8.
 - Lobisomem Mítico deixa de puxar aliados de outras facções, passa a resolver M nas telas de inspeção, usa luva M distinta no viewmodel, ganha animação própria com pés no chão e volta a publicar os retratos de resultado aprovados, que tinham saído do quadro medido no elenco.
 - O pack integrado do Lobisomem passa a servir os clipes próprios na sequência do runtime, com o fallback compartilhado preservado só para comparação e regressão.
 - No Sertão, as três carroças deixam passagem pelos dois flancos e as cinco casas diante dos respawns passam a ter porta, saída lateral, janela com revide e navegação intencional para bots.
