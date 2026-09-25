@@ -1206,9 +1206,8 @@ export function buildFerroVelho(scene, T) {
       // A cuba chega a 0,89 m: sem pegada o jogador atravessava o carrinho inteiro.
       collide(bx, bz, 0.72, 0.82, 0.95);
     };
-    // Ao NORTE da porta do escritório: em (3,2, -30,4) a pegada ficava no vão e cortava
-    // o grafo do barraco (eval:mapcontrato MC3, 21 ilhados — BUG-179 em KNOWN-BUGS).
-    // O colisor do carrinho já sai de dentro do próprio `barrow()` (BUG-54).
+    // Ao NORTE da porta: em (3,2, -30,4) a pegada ficava no vão e cortava o grafo do
+    // barraco (MC3, 21 ilhados — BUG-179). O colisor sai de dentro do `barrow()`.
     barrow(2.5, -33.0, 0.6);
     /* BATERIAS empilhadas (terminais esverdeados de sulfato) + ROLOS DE FIO DE COBRE —
        é literalmente o que o ferro velho compra; ficam à sombra do barraco. */
@@ -2008,9 +2007,8 @@ export function buildFerroVelho(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 61, separacao: 13 },
   });
 
-  /* BUG-57 (rato no pátio e o caramelo de guarda) já é atendido pelo bloco de
-     `createFavelaAmbience` acima, que a main trouxe com ratos, pombos, cachorro e
-     baratas — uma declaração só de vida local por mapa. */
+  /* BUG-57 (rato no pátio, caramelo de guarda) já vem do `createFavelaAmbience` acima,
+     que a main trouxe com ratos, pombos, cachorro e baratas. */
 
   return {
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
