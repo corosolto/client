@@ -1,6 +1,12 @@
 ---
 import pkg from '../../package.json';
 import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL } from '../lib/site';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+
+/* Revisão do CSS pelo CONTEÚDO: a versão do pacote não muda quando só o CSS muda, e o
+   WebView servia CSS velho. Hash do arquivo na URL derruba o cache sozinho. */
+const CSS_REV = createHash('sha1').update(readFileSync('public/style.css')).digest('hex').slice(0, 8);
 
 /* ESTÁTICA de propósito: o Stateloop não publica SSR e `prerender = false` aqui
    fazia o build não emitir dist/client/index.html. Idioma por país: /api/geo-lang. */
@@ -575,7 +581,7 @@ window.__GEO_LANG__ = (function () {
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href={`/map-preview.css?v=${V}-${JS_REV}`}>
-<link rel="stylesheet" href={`/style.css?v=${V}`}>
+<link rel="stylesheet" href={`/style.css?v=${V}-${CSS_REV}`}>
 <!-- Todo módulo local precisa passar pelo import map versionado. -->
 <script type="importmap" is:inline set:html={IMPORTMAP}></script>
 <link rel="stylesheet" href={`/map-preview.css?v=${V}-${JS_REV}`} />
@@ -1281,7 +1287,7 @@ window.__GEO_LANG__ = (function () {
 <div id="howto-panel" class="screen hidden">
   <div class="panel center-panel">
     <h2>COMO JOGAR</h2>
-    <div class="howto-grid">
+    <div class="howto-grid howto-keys">
       <span>W A S D</span><span>Mover</span>
       <span>MOUSE</span><span>Mirar</span>
       <span>SHIFT</span><span>Correr</span>
@@ -1295,6 +1301,19 @@ window.__GEO_LANG__ = (function () {
       <span>M</span><span>Trocar de time</span>
       <span>TAB</span><span>Placar</span>
       <span>ESC</span><span>Pausar</span>
+    </div>
+    <!-- Versão TOQUE (só no mobile via CSS): o celular não tem teclado, então os controles
+         são os dois sticks + botões da tela. Mantém o mesmo grid pra herdar o estilo. -->
+    <div class="howto-grid howto-touch">
+      <span>Stick esq.</span><span>Mover</span>
+      <span>Stick dir.</span><span>Olhar / mirar</span>
+      <span>Miolo dos sticks</span><span>Atirar (aperta o centro)</span>
+      <span>Botão ◎</span><span>Mira telescópica (AWP)</span>
+      <span>Botão ↻</span><span>Recarregar</span>
+      <span>Botão ⌄</span><span>Agachar</span>
+      <span>Barra de baixo</span><span>Trocar arma / granadas</span>
+      <span>PEGAR</span><span>Pegar arma do chão</span>
+      <span>Botão II</span><span>Pausar</span>
     </div>
     <!-- index.astro:502 - O TEXTO TEM QUE DIZER O FORMATO DE CADA MODO, E OS DOIS SÃO
          DIFERENTES DE PROPÓSITO (o dono: "o captura estava com cronometragem - isso não
