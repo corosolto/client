@@ -163,17 +163,19 @@ const F = (familia, chassi, extra = {}) => ({
   ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.3 },
   ...extra,
 });
-// recoilScale: coice de quadril ≥ 4% da diagonal da arma (captura/coice.mjs; golden AK 3,6% só no mount).
 // A 'ak' fica fora: o dono manteve a golden aprovada (24/09); o chassi AK do pack serve a 'akm'.
 const A = (alivio) => ({ auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio });
 const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 };
+// recoilScale: coice de quadril ≥ 4% da diagonal da arma (captura/coice.mjs; golden AK 3,6% só no mount).
 export const VM_FABRICA = Object.freeze({
   akm: F('ak', 'AK', { recoilScale: 3.5, ads: A(0.3) }),
   m4: F('ar', 'MX16A4', { recoilScale: 3.8, ads: A(0.1) }),
   famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
-  g3: F('g3', 'G3', { recoilScale: 5, ads: A(0.1) }),
-  svd: F('svd', 'SVD', { recoilScale: 2.2, ads: A(0.34) }),
-  awp: F('sniper', 'L96X', { recoilScale: 3.5, ads: A(0.12) }),
+  // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
+  // entra; nesses três a extensão não fura a câmera (crítico, rodada 1).
+  g3: F('g3', 'G3', { manga: true, recoilScale: 5, ads: A(0.1) }),
+  svd: F('svd', 'SVD', { manga: true, recoilScale: 2.2, ads: A(0.34) }),
+  awp: F('sniper', 'L96X', { manga: true, recoilScale: 3.5, ads: A(0.12) }),
   mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, ads: A(0.4) }),
   mp5: F('mp5', 'MPS5', { recoilScale: 2.3, ads: A(0.1) }),
   p90: F('p90', 'PDW90', { recoilScale: 2.4, ads: A(0.3) }),
