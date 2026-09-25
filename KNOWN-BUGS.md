@@ -3504,6 +3504,20 @@ mudar.
 
 ## P1 — o jogador vê
 
+### ~~BUG-147 · escadas e guaritas do Carandiru não eram acessíveis; janelas do pavilhão flutuavam sem edifício~~ · CORRIGIDO LOCALMENTE 10/09/2026
+
+**Sintoma (do dono):** *"nenhuma das escadas permite chegar funcionalmente ao muro perimetral e às guaritas; o prédio central tem janelas suspensas sem parede/volume arquitetônico"*.
+
+**Causa raiz — confirmada.** `CAR2` aceitava nomes e arrays: `guardEntries` eram `Group` vazios, sem piso, destino nem percurso. O recibo C4 teleportava o corpo ao início de cada escada e aceitava apenas atingir a altura alvo. As quatro guaritas tinham o piso físico em 6,95 m enquanto a passarela termina em 5,80 m, sem `elevatedSurface` interna. No pavilhão, quatro massas de canto sustentavam parte das fachadas; as janelas restantes eram cascas em x=±4,575/z=±7,575 sem parede ou piso adjacente.
+
+**Reprodução:** `node tools/eval/carandiru-jogabilidade-check.mjs --checkpoint=C4`. A régua fortalecida exige pátio → escada → passarela → interior de cada guarita nos dois sentidos e suporte/piso real em cada janela.
+
+**Régua:** `tools/eval/carandiru-jogabilidade-check.mjs` (`npm run eval:carandiru`). Mutantes: `patamar-desconectado`, `degrau-alto`, `colisao-bloqueando`, `guarita-inalcancavel` e `janela-sem-parede`.
+
+**Correção:** quatro acessos laterais agora encontram as quatro passarelas em 5,80 m; seis rotas saem do pátio, percorrem os degraus e entram em seis guaritas com piso real, e voltam pelo mesmo caminho. As guaritas ganharam interiores, peitoris e contracobertura física; as duas torres centrais enxergam no máximo 2/4 spawns e preservam três posições reais de contratiro. O Pavilhão 6 ganhou piso superior completo, fachadas construídas ao redor dos vãos, uma escada contínua e pontos de tiro apoiados em parede e piso reais.
+
+**Evidência:** CAR2/CAR3/CAR5 verdes; 12/12 percursos pátio↔guarita e 2/2 pátio↔galeria executados no Chrome/WebGL por `Game._moveEntity`, com erro final máximo de 0,418 m. `eval:mapcontrato` mede 1.223 nós, 14.280 arestas e grafo conexo. Os cinco mutantes causais são mordidos. Capturas 1200×800 ficam em `artifacts/carandiru-c4/final/`; aprovação humana permanece pendente.
+
 ### ~~BUG-142 · a replay cam de headshot arrancava a câmera do jogador por 1,2 s~~ · CORRIGIDO LOCALMENTE 06/09/2026
 
 **Relato do dono (06/09):** tirar o efeito de câmera do headshot.
@@ -8253,6 +8267,55 @@ comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 
 Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.
 
+## Campinho do Morro — erro JS intermitente na entrada da partida (07/09/2026)
+
+Observado **1 vez em 4 execuções** do capturador nesta lane, sempre em `campomorro`,
+sem erro nos outros mapas da mesma rodada:
+
+```
+Cannot read properties of undefined (reading 'id')
+```
+
+Evidência: `artifacts/mapas-polish/recovery-fixed/browser-med.json`, campo `errors` da
+entrada `campomorro`, gravado por
+`node tools/eval/mapas-polish-capture.mjs artifacts/mapas-polish/recovery-fixed campomorro`.
+Duas reexecuções isoladas do mesmo comando deram `errors: 0`; portanto é corrida, não
+falha determinística, e **não** foi atribuída a arquivo:linha ainda.
+
+`Régua: nenhuma.` O capturador passou a registrar `e.stack` em vez de `e.message`
+(`tools/eval/mapas-polish-capture.mjs`), de modo que a próxima ocorrência já sai com pilha.
+Não corrigir às cegas: sem a pilha, qualquer palpite sobre torcida/CTF/bots é especulação.
+O mapa chega a `live`, carrega os props e joga nas quatro vistas fixas.
+
+### ~~BUG-146 · VM14: rack norte da Penitenciária encosta na guarita~~ · CORRIGIDO LOCALMENTE 08/09/2026
+
+Relato recebido na integração do PR #540: “reproduza o gate VM14 do pickup
+inalcançável da Penitenciária e determine se é introduzido pela pilha ou herdado”.
+
+**Régua vermelha:** `PATH=/opt/homebrew/bin:$PATH node tools/eval/pickup-check.mjs
+penitenciaria` no merge local de `0265aa76` com `origin/main` mediu 1 de 66 pickups
+sem alcance. A `carbine` do rack norte foi empurrada para `(11,18; 46,60)` e ficou
+a 1,23 m da célula alcançável mais próxima; VM14 exige no máximo 1,0 m.
+
+**Origem:** a mesma régua em `origin/main` mede 0/66 falhas; no HEAD `0265aa76` do
+#540 mede 1/66. Portanto a falha é introduzida pela pilha. O colisor cheio da
+`guarita_muro` norte cobre também o vão sob a cabine elevada; `_freeSpot` empurra a
+arma para o canto entre guarita e muro. Evidências locais em
+`artifacts/mapas-stack-root/vm14-{origin_main,codex_mapas-polish-integral}.{log,json}`.
+
+**Correção:** as duas guaritas mantêm o mesmo modelo e posição, mas o colisor cheio
+foi substituído pelos oito apoios de 0,30 m que correspondem à estrutura visível.
+VM14 passou para 0/66 falhas; pior distância até chão alcançável caiu de 1,23 m para
+0,14 m. Spawns, pickups declarados, CTF e limites não mudaram.
+
+**Mutante:** `node tools/eval/pickup-check.mjs penitenciaria
+--mutante=torre-bloco` restaura o AABB cheio da guarita direita. A régua volta a
+1/66 sem alcance, com a `carbine` a 1,33 m, e sai 1. O mutante falha se não encontrar
+os oito apoios ou se não reproduzir a arma específica.
+
+**Custo declarado:** quatro AABBs estreitos por guarita em vez de um AABB grande;
+o vão sob a cabine passa a ser navegável e os apoios continuam sólidos. Aparência,
+draw calls e posição dos GLBs não mudam. Teste manual sob a guarita ainda pendente.
 ### BUG-VM-FECHAMENTO-RUBEN — arsenal reprovado pelo dono, retomada 13/09/2026
 
 **ABERTO.** Ruben autorizou prosseguir até terminar. Esta lista tem precedência

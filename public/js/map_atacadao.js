@@ -6,6 +6,7 @@ import { placeProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { fabricasUV } from './map_uv.js';
 
 
 export const ATACADAO_PROPS = [
@@ -163,27 +164,32 @@ export function buildAtacadao(scene, T) {
 
   // Reutilizar geometrias iguais preserva materiais/transformações e evita
   // upload, binding e coleta de centenas de buffers repetidos.
+  /* UV em metros (map_uv.js): só reescala UV; sem material (placa, proxy de
+     bounds) cai no cache liso. */
+  const geoUV = fabricasUV();
   const boxGeoCache = new Map(), planeGeoCache = new Map();
-  const boxGeo = (w, h, d) => {
+  const boxGeo = (w, h, d, mat) => {
+    if (mat) return geoUV.box(w, h, d, mat);
     const key = `${w}|${h}|${d}`;
     if (!boxGeoCache.has(key)) boxGeoCache.set(key, new THREE.BoxGeometry(w, h, d));
     return boxGeoCache.get(key);
   };
-  const planeGeo = (w, h) => {
+  const planeGeo = (w, h, mat) => {
+    if (mat) return geoUV.plano(w, h, mat);
     const key = `${w}|${h}`;
     if (!planeGeoCache.has(key)) planeGeoCache.set(key, new THREE.PlaneGeometry(w, h));
     return planeGeoCache.get(key);
   };
 
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
-    const m = new THREE.Mesh(boxGeo(w, h, d), mat);
+    const m = new THREE.Mesh(boxGeo(w, h, d, mat), mat);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
     root.add(m);
     if (opts.collide !== false) { colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 }); occluders.push(m); }
     return m;
   }
-  function addFloor(w, d, mat, x, z, y = 0.01) { const m = new THREE.Mesh(planeGeo(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; }
+  function addFloor(w, d, mat, x, z, y = 0.01) { const m = new THREE.Mesh(planeGeo(w, d, mat), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; }
   const col = (x, z, hx, hz, h) => colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: h, minZ: z - hz, maxZ: z + hz });
   const worldPropBatch = new PropBatch({ bucket: 18, tag: 'atacadao-entorno', shadowMin: 0.04 });
   const interiorPropBatch = new PropBatch({ bucket: 0, tag: 'atacadao-interior', shadowMin: 0.04 });
@@ -266,7 +272,7 @@ export function buildAtacadao(scene, T) {
   const rackBox = (g, w, h, d, mat, dx, dy, dz, sombra = true) => {
     const key = `${w}|${h}|${d}|${mat.uuid}|${sombra ? 1 : 0}`;
     let part = rackParts.get(key);
-    if (!part) { part = { geo: boxGeo(w, h, d), mat, sombra, matrices: [] }; rackParts.set(key, part); }
+    if (!part) { part = { geo: boxGeo(w, h, d, mat), mat, sombra, matrices: [] }; rackParts.set(key, part); }
     rackDummy.position.set(g.position.x + dx, dy + h / 2, g.position.z + dz);
     rackDummy.rotation.set(0, 0, 0); rackDummy.scale.set(1, 1, 1); rackDummy.updateMatrix();
     part.matrices.push(rackDummy.matrix.clone());
