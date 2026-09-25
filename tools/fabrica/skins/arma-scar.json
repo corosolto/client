@@ -1,0 +1,11 @@
+{
+  "id": "scar",
+  "descricao": "Identidade SCAR-H sobre o Mk14 EBR do pack: caixa e chassi em FDE (areia escura), polímero FDE mais escuro, cano e peças de aço pretos. Só material — a malha é a do pack.",
+  "materiais": {
+    "finish_chassis": { "cor": "a68d64", "metal": 0.15, "rugosidade": 0.62 },
+    "finish2": { "cor": "a68d64", "metal": 0.15, "rugosidade": 0.62 },
+    "polymer": { "cor": "8c7654", "metal": 0.0, "rugosidade": 0.7 },
+    "finish": { "cor": "26272a", "metal": 0.6, "rugosidade": 0.45 },
+    "finish_bright": { "cor": "3a3b3e", "metal": 0.7, "rugosidade": 0.4 }
+  }
+}

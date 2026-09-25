@@ -1061,6 +1061,71 @@
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/revolver38.json"
     },
+    "scar": {
+      "schemaVersion": 1,
+      "id": "scar",
+      "arma": "scar",
+      "chassi": "Mk14EBR",
+      "variante": true,
+      "url": "/private-assets/viewmodels/fabrica/scar-fabrica.glb",
+      "bytes": 3819096,
+      "sha256": "e15febed0de571bb81b388fd4b64a1852785906412ddaf675ab66e1957dc7b01",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_MK14_Idle.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.6833,
+          "braco": "A_FP_MK14_Reload_Tac.FBX",
+          "arma": "A_W_MK14_Reload_Tac.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 2.6833,
+          "braco": "A_FP_MK14_Reload_Tac.FBX",
+          "arma": "A_W_MK14_Reload_Tac.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 7,
+      "file": "viewmodels/fabrica/scar-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/scar.json",
+      "insumos": {
+        "ficha": "43fcd215d66a1807e68ba92360b72690f3f115f023fbf1bf065c9ed89e4a8ffe",
+        "chassi": "be374f2e21e6dc1740c1b2035b663d89b1c123876b05791d249ec2dfdee7723d",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "eaa6c85c032b1c14aa9b4a7476e751b5f83e88fd7d708b07598d5b9bbf81dfc7",
+        "poseFbx": "9644151e1f59023162299a7e2edfe46717f4c617f9bc3d9624ce888b263225d5",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_tactical:braco": "d6a0cc9ca319146422a61e3d5d8f932002d6ceb91ad734a7d36022b97eba1237",
+        "clipe:reload_tactical:arma": "d998026a70d039fff2b44fa5530fa87f401118660ecab906b78c1a97dc1fd05a",
+        "clipe:reload_empty:braco": "d6a0cc9ca319146422a61e3d5d8f932002d6ceb91ad734a7d36022b97eba1237",
+        "clipe:reload_empty:arma": "d998026a70d039fff2b44fa5530fa87f401118660ecab906b78c1a97dc1fd05a",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "zonaLivre:quebra-chama-scar": "16f0bc90aba6cb1c236e95e45acd51d6e9f1fdf6fd328b313ab46d033eebd99f"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/scar.json"
+    },
     "shotgun": {
       "schemaVersion": 1,
       "id": "shotgun",
