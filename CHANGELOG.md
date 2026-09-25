@@ -26,6 +26,7 @@
 ## Não lançado — 2026-09-06
 
 ### Adicionado
+- Contador central de SEQUÊNCIA mostra os abates da vida atual confirmados pelo jogo/servidor, com identidade visual do CSBrasil; morte, round e reconexão o zeram sem apagar o total da partida. Régua `eval:killstreak` cobre SP e MP com seis mutantes.
 - Contador de ABATES do jogador no HUD, na coluna de estado dele: algarismo grande com rótulo miúdo, conta a PARTIDA (não o abate do time nem o da rodada) e não zera na virada de round — antes o número pessoal só existia atrás do TAB. Régua `eval:abateshud` com quatro mutantes, no `check:fast`.
 - Sertão da Treta substitui o Velho Oeste: casario de taipa, Caatinga, Canudos, calango quadrúpede, aves, cabras e galinha com pintinhos. Preview real com vídeo silencioso ao passar o mouse; criação com caminhada e pausas. O memorial de Padre Cícero permanece fora desta entrega.
 - Camada operacional (`tools/ops/`, `npm run ops:diag`): o jogo diagnostica boot, deploy, assets no edge, APIs, telemetria, ranking e partida sintética e explica cada achado com causa provável, evidência, impacto e próximo passo; separa "tecnicamente verde" de "pronto para lançamento". Mutantes em `ops:selftest` e unidades em `ops:test`, os dois no `check:fast`.
