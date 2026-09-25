@@ -79,30 +79,42 @@ export function buracosDaArma(m) {
    com o aro ≥ 3 mm mais perto que ela, no topo da silhueta; a mais alta vence. */
 export function janelaDeOptica(m, { y0, altArma }) {
   const { w, h, px, prof } = m;
-  // Cortes nas profundidades que existem na metade de cima da arma (mm), no máximo 80.
+  const arma = (i) => px[i] === 1 || px[i] === 3;
+  // Recorte: metade de cima da silhueta (+ margem), onde mora o aparelho; cortes em TODAS as
+  // profundidades que existem ali (a lente fica 3–7 mm atrás do aro: passo largo pula a fresta).
+  const yMeio = Math.min(h - 1, Math.round(y0 + 0.5 * altArma));
+  let cx0 = w; let cx1 = -1;
   const niveis = new Set();
-  const yMeio = y0 + 0.5 * altArma;
-  for (let y = y0; y <= yMeio; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if ((px[i] === 1 || px[i] === 3) && prof[i]) niveis.add(prof[i]); }
+  for (let y = y0; y <= yMeio; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x; if (!arma(i) || !prof[i]) continue;
+    niveis.add(prof[i]); if (x < cx0) cx0 = x; if (x > cx1) cx1 = x;
+  }
+  if (cx1 < 0) return null;
+  cx0 = Math.max(0, cx0 - 2); cx1 = Math.min(w - 1, cx1 + 2);
+  const ry0 = Math.max(0, y0 - 2); const cw = cx1 - cx0 + 1; const ch = yMeio - ry0 + 1;
   const ord = [...niveis].sort((a, b) => a - b);
-  const passo = Math.max(1, Math.ceil(ord.length / 80));
   const achadas = [];
-  for (let k = 0; k < ord.length; k += passo) {
-    const T = ord[k] + 1;
-    const corte = new Uint8Array(w * h);
-    for (let i = 0; i < w * h; i++) if ((px[i] === 1 || px[i] === 3) && prof[i] && prof[i] < T) corte[i] = 1; else if (px[i] === 2) corte[i] = 2;
-    for (const b of buracosDaArma({ w, h, px: corte })) {
+  const corte = new Uint8Array(cw * ch);
+  for (const nivel of ord) {
+    const T = nivel + 1;
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+      const i = (y + ry0) * w + x + cx0;
+      corte[y * cw + x] = arma(i) && prof[i] && prof[i] < T ? 1 : px[i] === 2 ? 2 : 0;
+    }
+    for (const b0 of buracosDaArma({ w: cw, h: ch, px: corte })) {
+      const b = { ...b0, cx: b0.cx + cx0, cy: b0.cy + ry0, x0: b0.x0 + cx0, x1: b0.x1 + cx0, y0: b0.y0 + ry0, y1: b0.y1 + ry0 };
       const bw = b.x1 - b.x0 + 1; const bh = b.y1 - b.y0 + 1;
-      if (b.n < 25 || b.bordaArma < 0.9 || bh > 0.15 * h || bw > 0.15 * w || b.cy > yMeio) continue;
+      if (b.n < 25 || b.bordaArma < 0.9 || bh > 0.15 * h || bw > 0.15 * w) continue;
       if (b.n / (bw * bh) < 0.6 || bw / bh < 0.5 || bw / bh > 2) continue;
-      // Fundo do buraco = lente (arma) ≥ 4 mm atrás do corte; vazio no fundo é o aro normal.
+      // Fundo do buraco = lente (arma) ≥ 3 mm atrás do corte; vazio no fundo é o aro normal.
       let lente = 0; let soma = 0;
       for (let y = b.y0; y <= b.y1; y++) for (let x = b.x0; x <= b.x1; x++) {
-        const i = y * w + x; if (corte[i] || !(px[i] === 1 || px[i] === 3)) continue; lente++; soma += prof[i];
+        const i = y * w + x; if (corte[(y - ry0) * cw + x - cx0] || !arma(i)) continue; lente++; soma += prof[i];
       }
       if (lente < 0.8 * b.n || soma / lente < T + 3) continue;
       // A janela é o TOPO do aparelho: acima dela só o aro (≤ metade da altura dela + 6 px).
       let acima = 0;
-      for (let x = b.x0; x <= b.x1; x++) for (let y = 0; y < b.y0; y++) { const i = y * w + x; if (px[i] === 1 || px[i] === 3) acima++; }
+      for (let x = b.x0; x <= b.x1; x++) for (let y = 0; y < b.y0; y++) if (arma(y * w + x)) acima++;
       if (acima / bw > 0.5 * bh + 6) continue;
       achadas.push({ ...b, fundo: true, T, profLente: soma / lente });
     }
