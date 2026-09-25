@@ -259,11 +259,11 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.652 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.772 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
-| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 753 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 757 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 325 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 241 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 785 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 974 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 791 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 981 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
 | `penitenciaria` | CARANDIRU | **captura** | `map_penitenciaria.js` | 1.009 |
 
