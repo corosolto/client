@@ -8,6 +8,7 @@ import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { fabricasUV } from './map_uv.js';
 
+
 export const ATACADAO_PROPS = [
   // armazém (kit atacadao_r3, Mint ~4,5k tris cada)
   'estante_pallets', 'freezer', 'ilha_caixas',

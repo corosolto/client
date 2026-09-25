@@ -46,7 +46,10 @@ for (const nome of readdirSync(DIR).filter((f) => f.endsWith('.mjs'))) {
   const entraNasFalhas = /falhas\.push/.test(depois.slice(0, 300));
   const saida = texto.match(/process\.exit(?:Code)?\s*[(=]\s*([^;)]*)\)?/g) || [];
   const flagNoExit = saida.some((e) => /mutacaoCega|cega/i.test(e));
-  if (!entraNasFalhas && !flagNoExit) {
+  // terceira forma correta (motoca/pilot, vindos da main): exit(1) DIRETO
+  // logo após o anúncio — não passa pelo falhas.length.
+  const saiDireto = /process\.exit\(1\)/.test(depois.slice(0, 300));
+  if (!entraNasFalhas && !flagNoExit && !saiDireto) {
     falhas.push(`MC1 ${nome}: anuncia "portão cego" e sai por \`${saida[saida.length - 1] || 'nada'}\` — a lista de falhas está vazia nesse caso, então o processo sai VERDE`);
   }
 }

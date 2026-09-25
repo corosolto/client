@@ -29,7 +29,7 @@
 import * as THREE from 'three';
 import { MAPS, resolveMapId } from './js/maps.js';
 import { initTextures } from './js/textures.js';
-import { CHARACTERS } from './js/characters.js';
+import { CHARACTERS, setCharacterRendererCapabilities } from './js/characters.js';
 import { preloadCharacterAssets, buildCharacterModel } from './js/glbchars.js';
 import { enableLightBloom } from './js/bloom.js';
 
@@ -43,6 +43,15 @@ renderer.setSize(W, H); renderer.setPixelRatio(1);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
+
+/* main.js:50 faz esta chamada; a bancada NÃO fazia. Sem ela `_hasTextureLod`
+   fica false, `regOn` é sempre false e o piso de albedo REGIONAL (o mecanismo
+   que o C10 instalou) nunca entra: a bancada media o degrau por texel, que é o
+   caminho de WebGL1. Medido: `?charalbreg=0` dava delta 0,00 nos 9 personagens
+   — o kill-switch do mecanismo não mudava um pixel porque o mecanismo já estava
+   desligado. É a LIÇÃO 3 (régua medindo outro mundo) em cima do exato número
+   que a régua existe para vigiar. */
+setCharacterRendererCapabilities(renderer);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, W / H, 0.08, 400);

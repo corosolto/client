@@ -1,0 +1,291 @@
+# Plano de produção dos viewmodels — inventário medido e ordem de trabalho
+
+**Data:** 11/09/2026
+**Estado:** proposto, aguardando decisão do dono
+**Base:** `claude/vm-unificado` · servidor de teste `localhost:4361`
+
+Este documento existe porque a frente de viewmodel já foi refeita três vezes por
+falta de um inventário do que existe. Tudo abaixo é medido, com o comando que
+reproduz. Nada aqui é estimativa.
+
+---
+
+## 1 · O que temos hoje, no jogo
+
+| caminho | armas | fonte do braço | estado |
+|---|---|---|---|
+| **golden** (`coro/<arma>-hires.glb`) | 13 | `Requests_Studio_Hands` (doador `ak-12animated`) | escala convergida, erro 0,0% |
+| **família** (`private-assets/<fam>/`) | 7 | `Hand-Tool1` (KINEMATION) | serve, mas é a fonte que a casa descartou |
+| sem viewmodel autorado | 0 | — | — |
+
+As 13 no golden: `ak` `m4` `md97` `scar` `famas` `m92` `sks` `svd` `mosin` `lmg`
+`mp5` `uzi` `p90`.
+
+As 7 na família: `awp` `shotgun` `carbine` `g3` `pistol` `deagle` `revolver38`.
+
+> `GOLDEN-AK-DECISION.md` (31/08, aprovada por crítico adversarial) descartou o
+> KINEMATION como fonte canônica. O dono confirmou em 11/09 que a mão da AK é a
+> certa. O destino das 7 é o golden.
+
+**Dívidas medidas, todas com régua no ar:**
+
+- `eval:vm-consistencia` — **2/24**: só `ak` e `akm` declaram `parts.mag`. Nas
+  outras a animação puxa o osso e a geometria não segue: a mão puxa o nada.
+- Enquadramento: o builder aplica em todas os deslocamentos de câmera da AK.
+- `BUG-VM-ESCALA-PISTOLA` — o piloto da pistola entra 144× maior; ela segue na família.
+
+---
+
+## 2 · O acervo, inventariado
+
+`/Volumes/Zenith/Archives/downloads/Downloads` — 8,9 GB, 917 itens.
+
+### 2.1 · KINEMATION Ultimate (`fpsanimationpack_ultimate.unitypackage`, 516 MB)
+
+**É uma versão MAIOR do pack já em uso:** 23 famílias contra as 18 extraídas.
+
+Novas: **`ASVal`** · **`Drake-12`** · **`Kolibri`** · **`M1911`** · **`RPG`**
+
+`Drake-12` é shotgun e `M1911` é pistola — duas das que o builder recusa hoje.
+
+```sh
+tar xzf fpsanimationpack_ultimate.unitypackage -C <dir>
+for f in $(find <dir> -name pathname); do cat "$f"; echo; done | sort -u
+```
+
+### 2.2 · CS 1.6 fonte (`cs16_widescreen_src.zip`, 9,5 MB)
+
+**771 arquivos: 400 `.smd`, 39 `.qc`, 255 `.bmp`.** É o código-fonte dos
+viewmodels originais — 30 armas, cada uma com `draw.smd`, `idle1.smd`,
+`reload.smd`, `lhand.smd` e o template da malha.
+
+`v_ak47 v_aug v_awp v_deagle v_elite v_famas v_fiveseven v_g3sg1 v_galil
+v_glock18 v_knife v_m249 v_m3 v_m4a1 v_mac10 v_mp5 v_p228 v_p90 v_scout v_sg550
+v_sg552 v_tmp v_ump45 v_usp v_xm1014` (+ granadas, C4, escudo)
+
+É o gabarito de **cadência**, que o repo já consome por
+`tools/viewmodels/cs16-timings.json` e `extract_cs16_timings.py`. O `cs16` de
+cada família no `vmconfig.js` sai daqui.
+
+### 2.3 · ARMS.rar (81 MB) — avaliado e descartado
+
+`ARMS.blend` é um **corpo Mixamo**, não um rig de braço FP: `Ch08_Body` (3.294
+verts) + `Ch08_Hoodie` (1.261), 43 ossos, materiais `Ch08_body`/`Ch08_body1`.
+
+### 2.4 · Doadores GLB com rig — 45 de 69
+
+Os que têm **duas malhas de mão**, que é a estrutura do golden:
+
+| doador | clipes | ossos | MB |
+|---|---:|---:|---:|
+| **`ak-12animated`** (o do golden) | 4 | 77 | 13,6 |
+| `m4a1_animated_low_poly` | 4 | 80 | 1,1 |
+| `animated_shotgun` | 7 | 89 | 11,1 |
+| `lmg_animated` | 1 | 50 | 10,1 |
+| `fps_animated_carbine` | 1 (3 mãos) | 50 | 7,6 |
+| `m16_a2_assault_rifle_-_animated` | 1 (3 mãos) | 60 | 8,0 |
+
+Os de mais clipes, sem par de mãos: `uzi__first_person_animations_2026_remake`
+(**13 clipes**, 1072 ossos), `desert_eagle__first_person_animations` (9, 1068),
+`pistol_animated` (7), `ak74u__free_animation` (7),
+`fps_animations_sniper_rifle` (6), `m4a1-s_cs2__first_person_animations` (5).
+
+---
+
+## 3 · Onde o método atual trava
+
+`build_ak_hires_pilot.py` recusa 4 armas:
+
+```
+carbine   stock mask too small: 0 verts / 0 shells
+shotgun   stock mask too small: 0 verts / 0 shells
+awp       stock mask too small: 32 verts / 1 shells
+g3        stock mask too small: 167 verts / 31 shells
+```
+
+Ele alinha a arma pela **coronha**, apagando as cascas atrás de `x < -0.240`. A
+guarda existe para nunca bissectar uma casca — o comentário dela diz que isso
+"abre o receptor e desconecta a empunhadura". Afrouxá-la é fraude de placar.
+
+**Diagnóstico:** o alinhamento por coronha é uma suposição sobre a silhueta da
+AK. Bullpup (`tavor`), carabina curta, shotgun de bomba e sniper de ferrolho não
+a satisfazem por construção.
+
+---
+
+## 3b · A mão: comparação das quatro fontes, e a decisão
+
+Medido em 11/09/2026:
+
+| fonte | verts | ossos | materiais | separa p/ skin por time? |
+|---|---:|---:|---|---|
+| **`Requests_Studio_Hands`** (aprovada) | **24.818** | **77** | `CoroSolto_FP_Gloves` + `CoroSolto_Mandrake_Sleeves` | sim |
+| `free_fps_arms_gameready_-_rigged` | 8.112 | 52 | `FPS_Arm`, `FPS_Hand` | sim |
+| `fps_arms_gloved` | 5.126 | 47 | `sleeves`, `gloves` | sim |
+| `ARMS.blend` | 4.555 | 43 | `Ch08_body` ×2 | não — é corpo |
+
+**A aprovada fica.** Ganha de 3 a 5× em geometria e 1,5× em ossos, e nenhuma das
+outras justifica a troca.
+
+O motivo decisivo, porém, é outro: a **skin de mão por time** já funciona hoje por
+`applyTeamHandMaterial(material, profile)` em `authoredvm.js:271`, que tinge
+`profile.skin`, `profile.accent` e `profile.sleeve` **casando pelo NOME do
+material** (`CoroSolto_FP_Gloves`, `CoroSolto_*_Sleeves`). Trocar a fonte de mão
+quebra a skin por time até alguém renomear os materiais da fonte nova.
+
+## 3c · O princípio que organiza o resto
+
+Os doadores de hoje trazem conjuntos de clipes muito mais ricos que os 4 da AK:
+
+| doador | clipes | traz o que a AK não tem |
+|---|---:|---|
+| `uzi__..._2026_remake` | 13 | **Aim_In / Aim_Out** (ADS), Walk, Run, Firemode |
+| `desert_eagle__first_person_animations` | 9 | Reload_Empty, Inspect, Unequip, Walk, Run |
+| `animated_shotgun` | 7 | **ReloadStart / Reload / ReloadEnd** (pump) |
+| `pistol_animated` | 7 | EmptyClipReload, Weild |
+| `fps_animations_sniper_rifle` | 6 | **Shot_sight** (tiro mirado) |
+| `m4a1-s_cs2__first_person_animations` | 5 | as animações da M4 do CS2 |
+
+Usar o doador da classe **inteiro** dá animação melhor e traz de volta a
+inconsistência de mão que o dono reclamou — cada doador tem a sua.
+
+> **Princípio: a mão vem de UMA fonte (a aprovada); a animação vem do melhor
+> doador de cada classe, por retargeting.** O maquinário existe
+> (`tools/merge-anims.mjs`, a trilha de retarget).
+
+Corolário: `carbine`, `g3`, `awp` e `shotgun` não falham por defeito delas —
+falham porque estavam sendo forçadas no molde de uma AK.
+
+## 4 · Ordem de trabalho proposta
+
+Em ordem de **impacto ÷ custo**, com a régua de cada passo.
+
+### Onda A — extrair o pack Ultimate (custo baixo, destrava 5 famílias)
+
+Extrair as 5 novas e reconstruir `shotgun` com `Drake-12` e `pistol`/`deagle`
+com `M1911`. É o caminho já automatizado (`bake_family.mjs`), e resolve duas das
+quatro recusas sem tocar no builder.
+
+**Pronto é:** `eval:vm-serving` verde com as famílias novas.
+
+### Onda B — as caixas de pente (a queixa nº 1 do dono) — **são 8, não 22**
+
+**Revisado em 11/09 com a causa raiz medida (BUG-90).** Não são 22 caixas: são
+**8**. As 14 armas golden trazem o pente preso ao osso por *skinning* dentro do
+próprio GLB e **nunca vão precisar de `parts`** — a AK golden mede 18,19 cm de
+curso no `Mag_metarig` durante a recarga. E `shotgun`/`revolver38` não têm osso de
+pente porque não têm pente: `pump_loop` e `cylinder`.
+
+Sobram **quatro**, e só quatro: `awp` `carbine` `deagle` `pistol`. Nelas
+`hidePackGun` (`public/js/vmweapon.js:35-38`) apaga a arma do pack inteira —
+inclusive o pente skinnado — e a arma visível é o wrap Mint, com o carregador
+soldado ao corpo. O osso puxa o invisível.
+
+Quatro e não oito porque `WEAPON_IDS` (`public/js/weapons.js:10-12`) tem 20 armas
+jogáveis, e `akm` `g3` `g3sg1` `m400` `tavor` não estão nela — ficaram no
+`vmconfig` depois do enxugamento 26 → 20 de 31/08. Trabalhar nelas agora é
+produzir para arma que ninguém empunha.
+
+A coreografia já existe: **toda** família com osso `Mag` o anima em
+`reload_tactical` e `reload_empty`, com translação, rotação e escala.
+
+Ferramenta: `tools/viewmodels/derivar-caixa-pente.mjs`, que deriva a caixa do
+perfil de profundidade da malha **dentro da página**, em cima do `weaponModel()`
+real, e só vale depois de reproduzir as duas caixas já aprovadas (`ak`, `akm`).
+Se não reproduzir, ela sai vermelha em vez de aplicar.
+
+**Pronto é:** `node tools/eval/vm-pente-carga.mjs` com carga **visível** acima do
+piso nas 4, e a `vm-consistencia` reescrita para medir o GLB servido em vez do
+campo `parts` — hoje 14 das 22 reprovas dela são falsas.
+
+**Aviso de régua, pago em 11/09.** A caixa derivada foi conferida de dois jeitos
+contra a aprovada da AKM: por **erro de face** deu 1,97 cm, dentro de qualquer
+tolerância razoável — e por **interseção sobre união dos triângulos recortados**
+deu **10,8%**. Quase aprovei um recorte errado com a régua errada. Caixa de pente
+se confere pelo conjunto de triângulos que ela captura, nunca por distância de
+face. E a derivação precisa rodar DENTRO da página, sobre o `weaponModel()` real:
+a reprodução offline da normalização deu 12,43% dos triângulos para a caixa
+aprovada da AK contra os 1,87% de referência — divergência de reimplementação, que
+é a mesma cegueira da `vm-consistencia-check.mjs`.
+
+### Onda B2 — a pistola, que é um caso à parte (medido em 11/09)
+
+A pistola **não** tem o defeito do pente soldado: ela mede 197 vértices visíveis
+no osso `Mag`. Tem um defeito diferente e maior.
+
+`pistol` declara `baked: true` **e** `runtime: 'family'`. Com `baked`, a chave vira
+`pistol#pistol` (`authoredvm.js:432`) e o `attachMintWeapon` só roda quando a chave
+**não** tem `#` (`:526`). Então ele nunca roda: a arma do pacote nunca é escondida
+e o `MINT_WEAPON_PISTOL` que o caminho assado procura **não existe** em
+`pistol/pistol-runtime.glb` — nenhum runtime de família tem nó `MINT_WEAPON_*`. O
+que o jogador empunha é a `SK_G18` do KINEMATION, não a `pistol.glb` do jogo.
+
+E o piloto que existiria para substituí-la tem dois bloqueios já medidos:
+
+| | `ak-hires.glb` (aprovada) | `pistol-hires.glb` (07/09) |
+|---|---|---|
+| mão | `Requests_Studio_Hands` ×2, 85 nós | **`armmesh_Mat_0`, 58 nós** |
+| material da luva | `CoroSolto_FP_Gloves` | `CoroSolto_FP_Gloves` ✓ |
+| pente próprio | por skinning | `CoroSolto_Pistol_Mag` ✓ |
+| escala | correta | **144× maior** (BUG-VM-ESCALA-PISTOLA) |
+
+**E o retarget por nome de osso está descartado entre os dois doadores:**
+`ak-12animated.glb` (111 nós, clipes `Equip/Idle/Shoot/Reload` separados) e
+`fps_pistol_animated.glb` (79 nós, **um clipe só, `allanims`**) compartilham
+**1** nome de nó — `Sketchfab_model`, que é a raiz do Sketchfab, não um osso. Levar
+a mão aprovada para o rig da pistola exige mapa de ossos explícito, não
+casamento por nome. É por isso que `build_pistol_hires_pilot.py` fatia poses por
+número de quadro.
+
+**Pronto é:** `vm-pente-carga` mostrando a malha da `pistol.glb` na tela em vez da
+`SK_G18`, com a mão aprovada e a escala declarada.
+
+### Onda C — enquadramento por arma
+
+O builder aplica `cameraLateralShift` e `cameraVerticalShift` da AK em todas.
+Calibrar por arma com `vm-frame-calibra.mjs`, alvo = a AK em 8,49 px/cm.
+
+**Pronto é:** dispersão de px/cm abaixo de ±10% entre as 20 armas do arsenal.
+
+### Onda D — alinhamento sem coronha (destrava `carbine`, `g3`, `awp`)
+
+Trocar o alinhamento por coronha por alinhamento pelo **eixo do cano + ponto de
+empunhadura**, que toda arma tem. É a mudança estrutural do builder, e a única que
+exige medir contra as 13 já convergidas para provar que não as regride.
+
+**Pronto é:** as 13 saem byte a byte iguais às atuais, e as 3 novas passam.
+
+### Onda E — revisão humana, arma a arma
+
+Nada acima substitui isto. A AK só virou golden depois que o dono jogou.
+
+---
+
+## 5 · O que este plano NÃO propõe, e por quê
+
+- **Não propõe trocar a mão.** Comparado e decidido na seção 3b: a aprovada ganha
+  em geometria e em ossos, e é a única já ligada à skin por time.
+- **Não propõe reautorar animação à mão.** O pack e o CS 1.6 já trazem
+  `draw/idle/reload` por arma; o gargalo nunca foi animação.
+- **Não propõe afrouxar a guarda da coronha.**
+- **Não propõe publicar sem hash.** Em 11/09 a AK aprovada foi sobrescrita porque
+  a verificação comparava **tamanho** e não **sha256** — dois arquivos diferentes
+  tinham os mesmos 3.414.520 bytes. Toda publicação daqui em diante compara hash.
+
+---
+
+## 6 · Requisito do dono, 11/09
+
+> *"no final eu quero skins de mãos diferentes por time ainda, mas deixe tudo na
+> mesma escala"*
+
+Os dois já têm caminho:
+
+- **Skin por time** — funciona hoje, por tintura de material em
+  `applyTeamHandMaterial`. Preservá-la é mais um motivo para a mão não mudar de
+  fonte. Se em algum momento a skin passar de tintura para textura própria por
+  time, o lugar é `MATERIAL_TEXTURE_BASE` (`Hand: T_Arm01`, `Glove: T_Glove01`,
+  `Cloth: T_Cloth01`), que já existe e já é lido do runtime compartilhado.
+- **Mesma escala** — é a Onda C, e o alvo já está medido: a AK em **8,49 px/cm**.
+  A régua de aceitação é dispersão abaixo de ±10% entre as 20 armas do arsenal,
+  contra os 2,8× de dispersão que o baseline de 11/09 mediu.

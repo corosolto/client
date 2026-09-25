@@ -1,0 +1,255 @@
+{
+  "schema": 1,
+  "servedRoot": "/private-assets/viewmodels",
+  "blobPrefix": "viewmodels/sha256",
+  "blobBase": null,
+  "count": 35,
+  "totalBytes": 79092022,
+  "files": [
+    {
+      "path": "ak/akm-baked-runtime.glb",
+      "bytes": 1487308,
+      "sha256": "ebcfd0d3b7874bdb0420040ae65f055408210f34162ab227041d9b29e898dda2",
+      "v": "ebcfd0d3b7",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "ak/m92-baked-runtime.glb",
+      "bytes": 1654024,
+      "sha256": "95b0445bb1e397ae45d22fbf7e92dce408f1dc04dded1f77a4a4e8c857d7cecb",
+      "v": "95b0445bb1",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "ar/carbine-baked-runtime.glb",
+      "bytes": 1631536,
+      "sha256": "8de215edb19630a187143cbc0c09e5a3596d3ed816a3dfe7d741d842cb9834f0",
+      "v": "8de215edb1",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "ar/famas-baked-runtime.glb",
+      "bytes": 1589920,
+      "sha256": "640f3369d7cf586ad7c7f153d556a713e6afcf349ea61d93af6dc792fb180592",
+      "v": "640f3369d7",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "ar/m4-baked-runtime.glb",
+      "bytes": 1506656,
+      "sha256": "2d8e00559ad2e640183b45062f13e5a3b77256d5638831957e8c96af9b510233",
+      "v": "2d8e00559a",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "ar/md97-baked-runtime.glb",
+      "bytes": 1471632,
+      "sha256": "d0989e2f5688ad44d3338cf541fe2345036cea12d57c4695250344362059567f",
+      "v": "d0989e2f56",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "ar/scar-baked-runtime.glb",
+      "bytes": 1526788,
+      "sha256": "958a0223cb2efa703ffe200f17044308a7bf1a9016d786b816e3b1cdc053c20c",
+      "v": "958a0223cb",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "ar/tavor-baked-runtime.glb",
+      "bytes": 1603920,
+      "sha256": "e90326406e6619f8b9799516474857db88f1785f1d56c52f56420cf0cec5ed0f",
+      "v": "e90326406e",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "bolt/mosin-baked-runtime.glb",
+      "bytes": 5298468,
+      "sha256": "52b8db3adc4415364accf34d5b039d1399df988482268150790b4cc40399c56b",
+      "v": "52b8db3adc",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "bolt/rem700-baked-runtime.glb",
+      "bytes": 4695384,
+      "sha256": "439a4859d840b241680cd6a566bf62b989b7a63c01bbf89d45c7d3b24f1e79fa",
+      "v": "439a4859d8",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "deagle/deagle-runtime.glb",
+      "bytes": 3246776,
+      "sha256": "d482ff82bceba3690ff4dd5912f95851d538320a55d9d7f37cf56e32fd2c64a4",
+      "v": "d482ff82bc",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "g3/g3-baked-runtime.glb",
+      "bytes": 1607272,
+      "sha256": "6a4cd484a8df4c35e43fe8ecd13eb5b242d02b39e8aeec3b2bfe55c70f9f4446",
+      "v": "6a4cd484a8",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "g3/g3sg1-baked-runtime.glb",
+      "bytes": 1523360,
+      "sha256": "f6959a3ae2efbc4191ac48bc77f9e10b4ddf220d8acf979f5598cfff5047002c",
+      "v": "f6959a3ae2",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "lmg/lmg-baked-runtime.glb",
+      "bytes": 6466928,
+      "sha256": "3552c724aee62b11cb7bf9b67e069bb2c6c28cfffc89a8a42c84257b9fca536f",
+      "v": "3552c724ae",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "marksman/sks-baked-runtime.glb",
+      "bytes": 5473264,
+      "sha256": "a52560d382cc9c48804bf879e40f5eeed1e248ada22f9f74fa4c12b1cc19d871",
+      "v": "a52560d382",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "mp5/mp5-runtime.glb",
+      "bytes": 1550620,
+      "sha256": "ac4630c4941b33e626ebbee61071c3b5c558de24647338da87da32346cba9903",
+      "v": "ac4630c494",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "p90/p90-baked-runtime.glb",
+      "bytes": 1477620,
+      "sha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
+      "v": "3eece3e0fb",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "pistol/pistol-runtime.glb",
+      "bytes": 3006796,
+      "sha256": "04c126d93148f9cf0ffa07927f4d09cde2067d9abbc9ddcd25d3b811923fa3b8",
+      "v": "04c126d931",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "recoil.json",
+      "bytes": 78732,
+      "sha256": "f7fd16adea20ca8f9e856eaa56ec0f94f667972a611c201a2ce227ab2fb27265",
+      "v": "f7fd16adea",
+      "contentType": "application/json"
+    },
+    {
+      "path": "revolver/revolver-runtime.glb",
+      "bytes": 4074036,
+      "sha256": "c1394590ae640ff32792ac41e78bd3eeca7ccd1163d0a12c071a69d9582bed36",
+      "v": "c1394590ae",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "shared/T_Arm01_B.webp",
+      "bytes": 27992,
+      "sha256": "ea23ecd5a6dfac1b62348bd815a2d171b2779573ec9a96a53cb579c9532eb0d0",
+      "v": "ea23ecd5a6",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/T_Arm01_N.webp",
+      "bytes": 147602,
+      "sha256": "df2a3f6343c2e4f0bac4ff06e71399127762c2b03ffedc7200ff74ac73a60d47",
+      "v": "df2a3f6343",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/T_Arm01_ORM.webp",
+      "bytes": 71416,
+      "sha256": "5b5e79a1a26e12b89a427c7ea470c1f1f126ba3b90f004f81d72f0eae373960b",
+      "v": "5b5e79a1a2",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/T_Cloth01_B.webp",
+      "bytes": 68940,
+      "sha256": "7300e251e2f5550d36dfda181a9602ac42a3fb2a04c43d13320f83c6c8a059b2",
+      "v": "7300e251e2",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/T_Cloth01_N.webp",
+      "bytes": 1346582,
+      "sha256": "9ed1a23714bb98f6367178de003839e283d74c458e58b7e3b38e836e641e2812",
+      "v": "9ed1a23714",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/T_Cloth01_ORM.webp",
+      "bytes": 184270,
+      "sha256": "f2d1797be051960d4a6ff455e17764542976004131e31a4a415d2a1e4eb03c63",
+      "v": "f2d1797be0",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/T_Glove01_B.webp",
+      "bytes": 183500,
+      "sha256": "7542bec0c2d5eae1600cac2c2da46fc7a449a47cc6af106c73e23e0d7c99954b",
+      "v": "7542bec0c2",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/T_Glove01_N.webp",
+      "bytes": 1470334,
+      "sha256": "29494e350ba01ed6e6ab2ae13fac48a9f7cce1f689a39bd8c688a89b1f1c1438",
+      "v": "29494e350b",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/T_Glove01_ORM.webp",
+      "bytes": 147442,
+      "sha256": "c8034b6e1b42f831857972b857c362b1562c38ae418ac5a7dd619dd209e5aac8",
+      "v": "c8034b6e1b",
+      "contentType": "image/webp"
+    },
+    {
+      "path": "shared/general-runtime.glb",
+      "bytes": 8044284,
+      "sha256": "e90274422745fb0450fc795ab89d6a9e70e953d692bc8f564dc2bc42b1e71c8f",
+      "v": "e902744227",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "shotgun/shotgun-baked-runtime.glb",
+      "bytes": 3954632,
+      "sha256": "6c6c1ba3f72d227375650160c911ca72ef798a198a64682558d99c794c431239",
+      "v": "6c6c1ba3f7",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "smg/uzi-baked-runtime.glb",
+      "bytes": 4267588,
+      "sha256": "353d0384ec60a0e6ffc99ef38b5092a5773c2562e2e4bc401adef1228ef0a9fc",
+      "v": "353d0384ec",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "sniper/awp-baked-runtime.glb",
+      "bytes": 1486132,
+      "sha256": "3e6b77e45760191847097dc4847c9200686367d241c7d03505b46de06ba52f0a",
+      "v": "3e6b77e457",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "sniper/m400-baked-runtime.glb",
+      "bytes": 1537064,
+      "sha256": "f75e4625c1199d3fed6fb9f132e5cc59a0c742dc41a92bcac5fa6bcab76f739d",
+      "v": "f75e4625c1",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "svd/svd-baked-runtime.glb",
+      "bytes": 5183204,
+      "sha256": "f44732930d24dcb78a728ea3a1c1458d0d763a23a79749ea8ad54366a9e376e9",
+      "v": "f44732930d",
+      "contentType": "model/gltf-binary"
+    }
+  ]
+}

@@ -31,7 +31,7 @@
    espelha `dist/client` em `.vercel/output/static`, então os dois lugares são
    podados, senão o deploy sobe pelo espelho e a poda não teria servido pra nada.
    ============================================================================ */
-import { existsSync, rmSync, statSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, statSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
 /* Lista fechada e literal. Poda dirigida por padrão (glob, regex) num script que
@@ -81,4 +81,25 @@ if (!podados) {
   console.log('  poda: nada a podar.');
 } else {
   console.log(`  poda: ${mb(total)} fora do publicado.`);
+}
+
+/* Viewmodel privado: só sai publicado o que está no manifesto (tools/viewmodels/
+   vm-assets.manifest.json). Build local pelo symlink copiaria também clipes crus e
+   relatórios do assado. Manifesto ilegível reprova: publicar às cegas não é opção. */
+const VM_DIRS = ['dist/client/private-assets/viewmodels', '.vercel/output/static/private-assets/viewmodels'];
+if (VM_DIRS.some((d) => existsSync(d))) {
+  const lista = new Set(JSON.parse(readFileSync('tools/viewmodels/vm-assets.manifest.json', 'utf8')).files.map((f) => f.path));
+  if (!lista.size) throw new Error('prune-dist: manifesto do viewmodel vazio');
+  for (const raiz of VM_DIRS.filter((d) => existsSync(d))) {
+    let fora = 0, bytes = 0;
+    const varre = (dir, rel) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const p = path.join(dir, e.name), r = rel ? `${rel}/${e.name}` : e.name;
+        if (e.isDirectory()) { varre(p, r); if (!readdirSync(p).length) rmSync(p, { recursive: true }); }
+        else if (!lista.has(r)) { bytes += statSync(p).size; rmSync(p, { force: true }); fora++; }
+      }
+    };
+    varre(raiz, '');
+    console.log(`  poda: ${raiz} — ${fora} arquivo(s) fora do manifesto (${mb(bytes)})`);
+  }
 }

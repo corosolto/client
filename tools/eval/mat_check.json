@@ -98,6 +98,18 @@
      "roughnessFactor": 1,
      "temMapaMR": true,
      "temMapaAlbedo": true
+    },
+    {
+     "metallicFactor": 1,
+     "roughnessFactor": 1,
+     "temMapaMR": true,
+     "temMapaAlbedo": false
+    },
+    {
+     "metallicFactor": 1,
+     "roughnessFactor": 1,
+     "temMapaMR": true,
+     "temMapaAlbedo": false
     }
    ]
   },
@@ -212,6 +224,17 @@
    ]
   },
   {
+   "arma": "mosquete",
+   "materiais": [
+    {
+     "metallicFactor": 1,
+     "roughnessFactor": 1,
+     "temMapaMR": true,
+     "temMapaAlbedo": true
+    }
+   ]
+  },
+  {
    "arma": "mp5",
    "materiais": [
     {
@@ -263,6 +286,24 @@
      "roughnessFactor": 1,
      "temMapaMR": true,
      "temMapaAlbedo": true
+    },
+    {
+     "metallicFactor": 1,
+     "roughnessFactor": 1,
+     "temMapaMR": true,
+     "temMapaAlbedo": false
+    },
+    {
+     "metallicFactor": 1,
+     "roughnessFactor": 1,
+     "temMapaMR": true,
+     "temMapaAlbedo": false
+    },
+    {
+     "metallicFactor": 1,
+     "roughnessFactor": 1,
+     "temMapaMR": true,
+     "temMapaAlbedo": false
     }
    ]
   },

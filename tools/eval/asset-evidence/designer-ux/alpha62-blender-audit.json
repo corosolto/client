@@ -1,0 +1,558 @@
+{
+  "source": "/Users/ruben/game/public/models/characters/designer-ux.glb",
+  "blender": "5.2.0 LTS",
+  "armatureCount": 1,
+  "meshCount": 1,
+  "importHelperMeshes": [
+    "Icosphere"
+  ],
+  "armatures": [
+    {
+      "name": "Armature",
+      "scale": [
+        0.01,
+        0.01,
+        0.01
+      ],
+      "rotationEuler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "boneCount": 24,
+      "bones": [
+        {
+          "name": "Hips",
+          "parent": null,
+          "head": [
+            -0.002209,
+            -0.05838,
+            0.868111
+          ],
+          "tail": [
+            0.252185,
+            -9.293367,
+            9.550015
+          ],
+          "length": 12.677743
+        },
+        {
+          "name": "LeftUpLeg",
+          "parent": "Hips",
+          "head": [
+            0.09948,
+            -0.071764,
+            0.784426
+          ],
+          "tail": [
+            4.275828,
+            -5.425461,
+            -32.688641
+          ],
+          "length": 34.154798
+        },
+        {
+          "name": "LeftLeg",
+          "parent": "LeftUpLeg",
+          "head": [
+            0.141244,
+            -0.1253,
+            0.449695
+          ],
+          "tail": [
+            4.17074,
+            4.425653,
+            -33.71273
+          ],
+          "length": 34.698981
+        },
+        {
+          "name": "LeftFoot",
+          "parent": "LeftLeg",
+          "head": [
+            0.181539,
+            -0.079791,
+            0.108071
+          ],
+          "tail": [
+            2.539078,
+            -8.354248,
+            -7.158404
+          ],
+          "length": 11.261718
+        },
+        {
+          "name": "LeftToeBase",
+          "parent": "LeftFoot",
+          "head": [
+            0.205114,
+            -0.162537,
+            0.035407
+          ],
+          "tail": [
+            3.290979,
+            -10.993222,
+            0.035399
+          ],
+          "length": 11.261719
+        },
+        {
+          "name": "RightUpLeg",
+          "parent": "Hips",
+          "head": [
+            -0.101591,
+            -0.071396,
+            0.783665
+          ],
+          "tail": [
+            -4.193001,
+            -5.278314,
+            -32.995464
+          ],
+          "length": 34.422103
+        },
+        {
+          "name": "RightLeg",
+          "parent": "RightUpLeg",
+          "head": [
+            -0.142505,
+            -0.123465,
+            0.445874
+          ],
+          "tail": [
+            -4.361738,
+            4.322156,
+            -33.255981
+          ],
+          "length": 34.254643
+        },
+        {
+          "name": "RightFoot",
+          "parent": "RightLeg",
+          "head": [
+            -0.184698,
+            -0.079009,
+            0.108855
+          ],
+          "tail": [
+            -2.738201,
+            -8.344934,
+            -7.349331
+          ],
+          "length": 11.422365
+        },
+        {
+          "name": "RightToeBase",
+          "parent": "RightFoot",
+          "head": [
+            -0.210233,
+            -0.161669,
+            0.034275
+          ],
+          "tail": [
+            -3.581621,
+            -11.075155,
+            0.034281
+          ],
+          "length": 11.422365
+        },
+        {
+          "name": "Spine02",
+          "parent": "Hips",
+          "head": [
+            -0.001841,
+            -0.071409,
+            0.994217
+          ],
+          "tail": [
+            0.034982,
+            -1.374367,
+            13.605228
+          ],
+          "length": 12.678197
+        },
+        {
+          "name": "Spine01",
+          "parent": "Spine02",
+          "head": [
+            -0.001473,
+            -0.084437,
+            1.120327
+          ],
+          "tail": [
+            0.03535,
+            -1.387369,
+            13.731016
+          ],
+          "length": 12.677873
+        },
+        {
+          "name": "Spine",
+          "parent": "Spine01",
+          "head": [
+            -0.001105,
+            -0.097467,
+            1.246433
+          ],
+          "tail": [
+            -0.035374,
+            -0.393612,
+            4.234329
+          ],
+          "length": 3.002731
+        },
+        {
+          "name": "LeftShoulder",
+          "parent": "Spine",
+          "head": [
+            0.023697,
+            -0.099574,
+            1.263434
+          ],
+          "tail": [
+            9.944313,
+            -0.310252,
+            1.263434
+          ],
+          "length": 9.922852
+        },
+        {
+          "name": "LeftArm",
+          "parent": "LeftShoulder",
+          "head": [
+            0.122904,
+            -0.10168,
+            1.263435
+          ],
+          "tail": [
+            13.981603,
+            2.823949,
+            -16.870453
+          ],
+          "length": 23.010014
+        },
+        {
+          "name": "LeftForeArm",
+          "parent": "LeftArm",
+          "head": [
+            0.261488,
+            -0.072424,
+            1.082094
+          ],
+          "tail": [
+            12.660458,
+            -5.053161,
+            -11.583014
+          ],
+          "length": 18.410517
+        },
+        {
+          "name": "LeftHand",
+          "parent": "LeftForeArm",
+          "head": [
+            0.385478,
+            -0.122232,
+            0.955444
+          ],
+          "tail": [
+            9.443233,
+            -2.470929,
+            -14.89977
+          ],
+          "length": 18.410516
+        },
+        {
+          "name": "neck",
+          "parent": "Spine",
+          "head": [
+            -0.000638,
+            -0.104536,
+            1.325501
+          ],
+          "tail": [
+            0.063211,
+            -1.072789,
+            12.15467
+          ],
+          "length": 10.872556
+        },
+        {
+          "name": "Head",
+          "parent": "neck",
+          "head": [
+            0.0,
+            -0.114219,
+            1.433793
+          ],
+          "tail": [
+            0.025727,
+            1.863234,
+            9.24026
+          ],
+          "length": 8.053068
+        },
+        {
+          "name": "head_end",
+          "parent": "Head",
+          "head": [
+            0.000893,
+            0.034945,
+            1.704739
+          ],
+          "tail": [
+            0.024141,
+            3.918665,
+            8.759388
+          ],
+          "length": 8.053068
+        },
+        {
+          "name": "headfront",
+          "parent": "Head",
+          "head": [
+            0.0,
+            -0.194749,
+            1.433793
+          ],
+          "tail": [
+            0.0,
+            -8.247817,
+            1.433793
+          ],
+          "length": 8.053068
+        },
+        {
+          "name": "RightShoulder",
+          "parent": "Spine",
+          "head": [
+            -0.027635,
+            -0.099196,
+            1.260391
+          ],
+          "tail": [
+            -10.639508,
+            -0.272083,
+            1.260391
+          ],
+          "length": 10.613282
+        },
+        {
+          "name": "RightArm",
+          "parent": "RightShoulder",
+          "head": [
+            -0.133753,
+            -0.100924,
+            1.260391
+          ],
+          "tail": [
+            -13.647166,
+            3.001083,
+            -15.964521
+          ],
+          "length": 22.111815
+        },
+        {
+          "name": "RightForeArm",
+          "parent": "RightArm",
+          "head": [
+            -0.268889,
+            -0.069905,
+            1.088143
+          ],
+          "tail": [
+            -12.156533,
+            -5.000782,
+            -11.626654
+          ],
+          "length": 18.091315
+        },
+        {
+          "name": "RightHand",
+          "parent": "RightForeArm",
+          "head": [
+            -0.387765,
+            -0.119214,
+            0.960995
+          ],
+          "tail": [
+            -9.161288,
+            -2.77108,
+            -14.636716
+          ],
+          "length": 18.091315
+        }
+      ]
+    }
+  ],
+  "meshes": [
+    {
+      "name": "designer_ux_final",
+      "parent": "Armature",
+      "vertices": 22516,
+      "triangles": 12849,
+      "materials": [
+        "CS_UX_CLOTH_BLACK",
+        "CS_UX_SKIN_MEDIUM_BROWN",
+        "CS_UX_HAIR_BLACK",
+        "CS_UX_PROP_BLACK",
+        "CS_UX_TABLET_SCREEN",
+        "CS_UX_FAN_0",
+        "CS_UX_FAN_1",
+        "CS_UX_FAN_2",
+        "CS_UX_FAN_3",
+        "CS_UX_FAN_4",
+        "CS_UX_FAN_5",
+        "CS_UX_FAN_6",
+        "CS_UX_FAN_7",
+        "CS_UX_FAN_8",
+        "CS_UX_PIPING_PURPLE",
+        "CS_UX_PIPING_BLUE",
+        "CS_UX_THERMOS_METAL",
+        "CS_UX_THERMOS_PUMP_BLACK"
+      ],
+      "vertexGroups": [
+        "Hips",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand"
+      ],
+      "armatureModifiers": [
+        "Armature"
+      ],
+      "hideRender": false,
+      "boundsMin": [
+        -0.579,
+        -0.248275,
+        -0.0
+      ],
+      "boundsMax": [
+        0.495872,
+        0.248,
+        1.717999
+      ]
+    }
+  ],
+  "focusBones": {
+    "LeftArm": {
+      "verticesWeightGte005": 1145,
+      "weightSum": 387.907316,
+      "weightedCentroid": [
+        0.15308,
+        -0.06181,
+        1.17008
+      ],
+      "distanceToRestBoneP50": 0.106465,
+      "distanceToRestBoneP95": 0.226019,
+      "distanceToRestBoneMax": 0.351499
+    },
+    "LeftForeArm": {
+      "verticesWeightGte005": 225,
+      "weightSum": 167.511112,
+      "weightedCentroid": [
+        0.297458,
+        -0.085422,
+        1.028055
+      ],
+      "distanceToRestBoneP50": 0.044795,
+      "distanceToRestBoneP95": 0.067598,
+      "distanceToRestBoneMax": 0.071818
+    },
+    "LeftHand": {
+      "verticesWeightGte005": 1767,
+      "weightSum": 1756.559895,
+      "weightedCentroid": [
+        0.434241,
+        -0.121741,
+        0.885836
+      ],
+      "distanceToRestBoneP50": 0.02821,
+      "distanceToRestBoneP95": 0.045805,
+      "distanceToRestBoneMax": 0.050071
+    },
+    "LeftShoulder": {
+      "verticesWeightGte005": 863,
+      "weightSum": 253.776231,
+      "weightedCentroid": [
+        0.078749,
+        -0.097449,
+        1.28002
+      ],
+      "distanceToRestBoneP50": 0.091808,
+      "distanceToRestBoneP95": 0.1608,
+      "distanceToRestBoneMax": 0.193883
+    },
+    "RightArm": {
+      "verticesWeightGte005": 891,
+      "weightSum": 348.267997,
+      "weightedCentroid": [
+        -0.173844,
+        -0.06753,
+        1.175072
+      ],
+      "distanceToRestBoneP50": 0.082592,
+      "distanceToRestBoneP95": 0.159576,
+      "distanceToRestBoneMax": 0.192187
+    },
+    "RightForeArm": {
+      "verticesWeightGte005": 202,
+      "weightSum": 137.742982,
+      "weightedCentroid": [
+        -0.307742,
+        -0.089117,
+        1.033722
+      ],
+      "distanceToRestBoneP50": 0.045425,
+      "distanceToRestBoneP95": 0.061144,
+      "distanceToRestBoneMax": 0.070208
+    },
+    "RightHand": {
+      "verticesWeightGte005": 1770,
+      "weightSum": 1765.341374,
+      "weightedCentroid": [
+        -0.434089,
+        -0.121753,
+        0.886141
+      ],
+      "distanceToRestBoneP50": 0.027237,
+      "distanceToRestBoneP95": 0.041734,
+      "distanceToRestBoneMax": 0.051429
+    },
+    "RightShoulder": {
+      "verticesWeightGte005": 936,
+      "weightSum": 275.20185,
+      "weightedCentroid": [
+        -0.085127,
+        -0.095114,
+        1.278639
+      ],
+      "distanceToRestBoneP50": 0.095219,
+      "distanceToRestBoneP95": 0.176449,
+      "distanceToRestBoneMax": 0.207471
+    }
+  },
+  "renders": [
+    "/Users/ruben/game/tools/eval/asset-evidence/designer-ux/alpha62-renders/designer-ux-front.png",
+    "/Users/ruben/game/tools/eval/asset-evidence/designer-ux/alpha62-renders/designer-ux-left.png",
+    "/Users/ruben/game/tools/eval/asset-evidence/designer-ux/alpha62-renders/designer-ux-back.png"
+  ]
+}

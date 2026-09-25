@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "provider": "openrouter",
+  "modelId": "google/gemini-3.1-flash-tts-preview",
+  "startedAt": "2026-08-11T20:35:46.819Z",
+  "completedAt": null,
+  "status": "paused",
+  "maxCostUsd": 6,
+  "totalCostUsd": 0.006587,
+  "plannedJobs": 224,
+  "plannedCharacters": [
+    "claquete-verde",
+    "microfonildo",
+    "controlino",
+    "capivara-reporter",
+    "chroma-rex",
+    "fantoche-ibope",
+    "nuvem-tempo",
+    "designer-ux",
+    "streamer-tiltado",
+    "otaku-bairro",
+    "mestre-rpg",
+    "lenda-lanhouse",
+    "hacker-wifi",
+    "formata-vinte",
+    "tia-pastel",
+    "motorista-app",
+    "motorista-onibus",
+    "pedreiro-grau",
+    "camelo-ambulante",
+    "feirante-grito",
+    "frentista-posto",
+    "noia-esquina",
+    "fumador-pendrive",
+    "mago-cobre",
+    "dj-bluetooth",
+    "profeta-calcada",
+    "ciclista-sem-freio",
+    "homem-carrinho"
+  ],
+  "preflight": {
+    "checkedAt": "2026-08-11T20:35:46.813Z",
+    "modelId": "google/gemini-3.1-flash-tts-preview",
+    "modelName": "Google: Gemini 3.1 Flash TTS Preview",
+    "pricing": {
+      "prompt": "0.000001",
+      "completion": "0.00002",
+      "discount": 0
+    },
+    "endpointCount": 1,
+    "providers": [
+      "Google"
+    ],
+    "balanceUsd": 14.9456244,
+    "capUsd": 6
+  },
+  "note": "Vozes sintéticas originais; nenhuma clonagem. Lote pausado deliberadamente após quatro falas para priorizar os pilotos; status generated exige escuta humana posterior.",
+  "completed": [
+    {
+      "characterId": "claquete-verde",
+      "key": "select-01",
+      "event": "select",
+      "file": "audio/characters/claquete-verde/select/select-01.mp3",
+      "sha256": "1925dfc9b33a9479a18ef9aeb3c2213af5bf1dfc4c1a7cd2b90cfa728cb8b382",
+      "duration": 3.4,
+      "generationId": "gen-tts-1786480546-EuWmjN0YmVsLWd8QTNPW",
+      "costUsd": 0.001709,
+      "usage": 0.001709,
+      "generatedAt": "2026-08-11T20:35:58.227Z"
+    },
+    {
+      "characterId": "claquete-verde",
+      "key": "select-02",
+      "event": "select",
+      "file": "audio/characters/claquete-verde/select/select-02.mp3",
+      "sha256": "1752ea347d9973d1b18bc4eea87719de69a3296544849f42154d4740c481f143",
+      "duration": 2.48,
+      "generationId": "gen-tts-1786480558-5fp8ZJBdgsxjtNtbeTgW",
+      "costUsd": 0.001249,
+      "usage": 0.001249,
+      "generatedAt": "2026-08-11T20:36:10.190Z"
+    },
+    {
+      "characterId": "claquete-verde",
+      "key": "kill-01",
+      "event": "kill",
+      "file": "audio/characters/claquete-verde/kill/kill-01.mp3",
+      "sha256": "52cbc18144fbda8835cca51ccc5f131c5dae101ddb8854f4d871912b4bdb334e",
+      "duration": 1.76,
+      "generationId": "gen-tts-1786480570-QzDYWBUXg5D4D4r83iOa",
+      "costUsd": 0.001824,
+      "usage": 0.001824,
+      "generatedAt": "2026-08-11T20:36:24.810Z"
+    },
+    {
+      "characterId": "claquete-verde",
+      "key": "kill-02",
+      "event": "kill",
+      "file": "audio/characters/claquete-verde/kill/kill-02.mp3",
+      "sha256": "b14216142fb62e98babaafbf9e62a072a9e903ae087722ce028fbf9fdacca032",
+      "duration": 1.64,
+      "generationId": "gen-tts-1786480584-ItOYZeJvLCWb3mpevYY6",
+      "costUsd": 0.001805,
+      "usage": 0.001805,
+      "generatedAt": "2026-08-11T20:36:37.446Z"
+    }
+  ],
+  "failures": []
+}

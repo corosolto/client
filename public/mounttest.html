@@ -53,6 +53,7 @@ const def = CHARACTERS.find(c => c.id === CHAR) || { id: CHAR, team:'P' };
 const built = buildCharacterModel(def, { weapon:true, weaponId: WEAPON });
 if (!built || !built.group) { hud.textContent = 'sem modelo '+CHAR; throw new Error('no model'); }
 scene.add(built.group);
+window.MOUNT_CTRL = built.ctrl || null; // diagnóstico do arnês: estado/tempo da ação real
 
 const PLAY = qp.get('play'); // 'walk'|'run'|'idle' -> animate continuously for video capture
 const resizeMount = () => {
@@ -69,6 +70,7 @@ if (PLAY) {
   const orbit = qp.get('orbit') === '1';
   let last = performance.now();
   const SPD = parseFloat(qp.get('spd')) || (state==='run' ? 1.9 : 1.0);
+  window.RENDER = ()=>renderer.render(scene, cam);
   let MOV = 0;
   window.MOUNT_SET_PLAY = (next) => {
     state = next;
@@ -82,7 +84,8 @@ if (PLAY) {
       } else if (state === 'shoot') {
         built.ctrl.shoot();
         replayTimer = setInterval(() => { built.ctrl.shooting = false; built.ctrl.shoot(); }, 900);
-      } else if (built.ctrl._to) built.ctrl._to(state);
+      } else if ((state === 'crouch' || state === 'crouchwalk') && built.ctrl.setCrouch) built.ctrl.setCrouch(true);
+      else if (built.ctrl._to) built.ctrl._to(state);
       if (built.ctrl.actions && built.ctrl.actions[state]) built.ctrl.actions[state].timeScale = ts;
     }
     MOV = (state==='run' || state==='walk' || state==='walkfire') ? 1 : 0;
@@ -94,8 +97,8 @@ if (PLAY) {
     const dt = Math.min(0.05, (now-last)/1000); last = now;
     window.STEP(dt);
     if (orbit) { const a = now*0.0004; cam.position.set(Math.sin(a)*3.4, 1.35, Math.cos(a)*3.4); cam.lookAt(0,1.0,0); }
-    renderer.render(scene, cam);
-    requestAnimationFrame(loop);
+    window.RENDER();
+    if (qp.get('manual') !== '1') requestAnimationFrame(loop);
   })(last);
   window.MOUNT_READY = true;
 } else {

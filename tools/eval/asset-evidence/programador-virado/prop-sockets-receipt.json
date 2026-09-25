@@ -1,0 +1,42 @@
+{
+  "source": "/Users/ruben/game/tools/eval/asset-evidence/programador-virado/programador-before-prop-sockets.glb",
+  "output": "/Users/ruben/game/public/models/characters/programador-virado.glb",
+  "sourceSha256": "2038caea8b0f3f930f05f0830faf9d974b0726c5837854193937860905d7caeb",
+  "outputSha256": "dd4c5bf12ab1eb69ebeedaaf9a39a52aed87e08fa7c330a6fca0983cb9467799",
+  "blender": "5.2.0 LTS",
+  "socket": "Hips",
+  "changedVertices": 2260,
+  "materials": [
+    "LAN_MugSteel",
+    "LAN_MugDark",
+    "LAN_Mouse_Rev2",
+    "LAN_Trackball_Red",
+    "LAN_Cable_Visible",
+    "LAN_Mouse_Buttons"
+  ],
+  "operation": "mug += [0,+0.20,-0.07]; mouse/cable += [+0.05,+0.30,-0.04]; weights=Hips:1",
+  "beforeBoundsBlenderWorld": {
+    "min": [
+      0.153,
+      -0.243,
+      0.941
+    ],
+    "max": [
+      0.367,
+      0.035512,
+      1.31077
+    ]
+  },
+  "afterBoundsBlenderWorld": {
+    "min": [
+      0.203,
+      0.027,
+      0.897
+    ],
+    "max": [
+      0.367,
+      0.335512,
+      1.27077
+    ]
+  }
+}
