@@ -1215,6 +1215,76 @@
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/shotgun.json"
     },
+    "sks": {
+      "schemaVersion": 1,
+      "id": "sks",
+      "arma": "sks",
+      "chassi": "Kar98K",
+      "variante": true,
+      "url": "/private-assets/viewmodels/fabrica/sks-fabrica.glb",
+      "bytes": 2733696,
+      "sha256": "39c44f6e413db048dc5d48aeb0e410bac2711b843b521156585308af0aab0947",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_Kar98K_Pose.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 4.7,
+          "braco": "A_FP_Kar98K_Reload_Empty.FBX",
+          "arma": "A_W_Kar98K_Empty_Reload.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 4.7,
+          "braco": "A_FP_Kar98K_Reload_Empty.FBX",
+          "arma": "A_W_Kar98K_Empty_Reload.FBX"
+        }
+      ],
+      "clipesRuntime": {
+        "reload_start": "ausente",
+        "reload_loop": "ausente",
+        "reload_end": "ausente",
+        "shoot": "procedural"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 17,
+      "file": "viewmodels/fabrica/sks-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/sks.json",
+      "insumos": {
+        "ficha": "89de016f326d6237ba32cae264bac4b5163e2b63bd79c5754b25a2cc79efc6af",
+        "chassi": "7c905ea1c8233b518da5ee11d33bc76f6cf7398e4ba3566a5e14d80a645ac314",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "a8a54443bff630ec5c696b6069a98a8648513407693c781885a377a788b54306",
+        "poseFbx": "4d139d101d63ef90c4db007ef1217aa704a54cf5382259d4cd15e0d10e68f535",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:idle:arma": "eac07c23814e543d3e9c35b2244554d64ed58c4c4f09f70778d8eaa65dd18528",
+        "clipe:reload_empty:braco": "44177317fdf1aa274cfb006c61a5ec0c211a2f35858b25939e21cade56785f39",
+        "clipe:reload_empty:arma": "45239ca811c525712f07fdb2550a40639d14a064619428c74766bf9449f9c59f",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "clipe:reload_tactical:braco": "44177317fdf1aa274cfb006c61a5ec0c211a2f35858b25939e21cade56785f39",
+        "clipe:reload_tactical:arma": "45239ca811c525712f07fdb2550a40639d14a064619428c74766bf9449f9c59f",
+        "zonaLivre:caixa-do-pente": "5c88a3ab53e236f0557bf974cff79d63351cf5331ba3e710a0698f5045a8936a",
+        "zonaLivre:luneta": "5c88a3ab53e236f0557bf974cff79d63351cf5331ba3e710a0698f5045a8936a"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/sks.json"
+    },
     "svd": {
       "schemaVersion": 1,
       "id": "svd",
