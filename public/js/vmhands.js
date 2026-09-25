@@ -4,14 +4,14 @@ export const TEAM_HANDS = Object.freeze({
   E: Object.freeze({ id: 'E', glove: '#34363a', sleeve: '#781f2a', accent: '#e2d6b5', motif: 'star', fingerless: false }),
   B: Object.freeze({ id: 'B', glove: '#4e5740', sleeve: '#4e5740', accent: '#a5a57b', motif: 'camo', fingerless: false }),
   C: Object.freeze({ id: 'C', glove: '#dad8cd', sleeve: '#493544', accent: '#ba3544', motif: 'plain', fingerless: false }),
-  F: Object.freeze({ id: 'F', glove: '#34363a', sleeve: '#292b30', accent: '#696b70', motif: 'plain', fingerless: true }),
+  F: Object.freeze({ id: 'F', glove: '#34363a', sleeve: '#292b30', accent: '#c9a227', motif: 'corrente', fingerless: true }),
   U: Object.freeze({ id: 'U', glove: '#34363a', sleeve: '#292b30', accent: '#d9d7cf', motif: 'checker', fingerless: true }),
   M: Object.freeze({ id: 'M', glove: '#4a3b28', sleeve: '#3d1f66', accent: '#b8914a', motif: 'trama', fingerless: false }),
 });
 // Neutro = base da fábrica (braco-coro-ak.json): luva e manga Mandrake da AK aprovada, em sRGB.
 const NEUTRAL_HANDS = Object.freeze({ id: 'neutral', glove: '#242f38', sleeve: '#243c4d', accent: '#797d80', motif: 'plain', fingerless: false });
 export const teamHandStyle = (faction) => TEAM_HANDS[faction] || NEUTRAL_HANDS;
-export const HAND_ATLAS_VERSION = 'team-hands-6';
+export const HAND_ATLAS_VERSION = 'team-hands-7';
 
 // Rig do braço → pasta de atlas (UVs distintos, pintura comum). O GLTFLoader tira os pontos
 // dos nomes de osso (hand.R_metarig → handR_metarig).
