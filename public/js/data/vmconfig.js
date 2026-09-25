@@ -171,6 +171,7 @@ export const VM_FABRICA = Object.freeze({
   akm: F('ak', 'AK', { recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
   m4: F('ar', 'MX16A4', { recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.1) }),
   famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
+  tavor: F('ar', 'MX16A4', { variante: true, frame: { x: 0.235, y: -0.06, z: -0.24 }, ads: A(0.1) }),
   // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
   // entra; nesses três a extensão não fura a câmera (crítico, rodada 1).
   g3: F('g3', 'G3', { manga: true, recoilScale: 7, recoilLoc: 1.5, ads: A(0.1) }),

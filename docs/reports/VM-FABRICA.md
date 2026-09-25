@@ -234,27 +234,115 @@ da fábrica (o `qa.mjs` conta DÍVIDA como vermelho).
 
 Resultado do lote 1: seção 8.
 
-## 7. Plano B — modo animador
+## 7. Plano B — modo animador (FAMAS e TAVOR bullpup, 24/09)
 
-Para variante sem clipe adequado no pack (a FAMAS bullpup de verdade, por exemplo), a zona de
-contato precisa ser **re-autorada**, não trocada. As receitas genéricas dos PRs #639/#640 foram
-trazidas para `tools/viewmodels/prep/` (`recarga-k.mjs` — recarga por quadros-chave com IK nas
-duas mãos; `braco-estavel.mjs`, `saque-do-idle.mjs`, `pente-na-mao.mjs`, `municao-na-mao.mjs`,
-`compacta-peca.mjs`, `vm-palco-offline.mjs`). O fluxo do modo animador:
+Para arma cuja zona de contato o pack não tem (bullpup: pente **atrás** do punho), a zona de
+contato é **re-autorada**, não trocada. Produtos: `famas` e `tavor` (`fichas/famas.json`,
+`fichas/tavor.json`, chaves em `tools/fabrica/animador/<arma>.json`). Do chassi MX16A4 ficam o
+braço `SK_Arms_Mono`, a pose da mão forte no punho, a câmera, o saque geral e o coice
+procedural; o resto é novo:
 
-1. partir do `base.blend` da fábrica (braço + arma fundidos, osso `Arma` no `ik_hand_gun`);
-2. posar quadros-chave de `idle`, `shoot`, `reload_*`, `equip_rifle` por `bpy` (a mão esquerda
-   é animada **relativa à arma**; a arma segue a mão direita pelo `ik_hand_gun`);
-3. renderizar **pela câmera de autoria** (`tools/fabrica/blender/render.py`) — fora do quadro
-   pode trapacear;
-4. medir em laço: `tools/fabrica/reguas.mjs` (FB4) e as réguas de imagem.
+```
+ficha (malhaPropria + animador) ──► montar.py (malha do jogo no osso Arma, peças móveis por ilha)
+   ──► animador.py (idle re-posado + reload_* por chave, IK analítico, 2º pente, régua do laço)
+   ──► clipes.mjs (saque do pack + correção idle_pack⁻¹·idle na mão de apoio) ──► otimização
+```
 
-**Truque do segundo pente** (recarga): duplicar o pente (`Mag2`) estacionado fora da tela, do
-lado da mão esquerda; a mão pega o `Mag2` fora da tela, o pente velho sai e cai, e fora de vista
-os dois voltam aos lugares — sem troca de pai no meio da animação (a causa dos pentes voando).
-Nenhum produto do lote 1 usa: todos são o pack como autorado. Quando uma variante usar, a régua
-`carregador` precisa aceitar "pente reserva fora da tela" (e continuar reprovando pente
-flutuando ou sumindo **visível**) — com mutante.
+- **Malha própria** (`ficha.malhaPropria`, `montar.py malha_propria`): a malha da arma do pack sai
+  inteira; entra o modelo de mundo do jogo (`public/models/weapons/<arma>.glb`, 0 crédito Mint),
+  soldado, posto na raiz do FBX (`posCm`/`rotDeg`/`escala`: a palma forte do MX16A4 cai no meio
+  do punho da arma nova) e pesado 100% no osso `Arma`. Peças móveis = ilhas cuja caixa cabe na
+  caixa pedida (contagem de vértices conferida): pente → `Mag`, alavanca da FAMAS →
+  `ChargingHandle`, retém da TAVOR (paleta atrás do pente) → `BoltRelease`; o pivô do osso vai ao
+  alto da peça. `material` troca o metálico 1 do modelo de mundo (cromado no viewmodel) por
+  polímero, mantendo a textura base. `mira` e `boca` são da arma nova (linha de visada da alça).
+- **Animador** (`blender/animador.py`): FK próprio sobre o repouso do rig (sem depsgraph; mesmo
+  insumo → mesmos quadros), IK analítico de dois ossos nas duas mãos com o giro do antebraço
+  dividido ao meio. Por quadro: (1) apresentação da arma — giro em eixos de câmera em torno da
+  palma forte + translação (`arma`); (2) mão forte presa ao punho pela relação do idle; (3) mão de
+  apoio por chaves (`mao`: `idle`, `armaCm` na raiz da arma, `camCm` na **câmera do jogo**,
+  `poco` = segurando o pente a `[dx,dy,dz]` cm do encaixe, `fecho` dos dedos); (4) mecanismos
+  (`mecanismos`: deslocamento em cm na raiz); (5) pentes (`pentes`: `arma` com `deslocCm`, `mao`, `largado` (fica onde a mão soltou),
+  `cai` com velocidade/giro e gravidade, `escondido`). Todas as chaves de todos os ossos são
+  gravadas (trilha NLA sem osso solto).
+- **Idle re-posado:** o idle do pack com a mão de apoio levada ao guarda-mão da arma nova
+  (`idle.maoApoio.palmaCm`); a trilha original vira `idle_pack` e o `clipes.mjs` aplica a mesma
+  correção local (`idle_pack⁻¹·idle`) ao saque geral, que termina no idle novo; `idle_pack` sai do
+  produto.
+- **Câmera do jogo:** o build passa ao animador o frame da arma (`VM_FABRICA_FRAME` +
+  `VM_FABRICA_POS` + `VM_FABRICA[arma].frame`); a câmera do jogo é a de autoria ∘ inverso do
+  mount do `authoredvm.js`. É nela que `camCm` e o "fora da tela" (3:2 e 16:9) são medidos —
+  a câmera de autoria do pack fica ~26 cm atrás, sobre o pente do bullpup, e engana.
+  `render.py --frame=<json>` desenha pela mesma câmera (`trabalho/<id>/frame-jogo.json`).
+- **Truque do segundo pente:** `Mag2` é cópia do pente num osso irmão, **coincidente** com o pente
+  no repouso (invisível: mesma malha no mesmo lugar em todo clipe do pack). Na recarga: o reserva
+  some coincidente, reaparece na mão **fora da tela**, sobe à vista, bate/empurra o pente velho
+  (que cai com gravidade até sair do quadro), encaixa; fora de vista o velho volta ao encaixe
+  escondido (escala 0 só enquanto viaja) e cresce dentro do reserva. Nenhuma troca de pai.
+- **Régua do laço** (`animador.json`, o build **falha** nela): por quadro, palma de apoio e
+  palma forte à arma, erro do IK e, por pente, visível / na tela (câmera do jogo, 3:2 e 16:9) /
+  distância à palma; reprova pente que **some na tela** fora da coincidência e pente que **surge
+  na tela** fora da coincidência.
+- **Régua de imagem `carregador` com reserva** (`vm-reguas.mjs`, `CARREGADOR_PECA` com
+  `reserva: 'Mag2'` para famas/tavor no modo fábrica): mede os dois pentes por amostra. Vale:
+  no encaixe (mesmo fora do quadro — no quadril do bullpup o poço fica sob a câmera), na mão,
+  caindo, fora do quadro. Reprova: objeto no meio do ar, mão de apoio na tela sem pente na mão e
+  sem pente no encaixe, pente que some/surge na tela fora da coincidência, recarga sem pente na
+  mão. Mutantes `reserva-solta` e `reserva-some` (famas) têm de reprovar.
+
+Iterar: `tools/fabrica/captura/quadros.mjs` (jogo real: idle, ADS, tiro, recargas em frações,
+saque, folha de contato) e `render.py --frame` (Blender, sem navegador).
+
+### 7.1 Lote bullpup (24/09) — resultado
+
+Produtos (overlay privada `…/generated/viewmodels-fabrica-bullpup/overlay/viewmodels/fabrica/`;
+hardlink da overlay da fábrica + os dois produtos), reprodutíveis (rebuild byte a byte igual):
+famas `29f877cdb2` 2,16 MiB · tavor `403658a972` 2,16 MiB (sobre `vm/fabrica` com o lote 2). Recarga 2,4 s (FAMAS) e 2,3 s (TAVOR),
+o tempo de `weapons.js`: o runtime toca o clipe em ≈1×.
+
+Réguas (`node tools/fabrica/qa.mjs famas,tavor --lote=fabrica-bullpup`), 3:2 / 16:9:
+
+| arma | produto FB1–4 | manga-oca | manga-tela | mira | cobertura | mãos | carregador (reserva) | repete |
+|---|---|---|---|---|---|---|---|---|
+| famas | ✓ | ✓ | ✓ 5% | ✓✓ 21 px | ✓✓ 0,94/0,96× AK, braço 1,01× | ✓✓ 0,09 | ✓✓ | ✓ |
+| tavor | ✓ | ✓ | ✓ 9% | ✓✓ 17 px | ✓✓ 0,93/0,96× AK, braço 1,29× | ✓✓ 0,08 | ✓✓ | ✓ |
+
+Mutantes: `cache-velho`, `sem-socket`, `invertida`, `mao-solta` (produto) e `reserva-solta`,
+`reserva-some`, `pente-pisca` (carregador com reserva) — os sete mordem. Regressão: `eval:vm-cache`,
+`eval:vm-launch`, `eval:vm-orientacao`, `eval:vm-manga-oca`, `eval:vm-placar` verdes; placar do
+#636 re-medido nas 26 armas (16:9: p90 carregador vermelho→verde, produto antigo sem reserva; 3:2: awp
+cobertura oscila 0,93↔0,95×, verde);
+`eval:vm-rig` vermelho igual na base ("ak: produto ausente", §8). Sob carga (load ~35) a régua
+`mira` 16:9 mediu duas vezes o quadril como ADS (230 px, +67°, socket 0,96 NDC) — a mesma
+assinatura intermitente da M4 no lote 1; re-medida com a máquina mais leve: verde.
+
+Crítico cego (três rodadas, contexto limpo, só pixel):
+
+| rodada | famas | tavor | o que mudou depois |
+|---|---|---|---|
+| r1 | RESSALVA — aro da FAMAS 80 px abaixo da cruz no ADS; pente nunca visto fora da arma | RESSALVA — pente nunca visto fora; pente "tábua" (malha Mint) | mira 9,6→9,3; reserva mostrado ao lado do poço |
+| r2 | RESSALVA — dois pentes juntos (reserva chega antes de o velho sair); guinada ~60° com a coronha enorme | RESSALVA — idem | vazia: velho cai primeiro; tática: a mão tira o velho e volta com o reserva; menos guinada |
+| r3 | **RESSALVA** — recarga com a arma de lado, boca a ~55 px da cruz e coronha no terço direito; o reserva entra pela frente do punho antes de encaixar; saque-15 sem mão | **RESSALVA** — na recarga a TAVOR fica grande (~125–130% da AK) e em vazia-075 (retém) corpo e mão passam perto da cruz; no ADS não aparece mão | — (limite de três voltas) |
+
+O crítico registra como certo nas duas: idle a ~1° do eixo da AK, mão de apoio no guarda-mão,
+**pente atrás do punho** (bullpup de verdade), pente velho sai inteiro e cai visível na vazia,
+na tática a mão tira o velho e traz o novo, sem pente duplo nem peça solta; ADS da TAVOR com o
+aro na cruz. Não decidiu o ADS da FAMAS (topo da massa a ~15 px; um anel abaixo a ~45 px que
+pode ser o protetor da massa). Fora do viewmodel: o HUD enche o pente já aos ~25% da recarga.
+
+Revisão antes do push (contexto limpo) achou e ficou consertado: o Mag2 contava como "corpo da
+arma" na régua (repouso nunca reprovava por deslocamento), o caminho com reserva não tinha
+fantasma nem gravava o estado (o `vm-carregador-repete` comparava vazio), "surge na tela" só
+valia com a mão de apoio na tela, e a câmera do jogo usava a ordem de Euler do Blender (0,88°).
+Aberto: as checagens de tela do animador usam o centro da peça; `FABRICA_PRIVADO` é o único
+isolamento entre worktrees (sem ele o build escreve na overlay do lote 1).
+
+**O plano B serve para outras variantes?** Sim, como ferramenta: montar (malha própria por
+ilhas) → animador (IK, câmera do jogo, segundo pente, régua do laço) → réguas verdes saiu em
+três voltas por arma, e o crítico nunca reprovou. O que ele não entrega sozinho é a
+coreografia: as chaves são autoradas à mão e o gosto (quanto girar a arma, onde a mão entra)
+leva voltas de crítico; a malha de mundo low-poly limita o acabamento (o pente da TAVOR). Para
+carabina de alavanca e UZI (pente no punho) o mesmo fluxo vale; conta ~1 dia por arma.
 
 ## 8. Lote 1
 
@@ -390,8 +478,8 @@ mecanismo a recarga opera (medido em `tools/fabrica/chassis/*.json`).
 | akm | AK | puro + skin AK-47 | lote 2 (o AK-200 do pack) |
 | m92 | AK | variante (cano/guarda-mão curtos da M92 Mint) | Krinkov: AK encurtada |
 | m4 | MX16A4 | puro | lote 1 |
-| famas | MX16A4 → plano B | variante bullpup | lote 1 reprovado; plano B em `vm/fabrica-bullpup` (outro agente) |
-| tavor | plano B | variante bullpup | `vm/fabrica-bullpup` (outro agente) |
+| famas | MX16A4 + malha própria | **plano B** (§7): FAMAS do jogo, pente atrás do punho | lote bullpup; a variante de zona livre do lote 1 foi reprovada |
+| tavor | MX16A4 + malha própria | **plano B** (§7): TAVOR do jogo, retém atrás do pente | lote bullpup |
 | md97 | MX16A4 | variante (IMBEL: guarda-mão e coronha) | AR-15 brasileiro |
 | scar | Mk14EBR | variante (casca SCAR) | pente à frente, contato de fuzil de batalha |
 | g3 | G3 | puro | lote 2 |
@@ -425,10 +513,10 @@ alavanca, uzi com pente no punho) fica fora da conta: 1–2 dias por arma.
 
 ## 10. Limites ditos sem rodeio
 
-- **FAMAS não é bullpup.** O pente da FAMAS fica atrás do punho; no chassi MX16A4 ele fica à
-  frente, e isso é zona de contato (a mão de apoio vai ao pente ali, a animação do pack é essa).
-  A variante lê como FAMAS pela alça de transporte e pela soleira; o pente continua o do M4. Uma
-  FAMAS fiel exige plano B (re-autorar a recarga) — trocar a zona livre não chega lá.
+- **FAMAS do lote 1 não era bullpup** (pente do M4 à frente do punho; crítico: "uma M4 com a alça
+  da FAMAS"). Substituída pelo plano B (§7): malha do jogo com o pente atrás do punho e recarga
+  re-autorada. O preço do plano B: a recarga é autorada por chave (não é captura de movimento do
+  pack) e a arma é o modelo de mundo do jogo (low-poly, textura 512 px).
 - **Mint:** 0 crédito gasto. A zona livre da FAMAS saiu da FAMAS Mint que o jogo já usa como
   modelo de mundo (`public/models/weapons/famas.glb`) — mesma identidade do mundo, sem custo.
 - A recarga vazia da AK do pack deixa o pente velho **cair** à vista (15%); a régua `carregador`

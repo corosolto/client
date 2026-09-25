@@ -68,9 +68,11 @@ export const CARREGADOR_PECA = {
 // malha única; na KXG12 o cartucho que a mão leva ao tubo é o osso Gauge (só aparece na recarga).
 export const FABRICA_NA_REGUA = /(?:^|&)vmfabrica=/.test(process.env.VM_PALCO_QS || '');
 if (FABRICA_NA_REGUA) {
-  for (const arma of ['akm', 'm4', 'famas', 'pistol', 'g3', 'svd', 'awp', 'mp5', 'deagle']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
+  for (const arma of ['akm', 'm4', 'pistol', 'g3', 'svd', 'awp', 'mp5', 'deagle']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
   CARREGADOR_PECA.p90 = { osso: 'Magazine' };
   CARREGADOR_PECA.mosin = { osso: 'Cartridge', clipe: true };   // recarga em laço: o cartucho solto, não o clipe
+  // Plano B (bullpup): pente reserva Mag2 coincidente no repouso, pego fora da tela (VM-FABRICA.md §7).
+  for (const arma of ['famas', 'tavor']) CARREGADOR_PECA[arma] = { osso: 'Mag', reserva: 'Mag2' };
   CARREGADOR_PECA.shotgun = { osso: 'Gauge', clipe: true };
 }
 const CARREGADOR_NA = {
@@ -208,9 +210,19 @@ async function coletarCarregador(page, arma, aplicar, quadroEntre = false) {
   const rig = rigDe(arma);
   const amostras = [];
   await P.segurar(page, true);
-  const repouso = await P.pecaCarregador(page, arma, spec, rig);
+  const reserva = spec.reserva ? { ...spec, osso: spec.reserva, gemeo: spec.osso } : null;
+  const principal = spec.reserva ? { ...spec, gemeo: spec.reserva } : spec;
+  const medir = async () => {
+    const r = await P.pecaCarregador(page, arma, principal, rig);
+    r.px = await pixelsDaPeca(page, arma, spec, r);
+    if (reserva && !r.erro) {
+      r.reserva = await P.pecaCarregador(page, arma, reserva, rig);
+      r.reserva.px = await pixelsDaPeca(page, arma, reserva, r.reserva);
+    }
+    return r;
+  };
+  const repouso = await medir();
   if (repouso.erro) return { erro: repouso.erro };
-  repouso.px = await pixelsDaPeca(page, arma, spec, repouso);
   const dur = WEAPONS[arma].reload;
   for (const [tipo, mag, n] of [['vazia', 0, 12], ['tatica', Math.max(1, Math.floor(WEAPONS[arma].mag / 2)), 6]]) {
     const ini = await P.iniciarRecarga(page, arma, mag);
@@ -221,14 +233,12 @@ async function coletarCarregador(page, arma, aplicar, quadroEntre = false) {
       await P.passo(page, dur * (f - prev)); prev = f;
       if (quadroEntre) await P.esperarQuadro(page);
       await aplicar('amostra');
-      const r = await P.pecaCarregador(page, arma, spec, rig);
-      r.px = await pixelsDaPeca(page, arma, spec, r);
-      amostras.push({ tipo, f: +f.toFixed(2), ...r });
+      amostras.push({ tipo, f: +f.toFixed(2), ...(await medir()) });
     }
     await P.passo(page, dur * (1 - prev) + 0.8);
     await page.evaluate(() => { window.__game.player.reloadUntil = 0; });
   }
-  return { repouso, amostras, clipe: Boolean(spec.clipe) };
+  return { repouso, amostras, clipe: Boolean(spec.clipe), reserva: Boolean(reserva) };
 }
 
 /* ---------------------------------------------------------------------------
@@ -374,6 +384,7 @@ export const JUIZ = {
     const k = c.carregador;
     if (!k) return NM('não coletado');
     if (k.erro) return NM(k.erro);
+    if (k.reserva) return carregadorComReserva(k);
     const T = L.CARREGADOR;
     const r0 = k.repouso;
     const falhas = [];
@@ -427,6 +438,72 @@ export const JUIZ = {
     return R(valor, `${[...new Set(falhas)].slice(0, 4).join('; ')}${falhas.length > 4 ? ` (+${falhas.length - 4})` : ''}. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.`);
   },
 };
+
+/* Dois pentes (plano B): o reserva Mag2 fica COINCIDENTE com o pente no repouso e só aparece
+   na mão depois de pego fora da tela. Vale "fora da tela pode trapacear"; na tela, cada pente
+   visível está no encaixe, na mão ou caindo, e nenhum some/surge na tela fora da coincidência. */
+function carregadorComReserva(k) {
+  const T = L.CARREGADOR;
+  const falhas = [];
+  const estado = (a, r0) => {
+    if (!a || a.erro) return 'erro';
+    if (!a.visivel) return 'oculto';
+    const desloc = r0.local && a.local ? Math.hypot(...a.local.map((v, i) => v - r0.local[i])) : Infinity;
+    a.desloc = desloc;
+    // no encaixe vale mesmo fora do quadro: no bullpup o poço fica sob a câmera no quadril
+    if (desloc <= T.deslocMax) return 'arma';
+    if (!(a.px >= T.pxMin)) return 'fora';
+    if (desloc <= T.encaixeMax && a.dArma <= T.encostaMax) return 'arma';
+    if (a.dMao <= T.maoMax) return 'mao';
+    return 'solto';
+  };
+  const r0 = k.repouso;
+  const r0b = r0.reserva;
+  if (!(r0.visivel && r0.dArma <= T.encostaMax)) falhas.push('em repouso o pente não está no encaixe');
+  for (const [x, nome] of [[r0, 'pente'], [r0b, 'reserva']]) {
+    if (x?.visivel && x.tamCorpo && x.tamPeca / x.tamCorpo > T.fantasmaMax) falhas.push(`tira carregador fantasma: o ${nome} mede ${(100 * x.tamPeca / x.tamCorpo).toFixed(0)}% da arma`);
+  }
+  const coincide = (a, b) => a?.visivel && b?.visivel && a.local && b.local && Math.hypot(...a.local.map((v, i) => v - b.local[i])) <= T.deslocMax;
+  if (r0b?.visivel && !coincide(r0, r0b) && r0b.px >= T.pxMin) falhas.push('em repouso o pente reserva está à vista fora do encaixe');
+  const estados = [];
+  let naMao = 0;
+  let ant = null;
+  let tipoAnt = '';
+  for (const a of k.amostras) {
+    if (a.erro) { falhas.push(`${a.tipo}: ${a.erro}`); continue; }
+    if (a.tipo !== tipoAnt) { ant = null; tipoAnt = a.tipo; }
+    const pc = `${a.tipo} ${Math.round(a.f * 100)}%`;
+    const b = a.reserva;
+    const eA = estado(a, r0);
+    const eB = estado(b, r0);
+    // o pente caindo: desce ≥ quedaMin palma entre amostras (mesma regra do pente único)
+    const cai = (x, xa) => x?.vista && xa?.vista && x.vista[1] - xa.vista[1] <= -T.quedaMin;
+    const final = [[eA, a, ant, 'pente'], [eB, b, ant?.reserva, 'reserva']].map(([e, x, xa, nome]) => {
+      if (e === 'solto' && cai(x, xa)) return 'caindo';
+      if (e === 'solto') falhas.push(`recarrega com objeto no meio do ar: ${pc} — ${nome} a ${x.dMao.toFixed(2)} palma da mão, deslocado ${Number.isFinite(x.desloc) ? x.desloc.toFixed(2) : '∞'} do encaixe`);
+      return e;
+    });
+    a.estado = final.join('/');
+    if (final.includes('mao')) naMao++;
+    if (a.maoNaTela && !final.includes('mao') && !final.includes('arma')) falhas.push(`mão vazia: ${pc} — mão de apoio na tela, nenhum pente na mão nem no encaixe`);
+    if (ant) {
+      for (const [x, xa, nome, outro] of [[a, ant, 'pente', b], [b, ant.reserva, 'reserva', a]]) {
+        const estavaNaTela = xa?.visivel && xa.px >= T.pxMin;
+        const estaNaTela = x?.visivel && x.px >= T.pxMin;
+        if (estavaNaTela && !x?.visivel && !coincide(xa, xa === ant ? ant.reserva : ant)) falhas.push(`${nome} some na tela: ${pc}`);
+        // surgir na mão só é truque aceito se a mão vinha de fora do quadro; fora da mão, nunca
+        const naMaoAgora = x === a ? final[0] === 'mao' : final[1] === 'mao';
+        if (!xa?.visivel && estaNaTela && !coincide(x, outro) && (!naMaoAgora || ant.maoNaTela)) falhas.push(`${nome} surge na tela: ${pc}`);
+      }
+    }
+    estados.push(`${a.tipo}${a.f}:${final.join('/')}`);
+    ant = a;
+  }
+  if (!naMao) falhas.push('tira no ar: em nenhum quadro da recarga um pente está na mão');
+  const valor = falhas.length ? `${falhas.length} falha(s)` : 'ok';
+  if (!falhas.length) return V(valor, estados.join(' '));
+  return R(valor, `${[...new Set(falhas)].slice(0, 4).join('; ')}${falhas.length > 4 ? ` (+${falhas.length - 4})` : ''}. Conserto: chaves de pente no animador (tools/fabrica/animador/<arma>.json).`);
+}
 
 export const REGUAS = Object.keys(JUIZ);
 
@@ -499,6 +576,18 @@ export const MUTANTES = {
     const mag = e.weaponMeshes.find((m) => /_MAG$/i.test(m.name)); if (!mag) return { aplicou: false };
     const antes = mag.position.clone(); mover(mag, 0, palmaDe(e) * 2, 0);
     return { aplicou: !mag.position.equals(antes) };`), arma) },
+  // Plano B: o pente reserva (Mag2) sai da mão e fica no ar / some com a mão na tela.
+  'reserva-solta': { regua: 'carregador', arma: 'famas', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const b = e.scene.getObjectByName('Mag2'); if (!b) return { aplicou: false };
+    mover(b, palmaDe(e) * 2.5, palmaDe(e) * 1.5, 0); return { aplicou: true };`), arma) },
+  // O pente pisca (some e volta) na tela entre amostras: exercita "some/surge na tela".
+  'pente-pisca': { regua: 'carregador', arma: 'famas', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const m = e.scene.getObjectByName('Mag'); if (!m) return { aplicou: false };
+    window.__pisca = (window.__pisca || 0) + 1; m.scale.setScalar(window.__pisca % 2 ? 0 : 1); m.updateMatrixWorld(true);
+    return { aplicou: true };`), arma) },
+  'reserva-some': { regua: 'carregador', arma: 'famas', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const b = e.scene.getObjectByName('Mag2'); const m = e.scene.getObjectByName('Mag'); if (!b || !m) return { aplicou: false };
+    b.scale.setScalar(0); m.scale.setScalar(0); b.updateMatrixWorld(true); m.updateMatrixWorld(true); return { aplicou: true };`), arma) },
   // O pente some no meio da recarga com a mão na tela (p90 da revisão L1).
   // Munição estacionada fora do quadro é legítima; a mesma peça parada NO quadro, solta acima
   // da arma, tem de reprovar (produto da fábrica: rode com VM_PALCO_QS=vmfabrica=mosin).

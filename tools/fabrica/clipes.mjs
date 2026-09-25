@@ -258,6 +258,25 @@ function poseDoIdle(doc, alvos, nos, duracao) {
   return { duracao, tempos: new Float32Array([0, duracao]), trilhas };
 }
 
+// Plano B: o idle foi re-posado (mão de apoio no guarda-mão da arma nova). O saque do pack
+// ganha a mesma correção local de rotação, idle_pack⁻¹·idle, para terminar no idle novo.
+function correcaoDoIdle(doc, nos) {
+  const anims = doc.getRoot().listAnimations();
+  const pack = anims.find((a) => a.getName() === 'idle_pack');
+  const novo = anims.find((a) => a.getName() === 'idle');
+  if (!pack || !novo) return null;
+  const q0 = (anim, no) => {
+    const c = anim.listChannels().find((x) => x.getTargetNode() === no && x.getTargetPath() === 'rotation');
+    return new Quaternion().fromArray(c ? Array.from(c.getSampler().getOutput().getArray().slice(0, 4)) : no.getRotation());
+  };
+  const delta = new Map();
+  for (const [nome, no] of nos) {
+    const d = q0(pack, no).invert().multiply(q0(novo, no));
+    if (1 - Math.abs(d.w) > 1e-7) delta.set(nome, d);
+  }
+  return { delta, pack };
+}
+
 function trilha(doc, anim, buffer, no, prop, tempos, valores) {
   const w = prop === 'rotation' ? 4 : 3;
   const entrada = doc.createAccessor(`${anim.getName()}_${no.getName()}_t`, buffer).setType('SCALAR').setArray(tempos);
@@ -329,8 +348,14 @@ async function main() {
     relatorio.idleArma = { fonte: path.basename(plano.clipes.idle.arma), ossos: a.trilhas.size, residuoCm: a.residuoCm };
   }
 
+  const correcao = correcaoDoIdle(doc, nos);
+  relatorio.animador = Object.entries(plano.clipes).filter(([, c]) => c.tipo === 'animador').map(([nome]) => {
+    const a = raiz.listAnimations().find((x) => x.getName() === nome);
+    if (!a) throw new Error(`clipe ${nome} do animador ausente no GLB base`);
+    return { nome, duracao: Math.max(...a.listSamplers().map((sm) => sm.getInput().getMax([])[0])) };
+  });
   for (const [nomeJogo, fonte] of Object.entries(plano.clipes)) {
-    if (nomeJogo === 'idle' || !fonte || fonte.tipo === 'procedural' || fonte.tipo === 'ausente') continue;
+    if (nomeJogo === 'idle' || !fonte || ['procedural', 'ausente', 'animador'].includes(fonte.tipo)) continue;
     const fbxBraco = fonte.braco ? path.join(fonte.geral ? plano.packAnimacoes : pasta, fonte.braco) : null;
     const fbxArma = fonte.arma ? path.join(pasta, fonte.arma) : null;
     let braco = null;
@@ -340,6 +365,16 @@ async function main() {
       assimp(fbxBraco, glb);
       await soAnimacao(glb);
       braco = amostrar(await carregarAnimacao(glb), alvosBraco, { dobrarRaiz: true, nos });
+      if (correcao) {
+        for (const [n, tr] of braco.trilhas) {
+          const d = correcao.delta.get(n);
+          if (!d) continue;
+          const q = new Quaternion();
+          for (let i = 0; i < tr.r.length; i += 4) {
+            q.fromArray(tr.r, i).multiply(d).toArray(tr.r, i);
+          }
+        }
+      }
     }
     if (fbxArma) {
       const glb = path.join(cru, `${nomeJogo}-arma.glb`);
@@ -379,6 +414,12 @@ async function main() {
       duracaoArma: arma ? +arma.duracao.toFixed(4) : null,
       alinhamentoArma: arma ? { ossos: arma.ossos, metodo: arma.metodo, residuoCm: +arma.residuoCm.toFixed(4) } : null,
     });
+  }
+  if (correcao) {
+    relatorio.correcaoIdle = [...correcao.delta.keys()];
+    correcao.pack.listSamplers().forEach((sm) => sm.dispose());
+    correcao.pack.listChannels().forEach((c) => c.dispose());
+    correcao.pack.dispose();
   }
   await io.write(saida, doc);
   relatorio.bytes = (await fs.stat(saida)).size;

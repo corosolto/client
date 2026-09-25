@@ -18,6 +18,8 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const manifesto = lerJson(MANIFESTO);
 const ORDEM = opt('armas', 'ak,m4,famas,shotgun,pistol').split(',').filter((id) => manifesto.candidates[id]);
 const TITULO = opt('titulo', 'lote 1 (AK, M4, FAMAS, escopeta, pistola)').replaceAll('_', ' ');
+const BULLPUP = /bullpup/.test(LOTE);
+const COMPARAR = (opt('comparar', '') || '').split(',').filter(Boolean);
 const resumo = rj(path.join(LOTE, 'qa/resumo.json'), { porArma: {}, regressao: {}, mutantesDoProduto: [] });
 const rev = execSync('git rev-parse --short HEAD', { cwd: RAIZ_REPO }).toString().trim();
 const url = (w) => `http://127.0.0.1:${PORTA}/?debug=1&auto=P,mst&map=piscina_treta&armaslazy=0&vmauthored=1&vmqa=precision&vmfabrica=${w}`;
@@ -75,7 +77,7 @@ const dono = `<div class="owner"><button data-v="APROVADA">Aprovo</button><butto
 const card = (id) => {
   const f = ficha(id); const cr = critico(id); const vermelhos = resumo.porArma?.[id] || [];
   return `<section class="card" id="${esc(id)}" data-w="${esc(id)}">
-  <header><h2>${esc(id)}</h2><span class="tag">chassi ${esc(f.chassi)}${f.zonaLivre?.length ? ' · VARIANTE' : ' · puro'}</span><span class="verd ${vclass(cr.v)}">crítico: ${esc(cr.v)}</span></header>
+  <header><h2>${esc(id)}</h2><span class="tag">chassi ${esc(f.chassi)}${f.malhaPropria ? ' · PLANO B (malha própria)' : f.zonaLivre?.length ? ' · VARIANTE' : ' · puro'}</span><span class="verd ${vclass(cr.v)}">crítico: ${esc(cr.v)}</span></header>
   <p class="resumo">${esc(f.descricao || '')}${f.limite ? ` <b>Limite:</b> ${esc(f.limite)}` : ''}</p>
   <p class="open"><a href="${esc(url(id))}" target="_blank" rel="noopener">▶ abrir no jogo (fábrica)</a> · <a href="${esc(urlAntes(id))}" target="_blank" rel="noopener">produto atual (antes)</a></p>
   <div class="chips">${chips(id)}</div>
@@ -89,6 +91,14 @@ const card = (id) => {
   ${cr.texto ? `<details><summary>parecer do crítico cego</summary><pre>${esc(cr.texto)}</pre></details>` : ''}
   ${dono}
 </section>`;
+};
+const comparar = (id) => {
+  const d = path.join(LOTE, 'comparar', id);
+  const fs_ = fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f.endsWith('.png')).sort() : [];
+  const nome = id === 'ak' ? 'AK golden (aprovada)' : `${id} — lote 1, APROVADA pelo crítico`;
+  return `<section class="card" id="ref-${esc(id)}"><header><h2>${esc(nome)}</h2><span class="tag">referência</span></header>
+  <p class="open"><a href="${esc(id === 'ak' ? urlAntes('ak') : url(id))}" target="_blank" rel="noopener">▶ abrir no jogo</a></p>
+  <div class="grid">${fs_.map((f) => `<figure><a href="comparar/${id}/${esc(f)}" data-lb><img loading="lazy" src="comparar/${id}/${esc(f)}" alt=""></a><figcaption>${esc(f.replace(/\.png$/, ''))}</figcaption></figure>`).join('') || '<p class="ref">sem figura</p>'}</div></section>`;
 };
 const linhas = ORDEM.map((id) => { const f = ficha(id); const cr = critico(id); const v = resumo.porArma?.[id] || [];
   return `<tr><td><a href="#${id}">${id}</a></td><td>${esc(f.chassi)}${f.zonaLivre?.length ? ' (variante)' : ''}</td><td class="${vclass(cr.v)}">${esc(cr.v)}</td><td>${v.length ? `<span class="bad">${esc(v.join(', '))}</span>` : '<span class="okt">verde</span>'}</td></tr>`; }).join('');
@@ -134,9 +144,9 @@ textarea{width:100%;min-height:110px;font:12px ui-monospace,monospace;background
 </style></head><body><main>
 <h1>Fábrica de armas — ${esc(TITULO)}</h1>
 <div class="top">
- <div class="box"><b>O que é</b><p class="ref" style="margin:4px 0">Cada arma é o pack KINEMATION <b>como autorado</b> na zona de contato (braço, arma, pose e recargas do próprio pack); só a zona livre varia (a FAMAS troca alça e soleira) e a identidade vem de skin. Servidor: <code>node tools/eval/serve.mjs ${PORTA}</code> no worktree <code>vm-fabrica</code> (branch <code>vm/fabrica</code> @ ${esc(rev)}). No jogo: <code>?vmauthored=1&amp;vmfabrica=&lt;arma&gt;</code>. Nenhuma flag <code>ready</code> nem <code>VM_LAUNCH</code> foi mudada.</p>
- <p class="ref" style="margin:4px 0"><b>Política revogada (confirmar):</b> desde 24/08 (BUG-75) a arma do pack ficava escondida e a Mint era encaixada por cima ("pacote é doador, nunca aparência"). A fábrica mostra a arma do pack; a identidade do jogo vem de skin, nome e variante de zona livre.</p>
- <p class="ref" style="margin:4px 0"><b>Mint:</b> 0 crédito. A zona livre da FAMAS saiu da FAMAS Mint que o jogo já usa no mundo. <b>Mãos:</b> base neutra na aparência da AK aprovada; no jogo o time pinta por cima (mãos por time, mesma escala).</p>
+ <div class="box"><b>O que é</b>${BULLPUP ? `<p class="ref" style="margin:4px 0"><b>Plano B (re-autorado).</b> O pack não tem chassi bullpup: no MX16A4 o pente fica à frente do punho e é zona de contato, e a FAMAS de zona livre do lote 1 foi reprovada ("uma M4 com a alça da FAMAS"). Aqui a arma é a malha do próprio jogo (FAMAS/TAVOR, 0 crédito Mint) com o pente <b>atrás do punho</b>; ficam do pack o braço SK_Arms_Mono, a mão forte no punho, a câmera, o saque geral e o coice procedural. A mão de apoio no guarda-mão e as recargas tática e vazia são re-autoradas por <code>tools/fabrica/blender/animador.py</code> (IK nas duas mãos; truque do segundo pente: o reserva é pego fora da tela, o velho cai e volta quando ninguém vê). Servidor: <code>node tools/eval/serve.mjs ${PORTA}</code> no worktree <code>vm-fabrica-bullpup</code> @ ${esc(rev)}. Nenhuma flag <code>ready</code> nem <code>VM_LAUNCH</code> foi mudada. No fim, as aprovadas (M4 e pistola do lote 1, AK golden) para comparar.</p>` : ''}<p ${BULLPUP ? 'hidden' : ''} class="ref" style="margin:4px 0">Cada arma é o pack KINEMATION <b>como autorado</b> na zona de contato (braço, arma, pose e recargas do próprio pack); só a zona livre varia (a FAMAS troca alça e soleira) e a identidade vem de skin. Servidor: <code>node tools/eval/serve.mjs ${PORTA}</code> no worktree <code>vm-fabrica</code> (branch <code>vm/fabrica</code> @ ${esc(rev)}). No jogo: <code>?vmauthored=1&amp;vmfabrica=&lt;arma&gt;</code>. Nenhuma flag <code>ready</code> nem <code>VM_LAUNCH</code> foi mudada.</p>
+ <p ${BULLPUP ? 'hidden' : ''} class="ref" style="margin:4px 0"><b>Política revogada (confirmar):</b> desde 24/08 (BUG-75) a arma do pack ficava escondida e a Mint era encaixada por cima ("pacote é doador, nunca aparência"). A fábrica mostra a arma do pack; a identidade do jogo vem de skin, nome e variante de zona livre.</p>
+ <p ${BULLPUP ? 'hidden' : ''} class="ref" style="margin:4px 0"><b>Mint:</b> 0 crédito. A zona livre da FAMAS saiu da FAMAS Mint que o jogo já usa no mundo. <b>Mãos:</b> base neutra na aparência da AK aprovada; no jogo o time pinta por cima (mãos por time, mesma escala).</p>
  <p class="ref" style="margin:4px 0">Como a fábrica funciona e o mapa das 26 armas: <code>docs/reports/VM-FABRICA.md</code>.</p></div>
  <div class="box"><b>Veredito do dono (colar)</b><textarea id="out" readonly></textarea><button id="cp" style="margin-top:6px">copiar</button>
  <div class="chips" style="margin-top:8px">${mut}${reg}</div></div>
@@ -144,9 +154,10 @@ textarea{width:100%;min-height:110px;font:12px ui-monospace,monospace;background
 ${refLote1 || duasAks}
 <div class="box"><table><thead><tr><th>arma</th><th>chassi</th><th>crítico cego</th><th>réguas vermelhas (3:2 e 16:9)</th></tr></thead><tbody>${linhas}</tbody></table></div>
 ${ORDEM.map(card).join('\n')}
+${COMPARAR.map(comparar).join('\n')}
 </main><div id="lb"><img alt=""></div>
 <script>
-const K='fabricaLote1';let st={};try{st=JSON.parse(localStorage.getItem(K)||'{}')}catch{}
+const K='${BULLPUP ? 'fabricaBullpup' : 'fabricaLote1'}';let st={};try{st=JSON.parse(localStorage.getItem(K)||'{}')}catch{}
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(st))}catch{}};
 const line=(w)=>{const s=st[w];return s&&s.v?\`VEREDITO-DONO \${w} \${s.v}\${s.n?' — '+s.n:''}\`:''};
 const render=()=>{document.getElementById('out').value=Object.keys(st).map(line).filter(Boolean).join('\\n');

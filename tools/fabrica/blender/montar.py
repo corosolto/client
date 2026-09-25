@@ -425,6 +425,124 @@ def importar_peca(peca: dict, braco, em_rig) -> dict:
             "ancora": ancora.get("nome"), "posCm": list(ancora["pos"])}
 
 
+def ilhas(me) -> list:
+    """Componentes conexos (índices de vértice) de uma malha."""
+    vizinhos = [set() for _ in me.vertices]
+    for e in me.edges:
+        a, b = e.vertices
+        vizinhos[a].add(b)
+        vizinhos[b].add(a)
+    vistos, saida = set(), []
+    for ini in range(len(me.vertices)):
+        if ini in vistos:
+            continue
+        pilha, grupo = [ini], []
+        vistos.add(ini)
+        while pilha:
+            i = pilha.pop()
+            grupo.append(i)
+            for n in vizinhos[i]:
+                if n not in vistos:
+                    vistos.add(n)
+                    pilha.append(n)
+        saida.append(grupo)
+    return saida
+
+
+def malha_propria(spec: dict, braco, malhas_pack: list, em_rig) -> dict:
+    """Plano B: a arma do pack sai e entra a malha do jogo, rígida no osso Arma, com as peças móveis
+    (ilhas) no osso do pack que o animador anima. Formato: docs/reports/VM-FABRICA.md §7."""
+    for o in malhas_pack:
+        bpy.data.objects.remove(o, do_unlink=True)
+    antes = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=spec["fonte"])
+    novos = [o for o in bpy.data.objects if o not in antes]
+    fontes = [o for o in novos if o.type == "MESH"]
+    if len(fontes) != 1:
+        raise RuntimeError(f"malha própria deveria ter 1 malha, veio {len(fontes)}")
+    fonte = fontes[0]
+    mw = fonte.matrix_world.copy()
+    fonte.parent = None
+    fonte.matrix_world = mw
+    remover([o for o in novos if o.type != "MESH"])
+    bpy.ops.object.select_all(action="DESELECT")
+    fonte.select_set(True)
+    bpy.context.view_layer.objects.active = fonte
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    me = fonte.data
+    if spec.get("soldar", True):
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+        bm.to_mesh(me)
+        bm.free()
+    # Peças móveis: ilha cuja caixa cabe na caixa pedida (e com n vértices, se pedido).
+    dono = {}
+    rel_pecas = []
+    for peca in spec.get("pecas", []):
+        pegos = 0
+        for grupo in ilhas(me):
+            pts = [me.vertices[i].co for i in grupo]
+            mn = [min(p[k] for p in pts) for k in range(3)]
+            mx = [max(p[k] for p in pts) for k in range(3)]
+            cx = peca["caixa"]
+            if not all(cx["min"][k] <= mn[k] and mx[k] <= cx["max"][k] for k in range(3)):
+                continue
+            if "abaixoDe" in peca and not mn[2] < peca["abaixoDe"]:
+                continue
+            if "n" in peca and len(grupo) not in peca["n"]:
+                continue
+            for i in grupo:
+                if i in dono:
+                    raise RuntimeError(f"vértice {i} em duas peças ({dono[i]}, {peca['osso']})")
+                dono[i] = peca["osso"]
+            pegos += len(grupo)
+        esperado = peca.get("vertices")
+        if esperado is not None and pegos != esperado:
+            raise RuntimeError(f"peça {peca['nome']}: {pegos} vértices, esperado {esperado}")
+        rel_pecas.append({"nome": peca["nome"], "osso": peca["osso"], "vertices": pegos})
+    # Referencial: GLB (m) → raiz do FBX (cm) → mundo, pelo repouso do osso Arma.
+    from mathutils import Euler
+    local = (Matrix.Translation(Vector(spec["posCm"])) @ Euler([math.radians(a) for a in spec.get("rotDeg", [0, 0, 0])]).to_matrix().to_4x4()
+             @ Matrix.Scale(spec.get("escala", 1.0) * 100.0, 4))
+    fonte.matrix_world = braco.matrix_world @ braco.data.bones[OSSO_ARMA].matrix_local @ em_rig @ local
+    bpy.ops.object.select_all(action="DESELECT")
+    fonte.select_set(True)
+    bpy.context.view_layer.objects.active = fonte
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    fonte.name = f"GEO_WEAPON_{spec['nome'].upper()}"
+    grupos = {}
+    for osso in {OSSO_ARMA, *dono.values()}:
+        if osso not in braco.data.bones:
+            raise RuntimeError(f"osso {osso} ausente no rig (peça móvel da malha própria)")
+        grupos[osso] = fonte.vertex_groups.new(name=osso)
+    for v in me.vertices:
+        grupos[dono.get(v.index, OSSO_ARMA)].add([v.index], 1.0, "REPLACE")
+    mw = fonte.matrix_world.copy()
+    fonte.parent = braco
+    fonte.matrix_world = mw
+    mod = fonte.modifiers.new("Armature", "ARMATURE")
+    mod.object = braco
+    for mat in me.materials:
+        if mat and not mat.name.startswith("CoroSolto_"):
+            mat.name = f"CoroSolto_MP_{mat.name}"
+    # Pivô de cada osso móvel no alto da própria peça (o pente gira pela boca do poço).
+    para_arm = braco.matrix_world.inverted() @ fonte.matrix_world
+    bpy.context.view_layer.objects.active = braco
+    bpy.ops.object.mode_set(mode="EDIT")
+    eb = braco.data.edit_bones
+    for osso in set(dono.values()):
+        pts = [para_arm @ me.vertices[i].co for i, d in dono.items() if d == osso]
+        c = sum(pts, Vector()) / len(pts)
+        topo = max(pts, key=lambda p: p.z).z if osso == "Mag" else c.z
+        cabeca = Vector((c.x, c.y, topo))
+        desloc = cabeca - eb[osso].head
+        eb[osso].head += desloc
+        eb[osso].tail += desloc
+    bpy.ops.object.mode_set(mode="OBJECT")
+    return {"fonte": spec["fonte"], "objeto": fonte.name, "vertices": len(me.vertices), "pecas": rel_pecas}
+
+
 def camera_do_pack(cam_spec: dict):
     """Câmera do FPSPlayer.prefab (Unity → Blender: x=-x, y=-z, z=y). Fica no GLB:
     é a câmera de autoria — o runtime enquadra por ela e o QA renderiza por ela."""
@@ -483,6 +601,10 @@ def main() -> None:
 
     rig_braco.data.pose_position = "REST"
     bpy.context.view_layer.update()
+    propria = None
+    if plano.get("malhaPropria"):
+        propria = malha_propria(plano["malhaPropria"], rig_braco, malhas_arma, em_rig)
+        malhas_arma = [bpy.data.objects[propria["objeto"]]]
     removidos = remover_regioes(rig_braco, malhas_arma, plano.get("removerZonaLivre", []), em_rig, plano.get("protecao", []))
     pecas = [importar_peca(p, rig_braco, em_rig) for p in plano.get("zonaLivre", [])]
     rig_braco.data.pose_position = "POSE"
@@ -497,13 +619,15 @@ def main() -> None:
     vazio("SOCKET_FAB_SIGHT", rig_braco, em_rig @ Matrix.Translation(mira))
     vazio("SOCKET_FAB_MUZZLE", rig_braco, em_rig @ Matrix.Translation(mira + frente * 40.0))
     vazio("SOCKET_FAB_UP", rig_braco, em_rig @ Matrix.Translation(mira + Vector(chassi["eixos"]["cima"]) * 10.0))
-    boca = chassi.get("ancoras", {}).get("boca")
+    boca = plano.get("boca") or chassi.get("ancoras", {}).get("boca")
     if boca:
         vazio("SOCKET_FAB_BARREL", rig_braco, em_rig @ Matrix.Translation(Vector(boca["raizCm"])))
 
     cam = camera_do_pack(plano["camera"])
     cena["fabrica_id"] = plano["id"]
     cena["fabrica_chassi"] = chassi["nome"]
+    # Raiz do FBX (cm) → osso Arma: o animador (plano B) posa alvos neste referencial.
+    cena["fabrica_em_rig"] = [v for linha in em_rig for v in linha]
 
     blend = saida / "base.blend"
     glb = saida / "base.glb"
@@ -534,6 +658,7 @@ def main() -> None:
         "bracos": {"ossos": len(rig_braco.data.bones), "skin": skin_braco, "clipes": relatorio_clipes},
         "arma": {"ossos": ossos_arma, "ossoRaiz": OSSO_ARMA, "materiais": skin_arma},
         "zonaLivre": {"removido": removidos, "pecas": pecas},
+        "malhaPropria": propria,
     }
     (saida / "montagem.json").write_text(json.dumps(relatorio, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print("FABRICA_MONTAGEM=" + json.dumps({"glb": str(glb), "id": plano["id"]}))
