@@ -254,3 +254,18 @@ Bytes históricos, sem regeneração. Manifesto de origem: `docs/maps/POLISH-REC
   permanecem determinísticos. A geração ocorreu na conta Mint do usuário para este
   projeto. Termos públicos e publicação comercial ainda exigem verificação; não
   declarar CC0.
+
+## Kit estrutural de Obras da Prefeitura
+
+Reaproveitado da frente histórica `map2/obras`; nenhum crédito novo foi consumido.
+Ambos pertencem ao pack Mint `posto_obras_r3`, gerado pela conta do projeto com
+prompt próprio e sob licença de assinante Mint Pro. O registro completo, incluindo
+IDs, chat, hashes e processamento, está em `mint-assets.json`.
+
+- `andaime.glb` — torre tubular com plataformas e travessas; 4.299 triângulos,
+  WebP 1024. Registro `andaime-obras`.
+- `container_escritorio.glb` — container de canteiro com porta e janela; 4.406
+  triângulos, WebP 1024. Registro `container-escritorio-obras`.
+
+Licença de uso da conta Mint; não declarar CC0. Os arquivos continuam sujeitos aos
+termos e direitos de terceiros registrados no manifesto.
