@@ -325,6 +325,72 @@
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/g3.json"
     },
+    "g3sg1": {
+      "schemaVersion": 1,
+      "id": "g3sg1",
+      "arma": "g3sg1",
+      "chassi": "G3",
+      "variante": true,
+      "url": "/private-assets/viewmodels/fabrica/g3sg1-fabrica.glb",
+      "bytes": 3369520,
+      "sha256": "e9248df6b25a5e407bf3fa9c1275b6e18928805bdd5f1ee22967c54efa89ee75",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_G3_Idle.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.6333,
+          "braco": "A_FP_G3_Reload_Tac.FBX",
+          "arma": "A_W_G3_Reload_Tac.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 3.8833,
+          "braco": "A_FP_G3_Reload_Empty.FBX",
+          "arma": "A_W_G3_Reload_Empty.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 5,
+      "file": "viewmodels/fabrica/g3sg1-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/g3sg1.json",
+      "insumos": {
+        "ficha": "71674614016a5043e3137763c339af2c083b45d2902853a7eeef49fa37ee951f",
+        "chassi": "134433dae19b00acf4bf50de01ab7f24726d037d2603eacbe63773b2d1f20fff",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "3aaed1e48e76260c0c271a7578fba32b36bb3778585a6a27967d1fce8756cd38",
+        "poseFbx": "a195ea43af6078acde3d04ddfaecbacec1f68f4c43ac8900be8ebc8b933e0046",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_tactical:braco": "56f91940aaf36f2d558571c26cd2c935c228b22a52729966dc9f41efd913c712",
+        "clipe:reload_tactical:arma": "6f6549a474932458be1300cfc2af74aeb6006856cbd671ba8ebce41cc2e3dc4f",
+        "clipe:reload_empty:braco": "1bfa4e5574d8fd0b022290f812d075a5ae2934c0a84aa1ea89f8572afea268c0",
+        "clipe:reload_empty:arma": "b74d8f8caa473320c9de1b3d4534adc711a338e38d5787e04834cad47ed6495b",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "zonaLivre:luneta": "3634db457fe27b5904955efb64c74dadf2336263fa64e153014d76df31770ddb",
+        "zonaLivre:coronha-sg1": "3634db457fe27b5904955efb64c74dadf2336263fa64e153014d76df31770ddb"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/g3sg1.json"
+    },
     "lmg": {
       "schemaVersion": 1,
       "id": "lmg",

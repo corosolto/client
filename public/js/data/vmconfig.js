@@ -174,6 +174,7 @@ export const VM_FABRICA = Object.freeze({
   md97: F('ar', 'MX16A4', { variante: true, recoilScale: 3.8, ads: A(0.1) }),
   famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
   g3: F('g3', 'G3', { recoilScale: 5, ads: A(0.1) }),
+  g3sg1: F('g3', 'G3', { variante: true, recoilScale: 5, ads: A(0.1) }),
   svd: F('svd', 'SVD', { recoilScale: 2.2, ads: A(0.34) }),
   awp: F('sniper', 'L96X', { recoilScale: 3.5, ads: A(0.12) }),
   mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, ads: A(0.4) }),
