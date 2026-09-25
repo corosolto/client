@@ -1405,10 +1405,8 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
-  /* `applyCinematicScreen` morreu com a barra cinematográfica no 495a6d889 (alinhamento
-     da estrutura visual com a main). A chamada ficou para trás e estourava
-     `ReferenceError` DENTRO de `setPaused(true)` — o M em partida abria o pause-menu e
-     nunca chegava ao `pickTeam`, que é o #char-select que o smoke cobra. */
+  /* `applyCinematicScreen` morreu no 495a6d889 e a chamada ficou: o `ReferenceError` dentro
+     de `setPaused(true)` matava o M em partida (pilha no BUG-179, item 7). */
   game.onPauseChange = () => resetConfirms();
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
