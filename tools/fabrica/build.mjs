@@ -108,6 +108,17 @@ if (acabZl) {
     m.setMetallicFactor(acabZl.metal).setRoughnessFactor(acabZl.rugosidade).setMetallicRoughnessTexture(null);
   }
 }
+// Identidade por matiz: a textura do pack girada de cor (a L96X areia vira a AWP verde do jogo).
+for (const t of ficha.tingirTextura || []) {
+  const mats = doc.getRoot().listMaterials().filter((m) => m.getName() === t.material);
+  if (!mats.length) throw new Error(`tingirTextura: material ${t.material} ausente`);
+  for (const m of mats) {
+    const tex = m.getBaseColorTexture();
+    if (!tex) throw new Error(`tingirTextura: ${t.material} sem textura base`);
+    const img = await sharp(Buffer.from(tex.getImage())).modulate({ hue: t.hue || 0, saturation: t.saturacao ?? 1, brightness: t.brilho ?? 1 }).png().toBuffer();
+    tex.setImage(new Uint8Array(img)).setMimeType('image/png');
+  }
+}
 await doc.transform(
   dedup(),
   resample({ tolerance: 1e-5 }),

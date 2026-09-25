@@ -211,6 +211,9 @@ class Animador:
             self.pega_palma_raiz = Vector(pega["palmaCm"])
             Hm = self.mao_em_raiz(self.pega_palma_raiz, self.pega_rot_raiz, R0)
             self.pega = Hm.inverted() @ p.mat(self.osso_pente)  # pente na mão: relação fixa (punho → pente assentado)
+            # Cada peça "na mão" guarda a própria relação com o punho: os seis cartuchos do tambor
+            # chegam juntos na forma do tambor (speed-loader); pente e reserva coincidentes dão a mesma.
+            self.pega_osso = {n: Hm.inverted() @ p.mat(n) for n in self.pai_pecas()}
         Rinv = R0.inverted()
         eixos = lambda l: {"palma": list(so_rot(Rinv) @ (p.pos(f"middle_01_{l}") - p.pos(f"hand_{l}")).cross(p.pos(f"index_01_{l}") - p.pos(f"pinky_01_{l}")).normalized()),
                            "dedos": list(so_rot(Rinv) @ (p.pos(f"middle_01_{l}") - p.pos(f"hand_{l}")).normalized()),
@@ -219,6 +222,9 @@ class Animador:
                             "pente": list(Rinv @ p.pos(self.osso_pente))}
         self.polo_l = p.pos("lowerarm_l") - (p.pos("upperarm_l") + p.pos("hand_l")) * 0.5
         self.polo_r = p.pos("lowerarm_r") - (p.pos("upperarm_r") + p.pos("hand_r")) * 0.5
+
+    def pai_pecas(self):
+        return sorted({o for c in self.spec["clipes"].values() for o in (c.get("pentes") or {})} & set(self.pose.pai))
 
     def mao_em_raiz(self, palma_raiz, rot_raiz, R):
         R3 = so_rot(R) @ rot_raiz
@@ -320,7 +326,7 @@ class Animador:
                     d = d.lerp(Vector(prox.get("deslocCm", (0, 0, 0))), s_)
                 M = Matrix.Translation(so_rot(R) @ d) @ seat
             elif est == "mao":
-                M = p.mat("hand_l") @ self.pega
+                M = p.mat("hand_l") @ self.pega_osso.get(osso, self.pega)
             elif est == "cai":
                 M0 = ini["M0"] or seat
                 dt = t - ini["t0"]

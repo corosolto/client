@@ -346,6 +346,9 @@ export const JUIZ = {
     if (q.cruz > 0) falhas.push(`${q.cruz} px de arma/braço sobre a cruz no quadril`);
     const dAng = q.eixo && ak.eixo ? ((q.eixo.graus - ak.eixo.graus + 540) % 360) - 180 : null;
     if (dAng !== null && Math.abs(dAng) > L.COBERTURA_ANGULO_MAX) falhas.push(`ângulo esquisito: eixo da arma na tela ${q.eixo.graus.toFixed(0)}° contra ${ak.eixo.graus.toFixed(0)}° da AK (${dAng > 0 ? '+' : ''}${dAng.toFixed(0)}°, teto ±${L.COBERTURA_ANGULO_MAX}°)`);
+    if (dAng !== null && FABRICA_NA_REGUA && soFabrica(c.arma) && Math.abs(dAng) > L.INCLINACAO_FABRICA_MAX && Math.abs(dAng) <= L.COBERTURA_ANGULO_MAX) {
+      falhas.push(`arma inclinada: eixo na tela ${dAng > 0 ? '+' : ''}${dAng.toFixed(0)}° da AK (fábrica: teto ±${L.INCLINACAO_FABRICA_MAX}°)`);
+    }
     if (q.olho !== null && q.olho !== undefined && rigDe(c.arma) !== 'metarig' && q.olho < L.COBERTURA_OLHO_MIN) falhas.push(`câmera dentro da arma: a parte mais perto está a ${q.olho.toFixed(2)} palma do olho (mínimo ${L.COBERTURA_OLHO_MIN})`);
     let adsTxt = 'ADS: viewmodel some (luneta)';
     if (c.ads && c.ads.areaTotal > 0) {
@@ -578,6 +581,11 @@ export const MUTANTES = {
   'arma-gigante': { regua: 'cobertura', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
     const r = raizesDe(e); for (const m of r) { m.scale.multiplyScalar(1.6); m.updateMatrixWorld(true); }
     return { aplicou: r.length > 0, malhas: r.map((m) => m.name) };`), arma) },
+  // A M4 da fábrica girada 9° no plano da tela (a UZI/SCAR que o dono viu inclinadas, 25/09).
+  inclinada: { regua: 'cobertura', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const q = new e.mount.quaternion.constructor().setFromAxisAngle({ x: 0, y: 0, z: 1, isVector3: true }, 9 * Math.PI / 180);
+    e.mount.quaternion.premultiply(q); e.mount.position.applyQuaternion(q); e.mount.updateMatrixWorld(true);
+    return { aplicou: true };`), arma) },
   // A PT-38 com o frame da reescala do #631 (z −0,566), que o dono REVERTEU: a
   // cobertura das curtas mede contra a PT-38 aprovada e tem de reprovar (~0,55×).
   'pistola-631': { regua: 'cobertura', arma: 'pistol', fase: 'idle', aplicar: async (page, arma) => {

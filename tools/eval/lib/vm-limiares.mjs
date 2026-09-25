@@ -65,6 +65,10 @@ export const COBERTURA_OLHO_MIN = 0.6;
 // em quadril a ±12° do da AK. Crítico r2: mp5 "pitch ~39° vs 26° da AK" (13°,
 // reprovada), md97 "mais horizontal com a traseira alta".
 export const COBERTURA_ANGULO_MAX = 12;
+// Produtos da FÁBRICA: o dono (25/09) viu inclinadas a UZI (+10° da AK nesta régua) e a SCAR
+// (−8°); as aprovadas medem m4 0, akm 0, g3 +2, mp5 +3, awp +2, lmg −3, shotgun −3, m400 −4
+// (vm-reguas --regua=cobertura, VM_PALCO_QS=vmfabrica=…, 3:2). Teto no meio do vão: 6°.
+export const INCLINACAO_FABRICA_MAX = 6;
 // ADS: arma+braço cobrem no máximo 1,5× o que a AK cobre em quadril (12,3% → 18,5%).
 // O crítico reprovou o shotgun no ADS por "cobrir ~40% da tela".
 export const COBERTURA_ADS_MAX_VS_AK = 1.5;
