@@ -260,7 +260,7 @@ function coberturaCurta(c, refs) {
   if (!p?.quadril?.areaArma) return NM(`referência da pistola ausente (${PISTOLA_APROVADA_ARQ} sem este aspecto)`);
   const q = c.quadril;
   if (!q?.areaArma) return NM('arma curta sem pixel de arma no quadril');
-  const faixa = L.PISTOLA_APROVADA.faixa;
+  const faixa = L.PISTOLA_FAIXA_ARMA[c.arma] || L.PISTOLA_APROVADA.faixa;
   const tam = tamanhoCurta(q, p, c.arma);
   const falhas = [];
   if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da PT-38 ${p.fonte} por metro (faixa das curtas ${faixa.min}–${faixa.max})`);
@@ -354,7 +354,7 @@ export const JUIZ = {
     const dpos = Math.hypot(x1 - x0, y1 - y0);
     const posMax = L.PISTOLA_POS_MAX * (refs.largura || L.LARGURA_REF);
     const adsRaz = p.ads.areaArma ? (c.ads?.areaArma || 0) / p.ads.areaArma : 0;
-    const faixa = refs.faixaPistola || L.PISTOLA_FAIXA;
+    const faixa = refs.faixaPistola || L.PISTOLA_FAIXA_ARMA[c.arma] || L.PISTOLA_FAIXA;
     const falhas = [];
     if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da pistola ${p.fonte} por metro (faixa ${faixa.min}–${faixa.max})`);
     if (tam > faixa.max) falhas.push(`arma gigante: ${(tam * 100).toFixed(0)}% da pistola ${p.fonte} por metro (faixa ${faixa.min}–${faixa.max})`);
