@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.283`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.284`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -61,6 +61,28 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.284] — 2026-09-25
+
+### Mudado
+- feat(quebrada): reconstruir rotas e cobertura do Campinho (#602)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(quebrada): record alpha262 playtest evidence
+- test(quebrada): expand Campinho browser matrix
+- fix(quebrada): reassar grafites do Campinho
+- docs(quebrada): vincular draft substituto
+- docs(quebrada): registrar portao herdado
+- docs(quebrada): atualizar blocos gerados
+- feat(quebrada): reconstruir rotas e cobertura do Campinho
 
 ## [2.0.0-alpha.283] — 2026-09-25
 
