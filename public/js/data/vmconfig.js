@@ -174,7 +174,7 @@ export const VM_FABRICA = Object.freeze({
   // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
   // entra; nesses três a extensão não fura a câmera (crítico, rodada 1).
   g3: F('g3', 'G3', { manga: true, recoilScale: 5, ads: A(0.1) }),
-  svd: F('svd', 'SVD', { manga: true, recoilScale: 2.2, ads: A(0.34) }),
+  svd: F('svd', 'SVD', { manga: true, recoilScale: 2.8, ads: A(0.34) }),
   awp: F('sniper', 'L96X', { manga: true, recoilScale: 3.5, ads: A(0.12) }),
   mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, ads: A(0.4) }),
   mp5: F('mp5', 'MPS5', { recoilScale: 2.3, ads: A(0.1) }),
