@@ -1153,27 +1153,36 @@
       "chassi": "Viper-357",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/revolver38-fabrica.glb",
-      "bytes": 2547208,
-      "sha256": "27bf8cb5fbddd16308c3d5c2992eae1ab8d6fc74b15e7401bdc36df243ed9251",
+      "bytes": 2367964,
+      "sha256": "bb7fd416c0fe08de3b409aaa383ea26fb0330013b568ff412b52f19079904b7b",
       "clipes": [
         {
           "nome": "idle",
           "braco": "A_FP_Viper-357_Reload_Empty.FBX"
         },
         {
-          "nome": "reload_empty",
-          "duracao": 7.3667,
-          "braco": "A_FP_Viper-357_Reload_Empty.FBX",
-          "arma": "A_W_Viper-357_Reload_Empty.FBX"
-        },
-        {
           "nome": "shoot",
           "duracao": 1.2,
           "braco": "idle congelado",
           "arma": "A_W_Viper-357_Fire.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 2.4,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.4,
+          "braco": "animador",
+          "arma": "animador"
         }
       ],
-      "clipesRuntime": {},
+      "clipesRuntime": {
+        "equip_rifle": "ausente",
+        "inspect": "ausente"
+      },
       "camera": {
         "fov": 80,
         "posicao": [
@@ -1183,19 +1192,19 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 7,
+      "segundos": 10,
       "file": "viewmodels/fabrica/revolver38-fabrica.glb",
       "ficha": "tools/fabrica/fichas/revolver38.json",
       "insumos": {
-        "ficha": "d597a91d96057ffb3489f697b4d339901a970ea6371cacf9075e146a872edf0c",
+        "ficha": "13608d1a3529ccf99be98c99ae511d12d126461dd6a605448cd294dbcc27c385",
         "chassi": "d5be237caeb6cf74410556ade6d3db26fa533e749d8aa07b0d778da1e9024d2b",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "cf98b2385fe8b51e06ed49578e1c10329070193d57c0cae90a1901d1ed35cfac",
         "poseFbx": "06a92e6d18de0677c7db9482f4db41587697a575eef6b6343d20ec70ca56ab74",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
-        "clipe:reload_empty:braco": "06a92e6d18de0677c7db9482f4db41587697a575eef6b6343d20ec70ca56ab74",
-        "clipe:reload_empty:arma": "1cb800bf62fbd5ae11ddba0ba9e6161b3bbba5b7bce7df68d5960b35a7b66677",
-        "clipe:shoot:arma": "d27fdbfb2e4c96a79c71cff0ad37d6399bc80025ebd748d05c3410aa632a1d06"
+        "clipe:shoot:arma": "d27fdbfb2e4c96a79c71cff0ad37d6399bc80025ebd748d05c3410aa632a1d06",
+        "animador": "4d3d5a843f81bda715de52059e4b747917b923695218a7565fa7faef3cc974cf",
+        "frameJogo": "22aca287a6830f7170eb14811b67493be8a4fb2f50437440dbf809bf2867c034"
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/revolver38.json"
