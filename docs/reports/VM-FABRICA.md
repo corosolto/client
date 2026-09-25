@@ -120,6 +120,10 @@ Três armadilhas do pack, cada uma virou código com comentário:
   **posição** do pacote é resolvida por chassi (`VM_FABRICA_POS`, gerado por
   `tools/fabrica/enquadrar.mjs`), para a arma ocupar o que a AK aprovada ocupa. Variante herda
   a posição do produto puro do chassi (`enquadramentoDe`). Curta usa o frame da PT-38 aprovada.
+  Lote 2: o `enquadrar.mjs` também conta os vértices da **ponta da manga** no quadro, em todos os
+  clipes (9 frações cada), e penaliza; quando só uma lente mais fechada tira a manga sem encolher
+  a arma, o chassi ganha `fov` próprio (awp 44°, mosin 50°). A LMG tem guinada 0 (a pose do
+  MGX5 fica achatada com os 7,69° únicos).
 - **ADS pelo pack:** o eixo `SIGHT→MUZZLE` (linha de visada do AimPoint) vai ao eixo óptico, a
   **rolagem** é zerada por `SOCKET_FAB_UP` (o pack alinha a rotação inteira do AimPoint — sem
   isso AK/M4/KXG12 tombavam 16–24° no ADS) e a alça fica a `alivio` metros do olho
@@ -127,10 +131,19 @@ Três armadilhas do pack, cada uma virou código com comentário:
 - **Manga:** a extensão do `vmsleeve.js` fica **desligada** por produto (`manga:false`): o
   `SK_Arms_Mono` já traz a manga até o ombro. Provado por `eval:vm-manga-oca --fabrica` e
   `eval:vm-manga-tela --fabrica` (seção 6).
+  No lote 2 a extensão foi ligada para esconder a boca da manga e o crítico cego viu um **tubo
+  rosa translúcido** do antebraço cruzando a câmera da escopeta; o `vm-manga-tela` não pegou
+  (lacuna da régua: ela mede a boca, não a extensão atravessando o olho). Voltou `manga:false`
+  em todos, e a boca sai do quadro pelo enquadramento.
 - **Mãos por time:** os materiais de braço se chamam `CoroSolto_FP_{Cloth,Glove,Hand}`; o
   sistema de mãos por time (`vmhands.js`, atlas pintados nas UVs do `SK_Arms_Mono`) tinge por
   cima, na mesma escala, como na AK K e na PT-38.
 - Recuo: `recoil.json` da família do chassi (ak←AK, ar←MX16A4, pistol←X18, shotgun←KXG12).
+  Na escala do pack o coice de quadril saía ilegível (0,9–2,9% da diagonal da arma; a golden AK
+  dá 3,6% só no mount). `recoilScale` por produto leva todas a 4–7%, medido por
+  `tools/fabrica/captura/coice.mjs` (centro da arma como ponto fixo do mount, pela vmCamera,
+  5 tiros); a deagle **desce** para 0,45 (47% → 18%, o mesmo 0,45 da deagle golden). O cache do
+  recuo era por família e deixava ak↔akm com a escala da arma anterior: a chave é família@escala.
 
 ## 3. A ficha
 
@@ -301,6 +314,41 @@ uma arma no chão do mapa (a máscara de viewmodel do carregador da M4 está ver
 **AK:** a pergunta é do dono — manter a golden (braço diferente das outras) ou padronizar no pack;
 se padronizar, a recarga vazia do AK-200 deixa o pente velho à vista, e o jeito limpo é o plano B
 (truque do segundo pente) só para essa recarga.
+
+## 8.2 Lote 2 (24–25/09)
+
+Decisões do dono antes do lote: a `ak` fica a golden aprovada (fora de `VM_FABRICA`); o chassi AK
+do pack vira a `akm`; FAMAS e Tavor vão para o plano B em `vm/fabrica-bullpup` (outro agente).
+Produtos novos: akm, g3, svd, awp, mosin, mp5, p90, lmg, deagle, revolver38. A granada já é o
+pack como autorado (produto K, `ready`) e não foi refeita.
+
+**O que o lote 2 ensinou**
+
+- **Manga × pente.** Sem a extensão do `vmsleeve`, a boca da manga do `SK_Arms_Mono` entra no
+  quadro quando o pacote vai para longe; com o pacote perto, a troca do pente de L96X, SVD e G3
+  acontece abaixo da borda (régua `carregador`: "tira no ar"). Não existe quadro que resolva os
+  dois nesses três chassis (varredura de `enquadrar.mjs --medir`). Ficaram no quadro longe com
+  `manga:true`, onde a extensão não fura a câmera. Shotgun e p90, onde a extensão virou um tubo
+  rosa na frente da câmera, ficaram perto e sem manga.
+- **Lacuna da `vm-manga-tela`.** Ela mede a boca da manga na tela; o tubo da extensão
+  atravessando o olho (shotgun, p90) passou verde. Só o crítico viu.
+- **Coice.** Na escala do pack o recuo procedural sai ilegível: o crítico via o `fire` igual ao
+  idle. A golden mede 11% da diagonal (mount 3,6% + clipe de tiro; `captura/coice.mjs --total`).
+  Uma escala só também não serve: o kickback (metros) cresce junto e a arma vem para o rosto,
+  com a boca descendo. `recoilScale` gira o cano (~7° no quadril) e `recoilLoc` (novo,
+  `VmRecoil.setFamily(…, locScale)`, padrão = a mesma escala, K intacto) fica ~1,5. O `kcap`
+  captura o `fire` no pico do giro.
+- **ADS das curtas.** O `aimPointOffset` da X18 (0,2 m) deixava a pistola ~1,9× a PT-38 aprovada
+  no ADS; a 0,38 m ela fica do tamanho dela (`mira` e `pistola-ref` verdes).
+- **Cartucho da escopeta.** O cartucho do pack é vermelho e some contra a manga vermelha; a
+  skin `escopeta` pinta só o `KSG_Ammo` de amarelo latão.
+- **Réguas com óptica.** A `mira` mede a massa da arma; na MGX5 (óptica alta) e na PDW90 (reflex
+  em cima do carregador) a massa fica 35–60 px abaixo da cruz com o aro da óptica **na** cruz
+  (figura em `artifacts/fabrica-lote2/reguas-3x2/lmg-ads.png`). O socket da alça lê 0,000 NDC.
+- **Pente fora da tela, como autorado.** A recarga vazia da PDW90 leva o carregador para baixo da
+  borda entre 31% e 38% em qualquer quadro testado; o crítico lê "pente some". O AK-200 (akm)
+  deixa o pente velho cair à vista (15%). Os dois são o pack como autorado: plano B (truque do
+  segundo pente), fora da fábrica pura.
 
 ## 9. Mapeamento das 26 armas
 
