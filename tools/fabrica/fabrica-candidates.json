@@ -332,8 +332,8 @@
       "chassi": "MGX5",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/lmg-fabrica.glb",
-      "bytes": 4847796,
-      "sha256": "2f030d550fab20f7a5129ab8c120b5254c2f78f7f3908e8a684c2ed53fea4f92",
+      "bytes": 4863540,
+      "sha256": "527c3d411e39f5c57cc66d2434afa22eaccd489477f933c9e725bc827b825ece",
       "clipes": [
         {
           "nome": "idle",
@@ -374,16 +374,17 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 9,
+      "segundos": 15,
       "file": "viewmodels/fabrica/lmg-fabrica.glb",
       "ficha": "tools/fabrica/fichas/lmg.json",
       "insumos": {
-        "ficha": "113bd43c46b659387e3928cc6adf6383f886c0be8862fff53006bc1c075079f2",
+        "ficha": "56113e0d95644784a9be8f3f4fcb12139e101019df30866e25625875dbfbaff6",
         "chassi": "b9804be2cbed5c112b0d9a23e859b430dbd4a7ca25dcf44a4db0c714c52e320f",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "7836e63c9536f83b248661f9edb48477c756d1bfeec71daf1a9d049abb8e32cb",
         "poseFbx": "61ef170d8561e53b31f8200046c548dac48db8786eb00e88e02af6ec3222f37c",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:idle:arma": "7ff6e7afba04438550106ba9d85e53c70a02fec90b38cc827c5a1e6b28273c76",
         "clipe:reload_tactical:braco": "c02463971525d90955418bc94867fe928eeaaa66c833452dbd7575863a3635d5",
         "clipe:reload_tactical:arma": "e76a58f26d4b2332740a8b9e491ee12cb1a26b91c3e2beede295419833142f4c",
         "clipe:reload_empty:braco": "808da5198675bcaf45c2d879435c3af97457af74b32cf92c2686e247845cf222",
