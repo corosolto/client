@@ -8,6 +8,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   g3: '41e72be5d8',
   lmg: '2f030d550f',
   m4: 'c500cfe632',
+  m92: 'c8fcfb1276',
   md97: 'f17921e1c1',
   mosin: 'bd5794e7d0',
   mp5: 'd26da9f0ab',
@@ -32,6 +33,7 @@ export const VM_FABRICA_POS = Object.freeze({
   shotgun: { x: 0.155, y: -0.04, z: -0.323 },
   svd: { x: 0.175, y: -0.05, z: -0.143 },
   famas: { x: 0.245, y: -0.08, z: -0.233 },
+  m92: { x: 0.215, y: -0.05, z: -0.173 },
   md97: { x: 0.245, y: -0.08, z: -0.233 },
   tavor: { x: 0.245, y: -0.08, z: -0.233 },
 });

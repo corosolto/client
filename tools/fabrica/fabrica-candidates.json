@@ -459,6 +459,71 @@
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/m4.json"
     },
+    "m92": {
+      "schemaVersion": 1,
+      "id": "m92",
+      "arma": "m92",
+      "chassi": "AK",
+      "variante": true,
+      "url": "/private-assets/viewmodels/fabrica/m92-fabrica.glb",
+      "bytes": 3799036,
+      "sha256": "c8fcfb1276481e184033543f150c72fc474b71f59f8930a1f2bb139262a0c07a",
+      "clipes": [
+        {
+          "nome": "idle",
+          "braco": "A_FP_AKX_Idle.FBX"
+        },
+        {
+          "nome": "reload_tactical",
+          "duracao": 2.55,
+          "braco": "A_FP_AKX_Reload_Tac.FBX",
+          "arma": "A_W_AKX_Reload_Tac.FBX"
+        },
+        {
+          "nome": "reload_empty",
+          "duracao": 3.0833,
+          "braco": "A_FP_AKX_Reload_Empty.FBX",
+          "arma": "A_W_AKX200_Reload_Empty.FBX"
+        },
+        {
+          "nome": "equip_rifle",
+          "duracao": 1,
+          "braco": "A_FP_Rifle_Equip.FBX",
+          "arma": "idle congelado"
+        }
+      ],
+      "clipesRuntime": {
+        "shoot": "procedural"
+      },
+      "camera": {
+        "fov": 80,
+        "posicao": [
+          -0.012000000104308128,
+          -0.05999999865889549,
+          1.6540000438690186
+        ],
+        "fonte": "FPSPlayer.prefab"
+      },
+      "segundos": 4,
+      "file": "viewmodels/fabrica/m92-fabrica.glb",
+      "ficha": "tools/fabrica/fichas/m92.json",
+      "insumos": {
+        "ficha": "4d22905490946f35a7a1e7f559f4cf006681a8018fe398205667a2f95cbe83be",
+        "chassi": "a1c67ce6a8692f09d3c00d76577d698b3b649614050b157874738b861fd8ef0c",
+        "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
+        "armaFbx": "aad275438cb295aca9c875743a435bbd4fd6994208a9b8dcce2539f4b44e8504",
+        "poseFbx": "ef079242d7f2541b07efed816771e5bfeb3a595777a8d3ecfa45f71c1b7680ce",
+        "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:reload_tactical:braco": "a3aa41130c44e6ae77c71df8370c466469134b69a14d1baba08eb3087439c8d6",
+        "clipe:reload_tactical:arma": "339f0be413a22408ac046bd029f50319cc6677de7f2d2f09adb9ebde8f89bb11",
+        "clipe:reload_empty:braco": "488b04750ab61937c97717b7191806fc7cd47019db2607d33143bac6232fcb77",
+        "clipe:reload_empty:arma": "61ade5b0548d0fd895ee4c39bc2f5b2d0bfe063332bae589a65adf5eee64f171",
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "zonaLivre:frente-m92": "575ff58ae569392386edd2d8147904dd9e9dd75cb8979c1a95196457dbf70230"
+      },
+      "ready": false,
+      "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/m92.json"
+    },
     "md97": {
       "schemaVersion": 1,
       "id": "md97",
