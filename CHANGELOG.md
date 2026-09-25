@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.290`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.291`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -62,6 +62,12 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.291] — 2026-09-25
+
+### Mudado
+- fix(upa): devolve a segunda rota do setor de emergência (CTF2 fora do fio da navalha) (#650)
+- fix(upa): devolve a segunda rota do setor de emergencia
 
 ## [2.0.0-alpha.290] — 2026-09-25
 
