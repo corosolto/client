@@ -855,10 +855,17 @@ export function buildParque(scene, T) {
     for (const sx of [-1, 1]) for (let z = -36; z <= 36.01; z += 9) plantaPalmeira(sx * 38.5, z);
     for (const sz of [-1, 1]) for (const x of [-24, -12, 0, 12, 24]) plantaPalmeira(x, sz * 48.5);
     /* Alameda interna: planta só onde a própria regra do mapa libera — mesma guarda
-       de nó de rota, colisor e trilho que as árvores existentes já respeitam. */
+       de nó de rota, colisor e trilho que as árvores existentes já respeitam.
+       A faixa autoral é x=±9,6. Os jardins em chicana (parque-jardim-central, x=±8,5
+       e meia-largura 1,5) chegaram depois e ocupam x 7,0–10,0: com a folga de 1,2 da
+       guarda eles esterilizavam TODA a alameda (0 palmeiras). Onde a chicana tomou o
+       chão a fileira recua para o primeiro x livre dela (10,0 + 1,2 = 11,2 -> 11,4),
+       ainda dentro do vão entre os bancos (x até 9,6) e os quiosques (x a partir de
+       10,4 só em z≈±19). Nenhuma geometria das duas autorias sai do lugar, e quem
+       decide continua sendo a guarda. */
     let nAlameda = 0;
     for (const sx of [-1, 1]) for (let z = -28; z <= 28.01; z += 7) {
-      const x = sx * 9.6;
+      const x = livreVeg(sx * 9.6, z, 1.2) ? sx * 9.6 : sx * 11.4;
       if (livreVeg(x, z, 1.2)) { plantaPalmeira(x, z); nAlameda++; }
     }
     root.userData.alamedaPalmeiras = nAlameda;
