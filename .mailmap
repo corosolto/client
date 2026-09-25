@@ -1,0 +1,9 @@
+# Um `git config user.email` rodado dentro de uma worktree LIGADA escreve no
+# .git/config COMPARTILHADO (git rev-parse --git-common-dir aponta para o mesmo
+# arquivo nas 155 worktrees deste repo). Em 24/09 um teste descartável do
+# resolvedor de package.json fez isso e a identidade `t <t@t>` vazou para 39
+# commits de merge entre 21:23 e 00:03, 23 deles já na main.
+#
+# O conserto é aqui, e não reescrevendo histórico publicado: mailmap corrige a
+# atribuição em log, blame, shortlog e no GitHub sem trocar um sha sequer.
+rubenmarcus <rubenmarcus.dev@gmail.com> t <t@t>
