@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.291`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.292`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,34 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.292] — 2026-09-25
+
+### Mudado
+- feat(maps): restaura escala do Posto e Atacadão (#562)
+- feat(maps): integra UV e vãos da Penitenciária sobre #554 (#555)
+- feat(maps): restaura Madureira no degrau 542 (#560)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(carandiru): remove as reguas C1-C4 da lane superada
+- chore(docs): regenera bloco derivado apos integrar a raiz
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado apos o merge da alpha.267
+- chore(docs): regenera bloco derivado (autofix)
+- docs: refresh generated repository inventory
+- docs(carandiru): record overnight browser evidence
+- test(carandiru): harden wall and pavilion acceptance
+- fix(ci): refresh Carandiru dependency lock
+- fix(carandiru): tornar guaritas e pavilhao jogaveis
+- docs: refresh Carandiru stair authorship
+- fix(carandiru): make all stairs traversable
 
 ## [2.0.0-alpha.291] — 2026-09-25
 
