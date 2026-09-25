@@ -1181,6 +1181,31 @@ function runNode(script, env = {}, args = []) {
   }
 }
 
+{
+  let audit;
+  try {
+    audit = JSON.parse(execFileSync(process.execPath, [join(ROOT, 'tools/eval/authored-attach-check.mjs')], { encoding: 'utf8' }));
+  } catch (error) {
+    try { audit = JSON.parse(String(error.stdout)); }
+    catch { audit = { ok: false, checks: [{ name: 'execução do encaixe', error: String(error.message).slice(0, 160), ok: false }] }; }
+  }
+  const failed = audit.checks.filter((c) => !c.ok);
+  put('AUD1A', 'encaixe autorado usa corpo deformado e preserva montagem ao reequipar', audit.ok,
+    failed.length ? failed.map((c) => `${c.name}: ${c.error}`).join(' | ') : 'skin, interleaved, reattach e famílias de controle conferem');
+}
+
+{
+  let audit;
+  try {
+    audit = JSON.parse(execFileSync(process.execPath, [join(ROOT, 'tools/eval/authored-transition-check.mjs')], { encoding: 'utf8' }));
+  } catch (error) {
+    try { audit = JSON.parse(String(error.stdout)); }
+    catch { audit = { ok: false, checks: [{ name: 'execução das transições', ok: false }] }; }
+  }
+  put('AUD1B', 'transições autoradas terminam com pose Idle real', audit.ok,
+    audit.checks.filter(c => !c.ok).map(c => c.name).join(' | ') || 'fila, pose visível, oculta e utilitária conferem');
+}
+
 /* ── 2d. VM17 — O ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA ────────────────────────
    POR QUE ESTA INVARIANTE NASCEU JUNTO COM O PITCH: um crítico anterior provou que o ADS
    não tem invariante NENHUMA — mutar `this._adsPose['pistol']` passava 20/22 verde — e que
@@ -1454,10 +1479,16 @@ function runNode(script, env = {}, args = []) {
   // ARM3 — nenhuma arma pode ser desproporcionalmente "alta". Foi a causa real
   // da "uzi maior que o corpo do hipster": o len normaliza o COMPRIMENTO e a
   // altura vinha junto.
+  const gameplayIds = new Set(linhas.map((line) => line.trim().split(':')[0]));
   const lens = [...wsrc.matchAll(/(\w+):\s*\{\s*len:\s*([\d.]+)/g)].map((m) => [m[1], parseFloat(m[2])]);
-  const gigantes = lens.filter(([k, v]) => !/knife|pistol|deagle|revolver/.test(k) && v > 1.25);
+  // weapons.js também guarda CFG de props cênicos usados por glbchars.js. ARM4 mede
+  // apenas a população balística declarada em game.js; o mutante prova que reincluir
+  // o mosquete de apresentação volta a acender a régua.
+  const mutateDisplayIntoWeapons = process.argv.includes('--mutante=display-no-fpvm');
+  const measuredLens = lens.filter(([id]) => mutateDisplayIntoWeapons || gameplayIds.has(id));
+  const gigantes = measuredLens.filter(([k, v]) => !/knife|pistol|deagle|revolver/.test(k) && v > 1.25);
   put('ARM4', 'nenhuma arma longa demais (len ≤ 1,25 m fora de sniper de ferrolho)',
-    gigantes.length === 0, gigantes.length ? gigantes.map(([k, v]) => `${k}=${v}`).join(', ') : `${lens.length} armas`, 'warn');
+    gigantes.length === 0, gigantes.length ? gigantes.map(([k, v]) => `${k}=${v}`).join(', ') : `${measuredLens.length} armas`, 'warn');
 
   // ARM5 — 1 killfeed por morte. "voce viu que tem 2 me eliminando esta confuso".
   const feedCalls = (gsrc.match(/this\._feed\(/g) || []).length;

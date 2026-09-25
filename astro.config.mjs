@@ -41,6 +41,15 @@ export default defineConfig({
     define: {
       __MANIFESTO_JS__: JSON.stringify(MANIFESTO_JS),
     },
+    // BUG-75 (achado do dono, 29/08): public/private-assets/viewmodels é symlink
+    // para fora da raiz; sem fs.allow explícito um restart do dev server pode
+    // passar a devolver 403 e o jogo cai no viewmodel legado EM SILÊNCIO.
+    // Régua: tools/eval/authored-serving-check.mjs (sobe o astro real e cobra 200).
+    server: {
+      fs: {
+        allow: ['.', '/Users/ruben/csbrasil-private-assets'],
+      },
+    },
   },
 
   // AEO: llms-full.txt, ai-index.json, docs.json e espelhos .md das páginas de

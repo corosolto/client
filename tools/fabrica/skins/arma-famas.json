@@ -1,0 +1,11 @@
+{
+  "id": "famas",
+  "descricao": "Chassi MX16A4 no tom da FAMAS: polímero e acabamento escuros; as peças Mint da zona livre trazem o próprio material.",
+  "materiais": {
+    "finish": { "cor": "2c2f33", "metal": 0.4, "rugosidade": 0.5 },
+    "finish_alu": { "cor": "24272b", "metal": 0.45, "rugosidade": 0.48 },
+    "finish_dark": { "cor": "1e2023", "metal": 0.35, "rugosidade": 0.52 },
+    "polymer": { "cor": "1f2124", "metal": 0.05, "rugosidade": 0.6 },
+    "polymer_grip": { "cor": "1a1c1e", "metal": 0.05, "rugosidade": 0.65 }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "shotgun",
+  "arma": "shotgun",
+  "chassi": "KXG12",
+  "descricao": "Escopeta = KXG12 do pack como autorada (KXG12_fixed): chassi puro + braço único coro-ak; recarga cartucho a cartucho (start/loop/end) e bomba do pack.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "clipes": {
+    "reload_start": "pack:reload_start",
+    "reload_loop": "pack:reload_loop",
+    "reload_end": "pack:reload_end",
+    "pump": "pack:pump",
+    "pump_empty": "pack:pump_empty",
+    "equip_rifle": "geral:rifle_equip",
+    "shoot": "procedural",
+    "inspect": "ausente"
+  },
+  "recuo": {
+    "familia": "shotgun",
+    "fonte": "recoil.json ← Animations/KXG12/KXG12.asset; o tiro toca a bomba do pack (useFireClip=1 no Settings)"
+  },
+  "ocultar": [
+    {
+      "osso": "Gauge",
+      "clipe": "reload_loop",
+      "de": 0.73,
+      "ate": 0.88,
+      "motivo": "o pack devolve o cartucho ao ponto de pega (borda de baixo do quadro no jogo) ~15% antes de a mão chegar; medido por mão→cartucho a cada 2% do laço (1,4 palma aos 80%)"
+    }
+  ]
+}

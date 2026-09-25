@@ -1,0 +1,10 @@
+{
+  "id": "motoca-cachorro-loko",
+  "weapon": "m4",
+  "pose": "walk frame 15",
+  "camera": "tq",
+  "glb": "public/models/characters/motoca-cachorro-loko.glb",
+  "sha256": "07c075435c5c4ea05fdb6b92def16b03b5faaf36f6fd2250e4c9824c6865e034",
+  "mutation": "inverse compact factor 0.45 + Curl_L/R zero",
+  "changedVertices": 214
+}

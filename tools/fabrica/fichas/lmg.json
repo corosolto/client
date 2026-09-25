@@ -1,0 +1,13 @@
+{
+  "id": "lmg",
+  "arma": "lmg",
+  "chassi": "MGX5",
+  "descricao": "LMG = MGX5 do pack; fita e caixa, sem pente destacável.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "lmg",
+    "fonte": "recoil.json ← Animations/MGX5 (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}

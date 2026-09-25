@@ -1,0 +1,626 @@
+{
+  "schemaVersion": 1,
+  "nome": "MGX5",
+  "tipo": "lmg",
+  "nota": null,
+  "fonte": {
+    "pacote": "fpsanimationpack_ultimate.unitypackage (KINEMATION FPS Animation Pack, licença paga, distribuição web autorizada pelo dono)",
+    "armaFbx": "Animations/MGX5/Weapon/MGX5.FBX",
+    "poseFbx": "Animations/MGX5/Character/A_FP_MGX5_Idle.FBX",
+    "armaSha256": "7836e63c9536f83b248661f9edb48477c756d1bfeec71daf1a9d049abb8e32cb",
+    "poseSha256": "61ef170d8561e53b31f8200046c548dac48db8786eb00e88e02af6ec3222f37c",
+    "prefab": "Prefabs/MGX5.prefab"
+  },
+  "unidade": "cm no espaço da raiz da arma (SOCKET_WEAPON_*), pose de idle do pack",
+  "eixos": {
+    "frente": [
+      0,
+      -1,
+      0
+    ],
+    "cima": [
+      0,
+      0,
+      1
+    ],
+    "direita": [
+      -1,
+      0,
+      0
+    ]
+  },
+  "mira": {
+    "aimPointUnity": [
+      0.0002,
+      0.0754,
+      -0.215
+    ],
+    "raizCm": [
+      -0.02,
+      21.5,
+      7.54
+    ],
+    "conferencia": "altura da mira 7.54 cm × topo da carcaça 3.33 cm"
+  },
+  "settings": {
+    "arquivo": "/Users/ruben/csbrasil-private-assets/sources/kinemation-fpspack/tree/Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/MGX5_Settings.asset",
+    "ikOffset": [
+      -0.01,
+      0.02,
+      0
+    ],
+    "aimPointOffset": [
+      0,
+      0,
+      -0.07
+    ],
+    "adsBlend": 0.558,
+    "fireRate": 700,
+    "ammo": 100,
+    "aimFov": 60,
+    "fullAuto": true,
+    "useFireClip": false
+  },
+  "camera": {
+    "fonte": "FPSPlayer.prefab",
+    "posUnity": [
+      0.012,
+      1.654,
+      0.06
+    ],
+    "fov": 80,
+    "eixoFov": "vertical"
+  },
+  "geral": {
+    "min": [
+      -6.369,
+      -63.69,
+      -19.746
+    ],
+    "max": [
+      17.893,
+      49.32,
+      10.819
+    ],
+    "n": 24880
+  },
+  "zonaContato": {
+    "maoForte": {
+      "palmaCm": [
+        -3.273,
+        11.877,
+        -13.56
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -1.596,
+          5.644,
+          -18.285
+        ],
+        "max": [
+          1.595,
+          15.848,
+          -6.815
+        ],
+        "n": 324
+      }
+    },
+    "maoApoio": {
+      "palmaCm": [
+        1.758,
+        -17.2,
+        -11.096
+      ],
+      "raioCm": 7,
+      "caixa": {
+        "min": [
+          -2.257,
+          -22.454,
+          -9.176
+        ],
+        "max": [
+          2.467,
+          -11.647,
+          -4.655
+        ],
+        "n": 455
+      }
+    },
+    "ossosMoveis": {
+      "Bag": {
+        "min": [
+          -2.44,
+          -8.371,
+          -19.746
+        ],
+        "max": [
+          4.969,
+          -0.224,
+          -7.347
+        ],
+        "n": 601
+      },
+      "Feed_Tray": {
+        "min": [
+          -3.098,
+          -9.034,
+          -1.79
+        ],
+        "max": [
+          3.599,
+          -0.114,
+          1.757
+        ],
+        "n": 251
+      },
+      "Lever": {
+        "min": [
+          -6.112,
+          -16.768,
+          -2.114
+        ],
+        "max": [
+          1.491,
+          -6.266,
+          6.314
+        ],
+        "n": 844
+      },
+      "Rail": {
+        "min": [
+          -6.369,
+          -8.535,
+          -6.584
+        ],
+        "max": [
+          -2.326,
+          8.728,
+          -0.117
+        ],
+        "n": 581
+      },
+      "Switch": {
+        "min": [
+          -1.596,
+          8.766,
+          -8.725
+        ],
+        "max": [
+          1.596,
+          11.696,
+          -6.726
+        ],
+        "n": 218
+      },
+      "Top": {
+        "min": [
+          -3.904,
+          -9.598,
+          -0.044
+        ],
+        "max": [
+          3.572,
+          21.605,
+          10.819
+        ],
+        "n": 3914
+      },
+      "Top_Catch": {
+        "min": [
+          -2.707,
+          17.174,
+          0.902
+        ],
+        "max": [
+          2.707,
+          21.622,
+          3.539
+        ],
+        "n": 477
+      },
+      "bullet": {
+        "min": [
+          17.006,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          17.893,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_001": {
+        "min": [
+          16.119,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          17.006,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_002": {
+        "min": [
+          15.232,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          16.119,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_003": {
+        "min": [
+          14.345,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          15.232,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_004": {
+        "min": [
+          13.458,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          14.345,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_005": {
+        "min": [
+          12.571,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          13.458,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_006": {
+        "min": [
+          11.684,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          12.571,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_007": {
+        "min": [
+          10.797,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          11.684,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_008": {
+        "min": [
+          9.91,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          10.797,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_009": {
+        "min": [
+          9.023,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          9.91,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_010": {
+        "min": [
+          8.137,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          9.023,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_011": {
+        "min": [
+          7.25,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          8.137,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_012": {
+        "min": [
+          6.363,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          7.25,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_013": {
+        "min": [
+          5.476,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          6.363,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_014": {
+        "min": [
+          4.589,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          5.476,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_015": {
+        "min": [
+          3.702,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          4.589,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_016": {
+        "min": [
+          2.815,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          3.702,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_017": {
+        "min": [
+          1.928,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          2.815,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_018": {
+        "min": [
+          1.041,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          1.928,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_019": {
+        "min": [
+          0.154,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          1.041,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_020": {
+        "min": [
+          -0.733,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          0.154,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      },
+      "bullet_021": {
+        "min": [
+          -1.62,
+          -7.549,
+          -0.072
+        ],
+        "max": [
+          -0.733,
+          -2.112,
+          0.815
+        ],
+        "n": 188
+      }
+    }
+  },
+  "ancoras": {
+    "boca": {
+      "raizCm": [
+        0,
+        -63.69,
+        -0.586
+      ],
+      "origem": "extremo estático no eixo do cano"
+    },
+    "coronha": {
+      "raizCm": [
+        0,
+        23.877,
+        -2.038
+      ],
+      "origem": "12 cm atrás da palma forte, altura média da fatia",
+      "traseiraCm": -49.32
+    },
+    "trilhoSuperior": {
+      "raizCm": [
+        0,
+        3.877,
+        -1.379
+      ],
+      "origem": "ponto mais alto da fatia sobre o poço do pente"
+    },
+    "guardaMao": {
+      "caixa": {
+        "min": [
+          -2.514,
+          -59.453,
+          -9.176
+        ],
+        "max": [
+          3.005,
+          -11.227,
+          2.771
+        ],
+        "n": 9389
+      },
+      "origem": "estático entre a mão de apoio (-6 cm) e a boca (-4 cm)"
+    }
+  },
+  "ossosArma": [
+    "Top",
+    "Top_Catch",
+    "Switch",
+    "Feed_Tray",
+    "Lever",
+    "Rail",
+    "Bag",
+    "bullet",
+    "bullet_001",
+    "bullet_002",
+    "bullet_003",
+    "bullet_004",
+    "bullet_005",
+    "bullet_006",
+    "bullet_007",
+    "bullet_008",
+    "bullet_009",
+    "bullet_010",
+    "bullet_011",
+    "bullet_012",
+    "bullet_013",
+    "bullet_014",
+    "bullet_015",
+    "bullet_016",
+    "bullet_017",
+    "bullet_018",
+    "bullet_019",
+    "bullet_020",
+    "bullet_021"
+  ],
+  "clipes": {
+    "reload_tactical": {
+      "braco": "Character/A_FP_MGX5_Reload_Tac.FBX",
+      "arma": "Weapon/A_W_MGX5_Reload_Tac.FBX"
+    },
+    "reload_empty": {
+      "braco": "Character/A_FP_MGX5_Reload_Empty.FBX",
+      "arma": "Weapon/A_W_MGX5_Reload_Empty.FBX"
+    },
+    "shoot": {
+      "braco": null,
+      "arma": "Weapon/A_W_MGX5_Fire.FBX"
+    }
+  },
+  "arquivosPersonagem": [
+    "A_FP_MGX5_Idle.FBX",
+    "A_FP_MGX5_Reload_Empty.FBX",
+    "A_FP_MGX5_Reload_Tac.FBX",
+    "A_FP_MGX5_Reload_Tac_Less.FBX"
+  ],
+  "arquivosArma": [
+    "A_W_MGX5_Belt_Sprint.FBX",
+    "A_W_MGX5_Belt_Walk.FBX",
+    "A_W_MGX5_Fire.FBX",
+    "A_W_MGX5_Idle.FBX",
+    "A_W_MGX5_Reload_Empty.FBX",
+    "A_W_MGX5_Reload_Tac.FBX",
+    "A_W_MGX5_Reload_Tac_Less.FBX",
+    "MGX5.FBX"
+  ],
+  "materiais": {
+    "pasta": "Animations/MGX5/Weapon/Materials_URP",
+    "porSlot": [
+      "Animations/MGX5/Weapon/Materials_URP/M_MGX5_Ammo.mat",
+      "Animations/MGX5/Weapon/Materials_URP/M_MGX5_Body.mat"
+    ],
+    "porNome": {},
+    "texturas": {
+      "49d4cb2123722634c87a2d7a59840837": "Animations/MGX5/Weapon/Textures/Bullet_Color.TGA",
+      "baef0877cd0947b4ca84ceb712fe3c79": "Animations/MGX5/Weapon/Textures/MGX5_Color.TGA"
+    }
+  }
+}

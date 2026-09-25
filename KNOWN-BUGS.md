@@ -12,21 +12,38 @@
 > entrada e o do relatório final estão em
 > `.claude/skills/bug-hunt/references/gabaritos.md`.
 
-**Quality gate na data deste arquivo** (`npm run check`, com `eval:vm` antes das invariantes):
+**Última execução local de invariantes — 14/09/2026, lane vm-unificado**
+(`npm run eval:vm` antes de `npm run eval:invariants`; não equivale ao `npm run check` completo):
 
 ```
-CRÍTICAS: 42/55 passam  ← nenhuma falha nova
-DÍVIDAS:  VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19, BOT8,
-          CHR1, CHR3, CHR4, CTF1
-AVISOS:   VM15 e BOT2 fora do alvo
-PULADAS:  4 (exigem browser ou arnês ausente)
+CRÍTICAS: 40/59 passam ← VM5, VM18b, CHR8, MAP2B, MAT2, TEX1 reprovam
+DÍVIDAS: VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19, BOT8, CHR1, CHR3, CHR4, CTF1
+AVISOS: VM15, BOT2, BOT3, CHR5B, CENA3 fora do alvo
+PULADAS: 8 (exigem browser ou arnês ausente)
 ```
 
-Colado de uma execução real de **17/08**. As 13 dívidas continuam todas identificadas em
-`KNOWN-RED.json` e não reprovam o processo; o gate terminou com código 0. `AUD1` passou
-depois do refresh do JSON de viewmodel. Na mesma árvore, o `check:fast` percorreu os **51
-passos** pelo runner e todos passaram — inclusive os novos `eval:parquewheel`,
-`eval:velhooeste`, `eval:penitenciaria`, `eval:backendhints` e `changelog:check`.
+Log local: `artifacts/viewmodels/fechamento-ruben/eval-invariants-transitions.log`.
+AUD1, AUD1A e AUD1B passaram. As falhas do placar não foram dispensadas nem
+classificadas como regressões desta rodada sem comparação de baseline.
+
+
+Colado de uma execução real de **17/08** (`npm run check`, que roda `eval:vm` antes das
+invariantes — ver BUG-02). **Zero vermelhas reprovando**: as 13 antigas viraram dívida
+declarada em `KNOWN-RED.json` (continuam devidas, não reprovam), TEX1 ficou VERDE (as 10
+superfícies do fy_quebrada ganharam albedo) e a VM14 saiu do vermelho em 17/08 quando as
+duas armas do fundo do canal do corrego subiram para as cabeceiras das pontes. Na mesma
+rodada a wave 3 do BUG-54 fechou: `eval:occluders` 0/0/0 nos 10 mapas.
+
+> **`check:fast` pós-swarm, 18/08: 77/84** (após o regen final do grafite do mansão). As 7
+> vermelhas restantes reproduzem na base 03def43 do dia (SB7, mapid-M1, UIR4/22/26/30 do
+> redesign, camera-grip, char-thumbnail lenda-lanhouse, asset-integrity camera-roxa, devport
+> de ambiente) — nenhuma é das 4 frentes do swarm de 18/08 (BUG-55, 56, 57 parte 2, 59).
+
+Duas reprovações do `check:fast` que **não são defeito de código de jogo** e que cortam a
+corrente de `&&` se ficarem no meio dela: `anims:check` (BUG-15, `public/models/anims/`
+não versionado) — por isso ele foi para o FIM do `check:fast` em 05/08 — e `feet:check`,
+que reprova enquanto houver mudança de personagem não regenerada na árvore
+(`npm run feet`).
 
 Mudou em 04/08: **CHR5B saiu do aviso e ficou VERDE** (27/44 personagens sem mapa de
 superfície → 0/44) e entrou a **CHR7** (convenção de skin), verde — daí 49 e não 48.
@@ -81,6 +98,28 @@ atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o a
 
 Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
 
+## BUG-180 — o cant da PT-38 custava área de tela em 7 das 26 armas (#638)
+
+**Aberto em 25/09/2026, branch `vm/integracao-k`.** Três campos de `VM_FRAME`
+(`public/js/vmattach.js`) tinham nesta branch valores que a main não tem: `sniper.roll`
+`0.580` (a main usa `-0.055`), a entrada inteira da classe `pistol` (`roll -0.105 / pitch
+0.1745 / yaw 0.3142 / tanH 0.285 / minz 0.3500 / fwdTan 1.45`, contra `-0.050 / 0.4712 /
+0.5585 / 0.280 / 0.2700 / 1.60` da main) e `zMul { uzi: 1.34, p90: 1.16, mp5: 1.08 }`
+(a main já zerou as exceções por arma). Medido com os valores da branch, `node
+tools/eval/vm-mint-audit.mjs` punha 7 das 26 armas abaixo do piso de 4% de `areaPct`:
+deagle 3,07/2,68 · revolver38 3,85/3,60 · mosin 3,14/2,87 · rem700 4,23/3,85 · uzi
+4,14/3,50 · g3sg1 4,21/3,81 · sks 3,30/2,98 (16:9 / 3:2). As invariantes VM5 e VM18b
+reprovavam por isso — não pelos GLB trocados.
+
+Conserto: os três campos voltaram aos valores da main (mesmo conserto do #623). Medido
+depois: 26/26 entre 4,10% e 10,22%, VM5 e VM18b verdes.
+
+**O que fica em aberto:** o cant leve da branch existia porque a pose 27°/32° da main faz a
+PT-38 atravessar a tela e esconder a mão no cabo. A queixa continua válida; o que não é
+aceitável é pagá-la com tamanho aparente abaixo do piso da VM5. Régua: VM5/VM18b em
+`tools/eval/invariants.mjs` — qualquer pose nova para a família `pistol` tem de manter
+`areaPct` ≥ 4% nos dois aspectos.
+
 ## BUG-178 — a main publicou import sem export e só o prod-watch viu (#524)
 
 **Fechado em 23/09/2026.** O #524 (fingerprint `producao-inconsistente`) juntou duas causas
@@ -102,6 +141,46 @@ Régua: `eval:modgraph` (`tools/eval/module-graph-check.mjs`), no `pr-fast`, no 
 e no `check:fast`. Ela reprova `42c01175a` com a mesma linha do prod-watch, passa na alpha.265 e
 o mutante `--mutante=06-09` reprova.
 O 13/09 foi uma queda de banco que se recuperou sozinha, e não tem conserto no cliente.
+
+## BUG-170 — granada perdeu a animação paga no rewrite do multiplayer
+
+**Fechado em 19/09/2026, branch `claude/vm-integracao`.** `0e3d1cd71` (03/09, granadas
+online) reescreveu `_throwSmoke`/`_throwFrag` sem o `this.vm.authored?.throwUtility(kind,
+1.05, release)` de `558f94926` — o arremesso saía no clique, sem a animação do pack. Zero
+erro no console; a régua `eval:authored-vm` ("smoke e frag aguardam o release da animação")
+estava vermelha na lane `vm-unificado` desde o merge com a main e ninguém leu.
+
+Conserto: `_throwNade(kind, ammoKey)` em `game.js` — o `release` faz `pedirNade` (online)
+ou `_spawnGrenade` (local) só quando a animação libera; sem viewmodel autorado, libera na
+hora como antes. Régua: `eval:authored-vm` (cláusula reescrita para aceitar o helper).
+
+## BUG-171 — `eval:vm-identity` ID6 media 0 B na AK golden (cegueira de instrumento)
+
+**Fechado em 19/09/2026.** "download da família < 8 MiB — 0.0 MiB" para a `ak`. Não era
+peso: o buffer padrão de Resource Timing guarda **250 entradas**, o mapa sozinho estoura
+isso e o GLB do viewmodel (que chega depois do boot) nem entrava em
+`performance.getEntriesByType('resource')`. Segundo defeito no mesmo filtro: só olhava
+`-runtime.glb` (rota de família), nunca `-hires.glb` (rota golden).
+
+Conserto em `tools/eval/authored-identity-check.mjs`: `addInitScript` sobe o buffer para
+5000 e o filtro aceita as duas rotas. Medido: ak 3,3 MiB. `check:vm` 6/6 verde.
+
+## Divergência de câmera (BUG-75, parágrafo "câmera fica fora do GLB") — OBSOLETO desde 28/08
+
+O texto abaixo em BUG-75 ("o export seleciona somente rig e meshes… regra HFOV 90, VFOV
+67,38° em 3:2") descreve o estado de 24/08. Desde `fc32ebb13` o `build_ak_hires_pilot.py`
+exporta a câmera (58°, aspecto 1,5) e `authoredvm.js` lança erro sem ela. O que sobrou no
+tronco da frente até 09/09 foi o clamp `Math.max(cameraFov, 84)`; na lane golden ele já
+era inerte (`frame.fov = cameraFov`) e em 19/09 virou explícito (`golden ? cameraFov`).
+**Régua que fecha o contrato:** `npm run eval:vm-camera` (`tools/eval/vm-camera-check.mjs`)
+mede no navegador que `vmCamera.fov` e a matriz de projeção em 3:2 são as da câmera do GLB
+(15/15 verde: 14 golden a 58°, faca a 50°) e que 16:9 mantém a meia-tangente horizontal.
+Mutante `--mutante=clamp` reintroduz o defeito do tronco e fica vermelho.
+
+Pendência que a régua NÃO cobre: a **pistola aprovada** roda na rota de família
+(`FAMILY_FRAME.pistol`, fov 55 válido em 16:9 → 63,35° em 3:2). Não há câmera Blender por
+trás — a composição foi calibrada no navegador pelo dono. O `pistol-hires.glb` (34°) é o
+piloto que entra 144× maior (BUG-VM-ESCALA-PISTOLA) e **não** é a rota ativa.
 
 ## BUG-169 — "SERVIDORES FORA DO AR" com os quatro nós de pé
 
@@ -1113,6 +1192,147 @@ cobra rejeição com `timeout` dentro do prazo; mutante sem prazo (Infinity) fic
 deixa a régua vermelha. Antes: 1 FALHA (`pendente_para_sempre`); depois: 47/47. Custo
 declarado: conexão legítima mais lenta que 8 s agora vira erro com "tente de novo".
 
+### ~~BUG-78 · `trim.pos` por arma era inerte — a âncora do centro cancelava a translação~~ · RESOLVIDO 09/09
+
+**O que era.** `attachMintWeapon` aplicava `trim.pos` na posição do wrap e, logo depois,
+recentrava o holder para o centro da arma Mint coincidir com o centro da arma do pack
+(*"Âncora DEFINITIVA"*). Essa âncora é calculada com o wrap JÁ transladado, então
+cancelava a translação exatamente. O `trim`, documentado no `vmconfig.js` como *"ajuste
+fino do wrap Mint no socket"*, não movia nada — só `mount.pos`, que é por FAMÍLIA, tinha
+efeito.
+
+**Como ficou provado**: `trim.pos = [0, 0, 0.3]` (30 cm) e `[0, -0.03, 0]` deram exatamente
+o mesmo contato medido (1,9 cm) e a mesma bbox da rodada sem trim nenhum. O arquivo servido
+continha o trim — conferido com `curl`.
+
+**Medida antes × depois** (m92, jogo real, `piscina_treta`, 3:2, contato 3D em cm):
+1,9 cm em idle/ADS/disparo → **0,5 cm**, dentro da faixa das aprovadas (ak 0,2, deagle
+0,3–0,5, shotgun 0,2–0,5). Nenhuma outra arma muda: `trim.pos` é `[0,0,0]` em todas as
+demais, e o caminho assado não passa por aqui.
+
+**Causa raiz**: ordem em `public/js/vmweapon.js` — a translação por arma agora entra no
+holder DEPOIS da âncora, do mesmo jeito que `mount.pos`.
+
+**Régua**: `tools/eval/vm-arsenal-check.mjs`, cláusula de contato em CENTÍMETROS. Em
+pixels a medida ordenava errado — o `deagle/ads`, com a mão na coronha (conferido na
+figura), dava a pior razão de todas, porque distância na tela depende de quanto a arma
+ocupa o quadro e da densidade da amostra. Teto 1,0 cm; procedência: ak 0,1–0,2 em todas as
+capturas, deagle 0,3–0,5, shotgun 0,2–0,5, m92 1,2–1,9 antes do conserto. Mutante
+`semcontato` reprova.
+
+**Limite declarado da régua**: é a distância MÍNIMA sobre a nuvem de mão inteira — com a
+mão forte encostada, uma mão de apoio solta não aparece. Separar as duas exige dividir a
+malha `GEO_FP_SK_Glove_01`, que hoje é uma só.
+
+
+### ~~BUG-77 · peça separada (pente/ferrolho) ficava no tamanho pré-normalização — a AKM renderizava 20% maior~~ · RESOLVIDO 09/09
+
+**O que era.** `splitParts` (`public/js/vmweapon.js`) recorta o pente da malha da arma e
+pendura o fragmento num OSSO do braço, congelando a matriz a partir de `mesh.matrixWorld`.
+Ele rodava ANTES de `wrap.scale.setScalar(...)`, a linha que dá a escala final ao wrap — e
+como o fragmento fica pendurado no osso, e não no wrap, ele nunca recebia essa escala.
+
+**Medida antes** (jogo real, `piscina_treta`, 3:2, diâmetro 3D da nuvem de pontos da arma,
+invariante à pose): `akm` 105,8 cm contra **88 cm** declarados em `weapons.js`, e razão
+arma/mão **1,36** contra **1,12** da `ak` aprovada — com as MESMAS mãos (77,8 cm), porque
+as duas são da família `ak`.
+
+**Medida depois**: `akm` 87,1 cm e razão 1,12 — idêntica à `ak`. As outras 24 armas não
+mudaram (só `ak` e `akm` declaram `parts`, e a `ak` é assada, que não passa por este
+caminho).
+
+**Causa raiz**: ordem de `splitParts` em `public/js/vmweapon.js` — separar a peça antes da
+escala final do wrap.
+
+**Régua**: `tools/eval/vm-arsenal-check.mjs`, cláusula de tamanho: o diâmetro 3D medido tem
+de bater com o `len` declarado em `weapons.js` dentro de 8% para arma longa. Procedência do
+teto: 21 das 25 armas batem dentro de 2% (awp 116,1/115, ak 87,2/88, lmg 110,1/110,
+svd 115/115). Arma de UMA MÃO fica de fora da cláusula — o diâmetro vai da boca ao
+calcanhar da coronha e supera o `len` por construção (pistol 30,4/26, revolver38 27,3/24,
+deagle 31,5/30). Mutante `tamanho` infla o diâmetro medido e reprova.
+
+**Por que a régua anterior não pegava**: ela media a diagonal NA TELA, que depende da pose
+e da distância — a mesma arma mediu 624 px numa rodada e 878 px em outra. O diâmetro 3D é
+de corpo rígido e reproduziu idêntico em rodadas seguidas.
+
+**Custo declarado**: nenhum medido. `check:fast` 89/100 com o conserto contra 88/100 na
+base (a diferença é `eval:devport`, intermitente).
+
+
+### ~~BUG-76 · o viewmodel autorado escondia a arma do pack sem ter malha Mint — e servia a AWP no lugar de outras armas~~ · RESOLVIDO 07/09
+
+**Palavras de quem reportou** (07/09, revisão do dono, 19 screenshots 14:03–15:52): a arma
+"flutua sem mãos", e depois: *"nao so LMG mas todas lanes, eu ja testei ,pistola ,faca e ak
+e estao resolvidas, nao testei a M4A1"*.
+
+**O que era.** `attachMintWeapon` (`public/js/vmweapon.js`) chamava `hidePackGun(entry)`
+ANTES de saber se havia malha Mint, e saía por `if (!wrap) return null`. A malha Mint vem do
+modelo de MUNDO, e a partida pré-carrega só as armas que sorteou (`public/js/weapons.js`
+`preloadWeapons`; o resto chega em ocioso). Resultado: a família ficava **sem arma nenhuma**
+— luva segurando o vazio — pelo resto da sessão, e QUAL família caía mudava a cada partida.
+Somado a isso, `weaponModel(id)` cai em `_cache.get('awp')` quando a arma pedida não está
+carregada: com a AWP em cache e a Zastava fora, o wrap saía `mint_weapon_m92` com a malha
+`sniper_1` — a arma gigante e errada do frame `15.51.33`.
+
+**Medida antes** (jogo real, `piscina_treta`, 3:2, 7 capturas por arma):
+`awp`, `shotgun` e `revolver38` com `arma 0/0` e mão em quadro; em outra sessão os mesmos
+zeros caíram em `m4`, `carbine` e `lmg`. Diagonal aparente da `m92`: 857 px contra 552 px da
+`ak` na mesma família (1,55×).
+
+**Medida depois**: `awp` 292/302, `shotgun` 300/302, `revolver38` 306/306 vértices de arma em
+quadro; substituição silenciosa eliminada (`hasWeapon` obrigatório antes do wrap).
+
+**Causa raiz**: `public/js/vmweapon.js:137` (hidePackGun incondicional) + `public/js/weapons.js:338`
+(`|| _cache.get('awp')`).
+
+**Régua**: `tools/eval/vm-attach-fallback-check.mjs` (`npm run eval:vm-attach`, dentro do
+`check:vm`) — bloqueia o GLB de mundo da arma e exige que a família continue com arma em
+quadro E sem wrap de outra arma. Mutantes: `--mutante=escondepack` (reintroduz o estado do
+defeito) e `--mutante=forjawrap` (forja wrap com malha `sniper_1`); os dois reprovam, e a
+régua sai 1 se um deles passar.
+
+**Coleta e portão do arsenal**: `tools/viewmodels/prep/vm-arsenal-frames.mjs` +
+`tools/eval/vm-arsenal-check.mjs`; relatório em
+`docs/reports/VM-ENCAIXE-MINT-2026-09-07.md`.
+
+**O caminho LEGADO tinha a mesma substituição, e pior** (07/09, segunda rodada): o `rw` de
+TODAS as armas é montado uma vez só no boot (`public/js/game.js` `_buildViewModels`), com o
+que estivesse em cache. Régua determinística — libera só `awp.glb` e bloqueia o resto, com
+`awp` montada provando a pré-condição: **25 armas montaram a malha da AWP**, inclusive a
+faca, e `alignHands` punha a mão no grip da arma pedida (por isso `mão 0/312` nas medidas de
+antes). Depois do conserto (`hasWeapon` obrigatório + montagem tardia quando o GLB chega):
+0 substituições, e as 9 armas medidas desenham a própria arma com mão em quadro (60–92 de
+312) e contato 1–7 px. Régua: `npm run eval:vm-attach-legado`, mutante `montaalheia`.
+
+**Custo declarado**: quando o GLB de mundo não chegou, a família desenha a malha do pack
+(licenciada, já dentro do runtime GLB) em vez da Mint, até o modelo chegar — o portão avisa
+`AVISO fallback:` quais armas estão nesse estado. Continuam ABERTOS, com régua vermelha
+medindo: escala em fuga da `m92` (1,49–1,55× a `ak`), contato da mão no `revolver38`
+(53–59 px, teto 40) e `m92/reload` com a mão saindo do quadro.
+
+
+### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
+
+**Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de
+debug vermelho cobrindo metade da tela — `THREE.WebGLProgram: Shader Error, 'uv1':
+undeclared identifier`. O erro seguia vivo na v2.1.0-teste depois do merge da main.
+
+**Causa raiz — medida, não palpite.** O Mini Cooper (`2014_mini_cooper_s_f56.glb`) tem
+`normalTexture.texCoord: 1` (glTF legal, a primitiva tem TEXCOORD_1). O `PropBatch`
+instancia via `normalizeGeo` (`mapprops.js`), que reescrevia a geometria só com
+{position, normal, uv}: o uv1 sumia e o material (com a textura no canal 1) ficava. O
+three r160 só declara `attribute vec2 uv1` quando a GEOMETRIA tem uv1
+(`three.module.js:20851`, `vertexUv1s: HAS_ATTRIBUTE_UV1`) — shader compilado usa `uv1`
+sem declaração. Confirmação em runtime: os 3 programas com `diagnostics` no renderer da
+mansão bootada eram exatamente os materiais do Mini com `uv1` no cacheKey. Varredura de
+JSON em 929 GLBs: **7 com textura em canal ≥1** (Mini, DeLorean, Cobalt, Fiesta, M8,
+Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
+
+**Conserto:** `normalizeGeo` agora carrega uv1 (o da fonte, ou cópia do uv — o merge
+exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
+normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
+Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
+
 ### ~~BUG-80 · a promessa do `orientation.lock()` derrubava o launch — a partida abria com o painel "Falha ao abrir partida"~~ · RESOLVIDO 28/08 (issues #431 e #432)
 
 **Sintoma (literal, issues #431 e #432, abertas pelo `crash-fix.yml` em 24/08 18:07Z):**
@@ -2007,7 +2227,6 @@ true; }`, que calaria crash de verdade. **3 mutações medidas:** `sem-midia` (o
 `/aborted|interrupted/i` e o crash de `audio.js` vira `recuperavel`) e `sem-cota-midia`
 (anula o teto e o abort volta a comer a cota de exceção). Todas acendem EP14; as 32
 anteriores seguem acendendo as suas — **35 de 35 na matriz completa**.
-
 ### ~~BUG-72 · `console.error` informativo virava bug do jogo, e a pilha do idioma `(msg, e)` se perdia~~ · RESOLVIDO 19/08 (issue #382)
 
 **Sintoma (literal, issue #382, aberta pelo `crash-fix.yml`):**
@@ -2181,7 +2400,6 @@ o valor bruto: relatório com mensagem acima de 500 chars ou source acima de 300
 casos — os três publicados acima são byte a byte os mesmos. **Não verificado:** POST real
 contra staging; a guarda foi exercitada pelo helper de produção, pelo trecho executado do
 cliente e pela conferência de fiação, não contra o banco.
-
 ### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
 
 **Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**
@@ -2479,6 +2697,53 @@ Um compile real no Chrome/SwiftShader com contexto WebGL1 gerou os dois programa
 de #120/#121; #115, #127 e #130 permanecem abertos porque seus logs não identificam o mesmo
 programa. O shader crítico fica exatamente no piso mínimo, então novos mapas devem continuar
 reutilizando varyings ou aplicar o perfil seguro.
+
+### BUG-40 · Míticos deformados, semanticamente errados e sem grip funcional — ABERTO 10/08
+
+**Sintoma (do dono, com 49 capturas da tela real):** *"TEM Varios problemas nos
+personagens, o boto ta com as maos esquisitas nenhum segura as maos dieito na arma,
+varios tao com formato de balao um bug antigo"*. Nas figuras, Boto é um homem de terno
+com mãos alongadas em vez do golfinho rosa; Lobisomem é um homem comum; Cuca tem a malha
+rasgada; armas flutuam, atravessam mãos ou ficam presas fora da pegada em vários membros
+do time. A descrição antiga de lobo-guará foi explicitamente revogada pelo dono: a
+referência válida é o lobo preto, forte e dentuço em `references/mitico/lobisomem/`.
+Prévia Mint nova aprovada em 10/08: *"agora sim o lobisomen ficou top"*; o GLB foi
+integrado e passou pela captura do runtime, mas a frente Mítica continua aberta pelos
+outros personagens e pelos portões descritos abaixo.
+
+**Evidência automática inicial:** `node tools/eval/mythic-character-check.mjs` mede
+9/9 GLB e 9/9 PBR, mas só 8/9 com skin; `bandeirante` tem zero skins. O resultado prova
+também que a régua vigente está incompleta: ela aprova identidade visual errada e não
+mede o grip que aparece na seleção.
+
+**Régua antes do conserto:** `tools/eval/mythic-character-check.mjs` para arquivo/skin/PBR;
+`tools/eval/select-inflate.mjs` para deformação GPU no caminho da seleção;
+`tools/eval/select-mount.mjs` para montagem da arma no mesmo caminho. Falta acrescentar
+uma sonda de identidade/proveniência e provar as mutações antes de trocar os assets.
+
+**Lobisomem, estado medido em 10/08.** O auditor do Blender
+(`tools/blender-character-audit.py`) confirma skin nativa e bind com os pés no chão; a
+`Icosphere` vista pelo importador foi refutada como hipótese — é helper do Blender e não
+existe na cena glTF. No caminho real da seleção, `select-mount` passa a shotgun nas duas
+mãos; o mutante `--mutate=tras` reprova o contato da mão de apoio. A captura nova da
+`select-inflate --fotos` mostrou outro defeito que o enquadramento antigo escondia: o
+plano `y=0` cortava as duas pernas porque os cinco clipes afundavam o corpo (pior caso
+medido: `-0,2692 m`). O gerador de `foot-offsets.json` agora aceita acima do teto **só**
+os pares do Lobisomem conferidos em imagem; `npm run feet:check` sai 0 e
+`--mutante=semverificados` sai 1 recolocando os cinco na lista de suspeitos. A revisão
+adversarial aprovou o item de engine depois do A/B: antes não havia patas; depois, patas,
+dedos e garras aparecem inteiros sobre o piso.
+
+**Ainda não está verde por decreto.** `select-inflate` mede `32,6` arestas ruins/10 mil
+contra teto `23,6`, embora a figura posada não mostre o antigo formato de balão; a hipótese
+de morfologia foi localizada com `--diagnose`: as arestas que dobram se concentram em
+`Head`, `LeftHand` e `Curl_R/L`; perna, quadril e torso não aparecem entre os oito ossos
+dominantes. Isso refuta balão corporal, mas ainda não autoriza exceção sem uma referência
+monstruosa aprovada. A revisão adversarial também reprovou a
+brasilidade: a silhueta lê como lobisomem de fantasia genérico, e
+`references/mitico/lobisomem/` ainda não tem `FONTE.md`. Não afrouxar o teto nem inventar
+adereço sem decisão do dono.
+
 
 ### ~~BUG-45 · log WebGL nulo derrubava o loop de render~~ · RESOLVIDO 11/08
 
@@ -3394,6 +3659,1125 @@ ver acima.
 
 ---
 
+### BUG-85 · luva e tamanho aparente mudam na troca pistola → faca · RELATADO 05/09
+
+**Relato literal:** "a luva muda da pistola pra faca? tem que ser a mesma luva?"
+e "a pistola parece menor que a favca, quando na vida real ela é maior".
+Movimento D da faca aprovado pelo dono na mesma mensagem. O requisito é manter
+a mesma identidade de mãos/braços por facção em todas as armas; comparar
+proporções sem assumir dimensões reais universais. Baseline visual na prévia
+`artifacts/viewmodels/astra-series/knife-motion-candidate-d-runtime-retry-3x2/overview-sheet.png`.
+**Em correção local, não encerrado:** `vm-hand-continuity-check.mjs` executa
+os dois aplicadores e o bind tardio reais: 21/21 falhas na primeira régua antes;
+31/31 passam após identidade por time e refresh, mutante falha em 15/31.
+Atlas separados respeitam UVs dos dois rigs; isso não certifica aparência.
+`vm-hand-continuity-runtime.mjs` captura times e proporções no Game real.
+FOV inicial servido da faca = 29,241747°; pistola = 55° de referência 16:9.
+Escala, acabamento visual e extensão às demais rotas ainda em revisão.
+Movimento D já integrado sem sobrescrever clipes originais; runtime 3:2
+com 225 frames, 26/26 verificações. Evidências: `astra-series/hand-continuity/`.
+
+**Atualização 06/09:** crítico independente aprovou os 60 stills v4 (identidade
+e proporção), sem certificar movimento. A inspeção UV encontrou pele residual
+no punho F/U da pistola: o mesh chamado `Skin` cobre a região do punho, não as
+pontas dos dedos. Régua `vm-hand-atlas-check.mjs`: 4/12 falhas nos WebPs v4,
+12/12 após retirar essa exceção da máscara. Mutantes `punho-descoberto` e
+`dedos-cobertos` falham em 6/12 cada. FOV 50° já está no GLB público **local**,
+hash `3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621`;
+geometria, escala e ataques preservados. Recaptura pública v5 concluída:
+`final-chrome-{3x2,16x9}` com 27/27 e 225 frames cada; `final-teams-r2` com
+60 fotos, 121/121. Zero erros. Blender: oito poses, delta projetado máximo
+0,0000023518 da tela. Prévia `astra-series/knife-final-review.html` verificada.
+Ainda exige aprovação final do dono para proporção/continuidade e extensão às
+demais rotas; BUG-85 não encerrado globalmente por validar só pistola/faca.
+
+**Atualização 07/09 (tarde):** o dono jogou localmente (worktree da auditoria
+dos controles, conteúdo `d35c6658`) e disse "faca pistola e ak estao
+perfeitas" — a aprovação de proporção/acabamento pendente desde 06/09 foi
+dada verbalmente. Encerramento formal do bug (registro na lane da faca e
+extensão às demais armas) permanece com a lane `codex/vm-astra-pistol`.
+
+### ~~BUG-86 · sonda do gauntlet contava silhueta dependendo do PBR do material~~ · CORRIGIDO 07/09 (branch `glm/vm-controles-final`)
+
+`pinta()` do `vm-gauntlet.mjs` zerava só `map`: normal/ORM/bump ativos deixavam
+glints especulares quebrando o classificador estrito (`r<70 && b<70`) e
+subcontavam até 5% dos pixels de mão. Prova: mesma geometria/enquadramento
+mede 37.122 px com normal maps do doador e 39.039 px sem (as `team-hands-5`
+removeram os mapas e a régua "mudou" sozinha: 3,890× → 4,047×). Correção
+saneia normal/bump/roughness/metalness/ao/alpha/displacement; validada por
+independência de material (com e sem acabamento, contadores idênticos).
+Réguas visuais afetadas re-executadas: AK 3:2 verde, mutantes AK/pistola
+mordendo. Diagnóstico e tabela na
+`docs/reports/VIEWMODEL-CONTROLES-AUDITORIA-2026-09-07.md`.
+
+### ~~BUG-87 · réguas de ADS e identidade travavam na golden (e 3 checks de era errada ao destravar)~~ · CORRIGIDO 07/09 (branch `glm/vm-controles-final`)
+
+A entrega da golden (`a2396697`) tirou o wrap Mint sem trazer `SOCKET_MINT_*`;
+`authored-ads-check.mjs` e `authored-identity-check.mjs` esperavam
+`mint.active` e morriam em timeout 120 s — `check:vm` 5/6 com a arma padrão.
+Ao destravar, a régua de identidade ainda trazia três suposições da era
+AKM/KINEMATION: `map === null` tratado como placeholder (a golden não tem
+baseColor map por contrato), clip comparado como `'idle'` minúsculo (golden:
+`Idle`) e `GEO_WEAPON_*` tratado como pack a esconder (na pistola assada é a
+arma licenciada). Correções: espera pela entry; sem Mint/sockets, AD1/AD3 e
+ID1–ID4 viram NOTA explícita, AD2 mede pela caixa do esqueleto (bind pose não
+serve para SkinnedMesh) e mutantes em entrada sem Mint REPROVAM (verde celo
+é pior que vermelho — lei 3). Mesma lei aplicada aos mutantes
+`sem-oclusor-frontal`/`sem-ads-autorado`/`ads-cortado` do contrato AK, que
+passavam em silêncio contra a golden (checks condicionados ao AKM).
+Pós-correção: `check:vm` 6/6; M4 continua medindo AD1–AD4/ID1–ID8 como antes
+e seus mutantes falham.
+
+### BUG-88 · pistola mede mãos/arma 4,047× contra teto 4,0× (referência CS 1.6: 1,9×) · RELATADO 07/09
+
+Com a sonda honesta do BUG-86, o idle da pistola (frame aprovado a 15°,
+acabamento v5) mede 4,047× em 1440×960 — acima do teto 4,0×, calibrado na era
+que subcontava. A mesma régua no molde CC0 `usp` do CS 1.6 mede 1,9×; a AK
+golden, 0,73×. **Régua:** `node tools/eval/vm-gauntlet.mjs --modo=kinemation
+**Atualização 07/09 (tarde):** o dono jogou localmente e disse "faca pistola e
+ak estao perfeitas" — a proporção atual da pistola está ACEITA por ele. Resta
+a tarefa de arnês de re-derivar o teto 4,0× da referência (molde usp, régua
+corrigida do BUG-86) com procedência, sem afrouxar às cegas.
+
+--armas=pistol` (vermelho em P2). Não é regressão geométrica: a silhueta era a
+mesma na aprovação do yaw (a régua é que subcontava). Decisão do dono:
+re-derivar o teto da referência com a régua corrigida, ou reduzir a massa de
+mão aparente (mudança visual exige nova aprovação). Nenhum teto foi afrouxado
+nesta auditoria.
+
+### BUG-89 · AK golden 16:9 corta luva direita e encosta no topo na recarga · RELATADO 07/09
+
+C6 preserva a meia-tangente horizontal: em 1440×810 a golden renderiza na
+mesma escala por pixel (luva esquerda 18.729 px vs 18.726 em 3:2) e o canvas
+menor corta o excedente vertical. Gauntlet 16:9: P1 luva direita 1.602 px
+(idle)/692 px (fire) contra mínimo 2.109 px; P5 recarga com 0 px de margem no
+topo (43 px em 3:2). Consequência aritmética do enquadramento normativo 3:2
+sobre o GLB congelado — a faca resolveu o equivalente com z=-0,25 + FOV 50°
+aprovados. **Régua:** `node tools/eval/vm-gauntlet.mjs --modo=golden --armas=ak
+--largura=1440 --altura=810`. Re-enquadrar a golden (congelada por hash em
+contrato e ledger) é decisão do dono.
+
+### BUG-90 · o pente fica soldado na arma durante a recarga — 4 armas jogáveis · RELATADO 11/09
+
+**Palavras do dono, literais:** *"animação 'no ar' — vários rifles puxam o
+carregador mas o pente não sai, fica a mão puxando o nada"*.
+
+**A conclusão anterior estava errada, e vai retratada.** Em 11/09 esta frente
+concluiu, do vídeo de aceite, que *"a AK golden não anima a recarga"*. O RMS
+entre quadros dava 0,03 no fim e foi lido como imagem congelada. O SwiftShader
+roda este jogo a **~0,3 FPS** enquanto o Playwright grava a 30: o mesmo quadro do
+jogo se repete dezenas de vezes no arquivo, e a série tinha a assinatura disso
+(0,1 · 0,5 · 0,2 · **15,7** · 6,0 · 0,1). Medido no domínio certo — posição do
+osso em espaço de mundo, dentro da página — a AK golden entra em estado `reload`
+com a ação `Reload` tocando, e o `Mag_metarig` se desloca. É a lei 7 cobrada de
+quem tinha acabado de citá-la.
+
+**E a primeira medida dessa sonda também estava contaminada.** Ela dava 18,19 cm,
+mas o mutante `--mutante=semtecla` — que NÃO aperta R — dava **13,57 cm**, com os
+estados em `fire→idle`. Os quatro tiros que a sonda dá antes (para o jogo aceitar
+recarregar) movem o próprio `Mag_metarig`, e a régua somava esse curso ao da
+recarga: ela media *movimento de osso*, não *recarga*. Consertada em duas
+cláusulas — a linha de base só é tomada depois de o estado voltar a `idle`, e só
+entram na conta as amostras em que `entry.state === 'reload'`. Remedida assim, a
+AK golden dá **20,97 cm**, com 96 de 96 amostras em recarga e base tomada em
+`idle`. Esse é o número honesto.
+
+Três medidas contaminadas nesta rodada, todas pegas por mutante ou por
+instrumento independente. O padrão é o mesmo e vale escrever: **a régua nova é
+tão suspeita quanto o código que ela julga**.
+
+**Causa raiz.** No caminho ENCAIXADO, `hidePackGun` (`public/js/vmweapon.js:35-38`)
+apaga a arma do pack inteira — e é ela que tem o carregador preso ao osso `Mag`
+por skinning. A arma visível é o wrap Mint, pendurado no soquete com o pente
+**soldado ao corpo**. O osso puxa geometria invisível; a peça visível não se
+separa nunca. A queixa do dono é literal.
+
+`splitParts` (`public/js/vmweapon.js:85`) existe exatamente para isso: recorta o
+pente do wrap Mint e o pendura no osso (`bone.add(partMesh)`, `:147`). Ele só roda
+quando a arma declara `parts.mag.box` no `vmconfig.js`, e **só `ak` e `akm`
+declaram** — as duas viraram `golden` em 11/09 01:45, e o caminho golden não passa
+por `attachMintWeapon`. Resultado: hoje o recorte **não roda para arma nenhuma**.
+
+**Medido, 11/09.** Varredura dos GLB servidos (`/tmp/scan-mag.mjs`, contagem de
+vértices com peso não-nulo no osso):
+
+| caminho | armas | pente preso ao osso `Mag` |
+|---|---|---|
+| golden | 14 | todas, por skinning — ak 783 verts, lmg 1.824, sks 1.264, m92 59 |
+| família | awp, carbine, deagle, pistol | preso por skinning (ar 2.616, pistol 1.257, deagle 804, sniper 392) — **e escondido por `hidePackGun`** |
+| família | shotgun, revolver38 | sem osso `Mag`, e correto: `reloadStyle` `pump_loop` e `cylinder` |
+
+A coreografia não é o problema: **toda** família com osso `Mag` o anima em
+`reload_tactical` e `reload_empty`, com translação, rotação e escala.
+
+**Confirmação in-game, 11/09.** `vm-pente-carga.mjs`, coluna de carga **visível**:
+
+| arma | visíveis | presos | caminho | |
+|---|---:|---:|---|---|
+| `ak` | **783** | 783 | `gold#ak` | pente skinnado e na tela |
+| `carbine` | **0** | 178 | `ar` | **carga oculta** |
+| `awp` | **0** | 50 | `sniper` | **carga oculta** |
+| `deagle` | **0** | 123 | `deagle` | **carga oculta**; na tela `deagle_1` (Mint montada) |
+| `pistol` | 197 | 197 | `pistol#pistol` | visível — e é outro defeito, o BUG-91 |
+
+O mecanismo deixa de ser leitura de código e passa a ser medida. A sonda também
+diz o que está na tela, e isso fecha os dois casos de uma vez:
+
+```
+deagle    mint montada: sim · na tela: GEO_FP_SK_Hand, deagle_1
+pistol    mint montada: NÃO · na tela: GEO_FP_SK_Hand, SK_G18, SK_G18_1, SK_G18_2
+ak        na tela: ..._ak_body, ..._ak_charging_handle, ..._ak_magazine
+```
+
+Na AK golden o pente aparece na lista do que está na tela
+(`coro_solto_project_ak_magazine`). Na `deagle` a Mint está montada e o pente
+não está em lugar nenhum. Na `pistol` a arma na tela é a `SK_G18`.
+
+**Correção de magnitude.** A partir da varredura offline eu previ 2.616 vértices
+para a `carbine`; a medida dentro da página deu **178**. A varredura offline conta
+em duplicidade quando vários nós compartilham a mesma skin. Vale o número de
+dentro da página — é o que o jogo carregou. Na AK, onde não há nós repetidos, os
+dois instrumentos deram o mesmo 783.
+
+A própria sonda nasceu com dois defeitos, e o segundo é o que interessa: ela leu
+`BufferAttribute.getComponent`, que não existe nesta versão do Three, e imprimiu
+**"4/4 com carga VISÍVEL · 0 puxando o nada"** com três das quatro armas em erro —
+porque o contador de falhas filtrava `!r.erro`. Placar verde por cima de medição
+que não aconteceu é a forma mais cara de vermelho falso. Corrigido: o rodapé agora
+tem coluna `sem medida`.
+
+**Armas afetadas: 4, e só 4.** `WEAPON_IDS` (`public/js/weapons.js:10-12`) tem 20
+armas jogáveis. Cruzando com o `vmconfig`:
+
+- **13 golden** — `ak m4 mp5 m92 md97 mosin lmg scar famas uzi p90 svd sks`. Pente
+  por skinning, dentro do GLB. Não têm o defeito.
+- **6 de família** — `awp shotgun deagle pistol revolver38 carbine`.
+- **`knife`** corre em `meleevm.js`, fora deste caminho.
+
+Com pente soldado: **`awp` `carbine` `deagle`**. A `pistol` tem o defeito vizinho
+do BUG-91.
+
+**Correção de uma simplificação minha.** Eu escrevi antes que `shotgun` e
+`revolver38` estavam corretas por não terem pente. Corretas quanto ao PENTE — elas
+não têm osso `Mag`, e `pump_loop`/`cylinder` são os estilos certos. Mas a família
+`shotgun` anima `Pump` e a `revolver` anima `Cartridge0..5` e `CylinderRelease`, e
+no caminho encaixado essas peças estão **igualmente soldadas** ao corpo Mint. O
+mecanismo é o mesmo; muda o nome da peça. `splitParts` aceita qualquer nome
+(`Object.entries(partsCfg)`), então o conserto é o mesmo com `parts.pump` e
+`parts.cylinder`. Não estava na lista do dono e não inflo o BUG-90 com isso — fica
+registrado como a extensão natural dele.
+
+`akm`, `g3`, `g3sg1`, `m400` e `tavor` aparecem no `vmconfig` mas **não estão em
+`WEAPON_IDS`** — são o descompasso `vmconfig` × `weapons.js` que o enxugamento de
+26 → 20 armas (31/08) deixou para trás, e não entram na conta porque o jogador não
+as empunha. Elas também não têm entrada em `CFG` (`weapons.js:43-116`), então
+`weaponModel` as cairia em `CFG.awp` — latente, e só latente enquanto não voltarem
+ao roster.
+
+As outras 13 saíram do defeito por consequência da migração golden de 11/09 01:43
+— posterior à queixa. Por isso a queixa descrevia corretamente quase todo o
+arsenal na época em que foi feita.
+
+**E há um segundo defeito na mesma família, já medido.** O piloto
+`coro/pistol-hires.glb`, aprovado pelo dono em 07/09, tem o pente certo
+(`CoroSolto_Pistol_Mag`, malha própria) e a **mão errada**: `armmesh_Mat_0` em 58
+nós, contra `Requests_Studio_Hands` ×2 em 85 nós na AK. Ele preserva o nome de
+material `CoroSolto_FP_Gloves`, então a skin por time funciona — mas a geometria e
+o rig são de outro doador. É a queixa nº 1 do dono (*"escala de mãos/braços varia
+por arma"*) congelada num arquivo. Somado ao BUG-VM-ESCALA-PISTOLA, a pistola tem
+**dois** bloqueios para o caminho golden, não um.
+
+**Correção, 11/09 — e ela não é a que o plano previa.** O plano mandava derivar uma
+**caixa** por arma e deixar o `splitParts` recortar por volume. Duas regras de
+derivação foram medidas e as duas falharam:
+
+1. *Perfil de profundidade* (a corrida de fatias em que a silhueta desce). IoU de
+   80,0% na `ak` raspando o piso, 1,7% na `akm`, e caixas sem sentido nas alvo — a
+   da `carbine` caía inteira atrás do grip, na coronha.
+2. *Componente conexo cercado por caixa.* A identificação da **peça** funcionou de
+   primeira: numa malha de 4.576 triângulos a `ak` tem 15 componentes, e o de 379
+   triângulos ocupa `x[-0,008 · 0,025] y[-0,133 · 0,053] z[0,044 · 0,191]` — quem
+   autorou a caixa aprovada em 31/08 estava, sem saber, cercando esse componente.
+   Mas a **caixa em volta dele** arrasta 373 triângulos de OUTRAS peças. Na
+   `carbine` são 328 contra 324 da peça; na `deagle`, 594 contra 373.
+
+A caixa é a ferramenta errada, e não é afinável: o pente e o corpo da arma ocupam
+o mesmo volume. O conserto é recortar **a peça**, não o volume —
+`componenteDoPente` (`public/js/vmweapon.js`), união-busca sobre vértices
+coincidentes, escolhendo o componente entre 1% e 15% dos triângulos, com centro em
+z na janela do punho, que desce mais. A regra foi validada contra o pente da `ak`,
+que é conhecido desde 31/08: ela escolhe o de 379 triângulos.
+
+Ligado em `awp`, `carbine` e `deagle` com `parts: { mag: { peca: true, bone: 'Mag' } }`.
+Sem caixa: por construção o pedaço carregado é exatamente a peça, zero intrusos, e
+nunca corta geometria no meio. Interruptor: `?pentepeca=0`.
+
+**Antes × depois, `vm-pente-carga.mjs`:**
+
+| arma | antes | depois | via | na tela |
+|---|---:|---:|---|---|
+| `carbine` | 0 / 178 | **972 / 1150** | `filho` | `mint_part_mag` |
+| `awp` | 0 / 50 | **528 / 578** | `filho` | `mint_part_mag` |
+| `deagle` | 0 / 123 | **1119 / 1242** | `filho` | `mint_part_mag` |
+
+`eval:vm-consistencia` foi de **14/19 para 17/19**.
+
+**E aí eu OLHEI, e a `carbine` estava errada.** Todos os números dela eram verdes —
+972 vértices visíveis, via `filho`, `mint_part_mag` na lista do que está na tela,
+régua em 17/19. A foto (`carbine-recarga-075.png`) mostra a peça tingida como um
+**laço curvo fino junto ao gatilho**, solto no ar: é a **alavanca**, não um
+carregador.
+
+A causa é anterior ao recorte: a *"CARABINA PAPO DE PEÃO"* é uma carabina **de
+alavanca** e não tem pente destacável. A família `ar` anima um osso `Mag` porque o
+rig do pacote é de um M16A4 — **o rig e a arma são de espécies diferentes**. Nesse
+caso não existe peça certa para pendurar no osso, e qualquer recorte estaria
+errado. `carbine` revertida; ela entra na mesma categoria de `shotgun` e
+`revolver38`.
+
+Fica a lição, e ela custou uma rodada inteira: **todo número desta correção ficou
+verde com a peça errada pendurada no osso**. Contagem de vértices não sabe o que é
+um carregador. Só a figura sabe — lei 3.
+
+**A figura isolada, e o veredito arma a arma.** A foto no jogo também não bastava:
+a `awp` ocupa a borda direita inteira da tela e a peça fica atrás do receptor — em
+cinco quadros não aparece vermelho nenhum. Enquadramento ruim de viewmodel esconde
+defeito de peça; são dois problemas e um tapa o outro. `tools/eval/vm-peca-render.mjs`
+tira a arma da cena: monta `weaponModel(id)` numa cena própria, pinta o componente
+por cor de vértice e renderiza de lado, de baixo e de trás em fundo liso.
+
+| arma | peça escolhida | veredito |
+|---|---|---|
+| `ak` (controle) | 379 tri — **o pente-banana inteiro** | ✓ a regra acerta o caso conhecido |
+| `awp` | 176 tri — caixa curta à frente do guarda-mato | ✓ é o carregador da L96 |
+| `deagle` | 373 tri — **só a BASE do carregador** | ✗ puxá-la deixa o punho oco |
+| `carbine` | 324 tri — **a alavanca** | ✗ arma de alavanca, sem pente |
+
+Ligado só na **`awp`**. `eval:vm-consistencia`: 14/19 → **15/19**, e o ganho é
+inteiro dela.
+
+Sobram `shotgun`, `revolver38`, `carbine` e `deagle`: armas cuja peça móvel não é
+pente, cujo rig não corresponde à arma, ou cujo carregador não é geometria
+separada no modelo Mint. Nenhuma delas se conserta por recorte — e três das quatro
+só se revelaram na figura, com todos os números verdes.
+
+**Réguas novas:**
+
+- `node tools/eval/vm-pente-carga.mjs --porta=<p>` — conta a carga **visível** no
+  osso do pente, por arma, no jogo. Mutantes: `--mutante=sempeso` ignora o
+  skinning e reintroduz o defeito na AK golden; `--mutante=semfilho` ignora o
+  parentesco e reintroduz nas encaixadas.
+- `node tools/eval/vm-recarga-probe.mjs --arma=<a> --porta=<p>` — curso do osso em
+  cm. Mutantes: `--mutante=semtecla` (não aperta R) e `--mutante=semgasto` (não
+  gasta munição antes — é o defeito de instrumento que esta sonda teve na
+  primeira execução: o jogo recusa recarregar pente cheio e a medida vira 0 cm).
+
+**A régua que existia foi consertada, e o conserto quase matou a mordida dela.**
+`tools/eval/vm-consistencia-check.mjs` agora cobra a caixa só de quem passa por
+`attachMintWeapon` — arma **jogável**, sem `golden`, sem `baked` — e a isenção do
+caminho golden virou uma cláusula MEDIDA (VM-C4: o GLB servido tem de ter ≥50
+vértices presos ao osso do pente por skinning), não uma isenção por fé. Placar:
+**14/19**, com 5 reprovas e nenhuma falsa.
+
+No caminho, os três mutantes que já existiam (`semparts`, `caixavazia`,
+`caixatudo`) **pararam de morder**: eles mutam o `parts` da `ak`, e a `ak` virou
+golden em 11/09 — as cláusulas de caixa deixaram de se aplicar a ela e os três
+passaram calados. Consertado pondo a `ak` no caminho encaixado dentro do mutante.
+Fica a lição: mutante que só morde na configuração de ontem não guarda nada, e ele
+não avisa — passa em silêncio.
+
+**O que ela acertava desde o começo.** A mensagem do VM-C1 em
+`tools/eval/vm-consistencia-check.mjs:146` é a queixa do dono ao pé da letra — *"a
+mão puxa o nada"*. Mas ela decide pelo campo `parts.mag` do `vmconfig.js`, que é
+**declaração**, não peça. Das 22 reprovas do placar 2/24, **14 são falsas** (as
+golden, cujo pente funciona por skinning e que nunca vão precisar de `parts`) e
+**8 são verdadeiras** (as de família). O defeito estava apontado desde o começo,
+enterrado em falso vermelho — que é como se ensina a ignorar vermelho. Reescrevê-la
+para medir o GLB servido, e não o campo, é parte do conserto.
+
+### BUG-91 · a pistola em primeira pessoa é a Glock do pacote, não a `pistol.glb` do jogo · MEDIDO 11/09
+
+**Como apareceu.** Investigando o BUG-90, a `pistol` foi a única arma de família a
+medir carga **visível** no osso do pente (197 de 197). Isso só é possível se
+`hidePackGun` nunca rodou — e `hidePackGun` só roda dentro de `attachMintWeapon`.
+
+**Causa raiz, em três linhas de código.**
+
+1. `vmconfig.js` declara `pistol: W('pistol', { baked: true, runtime: 'family', … })`.
+2. `baked: true` faz `entryKeyFor` devolver `pistol#pistol` (`authoredvm.js:245`).
+3. `attachMintWeapon` só é chamado quando a chave **não** tem `#`
+   (`authoredvm.js:526`): `if (entry.family !== 'grenade' && !key.includes('#'))`.
+
+Então o caminho assado assume o comando e procura `MINT_WEAPON_PISTOL`
+(`authoredvm.js:464`). Esse nó **não existe**: com `runtime: 'family'` a URL
+resolvida é a da família (`authoredvm.js:262`), e **nenhum** runtime de família tem
+nó `MINT_WEAPON_*` — verificado em `pistol`, `deagle`, `ar` e `sniper`. O
+`entry.mint` nunca nasce, a arma do pacote nunca é escondida, e o que fica na tela
+é a malha `SK_G18` do KINEMATION.
+
+`baked: true` e `runtime: 'family'` são contraditórios: o primeiro diz *"a Mint já
+está assada dentro do GLB"* e o segundo manda servir o GLB de família, que não tem
+Mint assada nenhuma. A combinação falha **em silêncio** — é a assinatura da lei 6.
+
+**Não foi introduzido agora.** `git log -p -- public/js/data/vmconfig.js` mostra
+`baked: true` na linha da pistola desde antes de 10/09 23:43. A reversão de 11/09
+00:24 (BUG-VM-ESCALA-PISTOLA) devolveu o estado anterior, não criou este.
+
+**Régua:** `node tools/eval/vm-pente-carga.mjs --armas=pistol --porta=<p>` — a linha
+`mint montada:` e `na tela:` dizem qual malha o jogador empunha.
+
+**Custo de consertar.** Tirar `baked: true` põe a pistola no caminho encaixado: a
+`pistol.glb` entra na mão e a `SK_G18` some — mas aí ela herda o BUG-90 (pente
+soldado) e passa a precisar de `parts.mag`. Os dois consertos são o mesmo trabalho.
+
+### ~~BUG-84 · tiros alheios acendem a luz do viewmodel da faca~~ · CORRIGIDO LOCALMENTE 05/09
+
+Na revisão contínua da faca, o crítico viu clarões isolados nos frames
+144, 177 e 223 de `artifacts/viewmodels/astra-series/knife-approved-motion-3x2/`.
+O jogador estava com faca, sem disparar. `Game._flash` distingue `fpCls`
+para criar sprites locais, mas reacende `_vmFlash` incondicionalmente,
+inclusive para os tiros de bots. Geometria e pose não mudam nesses frames.
+Correção: só iniciar o pulso local quando há `fpCls`; luz do mundo preservada.
+`melee-motion-check.mjs` chama `_flash` REAL: antes uma falha, depois 14/14;
+mutante `flash-externo` reintroduz a falha. Browser normal em
+`knife-final-motion-3x2/`: 27 verificações, 21 fotos e vídeo de 225 frames.
+Mutante em `knife-flash-mutant-runtime/`: falha só o pulso externo, que muda
+intensidade de 0 para 1,6; fotos antes/depois confirmam o clarão na mão.
+Régua permanente via `eval:melee-vm`/CI; não é defeito da geometria aprovada.
+
+### ~~BUG-83 · faca abre a mão por um quadro ao terminar o saque/ataque~~ · CORRIGIDO LOCALMENTE 05/09
+
+**Sintoma observado na revisão visual:** `draw-100` e `quick-100` do piloto
+faca voltavam à pose aberta do rig antes de retornar ao idle (3:2 e 16:9).
+Evidência: `artifacts/viewmodels/astra-series/knife-runtime-{3x2,16x9}/`.
+
+**Causa confirmada:** `public/js/meleevm.js` desabilitava o clipe terminado
+(`clampWhenFinished=false`) e iniciava Idle com fade de peso zero. A fixture
+do controlador real mediu mão x=0 em vez do intervalo válido [1,4] no término
+de quick/heavy; em draw x≈0. Havia também handler de `finished` sem verificar
+se o evento pertencia à ação atual.
+
+**Correção:** sustentar a pose final durante o crossfade (`clampWhenFinished=true`)
+e ignorar `finished` de ações substituídas. Não trocar câmera, GLB ou controles
+de ataque para esconder esse defeito. O experimento de profundidade da faca
+é separado: foi aplicado depois, por aprovação do dono em 05/09; ver
+`docs/reports/VIEWMODEL-SERIES-HANDOFF.md`.
+
+**Régua:** `npm run eval:melee-vm`, também no CI e em `check:vm`. A nova
+`tools/eval/melee-motion-check.mjs` executa a classe e o AnimationMixer reais:
+antes 4/7 cláusulas falhavam; depois 7/7 passaram. `--mutante=sem-clamp`
+reintroduz três falhas de pose; `--mutante=evento-antigo` reintroduz a falha
+de interrupção. Logs `knife-motion-{before,after,mutant-clamp,mutant-event}.json`.
+O palpite de asset deformado não explica o salto: a fixture sem esse asset
+reproduz o defeito. Custo de GPU não medido; não há malhas/texturas novas.
+Recaptura `knife-fixed-candidate-{3x2,16x9}/` e revisão independente confirmam
+que os quadros finais não caem mais na pose aberta/baixa. O A/B de 3:2 usa
+igual profundidade; em 16:9 a pose foi avaliada separadamente do enquadramento.
+O acabamento/contato da faca e vídeo contínuo seguem pendentes. Não publicado.
+
+### BUG-75 · mãos genéricas, encaixe torto e anatomia deformada — REABERTO 24/08
+
+> **23/09 — política revogada pelo dono.** A regra "pacote é doador, nunca aparência" (arma do
+> pack escondida por `hidePackGun`, Mint encaixada por cima) deixa de valer: na fábrica de armas
+> (`tools/fabrica/`, `docs/reports/VM-FABRICA.md`) a arma KINEMATION aparece como autorada e a
+> identidade vem de skin, nome e variante de zona livre. Os produtos da fábrica (`?vmfabrica=`)
+> não passam por `attachMintWeapon`/`hidePackGun`; os produtos antigos continuam como estão.
+
+**Sintoma (do dono):** *"mãos genéricas que não se parecem nada com mãos, mal encaixe nas
+armas, recarregar some com a arma ao invés de mostrá-la, péssimas animações, péssima
+inclinação das armas"*. O pedido inclui todas as famílias e explicitamente a faca.
+
+**Causa raiz — confirmada.** O caminho servido cria `fpArm()` e `frontHand()` com cápsulas
+e prende essas peças diretamente em cada grupo de arma (`public/js/game.js`,
+`_buildViewModels`). O módulo que deveria fornecer braços rigados está desligado por
+`FP_OFF = true` e `buildFPArms()` devolve `null` (`public/js/fparms.js`). A recarga do
+`ViewModelRig` movimenta apenas o pivô global da arma; não existe ação de mão indo ao
+carregador/ferrolho (`public/js/springs.js`, estado `reload`). Portanto os cinco sintomas
+são o mesmo defeito de arquitetura, não cinco offsets ruins.
+
+**Referência funcional:** os vídeos enviados pelo Emerson em 23/08 mostram o personagem
+Mint já rigado, a arma montada no esqueleto e três câmeras lendo a mesma pose. O próprio
+acervo local confirma `LeftHand`/`RightHand` e cadeias de braço nos personagens, além de
+clipes retargetados por personagem em `public/models/anims/`.
+
+**Reprodução:** abrir `/?hands=1`, trocar entre rifle, pistola e faca e recarregar. O
+personagem escolhido não participa do viewmodel; durante a recarga nenhuma mão visita
+carregador ou ferrolho.
+
+**Conserto entregue.** `public/js/fpsrig.js` usa o rig FP CC0 WRAD com 30 ossos de dedos,
+luvas próprias e IK por socket; o arquivo Blender canônico é
+`tools/blender/source/fp-arms-source.blend`, o arquivo autorado é
+`tools/blender/fp-arms-authored.blend` e o export servido é
+`public/models/viewmodels/fp-arms.glb`. Rifle, pistola, escopeta, bolt action e faca têm
+poses/fases próprias. A recarga move a mão ao carregador, bomba, ferrolho ou slide e mantém
+a arma visível; rifle e pistola exibem também o carregador destacado.
+
+**Régua fechada:** `npm run eval:fp-rig` mede as 26 armas e as quatro famílias de recarga.
+Em 24/08: 26/26 com fonte de identidade `mandrake`, 2 SkinnedMeshes, arma visível e erro de
+palma ≤ 0,015 m; fases `magazine+bolt`, `magazine+slide`, `pump` e `bolt` presentes. Os
+mutantes `generico` e `recarga-global` ficam vermelhos como esperado. A compilação Astro e
+a verificação de sintaxe passaram, e AK/pistola/faca foram conferidas no navegador real.
+
+**Reaberto pelo dono:** *"parece o braço de uma pessoa deformada e nao real"*; *"as armas
+tambem estao bem ruim posicionadas especialmente a faca e sniper"*. A régua anterior mede
+punho→socket e existência de fases inventadas em JS. Ela não mede anatomia, silhueta nem se
+mãos+arma+animação foram autoradas como um único viewmodel; portanto ficou verde para a
+arquitetura errada. O palpite "ajustar novamente o IK" foi refutado pela inspeção dos pacotes
+CC0 enviados: os `v_*.mdl` já contêm mãos, arma, esqueleto e sequências específicas. AK, AWP,
+Deagle e faca serão o corte de prova do novo caminho, sem CCD IK em runtime.
+
+**Nova régua, antes do conserto:** `npm run eval:authored-vm`. O contrato exige um GLB
+autorado completo por arma de prova, com skin, as duas mãos e os clips originais. O estado de
+24/08 reprova por ausência dos quatro artefatos. Mutantes obrigatórios: `sem-clipe` e
+`sem-maos`.
+
+**Correção final em 24/08 — pacote CC0 é doador, nunca aparência.** A primeira integração
+reutilizava também as armas e texturas GoldSrc e, portanto, entregava um clone visual do CS.
+Isso foi descartado. `public/js/authoredvm.js` agora usa os 18 GLBs convertidos somente como
+esqueleto, mãos e clips mecânicos. Todo mesh de arma doadora recebe
+`animationDonorOnly=true` e fica invisível. No mesmo osso animado é montado, por ID, o GLB
+próprio de `public/models/weapons/` já usado pelo Coro Solto. Toda cor das texturas de mão
+do pacote é descartada; apenas o relevo em cinza ajuda a ler dedos e costuras, enquanto a
+skin final é gerada com pele, tatuagem e roupa do personagem selecionado. Assim AK,
+M92, M400, faca e cada uma das outras 22 armas conservam sua identidade do jogo, enquanto
+recarga, disparo, saque e golpe vêm do molde animado CC0.
+
+**Antes × depois e evidência.** Antes, o caminho procedural exibia braços deformados; a
+primeira tentativa autorada corrigiu a anatomia mas copiou a aparência do CS. Depois, a
+régua passa **18/18 doadores e 26/26 armas próprias**, incluindo `idle`, `draw`, disparo,
+recarga e `slash/stab`. Além dos mutantes `sem-clipe` e `sem-maos`, o mutante `clone-cs`
+agora falha se a arma doadora reaparecer, se a arma própria deixar de ser montada ou se uma
+textura de mão doadora sobreviver. A bancada `authoredvmviewer.html` foi percorrida nas 26
+armas com recarga ou golpe ativo e confirmou que cada ID monta seu GLB próprio, mantém a
+arma doadora invisível e recebe os materiais personalizados do personagem.
+
+**Reaberto novamente pelo dono em 24/08 — a bancada estrutural não é aprovação visual.**
+Os screenshots do jogo real mostram mãos e armas disformes, contatos incompatíveis e
+enquadramento diferente do render do Blender. Há também uma divergência concreta de
+câmera: o piloto AK é composto com VFOV 58° em
+`tools/blender/viewmodels/build_ak_hires_pilot.py`, mas a câmera fica fora do GLB porque o
+export seleciona somente rig e meshes. `public/js/authoredvm.js` reconstrói a projeção pela
+regra HFOV 90, que em 3:2 vira VFOV 67,38°. Portanto o navegador não avalia a mesma
+composição aprovada offline.
+
+O caminho final e seus portões vivem em
+[`docs/development/VIEWMODEL-1P-PROFISSIONAL.md`](docs/development/VIEWMODEL-1P-PROFISSIONAL.md).
+Até os cinco pilotos (rifle, pistola, faca, sniper e escopeta) passarem no jogo real, o 1P
+continua **não aprovado** independentemente de build, ossos, clips ou sockets verdes.
+
+**Reaberto no piloto AK em 25/08 — defeitos literais do `akpilot=21`.** *"o pente
+para no ar, e a arma que encaixa no pente e não o pente na arma"*; *"quando atira o
+tamanho do pente diminui"*; *"a mão de trás não está segurando no cabo de madeira"*;
+e a composição mostra a coronha inteira, ao contrário da referência de enquadramento do
+CS 1.6. A inclinação foi aprovada e não deve mudar. Evidência servida:
+`Screenshot 2026-08-25 at 02.06.27.png`. Régua anterior: **cega**, pois verificava
+câmera, nomes das ações e existência do rig, mas não amostrava escala do carregador,
+trajetória relativa arma↔carregador nem contato da mão forte. Nova régua desta rodada:
+`tools/eval/ak-viewmodel-contract.mjs` precisa amostrar a animação real do GLB e reprovar
+qualquer escala do carregador instalado diferente de 1 durante `Shoot`; a evidência visual
+obrigatória é uma prancha de disparo e outra de recarga, no recorte 3:2 servido.
+
+**Reaberto no piloto AKM em 26/08 — contato incompleto da mão forte.** *"a mão de
+trás da AKM não está segurando o suporte e o dedo até fica no trigger mas não se
+movimenta corretamente"*. A causa foi medida no arquivo autorado: a palma estava
+registrada no rifle e somente a cadeia do indicador era resolvida; polegar, médio,
+anelar e mínimo continuavam na pose aberta do doador, formando uma plataforma sob o
+cabo. Além disso, o alvo do indicador era idêntico em todos os frames de `Shoot`, então
+o teste anterior aceitava contato estático como disparo. A nova correção precisa envolver
+o cabo com as cinco cadeias e medir deslocamento/retorno do indicador durante `Shoot`.
+
+**Correção e régua em 26/08.** O registro da palma foi recalculado contra o volume real do
+cabo de madeira da AKM, e polegar, médio, anelar e mínimo agora possuem alvos separados que
+envolvem o cabo. O indicador ganhou curso de disparo próprio: o GLB exportado mede 5,979°
+entre repouso e pressão, com retorno de 0° no fim do clipe. A régua
+`tools/eval/ak-viewmodel-contract.mjs` exige os 15 ossos da mão forte, curso ≥ 4° e retorno
+≤ 1°; `--mutante-gatilho-estatico` zera artificialmente o curso e obrigatoriamente reprova.
+Pranchas específicas da mão forte ficam em
+`artifacts/viewmodels/akm-hires-pilot/renders/strong-hand-*.png`.
+
+**Reaberto novamente em 26/08 — fechamento frontal, contato e ADS.** Relato literal do
+dono: *"a akm ainda esta com bugs, ela tem um buraco na frente voce ve um fundo azul quando
+olha pro ceu, o dedo nao chega a encostar no trigger apesar da mao de tras estar correta
+segurando a arma, e quando o usuario clica em mirar com zoom com o botao direito do mouse ela
+nao fica mais de frente."* As três causas eram independentes: o mesh autorado terminava com
+uma abertura interna visível contra fundos claros; a pose aproximava o indicador sem impor
+contato geométrico mensurável; e o ADS herdava apenas a transformação genérica, sem alinhar o
+pacote autorado inteiro à linha óptica.
+
+**Correção validada.** O export da AKM recebeu o oclusor interno escuro
+`coro_solto_project_akm_front_occluder`, marcado com
+`occlusion_role=seal-front-sky-leak`, sem alterar a silhueta externa. O indicador foi
+recalibrado e agora fica a **0,722 mm** do gatilho; os 15 ossos da mão forte continuam
+presentes e o disparo mede **5,1°**, retornando a **0°**. O ADS passa a transformar o mount
+completo da arma e mãos com `yaw=-0,55 rad` e `x=-1,05`, escolha feita por comparação visual
+de seis enquadramentos (`x=-0,45` a `-1,45`), não apenas por build. A prancha dessa varredura
+está em `artifacts/viewmodels/akm-hires-pilot/ads-sweep/contact-sheet.png`.
+
+**Evidência no navegador real.** `fire.png`, `ads.png`, `reload.png`, `lookdown.png` e a
+prancha final em `artifacts/viewmodels/akm-hires-pilot/final-browser-v9/` confirmam: nenhum
+azul atravessa a frente ao olhar para o céu; no botão direito a caixa da culatra e a linha do
+cano vêm para o centro sem cortar arma ou mãos; e a pose de disparo permanece estável. O
+flash e a boca da arma coincidem em NDC `[0,181; -0,075]`. A régua agora também exige o
+oclusor, contato ≤ 4,5 mm, ADS autorado e faixa de enquadramento `-1,20 ≤ x ≤ -0,80`;
+`--mutante-dedo-sem-contato`, `--mutante-sem-oclusor-frontal`,
+`--mutante-sem-ads-autorado` e `--mutante-ads-cortado` ficam todos vermelhos.
+
+**Pistola reaberta em 26–27/08 — pose, disparo e recarga ainda não aprovados.** Relatos
+literais: *"a arma esta muito de lado, quando atira fica uma mao segurando o carregador ao
+inves das duas atirando"* e *"sim o dedo no gatilho nao dispara, e o recarregar nao esta
+animado direito"*. Os contact sheets `shoot-contact-v14.png` e
+`reload-contact-v14.png` confirmam que a pistola ainda fica comprimida no canto, os braços
+dominam o quadro e os contatos mecânicos não são demonstrados com clareza. O
+`eval:pistol-pilot` existente valida contrato/estrutura do arquivo; seu PASS não equivale a
+aprovação visual no navegador.
+
+**Rodada 01/09 — regressão “dois canos de PVC” reproduzida e substituída.** Relatos literais
+do dono: *"as mãos estão gigante e a pistola não existe mais"* e *"parece [...] dois canos de
+PVC"*. A captura das 09:50 confirma arma ausente e somente mangas/braços sem leitura de pele,
+luva ou anatomia. Não era um ajuste fino: a rota customizada anterior combinava câmera e bases
+de rig incompatíveis. Em paralelo, `optimize_paid_family.mjs` recopiava as nove texturas
+compartilhadas a partir de GLBs já reduzidos a placeholders 1 × 1; cada nova otimização
+preservava o apagamento.
+
+A trilha canônica passou para a família licenciada X18/G18. A montagem preserva a skin da arma
+ao obter as bases locais, cancela a segunda conversão FBX 0,01, normaliza a fase dos clips de
+braços/arma e assa o `Mag` relativo a `hand_l` durante o trecho destacado. Antes dessa última
+régua, o pente ficava 160 px longe da mão; depois, 0 px. As texturas voltam a ser geradas dos
+PNGs-fonte, e o URL do catálogo usa `paid-aaa-3` para impedir cache do GLB rejeitado.
+
+O runtime 3:2 final carrega `pistol#pistol`, SHA-256
+`0ac4e088b0c7195e8c3412052e9710ba2a4ff47398f7d0e26a1cd6f4a13a8eb6`. O idle começa em
+`(0,5965; 0,4906)`, o tiro percorre 11,5% da diagonal da arma, o corpo percorre 22% durante a
+recarga e o pente 97%. `gauntlet-mag-grip-v1/relatorio.json` passa 1/1; `sem-arma`,
+`sem-pente`, `pente-estatico`, `sem-mao-apoio`, `draw-idle` e `tiro-estatico` ficam vermelhos.
+A prancha do jogo está em `artifacts/viewmodels/golden-pistol/runtime-final/contact-sheet.png`.
+A candidata ainda aguarda aprovação visual do dono; decisão e reversão estão em
+`docs/reports/GOLDEN-PISTOL-DECISION.md`.
+
+**Rodada 05/09 — captura e diagnóstico corrigidos; pistola ainda não golden.**
+Na lane `codex/vm-astra-pistol`, a reprodução em 1440×960 mostrou o frame de
+saque 0% com a pose pronta e o frame 50% defasado no `golden-ak-runtime.mjs`.
+O mount do saque já recebia `update(0)`, mas faltava assegurar o render da nova
+pose/matriz; no tiro, amostrar só o mixer também congelava o recuo. O
+helper agora avança o controlador em subpassos (inclusive na recarga), preserva
+idle pausado, restaura os estados ao terminar e espera retorno natural a idle,
+sem forçar `action.time` ao fim da recarga. O saque zero corrigido fica fora da
+tela; o intermediário entra progressivamente.
+
+O candidato C também expôs um diagnóstico falso do `vm-gauntlet.mjs`: pico do
+pente **1777 px**, abaixo do filtro **>2000 px**, produzia resumo `-1`, exibido
+como mão a **>192 px**. Ausência de amostra agora é `distancePx: null`, com
+reprovação explícita por medição insuficiente; nenhum limiar foi relaxado. A
+hipótese de mão desconectada não é sustentada por esse número. B e C foram
+rejeitados por proporção/enquadramento; não substituiram a baseline nem a AK.
+
+Réguas independentes: `npm run eval:authored-capture -- --mutate` (**10/10**, oito
+mutantes) e `node tools/eval/vm-contact-diagnostic-check.mjs --mutate` (**8/8**,
+dois mutantes), com retorno ao verde. Custo: mais subpassos na ferramenta de
+captura; nenhum módulo servido do jogo foi alterado. O HUD é registrado no
+bloco `rendered`, congelado junto com a simulação durante a foto para impedir
+deriva de munição entre metadata e pixels. Tempo adicional de captura
+não foi benchmarkado. Antes/depois, SHAs e limitações ficam no
+[`VIEWMODEL-ASTRA-PISTOL-HANDOFF.md`](docs/reports/VIEWMODEL-ASTRA-PISTOL-HANDOFF.md).
+Isso corrige o instrumento, **não encerra o BUG-75** nem aprova visualmente mãos.
+
+**Rodada 28/08 (pack pago) — régua antes do conserto, causas MEDIDAS.** A integração do
+KINEMATION (29 commits em ~90 min, sem portões) trocou 25/26 armas pela malha genérica do
+pack e quebrou o resto por quatro causas confirmadas lendo o binário dos GLBs e o código:
+(1) `build_paid_family.py` parenteava a arma no OBJETO armature com matriz de rest
+congelada — os clipes animam `ik_hand_gun` e a arma ficava soldada no ar (consertado:
+bone-parent com compensação de tail; delta de posição com idle aplicado ≤1e-6 m nas 15
+famílias; régua no `validate_paid_catalog` com baseline versionado e mutante provado);
+(2) as mesmas 9 texturas de braço (18,3 MB) embutidas nos 16 GLBs — troca de arma baixava
+23 MB (consertado: shared/ + placeholder 1×1 religado por nome; família 2,9–7,5 MiB,
+catálogo 345→68 MB; ID5/ID6 na `authored-identity-check`); (3) sem clipe de fire em 12/15
+famílias e o kick legado zerado — arma parada atirando (consertado: `vmrecoil.js` com as
+curvas e amplitudes do RecoilAnimData extraídas do pack; `vmrecoil-sim` 42/42, pico AK
+medido no jogo 1,50° vs 1,55° da simulação); (4) `setAim()` no-op (consertado: alça MEDIDA
+da arma Mint alinhada ao eixo da vmCamera; `authored-ads-check` em 16:9 e 3:2, desvio
+0.000). A identidade voltou: `vmweapon.js` monta a malha Mint no socket com base automática
+de encaixe (contra-escala razão 1,001) e a genérica do pack fica oculta — tudo atrás do
+portão `ready` por família no `vmconfig.js` (o jogo segue 100% legado até a onda flipar) e
+do kill-switch `?vmauthored=0`. Idle respira (ID7), fila não encalha com mount oculto
+(ID8), fuzil saca com o clipe `equip_rifle` do General/ e a faca ganhou dono (meleevm
+construído; `melee-vm-check` 6/6). Suíte local: `npm run check:vm`; matriz visual por arma
+em `viewmodel-visual-matrix.mjs` para o A/B da onda contra o golden gen-2.
+
+### ~~BUG-59 · 18 personagens desta branch sem mídia do redesign (avatar/webm/resultado)~~ · RESOLVIDO 18/08 (mídia)
+
+**Evidência:** `eval:redesign` UIA1/UIA4/UIR1 vermelhas desde o merge da main (alpha.147,
+17/08). A régua da main exige avatar `.webp`, vídeo de seleção `.webm` e artes de
+vitória/derrota para TODO o elenco — os 18 personagens que esta branch acrescentou
+(mítico + facções novas: boto, cuca, curupira, saci, lampião, gilbomes, camera-roxa…)
+não tinham o lote.
+
+**Antes × depois (18/08):** antes — UIA1 faltava 18 avatares + 18 seleções + 36 artes,
+UIA4 `auditoria=divergente`, UIR1 sem wiring (consertada no commit anterior desta branch).
+Depois — lote completo gerado do PRÓPRIO pipeline do jogo (mounttest/GLB, sem IA):
+54 WebM VP9 (18 seleção 640×854 + 36 resultado 640×640), 18 avatares 256×256 derivados do
+frame @1.0s (mesma receita dos 44, punk/gotinha pinados intactos), 36 artes 1024×1536 alpha
+com margens UIA19 — `eval:redesign` UIA1/UIA4/UIR1 VERDES, placar 43→45 ✓.
+
+**Dois defeitos de arnês achados e consertados no caminho:**
+1. `trim()` do sharp 0.35.3 é no-op com fundo transparente (reproduzido em PNG sintético) —
+   o `char-result-stills.mjs` faz trim manual por bbox de alpha>8.
+2. O `caixa()` (bbox por esqueleto) subestima largura em 4 rigs (bandeirante/cuca/lobisomem/
+   microfonildo saíam cortados na borda) — o quadro agora re-renderiza com folga crescente
+   se o conteúdo toca borda.
+3. `serve.mjs` não resolvia `define:vars` do index.astro (SUPPORT_URL, PR #284) e `/` morria
+   com ReferenceError no arnês — variáveis conhecidas viram tabela no renderer.
+
+**Evidência do lote:** prancha e recibos em `tools/eval/asset-evidence/bug59/`
+(contact-sheet-18.png + receipts.json); crítico numérico adversarial
+(`tools/eval/bug59-critico.mjs`) sem reprovações: inventário 62/62/124 exato, 54/54 WebM
+VP9, 18/18 artes nos limites, pares vitoria/derrota byte-idênticos (convenção do lote de 44).
+
+**O que NÃO fechou aqui (declarado):** (1) leitura VISUAL das pranchas por olho humano — o
+perfil numérico a 64px tem figura e contraste reais (corpo 11–36%, abaixo dos 34–51% do
+lote de 44: enquadramento tq mais afastado), mas "parece o Brasil?" só o dono responde;
+(2) `eval:char-thumbnail` tem 1 vermelha pré-existente (thumbnail lenda-lanhouse) — frente
+de models, fora do escopo de mídia; (3) UIR4/UIR22/UIR26/UIR30 seguem vermelhas — outras
+frentes desta branch, não são de mídia.
+
+### ~~BUG-62 · Home dava ReferenceError `moduleCacheManifest is not defined` no request (SSR)~~ · RESOLVIDO 18/08
+
+**Sintoma:** dev server e função da Vercel devolviam `/` com **500 e 0 bytes** —
+`ReferenceError: moduleCacheManifest is not defined` em `src/pages/index.astro:12`.
+
+**Causa raiz:** o merge `0040c73` resolveu o conflito do frontmatter deixando a CHAMADA
+nua `moduleCacheManifest()` (padrão pré-#194) e jogando fora o import. O padrão vigente
+desde #194 é a constante `__MANIFESTO_JS__` injetada pelo `astro.config` via `vite.define`
+(o manifesto é calculado UMA vez no build — página SSR não lê disco no request, que é a
+classe do *"200 com 0 bytes"* de 12/08). `index.astro` era o único arquivo fora do padrão.
+
+**Por que nada viu (terceiro furo de arnês do mesmo merge):** `astro build` **não executa**
+frontmatter de página SSR — só compila. O build verde do BUG-61 não provava página viva. E
+a régua certa (`eval:ssr`, que renderiza o artefato construído e acusa corpo vazio) existia,
+mordia — e **não estava no `check:fast`**. Rodada contra o `.vercel/output` de ontem:
+SSR1 `/ status=500 0 bytes ✗`.
+
+**Antes × depois (18/08):** antes — `/` 500/0 bytes em dev e no artefato. Depois —
+`index.astro` usa `__MANIFESTO_JS__` (como `Layout.astro`), rebuild, `eval:ssr` verde:
+`/ status=200 76380 bytes`, SSR2/SSR3 PASSA, exit 0. Dev server reiniciado (o `vite.define`
+é congelado na subida) e `/` 200 com import map cache-busted.
+
+**Portão:** passo novo **`eval:build`** no fim do `check:fast` — `npm run build && eval:ssr`,
+sempre contra artefato fresco (artefato velho mede o mundo de ontem: mesma classe do BUG-02).
+A mutação é o estado real de hoje: a árvore de antes do conserto reprova, a de depois passa.
+
+### ~~BUG-61 · Merge de 17/08 quebrou o build do site e nenhuma régua viu~~ · RESOLVIDO 18/08
+
+**Sintoma:** `npm run build` (e o dev server) falham com *Closing tag '</div>' has no matching
+opening tag* em `src/pages/index.astro:997`.
+
+**Causa raiz:** o merge `0040c73` achatou o `set-preview-wrap` da main (que tinha dois divs
+internos) num `aside` vazio desta branch e sobrou um `</div>` sem abertura. Antes do merge o
+painão de settings era 41/41 divs balanceado; depois, 8 abre × 9 fecha.
+
+**Por que um dia de build quebrado passou em branco:** `npm run build` **não está no
+`check:fast`** — o portão mede o jogo e as docs, não o deploy. Evidência: a vermelha apareceu
+em 18/08 no primeiro build manual pós-merge. A régua que faltou acender: **build como passo do
+portão** (candidato a entrar no `check:fast`).
+
+**Antes × depois (18/08):** antes — `astro build` morre em CompilerError. Depois — remoção do
+`</div>` órfão, `Server built in 8.49s`, prune roda. Commit `60604fa`. A mutação que prova a
+régua futura é o próprio estado quebrado: um merge que perde uma abertura de tag tem que
+reprovar o portão no mesmo dia, não no próximo build manual.
+
+### ~~BUG-60 · Regen de grafite de UM mapa apaga os outros nove do layout~~ · RESOLVIDO 18/08
+
+**Sintoma:** `public/js/graffiti_layout.js` ficou com **1 de 10 mapas** (só `ferro_velho`) no
+meio do regen pós-merge de 17/08. `tools/eval/graffiti-layout-check.mjs` M1 vermelha para 9
+mapas ("chama grafitar mas não está no layout").
+
+**Causa raiz:** `tools/gen-graffiti-layout.mjs` extraía o JSON do `GRAFITE` da primeira `{`
+até o `lastIndexOf('}')` do arquivo — que desde a issue #82 é o fechamento do `GRAFITE_FP` no
+rodapé, não do `GRAFITE`. `JSON.parse` lança (*Unexpected non-whitespace character after
+JSON*), o `catch` vazio zera `anterior` ("recomeça") e o regen de um mapa só grava aquele
+mapa. A feature "preservar os outros" (comentário do próprio tool) nunca funcionou com o
+rodapé FP no arquivo; ninguém notou porque os regens anteriores eram sempre de TODOS os mapas.
+
+**Antes × depois (18/08):** antes — layout 1/10 mapas · 413 peças · M1 9× vermelha ·
+`check:fast` 72/83. Conserto: fim do JSON por casamento de chaves (string-aware), rejeitando
+o rodapé. Depois — regen **individual** dos 9 mapas (cada execução exercita o preserve: 829 →
+1156 → 1204 → … → 2993 peças acumulando, nunca perdendo mapa), check **10/10 mapas ·
+2993 peças · manifesto fresco** verde, `check:fast` **76/83** sem vermelha nova. A mutação
+que prova a régua foi a própria árvore quebrada de 18/08: a saída do tool com o defeito É o
+vermelho que a M1 acusa.
+
+### BUG-55 · Escala dos barracos/models errada no Lajes e no Córrego — ABERTO 17/08
+
+**Sintoma literal do dono (teste de 17/08):** lajes — *"o melhor em textura. mas barracos
+e model estao com escala errada"*; córrego — *"melhor em questao de mapa, mas mesmo erro
+de escala, e sem muito detalhes"*.
+
+**Régua (córrego, 18/08):** `npm run eval:escala-favela`
+(`tools/eval/escala-favela-check.mjs`, no `check:fast`) — 5 cláusulas medidas no mundo
+construído via harness: ESC1 toda casa com porta de 2,00–2,20 m e base no piso (portas
+medidas como componentes por aresta compartilhada da malha mesclada do `matVao`;
+cluster por centroide media 0,55 m numa porta de 2,10 m — quad de 2 triângulos não faz
+ponte), ESC2 passo de andar 2,4–2,8 m, ESC3 barraco de frente de muro 2,4–2,8 m,
+ESC4 palafita 2,4–2,8 m sobre os pilotis, ESC5 todo prop GLB na faixa de altura real
+da classe (registro `propEscala` do próprio mapa — valor de USO, não cópia).
+Mutantes: `porta-ana|piso-gigante|puxadinho-alto|palafita-alta|escala2x`, cada um
+reprovando a sua cláusula (0/15, 0/15, 0/19, 0/6, 0/22 medidos no estado verde).
+
+**Córrego — antes × depois (18/08, branch `swarm/bug55-corrego`):**
+
+| cláusula | antes | depois |
+|---|---|---|
+| ESC1 porta no térreo | **0 portas** — vão único de 1,0 m a 1,15 m do chão | 15/15 casas com porta de 2,10 m, base 0,02 m |
+| ESC2 passo de andar | 2,80 m | 2,80 m (já batia) |
+| ESC3 barraco de muro | 6/19 na faixa — até **3,75 m** | 19/19 — 2,40–2,79 m |
+| ESC4 palafita | 4/6 — corpos até **3,2 m** | 6/6 — 2,40–2,80 m |
+| ESC5 props GLB | 22/22 | 22/22 (já batia) |
+
+O defeito era um só e era de escala, não de detalhe: nenhuma fachada tinha porta que
+tocasse o piso (`map_corrego.js`, bloco (8) JANELA E PORTA — o vão nascia a 1,15 m em
+todos os pavimentos, inclusive o térreo), e barraco de 1 pavimento subia a 3,75 m.
+Conserto: porta de 2,10 m com base em 0,02 m no térreo (saindo 0,10 m da face para não
+nascer dentro do embasamento de 1,05 m, que avança 0,08 m), fileira C em
+`2,4 + (|z| mod 4)·0,13` e palafitas com corpo `h−0,4` na faixa. Janela só de andar
+para cima, com peitoril. Detalhe decorativo NÃO entrou (escopo: só escala; "sem muito
+detalhes" é frente de ambiência, BUG-57).
+
+**Custo declarado:** a mudança de geometria deixa o `graffiti-layout-check` (F2
+fy_corrego) vermelho até o integrador regar `npm run grafite fy_corrego` — esperado e
+declarado; regens são serializados na integração. O `mapa-id-check` (M1) já reprova na
+base 03def43 por ids `fy_*` em `docs/docs/*.md` pré-existentes — não é desta frente.
+Figuras 3:2 antes/depois com referência humana (bot + vareta de 1,70 m) em
+`tools/eval/asset-evidence/bug55-corrego/{antes,depois}/`.
+
+**Lajes:** mesma família de defeito, frente BUG-58 — não medido aqui.
+
+### BUG-56 · Mansão do Joá é o mapa mais low-poly — jogabilidade boa, visual reprovado — CORRIGIDO EM ARQUIVO 18/08, aguardando olho do dono
+
+> **Atualização 19/08 (frente C do swarm v2.1.0):** a cláusula de água deste contrato foi
+> **INVERTIDA** pela decisão do dono 18/08 (plans/13: "a piscina nao afunda") — ver
+> **BUG-67**. A frota GLB, o pack Mint e o espelho d'água NÃO entrável seguem valendo aqui.
+
+**Sintoma literal do dono:** *"esta bom como mapa pessimo visualmente mais lowpoly de
+todos, usar carros que temos em glbs e tambem gerar models no mint gg pro jardim, casa"*.
+
+**Conserto (worktree swarm/bug56-mansao):** a frota procedural virou GLB do acervo
+(fusca `1968_volkswagen_beetle`, Mini Cooper S, Golf R32 — ids/fichas do `map_havan.js`,
+escala de fábrica, colisor das 3 vagas preservado, `carroGenerico` rebaixado a fallback
+de `?glb=0`/node) e o pack Mint "Mansão do Joá — jardim e casa" (6 props: banco
+modernista, poste, escultura, vaso tropical, lounge, lampião de fachada) foi integrado
+com colisor próprio por prop. Registro: `mansao_jardim_pack` em `mint-assets.json`.
+
+**O que a INTEGRAÇÃO achou depois do merge (18/08):** o agente tinha posto o
+`1981_dmc_delorean` — o `grafite-editorial` reprova (marca protegida na mansão; o mutante
+`carros` existe exatamente pra isso) e a régua estava certa contra o review adversarial do
+agente, que cobriu com "direção do dono" — veto de copyright do `AGENTS.md` prevalece.
+Trocado pelo beetle. A régua nova `mansao-glb-fit` veio com a frota HARDCODED (continuava
+verde lendo delorean com o mapa já trocado — o modo de cegueira "lê a declaração" da
+lição 2): agora lê o `GARAGEM` do fonte. E ganhou PISO de largura 1,30 m — o
+`1986_ford_escort_xr3` do acervo tem bbox 31×47×90 (unidade quebrada), a escala
+média-geométrica o renderizava a **1,12 m de largura** e nenhuma cláusula acusava (só
+havia teto). Provado na integração: escort exit 1, beetle (1,57 m) exit 0, mutante glb2x
+exit 1. Dívida de acervo: `1986_ford_escort_xr3`, `1999_volkswagen_gol_2000_gti_g2` e
+`1989_ford_fiesta_xr2i_mk3` com bbox em unidade quebrada — não usar em mapa sem consertar
+o GLB ou estender a ficha.
+
+**Réguas:** `tools/eval/mansao-glb-fit.mjs` (NOVA) mede a bbox real de cada GLB escalada
+como o jogo escala e compara com o colisor declarado — 8/8 verde; mutante `--mutante=glb2x`
+(dobra a malha medida) → 8/8 ESTOURA, exit 1. O primeiro vermelho dela foi o vaso
+(base rígida 0,67 m sobre colisor 0,60 m): colisor corrigido para 0,70 m — malha ≤ col +2 cm
+continua valendo, teto não afrouxou. O contrato `mansao-water-check` ganhou 6 cláusulas de
+frota GLB e 4 mutantes novos (`carros-glb-ausentes`, `carro-glb-clonado`, `carro-glb-gigante`,
+`vaga-sem-colisor`), todos mordendo a cláusula certa, exit 1 comprovado. Verdes preservadas:
+`map-check fy_mansao` (MAP1 dentro 0, CTF2 ≥2 rotas), `pickup-check` (sem alcance 0),
+`eval:map-new`, `eval:asset-integrity` (pack segue a forma dos 4 packs existentes: sem
+`finalSha256`, proveniência no `source`), validador Khronos ad hoc 6/6 GLBs 0 erros.
+
+**Antes×depois (3:2, `tools/eval/asset-evidence/bug56-{antes,depois}/fy_mansao/`, A/B por
+`tools/eval/ab-pixel.py`):** `cars-front-close` 9,4% dos pixels mudados concentrados no
+terço central (os 3 carros GLB); `garden-eye` 3,1% (postes/bancos/vasos no caminho de
+pedras); `facade-garden` 1,1% no centro (lampiões na fachada); `interior` 0,0% (intocado,
+como esperado). A métrica de bordas do `ab-pixel.py` foi consertada: contava
+`len(getdata())` = todos os pixels, sempre 100%/100% — réguas decorativas não entram.
+
+**Dívidas declaradas:** (1) o pedido "casa" foi atendido na FACHADA (lampiões) — o interior
+segue procedural (contrato verde, mas sem props Mint); (2) `grafite-layout-check` VERMELHO
+em fy_mansao até o regen do integrador (`npm run grafite fy_mansao` é dele); (3) o vermelho
+preexistente de `camera-roxa` no asset-integrity não é desta frente (arquivo e registro
+intactos no diff); (4) o A/B é quantitativo — **nenhum agente desta sessão olhou as figuras**
+(modelo sem visão): a aprovação visual é do dono, por screenshot, como sempre.
+
+
+### BUG-67 · "a piscina nao afunda" + "o jardim esta bizarro" — Mansão v2.1: piscina entrável e jardim refeito — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do dono
+
+**Frases literais do dono (18/08)** e decisão registrada no
+[`plans/13-VISUAL-V2.1.md`](plans/13-VISUAL-V2.1.md): piscina **entrável** com
+profundidade de verdade e jardim **refeito do zero** com régua de variedade. A decisão
+INVERTEU o contrato de água do BUG-56 (a piscina "não entrável" vira o estado REPROVADO).
+
+**Conserto 1 — PISCINA ENTRÁVEL (padrão córrego, `CANAL_FUNDO`):** o colisor-tampa
+`col(-6,6,-0.5,0.65,-32,-24)` saiu; a cuba é piso andável via `groundHeightAt` +
+paredes de colisor do fundo até y=0 (em cima delas não colide: `_collide` exige
+`pos.y+0,3 < maxY`). Raso **-0,85 m** com 2 degraus de entrada na borda sul (largura
+total), escada submersa (4 degraus de 0,25) e fundo **-1,85 m** — 0,15 m abaixo do teto
+de guarda-corpo MAP6 (`QUEDA_ANDAR 2,0`, map-check.mjs:151). Saída de degrau a degrau
+(subidas 0,28 < STEP_H 0,55): **quem cai na piscina SAI andando** — e o mantle (1,95 m)
+segue como segunda saída. A máscara opaca a 0,045 m virou subleito do vertedouro (era o
+teto do nadador); o gramado é cortado no recorte da cuba (a lâmina a -0,01 atravessava).
+A cuba terminou **2 m ao norte** (interior z∈[-32,5,-26,5]): a 2ª fileira do armário
+nasce a `spawnB-3,6 = -25,6` e caía **na água** (pickup-check "abaixo do piso" **7, pior
+-0,85** — a tampa antiga era o guarda-rail do rack; `_walkDepth` só enxerga colisor).
+No deck: **abaixo do piso 0**.
+
+**Conserto 2 — JARDIM:** os **72 clones idênticos** (1 `InstancedMesh`, 12 anéis de 6,
+ZERO cor por instância) viram **2 famílias de malha** (blobo + folha ereta, 30+26) com
+**tint E escala por instância** (`setColorAt`, paleta de 5 verdes + jitter HSL), em
+**drifts orgânicos** pelo ângulo áureo, nas bordas — corredor de combate central limpo.
+Caminho de pedras vira **cadeia portão→porta** (12 pedras a ≤3 m, z 33,6→16,2, tag
+`pedra-caminho`); árvores ganham tag `arvore`. Props Mint do BUG-56, frota GLB e espelho
+d'água NÃO entrável: intocados (cláusulas verdes preservadas).
+
+**Réguas:** `mansao-water-check` **INVERTIDA** (9 cláusulas de piscina/espelho; o mutante
+`agua-entravel` virou `agua-bloqueada` = o estado reprovado por definição) — antes no
+estado v2.1.0: **8 VERMELHAS** (tampa maxY 0,65 · entrada andando 0,00 m · raso/fundo
+0,00 m · paredes atravessáveis até x=18 · 0 pisos de cuba · 1 máscara-teto); depois:
+VERDE, anti-trap "saiu em 5 passos até y=0,00". Mutantes `agua-bloqueada` (4 cláusulas),
+`borda-alta` (3 — anti-trap), `sem-parede`, `piscina-sem-cuba`, `piscina-cuba-curta`:
+**todos exit 1**. NOVA `mansao-garden-check.mjs` (G1 variedade/G2 composição/G3 escala):
+antes **6 VERMELHAS** (72 instâncias · 0 cores/1,39× · colônia same-mesh 16 em 6 m ·
+0 pedras marcadas · G2c sem medir · 0 árvores marcadas); depois VERDE (30+26 · 8/9
+cores · spread 1,86/1,91× · colônia 8 · cadeia de 12 pedras · plantio a 5,05 m do
+caminho). Mutantes `clona-tudo` (0 cores/1,00× + colônia 30), `planta-no-caminho`
+(0,25 m), `planta-gigante` (2,7 m), `sem-pedras`: **todos exit 1**.
+
+**Verdes preservadas:** `mansao-glb-fit` 8/8 · `map-check fy_mansao` (MAP1 0 — a pedra
+sul sobre o degrau a -0,283 fazia penetração 0,47 m em 12 pontos, corrigida; MAP6 0;
+CTF2 ≥2 rotas) · `pickup-check` (sem alcance 0, abaixo do piso 0, flutuando 0) ·
+`eval:grafite-editorial` · `eval:spawn` · `syntax`.
+
+**Antes×depois (3:2, `tools/eval/asset-evidence/bug64-mansao-v21/{antes,depois}/`,
+captura `mansao-v21-capture.mjs` com vareta de 1,70 m, A/B `ab-pixel.py`):** vistas
+NÃO alteradas ~0,2% (`jardim-no-caminho`, olhando o portão); vistas alteradas:
+`jardim-composicao` 51,5% (bordas 2,5→3,3% — mais detalhe), `piscina-dentro-fundo`
+51,1% (pose só existe no depois: nadador no fundo), `piscina-do-spawn` 86,2% (enquadre
+mudou 2 m com a cuba). Sonda de cor: azulejo/água em 11% do frame exterior e **37,6%
+do frame de dentro da piscina**. **Nenhum agente desta sessão OLHOU as figuras**
+(modelo sem visão, mesmo limite do BUG-56): aprovação visual é do dono.
+
+**Dívidas declaradas:** (1) a lâmina visual segue o tratamento simples
+(`MeshStandardMaterial` plano, agora `DoubleSide`) — ondas/reflexo são a frente B
+(córrego), por decisão do plans/13 "a lâmina pode ganhar o mesmo tratamento da frente B
+depois"; (2) `map_check.json`/`pickup_check.json` não foram regenerados por esta frente
+(regen é do integrador, BUG-02/BUG-60); (3) os 404 preexistentes de
+`folha-pixaca-0{3,4,5}.png` no serve de eval não são desta frente (defeito de acervo
+pré-existente).
+
+### BUG-57 · Ambiência real só existe no Lajes — todos os mapas precisam — ABERTO 17/08
+
+**Sintoma literal do dono:** *"ele tem ambiencia real coisa que nenhum dos outros mapas
+tem, horizonte, animais, animacoes no ceu, precismoa disso em todos os mapas"*. Também:
+córrego — *"precisa gerar jacare no mintgg e a capivara, pode usar glbs de mesa de bar"*;
+lajes — *"falta colocar uns cachorro caramelo e mais animais como ratos"*.
+
+**Régua: parcial.** `eval:ambience` (AM1-AM10) cobre fy_lajes/fy_corrego/fy_escadao.
+Falta: (1) estender o contrato para os 10 mapas do registro — mapa sem `ambience`
+declarada reprova; (2) horizonte (`makeHorizon`) e vida de céu viram cláusula; (3) fauna
+por bioma (jacaré+capivara no córrego, caramelo+ratos a mais no lajes).
+
+**Córrego, frente B v2.1.0 (19/08, branch `v21/b-corrego`) — jacaré/capivara GLB no
+mapa + água viva:**
+
+| cláusula nova do `eval:corrego-contract` | antes | depois |
+|---|---|---|
+| jacaré GLB posicionado no canal (~1,8 m, escala do Mint) | ✗ proxy procedural | ✓ clone gltf assentado no fundo, ~30% submerso |
+| jacaré meio submerso (dorso de fora) | ✗ | ✓ |
+| capivara GLB na margem alagada (~1,0 m, pés no chão) | ✗ | ✓ |
+| GLB substitui o proxy (proxy invisível) | ✗ nem havia GLB | ✓ proxy fica na cena escondido (padrão placeProp) |
+| fauna GLB sem collider/fora de sólido | ✗ | ✓ |
+| água com shader de onda (onBeforeCompile + uAgua) | ✗ planos mortos | ✓ 4 senos, 2,8 cm, normal analítica |
+| água com geometria subdividida (≥6×24) | ✗ 1 segmento | ✓ 12×160 (low 6×24) |
+| água com relógio vivo | ✗ | ✓ uAgua avança no onBeforeRender |
+| amplitude ≤ 4 cm (não invade o limo) | — | ✓ 2,8 cm |
+| grama: terreno reservado (≥12 spots) | ✗ | ✓ 26 spots (presença DORMENTE até a frente E) |
+
+Estado ANTES medido: 10/35 vermelhas no corrego-contract estendido. DEPOIS: 35/35
+verdes. Mutantes novos mordendo: `proxy-volta` (8/35), `agua-morta` (3/35);
+`grama-sumiu` lança NAO APLICOU (prop não existe — dormência declarada). Browser
+(loader real): censo `source:'gltf'` para os dois, textura 256² carregada, raycast da
+câmera acerta o jacaré; água viva × morta (`?agua=0`) = diff de banda 129 vs 10,9
+(12× mais movimento com o shader). Figuras 3:2 antes/depois em
+`tools/eval/asset-evidence/maps/fy_corrego/`. NÃO verificado: leitura estética
+(pixels de cor do jacaré/capivara não discriminaram sob fog/luz — fica para o olho
+do dono) e o parse GLB em node (trava em textura — limitação declarada no header do
+check; coberto por Khronos + browser).
+
+**Fauna v2.1 (frente D, plans/13) — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do
+dono.** Frases literais (18/08): *"a pomba que nao esta com bracos avertos deveria ficar
+so na ponta das lajes ou no chao"* e *"faltou rigar o cachorro caramelo ... e outros
+animais tambem"*.
+
+- **Pombo não voa mais:** o `pigeon_flight.glb` (asas abertas estático) saiu do acervo e
+  do `ambientlife.js`; config `mode:flight` cai no chão com aviso de migração, o alerta
+  de tiro vira fuga A PÉ na superfície onde a pomba nasceu (sem `takeoff`/`fly`, bob 0).
+- **Três espécies novas riggadas (Quaternius CC0, mesmo pipeline do caramelo):**
+  `cat_telhado.glb` (Idle/Walk/Run), `galinha_campo.glb` (Idle/Walk), `vaca_campo.glb`
+  (Idle/Walk/Gallop, clipes podados de 24). Controlador `_updateDog` generalizado para
+  `_updateQuad` com velocidade de fuga/caminhada por espécie; normalização por altura
+  alvo (gato 0,48 / galinha 0,50 / vaca 1,75 m). Procedência em
+  `public/models/ambient/FONTE.md`.
+- **Régua:** `eval:ambience-registry` ganhou AR4 (espécie-chave por bioma: gato na
+  favela, galinha/vaca no campo) e AR5 (nenhuma pomba em modo flight no registro) —
+  mutantes `sem-gato` e `pomba-voa-de-novo` mordem. `eval:ambience` ganhou AM11 (nenhum
+  estado fly/takeoff ao vivo, bob ≤ 0,35 m) e AM12 (espécie nova por bioma com clipe
+  andando, mixer > 0) — mutantes `pomba-voa-de-novo` e `bicho-estatico` mordem. Placar
+  final: AR1-5 VERDE nos 14 mapas, AM1-12 VERDE (16/16).
+- **Caveat de medição:** `eval:ambience` usa `BASE` ou cai na 8123 — um `serve.mjs`
+  velho servindo OUTRO worktree na 8123 mediu o código antigo e inventou 3 vermelhas
+  (AM5 takeoff, AM7 orçamento, AM12 sem espécie). Contra o servidor do próprio worktree:
+  tudo verde sem tocar uma linha. Antes de "consertar" vermelha de browser, confira de
+  qual diretório a porta serve (`lsof -p <pid> | grep cwd`). Mordeu de novo na
+  integração v2.1.0 (19/08): o `gen-graffiti-layout` também cai na 8123 por default e
+  a primeira regen dos 10 layouts assou os murais "homenagem-*" da MAIN (MURAIS_HOM
+  povoado lá) em vez da branch — M5 pegou. Regen certa é com `BASE=http://127.0.0.1:<porta do worktree>`.
+- **Dívida registrada:** jacaré/capivara seguem estáticos — não existe réptil/capivara
+  riggado CC0 (varredura Quaternius + Poly Pizza 19/08, documentada no FONTE.md); o
+  pipeline de animação Mint é humanoid-only. Integração no córrego é da frente B.
+
+### BUG-58 · Lajes é a régua visual de favela, mas está labiríntico e grande demais — ABERTO 17/08
+
+**Sintoma literal do dono:** *"mapa esta muito labirintico e confuso apesar que os becos
+estao reais"*; *"talvez deixar becos e escadas, melhorar a escalas dos barracos de favela,
+e simplificar o mapa, nao fazer tao grande"*; e a consagração: *"o lajes e a regua de
+favela visualmente ... e o mais bonito de todos"*. Campinho: *"otimo como mapa, precisa
+ser estruturado visualmente como o lajes"*.
+
+**Leitura:** manter becos/escadas (reais), reduzir a extensão total e o número de
+ramais; a decisão de arte do lajes vira o padrão dos mapas de favela. A régua de
+circuito (LC1-LC6) já mede conectividade — falta um teto de COMPLEXIDADE (nº de ramais /
+área total / decisões por travessia) medido contra o que o dono aprovar na versão
+simplificada.
+
+**Anti-trap (v2.1, plans/13) — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do dono.**
+Frase literal do dono (17/08): *"a parte debaixo tem cantos intransponiveis se vc cai de
+cima voce nao sai nunca mais isso nao pode acontecer"*. O LC1-6 media o térreo contíguo
+e os ~4% fora do circuito eram exatamente os cantos onde ele ficou preso.
+
+**Régua nova `eval:lajes-antitrap` (AT1):** no `Game` real, com índice espacial de
+colisores PROVADO igual ao `_collide` em 400 pontos (divergência aborta), grade 0,5 m
+8-vizinhos com validação de segmento e flood REVERSO dos spawns por todas as camadas:
+100% das células andáveis têm caminho de VOLTA a um spawn andando (pulo/mantle não
+contam). **Antes: 143 células sem volta** — laje MN selada pelo próprio guarda-corpo da
+tábua (62), faixas de miolo atrás dos muros do beco (44+), nichos entre caixa d'água e
+corrimão (5). **Depois: 6759/6759 (100%)**, zero bolsões. Mutante `sela-canto` fecha os
+dois vãos da escadaria → 22 células vermelhas, exit 1. Overlay por camada em
+`tools/eval/asset-evidence/maps/fy_lajes/antitrap-overlay.png` (vermelho = preso).
+
+**Conserto:** três vãos de fuga (`VANS_DE_FUGA`, map_lajes_authored.js) cortam o muro
+emitido para o corredor vizinho — o buraco de muro real de comunidade — e o painel de
+muro rente passa a vetar slot em cima de vão; o guarda-corpo da tábua é omitido onde a
+linha OU o convés cruza laje ao nível 5,20 (a boca da WN-MN tinha janela livre de 0,15 m
+para um corpo de 0,76). **Achado no caminho:** o colisor do corrimão usava a convenção
+de rotação espelhada em z — nas tábuas diagonais o corpo batia num corrimão invisível a
+1,5 m do visível (bala via malha certa, corpo via colisor errado).
+
+### BUG-54 · Lajes tem pele de favela sobre planta de caixas e perdeu a jogabilidade roof-first — ABERTO 16/08
+
+**Sintoma literal do dono, após jogar a R18:** *"a textura e de favela, mas o mapa nao,
+ainda parece um monte de caixa amontuada sem nexo nenhum"*; *"a ideia era o mapa ser de
+sinper e todo mundo jogar de lages, mas tb poder cair por becos apertados"*; *"as escadas
+estao esdruxulas, nenhuma favela tem escada assim"*. Na rodada seguinte ele explicitou que
+o fluxo entre lajes precisa de acessos de madeira e de um pulo mais alto.
+
+**Reprodução:** screenshots 3:2 do teste do dono em 16/08 mostram os dois spawns no chão,
+um corredor central de 7,2 m, três ilhas superiores sem rede contínua e três lances retos
+de 30 degraus tratados como objetos soltos. A régua antiga ficou verde porque contava três
+acessos, três escadas e detalhe cultural; ela não media qual camada domina a travessia nem
+a largura e o encaixe urbano do caminho inferior.
+
+**Referências e regra:** `references/favela/lajes-rio/FONTE.md` registra becos publicados
+de 0,8–1,5 m, rede local proposta de 2 m, usos sociais da laje e a gramática de navegação
+vertical do guia oficial de Favela. A tradução jogável está em `plans/10-LAJES.md`.
+
+**Régua vigente:** `eval:lajes-spatial` reprovou o estado recebido em 6/6 cláusulas e
+agora mede no `Game` real: spawns a 5,20 m, duas rotas superiores independentes, caminho
+curto 100% acima de 4 m, becos p50 1,81 m/p90 1,86 m, três escadas de dois lances e ápice
+local de 0,806 m contra 0,586 m no controle. Os mutantes `spawn-beco`, `rota-unica`,
+`beco-avenida`, `escada-reta` e `pulo-global` ficam vermelhos. `eval:lajes-gap` mede as
+13 passarelas na `Box3`; `map-check fy_lajes` confirma dez níveis alcançáveis pelo corpo
+e pelo A*, zero penetração e zero borda alta aberta.
+
+**Estado:** corrigido em arquivo, aguardando o teste visual/jogável do dono. As seis
+capturas 3:2 vigentes estão em `tools/eval/asset-evidence/maps/fy_lajes/`; o bug não fecha
+por placar nem por nota de quem construiu.
+
+**Teste do dono, R26 em 16/08 — visual aprovado, gameplay reaberto:** *"visualmente o
+mapa está incrivel. esta muito proximo do que queriamos"*. Essa aprovação preserva a
+direção de arquitetura, materiais, fiação, pipas, pombos e ratos. No mesmo teste ele
+reportou quatro bloqueadores: *"o mapa ta em boxes procedurais eu atiro pra frente e bate
+tiros no ar"*; *"tem um ponto que eu ficava caindo pra cima da laje de novo e depois no
+chao tem um bug ali"*; *"nao da pra saber os limites do mapa"*; e o fluxo entre a rota de
+lajes e o ataque inferior ficou confuso. Evidência: screenshots 3:2 em
+`/Users/ruben/Desktop/screenshots/Screenshot 2026-08-16 at 17.* (2).png`.
+
+**Leitura do fonte, ainda sem régua de reprodução:** `map_lajes_authored.js:128-137`
+coloca toda caixa invisível `MAT.proxy` também em `world.occluders`, e
+`game.js:2923-2928` atira contra essa lista; portanto portas, janelas e recortes visuais
+dos GLB continuam sólidos para a bala. `map_lajes_authored.js:321-337` ignora o `yRef`
+que `_updatePlayer` passa em `game.js:4857-4882`, então uma consulta feita por quem está
+abaixo ainda pode devolver a laje de 5,20 m. Os limites físicos terminam em x ±15,5 / z
+−39..39, mas o casario visível continua fora deles (`map_lajes_authored.js:491-511`),
+criando caminho que parece aberto e termina no clamp invisível. As caixas independentes
+dos segmentos de beco (`:194-219`) também podem se sobrepor nos retornos; localizar os
+pares exatos em que isso bloqueia a passagem ainda depende de um probe caminhando com o
+`_collide` real.
+
+**Régua ausente que impede consertar por palpite:** falta um gate que (1) compare o
+primeiro hit dos proxies com a superfície visível carregada no navegador; (2) caminhe o
+térreo com `_collide` e `groundHeightAt(..., yRef=0)`; (3) mute a camada para reproduzir
+o salto térreo→laje; e (4) prove que todo limite aparente tem fechamento físico visível.
+Os portões atuais medem o grafo declarado, não esses quatro comportamentos.
+
+**Rodada R27 (16/08, noite) — réguas escritas, estado vermelho medido, conserto em
+andamento nesta mesma árvore (não commitado):**
+
+- **Régua de bala (browser):** `npm run eval:occluders` sonda raios dos waypoints a
+  0,5/1,3/1,62 m comparando o primeiro hit de `world.occluders` com a primeira malha
+  VISÍVEL. Estado recebido: **977 raios tiro-no-ar em fy_lajes (33%)** e vermelho nos
+  10 mapas (ferro_velho 36,3%, loja_h 17,5%, quebrada 18,6%, praca 38 grupos-letra-morta
+  + escadão 34). Mutantes `occluder-invisivel|proxy-inflado|grupo-sem-raycast|vao-fechado`
+  aplicam e ficam vermelhos.
+- **Régua de circuito (node):** `npm run eval:lajes-circuito` — o térreo tinha **14
+  componentes conexos** e os pés das três escadas em três ilhas; `groundHeightAt`
+  ignorava o `yRef` (sob tábua/mirante devolvia 5,20 m para quem estava no chão e o
+  snap de gravidade teleportava o corpo para cima — o "caindo pra cima da laje" do dono,
+  reproduzido em harness). Mutantes `ignora-yref|ramal-fechado|rota-inferior-partida`.
+- **Conserto em Lajes:** occluder = malha visível (casas instanciadas do PropBatch entram
+  em `occluders`; corpo dos blocos vira collider puro; muros de beco/escada/perímetro
+  agora são malha visível); `groundHeightAt(x,z,yRef)` multinível pela regra da Havan;
+  mirantes viraram pilotis com túnel andável de 2,1 m; esquinas por mitra de muros
+  (fim da caixa independente por trecho); muro de perímetro visível nos 4 lados; faixas
+  de fachada do chão à laje em cada bloco (empilhamento); fascia/remendos nas bordas;
+  caixas d'água com variação preta/azul + PVC; cachorro caramelo (Quaternius CC0 tingido)
+  no circuito inferior. Resultado medido: **tiro-no-ar 977→0, atravessa-parede→0**,
+  circuito 96-97% contíguo, LS1-LS6 e LC1-LC5 verdes com os 8 mutantes mordendo.
+- **Fecha só com o dono:** a rodada de capturas 3:2 e o crítico adversarial estão na
+  evidência (`tools/eval/asset-evidence/maps/fy_lajes/`); o teste jogável é dele.
+
+**Rodada de 17/08 — wave 3 fechada e commitada:** `eval:occluders` **VERDE 0/0/0 nos 10
+mapas**. fy_mansao 123+35→0 (vidro sai de occluders, carros/brises/ripados/pote entram),
+fy_campomorro 64→0 (o TERRENO do morro passa a parar bala; ruas, portas salientes,
+arquibancada e traves idem), fy_corrego 2→0, piscina_treta 1→0, quebrada já media 0.
+Padrão novo nos addBox dos 4 mapas: `opts.bala` registra occluder visível sem colisor
+próprio. VM14 saiu do vermelho (as 2 armas do fundo do canal do corrego subiram para as
+cabeceiras das pontes). O grafite do fy_lajes voltou (a chamada morreu na troca de builder
+— audit 0 no ar/0 tapadas) e `eval:ambience` rodou pela primeira vez com o cachorro,
+13/13. Segue aguardando o teste jogável do dono.
+
+### ~~BUG-52 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
+> **Numeração em colisão (merge 17/08):** as entradas abaixo vieram da `main`, que
+> numerou BUG-52..57 em paralelo a esta branch. Os números da main foram mantidos
+> com o sufixo `(main)` — não confundir com os BUG-52..58 desta árvore.
+
+### ~~BUG-54 (main) · wallpaper do loading quebra em alta resolução (#292)~~ · RESOLVIDO 16/08
+
 ### BUG-79 · Córrego: grama nunca foi servida e as rampas do canal mostram o céu
 
 **Reportado (27/08/2026, palavras literais do dono):**
@@ -3484,7 +4868,7 @@ sobras laterais são preenchimento escuro desfocado. **Custo:** a URL é baixada
 uma vez, mas pintada em dois planos; não entrou asset nem request novo, apenas um segundo
 paint durante telas estáticas de espera.
 
-### BUG-53 · O redesign novo tinha mídia completa, mas integração e régua continuam erradas
+### BUG-53 (main) · O redesign novo tinha mídia completa, mas integração e régua continuam erradas
 
 **Décima revisão do dono (16/08):** a tela cheia de mapas ganhou opções de armas, jogadores
 e número de rounds sem esconder o catálogo. A escolha de 1/3/5/7 atravessa `main.js` e
@@ -3736,7 +5120,7 @@ loading passou a GLB ao vivo.
 `tools/eval/select-mount.mjs --mutate=sem-preview` prova que o porte funcional não pode
 voltar a substituir a pose apresentada.
 
-### ~~BUG-52 · O indicador de dano apontava 180° pro lado errado~~ · RESOLVIDO 12/08
+### ~~BUG-52 (main) · O indicador de dano apontava 180° pro lado errado~~ · RESOLVIDO 12/08
 
 **Sintoma (do dono):** *"O jogo está mostrando o dano recebido (e o texto do dano) em uma
 posição 180 graus além da esperada. Ou seja, se eu tomo na frente, aparece que eu tomei nas
@@ -3787,7 +5171,7 @@ o visual em jogo (posição do arco na borda, painel de morte) não foi conferid
 28 cláusulas (4 direções × 7 yaws), 1 mutação medida: `--mutante=ordem-trocada` devolve a
 ordem de operandos do defeito original e derruba 28/28 casos.
 
-### ~~BUG-53 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
+### ~~BUG-53 (main) · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
 
 **Sintoma (medido, censo no navegador):** fachada externa com 22% de cobertura a 3,2 m e
 **0/90 placas a 5,0 m** (quebrada 65,7/44,4 · piscina 68,5/72,7 nas mesmas faixas). As
@@ -3820,6 +5204,10 @@ nova de cornija (`y0 5,0–5,6`, pixo fino).
 
 **Prova com controle e mutação:** rebake do controle (sem a correção) = 45,1% · 20,6% ·
 0/90 — é também a prova de que a régua morde: sem o olho de 5,25 m a faixa de 5,0 m volta
+a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m). Auditoria irmã: no-ar
+reais 20 (controle) → 26, todos na classe pré-existente de peça em base de coluna/poste
+(y ≤ 1,7); zero peça flutuante nas faixas novas. Piso da `graffiti-census` para loja_h
+subiu 43 → 50 (o censo varia ±6 pontos entre execuções). Fotos olhadas: pixo correndo na
 a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m) na branch original; na
 árvore da main (com o filtro de âncora baixa do #260, que tira a tinta de caixa
 procedural do 1,6 m) o rebake mede **49,4% · 28% · 54,4%**. Auditoria irmã: no-ar
@@ -3831,6 +5219,164 @@ cornija e peças entre colunas, nada no ar nos ângulos de jogador.
 **O que NÃO foi verificado:** 3,2 m continua 28% (quebrada 65,7) — os banners recebem
 peça mas a largura útil limita; e o delta de +6 no-ar não foi isolado peça a peça
 (reshuffle da passada mistura a amostra).
+
+### ~~BUG-53 · Mansão: 18 peças de pixo MORTE fósseis no layout, e duas réguas que liam ausência como saúde~~ · RESOLVIDO 14/08
+
+**Sintoma (medido):** `graffiti-audit` reportava `OK fy_mansao 0 peças` — verde com zero
+peças medidas. Atrás disso: `map_mansao.js` importava `grafitar` mas **nunca chamava**
+(o chamado original, `c3ede3e`, foi removido quando o pool tinha `folha-pixaca-01.png`,
+o pixo que lê "MORTE"), e o `gen-graffiti-layout.mjs`, ao não achar passada, **mantinha
+a entrada anterior** — então o layout assado seguiu com 18 peças do pixo vetado,
+meses depois da fonte limpa, invisível para o `grafite-editorial` (que só media o MORTE
+na fonte, não no assado).
+
+**Causa (a mesma classe, três instrumentos):** degradação calada. O gerador preservava
+fóssil (`continue` silencioso), a auditoria lia `0 peças` como OK, e o editorial não
+medeia o assado da mansão. Qualquer um dos três sozinho teria denunciado; os três juntos
+deixaram o veto editorial valendo só no papel.
+
+**Correção:** (1) `map_mansao.js` volta a chamar `grafitar` com pool sem o pixo-01
+(`folha-pixaca-03/04/05`, mesma banda e chance do chamado original); (2) o gerador agora
+**apaga a entrada** de mapa sem passada e sai com código 1 listando os mapas
+(`sem passada` vira erro alto, não aviso); (3) a auditoria marca RUIM qualquer mapa com
+**0 peças medidas** — ausência nunca mais lê como saúde; (4) o editorial mede o MORTE no
+layout assado da mansão, com mutante `--mutante=morte` que reprova (prova de que morde:
+exit 1 no mutante, exit 0 no real após o rebake — 15 peças, pool limpo).
+
+**Bônus medido na mesma rodada:** as faixas de pano penduradas em arame na Quebrada
+("ETERNAMENTE", "DA LESTE VIVE") eram nomeadas `mural:` e a auditoria as cobrava como
+arte de parede — 100% no ar por construção (é pano no arame, decisão de arte de 06/08).
+Renomeadas para `faixa:` (`map_quebrada.js:1199`), com `faixa` incluída no `NAO_PINTA`
+e na varredura de vagas ocupadas da passada.
+
+### BUG-47 · Doidinho: P90 vira blob/pistola e desaparece no medium — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Sintoma (laudo externo limpo, 0/2):** *"a P90 não existe nos pixels como P90"* e
+*"em `medium` a arma é invisível"*. No `grip`, o crítico não encontrou carregador superior
+longitudinal, corpo bullpup/trilho, arco fechado do punho dianteiro nem contato verificável da
+mão dianteira.
+
+**Palpite refutado:** a P90 raw não estava ausente nem remodelada como pistola. O Blender mostra
+carregador superior e dois arcos; o GLB preserva os spans desses marcadores. O caminho real usava
+o porte funcional de `4°`, quase na direção da câmera do capturador: os `0,52 m` projetavam só
+`0,110 m`, enquanto a M4 aprovada no mesmo quadro projetava `0,178 m`.
+
+**Correção mínima:** somente o mount visual de `doidinho-bairro` usa yaw `-18°`; roster, GLB,
+escala e balística permanecem intactos. A projeção medida sobe para `0,292 m`. A prova Blender
+3/4/walk/crouch mostra carregador, corpo bullpup, dois arcos e mão dianteira no arco.
+
+**Régua:** `npm run eval:pilot-system` mede marcadores, projeção contra a M4 aprovada, ID e
+contato da mão; `npm run eval:pilot-grip` recalcula SHA e distâncias Blender. Seis mutantes
+causais ficam vermelhos. Evidência em `tools/eval/asset-evidence/doidinho-bairro/grip/`.
+Sem browser nesta passada: o arquivo está pronto para recaptura, não autoaprovado.
+
+**Bloqueador adicional do segundo crítico limpo:** P90, rig, clipes e roupa passaram, mas a
+gambiarra grande e branca no ombro leu como disco placeholder. A extensão da régua ficou
+vermelha antes do passe (`luma 1,000`, `0,203×0,397 m`, centro lateral `0,113 m`).
+`tools/blender-doidinho-meter-prop.py` compactou só a gambiarra em `0,72×`, levou-a ao centro
+traseiro da mochila e retexturizou carcaça teal + aro cobre + dial escuro + seletor vermelho.
+Depois: luma `0,165`, chroma `0,180`, projeção `0,101×0,262 m`, centro `0,065 m` e frente
+`-0,042 m`. Os mutantes `doidinho-disco-branco` e `doidinho-prop-ombro` ficam vermelhos.
+
+### BUG-46 · Programador: caneca/mouse mudam peito→ar→quadril e ocultam a mão de apoio — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Sintoma (laudo externo limpo, 0/2):** *"a mesma caneca aparece agora na altura do
+quadril/coxa, também sem ponto de fixação visível"* e *"caneca e mouse aparecem colados no meio
+do peito, ocupando [...] exatamente a região onde a mão de apoio deveria aparecer"*. A M4 e a
+mão traseira foram aprovadas e não devem ser reabertas.
+
+**Causa medida:** caneca, mouse, trackball e cabo estavam no plano frontal e pesados em
+`Spine02`, portanto orbitavam com o peito e cobriam a mão de apoio. A primeira execução de
+`eval:pilot-system` ficou vermelha: frente `+0,243 m` e `0%` dos vértices rigidamente em Hips.
+
+**Correção mínima:** `tools/blender-programador-prop-sockets.py` move somente esses props para
+o quadril lateral/traseiro e atribui seus vértices a `Hips:1`. Depois: frente máxima
+`-0,027 m` e `100%` de `2.396` vértices rígidos. A M4, teclado, corpo e rig ficaram fora da
+seleção. A figura Blender 3/4 mostra a mão dianteira no handguard; o A/B desloca só a arma.
+
+**Régua:** `npm run eval:pilot-system` + `npm run eval:pilot-grip`; mutantes `prop-peito`,
+`prop-solto` e `arma-deslocada` ficam vermelhos. Recibo, backup e figuras em
+`tools/eval/asset-evidence/programador-virado/`. Sem browser nesta passada: aguarda recaptura
+e nota externa.
+
+### BUG-45 · Motoca: capacete ainda lê como blob/lâmina e telefone como slab — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Palavras do reporte:** *"pixel reprovou queixeira como lâmina preta horizontal/projeção
+frontal apesar HARD verde."*
+
+**Reprodução antes do conserto:** `npm run eval:charhard` passa 7/7 porque HARD4 mede apenas
+a largura da faixa frontal. No GLB servido, a ponta projetada da queixeira tem razão frontal
+largura/altura 3,10; a vista frontal do Blender mostra a placa preta atravessando o queixo.
+O preto não é erro de shader: o material `CS_HARD_` e o albedo quase preto já passam HARD1–3.
+Régua nova deve medir forma/projeção frontal e ficar vermelha antes de remodelar o capacete.
+
+**Antes × depois medido:** HARD8 entrou primeiro e reprovou o canônico em `3,10:1`.
+`tools/blender-motoca-front-profile.py` selecionou somente 127 vértices da ponta frontal do
+material `CS_HARD_Motofrete_Helmet_Black`, compactou X em `0,52×` e recuou Y em 4 mm; bag,
+telefone, demais materiais e rig não foram tocados. O canônico novo mede `1,61:1`, largura
+frontal `0,051 m`, mantém casco `0,240 m`, aro `0,255 m` e visor em chroma `0,007`.
+Recibo: `tools/eval/asset-evidence/motoca-cachorro-loko/front-profile-receipt.json`;
+antes/depois e vistas Blender ficam no mesmo diretório.
+
+**Régua e mutação:** `npm run eval:charhard` passa HARD1–HARD8. O mutante
+`--mutante=queixeira-frontal-lamina` amplia apenas a projeção medida e reprova HARD8; os cinco
+mutantes anteriores também reprovam suas cláusulas próprias (inclusive
+`queixeira-lamina`, recalibrado para recompor os ~0,30 m depois da compactação). Khronos valida
+o GLB com zero erros e a integridade confere o SHA
+`56011f4a77d4d5726c32c8257de39db36c7b8121a7b7ba2d86076b4c6957f9ce`.
+
+**Reaberto por nota externa limpa:** a primeira compactação passou HARD8, mas os pixels ainda
+mostraram *"placa cinza chapada"*, *"massa preta amorfa envolvendo mandíbula/nuca"* e telefone
+como *"retângulo ciano chapado"*. Isso provou que razão geométrica isolada continuava cega.
+
+**Segunda régua, antes do segundo conserto:** a máscara frontal Blender `360×463` passou a
+medir abertura facial, continuidade da silhueta e corpo/suporte/tela do telefone. O estado
+anterior ficou vermelho por não ter peças explícitas de shell/chin/hinge/mount e por tela com
+luma `0,655`. `tools/blender-motoca-rebuild-helmet-phone.py` removeu somente os triângulos
+antigos desses artefatos e criou calota contínua, queixeira espessa em U, viseira levantada
+ligada por dobradiças e telefone escuro menor com tela fraca, berço e correia. Bag, jaqueta,
+M4, corpo e rig ficaram fora da seleção.
+
+**Depois medido:** abertura facial `65,6%`, maior componente do casco/queixeira `100%`,
+silhueta do capacete `63×143 px` no frame de prova, corpo/suporte do telefone `91,5%` dos
+pixels e luma da tela `0,030`. `npm run eval:charhard` passa 8/8; `eval:motoca-visual` passa
+8/8. Os seis mutantes geométricos anteriores e três novos (`casco-fechado`,
+`casco-rompido`, `telefone-slab`) ficam vermelhos. Recibo, backup, máscara e vistas Blender
+estão em `tools/eval/asset-evidence/motoca-cachorro-loko/`.
+
+**Limite declarado:** as figuras offline foram olhadas pelo builder, não aprovadas por ele.
+A correção só fecha visualmente depois da recaptura do runtime e de nova nota adversarial.
+
+### BUG-41 · Time Mítico aparece como caixas ou T-pose na seleção
+
+**Palavras de quem reportou** (Ruben, screenshot 09/08): *"tem varios personagens que
+estao low poly ainda e os mapas tambem. esta ruim. especialmente esse time de miticos"*.
+
+**Evidência visual.** Com Lampião selecionado, o palco 3D mostra cabeça, tronco e membros
+como paralelepípedos; a arma também é procedural. A lista lateral mistura esse fallback
+com miniaturas detalhadas em T-pose, portanto o defeito não é direção de arte uniforme.
+
+**Censo antes do conserto.** Os nove arquivos existiam, mas `GLB_CHARS` cadastrava só seis.
+Todos os seis Mint tinham material PBR e `0 skins`; Lampião, Lobisomem e Zumbi eram raws sem
+normal, UV, material ou textura, com centenas de milhares de triângulos. Ativá-los como
+estavam só trocaria caixa por malha branca/preta pesada.
+
+**Estado medido depois da recuperação (09/08).** `GLB_CHARS` cadastra `9/9`; todos têm PBR
+e ficam entre 4,4k e 5,0k triângulos. O rig de doador retirou o fallback cúbico de oito:
+`8/9` têm skin. O Bandeirante permanece sem skin e sem arma animada, então o portão continua
+vermelho. A captura de 09/08 também reprovava o conteúdo que a contagem não enxerga:
+Boto ainda é um homem de terno em vez do golfinho rosa pedido,
+Lobisomem era humano e a arma da Cuca cruzava o torso. Esses assets exigiam nova
+geração/rig no Mint; o Lobisomem já foi substituído pelo lobo preto
+aprovado, mas permanece com as pendências de régua/proveniência do BUG-40. Meshy está
+vetado porque seus GLBs já renderizaram
+pretos e sem anexo de arma neste loader. O MCP Mint desta máquina ainda não oferece escopo
+de escrita, portanto isso não está resolvido.
+
+**Régua:** `npm run eval:mitico` (`tools/eval/mythic-character-check.mjs`). Cobra `9/9`
+cadastrados, com skin, PBR completo e orçamento de `2,5k–40k` triângulos. Mutações:
+`--mutante=fallback|semrig|sempbr`. Estado atual: `9/9 GLB · 8/9 rig · 9/9 PBR`, vermelho
+em `bandeirante: 0 skins`.
 
 
 ### ~~BUG-43 · "o menu de HUD não está mostrando com vmlab=1 em produção"~~ · RESOLVIDO 10/08
@@ -4291,6 +5837,110 @@ tipografia sem olhar overflow já quebrou tela antes). As 9 telas foram capturad
 Chrome headless a 1536×1024 (3:2, o enquadramento do dono) e medidas com o mesmo `ref-ui.py`
 apontado para as capturas.
 
+### ~~BUG-42 · "a UI continua a mesma de sempre"~~ · RESOLVIDO 11/08
+
+**Sintoma (palavras do dono, olhando o QA da alpha.58):** *"eu vi seu teste de QA da UI e
+ela continua a mesma de sempre"*.
+
+**Reproduzido, e não é cache.** As capturas julgadas mostram o chrome `CORO SOLTO //
+TRANSMISSÃO` e a versão `alpha.58`, portanto carregaram o CSS e o módulo novos. Mesmo assim,
+o fluxo preserva as composições antigas: menu em coluna à esquerda, facções em cartões,
+personagem em filmstrip vertical + ficha + preview, mapa em cabeçalho + foto + strip e
+configurações no mesmo painel tabulado. O diff confirma a causa: a rodada acrescentou a
+classe `.cine-surface` às telas, 164 linhas de CSS decorativo e um chrome persistente, mas
+não substituiu a estrutura dos fluxos principais.
+
+**Falha da régua:** `tools/eval/cinematic-ui-contract-check.mjs` mede presença de chrome,
+metadados de capítulo, superfície, foco e movimento reduzido. Todas podem ficar verdes sobre
+a mesma composição antiga; portanto o portão respondeu "cinematográfica" quando só provou
+"tem decoração cinematográfica". O APROVADO visual anterior fica retirado.
+
+**Ordem do conserto:** primeiro uma régua estrutural que fique vermelha neste estado e uma
+mutação que restaure uma composição antiga; depois substituir de fato as composições do
+menu, facção, personagem, mapa e configurações; por fim capturar novamente em 3:2 e entregar
+as imagens a um crítico sem contexto. Não afrouxar o BUG-05: contraste, margem, legibilidade
+e navegação continuam valendo dentro da nova estrutura.
+
+**Fechado por composição e captura.** O menu virou deck cinematográfico; setup ganhou
+briefing; facções mostram a grade inteira sem rolagem e com adversário estável; personagem
+usa palco+dossiê+rail; mapa ficou full-bleed; configurações ocupam o quadro como sistema.
+A régua estrutural fica verde e os mutantes `composicao-antiga` e `faccao-rolavel`
+derrubam somente suas cláusulas. Um crítico sem contexto aprovou as capturas finais em
+3:2, inclusive a passagem adicional em 1280×720. A evidência persistente mora em
+`tools/eval/asset-evidence/ui-cinematic/`; não voltar a usar os contatos temporários da
+alpha.58 como baseline visual.
+
+### ~~BUG-43 · Quatro mapas novos passaram os contratos e falharam no pixel~~ · RESOLVIDO 11/08
+
+**Sintoma (asset-review independente, 17 PNGs em 1536×1024):** Campo tem
+*"teto, piso e paredão quase no mesmo preto"* no galpão; Lajes tem vãos que leem como
+*"placa escura contínua"* e um decal reconhecível como Rick Sánchez; Córrego tem capivara
+em *"escala sofá/carro"* intersectando pneus e só dois ratos legíveis como ovais; Mansão
+tem jardim/interior pobres e três carros reconhecíveis como Mustang, DeLorean e BMW.
+
+**Evidência:** `tools/eval/asset-evidence/maps/fy_campomorro/galpao-interior.png`,
+`fy_lajes/{jump-link,roof-route}.png`, `fy_corrego/{capivara,rats}.png` e
+`fy_mansao/{facade-garden,interior}.png`. O `eval:map-evidence` estava verde porque mede
+frescor, câmera e integridade dos arquivos — não iluminação, silhueta, composição ou veto
+editorial.
+
+**Régua antes do conserto:** estender os contratos de Campo, Lajes, Córrego e Mansão com
+marcadores da cena real e mutantes nomeados; estender `graffiti-editorial-check.mjs` para
+os identificadores protegidos. **Correção mecânica em 11/08:** contratos verdes e todos os
+mutantes mordidos; Campo preserva 92% na `field-mouth`, Córrego mede capivara ≤1,85 m e
+ratos de 12–15 cm, Lajes mede 8/8 bordas + 3/3 rotas, Mansão mede 3 carros genéricos,
+8 bromélias, 2 palmeiras e o interior. **Continua aberto até a recaptura 3:2 e o novo
+asset-review independente**; essa etapa pertence ao agente único de browser.
+
+**Reaberto pelo pixel externo (alpha.60).** Um Claude Opus 5 via OpenRouter recebeu apenas
+o contato 3:2 e as perguntas editoriais, sem justificativa do builder; recibo literal em
+`tmp/map-alpha60-openrouter-review.json`. Reprovou 4/4: no Campo o piso era *"uma cor cinza
+uniforme sem textura"* e as faixas laranja pareciam flutuar; em Lajes ainda leu
+marinheiro/Popeye, Fusca/VW e pousos sem borda frontal; no Córrego a capivara leu urso/hamster,
+os ratos eram clones e o pôster religioso/vulgar permaneceu; na Mansão os carros estavam
+distantes, a cunha vermelha lembrava Countach/Testarossa, o jardim parecia catálogo simétrico
+e o interior continuava blockout. As novas cláusulas precisam reprovar exatamente esses
+estados e seus mutantes antes da segunda correção; evidência fresca e nova nota externa são
+obrigatórias para fechar.
+
+**Reaberto novamente pelo mesmo crítico limpo (alpha.61).** No Córrego, escala e folga dos
+pneus passaram, mas a capivara ainda era *"corpo elipsoide + 4 cilindros finos + cabeça que
+é uma caixa"*; ratos continuaram blobs sem apoio/contexto e o córrego leu como quadra na
+mesma cota. Na Mansão, as marcas reais saíram, mas o close revelou carros sem leitura de
+roda/vidro/grade, a ilha continuou ambígua, o pergolado flutuava e água/jardim seguiam
+chapados. As cláusulas novas medem a geometria servida (não só o marcador): junta e membros
+da capivara, paredes de profundidade e contexto dos ratos; peças frontais e três famílias
+de carro, distribuição real dos maciços, pilares/vigas, cozinha funcional e home theater.
+O bug permanece aberto até recaptura seletiva 3:2 e outra nota externa.
+
+**QA de evidência camera2:** a ilha gourmet finalmente ficou inteira, mas o frame dos
+ratos provou que dois animais nasciam dentro dos próprios sacos de lixo e a animação por
+`performance.now()` mudava a pose entre máquinas. A régua nova mede interseção real de
+`Box3`; o trio foi afastado apenas para a faixa livre junto da mesma manilha e fica estável
+quando `mapview` abre com `?capture=<sha>`. O mutante `ratos-sob-lixo` restaura as posições
+reprovadas e fica vermelho. Como o fonte de Córrego mudou, os seis frames dele precisam de
+recaptura; Mansão não deve ser recapturada nesta passagem.
+
+**Terceiro crítico limpo, após a recaptura:** ratos, canal, jacaré, carros, lounge,
+gourmet e theater passaram, mas a capivara ainda leu porco/tapir; a ponte norte era uma
+prancha uniforme; `ashtar-meme.jpg` expôs um retrato reconhecível de Vladimir Putin; o
+jardim da Mansão permaneceu axial/raro e a piscina transparente mostrava o gramado sob a
+água. As réguas novas ficaram vermelhas nesses cinco estados. A correção troca a capivara
+por corpo de cilindro com tampas arredondadas, cabeça/focinho rombos e patas curtas; separa
+a ponte em tábuas empenadas com lacunas; retira `ashtar*.{jpg,png}` do pool; cria três
+maciços tropicais densos e uma cuba opaca acima do gramado. Mutantes: `capivara-tapir`,
+`ponte-prancha`, `putin`, `jardim-raro` e `piscina-sem-cuba`. Continua sem aprovação até
+recaptura integral ligada aos novos SHAs e outro crítico limpo.
+
+**Fechado pelo pixel, não pelo contrato.** A última captura integral ficou ligada aos
+fontes e câmeras atuais; o mutante de `camera-drift` continuou vermelho. O crítico final
+sem contexto aprovou Campo, Lajes e Escadão e, numa passagem focal separada, aprovou a
+capivara com quatro apoios distintos no chão, a ponte sem rosto/pessoa real e a piscina
+com cuba opaca contínua, sem jardim visível sob a lâmina. Os mutantes finais
+`capivara-dois-apoios`, `rostos-carecas` e `piscina-cuba-curta` restauram exatamente os
+três pixels interceptados na última rodada e ficam vermelhos. Evidência canônica:
+`tools/eval/asset-evidence/maps/manifest.json` e os PNGs de `fy_corrego`/`fy_mansao`.
+
 ### ~~BUG-06 · Alvo de capturas do CTF não deriva do número de bandeiras~~ · RESOLVIDO 05/08
 
 **Sintoma (palavras do dono, jogando):** *"no capture the flag na loja H está com 3 capturas
@@ -4720,6 +6370,27 @@ voltou a funcionar — GLB novo 531 KB com texturas restauradas via `rig-tex-res
 
 **Medido depois:** `select-mount` **0/44**; `select-inflate` nos 4: 0/4, com o trapfunk
 MELHOR que antes (21,4 → 14,6 ruins/1e4). A/B por figura na página da rodada.
+
+#### BUG-25 (5º ciclo) · re-rig dos 10 piores via `rig-meshy.mjs` — 1 verde, 3 melhores, 6 sem caminho (13/08)
+
+Fila dos 10 piores do `select-inflate` (JSON de 12/08, 23/62 reprovados) submetida a
+**rig novo do Meshy sobre a MESMA malha** (`tools/rig-meshy.mjs` — 5 créditos/personagem,
+esqueleto de 24 juntas idêntico ao das referências mandrake/pagodeiro, texturas
+restauradas por `rig-tex-restore`, otimização textura-only 1024/webp). Teto da régua:
+p99 ≤ 0,675 · ruins/1e4 ≤ 23,6.
+
+| destino | quem | número |
+|---|---|---|
+| **verde** | boto | p99 9,90 → **0,611** · ruins 778 → **21,6** |
+| melhorou, segue vermelho | curupira 4,70→0,598/32,1 · mariabonita 2,55→0,731/47,5 · lampiao 1,64→1,121/121,5 | ablação `semik` não move: é peso de pele, não IK |
+| **revertido** (rig novo PIOR) | cuca 310→1040 ruins · gilbomes 57→373 · esbirro 44→87 | auto-rig piora o que já estava perto do teto |
+| **revertido** (rig novo pior NO OLHO) | saci 4,29/607 → 1,34/189 no número, mas a perna virou fita torcida na figura | foto ganha de raciocínio: número melhor, imagem pior |
+| não rigável por este caminho | profeta-calcada (Meshy 422 "pose estimation failed") · programador-virado (7 materiais, fora do padrão Mint de 1; o restore interno do `rig-meshy` aborta) | precisam de outra rota (pose/malha primeiro) |
+
+**Lição da rodada:** re-rig automático é alavanca grande só para rig catastrófico
+(p99 > ~2); abaixo disso ele troca um skin ruim por outro e pode piorar — medir e OLHAR
+cada um, não rodar em lote cego. Placar da régua: **23/62 → 22/62** (baseline completo
+re-escrito em `tools/eval/select_inflate.json`).
 
 ### ~~BUG-32 · "mapa ctf na piscina ta com bandeiras com nome do patio brasilia"~~ · RESOLVIDO 06/08
 
@@ -5332,6 +7003,59 @@ navegador. `decodeAudioData` real, latência real e o custo de uma rajada full-a
 ---
 
 ### ~~BUG-57 · Régua casava literal de formatação e travou TODO deploy da main por meio dia~~ · RESOLVIDO 16/08
+
+### ~~BUG-44 · `eval:gltf-validator` tenta abrir concepts WebP do `mint-assets` como glTF~~ · RESOLVIDO 11/08
+
+**Palavras do reporte:** *"`eval:gltf-validator` tenta abrir concepts WebP do mint-assets
+como glTF."*
+
+**Reprodução antes do conserto:** `npm run eval:gltf-validator` selecionava toda entrada com
+`processing.finalSha256`; tentava entregar quatro WebP ao Khronos e saía 1, embora os seis GLB
+registrados tenham zero erros. Régua: o próprio `tools/eval/gltf-validator-check.mjs` ainda
+não distingue o tipo do artefato. O conserto não pode remover concepts do registro nem
+afrouxar a validação dos GLB.
+
+**Causa raiz e conserto:** `finalSha256` descreve integridade, não formato. Os dois gates
+usavam essa propriedade para enumerar assets, e o Khronos inferia glTF por posição na lista.
+Cada artefato final agora declara `artifactType`; `final-asset-registry.mjs` valida o tipo
+contra `files[0]` e fornece a mesma enumeração para integridade e Khronos. Integridade segue
+cobrando concepts e modelos; Khronos seleciona apenas `model/gltf-binary`.
+
+**Antes × depois:** antes, quatro WebP falhavam e os seis GLB passavam; depois,
+`npm run eval:asset-integrity` confere os onze artefatos finais e
+`npm run eval:gltf-validator` confere os seis GLB, com zero erros. Mutações:
+`--mutante=inclui-imagem` recoloca os WebP no escopo e sai 1; `--mutante=cabecalho`
+corrompe o primeiro GLB e sai 1. Custo declarado: todo novo artefato com hash final precisa
+de tipo explícito; tipo ausente ou extensão divergente falha fechado.
+
+### ~~BUG-40 · `npm run dev` não abre outra porta quando já existe um servidor~~ · RESOLVIDO 09/08
+
+**Palavras de quem reportou** (Ruben, 09/08): *"precisamos por um fix na hora de rodar
+dev que se a porta tiver usendo usado ele serve de outra porta"*.
+
+**Reprodução antes do conserto.** Com o Astro do próprio projeto vivo em `:4321`,
+`npm run dev` encerra com código 0 e imprime apenas `Dev server already running at
+http://127.0.0.1:4321`; nenhuma segunda URL é criada. A porta estava ocupada por PID vivo,
+portanto não era lock órfão.
+
+**Causa raiz.** O Astro 7 detecta este ambiente de agente e daemoniza automaticamente. O
+processo em background consulta `.astro/dev.json` antes de o Vite tentar abrir o socket;
+ao encontrar lock vivo, encerrava com código 0. Portanto a capacidade nativa do Vite de
+avançar `4321 -> 4322` nunca chegava a rodar.
+
+**Conserto.** `scripts/dev.mjs` inicia o CLI Astro em foreground com `--ignore-lock`. É um
+lançador Node, em vez de `VAR=valor` no script npm, para continuar funcionando no Windows.
+O Vite segue escolhendo a porta: no caso real, com `4321` ocupada, anunciou e serviu
+`http://localhost:4322/`. A instância extra fica deliberadamente fora do lock do Astro e é
+encerrada por `Ctrl+C`; `astro dev stop` continua controlando só a instância original.
+
+**Régua:** `npm run eval:devport` (`tools/eval/dev-port-check.mjs`). Planta lock vivo e
+socket ocupado num projeto Astro temporário, executa o `scripts.dev` real e exige uma URL
+em outra porta. Antes: saída 1, nenhuma segunda URL. Depois: porta ocupada `58402` ->
+servidor `58403`, saída 0. Mutação `--mutante=semlock`: saída 1 e mensagem do Astro dizendo
+apenas que o servidor do lock já estava vivo. A régua entra no `check:fast` antes dos
+portões que podem cortar a corrente.
+### ~~BUG-57 (main) · Régua casava literal de formatação e travou TODO deploy da main por meio dia~~ · RESOLVIDO 16/08
 
 **Sintoma.** Deploys da Vercel falhando desde `ef0a392` (16/08 ~01:52) com
 `check:deploy` vermelho em `eval:redesign` — UIA6. A main ficou SEM publicar por
@@ -6433,3 +8157,174 @@ comandos: `docs/maps/LAJES-PERFORMANCE.md`; artefatos locais em
 ### Amazônia 8×8 — CPU e escadas, 06/09/2026, PR #527
 
 Pedido: “medir e reduzir o lag de single-player 8x8, confirmar escadas das palafitas viradas para o respawn e visão do rio desbloqueada”. Perfil Node reproduziu o custo em consultas de visão sobre madeira/chão agrupados; BFS não é a causa dominante. Correção e provas em [AMAZONIA-8X8-PERF-ESCADAS.md](docs/reports/AMAZONIA-8X8-PERF-ESCADAS.md). Continuação local em validação, sem navegador/merge/release; frametime de GPU ainda não medido.
+
+### BUG-VM-FECHAMENTO-RUBEN — arsenal reprovado pelo dono, retomada 13/09/2026
+
+**ABERTO.** Ruben autorizou prosseguir até terminar. Esta lista tem precedência
+sobre aprovações antigas. O registro de execução, artefatos e próximo passo está em
+[`VM-DIAGNOSTICO-FECHAMENTO.md`](docs/reports/VM-DIAGNOSTICO-FECHAMENTO.md).
+
+| ID do jogo | Relato literal do dono | Aceite |
+|---|---|---|
+| `md97` | “d97 sem pente” | Carregador presente, encaixado e com recarga correspondente. |
+| `m92` (Zastava) | “zastava tira um pouco ainda do cano” | Recarga não move nenhuma parte do cano. |
+| `deagle` | “deagle apontando pra cima” | Enquadramento e orientação conferidos no jogo, inclusive em transições. |
+| `m4` | “m4a1 tira o pente mas a parte de cima do pente fica” | Carregador sai inteiro; distinguir visualmente seu topo do poço fixo da arma. |
+| `scar` | “Scar sai parte do cano e fica parte do pente quando recarrega” | Carregador completo e cano intacto durante a ação. |
+| `sks` | “sks mao fica na frente da arma e recarrega com objeto no meio do ar” | Mão de apoio no guarda-mão; munição manipulada em contato e mecanismo coerente. |
+| `revolver38` | “revolver recarrega com objeto no meio do ar” | Recarga do tambor com munição em contato, sem objeto solto. |
+| `svd` | “SVD recarrega ok, mas mao fica por cima do cano da frente” | Preservar a recarga aceita e corrigir mão de apoio. |
+| `uzi` | “Uzi tira so a parte debaixo do pente e fica parte do pente no recarregar” | Retirar o carregador inteiro sem retirar a empunhadura. |
+| `mp5` | “Mp5 sem pente na frente e com a mao por cima do cano da frente precisava re-rigar a arma” | Carregador presente e mãos rigadas para esta arma. |
+| `shotgun` (M3) | “M3 arma apontado pro alto e segunda mao nao segura o cano na frente” | Orientação coerente e mão de apoio segurando a região dianteira em idle/tiro. |
+
+Placar cego de 14/09 no caminho ativo (`artifacts/viewmodels/fechamento-ruben/placar-dono-20260914/CRITICA.md`,
+crítico sem a justificativa de quem construiu): **REPROVADAS** `shotgun` (nenhuma
+mão encosta; recarga apontada pro alto), `sks`, `uzi`, `md97`; **RESSALVA** `mp5`
+(pente não visível ao sair), `m92` (~125 % da AK); **APROVADAS** pelo crítico
+`svd`, `deagle`, `revolver38`, `m4`, `scar` — o aceite continua sendo do dono.
+No mesmo dia: `md97` perdeu o cilindro solto (alavanca da AK herdada do rig,
+`5dae7b9d1`) e `sks` ganhou a mão de apoio no guarda-mão em idle/tiro e a
+recarga começando/terminando no idle (`3058c8ec0`); a recarga por clip do SKS
+segue "tira no ar". Detalhe em `VM-DIAGNOSTICO-FECHAMENTO.md`, checkpoint 14/09.
+
+Defeito reproduzido e corrigido no instrumento de captura: `MEDIR` agora usa o
+registro de malhas de mão autoradas; `charging_handle` deixa de ser contado como
+mão. A mutação `mao-nome` reintroduz e detecta o falso positivo. Medição de contato também
+precisa distinguir mão forte e apoio e as fases em que cada uma deve segurar a arma.
+Não aceitar fechamento por presença de malha ou distância mínima global.
+
+Encaixe Deagle/revólver: o centro era calculado antes do skin e recalibrado contra
+a câmera ao reequipar. `bodyAnchor` mede o corpo influenciado por `neutral_bone`
+no espaço do socket. Atualiza `SkinnedMesh.updateMatrixWorld` antes de deformar,
+pois `updateWorldMatrix` sozinho deixa a matriz inversa de bind antiga. `AUD1A`
+exercita o attach real, atributos interleaved e o primeiro attach sem render prévio;
+`node tools/eval/authored-attach-check.mjs --mutantes` comprova as falhas detectadas.
+A caixa no socket preserva a montagem quando o pai gira; caixa mundial convertida
+após calcular seu centro não tem essa propriedade. A revisão visual e os mecanismos
+de recarga ainda não estão encerrados.
+
+### BUG-VM-ESCALA-PISTOLA — o piloto hires da pistola entra 144× maior, 11/09/2026
+
+Marcar `golden: true` na pistola a tira do caminho de família e a manda para o
+piloto versionado em `coro/pistol-hires.glb`. O piloto entra **sem a normalização
+da família** e renderiza fora de escala. Medido no jogo real, 3:2, autorado:
+
+| | com `golden` | caminho de família | declarado |
+|---|---:|---:|---:|
+| arma 3D | 3.743,6 cm | 22,9 cm | 26 cm |
+| mão 3D | 7.125,8 cm | 46,4 cm | — |
+| contato mão↔arma | 14,10 cm | 0,10 cm | ~0,2 (ak) |
+
+**Estado:** contornado — `public/js/data/vmconfig.js` mantém a pistola no caminho
+de família. O piloto `pistol-hires.glb` continua no repo e continua sendo o
+conteúdo aprovado pelo dono em 07/09; ele só não pode ser servido antes de a
+escala ser calibrada, como foi feito nas 13 armas longas (`--comprimento` do
+`build_ak_hires_pilot.py`, alvo `len × vm`).
+
+**Régua:** `node tools/viewmodels/prep/vm-arsenal-frames.mjs --porta=<p>
+--aspecto=32 --modo=autorado --armas=pistol` — o campo `arma_diam3d_cm` do
+`frames.json` denuncia.
+
+**Custo declarado:** a pistola fica no rig KINEMATION enquanto as 13 longas já
+estão no rig do doador da AK, então ela destoa do resto até ser calibrada.
+
+### BUG-156 · o merge matou o viewmodel autorado inteiro — 26 armas no legado, sem mãos · MEDIDO 12/09
+
+**Relato do dono (12/09/2026, com print):** *"nao aparece nenhuma mao"*, e antes
+*"quando abro esse link mostram skins antigos nao mostram os mesmos do
+http://localhost:4361/vmtest.html"*.
+
+**Causa raiz.** `_applyVmVisibility` (`public/js/game.js`) voltou à versão da
+main no merge de 555 commits. A main não conhece o caminho autorado, então a
+linha que diz ao controlador qual arma está na mão saiu junto:
+
+```js
+const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
+```
+
+Sem ela `authored.weapon` ficava `''`, `entryKeyFor` devolvia `''`, nenhuma
+entrada era pedida e **as 26 armas caíam no viewmodel legado** — modelo antigo e
+sem mãos. Medido no jogo: `entries` tinha só `grenade`; o GLB golden era baixado
+(`/models/viewmodels/coro/*-hires.glb` aparecia na rede) e nunca montado.
+
+É o oitavo defeito de merge da mesma classe: declaração de um lado, uso do
+outro. `node --check` passa, `check:fast` passa — ele roda o motor em node e
+nunca monta viewmodel.
+
+**Por que nenhuma régua pegou.** Todas mediam o ARQUIVO (malha, material,
+config), e o GLB estava certo o tempo todo. O que falhou foi a LIGAÇÃO. A
+régua antiga que chegou perto foi `vm-arsenal-frames`, que reportou `mao 0/0`
+em todos os estados — e eu descartei como defeito da régua no dia 12/09 de
+manhã, depois de ver mãos na bancada de GLB. **A régua estava certa e eu
+errei:** ela media a tela, a bancada media o arquivo.
+
+**Conserto.** `public/js/game.js`, `_applyVmVisibility` restaurada de
+`c8b75444f`, com o crachá de QA dependendo de `testMode` (a constante
+`AUTHORED_VM_ENABLED` não existe mais).
+
+**Régua nova:** `tools/eval/vm-autorado-vivo.mjs` (`npm run eval:vm-autorado-vivo`).
+Boota o jogo, percorre as armas `golden` do vmconfig e exige, por arma: chave
+resolvida começando em `gold#`, malha de mão na entrada, e mão visível com a
+cadeia de pais inteira.
+
+- antes: 0/14, todas `LEGADO`, `maos 0/0`
+- depois: **14/14 com `gold#<arma>` e `maos 2/2`**
+- mutação `--mutante=semfiacao` (serve o `game.js` sem a linha): 0/3, reproduz
+  o print do dono
+
+### BUG-157 · o dono testou o GLB de ontem: a URL do golden não mudava com o arquivo · MEDIDO 13/09
+
+**Relato do dono, com print:** *"a p90 nem sequer atira, a uzi ainda está errada
+no recarregar e todos os erros que eu te apontei antes ainda acontecem"*.
+
+**Causa raiz.** `urlForKey` (`public/js/authoredvm.js`) montava a URL do GLB
+golden assim:
+
+```js
+const version = weapon === 'ak' ? 'golden-ak-4' : `golden-${weapon}-1`;
+```
+
+String escrita à mão, congelada em `-1` para toda arma que não fosse a AK.
+Republiquei `m4`, `uzi` e `p90` com o pente consertado na **mesma URL com o
+mesmo `?v=`** e o navegador serviu o arquivo em cache. O conserto estava no
+disco e nunca chegou à tela.
+
+**Por que nenhuma régua pegou.** Todas leem o GLB em disco, e em disco o
+conserto estava lá: `vm-peso-pente` 15/15, `vm-escala-check` 13/15,
+`vm-bancada-check` verde. A fronteira entre o disco e o navegador não tinha
+régua. É a mesma lição do `moduleCacheManifest()`, que já derivava a revisão dos
+bytes para os `.js` — o GLB tinha ficado de fora.
+
+**Conserto.** `tools/viewmodels/gen-goldenver.mjs` gera
+`public/js/data/goldenver.js` com o sha256 de cada GLB publicado, e
+`publicar-hires.mjs` chama no fim de toda publicação. `urlForKey` lê de lá.
+Bump manual deixa de existir.
+
+**Régua nova:** `tools/eval/vm-cache-golden.mjs` (`npm run eval:vm-cache`), duas
+cláusulas — VC1: `urlForKey` usa `GOLDEN_VER` e não string literal; VC2: o
+registrado bate com os bytes reais.
+
+- mutação `--mutante=congelada`: VC1 vermelha
+- mutação `--mutante=desatual`: VC2 vermelha, `m4 (registrado 5ea87fdef5, real deadbeef01)`
+
+**Custo declarado:** o dono gastou uma rodada de teste inteira num arquivo
+velho, e eu afirmei três vezes que o conserto estava publicado. Estava — só não
+chegava.
+
+
+## Viewmodel autorado retorna estado Idle com esqueleto preso
+
+Reprodução: `node tools/eval/authored-transition-check.mjs` antes da correção,
+com `AuthoredViewModels.update` real e fila de clipes. `finished` disparava durante
+`AnimationMixer.update`, e `_continue` trocava/desativava ações reentrantemente.
+O estado passava a Idle, mas o binding conservava a posição final da recarga.
+Isso foi visto na SVD candidata: apoio correto antes, mão antiga acima do cano
+após recarregar. Evidência local em
+`artifacts/viewmodels/fechamento-ruben/transitions-before.json`.
+
+Correção em `authoredvm.js`: `_stepEntry` resolve fim de ação depois do mixer;
+Idle de arma oculta não inicia fade que deixaria de avançar. AUD1B verifica pose,
+fila e caminhos visível/oculto/utilitário. Mutação `--mutantes` desfaz o adiamento
+e torna a régua vermelha. Captura real e revisão independente em andamento no
+[ledger da frente](docs/reports/VM-DIAGNOSTICO-FECHAMENTO.md).

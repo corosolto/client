@@ -1,0 +1,45 @@
+{
+ "o_que_e": "Retrato da AK golden APROVADA (antes do rebuild em K do #631) no quadro renderizado: referência do eval:vm-cobertura. Regravar só com decisão do dono (--assar-ak).",
+ "3x2": {
+  "quadril": {
+   "areaArma": 0.07700231481481482,
+   "areaBraco": 0.04644458912037037,
+   "areaTotal": 0.12344690393518519,
+   "eixo": {
+    "graus": 155.13561940492852,
+    "perto": [
+     1408.0748633200794,
+     822.7308648111332
+    ],
+    "longe": [
+     984.0333229329174,
+     626.2176599063963
+    ],
+    "comprimento": 467.3635283971657
+   },
+   "rolagem": -12.72044430287736
+  },
+  "medido": "2026-09-23"
+ },
+ "16x9": {
+  "quadril": {
+   "areaArma": 0.08485082304526749,
+   "areaBraco": 0.03673525377229081,
+   "areaTotal": 0.1215860768175583,
+   "eixo": {
+    "graus": 156.96280591451452,
+    "perto": [
+     1399.946745166254,
+     715.2036529069378
+    ],
+    "longe": [
+     979.7070362187856,
+     536.5004351610096
+    ],
+    "comprimento": 456.65769785365666
+   },
+   "rolagem": -12.744840024974424
+  },
+  "medido": "2026-09-23"
+ }
+}

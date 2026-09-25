@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "rule": "A family shares timing and rig conventions, never blind mesh transforms. Every weapon keeps its own grip, trigger, support-hand, magazine and sight sockets.",
+  "families": {
+    "ak_pattern": {
+      "pilot": "ak",
+      "members": ["ak", "akm", "m92"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "curved detachable magazine and right-side charging handle"
+    },
+    "ar_pattern": {
+      "pilot": "m4",
+      "members": ["m4", "md97", "scar", "tavor", "famas"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "detachable rifle magazine; bullpups require weapon-specific magazine and support-hand sockets"
+    },
+    "smg_box_mag": {
+      "pilot": "mp5",
+      "members": ["mp5", "uzi"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "compact box magazine"
+    },
+    "p90_top_mag": {
+      "pilot": "p90",
+      "members": ["p90"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "top-mounted horizontal magazine; never inherits box-mag hand paths"
+    },
+    "battle_rifle": {
+      "pilot": "g3",
+      "members": ["g3", "carbine"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "full-size detachable magazine and long receiver"
+    },
+    "semi_auto_pistol": {
+      "pilot": "pistol",
+      "members": ["pistol", "deagle"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "grip magazine and reciprocating slide"
+    },
+    "revolver": {
+      "pilot": "revolver38",
+      "members": ["revolver38"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "swing-out cylinder; never inherits pistol magazine motion"
+    },
+    "pump_shotgun": {
+      "pilot": "shotgun",
+      "members": ["shotgun"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "pump action and per-shell loading"
+    },
+    "bolt_sniper": {
+      "pilot": "awp",
+      "members": ["awp", "mosin", "rem700"],
+      "states": ["idle", "fire", "bolt", "reload", "ads"],
+      "mechanism": "manual bolt cycle; magazine treatment remains weapon-specific"
+    },
+    "semi_auto_scoped": {
+      "pilot": "m400",
+      "members": ["m400", "svd", "g3sg1", "sks"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "scoped semi-automatic rifle; each magazine/receiver gets its own sockets"
+    },
+    "lmg": {
+      "pilot": "lmg",
+      "members": ["lmg"],
+      "states": ["idle", "fire", "reload", "ads"],
+      "mechanism": "belt or box-fed heavy weapon; dedicated reload"
+    },
+    "knife": {
+      "pilot": "knife",
+      "members": ["knife"],
+      "states": ["idle", "draw", "slash", "stab"],
+      "mechanism": "melee; dominant grip and safe support-hand silhouette"
+    }
+  }
+}

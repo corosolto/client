@@ -13,6 +13,12 @@ const PORT = parseInt(process.argv[2] || '8123', 10);
 const ROOT = 'public';
 const ASTRO = 'src/pages/index.astro';
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.glb': 'model/gltf-binary', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.wasm': 'application/wasm', '.txt': 'text/plain' };
+const CHARACTER_EVAL_SHELL = `<!doctype html>
+<meta charset="utf-8">
+<title>character eval shell</title>
+<script type="importmap">
+{"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/addons/"}}
+</script>`;
 
 /* POR QUE O FRONTMATTER É AVALIADO AQUI
    O arnês não roda o Astro: ele serve o `.astro` cru com algumas substituições. Cada
@@ -91,14 +97,38 @@ async function renderIndex() {
       ...Object.fromEntries(modulos.map((mod) => [`./js/${mod}`, `./js/${mod}?v=${V}-${JS_REV}`])),
     },
   });
-  // `__MANIFESTO_JS__` é injetado pelo build do Astro; no arnês ele vem do mesmo
-  // manifesto de cache de módulos que monta o import map acima.
+  /* O `define:vars` agora sai do frontmatter DE VERDADE (`evalDeclarations` acima),
+     mecanismo da main: a tabela à mão que esta branch tinha (SUPPORT_URL_BR /
+     SUPPORT_URL_INTL) virava dívida a cada variável nova no index.astro, e o
+     `GIT_SHA` que a telemetria acrescentou já não estava nela. Isso fica.
+
+     `__MANIFESTO_JS__` é injetado pelo build do Astro; no arnês ele vem do mesmo
+     manifesto de cache de módulos que monta o import map acima. */
   const frontmatter = src.match(FRONTMATTER);
   if (!frontmatter) throw new Error(`serve.mjs: ${ASTRO} sem frontmatter`);
   const scope = await evalDeclarations(frontmatter[1], resolve(ASTRO), {
     __MANIFESTO_JS__: { modules: modulos, revision: JS_REV },
   });
-  return src
+  /* Varredura GENÉRICA de atributo com template literal, que a branch acrescentou e
+     a lista por-atributo da main não cobre: `attr={`...`}` vira `attr="..."`.
+     Quando o `index.astro` ganha um atributo novo com template literal e ninguém
+     acrescenta a linha correspondente abaixo, ele sai como TEXTO LITERAL, o
+     navegador pede `/%7B%60/js/main.js...%60%7D`, toma 404, e o jogo trava em
+     "CARREGANDO ARENA…" sem `window.__game`. Em captura headless isso vira
+     `waitForFunction: Timeout 900000ms` e o log acusa o MAPA — perdemos uma bateria
+     inteira "descobrindo" que os mapas novos não bootavam, quando NENHUM mapa
+     bootava e a culpa era deste renderizador. Ela roda DEPOIS das regras explícitas
+     da main, como rede: o que sobrar com `${...}` depende de escopo de runtime
+     (`${f.crest}` dentro de um `.map()`) e é devolvido INTACTO, para o erro
+     continuar legível em vez de virar atributo quebrado.
+     LIMITE DECLARADO: isto não é o Astro. Se um dia uma dessas expressões for fatal
+     para o boot, o caminho é usar o Astro de verdade, não engordar este regex. */
+  const VARS = { V, JS_REV };
+  const attrs = (s) => s.replace(/(\w[\w:-]*)=\{`([^`]*)`\}/g, (todo, attr, corpo) => {
+    const resolvido = corpo.replace(/\$\{(\w+)\}/g, (m, nome) => (nome in VARS ? VARS[nome] : m));
+    return /\$\{/.test(resolvido) ? todo : `${attr}="${resolvido}"`;
+  });
+  return attrs(src
     .replace(DEFINE_VARS, (tag, names) => {
       const declaracoes = names.split(',').map((name) => name.trim()).filter(Boolean).map((name) => {
         if (!/^[A-Za-z_$][\w$]*$/.test(name)) throw new Error(`serve.mjs: ${tag} usa forma não abreviada; o arnês só resolve \`define:vars={{ NOME }}\``);
@@ -126,19 +156,47 @@ async function renderIndex() {
       'src={`/js/ops.js?v=${V}-${JS_REV}`}',
       `src="/js/ops.js?v=${V}-${JS_REV}"`,
     )
-    .replace(/src=\{`\/js\/main\.js\?v=\$\{V\}-\$\{JS_REV\}`\}/, `src="/js/main.js?v=${V}-${JS_REV}"`);
+    .replace(/src=\{`\/js\/main\.js\?v=\$\{V\}-\$\{JS_REV\}`\}/, `src="/js/main.js?v=${V}-${JS_REV}"`));
 }
 
+/* ORDEM IMPORTA: o corpo é produzido ANTES de qualquer writeHead.
+   O defeito que isto conserta (medido em 12/08): a rota `/` fazia
+   `res.writeHead(200)` e SÓ DEPOIS `await renderIndex()`. Quando o render
+   falhava — `index.astro` com marcador de conflito, ou o frontmatter mudando de
+   forma, que o cabeçalho deste arquivo já avisa que acontece — o `catch` tentava
+   `res.writeHead(404)` sobre cabeçalho já enviado. Isso lança
+   ERR_HTTP_HEADERS_SENT DENTRO de um handler async, ninguém captura, e o
+   PROCESSO INTEIRO morre.
+
+   O preço disso não foi uma requisição perdida: foi a bateria de captura toda.
+   Em 12/08 o servidor caiu no meio do `fy_quebrada` e os 5 mapas seguintes
+   (escadao, campomorro, lajes, corrego, mansao) saíram com
+   ERR_CONNECTION_REFUSED — justamente os 5 que o dono relatou como piores e que
+   ninguém tinha frame para julgar. Servidor de arnês que morre falsifica a
+   medição em silêncio: o log fica cheio de "fatal" que parece defeito do jogo. */
 http.createServer(async (req, res) => {
   try {
-    let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-    if (p === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(await renderIndex()); }
-    const file = normalize(join(ROOT, p));
-    if (!file.startsWith(ROOT)) throw new Error('path');
-    const data = await readFile(file);
-    res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream' });
-    res.end(data);
-  } catch {
+    const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    let body, type;
+    if (p === '/') { body = await renderIndex(); type = 'text/html'; }
+    else if (p === '/eval-character.html') { body = CHARACTER_EVAL_SHELL; type = 'text/html'; }
+    else {
+      const file = normalize(join(ROOT, p));
+      if (!file.startsWith(ROOT)) throw new Error('path');
+      body = await readFile(file);
+      type = MIME[extname(file)] || 'application/octet-stream';
+    }
+    res.writeHead(200, { 'content-type': type });
+    res.end(body);
+  } catch (e) {
+    // `headersSent` é o guarda-costas: se por qualquer caminho novo o cabeçalho
+    // já tiver saído, derrube só ESTA conexão em vez de o processo.
+    if (res.headersSent) { res.destroy(); return; }
     res.writeHead(404); res.end('404');
   }
 }).listen(PORT, () => console.log(`eval server -> http://localhost:${PORT}`));
+
+/* Rede de segurança final. Uma bateria de captura leva mais de uma hora; perder
+   isso porque um socket morreu não paga. Nenhum destes derruba o servidor. */
+process.on('uncaughtException', (e) => console.error('[serve] exceção ignorada:', e.message));
+process.on('unhandledRejection', (e) => console.error('[serve] rejeição ignorada:', e?.message || e));

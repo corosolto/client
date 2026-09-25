@@ -1,5 +1,5 @@
 {
- "gerado": "2026-09-13T20:13:39.079Z",
+ "gerado": "2026-09-24T23:32:08.671Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -7,6 +7,7 @@
   "map3": "NBR 9077: espelho 0.16,0.19, piso 0.25,0.32, 2h+p 0.62,0.66, largura ≥ 1.2 m, inclinação 25,40°",
   "map4": "occluder com malha visível a ≤ 0.35 m (tolerância declarada); reprova acima de 10% da face lateral sem malha",
   "map5": "espaçamento médio entre props ≤ 7 m E densidade de prop/waypoint ≥ 0.35 × a mediana do próprio mapa (grade 4×4, só quadrante com ≥ 40 m² andáveis)",
+  "map6": "toda borda alcançável com queda ≥ 2 m empurra o corpo na altura do piso superior",
   "ctf1": "altura mínima do triângulo das bandeiras, distância ao spawn mais próximo, maior linha de tiro limpa",
   "ctf2": "rotas separadas por ≥ 6 m entre cada spawn e cada bandeira"
  },
@@ -531,6 +532,7 @@
    "piorRazaoProp": 0.53,
    "piorRazaoWp": 0.75,
    "piorEspacamento": 6.5,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -673,15 +675,13 @@
      "tipo": "chao",
      "x": -7.2,
      "z": 4.8,
-     "pen": 1.051,
-     "objeto": "amazonia-estatica"
+     "pen": 1.051
     },
     {
      "tipo": "chao",
      "x": -7.2,
      "z": -23.2,
-     "pen": 0.44,
-     "objeto": "amazonia-estatica"
+     "pen": 0.44
     }
    ],
    "dentroTodos": [
@@ -689,15 +689,13 @@
      "tipo": "chao",
      "x": -7.2,
      "z": 4.8,
-     "pen": 1.051,
-     "objeto": "amazonia-estatica"
+     "pen": 1.051
     },
     {
      "tipo": "chao",
      "x": -7.2,
      "z": -23.2,
-     "pen": 0.44,
-     "objeto": "amazonia-estatica"
+     "pen": 0.44
     }
    ],
    "spawns": [
@@ -1215,6 +1213,7 @@
    "piorRazaoProp": 0.36,
    "piorRazaoWp": 0.49,
    "piorEspacamento": 4.62,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -1908,6 +1907,23 @@
    "piorRazaoProp": 0.22,
    "piorRazaoWp": 0.2,
    "piorEspacamento": 5.45,
+   "bordasSemGuarda": [
+    {
+     "x": 1.25,
+     "z": 13.25,
+     "queda": 2.1
+    },
+    {
+     "x": 1.25,
+     "z": 13.5,
+     "queda": 2.28
+    },
+    {
+     "x": 1.25,
+     "z": 13.75,
+     "queda": 2.46
+    }
+   ],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -2037,401 +2053,14 @@
   },
   {
    "map": "praca_poderes",
-   "celulasAlcancadas": 216066,
-   "amostrasChao": 13449,
-   "observadores": 3327,
-   "corpoDentroDeSolido": 47,
+   "celulasAlcancadas": 213435,
+   "amostrasChao": 13280,
+   "observadores": 3285,
+   "corpoDentroDeSolido": 0,
    "submersosAcimaDoPeito": 0,
-   "piorPenetracao": 1.053,
-   "piores": [
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": 36,
-     "pen": 1.053,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": 37,
-     "pen": 1.053,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 62,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 63,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 64,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 65,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 66,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 67,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    }
-   ],
-   "dentroTodos": [
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": 36,
-     "pen": 1.053,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": 37,
-     "pen": 1.053,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 62,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 63,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 64,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 65,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 66,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 67,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 68,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 69,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 14.5,
-     "z": 70,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 62,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 63,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 64,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 65,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 66,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 67,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 68,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 69,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 70,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 71,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 72,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 73,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 29.5,
-     "z": 74,
-     "pen": 1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 30,
-     "pen": 0.821,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 31,
-     "pen": 0.821,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 38,
-     "pen": 0.778,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 39,
-     "pen": 0.778,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 40,
-     "pen": 0.778,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 41,
-     "pen": 0.778,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 83,
-     "pen": 0.669,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 21,
-     "pen": 0.624,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 22,
-     "pen": 0.624,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 23,
-     "pen": 0.624,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -52,
-     "pen": 0.429,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -55,
-     "pen": 0.386,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -54,
-     "pen": 0.386,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -35,
-     "pen": 0.357,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -34,
-     "pen": 0.357,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -33,
-     "pen": 0.357,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 54,
-     "pen": 0.354,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 55,
-     "pen": 0.354,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 56,
-     "pen": 0.354,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 62,
-     "pen": 0.311,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 63,
-     "pen": 0.311,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 64,
-     "pen": 0.311,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 65,
-     "pen": 0.311,
-     "objeto": "(sem nome)"
-    }
-   ],
+   "piorPenetracao": 0,
+   "piores": [],
+   "dentroTodos": [],
    "spawns": [
     {
      "team": "B",
@@ -2495,14 +2124,14 @@
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.8983,
+     "fracMedia": 0.5391,
      "maiorVisada": 153.6
     },
     {
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.8425,
+     "fracMedia": 0.4717,
      "maiorVisada": 146.1
     }
    ],
@@ -2512,9 +2141,9 @@
      "x": -9,
      "z": -62,
      "chao": 0,
-     "obsLonge": 2936,
-     "obsVendo": 2624,
-     "frac": 0.8937,
+     "obsLonge": 2903,
+     "obsVendo": 1535,
+     "frac": 0.5288,
      "maiorVisada": 153.6
     },
     {
@@ -2522,29 +2151,29 @@
      "x": -3,
      "z": -62,
      "chao": 0,
-     "obsLonge": 2940,
-     "obsVendo": 2647,
-     "frac": 0.9003,
-     "maiorVisada": 151.6
+     "obsLonge": 2907,
+     "obsVendo": 1555,
+     "frac": 0.5349,
+     "maiorVisada": 151
     },
     {
      "team": "B",
      "x": 3,
      "z": -62,
      "chao": 0,
-     "obsLonge": 2940,
-     "obsVendo": 2638,
-     "frac": 0.8973,
-     "maiorVisada": 151.3
+     "obsLonge": 2907,
+     "obsVendo": 1542,
+     "frac": 0.5304,
+     "maiorVisada": 150.7
     },
     {
      "team": "B",
      "x": 9,
      "z": -62,
      "chao": 0,
-     "obsLonge": 2935,
-     "obsVendo": 2647,
-     "frac": 0.9019,
+     "obsLonge": 2902,
+     "obsVendo": 1632,
+     "frac": 0.5624,
      "maiorVisada": 153.3
     },
     {
@@ -2552,9 +2181,9 @@
      "x": -9,
      "z": 62,
      "chao": 0,
-     "obsLonge": 2936,
-     "obsVendo": 2476,
-     "frac": 0.8433,
+     "obsLonge": 2908,
+     "obsVendo": 1377,
+     "frac": 0.4735,
      "maiorVisada": 146.1
     },
     {
@@ -2562,30 +2191,30 @@
      "x": -3,
      "z": 62,
      "chao": 0,
-     "obsLonge": 2967,
-     "obsVendo": 2473,
-     "frac": 0.8335,
-     "maiorVisada": 144.1
+     "obsLonge": 2939,
+     "obsVendo": 1295,
+     "frac": 0.4406,
+     "maiorVisada": 142.2
     },
     {
      "team": "E",
      "x": 3,
      "z": 62,
      "chao": 0,
-     "obsLonge": 2988,
-     "obsVendo": 2522,
-     "frac": 0.844,
-     "maiorVisada": 143.7
+     "obsLonge": 2960,
+     "obsVendo": 1392,
+     "frac": 0.4703,
+     "maiorVisada": 143.1
     },
     {
      "team": "E",
      "x": 9,
      "z": 62,
      "chao": 0,
-     "obsLonge": 2988,
-     "obsVendo": 2537,
-     "frac": 0.8491,
-     "maiorVisada": 145.8
+     "obsLonge": 2959,
+     "obsVendo": 1487,
+     "frac": 0.5025,
+     "maiorVisada": 145.1
     }
    ],
    "salaDoSpawn": [
@@ -2613,8 +2242,8 @@
      "team": "B",
      "x": 3,
      "z": -62,
-     "folgaParede": 11.8,
-     "dirPior": 163,
+     "folgaParede": 8.2,
+     "dirPior": 90,
      "areaContigua": 78.6,
      "okFolga": true,
      "okArea": true
@@ -2623,8 +2252,8 @@
      "team": "B",
      "x": 9,
      "z": -62,
-     "folgaParede": 11.9,
-     "dirPior": 73,
+     "folgaParede": 8.2,
+     "dirPior": 90,
      "areaContigua": 78.6,
      "okFolga": true,
      "okArea": true
@@ -2643,8 +2272,8 @@
      "team": "E",
      "x": -3,
      "z": 62,
-     "folgaParede": 8.25,
-     "dirPior": 225,
+     "folgaParede": 8.2,
+     "dirPior": 270,
      "areaContigua": 78.6,
      "okFolga": true,
      "okArea": true
@@ -2653,8 +2282,8 @@
      "team": "E",
      "x": 3,
      "z": 62,
-     "folgaParede": 8.25,
-     "dirPior": 315,
+     "folgaParede": 8.2,
+     "dirPior": 270,
      "areaContigua": 78.6,
      "okFolga": true,
      "okArea": true
@@ -2663,9 +2292,9 @@
      "team": "E",
      "x": 9,
      "z": 62,
-     "folgaParede": 5.35,
-     "dirPior": 270,
-     "areaContigua": 78.5,
+     "folgaParede": 5.25,
+     "dirPior": 0,
+     "areaContigua": 78.4,
      "okFolga": true,
      "okArea": true
     }
@@ -2675,73 +2304,73 @@
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 64,
-   "occPulados": 2,
-   "fracSemMalha": 0.0041,
+   "occMedidos": 92,
+   "occPulados": 11,
+   "fracSemMalha": 0.0034,
    "quadrantes": [
     {
      "q": "0,0",
      "x0": -45.5,
      "z0": -76,
-     "areaAndavel": 879,
-     "props": 0,
+     "areaAndavel": 869,
+     "props": 2,
      "waypoints": 30,
-     "densProp": 0,
-     "densWp": 3.41,
-     "espacamento": 99,
-     "razaoProp": 0,
-     "razaoWp": 0.82
+     "densProp": 0.23,
+     "densWp": 3.45,
+     "espacamento": 20.84,
+     "razaoProp": 0.33,
+     "razaoWp": 0.83
     },
     {
      "q": "0,1",
      "x0": -45.5,
      "z0": -36,
-     "areaAndavel": 890,
-     "props": 0,
+     "areaAndavel": 875,
+     "props": 2,
      "waypoints": 45,
-     "densProp": 0,
-     "densWp": 5.06,
-     "espacamento": 99,
-     "razaoProp": 0,
-     "razaoWp": 1.22
+     "densProp": 0.23,
+     "densWp": 5.14,
+     "espacamento": 20.92,
+     "razaoProp": 0.33,
+     "razaoWp": 1.23
     },
     {
      "q": "0,2",
      "x0": -45.5,
      "z0": 4,
-     "areaAndavel": 890,
-     "props": 0,
+     "areaAndavel": 880,
+     "props": 2,
      "waypoints": 45,
-     "densProp": 0,
-     "densWp": 5.06,
-     "espacamento": 99,
-     "razaoProp": 0,
+     "densProp": 0.23,
+     "densWp": 5.11,
+     "espacamento": 20.97,
+     "razaoProp": 0.33,
      "razaoWp": 1.22
     },
     {
      "q": "0,3",
      "x0": -45.5,
      "z0": 44,
-     "areaAndavel": 880,
-     "props": 1,
+     "areaAndavel": 869,
+     "props": 3,
      "waypoints": 20,
-     "densProp": 0.11,
-     "densWp": 2.27,
-     "espacamento": 29.66,
-     "razaoProp": 0.28,
+     "densProp": 0.35,
+     "densWp": 2.3,
+     "espacamento": 17.02,
+     "razaoProp": 0.51,
      "razaoWp": 0.55
     },
     {
      "q": "1,0",
      "x0": -22.8,
      "z0": -76,
-     "areaAndavel": 871,
-     "props": 7,
+     "areaAndavel": 861,
+     "props": 9,
      "waypoints": 34,
-     "densProp": 0.8,
-     "densWp": 3.9,
-     "espacamento": 11.15,
-     "razaoProp": 2.03,
+     "densProp": 1.05,
+     "densWp": 3.95,
+     "espacamento": 9.78,
+     "razaoProp": 1.52,
      "razaoWp": 0.94
     },
     {
@@ -2754,155 +2383,156 @@
      "densProp": 1.03,
      "densWp": 5.25,
      "espacamento": 9.87,
-     "razaoProp": 2.61,
-     "razaoWp": 1.27
+     "razaoProp": 1.49,
+     "razaoWp": 1.26
     },
     {
      "q": "1,2",
      "x0": -22.8,
      "z0": 4,
-     "areaAndavel": 846,
-     "props": 12,
+     "areaAndavel": 841,
+     "props": 15,
      "waypoints": 47,
-     "densProp": 1.42,
-     "densWp": 5.55,
-     "espacamento": 8.4,
-     "razaoProp": 3.59,
+     "densProp": 1.78,
+     "densWp": 5.59,
+     "espacamento": 7.49,
+     "razaoProp": 2.58,
      "razaoWp": 1.34
     },
     {
      "q": "1,3",
      "x0": -22.8,
      "z0": 44,
-     "areaAndavel": 688,
-     "props": 7,
-     "waypoints": 23,
-     "densProp": 1.02,
-     "densWp": 3.34,
-     "espacamento": 9.91,
-     "razaoProp": 2.58,
-     "razaoWp": 0.8
+     "areaAndavel": 678,
+     "props": 9,
+     "waypoints": 21,
+     "densProp": 1.33,
+     "densWp": 3.1,
+     "espacamento": 8.68,
+     "razaoProp": 1.93,
+     "razaoWp": 0.74
     },
     {
      "q": "2,0",
      "x0": 0,
      "z0": -76,
-     "areaAndavel": 877,
-     "props": 6,
+     "areaAndavel": 865,
+     "props": 9,
      "waypoints": 28,
-     "densProp": 0.68,
-     "densWp": 3.19,
-     "espacamento": 12.09,
-     "razaoProp": 1.72,
-     "razaoWp": 0.77
+     "densProp": 1.04,
+     "densWp": 3.24,
+     "espacamento": 9.81,
+     "razaoProp": 1.51,
+     "razaoWp": 0.78
     },
     {
      "q": "2,1",
      "x0": 0,
      "z0": -36,
-     "areaAndavel": 842,
-     "props": 13,
+     "areaAndavel": 839,
+     "props": 15,
      "waypoints": 37,
-     "densProp": 1.54,
-     "densWp": 4.4,
-     "espacamento": 8.05,
-     "razaoProp": 3.9,
+     "densProp": 1.79,
+     "densWp": 4.41,
+     "espacamento": 7.48,
+     "razaoProp": 2.59,
      "razaoWp": 1.06
     },
     {
      "q": "2,2",
      "x0": 0,
      "z0": 4,
-     "areaAndavel": 852,
-     "props": 12,
+     "areaAndavel": 851,
+     "props": 13,
      "waypoints": 39,
-     "densProp": 1.41,
-     "densWp": 4.58,
-     "espacamento": 8.43,
-     "razaoProp": 3.57,
+     "densProp": 1.53,
+     "densWp": 4.59,
+     "espacamento": 8.09,
+     "razaoProp": 2.22,
      "razaoWp": 1.1
     },
     {
      "q": "2,3",
      "x0": 0,
      "z0": 44,
-     "areaAndavel": 618,
-     "props": 7,
-     "waypoints": 20,
-     "densProp": 1.13,
-     "densWp": 3.24,
-     "espacamento": 9.39,
-     "razaoProp": 2.86,
-     "razaoWp": 0.78
+     "areaAndavel": 597,
+     "props": 9,
+     "waypoints": 18,
+     "densProp": 1.51,
+     "densWp": 3.01,
+     "espacamento": 8.15,
+     "razaoProp": 2.19,
+     "razaoWp": 0.72
     },
     {
      "q": "3,0",
      "x0": 22.8,
      "z0": -76,
-     "areaAndavel": 889,
-     "props": 0,
+     "areaAndavel": 879,
+     "props": 2,
      "waypoints": 30,
-     "densProp": 0,
-     "densWp": 3.38,
-     "espacamento": 99,
-     "razaoProp": 0,
-     "razaoWp": 0.81
+     "densProp": 0.23,
+     "densWp": 3.41,
+     "espacamento": 20.96,
+     "razaoProp": 0.33,
+     "razaoWp": 0.82
     },
     {
      "q": "3,1",
      "x0": 22.8,
      "z0": -36,
-     "areaAndavel": 900,
-     "props": 0,
+     "areaAndavel": 885,
+     "props": 2,
      "waypoints": 45,
-     "densProp": 0,
-     "densWp": 5,
-     "espacamento": 99,
-     "razaoProp": 0,
-     "razaoWp": 1.2
+     "densProp": 0.23,
+     "densWp": 5.08,
+     "espacamento": 21.04,
+     "razaoProp": 0.33,
+     "razaoWp": 1.22
     },
     {
      "q": "3,2",
      "x0": 22.8,
      "z0": 4,
-     "areaAndavel": 900,
-     "props": 0,
+     "areaAndavel": 890,
+     "props": 2,
      "waypoints": 45,
-     "densProp": 0,
-     "densWp": 5,
-     "espacamento": 99,
-     "razaoProp": 0,
-     "razaoWp": 1.2
+     "densProp": 0.22,
+     "densWp": 5.06,
+     "espacamento": 21.09,
+     "razaoProp": 0.32,
+     "razaoWp": 1.21
     },
     {
      "q": "3,3",
      "x0": 22.8,
      "z0": 44,
-     "areaAndavel": 808,
-     "props": 0,
+     "areaAndavel": 785,
+     "props": 2,
      "waypoints": 20,
-     "densProp": 0,
-     "densWp": 2.47,
-     "espacamento": 99,
-     "razaoProp": 0,
-     "razaoWp": 0.6
+     "densProp": 0.25,
+     "densWp": 2.55,
+     "espacamento": 19.81,
+     "razaoProp": 0.36,
+     "razaoWp": 0.61
     }
    ],
-   "medianaProp": 0.395,
-   "medianaWp": 4.15,
-   "piorRazaoProp": 0,
+   "medianaProp": 0.69,
+   "medianaWp": 4.18,
+   "piorRazaoProp": 0.32,
    "piorRazaoWp": 0.55,
-   "piorEspacamento": 99,
+   "piorEspacamento": 21.09,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "B",
      "bandeira": "E",
      "rotas": 4,
      "comprimentos": [
-      96,
       103.3,
-      117.3,
-      118.4
+      103.3,
+      118.4,
+      136
      ]
     },
     {
@@ -2910,9 +2540,9 @@
      "bandeira": "MID",
      "rotas": 4,
      "comprimentos": [
-      72.2,
-      79.5,
+      75.9,
       90.9,
+      98.2,
       113.2
      ]
     },
@@ -2921,10 +2551,10 @@
      "bandeira": "B",
      "rotas": 4,
      "comprimentos": [
-      39.6,
+      43.2,
       46.9,
-      49.5,
-      61.9
+      61.9,
+      71.8
      ]
     },
     {
@@ -2932,10 +2562,10 @@
      "bandeira": "E",
      "rotas": 4,
      "comprimentos": [
-      32.6,
-      45.1,
-      47.6,
-      66.3
+      38.8,
+      38.8,
+      57.5,
+      62.7
      ]
     },
     {
@@ -2943,9 +2573,9 @@
      "bandeira": "MID",
      "rotas": 4,
      "comprimentos": [
-      62.7,
-      75.1,
+      65.2,
       76.2,
+      86.5,
       93.8
      ]
     },
@@ -2954,10 +2584,10 @@
      "bandeira": "B",
      "rotas": 4,
      "comprimentos": [
-      89.1,
+      95.3,
       98.9,
-      110.3,
-      116.5
+      116.5,
+      121.7
      ]
     }
    ],
@@ -2981,7 +2611,7 @@
      "z": 2.5,
      "distSpawn": 59.5,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 91.8,
+     "maiorLinhaTiro": 89.3,
      "chao": 0,
      "penetracao": 0.03
     },
@@ -3001,2618 +2631,170 @@
   },
   {
    "map": "piscina_treta",
-   "celulasAlcancadas": 21391,
-   "amostrasChao": 1344,
-   "observadores": 336,
-   "corpoDentroDeSolido": 364,
+   "celulasAlcancadas": 25487,
+   "amostrasChao": 1552,
+   "observadores": 392,
+   "corpoDentroDeSolido": 18,
    "submersosAcimaDoPeito": 0,
-   "piorPenetracao": 1.1,
+   "piorPenetracao": 0.45,
    "piores": [
     {
      "tipo": "chao",
-     "x": -7.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -12,
+     "z": 2.5,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -12,
+     "z": 3.5,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -12,
+     "z": 7.5,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -12,
+     "z": 8.5,
+     "pen": 0.45
     }
    ],
    "dentroTodos": [
     {
      "tipo": "chao",
-     "x": -7.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
+     "x": -12,
      "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -7.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
+     "x": 12,
      "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -6.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
+     "x": 12,
      "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -3.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
+     "x": 12,
      "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -3.5,
+     "x": 12,
      "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -3.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
+     "x": 12,
      "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -3.5,
+     "x": 12,
      "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -3.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
+     "x": 12,
      "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -3.5,
+     "x": 12,
      "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "pen": 0.45
     },
     {
      "tipo": "chao",
-     "x": -3.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
+     "x": -7,
+     "z": -16.5,
+     "pen": 0.31
     },
     {
      "tipo": "chao",
-     "x": -2.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 0.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 1.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 2.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 3.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 4.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 5.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 6.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 7.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 8.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 9.5,
-     "pen": 1.1,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": -5.5,
-     "pen": 1.027,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": 3.5,
-     "pen": 1.027,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 11.5,
-     "z": -5.5,
-     "pen": 1.027,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 11.5,
-     "z": 3.5,
-     "pen": 1.027,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -9.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -8.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -7.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -6.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -5.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -4.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -3.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -2.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -1.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": -0.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 0.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 1.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 2.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 3.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 4.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 5.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 6.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 7.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 8.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 9.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -8.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -7.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -6.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -5.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -1.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -0.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 0.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 1.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 4.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 5.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 6.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 7.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -9.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -8.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -7.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -6.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -5.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -4.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -3.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -2.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -1.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": -0.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 0.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 1.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 2.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 3.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 4.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 5.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 6.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 7.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 8.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 9.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 8.5,
-     "z": 10.5,
-     "pen": 0.5,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": -9.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": -8.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": -4.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": 4.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": 8.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": 9.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 11.5,
-     "z": -9.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 11.5,
-     "z": -8.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 11.5,
-     "z": -4.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 11.5,
-     "z": 4.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 11.5,
-     "z": 8.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 11.5,
-     "z": 9.5,
-     "pen": 0.45,
-     "objeto": "(sem nome)"
+     "x": -7,
+     "z": 16.5,
+     "pen": 0.31
     }
    ],
    "spawns": [
@@ -5678,15 +2860,15 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1579,
-     "maiorVisada": 48.6
+     "fracMedia": 0.1278,
+     "maiorVisada": 46.2
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1557,
-     "maiorVisada": 47.7
+     "fracMedia": 0.0984,
+     "maiorVisada": 45.2
     }
    ],
    "exposicaoPorSpawn": [
@@ -5695,80 +2877,80 @@
      "x": -9,
      "z": -21,
      "chao": 0,
-     "obsLonge": 170,
-     "obsVendo": 53,
-     "frac": 0.3118,
-     "maiorVisada": 48.2
+     "obsLonge": 205,
+     "obsVendo": 5,
+     "frac": 0.0244,
+     "maiorVisada": 29.1
     },
     {
      "team": "E",
      "x": -3,
      "z": -21,
      "chao": 0,
-     "obsLonge": 154,
-     "obsVendo": 1,
-     "frac": 0.0065,
-     "maiorVisada": 27.1
+     "obsLonge": 186,
+     "obsVendo": 43,
+     "frac": 0.2312,
+     "maiorVisada": 46.2
     },
     {
      "team": "E",
      "x": 3,
      "z": -21,
      "chao": 0,
-     "obsLonge": 153,
-     "obsVendo": 0,
-     "frac": 0,
-     "maiorVisada": 0
+     "obsLonge": 186,
+     "obsVendo": 43,
+     "frac": 0.2312,
+     "maiorVisada": 46.2
     },
     {
      "team": "E",
      "x": 9,
      "z": -21,
      "chao": 0,
-     "obsLonge": 166,
-     "obsVendo": 52,
-     "frac": 0.3133,
-     "maiorVisada": 48.6
+     "obsLonge": 205,
+     "obsVendo": 5,
+     "frac": 0.0244,
+     "maiorVisada": 29.1
     },
     {
      "team": "B",
      "x": -9,
      "z": 21,
      "chao": 0,
-     "obsLonge": 174,
-     "obsVendo": 51,
-     "frac": 0.2931,
-     "maiorVisada": 47.3
+     "obsLonge": 205,
+     "obsVendo": 4,
+     "frac": 0.0195,
+     "maiorVisada": 29.7
     },
     {
      "team": "B",
      "x": -3,
      "z": 21,
      "chao": 0,
-     "obsLonge": 156,
-     "obsVendo": 2,
-     "frac": 0.0128,
-     "maiorVisada": 28
+     "obsLonge": 186,
+     "obsVendo": 33,
+     "frac": 0.1774,
+     "maiorVisada": 45.2
     },
     {
      "team": "B",
      "x": 3,
      "z": 21,
      "chao": 0,
-     "obsLonge": 153,
-     "obsVendo": 2,
-     "frac": 0.0131,
-     "maiorVisada": 28.4
+     "obsLonge": 186,
+     "obsVendo": 33,
+     "frac": 0.1774,
+     "maiorVisada": 45.2
     },
     {
      "team": "B",
      "x": 9,
      "z": 21,
      "chao": 0,
-     "obsLonge": 168,
-     "obsVendo": 51,
-     "frac": 0.3036,
-     "maiorVisada": 47.7
+     "obsLonge": 205,
+     "obsVendo": 4,
+     "frac": 0.0195,
+     "maiorVisada": 29.7
     }
    ],
    "salaDoSpawn": [
@@ -5776,9 +2958,9 @@
      "team": "E",
      "x": -9,
      "z": -21,
-     "folgaParede": 2.8,
-     "dirPior": 321,
-     "areaContigua": 62.4,
+     "folgaParede": 3.25,
+     "dirPior": 264,
+     "areaContigua": 63.6,
      "okFolga": true,
      "okArea": true
     },
@@ -5786,9 +2968,9 @@
      "team": "E",
      "x": -3,
      "z": -21,
-     "folgaParede": 2.1,
-     "dirPior": 39,
-     "areaContigua": 52.6,
+     "folgaParede": 2.85,
+     "dirPior": 225,
+     "areaContigua": 65.5,
      "okFolga": true,
      "okArea": true
     },
@@ -5796,9 +2978,9 @@
      "team": "E",
      "x": 3,
      "z": -21,
-     "folgaParede": 2.1,
-     "dirPior": 141,
-     "areaContigua": 52.6,
+     "folgaParede": 2.85,
+     "dirPior": 309,
+     "areaContigua": 65.5,
      "okFolga": true,
      "okArea": true
     },
@@ -5806,9 +2988,9 @@
      "team": "E",
      "x": 9,
      "z": -21,
-     "folgaParede": 2.8,
-     "dirPior": 219,
-     "areaContigua": 62.4,
+     "folgaParede": 3.25,
+     "dirPior": 264,
+     "areaContigua": 63.6,
      "okFolga": true,
      "okArea": true
     },
@@ -5816,9 +2998,9 @@
      "team": "B",
      "x": -9,
      "z": 21,
-     "folgaParede": 2.8,
-     "dirPior": 39,
-     "areaContigua": 62.4,
+     "folgaParede": 3.25,
+     "dirPior": 84,
+     "areaContigua": 63.6,
      "okFolga": true,
      "okArea": true
     },
@@ -5826,9 +3008,9 @@
      "team": "B",
      "x": -3,
      "z": 21,
-     "folgaParede": 2.1,
-     "dirPior": 321,
-     "areaContigua": 52.6,
+     "folgaParede": 2.85,
+     "dirPior": 129,
+     "areaContigua": 65.5,
      "okFolga": true,
      "okArea": true
     },
@@ -5836,9 +3018,9 @@
      "team": "B",
      "x": 3,
      "z": 21,
-     "folgaParede": 2.1,
-     "dirPior": 219,
-     "areaContigua": 52.6,
+     "folgaParede": 2.85,
+     "dirPior": 45,
+     "areaContigua": 65.5,
      "okFolga": true,
      "okArea": true
     },
@@ -5846,246 +3028,247 @@
      "team": "B",
      "x": 9,
      "z": 21,
-     "folgaParede": 2.8,
-     "dirPior": 141,
-     "areaContigua": 62.4,
+     "folgaParede": 3.25,
+     "dirPior": 84,
+     "areaContigua": 63.6,
      "okFolga": true,
      "okArea": true
     }
    ],
-   "piorFolga": 2.1,
-   "piorArea": 52.6,
+   "piorFolga": 2.85,
+   "piorArea": 63.6,
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 92,
-   "occPulados": 0,
-   "fracSemMalha": 0.0023,
+   "occMedidos": 1,
+   "occPulados": 19,
+   "fracSemMalha": 0,
    "quadrantes": [
     {
      "q": "0,0",
-     "x0": -16.5,
+     "x0": -21,
      "z0": -24.5,
-     "areaAndavel": 76,
+     "areaAndavel": 62,
      "props": 7,
-     "waypoints": 7,
-     "densProp": 9.17,
-     "densWp": 9.17,
-     "espacamento": 3.3,
-     "razaoProp": 1.27,
-     "razaoWp": 1.23
+     "waypoints": 10,
+     "densProp": 11.27,
+     "densWp": 16.1,
+     "espacamento": 2.98,
+     "razaoProp": 1.92,
+     "razaoWp": 1.73
     },
     {
      "q": "0,1",
-     "x0": -16.5,
+     "x0": -21,
      "z0": -12.3,
-     "areaAndavel": 86,
-     "props": 5,
-     "waypoints": 5,
-     "densProp": 5.81,
-     "densWp": 5.81,
-     "espacamento": 4.15,
-     "razaoProp": 0.81,
-     "razaoWp": 0.78
+     "areaAndavel": 98,
+     "props": 8,
+     "waypoints": 10,
+     "densProp": 8.15,
+     "densWp": 10.19,
+     "espacamento": 3.5,
+     "razaoProp": 1.39,
+     "razaoWp": 1.1
     },
     {
      "q": "0,2",
-     "x0": -16.5,
+     "x0": -21,
      "z0": 0,
-     "areaAndavel": 86,
-     "props": 6,
-     "waypoints": 8,
-     "densProp": 6.97,
-     "densWp": 9.29,
-     "espacamento": 3.79,
-     "razaoProp": 0.97,
-     "razaoWp": 1.25
+     "areaAndavel": 99,
+     "props": 9,
+     "waypoints": 14,
+     "densProp": 9.13,
+     "densWp": 14.2,
+     "espacamento": 3.31,
+     "razaoProp": 1.55,
+     "razaoWp": 1.53
     },
     {
      "q": "0,3",
-     "x0": -16.5,
+     "x0": -21,
      "z0": 12.3,
-     "areaAndavel": 78,
+     "areaAndavel": 64,
      "props": 7,
-     "waypoints": 6,
-     "densProp": 8.95,
-     "densWp": 7.67,
-     "espacamento": 3.34,
-     "razaoProp": 1.24,
-     "razaoWp": 1.03
+     "waypoints": 8,
+     "densProp": 10.95,
+     "densWp": 12.51,
+     "espacamento": 3.02,
+     "razaoProp": 1.86,
+     "razaoWp": 1.34
     },
     {
      "q": "1,0",
-     "x0": -8.3,
+     "x0": -10.5,
      "z0": -24.5,
-     "areaAndavel": 78,
-     "props": 6,
-     "waypoints": 8,
-     "densProp": 7.7,
-     "densWp": 10.26,
-     "espacamento": 3.6,
-     "razaoProp": 1.07,
-     "razaoWp": 1.38
+     "areaAndavel": 104,
+     "props": 3,
+     "waypoints": 10,
+     "densProp": 2.9,
+     "densWp": 9.66,
+     "espacamento": 5.88,
+     "razaoProp": 0.49,
+     "razaoWp": 1.04
     },
     {
      "q": "1,1",
-     "x0": -8.3,
+     "x0": -10.5,
      "z0": -12.3,
-     "areaAndavel": 89,
-     "props": 3,
+     "areaAndavel": 129,
+     "props": 0,
      "waypoints": 0,
-     "densProp": 3.37,
+     "densProp": 0,
      "densWp": 0,
-     "espacamento": 5.44,
-     "razaoProp": 0.47,
+     "espacamento": 99,
+     "razaoProp": 0,
      "razaoWp": 0
     },
     {
      "q": "1,2",
-     "x0": -8.3,
+     "x0": -10.5,
      "z0": 0,
-     "areaAndavel": 89,
-     "props": 3,
+     "areaAndavel": 129,
+     "props": 0,
      "waypoints": 0,
-     "densProp": 3.37,
+     "densProp": 0,
      "densWp": 0,
-     "espacamento": 5.44,
-     "razaoProp": 0.47,
+     "espacamento": 99,
+     "razaoProp": 0,
      "razaoWp": 0
     },
     {
      "q": "1,3",
-     "x0": -8.3,
+     "x0": -10.5,
      "z0": 12.3,
-     "areaAndavel": 81,
-     "props": 6,
-     "waypoints": 8,
-     "densProp": 7.44,
-     "densWp": 9.92,
-     "espacamento": 3.67,
-     "razaoProp": 1.03,
-     "razaoWp": 1.33
+     "areaAndavel": 107,
+     "props": 3,
+     "waypoints": 6,
+     "densProp": 2.81,
+     "densWp": 5.62,
+     "espacamento": 5.97,
+     "razaoProp": 0.48,
+     "razaoWp": 0.6
     },
     {
      "q": "2,0",
      "x0": 0,
      "z0": -24.5,
-     "areaAndavel": 77,
-     "props": 7,
-     "waypoints": 6,
-     "densProp": 9.04,
-     "densWp": 7.75,
-     "espacamento": 3.33,
-     "razaoProp": 1.25,
-     "razaoWp": 1.04
+     "areaAndavel": 104,
+     "props": 4,
+     "waypoints": 13,
+     "densProp": 3.85,
+     "densWp": 12.51,
+     "espacamento": 5.1,
+     "razaoProp": 0.65,
+     "razaoWp": 1.34
     },
     {
      "q": "2,1",
      "x0": 0,
      "z0": -12.3,
-     "areaAndavel": 89,
-     "props": 3,
-     "waypoints": 0,
-     "densProp": 3.37,
-     "densWp": 0,
-     "espacamento": 5.44,
-     "razaoProp": 0.47,
-     "razaoWp": 0
+     "areaAndavel": 129,
+     "props": 0,
+     "waypoints": 6,
+     "densProp": 0,
+     "densWp": 4.66,
+     "espacamento": 99,
+     "razaoProp": 0,
+     "razaoWp": 0.5
     },
     {
      "q": "2,2",
      "x0": 0,
      "z0": 0,
-     "areaAndavel": 89,
-     "props": 3,
-     "waypoints": 0,
-     "densProp": 3.37,
-     "densWp": 0,
-     "espacamento": 5.44,
-     "razaoProp": 0.47,
-     "razaoWp": 0
+     "areaAndavel": 129,
+     "props": 0,
+     "waypoints": 6,
+     "densProp": 0,
+     "densWp": 4.66,
+     "espacamento": 99,
+     "razaoProp": 0,
+     "razaoWp": 0.5
     },
     {
      "q": "2,3",
      "x0": 0,
      "z0": 12.3,
-     "areaAndavel": 80,
-     "props": 7,
-     "waypoints": 6,
-     "densProp": 8.74,
-     "densWp": 7.49,
-     "espacamento": 3.38,
-     "razaoProp": 1.21,
+     "areaAndavel": 107,
+     "props": 4,
+     "waypoints": 10,
+     "densProp": 3.73,
+     "densWp": 9.33,
+     "espacamento": 5.18,
+     "razaoProp": 0.63,
      "razaoWp": 1
     },
     {
      "q": "3,0",
-     "x0": 8.3,
+     "x0": 10.5,
      "z0": -24.5,
-     "areaAndavel": 79,
+     "areaAndavel": 65,
      "props": 7,
-     "waypoints": 7,
-     "densProp": 8.86,
-     "densWp": 8.86,
-     "espacamento": 3.36,
-     "razaoProp": 1.23,
-     "razaoWp": 1.19
+     "waypoints": 6,
+     "densProp": 10.82,
+     "densWp": 9.28,
+     "espacamento": 3.04,
+     "razaoProp": 1.84,
+     "razaoWp": 1
     },
     {
      "q": "3,1",
-     "x0": 8.3,
+     "x0": 10.5,
      "z0": -12.3,
-     "areaAndavel": 89,
-     "props": 5,
-     "waypoints": 3,
-     "densProp": 5.61,
-     "densWp": 3.36,
-     "espacamento": 4.22,
-     "razaoProp": 0.78,
-     "razaoWp": 0.45
+     "areaAndavel": 101,
+     "props": 8,
+     "waypoints": 7,
+     "densProp": 7.91,
+     "densWp": 6.92,
+     "espacamento": 3.56,
+     "razaoProp": 1.35,
+     "razaoWp": 0.74
     },
     {
      "q": "3,2",
-     "x0": 8.3,
+     "x0": 10.5,
      "z0": 0,
-     "areaAndavel": 89,
-     "props": 6,
-     "waypoints": 4,
-     "densProp": 6.73,
-     "densWp": 4.48,
-     "espacamento": 3.86,
-     "razaoProp": 0.93,
-     "razaoWp": 0.6
+     "areaAndavel": 102,
+     "props": 9,
+     "waypoints": 10,
+     "densProp": 8.85,
+     "densWp": 9.83,
+     "espacamento": 3.36,
+     "razaoProp": 1.51,
+     "razaoWp": 1.06
     },
     {
      "q": "3,3",
-     "x0": 8.3,
+     "x0": 10.5,
      "z0": 12.3,
-     "areaAndavel": 81,
+     "areaAndavel": 67,
      "props": 7,
      "waypoints": 6,
-     "densProp": 8.66,
-     "densWp": 7.42,
-     "espacamento": 3.4,
-     "razaoProp": 1.2,
-     "razaoWp": 1
+     "densProp": 10.52,
+     "densWp": 9.01,
+     "espacamento": 3.08,
+     "razaoProp": 1.79,
+     "razaoWp": 0.97
     }
    ],
-   "medianaProp": 7.205,
-   "medianaWp": 7.455,
-   "piorRazaoProp": 0.47,
+   "medianaProp": 5.88,
+   "medianaWp": 9.305,
+   "piorRazaoProp": 0,
    "piorRazaoWp": 0,
-   "piorEspacamento": 5.44,
+   "piorEspacamento": 99,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
      "bandeira": "E",
      "rotas": 4,
      "comprimentos": [
-      11.6,
-      11.6,
-      11.6,
-      11.6
+      11.7,
+      11.7,
+      11.7,
+      11.7
      ]
     },
     {
@@ -6093,17 +3276,18 @@
      "bandeira": "MID",
      "rotas": 2,
      "comprimentos": [
-      41.6,
-      72.8
+      35.6,
+      77.1
      ]
     },
     {
      "time": "E",
      "bandeira": "B",
-     "rotas": 2,
+     "rotas": 3,
      "comprimentos": [
-      45.6,
-      68.8
+      38.7,
+      52.5,
+      71.1
      ]
     },
     {
@@ -6111,8 +3295,8 @@
      "bandeira": "E",
      "rotas": 2,
      "comprimentos": [
-      50.4,
-      68.8
+      39.2,
+      45
      ]
     },
     {
@@ -6121,7 +3305,7 @@
      "rotas": 2,
      "comprimentos": [
       36.8,
-      82.4
+      61.4
      ]
     },
     {
@@ -6129,10 +3313,10 @@
      "bandeira": "B",
      "rotas": 4,
      "comprimentos": [
-      11.6,
-      11.6,
-      11.6,
-      11.6
+      12.3,
+      12.3,
+      12.3,
+      12.3
      ]
     }
    ],
@@ -6145,7 +3329,7 @@
      "z": -13,
      "distSpawn": 8.54,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 37.7,
+     "maiorLinhaTiro": 37.6,
      "chao": 0,
      "penetracao": 0
     },
@@ -6156,7 +3340,7 @@
      "z": 0,
      "distSpawn": 21.21,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 34.1,
+     "maiorLinhaTiro": 33.4,
      "chao": 0,
      "penetracao": 0
     },
@@ -6167,7 +3351,7 @@
      "z": 14,
      "distSpawn": 7.62,
      "timeSpawn": "B",
-     "maiorLinhaTiro": 37.5,
+     "maiorLinhaTiro": 37.6,
      "chao": 0,
      "penetracao": 0
     }
@@ -6176,9 +3360,9 @@
   },
   {
    "map": "loja_h",
-   "celulasAlcancadas": 76599,
-   "amostrasChao": 4516,
-   "observadores": 1119,
+   "celulasAlcancadas": 75368,
+   "amostrasChao": 4439,
+   "observadores": 1107,
    "corpoDentroDeSolido": 0,
    "submersosAcimaDoPeito": 0,
    "piorPenetracao": 0,
@@ -6254,8 +3438,8 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.6124,
-     "maiorVisada": 89.7
+     "fracMedia": 0.5357,
+     "maiorVisada": 87.7
     }
    ],
    "exposicaoPorSpawn": [
@@ -6264,7 +3448,7 @@
      "x": 0,
      "z": -39,
      "chao": 3.4,
-     "obsLonge": 922,
+     "obsLonge": 917,
      "obsVendo": 0,
      "frac": 0,
      "maiorVisada": 0
@@ -6274,7 +3458,7 @@
      "x": -6,
      "z": -39,
      "chao": 3.4,
-     "obsLonge": 928,
+     "obsLonge": 923,
      "obsVendo": 0,
      "frac": 0,
      "maiorVisada": 0
@@ -6284,7 +3468,7 @@
      "x": 6,
      "z": -39,
      "chao": 3.4,
-     "obsLonge": 929,
+     "obsLonge": 924,
      "obsVendo": 0,
      "frac": 0,
      "maiorVisada": 0
@@ -6294,7 +3478,7 @@
      "x": 3,
      "z": -39,
      "chao": 3.4,
-     "obsLonge": 922,
+     "obsLonge": 917,
      "obsVendo": 0,
      "frac": 0,
      "maiorVisada": 0
@@ -6304,40 +3488,40 @@
      "x": -8,
      "z": 55,
      "chao": 0,
-     "obsLonge": 935,
-     "obsVendo": 580,
-     "frac": 0.6203,
-     "maiorVisada": 89.7
+     "obsLonge": 927,
+     "obsVendo": 516,
+     "frac": 0.5566,
+     "maiorVisada": 87.7
     },
     {
      "team": "E",
      "x": -3,
      "z": 55,
      "chao": 0,
-     "obsLonge": 932,
-     "obsVendo": 571,
-     "frac": 0.6127,
-     "maiorVisada": 88.6
+     "obsLonge": 923,
+     "obsVendo": 498,
+     "frac": 0.5395,
+     "maiorVisada": 86.6
     },
     {
      "team": "E",
      "x": 3,
      "z": 55,
      "chao": 0,
-     "obsLonge": 933,
-     "obsVendo": 558,
-     "frac": 0.5981,
-     "maiorVisada": 88.5
+     "obsLonge": 922,
+     "obsVendo": 474,
+     "frac": 0.5141,
+     "maiorVisada": 86.5
     },
     {
      "team": "E",
      "x": 8,
      "z": 55,
      "chao": 0,
-     "obsLonge": 936,
-     "obsVendo": 579,
-     "frac": 0.6186,
-     "maiorVisada": 89.5
+     "obsLonge": 924,
+     "obsVendo": 492,
+     "frac": 0.5325,
+     "maiorVisada": 87.5
     }
    ],
    "salaDoSpawn": [
@@ -6347,7 +3531,7 @@
      "z": -39,
      "folgaParede": 2.45,
      "dirPior": 259,
-     "areaContigua": 46.3,
+     "areaContigua": 51.3,
      "okFolga": true,
      "okArea": true
     },
@@ -6357,7 +3541,7 @@
      "z": -39,
      "folgaParede": 2.45,
      "dirPior": 259,
-     "areaContigua": 43.6,
+     "areaContigua": 43.7,
      "okFolga": true,
      "okArea": true
     },
@@ -6367,7 +3551,7 @@
      "z": -39,
      "folgaParede": 2.45,
      "dirPior": 259,
-     "areaContigua": 43.6,
+     "areaContigua": 43.7,
      "okFolga": true,
      "okArea": true
     },
@@ -6377,7 +3561,7 @@
      "z": -39,
      "folgaParede": 2.45,
      "dirPior": 259,
-     "areaContigua": 47.6,
+     "areaContigua": 51.1,
      "okFolga": true,
      "okArea": true
     },
@@ -6423,7 +3607,7 @@
     }
    ],
    "piorFolga": 2.45,
-   "piorArea": 43.6,
+   "piorArea": 43.7,
    "escadas": [
     {
      "nome": "escada L do mezanino",
@@ -6460,7 +3644,31 @@
      "espelhoMin": 0.17,
      "espelhoMax": 0.17,
      "pisoMed": 0.2911,
-     "larguraMedida": 2.45,
+     "larguraMedida": 2.35,
+     "subida": 3.23,
+     "corrida": 5.26,
+     "inclinacaoGraus": 31.55,
+     "blondel": 0.631,
+     "desvioChaoDegrau": 0.015,
+     "okEspelho": true,
+     "okPiso": true,
+     "okBlondel": true,
+     "okLargura": true,
+     "okInclinacao": true,
+     "okDesvio": true
+    },
+    {
+     "nome": "escada central de carga",
+     "x0": -1.3,
+     "x1": 1.3,
+     "z0": -31,
+     "z1": -25.2,
+     "degraus": 19,
+     "espelhoMed": 0.17,
+     "espelhoMin": 0.17,
+     "espelhoMax": 0.17,
+     "pisoMed": 0.2911,
+     "larguraMedida": 2.35,
      "subida": 3.23,
      "corrida": 5.26,
      "inclinacaoGraus": 31.55,
@@ -6477,15 +3685,15 @@
    "travessia": [
     {
      "nivel": "mezanino",
-     "celulasAlcancadas": 3480,
-     "waypointsNoNivel": 86,
+     "celulasAlcancadas": 3192,
+     "waypointsNoNivel": 85,
      "aEstrelaChega": true
     }
    ],
    "occluderSemMalha": [],
-   "occMedidos": 110,
+   "occMedidos": 331,
    "occPulados": 0,
-   "fracSemMalha": 0.001,
+   "fracSemMalha": 0.0009,
    "quadrantes": [
     {
      "q": "0,0",
@@ -6493,12 +3701,12 @@
      "z0": -57.5,
      "areaAndavel": 90,
      "props": 4,
-     "waypoints": 49,
+     "waypoints": 10,
      "densProp": 4.43,
-     "densWp": 54.22,
+     "densWp": 11.07,
      "espacamento": 4.75,
-     "razaoProp": 1.17,
-     "razaoWp": 5.33
+     "razaoProp": 1.11,
+     "razaoWp": 1.41
     },
     {
      "q": "0,1",
@@ -6506,12 +3714,12 @@
      "z0": -28.8,
      "areaAndavel": 256,
      "props": 11,
-     "waypoints": 38,
+     "waypoints": 20,
      "densProp": 4.29,
-     "densWp": 14.84,
+     "densWp": 7.81,
      "espacamento": 4.83,
-     "razaoProp": 1.13,
-     "razaoWp": 1.46
+     "razaoProp": 1.07,
+     "razaoWp": 0.99
     },
     {
      "q": "0,2",
@@ -6523,8 +3731,8 @@
      "densProp": 2.76,
      "densWp": 6.89,
      "espacamento": 6.02,
-     "razaoProp": 0.73,
-     "razaoWp": 0.68
+     "razaoProp": 0.69,
+     "razaoWp": 0.88
     },
     {
      "q": "0,3",
@@ -6532,90 +3740,90 @@
      "z0": 28.8,
      "areaAndavel": 328,
      "props": 11,
-     "waypoints": 24,
+     "waypoints": 22,
      "densProp": 3.35,
-     "densWp": 7.31,
+     "densWp": 6.7,
      "espacamento": 5.46,
-     "razaoProp": 0.89,
-     "razaoWp": 0.72
+     "razaoProp": 0.84,
+     "razaoWp": 0.85
     },
     {
      "q": "1,0",
      "x0": -18.8,
      "z0": -57.5,
-     "areaAndavel": 177,
-     "props": 24,
-     "waypoints": 75,
-     "densProp": 13.53,
-     "densWp": 42.27,
-     "espacamento": 2.72,
-     "razaoProp": 3.58,
-     "razaoWp": 4.16
+     "areaAndavel": 155,
+     "props": 25,
+     "waypoints": 58,
+     "densProp": 16.13,
+     "densWp": 37.42,
+     "espacamento": 2.49,
+     "razaoProp": 4.03,
+     "razaoWp": 4.75
     },
     {
      "q": "1,1",
      "x0": -18.8,
      "z0": -28.8,
-     "areaAndavel": 408,
-     "props": 46,
-     "waypoints": 45,
-     "densProp": 11.28,
-     "densWp": 11.04,
-     "espacamento": 2.98,
-     "razaoProp": 2.98,
-     "razaoWp": 1.09
+     "areaAndavel": 400,
+     "props": 47,
+     "waypoints": 59,
+     "densProp": 11.76,
+     "densWp": 14.76,
+     "espacamento": 2.92,
+     "razaoProp": 2.94,
+     "razaoWp": 1.88
     },
     {
      "q": "1,2",
      "x0": -18.8,
      "z0": 0,
-     "areaAndavel": 369,
+     "areaAndavel": 366,
      "props": 10,
      "waypoints": 29,
-     "densProp": 2.71,
-     "densWp": 7.87,
-     "espacamento": 6.07,
-     "razaoProp": 0.72,
-     "razaoWp": 0.77
+     "densProp": 2.74,
+     "densWp": 7.93,
+     "espacamento": 6.05,
+     "razaoProp": 0.68,
+     "razaoWp": 1.01
     },
     {
      "q": "1,3",
      "x0": -18.8,
      "z0": 28.8,
-     "areaAndavel": 390,
-     "props": 10,
+     "areaAndavel": 385,
+     "props": 12,
      "waypoints": 34,
-     "densProp": 2.57,
-     "densWp": 8.73,
-     "espacamento": 6.24,
-     "razaoProp": 0.68,
-     "razaoWp": 0.86
+     "densProp": 3.12,
+     "densWp": 8.84,
+     "espacamento": 5.66,
+     "razaoProp": 0.78,
+     "razaoWp": 1.12
     },
     {
      "q": "2,0",
      "x0": 0,
      "z0": -57.5,
-     "areaAndavel": 185,
-     "props": 24,
-     "waypoints": 86,
-     "densProp": 12.98,
-     "densWp": 46.5,
-     "espacamento": 2.78,
-     "razaoProp": 3.43,
-     "razaoWp": 4.57
+     "areaAndavel": 161,
+     "props": 25,
+     "waypoints": 63,
+     "densProp": 15.54,
+     "densWp": 39.16,
+     "espacamento": 2.54,
+     "razaoProp": 3.88,
+     "razaoWp": 4.98
     },
     {
      "q": "2,1",
      "x0": 0,
      "z0": -28.8,
-     "areaAndavel": 406,
-     "props": 52,
-     "waypoints": 52,
-     "densProp": 12.8,
-     "densWp": 12.8,
+     "areaAndavel": 400,
+     "props": 51,
+     "waypoints": 58,
+     "densProp": 12.76,
+     "densWp": 14.51,
      "espacamento": 2.8,
-     "razaoProp": 3.39,
-     "razaoWp": 1.26
+     "razaoProp": 3.19,
+     "razaoWp": 1.84
     },
     {
      "q": "2,2",
@@ -6627,21 +3835,21 @@
      "densProp": 3.1,
      "densWp": 7.74,
      "espacamento": 5.68,
-     "razaoProp": 0.82,
-     "razaoWp": 0.76
+     "razaoProp": 0.77,
+     "razaoWp": 0.98
     },
     {
      "q": "2,3",
      "x0": 0,
      "z0": 28.8,
-     "areaAndavel": 377,
-     "props": 12,
-     "waypoints": 35,
-     "densProp": 3.19,
-     "densWp": 9.29,
-     "espacamento": 5.6,
-     "razaoProp": 0.84,
-     "razaoWp": 0.91
+     "areaAndavel": 369,
+     "props": 14,
+     "waypoints": 34,
+     "densProp": 3.8,
+     "densWp": 9.23,
+     "espacamento": 5.13,
+     "razaoProp": 0.95,
+     "razaoWp": 1.17
     },
     {
      "q": "3,0",
@@ -6649,12 +3857,12 @@
      "z0": -57.5,
      "areaAndavel": 93,
      "props": 4,
-     "waypoints": 37,
+     "waypoints": 7,
      "densProp": 4.3,
-     "densWp": 39.78,
+     "densWp": 7.53,
      "espacamento": 4.82,
-     "razaoProp": 1.14,
-     "razaoWp": 3.91
+     "razaoProp": 1.07,
+     "razaoWp": 0.96
     },
     {
      "q": "3,1",
@@ -6662,12 +3870,12 @@
      "z0": -28.8,
      "areaAndavel": 262,
      "props": 11,
-     "waypoints": 29,
+     "waypoints": 17,
      "densProp": 4.21,
-     "densWp": 11.09,
+     "densWp": 6.5,
      "espacamento": 4.88,
-     "razaoProp": 1.11,
-     "razaoWp": 1.09
+     "razaoProp": 1.05,
+     "razaoWp": 0.83
     },
     {
      "q": "3,2",
@@ -6679,8 +3887,8 @@
      "densProp": 2.74,
      "densWp": 6.57,
      "espacamento": 6.04,
-     "razaoProp": 0.72,
-     "razaoWp": 0.65
+     "razaoProp": 0.68,
+     "razaoWp": 0.83
     },
     {
      "q": "3,3",
@@ -6688,19 +3896,51 @@
      "z0": 28.8,
      "areaAndavel": 331,
      "props": 11,
-     "waypoints": 22,
+     "waypoints": 20,
      "densProp": 3.32,
-     "densWp": 6.64,
+     "densWp": 6.04,
      "espacamento": 5.49,
-     "razaoProp": 0.88,
-     "razaoWp": 0.65
+     "razaoProp": 0.83,
+     "razaoWp": 0.77
     }
    ],
-   "medianaProp": 3.7800000000000002,
-   "medianaWp": 10.165,
+   "medianaProp": 4.005,
+   "medianaWp": 7.869999999999999,
    "piorRazaoProp": 0.68,
-   "piorRazaoWp": 0.65,
-   "piorEspacamento": 6.24,
+   "piorRazaoWp": 0.77,
+   "piorEspacamento": 6.05,
+   "bordasSemGuarda": [
+    {
+     "x": -2.5,
+     "z": -31,
+     "queda": 3.4
+    },
+    {
+     "x": -2.25,
+     "z": -31,
+     "queda": 3.4
+    },
+    {
+     "x": -2,
+     "z": -31,
+     "queda": 3.4
+    },
+    {
+     "x": 2,
+     "z": -31,
+     "queda": 3.4
+    },
+    {
+     "x": 2.25,
+     "z": -31,
+     "queda": 3.4
+    },
+    {
+     "x": 2.5,
+     "z": -31,
+     "queda": 3.4
+    }
+   ],
    "rotasSpawnBandeira": [
     {
      "time": "B",
@@ -6708,7 +3948,7 @@
      "rotas": 2,
      "comprimentos": [
       98.4,
-      103.4
+      98.6
      ]
     },
     {
@@ -6716,7 +3956,7 @@
      "bandeira": "PL",
      "rotas": 2,
      "comprimentos": [
-      89.6,
+      84.7,
       106.5
      ]
     },
@@ -6726,7 +3966,7 @@
      "rotas": 2,
      "comprimentos": [
       34.4,
-      61.8
+      53.5
      ]
     },
     {
@@ -6734,19 +3974,18 @@
      "bandeira": "BL",
      "rotas": 2,
      "comprimentos": [
-      36.3,
+      31.5,
       83.8
      ]
     },
     {
      "time": "E",
      "bandeira": "PO",
-     "rotas": 4,
+     "rotas": 3,
      "comprimentos": [
       26,
-      34,
       95.7,
-      151.2
+      153.2
      ]
     },
     {
@@ -6765,8 +4004,8 @@
      "rotas": 3,
      "comprimentos": [
       90,
-      98,
-      139.8
+      106.5,
+      149.3
      ]
     },
     {
@@ -6830,72 +4069,14 @@
   },
   {
    "map": "ferro_velho",
-   "celulasAlcancadas": 54777,
-   "amostrasChao": 3405,
-   "observadores": 867,
-   "corpoDentroDeSolido": 4,
+   "celulasAlcancadas": 54698,
+   "amostrasChao": 3401,
+   "observadores": 866,
+   "corpoDentroDeSolido": 0,
    "submersosAcimaDoPeito": 0,
-   "piorPenetracao": 0.885,
-   "piores": [
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -30.5,
-     "pen": 0.885,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -16.5,
-     "z": 27.5,
-     "pen": 0.32,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": 33.5,
-     "pen": 0.32,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 19.5,
-     "z": 1.5,
-     "pen": 0.32,
-     "objeto": "(sem nome)"
-    }
-   ],
-   "dentroTodos": [
-    {
-     "tipo": "chao",
-     "x": 3.5,
-     "z": -30.5,
-     "pen": 0.885,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -16.5,
-     "z": 27.5,
-     "pen": 0.32,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": -11.5,
-     "z": 33.5,
-     "pen": 0.32,
-     "objeto": "(sem nome)"
-    },
-    {
-     "tipo": "chao",
-     "x": 19.5,
-     "z": 1.5,
-     "pen": 0.32,
-     "objeto": "(sem nome)"
-    }
-   ],
+   "piorPenetracao": 0,
+   "piores": [],
+   "dentroTodos": [],
    "spawns": [
     {
      "team": "E",
@@ -6959,14 +4140,14 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.3462,
+     "fracMedia": 0.3358,
      "maiorVisada": 71.7
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.2329,
+     "fracMedia": 0.2307,
      "maiorVisada": 61.5
     }
    ],
@@ -6976,9 +4157,9 @@
      "x": -3.6,
      "z": 33,
      "chao": 0,
-     "obsLonge": 644,
-     "obsVendo": 217,
-     "frac": 0.337,
+     "obsLonge": 643,
+     "obsVendo": 212,
+     "frac": 0.3297,
      "maiorVisada": 70.1
     },
     {
@@ -6986,9 +4167,9 @@
      "x": -1.2,
      "z": 33,
      "chao": 0,
-     "obsLonge": 642,
-     "obsVendo": 226,
-     "frac": 0.352,
+     "obsLonge": 641,
+     "obsVendo": 218,
+     "frac": 0.3401,
      "maiorVisada": 68.8
     },
     {
@@ -6996,9 +4177,9 @@
      "x": 1.2,
      "z": 33,
      "chao": 0,
-     "obsLonge": 644,
-     "obsVendo": 226,
-     "frac": 0.3509,
+     "obsLonge": 643,
+     "obsVendo": 218,
+     "frac": 0.339,
      "maiorVisada": 70.8
     },
     {
@@ -7006,9 +4187,9 @@
      "x": 3.6,
      "z": 33,
      "chao": 0,
-     "obsLonge": 644,
-     "obsVendo": 222,
-     "frac": 0.3447,
+     "obsLonge": 643,
+     "obsVendo": 215,
+     "frac": 0.3344,
      "maiorVisada": 71.7
     },
     {
@@ -7047,8 +4228,8 @@
      "z": -25,
      "chao": 0,
      "obsLonge": 570,
-     "obsVendo": 164,
-     "frac": 0.2877,
+     "obsVendo": 159,
+     "frac": 0.2789,
      "maiorVisada": 61.5
     }
    ],
@@ -7129,7 +4310,7 @@
      "z": -25,
      "folgaParede": 1.8,
      "dirPior": 259,
-     "areaContigua": 59.8,
+     "areaContigua": 59.4,
      "okFolga": true,
      "okArea": true
     }
@@ -7139,9 +4320,9 @@
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 100,
+   "occMedidos": 184,
    "occPulados": 0,
-   "fracSemMalha": 0.0017,
+   "fracSemMalha": 0.0014,
    "quadrantes": [
     {
      "q": "0,0",
@@ -7153,8 +4334,8 @@
      "densProp": 5.99,
      "densWp": 9.68,
      "espacamento": 4.08,
-     "razaoProp": 1.5,
-     "razaoWp": 1.09
+     "razaoProp": 1.41,
+     "razaoWp": 1.1
     },
     {
      "q": "0,1",
@@ -7166,8 +4347,8 @@
      "densProp": 14.2,
      "densWp": 12.84,
      "espacamento": 2.65,
-     "razaoProp": 3.55,
-     "razaoWp": 1.45
+     "razaoProp": 3.35,
+     "razaoWp": 1.46
     },
     {
      "q": "0,2",
@@ -7179,8 +4360,8 @@
      "densProp": 14.2,
      "densWp": 11.49,
      "espacamento": 2.65,
-     "razaoProp": 3.55,
-     "razaoWp": 1.3
+     "razaoProp": 3.35,
+     "razaoWp": 1.31
     },
     {
      "q": "0,3",
@@ -7192,8 +4373,8 @@
      "densProp": 21.71,
      "densWp": 9.1,
      "espacamento": 2.15,
-     "razaoProp": 5.43,
-     "razaoWp": 1.03
+     "razaoProp": 5.11,
+     "razaoWp": 1.04
     },
     {
      "q": "1,0",
@@ -7205,8 +4386,8 @@
      "densProp": 4.7,
      "densWp": 6.11,
      "espacamento": 4.61,
-     "razaoProp": 1.18,
-     "razaoWp": 0.69
+     "razaoProp": 1.11,
+     "razaoWp": 0.7
     },
     {
      "q": "1,1",
@@ -7218,8 +4399,8 @@
      "densProp": 2.59,
      "densWp": 9.07,
      "espacamento": 6.21,
-     "razaoProp": 0.65,
-     "razaoWp": 1.02
+     "razaoProp": 0.61,
+     "razaoWp": 1.03
     },
     {
      "q": "1,2",
@@ -7231,7 +4412,7 @@
      "densProp": 5.18,
      "densWp": 8.63,
      "espacamento": 4.39,
-     "razaoProp": 1.29,
+     "razaoProp": 1.22,
      "razaoWp": 0.98
     },
     {
@@ -7244,21 +4425,21 @@
      "densProp": 3.97,
      "densWp": 7.49,
      "espacamento": 5.02,
-     "razaoProp": 0.99,
+     "razaoProp": 0.94,
      "razaoWp": 0.85
     },
     {
      "q": "2,0",
      "x0": 0,
      "z0": -35.5,
-     "areaAndavel": 229,
-     "props": 9,
-     "waypoints": 21,
-     "densProp": 3.93,
-     "densWp": 9.17,
-     "espacamento": 5.04,
-     "razaoProp": 0.98,
-     "razaoWp": 1.04
+     "areaAndavel": 224,
+     "props": 10,
+     "waypoints": 20,
+     "densProp": 4.46,
+     "densWp": 8.93,
+     "espacamento": 4.73,
+     "razaoProp": 1.05,
+     "razaoWp": 1.02
     },
     {
      "q": "2,1",
@@ -7270,8 +4451,8 @@
      "densProp": 2.94,
      "densWp": 10.07,
      "espacamento": 5.83,
-     "razaoProp": 0.73,
-     "razaoWp": 1.14
+     "razaoProp": 0.69,
+     "razaoWp": 1.15
     },
     {
      "q": "2,2",
@@ -7283,7 +4464,7 @@
      "densProp": 3.35,
      "densWp": 8.37,
      "espacamento": 5.47,
-     "razaoProp": 0.84,
+     "razaoProp": 0.79,
      "razaoWp": 0.95
     },
     {
@@ -7296,8 +4477,8 @@
      "densProp": 5.45,
      "densWp": 9.53,
      "espacamento": 4.28,
-     "razaoProp": 1.36,
-     "razaoWp": 1.08
+     "razaoProp": 1.28,
+     "razaoWp": 1.09
     },
     {
      "q": "3,0",
@@ -7309,8 +4490,8 @@
      "densProp": 2.06,
      "densWp": 6.99,
      "espacamento": 6.97,
-     "razaoProp": 0.52,
-     "razaoWp": 0.79
+     "razaoProp": 0.49,
+     "razaoWp": 0.8
     },
     {
      "q": "3,1",
@@ -7322,7 +4503,7 @@
      "densProp": 4.03,
      "densWp": 8.55,
      "espacamento": 4.98,
-     "razaoProp": 1.01,
+     "razaoProp": 0.95,
      "razaoWp": 0.97
     },
     {
@@ -7335,8 +4516,8 @@
      "densProp": 1.17,
      "densWp": 6.63,
      "espacamento": 9.24,
-     "razaoProp": 0.29,
-     "razaoWp": 0.75
+     "razaoProp": 0.28,
+     "razaoWp": 0.76
     },
     {
      "q": "3,3",
@@ -7348,15 +4529,16 @@
      "densProp": 2.91,
      "densWp": 7.47,
      "espacamento": 5.87,
-     "razaoProp": 0.73,
-     "razaoWp": 0.84
+     "razaoProp": 0.69,
+     "razaoWp": 0.85
     }
    ],
-   "medianaProp": 4,
-   "medianaWp": 8.850000000000001,
-   "piorRazaoProp": 0.29,
-   "piorRazaoWp": 0.69,
+   "medianaProp": 4.245,
+   "medianaWp": 8.780000000000001,
+   "piorRazaoProp": 0.28,
+   "piorRazaoWp": 0.7,
    "piorEspacamento": 9.24,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -7459,7 +4641,7 @@
      "z": 4,
      "distSpawn": 30.36,
      "timeSpawn": "B",
-     "maiorLinhaTiro": 53.9,
+     "maiorLinhaTiro": 53.8,
      "chao": 0,
      "penetracao": 0
     },
@@ -7561,7 +4743,7 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1096,
+     "fracMedia": 0.088,
      "maiorVisada": 70
     },
     {
@@ -7579,8 +4761,8 @@
      "z": -42.5,
      "chao": 0,
      "obsLonge": 629,
-     "obsVendo": 72,
-     "frac": 0.1145,
+     "obsVendo": 67,
+     "frac": 0.1065,
      "maiorVisada": 70
     },
     {
@@ -7589,8 +4771,8 @@
      "z": -42.5,
      "chao": 0,
      "obsLonge": 620,
-     "obsVendo": 39,
-     "frac": 0.0629,
+     "obsVendo": 33,
+     "frac": 0.0532,
      "maiorVisada": 44.4
     },
     {
@@ -7599,8 +4781,8 @@
      "z": -42.5,
      "chao": 0,
      "obsLonge": 607,
-     "obsVendo": 48,
-     "frac": 0.0791,
+     "obsVendo": 44,
+     "frac": 0.0725,
      "maiorVisada": 41.9
     },
     {
@@ -7609,8 +4791,8 @@
      "z": -42.5,
      "chao": 0,
      "obsLonge": 593,
-     "obsVendo": 108,
-     "frac": 0.1821,
+     "obsVendo": 71,
+     "frac": 0.1197,
      "maiorVisada": 61.3
     },
     {
@@ -7741,7 +4923,7 @@
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 411,
+   "occMedidos": 433,
    "occPulados": 0,
    "fracSemMalha": 0.0037,
    "quadrantes": [
@@ -7959,6 +5141,7 @@
    "piorRazaoProp": 0.24,
    "piorRazaoWp": 0.76,
    "piorEspacamento": 5.42,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -8066,7 +5249,7 @@
      "z": 6,
      "distSpawn": 34.86,
      "timeSpawn": "B",
-     "maiorLinhaTiro": 56.3,
+     "maiorLinhaTiro": 52.9,
      "chao": 0,
      "penetracao": 0.02
     },
@@ -8555,6 +5738,7 @@
    "piorRazaoProp": 0.38,
    "piorRazaoWp": 0.81,
    "piorEspacamento": 6.61,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -9198,6 +6382,7 @@
    "piorRazaoProp": 0.42,
    "piorRazaoWp": 0.41,
    "piorEspacamento": 4.08,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -9327,9 +6512,9 @@
   },
   {
    "map": "posto_treta",
-   "celulasAlcancadas": 48362,
-   "amostrasChao": 3092,
-   "observadores": 779,
+   "celulasAlcancadas": 46728,
+   "amostrasChao": 2992,
+   "observadores": 758,
    "corpoDentroDeSolido": 0,
    "submersosAcimaDoPeito": 0,
    "piorPenetracao": 0,
@@ -9398,14 +6583,14 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.7205,
+     "fracMedia": 0.8565,
      "maiorVisada": 73.6
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.7321,
+     "fracMedia": 0.8687,
      "maiorVisada": 72.3
     }
    ],
@@ -9415,9 +6600,9 @@
      "x": -8,
      "z": -30,
      "chao": 0,
-     "obsLonge": 543,
-     "obsVendo": 378,
-     "frac": 0.6961,
+     "obsLonge": 528,
+     "obsVendo": 438,
+     "frac": 0.8295,
      "maiorVisada": 73.1
     },
     {
@@ -9425,9 +6610,9 @@
      "x": -2,
      "z": -30,
      "chao": 0,
-     "obsLonge": 520,
-     "obsVendo": 371,
-     "frac": 0.7135,
+     "obsLonge": 503,
+     "obsVendo": 434,
+     "frac": 0.8628,
      "maiorVisada": 70.5
     },
     {
@@ -9435,9 +6620,9 @@
      "x": 4,
      "z": -30,
      "chao": 0,
-     "obsLonge": 528,
-     "obsVendo": 391,
-     "frac": 0.7405,
+     "obsLonge": 512,
+     "obsVendo": 442,
+     "frac": 0.8633,
      "maiorVisada": 70.9
     },
     {
@@ -9445,9 +6630,9 @@
      "x": 10,
      "z": -30,
      "chao": 0,
-     "obsLonge": 556,
-     "obsVendo": 407,
-     "frac": 0.732,
+     "obsLonge": 540,
+     "obsVendo": 470,
+     "frac": 0.8704,
      "maiorVisada": 73.6
     },
     {
@@ -9455,9 +6640,9 @@
      "x": -8,
      "z": 30,
      "chao": 0,
-     "obsLonge": 532,
-     "obsVendo": 372,
-     "frac": 0.6992,
+     "obsLonge": 520,
+     "obsVendo": 438,
+     "frac": 0.8423,
      "maiorVisada": 72.3
     },
     {
@@ -9465,9 +6650,9 @@
      "x": -2,
      "z": 30,
      "chao": 0,
-     "obsLonge": 508,
-     "obsVendo": 371,
-     "frac": 0.7303,
+     "obsLonge": 498,
+     "obsVendo": 435,
+     "frac": 0.8735,
      "maiorVisada": 69.6
     },
     {
@@ -9475,9 +6660,9 @@
      "x": 4,
      "z": 30,
      "chao": 0,
-     "obsLonge": 516,
-     "obsVendo": 392,
-     "frac": 0.7597,
+     "obsLonge": 507,
+     "obsVendo": 445,
+     "frac": 0.8777,
      "maiorVisada": 70
     },
     {
@@ -9485,9 +6670,9 @@
      "x": 10,
      "z": 30,
      "chao": 0,
-     "obsLonge": 541,
-     "obsVendo": 400,
-     "frac": 0.7394,
+     "obsLonge": 531,
+     "obsVendo": 468,
+     "frac": 0.8814,
      "maiorVisada": 71.8
     }
    ],
@@ -9578,9 +6763,9 @@
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 26,
+   "occMedidos": 45,
    "occPulados": 0,
-   "fracSemMalha": 0.0077,
+   "fracSemMalha": 0.0088,
    "quadrantes": [
     {
      "q": "0,0",
@@ -9592,34 +6777,34 @@
      "densProp": 0.92,
      "densWp": 9.17,
      "espacamento": 10.44,
-     "razaoProp": 0.38,
-     "razaoWp": 1.01
+     "razaoProp": 0.26,
+     "razaoWp": 1
     },
     {
      "q": "0,1",
      "x0": -27.5,
      "z0": -17.8,
-     "areaAndavel": 112,
-     "props": 5,
-     "waypoints": 15,
-     "densProp": 4.47,
-     "densWp": 13.42,
-     "espacamento": 4.73,
-     "razaoProp": 1.84,
-     "razaoWp": 1.48
+     "areaAndavel": 130,
+     "props": 12,
+     "waypoints": 18,
+     "densProp": 9.22,
+     "densWp": 13.83,
+     "espacamento": 3.29,
+     "razaoProp": 2.62,
+     "razaoWp": 1.51
     },
     {
      "q": "0,2",
      "x0": -27.5,
      "z0": 0,
-     "areaAndavel": 112,
-     "props": 6,
-     "waypoints": 11,
-     "densProp": 5.37,
-     "densWp": 9.84,
-     "espacamento": 4.32,
-     "razaoProp": 2.21,
-     "razaoWp": 1.09
+     "areaAndavel": 130,
+     "props": 15,
+     "waypoints": 14,
+     "densProp": 11.54,
+     "densWp": 10.77,
+     "espacamento": 2.94,
+     "razaoProp": 3.28,
+     "razaoWp": 1.17
     },
     {
      "q": "0,3",
@@ -9631,112 +6816,112 @@
      "densProp": 0.9,
      "densWp": 9.04,
      "espacamento": 10.52,
-     "razaoProp": 0.37,
-     "razaoWp": 1
+     "razaoProp": 0.26,
+     "razaoWp": 0.99
     },
     {
      "q": "1,0",
      "x0": -13.8,
      "z0": -35.5,
-     "areaAndavel": 196,
-     "props": 5,
+     "areaAndavel": 190,
+     "props": 6,
      "waypoints": 17,
-     "densProp": 2.55,
-     "densWp": 8.67,
-     "espacamento": 6.26,
-     "razaoProp": 1.05,
-     "razaoWp": 0.96
+     "densProp": 3.15,
+     "densWp": 8.93,
+     "espacamento": 5.63,
+     "razaoProp": 0.9,
+     "razaoWp": 0.97
     },
     {
      "q": "1,1",
      "x0": -13.8,
      "z0": -17.8,
-     "areaAndavel": 221,
-     "props": 4,
-     "waypoints": 20,
-     "densProp": 1.81,
-     "densWp": 9.04,
-     "espacamento": 7.44,
-     "razaoProp": 0.74,
-     "razaoWp": 1
+     "areaAndavel": 191,
+     "props": 7,
+     "waypoints": 17,
+     "densProp": 3.66,
+     "densWp": 8.89,
+     "espacamento": 5.23,
+     "razaoProp": 1.04,
+     "razaoWp": 0.97
     },
     {
      "q": "1,2",
      "x0": -13.8,
      "z0": 0,
-     "areaAndavel": 222,
-     "props": 4,
-     "waypoints": 17,
-     "densProp": 1.81,
-     "densWp": 7.67,
-     "espacamento": 7.44,
-     "razaoProp": 0.74,
-     "razaoWp": 0.85
+     "areaAndavel": 191,
+     "props": 8,
+     "waypoints": 15,
+     "densProp": 4.19,
+     "densWp": 7.85,
+     "espacamento": 4.89,
+     "razaoProp": 1.19,
+     "razaoWp": 0.86
     },
     {
      "q": "1,3",
      "x0": -13.8,
      "z0": 17.8,
-     "areaAndavel": 200,
-     "props": 5,
+     "areaAndavel": 194,
+     "props": 6,
      "waypoints": 17,
-     "densProp": 2.5,
-     "densWp": 8.52,
-     "espacamento": 6.32,
-     "razaoProp": 1.03,
-     "razaoWp": 0.94
+     "densProp": 3.1,
+     "densWp": 8.77,
+     "espacamento": 5.68,
+     "razaoProp": 0.88,
+     "razaoWp": 0.96
     },
     {
      "q": "2,0",
      "x0": 0,
      "z0": -35.5,
-     "areaAndavel": 211,
-     "props": 5,
+     "areaAndavel": 206,
+     "props": 6,
      "waypoints": 19,
-     "densProp": 2.37,
-     "densWp": 9.02,
-     "espacamento": 6.49,
-     "razaoProp": 0.97,
+     "densProp": 2.91,
+     "densWp": 9.22,
+     "espacamento": 5.86,
+     "razaoProp": 0.83,
      "razaoWp": 1
     },
     {
      "q": "2,1",
      "x0": 0,
      "z0": -17.8,
-     "areaAndavel": 224,
-     "props": 5,
+     "areaAndavel": 209,
+     "props": 6,
      "waypoints": 22,
-     "densProp": 2.23,
-     "densWp": 9.82,
-     "espacamento": 6.7,
-     "razaoProp": 0.92,
-     "razaoWp": 1.08
+     "densProp": 2.88,
+     "densWp": 10.54,
+     "espacamento": 5.9,
+     "razaoProp": 0.82,
+     "razaoWp": 1.15
     },
     {
      "q": "2,2",
      "x0": 0,
      "z0": 0,
-     "areaAndavel": 221,
+     "areaAndavel": 206,
      "props": 8,
      "waypoints": 20,
-     "densProp": 3.61,
-     "densWp": 9.04,
-     "espacamento": 5.26,
-     "razaoProp": 1.48,
-     "razaoWp": 1
+     "densProp": 3.88,
+     "densWp": 9.7,
+     "espacamento": 5.08,
+     "razaoProp": 1.1,
+     "razaoWp": 1.06
     },
     {
      "q": "2,3",
      "x0": 0,
      "z0": 17.8,
-     "areaAndavel": 214,
-     "props": 4,
+     "areaAndavel": 209,
+     "props": 5,
      "waypoints": 19,
-     "densProp": 1.87,
-     "densWp": 8.88,
-     "espacamento": 7.32,
-     "razaoProp": 0.77,
-     "razaoWp": 0.98
+     "densProp": 2.39,
+     "densWp": 9.08,
+     "espacamento": 6.47,
+     "razaoProp": 0.68,
+     "razaoWp": 0.99
     },
     {
      "q": "3,0",
@@ -9748,33 +6933,33 @@
      "densProp": 3.53,
      "densWp": 9.18,
      "espacamento": 5.32,
-     "razaoProp": 1.45,
-     "razaoWp": 1.01
+     "razaoProp": 1,
+     "razaoWp": 1
     },
     {
      "q": "3,1",
      "x0": 13.8,
      "z0": -17.8,
-     "areaAndavel": 183,
-     "props": 4,
-     "waypoints": 20,
-     "densProp": 2.19,
-     "densWp": 10.94,
-     "espacamento": 6.76,
-     "razaoProp": 0.9,
-     "razaoWp": 1.21
+     "areaAndavel": 170,
+     "props": 6,
+     "waypoints": 19,
+     "densProp": 3.54,
+     "densWp": 11.2,
+     "espacamento": 5.32,
+     "razaoProp": 1.01,
+     "razaoWp": 1.22
     },
     {
      "q": "3,2",
      "x0": 13.8,
      "z0": 0,
-     "areaAndavel": 184,
-     "props": 6,
-     "waypoints": 17,
-     "densProp": 3.27,
-     "densWp": 9.26,
-     "espacamento": 5.53,
-     "razaoProp": 1.34,
+     "areaAndavel": 171,
+     "props": 8,
+     "waypoints": 16,
+     "densProp": 4.69,
+     "densWp": 9.38,
+     "espacamento": 4.62,
+     "razaoProp": 1.33,
      "razaoWp": 1.02
     },
     {
@@ -9785,17 +6970,18 @@
      "props": 5,
      "waypoints": 13,
      "densProp": 3.5,
-     "densWp": 9.09,
-     "espacamento": 5.35,
-     "razaoProp": 1.44,
-     "razaoWp": 1
+     "densWp": 9.11,
+     "espacamento": 5.34,
+     "razaoProp": 1,
+     "razaoWp": 0.99
     }
    ],
-   "medianaProp": 2.435,
-   "medianaWp": 9.065,
-   "piorRazaoProp": 0.37,
-   "piorRazaoWp": 0.85,
+   "medianaProp": 3.5149999999999997,
+   "medianaWp": 9.175,
+   "piorRazaoProp": 0.26,
+   "piorRazaoWp": 0.86,
    "piorEspacamento": 10.52,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -9811,12 +6997,10 @@
     {
      "time": "E",
      "bandeira": "MID",
-     "rotas": 4,
+     "rotas": 2,
      "comprimentos": [
-      34.8,
-      40.5,
-      67.7,
-      74.5
+      36.8,
+      79.3
      ]
     },
     {
@@ -9824,10 +7008,10 @@
      "bandeira": "B",
      "rotas": 4,
      "comprimentos": [
-      47,
-      54.6,
-      69.1,
-      84.7
+      56.6,
+      71.1,
+      86.3,
+      143.9
      ]
     },
     {
@@ -9835,21 +7019,19 @@
      "bandeira": "E",
      "rotas": 4,
      "comprimentos": [
-      47,
-      54.6,
-      69.1,
-      84.7
+      56.6,
+      71.1,
+      86.3,
+      143.9
      ]
     },
     {
      "time": "B",
      "bandeira": "MID",
-     "rotas": 4,
+     "rotas": 2,
      "comprimentos": [
-      34.8,
-      34.8,
-      51.2,
-      67.7
+      36.8,
+      79.3
      ]
     },
     {
@@ -9864,7 +7046,7 @@
      ]
     }
    ],
-   "piorRotas": 4,
+   "piorRotas": 2,
    "bandeiras": [
     {
      "id": "E",
@@ -10157,7 +7339,7 @@
    "occluderSemMalha": [],
    "occMedidos": 122,
    "occPulados": 0,
-   "fracSemMalha": 0.004,
+   "fracSemMalha": 0.0041,
    "quadrantes": [
     {
      "q": "0,0",
@@ -10373,6 +7555,7 @@
    "piorRazaoProp": 0.42,
    "piorRazaoWp": 0.73,
    "piorEspacamento": 8.64,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -10484,57 +7667,49 @@
      "tipo": "chao",
      "x": 9.5,
      "z": 0.5,
-     "pen": 1.31,
-     "objeto": "(sem nome)"
+     "pen": 1.31
     },
     {
      "tipo": "chao",
      "x": 8.5,
      "z": 2.5,
-     "pen": 1.253,
-     "objeto": "(sem nome)"
+     "pen": 1.253
     },
     {
      "tipo": "chao",
      "x": 8.5,
      "z": 4.5,
-     "pen": 1.205,
-     "objeto": "(sem nome)"
+     "pen": 1.205
     },
     {
      "tipo": "chao",
      "x": 8.5,
      "z": 3.5,
-     "pen": 1.198,
-     "objeto": "(sem nome)"
+     "pen": 1.198
     },
     {
      "tipo": "chao",
      "x": 9.5,
      "z": 1.5,
-     "pen": 1.033,
-     "objeto": "(sem nome)"
+     "pen": 1.033
     },
     {
      "tipo": "chao",
      "x": 9.5,
      "z": 2.5,
-     "pen": 0.796,
-     "objeto": "(sem nome)"
+     "pen": 0.796
     },
     {
      "tipo": "chao",
      "x": 9.5,
      "z": 3.5,
-     "pen": 0.661,
-     "objeto": "(sem nome)"
+     "pen": 0.661
     },
     {
      "tipo": "chao",
      "x": 9.5,
      "z": 4.5,
-     "pen": 0.651,
-     "objeto": "(sem nome)"
+     "pen": 0.651
     }
    ],
    "dentroTodos": [
@@ -10542,57 +7717,49 @@
      "tipo": "chao",
      "x": 9.5,
      "z": 0.5,
-     "pen": 1.31,
-     "objeto": "(sem nome)"
+     "pen": 1.31
     },
     {
      "tipo": "chao",
      "x": 8.5,
      "z": 2.5,
-     "pen": 1.253,
-     "objeto": "(sem nome)"
+     "pen": 1.253
     },
     {
      "tipo": "chao",
      "x": 8.5,
      "z": 4.5,
-     "pen": 1.205,
-     "objeto": "(sem nome)"
+     "pen": 1.205
     },
     {
      "tipo": "chao",
      "x": 8.5,
      "z": 3.5,
-     "pen": 1.198,
-     "objeto": "(sem nome)"
+     "pen": 1.198
     },
     {
      "tipo": "chao",
      "x": 9.5,
      "z": 1.5,
-     "pen": 1.033,
-     "objeto": "(sem nome)"
+     "pen": 1.033
     },
     {
      "tipo": "chao",
      "x": 9.5,
      "z": 2.5,
-     "pen": 0.796,
-     "objeto": "(sem nome)"
+     "pen": 0.796
     },
     {
      "tipo": "chao",
      "x": 9.5,
      "z": 3.5,
-     "pen": 0.661,
-     "objeto": "(sem nome)"
+     "pen": 0.661
     },
     {
      "tipo": "chao",
      "x": 9.5,
      "z": 4.5,
-     "pen": 0.651,
-     "objeto": "(sem nome)"
+     "pen": 0.651
     }
    ],
    "spawns": [
@@ -11056,6 +8223,7 @@
    "piorRazaoProp": 0,
    "piorRazaoWp": 0.83,
    "piorEspacamento": 99,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -11633,6 +8801,7 @@
    "piorRazaoProp": 0.13,
    "piorRazaoWp": 0.78,
    "piorEspacamento": 14.05,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -11732,14 +8901,184 @@
   },
   {
    "map": "parque_treta",
-   "celulasAlcancadas": 66801,
-   "amostrasChao": 4241,
-   "observadores": 1034,
-   "corpoDentroDeSolido": 0,
+   "celulasAlcancadas": 71572,
+   "amostrasChao": 4496,
+   "observadores": 1113,
+   "corpoDentroDeSolido": 20,
    "submersosAcimaDoPeito": 0,
-   "piorPenetracao": 0,
-   "piores": [],
-   "dentroTodos": [],
+   "piorPenetracao": 1.06,
+   "piores": [
+    {
+     "tipo": "chao",
+     "x": -20.2,
+     "z": -31.2,
+     "pen": 1.06
+    },
+    {
+     "tipo": "chao",
+     "x": -20.2,
+     "z": 30.8,
+     "pen": 1.06
+    },
+    {
+     "tipo": "chao",
+     "x": -23.2,
+     "z": -31.2,
+     "pen": 0.7
+    },
+    {
+     "tipo": "chao",
+     "x": -23.2,
+     "z": 30.8,
+     "pen": 0.7
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": 12.8,
+     "pen": 0.45
+    }
+   ],
+   "dentroTodos": [
+    {
+     "tipo": "chao",
+     "x": -20.2,
+     "z": -31.2,
+     "pen": 1.06
+    },
+    {
+     "tipo": "chao",
+     "x": -20.2,
+     "z": 30.8,
+     "pen": 1.06
+    },
+    {
+     "tipo": "chao",
+     "x": -23.2,
+     "z": -31.2,
+     "pen": 0.7
+    },
+    {
+     "tipo": "chao",
+     "x": -23.2,
+     "z": 30.8,
+     "pen": 0.7
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": 12.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -15.2,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -15.2,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -15.2,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -15.2,
+     "z": 12.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 15.8,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 15.8,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 15.8,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 15.8,
+     "z": 12.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 16.8,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 16.8,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 16.8,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 16.8,
+     "z": 12.8,
+     "pen": 0.45
+    }
+   ],
    "spawns": [
     {
      "team": "E",
@@ -11803,15 +9142,15 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.2672,
-     "maiorVisada": 85.6
+     "fracMedia": 0.519,
+     "maiorVisada": 86.2
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.2747,
-     "maiorVisada": 83.4
+     "fracMedia": 0.5222,
+     "maiorVisada": 84.1
     }
    ],
    "exposicaoPorSpawn": [
@@ -11820,9 +9159,9 @@
      "x": -9,
      "z": -38.5,
      "chao": 0,
-     "obsLonge": 831,
-     "obsVendo": 267,
-     "frac": 0.3213,
+     "obsLonge": 881,
+     "obsVendo": 367,
+     "frac": 0.4166,
      "maiorVisada": 83.4
     },
     {
@@ -11830,19 +9169,19 @@
      "x": -3,
      "z": -38.5,
      "chao": 0,
-     "obsLonge": 815,
-     "obsVendo": 175,
-     "frac": 0.2147,
-     "maiorVisada": 85.4
+     "obsLonge": 876,
+     "obsVendo": 549,
+     "frac": 0.6267,
+     "maiorVisada": 86.2
     },
     {
      "team": "E",
      "x": 3,
      "z": -38.5,
      "chao": 0,
-     "obsLonge": 808,
-     "obsVendo": 180,
-     "frac": 0.2228,
+     "obsLonge": 874,
+     "obsVendo": 560,
+     "frac": 0.6407,
      "maiorVisada": 85.6
     },
     {
@@ -11850,9 +9189,9 @@
      "x": 9,
      "z": -38.5,
      "chao": 0,
-     "obsLonge": 806,
-     "obsVendo": 250,
-     "frac": 0.3102,
+     "obsLonge": 875,
+     "obsVendo": 343,
+     "frac": 0.392,
      "maiorVisada": 82.9
     },
     {
@@ -11860,9 +9199,9 @@
      "x": -9,
      "z": 38.5,
      "chao": 0,
-     "obsLonge": 802,
-     "obsVendo": 269,
-     "frac": 0.3354,
+     "obsLonge": 862,
+     "obsVendo": 360,
+     "frac": 0.4176,
      "maiorVisada": 81.3
     },
     {
@@ -11870,30 +9209,30 @@
      "x": -3,
      "z": 38.5,
      "chao": 0,
-     "obsLonge": 791,
-     "obsVendo": 173,
-     "frac": 0.2187,
-     "maiorVisada": 83.2
+     "obsLonge": 855,
+     "obsVendo": 537,
+     "frac": 0.6281,
+     "maiorVisada": 84
     },
     {
      "team": "B",
      "x": 3,
      "z": 38.5,
      "chao": 0,
-     "obsLonge": 789,
-     "obsVendo": 175,
-     "frac": 0.2218,
-     "maiorVisada": 83.4
+     "obsLonge": 855,
+     "obsVendo": 550,
+     "frac": 0.6433,
+     "maiorVisada": 84.1
     },
     {
      "team": "B",
      "x": 9,
      "z": 38.5,
      "chao": 0,
-     "obsLonge": 787,
-     "obsVendo": 254,
-     "frac": 0.3227,
-     "maiorVisada": 80.8
+     "obsLonge": 855,
+     "obsVendo": 342,
+     "frac": 0.4,
+     "maiorVisada": 81.4
     }
    ],
    "salaDoSpawn": [
@@ -11913,7 +9252,7 @@
      "z": -38.5,
      "folgaParede": 2.75,
      "dirPior": 264,
-     "areaContigua": 60.1,
+     "areaContigua": 60.8,
      "okFolga": true,
      "okArea": true
     },
@@ -11923,7 +9262,7 @@
      "z": -38.5,
      "folgaParede": 2.75,
      "dirPior": 264,
-     "areaContigua": 60.4,
+     "areaContigua": 61.1,
      "okFolga": true,
      "okArea": true
     },
@@ -11953,7 +9292,7 @@
      "z": 38.5,
      "folgaParede": 2.75,
      "dirPior": 84,
-     "areaContigua": 61.4,
+     "areaContigua": 61.8,
      "okFolga": true,
      "okArea": true
     },
@@ -11963,7 +9302,7 @@
      "z": 38.5,
      "folgaParede": 2.75,
      "dirPior": 84,
-     "areaContigua": 61.6,
+     "areaContigua": 61.9,
      "okFolga": true,
      "okArea": true
     },
@@ -11983,224 +9322,225 @@
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 89,
-   "occPulados": 3,
-   "fracSemMalha": 0.0033,
+   "occMedidos": 48,
+   "occPulados": 0,
+   "fracSemMalha": 0.0037,
    "quadrantes": [
     {
      "q": "0,0",
      "x0": -31.2,
      "z0": -41.2,
-     "areaAndavel": 242,
-     "props": 19,
-     "waypoints": 31,
-     "densProp": 7.84,
-     "densWp": 12.8,
-     "espacamento": 3.57,
-     "razaoProp": 2.47,
-     "razaoWp": 1.36
+     "areaAndavel": 301,
+     "props": 1,
+     "waypoints": 33,
+     "densProp": 0.33,
+     "densWp": 10.97,
+     "espacamento": 17.34,
+     "razaoProp": 0.33,
+     "razaoWp": 1.19
     },
     {
      "q": "0,1",
      "x0": -31.2,
      "z0": -20.6,
-     "areaAndavel": 263,
-     "props": 10,
-     "waypoints": 27,
-     "densProp": 3.81,
-     "densWp": 10.28,
-     "espacamento": 5.12,
-     "razaoProp": 1.2,
-     "razaoWp": 1.09
+     "areaAndavel": 286,
+     "props": 2,
+     "waypoints": 26,
+     "densProp": 0.7,
+     "densWp": 9.09,
+     "espacamento": 11.96,
+     "razaoProp": 0.69,
+     "razaoWp": 0.99
     },
     {
      "q": "0,2",
      "x0": -31.2,
      "z0": 0,
-     "areaAndavel": 274,
-     "props": 10,
-     "waypoints": 27,
-     "densProp": 3.65,
-     "densWp": 9.86,
-     "espacamento": 5.23,
-     "razaoProp": 1.15,
-     "razaoWp": 1.05
+     "areaAndavel": 290,
+     "props": 3,
+     "waypoints": 26,
+     "densProp": 1.04,
+     "densWp": 8.97,
+     "espacamento": 9.83,
+     "razaoProp": 1.03,
+     "razaoWp": 0.97
     },
     {
      "q": "0,3",
      "x0": -31.2,
      "z0": 20.6,
-     "areaAndavel": 286,
-     "props": 17,
-     "waypoints": 30,
-     "densProp": 5.94,
-     "densWp": 10.49,
-     "espacamento": 4.1,
-     "razaoProp": 1.87,
-     "razaoWp": 1.11
+     "areaAndavel": 301,
+     "props": 1,
+     "waypoints": 28,
+     "densProp": 0.33,
+     "densWp": 9.31,
+     "espacamento": 17.34,
+     "razaoProp": 0.33,
+     "razaoWp": 1.01
     },
     {
      "q": "1,0",
      "x0": -15.6,
      "z0": -41.2,
-     "areaAndavel": 275,
-     "props": 7,
-     "waypoints": 29,
-     "densProp": 2.55,
-     "densWp": 10.56,
-     "espacamento": 6.26,
-     "razaoProp": 0.8,
-     "razaoWp": 1.12
+     "areaAndavel": 297,
+     "props": 3,
+     "waypoints": 33,
+     "densProp": 1.01,
+     "densWp": 11.11,
+     "espacamento": 9.95,
+     "razaoProp": 1,
+     "razaoWp": 1.2
     },
     {
      "q": "1,1",
      "x0": -15.6,
      "z0": -20.6,
-     "areaAndavel": 230,
-     "props": 6,
-     "waypoints": 22,
-     "densProp": 2.61,
-     "densWp": 9.58,
-     "espacamento": 6.19,
-     "razaoProp": 0.82,
+     "areaAndavel": 245,
+     "props": 3,
+     "waypoints": 23,
+     "densProp": 1.23,
+     "densWp": 9.4,
+     "espacamento": 9.03,
+     "razaoProp": 1.22,
      "razaoWp": 1.02
     },
     {
      "q": "1,2",
      "x0": -15.6,
      "z0": 0,
-     "areaAndavel": 235,
-     "props": 6,
-     "waypoints": 22,
-     "densProp": 2.55,
-     "densWp": 9.34,
-     "espacamento": 6.26,
-     "razaoProp": 0.8,
-     "razaoWp": 0.99
+     "areaAndavel": 247,
+     "props": 3,
+     "waypoints": 23,
+     "densProp": 1.21,
+     "densWp": 9.31,
+     "espacamento": 9.08,
+     "razaoProp": 1.2,
+     "razaoWp": 1.01
     },
     {
      "q": "1,3",
      "x0": -15.6,
      "z0": 20.6,
-     "areaAndavel": 277,
-     "props": 8,
-     "waypoints": 24,
-     "densProp": 2.89,
-     "densWp": 8.66,
-     "espacamento": 5.88,
-     "razaoProp": 0.91,
-     "razaoWp": 0.92
+     "areaAndavel": 298,
+     "props": 3,
+     "waypoints": 28,
+     "densProp": 1.01,
+     "densWp": 9.39,
+     "espacamento": 9.97,
+     "razaoProp": 1,
+     "razaoWp": 1.02
     },
     {
      "q": "2,0",
      "x0": 0,
      "z0": -41.2,
-     "areaAndavel": 280,
-     "props": 8,
-     "waypoints": 29,
-     "densProp": 2.85,
-     "densWp": 10.35,
-     "espacamento": 5.92,
-     "razaoProp": 0.9,
-     "razaoWp": 1.1
+     "areaAndavel": 302,
+     "props": 3,
+     "waypoints": 33,
+     "densProp": 0.99,
+     "densWp": 10.93,
+     "espacamento": 10.03,
+     "razaoProp": 0.98,
+     "razaoWp": 1.18
     },
     {
      "q": "2,1",
      "x0": 0,
      "z0": -20.6,
-     "areaAndavel": 236,
-     "props": 6,
-     "waypoints": 21,
-     "densProp": 2.54,
-     "densWp": 8.88,
-     "espacamento": 6.28,
-     "razaoProp": 0.8,
-     "razaoWp": 0.94
+     "areaAndavel": 249,
+     "props": 3,
+     "waypoints": 23,
+     "densProp": 1.2,
+     "densWp": 9.22,
+     "espacamento": 9.12,
+     "razaoProp": 1.19,
+     "razaoWp": 1
     },
     {
      "q": "2,2",
      "x0": 0,
      "z0": 0,
-     "areaAndavel": 238,
-     "props": 7,
-     "waypoints": 21,
-     "densProp": 2.94,
-     "densWp": 8.83,
-     "espacamento": 5.83,
-     "razaoProp": 0.92,
-     "razaoWp": 0.94
+     "areaAndavel": 252,
+     "props": 4,
+     "waypoints": 23,
+     "densProp": 1.59,
+     "densWp": 9.13,
+     "espacamento": 7.94,
+     "razaoProp": 1.57,
+     "razaoWp": 0.99
     },
     {
      "q": "2,3",
      "x0": 0,
      "z0": 20.6,
-     "areaAndavel": 281,
-     "props": 7,
-     "waypoints": 25,
-     "densProp": 2.49,
-     "densWp": 8.9,
-     "espacamento": 6.33,
-     "razaoProp": 0.78,
-     "razaoWp": 0.94
+     "areaAndavel": 303,
+     "props": 3,
+     "waypoints": 28,
+     "densProp": 0.99,
+     "densWp": 9.23,
+     "espacamento": 10.06,
+     "razaoProp": 0.98,
+     "razaoWp": 1
     },
     {
      "q": "3,0",
      "x0": 15.6,
      "z0": -41.2,
-     "areaAndavel": 295,
-     "props": 11,
-     "waypoints": 28,
-     "densProp": 3.73,
-     "densWp": 9.5,
-     "espacamento": 5.18,
-     "razaoProp": 1.17,
-     "razaoWp": 1.01
+     "areaAndavel": 301,
+     "props": 1,
+     "waypoints": 27,
+     "densProp": 0.33,
+     "densWp": 8.98,
+     "espacamento": 17.34,
+     "razaoProp": 0.33,
+     "razaoWp": 0.97
     },
     {
      "q": "3,1",
      "x0": 15.6,
      "z0": -20.6,
-     "areaAndavel": 238,
-     "props": 10,
-     "waypoints": 18,
-     "densProp": 4.19,
-     "densWp": 7.55,
-     "espacamento": 4.88,
-     "razaoProp": 1.32,
-     "razaoWp": 0.8
+     "areaAndavel": 250,
+     "props": 4,
+     "waypoints": 17,
+     "densProp": 1.6,
+     "densWp": 6.81,
+     "espacamento": 7.9,
+     "razaoProp": 1.58,
+     "razaoWp": 0.74
     },
     {
      "q": "3,2",
      "x0": 15.6,
      "z0": 0,
-     "areaAndavel": 232,
-     "props": 9,
+     "areaAndavel": 251,
+     "props": 4,
      "waypoints": 16,
-     "densProp": 3.87,
-     "densWp": 6.88,
-     "espacamento": 5.08,
-     "razaoProp": 1.22,
-     "razaoWp": 0.73
+     "densProp": 1.59,
+     "densWp": 6.37,
+     "espacamento": 7.92,
+     "razaoProp": 1.57,
+     "razaoWp": 0.69
     },
     {
      "q": "3,3",
      "x0": 15.6,
      "z0": 20.6,
-     "areaAndavel": 293,
-     "props": 10,
-     "waypoints": 24,
-     "densProp": 3.42,
-     "densWp": 8.2,
-     "espacamento": 5.41,
-     "razaoProp": 1.08,
-     "razaoWp": 0.87
+     "areaAndavel": 301,
+     "props": 1,
+     "waypoints": 23,
+     "densProp": 0.33,
+     "densWp": 7.64,
+     "espacamento": 17.35,
+     "razaoProp": 0.33,
+     "razaoWp": 0.83
     }
    ],
-   "medianaProp": 3.1799999999999997,
-   "medianaWp": 9.42,
-   "piorRazaoProp": 0.78,
-   "piorRazaoWp": 0.73,
-   "piorEspacamento": 6.33,
+   "medianaProp": 1.01,
+   "medianaWp": 9.225000000000001,
+   "piorRazaoProp": 0.33,
+   "piorRazaoWp": 0.69,
+   "piorEspacamento": 17.35,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -12208,9 +9548,9 @@
      "rotas": 4,
      "comprimentos": [
       28.3,
-      39.2,
-      54.6,
-      95.7
+      30.9,
+      41.8,
+      74.6
      ]
     },
     {
@@ -12218,9 +9558,9 @@
      "bandeira": "MID",
      "rotas": 4,
      "comprimentos": [
-      61.8,
-      68.2,
-      87.4,
+      56.5,
+      63.7,
+      67.4,
       89.3
      ]
     },
@@ -12229,10 +9569,10 @@
      "bandeira": "B",
      "rotas": 4,
      "comprimentos": [
-      82.9,
-      90.1,
-      101.3,
-      105.5
+      80.2,
+      85.5,
+      90.8,
+      122.1
      ]
     },
     {
@@ -12240,9 +9580,9 @@
      "bandeira": "E",
      "rotas": 3,
      "comprimentos": [
-      85.5,
+      82.9,
       89,
-      107.4
+      108.2
      ]
     },
     {
@@ -12250,10 +9590,10 @@
      "bandeira": "MID",
      "rotas": 4,
      "comprimentos": [
+      30.1,
       32.8,
-      33.6,
-      50.1,
-      52.8
+      41.8,
+      46.4
      ]
     },
     {
@@ -12277,7 +9617,7 @@
      "z": -33,
      "distSpawn": 10.55,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 82.6,
+     "maiorLinhaTiro": 84.3,
      "chao": 0,
      "penetracao": 0.025
     },
@@ -12301,7 +9641,7 @@
      "timeSpawn": "B",
      "maiorLinhaTiro": 87.1,
      "chao": 0,
-     "penetracao": 0.025
+     "penetracao": 0.045
     }
    ],
    "alturaTrianguloMin": 4.79
@@ -12319,57 +9659,49 @@
      "tipo": "chao",
      "x": -11.2,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -9.2,
      "z": 21.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -9.2,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     }
    ],
    "dentroTodos": [
@@ -12377,386 +9709,331 @@
      "tipo": "chao",
      "x": -11.2,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -10.2,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -9.2,
      "z": 21.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -9.2,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -9.2,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -9.2,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -9.2,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -9.2,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -8.2,
      "z": 21.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -8.2,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -8.2,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -8.2,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -8.2,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -8.2,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -7.2,
      "z": 21.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -7.2,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -7.2,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -7.2,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -7.2,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -6.2,
      "z": 21.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -6.2,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -6.2,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -6.2,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": -6.2,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-7-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 6.8,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 6.8,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 6.8,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 6.8,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 6.8,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 7.8,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 7.8,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 7.8,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 7.8,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 7.8,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 8.8,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 8.8,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 8.8,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 8.8,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 8.8,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 8.8,
      "z": 27.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 9.8,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 9.8,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 9.8,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 9.8,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 9.8,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 10.8,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 10.8,
      "z": 23.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 10.8,
      "z": 24.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 10.8,
      "z": 25.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 10.8,
      "z": 26.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     },
     {
      "tipo": "chao",
      "x": 11.8,
      "z": 22.8,
-     "pen": 0.3,
-     "objeto": "sertao-casa-pedra-8-box-batch-3"
+     "pen": 0.3
     }
    ],
    "spawns": [
@@ -13220,6 +10497,7 @@
    "piorRazaoProp": 0.5,
    "piorRazaoWp": 0.72,
    "piorEspacamento": 8.23,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
@@ -13321,168 +10599,302 @@
   },
   {
    "map": "penitenciaria",
-   "celulasAlcancadas": 99250,
-   "amostrasChao": 6079,
-   "observadores": 1530,
-   "corpoDentroDeSolido": 14,
+   "celulasAlcancadas": 92754,
+   "amostrasChao": 5711,
+   "observadores": 1462,
+   "corpoDentroDeSolido": 40,
    "submersosAcimaDoPeito": 0,
-   "piorPenetracao": 1.02,
+   "piorPenetracao": 1.133,
    "piores": [
+    {
+     "tipo": "chao",
+     "x": 8.9,
+     "z": -1.1,
+     "pen": 1.133
+    },
+    {
+     "tipo": "chao",
+     "x": 8.9,
+     "z": -0.1,
+     "pen": 1.133
+    },
+    {
+     "tipo": "chao",
+     "x": 8.9,
+     "z": 0.9,
+     "pen": 1.133
+    },
+    {
+     "tipo": "chao",
+     "x": -24.1,
+     "z": -37.1,
+     "pen": 1.08
+    },
+    {
+     "tipo": "chao",
+     "x": -23.1,
+     "z": -37.1,
+     "pen": 1.08
+    },
+    {
+     "tipo": "chao",
+     "x": 22.9,
+     "z": -37.1,
+     "pen": 1.08
+    },
     {
      "tipo": "chao",
      "x": -15.1,
      "z": -2.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
      "x": -14.1,
      "z": -2.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
-    },
-    {
-     "tipo": "chao",
-     "x": -13.1,
-     "z": -2.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
-    },
-    {
-     "tipo": "chao",
-     "x": -13.1,
-     "z": -1.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
-    },
-    {
-     "tipo": "chao",
-     "x": -4.1,
-     "z": -13.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
-    },
-    {
-     "tipo": "chao",
-     "x": -3.1,
-     "z": -13.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
-    },
-    {
-     "tipo": "chao",
-     "x": -2.1,
-     "z": -13.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
-    },
-    {
-     "tipo": "chao",
-     "x": 2.9,
-     "z": -7.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     }
    ],
    "dentroTodos": [
     {
      "tipo": "chao",
+     "x": 8.9,
+     "z": -1.1,
+     "pen": 1.133
+    },
+    {
+     "tipo": "chao",
+     "x": 8.9,
+     "z": -0.1,
+     "pen": 1.133
+    },
+    {
+     "tipo": "chao",
+     "x": 8.9,
+     "z": 0.9,
+     "pen": 1.133
+    },
+    {
+     "tipo": "chao",
+     "x": -24.1,
+     "z": -37.1,
+     "pen": 1.08
+    },
+    {
+     "tipo": "chao",
+     "x": -23.1,
+     "z": -37.1,
+     "pen": 1.08
+    },
+    {
+     "tipo": "chao",
+     "x": 22.9,
+     "z": -37.1,
+     "pen": 1.08
+    },
+    {
+     "tipo": "chao",
      "x": -15.1,
      "z": -2.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
      "x": -14.1,
      "z": -2.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
      "x": -13.1,
      "z": -2.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
      "x": -13.1,
      "z": -1.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
      "x": -4.1,
      "z": -13.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
      "x": -3.1,
      "z": -13.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
      "x": -2.1,
      "z": -13.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
-     "x": 2.9,
+     "x": 14.9,
      "z": -7.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
-     "x": 2.9,
+     "x": 14.9,
      "z": -6.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
     },
     {
      "tipo": "chao",
-     "x": 2.9,
+     "x": 14.9,
      "z": -5.1,
-     "pen": 1.02,
-     "objeto": "penitenciaria-da-treta"
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -36.1,
+     "z": -28.1,
+     "pen": 0.967
+    },
+    {
+     "tipo": "chao",
+     "x": -36.1,
+     "z": 27.9,
+     "pen": 0.967
+    },
+    {
+     "tipo": "chao",
+     "x": -35.1,
+     "z": 27.9,
+     "pen": 0.967
+    },
+    {
+     "tipo": "chao",
+     "x": 34.9,
+     "z": -28.1,
+     "pen": 0.967
+    },
+    {
+     "tipo": "chao",
+     "x": 34.9,
+     "z": 27.9,
+     "pen": 0.967
+    },
+    {
+     "tipo": "chao",
+     "x": 35.9,
+     "z": -28.1,
+     "pen": 0.967
+    },
+    {
+     "tipo": "chao",
+     "x": 35.9,
+     "z": 27.9,
+     "pen": 0.967
     },
     {
      "tipo": "chao",
      "x": -19.1,
      "z": -16.1,
-     "pen": 0.575,
-     "objeto": "penitenciaria-dinamite-0"
+     "pen": 0.575
     },
     {
      "tipo": "chao",
      "x": 3.9,
      "z": 22.9,
-     "pen": 0.575,
-     "objeto": "penitenciaria-dinamite-2"
+     "pen": 0.575
     },
     {
      "tipo": "chao",
-     "x": -7.1,
-     "z": -2.1,
-     "pen": 0.32,
-     "objeto": "arma-central-ak"
+     "x": 9.9,
+     "z": -1.1,
+     "pen": 0.567
     },
     {
      "tipo": "chao",
-     "x": -1.1,
-     "z": -2.1,
-     "pen": 0.32,
-     "objeto": "arma-central-shotgun"
+     "x": 9.9,
+     "z": -0.1,
+     "pen": 0.567
+    },
+    {
+     "tipo": "chao",
+     "x": 9.9,
+     "z": 0.9,
+     "pen": 0.567
+    },
+    {
+     "tipo": "chao",
+     "x": -27.1,
+     "z": -41.1,
+     "pen": 0.52
+    },
+    {
+     "tipo": "chao",
+     "x": -26.1,
+     "z": -41.1,
+     "pen": 0.52
+    },
+    {
+     "tipo": "chao",
+     "x": -25.1,
+     "z": -41.1,
+     "pen": 0.52
+    },
+    {
+     "tipo": "chao",
+     "x": -24.1,
+     "z": -41.1,
+     "pen": 0.52
+    },
+    {
+     "tipo": "chao",
+     "x": -36.1,
+     "z": -27.1,
+     "pen": 0.483
+    },
+    {
+     "tipo": "chao",
+     "x": -36.1,
+     "z": 26.9,
+     "pen": 0.483
+    },
+    {
+     "tipo": "chao",
+     "x": -35.1,
+     "z": -27.1,
+     "pen": 0.483
+    },
+    {
+     "tipo": "chao",
+     "x": -35.1,
+     "z": 26.9,
+     "pen": 0.483
+    },
+    {
+     "tipo": "chao",
+     "x": 34.9,
+     "z": -27.1,
+     "pen": 0.483
+    },
+    {
+     "tipo": "chao",
+     "x": 34.9,
+     "z": 26.9,
+     "pen": 0.483
+    },
+    {
+     "tipo": "chao",
+     "x": 35.9,
+     "z": -27.1,
+     "pen": 0.483
+    },
+    {
+     "tipo": "chao",
+     "x": 35.9,
+     "z": 26.9,
+     "pen": 0.483
     }
    ],
    "spawns": [
@@ -13548,15 +10960,15 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.7932,
-     "maiorVisada": 97.4
+     "fracMedia": 0.6222,
+     "maiorVisada": 93.3
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.7614,
-     "maiorVisada": 98.5
+     "fracMedia": 0.5524,
+     "maiorVisada": 95
     }
    ],
    "exposicaoPorSpawn": [
@@ -13565,19 +10977,19 @@
      "x": -15,
      "z": -42,
      "chao": 0,
-     "obsLonge": 1259,
-     "obsVendo": 1005,
-     "frac": 0.7983,
-     "maiorVisada": 97.4
+     "obsLonge": 1205,
+     "obsVendo": 712,
+     "frac": 0.5909,
+     "maiorVisada": 88.7
     },
     {
      "team": "E",
      "x": -5,
      "z": -42,
      "chao": 0,
-     "obsLonge": 1237,
-     "obsVendo": 977,
-     "frac": 0.7898,
+     "obsLonge": 1181,
+     "obsVendo": 771,
+     "frac": 0.6528,
      "maiorVisada": 93.3
     },
     {
@@ -13585,39 +10997,39 @@
      "x": 5,
      "z": -42,
      "chao": 0,
-     "obsLonge": 1243,
-     "obsVendo": 978,
-     "frac": 0.7868,
-     "maiorVisada": 93.4
+     "obsLonge": 1186,
+     "obsVendo": 783,
+     "frac": 0.6602,
+     "maiorVisada": 92.6
     },
     {
      "team": "E",
      "x": 15,
      "z": -42,
      "chao": 0,
-     "obsLonge": 1267,
-     "obsVendo": 1011,
-     "frac": 0.7979,
-     "maiorVisada": 97.4
+     "obsLonge": 1209,
+     "obsVendo": 707,
+     "frac": 0.5848,
+     "maiorVisada": 90.4
     },
     {
      "team": "B",
      "x": 15,
      "z": 42,
      "chao": 0,
-     "obsLonge": 1258,
-     "obsVendo": 984,
-     "frac": 0.7822,
-     "maiorVisada": 97.6
+     "obsLonge": 1200,
+     "obsVendo": 655,
+     "frac": 0.5458,
+     "maiorVisada": 90.6
     },
     {
      "team": "B",
      "x": 5,
      "z": 42,
      "chao": 0,
-     "obsLonge": 1239,
-     "obsVendo": 951,
-     "frac": 0.7676,
+     "obsLonge": 1182,
+     "obsVendo": 692,
+     "frac": 0.5854,
      "maiorVisada": 93.5
     },
     {
@@ -13625,9 +11037,9 @@
      "x": -5,
      "z": 42,
      "chao": 0,
-     "obsLonge": 1238,
-     "obsVendo": 956,
-     "frac": 0.7722,
+     "obsLonge": 1180,
+     "obsVendo": 698,
+     "frac": 0.5915,
      "maiorVisada": 93.5
     },
     {
@@ -13635,10 +11047,10 @@
      "x": -15,
      "z": 42,
      "chao": 0,
-     "obsLonge": 1259,
-     "obsVendo": 911,
-     "frac": 0.7236,
-     "maiorVisada": 98.5
+     "obsLonge": 1204,
+     "obsVendo": 586,
+     "frac": 0.4867,
+     "maiorVisada": 95
     }
    ],
    "salaDoSpawn": [
@@ -13646,9 +11058,9 @@
      "team": "E",
      "x": -15,
      "z": -42,
-     "folgaParede": 5.55,
-     "dirPior": 264,
-     "areaContigua": 78.3,
+     "folgaParede": 4.3,
+     "dirPior": 309,
+     "areaContigua": 75.9,
      "okFolga": true,
      "okArea": true
     },
@@ -13656,9 +11068,9 @@
      "team": "E",
      "x": -5,
      "z": -42,
-     "folgaParede": 5.55,
-     "dirPior": 264,
-     "areaContigua": 78.3,
+     "folgaParede": 3.75,
+     "dirPior": 101,
+     "areaContigua": 72.4,
      "okFolga": true,
      "okArea": true
     },
@@ -13666,9 +11078,9 @@
      "team": "E",
      "x": 5,
      "z": -42,
-     "folgaParede": 5.55,
-     "dirPior": 264,
-     "areaContigua": 78.3,
+     "folgaParede": 3.25,
+     "dirPior": 287,
+     "areaContigua": 72.8,
      "okFolga": true,
      "okArea": true
     },
@@ -13676,9 +11088,9 @@
      "team": "E",
      "x": 15,
      "z": -42,
-     "folgaParede": 5.55,
-     "dirPior": 264,
-     "areaContigua": 78.3,
+     "folgaParede": 4.5,
+     "dirPior": 236,
+     "areaContigua": 75.5,
      "okFolga": true,
      "okArea": true
     },
@@ -13686,9 +11098,9 @@
      "team": "B",
      "x": 15,
      "z": 42,
-     "folgaParede": 5.55,
-     "dirPior": 84,
-     "areaContigua": 78.4,
+     "folgaParede": 4.3,
+     "dirPior": 129,
+     "areaContigua": 74.6,
      "okFolga": true,
      "okArea": true
     },
@@ -13696,9 +11108,9 @@
      "team": "B",
      "x": 5,
      "z": 42,
-     "folgaParede": 5.55,
-     "dirPior": 84,
-     "areaContigua": 78.4,
+     "folgaParede": 2.85,
+     "dirPior": 51,
+     "areaContigua": 70,
      "okFolga": true,
      "okArea": true
     },
@@ -13706,9 +11118,9 @@
      "team": "B",
      "x": -5,
      "z": 42,
-     "folgaParede": 5.55,
-     "dirPior": 84,
-     "areaContigua": 78.4,
+     "folgaParede": 2.85,
+     "dirPior": 129,
+     "areaContigua": 69.6,
      "okFolga": true,
      "okArea": true
     },
@@ -13718,244 +11130,245 @@
      "z": 42,
      "folgaParede": 3.95,
      "dirPior": 276,
-     "areaContigua": 73,
+     "areaContigua": 70.1,
      "okFolga": true,
      "okArea": true
     }
    ],
-   "piorFolga": 3.95,
-   "piorArea": 73,
+   "piorFolga": 2.85,
+   "piorArea": 69.6,
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 77,
-   "occPulados": 1,
-   "fracSemMalha": 0.0014,
+   "occMedidos": 130,
+   "occPulados": 3,
+   "fracSemMalha": 0.0029,
    "quadrantes": [
     {
      "q": "0,0",
      "x0": -37.1,
      "z0": -47.1,
-     "areaAndavel": 372,
-     "props": 12,
-     "waypoints": 38,
-     "densProp": 3.23,
-     "densWp": 10.22,
-     "espacamento": 5.57,
-     "razaoProp": 1.67,
-     "razaoWp": 1.06
+     "areaAndavel": 319,
+     "props": 31,
+     "waypoints": 50,
+     "densProp": 9.72,
+     "densWp": 15.68,
+     "espacamento": 3.21,
+     "razaoProp": 2.31,
+     "razaoWp": 0.82
     },
     {
      "q": "0,1",
      "x0": -37.1,
      "z0": -23.6,
-     "areaAndavel": 363,
-     "props": 7,
-     "waypoints": 39,
-     "densProp": 1.93,
-     "densWp": 10.73,
-     "espacamento": 7.2,
-     "razaoProp": 1,
-     "razaoWp": 1.12
+     "areaAndavel": 356,
+     "props": 9,
+     "waypoints": 99,
+     "densProp": 2.53,
+     "densWp": 27.78,
+     "espacamento": 6.29,
+     "razaoProp": 0.6,
+     "razaoWp": 1.45
     },
     {
      "q": "0,2",
      "x0": -37.1,
      "z0": 0,
-     "areaAndavel": 362,
-     "props": 7,
-     "waypoints": 42,
-     "densProp": 1.93,
-     "densWp": 11.59,
-     "espacamento": 7.19,
-     "razaoProp": 1,
-     "razaoWp": 1.2
+     "areaAndavel": 355,
+     "props": 9,
+     "waypoints": 97,
+     "densProp": 2.53,
+     "densWp": 27.3,
+     "espacamento": 6.28,
+     "razaoProp": 0.6,
+     "razaoWp": 1.42
     },
     {
      "q": "0,3",
      "x0": -37.1,
      "z0": 23.6,
-     "areaAndavel": 371,
-     "props": 13,
-     "waypoints": 38,
-     "densProp": 3.5,
-     "densWp": 10.23,
-     "espacamento": 5.34,
-     "razaoProp": 1.81,
-     "razaoWp": 1.06
+     "areaAndavel": 348,
+     "props": 22,
+     "waypoints": 68,
+     "densProp": 6.32,
+     "densWp": 19.53,
+     "espacamento": 3.98,
+     "razaoProp": 1.5,
+     "razaoWp": 1.02
     },
     {
      "q": "1,0",
      "x0": -18.6,
      "z0": -47.1,
-     "areaAndavel": 424,
-     "props": 1,
-     "waypoints": 47,
-     "densProp": 0.24,
-     "densWp": 11.08,
-     "espacamento": 20.6,
-     "razaoProp": 0.12,
-     "razaoWp": 1.15
+     "areaAndavel": 397,
+     "props": 9,
+     "waypoints": 51,
+     "densProp": 2.27,
+     "densWp": 12.85,
+     "espacamento": 6.64,
+     "razaoProp": 0.54,
+     "razaoWp": 0.67
     },
     {
      "q": "1,1",
      "x0": -18.6,
      "z0": -23.6,
-     "areaAndavel": 412,
-     "props": 2,
-     "waypoints": 36,
-     "densProp": 0.49,
-     "densWp": 8.74,
-     "espacamento": 14.35,
-     "razaoProp": 0.25,
-     "razaoWp": 0.91
+     "areaAndavel": 382,
+     "props": 12,
+     "waypoints": 54,
+     "densProp": 3.14,
+     "densWp": 14.14,
+     "espacamento": 5.64,
+     "razaoProp": 0.75,
+     "razaoWp": 0.74
     },
     {
      "q": "1,2",
      "x0": -18.6,
      "z0": 0,
-     "areaAndavel": 400,
-     "props": 4,
-     "waypoints": 40,
-     "densProp": 1,
-     "densWp": 10,
-     "espacamento": 10,
-     "razaoProp": 0.52,
-     "razaoWp": 1.04
+     "areaAndavel": 372,
+     "props": 15,
+     "waypoints": 70,
+     "densProp": 4.04,
+     "densWp": 18.84,
+     "espacamento": 4.98,
+     "razaoProp": 0.96,
+     "razaoWp": 0.98
     },
     {
      "q": "1,3",
      "x0": -18.6,
      "z0": 23.6,
-     "areaAndavel": 418,
-     "props": 6,
-     "waypoints": 40,
-     "densProp": 1.44,
-     "densWp": 9.57,
-     "espacamento": 8.35,
-     "razaoProp": 0.75,
-     "razaoWp": 0.99
+     "areaAndavel": 384,
+     "props": 21,
+     "waypoints": 42,
+     "densProp": 5.47,
+     "densWp": 10.95,
+     "espacamento": 4.27,
+     "razaoProp": 1.3,
+     "razaoWp": 0.57
     },
     {
      "q": "2,0",
      "x0": 0,
      "z0": -47.1,
-     "areaAndavel": 409,
-     "props": 1,
-     "waypoints": 44,
-     "densProp": 0.24,
-     "densWp": 10.76,
-     "espacamento": 20.22,
-     "razaoProp": 0.12,
-     "razaoWp": 1.12
+     "areaAndavel": 382,
+     "props": 9,
+     "waypoints": 61,
+     "densProp": 2.36,
+     "densWp": 15.99,
+     "espacamento": 6.51,
+     "razaoProp": 0.56,
+     "razaoWp": 0.83
     },
     {
      "q": "2,1",
      "x0": 0,
      "z0": -23.6,
-     "areaAndavel": 398,
-     "props": 5,
-     "waypoints": 37,
-     "densProp": 1.26,
-     "densWp": 9.3,
-     "espacamento": 8.92,
-     "razaoProp": 0.65,
-     "razaoWp": 0.97
+     "areaAndavel": 373,
+     "props": 17,
+     "waypoints": 66,
+     "densProp": 4.56,
+     "densWp": 17.69,
+     "espacamento": 4.68,
+     "razaoProp": 1.08,
+     "razaoWp": 0.92
     },
     {
      "q": "2,2",
      "x0": 0,
      "z0": 0,
-     "areaAndavel": 390,
-     "props": 9,
-     "waypoints": 35,
-     "densProp": 2.31,
-     "densWp": 8.98,
-     "espacamento": 6.58,
-     "razaoProp": 1.2,
-     "razaoWp": 0.93
+     "areaAndavel": 358,
+     "props": 22,
+     "waypoints": 113,
+     "densProp": 6.15,
+     "densWp": 31.6,
+     "espacamento": 4.03,
+     "razaoProp": 1.46,
+     "razaoWp": 1.65
     },
     {
      "q": "2,3",
      "x0": 0,
      "z0": 23.6,
-     "areaAndavel": 424,
-     "props": 1,
-     "waypoints": 41,
-     "densProp": 0.24,
-     "densWp": 9.67,
-     "espacamento": 20.6,
-     "razaoProp": 0.12,
-     "razaoWp": 1.01
+     "areaAndavel": 389,
+     "props": 17,
+     "waypoints": 59,
+     "densProp": 4.37,
+     "densWp": 15.17,
+     "espacamento": 4.78,
+     "razaoProp": 1.04,
+     "razaoWp": 0.79
     },
     {
      "q": "3,0",
      "x0": 18.6,
      "z0": -47.1,
-     "areaAndavel": 369,
-     "props": 11,
-     "waypoints": 26,
-     "densProp": 2.98,
-     "densWp": 7.05,
-     "espacamento": 5.79,
-     "razaoProp": 1.54,
-     "razaoWp": 0.73
+     "areaAndavel": 336,
+     "props": 24,
+     "waypoints": 108,
+     "densProp": 7.14,
+     "densWp": 32.11,
+     "espacamento": 3.74,
+     "razaoProp": 1.7,
+     "razaoWp": 1.67
     },
     {
      "q": "3,1",
      "x0": 18.6,
      "z0": -23.6,
-     "areaAndavel": 356,
-     "props": 8,
-     "waypoints": 25,
-     "densProp": 2.25,
-     "densWp": 7.02,
-     "espacamento": 6.67,
-     "razaoProp": 1.17,
-     "razaoWp": 0.73
+     "areaAndavel": 349,
+     "props": 10,
+     "waypoints": 81,
+     "densProp": 2.86,
+     "densWp": 23.19,
+     "espacamento": 5.91,
+     "razaoProp": 0.68,
+     "razaoWp": 1.21
     },
     {
      "q": "3,2",
      "x0": 18.6,
      "z0": 0,
-     "areaAndavel": 363,
-     "props": 7,
-     "waypoints": 28,
-     "densProp": 1.93,
-     "densWp": 7.72,
-     "espacamento": 7.2,
-     "razaoProp": 1,
-     "razaoWp": 0.8
+     "areaAndavel": 356,
+     "props": 9,
+     "waypoints": 88,
+     "densProp": 2.53,
+     "densWp": 24.75,
+     "espacamento": 6.29,
+     "razaoProp": 0.6,
+     "razaoWp": 1.29
     },
     {
      "q": "3,3",
      "x0": 18.6,
      "z0": 23.6,
-     "areaAndavel": 371,
-     "props": 12,
-     "waypoints": 28,
-     "densProp": 3.23,
-     "densWp": 7.54,
-     "espacamento": 5.56,
-     "razaoProp": 1.67,
-     "razaoWp": 0.78
+     "areaAndavel": 342,
+     "props": 21,
+     "waypoints": 122,
+     "densProp": 6.14,
+     "densWp": 35.65,
+     "espacamento": 4.04,
+     "razaoProp": 1.46,
+     "razaoWp": 1.86
     }
    ],
-   "medianaProp": 1.93,
-   "medianaWp": 9.620000000000001,
-   "piorRazaoProp": 0.12,
-   "piorRazaoWp": 0.73,
-   "piorEspacamento": 20.6,
+   "medianaProp": 4.205,
+   "medianaWp": 19.185000000000002,
+   "piorRazaoProp": 0.54,
+   "piorRazaoWp": 0.57,
+   "piorEspacamento": 6.64,
+   "bordasSemGuarda": [],
    "rotasSpawnBandeira": [
     {
      "time": "E",
      "bandeira": "E",
      "rotas": 4,
      "comprimentos": [
-      14.1,
-      14.1,
-      14.1,
-      14.1
+      16.4,
+      16.4,
+      16.4,
+      16.4
      ]
     },
     {
@@ -13963,10 +11376,10 @@
      "bandeira": "MID",
      "rotas": 4,
      "comprimentos": [
-      46.9,
-      49.6,
-      58.6,
-      60.5
+      45,
+      49.9,
+      55.2,
+      90.8
      ]
     },
     {
@@ -13974,10 +11387,10 @@
      "bandeira": "B",
      "rotas": 4,
      "comprimentos": [
-      88.5,
-      96.5,
-      96.5,
-      113.8
+      86.7,
+      93.1,
+      97.5,
+      122.3
      ]
     },
     {
@@ -13985,10 +11398,10 @@
      "bandeira": "E",
      "rotas": 4,
      "comprimentos": [
-      89.8,
-      95.1,
-      95.1,
-      112.5
+      86.4,
+      100,
+      102.5,
+      180.5
      ]
     },
     {
@@ -13997,9 +11410,9 @@
      "rotas": 4,
      "comprimentos": [
       51.4,
-      54.1,
-      65,
-      70.6
+      60.2,
+      65.2,
+      211.1
      ]
     },
     {
@@ -14007,10 +11420,10 @@
      "bandeira": "B",
      "rotas": 4,
      "comprimentos": [
-      17.3,
-      17.3,
-      17.3,
-      17.3
+      15.8,
+      15.8,
+      15.8,
+      15.8
      ]
     }
    ],
@@ -14029,14 +11442,14 @@
     },
     {
      "id": "MID",
-     "label": "PÁTIO",
-     "x": 0,
+     "label": "PAVILHÃO 6",
+     "x": -8,
      "z": 0,
-     "distSpawn": 42.3,
+     "distSpawn": 42.11,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 55.9,
+     "maiorLinhaTiro": 49.8,
      "chao": 0,
-     "penetracao": 0.018
+     "penetracao": 0.033
     },
     {
      "id": "B",
@@ -14050,7 +11463,7 @@
      "penetracao": 0
     }
    ],
-   "alturaTrianguloMin": 0
+   "alturaTrianguloMin": 8
   }
  ]
 }

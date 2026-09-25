@@ -1,0 +1,1223 @@
+{
+ "gerado": "2026-08-12T04:45:52.825Z",
+ "tetos": {
+  "TEXEL_MIN": 64,
+  "TEXEL_MAX": 512,
+  "TEXEL_ALVO": 128,
+  "DISPERSAO_MAX": 1.5,
+  "PISO_AREA_MAX": 0.1,
+  "ANISO_MIN": 4
+ },
+ "mapas": [
+  {
+   "id": "praca_poderes",
+   "nome": "Praça dos Três Poderes",
+   "malhas": 169,
+   "superficies": 126,
+   "areaEstrutural": 231549.47596394524,
+   "areaTotal": 231841.52364943264,
+   "mediana": 66.30387414554352,
+   "p05": 57.695863789466735,
+   "p95": 98.53444594169613,
+   "maxEstrutural": 1261.2214761111163,
+   "maxTotal": 1474.4917515738575,
+   "dispersaoP95": 1.4861038998325098,
+   "dispersaoMax": 19.0218368438413,
+   "dispersaoTotal": 22.23839512510541,
+   "fracAbaixoDoPiso": 0.058534953287511474,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 43,
+   "areaSemTextura": 2953.392692916911,
+   "anisoRuim": 0,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 230027.9168380438,
+   "medianaChao": 66.30387414554352,
+   "medianaArte": 432.59634455033216,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 13.6,
+     "area": 122.9
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 30.7,
+     "area": 416.8
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 57.7,
+     "area": 6300
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 57.7,
+     "area": 6300
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 61.6,
+     "area": 414
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 64,
+     "area": 2
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 66.3,
+     "area": 193200
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 69.1,
+     "area": 329.2
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 69.1,
+     "area": 329.2
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 80,
+     "area": 15.4
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 1261.2,
+     "area": 1
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 968.5,
+     "area": 1.7
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 661.9,
+     "area": 3.6
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 428,
+     "area": 9.3
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 428,
+     "area": 9.3
+    }
+   ]
+  },
+  {
+   "id": "piscina_treta",
+   "nome": "Piscina da Treta",
+   "malhas": 543,
+   "superficies": 263,
+   "areaEstrutural": 13829.746816968458,
+   "areaTotal": 14648.408233361668,
+   "mediana": 130.6557987861106,
+   "p05": 52.80876780845022,
+   "p95": 355.86459999074094,
+   "maxEstrutural": 770.6625047119152,
+   "maxTotal": 1461.973274667851,
+   "dispersaoP95": 2.7236801067919476,
+   "dispersaoMax": 5.898417918469307,
+   "dispersaoTotal": 11.189501639044485,
+   "fracAbaixoDoPiso": 0.23171790805333098,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 280,
+   "areaSemTextura": 3669.291155152568,
+   "anisoRuim": 14,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 10461.23709523577,
+   "medianaChao": 268.4950651315588,
+   "medianaArte": 155.4362878241075,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 33.9,
+     "area": 285
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 37.1,
+     "area": 47.6
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 52.8,
+     "area": 846
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 52.8,
+     "area": 846
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 63.2,
+     "area": 590
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 63.2,
+     "area": 590
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 84.4,
+     "area": 442
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 84.4,
+     "area": 442
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 88.6,
+     "area": 752.2
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 88.6,
+     "area": 752.2
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 770.7,
+     "area": 3.4
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 764.2,
+     "area": 3.5
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 581.8,
+     "area": 2.7
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 581.8,
+     "area": 2.7
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 581.8,
+     "area": 2.7
+    }
+   ]
+  },
+  {
+   "id": "loja_h",
+   "nome": "Loja H (Estacionamento)",
+   "malhas": 393,
+   "superficies": 121,
+   "areaEstrutural": 67117.15057958571,
+   "areaTotal": 67607.68009024934,
+   "mediana": 151.4880622248268,
+   "p05": 65.15555972871964,
+   "p95": 240.35821220851324,
+   "maxEstrutural": 2813.1050615073555,
+   "maxTotal": 2813.1050615073555,
+   "dispersaoP95": 1.5866478762649447,
+   "dispersaoMax": 18.569813490203366,
+   "dispersaoTotal": 18.569813490203366,
+   "fracAbaixoDoPiso": 0.04855128628206153,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 272,
+   "areaSemTextura": 6083.853598196717,
+   "anisoRuim": 6,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 57937.19646664047,
+   "medianaChao": 151.4880622248268,
+   "medianaArte": 139.2415982256113,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 18,
+     "area": 2016
+    },
+    {
+     "nome": "havan-tinta",
+     "tipo": "BufferGeometry",
+     "d": 22.1,
+     "area": 58.6
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 29.8,
+     "area": 1184
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 65.2,
+     "area": 3952
+    },
+    {
+     "nome": "havan-deco",
+     "tipo": "BufferGeometry",
+     "d": 68.4,
+     "area": 56
+    },
+    {
+     "nome": "havan-deco",
+     "tipo": "BufferGeometry",
+     "d": 70.5,
+     "area": 83.5
+    },
+    {
+     "nome": "havan-tinta",
+     "tipo": "BufferGeometry",
+     "d": 73.2,
+     "area": 16.8
+    },
+    {
+     "nome": "havan-tinta",
+     "tipo": "BufferGeometry",
+     "d": 82.6,
+     "area": 36
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 87.8,
+     "area": 4864
+    },
+    {
+     "nome": "havan-deco",
+     "tipo": "BufferGeometry",
+     "d": 93.7,
+     "area": 2.8
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 2813.1,
+     "area": 0.4
+    },
+    {
+     "nome": "havan-deco",
+     "tipo": "BufferGeometry",
+     "d": 782.8,
+     "area": 199.5
+    },
+    {
+     "nome": "havan-deco",
+     "tipo": "BufferGeometry",
+     "d": 759.9,
+     "area": 345.8
+    },
+    {
+     "nome": "havan-deco",
+     "tipo": "BufferGeometry",
+     "d": 512,
+     "area": 87.3
+    },
+    {
+     "nome": "havan-deco",
+     "tipo": "BufferGeometry",
+     "d": 512,
+     "area": 23
+    }
+   ]
+  },
+  {
+   "id": "ferro_velho",
+   "nome": "Ferro Velho do Zé",
+   "malhas": 670,
+   "superficies": 498,
+   "areaEstrutural": 145126.92992240336,
+   "areaTotal": 146128.58619656743,
+   "mediana": 71.11111111111111,
+   "p05": 71.11111111111111,
+   "p95": 149.20779173918424,
+   "maxEstrutural": 3784.8129995892355,
+   "maxTotal": 3784.8129995892355,
+   "dispersaoP95": 2.0982345713322785,
+   "dispersaoMax": 53.223932806723624,
+   "dispersaoTotal": 53.223932806723624,
+   "fracAbaixoDoPiso": 0.022308635556543124,
+   "fracNaoMedida": 0.01113858642656266,
+   "semMedida": 6,
+   "semTextura": 166,
+   "areaSemTextura": 280.1531745092645,
+   "anisoRuim": 79,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 136102.97702279067,
+   "medianaChao": 71.11111111111111,
+   "medianaArte": 189.36301533262082,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 7.9,
+     "area": 520
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 9,
+     "area": 408
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 10,
+     "area": 330
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 11.8,
+     "area": 234
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 13.6,
+     "area": 176
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 13.6,
+     "area": 176
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 18.8,
+     "area": 46.5
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 20.9,
+     "area": 37.6
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 21.2,
+     "area": 36.3
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 21.4,
+     "area": 35.9
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 3784.8,
+     "area": 0.1
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 3784.8,
+     "area": 0.1
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 3784.8,
+     "area": 0.1
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 3784.8,
+     "area": 0.1
+    },
+    {
+     "nome": "(CylinderGeometry)",
+     "tipo": "CylinderGeometry",
+     "d": 1129.2,
+     "area": 0.5
+    }
+   ]
+  },
+  {
+   "id": "quebrada",
+   "nome": "Quebrada (Rua do Baile)",
+   "malhas": 1615,
+   "superficies": 1108,
+   "areaEstrutural": 34360.09011877813,
+   "areaTotal": 37144.36358875877,
+   "mediana": 112.26342667172354,
+   "p05": 85.40750399777782,
+   "p95": 135.67325248377168,
+   "maxEstrutural": 508.1338495383444,
+   "maxTotal": 1193.4977715336456,
+   "dispersaoP95": 1.2085258441335687,
+   "dispersaoMax": 4.526263491174291,
+   "dispersaoTotal": 10.631225207686086,
+   "fracAbaixoDoPiso": 0.019906816240455295,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 507,
+   "areaSemTextura": 3041.4324521653816,
+   "anisoRuim": 0,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 22729.137770356767,
+   "medianaChao": 119.96676338098574,
+   "medianaArte": 179.00057106888065,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 16.5,
+     "area": 242
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 16.5,
+     "area": 242
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 36.2,
+     "area": 200
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 82.5,
+     "area": 616
+    },
+    {
+     "nome": "(CylinderGeometry)",
+     "tipo": "CylinderGeometry",
+     "d": 83.2,
+     "area": 96.6
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 83.7,
+     "area": 0.6
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 83.7,
+     "area": 0.6
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 83.7,
+     "area": 0.6
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 83.7,
+     "area": 0.6
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 83.7,
+     "area": 0.6
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 508.1,
+     "area": 2.4
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 508.1,
+     "area": 2.4
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 508.1,
+     "area": 2.4
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 396.6,
+     "area": 6
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 396.6,
+     "area": 6
+    }
+   ]
+  },
+  {
+   "id": "fy_escadao",
+   "nome": "Escadão (Morro)",
+   "malhas": 755,
+   "superficies": 397,
+   "areaEstrutural": 12251.569292611419,
+   "areaTotal": 13255.536768611864,
+   "mediana": 128,
+   "p05": 7.257747241825751,
+   "p95": 162.18946396798475,
+   "maxEstrutural": 264.54093983306143,
+   "maxTotal": 1206.822048391239,
+   "dispersaoP95": 1.2671051872498809,
+   "dispersaoMax": 2.0667260924457924,
+   "dispersaoTotal": 9.428297253056554,
+   "fracAbaixoDoPiso": 0.11441473442951393,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 358,
+   "areaSemTextura": 2048.9082240585,
+   "anisoRuim": 0,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 6242.4180774580145,
+   "medianaChao": 128,
+   "medianaArte": 170.76499540463183,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 7.3,
+     "area": 1244.2
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 44,
+     "area": 33.8
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 44,
+     "area": 33.8
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 46.7,
+     "area": 30
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 52.3,
+     "area": 24
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 60.3,
+     "area": 18
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 60.3,
+     "area": 18
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 66.9,
+     "area": 936
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 70.5,
+     "area": 13.2
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 70.5,
+     "area": 13.2
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 264.5,
+     "area": 1.3
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 264.5,
+     "area": 1.3
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 264.5,
+     "area": 1.3
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 264.5,
+     "area": 1.3
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 264.5,
+     "area": 1.3
+    }
+   ]
+  },
+  {
+   "id": "fy_campomorro",
+   "nome": "Campo do Morro",
+   "malhas": 507,
+   "superficies": 174,
+   "areaEstrutural": 18572.097575556476,
+   "areaTotal": 19254.230559878404,
+   "mediana": 131.0951002805739,
+   "p05": 47.33441623011851,
+   "p95": 177.08020876690483,
+   "maxEstrutural": 313.66018244186677,
+   "maxTotal": 616.0322336298757,
+   "dispersaoP95": 1.3507767139115967,
+   "dispersaoMax": 2.3926156032571875,
+   "dispersaoTotal": 4.699124775155013,
+   "fracAbaixoDoPiso": 0.12575450719998232,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 333,
+   "areaSemTextura": 2827.2025832508325,
+   "anisoRuim": 0,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 6330.427408014961,
+   "medianaChao": 131.0951002805739,
+   "medianaArte": 144.97327605428765,
+   "piores": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 2.3,
+     "area": 218.9
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 3,
+     "area": 216.2
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 39.8,
+     "area": 247.9
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 44.8,
+     "area": 195.5
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 47.3,
+     "area": 175.5
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 47.3,
+     "area": 175.5
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 47.3,
+     "area": 175.5
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 52.7,
+     "area": 141.5
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 52.7,
+     "area": 141.5
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 52.7,
+     "area": 141.5
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 313.7,
+     "area": 4
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 293.6,
+     "area": 4.6
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 278.3,
+     "area": 5.1
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 274.9,
+     "area": 5.2
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 274.9,
+     "area": 5.2
+    }
+   ]
+  },
+  {
+   "id": "fy_lajes",
+   "nome": "Lajes (Comunidade)",
+   "malhas": 496,
+   "superficies": 297,
+   "areaEstrutural": 14642.804393538172,
+   "areaTotal": 15976.95545644521,
+   "mediana": 128,
+   "p05": 59.394069589415615,
+   "p95": 445.3626427504614,
+   "maxEstrutural": 903.0831141767136,
+   "maxTotal": 1662.6691805765506,
+   "dispersaoP95": 3.47939564648798,
+   "dispersaoMax": 7.055336829505575,
+   "dispersaoTotal": 12.989602973254302,
+   "fracAbaixoDoPiso": 0.22837155439129528,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 199,
+   "areaSemTextura": 3318.497680712701,
+   "anisoRuim": 0,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 6030.083602929835,
+   "medianaChao": 59.394069589415615,
+   "medianaArte": 168.72388872028796,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 59.4,
+     "area": 3344
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 90.4,
+     "area": 19.2
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 96.8,
+     "area": 42
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 107.9,
+     "area": 25.9
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 109.2,
+     "area": 88
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 110.5,
+     "area": 24.7
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 111.3,
+     "area": 148
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 111.3,
+     "area": 148
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 114.5,
+     "area": 240
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 114.5,
+     "area": 240
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 903.1,
+     "area": 9
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 19.4
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 19.4
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 16.3
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 4.2
+    }
+   ]
+  },
+  {
+   "id": "fy_corrego",
+   "nome": "Córrego (Favela de SP)",
+   "malhas": 540,
+   "superficies": 403,
+   "areaEstrutural": 14751.544329167638,
+   "areaTotal": 15586.018265172232,
+   "mediana": 247.14792551704463,
+   "p05": 62.70693741524936,
+   "p95": 704.8269835943381,
+   "maxEstrutural": 739.8285605018474,
+   "maxTotal": 1474.4922889777117,
+   "dispersaoP95": 2.8518426044637364,
+   "dispersaoMax": 2.9934645777588162,
+   "dispersaoTotal": 5.966031419818747,
+   "fracAbaixoDoPiso": 0.05423161007069558,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 137,
+   "areaSemTextura": 297.5356140646469,
+   "anisoRuim": 0,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 7918.3578901181245,
+   "medianaChao": 79.00331518059106,
+   "medianaArte": 184.41921873303548,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 62.7,
+     "area": 800
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 79,
+     "area": 1680
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 79,
+     "area": 1680
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 80.2,
+     "area": 15.3
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 80.2,
+     "area": 15.3
+    },
+    {
+     "nome": "(SphereGeometry)",
+     "tipo": "SphereGeometry",
+     "d": 92.6,
+     "area": 1.4
+    },
+    {
+     "nome": "(SphereGeometry)",
+     "tipo": "SphereGeometry",
+     "d": 92.6,
+     "area": 1.4
+    },
+    {
+     "nome": "(SphereGeometry)",
+     "tipo": "SphereGeometry",
+     "d": 92.6,
+     "area": 1.4
+    },
+    {
+     "nome": "(SphereGeometry)",
+     "tipo": "SphereGeometry",
+     "d": 92.6,
+     "area": 1.4
+    },
+    {
+     "nome": "(SphereGeometry)",
+     "tipo": "SphereGeometry",
+     "d": 92.6,
+     "area": 1.4
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 739.8,
+     "area": 25.9
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 739.8,
+     "area": 25.9
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 724.7,
+     "area": 27
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 724.7,
+     "area": 27
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 716.5,
+     "area": 27.6
+    }
+   ]
+  },
+  {
+   "id": "fy_mansao",
+   "nome": "Mansão do Joá",
+   "malhas": 882,
+   "superficies": 148,
+   "areaEstrutural": 8979.363422894887,
+   "areaTotal": 8979.363422894887,
+   "mediana": 109.70476734409125,
+   "p05": 1.492007693184502,
+   "p95": 290.13675107215624,
+   "maxEstrutural": 512,
+   "maxTotal": 512,
+   "dispersaoP95": 2.6447050396828824,
+   "dispersaoMax": 4.667071563026076,
+   "dispersaoTotal": 4.667071563026076,
+   "fracAbaixoDoPiso": 0.45959939650763726,
+   "fracNaoMedida": 0,
+   "semMedida": 0,
+   "semTextura": 734,
+   "areaSemTextura": 4817.832071942018,
+   "anisoRuim": 0,
+   "borrados": 0,
+   "borradosEx": [],
+   "areaChao": 6570.3692178850015,
+   "medianaChao": 45.48281948919689,
+   "medianaArte": null,
+   "piores": [
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 1.5,
+     "area": 690
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 3.2,
+     "area": 98.8
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 3.2,
+     "area": 98.8
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 4.9,
+     "area": 42.1
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 5.9,
+     "area": 29.1
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 45.5,
+     "area": 3168
+    },
+    {
+     "nome": "(PlaneGeometry)",
+     "tipo": "PlaneGeometry",
+     "d": 86.5,
+     "area": 140
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 106.6,
+     "area": 217.9
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 109.7,
+     "area": 212.6
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 109.7,
+     "area": 212.6
+    }
+   ],
+   "topo": [
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 1.8
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 1.8
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 1.8
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 1.8
+    },
+    {
+     "nome": "(BoxGeometry)",
+     "tipo": "BoxGeometry",
+     "d": 512,
+     "area": 1.8
+    }
+   ]
+  }
+ ]
+}

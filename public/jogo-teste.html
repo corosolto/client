@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Entrando no teste de arsenal…</title>
+<style>
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0e1116;
+         color:#e6e9ef; font:14px/1.6 system-ui,-apple-system,sans-serif; text-align:center; }
+  b { color:#f0b429; }
+  kbd { background:#1a212b; border:1px solid #2e3846; border-radius:5px; padding:2px 7px;
+        font:13px ui-monospace,monospace; }
+  p { max-width:46ch; }
+</style>
+<div>
+  <p><b>Entrando na partida de teste…</b><br>
+  a tela de carregamento leva uns 15 segundos.</p>
+  <p>Já dentro, <kbd>[</kbd> e <kbd>]</kbd> andam pelas 26 armas.<br>
+  <kbd>R</kbd> recarrega, botão direito mira.</p>
+  <p style="opacity:.55">Se ficar parado nesta página, o link é
+  <code>/?debug=1&amp;auto=E&amp;map=brasilia&amp;armaslazy=0</code></p>
+</div>
+<script>
+  /* Atalho sem `&` na URL: colar um link com ampersand em terminal ou chat quebra
+     no primeiro `&` e cai no menu em vez da partida. O destino é o mesmo. */
+  const p = new URLSearchParams(location.search);
+  const q = new URLSearchParams({
+    debug: '1', auto: 'E', armaslazy: '0',
+    map: p.get('map') || 'brasilia',
+  });
+  if (p.get('vmweapon')) q.set('vmweapon', p.get('vmweapon'));
+  location.replace(`/?${q}`);
+</script>
