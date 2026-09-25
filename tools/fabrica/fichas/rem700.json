@@ -1,0 +1,220 @@
+{
+  "id": "rem700",
+  "arma": "rem700",
+  "chassi": "Kar98K",
+  "descricao": "REM 700 \"Caçador\" = Kar98K do pack como autorado na zona de contato. O contato decide: a Remington 700 de caça é ferrolho com depósito INTERNO (a REM 700 do jogo não tem pente destacável) — é o Kar98K, não a L96X (pente destacável) da proposta inicial. Recarga cartucho a cartucho (família bolt, laço reload_start/loop/end do pack), tiro com o ciclo de ferrolho do pack, coronha de madeira de caça do Kar98K. Zona livre: a luneta da REM 700 do próprio jogo (public/models/weapons/rem700.glb, 0 crédito Mint) em montagem avançada sobre o cano (tipo scout) e sem as miras de ferro do Kar98K.",
+  "limite": "Luneta avançada, não sobre a caixa da culatra: a recarga cartucho a cartucho do Kar98K põe a mão e o cartucho por CIMA da janela da culatra (é zona de contato); uma luneta ali seria atravessada pela mão e pelo cartucho em toda recarga.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "idleArma": "reload_start",
+  "removerZonaLivre": [
+    {
+      "nome": "alca-de-mira-kar98k",
+      "min": [
+        -4,
+        -27,
+        1.2
+      ],
+      "max": [
+        4,
+        -13,
+        8
+      ]
+    },
+    {
+      "nome": "massa-kar98k",
+      "min": [
+        -4,
+        -73,
+        0.9
+      ],
+      "max": [
+        4,
+        -66,
+        6
+      ]
+    }
+  ],
+  "zonaLivre": [
+    {
+      "peca": "luneta",
+      "fonte": "public/models/weapons/rem700.glb",
+      "recorte": {
+        "min": [
+          -1,
+          -1,
+          0.075
+        ],
+        "max": [
+          1,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          -1.56,
+          -40.3,
+          -4.2
+        ],
+        "rotDeg": [
+          0,
+          0,
+          -90
+        ],
+        "escala": 0.7
+      }
+    }
+  ],
+  "acabamentoZonaLivre": {
+    "tom": [
+      0.5,
+      0.5,
+      0.52
+    ],
+    "metal": 0.45,
+    "rugosidade": 0.5
+  },
+  "mira": {
+    "raizCm": [
+      0,
+      -24.5,
+      2.8
+    ],
+    "origem": "ocular da luneta avançada (sobrepor.py)"
+  },
+  "enquadramentoDe": "mosin",
+  "recuo": {
+    "familia": "bolt",
+    "fonte": "recoil.json ← Animations/Kar98K (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "ocultar": [
+    {
+      "osso": "Clip",
+      "clipe": "reload_start",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip0",
+      "clipe": "reload_start",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip1",
+      "clipe": "reload_start",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip2",
+      "clipe": "reload_start",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip3",
+      "clipe": "reload_start",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip4",
+      "clipe": "reload_start",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "Clip",
+      "clipe": "reload_loop",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip0",
+      "clipe": "reload_loop",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip1",
+      "clipe": "reload_loop",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip2",
+      "clipe": "reload_loop",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip3",
+      "clipe": "reload_loop",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip4",
+      "clipe": "reload_loop",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "Clip",
+      "clipe": "reload_end",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip0",
+      "clipe": "reload_end",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip1",
+      "clipe": "reload_end",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip2",
+      "clipe": "reload_end",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip3",
+      "clipe": "reload_end",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    },
+    {
+      "osso": "CartridgeClip4",
+      "clipe": "reload_end",
+      "de": 0,
+      "ate": 1,
+      "motivo": "a REM 700 carrega cartucho a cartucho, sem lâmina; o laço do Kar98K traz a lâmina do repouso para o quadro (crítico r3: 'objeto no meio do ar')"
+    }
+  ]
+}

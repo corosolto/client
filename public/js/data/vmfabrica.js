@@ -16,6 +16,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   mp5: 'd26da9f0ab',
   p90: 'f0ab213493',
   pistol: '4c9e3a1a29',
+  rem700: '4710515e72',
   revolver38: '27bf8cb5fb',
   scar: 'e15febed0d',
   shotgun: '168a53d23a',
@@ -41,5 +42,6 @@ export const VM_FABRICA_POS = Object.freeze({
   g3sg1: { x: 0.155, y: -0.06, z: -0.313 },
   m92: { x: 0.215, y: -0.05, z: -0.173 },
   md97: { x: 0.245, y: -0.08, z: -0.233 },
+  rem700: { x: 0.155, y: -0.03, z: -0.123, fov: 50 },
   tavor: { x: 0.245, y: -0.08, z: -0.233 },
 });
