@@ -204,8 +204,8 @@
       "chassi": "MX16A4",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/famas-fabrica.glb",
-      "bytes": 2267792,
-      "sha256": "ba4dbf38653619bc982e5e802c32173434253b9a0e25c154b40ccd4ca0470a98",
+      "bytes": 2267808,
+      "sha256": "47e12d76849026f5b663f0ff4454216316478504daf5cd333284d69b7ff653dd",
       "clipes": [
         {
           "nome": "idle",
@@ -255,7 +255,7 @@
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "malhaPropria": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a",
-        "animador": "00ec67f3d07d40dbfbd896adc53a1ee5e5f8b321ddd33652278507dd03500dba",
+        "animador": "3856fb0be47b8d326b3080e9fe64eeb69cefe0c2cfeb18cc0efe42826ea09719",
         "frameJogo": "2f367ba5ae75380191fb3717c63df1f6d547dd5c6047861b2e1f987e8ded4c0b"
       },
       "ready": false,
@@ -961,8 +961,8 @@
       "chassi": "MX16A4",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/tavor-fabrica.glb",
-      "bytes": 2260644,
-      "sha256": "2c47a86b1a8bab7d105eb3488e740033a99bc8e6fddd37ee876d0e726a0a5684",
+      "bytes": 2260692,
+      "sha256": "88a6aeec814e23d4e8206135ba7116420d7a03d83670efdb244b6ab7c39f923f",
       "clipes": [
         {
           "nome": "idle",
@@ -1000,7 +1000,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 5,
+      "segundos": 6,
       "file": "viewmodels/fabrica/tavor-fabrica.glb",
       "ficha": "tools/fabrica/fichas/tavor.json",
       "insumos": {
@@ -1012,7 +1012,7 @@
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "malhaPropria": "958f09eec9033af88c954d57fef4130827a2b2958109c12f52644e1e7ace573c",
-        "animador": "1d07950ae0d248c63b509e5f125794952e2c8ea4f0e4766b8e15655b81f2d196",
+        "animador": "d21ea85b0068b63804a2f59947f958f0e548a189c1d0607f44d6b828b8acf8a3",
         "frameJogo": "ac7d3c93ef2689dd2f42c344ac2b56907a361c6dde54478f2fda500e5ddcfb1e"
       },
       "ready": false,

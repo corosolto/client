@@ -36,8 +36,9 @@
         "Mag": [
           {"u": 0, "estado": "arma"},
           {"u": 0.22, "estado": "arma"},
-          {"u": 0.25, "estado": "arma", "deslocCm": [0, 0, -3]},
-          {"u": 0.26, "estado": "cai", "velCm": [-15, 0, -10], "giroGrausS": 60},
+          {"u": 0.26, "estado": "arma", "deslocCm": [0, 0, -4]},
+          {"u": 0.31, "estado": "arma", "deslocCm": [0, 0, -10]},
+          {"u": 0.32, "estado": "cai", "velCm": [-10, 0, -5], "giroGrausS": 40},
           {"u": 0.56, "estado": "escondido"},
           {"u": 0.66, "estado": "arma"}
         ],
