@@ -1,0 +1,49 @@
+{
+  "id": "m400",
+  "curta": false,
+  "golden": {
+    "eixo": 28.7,
+    "centro": [
+      0.835,
+      0.767
+    ]
+  },
+  "frameBase": {
+    "x": 0.245,
+    "y": -0.08,
+    "z": -0.233,
+    "fov": 57,
+    "rotDeg": [
+      1.69,
+      7.69,
+      6.19
+    ]
+  },
+  "antes": {
+    "tamanhoVsAk": 0.999,
+    "bracoVsAk": 1.034,
+    "eixo": 36.2,
+    "cruz": 0,
+    "mangaNoQuadro": 0,
+    "centro": [
+      0.831,
+      0.74
+    ]
+  },
+  "frame": {
+    "x": 0.245,
+    "y": -0.08,
+    "z": -0.403
+  },
+  "depois": {
+    "tamanhoVsAk": 0.888,
+    "bracoVsAk": 1.187,
+    "eixo": 32.8,
+    "cruz": 0,
+    "mangaNoQuadro": 0,
+    "centro": [
+      0.82,
+      0.751
+    ]
+  }
+}
