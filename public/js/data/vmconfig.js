@@ -179,7 +179,7 @@ export const VM_FABRICA = Object.freeze({
   mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, ads: A(0.4) }),
   mp5: F('mp5', 'MPS5', { recoilScale: 2.3, ads: A(0.1) }),
   p90: F('p90', 'PDW90', { recoilScale: 2.4, ads: A(0.3) }),
-  lmg: F('lmg', 'MGX5', { recoilScale: 2.2, frame: { x: 0.295, y: -0.04, z: -0.213, rotDeg: [1.69, 0, 6.19] }, ads: A(0.3) }),
+  lmg: F('lmg', 'MGX5', { recoilScale: 2.2, frame: { x: 0.335, y: -0.04, z: -0.18, rotDeg: [1.69, 0, -8] }, ads: A(0.3) }),
   shotgun: F('shotgun', 'KXG12', { recoilScale: 1.3, ads: A(0.1) }),
   pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.2) }),
   deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: A(0.2) }),
