@@ -35,6 +35,9 @@ page.on('pageerror', (e) => erros.push(String(e).slice(0, 200)));
 page.on('console', (m) => { if (/paid-viewmodel|melee-vm/.test(m.text())) erros.push(m.text().slice(0, 200)); });
 const shot = async (nome) => {
   await page.evaluate(() => {
+    // Bot que renasce no meio da recarga entrava na frente da arma (rodada 2 do crítico).
+    const g = window.__game;
+    for (const c of g?.combatants || []) if (c !== g.player) { c.alive = false; if (c.mesh) c.mesh.visible = false; }
     for (const el of document.querySelectorAll('body *')) {
       if (el.children.length < 6 && /DEBUG \(console\)/.test(el.textContent || '') && el.offsetHeight > 40) el.style.display = 'none';
     }

@@ -811,8 +811,8 @@
       "chassi": "KXG12",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/shotgun-fabrica.glb",
-      "bytes": 3093836,
-      "sha256": "168a53d23ab57be3d282ab35bc52a85f5d572785f0c0cdfc3ba9295fb19939a4",
+      "bytes": 3080316,
+      "sha256": "8b3c8639cad501ac42893e4829efbbfab901f227f7da203ad39325496f088a80",
       "clipes": [
         {
           "nome": "idle",
@@ -872,7 +872,7 @@
       "file": "viewmodels/fabrica/shotgun-fabrica.glb",
       "ficha": "tools/fabrica/fichas/shotgun.json",
       "insumos": {
-        "ficha": "4c36dc7aaafd307a5e79fc9a6619320475bf2f305687e60cb3ba621c922099c1",
+        "ficha": "b5312d2e823844faa6d200b22ac4645907c0c636f9cda3429fcd41a7c571912e",
         "chassi": "5d58bd2016913609cb4d00e4205a182da8f67a4b63b2e09353daa7c71fd98f01",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "3050e8d1b6a617685feda650ce477ca7b125f1bf0f05c63f24acc17379c22311",

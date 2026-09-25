@@ -13,7 +13,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   p90: 'f0ab213493',
   pistol: '4c9e3a1a29',
   revolver38: '27bf8cb5fb',
-  shotgun: '168a53d23a',
+  shotgun: '8b3c8639ca',
   svd: '3efcb8065b',
 });
 // Posição do pacote por chassi contra a AK golden (tools/fabrica/enquadramento/<id>.json);
