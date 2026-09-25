@@ -59,4 +59,13 @@ export const LOOK = {
     neblina: { d: 0.0056, solDir: [-30, 14, -18], forca: 0 },
     grade: { exposicao: 1.48, piso: 0.0050, expAces: 1.58 },
   },
+  parque_treta: {   // Madureira no fim de tarde: sol baixo, céu roxo e sombras longas
+    sky: '/img/textures/sky_parque.webp',
+    horizonte: 0x7b739a,
+    zenite: 0x193660,
+    sol: { cor: 0xffc890, i: 1.75, pos: [-38, 16, -8] },
+    hemi: { ceu: 0xd9c2e0, chao: 0x4f4034, i: 1.0 },
+    neblina: { d: 0.0075, solDir: [-38, 16, -8], forca: 0.88 },
+    grade: { exposicao: 1.42, piso: 0.0050, expAces: 1.52 },
+  },
 };

@@ -573,12 +573,12 @@ export const VM_FRAME = {
        O que NÃO fechou está declarado no relatório: pistola e faca (sem foto de referência)
        e a borda esquerda de 5 armas. */
     rifle:   { roll: -0.070, pitch: 0.1571, yaw: 0.2793, tanH: 0.360, clear: 0.020, minz: 0.3450, fwdTan: 1.60 },
-    sniper:  { roll: 0.580, pitch: 0.1571, yaw: 0.2094, tanH: 0.360, clear: 0.020, minz: 0.3350, fwdTan: 1.60 },
+    sniper:  { roll: -0.055, pitch: 0.1571, yaw: 0.2094, tanH: 0.360, clear: 0.020, minz: 0.3350, fwdTan: 1.60 },
     shotgun: { roll: -0.078, pitch: 0.1047, yaw: 0.3491, tanH: 0.360, clear: 0.020, minz: 0.3450, fwdTan: 1.60 },
     smg:     { roll: -0.085, pitch: 0.4189, yaw: 0.4887, tanH: 0.360, clear: 0.020, minz: 0.3500, fwdTan: 1.60 },
-    // Armas curtas: cant leve (a pose 27°/32° fazia a PT-38 atravessar a tela
-    // e esconder a mão do cabo); boca à esquerda sem parecer arma caída.
-    pistol:  { roll: -0.105, pitch: 0.1745, yaw: 0.3142, tanH: 0.285, clear: 0.020, minz: 0.3500, fwdTan: 1.45 },
+    // Pose da main: o cant leve desta branch punha deagle/revolver38/mosin abaixo do piso
+    // de areaPct da VM5; a queixa da PT-38 que motivou o cant fica em KNOWN-BUGS (BUG-180).
+    pistol:  { roll: -0.050, pitch: 0.4712, yaw: 0.5585, tanH: 0.280, clear: 0.020, minz: 0.2700, fwdTan: 1.60 },
     knife:   { roll: 0, pitch: 0.000, yaw: 0.000, tanH: 0.240, clear: 0.020, minz: 0.3100, fwdTan: 1.60 },   // pitch/yaw n/a: a faca usa knifeRot
   },
   // A faca não tem cano: em vez do cant ela leva a pose CS clássica (lâmina atravessada,
@@ -618,9 +618,7 @@ export const VM_FRAME = {
      que sobrasse só tiraria o grip da banda da VM9 (m92 com 1,12 ia a Zg 0,560 e o grip
      saía por 0,0009). DÍVIDA REMOVIDA: 5 exceções por arma -> 0. Se alguém precisar de uma,
      o custo é medido: a janela inteira de Zg da VM9 é [0,445 ; 0,558], ou seja ±11%. */
-  // Compactas têm caixa alta para o comprimento: afastar em torno do grip
-  // impede UZI/P90 de parecerem maiores que um fuzil na lente 1P.
-  zMul: { uzi: 1.34, p90: 1.16, mp5: 1.08 },
+  zMul: {},
   // classe de ENQUADRAMENTO (≠ STATIC_CLASS do pipeline Tripo, ≠ BALL_CLASS da balística)
   classOf: {
     ak: 'rifle', akm: 'rifle', m4: 'rifle', m92: 'rifle', g3: 'rifle', carbine: 'rifle',

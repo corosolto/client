@@ -257,15 +257,15 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,978 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 1,100 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,064 |
-| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,922 |
-| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,657 |
-| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,348 |
+| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 2,025 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,709 |
+| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,772 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 392 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 753 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 338 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 258 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 277 |
-| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 427 |
+| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 974 |
 | `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 1,061 |
 | `penitenciaria` | CARANDIRU | **capture** | `map_penitenciaria.js` | 1,009 |
 

@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.281`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.287`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -36,6 +36,7 @@
 - O beacon de `/api/perf` leva o resumo do `ops.js` (boot, FPS p50/p5, falhas de carga, sessão anterior) e o relatório de crash diz onde a sessão anterior parou; a sonda de navegador usa a GPU do Mac sozinha e o elenco é sondado pelo `glbchars.js` que a produção serve.
 
 ### Corrigido
+- O Campinho da Quebrada ganha cobertura nos dois portões e nas laterais, placar de várzea e navegação contínua nas quinas, preservando duas rotas separadas em CTF e partidas 5x5/8x8.
 - Lobisomem Mítico deixa de puxar aliados de outras facções, passa a resolver M nas telas de inspeção, usa luva M distinta no viewmodel, ganha animação própria com pés no chão e volta a publicar os retratos de resultado aprovados, que tinham saído do quadro medido no elenco.
 - O pack integrado do Lobisomem passa a servir os clipes próprios na sequência do runtime, com o fallback compartilhado preservado só para comparação e regressão.
 - No Sertão, as três carroças deixam passagem pelos dois flancos e as cinco casas diante dos respawns passam a ter porta, saída lateral, janela com revide e navegação intencional para bots.
@@ -60,6 +61,178 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.287] — 2026-09-25
+
+### Mudado
+- fix(corrego): torna rota baixa e camada vertical jogáveis (#599)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(corrego): record alpha262 validation
+- fix(corrego): reduce diffuse vegetation scene cost
+- docs(corrego): registra draft PR 599
+- docs(corrego): registra carga, WebGL e continuidade
+- test(corrego): mede travessia, janelas e decisões táticas
+- fix(corrego): torna rotas baixa e vertical jogáveis
+
+## [2.0.0-alpha.286] — 2026-09-25
+
+### Mudado
+- feat(ferro velho): passarela e rotas táticas (#600)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(ferro-velho): link review draft
+- feat(ferro-velho): add elevated scrap routes
+
+## [2.0.0-alpha.285] — 2026-09-25
+
+### Mudado
+- feat(parque): reautora Parque Madureira com rotas e ambiência (#597)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(parque): registra UIR15 herdada
+- docs(parque): registra alpha.262 e bloqueios reais
+- test(parque): cobre matriz real 5x5 e 8x8
+- docs(parque): fecha evidencias e dividas herdadas
+- fix(parque): respeita contratos globais do catalogo
+- feat(parque): reautora Madureira com rotas e ambiencia
+
+## [2.0.0-alpha.284] — 2026-09-25
+
+### Mudado
+- feat(quebrada): reconstruir rotas e cobertura do Campinho (#602)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(quebrada): record alpha262 playtest evidence
+- test(quebrada): expand Campinho browser matrix
+- fix(quebrada): reassar grafites do Campinho
+- docs(quebrada): vincular draft substituto
+- docs(quebrada): registrar portao herdado
+- docs(quebrada): atualizar blocos gerados
+- feat(quebrada): reconstruir rotas e cobertura do Campinho
+
+## [2.0.0-alpha.283] — 2026-09-25
+
+### Mudado
+- feat(mobile): controles de toque + UI responsiva pro app Web (#496)
+- feat(mobile): controles de toque + UI responsiva (recriado do #496) (#647)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(eval): arnes local resolve builtin do Node no frontmatter
+- chore(docs): regenera bloco derivado (autofix)
+
+## [2.0.0-alpha.282] — 2026-09-24
+
+### Mudado
+- feat(audio): kill-shouts do time Mítico via ElevenLabs (#486)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(audio): fechamento do elenco Mítico e upgrade dos funkeiros
+- feat(audio): elenco misto Fish+ElevenLabs e pilotos de upgrade dos times
+- feat(audio): sotaque de Pernambuco empurrado no design de Lampião e Maria Bonita
+- feat(audio): rodada final dos míticos — redesigns, expressões do cangaço e SFX do lobo
+- feat(audio): dossiê de sotaques e Voice Design dos míticos reprovados
+- feat(audio): kill-shouts do time Mítico via ElevenLabs
 
 ## [2.0.0-alpha.281] — 2026-09-24
 

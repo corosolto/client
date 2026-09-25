@@ -98,6 +98,28 @@ atravessa de nó até o teto de 150 ms — acima disso a companhia não paga o a
 
 Régua `eval:noescolha`, 12 cláusulas, mutantes `so-ping`, `mais-vazio`, `so-perto`, `id-curto`.
 
+## BUG-180 — o cant da PT-38 custava área de tela em 7 das 26 armas (#638)
+
+**Aberto em 25/09/2026, branch `vm/integracao-k`.** Três campos de `VM_FRAME`
+(`public/js/vmattach.js`) tinham nesta branch valores que a main não tem: `sniper.roll`
+`0.580` (a main usa `-0.055`), a entrada inteira da classe `pistol` (`roll -0.105 / pitch
+0.1745 / yaw 0.3142 / tanH 0.285 / minz 0.3500 / fwdTan 1.45`, contra `-0.050 / 0.4712 /
+0.5585 / 0.280 / 0.2700 / 1.60` da main) e `zMul { uzi: 1.34, p90: 1.16, mp5: 1.08 }`
+(a main já zerou as exceções por arma). Medido com os valores da branch, `node
+tools/eval/vm-mint-audit.mjs` punha 7 das 26 armas abaixo do piso de 4% de `areaPct`:
+deagle 3,07/2,68 · revolver38 3,85/3,60 · mosin 3,14/2,87 · rem700 4,23/3,85 · uzi
+4,14/3,50 · g3sg1 4,21/3,81 · sks 3,30/2,98 (16:9 / 3:2). As invariantes VM5 e VM18b
+reprovavam por isso — não pelos GLB trocados.
+
+Conserto: os três campos voltaram aos valores da main (mesmo conserto do #623). Medido
+depois: 26/26 entre 4,10% e 10,22%, VM5 e VM18b verdes.
+
+**O que fica em aberto:** o cant leve da branch existia porque a pose 27°/32° da main faz a
+PT-38 atravessar a tela e esconder a mão no cabo. A queixa continua válida; o que não é
+aceitável é pagá-la com tamanho aparente abaixo do piso da VM5. Régua: VM5/VM18b em
+`tools/eval/invariants.mjs` — qualquer pose nova para a família `pistol` tem de manter
+`areaPct` ≥ 4% nos dois aspectos.
+
 ## BUG-178 — a main publicou import sem export e só o prod-watch viu (#524)
 
 **Fechado em 23/09/2026.** O #524 (fingerprint `producao-inconsistente`) juntou duas causas

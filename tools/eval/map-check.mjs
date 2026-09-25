@@ -201,8 +201,13 @@ for (const mapId of MAP_IDS) {
   // Água, manchas e folhagem de superfície continuam em `root` para descarte do mapa, mas
   // não podem virar teto na sonda vertical. O mutante reativa todas as superfícies marcadas:
   // `node tools/eval/map-check.mjs <mapa> --mutante=superficie-solida` deve reprovar.
+  const marcadoNaoSolido = (object) => {
+    for (let o = object; o; o = o.parent)
+      if (o.userData?.nonSolidSurface === true) return true;
+    return false;
+  };
   const solido = (h) => h.object && h.object.isMesh && !h.object.isSprite &&
-    (MUTANTE_SUPERFICIE_SOLIDA || !h.object.userData?.nonSolidSurface);
+    (MUTANTE_SUPERFICIE_SOLIDA || !marcadoNaoSolido(h.object));
   const primeiroSolido = (hits) => { for (const h of hits) if (solido(h)) return h; return null; };
 
   /* ================= grade de andabilidade (idêntica à do pickup-check) ================= */
@@ -292,14 +297,14 @@ for (const mapId of MAP_IDS) {
     ray.set(new THREE.Vector3(x, chao + PEITO, z), down);
     ray.far = PEITO - 0.01;   // -0,01: não conta o PRÓPRIO piso em que se está de pé
     const h0 = primeiroSolido(ray.intersectObject(W.root, true));
-    if (!h0) return { topo: null, pen: 0 };
+    if (!h0) return { topo: null, pen: 0, objeto: null };
     const topo = h0.point.y;                           // raio pra baixo: o 1º sólido é o mais alto
-    return { topo, pen: Math.max(0, topo - chao) };
+    return { topo, pen: Math.max(0, topo - chao), objeto: h0.object.name || h0.object.parent?.name || '(sem nome)' };
   };
   const dentro = [];   // pontos com corpo dentro de sólido
   const registra = (x, z, tipo) => {
     const s = sonda(x, z);
-    if (s.pen > DEGRAU) dentro.push({ tipo, x: +x.toFixed(2), z: +z.toFixed(2), pen: +s.pen.toFixed(3) });
+    if (s.pen > DEGRAU) dentro.push({ tipo, x: +x.toFixed(2), z: +z.toFixed(2), pen: +s.pen.toFixed(3), objeto: s.objeto });
     return s.pen;
   };
   const spawnsInfo = [];
