@@ -34,18 +34,18 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 50.524 linhas em 97 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7.532** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.600 linhas | `wc -l public/js/main.js` |
-| Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
-| GLBs de personagem | 55 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props em GLB | 179 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
-| Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
+| Código do jogo | 55.951 linhas em 109 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7.994** linhas | `wc -l public/js/game.js` |
+| `main.js` | 3.662 linhas | `wc -l public/js/main.js` |
+| Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
+| GLBs de personagem | 64 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
+| Props em GLB | 190 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Clipes de animação versionados | 777 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 53, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 17 | objeto `MAPS` de `maps.js` |
-| Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 421 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 80 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Arnêses visuais em HTML | 22 | `git ls-files 'public/*.html' \| wc -l` |
+| Scripts do arnês | 558 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.287` | `public/js/version.js` e `package.json` (batem) |
 
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 97 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 109 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -100,7 +100,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **161** importam Playwright, **58** importam gltf-transform e **10** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **221** importam Playwright, **81** importam gltf-transform e **10** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -309,22 +309,22 @@ Os mapas registrados, e em que modo cada um abre:
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.192 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.407 |
-| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.974 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.041 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.015 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.009 |
-| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.652 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.097 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.064 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.028 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.709 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.772 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 753 |
-| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 325 |
-| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 241 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 256 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 338 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 258 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 277 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 974 |
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
 | `penitenciaria` | CARANDIRU | **captura** | `map_penitenciaria.js` | 1.009 |
 
-**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 23 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
