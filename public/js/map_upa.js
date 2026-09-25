@@ -228,7 +228,7 @@ export function buildUpa(scene, T) {
 
   for (const mx of [8, 14, 20]) { maca(mx, 22, 0); soro(mx + 1.0, 20.6); monitor(mx - 1.2, 22); }   // macas + monitores de sinais vitais
   crashCart(24, 22); respirador(4.6, 20); desfib(29.2, 1.7, 22, -Math.PI / 2);
-  const bancadaEmergencia = addBox(4, 1.0, 1.5, MAT.armario, 27, 0, 18, { name: 'upa-clinical-emergencia' }); cover('bancada-emergencia', 27, 18, bancadaEmergencia); biombo(6, 26); armario(26, 16);
+  const bancadaEmergencia = addBox(4, 1.0, 1.5, MAT.armario, 27, 0, 18, { name: 'upa-clinical-emergencia' }); cover('bancada-emergencia', 27, 18, bancadaEmergencia); biombo(7, 26); armario(26, 16);
   cadeiraRodas(8, 27, 0);
   planta(6, 33); planta(28, 33);
 

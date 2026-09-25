@@ -33,10 +33,10 @@
       "sourceBytes": 271280,
       "foundationSha256": "aed9fd871b9b9281f3a7fbe7db2baab0095cc5f5f5cc7cbd802ae31cabd5d102",
       "foundationBytes": 3764304,
-      "productSha256": "f5c2da77aa1a5f6ee4343a13620ce636ebeb22fa07c6da4a97a2e4d58169ff5a",
-      "productBytes": 5138408,
-      "sha256": "f5c2da77aa1a5f6ee4343a13620ce636ebeb22fa07c6da4a97a2e4d58169ff5a",
-      "bytes": 5138408,
+      "productSha256": "c215b93f67f132a816140bf99ee1befc4f519a6953c2726da830a002d1e4c71b",
+      "productBytes": 5142564,
+      "sha256": "c215b93f67f132a816140bf99ee1befc4f519a6953c2726da830a002d1e4c71b",
+      "bytes": 5142564,
       "mechanism": "detachable-mag/top-bolt/trigger",
       "ready": false,
       "sourceBranch": "private-generated/viewmodels/smg+public/models/weapons/uzi.glb",
@@ -46,7 +46,9 @@
         "sourceSha256": "353d0384ec60a0e6ffc99ef38b5092a5773c2562e2e4bc401adef1228ef0a9fc",
         "sourceBytes": 4267588,
         "recipe": "tools/viewmodels/prep/uzi-uma-mao.mjs (doador pistol-runtime.glb)"
-      }
+      },
+      "postProcess": "node tools/viewmodels/prep/compacta-peca.mjs --arma=uzi --in=<vm/integracao-k>/smg/uzi-baked-runtime.glb --out=<privado>/smg/uzi-baked-runtime.glb",
+      "postProcessInputSha256": "f5c2da77aa1a5f6ee4343a13620ce636ebeb22fa07c6da4a97a2e4d58169ff5a"
     },
     "p90": {
       "displayName": "P90 CHINELÃO",
@@ -54,9 +56,9 @@
       "file": "viewmodels/p90/p90-baked-runtime.glb",
       "sourceSha256": "6fda87809ab60e1fea7a1e7bf5ebc5355e6ee70d595f7c4610ed88e847560aa2",
       "sourceBytes": 254312,
-      "productSha256": "1484c03ba7bedd8a4ebdc52e7d2da336729b6f6f7e5acbed888c681dcf2092fe",
+      "productSha256": "2b4ff0fdf8ad65973f5eb6d3230cfa5d0e3eca73fecb7ca4380aafa1c57c196c",
       "productBytes": 1469436,
-      "sha256": "1484c03ba7bedd8a4ebdc52e7d2da336729b6f6f7e5acbed888c681dcf2092fe",
+      "sha256": "2b4ff0fdf8ad65973f5eb6d3230cfa5d0e3eca73fecb7ca4380aafa1c57c196c",
       "bytes": 1469436,
       "mechanism": "top-mag/dual-release/charger/mechanism/trigger",
       "ready": false,
@@ -69,7 +71,9 @@
         "sourceSha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
         "sourceBytes": 1477620,
         "recipe": "tools/viewmodels/prep/mag-na-mao.mjs --arma=p90"
-      }
+      },
+      "postProcess": "node tools/viewmodels/prep/mag-na-mao.mjs --arma=p90 --source=<catálogo-otimizado>/p90/p90-baked-runtime.glb --output-dir=<privado>/p90",
+      "postProcessInputSha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908"
     }
   }
 }

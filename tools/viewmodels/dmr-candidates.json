@@ -7,8 +7,8 @@
       "file": "viewmodels/bolt/rem700-baked-runtime.glb",
       "sourceSha256": "5cfa20b4e2d85fcce1b012f5e24b616d90c795c12add3c3c0e0d646d8286bea3",
       "sourceBytes": 4675672,
-      "sha256": "314cf08a945e69801749bdd0d7be2df72dd5e0f3807113e16816f56cbf323fd0",
-      "bytes": 5018724,
+      "sha256": "2a5eb7c53b291381b8fb79811ab0c0920deda68fa7ca5643004613a7a1f5f2af",
+      "bytes": 5261724,
       "mechanism": "bolt-action/internal-5",
       "ready": false,
       "sourceBranch": "claude/vm-dmr-final",
@@ -18,7 +18,9 @@
         "sourceSha256": "439a4859d840b241680cd6a566bf62b989b7a63c01bbf89d45c7d3b24f1e79fa",
         "sourceBytes": 4695384,
         "recipe": "tools/viewmodels/prep/desvira-malha.mjs --arma=rem700"
-      }
+      },
+      "postProcess": "node tools/viewmodels/prep/braco-estavel.mjs --arma=rem700 --in=<vm/integracao-k>/bolt/rem700-baked-runtime.glb --out=<privado>/bolt/rem700-baked-runtime.glb && node tools/viewmodels/prep/saque-do-idle.mjs --arma=rem700 --in=<privado>/bolt/rem700-baked-runtime.glb --out=<privado>/bolt/rem700-baked-runtime.glb && node tools/viewmodels/prep/municao-na-mao.mjs --arma=rem700 --in=<privado>/bolt/rem700-baked-runtime.glb --out=<privado>/bolt/rem700-baked-runtime.glb",
+      "postProcessInputSha256": "314cf08a945e69801749bdd0d7be2df72dd5e0f3807113e16816f56cbf323fd0"
     },
     "g3sg1": {
       "family": "g3",
