@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.298`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.299`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,17 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.299] — 2026-09-26
+
+### Mudado
+- feat(mapas): estaciona 7 mapas para retrabalho e abre a oficina (?oficina=1) (#659)
+- fix(arnes): serve.mjs morria no primeiro request e levava o portao junto
+- chore(docs): regenera derivados apos o merge do autofix
+- chore(docs): regenera blocos derivados depois da remocao do wall-27
+- chore(arte): apaga de vez o wallpaper da Cuca — a personagem nao existe no elenco
+- chore(docs): regenera bloco derivado (autofix)
+- feat(mapas): estaciona 7 mapas para retrabalho e abre a oficina (?oficina=1)
 
 ## [2.0.0-alpha.298] — 2026-09-25
 
