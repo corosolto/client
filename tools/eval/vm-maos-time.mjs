@@ -69,6 +69,13 @@ function dist(p, c) {
   const v = Math.max(0.7, Math.min(1.02, (p[0] * c[0] + p[1] * c[1] + p[2] * c[2]) / cc));
   return Math.hypot(p[0] - v * c[0], p[1] - v * c[1], p[2] - v * c[2]);
 }
+// Distância à mistura linear luva↔acento (tom 0,7–1,02), com teto mais apertado.
+function mistura(p, a, b) {
+  let d = Infinity;
+  for (let t = 0; t <= 1; t += 0.05) d = Math.min(d, dist(p, a.map((c, i) => c * (1 - t) + b[i] * t)));
+  return d;
+}
+const LIMIAR_MISTURA = 10;
 const LIMIAR = 18;          // RGB: pixel mais longe que isto de toda a paleta = cor estranha ao time
 const MAX_ESTRANHO = 0.12;  // fração de pixels de mão com cor estranha
 const TOL_PALETA = 14;      // mediana da luva/manga × cor declarada (raio c·v)
@@ -90,9 +97,11 @@ function julgar(amostras, time) {
       const x = Math.hypot(p[0] - 0.97 * c[0], p[1] - 0.97 * c[1], p[2] - 0.97 * c[2]);
       if (x < d) { d = x; melhor = k; }
     }
-    if (perto > LIMIAR) { estranho++; continue; }
+    // Motivo fino (treliça, estrelas): o filtro da textura mistura luva e acento no mesmo pixel.
+    if (perto > LIMIAR && mistura(p, pal.luva, pal.acento) > LIMIAR_MISTURA) { estranho++; continue; }
     conta[melhor]++;
-    if (por[melhor]) por[melhor].push(p);
+    // Mediana só com pixel "puro": a mistura luva↔acento puxava a manga escura do F_grife.
+    if (por[melhor] && dist(p, pal[melhor]) <= 12) por[melhor].push(p);
   }
   const med = (xs) => xs.length ? [0, 1, 2].map((c) => xs.map((p) => p[c]).sort((a, b) => a - b)[xs.length >> 1]) : null;
   const n = amostras.length || 1;

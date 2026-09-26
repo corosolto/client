@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { TEAM_HANDS } from '../../public/js/vmhands.js';
+import { TEAM_HANDS, F_OPCOES } from '../../public/js/vmhands.js';
 import { FACTIONS } from '../../public/js/factions.js';
 import { VM_WEAPON, VM_FAMILY } from '../../public/js/data/vmconfig.js';
 
@@ -24,9 +24,9 @@ const CHAR = { E: 'esquerdomacho', B: 'caminhoneiro', C: 'bonzo', F: 'mandrake',
 const times = (depois?.times || FACTIONS.filter((f) => f.ready).map((f) => f.id));
 const nomeTime = (t) => FACTIONS.find((f) => f.id === t)?.name || t;
 const familias = [...new Set([...Object.values(VM_WEAPON).map((e) => e.family), ...Object.keys(VM_FAMILY)])].join(',');
-const url = (col, arma, t) => {
+const url = (col, arma, t, extra = {}) => {
   const q = new URLSearchParams({ debug: '1', auto: `${t},${CHAR[t] || ''}`, map: 'piscina_treta', vmauthored: '1', vmqa: 'precision',
-    vmready: familias, vmweapon: Object.keys(VM_WEAPON).join(','), ...(col === 'ak-golden' ? { vmgolden: 'ak' } : { vmfabrica: '1' }) });
+    vmready: familias, vmweapon: Object.keys(VM_WEAPON).join(','), ...(col === 'ak-golden' ? { vmgolden: 'ak' } : { vmfabrica: '1' }), ...extra });
   return `http://127.0.0.1:${porta}/?${q}`;
 };
 const colunas = [];
@@ -57,6 +57,18 @@ const grade = colunas.map((col) => `<tr><th>${esc(col.id)}<div class="k">${esc(s
   return `<td>${f?.foto ? `<a href="${esc(f.foto)}" target="_blank"><img loading="lazy" src="${esc(f.foto)}" alt="${esc(col.id)} ${t}"></a>` : '<div class="vazio">sem foto</div>'}${link}</td>`;
 }).join('')}</tr>`).join('');
 
+const OPC_COLS = ['ak-golden', 'm4', 'pistol', 'knife', 'knife-L'];
+const padraoF = Object.entries(F_OPCOES).find(([, v]) => v === TEAM_HANDS.F)?.[0];
+const DESCR = { ouro: 'luva dourada sem dedos, manga preta — ostentação, a cor da facção', grife: 'luva preta com treliça dourada de grife (a jaqueta estampada da arte), sem dedos', corrente: 'luva escura sem dedos, cordão de ouro no pulso e nos nós (proposta anterior; crítico: lê como onça na M4, some na pistola)' };
+const opcoesF = Object.entries(F_OPCOES).map(([op, st]) => {
+  const fj = op === padraoF ? fotos : ler(`f-${op}/fotos.json`);
+  const pre = op === padraoF ? '' : `f-${op}/`;
+  return `<tr><th>${op}${op === padraoF ? ' <span class="k">(padrão no código)</span>' : ''}<div class="k">${esc(DESCR[op])}</div><div class="pal"><span style="background:${st.glove}"></span><span style="background:${st.sleeve}"></span><span style="background:${st.accent}"></span></div></th>${OPC_COLS.map((c) => {
+    const f = fj?.celulas.find((x) => x.coluna === c && x.time === 'F');
+    const link = c === 'knife-L' ? '' : `<a href="${esc(url(c, c.replace('-golden', ''), 'F', { vmmaosf: op }))}" target="_blank" rel="noopener">abrir no jogo</a>`;
+    return `<td>${f?.foto ? `<a href="${esc(pre + f.foto)}" target="_blank"><img loading="lazy" src="${esc(pre + f.foto)}" alt="F ${op} ${c}"></a>` : '<div class="vazio">sem foto</div>'}${link}</td>`;
+  }).join('')}</tr>`;
+}).join('');
 const cons = Object.entries(depois?.consistencia || {}).map(([k, v]) => `<tr><th>${esc(k)}</th><td>rgb(${v.mediana.join(', ')})</td><td>${esc(v.pior.coluna)} a ${v.pior.d}</td></tr>`).join('');
 const falhas = (depois?.checks || []).filter((c) => !c.ok);
 const mut = mutantes.map(([m, r]) => `<li><b>${m}</b>: ${r ? (r.ok ? '<span class="mal">NÃO mordeu</span>' : `<span class="bom">mordeu</span> — ${r.checks.filter((c) => !c.ok).length} falhas`) : 'não rodado'}</li>`).join('');
@@ -82,6 +94,9 @@ pre{white-space:pre-wrap;font:12px/1.4 ui-monospace,monospace}
 <h2>Arma × time, no jogo</h2>
 <p class="k">Quadro de idle no jogo real (pós ligado). "abrir no jogo" abre a partida com o personagem do time; troque de arma no painel de QA ou no console com <code>__vmPrecisionQa.equip('m4')</code>. A AK golden abre com <code>?vmgolden=ak</code>; a faca L não tem URL (a régua troca o GLB da faca K pela L).</p>
 <div class="box"><table class="grade"><tr><th>arma</th>${times.map((t) => `<th>${t} · ${esc(nomeTime(t))}</th>`).join('')}</tr>${grade}</table></div>
+<h2>FUNKEIROS: escolha do dono (três propostas)</h2>
+<p class="k">Mesma régua para as três; no jogo, <code>?vmmaosf=ouro|grife|corrente</code> troca a opção (só revisão). A que ficar vira o padrão em <code>F_OPCOES</code>/<code>TEAM_HANDS.F</code> (vmhands.js).</p>
+<div class="box"><table class="grade"><tr><th>opção</th>${OPC_COLS.map((c) => `<th>${c}</th>`).join('')}</tr>${opcoesF}</table></div>
 <h2>Auditoria: antes (base vm/fabrica) → depois</h2>
 <p class="k">Célula = rig(s) da mão e se todo material de mão é o atlas do time; "cor N%" = pixels de mão fora da paleta do time no passe de albedo. K/L/A = rig. Base: ${esc(antes ? 'origin/vm/fabrica' : 'não rodada')}.</p>
 <div class="box"><table><tr><th>arma</th><th>servido</th><th>rig</th>${times.map((t) => `<th>${t}</th>`).join('')}</tr>${linhasAuditoria}</table></div>
