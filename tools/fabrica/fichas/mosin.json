@@ -10,36 +10,44 @@
     "familia": "bolt",
     "fonte": "recoil.json ← Animations/Kar98K (RecoilAnimData); clipe de tiro do pack onde existe"
   },
-  "animador": "tools/fabrica/animador/kar98k-laco.json",
+  "animador": "tools/fabrica/animador/kar98k-lamina.json",
   "clipes": {
-    "reload_start": "animador",
-    "reload_loop": "animador",
-    "reload_end": "animador",
-    "reload_empty": "ausente",
+    "reload_empty": "animador",
+    "reload_tactical": "animador",
+    "reload_start": "ausente",
+    "reload_loop": "ausente",
+    "reload_end": "ausente",
     "equip_rifle": "geral:rifle_equip"
   },
   "moverPack": [
     {
-      "osso": "Cartridge",
-      "novoOsso": "Mag",
-      "posCm": [
-        0,
-        -3,
-        -1.2
+      "osso": [
+        "CartridgeClip0",
+        "CartridgeClip1",
+        "CartridgeClip2",
+        "CartridgeClip3",
+        "CartridgeClip4"
       ],
-      "rotDeg": [
+      "novoOsso": "Mag",
+      "refOsso": "Clip",
+      "deslocCm": [
         0,
         0,
-        0
+        -16
+      ]
+    },
+    {
+      "osso": "Clip",
+      "novoOsso": "Lamina",
+      "refOsso": "Clip",
+      "deslocCm": [
+        0,
+        0,
+        -16
       ]
     }
   ],
   "removerOssos": [
-    "Clip",
-    "CartridgeClip0",
-    "CartridgeClip1",
-    "CartridgeClip2",
-    "CartridgeClip3",
-    "CartridgeClip4"
+    "Cartridge"
   ]
 }
