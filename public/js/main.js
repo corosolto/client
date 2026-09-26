@@ -2568,8 +2568,7 @@ async function renderGlobal(nick) {
      reage à resposta, pra não existirem duas fontes de verdade que divergem. */
   if (data && data.disabled) {
     box.innerHTML = '<h3>RANKING GLOBAL</h3>' +
-      '<div class="rg-off">desligado por enquanto — o jogo está em alpha e o ranking volta ' +
-      'quando o placar for confiável. Seus stats deste navegador continuam contando, ali em cima.</div>' +
+      '<div class="rg-off">desligado por enquanto. Seus stats deste navegador continuam contando, ali em cima.</div>' +
       '<div class="rg-links"><a href="/mapa" target="_blank" style="color:var(--cs)">MAPA AO VIVO ↗</a></div>';
     return;
   }
@@ -2577,14 +2576,20 @@ async function renderGlobal(nick) {
     box.innerHTML = '<h3>RANKING GLOBAL</h3><div class="rg-off">indisponível no momento</div>';
     return;
   }
+  const rankText = (value) => String(value ?? '—').replace(/[&<>"']/g, (ch) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
   const rows = data.players.slice(0, 10).map((p, i) =>
-    `<tr class="${p.nick === nick ? 'me' : ''}"><td>${i + 1}</td><td>${p.nick}</td><td>${p.kd}</td><td>${p.kills}</td><td>${p.wins > 0 ? p.wins : "—"}</td></tr>`).join('');
+    `<tr class="${p.nick === nick ? 'me' : ''}"><td>${i + 1}</td><td>${rankText(p.nick)}</td><td>${rankText(p.points)}</td><td>${rankText(p.kd)}</td><td>${rankText(p.kills)}</td></tr>`).join('');
+  const meuPerfil = data.players.find((p) => p.nick === nick);
+  const meuPerfilUrl = meuPerfil?.id
+    ? `/u/${encodeURIComponent(meuPerfil.id)}/${encodeURIComponent(meuPerfil.nick)}`
+    : `/u/${encodeURIComponent(nick)}`;
   box.innerHTML = '<h3>RANKING GLOBAL (top 10)</h3>' +
     (rows
-      ? `<table><tr><th>#</th><th>JOGADOR</th><th>K/D</th><th>KILLS</th><th>VIT.</th></tr>${rows}</table>`
+      ? `<table><tr><th>#</th><th>JOGADOR</th><th>PONTOS</th><th>K/D</th><th>KILLS</th></tr>${rows}</table>`
       : '<div class="rg-off">ainda vazio — seja o primeiro!</div>') +
     `<div class="rg-links"><a href="/ranking" target="_blank" style="color:var(--cs)">RANKING COMPLETO ↗</a>` +
-    (nick ? `<a href="/u/${encodeURIComponent(nick)}" target="_blank" style="color:var(--cs)">MEU PERFIL ↗</a>` : '') +
+    (nick ? `<a href="${meuPerfilUrl}" target="_blank" style="color:var(--cs)">MEU PERFIL ↗</a>` : '') +
     `<a href="/mapa" target="_blank" style="color:var(--cs)">MAPA AO VIVO ↗</a></div>`;
 }
 
@@ -3096,6 +3101,7 @@ let mpNoAtual = null;
 let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
 let mpNos = [];
 let mpTimerLista = null;
+let mpTicketIdentityUid = null;
 
 async function obterMpTicket(action) {
   /* Nó local explícito (?mp=1/localhost) roda com MP_TICKET_REQUIRED=0. Pedir o ticket à API
@@ -3104,9 +3110,19 @@ async function obterMpTicket(action) {
   if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
   if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
+  const uid = getAnonId();
+  const token = getToken();
+  const nick = (nickEl.value || '').trim();
+  if (nick && mpTicketIdentityUid !== uid) {
+    const reg = await api('/api/register', { uid, nick, token });
+    if (reg?.ok) {
+      mpTicketIdentityUid = uid;
+      if (reg.nick) registeredNick = reg.nick;
+    } else if (reg?.error) rankingBloqueado = String(reg.message || reg.error);
+  }
   const r = await fetch(apiUrl('/api/mp-ticket'), {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ node, action, anonId: getAnonId(), sessionId: getSessionId() }),
+    body: JSON.stringify({ node, action, anonId: uid, sessionId: getSessionId(), token }),
   });
   if (!r.ok) throw new Error(`ticket_${r.status}`);
   const body = await r.json();

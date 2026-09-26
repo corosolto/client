@@ -37,10 +37,13 @@ let p: any = null, configured = !!supabaseAdmin;
    fica null e o template cai no aviso. */
 if (RANKING_ON && supabaseAdmin) {
   if (parts.length === 2) {
-    const { data } = await supabaseAdmin
-      .from('stats').select('*, players!inner(id, nick, social_link, socials, avatar_url)')
-      .eq('players.id', parts[0]).maybeSingle();
-    p = data;
+    const { data, error } = await supabaseAdmin
+      .from('player_points').select('*').eq('id', parts[0]).maybeSingle();
+    if (error) return Astro.redirect('/ranking', 302);
+    p = data ? { ...data, players: {
+      id: data.id, nick: data.nick, social_link: data.social_link,
+      socials: data.socials, avatar_url: data.avatar_url,
+    } } : null;
     if (p) {
       const real = p.players.nick;
       if (decodeURIComponent(parts[1]).toLowerCase() !== real.toLowerCase())
@@ -53,7 +56,8 @@ if (RANKING_ON && supabaseAdmin) {
     if (data) return Astro.redirect(`/u/${data.id}/${encodeURIComponent(data.nick)}`, 301);
   }
 }
-if (configured && !p) return Astro.redirect('/ranking', 302);
+if (RANKING_ON && configured && !p) return Astro.redirect('/ranking', 302);
+const points = Number(p?.points ?? 0);
 
 const nick = p?.players?.nick ?? parts.join('/') ?? '';
 const pid = p?.players?.id ?? '';
@@ -62,9 +66,9 @@ const tempo = p ? displayTime(p) : '0min';
 const [ladoLabel, ladoCor] = p ? sideOf(p.matches_p, p.matches_b) : ['NEUTRO', '#ffd23f'];
 const badgeUrl = abs(`/api/badge/${pid}.png`);
 const pageUrl = abs(`/u/${pid}/${encodeURIComponent(nick)}`);
-const title = `${nick} - ${p ? `${p.kills} kills, K/D ${kd}` : 'perfil'} | ${BRAND_FULL}`;
+const title = `${nick} - ${p ? `${points} pontos, K/D ${kd}` : 'perfil'} | ${BRAND_FULL}`;
 const desc = p
-  ? `${nick} no ${BRAND_FULL}: ${p.kills} kills, K/D ${kd}, ${p.wins > 0 ? p.wins : 'nenhuma'} vitória(s), ${p.headshots} headshots e ${tempo} de arena em ${p.matches} partidas.`
+  ? `${nick} no ${BRAND_FULL}: ${points} pontos, ${p.kills} kills, K/D ${kd}, ${p.wins > 0 ? p.wins : 'nenhuma'} vitória(s) e ${tempo} de arena.`
   : 'Perfil de jogador';
 
 const socials: any[] = p
@@ -118,9 +122,7 @@ const jsonld = p ? [
   {!RANKING_ON && (
     <div class="panel">
       <h1>Perfis desligados por enquanto</h1>
-      <p>O jogo está em <strong>alpha</strong> e o ranking saiu do ar até o placar ser
-      confiável - as páginas de jogador foram junto. Este endereço continua sendo o seu:
-      quando voltar, é aqui.</p>
+      <p>O ranking e as páginas de jogador voltarão. Este endereço continua sendo o seu.</p>
       <p><a href="/mapa">quem está jogando agora</a> · <a href="/changelog">o que mudou</a> ·
       <a href="/">▶ JOGAR</a></p>
     </div>
@@ -160,6 +162,7 @@ const jsonld = p ? [
 
       <h2>Placar</h2>
       <div class="tstat">
+        <div><b>{points}</b><span>pontos</span></div>
         <div><b>{p.kills}</b><span>kills</span></div>
         <div><b>{kd}</b><span>K/D</span></div>
         <div><b>{p.deaths}</b><span>mortes</span></div>

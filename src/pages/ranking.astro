@@ -34,9 +34,12 @@ Astro.response.headers.set(
    e um 410 seria mentira, porque não foi removida. `noindex, follow` tira a página do
    índice enquanto o conteúdo não existe, sem cortar os links que passam por ela.
    Quando religar, é só `RANKING_ON = true`: nada aqui embaixo mudou. */
-let players: any[] = [], configured = !!supabaseAdmin;
+let players: any[] = [], configured = !!supabaseAdmin, rankingError = false;
 if (RANKING_ON && supabaseAdmin) {
-  const { data } = await supabaseAdmin.from('leaderboard').select('*');
+  const { data, error } = await supabaseAdmin.from('leaderboard').select(
+    'id,nick,social_link,socials,avatar_url,matches,wins,rounds,matches_p,matches_b,kills,deaths,headshots,best_streak,play_seconds,last_character,kd,points',
+  ).order('points', { ascending: false }).order('wins', { ascending: false });
+  rankingError = !!error;
   players = data ?? [];
 }
 const PAGE_SIZE = 25;
@@ -49,6 +52,7 @@ const rows = players.slice(offset, offset + PAGE_SIZE);
 const totKills = players.reduce((s, p) => s + (p.kills || 0), 0);
 const totMatches = players.reduce((s, p) => s + (p.matches || 0), 0);
 const totHs = players.reduce((s, p) => s + (p.headshots || 0), 0);
+const totPoints = players.reduce((s, p) => s + Number(p.points || 0), 0);
 
 /* Título e descrição também mentiam com RANKING_ON=false: prometiam
    "leaderboard global … atualiza a cada partida" numa página que só mostra um
@@ -57,22 +61,22 @@ const totHs = players.reduce((s, p) => s + (p.headshots || 0), 0);
    resposta certa pra "qual é o ranking de CORO SOLTO?" é "não tem por enquanto",
    e é melhor que a IA leia isso do que invente. */
 const pageTitle = !RANKING_ON
-  ? `Ranking global - desligado durante o alpha | ${BRAND_FULL}`
+  ? `Ranking global - desligado por enquanto | ${BRAND_FULL}`
   : curPage > 1
     ? `Ranking global - página ${curPage} | ${BRAND_FULL}`
-    : `Ranking global - os maiores abatedores | ${BRAND_FULL}`;
+    : `Ranking global - maior pontuação | ${BRAND_FULL}`;
 const pageDesc = !RANKING_ON
-  ? `O ranking global do ${BRAND_FULL} está desligado enquanto o jogo está em alpha: o placar ainda é forjável, e publicar classificação forjável é publicar número errado. Volta no mesmo endereço.`
+  ? `O ranking global do ${BRAND_FULL} está desligado por enquanto e voltará neste endereço.`
   : players.length
-    ? `Leaderboard global do ${BRAND_FULL}: ${players.length} jogadores, ${totKills.toLocaleString('pt-BR')} kills e ${totMatches.toLocaleString('pt-BR')} partidas. Atualiza a cada partida.`
-    : `Leaderboard global do ${BRAND_FULL}: os maiores abatedores da arena Treta Suprema.`;
+    ? `Ranking global do ${BRAND_FULL}: ${players.length} jogadores e ${totPoints.toLocaleString('pt-BR')} pontos. Abates multiplayer confirmados recebem ponto extra.`
+    : `Ranking global do ${BRAND_FULL}: pontuação de singleplayer e multiplayer.`;
 
 const jsonld = (RANKING_ON && rows.length) ? [
   {
     '@type': 'ItemList',
     '@id': abs('/ranking') + '#lista',
     name: `Ranking global do ${BRAND_FULL}`,
-    description: 'Classificação dos jogadores por número de kills.',
+    description: 'Classificação dos jogadores por pontos; abates multiplayer confirmados recebem ponto extra.',
     itemListOrder: 'https://schema.org/ItemListOrderDescending',
     numberOfItems: players.length,
     itemListElement: rows.map((p, i) => ({
@@ -83,7 +87,7 @@ const jsonld = (RANKING_ON && rows.length) ? [
         '@type': 'Person',
         name: p.nick,
         url: p.id ? abs(`/u/${p.id}/${encodeURIComponent(p.nick)}`) : undefined,
-        description: `${p.kills} kills · K/D ${p.kd} · ${p.headshots} headshots em ${p.matches} partidas`,
+        description: `${p.points} pontos · ${p.kills} kills · K/D ${p.kd}`,
       },
     })),
   },
@@ -100,26 +104,24 @@ const jsonld = (RANKING_ON && rows.length) ? [
 <Layout
   title={pageTitle}
   description={pageDesc}
-  noindex={!RANKING_ON || curPage > 1}
+  noindex={!RANKING_ON || rankingError || curPage > 1}
   jsonld={jsonld}
   h1="Ranking global"
-  kicker={RANKING_ON ? 'classificado por kills' : 'desligado durante o alpha'}
+  kicker={RANKING_ON ? 'classificado por pontos' : 'desligado por enquanto'}
   heroImg="/img/map-previews/loja_h.jpg"
   heroPos="50%">
   {RANKING_ON && <Fragment slot="sub">
-    Classificado por kills. Atualiza ao fim de cada partida - jogue uma e o seu nome entra aqui.
+    Um ponto por abate na base; abates multiplayer confirmados recebem mais um. Atualiza após a partida.
   </Fragment>}
   {!RANKING_ON && <Fragment slot="sub">
-    O placar entre jogadores está fora do ar enquanto o jogo é alpha. Os seus números de partida
+    O ranking global está desligado por enquanto. Seus números de partida
     continuam salvos no navegador e aparecem no menu RANKING do jogo.
   </Fragment>}
 
   {!RANKING_ON && (
     <div class="panel">
       <p><strong>O ranking está desligado por enquanto.</strong></p>
-      <p>O jogo está em <strong>alpha</strong>. Enquanto o placar não for confiável, publicar
-      classificação é publicar número errado - então ele sai do ar em vez de mentir. Volta no
-      mesmo endereço, com os perfis junto.</p>
+      <p>O placar e os perfis voltarão neste mesmo endereço.</p>
       <p>Enquanto isso: <a href="/mapa">quem está jogando agora</a> ·
       <a href="/changelog">o que mudou</a> · <a href="/">▶ JOGAR</a></p>
     </div>
@@ -127,7 +129,9 @@ const jsonld = (RANKING_ON && rows.length) ? [
 
   {RANKING_ON && !configured && <div class="panel"><p>Ranking ainda não configurado (pendências de ambiente no servidor).</p></div>}
 
-  {RANKING_ON && configured && players.length === 0 && (
+  {RANKING_ON && rankingError && <div class="panel"><p>Ranking indisponível no momento. Tente novamente em breve.</p></div>}
+
+  {RANKING_ON && configured && !rankingError && players.length === 0 && (
     <div class="panel">
       <p>Ainda ninguém na arena. Seja o primeiro a cravar seu nome na treta: <a href="/">▶ JOGAR</a></p>
     </div>
@@ -140,16 +144,17 @@ const jsonld = (RANKING_ON && rows.length) ? [
         <div><b>{totMatches.toLocaleString('pt-BR')}</b><span>partidas</span></div>
         <div><b>{totKills.toLocaleString('pt-BR')}</b><span>kills</span></div>
         <div><b>{totHs.toLocaleString('pt-BR')}</b><span>headshots</span></div>
+        <div><b>{totPoints.toLocaleString('pt-BR')}</b><span>pontos</span></div>
       </div>
 
       <div class="tw">
         <table>
-          <caption class="sr-only">Ranking global de jogadores, ordenado por kills</caption>
+          <caption class="sr-only">Ranking global de jogadores, ordenado por pontos</caption>
           <thead>
             <tr>
               <th scope="col">#</th><th scope="col">Jogador</th>
               <th scope="col" class="num">Part.</th><th scope="col" class="num">Vit.</th>
-              <th scope="col" class="num">K/D</th><th scope="col" class="num">Kills</th>
+              <th scope="col" class="num">Pontos</th><th scope="col" class="num">K/D</th><th scope="col" class="num">Kills</th>
               <th scope="col" class="num">Mortes</th><th scope="col" class="num">HS</th>
               <th scope="col" class="num">Seq.</th><th scope="col" class="num">Tempo</th>
               <th scope="col">Lado</th>
@@ -188,6 +193,7 @@ const jsonld = (RANKING_ON && rows.length) ? [
                   </td>
                   <td class="num">{p.matches}</td>
                   <td class="num">{p.wins > 0 ? p.wins : " - "}</td>
+                  <td class="num" style="color:var(--amber)">{p.points}</td>
                   <td class="num" style="color:var(--amber)">{p.kd}</td>
                   <td class="num">{p.kills}</td>
                   <td class="num">{p.deaths}</td>

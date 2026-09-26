@@ -140,8 +140,10 @@ const CASOS = [
   {
     nome: 'AEO1 · com RANKING_ON=false, nenhuma página promete ranking global',
     run: (b) => {
-      const flagOff = /export const RANKING_ON = false/.test(
-        readFileSync(path.join(ROOT, 'src', 'lib', 'site.ts'), 'utf-8'));
+      const rankingSource = readFileSync(path.join(ROOT, 'src', 'lib', 'site.ts'), 'utf-8');
+      const flagOff = /export const RANKING_ON = false/.test(rankingSource)
+        || (process.env.RANKING_ON !== 'true'
+          && /export const RANKING_ON = import\.meta\.env\.RANKING_ON === 'true'/.test(rankingSource));
       if (!flagOff) return null; // ranking ligado: as frases são verdade
       const alvos = { ...b.html, '/llms.txt': b.llms };
       for (const [p, txt] of Object.entries(alvos)) {
