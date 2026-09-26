@@ -22,7 +22,7 @@ const rev = execSync('git rev-parse --short HEAD', { cwd: RAIZ_REPO }).toString(
 // Ordem do §9 do VM-FABRICA; fonte de cada arma.
 const MINHAS = ['m4', 'pistol', 'shotgun', 'g3', 'svd', 'mp5', 'p90', 'lmg', 'deagle', 'famas', 'tavor'];
 const DE_VARIANTES = ['akm', 'm92', 'md97', 'scar', 'g3sg1', 'sks', 'awp', 'rem700', 'm400', 'mosin', 'carbine', 'uzi', 'revolver38'];
-const APROVADAS = { ak: 'AK golden (rig A) — aprovada pelo dono; fica fora da fábrica', knife: 'faca aprovada (o pack não tem faca)', grenade: 'granada K — já é o pack como autorado (ready)' };
+const APROVADAS = { ak: 'AK golden (rig A) — aprovada pelo dono; servida por gold#ak (eval:vm-launch VL7)', knife: 'faca aprovada (o pack não tem faca)', grenade: 'granada K — já é o pack como autorado (ready)' };
 const ORDEM = ['ak', 'akm', 'm92', 'm4', 'famas', 'tavor', 'md97', 'scar', 'g3', 'g3sg1', 'svd', 'sks', 'awp', 'rem700', 'm400',
   'mosin', 'carbine', 'mp5', 'uzi', 'p90', 'lmg', 'shotgun', 'deagle', 'revolver38', 'pistol', 'grenade', 'knife'];
 
@@ -48,6 +48,7 @@ const critico = (id) => {
     || ['REPROVADA', 'RESSALVA', 'APROVADA'].find((k) => new RegExp(`^\\S+\\s+${k}\\b`, 'm').test(t)) || (t ? 'VER TEXTO' : 'PENDENTE');
   return { v, texto: t };
 };
+const nota = (id) => rt(path.join(FINAL, 'critico', id, 'nota-construtor.txt')).trim();
 const qa = (id) => rj(fonteDe(id) === 'variantes' ? path.join(pastaVar, id, 'qa.json') : path.join(FINAL, 'qa', `${id}.json`), null);
 const figuras = (id) => {
   const fonte = fonteDe(id);
@@ -94,6 +95,7 @@ const card = (id) => {
   <div class="chips">${chips(id)}</div>
   <div class="grid">${fig.map(([src, f]) => `<figure><a href="${esc(src)}" data-lb><img loading="lazy" src="${esc(src)}" alt="${esc(id)} ${esc(f)}"></a><figcaption>${esc(ROTULO(f))}</figcaption></figure>`).join('') || '<p class="ref">sem figura</p>'}</div>
   ${cr.texto ? `<details><summary>parecer do crítico cego</summary><pre>${esc(cr.texto)}</pre></details>` : ''}
+  ${nota(id) ? `<p class="ref"><b>Nota de quem construiu (não é do crítico):</b> ${esc(nota(id))}</p>` : ''}
   ${dono}
 </section>`;
 };

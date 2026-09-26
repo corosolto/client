@@ -473,6 +473,13 @@ no vocabulário do crítico e no `vm-frame-calibra`); m92/g3sg1 herdam o vermelh
 chassi; awp, mosin, revolver38, akm e carbine são plano B em `vm/fabrica-variantes` (#653); FAMAS e
 TAVOR entraram por merge de `vm/fabrica-bullpup` (produtos idênticos byte a byte na nossa overlay).
 
+**AK = golden, agora de verdade.** A decisão de 24/09 não estava aplicada: desde o 1aecd3063 a
+'ak' não tinha `golden:true` e o jogo servia o produto K (`ak#ak`; achado no #661). Voltou a
+`gold#ak` (coro/ak-hires.glb, 3b6ca23d…); o selo de depuração diz a fonte ('vm: AUTORADO ak (ak) ·
+gold'), `eval:vm-launch` VL7 reprova qualquer outra rota (mutante `ak-servida-pelo-k`),
+`eval:authored-vm` exige a AK como única golden (mutante `ak-k`) e `eval:vm-rig` passa a tratar a
+golden como fonte (sem "produto ausente").
+
 **Réguas novas (com mutante)**
 
 - `mira` — **janela de óptica/reflex** (`janelaDeOptica`, vm-analise): a lente da MGX5 e da PDW90 é
