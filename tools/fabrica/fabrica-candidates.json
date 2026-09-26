@@ -1561,8 +1561,8 @@
       "chassi": "X18",
       "variante": true,
       "url": "/private-assets/viewmodels/fabrica/uzi-fabrica.glb",
-      "bytes": 2164304,
-      "sha256": "95cb79312fcec0b1481ad1e5dcdcfbb182a8f22cf3b106a2b236ed258db97c47",
+      "bytes": 2164332,
+      "sha256": "b2d1bbb774f5cfa57b6e8e6e1f446d242f98fa220c70ea2a615bd42d9c7ebefc",
       "clipes": [
         {
           "nome": "idle",
@@ -1600,7 +1600,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 5,
+      "segundos": 7,
       "file": "viewmodels/fabrica/uzi-fabrica.glb",
       "ficha": "tools/fabrica/fichas/uzi.json",
       "insumos": {
@@ -1611,7 +1611,7 @@
         "poseFbx": "670a23d9240ca27cf1164276559f5aacb0521d4dbfd72d5d57ff405077a91c61",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "malhaPropria": "213b06a54610f35bf7315d6e85946604688315b9074f01f6040c2c33b3cf5edd",
-        "animador": "f6ec3a743a603d78c93b686f24bc4459c0aae8c7df8a24098537260bca37242a",
+        "animador": "59af030b7e0b5424d6b668d1e7138e12bd90796b9fb026f9bddd368603db3780",
         "frameJogo": "033ac041088749891ed0e9ce03dcfbfe39b11c8191d2068d0d328ba41c07a146"
       },
       "ready": false,
