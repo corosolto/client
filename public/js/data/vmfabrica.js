@@ -2,7 +2,7 @@
 // Versão de URL por BYTES dos produtos da fábrica (tools/fabrica/fabrica-candidates.json).
 export const VM_FABRICA_BYTES = Object.freeze({
   akm: '91ee56bd36',
-  awp: '4ede8ebe88',
+  awp: '41867d86fd',
   carbine: 'd9c3907371',
   deagle: 'a08149fe73',
   famas: '47e12d7684',

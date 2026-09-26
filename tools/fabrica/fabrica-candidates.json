@@ -70,8 +70,8 @@
       "chassi": "L96X",
       "variante": true,
       "url": "/private-assets/viewmodels/fabrica/awp-fabrica.glb",
-      "bytes": 2820904,
-      "sha256": "4ede8ebe88f378fc934cb608d36de9eff538d9e9092e6a0c193347841f7588d1",
+      "bytes": 2821016,
+      "sha256": "41867d86fd6eaf0206ac0cd0cfbb7d570acd8ab878e045aa7a2fab118e55170d",
       "clipes": [
         {
           "nome": "idle",
@@ -112,7 +112,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 8,
+      "segundos": 14,
       "file": "viewmodels/fabrica/awp-fabrica.glb",
       "ficha": "tools/fabrica/fichas/awp.json",
       "insumos": {
@@ -126,7 +126,7 @@
         "clipe:shoot:arma": "c1ecb8c099d9a4a89e964f36a2d42829436d333ed9a5a64f66b116cfbcd4b138",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "zonaLivre:luneta-awp": "6a303a1b97dfd23b9e1e9c979700119dffbb0ee3c48551751887f7f86a372a2a",
-        "animador": "7f7491b93a6f20f48eda053365c649af57234078c7275bf16957dbb170857ade",
+        "animador": "e912dc81ef74d13ab9f986b3bceaeb72bbb659e1605f328ce05dec02befc1443",
         "frameJogo": "792563a74849897dd15a8408ae18acec660bc626c62e1c3e409382c8af5f4813"
       },
       "ready": false,
