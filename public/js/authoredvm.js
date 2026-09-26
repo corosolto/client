@@ -42,7 +42,8 @@ const CS16_TUDO = AUTHORED_VM_ENABLED && _QS?.get('cs16') === '1';
 const RETARGET_TUDO = AUTHORED_VM_ENABLED && _QS?.get('rt') === '1';
 const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
 const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
-const GOLDEN_ADS = _QS?.get('vmgoldenads') === '1';   // revisão do ADS da golden (crítico: RESSALVA)
+const GOLDEN_ADS = _QS?.get('vmgoldenads') === '1';
+
 // Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
 // só abrem armas numa sessão de revisão.
 const AUTHORED_KILLED = !AUTHORED_VM_ENABLED;
