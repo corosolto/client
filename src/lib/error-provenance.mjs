@@ -25,6 +25,9 @@ const CONTEXT_LOSS_RE = /to WebGL2?RenderingContext\.\w+ must be an instance of 
 // Queda de rede do jogador, uma redação por engine (#125/#592 Firefox, #201 WebKit, Chromium).
 // Prefixo opcional = o do launch watchdog. ESTREITA, casa a mensagem INTEIRA — BUG-170.
 const REDE_RE = /^(?:falha ao abrir [^:]{1,40}: )?(?:network error|load failed|failed to fetch|networkerror when attempting to fetch resource\.?)$/i;
+// Catálogo privado ausente do deploy: o catch do authoredvm.js loga e o jogo cai no legado.
+// Exige o prefixo do catch, o caminho privado e o 404. ESTREITA — KNOWN-BUGS.md, BUG-181.
+const VM_PRIVADO_AUSENTE_RE = /^\[paid-viewmodel\] [\w#-]+ fetch for "https?:\/\/[^"\s]+\/private-assets\/viewmodels\/[^"\s]+" responded with 404:(?: Not Found)?$/;
 // Arnês de automação: o predicado do `waitForFunction` roda DENTRO da página e a exceção dele
 // chega como se fosse do jogo. O nome do injetor é a proveniência (KNOWN-BUGS.md, BUG-151).
 const AUTOMACAO_RE = /\bUtilityScript\b|\b__puppeteer_evaluation_script__\b|\bpptr:[/][/]/;
@@ -110,6 +113,7 @@ export function classifyCrash(payload = {}, ownOrigin = '') {
   // DEPOIS de CACHE_SPLIT_RE (dele é o "dynamically imported module") e contra a MENSAGEM:
   // a stack de um fetch caído é só "TypeError: network error". BUG-170.
   if (REDE_RE.test(String(payload.message || '').trim())) return 'recuperavel';
+  if (VM_PRIVADO_AUSENTE_RE.test(String(payload.message || '').trim())) return 'recuperavel';
   return 'codigo';
 }
 
