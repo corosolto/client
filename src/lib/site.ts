@@ -79,4 +79,5 @@ export const SUPPORT_URL_INTL = import.meta.env.PUBLIC_SUPPORT_URL_INTL || 'http
    AO RELIGAR, LEIA ISTO: a rota canônica do perfil já é `/u/<id>/<nick>`, mas o
    cliente monta o legado `/u/<nick>` (`main.js`, `renderGlobal`). Nick aceita
    caractere especial; a URL tem que ser montada a partir do **id**. */
-export const RANKING_ON = false;
+// Ativar apenas no build que seguir migration 037 + rollout compatível de API/nós.
+export const RANKING_ON = import.meta.env.RANKING_ON === 'true';

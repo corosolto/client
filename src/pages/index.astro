@@ -1,6 +1,6 @@
 ---
 import pkg from '../../package.json';
-import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL } from '../lib/site';
+import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL, RANKING_ON } from '../lib/site';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
@@ -568,8 +568,8 @@ window.__GEO_LANG__ = (function () {
       "acceptedAnswer": { "@type": "Answer", "text": "Cinco facções fictícias e satíricas, com 44 personagens no total: Time E (8), Time B (9), Tribos Urbanas (9), Palhaços (9) e Funkeiros (9). Tribos Urbanas e Funkeiros não têm nada de política. Todos são arquétipos originais, sem pessoas reais, e todos jogam exatamente igual." } },
     { "@type": "Question", "name": "Quais mapas o jogo tem?",
       "acceptedAnswer": { "@type": "Answer", "text": "Cinco arenas: Praça dos Três Poderes (a Brasília fictícia, com a urna gigante quebrada no mid), Praça clássica, Piscina da Treta, Loja H (estacionamento) e Ferro Velho do Zé. As duas últimas abrem em Capture the Flag, mas qualquer mapa aceita qualquer modo." } },
-    { "@type": "Question", "name": "Tem ranking global?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Ainda não. O jogo está em alpha e o ranking global está desligado até o placar ser confiável. Seus stats de partida ficam salvos no seu navegador e aparecem no menu RANKING do jogo." } },
+    { "@type": "Question", "name": "Como funciona o ranking global?",
+      "acceptedAnswer": { "@type": "Answer", "text": "O ranking soma a pontuação das partidas. Cada abate multiplayer confirmado recebe um ponto extra. Consulte a página /ranking para a disponibilidade atual." } },
     { "@type": "Question", "name": "É um jogo oficial da Valve ou do Counter-Strike?",
       "acceptedAnswer": { "@type": "Answer", "text": "Não. É uma paródia independente feita por fãs, sem qualquer afiliação com a Valve. Counter-Strike é marca da Valve Corporation." } },
     { "@type": "Question", "name": "Funciona no celular?",
@@ -1245,8 +1245,10 @@ window.__GEO_LANG__ = (function () {
     <h2>RANKING</h2>
     <div id="rank-local" class="rank-stats"></div>
     <div id="rank-global"></div>
-    <p class="rank-note">Estes stats ficam <strong>neste navegador</strong>. O ranking global está
-    desligado enquanto o jogo está em alpha - volta quando o placar for confiável.</p>
+    <p class="rank-note">Seus stats locais ficam <strong>neste navegador</strong>.
+      {RANKING_ON
+        ? 'No ranking global, abates multiplayer confirmados recebem um ponto extra.'
+        : 'O ranking global está desligado por enquanto.'}</p>
     <button id="ranking-back" class="btn">VOLTAR</button>
   </div>
 </div>

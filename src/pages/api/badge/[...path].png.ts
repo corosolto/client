@@ -11,6 +11,7 @@ import { displayTime } from '../../../lib/fmt';
 import { CHARS, charSvg, charName } from '../../../lib/charsvg';
 import { socialAvatar } from '../../../lib/social';
 import { fetchAvatar } from '../../../lib/safe-url';
+import { RANKING_ON } from '../../../lib/site';
 
 export const prerender = false;
 
@@ -75,9 +76,9 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
   const cName = charName(charId);
 
   const cells: [string, string][] = [
-    ['PARTIDAS', String(p.matches)], ['VITÓRIAS', p.wins > 0 ? String(p.wins) : ' - '], ['K/D', kd],
-    ['KILLS', String(p.kills)], ['MORTES', String(p.deaths)], ['HEADSHOTS', String(p.headshots)],
-    ['SEQUÊNCIA', `${p.best_streak}×`], ['ROUNDS', String(p.rounds)], ['TEMPO', displayTime(p)],
+    ['PONTOS', String(p.points)], ['KILLS', String(p.kills)], ['K/D', kd],
+    ['PARTIDAS', String(p.matches)], ['VITÓRIAS', p.wins > 0 ? String(p.wins) : ' - '], ['HEADSHOTS', String(p.headshots)],
+    ['MORTES', String(p.deaths)], ['SEQUÊNCIA', `${p.best_streak}×`], ['TEMPO', displayTime(p)],
   ];
   const grid = cells.map(([label, v], i) => {
     const x = 46 + (i % 3) * 260, y = 228 + Math.floor(i / 3) * 70;
@@ -139,15 +140,23 @@ const handle: APIRoute = async ({ params, request }) => {
   if (!supabaseAdmin)
     return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
   const parts = (params.path || '').split('/').filter(Boolean);
-  let query = supabaseAdmin.from('stats').select('*, players!inner(id, nick, social_link, avatar_url)');
   const first = parts[0] || '';
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(first);
+  const nick = first.replace(/\.png$/, '').slice(0, 14);
+  // A badge antiga continua operando antes da migration; a flag só liga junto
+  // da view nova, após o rollout coordenado.
+  const query = RANKING_ON
+    ? supabaseAdmin.from('player_points').select('*')
+    : supabaseAdmin.from('stats').select('*, players!inner(id, nick, social_link, avatar_url)');
   const { data } = await (isUuid
-    ? query.eq('players.id', first).maybeSingle()
-    : query.eq('nick', first.replace(/\.png$/, '').slice(0, 14)).maybeSingle());
+    ? query.eq(RANKING_ON ? 'id' : 'players.id', first).maybeSingle()
+    : query.eq('nick', nick).maybeSingle());
   if (!data) return new Response('not found', { status: 404 });
-  const p = { ...data, social: (data as any).players?.social_link };
-  const avatarUri = await avatarDataUri((data as any).players?.avatar_url || socialAvatar(p.social));
+  const p = RANKING_ON
+    ? { ...data, social: (data as any).social_link }
+    : { ...data, points: data.kills, social: (data as any).players?.social_link };
+  const avatarUrl = RANKING_ON ? (data as any).avatar_url : (data as any).players?.avatar_url;
+  const avatarUri = await avatarDataUri(avatarUrl || socialAvatar(p.social));
   await init(request);
   const resvg = new Resvg(badgeSvg(p, avatarUri, data.last_character), {
     font: { fontBuffers, loadSystemFonts: false, defaultFontFamily: 'DejaVu Sans' },
