@@ -1,13 +1,13 @@
 # PLACAR das réguas de imagem do viewmodel
 
-Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-25, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `a95da85e69f16072`.
+Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-26, quadro 3x2
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `a0edc00e837d0149`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
 |---|---|---|---|---|---|
 | awp | n/a | **VERMELHO** 1.43× AK | n/a | verde 0.08 | verde ok |
-| ak | verde 11 px | verde 0.95× AK | n/a | verde 0.01 | verde ok |
+| ak | **VERMELHO** 213 px | verde 1.00× AK | n/a | verde 0.19 | verde ok |
 | m4 | **VERMELHO** 43 px | verde 1.01× AK | n/a | verde 0.00 | verde ok |
 | mp5 | verde 1 px | verde 0.79× AK | n/a | verde 0.01 | verde ok |
 | shotgun | verde 7 px | verde 1.06× AK | n/a | verde 0.02 | verde ok |
@@ -29,16 +29,16 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 | lmg | **VERMELHO** 31 px | verde 0.75× AK | n/a | verde 0.13 | n/a |
 | scar | **VERMELHO** 99 px | verde 1.20× AK | n/a | **VERMELHO** 0.44 | verde ok |
 | tavor | **VERMELHO** 41 px | verde 1.04× AK | n/a | **VERMELHO** 0.30 | **VERMELHO** 1 falha(s) |
-| famas | **VERMELHO** 64 px | verde 0.91× AK | n/a | verde 0.19 | **VERMELHO** 1 falha(s) |
+| famas | **VERMELHO** 45 px | verde 0.94× AK | n/a | verde 0.19 | **VERMELHO** 1 falha(s) |
 | uzi | **VERMELHO** 25 px | verde 0.53× AK | n/a | n/a | **VERMELHO** 2 falha(s) |
-| p90 | **VERMELHO** 71 px | verde 0.68× AK | n/a | verde 0.06 | verde ok |
+| p90 | **VERMELHO** 71 px | verde 0.68× AK | n/a | verde 0.06 | **VERMELHO** 1 falha(s) |
 
-**Vermelhas na máquina:** 17 de 26 — awp, m4, g3, md97, carbine, m400, mosin, rem700, svd, g3sg1, sks, lmg, scar, tavor, famas, uzi, p90.
+**Vermelhas na máquina:** 18 de 26 — awp, ak, m4, g3, md97, carbine, m400, mosin, rem700, svd, g3sg1, sks, lmg, scar, tavor, famas, uzi, p90.
 
 ## mira
 
 - **awp** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
-- **ak** VERDE — massa a 11 px da cruz (+6, -9); teto 30 px; eixo no ADS +3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 11 px do aparelho visto · socket sight (o que o AD1 lê) 0.143 NDC
+- **ak** VERMELHO — mira fora da cruz a 213 px; ângulo esquisito no ADS: arma tombada +65° da vertical — aro a 213 px da cruz (+199, +75); teto 30 px; eixo no ADS +65° da vertical (teto ±12°). Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
 - **m4** VERMELHO — mira fora da cruz a 43 px — massa a 43 px da cruz (+5, -43); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
 - **mp5** VERDE — aro a 1 px da cruz (-0, -0); teto 30 px; eixo no ADS +2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.101 NDC
 - **shotgun** VERDE — massa a 7 px da cruz (+2, -7); teto 30 px; eixo no ADS -3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 10 px do aparelho visto · socket sight (o que o AD1 lê) 0.013 NDC
@@ -60,18 +60,18 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **lmg** VERMELHO — mira fora da cruz a 31 px — massa a 31 px da cruz (+31, -3); teto 30 px; eixo no ADS +7° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
 - **scar** VERMELHO — mira fora da cruz a 99 px; ângulo esquisito no ADS: arma tombada +29° da vertical — massa a 99 px da cruz (+36, -92); teto 30 px; eixo no ADS +29° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
 - **tavor** VERMELHO — mira fora da cruz a 41 px — massa a 41 px da cruz (+1, -41); teto 30 px; eixo no ADS -9° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
-- **famas** VERMELHO — mira fora da cruz a 64 px — massa a 64 px da cruz (-8, -63); teto 30 px; eixo no ADS -5° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
+- **famas** VERMELHO — mira fora da cruz a 45 px — janela a 45 px da cruz (-8, -44); teto 30 px; eixo no ADS -5° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
 - **uzi** VERMELHO — ângulo esquisito no ADS: arma tombada +14° da vertical — massa a 25 px da cruz (+5, -25); teto 30 px; eixo no ADS +14° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
 - **p90** VERMELHO — mira fora da cruz a 71 px — aro a 71 px da cruz (-29, +65); teto 30 px; eixo no ADS +4° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.108 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
 
 ## cobertura
 
 - **awp** VERMELHO — arma gigante: 143% da AK (faixa 0.8–1.25, classe longa); braço 1.47× a área do braço da AK (teto 1.4) — tamanho 1.43× AK, rolagem -17° da AK (informativa), eixo +1° da AK, braço 1.47×, cruz 0 px, olho 1.03 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).
-- **ak** VERDE — tamanho 0.95× AK, rolagem +13° da AK (informativa), eixo -1° da AK, braço 0.94×, cruz 0 px, olho 2.86 palma, ADS cobre 7.4% (teto 18.5%)
+- **ak** VERDE — tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo +0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 12.3% (teto 18.5%)
 - **m4** VERDE — tamanho 1.01× AK, rolagem +5° da AK (informativa), eixo +7° da AK, braço 0.79×, cruz 0 px, olho 1.36 palma, ADS cobre 10.3% (teto 18.5%)
 - **mp5** VERDE — tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.90×, cruz 0 px, olho 2.49 palma, ADS cobre 5.6% (teto 18.5%)
 - **shotgun** VERDE — tamanho 1.06× AK, rolagem +20° da AK (informativa), eixo -6° da AK, braço 1.28×, cruz 0 px, olho 0.99 palma, ADS cobre 12.7% (teto 18.5%)
-- **deagle** VERDE — curta: tamanho 1.13× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.30 palma
+- **deagle** VERDE — curta: tamanho 1.13× PT-38 aprovada por metro (faixa 0.8–1.45), cruz 0 px, olho 3.30 palma
 - **pistol** VERDE — curta: tamanho 1.00× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.36 palma
 - **knife** N/A — faca: meleevm, régua própria (melee-framing)
 - **m92** VERDE — tamanho 1.15× AK, rolagem +14° da AK (informativa), eixo +10° da AK, braço 1.16×, cruz 0 px, olho 3.13 palma, ADS cobre 7.4% (teto 18.5%)
@@ -89,7 +89,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **lmg** VERDE — tamanho 0.75× AK, rolagem +0° da AK (informativa), eixo -12° da AK, braço 0.62×, cruz 0 px, olho 1.58 palma, ADS cobre 9.6% (teto 18.5%)
 - **scar** VERDE — tamanho 1.20× AK, rolagem +11° da AK (informativa), eixo +5° da AK, braço 0.82×, cruz 0 px, olho 1.03 palma, ADS cobre 17.9% (teto 18.5%)
 - **tavor** VERDE — tamanho 1.04× AK, rolagem +12° da AK (informativa), eixo +7° da AK, braço 0.46×, cruz 0 px, olho 1.83 palma, ADS cobre 9.5% (teto 18.5%)
-- **famas** VERDE — tamanho 0.91× AK, rolagem -8° da AK (informativa), eixo -2° da AK, braço 0.78×, cruz 0 px, olho 1.72 palma, ADS cobre 13.0% (teto 18.5%)
+- **famas** VERDE — tamanho 0.94× AK, rolagem -4° da AK (informativa), eixo -5° da AK, braço 1.08×, cruz 0 px, olho 1.73 palma, ADS cobre 13.0% (teto 18.5%)
 - **uzi** VERDE — tamanho 0.53× AK, rolagem -3° da AK (informativa), eixo +0° da AK, braço 0.25×, cruz 0 px, olho ? palma, ADS cobre 3.4% (teto 18.5%)
 - **p90** VERDE — tamanho 0.68× AK, rolagem +49° da AK (informativa), eixo -7° da AK, braço 0.38×, cruz 0 px, olho 4.16 palma, ADS cobre 10.5% (teto 18.5%)
 
@@ -125,7 +125,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 ## maos
 
 - **awp** VERDE — dedos da mão de apoio a 0.08 palma da malha da arma (palma 0.26); teto 0.2
-- **ak** VERDE — dedos da mão de apoio a 0.01 palma da malha da arma (palma 0.14); teto 0.2
+- **ak** VERDE — dedos da mão de apoio a 0.19 palma da malha da arma (palma 0.35); teto 0.2
 - **m4** VERDE — dedos da mão de apoio a 0.00 palma da malha da arma (palma 0.08); teto 0.2
 - **mp5** VERDE — dedos da mão de apoio a 0.01 palma da malha da arma (palma 0.22); teto 0.2
 - **shotgun** VERDE — dedos da mão de apoio a 0.02 palma da malha da arma (palma 0.32); teto 0.2
@@ -154,7 +154,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 ## carregador
 
 - **awp** VERDE — vazia0.08:fora vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma
-- **ak** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
+- **ak** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:arma vazia0.31:mao vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:mao vazia0.69:mao vazia0.77:fora vazia0.85:mao vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:mao tatica0.86:arma
 - **m4** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 - **mp5** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 - **shotgun** VERDE — vazia0.08:mao vazia0.15:mao-vazia vazia0.23:mao vazia0.31:mao-vazia vazia0.38:mao-vazia vazia0.46:mao vazia0.54:mao-vazia vazia0.62:mao-vazia vazia0.69:mao vazia0.77:mao-vazia vazia0.85:mao-vazia vazia0.92:mao tatica0.14:mao tatica0.29:mao-vazia tatica0.43:mao-vazia tatica0.57:mao-vazia tatica0.71:mao tatica0.86:mao
@@ -178,5 +178,5 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **tavor** VERMELHO — mão vazia: vazia 38% — mão de apoio na tela e o carregador a 0.89 palma dela, fora do quadro. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
 - **famas** VERMELHO — mão vazia: vazia 38% — mão de apoio na tela e o carregador a 0.85 palma dela, fora do quadro. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
 - **uzi** VERMELHO — em repouso o carregador não encosta na arma (Infinity palma); tira carregador fantasma: a peça do carregador mede 100% da arma. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
-- **p90** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:arma vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
+- **p90** VERMELHO — tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.
 
