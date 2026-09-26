@@ -56,3 +56,17 @@ navegação; ela **não** faz parte deste deploy. O handoff desse objetivo segue
    idempotente, bot/espectador/mesmo perfil sem bônus e perfil fora do top 500.
 6. Se qualquer gate falhar, deixar a flag desligada e registrar a fronteira
    exata; não anunciar ranking ativo só por deploy verde.
+
+## Marco validado: banco e builds — 26/09/2026
+
+- A migration 037 foi aplicada em produção após dry-run com rollback. O
+  pós-check confirmou view, RPC, coluna e privilégios: 4516 linhas em pontos,
+  top 500, zero bônus retroativos; service role lê e anon não lê.
+- API `305efaf` construída no Cloud Build
+  `f93bf981-9a38-4019-a9b9-c8835b37e3d6` (SUCCESS), digest
+  `sha256:33762017a98a25624d5184b7b837c9d773da4930f401e655030bbeb771152eb7`.
+- Nó `11d3016` com cliente pinado alpha.250 construído no Cloud Build
+  `90be4d27-487e-4f98-89fe-cd42bcd18588` (SUCCESS), digest
+  `sha256:35d4c3e8113c30f77a2cfe58eefafda8f8b9c89f0a149ddbb7060d45f6905446`.
+- Ainda sem tráfego dessas imagens, flag desligada e cliente não publicado.
+  Próximo passo: promover API com flag desligada e conferir health/revisão.
