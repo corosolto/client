@@ -339,10 +339,6 @@
     "Lamina": [
      {
       "u": 0,
-      "estado": "arma"
-     },
-     {
-      "u": 0.02,
       "estado": "escondido"
      },
      {
@@ -688,10 +684,6 @@
     "Lamina": [
      {
       "u": 0,
-      "estado": "arma"
-     },
-     {
-      "u": 0.02,
       "estado": "escondido"
      },
      {
