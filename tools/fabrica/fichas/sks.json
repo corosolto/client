@@ -1,0 +1,103 @@
+{
+  "id": "sks",
+  "arma": "sks",
+  "chassi": "Kar98K",
+  "descricao": "SKS = Kar98K do pack como autorado na zona de contato — a SKS tem pente FIXO carregado por cima com lâmina (clip) de 10, que é o gesto da recarga vazia do Kar98K: abrir a culatra, encaixar a lâmina no guia, empurrar os cartuchos, fechar. Por isso as duas recargas do jogo (família marksman, pente) tocam a recarga por lâmina do pack, e o tiro é o coice procedural (semiautomática: o ciclo de ferrolho do Kar98K no tiro não vale). Zona livre da SKS do próprio jogo (public/models/weapons/sks.glb, 0 crédito Mint), calibrada contra o chassi (tools/fabrica/blender/sobrepor.py): a caixa do pente fixo à frente do guarda-mato e a luneta atrás do guia da lâmina (fora do caminho da lâmina e dos cartuchos).",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "idleArma": "reload_start",
+  "clipes": {
+    "reload_tactical": "pack:reload_empty",
+    "reload_empty": "pack:reload_empty",
+    "reload_start": "ausente",
+    "reload_loop": "ausente",
+    "reload_end": "ausente",
+    "shoot": "procedural"
+  },
+  "removerZonaLivre": [],
+  "zonaLivre": [
+    {
+      "peca": "caixa-do-pente",
+      "fonte": "public/models/weapons/sks.glb",
+      "recorte": {
+        "min": [
+          -0.137,
+          -1,
+          -1
+        ],
+        "max": [
+          -0.088,
+          1,
+          -0.0147
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          -1.13,
+          -13,
+          -4
+        ],
+        "rotDeg": [
+          0,
+          0,
+          -90
+        ],
+        "escala": 1.02
+      }
+    },
+    {
+      "peca": "luneta",
+      "fonte": "public/models/weapons/sks.glb",
+      "recorte": {
+        "min": [
+          -0.255,
+          -1,
+          0.064
+        ],
+        "max": [
+          -0.118,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          -1.13,
+          -9,
+          -5
+        ],
+        "rotDeg": [
+          0,
+          0,
+          -90
+        ],
+        "escala": 1.02
+      }
+    }
+  ],
+  "mira": {
+    "raizCm": [
+      0,
+      17,
+      3.6
+    ],
+    "origem": "ocular da luneta da SKS do jogo (sobrepor.py --medir)"
+  },
+  "recuo": {
+    "familia": "marksman",
+    "fonte": "recoil.json ← família marksman (fuzil semiautomático de precisão)"
+  },
+  "acabamentoZonaLivre": {
+    "tom": [
+      0.42,
+      0.42,
+      0.44
+    ],
+    "metal": 0.45,
+    "rugosidade": 0.55
+  },
+  "limite": "A frente curta da SKS do jogo (cano, tubo de gás e baioneta) foi testada e saiu (crítico r1: 'recarregar tira o cano'): a emenda com o guarda-mão do Kar98K ficava 7 cm à frente da mão de apoio e, com a arma rolada na recarga por lâmina, a face do corte lia como o cano se soltando. Fica a frente inteira do Kar98K.",
+  "enquadramento": "frame próprio (vmconfig): 7,7 cm mais longe que o da Mosin — no frame da Mosin a mão da recarga por lâmina chegava a 3× a mão de apoio (crítico r3, 'mão gigante')"
+}

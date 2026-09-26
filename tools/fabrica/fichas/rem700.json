@@ -1,0 +1,131 @@
+{
+  "id": "rem700",
+  "arma": "rem700",
+  "chassi": "Kar98K",
+  "descricao": "REM 700 \"Caçador\" = Kar98K do pack como autorado na zona de contato. O contato decide: a Remington 700 de caça é ferrolho com depósito INTERNO (a REM 700 do jogo não tem pente destacável) — é o Kar98K, não a L96X (pente destacável) da proposta inicial. Recarga cartucho a cartucho pelo PLANO B (tools/fabrica/animador/kar98k-laco.json, a mesma da Mosin): a mão forte levanta e puxa o ferrolho, a mão de apoio põe um cartucho por laço na janela aberta e o ferrolho fecha; o laço do pack deixava o cartucho e a lâmina do Kar98K parados no ar (crítico r3/r4). Tiro com o ciclo de ferrolho do pack, coronha de madeira de caça do Kar98K. Zona livre: a luneta da REM 700 do próprio jogo (public/models/weapons/rem700.glb, 0 crédito Mint) em montagem avançada sobre o cano (tipo scout) e sem as miras de ferro do Kar98K.",
+  "limite": "Luneta avançada, não sobre a caixa da culatra: a recarga cartucho a cartucho do Kar98K põe a mão e o cartucho por CIMA da janela da culatra (é zona de contato); uma luneta ali seria atravessada pela mão e pelo cartucho em toda recarga.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "removerZonaLivre": [
+    {
+      "nome": "alca-de-mira-kar98k",
+      "min": [
+        -4,
+        -27,
+        1.2
+      ],
+      "max": [
+        4,
+        -13,
+        8
+      ]
+    },
+    {
+      "nome": "massa-kar98k",
+      "min": [
+        -4,
+        -73,
+        0.9
+      ],
+      "max": [
+        4,
+        -66,
+        6
+      ]
+    }
+  ],
+  "zonaLivre": [
+    {
+      "peca": "luneta",
+      "fonte": "public/models/weapons/rem700.glb",
+      "recorte": {
+        "min": [
+          -1,
+          -1,
+          0.075
+        ],
+        "max": [
+          1,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          -1.56,
+          -40.3,
+          -4.2
+        ],
+        "rotDeg": [
+          0,
+          0,
+          -90
+        ],
+        "escala": 0.7
+      }
+    }
+  ],
+  "acabamentoZonaLivre": {
+    "tom": [
+      0.5,
+      0.5,
+      0.52
+    ],
+    "metal": 0.45,
+    "rugosidade": 0.5
+  },
+  "mira": {
+    "raizCm": [
+      0,
+      -24.5,
+      2.8
+    ],
+    "origem": "ocular da luneta avançada (sobrepor.py)"
+  },
+  "enquadramentoDe": "mosin",
+  "recuo": {
+    "familia": "bolt",
+    "fonte": "recoil.json ← Animations/Kar98K (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "animador": "tools/fabrica/animador/kar98k-lamina.json",
+  "clipes": {
+    "reload_empty": "animador",
+    "reload_tactical": "animador",
+    "reload_start": "ausente",
+    "reload_loop": "ausente",
+    "reload_end": "ausente",
+    "equip_rifle": "geral:rifle_equip"
+  },
+  "moverPack": [
+    {
+      "osso": [
+        "CartridgeClip0",
+        "CartridgeClip1",
+        "CartridgeClip2",
+        "CartridgeClip3",
+        "CartridgeClip4"
+      ],
+      "novoOsso": "Mag",
+      "refOsso": "Clip",
+      "deslocCm": [
+        0,
+        0,
+        -16
+      ]
+    },
+    {
+      "osso": "Clip",
+      "novoOsso": "Lamina",
+      "refOsso": "Clip",
+      "deslocCm": [
+        0,
+        0,
+        -16
+      ]
+    }
+  ],
+  "removerOssos": [
+    "Cartridge"
+  ]
+}

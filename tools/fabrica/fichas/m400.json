@@ -1,0 +1,85 @@
+{
+  "id": "m400",
+  "arma": "m400",
+  "chassi": "MX16A4",
+  "descricao": "M400 (AR-15 de precisão com luneta) = MX16A4 do pack como autorado na zona de contato — mesmo punho, pente à frente do punho, alavanca de manejo traseira e mão de apoio do AR-15; a L96X da proposta inicial é ferrolho com contato de outra arma. Zona livre da M400 do próprio jogo (public/models/weapons/m400.glb, 0 crédito Mint): luneta com montagem no trilho (sai a alça de transporte e a massa de mira do pack) (a coronha fica a do MX16A4, a da M4 aprovada). Malha do jogo calibrada inteira contra o chassi (tools/fabrica/blender/sobrepor.py).",
+  "skinBraco": "coro-ak",
+  "skinArma": "md97",
+  "removerZonaLivre": [
+    {
+      "nome": "alca-mx16a4",
+      "min": [
+        -4,
+        -7,
+        2.5
+      ],
+      "max": [
+        4,
+        16,
+        8
+      ]
+    },
+    {
+      "nome": "massa-mx16a4",
+      "min": [
+        -4,
+        -45,
+        1.2
+      ],
+      "max": [
+        4,
+        -36.5,
+        8
+      ]
+    }
+  ],
+  "zonaLivre": [
+    {
+      "peca": "luneta",
+      "fonte": "public/models/weapons/m400.glb",
+      "recorte": {
+        "min": [
+          -0.25,
+          -1,
+          0.1
+        ],
+        "max": [
+          0.04,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          -1.25,
+          -8,
+          -8.2
+        ],
+        "rotDeg": [
+          0,
+          0,
+          -90
+        ],
+        "escala": 1.0
+      }
+    }
+  ],
+  "mira": {
+    "raizCm": [
+      0,
+      15.5,
+      6.2
+    ],
+    "origem": "ocular da luneta da M400 do jogo (sobrepor.py --medir)"
+  },
+  "recuo": {
+    "familia": "ar",
+    "fonte": "recoil.json ← Animations/MX16A4 (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "acabamentoZonaLivre": {
+    "metal": 0.35,
+    "rugosidade": 0.6
+  },
+  "limite": "A coronha retrátil da M400 do jogo foi testada e saiu (crítico r2): mais alta que a do MX16A4, entrava no canto do quadro de quadril e do saque, onde a M4 aprovada não mostra nada."
+}

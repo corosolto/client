@@ -2,12 +2,73 @@
   "id": "awp",
   "arma": "awp",
   "chassi": "L96X",
-  "descricao": "AWP = L96X do pack (o Accuracy International que a AWP é).",
+  "descricao": "AWP = L96X do pack (o Accuracy International que a AWP é) na identidade da AWP VERDE do jogo: a textura areia da L96X girada para o oliva do modelo de mundo (tingirTextura) e a luneta da AWP do jogo (public/models/weapons/awp.glb, 0 crédito Mint) no trilho. Recargas pelo PLANO B (tools/fabrica/animador/awp.json): a do pack punha o fuzil apontado para o alto e a mão grande no ferrolho (crítico). Aqui a arma só sobe e rola um pouco; a mão de apoio tira o pente pelo poço (tática) ou deixa cair (vazia) e traz o segundo pente de fora da tela; na vazia a mão forte sai do punho, levanta e puxa o ferrolho e volta.",
   "skinBraco": "coro-ak",
   "skinArma": null,
-  "zonaLivre": [],
+  "zonaLivre": [
+    {
+      "peca": "luneta-awp",
+      "fonte": "public/models/weapons/awp.glb",
+      "recorte": {
+        "min": [
+          -0.07,
+          -1,
+          0.044
+        ],
+        "max": [
+          0.28,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          0,
+          -8,
+          -2.7
+        ],
+        "rotDeg": [
+          0,
+          0,
+          90
+        ],
+        "escala": 1.2
+      }
+    }
+  ],
   "recuo": {
     "familia": "sniper",
     "fonte": "recoil.json ← Animations/L96X (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "animador": "tools/fabrica/animador/awp.json",
+  "clipes": {
+    "reload_tactical": "animador",
+    "reload_empty": "animador",
+    "equip_rifle": "geral:rifle_equip"
+  },
+  "removerOssos": [
+    "Ammo"
+  ],
+  "tingirTextura": [
+    {
+      "material": "CoroSolto_L115A3_Body",
+      "hue": 62,
+      "saturacao": 0.75,
+      "brilho": 0.9,
+      "origem": "AWP verde do modelo de mundo do jogo (public/models/weapons/awp.glb: coronha oliva ~#4a5445); a L96X do pack é areia #825d35"
+    }
+  ],
+  "acabamentoZonaLivre": {
+    "metal": 0.35,
+    "rugosidade": 0.55
+  },
+  "mira": {
+    "raizCm": [
+      0,
+      22,
+      9.3
+    ],
+    "origem": "ocular da luneta da AWP do jogo (sobrepor.py)"
   }
 }

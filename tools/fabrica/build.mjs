@@ -89,9 +89,34 @@ const doc = await io.read(path.join(plano.saida.dir, 'clipes.glb'));
 doc.getRoot().getAsset().generator = `CoroSolto fabrica (${path.relative(RAIZ_REPO, fichaArquivo)})`;
 // Plano B: acabamento da malha do jogo (o metálico 1 do modelo de mundo sai cromado no viewmodel).
 const acab = ficha.malhaPropria?.material;
+const doTipo = (prefixo, pedido) => {
+  const ms = doc.getRoot().listMaterials().filter((x) => x.getName().startsWith(prefixo));
+  if (pedido && !ms.length) throw new Error(`acabamento pedido e nenhum material ${prefixo}* no produto`);
+  return ms;
+};
 if (acab) {
-  for (const m of doc.getRoot().listMaterials().filter((x) => x.getName().startsWith('CoroSolto_MP_'))) {
+  for (const m of doTipo('CoroSolto_MP_', acab)) {
     m.setBaseColorFactor([...acab.tom, 1]).setMetallicFactor(acab.metal).setRoughnessFactor(acab.rugosidade).setMetallicRoughnessTexture(null);
+  }
+}
+// Zona livre: o mesmo defeito — as peças do modelo de mundo trazem metálico 1 × textura MR e saem
+// cromadas ao lado do pack. `acabamentoZonaLivre` fixa metal/rugosidade (e o tom, se pedido) e mantém a cor base.
+const acabZl = ficha.acabamentoZonaLivre;
+if (acabZl) {
+  for (const m of doTipo('CoroSolto_ZL_', acabZl)) {
+    if (acabZl.tom) m.setBaseColorFactor([...acabZl.tom, 1]);
+    m.setMetallicFactor(acabZl.metal).setRoughnessFactor(acabZl.rugosidade).setMetallicRoughnessTexture(null);
+  }
+}
+// Identidade por matiz: a textura do pack girada de cor (a L96X areia vira a AWP verde do jogo).
+for (const t of ficha.tingirTextura || []) {
+  const mats = doc.getRoot().listMaterials().filter((m) => m.getName() === t.material);
+  if (!mats.length) throw new Error(`tingirTextura: material ${t.material} ausente`);
+  for (const m of mats) {
+    const tex = m.getBaseColorTexture();
+    if (!tex) throw new Error(`tingirTextura: ${t.material} sem textura base`);
+    const img = await sharp(Buffer.from(tex.getImage())).modulate({ hue: t.hue || 0, saturation: t.saturacao ?? 1, brightness: t.brilho ?? 1 }).png().toBuffer();
+    tex.setImage(new Uint8Array(img)).setMimeType('image/png');
   }
 }
 await doc.transform(

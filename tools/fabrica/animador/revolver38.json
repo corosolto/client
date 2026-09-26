@@ -1,0 +1,1074 @@
+{
+ "pente": "Cartridge0",
+ "idle": {
+  "maoApoio": {
+   "palmaCm": [
+    2.5,
+    5.8,
+    -12.3
+   ]
+  }
+ },
+ "pegaPente": {
+  "palmaCm": [
+   0,
+   8,
+   -1.2
+  ],
+  "rotDeg": [
+   0,
+   0,
+   180
+  ]
+ },
+ "clipes": {
+  "reload_empty": {
+   "segundos": 2.4,
+   "arma": [
+    {
+     "u": 0
+    },
+    {
+     "u": 0.14,
+     "rotDeg": [
+      15,
+      60,
+      0
+     ],
+     "camCm": [
+      -6,
+      4,
+      -26
+     ]
+    },
+    {
+     "u": 0.85,
+     "rotDeg": [
+      15,
+      60,
+      0
+     ],
+     "camCm": [
+      -6,
+      4,
+      -26
+     ]
+    },
+    {
+     "u": 1
+    }
+   ],
+   "mao": [
+    {
+     "u": 0,
+     "idle": true
+    },
+    {
+     "u": 0.1,
+     "idle": true,
+     "fecho": 0.6
+    },
+    {
+     "u": 0.2,
+     "armaCm": [
+      3,
+      -1,
+      -13
+     ],
+     "fecho": 0.7
+    },
+    {
+     "u": 0.3,
+     "armaCm": [
+      3,
+      -1,
+      -13
+     ],
+     "fecho": 0.7
+    },
+    {
+     "u": 0.42,
+     "camCm": [
+      0,
+      -50,
+      -30
+     ],
+     "fecho": 0.9
+    },
+    {
+     "u": 0.45,
+     "camCm": [
+      0,
+      -50,
+      -30
+     ],
+     "fecho": 0.9
+    },
+    {
+     "u": 0.54,
+     "poco": [
+      4,
+      -2,
+      -8
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.6,
+     "poco": [
+      4,
+      -2,
+      -8
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.65,
+     "poco": [
+      0,
+      6,
+      0
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.7,
+     "poco": [
+      0,
+      0,
+      0
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.74,
+     "poco": [
+      0,
+      4,
+      0
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.5
+    },
+    {
+     "u": 0.8,
+     "armaCm": [
+      3,
+      -1,
+      -13
+     ],
+     "fecho": 0.6
+    },
+    {
+     "u": 0.9,
+     "armaCm": [
+      3,
+      -1,
+      -13
+     ],
+     "fecho": 0.6
+    },
+    {
+     "u": 1,
+     "idle": true
+    }
+   ],
+   "mecanismos": {
+    "CraneArm": [
+     {
+      "u": 0,
+      "rotDeg": [
+       0,
+       0,
+       0
+      ],
+      "pivoCm": [
+       0.6,
+       -3,
+       -3.6
+      ]
+     },
+     {
+      "u": 0.14,
+      "rotDeg": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.2,
+      "rotDeg": [
+       0,
+       100,
+       0
+      ]
+     },
+     {
+      "u": 0.8,
+      "rotDeg": [
+       0,
+       100,
+       0
+      ]
+     },
+     {
+      "u": 0.86,
+      "rotDeg": [
+       0,
+       0,
+       0
+      ]
+     }
+    ],
+    "Ejector": [
+     {
+      "u": 0,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.26,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.3,
+      "cm": [
+       0,
+       3,
+       0
+      ]
+     },
+     {
+      "u": 0.34,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     }
+    ],
+    "CylinderRelease": [
+     {
+      "u": 0,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.1,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.13,
+      "cm": [
+       0,
+       -0.6,
+       0
+      ]
+     },
+     {
+      "u": 0.18,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     }
+    ]
+   },
+   "pentes": {
+    "Cartridge0": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       -10.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 200
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge1": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       -6.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 240
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge2": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       -2.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 280
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge3": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       2.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 320
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge4": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       6.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 360
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge5": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       10.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 400
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge02": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.02,
+      "estado": "escondido"
+     }
+    ],
+    "Municiador": [
+     {
+      "u": 0,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.745,
+      "estado": "cai",
+      "velCm": [
+       6,
+       20,
+       -30
+      ],
+      "giroGrausS": 150
+     },
+     {
+      "u": 0.97,
+      "estado": "escondido"
+     }
+    ]
+   }
+  },
+  "reload_tactical": {
+   "segundos": 2.4,
+   "arma": [
+    {
+     "u": 0
+    },
+    {
+     "u": 0.14,
+     "rotDeg": [
+      15,
+      60,
+      0
+     ],
+     "camCm": [
+      -6,
+      4,
+      -26
+     ]
+    },
+    {
+     "u": 0.85,
+     "rotDeg": [
+      15,
+      60,
+      0
+     ],
+     "camCm": [
+      -6,
+      4,
+      -26
+     ]
+    },
+    {
+     "u": 1
+    }
+   ],
+   "mao": [
+    {
+     "u": 0,
+     "idle": true
+    },
+    {
+     "u": 0.1,
+     "idle": true,
+     "fecho": 0.6
+    },
+    {
+     "u": 0.2,
+     "armaCm": [
+      3,
+      -1,
+      -13
+     ],
+     "fecho": 0.7
+    },
+    {
+     "u": 0.3,
+     "armaCm": [
+      3,
+      -1,
+      -13
+     ],
+     "fecho": 0.7
+    },
+    {
+     "u": 0.42,
+     "camCm": [
+      0,
+      -50,
+      -30
+     ],
+     "fecho": 0.9
+    },
+    {
+     "u": 0.45,
+     "camCm": [
+      0,
+      -50,
+      -30
+     ],
+     "fecho": 0.9
+    },
+    {
+     "u": 0.54,
+     "poco": [
+      4,
+      -2,
+      -8
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.6,
+     "poco": [
+      4,
+      -2,
+      -8
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.65,
+     "poco": [
+      0,
+      6,
+      0
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.7,
+     "poco": [
+      0,
+      0,
+      0
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.74,
+     "poco": [
+      0,
+      4,
+      0
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.5
+    },
+    {
+     "u": 0.8,
+     "armaCm": [
+      3,
+      -1,
+      -13
+     ],
+     "fecho": 0.6
+    },
+    {
+     "u": 0.9,
+     "armaCm": [
+      3,
+      -1,
+      -13
+     ],
+     "fecho": 0.6
+    },
+    {
+     "u": 1,
+     "idle": true
+    }
+   ],
+   "mecanismos": {
+    "CraneArm": [
+     {
+      "u": 0,
+      "rotDeg": [
+       0,
+       0,
+       0
+      ],
+      "pivoCm": [
+       0.6,
+       -3,
+       -3.6
+      ]
+     },
+     {
+      "u": 0.14,
+      "rotDeg": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.2,
+      "rotDeg": [
+       0,
+       100,
+       0
+      ]
+     },
+     {
+      "u": 0.8,
+      "rotDeg": [
+       0,
+       100,
+       0
+      ]
+     },
+     {
+      "u": 0.86,
+      "rotDeg": [
+       0,
+       0,
+       0
+      ]
+     }
+    ],
+    "Ejector": [
+     {
+      "u": 0,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.26,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.3,
+      "cm": [
+       0,
+       3,
+       0
+      ]
+     },
+     {
+      "u": 0.34,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     }
+    ],
+    "CylinderRelease": [
+     {
+      "u": 0,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.1,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "u": 0.13,
+      "cm": [
+       0,
+       -0.6,
+       0
+      ]
+     },
+     {
+      "u": 0.18,
+      "cm": [
+       0,
+       0,
+       0
+      ]
+     }
+    ]
+   },
+   "pentes": {
+    "Cartridge0": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       -10.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 200
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge1": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       -6.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 240
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge2": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       -2.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 280
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge3": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       2.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 320
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge4": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       6.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 360
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge5": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.3,
+      "estado": "arma"
+     },
+     {
+      "u": 0.31,
+      "estado": "cai",
+      "velCm": [
+       10.0,
+       60,
+       -20
+      ],
+      "giroGrausS": 400
+     },
+     {
+      "u": 0.44,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.7,
+      "estado": "arma"
+     }
+    ],
+    "Cartridge02": [
+     {
+      "u": 0,
+      "estado": "arma"
+     },
+     {
+      "u": 0.02,
+      "estado": "escondido"
+     }
+    ],
+    "Municiador": [
+     {
+      "u": 0,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.745,
+      "estado": "cai",
+      "velCm": [
+       6,
+       20,
+       -30
+      ],
+      "giroGrausS": 150
+     },
+     {
+      "u": 0.97,
+      "estado": "escondido"
+     }
+    ]
+   }
+  }
+ },
+ "sondas": {
+  "tambor": [
+   0,
+   -2.2,
+   -1.2
+  ],
+  "apoio": [
+   2.5,
+   5.8,
+   -12.3
+  ]
+ },
+ "municiador": {
+  "osso": "Municiador",
+  "pai": "Drum",
+  "centroCm": [
+   0,
+   -0.07,
+   -1.22
+  ],
+  "pecas": [
+   [
+    1.95,
+    0.0,
+    0.45,
+    18
+   ],
+   [
+    0.6,
+    0.45,
+    1.5,
+    10
+   ],
+   [
+    0.9,
+    1.5,
+    2.3,
+    12
+   ]
+  ],
+  "tom": [
+   0.07,
+   0.07,
+   0.08
+  ]
+ }
+}

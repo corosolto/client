@@ -32,7 +32,8 @@ export async function abrirNavegador() {
 export async function subirServidor(porta) {
   const base = `http://127.0.0.1:${porta}`;
   try { if ((await fetch(base)).ok) return { base, kill: () => {} }; } catch { /* sobe */ }
-  const srv = spawn('node', ['tools/eval/serve.mjs', String(porta)], { stdio: 'ignore' });
+  const raiz = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../..');   // qa.mjs chama de qualquer cwd
+  const srv = spawn('node', ['tools/eval/serve.mjs', String(porta)], { stdio: 'ignore', cwd: raiz });
   process.on('exit', () => srv.kill());
   for (let i = 0; i < 60; i++) {
     try { if ((await fetch(base)).ok) return { base, kill: () => srv.kill() }; } catch { /* subindo */ }
@@ -121,6 +122,9 @@ export async function entrarAds(page) {
     // o quadril como ADS (+50–67° "tombada"). Espera o adsAmount chegar antes de congelar.
     await page.waitForFunction(() => window.__game.player.scoped && (window.__authoredVm.adsAmount || 0) >= 0.99, null, { timeout: 10000 }).catch(() => null);
     await segurar(page, true);
+    // O mount é posto no update(); o adsAmount (setAim) anda mesmo congelado. Um passo mínimo
+    // re-aplica o mount com o blend atual — sem ele a figura saía de quadril com ads=1 (revólver, 25/09).
+    await passo(page, 1e-4);
     await esperarQuadro(page);
     est = await page.evaluate(() => ({ scoped: Boolean(window.__game.player.scoped), ads: +(window.__authoredVm.adsAmount || 0).toFixed(3) }));
     if (est.scoped && est.ads >= 0.99) break;
