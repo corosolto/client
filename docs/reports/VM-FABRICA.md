@@ -480,6 +480,18 @@ gold'), `eval:vm-launch` VL7 reprova qualquer outra rota (mutante `ak-servida-pe
 `eval:authored-vm` exige a AK como única golden (mutante `ak-k`) e `eval:vm-rig` passa a tratar a
 golden como fonte (sem "produto ausente").
 
+**ADS da AK golden (dono, 25/09).** Alça (topo da folha da alça de entalhe, 0,167/0,0588) e massa
+(topo do poste, 0,507/0,0546) medidas na malha no espaço do osso `Rifle_metarig`
+(`captura/sonda-golden.mjs`; o espaço do osso é ~2,4× o metro da câmera), presas ao osso como
+`adsSockets` — fora de `sockets`/`mint`, então boca, flash e quadril não mudam. O ADS usa o
+mesmo caminho da M4/pistola, com alívio 0,35 m. `mira/ak` 213 → 8 px em 3:2 e 16:9 (dívida
+removida); mutante `golden-mira-acima` morde (`npm run eval:vm-mira-golden`). Quadril idêntico:
+máscara antes × depois igual à de duas medições do depois, e os pixels do viewmodel diferem menos
+que entre duas medições do depois (`artifacts/fabrica-final/ak-golden-ads/prova-quadril/`).
+Crítico A/B cego: r1 REPROVADA (a cruz caía dentro da folha), r2 RESSALVA — mira certa, alvo
+visível, reta e do tamanho da M4; pesa só a pose das mãos coladas ao olho, que é a pose aprovada da
+golden (não mexida, por decisão do dono).
+
 **Réguas novas (com mutante)**
 
 - `mira` — **janela de óptica/reflex** (`janelaDeOptica`, vm-analise): a lente da MGX5 e da PDW90 é

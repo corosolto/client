@@ -22,7 +22,7 @@ const rev = execSync('git rev-parse --short HEAD', { cwd: RAIZ_REPO }).toString(
 // Ordem do §9 do VM-FABRICA; fonte de cada arma.
 const MINHAS = ['m4', 'pistol', 'shotgun', 'g3', 'svd', 'mp5', 'p90', 'lmg', 'deagle', 'famas', 'tavor'];
 const DE_VARIANTES = ['akm', 'm92', 'md97', 'scar', 'g3sg1', 'sks', 'awp', 'rem700', 'm400', 'mosin', 'carbine', 'uzi', 'revolver38'];
-const APROVADAS = { ak: 'AK golden (rig A) — aprovada pelo dono; servida por gold#ak (eval:vm-launch VL7)', knife: 'faca aprovada (o pack não tem faca)', grenade: 'granada K — já é o pack como autorado (ready)' };
+const APROVADAS = { ak: 'AK golden (rig A) — aprovada pelo dono; servida por gold#ak (eval:vm-launch VL7); ADS alinhado pela alça e massa medidas (mira 8 px, eval:vm-mira-golden)', knife: 'faca aprovada (o pack não tem faca)', grenade: 'granada K — já é o pack como autorado (ready)' };
 const ORDEM = ['ak', 'akm', 'm92', 'm4', 'famas', 'tavor', 'md97', 'scar', 'g3', 'g3sg1', 'svd', 'sks', 'awp', 'rem700', 'm400',
   'mosin', 'carbine', 'mp5', 'uzi', 'p90', 'lmg', 'shotgun', 'deagle', 'revolver38', 'pistol', 'grenade', 'knife'];
 
@@ -43,6 +43,11 @@ for (const id of DE_VARIANTES) {
 const critico = (id) => {
   const f = fonteDe(id) === 'variantes' ? path.join(pastaVar, id, 'veredito.txt') : path.join(FINAL, 'critico', id, 'veredito.txt');
   const t = rt(f).trim();
+  if (id === 'ak') {
+    const ads = rt(path.join(FINAL, 'ak-golden-ads/critico/veredito.txt')).trim();
+    const prova = rt(path.join(FINAL, 'ak-golden-ads/prova-quadril/diff-quadril.txt')).trim();
+    return { v: 'APROVADA', texto: `${APROVADAS[id]}\n\nADS novo (dono, 25/09) — crítico A/B cego contra a M4 aprovada:\n${ads}\n\nQuadril antes × depois (pixels do viewmodel; referência = duas medições do depois):\n${prova}` };
+  }
   if (fonteDe(id) === 'aprovada') return { v: 'APROVADA', texto: APROVADAS[id] };
   const v = /VEREDITO:\s*([A-ZÇÃ-]+)/.exec(t)?.[1]
     || ['REPROVADA', 'RESSALVA', 'APROVADA'].find((k) => new RegExp(`^\\S+\\s+${k}\\b`, 'm').test(t)) || (t ? 'VER TEXTO' : 'PENDENTE');
@@ -56,7 +61,13 @@ const figuras = (id) => {
     const d = path.join(FINAL, 'ref'); const pref = id === 'ak' ? 'REF-ak-' : `${id}-`;
     const dd = id === 'ak' ? d : path.join(FINAL, 'capturas/3x2');
     const fs_ = fs.existsSync(dd) ? fs.readdirSync(dd).filter((f) => f.startsWith(pref) && f.endsWith('.png')).sort() : [];
-    return fs_.map((f) => [path.relative(FINAL, path.join(dd, f)), f]);
+    const extra = [];
+    // ADS alinhado da golden (dono, 25/09): figuras da régua e a prova do quadril idêntico.
+    if (id === 'ak') {
+      const a = path.join(FINAL, 'ak-golden-ads/critico/atual');
+      for (const f of ['A-ads-3x2.png', 'A-ads-16x9.png']) if (fs.existsSync(path.join(a, f))) extra.push([path.relative(FINAL, path.join(a, f)), `ak-ads-${f.slice(6)}`]);
+    }
+    return [...fs_.map((f) => [path.relative(FINAL, path.join(dd, f)), f]), ...extra];
   }
   const d = fonte === 'variantes' ? path.join(pastaVar, id) : path.join(FINAL, 'capturas/3x2');
   const fs_ = fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f.startsWith(`${id}-`) && f.endsWith('.png')).sort() : [];
