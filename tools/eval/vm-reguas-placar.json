@@ -1,7 +1,7 @@
 {
  "gerado": "2026-09-26",
  "aspecto": "3x2",
- "entradas": "a0edc00e837d0149",
+ "entradas": "aa2b62e94d7396f8",
  "resultados": {
   "awp": {
    "mira": {
@@ -39,7 +39,7 @@
    "cobertura": {
     "estado": "VERDE",
     "valor": "1.00× AK",
-    "msg": "tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo +0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 12.3% (teto 18.5%)"
+    "msg": "tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo 0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 12.3% (teto 18.5%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -632,8 +632,8 @@
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "0.94× AK",
-    "msg": "tamanho 0.94× AK, rolagem -4° da AK (informativa), eixo -5° da AK, braço 1.08×, cruz 0 px, olho 1.73 palma, ADS cobre 13.0% (teto 18.5%)"
+    "valor": "0.91× AK",
+    "msg": "tamanho 0.91× AK, rolagem -8° da AK (informativa), eixo -2° da AK, braço 0.78×, cruz 0 px, olho 1.72 palma, ADS cobre 13.0% (teto 18.5%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -715,11 +715,7 @@
    "carregador"
   ],
   "armas": [
-   "scar",
-   "tavor",
-   "uzi",
-   "g3sg1",
-   "sks"
+   "ak"
   ],
   "base": "2026-09-26"
  }

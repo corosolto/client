@@ -319,6 +319,15 @@
      "3x2"
     ],
     "fila": "config (ads.linhaDeMira/off por arma)"
+   },
+   "ak": {
+    "valor": "213 px",
+    "dono": "dono (ADS da golden pronto atrás de ?vmgoldenads=1: mira 8 px, crítico A/B RESSALVA só pela pose aprovada das mãos; ligar por padrão é decisão dele)",
+    "medido": "sem ?vmgoldenads=1 a golden não tem ADS: mira fora da cruz a 213 px, +65° da vertical",
+    "aspectos": [
+     "3x2",
+     "16x9"
+    ]
    }
   }
  },

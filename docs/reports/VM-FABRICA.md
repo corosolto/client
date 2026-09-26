@@ -490,7 +490,8 @@ máscara antes × depois igual à de duas medições do depois, e os pixels do v
 que entre duas medições do depois (`artifacts/fabrica-final/ak-golden-ads/prova-quadril/`).
 Crítico A/B cego: r1 REPROVADA (a cruz caía dentro da folha), r2 RESSALVA — mira certa, alvo
 visível, reta e do tamanho da M4; pesa só a pose das mãos coladas ao olho, que é a pose aprovada da
-golden (não mexida, por decisão do dono).
+golden (não mexida, por decisão do dono). Para não bloquear a integração, o ADS fica atrás de
+`?vmgoldenads=1` (desligado por padrão) até o dono aprovar; `mira/ak` segue como dívida dele.
 
 **Réguas novas (com mutante)**
 

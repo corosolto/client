@@ -1,7 +1,7 @@
 {
  "gerado": "2026-09-26",
  "aspecto": "16x9",
- "entradas": "a0edc00e837d0149",
+ "entradas": "aa2b62e94d7396f8",
  "resultados": {
   "awp": {
    "mira": {
@@ -189,7 +189,7 @@
    "carregador": {
     "estado": "VERDE",
     "valor": "ok",
-    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:fora vazia0.38:fora vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:fora vazia0.77:fora vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:fora tatica0.71:mao tatica0.86:arma"
+    "msg": "vazia0.08:arma vazia0.15:arma vazia0.23:fora vazia0.31:fora vazia0.38:fora vazia0.46:fora vazia0.54:mao vazia0.62:arma vazia0.69:fora vazia0.77:fora vazia0.85:arma vazia0.92:fora tatica0.14:arma tatica0.29:fora tatica0.43:fora tatica0.57:fora tatica0.71:fora tatica0.86:fora"
    }
   },
   "knife": {
@@ -485,8 +485,8 @@
    },
    "carregador": {
     "estado": "VERMELHO",
-    "valor": "20 falha(s)",
-    "msg": "em repouso o carregador está invisível; mão vazia: vazia 8% — mão de apoio na tela e o carregador invisível; mão vazia: vazia 15% — mão de apoio na tela e o carregador invisível; mão vazia: vazia 23% — mão de apoio na tela e o carregador invisível (+16). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
+    "valor": "2 falha(s)",
+    "msg": "tira carregador fantasma: a peça do carregador mede 100% da arma; tira no ar: em nenhum quadro da recarga a peça está na mão. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
    }
   },
   "g3sg1": {
@@ -715,9 +715,7 @@
    "carregador"
   ],
   "armas": [
-   "g3sg1",
-   "lmg",
-   "sks"
+   "ak"
   ],
   "base": "2026-09-26"
  }
