@@ -535,6 +535,102 @@ e a corrida é de dois quadros (repro manual confiável não existe; foi por iss
 virou `vm` com rAF sob controle, e não `crash-watch`). `npm run build` e `check:seo` também não
 rodaram aqui. A recorrência em produção não foi medida: a tabela `js_error` é schema privado,
 sem credencial nesta máquina.
+
+### BUG-181 · viewmodel pago ausente do deploy entrava como crash de código e abria issue a cada versão · CORRIGIDO 25/09
+
+**Sintoma:** três issues abertas sozinhas pelo `crash-fix.yml` em duas horas, todas com classe
+`codigo`, a mesma pilha same-origin e mensagens diferentes:
+
+```
+#656  6ed06580  alpha.297  [paid-viewmodel] grenade fetch for ".../private-assets/viewmodels/grenade/grenade-runtime.glb?v=5b785ea19a" responded with 404:
+#657  40b47046  alpha.297  [paid-viewmodel] general-runtime fetch for ".../private-assets/viewmodels/shared/general-runtime.glb?v=paid-aaa-3" responded with 404:
+#658  60a6cc34  alpha.298  [paid-viewmodel] pistol#pistol fetch for ".../private-assets/viewmodels/pistol/pistol-runtime.glb?v=edb77908ea" responded with 404:
+Stack: Error: fetch for "…" responded with 404:  at …/vendor/three.module.js:43588:12
+```
+
+**Causa raiz — confirmada.** O catálogo privado nunca foi publicado.
+`tools/viewmodels/vm-assets.manifest.json` está com `blobBase: null`, então o
+`fetch-viewmodels.sh` do build não baixa nada e sai 0 (a pendência do dono está no #655 e em
+`docs/reports/VM-ENTREGA-PRODUCAO.md`). Em 25/09, `curl` em produção deu 404 (HTTP/2) nas quatro
+URLs que o runtime pede: `pistol/pistol-runtime.glb`, `grenade/grenade-runtime.glb`,
+`shared/general-runtime.glb` e `recoil.json`. O AK golden (`/models/viewmodels/coro/ak-hires.glb`,
+que é público e mora no git) deu 200. O `authoredvm.js` captura a falha, `active()` fica falso e
+o jogo desenha o viewmodel legado. A degradação é a desenhada no #655. O problema estava na
+classificação: o catch loga `console.error('[paid-viewmodel] <chave>', error)` com o `HttpError`
+do three, o hook do `index.astro` acha a pilha same-origin do `three.module.js`, e o
+`classifyCrash` devolvia `codigo`. São três assets diferentes, cada um com a sua fingerprint.
+A da pistola e a da granada ainda vão mudar a cada re-asse, porque a fingerprint inclui o `?v=`
+dos bytes do GLB, e cada mudança abriria uma issue nova. O `general-runtime` usa o
+`CATALOG_VERSION` fixo.
+
+**Conserto.** `VM_PRIVADO_AUSENTE_RE` em `src/lib/error-provenance.mjs` faz o `classifyCrash`
+devolver `recuperavel`. A linha continua no banco, mas não consome dispatch e não abre issue.
+A regex é estreita e casa a mensagem inteira, com três exigências juntas:
+
+- o prefixo `[paid-viewmodel] <chave>` do catch, que é a prova de que houve fallback;
+- um caminho `/private-assets/viewmodels/`, porque asset público faltando é defeito do git;
+- status 404, porque 403 é token e 5xx é servidor.
+
+Não precisa de espelho no cliente. Esse caminho é `console.error` e nunca passa pelo
+`lancamento.fail`.
+
+**Régua:** `tools/ops/tests/viewmodel-ausente.test.mjs` (`npm run ops:test`) tem 12 cláusulas.
+Quatro usam os payloads reais de #656, #657 e #658, mais a variante HTTP/1.1 `404: Not Found`.
+As outras oito são antivacuidade e precisam continuar em `codigo`:
+
+- AK golden público com 404;
+- 403, 500 ou 410 no caminho privado;
+- GLB que chega e não parseia;
+- 404 privado sem o prefixo do catch;
+- texto antes do prefixo;
+- texto depois do status;
+- frase entre a chave e o `fetch`;
+- 404 em outro catálogo privado (`/private-assets/audio/`).
+
+Antes do conserto passavam 8 de 12, com as quatro reais vermelhas. Depois passam as 12.
+Com `scripts/classify-crash.mjs`, o mesmo script do workflow, as três mensagens reais saíram
+de `codigo` para `recuperavel`.
+
+**Mutações.** Cada uma acende a cláusula certa:
+
+| Mutação | O que faz | Vermelhas |
+|---|---|---|
+| `sem-corte` | tira o `return` | 4 |
+| `sem-inicio` | tira o `^` | 1 |
+| `sem-fim` | tira o `$` | 1 |
+| `sem-prefixo` | aceita qualquer coisa antes do `fetch` | 3 |
+| `chave-livre` | troca `[\w#-]+` por `.*` | 1 |
+| `qualquer-status` | troca `404` por `\d{3}` | 1 |
+| `qualquer-caminho` | tira `/private-assets/viewmodels/` | 2 |
+| `qualquer-privado` | afrouxa para `/private-assets/` | 1 |
+
+Uma abertura sobrevive: trocar o host `https?://[^"\s]+` por `"[^"]*`. Não tem cláusula porque
+o `HttpError` do three sempre usa o `response.url` absoluto.
+
+**Custo declarado.** Enquanto o catálogo não for publicado, o painel de crash não avisa mais que
+produção serve o legado. Esse sinal passa a depender do `VM_REQUIRED=1` no build e do
+`eval:vm-serving-prod`. Com o catálogo publicado, um 404 de família marcada `ready` também para
+de abrir issue. É o caso da `grenade/grenade-runtime.glb`, que não está no manifesto de 35
+entradas: vai continuar dando 404 depois do upload até o runtime da lane vm-launch-k (#638)
+entrar.
+
+**Não verificado:** o espelho do `corosolto/backend` (`api/_lib/error-provenance.mjs`) não foi
+tocado. Até ele receber a mesma regex, o `repository_dispatch` continua disparando e a coluna
+`classification` da `js_error` continua gravada como `codigo`. A issue já não nasce, porque o
+`crash-fix.yml` reclassifica com o script deste repo. A recorrência na tabela `js_error` não foi
+medida, porque não há credencial nesta máquina.
+
+**Fora do escopo, e já era assim antes:**
+
+- O cliente continua gastando até 3 das 10 vagas de exceção por sessão (`TETO_SESSAO` no
+  `index.astro`) nesses três logs. Mudar isso exige espelhar a regex no hook do cliente.
+- Depois de uma falha, o `setWeapon` do `authoredvm.js` apaga o cache e pede o GLB de novo a
+  cada troca de arma, tomando outro 404. A fingerprint deduplica o envio, mas a requisição se
+  repete.
+
+As duas mudanças mexem no `authoredvm.js` ou no hook do `index.astro`. O arquivo inteiro do
+`authoredvm.js` está sendo reescrito no #638.
+
 ### BUG-177 · `loop()` lia `#char-select` sem guarda e congelava o jogo quando o elemento sumia · CORRIGIDO 23/09
 
 **Sintoma:** crash automático #617 em produção (alpha.262), `TypeError: Cannot read
