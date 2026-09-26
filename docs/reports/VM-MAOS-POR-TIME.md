@@ -53,3 +53,18 @@ Mutantes: `golden-sem-time` (base: rig A fora), `faca-time-errado` (faca presa n
 Não mede: luz, movimento, gosto do motivo. Isso é do crítico e do dono.
 
 Página: `artifacts/maos-por-time/index.html` (`node tools/eval/vm-maos-time-pagina.mjs`).
+
+## Crítico cego (vm-critico-visual, folha AK golden × M4 × pistola × seis times)
+
+Rodada 1: C aprovada; B, U, E ressalva; M reprovada (a trama virava "onça" na M4 e listra na
+pistola, roxo vazando no punho da golden); F reprovada (sem motivo, "o U sem o xadrez").
+Consertos: motivos novos desenhados em volta do eixo do braço, só na luva; F ganhou cordão de
+ouro (proposta, commit separado para o dono aceitar ou reverter).
+
+Rodada 2: B e C aprovadas; U, M e E ressalva; **F segue reprovada** — o cordão no pulso lê na AK,
+vira faixa com cara de onça na M4 e some na pistola (a pistola quase não mostra punho nem manga:
+E e F viram a mesma mão). Pendentes que ficam com o dono: identidade do F (e do E) precisa morar
+no dorso da mão, não no punho, para aparecer na pistola; a escala aparente do xadrez (U) e da
+trama (M) muda entre a golden e o K porque o enquadramento da golden mostra a mão mais de perto
+(a pintura é na mesma escala por mão; não medido na tela). Parado em duas rodadas pelo detector
+de giro da skill.
