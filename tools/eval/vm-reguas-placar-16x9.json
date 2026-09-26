@@ -1,7 +1,7 @@
 {
  "gerado": "2026-09-26",
  "aspecto": "16x9",
- "entradas": "c2839259af86a79b",
+ "entradas": "aa2b62e94d7396f8",
  "resultados": {
   "awp": {
    "mira": {
@@ -705,5 +705,18 @@
     "msg": "tira carregador fantasma (toco): com o pente na mão aparece no máximo 30% dele (mínimo 35%). Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config."
    }
   }
+ },
+ "parcial": {
+  "reguas": [
+   "mira",
+   "cobertura",
+   "pistola-ref",
+   "maos",
+   "carregador"
+  ],
+  "armas": [
+   "ak"
+  ],
+  "base": "2026-09-26"
  }
 }

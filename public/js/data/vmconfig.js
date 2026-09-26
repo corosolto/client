@@ -55,10 +55,8 @@ export const VM_WEAPON = {
   // Produto K (KINEMATION, 67 juntas) assado por arma no catálogo privado:
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
-  // AK = a GOLDEN aprovada (rig A, coro/ak-hires.glb; decisão do dono 24/09): rota gold#ak,
-  // sem produto K. eval:vm-launch VL7 reprova se a 'ak' servir outra coisa. Caixa MAG: eval:cs16.
-  // ADS da golden (dono, 25/09): alça e massa medidas na malha, no espaço do osso Rifle_metarig
-  // (sonda-golden.mjs); o quadril aprovado não lê nada daqui.
+  // AK = golden aprovada (rota gold#ak, eval:vm-launch VL7); ADS pela alça/massa medidas no osso
+  // Rifle_metarig, que o quadril não lê (VM-FABRICA §8.3). Caixa MAG: eval:cs16.
   ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } },
     ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.35,
       golden: { osso: 'Rifle_metarig', alca: [-0.0064, 0.167, 0.0588], massa: [-0.0064, 0.507, 0.0546], cima: [0, 0, 1] } } }),

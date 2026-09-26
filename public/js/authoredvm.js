@@ -44,6 +44,8 @@ const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get(
 const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
 const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
+const GOLDEN_ADS = _QS?.get('vmgoldenads') === '1';
+
 // Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
 // só abrem armas numa sessão de revisão.
 const AUTHORED_KILLED = !AUTHORED_VM_ENABLED;
@@ -571,10 +573,9 @@ export class AuthoredViewModels {
           : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family && !weaponBaked(id));
         if (owner) attachMintWeapon(entry, owner);
       }
-      // AK golden (decisão do dono, 25/09): ADS alinhado pela alça e massa MEDIDAS na malha dela
-      // (tools/fabrica/captura/sonda-golden.mjs), presas ao osso da arma. Ficam FORA de
-      // entry.sockets/mint: boca, flash e tudo o que o quadril usa seguem como aprovados.
-      const mira = golden && VM_WEAPON[bakedWeapon]?.ads?.golden;
+      // AK golden: ADS pela alça e massa medidas na malha (sonda-golden.mjs), fora de sockets/mint
+      // para boca, flash e quadril seguirem os aprovados (VM-FABRICA §8.3).
+      const mira = golden && GOLDEN_ADS && VM_WEAPON[bakedWeapon]?.ads?.golden;
       if (mira) {
         const osso = visual.scene.getObjectByName(mira.osso);
         if (osso) {

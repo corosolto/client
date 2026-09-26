@@ -22,7 +22,7 @@ const rev = execSync('git rev-parse --short HEAD', { cwd: RAIZ_REPO }).toString(
 // Ordem do §9 do VM-FABRICA; fonte de cada arma.
 const MINHAS = ['m4', 'pistol', 'shotgun', 'g3', 'svd', 'mp5', 'p90', 'lmg', 'deagle', 'famas', 'tavor'];
 const DE_VARIANTES = ['akm', 'm92', 'md97', 'scar', 'g3sg1', 'sks', 'awp', 'rem700', 'm400', 'mosin', 'carbine', 'uzi', 'revolver38'];
-const APROVADAS = { ak: 'AK golden (rig A) — aprovada pelo dono; servida por gold#ak (eval:vm-launch VL7); ADS alinhado pela alça e massa medidas (mira 8 px, eval:vm-mira-golden)', knife: 'faca aprovada (o pack não tem faca)', grenade: 'granada K — já é o pack como autorado (ready)' };
+const APROVADAS = { ak: 'AK golden (rig A) — aprovada pelo dono; servida por gold#ak (eval:vm-launch VL7); ADS alinhado pela alça e massa medidas atrás de ?vmgoldenads=1 (mira 8 px, eval:vm-mira-golden; crítico A/B RESSALVA)', knife: 'faca aprovada (o pack não tem faca)', grenade: 'granada K — já é o pack como autorado (ready)' };
 const ORDEM = ['ak', 'akm', 'm92', 'm4', 'famas', 'tavor', 'md97', 'scar', 'g3', 'g3sg1', 'svd', 'sks', 'awp', 'rem700', 'm400',
   'mosin', 'carbine', 'mp5', 'uzi', 'p90', 'lmg', 'shotgun', 'deagle', 'revolver38', 'pistol', 'grenade', 'knife'];
 

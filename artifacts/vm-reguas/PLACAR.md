@@ -1,7 +1,7 @@
 # PLACAR das réguas de imagem do viewmodel
 
 Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-26, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `c2839259af86a79b`.
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `aa2b62e94d7396f8`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
@@ -67,7 +67,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 ## cobertura
 
 - **awp** VERMELHO — arma gigante: 143% da AK (faixa 0.8–1.25, classe longa); braço 1.47× a área do braço da AK (teto 1.4) — tamanho 1.43× AK, rolagem -17° da AK (informativa), eixo +1° da AK, braço 1.47×, cruz 0 px, olho 1.03 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).
-- **ak** VERDE — tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo +0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 12.3% (teto 18.5%)
+- **ak** VERDE — tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo 0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 12.3% (teto 18.5%)
 - **m4** VERDE — tamanho 1.01× AK, rolagem +5° da AK (informativa), eixo +7° da AK, braço 0.79×, cruz 0 px, olho 1.36 palma, ADS cobre 10.3% (teto 18.5%)
 - **mp5** VERDE — tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.90×, cruz 0 px, olho 2.49 palma, ADS cobre 5.6% (teto 18.5%)
 - **shotgun** VERDE — tamanho 1.06× AK, rolagem +20° da AK (informativa), eixo -6° da AK, braço 1.28×, cruz 0 px, olho 0.99 palma, ADS cobre 12.7% (teto 18.5%)
