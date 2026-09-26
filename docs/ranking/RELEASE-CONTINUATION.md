@@ -89,3 +89,20 @@ navegação; ela **não** faz parte deste deploy. O handoff desse objetivo segue
   reserva a chave apenas ao SSR de produção, nunca Preview/browser. Pedida
   escolha do usuário entre configurar a variável protegida e adaptar o SSR
   para ler uma API pública. Até resolver, não ativar a vitrine.
+
+## Ordem de merge definida pelo usuário
+
+O usuário aprovou configurar a chave protegida e produzir o ranking, mas pediu
+em seguida: **aguardar o merge das armas; só depois entra o ranking**. Em
+26/09, a PR cliente #663 tinha checks verdes e seguia aberta; a PR backend
+#34 seguia aberta. Nenhuma das duas foi mesclada. A chave ainda **não** foi
+copiada para a Vercel; a flag pública continua desligada. A revisão Cloud Run
+`00036-pej` com flag ligada permanece em 0% de tráfego.
+
+Na retomada: confirmar o SHA da `main` após o merge das armas, atualizar a
+lane isolada do ranking sem absorver a home experimental, repetir os gates e
+verificar conflitos de `main.js`/`index.astro`/assets; então configurar somente
+Production, construir sem alias, validar e promover na ordem coordenada.
+Não antecipar merge nem deploy enquanto o merge das armas estiver em curso.
+O layout da nova home continua na lane `codex/re-ui-home`, sem aceite visual,
+e não faz parte da PR #663.
