@@ -70,3 +70,22 @@ navegação; ela **não** faz parte deste deploy. O handoff desse objetivo segue
   `sha256:35d4c3e8113c30f77a2cfe58eefafda8f8b9c89f0a149ddbb7060d45f6905446`.
 - Ainda sem tráfego dessas imagens, flag desligada e cliente não publicado.
   Próximo passo: promover API com flag desligada e conferir health/revisão.
+
+## Marco validado: API e nós publicados, UI em PR
+
+- Cloud Run API `backend:305efaf`, revisão `csbrasil-backend-00034-law`, recebe
+  100% do tráfego. `/api/health` HTTP 200 com banco OK; `/api/leaderboard`
+  segue HTTP 200 `{"disabled":true}`. Reversão da API: revisão `00033-m6k`.
+- Nós EUA, Europa e Brasil publicados sequencialmente, sempre com zero
+  jogadores. Os três `/health` públicos mostram `serverSha:11d3016`, cliente
+  pinado `d4d9c693...`, protocolos 1–5, duas salas e zero jogadores. Em cada
+  região, ticket emitido pela API abriu WebSocket e recebeu `welcome`.
+  Reversão dos nós: imagem `servidor:runtime-fe7d950`.
+- Branch `codex/ranking-release` publicada em PR #663; `check:deploy` local
+  passou no push após regenerar `tools/eval/ARCH.md`. PR/CI ainda pendente,
+  sem merge nem produção Vercel. O código da home experimental ficou fora.
+- `SUPABASE_SERVICE_ROLE_KEY` não consta no ambiente Production da Vercel;
+  o SSR de `/ranking`, `/u/*` e badge precisa dela. A documentação de segurança
+  reserva a chave apenas ao SSR de produção, nunca Preview/browser. Pedida
+  escolha do usuário entre configurar a variável protegida e adaptar o SSR
+  para ler uma API pública. Até resolver, não ativar a vitrine.
