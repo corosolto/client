@@ -801,8 +801,8 @@
       "chassi": "Kar98K",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/mosin-fabrica.glb",
-      "bytes": 2588836,
-      "sha256": "cb3c4df1f422947b1a50d3b1728bd5b9ecb11bc89161d76704bcd052ecc3ab19",
+      "bytes": 2587344,
+      "sha256": "6162d93adf68aded7a485bfd304066f3d4c45746def9caf3fc670d414e4a2d4b",
       "clipes": [
         {
           "nome": "idle",
@@ -847,7 +847,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 7,
+      "segundos": 14,
       "file": "viewmodels/fabrica/mosin-fabrica.glb",
       "ficha": "tools/fabrica/fichas/mosin.json",
       "insumos": {
@@ -860,7 +860,7 @@
         "clipe:shoot:braco": "56f288cf6510ea263cdbe9afcfc3c9e1163e1be7933e2145490d52b10a7b1b16",
         "clipe:shoot:arma": "3b9dc4357ef2fb0ca4dd527764054c963a10cad0ebf9ddf6fa9bed22df47ddd0",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
-        "animador": "c1373e0b1751d5d804909ef7cd90f461bce44575ae72ccc8f2e38a92ead977e2",
+        "animador": "37ff88d2098d60f727417a7841156e4e6ba3b5213d691b24d6c2c7667814972b",
         "frameJogo": "5c0a11c48f139c5b7f97565e466126630c93cbbdfe298729189b27c7f0527d83"
       },
       "ready": false,
@@ -1074,8 +1074,8 @@
       "chassi": "Kar98K",
       "variante": true,
       "url": "/private-assets/viewmodels/fabrica/rem700-fabrica.glb",
-      "bytes": 2718192,
-      "sha256": "5f50005bd3695d809cbf9606eca65119468602faa8f99413cf78a898a785b4e8",
+      "bytes": 2716704,
+      "sha256": "2f5a67778bf449bcee6532d2273308a2572eee4a60790e313da864b54ec0d116",
       "clipes": [
         {
           "nome": "idle",
@@ -1120,7 +1120,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 7,
+      "segundos": 14,
       "file": "viewmodels/fabrica/rem700-fabrica.glb",
       "ficha": "tools/fabrica/fichas/rem700.json",
       "insumos": {
@@ -1134,7 +1134,7 @@
         "clipe:shoot:arma": "3b9dc4357ef2fb0ca4dd527764054c963a10cad0ebf9ddf6fa9bed22df47ddd0",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "zonaLivre:luneta": "65f27ce977bc651a58d46510f91cd46df1d13d6a7e4cfade1790be9799ec2141",
-        "animador": "c1373e0b1751d5d804909ef7cd90f461bce44575ae72ccc8f2e38a92ead977e2",
+        "animador": "37ff88d2098d60f727417a7841156e4e6ba3b5213d691b24d6c2c7667814972b",
         "frameJogo": "5c0a11c48f139c5b7f97565e466126630c93cbbdfe298729189b27c7f0527d83"
       },
       "ready": false,
