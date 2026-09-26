@@ -117,6 +117,9 @@ export async function entrarAds(page) {
     await segurar(page, false);
     await page.evaluate(() => { if (!window.__game.player.scoped) window.__vmPrecisionQa.ads(); });
     await page.waitForTimeout(1300);
+    // Máquina carregada (placar com outros navegadores): 1,3 s não assentava o ADS e a régua lia
+    // o quadril como ADS (+50–67° "tombada"). Espera o adsAmount chegar antes de congelar.
+    await page.waitForFunction(() => window.__game.player.scoped && (window.__authoredVm.adsAmount || 0) >= 0.99, null, { timeout: 10000 }).catch(() => null);
     await segurar(page, true);
     await esperarQuadro(page);
     est = await page.evaluate(() => ({ scoped: Boolean(window.__game.player.scoped), ads: +(window.__authoredVm.adsAmount || 0).toFixed(3) }));
