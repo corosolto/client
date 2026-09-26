@@ -396,6 +396,56 @@ então é a célula oscilando, não esta branch. `eval:vm-placar`, `eval:vm-cach
 `eval:vm-orientacao` e `eval:vm-manga-oca` verdes; `eval:vm-rig` vermelho igual na base. Régua FB4 passou a medir a palma contra todos os vértices
 (a amostra de um em dois punha o Mk14 do pack, como autorado, a 4,0 cm; `mao-solta` morde).
 
+### 7.3 Rodada final das variantes (26/09) — mosin, rem700, revolver38, awp, uzi
+
+As cinco que ficaram abaixo da barra depois das três voltas de crítico do lote. Figuras do crítico
+cego em `artifacts/fabrica-variantes/critico-final3|4|5/` (A/B contra a rodada anterior).
+
+- **Captura do QA consertada.** `qa.mjs` só conectava o `kcap` e o vídeo num servidor que as réguas
+  de imagem já tinham derrubado (saída em 1 s, `ERR_CONNECTION_REFUSED`, capturas 16:9 e vídeo
+  vazios). O QA sobe o servidor, apaga vídeo velho e conta captura/vídeo vazios como vermelho.
+  `entrarAds` re-aplica o mount depois de congelar (o `adsAmount` anda congelado, o mount não): a
+  figura "ADS no quadril" do revólver e a mira da UZI a 150 px/+70° eram isso — re-medida, 28 px.
+- **UZI:** volta ao produto RESSALVA (`95cb79312f`, rebuild byte a byte) e só então a tática
+  gira o pente 70° ao sair/entrar e cruza a borda com a mão em ~80 ms; braço de apoio preso no
+  espaço da câmera no começo e no fim (a arma gira e arrastava a boca da manga para o quadro).
+- **AWP:** a subida vai até u 0,26 (antes 0,10–0,12, o "salto"), 3 cm; as duas recargas tiram o
+  pente com a mão e buscam o reserva pela esquerda com o pente à vista (fora do quadro ~0,05 do
+  clipe, no instante que a régua do carregador amostra como "fora").
+- **Mosin/REM 700 (lâmina):** a mão de apoio aberta sob o guarda-mão era o IK sem alcance (a arma
+  ia 26 cm à frente com a mão ainda no guarda-mão: 23 cm de erro). A arma só avança depois que a
+  mão sai e volta antes de a mão voltar; a lâmina vem na mão de fora da tela, os cinco cartuchos
+  descem com a mão, a lâmina salta quando o ferrolho começa a fechar e cai junto da arma.
+- **Revólver:** o guindaste girava −100° e levava o tambor para dentro da armação; agora +100°
+  (à esquerda, à vista). O municiador rápido é malha nova (`animador.py`: `municiador` = aro +
+  botão num osso filho do tambor, 1/1000 no repouso porque o pack não tem trilha para ele) com os
+  seis cartuchos do pack em `mao`; `poco` com `mec` segue o tambor aberto. A arma deita de lado
+  um pouco mais longe para as balas aparecerem de lado antes de entrar.
+
+Crítico cego (três rodadas A/B, contexto limpo, só pixel; `critico-final3|4|5`):
+
+| arma | antes (A/B r3 do lote) | r1 | r2 | r3 (final) | o que o crítico ainda pede |
+|---|---|---|---|---|---|
+| uzi | REPROVADA | RESSALVA | RESSALVA | **RESSALVA** | mão no ADS (uma mão é decisão do dono); pedaço do braço de apoio na borda de baixo |
+| awp | RESSALVA | RESSALVA | RESSALVA | **RESSALVA** | a mão leva o pente até a borda esquerda em vez de trocar junto da arma |
+| revolver38 | REPROVADA | REPROVADA (arma 2× na recarga) | RESSALVA | **RESSALVA** | recarga aceita ("cartuchos entram no tambor com contato"); no ADS as mãos cobrem a traseira |
+| mosin | REPROVADA | RESSALVA | REPROVADA (braço na cruz) | **REPROVADA** | polegar sobre os cartuchos de f040 a f060; mão volta ao guarda-mão por baixo |
+| rem700 | REPROVADA | RESSALVA | REPROVADA | **REPROVADA** | luneta na boca (limite aceito pelo dono) + os defeitos da mosin |
+
+Réguas (3:2 e 16:9, `qa.mjs` completo): produto FB1–4 e mutantes verdes; manga-oca verde nas
+cinco; manga-tela verde em quatro (uzi 0,63%); mira uzi 28 px, revólver 0 px (as de luneta N/A);
+cobertura, mãos, carregador com reserva e carregador-repete verdes nas cinco, nas duas
+proporções; capturas 3:2/16:9 e vídeo gravados. Mutantes do carregador (`reserva-solta`,
+`reserva-some`, `pente-pisca`, `clipe-no-quadro`), `inclinada` e `p90-tubo` mordem. A régua do
+laço passou a varrer toda peça com chaves (não só o pente): o mutante "Cartridge3 surge na tela"
+reprova o build; os produtos do plano B que já existiam reconstroem byte a byte. Placar do #636
+re-medido nas 26 armas: 0 célula mudou de estado.
+
+Limites ditos: a luneta da REM 700 fica avançada e o ADS da Mosin é a luneta 2D (decisão do dono;
+o crítico reprova a REM 700 pela luneta na boca e pelo corpo de Mosin — é a variante aceita). A
+UZI deixa 0,63% de extensão do vmsleeve na tela no fim da recarga vazia (teto 0,5%; o produto
+RESSALVA media 1,03%): sem a extensão a boca da manga do braço de apoio aparece (manga-oca).
+
 ## 8. Lote 1
 
 Produtos (overlay privada `…/viewmodels-fabrica/overlay/viewmodels/fabrica/`), reprodutíveis
@@ -542,7 +592,7 @@ golden como fonte (sem "produto ausente").
 - `manga-tela` — **extensão do vmsleeve na tela**: o tubo que o crítico viu era a extensão aparecendo
   (manga 9% da tela, verde). O vmsleeve marca a base dos vértices e o raster conta a extensão; na
   fábrica o teto é 0,5% da tela. Mutante `p90-tubo` (extensão ligada, z −0,383) morde com 3,5%.
-  `npm run eval:vm-manga-tela-fabrica`. awp da fábrica fica como dívida do #653.
+  `npm run eval:vm-manga-tela-fabrica`. A awp da fábrica ficou verde no #653 (0,00%, sem `manga:true`); a uzi fica em 0,63% (§7.3).
 - Sondas: `captura/rolagem.mjs` (rolagem em torno do cano e eixo do cano na tela, contra a M4
   aprovada), `captura/coice.mjs --total`, `captura/sonda-mira.mjs`.
 - `kcap`: bots escondidos antes de cada render (o visual é `mesh.group` + halo), recarga em 12
