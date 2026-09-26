@@ -44,8 +44,11 @@ check(authored.includes('export const AUTHORED_VM_ENABLED = VM_RUNTIME.active;')
 // anulava o normal map — a mão virava luva lisa sem dedos.
 check(authored.includes('HAND_MATERIAL_AK_LINEAGE'),
   'linhagem de mão da AK é reconhecida no runtime');
-check(authored.includes("&& !HAND_MATERIAL_AK_LINEAGE.test(material?.name || '')"),
-  'mão da linhagem AK não recebe o atlas de time do rig KINEMATION');
+// Mãos por time (#661): a golden (rig A) recebe o atlas do PRÓPRIO rig (handLayoutOfMesh);
+// só o molde GoldSrc/retarget da linhagem AK fica fora do atlas.
+check(authored.includes("&& !(molde && HAND_MATERIAL_AK_LINEAGE.test(material?.name || ''))")
+  && authored.includes('handLayoutOfMesh(object)'),
+  'mão da linhagem AK só recebe atlas pelo layout do próprio rig; molde fica fora');
 check(game.includes('this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root')
   && game.includes('this.vm.melee = !AUTHORED_VM_ENABLED ? null : new KnifeMeleeViewModel('),
 'controladores só são criados dentro do portão global');
@@ -74,7 +77,8 @@ const knifeClips = new Set((knifeJson.animations || []).map((clip) => clip.name)
 check(['Idle', 'Draw', 'Slash', 'Stab', 'QuickThrust', 'HeavyStab'].every((name) => knifeClips.has(name)), 'faca contém os seis clipes do contrato');
 check((knifeJson.cameras || []).length > 0, 'faca contém câmera authored');
 const handFiles = [...tracked].filter((file) => file.startsWith('public/models/viewmodels/coro/hands/') && file.endsWith('.webp'));
-check(handFiles.length === 48, '48 atlas públicos de mãos estão versionados', String(handFiles.length));
+// 48 atlas até o #661; as mãos por time somam o rig A (36) e o estilo M/neutro em K e L: 108.
+check(handFiles.length === 108, '108 atlas públicos de mãos estão versionados (K 54 · L 18 · A 36)', String(handFiles.length));
 check(![...tracked].some((file) => file.startsWith('public/private-assets/')), 'nenhum asset privado entrou no Git');
 check(!fs.existsSync(path.join(root, 'public/models/viewmodels/coro/pistol-runtime.glb')), 'PT-38 aprovada permanece fail-closed fora do catálogo público');
 // vm/k-rebuild: AK, faca e granada em K são binários licenciados (braços KINEMATION).
