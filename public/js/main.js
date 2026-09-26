@@ -3127,6 +3127,17 @@ function mpErro(msg, comRetry = false) {
     e.appendChild(b);
   }
 }
+
+/* Nó que ainda serve mapa PARADO é nó por atualizar (o pin CLIENT_REF do backend).
+   Recusa em vez de trocar o mapa: substituir dessincroniza do servidor. */
+function noServeMapaParado(id, net) {
+  if (oficina || !MAPAS_PARADOS.has(resolveMapId(id))) return false;
+  try { net?.close?.(); } catch { /* fechar é cortesia; a recusa vale de qualquer jeito */ }
+  mpSessao = null;
+  mpErro(`Este servidor sorteou "${MAPS[resolveMapId(id)]?.name || id}", que saiu do jogo para retrabalho. `
+    + 'O nó ainda não foi atualizado — escolha outra sala ou outra região.', true);
+  return true;
+}
 /* Chip de estado da conexão (#mp-estado). Um lugar só e sempre visível: "medindo",
    "online em tal região", "conectando na sala" e "fora do ar" são estados diferentes
    e a tela antiga não distinguia nenhum deles de "travou". */
@@ -3555,7 +3566,10 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   mpEstado('on', `NA SALA · ${sala.name || sala.convite || ''}`);
   clearInterval(mpTimerLista);
   mpSessao = { net, sala, no: mpNoAtual };
-  /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê. */
+  /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê.
+     Nó desatualizado ainda sorteia mapa PARADO: recusar é a única saída honesta — trocar o
+     mapa por conta própria dessincroniza do servidor. Contrato: docs/maps/MAPAS-PARADOS.md. */
+  if (noServeMapaParado(welcome.map, net)) return;
   if (MAPS[welcome.map]) currentMap = welcome.map;
   matchMode = welcome.ctf ? 'ctf' : 'rounds';
   modoEscolhido = true;
@@ -3574,6 +3588,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
   net.onPartida = async (m) => {
     if (mpSessao?.net !== net) return;
+    if (noServeMapaParado(m.map, net)) return;
     if (MAPS[m.map]) currentMap = m.map;
     matchMode = m.ctf ? 'ctf' : 'rounds';
     await mpMontarPartida(net, m);
