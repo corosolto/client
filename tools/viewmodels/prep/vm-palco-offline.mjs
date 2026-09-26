@@ -116,7 +116,8 @@ export async function rasterizar(palco, { aspecto = '3x2', arquivo = '', dono: q
   const img = arquivo ? Buffer.alloc(w * h * 3, 235) : null;
   const v = new THREE.Vector3();
   const NEAR = 0.02;
-  const triangulo = ([ax, ay, za], [bx, by, zb], [cx, cy, zc], classe, base) => {
+  const ext = new Uint8Array(w * h);   // pixel desenhado por triângulo da EXTENSÃO do vmsleeve
+  const triangulo = ([ax, ay, za], [bx, by, zb], [cx, cy, zc], classe, base, eExt = 0) => {
     const area = (bx - ax) * (cy - ay) - (cx - ax) * (by - ay);
     if (Math.abs(area) < 1e-9) return;
     const minx = Math.max(0, Math.floor(Math.min(ax, bx, cx))), maxx = Math.min(w - 1, Math.ceil(Math.max(ax, bx, cx)));
@@ -133,7 +134,7 @@ export async function rasterizar(palco, { aspecto = '3x2', arquivo = '', dono: q
         const d = w0 * za + w1 * zb + w2 * zc;
         const o = y * w + x;
         if (d >= z[o]) continue;
-        z[o] = d; dono[o] = classe;
+        z[o] = d; dono[o] = classe; ext[o] = eExt;
         if (img) { img[o * 3] = base[0] * luz * 255; img[o * 3 + 1] = base[1] * luz * 255; img[o * 3 + 2] = base[2] * luz * 255; }
       }
     }
@@ -160,8 +161,10 @@ export async function rasterizar(palco, { aspecto = '3x2', arquivo = '', dono: q
       const nomes = mesh.userData.__mats || [];
       const classe = CLASSE(nomes[gr.materialIndex ?? 0] ?? nomes[0] ?? mat?.name ?? '');
       const base = classe === 4 && mat?.color ? [mat.color.r, mat.color.g, mat.color.b].map((c) => 0.25 + c * 0.55) : COR[classe];
+      const baseExt = mesh.userData.sleeveBase ?? Infinity;
       for (let k = gr.start; k < gr.start + gr.count; k += 3) {
         const a = idx ? idx.getX(k) : k, b = idx ? idx.getX(k + 1) : k + 1, c = idx ? idx.getX(k + 2) : k + 2;
+        const eExt = a >= baseExt || b >= baseExt || c >= baseExt ? 1 : 0;
         // Recorte no plano próximo (o tubo da manga atravessa a câmera: sem recorte ele some).
         let poli = [a, b, c].map((i) => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]]);
         const rec = [];
@@ -181,15 +184,19 @@ export async function rasterizar(palco, { aspecto = '3x2', arquivo = '', dono: q
           cor = /_r$/.test(nome) ? COR[5] : /_l$/.test(nome) ? COR[1] : COR[6];
         }
         poli = rec.map(([x, y, d]) => [(x / (d * half * asp) + 1) * w / 2, (1 - y / (d * half)) * h / 2, d]);
-        for (let q = 1; q + 1 < poli.length; q += 1) triangulo(poli[0], poli[q], poli[q + 1], classe, cor);
+        for (let q = 1; q + 1 < poli.length; q += 1) triangulo(poli[0], poli[q], poli[q + 1], classe, cor, eExt);
       }
     }
   }
   const conta = [0, 0, 0, 0, 0];
   let mangaCentro = 0;
+  // EXTENSÃO do vmsleeve NA TELA: o tubo existe para esconder a boca da manga atrás da câmera;
+  // se aparece, é o "antebraço gigante"/tubo rosa que o crítico viu (p90/shotgun, 24/09).
+  let extensao = 0;
   for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) {
     const c = dono[y * w + x]; conta[c] += 1;
     if (c === 1 && x > w * 0.25 && x < w * 0.75) mangaCentro += 1;
+    if (ext[y * w + x]) extensao += 1;
   }
   if (img) {
     const cx = w >> 1, cy = h >> 1;
@@ -197,7 +204,7 @@ export async function rasterizar(palco, { aspecto = '3x2', arquivo = '', dono: q
     await sharp(img, { raw: { width: w, height: h, channels: 3 } }).png().toFile(arquivo);
   }
   const t = w * h;
-  return { manga: conta[1] / t, luva: conta[2] / t, pele: conta[3] / t, arma: conta[4] / t, mangaCentro: mangaCentro / (t / 2),
+  return { manga: conta[1] / t, luva: conta[2] / t, pele: conta[3] / t, arma: conta[4] / t, mangaCentro: mangaCentro / (t / 2), extensao: extensao / t,
     ...(querDono ? { dono, w, h } : {}) };
 }
 

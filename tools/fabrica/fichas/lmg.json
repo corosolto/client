@@ -9,5 +9,6 @@
   "recuo": {
     "familia": "lmg",
     "fonte": "recoil.json ← Animations/MGX5 (RecoilAnimData); clipe de tiro do pack onde existe"
-  }
+  },
+  "idleArma": "shoot"
 }

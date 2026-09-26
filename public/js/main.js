@@ -2166,11 +2166,8 @@ for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
   if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
-  // Facção sem elenco é INDISPONÍVEL, e indisponível é ESTADO, não surpresa no
-  // clique: aria-disabled fecha o card pro leitor de tela e pro arnês. A conta
-  // antiga pedia `card.dataset.ready === '1'` — atributo que NINGUÉM escreve
-  // nestes cards (só o canvas do loading3d usa esse nome), então todo card
-  // nascia desligado e a tela de facção virava beco sem saída.
+  // sem elenco = INDISPONÍVEL como estado (aria-disabled); o antigo `dataset.ready` ninguém escrevia
+  // nestes cards, e toda facção nascia desligada.
   card.setAttribute('aria-disabled', String(!n));
   card.addEventListener('focus', () => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   card.onclick = () => {

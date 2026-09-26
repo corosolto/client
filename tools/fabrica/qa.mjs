@@ -83,14 +83,21 @@ for (const aspecto of ['3x2', '16x9']) {
 
 {
   // #641: a amostra do carregador tem de sair igual com e sem render entre passo e medida.
-  const r = rodar('carregador-repete', process.execPath, ['tools/eval/vm-carregador-repete.mjs', `--armas=${ids.join(',')}`, `--porta=${PORTA}`],
-    { VM_PALCO_QS: `vmfabrica=${ids.join(',')}` });
-  for (const id of ids) resultado[id]['carregador-repete'] = { ok: r.status === 0, log: r.log };
+  // Sem peça de carregador (fita da LMG, tambor do revólver) a régua do carregador é N/A: não repete.
+  const semPeca = new Set(['lmg', 'revolver38', 'knife']);
+  const comPeca = ids.filter((id) => !semPeca.has(id));
+  if (comPeca.length) {
+    const r = rodar('carregador-repete', process.execPath, ['tools/eval/vm-carregador-repete.mjs', `--armas=${comPeca.join(',')}`, `--porta=${PORTA}`],
+      { VM_PALCO_QS: `vmfabrica=${comPeca.join(',')}` });
+    for (const id of comPeca) resultado[id]['carregador-repete'] = { ok: r.status === 0, log: r.log };
+  }
 }
 
 if (!flag('sem-capturas')) {
   for (const [aspecto, arg] of [['3x2', '32'], ['16x9', '169']]) {
     const dir = path.join(LOTE, 'capturas', aspecto);
+    // Figuras de rodada anterior (outras frações) não entram no pacote do crítico.
+    if (fs.existsSync(dir)) for (const f of fs.readdirSync(dir)) if (ids.some((id) => f.startsWith(`${id}-`))) fs.rmSync(path.join(dir, f));
     rodar(`capturas-${aspecto}`, process.execPath, ['tools/fabrica/captura/kcap.mjs', `--porta=${PORTA}`, `--aspecto=${arg}`,
       `--armas=${ids.join(',')}`, `--out=${dir}`, `--query=vmfabrica=${ids.join(',')}`]);
     for (const id of ids) resultado[id][`capturas-${aspecto}`] = fs.existsSync(dir)

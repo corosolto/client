@@ -71,6 +71,59 @@ export function buracosDaArma(m) {
   return buracos;
 }
 
+/* JANELA DE ÓPTICA/REFLEX: a lente é malha opaca (MGX5, PDW90 do pack), então o aro não vira
+   buraco da silhueta e a régua caía na MASSA (topo do corpo, 35–60 px abaixo da cruz com a
+   janela nela). A lente fica RECUADA atrás do aro: cortando a silhueta numa profundidade entre
+   o aro e a lente, a lente vira buraco cercado de arma. Aceita só janela de lente: até 15%
+   do quadro, cheia (≥ 60% da caixa), quase redonda/quadrada, na metade de cima da arma e
+   com o aro ≥ 3 mm mais perto que ela, no topo da silhueta; a mais alta vence. */
+export function janelaDeOptica(m, { y0, altArma }) {
+  const { w, h, px, prof } = m;
+  const arma = (i) => px[i] === 1 || px[i] === 3;
+  // Recorte: metade de cima da silhueta (+ margem), onde mora o aparelho; cortes em TODAS as
+  // profundidades que existem ali (a lente fica 3–7 mm atrás do aro: passo largo pula a fresta).
+  const yMeio = Math.min(h - 1, Math.round(y0 + 0.5 * altArma));
+  let cx0 = w; let cx1 = -1;
+  const niveis = new Set();
+  for (let y = y0; y <= yMeio; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x; if (!arma(i) || !prof[i]) continue;
+    niveis.add(prof[i]); if (x < cx0) cx0 = x; if (x > cx1) cx1 = x;
+  }
+  if (cx1 < 0) return null;
+  cx0 = Math.max(0, cx0 - 2); cx1 = Math.min(w - 1, cx1 + 2);
+  const ry0 = Math.max(0, y0 - 2); const cw = cx1 - cx0 + 1; const ch = yMeio - ry0 + 1;
+  const ord = [...niveis].sort((a, b) => a - b);
+  const achadas = [];
+  const corte = new Uint8Array(cw * ch);
+  for (const nivel of ord) {
+    const T = nivel + 1;
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+      const i = (y + ry0) * w + x + cx0;
+      corte[y * cw + x] = arma(i) && prof[i] && prof[i] < T ? 1 : px[i] === 2 ? 2 : 0;
+    }
+    for (const b0 of buracosDaArma({ w: cw, h: ch, px: corte })) {
+      const b = { ...b0, cx: b0.cx + cx0, cy: b0.cy + ry0, x0: b0.x0 + cx0, x1: b0.x1 + cx0, y0: b0.y0 + ry0, y1: b0.y1 + ry0 };
+      const bw = b.x1 - b.x0 + 1; const bh = b.y1 - b.y0 + 1;
+      if (b.n < 25 || b.bordaArma < 0.9 || bh > 0.15 * h || bw > 0.15 * w) continue;
+      if (b.n / (bw * bh) < 0.6 || bw / bh < 0.5 || bw / bh > 2) continue;
+      // Fundo do buraco = lente (arma) ≥ 3 mm atrás do corte; vazio no fundo é o aro normal.
+      let lente = 0; let soma = 0;
+      for (let y = b.y0; y <= b.y1; y++) for (let x = b.x0; x <= b.x1; x++) {
+        const i = y * w + x; if (corte[(y - ry0) * cw + x - cx0] || !arma(i)) continue; lente++; soma += prof[i];
+      }
+      if (lente < 0.8 * b.n || soma / lente < T + 3) continue;
+      // A janela é o TOPO do aparelho: acima dela só o aro (≤ metade da altura dela + 6 px).
+      let acima = 0;
+      for (let x = b.x0; x <= b.x1; x++) for (let y = 0; y < b.y0; y++) if (arma(y * w + x)) acima++;
+      if (acima / bw > 0.5 * bh + 6) continue;
+      achadas.push({ ...b, fundo: true, T, profLente: soma / lente });
+    }
+  }
+  // A janela é o buraco-lente mais ALTO; entre cortes que acham a mesma, fica o maior.
+  achadas.sort((a, b) => (a.y0 - b.y0) || (b.n - a.n));
+  return achadas[0] || null;
+}
+
 /* PONTO DE MIRA NA IMAGEM (eval:vm-mira). Dois tipos de aparelho de pontaria:
    1. ARO (alça de dioptro, anel de óptica/reflex): buraco da silhueta cercado
       só de arma, pequeno, na metade de cima da arma → o ponto é o centro do aro.
@@ -81,7 +134,7 @@ export function buracosDaArma(m) {
    Nenhum dos dois usa o socket `sight`: o AD1 do eval:vm-ads usava, e o ADS
    automático leva exatamente esse socket ao centro — tautologia (md97/m92/mp5/
    akm com AD1 0,000 e a mira 40–90 px fora, revisão L1). */
-export function pontoDeMira(m, { fracFundo = 0.15 } = {}) {
+export function pontoDeMira(m, { fracFundo = 0.15, fundoAro = true } = {}) {
   const { w, h, px, prof } = m;
   if (!prof) throw new Error('pontoDeMira precisa da máscara com profundidade');
   const ds = [];
@@ -107,8 +160,8 @@ export function pontoDeMira(m, { fracFundo = 0.15 } = {}) {
     && (b.y1 - b.y0) <= 0.08 * h && (b.x1 - b.x0) <= 0.08 * w
     && b.cy <= y0 + 0.5 * altArma);
   aros.sort((a, b) => a.cy - b.cy);
-  const aro = aros[0] || null;
-  const ponto = aro ? { x: aro.cx, y: aro.cy, tipo: 'aro' } : massa ? { ...massa, tipo: 'massa' } : null;
+  const aro = aros[0] || (fundoAro ? janelaDeOptica(m, { y0, altArma }) : null);
+  const ponto = aro ? { x: aro.cx, y: aro.cy, tipo: aro.fundo ? 'janela' : 'aro' } : massa ? { ...massa, tipo: 'massa' } : null;
   if (!ponto) return { mensuravel: false, motivo: 'nem aro nem massa visível' };
   const dx = ponto.x - w / 2; const dy = ponto.y - h / 2;
   return { mensuravel: true, ponto, dx, dy, desvio: Math.hypot(dx, dy), aro, massa, dPerto, dLonge };

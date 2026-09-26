@@ -296,6 +296,11 @@ export const entryKeyFor = (weapon) => {
   if (GOLDEN_VM && VM_WEAPON[weapon]?.golden === true) return `gold#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
+// Fonte que o runtime serve para a arma (revisão/QA/réguas): chave e URL. VL7 do eval:vm-launch.
+export function vmFonteDe(weapon) {
+  const chave = entryKeyFor(weapon);
+  return { chave, url: chave ? urlForKey(chave) : '' };
+}
 const urlForKey = (key) => {
   if (key.startsWith('fab#')) {
     const weapon = key.slice(4);
@@ -567,6 +572,21 @@ export class AuthoredViewModels {
           : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family && !weaponBaked(id));
         if (owner) attachMintWeapon(entry, owner);
       }
+      // AK golden (decisão do dono, 25/09): ADS alinhado pela alça e massa MEDIDAS na malha dela
+      // (tools/fabrica/captura/sonda-golden.mjs), presas ao osso da arma. Ficam FORA de
+      // entry.sockets/mint: boca, flash e tudo o que o quadril usa seguem como aprovados.
+      const mira = golden && VM_WEAPON[bakedWeapon]?.ads?.golden;
+      if (mira) {
+        const osso = visual.scene.getObjectByName(mira.osso);
+        if (osso) {
+          const ponto = (nome, p) => { const o = new THREE.Object3D(); o.name = nome; o.position.fromArray(p); osso.add(o); return o; };
+          entry.adsSockets = {
+            sight: ponto('SOCKET_GOLD_SIGHT', mira.alca),
+            muzzle: ponto('SOCKET_GOLD_MASSA', mira.massa),
+            up: ponto('SOCKET_GOLD_UP', mira.alca.map((c, k) => c + mira.cima[k] * 0.1)),
+          };
+        }
+      }
       if (acceptsAuthoredLoad({ request, activeRequest: this._activeRequest, key,
         activeKey: entryKeyFor(this.weapon), utility: Boolean(this.utility) })) {
         // Chegada tardia entra SUBINDO pelo arco de draw, nunca trocando no meio do idle.
@@ -626,9 +646,12 @@ export class AuthoredViewModels {
 
   _applyRecoilFamily() {
     const family = familyFor(this.weapon);
-    if (!family || !this._recoilParams || family === this._recoilFamily) return;
-    this._recoilFamily = family;
-    this.recoil.setFamily(this._recoilParams, family, cfgArma(this.weapon)?.recoilScale ?? 1);
+    // A escala entra na chave: ak (golden) e akm (fábrica) dividem a família e não o coice.
+    const scale = cfgArma(this.weapon)?.recoilScale ?? 1;
+    const locScale = cfgArma(this.weapon)?.recoilLoc ?? scale;
+    if (!family || !this._recoilParams || `${family}@${scale}@${locScale}` === this._recoilFamily) return;
+    this._recoilFamily = `${family}@${scale}@${locScale}`;
+    this.recoil.setFamily(this._recoilParams, family, scale, locScale);
   }
 
   setAim(id = this.weapon, amount = 0) {
@@ -708,14 +731,16 @@ export class AuthoredViewModels {
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
     const adsConfig = cfgArma(this.weapon)?.ads;
-    const wrap = active.mint?.active;
+    const wrap = active.mint?.active || active.adsSockets?.sight;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {
         active.mount.updateWorldMatrix(true, true);
+        // Golden: pontos de mira próprios (adsSockets); as outras armas leem sockets/mint.
+        const alvo = active.adsSockets ? { sockets: active.adsSockets } : active;
         // Eixo do cano MEDIDO (boca − alça, ambos da malha Mint) — sem assumir
         // convenção de eixo do wrap; é o mesmo par de pontos que o slide usa.
-        const muzzlePoint = mintPointScene(active, 'muzzle');
-        const sightPoint = mintPointScene(active, 'sight');
+        const muzzlePoint = mintPointScene(alvo, 'muzzle');
+        const sightPoint = mintPointScene(alvo, 'sight');
         if (muzzlePoint && sightPoint) {
           _adsForward.copy(muzzlePoint).sub(sightPoint).normalize();
           _adsAlign.setFromUnitVectors(_adsForward, _ADS_AXIS);
@@ -724,15 +749,15 @@ export class AuthoredViewModels {
           active.mount.rotation.setFromQuaternion(_adsQuat);
           active.mount.updateWorldMatrix(true, true);
           // Rolagem: o ADS do pack alinha a rotação inteira do AimPoint, não só o cano.
-          const up = active.sockets?.up && mintPointScene(active, 'up');
-          const alca = up && mintPointScene(active, 'sight');
+          const up = alvo.sockets?.up && mintPointScene(alvo, 'up');
+          const alca = up && mintPointScene(alvo, 'sight');
           if (up && alca) {
             const rolagem = Math.atan2(up.x - alca.x, up.y - alca.y);
             _adsQuat.setFromEuler(active.mount.rotation).premultiply(_adsRoll.setFromAxisAngle(_ADS_ROLL, rolagem * ads));
             active.mount.rotation.setFromQuaternion(_adsQuat);
             active.mount.updateWorldMatrix(true, true);
           }
-          const sight = mintPointScene(active, 'sight');
+          const sight = mintPointScene(alvo, 'sight');
           if (sight) {
             active.mount.position.x += -sight.x * ads;
             active.mount.position.y += -sight.y * ads;

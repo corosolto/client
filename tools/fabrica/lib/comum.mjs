@@ -26,8 +26,8 @@ export function foraDoRepo(alvo) {
 
 export const sha256 = (arquivo) => crypto.createHash('sha256').update(fs.readFileSync(arquivo)).digest('hex');
 
-export function rodarBlender(script, args, { marcador } = {}) {
-  const r = spawnSync(BLENDER, ['-b', '--python-exit-code', '1', '--python', script, '--', ...args], {
+export function rodarBlender(script, args, { marcador, blend } = {}) {
+  const r = spawnSync(BLENDER, ['-b', ...(blend ? [blend] : []), '--python-exit-code', '1', '--python', script, '--', ...args], {
     encoding: 'utf8', maxBuffer: 256 * 1024 * 1024,
   });
   if (r.status !== 0 || (marcador && !r.stdout.includes(marcador))) {
@@ -63,7 +63,7 @@ ${Object.entries(manifesto.candidates).map(([id, c]) => `  ${id}: '${c.sha256.sl
 // Posição do pacote por chassi contra a AK golden (tools/fabrica/enquadramento/<id>.json);
 // rotação e FOV ficam os de VM_FABRICA_FRAME, iguais para todas as armas.
 export const VM_FABRICA_POS = Object.freeze({
-${frames.map((e) => `  ${e.id}: { x: ${e.frame.x}, y: ${e.frame.y}, z: ${e.frame.z} },`).join('\n')}
+${frames.map((e) => `  ${e.id}: { x: ${e.frame.x}, y: ${e.frame.y}, z: ${e.frame.z}${e.frame.rotDeg ? `, rotDeg: [${e.frame.rotDeg.join(', ')}]` : ''}${e.frame.fov ? `, fov: ${e.frame.fov}` : ''} },`).join('\n')}
 });
 `;
   fs.writeFileSync(path.join(RAIZ_REPO, 'public/js/data/vmfabrica.js'), corpo);

@@ -9,39 +9,45 @@
     ]
   },
   "frameBase": {
-    "x": 0.385,
-    "y": 0.03,
+    "x": 0.375,
+    "y": 0,
     "z": -0.203,
     "fov": 57,
     "rotDeg": [
       1.69,
-      7.69,
+      -8,
       6.19
     ]
   },
   "antes": {
-    "tamanhoVsAk": 0.862,
-    "bracoVsAk": 0.924,
-    "eixo": 29.7,
+    "tamanhoVsAk": 0.647,
+    "bracoVsAk": 0.789,
+    "eixo": 54.2,
     "cruz": 0,
     "centro": [
-      0.886,
-      0.645
+      0.933,
+      0.676
     ]
   },
   "frame": {
     "x": 0.375,
     "y": 0,
-    "z": -0.203
+    "z": -0.203,
+    "rotDeg": [
+      1.69,
+      0,
+      6.19
+    ]
   },
   "depois": {
-    "tamanhoVsAk": 0.888,
-    "bracoVsAk": 0.769,
-    "eixo": 29.6,
+    "tamanhoVsAk": 0.917,
+    "bracoVsAk": 1.167,
+    "eixo": 28,
     "cruz": 0,
     "centro": [
-      0.882,
-      0.684
+      0.884,
+      0.661
     ]
-  }
+  },
+  "nota": "posição do solver + guinada 0 ajustada pela régua cobertura (a pose do MGX5 fica 14° mais achatada que a AK com a guinada única; com 0: eixo +6°, 0,80× AK)"
 }

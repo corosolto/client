@@ -66,8 +66,11 @@ enxerga por `public/private-assets/viewmodels`.
    ferrolho, bomba e gatilho mantêm o osso do pack). O exportador glTF espalhava a arma quando
    ela era uma armadura pendurada num vazio preso a osso: ossos a ~80 cm e vértice sem peso
    colapsado na raiz. O `ak-runtime.glb` antigo do catálogo tem o mesmo defeito.
-4. Skins: braço (seção 4) e arma (receita por material; sem receita, a cor do `.mat` do Unity,
-   **convertida de gama para linear** — lida crua, a AK saía cinza-clara).
+4. Skins: braço (seção 4) e arma (receita por material; sem receita, o `.mat` do Unity — cor
+   **convertida de gama para linear** e textura pelo GUID). O `.mat` de cada material do FBX sai
+   do mapa do próprio Unity: `externalObjects` do `.meta` do FBX (nome → `.mat`), depois
+   `m_Materials` do prefab (slot → `.mat`), e só por último o nome igual. Sem isso KXG12, L96X,
+   PDW90, MGX5 e DGL50 saíam cinza (o nome no FBX — `MG6`, `KSG_Body` — não é o do `.mat`).
 5. Zona livre (variante): apaga vértices rígidos em caixas da ficha — **nunca** vértice de osso
    móvel nem dentro das caixas da zona de contato do chassi (+1 cm); importa as peças, recorta,
    posiciona na âncora e pesa 100% no osso `Arma`.
@@ -108,7 +111,8 @@ Três armadilhas do pack, cada uma virou código com comentário:
 
 ### 2.3 Runtime (`public/js/authoredvm.js`, `data/vmconfig.js`, `data/vmfabrica.js`)
 
-- **Só na revisão:** `/?vmauthored=1&vmfabrica=ak,m4` (ou `=1` para todos de `VM_FABRICA`).
+- **Só na revisão:** `/?vmauthored=1&vmfabrica=m4,g3` (ou `=1` para todos de `VM_FABRICA`). A
+  `ak` não está em `VM_FABRICA`: o dono manteve a golden aprovada (24/09).
   Sem `ready`, `VM_LAUNCH` continua `false`; fora do parâmetro nada muda.
 - Chave `fab#<arma>` → `/private-assets/viewmodels/fabrica/<arma>-fabrica.glb?v=<VM_FABRICA_BYTES>`.
 - **Frame:** rotação e FOV **únicos** para todas as armas (`VM_FABRICA_FRAME`, o frame da AK K,
@@ -116,6 +120,10 @@ Três armadilhas do pack, cada uma virou código com comentário:
   **posição** do pacote é resolvida por chassi (`VM_FABRICA_POS`, gerado por
   `tools/fabrica/enquadrar.mjs`), para a arma ocupar o que a AK aprovada ocupa. Variante herda
   a posição do produto puro do chassi (`enquadramentoDe`). Curta usa o frame da PT-38 aprovada.
+  Lote 2: o `enquadrar.mjs` também conta os vértices da **ponta da manga** no quadro, em todos os
+  clipes (9 frações cada), e penaliza; quando só uma lente mais fechada tira a manga sem encolher
+  a arma, o chassi ganha `fov` próprio (awp 44°, mosin 50°). A LMG tem guinada 0 (a pose do
+  MGX5 fica achatada com os 7,69° únicos).
 - **ADS pelo pack:** o eixo `SIGHT→MUZZLE` (linha de visada do AimPoint) vai ao eixo óptico, a
   **rolagem** é zerada por `SOCKET_FAB_UP` (o pack alinha a rotação inteira do AimPoint — sem
   isso AK/M4/KXG12 tombavam 16–24° no ADS) e a alça fica a `alivio` metros do olho
@@ -123,10 +131,19 @@ Três armadilhas do pack, cada uma virou código com comentário:
 - **Manga:** a extensão do `vmsleeve.js` fica **desligada** por produto (`manga:false`): o
   `SK_Arms_Mono` já traz a manga até o ombro. Provado por `eval:vm-manga-oca --fabrica` e
   `eval:vm-manga-tela --fabrica` (seção 6).
+  No lote 2 a extensão foi ligada para esconder a boca da manga e o crítico cego viu um **tubo
+  rosa translúcido** do antebraço cruzando a câmera da escopeta; o `vm-manga-tela` não pegou
+  (lacuna da régua: ela mede a boca, não a extensão atravessando o olho). Voltou `manga:false`
+  em todos, e a boca sai do quadro pelo enquadramento.
 - **Mãos por time:** os materiais de braço se chamam `CoroSolto_FP_{Cloth,Glove,Hand}`; o
   sistema de mãos por time (`vmhands.js`, atlas pintados nas UVs do `SK_Arms_Mono`) tinge por
   cima, na mesma escala, como na AK K e na PT-38.
 - Recuo: `recoil.json` da família do chassi (ak←AK, ar←MX16A4, pistol←X18, shotgun←KXG12).
+  Na escala do pack o coice de quadril saía ilegível (0,9–2,9% da diagonal da arma; a golden AK
+  dá 3,6% só no mount). `recoilScale` por produto leva todas a 4–7%, medido por
+  `tools/fabrica/captura/coice.mjs` (centro da arma como ponto fixo do mount, pela vmCamera,
+  5 tiros); a deagle **desce** para 0,45 (47% → 18%, o mesmo 0,45 da deagle golden). O cache do
+  recuo era por família e deixava ak↔akm com a escala da arma anterior: a chave é família@escala.
 
 ## 3. A ficha
 
@@ -149,6 +166,11 @@ Três armadilhas do pack, cada uma virou código com comentário:
   } ],
   "mira": { "raizCm": [0, 8.0, 10.4] },   // opcional: linha de visada da variante (substitui o AimPoint)
   "enquadramentoDe": "m4",                // opcional: variante herda a posição do produto puro
+  "idleArma": "reload_start",             // opcional: pose de idle da ARMA do pack ("pack" = A_W_*_Pose/Idle;
+                                          //   "<clipe>" = quadro 0 dele — Kar98K guarda a munição assim)
+  "ocultar": [ { "osso": "Gauge", "clipe": "reload_loop", "de": 0.73, "ate": 0.88 } ],
+                                          // opcional: peça do pack escondida (escala ~0) numa janela do clipe
+  "alinharTempo": ["reload_loop"],        // opcional: arma no comprimento do braço (clipe em laço)
   "recuo": { "familia": "ar" }
 }
 ```
@@ -212,27 +234,115 @@ da fábrica (o `qa.mjs` conta DÍVIDA como vermelho).
 
 Resultado do lote 1: seção 8.
 
-## 7. Plano B — modo animador
+## 7. Plano B — modo animador (FAMAS e TAVOR bullpup, 24/09)
 
-Para variante sem clipe adequado no pack (a FAMAS bullpup de verdade, por exemplo), a zona de
-contato precisa ser **re-autorada**, não trocada. As receitas genéricas dos PRs #639/#640 foram
-trazidas para `tools/viewmodels/prep/` (`recarga-k.mjs` — recarga por quadros-chave com IK nas
-duas mãos; `braco-estavel.mjs`, `saque-do-idle.mjs`, `pente-na-mao.mjs`, `municao-na-mao.mjs`,
-`compacta-peca.mjs`, `vm-palco-offline.mjs`). O fluxo do modo animador:
+Para arma cuja zona de contato o pack não tem (bullpup: pente **atrás** do punho), a zona de
+contato é **re-autorada**, não trocada. Produtos: `famas` e `tavor` (`fichas/famas.json`,
+`fichas/tavor.json`, chaves em `tools/fabrica/animador/<arma>.json`). Do chassi MX16A4 ficam o
+braço `SK_Arms_Mono`, a pose da mão forte no punho, a câmera, o saque geral e o coice
+procedural; o resto é novo:
 
-1. partir do `base.blend` da fábrica (braço + arma fundidos, osso `Arma` no `ik_hand_gun`);
-2. posar quadros-chave de `idle`, `shoot`, `reload_*`, `equip_rifle` por `bpy` (a mão esquerda
-   é animada **relativa à arma**; a arma segue a mão direita pelo `ik_hand_gun`);
-3. renderizar **pela câmera de autoria** (`tools/fabrica/blender/render.py`) — fora do quadro
-   pode trapacear;
-4. medir em laço: `tools/fabrica/reguas.mjs` (FB4) e as réguas de imagem.
+```
+ficha (malhaPropria + animador) ──► montar.py (malha do jogo no osso Arma, peças móveis por ilha)
+   ──► animador.py (idle re-posado + reload_* por chave, IK analítico, 2º pente, régua do laço)
+   ──► clipes.mjs (saque do pack + correção idle_pack⁻¹·idle na mão de apoio) ──► otimização
+```
 
-**Truque do segundo pente** (recarga): duplicar o pente (`Mag2`) estacionado fora da tela, do
-lado da mão esquerda; a mão pega o `Mag2` fora da tela, o pente velho sai e cai, e fora de vista
-os dois voltam aos lugares — sem troca de pai no meio da animação (a causa dos pentes voando).
-Nenhum produto do lote 1 usa: todos são o pack como autorado. Quando uma variante usar, a régua
-`carregador` precisa aceitar "pente reserva fora da tela" (e continuar reprovando pente
-flutuando ou sumindo **visível**) — com mutante.
+- **Malha própria** (`ficha.malhaPropria`, `montar.py malha_propria`): a malha da arma do pack sai
+  inteira; entra o modelo de mundo do jogo (`public/models/weapons/<arma>.glb`, 0 crédito Mint),
+  soldado, posto na raiz do FBX (`posCm`/`rotDeg`/`escala`: a palma forte do MX16A4 cai no meio
+  do punho da arma nova) e pesado 100% no osso `Arma`. Peças móveis = ilhas cuja caixa cabe na
+  caixa pedida (contagem de vértices conferida): pente → `Mag`, alavanca da FAMAS →
+  `ChargingHandle`, retém da TAVOR (paleta atrás do pente) → `BoltRelease`; o pivô do osso vai ao
+  alto da peça. `material` troca o metálico 1 do modelo de mundo (cromado no viewmodel) por
+  polímero, mantendo a textura base. `mira` e `boca` são da arma nova (linha de visada da alça).
+- **Animador** (`blender/animador.py`): FK próprio sobre o repouso do rig (sem depsgraph; mesmo
+  insumo → mesmos quadros), IK analítico de dois ossos nas duas mãos com o giro do antebraço
+  dividido ao meio. Por quadro: (1) apresentação da arma — giro em eixos de câmera em torno da
+  palma forte + translação (`arma`); (2) mão forte presa ao punho pela relação do idle; (3) mão de
+  apoio por chaves (`mao`: `idle`, `armaCm` na raiz da arma, `camCm` na **câmera do jogo**,
+  `poco` = segurando o pente a `[dx,dy,dz]` cm do encaixe, `fecho` dos dedos); (4) mecanismos
+  (`mecanismos`: deslocamento em cm na raiz); (5) pentes (`pentes`: `arma` com `deslocCm`, `mao`, `largado` (fica onde a mão soltou),
+  `cai` com velocidade/giro e gravidade, `escondido`). Todas as chaves de todos os ossos são
+  gravadas (trilha NLA sem osso solto).
+- **Idle re-posado:** o idle do pack com a mão de apoio levada ao guarda-mão da arma nova
+  (`idle.maoApoio.palmaCm`); a trilha original vira `idle_pack` e o `clipes.mjs` aplica a mesma
+  correção local (`idle_pack⁻¹·idle`) ao saque geral, que termina no idle novo; `idle_pack` sai do
+  produto.
+- **Câmera do jogo:** o build passa ao animador o frame da arma (`VM_FABRICA_FRAME` +
+  `VM_FABRICA_POS` + `VM_FABRICA[arma].frame`); a câmera do jogo é a de autoria ∘ inverso do
+  mount do `authoredvm.js`. É nela que `camCm` e o "fora da tela" (3:2 e 16:9) são medidos —
+  a câmera de autoria do pack fica ~26 cm atrás, sobre o pente do bullpup, e engana.
+  `render.py --frame=<json>` desenha pela mesma câmera (`trabalho/<id>/frame-jogo.json`).
+- **Truque do segundo pente:** `Mag2` é cópia do pente num osso irmão, **coincidente** com o pente
+  no repouso (invisível: mesma malha no mesmo lugar em todo clipe do pack). Na recarga: o reserva
+  some coincidente, reaparece na mão **fora da tela**, sobe à vista, bate/empurra o pente velho
+  (que cai com gravidade até sair do quadro), encaixa; fora de vista o velho volta ao encaixe
+  escondido (escala 0 só enquanto viaja) e cresce dentro do reserva. Nenhuma troca de pai.
+- **Régua do laço** (`animador.json`, o build **falha** nela): por quadro, palma de apoio e
+  palma forte à arma, erro do IK e, por pente, visível / na tela (câmera do jogo, 3:2 e 16:9) /
+  distância à palma; reprova pente que **some na tela** fora da coincidência e pente que **surge
+  na tela** fora da coincidência.
+- **Régua de imagem `carregador` com reserva** (`vm-reguas.mjs`, `CARREGADOR_PECA` com
+  `reserva: 'Mag2'` para famas/tavor no modo fábrica): mede os dois pentes por amostra. Vale:
+  no encaixe (mesmo fora do quadro — no quadril do bullpup o poço fica sob a câmera), na mão,
+  caindo, fora do quadro. Reprova: objeto no meio do ar, mão de apoio na tela sem pente na mão e
+  sem pente no encaixe, pente que some/surge na tela fora da coincidência, recarga sem pente na
+  mão. Mutantes `reserva-solta` e `reserva-some` (famas) têm de reprovar.
+
+Iterar: `tools/fabrica/captura/quadros.mjs` (jogo real: idle, ADS, tiro, recargas em frações,
+saque, folha de contato) e `render.py --frame` (Blender, sem navegador).
+
+### 7.1 Lote bullpup (24/09) — resultado
+
+Produtos (overlay privada `…/generated/viewmodels-fabrica-bullpup/overlay/viewmodels/fabrica/`;
+hardlink da overlay da fábrica + os dois produtos), reprodutíveis (rebuild byte a byte igual):
+famas `29f877cdb2` 2,16 MiB · tavor `403658a972` 2,16 MiB (sobre `vm/fabrica` com o lote 2). Recarga 2,4 s (FAMAS) e 2,3 s (TAVOR),
+o tempo de `weapons.js`: o runtime toca o clipe em ≈1×.
+
+Réguas (`node tools/fabrica/qa.mjs famas,tavor --lote=fabrica-bullpup`), 3:2 / 16:9:
+
+| arma | produto FB1–4 | manga-oca | manga-tela | mira | cobertura | mãos | carregador (reserva) | repete |
+|---|---|---|---|---|---|---|---|---|
+| famas | ✓ | ✓ | ✓ 5% | ✓✓ 21 px | ✓✓ 0,94/0,96× AK, braço 1,01× | ✓✓ 0,09 | ✓✓ | ✓ |
+| tavor | ✓ | ✓ | ✓ 9% | ✓✓ 17 px | ✓✓ 0,93/0,96× AK, braço 1,29× | ✓✓ 0,08 | ✓✓ | ✓ |
+
+Mutantes: `cache-velho`, `sem-socket`, `invertida`, `mao-solta` (produto) e `reserva-solta`,
+`reserva-some`, `pente-pisca` (carregador com reserva) — os sete mordem. Regressão: `eval:vm-cache`,
+`eval:vm-launch`, `eval:vm-orientacao`, `eval:vm-manga-oca`, `eval:vm-placar` verdes; placar do
+#636 re-medido nas 26 armas (16:9: p90 carregador vermelho→verde, produto antigo sem reserva; 3:2: awp
+cobertura oscila 0,93↔0,95×, verde);
+`eval:vm-rig` vermelho igual na base ("ak: produto ausente", §8). Sob carga (load ~35) a régua
+`mira` 16:9 mediu duas vezes o quadril como ADS (230 px, +67°, socket 0,96 NDC) — a mesma
+assinatura intermitente da M4 no lote 1; re-medida com a máquina mais leve: verde.
+
+Crítico cego (três rodadas, contexto limpo, só pixel):
+
+| rodada | famas | tavor | o que mudou depois |
+|---|---|---|---|
+| r1 | RESSALVA — aro da FAMAS 80 px abaixo da cruz no ADS; pente nunca visto fora da arma | RESSALVA — pente nunca visto fora; pente "tábua" (malha Mint) | mira 9,6→9,3; reserva mostrado ao lado do poço |
+| r2 | RESSALVA — dois pentes juntos (reserva chega antes de o velho sair); guinada ~60° com a coronha enorme | RESSALVA — idem | vazia: velho cai primeiro; tática: a mão tira o velho e volta com o reserva; menos guinada |
+| r3 | **RESSALVA** — recarga com a arma de lado, boca a ~55 px da cruz e coronha no terço direito; o reserva entra pela frente do punho antes de encaixar; saque-15 sem mão | **RESSALVA** — na recarga a TAVOR fica grande (~125–130% da AK) e em vazia-075 (retém) corpo e mão passam perto da cruz; no ADS não aparece mão | — (limite de três voltas) |
+
+O crítico registra como certo nas duas: idle a ~1° do eixo da AK, mão de apoio no guarda-mão,
+**pente atrás do punho** (bullpup de verdade), pente velho sai inteiro e cai visível na vazia,
+na tática a mão tira o velho e traz o novo, sem pente duplo nem peça solta; ADS da TAVOR com o
+aro na cruz. Não decidiu o ADS da FAMAS (topo da massa a ~15 px; um anel abaixo a ~45 px que
+pode ser o protetor da massa). Fora do viewmodel: o HUD enche o pente já aos ~25% da recarga.
+
+Revisão antes do push (contexto limpo) achou e ficou consertado: o Mag2 contava como "corpo da
+arma" na régua (repouso nunca reprovava por deslocamento), o caminho com reserva não tinha
+fantasma nem gravava o estado (o `vm-carregador-repete` comparava vazio), "surge na tela" só
+valia com a mão de apoio na tela, e a câmera do jogo usava a ordem de Euler do Blender (0,88°).
+Aberto: as checagens de tela do animador usam o centro da peça; `FABRICA_PRIVADO` é o único
+isolamento entre worktrees (sem ele o build escreve na overlay do lote 1).
+
+**O plano B serve para outras variantes?** Sim, como ferramenta: montar (malha própria por
+ilhas) → animador (IK, câmera do jogo, segundo pente, régua do laço) → réguas verdes saiu em
+três voltas por arma, e o crítico nunca reprovou. O que ele não entrega sozinho é a
+coreografia: as chaves são autoradas à mão e o gosto (quanto girar a arma, onde a mão entra)
+leva voltas de crítico; a malha de mundo low-poly limita o acabamento (o pente da TAVOR). Para
+carabina de alavanca e UZI (pente no punho) o mesmo fluxo vale; conta ~1 dia por arma.
 
 ## 8. Lote 1
 
@@ -293,6 +403,135 @@ uma arma no chão do mapa (a máscara de viewmodel do carregador da M4 está ver
 se padronizar, a recarga vazia do AK-200 deixa o pente velho à vista, e o jeito limpo é o plano B
 (truque do segundo pente) só para essa recarga.
 
+## 8.2 Lote 2 (24–25/09)
+
+Decisões do dono antes do lote: a `ak` fica a golden aprovada (fora de `VM_FABRICA`); o chassi AK
+do pack vira a `akm`; FAMAS e Tavor vão para o plano B em `vm/fabrica-bullpup` (outro agente).
+Produtos novos: akm, g3, svd, awp, mosin, mp5, p90, lmg, deagle, revolver38. A granada já é o
+pack como autorado (produto K, `ready`) e não foi refeita.
+
+**Resultado (25/09).** Réguas de imagem mira · cobertura · pistola-ref · mãos · carregador
+(✓ verde, ✗ vermelho, · n/a); célula = 3:2 / 16:9. Crítico cego = última rodada da arma.
+
+| arma | chassi | 3:2 | 16:9 | crítico | o que pesa |
+|---|---|---|---|---|---|
+| m4 (lote 1) | MX16A4 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | quadro do lote 1 mantido |
+| shotgun | KXG12 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | era RESSALVA no lote 1 (cartucho oculto na volta + cartucho amarelo) |
+| pistol (lote 1) | X18 | ✓✓✓·✓ | ✓✓✓·✗ | APROVADA | 16:9 carregador = dívida R1 da PT-38 |
+| akm | AK | ✓✓·✓✗ | ✓✓·✓✗ | RESSALVA | o AK-200 solta o pente velho à vista (plano B); mão direita deformada em f075 |
+| g3 | G3 | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | coice com metade da amplitude da AK; mão de apoio por cima do guarda-mão |
+| svd | SVD | ·✓·✓✓ | ·✓·✓✓ | RESSALVA | pente velho solto ao lado da culatra em f020 |
+| mp5 | MPS5 | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | coice empurra de lado, cano pouco sobe |
+| p90 | PDW90 | ✗✓·✓✓ | ✗✓·✓✓ | RESSALVA | pente some sob a mão (pack); mira lida pela massa, reflex na cruz |
+| lmg | MGX5 | ✗✓·✓· | ✗✓·✓· | RESSALVA | cinto velho não sai (pack); mira lida pela massa, óptica na cruz |
+| deagle | DGL50 | ✓✓✓·✓ | ✓✓✓·✓ | RESSALVA | 135–140% da PT-38 (a Desert Eagle é maior; decisão do dono) |
+| awp | L96X | ·✓·✓✓ | ·✓·✓✓ | REPROVADA | recarga do pack: arma aponta pro alto, mão grande sobre o ferrolho, sem luneta no modelo |
+| mosin | Kar98K | ·✓·✓✓ | ·✓·✓✓ | REPROVADA | recarga do pack: fuzil gira de lado atravessando a mira; cartucho não lido |
+| revolver38 | Viper-357 | ✓✓✓·· | ✓✓✓·· | REPROVADA | f010: mão direita sobe aberta até a cruz (pack); mãos grandes no ADS |
+
+Os três REPROVADOS são recargas **do pack como autorado** (a fábrica pura não muda a zona de
+contato): ficam para variante/plano B com o dono. Vereditos por rodada em
+`artifacts/fabrica-lote2/critico-r{2,3,4}/` e `critico/<id>/veredito.txt`.
+
+**Regressão do arsenal:** placar das 26 armas re-medido depois do lote 2 nas duas proporções:
+0 falha; células vermelhas com dono 57 → 56. `eval:vm-cache`, `vm-launch`, `vm-orientacao`,
+`vm-manga-oca`, `vmrecoil`, `vm-catalog` verdes; `eval:vm-rig` vermelho igual na base ("ak: produto
+ausente").
+
+**O que o lote 2 ensinou**
+
+- **Manga × pente.** Sem a extensão do `vmsleeve`, a boca da manga do `SK_Arms_Mono` entra no
+  quadro quando o pacote vai para longe; com o pacote perto, a troca do pente de L96X, SVD e G3
+  acontece abaixo da borda (régua `carregador`: "tira no ar"). Não existe quadro que resolva os
+  dois nesses três chassis (varredura de `enquadrar.mjs --medir`). Ficaram no quadro longe com
+  `manga:true`, onde a extensão não fura a câmera. Shotgun e p90, onde a extensão virou um tubo
+  rosa na frente da câmera, ficaram perto e sem manga.
+- **Lacuna da `vm-manga-tela`.** Ela mede a boca da manga na tela; o tubo da extensão
+  atravessando o olho (shotgun, p90) passou verde. Só o crítico viu.
+- **Coice.** Na escala do pack o recuo procedural sai ilegível: o crítico via o `fire` igual ao
+  idle. A golden mede 11% da diagonal (mount 3,6% + clipe de tiro; `captura/coice.mjs --total`).
+  Uma escala só também não serve: o kickback (metros) cresce junto e a arma vem para o rosto,
+  com a boca descendo. `recoilScale` gira o cano (~7° no quadril) e `recoilLoc` (novo,
+  `VmRecoil.setFamily(…, locScale)`, padrão = a mesma escala, K intacto) fica ~1,5. O `kcap`
+  captura o `fire` no pico do giro.
+- **ADS das curtas.** O `aimPointOffset` da X18 (0,2 m) deixava a pistola ~1,9× a PT-38 aprovada
+  no ADS; a 0,38 m ela fica do tamanho dela (`mira` e `pistola-ref` verdes).
+- **Cartucho da escopeta.** O cartucho do pack é vermelho e some contra a manga vermelha; a
+  skin `escopeta` pinta só o `KSG_Ammo` de amarelo latão.
+- **Réguas com óptica.** A `mira` mede a massa da arma; na MGX5 (óptica alta) e na PDW90 (reflex
+  em cima do carregador) a massa fica 35–60 px abaixo da cruz com o aro da óptica **na** cruz
+  (figura em `artifacts/fabrica-lote2/reguas-3x2/lmg-ads.png`). O socket da alça lê 0,000 NDC.
+- **Pente fora da tela, como autorado.** A recarga vazia da PDW90 leva o carregador para baixo da
+  borda entre 31% e 38% em qualquer quadro testado; o crítico lê "pente some". O AK-200 (akm)
+  deixa o pente velho cair à vista (15%). Os dois são o pack como autorado: plano B (truque do
+  segundo pente), fora da fábrica pura.
+
+## 8.3 Rodada final (25–26/09)
+
+Decisões do dono: a deagle fica grande (faixa própria 0,80–1,45 da PT-38 em `PISTOLA_FAIXA_ARMA`,
+no vocabulário do crítico e no `vm-frame-calibra`); m92/g3sg1 herdam o vermelho de carregador do
+chassi; awp, mosin, revolver38, akm e carbine são plano B em `vm/fabrica-variantes` (#653); FAMAS e
+TAVOR entraram por merge de `vm/fabrica-bullpup` (produtos idênticos byte a byte na nossa overlay).
+
+**AK = golden, agora de verdade.** A decisão de 24/09 não estava aplicada: desde o 1aecd3063 a
+'ak' não tinha `golden:true` e o jogo servia o produto K (`ak#ak`; achado no #661). Voltou a
+`gold#ak` (coro/ak-hires.glb, 3b6ca23d…); o selo de depuração diz a fonte ('vm: AUTORADO ak (ak) ·
+gold'), `eval:vm-launch` VL7 reprova qualquer outra rota (mutante `ak-servida-pelo-k`),
+`eval:authored-vm` exige a AK como única golden (mutante `ak-k`) e `eval:vm-rig` passa a tratar a
+golden como fonte (sem "produto ausente").
+
+**ADS da AK golden (dono, 25/09).** Alça (topo da folha da alça de entalhe, 0,167/0,0588) e massa
+(topo do poste, 0,507/0,0546) medidas na malha no espaço do osso `Rifle_metarig`
+(`captura/sonda-golden.mjs`; o espaço do osso é ~2,4× o metro da câmera), presas ao osso como
+`adsSockets` — fora de `sockets`/`mint`, então boca, flash e quadril não mudam. O ADS usa o
+mesmo caminho da M4/pistola, com alívio 0,35 m. `mira/ak` 213 → 8 px em 3:2 e 16:9 (dívida
+removida); mutante `golden-mira-acima` morde (`npm run eval:vm-mira-golden`). Quadril idêntico:
+máscara antes × depois igual à de duas medições do depois, e os pixels do viewmodel diferem menos
+que entre duas medições do depois (`artifacts/fabrica-final/ak-golden-ads/prova-quadril/`).
+Crítico A/B cego: r1 REPROVADA (a cruz caía dentro da folha), r2 RESSALVA — mira certa, alvo
+visível, reta e do tamanho da M4; pesa só a pose das mãos coladas ao olho, que é a pose aprovada da
+golden (não mexida, por decisão do dono).
+
+**Réguas novas (com mutante)**
+
+- `mira` — **janela de óptica/reflex** (`janelaDeOptica`, vm-analise): a lente da MGX5 e da PDW90 é
+  malha opaca, então o aro não vira buraco e a régua lia a massa (35–60 px com a lente na cruz).
+  Cortes da silhueta de cima em todas as profundidades: a lente recuada ≥ 3 mm atrás do aro vira
+  buraco. p90/lmg 1 px; catálogo K igual ao placar (famas K 64 → 45 px, segue vermelha). Mutante
+  `janela-fora` morde; `sockets-acima` e `sem-ads` seguem mordendo. `npm run eval:vm-mira-janela`.
+- `manga-tela` — **extensão do vmsleeve na tela**: o tubo que o crítico viu era a extensão aparecendo
+  (manga 9% da tela, verde). O vmsleeve marca a base dos vértices e o raster conta a extensão; na
+  fábrica o teto é 0,5% da tela. Mutante `p90-tubo` (extensão ligada, z −0,383) morde com 3,5%.
+  `npm run eval:vm-manga-tela-fabrica`. awp da fábrica fica como dívida do #653.
+- Sondas: `captura/rolagem.mjs` (rolagem em torno do cano e eixo do cano na tela, contra a M4
+  aprovada), `captura/coice.mjs --total`, `captura/sonda-mira.mjs`.
+- `kcap`: bots escondidos antes de cada render (o visual é `mesh.group` + halo), recarga em 12
+  frações (0,125 e 0,35 pegam o pente velho caindo). `entrarAds` espera o ADS assentar (sob carga
+  o placar lia o quadril como ADS).
+
+**Resultado** (réguas 3:2 / 16:9: mira · cobertura · pistola-ref · mãos · carregador)
+
+| arma | chassi | 3:2 | 16:9 | crítico final | rodadas |
+|---|---|---|---|---|---|
+| m4 | MX16A4 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | lote 2 r4 |
+| pistol | X18 | ✓✓✓·✓ | ✓✓✓·✗ | APROVADA | lote 2 r4 (16:9 = dívida R1 da PT-38) |
+| shotgun | KXG12 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | lote 2 r4 |
+| mp5 | MPS5 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | r1 |
+| svd | SVD | ·✓·✓✓ | ·✓·✓✓ | APROVADA | r1 |
+| p90 | PDW90 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | r1 |
+| deagle | DGL50 | ✓✓✓·✓ | ✓✓✓·✓ | APROVADA | r2 |
+| g3 | G3 | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | r3: coice vai para a frente no pico; braço de apoio esticado (pose do pack) |
+| famas | MX16A4 + malha | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | r3: tiro afunda no pico; eixo no limite (régua: −0°) |
+| tavor | MX16A4 + malha | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | r3: eixo no limite no olho (régua: +3°) |
+| lmg | MGX5 | ✓✓·✓· | ✓✓·✓· | REPROVADA r3 → corrigida | cinta reta no idle (pose de repouso do FBX); idle agora pelo quadro 0 do tiro do pack, cinta pende — sem 4ª rodada |
+
+Polimento: coice por produto (`recoilScale` gira o cano, `recoilLoc` o kickback: a MP5 empurrava
+de lado com 4,5 cm de kickback); G3 com a rolagem da M4 (6,4°) e ADS a 0,22 m; FAMAS/TAVOR com a
+recarga menos puxada para a cruz, ADS a 0,28 m (mão aparece) e o pente velho escorregando 10 cm
+antes de cair; LMG mais longe (0,90× AK, braço 0,60×). O que sobra é do pack como autorado: a mão
+de apoio da G3 na ponta do guarda-mão, a caixa da MGX5 (a velha não sai à vista) e a batida na
+alavanca da G3 que a g3sg1 herda (não é trivial: é a recarga do pack; fica com o #653).
+
 ## 9. Mapeamento das 26 armas
 
 Decisão do dono: arma sem chassi próprio vira VARIANTE do chassi mais próximo. Contato é o que
@@ -301,32 +540,32 @@ mecanismo a recarga opera (medido em `tools/fabrica/chassis/*.json`).
 
 | Arma | Chassi | Tipo | Observação |
 |---|---|---|---|
-| ak | AK | puro + skin AK-47 | lote 1 |
-| akm | AK | variante (skin; soleira fixa) | mesmo contato |
+| ak | — | **fica a golden aprovada** (rig A) | decisão do dono 24/09 |
+| akm | AK | puro + skin AK-47 | lote 2 (o AK-200 do pack) |
 | m92 | AK | variante (cano/guarda-mão curtos da M92 Mint) | Krinkov: AK encurtada |
 | m4 | MX16A4 | puro | lote 1 |
-| famas | MX16A4 | variante (alça e soleira Mint) | lote 1; **não é bullpup** (seção 10) |
-| tavor | MX16A4 | variante (casca bullpup) | mesmo limite da FAMAS |
+| famas | MX16A4 + malha própria | **plano B** (§7): FAMAS do jogo, pente atrás do punho | lote bullpup; a variante de zona livre do lote 1 foi reprovada |
+| tavor | MX16A4 + malha própria | **plano B** (§7): TAVOR do jogo, retém atrás do pente | lote bullpup |
 | md97 | MX16A4 | variante (IMBEL: guarda-mão e coronha) | AR-15 brasileiro |
 | scar | Mk14EBR | variante (casca SCAR) | pente à frente, contato de fuzil de batalha |
-| g3 | G3 | puro | |
+| g3 | G3 | puro | lote 2 |
 | g3sg1 | G3 | variante (luneta, coronha) | |
-| svd | SVD | puro | |
+| svd | SVD | puro | lote 2 |
 | sks | SVD | variante (madeira) | pente fixo da SKS = mudança de contato; alternativa Mk14 |
-| awp | L96X | puro | a L96X é o Accuracy International que a AWP é |
+| awp | L96X | puro | lote 2; a L96X é o Accuracy International que a AWP é |
 | rem700 | L96X | variante | ferrolho com pente |
 | m400 | L96X | variante | |
-| mosin | Kar98K | variante (skin, cano) | recarga cartucho a cartucho; conferir chassi Kar98K |
+| mosin | Kar98K | puro | lote 2; recarga cartucho a cartucho; idle da arma = quadro 0 da reload_start |
 | carbine | Kar98K | variante | alavanca ≠ ferrolho: gesto de contato diferente (plano B se o dono não aceitar) |
-| mp5 | MPS5 | puro | |
+| mp5 | MPS5 | puro | lote 2 |
 | uzi | MPS5 | variante (casca UZI) | na UZI o pente é no punho — o MPS5 põe à frente; Kolibri é micropistola, não serve |
-| p90 | PDW90 | puro | pose é o quadro 0 da inspeção |
-| lmg | MGX5 | puro | cinto/caixa, sem pente destacável |
-| shotgun | KXG12 | puro | lote 1; a M3 do jogo é bomba como a KXG12; Drake-12 é de dois canos |
-| deagle | DGL50 | puro | |
-| revolver38 | Viper-357 | puro | sem pose de braço no pack (quadro 0 da recarga) |
+| p90 | PDW90 | puro | lote 2; pose = quadro 0 da inspeção |
+| lmg | MGX5 | puro | lote 2; alívio 0,3 m e guinada 0 |
+| shotgun | KXG12 | puro | lotes 1–2; cartucho oculto na espera do laço |
+| deagle | DGL50 | puro | lote 2 |
+| revolver38 | Viper-357 | puro | lote 2; sem pose de braço no pack (quadro 0 da recarga) |
 | pistol | X18 | puro + skin PT-38 | lote 1 |
-| grenade | Grenade | pack (braço) | granada K atual; arremesso start/loop/end |
+| grenade | Grenade | já é pack como autorado | a granada K atual (SK_Arms_Mono + arremesso do pack, `ready`) — não refeita |
 | knife | — | fica a aprovada | o pack não tem faca |
 
 **Estimativa para as 26.** Medido no lote 1: build 4–12 s; enquadramento ~2 s; `qa.mjs` por
@@ -340,10 +579,10 @@ alavanca, uzi com pente no punho) fica fora da conta: 1–2 dias por arma.
 
 ## 10. Limites ditos sem rodeio
 
-- **FAMAS não é bullpup.** O pente da FAMAS fica atrás do punho; no chassi MX16A4 ele fica à
-  frente, e isso é zona de contato (a mão de apoio vai ao pente ali, a animação do pack é essa).
-  A variante lê como FAMAS pela alça de transporte e pela soleira; o pente continua o do M4. Uma
-  FAMAS fiel exige plano B (re-autorar a recarga) — trocar a zona livre não chega lá.
+- **FAMAS do lote 1 não era bullpup** (pente do M4 à frente do punho; crítico: "uma M4 com a alça
+  da FAMAS"). Substituída pelo plano B (§7): malha do jogo com o pente atrás do punho e recarga
+  re-autorada. O preço do plano B: a recarga é autorada por chave (não é captura de movimento do
+  pack) e a arma é o modelo de mundo do jogo (low-poly, textura 512 px).
 - **Mint:** 0 crédito gasto. A zona livre da FAMAS saiu da FAMAS Mint que o jogo já usa como
   modelo de mundo (`public/models/weapons/famas.glb`) — mesma identidade do mundo, sem custo.
 - A recarga vazia da AK do pack deixa o pente velho **cair** à vista (15%); a régua `carregador`

@@ -37,7 +37,16 @@ const candidatas = Object.assign({}, ...['rifle', 'smg', 'sidearm', 'dmr', 'prec
 const exigidos = contrato.rig.ossosDeBraco;
 const falhas = [];
 const linhas = [];
+// Arma servida pela GOLDEN aprovada (a 'ak', decisão do dono 24/09) não tem produto K: a fonte é
+// o GLB golden público (rig A, fora deste contrato K) — confere que ele existe e segue.
+const { VM_WEAPON } = await import(new URL('../../public/js/data/vmconfig.js', import.meta.url).href);
 for (const [weapon, cfg] of Object.entries(candidatas)) {
+  if (VM_WEAPON[weapon]?.golden === true) {
+    const gold = path.join(ROOT, 'public/models/viewmodels/coro', `${weapon}-hires.glb`);
+    if (!fs.existsSync(gold)) falhas.push(`${weapon}: golden ausente (${path.relative(ROOT, gold)})`);
+    linhas.push({ weapon, golden: true, ossosNoContrato: exigidos.length, deExigidos: exigidos.length, semAcao: [], temRecarga: true });
+    continue;
+  }
   const file = path.join(ASSET_ROOT, cfg.file);
   if (!fs.existsSync(file)) { falhas.push(`${weapon}: produto ausente`); continue; }
   const json = glb(file);
@@ -64,7 +73,7 @@ console.log(`VM_RIG_CONTRATO=${JSON.stringify({ ok: falhas.length === 0, rig: co
 if (process.argv.includes('--tabela')) {
   console.log(`\n${'arma'.padEnd(12)}${'ossos'.padStart(10)}  ações faltando`);
   for (const linha of linhas.sort((a, b) => a.ossosNoContrato - b.ossosNoContrato)) {
-    console.log(`${linha.weapon.padEnd(12)}${`${linha.ossosNoContrato}/${linha.deExigidos}`.padStart(10)}  ${[...linha.semAcao, linha.temRecarga ? '' : 'recarga'].filter(Boolean).join(', ') || '—'}`);
+    console.log(`${linha.weapon.padEnd(12)}${(linha.golden ? 'golden' : `${linha.ossosNoContrato}/${linha.deExigidos}`).padStart(10)}  ${linha.golden ? 'rig A aprovado (fora do contrato K)' : [...linha.semAcao, linha.temRecarga ? '' : 'recarga'].filter(Boolean).join(', ') || '—'}`);
   }
 }
 if (falhas.length) process.exitCode = 1;
