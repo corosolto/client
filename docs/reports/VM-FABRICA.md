@@ -466,6 +466,53 @@ ausente").
   deixa o pente velho cair à vista (15%). Os dois são o pack como autorado: plano B (truque do
   segundo pente), fora da fábrica pura.
 
+## 8.3 Rodada final (25–26/09)
+
+Decisões do dono: a deagle fica grande (faixa própria 0,80–1,45 da PT-38 em `PISTOLA_FAIXA_ARMA`,
+no vocabulário do crítico e no `vm-frame-calibra`); m92/g3sg1 herdam o vermelho de carregador do
+chassi; awp, mosin, revolver38, akm e carbine são plano B em `vm/fabrica-variantes` (#653); FAMAS e
+TAVOR entraram por merge de `vm/fabrica-bullpup` (produtos idênticos byte a byte na nossa overlay).
+
+**Réguas novas (com mutante)**
+
+- `mira` — **janela de óptica/reflex** (`janelaDeOptica`, vm-analise): a lente da MGX5 e da PDW90 é
+  malha opaca, então o aro não vira buraco e a régua lia a massa (35–60 px com a lente na cruz).
+  Cortes da silhueta de cima em todas as profundidades: a lente recuada ≥ 3 mm atrás do aro vira
+  buraco. p90/lmg 1 px; catálogo K igual ao placar (famas K 64 → 45 px, segue vermelha). Mutante
+  `janela-fora` morde; `sockets-acima` e `sem-ads` seguem mordendo. `npm run eval:vm-mira-janela`.
+- `manga-tela` — **extensão do vmsleeve na tela**: o tubo que o crítico viu era a extensão aparecendo
+  (manga 9% da tela, verde). O vmsleeve marca a base dos vértices e o raster conta a extensão; na
+  fábrica o teto é 0,5% da tela. Mutante `p90-tubo` (extensão ligada, z −0,383) morde com 3,5%.
+  `npm run eval:vm-manga-tela-fabrica`. awp da fábrica fica como dívida do #653.
+- Sondas: `captura/rolagem.mjs` (rolagem em torno do cano e eixo do cano na tela, contra a M4
+  aprovada), `captura/coice.mjs --total`, `captura/sonda-mira.mjs`.
+- `kcap`: bots escondidos antes de cada render (o visual é `mesh.group` + halo), recarga em 12
+  frações (0,125 e 0,35 pegam o pente velho caindo). `entrarAds` espera o ADS assentar (sob carga
+  o placar lia o quadril como ADS).
+
+**Resultado** (réguas 3:2 / 16:9: mira · cobertura · pistola-ref · mãos · carregador)
+
+| arma | chassi | 3:2 | 16:9 | crítico final | rodadas |
+|---|---|---|---|---|---|
+| m4 | MX16A4 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | lote 2 r4 |
+| pistol | X18 | ✓✓✓·✓ | ✓✓✓·✗ | APROVADA | lote 2 r4 (16:9 = dívida R1 da PT-38) |
+| shotgun | KXG12 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | lote 2 r4 |
+| mp5 | MPS5 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | r1 |
+| svd | SVD | ·✓·✓✓ | ·✓·✓✓ | APROVADA | r1 |
+| p90 | PDW90 | ✓✓·✓✓ | ✓✓·✓✓ | APROVADA | r1 |
+| deagle | DGL50 | ✓✓✓·✓ | ✓✓✓·✓ | APROVADA | r2 |
+| g3 | G3 | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | r3: coice vai para a frente no pico; braço de apoio esticado (pose do pack) |
+| famas | MX16A4 + malha | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | r3: tiro afunda no pico; eixo no limite (régua: −0°) |
+| tavor | MX16A4 + malha | ✓✓·✓✓ | ✓✓·✓✓ | RESSALVA | r3: eixo no limite no olho (régua: +3°) |
+| lmg | MGX5 | ✓✓·✓· | ✓✓·✓· | REPROVADA r3 → corrigida | cinta reta no idle (pose de repouso do FBX); idle agora pelo quadro 0 do tiro do pack, cinta pende — sem 4ª rodada |
+
+Polimento: coice por produto (`recoilScale` gira o cano, `recoilLoc` o kickback: a MP5 empurrava
+de lado com 4,5 cm de kickback); G3 com a rolagem da M4 (6,4°) e ADS a 0,22 m; FAMAS/TAVOR com a
+recarga menos puxada para a cruz, ADS a 0,28 m (mão aparece) e o pente velho escorregando 10 cm
+antes de cair; LMG mais longe (0,90× AK, braço 0,60×). O que sobra é do pack como autorado: a mão
+de apoio da G3 na ponta do guarda-mão, a caixa da MGX5 (a velha não sai à vista) e a batida na
+alavanca da G3 que a g3sg1 herda (não é trivial: é a recarga do pack; fica com o #653).
+
 ## 9. Mapeamento das 26 armas
 
 Decisão do dono: arma sem chassi próprio vira VARIANTE do chassi mais próximo. Contato é o que
