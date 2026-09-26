@@ -5,20 +5,21 @@
 // Réguas: luva/manga da paleta do time (vmhands.js) e a MESMA cor em todas as armas do time.
 // Uso: node tools/eval/vm-maos-time.mjs [--porta=4702] [--passe=servido|aprovadas|todos]
 //      [--armas=ak,m4] [--times=E,U] [--fotos] [--saida=artifacts/maos-por-time]
-//      [--mutante=golden-sem-time|faca-time-errado|atlas-trocado] [--base=origin/vm/fabrica]
+//      [--mutante=golden-sem-time|faca-time-errado|atlas-trocado] [--base=origin/vm/fabrica] [--sonda=lado|escala]
+// --sonda troca todo atlas de mão por um de medida (hand-rigs.mjs `sondar`) e mede em vez de julgar.
 // --base serve vmhands/authoredvm/meleevm e os atlas daquele ref: é a auditoria do antes.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { TEAM_HANDS, teamHandStyle } from '../../public/js/vmhands.js';
+import { TEAM_HANDS, F_OPCOES, teamHandStyle } from '../../public/js/vmhands.js';
 import { FACTIONS } from '../../public/js/factions.js';
 import { WEAPON_IDS } from '../../public/js/weapons.js';
 import { VM_WEAPON, VM_FAMILY } from '../../public/js/data/vmconfig.js';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const args = new Map(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=')));
-const FLAGS = ['porta', 'passe', 'armas', 'times', 'fotos', 'saida', 'mutante', 'base'];
+const FLAGS = ['porta', 'passe', 'armas', 'times', 'fotos', 'saida', 'mutante', 'base', 'sonda', 'maosf'];
 for (const k of args.keys()) if (!FLAGS.includes(k)) throw Error(`flag desconhecida: ${k}`);
 const MUTANTES = ['golden-sem-time', 'faca-time-errado', 'atlas-trocado'];
 const mutante = args.get('mutante') || '';
@@ -26,6 +27,12 @@ if (mutante && !MUTANTES.includes(mutante)) throw Error(`mutante desconhecido: $
 const port = Number(args.get('porta') || 4702), base = `http://127.0.0.1:${port}`;
 const out = path.resolve(root, args.get('saida') || 'artifacts/maos-por-time');
 const fotos = args.has('fotos');
+const SONDA = args.get('sonda') || '';
+// --maosf=<opção>: roda com a proposta de FUNKEIROS escolhida (?vmmaosf=), para a página do dono.
+const MAOSF = args.get('maosf') || '';
+if (MAOSF && !F_OPCOES[MAOSF]) throw Error(`opção F desconhecida: ${MAOSF}`);
+const estiloDe = (id) => (id === 'F' && MAOSF ? F_OPCOES[MAOSF] : teamHandStyle(id));
+if (SONDA && !['lado', 'escala'].includes(SONDA)) throw Error(`sonda desconhecida: ${SONDA}`);
 
 // Toda facção jogável tem de ter estilo próprio; neutro é só fallback.
 const JOGAVEIS = FACTIONS.filter((f) => f.ready).map((f) => f.id);
@@ -49,7 +56,7 @@ const filtro = args.get('armas')?.split(',');
 
 const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 function paleta(id) {
-  const s = teamHandStyle(id);
+  const s = estiloDe(id);
   const p = { luva: rgb(s.glove), manga: rgb(s.sleeve), acento: rgb(s.accent), pele: [183, 137, 104],
     costura: id === 'C' ? [220, 216, 206] : [156, 153, 143] };
   if (s.fingerless) p.bainha = p.luva.map((c) => c * 0.58);
@@ -130,7 +137,7 @@ const PAGINA = {
     return meshes.every((o) => (Array.isArray(o.material) ? o.material : [o.material])
       .every((m) => !m?.userData?.teamHands || (m.map?.image?.width > 0 && m.bumpMap?.image?.width > 0)));
   },
-  passe: async ({ largura, altura }) => {
+  passe: async ({ largura, altura, sonda }) => {
     const THREE = await import('three');
     const g = window.__game, r = g.renderer;
     const HAND = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
@@ -176,7 +183,36 @@ const PAGINA = {
       if (fundo(i) || fundo(i - 4) || fundo(i + 4) || fundo(i - W * 4) || fundo(i + W * 4)) continue;
       n++; if (n % 3 === 0) amostras.push([px[i], px[i + 1], px[i + 2]]);
     }
-    return { materiais, amostras, pxMao: n, tela: [W, H], alvo: [largura, altura] };
+    let medida = null;
+    if (sonda) {
+      // Faixas de 0,2 mão: transições por pixel de mão nas linhas e colunas → pixels por mão.
+      const mao = (i) => !fundo(i);
+      let tr = [0, 0, 0, 0], cont = [0, 0];
+      for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+        const i = (y * W + x) * 4, d = i + 4, b = i + W * 4;
+        if (mao(i) && mao(d)) { cont[0]++; if ((px[i] > 128) !== (px[d] > 128)) tr[0]++; if ((px[i + 2] > 128) !== (px[d + 2] > 128)) tr[2]++; }
+        if (mao(i) && mao(b)) { cont[1]++; if ((px[i] > 128) !== (px[b] > 128)) tr[1]++; if ((px[i + 2] > 128) !== (px[b + 2] > 128)) tr[3]++; }
+      }
+      const gy = Math.hypot(tr[0] / (cont[0] || 1), tr[1] / (cont[1] || 1)), gx = Math.hypot(tr[2] / (cont[0] || 1), tr[3] / (cont[1] || 1));
+      const ossos = [];
+      const PARES = [[/^handR_metarig$/, /^f_middle01R_metarig$/], [/^handL_metarig$/, /^f_middle01L_metarig$/], [/^R_wrist_026$/, /^R_middle1_035$/],
+        [/^L_wrist_02$/, /^L_middle1_011$/], [/^hand_r$/, /^middle_01_r$/], [/^hand_l$/, /^middle_01_l$/]];
+      for (const o of maos) {
+        for (const [a, b] of PARES) {
+          const A = o.skeleton?.bones.find((x) => a.test(x.name)), B = o.skeleton?.bones.find((x) => b.test(x.name));
+          if (!A || !B) continue;
+          const pa = A.getWorldPosition(new THREE.Vector3()).project(g.vmCamera), pb = B.getWorldPosition(new THREE.Vector3()).project(g.vmCamera);
+          ossos.push({ osso: A.name, px: +Math.hypot((pa.x - pb.x) * W / 2, (pa.y - pb.y) * H / 2).toFixed(1), naTela: Math.abs(pa.x) < 1 && Math.abs(pa.y) < 1 });
+        }
+      }
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      const ctx = cv.getContext('2d'), im = ctx.createImageData(W, H);
+      for (let y = 0; y < H; y++) im.data.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);
+      ctx.putImageData(im, 0, 0);
+      medida = { pxPorMaoY: gy ? +(1 / (0.2 * gy)).toFixed(1) : null, pxPorMaoX: gx ? +(1 / (0.2 * gx)).toFixed(1) : null,
+        ossos: [...new Map(ossos.map((o) => [o.osso, o])).values()], imagem: cv.toDataURL('image/png') };
+    }
+    return { materiais, amostras, pxMao: n, tela: [W, H], alvo: [largura, altura], medida };
   },
 };
 
@@ -241,9 +277,27 @@ try {
       await page.route('**/viewmodels/knife/knife-baked-runtime.glb*', (r) => r.fulfill({ path: facaL, contentType: 'model/gltf-binary' }));
     }
     await mutar(page, P);
+    if (SONDA) {
+      const { HAND_RIGS, lerRig, campos, sondar } = await import('../viewmodels/lib/hand-rigs.mjs');
+      const sharp = (await import('sharp')).default;
+      const dir = path.join(out, 'sonda', SONDA);
+      for (const layout of Object.keys(HAND_RIGS)) {
+        const rig = await lerRig(layout);
+        for (const prim of rig.primitivas) {
+          const f = path.join(dir, layout, `${prim.papel}.png`);
+          await fs.mkdir(path.dirname(f), { recursive: true });
+          const c = campos(layout, prim);
+          await sharp(sondar(c, SONDA), { raw: { width: c.size, height: c.size, channels: 3 } }).png().toFile(f);
+        }
+      }
+      await page.route(/\/models\/viewmodels\/coro\/hands\/(\w+)\/(\w+)-\w+\.webp/, (r) => {
+        const [, layout, papel] = /hands\/(\w+)\/(\w+)-\w+\.webp/.exec(r.request().url());
+        return r.fulfill({ path: path.join(dir, layout, `${papel}.png`), contentType: 'image/png' });
+      });
+    }
     const qs = new URLSearchParams({ debug: '1', auto: times[0], map: 'piscina_treta', armaslazy: '0', vmauthored: '1', vmqa: 'precision',
       vmready: [...new Set(families)].join(','), vmweapon: Object.keys(VM_WEAPON).join(','), ...P.qs,
-      ...(fotos ? {} : { bloom: '0' }) });
+      ...(fotos ? {} : { bloom: '0' }), ...(MAOSF ? { vmmaosf: MAOSF } : {}) });
     await page.goto(`${base}/?${qs}`, { waitUntil: 'domcontentloaded', timeout: 240000 });
     await page.addStyleTag({ content: 'astro-dev-toolbar,#vm-precision-qa,#crash-overlay,#aviso-software,.tutorial-overlay,[data-vmqa]{display:none!important}' });
     await page.waitForFunction(() => window.__game?.state === 'live' && window.__vmPrecisionQa && window.__authoredVm, null, { timeout: 240000 });
@@ -286,7 +340,14 @@ try {
             report.celulas.push({ passe: nome, coluna: col.id, arma: col.arma, servido, time, foto });
             continue;
           }
-          const res = await page.evaluate(PAGINA.passe, { largura: 480, altura: 320 });
+          const res = await page.evaluate(PAGINA.passe, { largura: 480, altura: 320, sonda: Boolean(SONDA) });
+          if (SONDA) {
+            const img = `sonda/${SONDA}/${col.id}.png`;
+            await fs.writeFile(path.join(out, img), Buffer.from(res.medida.imagem.split(',')[1], 'base64'));
+            report.celulas.push({ passe: nome, coluna: col.id, arma: col.arma, servido, time, imagem: img, pxMao: res.pxMao,
+              pxPorMaoY: res.medida.pxPorMaoY, pxPorMaoX: res.medida.pxPorMaoX, ossos: res.medida.ossos });
+            continue;
+          }
           const j = julgar(res.amostras, time);
           report.celulas.push({ passe: nome, coluna: col.id, arma: col.arma, servido, time, pxMao: res.pxMao,
             materiais: res.materiais, estranho: j.estranho, fracao: j.fracao, luva: j.luva, manga: j.manga });
@@ -304,6 +365,19 @@ try {
 }
 
 // Réguas. Célula com mão do rig autorado e sem mapa do time = mão sem skin de time.
+if (SONDA) {
+  await fs.writeFile(path.join(out, `sonda-${SONDA}.json`), JSON.stringify(report, null, 1));
+  for (const c of report.celulas) console.log(c.coluna, c.servido, c.erro || '', c.pxPorMaoY, c.pxPorMaoX, JSON.stringify(c.ossos));
+  // Mesma arma, dois rigs: o motivo da golden (A) na tela tem de ter a escala do da AK K (±15%).
+  const gold = report.celulas.find((c) => c.coluna === 'ak-golden'), k = report.celulas.find((c) => c.coluna === 'ak');
+  if (SONDA === 'escala' && gold && k) {
+    const r = ['pxPorMaoY', 'pxPorMaoX'].map((e) => +(gold[e] / k[e]).toFixed(3));
+    const ok = r.every((x) => Math.abs(x - 1) <= 0.15);
+    console.log(JSON.stringify({ escalaGoldenSobreK: r, ok }));
+    process.exit(ok ? 0 : 1);
+  }
+  process.exit(0);
+}
 if (fotos) {
   await fs.writeFile(path.join(out, 'fotos.json'), JSON.stringify(report, null, 1));
   console.log(JSON.stringify({ fotos: report.celulas.length, erros: report.erros }));
