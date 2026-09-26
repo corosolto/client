@@ -368,9 +368,8 @@ const factionArtReady = Promise.all(factionArtImages.map((image) => (
   })
 ))).catch((error) => console.warn('[facções] preload parcial', error));
 
-/* Wallpapers rotativos (wall-10..28, menos os estacionados): 1 por tela no fluxo
-   home→setup→lado→personagem, sem repetir; o offset rotaciona a cada acesso
-   (localStorage) pra variar entre visitas.
+/* Wallpapers rotativos (wall-10..28): 1 por tela no fluxo home→setup→lado→personagem, sem
+   repetir; o offset rotaciona a cada acesso (localStorage) pra variar entre visitas.
 
    Estes arrays são fallback do primeiro quadro. A fonte de verdade é
    public/img/walls.json, gerado por `npm run media` a partir do disco. O manifesto
@@ -379,11 +378,7 @@ const factionArtReady = Promise.all(factionArtImages.map((image) => (
    Servidos em .webp desde 07/08: os PNG de 2–2,6 MB viraram ~250 KB (ffmpeg libwebp q85,
    comparado lado a lado antes da troca — texto do cartaz e grão idênticos). Os .png ficam
    na pasta como fonte; wallpaper novo entra como PNG e vira .webp no mesmo commit.
-
-   wall-27 (a Cuca) saiu da rotação em 25/09 a pedido do dono. A arte não foi apagada:
-   os três arquivos estão inteiros em public/img/parados/, fora do alcance dos
-   geradores (`listWebp` e o glob do menuwalls leem só o topo de public/img/). Volta
-   com `git mv` de volta + `npm run media && npm run menuwalls`. */
+   wall-27 saiu em 25/09: a Cuca não existe no elenco. */
 const WALLS = ['/img/wall-10.webp', '/img/wall-11.webp', '/img/wall-12.webp', '/img/wall-13.webp',
   '/img/wall-14.webp', '/img/wall-15.webp', '/img/wall-16.webp', '/img/wall-17.webp',
   '/img/wall-18.webp', '/img/wall-19.webp', '/img/wall-20.webp', '/img/wall-21.webp',
