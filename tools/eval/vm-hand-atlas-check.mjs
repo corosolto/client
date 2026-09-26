@@ -28,7 +28,7 @@ const distance = (a, b) => Math.hypot(...chroma(a).map((v, i) => v - chroma(b)[i
 const checks = [], cache = new Map();
 let mutations = 0;
 for (const faction of ['F', 'U']) for (const point of landmarks) {
-  const file = `public/models/viewmodels/coro/hands/${point.layout}/${point.role}-${faction}.webp`;
+  const file = `public/models/viewmodels/coro/hands/${point.layout}/${point.role}-${TEAM_HANDS[faction].id}.webp`;
   if (!cache.has(file)) cache.set(file, await sharp(path.join(root, file)).removeAlpha().raw().toBuffer({ resolveWithObject: true }));
   const { data, info } = cache.get(file);
   if (info.width !== 512 || info.height !== 512 || info.channels !== 3) throw Error(`atlas/landmark incompatível: ${file}`);
