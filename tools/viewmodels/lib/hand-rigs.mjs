@@ -37,6 +37,9 @@ export const HAND_RIGS = Object.freeze({
     lado: (osso) => (/\.L[._]/.test(osso) ? 'l' : 'r'),
     ponta: /(?:f_index|f_middle|f_ring|f_pinky|thumb)\.0[23]\./,
     // A luva do rig A desce 0,36 mão abaixo do pulso; o trecho abaixo de −0,15 é o punho da manga no K.
+    // escalaX: a mão A é mais larga por comprimento (0,96 × 0,77 no pulso; 1,13 × 0,99 na palma) e na
+    // tela a sonda deu 66 × 83 px por mão em x contra a AK K (y 66 × 69): x × 0,82 iguala a contagem.
+    escalaX: 0.82,
     papeis: [
       { material: /CoroSolto_FP_Gloves$/, papel: 'glove', pintura: 'combined' },
       { material: /CoroSolto_Mandrake_Sleeves$/, papel: 'cloth', pintura: 'cloth' },
@@ -108,10 +111,11 @@ export function campos(layout, prim, size = 512) {
   const attr = prim.vertices.map((v) => {
     const forte = v.pesos.reduce((a, b) => (b[1] > (a?.[1] || 0) ? b : a), null)?.[0] || '';
     const c = coord[def.lado(forte)](v.p);
+    c[0] *= def.escalaX || 1;
     const ponta = v.pesos.filter(([b]) => def.ponta.test(b)).reduce((s, [, w]) => s + w, 0);
-    return [...c, ponta];
+    return [...c, ponta, def.lado(forte) === 'r' ? 1 : 0];
   });
-  const fields = new Float32Array(size * size * 4), covered = new Uint8Array(size * size);
+  const fields = new Float32Array(size * size * 4), covered = new Uint8Array(size * size), lados = new Uint8Array(size * size);
   for (const face of prim.faces) {
     const p = face.map((k) => [prim.vertices[k].uv[0] * size, prim.vertices[k].uv[1] * size]);
     const den = (p[1][1] - p[2][1]) * (p[0][0] - p[2][0]) + (p[2][0] - p[1][0]) * (p[0][1] - p[2][1]);
@@ -123,6 +127,7 @@ export function campos(layout, prim, size = 512) {
       const b = ((p[2][1] - p[0][1]) * (x + 0.5 - p[2][0]) + (p[0][0] - p[2][0]) * (y + 0.5 - p[2][1])) / den, c = 1 - a - b;
       if (Math.min(a, b, c) < -1e-6) continue;
       const ix = y * size + x; covered[ix] = 1;
+      lados[ix] = attr[face[0]][4];
       for (let j = 0; j < 4; j++) fields[ix * 4 + j] = attr[face[0]][j] * a + attr[face[1]][j] * b + attr[face[2]][j] * c;
     }
   }
@@ -131,11 +136,25 @@ export function campos(layout, prim, size = 512) {
     for (let y = 1; y < size - 1; y++) for (let x = 1; x < size - 1; x++) {
       const ix = y * size + x; if (covered[ix]) continue;
       const from = [ix - 1, ix + 1, ix - size, ix + size].find((n) => covered[n]); if (from === undefined) continue;
-      next[ix] = 1; for (let j = 0; j < 4; j++) fields[ix * 4 + j] = fields[from * 4 + j];
+      next[ix] = 1; lados[ix] = lados[from]; for (let j = 0; j < 4; j++) fields[ix * 4 + j] = fields[from * 4 + j];
     }
     covered.set(next);
   }
-  return { fields, covered, size };
+  return { fields, covered, lados, size };
+}
+
+// Atlas de sonda (não servidos): `lado` pinta sinal de z por mão; `escala` pinta faixas de 0,2 mão
+// em y (vermelho) e em x (azul), para medir na tela quantos pixels valem uma mão.
+export function sondar({ fields, lados, size }, tipo) {
+  const px = Buffer.alloc(size * size * 3);
+  for (let ix = 0; ix < size * size; ix++) {
+    const [x, y, z] = fields.subarray(ix * 4, ix * 4 + 3);
+    let c;
+    if (tipo === 'lado') c = lados[ix] ? (z > 0 ? [255, 0, 0] : [0, 0, 255]) : (z > 0 ? [255, 255, 0] : [0, 255, 255]);
+    else c = [Math.floor(y * 5) % 2 === 0 ? 255 : 0, 64, Math.floor(x * 5 + 100) % 2 === 0 ? 255 : 0];
+    px.set(c, ix * 3);
+  }
+  return px;
 }
 
 const parse = (s) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
@@ -179,6 +198,18 @@ export function pintar({ fields, size }, pintura, style) {
     if (!exposed && !isSleeve && !noEixo && (cuff || handPanel) && style.motif === 'trama') {
       const a = Math.sin((volta + y) * 28), b = Math.sin((volta - y) * 28);
       if (Math.max(a, b) > 0.8) color = accent;
+    }
+    // Identidade na luva inteira, dedos inclusive: é o que aparece em toda arma (a pistola quase
+    // não mostra punho nem manga; crítico cego, rodada 2).
+    if (!exposed && !isSleeve && !noEixo && !cuff && !handPanel && style.motif === 'star') {
+      const u = volta / 0.3 + (Math.floor(y / 0.3) % 2) * 0.5, v = y / 0.3;
+      const fu = u - Math.floor(u) - 0.5, fv = v - Math.floor(v) - 0.5;
+      if (inStar(fu * 0.62, fv * 0.62)) color = accent;
+    }
+    if (!exposed && !isSleeve && !noEixo && style.motif === 'grife') {
+      const a = Math.abs(Math.sin((volta + y) * 16)), b = Math.abs(Math.sin((volta - y) * 16));
+      const centro = Math.abs(Math.cos((volta + y) * 16)) > 0.93 && Math.abs(Math.cos((volta - y) * 16)) > 0.93;
+      if (Math.min(a, b) < 0.13 || centro) color = accent;
     }
     if (!exposed && !isSleeve && !noEixo && style.motif === 'corrente') {
       // Cordão de ouro no pulso e nos nós dos dedos: elos alternados em volta do braço.

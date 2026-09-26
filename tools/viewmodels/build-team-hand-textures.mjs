@@ -6,13 +6,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import { TEAM_HANDS, teamHandStyle } from '../../public/js/vmhands.js';
+import { TEAM_HANDS, F_OPCOES, teamHandStyle } from '../../public/js/vmhands.js';
 import { HAND_RIGS, lerRig, campos, pintar, root } from './lib/hand-rigs.mjs';
 
 const args = new Map(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=')));
 for (const k of args.keys()) if (!['layouts', 'times', 'forcar', 'conferir'].includes(k)) throw Error(`flag desconhecida: ${k}`);
 const layouts = (args.get('layouts') || Object.keys(HAND_RIGS).join(',')).split(',');
-const styles = [...Object.values(TEAM_HANDS), teamHandStyle('neutral')]
+const styles = [...new Set([...Object.values(TEAM_HANDS), ...Object.values(F_OPCOES), teamHandStyle('neutral')])]
   .filter((s) => !args.has('times') || args.get('times').split(',').includes(s.id));
 const output = path.join(root, 'public/models/viewmodels/coro/hands');
 const existe = (f) => fs.access(f).then(() => true, () => false);
