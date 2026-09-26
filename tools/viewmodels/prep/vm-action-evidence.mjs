@@ -81,7 +81,7 @@ try {
       (route) => route.fulfill({ path: path.resolve(file), contentType: 'model/gltf-binary' }));
   }
   const base = `http://127.0.0.1:${arg('porta', '4361')}`;
-  const query = new URLSearchParams({ debug: '1', auto: `E,${char}`, map: 'brasilia', armaslazy: '0' });
+  const query = new URLSearchParams({ debug: '1', vmauthored: '1', auto: `E,${char}`, map: 'brasilia', armaslazy: '0' });
   await page.goto(`${base}/?${query}`, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.evaluate((m) => { window.__game.paused = true; window.__VM_MUTANTE = m; }, mutant);

@@ -2166,10 +2166,17 @@ for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
   if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
-  /* PRONTIDÃO = TER ELENCO, não `dataset.ready` (atributo que o index.astro da main não
-     escreve): com ele o card nascia desabilitado para sempre — BUG-179 em KNOWN-BUGS. */
-  card.setAttribute('aria-disabled', String(!(n > 0)));
+  // Facção sem elenco é INDISPONÍVEL, e indisponível é ESTADO, não surpresa no
+  // clique: aria-disabled fecha o card pro leitor de tela e pro arnês. A conta
+  // antiga pedia `card.dataset.ready === '1'` — atributo que NINGUÉM escreve
+  // nestes cards (só o canvas do loading3d usa esse nome), então todo card
+  // nascia desligado e a tela de facção virava beco sem saída.
+  card.setAttribute('aria-disabled', String(!n));
   card.addEventListener('focus', () => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+  card.onclick = () => {
+    if (!n) { ui.back(); return; }
+    sfx.uiClick(); pickTeam(f.toUpperCase());
+  };
 }
 /* O dossiê lateral de facção (`presentFaction`, #faction-hero) saiu com o
    index.astro da branch no merge com a main; ficaram só as chamadas. */
@@ -2182,12 +2189,6 @@ for (const [id, direction] of [['team-prev', -1], ['team-next', 1]]) {
     rail?.scrollBy({ top: direction * Math.max(92, rail.clientHeight * .56), behavior: 'smooth' });
   };
 }
-$('btn-team-e').onclick = () => { sfx.uiClick(); pickTeam('E'); };
-$('btn-team-b').onclick = () => { sfx.uiClick(); pickTeam('B'); };
-$('btn-team-u') && ($('btn-team-u').onclick = () => { sfx.uiClick(); pickTeam('U'); });
-$('btn-team-c') && ($('btn-team-c').onclick = () => { sfx.uiClick(); pickTeam('C'); });
-$('btn-team-f') && ($('btn-team-f').onclick = () => { sfx.uiClick(); pickTeam('F'); });
-$('btn-team-m') && ($('btn-team-m').onclick = () => { sfx.uiClick(); pickTeam('M'); });
 $('btn-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
 $('btn-pause-settings').onclick = () => { sfx.uiClick(); settingsReturn = 'pause-menu'; show('settings-panel'); };
 $('btn-pause-controls').onclick = () => { sfx.uiClick(); howtoReturn = 'pause-menu'; show('howto-panel'); };

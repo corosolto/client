@@ -56,7 +56,7 @@ let videoPath = '';
 try {
   const extra = process.env.QS ? `&${process.env.QS}` : '';
   await page.goto(
-    `${BASE}/?debug=1&auto=E&vmweapon=${ARMA}&map=brasilia&armaslazy=0&vmready=${familia}${extra}`,
+    `${BASE}/?debug=1&vmauthored=1&auto=E&vmweapon=${ARMA}&map=brasilia&armaslazy=0&vmready=${familia}${extra}`,
     { waitUntil: 'load', timeout: 180000 },
   );
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });

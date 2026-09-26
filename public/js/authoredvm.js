@@ -1,12 +1,18 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
+import { VM_FAMILY, VM_WEAPON, VM_FABRICA, VM_FABRICA_FRAME } from './data/vmconfig.js';
+import { VM_RUNTIME } from './vmlaunch.js';
 import { GOLDEN_VER } from './data/goldenver.js';
 import { FAMILY_VER } from './data/weaponver.js';
+import { VM_FRAME } from './data/vmframe.js';
+import { VM_BYTES } from './data/vmbytes.js';
+import { VM_FABRICA_BYTES, VM_FABRICA_POS } from './data/vmfabrica.js';
+import { SHARED_VER } from './data/vmsharedver.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
 import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
+import { extendSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -17,6 +23,8 @@ export const AUTHORED_VM_MODELS = Object.freeze(Object.fromEntries(
 ));
 
 const CATALOG_VERSION = 'paid-aaa-3';
+// Compartilhados (atlas, general, recoil, trilhas gs/rt) versionam pelos bytes: BUG-157.
+const sharedUrl = (name) => `/private-assets/viewmodels/${name}?v=${SHARED_VER[name] || 'sem-versao'}`;
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
@@ -26,20 +34,25 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
 // ?vmfonte=goldsrc: viewmodel dos moldes CS 1.6 (CC0, FONTE.md) com a arma
 // Mint; ?cs16=1 é o atalho que liga todas as famílias + a fonte de uma vez.
 const _QS = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-const CS16_TUDO = _QS?.get('cs16') === '1';
+// Fonte única: chave de lançamento tudo-ou-nada (vmlaunch.js) ou revisão `?vmauthored=1`.
+export const AUTHORED_VM_ENABLED = VM_RUNTIME.active;
+const CS16_TUDO = AUTHORED_VM_ENABLED && _QS?.get('cs16') === '1';
 // ?vmfonte=retarget (?rt=1): braços pagos sobre movimento CS 1.6 retargetado.
 // Evidência e custo da escolha: docs/reports/GOLDEN-AK-DECISION.md.
-const RETARGET_TUDO = _QS?.get('rt') === '1';
+const RETARGET_TUDO = AUTHORED_VM_ENABLED && _QS?.get('rt') === '1';
 const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
 const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
-// Kill-switch global do caminho autorado (?vmauthored=0): tudo cai no legado.
-const AUTHORED_KILLED = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).get('vmauthored') === '0';
+// Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
+// só abrem armas numa sessão de revisão.
+const AUTHORED_KILLED = !AUTHORED_VM_ENABLED;
 
 // Cache de GLTF parseado no nível do módulo: o preload do boot aquece aqui e
 // _loadFamily consome clone — o mesmo download serve qualquer instância de Game.
 const GLTF_CACHE = new Map();
 let skeletonClonePromise = null;
+export function acceptsAuthoredLoad({ request, activeRequest, key, activeKey, utility = false }) {
+  return request === activeRequest && key === activeKey && !utility;
+}
 function loadFamilyGltf(key) {
   if (!GLTF_CACHE.has(key)) {
     GLTF_CACHE.set(key, new GLTFLoader().loadAsync(urlForKey(key)).catch((error) => {
@@ -69,7 +82,7 @@ function sharedArmTextures() {
   if (!sharedArmPromise) {
     const loader = new THREE.TextureLoader();
     sharedArmPromise = Promise.all(SHARED_ARM_TEXTURES.map((name) => loader
-      .loadAsync(`/private-assets/viewmodels/shared/${name}.webp?v=${CATALOG_VERSION}`)
+      .loadAsync(sharedUrl(`shared/${name}.webp`))
       .then((texture) => {
         texture.name = name;
         texture.flipY = false;
@@ -113,7 +126,7 @@ function generalMotions() {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
   if (!generalMotionsPromise) {
     generalMotionsPromise = new GLTFLoader()
-      .loadAsync(`/private-assets/viewmodels/shared/general-runtime.glb?v=${CATALOG_VERSION}`)
+      .loadAsync(sharedUrl('shared/general-runtime.glb'))
       .then((gltf) => new Map(gltf.animations.map((clip) => [clip.name, clip])))
       .catch((error) => {
         console.error('[paid-viewmodel] general-runtime', error);
@@ -128,7 +141,7 @@ let recoilParamsPromise = null;
 function recoilParams() {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
   if (!recoilParamsPromise) {
-    recoilParamsPromise = fetch(`/private-assets/viewmodels/recoil.json?v=${CATALOG_VERSION}`)
+    recoilParamsPromise = fetch(sharedUrl('recoil.json'))
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => data?.families || null)
       .catch((error) => {
@@ -154,7 +167,7 @@ export function preloadAuthoredFamilies(keys = []) {
 // própria — família#arma) + granada, se aberta.
 export function authoredBootFamilies(weaponIds = []) {
   const keys = new Set(weaponIds.map((id) => entryKeyFor(id)).filter(Boolean));
-  if (familyReady('grenade')) keys.add('grenade');
+  if (!AUTHORED_KILLED && familyReady('grenade')) keys.add('grenade');
   return [...keys];
 }
 
@@ -165,7 +178,25 @@ const _adsAlign = new THREE.Quaternion();
 const _adsBlend = new THREE.Quaternion();
 const _adsForward = new THREE.Vector3();
 const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
+const _ADS_ROLL = new THREE.Vector3(0, 0, 1);
+const _adsRoll = new THREE.Quaternion();
+// Pose de ADS autoral: clipe `ads` de um quadro (tools/viewmodels/prep/ads-pose.mjs) vira camada
+// aditiva sobre o quadro 0 do idle, com peso = ADS; o mixer compõe e só reescreve o que mudou.
+function adsActionOf(entry) {
+  const clip = entry.clips.get('ads');
+  const idle = entry.clips.get('idle');
+  if (!clip || !idle || entry.golden) return null;
+  // Trilha sem par no idle ficaria absoluta na camada aditiva (posição somada duas vezes).
+  if (clip.tracks.some((t) => !idle.tracks.some((r) => r.name === t.name))) return null;
+  const action = entry.mixer.clipAction(THREE.AnimationUtils.makeClipAdditive(clip.clone(), 0, idle));
+  action.blendMode = THREE.AdditiveAnimationBlendMode;
+  action.setEffectiveWeight(0);
+  return action;
+}
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
+// A linhagem metarig da AK preserva o acabamento aprovado e não recebe o atlas KINEMATION.
+// Causa e medidas: docs/reports/VIEWMODEL-PADRAO-FPS-PROFISSIONAL.md.
+const HAND_MATERIAL_AK_LINEAGE = /CoroSolto_(?:FP_Gloves|Mandrake_Sleeves)/i;
 const CLIP_ALIASES = Object.freeze({
   equip: 'equip_rifle', reload: 'reload_tactical', fire: 'shoot',
   reloadtactical: 'reload_tactical', reloadempty: 'reload_empty',
@@ -206,9 +237,13 @@ const FAMILY_FRAME = Object.freeze({
   ak:      { x: 0.112, y: -0.068, z: -0.199, fov: 84, rotDeg: [0.6, -0.1, -5] },
   ar:      { x: 0.096, y: -0.129, z: -0.198, fov: 84, rotDeg: [-8.0, 0.9, 0] },
   mp5:     { x: 0.091, y: -0.187, z: -0.204, fov: 84, rotDeg: [-10.1, 0, 0] },
-  deagle:  { x: 0.089, y: -0.152, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
+  // O DGL50 final já traz a arma assada no rig. A calibração antiga incluía
+  // o wrap montado em runtime e deixava o punho abaixo do quadro.
+  deagle:  { x: 0.089, y: 0.000, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
   smg:     { x: 0.206, y: -0.141, z: -0.462, fov: 84, rotDeg: [15.4, 6.0, 0] },
-  p90:     { x: 0.075, y: -0.02, z: -0.141, fov: 84, rotDeg: [0, 0, 0] },
+  // O pacote P90 nasceu 41,56 graus fora do eixo do gabarito. A rolagem final
+  // preserva arma e mãos juntas e devolve a silhueta horizontal ao ombro.
+  p90:     { x: 0.300, y: -0.200, z: -0.600, fov: 84, rotDeg: [15.4, 6.0, -60] },
   // Yaw 15° aprovado em 05/09: VIEWMODEL-ASTRA-PISTOL-HANDOFF.md.
   pistol:  { x: 0.100, y: -0.100, z: -0.220, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 },
   shotgun: { x: 0.057, y: -0.114, z: -0.159, fov: 84, rotDeg: [-8.9, 0, 0] },
@@ -216,11 +251,11 @@ const FAMILY_FRAME = Object.freeze({
   bolt:    { x: 0.055, y: -0.083, z: -0.254, fov: 84, rotDeg: [-1.6, -0.3, 0] },
   g3:      { x: 0.117, y: -0.062, z: -0.202, fov: 84, rotDeg: [1.0, -0.2, 0] },
   marksman:{ x: 0.107, y: -0.07, z: -0.187, fov: 84, rotDeg: [0.5, -0.3, 0] },
-  svd:     { x: 0.107, y: -0.06, z: -0.419, fov: 84, rotDeg: [1.9, 0.5, 0] },
+  svd:     { x: 0.107, y: -0.17, z: -0.419, fov: 84, rotDeg: [1.9, 0.5, 0] },
   lmg:     { x: 0.153, y: -0.116, z: -0.409, fov: 84, rotDeg: [-5.2, -0.3, 0] },
   // revolver: sem doador CS 1.6 (não existe no jogo fonte) — fica no olho antigo.
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
-  grenade: { x: 0.045, y: -0.035, z: -0.080, fov: 84 },
+  grenade: { x: -0.050, y: 0.000, z: -0.080, fov: 84 },
   default: { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
 });
 
@@ -230,6 +265,15 @@ const READY_OVERRIDE = new Set(
   CS16_TUDO || RETARGET_TUDO
     ? Object.keys(VM_FAMILY)
     : (_QS?.get('vmready') || '').split(',').filter(Boolean));
+// Candidato por arma: abre Mosin/SVD/SKS sem abrir as outras armas da mesma
+// família. Continua subordinado ao portão global `vmauthored=1`.
+const WEAPON_OVERRIDE = new Set((_QS?.get('vmweapon') || '').split(',').filter(Boolean));
+// Produto da fábrica por arma (revisão): ?vmfabrica=ak,m4 ou =1 para todos os de VM_FABRICA.
+const FABRICA_QS = (_QS?.get('vmfabrica') || '').split(',').filter(Boolean);
+const fabricaAtiva = (weapon) => !AUTHORED_KILLED && Boolean(VM_FABRICA[weapon])
+  && (FABRICA_QS.includes('1') || FABRICA_QS.includes(weapon));
+// Config efetiva da arma: a da fábrica quando o produto dela está em cena.
+const cfgArma = (weapon) => (fabricaAtiva(weapon) ? VM_FABRICA[weapon] : VM_WEAPON[weapon]);
 const familyReady = (family) => Boolean(family)
   && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
 // Portão por ARMA dentro da família (KNOWN-BUGS, rollout de 19/09): `ready:false`
@@ -237,20 +281,26 @@ const familyReady = (family) => Boolean(family)
 const weaponReady = (weapon, family) => VM_WEAPON[weapon]?.ready !== false || READY_OVERRIDE.has(family);
 const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';
+  if (fabricaAtiva(weapon)) return VM_FABRICA[weapon].familia;
   const family = AUTHORED_VM_MODELS[weapon] || '';
-  return familyReady(family) && weaponReady(weapon, family) ? family : '';
+  return (familyReady(family) && weaponReady(weapon, family)) || WEAPON_OVERRIDE.has(weapon) ? family : '';
 };
 // Arma "baked" tem GLB próprio (Mint assada dentro, offline): entry por ARMA.
 const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
 export const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
+  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
   if (GOLDEN_VM && VM_WEAPON[weapon]?.golden === true) return `gold#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 const urlForKey = (key) => {
+  if (key.startsWith('fab#')) {
+    const weapon = key.slice(4);
+    return `/private-assets/viewmodels/fabrica/${weapon}-fabrica.glb?v=${VM_FABRICA_BYTES[weapon] || 'sem-versao'}`;
+  }
   if (key.startsWith('gold#')) {
     const weapon = key.slice(5);
     // Revisão pelos BYTES (data/goldenver.js, gerado). A string à mão congelava
@@ -260,12 +310,15 @@ const urlForKey = (key) => {
   }
   if (key.startsWith('gs#') || key.startsWith('rt#')) {
     const dir = key.startsWith('rt#') ? 'retarget-vm' : 'goldsrc-vm';
-    return `/private-assets/viewmodels/${dir}/${key.slice(3)}-runtime.glb?v=${CATALOG_VERSION}`;
+    return sharedUrl(`${dir}/${key.slice(3)}-runtime.glb`);
   }
   if (key.includes('#')) {
     const [family, weapon] = key.split('#');
-    if (VM_WEAPON[weapon]?.runtime === 'family') return AUTHORED_VM_URLS[family];
-    return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${CATALOG_VERSION}`;
+    // A versão deriva dos bytes para invalidar o cache após reassar uma arma.
+    // Contrato: docs/reports/VIEWMODEL-PADRAO-FPS-PROFISSIONAL.md.
+    const versao = VM_BYTES[weapon] || 'sem-versao';
+    if (VM_WEAPON[weapon]?.runtime === 'family') return `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${versao}`;
+    return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${versao}`;
   }
   return AUTHORED_VM_URLS[key];
 };
@@ -309,15 +362,26 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 
   const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
   const golden = sourceKey.startsWith('gold#');
-  // A trilha retarget ainda não tem enquadramento medido: a manga do pack entra
-  // por cima da arma e o C5 só fecha escondendo o cano (VIEWMODEL-INVENTARIO).
-  const frame = golden
+  const fabrica = sourceKey.startsWith('fab#');
+  // Precedência: família, medida por arma e override manual; `family` herda tudo.
+  // Medição: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
+  const weaponId = sourceKey.split('#')[1];
+  const weaponFrame = VM_WEAPON[weaponId]?.frame;
+  const familyFrame = FAMILY_FRAME[family] || FAMILY_FRAME.default;
+  const medido = VM_FRAME[weaponId];
+  const frame = fabrica
+    ? { ...VM_FABRICA_FRAME, ...(VM_FABRICA_POS[weaponId] || {}), ...(VM_FABRICA[weaponId]?.frame || {}) }
+    : golden
     ? { x: 0, y: 0, z: 0, fov: cameraFov }
     : molde
     ? { ...(VM_FONTE === 'goldsrc'
-      ? MOLDE_FRAME[sourceKey.split('#')[1]] || MOLDE_FRAME.default
+      ? MOLDE_FRAME[weaponId] || MOLDE_FRAME.default
       : { x: 0, y: 0, z: 0 }), fov: 74 }
-    : (FAMILY_FRAME[family] || FAMILY_FRAME.default);
+    : {
+      ...familyFrame,
+      ...(medido || {}),
+      ...(weaponFrame && typeof weaponFrame === 'object' ? weaponFrame : {}),
+    };
 
   const mount = new THREE.Group();
   mount.name = `paid_viewmodel_mount_${family}`;
@@ -333,6 +397,7 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 
   const handMeshes = [];
   const weaponMeshes = [];
+  const idleClip = (gltf.animations || []).find((clip) => clipKey(clip.name) === 'idle') || null;
   const utilityModels = new Map();
   const caixaArma = new THREE.Box3();
   scene.traverse((object) => {
@@ -348,15 +413,19 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const hand = materialsOf(object).some((material) => HAND_MATERIAL.test(material?.name || ''));
     if (hand) {
       handMeshes.push(object);
-      // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget e AK golden
-      // conservam seus materiais até terem inspeção de UV e aprovação próprias.
+      // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget, AK golden e a
+      // linhagem derivada da AK conservam seus materiais: o UV é outro.
+      const tingivel = (material) => HAND_MATERIAL.test(material?.name || '')
+        && !HAND_MATERIAL_AK_LINEAGE.test(material?.name || '');
       if (!golden) {
         object.material = Array.isArray(object.material)
-          ? object.material.map((material) => HAND_MATERIAL.test(material?.name || '')
+          ? object.material.map((material) => tingivel(material)
             ? tintHandMaterial(material, profile, molde) : material)
-          : tintHandMaterial(object.material, profile, molde);
+          : (tingivel(object.material) ? tintHandMaterial(object.material, profile, molde) : object.material);
       }
       object.userData.authoredCharacterHand = profile.id || 'player';
+      const mangaRuntime = !fabrica || VM_FABRICA[weaponId]?.manga !== false;
+      if (!golden && !molde && mangaRuntime && materialsOf(object).some((m) => SLEEVE_MATERIAL.test(m?.name || ''))) extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });
     } else {
       weaponMeshes.push(object);
       if (molde && !/MAG/i.test(object.name)) {
@@ -404,6 +473,8 @@ export class AuthoredViewModels {
     this.utility = null;
     this._utilityPrime = null;
     this._disposed = false;
+    this._requestSerial = 0;
+    this._activeRequest = 0;
   }
 
   setProfile(profile) {
@@ -428,7 +499,7 @@ export class AuthoredViewModels {
     return this;
   }
 
-  async _loadFamily(key) {
+  async _loadFamily(key, request = this._activeRequest) {
     if (NODE_RUNTIME || AUTHORED_KILLED) return null;
     if (!key || this.entries.has(key)) return this.entries.get(key) || null;
     if (this.pending.has(key)) return this.pending.get(key);
@@ -436,7 +507,8 @@ export class AuthoredViewModels {
     // VM_FAMILY dava undefined e nada da família valia (31/08).
     const bruta = key.split('#')[0];
     const armaDaChave = key.includes('#') ? key.split('#')[1] : '';
-    const family = (bruta === 'gs' || bruta === 'rt' || bruta === 'gold')
+    const family = bruta === 'fab' ? VM_FABRICA[armaDaChave]?.familia
+      : (bruta === 'gs' || bruta === 'rt' || bruta === 'gold')
       ? (VM_WEAPON[armaDaChave]?.family || bruta) : bruta;
     const bakedWeapon = key.includes('#') ? key.split('#')[1] : '';
     const golden = key.startsWith('gold#');
@@ -463,11 +535,23 @@ export class AuthoredViewModels {
       mixer.addEventListener('finished', (event) => {
         if (event.action === entry.action) this._continue(entry);
       });
+      entry.adsAction = adsActionOf(entry);
       this._setupGeneralMotion(entry, general);
       this.entries.set(key, entry);
       this.pending.delete(key);
       this._idle(entry);
-      if (bakedWeapon) {
+      if (key.startsWith('fab#')) {
+        // Fábrica: a arma É a do pack (política do BUG-75 revogada pelo dono em 23/09);
+        // mira e boca vêm dos sockets da ficha do chassi.
+        const raiz = visual.scene.getObjectByName(`SOCKET_WEAPON_${bakedWeapon.toUpperCase()}`);
+        entry.mint = { active: raiz, wraps: new Map(), weaponId: bakedWeapon, fabrica: true };
+        entry.sockets = {
+          muzzle: visual.scene.getObjectByName('SOCKET_FAB_MUZZLE') || null,
+          sight: visual.scene.getObjectByName('SOCKET_FAB_SIGHT') || null,
+          up: visual.scene.getObjectByName('SOCKET_FAB_UP') || null,
+          boca: visual.scene.getObjectByName('SOCKET_FAB_BARREL') || null,
+        };
+      } else if (bakedWeapon) {
         // GLB assado: a Mint já está DENTRO (offline) com sockets nomeados —
         // nada de montagem ao vivo; só referencia os nós do contrato.
         const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`);
@@ -483,7 +567,8 @@ export class AuthoredViewModels {
           : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family && !weaponBaked(id));
         if (owner) attachMintWeapon(entry, owner);
       }
-      if (entryKeyFor(this.weapon) === key && !this.utility) {
+      if (acceptsAuthoredLoad({ request, activeRequest: this._activeRequest, key,
+        activeKey: entryKeyFor(this.weapon), utility: Boolean(this.utility) })) {
         // Chegada tardia entra SUBINDO pelo arco de draw, nunca trocando no meio do idle.
         entry.mount.visible = true;
         this.draw(this.weapon);
@@ -518,6 +603,8 @@ export class AuthoredViewModels {
   setWeapon(id) {
     const previous = this.weapon;
     this.weapon = id;
+    const request = ++this._requestSerial;
+    this._activeRequest = request;
     const key = entryKeyFor(id);
     for (const entry of this.entries.values()) {
       const visible = this.utility ? entry === this.utility.entry : entry.key === key;
@@ -528,7 +615,7 @@ export class AuthoredViewModels {
     if (!key) return false;
     const entry = this.entries.get(key);
     if (!entry) {
-      this._loadFamily(key);
+      this._loadFamily(key, request);
       return false;
     }
     if (previous !== id) this._idle(entry);
@@ -541,7 +628,7 @@ export class AuthoredViewModels {
     const family = familyFor(this.weapon);
     if (!family || !this._recoilParams || family === this._recoilFamily) return;
     this._recoilFamily = family;
-    this.recoil.setFamily(this._recoilParams, family, VM_WEAPON[this.weapon]?.recoilScale ?? 1);
+    this.recoil.setFamily(this._recoilParams, family, cfgArma(this.weapon)?.recoilScale ?? 1);
   }
 
   setAim(id = this.weapon, amount = 0) {
@@ -584,6 +671,11 @@ export class AuthoredViewModels {
       if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) this._stepEntry(entry, step);
     }
     if (!active?.mount.visible) return;
+    if (active.adsAction) {
+      // _idle pode ter parado todas as ações (stopAllAction): a camada volta a tocar aqui.
+      if (!active.adsAction.isRunning()) active.adsAction.play();
+      active.adsAction.setEffectiveWeight(this.adsAmount);
+    }
     this._stepEntry(active, step);
     this._time += step;
     // Dono único do transform do mount: base ∘ arco de draw ∘ recuo (ADS: M6).
@@ -615,7 +707,7 @@ export class AuthoredViewModels {
     // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
-    const adsConfig = VM_WEAPON[this.weapon]?.ads;
+    const adsConfig = cfgArma(this.weapon)?.ads;
     const wrap = active.mint?.active;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {
@@ -631,10 +723,21 @@ export class AuthoredViewModels {
           _adsQuat.setFromEuler(active.mount.rotation).premultiply(_adsBlend);
           active.mount.rotation.setFromQuaternion(_adsQuat);
           active.mount.updateWorldMatrix(true, true);
+          // Rolagem: o ADS do pack alinha a rotação inteira do AimPoint, não só o cano.
+          const up = active.sockets?.up && mintPointScene(active, 'up');
+          const alca = up && mintPointScene(active, 'sight');
+          if (up && alca) {
+            const rolagem = Math.atan2(up.x - alca.x, up.y - alca.y);
+            _adsQuat.setFromEuler(active.mount.rotation).premultiply(_adsRoll.setFromAxisAngle(_ADS_ROLL, rolagem * ads));
+            active.mount.rotation.setFromQuaternion(_adsQuat);
+            active.mount.updateWorldMatrix(true, true);
+          }
           const sight = mintPointScene(active, 'sight');
           if (sight) {
             active.mount.position.x += -sight.x * ads;
             active.mount.position.y += -sight.y * ads;
+            // Alívio de olho do pack (aimPointOffset do Settings): alça a `alivio` m do olho.
+            if (adsConfig.alivio) active.mount.position.z += (-adsConfig.alivio - sight.z) * ads;
             // Recuar a alça para distância-alvo joga a arma fora do quadro
             // (testado 31/08): calibração fina por família, não fórmula.
           }
@@ -654,6 +757,7 @@ export class AuthoredViewModels {
   muzzleWorld(id = this.weapon, camera = null) {
     const entry = this.entry(id);
     if (!entry?.mount.visible || !camera) return null;
+    if (entry.sockets?.boca) return camera.localToWorld(entry.sockets.boca.getWorldPosition(new THREE.Vector3()));
     // Arma Mint montada tem boca MEDIDA (weaponMetrics); o bbox é só fallback.
     const mint = mintPointWorld(entry, 'muzzle', camera);
     if (mint) return mint;
@@ -724,7 +828,7 @@ export class AuthoredViewModels {
     }
     // Pistolas cs16: o arco procedural É o estado draw — cadência do QC e
     // expiração no update (não há clipe para "terminar"). Revisão 29/08.
-    const useGameplayTiming = VM_WEAPON[id]?.timing === 'gameplay';
+    const useGameplayTiming = cfgArma(id)?.timing === 'gameplay';
     entry.drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.12, duration || 0.32);
     entry.drawTime = 0;
     entry.state = 'draw';
@@ -779,7 +883,7 @@ export class AuthoredViewModels {
       entry.state = 'fire';
       return this._play(entry, 'shoot', { fade: 0.01 });
     }
-    if (cs16 && VM_WEAPON[id]?.timing !== 'gameplay') {
+    if (cs16 && cfgArma(id)?.timing !== 'gameplay') {
       // Máquina de 6 estados do QC: shoot1→2→3 cicla como as três sequências.
       // O recuo do mount voltou com a escala em metro (antes era invisível).
       this.recoil.shoot(this._time);
@@ -832,6 +936,8 @@ export class AuthoredViewModels {
     return this._play(entry, names[0], { timeScale, fade: 0.02, preserveQueue: true });
   }
 
+  // O listener `finished` dispara dentro do update; a troca fica para depois do mixer.
+  // Cobertura: tools/eval/authored-transition-check.mjs.
   _stepEntry(entry, step) {
     entry.updatingMixer = true;
     try {
@@ -853,8 +959,8 @@ export class AuthoredViewModels {
     // Sem guarda de visibilidade: fila encalhada com mount oculto era pose congelada.
     const next = entry.queue.shift();
     if (next) this._play(entry, next.name, { timeScale: next.timeScale, preserveQueue: true });
-    // fim de clipe volta ao idle com FADE: o último frame não fecha nos
-    // twists do braço e o snap seco era um pop no fim de toda recarga.
+    // Mount visível volta com fade; oculto usa troca seca para não congelar sem updates.
+    // Cobertura: tools/eval/authored-transition-check.mjs.
     else this._idle(entry, entry.mount.visible ? 0.15 : 0);
   }
 

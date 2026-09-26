@@ -15,8 +15,8 @@
  *      contrato explícito para que uma troca de política seja uma decisão, não um acidente.
  *
  * Mutação:
- *   --mutante=clamp   serve o authoredvm.js com o clamp antigo (max(cameraFov, 84)) →
- *                     a régua tem que ficar VERMELHA em toda arma golden.
+ *   --mutante=clamp   serve authoredvm.js e meleevm.js com o clamp antigo (max(fov, 84)) →
+ *                     a régua tem que ficar VERMELHA em toda arma golden e na faca.
  *
  *   node tools/eval/vm-camera-check.mjs --porta=4361 [--armas=ak,pistol]
  */
@@ -53,12 +53,23 @@ async function abrir(viewport) {
   if (MUTANTE === 'clamp') {
     // Reproduz o defeito do tronco (fc32ebb13…c25a14ed0): fov da família por cima da câmera.
     const fonte = fs.readFileSync('public/js/authoredvm.js', 'utf8')
-      .replace('? { x: 0, y: 0, z: 0, fov: cameraFov }', '? { x: 0, y: 0, z: 0, fov: Math.max(cameraFov, 84) }');
-    if (!fonte.includes('Math.max(cameraFov, 84) }')) throw new Error('mutante clamp não encontrou a linha');
+      .replace('? { x: 0, y: 0, z: 0, fov: cameraFov }', '? { x: 0, y: 0, z: 0, fov: Math.max(cameraFov, 84) }')
+      // O fov projetado sai do `return` do pacote, não do `frame`: só o frame deixava o mutante cego.
+      .replace('cameraFov: golden ? cameraFov :', 'cameraFov: golden ? Math.max(cameraFov, 84) :');
+    if (!fonte.includes('Math.max(cameraFov, 84) }') || !fonte.includes('golden ? Math.max(cameraFov, 84) :')) {
+      throw new Error('mutante clamp não encontrou a linha');
+    }
     await pag.route('**/js/authoredvm.js*', (r) =>
       r.fulfill({ contentType: 'application/javascript; charset=utf-8', body: fonte }));
+    // Sem arma golden (tudo em K), a câmera autoral que sobra é a da faca: o clamp vale lá também.
+    const melee = fs.readFileSync('public/js/meleevm.js', 'utf8')
+      .replace('this.cameraFov = camera.fov;', 'this.cameraFov = Math.max(camera.fov, 84);');
+    if (!melee.includes('Math.max(camera.fov, 84)')) throw new Error('mutante clamp não encontrou a câmera da faca');
+    await pag.route('**/js/meleevm.js*', (r) =>
+      r.fulfill({ contentType: 'application/javascript; charset=utf-8', body: melee }));
   }
-  await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0`,
+  // Revisão explícita: sem a chave de lançamento o jogo nasce no legado (eval:vm-launch).
+  await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0&vmauthored=1`,
     { waitUntil: 'load', timeout: 180000 });
   await pag.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await pag.waitForTimeout(2000);
@@ -90,8 +101,10 @@ if (!ALVO.includes('knife') && !SO.length) ALVO.push('knife');   // a faca tem c
 
 const linhas = [];
 for (const arma of ALVO) {
+  // A faca mede o GLB que o meleevm.js serve (produto K privado ou golden público).
+  const faca = /const KNIFE_URL = [`'"]\/([^?`'"]+)/.exec(fs.readFileSync('public/js/meleevm.js', 'utf8'))?.[1];
   const glb = arma === 'knife'
-    ? 'public/models/viewmodels/coro/melee/knife-hires.glb'
+    ? `public/${faca}`
     : `public/models/viewmodels/coro/${arma}-hires.glb`;
   if (!fs.existsSync(glb)) { linhas.push({ arma, ok: false, motivo: 'GLB ausente' }); continue; }
   const cam = cameraDoGlb(glb);

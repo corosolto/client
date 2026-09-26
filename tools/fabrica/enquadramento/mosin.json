@@ -1,0 +1,47 @@
+{
+  "id": "mosin",
+  "curta": false,
+  "golden": {
+    "eixo": 28.7,
+    "centro": [
+      0.835,
+      0.767
+    ]
+  },
+  "frameBase": {
+    "x": 0.065,
+    "y": 0.04,
+    "z": -0.203,
+    "fov": 57,
+    "rotDeg": [
+      1.69,
+      7.69,
+      6.19
+    ]
+  },
+  "antes": {
+    "tamanhoVsAk": 1.007,
+    "bracoVsAk": 2.349,
+    "eixo": 35.3,
+    "cruz": 118,
+    "centro": [
+      0.835,
+      0.764
+    ]
+  },
+  "frame": {
+    "x": 0.175,
+    "y": -0.04,
+    "z": -0.123
+  },
+  "depois": {
+    "tamanhoVsAk": 0.826,
+    "bracoVsAk": 0.971,
+    "eixo": 29.2,
+    "cruz": 0,
+    "centro": [
+      0.837,
+      0.749
+    ]
+  }
+}

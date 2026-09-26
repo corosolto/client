@@ -1,0 +1,13 @@
+{
+  "id": "awp",
+  "arma": "awp",
+  "chassi": "L96X",
+  "descricao": "AWP = L96X do pack (o Accuracy International que a AWP é).",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "sniper",
+    "fonte": "recoil.json ← Animations/L96X (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}
