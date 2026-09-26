@@ -15,6 +15,8 @@
 // nome certo. O domínio segue csbrasil.online: trocar domínio no dia do
 // release custa todo o histórico de indexação por zero ganho.
 
+import { MAPAS } from '../data/jogo';
+
 export const SITE = 'https://www.csbrasil.online';
 
 export const BRAND = 'CORO SOLTO';
@@ -32,7 +34,7 @@ export const DESC_SHORT =
 export const DESC_LONG =
   'Jogo FPS gratuito de navegador: arena de sniper estilo praca_poderes do CS 1.6 numa Brasília ' +
   'fictícia e satírica. Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros, ' +
-  '5 mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação, sem cadastro.';
+  `${MAPAS.length} mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação, sem cadastro.`;
 
 // @id estável do nó VideoGame. É o que evita que o mesmo jogo apareça como
 // DUAS entidades quando index.astro e sobre.astro emitem JSON-LD cada um: com

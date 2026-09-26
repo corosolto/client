@@ -35,7 +35,7 @@ const MAPSRC = readFileSync(path.join(ROOT, 'public', 'js', 'maps.js'), 'utf8');
 const MAINSRC = readFileSync(path.join(ROOT, 'public', 'js', 'main.js'), 'utf8');
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (mutant && !['sem-rotacao', 'ignora-escolha', 'salva-link'].includes(mutant)) {
+if (mutant && !['sem-rotacao', 'ignora-escolha', 'salva-link', 'serve-parado'].includes(mutant)) {
   throw new Error(`mutante desconhecido: ${mutant}`);
 }
 
@@ -74,12 +74,29 @@ if (mutant === 'sem-rotacao' && sessaoSrc) {
 }
 if (mutant === 'ignora-escolha' && sessaoSrc) {
   const antes = sessaoSrc;
-  sessaoSrc = sessaoSrc.replace(/if \(pinned\) return resolveMapId\(savedMap\);\n?/, '');
+  sessaoSrc = sessaoSrc.replace(/if \(pinned\) return guarda\(savedMap, 'mapa fixado'\);\n?/, '');
   if (sessaoSrc === antes) throw new Error('MUTANTE NAO APLICOU: ignora-escolha');
+}
+/* Mutante da parada: a guarda do mapa parado some e ele volta a abrir por link. Se ROT7
+   não acender com isto, ela não está medindo nada. */
+if (mutant === 'serve-parado' && sessaoSrc) {
+  const antes = sessaoSrc;
+  sessaoSrc = sessaoSrc.replace('if (!oficina && MAPAS_PARADOS.has(alvo)) {', 'if (false) {');
+  if (sessaoSrc === antes) throw new Error('MUTANTE NAO APLICOU: serve-parado');
 }
 
 const MAP_IDS = Object.keys(MAPS);
 const DEFAULT_MAP = MAPSRC.match(/export const DEFAULT_MAP = '([^']+)'/)?.[1];
+/* A fila da sugestão anda entre os JOGÁVEIS, não entre todos: mapa parado para
+   retrabalho (MAPAS_PARADOS) continua no registro — é dele que ~50 réguas vivem — mas
+   não pode ser oferecido a quem nunca escolheu. Ler a lista do fonte, e não repetir os
+   ids aqui, é o que impede a régua de envelhecer sozinha quando um mapa voltar. */
+const paradosSrc = /export const MAPAS_PARADOS = new Set\(\[[\s\S]*?\]\);/.exec(MAPSRC)?.[0];
+if (!paradosSrc) failures.push('ROT0 MAPAS_PARADOS não encontrado no maps.js');
+const PARADOS = paradosSrc
+  ? [...paradosSrc.matchAll(/'([^']+)'/g)].map((m) => m[1]).filter((id) => MAPS[id])
+  : [];
+const JOGAVEIS = MAP_IDS.filter((id) => !PARADOS.includes(id));
 // resolveMapId lê a tabela de nomes antigos (#200): sem ela no escopo, ROT4 acusaria o
 // próprio arnês em vez do jogo. Ausência é vermelha, não objeto vazio.
 const aliasSrc = /export const ALIAS_MAPA = \{[^}]*\};/.exec(MAPSRC)?.[0];
@@ -88,9 +105,10 @@ let fns = null;
 if (!failures.length) {
   try {
     fns = Function(
-      'MAPS', 'MAP_IDS', 'DEFAULT_MAP',
+      'MAPS', 'MAP_IDS', 'DEFAULT_MAP', 'MAPAS_PARADOS', 'MAP_IDS_JOGAVEIS', 'console',
       `${aliasSrc}\n${resolveSrc}\n${nextSrc}\n${sessaoSrc}\nreturn { resolveMapId, nextMapId, mapaDaSessao };`.replaceAll('export const', 'const').replaceAll('export function', 'function'),
-    )(Object.fromEntries(MAP_IDS.map((id) => [id, true])), MAP_IDS, DEFAULT_MAP);
+    )(Object.fromEntries(MAP_IDS.map((id) => [id, true])), MAP_IDS, DEFAULT_MAP,
+      new Set(PARADOS), JOGAVEIS, { warn() {} });
   } catch (error) {
     failures.push(`ROT0 funções não avaliam: ${error.message}`);
   }
@@ -98,7 +116,7 @@ if (!failures.length) {
 
 if (fns) {
   const { mapaDaSessao } = fns;
-  const outro = MAP_IDS.find((id) => id !== DEFAULT_MAP);
+  const outro = JOGAVEIS.find((id) => id !== DEFAULT_MAP);
 
   // ROT1 — link compartilhado manda, com ou sem pin
   const rot1 = mapaDaSessao({ urlMap: outro, savedMap: DEFAULT_MAP, pinned: false }) === outro
@@ -109,18 +127,42 @@ if (fns) {
   const rot2 = mapaDaSessao({ urlMap: null, savedMap: outro, pinned: true }) === outro;
   if (!rot2) failures.push('ROT2 escolha explícita (pin) não é respeitada');
 
-  // ROT3 — quem nunca escolheu percorre TODOS os mapas, um por visita, e fecha o ciclo
+  // ROT3 — quem nunca escolheu percorre todos os mapas JOGÁVEIS, um por visita, e fecha o ciclo
   const vistos = [];
   let mapa = DEFAULT_MAP;
-  for (let visita = 0; visita < MAP_IDS.length * 2; visita++) {
+  for (let visita = 0; visita < JOGAVEIS.length * 2; visita++) {
     mapa = mapaDaSessao({ urlMap: null, savedMap: mapa, pinned: false });
     vistos.push(mapa);
   }
-  const primeiraVolta = vistos.slice(0, MAP_IDS.length);
-  const rot3 = new Set(primeiraVolta).size === MAP_IDS.length
-    && primeiraVolta.every((id) => MAP_IDS.includes(id))
-    && vistos[MAP_IDS.length] === vistos[0];
-  if (!rot3) failures.push(`ROT3 rotação não percorre os ${MAP_IDS.length} mapas em ciclo: ${vistos.join(' → ')}`);
+  const primeiraVolta = vistos.slice(0, JOGAVEIS.length);
+  const rot3 = new Set(primeiraVolta).size === JOGAVEIS.length
+    && primeiraVolta.every((id) => JOGAVEIS.includes(id))
+    && vistos[JOGAVEIS.length] === vistos[0];
+  if (!rot3) failures.push(`ROT3 rotação não percorre os ${JOGAVEIS.length} mapas jogáveis em ciclo: ${vistos.join(' → ')}`);
+
+  /* ROT7 — mapa PARADO não chega ao jogador fora da oficina. Três caminhos, porque são
+     três portas diferentes: a fila da sugestão, o link `?map=` e o pin salvo de antes da
+     parada. O pin é o traiçoeiro: quem fixou o mapa quando ele era jogável continuaria
+     abrindo nele para sempre. */
+  if (PARADOS.length) {
+    const naFila = vistos.filter((id) => PARADOS.includes(id));
+    if (naFila.length) failures.push(`ROT7 rotação ofereceu mapa parado: ${[...new Set(naFila)].join(', ')}`);
+    for (const parado of PARADOS) {
+      if (mapaDaSessao({ urlMap: parado, savedMap: DEFAULT_MAP, pinned: false }) === parado) {
+        failures.push(`ROT7 ?map=${parado} abriu um mapa parado fora da oficina`);
+      }
+      if (mapaDaSessao({ urlMap: null, savedMap: parado, pinned: true }) === parado) {
+        failures.push(`ROT7 pin salvo em ${parado} continuou abrindo um mapa parado fora da oficina`);
+      }
+    }
+
+    // ROT8 — a oficina EXISTE: com ?oficina=1 o mapa parado abre, senão não há como refazê-lo
+    for (const parado of PARADOS) {
+      if (mapaDaSessao({ urlMap: parado, savedMap: DEFAULT_MAP, pinned: false, oficina: true }) !== parado) {
+        failures.push(`ROT8 oficina não abre ${parado}`);
+      }
+    }
+  }
 
   // ROT4 — id desconhecido/corrompido não lança e cai em mapa válido
   try {
@@ -132,7 +174,7 @@ if (fns) {
 }
 
 // ROT5 — fiação do menu: main.js decide pela mapaDaSessao e o carrossel grava o pin
-const rot5 = /mapaDaSessao\(\{ urlMap, savedMap: settings\.map, pinned: settings\.mapPinned \}\)/.test(MAINSRC)
+const rot5 = /mapaDaSessao\(\{ urlMap, savedMap: settings\.map, pinned: settings\.mapPinned, oficina \}\)/.test(MAINSRC)
   && /settings\.mapPinned = true;/.test(MAINSRC);
 if (!rot5) failures.push('ROT5 main.js não usa mapaDaSessao ou o carrossel não grava mapPinned');
 
@@ -150,5 +192,5 @@ if (failures.length) {
   console.error(`\x1b[31mMAP-ROTATION ${failures.length} VERMELHA(S)\x1b[0m${mutant ? ` (mutante=${mutant})` : ''}`);
   process.exitCode = 1;
 } else {
-  console.log('\x1b[32mMAP-ROTATION verde: link manda, escolha fica, e quem não escolhe roda pelos 5 mapas\x1b[0m');
+  console.log(`\x1b[32mMAP-ROTATION verde: link manda, escolha fica, quem não escolhe roda pelos ${JOGAVEIS.length} mapas jogáveis, e os ${PARADOS.length} parados só abrem na oficina\x1b[0m`);
 }

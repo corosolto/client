@@ -77,6 +77,15 @@ async function loadModule(spec, fromDir) {
 async function evalDeclarations(code, filename, seed = {}) {
   const scope = { __ENV: process.env, ...seed };
   const imports = [];
+  /* `.ts` de verdade (interface, `as const`, anotação) não roda no `vm`: quem tira os
+     tipos é o próprio Node (`stripTypeScriptTypes`, v22.13+), não uma gambiarra de regex.
+     Sem isto, `src/lib/site.ts` importando `src/data/jogo.ts` derrubava o arnês inteiro. */
+  if (filename.endsWith('.ts')) {
+    try {
+      const { stripTypeScriptTypes } = await import('node:module');
+      if (typeof stripTypeScriptTypes === 'function') code = stripTypeScriptTypes(code, { mode: 'strip' });
+    } catch { /* Node antigo: cai no erro explicativo abaixo, que é melhor que servir quebrado */ }
+  }
   const body = code
     .replace(IMPORT_LINE, (_, clause, spec) => { imports.push([clause, spec]); return ''; })
     .replace(/^declare\s[^\n]*$/gm, '')
@@ -148,7 +157,10 @@ async function renderIndex() {
 http.createServer(async (req, res) => {
   try {
     let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-    if (p === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(await renderIndex()); }
+    /* O 200 só depois do render: escrever cabeçalho antes do `await` fazia o catch cair
+       em ERR_HTTP_HEADERS_SENT e MATAR o servidor no primeiro request — quatro portões
+       viravam 'ERR_CONNECTION_REFUSED' e ninguém via a causa. */
+    if (p === '/') { const html = await renderIndex(); res.writeHead(200, { 'content-type': 'text/html' }); return res.end(html); }
     if (p === '/eval-character.html') {
       res.writeHead(200, { 'content-type': 'text/html' });
       return res.end(CHARACTER_EVAL_SHELL);
@@ -158,7 +170,10 @@ http.createServer(async (req, res) => {
     const data = await readFile(file);
     res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream' });
     res.end(data);
-  } catch {
-    res.writeHead(404); res.end('404');
+  } catch (erro) {
+    // O motivo vai para o log: 404 mudo já custou uma caçada inteira.
+    console.error('[serve]', req.url, '->', erro?.stack || erro);
+    if (!res.headersSent) res.writeHead(404);
+    res.end('404');
   }
 }).listen(PORT, () => console.log(`eval server -> http://localhost:${PORT}`));
