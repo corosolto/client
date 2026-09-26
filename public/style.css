@@ -1901,6 +1901,9 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-byline strong{color:#b9babf;font-weight:600}
 .ms-badge-oficial{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#b4d92e;border:1px solid rgba(180,217,46,.5);border-radius:3px;text-transform:uppercase}
 .ms-badge-comunidade{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#2e9ed8;border:1px solid rgba(46,158,216,.5);border-radius:3px;text-transform:uppercase}
+/* EM OBRAS: só aparece na oficina (?oficina=1), em mapa parado para retrabalho. Âmbar
+   de canteiro, para não se confundir com o verde do OFICIAL nem com o azul da COMUNIDADE. */
+.ms-badge-parado{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#e0a32e;border:1px solid rgba(224,163,46,.5);border-radius:3px;text-transform:uppercase}
 .ms-count{font-family:var(--font);font-weight:600;font-size:11px;letter-spacing:2px;color:#5c5d63}
 .ms-name{margin:0;font-family:var(--aaa-font-display);font-weight:400;font-size:40px;
   line-height:1;letter-spacing:1px;text-transform:uppercase;color:var(--ink-100);

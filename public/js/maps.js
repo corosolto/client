@@ -99,6 +99,32 @@ export const MAPS = {
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';
 
+/* Mapas fora do jogo para retrabalho: saem do menu, não do registro (é dele que ~50
+   réguas vivem). Contrato e volta: docs/maps/MAPAS-PARADOS.md. */
+export const MAPAS_PARADOS = new Set([
+  'mansao',
+  'parque_treta',
+  'campomorro',
+  'obras_prefeitura',
+  'upa_24h',
+  'atacadao_treta',
+  'penitenciaria',
+]);
+
+/* A lista que o JOGADOR vê. `MAP_IDS` continua sendo o registro inteiro porque é dele
+   que as réguas vivem; quem desenha menu, carrossel, catálogo e rotação usa esta. */
+export const MAP_IDS_JOGAVEIS = MAP_IDS.filter((id) => !MAPAS_PARADOS.has(id));
+
+/* Oficina: a versão alternativa do jogo para refazer mapa por mapa. Com `?oficina=1` o
+   menu volta a listar TODOS, parados inclusive; sem ela, só os jogáveis. */
+export function mapasDoMenu(oficina = false) {
+  return oficina ? MAP_IDS : MAP_IDS_JOGAVEIS;
+}
+
+export function mapaParado(id) {
+  return MAPAS_PARADOS.has(resolveMapId(id));
+}
+
 /* ALIAS DE ID ANTIGO -> NOVO, e por que ele NÃO é opcional.
    ═══════════════════════════════════════════════════════════════════════════════════
    Id de mapa não é detalhe interno: ele SAI do processo por dois caminhos, e os dois
@@ -144,15 +170,31 @@ export function resolveMapId(id) {
   return DEFAULT_MAP;
 }
 
+/* A fila anda só entre os JOGÁVEIS; lista vazia cai no DEFAULT_MAP em vez de
+   dividir por zero. */
 export function nextMapId(id) {
-  return MAP_IDS[(MAP_IDS.indexOf(resolveMapId(id)) + 1) % MAP_IDS.length];
+  const fila = MAP_IDS_JOGAVEIS.length ? MAP_IDS_JOGAVEIS : [DEFAULT_MAP];
+  const atual = resolveMapId(id);
+  const i = fila.indexOf(atual);
+  return fila[(i + 1) % fila.length];
 }
 
 /* Rotação da sugestão inicial (pedido do dono: menos awp_map, mais exposição dos
    outros mapas): link ?map= manda sempre; quem escolheu no carrossel (pin) fica
-   no escolhido; quem nunca escolheu recebe o próximo da fila a cada visita. */
-export function mapaDaSessao({ urlMap, savedMap, pinned } = {}) {
-  if (urlMap) return resolveMapId(urlMap);
-  if (pinned) return resolveMapId(savedMap);
+   no escolhido; quem nunca escolheu recebe o próximo da fila a cada visita.
+
+   Mapa parado fora da oficina cai no DEFAULT_MAP COM aviso: trocar o mapa do jogador
+   calado é o defeito mais caro deste repo. */
+export function mapaDaSessao({ urlMap, savedMap, pinned, oficina = false } = {}) {
+  const guarda = (id, origem) => {
+    const alvo = resolveMapId(id);
+    if (!oficina && MAPAS_PARADOS.has(alvo)) {
+      console.warn(`[mapas] '${alvo}' está parado para retrabalho (${origem}); abrindo '${DEFAULT_MAP}'. Use ?oficina=1 para jogá-lo assim mesmo.`);
+      return DEFAULT_MAP;
+    }
+    return alvo;
+  };
+  if (urlMap) return guarda(urlMap, '?map=');
+  if (pinned) return guarda(savedMap, 'mapa fixado');
   return nextMapId(savedMap);
 }

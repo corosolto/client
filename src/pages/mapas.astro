@@ -29,6 +29,7 @@ import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 
 const nCtf = MAPAS.filter(m => m.ctf).length;
 const nRounds = MAPAS.length - nCtf;
+const CTF_NOMES = MAPAS.filter(m => m.ctf).map(m => m.nome);
 const plural = (n: number, um: string, muitos: string) => (n === 1 ? um : muitos);
 
 /* A captura de cada arena tem o nome do PRÓPRIO id do mapa. Casar por id (e não
@@ -78,7 +79,7 @@ const jsonld = [
   </Fragment>
 
   {/* ARENA DE ABERTURA: imagem à esquerda, texto à direita - o enquadramento da
-      tela de escolha de mapa do jogo. As outras quatro entram na grade. */}
+      tela de escolha de mapa do jogo. As outras entram na grade. */}
   <article class="card wide">
     <div class="fig">
       <img src={preview(destaque.id)} width="640" height="640" alt={`Vista aérea da arena ${destaque.nome}`} loading="eager" decoding="async">
@@ -119,8 +120,8 @@ const jsonld = [
     <li><strong>Rounds:</strong> 4×4 por padrão (o menu vai de 1 a 8 por lado), com respawn de
       2,2 s. Round de 1:39; leva o round o time com mais abates quando o relógio zera; 3 rounds
       vencem a partida, e a 5ª rodada é o teto.</li>
-    <li><strong>Capture the Flag:</strong> quatro bandeiras espalhadas pela arena. A geometria da
-      Loja H, do Ferro Velho e da Quebrada foi desenhada em volta delas - por isso os três abrem
+    <li><strong>Capture the Flag:</strong> quatro bandeiras espalhadas pela arena. A geometria
+      de{' '}{CTF_NOMES.join(', ')} foi desenhada em volta delas - por isso essas {nCtf} abrem
       em CTF. Em CTF a rodada acaba por captura, não por relógio.</li>
     <li>O mapa é sorteado ou escolhido na tela de seleção, antes de começar.</li>
   </ul>

@@ -647,9 +647,12 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /import \{[^}]*MAP_CATS[^}]*\} from '\.\/mapcat\.js';/.test(main)
   /* TODOS voltou a ser o acervo INTEIRO (21/08) e ordena por partidas jogadas; OFICIAIS
      virou aba própria. Sem o desempate por índice a lista dança entre renders. */
-  && /if \(mapCategory === 'TODOS'\) \{[\s\S]{0,220}playsDe\(b\) - playsDe\(a\) \|\| MAP_IDS\.indexOf\(a\) - MAP_IDS\.indexOf\(b\)/.test(main)
-  && /if \(mapCategory === 'OFICIAIS'\) return MAP_IDS\.filter\(\(id\) => !catsDe\(id\)\.includes\('COMUNIDADE'\)\)/.test(main)
-  && /return MAP_IDS\.filter\(\(id\) => catsDe\(id\)\.includes\(mapCategory\)\)/.test(main)
+  /* A lista do MENU é MAPAS_MENU (= mapasDoMenu(oficina)), não MAP_IDS. MAP_IDS continua
+     sendo o registro inteiro, de onde as réguas vivem; o jogador só vê os JOGÁVEIS, com os
+     parados para retrabalho de fora — a menos que entre pela oficina (?oficina=1). */
+  && /if \(mapCategory === 'TODOS'\) \{[\s\S]{0,240}playsDe\(b\) - playsDe\(a\) \|\| MAPAS_MENU\.indexOf\(a\) - MAPAS_MENU\.indexOf\(b\)/.test(main)
+  && /if \(mapCategory === 'OFICIAIS'\) return MAPAS_MENU\.filter\(\(id\) => !catsDe\(id\)\.includes\('COMUNIDADE'\)\)/.test(main)
+  && /return MAPAS_MENU\.filter\(\(id\) => catsDe\(id\)\.includes\(mapCategory\)\)/.test(main)
   /* a estatística sai do contador REAL (picks_daily via /api/pick), nunca de número local,
      e a tela tem de abrir sem ela: rede caída não pode derrubar a escolha de mapa. */
   && /fetch(?:ComRetry)?\(apiUrl\('\/api\/map-plays'\)\)/.test(main)   // com retry no cold start (06/09), a mesma rota
@@ -658,10 +661,10 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
 
   /* zero partidas é AUSÊNCIA de medida, não medida de zero: o crachá some em vez de mentir */
   && /plays\.hidden = !n;/.test(funcMap)
-  && /function stepMap\(dir, ids = MAP_IDS\)/.test(main)
-  && /const pool = ids\.length \? ids : MAP_IDS;/.test(main)
+  && /function stepMap\(dir, ids = MAPAS_MENU\)/.test(main)
+  && /const pool = ids\.length \? ids : MAPAS_MENU;/.test(main)
   && /const nextId = pool\[\(Math\.max\(0, pool\.indexOf\(currentMap\)\) \+ dir \+ pool\.length\) % pool\.length\];/.test(main)
-  && /gotoMap\(MAP_IDS\.indexOf\(nextId\)\)/.test(main)
+  && /gotoMap\(MAPAS_MENU\.indexOf\(nextId\)\)/.test(main)
   && /\$\('ms-prev'\)\.onclick = \(\) => stepMap\(-1, visibleMapIds\(\)\)/.test(main)
   && /\$\('ms-next'\)\.onclick = \(\) => stepMap\(1, visibleMapIds\(\)\)/.test(main)
   && /e\.key === 'ArrowLeft'[\s\S]{0,100}stepMap\(-1, visibleMapIds\(\)\)/.test(main)
