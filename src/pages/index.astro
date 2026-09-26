@@ -659,6 +659,89 @@ window.__GEO_LANG__ = (function () {
   <div class="cs-vignette"></div>
   <div class="scanlines"></div>
 
+  <div id="hub-ui" class="hub-ui" hidden>
+    <header class="hub-header">
+      <img class="hub-logo" src="/logo.png" alt="CORO SOLTO: Treta Suprema" width="160" height="96">
+      <nav class="hub-tabs" role="tablist" aria-label="Seções da home">
+        <button type="button" role="tab" aria-selected="true" aria-controls="hub-play" data-hub-tab="jogar">JOGAR</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="hub-ranking" data-hub-tab="ranking">RANKING</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="hub-about" data-hub-tab="sobre">SOBRE O JOGO</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="hub-feedback" data-hub-tab="feedback">FEEDBACK</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="hub-support" data-hub-tab="apoie">APOIE O JOGO</button>
+      </nav>
+      <div class="hub-online" aria-live="polite"><i aria-hidden="true"></i><span id="hub-online-n">—</span> ONLINE</div>
+      <button id="hub-profile" class="hub-header-action" type="button" aria-label="Editar perfil"><span id="hub-avatar">CS</span><b id="hub-nick">SEM NICK</b></button>
+      <button id="hub-settings" class="hub-header-action hub-settings" type="button" aria-label="Configurações">⚙</button>
+    </header>
+
+    <section id="hub-play" class="hub-pane hub-play" role="tabpanel" aria-label="Jogar">
+      <div class="hub-net" role="group" aria-label="Tipo de partida">
+        <button id="hub-sp" type="button" aria-pressed="true">SINGLEPLAYER</button>
+        <button id="hub-mp" type="button" aria-pressed="false">MULTIPLAYER <small>BETA</small></button>
+      </div>
+      <div class="hub-play-heading"><small>01 · A PARTIDA</small><h2>ESCOLHA A TRETA</h2></div>
+      <div id="hub-character" class="hub-character" aria-label="Personagem escolhido"></div>
+      <button id="hub-change-character" class="hub-character-card" type="button">
+        <small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><span>TROCAR ▸</span>
+      </button>
+      <div id="hub-multiplayer-entry" class="hub-multiplayer-entry" hidden>
+        <h2>MULTIPLAYER <small>BETA</small></h2>
+        <p>Encontre gente nos servidores públicos ou abra uma sala privada com seus amigos.</p>
+        <button id="hub-open-multiplayer" class="hub-cta" type="button">VER SERVIDORES E SALAS ▸</button>
+      </div>
+    </section>
+
+    <section id="hub-ranking" class="hub-pane hub-info" role="tabpanel" aria-label="Ranking" hidden>
+      <div class="hub-kicker">02 · ARQUIVO</div><h2>PLACAR DA RUA</h2>
+      <p>Seus números ficam neste navegador. O ranking global volta quando as partidas tiverem validação do servidor.</p>
+      <div id="hub-rank-local" class="hub-rank-stats"></div>
+      <div id="hub-rank-global" class="hub-rank-global"></div>
+      <a href="/ranking">ABRIR PÁGINA DO RANKING ↗</a>
+    </section>
+
+    <section id="hub-about" class="hub-pane hub-info" role="tabpanel" aria-label="Sobre o jogo" hidden>
+      <div class="hub-kicker">03 · O JOGO</div><h2>SOBRE O JOGO</h2>
+      <p>CORO SOLTO: Treta Suprema é um FPS gratuito de navegador. Entre numa partida contra bots ou jogue com outras pessoas, escolha seu coro e dispute os mapas da treta.</p>
+      <div id="hub-factions" class="hub-factions"></div>
+      <nav class="hub-link-grid" aria-label="Conheça o jogo">
+        <a href="/sobre">SOBRE ↗</a><a href="/como-jogar">COMO JOGAR ↗</a>
+        <a href="/armas">ARMAS ↗</a><a href="/mapas">MAPAS ↗</a>
+        <a href="/changelog">NOVIDADES ↗</a><a href="https://github.com/corosolto/client" target="_blank" rel="noopener">CÓDIGO ↗</a>
+      </nav>
+    </section>
+
+    <section id="hub-feedback" class="hub-pane hub-info" role="tabpanel" aria-label="Feedback" hidden>
+      <div class="hub-kicker">04 · CANAL ABERTO</div><h2>MANDE O PAPO</h2>
+      <p>Achou um bug ou tem uma ideia? Sua mensagem chega à equipe do jogo.</p>
+      <label for="hub-fb-msg">MENSAGEM</label>
+      <textarea id="hub-fb-msg" maxlength="2000" rows="5" placeholder="Conte o que aconteceu ou o que gostaria de ver…"></textarea>
+      <label for="hub-fb-email">EMAIL</label>
+      <input id="hub-fb-email" type="email" maxlength="254" autocomplete="email" placeholder="seu@email.com">
+      <label class="hub-fb-consent"><input type="checkbox" id="hub-fb-news"> Aceito receber novidades do jogo por email.</label>
+      <p id="hub-fb-status" aria-live="polite"></p>
+      <button id="hub-fb-send" class="hub-cta" type="button">ENVIAR ▸</button>
+      <div class="hub-link-grid"><a href={DISCORD_URL} target="_blank" rel="noopener">DISCORD ↗</a><a href="https://github.com/corosolto/client/issues" target="_blank" rel="noopener">GITHUB ISSUES ↗</a><a href={TELEGRAM_URL} target="_blank" rel="noopener">TELEGRAM ↗</a></div>
+    </section>
+
+    <section id="hub-support" class="hub-pane hub-info" role="tabpanel" aria-label="Apoie o jogo" hidden>
+      <div class="hub-kicker">05 · BANCA DA TRETA</div><h2>APOIE O JOGO</h2>
+      <p>O CORO SOLTO é gratuito e open source. O apoio ajuda a manter servidores, domínio e o desenvolvimento do jogo. Apoiar não dá vantagem na partida.</p>
+      <div class="hub-link-grid"><a href="/apoie">VER FORMAS DE APOIAR ↗</a><a href={GITHUB_URL} target="_blank" rel="noopener">VER O PROJETO NO GITHUB ↗</a></div>
+    </section>
+
+    <footer class="hub-footer"><span><b>DICA</b> Escolha seu mapa e seu personagem antes de entrar na partida.</span><a href="/docs/">DOCS ↗</a><a href="/mapa">MAPA AO VIVO ↗</a></footer>
+  </div>
+
+  <div id="hub-quick" class="hub-modal" hidden>
+    <div class="hub-modal-card" role="dialog" aria-modal="true" aria-labelledby="hub-quick-title">
+      <header><small>ÚLTIMO CORTE</small><h2 id="hub-quick-title">PRONTO PRA TRETA?</h2><button id="hub-quick-close" type="button" aria-label="Fechar">ESC ✕</button></header>
+      <img id="hub-quick-map-img" src="/img/map-previews/praca_poderes.jpg" alt="">
+      <div id="hub-quick-summary"></div>
+      <button id="hub-quick-confirm" class="hub-cta" type="button">JOGAR AGORA ▸</button>
+      <button id="hub-quick-change-map" type="button">OUTRO MAPA ▸</button>
+    </div>
+  </div>
+
   <!-- Chips do topo-direito (redesign, tela 01). São ROTAS REAIS do site, não
        decoração: as mesmas três já existiam soterradas na fileira de 10 links do
        rodapé. Aqui elas ganham o peso que o desenho pede, e o rodapé segue
@@ -787,6 +870,11 @@ window.__GEO_LANG__ = (function () {
           <span id="map-name"> - </span>
           <span id="map-meta"></span>
         </div>
+      </div>
+      <div class="hub-match-chips" role="group" aria-label="Opções da partida">
+        <button id="hub-mode-rounds" type="button" aria-pressed="true"><small>MODO</small><strong>ROUNDS</strong></button>
+        <button id="hub-mode-ctf" type="button" aria-pressed="false"><small>MODO</small><strong>CAPTURA</strong></button>
+        <button id="hub-rounds" type="button"><small>ROUNDS</small><strong id="hub-rounds-value">5</strong></button>
       </div>
       <div class="match-opts">
         <label class="map-label">ARMAS
@@ -1034,6 +1122,7 @@ window.__GEO_LANG__ = (function () {
       </div>
       <button id="char-confirm" class="btn btn-big">USAR PERSONAGEM</button>
     </div>
+    <span id="char-preview-return" hidden></span>
     <div class="char-preview-box">
       <canvas id="char-preview" width="640" height="640"></canvas>
       <img id="char-preview-static" class="hidden" src="" alt="">

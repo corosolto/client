@@ -90,6 +90,7 @@ if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'
 /* AUTO-PERFIL PARA MÁQUINA FRACA: cai pra 'low' por padrão só se o jogador NUNCA escolheu
    qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
 const AUTO_PROFILE = new URLSearchParams(location.search).get('perfilauto') !== '0';
+const HUB_ENABLED = new URLSearchParams(location.search).get('home') === 'hub';
 function detectaHwFraco() {
   const gpu = (renderer.__csWebgl?.renderer || '').toLowerCase();
   const integrada = /intel|iris|uhd graphics|hd graphics|mesa|microsoft basic|swiftshader|llvmpipe|softpipe/.test(gpu);
@@ -341,6 +342,7 @@ loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 /* ---------------- screens ---------------- */
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
+  if (HUB_ENABLED && id === 'char-select') returnPreviewToSelection();
   stopMapPreviews();
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
@@ -351,7 +353,10 @@ function show(id) {
   // aberto embaixo e o VOLTAR cai de volta nele, com mapa/modo/bots intactos.
   if (id !== 'main-menu' && id !== 'map-screen') { const ms = document.getElementById('menu-setup'); if (ms) ms.classList.remove('open'); }
   else { applyHomeWall(); if (musicArmed) startMenuMusic(); }   // volta pra home: wallpaper + música de menu
-  if (id === 'main-menu') setTimeout(focusMenu, 40);   // teclado: ↑/↓ navegam assim que a home aparece
+  if (id === 'main-menu') {
+    if (HUB_ENABLED) { $('menu-setup').classList.add('open'); syncHomeCharacter(); }
+    setTimeout(focusMenu, 40);   // teclado: ↑/↓ navegam assim que a home aparece
+  }
 }
 const $ = id => document.getElementById(id);
 const FACTION_ART_URLS = ['/img/faccoes/time-e.webp', '/img/faccoes/time-b.webp', '/img/faccoes/tribos.webp', '/img/faccoes/palhacos.webp', '/img/faccoes/funkeiros.webp', '/img/faccoes/mitico.webp'];
@@ -554,6 +559,7 @@ function focusMenu() {
   if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
   const menu = document.getElementById('main-menu');
   if (!menu || menu.classList.contains('hidden')) return;
+  if (HUB_ENABLED) { document.querySelector('.hub-tabs [aria-selected="true"]')?.focus(); return; }
   const ms = document.getElementById('menu-setup');
   if (ms && ms.classList.contains('open')) return;
   const first = [...document.querySelectorAll('.cs-item')].find((b) => b.offsetParent !== null);
@@ -858,7 +864,24 @@ function pvThumb(def) {
 }
 
 /* ---------------- game lifecycle ---------------- */
-let game = null, currentTeam = 'E', currentFaction = 'E', currentChar = CHARACTERS[0].id, selChar = null;
+const rememberedChar = localStorage.getItem('csbr-home-character');
+const initialChar = CHARACTERS.find((c) => c.id === rememberedChar) || CHARACTERS[0];
+let game = null, currentTeam = initialChar.team === 'B' ? 'B' : 'E', currentFaction = initialChar.team, currentChar = initialChar.id, selChar = null;
+function returnPreviewToSelection() {
+  const box = document.querySelector('.char-preview-box');
+  const marker = $('char-preview-return');
+  if (box && marker && box.parentElement !== marker.parentElement) marker.parentElement.insertBefore(box, marker.nextSibling);
+}
+function syncHomeCharacter() {
+  if (!HUB_ENABLED || $('main-menu')?.dataset.hubTab !== 'jogar' || $('main-menu')?.dataset.hubNet !== 'sp') return;
+  const box = document.querySelector('.char-preview-box');
+  const host = $('hub-character');
+  if (box && host && box.parentElement !== host) host.appendChild(box);
+  const def = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
+  $('hub-character-name').textContent = `${tr(FACTION_NAME[def.team] || def.team)} · ${def.name}`;
+  $('hub-change-character').style.setProperty('--hub-faction', PALETA[def.team]?.base || '#b4d92e');
+  pvSetChar(def);
+}
 let pickingEnemy = false, currentEnemyFaction = null;   // 2º passo do team-select: escolher o adversário
 let submitted = true;   // stats da partida atual já enviados?
 
@@ -1702,6 +1725,12 @@ addEventListener('keydown', (e) => {
   // ESC na map screen = o VOLTAR dela (cai de volta no setup, estado intacto)
   if (!$('map-screen').classList.contains('hidden')) { e.preventDefault(); ui.back(); show('main-menu'); return; }
   if ($('main-menu').classList.contains('hidden')) return;
+  if (HUB_ENABLED) {
+    if (menuSetup.dataset.step === 'profile') {
+      e.preventDefault(); ui.back(); setSetupStep('match'); $('hub-profile').focus();
+    }
+    return;
+  }
   // ESC no passo do perfil volta pro passo da partida — só o segundo ESC fecha o painel.
   if (menuSetup.classList.contains('open') && menuSetup.dataset.step === 'profile') {
     e.preventDefault(); ui.back(); setSetupStep('match'); return;
@@ -1711,6 +1740,9 @@ addEventListener('keydown', (e) => {
 // Clique no wallpaper (fora do painel e fora da nav) também fecha — comportamento de
 // qualquer painel docado; sem isso o jogador tenta e não acontece nada.
 $('main-menu').addEventListener('pointerdown', (e) => {
+  if (HUB_ENABLED && e.target === menuSetup && menuSetup.dataset.step === 'profile') {
+    ui.back(); setSetupStep('match'); $('hub-profile').focus(); return;
+  }
   if (e.target.closest('.cs-setup') || e.target.closest('.cs-left')) return;
   closeSetup(true);
 });
@@ -1749,6 +1781,112 @@ $('btn-jogar').onclick = async () => {
   window.__gameLaunch?.ready('menu');
   ensureTeamPreviews();   // thumbnails 3D dos times (async, cacheia no card)
 };
+if (HUB_ENABLED) {
+  document.documentElement.dataset.homeUi = 'hub';
+  $('hub-ui').hidden = false;
+  $('main-menu').dataset.hubTab = 'jogar';
+  $('main-menu').dataset.hubNet = 'sp';
+  menuSetup.classList.add('open');
+  const tabs = [...document.querySelectorAll('.hub-tabs [data-hub-tab]')];
+  const panes = { jogar: $('hub-play'), ranking: $('hub-ranking'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
+  const setHubTab = (tab) => {
+    $('main-menu').dataset.hubTab = tab;
+    for (const button of tabs) {
+      const active = button.dataset.hubTab === tab;
+      button.setAttribute('aria-selected', String(active));
+      button.tabIndex = active ? 0 : -1;
+    }
+    for (const [name, pane] of Object.entries(panes)) pane.hidden = name !== tab;
+    if (tab === 'ranking') void renderHubRanking();
+    if (tab === 'jogar') syncHomeCharacter();
+  };
+  tabs.forEach((button, index) => {
+    button.onclick = () => { ui.click(); setHubTab(button.dataset.hubTab); };
+    button.onkeydown = (event) => {
+      const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (!step) return;
+      event.preventDefault();
+      const next = tabs[(index + step + tabs.length) % tabs.length];
+      next.focus(); next.click();
+    };
+  });
+  const setHubNet = (net) => {
+    $('main-menu').dataset.hubNet = net;
+    $('hub-sp').setAttribute('aria-pressed', String(net === 'sp'));
+    $('hub-mp').setAttribute('aria-pressed', String(net === 'mp'));
+    $('hub-multiplayer-entry').hidden = net !== 'mp';
+    if (net === 'sp') syncHomeCharacter();
+  };
+  $('hub-sp').onclick = () => { ui.click(); setHubNet('sp'); };
+  $('hub-mp').onclick = () => { ui.click(); setHubNet('mp'); };
+  $('hub-open-multiplayer').onclick = () => { ui.click(); abrirMultiplayer(); };
+  $('hub-change-character').onclick = async () => {
+    ui.click();
+    await factionArtReady;
+    setTeamStep('side'); show('team-select'); ensureTeamPreviews();
+  };
+  $('hub-profile').onclick = () => { setHubTab('jogar'); setHubNet('sp'); openProfileStep(true); };
+  $('hub-settings').onclick = () => { ui.click(); settingsReturn = 'main-menu'; show('settings-panel'); };
+  const onlineCount = $('mf-online-n');
+  const syncOnline = () => { $('hub-online-n').textContent = onlineCount.textContent || '—'; };
+  new MutationObserver(syncOnline).observe(onlineCount, { childList: true, characterData: true, subtree: true });
+  syncOnline();
+  const factionGrid = $('hub-factions');
+  for (const fac of ['E', 'B', 'U', 'C', 'F', 'M']) {
+    const item = document.createElement('div');
+    item.style.setProperty('--hub-faction', PALETA[fac]?.base || '#b4d92e');
+    const crest = document.createElement('img'); crest.src = `/img/brasoes/${fac.toLowerCase()}.png`; crest.alt = '';
+    const name = document.createElement('span'); name.textContent = tr(FACTION_NAME[fac] || fac);
+    item.append(crest, name); factionGrid.appendChild(item);
+  }
+  const legacyPlay = $('btn-jogar').onclick;
+  $('btn-jogar').onclick = () => {
+    if (!(nickEl.value || '').trim()) { legacyPlay(); return; }
+    ui.click(); openHubQuick();
+  };
+  const closeQuick = () => { $('hub-quick').hidden = true; $('btn-jogar').focus(); };
+  $('hub-quick-close').onclick = closeQuick;
+  $('hub-quick').onclick = (event) => { if (event.target === $('hub-quick')) closeQuick(); };
+  addEventListener('keydown', (event) => {
+    if ($('hub-quick').hidden) return;
+    if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); closeQuick(); return; }
+    if (event.key !== 'Tab') return;
+    const controls = [...$('hub-quick').querySelectorAll('button:not([disabled])')];
+    const first = controls[0], last = controls.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }, { capture: true });
+  $('hub-quick-confirm').onclick = () => {
+    $('hub-quick').hidden = true;
+    void startGame(currentTeam, currentChar, currentEnemyFaction);
+  };
+  $('hub-quick-change-map').onclick = () => { $('hub-quick').hidden = true; $('map-preview').click(); };
+  $('hub-fb-send').onclick = () => submitFeedbackFor('hub-fb');
+  setHubTab('jogar');
+}
+function openHubQuick() {
+  const def = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
+  $('hub-quick-map-img').src = `/img/map-previews/${currentMap}.jpg`;
+  $('hub-quick-map-img').alt = `Prévia do mapa ${MAPS[currentMap].name}`;
+  const fields = [
+    ['TIPO', 'SINGLEPLAYER'],
+    ['MAPA', MAPS[currentMap].name],
+    ['MODO', matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA'],
+    ['ARMAS', tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS')],
+    ['BOTS', `${settings.bots} POR LADO`],
+    ['ROUNDS', String(matchRounds())],
+    ['VOCÊ', `${tr(FACTION_NAME[def.team] || def.team)} · ${def.name}`],
+  ];
+  const summary = $('hub-quick-summary'); summary.replaceChildren();
+  for (const [label, value] of fields) {
+    const row = document.createElement('div');
+    const name = document.createElement('span'); name.textContent = label;
+    const selected = document.createElement('strong'); selected.textContent = value;
+    row.append(name, selected); summary.appendChild(row);
+  }
+  $('hub-quick').hidden = false;
+  $('hub-quick-close').focus();
+}
 $('btn-ranking').onclick = () => { sfx.uiClick(); showRanking(); };
 $('ranking-back').onclick = () => { ui.back(); markCurrent(null); show('main-menu'); };
 /* FEEDBACK: email + consentimento obrigatórios ANTES de enviar — a tabela é a
@@ -1780,22 +1918,25 @@ function showSupport(region) {
 }
 $('support-br').onclick = () => showSupport('br');
 $('support-intl').onclick = () => showSupport('intl');
-$('fb-send').onclick = async () => {
+async function submitFeedbackFor(prefix) {
   ui.click();
-  const msg = $('fb-msg').value.trim(), email = $('fb-email').value.trim();
-  const news = $('fb-news').checked, st = $('fb-status');
+  const msgEl = $(`${prefix}-msg`), emailEl = $(`${prefix}-email`), newsEl = $(`${prefix}-news`);
+  const sendEl = $(`${prefix}-send`), st = $(`${prefix}-status`);
+  const msg = msgEl.value.trim(), email = emailEl.value.trim();
+  const news = newsEl.checked;
   const falha = (t, campo) => { st.textContent = t; st.classList.add('erro'); campo?.classList.add('invalid');
     setTimeout(() => campo?.classList.remove('invalid'), 600); };
   st.classList.remove('erro');
-  if (msg.length < 3) return falha(tr('escreve o feedback primeiro'), $('fb-msg'));
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return falha(tr('preenche um email válido'), $('fb-email'));
+  if (msg.length < 3) return falha(tr('escreve o feedback primeiro'), msgEl);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return falha(tr('preenche um email válido'), emailEl);
   if (!news) return falha(tr('marca o aceite da newsletter pra enviar'), null);
-  $('fb-send').disabled = true; st.textContent = tr('enviando…');
+  sendEl.disabled = true; st.textContent = tr('enviando…');
   const res = await api('/api/feedback', { email, newsletter: news, message: msg, map: currentMap, version: VERSION });
-  $('fb-send').disabled = false;
-  if (res && res.ok) { st.textContent = tr('valeu! feedback enviado.'); $('fb-msg').value = ''; }
+  sendEl.disabled = false;
+  if (res && res.ok) { st.textContent = tr('valeu! feedback enviado.'); msgEl.value = ''; }
   else falha(res?.error === 'rate_limited' ? tr('calma — muitos envios, tenta daqui a pouco') : tr('não deu pra enviar agora, tenta de novo mais tarde'), null);
-};
+}
+$('fb-send').onclick = () => submitFeedbackFor('fb');
 // carrossel de mapas: setas ‹ › trocam o mapa E o fundo 3D do menu + thumbnail real do mapa
 const mapNameEl = $('map-name');
 const mapThumb = $('map-thumb');
@@ -1844,6 +1985,11 @@ function setMapMode() {
   }
   const d = $('map-dots');
   if (d) d.innerHTML = MAPAS_MENU.map((_, i) => `<i class="${i === mapIdx ? 'on' : ''}"></i>`).join('');
+  if (HUB_ENABLED) {
+    $('hub-mode-rounds').setAttribute('aria-pressed', String(matchMode === 'rounds'));
+    $('hub-mode-ctf').setAttribute('aria-pressed', String(matchMode === 'ctf'));
+    $('hub-rounds-value').textContent = String(matchRounds());
+  }
   setMapMeta();
 }
 // O badge de modo virou BOTÃO: pedido do dono ("os mapas todos podem ser rounds ou CTF,
@@ -1862,6 +2008,16 @@ function setMapMode() {
     setSetupStep('match');   // o eyebrow do passo carrega o modo (PARTIDA / PARTIDA (CTF))
     renderMapScreen();       // a tela cheia acompanha o modo (rounds por modo, ficha)
   });
+}
+if (HUB_ENABLED) {
+  $('hub-mode-rounds').onclick = () => { if (matchMode !== 'rounds') $('map-mode').click(); };
+  $('hub-mode-ctf').onclick = () => { if (matchMode !== 'ctf') $('map-mode').click(); };
+  $('hub-rounds').onclick = () => {
+    const options = [1, 3, 5, 7];
+    const next = options[(options.indexOf(matchRounds()) + 1) % options.length];
+    settings[matchMode === 'ctf' ? 'ctfRounds' : 'rounds'] = next;
+    saveSettings(); ui.click(); setMapMode(); renderMapScreen();
+  };
 }
 let mapIdx = Math.max(0, MAPAS_MENU.indexOf(currentMap));
 function gotoMap(i) {
@@ -2262,6 +2418,7 @@ $('char-confirm').onclick = () => {
   if (switchMode && game) {
     switchMode = false;
     currentChar = selChar.id;
+    if (HUB_ENABLED) localStorage.setItem('csbr-home-character', currentChar);
     show(null);
     try {
       game._switchTeam(selChar.id);
@@ -2269,6 +2426,14 @@ $('char-confirm').onclick = () => {
       currentEnemyFaction = game.enemyFaction; currentChar = game.playerCharId;
     } catch (e) { console.error('switch team failed', e); }
     game.resume();   // unpause + re-request pointer lock (fixes "M opens but game won't resume")
+  } else if (HUB_ENABLED) {
+    switchMode = false;
+    currentChar = selChar.id;
+    currentFaction = selChar.team;
+    currentTeam = currentFaction === 'B' ? 'B' : 'E';
+    currentEnemyFaction = null;
+    localStorage.setItem('csbr-home-character', currentChar);
+    show('main-menu');
   } else {
     switchMode = false;
     // 2º passo: escolher o ADVERSÁRIO (reusa o team-select com título trocado).
@@ -2504,6 +2669,10 @@ function renderPlayerPlate() {
   const nick = (nickEl.value || '').trim();
   applyPlayerAvatar($('pp-avatar'), nick);
   $('pp-nick').textContent = nick || tr('SEM NICK');
+  if (HUB_ENABLED) {
+    applyPlayerAvatar($('hub-avatar'), nick);
+    $('hub-nick').textContent = nick || tr('SEM NICK');
+  }
   $('pp-level').textContent = `${tr('NÍVEL')} ${level}`;
   $('xp-fill').style.width = (into / 20) + '%';
   $('xp-num').textContent = `${into.toLocaleString('pt-BR')} / 2.000 XP`;
@@ -2558,6 +2727,41 @@ function showRanking() {
     `<div><b>${st.kills}</b>kills</div><div><b>${st.deaths}</b>mortes</div><div><b>${st.headshots}</b>headshots</div><div><b>${st.rounds || 0}</b>rounds</div>`;
   show('ranking-panel');
   renderGlobal(nick);
+}
+async function renderHubRanking() {
+  const stats = loadStats();
+  const cards = $('hub-rank-local');
+  cards.replaceChildren();
+  for (const [label, value] of [
+    ['KILLS', stats.kills], ['MORTES', stats.deaths], ['VITÓRIAS', stats.wins], ['PARTIDAS', stats.matches],
+  ]) {
+    const card = document.createElement('div');
+    const number = document.createElement('b'); number.textContent = String(value);
+    card.append(number, document.createTextNode(label)); cards.appendChild(card);
+  }
+  const global = $('hub-rank-global');
+  global.textContent = 'Carregando o ranking global…';
+  const data = await api('/api/leaderboard');
+  if (data?.disabled) {
+    global.textContent = 'O ranking global está desligado enquanto a pontuação competitiva não for validada pelo servidor.';
+    return;
+  }
+  if (!Array.isArray(data?.players)) { global.textContent = 'Ranking global indisponível no momento.'; return; }
+  if (!data.players.length) { global.textContent = 'Ainda não há jogadores no ranking.'; return; }
+  const table = document.createElement('table');
+  const head = document.createElement('tr');
+  for (const label of ['#', 'JOGADOR', 'K/D', 'KILLS', 'VIT.']) {
+    const cell = document.createElement('th'); cell.textContent = label; head.appendChild(cell);
+  }
+  table.appendChild(head);
+  for (const [index, player] of data.players.slice(0, 10).entries()) {
+    const row = document.createElement('tr');
+    for (const value of [index + 1, player.nick, player.kd, player.kills, player.wins]) {
+      const cell = document.createElement('td'); cell.textContent = String(value ?? '—'); row.appendChild(cell);
+    }
+    table.appendChild(row);
+  }
+  global.replaceChildren(table);
 }
 async function renderGlobal(nick) {
   const box = $('rank-global');
@@ -2963,7 +3167,9 @@ function loop() {
     menuCam.lookAt(0, 1, 0);
     renderer.render(menuScene, menuCam);
   }
-  if (csOpen && pv && pv.model && !previewVideoVisible()) {
+  const hubPreviewOpen = HUB_ENABLED && $('main-menu')?.classList.contains('hidden') === false
+    && $('main-menu').dataset.hubTab === 'jogar' && $('main-menu').dataset.hubNet === 'sp';
+  if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {
     const pvDt = Math.min(0.05, dtReal);
     if (!pvDrag) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
     // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box

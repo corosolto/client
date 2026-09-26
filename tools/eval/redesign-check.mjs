@@ -163,8 +163,8 @@ main = muta('sem-i18n', main,
   "`${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`",
   "`MAPA ${MAP_IDS.indexOf(currentMap) + 1} DE ${MAP_IDS.length}`");
 main = muta('preview-render', main,
-  "if (csOpen && pv && pv.model && !previewVideoVisible()) {",
-  "if (csOpen && pv && pv.model) {");
+  "if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {",
+  "if ((csOpen || hubPreviewOpen) && pv && pv.model) {");
 main = muta('preview-decode', main,
   "if (id !== 'char-select') pvStopVideo();",
   '');
@@ -623,7 +623,7 @@ const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main
   && /const FACTION_NAME = \{ E: 'TIME E'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
-const previewUso = /if \(csOpen && pv && pv\.model && !previewVideoVisible\(\)\)/.test(funcLoop)
+const previewUso = /if \(\(csOpen \|\| hubPreviewOpen\) && pv && pv\.model && !previewVideoVisible\(\)\)/.test(funcLoop)
   && /function previewVideoVisible\(\)[\s\S]*classList\.contains\('has-video'\)/.test(main);
 const previewPausa = /id !== 'char-select'[\s\S]{0,60}pvStopVideo\(\)/.test(funcShow)
   && /function pvStopVideo\(\)[\s\S]{0,180}video\.pause\(\)/.test(main);

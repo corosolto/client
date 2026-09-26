@@ -35,6 +35,7 @@ O pacote é especificação visual. O código de produção continua em `src/pag
 - Worktree: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/re-ui-home`
 - Branch: `codex/re-ui-home`
 - Base: `origin/main` em `299870720936794aa4729f344d2d9167a2b6a357`
+- Checkpoint de wallpaper após rebase: `040db41a8` (`fix(ui): preencher wallpapers da home em qualquer proporção`).
 - A árvore principal suja não foi alterada.
 
 ## Milestones
@@ -43,11 +44,17 @@ O pacote é especificação visual. O código de produção continua em `src/pag
 - [x] Worktree isolado criado a partir da release `v2.0.0-alpha.298`.
 - [x] Causa das faixas laterais medida: a arte principal usava `contain` fora do 3:2.
 - [x] Contrato técnico de wallpaper `cover` validado no gate e por mutação.
+- [x] Casco do hub implementado como prévia opt-in `?home=hub`: abas Jogar, Ranking,
+  Sobre, Feedback e Apoie; controles reais do setup; perfil e confirmação em modal.
+- [x] Seleção de personagem persistida e renderer Three.js reaproveitado na aba Jogar.
+- [x] Entrada singleplayer ligada ao `startGame` existente; multiplayer abre a lista real
+  de servidores/salas. Build, SEO/AEO, sintaxe, docs e `eval:redesign` passam.
 - [ ] Capturas e revisão visual em 3:2, 16:9 e ultrawide.
-- [ ] Casco do hub com tabs e modais integrado.
-- [ ] Personagem selecionado renderizado na home.
-- [ ] Fluxos singleplayer e multiplayer ligados aos estados reais.
-- [ ] Ranking/perfil/SEO reativados sobre pontuação autoritativa.
+- [ ] Fluxos e renderização verificados no navegador real e pelo jogador.
+- [ ] Ranking/perfil/SEO reativados sobre pontuação autoritativa, com categoria MP:
+  bots na faixa SP; humanos com pontuação maior somente após confirmação autoritativa.
+- [ ] Etapas posteriores do pedido: marketing, mobile, documentação dev e limpeza
+  do repositório, cada uma em escopo e checkpoint próprios após a UI.
 
 ## Decisões
 
@@ -57,12 +64,21 @@ O pacote é especificação visual. O código de produção continua em `src/pag
   partida aceita números calculados no cliente e não serve como autoridade competitiva.
 - Os painéis, APIs, estados e modelos atuais serão adaptados. O runtime `support.js` do
   protótipo não entra no jogo.
+- A prévia fica atrás de `?home=hub` até a revisão visual e de gameplay, sem troca
+  automática da home pública. Não enviar, ativar ranking ou publicar antes disso.
 
 ## Próximo passo
 
-Montar o casco do hub na home, preservando os fluxos reais do jogo. A régua
-`npm run eval:redesign` passou em 26/09 com Node 23 (`PATH=/opt/homebrew/bin:$PATH`), e
-`--mutante=menu-wall-contain-volta` deixou UIR32 vermelha. A revisão visual ainda está
-pendente: o acesso do navegador a `127.0.0.1:4339` foi recusado em 26/09, portanto não
-há captura 3:2/16:9 validada nesta lane. Não declarar o wallpaper aprovado visualmente
-até conferir o recorte de todos os wallpapers nessas proporções e em ultrawide.
+Inspecionar a prévia `http://127.0.0.1:4339/?home=hub` em 3:2, 16:9 e ultrawide,
+exercitando tabs, perfil, mapa, personagem, confirmação, SP e MP; corrigir os
+problemas observados antes de considerar a UI pronta. O navegador recusou o acesso
+a `127.0.0.1:4339` duas vezes em 26/09, inclusive após o usuário dizer que sim:
+há uma preferência salva bloqueando a origem. Não contornar por outro navegador,
+CDP ou automação. O usuário precisa alterar a permissão salva para essa origem.
+
+Validação não visual em 26/09 com Node 23 (`PATH=/opt/homebrew/bin:$PATH`):
+`npm run build`, `check:seo` (6/6), `syntax`, `docs:check` e `eval:redesign` verdes;
+mutantes `menu-wall-contain-volta` (UIR32) e `preview-render` (UIR2) vermelhos como
+esperado. `npm run eval:ui` mostrou UI1 (12 falhas de contraste do HUD) e UI4
+(simulação de placar/round com NaN) vermelhos; áreas não alteradas por este hub,
+mas ainda sem comparação com baseline independente. Não chamar esse gate de verde.
