@@ -578,17 +578,20 @@ def manter_do_pack(item: dict, braco, malhas_pack: list, em_rig) -> dict:
     alavanca, que não tem munição solta no modelo de mundo). Os vértices com peso dominante em
     `osso` viram um objeto próprio no osso `novoOsso` (criado sob Arma se faltar); a peça e o osso
     vão juntos para `posCm`/`rotDeg` (raiz do FBX, cm), girando em torno da cabeça do osso."""
-    osso, novo = item["osso"], item.get("novoOsso", item["osso"])
+    ossos = item["osso"] if isinstance(item["osso"], list) else [item["osso"]]
+    osso, novo = item.get("refOsso", ossos[0]), item.get("novoOsso", ossos[0])
     W = braco.matrix_world @ braco.data.bones[OSSO_ARMA].matrix_local @ em_rig   # raiz (cm) → mundo
     cab_root = W.inverted() @ (braco.matrix_world @ braco.data.bones[osso].head_local)
     from mathutils import Euler
-    M_root = (Matrix.Translation(Vector(item["posCm"])) @ Euler([math.radians(a) for a in item.get("rotDeg", [0, 0, 0])]).to_matrix().to_4x4()
+    # posCm: onde a cabeça do osso de referência vai; deslocCm: só desloca (a peça fica onde o pack a pôs + d)
+    alvo = Vector(item["posCm"]) if "posCm" in item else cab_root + Vector(item.get("deslocCm", [0, 0, 0]))
+    M_root = (Matrix.Translation(alvo) @ Euler([math.radians(a) for a in item.get("rotDeg", [0, 0, 0])]).to_matrix().to_4x4()
               @ Matrix.Translation(-cab_root))
     M_w = W @ M_root @ W.inverted()
     pedacos = []
     for o in malhas_pack:
-        g = o.vertex_groups.get(osso)
-        if g is None:
+        gs = {o.vertex_groups[n].index for n in ossos if o.vertex_groups.get(n) is not None}
+        if not gs:
             continue
         copia = o.copy()
         copia.data = o.data.copy()
@@ -596,7 +599,7 @@ def manter_do_pack(item: dict, braco, malhas_pack: list, em_rig) -> dict:
         bm = bmesh.new()
         bm.from_mesh(copia.data)
         deform = bm.verts.layers.deform.verify()
-        fora = [v for v in bm.verts if max(v[deform].items(), key=lambda x: x[1], default=(-1, 0))[0] != g.index]
+        fora = [v for v in bm.verts if max(v[deform].items(), key=lambda x: x[1], default=(-1, 0))[0] not in gs]
         bmesh.ops.delete(bm, geom=fora, context="VERTS")
         bm.to_mesh(copia.data)
         bm.free()
@@ -605,7 +608,7 @@ def manter_do_pack(item: dict, braco, malhas_pack: list, em_rig) -> dict:
             continue
         pedacos.append(copia)
     if not pedacos:
-        raise RuntimeError(f"manterPack: nenhum vértice no osso {osso}")
+        raise RuntimeError(f"manterPack: nenhum vértice nos ossos {ossos}")
     bpy.context.view_layer.objects.active = braco
     bpy.ops.object.mode_set(mode="EDIT")
     eb = braco.data.edit_bones
@@ -642,7 +645,7 @@ def manter_do_pack(item: dict, braco, malhas_pack: list, em_rig) -> dict:
         mod = copia.modifiers.new("Armature", "ARMATURE")
         mod.object = braco
         n += len(copia.data.vertices)
-    return {"osso": osso, "novoOsso": novo, "vertices": n, "posCm": list(item["posCm"])}
+    return {"osso": ossos, "novoOsso": novo, "vertices": n, "posCm": list(alvo)}
 
 
 def camera_do_pack(cam_spec: dict):
@@ -713,7 +716,8 @@ def main() -> None:
         # no depósito, não flutuando sobre a caixa) e ossos do pack que o plano B não usa (a lâmina).
         movidas = [manter_do_pack(item, rig_braco, malhas_arma, em_rig) for item in plano.get("moverPack", [])]
         for item in plano.get("moverPack", []):
-            apagar_osso(malhas_arma, item["osso"])
+            for o_ in (item["osso"] if isinstance(item["osso"], list) else [item["osso"]]):
+                apagar_osso(malhas_arma, o_)
         for osso in plano.get("removerOssos", []):
             apagar_osso(malhas_arma, osso)
         malhas_arma = malhas_arma + [bpy.data.objects[f"GEO_WEAPON_PACK_{m['novoOsso'].upper()}"] for m in movidas]
