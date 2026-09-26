@@ -13,12 +13,12 @@ const NEUTRAL_HANDS = Object.freeze({ id: 'neutral', glove: '#242f38', sleeve: '
 export const teamHandStyle = (faction) => TEAM_HANDS[faction] || NEUTRAL_HANDS;
 export const HAND_ATLAS_VERSION = 'team-hands-7';
 
-// Rig do braço → pasta de atlas (UVs distintos, pintura comum). O GLTFLoader tira os pontos
-// dos nomes de osso (hand.R_metarig → handR_metarig).
+// Rig A (AK golden), L (faca), K (SK_Arms_Mono): docs/reports/VM-MAOS-POR-TIME.md.
+// O GLTFLoader tira os pontos dos nomes de osso (hand.R_metarig → handR_metarig).
 const RIG_BONES = Object.freeze([
-  ['ak', /^hand\.?R_metarig$/],   // rig A: AK golden e demais coro/*-hires de metarig
-  ['knife', /^R_wrist_026$/],       // rig L: faca aprovada e PT-38 golden
-  ['pistol', /^hand_r$/],           // rig K: SK_Arms_Mono (fábrica, catálogo K, granada)
+  ['ak', /^hand\.?R_metarig$/],
+  ['knife', /^R_wrist_026$/],
+  ['pistol', /^hand_r$/],
 ]);
 export function handLayoutOfMesh(mesh) {
   const bones = mesh?.skeleton?.bones || [];
