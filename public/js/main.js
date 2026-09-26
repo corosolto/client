@@ -91,6 +91,15 @@ if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'
    qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
 const AUTO_PROFILE = new URLSearchParams(location.search).get('perfilauto') !== '0';
 const HUB_ENABLED = new URLSearchParams(location.search).get('home') === 'hub';
+function hubNavigate(changes, replace = false) {
+  if (!HUB_ENABLED) return;
+  const url = new URL(location.href);
+  for (const [key, value] of Object.entries(changes)) {
+    if (value == null) url.searchParams.delete(key);
+    else url.searchParams.set(key, value);
+  }
+  if (url.href !== location.href) history[replace ? 'replaceState' : 'pushState'](null, '', url);
+}
 function detectaHwFraco() {
   const gpu = (renderer.__csWebgl?.renderer || '').toLowerCase();
   const integrada = /intel|iris|uhd graphics|hd graphics|mesa|microsoft basic|swiftshader|llvmpipe|softpipe/.test(gpu);
@@ -342,6 +351,21 @@ loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 /* ---------------- screens ---------------- */
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
+  const hubMpRoute = HUB_ENABLED && id === 'mp-panel';
+  if (hubMpRoute) {
+    const menu = document.getElementById('main-menu');
+    menu.dataset.hubTab = 'jogar'; menu.dataset.hubNet = 'mp';
+    document.getElementById('hub-play').hidden = false;
+    for (const pane of ['hub-ranking', 'hub-about', 'hub-feedback', 'hub-support']) document.getElementById(pane).hidden = true;
+    for (const tab of document.querySelectorAll('.hub-tabs [data-hub-tab]')) {
+      const active = tab.dataset.hubTab === 'jogar';
+      tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1;
+    }
+    document.getElementById('hub-sp').setAttribute('aria-pressed', 'false');
+    document.getElementById('hub-mp').setAttribute('aria-pressed', 'true');
+    document.getElementById('hub-multiplayer-entry').hidden = false;
+    id = 'main-menu';
+  }
   if (HUB_ENABLED && id === 'char-select') returnPreviewToSelection();
   stopMapPreviews();
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
@@ -356,6 +380,10 @@ function show(id) {
   if (id === 'main-menu') {
     if (HUB_ENABLED) { $('menu-setup').classList.add('open'); syncHomeCharacter(); }
     setTimeout(focusMenu, 40);   // teclado: ↑/↓ navegam assim que a home aparece
+    if (HUB_ENABLED && $('main-menu').dataset.hubNet === 'mp') {
+      $('mp-panel').classList.remove('hidden');
+      if (!hubMpRoute) void abrirMultiplayer();
+    }
   }
 }
 const $ = id => document.getElementById(id);
@@ -864,7 +892,8 @@ function pvThumb(def) {
 }
 
 /* ---------------- game lifecycle ---------------- */
-const rememberedChar = localStorage.getItem('csbr-home-character');
+const routeChar = HUB_ENABLED ? new URLSearchParams(location.search).get('personagem') : null;
+const rememberedChar = (routeChar && CHARACTERS.some((c) => c.id === routeChar) ? routeChar : null) || localStorage.getItem('csbr-home-character');
 const initialChar = CHARACTERS.find((c) => c.id === rememberedChar) || CHARACTERS[0];
 let game = null, currentTeam = initialChar.team === 'B' ? 'B' : 'E', currentFaction = initialChar.team, currentChar = initialChar.id, selChar = null;
 function returnPreviewToSelection() {
@@ -879,8 +908,86 @@ function syncHomeCharacter() {
   if (box && host && box.parentElement !== host) host.appendChild(box);
   const def = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
   $('hub-character-name').textContent = `${tr(FACTION_NAME[def.team] || def.team)} · ${def.name}`;
+  $('hub-character-crest').src = `/img/brasoes/${def.team.toLowerCase()}.png`;
   $('hub-change-character').style.setProperty('--hub-faction', PALETA[def.team]?.base || '#b4d92e');
   pvSetChar(def);
+}
+let hubMapReturnQuick = false;
+let hubRosterFaction = null;
+function closeHubMap(updateRoute = true) {
+  $('hub-map-modal').hidden = true;
+  if (hubMapReturnQuick) { hubMapReturnQuick = false; openHubQuick(updateRoute); }
+  else $('hub-map-change').focus();
+  if (updateRoute && $('hub-quick').hidden) hubNavigate({ janela: null, origem: null });
+}
+function openHubMap(fromQuick = false, updateRoute = true) {
+  hubMapReturnQuick = fromQuick;
+  $('hub-quick').hidden = true;
+  const filters = $('hub-map-filters');
+  const grid = $('hub-map-grid');
+  const render = (category) => {
+    filters.replaceChildren(); grid.replaceChildren();
+    const categories = ['TODOS', 'OFICIAIS', 'COMUNIDADE'];
+    for (const name of categories) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.textContent = name;
+      button.setAttribute('aria-pressed', String(name === category));
+      button.onclick = () => render(name);
+      filters.appendChild(button);
+    }
+    const ids = MAPAS_MENU.filter((id) => category === 'TODOS' ||
+      (category === 'COMUNIDADE') === catsDe(id).includes('COMUNIDADE'));
+    for (const id of ids) {
+      const button = document.createElement('button'); button.type = 'button';
+      button.setAttribute('aria-pressed', String(id === currentMap));
+      const poster = document.createElement('img'); poster.src = mapPreviewPoster(id, VERSION);
+      poster.alt = ''; poster.loading = 'lazy';
+      const name = document.createElement('span'); name.textContent = MAPS[id].name;
+      button.append(poster, name);
+      button.onclick = () => { ui.click(); gotoMap(MAPAS_MENU.indexOf(id), false); closeHubMap(false); hubNavigate({ map: id, janela: fromQuick ? 'confirmar' : null, origem: null }); };
+      grid.appendChild(button);
+    }
+  };
+  render('TODOS'); $('hub-map-modal').hidden = false; $('hub-map-close').focus();
+  if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'mapas', origem: fromQuick ? 'confirmar' : null });
+}
+function closeHubRoster(updateRoute = true) {
+  $('hub-roster-modal').hidden = true; $('hub-change-character').focus();
+  if (updateRoute) hubNavigate({ janela: null });
+}
+function openHubRoster(updateRoute = true) {
+  hubRosterFaction = (CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0]).team;
+  const filters = $('hub-roster-factions'), grid = $('hub-roster-grid');
+  const render = () => {
+    filters.replaceChildren(); grid.replaceChildren();
+    for (const faction of ['E', 'B', 'U', 'C', 'F', 'M']) {
+      const button = document.createElement('button'); button.type = 'button';
+      button.textContent = tr(FACTION_NAME[faction] || faction);
+      button.setAttribute('aria-pressed', String(faction === hubRosterFaction));
+      button.onclick = () => { hubRosterFaction = faction; render(); };
+      filters.appendChild(button);
+    }
+    for (const def of CHARACTERS.filter((c) => c.team === hubRosterFaction)) {
+      const button = document.createElement('button'); button.type = 'button';
+      button.setAttribute('aria-pressed', String(def.id === currentChar));
+      const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
+      avatar.alt = ''; avatar.loading = 'lazy';
+      const name = document.createElement('span'); name.textContent = def.name;
+      button.append(avatar, name);
+      button.onclick = () => {
+        ui.click(); currentChar = def.id; currentFaction = def.team;
+        currentTeam = def.team === 'B' ? 'B' : 'E'; currentEnemyFaction = null;
+        localStorage.setItem('csbr-home-character', currentChar);
+        syncHomeCharacter(); closeHubRoster(false);
+        hubNavigate({ personagem: currentChar, janela: null });
+      };
+      grid.appendChild(button);
+    }
+    const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
+    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[selected.team] || selected.team)} · ${selected.name}`;
+  };
+  render(); $('hub-roster-modal').hidden = false; $('hub-roster-close').focus();
+  if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'personagens' });
 }
 let pickingEnemy = false, currentEnemyFaction = null;   // 2º passo do team-select: escolher o adversário
 let submitted = true;   // stats da partida atual já enviados?
@@ -1711,11 +1818,12 @@ $('setup-back').onclick = () => { closeSetup(true); };
 function openProfileStep(focusNick) {
   ui.click();
   setSetupStep('profile');
+  if (HUB_ENABLED) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'perfil', origem: null });
   if (focusNick) setTimeout(() => nickEl.focus(), 60);
 }
 $('btn-profile').onclick = () => openProfileStep(true);
-$('profile-back').onclick = () => { ui.back(); setSetupStep('match'); };
-$('profile-ok').onclick = () => { ui.click(); saveSettings(); setSetupStep('match'); };
+$('profile-back').onclick = () => { ui.back(); setSetupStep('match'); hubNavigate({ janela: null }); };
+$('profile-ok').onclick = () => { ui.click(); saveSettings(); setSetupStep('match'); hubNavigate({ janela: null }); };
 // ESC no menu = voltar um passo. Num jogo de PC, ESC é o botão de voltar universal;
 // não ter isso no menu é inconsistente com o próprio jogo (ESC pausa a partida).
 // no window (não no #main-menu): depois de um clique no wallpaper o foco volta pro <body>
@@ -1727,7 +1835,7 @@ addEventListener('keydown', (e) => {
   if ($('main-menu').classList.contains('hidden')) return;
   if (HUB_ENABLED) {
     if (menuSetup.dataset.step === 'profile') {
-      e.preventDefault(); ui.back(); setSetupStep('match'); $('hub-profile').focus();
+      e.preventDefault(); ui.back(); setSetupStep('match'); hubNavigate({ janela: null }); $('hub-profile').focus();
     }
     return;
   }
@@ -1741,7 +1849,7 @@ addEventListener('keydown', (e) => {
 // qualquer painel docado; sem isso o jogador tenta e não acontece nada.
 $('main-menu').addEventListener('pointerdown', (e) => {
   if (HUB_ENABLED && e.target === menuSetup && menuSetup.dataset.step === 'profile') {
-    ui.back(); setSetupStep('match'); $('hub-profile').focus(); return;
+    ui.back(); setSetupStep('match'); hubNavigate({ janela: null }); $('hub-profile').focus(); return;
   }
   if (e.target.closest('.cs-setup') || e.target.closest('.cs-left')) return;
   closeSetup(true);
@@ -1781,24 +1889,36 @@ $('btn-jogar').onclick = async () => {
   window.__gameLaunch?.ready('menu');
   ensureTeamPreviews();   // thumbnails 3D dos times (async, cacheia no card)
 };
+let restoreHubRoute = () => {};
 if (HUB_ENABLED) {
   document.documentElement.dataset.homeUi = 'hub';
   $('hub-ui').hidden = false;
   $('main-menu').dataset.hubTab = 'jogar';
   $('main-menu').dataset.hubNet = 'sp';
+  $('main-menu').dataset.hubMpTab = 'public';
   menuSetup.classList.add('open');
+  const mpPanel = $('mp-panel');
+  $('hub-mp-host').appendChild(mpPanel);
+  $('mp-panel').querySelector('.mp-corpo').prepend($('mp-quick'));
+  $('mp-panel').querySelector('.mp-corpo').appendChild($('mp-panel').querySelector('.mp-criar'));
   const tabs = [...document.querySelectorAll('.hub-tabs [data-hub-tab]')];
   const panes = { jogar: $('hub-play'), ranking: $('hub-ranking'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
-  const setHubTab = (tab) => {
+  const setHubTab = (tab, updateRoute = true) => {
     $('main-menu').dataset.hubTab = tab;
+    if (tab !== 'jogar' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     for (const button of tabs) {
       const active = button.dataset.hubTab === tab;
       button.setAttribute('aria-selected', String(active));
       button.tabIndex = active ? 0 : -1;
     }
     for (const [name, pane] of Object.entries(panes)) pane.hidden = name !== tab;
+    mpPanel.classList.toggle('hidden', tab !== 'jogar' || $('main-menu').dataset.hubNet !== 'mp');
     if (tab === 'ranking') void renderHubRanking();
-    if (tab === 'jogar') syncHomeCharacter();
+    if (tab === 'jogar') {
+      syncHomeCharacter();
+      if ($('main-menu').dataset.hubNet === 'mp') void abrirMultiplayer();
+    }
+    if (updateRoute) hubNavigate({ secao: tab, janela: null, origem: null });
   };
   tabs.forEach((button, index) => {
     button.onclick = () => { ui.click(); setHubTab(button.dataset.hubTab); };
@@ -1810,23 +1930,35 @@ if (HUB_ENABLED) {
       next.focus(); next.click();
     };
   });
-  const setHubNet = (net) => {
+  const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
+    if (net === 'mp' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     $('hub-sp').setAttribute('aria-pressed', String(net === 'sp'));
     $('hub-mp').setAttribute('aria-pressed', String(net === 'mp'));
     $('hub-multiplayer-entry').hidden = net !== 'mp';
-    if (net === 'sp') syncHomeCharacter();
+    if (net === 'sp') { mpPanel.classList.add('hidden'); syncHomeCharacter(); }
+    else if (updateRoute && $('main-menu').dataset.hubTab === 'jogar') void abrirMultiplayer();
+    if (updateRoute) hubNavigate({ secao: 'jogar', partida: net === 'mp' ? 'multiplayer' : 'singleplayer', servidor: net === 'mp' ? ($('main-menu').dataset.hubMpTab === 'private' ? 'privado' : 'publico') : null, janela: null, origem: null });
   };
   $('hub-sp').onclick = () => { ui.click(); setHubNet('sp'); };
   $('hub-mp').onclick = () => { ui.click(); setHubNet('mp'); };
-  $('hub-open-multiplayer').onclick = () => { ui.click(); abrirMultiplayer(); };
-  $('hub-change-character').onclick = async () => {
-    ui.click();
-    await factionArtReady;
-    setTeamStep('side'); show('team-select'); ensureTeamPreviews();
+  const setHubMpTab = (tab, updateRoute = true) => {
+    $('main-menu').dataset.hubMpTab = tab;
+    $('hub-mp-public').setAttribute('aria-selected', String(tab === 'public'));
+    $('hub-mp-private').setAttribute('aria-selected', String(tab === 'private'));
+    $('mp-panel').querySelector('.mp-criar').open = tab === 'private';
+    if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'multiplayer', servidor: tab === 'private' ? 'privado' : 'publico', janela: null, origem: null });
   };
-  $('hub-profile').onclick = () => { setHubTab('jogar'); setHubNet('sp'); openProfileStep(true); };
-  $('hub-settings').onclick = () => { ui.click(); settingsReturn = 'main-menu'; show('settings-panel'); };
+  $('hub-mp-public').onclick = () => { ui.click(); setHubMpTab('public'); };
+  $('hub-mp-private').onclick = () => { ui.click(); setHubMpTab('private'); };
+  $('hub-change-character').onclick = () => { ui.click(); openHubRoster(); };
+  $('hub-map-change').onclick = () => { ui.click(); openHubMap(); };
+  $('hub-map-close').onclick = closeHubMap;
+  $('hub-roster-close').onclick = closeHubRoster;
+  $('hub-map-modal').onclick = (event) => { if (event.target === $('hub-map-modal')) closeHubMap(); };
+  $('hub-roster-modal').onclick = (event) => { if (event.target === $('hub-roster-modal')) closeHubRoster(); };
+  $('hub-profile').onclick = () => { setHubTab('jogar', false); setHubNet('sp', false); openProfileStep(true); hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'perfil', origem: null }); };
+  $('hub-settings').onclick = () => { ui.click(); settingsReturn = 'main-menu'; show('settings-panel'); hubNavigate({ janela: 'configuracoes', origem: null }); };
   const onlineCount = $('mf-online-n');
   const syncOnline = () => { $('hub-online-n').textContent = onlineCount.textContent || '—'; };
   new MutationObserver(syncOnline).observe(onlineCount, { childList: true, characterData: true, subtree: true });
@@ -1844,27 +1976,64 @@ if (HUB_ENABLED) {
     if (!(nickEl.value || '').trim()) { legacyPlay(); return; }
     ui.click(); openHubQuick();
   };
-  const closeQuick = () => { $('hub-quick').hidden = true; $('btn-jogar').focus(); };
+  const closeQuick = (updateRoute = true) => { $('hub-quick').hidden = true; $('btn-jogar').focus(); if (updateRoute) hubNavigate({ janela: null, origem: null }); };
   $('hub-quick-close').onclick = closeQuick;
   $('hub-quick').onclick = (event) => { if (event.target === $('hub-quick')) closeQuick(); };
   addEventListener('keydown', (event) => {
-    if ($('hub-quick').hidden) return;
+    if (event.key === 'Escape' && !$('hub-map-modal').hidden) { event.preventDefault(); event.stopImmediatePropagation(); closeHubMap(); return; }
+    if (event.key === 'Escape' && !$('hub-roster-modal').hidden) { event.preventDefault(); event.stopImmediatePropagation(); closeHubRoster(); return; }
+    const activeModal = ['hub-map-modal', 'hub-roster-modal', 'hub-quick'].map($).find((modal) => !modal.hidden);
+    if (!activeModal) return;
     if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); closeQuick(); return; }
     if (event.key !== 'Tab') return;
-    const controls = [...$('hub-quick').querySelectorAll('button:not([disabled])')];
+    const controls = [...activeModal.querySelectorAll('button:not([disabled])')];
+    if (!controls.length) return;
     const first = controls[0], last = controls.at(-1);
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   }, { capture: true });
   $('hub-quick-confirm').onclick = () => {
     $('hub-quick').hidden = true;
+    hubNavigate({ janela: null, origem: null }, true);
     void startGame(currentTeam, currentChar, currentEnemyFaction);
   };
-  $('hub-quick-change-map').onclick = () => { $('hub-quick').hidden = true; $('map-preview').click(); };
+  $('hub-quick-change-map').onclick = () => { ui.click(); openHubMap(true); };
+  for (const button of document.querySelectorAll('#hub-fb-types button')) button.onclick = () => {
+    ui.click();
+    for (const choice of document.querySelectorAll('#hub-fb-types button'))
+      choice.setAttribute('aria-pressed', String(choice === button));
+  };
   $('hub-fb-send').onclick = () => submitFeedbackFor('hub-fb');
-  setHubTab('jogar');
+  restoreHubRoute = () => {
+    const query = new URLSearchParams(location.search);
+    const section = query.get('secao');
+    const tab = Object.hasOwn(panes, section) ? section : 'jogar';
+    const net = query.get('partida') === 'multiplayer' ? 'mp' : 'sp';
+    const server = query.get('servidor') === 'privado' ? 'private' : 'public';
+    const modal = query.get('janela');
+    $('hub-quick').hidden = true;
+    $('hub-map-modal').hidden = true;
+    $('hub-roster-modal').hidden = true;
+    hubMapReturnQuick = false;
+    if (modal !== 'configuracoes' && $('settings-panel').classList.contains('hidden') === false && settingsReturn === 'main-menu') show('main-menu');
+    const map = query.get('map');
+    if (map && MAPAS_MENU.includes(map) && map !== currentMap) gotoMap(MAPAS_MENU.indexOf(map), false);
+    const char = CHARACTERS.find((c) => c.id === query.get('personagem'));
+    if (char && char.id !== currentChar) { currentChar = char.id; currentFaction = char.team; currentTeam = char.team === 'B' ? 'B' : 'E'; currentEnemyFaction = null; }
+    setHubNet(net, false);
+    setHubMpTab(server, false);
+    setHubTab(tab, false);
+    if (modal === 'configuracoes') { settingsReturn = 'main-menu'; show('settings-panel'); return; }
+    if (tab !== 'jogar') return;
+    if (net === 'sp' && modal === 'perfil') setSetupStep('profile');
+    else if (net === 'sp' && modal === 'mapas') openHubMap(query.get('origem') === 'confirmar', false);
+    else if (net === 'sp' && modal === 'personagens') openHubRoster(false);
+    else if (net === 'sp' && modal === 'confirmar') openHubQuick(false);
+    else if (menuSetup.dataset.step === 'profile') setSetupStep('match');
+  };
+  addEventListener('popstate', restoreHubRoute);
 }
-function openHubQuick() {
+function openHubQuick(updateRoute = true) {
   const def = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
   $('hub-quick-map-img').src = `/img/map-previews/${currentMap}.jpg`;
   $('hub-quick-map-img').alt = `Prévia do mapa ${MAPS[currentMap].name}`;
@@ -1886,6 +2055,7 @@ function openHubQuick() {
   }
   $('hub-quick').hidden = false;
   $('hub-quick-close').focus();
+  if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'confirmar', origem: null });
 }
 $('btn-ranking').onclick = () => { sfx.uiClick(); showRanking(); };
 $('ranking-back').onclick = () => { ui.back(); markCurrent(null); show('main-menu'); };
@@ -1923,6 +2093,8 @@ async function submitFeedbackFor(prefix) {
   const msgEl = $(`${prefix}-msg`), emailEl = $(`${prefix}-email`), newsEl = $(`${prefix}-news`);
   const sendEl = $(`${prefix}-send`), st = $(`${prefix}-status`);
   const msg = msgEl.value.trim(), email = emailEl.value.trim();
+  const type = prefix === 'hub-fb' ? document.querySelector('#hub-fb-types [aria-pressed="true"]')?.dataset.hubFbType : null;
+  const message = type ? `[${type}] ${msg}`.slice(0, 2000) : msg;
   const news = newsEl.checked;
   const falha = (t, campo) => { st.textContent = t; st.classList.add('erro'); campo?.classList.add('invalid');
     setTimeout(() => campo?.classList.remove('invalid'), 600); };
@@ -1931,7 +2103,7 @@ async function submitFeedbackFor(prefix) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return falha(tr('preenche um email válido'), emailEl);
   if (!news) return falha(tr('marca o aceite da newsletter pra enviar'), null);
   sendEl.disabled = true; st.textContent = tr('enviando…');
-  const res = await api('/api/feedback', { email, newsletter: news, message: msg, map: currentMap, version: VERSION });
+  const res = await api('/api/feedback', { email, newsletter: news, message, map: currentMap, version: VERSION });
   sendEl.disabled = false;
   if (res && res.ok) { st.textContent = tr('valeu! feedback enviado.'); msgEl.value = ''; }
   else falha(res?.error === 'rate_limited' ? tr('calma — muitos envios, tenta daqui a pouco') : tr('não deu pra enviar agora, tenta de novo mais tarde'), null);
@@ -2020,7 +2192,7 @@ if (HUB_ENABLED) {
   };
 }
 let mapIdx = Math.max(0, MAPAS_MENU.indexOf(currentMap));
-function gotoMap(i) {
+function gotoMap(i, updateRoute = true) {
   mapIdx = (i + MAPAS_MENU.length) % MAPAS_MENU.length;
   currentMap = resolveMapId(MAPAS_MENU[mapIdx]);
   settings.map = currentMap; settings.mapPinned = true; saveSettings();   // escolha explícita sai da rotação
@@ -2034,6 +2206,7 @@ function gotoMap(i) {
   rebuildMenuBackdrop();
   loadMenuBackdrop().catch(() => {});
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
+  if (updateRoute) hubNavigate({ map: currentMap });
 }
 function stepMap(dir, ids = MAPAS_MENU) {
   const pool = ids.length ? ids : MAPAS_MENU;
@@ -2174,8 +2347,12 @@ function renderMapScreen() {
   bindMapPreviews($('ms-strip'));
   requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
 }
-mapPreviewHost.title = tr('Ver mapa em tela cheia');
-mapPreviewHost.onclick = () => { ui.click(); renderMapScreen(); show('map-screen'); };
+mapPreviewHost.title = HUB_ENABLED ? 'Trocar mapa' : tr('Ver mapa em tela cheia');
+mapPreviewHost.onclick = () => {
+  ui.click();
+  if (HUB_ENABLED) openHubMap();
+  else { renderMapScreen(); show('map-screen'); }
+};
 $('ms-back').onclick = () => { ui.back(); show('main-menu'); };
 $('ms-prev').onclick = () => stepMap(-1, visibleMapIds());
 $('ms-next').onclick = () => stepMap(1, visibleMapIds());
@@ -2264,6 +2441,7 @@ const closeSettings = () => {
   if (game) game.applySettings();
   if (settingsReturn === 'main-menu') markCurrent(null);
   show(settingsReturn);
+  if (HUB_ENABLED && settingsReturn === 'main-menu') hubNavigate({ janela: null });
 };
 $('settings-back').onclick = closeSettings;
 $('settings-close').onclick = closeSettings;
@@ -3192,6 +3370,10 @@ loop();
 }
 { const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
 show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
+if (HUB_ENABLED) {
+  hubNavigate({ map: currentMap, personagem: currentChar }, true);
+  restoreHubRoute();
+}
 window.__CS_MAIN_READY__ = true;
 window.__gameLaunch?.ready('boot');
 function showInspectionResult(won, character) {
@@ -3356,7 +3538,8 @@ function mpEstado(s, txt) {
 const mpQualidade = (ms) => (ms == null ? 'ruim' : ms <= 60 ? 'bom' : ms <= 120 ? 'medio' : 'ruim');
 
 async function abrirMultiplayer() {
-  show('mp-panel');
+  if (HUB_ENABLED) mpEl('mp-panel').classList.remove('hidden');
+  else show('mp-panel');
   mpErro('');
   mpMontarFormulario();
   mpEstado('sondando', 'MEDINDO O PING…');

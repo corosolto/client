@@ -12,6 +12,8 @@ boot ou os fluxos reais do jogo. A primeira entrega fecha:
 - personagem 3D escolhido visível na home e reutilização do fluxo atual de elenco;
 - abas Ranking, Sobre, Feedback e Apoie ligadas aos dados e ações existentes;
 - perfil editável e rotas públicas de jogador preservadas;
+- URLs próprias e compartilháveis para abas, modos, modais, mapa e personagem, com
+  restauração por reload e Voltar/Avançar;
 - navegação por teclado, estados de foco, 3:2 e 16:9 verificados no navegador.
 
 O ranking global só fica público quando resultados competitivos forem validados pelo servidor.
@@ -49,6 +51,19 @@ O pacote é especificação visual. O código de produção continua em `src/pag
 - [x] Seleção de personagem persistida e renderer Three.js reaproveitado na aba Jogar.
 - [x] Entrada singleplayer ligada ao `startGame` existente; multiplayer abre a lista real
   de servidores/salas. Build, SEO/AEO, sintaxe, docs e `eval:redesign` passam.
+- [!] Prévia `383a4f150` rejeitada visualmente pelo usuário em 26/09: a captura
+  mostrou título coberto pelo card do mapa, vazio central, escala/composição ruins e
+  telas internas fora da linguagem de modais do handoff. Verde técnico não a aprova.
+- [x] Segunda iteração local: coluna Jogar sem título sobreposto, mapa flexível, cinco
+  opções na mesma fileira, personagem com ficha/brasão, catálogo de mapas e elenco em
+  modais, lista MP embutida com abas público/privado. Abas Sobre, Feedback e Apoie
+  ganharam composição e ações próprias. Ainda sem aceite visual.
+- [x] Navegação compartilhável da prévia: `?home=hub&secao=feedback`,
+  `?home=hub&secao=jogar&partida=multiplayer&servidor=privado`,
+  `?home=hub&secao=jogar&partida=singleplayer&janela=mapas` e modais
+  `personagens`, `perfil`, `configuracoes`, `confirmar`. `map` e `personagem`
+  preservam escolhas. `popstate` restaura o estado do hub. Ainda falta teste de
+  navegador real sob a permissão atual.
 - [ ] Capturas e revisão visual em 3:2, 16:9 e ultrawide.
 - [ ] Fluxos e renderização verificados no navegador real e pelo jogador.
 - [ ] Ranking/perfil/SEO reativados sobre pontuação autoritativa, com categoria MP:
@@ -66,12 +81,20 @@ O pacote é especificação visual. O código de produção continua em `src/pag
   protótipo não entra no jogo.
 - A prévia fica atrás de `?home=hub` até a revisão visual e de gameplay, sem troca
   automática da home pública. Não enviar, ativar ranking ou publicar antes disso.
+- URLs da prévia usam parâmetros na rota `/`, mantendo as rotas públicas Astro já
+  existentes (`/ranking`, `/sobre`, `/apoie` etc.). Não criar páginas duplicadas
+  só para mudar a barra de endereço. A escolha de URLs limpas fica para a revisão
+  do usuário.
 
 ## Próximo passo
 
-Inspecionar a prévia `http://127.0.0.1:4339/?home=hub` em 3:2, 16:9 e ultrawide,
-exercitando tabs, perfil, mapa, personagem, confirmação, SP e MP; corrigir os
-problemas observados antes de considerar a UI pronta. O navegador recusou o acesso
+Pedir nova captura 3:2/16:9 da segunda iteração e comparar com o handoff antes
+de chamar a UI pronta. Verificar clique, reload, Voltar/Avançar de cada URL do
+hub em navegador real, além dos fluxos de mapa/personagem/MP; então reparar
+eventuais desvios visuais e funcionais. As duas capturas rejeitadas são
+`/Users/ruben/Documents/screen/Screenshot 2026-09-26 at 02.15.44.png` e
+`/Users/ruben/Documents/screen/Screenshot 2026-09-26 at 02.15.22.png`.
+O navegador recusou o acesso
 a `127.0.0.1:4339` duas vezes em 26/09, inclusive após o usuário dizer que sim:
 há uma preferência salva bloqueando a origem. Não contornar por outro navegador,
 CDP ou automação. O usuário precisa alterar a permissão salva para essa origem.
@@ -82,3 +105,8 @@ mutantes `menu-wall-contain-volta` (UIR32) e `preview-render` (UIR2) vermelhos c
 esperado. `npm run eval:ui` mostrou UI1 (12 falhas de contraste do HUD) e UI4
 (simulação de placar/round com NaN) vermelhos; áreas não alteradas por este hub,
 mas ainda sem comparação com baseline independente. Não chamar esse gate de verde.
+
+Segunda iteração em 26/09: `npm run build`, `npm run syntax`,
+`npm run eval:redesign`, `npm run docs:check`, `npm run check:seo` (6/6) e
+`git diff --check` passaram. Há aviso do adapter: Node local 23, Vercel usará 24.
+Esses gates não provam fidelidade visual nem a navegação de URLs no navegador.

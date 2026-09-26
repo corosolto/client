@@ -679,15 +679,17 @@ window.__GEO_LANG__ = (function () {
         <button id="hub-sp" type="button" aria-pressed="true">SINGLEPLAYER</button>
         <button id="hub-mp" type="button" aria-pressed="false">MULTIPLAYER <small>BETA</small></button>
       </div>
-      <div class="hub-play-heading"><small>01 · A PARTIDA</small><h2>ESCOLHA A TRETA</h2></div>
       <div id="hub-character" class="hub-character" aria-label="Personagem escolhido"></div>
       <button id="hub-change-character" class="hub-character-card" type="button">
-        <small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><span>TROCAR ▸</span>
+        <img id="hub-character-crest" src="/img/brasoes/e.png" width="38" height="38" alt="">
+        <span><small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><small>TROCAR ▸</small></span>
       </button>
       <div id="hub-multiplayer-entry" class="hub-multiplayer-entry" hidden>
-        <h2>MULTIPLAYER <small>BETA</small></h2>
-        <p>Encontre gente nos servidores públicos ou abra uma sala privada com seus amigos.</p>
-        <button id="hub-open-multiplayer" class="hub-cta" type="button">VER SERVIDORES E SALAS ▸</button>
+        <div class="hub-mp-tabs" role="tablist" aria-label="Tipo de servidor">
+          <button id="hub-mp-public" type="button" role="tab" aria-selected="true">SERVIDORES PÚBLICOS</button>
+          <button id="hub-mp-private" type="button" role="tab" aria-selected="false">SERVIDOR PRIVADO</button>
+        </div>
+        <div id="hub-mp-host"></div>
       </div>
     </section>
 
@@ -703,6 +705,7 @@ window.__GEO_LANG__ = (function () {
       <div class="hub-kicker">03 · O JOGO</div><h2>SOBRE O JOGO</h2>
       <p>CORO SOLTO: Treta Suprema é um FPS gratuito de navegador. Entre numa partida contra bots ou jogue com outras pessoas, escolha seu coro e dispute os mapas da treta.</p>
       <div id="hub-factions" class="hub-factions"></div>
+      <a class="hub-changelog" href="/changelog"><small>NO ÚLTIMO PATCH</small><strong>Veja o que mudou na arena</strong><span>NOVIDADES ↗</span></a>
       <nav class="hub-link-grid" aria-label="Conheça o jogo">
         <a href="/sobre">SOBRE ↗</a><a href="/como-jogar">COMO JOGAR ↗</a>
         <a href="/armas">ARMAS ↗</a><a href="/mapas">MAPAS ↗</a>
@@ -713,20 +716,37 @@ window.__GEO_LANG__ = (function () {
     <section id="hub-feedback" class="hub-pane hub-info" role="tabpanel" aria-label="Feedback" hidden>
       <div class="hub-kicker">04 · CANAL ABERTO</div><h2>MANDE O PAPO</h2>
       <p>Achou um bug ou tem uma ideia? Sua mensagem chega à equipe do jogo.</p>
+      <div class="hub-feedback-grid"><div class="hub-feedback-main">
+      <div id="hub-fb-types" class="hub-modal-filters" role="group" aria-label="Tipo de feedback">
+        <button type="button" data-hub-fb-type="BUG" aria-pressed="true">BUG</button>
+        <button type="button" data-hub-fb-type="IDEIA" aria-pressed="false">IDEIA</button>
+        <button type="button" data-hub-fb-type="JOGABILIDADE" aria-pressed="false">JOGABILIDADE</button>
+        <button type="button" data-hub-fb-type="MAPA" aria-pressed="false">MAPA</button>
+        <button type="button" data-hub-fb-type="OUTRO" aria-pressed="false">OUTRO</button>
+      </div>
       <label for="hub-fb-msg">MENSAGEM</label>
       <textarea id="hub-fb-msg" maxlength="2000" rows="5" placeholder="Conte o que aconteceu ou o que gostaria de ver…"></textarea>
-      <label for="hub-fb-email">EMAIL</label>
+      <label for="hub-fb-email">EMAIL · OBRIGATÓRIO PARA ENVIO</label>
       <input id="hub-fb-email" type="email" maxlength="254" autocomplete="email" placeholder="seu@email.com">
       <label class="hub-fb-consent"><input type="checkbox" id="hub-fb-news"> Aceito receber novidades do jogo por email.</label>
       <p id="hub-fb-status" aria-live="polite"></p>
       <button id="hub-fb-send" class="hub-cta" type="button">ENVIAR ▸</button>
-      <div class="hub-link-grid"><a href={DISCORD_URL} target="_blank" rel="noopener">DISCORD ↗</a><a href="https://github.com/corosolto/client/issues" target="_blank" rel="noopener">GITHUB ISSUES ↗</a><a href={TELEGRAM_URL} target="_blank" rel="noopener">TELEGRAM ↗</a></div>
+      </div><aside class="hub-feedback-aside"><h3>PREFERE FALAR DIRETO?</h3>
+        <a href={DISCORD_URL} target="_blank" rel="noopener">DISCORD <span>↗</span></a>
+        <a href="https://github.com/corosolto/client/issues" target="_blank" rel="noopener">GITHUB ISSUES <span>↗</span></a>
+        <a href={TELEGRAM_URL} target="_blank" rel="noopener">TELEGRAM <span>↗</span></a>
+      </aside></div>
     </section>
 
     <section id="hub-support" class="hub-pane hub-info" role="tabpanel" aria-label="Apoie o jogo" hidden>
       <div class="hub-kicker">05 · BANCA DA TRETA</div><h2>APOIE O JOGO</h2>
       <p>O CORO SOLTO é gratuito e open source. O apoio ajuda a manter servidores, domínio e o desenvolvimento do jogo. Apoiar não dá vantagem na partida.</p>
-      <div class="hub-link-grid"><a href="/apoie">VER FORMAS DE APOIAR ↗</a><a href={GITHUB_URL} target="_blank" rel="noopener">VER O PROJETO NO GITHUB ↗</a></div>
+      <div class="hub-support-choices">
+        <a href="/apoie"><small>NO BRASIL</small><strong>MeApoia / Pix</strong><span>ESCOLHER COMO APOIAR ↗</span></a>
+        <a href={SUPPORT_URL_INTL} target="_blank" rel="noopener"><small>FORA DO BRASIL</small><strong>Ko-fi</strong><span>APOIO INTERNACIONAL ↗</span></a>
+      </div>
+      <p class="hub-support-note">Sem planos ou recompensas inventadas: valores e formas de pagamento ficam nas páginas de apoio.</p>
+      <a class="hub-support-source" href={GITHUB_URL} target="_blank" rel="noopener">VER O CÓDIGO DO JOGO NO GITHUB ↗</a>
     </section>
 
     <footer class="hub-footer"><span><b>DICA</b> Escolha seu mapa e seu personagem antes de entrar na partida.</span><a href="/docs/">DOCS ↗</a><a href="/mapa">MAPA AO VIVO ↗</a></footer>
@@ -739,6 +759,23 @@ window.__GEO_LANG__ = (function () {
       <div id="hub-quick-summary"></div>
       <button id="hub-quick-confirm" class="hub-cta" type="button">JOGAR AGORA ▸</button>
       <button id="hub-quick-change-map" type="button">OUTRO MAPA ▸</button>
+    </div>
+  </div>
+
+  <div id="hub-map-modal" class="hub-modal" hidden>
+    <div class="hub-modal-card hub-modal-wide" role="dialog" aria-modal="true" aria-labelledby="hub-map-title">
+      <header><small>O PALCO</small><h2 id="hub-map-title">ESCOLHA O MAPA</h2><button id="hub-map-close" type="button" aria-label="Fechar">ESC ✕</button></header>
+      <div id="hub-map-filters" class="hub-modal-filters" role="group" aria-label="Categorias de mapa"></div>
+      <div id="hub-map-grid" class="hub-map-grid"></div>
+    </div>
+  </div>
+
+  <div id="hub-roster-modal" class="hub-modal" hidden>
+    <div class="hub-modal-card hub-modal-wide" role="dialog" aria-modal="true" aria-labelledby="hub-roster-title">
+      <header><small>ESCALAÇÃO</small><h2 id="hub-roster-title">FACÇÃO E PERSONAGEM</h2><button id="hub-roster-close" type="button" aria-label="Fechar">ESC ✕</button></header>
+      <div id="hub-roster-factions" class="hub-modal-filters" role="group" aria-label="Facções"></div>
+      <div id="hub-roster-grid" class="hub-roster-grid"></div>
+      <p id="hub-roster-selected" class="hub-roster-selected" aria-live="polite"></p>
     </div>
   </div>
 
@@ -870,13 +907,12 @@ window.__GEO_LANG__ = (function () {
           <span id="map-name"> - </span>
           <span id="map-meta"></span>
         </div>
+        <button id="hub-map-change" class="hub-map-change" type="button">TROCAR MAPA ▸</button>
       </div>
       <div class="hub-match-chips" role="group" aria-label="Opções da partida">
-        <button id="hub-mode-rounds" type="button" aria-pressed="true"><small>MODO</small><strong>ROUNDS</strong></button>
-        <button id="hub-mode-ctf" type="button" aria-pressed="false"><small>MODO</small><strong>CAPTURA</strong></button>
-        <button id="hub-rounds" type="button"><small>ROUNDS</small><strong id="hub-rounds-value">5</strong></button>
-      </div>
-      <div class="match-opts">
+        <button id="hub-mode-rounds" type="button" aria-pressed="true"><strong>ROUNDS</strong><small>MATA-MATA · MELHOR DE 5</small></button>
+        <button id="hub-mode-ctf" type="button" aria-pressed="false"><strong>CAPTURA</strong><small>BANDEIRAS · MELHOR DE 3</small></button>
+        <div class="match-opts">
         <label class="map-label">ARMAS
           <div class="dd" id="wpn-dd">
             <button class="dd-btn" id="wpn-dd-btn" type="button"><span id="wpn-dd-label"></span><span class="dd-arrow">▾</span></button>
@@ -891,6 +927,8 @@ window.__GEO_LANG__ = (function () {
         </label>
         <!-- Dificuldade agora é RANDÔMICA por bot (50% ruins / 20% médios / 20% bons /
              10% muito bons) - seletor removido. -->
+        </div>
+        <button id="hub-rounds" type="button"><small>ROUNDS</small><strong id="hub-rounds-value">5</strong></button>
       </div>
       <div class="cs-setup-actions">
         <button id="btn-profile" class="btn btn-profile" type="button">
