@@ -324,7 +324,7 @@ for (const [weapon, cfg] of Object.entries(candidates)) {
   if (MUTANTE === 'pistola-631' && weapon === 'pistol') Object.assign(frame, { x: 0.1648, y: -0.19, z: -0.5664 });
   const curta = CURTAS.has(weapon) && MUTANTE !== 'curta-na-ak';
   const informativo = INFORMATIVO.has(weapon) && MUTANTE !== 'raster-desligado';
-  const ratioBand = curta ? { ...L.PISTOLA_APROVADA.faixa, reason: 'curta: por metro contra a PT-38 aprovada (dono, 23/09)' }
+  const ratioBand = curta ? { ...(L.PISTOLA_FAIXA_ARMA[weapon] || L.PISTOLA_APROVADA.faixa), reason: 'curta: por metro contra a PT-38 aprovada (dono, 23/09; deagle 25/09)' }
     : RATIO_BANDS[weapon] || { min: 1 - RAZAO_TOL, max: 1 + RAZAO_TOL };
   const row = { weapon, family: VM_WEAPON[weapon]?.family, frame, ratioBand, referencia: curta ? 'pistol-aprovada' : 'ak', informativo, aspectos: {} };
   // Reprovação de tamanho/braço de arma informativa vira nota: o raster do #636 manda.

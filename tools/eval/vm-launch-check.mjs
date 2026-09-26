@@ -13,6 +13,7 @@
  *   VL4 seletor       authoredvm.js obedece a chave: 0 ou TODAS as chaves de boot
  *   VL5 jogo real     Game em node: sem chave não nasce controlador autorado nem faca
  *   VL6 asset         com VM_LAUNCH=true, o GLB de cada arma existe no catálogo servido
+ *   VL7 ak golden     a 'ak' serve a GOLDEN aprovada (gold#ak, coro/ak-hires.glb 3b6ca23d…), nada mais
  *                     (sem catálogo privado não dá para medir → VERMELHO; com a chave
  *                     desligada vira só relatório — a granada K não existe hoje)
  *
@@ -35,6 +36,8 @@ const FILES = {
   game: path.join(JS, 'game.js'),
 };
 const read = (key) => fs.readFileSync(FILES[key], 'utf8');
+// sha256 da AK golden aprovada pelo dono (rig A, coro/ak-hires.glb) — o mesmo prefixo de GOLDEN_VER.ak.
+const AK_GOLDEN_SHA = '3b6ca23d';
 let serial = 0;
 
 // Módulo a partir de FONTE (mutável): especificador relativo vira URL absoluta,
@@ -174,6 +177,17 @@ async function audit(sources, { jogo = true, catalogo = true } = {}) {
       : 'VM_LAUNCH=true sem catálogo privado em public/private-assets/viewmodels: não dá para provar que os GLB existem',
   });
 
+  // VL7: decisão do dono (24/09) — AK = golden aprovada (rig A). A rota que o runtime escolhe
+  // para 'ak' tem de ser gold#ak e o GLB servido tem de ter os bytes aprovados.
+  // Medido na revisão (?vmauthored=1), onde a rota autorada existe sem a chave de lançamento.
+  const rev = await load(sources, '?vmauthored=1');
+  const fonte = rev.authored.vmFonteDe ? rev.authored.vmFonteDe('ak') : { chave: '', url: '' };
+  const golden = path.join(ROOT, 'public/models/viewmodels/coro/ak-hires.glb');
+  const sha = fs.existsSync(golden) ? (await import('node:crypto')).createHash('sha256').update(fs.readFileSync(golden)).digest('hex') : '';
+  check('VL7', fonte.chave === 'gold#ak' && fonte.url.startsWith('/models/viewmodels/coro/ak-hires.glb') && sha.startsWith(AK_GOLDEN_SHA), {
+    chave: fonte.chave, url: fonte.url, sha: sha.slice(0, 10),
+    msg: `a 'ak' não serve a golden aprovada (chave ${fonte.chave || '—'}, sha ${sha.slice(0, 10) || 'ausente'}; esperado gold#ak e ${AK_GOLDEN_SHA})` });
+
   if (jogo) {
     const semChave = await gameProbe(sources.game !== read('game') ? sources.game : '', '');
     const revisao = await gameProbe(sources.game !== read('game') ? sources.game : '', '?vmauthored=1');
@@ -229,6 +243,7 @@ if (process.argv.includes('--mutantes')) {
       'this.vm.melee = new KnifeMeleeViewModel({')],
     ['granada-fora-da-chave', ['VL1'], mut('launch', "[...WEAPON_IDS, 'grenade']", '[...WEAPON_IDS]')],
     ['chave-sem-asset', ['VL6'], { ...base, config: allReady(base.config, { launch: true }) }, { catalogo: false }],
+    ['ak-servida-pelo-k', ['VL7'], mut('config', "ak: W('ak', { baked: true, golden: true,", "ak: W('ak', { baked: true,")],
   ];
   result.mutantes = [];
   for (const [nome, espera, sources, opcoes = {}] of mutantes) {

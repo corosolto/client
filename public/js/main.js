@@ -1390,6 +1390,8 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
+  // applyCinematicScreen nunca existiu: chamada órfã aqui era ReferenceError dentro de setPaused(true)
+  // e o M no meio da partida não abria a troca de time (tests/smoke/web-smoke.spec.js).
   game.onPauseChange = () => resetConfirms();
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
@@ -2138,8 +2140,8 @@ for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
   if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
-  // Facção sem elenco fica indisponível via aria-disabled (leitor de tela e arnês);
-  // dataset.ready ninguém escreve nestes cards.
+  // sem elenco = INDISPONÍVEL como estado (aria-disabled); o antigo `dataset.ready` ninguém escrevia
+  // nestes cards, e toda facção nascia desligada.
   card.setAttribute('aria-disabled', String(!n));
   card.addEventListener('focus', () => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   card.onclick = () => {

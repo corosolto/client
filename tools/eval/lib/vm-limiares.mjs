@@ -79,6 +79,9 @@ export const COBERTURA_ADS_MAX_VS_AK = 1.5;
    6% da largura (86 px) do centro da pistola. ADS: arma visível ≥ 50% da área
    da pistola em ADS (o revólver deixa "40 px acima das luvas"). */
 export const PISTOLA_FAIXA = { min: 0.80, max: 1.25 };
+// Faixa própria por curta (decisão do dono, 25/09): a deagle fica GRANDE, 135–140% da PT-38
+// no olho do crítico; o mesmo teto vale para qualquer régua que meça a curta contra a PT-38.
+export const PISTOLA_FAIXA_ARMA = Object.freeze({ deagle: { min: 0.80, max: 1.45 } });
 
 /* ARMAS CURTAS — decisão do dono (integração K, 23/09): pistol, deagle e
    revolver38 medem-se contra a PT-38 APROVADA (o enquadramento de antes do #631,

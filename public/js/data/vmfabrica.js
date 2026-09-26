@@ -5,10 +5,10 @@ export const VM_FABRICA_BYTES = Object.freeze({
   awp: '651cf09d7e',
   carbine: 'd9c3907371',
   deagle: 'a08149fe73',
-  famas: '29f877cdb2',
+  famas: '47e12d7684',
   g3: '41e72be5d8',
   g3sg1: 'e9248df6b2',
-  lmg: '2f030d550f',
+  lmg: '527c3d411e',
   m4: 'c500cfe632',
   m400: 'a9f4bce104',
   m92: 'c8fcfb1276',
@@ -23,7 +23,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   shotgun: '8b3c8639ca',
   sks: '39c44f6e41',
   svd: '3efcb8065b',
-  tavor: '403658a972',
+  tavor: '88a6aeec81',
   uzi: 'b2d1bbb774',
 });
 // Posição do pacote por chassi contra a AK golden (tools/fabrica/enquadramento/<id>.json);

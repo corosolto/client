@@ -55,12 +55,9 @@ export const VM_WEAPON = {
   // Produto K (KINEMATION, 67 juntas) assado por arma no catálogo privado:
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
-  // AK/AKM K (rifles-ak-final.py + grip-support.mjs): frame pelo retrato da golden (vm-gauntlet:
-  // mão/arma 0,74 contra 0,73) dentro da faixa do eval:vm-frame; ADS pela alça e massa.
-  ak: W('ak', { baked: true,
-    frame: { x: 0.065, y: 0.04, z: -0.203, fov: 57, rotDeg: [1.69, 7.69, 6.19] },
-    ads: { auto: true, off: [-0.001, 0.0009, 0], rotDeg: [-6.12, -0.71, 0], pull: 0.05, fovScale: 1,
-      linhaDeMira: { ref: 'MINT_WEAPON_AK', alca: [-0.06, 0.153, 0.005], massa: [-0.48, 0.155, 0.005] } } }),
+  // AK = a GOLDEN aprovada (rig A, coro/ak-hires.glb; decisão do dono 24/09): rota gold#ak,
+  // sem produto K. eval:vm-launch VL7 reprova se a 'ak' servir outra coisa. Caixa MAG: eval:cs16.
+  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),
@@ -170,16 +167,17 @@ const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDro
 export const VM_FABRICA = Object.freeze({
   akm: F('ak', 'AK', { recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
   m4: F('ar', 'MX16A4', { recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.1) }),
-  famas: F('ar', 'MX16A4', { variante: true, ads: A(0.1) }),
+  famas: F('ar', 'MX16A4', { variante: true, recoilScale: 7, recoilLoc: 0.8, ads: A(0.28) }),
+  tavor: F('ar', 'MX16A4', { variante: true, recoilScale: 7, recoilLoc: 0.8, frame: { x: 0.235, y: -0.06, z: -0.24 }, ads: A(0.28) }),
   // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
   // entra; nesses três a extensão não fura a câmera (crítico, rodada 1).
-  g3: F('g3', 'G3', { manga: true, recoilScale: 7, recoilLoc: 1.5, ads: A(0.1) }),
+  g3: F('g3', 'G3', { manga: true, recoilScale: 9, recoilLoc: 1.5, frame: { x: 0.195, y: -0.07, z: -0.353, rotDeg: [1.69, 7.69, 4.7] }, ads: A(0.22) }),
   svd: F('svd', 'SVD', { manga: true, recoilScale: 3, recoilLoc: 1.5, ads: A(0.34) }),
-  awp: F('sniper', 'L96X', { recoilScale: 3.5, frame: { x: 0.21, y: -0.05, z: -0.3, fov: 44, rotDeg: [1.69, 4, 6.19] }, ads: A(0.12) }),
+  awp: F('sniper', 'L96X', { manga: true, recoilScale: 3.5, frame: { x: 0.21, y: -0.05, z: -0.3, fov: 44, rotDeg: [1.69, 4, 6.19] }, ads: A(0.12) }),
   mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, frame: { x: 0.14, y: -0.05, z: -0.123, fov: 50, rotDeg: [-2, 7.69, 6.19] }, ads: A(0.4) }),
-  mp5: F('mp5', 'MPS5', { recoilScale: 6, recoilLoc: 1.5, ads: A(0.1) }),
+  mp5: F('mp5', 'MPS5', { recoilScale: 7, recoilLoc: 0.6, ads: A(0.1) }),
   p90: F('p90', 'PDW90', { recoilScale: 8, recoilLoc: 1.5, ads: A(0.3) }),
-  lmg: F('lmg', 'MGX5', { recoilScale: 4, recoilLoc: 1.5, frame: { x: 0.335, y: -0.04, z: -0.18, rotDeg: [1.69, 0, -8] }, ads: A(0.3) }),
+  lmg: F('lmg', 'MGX5', { recoilScale: 4, recoilLoc: 1.5, frame: { x: 0.335, y: -0.04, z: -0.15, rotDeg: [1.69, 0, -8] }, ads: A(0.3) }),
   shotgun: F('shotgun', 'KXG12', { recoilScale: 2.8, recoilLoc: 1.2, ads: A(0.1) }),
   pistol: F('pistol', 'X18', { frame: CURTA, ads: A(0.38) }),
   deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: A(0.38) }),
@@ -193,5 +191,4 @@ export const VM_FABRICA = Object.freeze({
   rem700: F('bolt', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.14, y: -0.05, z: -0.123, fov: 50, rotDeg: [-2, 7.69, 6.19] }, ads: A(0.4) }),
   carbine: F('bolt', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.115, y: -0.04, z: -0.123, fov: 50 }, ads: A(0.3) }),
   uzi: F('smg', 'X18', { variante: true, manga: true, recoilScale: 3, frame: { ...CURTA, x: 0.26, y: -0.2, z: -0.55, rotDeg: [21, 15, -5] }, ads: A(0.2) }),
-  tavor: F('ar', 'MX16A4', { variante: true, frame: { x: 0.235, y: -0.06, z: -0.24 }, ads: A(0.1) }),
 });

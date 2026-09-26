@@ -296,6 +296,11 @@ const entryKeyFor = (weapon) => {
   if (GOLDEN_VM && VM_WEAPON[weapon]?.golden === true) return `gold#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
+// Fonte que o runtime serve para a arma (revisão/QA/réguas): chave e URL. VL7 do eval:vm-launch.
+export function vmFonteDe(weapon) {
+  const chave = entryKeyFor(weapon);
+  return { chave, url: chave ? urlForKey(chave) : '' };
+}
 const urlForKey = (key) => {
   if (key.startsWith('fab#')) {
     const weapon = key.slice(4);

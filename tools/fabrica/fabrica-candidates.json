@@ -278,8 +278,8 @@
       "chassi": "MX16A4",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/famas-fabrica.glb",
-      "bytes": 2266832,
-      "sha256": "29f877cdb2caf6f83e60116af04fda382efc5c91a6c305938e392cdb150d2093",
+      "bytes": 2267808,
+      "sha256": "47e12d76849026f5b663f0ff4454216316478504daf5cd333284d69b7ff653dd",
       "clipes": [
         {
           "nome": "idle",
@@ -317,7 +317,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 8,
+      "segundos": 6,
       "file": "viewmodels/fabrica/famas-fabrica.glb",
       "ficha": "tools/fabrica/fichas/famas.json",
       "insumos": {
@@ -329,7 +329,7 @@
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "malhaPropria": "159c0750b378252a7c5da16837b1e4c584e900416a2085dfd662cb38ea60405a",
-        "animador": "99e778c8f9ed4e66ff8d3ca40b9fed0a176870fb71dc69141ceac7119217ff0c",
+        "animador": "3856fb0be47b8d326b3080e9fe64eeb69cefe0c2cfeb18cc0efe42826ea09719",
         "frameJogo": "2f367ba5ae75380191fb3717c63df1f6d547dd5c6047861b2e1f987e8ded4c0b"
       },
       "ready": false,
@@ -472,8 +472,8 @@
       "chassi": "MGX5",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/lmg-fabrica.glb",
-      "bytes": 4847796,
-      "sha256": "2f030d550fab20f7a5129ab8c120b5254c2f78f7f3908e8a684c2ed53fea4f92",
+      "bytes": 4863540,
+      "sha256": "527c3d411e39f5c57cc66d2434afa22eaccd489477f933c9e725bc827b825ece",
       "clipes": [
         {
           "nome": "idle",
@@ -514,16 +514,17 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 9,
+      "segundos": 15,
       "file": "viewmodels/fabrica/lmg-fabrica.glb",
       "ficha": "tools/fabrica/fichas/lmg.json",
       "insumos": {
-        "ficha": "113bd43c46b659387e3928cc6adf6383f886c0be8862fff53006bc1c075079f2",
+        "ficha": "56113e0d95644784a9be8f3f4fcb12139e101019df30866e25625875dbfbaff6",
         "chassi": "b9804be2cbed5c112b0d9a23e859b430dbd4a7ca25dcf44a4db0c714c52e320f",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "7836e63c9536f83b248661f9edb48477c756d1bfeec71daf1a9d049abb8e32cb",
         "poseFbx": "61ef170d8561e53b31f8200046c548dac48db8786eb00e88e02af6ec3222f37c",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
+        "clipe:idle:arma": "7ff6e7afba04438550106ba9d85e53c70a02fec90b38cc827c5a1e6b28273c76",
         "clipe:reload_tactical:braco": "c02463971525d90955418bc94867fe928eeaaa66c833452dbd7575863a3635d5",
         "clipe:reload_tactical:arma": "e76a58f26d4b2332740a8b9e491ee12cb1a26b91c3e2beede295419833142f4c",
         "clipe:reload_empty:braco": "808da5198675bcaf45c2d879435c3af97457af74b32cf92c2686e247845cf222",
@@ -1497,8 +1498,8 @@
       "chassi": "MX16A4",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/tavor-fabrica.glb",
-      "bytes": 2263232,
-      "sha256": "403658a972a9d1d2b45e0d8c0bcfe578391920fedd41a64eb1d8546f23352831",
+      "bytes": 2260692,
+      "sha256": "88a6aeec814e23d4e8206135ba7116420d7a03d83670efdb244b6ab7c39f923f",
       "clipes": [
         {
           "nome": "idle",
@@ -1536,7 +1537,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 5,
+      "segundos": 6,
       "file": "viewmodels/fabrica/tavor-fabrica.glb",
       "ficha": "tools/fabrica/fichas/tavor.json",
       "insumos": {
@@ -1548,7 +1549,7 @@
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "malhaPropria": "958f09eec9033af88c954d57fef4130827a2b2958109c12f52644e1e7ace573c",
-        "animador": "cee409c92e359039514a2b635f46aaff07c000434026e4c3634dd6763300b8fd",
+        "animador": "d21ea85b0068b63804a2f59947f958f0e548a189c1d0607f44d6b828b8acf8a3",
         "frameJogo": "ac7d3c93ef2689dd2f42c344ac2b56907a361c6dde54478f2fda500e5ddcfb1e"
       },
       "ready": false,

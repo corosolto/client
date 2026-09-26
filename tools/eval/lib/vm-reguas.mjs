@@ -282,7 +282,7 @@ function coberturaCurta(c, refs) {
   if (!p?.quadril?.areaArma) return NM(`referência da pistola ausente (${PISTOLA_APROVADA_ARQ} sem este aspecto)`);
   const q = c.quadril;
   if (!q?.areaArma) return NM('arma curta sem pixel de arma no quadril');
-  const faixa = L.PISTOLA_APROVADA.faixa;
+  const faixa = L.PISTOLA_FAIXA_ARMA[c.arma] || L.PISTOLA_APROVADA.faixa;
   const tam = tamanhoCurta(q, p, c.arma);
   const falhas = [];
   if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da PT-38 ${p.fonte} por metro (faixa das curtas ${faixa.min}–${faixa.max})`);
@@ -379,7 +379,7 @@ export const JUIZ = {
     const dpos = Math.hypot(x1 - x0, y1 - y0);
     const posMax = L.PISTOLA_POS_MAX * (refs.largura || L.LARGURA_REF);
     const adsRaz = p.ads.areaArma ? (c.ads?.areaArma || 0) / p.ads.areaArma : 0;
-    const faixa = refs.faixaPistola || L.PISTOLA_FAIXA;
+    const faixa = refs.faixaPistola || L.PISTOLA_FAIXA_ARMA[c.arma] || L.PISTOLA_FAIXA;
     const falhas = [];
     if (tam < faixa.min) falhas.push(`arma pequena: ${(tam * 100).toFixed(0)}% da pistola ${p.fonte} por metro (faixa ${faixa.min}–${faixa.max})`);
     if (tam > faixa.max) falhas.push(`arma gigante: ${(tam * 100).toFixed(0)}% da pistola ${p.fonte} por metro (faixa ${faixa.min}–${faixa.max})`);
@@ -566,6 +566,15 @@ export const MUTANTES = {
     mover(s.sight, 0, d, 0); mover(s.muzzle, 0, d, 0);
     return { aplicou: s.sight.getWorldPosition(s.sight.position.clone()).y - y0 > d * 0.9, sobe: d };`), arma) },
   'sem-ads': { regua: 'mira', arma: 'carbine', fase: 'antesAds', aplicar: async () => ({ aplicou: true }) },
+  // Janela de óptica/reflex fora da cruz (VM_PALCO_QS=vmfabrica=p90): a lente da PDW90 é malha
+  // opaca; a régua acha a janela pela profundidade e tem de reprovar com o pacote 0,25 palma à
+  // direita no ADS (antes da janela ela lia a massa, 35 px, e reprovava com a lente na cruz).
+  'janela-fora': { regua: 'mira', arma: 'p90', fase: 'ads', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const cam = window.__game.vmCamera; cam.updateMatrixWorld();
+    const dir = new cam.position.constructor(1, 0, 0).applyQuaternion(cam.getWorldQuaternion(cam.quaternion.clone()));
+    const d = palmaDe(e) * 0.25; const w0 = e.mount.getWorldPosition(e.mount.position.clone());
+    mover(e.mount, dir.x * d, dir.y * d, dir.z * d);
+    return { aplicou: e.mount.getWorldPosition(w0.clone()).distanceTo(w0) > d * 0.9, passo: d };`), arma) },
   // FILA-CORRECAO shotgun item 2: "mutante que aproxima a arma e reprova" —
   // 2,2 palmas (~26 cm de mão real) para o olho: a m4 fica com a câmera dentro
   // da coronha, o "tubo octogonal oco" do shotgun.

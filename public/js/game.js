@@ -29,7 +29,7 @@ import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o 
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 import { createSoundscape } from './soundscape.js';        // vida 1: áudio ambiente por mapa (world.sound)
-import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS } from './authoredvm.js';
+import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS, vmFonteDe } from './authoredvm.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { viewmodelVisibility } from './vmvisibility.js';
 
@@ -3100,7 +3100,7 @@ export class Game {
         document.body.appendChild(badge);
       }
       badge.textContent = (melee ? `vm: faca autorada · ${w}` : authored
-        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'})` : `vm: legado · ${w}`) + ` · ${VM_RUNTIME.mode}`;
+        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'}) · ${({ gold: 'gold', fab: 'fábrica' })[vmFonteDe(w).chave.split('#')[0]] || 'K'}` : `vm: legado · ${w}`) + ` · ${VM_RUNTIME.mode}`;
       badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
       if (AUTHORED_VM_ENABLED && QS.get('vmqa') === 'precision') this._ensureVmPrecisionQa();
     }
