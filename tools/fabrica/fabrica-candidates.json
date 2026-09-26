@@ -801,8 +801,8 @@
       "chassi": "Kar98K",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/mosin-fabrica.glb",
-      "bytes": 2585164,
-      "sha256": "14015e29d79e0a4e1f25fd5abbafc863f9949b1ded5f60e469decff3fe1b623f",
+      "bytes": 2588836,
+      "sha256": "cb3c4df1f422947b1a50d3b1728bd5b9ecb11bc89161d76704bcd052ecc3ab19",
       "clipes": [
         {
           "nome": "idle",
@@ -860,7 +860,7 @@
         "clipe:shoot:braco": "56f288cf6510ea263cdbe9afcfc3c9e1163e1be7933e2145490d52b10a7b1b16",
         "clipe:shoot:arma": "3b9dc4357ef2fb0ca4dd527764054c963a10cad0ebf9ddf6fa9bed22df47ddd0",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
-        "animador": "ea7bb124db879e6f6b98e1f4ee87abce3ee12ea9a94f36f74309de1a43ce150f",
+        "animador": "c1373e0b1751d5d804909ef7cd90f461bce44575ae72ccc8f2e38a92ead977e2",
         "frameJogo": "5c0a11c48f139c5b7f97565e466126630c93cbbdfe298729189b27c7f0527d83"
       },
       "ready": false,
@@ -1074,8 +1074,8 @@
       "chassi": "Kar98K",
       "variante": true,
       "url": "/private-assets/viewmodels/fabrica/rem700-fabrica.glb",
-      "bytes": 2714520,
-      "sha256": "b858bc287c6cdb16ed740412852fa3804d07af074e409930529af8776167c7d7",
+      "bytes": 2718192,
+      "sha256": "5f50005bd3695d809cbf9606eca65119468602faa8f99413cf78a898a785b4e8",
       "clipes": [
         {
           "nome": "idle",
@@ -1134,7 +1134,7 @@
         "clipe:shoot:arma": "3b9dc4357ef2fb0ca4dd527764054c963a10cad0ebf9ddf6fa9bed22df47ddd0",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "zonaLivre:luneta": "65f27ce977bc651a58d46510f91cd46df1d13d6a7e4cfade1790be9799ec2141",
-        "animador": "ea7bb124db879e6f6b98e1f4ee87abce3ee12ea9a94f36f74309de1a43ce150f",
+        "animador": "c1373e0b1751d5d804909ef7cd90f461bce44575ae72ccc8f2e38a92ead977e2",
         "frameJogo": "5c0a11c48f139c5b7f97565e466126630c93cbbdfe298729189b27c7f0527d83"
       },
       "ready": false,
