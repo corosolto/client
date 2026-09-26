@@ -480,7 +480,7 @@ def medir(an, nome, quadros, rest_por_osso, pentes):
         lin = {"quadro": f, "palmaApoioArmaCm": round(d_corpo, 2), "palmaForteArmaCm": round(d_forte, 2),
                "erroIkCm": [round(e, 3) for e in q["erro"]]}
         for osso in pentes:
-            esc = pose.mat(osso).to_scale()
+            esc = pose.mat(osso).to_scale() / an.escala_peca.get(osso, 1.0)   # peça MICRO: repouso é invisível
             visivel = min(esc) > 0.2
             pts = posto.get(osso, [])
             c = centro(pts)
@@ -494,7 +494,7 @@ def medir(an, nome, quadros, rest_por_osso, pentes):
             ant = vis_ant.get(osso)
             outro = [o for o in pentes if o != osso]
             coincide = lambda: any((centro(posto.get(o, [])) - c).length < 1.0
-                                   and min(pose.mat(o).to_scale()) > 0.2 for o in outro)
+                                   and min(pose.mat(o).to_scale() / an.escala_peca.get(o, 1.0)) > 0.2 for o in outro)
             if ant is not None:
                 if ant["naTela"] and not visivel and not ant.get("coincidia"):
                     falhas.append(f"{nome} q{f}: {osso} some NA TELA")
@@ -630,7 +630,8 @@ def main():
                           for k, v in an.diagnostico.items()}
     an.base0 = an.base0_novo
     rest = vertices_por_osso(rig, malhas)
-    pentes = [osso_pente, f"{osso_pente}2"] + ([mun] if mun else [])   # o municiador também não some/surge na tela
+    # varre toda peça com chaves de pente (os seis cartuchos do revólver, a lâmina), não só o pente
+    pentes = sorted(set(an.pai_pecas()) | {osso_pente, f"{osso_pente}2"} | ({mun} if mun else set()))
     for nome, clipe in spec["clipes"].items():
         quadros, n = an.assar(nome, clipe)
         an.gravar(nome, quadros, n)

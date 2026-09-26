@@ -102,8 +102,9 @@ if (!flag('sem-capturas')) {
     const dir = path.join(LOTE, 'capturas', aspecto);
     // Figuras de rodada anterior (outras frações) não entram no pacote do crítico.
     if (fs.existsSync(dir)) for (const f of fs.readdirSync(dir)) if (ids.some((id) => f.startsWith(`${id}-`))) fs.rmSync(path.join(dir, f));
-    rodar(`capturas-${aspecto}`, process.execPath, ['tools/fabrica/captura/kcap.mjs', `--porta=${PORTA}`, `--aspecto=${arg}`,
+    const cap = rodar(`capturas-${aspecto}`, process.execPath, ['tools/fabrica/captura/kcap.mjs', `--porta=${PORTA}`, `--aspecto=${arg}`,
       `--armas=${ids.join(',')}`, `--out=${dir}`, `--query=vmfabrica=${ids.join(',')}`]);
+    for (const id of ids) resultado[id][`capturas-${aspecto}-status`] = cap.status;
     for (const id of ids) resultado[id][`capturas-${aspecto}`] = fs.existsSync(dir)
       ? fs.readdirSync(dir).filter((f) => f.startsWith(`${id}-`) && f.endsWith('.png')).map((f) => path.relative(LOTE, path.join(dir, f))) : [];
   }
@@ -111,10 +112,12 @@ if (!flag('sem-capturas')) {
   const vdir = path.join(LOTE, 'video');
   for (const id of ids) {
     fs.rmSync(path.join(vdir, id), { recursive: true, force: true });   // vídeo velho não conta como captura
-    rodar(`video-${id}`, process.execPath, ['tools/viewmodels/prep/arsenal-video-capture.mjs', `--porta=${PORTA}`,
+    const vid = rodar(`video-${id}`, process.execPath, ['tools/viewmodels/prep/arsenal-video-capture.mjs', `--porta=${PORTA}`,
       `--armas=${id}`, '--aspecto=3x2', `--out=${path.join(vdir, id)}`], { VM_PALCO_QS: `vmfabrica=${id}` });
     const d = path.join(vdir, id);
-    resultado[id].video = fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f.endsWith('.webm')).map((f) => path.relative(LOTE, path.join(d, f))) : [];
+    // O script grava o mestre e sai 1 quando a arma falha dentro do try: conta só o corte da arma e o status.
+    resultado[id].video = vid.status === 0 && fs.existsSync(d)
+      ? fs.readdirSync(d).filter((f) => f.startsWith(`${id}-`) && f.endsWith('.webm')).map((f) => path.relative(LOTE, path.join(d, f))) : [];
   }
   // Pacote do crítico: figuras 3:2 do produto + referências aprovadas, sem texto de intenção.
   const refDir = path.join(LOTE, 'ref');   // retratos da AK golden e da PT-38 aprovadas (fora do git)
@@ -151,6 +154,7 @@ const vermelhos = (id) => {
     for (const [regua, v] of Object.entries(img || {})) if (v.estado === 'VERMELHO') lista.push(`${regua}@${a}`);
   }
   if (!flag('sem-capturas') && !(r['capturas-3x2'] || []).length) lista.push('sem-captura');
+  for (const a of ['3x2', '16x9']) if (!flag('sem-capturas') && r[`capturas-${a}-status`]) lista.push(`captura-falhou@${a}`);
   if (!flag('sem-capturas') && !(r['capturas-16x9'] || []).length) lista.push('sem-captura@16x9');
   if (!flag('sem-capturas') && !(r.video || []).length) lista.push('sem-video');
   if (r['carregador-repete'] && !r['carregador-repete'].ok) lista.push('carregador-repete');

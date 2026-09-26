@@ -32,7 +32,8 @@ export async function abrirNavegador() {
 export async function subirServidor(porta) {
   const base = `http://127.0.0.1:${porta}`;
   try { if ((await fetch(base)).ok) return { base, kill: () => {} }; } catch { /* sobe */ }
-  const srv = spawn('node', ['tools/eval/serve.mjs', String(porta)], { stdio: 'ignore' });
+  const raiz = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../..');   // qa.mjs chama de qualquer cwd
+  const srv = spawn('node', ['tools/eval/serve.mjs', String(porta)], { stdio: 'ignore', cwd: raiz });
   process.on('exit', () => srv.kill());
   for (let i = 0; i < 60; i++) {
     try { if ((await fetch(base)).ok) return { base, kill: () => srv.kill() }; } catch { /* subindo */ }

@@ -170,7 +170,7 @@ export const VM_FABRICA = Object.freeze({
   famas: F('ar', 'MX16A4', { variante: true, recoilScale: 7, recoilLoc: 0.8, ads: A(0.28) }),
   tavor: F('ar', 'MX16A4', { variante: true, recoilScale: 7, recoilLoc: 0.8, frame: { x: 0.235, y: -0.06, z: -0.24 }, ads: A(0.28) }),
   // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
-  // entra; nesses três a extensão não fura a câmera (crítico, rodada 1).
+  // entra; nesses dois a extensão não fura a câmera (crítico, rodada 1).
   g3: F('g3', 'G3', { manga: true, recoilScale: 9, recoilLoc: 1.5, frame: { x: 0.195, y: -0.07, z: -0.353, rotDeg: [1.69, 7.69, 4.7] }, ads: A(0.22) }),
   svd: F('svd', 'SVD', { manga: true, recoilScale: 3, recoilLoc: 1.5, ads: A(0.34) }),
   awp: F('sniper', 'L96X', { recoilScale: 3.5, frame: { x: 0.21, y: -0.05, z: -0.3, fov: 44, rotDeg: [1.69, 4, 6.19] }, ads: A(0.12) }),
