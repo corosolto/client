@@ -631,8 +631,9 @@ export const MUTANTES = {
   // Munição estacionada fora do quadro é legítima; a mesma peça parada NO quadro, solta acima
   // da arma, tem de reprovar (produto da fábrica: rode com VM_PALCO_QS=vmfabrica=mosin).
   'clipe-no-quadro': { regua: 'carregador', arma: 'mosin', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
-    const b = e?.scene.getObjectByName('Cartridge'); const a = e?.scene.getObjectByName('Arma');
-    if (!b || !a) return { aplicou: false, motivo: 'sem Cartridge/Arma' };
+    // Mosin do plano B (lâmina): a munição é o osso Mag; a de antes era o cartucho do laço.
+    const b = e?.scene.getObjectByName('Mag') || e?.scene.getObjectByName('Cartridge'); const a = e?.scene.getObjectByName('Arma');
+    if (!b || !a) return { aplicou: false, motivo: 'sem Mag/Cartridge/Arma' };
     const alvo = a.getWorldPosition(a.position.clone()).add(a.position.clone().set(0, palmaDe(e) * 1.5, 0));
     b.position.copy(b.parent.worldToLocal(alvo)); b.updateMatrixWorld(true);
     return { aplicou: true };`), arma) },

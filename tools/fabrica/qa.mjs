@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { MANIFESTO, RAIZ_REPO, gravarJson, lerJson } from './lib/comum.mjs';
+import { subirServidor } from '../eval/lib/vm-palco.mjs';
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
@@ -94,6 +95,9 @@ for (const aspecto of ['3x2', '16x9']) {
 }
 
 if (!flag('sem-capturas')) {
+  // As réguas de imagem sobem e derrubam o próprio servidor; kcap e o vídeo só conectam.
+  // Sem isto as capturas saíam em 1 s com ERR_CONNECTION_REFUSED (25/09).
+  const srv = await subirServidor(PORTA);
   for (const [aspecto, arg] of [['3x2', '32'], ['16x9', '169']]) {
     const dir = path.join(LOTE, 'capturas', aspecto);
     // Figuras de rodada anterior (outras frações) não entram no pacote do crítico.
@@ -106,6 +110,7 @@ if (!flag('sem-capturas')) {
   // Vídeo 3:2 por arma (saque, idle, tiro, ADS, recarga) — a página do dono mostra o movimento.
   const vdir = path.join(LOTE, 'video');
   for (const id of ids) {
+    fs.rmSync(path.join(vdir, id), { recursive: true, force: true });   // vídeo velho não conta como captura
     rodar(`video-${id}`, process.execPath, ['tools/viewmodels/prep/arsenal-video-capture.mjs', `--porta=${PORTA}`,
       `--armas=${id}`, '--aspecto=3x2', `--out=${path.join(vdir, id)}`], { VM_PALCO_QS: `vmfabrica=${id}` });
     const d = path.join(vdir, id);
@@ -121,6 +126,7 @@ if (!flag('sem-capturas')) {
     if (fs.existsSync(refDir)) fs.cpSync(refDir, path.join(dir, 'referencia'), { recursive: true });
     resultado[id].critico = { pacote: path.relative(LOTE, dir) };
   }
+  srv.kill();
 }
 
 // --sem-regressao preserva a regressão da última rodada completa (ela não depende do produto).
@@ -145,6 +151,8 @@ const vermelhos = (id) => {
     for (const [regua, v] of Object.entries(img || {})) if (v.estado === 'VERMELHO') lista.push(`${regua}@${a}`);
   }
   if (!flag('sem-capturas') && !(r['capturas-3x2'] || []).length) lista.push('sem-captura');
+  if (!flag('sem-capturas') && !(r['capturas-16x9'] || []).length) lista.push('sem-captura@16x9');
+  if (!flag('sem-capturas') && !(r.video || []).length) lista.push('sem-video');
   if (r['carregador-repete'] && !r['carregador-repete'].ok) lista.push('carregador-repete');
   return lista;
 };
