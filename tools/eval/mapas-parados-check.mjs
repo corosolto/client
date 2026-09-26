@@ -35,7 +35,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
 const ler = (rel) => (existsSync(path.join(ROOT, rel)) ? readFileSync(path.join(ROOT, rel), 'utf8') : null);
 
-const MUTANTES = ['some-do-registro', 'vaza-no-menu', 'menu-cru', 'oficina-cega', 'sem-testmode', 'inspecao-crua'];
+const MUTANTES = ['some-do-registro', 'vaza-no-menu', 'menu-cru', 'oficina-cega', 'sem-testmode', 'inspecao-crua', 'mp-obedece'];
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (mutante && !MUTANTES.includes(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
@@ -72,6 +72,11 @@ if (mutante === 'inspecao-crua' && MAINSRC) {
   MAINSRC = MAINSRC.replace('if (target.map) currentMap = mapaDaSessao({ urlMap: target.map, oficina });',
     'if (target.map) currentMap = resolveMapId(target.map);');
   if (MAINSRC === antes) throw new Error('MUTANTE NAO APLICOU: inspecao-crua');
+}
+if (mutante === 'mp-obedece' && MAINSRC) {
+  const antes = MAINSRC;
+  MAINSRC = MAINSRC.replace(/if \(noServeMapaParado\(welcome\.map, net\)\) return;\n/, '');
+  if (MAINSRC === antes) throw new Error('MUTANTE NAO APLICOU: mp-obedece');
 }
 if (mutante === 'sem-testmode' && MAINSRC) {
   const antes = MAINSRC;
@@ -135,6 +140,22 @@ if (MAINSRC) {
     falhas.push('MP8 tela de inspeção resolve o mapa sem a guarda de parado — ?tela=maps&map=<parado> abriria fora da oficina');
   } else if (!/if \(target\.map\) currentMap = mapaDaSessao\(\{ urlMap: target\.map, oficina \}\);/.test(MAINSRC)) {
     falhas.push('MP8 tela de inspeção não passa o mapa por mapaDaSessao com a oficina');
+  }
+}
+
+/* MP9 — o MULTIPLAYER é a terceira porta, e a única em que o mapa vem de FORA: o nó
+   sorteia e o cliente obedecia com `if (MAPS[welcome.map])`. Nó com CLIENT_REF antigo
+   ainda serve mapa parado, então o cliente precisa recusar — trocar por conta própria
+   dessincronizaria do servidor. */
+if (MAINSRC) {
+  if (!/function noServeMapaParado\(/.test(MAINSRC)) {
+    falhas.push('MP9 main.js não tem a recusa de mapa parado vindo do nó');
+  } else {
+    const portas = (MAINSRC.match(/if \(noServeMapaParado\(/g) || []).length;
+    if (portas < 2) falhas.push(`MP9 a recusa cobre ${portas} de 2 pontos (welcome da sala e onPartida da rotação)`);
+    if (!/mpMapasDoNo = \(await listMaps\([^)]*\)\)\.filter\(\(id\) => MAPS\[id\] && MAPAS_MENU\.includes\(id\)\);/.test(MAINSRC)) {
+      falhas.push('MP9 a grade de mapas do multiplayer não filtra pela lista jogável');
+    }
   }
 }
 
