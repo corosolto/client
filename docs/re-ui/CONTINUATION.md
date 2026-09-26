@@ -38,6 +38,10 @@ O pacote é especificação visual. O código de produção continua em `src/pag
 - Branch: `codex/re-ui-home`
 - Base: `origin/main` em `299870720936794aa4729f344d2d9167a2b6a357`
 - Checkpoint de wallpaper após rebase: `040db41a8` (`fix(ui): preencher wallpapers da home em qualquer proporção`).
+- Primeira prévia rejeitada: `383a4f150`. Segunda iteração e URLs compartilháveis:
+  `b89a988ef` (`feat(ui): reorganizar hub e dar URLs compartilháveis às seções`).
+- `origin/main` avançou três commits após a base desta lane; nenhum rebase/merge foi
+  feito durante o checkpoint. Reavaliar antes de propor PR.
 - A árvore principal suja não foi alterada.
 
 ## Milestones
