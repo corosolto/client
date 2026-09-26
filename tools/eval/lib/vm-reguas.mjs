@@ -541,6 +541,13 @@ export const MUTANTES = {
     mover(s.sight, 0, d, 0); mover(s.muzzle, 0, d, 0);
     return { aplicou: s.sight.getWorldPosition(s.sight.position.clone()).y - y0 > d * 0.9, sobe: d };`), arma) },
   'sem-ads': { regua: 'mira', arma: 'carbine', fase: 'antesAds', aplicar: async () => ({ aplicou: true }) },
+  // ADS da AK golden (dono, 25/09): alça e massa medidas presas ao osso da arma. Com os dois pontos
+  // 1,2 palma acima da mira real, o ADS centra o ponto errado e a mira tem de reprovar.
+  'golden-mira-acima': { regua: 'mira', arma: 'ak', fase: 'antesAds', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const s = e?.adsSockets; if (!s?.sight || !s?.muzzle) return { aplicou: false, motivo: 'golden sem adsSockets' };
+    const d = palmaDe(e) * 1.2; const y0 = s.sight.getWorldPosition(s.sight.position.clone()).y;
+    mover(s.sight, 0, d, 0); mover(s.muzzle, 0, d, 0); mover(s.up, 0, d, 0);
+    return { aplicou: s.sight.getWorldPosition(s.sight.position.clone()).y - y0 > d * 0.9, sobe: d };`), arma) },
   // Janela de óptica/reflex fora da cruz (VM_PALCO_QS=vmfabrica=p90): a lente da PDW90 é malha
   // opaca; a régua acha a janela pela profundidade e tem de reprovar com o pacote 0,25 palma à
   // direita no ADS (antes da janela ela lia a massa, 35 px, e reprovava com a lente na cruz).

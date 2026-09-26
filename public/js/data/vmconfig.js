@@ -57,7 +57,11 @@ export const VM_WEAPON = {
   awp: W('sniper', { baked: true, frame: 'family' }),
   // AK = a GOLDEN aprovada (rig A, coro/ak-hires.glb; decisão do dono 24/09): rota gold#ak,
   // sem produto K. eval:vm-launch VL7 reprova se a 'ak' servir outra coisa. Caixa MAG: eval:cs16.
-  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
+  // ADS da golden (dono, 25/09): alça e massa medidas na malha, no espaço do osso Rifle_metarig
+  // (sonda-golden.mjs); o quadril aprovado não lê nada daqui.
+  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } },
+    ads: { auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.35,
+      golden: { osso: 'Rifle_metarig', alca: [-0.006, 0.167, 0.0571], massa: [-0.006, 0.507, 0.0546], cima: [0, 0, 1] } } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),

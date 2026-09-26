@@ -319,15 +319,6 @@
      "3x2"
     ],
     "fila": "config (ads.linhaDeMira/off por arma)"
-   },
-   "ak": {
-    "valor": "213 px",
-    "dono": "dono (AK golden aprovada, rig A: o runtime não tem pose de ADS autoral para golden — só a lente; decidir se a golden ganha ADS)",
-    "medido": "mira fora da cruz a 213 px; ângulo esquisito no ADS: arma tombada +65° da vertical — no ADS a golden fica no quadro do quadril (sem mint/sockets, o ADS automático não se aplica)",
-    "aspectos": [
-     "3x2",
-     "16x9"
-    ]
    }
   }
  },

@@ -20,6 +20,13 @@ for (const arma of ARMAS) {
   if (arg('deslocar')) await page.evaluate(([x, d]) => { const e = window.__authoredVm.entry(x); const cam = window.__game.vmCamera; cam.updateMatrixWorld();
     const dir = new cam.position.constructor(1, 0, 0).applyQuaternion(cam.getWorldQuaternion(cam.quaternion.clone())).multiplyScalar(d);
     const w = e.mount.getWorldPosition(e.mount.position.clone()).add(dir); e.mount.position.copy(e.mount.parent.worldToLocal(w)); e.mount.updateMatrixWorld(true); }, [arma, Number(arg('deslocar'))]);
+  if (process.env.SONDA_PONTOS) console.log(JSON.stringify(await page.evaluate(([x, lista]) => {
+    const g = window.__game; const e = window.__authoredVm.entry(x); const cam = g.vmCamera; cam.updateMatrixWorld();
+    const osso = e.scene.getObjectByName('Rifle_metarig'); osso.updateWorldMatrix(true, false);
+    const V = e.scene.position.constructor; const W = 1440; const H = 960;
+    return lista.map((p) => { const v = new V(...p).applyMatrix4(osso.matrixWorld); const d = cam.worldToLocal(v.clone()).z; v.project(cam);
+      return [p.join(','), Math.round((v.x + 1) * W / 2 - W / 2), Math.round((1 - v.y) * H / 2 - H / 2), +(-d).toFixed(3)]; });
+  }, [arma, JSON.parse(process.env.SONDA_PONTOS)])));
   const m = await P.mascara(page, arma, { profundidade: true, normais: true });
   const r = A.pontoDeMira(m);
   console.log(arma, JSON.stringify({ tipo: r.ponto?.tipo, desvio: r.desvio?.toFixed(0), dx: r.dx?.toFixed(0), dy: r.dy?.toFixed(0) }));
