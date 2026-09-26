@@ -1518,7 +1518,7 @@ html[data-ui="legacy"] #match-title{font-family:var(--font)}
 .cs-wallpaper{position:absolute;inset:0;z-index:0;overflow:hidden;isolation:isolate;background:var(--bg-900)}
 .cs-wallpaper::before,.cs-wallpaper::after{content:"";position:absolute;pointer-events:none;background-image:var(--menu-wall);background-position:center;background-repeat:no-repeat}
 .cs-wallpaper::before{inset:-24px;z-index:0;background-size:cover;filter:blur(18px) brightness(.48) saturate(.72)}
-.cs-wallpaper::after{inset:0;z-index:1;background-size:contain}
+.cs-wallpaper::after{inset:0;z-index:1;background-size:cover}
 @media (min-aspect-ratio:37/25) and (max-aspect-ratio:38/25){
   .cs-wallpaper::before,.cs-wallpaper::after{background-image:var(--menu-wall-3x2,var(--menu-wall))}
   .cs-wallpaper::after{background-size:cover}

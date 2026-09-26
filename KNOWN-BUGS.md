@@ -73,6 +73,19 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## BUG-180 — wallpaper da home deixa faixas laterais fora do 3:2
+
+**Relato do dono em 26/09/2026:** *"os wallpapers estao em tamanho ruim na home ...
+precisamos ajustar a proporcao de todos wallpapers"*. Os screenshots mostram faixas
+laterais na home publicada. O BUG-64 resolveu o enquadramento em 3:2, mas a regra
+`public/style.css` ainda usava `background-size:contain` no plano principal fora daquela
+faixa. O plano de preenchimento atrás do principal não escondia a emenda.
+
+Na lane `codex/re-ui-home`, o plano principal usa `cover`. `npm run eval:redesign`
+passou com UIR32; `--mutante=menu-wall-contain-volta` torna UIR32 vermelha.
+**Estado:** correção técnica candidata. A revisão visual dos recortes em 3:2, 16:9 e
+ultrawide está pendente após a recusa de acesso do navegador local em 26/09.
+
 ## Encontro no multiplayer — 60% das sessões eram contra bot
 
 **Medido em 13/09/2026** (`mp_metrics_5m` e `mp_session`, 30 dias de produção):
