@@ -19,6 +19,9 @@
 
 > *"a classificacao dos mapas tb pode melhorar. amazonia nao é favela/comunidade"*
 
+> *"tem bastante elemento low poly ainda, o tupi trabalhou bem nos objetos e
+>  elementos do mapa"* (26/09 — vira a frente MA5)
+
 ## Evidência colhida antes de planejar (26/09)
 
 - **Censo cobre metade:** `tools/eval/graffiti_census.json` só tem 5 mapas
@@ -43,6 +46,18 @@
   RC3 (soft particles) e RC4 (vento) não estão.
 - **Acervo parado antes de gerar:** 386 assets Mint pagos e não usados
   (`docs/maps/mint/MINT-ACERVO.md`). Qualquer pedido de prop novo começa neles.
+- **Low-poly herança medido em primitivas:** contagem de `Box/Cylinder` por mapa
+  aberto: escadão **105** · quebrada **101** · loja_h **96** · posto **64** ·
+  ferro_velho **60+20** · brasília **50+19** — contra **7** da `map_lajes_authored`,
+  o único construído no kit Blender assado (`build_lajes_authored_kit.py`). O
+  padrão que o dono aprovou já existe em casa; falta levar aos outros dez.
+- **A receita de objeto do tupi (MAKING-OF):** espécies geradas no Mint (~US$ 6 por
+  6 espécies) e **reconstruídas no Blender com LODs**; scans CC0 do Poly Haven;
+  e o processo "gauntlet" — builders paralelos, críticos só-pixel, classificador
+  "parece real?" em 42 frames (4,96→5,46 em 13 rodadas).
+- **A casa já tem régua "não parece low poly":** `amazonia-check`,
+  `parque-vida-check`, `penitenciaria-vida-check` — o padrão existe, falta virar
+  portão dos 11 abertos.
 
 ## As frentes
 
@@ -96,12 +111,30 @@ não esperam a migração: `amazonia` deixa de ser `FAVELA` (vira tema próprio)
 `mapcat-check`: todo mapa jogável tem TEMA, nenhum cai no fallback, e as rotações
 oficiais continuam resolvendo (mutante: tirar o TEMA de um mapa → vermelho).
 
+**MA5 — Fim do low-poly herança (a frente do "tupi trabalhou bem nos objetos").**
+Substituir os aglomerados de primitivas por malha autoral, na ordem de custo da
+casa: (1) acervo Mint parado, (2) receita tupi para vegetação — gerar no Mint e
+**reconstruir no Blender com LODs** (juçara/jerivá/embaúba do tupi são o
+precedente barato: ~US$ 6 a leva), (3) kit Blender assado no padrão
+`build_lajes_authored_kit.py` (geometria + PBR + lightmap numa casca só) para os
+conjuntos que se repetem — barracos do escadão/quebrada, marquise e paredão do
+posto, fachada da loja_h. Scans CC0 (Poly Haven) para rocha/terreno onde couber.
+Orçamento por mapa: o teto de triângulo da casa continua valendo — malha melhora,
+frame não pode cair (o `KNOWN-BUGS` do fps é vizinho).
+Régua: cláusula "não parece low poly" no padrão `amazonia-check` **em todos os
+11** + teto de primitivas por mapa (mutante adiciona 10 caixas → vermelho; a
+`map_lajes_authored` com 7 é o piso de referência). Julgamento pelo processo do
+tupi: críticos só-pixel + classificador "parece real?" por rodada — o
+`vision-judge.mjs` é o embrião do classificador.
+
 ## Ordem de execução
 
 1. **MA4 correções cirúrgicas** (horas, desbloqueia conversa de catálogo);
 2. **MA1** (a régua que sustenta o resto — sem ela MA2 aprova no olho);
-3. **MA2** ferro velho (pior ofensor, trabalho já especificado);
-4. **MA3** contínuo por payoff: água-amazonia → poeira-ferrovelho → vento.
+3. **MA2** ferro velho (pior ofensor; a frota do item 2 é caso particular do MA5);
+4. **MA5** contínuo por pior razão primitivas/visibilidade: escadão → quebrada →
+   loja_h → posto → brasília;
+5. **MA3** contínuo por payoff: água-amazonia → poeira-ferrovelho → vento.
 
 ## Vetos e leis (herdados, não se negociam)
 
