@@ -74,12 +74,12 @@ check(armasServidas.join(',') === 'ak,pistol',
   'só ak e pistol chegam ao jogador; akm/m92 seguram no legado', armasServidas.join(', '));
 check(/VM_WEAPON\[weapon\]\?\.ready !== false/.test(runtime),
   'runtime honra o portão por arma (ready:false em VM_WEAPON)');
-// Um rig só (K) em toda arma de fogo: nenhuma volta ao golden metarig sem decisão.
+// Decisão do dono (24/09): a AK é a GOLDEN aprovada (rig A); nenhuma outra arma volta ao golden
+// sem decisão. Mutante ak-k: a AK servida pelo catálogo K tem de reprovar.
 const goldenFogo = Object.entries(VM_WEAPON).filter(([, c]) => c.golden === true).map(([w]) => w);
-check(mutant !== 'ak-golden' && goldenFogo.length === 0
-    && VM_WEAPON.ak?.baked === true && VM_WEAPON.ak?.runtime !== 'family'
+check(mutant !== 'ak-k' && goldenFogo.join(',') === 'ak'
     && VM_WEAPON.pistol?.runtime === 'family',
-  'AK e pistola servidas pelo catálogo K (produto por arma e rota de família); nenhuma arma golden',
+  'AK servida pela golden aprovada (única golden); pistola pela rota de família',
   goldenFogo.join(', '));
 check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
 check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),

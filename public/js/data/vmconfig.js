@@ -55,12 +55,9 @@ export const VM_WEAPON = {
   // Produto K (KINEMATION, 67 juntas) assado por arma no catálogo privado:
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
-  // AK/AKM K (rifles-ak-final.py + grip-support.mjs): frame pelo retrato da golden (vm-gauntlet:
-  // mão/arma 0,74 contra 0,73) dentro da faixa do eval:vm-frame; ADS pela alça e massa.
-  ak: W('ak', { baked: true,
-    frame: { x: 0.065, y: 0.04, z: -0.203, fov: 57, rotDeg: [1.69, 7.69, 6.19] },
-    ads: { auto: true, off: [-0.001, 0.0009, 0], rotDeg: [-6.12, -0.71, 0], pull: 0.05, fovScale: 1,
-      linhaDeMira: { ref: 'MINT_WEAPON_AK', alca: [-0.06, 0.153, 0.005], massa: [-0.48, 0.155, 0.005] } } }),
+  // AK = a GOLDEN aprovada (rig A, coro/ak-hires.glb; decisão do dono 24/09): rota gold#ak,
+  // sem produto K. eval:vm-launch VL7 reprova se a 'ak' servir outra coisa. Caixa MAG: eval:cs16.
+  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true }),
