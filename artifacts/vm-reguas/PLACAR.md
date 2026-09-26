@@ -1,7 +1,7 @@
 # PLACAR das réguas de imagem do viewmodel
 
 Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-26, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `a0edc00e837d0149`.
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `c2839259af86a79b`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
@@ -29,7 +29,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 | lmg | **VERMELHO** 31 px | verde 0.75× AK | n/a | verde 0.13 | n/a |
 | scar | **VERMELHO** 99 px | verde 1.20× AK | n/a | **VERMELHO** 0.44 | verde ok |
 | tavor | **VERMELHO** 41 px | verde 1.04× AK | n/a | **VERMELHO** 0.30 | **VERMELHO** 1 falha(s) |
-| famas | **VERMELHO** 45 px | verde 0.94× AK | n/a | verde 0.19 | **VERMELHO** 1 falha(s) |
+| famas | **VERMELHO** 45 px | verde 0.91× AK | n/a | verde 0.19 | **VERMELHO** 1 falha(s) |
 | uzi | **VERMELHO** 25 px | verde 0.53× AK | n/a | n/a | **VERMELHO** 2 falha(s) |
 | p90 | **VERMELHO** 71 px | verde 0.68× AK | n/a | verde 0.06 | **VERMELHO** 1 falha(s) |
 
@@ -89,7 +89,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **lmg** VERDE — tamanho 0.75× AK, rolagem +0° da AK (informativa), eixo -12° da AK, braço 0.62×, cruz 0 px, olho 1.58 palma, ADS cobre 9.6% (teto 18.5%)
 - **scar** VERDE — tamanho 1.20× AK, rolagem +11° da AK (informativa), eixo +5° da AK, braço 0.82×, cruz 0 px, olho 1.03 palma, ADS cobre 17.9% (teto 18.5%)
 - **tavor** VERDE — tamanho 1.04× AK, rolagem +12° da AK (informativa), eixo +7° da AK, braço 0.46×, cruz 0 px, olho 1.83 palma, ADS cobre 9.5% (teto 18.5%)
-- **famas** VERDE — tamanho 0.94× AK, rolagem -4° da AK (informativa), eixo -5° da AK, braço 1.08×, cruz 0 px, olho 1.73 palma, ADS cobre 13.0% (teto 18.5%)
+- **famas** VERDE — tamanho 0.91× AK, rolagem -8° da AK (informativa), eixo -2° da AK, braço 0.78×, cruz 0 px, olho 1.72 palma, ADS cobre 13.0% (teto 18.5%)
 - **uzi** VERDE — tamanho 0.53× AK, rolagem -3° da AK (informativa), eixo +0° da AK, braço 0.25×, cruz 0 px, olho ? palma, ADS cobre 3.4% (teto 18.5%)
 - **p90** VERDE — tamanho 0.68× AK, rolagem +49° da AK (informativa), eixo -7° da AK, braço 0.38×, cruz 0 px, olho 4.16 palma, ADS cobre 10.5% (teto 18.5%)
 

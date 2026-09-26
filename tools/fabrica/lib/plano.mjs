@@ -91,7 +91,8 @@ export function montarPlano(fichaArquivo) {
       matPorNome: Object.fromEntries(Object.entries(chassi.materiais.porNome || {}).map(([n, p]) => [n, path.join(PACK_RAIZ, p)])),
       matPorSlot: (chassi.materiais.porSlot || []).map((p) => (p ? path.join(PACK_RAIZ, p) : null)),
       texturasPorGuid,
-      mira: ficha.mira ? { ...chassi.mira, raizCm: ficha.mira.raizCm, origem: ficha.mira.origem } : chassi.mira,
+      mira: ficha.mira ? { ...chassi.mira, raizCm: ficha.mira.raizCm, origem: ficha.mira.origem,
+        frente: ficha.mira.frente || null, cima: ficha.mira.cima || null } : chassi.mira,
       eixos: chassi.eixos,
       ancoras: chassi.ancoras,
     },
@@ -112,6 +113,8 @@ export function montarPlano(fichaArquivo) {
       fonte: path.resolve(RAIZ_REPO, ficha.malhaPropria.fonte) } : null,
     boca: ficha.boca || null,
     animador: ficha.animador ? path.resolve(RAIZ_REPO, ficha.animador) : null,
+    moverPack: ficha.moverPack || [],
+    removerOssos: ficha.removerOssos || [],
     saida: { dir },
   };
   const entradas = {

@@ -36,7 +36,7 @@ async function versoes() {
   return (await import(`${url}?t=${Date.now()}`)).VM_FABRICA_BYTES;
 }
 
-function pontosArma(g) {
+function pontosArma(g, passo = 2) {
   const cam = camera(g);
   const inv = cam.matrixWorld.clone().invert();
   const out = [];
@@ -45,7 +45,7 @@ function pontosArma(g) {
     if (!o.isSkinnedMesh || [o.material].flat().some((m) => /CoroSolto_FP_/.test(m?.name || ''))) return;
     o.skeleton.update();
     const pos = o.geometry.attributes.position;
-    for (let i = 0; i < pos.count; i += 2) {
+    for (let i = 0; i < pos.count; i += passo) {
       v.fromBufferAttribute(pos, i);
       o.applyBoneTransform(i, v);
       out.push(v.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv));
@@ -107,8 +107,10 @@ export async function medir(id, mut = '') {
   const palmaF = ['hand_r', 'middle_01_r', 'index_01_r', 'ring_01_r'].map((n) => naCamera(g, n)).filter(Boolean)
     .reduce((a, p) => a.add(p), new THREE.Vector3()).divideScalar(4);
   if (mut === 'mao-solta') palmaF.x += 0.12;
+  // FB4 com TODOS os vértices: a amostra de um em dois (boa para orientação) põe a palma do Mk14
+  // do pack, como autorado, a 4,0 cm num punho de poucos vértices — a régua media a amostra, não a malha.
   let d = Infinity;
-  for (const p of pts) d = Math.min(d, p.distanceTo(palmaF));
+  for (const p of (mut === 'invertida' ? pts : pontosArma(g, 1))) d = Math.min(d, p.distanceTo(palmaF));
   r.medidas.contato = { palmaForteCm: +(d * 100).toFixed(2) };
   if (d * 100 > PALMA_MAX_CM) r.falhas.push(`FB4 zona de contato: palma forte a ${(d * 100).toFixed(1)} cm da arma (teto ${PALMA_MAX_CM})`);
   return r;

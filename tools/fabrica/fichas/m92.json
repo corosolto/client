@@ -1,0 +1,71 @@
+{
+  "id": "m92",
+  "arma": "m92",
+  "chassi": "AK",
+  "descricao": "Zastava M92 (AK encurtada, tipo Krinkov) = AK-200 do pack como autorado na zona de contato — mesmo punho, pente curvo à frente do punho, alavanca de manejo à direita, mão de apoio no guarda-mão. Zona livre: sai tudo à frente do guarda-mão do pack (tubo de gás, massa, cano e quebra-chama longos) e entra a frente curta da M92 do próprio jogo (public/models/weapons/m92.glb, 0 crédito Mint: bloco de gás com massa e o freio de boca), calibrada inteira contra o chassi (tools/fabrica/blender/sobrepor.py, poço sobre poço). Skin de polímero preto.",
+  "skinBraco": "coro-ak",
+  "skinArma": "m92",
+  "removerZonaLivre": [
+    {
+      "nome": "frente-longa-ak200",
+      "min": [
+        -6,
+        -60,
+        -5
+      ],
+      "max": [
+        6,
+        -26,
+        8
+      ]
+    }
+  ],
+  "zonaLivre": [
+    {
+      "peca": "frente-m92",
+      "fonte": "public/models/weapons/m92.glb",
+      "recorte": {
+        "min": [
+          0.3,
+          -1,
+          -1
+        ],
+        "max": [
+          1,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          -1.58,
+          -7,
+          -8.2
+        ],
+        "rotDeg": [
+          0,
+          0,
+          -90
+        ],
+        "escala": 0.6
+      }
+    }
+  ],
+  "boca": {
+    "raizCm": [
+      0,
+      -37,
+      0
+    ]
+  },
+  "recuo": {
+    "familia": "ak",
+    "fonte": "recoil.json ← Animations/AK (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "enquadramentoDe": "akm",
+  "acabamentoZonaLivre": {
+    "metal": 0.35,
+    "rugosidade": 0.6
+  }
+}

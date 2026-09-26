@@ -2,12 +2,18 @@
   "id": "akm",
   "arma": "akm",
   "chassi": "AK",
-  "descricao": "AKM = AK-200 do pack como autorado (a AK aprovada fica a golden, decisão do dono 24/09) + skin AK-47.",
+  "descricao": "AKM = AK-200 do pack como autorado (a AK aprovada fica a golden, decisão do dono 24/09) + skin AK-47. Recarga VAZIA pelo plano B (tools/fabrica/animador/akm.json): a do pack deixava o pente velho parado no ar aos 15% (crítico e régua do carregador); aqui ele escorrega do poço e cai com gravidade, e o novo é o segundo pente (Mag2) trazido de fora da tela. A tática também (a do pack deixava a mão de apoio acenando no ar e o pente velho no lugar enquanto o novo chegava — crítico da rodada final).",
   "skinBraco": "coro-ak",
   "skinArma": "ak47",
   "zonaLivre": [],
   "recuo": {
     "familia": "ak",
     "fonte": "recoil.json ← Animations/AK (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "animador": "tools/fabrica/animador/akm.json",
+  "clipes": {
+    "reload_empty": "animador",
+    "equip_rifle": "geral:rifle_equip",
+    "reload_tactical": "animador"
   }
 }

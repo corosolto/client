@@ -171,15 +171,26 @@ Três armadilhas do pack, cada uma virou código com comentário:
   "ocultar": [ { "osso": "Gauge", "clipe": "reload_loop", "de": 0.73, "ate": 0.88 } ],
                                           // opcional: peça do pack escondida (escala ~0) numa janela do clipe
   "alinharTempo": ["reload_loop"],        // opcional: arma no comprimento do braço (clipe em laço)
+  "acabamentoZonaLivre": { "metal": 0.35, "rugosidade": 0.6, "tom": [0.42, 0.42, 0.44] },
+                                          // opcional: o metálico 1 do modelo de mundo sai cromado ao lado do pack
   "recuo": { "familia": "ar" }
 }
 ```
+
+Plano B (§7) acrescenta `malhaPropria` e `animador`. Campos do lote das variantes (§7.2):
+`malhaPropria.pivos: "pack"` (osso móvel fica no repouso do pack, para tocar os clipes do PACK
+sobre a malha nova), `malhaPropria.pecas[].pivoGlb` (dobradiça de peça que gira, no GLB),
+`malhaPropria.manterPack: [{osso, novoOsso, posCm, rotDeg}]` (peça do pack mantida ao lado da
+malha do jogo, em osso próprio — o cartucho do Kar98K na carabina), `mira.frente`/`mira.cima`
+(linha de visada de malha própria girada em relação ao chassi — a UZI a 21°). No animador:
+`pente` (osso do pente/cartucho), `alavanca.osso` + `maoForte: [{u, alavanca}]` (mão forte que
+gira com a alavanca) e `mecanismos.<osso>[].rotDeg` (giro em torno da cabeça do osso).
 
 ### 3.1 Como acrescentar uma arma
 
 1. `node tools/fabrica/chassi.mjs <CHASSI>` se o chassi ainda não tem ficha (`tools/fabrica/lib/chassis-pack.mjs` diz qual FBX é a arma e qual é a pose).
 2. Escreva `tools/fabrica/fichas/<arma>.json` (copie a do chassi puro mais próximo).
-3. Variante: `node tools/fabrica/blender/perfil.py` desenha o chassi (`--fbx`) e a peça (`--glb`) com grade em cm — é daí que saem as caixas de remoção, o recorte, a âncora e a escala. A zona de contato do chassi é protegida mesmo que a caixa a cubra (o relatório conta os vértices protegidos).
+3. Variante: `tools/fabrica/blender/sobrepor.py` desenha o chassi (`--fbx`) e a malha do jogo (`--glb`) **sobrepostos** no referencial da raiz, com grade rotulada; calibre a malha do jogo INTEIRA (`--pos/--rot/--escala`: poço sobre poço, punho sobre punho) e toda peça recortada dela usa a mesma âncora. `--medir` dá caixa e centro dos vértices numa região (ocular da luneta, massa, boca); `--caixas` desenha as remoções. (`perfil.py` desenha um de cada vez.) A zona de contato do chassi é protegida mesmo que a caixa a cubra (o relatório conta os vértices protegidos).
 4. `node tools/fabrica/build.mjs tools/fabrica/fichas/<arma>.json`, depois `node tools/fabrica/enquadrar.mjs <arma> --aplicar` (produto puro).
 5. Some a arma a `VM_FABRICA` em `public/js/data/vmconfig.js` (família, chassi, `alivio` do Settings).
 6. `node tools/fabrica/qa.mjs <arma>`; o crítico cego julga o pacote `artifacts/fabrica-lote1/critico/<arma>/`.
@@ -344,6 +355,97 @@ coreografia: as chaves são autoradas à mão e o gosto (quanto girar a arma, on
 leva voltas de crítico; a malha de mundo low-poly limita o acabamento (o pente da TAVOR). Para
 carabina de alavanca e UZI (pente no punho) o mesmo fluxo vale; conta ~1 dia por arma.
 
+### 7.2 Lote das variantes (25/09) — as 9 restantes
+
+Branch `vm/fabrica-variantes` (sobre `vm/fabrica` + `vm/fabrica-bullpup`). Overlay privada
+`…/generated/viewmodels-fabrica-variantes/overlay/viewmodels/fabrica/` (hardlink da fábrica +
+bullpup + os 9 produtos, `FABRICA_PRIVADO` isola). 0 crédito Mint: toda peça nova sai do modelo
+de mundo da própria arma (`public/models/weapons/<arma>.glb`). Os 9 rebuilds saem byte a byte
+iguais; akm, m4, pistol e famas reconstruídos com as ferramentas novas também.
+
+**A regra que decidiu cada chassi: zona de contato, não aparência.** Três propostas iniciais
+caíram na medida (§9): a `carbine` do jogo é de **alavanca** com depósito tubular (não o AR do
+MX16A4); a `m400` é **AR-15** de precisão, automática, pente à frente do punho (não a L96X de
+ferrolho); a `rem700` tem depósito **interno** (o laço cartucho a cartucho do Kar98K, não o
+pente destacável da L96X). A `uzi` tem o pente **no punho** — contato do X18, não do MPS5.
+
+| arma | chassi | tipo | o que entra / o que saiu |
+|---|---|---|---|
+| g3sg1 | G3 | zona livre | luneta de garra + coronha SG1 (calibração casou em escala 1,0) |
+| md97 | MX16A4 | skin | a alça alta da MD97 tinha tambor maciço e tapava o ADS: saiu |
+| m400 | MX16A4 | zona livre | luneta; coronha retrátil saiu (entrava no quadro); enquadramento próprio |
+| scar | Mk14EBR | skin FDE + quebra-chama | casca alta da SCAR cobriria alavanca/ferrolho; coronha rebatível saiu; a recarga vazia do Mk14 larga o punho → as duas tocam a tática |
+| m92 | AK | zona livre | frente curta da M92 (bloco de gás, massa, freio) no lugar da frente longa do AK-200 |
+| sks | Kar98K | zona livre | recarga por **lâmina** = recarga vazia do Kar98K; caixa do pente fixo + luneta atrás do guia; a frente da SKS saiu ("recarregar tira o cano"); frame próprio mais longe (mão gigante) |
+| rem700 | Kar98K | zona livre | luneta **avançada** (sobre a janela a mão e o cartucho do laço a atravessariam); lâmina do Kar98K oculta no laço (`ocultar`) |
+| uzi | X18 + malha própria | **plano B** | uma mão (nota do dono); pente sai/entra pelo eixo do punho, reserva `Mag2`; girada 21° para o poço cair no eixo do punho do X18 (`mira.frente/cima`) |
+| carbine | Kar98K + malha própria | **plano B** | alavanca em osso próprio com a mão forte indo junto (`pump` a cada tiro), cartucho do Kar98K (`manterPack`) um a um no laço `reload_start/loop/end` |
+
+**Limite dito:** a portinhola da carabina é desenhada do lado da câmera (esquerdo). Numa
+Winchester ela é à direita — com a câmera à esquerda do cano, a mão e o cartucho sumiam atrás da
+caixa (crítico: "o cartucho nunca entra"). A UZI e a carabina são a malha de mundo low-poly.
+
+Réguas e crítico: tabela do PR e `artifacts/fabrica-variantes/index.html` (página do dono,
+porta 4691). Vermelhos que ficam, **iguais aos do produto puro aprovado do mesmo chassi**:
+m92 carregador (a recarga vazia do AK-200 deixa o pente cair à vista aos 15%, como na akm) e
+g3sg1 carregador 16:9 (como na g3). Regressão do arsenal: placar do #636 re-medido nas 26
+armas (3:2 e 16:9, `vm-reguas --placar`): 0 célula mudou em 3:2; em 16:9 só o p90 ANTIGO
+(fora da fábrica) voltou a vermelho no carregador ("toco" 30% contra 35%) — a mesma célula que o
+lote bullpup viu virar para verde; A/B com a régua de `vm/fabrica-bullpup` dá o mesmo vermelho,
+então é a célula oscilando, não esta branch. `eval:vm-placar`, `eval:vm-cache`, `eval:vm-launch`,
+`eval:vm-orientacao` e `eval:vm-manga-oca` verdes; `eval:vm-rig` vermelho igual na base. Régua FB4 passou a medir a palma contra todos os vértices
+(a amostra de um em dois punha o Mk14 do pack, como autorado, a 4,0 cm; `mao-solta` morde).
+
+### 7.3 Rodada final das variantes (26/09) — mosin, rem700, revolver38, awp, uzi
+
+As cinco que ficaram abaixo da barra depois das três voltas de crítico do lote. Figuras do crítico
+cego em `artifacts/fabrica-variantes/critico-final3|4|5/` (A/B contra a rodada anterior).
+
+- **Captura do QA consertada.** `qa.mjs` só conectava o `kcap` e o vídeo num servidor que as réguas
+  de imagem já tinham derrubado (saída em 1 s, `ERR_CONNECTION_REFUSED`, capturas 16:9 e vídeo
+  vazios). O QA sobe o servidor, apaga vídeo velho e conta captura/vídeo vazios como vermelho.
+  `entrarAds` re-aplica o mount depois de congelar (o `adsAmount` anda congelado, o mount não): a
+  figura "ADS no quadril" do revólver e a mira da UZI a 150 px/+70° eram isso — re-medida, 28 px.
+- **UZI:** volta ao produto RESSALVA (`95cb79312f`, rebuild byte a byte) e só então a tática
+  gira o pente 70° ao sair/entrar e cruza a borda com a mão em ~80 ms; braço de apoio preso no
+  espaço da câmera no começo e no fim (a arma gira e arrastava a boca da manga para o quadro).
+- **AWP:** a subida vai até u 0,26 (antes 0,10–0,12, o "salto"), 3 cm; as duas recargas tiram o
+  pente com a mão e buscam o reserva pela esquerda com o pente à vista (fora do quadro ~0,05 do
+  clipe, no instante que a régua do carregador amostra como "fora").
+- **Mosin/REM 700 (lâmina):** a mão de apoio aberta sob o guarda-mão era o IK sem alcance (a arma
+  ia 26 cm à frente com a mão ainda no guarda-mão: 23 cm de erro). A arma só avança depois que a
+  mão sai e volta antes de a mão voltar; a lâmina vem na mão de fora da tela, os cinco cartuchos
+  descem com a mão, a lâmina salta quando o ferrolho começa a fechar e cai junto da arma.
+- **Revólver:** o guindaste girava −100° e levava o tambor para dentro da armação; agora +100°
+  (à esquerda, à vista). O municiador rápido é malha nova (`animador.py`: `municiador` = aro +
+  botão num osso filho do tambor, 1/1000 no repouso porque o pack não tem trilha para ele) com os
+  seis cartuchos do pack em `mao`; `poco` com `mec` segue o tambor aberto. A arma deita de lado
+  um pouco mais longe para as balas aparecerem de lado antes de entrar.
+
+Crítico cego (três rodadas A/B, contexto limpo, só pixel; `critico-final3|4|5`):
+
+| arma | antes (A/B r3 do lote) | r1 | r2 | r3 (final) | o que o crítico ainda pede |
+|---|---|---|---|---|---|
+| uzi | REPROVADA | RESSALVA | RESSALVA | **RESSALVA** | mão no ADS (uma mão é decisão do dono); pedaço do braço de apoio na borda de baixo |
+| awp | RESSALVA | RESSALVA | RESSALVA | **RESSALVA** | a mão leva o pente até a borda esquerda em vez de trocar junto da arma |
+| revolver38 | REPROVADA | REPROVADA (arma 2× na recarga) | RESSALVA | **RESSALVA** | recarga aceita ("cartuchos entram no tambor com contato"); no ADS as mãos cobrem a traseira |
+| mosin | REPROVADA | RESSALVA | REPROVADA (braço na cruz) | **REPROVADA** | polegar sobre os cartuchos de f040 a f060; mão volta ao guarda-mão por baixo |
+| rem700 | REPROVADA | RESSALVA | REPROVADA | **REPROVADA** | luneta na boca (limite aceito pelo dono) + os defeitos da mosin |
+
+Réguas (3:2 e 16:9, `qa.mjs` completo): produto FB1–4 e mutantes verdes; manga-oca verde nas
+cinco; manga-tela verde em quatro (uzi 0,63%); mira uzi 28 px, revólver 0 px (as de luneta N/A);
+cobertura, mãos, carregador com reserva e carregador-repete verdes nas cinco, nas duas
+proporções; capturas 3:2/16:9 e vídeo gravados. Mutantes do carregador (`reserva-solta`,
+`reserva-some`, `pente-pisca`, `clipe-no-quadro`), `inclinada` e `p90-tubo` mordem. A régua do
+laço passou a varrer toda peça com chaves (não só o pente): o mutante "Cartridge3 surge na tela"
+reprova o build; os produtos do plano B que já existiam reconstroem byte a byte. Placar do #636
+re-medido nas 26 armas: 0 célula mudou de estado.
+
+Limites ditos: a luneta da REM 700 fica avançada e o ADS da Mosin é a luneta 2D (decisão do dono;
+o crítico reprova a REM 700 pela luneta na boca e pelo corpo de Mosin — é a variante aceita). A
+UZI deixa 0,63% de extensão do vmsleeve na tela no fim da recarga vazia (teto 0,5%; o produto
+RESSALVA media 1,03%): sem a extensão a boca da manga do braço de apoio aparece (manga-oca).
+
 ## 8. Lote 1
 
 Produtos (overlay privada `…/viewmodels-fabrica/overlay/viewmodels/fabrica/`), reprodutíveis
@@ -502,7 +604,7 @@ golden (não mexida, por decisão do dono).
 - `manga-tela` — **extensão do vmsleeve na tela**: o tubo que o crítico viu era a extensão aparecendo
   (manga 9% da tela, verde). O vmsleeve marca a base dos vértices e o raster conta a extensão; na
   fábrica o teto é 0,5% da tela. Mutante `p90-tubo` (extensão ligada, z −0,383) morde com 3,5%.
-  `npm run eval:vm-manga-tela-fabrica`. awp da fábrica fica como dívida do #653.
+  `npm run eval:vm-manga-tela-fabrica`. A awp da fábrica ficou verde no #653 (0,00%, sem `manga:true`); a uzi fica em 0,63% (§7.3).
 - Sondas: `captura/rolagem.mjs` (rolagem em torno do cano e eixo do cano na tela, contra a M4
   aprovada), `captura/coice.mjs --total`, `captura/sonda-mira.mjs`.
 - `kcap`: bots escondidos antes de cada render (o visual é `mesh.group` + halo), recarga em 12
@@ -542,23 +644,23 @@ mecanismo a recarga opera (medido em `tools/fabrica/chassis/*.json`).
 |---|---|---|---|
 | ak | — | **fica a golden aprovada** (rig A) | decisão do dono 24/09 |
 | akm | AK | puro + skin AK-47 | lote 2 (o AK-200 do pack) |
-| m92 | AK | variante (cano/guarda-mão curtos da M92 Mint) | Krinkov: AK encurtada |
+| m92 | AK | variante (frente curta da M92 do jogo + skin de polímero) | lote das variantes (§7.2) |
 | m4 | MX16A4 | puro | lote 1 |
 | famas | MX16A4 + malha própria | **plano B** (§7): FAMAS do jogo, pente atrás do punho | lote bullpup; a variante de zona livre do lote 1 foi reprovada |
 | tavor | MX16A4 + malha própria | **plano B** (§7): TAVOR do jogo, retém atrás do pente | lote bullpup |
-| md97 | MX16A4 | variante (IMBEL: guarda-mão e coronha) | AR-15 brasileiro |
-| scar | Mk14EBR | variante (casca SCAR) | pente à frente, contato de fuzil de batalha |
+| md97 | MX16A4 | variante (skin) | lote das variantes; a alça alta da MD97 tapava o ADS |
+| scar | Mk14EBR | variante (skin FDE + quebra-chama) | lote das variantes; a casca alta da SCAR cobriria a alavanca e o ferrolho |
 | g3 | G3 | puro | lote 2 |
-| g3sg1 | G3 | variante (luneta, coronha) | |
+| g3sg1 | G3 | variante (luneta e coronha SG1 do jogo) | lote das variantes |
 | svd | SVD | puro | lote 2 |
-| sks | SVD | variante (madeira) | pente fixo da SKS = mudança de contato; alternativa Mk14 |
+| sks | Kar98K | variante (caixa do pente e luneta) | lote das variantes; pente fixo carregado por lâmina = recarga vazia do Kar98K |
 | awp | L96X | puro | lote 2; a L96X é o Accuracy International que a AWP é |
-| rem700 | L96X | variante | ferrolho com pente |
-| m400 | L96X | variante | |
+| rem700 | Kar98K | variante (luneta avançada) | lote das variantes; depósito interno = laço cartucho a cartucho do Kar98K, não o pente da L96X |
+| m400 | MX16A4 | variante (luneta) | lote das variantes; é AR-15 de precisão (pente à frente do punho), não ferrolho |
 | mosin | Kar98K | puro | lote 2; recarga cartucho a cartucho; idle da arma = quadro 0 da reload_start |
-| carbine | Kar98K | variante | alavanca ≠ ferrolho: gesto de contato diferente (plano B se o dono não aceitar) |
+| carbine | Kar98K + malha própria | **plano B** (alavanca, carga lateral, cartucho do Kar98K) | lote das variantes; a do jogo é de alavanca com depósito tubular |
 | mp5 | MPS5 | puro | lote 2 |
-| uzi | MPS5 | variante (casca UZI) | na UZI o pente é no punho — o MPS5 põe à frente; Kolibri é micropistola, não serve |
+| uzi | X18 + malha própria | **plano B** (uma mão; pente no punho) | lote das variantes; o contato de pente no punho é o do X18, não o do MPS5 |
 | p90 | PDW90 | puro | lote 2; pose = quadro 0 da inspeção |
 | lmg | MGX5 | puro | lote 2; alívio 0,3 m e guinada 0 |
 | shotgun | KXG12 | puro | lotes 1–2; cartucho oculto na espera do laço |

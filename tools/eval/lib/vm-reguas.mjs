@@ -67,6 +67,9 @@ export const CARREGADOR_PECA = {
 // Produtos da fábrica (VM_PALCO_QS=vmfabrica=…): o pente é o osso Mag do chassi do pack numa
 // malha única; na KXG12 o cartucho que a mão leva ao tubo é o osso Gauge (só aparece na recarga).
 export const FABRICA_NA_REGUA = /(?:^|&)vmfabrica=/.test(process.env.VM_PALCO_QS || '');
+// Só as armas pedidas no vmfabrica= trocam de peça: as outras do mesmo processo são o produto antigo.
+const NA_FABRICA = new Set((new URLSearchParams(process.env.VM_PALCO_QS || '').get('vmfabrica') || '').split(','));
+const soFabrica = (arma) => NA_FABRICA.has('1') || NA_FABRICA.has(arma);
 if (FABRICA_NA_REGUA) {
   for (const arma of ['akm', 'm4', 'pistol', 'g3', 'svd', 'awp', 'mp5', 'deagle']) CARREGADOR_PECA[arma] = { osso: 'Mag' };
   CARREGADOR_PECA.p90 = { osso: 'Magazine' };
@@ -74,6 +77,22 @@ if (FABRICA_NA_REGUA) {
   // Plano B (bullpup): pente reserva Mag2 coincidente no repouso, pego fora da tela (VM-FABRICA.md §7).
   for (const arma of ['famas', 'tavor']) CARREGADOR_PECA[arma] = { osso: 'Mag', reserva: 'Mag2' };
   CARREGADOR_PECA.shotgun = { osso: 'Gauge', clipe: true };
+  // Variantes (fábrica-variantes): o pente do chassi do pack (zona de contato como autorada); a UZI
+  // é plano B (uma mão; pente reserva Mag2); REM 700 recarrega em laço como a Mosin; a SKS
+  // carrega pela lâmina do Kar98K (recarga vazia do pack), o carregador é a lâmina.
+  const variantes = {
+    g3sg1: { osso: 'Mag' }, md97: { osso: 'Mag' }, m400: { osso: 'Mag' }, scar: { osso: 'Mag' }, m92: { osso: 'Mag' },
+    uzi: { osso: 'Mag', reserva: 'Mag2' }, carbine: { osso: 'Mag', reserva: 'Mag2' },
+    sks: { osso: 'Clip', clipe: true },
+  };
+  for (const [arma, spec] of Object.entries(variantes)) if (soFabrica(arma)) CARREGADOR_PECA[arma] = spec;
+  // Recargas do pack reprovadas refeitas pelo plano B (rodada final): pente reserva Mag2 / cartucho reserva.
+  const planoB = {
+    akm: { osso: 'Mag', reserva: 'Mag2' }, awp: { osso: 'Mag', reserva: 'Mag2' },
+    mosin: { osso: 'Mag', reserva: 'Mag2' }, rem700: { osso: 'Mag', reserva: 'Mag2' },
+    revolver38: { osso: 'Cartridge0', reserva: 'Cartridge02' },
+  };
+  for (const [arma, spec] of Object.entries(planoB)) if (soFabrica(arma)) CARREGADOR_PECA[arma] = spec;
 }
 const CARREGADOR_NA = {
   knife: 'faca: sem carregador',
@@ -81,6 +100,9 @@ const CARREGADOR_NA = {
   carbine: 'alavanca com cartucho solto pela janela: sem peça de carregador no produto',
   lmg: 'fita/caixa: eval:vm-lmg-final (tampa/caixa/fita)',
 };
+// Fábrica: a carabina de alavanca (plano B) tem o cartucho do Kar98K como peça (CARREGADOR_PECA acima).
+if (FABRICA_NA_REGUA && soFabrica('carbine')) delete CARREGADOR_NA.carbine;
+if (FABRICA_NA_REGUA && soFabrica('revolver38')) delete CARREGADOR_NA.revolver38;
 
 /* ---------------------------------------------------------------------------
    COLETA: tudo que as cinco réguas leem de UMA arma, numa passada do jogo.
@@ -324,6 +346,9 @@ export const JUIZ = {
     if (q.cruz > 0) falhas.push(`${q.cruz} px de arma/braço sobre a cruz no quadril`);
     const dAng = q.eixo && ak.eixo ? ((q.eixo.graus - ak.eixo.graus + 540) % 360) - 180 : null;
     if (dAng !== null && Math.abs(dAng) > L.COBERTURA_ANGULO_MAX) falhas.push(`ângulo esquisito: eixo da arma na tela ${q.eixo.graus.toFixed(0)}° contra ${ak.eixo.graus.toFixed(0)}° da AK (${dAng > 0 ? '+' : ''}${dAng.toFixed(0)}°, teto ±${L.COBERTURA_ANGULO_MAX}°)`);
+    if (dAng !== null && FABRICA_NA_REGUA && soFabrica(c.arma) && Math.abs(dAng) > L.INCLINACAO_FABRICA_MAX && Math.abs(dAng) <= L.COBERTURA_ANGULO_MAX) {
+      falhas.push(`arma inclinada: eixo na tela ${dAng > 0 ? '+' : ''}${dAng.toFixed(0)}° da AK (fábrica: teto ±${L.INCLINACAO_FABRICA_MAX}°)`);
+    }
     if (q.olho !== null && q.olho !== undefined && rigDe(c.arma) !== 'metarig' && q.olho < L.COBERTURA_OLHO_MIN) falhas.push(`câmera dentro da arma: a parte mais perto está a ${q.olho.toFixed(2)} palma do olho (mínimo ${L.COBERTURA_OLHO_MIN})`);
     let adsTxt = 'ADS: viewmodel some (luneta)';
     if (c.ads && c.ads.areaTotal > 0) {
@@ -572,6 +597,11 @@ export const MUTANTES = {
   'arma-gigante': { regua: 'cobertura', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
     const r = raizesDe(e); for (const m of r) { m.scale.multiplyScalar(1.6); m.updateMatrixWorld(true); }
     return { aplicou: r.length > 0, malhas: r.map((m) => m.name) };`), arma) },
+  // A M4 da fábrica girada 9° no plano da tela (a UZI/SCAR que o dono viu inclinadas, 25/09).
+  inclinada: { regua: 'cobertura', arma: 'm4', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const q = new e.mount.quaternion.constructor().setFromAxisAngle({ x: 0, y: 0, z: 1, isVector3: true }, 9 * Math.PI / 180);
+    e.mount.quaternion.premultiply(q); e.mount.position.applyQuaternion(q); e.mount.updateMatrixWorld(true);
+    return { aplicou: true };`), arma) },
   // A PT-38 com o frame da reescala do #631 (z −0,566), que o dono REVERTEU: a
   // cobertura das curtas mede contra a PT-38 aprovada e tem de reprovar (~0,55×).
   'pistola-631': { regua: 'cobertura', arma: 'pistol', fase: 'idle', aplicar: async (page, arma) => {
@@ -608,8 +638,9 @@ export const MUTANTES = {
   // Munição estacionada fora do quadro é legítima; a mesma peça parada NO quadro, solta acima
   // da arma, tem de reprovar (produto da fábrica: rode com VM_PALCO_QS=vmfabrica=mosin).
   'clipe-no-quadro': { regua: 'carregador', arma: 'mosin', fase: 'idle', aplicar: (page, arma) => page.evaluate(naPagina(`
-    const b = e?.scene.getObjectByName('Cartridge'); const a = e?.scene.getObjectByName('Arma');
-    if (!b || !a) return { aplicou: false, motivo: 'sem Cartridge/Arma' };
+    // Mosin do plano B (lâmina): a munição é o osso Mag; a de antes era o cartucho do laço.
+    const b = e?.scene.getObjectByName('Mag') || e?.scene.getObjectByName('Cartridge'); const a = e?.scene.getObjectByName('Arma');
+    if (!b || !a) return { aplicou: false, motivo: 'sem Mag/Cartridge/Arma' };
     const alvo = a.getWorldPosition(a.position.clone()).add(a.position.clone().set(0, palmaDe(e) * 1.5, 0));
     b.position.copy(b.parent.worldToLocal(alvo)); b.updateMatrixWorld(true);
     return { aplicou: true };`), arma) },
