@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MA4 · Classificação de mapas — antes e depois</title>
+<style>
+  :root { color-scheme: dark; --ink: #e8e4dc; --mut: #9a948a; --bad: #ff6b5e; --good: #58d68d; --line: #2c2a26; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #14130f; color: var(--ink); font: 14px/1.55 ui-monospace, Menlo, monospace; padding: 32px 20px 60px; }
+  main { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 40px 0 8px; color: var(--mut); text-transform: uppercase; letter-spacing: .08em; }
+  p.sub { color: var(--mut); margin: 0 0 24px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { color: var(--mut); font-weight: 400; }
+  .antes { color: var(--bad); } .depois { color: var(--good); }
+  .par { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0 28px; }
+  .par figure { margin: 0; }
+  .par img { width: 100%; display: block; border: 1px solid var(--line); border-radius: 4px; }
+  .par figcaption { padding: 8px 2px 0; color: var(--mut); }
+  .par figcaption b { font-weight: 400; }
+  code { color: #d8c88a; }
+  .sel { display: inline-block; border: 1px solid var(--line); border-radius: 3px; padding: 0 6px; margin-left: 6px; }
+  footer { margin-top: 48px; color: var(--mut); font-size: 12px; border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>MA4 · Classificação de mapas — antes e depois</h1>
+  <p class="sub">plans/26-MAPAS-ABERTOS-VISUAL.md · branch <code>feat/mapas-abertos-visual</code> · capturas de <code>?tela=maps&amp;map=&lt;id&gt;</code> em 1280×800, dev server, 26/09/2026</p>
+
+  <h2>O que era e o que passou a ser</h2>
+  <table>
+    <tr><th>mapa</th><th>ficha (#ms-cat) antes</th><th>depois</th><th>defeito que fechou</th></tr>
+    <tr>
+      <td><b>Treta na Amazônia</b></td>
+      <td class="antes">FAVELA</td>
+      <td class="depois">AMAZONIA</td>
+      <td>Palafita de ribeirinho vendida como laje — pedido literal do dono: <i>"amazonia nao é favela/comunidade"</i>. Categoria nova com CAT_DESC e tradução próprias.</td>
+    </tr>
+    <tr>
+      <td><b>Córrego (Favela de SP)</b></td>
+      <td class="antes">ARENA</td>
+      <td class="depois">FAVELA</td>
+      <td>Nasceu sem entrada em <code>MAP_CATS</code> e vivia do fallback <code>catsDe = ['ARENA']</code> — o nome do mapa dizia uma coisa, a ficha outra, calado.</td>
+    </tr>
+    <tr>
+      <td>mansão · escadão · campomorro · lajes</td>
+      <td class="antes">sem cats/autor/data</td>
+      <td class="depois">catálogo completo</td>
+      <td>Mesma classe do bug do córrego, achada pela régua nova na primeira rodada: 14 falhas em 15 mapas (7 eram dívida pré-existente, 3 foram erro meu de edição que a régua pegou antes do commit).</td>
+    </tr>
+  </table>
+
+  <h2>Antes · depois — Amazonia</h2>
+  <div class="par">
+    <figure>
+      <img src="antes-amazonia.webp" alt="Ficha da Treta na Amazônia antes, com badge FAVELA">
+      <figcaption><b>ANTES</b> — ficha diz <span class="antes">FAVELA</span></figcaption>
+    </figure>
+    <figure>
+      <img src="depois-amazonia.webp" alt="Ficha da Treta na Amazônia depois, com badge AMAZONIA">
+      <figcaption><b>DEPOIS</b> — ficha diz <span class="depois">AMAZONIA</span><span class="sel">#ms-cat</span></figcaption>
+    </figure>
+  </div>
+
+  <h2>Antes · depois — Córrego</h2>
+  <div class="par">
+    <figure>
+      <img src="antes-corrego.webp" alt="Ficha do Córrego antes, com badge ARENA do fallback">
+      <figcaption><b>ANTES</b> — ficha diz <span class="antes">ARENA</span> (fallback silencioso)</figcaption>
+    </figure>
+    <figure>
+      <img src="depois-corrego.webp" alt="Ficha do Córrego depois, com badge FAVELA">
+      <figcaption><b>DEPOIS</b> — ficha diz <span class="depois">FAVELA</span><span class="sel">#ms-cat</span></figcaption>
+    </figure>
+  </div>
+
+  <h2>A régua que sustenta (eval:mapcat)</h2>
+  <table>
+    <tr><th>cláusula</th><th>o que mede</th><th>mutante que morde</th></tr>
+    <tr><td>C1</td><td>todo mapa do registro tem entrada própria em MAP_CATS — nenhum vive do fallback ARENA</td><td><code>--mutante=sem-cats</code> (o bug do córrego)</td></tr>
+    <tr><td>C2</td><td>toda categoria usada existe em CAT_DESC (badge, aba e tradução leem daqui)</td><td><code>--mutante=cat-fantasma</code></td></tr>
+    <tr><td>C3</td><td>autoria e data cobrem o registro (a ficha e o servidor de multiplayer leem)</td><td><code>--mutante=sem-autoria</code></td></tr>
+    <tr><td>C4</td><td>eixo TEMA é mutuamente exclusivo — FAVELA+AMAZONIA no mesmo mapa reprova</td><td><code>--mutante=dois-temas</code></td></tr>
+  </table>
+  <p>Verde hoje: <code>MAPCAT-CHECK ✓ 15 mapas do registro</code>. No <code>check:fast</code> do CI.</p>
+
+  <footer>
+    Regenerar as capturas: <code>node tools/eval/asset-evidence/ma4-classificacao/capturar.mjs --label=antes|depois</code>
+    (com o dev server em localhost:4321 e, para o "antes", o mapcat.js do commit anterior).
+    Régua: <code>tools/eval/mapcat-check.mjs</code>. Plano: <code>plans/26-MAPAS-ABERTOS-VISUAL.md</code> (frente MA4).
+  </footer>
+</main>
+</body>
+</html>

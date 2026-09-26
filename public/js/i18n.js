@@ -109,7 +109,7 @@ const DICT = {
   'O PALCO DA TRETA': 'THE STAGE',
   // map screen (abas de categoria — tela 04 do redesign)
   'ESCOLHA DO MAPA': 'PICK THE MAP',
-  'TODOS': 'ALL', 'ARENA': 'ARENA', 'FAVELA': 'FAVELA', 'CIDADES': 'CITIES', 'COMUNIDADE': 'COMMUNITY', 'AI': 'AI',
+  'TODOS': 'ALL', 'ARENA': 'ARENA', 'FAVELA': 'FAVELA', 'CIDADES': 'CITIES', 'AMAZONIA': 'AMAZONIA', 'COMUNIDADE': 'COMMUNITY', 'AI': 'AI',
   'OFICIAL': 'OFFICIAL', 'por': 'by',
   // descrições de categoria da tela de mapas (a chave é o texto PT exato do CAT_DESC)
   'O acervo inteiro: oficial e comunidade, arena e cidade.': 'The whole roster: official and community, arena and city.',
