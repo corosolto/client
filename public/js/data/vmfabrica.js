@@ -18,7 +18,7 @@ export const VM_FABRICA_BYTES = Object.freeze({
   p90: 'f0ab213493',
   pistol: '4c9e3a1a29',
   rem700: '5f50005bd3',
-  revolver38: 'd7ff731d12',
+  revolver38: '9204c8df66',
   scar: 'e15febed0d',
   shotgun: '8b3c8639ca',
   sks: '39c44f6e41',

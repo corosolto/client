@@ -1147,8 +1147,8 @@
       "chassi": "Viper-357",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/revolver38-fabrica.glb",
-      "bytes": 2369336,
-      "sha256": "d7ff731d12f4d876c6a9ad0fcb0298fa87292de905bbd6bdeba76f17f8661674",
+      "bytes": 2385736,
+      "sha256": "9204c8df66922c6f02392573b4220aaf3295bac3e46fb47df7caf1f270046ea5",
       "clipes": [
         {
           "nome": "idle",
@@ -1186,7 +1186,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 9,
+      "segundos": 10,
       "file": "viewmodels/fabrica/revolver38-fabrica.glb",
       "ficha": "tools/fabrica/fichas/revolver38.json",
       "insumos": {
@@ -1197,7 +1197,7 @@
         "poseFbx": "06a92e6d18de0677c7db9482f4db41587697a575eef6b6343d20ec70ca56ab74",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "clipe:shoot:arma": "d27fdbfb2e4c96a79c71cff0ad37d6399bc80025ebd748d05c3410aa632a1d06",
-        "animador": "63095ea04321ef8db9d1a30c67707d2f7d229a63b8c56e8c984fa015a4222525",
+        "animador": "ce8154527f18abb3000501ac5509e04337a8b3387eb4db9aa392c1a2b12250db",
         "frameJogo": "0a4aed73562419181a063fcde4fab1b48ed412eb6cc5ed19ab22c4fd50322841"
       },
       "ready": false,

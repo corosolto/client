@@ -157,6 +157,7 @@ class Animador:
         self.cam_jogo = self.cam @ mount.inverted()
         self.meia_h = math.atan(math.tan(math.radians(fr["fov"]) / 2) * 16 / 9)
         self.malhas = [o for o in bpy.data.objects if o.type == "MESH" and o.name.startswith("GEO_WEAPON_")]
+        self.escala_peca = {}
 
     # --- referenciais -------------------------------------------------------------------------
     def raiz(self):
@@ -237,6 +238,8 @@ class Animador:
             return self.mao_em_raiz(self.apoio_palma_raiz, rotz @ self.apoio_rot_raiz, R)
         if "poco" in k:
             Hs = self.mao_em_raiz(self.pega_palma_raiz, self.pega_rot_raiz, R)
+            if k.get("mec"):   # encaixe que anda com um mecanismo (tambor aberto): segue o giro dele
+                Hs = self._mec[k["mec"]] @ Hs
             d = so_rot(R) @ Vector(k["poco"])
             return Matrix.Translation(d) @ Hs
         R3 = so_rot(R) @ rotz @ self.apoio_rot_raiz
@@ -275,6 +278,7 @@ class Animador:
                 M = Matrix.Translation(so_rot(R) @ d) @ M0
             p.por(osso, M)
             mec_delta[osso] = M @ M0.inverted()
+        self._mec = mec_delta
         # 3) mão forte presa ao punho — ou levada pela alavanca (`maoForte`: [{u, alavanca: 0..1}],
         #    osso da alavanca em spec.alavanca.osso): a mão gira junto com a alavanca de uma carabina.
         hr = p.mat("ik_hand_gun") @ self.mao_r_na_arma
@@ -341,9 +345,11 @@ class Animador:
                 M = None
             else:
                 raise RuntimeError(f"estado de pente desconhecido: {est}")
-            mats[osso] = M
             if M is not None:
-                estado[f"{osso}_ultimo"] = M
+                estado[f"{osso}_ultimo"] = M   # sem a escala da peça: 'cai'/'largado' partem daqui
+            if M is not None and osso in self.escala_peca:
+                M = M @ Matrix.Scale(self.escala_peca[osso], 4)
+            mats[osso] = M
         return mats, err_l, err_r
 
     def assar(self, nome, clipe):
@@ -533,6 +539,65 @@ def segundo_pente(rig, malhas, osso="Mag"):
     return copiados
 
 
+MICRO = 1000.0   # peça nova sem lugar no repouso: malha gravada 1/MICRO do tamanho (invisível nos clipes do pack)
+
+
+def municiador(rig, spec, em_rig):
+    """Municiador rápido (speed-loader) do revólver: aro + botão serrilhado, num osso filho do tambor.
+
+    As seis balas são os cartuchos do próprio pack (Cartridge0–5, em 'mao' junto com ele); o
+    municiador só leva o corpo. Fora das recargas do animador ele fica 1/MICRO do tamanho no
+    encaixe (o pack não tem trilha para o osso), e o animador o escala por MICRO quando aparece."""
+    m = spec["municiador"]
+    Wr = rig.data.bones["Arma"].matrix_local @ em_rig   # raiz (cm) → armadura
+    c = Vector(m["centroCm"])                          # centro da face de trás do tambor (raiz)
+    bpy.context.view_layer.objects.active = rig
+    rig.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    eb = rig.data.edit_bones
+    b = eb.new(m.get("osso", "Municiador"))
+    b.head = Wr @ c
+    b.tail = Wr @ (c + Vector((0, 2.0, 0)))
+    b.roll = 0.0
+    b.parent = eb[m["pai"]]
+    nome = b.name
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bm = bmesh.new()
+    # eixo do tambor = +Y da raiz (para trás); cilindros do bmesh nascem no eixo Z
+    para_y = Matrix.Rotation(math.radians(-90), 4, "X")
+    for raio, y0, y1, lados in m["pecas"]:   # [raio cm, y inicial, y final, lados]
+        g = bmesh.ops.create_cone(bm, cap_ends=True, segments=int(lados), radius1=raio, radius2=raio, depth=y1 - y0)
+        bmesh.ops.transform(bm, matrix=Matrix.Translation(c + Vector((0, (y0 + y1) / 2, 0))) @ para_y, verts=g["verts"])
+    malha = bpy.data.meshes.new("municiador")
+    bm.to_mesh(malha)
+    bm.free()
+    obj = bpy.data.objects.new("GEO_WEAPON_MUNICIADOR", malha)
+    bpy.context.collection.objects.link(obj)
+    # raiz → espaço do rig, encolhido no encaixe (cabeça do osso)
+    cab = Wr @ c
+    obj.matrix_world = rig.matrix_world @ Matrix.Translation(cab) @ Matrix.Scale(1.0 / MICRO, 4) @ Matrix.Translation(-cab) @ Wr
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    mat = bpy.data.materials.new("CoroSolto_municiador")
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (*m.get("tom", (0.08, 0.08, 0.09)), 1.0)
+    bsdf.inputs["Metallic"].default_value = 0.6
+    bsdf.inputs["Roughness"].default_value = 0.45
+    malha.materials.append(mat)
+    for p_ in malha.polygons:
+        p_.use_smooth = False
+    grupo = obj.vertex_groups.new(name=nome)
+    grupo.add([v.index for v in malha.vertices], 1.0, "REPLACE")
+    obj.parent = rig
+    obj.matrix_parent_inverse = rig.matrix_world.inverted()
+    mod = obj.modifiers.new("Armature", "ARMATURE")
+    mod.object = rig
+    return nome, len(malha.vertices)
+
+
 def main():
     a = args_()
     spec = json.loads(Path(a.poses).read_text(encoding="utf-8"))
@@ -544,7 +609,15 @@ def main():
     rel = {"clipes": {}, "falhas": []}
     osso_pente = spec.get("pente", "Mag")
     rel["pente2"] = {"vertices": segundo_pente(rig, malhas, osso_pente)}
+    mun = None
+    if spec.get("municiador"):
+        em = bpy.context.scene["fabrica_em_rig"]
+        mun, nv = municiador(rig, spec, Matrix([em[0:4], em[4:8], em[8:12], em[12:16]]))
+        rel["municiador"] = {"osso": mun, "vertices": nv}
+        malhas = [o for o in bpy.data.objects if o.type == "MESH" and o.name.startswith("GEO_WEAPON_")]
     an = Animador(spec)
+    if mun:
+        an.escala_peca[mun] = MICRO
     an.pose = Pose(rig)
     an.preparar()
     rel["idle"] = {"erroIkCm": round(an.repor_idle(), 3)}
@@ -557,7 +630,7 @@ def main():
                           for k, v in an.diagnostico.items()}
     an.base0 = an.base0_novo
     rest = vertices_por_osso(rig, malhas)
-    pentes = [osso_pente, f"{osso_pente}2"]
+    pentes = [osso_pente, f"{osso_pente}2"] + ([mun] if mun else [])   # o municiador também não some/surge na tela
     for nome, clipe in spec["clipes"].items():
         quadros, n = an.assar(nome, clipe)
         an.gravar(nome, quadros, n)

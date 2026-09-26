@@ -11,9 +11,14 @@
  },
  "pegaPente": {
   "palmaCm": [
-   4,
-   -2,
-   -2
+   0,
+   8,
+   -1.2
+  ],
+  "rotDeg": [
+   0,
+   0,
+   180
   ]
  },
  "clipes": {
@@ -24,29 +29,29 @@
      "u": 0
     },
     {
-     "u": 0.12,
+     "u": 0.14,
      "rotDeg": [
-      -30,
-      25,
-      -40
+      15,
+      60,
+      0
      ],
      "camCm": [
-      -3,
-      7,
-      -2
+      -6,
+      4,
+      -26
      ]
     },
     {
      "u": 0.85,
      "rotDeg": [
-      -30,
-      25,
-      -40
+      15,
+      60,
+      0
      ],
      "camCm": [
-      -3,
-      7,
-      -2
+      -6,
+      4,
+      -26
      ]
     },
     {
@@ -84,46 +89,69 @@
     {
      "u": 0.42,
      "camCm": [
-      18,
-      -45,
-      -28
+      0,
+      -50,
+      -30
      ],
      "fecho": 0.9
     },
     {
-     "u": 0.52,
-     "armaCm": [
-      -1,
-      -2,
-      -11
+     "u": 0.45,
+     "camCm": [
+      0,
+      -50,
+      -30
      ],
-     "fecho": 0.8
+     "fecho": 0.9
+    },
+    {
+     "u": 0.54,
+     "poco": [
+      4,
+      -2,
+      -8
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
     },
     {
      "u": 0.6,
-     "armaCm": [
-      -1,
+     "poco": [
+      4,
       -2,
-      -11
+      -8
      ],
-     "fecho": 0.8
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.65,
+     "poco": [
+      0,
+      6,
+      0
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
     },
     {
      "u": 0.7,
-     "armaCm": [
-      -1,
-      -2,
-      -5
+     "poco": [
+      0,
+      0,
+      0
      ],
-     "fecho": 0.8
+     "mec": "CraneArm",
+     "fecho": 0.9
     },
     {
      "u": 0.74,
-     "armaCm": [
-      -1,
-      -2,
-      -5
+     "poco": [
+      0,
+      4,
+      0
      ],
+     "mec": "CraneArm",
      "fecho": 0.5
     },
     {
@@ -133,7 +161,7 @@
       -1,
       -13
      ],
-     "fecho": 0.5
+     "fecho": 0.6
     },
     {
      "u": 0.9,
@@ -142,7 +170,7 @@
       -1,
       -13
      ],
-     "fecho": 0.5
+     "fecho": 0.6
     },
     {
      "u": 1,
@@ -176,7 +204,7 @@
       "u": 0.2,
       "rotDeg": [
        0,
-       -100,
+       100,
        0
       ]
      },
@@ -184,7 +212,7 @@
       "u": 0.8,
       "rotDeg": [
        0,
-       -100,
+       100,
        0
       ]
      },
@@ -287,35 +315,16 @@
       "giroGrausS": 200
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge1": [
@@ -338,35 +347,16 @@
       "giroGrausS": 240
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge2": [
@@ -389,35 +379,16 @@
       "giroGrausS": 280
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge3": [
@@ -440,35 +411,16 @@
       "giroGrausS": 320
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge4": [
@@ -491,35 +443,16 @@
       "giroGrausS": 360
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge5": [
@@ -542,35 +475,16 @@
       "giroGrausS": 400
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge02": [
@@ -580,6 +494,30 @@
      },
      {
       "u": 0.02,
+      "estado": "escondido"
+     }
+    ],
+    "Municiador": [
+     {
+      "u": 0,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.745,
+      "estado": "cai",
+      "velCm": [
+       6,
+       20,
+       -30
+      ],
+      "giroGrausS": 150
+     },
+     {
+      "u": 0.97,
       "estado": "escondido"
      }
     ]
@@ -592,29 +530,29 @@
      "u": 0
     },
     {
-     "u": 0.12,
+     "u": 0.14,
      "rotDeg": [
-      -30,
-      25,
-      -40
+      15,
+      60,
+      0
      ],
      "camCm": [
-      -3,
-      7,
-      -2
+      -6,
+      4,
+      -26
      ]
     },
     {
      "u": 0.85,
      "rotDeg": [
-      -30,
-      25,
-      -40
+      15,
+      60,
+      0
      ],
      "camCm": [
-      -3,
-      7,
-      -2
+      -6,
+      4,
+      -26
      ]
     },
     {
@@ -652,46 +590,69 @@
     {
      "u": 0.42,
      "camCm": [
-      18,
-      -45,
-      -28
+      0,
+      -50,
+      -30
      ],
      "fecho": 0.9
     },
     {
-     "u": 0.52,
-     "armaCm": [
-      -1,
-      -2,
-      -11
+     "u": 0.45,
+     "camCm": [
+      0,
+      -50,
+      -30
      ],
-     "fecho": 0.8
+     "fecho": 0.9
+    },
+    {
+     "u": 0.54,
+     "poco": [
+      4,
+      -2,
+      -8
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
     },
     {
      "u": 0.6,
-     "armaCm": [
-      -1,
+     "poco": [
+      4,
       -2,
-      -11
+      -8
      ],
-     "fecho": 0.8
+     "mec": "CraneArm",
+     "fecho": 0.9
+    },
+    {
+     "u": 0.65,
+     "poco": [
+      0,
+      6,
+      0
+     ],
+     "mec": "CraneArm",
+     "fecho": 0.9
     },
     {
      "u": 0.7,
-     "armaCm": [
-      -1,
-      -2,
-      -5
+     "poco": [
+      0,
+      0,
+      0
      ],
-     "fecho": 0.8
+     "mec": "CraneArm",
+     "fecho": 0.9
     },
     {
      "u": 0.74,
-     "armaCm": [
-      -1,
-      -2,
-      -5
+     "poco": [
+      0,
+      4,
+      0
      ],
+     "mec": "CraneArm",
      "fecho": 0.5
     },
     {
@@ -701,7 +662,7 @@
       -1,
       -13
      ],
-     "fecho": 0.5
+     "fecho": 0.6
     },
     {
      "u": 0.9,
@@ -710,7 +671,7 @@
       -1,
       -13
      ],
-     "fecho": 0.5
+     "fecho": 0.6
     },
     {
      "u": 1,
@@ -744,7 +705,7 @@
       "u": 0.2,
       "rotDeg": [
        0,
-       -100,
+       100,
        0
       ]
      },
@@ -752,7 +713,7 @@
       "u": 0.8,
       "rotDeg": [
        0,
-       -100,
+       100,
        0
       ]
      },
@@ -855,35 +816,16 @@
       "giroGrausS": 200
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge1": [
@@ -906,35 +848,16 @@
       "giroGrausS": 240
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge2": [
@@ -957,35 +880,16 @@
       "giroGrausS": 280
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge3": [
@@ -1008,35 +912,16 @@
       "giroGrausS": 320
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge4": [
@@ -1059,35 +944,16 @@
       "giroGrausS": 360
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge5": [
@@ -1110,35 +976,16 @@
       "giroGrausS": 400
      },
      {
-      "u": 0.46,
+      "u": 0.44,
       "estado": "escondido"
      },
      {
-      "u": 0.52,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
-     },
-     {
-      "u": 0.6,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       -7
-      ]
+      "u": 0.445,
+      "estado": "mao"
      },
      {
       "u": 0.7,
-      "estado": "arma",
-      "deslocCm": [
-       0,
-       0,
-       0
-      ]
+      "estado": "arma"
      }
     ],
     "Cartridge02": [
@@ -1148,6 +995,30 @@
      },
      {
       "u": 0.02,
+      "estado": "escondido"
+     }
+    ],
+    "Municiador": [
+     {
+      "u": 0,
+      "estado": "escondido"
+     },
+     {
+      "u": 0.445,
+      "estado": "mao"
+     },
+     {
+      "u": 0.745,
+      "estado": "cai",
+      "velCm": [
+       6,
+       20,
+       -30
+      ],
+      "giroGrausS": 150
+     },
+     {
+      "u": 0.97,
       "estado": "escondido"
      }
     ]
@@ -1164,6 +1035,40 @@
    2.5,
    5.8,
    -12.3
+  ]
+ },
+ "municiador": {
+  "osso": "Municiador",
+  "pai": "Drum",
+  "centroCm": [
+   0,
+   -0.07,
+   -1.22
+  ],
+  "pecas": [
+   [
+    1.95,
+    0.0,
+    0.45,
+    18
+   ],
+   [
+    0.6,
+    0.45,
+    1.5,
+    10
+   ],
+   [
+    0.9,
+    1.5,
+    2.3,
+    12
+   ]
+  ],
+  "tom": [
+   0.07,
+   0.07,
+   0.08
   ]
  }
 }
