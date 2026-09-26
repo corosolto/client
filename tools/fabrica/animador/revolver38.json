@@ -167,7 +167,7 @@
       "u": 0.2,
       "rotDeg": [
        0,
-       -80,
+       -100,
        0
       ]
      },
@@ -175,7 +175,7 @@
       "u": 0.8,
       "rotDeg": [
        0,
-       -80,
+       -100,
        0
       ]
      },
@@ -278,8 +278,12 @@
       "giroGrausS": 200
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -306,8 +310,12 @@
       "giroGrausS": 240
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -334,8 +342,12 @@
       "giroGrausS": 280
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -362,8 +374,12 @@
       "giroGrausS": 320
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -390,8 +406,12 @@
       "giroGrausS": 360
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -418,8 +438,12 @@
       "giroGrausS": 400
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -434,14 +458,6 @@
      {
       "u": 0.02,
       "estado": "escondido"
-     },
-     {
-      "u": 0.47,
-      "estado": "mao"
-     },
-     {
-      "u": 0.87,
-      "estado": "arma"
      }
     ]
    }
@@ -596,7 +612,7 @@
       "u": 0.2,
       "rotDeg": [
        0,
-       -80,
+       -100,
        0
       ]
      },
@@ -604,7 +620,7 @@
       "u": 0.8,
       "rotDeg": [
        0,
-       -80,
+       -100,
        0
       ]
      },
@@ -707,8 +723,12 @@
       "giroGrausS": 200
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -735,8 +755,12 @@
       "giroGrausS": 240
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -763,8 +787,12 @@
       "giroGrausS": 280
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -791,8 +819,12 @@
       "giroGrausS": 320
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -819,8 +851,12 @@
       "giroGrausS": 360
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -847,8 +883,12 @@
       "giroGrausS": 400
      },
      {
-      "u": 0.5,
+      "u": 0.46,
       "estado": "escondido"
+     },
+     {
+      "u": 0.5,
+      "estado": "mao"
      },
      {
       "u": 0.69,
@@ -863,14 +903,6 @@
      {
       "u": 0.02,
       "estado": "escondido"
-     },
-     {
-      "u": 0.47,
-      "estado": "mao"
-     },
-     {
-      "u": 0.87,
-      "estado": "arma"
      }
     ]
    }

@@ -68,10 +68,10 @@
       "id": "awp",
       "arma": "awp",
       "chassi": "L96X",
-      "variante": false,
+      "variante": true,
       "url": "/private-assets/viewmodels/fabrica/awp-fabrica.glb",
-      "bytes": 2643152,
-      "sha256": "4b212338f1740bdd95be84b719b23c1f26d00e80b506ca18805ef2b508bfc75b",
+      "bytes": 2835024,
+      "sha256": "fa1e02cbc709c7f7500af8890eb8422fb0d4096a36ef80c50a2ed56dc4712247",
       "clipes": [
         {
           "nome": "idle",
@@ -112,11 +112,11 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 7,
+      "segundos": 9,
       "file": "viewmodels/fabrica/awp-fabrica.glb",
       "ficha": "tools/fabrica/fichas/awp.json",
       "insumos": {
-        "ficha": "3dfff01075bef9586d7a000282e6ba88993c93717f6eda026185456612ee9af6",
+        "ficha": "9f4a4ba3bf6aa12081eadcb7d34367c0326472fc9ad8972bb28b12705f04208c",
         "chassi": "09b64dcce57c3a24417a33a37d51a23f1c2557e3ba6691204abab8feb2d783ee",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "b44ae664b8d69bf7ec9909dda233daab6ee51debef890e7d5d164daa51dd7d2d",
@@ -125,8 +125,9 @@
         "clipe:shoot:braco": "96b75903ccc3d5da2997adca4b32df9ed536d87216cbff6fb532cd68ffdd8bcd",
         "clipe:shoot:arma": "c1ecb8c099d9a4a89e964f36a2d42829436d333ed9a5a64f66b116cfbcd4b138",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "zonaLivre:luneta-awp": "6a303a1b97dfd23b9e1e9c979700119dffbb0ee3c48551751887f7f86a372a2a",
         "animador": "04ed481771719c39cdd16426ef772e4fecfc97503c4017498982df56ef7c893c",
-        "frameJogo": "ba7cd3a43fefa0359c73ebeace18d349e90e3b1ad8526a4cff28d1d1f6207006"
+        "frameJogo": "792563a74849897dd15a8408ae18acec660bc626c62e1c3e409382c8af5f4813"
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/awp.json"
@@ -799,36 +800,12 @@
       "chassi": "Kar98K",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/mosin-fabrica.glb",
-      "bytes": 2912724,
-      "sha256": "bd5794e7d094d12581b68ad96e7983db1977b68d76cd06c6e9ba4aa369c99b52",
+      "bytes": 2479520,
+      "sha256": "f3ce94795d015b6494db93c2edf7681bfa7966b8707e9ab15e4718a0de326f85",
       "clipes": [
         {
           "nome": "idle",
           "braco": "A_FP_Kar98K_Pose.FBX"
-        },
-        {
-          "nome": "reload_empty",
-          "duracao": 4.7,
-          "braco": "A_FP_Kar98K_Reload_Empty.FBX",
-          "arma": "A_W_Kar98K_Empty_Reload.FBX"
-        },
-        {
-          "nome": "reload_start",
-          "duracao": 1.3,
-          "braco": "A_FP_Kar98K_Reload_Start.FBX",
-          "arma": "A_W_Kar98K_Reload_Start.FBX"
-        },
-        {
-          "nome": "reload_loop",
-          "duracao": 0.8,
-          "braco": "A_FP_Kar98K_Reload_Loop.FBX",
-          "arma": "A_W_Kar98K_Reload_Loop.FBX"
-        },
-        {
-          "nome": "reload_end",
-          "duracao": 2.0333,
-          "braco": "A_FP_Kar98K_Reload_End.FBX",
-          "arma": "A_W_Kar98K_Reload_End.FBX"
         },
         {
           "nome": "shoot",
@@ -841,9 +818,29 @@
           "duracao": 1,
           "braco": "A_FP_Rifle_Equip.FBX",
           "arma": "idle congelado"
+        },
+        {
+          "nome": "reload_start",
+          "duracao": 0.8,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "reload_loop",
+          "duracao": 0.6,
+          "braco": "animador",
+          "arma": "animador"
+        },
+        {
+          "nome": "reload_end",
+          "duracao": 0.8,
+          "braco": "animador",
+          "arma": "animador"
         }
       ],
-      "clipesRuntime": {},
+      "clipesRuntime": {
+        "reload_empty": "ausente"
+      },
       "camera": {
         "fov": 80,
         "posicao": [
@@ -853,28 +850,21 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 13,
+      "segundos": 8,
       "file": "viewmodels/fabrica/mosin-fabrica.glb",
       "ficha": "tools/fabrica/fichas/mosin.json",
       "insumos": {
-        "ficha": "89ba151eb1a14a8779976df0eb8fca6eaeaa4930bcbae5a32d6b19dfb5a2d46a",
+        "ficha": "e544e884a2ae16de7f3384d089b1270347185f3563c5660580d8d4a901591cae",
         "chassi": "7c905ea1c8233b518da5ee11d33bc76f6cf7398e4ba3566a5e14d80a645ac314",
         "skinBraco": "be128d3ee36b54a2864b22c00b7c6dcab7fa252c389af8533d92214c114bdb0f",
         "armaFbx": "a8a54443bff630ec5c696b6069a98a8648513407693c781885a377a788b54306",
         "poseFbx": "4d139d101d63ef90c4db007ef1217aa704a54cf5382259d4cd15e0d10e68f535",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
-        "clipe:idle:arma": "eac07c23814e543d3e9c35b2244554d64ed58c4c4f09f70778d8eaa65dd18528",
-        "clipe:reload_empty:braco": "44177317fdf1aa274cfb006c61a5ec0c211a2f35858b25939e21cade56785f39",
-        "clipe:reload_empty:arma": "45239ca811c525712f07fdb2550a40639d14a064619428c74766bf9449f9c59f",
-        "clipe:reload_start:braco": "3073868914e3f48296d37a34cdc52d94d0ded112aeaf7809442379117fa116a6",
-        "clipe:reload_start:arma": "eac07c23814e543d3e9c35b2244554d64ed58c4c4f09f70778d8eaa65dd18528",
-        "clipe:reload_loop:braco": "384587444eb0cbbf9b7c02ce4eb40f5b35e29b1281731fa384d26442759c1645",
-        "clipe:reload_loop:arma": "f0c6a5ac37c3cff01ee8f6a001e398e4c01033ef8ac55cfd4b72a948a6d53883",
-        "clipe:reload_end:braco": "86722b1453069a3d0a593898d6ecb1d012dbcba328c43e427dce71e7206d332f",
-        "clipe:reload_end:arma": "aaae0003e4ede22a97df0cefc982562fac6c4b680f3f05b4523dde8558126f42",
         "clipe:shoot:braco": "56f288cf6510ea263cdbe9afcfc3c9e1163e1be7933e2145490d52b10a7b1b16",
         "clipe:shoot:arma": "3b9dc4357ef2fb0ca4dd527764054c963a10cad0ebf9ddf6fa9bed22df47ddd0",
-        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad"
+        "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
+        "animador": "bac64d9b82cf1bad1b8ed17638c83135f02e44f002ebc6cddf422fa57e08af50",
+        "frameJogo": "5c0a11c48f139c5b7f97565e466126630c93cbbdfe298729189b27c7f0527d83"
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/mosin.json"
@@ -1087,8 +1077,8 @@
       "chassi": "Kar98K",
       "variante": true,
       "url": "/private-assets/viewmodels/fabrica/rem700-fabrica.glb",
-      "bytes": 2610280,
-      "sha256": "908d4560f804b33d9a342871939dcce5d97429c3de5d72d9c1cc0a09c042579b",
+      "bytes": 2608892,
+      "sha256": "3c68d00f17bac9562aa60cc55eca6945ebc721dde7ea77e45bd75ff84f4a2b87",
       "clipes": [
         {
           "nome": "idle",
@@ -1137,7 +1127,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 8,
+      "segundos": 6,
       "file": "viewmodels/fabrica/rem700-fabrica.glb",
       "ficha": "tools/fabrica/fichas/rem700.json",
       "insumos": {
@@ -1151,8 +1141,8 @@
         "clipe:shoot:arma": "3b9dc4357ef2fb0ca4dd527764054c963a10cad0ebf9ddf6fa9bed22df47ddd0",
         "clipe:equip_rifle:braco": "8322fd4633c145b3efebfafa519c106ec05bd0da87df02ad86930bdf360e28ad",
         "zonaLivre:luneta": "65f27ce977bc651a58d46510f91cd46df1d13d6a7e4cfade1790be9799ec2141",
-        "animador": "c172855ee504a822345d65b8f6f2179b404815685fa9fa572fac5706f5352903",
-        "frameJogo": "06be2733663a83230bf8f53cc1581facbb274354844e8d99c96661470e1fe5fd"
+        "animador": "bac64d9b82cf1bad1b8ed17638c83135f02e44f002ebc6cddf422fa57e08af50",
+        "frameJogo": "5c0a11c48f139c5b7f97565e466126630c93cbbdfe298729189b27c7f0527d83"
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/rem700.json"
@@ -1164,8 +1154,8 @@
       "chassi": "Viper-357",
       "variante": false,
       "url": "/private-assets/viewmodels/fabrica/revolver38-fabrica.glb",
-      "bytes": 2367964,
-      "sha256": "bb7fd416c0fe08de3b409aaa383ea26fb0330013b568ff412b52f19079904b7b",
+      "bytes": 2369960,
+      "sha256": "d68a8f717669c122c08ac6fc6c78774e19bab8abcc01216179290ae59bda8c05",
       "clipes": [
         {
           "nome": "idle",
@@ -1203,7 +1193,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 10,
+      "segundos": 13,
       "file": "viewmodels/fabrica/revolver38-fabrica.glb",
       "ficha": "tools/fabrica/fichas/revolver38.json",
       "insumos": {
@@ -1214,8 +1204,8 @@
         "poseFbx": "06a92e6d18de0677c7db9482f4db41587697a575eef6b6343d20ec70ca56ab74",
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "clipe:shoot:arma": "d27fdbfb2e4c96a79c71cff0ad37d6399bc80025ebd748d05c3410aa632a1d06",
-        "animador": "4d3d5a843f81bda715de52059e4b747917b923695218a7565fa7faef3cc974cf",
-        "frameJogo": "22aca287a6830f7170eb14811b67493be8a4fb2f50437440dbf809bf2867c034"
+        "animador": "80b3589a016eb20684704ecf5d615eec7518776fc0c52fb8ba91527ee173c8ac",
+        "frameJogo": "0a4aed73562419181a063fcde4fab1b48ed412eb6cc5ed19ab22c4fd50322841"
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/revolver38.json"
@@ -1579,8 +1569,8 @@
       "chassi": "X18",
       "variante": true,
       "url": "/private-assets/viewmodels/fabrica/uzi-fabrica.glb",
-      "bytes": 2164192,
-      "sha256": "2ba354354bbf5bd32728f0b949f37e912c77391befc7710ac938ea8f523e1815",
+      "bytes": 2164304,
+      "sha256": "95cb79312fcec0b1481ad1e5dcdcfbb182a8f22cf3b106a2b236ed258db97c47",
       "clipes": [
         {
           "nome": "idle",
@@ -1618,7 +1608,7 @@
         ],
         "fonte": "FPSPlayer.prefab"
       },
-      "segundos": 7,
+      "segundos": 5,
       "file": "viewmodels/fabrica/uzi-fabrica.glb",
       "ficha": "tools/fabrica/fichas/uzi.json",
       "insumos": {
@@ -1630,7 +1620,7 @@
         "personagemFbx": "ea93b02c42fb00ea4713604e72004c27c99c91c9d7446ccc7022be3b79e13c47",
         "malhaPropria": "213b06a54610f35bf7315d6e85946604688315b9074f01f6040c2c33b3cf5edd",
         "animador": "f6ec3a743a603d78c93b686f24bc4459c0aae8c7df8a24098537260bca37242a",
-        "frameJogo": "29007d84289a94eb257b53ff2639f0341c54337d9c8df0ababd8449d501c00f5"
+        "frameJogo": "033ac041088749891ed0e9ce03dcfbfe39b11c8191d2068d0d328ba41c07a146"
       },
       "ready": false,
       "rebuild": "node tools/fabrica/build.mjs tools/fabrica/fichas/uzi.json"

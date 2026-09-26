@@ -2,7 +2,7 @@
 // Versão de URL por BYTES dos produtos da fábrica (tools/fabrica/fabrica-candidates.json).
 export const VM_FABRICA_BYTES = Object.freeze({
   akm: '91ee56bd36',
-  awp: '4b212338f1',
+  awp: 'fa1e02cbc7',
   carbine: 'd9c3907371',
   deagle: 'a08149fe73',
   famas: '29f877cdb2',
@@ -13,18 +13,18 @@ export const VM_FABRICA_BYTES = Object.freeze({
   m400: 'a9f4bce104',
   m92: 'c8fcfb1276',
   md97: 'f17921e1c1',
-  mosin: 'bd5794e7d0',
+  mosin: 'f3ce94795d',
   mp5: 'd26da9f0ab',
   p90: 'f0ab213493',
   pistol: '4c9e3a1a29',
-  rem700: '908d4560f8',
-  revolver38: 'bb7fd416c0',
+  rem700: '3c68d00f17',
+  revolver38: 'd68a8f7176',
   scar: 'e15febed0d',
   shotgun: '8b3c8639ca',
   sks: '39c44f6e41',
   svd: '3efcb8065b',
   tavor: '403658a972',
-  uzi: '2ba354354b',
+  uzi: '95cb79312f',
 });
 // Posição do pacote por chassi contra a AK golden (tools/fabrica/enquadramento/<id>.json);
 // rotação e FOV ficam os de VM_FABRICA_FRAME, iguais para todas as armas.
