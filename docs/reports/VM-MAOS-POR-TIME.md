@@ -68,3 +68,30 @@ no dorso da mão, não no punho, para aparecer na pistola; a escala aparente do 
 trama (M) muda entre a golden e o K porque o enquadramento da golden mostra a mão mais de perto
 (a pintura é na mesma escala por mão; não medido na tela). Parado em duas rodadas pelo detector
 de giro da skill.
+
+## Volta 3 (identidade na luva, propostas do F, escala na tela)
+
+**Onde a identidade aparece.** A pistola mostra quase só a luva (lado e dedos da mão de apoio);
+punho e manga saem do quadro. E e F guardavam o time no punho/manga. Agora:
+- **E**: luva vermelha (`#8c2632`) com estrelas creme miúdas em volta da mão e dos dedos.
+- **F**: três propostas em `F_OPCOES` (`?vmmaosf=` na revisão; padrão no código `ouro`):
+  `ouro` (luva dourada sem dedos, manga preta), `grife` (luva preta com treliça dourada),
+  `corrente` (a anterior: cordão no pulso). A escolha é do dono; a página mostra as três.
+
+**Escala do motivo na tela** (`vm-maos-time --sonda=escala`, atlas de faixas de 0,2 mão): px por
+mão na tela, golden × AK K: y 65,9 × 68,9, x 66,2 × 83,2 (0,80 em x). A mão do rig A é mais larga
+por comprimento (pulso 0,96 × 0,77; palma 1,13 × 0,99 mão), então o motivo cabia mais vezes na
+largura — o "xadrez miúdo" que o crítico viu. `escalaX: 0,82` no rig A: 0,96 / 0,96 depois. A
+sonda entra na régua (±15%) e reprovava antes do ajuste.
+
+**Crítico cego, rodada 3** (folha AK golden × M4 × pistola × 6 times + folha das propostas do F):
+E, B, U, C aprovadas; M ressalva (na pistola fica perto do B: duas luvas estampadas terrosas);
+F: `grife` APROVADA, `ouro` RESSALVA (o mais legível, mas o amarelo fosco lê como luva de
+borracha, não ouro), `corrente` REPROVADA (igual à rodada 2). Ordem do crítico: grife, ouro,
+corrente. Nada regrediu. Não julgado: ADS, tiro e recarga; mapa escuro.
+
+**Régua com as três propostas do F** (`--maosf=`): o classificador passou a aceitar a mistura
+luva↔acento que o filtro da textura faz num motivo fino (teto 10 RGB, mais apertado que o da
+paleta) e a mediana usa só pixel puro. `ouro` e `corrente` verdes; `grife` fica com 1 falha — na
+granada (mão mais perto da câmera) 12,2% dos pixels saem fora da paleta, contra o teto de 12%. O
+teto não foi afrouxado: se o dono escolher `grife`, a treliça precisa de traço mais grosso.
