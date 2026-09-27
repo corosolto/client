@@ -114,3 +114,21 @@ Segunda iteração em 26/09: `npm run build`, `npm run syntax`,
 `npm run eval:redesign`, `npm run docs:check`, `npm run check:seo` (6/6) e
 `git diff --check` passaram. Há aviso do adapter: Node local 23, Vercel usará 24.
 Esses gates não provam fidelidade visual nem a navegação de URLs no navegador.
+
+## Lane de lançamento (27/09)
+
+O dono pediu lançar a UI após o release das 26 armas. Nova lane isolada
+`worktrees/re-ui-launch`, branch `codex/re-ui-launch`, começou de
+`origin/main@066646e8d` (`v2.1.0-alpha.2`). Foram portados com `cherry-pick -x`
+apenas os commits de wallpaper e UI `040db41a8`, `383a4f150`,
+`b89a988ef`, `2ea290de3`. Os commits de ranking `996dbd318`, `7c5a73785`
+e `999bd2bc9` ficaram fora; `RANKING_ON` permanece desligado. Conflitos em
+blocos numéricos gerados de README/STATUS/docs/ARCH foram resolvidos com a
+base atual e regenerados por `npm run docs` e `npm run arch`; não houve
+conflito em lógica de `main.js`, `index.astro` ou CSS. `syntax`, `build` e
+`eval:redesign` passam com Node 23. O hub ainda requer `?home=hub`; antes de
+substituir a home padrão, verificar preview em 3:2/16:9, URLs/Voltar,
+personagem/mapa/SP/MP, corrigir os problemas observados, então remover a
+dependência dessa query, repetir gates e publicar em PR separado do ranking.
+O servidor dev solicitado em 4339 escolheu 4340; foi encerrado, respeitando
+o bloqueio antigo do navegador local. Usar preview Vercel do PR para revisão.
