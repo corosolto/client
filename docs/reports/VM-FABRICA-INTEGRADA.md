@@ -171,13 +171,18 @@ terminava em `efc892db0`. O checkpoint `1721c26a5` versionou
 réguas concluídas estão na tabela acima. Resultado rejeitado: chamar a Uzi de verde na
 `vm-manga-tela-fabrica`; a ressalva 0,63% permanece explícita.
 
-**Pendente antes do push:** commitar este relatório, revalidar status/diff, fazer push e
-abrir o PR. Os portões pedidos no handoff terminaram; as falhas estão atribuídas na
-tabela, com uma dívida nova medida da Uzi. Logs persistentes (ignorados pelo Git)
-estão em `artifacts/vm-fabrica-integrada/gates/`. O jogo de revisão serve na porta
-4711 e a página de vereditos na 4712. A decisão do dono sobre o retorno temporário
-da AK e da faca ao legado com `VM_LAUNCH=false` está pendente para o merge. Nenhum
-upload ou ativação foi feito.
+**PR aberto:** [#666](https://github.com/corosolto/client/pull/666), não draft. A branch
+foi publicada em `2bde96913` com o pre-push `check:deploy` verde (102 s), sem
+`PREPUSH=0`. Os portões pedidos no handoff terminaram; as falhas estão atribuídas
+na tabela, com uma dívida nova medida da Uzi. Logs persistentes (ignorados pelo
+Git) estão em `artifacts/vm-fabrica-integrada/gates/`. O jogo de revisão serve
+na porta 4711 e a página de vereditos na 4712.
+
+**Próximo passo:** publicar este checkpoint, acompanhar o CI no head atual e fazer
+merge commit somente com checks obrigatórios verdes. Antes do merge, resolver com
+o dono o retorno temporário da AK e da faca ao legado com `VM_LAUNCH=false`.
+Depois, conferir o release 2.1.0 e fechar com referência ao #666 os PRs
+substituídos. Nenhum upload ou ativação foi feito.
 
 ## 8. Entrega privada preparada para o dono
 
