@@ -39,7 +39,8 @@ import { FACCAO_NOME_UI } from './mapcat.js';
 const SETTINGS_KEY = 'awpbr_settings';
 const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 if (savedSettings.invertY == null && savedSettings.invY != null) savedSettings.invertY = savedSettings.invY;
-const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal' }, savedSettings);
+const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
+if (!['first', 'third', 'shoulder'].includes(settings.camView)) settings.camView = 'first';
 let preferredQuality = null;
 const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify({
   ...settings,
@@ -1410,6 +1411,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   retryPending();
   armSwitchHook();
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
+  game.onCamViewChange = (mode) => { settings.camView = mode; $('set-camera').value = mode; saveSettings(); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
   /* `applyCinematicScreen` morreu no 495a6d889 e a chamada ficou: o `ReferenceError` dentro
@@ -2114,9 +2116,10 @@ $('settings-close').onclick = closeSettings;
 $('settings-apply').onclick = () => { ui.click(); saveSettings(); if (game) game.applySettings(); };
 $('settings-restore').onclick = () => {
   ui.click();
-  settings.quality = 'med'; settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.speech = true; settings.xhair = '#4fe8e0';
+  settings.quality = 'med'; settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
   $('set-quality').value = settings.quality; $('set-sens').value = settings.sens; $('set-vol').value = settings.vol;
-  $('set-speech').checked = true; $('set-invert-y').checked = false; $('set-xhair').value = settings.xhair;
+  $('set-speech').checked = true; $('set-invert-y').checked = false; $('set-xhair').value = settings.xhair; $('set-camera').value = 'first';
+  if (game) game.setCamView('first');
   sfx.speechEnabled = true; sfx.setVolume(settings.vol); applyXhair(); updLabels(); saveSettings();
   if (game) game.applySettings();
 };
@@ -2762,7 +2765,14 @@ function selectCharacterFromAvatar(c, row, roster) {
 
 /* ---------------- settings wiring ---------------- */
 const sensEl = $('set-sens'), invertEl = $('set-invert-y'), volEl = $('set-vol'), qualEl = $('set-quality');
+const cameraEl = $('set-camera');
 sensEl.value = settings.sens; volEl.value = settings.vol; qualEl.value = settings.quality;
+cameraEl.value = settings.camView;
+cameraEl.onchange = () => {
+  if (game) game.setCamView(cameraEl.value);
+  else { settings.camView = cameraEl.value; saveSettings(); }
+  ui.click();
+};
 invertEl.checked = settings.invertY === true;
 if (COMPAT_MODE) { qualEl.disabled = true; qualEl.title = 'Modo compatibilidade usa qualidade baixa nesta sessão'; }
 const updLabels = () => {

@@ -765,7 +765,7 @@ export class Game {
 
     // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
     // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
-    this.camView = 'first';
+    this.camView = ['first', 'third', 'shoulder'].includes(settings.camView) ? settings.camView : 'first';
     this.playerTP = null;
     this._tpWeapon = null;
     this._tpDead = false;
@@ -1986,7 +1986,7 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
-      if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª/3ª pessoa on/off
+      if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª → 3ª → ombro
       // slot memory: 1 = last primary held, 2 = last sidearm held (not a hardcoded reset)
       if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
@@ -3008,6 +3008,7 @@ export class Game {
     // clarão dos tiros ao vivo (mesma disciplina da qualidade: mudou em partida, aplicou)
     const _fx = FX_CLARAO[this.settings.fxFlash] ?? 1;
     this._fxSet({ light: _fx, flash: _fx });
+    if (this.settings.camView !== this.camView) this.setCamView(this.settings.camView);
   }
   _applyQuality() {
     const q = this.settings.quality;
@@ -5659,9 +5660,18 @@ export class Game {
     // first = 1ª pessoa (só-arma, padrão do jogo) · third = OTS SOCOM (cintura pra cima) ·
     // shoulder = OTS colado (vê a arma de perto). A 1ª-pessoa-com-corpo (fpbody) foi removida.
     const order = ['first', 'third', 'shoulder'];
-    this.camView = order[(order.indexOf(this.camView) + 1) % order.length];
-    if (this.camView !== 'first') this._ensurePlayerTP();
+    this.setCamView(order[(order.indexOf(this.camView) + 1) % order.length]);
+  }
+  setCamView(mode) {
+    if (!['first', 'third', 'shoulder'].includes(mode)) return false;
+    this.camView = mode;
+    this.settings.camView = mode;
+    if (mode !== 'first') this._ensurePlayerTP();
     this._syncCamViewVis();
+    const realScope = this.player.scoped && !!WEAPONS[this.player.weapon].scope;
+    this._syncVmPresentation(realScope);
+    this.onCamViewChange?.(mode);
+    return true;
   }
 
   // Visibilidade base ao alternar: corpo TP em qualquer modo 3ª pessoa. Os braços FP são
