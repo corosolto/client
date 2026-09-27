@@ -2,7 +2,7 @@
   "schema": 1,
   "servedRoot": "/private-assets/viewmodels",
   "blobPrefix": "viewmodels/sha256",
-  "blobBase": null,
+  "blobBase": "https://c7n4tyaqblkahvgo.private.blob.vercel-storage.com",
   "count": 63,
   "totalBytes": 167439286,
   "files": [

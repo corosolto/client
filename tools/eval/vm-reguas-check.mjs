@@ -23,7 +23,7 @@
      --assar-pistola          regrava tools/eval/vm-pistola-aprovada.json (só com decisão do dono)
      --ref-ak=viva / --assar-ak  idem para a AK (padrão: retrato da golden APROVADA, pré-#631)
    Saída ≠ 0: vermelho fora da dívida declarada (vm-reguas-divida.json) ou
-   "não sei medir". Com VM_LAUNCH=true a dívida não desculpa nada.
+   "não sei medir". Com VM_LAUNCH=true só o aceite exato do dono vale.
    Requer private-assets e navegador — régua LOCAL (check:vm), fora do check:fast;
    o CI confere o placar assado com eval:vm-placar.
    ============================================================================ */
@@ -34,6 +34,7 @@ import { pathToFileURL } from 'node:url';
 import * as P from './lib/vm-palco.mjs';
 import { JUIZ, MUTANTES, REGUAS, TODAS, coletar, coletarReferencias } from './lib/vm-reguas.mjs';
 import { entradasDoPlacar } from './vm-placar-check.mjs';
+import { aceiteExato, lerAceites } from './lib/vm-aceite-visual.mjs';
 
 const arg = (n, d = '') => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d; };
 const flag = (n) => process.argv.includes(`--${n}`);
@@ -55,6 +56,7 @@ if (VARIANTE && flag('placar')) throw new Error('--variante não assa placar: o 
 const { VM_LAUNCH } = await import(pathToFileURL(path.resolve('public/js/data/vmconfig.js')).href);
 const DIVIDA_ARQ = 'tools/eval/vm-reguas-divida.json';
 const divida = fs.existsSync(DIVIDA_ARQ) ? JSON.parse(fs.readFileSync(DIVIDA_ARQ, 'utf8')).dividas || {} : {};
+const aceites = lerAceites();
 
 const srv = await P.subirServidor(PORTA);
 let browser = await P.abrirNavegador();
@@ -127,8 +129,10 @@ if (MUT) {
       const d = divida[r]?.[arma];
       if (d && !VM_LAUNCH) {
         console.log(`DÍVIDA ${tag} ${x.valor} — ${x.msg} [dono: ${d.dono}]`);
+      } else if (d && VM_LAUNCH && aceiteExato(aceites, ASPECTO, r, arma, x)) {
+        console.log(`ACEITE ${tag} ${x.valor} — ${x.msg} [dono: ${d.dono}; valor igual ao aprovado]`);
       } else {
-        console.log(`FALHA ${tag} ${x.valor} — ${x.msg}${d && VM_LAUNCH ? ' [VM_LAUNCH=true: dívida não vale]' : ''}`);
+        console.log(`FALHA ${tag} ${x.valor} — ${x.msg}${d && VM_LAUNCH ? ' [VM_LAUNCH=true: fora do aceite exato]' : ''}`);
         falhas.push(tag);
       }
     }

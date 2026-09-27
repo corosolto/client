@@ -4,7 +4,7 @@
 
 - **Versão:** `2.1.0-alpha.1`
 - **Conteúdo jogável:** 6 facções, 53 personagens, 18 mapas e 27 armas com GLB
-- **Código do jogo:** 57.528 linhas em 112 módulos JavaScript
+- **Código do jogo:** 57.514 linhas em 112 módulos JavaScript
 - **Automação:** 440 comandos npm, 611 scripts de avaliação e 100 scripts de pipeline
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `package.json · CHARACTERS · MAPS · public/models/weapons · public/js · tools/`

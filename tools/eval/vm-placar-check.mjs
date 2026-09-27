@@ -9,16 +9,18 @@
         vmbytes, FAMILY_FRAME e das próprias réguas) — conserto de config ou
         produto re-assado sem re-medir fica vermelho aqui;
      P2 todo vermelho do placar tem dono em vm-reguas-divida.json;
-     P3 com VM_LAUNCH=true nenhuma arma pode estar vermelha (a chave tudo-ou-nada
-        do eval:vm-launch cobra `ready`; esta cobra a imagem).
+     P3 com VM_LAUNCH=true só células vermelhas aceitas pelo dono, com estado,
+        valor e mensagem idênticos ao placar aprovado; novas/pioradas reprovam.
    Mutantes: --mutante=placar-velho (troca o hash), --mutante=sem-dono (tira uma
-   dívida), --mutante=chave-ligada (VM_LAUNCH=true) — os três reprovam.
+   dívida), --mutante=chave-ligada (altera um vermelho),
+   --mutante=celula-nova (vermelho novo) — todos reprovam.
    Conserto quando P1 reprova: `npm run eval:vm-reguas -- --placar` (local).
    ============================================================================ */
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { aceiteExato, lerAceites } from './lib/vm-aceite-visual.mjs';
 
 const ENTRADAS = [
   'public/js/data/vmconfig.js', 'public/js/data/vmframe.js', 'public/js/data/vmbytes.js',
@@ -51,10 +53,19 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const placares = [placarArq, ...extras].map((f) => ({ arq: f, ...JSON.parse(fs.readFileSync(f, 'utf8')) }));
   const DIV = 'tools/eval/vm-reguas-divida.json';
   const divida = fs.existsSync(DIV) ? JSON.parse(fs.readFileSync(DIV, 'utf8')).dividas || {} : {};
+  const aceites = lerAceites();
   let { VM_LAUNCH } = await import(pathToFileURL(path.resolve('public/js/data/vmconfig.js')).href);
   let atual = entradasDoPlacar().hash;
   if (mut === 'placar-velho') atual = `${atual.slice(0, -1)}x`;
-  if (mut === 'chave-ligada') VM_LAUNCH = true;
+  if (mut === 'chave-ligada' || mut === 'valor-pior') {
+    VM_LAUNCH = true;
+    const x = placares[0].resultados.awp.cobertura;
+    x.valor = `${x.valor} [mutante]`;
+  }
+  if (mut === 'celula-nova') {
+    VM_LAUNCH = true;
+    placares[0].resultados.m4.mira = { estado: 'VERMELHO', valor: '99 px', msg: 'mutante: mira deslocada' };
+  }
   if (mut === 'sem-dono') { const r = Object.keys(divida)[0]; delete divida[r][Object.keys(divida[r])[0]]; }
   let verm = 0;
   for (const placar of placares) {
@@ -67,7 +78,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
         if (r.startsWith('__') || !['VERMELHO', 'NAO_MEDE'].includes(x.estado)) continue;
         verm++;
         if (!divida[r]?.[arma]) falhas.push(`P2 ${asp} ${r}/${arma} vermelho sem dono em vm-reguas-divida.json — ${x.msg.slice(0, 140)}`);
-        if (VM_LAUNCH) falhas.push(`P3 VM_LAUNCH=true com ${r}/${arma} (${asp}) vermelho na imagem — ${x.msg.slice(0, 140)}`);
+        if (VM_LAUNCH && !aceiteExato(aceites, asp, r, arma, x)) {
+          falhas.push(`P3 VM_LAUNCH=true com ${r}/${arma} (${asp}) vermelho novo ou diferente do aceite — ${x.msg.slice(0, 140)}`);
+        }
       }
     }
   }
