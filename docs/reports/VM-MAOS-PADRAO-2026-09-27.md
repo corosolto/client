@@ -60,6 +60,9 @@ O `check:vm` completo no head publicado `923047a94` terminou **7/9 em
 células 3:2 aceitas como dívida antes da chave) reprovaram. As outras sete
 réguas passaram. A execução está em
 `artifacts/vm-hands-default/check-vm.log`, ignorado pelo Git.
+Após o aceite explícito do dono, o `check:vm` completo passou **9/9 em
+1150,2 s**, inclusive `eval:vm-reguas` ao vivo (985,8 s) e o placar 0 falhas.
+Log local ignorado: `artifacts/vm-hands-default/check-vm-aceito.log`.
 
 `check:deploy` passou **46/46** em 119,5 s. `check:fast` passou **163/167** em
 449 s; as quatro falhas (`eval:mapid`, `audio:check`, `eval:audiovoicemix` e
@@ -114,5 +117,5 @@ vínculo VM_BYTES. O worktree temporário foi removido após a verificação.
 
 **Estado:** branch `vm/hands-default` publicada no PR draft #669; ainda não
 mergeada. O `check:vm` completo fechou 7/9 no head `923047a94`, antes do
-aceite; nova execução no head com aceite está em andamento. A câmera
+aceite; a nova execução com aceite fechou 9/9. A câmera
 permanece no PR #668, independente desta mudança.
