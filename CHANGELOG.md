@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.1`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.2`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,24 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.2] — 2026-09-27
+
+### Mudado
+- viewmodel: mãos novas da fábrica por padrão nas 26 armas (#669)
+- viewmodel: publicar manifesto do Blob privado
+- docs: registrar check vm completo verde
+- docs: registrar build privado e portão de hashes
+- viewmodel: permitir build com runtime privado conferido
+- viewmodel: registrar aceite visual exato para lançamento
+- docs: distinguir alertas visuais de armas reprovadas
+- viewmodel: validar manifesto Blob no CI sem binários privados
+- test(viewmodel): verifica rotas efetivas no Astro
+- test(viewmodel): remede placar 16x9 sem novas dividas
+- test(viewmodel): remede placar 3x2 do lancamento
+- test(viewmodel): cobre lançamento padrão das famílias
+- docs(viewmodel): registra lançamento padrão e entrega privada
+- feat(viewmodel): ativa mãos novas por padrão sem flags
 
 ## [2.1.0-alpha.1] — 2026-09-27
 
