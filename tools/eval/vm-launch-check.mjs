@@ -13,7 +13,9 @@
  *   VL3 decisão       tabela-verdade de vmLaunchDecision (lançamento/revisão/kill)
  *   VL4 seletor       authoredvm.js obedece a chave: 0 ou TODAS as chaves de boot
  *   VL5 jogo real     Game em node: padrão ativo e ?vmauthored=0 desliga ambos
- *   VL6 asset         com VM_LAUNCH=true, o GLB de cada arma existe no catálogo servido
+ *   VL6 asset         com VM_LAUNCH=true, GLBs existem no catálogo local ou o
+ *                     manifesto Blob privado cobre cada rota efetiva; o build
+ *                     confere os bytes por SHA-256 antes de publicar
  *   VL7 ak golden     a 'ak' serve a GOLDEN aprovada (gold#ak, coro/ak-hires.glb 3b6ca23d…), nada mais
  *                     (sem catálogo privado não dá para medir → VERMELHO)
  *
@@ -24,6 +26,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { readManifest } from '../../scripts/vm-assets.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -106,7 +109,7 @@ const COMPARTILHADOS = ['shared/general-runtime.glb', 'recoil.json',
   ...['Arm01', 'Cloth01', 'Glove01'].flatMap((b) => ['B', 'N', 'ORM'].map((m) => `shared/T_${b}_${m}.webp`))]
   .map((f) => `public/private-assets/viewmodels/${f}`);
 
-async function audit(sources, { jogo = true, catalogo = true } = {}) {
+async function audit(sources, { jogo = true, catalogo = true, manifesto = true, manifestoData = null } = {}) {
   const checks = [];
   const check = (id, ok, detail) => checks.push({ id, ok: Boolean(ok), ...detail });
   const { config, launch, authored } = await load(sources);
@@ -169,11 +172,40 @@ async function audit(sources, { jogo = true, catalogo = true } = {}) {
     ...launch.VM_LAUNCH_IDS.map((id) => [id, assetDe(id, authored)]).filter(([, f]) => !f || !fs.existsSync(path.join(ROOT, f))),
     ...COMPARTILHADOS.filter((f) => !fs.existsSync(path.join(ROOT, f))).map((f) => ['compartilhado', f]),
   ].map(([id, f]) => `${id}:${f || '?'}`) : null;
-  check('VL6', config.VM_LAUNCH !== true || (catalogoPresente && faltando.length === 0), {
-    medido: catalogoPresente, faltando, informativo: config.VM_LAUNCH !== true,
+  let entrega = null;
+  if (!catalogoPresente && manifesto) {
+    try {
+      const m = manifestoData || readManifest();
+      const baseOk = /^https:\/\/[a-z0-9-]+\.private\.blob\.vercel-storage\.com$/i.test(m.blobBase || '');
+      const arquivos = new Map(m.files.map((f) => [f.path, f]));
+      const estruturaOk = m.count === m.files.length && arquivos.size === m.files.length
+        && m.totalBytes === m.files.reduce((n, f) => n + f.bytes, 0);
+      const requeridos = [...launch.VM_LAUNCH_IDS.map((id) => [id, assetDe(id, authored)]),
+        ...COMPARTILHADOS.map((f) => ['compartilhado', f])];
+      const ausentes = [];
+      for (const [id, f] of requeridos) {
+        if (!f) { ausentes.push(`${id}:sem rota`); continue; }
+        const prefixo = 'public/private-assets/viewmodels/';
+        if (!f.startsWith(prefixo)) {
+          if (!fs.existsSync(path.join(ROOT, f))) ausentes.push(`${id}:${f}`);
+          continue;
+        }
+        const entrada = arquivos.get(f.slice(prefixo.length));
+        if (!entrada) { ausentes.push(`${id}:${f}`); continue; }
+        const url = id === 'grenade' || id === 'compartilhado' ? '' : authored.vmFonteDe(id).url;
+        const versao = new URLSearchParams(url.split('?')[1] || '').get('v');
+        if (versao && versao !== entrada.v) ausentes.push(`${id}:${f} versão ${versao} != ${entrada.v}`);
+      }
+      entrega = { ok: baseOk && estruturaOk && ausentes.length === 0,
+        baseOk, estruturaOk, contagem: m.files.length, ausentes };
+    } catch (error) { entrega = { ok: false, erro: error.message }; }
+  }
+  check('VL6', config.VM_LAUNCH !== true || (catalogoPresente
+    ? faltando.length === 0 : entrega?.ok === true), {
+    medido: catalogoPresente, faltando, entrega, informativo: config.VM_LAUNCH !== true,
     msg: catalogoPresente
       ? `VM_LAUNCH=true com ${faltando.length} asset(s) ausente(s) (${faltando.slice(0, 4).join(', ')}) — o jogador veria o legado nessas armas`
-      : 'VM_LAUNCH=true sem catálogo privado em public/private-assets/viewmodels: não dá para provar que os GLB existem',
+      : 'VM_LAUNCH=true sem catálogo local e sem manifesto Blob privado completo; o build não conseguiria buscar e conferir os GLBs',
   });
 
   // VL7: decisão do dono (24/09) — AK = golden aprovada (rig A). A rota que o runtime escolhe
@@ -243,7 +275,7 @@ if (process.argv.includes('--mutantes')) {
     ['faca-fora-da-chave', ['VL5'], mut('game', 'this.vm.melee = !AUTHORED_VM_ENABLED ? null : new KnifeMeleeViewModel({',
       'this.vm.melee = new KnifeMeleeViewModel({')],
     ['granada-fora-da-chave', ['VL1'], mut('launch', "[...WEAPON_IDS, 'grenade']", '[...WEAPON_IDS]')],
-    ['chave-sem-asset', ['VL6'], { ...base, config: allReady(base.config, { launch: true }) }, { catalogo: false }],
+    ['chave-sem-asset', ['VL6'], { ...base, config: allReady(base.config, { launch: true }) }, { catalogo: false, manifesto: false }],
     ['ak-servida-pelo-k', ['VL7'], mut('config', "ak: W('ak', { baked: true, golden: true,", "ak: W('ak', { baked: true,")],
   ];
   result.mutantes = [];
@@ -255,6 +287,22 @@ if (process.argv.includes('--mutantes')) {
     console.log(`  mutante ${nome.padEnd(22)} ${mordeu ? 'VERMELHO (mordeu)' : 'VERDE — a régua está cega'}  ${vermelhas.join(',')}`);
   }
   result.ok &&= result.mutantes.every((m) => m.mordeu);
+  // CI não recebe binários licenciados. O manifesto versionado com base Blob
+  // deve provar cobertura das rotas, e uma entrada removida tem de reprovar.
+  const publicado = { ...readManifest(), blobBase: 'https://fixture.private.blob.vercel-storage.com' };
+  const noCi = await audit(base, { jogo: false, catalogo: false, manifestoData: publicado });
+  const semUpload = await audit(base, { jogo: false, catalogo: false, manifestoData: readManifest() });
+  const semM4 = await audit(base, { jogo: false, catalogo: false, manifestoData: {
+    ...publicado, count: publicado.count - 1, totalBytes: publicado.totalBytes - publicado.files.find((f) => f.path === 'fabrica/m4-fabrica.glb').bytes,
+    files: publicado.files.filter((f) => f.path !== 'fabrica/m4-fabrica.glb'),
+  } });
+  const ciCobre = noCi.checks.find((c) => c.id === 'VL6')?.ok === true;
+  const ciSemUpload = semUpload.checks.find((c) => c.id === 'VL6')?.ok === false;
+  const ciMorde = semM4.checks.find((c) => c.id === 'VL6')?.ok === false;
+  console.log(`  manifesto CI completo          ${ciCobre ? 'VERDE' : 'FALHA'}`);
+  console.log(`  manifesto sem upload           ${ciSemUpload ? 'VERMELHO (mordeu)' : 'VERDE — a régua está cega'}`);
+  console.log(`  mutante manifesto-sem-m4       ${ciMorde ? 'VERMELHO (mordeu)' : 'VERDE — a régua está cega'}`);
+  result.ok &&= ciCobre && ciSemUpload && ciMorde;
 }
 console.log(result.ok ? '\n  VERDE — sem ativação parcial\n' : '\n  VERMELHO\n');
 process.exit(result.ok ? 0 : 1);

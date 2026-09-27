@@ -59,6 +59,15 @@ por servidor de outro worktree; a régua agora escolhe porta livre, fecha o
 Astro que abriu e mantém mutante de granada ausente vermelho. O mutante do
 jogo sem a ligação `authored.setWeapon` também reprovou 0/2 (M4 e AK sem mãos).
 
+O PR draft #669 está publicado em `923047a94`. No CI desse head, smoke, DCO,
+ratchet e CodeQL passaram; o build e o preview Vercel reprovaram porque o
+runner não contém os GLBs privados e o manifesto ainda está sem `blobBase`.
+O portão VL6 agora admite um runner limpo apenas se o manifesto versionado
+tiver a base Blob privada, estrutura consistente e todas as rotas do lançamento
+com versão correta. Simulações passaram com manifesto completo; os mutantes
+sem upload e sem M4 reprovaram. O próprio build continua conferindo SHA-256
+dos bytes baixados antes de publicar. Sem upload, o CI permanece vermelho.
+
 ## Para publicar
 
 1. O dono publica os 63 assets no Blob privado com o token em ambiente local:
@@ -72,6 +81,7 @@ jogo sem a ligação `authored.setWeapon` também reprovou 0/2 (M4 e AK sem mão
 3. Resolver as dívidas visuais de lançamento ou registrar a decisão do dono
    sobre elas de forma explícita e verificável antes do merge.
 
-**Estado:** código local em validação na branch `vm/hands-default`; ainda não
-publicado nem mergeado. A câmera permanece no PR #668, independente desta
+**Estado:** branch `vm/hands-default` publicada no PR draft #669; ainda não
+mergeada. O `check:vm` completo foi iniciado no head `923047a94`; registrar
+seu resultado ao terminar. A câmera permanece no PR #668, independente desta
 mudança.
