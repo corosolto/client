@@ -3,8 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { WEAPONS } from '../../public/js/data/weapons.js';
-import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
-import { AUTHORED_VM_MODELS, AUTHORED_VM_URLS } from '../../public/js/authoredvm.js';
+import { VM_FABRICA, VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
+import { AUTHORED_VM_MODELS, AUTHORED_VM_URLS, vmFonteDe } from '../../public/js/authoredvm.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -61,17 +61,19 @@ const readyFamilies = Object.entries(VM_FAMILY)
   .filter(([, config]) => config.ready === true)
   .map(([family]) => family)
   .sort();
-check(readyFamilies.join(',') === 'ak,grenade,pistol',
-  'somente AK/pistola golden e granada abrem o portão autorado', readyFamilies.join(', '));
-// Dentro da família aberta, só a arma aprovada sobe: akm/m92 (família ak) ficam
-// `ready:false` no VM_WEAPON até veredito próprio do dono. A pistola aprovada em 07/09
-// é a ROTA DE FAMÍLIA (FAMILY_FRAME calibrado no navegador) — `golden:true` nela
-// entra 144× maior (BUG-VM-ESCALA-PISTOLA).
+check(readyFamilies.length === Object.keys(VM_FAMILY).length,
+  'todas as famílias abrem o lançamento padrão', readyFamilies.join(', '));
+// O dono pediu as 26 mãos novas sem query em 27/09; a fábrica cobre 24 armas,
+// a AK mantém a golden aprovada, e a faca tem rig próprio.
 const armasServidas = Object.entries(VM_WEAPON)
   .filter(([, c]) => VM_FAMILY[c.family]?.ready === true && c.ready !== false)
   .map(([w]) => w).sort();
-check(armasServidas.join(',') === 'ak,pistol',
-  'só ak e pistol chegam ao jogador; akm/m92 seguram no legado', armasServidas.join(', '));
+check(armasServidas.length === Object.keys(VM_WEAPON).length,
+  'todas as armas de fogo chegam ao jogador', armasServidas.join(', '));
+const rotas = Object.fromEntries(armasServidas.map((w) => [w, vmFonteDe(w).chave]));
+check(Object.keys(VM_FABRICA).length === 24 && Object.entries(rotas).every(([w, key]) =>
+  key === (w === 'ak' ? 'gold#ak' : `fab#${w}`)),
+  'fábrica por padrão nas 24 armas; AK conserva a golden', JSON.stringify(rotas));
 check(/VM_WEAPON\[weapon\]\?\.ready !== false/.test(runtime),
   'runtime honra o portão por arma (ready:false em VM_WEAPON)');
 // Decisão do dono (24/09): a AK é a GOLDEN aprovada (rig A); nenhuma outra arma volta ao golden
@@ -79,7 +81,7 @@ check(/VM_WEAPON\[weapon\]\?\.ready !== false/.test(runtime),
 const goldenFogo = Object.entries(VM_WEAPON).filter(([, c]) => c.golden === true).map(([w]) => w);
 check(mutant !== 'ak-k' && goldenFogo.join(',') === 'ak'
     && VM_WEAPON.pistol?.runtime === 'family',
-  'AK servida pela golden aprovada (única golden); pistola pela rota de família',
+  'AK conserva a única golden; pistola K mantém a rota de família para A/B',
   goldenFogo.join(', '));
 check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
 check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),

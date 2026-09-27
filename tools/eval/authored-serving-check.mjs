@@ -8,22 +8,36 @@
    viewmodel errado sem saber. O check:vm rodava réguas via serve.mjs (outro
    servidor) e por isso ficava verde enquanto o navegador do dono tomava 403 —
    esta régua sobe o ASTRO DE VERDADE e cobra a resposta.
-   SV1 toda família com portão aberto (ready:true) responde 200 e > 100 KB;
+   SV1 cada arma com portão aberto responde pela URL efetiva do runtime
+       (fábrica, golden ou família), com 200 e > 100 KB;
    SV2 shared/ (9 texturas + general-runtime) e recoil.json respondem 200;
-   SV3 famílias fechadas também respondem (o ?vmready= de calibração depende);
+   SV3 a família utilitária grenade responde 200;
    SV4 só arma baked sem runtime:'family' tem GLB próprio (mesma rota de authoredvm.js).
    Mutante: --mutante=familia-fantasma troca a família presente da granada por um
    GLB inexistente e TEM que acusar.
    Uso: node tools/eval/authored-serving-check.mjs [--porta=8163]
    ============================================================================ */
 import { execSync, spawn } from 'node:child_process';
+import net from 'node:net';
 
-import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
+import { VM_FAMILY, VM_LAUNCH, VM_WEAPON } from '../../public/js/data/vmconfig.js';
+import { vmFonteDe } from '../../public/js/authoredvm.js';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
 if (MUT && MUT !== 'familia-fantasma') throw new Error(`mutante desconhecido: ${MUT}`);
-const PORTA = arg('porta') || '8163';
+// Uma porta fixa pode estar ocupada por Astro de OUTRO worktree. Nesse caso a
+// régua sondava esse servidor, acusava 404 falso e matava o processo que ela
+// tentou subir. Sem --porta explícita, reserve uma porta livre por execução.
+const portaLivre = () => new Promise((resolve, reject) => {
+  const server = net.createServer();
+  server.once('error', reject);
+  server.listen(0, '127.0.0.1', () => {
+    const porta = String(server.address().port);
+    server.close((error) => error ? reject(error) : resolve(porta));
+  });
+});
+const PORTA = arg('porta') || await portaLivre();
 
 // O astro deste repo é instância ÚNICA: se o servidor do dono está de pé, é ELE
 // que a régua sonda (mais fiel — é o servidor onde o defeito morde); sem nenhum
@@ -71,14 +85,19 @@ async function head(path, minBytes = 1) {
   }
 }
 
-const familias = Object.keys(VM_FAMILY);
-for (const familia of familias) {
-  const alvo = MUT === 'familia-fantasma' && familia === 'grenade' ? 'fantasma' : familia;
-  const resultado = await head(`/private-assets/viewmodels/${alvo}/${alvo}-runtime.glb`, 100 * 1024);
-  const aberta = VM_FAMILY[familia].ready === true;
-  check(resultado.ok, `${aberta ? 'SV1' : 'SV3'} ${familia}${aberta ? ' (ready)' : ''}: GLB responde 200`,
+const armas = Object.keys(VM_WEAPON);
+for (const arma of armas) {
+  const { chave, url } = vmFonteDe(arma);
+  if (!chave && !VM_LAUNCH) { console.log(`N/A   SV1 ${arma}: legado com lançamento desligado`); continue; }
+  const resultado = url ? await head(url, 100 * 1024) : { ok: false, status: 'sem URL', bytes: 0 };
+  check(resultado.ok, `SV1 ${arma} (${chave || 'sem chave'}): GLB efetivo responde 200`,
     `status ${resultado.status}, ${(resultado.bytes / 1048576).toFixed(1)} MiB`);
 }
+const familia = 'grenade';
+const alvo = MUT === 'familia-fantasma' ? 'fantasma' : familia;
+const granada = await head(`/private-assets/viewmodels/${alvo}/${alvo}-runtime.glb`, 100 * 1024);
+check(VM_FAMILY.grenade.ready === true && granada.ok, 'SV3 grenade: GLB responde 200',
+  `status ${granada.status}, ${(granada.bytes / 1048576).toFixed(1)} MiB`);
 
 // `runtime:'family'` usa o GLB da família mesmo com `baked:true` (authoredvm.js:urlForKey).
 for (const [arma, cfg] of Object.entries(VM_WEAPON)) {
@@ -100,6 +119,10 @@ for (const [path, minBytes] of compartilhados) {
   check(resultado.ok, `SV2 ${path.split('/').pop()}: responde 200`, `status ${resultado.status}`);
 }
 
-srv?.kill();
-console.log(JSON.stringify({ mutante: MUT || null, familias: familias.length, failures }, null, 2));
+if (srv) {
+  srv.kill();
+  // Astro sobe um daemon: matar só o processo npx deixa o servidor vivo.
+  try { execSync('npx astro dev stop', { stdio: 'ignore', timeout: 20000 }); } catch { /* já parou */ }
+}
+console.log(JSON.stringify({ mutante: MUT || null, armas: armas.length, failures }, null, 2));
 process.exit(failures ? 1 : 0);
