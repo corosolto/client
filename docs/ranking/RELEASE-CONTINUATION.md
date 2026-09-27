@@ -124,3 +124,16 @@ e não faz parte da PR #663.
 - Próximo passo: gates na base alpha.2, variável protegida Production,
   deployment sem alias e prova de ranking/perfil/badge; depois merges e
   promoção coordenada. A home experimental continua fora do corte.
+
+### Gates e ambiente de produção preparados
+
+- `check:deploy` passou 46/46 na base alpha.2; build com `RANKING_ON=true` e
+  `check:seo` passaram 6/6. A branch segue limpa fora deste ledger.
+- A chave existente do Secret Manager foi instalada como
+  `SUPABASE_SERVICE_ROLE_KEY` sensível **somente em Production** da Vercel;
+  `RANKING_ON=true` também foi configurado somente em Production. O valor da
+  chave não foi exibido nem salvo no repo. Nenhum deployment de cliente foi
+  feito por essa configuração; o domínio público ainda usa o build anterior.
+- Próximo passo: publicar candidato Production com `--skip-domain`, validar
+  SSR e badge usando o banco real e só então decidir a ordem de promoção dos
+  merges/alias. Não reiniciar os nós ocupados.
