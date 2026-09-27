@@ -10,7 +10,7 @@
  * Régua de contagem não pegaria: as malhas existem no GLB e a config está certa.
  * O que falhava era a LIGAÇÃO. Por isso esta régua mede no jogo de verdade, arma
  * por arma, três coisas juntas:
- *   1. a chave resolvida é autorada: `gold#` (AK pública) ou `<família>#<arma>` (produto K);
+ *   1. a chave resolvida é autorada: `gold#` (AK) ou `fab#` (produto da fábrica);
  *   2. o controlador tem malha de mão na entrada;
  *   3. a mão está visível com a cadeia de pais inteira.
  *
@@ -20,8 +20,8 @@
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361 --todas   # as 25 armas de fogo
  *
- * Sem a chave de lançamento o jogo nasce no legado (eval:vm-launch): esta régua
- * abre a revisão `?vmauthored=1`; `--todas` abre também o portão de todas as famílias.
+ * `--sem-flags` mede o padrão publicado, inclusive a faca; o modo antigo abre
+ * `?vmauthored=1`, e `--todas` abre o portão de todas as famílias na revisão.
  */
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -33,13 +33,14 @@ const PORTA = arg('porta', '4361');
 const MUTANTE = arg('mutante', '');
 const SO = arg('armas', '').split(',').filter(Boolean);
 const TODAS = process.argv.includes('--todas');
+const SEM_FLAGS = process.argv.includes('--sem-flags');
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const nav = await chromium.launch();
-const pag = await nav.newPage({ viewport: { width: 1280, height: 800 } });
+const pag = await nav.newPage({ viewport: { width: SEM_FLAGS ? 1200 : 1280, height: 800 } });
 const erros = [];
 pag.on('pageerror', (e) => erros.push(String(e).split('\n')[0].slice(0, 140)));
 
@@ -53,7 +54,7 @@ if (MUTANTE === 'semfiacao') {
 }
 
 const FAMILIAS = 'ak,ar,mp5,smg,p90,g3,marksman,svd,sniper,bolt,deagle,pistol,revolver,shotgun,lmg,grenade';
-await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0&vmauthored=1${TODAS ? `&vmready=${FAMILIAS}` : ''}`,
+await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0${SEM_FLAGS ? '' : `&vmauthored=1${TODAS ? `&vmready=${FAMILIAS}` : ''}`}`,
   { waitUntil: 'load', timeout: 180000 });
 await pag.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
 await pag.waitForTimeout(2500);
@@ -68,6 +69,7 @@ const ALVO = SO.length ? SO : await pag.evaluate(async (todas) => {
     .filter(([, c]) => todas || (c.ready !== false && vm.VM_FAMILY?.[c.family]?.ready === true))
     .map(([k]) => k);
 }, TODAS);
+if (SEM_FLAGS && !SO.length) ALVO.push('knife');
 if (!ALVO.length) {
   await nav.close();
   console.log('\n  VERMELHO — nenhuma arma pronta no vmconfig\n');
@@ -79,6 +81,19 @@ for (const arma of ALVO) {
   const r = await pag.evaluate(async (a) => {
     const g = window.__game;
     g._switchWeapon(a);
+    if (a === 'knife') {
+      for (let i = 0; i < 60 && !g.vm.melee?.active; i += 1) {
+        await new Promise((r2) => setTimeout(r2, 120));
+      }
+      const visivel = (o) => { let v = o.visible; let p = o.parent; while (v && p) { v = p.visible; p = p.parent; } return v; };
+      const maos = [];
+      g.vm.melee?.scene?.traverse((o) => {
+        if (o.isMesh && (Array.isArray(o.material) ? o.material : [o.material])
+          .some((m) => /CoroSolto_FP_(?:Hand|Glove|Cloth)/i.test(m?.name || ''))) maos.push(o);
+      });
+      return { arma: a, chave: g.vm.melee?.active ? 'melee#knife' : null,
+        maos: maos.length, visiveis: maos.filter(visivel).length };
+    }
     for (let i = 0; i < 60 && !g.vm.authored?.entry?.(a); i += 1) {
       await new Promise((r2) => setTimeout(r2, 120));     // espera o GLB chegar
     }
@@ -88,6 +103,11 @@ for (const arma of ALVO) {
     const maos = ent?.handMeshes || [];
     return { arma: a, chave: ent?.key || null, maos: maos.length, visiveis: maos.filter(visivel).length };
   }, arma);
+  if (SEM_FLAGS && ['m4', 'ak', 'pistol', 'knife'].includes(arma)) {
+    const dir = 'artifacts/vm-hands-default';
+    fs.mkdirSync(dir, { recursive: true });
+    await pag.screenshot({ path: `${dir}/${arma}.png` });
+  }
   const ok = Boolean(r.chave?.includes('#')) && r.visiveis > 0;
   linhas.push({ ...r, ok });
   console.log(`  ${r.arma.padEnd(10)} ${String(r.chave || 'LEGADO').padEnd(22)} maos ${r.visiveis}/${r.maos}  ${ok ? 'ok' : 'FALHA'}`);

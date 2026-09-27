@@ -12,7 +12,7 @@ export const SERVED_ROOT = '/private-assets/viewmodels';
 export const DEST_DIR = path.join(ROOT, 'public/private-assets/viewmodels');
 export const BLOB_PREFIX = 'viewmodels/sha256';
 export const DEFAULT_SOURCE = path.join(process.env.HOME || '',
-  'csbrasil-private-assets/generated/viewmodels-catalog-final/preview-root/viewmodels');
+  'csbrasil-private-assets/generated/viewmodels-fabrica-integrada/overlay/viewmodels');
 
 const CONTENT_TYPES = Object.freeze({
   '.glb': 'model/gltf-binary',
