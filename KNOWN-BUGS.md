@@ -73,11 +73,23 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## BUG-183 — SVD da fábrica perdeu a luneta física do modelo anterior
+
+**Relato do dono em 27/09/2026:** a SVD autorada exibida no QA de precisão parece um molde blocado e perdeu a luneta que aparecia no modelo anterior. Reproduzido no preview `jzzbz4fvs`: com `vmfabrica=1` a SVD mostrava o chassi cinza/facetado do pack sem luneta; com `vmfabrica=0` a SVD baked anterior mostrava madeira e luneta física. **Estado:** `tools/fabrica/fichas/svd.json` agora monta a malha inteira do modelo anterior (`public/models/weapons/svd.glb`) no rig e nas mãos da fábrica. O pente de 523 vértices acompanha o osso `Mag` nas recargas tática e vazia; capturas offline em `/tmp/csbr-svd-full-mag4-render/` e `/tmp/csbr-svd-full-mag4-empty-render/`. Produto final `8932f87984` passou `reguas.mjs` com quatro mutantes; captura em jogo `artifacts/vm-ads-visibility/svd-idle.png` mostra madeira/luneta sem cobrir o centro. O novo Blob foi enviado e baixado novamente: 63/63 SHA-256, 0 diferenças no manifesto. O catálogo 25/25 confirma modelos autorados ao fim do saque, mas a comparação estética das demais armas ainda precisa de olhar humano. **Régua:** VM21 em `invariants.mjs`, `reguas.mjs` e arnês de navegador; aprovação visual final da SVD no preview novo pendente.
+
+## BUG-184 — luneta da MGX5 não aparece no site público
+
+**Relato do dono em 27/09/2026:** nunca viu MGX5 com luneta durante o jogo normal. No preview do PR #670 (`jzzbz4fvs`), o clique direito em partida abriu a visão circular ampliada da MGX5 (`lmg`) e ocultou o viewmodel. O site público ainda não inclui o PR #670; validar novamente depois do merge/deploy. **Régua:** VM23 em `invariants.mjs`, `ads-visibility-check.mjs` e preview real com clique direito confirmados; produção pendente.
+
+## BUG-182 — pente da AWP sai pelo lado na recarga
+
+**Relato do dono em 27/09/2026:** *"a awp antes tinha animacao do pente recarregando pra baixo e nao pro lado e estava bom agora vai pro lado ficou meio esquisito"*. Reproduzido no produto da fábrica: `tools/fabrica/animador/awp.json` deslocava a mão e o pente 44 cm à esquerda no meio das recargas tática e vazia. Render baseline em `/tmp/csbr-awp-baseline-render/render/`, amostras `reload_tactical-030/045/060.png`; em 045 o pente está na borda inferior esquerda. **Estado:** nova trajetória desce com x=-8 cm e y=-55 cm, sem sumir dentro do quadro; build isolado `3df6baabdb`, render dos dois clipes sem falhas, réguas verdes e captura em jogo `artifacts/vm-ads-visibility/awp-reload-mid.png` mostrando o pente saindo para baixo. Upload privado e fetch 63/63 por SHA-256 feitos. **Régua:** VM22 em `invariants.mjs` mais `animador.py`/`reguas.mjs`.
+
 ## BUG-181 — ADS encobre o alvo nas três câmeras
 
 **Relato do dono em 27/09/2026:** *"o campo de visao piorou quando mirando, em todos os 3 tipos de camera, quase nao se ve o que se atira e isso é um problemao"*; algumas armas por personagem estão especialmente ruins. Capturas de produção às 22:33–22:34 mostram M4, P90, revólver e MGX5 em primeira pessoa, além do corpo em terceira pessoa. A MGX5 recebe luneta funcional no PR #670, ainda em draft.
 
-**Estado:** reportado e reproduzido visualmente nas capturas do dono; diagnóstico e régua de jogo real em andamento. A validação anterior media alinhamento da alça e retorno das mãos, mas não a área do alvo visível durante o ADS. **Régua:** pendente. Bloqueia merge da UI, vídeo e divulgação.
+**Estado:** ajuste de FOV e projeção no PR #670; preview `jzzbz4fvs` com M4/P90/revólver e três câmeras. Régua local `ads-visibility-check.mjs` passou 0 falhas também com GLBs candidatos da SVD/AWP; capturas em `artifacts/vm-ads-visibility/`. Falta revisar o conjunto das armas/personagens em jogo. A validação anterior media alinhamento da alça e retorno das mãos, mas não a área do alvo visível durante o ADS. **Régua:** PX1 em `invariants.mjs` aponta para o arnês de navegador. Bloqueia merge da UI, vídeo e divulgação até revisão visual final.
 
 ## BUG-180 — wallpaper da home deixa faixas laterais fora do 3:2
 

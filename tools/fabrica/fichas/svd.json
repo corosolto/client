@@ -2,12 +2,75 @@
   "id": "svd",
   "arma": "svd",
   "chassi": "SVD",
-  "descricao": "SVD do pack como autorada.",
+  "descricao": "SVD do modelo anterior do jogo, com madeira e luneta física, montada no rig de braços e recarga do pack. A malha inteira foi alinhada contra o FBX SVD; o pente é uma ilha própria no osso Mag e sai com a mão nas recargas tática e vazia.",
   "skinBraco": "coro-ak",
   "skinArma": null,
   "zonaLivre": [],
   "recuo": {
     "familia": "svd",
     "fonte": "recoil.json ← Animations/SVD (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "malhaPropria": {
+    "fonte": "public/models/weapons/svd.glb",
+    "origem": "modelo de mundo anterior da SVD do jogo",
+    "escala": 1.13,
+    "rotDeg": [
+      0,
+      0,
+      -90
+    ],
+    "posCm": [
+      0,
+      -17,
+      -2
+    ],
+    "alinhamento": "sobreposição lateral com o FBX: cano, punho e coronha alinhados; deslocamento longitudinal de 10 cm leva o pente à mão do clipe do pack",
+    "pecas": [
+      {
+        "nome": "pente",
+        "osso": "Mag",
+        "caixa": {
+          "min": [
+            -0.15,
+            -0.06,
+            -0.15
+          ],
+          "max": [
+            0.05,
+            0.06,
+            0.02
+          ]
+        },
+        "vertices": 523
+      }
+    ],
+    "material": {
+      "tom": [
+        0.55,
+        0.55,
+        0.55
+      ],
+      "metal": 0.2,
+      "rugosidade": 0.65,
+      "nota": "preserva cor e textura da madeira e escurece o metal do modelo anterior"
+    },
+    "pivos": "pack",
+    "soldar": false
+  },
+  "mira": {
+    "raizCm": [
+      0,
+      15.8,
+      6.5
+    ],
+    "origem": "centro da ocular da luneta do modelo anterior: x=-0.29 m, z=0.075 m no GLB"
+  },
+  "boca": {
+    "raizCm": [
+      0,
+      -73.4,
+      0.9
+    ],
+    "origem": "extremidade do cano do modelo anterior: x=0.499 m, z=0.026 m no GLB"
   }
 }
