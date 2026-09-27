@@ -3387,11 +3387,10 @@ export class Game {
   }
   // Target FOV while aiming: strong for scoped snipers, light ADS for the rest.
   _zoomFov(w) {
-    // Zoom de ADS mais forte que antes (base é FOV 70): pedido "parece longe, dá pra ver no
-    // ferrolho". Snipers com luneta = zoom pesado; marksman forte; rifles/SMG/pistola iron-sight.
-    const Z = { awp: 22, mosin: 20, m400scope: 34, svd: 30, sks: 32, md97: 40, carbine: 38, shotgun: 44,
-      ak: 42, m92: 42, m4: 42, scar: 42, famas: 42,
-      mp5: 46, uzi: 46, p90: 46, lmg: 38, deagle: 47, pistol: 48, revolver38: 48 };
+    // BUG-181: lunetas mantêm zoom óptico; alça/massa preservam campo de visão útil.
+    const Z = { awp: 22, mosin: 20, rem700: 20, m400: 34, svd: 30, g3sg1: 30, sks: 32, md97: 56, carbine: 56, shotgun: 58,
+      ak: 56, akm: 56, m92: 56, m4: 56, g3: 56, scar: 56, tavor: 56, famas: 56,
+      mp5: 58, uzi: 58, p90: 58, lmg: 38, deagle: 59, pistol: 59, revolver38: 59 };
     return Z[w] || 46;
   }
   _reloading() { return this.time < this.player.reloadUntil; }
@@ -5732,9 +5731,11 @@ export class Game {
     // 'third' = over-the-shoulder perto, cintura pra cima (estilo SOCOM): ~1,7 m atrás,
     // ~1,8 m de altura olhando reto → pernas caem fora. 'shoulder' = mais colado ainda.
     const shoulder = this.camView === 'shoulder';
-    const TP_DIST = shoulder ? 0.85 : 1.7;
+    const ads = p.scoped ? Math.min(1, (this._tpAdsF || 0) + dt / 0.11) : Math.max(0, (this._tpAdsF || 0) - dt / 0.11);
+    this._tpAdsF = ads;
+    const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads;
     const TP_UP = shoulder ? 0.10 : 0.18;
-    const TP_SIDE = shoulder ? 0.34 : 0.28;
+    const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
     cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
     cam.position.y += TP_UP;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
@@ -6126,6 +6127,15 @@ export class Game {
       this.vm.root.position.setScalar(0);
       this.vm.root.rotation.set(0, 0, 0);
       this.vm.root.scale.setScalar(1);
+      if (authoredActive && this.vmCamera) {
+        const baseFov = this.vm.authored.fov(p.weapon, this.vmCamera.aspect);
+        const opticalWidth = Math.tan(THREE.MathUtils.degToRad(baseFov / 2)) * (1 + 0.30 * a);
+        const fov = THREE.MathUtils.radToDeg(2 * Math.atan(opticalWidth));
+        if (Math.abs(this.vmCamera.fov - fov) > 0.01) {
+          this.vmCamera.fov = fov;
+          this.vmCamera.updateProjectionMatrix();
+        }
+      }
     } else {
       this.vm.root.position.set(VM_OFF[0] + pose.x * a + bobX + rg.pos.x, vmOffY((this.vmCamera && this.vmCamera.aspect) || this.camera.aspect) + bobY - p.crouchF * 0.02 + pose.y * a + k * 0.015 + rg.pos.y, VM_OFF[2] + k * 0.050 + pose.z * a - swPz + rg.pos.z);
       // Coice, ADS, faca, rig e escala compõem apenas o caminho legado.

@@ -73,6 +73,12 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ---
 
+## BUG-181 — ADS encobre o alvo nas três câmeras
+
+**Relato do dono em 27/09/2026:** *"o campo de visao piorou quando mirando, em todos os 3 tipos de camera, quase nao se ve o que se atira e isso é um problemao"*; algumas armas por personagem estão especialmente ruins. Capturas de produção às 22:33–22:34 mostram M4, P90, revólver e MGX5 em primeira pessoa, além do corpo em terceira pessoa. A MGX5 recebe luneta funcional no PR #670, ainda em draft.
+
+**Estado:** reportado e reproduzido visualmente nas capturas do dono; diagnóstico e régua de jogo real em andamento. A validação anterior media alinhamento da alça e retorno das mãos, mas não a área do alvo visível durante o ADS. **Régua:** pendente. Bloqueia merge da UI, vídeo e divulgação.
+
 ## BUG-180 — wallpaper da home deixa faixas laterais fora do 3:2
 
 **Relato do dono em 26/09/2026:** *"os wallpapers estao em tamanho ruim na home ...
