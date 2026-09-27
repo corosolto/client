@@ -1,8 +1,8 @@
 // GET /api/badge/<id|nick>.png - badge com stats.
-// Render: resvg-wasm (binário único servido de /wasm/) + fonte DejaVu embutida.
+// Render: resvg nativo no servidor + fonte DejaVu embutida.
 // Avatar: foto → unavatar(X) → personagem do jogo (SVG) → inicial.
 import type { APIRoute } from 'astro';
-import { initWasm, Resvg } from '@resvg/resvg-wasm';
+import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../../lib/supabase';
 import { rateLimit } from '../../../lib/ratelimit';
@@ -11,39 +11,11 @@ import { displayTime } from '../../../lib/fmt';
 import { CHARS, charSvg, charName } from '../../../lib/charsvg';
 import { socialAvatar } from '../../../lib/social';
 import { fetchAvatar } from '../../../lib/safe-url';
+import { RANKING_ON } from '../../../lib/site';
 
 export const prerender = false;
 
 const fontBuffers = [Buffer.from(FONT_BOLD_B64, 'base64')];
-let wasmReady: Promise<unknown> | null = null;
-
-// O wasm vem de /wasm/resvg.wasm, que `scripts/copy-wasm.mjs` põe lá no build.
-// FALLBACK: se o arquivo não estiver publicado (era o caso até esta release -
-// `public/wasm/` nunca esteve no git nem era gerado por nada, então num deploy
-// limpo esta rota devolvia 500 e TODA página /u/* ficava sem og:image), lemos o
-// binário direto do pacote instalado. Duas fontes independentes pro mesmo byte:
-// a rota da badge é o ativo social mais importante do site e não pode depender
-// de um arquivo copiado à mão.
-function init(req: Request) {
-  return wasmReady ??= (async () => {
-    try {
-      const r = await fetch(new URL('/wasm/resvg.wasm', req.url));
-      if (r.ok) return await initWasm(await r.arrayBuffer());
-      console.warn('[badge] /wasm/resvg.wasm devolveu', r.status, ' - usando o node_modules');
-    } catch (e) {
-      console.warn('[badge] fetch do wasm falhou - usando o node_modules:', e);
-    }
-    const { readFileSync } = await import('node:fs');
-    const { createRequire } = await import('node:module');
-    const require = createRequire(import.meta.url);
-    let p: string | null = null;
-    for (const c of ['@resvg/resvg-wasm/index_bg.wasm', '@resvg/resvg-wasm/dist/index_bg.wasm']) {
-      try { p = require.resolve(c); break; } catch { /* tenta o próximo */ }
-    }
-    if (!p) throw new Error('resvg.wasm indisponível (nem publicado nem no node_modules)');
-    return initWasm(readFileSync(p));
-  })();
-}
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -75,9 +47,9 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
   const cName = charName(charId);
 
   const cells: [string, string][] = [
-    ['PARTIDAS', String(p.matches)], ['VITÓRIAS', p.wins > 0 ? String(p.wins) : ' - '], ['K/D', kd],
-    ['KILLS', String(p.kills)], ['MORTES', String(p.deaths)], ['HEADSHOTS', String(p.headshots)],
-    ['SEQUÊNCIA', `${p.best_streak}×`], ['ROUNDS', String(p.rounds)], ['TEMPO', displayTime(p)],
+    ['PONTOS', String(p.points)], ['KILLS', String(p.kills)], ['K/D', kd],
+    ['PARTIDAS', String(p.matches)], ['VITÓRIAS', p.wins > 0 ? String(p.wins) : ' - '], ['HEADSHOTS', String(p.headshots)],
+    ['MORTES', String(p.deaths)], ['SEQUÊNCIA', `${p.best_streak}×`], ['TEMPO', displayTime(p)],
   ];
   const grid = cells.map(([label, v], i) => {
     const x = 46 + (i % 3) * 260, y = 228 + Math.floor(i / 3) * 70;
@@ -112,7 +84,7 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
 
 export const GET: APIRoute = async (ctx) => {
   /* ── RATE LIMIT + CACHE DE CDN (07/08, com o site no ar) ────────────────────
-     Esta rota roda `resvg-wasm` A CADA REQUISIÇÃO e aceita QUALQUER nick no
+     Esta rota roda `resvg` A CADA REQUISIÇÃO e aceita QUALQUER nick no
      caminho, então o cache por URL não protege: quem varia o nick gera trabalho
      novo toda vez. E o `cache-control` só tinha `max-age` (navegador), sem
      `s-maxage` - a CDN não guardava nada e todo hit chegava na função.
@@ -135,20 +107,27 @@ export const GET: APIRoute = async (ctx) => {
   }
 };
 
-const handle: APIRoute = async ({ params, request }) => {
+const handle: APIRoute = async ({ params }) => {
   if (!supabaseAdmin)
     return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
   const parts = (params.path || '').split('/').filter(Boolean);
-  let query = supabaseAdmin.from('stats').select('*, players!inner(id, nick, social_link, avatar_url)');
   const first = parts[0] || '';
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(first);
+  const nick = first.replace(/\.png$/, '').slice(0, 14);
+  // A badge antiga continua operando antes da migration; a flag só liga junto
+  // da view nova, após o rollout coordenado.
+  const query = RANKING_ON
+    ? supabaseAdmin.from('player_points').select('*')
+    : supabaseAdmin.from('stats').select('*, players!inner(id, nick, social_link, avatar_url)');
   const { data } = await (isUuid
-    ? query.eq('players.id', first).maybeSingle()
-    : query.eq('nick', first.replace(/\.png$/, '').slice(0, 14)).maybeSingle());
+    ? query.eq(RANKING_ON ? 'id' : 'players.id', first).maybeSingle()
+    : query.eq('nick', nick).maybeSingle());
   if (!data) return new Response('not found', { status: 404 });
-  const p = { ...data, social: (data as any).players?.social_link };
-  const avatarUri = await avatarDataUri((data as any).players?.avatar_url || socialAvatar(p.social));
-  await init(request);
+  const p = RANKING_ON
+    ? { ...data, social: (data as any).social_link }
+    : { ...data, points: data.kills, social: (data as any).players?.social_link };
+  const avatarUrl = RANKING_ON ? (data as any).avatar_url : (data as any).players?.avatar_url;
+  const avatarUri = await avatarDataUri(avatarUrl || socialAvatar(p.social));
   const resvg = new Resvg(badgeSvg(p, avatarUri, data.last_character), {
     font: { fontBuffers, loadSystemFonts: false, defaultFontFamily: 'DejaVu Sans' },
     background: '#0c0e11',
