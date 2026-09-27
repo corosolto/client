@@ -271,10 +271,12 @@ const READY_OVERRIDE = new Set(
 // Candidato por arma: abre Mosin/SVD/SKS sem abrir as outras armas da mesma
 // família. Continua subordinado ao portão global `vmauthored=1`.
 const WEAPON_OVERRIDE = new Set((_QS?.get('vmweapon') || '').split(',').filter(Boolean));
-// Produto da fábrica por arma (revisão): ?vmfabrica=ak,m4 ou =1 para todos os de VM_FABRICA.
+// Lançamento serve a fábrica por padrão; ?vmfabrica=0 preserva comparação com o K.
+// Em revisão, ?vmfabrica=ak,m4 ou =1 abre produtos sem alterar o lançamento.
 const FABRICA_QS = (_QS?.get('vmfabrica') || '').split(',').filter(Boolean);
 const fabricaAtiva = (weapon) => !AUTHORED_KILLED && Boolean(VM_FABRICA[weapon])
-  && (FABRICA_QS.includes('1') || FABRICA_QS.includes(weapon));
+  && ((VM_RUNTIME.mode === 'lancamento' && !FABRICA_QS.includes('0'))
+    || FABRICA_QS.includes('1') || FABRICA_QS.includes(weapon));
 // Config efetiva da arma: a da fábrica quando o produto dela está em cena.
 const cfgArma = (weapon) => (fabricaAtiva(weapon) ? VM_FABRICA[weapon] : VM_WEAPON[weapon]);
 const familyReady = (family) => Boolean(family)

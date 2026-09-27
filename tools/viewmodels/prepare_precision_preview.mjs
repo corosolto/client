@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertRuntimeDir } from './lib/assert-runtime-dir.mjs';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const manifests = await Promise.all([
@@ -24,7 +25,12 @@ const mode = process.argv[2] || 'prepare';
 
 if (mode === '--cleanup' || mode === '--assert-clean') {
   const linkStat = await fs.lstat(link).catch(() => null);
-  if (linkStat && !linkStat.isSymbolicLink()) throw new Error(`${link} existe e não é symlink`);
+  if (linkStat && !linkStat.isSymbolicLink()) {
+    if (mode === '--cleanup' || !linkStat.isDirectory()) throw new Error(`${link} existe e não é symlink`);
+    const count = await assertRuntimeDir(link);
+    console.log(`PASS runtime privado ${count}/${count} arquivos conferidos por SHA-256`);
+    process.exit(0);
+  }
   if (linkStat) {
     const current = path.resolve(repo, await fs.readlink(link));
     if (!path.relative(repo, current).startsWith('..')) {

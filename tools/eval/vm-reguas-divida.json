@@ -1,5 +1,5 @@
 {
- "o_que_e": "Vermelhos CONHECIDOS das réguas de imagem do viewmodel (eval:vm-reguas). Cada entrada vira DÍVIDA (aviso) em vez de reprovar, e só enquanto VM_LAUNCH=false. Não entre aqui para passar o portão: só com dono e o número medido. Régua que ficar verde avisa para remover a entrada.",
+ "o_que_e": "Vermelhos CONHECIDOS das réguas de imagem do viewmodel (eval:vm-reguas), com dono. Com VM_LAUNCH=false, cada entrada vira DÍVIDA (aviso). Com VM_LAUNCH=true, só passa o resultado idêntico ao aceite explícito do dono em vm-launch-aceite-visual.json. Não entre aqui para passar o portão: só com dono e o número medido. Régua que ficar verde avisa para remover a entrada.",
  "gerado": "2026-09-23",
  "placar": "0525a3c8517685fc",
  "dividas": {
