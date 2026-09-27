@@ -3196,7 +3196,7 @@ export class Game {
       return el;
     };
     const weaponRow = panel.querySelector('[data-vmqa="weapons"]');
-    for (const [label, weapon] of [['AK', 'ak'], ['Faca', 'knife'], ['M4', 'm4'], ['MD97', 'md97'], ['SCAR', 'scar'], ['FAMAS', 'famas'], ['M92', 'm92'], ['Carabina', 'carbine'], ['Tavor', 'tavor'], ['Mosin', 'mosin'], ['SVD', 'svd'], ['SKS', 'sks'], ['Fallback', 'pistol']]) {
+    for (const [label, weapon] of [['AK', 'ak'], ['Faca', 'knife'], ['M4', 'm4'], ['MD97', 'md97'], ['SCAR', 'scar'], ['FAMAS', 'famas'], ['M92', 'm92'], ['Carabina', 'carbine'], ['Tavor', 'tavor'], ['MGX5', 'lmg'], ['Mosin', 'mosin'], ['SVD', 'svd'], ['SKS', 'sks'], ['Fallback', 'pistol']]) {
       weaponRow.appendChild(button(label, () => equip(weapon)));
     }
     const actionRow = panel.querySelector('[data-vmqa="actions"]');
@@ -3391,7 +3391,7 @@ export class Game {
     // ferrolho". Snipers com luneta = zoom pesado; marksman forte; rifles/SMG/pistola iron-sight.
     const Z = { awp: 22, mosin: 20, m400scope: 34, svd: 30, sks: 32, md97: 40, carbine: 38, shotgun: 44,
       ak: 42, m92: 42, m4: 42, scar: 42, famas: 42,
-      mp5: 46, uzi: 46, p90: 46, lmg: 44, deagle: 47, pistol: 48, revolver38: 48 };
+      mp5: 46, uzi: 46, p90: 46, lmg: 38, deagle: 47, pistol: 48, revolver38: 48 };
     return Z[w] || 46;
   }
   _reloading() { return this.time < this.player.reloadUntil; }
