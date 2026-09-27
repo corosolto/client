@@ -422,7 +422,9 @@ window.__GEO_LANG__ = (function () {
         lancamento.begin('menu', 3000, function(){
           var menu = document.getElementById('main-menu');
           var setup = document.getElementById('menu-setup');
-          return !!(menu && menu.classList.contains('hidden')) || !!(setup && setup.dataset.step === 'profile');
+          var confirmacao = document.getElementById('hub-quick');
+          return !!(menu && menu.classList.contains('hidden')) || !!(setup && setup.dataset.step === 'profile') ||
+            !!(document.documentElement.dataset.homeUi === 'hub' && confirmacao && !confirmacao.hidden);
         });
       }
     }catch(_){}

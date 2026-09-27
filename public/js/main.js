@@ -91,7 +91,7 @@ if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'
 /* AUTO-PERFIL PARA MÁQUINA FRACA: cai pra 'low' por padrão só se o jogador NUNCA escolheu
    qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
 const AUTO_PROFILE = new URLSearchParams(location.search).get('perfilauto') !== '0';
-const HUB_ENABLED = new URLSearchParams(location.search).get('home') === 'hub';
+const HUB_ENABLED = new URLSearchParams(location.search).get('home') !== 'legacy';
 function hubNavigate(changes, replace = false) {
   if (!HUB_ENABLED) return;
   const url = new URL(location.href);
@@ -1949,6 +1949,8 @@ if (HUB_ENABLED) {
     $('hub-mp-public').setAttribute('aria-selected', String(tab === 'public'));
     $('hub-mp-private').setAttribute('aria-selected', String(tab === 'private'));
     $('mp-panel').querySelector('.mp-criar').open = tab === 'private';
+    $('mp-privada').checked = tab === 'private';
+    $('mp-senha-wrap').hidden = tab !== 'private';
     if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'multiplayer', servidor: tab === 'private' ? 'privado' : 'publico', janela: null, origem: null });
   };
   $('hub-mp-public').onclick = () => { ui.click(); setHubMpTab('public'); };
@@ -1959,7 +1961,7 @@ if (HUB_ENABLED) {
   $('hub-roster-close').onclick = closeHubRoster;
   $('hub-map-modal').onclick = (event) => { if (event.target === $('hub-map-modal')) closeHubMap(); };
   $('hub-roster-modal').onclick = (event) => { if (event.target === $('hub-roster-modal')) closeHubRoster(); };
-  $('hub-profile').onclick = () => { setHubTab('jogar', false); setHubNet('sp', false); openProfileStep(true); hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'perfil', origem: null }); };
+  $('hub-profile').onclick = () => { setHubTab('jogar', false); setHubNet('sp', false); openProfileStep(true); hubNavigate({ secao: 'jogar', partida: 'singleplayer', servidor: null, janela: 'perfil', origem: null }); };
   $('hub-settings').onclick = () => { ui.click(); settingsReturn = 'main-menu'; show('settings-panel'); hubNavigate({ janela: 'configuracoes', origem: null }); };
   const onlineCount = $('mf-online-n');
   const syncOnline = () => { $('hub-online-n').textContent = onlineCount.textContent || '—'; };
