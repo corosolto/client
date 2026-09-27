@@ -132,3 +132,14 @@ personagem/mapa/SP/MP, corrigir os problemas observados, então remover a
 dependência dessa query, repetir gates e publicar em PR separado do ranking.
 O servidor dev solicitado em 4339 escolheu 4340; foi encerrado, respeitando
 o bloqueio antigo do navegador local. Usar preview Vercel do PR para revisão.
+
+Após o merge da câmera (#668), esta lane recebeu `origin/main@37824be5b`
+(`v2.1.0-alpha.3`) via merge commit `c006d14cb`. Os conflitos ocorreram apenas
+nos oito documentos gerados; foram resolvidos com a base atual e nova rodada de
+`npm run docs`/`npm run arch`. O código de câmera em `main.js` e a página
+`index.astro` mesclaram automaticamente. O tutorial MP foi incluído em
+`/como-jogar#multiplayer` e `/how-to-play#multiplayer` no commit `7bcf8b02e`,
+corrigindo a FAQ que ainda dizia não existir multiplayer. Build passou. O
+primeiro push local foi bloqueado por `travessao:check`: placeholder `—` do
+contador online no hub. Corrigido para `-`; régua isolada agora verde. Próximo:
+repetir portões no head mesclado, push, PR draft e inspeção no preview.
