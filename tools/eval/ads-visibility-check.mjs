@@ -42,7 +42,7 @@ try {
   page.on('pageerror', (error) => console.log(`pageerror: ${error.message.slice(0, 180)}`));
   if (mutant) {
     const source = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
-    const broken = source.replace('m4: 56,', 'm4: 42,').replace('1 + 0.30 * a', '1 + 0 * a');
+    const broken = source.replace('m4: 56,', 'm4: 42,').replace('(shortGun ? 0.75 : 0.50) * a', '0 * a');
     if (source === broken || !broken.includes('m4: 42,') || !broken.includes('1 + 0 * a')) throw new Error('mutante não aplicou');
     await page.route('**/js/game.js*', (route) => route.fulfill({ contentType: 'application/javascript', body: broken }));
   }
@@ -86,7 +86,7 @@ try {
     const ads = await read();
     await page.screenshot({ path: path.join(out, `${weapon}-first-ads.png`) });
     const vmScale = Math.tan(ads.vmFov * Math.PI / 360) / Math.tan(ads.vmHipFov * Math.PI / 360);
-    check(`${weapon} primeira pessoa: janela do alvo`, ads.authored && ads.scoped && ads.fov >= 54 && vmScale >= 1.2,
+    check(`${weapon} primeira pessoa: janela do alvo`, ads.authored && ads.scoped && ads.fov >= 54 && vmScale >= (weapon === 'revolver38' ? 1.55 : 1.35),
       { fov: ads.fov, vmFov: ads.vmFov, vmHipFov: ads.vmHipFov, vmScale });
     if (weapon === 'm4') {
       for (const mode of ['third', 'shoulder']) {
