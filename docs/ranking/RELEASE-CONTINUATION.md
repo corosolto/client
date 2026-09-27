@@ -163,3 +163,30 @@ e não faz parte da PR #663.
   candidato redirecionou 301 para `/u/<id>/HiT%3B*`. Ainda falta atualizar o PR #663
   (o bot avança a base em paralelo), passar CI, integrar backend/cliente e
   verificar o domínio público. Nenhuma partida real SP/MP nova foi medida.
+
+### API integrada com flag pública OFF — 27/09/2026
+
+- A base cliente avançou a `v2.1.0-alpha.3` (`37824be5b`); correção do badge
+  reaplicada sem conflito e enviada ao PR #663 em `52061e9f2`. O
+  `check:deploy` completo passou 46/46 nessa base. O primeiro hook de push
+  falhou em uma checagem de documentação; `npm run docs` e `gen-arch` não
+  produziram diff, e a repetição independente de `check:deploy` passou 46/46.
+- Consulta somente-leitura à base real encontrou **zero** linhas de
+  `mp_round_player` com `bonus_kills > 0`; o top 500 do canário ainda tem
+  pontos iguais aos kills. A implementação passou gates sintéticos, mas o
+  bônus em partida humana ainda não foi observado.
+- Para integrar sem ativar prematuramente, `RANKING_ON` em Vercel Production
+  foi alterado para `false`; a chave SSR sensível continua somente em
+  Production. No Cloud Run, o template também foi alterado para flag OFF antes
+  do merge. O candidato Vercel já construído continua sendo evidência de
+  staging, não o site público.
+- A PR backend #34 foi mesclada em `b692b6821`; workflow de deploy
+  `36350828998` passou. A nova revisão `csbrasil-backend-00037-4k2`
+  (imagem `backend:b692b68`) recebeu 100% do tráfego com `RANKING_ON=false`.
+  `/api/health` respondeu 200 com banco/esquema OK e frescor operacional;
+  `/api/leaderboard` segue 200 `{"disabled":true}`. Canário ON `00036-pej`
+  permanece em 0%; nenhum nó foi reiniciado.
+- Próximo passo: aguardar CI/merge da PR cliente #663 com Production OFF;
+  verificar deployment público, depois obter partidas reais SP e MP com dois
+  perfis autenticados diferentes, retry e casos sem bônus antes de ligar as
+  duas flags e validar domínio público novamente. Home redesenhada segue fora.
