@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.0`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.1`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,14 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.1] — 2026-09-27
+
+### Mudado
+- viewmodel: fábrica de armas integrada (26 armas + mãos por time), atrás do VM_LAUNCH — v2.1.0 (#667)
+- docs(vm): registra PR substituto com DCO regularizado
+- chore(docs): regenera bloco derivado (autofix)
+- viewmodel: integra árvore da fábrica com autoria regularizada
 
 ## [2.1.0-alpha.0] — 2026-09-26
 
