@@ -32,12 +32,21 @@ ausente desta shell. Com `VM_LAUNCH=true`, `fetch-viewmodels.mjs` agora reprova
 o build quando faltam assets, mesmo sem `VM_REQUIRED=1`, para impedir um
 deployment verde que exiba armas sem mãos.
 
-O placar assado anterior contém **29 células visuais vermelhas** com dono;
-`eval:vm-placar` as transforma em falhas quando `VM_LAUNCH=true`. Há também
-dois hashes de placar envelhecidos pela mudança de prontidão; a re-medida
-3:2 e 16:9 está em andamento. Esses vermelhos não são prova de ausência de
-mãos: incluem enquadramento, contato, mira e recarga. Não alterar os limites
-ou suprimir P3 para obter CI verde sem decisão explícita sobre a dívida.
+O placar assado contém **29 células visuais vermelhas** com dono;
+`eval:vm-placar` as transforma em falhas quando `VM_LAUNCH=true`. As re-medidas
+3:2 (14,8 min) e 16:9 (14,9 min) fecharam em **14 + 15 vermelhas, exatamente
+as mesmas 29 da main, sem novo vermelho nem mudança de valor vermelho**.
+`eval:vm-placar` passou P1/P2 (placares atuais e dívidas com dono) e reprovou
+apenas P3 com 29 falhas. Esses vermelhos não são prova de ausência de mãos:
+incluem enquadramento, contato, mira e recarga. Na Tavor, a mão aparece mas
+o contato reprova. Não alterar os limites ou suprimir P3 para obter CI verde
+sem decisão explícita sobre a dívida.
+
+`check:deploy` passou **46/46** em 119,5 s. `check:fast` passou **163/167** em
+449 s; as quatro falhas (`eval:mapid`, `audio:check`, `eval:audiovoicemix` e
+`eval:amazonia`) foram reproduzidas no checkout limpo `origin/main@c54a28279`
+e são herdadas. `eval:vm-orientacao --mutantes` passou: 17 produtos medidos,
+e o mutante voltou a detectar as quatro armas invertidas do catálogo antigo.
 
 ## Para publicar
 
