@@ -24,11 +24,11 @@ granada), cobertura das chaves, assets locais e kill switch.
 ## Entrega privada e bloqueios
 
 O manifesto `tools/viewmodels/vm-assets.manifest.json` confere com a árvore
-integrada: **63 assets, 159,7 MB, 0 divergências**. Ele ainda tem `blobBase`
-vazio. O preview do #668 devolveu **HTTP 404** para
+integrada: **63 assets, 159,7 MB, 0 divergências**. O preview antigo do #668
+devolveu **HTTP 404** para
 `/private-assets/viewmodels/fabrica/m4-fabrica.glb?v=c500cfe632`; a mesma
-URL respondeu 200 no servidor local com a árvore privada. O token Blob está
-ausente desta shell. Com `VM_LAUNCH=true`, `fetch-viewmodels.mjs` agora reprova
+URL respondeu 200 no servidor local com a árvore privada. Com
+`VM_LAUNCH=true`, `fetch-viewmodels.mjs` reprova
 o build quando faltam assets, mesmo sem `VM_REQUIRED=1`, para impedir um
 deployment verde que exiba armas sem mãos.
 
@@ -88,7 +88,16 @@ O portão VL6 agora admite um runner limpo apenas se o manifesto versionado
 tiver a base Blob privada, estrutura consistente e todas as rotas do lançamento
 com versão correta. Simulações passaram com manifesto completo; os mutantes
 sem upload e sem M4 reprovaram. O próprio build continua conferindo SHA-256
-dos bytes baixados antes de publicar. Sem upload, o CI permanece vermelho.
+dos bytes baixados antes de publicar. Naquele head, sem upload, o CI permaneceu
+vermelho.
+
+Em 27/09, o token foi obtido pela CLI do ambiente Production do projeto
+`csbrasil`, sem gravação ou exibição da credencial. `upload-viewmodels.mjs
+--publicar` enviou **63 blobs**, sem remoções; o manifesto agora contém a
+origem privada. `--check` conferiu 63/63 contra a árvore de origem. Um fetch
+limpo pela mesma origem privada baixou **63/63 e conferiu SHA-256 de 159,7 MB**;
+a cópia temporária foi removida. O mutante `manifesto sem upload` foi isolado
+do estado real do manifesto e continua reprovando depois da publicação.
 
 Foi encontrado e corrigido um conflito entre `fetch-viewmodels` e
 `prepare_precision_preview --assert-clean`: o primeiro instala o runtime
@@ -104,11 +113,9 @@ vínculo VM_BYTES. O worktree temporário foi removido após a verificação.
 
 ## Para publicar
 
-1. O dono publica os 63 assets no Blob privado com o token em ambiente local:
-   `node scripts/upload-viewmodels.mjs --publicar`. O comando usa por padrão
-   `~/csbrasil-private-assets/generated/viewmodels-fabrica-integrada/overlay/viewmodels`.
-   O manifesto resultante com `blobBase` precisa ser commitado; não registrar
-   token, URL assinada ou binário privado no Git.
+1. **Concluído:** 63 assets publicados no Blob privado e manifesto com
+   `blobBase` gerado. Commitar somente o manifesto e o ajuste do mutante; não
+   registrar token, URL assinada ou binário privado no Git.
 2. Validar preview limpo com `VM_REQUIRED=1` e `eval:vm-serving-prod`:
    63/63 arquivos servidos com hash e cabeçalho corretos, além de jogo sem
    flags com as 26 mãos visíveis.
@@ -117,5 +124,6 @@ vínculo VM_BYTES. O worktree temporário foi removido após a verificação.
 
 **Estado:** branch `vm/hands-default` publicada no PR draft #669; ainda não
 mergeada. O `check:vm` completo fechou 7/9 no head `923047a94`, antes do
-aceite; a nova execução com aceite fechou 9/9. A câmera
+aceite; a nova execução com aceite fechou 9/9. Upload e fetch remoto 63/63
+concluídos; CI e preview no novo head ainda pendentes. A câmera
 permanece no PR #668, independente desta mudança.

@@ -291,7 +291,7 @@ if (process.argv.includes('--mutantes')) {
   // deve provar cobertura das rotas, e uma entrada removida tem de reprovar.
   const publicado = { ...readManifest(), blobBase: 'https://fixture.private.blob.vercel-storage.com' };
   const noCi = await audit(base, { jogo: false, catalogo: false, manifestoData: publicado });
-  const semUpload = await audit(base, { jogo: false, catalogo: false, manifestoData: readManifest() });
+  const semUpload = await audit(base, { jogo: false, catalogo: false, manifestoData: { ...readManifest(), blobBase: null } });
   const semM4 = await audit(base, { jogo: false, catalogo: false, manifestoData: {
     ...publicado, count: publicado.count - 1, totalBytes: publicado.totalBytes - publicado.files.find((f) => f.path === 'fabrica/m4-fabrica.glb').bytes,
     files: publicado.files.filter((f) => f.path !== 'fabrica/m4-fabrica.glb'),
