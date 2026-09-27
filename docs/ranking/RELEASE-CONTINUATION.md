@@ -190,3 +190,38 @@ e não faz parte da PR #663.
   verificar deployment público, depois obter partidas reais SP e MP com dois
   perfis autenticados diferentes, retry e casos sem bônus antes de ligar as
   duas flags e validar domínio público novamente. Home redesenhada segue fora.
+
+### Cliente integrado; ativação e paridade ainda pendentes — 27/09/2026
+
+- PR cliente #663 passou os checks, inclusive portão de navegador, build e
+  smoke, e foi mesclada em `65a620a73`. O release criou `v2.1.0-alpha.4` no
+  commit `1cdfefdf6`; o workflow que iniciou esse release aparece cancelado
+  após o commit/tag, mas a tag e o deployment existem. Vercel Production
+  `dpl_DZqweSnhcNTKwnAHFibNYnDK7VKL` está READY e aliased em
+  `www.csbrasil.online`.
+- No domínio público alpha.4: `/ranking` HTTP 200 com aviso OFF e `noindex`,
+  perfil HTTP 200 com `noindex`, home HTTP 200 com link de ranking e texto OFF;
+  `/api/badge/<id>.png` HTTP 200 `image/png` 840×440. API Cloud Run
+  `00037-4k2` segue 100% com `/api/health` 200 (banco/esquema OK) e
+  `/api/leaderboard` 200 `{"disabled":true}`. O canário ON `00036-pej` mantém
+  0% de tráfego. Consulta ao Supabase após o deploy ainda encontrou zero linhas
+  `mp_round_player.bonus_kills > 0`.
+- Verificação dos nós sem reinício: BR continua em `serverSha:11d3016`, cliente
+  pinado `d4d9c693` (alpha.250), **2 jogadores / 3 salas**; não interromper.
+  EUA e Europa foram alterados por outra lane durante a CI para a imagem
+  `servidor:runtime-b692b68-c37824be`, `serverSha:b692b682`, cliente pinado
+  `37824be5` (alpha.3), ambos 0 jogadores. O Cloud Build dessa imagem
+  (`680492e0-97ff-4ec3-8c39-e1e28f14b5d3`) passou, mas isso não constitui
+  prova de paridade de física com o site alpha.4; a antiga régua D7 havia
+  reprovado a branch moderna. Não sobrepor a lane que está atualizando nós.
+- Inspeção visual do candidato remoto ON mostrou ranking → perfil único e badge
+  sem falha. As páginas internas ainda usam a linguagem visual antiga, não
+  foram aprovadas como a nova UI. A PR #670 trata a home redesenhada em outra
+  lane, ainda aberta e marcada para staging/gameplay humano; não absorvê-la
+  aqui nem considerar a captura anterior como aceite.
+- Próximo passo para ativar: obter uma partida SP real e uma rodada MP real com
+  dois perfis humanos autenticados distintos, confirmar crédito idempotente
+  após retry e ausência de bônus com bot/espectador/mesmo perfil, além de
+  paridade/saúde da frota na versão pública. Só então ligar `RANKING_ON` em API
+  e Vercel Production, redeployar/promover em ordem e repetir a prova pública.
+  Enquanto isso, manter as flags OFF e não reiniciar BR com jogadores.
