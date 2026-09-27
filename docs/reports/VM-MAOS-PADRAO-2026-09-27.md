@@ -32,15 +32,29 @@ ausente desta shell. Com `VM_LAUNCH=true`, `fetch-viewmodels.mjs` agora reprova
 o build quando faltam assets, mesmo sem `VM_REQUIRED=1`, para impedir um
 deployment verde que exiba armas sem mãos.
 
-O placar assado contém **29 células visuais vermelhas** com dono;
-`eval:vm-placar` as transforma em falhas quando `VM_LAUNCH=true`. As re-medidas
-3:2 (14,8 min) e 16:9 (14,9 min) fecharam em **14 + 15 vermelhas, exatamente
-as mesmas 29 da main, sem novo vermelho nem mudança de valor vermelho**.
+O placar assado contém **15 pares arma/régua distintos** com alerta automático,
+medidos em dois formatos: 14 células em 3:2 e 15 em 16:9, somando 29 medições.
+Não são 29 armas reprovadas. Os 15 pares são 9 de enquadramento/ângulo
+relativos à AK (AWP, G3, MD97, M400, Mosin, Rem700, SVD, G3SG1 e SKS), ADS
+da AK, contato da mão de apoio na Tavor e quatro verificações de carregador
+(Tavor, FAMAS, Uzi e Deagle). As re-medidas 3:2 (14,8 min) e 16:9 (14,9 min)
+deram **exatamente as mesmas células vermelhas da main, sem novo vermelho nem
+mudança de valor vermelho**. O dono relatou ter aprovado os screenshots
+estáticos de todas as armas no HTML de revisão; essa aprovação cobre a
+aparência dos quadros vistos, enquanto ADS e recarga exigem seus próprios
+quadros em movimento.
+`eval:vm-placar` transforma as 29 medições em falhas quando `VM_LAUNCH=true`.
 `eval:vm-placar` passou P1/P2 (placares atuais e dívidas com dono) e reprovou
 apenas P3 com 29 falhas. Esses vermelhos não são prova de ausência de mãos:
 incluem enquadramento, contato, mira e recarga. Na Tavor, a mão aparece mas
 o contato reprova. Não alterar os limites ou suprimir P3 para obter CI verde
 sem decisão explícita sobre a dívida.
+
+O `check:vm` completo no head publicado `923047a94` terminou **7/9 em
+1338,6 s**: só `eval:vm-placar` (29 medições P3) e `eval:vm-reguas` (14
+células 3:2 aceitas como dívida antes da chave) reprovaram. As outras sete
+réguas passaram. A execução está em
+`artifacts/vm-hands-default/check-vm.log`, ignorado pelo Git.
 
 `check:deploy` passou **46/46** em 119,5 s. `check:fast` passou **163/167** em
 449 s; as quatro falhas (`eval:mapid`, `audio:check`, `eval:audiovoicemix` e
@@ -82,6 +96,6 @@ dos bytes baixados antes de publicar. Sem upload, o CI permanece vermelho.
    sobre elas de forma explícita e verificável antes do merge.
 
 **Estado:** branch `vm/hands-default` publicada no PR draft #669; ainda não
-mergeada. O `check:vm` completo foi iniciado no head `923047a94`; registrar
-seu resultado ao terminar. A câmera permanece no PR #668, independente desta
+mergeada. O `check:vm` completo fechou 7/9 no head `923047a94`, com apenas as
+dívidas visuais P3 acima. A câmera permanece no PR #668, independente desta
 mudança.
