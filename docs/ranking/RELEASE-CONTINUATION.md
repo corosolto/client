@@ -106,3 +106,21 @@ Production, construir sem alias, validar e promover na ordem coordenada.
 Não antecipar merge nem deploy enquanto o merge das armas estiver em curso.
 O layout da nova home continua na lane `codex/re-ui-home`, sem aceite visual,
 e não faz parte da PR #663.
+
+## Retomada após o merge das armas — 27/09/2026
+
+- PR cliente #669 (`vm/hands-default`) foi mesclada em `main` no commit
+  `1e4f88bd1`; o release automático avançou a base para `066646e8d`
+  (`v2.1.0-alpha.2`). O bot atualizou a PR #663 com essa base.
+- Auditoria de `origin/main...origin/codex/ranking-release`: só os arquivos
+  de ranking/perfil e documentação/índices esperados ficaram no diff. Os seis
+  arquivos funcionais do ranking não mudaram entre o checkpoint anterior
+  `0b6c58c8a` e a branch atualizada pelo bot. O commit local que registrava
+  a espera foi reaplicado sobre essa base, sem conflito.
+- Produção no início da retomada: API pública ainda em `00034-law`, flag OFF;
+  canário ON em `00036-pej` com 0% de tráfego; três nós `serverSha:11d3016`.
+  O nó Brasil tinha 2 jogadores, portanto não reiniciar nós neste corte.
+  Vercel Production ainda sem `RANKING_ON` e `SUPABASE_SERVICE_ROLE_KEY`.
+- Próximo passo: gates na base alpha.2, variável protegida Production,
+  deployment sem alias e prova de ranking/perfil/badge; depois merges e
+  promoção coordenada. A home experimental continua fora do corte.
