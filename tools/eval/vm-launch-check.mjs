@@ -5,17 +5,17 @@
  * o #618 abria o autorado por família (ak, pistol, grenade prontas) e as outras
  * 23 armas caíam no legado na MESMA partida — duas linguagens visuais de mão
  * trocando a cada arma. Estado medido na criação: 3 das 26 armas prontas
- * (ak, pistol, knife) + granada; VM_LAUNCH=false.
+ * (ak, pistol, knife) + granada. Em 27/09 o dono pediu as 26 mãos novas por padrão.
  *
+ *   VL0 padrão        lançamento ativo sem query
  *   VL1 cobertura     cada id do WEAPON_IDS (+ granada) tem portão legível
  *   VL2 chave honesta VM_LAUNCH=true só com as 26 + granada `ready`
  *   VL3 decisão       tabela-verdade de vmLaunchDecision (lançamento/revisão/kill)
  *   VL4 seletor       authoredvm.js obedece a chave: 0 ou TODAS as chaves de boot
- *   VL5 jogo real     Game em node: sem chave não nasce controlador autorado nem faca
+ *   VL5 jogo real     Game em node: padrão ativo e ?vmauthored=0 desliga ambos
  *   VL6 asset         com VM_LAUNCH=true, o GLB de cada arma existe no catálogo servido
  *   VL7 ak golden     a 'ak' serve a GOLDEN aprovada (gold#ak, coro/ak-hires.glb 3b6ca23d…), nada mais
- *                     (sem catálogo privado não dá para medir → VERMELHO; com a chave
- *                     desligada vira só relatório — a granada K não existe hoje)
+ *                     (sem catálogo privado não dá para medir → VERMELHO)
  *
  *   node tools/eval/vm-launch-check.mjs              # régua no estado do repo
  *   node tools/eval/vm-launch-check.mjs --mutantes   # prova que ela morde
@@ -96,14 +96,11 @@ async function gameProbe(gameSource, search) {
 
 // Caminho servido de cada id, espelho do `urlForKey` (authoredvm.js) e do meleevm.js.
 const FACA_SERVIDA = /const KNIFE_URL = [`'"]\/([^?`'"]+)/.exec(fs.readFileSync(path.join(JS, 'meleevm.js'), 'utf8'))?.[1] || '?';
-function assetDe(id, config) {
+function assetDe(id, authored) {
   if (id === 'knife') return `public/${FACA_SERVIDA}`;
   if (id === 'grenade') return 'public/private-assets/viewmodels/grenade/grenade-runtime.glb';
-  const c = config.VM_WEAPON[id];
-  if (!c) return null;
-  if (c.golden) return `public/models/viewmodels/coro/${id}-hires.glb`;
-  if (c.runtime === 'family' || !c.baked) return `public/private-assets/viewmodels/${c.family}/${c.family}-runtime.glb`;
-  return `public/private-assets/viewmodels/${c.family}/${id}-baked-runtime.glb`;
+  const url = authored.vmFonteDe(id).url;
+  return url?.startsWith('/') ? `public/${url.slice(1).split('?')[0]}` : null;
 }
 const COMPARTILHADOS = ['shared/general-runtime.glb', 'recoil.json',
   ...['Arm01', 'Cloth01', 'Glove01'].flatMap((b) => ['B', 'N', 'ORM'].map((m) => `shared/T_${b}_${m}.webp`))]
@@ -113,6 +110,8 @@ async function audit(sources, { jogo = true, catalogo = true } = {}) {
   const checks = [];
   const check = (id, ok, detail) => checks.push({ id, ok: Boolean(ok), ...detail });
   const { config, launch, authored } = await load(sources);
+  check('VL0', config.VM_LAUNCH === true && launch.VM_RUNTIME.mode === 'lancamento', {
+    modo: launch.VM_RUNTIME.mode, msg: 'as mãos novas devem nascer ligadas sem parâmetro de revisão' });
   const { WEAPON_IDS } = await import('../../public/js/weapons.js');
 
   const semPortao = WEAPON_IDS.filter((id) => !config.VM_WEAPON[id] && !config.VM_MELEE?.[id]);
@@ -167,7 +166,7 @@ async function audit(sources, { jogo = true, catalogo = true } = {}) {
 
   const catalogoPresente = catalogo && fs.existsSync(path.join(ROOT, 'public/private-assets/viewmodels'));
   const faltando = catalogoPresente ? [
-    ...launch.VM_LAUNCH_IDS.map((id) => [id, assetDe(id, config)]).filter(([, f]) => !f || !fs.existsSync(path.join(ROOT, f))),
+    ...launch.VM_LAUNCH_IDS.map((id) => [id, assetDe(id, authored)]).filter(([, f]) => !f || !fs.existsSync(path.join(ROOT, f))),
     ...COMPARTILHADOS.filter((f) => !fs.existsSync(path.join(ROOT, f))).map((f) => ['compartilhado', f]),
   ].map(([id, f]) => `${id}:${f || '?'}`) : null;
   check('VL6', config.VM_LAUNCH !== true || (catalogoPresente && faltando.length === 0), {
@@ -191,12 +190,14 @@ async function audit(sources, { jogo = true, catalogo = true } = {}) {
   if (jogo) {
     const semChave = await gameProbe(sources.game !== read('game') ? sources.game : '', '');
     const revisao = await gameProbe(sources.game !== read('game') ? sources.game : '', '?vmauthored=1');
+    const desligado = await gameProbe(sources.game !== read('game') ? sources.game : '', '?vmauthored=0');
     const esperadoPadrao = launch.VM_RUNTIME.active;
-    check('VL5', !semChave.erro && !revisao.erro
+    check('VL5', !semChave.erro && !revisao.erro && !desligado.erro
       && semChave.authored === esperadoPadrao && semChave.melee === esperadoPadrao
-      && revisao.authored === true && revisao.melee === true,
-    { padrao: semChave, revisao, esperadoPadrao,
-      msg: 'Game real: sem a chave, `vm.authored` e `vm.melee` têm de ser null (faca e granada inclusive)' });
+      && revisao.authored === true && revisao.melee === true
+      && desligado.authored === false && desligado.melee === false,
+    { padrao: semChave, revisao, desligado, esperadoPadrao,
+      msg: 'Game real: sem query, `vm.authored` e `vm.melee` devem seguir o estado do lançamento' });
   }
   return { ok: checks.every((c) => c.ok), checks };
 }
@@ -234,7 +235,7 @@ if (process.argv.includes('--mutantes')) {
     return { ...base, [key]: src.replace(antes, depois) };
   };
   const mutantes = [
-    ['chave-mentirosa', ['VL2'], mut('config', 'export const VM_LAUNCH = false;', 'export const VM_LAUNCH = true;')],
+    ['chave-desligada', ['VL0'], mut('config', 'export const VM_LAUNCH = true;', 'export const VM_LAUNCH = false;')],
     ['uma-arma-fora', ['VL2'], { ...base, config: allReady(base.config, { launch: true, except: 'uzi' }) }],
     ['ativacao-parcial', ['VL3', 'VL4'], mut('launch', 'ids.length > 0 && notReady.length === 0', 'ids.length > 0')],
     ['seletor-ignora-chave', ['VL4'], mut('authored', 'export const AUTHORED_VM_ENABLED = VM_RUNTIME.active;',
