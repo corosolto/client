@@ -358,6 +358,7 @@
     "vm:goldenver": "node tools/viewmodels/gen-goldenver.mjs",
     "eval:vm-cache": "node tools/eval/vm-cache-golden.mjs && node tools/eval/vm-cache-assets.mjs",
     "eval:vm-camera": "node tools/eval/vm-camera-check.mjs --porta=8167",
+    "eval:vm-camera-modes": "node tools/eval/vm-camera-modes-check.mjs && node tools/eval/vm-camera-modes-check.mjs --mutante=sem-retorno",
     "eval:mp-paridade": "node tools/eval/mp-paridade-check.mjs",
     "eval:obras": "node tools/eval/obras-check.mjs",
     "eval:obras-browser": "node tools/eval/obras-browser-check.mjs",
