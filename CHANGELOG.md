@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.3`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.4`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,23 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.4] — 2026-09-27
+
+### Mudado
+- feat(ranking): reativar ranking único por pontos sem alterar a home (#663)
+- docs(ranking): record guarded API merge
+- fix(ranking): render badge in protected Vercel deployment
+- chore(docs): regenera bloco derivado (autofix)
+- docs(ranking): checkpoint alpha.2 gates and production env
+- docs(ranking): resume after weapons release base
+- docs(ranking): wait for weapons merge before release
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(ranking): checkpoint API nodes and Vercel dependency
+- docs(ranking): sync generated symbol index
+- docs(ranking): checkpoint database and image builds
+- feat(ranking): prepare isolated points release without hub UI
 
 ## [2.1.0-alpha.3] — 2026-09-27
 
