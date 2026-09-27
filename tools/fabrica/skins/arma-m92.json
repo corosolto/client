@@ -1,0 +1,11 @@
+{
+  "id": "m92",
+  "descricao": "Identidade Zastava M92 sobre o AK-200 do pack: aço oxidado escuro e guarnições de polímero preto (a AKM do jogo usa a madeira da AK-47). Só material — a malha é a do pack.",
+  "materiais": {
+    "M_Polymer_Furniture": { "cor": "1d1d1e", "metal": 0.0, "rugosidade": 0.68 },
+    "M_Finish": { "cor": "26282b", "metal": 0.65, "rugosidade": 0.44 },
+    "M_Finish_Milled": { "cor": "33363a", "metal": 0.7, "rugosidade": 0.38 },
+    "M_Polymer_Mag": { "cor": "2a2723", "metal": 0.55, "rugosidade": 0.46 },
+    "M_Mag_Translucent": { "cor": "2a2723", "metal": 0.55, "rugosidade": 0.46 }
+  }
+}

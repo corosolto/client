@@ -51,7 +51,7 @@ for (const arma of ARMAS) {
   const tmp = fs.mkdtempSync(path.join('/tmp', `pente-${arma}-`));
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
   try {
-    const qs = `?debug=1&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0${FORCAR ? '' : ''}`;
+    const qs = `?debug=1&vmauthored=1&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0${FORCAR ? '' : ''}`;
     await page.goto(`${BASE}/${qs}`, { waitUntil: 'load', timeout: 180000 });
     await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
     await page.waitForFunction((w) => Boolean(window.__authoredVm?.entry?.(w)?.scene), arma, { timeout: 120000 });

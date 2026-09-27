@@ -1,0 +1,13 @@
+{
+  "id": "p90",
+  "arma": "p90",
+  "chassi": "PDW90",
+  "descricao": "P90 = PDW90 do pack; a pose é o quadro 0 da inspeção (o pack não tem pose dedicada).",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "p90",
+    "fonte": "recoil.json ← Animations/PDW90 (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}
