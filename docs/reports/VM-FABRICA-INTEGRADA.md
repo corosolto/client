@@ -1,6 +1,7 @@
 # Fábrica de armas integrada — uma branch, um PR
 
-**Branch:** `vm/fabrica-integrada` (sobre a `main` alpha.300) · 26/09/2026.
+**Branch de integração:** `vm/fabrica-integrada` (sobre a `main` alpha.300) ·
+26/09/2026. **PR de entrega:** #667, branch `vm/fabrica-integrada-dco`.
 O dono aprovou as armas ("estão muito boas, vamos criar um PR e mergear"). Esta branch junta
 todo o trabalho da fábrica num PR só, atrás da chave `VM_LAUNCH` (desligada).
 
@@ -159,7 +160,8 @@ baseline, fazer merge commit apenas com CI obrigatório verde no head atual e co
 release 2.1.0. Depois, entregar câmera de 3ª pessoa visível, página de revisão e manifesto
 privado para o dono, sem ativar `ready`/`VM_LAUNCH` ou publicar no Blob.
 
-**Worktree/branch:** `worktrees/vm-fabrica-integrada`, `vm/fabrica-integrada`; baseline
+**Worktrees/branches:** `worktrees/vm-fabrica-integrada`, `vm/fabrica-integrada`;
+entrega `worktrees/vm-fabrica-integrada-dco`, `vm/fabrica-integrada-dco`; baseline
 `worktrees/vm-fabrica-integrada-base` destacada em `5b9c9bec3`. A integração herdada
 terminava em `efc892db0`. O checkpoint `1721c26a5` versionou
 `.claude/skills/fabrica-armas/SKILL.md` e o link em `AGENTS.md`; `skills:check` e
@@ -183,11 +185,15 @@ sem `Signed-off-by` trazidos pela ancestralidade das branches de origem. Os
 commits desta continuação têm o trailer. O script `scripts/ci/dco_check.py`
 verifica todos os commits não merge de `main..HEAD`; um commit adicional no
 mesmo branch não corrige esses ancestrais. Não fazer force-push no branch
-compartilhado. Próximo passo: abrir um branch limpo sobre `5b9c9bec3` com a
-árvore integrada em commit assinado, conferir igualdade de árvore e portões,
-e abrir um PR substituto; deixar o #666 com referência ao sucessor.
+compartilhado. O branch `vm/fabrica-integrada-dco` partiu de `5b9c9bec3`.
+O commit `fc3d007c5` reproduz exatamente a árvore de `17e19202c` (tree
+`8f5829b8c6bde0b8a7db4681a543107309bc2cdf`), com trailer de integrador;
+o DCO local passou sem faltantes e `check:deploy` passou 46/46. Nenhum
+force-push foi feito. O [#667](https://github.com/corosolto/client/pull/667)
+substitui o #666, fechado com referência ao sucessor. A branch e os PRs de
+origem continuam acessíveis para a proveniência dos commits individuais.
 
-**Depois do DCO:** acompanhar o CI no head atual e fazer merge commit somente
+**Próximo passo:** acompanhar o CI do #667 no head atual e fazer merge commit somente
 com checks obrigatórios verdes. Antes do merge, resolver com o dono o retorno
 temporário da AK e da faca ao legado com `VM_LAUNCH=false`. Depois, conferir
 o release 2.1.0 e fechar com referência ao PR integrado os PRs substituídos.
