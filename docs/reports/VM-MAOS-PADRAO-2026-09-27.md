@@ -47,6 +47,17 @@ sem decisão explícita sobre a dívida.
 `eval:amazonia`) foram reproduzidas no checkout limpo `origin/main@c54a28279`
 e são herdadas. `eval:vm-orientacao --mutantes` passou: 17 produtos medidos,
 e o mutante voltou a detectar as quatro armas invertidas do catálogo antigo.
+`eval:vm-maos-time` passou. `eval:vm-manga-tela-fabrica` reprova pela Uzi:
+vmsleeve 0,63% da tela na recarga vazia a 92%, acima do teto de 0,5%.
+A mesma falha e o mesmo valor foram reproduzidos em `origin/main@c54a28279`.
+`eval:vm-mira-janela` e `eval:vm-mira-golden` passaram.
+`eval:vm-serving` passou pela URL efetiva das 25 armas, granada, armas baked
+e recursos compartilhados no Astro real, com os assets privados copiados para
+`public/private-assets/viewmodels` local ignorado pelo Git. O teste anterior
+sondava 11 rotas K que não são o lançamento e reutilizava uma porta ocupada
+por servidor de outro worktree; a régua agora escolhe porta livre, fecha o
+Astro que abriu e mantém mutante de granada ausente vermelho. O mutante do
+jogo sem a ligação `authored.setWeapon` também reprovou 0/2 (M4 e AK sem mãos).
 
 ## Para publicar
 
