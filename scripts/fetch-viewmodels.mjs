@@ -15,8 +15,10 @@ import { copyFileSync, existsSync, lstatSync, mkdirSync, renameSync, rmSync, sta
 import path from 'node:path';
 
 import { DEST_DIR, ROOT, blobPathOf, readManifest, sha256File } from './vm-assets.mjs';
+import { VM_LAUNCH } from '../public/js/data/vmconfig.js';
 
-const REQUIRED = process.env.VM_REQUIRED === '1';
+// Lançamento sem GLB não pode publicar um build "verde" que mostra só armas sem mãos.
+const REQUIRED = VM_LAUNCH === true || process.env.VM_REQUIRED === '1';
 const DEST = path.resolve(process.env.VM_DEST || DEST_DIR);
 const SOURCE_DIR = process.env.VM_SOURCE_DIR ? path.resolve(process.env.VM_SOURCE_DIR) : '';
 const TOKEN = process.env.VM_BLOB_TOKEN || process.env.BLOB_READ_WRITE_TOKEN || '';

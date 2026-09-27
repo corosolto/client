@@ -1,0 +1,153 @@
+{
+  "schema": 1,
+  "data": "2026-09-27",
+  "decisao": "Dono aprovou os screenshots das armas e autorizou publicar com os alertas conhecidos de ADS, contato e recarga, corrigindo-os depois.",
+  "regra": "Apenas estado, valor e mensagem idênticos aos placares aprovados; qualquer célula nova ou alterada reprova.",
+  "aceites": {
+    "3x2/cobertura/awp": {
+      "estado": "VERMELHO",
+      "valor": "1.43× AK",
+      "sha256": "8cbcb84ee1427a61929ec21ae6bb3e4e702153a91ea302748cbddba207704d82"
+    },
+    "3x2/mira/ak": {
+      "estado": "VERMELHO",
+      "valor": "213 px",
+      "sha256": "d02cde4fc0cb6e470768e8db9d56916759adf5bc9d2b1bc24328145b0eba5586"
+    },
+    "3x2/cobertura/g3": {
+      "estado": "VERMELHO",
+      "valor": "1.06× AK",
+      "sha256": "bfdfc2a83f574253ead90cf226b1050cd7823ce65e95a6d76d3fe7db2b0b9e0b"
+    },
+    "3x2/cobertura/md97": {
+      "estado": "VERMELHO",
+      "valor": "1.04× AK",
+      "sha256": "a5c1859e4e52ccb7d3dc318afff6ee99a7e9b083fcff84ed5f89f8ec8f38c0cc"
+    },
+    "3x2/cobertura/m400": {
+      "estado": "VERMELHO",
+      "valor": "0.91× AK",
+      "sha256": "db358886367153a975117cdb252cf6506aafccd5c86f89630cc355d143dfc7bb"
+    },
+    "3x2/cobertura/mosin": {
+      "estado": "VERMELHO",
+      "valor": "1.13× AK",
+      "sha256": "bae5b116393c8b2a8bfedc4e2d9ecaf97e1fe4e409192443acddf6a185c6b405"
+    },
+    "3x2/cobertura/rem700": {
+      "estado": "VERMELHO",
+      "valor": "1.07× AK",
+      "sha256": "f5bfb4a62c65ae161c19b8b1113b4f9d450196bbb41c2e48a2ccbd2e43282ebf"
+    },
+    "3x2/cobertura/svd": {
+      "estado": "VERMELHO",
+      "valor": "0.50× AK",
+      "sha256": "21b1340a36e0ccfff8ce7062989b274febe68cde39753fd584123ff03ea20586"
+    },
+    "3x2/cobertura/g3sg1": {
+      "estado": "VERMELHO",
+      "valor": "1.06× AK",
+      "sha256": "c0dc518b853ae0f3041a7a7fa62eafc92da267d42add540e63fb2b43b465e7b5"
+    },
+    "3x2/cobertura/sks": {
+      "estado": "VERMELHO",
+      "valor": "0.64× AK",
+      "sha256": "0b43182dace1834559eed6dc9d1a5770c6efd1e1587237944e50a5c63fae2be7"
+    },
+    "3x2/maos/tavor": {
+      "estado": "VERMELHO",
+      "valor": "0.30",
+      "sha256": "d2037e649b5fc8c67989e3a8e5b0c44f91fd2fc9b36cedf4f143c62d71731c4d"
+    },
+    "3x2/carregador/tavor": {
+      "estado": "VERMELHO",
+      "valor": "1 falha(s)",
+      "sha256": "b3166fa6645b369ca2c29212e62626f3ea116cf111e3fc7d35774f49bb86efa1"
+    },
+    "3x2/carregador/famas": {
+      "estado": "VERMELHO",
+      "valor": "1 falha(s)",
+      "sha256": "ac9ca243108120492e622d360028319fa676718dd951ebe116275be186776a1f"
+    },
+    "3x2/carregador/uzi": {
+      "estado": "VERMELHO",
+      "valor": "1 falha(s)",
+      "sha256": "e341421a4f7b81e866b1ca8a5a91fde5192e20b3d4e51210bd5ec541d07d014f"
+    },
+    "16x9/cobertura/awp": {
+      "estado": "VERMELHO",
+      "valor": "1.37× AK",
+      "sha256": "8c40997bf7f5c075b4a1ed9a691b1617e4aa838962e09606b84d37022c5e1744"
+    },
+    "16x9/mira/ak": {
+      "estado": "VERMELHO",
+      "valor": "213 px",
+      "sha256": "731a85de54d497c53468a0c2861ac3abb6cbd374579eb1d5999beaacf0826544"
+    },
+    "16x9/carregador/deagle": {
+      "estado": "VERMELHO",
+      "valor": "1 falha(s)",
+      "sha256": "4cdac77a347ddff15faffd0cf07359786870c4aa060e6c019332069624848f4d"
+    },
+    "16x9/cobertura/g3": {
+      "estado": "VERMELHO",
+      "valor": "0.98× AK",
+      "sha256": "0ac43fcb29ff8465f554c5b161d0f3cd7eab65b345a6ca3725d32b9e74a4943e"
+    },
+    "16x9/cobertura/md97": {
+      "estado": "VERMELHO",
+      "valor": "1.08× AK",
+      "sha256": "826625802ccd4a6afe9deec0d1888e316da652e282aa8d31df35ea47a4191758"
+    },
+    "16x9/cobertura/m400": {
+      "estado": "VERMELHO",
+      "valor": "0.84× AK",
+      "sha256": "efcd808bbbacf3d8db4aae3db28ed3da2b504c0decffc8bbc900271a736ac073"
+    },
+    "16x9/cobertura/mosin": {
+      "estado": "VERMELHO",
+      "valor": "1.03× AK",
+      "sha256": "bc3a950ae5094b9f0d3d6e6b0f2e0ed6cc0fc56c57bfbcac31fe164f8a087396"
+    },
+    "16x9/cobertura/rem700": {
+      "estado": "VERMELHO",
+      "valor": "0.94× AK",
+      "sha256": "2e1204fc002fa1d17d74abdbba67a329b6979274bb5d55bce94e21e53968b2c9"
+    },
+    "16x9/cobertura/svd": {
+      "estado": "VERMELHO",
+      "valor": "0.43× AK",
+      "sha256": "58a44be46c1264af7ca4e2588d5f8180ce2c5b09496b3e1ad91ea321f1fd4ee4"
+    },
+    "16x9/cobertura/g3sg1": {
+      "estado": "VERMELHO",
+      "valor": "1.00× AK",
+      "sha256": "80b81dadfb0ff48051be96baa28b70736f5213be589297792828187a6da60d8b"
+    },
+    "16x9/cobertura/sks": {
+      "estado": "VERMELHO",
+      "valor": "0.58× AK",
+      "sha256": "c2f67b58d2b5719027433d2daec7d6ce7c5738d1ccd6a2d7472dd8359c85bdef"
+    },
+    "16x9/maos/tavor": {
+      "estado": "VERMELHO",
+      "valor": "0.30",
+      "sha256": "d2037e649b5fc8c67989e3a8e5b0c44f91fd2fc9b36cedf4f143c62d71731c4d"
+    },
+    "16x9/carregador/tavor": {
+      "estado": "VERMELHO",
+      "valor": "1 falha(s)",
+      "sha256": "b3166fa6645b369ca2c29212e62626f3ea116cf111e3fc7d35774f49bb86efa1"
+    },
+    "16x9/carregador/famas": {
+      "estado": "VERMELHO",
+      "valor": "1 falha(s)",
+      "sha256": "ac9ca243108120492e622d360028319fa676718dd951ebe116275be186776a1f"
+    },
+    "16x9/carregador/uzi": {
+      "estado": "VERMELHO",
+      "valor": "1 falha(s)",
+      "sha256": "e341421a4f7b81e866b1ca8a5a91fde5192e20b3d4e51210bd5ec541d07d014f"
+    }
+  }
+}

@@ -1,7 +1,12 @@
 # Viewmodel autorado em produção: entrega privada pelo Blob
 
-**Estado:** implementado e ensaiado em 23/09/2026, **ainda sem upload real**. O dono precisa
-fazer os três passos da seção "Primeira publicação" antes do merge.
+**Estado em 23/09/2026:** implementado e ensaiado, ainda sem upload real.
+Os números de 35 arquivos abaixo descrevem o catálogo daquela data. Em
+27/09, a fábrica integrada passou a ter **63 assets, 159,7 MB**, na origem
+`~/csbrasil-private-assets/generated/viewmodels-fabrica-integrada/overlay/viewmodels`.
+O novo lançamento sem flags e seus bloqueios estão em
+[`VM-MAOS-PADRAO-2026-09-27.md`](VM-MAOS-PADRAO-2026-09-27.md). O dono precisa
+fazer a primeira publicação antes do merge.
 
 ## O defeito
 
