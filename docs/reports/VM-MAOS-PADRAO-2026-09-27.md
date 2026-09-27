@@ -87,6 +87,18 @@ com versão correta. Simulações passaram com manifesto completo; os mutantes
 sem upload e sem M4 reprovaram. O próprio build continua conferindo SHA-256
 dos bytes baixados antes de publicar. Sem upload, o CI permanece vermelho.
 
+Foi encontrado e corrigido um conflito entre `fetch-viewmodels` e
+`prepare_precision_preview --assert-clean`: o primeiro instala o runtime
+privado como diretório físico e o segundo antes rejeitava todo diretório.
+Agora o build aceita somente um diretório com **exatamente** os 63 arquivos do
+manifesto, sem links simbólicos, extras ou hash divergente; a proteção contra
+symlink de preview local permanece. Fixture com 63/63 passou, mutantes de
+arquivo extra e hash incorreto reprovaram. Em worktree destacado isolado,
+com apenas os 63 assets em links físicos para os bytes locais, `npm run build`
+passou e `eval:vm-serving-prod` confirmou 63/63 hashes tanto em
+`.vercel/output/static` quanto em `dist/client`, 0 extras, cabeçalhos e
+vínculo VM_BYTES. O worktree temporário foi removido após a verificação.
+
 ## Para publicar
 
 1. O dono publica os 63 assets no Blob privado com o token em ambiente local:
