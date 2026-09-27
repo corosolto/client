@@ -18,7 +18,7 @@ const browser = await chromium.launch({
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
 });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-await page.goto(`${base}/?debug=1&auto=P,mst&map=fy_piscina_treta&hands=1&vmweapon=akm&triggerfix=8`, {
+await page.goto(`${base}/?debug=1&vmauthored=1&auto=P,mst&map=fy_piscina_treta&hands=1&vmweapon=akm&triggerfix=8`, {
   waitUntil: 'commit', timeout: 90000,
 });
 await page.waitForFunction(() => !!window.__game, null, { timeout: 240000 });

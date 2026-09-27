@@ -1,0 +1,74 @@
+{
+  "id": "scar",
+  "arma": "scar",
+  "chassi": "Mk14EBR",
+  "descricao": "SCAR-H = Mk14 EBR do pack como autorado na zona de contato — fuzil de batalha 7,62 com o mesmo contato: pente à frente do punho, alavanca de manejo que corre à frente pelo lado, mão de apoio no guarda-mão. Identidade: skin FDE (areia) e o quebra-chama da SCAR do próprio jogo (public/models/weapons/scar.glb, 0 crédito Mint) no cano mais curto. Malha do jogo calibrada inteira contra o chassi (tools/fabrica/blender/sobrepor.py).",
+  "skinBraco": "coro-ak",
+  "skinArma": "scar",
+  "removerZonaLivre": [
+    {
+      "nome": "cano-e-massa-mk14",
+      "min": [
+        -5,
+        -62,
+        -3
+      ],
+      "max": [
+        5,
+        -50,
+        4
+      ]
+    }
+  ],
+  "zonaLivre": [
+    {
+      "peca": "quebra-chama-scar",
+      "fonte": "public/models/weapons/scar.glb",
+      "recorte": {
+        "min": [
+          -1,
+          -1,
+          -1
+        ],
+        "max": [
+          -0.43,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          1.97,
+          0,
+          -8
+        ],
+        "rotDeg": [
+          0,
+          0,
+          90
+        ],
+        "escala": 1.0
+      }
+    }
+  ],
+  "boca": {
+    "raizCm": [
+      0,
+      -50,
+      0
+    ]
+  },
+  "recuo": {
+    "familia": "marksman",
+    "fonte": "recoil.json ← Animations/Mk14EBR (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "limite": "A caixa da culatra alta da SCAR não entra: cobriria a alavanca e o ferrolho do Mk14, que a recarga mexe (zona de contato). A coronha rebatível da SCAR foi testada e saiu: com o apoio de face 5 cm mais alto que o do Mk14, ela entrava no quadro de quadril como um bloco solto ao lado da mão; fica a coronha do Mk14 com a skin. A recarga vazia do Mk14 do pack tira a mão do gatilho do punho e a deixa parada sobre a coronha (crítico r2, 'mão no ar'); a SCAR toca a recarga tática do pack nas duas recargas.",
+  "acabamentoZonaLivre": {
+    "metal": 0.35,
+    "rugosidade": 0.6
+  },
+  "clipes": {
+    "reload_empty": "pack:reload_tactical"
+  }
+}

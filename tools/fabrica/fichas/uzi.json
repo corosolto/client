@@ -1,0 +1,107 @@
+{
+  "id": "uzi",
+  "arma": "uzi",
+  "chassi": "X18",
+  "descricao": "UZI = malha do jogo (public/models/weapons/uzi.glb, 0 crédito Mint) pelo PLANO B sobre o contato do X18. O contato decide: na UZI o pente mora DENTRO do punho, como na pistola — nenhuma submetralhadora do pack tem isso (o MPS5 põe o pente à frente do punho; a Kolibri é micropistola). Do X18 ficam o braço, a mão forte no punho e a câmera; a UZI é girada 21° para o poço dela cair no eixo inclinado do punho do X18. Empunhada com UMA mão (a de apoio fica fora da tela no repouso e no tiro) e as recargas re-autoradas por tools/fabrica/blender/animador.py (tools/fabrica/animador/uzi.json): a mão de apoio vem ao pé do punho, tira o pente pelo eixo do poço (tática) ou deixa cair (vazia), busca o reserva fora da tela e encaixa.",
+  "planoB": "empunhadura de uma mão (nota do dono: 'deveria ser segurada com uma mão só'); o X18 do pack empunha a duas mãos e recarrega a partir dela",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "malhaPropria": {
+    "fonte": "public/models/weapons/uzi.glb",
+    "origem": "Mint (modelo de mundo da UZI do jogo)",
+    "escala": 0.52,
+    "rotDeg": [
+      0,
+      21,
+      -90
+    ],
+    "posCm": [
+      0,
+      2,
+      -3.3
+    ],
+    "alinhamento": "punho da UZI sobre o punho do X18 (tools/fabrica/blender/sobrepor.py); 21° = inclinação do pente do X18 (caixa do osso Mag: 7,7 cm à ré em 12,1 cm de altura, menos a espessura do pente)",
+    "pecas": [
+      {
+        "nome": "pente",
+        "osso": "Mag",
+        "caixa": {
+          "min": [
+            -0.07,
+            -0.05,
+            -0.35
+          ],
+          "max": [
+            0.04,
+            0.04,
+            0.16
+          ]
+        }
+      }
+    ],
+    "material": {
+      "tom": [
+        0.4,
+        0.41,
+        0.43
+      ],
+      "metal": 0.45,
+      "rugosidade": 0.5,
+      "nota": "aço fosfatizado; o metálico 1 do modelo de mundo sai cromado"
+    }
+  },
+  "mira": {
+    "raizCm": [
+      0,
+      12.6,
+      18.5
+    ],
+    "frente": [
+      0,
+      -0.9336,
+      -0.3584
+    ],
+    "cima": [
+      0,
+      -0.3584,
+      0.9336
+    ],
+    "origem": "alça traseira da UZI (ilha x −0,39…−0,29, topo z 0,347 do GLB) na linha da massa (z 0,343); direção do cano da UZI girada 21°"
+  },
+  "boca": {
+    "raizCm": [
+      0,
+      -26.4,
+      -1.7
+    ],
+    "origem": "boca do cano (x 0,499, z 0,225 do GLB)"
+  },
+  "clipes": {
+    "reload_tactical": "animador",
+    "reload_empty": "animador",
+    "shoot": "procedural",
+    "equip_rifle": "animador",
+    "inspect": "ausente"
+  },
+  "recuo": {
+    "familia": "smg",
+    "fonte": "recoil.json ← família smg"
+  },
+  "removerZonaLivre": [
+    {
+      "nome": "coronha-rebativel-uzi",
+      "min": [
+        -6,
+        13,
+        -9
+      ],
+      "max": [
+        6,
+        32,
+        6.5
+      ]
+    }
+  ],
+  "animador": "tools/fabrica/animador/uzi.json",
+  "saque": "clipe equip_rifle do animador com a mão de apoio fora da tela + arco procedural do runtime (drawDrop do frame curto); sem ele o saque mostrava a pose de repouso do rig, com a segunda mão no punho (crítico r2)"
+}

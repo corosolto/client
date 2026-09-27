@@ -1,0 +1,54 @@
+{
+  "id": "tavor",
+  "arma": "tavor",
+  "chassi": "MX16A4",
+  "descricao": "TAVOR bullpup (plano B). Do chassi MX16A4 ficam só o braço SK_Arms_Mono, a pose da mão forte, a câmera e o saque geral; a arma é a TAVOR do jogo (public/models/weapons/tavor.glb, 0 crédito Mint) com o pente ATRÁS do punho em osso próprio e o retém do ferrolho (paleta atrás do pente) no osso BoltRelease; mão de apoio e recargas re-autoradas pelo animador (tools/fabrica/animador/tavor.json).",
+  "planoB": "no MX16A4 o pente fica à frente do punho e é zona de contato; na TAVOR ele fica atrás do punho, sob a bochecha",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "malhaPropria": {
+    "fonte": "public/models/weapons/tavor.glb",
+    "origem": "Mint (modelo de mundo da TAVOR do jogo)",
+    "escala": 0.72,
+    "rotDeg": [0, 0, -90],
+    "posCm": [-1.04, 10.77, -5.215],
+    "alinhamento": "GLB com a boca em +X (giro −90°); palma forte do MX16A4 no meio do punho (x=−0,053, z=−0,07 no GLB); comprimento real 720 mm",
+    "pecas": [
+      {
+        "nome": "pente",
+        "osso": "Mag",
+        "caixa": {"min": [-0.27, -0.01, -0.21], "max": [-0.13, 0.035, 0.055]},
+        "n": [40],
+        "vertices": 40
+      },
+      {
+        "nome": "retem",
+        "osso": "BoltRelease",
+        "caixa": {"min": [-0.36, -0.015, -0.05], "max": [-0.27, 0.045, -0.02]},
+        "n": [36],
+        "vertices": 36
+      }
+    ],
+    "material": {
+      "tom": [0.55, 0.55, 0.55],
+      "metal": 0.12,
+      "rugosidade": 0.64,
+      "nota": "polímero escuro da TAVOR; a textura base do modelo de mundo fica"
+    }
+  },
+  "mira": {
+    "raizCm": [0, 18.0, 8.75],
+    "origem": "alça rebatível (ilha x −0,112…−0,087, z 0,175–0,198) e massa (x 0,27, z 0,198): linha z 0,194 × 0,72 − 5,215"
+  },
+  "boca": {"raizCm": [0, -25.2, 0.15], "origem": "quebra-chamas da TAVOR (x 0,499, z 0,075 do GLB)"},
+  "animador": "tools/fabrica/animador/tavor.json",
+  "clipes": {
+    "reload_tactical": "animador",
+    "reload_empty": "animador",
+    "equip_rifle": "geral:rifle_equip",
+    "shoot": "procedural",
+    "inspect": "ausente"
+  },
+  "recuo": {"familia": "ar", "fonte": "recoil.json ← MX16A4 (chassi)"},
+  "enquadramentoDe": "m4"
+}

@@ -1,0 +1,7 @@
+{
+  "id": "escopeta",
+  "descricao": "Cartucho amarelo na KXG12: o vermelho do pack some contra a manga vermelha do braço coro-ak e o crítico lia a mão vazia no laço da recarga. Só o material do cartucho; o resto é o do pack.",
+  "materiais": {
+    "KSG_Ammo": { "cor": "e0b230", "metal": 0.35, "rugosidade": 0.4 }
+  }
+}

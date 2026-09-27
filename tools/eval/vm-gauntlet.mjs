@@ -443,6 +443,8 @@ const browser = await chromium.launch({
 const relatorio = [];
 for (const arma of ARMAS) {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
+  // O boot passa de 250 recursos; sem buffer maior o GLB servido some do Resource Timing.
+  await page.addInitScript(() => performance.setResourceTimingBufferSize(4000));
   const espera = (ms) => page.waitForTimeout(ms);
   /* Dois requestAnimationFrame antes de cada foto: o canvas WebGL só muda no
      laço do jogo, e a foto logo após o evaluate saía com o render ANTERIOR —
@@ -458,7 +460,7 @@ for (const arma of ARMAS) {
   try {
     console.log(`${arma}: abrindo runtime`);
     await page.goto(
-      `${BASE}/?debug=1&${QS_MODO}&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0`,
+      `${BASE}/?debug=1&vmauthored=1&${QS_MODO}&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0`,
       { waitUntil: 'domcontentloaded', timeout: 180000 },
     );
     console.log(`${arma}: aguardando partida`);
