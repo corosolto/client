@@ -116,14 +116,38 @@ async function renderIndex() {
       ...Object.fromEntries(modulos.map((mod) => [`./js/${mod}`, `./js/${mod}?v=${V}-${JS_REV}`])),
     },
   });
-  // `__MANIFESTO_JS__` é injetado pelo build do Astro; no arnês ele vem do mesmo
-  // manifesto de cache de módulos que monta o import map acima.
+  /* O `define:vars` agora sai do frontmatter DE VERDADE (`evalDeclarations` acima),
+     mecanismo da main: a tabela à mão que esta branch tinha (SUPPORT_URL_BR /
+     SUPPORT_URL_INTL) virava dívida a cada variável nova no index.astro, e o
+     `GIT_SHA` que a telemetria acrescentou já não estava nela. Isso fica.
+
+     `__MANIFESTO_JS__` é injetado pelo build do Astro; no arnês ele vem do mesmo
+     manifesto de cache de módulos que monta o import map acima. */
   const frontmatter = src.match(FRONTMATTER);
   if (!frontmatter) throw new Error(`serve.mjs: ${ASTRO} sem frontmatter`);
   const scope = await evalDeclarations(frontmatter[1], resolve(ASTRO), {
     __MANIFESTO_JS__: { modules: modulos, revision: JS_REV },
   });
-  return src
+  /* Varredura GENÉRICA de atributo com template literal, que a branch acrescentou e
+     a lista por-atributo da main não cobre: `attr={`...`}` vira `attr="..."`.
+     Quando o `index.astro` ganha um atributo novo com template literal e ninguém
+     acrescenta a linha correspondente abaixo, ele sai como TEXTO LITERAL, o
+     navegador pede `/%7B%60/js/main.js...%60%7D`, toma 404, e o jogo trava em
+     "CARREGANDO ARENA…" sem `window.__game`. Em captura headless isso vira
+     `waitForFunction: Timeout 900000ms` e o log acusa o MAPA — perdemos uma bateria
+     inteira "descobrindo" que os mapas novos não bootavam, quando NENHUM mapa
+     bootava e a culpa era deste renderizador. Ela roda DEPOIS das regras explícitas
+     da main, como rede: o que sobrar com `${...}` depende de escopo de runtime
+     (`${f.crest}` dentro de um `.map()`) e é devolvido INTACTO, para o erro
+     continuar legível em vez de virar atributo quebrado.
+     LIMITE DECLARADO: isto não é o Astro. Se um dia uma dessas expressões for fatal
+     para o boot, o caminho é usar o Astro de verdade, não engordar este regex. */
+  const VARS = { V, JS_REV };
+  const attrs = (s) => s.replace(/(\w[\w:-]*)=\{`([^`]*)`\}/g, (todo, attr, corpo) => {
+    const resolvido = corpo.replace(/\$\{(\w+)\}/g, (m, nome) => (nome in VARS ? VARS[nome] : m));
+    return /\$\{/.test(resolvido) ? todo : `${attr}="${resolvido}"`;
+  });
+  return attrs(src
     .replace(DEFINE_VARS, (tag, names) => {
       const declaracoes = names.split(',').map((name) => name.trim()).filter(Boolean).map((name) => {
         if (!/^[A-Za-z_$][\w$]*$/.test(name)) throw new Error(`serve.mjs: ${tag} usa forma não abreviada; o arnês só resolve \`define:vars={{ NOME }}\``);
@@ -151,7 +175,7 @@ async function renderIndex() {
       'src={`/js/ops.js?v=${V}-${JS_REV}`}',
       `src="/js/ops.js?v=${V}-${JS_REV}"`,
     )
-    .replace(/src=\{`\/js\/main\.js\?v=\$\{V\}-\$\{JS_REV\}`\}/, `src="/js/main.js?v=${V}-${JS_REV}"`);
+    .replace(/src=\{`\/js\/main\.js\?v=\$\{V\}-\$\{JS_REV\}`\}/, `src="/js/main.js?v=${V}-${JS_REV}"`));
 }
 
 http.createServer(async (req, res) => {

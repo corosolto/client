@@ -1,0 +1,102 @@
+{
+  "id": "g3sg1",
+  "arma": "g3sg1",
+  "chassi": "G3",
+  "descricao": "G3SG1 = G3 do pack como autorada na zona de contato (punho, pente à frente do punho, alavanca de manejo à esquerda do tubo, mão de apoio no guarda-mão) + zona livre da G3SG1 do próprio jogo (public/models/weapons/g3sg1.glb, 0 crédito Mint): luneta com montagem de garra e coronha SG1 com apoio de face. A malha do jogo foi calibrada inteira contra o chassi (tools/fabrica/blender/sobrepor.py: poço sobre poço, punho sobre punho) e as duas peças saem dela com a mesma âncora.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "removerZonaLivre": [
+    {
+      "nome": "coronha-g3-pack",
+      "min": [
+        -5,
+        24.5,
+        -17
+      ],
+      "max": [
+        5,
+        47,
+        7
+      ]
+    }
+  ],
+  "zonaLivre": [
+    {
+      "peca": "luneta",
+      "fonte": "public/models/weapons/g3sg1.glb",
+      "recorte": {
+        "min": [
+          -0.24,
+          -1,
+          0.066
+        ],
+        "max": [
+          0.09,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          0,
+          -4,
+          -3
+        ],
+        "rotDeg": [
+          0,
+          0,
+          -90
+        ],
+        "escala": 1.0
+      }
+    },
+    {
+      "peca": "coronha-sg1",
+      "fonte": "public/models/weapons/g3sg1.glb",
+      "recorte": {
+        "min": [
+          -1,
+          -1,
+          -1
+        ],
+        "max": [
+          -0.28,
+          1,
+          1
+        ]
+      },
+      "ancora": {
+        "nome": "calibrada",
+        "pos": [
+          0,
+          -4,
+          -3
+        ],
+        "rotDeg": [
+          0,
+          0,
+          -90
+        ],
+        "escala": 1.0
+      }
+    }
+  ],
+  "mira": {
+    "raizCm": [
+      0,
+      17.5,
+      8.1
+    ],
+    "origem": "ocular da luneta da G3SG1 do jogo (centro medido por sobrepor.py --medir)"
+  },
+  "enquadramentoDe": "g3",
+  "recuo": {
+    "familia": "g3",
+    "fonte": "recoil.json ← Animations/G3 (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "acabamentoZonaLivre": {
+    "metal": 0.35,
+    "rugosidade": 0.6
+  }
+}

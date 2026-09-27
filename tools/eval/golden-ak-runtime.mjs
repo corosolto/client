@@ -78,7 +78,7 @@ async function openMap(map) {
     }
   });
   await page.goto(
-    `${BASE}/?debug=1&auto=E&vmweapon=${WEAPON}&map=${map}&armaslazy=0&${QS_MODO}`,
+    `${BASE}/?debug=1&vmauthored=1&auto=E&vmweapon=${WEAPON}&map=${map}&armaslazy=0&${QS_MODO}`,
     { waitUntil: 'domcontentloaded', timeout: 180000 },
   );
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });

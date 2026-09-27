@@ -1,0 +1,53 @@
+{
+  "id": "famas",
+  "arma": "famas",
+  "chassi": "MX16A4",
+  "descricao": "FAMAS bullpup de verdade (plano B). Do chassi MX16A4 ficam só o braço SK_Arms_Mono, a pose da mão forte, a câmera e o saque geral; a arma é a FAMAS do jogo (public/models/weapons/famas.glb, 0 crédito Mint) com o pente ATRÁS do punho em osso próprio, e a mão de apoio, a recarga tática e a vazia são re-autoradas pelo animador (tools/fabrica/animador/famas.json).",
+  "planoB": "no MX16A4 o pente fica à frente do punho e é zona de contato; a variante de zona livre (lote 1) lia como 'M4 com alça de FAMAS' (crítico REPROVADA)",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "malhaPropria": {
+    "fonte": "public/models/weapons/famas.glb",
+    "origem": "Mint (modelo de mundo da FAMAS do jogo)",
+    "escala": 0.758,
+    "rotDeg": [0, 0, 90],
+    "posCm": [-0.57, 3.6, -4.95],
+    "alinhamento": "palma forte do MX16A4 (-2,16; 14,59; -10,26) no meio do punho da FAMAS (x=0,145, z=-0,07 no GLB), eixo do cano no plano x=0; comprimento real 757 mm",
+    "pecas": [
+      {
+        "nome": "pente",
+        "osso": "Mag",
+        "caixa": {"min": [0.22, -0.04, -0.2], "max": [0.34, 0.02, 0.05]},
+        "abaixoDe": -0.03,
+        "vertices": 220
+      },
+      {
+        "nome": "alavanca",
+        "osso": "ChargingHandle",
+        "caixa": {"min": [-0.06, -0.03, 0.09], "max": [0.005, 0.01, 0.145]},
+        "vertices": 54
+      }
+    ],
+    "material": {
+      "tom": [0.42, 0.43, 0.45],
+      "metal": 0.15,
+      "rugosidade": 0.62,
+      "nota": "polímero escuro da FAMAS; a textura base do modelo de mundo fica"
+    }
+  },
+  "mira": {
+    "raizCm": [0.04, 17.6, 9.3],
+    "origem": "alça (ilha x 0,181–0,188, z 0,155–0,183 do GLB) e massa (z 0,171): linha z 0,170 × 0,758 − 4,95 = 7,94; ajustada no jogo entre o aro (crítico: 80 px abaixo em 9,6) e o topo da massa (régua mira: 40 px acima em 7,94)"
+  },
+  "boca": {"raizCm": [0, -34.2, -0.52], "origem": "quebra-chamas da FAMAS (x −0,499, z 0,058 do GLB)"},
+  "animador": "tools/fabrica/animador/famas.json",
+  "clipes": {
+    "reload_tactical": "animador",
+    "reload_empty": "animador",
+    "equip_rifle": "geral:rifle_equip",
+    "shoot": "procedural",
+    "inspect": "ausente"
+  },
+  "recuo": {"familia": "ar", "fonte": "recoil.json ← MX16A4 (chassi)"},
+  "enquadramentoDe": "m4"
+}

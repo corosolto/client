@@ -125,7 +125,11 @@ async function checkVmBytes() {
   if (MUT === 'vmbytes-velho') { const k = Object.keys(bytes)[0]; bytes[k] = '0000000000'; }
   const imut = new Set(files.filter((f) => cachePolicyFor(f.path) === 'immutable').map((f) => f.v));
   const orfaos = Object.entries(bytes).filter(([, v]) => !imut.has(v)).map(([w, v]) => `${w}=${v}`);
-  const soltos = [...imut].filter((v) => !Object.values(bytes).includes(v));
+  // `<família>/<família>-runtime.glb` (granada, deagle…) versiona por FAMILY_VER, também sha256[:10].
+  const wv = path.join(ROOT, 'public/js/data/weaponver.js');
+  const { FAMILY_VER = {} } = existsSync(wv) ? await import(pathToFileURL(wv).href) : {};
+  const familia = new Set(files.filter((f) => /^([^/]+)\/\1-runtime\.glb$/.test(f.path) && FAMILY_VER[f.path.split('/')[0]] === f.v).map((f) => f.v));
+  const soltos = [...imut].filter((v) => !Object.values(bytes).includes(v) && !familia.has(v));
   check(!orfaos.length && !soltos.length, 'SP4', `VM_BYTES (${Object.keys(bytes).length}) ↔ manifesto imutável (${imut.size})`,
     [orfaos.length ? `URL pede bytes que o manifesto não publica: ${orfaos.slice(0, 4).join(', ')}` : '',
       soltos.length ? `imutável sem versão no runtime: ${soltos.slice(0, 4).join(', ')}` : ''].filter(Boolean).join('; '));

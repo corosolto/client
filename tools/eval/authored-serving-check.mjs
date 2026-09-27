@@ -10,8 +10,10 @@
    esta régua sobe o ASTRO DE VERDADE e cobra a resposta.
    SV1 toda família com portão aberto (ready:true) responde 200 e > 100 KB;
    SV2 shared/ (9 texturas + general-runtime) e recoil.json respondem 200;
-   SV3 famílias fechadas também respondem (o ?vmready= de calibração depende).
-   Mutante: --mutante=familia-fantasma pede um GLB inexistente e TEM que acusar.
+   SV3 famílias fechadas também respondem (o ?vmready= de calibração depende);
+   SV4 só arma baked sem runtime:'family' tem GLB próprio (mesma rota de authoredvm.js).
+   Mutante: --mutante=familia-fantasma troca a família presente da granada por um
+   GLB inexistente e TEM que acusar.
    Uso: node tools/eval/authored-serving-check.mjs [--porta=8163]
    ============================================================================ */
 import { execSync, spawn } from 'node:child_process';
@@ -71,16 +73,16 @@ async function head(path, minBytes = 1) {
 
 const familias = Object.keys(VM_FAMILY);
 for (const familia of familias) {
-  const alvo = MUT === 'familia-fantasma' && familia === 'ak' ? 'fantasma' : familia;
+  const alvo = MUT === 'familia-fantasma' && familia === 'grenade' ? 'fantasma' : familia;
   const resultado = await head(`/private-assets/viewmodels/${alvo}/${alvo}-runtime.glb`, 100 * 1024);
   const aberta = VM_FAMILY[familia].ready === true;
   check(resultado.ok, `${aberta ? 'SV1' : 'SV3'} ${familia}${aberta ? ' (ready)' : ''}: GLB responde 200`,
     `status ${resultado.status}, ${(resultado.bytes / 1048576).toFixed(1)} MiB`);
 }
 
-// Armas ASSADAS têm GLB próprio (Mint dentro): o serving cobre cada uma.
+// `runtime:'family'` usa o GLB da família mesmo com `baked:true` (authoredvm.js:urlForKey).
 for (const [arma, cfg] of Object.entries(VM_WEAPON)) {
-  if (cfg.baked !== true) continue;
+  if (cfg.baked !== true || cfg.runtime === 'family') continue;
   const resultado = await head(`/private-assets/viewmodels/${cfg.family}/${arma}-baked-runtime.glb`, 500 * 1024);
   check(resultado.ok, `SV4 ${arma} (baked): GLB responde 200`,
     `status ${resultado.status}, ${(resultado.bytes / 1048576).toFixed(1)} MiB`);

@@ -51,6 +51,13 @@
     <div id="weaponSliders"></div>
   </div>
   <div id="crosshair"></div>
+  <script>
+    // Bancada é revisão: sem ?vmauthored=1 a chave tudo-ou-nada (vmlaunch.js) deixa o autorado morto.
+    if (new URLSearchParams(location.search).get('vmauthored') !== '1') {
+      const q = new URLSearchParams(location.search); q.set('vmauthored', '1');
+      location.replace(`${location.pathname}?${q}${location.hash}`);
+    }
+  </script>
   <script type="importmap">
     {"imports":{"three":"./vendor/three.module.js?h=a47c475b7bea","three/addons/":"./vendor/addons/"}}
   </script>

@@ -10,7 +10,7 @@
  * Régua de contagem não pegaria: as malhas existem no GLB e a config está certa.
  * O que falhava era a LIGAÇÃO. Por isso esta régua mede no jogo de verdade, arma
  * por arma, três coisas juntas:
- *   1. a chave resolvida começa com `gold#` (é o GLB novo, não a família velha);
+ *   1. a chave resolvida é autorada: `gold#` (AK pública) ou `<família>#<arma>` (produto K);
  *   2. o controlador tem malha de mão na entrada;
  *   3. a mão está visível com a cadeia de pais inteira.
  *
@@ -18,6 +18,10 @@
  *   --mutante=semfiacao   serve o game.js sem o `authored?.setWeapon` → 0 armas
  *
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361
+ *   node tools/eval/vm-autorado-vivo.mjs --porta=4361 --todas   # as 25 armas de fogo
+ *
+ * Sem a chave de lançamento o jogo nasce no legado (eval:vm-launch): esta régua
+ * abre a revisão `?vmauthored=1`; `--todas` abre também o portão de todas as famílias.
  */
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -28,6 +32,7 @@ const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `=${
 const PORTA = arg('porta', '4361');
 const MUTANTE = arg('mutante', '');
 const SO = arg('armas', '').split(',').filter(Boolean);
+const TODAS = process.argv.includes('--todas');
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -47,7 +52,8 @@ if (MUTANTE === 'semfiacao') {
     r.fulfill({ contentType: 'application/javascript; charset=utf-8', body: fonte }));
 }
 
-await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0`,
+const FAMILIAS = 'ak,ar,mp5,smg,p90,g3,marksman,svd,sniper,bolt,deagle,pistol,revolver,shotgun,lmg,grenade';
+await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0&vmauthored=1${TODAS ? `&vmready=${FAMILIAS}` : ''}`,
   { waitUntil: 'load', timeout: 180000 });
 await pag.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
 await pag.waitForTimeout(2500);
@@ -56,15 +62,15 @@ await pag.waitForTimeout(2500);
    parser à mão já falhou aqui e devolveu zero armas com o arquivo correto.
    Só entram as que o portão de rollout deixa passar (família ready + arma não
    segurada): as demais caem no legado DE PROPÓSITO e não são defeito. */
-const ALVO = SO.length ? SO : await pag.evaluate(async () => {
+const ALVO = SO.length ? SO : await pag.evaluate(async (todas) => {
   const vm = await import('/js/data/vmconfig.js');
   return Object.entries(vm.VM_WEAPON || {})
-    .filter(([, c]) => c?.golden && c.ready !== false && vm.VM_FAMILY?.[c.family]?.ready === true)
+    .filter(([, c]) => todas || (c.ready !== false && vm.VM_FAMILY?.[c.family]?.ready === true))
     .map(([k]) => k);
-});
+}, TODAS);
 if (!ALVO.length) {
   await nav.close();
-  console.log('\n  VERMELHO — nenhuma arma golden no vmconfig\n');
+  console.log('\n  VERMELHO — nenhuma arma pronta no vmconfig\n');
   process.exit(1);
 }
 
@@ -73,7 +79,7 @@ for (const arma of ALVO) {
   const r = await pag.evaluate(async (a) => {
     const g = window.__game;
     g._switchWeapon(a);
-    for (let i = 0; i < 30 && !g.vm.authored?.entry?.(a); i += 1) {
+    for (let i = 0; i < 60 && !g.vm.authored?.entry?.(a); i += 1) {
       await new Promise((r2) => setTimeout(r2, 120));     // espera o GLB chegar
     }
     await new Promise((r2) => setTimeout(r2, 250));
@@ -82,16 +88,16 @@ for (const arma of ALVO) {
     const maos = ent?.handMeshes || [];
     return { arma: a, chave: ent?.key || null, maos: maos.length, visiveis: maos.filter(visivel).length };
   }, arma);
-  const ok = r.chave?.startsWith('gold#') && r.visiveis > 0;
+  const ok = Boolean(r.chave?.includes('#')) && r.visiveis > 0;
   linhas.push({ ...r, ok });
-  console.log(`  ${r.arma.padEnd(7)} ${String(r.chave || 'LEGADO').padEnd(14)} maos ${r.visiveis}/${r.maos}  ${ok ? 'ok' : 'FALHA'}`);
+  console.log(`  ${r.arma.padEnd(10)} ${String(r.chave || 'LEGADO').padEnd(22)} maos ${r.visiveis}/${r.maos}  ${ok ? 'ok' : 'FALHA'}`);
 }
 await nav.close();
 
 const bons = linhas.filter((l) => l.ok).length;
-const semMao = linhas.filter((l) => l.chave?.startsWith('gold#') && !l.visiveis).map((l) => l.arma);
-const legado = linhas.filter((l) => !l.chave?.startsWith('gold#')).map((l) => l.arma);
-console.log(`\n  ${bons}/${ALVO.length} armas golden montam o viewmodel autorado COM mão visível`);
+const semMao = linhas.filter((l) => l.chave?.includes('#') && !l.visiveis).map((l) => l.arma);
+const legado = linhas.filter((l) => !l.chave?.includes('#')).map((l) => l.arma);
+console.log(`\n  ${bons}/${ALVO.length} armas montam o viewmodel autorado COM mão visível`);
 if (legado.length) console.log(`  caíram no legado: ${legado.join(' ')}`);
 if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
