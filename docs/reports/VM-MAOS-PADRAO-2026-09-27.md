@@ -43,12 +43,17 @@ mudança de valor vermelho**. O dono relatou ter aprovado os screenshots
 estáticos de todas as armas no HTML de revisão; essa aprovação cobre a
 aparência dos quadros vistos, enquanto ADS e recarga exigem seus próprios
 quadros em movimento.
-`eval:vm-placar` transforma as 29 medições em falhas quando `VM_LAUNCH=true`.
-`eval:vm-placar` passou P1/P2 (placares atuais e dívidas com dono) e reprovou
-apenas P3 com 29 falhas. Esses vermelhos não são prova de ausência de mãos:
+Antes do aceite, `eval:vm-placar` transformava as 29 medições em falhas P3
+quando `VM_LAUNCH=true`. Esses alertas não são prova de ausência de mãos:
 incluem enquadramento, contato, mira e recarga. Na Tavor, a mão aparece mas
-o contato reprova. Não alterar os limites ou suprimir P3 para obter CI verde
-sem decisão explícita sobre a dívida.
+o contato reprova. O dono confirmou a publicação com os alertas conhecidos,
+deixando sua correção para depois. `vm-launch-aceite-visual.json` registra as
+29 células por formato com estado, valor e SHA-256 da mensagem medida. P3 e a
+régua ao vivo só aceitam esses resultados **exatos**; célula nova, valor ou
+mensagem alterados e `NAO_MEDE` continuam vermelhos. O placar passou 0 falhas;
+os mutantes de valor alterado e célula nova reprovaram. Uma amostra no jogo
+real, `cobertura/awp` 3:2, continuou com o valor aprovado e passou como
+aceite. A dívida original com dono permanece para o trabalho de correção.
 
 O `check:vm` completo no head publicado `923047a94` terminou **7/9 em
 1338,6 s**: só `eval:vm-placar` (29 medições P3) e `eval:vm-reguas` (14
@@ -92,10 +97,10 @@ dos bytes baixados antes de publicar. Sem upload, o CI permanece vermelho.
 2. Validar preview limpo com `VM_REQUIRED=1` e `eval:vm-serving-prod`:
    63/63 arquivos servidos com hash e cabeçalho corretos, além de jogo sem
    flags com as 26 mãos visíveis.
-3. Resolver as dívidas visuais de lançamento ou registrar a decisão do dono
-   sobre elas de forma explícita e verificável antes do merge.
+3. Depois do merge, corrigir os 15 pares arma/régua aceitos e retirar cada
+   entrada do aceite quando a régua correspondente ficar verde.
 
 **Estado:** branch `vm/hands-default` publicada no PR draft #669; ainda não
-mergeada. O `check:vm` completo fechou 7/9 no head `923047a94`, com apenas as
-dívidas visuais P3 acima. A câmera permanece no PR #668, independente desta
-mudança.
+mergeada. O `check:vm` completo fechou 7/9 no head `923047a94`, antes do
+aceite; nova execução no head com aceite está em andamento. A câmera
+permanece no PR #668, independente desta mudança.
