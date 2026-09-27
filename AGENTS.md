@@ -144,6 +144,7 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 | como abrir um PR que passa | [`CONTRIBUTING.md`](CONTRIBUTING.md) | linha editorial, higiene, processo |
 | investigar e consertar um defeito | [`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md) | as leis viram passo a passo, com o caso real de cada uma |
 | criar personagem, mapa ou asset novo | [`.claude/skills/csbrasil/SKILL.md`](.claude/skills/csbrasil/SKILL.md) | pipeline com 6 portões; ficha validada por `npm run spec:check` |
+| criar ou trocar viewmodel pela fábrica | [`.claude/skills/fabrica-armas/SKILL.md`](.claude/skills/fabrica-armas/SKILL.md) | ficha, zona de contato, build, QA e crítico cego |
 | revisar asset gerado (nota de fora) | [`.claude/skills/asset-review/SKILL.md`](.claude/skills/asset-review/SKILL.md) | crítico adversarial de contexto limpo — quem constrói não dá a nota |
 | limitar contexto, Graphify e Serena | [`docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa`](docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa) | um assunto, uma tarefa; checkpoint antes de trocar |
 | skills nativas visíveis pra todo agente | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` no `check:fast` |

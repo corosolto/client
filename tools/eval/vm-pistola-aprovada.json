@@ -1,0 +1,39 @@
+{
+ "o_que_e": "Retrato da PT-38 APROVADA (antes do #631) no quadro renderizado: referência do eval:vm-pistola-ref. Regravar só com decisão do dono (--assar-pistola).",
+ "3x2": {
+  "quadril": {
+   "areaArma": 0.007086226851851852,
+   "arma": {
+    "x0": 778,
+    "y0": 666,
+    "x1": 934,
+    "y1": 808,
+    "larg": 157,
+    "alt": 143,
+    "n": 9796
+   }
+  },
+  "ads": {
+   "areaArma": 0.0044603587962962965
+  },
+  "medido": "2026-09-23"
+ },
+ "16x9": {
+  "quadril": {
+   "areaArma": 0.008398491083676268,
+   "arma": {
+    "x0": 778,
+    "y0": 591,
+    "x1": 934,
+    "y1": 733,
+    "larg": 157,
+    "alt": 143,
+    "n": 9796
+   }
+  },
+  "ads": {
+   "areaArma": 0.005286351165980796
+  },
+  "medido": "2026-09-23"
+ }
+}

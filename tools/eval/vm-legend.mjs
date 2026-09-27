@@ -228,7 +228,7 @@ const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--ena
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 const relatorio = { arma: ARMA, modo: MODO, viewport: { W, H }, legenda: [], estados: [] };
 try {
-  await page.goto(`${BASE}/?debug=1&${QS_MODO}&auto=E&vmweapon=${ARMA}&map=brasilia&armaslazy=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${BASE}/?debug=1&vmauthored=1&${QS_MODO}&auto=E&vmweapon=${ARMA}&map=brasilia&armaslazy=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.waitForFunction((w) => window.__authoredVm?.entry?.(w), ARMA, { timeout: 120000 });
   await page.waitForTimeout(700);
