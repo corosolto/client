@@ -63,6 +63,27 @@ uma destas servir, e **use o termo dele**, não o seu:
 - **"arma pequena"** / **"arma gigante"** — sempre relativo à AK na mesma
   figura. Dê a razão aproximada: "uns 60% da AK".
 
+### Onde o defeito começa — os mesmos números das réguas
+
+As réguas de imagem (`eval:vm-mira`, `eval:vm-cobertura`, `eval:vm-pistola-ref`,
+`eval:vm-maos`, `eval:vm-carregador`) usam estes cortes, definidos em
+`tools/eval/lib/vm-limiares.mjs`. Use-os quando o frame deixar medir, num quadro
+de 1440 px de largura; se o seu olho discordar do número, diga os dois.
+
+- **mira fora da cruz**: aro da alça/óptica ou topo da massa a mais de **30 px**
+  da cruz; ou a arma tombada mais de **12°** da vertical no ADS.
+- **ângulo esquisito** (quadril): eixo coronha→boca a mais de **12°** do da AK.
+- **arma pequena / gigante**: arma longa fora de **80–125%** da AK (tamanho
+  linear); compacta (mp5, uzi, p90) fora de **50–100%**; lmg fora de **65–95%**
+  (opção B do dono); m92 fora de **80–150%** (escala real por metro, decisão do
+  dono: maior que a AK não é defeito até 150%); curta (pistola, deagle, revólver)
+  fora de **80–125%** da **PT-38 aprovada** por comprimento da arma — as curtas
+  NÃO se comparam com a AK (decisão do dono, integração K). **deagle** tem faixa
+  própria **80–145%** (decisão do dono, 25/09: a Desert Eagle fica grande).
+- **mão de apoio não encosta**: dedos a mais de ~**2–2,5 cm** (0,20 palma) da arma.
+- **objeto no meio do ar**: peça visível a mais de uma palma e meia (0,7 palma
+  de junta) de qualquer mão e fora do encaixe, sem estar caindo.
+
 ## O que você recebe
 
 Um diretório de PNG. Os nomes dizem o que são: `<arma>-<estado>.png`, com

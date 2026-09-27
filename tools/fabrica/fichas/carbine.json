@@ -1,0 +1,105 @@
+{
+  "id": "carbine",
+  "arma": "carbine",
+  "chassi": "Kar98K",
+  "descricao": "Carabina de alavanca (\"Papo de Peão\") pelo PLANO B. A carabina do jogo é de alavanca com depósito tubular carregado pela portinhola lateral — o pack não tem esse contato (o MX16A4 da proposta inicial é AR de pente; o Kar98K carrega por cima com ferrolho). Do Kar98K ficam o braço, a mão forte no delgado da coronha (a carabina também não tem punho de pistola), a mão de apoio no guarda-mão, a câmera e o saque geral; a arma é a malha do jogo (public/models/weapons/carbine.glb, 0 crédito Mint) com a alavanca em osso próprio, e o cartucho é o do próprio Kar98K. Re-autorado por tools/fabrica/blender/animador.py (tools/fabrica/animador/carbine.json): recarga cartucho a cartucho pela portinhola (laço reload_start/loop/end, um laço por cartucho, como a Mosin) e o ciclo da alavanca a cada tiro com a mão forte indo junto (clipe pump).",
+  "planoB": "contato de alavanca + portinhola lateral não existe no pack",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "malhaPropria": {
+    "fonte": "public/models/weapons/carbine.glb",
+    "origem": "Mint (modelo de mundo da carabina do jogo)",
+    "escala": 0.95,
+    "rotDeg": [
+      0,
+      0,
+      0
+    ],
+    "posCm": [
+      0,
+      -5,
+      -6
+    ],
+    "alinhamento": "delgado da coronha na palma forte do Kar98K e guarda-mão na palma de apoio (tools/fabrica/blender/sobrepor.py); cano do GLB já em −Y",
+    "pecas": [
+      {
+        "nome": "alavanca",
+        "osso": "Bolt",
+        "caixa": {
+          "min": [
+            -0.01,
+            0.07,
+            -0.07
+          ],
+          "max": [
+            0.01,
+            0.24,
+            0.03
+          ]
+        },
+        "pivoGlb": [
+          0,
+          0.082,
+          0.02
+        ]
+      }
+    ],
+    "manterPack": [
+      {
+        "osso": "Cartridge",
+        "novoOsso": "Mag",
+        "posCm": [
+          0,
+          -6,
+          -3.3
+        ],
+        "rotDeg": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "material": {
+      "tom": [
+        0.55,
+        0.55,
+        0.56
+      ],
+      "metal": 0.25,
+      "rugosidade": 0.6,
+      "nota": "madeira e aço oxidado do modelo de mundo sem o cromado do metálico 1"
+    }
+  },
+  "mira": {
+    "raizCm": [
+      0,
+      -9.5,
+      3.8
+    ],
+    "origem": "logo acima do entalhe da alça e do cão (topos 3,74 cm) — massa (3,18 cm) medida por sobrepor.py --medir"
+  },
+  "boca": {
+    "raizCm": [
+      0,
+      -52.4,
+      1.3
+    ],
+    "origem": "boca do cano (y −0,499, z 0,077 do GLB)"
+  },
+  "animador": "tools/fabrica/animador/carbine.json",
+  "clipes": {
+    "reload_start": "animador",
+    "reload_loop": "animador",
+    "reload_end": "animador",
+    "reload_empty": "ausente",
+    "pump": "animador",
+    "equip_rifle": "geral:rifle_equip",
+    "shoot": "procedural",
+    "inspect": "ausente"
+  },
+  "recuo": {
+    "familia": "bolt",
+    "fonte": "recoil.json ← Kar98K (chassi)"
+  }
+}

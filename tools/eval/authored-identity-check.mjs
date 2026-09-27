@@ -66,7 +66,7 @@ try {
        0 B e reprovava por cegueira do instrumento, não por peso do arquivo. */
     await page.addInitScript(() => performance.setResourceTimingBufferSize(5000));
     await page.goto(
-      `${BASE}/?debug=1&auto=E&vmweapon=${id}&map=brasilia&armaslazy=0&vmready=${familia}`,
+      `${BASE}/?debug=1&auto=E&vmauthored=1&vmweapon=${id}&map=brasilia&armaslazy=0&vmready=${familia}`,
       { waitUntil: 'load', timeout: 180000 },
     );
     await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });

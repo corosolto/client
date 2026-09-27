@@ -48,7 +48,7 @@ try {
     if (!familia) throw new Error(`arma sem família paga: ${id}`);
     const page = await browser.newPage({ viewport: CELL });
     await page.goto(
-      `${BASE}/?debug=1&auto=E&vmweapon=${id}&map=brasilia&armaslazy=0&vmready=${familia}`,
+      `${BASE}/?debug=1&vmauthored=1&auto=E&vmweapon=${id}&map=brasilia&armaslazy=0&vmready=${familia}`,
       { waitUntil: 'load', timeout: 180000 },
     );
     await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });

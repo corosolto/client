@@ -3,28 +3,35 @@
   "servedRoot": "/private-assets/viewmodels",
   "blobPrefix": "viewmodels/sha256",
   "blobBase": null,
-  "count": 35,
-  "totalBytes": 79092022,
+  "count": 63,
+  "totalBytes": 167439286,
   "files": [
     {
+      "path": "ak/ak-baked-runtime.glb",
+      "bytes": 1536096,
+      "sha256": "96d077bec15209f63a6cdf7367305f417c2a8bc05fb8c054456ae73a04c3dee8",
+      "v": "96d077bec1",
+      "contentType": "model/gltf-binary"
+    },
+    {
       "path": "ak/akm-baked-runtime.glb",
-      "bytes": 1487308,
-      "sha256": "ebcfd0d3b7874bdb0420040ae65f055408210f34162ab227041d9b29e898dda2",
-      "v": "ebcfd0d3b7",
+      "bytes": 1531012,
+      "sha256": "664dd1c43808d749d22709907d496ea858e0406965c40a497269949a3ba8a79a",
+      "v": "664dd1c438",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "ak/m92-baked-runtime.glb",
-      "bytes": 1654024,
-      "sha256": "95b0445bb1e397ae45d22fbf7e92dce408f1dc04dded1f77a4a4e8c857d7cecb",
-      "v": "95b0445bb1",
+      "bytes": 1697728,
+      "sha256": "dd51c07b8fddad1b59001a622a3e6c3d9fc4427316dfcf4482a41036e02da1fd",
+      "v": "dd51c07b8f",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "ar/carbine-baked-runtime.glb",
-      "bytes": 1631536,
-      "sha256": "8de215edb19630a187143cbc0c09e5a3596d3ed816a3dfe7d741d842cb9834f0",
-      "v": "8de215edb1",
+      "bytes": 1687080,
+      "sha256": "59806688b0884480ec142d1a4c0e388b0bdeed9736638ca67eeba2fbcdb52bca",
+      "v": "59806688b0",
       "contentType": "model/gltf-binary"
     },
     {
@@ -43,16 +50,16 @@
     },
     {
       "path": "ar/md97-baked-runtime.glb",
-      "bytes": 1471632,
-      "sha256": "d0989e2f5688ad44d3338cf541fe2345036cea12d57c4695250344362059567f",
-      "v": "d0989e2f56",
+      "bytes": 1518536,
+      "sha256": "4cd468a65fffa13414d4f47dc8fd7a1f6070d7c26ef9f9dc2784f39ea3bfe7dc",
+      "v": "4cd468a65f",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "ar/scar-baked-runtime.glb",
-      "bytes": 1526788,
-      "sha256": "958a0223cb2efa703ffe200f17044308a7bf1a9016d786b816e3b1cdc053c20c",
-      "v": "958a0223cb",
+      "bytes": 1573740,
+      "sha256": "5a4f8664e3b150398700cd5b8a842cedf3e37575b439ef0e83265d484883fb6a",
+      "v": "5a4f8664e3",
       "contentType": "model/gltf-binary"
     },
     {
@@ -64,30 +71,198 @@
     },
     {
       "path": "bolt/mosin-baked-runtime.glb",
-      "bytes": 5298468,
-      "sha256": "52b8db3adc4415364accf34d5b039d1399df988482268150790b4cc40399c56b",
-      "v": "52b8db3adc",
+      "bytes": 5492332,
+      "sha256": "ea1195452048dfc352948d135f84805b8d295ca2a3a50e2e4e21cfc3cb6caca7",
+      "v": "ea11954520",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "bolt/rem700-baked-runtime.glb",
-      "bytes": 4695384,
-      "sha256": "439a4859d840b241680cd6a566bf62b989b7a63c01bbf89d45c7d3b24f1e79fa",
-      "v": "439a4859d8",
+      "bytes": 5261724,
+      "sha256": "2a5eb7c53b291381b8fb79811ab0c0920deda68fa7ca5643004613a7a1f5f2af",
+      "v": "2a5eb7c53b",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "deagle/deagle-runtime.glb",
-      "bytes": 3246776,
-      "sha256": "d482ff82bceba3690ff4dd5912f95851d538320a55d9d7f37cf56e32fd2c64a4",
-      "v": "d482ff82bc",
+      "bytes": 3443296,
+      "sha256": "e480f69e76f892b5b7ad3d49d1a69f24fe0c8515735faa1c7cd86de7a2583c97",
+      "v": "e480f69e76",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/akm-fabrica.glb",
+      "bytes": 3889224,
+      "sha256": "91ee56bd36a34f8b616e6038ce04139c258dbf9dfa4a8e1dd0cec751a6252a05",
+      "v": "91ee56bd36",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/awp-fabrica.glb",
+      "bytes": 2821016,
+      "sha256": "41867d86fd6eaf0206ac0cd0cfbb7d570acd8ab878e045aa7a2fab118e55170d",
+      "v": "41867d86fd",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/carbine-fabrica.glb",
+      "bytes": 2306700,
+      "sha256": "d9c3907371d7f5879a8c2156dc284520bf77a4e25d84b72e19e30f9a7c073290",
+      "v": "d9c3907371",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/deagle-fabrica.glb",
+      "bytes": 2543216,
+      "sha256": "a08149fe7315fc5703535c149ddaa6c185674df2b4291401c43f76d9cb90b12d",
+      "v": "a08149fe73",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/famas-fabrica.glb",
+      "bytes": 2267808,
+      "sha256": "47e12d76849026f5b663f0ff4454216316478504daf5cd333284d69b7ff653dd",
+      "v": "47e12d7684",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/g3-fabrica.glb",
+      "bytes": 3351684,
+      "sha256": "41e72be5d88dfde2c46d8d3f559c498c678957141f5e62778630f572ad6b9e33",
+      "v": "41e72be5d8",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/g3sg1-fabrica.glb",
+      "bytes": 3369520,
+      "sha256": "e9248df6b25a5e407bf3fa9c1275b6e18928805bdd5f1ee22967c54efa89ee75",
+      "v": "e9248df6b2",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/lmg-fabrica.glb",
+      "bytes": 4863540,
+      "sha256": "527c3d411e39f5c57cc66d2434afa22eaccd489477f933c9e725bc827b825ece",
+      "v": "527c3d411e",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/m4-fabrica.glb",
+      "bytes": 4162644,
+      "sha256": "c500cfe6320ac063d72c60750adecce0a91179b8b53881f3b48e30f6918a2a9a",
+      "v": "c500cfe632",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/m400-fabrica.glb",
+      "bytes": 4133476,
+      "sha256": "a9f4bce104f31563c59ecd0d7a369026b0bb9c9e1d0e2bdb4cfc8577fa5a4793",
+      "v": "a9f4bce104",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/m92-fabrica.glb",
+      "bytes": 3799036,
+      "sha256": "c8fcfb1276481e184033543f150c72fc474b71f59f8930a1f2bb139262a0c07a",
+      "v": "c8fcfb1276",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/md97-fabrica.glb",
+      "bytes": 4162572,
+      "sha256": "f17921e1c1db424f9bd18f651fe5fa5a25cd795732936d47b139945948914e26",
+      "v": "f17921e1c1",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/mosin-fabrica.glb",
+      "bytes": 2587280,
+      "sha256": "71b22a261d20006e95886af09bad40859d489dd0b7827e5e20c000387590d21a",
+      "v": "71b22a261d",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/mp5-fabrica.glb",
+      "bytes": 3126712,
+      "sha256": "d26da9f0abc835518f0b7bb84cbf2c84804b2929f8661c0cd36303d618c97bd7",
+      "v": "d26da9f0ab",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/p90-fabrica.glb",
+      "bytes": 5417180,
+      "sha256": "f0ab213493475f1d152871d46b76e6bd268f4b77fc2fa5abc04d0f0c56564a11",
+      "v": "f0ab213493",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/pistol-fabrica.glb",
+      "bytes": 2727384,
+      "sha256": "4c9e3a1a29908310c9e6d555c3dadf783e75d5858c646bd10060081aaabe7f6a",
+      "v": "4c9e3a1a29",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/rem700-fabrica.glb",
+      "bytes": 2716640,
+      "sha256": "4cbc945120022d89c93056e1f86573954687ebb7a94b7c44088a062388cc6b45",
+      "v": "4cbc945120",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/revolver38-fabrica.glb",
+      "bytes": 2385736,
+      "sha256": "9204c8df66922c6f02392573b4220aaf3295bac3e46fb47df7caf1f270046ea5",
+      "v": "9204c8df66",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/scar-fabrica.glb",
+      "bytes": 3819096,
+      "sha256": "e15febed0de571bb81b388fd4b64a1852785906412ddaf675ab66e1957dc7b01",
+      "v": "e15febed0d",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/shotgun-fabrica.glb",
+      "bytes": 3080316,
+      "sha256": "8b3c8639cad501ac42893e4829efbbfab901f227f7da203ad39325496f088a80",
+      "v": "8b3c8639ca",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/sks-fabrica.glb",
+      "bytes": 2733696,
+      "sha256": "39c44f6e413db048dc5d48aeb0e410bac2711b843b521156585308af0aab0947",
+      "v": "39c44f6e41",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/svd-fabrica.glb",
+      "bytes": 3394376,
+      "sha256": "3efcb8065b195f236cce9ba372c3f85b839e0f5859a857eaf284a29454faa8b5",
+      "v": "3efcb8065b",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/tavor-fabrica.glb",
+      "bytes": 2260692,
+      "sha256": "88a6aeec814e23d4e8206135ba7116420d7a03d83670efdb244b6ab7c39f923f",
+      "v": "88a6aeec81",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "fabrica/uzi-fabrica.glb",
+      "bytes": 2162564,
+      "sha256": "59756a6f187a031a5b1fe822c135be20e6509ba51a1cf6e818261868381e32b8",
+      "v": "59756a6f18",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "g3/g3-baked-runtime.glb",
-      "bytes": 1607272,
-      "sha256": "6a4cd484a8df4c35e43fe8ecd13eb5b242d02b39e8aeec3b2bfe55c70f9f4446",
-      "v": "6a4cd484a8",
+      "bytes": 1636876,
+      "sha256": "a31aff0279267f1ef22a890256961c7cc3d1d86a89b104a53df149ac7d7bac02",
+      "v": "a31aff0279",
       "contentType": "model/gltf-binary"
     },
     {
@@ -98,31 +273,52 @@
       "contentType": "model/gltf-binary"
     },
     {
+      "path": "grenade/grenade-runtime.glb",
+      "bytes": 2868028,
+      "sha256": "f6033daefb76b26e80f21ea7138e36f418cb3f3aa7e07d1cff98a6b1bd4a9826",
+      "v": "f6033daefb",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "grenade/grenades-world.glb",
+      "bytes": 1213844,
+      "sha256": "0e64280c5bace45167a325b3b43ef505d4be77e208dba2f568cc4f2d3025badf",
+      "v": "0e64280c5b",
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "path": "knife/knife-baked-runtime.glb",
+      "bytes": 1487908,
+      "sha256": "93028919ee74f46ed8ef77c8e34ceec314f4e76b2e069b4686b65d1cb84f0556",
+      "v": "93028919ee",
+      "contentType": "model/gltf-binary"
+    },
+    {
       "path": "lmg/lmg-baked-runtime.glb",
-      "bytes": 6466928,
-      "sha256": "3552c724aee62b11cb7bf9b67e069bb2c6c28cfffc89a8a42c84257b9fca536f",
-      "v": "3552c724ae",
+      "bytes": 6467236,
+      "sha256": "025a99f2f5f969e513ebafb7678f87f8bd726149d9d924cde6d6941ae367a179",
+      "v": "025a99f2f5",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "marksman/sks-baked-runtime.glb",
-      "bytes": 5473264,
-      "sha256": "a52560d382cc9c48804bf879e40f5eeed1e248ada22f9f74fa4c12b1cc19d871",
-      "v": "a52560d382",
+      "bytes": 5629224,
+      "sha256": "0e5d0ff138a73371e090ddb5a21fee7cd2b07b03742675543b036e1b2648fc4a",
+      "v": "0e5d0ff138",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "mp5/mp5-runtime.glb",
-      "bytes": 1550620,
-      "sha256": "ac4630c4941b33e626ebbee61071c3b5c558de24647338da87da32346cba9903",
-      "v": "ac4630c494",
+      "bytes": 1540288,
+      "sha256": "b548817afd0725ef52ac8ba11834fd44acf4e48678785adb15fa425f6161fd58",
+      "v": "b548817afd",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "p90/p90-baked-runtime.glb",
-      "bytes": 1477620,
-      "sha256": "3eece3e0fb6eb8c640f96c084523af0cc979e3d3a00239f5697a7aa6975e6908",
-      "v": "3eece3e0fb",
+      "bytes": 1469436,
+      "sha256": "2b4ff0fdf8ad65973f5eb6d3230cfa5d0e3eca73fecb7ca4380aafa1c57c196c",
+      "v": "2b4ff0fdf8",
       "contentType": "model/gltf-binary"
     },
     {
@@ -141,9 +337,9 @@
     },
     {
       "path": "revolver/revolver-runtime.glb",
-      "bytes": 4074036,
-      "sha256": "c1394590ae640ff32792ac41e78bd3eeca7ccd1163d0a12c071a69d9582bed36",
-      "v": "c1394590ae",
+      "bytes": 4186328,
+      "sha256": "40b53e2fba7309ee210f0199f69fd7227c544b197d409904faaa4981231f796e",
+      "v": "40b53e2fba",
       "contentType": "model/gltf-binary"
     },
     {
@@ -218,16 +414,16 @@
     },
     {
       "path": "shotgun/shotgun-baked-runtime.glb",
-      "bytes": 3954632,
-      "sha256": "6c6c1ba3f72d227375650160c911ca72ef798a198a64682558d99c794c431239",
-      "v": "6c6c1ba3f7",
+      "bytes": 4307324,
+      "sha256": "d08281eef972f6033766794ca8930a03138524e0a211d125caa9838c09d1724d",
+      "v": "d08281eef9",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "smg/uzi-baked-runtime.glb",
-      "bytes": 4267588,
-      "sha256": "353d0384ec60a0e6ffc99ef38b5092a5773c2562e2e4bc401adef1228ef0a9fc",
-      "v": "353d0384ec",
+      "bytes": 5142564,
+      "sha256": "c215b93f67f132a816140bf99ee1befc4f519a6953c2726da830a002d1e4c71b",
+      "v": "c215b93f67",
       "contentType": "model/gltf-binary"
     },
     {
@@ -239,16 +435,16 @@
     },
     {
       "path": "sniper/m400-baked-runtime.glb",
-      "bytes": 1537064,
-      "sha256": "f75e4625c1199d3fed6fb9f132e5cc59a0c742dc41a92bcac5fa6bcab76f739d",
-      "v": "f75e4625c1",
+      "bytes": 1984364,
+      "sha256": "838066951a0a9ed1b530875932e5af127f1ad3b7448773169ce3fcda4ed07637",
+      "v": "838066951a",
       "contentType": "model/gltf-binary"
     },
     {
       "path": "svd/svd-baked-runtime.glb",
-      "bytes": 5183204,
-      "sha256": "f44732930d24dcb78a728ea3a1c1458d0d763a23a79749ea8ad54366a9e376e9",
-      "v": "f44732930d",
+      "bytes": 5194336,
+      "sha256": "9db55c0299f966ee1877beecb21c5c8a54f3f823c2ce7126439d1af383b3622d",
+      "v": "9db55c0299",
       "contentType": "model/gltf-binary"
     }
   ]

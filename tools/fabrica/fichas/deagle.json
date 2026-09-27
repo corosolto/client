@@ -1,0 +1,13 @@
+{
+  "id": "deagle",
+  "arma": "deagle",
+  "chassi": "DGL50",
+  "descricao": "Deagle = DGL50 do pack como autorada.",
+  "skinBraco": "coro-ak",
+  "skinArma": null,
+  "zonaLivre": [],
+  "recuo": {
+    "familia": "deagle",
+    "fonte": "recoil.json ← Animations/DGL50 (RecoilAnimData); clipe de tiro do pack onde existe"
+  }
+}

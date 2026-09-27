@@ -1,0 +1,12 @@
+{
+  "id": "md97",
+  "descricao": "Identidade IMBEL MD97 sobre o MX16A4 do pack: aço fosfatizado escuro (a MD97 não tem o alumínio anodizado cinza do AR-15), polímero preto, carregador de aço. Só material — a malha é a do pack.",
+  "materiais": {
+    "finish": { "cor": "2a2c2f", "metal": 0.6, "rugosidade": 0.5 },
+    "finish_alu": { "cor": "303236", "metal": 0.6, "rugosidade": 0.48 },
+    "finish_dark": { "cor": "1e1f21", "metal": 0.55, "rugosidade": 0.5 },
+    "polymer": { "cor": "1b1b1c", "metal": 0.0, "rugosidade": 0.7 },
+    "polymer_grip": { "cor": "1b1b1c", "metal": 0.0, "rugosidade": 0.72 },
+    "mag": { "cor": "34363a", "metal": 0.6, "rugosidade": 0.45 }
+  }
+}

@@ -157,7 +157,7 @@ for (const arma of ARMAS) {
   const registro = { arma, modo: MODO, passos: [], erro: null };
   try {
     await page.goto(
-      `${BASE}/?debug=1&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0&${QS_MODO}`,
+      `${BASE}/?debug=1&vmauthored=1&auto=E&vmweapon=${arma}&map=brasilia&armaslazy=0&${QS_MODO}`,
       { waitUntil: 'load', timeout: 180000 },
     );
     await page.waitForFunction(() => window.__game?.player, null, { timeout: 180000 });

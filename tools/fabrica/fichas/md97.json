@@ -1,0 +1,16 @@
+{
+  "id": "md97",
+  "arma": "md97",
+  "chassi": "MX16A4",
+  "descricao": "MD97 (IMBEL) = MX16A4 do pack como autorado na zona de contato — a MD97 tem o mesmo contato do AR-15: punho, pente à frente do punho, retém e alavanca de manejo traseira, mão de apoio no guarda-mão. Identidade por skin (aço fosfatizado escuro, polímero preto, carregador de aço).",
+  "skinBraco": "coro-ak",
+  "skinArma": "md97",
+  "removerZonaLivre": [],
+  "zonaLivre": [],
+  "enquadramentoDe": "m4",
+  "recuo": {
+    "familia": "ar",
+    "fonte": "recoil.json ← Animations/MX16A4 (RecoilAnimData); clipe de tiro do pack onde existe"
+  },
+  "limite": "A alça de transporte alta da MD97 do jogo (public/models/weapons/md97.glb) foi testada como zona livre e saiu: a alça de mira dela é um tambor maciço, sem janela, e no ADS tapava a cruz. Fica a alça do MX16A4 (a da M4 aprovada)."
+}
