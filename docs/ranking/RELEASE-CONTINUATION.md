@@ -137,3 +137,29 @@ e não faz parte da PR #663.
 - Próximo passo: publicar candidato Production com `--skip-domain`, validar
   SSR e badge usando o banco real e só então decidir a ordem de promoção dos
   merges/alias. Não reiniciar os nós ocupados.
+
+### Candidato Vercel e correção do badge — 27/09/2026
+
+- O primeiro candidato sem domínio (`dpl_HkkZQeyoFfpbCiMxF1w3tzjJhRqC`)
+  construiu e mostrou `/ranking` SSR com 500 jogadores, pontos, paginação e
+  links `/u/<id>/<nick>`. Perfil canônico retornou 200 e nick errado, 301.
+  Porém `/api/badge/<id>.png` retornou 500: a função tentou buscar seu próprio
+  WASM dentro do deployment protegido, recebeu HTML e o fallback não estava
+  empacotado. Não promover esse candidato.
+- A rota do badge passou a usar `@resvg/resvg-js` nativo, já dependência do
+  projeto, sem fetch recursivo nem fallback frágil. O texto da página foi
+  corrigido para mostrar o link único `/u/<id>/<nick>`. Build local
+  `RANKING_ON=true npm run build` passou.
+- Segundo candidato `dpl_GAzZW6PMYYHBAgQG6K5urn3axsmu` READY; badge real
+  retornou HTTP 200 `image/png` (21.276 bytes) pelo acesso autenticado da
+  Vercel, PNG 840×440, SHA-256
+  `bc88ed5ee02c8ed8c626cd71b189fd6b92eca113168cf97c3c4977ac8fa3dacc`.
+  `/ranking`, página 2, `/u/<id>/<nick>` e home retornaram 200; cada página
+  do ranking trouxe 25 links de perfil distintos e a home contém o link do
+  ranking. Não houve aviso de ranking não configurado/indisponível.
+  `--skip-domain` preservou `www.csbrasil.online` no build antigo com
+  ranking OFF; a Vercel atribuiu apenas o alias de projeto
+  `csbrasil-rubenmarcus-projects.vercel.app` ao candidato. Nick errado neste
+  candidato redirecionou 301 para `/u/<id>/HiT%3B*`. Ainda falta atualizar o PR #663
+  (o bot avança a base em paralelo), passar CI, integrar backend/cliente e
+  verificar o domínio público. Nenhuma partida real SP/MP nova foi medida.
