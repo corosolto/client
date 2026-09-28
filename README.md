@@ -74,10 +74,10 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Você é… | Leia |
 |---|---|
 | curioso | esta página, e depois <https://www.csbrasil.online> |
-| dev novo (ou agente) | [`STATUS.md`](STATUS.md) → [`docs/README.md`](docs/README.md) → [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| dev novo (ou agente) | [`docs/README.md`](docs/README.md) → [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | quer entender a stack | [`docs/docs/stack.md`](docs/docs/stack.md) — Three.js, Astro, Supabase, geração de asset, skills |
 | quer contribuir hoje | [`docs/issues/`](docs/issues/) — tarefas de entrada com arquivos e critério de aceite |
-| quer saber o que está quebrado | [`KNOWN-BUGS.md`](KNOWN-BUGS.md) — defeitos com `arquivo:linha` e passo de reprodução |
+| quer saber o que está quebrado | as [issues abertas](https://github.com/corosolto/client/issues) |
 
 **Site de documentação** (Docusaurus, com instrumentação de IA, quality gates e
 arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/docs/>.
@@ -192,7 +192,7 @@ está lá. Use `npm run dev`.
 
 ## Quality gate de qualidade
 
-Comandos atuais do quality gate: veja [`ARCH.generated.md`](ARCH.generated.md) (gerado — não editar à mão).
+Comandos atuais do quality gate: veja o bloco gerado no [`AGENTS.md`](AGENTS.md) e em [`docs/docs/comecando.md`](docs/docs/comecando.md).
 
 ```bash
 npm run arch         # regenera tools/eval/ARCH.md (índice + tabela de conflito)
