@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.4`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.5`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,26 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.5] — 2026-09-28
+
+### Mudado
+- feat: lançar hub e armas com ADS legível, MGX5 e SVD restaurada (#670)
+- fix: cobrir navegação da nova home nos portões
+- fix: alinhar ADS das armas e atualizar réguas visuais
+- fix(viewmodel): restore SVD silhouette and AWP reload
+- fix(viewmodel): clear ADS sight picture on all weapons
+- docs: refresh generated ADS gate counts
+- wip(viewmodel): widen ADS view across camera modes
+- fix(viewmodel): make MGX5 scope functional
+- feat(ui): make hub default and finish multiplayer flow
+- docs(re-ui): registrar merge da câmera e tutorial MP
+- docs(game): ensinar multiplayer e corrigir texto obsoleto
+- docs(re-ui): registrar lane de lançamento e sincronizar docs gerados
+- docs(ui): registrar checkpoint e pendências do hub
+- feat(ui): reorganizar hub e dar URLs compartilháveis às seções
+- feat(ui): montar prévia do hub da home com abas e personagem
+- fix(ui): preencher wallpapers da home em qualquer proporção
 
 ## [2.1.0-alpha.4] — 2026-09-27
 
