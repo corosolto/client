@@ -35,9 +35,27 @@ function inspectWindow(points, options) {
   const turns = Math.abs(angle) / (2 * Math.PI);
   if (turns < options.minTurns || Math.abs(angle) / Math.max(absoluteAngle, 1e-9) < options.minDirectionality) return null;
   const engagedShare = points.filter((p) => p.engaged).length / points.length;
+  const targetPoints = points.filter((p) => p.engaged && typeof p.targetKey === 'string'
+    && Number.isFinite(p.targetX) && Number.isFinite(p.targetZ));
+  let switches = 0;
+  for (let i = 1; i < targetPoints.length; i++)
+    if (targetPoints[i].targetKey !== targetPoints[i - 1].targetKey) switches++;
+  const stableTarget = targetPoints.length === points.length && switches === 0;
+  let targetTravel = null, centerOffset = null;
+  if (stableTarget) {
+    targetTravel = 0;
+    for (let i = 1; i < targetPoints.length; i++)
+      targetTravel += Math.hypot(targetPoints[i].targetX - targetPoints[i - 1].targetX,
+        targetPoints[i].targetZ - targetPoints[i - 1].targetZ);
+    centerOffset = targetPoints.reduce((sum, p) => sum + Math.hypot(p.targetX - cx, p.targetZ - cz), 0) / targetPoints.length;
+  }
   return { start: +points[0].t.toFixed(2), end: +points.at(-1).t.toFixed(2),
     path: +path.toFixed(2), net: +net.toFixed(2), turns: +turns.toFixed(2),
-    kind: engagedShare >= 0.5 ? 'target-present' : 'target-absent' };
+    kind: engagedShare >= 0.5 ? 'target-present' : 'target-absent',
+    target: { sampleShare: +(targetPoints.length / points.length).toFixed(2), switches,
+      key: stableTarget ? targetPoints[0].targetKey : null,
+      travel: targetTravel === null ? null : +targetTravel.toFixed(2),
+      centerOffset: centerOffset === null ? null : +centerOffset.toFixed(2) } };
 }
 
 export function inspectMovingLoops(samples, overrides = {}) {
