@@ -70,3 +70,5 @@ Definição de pronto deste objetivo: home e Ranking padrão publicados e rotas 
 ### Pós-release
 
 Os workflows disparados pelo commit automático alpha.9 concluíram com sucesso: `pr-fast` (`36470036920`) e `portao-browser` (`36470036887`). A falha isolada de `autofix` (`36470432542`) foi ao tentar rebater a PR antiga #665, com conflitos em documentação removida; não é falha do build publicado. Na auditoria mais recente, #705 continua mergeable, mas `mergeStateStatus=BLOCKED` enquanto seu build reexecuta sobre a base nova; não mesclar até esse check acabar.
+
+Atualização às 19:29 UTC: o build da #705 concluiu; PR `CLEAN`, sem checks falhos ou pendentes, é o único PR cliente aberto não draft pronto para merge nesta auditoria. #668 já estava `MERGED`.
