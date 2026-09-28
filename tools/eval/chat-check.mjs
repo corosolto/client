@@ -46,6 +46,9 @@
      sem-bidi       chat-painel.js: 'bdi' vira 'span'                   -> CC5 vermelha
      innerhtml      chat-painel.js: o primeiro `.textContent =` vira
                     `.innerHTML =`                                       -> CC5 vermelha
+     sem-nfkc       chat.js: normalizarTexto pula o NFKC                 -> CC1 vermelha
+     bloqueio-proprio chat.js: bloquear aceita o próprio handle           -> CC4 vermelha
+     tabela-torta   chat.js: maxChars 160 vira 161                       -> CC7 vermelha
 
    GANCHOS QUE A RÉGUA ESPERA (é o contrato entre a régua e quem implementa):
      game.js      entradaPropria(t) (INPUT, TEXTAREA, isContentEditable,
@@ -552,6 +555,9 @@ const MUTANTES = [
   ['chat-sem-meta', 'CC2', cc2, async () => ({ ...ctx, net: { mod: await importarMutado('public/js/net.js', (s) => s.replace(/return this\.chatLigado\(\) && !!this\.tp\?\.pronto;/, 'return !!this.tp?.pronto;'), 'chat-sem-meta'), motivo: '' } })],
   ['sem-bidi', 'CC5', cc5, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace(/'bdi'/g, "'span'"), 'sem-bidi'), motivo: '' } })],
   ['innerhtml', 'CC5', cc5, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace(/\.textContent = /, '.innerHTML = '), 'innerhtml'), motivo: '' } })],
+  ['sem-nfkc', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace("let s = txt.normalize('NFKC');", 'let s = txt;'), 'sem-nfkc'), motivo: '' } })],
+  ['bloqueio-proprio', 'CC4', cc4, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('h === this.eu?.h', 'false'), 'bloqueio-proprio'), motivo: '' } })],
+  ['tabela-torta', 'CC7', cc7, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('maxChars: 160,', 'maxChars: 161,'), 'tabela-torta'), motivo: '' } })],
 ];
 if (!SEM_MUTANTES) {
   console.log('\n· mutantes (cada um tem de deixar o seu grupo vermelho)');
