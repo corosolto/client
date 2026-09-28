@@ -89,6 +89,8 @@
     "eval:vm": "node tools/eval/vm-mint-audit.mjs",
     "eval:kick": "node tools/eval/vm-kick-sim.mjs",
     "eval:bots": "node tools/eval/botsim.mjs 60 all",
+    "//eval:bot-moving-loops": "Diagnóstico BUG-89: fixtures distinguem círculo em movimento de giro parado, ida e volta e reta; simulação real requer SIM_MOVING_LOOPS=1 npm run eval:bots",
+    "eval:bot-moving-loops": "node tools/eval/bot-moving-loops-check.mjs",
     "eval:site": "node tools/eval/site-smoke.mjs",
     "eval:error-console": "node tools/eval/error-console-check.mjs",
     "eval:edgecache": "node tools/eval/edge-cache-check.mjs",
