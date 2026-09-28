@@ -1899,6 +1899,8 @@ html[data-ui="legacy"] .cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-i
 .btn-profile[data-empty="1"] span{color:var(--am)}
 .pc-note{font-size:var(--fs-100);font-weight:500;color:var(--ink-300);line-height:var(--lh-base);
   letter-spacing:var(--tr-tight)}
+.profile-save-note:empty{display:none}
+.profile-save-note:not(:empty){color:var(--am)}
 
 /* fundo das telas de seleção = wallpaper rotativo (--wall, setado no main.js) + overlay escuro */
 #team-select,#char-select{
