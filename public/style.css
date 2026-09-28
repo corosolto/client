@@ -296,6 +296,29 @@ html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-cri
 @media(max-width:1100px){.hub-header{gap:10px}.hub-logo{height:74px}.hub-tabs button{font-size:11px}.hub-online{display:none}html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup{right:40%}}
 @media(max-width:760px){.hub-header{min-height:92px;padding:8px 14px;flex-wrap:wrap}.hub-logo{height:50px}.hub-tabs{order:3;width:100%;align-self:auto}.hub-header-action b{display:none}.hub-header-action{margin-left:auto}.hub-settings{margin-left:0}.hub-pane{top:110px;bottom:52px;left:14px;right:14px}.hub-character,.hub-character-card{display:none}html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup{left:14px;right:14px;top:163px;bottom:66px;width:auto}.hub-footer{min-height:46px;padding:9px 14px}.hub-footer a{display:none}.hub-factions,.hub-link-grid,.hub-support-choices{grid-template-columns:repeat(2,minmax(0,1fr))}.hub-feedback-grid{grid-template-columns:1fr}.hub-rank-stats{grid-template-columns:repeat(2,1fr)}.hub-map-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+/* O wallpaper continua full bleed; os controles ficam numa largura legível. */
+html[data-home-ui="hub"] #main-menu{--hub-edge:max(34px,calc((100vw - 1600px)/2))}
+.hub-header,.hub-footer{left:var(--hub-edge,34px);right:var(--hub-edge,34px)}
+.hub-pane{left:var(--hub-edge,34px);right:var(--hub-edge,34px)}
+.hub-character{right:var(--hub-edge,34px);width:min(34vw,544px)}
+.hub-character-card{right:var(--hub-edge,34px)}
+html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:var(--hub-edge);right:auto;width:min(960px,calc(60vw - var(--hub-edge) - 7px))}
+.hub-header-action .hub-profile-edit{display:inline;place-items:initial;width:auto;height:auto;padding:0 0 0 8px;border:0;border-left:1px solid #504c44;color:#b4d92e;font:700 10px/1 var(--font);letter-spacing:.5px;white-space:nowrap}
+.hub-character-card .hub-character-change{display:inline-block;margin-top:3px;color:#b4d92e;font:700 12px/1 var(--font);letter-spacing:1px}
+.hub-character-card:hover .hub-character-change,.hub-character-card:focus-visible .hub-character-change{text-decoration:underline;text-underline-offset:3px}
+html[data-home-ui="hub"] #menu-setup .hub-match-chips>button{position:relative;padding-right:23px}
+html[data-home-ui="hub"] #menu-setup .hub-match-chips>button::after{content:"▸";position:absolute;right:8px;top:50%;transform:translateY(-50%);font:700 16px/1 var(--font);opacity:.8}
+html[data-home-ui="hub"] #menu-setup .hub-match-chips>button:hover,html[data-home-ui="hub"] #menu-setup .hub-match-chips>button:focus-visible{border-color:#b4d92e;outline:2px solid #b4d92e;outline-offset:1px}
+.hub-tip{display:flex;align-items:center;gap:6px;min-width:0}.hub-tip #hub-tip-text{margin-right:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hub-footer-social .mf-social{display:flex;align-items:center;gap:7px;margin:0}
+.hub-footer-social .mf-social a{display:grid;place-items:center;width:28px;height:28px;border:1px solid #504c44;color:#d3d3d1}
+.hub-footer-social .mf-social a:hover,.hub-footer-social .mf-social a:focus-visible{border-color:#b4d92e;color:#b4d92e;outline:none}
+.hub-footer-social .mf-social svg{width:15px;height:15px;fill:currentColor}
+.hub-rank-profile{margin:8px 0 0;padding:11px 14px;border:1px solid #b4d92e;background:#b4d92e;color:#131313;font:700 12px/1 var(--font);letter-spacing:1px;cursor:pointer}
+.hub-rank-profile:hover,.hub-rank-profile:focus-visible{filter:brightness(1.12);outline:2px solid #f3b958;outline-offset:2px}
+@media(max-width:1100px){html[data-home-ui="hub"] #main-menu{--hub-edge:14px}.hub-header,.hub-footer,.hub-pane{left:14px;right:14px}.hub-character{right:14px}.hub-character-card{right:14px}html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:14px;width:calc(60vw - 28px)}}
+@media(max-width:760px){html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:14px;right:14px;width:auto}.hub-header-action .hub-profile-edit{display:none}.hub-footer{gap:8px}.hub-footer-social{margin-left:auto}.hub-tip{flex:1}.hub-footer a{display:none}}
+
 /* =========================================================================
    REDESIGN AAA — tokens novos, adicionados sem tocar nos de cima.
    Por quê: a paleta acima veio de medição pixel a pixel sobre referência

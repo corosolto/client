@@ -672,7 +672,7 @@ window.__GEO_LANG__ = (function () {
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-support" data-hub-tab="apoie">APOIE O JOGO</button>
       </nav>
       <div class="hub-online" aria-live="polite"><i aria-hidden="true"></i><span id="hub-online-n">-</span> ONLINE</div>
-      <button id="hub-profile" class="hub-header-action" type="button" aria-label="Editar perfil"><span id="hub-avatar">CS</span><b id="hub-nick">SEM NICK</b></button>
+      <button id="hub-profile" class="hub-header-action" type="button" aria-label="Criar ou editar perfil" title="Criar ou editar perfil"><span id="hub-avatar">CS</span><b id="hub-nick">SEM NICK</b><span class="hub-profile-edit" aria-hidden="true">EDITAR ▸</span></button>
       <button id="hub-settings" class="hub-header-action hub-settings" type="button" aria-label="Configurações">⚙</button>
     </header>
 
@@ -684,7 +684,7 @@ window.__GEO_LANG__ = (function () {
       <div id="hub-character" class="hub-character" aria-label="Personagem escolhido"></div>
       <button id="hub-change-character" class="hub-character-card" type="button">
         <img id="hub-character-crest" src="/img/brasoes/e.png" width="38" height="38" alt="">
-        <span><small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><small>TROCAR ▸</small></span>
+        <span><small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><span class="hub-character-change">TROCAR PERSONAGEM ▸</span></span>
       </button>
       <div id="hub-multiplayer-entry" class="hub-multiplayer-entry" hidden>
         <div class="hub-mp-tabs" role="tablist" aria-label="Tipo de servidor">
@@ -697,7 +697,10 @@ window.__GEO_LANG__ = (function () {
 
     <section id="hub-ranking" class="hub-pane hub-info" role="tabpanel" aria-label="Ranking" hidden>
       <div class="hub-kicker">02 · ARQUIVO</div><h2>PLACAR DA RUA</h2>
-      <p>Seus números ficam neste navegador. O ranking global volta quando as partidas tiverem validação do servidor.</p>
+      <p>{RANKING_ON
+        ? 'Um placar para todas as partidas: cada abate soma um ponto. Abates multiplayer confirmados entre perfis distintos recebem um ponto extra.'
+        : 'Seus números ficam neste navegador. O ranking global está indisponível por enquanto.'}</p>
+      <button id="hub-rank-profile" class="hub-rank-profile" type="button" hidden>{RANKING_ON ? 'CRIAR NICK PARA PARTICIPAR ▸' : 'CONFIGURAR SEU NICK ▸'}</button>
       <div id="hub-rank-local" class="hub-rank-stats"></div>
       <div id="hub-rank-global" class="hub-rank-global"></div>
       <a href="/ranking">ABRIR PÁGINA DO RANKING ↗</a>
@@ -751,7 +754,7 @@ window.__GEO_LANG__ = (function () {
       <a class="hub-support-source" href={GITHUB_URL} target="_blank" rel="noopener">VER O CÓDIGO DO JOGO NO GITHUB ↗</a>
     </section>
 
-    <footer class="hub-footer"><span><b>DICA</b> Escolha seu mapa e seu personagem antes de entrar na partida.</span><a href="/docs/">DOCS ↗</a><a href="/mapa">MAPA AO VIVO ↗</a></footer>
+    <footer class="hub-footer"><span class="hub-tip"><b>DICA</b><span id="hub-tip-text">Clique nas opções da partida para ajustá-las antes de jogar.</span></span><div id="hub-footer-social" class="hub-footer-social" aria-label="Redes do jogo"></div><a href="/docs/">DOCS ↗</a><a href="/mapa">MAPA AO VIVO ↗</a></footer>
   </div>
 
   <div id="hub-quick" class="hub-modal" hidden>
@@ -912,8 +915,8 @@ window.__GEO_LANG__ = (function () {
         <button id="hub-map-change" class="hub-map-change" type="button">TROCAR MAPA ▸</button>
       </div>
       <div class="hub-match-chips" role="group" aria-label="Opções da partida">
-        <button id="hub-mode-rounds" type="button" aria-pressed="true"><strong>ROUNDS</strong><small>MATA-MATA · MELHOR DE 5</small></button>
-        <button id="hub-mode-ctf" type="button" aria-pressed="false"><strong>CAPTURA</strong><small>BANDEIRAS · MELHOR DE 3</small></button>
+        <button id="hub-mode-rounds" type="button" aria-pressed="true" title="Selecionar mata-mata"><strong>MATA-MATA</strong><small>MELHOR DE 5</small></button>
+        <button id="hub-mode-ctf" type="button" aria-pressed="false" title="Selecionar captura de bandeiras"><strong>CAPTURA</strong><small>MELHOR DE 3</small></button>
         <div class="match-opts">
         <label class="map-label">ARMAS
           <div class="dd" id="wpn-dd">
@@ -930,7 +933,7 @@ window.__GEO_LANG__ = (function () {
         <!-- Dificuldade agora é RANDÔMICA por bot (50% ruins / 20% médios / 20% bons /
              10% muito bons) - seletor removido. -->
         </div>
-        <button id="hub-rounds" type="button"><small>ROUNDS</small><strong id="hub-rounds-value">5</strong></button>
+        <button id="hub-rounds" type="button" title="Alterar número de rounds"><small>ROUNDS</small><strong id="hub-rounds-value">5</strong></button>
       </div>
       <div class="cs-setup-actions">
         <button id="btn-profile" class="btn btn-profile" type="button">
