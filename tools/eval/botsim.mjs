@@ -23,6 +23,7 @@
    ============================================================================ */
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { inspectMovingLoops } from './bot-moving-loops.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const JS = path.resolve(HERE, '../../public/js');
@@ -135,6 +136,7 @@ const ONLY = process.argv[3] || 'all';
 const TEAM_SIZE = Math.max(1, Math.min(8, Number(process.env.SIM_TEAM_SIZE) || 4));
 const DT = 1 / 60, SAMPLE = 9;
 const DUEL = process.env.SIM_DUEL === '1';   // amostra a cada 9 passos ≈ 150 ms
+const MOVING_LOOPS = process.env.SIM_MOVING_LOOPS === '1';
 
 let D = null;
 function runMap(mapId, textures, seed) {
@@ -188,6 +190,7 @@ function runMap(mapId, textures, seed) {
   }
   const tr = new Map();
   for (const b of g.bots) tr.set(b, { lp: { x: b.pos.x, z: b.pos.z }, ly: b.yaw, lat: 0, fwd: 0, latF: 0, latFc: 0, fwdF: 0, fwdFc: 0, spin: 0, spinR: 0, latAbs: 0, mvAbs: 0, stuck: 0, n: 0, nR: 0, path: 0, x0: b.pos.x, z0: b.pos.z, roamZMin: Infinity, roamZMax: -Infinity });
+  const loopTracks = MOVING_LOOPS ? new Map(g.bots.map((b) => [b, []])) : null;
   const mapWidth = Math.max(0.001, g.world.bounds.maxX - g.world.bounds.minX);
   const mapDepth = Math.max(0.001, g.world.bounds.maxZ - g.world.bounds.minZ);
   let laneSpreadSum = 0, laneSpreadN = 0;
@@ -215,6 +218,8 @@ function runMap(mapId, textures, seed) {
     const dts = DT * SAMPLE;
     for (const b of g.bots) {
       const s = tr.get(b);
+      if (loopTracks) loopTracks.get(b).push({ t: i * DT, x: b.pos.x, z: b.pos.z,
+        yaw: b.yaw, engaged: !!b.target, alive: !!b.alive });
       if (!b.alive) { s.lp = { x: b.pos.x, z: b.pos.z }; s.ly = b.yaw; continue; }
       const mx = b.pos.x - s.lp.x, mz = b.pos.z - s.lp.z;
       const d = Math.hypot(mx, mz);
@@ -268,6 +273,31 @@ function runMap(mapId, textures, seed) {
     const s = tr.get(b);
     return sum + (Number.isFinite(s.roamZMin) && Number.isFinite(s.roamZMax) ? (s.roamZMax - s.roamZMin) / mapDepth : 0);
   }, 0) / nb;
+  if (loopTracks) {
+    if (process.env.SIM_LOOP_FIXTURE === '1') {
+      const fixture = loopTracks.get(g.bots[0]).slice(-41);
+      if (fixture.length !== 41) throw new Error('MOVING_LOOPS fixture sem 41 amostras');
+      fixture.forEach((point, index) => {
+        const angle = index / 40 * Math.PI * 2;
+        point.x = 1.4 * Math.cos(angle); point.z = 1.4 * Math.sin(angle);
+        point.alive = true; point.engaged = false;
+      });
+    }
+    const bots = g.bots.map((b, index) => {
+      const samples = loopTracks.get(b);
+      const { events, eligibleWindows } = inspectMovingLoops(samples);
+      return { bot: index, count: events.length,
+        samples: samples.length, eligibleWindows,
+        targetAbsent: events.filter((e) => e.kind === 'target-absent').length,
+        targetPresent: events.filter((e) => e.kind === 'target-present').length,
+        examples: events.slice(0, 3) };
+    });
+    if (!bots.some((b) => b.eligibleWindows > 0))
+      throw new Error('MOVING_LOOPS sem janela contínua de 5,85 s: zero candidato seria inconclusivo');
+    console.error('MOVING_LOOPS ' + JSON.stringify({ map: mapId, seed, bots,
+      targetAbsent: bots.reduce((sum, b) => sum + b.targetAbsent, 0),
+      targetPresent: bots.reduce((sum, b) => sum + b.targetPresent, 0) }));
+  }
   if (DUEL) return {
     map: mapId, bots: nb, tirosBot: D.shots, acertos: D.hits,
     taxaAcerto: +(D.hits / Math.max(1, D.shots)).toFixed(3),
@@ -329,12 +359,16 @@ for (const id of ids) {
   out.push({ map: id, bots: ok[0].bots, latFlips: m('latFlips'), latFlipsCombat: m('latFlipsCombat'), latShare: m('latShare'), fwdFlips: m('fwdFlips'), fwdFlipsCombat: m('fwdFlipsCombat'), spinTurns: m('spinTurns'), spinRoam: m('spinRoam'), stuckPct: m('stuckPct'), eff: m('eff'), laneSpread: m('laneSpread'), laneTargetSpread: m('laneTargetSpread'), roamDepthSpread: m('roamDepthSpread') });
 }
 console.log(JSON.stringify(out, null, 1));
+if (MOVING_LOOPS && out.some((row) => row.err)) {
+  console.error('MOVING_LOOPS inconclusivo: ao menos uma simulação falhou');
+  process.exitCode = 1;
+}
 const avg = (k) => +(out.filter(o => !o.err).reduce((a, o) => a + o[k], 0) / Math.max(1, out.filter(o => !o.err).length)).toFixed(3);
 if (DUEL) {
   const ok = out.filter(o => !o.err);
   const ts = ok.reduce((a, o) => a + o.ttkSum, 0), tn = ok.reduce((a, o) => a + o.ttkN, 0);
   console.log('MEDIA taxaAcerto', avg('taxaAcerto'), '| fracCabeca', avg('fracCabeca'), '| mortes/min', avg('mortesPorMin'),
     '| janela ate morrer (s)', +(tn ? ts / tn : 0).toFixed(3), '| mortes amostradas', tn);
-  process.exit(0);
+  process.exit(process.exitCode || 0);
 }
 console.log('MEDIA latFlips/min', avg('latFlips'), '| fwdFlips/min', avg('fwdFlips'), '| latShare', avg('latShare'), '| spin voltas/min', avg('spinTurns'), '| spinRoam', avg('spinRoam'), '| stuck%', avg('stuckPct'), '| eff', avg('eff'));

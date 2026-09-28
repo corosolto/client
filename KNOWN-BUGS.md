@@ -7972,6 +7972,17 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   ao redor de alguns destinos; portanto o relato continua **ABERTO para aceite visual**, não
   deve ser marcado como curado só pelo placar.
 
+  **Diagnóstico adicional 28/09, sem conserto de IA.** A régua `eval:bot-moving-loops` mede
+  circuito local em movimento pela trajetória, separando giro parado, ida-e-volta e órbita
+  com alvo; o mutante `sem-voltas` perde os dois círculos sintéticos. No `origin/main`
+  `21accd7c7`, Praça, 60 s × 9 sementes, `SIM_TEAM_SIZE=5` (nove bots), encontrou **30 janelas candidatas
+  com `b.target` presente, 0 sem alvo**, em 9/9 sementes. `b.target` pode persistir sem
+  linha de visão: esse rótulo não prova combate visível. A figura de oito e a ida-e-volta
+  em faixas de 2 cm eram falsos positivos, removidos antes desta contagem; os mutantes
+  `sem-voltas` e `sem-area` tornam as fixtures vermelhas. São janelas da simulação Node do
+  cliente, não partidas do servidor MP; órbita em combate pode ser tática. Confirmar em vídeo
+  3:2 e comparar trilhas de servidor e cliente antes de mudar `_updateBot` ou fechar #682.
+
 - **BUG-90 · MP: "os bots andam devagar" + "morri várias vezes sem ver e matei várias vezes
   sem ver"** (dono, 31/08, mesma sessão do BUG-89). **Causa raiz encontrada e medida — é o
   BUG-28 propagado ao servidor v5.** O `game/room.js` do backend constrói o `Game` direto
