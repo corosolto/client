@@ -14,6 +14,13 @@ import { VERSION } from './version.js';
    igual. O nó diz no `welcome` que versão simula; `?mpversao=0` libera no local. */
 export const versaoCompativel = (doNo, nossa = VERSION) => !doNo || doNo === nossa;
 
+/* CHAT DE SALA (docs/chat-de-sala.md §6): frames que chegam antes de existir painel ficam
+   em `_chatFila`; o teto é o `filaClienteMax` da tabela, cobrado por eval:chat (CC7). */
+export const CHAT_FILA_MAX = 64;
+const CHAT_CID_RE = /^[A-Za-z0-9_-]{1,12}$/;
+const CHAT_CANAIS = ['sala', 'time'];
+const formaChat = (m) => Number.isInteger(m.id) && typeof m.txt === 'string' && typeof m.h === 'string' && CHAT_CANAIS.includes(m.ch);
+
 export const resolvePlayerSide = (team, faction, online) =>
   online ? (team === 'B' ? 'B' : 'E') : (faction === 'B' ? 'B' : 'E');
 
@@ -119,6 +126,7 @@ export class NetClient {
     this.prev = null;
     this.seq = 0;
     this.onWelcome = null; this.onSnapshot = null; this.onSlot = null; this.onPartida = null; this.onClose = null;
+    this.onChat = null; this._chatFila = [];
     // ── diagnóstico de rede (overlay do jogo) ──
     this.stats = { hz: 0, kbps: 0, gapMax: 0, sinceLast: 0, ents: 0, tick: 0, ping: 0, snaps: 0, bytes: 0 };
     this._snapT = []; this._byteT = []; this._lastSnapT = 0;
@@ -226,6 +234,15 @@ export class NetClient {
           this._snapT.push(now); this._byteT.push({ t: now, b: bytes });
           this.stats.snaps++; this.stats.bytes += bytes;
           this.onSnapshot?.(m);
+        } else if (m.type === 'chat') {
+          // chat de sala: sem meta.chat o cliente é inerte, e frame malformado é descartado
+          if (this.chatLigado() && formaChat(m)) this._entregaChat(m);
+        } else if (m.type === 'chat_hist') {
+          if (this.chatLigado() && Array.isArray(m.list)) this._entregaChat({ type: 'chat_hist', list: m.list.filter((x) => x && formaChat(x)) });
+        } else if (m.type === 'chat_nack') {
+          if (this.chatLigado() && typeof m.cid === 'string' && typeof m.motivo === 'string') this._entregaChat(m);
+        } else if (m.type === 'chat_denuncia') {
+          if (this.chatLigado() && Number.isInteger(m.id) && typeof m.estado === 'string') this._entregaChat(m);
         }
       };
     });
@@ -248,6 +265,26 @@ export class NetClient {
   pedirTime(team = 'auto') { this.tp?.enviar(JSON.stringify({ type: 'time', team })); }
   // sair de campo e assistir: o corpo volta a ser bot e a partida segue cheia.
   espectar() { this.tp?.enviar(JSON.stringify({ type: 'espectar' })); }
+
+  /* ── chat de sala (docs/chat-de-sala.md) ── versão desconhecida da meta vale como ausente;
+     tudo sai por `enviar` (confiável), nunca por `enviarInseguro`. */
+  chatLigado() { const c = this.meta?.chat; return !!c && c.v === 1; }
+  _chatPronto() { return this.chatLigado() && !!this.tp?.pronto; }
+  _entregaChat(m) {
+    if (this.onChat) { this.onChat(m); return; }
+    this._chatFila.push(m);
+    if (this._chatFila.length > CHAT_FILA_MAX) this._chatFila.splice(0, this._chatFila.length - CHAT_FILA_MAX);
+  }
+  drenarChat() { return this._chatFila.splice(0, this._chatFila.length); }
+  enviarChat(ch, txt, cid) {
+    if (!this._chatPronto() || !this.meta.chat.pode) return false;
+    if (typeof txt !== 'string' || !CHAT_CID_RE.test(String(cid)) || !(this.meta.chat.canais || []).includes(ch)) return false;
+    return this.tp.enviar(JSON.stringify({ type: 'chat', ch, txt, cid }));
+  }
+  denunciarChat(id, motivo) {
+    if (!this._chatPronto() || !Number.isInteger(id) || !(this.meta.chat.denuncia || []).includes(motivo)) return false;
+    return this.tp.enviar(JSON.stringify({ type: 'chat_report', id, motivo }));
+  }
 
   close() {
     this.stopPing();

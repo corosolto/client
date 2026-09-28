@@ -124,7 +124,7 @@ const META_CHAT = {
   v: 1, eu: { h: 'K3F' }, pode: 1, canais: ['sala', 'time'], max: 160, epoca: 'QX9W2A7B',
   denuncia: ['ofensa', 'odio', 'assedio', 'spam', 'outro'],
 };
-const msgChat = (id, extra = {}) => ({ id, t: 1000 + id, ch: 'sala', aud: 'todos', h: `H${id}`, esp: 0, time: 'E', txt: `msg ${id}`, ...extra });
+const msgChat = (id, extra = {}) => ({ type: 'chat', id, t: 1000 + id, ch: 'sala', aud: 'todos', h: `H${id}`, esp: 0, time: 'E', txt: `msg ${id}`, ...extra });
 
 /* ============================== CC1 · normalização ============================== */
 /* Os vetores são os do §3 da doc, na mesma ordem; as linhas depois de "a".repeat(161)
