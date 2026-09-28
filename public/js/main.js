@@ -2019,7 +2019,8 @@ if (HUB_ENABLED) {
     $('hub-map-modal').hidden = true;
     $('hub-roster-modal').hidden = true;
     hubMapReturnQuick = false;
-    if (modal !== 'configuracoes' && $('settings-panel').classList.contains('hidden') === false && settingsReturn === 'main-menu') show('main-menu');
+    if (modal !== 'configuracoes' && $('settings-panel').classList.contains('hidden') === false
+      && settingsReturn === 'main-menu' && (!game || !['live', 'roundEnd', 'countdown'].includes(game.state))) show('main-menu');
     const map = query.get('map');
     if (map && MAPAS_MENU.includes(map) && map !== currentMap) gotoMap(MAPAS_MENU.indexOf(map), false);
     const char = CHARACTERS.find((c) => c.id === query.get('personagem'));
@@ -3362,8 +3363,9 @@ function loop() {
     menuCam.lookAt(0, 1, 0);
     renderer.render(menuScene, menuCam);
   }
-  const hubPreviewOpen = HUB_ENABLED && $('main-menu')?.classList.contains('hidden') === false
-    && $('main-menu').dataset.hubTab === 'jogar' && $('main-menu').dataset.hubNet === 'sp';
+  const hubMenu = $('main-menu');
+  const hubPreviewOpen = HUB_ENABLED && hubMenu?.classList.contains('hidden') === false
+    && hubMenu?.dataset.hubTab === 'jogar' && hubMenu?.dataset.hubNet === 'sp';
   if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {
     const pvDt = Math.min(0.05, dtReal);
     if (!pvDrag) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta

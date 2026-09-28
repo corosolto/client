@@ -17,7 +17,7 @@ test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ pa
   const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
   const t0 = Date.now();
 
-  await page.goto(`${base}/?debug=1&assetcheck=1`);
+  await page.goto(`${base}/?debug=1&assetcheck=1&home=legacy`);
 
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');
