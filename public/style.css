@@ -1899,6 +1899,8 @@ html[data-ui="legacy"] .cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-i
 .btn-profile[data-empty="1"] span{color:var(--am)}
 .pc-note{font-size:var(--fs-100);font-weight:500;color:var(--ink-300);line-height:var(--lh-base);
   letter-spacing:var(--tr-tight)}
+.profile-save-note:empty{display:none}
+.profile-save-note:not(:empty){color:var(--am)}
 
 /* fundo das telas de seleção = wallpaper rotativo (--wall, setado no main.js) + overlay escuro */
 #team-select,#char-select{
@@ -3002,4 +3004,37 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   .ms-foot { padding: 6px 14px 10px; }
   #map-screen .ms-actions .btn-big { padding: 9px 26px; }
   #map-screen .ms-actions .btn-big > * { font-size: 16px; }
+}
+
+/* No perfil estreito, a rede precisa do nome inteiro e o campo do usuário
+   continua ao lado do botão de remover. */
+@media (max-width: 380px) {
+  html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup[data-step="profile"] {
+    padding: 12px;
+  }
+  html[data-home-ui="hub"] #menu-setup[data-step="profile"] .pane-profile {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 18px 16px;
+  }
+  #social-list .social-item {
+    grid-template-columns: minmax(0, 1fr) 34px;
+  }
+  #social-list .social-item select {
+    grid-column: 1 / -1;
+  }
+  #social-list .social-item input {
+    min-width: 0;
+    grid-column: 1;
+  }
+  #social-list .social-item .social-del {
+    grid-column: 2;
+  }
+  html[data-home-ui="hub"] #menu-setup[data-step="profile"] .pane-profile .cs-setup-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding-top: 8px;
+    background: #1c1812;
+  }
 }
