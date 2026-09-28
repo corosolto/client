@@ -209,6 +209,7 @@
     "eval:texel": "node tools/eval/texel-check.mjs",
     "eval:nosgemeos": "node tools/eval/nos-gemeos-check.mjs",
     "eval:netcode": "node tools/eval/netcode-check.mjs",
+    "eval:chat": "node tools/eval/chat-check.mjs",
     "eval:analytics": "node tools/eval/player-analytics-check.mjs",
     "eval:telemetrytransport": "node tools/eval/telemetry-transport-check.mjs",
     "eval:online": "node tools/eval/online-counter-check.mjs",
