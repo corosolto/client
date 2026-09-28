@@ -117,7 +117,7 @@ medições que explicam — a régua mede rasgo de pele, não plausibilidade de 
    ============================================================================ */
 ```
 
-Depois: entrada no `package.json` mais a seção correspondente no `SCRIPTS.md` explicando
+Depois: entrada no `package.json` mais a seção correspondente no `SCRIPTS.md` (em `../progress`) explicando
 **por que ela existe**, e o passo dentro do `check:fast` — lembrando que, com um vermelho
 conhecido na cadeia, só o placar passo a passo revela um passo que quebrou agora.
 

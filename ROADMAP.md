@@ -1,10 +1,10 @@
 # ROADMAP — próximos passos
 
 > Atualizado em **07/08/2026** (`2.0.0-alpha.32`). Este arquivo é a VISTA DE CIMA:
-> a ordem e o porquê. O detalhe de execução mora em [`TRILHA-V2.md`](TRILHA-V2.md)
-> (T1–T32, com critério de aceite por tarefa) e nos planos por frente em
-> [`PLANS/`](PLANS/). Defeito aberto é [`KNOWN-BUGS.md`](KNOWN-BUGS.md); tarefa de
-> entrada pra contribuidor é [issue no GitHub](https://github.com/corosolto/client/issues)
+> a ordem e o porquê. O detalhe de execução (TRILHA-V2 e planos por frente já
+> executados) saiu da árvore pública; as fichas de conteúdo vivo continuam em
+> [`plans/`](plans/). Tarefa de entrada pra contribuidor é
+> [issue no GitHub](https://github.com/corosolto/client/issues)
 > + [`docs/issues/`](docs/issues/). Quando um item daqui fechar, ele sai daqui —
 > histórico é o git, não este arquivo.
 

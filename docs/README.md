@@ -31,17 +31,20 @@ docs/
     colaborar.md          setup, portão, o que um PR precisa, boas primeiras tarefas
     estado.md             fontes vivas de produção, dados e dívidas; sem placar colado
   issues/                 as good-first-issues, uma por arquivo (README.md indexa)
-  historico/              prompts e handoffs antigos — arquivo morto, não é doc viva
-  INDICE.md               índice dos .md soltos desta pasta
   LICENCA.md              as decisões de licença, arte paga e marca — fora do site de
                           propósito: quem declara é o LICENSE, e a tabela de superfícies
                           é gerada no CONTRIBUTING.md
-  seguranca.md ROADMAP.md QUALITY.md IDEAS.md TRIBOS-URBANAS.md ASSETS-PROMPTS.md
+  seguranca.md            fronteira de segurança do backend (/api/*, supabase)
+  onboarding.md           setup mínimo pra contribuir
+  quality-gates.md        labels, merge policy e crash triage (o processo do PR)
+  csbrasil-bot.md         o bot de issues/PRs do repositório
+  audio/proveniencia.json ledger de procedência dos assets de áudio (lido pelo gate)
+  runbooks/operacao-autonoma.md  diagnóstico e rollback de produção (npm run ops:diag)
 ```
 
 > Só o que está em `docs/docs/` entra no site Docusaurus — é o `routeBasePath: '/'` do
-> preset. Os `.md` soltos e o `historico/` ficam de fora de propósito: são material de
-> repositório, lido no GitHub, não página publicada.
+> preset. Os `.md` de trabalho interno não são página publicada e não fazem parte
+> da árvore pública.
 
 ## Subir localmente
 

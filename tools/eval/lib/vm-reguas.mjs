@@ -33,7 +33,7 @@ const tamanhoCurta = (q, p, arma) => Math.sqrt(q.areaArma / p.quadril.areaArma) 
 
 const ROOT = process.cwd();
 const { WEAPONS } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/weapons.js')).href);
-const { VM_WEAPON } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
+const { VM_WEAPON, VM_FABRICA } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
 const { weaponCFG } = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
 
 export const TODAS = Object.keys(WEAPONS);   // 26, com a faca
@@ -147,9 +147,16 @@ export async function coletar(page, arma, { reguas, mut = null, fotos = '', vari
     if (semAds) await P.esperarQuadro(page);
     await aplicar('ads');
     const m = await P.mascara(page, arma, { profundidade: quer('mira') });
-    c.ads = { ...A.silhueta(m), scoped: est.scoped, adsF: est.ads };
+    c.ads = { ...A.silhueta(m), scoped: est.scoped, adsF: est.ads,
+      estilo: (variante?.[arma]?.ads?.estilo || (FABRICA_NA_REGUA && soFabrica(arma) ? VM_FABRICA[arma] : VM_WEAPON[arma])?.ads?.estilo) || 'alca',
+      cruz: pixelsNaCruz(m),
+      janelaAlta: A.ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.45, y1: 0.55 }),
+      janelaBaixa: A.ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.50, y1: 0.65 }),
+      maosBaixas: A.ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.55, y1: 0.75, tipo: 2 }),
+    };
     if (quer('mira')) {
-      c.mira = m.nArma > 0 ? A.pontoDeMira(m) : { mensuravel: false, motivo: 'viewmodel some no ADS', semVm: true };
+      c.mira = m.nArma > 0 ? A.pontoDeMira(m, { preferirMassa: FABRICA_NA_REGUA && soFabrica(arma) && arma === 'p90' })
+        : { mensuravel: false, motivo: 'viewmodel some no ADS', semVm: true };
       // O que o AD1 antigo leria no mesmo quadro: projeção do socket `sight`.
       c.mira.socketNdc = await page.evaluate((x) => {
         const g = window.__game; const e = window.__authoredVm.entry(x); const s = e?.sockets?.sight;
@@ -297,6 +304,11 @@ function coberturaCurta(c, refs) {
 export const JUIZ = {
   mira(c) {
     if (c.classe === 'faca') return NA('faca: sem ADS');
+    if (c.ads?.estilo === 'foco') {
+      if (!c.ads.areaArma) return NM('foco sem arma visível');
+      return c.ads.cruz ? R(`${c.ads.cruz} px`, `retículo encoberto por ${c.ads.cruz} px no foco`)
+        : V('0 px', 'foco com retículo livre; tiro e cruz usam a câmera');
+    }
     const m = c.mira;
     if (!m) return NM('não coletado');
     if (!m.mensuravel) {
@@ -355,6 +367,8 @@ export const JUIZ = {
       const teto = L.COBERTURA_ADS_MAX_VS_AK * ak.areaTotal;
       adsTxt = `ADS cobre ${(c.ads.areaTotal * 100).toFixed(1)}% (teto ${(teto * 100).toFixed(1)}%)`;
       if (c.ads.areaTotal > teto) falhas.push(`no ADS arma+braço cobrem ${(c.ads.areaTotal * 100).toFixed(1)}% da tela (teto ${(teto * 100).toFixed(1)}%)`);
+      if (c.ads.janelaAlta > L.ADS_JANELA_ALTA_MAX) falhas.push(`janela junto à cruz ${(c.ads.janelaAlta * 100).toFixed(0)}% encoberta (teto ${L.ADS_JANELA_ALTA_MAX * 100}%)`);
+      if (c.ads.janelaBaixa > L.ADS_JANELA_BAIXA_MAX) falhas.push(`janela de alvo abaixo da cruz ${(c.ads.janelaBaixa * 100).toFixed(0)}% encoberta (teto ${L.ADS_JANELA_BAIXA_MAX * 100}%)`);
     } else if (!luneta(c.arma)) falhas.push('no ADS a arma sumiu (sem luneta)');
     const valor = `${tam.toFixed(2)}× AK`;
     // Rolagem: INFORMATIVA, não reprova. Bate com o crítico no p90 (+28° da AK com
@@ -385,6 +399,7 @@ export const JUIZ = {
     if (tam > faixa.max) falhas.push(`arma gigante: ${(tam * 100).toFixed(0)}% da pistola ${p.fonte} por metro (faixa ${faixa.min}–${faixa.max})`);
     if (dpos > posMax) falhas.push(`posição: centro da arma a ${dpos.toFixed(0)} px do da pistola (${(x1 - x0).toFixed(0)}, ${(y1 - y0).toFixed(0)}; teto ${posMax.toFixed(0)})`);
     if (adsRaz < L.PISTOLA_ADS_MIN) falhas.push(`ADS: só ${(adsRaz * 100).toFixed(0)}% da arma visível contra a pistola (mínimo ${L.PISTOLA_ADS_MIN * 100}%)`);
+    if (c.ads?.maosBaixas > L.PISTOLA_MAOS_JANELA_MAX) falhas.push(`mãos encobrem ${(c.ads.maosBaixas * 100).toFixed(0)}% da janela abaixo da cruz (teto ${L.PISTOLA_MAOS_JANELA_MAX * 100}%)`);
     const valor = `${tam.toFixed(2)}× pistola ${p.fonte}`;
     const txt = `tamanho ${valor}, desvio ${dpos.toFixed(0)} px, ADS ${(adsRaz * 100).toFixed(0)}%`;
     return falhas.length ? R(valor, `${falhas.join('; ')} — ${txt}. Conserto: FAMILY_FRAME/VM_FRAME da família curta (escala/offset/rotDeg).`) : V(valor, txt);
@@ -423,7 +438,7 @@ export const JUIZ = {
     const estados = [];
     let yAnt = r0.vista?.[1];
     let tipoAnt = '';
-    for (const a of k.amostras) {
+    for (const [i, a] of k.amostras.entries()) {
       if (a.erro) { falhas.push(`${a.tipo}: ${a.erro}`); continue; }
       if (a.tipo !== tipoAnt) { yAnt = r0.vista?.[1]; tipoAnt = a.tipo; }
       const pc = `${a.tipo} ${Math.round(a.f * 100)}%`;
@@ -432,20 +447,23 @@ export const JUIZ = {
       if (!naTela) {
         // Fora do quadro/escondido: só é defeito se a mão de apoio está NA TELA e a
         // peça não está nela — o dono vê a mão fechada vazia (p90 da revisão L1).
-        e = a.maoNaTela && !(a.visivel && a.dMao <= T.maoMax) ? 'mao-vazia' : 'fora';
+        e = a.maoNaTela ? (a.visivel && a.dMao <= T.maoMax ? 'mao-oculto' : 'mao-vazia') : 'fora';
       } else {
         const desloc = r0.local && a.local ? Math.hypot(a.local[0] - r0.local[0], a.local[1] - r0.local[1], a.local[2] - r0.local[2]) : Infinity;
         a.desloc = desloc;
         // Na arma: no encaixe, ou saindo/entrando dele ainda encostada no corpo (a PT-38
         // aprovada solta o pente a 0,44 palma do encaixe aos 15%, raspando no punho).
-        if (!k.clipe && repousoNaArma && (desloc <= T.deslocMax || (desloc <= T.encaixeMax && a.dArma <= T.encostaMax))) e = 'arma';
+        if (a.dMao <= T.maoMax && desloc > T.deslocMax) e = 'mao';
+        else if (!k.clipe && repousoNaArma && (desloc <= T.deslocMax || (desloc <= T.encaixeMax && a.dArma <= T.encostaMax))) e = 'arma';
         else if (a.dMao <= T.maoMax) e = 'mao';
         else if (k.clipe && a.dArma <= T.encostaMax) e = 'arma';
         else if (Number.isFinite(yAnt) && a.vista && a.vista[1] - yAnt <= -T.quedaMin) e = 'caindo';
+        else if (Number.isFinite(yAnt) && a.vista && a.vista[1] - yAnt <= -T.quedaMin / 2
+          && k.amostras[i + 1]?.tipo === a.tipo && k.amostras[i + 1]?.vista?.[1] - a.vista[1] <= -T.quedaMin) e = 'caindo';
         else e = 'solto';
       }
       if (a.vista) yAnt = a.vista[1];
-      if (e === 'mao') naMao++;
+      if (e === 'mao' || e === 'mao-oculto') naMao++;
       a.estado = e;
       estados.push(`${a.tipo}${a.f}:${e}`);
       if (e === 'solto') falhas.push(`recarrega com objeto no meio do ar: ${pc} — ${a.dMao.toFixed(2)} palma da mão, deslocado ${Number.isFinite(a.desloc) ? a.desloc.toFixed(2) : '∞'} do encaixe, ${a.px === Infinity ? 'na tela' : `${a.px} px na tela`}`);
@@ -456,7 +474,7 @@ export const JUIZ = {
     // de 15–20 px; nunca aparece pente inteiro").
     const fr = k.amostras.filter((a) => a.estado === 'mao' && Number.isFinite(a.px) && r0.pxSo).map((a) => a.px / r0.pxSo);
     if (fr.length && Math.max(...fr) < T.tocoMin) falhas.push(`tira carregador fantasma (toco): com o pente na mão aparece no máximo ${(100 * Math.max(...fr)).toFixed(0)}% dele (mínimo ${T.tocoMin * 100}%)`);
-    if (!naMao) falhas.push('tira no ar: em nenhum quadro da recarga a peça está na mão');
+    if (!naMao && k.amostras.some((a) => a.maoNaTela)) falhas.push('tira no ar: em nenhum quadro da recarga a peça está na mão');
     const valor = `${falhas.length ? falhas.length + ' falha(s)' : 'ok'}`;
     const txt = `${estados.join(' ')}`;
     if (!falhas.length) return V(valor, txt);
@@ -557,6 +575,19 @@ const PAGINA_UTIL = `
 const naPagina = (corpo) => new Function('x', `${PAGINA_UTIL}\nconst e = window.__authoredVm.entry(x);\n${corpo}`);
 
 export const MUTANTES = {
+  'ads-receptor-antigo': { regua: 'cobertura', arma: 'md97', fase: 'antesAds', aplicar: async (page, arma) => {
+    const r = await aplicarVariante(page, arma, { ads: { alivio: 0.1 } });
+    return { aplicou: r?.ads?.alivio === 0.1, alivio: r?.ads?.alivio };
+  } },
+  'ads-maos-antigas': { regua: 'pistola-ref', arma: 'pistol', fase: 'antesAds', aplicar: async (page, arma) => {
+    const r = await aplicarVariante(page, arma, { ads: { auto: true, off: [0, 0, 0], estilo: 'alca' } });
+    return { aplicou: r?.ads?.auto === true && r?.ads?.off?.[1] === 0, ads: r?.ads };
+  } },
+  'pente-suspenso': { regua: 'carregador', arma: 'm92', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const b = e.scene.getObjectByName('Mag'); if (!b) return { aplicou: false };
+    if (!window.__vmPenteSuspenso) window.__vmPenteSuspenso = b.getWorldPosition(b.position.clone()).add(b.position.clone().set(0, palmaDe(e) * 2, 0));
+    b.position.copy(b.parent.worldToLocal(window.__vmPenteSuspenso.clone())); b.updateMatrixWorld(true);
+    return { aplicou: true };`), arma) },
   // O defeito da revisão L1 (md97/m92/mp5/akm): os sockets de mira acima da
   // linha de mira real. O ADS automático centra o socket — o AD1 do eval:vm-ads
   // continua 0,000 — e a massa desenhada afunda abaixo da cruz.

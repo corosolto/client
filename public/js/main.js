@@ -1895,6 +1895,8 @@ let restoreHubRoute = () => {};
 if (HUB_ENABLED) {
   document.documentElement.dataset.homeUi = 'hub';
   $('hub-ui').hidden = false;
+  const legacySocialLinks = document.querySelector('.menu-footer .mf-social');
+  if (legacySocialLinks) $('hub-footer-social').appendChild(legacySocialLinks);
   $('main-menu').dataset.hubTab = 'jogar';
   $('main-menu').dataset.hubNet = 'sp';
   $('main-menu').dataset.hubMpTab = 'public';
@@ -1905,8 +1907,21 @@ if (HUB_ENABLED) {
   $('mp-panel').querySelector('.mp-corpo').appendChild($('mp-panel').querySelector('.mp-criar'));
   const tabs = [...document.querySelectorAll('.hub-tabs [data-hub-tab]')];
   const panes = { jogar: $('hub-play'), ranking: $('hub-ranking'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
+  const updateHubTip = () => {
+    const tab = $('main-menu').dataset.hubTab;
+    const tips = {
+      ranking: 'Acompanhe suas partidas e consulte a disponibilidade do placar global.',
+      sobre: 'Conheça as facções, os mapas e as últimas novidades do jogo.',
+      feedback: 'Descreva o bug ou a ideia; a mensagem chega à equipe do jogo.',
+      apoie: 'Apoiar o jogo não dá vantagem dentro da partida.',
+    };
+    $('hub-tip-text').textContent = tips[tab] || ($('main-menu').dataset.hubNet === 'mp'
+      ? 'Escolha um servidor público ou crie uma sala privada para seus amigos.'
+      : 'Clique nos cartões para ajustar modo, armas, bots e rounds antes de jogar.');
+  };
   const setHubTab = (tab, updateRoute = true) => {
     $('main-menu').dataset.hubTab = tab;
+    updateHubTip();
     if (tab !== 'jogar' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     for (const button of tabs) {
       const active = button.dataset.hubTab === tab;
@@ -1934,6 +1949,7 @@ if (HUB_ENABLED) {
   });
   const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
+    updateHubTip();
     if (net === 'mp' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     $('hub-sp').setAttribute('aria-pressed', String(net === 'sp'));
     $('hub-mp').setAttribute('aria-pressed', String(net === 'mp'));
@@ -1962,6 +1978,7 @@ if (HUB_ENABLED) {
   $('hub-map-modal').onclick = (event) => { if (event.target === $('hub-map-modal')) closeHubMap(); };
   $('hub-roster-modal').onclick = (event) => { if (event.target === $('hub-roster-modal')) closeHubRoster(); };
   $('hub-profile').onclick = () => { setHubTab('jogar', false); setHubNet('sp', false); openProfileStep(true); hubNavigate({ secao: 'jogar', partida: 'singleplayer', servidor: null, janela: 'perfil', origem: null }); };
+  $('hub-rank-profile').onclick = () => $('hub-profile').click();
   $('hub-settings').onclick = () => { ui.click(); settingsReturn = 'main-menu'; show('settings-panel'); hubNavigate({ janela: 'configuracoes', origem: null }); };
   const onlineCount = $('mf-online-n');
   const syncOnline = () => { $('hub-online-n').textContent = onlineCount.textContent || '—'; };
@@ -2165,6 +2182,8 @@ function setMapMode() {
   if (HUB_ENABLED) {
     $('hub-mode-rounds').setAttribute('aria-pressed', String(matchMode === 'rounds'));
     $('hub-mode-ctf').setAttribute('aria-pressed', String(matchMode === 'ctf'));
+    $('hub-mode-rounds').querySelector('small').textContent = `MELHOR DE ${settings.rounds || 5}`;
+    $('hub-mode-ctf').querySelector('small').textContent = `MELHOR DE ${settings.ctfRounds || 3}`;
     $('hub-rounds-value').textContent = String(matchRounds());
   }
   setMapMeta();
@@ -2914,6 +2933,7 @@ function showRanking() {
 }
 async function renderHubRanking() {
   const stats = loadStats();
+  $('hub-rank-profile').hidden = Boolean(registeredNick);
   const cards = $('hub-rank-local');
   cards.replaceChildren();
   for (const [label, value] of [
@@ -2934,13 +2954,13 @@ async function renderHubRanking() {
   if (!data.players.length) { global.textContent = 'Ainda não há jogadores no ranking.'; return; }
   const table = document.createElement('table');
   const head = document.createElement('tr');
-  for (const label of ['#', 'JOGADOR', 'K/D', 'KILLS', 'VIT.']) {
+  for (const label of ['#', 'JOGADOR', 'PONTOS', 'K/D', 'KILLS']) {
     const cell = document.createElement('th'); cell.textContent = label; head.appendChild(cell);
   }
   table.appendChild(head);
   for (const [index, player] of data.players.slice(0, 10).entries()) {
     const row = document.createElement('tr');
-    for (const value of [index + 1, player.nick, player.kd, player.kills, player.wins]) {
+    for (const value of [index + 1, player.nick, player.points, player.kd, player.kills]) {
       const cell = document.createElement('td'); cell.textContent = String(value ?? '—'); row.appendChild(cell);
     }
     table.appendChild(row);
