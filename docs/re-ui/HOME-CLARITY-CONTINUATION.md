@@ -66,3 +66,7 @@ Próximo passo: validar candidato alpha.9 ON (`/ranking`, perfil, badge, home), 
 - PRs abertos após o merge: #705 (uma linha de changelog, checks verdes, mergeable) é candidato direto; #704 ADS e #703 Amazônia viraram conflitos, drafts; #701 limpeza ampla virou conflito, requer revisão semântica; #689 tipografia e #690 avatar seguem drafts mergeable; #702 draft mergeable; #678/#665/#660 conflitam. Backend #25/#29/#30 mergeable mas sem checks anexados, não declarados prontos.
 
 Definição de pronto deste objetivo: home e Ranking padrão publicados e rotas públicas verificadas. O bônus humano MP e os demais PRs seguem como trabalho separado; não anunciar esse bônus como medido.
+
+### Pós-release
+
+Os workflows disparados pelo commit automático alpha.9 concluíram com sucesso: `pr-fast` (`36470036920`) e `portao-browser` (`36470036887`). A falha isolada de `autofix` (`36470432542`) foi ao tentar rebater a PR antiga #665, com conflitos em documentação removida; não é falha do build publicado. Na auditoria mais recente, #705 continua mergeable, mas `mergeStateStatus=BLOCKED` enquanto seu build reexecuta sobre a base nova; não mesclar até esse check acabar.
