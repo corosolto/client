@@ -76,7 +76,7 @@ function blocoInicial() {
 
 const INIT = blocoInicial();
 const OPEN_SETUP = bloco(SRC, 'const openSetup = (mode, title, act) =>');
-const GOTO_MAP = bloco(SRC, 'function gotoMap(i)');
+const GOTO_MAP = bloco(SRC, 'function gotoMap(');
 const MAP_IDX = (SRC.match(/^let mapIdx = .*$/m) || [])[0];
 if (!MAP_IDX) throw new Error('não achei `let mapIdx =` no main.js');
 // handler do badge de modo: o corpo do addEventListener('click', ...) dentro do bloco `mm`
@@ -124,12 +124,12 @@ function novoMenu(mapaInicial) {
       idx: () => mapIdx,
       openSetup, gotoMap, badge,
     };`;
-  const f = new Function('MAPS', 'MAP_IDS', 'DEFAULT_MAP', 'resolveMapId', 'settings', 'saveSettings',
+  const f = new Function('MAPS', 'MAP_IDS', 'MAPAS_MENU', 'DEFAULT_MAP', 'resolveMapId', 'settings', 'saveSettings',
     '$', 'ui', 'setMapMode', 'setSetupStep', 'markCurrent', 'menuSetup', 'applySetupWall',
-    'mapNameEl', 'setMapThumb', 'rebuildMenuBackdrop', 'renderMapScreen', 'loadMenuBackdrop', corpo);
-  return f(MAPS, MAP_IDS, DEFAULT_MAP, (id) => (MAPS[id] ? id : DEFAULT_MAP), { map: mapaInicial }, noop,
+    'mapNameEl', 'setMapThumb', 'rebuildMenuBackdrop', 'renderMapScreen', 'loadMenuBackdrop', 'hubNavigate', corpo);
+  return f(MAPS, MAP_IDS, MAP_IDS, DEFAULT_MAP, (id) => (MAPS[id] ? id : DEFAULT_MAP), { map: mapaInicial }, noop,
     () => el, { click: noop, hover: noop, back: noop }, noop, noop, noop, el, noop,
-    el, noop, noop, noop, loadMenuBackdrop);
+    el, noop, noop, noop, loadMenuBackdrop, noop);
 }
 
 /* ---- os 10 casos ---- */

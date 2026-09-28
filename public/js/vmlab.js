@@ -9,8 +9,8 @@
 // negativo = pra longe do olho); rx/ry/wt = pitch/yaw/inclinação em graus.
 import { weaponCFG } from './weapons.js';
 
-// snipers de luneta: a arma some no ADS e a luneta cobre (o jogo já trata a máscara).
-export const VMLAB_SCOPED = new Set(['awp', 'svd', 'sks', 'mosin']);
+// Armas com luneta: a arma some no ADS e a luneta cobre (o jogo já trata a máscara).
+export const VMLAB_SCOPED = new Set(['awp', 'svd', 'sks', 'mosin', 'lmg']);
 // armas cujo mirado é POSICIONADO À MÃO (sem auto-centrar a alça medida).
 export const VMLAB_NO_ALIGN = new Set(['pistol']);
 

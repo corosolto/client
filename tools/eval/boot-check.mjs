@@ -278,7 +278,7 @@ try {
     const watchdogsAntes = relatorios.filter((r) => r.source === 'launch-watchdog').length;
     await page.close();
     const jornada = await context.newPage();
-    await jornada.goto(`${BASE}/?nav=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await jornada.goto(`${BASE}/?nav=1&home=legacy`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await jornada.locator('#splash-enter:not(.hidden)').waitFor({ timeout: 120000 });
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
     await jornada.waitForTimeout(3100);

@@ -97,7 +97,7 @@ export const VM_WEAPON = {
     frame: { x: 0.065, y: 0.04, z: -0.203, fov: 57, rotDeg: [1.69, 7.69, 6.19] },
     ads: { auto: true, off: [0.0106, -0.0035, 0], rotDeg: [-5.49, -0.64, 0], pull: 0.05, fovScale: 1,
       linhaDeMira: { ref: 'MINT_WEAPON_AKM', alca: [-0.06, 0.15, 0.012], massa: [-0.48, 0.152, 0.012] } } }),
-  g3: W('g3', { baked: true, frame: 'family', ads: { auto: true, off: [-0.01, -0.107, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
+  g3: W('g3', { baked: true, frame: { y: -0.015, fov: 78, rotDeg: [8, -0.2, 18] }, ads: { auto: true, off: [-0.01, -0.107, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
   // Pose de duas mãos aponta ~55° para cima no frame da família: o pacote gira (yaw 16°, cano
   // ~15° como a PT-38) no fov da pistola; o ADS usa o clipe `ads` do produto (ads-pose.mjs).
   revolver38: W('revolver', { baked: true, runtime: 'family', timing: 'gameplay',
@@ -127,7 +127,7 @@ export const VM_WEAPON = {
     } }),
   // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
   // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
-  md97: W('ar', { baked: true, recoilScale: 1.8,
+  md97: W('ar', { baked: true, recoilScale: 1.8, frame: { fov: 90, rotDeg: [-4, -4, -12] },
     // linhaDeMira = alça e massa (nó + ponto local): o socket `sight` fica abaixo da alça.
     ads: { auto: true, off: [-0.006, 0, 0], rotDeg: [-4.31, 0.51, 0], pull: 0.05, fovScale: 1,
       linhaDeMira: { ref: 'MINT_WEAPON_MD97', alca: [0.24, 0.112, -0.0095], massa: [-0.265, 0.107, -0.010] } } }),

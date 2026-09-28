@@ -1,24 +1,24 @@
 # PLACAR das réguas de imagem do viewmodel
 
-Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-27, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `f78ee6bdcf005549`.
+Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-28, quadro 3x2
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `2438dd4a0392a81a`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
 |---|---|---|---|---|---|
 | awp | n/a | **VERMELHO** 1.43× AK | n/a | verde 0.08 | verde ok |
-| ak | **VERMELHO** 213 px | verde 1.00× AK | n/a | verde 0.19 | verde ok |
+| ak | verde 5 px | verde 1.00× AK | n/a | verde 0.19 | verde ok |
 | m4 | verde 0 px | verde 1.01× AK | n/a | verde 0.00 | verde ok |
 | mp5 | verde 1 px | verde 0.79× AK | n/a | verde 0.01 | verde ok |
 | shotgun | verde 7 px | verde 1.06× AK | n/a | verde 0.02 | verde ok |
-| deagle | verde 24 px | verde 1.13× PT-38 | verde 1.13× pistola aprovada | n/a | verde ok |
-| pistol | verde 20 px | verde 1.00× PT-38 | verde 1.00× pistola aprovada | n/a | verde ok |
+| deagle | verde 20 px | verde 1.13× PT-38 | verde 1.13× pistola aprovada | n/a | verde ok |
+| pistol | verde 15 px | verde 1.00× PT-38 | verde 1.00× pistola aprovada | n/a | verde ok |
 | knife | n/a | n/a | n/a | n/a | n/a |
 | m92 | verde 17 px | verde 1.15× AK | n/a | verde 0.00 | verde ok |
 | akm | verde 19 px | verde 0.93× AK | n/a | verde 0.01 | verde ok |
-| g3 | verde 6 px | **VERMELHO** 1.06× AK | n/a | verde 0.05 | verde ok |
-| revolver38 | verde 9 px | verde 0.83× PT-38 | verde 0.83× pistola aprovada | n/a | n/a |
-| md97 | verde 16 px | **VERMELHO** 1.04× AK | n/a | verde 0.02 | verde ok |
+| g3 | verde 12 px | verde 0.95× AK | n/a | verde 0.05 | verde ok |
+| revolver38 | verde 5 px | verde 0.83× PT-38 | verde 0.83× pistola aprovada | n/a | n/a |
+| md97 | verde 10 px | verde 1.09× AK | n/a | verde 0.02 | verde ok |
 | carbine | verde 16 px | verde 0.93× AK | n/a | verde 0.01 | n/a |
 | m400 | n/a | **VERMELHO** 0.91× AK | n/a | verde 0.01 | verde ok |
 | mosin | n/a | **VERMELHO** 1.13× AK | n/a | verde 0.03 | verde ok |
@@ -33,23 +33,23 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 | uzi | verde 7 px | verde 0.53× AK | n/a | n/a | **VERMELHO** 1 falha(s) |
 | p90 | verde 24 px | verde 0.68× AK | n/a | verde 0.06 | verde ok |
 
-**Vermelhas na máquina:** 13 de 26 — awp, ak, g3, md97, m400, mosin, rem700, svd, g3sg1, sks, tavor, famas, uzi.
+**Vermelhas na máquina:** 10 de 26 — awp, m400, mosin, rem700, svd, g3sg1, sks, tavor, famas, uzi.
 
 ## mira
 
 - **awp** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
-- **ak** VERMELHO — mira fora da cruz a 213 px; ângulo esquisito no ADS: arma tombada +65° da vertical — aro a 213 px da cruz (+199, +75); teto 30 px; eixo no ADS +65° da vertical (teto ±12°). Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT no produto (vm-fix-mesh).
+- **ak** VERDE — massa a 5 px da cruz (+4, -3); teto 30 px; eixo no ADS -4° da vertical (teto ±12°)
 - **m4** VERDE — massa a 0 px da cruz (+0, +0); teto 30 px; eixo no ADS -2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.181 NDC
 - **mp5** VERDE — aro a 1 px da cruz (-0, -0); teto 30 px; eixo no ADS +2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.101 NDC
 - **shotgun** VERDE — massa a 7 px da cruz (+2, -7); teto 30 px; eixo no ADS -3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 10 px do aparelho visto · socket sight (o que o AD1 lê) 0.013 NDC
-- **deagle** VERDE — massa a 24 px da cruz (-22, +10); teto 30 px; eixo no ADS -3° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.092 NDC
-- **pistol** VERDE — massa a 20 px da cruz (+0, -20); teto 30 px; eixo no ADS -4° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
+- **deagle** VERDE — massa a 20 px da cruz (-17, +10); teto 30 px; eixo no ADS -3° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.068 NDC
+- **pistol** VERDE — massa a 15 px da cruz (+0, -15); teto 30 px; eixo no ADS -4° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
 - **knife** N/A — faca: sem ADS
 - **m92** VERDE — massa a 17 px da cruz (+16, -7); teto 30 px; eixo no ADS +1° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 18 px do aparelho visto · socket sight (o que o AD1 lê) 0.127 NDC
 - **akm** VERDE — massa a 19 px da cruz (+15, -11); teto 30 px; eixo no ADS +8° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 19 px do aparelho visto · socket sight (o que o AD1 lê) 0.157 NDC
-- **g3** VERDE — massa a 6 px da cruz (+6, +0); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.481 NDC
-- **revolver38** VERDE — massa a 9 px da cruz (-9, +1); teto 30 px; eixo no ADS -6° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 9 px do aparelho visto · socket sight (o que o AD1 lê) 0.018 NDC
-- **md97** VERDE — massa a 16 px da cruz (-8, -14); teto 30 px; eixo no ADS +3° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 13 px do aparelho visto · socket sight (o que o AD1 lê) 0.093 NDC
+- **g3** VERDE — massa a 12 px da cruz (-12, +0); teto 30 px; eixo no ADS +10° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.287 NDC
+- **revolver38** VERDE — massa a 5 px da cruz (-5, +1); teto 30 px; eixo no ADS -6° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 5 px do aparelho visto · socket sight (o que o AD1 lê) 0.014 NDC
+- **md97** VERDE — massa a 10 px da cruz (-2, -10); teto 30 px; eixo no ADS -12° da vertical (teto ±12°); linhaDeMira (#633): massa declarada a 12 px do aparelho visto · socket sight (o que o AD1 lê) 0.057 NDC
 - **carbine** VERDE — massa a 16 px da cruz (+0, -16); teto 30 px; eixo no ADS +0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
 - **m400** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
 - **mosin** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
@@ -67,7 +67,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 ## cobertura
 
 - **awp** VERMELHO — arma gigante: 143% da AK (faixa 0.8–1.25, classe longa); braço 1.47× a área do braço da AK (teto 1.4) — tamanho 1.43× AK, rolagem -17° da AK (informativa), eixo +1° da AK, braço 1.47×, cruz 0 px, olho 1.03 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).
-- **ak** VERDE — tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo 0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 12.3% (teto 18.5%)
+- **ak** VERDE — tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo +0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 14.7% (teto 18.5%)
 - **m4** VERDE — tamanho 1.01× AK, rolagem +5° da AK (informativa), eixo +7° da AK, braço 0.79×, cruz 0 px, olho 1.36 palma, ADS cobre 6.3% (teto 18.5%)
 - **mp5** VERDE — tamanho 0.79× AK, rolagem +12° da AK (informativa), eixo -7° da AK, braço 0.90×, cruz 0 px, olho 2.49 palma, ADS cobre 5.6% (teto 18.5%)
 - **shotgun** VERDE — tamanho 1.06× AK, rolagem +20° da AK (informativa), eixo -6° da AK, braço 1.28×, cruz 0 px, olho 0.99 palma, ADS cobre 12.7% (teto 18.5%)
@@ -76,9 +76,9 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **knife** N/A — faca: meleevm, régua própria (melee-framing)
 - **m92** VERDE — tamanho 1.15× AK, rolagem +14° da AK (informativa), eixo +10° da AK, braço 1.16×, cruz 0 px, olho 3.13 palma, ADS cobre 7.4% (teto 18.5%)
 - **akm** VERDE — tamanho 0.93× AK, rolagem +3° da AK (informativa), eixo +0° da AK, braço 0.99×, cruz 0 px, olho 2.88 palma, ADS cobre 7.5% (teto 18.5%)
-- **g3** VERMELHO — braço 1.61× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela 142° contra 155° da AK (-14°, teto ±12°) — tamanho 1.06× AK, rolagem +34° da AK (informativa), eixo -14° da AK, braço 1.61×, cruz 0 px, olho 1.38 palma, ADS cobre 6.7% (teto 18.5%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).
+- **g3** VERDE — tamanho 0.95× AK, rolagem +22° da AK (informativa), eixo -11° da AK, braço 1.11×, cruz 0 px, olho 1.55 palma, ADS cobre 8.3% (teto 18.5%)
 - **revolver38** VERDE — curta: tamanho 0.83× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 5.56 palma
-- **md97** VERMELHO — braço 1.61× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela -176° contra 155° da AK (+29°, teto ±12°) — tamanho 1.04× AK, rolagem -114° da AK (informativa), eixo +29° da AK, braço 1.61×, cruz 0 px, olho 1.53 palma, ADS cobre 8.7% (teto 18.5%). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).
+- **md97** VERDE — tamanho 1.09× AK, rolagem -74° da AK (informativa), eixo +3° da AK, braço 1.26×, cruz 0 px, olho 1.15 palma, ADS cobre 15.8% (teto 18.5%)
 - **carbine** VERDE — tamanho 0.93× AK, rolagem +14° da AK (informativa), eixo -4° da AK, braço 1.37×, cruz 0 px, olho 1.46 palma, ADS cobre 12.4% (teto 18.5%)
 - **m400** VERMELHO — ângulo esquisito: eixo da arma na tela 133° contra 155° da AK (-22°, teto ±12°) — tamanho 0.91× AK, rolagem +44° da AK (informativa), eixo -22° da AK, braço 0.73×, cruz 0 px, olho 1.90 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).
 - **mosin** VERMELHO — braço 2.44× a área do braço da AK (teto 1.4); 3479 px de arma/braço sobre a cruz no quadril — tamanho 1.13× AK, rolagem +25° da AK (informativa), eixo -11° da AK, braço 2.44×, cruz 3479 px, olho 0.76 palma, ADS: viewmodel some (luneta). Conserto: z/escala do frame da arma (vmframe.js) ou malha (vm-fix-mesh).
@@ -100,13 +100,13 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **m4** N/A — só armas curtas
 - **mp5** N/A — só armas curtas
 - **shotgun** N/A — só armas curtas
-- **deagle** VERDE — tamanho 1.13× pistola aprovada, desvio 42 px, ADS 121%
-- **pistol** VERDE — tamanho 1.00× pistola aprovada, desvio 0 px, ADS 100%
+- **deagle** VERDE — tamanho 1.13× pistola aprovada, desvio 42 px, ADS 67%
+- **pistol** VERDE — tamanho 1.00× pistola aprovada, desvio 0 px, ADS 55%
 - **knife** N/A — só armas curtas
 - **m92** N/A — só armas curtas
 - **akm** N/A — só armas curtas
 - **g3** N/A — só armas curtas
-- **revolver38** VERDE — tamanho 0.83× pistola aprovada, desvio 24 px, ADS 97%
+- **revolver38** VERDE — tamanho 0.83× pistola aprovada, desvio 24 px, ADS 53%
 - **md97** N/A — só armas curtas
 - **carbine** N/A — só armas curtas
 - **m400** N/A — só armas curtas
@@ -163,7 +163,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **knife** N/A — faca: sem carregador
 - **m92** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 - **akm** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:fora vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:fora tatica0.57:mao tatica0.71:arma tatica0.86:arma
-- **g3** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
+- **g3** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:fora vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 - **revolver38** N/A — cilindro: tambor e cartuchos são do eval:vm-pistol-revolver
 - **md97** VERDE — vazia0.08:arma vazia0.15:arma vazia0.23:mao vazia0.31:mao vazia0.38:mao vazia0.46:mao vazia0.54:mao vazia0.62:mao vazia0.69:arma vazia0.77:arma vazia0.85:fora vazia0.92:arma tatica0.14:arma tatica0.29:mao tatica0.43:mao tatica0.57:mao tatica0.71:arma tatica0.86:arma
 - **carbine** N/A — alavanca com cartucho solto pela janela: sem peça de carregador no produto
