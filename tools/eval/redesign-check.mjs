@@ -82,6 +82,7 @@ const alvoPorMutante = {
   'mouse-invertido-ignorado': 'UIR31',
   'loading-wall-cover-unico': 'UIR32',
   'menu-wall-sem-3x2': 'UIR32',
+  'menu-wall-contain-volta': 'UIR32',
   'opcoes-mapa-decorativas': 'UIR33',
   'borda-tracejada-volta': 'UIR34',
   'splash-sem-personagem': 'UIR35',
@@ -162,8 +163,8 @@ main = muta('sem-i18n', main,
   "`${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`",
   "`MAPA ${MAP_IDS.indexOf(currentMap) + 1} DE ${MAP_IDS.length}`");
 main = muta('preview-render', main,
-  "if (csOpen && pv && pv.model && !previewVideoVisible()) {",
-  "if (csOpen && pv && pv.model) {");
+  "if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {",
+  "if ((csOpen || hubPreviewOpen) && pv && pv.model) {");
 main = muta('preview-decode', main,
   "if (id !== 'char-select') pvStopVideo();",
   '');
@@ -188,6 +189,9 @@ css = muta('loading-wall-cover-unico', css,
 css = muta('menu-wall-sem-3x2', css,
   "background-image:var(--menu-wall-3x2,var(--menu-wall))",
   'background-image:var(--menu-wall)');
+css = muta('menu-wall-contain-volta', css,
+  '.cs-wallpaper::after{inset:0;z-index:1;background-size:cover}',
+  '.cs-wallpaper::after{inset:0;z-index:1;background-size:contain}');
 main = muta('opcoes-mapa-decorativas', main,
   'roundsMax: matchRounds(),',
   'roundsMax: 5,');
@@ -619,7 +623,7 @@ const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main
   && /const FACTION_NAME = \{ E: 'TIME E'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
-const previewUso = /if \(csOpen && pv && pv\.model && !previewVideoVisible\(\)\)/.test(funcLoop)
+const previewUso = /if \(\(csOpen \|\| hubPreviewOpen\) && pv && pv\.model && !previewVideoVisible\(\)\)/.test(funcLoop)
   && /function previewVideoVisible\(\)[\s\S]*classList\.contains\('has-video'\)/.test(main);
 const previewPausa = /id !== 'char-select'[\s\S]{0,60}pvStopVideo\(\)/.test(funcShow)
   && /function pvStopVideo\(\)[\s\S]{0,180}video\.pause\(\)/.test(main);
@@ -886,7 +890,7 @@ const wallpaperLoadingResponsivo = /setProperty\('--loading-wall', loadingWallUr
   && /setProperty\('--menu-wall-3x2', SETUP_WALL_3X2\)/.test(main)
   && /\.cs-wallpaper::before,\.cs-wallpaper::after\{[^}]*background-image:var\(--menu-wall\);[^}]*background-repeat:no-repeat/.test(css)
   && /\.cs-wallpaper::before\{[^}]*background-size:cover;[^}]*filter:blur\(18px\)/.test(css)
-  && /\.cs-wallpaper::after\{[^}]*background-size:contain/.test(css)
+  && css.includes('.cs-wallpaper::after{inset:0;z-index:1;background-size:cover}')
   && /@media \(min-aspect-ratio:37\/25\) and \(max-aspect-ratio:38\/25\)\{[\s\S]{0,240}background-image:var\(--menu-wall-3x2,var\(--menu-wall\)\)[\s\S]{0,180}\.cs-wallpaper::after\{background-size:cover\}/.test(css)
   && menuWall3x2AssetsOk
   && /#boot-splash::before,#load-overlay::before\{[^}]*background-image:var\(--loading-wall\);background-size:cover;[^}]*filter:blur\(18px\)/.test(css)
@@ -1028,8 +1032,8 @@ const resultados = [
     'ENVIE SEU FEEDBACK abre o painel funcional sem criar rota morta'],
   ['UIR31', 'configuração de eixo vertical chega ao mouse-look real', mouseVerticalConfiguravel,
     'checkbox persistido inverte somente movementY; movimento horizontal permanece igual'],
-  ['UIR32', 'menu preenche o 3:2 sem cortar; splash e loading preservam a arte inteira', wallpaperLoadingResponsivo,
-    'cada wallpaper ganha variante 3:2 derivada da arte real; demais formatos mantêm contain sobre cover'],
+  ['UIR32', 'menu preenche o viewport em qualquer proporção; splash e loading preservam a arte inteira', wallpaperLoadingResponsivo,
+    'cada wallpaper cobre o viewport; 3:2 usa variante derivada da arte real'],
   ['UIR33', 'tela cheia de mapas configura armas, jogadores e número real de rounds', opcoesPartidaNoMapa,
     'os três controles persistem no estado; roundsMax atravessa main.js e governa o encerramento em game.js'],
   ['UIR34', 'interface pública não usa borda tracejada ou faixa hazard', semBordaTracejada,

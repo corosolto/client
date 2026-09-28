@@ -165,6 +165,9 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
   const inspecaoExplicita = /const inspectionScreen = resolveInspectionScreen\(params\)/.test(MAIN_JS)
     && /if \(inspectionScreen\) \{[\s\S]{0,120}openInspectionScreen\(inspectionScreen\)/.test(MAIN_JS)
     && /target\.screen === 'menu'/.test(inspectBloco);
+  const charConfirmIni = linhas.findIndex((l) => /^\$\('char-confirm'\)\.onclick = \(\) => \{$/.test(l));
+  let charConfirmFim = -1;
+  if (charConfirmIni >= 0) for (let j = charConfirmIni + 1; j < linhas.length; j++) if (/^\};$/.test(linhas[j])) { charConfirmFim = j; break; }
   const suspeitas = [];
   for (let i = 0; i < linhas.length; i++) {
     const L = linhas[i];
@@ -185,11 +188,18 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
     // contexto: o handler pode abrir algumas linhas acima (onclick de bloco)
     const ctx = linhas.slice(Math.max(0, i - 8), i + 1).join('\n');
     const porClique = /\.onclick\s*=|addEventListener\(\s*['"]click['"]|addEventListener\(\s*['"]keydown['"]|needsConfirm\(/.test(ctx);
-    if (!porClique) suspeitas.push(`${i + 1}: ${L.trim().slice(0, 90)}`);
+    const porHistoricoSeguro = !chamada && /show\(\s*['"]main-menu['"]\s*\)/.test(L)
+      && /restoreHubRoute = \(\) =>/.test(linhas.slice(Math.max(0, i - 20), i).join('\n'))
+      && /settingsReturn === 'main-menu'/.test(ctx)
+      && /\(!game \|\| !\['live', 'roundEnd', 'countdown'\]\.includes\(game\.state\)\)/.test(ctx);
+    const porConfirmacao = !chamada && i > charConfirmIni && i < charConfirmFim
+      && /else if \(HUB_ENABLED\)/.test(linhas.slice(Math.max(charConfirmIni, i - 8), i).join('\n'));
+    const porBoot = !chamada && /^show\('main-menu'\)/.test(L)
+      && /\/\* ---------------- boot ---------------- \*\//.test(linhas.slice(Math.max(0, i - 20), i).join('\n'))
+      && /window\.__CS_MAIN_READY__ = true/.test(linhas.slice(i + 1, i + 6).join('\n'));
+    if (!porClique && !porHistoricoSeguro && !porConfirmacao && !porBoot) suspeitas.push(`${i + 1}: ${L.trim().slice(0, 90)}`);
   }
-  // o boot (`show('main-menu')` imediatamente antes de `__CS_MAIN_READY__`) é legítimo:
-  // não há partida nenhuma ainda. A isenção é pela VIZINHANÇA, não pelo texto da linha.
-  const reais = suspeitas.filter((s) => !/isMobile/.test(s) && !/__CS_MAIN_READY__/.test(linhas[parseInt(s, 10)] || ''));
+  const reais = suspeitas.filter((s) => !/isMobile/.test(s));
   put('PAUSA5', 'nenhum caminho AUTOMÁTICO tira uma partida ativa do jogo',
     reais.length === 0, reais.length ? reais.join(' | ') : 'ok — só ação deliberada, inspeção inicial explícita ou catch delimitado de startGame');
 }

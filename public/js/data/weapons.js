@@ -34,7 +34,7 @@ export const WEAPONS = {
   g3sg1:     { name: 'G3SG1 "FRITZ"', short: 'G3SG1', dmg: 55, mag: 20, reserve: 60, rate: 0.22, reload: 2.8, spreadHip: 0.045, spreadScope: 0.0016, recoil: 0.026, auto: true, scope: true },
   sks:       { name: 'SKS "MILÍCIA"', short: 'SKS', dmg: 48, mag: 10, reserve: 50, rate: 0.18, reload: 2.6, spreadHip: 0.04, spreadScope: 0.002, recoil: 0.02, auto: true, scope: true },
   // arsenal 3 (militar)
-  lmg:       { name: 'METRALHA "TRETA PESADA"', short: 'LMG', dmg: 31, mag: 100, reserve: 200, rate: 0.085, reload: 5.0, spreadHip: 0.04, recoil: 0.011, auto: true },
+  lmg:       { name: 'METRALHA "TRETA PESADA"', short: 'LMG', dmg: 31, mag: 100, reserve: 200, rate: 0.085, reload: 5.0, spreadHip: 0.04, recoil: 0.011, auto: true, scope: true },
   scar:      { name: 'SCAR "PAGA-PAU"', short: 'SCAR', dmg: 37, mag: 20, reserve: 80, rate: 0.11, reload: 2.5, spreadHip: 0.02, recoil: 0.01, auto: true },
   tavor:     { name: 'TAVOR "CURTINHO"', short: 'TAVOR', dmg: 32, mag: 30, reserve: 90, rate: 0.09, reload: 2.3, spreadHip: 0.024, recoil: 0.008, auto: true },
   // rate 0.06→0.075: a 1000 RPM full-auto ela era a MELHOR arma do jogo (TTK 0.180) com o

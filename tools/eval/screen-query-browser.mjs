@@ -98,7 +98,7 @@ try {
       };
     });
     const isThreeTwo = label === '3x2';
-    const expectedPrimarySize = isThreeTwo ? 'cover' : 'contain';
+    const expectedPrimarySize = 'cover';
     const expectedPath = isThreeTwo ? '/img/walls-3x2/wall-' : '/img/wall-';
     if (wallpaper.frame.join('x') !== `${width}x${height}` || wallpaper.primarySize !== expectedPrimarySize
       || wallpaper.primaryRepeat !== 'no-repeat' || wallpaper.fillSize !== 'cover'
@@ -109,7 +109,7 @@ try {
     await page.screenshot({ path: `${OUT}/01_menu-wall-${label}.png` });
   }
   await page.setViewportSize({ width: 1536, height: 1024 });
-  console.log('✓ wallpaper inteiro em todos os formatos e variante cheia dedicada no 3:2');
+  console.log('✓ wallpaper preenche todos os formatos e usa variante dedicada no 3:2');
 
   await open('menu', '01', '#main-menu');
   const menuProfile = await page.evaluate(() => {

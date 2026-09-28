@@ -44,7 +44,7 @@ const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get(
 const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
 const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
-const GOLDEN_ADS = _QS?.get('vmgoldenads') === '1';
+const GOLDEN_ADS = AUTHORED_VM_ENABLED && _QS?.get('vmgoldenads') !== '0';
 
 // Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
 // só abrem armas numa sessão de revisão.

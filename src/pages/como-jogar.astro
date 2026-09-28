@@ -48,6 +48,13 @@ const PASSOS = [
     texto: 'Round de 1 minuto e 39 segundos; leva o round o time com mais abates quando o relógio zera. Três rounds vencem a partida, e a quinta rodada é o teto - se ninguém chegar a três, ganha quem tiver mais rounds.' },
 ];
 
+const MP_PASSOS = [
+  ['Abra MULTIPLAYER', 'Na home, escolha MULTIPLAYER. O jogo mede os servidores e indica a região com menor ping.'],
+  ['Entre em uma partida', 'Clique em JOGO RÁPIDO para entrar em uma sala aberta. Você também pode escolher uma sala na lista, um time com vaga ou assistir como espectador.'],
+  ['Jogue com amigos', 'Quem criou a sala pode copiar o código ou o link de convite. Abra SERVIDOR PRIVADO para colar o código recebido no campo de convite, ou abra o link. Uma sala privada também pede a senha.'],
+  ['Crie sua sala', 'Abra SERVIDOR PRIVADO e CRIAR MINHA SALA. Escolha nome, mapas, times, modo, jogadores por time e uma senha. Clique em CRIAR E ENTRAR, copie o convite na janela e entre na sala. Para criar uma sala pública, desmarque SALA PRIVADA.'],
+];
+
 const FAQ: [string, string][] = [
   ['Preciso instalar ou pagar alguma coisa?',
    'Não. O jogo é 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem download, sem instalação e sem cadastro.'],
@@ -60,7 +67,7 @@ const FAQ: [string, string][] = [
   ['Funciona no celular?',
    'O jogo foi feito para desktop, com mouse e teclado. Em tela de toque aparece um aviso recomendando jogar no computador.'],
   ['Dá pra jogar com amigos?',
-   'Ainda não: hoje todas as partidas são contra bots. O multiplayer é a próxima grande frente do projeto.'],
+   'Sim. Abra MULTIPLAYER e entre por JOGO RÁPIDO, pela lista de salas ou por código/link de convite. Você também pode criar uma sala pública ou privada e convidar amigos.'],
   ['O jogo tem lado político?',
    'Não. É sátira leve distribuída igualmente para todos os lados, sem gore e sem ódio, com personagens 100% fictícios. Tribos Urbanas, Funkeiros, Míticos e as novas facções culturais nem são lados políticos.'],
 ];
@@ -126,6 +133,15 @@ const jsonld = [
       </li>
     ))}
   </ol>
+
+  <h2 id="multiplayer">Tutorial de multiplayer</h2>
+  <p>Para jogar com outras pessoas, use um navegador de desktop com mouse e teclado. O multiplayer está em beta.</p>
+  <ol>
+    {MP_PASSOS.map(([nome, texto]) => (
+      <li><strong>{nome}.</strong> {texto}</li>
+    ))}
+  </ol>
+  <p>Dentro da partida, <strong>WASD</strong> move, o mouse mira, <strong>Tab</strong> mostra o placar e <strong>M</strong> troca de time quando houver vaga. Os bots completam as vagas configuradas na sala.</p>
 
   <h2>Controles</h2>
   <div class="tw">

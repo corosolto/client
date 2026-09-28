@@ -592,8 +592,9 @@ máscara antes × depois igual à de duas medições do depois, e os pixels do v
 que entre duas medições do depois (`artifacts/fabrica-final/ak-golden-ads/prova-quadril/`).
 Crítico A/B cego: r1 REPROVADA (a cruz caía dentro da folha), r2 RESSALVA — mira certa, alvo
 visível, reta e do tamanho da M4; pesa só a pose das mãos coladas ao olho, que é a pose aprovada da
-golden (não mexida, por decisão do dono). Para não bloquear a integração, o ADS fica atrás de
-`?vmgoldenads=1` (desligado por padrão) até o dono aprovar; `mira/ak` segue como dívida dele.
+golden (não mexida). Depois da decisão de melhorar o campo de visão de todas as armas, o ADS
+alinhado passou a ser o padrão da AK autorada; `?vmgoldenads=0` restaura a pose anterior.
+`eval:vm-mira-golden` mede a mira padrão em 3:2 e 16:9 e mantém o mutante de alça deslocada.
 
 **Réguas novas (com mutante)**
 

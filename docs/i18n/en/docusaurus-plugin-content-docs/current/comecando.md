@@ -41,9 +41,9 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 57,550 lines in 112 files | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **8,134** lines | `wc -l public/js/game.js` |
-| `main.js` | 3,714 lines | `wc -l public/js/main.js` |
+| Game code | 57,956 lines in 112 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **8,147** lines | `wc -l public/js/game.js` |
+| `main.js` | 4,107 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 64 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props in GLB | 204 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -51,7 +51,7 @@ this page was aging at the very first commit — see
 | Playable characters | 53, in 6 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 18 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 22 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 612 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Harness scripts | 613 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Pipeline scripts | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.1.0-alpha.4` | `public/js/version.js` and `package.json` (match) |

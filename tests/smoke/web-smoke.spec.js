@@ -13,6 +13,19 @@ test.afterEach(async ({ page }, testInfo) => {
   });
 });
 
+test('nova home abre o ranking e volta para jogar', async ({ page }) => {
+  const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
+  await page.goto(`${base}/?debug=1&nav=1`);
+  await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#boot-splash')).toHaveCount(0);
+  await expect(page.locator('#hub-ui')).toBeVisible();
+  await page.locator('[data-hub-tab="ranking"]').click();
+  await expect(page.locator('#hub-ranking')).toBeVisible();
+  await page.locator('[data-hub-tab="jogar"]').click();
+  await expect(page.locator('#hub-play')).toBeVisible();
+});
+
 test('menu, ranking, setup, teams, character and initial hud boot', async ({ page }, testInfo) => {
   const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
   const t0 = Date.now();
@@ -43,7 +56,7 @@ test('menu, ranking, setup, teams, character and initial hud boot', async ({ pag
     });
   }
 
-  await page.goto(`${base}/?debug=1&nav=1`);
+  await page.goto(`${base}/?debug=1&nav=1&home=legacy`);
 
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');

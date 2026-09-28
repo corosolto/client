@@ -4,7 +4,7 @@
   "blobPrefix": "viewmodels/sha256",
   "blobBase": "https://c7n4tyaqblkahvgo.private.blob.vercel-storage.com",
   "count": 63,
-  "totalBytes": 167439286,
+  "totalBytes": 166568194,
   "files": [
     {
       "path": "ak/ak-baked-runtime.glb",
@@ -99,9 +99,9 @@
     },
     {
       "path": "fabrica/awp-fabrica.glb",
-      "bytes": 2821016,
-      "sha256": "41867d86fd6eaf0206ac0cd0cfbb7d570acd8ab878e045aa7a2fab118e55170d",
-      "v": "41867d86fd",
+      "bytes": 2820968,
+      "sha256": "3df6baabdb3db80a93fcece4e829fcc53cbb764a7bb4581e33fb7b4710178e31",
+      "v": "3df6baabdb",
       "contentType": "model/gltf-binary"
     },
     {
@@ -239,9 +239,9 @@
     },
     {
       "path": "fabrica/svd-fabrica.glb",
-      "bytes": 3394376,
-      "sha256": "3efcb8065b195f236cce9ba372c3f85b839e0f5859a857eaf284a29454faa8b5",
-      "v": "3efcb8065b",
+      "bytes": 2523332,
+      "sha256": "8932f87984c5778d8b617f4ccac591838fbbfe6e06c4f7e98baba75d85088ccc",
+      "v": "8932f87984",
       "contentType": "model/gltf-binary"
     },
     {

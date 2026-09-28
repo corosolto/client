@@ -66,16 +66,6 @@
     ],
     "fila": "config (frame) — se o frame sozinho piora, pose/IK"
    },
-   "g3": {
-    "valor": "1.06× AK",
-    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
-    "medido": "braço 1.41× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela 142° contra 155° da AK (-14°, teto ±12°) — tamanho 1.06× AK, rolagem +34° da AK (informativa), eixo -14° da AK, braço 1.41×, cruz 0 px, olho 1.38",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (frame) — se o frame sozinho piora, pose/IK"
-   },
    "g3sg1": {
     "valor": "1.06× AK",
     "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
@@ -90,16 +80,6 @@
     "valor": "0.91× AK",
     "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
     "medido": "ângulo esquisito: eixo da arma na tela 133° contra 155° da AK (-22°, teto ±12°) — tamanho 0.91× AK, rolagem +44° da AK (informativa), eixo -22° da AK, braço 0.73×, cruz 0 px, olho 1.90 palma, ADS: viewmodel some (luneta). Conserto",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (frame) — se o frame sozinho piora, pose/IK"
-   },
-   "md97": {
-    "valor": "1.04× AK",
-    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
-    "medido": "braço 1.61× a área do braço da AK (teto 1.4); ângulo esquisito: eixo da arma na tela -176° contra 155° da AK (+29°, teto ±12°) — tamanho 1.04× AK, rolagem -114° da AK (informativa), eixo +29° da AK, braço 1.61×, cruz 0 px, olho 1.",
     "aspectos": [
      "16x9",
      "3x2"
@@ -179,16 +159,6 @@
     ],
     "fila": "config (ads.linhaDeMira/off por arma)"
    },
-   "g3": {
-    "valor": "89 px",
-    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
-    "medido": "mira fora da cruz a 89 px — massa a 89 px da cruz (+3, -89); teto 30 px; eixo no ADS +8° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT ",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (ads.linhaDeMira/off por arma)"
-   },
    "lmg": {
     "valor": "31 px",
     "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
@@ -248,15 +218,6 @@
      "3x2"
     ],
     "fila": "config (ads.linhaDeMira/off por arma)"
-   },
-   "ak": {
-    "valor": "213 px",
-    "dono": "dono (ADS da golden pronto atrás de ?vmgoldenads=1: mira 8 px, crítico A/B RESSALVA só pela pose aprovada das mãos; ligar por padrão é decisão dele)",
-    "medido": "sem ?vmgoldenads=1 a golden não tem ADS: mira fora da cruz a 213 px, +65° da vertical",
-    "aspectos": [
-     "3x2",
-     "16x9"
-    ]
    }
   }
  },
