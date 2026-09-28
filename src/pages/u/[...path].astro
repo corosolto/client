@@ -18,6 +18,7 @@ import { displayTime } from '../../lib/fmt';
 import { normalizeSocialUrl, socialAvatar, socialNet, NET_INFO, netIcon } from '../../lib/social';
 import { CHARS, charSvg } from '../../lib/charsvg';
 import { sideOf } from '../../lib/side';
+import { emptyPlayerScore } from '../../lib/empty-player-score';
 import { BRAND_FULL, GAME_ID, WEBSITE_ID, abs, RANKING_ON } from '../../lib/site';
 
 export const prerender = false;
@@ -40,9 +41,17 @@ if (RANKING_ON && supabaseAdmin) {
     const { data, error } = await supabaseAdmin
       .from('player_points').select('*').eq('id', parts[0]).maybeSingle();
     if (error) return Astro.redirect('/ranking', 302);
-    p = data ? { ...data, players: {
-      id: data.id, nick: data.nick, social_link: data.social_link,
-      socials: data.socials, avatar_url: data.avatar_url,
+    let score: any = data;
+    if (!score) {
+      const { data: player, error: profileError } = await supabaseAdmin
+        .from('players').select('id,nick,social_link,socials,avatar_url')
+        .eq('id', parts[0]).maybeSingle();
+      if (profileError) return Astro.redirect('/ranking', 302);
+      if (player) score = emptyPlayerScore(player);
+    }
+    p = score ? { ...score, players: {
+      id: score.id, nick: score.nick, social_link: score.social_link,
+      socials: score.socials, avatar_url: score.avatar_url,
     } } : null;
     if (p) {
       const real = p.players.nick;

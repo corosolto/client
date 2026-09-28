@@ -298,6 +298,29 @@ html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-cri
 /* <=360px: as cinco abas em duas linhas, header mais alto compensado em pane/menu */
 @media(max-width:360px){.hub-header{min-height:126px;padding:6px 8px}.hub-logo{height:42px}.hub-tabs{flex-wrap:wrap;overflow:visible;row-gap:2px}.hub-tabs button{font-size:12px;padding:9px 6px}.hub-pane{top:128px;left:8px;right:8px}html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup{left:8px;right:8px;top:178px}}
 
+/* O wallpaper continua full bleed; os controles ficam numa largura legível. */
+html[data-home-ui="hub"] #main-menu{--hub-edge:max(34px,calc((100vw - 1600px)/2))}
+.hub-header,.hub-footer{left:var(--hub-edge,34px);right:var(--hub-edge,34px)}
+.hub-pane{left:var(--hub-edge,34px);right:var(--hub-edge,34px)}
+.hub-character{right:var(--hub-edge,34px);width:min(34vw,544px)}
+.hub-character-card{right:var(--hub-edge,34px)}
+html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:var(--hub-edge);right:auto;width:min(960px,calc(60vw - var(--hub-edge) - 7px))}
+.hub-header-action .hub-profile-edit{display:inline;place-items:initial;width:auto;height:auto;padding:0 0 0 8px;border:0;border-left:1px solid #504c44;color:#b4d92e;font:700 10px/1 var(--font);letter-spacing:.5px;white-space:nowrap}
+.hub-character-card .hub-character-change{display:inline-block;margin-top:3px;color:#b4d92e;font:700 12px/1 var(--font);letter-spacing:1px}
+.hub-character-card:hover .hub-character-change,.hub-character-card:focus-visible .hub-character-change{text-decoration:underline;text-underline-offset:3px}
+html[data-home-ui="hub"] #menu-setup .hub-match-chips>button{position:relative;padding-right:23px}
+html[data-home-ui="hub"] #menu-setup .hub-match-chips>button::after{content:"▸";position:absolute;right:8px;top:50%;transform:translateY(-50%);font:700 16px/1 var(--font);opacity:.8}
+html[data-home-ui="hub"] #menu-setup .hub-match-chips>button:hover,html[data-home-ui="hub"] #menu-setup .hub-match-chips>button:focus-visible{border-color:#b4d92e;outline:2px solid #b4d92e;outline-offset:1px}
+.hub-tip{display:flex;align-items:center;gap:6px;min-width:0}.hub-tip #hub-tip-text{margin-right:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hub-footer-social .mf-social{display:flex;align-items:center;gap:7px;margin:0}
+.hub-footer-social .mf-social a{display:grid;place-items:center;width:28px;height:28px;border:1px solid #504c44;color:#d3d3d1}
+.hub-footer-social .mf-social a:hover,.hub-footer-social .mf-social a:focus-visible{border-color:#b4d92e;color:#b4d92e;outline:none}
+.hub-footer-social .mf-social svg{width:15px;height:15px;fill:currentColor}
+.hub-rank-profile{margin:8px 0 0;padding:11px 14px;border:1px solid #b4d92e;background:#b4d92e;color:#131313;font:700 12px/1 var(--font);letter-spacing:1px;cursor:pointer}
+.hub-rank-profile:hover,.hub-rank-profile:focus-visible{filter:brightness(1.12);outline:2px solid #f3b958;outline-offset:2px}
+@media(max-width:1100px){html[data-home-ui="hub"] #main-menu{--hub-edge:14px}.hub-header,.hub-footer,.hub-pane{left:14px;right:14px}.hub-character{right:14px}.hub-character-card{right:14px}html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:14px;width:calc(60vw - 28px)}}
+@media(max-width:760px){html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:14px;right:14px;width:auto}.hub-header-action .hub-profile-edit{display:none}.hub-footer{gap:8px}.hub-footer-social{margin-left:auto}.hub-tip{flex:1}.hub-footer a{display:none}}
+
 /* =========================================================================
    REDESIGN AAA — tokens novos, adicionados sem tocar nos de cima.
    Por quê: a paleta acima veio de medição pixel a pixel sobre referência
@@ -1878,6 +1901,8 @@ html[data-ui="legacy"] .cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-i
 .btn-profile[data-empty="1"] span{color:var(--am)}
 .pc-note{font-size:var(--fs-100);font-weight:500;color:var(--ink-300);line-height:var(--lh-base);
   letter-spacing:var(--tr-tight)}
+.profile-save-note:empty{display:none}
+.profile-save-note:not(:empty){color:var(--am)}
 
 /* fundo das telas de seleção = wallpaper rotativo (--wall, setado no main.js) + overlay escuro */
 #team-select,#char-select{
@@ -2981,4 +3006,37 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   .ms-foot { padding: 6px 14px 10px; }
   #map-screen .ms-actions .btn-big { padding: 9px 26px; }
   #map-screen .ms-actions .btn-big > * { font-size: 16px; }
+}
+
+/* No perfil estreito, a rede precisa do nome inteiro e o campo do usuário
+   continua ao lado do botão de remover. */
+@media (max-width: 380px) {
+  html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup[data-step="profile"] {
+    padding: 12px;
+  }
+  html[data-home-ui="hub"] #menu-setup[data-step="profile"] .pane-profile {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 18px 16px;
+  }
+  #social-list .social-item {
+    grid-template-columns: minmax(0, 1fr) 34px;
+  }
+  #social-list .social-item select {
+    grid-column: 1 / -1;
+  }
+  #social-list .social-item input {
+    min-width: 0;
+    grid-column: 1;
+  }
+  #social-list .social-item .social-del {
+    grid-column: 2;
+  }
+  html[data-home-ui="hub"] #menu-setup[data-step="profile"] .pane-profile .cs-setup-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding-top: 8px;
+    background: #1c1812;
+  }
 }

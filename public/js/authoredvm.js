@@ -397,6 +397,7 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   mount.name = `paid_viewmodel_mount_${family}`;
   mount.add(scene);
   mount.position.set(frame.x, frame.y, frame.z);
+  if (fabrica && frame.scale) mount.scale.setScalar(frame.scale);
   if (molde) {
     // espelho do cl_righthand: o molde cru é canhoto; det<0 exige DoubleSide.
     mount.scale.x = -1;

@@ -12,6 +12,7 @@ import { CHARS, charSvg, charName } from '../../../lib/charsvg';
 import { socialAvatar } from '../../../lib/social';
 import { fetchAvatar } from '../../../lib/safe-url';
 import { RANKING_ON } from '../../../lib/site';
+import { emptyPlayerScore } from '../../../lib/empty-player-score';
 
 export const prerender = false;
 
@@ -112,23 +113,32 @@ const handle: APIRoute = async ({ params }) => {
     return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
   const parts = (params.path || '').split('/').filter(Boolean);
   const first = parts[0] || '';
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(first);
-  const nick = first.replace(/\.png$/, '').slice(0, 14);
+  const key = first.replace(/\.png$/, '');
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(key);
+  const nick = key.slice(0, 14);
   // A badge antiga continua operando antes da migration; a flag só liga junto
   // da view nova, após o rollout coordenado.
   const query = RANKING_ON
     ? supabaseAdmin.from('player_points').select('*')
     : supabaseAdmin.from('stats').select('*, players!inner(id, nick, social_link, avatar_url)');
   const { data } = await (isUuid
-    ? query.eq(RANKING_ON ? 'id' : 'players.id', first).maybeSingle()
+    ? query.eq(RANKING_ON ? 'id' : 'players.id', key).maybeSingle()
     : query.eq('nick', nick).maybeSingle());
-  if (!data) return new Response('not found', { status: 404 });
+  let score: any = data;
+  if (RANKING_ON && !score) {
+    const players = supabaseAdmin.from('players').select('id,nick,social_link,socials,avatar_url');
+    const { data: player } = await (isUuid
+      ? players.eq('id', key).maybeSingle()
+      : players.eq('nick', nick).maybeSingle());
+    if (player) score = emptyPlayerScore(player);
+  }
+  if (!score) return new Response('not found', { status: 404 });
   const p = RANKING_ON
-    ? { ...data, social: (data as any).social_link }
-    : { ...data, points: data.kills, social: (data as any).players?.social_link };
-  const avatarUrl = RANKING_ON ? (data as any).avatar_url : (data as any).players?.avatar_url;
+    ? { ...score, social: score.social_link }
+    : { ...score, points: score.kills, social: score.players?.social_link };
+  const avatarUrl = RANKING_ON ? score.avatar_url : score.players?.avatar_url;
   const avatarUri = await avatarDataUri(avatarUrl || socialAvatar(p.social));
-  const resvg = new Resvg(badgeSvg(p, avatarUri, data.last_character), {
+  const resvg = new Resvg(badgeSvg(p, avatarUri, score.last_character), {
     font: { fontBuffers, loadSystemFonts: false, defaultFontFamily: 'DejaVu Sans' },
     background: '#0c0e11',
   });
