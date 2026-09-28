@@ -4,15 +4,16 @@
 export async function aplicarVariante(page, arma, variante) {
   if (!variante || !Object.keys(variante).length) return null;
   return page.evaluate(async ({ arma, variante }) => {
-    const { VM_WEAPON } = await import('./js/data/vmconfig.js');
+    const { VM_WEAPON, VM_FABRICA } = await import('./js/data/vmconfig.js');
     const e = window.__authoredVm.entry(arma);
+    const cfg = e.key.startsWith('fab#') ? VM_FABRICA[arma] : VM_WEAPON[arma];
     if (variante.frame) Object.assign(e.frame, variante.frame);
-    if (variante.ads) VM_WEAPON[arma].ads = { ...VM_WEAPON[arma].ads, ...variante.ads };
+    if (variante.ads) cfg.ads = { ...cfg.ads, ...variante.ads };
     if (variante.frame?.fov) {
       e.cameraFov = variante.frame.fov;
       const g = window.__game; g.vmCamera.fov = window.__authoredVm.fov(arma, g.vmCamera.aspect); g.vmCamera.updateProjectionMatrix();
     }
     window.__authoredVm.__cap.step(0.05);
-    return { frame: e.frame, ads: VM_WEAPON[arma].ads };
+    return { frame: e.frame, ads: cfg.ads };
   }, { arma, variante });
 }

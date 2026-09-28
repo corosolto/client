@@ -72,6 +72,11 @@ export const INCLINACAO_FABRICA_MAX = 6;
 // ADS: arma+braço cobrem no máximo 1,5× o que a AK cobre em quadril (12,3% → 18,5%).
 // O crítico reprovou o shotgun no ADS por "cobrir ~40% da tela".
 export const COBERTURA_ADS_MAX_VS_AK = 1.5;
+// BUG-181, produção 28/09: na coluna central (43–57% da largura), a AK golden
+// ocupa 20% do entorno da cruz e 60% logo abaixo. MD97 publicada: 41%/78%.
+// A folga de 5 pontos preserva a referência e reprova o receptor que tapa alvo.
+export const ADS_JANELA_ALTA_MAX = 0.25;
+export const ADS_JANELA_BAIXA_MAX = 0.65;
 
 /* PISTOLA-REF (eval:vm-pistola-ref): armas curtas contra a PT-38 aprovada.
    `tamanho` por metro (mesmo conceito do vm-frame: uma Deagle maior que uma
@@ -128,6 +133,9 @@ export const FAIXA_ESCALA = Object.freeze({
 export const VM_FRAME_INFORMATIVO = Object.freeze(['akm', 'm92', 'mp5', 'revolver38']);
 export const PISTOLA_POS_MAX = 0.06;
 export const PISTOLA_ADS_MIN = 0.5;
+// BUG-181: as duas mãos da PT-38 publicada ocupavam 88% da coluna sob a cruz;
+// a pose de foco corrigida ocupa 17%. O centro deve ficar majoritariamente livre.
+export const PISTOLA_MAOS_JANELA_MAX = 0.5;
 
 /* MÃOS (eval:vm-maos): distância dos dedos da mão de APOIO à superfície da malha
    da arma, em comprimentos de palma (junta hand→middle_01; a escala de cena
