@@ -9,21 +9,6 @@
       "valor": "1.43× AK",
       "sha256": "8cbcb84ee1427a61929ec21ae6bb3e4e702153a91ea302748cbddba207704d82"
     },
-    "3x2/mira/ak": {
-      "estado": "VERMELHO",
-      "valor": "213 px",
-      "sha256": "d02cde4fc0cb6e470768e8db9d56916759adf5bc9d2b1bc24328145b0eba5586"
-    },
-    "3x2/cobertura/g3": {
-      "estado": "VERMELHO",
-      "valor": "1.06× AK",
-      "sha256": "bfdfc2a83f574253ead90cf226b1050cd7823ce65e95a6d76d3fe7db2b0b9e0b"
-    },
-    "3x2/cobertura/md97": {
-      "estado": "VERMELHO",
-      "valor": "1.04× AK",
-      "sha256": "a5c1859e4e52ccb7d3dc318afff6ee99a7e9b083fcff84ed5f89f8ec8f38c0cc"
-    },
     "3x2/cobertura/m400": {
       "estado": "VERMELHO",
       "valor": "0.91× AK",
@@ -79,25 +64,10 @@
       "valor": "1.37× AK",
       "sha256": "8c40997bf7f5c075b4a1ed9a691b1617e4aa838962e09606b84d37022c5e1744"
     },
-    "16x9/mira/ak": {
-      "estado": "VERMELHO",
-      "valor": "213 px",
-      "sha256": "731a85de54d497c53468a0c2861ac3abb6cbd374579eb1d5999beaacf0826544"
-    },
     "16x9/carregador/deagle": {
       "estado": "VERMELHO",
       "valor": "1 falha(s)",
       "sha256": "4cdac77a347ddff15faffd0cf07359786870c4aa060e6c019332069624848f4d"
-    },
-    "16x9/cobertura/g3": {
-      "estado": "VERMELHO",
-      "valor": "0.98× AK",
-      "sha256": "0ac43fcb29ff8465f554c5b161d0f3cd7eab65b345a6ca3725d32b9e74a4943e"
-    },
-    "16x9/cobertura/md97": {
-      "estado": "VERMELHO",
-      "valor": "1.08× AK",
-      "sha256": "826625802ccd4a6afe9deec0d1888e316da652e282aa8d31df35ea47a4191758"
     },
     "16x9/cobertura/m400": {
       "estado": "VERMELHO",

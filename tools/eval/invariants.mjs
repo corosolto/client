@@ -2313,12 +2313,40 @@ function runNode(script, env = {}, args = []) {
 }
 
 // ── 10. INVARIANTES QUE EXIGEM PIXEL (marcadas, não rodadas aqui) ───────────
-// Sem arnês de browser para viewmodel hoje (o antigo `tools/eval/motion.mjs`
-// citado aqui NUNCA existiu no git — ponteiro fantasma). O que roda em browser
-// no CI é o portao-browser (boot real + grafite + silhueta da seleção); estas
-// PX continuam pendentes de arnês dedicado (ver KNOWN-BUGS, dívida PX).
+// Regressões reportadas em 27/09: a validação de área útil do ADS e da MGX5
+// em jogo real está em `node tools/eval/ads-visibility-check.mjs`. Estas três
+// condições de fonte/produto são baratas e permanecem no portão Node.
+{
+  const svd = JSON.parse(readFileSync(join(ROOT, 'tools/fabrica/fichas/svd.json'), 'utf8'));
+  const scope = svd.zonaLivre?.find((p) => p.peca === 'luneta-svd');
+  const own = svd.malhaPropria;
+  const mag = own?.pecas?.find((p) => p.osso === 'Mag');
+  put('VM21', 'SVD da fábrica conserva a luneta física do modelo anterior',
+    Boolean((scope?.fonte?.endsWith('/svd.glb') && scope?.recorte && scope?.ancora)
+      || (own?.fonte?.endsWith('/svd.glb') && mag?.vertices >= 500 && own.pivos === 'pack')),
+    own ? `${own.fonte}, malha inteira com pente Mag (${mag?.vertices || 0} vértices)`
+      : scope ? `${scope.fonte}, recorte e âncora presentes` : 'luneta ausente da ficha');
+
+  const awp = JSON.parse(readFileSync(join(ROOT, 'tools/fabrica/animador/awp.json'), 'utf8'));
+  const clips = ['reload_tactical', 'reload_empty'];
+  const descidas = clips.map((nome) => (awp.clipes?.[nome]?.mao || [])
+    .filter((p) => p.camCm && p.camCm[1] <= -50));
+  put('VM22', 'AWP tira o pente para baixo nas duas recargas, fora do quadro',
+    descidas.every((pts) => pts.length >= 2 && pts.every((p) => Math.abs(p.camCm[0]) <= 10)),
+    clips.map((nome, i) => `${nome}: ${descidas[i].map((p) => p.camCm.join(',')).join(' / ')}`).join(' | '));
+
+  const weapons = readFileSync(join(ROOT, 'public/js/data/weapons.js'), 'utf8');
+  const game = readFileSync(join(ROOT, 'public/js/game.js'), 'utf8');
+  put('VM23', 'MGX5 mantém luneta funcional no jogo normal',
+    /lmg:\s*\{[^\n]*scope:\s*true/.test(weapons) && /lmg:\s*38/.test(game),
+    'scope:true na tabela de armas e FOV 38 no ADS');
+}
+
+// O antigo `tools/eval/motion.mjs` citado aqui nunca existiu. PX1 agora tem
+// arnês de browser dedicado, executado separadamente deste runner Node; as
+// demais PX seguem pendentes de medições visuais próprias (ver KNOWN-BUGS).
 for (const id of ['AMH1','AMH2','AMH3','AMH4']) skip(id, 'Amazônia: apoios, cabanas, tiros e movimento', 'exige browser: HABITAT=1 node tools/eval/amazonia-visual-capture.mjs');
-skip('PX1', 'no ADS o jogador vê a arma E a mira', 'exige browser — sem arnês dedicado (divida PX)');
+skip('PX1', 'no ADS o jogador vê o alvo nas três câmeras', 'exige browser — rode node tools/eval/ads-visibility-check.mjs');
 skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — sem arnês dedicado (divida PX)');
 skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — sem arnês dedicado (divida PX)');
 skip('PX4', 'aliado × inimigo distinguíveis em 1 frame a 5/20/40 m', 'exige browser — sem arnês dedicado (divida PX)');

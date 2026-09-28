@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.1.0-alpha.4",
+  "version": "2.1.0-alpha.5",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -454,7 +454,7 @@
     "//eval:vm-orientacao": "malha da arma de trás para frente (ICP girado 180°: sks/mosin/svd/m400, crítico cego L3–L5 23/09/2026); mutante original = catálogo Codex fica vermelho",
     "eval:vm-orientacao": "node tools/eval/vm-orientacao-check.mjs --mutantes",
     "eval:vm-manga-tela-fabrica": "node tools/eval/vm-manga-tela-check.mjs --fabrica --tabela && node tools/eval/vm-manga-tela-check.mjs --mutante=p90-tubo",
-    "eval:vm-mira-golden": "VM_PALCO_QS=vmgoldenads=1 node tools/eval/vm-reguas-check.mjs --regua=mira --armas=ak && VM_PALCO_QS=vmgoldenads=1 node tools/eval/vm-reguas-check.mjs --regua=mira --armas=ak --aspecto=16x9 && VM_PALCO_QS=vmgoldenads=1 node tools/eval/vm-reguas-check.mjs --mutante=golden-mira-acima",
+    "eval:vm-mira-golden": "node tools/eval/vm-reguas-check.mjs --regua=mira --armas=ak && node tools/eval/vm-reguas-check.mjs --regua=mira --armas=ak --aspecto=16x9 && node tools/eval/vm-reguas-check.mjs --mutante=golden-mira-acima",
     "eval:vm-mira-janela": "VM_PALCO_QS=vmfabrica=p90,lmg node tools/eval/vm-reguas-check.mjs --regua=mira --armas=p90,lmg && VM_PALCO_QS=vmfabrica=p90 node tools/eval/vm-reguas-check.mjs --mutante=janela-fora",
     "//eval:vm-maos-time": "mãos por time em todo viewmodel (26 armas, faca K e L, granada, AK golden) × facção jogável, no jogo real: atlas do time e a mesma cor de luva/manga em todas as armas; escala do motivo na tela golden × AK K (±15%, sonda); mutantes golden-sem-time, faca-time-errado, atlas-trocado",
     "eval:vm-maos-time": "node tools/eval/vm-maos-time.mjs && node tools/eval/vm-maos-time.mjs --sonda=escala --times=E --armas=ak-golden,ak && ! node tools/eval/vm-maos-time.mjs --mutante=golden-sem-time --passe=aprovadas --armas=ak-golden --times=E,U && ! node tools/eval/vm-maos-time.mjs --mutante=faca-time-errado --armas=knife,knife-L --times=E,U && ! node tools/eval/vm-maos-time.mjs --mutante=atlas-trocado --passe=servido --armas=m4,ak --times=E",
