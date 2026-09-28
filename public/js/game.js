@@ -6072,7 +6072,9 @@ export class Game {
     if (precAds) {
       const spread = aberturaCone({ crouchF: p.crouchF, sp, grounded: p.grounded,
         adsF: this._aimF, bloom: this.bloom, scoped: p.scoped }, WEAPONS[p.weapon]);
-      gap = Math.max(3, Math.min(26, Math.tan(spread * 0.5) / Math.tan(this.camera.fov * Math.PI / 360) * innerHeight / 2));
+      // Piso menor no ADS: a AK agachada já tem cone estreito; com 3 px a
+      // primeira rajada ficava quase indistinguível do repouso (3 → 3,3 px).
+      gap = Math.max(2, Math.min(26, Math.tan(spread * 0.5) / Math.tan(this.camera.fov * Math.PI / 360) * innerHeight / 2));
     }
     this.el.crosshair.style.setProperty('--ch', gap.toFixed(1) + 'px');
     this._updateCrosshairParallax();

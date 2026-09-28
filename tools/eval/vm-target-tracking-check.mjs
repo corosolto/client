@@ -85,10 +85,10 @@ try {
         .replace(reticle, "this.el.crosshair.style.left = '50%'; this.el.crosshair.style.top = '50%';");
     }
     if (mutant === 'cruz-fixa') {
-      const gap = 'gap = Math.max(3, Math.min(26, Math.tan(spread * 0.5) / Math.tan(this.camera.fov * Math.PI / 360) * innerHeight / 2));';
+      const gap = 'gap = Math.max(2, Math.min(26, Math.tan(spread * 0.5) / Math.tan(this.camera.fov * Math.PI / 360) * innerHeight / 2));';
       if (!source.includes(gap)) throw new Error('mutante não encontrou a cruz de ADS');
       mutationApplied = true;
-      source = source.replace(gap, 'gap = 3;');
+      source = source.replace(gap, 'gap = 2;');
     }
     await route.fulfill({ response, body: source });
   });
@@ -136,7 +136,7 @@ try {
       g.bloom = 0;
       return { idle, spray };
     });
-    // Armas sem rajada podem ter cone projetado abaixo do piso legível de 3 px.
+    // Armas sem rajada podem ter cone projetado abaixo do piso legível de 2 px.
     // Nessas, a cruz não pode fechar quando o cone cresce; nas automáticas deve abrir.
     check(`${id} ${camMode} cruz reage à dispersão`, WEAPONS[id].auto
       ? crosshair.spray > crosshair.idle + (small ? 0.5 : 1) : crosshair.spray >= crosshair.idle, crosshair);

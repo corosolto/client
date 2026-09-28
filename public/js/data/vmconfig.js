@@ -165,6 +165,8 @@ const F = (familia, chassi, extra = {}) => ({
 // A 'ak' fica fora: o dono manteve a golden aprovada (24/09); o chassi AK do pack serve a 'akm'.
 // Foco com cruz livre: a arma fica abaixo da linha de tiro em vez de cobrir o alvo.
 const A = (alivio) => ({ auto: true, off: [0, -0.08, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio, estilo: 'foco' });
+// A luneta oculta o viewmodel durante o ADS; ela não usa a mira de foco.
+const S = (alivio) => ({ ...A(alivio), estilo: 'luneta' });
 const CURTA = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 };
 // recoilScale é só a mola visual; o recuo do tiro vive em game.js.
 export const VM_FABRICA = Object.freeze({
@@ -175,23 +177,23 @@ export const VM_FABRICA = Object.freeze({
   // manga:true: a troca do pente só fica no quadro com o pacote longe, e aí a boca da manga
   // entra; nesses dois a extensão não fura a câmera (crítico, rodada 1).
   g3: F('g3', 'G3', { manga: true, recoilScale: 9, recoilLoc: 1.5, frame: { x: 0.195, y: -0.07, z: -0.353, rotDeg: [1.69, 7.69, 4.7] }, ads: A(0.22) }),
-  svd: F('svd', 'SVD', { manga: true, recoilScale: 3, recoilLoc: 1.5, ads: A(0.34) }),
-  awp: F('sniper', 'L96X', { recoilScale: 3.5, frame: { x: 0.21, y: -0.05, z: -0.3, fov: 44, rotDeg: [1.69, 4, 6.19] }, ads: A(0.12) }),
-  mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, frame: { x: 0.14, y: -0.05, z: -0.123, fov: 50, rotDeg: [-2, 7.69, 6.19] }, ads: A(0.4) }),
+  svd: F('svd', 'SVD', { manga: true, recoilScale: 3, recoilLoc: 1.5, ads: S(0.34) }),
+  awp: F('sniper', 'L96X', { recoilScale: 3.5, frame: { x: 0.21, y: -0.05, z: -0.3, fov: 44, rotDeg: [1.69, 4, 6.19] }, ads: S(0.12) }),
+  mosin: F('bolt', 'Kar98K', { recoilScale: 3.3, frame: { x: 0.14, y: -0.05, z: -0.123, fov: 50, rotDeg: [-2, 7.69, 6.19] }, ads: S(0.4) }),
   mp5: F('mp5', 'MPS5', { recoilScale: 0.85, recoilLoc: 0.5, ads: A(0.3) }),
   p90: F('p90', 'PDW90', { recoilScale: 0.85, recoilLoc: 0.6, ads: A(0.5) }),
-  lmg: F('lmg', 'MGX5', { recoilScale: 4, recoilLoc: 1.5, frame: { x: 0.335, y: -0.04, z: -0.15, rotDeg: [1.69, 0, -8] }, ads: A(0.3) }),
+  lmg: F('lmg', 'MGX5', { recoilScale: 4, recoilLoc: 1.5, frame: { x: 0.335, y: -0.04, z: -0.15, rotDeg: [1.69, 0, -8] }, ads: S(0.3) }),
   shotgun: F('shotgun', 'KXG12', { recoilScale: 2.8, recoilLoc: 1.2, ads: A(0.1) }),
   pistol: F('pistol', 'X18', { frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco' } }),
   deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco' } }),
   revolver38: F('revolver', 'Viper-357', { frame: { ...CURTA, y: -0.07, rotDeg: [-10, 15, -5] }, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco' } }),
   m92: F('ak', 'AK', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
   md97: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
-  m400: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
-  g3sg1: F('g3', 'G3', { variante: true, recoilScale: 7, recoilLoc: 1.5, ads: A(0.1) }),
+  m400: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: S(0.3) }),
+  g3sg1: F('g3', 'G3', { variante: true, recoilScale: 7, recoilLoc: 1.5, ads: S(0.1) }),
   scar: F('marksman', 'Mk14EBR', { variante: true, recoilScale: 3, frame: { x: 0.2, y: -0.06, z: -0.3, rotDeg: [-2.5, 7.69, 6.19] }, ads: A(0.3) }),
-  sks: F('marksman', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.2, y: -0.05, z: -0.2, fov: 50, rotDeg: [1.69, -10, 6.19], scale: 1.8 }, ads: A(0.4) }),
-  rem700: F('bolt', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.14, y: -0.05, z: -0.123, fov: 50, rotDeg: [-2, 7.69, 6.19] }, ads: A(0.4) }),
+  sks: F('marksman', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.2, y: -0.05, z: -0.2, fov: 50, rotDeg: [1.69, -10, 6.19], scale: 1.8 }, ads: S(0.4) }),
+  rem700: F('bolt', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.14, y: -0.05, z: -0.123, fov: 50, rotDeg: [-2, 7.69, 6.19] }, ads: S(0.4) }),
   carbine: F('bolt', 'Kar98K', { variante: true, recoilScale: 3.3, frame: { x: 0.115, y: -0.04, z: -0.123, fov: 50 }, ads: A(0.35) }),
   uzi: F('smg', 'X18', { variante: true, manga: true, recoilScale: 3, frame: { ...CURTA, x: 0.26, y: -0.2, z: -0.55, rotDeg: [21, 15, -5] }, ads: A(0.4) }),
 });
