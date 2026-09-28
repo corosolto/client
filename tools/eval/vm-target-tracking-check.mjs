@@ -96,13 +96,14 @@ try {
   await page.goto(`${base}/?debug=1&auto=${encodeURIComponent(auto)}&map=${small ? 'piscina_treta' : 'amazonia'}&vmqa=precision&bloom=0`, { waitUntil: 'load', timeout: 180000 });
   if (mutant && !mutationApplied) throw new Error('mutante não interceptou o módulo do jogo');
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 90000 });
+  if (review && await page.locator('#aviso-software button').count()) await page.locator('#aviso-software button').click({ force: true });
   if (small) await page.evaluate(() => { const g = window.__game; g.settings.quality = 'low'; g._applyQuality(); });
   await page.evaluate(() => window.__game._ensureVmPrecisionQa());
   await page.evaluate(async (targetDepth) => {
     const THREE = await import('/vendor/three.module.js');
     const g = window.__game;
     const target = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.6), new THREE.MeshBasicMaterial({
-      color: 0xff00ff, side: THREE.DoubleSide, depthTest: false, depthWrite: false, toneMapped: false,
+      color: 0xff00ff, side: THREE.DoubleSide, transparent: true, depthTest: false, depthWrite: false, toneMapped: false,
     }));
     target.renderOrder = 9999;
     target.position.set(0, -0.35, -targetDepth);
@@ -260,6 +261,7 @@ try {
         document.querySelector('#vm-precision-qa').style.display = 'none';
       });
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      await page.waitForTimeout(350);
       await page.screenshot({ path: path.join(out, `${id}-${camMode}-review.png`) });
       await page.evaluate(() => {
         window.__trackingTarget.visible = true;
