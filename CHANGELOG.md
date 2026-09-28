@@ -80,6 +80,7 @@
 - fix(vm): abrir ADS no catálogo da fábrica
 - fix(vm): abrir janela central de mira na fábrica
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.7).
 ## [2.1.0-alpha.6] — 2026-09-28
 
 ### Mudado
