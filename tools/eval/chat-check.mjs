@@ -133,13 +133,13 @@ const VETORES = [
   ['"  oi\\t\\tgalera\\n"', '  oi\t\tgalera\n', 'oi galera'],
   ['"ＧＧ" (U+FF27 U+FF27)', 'ＧＧ', 'GG'],
   ['"𝐟𝐝𝐩" (negrito matemático)', '\u{1D41F}\u{1D41D}\u{1D429}', 'fdp'],
-  ['"a\\u202Eb\\u2066c" (controles bidi)', 'a‮b⁦c', 'abc'],
-  ['"x\\u200By\\uFEFFz\\u00ADw" (invisíveis Cf)', 'x​y﻿z­w', 'xyzw'],
-  ['"\\u3164" (preenchimento Hangul)', 'ㅤ', { motivo: 'vazia' }],
-  ['família com ZWJ fica inteira', '\u{1F468}‍\u{1F469}‍\u{1F467}', '\u{1F468}‍\u{1F469}‍\u{1F467}'],
-  ['"a\\u200Db" (ZWJ fora de emoji)', 'a‍b', 'ab'],
+  ['"a\\u202Eb\\u2066c" (controles bidi)', 'a\u{202E}b\u{2066}c', 'abc'],
+  ['"x\\u200By\\uFEFFz\\u00ADw" (invisíveis Cf)', 'x\u{200B}y\u{FEFF}z\u{AD}w', 'xyzw'],
+  ['"\\u3164" (preenchimento Hangul)', '\u{3164}', { motivo: 'vazia' }],
+  ['família com ZWJ fica inteira', '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}', '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}'],
+  ['"a\\u200Db" (ZWJ fora de emoji)', 'a\u{200D}b', 'ab'],
   /* NFKC compõe z + U+0301 em ź (U+017A) antes do corte; sobram 2 das 29 marcas restantes. */
-  ['"z" + 30 × U+0301 -> z com 2 marcas', 'z' + '́'.repeat(30), 'ź́́'],
+  ['"z" + 30 × U+0301 -> z com 2 marcas', 'z' + '\u{301}'.repeat(30), 'ź\u{301}\u{301}'],
   ['"tag\\u{E0041}" (tag invisível)', 'tag\u{E0041}', 'tag'],
   ['"a".repeat(161)', 'a'.repeat(161), { motivo: 'longa' }],
   ['"<img src=x onerror=alert(1)>" fica igual', '<img src=x onerror=alert(1)>', '<img src=x onerror=alert(1)>'],
@@ -147,12 +147,12 @@ const VETORES = [
   ['não string (passo 1)', 42, { motivo: 'invalida' }],
   ['641 unidades UTF-16 cruas (passo 1)', 'a'.repeat(641), { motivo: 'longa' }],
   ['160 emojis (320 UTF-16, 160 code points) passam (passos 1 e 9)', '\u{1F600}'.repeat(160), '\u{1F600}'.repeat(160)],
-  ['U+00A0, U+2028 e U+2029 viram espaço (passo 3)', 'a b c d', 'a b c d'],
+  ['U+00A0, U+2028 e U+2029 viram espaço (passo 3)', 'a\u{A0}b\u{2028}c\u{2029}d', 'a b c d'],
   ['surrogate solto sai (passo 5)', 'a\uD83Db', 'ab'],
-  ['U+034F e U+2800 saem (passo 5)', 'a͏b⠀c', 'abc'],
-  ['U+FE0F depois de pictograma fica (passo 6)', '❤️', '❤️'],
-  ['U+FE0F depois de letra sai (passo 6)', 'a️b', 'ab'],
-  ['acento com til cabe nas 2 marcas (passo 7)', 'ã́', 'ã́'.normalize('NFKC')],
+  ['U+034F e U+2800 saem (passo 5)', 'a\u{34F}b\u{2800}c', 'abc'],
+  ['U+FE0F depois de pictograma fica (passo 6)', '❤\u{FE0F}', '❤\u{FE0F}'],
+  ['U+FE0F depois de letra sai (passo 6)', 'a\u{FE0F}b', 'ab'],
+  ['acento com til cabe nas 2 marcas (passo 7)', 'a\u{303}\u{301}', 'a\u{303}\u{301}'.normalize('NFKC')],
 ];
 
 async function cc1(cobra, { chat }) {
@@ -166,7 +166,7 @@ async function cc1(cobra, { chat }) {
       cobra(r && r.ok === false && r.motivo === esperado.motivo, `CC1 ${nome} -> recusado como ${esperado.motivo} (veio ${JSON.stringify(r)})`);
     }
   }
-  cobra(contarChars('\u{1F468}‍\u{1F469}') === 3 && contarChars('') === 0, 'CC1 contarChars conta code points');
+  cobra(contarChars('\u{1F468}\u{200D}\u{1F469}') === 3 && contarChars('') === 0, 'CC1 contarChars conta code points');
   cobra(chaveTexto('Oi, galera!') === 'oigalera' && chaveTexto('OI  GALERA') === chaveTexto('oi galera'),
     'CC1 chaveTexto ignora caixa, espaço e pontuação');
   cobra(Array.isArray(CANAIS) && CANAIS.join() === 'sala,time', 'CC1 CANAIS é [sala, time]');
