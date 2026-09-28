@@ -1851,12 +1851,19 @@ $('profile-ok').onclick = async () => {
         note.textContent = reg?.message || 'Não foi possível salvar o perfil agora. Tente de novo.';
         return;
       }
+      // Só a resposta confirmada pode tornar um rascunho elegível para remoção
+      // remota. Um 503 seguido de recarga nunca deve criar clearSocials.
+      if (selectedSocials.length || submittedClear) {
+        confirmedSocials = selectedSocials;
+        localStorage.setItem(SOCIALS_CONFIRMED_KEY, submittedSocials);
+      }
       const socialsChanged = JSON.stringify(socials.filter(s => s.handle).map(s => ({ net: s.net, handle: s.handle }))) !== submittedSocials || socialsClearRequested !== submittedClear;
       if (socialsChanged) {
         // A resposta gravou o snapshot anterior. Se a edição atual ficou vazia,
         // o próximo salvamento deve substituir esse snapshot mesmo após recarga.
-        socialsClearRequested = true;
-        localStorage.setItem(SOCIALS_CLEAR_KEY, '1');
+        socialsClearRequested = confirmedSocials.length > 0 && !socials.some(s => s.handle);
+        if (socialsClearRequested) localStorage.setItem(SOCIALS_CLEAR_KEY, '1');
+        else localStorage.removeItem(SOCIALS_CLEAR_KEY);
       }
       if (nickEl.value.trim() !== nick || socialsChanged) {
         note.textContent = 'O perfil mudou durante o salvamento. Salve novamente.';
@@ -1867,7 +1874,6 @@ $('profile-ok').onclick = async () => {
       localStorage.setItem(NICK_KEY, registeredNick);
       socialsClearRequested = false;
       localStorage.removeItem(SOCIALS_CLEAR_KEY);
-      socials.forEach(s => { if (s.handle) persistedSocialRows.add(s); });
       updateAvatarVisibility();
       renderPlayerPlate();
       if (registeredNick !== nick) {
@@ -2748,10 +2754,14 @@ function extractFromUrl(v) {
 /* ---------------- multi-redes sociais (até 3, sem login) ---------------- */
 const SOCIALS_KEY = 'awpbr_socials';
 const SOCIALS_CLEAR_KEY = 'awpbr_socials_clear_pending';
+const SOCIALS_CONFIRMED_KEY = 'awpbr_socials_confirmed';
 const NETS = [['x', 'X / Twitter'], ['github', 'GitHub'], ['instagram', 'Instagram'],
   ['linkedin', 'LinkedIn'], ['tiktok', 'TikTok'], ['youtube', 'YouTube'], ['site', 'Site próprio']];
 let socials = [];
-let socialsClearRequested = localStorage.getItem(SOCIALS_CLEAR_KEY) === '1';
+let confirmedSocials = [];
+try { confirmedSocials = JSON.parse(localStorage.getItem(SOCIALS_CONFIRMED_KEY) || '[]'); } catch {}
+if (!Array.isArray(confirmedSocials)) confirmedSocials = [];
+let socialsClearRequested = confirmedSocials.length > 0 && localStorage.getItem(SOCIALS_CLEAR_KEY) === '1';
 const storedSocials = localStorage.getItem(SOCIALS_KEY);
 try { socials = JSON.parse(storedSocials || '[]'); } catch {}
 // migração do campo único antigo
@@ -2762,11 +2772,10 @@ if (storedSocials === null) {
 }
 localStorage.removeItem(SOCIAL_NET_KEY);
 localStorage.removeItem(SOCIAL_KEY);
-const persistedSocialRows = new WeakSet(socials.filter(s => s && typeof s === 'object' && s.handle));
-function removedSavedSocial(s) { return Boolean(s?.handle && persistedSocialRows.has(s)); }
+function removedSavedSocial(s) { return Boolean(s?.handle && confirmedSocials.length > 0); }
 function saveSocials(clearRequested = false) {
   localStorage.setItem(SOCIALS_KEY, JSON.stringify(socials));
-  socialsClearRequested ||= clearRequested;
+  socialsClearRequested ||= clearRequested && confirmedSocials.length > 0;
   if (socialsClearRequested) localStorage.setItem(SOCIALS_CLEAR_KEY, '1');
   updateAvatarVisibility();
 }
@@ -2791,7 +2800,7 @@ function renderSocials() {
       let v = extractFromUrl(inp.value) || inp.value;
       v = sanitizeHandle(v);
       if (v !== inp.value) inp.value = v;
-      s.handle = v; saveSocials(hadHandle && !v && persistedSocialRows.has(s));
+      s.handle = v; saveSocials(hadHandle && !v && confirmedSocials.length > 0);
     };
     del.onclick = () => { const [removed] = socials.splice(i, 1); saveSocials(removedSavedSocial(removed)); renderSocials(); };
     list.appendChild(row);

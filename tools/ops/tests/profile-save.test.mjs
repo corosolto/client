@@ -19,14 +19,14 @@ assert.ok(saveStart > 0 && saveEnd > saveStart, 'salvamento local das redes enco
 assert.ok(removeStart > 0 && removeStart < saveStart, 'classificação da remoção encontrada');
 const removeBlock = main.slice(removeStart, saveStart);
 const saveBlock = main.slice(saveStart, saveEnd).replace(
-  process.argv.includes('--mutante=sem-marca') ? 'socialsClearRequested ||= clearRequested;' : '\0',
+  process.argv.includes('--mutante=sem-marca') ? 'socialsClearRequested ||= clearRequested && confirmedSocials.length > 0;' : '\0',
   '',
 );
 const initStart = main.indexOf("const SOCIALS_KEY = 'awpbr_socials';");
 assert.ok(initStart > 0 && saveStart > initStart, 'inicialização das redes encontrada');
 const initBlock = main.slice(initStart, saveStart);
 
-async function click({ socials, response, nick = 'TestePerfil', socialsClearRequested = false, onRequest }) {
+async function click({ socials, response, nick = 'TestePerfil', socialsClearRequested = false, confirmedSocials = [], onRequest }) {
   const calls = [], steps = [];
   const elements = {
     'profile-ok': { disabled: false },
@@ -42,7 +42,7 @@ async function click({ socials, response, nick = 'TestePerfil', socialsClearRequ
     nickEl: { value: nick, focus() {} },
     socials,
     socialsClearRequested,
-    persistedSocialRows: { add() {} },
+    confirmedSocials,
     registeredNick: '',
     testMode: false,
     getToken: () => 'test-token',
@@ -51,6 +51,7 @@ async function click({ socials, response, nick = 'TestePerfil', socialsClearRequ
     localStorage: { setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     NICK_KEY: 'test-nick',
     SOCIALS_CLEAR_KEY: 'test-clear',
+    SOCIALS_CONFIRMED_KEY: 'test-confirmed',
     updateAvatarVisibility() {},
     renderPlayerPlate() {},
   };
@@ -79,7 +80,7 @@ test('perfil vazio em outro navegador preserva as redes já salvas', async () =>
 });
 
 test('remover a última rede envia intenção explícita de limpeza', async () => {
-  const result = await click({ socials: [], socialsClearRequested: true, response: { ok: true, nick: 'TestePerfil' } });
+  const result = await click({ socials: [], confirmedSocials: [{ net: 'x', handle: 'persistido' }], socialsClearRequested: true, response: { ok: true, nick: 'TestePerfil' } });
   assert.equal(result.calls[0].body.clearSocials, true);
   assert.equal(result.calls[0].body.socials.length, 0);
   assert.equal(result.ctx.socialsClearRequested, false);
@@ -88,7 +89,7 @@ test('remover a última rede envia intenção explícita de limpeza', async () =
 test('só remoção explícita marca a intenção de limpar', () => {
   const storage = new Map();
   const ctx = {
-    socials: [], socialsClearRequested: false, SOCIALS_KEY: 'test-socials', SOCIALS_CLEAR_KEY: 'test-clear',
+    socials: [], socialsClearRequested: false, confirmedSocials: [{ net: 'x', handle: 'persistido' }], SOCIALS_KEY: 'test-socials', SOCIALS_CLEAR_KEY: 'test-clear',
     localStorage: { setItem: (key, value) => storage.set(key, value) }, updateAvatarVisibility() {},
   };
   vm.runInNewContext(saveBlock, ctx);
@@ -99,18 +100,18 @@ test('só remoção explícita marca a intenção de limpar', () => {
   assert.equal(storage.get('test-clear'), '1');
 });
 
-test('apagar linha recém-criada não solicita limpar links remotos', () => {
-  const saved = { net: 'x', handle: 'persistido' };
-  const unsaved = { net: 'x', handle: 'rascunho' };
-  const ctx = { persistedSocialRows: new WeakSet([saved]) };
+test('apagar rascunho sem gravação confirmada não solicita limpar links remotos', () => {
+  const draft = { net: 'x', handle: 'rascunho' };
+  const ctx = { confirmedSocials: [] };
   vm.runInNewContext(removeBlock, ctx);
-  assert.equal(vm.runInNewContext('removedSavedSocial(s)', { ...ctx, s: saved }), true);
-  assert.equal(vm.runInNewContext('removedSavedSocial(s)', { ...ctx, s: unsaved }), false);
+  assert.equal(vm.runInNewContext('removedSavedSocial(s)', { ...ctx, s: draft }), false);
+  assert.equal(vm.runInNewContext(`${removeBlock}\nremovedSavedSocial(s)`, { confirmedSocials: [draft], s: draft }), true);
 });
 
 test('recarga preserva remoção pendente e não ressuscita link legado', () => {
   const storage = new Map([
     ['awpbr_socials', '[]'], ['awpbr_socials_clear_pending', '1'],
+    ['awpbr_socials_confirmed', '[{"net":"x","handle":"persistido"}]'],
     ['awpbr_social_net', 'x'], ['awpbr_social', 'antigo'],
   ]);
   const ctx = {
@@ -125,6 +126,23 @@ test('recarga preserva remoção pendente e não ressuscita link legado', () => 
   assert.equal(state.socials.length, 0);
   assert.equal(state.socialsClearRequested, true);
   assert.equal(storage.has('awpbr_social'), false);
+});
+
+test('503, recarga e remoção de rascunho não limpam redes remotas', () => {
+  const draft = { net: 'github', handle: 'nunca_salvo' };
+  const storage = new Map([['awpbr_socials', JSON.stringify([draft])]]);
+  const ctx = {
+    localStorage: {
+      getItem: key => storage.get(key) ?? null,
+      setItem: (key, value) => storage.set(key, value),
+      removeItem: key => storage.delete(key),
+    },
+    SOCIAL_NET_KEY: 'awpbr_social_net', SOCIAL_KEY: 'awpbr_social',
+    updateAvatarVisibility() {},
+  };
+  const state = vm.runInNewContext(`${initBlock}\n${saveBlock}\nconst removed = socials.shift(); saveSocials(removedSavedSocial(removed)); ({ socialsClearRequested })`, ctx);
+  assert.equal(state.socialsClearRequested, false);
+  assert.equal(storage.has('awpbr_socials_clear_pending'), false);
 });
 
 test('link legado migra uma vez quando ainda não há chave nova', () => {
@@ -151,7 +169,8 @@ test('edição durante o envio permanece no perfil para novo salvamento', async 
   });
   assert.deepEqual(result.steps, []);
   assert.match(result.elements['profile-save-note'].textContent, /mudou durante/);
-  assert.equal(result.storage.get('test-clear'), '1');
+  assert.match(result.storage.get('test-confirmed'), /primeiro/);
+  assert.equal(result.storage.has('test-clear'), false);
 });
 
 test('falha ao salvar mantém o perfil aberto e mostra aviso', async () => {
