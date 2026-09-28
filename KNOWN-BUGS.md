@@ -7983,6 +7983,15 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   cliente, não partidas do servidor MP; órbita em combate pode ser tática. Confirmar em vídeo
   3:2 e comparar trilhas de servidor e cliente antes de mudar `_updateBot` ou fechar #682.
 
+  **Contexto do alvo no mesmo baseline, alpha.7.** A régua agora grava índice estável do alvo,
+  cobertura, trocas, deslocamento do alvo e distância do alvo ao centro da volta. Das mesmas
+  30 janelas, 25 tiveram pelo menos uma troca de alvo, nove não tiveram alvo em todas as amostras
+  (grupos sobrepostos); só duas mantiveram o mesmo alvo durante a janela inteira, parado na
+  simulação e a cerca de 13,5–14,7 m do centro da volta. Isto mede coocorrência, não prova que
+  reaquisição causou o círculo. Mutante `sem-troca-alvo` deixa a cláusula vermelha; medida de
+  percurso do alvo fica `null` quando falta amostra ou há troca. Evidência local:
+  `csbrasil/evidence/bot-moving-loops-2026-09-28/target-context.ndjson`.
+
 - **BUG-90 · MP: "os bots andam devagar" + "morri várias vezes sem ver e matei várias vezes
   sem ver"** (dono, 31/08, mesma sessão do BUG-89). **Causa raiz encontrada e medida — é o
   BUG-28 propagado ao servidor v5.** O `game/room.js` do backend constrói o `Game` direto

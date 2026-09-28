@@ -191,6 +191,7 @@ function runMap(mapId, textures, seed) {
   const tr = new Map();
   for (const b of g.bots) tr.set(b, { lp: { x: b.pos.x, z: b.pos.z }, ly: b.yaw, lat: 0, fwd: 0, latF: 0, latFc: 0, fwdF: 0, fwdFc: 0, spin: 0, spinR: 0, latAbs: 0, mvAbs: 0, stuck: 0, n: 0, nR: 0, path: 0, x0: b.pos.x, z0: b.pos.z, roamZMin: Infinity, roamZMax: -Infinity });
   const loopTracks = MOVING_LOOPS ? new Map(g.bots.map((b) => [b, []])) : null;
+  const loopBotIds = MOVING_LOOPS ? new Map(g.bots.map((b, index) => [b, `bot-${index}`])) : null;
   const mapWidth = Math.max(0.001, g.world.bounds.maxX - g.world.bounds.minX);
   const mapDepth = Math.max(0.001, g.world.bounds.maxZ - g.world.bounds.minZ);
   let laneSpreadSum = 0, laneSpreadN = 0;
@@ -219,7 +220,9 @@ function runMap(mapId, textures, seed) {
     for (const b of g.bots) {
       const s = tr.get(b);
       if (loopTracks) loopTracks.get(b).push({ t: i * DT, x: b.pos.x, z: b.pos.z,
-        yaw: b.yaw, engaged: !!b.target, alive: !!b.alive });
+        yaw: b.yaw, engaged: !!b.target, alive: !!b.alive,
+        targetKey: b.target ? (loopBotIds.get(b.target) || (b.target === g.player ? 'player' : 'other')) : null,
+        targetX: b.target?.pos?.x, targetZ: b.target?.pos?.z });
       if (!b.alive) { s.lp = { x: b.pos.x, z: b.pos.z }; s.ly = b.yaw; continue; }
       const mx = b.pos.x - s.lp.x, mz = b.pos.z - s.lp.z;
       const d = Math.hypot(mx, mz);
@@ -275,13 +278,17 @@ function runMap(mapId, textures, seed) {
   }, 0) / nb;
   if (loopTracks) {
     if (process.env.SIM_LOOP_FIXTURE === '1') {
-      const fixture = loopTracks.get(g.bots[0]).slice(-41);
-      if (fixture.length !== 41) throw new Error('MOVING_LOOPS fixture sem 41 amostras');
-      fixture.forEach((point, index) => {
-        const angle = index / 40 * Math.PI * 2;
-        point.x = 1.4 * Math.cos(angle); point.z = 1.4 * Math.sin(angle);
-        point.alive = true; point.engaged = false;
-      });
+      for (const [botIndex, engaged] of [[0, false], [1, true]]) {
+        const fixture = loopTracks.get(g.bots[botIndex]).slice(-41);
+        if (fixture.length !== 41) throw new Error('MOVING_LOOPS fixture sem 41 amostras');
+        fixture.forEach((point, index) => {
+          const angle = index / 40 * Math.PI * 2;
+          point.x = 1.4 * Math.cos(angle); point.z = 1.4 * Math.sin(angle);
+          point.alive = true; point.engaged = engaged;
+          point.targetKey = engaged ? 'fixture-target' : null;
+          point.targetX = engaged ? 0 : null; point.targetZ = engaged ? 0 : null;
+        });
+      }
     }
     const bots = g.bots.map((b, index) => {
       const samples = loopTracks.get(b);
