@@ -19,7 +19,7 @@
    GH_DRY_RUN=1: comentário/issue salvos em estado/dry-run/, não enviados. */
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { criarCliente } from '../lib/gh.mjs';
 import { carregarPersona, cabecalho, assinatura } from '../lib/persona.mjs';
@@ -31,7 +31,7 @@ const PERSONA = carregarPersona(RAIZ);
 const ESTADO_DIR = join(RAIZ, 'estado');
 if (!existsSync(ESTADO_DIR)) mkdirSync(ESTADO_DIR, { recursive: true });
 const { gh, api } = criarCliente({ patEnv: CFG.pat_env, estadoDir: ESTADO_DIR, repo: CFG.repo });
-const REPO_DIR = join(RAIZ, CFG.base_dir || '../..');
+const REPO_DIR = resolve(RAIZ, CFG.base_dir || '../..');
 const log = (...a) => console.log(`[${new Date().toLocaleTimeString('pt-BR')}]`, ...a);
 const agora = () => new Date().toISOString();
 const DIAS_MS = 86_400_000;
@@ -80,7 +80,7 @@ async function rondaBranchOrfa(itens) {
   const refs = gh(['api', `repos/${CFG.repo}/branches?per_page=100`], { json: true });
   const prs = gh(['pr', 'list', '-R', CFG.repo, '--state', 'open', '--limit', '100', '--json', 'number,headRefName'], { json: true });
   const comPr = new Set(prs.map((p) => p.headRefName));
-  const commitDe = (sha) => gh(['api', `repos/${CFG.repo}/commits/${sha}`], { json: true });
+  const commitDe = async (sha) => gh(['api', `repos/${CFG.repo}/commits/${sha}`], { json: true });
   for (const ref of refs) {
     if (['main', 'staging', 'release'].includes(ref.name) || comPr.has(ref.name)) continue;
     const det = await commitDe(ref.commit.sha).catch(() => null);

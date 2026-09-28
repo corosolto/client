@@ -19,7 +19,7 @@
    GH_DRY_RUN=1: issue/comentário são salvos em estado/dry-run/, não enviados. */
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { criarCliente } from '../lib/gh.mjs';
 import { carregarPersona, cabecalho, assinatura } from '../lib/persona.mjs';
@@ -33,7 +33,7 @@ if (!existsSync(ESTADO_DIR)) mkdirSync(ESTADO_DIR);
 const { gh, api } = criarCliente({
   patEnv: CFG.pat_env, estadoDir: ESTADO_DIR, repo: CFG.repo,
 });
-const REPO_DIR = join(RAIZ, CFG.repo_dir || '../..');
+const REPO_DIR = resolve(RAIZ, CFG.repo_dir || '../..');
 const log = (...a) => console.log(`[${new Date().toLocaleTimeString('pt-BR')}]`, ...a);
 
 /* ── parser: saída humana do invariants.mjs ──────────────────────────────────
@@ -190,7 +190,9 @@ export function aplicarNoKnownBugs(md, { vermelhasNovas, resolvidas, renomesPara
 async function rodada() {
   log(`rodando a régua no repo (${CFG.invariants_cmd}) — demora 10-12 min…`);
   const r = spawnSync('sh', ['-c', CFG.invariants_cmd], { cwd: REPO_DIR, encoding: 'utf8', timeout: 20 * 60_000, maxBuffer: 32 * 1024 * 1024 });
-  if (r.status !== 0 || !(r.stdout || '').trim()) {
+  /* status 1 é o contrato da régua (crítica vermelha reprova o gate); o que
+   * mata o parse é saída VAZIA — aí o erro precisa carregar o stderr. */
+  if (!(r.stdout || '').trim()) {
     throw new Error(`régua falhou (status ${r.status}) em ${REPO_DIR} — stderr:\n${(r.stderr || '(vazio)').split('\n').slice(-8).join('\n')}`);
   }
   const agora = parseRodada(r.stdout || '');

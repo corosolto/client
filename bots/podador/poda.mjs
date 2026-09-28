@@ -20,7 +20,7 @@
      bun poda.mjs selftest          fixture mínima offline
 */
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
-import { join, dirname, relative } from 'node:path';
+import { join, resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { criarCliente } from '../lib/gh.mjs';
 import { carregarPersona, cabecalho, assinatura } from '../lib/persona.mjs';
@@ -35,7 +35,7 @@ const PERSONA = carregarPersona(RAIZ);
 const ESTADO_DIR = join(RAIZ, 'estado');
 if (!existsSync(ESTADO_DIR)) mkdirSync(ESTADO_DIR, { recursive: true });
 const { gh, api } = criarCliente({ patEnv: CFG.pat_env, estadoDir: ESTADO_DIR, repo: CFG.repo });
-const REPO_DIR = join(RAIZ, CFG.base_dir || '../..');
+const REPO_DIR = resolve(RAIZ, CFG.base_dir || '../..');
 const log = (...a) => console.log(`[${new Date().toLocaleTimeString('pt-BR')}]`, ...a);
 const MARCADOR = '<!-- podador: ronda-semanal -->';
 

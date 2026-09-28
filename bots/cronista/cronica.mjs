@@ -20,7 +20,7 @@
 */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { criarCliente, seco } from '../lib/gh.mjs';
 import { carregarPersona, cabecalho, assinatura } from '../lib/persona.mjs';
@@ -32,7 +32,7 @@ const PERSONA = carregarPersona(RAIZ);
 const ESTADO_DIR = join(RAIZ, 'estado');
 if (!existsSync(ESTADO_DIR)) mkdirSync(ESTADO_DIR, { recursive: true });
 const { gh } = criarCliente({ patEnv: CFG.pat_env, estadoDir: ESTADO_DIR, repo: CFG.repo });
-const REPO_DIR = join(RAIZ, CFG.base_dir || '../..');
+const REPO_DIR = resolve(RAIZ, CFG.base_dir || '../..');
 const log = (...a) => console.log(`[${new Date().toLocaleTimeString('pt-BR')}]`, ...a);
 const git = (...args) => execFileSync('git', ['-C', REPO_DIR, ...args], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
 
