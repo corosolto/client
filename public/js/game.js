@@ -6129,10 +6129,10 @@ export class Game {
       this.vm.root.scale.setScalar(1);
       if (authoredActive && this.vmCamera) {
         const baseFov = this.vm.authored.fov(p.weapon, this.vmCamera.aspect);
-        // Pistolas aproximam as duas mãos do olho; abrir mais a projeção delas
-        // devolve a faixa inferior do alvo sem deslocar a alça do centro.
+        // Pistolas aproximam as duas mãos do olho; abrir a projeção delas
+        // preserva o alvo sem encolher a arma abaixo da referência aprovada.
         const shortGun = p.weapon === 'revolver38' || p.weapon === 'deagle' || p.weapon === 'pistol';
-        const opticalWidth = Math.tan(THREE.MathUtils.degToRad(baseFov / 2)) * (1 + (shortGun ? 0.75 : 0.50) * a);
+        const opticalWidth = Math.tan(THREE.MathUtils.degToRad(baseFov / 2)) * (1 + (shortGun ? 0.35 : 0.50) * a);
         const fov = THREE.MathUtils.radToDeg(2 * Math.atan(opticalWidth));
         if (Math.abs(this.vmCamera.fov - fov) > 0.01) {
           this.vmCamera.fov = fov;
