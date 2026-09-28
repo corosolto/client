@@ -151,6 +151,9 @@ tools/eval/.cache/
 # Config local do Claude Code (permissões por máquina — não vai pro repo público)
 .claude/settings.local.json
 
+# Estado da ferramenta Serena (memories/cache/logs por máquina) — não é doc do projeto.
+/.serena/
+
 # Worktrees do Claude Code dentro do workspace — são árvores de trabalho separadas
 # (cada uma com seu .git), não conteúdo do projeto. Commitar aninharia repo e
 # inflaria o clone em ~1 GB. O `git worktree list` é a fonte da verdade delas.
@@ -170,9 +173,7 @@ tools/eval/.cache/
 # de ofuscação anularia a ofuscação. Fica local até decisão do dono.
 /supabase/opcional/
 
-# ── Cliente Godot (veio da main, PR #14) ────────────────────────────────────
-godot/.godot/
-.godot-ci/
+# Saída do Playwright (smoke web) — evidência de rodada, não produto.
 test-results/
 playwright-report/
 
@@ -217,8 +218,6 @@ graphify-out/
 tmp/
 # Cache de verificação de URL de ferramenta de IA.
 url_verification_cache.json
-# Logs de eval/serve do scratchpad (os PROMPT-HANDOFF-*.md são HISTÓRIA e ficam).
-scratchpad/*.log
 
 # ── Viewmodels 1P (BUG-75, 28/08) ───────────────────────────────────────────
 # `artifacts/` são 1,1 GB de contact sheets, grids de câmera e GLBs INTERMEDIÁRIOS

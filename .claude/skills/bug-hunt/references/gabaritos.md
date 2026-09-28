@@ -6,7 +6,7 @@ Complemento da [`SKILL.md`](../SKILL.md), passos 0, 7 e 8.
 
 ## Onde registrar
 
-Tudo vai para o [`KNOWN-BUGS.md`](../../../../KNOWN-BUGS.md) da raiz. Um arquivo só, de
+Tudo vai para o `KNOWN-BUGS.md` (em `../progress`) da raiz. Um arquivo só, de
 propósito: já foram encontrados quatro lugares diferentes com o mesmo número escrito à mão, todos
 desatualizados.
 

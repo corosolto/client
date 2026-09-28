@@ -46,7 +46,7 @@ critério de aceite.
 ## Rodando localmente
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git
+git clone https://github.com/corosolto/client.git
 cd csbrasil
 npm install
 cp .env.example .env      # opcional — sem envs, o ranking responde 503 e o resto roda
@@ -351,10 +351,10 @@ Existe uma skill pra isso, e ela serve pra agente e pra gente:
 método que este repositório pagou caro pra aprender — régua antes do conserto, mutação que prova
 que a régua morde, refutar o palpite óbvio antes de agir nele — cada regra com o
 caso real que a comprou. Traz também o fluxo: onde registrar
-([`KNOWN-BUGS.md`](KNOWN-BUGS.md)), em que ordem rodar o quality gate, e como reportar
-o que você **não** verificou.
+(`KNOWN-BUGS.md`), em que ordem rodar o quality
+gate, e como reportar o que você **não** verificou.
 
 Defeito com evidência (`arquivo:linha`, saída de régua ou passo de reprodução)
-entra no [`KNOWN-BUGS.md`](KNOWN-BUGS.md). Suspeita sem medição vai pro fim do
-arquivo, na seção *Relatados, ainda não reproduzidos* — e não sobe de seção sem
-número.
+entra no `KNOWN-BUGS.md`. Suspeita sem medição vai
+pro fim do arquivo, na seção *Relatados, ainda não reproduzidos* — e não sobe de seção
+sem número.
