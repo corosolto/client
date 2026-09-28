@@ -473,8 +473,6 @@
     "@resvg/resvg-wasm": "^2.6.2",
     "@supabase/supabase-js": "^2.110.7",
     "astro": "^7.1.1",
-    "dejavu-fonts-ttf": "^2.37.3",
-    "ndarray-pixels": "^5.2.0",
     "sharp": "^0.35.3"
   },
   "private": true,
@@ -491,7 +489,9 @@
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "aeo.js": "^0.0.16",
+    "dejavu-fonts-ttf": "^2.37.3",
     "meshoptimizer": "^1.2.0",
+    "ndarray-pixels": "^5.2.0",
     "playwright": "^1.62.1"
   }
 }
