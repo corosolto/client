@@ -5757,10 +5757,7 @@ export class Game {
     cam.lookAt(aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12));
   }
 
-  // A câmera de ombro está fora do eixo do olho. A cruz acompanha o primeiro
-  // impacto do raio autoritativo, inclusive perto da cobertura e longe da
-  // distância de convergência da câmera. Assim ela não promete um tiro no
-  // centro da tela quando o servidor acertaria outro ponto.
+  // BUG-181: em câmera deslocada, a cruz projeta o primeiro impacto do raio do olho.
   _updateCrosshairParallax() {
     const el = this.el.crosshair;
     if (this.camView === 'first') {
@@ -5772,9 +5769,7 @@ export class Game {
     const cameraDir = this._tpReticleCameraDir || (this._tpReticleCameraDir = new THREE.Vector3());
     cameraDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
     const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.playerTeam).map(b => b.mesh.group);
-    // A profundidade vem do objeto sob o centro da câmera. Se o raio do olho
-    // ainda não o toca, projetar até 200 m colocaria a cruz falsamente sobre
-    // o alvo distante e ela saltaria quando o primeiro pellet o atingisse.
+    // A profundidade vista pela câmera evita cruz falsa atrás da cobertura.
     this.ray.set(this.camera.position, cameraDir);
     this.ray.far = 200;
     const cChar = enemyGroups.length ? this.ray.intersectObjects(enemyGroups, true)[0] : null;
