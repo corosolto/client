@@ -3565,6 +3565,7 @@ export class Game {
     this._ejectCasing();
     // bolt-action snipers drop the scope after each shot (CS-style); autos stay aimed
     if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin')) this._scope(false, true);
+    if (!this.online && a.mag === 0 && a.res > 0) this._startReload();
   }
   _tryKnifeAttack(kind = 'quick') {
     const p = this.player, w = WEAPONS.knife;
