@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.8`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.13`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -64,6 +64,40 @@
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
 
+## [2.1.0-alpha.13] — 2026-09-28
+
+### Mudado
+- fix(profile): salvar e remover redes sociais com confirmação (#710)
+- fix(profile): confirm socials and show zero-score profiles
+- fix(profile): salvar nick e redes antes de avancar
+
+## [2.1.0-alpha.12] — 2026-09-28
+
+### Mudado
+- fix(profile): manter upload de foto com redes sociais (#690)
+- test(entrada): medir splash invisivel e foco do hub
+- fix(profile): manter upload de foto com redes sociais
+
+## [2.1.0-alpha.11] — 2026-09-28
+
+### Mudado
+- test(bots): medir loops na Praça sobre alpha.8 (#702)
+- docs: refresh generated bot diagnostic counts on alpha.8
+- test(bots): add target context to moving loop diagnostics
+- test(bots): detect moving loops in simulated trajectories
+
+## [2.1.0-alpha.10] — 2026-09-28
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-09-28) (#705)
+- docs(changelog): rodada do cronista — 1 commits
+
+## [2.1.0-alpha.9] — 2026-09-28
+
+### Mudado
+- feat(home): clarify controls and bound hub layout (#709)
+- feat(home): clarify controls and bound hub layout
+
 ## [2.1.0-alpha.8] — 2026-09-28
 
 ### Mudado
@@ -80,6 +114,7 @@
 - fix(vm): abrir ADS no catálogo da fábrica
 - fix(vm): abrir janela central de mira na fábrica
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.7).
 ## [2.1.0-alpha.6] — 2026-09-28
 
 ### Mudado
