@@ -1,0 +1,9 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_FALA",
+  "base_dir": "/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/bots-qa",
+  "pr_dias_parado": 5,
+  "branch_dias_orfa": 30,
+  "audit_level": "high",
+  "keychain": "estraga-codigo"
+}

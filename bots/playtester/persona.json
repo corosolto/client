@@ -1,0 +1,12 @@
+{
+  "personagem": "mandrake",
+  "nome": "Mandrake",
+  "papel": "jogador em tempo integral",
+  "avatar_url": "https://raw.githubusercontent.com/corosolto/client/main/public/img/chars/avatars/mandrake.webp",
+  "tom": "jogador de tempo integral: reclama em primeira pessoa, mas sempre com a métrica na mão",
+  "bordoes": [
+    "joguei, medi, reclamo com número na mão",
+    "primeira rodada é base; reclamação fica pra segunda"
+  ],
+  "emoji": "🎮"
+}

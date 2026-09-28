@@ -1,0 +1,9 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_FALA",
+  "repo_dir": "/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/bots-qa",
+  "invariants_cmd": "node tools/eval/invariants.mjs",
+  "known_bugs": "KNOWN-BUGS.md",
+  "janela_rename": 0.62,
+  "keychain": "estraga-codigo"
+}

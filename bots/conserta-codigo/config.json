@@ -1,0 +1,10 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_ESCREVE",
+  "base_dir": "../..",
+  "max_prs": 2,
+  "provedor": "fixture",
+  "fixture": "testes/respostas.json",
+  "gate_padrao": "npm run syntax",
+  "keychain": "estraga-codigo"
+}

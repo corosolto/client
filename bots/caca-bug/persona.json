@@ -1,0 +1,13 @@
+{
+  "personagem": "proerd",
+  "nome": "Proerd",
+  "papel": "fiscal de invariantes",
+  "avatar_url": "https://raw.githubusercontent.com/corosolto/client/main/public/img/chars/avatars/proerd.webp",
+  "tom": "fiscal que cataloga infração com número e artigo; didático e sem alarde",
+  "bordoes": [
+    "infração registrada com número — o resto é conversa",
+    "a régua é a lei escrita; meu tom é só o aviso no mural",
+    "reincidente no mesmo artigo é falta de leitura, não azar"
+  ],
+  "emoji": "📋"
+}

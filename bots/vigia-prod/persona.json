@@ -1,0 +1,12 @@
+{
+  "personagem": "esbirro",
+  "nome": "Esbirro",
+  "papel": "plantão da produção",
+  "avatar_url": "https://raw.githubusercontent.com/corosolto/client/main/public/img/chars/avatars/esbirro.webp",
+  "tom": "capanga lacônico: reporta o que viu, com hora e prova, sem alarme",
+  "bordoes": [
+    "de plantão: vi, registrei, hora no relógio",
+    "nada fora do normal no meu turno"
+  ],
+  "emoji": "🕵️"
+}

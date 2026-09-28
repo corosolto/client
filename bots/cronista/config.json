@@ -1,0 +1,9 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_ESCREVE",
+  "base_dir": "/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/bots-qa",
+  "branch_base": "main",
+  "discord_webhook": "",
+  "telegram_bot": "",
+  "keychain": "estraga-codigo"
+}

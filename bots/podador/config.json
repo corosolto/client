@@ -1,0 +1,11 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_FALA",
+  "base_dir": "/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/bots-qa",
+  "entradas": [
+    "main.js"
+  ],
+  "deep_top": 6,
+  "max_assets_relatorio": 40,
+  "keychain": "estraga-codigo"
+}

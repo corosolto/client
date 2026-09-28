@@ -1,0 +1,12 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_FALA",
+  "url": "https://www.csbrasil.online",
+  "base_dir": "/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/bots-qa",
+  "intervalo_min": 30,
+  "comentar_pr_vermelho": false,
+  "piso_audio": 300,
+  "amostra_decals": 12,
+  "smoke_cmd": "npx playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js --reporter=list --output=test-results",
+  "keychain": "estraga-codigo"
+}

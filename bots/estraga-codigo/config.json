@@ -1,0 +1,12 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_FALA",
+  "keychain": "estraga-codigo",
+  "intervalo_min": 10,
+  "provedor": "ollama",
+  "modelo": "qwen3.6-16k:27b",
+  "max_descobertas": 6,
+  "pular_drafts": true,
+  "fix_max": 3,
+  "gate_cmd": "npm run syntax && npm run docs:check && npm run arch:check"
+}

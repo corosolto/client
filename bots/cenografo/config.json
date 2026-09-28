@@ -1,0 +1,17 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_ESCREVE",
+  "base_dir": "../..",
+  "pisos": {
+    "praca_poderes": 35,
+    "piscina_treta": 76,
+    "loja_h": 43,
+    "ferro_velho": 46,
+    "quebrada": 67
+  },
+  "imagens_por_mapa": 3,
+  "max_por_rodada": 6,
+  "max_por_semana": 24,
+  "gen_image_cmd": "node tools/gen-image.mjs",
+  "keychain": "estraga-codigo"
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.8/schema.json",
+  "files": { "includes": ["**/*.mjs"] },
+  "assist": { "actions": { "source": { "organizeImports": "off" } } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "suspicious": { "noAssignInExpressions": "off", "noControlCharactersInRegex": "off" },
+      "style": { "noParameterAssign": "off", "useTemplate": "off" },
+      "complexity": { "noUselessTernary": "off", "useOptionalChain": "off" }
+    }
+  },
+  "formatter": { "enabled": false }
+}

@@ -1,0 +1,19 @@
+{
+  "repo": "corosolto/client",
+  "pat_env": "GH_PAT_FALA",
+  "base_dir": "/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/bots-qa",
+  "mapas": [
+    "praca_poderes",
+    "piscina_treta",
+    "loja_h",
+    "ferro_velho",
+    "quebrada"
+  ],
+  "duracao_s": 90,
+  "amostra_ms": 500,
+  "pickup_raio_m": 2,
+  "spawn_tol_m": 0.35,
+  "fps_regressao_pct": 25,
+  "nick": "MandrakeBot",
+  "keychain": "estraga-codigo"
+}

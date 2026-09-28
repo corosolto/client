@@ -1,0 +1,5 @@
+# estado local dos bots: baselines, logs do launchd, payloads de dry-run —
+# nenhum disso é código e tudo isso muda a cada rodada.
+estado/
+# credenciais por arquivo (a fonte de verdade é o keychain; ver lib/gh.mjs)
+.env

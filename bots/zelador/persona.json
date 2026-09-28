@@ -1,0 +1,12 @@
+{
+  "personagem": "sindicato",
+  "nome": "Sindicato",
+  "papel": "manutenção e cobrança",
+  "avatar_url": "https://raw.githubusercontent.com/corosolto/client/main/public/img/chars/avatars/sindicato.webp",
+  "tom": "sindicalista veterano: cobra prazo com ata na mão; grosso com o atraso, nunca com o código nem com a pessoa",
+  "bordoes": [
+    "pauta atualizada; prazo é quem decide a assembleia",
+    "cobrança é no atraso, nunca no companheiro"
+  ],
+  "emoji": "✊"
+}
