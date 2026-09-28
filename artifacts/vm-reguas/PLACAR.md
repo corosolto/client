@@ -1,7 +1,7 @@
 # PLACAR das réguas de imagem do viewmodel
 
 Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-28, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `c173381d95e82596`.
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `d22b323d7b2a6963`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
@@ -17,7 +17,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 | m92 | verde 0 px | verde 0.95× AK | n/a | verde 0.10 | verde ok |
 | akm | verde 0 px | verde 0.96× AK | n/a | verde 0.10 | verde ok |
 | g3 | verde 0 px | verde 0.91× AK | n/a | verde 0.09 | verde ok |
-| revolver38 | verde 0 px | verde 1.17× PT-38 | verde 1.17× pistola aprovada | n/a | verde ok |
+| revolver38 | verde 0 px | verde 1.03× PT-38 | verde 1.03× pistola aprovada | n/a | verde ok |
 | md97 | verde 0 px | verde 0.89× AK | n/a | verde 0.08 | verde ok |
 | carbine | verde 0 px | verde 0.94× AK | n/a | verde 0.06 | verde ok |
 | m400 | n/a | verde 0.89× AK | n/a | verde 0.08 | verde ok |
@@ -77,7 +77,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **m92** VERDE — tamanho 0.95× AK, rolagem -20° da AK (informativa), eixo +0° da AK, braço 1.05×, cruz 0 px, olho 2.17 palma, ADS cobre 6.0% (teto 18.5%)
 - **akm** VERDE — tamanho 0.96× AK, rolagem -21° da AK (informativa), eixo -0° da AK, braço 1.05×, cruz 0 px, olho 2.17 palma, ADS cobre 6.0% (teto 18.5%)
 - **g3** VERDE — tamanho 0.91× AK, rolagem +2° da AK (informativa), eixo +2° da AK, braço 1.17×, cruz 0 px, olho 2.14 palma, ADS cobre 6.9% (teto 18.5%)
-- **revolver38** VERDE — curta: tamanho 1.17× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.17 palma
+- **revolver38** VERDE — curta: tamanho 1.03× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.16 palma
 - **md97** VERDE — tamanho 0.89× AK, rolagem -23° da AK (informativa), eixo -0° da AK, braço 1.03×, cruz 0 px, olho 2.53 palma, ADS cobre 6.6% (teto 18.5%)
 - **carbine** VERDE — tamanho 0.94× AK, rolagem +34° da AK (informativa), eixo -3° da AK, braço 1.15×, cruz 0 px, olho 1.80 palma, ADS cobre 6.6% (teto 18.5%)
 - **m400** VERDE — tamanho 0.89× AK, rolagem -0° da AK (informativa), eixo -4° da AK, braço 1.16×, cruz 0 px, olho 2.70 palma, ADS: viewmodel some (luneta)
@@ -106,7 +106,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **m92** N/A — só armas curtas
 - **akm** N/A — só armas curtas
 - **g3** N/A — só armas curtas
-- **revolver38** VERDE — tamanho 1.17× pistola aprovada, desvio 73 px, ADS 92%
+- **revolver38** VERDE — tamanho 1.03× pistola aprovada, desvio 72 px, ADS 78%
 - **md97** N/A — só armas curtas
 - **carbine** N/A — só armas curtas
 - **m400** N/A — só armas curtas
