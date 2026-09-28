@@ -2702,8 +2702,8 @@ function saveSocials() {
   updateAvatarVisibility();
 }
 function updateAvatarVisibility() {
-  const hasAuto = socials.some(s => ['x', 'github'].includes(s.net) && s.handle);
-  $('avatar-row').classList.toggle('hidden', hasAuto || !(nickEl.value || '').trim());
+  const nick = registeredNick || nickEl.value || '';
+  $('avatar-row').classList.toggle('hidden', !nick.trim());
 }
 function renderSocials() {
   const list = $('social-list');
@@ -2732,7 +2732,7 @@ $('social-add').onclick = () => { socials.push({ net: 'x', handle: '' }); saveSo
 nickEl.addEventListener('input', updateAvatarVisibility);
 nickEl.addEventListener('input', syncPlayState);
 syncPlayState();   // estado inicial do botão JOGAR (nick vem do localStorage)
-renderSocials();
+renderSocials(); updateAvatarVisibility();
 
 /* ---------------- global ranking API (via /api/* do site) ---------------- */
 const TOKEN_KEY = 'awpbr_token';
