@@ -34,6 +34,17 @@ export function silhueta(m) {
   };
 }
 
+export function ocupacao(m, { x0, x1, y0, y1, tipo = 0 }) {
+  const xa = Math.floor(m.w * x0), xb = Math.ceil(m.w * x1);
+  const ya = Math.floor(m.h * y0), yb = Math.ceil(m.h * y1);
+  let n = 0;
+  for (let y = ya; y < yb; y++) for (let x = xa; x < xb; x++) {
+    const v = m.px[y * m.w + x];
+    if (tipo ? v === tipo : v > 0) n++;
+  }
+  return n / ((xb - xa) * (yb - ya));
+}
+
 // Buracos da silhueta da ARMA: fundo cercado (não alcança a borda do quadro).
 // Um aro de alça/óptica é um buraco cercado de arma; o vão entre braço e arma não
 // conta (borda com braço).
@@ -134,7 +145,7 @@ export function janelaDeOptica(m, { y0, altArma }) {
    Nenhum dos dois usa o socket `sight`: o AD1 do eval:vm-ads usava, e o ADS
    automático leva exatamente esse socket ao centro — tautologia (md97/m92/mp5/
    akm com AD1 0,000 e a mira 40–90 px fora, revisão L1). */
-export function pontoDeMira(m, { fracFundo = 0.15, fundoAro = true } = {}) {
+export function pontoDeMira(m, { fracFundo = 0.15, fundoAro = true, preferirMassa = false } = {}) {
   const { w, h, px, prof } = m;
   if (!prof) throw new Error('pontoDeMira precisa da máscara com profundidade');
   const ds = [];
@@ -161,7 +172,8 @@ export function pontoDeMira(m, { fracFundo = 0.15, fundoAro = true } = {}) {
     && b.cy <= y0 + 0.5 * altArma);
   aros.sort((a, b) => a.cy - b.cy);
   const aro = aros[0] || (fundoAro ? janelaDeOptica(m, { y0, altArma }) : null);
-  const ponto = aro ? { x: aro.cx, y: aro.cy, tipo: aro.fundo ? 'janela' : 'aro' } : massa ? { ...massa, tipo: 'massa' } : null;
+  const ponto = preferirMassa && massa ? { ...massa, tipo: 'massa' }
+    : aro ? { x: aro.cx, y: aro.cy, tipo: aro.fundo ? 'janela' : 'aro' } : massa ? { ...massa, tipo: 'massa' } : null;
   if (!ponto) return { mensuravel: false, motivo: 'nem aro nem massa visível' };
   const dx = ponto.x - w / 2; const dy = ponto.y - h / 2;
   return { mensuravel: true, ponto, dx, dy, desvio: Math.hypot(dx, dy), aro, massa, dPerto, dLonge };

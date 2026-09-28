@@ -87,9 +87,41 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## BUG-181 — ADS encobre o alvo nas três câmeras
 
-**Relato do dono em 27/09/2026:** *"o campo de visao piorou quando mirando, em todos os 3 tipos de camera, quase nao se ve o que se atira e isso é um problemao"*; algumas armas por personagem estão especialmente ruins. Capturas de produção às 22:33–22:34 mostram M4, P90, revólver e MGX5 em primeira pessoa, além do corpo em terceira pessoa. A MGX5 recebe luneta funcional no PR #670, ainda em draft.
+**Reaberto em produção em 28/09/2026, 03:28–03:34 Lisboa.** Quatro capturas do
+dono em Praça dos Três Poderes mostram P90 com corpo longo sob a cruz, MD97 com
+receptor central enorme e PT-38 com duas mãos dominando a mira. A release
+`v2.1.0-alpha.5` está pública; o verde do PR #670 mediu área total e às vezes
+abriu a revisão K no arnês, embora a fábrica seja o padrão publicado.
+Baseline da fábrica: `VM_PALCO_QS=vmfabrica=1 node tools/eval/vm-reguas-check.mjs
+--regua=mira,cobertura,pistola-ref --armas=p90,md97,pistol`;
+`/tmp/csbr-ads-public-factory.log` e imagens homônimas. Na coluna central
+43–57% da largura, a MD97 cobria 41% da vizinhança da cruz e 78% da faixa
+logo abaixo (AK golden: 20%/60%). Na PT-38, as mãos ocupavam 88% da coluna
+sob a cruz e a arma tinha 34% da área ADS da referência aprovada. A leitura
+antiga de `mira/p90` escolhia um buraco inferior falso; o topo da massa
+visível fica na cruz. `ads.alivio` maior sozinho piorou a pistola para 14%
+da arma aprovada, alternativa rejeitada.
 
-**Estado:** ajuste de FOV e projeção no PR #670; preview `jzzbz4fvs` com M4/P90/revólver e três câmeras. Régua local `ads-visibility-check.mjs` passou 0 falhas também com GLBs candidatos da SVD/AWP; capturas em `artifacts/vm-ads-visibility/`. Falta revisar o conjunto das armas/personagens em jogo. A validação anterior media alinhamento da alça e retorno das mãos, mas não a área do alvo visível durante o ADS. **Régua:** PX1 em `invariants.mjs` aponta para o arnês de navegador. Bloqueia merge da UI, vídeo e divulgação até revisão visual final.
+**Candidata em `codex/ads-public-fix`:** o alívio óptico do MX16A4 (M4/MD97)
+subiu de 0,1 para 0,3 m e o da P90 de 0,3 para 0,5 m. As três curtas usam
+foco com retículo da câmera livre e modelo abaixado, preservando a escala da
+arma. A régua raster agora limita a janela central e o volume das mãos;
+`ads-receptor-antigo` e `ads-maos-antigas` a tornam vermelha. Primeira passada
+das sete armas afetadas em 3:2: 0 falhas em
+`/tmp/csbr-ads-public-fix1.log`. A varredura das 26 revelou também MP5,
+carabina, SCAR, Uzi e SKS; as poses foram ajustadas. Placar da fábrica:
+**26 armas × 3:2 e 26 armas × 16:9, 0 células vermelhas**, incluindo recarga
+(`/tmp/csbr-mag-all-{3x2,16x9}.log`, `npm run eval:vm-placar`). Mutantes
+`ads-receptor-antigo`, `ads-maos-antigas`, `janela-fora` e `pente-suspenso`
+reprovaram. Smoke da partida real no mapa Brasília passou com capturas de
+P90, MD97, PT-38, revólver e M4 nas três câmeras
+(`/tmp/csbr-ads-real-game-fixed.log`, `artifacts/vm-ads-visibility/`).
+**Ainda faltam portões amplos, preview e publicação desta correção; não
+chamar BUG-181 de corrigido em produção nem retomar anúncios antes disso.**
+
+**Relato do dono em 27/09/2026:** *"o campo de visao piorou quando mirando, em todos os 3 tipos de camera, quase nao se ve o que se atira e isso é um problemao"*; algumas armas por personagem estão especialmente ruins. Capturas de produção às 22:33–22:34 mostram M4, P90, revólver e MGX5 em primeira pessoa, além do corpo em terceira pessoa. A MGX5 recebeu luneta funcional no PR #670, já publicado.
+
+**Histórico do PR #670:** ajuste de FOV e projeção; preview `jzzbz4fvs` com M4/P90/revólver e três câmeras. Régua local `ads-visibility-check.mjs` passou 0 falhas também com GLBs candidatos da SVD/AWP; capturas em `artifacts/vm-ads-visibility/`. A validação media alinhamento da alça e retorno das mãos, mas não a área do alvo visível durante o ADS. **Régua:** PX1 em `invariants.mjs` aponta para o arnês de navegador. Vídeo e divulgação continuam suspensos até revisão visual final.
 
 ## BUG-180 — wallpaper da home deixa faixas laterais fora do 3:2
 

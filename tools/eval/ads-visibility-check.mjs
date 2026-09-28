@@ -12,8 +12,9 @@ const remote = process.argv.find((value) => value.startsWith('--base='))?.slice(
 const assetBase = process.argv.find((value) => value.startsWith('--asset-base='))?.slice('--asset-base='.length).replace(/\/$/, '');
 const assetOverlay = process.argv.find((value) => value.startsWith('--asset-overlay='))?.slice('--asset-overlay='.length);
 const assetRoot = process.argv.find((value) => value.startsWith('--asset-root='))?.slice('--asset-root='.length);
+const auto = process.argv.find((value) => value.startsWith('--auto='))?.slice('--auto='.length) || 'E';
 const catalog = process.argv.includes('--catalogo');
-const out = path.join(root, 'artifacts/vm-ads-visibility');
+const out = path.join(root, 'artifacts/vm-ads-visibility', auto === 'E' ? '' : auto.replace(/[^a-z0-9_-]+/gi, '-'));
 fs.mkdirSync(out, { recursive: true });
 const assetDir = assetBase ? fs.mkdtempSync(path.join(os.tmpdir(), 'csbr-ads-assets-')) : null;
 const playwrightRoot = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
@@ -68,7 +69,7 @@ try {
     if (source === broken || !broken.includes('m4: 42,') || !broken.includes('1 + 0 * a')) throw new Error('mutante não aplicou');
     await page.route('**/js/game.js*', (route) => route.fulfill({ contentType: 'application/javascript', body: broken }));
   }
-  await page.goto(`${base}/?debug=1&auto=E&vmauthored=1&vmfabrica=1&vmweapon=m4&map=brasilia&armaslazy=1&vmqa=precision&bloom=0`, { waitUntil: 'load', timeout: 180000 });
+  await page.goto(`${base}/?debug=1&auto=${encodeURIComponent(auto)}&vmauthored=1&vmfabrica=1&vmweapon=m4&map=brasilia&armaslazy=1&vmqa=precision&bloom=0`, { waitUntil: 'load', timeout: 180000 });
   console.log('página carregada');
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 90000 });
   console.log('partida live');
@@ -117,27 +118,33 @@ try {
     // depois que dois frames puderam apresentar a nova malha ao canvas.
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   };
-  for (const weapon of ['m4', 'p90', 'revolver38']) {
+  const settle = async () => {
+    await page.waitForTimeout(300);
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  };
+  for (const weapon of ['m4', 'p90', 'md97', 'pistol', 'revolver38']) {
     await equip(weapon);
     await page.evaluate(() => window.__game.setCamView('first'));
     await aim(false);
     await aim(true);
+    await settle();
     const ads = await read();
     await page.screenshot({ path: path.join(out, `${weapon}-first-ads.png`) });
     const vmScale = Math.tan(ads.vmFov * Math.PI / 360) / Math.tan(ads.vmHipFov * Math.PI / 360);
-    check(`${weapon} primeira pessoa: janela do alvo`, ads.authored && ads.scoped && ads.fov >= 54 && vmScale >= (weapon === 'revolver38' ? 1.55 : 1.35),
+    // As curtas liberam a cruz por deslocamento da pose; o fator de projeção
+    // delas continua 1,35. A ocupação raster é aferida em eval:vm-reguas.
+    check(`${weapon} primeira pessoa: janela do alvo`, ads.authored && ads.scoped && ads.fov >= 54 && vmScale >= (['pistol', 'revolver38'].includes(weapon) ? 1.3 : 1.35),
       { fov: ads.fov, vmFov: ads.vmFov, vmHipFov: ads.vmHipFov, vmScale });
-    if (weapon === 'm4') {
-      for (const mode of ['third', 'shoulder']) {
-        await page.evaluate((m) => window.__game.setCamView(m), mode);
-        await page.waitForFunction((m) => window.__game.camView === m &&
-          Math.abs(window.__game.camera.position.clone().sub(window.__game._eyeWorld).dot(window.__game._tpRight)) >= 0.48,
-        mode, { timeout: 10000 });
-        const view = await read();
-        await page.screenshot({ path: path.join(out, `m4-${mode}-ads.png`) });
-        check(`m4 ${mode}: corpo fora da mira`, view.mode === mode && view.fov >= 54 && view.side >= 0.48,
-          { fov: view.fov, side: view.side, distance: view.distance });
-      }
+    for (const mode of ['third', 'shoulder']) {
+      await page.evaluate((m) => window.__game.setCamView(m), mode);
+      await page.waitForFunction((m) => window.__game.camView === m &&
+        Math.abs(window.__game.camera.position.clone().sub(window.__game._eyeWorld).dot(window.__game._tpRight)) >= 0.48,
+      mode, { timeout: 10000 });
+      await settle();
+      const view = await read();
+      await page.screenshot({ path: path.join(out, `${weapon}-${mode}-ads.png`) });
+      check(`${weapon} ${mode}: corpo fora da mira`, view.mode === mode && view.fov >= 54 && view.side >= 0.48,
+        { fov: view.fov, side: view.side, distance: view.distance });
     }
   }
   await equip('lmg');
