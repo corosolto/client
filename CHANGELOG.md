@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.5`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.10`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,41 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.10] — 2026-09-28
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-09-28) (#705)
+- docs(changelog): rodada do cronista — 1 commits
+
+## [2.1.0-alpha.9] — 2026-09-28
+
+### Mudado
+- feat(home): clarify controls and bound hub layout (#709)
+- feat(home): clarify controls and bound hub layout
+
+## [2.1.0-alpha.8] — 2026-09-28
+
+### Mudado
+- Move docs internas para o repo privado progress (#698)
+- Limpa docs internas e cliente Godot da árvore pública
+
+## [2.1.0-alpha.7] — 2026-09-28
+
+### Mudado
+- fix(vm): liberar a mira ADS no catálogo padrão (#693)
+- docs(vm): sincronizar blocos gerados da fábrica
+- test(vm): estabilizar capturas ADS dos Funkeiros
+- test(vm): medir catálogo da fábrica em 3:2 e 16:9
+- fix(vm): abrir ADS no catálogo da fábrica
+- fix(vm): abrir janela central de mira na fábrica
+
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.7).
+## [2.1.0-alpha.6] — 2026-09-28
+
+### Mudado
+- docs(geo): estado real de 28/09 e ordem revisada do runbook geo (#691)
+- docs(geo): estado real de 28/09 e ordem revisada — redeploy do client virou obrigatório
 
 ## [2.1.0-alpha.5] — 2026-09-28
 

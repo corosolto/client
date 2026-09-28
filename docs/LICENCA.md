@@ -99,7 +99,7 @@ com trabalho mesclado**:
 | Quem | O que entrou | Onde |
 |---|---|---|
 | `daltonfontes` | o mapa `fy_pool_day` ("Piscinão da Treta"), 1 commit | está nesta branch |
-| **William Oliveira** (`@woliveiras`) | o **cliente Godot desktop**, 13 commits, PR #14 mesclado em 18/07/2026 | **`main` — não está nesta branch** |
+| **William Oliveira** (`@woliveiras`) | o **cliente Godot desktop**, 13 commits, PR #14 mesclado em 18/07/2026 | saiu da árvore em 09/2026; os commits seguem no histórico da `main` |
 
 > **O `git shortlog` da branch de trabalho NÃO enumera os contribuidores do projeto.**
 > O bloco de pessoas de [Como colaborar](docs/colaborar.md) mede o **HEAD**, e o HEAD é uma

@@ -63,14 +63,14 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 | Arquivo | Linhas |
 |---|---:|
 | `public/js/game.js` | 8.148 |
-| `public/js/main.js` | 4.107 |
+| `public/js/main.js` | 4.127 |
 | `public/js/characters.js` | 1.099 |
 | `public/js/glbchars.js` | 851 |
 | `public/js/vmattach.js` | 632 |
 | `public/js/weapons.js` | 353 |
 | `public/js/springs.js` | 259 |
 
-Total de `public/js/`: **57.963 linhas em 112 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
+Total de `public/js/`: **57.984 linhas em 112 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: ``git ls-files public/js/*.js | xargs wc -l``
 
@@ -212,7 +212,7 @@ com a portabilidade.
 Hoje mapas, armas e personagens são **código**: cada `map_*.js` é geometria declarada à
 mão, e os maiores deles rivalizam em tamanho com os módulos de sistema. A direção
 "conteúdo como dado" do
-[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md)
+[`ROADMAP.md`](https://github.com/corosolto/client/blob/main/ROADMAP.md)
 quer migrar isso para JSON com loader único, para que uma contribuição de conteúdo seja
 *"abre um JSON e cria conteúdo"* em vez de *"um PR de código hand-coded arriscado"*.
 
@@ -280,13 +280,11 @@ para além do fim do arquivo.
 
 {/* BEGIN:GERADO:ponteiros — não edite à mão, rode `npm run docs` */}
 
-⚠️ **Ponteiros que apontam para além do fim do arquivo** (a prosa envelheceu — corrija à mão):
-
-- `KNOWN-BUGS.md` → `map_lajes_authored.js:491` (o arquivo tem 392 linhas)
+Nenhum ponteiro `arquivo:linha` das docs aponta para fora do arquivo que ele cita. ✓
 
 > Isto confere só o **limite** do arquivo: um ponteiro que ainda cabe mas mudou de assunto passa aqui. É a razão de a doutrina da casa ser declarar o SÍMBOLO e deixar a linha para o gerador — ver `tools/gen-arch.mjs`.
 
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `varredura de `arquivo:linha` em README/STATUS/HANDOFF/KNOWN-BUGS/docs/docs/SKILL`
+> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `varredura de `arquivo:linha` em README/AGENTS/docs/docs/SKILL`
 
 {/* END:GERADO:ponteiros */}
 

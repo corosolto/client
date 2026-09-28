@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.1.0-alpha.5",
+  "version": "2.1.0-alpha.10",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -431,7 +431,7 @@
     "eval:vm-pistola-ref": "node tools/eval/vm-reguas-check.mjs --regua=pistola-ref",
     "eval:vm-maos": "node tools/eval/vm-reguas-check.mjs --regua=maos",
     "eval:vm-carregador": "node tools/eval/vm-reguas-check.mjs --regua=carregador",
-    "eval:vm-reguas": "node tools/eval/vm-reguas-check.mjs --regua=todas",
+    "eval:vm-reguas": "VM_PALCO_QS=vmfabrica=1 node tools/eval/vm-reguas-check.mjs --regua=todas",
     "eval:vm-placar": "node tools/eval/vm-placar-check.mjs",
     "//eval:vm-launch": "chave tudo-ou-nada do viewmodel: VM_LAUNCH só com as 26 armas + granada ready, e o runtime não ativa pela metade (dono, 23/09/2026)",
     "eval:vm-launch": "node tools/eval/vm-launch-check.mjs --mutantes",

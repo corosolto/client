@@ -6,10 +6,10 @@ description: Cria ou troca um viewmodel da fábrica do CS BRASIL, da ficha ao cr
 # Fábrica de armas
 
 Esta skill é o roteiro operacional. O contrato e a história medida vivem em
-[`docs/reports/VM-FABRICA.md`](../../../docs/reports/VM-FABRICA.md). Leia também
+`docs/reports/VM-FABRICA.md` (em `../progress`). Leia também
 [`docs/LICOES.md`](../../../docs/LICOES.md) (lições 1–5, 11, 12 e 14) antes de
 alterar asset ou régua. O estado de integração está em
-[`docs/reports/VM-FABRICA-INTEGRADA.md`](../../../docs/reports/VM-FABRICA-INTEGRADA.md).
+`docs/reports/VM-FABRICA-INTEGRADA.md` (em `../progress`).
 
 ## 1. Comece pela zona de contato
 
