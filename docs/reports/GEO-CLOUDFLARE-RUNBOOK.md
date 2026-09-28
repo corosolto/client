@@ -18,6 +18,40 @@ Medido em 23/09 (GET somente leitura): `www.csbrasil.online` responde com `serve
 `x-vercel-id` (Cloudflare → Vercel); `/api/health` pelo proxy do site responde 200 com
 `stale:["city"]`.
 
+## Estado em 28/09/2026 e ordem REVISADA
+
+A ordem original (segredo → backend → client) foi invertida na prática: o client#625
+(proxy) foi mergeado e publicado em 24/09 **antes** do backend#31 e antes do segredo.
+Estado medido em 28/09 (~03:30 UTC):
+
+- backend#31 (`borda.mjs`) integrado e implantado; sem segredo configurado ele roda em
+  modo `legado` (mesmo comportamento de antes — nenhuma regressão). `GET <run.app>/health`
+  agora expõe `borda:{proxySite,cloudflare,modos}`.
+- `API_PROXY_SECRET` **não existe** na Vercel (conferido com `vercel env ls`) — o proxy
+  publica sem a prova `x-csb-proxy-auth`, e o backend não confaria nela.
+- Cloudflare Managed Transform continua **desligado**: `presence_anon` recebe `country`
+  fresco (BR/PT/US no dia), `city` segue nulo e `city_daily` parada em 30/08 —
+  `/api/health` responde `stale:["city"]`.
+
+**Passos que faltam, na ordem correta agora:**
+
+1. **Segredo** — `gcloud auth login` (a credencial local expirou) e rodar
+   `csbrasil/ops-geo-secret-2026-09-23.sh` (cria no GCP, liga no Cloud Run e cria a env
+   na Vercel, Production e Preview, sem imprimir o valor).
+2. **Redeploy do client — OBRIGATÓRIO** (não existia quando o runbook foi escrito): a env
+   é embutida no BUILD da Vercel, e o build de 24/09 é anterior à env. Rode de um
+   worktree limpo de `origin/main` — `git worktree add ../client-prod origin/main --detach`
+   e lá `vercel deploy --prod --scope rubenmarcus-projects --project csbrasil`. NUNCA do
+   checkout `feat/fps-paid-viewmodels-aaa` (branch privada, 2266 commits atrás).
+3. **Cloudflare** — zona `csbrasil.online` → Rules → Transform Rules → Managed Transforms
+   → **"Add visitor location headers" ON**. Sem isto o país flui (já flui) mas a cidade
+   não; `country_daily` ainda exige a migration 036 do `db-privado`.
+4. **Verificar** (§1.4): `<run.app>/health` com `borda.modos.site` subindo e `modos.direto`
+   parado; `city_daily` com o dia corrente; `/api/health` sem `city` em `stale`.
+
+O rodapé do script ops de 23/09 ("não é preciso redeploy agora") **não vale mais**:
+o client já havia publicado antes da env existir. É o passo 2 acima.
+
 ## Parte 1 — remendo (hoje)
 
 Os PRs do remendo mandam `telemetry`, `presence`, `heartbeat`, `submit-match` e `perf` pelo
