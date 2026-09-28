@@ -1825,7 +1825,72 @@ function openProfileStep(focusNick) {
 }
 $('btn-profile').onclick = () => openProfileStep(true);
 $('profile-back').onclick = () => { ui.back(); setSetupStep('match'); hubNavigate({ janela: null }); };
-$('profile-ok').onclick = () => { ui.click(); saveSettings(); setSetupStep('match'); hubNavigate({ janela: null }); };
+$('profile-ok').onclick = async () => {
+  ui.click();
+  const nick = nickEl.value.trim();
+  const note = $('profile-save-note');
+  if (!nick) {
+    note.textContent = 'Escolha um nick para salvar o perfil.';
+    nickEl.focus();
+    return;
+  }
+  const button = $('profile-ok');
+  button.disabled = true;
+  note.textContent = 'Salvando perfil…';
+  try {
+    if (!testMode) {
+      const selectedSocials = socials.filter(s => s.handle).map(s => ({ net: s.net, handle: s.handle }));
+      const submittedSocials = JSON.stringify(selectedSocials);
+      const submittedClear = socialsClearRequested;
+      const reg = await api('/api/register', {
+        nick, uid: getAnonId(), token: getToken(), socials: selectedSocials,
+        saveSocials: true,
+        clearSocials: selectedSocials.length === 0 && submittedClear,
+      });
+      if (!reg?.ok) {
+        note.textContent = reg?.message || 'Não foi possível salvar o perfil agora. Tente de novo.';
+        return;
+      }
+      // Só a resposta confirmada pode tornar um rascunho elegível para remoção
+      // remota. Um 503 seguido de recarga nunca deve criar clearSocials.
+      if (selectedSocials.length || submittedClear) {
+        confirmedSocials = selectedSocials;
+        localStorage.setItem(SOCIALS_CONFIRMED_KEY, submittedSocials);
+      }
+      const socialsChanged = JSON.stringify(socials.filter(s => s.handle).map(s => ({ net: s.net, handle: s.handle }))) !== submittedSocials || socialsClearRequested !== submittedClear;
+      if (socialsChanged) {
+        // A resposta gravou o snapshot anterior. Se a edição atual ficou vazia,
+        // o próximo salvamento deve substituir esse snapshot mesmo após recarga.
+        socialsClearRequested = confirmedSocials.length > 0 && !socials.some(s => s.handle);
+        if (socialsClearRequested) localStorage.setItem(SOCIALS_CLEAR_KEY, '1');
+        else localStorage.removeItem(SOCIALS_CLEAR_KEY);
+      }
+      if (nickEl.value.trim() !== nick || socialsChanged) {
+        note.textContent = 'O perfil mudou durante o salvamento. Salve novamente.';
+        return;
+      }
+      registeredNick = reg.nick || nick;
+      nickEl.value = registeredNick;
+      localStorage.setItem(NICK_KEY, registeredNick);
+      socialsClearRequested = false;
+      localStorage.removeItem(SOCIALS_CLEAR_KEY);
+      updateAvatarVisibility();
+      renderPlayerPlate();
+      if (registeredNick !== nick) {
+        note.textContent = `Este perfil já usa o nick ${registeredNick}. As redes foram salvas; o nick não pode ser alterado aqui.`;
+        return;
+      }
+    }
+    saveSettings();
+    note.textContent = '';
+    setSetupStep('match');
+    hubNavigate({ janela: null });
+  } catch {
+    note.textContent = 'Não foi possível salvar o perfil agora. Tente de novo.';
+  } finally {
+    button.disabled = false;
+  }
+};
 // ESC no menu = voltar um passo. Num jogo de PC, ESC é o botão de voltar universal;
 // não ter isso no menu é inconsistente com o próprio jogo (ESC pausa a partida).
 // no window (não no #main-menu): depois de um clique no wallpaper o foco volta pro <body>
@@ -2688,22 +2753,35 @@ function extractFromUrl(v) {
 
 /* ---------------- multi-redes sociais (até 3, sem login) ---------------- */
 const SOCIALS_KEY = 'awpbr_socials';
+const SOCIALS_CLEAR_KEY = 'awpbr_socials_clear_pending';
+const SOCIALS_CONFIRMED_KEY = 'awpbr_socials_confirmed';
 const NETS = [['x', 'X / Twitter'], ['github', 'GitHub'], ['instagram', 'Instagram'],
   ['linkedin', 'LinkedIn'], ['tiktok', 'TikTok'], ['youtube', 'YouTube'], ['site', 'Site próprio']];
 let socials = [];
-try { socials = JSON.parse(localStorage.getItem(SOCIALS_KEY) || '[]'); } catch {}
+let confirmedSocials = [];
+try { confirmedSocials = JSON.parse(localStorage.getItem(SOCIALS_CONFIRMED_KEY) || '[]'); } catch {}
+if (!Array.isArray(confirmedSocials)) confirmedSocials = [];
+let socialsClearRequested = confirmedSocials.length > 0 && localStorage.getItem(SOCIALS_CLEAR_KEY) === '1';
+const storedSocials = localStorage.getItem(SOCIALS_KEY);
+try { socials = JSON.parse(storedSocials || '[]'); } catch {}
 // migração do campo único antigo
-if (!socials.length) {
+if (storedSocials === null) {
   const oldNet = localStorage.getItem(SOCIAL_NET_KEY), oldHandle = localStorage.getItem(SOCIAL_KEY);
   if (oldNet && oldHandle) socials = [{ net: oldNet, handle: oldHandle }];
-}
-function saveSocials() {
   localStorage.setItem(SOCIALS_KEY, JSON.stringify(socials));
+}
+localStorage.removeItem(SOCIAL_NET_KEY);
+localStorage.removeItem(SOCIAL_KEY);
+function removedSavedSocial(s) { return Boolean(s?.handle && confirmedSocials.length > 0); }
+function saveSocials(clearRequested = false) {
+  localStorage.setItem(SOCIALS_KEY, JSON.stringify(socials));
+  socialsClearRequested ||= clearRequested && confirmedSocials.length > 0;
+  if (socialsClearRequested) localStorage.setItem(SOCIALS_CLEAR_KEY, '1');
   updateAvatarVisibility();
 }
 function updateAvatarVisibility() {
-  const hasAuto = socials.some(s => ['x', 'github'].includes(s.net) && s.handle);
-  $('avatar-row').classList.toggle('hidden', hasAuto || !(nickEl.value || '').trim());
+  const nick = registeredNick || nickEl.value || '';
+  $('avatar-row').classList.toggle('hidden', !nick.trim());
 }
 function renderSocials() {
   const list = $('social-list');
@@ -2718,12 +2796,13 @@ function renderSocials() {
     const sel = row.querySelector('select'), inp = row.querySelector('input'), del = row.querySelector('.social-del');
     sel.onchange = () => { s.net = sel.value; saveSocials(); };
     inp.oninput = () => {
+      const hadHandle = Boolean(s.handle);
       let v = extractFromUrl(inp.value) || inp.value;
       v = sanitizeHandle(v);
       if (v !== inp.value) inp.value = v;
-      s.handle = v; saveSocials();
+      s.handle = v; saveSocials(hadHandle && !v && confirmedSocials.length > 0);
     };
-    del.onclick = () => { socials.splice(i, 1); saveSocials(); renderSocials(); };
+    del.onclick = () => { const [removed] = socials.splice(i, 1); saveSocials(removedSavedSocial(removed)); renderSocials(); };
     list.appendChild(row);
   });
   $('social-add').classList.toggle('hidden', socials.length >= 3);
@@ -2732,7 +2811,7 @@ $('social-add').onclick = () => { socials.push({ net: 'x', handle: '' }); saveSo
 nickEl.addEventListener('input', updateAvatarVisibility);
 nickEl.addEventListener('input', syncPlayState);
 syncPlayState();   // estado inicial do botão JOGAR (nick vem do localStorage)
-renderSocials();
+renderSocials(); updateAvatarVisibility();
 
 /* ---------------- global ranking API (via /api/* do site) ---------------- */
 const TOKEN_KEY = 'awpbr_token';
