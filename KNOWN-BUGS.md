@@ -108,9 +108,16 @@ foco com retículo da câmera livre e modelo abaixado, preservando a escala da
 arma. A régua raster agora limita a janela central e o volume das mãos;
 `ads-receptor-antigo` e `ads-maos-antigas` a tornam vermelha. Primeira passada
 das sete armas afetadas em 3:2: 0 falhas em
-`/tmp/csbr-ads-public-fix1.log`; ainda faltam catálogo inteiro, 16:9,
-personagens em mapa real, portões e revisão visual final. **Não chamar
-BUG-181 de corrigido nem retomar anúncios antes desses passos.**
+`/tmp/csbr-ads-public-fix1.log`. A varredura das 26 revelou também MP5,
+carabina, SCAR, Uzi e SKS; as poses foram ajustadas. Placar da fábrica:
+**26 armas × 3:2 e 26 armas × 16:9, 0 células vermelhas**, incluindo recarga
+(`/tmp/csbr-mag-all-{3x2,16x9}.log`, `npm run eval:vm-placar`). Mutantes
+`ads-receptor-antigo`, `ads-maos-antigas`, `janela-fora` e `pente-suspenso`
+reprovaram. Smoke da partida real no mapa Brasília passou com capturas de
+P90, MD97, PT-38, revólver e M4 nas três câmeras
+(`/tmp/csbr-ads-real-game-fixed.log`, `artifacts/vm-ads-visibility/`).
+**Ainda faltam portões amplos, preview e publicação desta correção; não
+chamar BUG-181 de corrigido em produção nem retomar anúncios antes disso.**
 
 **Relato do dono em 27/09/2026:** *"o campo de visao piorou quando mirando, em todos os 3 tipos de camera, quase nao se ve o que se atira e isso é um problemao"*; algumas armas por personagem estão especialmente ruins. Capturas de produção às 22:33–22:34 mostram M4, P90, revólver e MGX5 em primeira pessoa, além do corpo em terceira pessoa. A MGX5 recebeu luneta funcional no PR #670, já publicado.
 

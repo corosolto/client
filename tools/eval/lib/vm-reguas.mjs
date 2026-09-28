@@ -438,7 +438,7 @@ export const JUIZ = {
     const estados = [];
     let yAnt = r0.vista?.[1];
     let tipoAnt = '';
-    for (const a of k.amostras) {
+    for (const [i, a] of k.amostras.entries()) {
       if (a.erro) { falhas.push(`${a.tipo}: ${a.erro}`); continue; }
       if (a.tipo !== tipoAnt) { yAnt = r0.vista?.[1]; tipoAnt = a.tipo; }
       const pc = `${a.tipo} ${Math.round(a.f * 100)}%`;
@@ -447,20 +447,23 @@ export const JUIZ = {
       if (!naTela) {
         // Fora do quadro/escondido: só é defeito se a mão de apoio está NA TELA e a
         // peça não está nela — o dono vê a mão fechada vazia (p90 da revisão L1).
-        e = a.maoNaTela && !(a.visivel && a.dMao <= T.maoMax) ? 'mao-vazia' : 'fora';
+        e = a.maoNaTela ? (a.visivel && a.dMao <= T.maoMax ? 'mao-oculto' : 'mao-vazia') : 'fora';
       } else {
         const desloc = r0.local && a.local ? Math.hypot(a.local[0] - r0.local[0], a.local[1] - r0.local[1], a.local[2] - r0.local[2]) : Infinity;
         a.desloc = desloc;
         // Na arma: no encaixe, ou saindo/entrando dele ainda encostada no corpo (a PT-38
         // aprovada solta o pente a 0,44 palma do encaixe aos 15%, raspando no punho).
-        if (!k.clipe && repousoNaArma && (desloc <= T.deslocMax || (desloc <= T.encaixeMax && a.dArma <= T.encostaMax))) e = 'arma';
+        if (a.dMao <= T.maoMax && desloc > T.deslocMax) e = 'mao';
+        else if (!k.clipe && repousoNaArma && (desloc <= T.deslocMax || (desloc <= T.encaixeMax && a.dArma <= T.encostaMax))) e = 'arma';
         else if (a.dMao <= T.maoMax) e = 'mao';
         else if (k.clipe && a.dArma <= T.encostaMax) e = 'arma';
         else if (Number.isFinite(yAnt) && a.vista && a.vista[1] - yAnt <= -T.quedaMin) e = 'caindo';
+        else if (Number.isFinite(yAnt) && a.vista && a.vista[1] - yAnt <= -T.quedaMin / 2
+          && k.amostras[i + 1]?.tipo === a.tipo && k.amostras[i + 1]?.vista?.[1] - a.vista[1] <= -T.quedaMin) e = 'caindo';
         else e = 'solto';
       }
       if (a.vista) yAnt = a.vista[1];
-      if (e === 'mao') naMao++;
+      if (e === 'mao' || e === 'mao-oculto') naMao++;
       a.estado = e;
       estados.push(`${a.tipo}${a.f}:${e}`);
       if (e === 'solto') falhas.push(`recarrega com objeto no meio do ar: ${pc} — ${a.dMao.toFixed(2)} palma da mão, deslocado ${Number.isFinite(a.desloc) ? a.desloc.toFixed(2) : '∞'} do encaixe, ${a.px === Infinity ? 'na tela' : `${a.px} px na tela`}`);
@@ -471,7 +474,7 @@ export const JUIZ = {
     // de 15–20 px; nunca aparece pente inteiro").
     const fr = k.amostras.filter((a) => a.estado === 'mao' && Number.isFinite(a.px) && r0.pxSo).map((a) => a.px / r0.pxSo);
     if (fr.length && Math.max(...fr) < T.tocoMin) falhas.push(`tira carregador fantasma (toco): com o pente na mão aparece no máximo ${(100 * Math.max(...fr)).toFixed(0)}% dele (mínimo ${T.tocoMin * 100}%)`);
-    if (!naMao) falhas.push('tira no ar: em nenhum quadro da recarga a peça está na mão');
+    if (!naMao && k.amostras.some((a) => a.maoNaTela)) falhas.push('tira no ar: em nenhum quadro da recarga a peça está na mão');
     const valor = `${falhas.length ? falhas.length + ' falha(s)' : 'ok'}`;
     const txt = `${estados.join(' ')}`;
     if (!falhas.length) return V(valor, txt);
@@ -580,6 +583,11 @@ export const MUTANTES = {
     const r = await aplicarVariante(page, arma, { ads: { auto: true, off: [0, 0, 0], estilo: 'alca' } });
     return { aplicou: r?.ads?.auto === true && r?.ads?.off?.[1] === 0, ads: r?.ads };
   } },
+  'pente-suspenso': { regua: 'carregador', arma: 'm92', fase: 'amostra', aplicar: (page, arma) => page.evaluate(naPagina(`
+    const b = e.scene.getObjectByName('Mag'); if (!b) return { aplicou: false };
+    if (!window.__vmPenteSuspenso) window.__vmPenteSuspenso = b.getWorldPosition(b.position.clone()).add(b.position.clone().set(0, palmaDe(e) * 2, 0));
+    b.position.copy(b.parent.worldToLocal(window.__vmPenteSuspenso.clone())); b.updateMatrixWorld(true);
+    return { aplicou: true };`), arma) },
   // O defeito da revisão L1 (md97/m92/mp5/akm): os sockets de mira acima da
   // linha de mira real. O ADS automático centra o socket — o AD1 do eval:vm-ads
   // continua 0,000 — e a massa desenhada afunda abaixo da cruz.

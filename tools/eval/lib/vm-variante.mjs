@@ -8,6 +8,7 @@ export async function aplicarVariante(page, arma, variante) {
     const e = window.__authoredVm.entry(arma);
     const cfg = e.key.startsWith('fab#') ? VM_FABRICA[arma] : VM_WEAPON[arma];
     if (variante.frame) Object.assign(e.frame, variante.frame);
+    if (variante.frame?.scale) e.mount.scale.setScalar(variante.frame.scale);
     if (variante.ads) cfg.ads = { ...cfg.ads, ...variante.ads };
     if (variante.frame?.fov) {
       e.cameraFov = variante.frame.fov;
