@@ -41,13 +41,13 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 45 arquivos `.js`, 36.159 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
-| `src/` | o **site** | 18 páginas `.astro`, 19 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 227 scripts em `tools/eval/`, 63 em `tools/` | node puro: sobe o jogo real sem browser |
+| `public/` | o **jogo** | 111 arquivos `.js`, 56.729 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `src/` | o **site** | 20 páginas `.astro`, 4 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
+| `tools/` | o **arnês** | 616 scripts em `tools/eval/`, 100 em `tools/` | node puro: sobe o jogo real sem browser |
 
 **Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
 
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `find src/pages -name '*.astro' | wc -l · find src/pages/api -name '*.ts' | wc -l · ls public/index.html`
+> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git ls-files 'src/pages/**/*.astro' 'src/pages/api/*.ts' public/index.html`
 
 <!-- END:GERADO:zonas -->
 
@@ -131,16 +131,12 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 
 | Você quer… | Vá para | Observação |
 |---|---|---|
-| o estado de hoje, em ≤100 linhas | [`STATUS.md`](STATUS.md) | comece por aqui |
-| contexto, leis e o que fazer em ordem | [`HANDOFF.md`](HANDOFF.md) | auto-contido, assume que você não viu nada |
-| **defeitos com evidência** | [`KNOWN-BUGS.md`](KNOWN-BUGS.md) | `arquivo:linha`, régua e reprodução por bug |
-|| **placar do quality gate** | [`QUALITY-SCORE.md`](QUALITY-SCORE.md) | resumo sintético; histórico e evidências em `KNOWN-BUGS.md` |
-| a ordem de trabalho de uma sessão | [`PROMPT.md`](PROMPT.md) | o que atacar primeiro, e por quê |
+| o estado de hoje e os ledgers internos | repo irmão `../progress` (clone ao lado do client) | `STATUS.md`, `HANDOFF.md`, `KNOWN-BUGS.md`, `QUALITY-SCORE.md`, `PROMPT.md`, `SCRIPTS.md` — bug com evidência continua sendo `KNOWN-BUGS.md` + invariante |
 | **índice símbolo→linha do `game.js`** e a tabela de conflito | [`tools/eval/ARCH.md`](tools/eval/ARCH.md) | **GERADO** (`npm run arch`) — leia **antes** de tocar em `game.js` |
 | o que cada script do arnês mede | [`tools/eval/README.md`](tools/eval/README.md) | inclui quais estão obsoletos |
 | a régua visual vigente | [`tools/eval/BAR-CONSISTENCIA.md`](tools/eval/BAR-CONSISTENCIA.md) | **tem precedência** sobre a `BAR.md` |
-| para onde o projeto vai | [`docs/ROADMAP.md`](docs/ROADMAP.md) | aponta para os planos, não os duplica |
-| o plano de release, degrau a degrau | [`docs/historico/plans/08-RELEASE-PROFISSIONAL.md`](docs/historico/plans/08-RELEASE-PROFISSIONAL.md) | com o corte defendido |
+| para onde o projeto vai | [`ROADMAP.md`](ROADMAP.md) | a vista de cima |
+| o plano de release, degrau a degrau | `../progress` → `archive/plans/08-RELEASE-PROFISSIONAL.md` | histórico: o corte defendido, não o estado atual |
 | como abrir um PR que passa | [`CONTRIBUTING.md`](CONTRIBUTING.md) | linha editorial, higiene, processo |
 | investigar e consertar um defeito | [`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md) | as leis viram passo a passo, com o caso real de cada uma |
 | criar personagem, mapa ou asset novo | [`.claude/skills/csbrasil/SKILL.md`](.claude/skills/csbrasil/SKILL.md) | pipeline com 6 portões; ficha validada por `npm run spec:check` |
@@ -149,12 +145,12 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 | limitar contexto, Graphify e Serena | [`docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa`](docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa) | um assunto, uma tarefa; checkpoint antes de trocar |
 | skills nativas visíveis pra todo agente | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` no `check:fast` |
 | podar over-engineering de um diff; entrevistar antes de codar | `.agents/skills/` (`ponytail-review`, `grill-me`, `handoff`, `to-spec`) | terceiras, gitignored, fixadas por hash — fontes em `.agents/skills/THIRD-PARTY.md` |
-| a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; `docs/INDICE.md` indexa os `.md` soltos |
-| licença, arte paga e marca | [`docs/LICENCA.md`](docs/LICENCA.md) | as **decisões** e o porquê; quem declara é o `LICENSE`, e a tabela de superfícies vive no `CONTRIBUTING.md` |
+| a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; os `.md` internos (IDEAS, QUALITY, relatórios) vivem no repo irmão `../progress` |
+| por que uma decisão de arquitetura é como é | [`docs/adr/`](docs/adr/) | ADRs curtas: contexto, decisão e consequências. O histórico de sessão antigo continua fora da árvore pública |
 | fronteira de segurança do backend | [`docs/seguranca.md`](docs/seguranca.md) | leia antes de mexer em `/api/*` ou `supabase/` |
 | **diagnosticar produção, recuperar e reverter** | [`docs/runbooks/operacao-autonoma.md`](docs/runbooks/operacao-autonoma.md) | `npm run ops:diag`: causa provável, evidência, impacto e próximo passo; "tecnicamente verde" ≠ "pronto para lançamento" |
 | tarefas boas de primeira contribuição | [`docs/issues/`](docs/issues/) | uma por arquivo, com critério de aceite |
-| por que uma decisão antiga é como é | [`docs/historico/`](docs/historico/) | arquivo morto: **não** descreve o estado atual |
+| por que uma decisão antiga é como é | `../progress` → `archive/docs/historico/` | arquivo morto: **não** descreve o estado atual |
 
 ---
 
@@ -163,11 +159,10 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 <!-- BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` -->
 
 ```bash
-npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:mapcontrato eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:modgraph eval:analytics eval:online eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:mapasparados eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:passosim eval:perfcampo eval:dificuldade eval:qualmapas eval:pickuparma eval:parquewheel eval:campo-contract eval:campomorro-molde eval:parquevida eval:parquecanopy eval:penitenciariavida eval:penitenciariafacade eval:penitenciariapickup eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check eval:audioalcance eval:audioespacial eval:audioenvelope eval:audioproc eval:audiocapacidade eval:audiofablocal eval:audioeventos eval:audioannouncer eval:audiovoicemix eval:audioprivate eval:audioruntimeassets eval:menumusicreview audio:inventario:autoteste audio:shortlist:autoteste feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:switchteam eval:launchwatchdog eval:launchrace eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints eval:geoproxy changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:wflocal eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:sonda eval:noescolha eval:maqfraca eval:qualadapt eval:netcodecbin eval:movimento eval:botsim-golden eval:replaycam eval:abateshud eval:botfaca eval:escadao-home eval:escadao-conflict-home eval:escadao-casa-central eval:escadao-casas-conflito eval:escadao-mirante-abrigo eval:escadao-structure eval:escadao-descent eval:escadao-details eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife ops:test ops:selftest eval:lajes-layout eval:lajes-rooftop eval:lajes-visual eval:lajes-ruas eval:lajes-identidade eval:lajes-roof-overlap eval:lajes-nav eval:lajes-ctf-surface eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:lajes-vertical eval:lajes-bots eval:lajes-ambiencia eval:lajes-santos eval:lajes-game eval:mappreview eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:sertao eval:sertao-spatial eval:sertao-interiors eval:sertao-wagon eval:sertao-flora eval:sertao-occlusion eval:sertao-fauna eval:calango-quadruped eval:sertao-horizon eval:sertao-distant-birds eval:sertao-integration eval:sertao-livestock eval:sertao-sky-lifecycle eval:amazonia eval:chao eval:miticos-lobisomem eval:mansao eval:dautelemetria eval:mpRoomOptions eval:fxFlash eval:campinho-integration eval:parque eval:audiofurollback eval:atacadao eval:killstreak eval:mp-paridade eval:obras eval:vm-launch eval:mapcat
 ```
 
-`package.json` tem **133 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **443 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
@@ -180,17 +175,15 @@ npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telem
 > **inventa vermelha**: com o JSON em `V0=80°` contra o `game.js` em `V0=42°`, a VM5 acusava
 > **26/26 armas fora**; depois de regenerar, **3/26**. A ordem do `npm run check` já está
 > corrigida — o cuidado é para quando você chamar `node tools/eval/invariants.mjs` na mão.
-> É o **BUG-02** do [`KNOWN-BUGS.md`](KNOWN-BUGS.md).
+> É o **BUG-02** do `KNOWN-BUGS.md` (em `../progress`).
 
 O `check:fast` usa `tools/eval/runner.mjs`: **todos os passos rodam mesmo quando um deles
 fica vermelho**, e o código de saída só é decidido no placar final. Isso evita que um defeito
-conhecido esconda um quality gate novo. Leia a entrada `check:fast` do `SCRIPTS.md` antes de
-acrescentar um passo.
+conhecido esconda um quality gate novo. Leia a entrada `check:fast` do `SCRIPTS.md` (em `../progress`) antes de acrescentar um passo.
 
 **O placar do quality gate não mora neste arquivo, e não deve morar em nenhum outro além de um.**
 Quantas invariantes passam **não é derivável do fonte** — depende de qual insumo existe na
-máquina. O número vive colado de uma execução real no cabeçalho do
-[`KNOWN-BUGS.md`](KNOWN-BUGS.md).
+máquina. O número vive colado de uma execução real no cabeçalho do `KNOWN-BUGS.md` (em `../progress`).
 
 ---
 

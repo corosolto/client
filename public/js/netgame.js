@@ -53,6 +53,7 @@ class Netcode {
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
+    this._statsInactive = false;
     this._nextClientStats = this._now() + 2000;
     // trocar de time / virar espectador remonta o casamento de ids na próxima nevada
     this._prevOnSlot = net.onSlot;
@@ -789,6 +790,15 @@ class Netcode {
     }
     // fps = frames REAIS de render na janela, e não as chamadas deste interval
     const now = performance.now();
+    const inactive = !!game.paused || (typeof document !== 'undefined' && !!document.hidden);
+    if (inactive !== this._statsInactive) {
+      this._statsInactive = inactive;
+      this._nsT0 = now;
+      this._nsF0 = game._rafFrames || 0;
+      this._nsFps = null;
+      this._reconcileWindow.length = 0;
+      this._nextClientStats = now + 10000;
+    }
     if (this._nsT0 == null) { this._nsT0 = now; this._nsF0 = game._rafFrames || 0; }
     const dframes = (game._rafFrames || 0) - this._nsF0, dtime = now - this._nsT0;
     if (dtime >= 400) {
@@ -796,7 +806,7 @@ class Netcode {
       this._nsT0 = now; this._nsF0 = game._rafFrames || 0;
     }
     const s = this.net.computeStats();
-    if (now >= this._nextClientStats && this._nsFps > 0) {
+    if (!inactive && now >= this._nextClientStats && this._nsFps > 0) {
       this._nextClientStats = now + 10000;
       const correcoes = this._reconcileWindow;
       this.net.sendClientStats?.({

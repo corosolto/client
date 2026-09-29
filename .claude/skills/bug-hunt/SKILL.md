@@ -18,7 +18,7 @@ Se você seguir só uma linha deste arquivo, que seja esta:
 
 Leia, nesta ordem, e não pule:
 
-1. **[`KNOWN-BUGS.md`](../../../KNOWN-BUGS.md)** — o defeito já pode estar lá, com causa raiz,
+1. **`KNOWN-BUGS.md` (em `../progress`)** — o defeito já pode estar lá, com causa raiz,
    `arquivo:linha` e o que já foi refutado. O cabeçalho tem o placar real do quality gate, colado de
    uma execução de verdade.
 2. **`docs/docs/quality-gates.md`** — as duas leis da casa e o teste de mutação. É a página
@@ -103,7 +103,7 @@ negativo — resultado negativo medido vale tanto quanto conserto.
 > 0/26. O modo de falha estava documentado desde antes em `public/js/game.js:1457`
 > (*"SEM ambiente … metalness 1,0 lê como silhueta preta"*).
 >
-> **Terceiro caso.** BUG-31: `docs/historico/plans/02-BOTS-E-MODELS.md:285` mandava rodar `retarget-glb.mjs` nos
+> **Terceiro caso.** BUG-31: `../progress` → `archive/plans/02-BOTS-E-MODELS.md:285` mandava rodar `retarget-glb.mjs` nos
 > palhaços. Rodado, medido, **no-op**: 0,13° de desvio máximo por osso. Gerar 88 GLB para não
 > mudar um vértice teria custado peso morto contra o teto de 250 MB da CrazyGames.
 
@@ -196,7 +196,7 @@ disjuntas — e a partição se declara por **símbolo**, nunca por linha (`npm 
 
 Oito passos. O 2 e o 5 são os que separam conserto de mexida.
 
-**0 · Registre antes de investigar.** Abra a entrada no [`KNOWN-BUGS.md`](../../../KNOWN-BUGS.md)
+**0 · Registre antes de investigar.** Abra a entrada no `KNOWN-BUGS.md` (em `../progress`)
 com as **palavras literais** de quem reportou. A palavra dele é o dado; a sua paráfrase já é
 interpretação. Sem evidência ainda, a entrada nasce em *Relatados, ainda não reproduzidos*, com
 `Régua: nenhuma`.
@@ -271,7 +271,7 @@ npm run check:seo    # se mexeu em src/ ou em public/llms.txt
 ```
 
 A composição exata sai do `package.json` (o **porquê** de cada passo mora no
-[`SCRIPTS.md`](../../../SCRIPTS.md)) e está publicada como bloco gerado em
+`SCRIPTS.md` (em `../progress`)) e está publicada como bloco gerado em
 [`AGENTS.md`](../../../AGENTS.md). Não copie a lista para lugar nenhum — ela muda.
 
 Três armadilhas de quality gate, todas já pagas:
@@ -340,7 +340,7 @@ A distinção que resolve a dúvida na hora de escrever:
 **Duas coisas que este arquivo não tem, e é melhor você saber:** ele **não recebe bloco gerado**
 (a tabela `COLOCACAO` de `tools/gen-docs.mjs` declara em quais arquivos cada bloco aparece, e não
 inclui este), e ele **não entra na varredura de ponteiros** do mesmo script, que hoje cobre
-`README/STATUS/HANDOFF/KNOWN-BUGS/AGENTS/docs/docs` e só o `SKILL.md` da `gauntlet-fps`
+`README/AGENTS/docs/docs` e só o `SKILL.md` da `gauntlet-fps`
 (`tools/gen-docs.mjs:584-586`). Consequência prática: aqui número de estado não se escreve —
 aponta-se; e os `arquivo:linha` desta skill são conferidos à mão. Se você mexer no
 `COLOCACAO` ou nessa lista, inclua este arquivo nos dois.
@@ -370,7 +370,7 @@ aponta-se; e os `arquivo:linha` desta skill são conferidos à mão. Se você me
 - [`references/gabaritos.md`](references/gabaritos.md) — gabarito da entrada do `KNOWN-BUGS.md` e
   do relatório final, incluindo como declarar o que **não** foi verificado.
 - `docs/docs/quality-gates.md` — as duas leis, a procedência de teto e o teste de mutação.
-- [`KNOWN-BUGS.md`](../../../KNOWN-BUGS.md) · [`AGENTS.md`](../../../AGENTS.md) ·
+- `KNOWN-BUGS.md` (em `../progress`) · [`AGENTS.md`](../../../AGENTS.md) ·
   [`CONTRIBUTING.md`](../../../CONTRIBUTING.md).
 - `gauntlet-fps` — a skill irmã. Ela **melhora o que funciona**; esta conserta o que está
   quebrado. Se o pedido é "deixe melhor", é lá.
