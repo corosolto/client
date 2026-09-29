@@ -151,6 +151,9 @@ const PACE = QS.get('pace') === '1';
    partida. Depois da janela o painel volta a aceitar clique (senão a regressão do G2-R2
    volta) e as duas ações destrutivas ainda exigem confirmação de dois toques (main.js). */
 const PAUSE_ARM_MS = 600;
+/* Chat de sala (#686): o pointerlockchange do Esc chega no mesmo tick do keydown no Chromium;
+   400 ms cobre um quadro atrasado e fica abaixo da guarda PAUSE_ARM_MS (eval:chat CC3e mede 450 ms). */
+const CHAT_PAUSA_GUARDA_MS = 400;
 /* Segunda trava, do mesmo defeito: NENHUM clique único pode destruir a partida em
    andamento (SAIR PRO MENU / REINICIAR). Dois toques — mas com uma pausa MEDIDA entre
    eles, e a regra mora aqui, exportada, porque "clique de novo" ingênuo NÃO resolve:
@@ -1279,6 +1282,8 @@ export class Game {
     /* O netcode nasce por ÚLTIMO: ele lê `player`, `bots` e `el`, que só existem agora.
        Construí-lo junto com o resto era pegar metade do jogo montada. */
     if (this._mpPend) { this._mp = this._mpPend.mpFactory(this, this._mpPend.net); this._mpPend = null; }
+    // chat de sala (#686): quem abre é o main.js; travarEntrada(v) liga e desliga a trava
+    this.onAbrirChat = null; this._entradaTravada = false; this._chatDestravadoAte = 0;
   }
 
   /* ================= setup ================= */
@@ -1964,7 +1969,12 @@ export class Game {
   /* ================= input ================= */
   _input() {
     this.keys = {};
+    /* Chat de sala (#686): tecla e clique num campo de texto são do campo, não do jogo.
+       Null-safe: o arnês e o nó headless entregam alvos sem closest. */
+    const entradaPropria = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable === true
+      || !!(typeof t.closest === 'function' && t.closest('[data-entrada-propria]')));
     this._kd = e => {
+      if (this._entradaTravada || entradaPropria(e.target)) return;
       if (e.code === 'Tab') { e.preventDefault(); this._showScoreboard(true); }
       /* Em pointer lock, engole os atalhos do navegador que a página PODE cancelar
          (Ctrl+S/D/A/R…). Os que ela NÃO pode — Ctrl+W à frente de todos — não passam por
@@ -1975,6 +1985,12 @@ export class Game {
       // Firefox Quick Find: qualquer letra abre a barra de busca se não cancelar o evento.
       // Em pointer lock o jogo é dono do teclado — engole tudo.
       if (document.pointerLockElement) e.preventDefault();
+      // Y/U abrem o chat antes do portão _acceptInput (o espectador não tem pointer lock), nunca pausado
+      if ((e.code === 'KeyY' || e.code === 'KeyU') && this.onAbrirChat && !this.paused && (this.state === 'live' || this.state === 'countdown')) {
+        e.preventDefault();
+        this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time');
+        return;
+      }
       this.keys[e.code] = true;
       if (this.radioOpen) {
         const n = { Digit1: 1, Digit2: 2, Digit3: 3 }[e.code];
@@ -2006,10 +2022,12 @@ export class Game {
       if (e.code === 'Space') e.preventDefault();
     };
     this._ku = e => {
+      if (this._entradaTravada || entradaPropria(e.target)) return;
       if (e.code === 'Tab') this._showScoreboard(false);
       this.keys[e.code] = false;
     };
     this._md = e => {
+      if (this._entradaTravada || entradaPropria(e.target)) return;
       if (this.radioOpen) { this.radioOpen = null; this._radioUi(); }
       if (!this._acceptInput()) {
         // pointer lock não engatou (ou caiu)? qualquer clique NO CANVAS retoma e tenta de novo.
@@ -2072,6 +2090,7 @@ export class Game {
     this._cc = e => e.preventDefault();
     this._blur = () => { this.keys = {}; };   // alt-tab com tecla pressionada não deixa tecla presa
     this._plc = () => {
+      if (this._chatSeguraPausa()) return;
       if (!document.pointerLockElement && !this.testMode && (this.state === 'live' || this.state === 'countdown') && !this.paused)
         this.setPaused(true);
     };
@@ -2287,9 +2306,29 @@ export class Game {
   espectando() { return !!(this.online && this._mp && this._mp.espectador); }
 
   _acceptInput() {
+    if (this._entradaTravada) return false;
     if (this.paused || this.state !== 'live' && this.state !== 'countdown') return false;
     return this.testMode || this.mobile || !!document.pointerLockElement;   // mobile: toque, sem pointer lock
   }
+  /* Chat de sala aberto (#686): o pointer lock fica ligado e a cena continua, mas nenhuma
+     tecla, clique ou stick chega ao jogador. Zera como o setPaused, sem o menu de pausa. */
+  travarEntrada(v) {
+    v = !!v;
+    if (this._entradaTravada === v) return;
+    this._entradaTravada = v;
+    if (v) {
+      this.keys = {}; this.mouseDown0 = false;
+      if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
+      if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
+      if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; }
+    } else {
+      this._chatDestravadoAte = this._now() + CHAT_PAUSA_GUARDA_MS;
+    }
+    const touchUi = this._touchUi || document.getElementById('touch-ui');
+    if (touchUi && touchUi.classList) touchUi.classList.toggle('chat', v);
+  }
+  // o Esc que fecha o compositor também derruba o pointer lock: essa perda não é pedido de pausa
+  _chatSeguraPausa() { return !!this._entradaTravada || this._now() < (this._chatDestravadoAte || 0); }
   /* O clique caiu no FUNDO do menu de pausa (e não num botão dele)? Durante a janela de
      guarda o painel está com `pointer-events:none`, então até o clique MIRADO num botão
      chega aqui como fundo — que é o ponto: o tiro que já estava saindo volta pro jogo em
