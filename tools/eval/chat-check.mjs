@@ -24,7 +24,8 @@
      CC3 · guardas do jogo (bootGame): tecla e clique num alvo de entrada própria não
            viram tecla nem tiro; Y/U chamam `onAbrirChat`; `travarEntrada` zera keys,
            mouse, sticks e desliga `_acceptInput`; `_plc` não pausa com o chat aberto
-           nem nos 400 ms depois de fechar.
+           nem nos 400 ms depois de fechar; o clique nesses 400 ms (o que fechou o
+           compositor, que com pointer lock tem o canvas como alvo) não atira.
      CC4 · ChatEstado: dedupe por id, teto de linhas, histórico, bloqueio (próprio,
            teto, storage que estoura), linhasVisiveis, canaisPara, proximoCid, ativo.
      CC5 · montarLinha com um DOM em que o setter de innerHTML LANÇA: rótulo e texto
@@ -39,8 +40,9 @@
    disco). Mutante que não morde, ou que não aplica, REPROVA a régua.
      trava-inerte   game.js: `this._entradaTravada || entradaPropria(e.target)` vira
                     `false` (a guarda de _kd/_ku/_md some)              -> CC3 vermelha
-     plc-antigo     game.js: a chamada `this._chatSeguraPausa()` em _plc vira `false`
-                                                                          -> CC3 vermelha
+     plc-antigo     game.js: `if (this._chatSeguraPausa()) return;` em _plc vira
+                    `if (false) return;`                                  -> CC3 vermelha
+     clique-pos-chat game.js: _md perde o `|| this._chatSeguraPausa()`   -> CC3 vermelha
      chat-inseguro  net.js: enviarChat manda por `enviarInseguro`      -> CC2 vermelha
      chat-sem-meta  net.js: `_chatPronto` ignora `chatLigado()`         -> CC2 vermelha
      sem-bidi       chat-painel.js: 'bdi' vira 'span'                   -> CC5 vermelha
@@ -359,10 +361,19 @@ async function cc3(cobra, { GameClasse }) {
       cobra(globalThis.document.getElementById('touch-ui').classList.contains('chat') === false, 'CC3e travarEntrada(false) tira a classe `chat` de #touch-ui');
       g._plc();
       cobra(g.paused === false, 'CC3e _plc não pausa nos 400 ms depois de fechar o chat');
+      /* 3f · com pointer lock todo clique tem o canvas como alvo, e o clique que fecha o
+         compositor (onDocMouseDown roda antes do _md) chegava ao jogo já destravado: atirava. */
+      globalThis.document.pointerLockElement = {};
+      g._md({ button: 0, target: alvoCanvas });
+      cobra(tiros === 0 && !g.mouseDown0, `CC3f o clique nos 400 ms depois de fechar o chat não atira: é o clique que fechou o compositor (${tiros} tiro)`);
+      globalThis.document.pointerLockElement = null;
       await dormir(450);
       g._plc();
       cobra(g.paused === true, 'CC3e passados os 400 ms, perder o lock volta a pausar (a guarda não é permanente)');
-      g.testMode = true; g.paused = false; globalThis.document.pointerLockElement = lock0;
+      g.paused = false; globalThis.document.pointerLockElement = {};
+      g._md({ button: 0, target: alvoCanvas });
+      cobra(tiros === 1, `CC3f passados os 400 ms o clique volta a atirar (${tiros} tiro)`);
+      g.testMode = true; g.paused = false; g.mouseDown0 = false; globalThis.document.pointerLockElement = lock0;
     }
   } finally { try { g.dispose(); } catch { /* o jogo mutado pode não desmontar limpo */ } }
 }
@@ -550,7 +561,8 @@ for (const [id, titulo, fn] of GRUPOS) {
    com uma falha que NÃO é "módulo ausente". */
 const MUTANTES = [
   ['trava-inerte', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace(/this\._entradaTravada \|\| entradaPropria\(e\.target\)/g, 'false'), 'trava-inerte')).Game })],
-  ['plc-antigo', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace(/this\._chatSeguraPausa\(\)/, 'false'), 'plc-antigo')).Game })],
+  ['plc-antigo', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace(/if \(this\._chatSeguraPausa\(\)\) return;/, 'if (false) return;'), 'plc-antigo')).Game })],
+  ['clique-pos-chat', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace('entradaPropria(e.target) || this._chatSeguraPausa()', 'entradaPropria(e.target)'), 'clique-pos-chat')).Game })],
   ['chat-inseguro', 'CC2', cc2, async () => ({ ...ctx, net: { mod: await importarMutado('public/js/net.js', (s) => s.replace(/this\.tp\.enviar\(JSON\.stringify\(\{ type: 'chat',/, "this.tp.enviarInseguro(JSON.stringify({ type: 'chat',"), 'chat-inseguro'), motivo: '' } })],
   ['chat-sem-meta', 'CC2', cc2, async () => ({ ...ctx, net: { mod: await importarMutado('public/js/net.js', (s) => s.replace(/return this\.chatLigado\(\) && !!this\.tp\?\.pronto;/, 'return !!this.tp?.pronto;'), 'chat-sem-meta'), motivo: '' } })],
   ['sem-bidi', 'CC5', cc5, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace(/'bdi'/g, "'span'"), 'sem-bidi'), motivo: '' } })],

@@ -2027,7 +2027,8 @@ export class Game {
       this.keys[e.code] = false;
     };
     this._md = e => {
-      if (this._entradaTravada || entradaPropria(e.target)) return;
+      // com pointer lock o clique que fecha o compositor tem o canvas como alvo e chega já destravado
+      if (this._entradaTravada || entradaPropria(e.target) || this._chatSeguraPausa()) return;
       if (this.radioOpen) { this.radioOpen = null; this._radioUi(); }
       if (!this._acceptInput()) {
         // pointer lock não engatou (ou caiu)? qualquer clique NO CANVAS retoma e tenta de novo.
