@@ -267,7 +267,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
 | `penitenciaria` | CARANDIRU | **captura** | `map_penitenciaria.js` | 1.009 |
 
-**18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 24 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

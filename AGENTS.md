@@ -41,7 +41,7 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 112 arquivos `.js`, 58.076 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `public/` | o **jogo** | 111 arquivos `.js`, 56.717 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
 | `src/` | o **site** | 20 páginas `.astro`, 4 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
 | `tools/` | o **arnês** | 615 scripts em `tools/eval/`, 100 em `tools/` | node puro: sobe o jogo real sem browser |
 
@@ -146,7 +146,7 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 | skills nativas visíveis pra todo agente | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` no `check:fast` |
 | podar over-engineering de um diff; entrevistar antes de codar | `.agents/skills/` (`ponytail-review`, `grill-me`, `handoff`, `to-spec`) | terceiras, gitignored, fixadas por hash — fontes em `.agents/skills/THIRD-PARTY.md` |
 | a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; os `.md` internos (IDEAS, QUALITY, relatórios) vivem no repo irmão `../progress` |
-| licença, arte paga e marca | [`docs/LICENCA.md`](docs/LICENCA.md) | as **decisões** e o porquê; quem declara é o `LICENSE`, e a tabela de superfícies vive no `CONTRIBUTING.md` |
+| por que uma decisão de arquitetura é como é | [`docs/adr/`](docs/adr/) | ADRs curtas: contexto, decisão e consequências. O histórico de sessão antigo continua fora da árvore pública |
 | fronteira de segurança do backend | [`docs/seguranca.md`](docs/seguranca.md) | leia antes de mexer em `/api/*` ou `supabase/` |
 | **diagnosticar produção, recuperar e reverter** | [`docs/runbooks/operacao-autonoma.md`](docs/runbooks/operacao-autonoma.md) | `npm run ops:diag`: causa provável, evidência, impacto e próximo passo; "tecnicamente verde" ≠ "pronto para lançamento" |
 | tarefas boas de primeira contribuição | [`docs/issues/`](docs/issues/) | uma por arquivo, com critério de aceite |

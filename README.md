@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 58.076 linhas em 112 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 56.717 linhas em 111 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **8.147** linhas | `wc -l public/js/game.js` |
 | `main.js` | 4.206 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 112 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 111 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -100,7 +100,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **258** importam Playwright, **113** importam gltf-transform e **10** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **224** importam Playwright, **113** importam gltf-transform e **10** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -325,7 +325,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
 | `penitenciaria` | CARANDIRU | **captura** | `map_penitenciaria.js` | 1.009 |
 
-**18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 24 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
