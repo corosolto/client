@@ -10,7 +10,7 @@
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
 | `public/js/game.js` | 8187 | 316 |
-| `public/js/main.js` | 4207 | 323 |
+| `public/js/main.js` | 4216 | 323 |
 | `public/js/glbchars.js` | 852 | 60 |
 | `public/js/characters.js` | 1100 | 40 |
 | `public/js/vmattach.js` | 633 | 4 |
