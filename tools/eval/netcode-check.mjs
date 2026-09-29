@@ -1234,5 +1234,41 @@ console.log('\n· faca no online: quem aplica o dano é o servidor');
   g.dispose(); g2.dispose();
 }
 
+console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
+{
+  const net = fakeNet(1, 5, false, 30);
+  const samples = [];
+  net.sendClientStats = (sample) => samples.push(sample);
+  const g = montaJogo(net);
+  const mp = g._mp;
+  const hiddenBefore = Object.getOwnPropertyDescriptor(document, 'hidden');
+  Object.defineProperty(document, 'hidden', { configurable: true, writable: true, value: true });
+  g._rafFrames = 100;
+  mp._reconcileWindow.push(0.7);
+  mp._nsT0 = performance.now() - 1000;
+  mp._nsF0 = 40;
+  mp._nextClientStats = 0;
+  mp.updateStats();
+  cobra(samples.length === 0, 'aba oculta não envia FPS, RTT e gap como se houvesse jogo visível');
+  cobra(mp._reconcileWindow.length === 0, 'correção da aba oculta não contamina a próxima janela');
+  document.hidden = false;
+  g.paused = true;
+  mp._nextClientStats = 0;
+  mp.updateStats();
+  cobra(samples.length === 0, 'menu de pausa não entra na qualidade de jogabilidade');
+  g.paused = false;
+  mp.updateStats();
+  cobra(samples.length === 0, 'retorno ao jogo aguarda janela nova antes de medir');
+  g._rafFrames += 60;
+  mp._nsT0 = performance.now() - 1000;
+  mp._nsF0 = g._rafFrames - 60;
+  mp._nextClientStats = 0;
+  mp.updateStats();
+  cobra(samples.length === 1 && samples[0].fps > 0, 'jogo visível volta a enviar telemetria após aquecer');
+  if (hiddenBefore) Object.defineProperty(document, 'hidden', hiddenBefore);
+  else delete document.hidden;
+  g.dispose();
+}
+
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);
