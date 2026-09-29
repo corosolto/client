@@ -35,6 +35,7 @@ export const CHAT_LIMITES = Object.freeze({
   filaClienteMax: 64,
   bloqueiosMax: 50,
   retencaoDenunciasDias: 90,
+  carenciaEspectadorMs: 30000,
 });
 
 export const MOTIVOS_DENUNCIA = Object.freeze(['ofensa', 'odio', 'assedio', 'spam', 'outro']);

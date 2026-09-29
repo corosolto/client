@@ -141,11 +141,16 @@ tabela.
   (`game/index.js`, `MP_TICKET_REQUIRED = process.env.MP_TICKET_REQUIRED !== '0'`). O nó já
   guarda `ws._playerId` e `ws._anonId` a partir de `req.mpTicketPayload`.
 - **Handle (`h`):** HMAC-SHA256 da chave com um segredo aleatório de 32 bytes por sala, gerado
-  quando o `ChatSala` nasce e nunca serializado nem logado. O resultado é escrito no alfabeto
-  do convite (`ALFABETO = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'`, `game/index.js`), com
-  `handleChars` (3) caracteres, estendido para 4 ou 5 se colidir com outro handle da mesma
-  sala. É o mesmo dentro da sala, inclusive entre partidas e reconexões, e diferente de uma
-  sala para outra. Ninguém consegue calcular a chave a partir do handle.
+  quando o `ChatSala` nasce e nunca serializado nem logado. O digest é escrito em base 31 no
+  alfabeto do convite (`ALFABETO = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'`, `game/index.js`) e o
+  handle são `handleChars` (3) dígitos da ponta BAIXA dessa escrita (os últimos
+  `handleCharsMax` dígitos; o mais significativo é enviesado porque 31^51 < 2^256 < 31^52),
+  estendido para 4 ou 5 se o prefixo colidir com outro handle da mesma sala. Se os cinco
+  colidirem, o nó re-deriva com sal (`chave#1`, `chave#2`, ...) em vez de passar de
+  `handleCharsMax`, que é o que a API de denúncias aceita (`handleDe` em `game/chat.js`;
+  mutantes `handle-longo` e `handle-enviesado`). É o mesmo dentro da sala, inclusive entre
+  partidas e reconexões, e diferente de uma sala para outra. Ninguém consegue calcular a
+  chave a partir do handle.
 - **Rótulo** (`rotuloDe(msg)`): com `nk`, o nick verificado com uma marca de verificado
   (texto, não imagem); sem `nk`, `Anônimo #<h>`. O rótulo é montado no cliente a partir de
   `h` e `nk`, nunca vem pronto do nó, e nunca entra em HTML: vai em `textContent` dentro de
@@ -180,6 +185,15 @@ estado é lido de `room.slots` na hora da entrega, nunca guardado no remetente.
 
 - A regra do espectador durante a partida é anti-ghosting: quem assiste vê os dois times e
   não pode passar posição a um deles.
+- **Carência de quem sai da arquibancada:** a regra acima só pelo slot no instante do envio
+  vazava em três frames (`time`, texto no canal do time, `espectar`). Por isso quem estava sem
+  slot e pega slot (`{type:'time'}`), sai (`leave`) ou cai (`close`) fica em carência por
+  `carenciaEspectadorMs` (30 s) a partir daquele momento, pela identidade e no nível do nó
+  (`LimitesChat.saiuDaArquibancada` e `carenciaEspectador`, marcadas em
+  `marcarSaidaDaArquibancada` antes do `claimSlot`): reconectar não zera. Em carência o
+  remetente é tratado como espectador nas linhas da tabela, mesmo com slot: o canal time é
+  recusado com `sem_time` e o canal sala vai só aos espectadores durante a partida (com eco
+  para quem escreveu). O cliente só mostra o motivo; não conta os 30 s.
 - O chat de time nunca chega ao espectador nem ao time adversário, em nenhuma janela.
 - Não há linhas de sistema de entrada e saída. O chat não anuncia quem entrou, saiu, trocou
   de time ou reconectou.
@@ -228,6 +242,7 @@ delas. A régua `eval:chat` do client lê esta tabela e compara com o objeto exp
 | `filaClienteMax` | 64 |
 | `bloqueiosMax` | 50 |
 | `retencaoDenunciasDias` | 90 |
+| `carenciaEspectadorMs` | 30000 |
 
 Procedência dos valores:
 
@@ -244,7 +259,10 @@ Procedência dos valores:
   (`limitesChat`), então reconectar ou trocar de sala não zera.
 - `repeticaoMs` 15000: a mesma chave de repetição em 15 s é spam, não conversa.
 - `escaladaRecusas` 8, `escaladaJanelaMs` 30000 e `silencioMs` 60000: quem bate no balde 8
-  vezes em 30 s está automatizando; 60 s de silêncio custa mais que a mensagem valia.
+  vezes em 30 s está automatizando; 60 s de silêncio custa mais que a mensagem valia. Conta
+  toda recusa que gera nack ao remetente (`vazia`, `longa`, `invalida`, `sem_time`, `rapido`,
+  `repetida`), menos `sala_rapida`: esse é o balde da SALA, drenado por terceiros, e contar
+  faria uma sala cheia silenciar quem só tentou falar (mutante `sala-rapida-escala`).
 - `salaCapacidade` 20 e `salaRecargaPorSegundo` 4: 10 conexões × 5 do balde daria 50 numa
   rajada; a sala segura em 20 e recarrega 4/s, que é o que o painel consegue desenhar sem
   virar cascata.
@@ -278,13 +296,23 @@ Procedência dos valores:
 - `bloqueiosMax` 50: cinco vezes o máximo de conexões numa sala.
 - `retencaoDenunciasDias` 90: o `purge_mp_chat_reports` da migration 039, no molde do
   `purge_submit_log` (`seguranca.md` §4).
+- `carenciaEspectadorMs` 30000: um round dura 99 s (`ROUND_TIME` em `public/js/game.js`);
+  30 s é um terço disso, o tempo em que a posição vista da arquibancada envelhece, e mais que
+  isso deixaria quem entra de verdade um round inteiro sem chat de time. O cliente não usa a
+  chave (só mostra `sem_time`); ela está aqui porque os dois lados exportam a mesma tabela.
 
 ## 7. Ciclo de vida
 
 - **Desconexão:**
   - no cliente, `mpDesconectou` (`main.js`) chama `destruir()` do chat: log, rascunho e fila
     somem;
-  - no nó, a reserva do handle continua no `ChatSala` enquanto a sala existir.
+  - no nó, a reserva do handle fica no `ChatSala` enquanto a chave estiver conectada ou for
+    autora de mensagem no buffer. A varredura do heartbeat (`varrer(agora, vazia, presentes)`)
+    solta handle, deduplicação e janela de denúncia de quem já saiu (a sala oficial nunca
+    fecha, e sem isso cada uid que passou ficaria no Map até o nó reiniciar); com a sala
+    vazia por `salaVaziaLimpaMs` zera tudo. Quem volta re-deriva o mesmo handle (mesma chave,
+    mesmo segredo), salvo colisão nova (mutantes `handles-sem-varredura` e
+    `vazia-guarda-handles`).
 - **Reconexão à mesma sala:**
   - o handle é o mesmo (mesma chave, mesmo segredo) e o balde não zera;
   - o `chat_hist` reenvia **só as mensagens que já tinham sido entregues àquela chave** (cada
@@ -345,8 +373,15 @@ Procedência dos valores:
    `flushDenunciasMs` em lotes de até `loteDenuncias` para `MP_CHAT_REPORT_URL`. O padrão
    dessa URL troca o caminho de `MP_METRICS_URL` por `/api/mp-chat-report`, e a
    autenticação é `Bearer MP_METRICS_TOKEN`, validada na API com `timingSafeEqual` como em
-   `api/mp-metrics.ts`. Em caso de erro, o lote volta para a fila. A fila também é esvaziada
-   no `shutdown` (SIGTERM), como o `flushTelemetria`.
+   `api/mp-metrics.ts`. Em caso de erro, o lote volta para a fila. No `shutdown` (SIGINT e
+   SIGTERM) o nó primeiro espera o POST que o flush periódico já tinha disparado (contador
+   `denunciasEmVoo`, prazo de 6 s = timeout do POST de 5 s + 1 s) e só então faz o flush
+   final e fecha `wss`/`server`: é mais estrito que o `flushTelemetria` (melhor esforço),
+   porque o `chat-smoke` provou que o `process.exit` engolia o pedido antes de conectar.
+   Custo declarado: até ~6 s a mais no SIGTERM quando havia POST em voo e a API não
+   responde (detalhe e a carência de 10 s do docker no README do backend). A variável
+   `MP_CHAT_FLUSH_MS` (padrão `flushDenunciasMs`) só existe para as réguas encurtarem o
+   intervalo, no molde de `MP_FLUSH_MS` da telemetria; não é parte deste contrato.
 5. A API (`api/mp-chat-report.ts`) exige o bearer (401 sem ele), aplica rateLimit de 30 a
    cada 10 min, sanitiza o lote e devolve 503 sem banco, para falhar fechado. Chama o RPC
    `track_mp_chat_reports(jsonb)`, idempotente pelo `id` do registro e executável só por
@@ -404,7 +439,7 @@ vermelha (lei 3). A saída vermelha vai para o corpo do PR.
 
 | Régua | O que tranca | Mutantes |
 |---|---|---|
-| `tools/eval/chat-check.mjs` (`eval:chat`, no `check:fast`) | vetores do §3; `NetClient` inerte sem meta e depois de `partida` sem meta, e só `tp.enviar`; guardas do jogo (tecla em input não vira tecla, `_md` não atira, `_plc` não pausa, Y/U abrem, `_acceptInput` falso, sticks zerados, e o clique nos 400 ms depois de fechar o compositor não atira: com pointer lock ele tem o canvas como alvo); `ChatEstado`; `montarLinha` com setter de `innerHTML` que lança; `sala/[codigo].astro` e sitemap sem chat; `chat-painel.js` sem `innerHTML`; `game.js` não importa chat; a tabela do §6 igual a `CHAT_LIMITES` | `trava-inerte`, `plc-antigo`, `clique-pos-chat`, `chat-inseguro`, `chat-sem-meta`, `sem-bidi`, `innerhtml`, `sem-nfkc`, `bloqueio-proprio`, `tabela-torta` |
+| `tools/eval/chat-check.mjs` (`eval:chat`, no `check:fast`) | vetores do §3; `NetClient` inerte sem meta e depois de `partida` sem meta, e só `tp.enviar`; guardas do jogo (tecla em input não vira tecla, `_md` não atira, `_plc` não pausa, Y/U abrem, `_acceptInput` falso, sticks zerados, e o clique nos 400 ms depois de fechar o compositor não atira: com pointer lock ele tem o canvas como alvo); `ChatEstado`; `montarLinha` com setter de `innerHTML` que lança; `sala/[codigo].astro` e sitemap sem chat; `chat-painel.js` sem `innerHTML`; `game.js` não importa chat; a tabela do §6 igual a `CHAT_LIMITES` | `trava-inerte`, `plc-antigo`, `clique-pos-chat`, `yu-so-live`, `stick-sem-portao`, `chat-inseguro`, `chat-sem-meta`, `sem-bidi`, `innerhtml`, `sem-nfkc`, `cf-por-replace`, `bloqueio-proprio`, `tabela-torta` |
 | `tests/smoke/chat-sala.spec.js` (Playwright, `smoke-web.yml`) | ARIA, Y/Enter/Esc, prisão de foco (e devolução do foco ao jogo depois de denunciar e fechar), IME, XSS e RTL, geometria contra `ZONA_MIRA` e `#crosshair` em 1600×900, 1500×1000, 1008×655, 844×390 (toque) e 390×844 (retrato); com `prefers-reduced-motion` a linha some por corte aos 12,6 s; o redesenho retoma a idade da linha e cala o `aria-live`; no toque o compositor fecha sem teclado (segundo toque em `#chat-toque`, toque fora por `pointerdown`, FECHAR) sem enviar nem atirar | `painel-largo`, `innerhtml`, `foco-preso`, `so-mousedown`, `reduzido-eterno`, `redesenho-novo`, `redesenho-falante` (via `page.route`) |
 | `tools/eval/ui-check.mjs` (`eval:ui`, UI1) | contraste dos textos do `#chat-sala` aberto, com linha, divisor e aviso de nack preenchido, sobre a areia do Piscinão: tudo >= 4,5:1 | `ui1_chat_aviso_sem_fundo` |
 | `tools/eval/chat-mp-browser.mjs` (`eval:chat-mp`, manual) | nó local com `MP_CHAT=1` (`--backend=<clone>`) e três navegadores separados (A no time E, B no time B em toque, S espectador): CE0 a CE10 do plano, frames gravados por `page.on('websocket')`, figuras JPEG em 5 viewports abertas e descritas (lei 4); `--tickets` sobe o nó com ticket obrigatório e prova o `nk` verificado e o `chat_hist` na reconexão | nenhum; é integração (foi ela que achou o foco preso e o clique que atirava ao fechar) |
@@ -413,8 +448,8 @@ vermelha (lei 3). A saída vermelha vai para o corpo do PR.
 
 | Régua | O que tranca | Mutantes |
 |---|---|---|
-| `game/chat-check.mjs` (`eval:chat`) | `ChatSala` puro nas 8 células do §5, baldes por chave, repetição, silêncio, buffer, histórico só do entregue, denúncia, meta sem `uid`/`pid`; `Room` real com socket falso | `espectador-vaza`, `time-vaza`, `balde-por-conexao`, `hist-alheio`, `sem-bidi`, `denuncia-sem-recebimento` |
-| `game/protocol-check.mjs` (estendido) | `maxPayload`, `metaChat` duas vezes, `.concat(FEATURES_CHAT)` duas vezes, chat nunca por `broadcast(` | `chat-sem-partida`, `sem-maxpayload`, `chat-sempre-ligado` |
-| `game/chat-smoke.mjs` (`eval:chat-smoke`) | nó real ligado e desligado, tickets reais, API falsa: `nk` só com pid, `nome=IMPOSTOR` nunca aparece, matriz A/B/S, balde sobrevive à reconexão, histórico não vai à sala 2, denúncia com bearer, canário fora de `/health`, `/metrics`, `/rooms` e `/sala/:codigo`, frame de 20 KiB fecha com 1009, desligado não muda nada | via `node --import ./game/mutar-chat.mjs` |
+| `game/chat-check.mjs` (`eval:chat`) | `ChatSala` puro nas 8 células do §5, baldes por chave, repetição, escalada (a recusa `sala_rapida` não conta), carência de 30 s de quem sai da arquibancada (G0..G4), varredura de handles, dedup e janelas de denúncia de quem saiu, forma do handle (nunca acima de 5, dígitos baixos), silêncio, buffer, histórico só do entregue, denúncia, meta sem `uid`/`pid`; `Room` real com socket falso; L4 compara a tabela do §6 com `CHAT_LIMITES` quando `CLIENT_DIR` tem este doc | `espectador-vaza`, `time-vaza`, `balde-por-conexao`, `hist-alheio`, `sem-bidi`, `denuncia-sem-recebimento`, `sala-rapida-escala`, `carencia-zero`, `handles-sem-varredura`, `vazia-guarda-handles`, `handle-longo`, `handle-enviesado` |
+| `game/protocol-check.mjs` (estendido, CH1..CH13) | `maxPayload`, `metaChat` duas vezes, `.concat(FEATURES_CHAT)` duas vezes, chat nunca por `broadcast(`, `nk` revalidado, varredura no heartbeat, flush periódico e no shutdown, carência marcada antes do `claimSlot` (CH12), shutdown que espera o POST em voo (CH13) | `chat-sem-partida`, `sem-maxpayload`, `chat-sempre-ligado`, `sem-carencia`, `shutdown-sem-espera` |
+| `game/chat-smoke.mjs` (`eval:chat-smoke`) | nó real ligado e desligado, tickets reais, API falsa: `nk` só com pid, `nome=IMPOSTOR` nunca aparece, matriz A/B/S, balde e handle sobrevivem à reconexão, histórico não vai à sala 2, denúncia com bearer, canário fora de `/health`, `/metrics`, `/rooms` e `/sala/:codigo`, frame de 20 KiB fecha com 1009, carência de quem pega slot vindo da arquibancada (G1..G4), shutdown que entrega a denúncia pendente e reentrega o lote que voltou com 503 (D9..D12), desligado não muda nada | `espectador-vaza`, `nome-do-navegador`, `carencia-zero`, `shutdown-sem-espera`, injetados no processo filho por `node --import ./game/mutar-chat.mjs` (ganchos em `game/mutar-chat-ganchos.mjs`) |
 | `api/reguas/mp-ticket-check.mjs` (estendido) | `nk` com e sem pid; `NICK_TICKET_RE` igual a `NICK_RE` | os existentes |
 | `api/reguas/chat-report-check.mjs` | 401 sem bearer, 503 sem banco; na migration 039: RLS, grant só a `service_role`, purge, e nenhum update em `hidden` ou flag | `sem-auth`, `auto-oculta`, `sem-purge` |
