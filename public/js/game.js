@@ -345,7 +345,7 @@ const SUP_REV = Object.freeze(Object.fromEntries(Object.entries(SUP_COD).map(([k
 export const supDeCod = (c) => SUP_REV[c] || null;
 
 export const ADS_RAMPA_S = 0.11;   // contrato do ADS: entrar e sair custam 110 ms (ver _updatePlayer)
-export function coneDoDisparo(estado, W, rnd) {
+export function aberturaCone(estado, W) {
   const crouchMul = 1 - 0.5 * (estado.crouchF || 0);
   const moveMul = GUNFEEL ? (1 + 1.8 * Math.min(1, (estado.sp || 0) / 6.6) + (estado.grounded ? 0 : 2.5)) : 1;
   const adsF = Math.min(1, Math.max(0, estado.adsF || 0));
@@ -353,7 +353,16 @@ export function coneDoDisparo(estado, W, rnd) {
   const base = (GUNFEEL
     ? (W.spreadHip + (spScoped - W.spreadHip) * adsF)
     : (estado.scoped && W.spreadScope !== undefined ? W.spreadScope : W.spreadHip)) * crouchMul * moveMul;
-  const sp = base * (1 + (estado.bloom || 0));
+  return base * (1 + (estado.bloom || 0));
+}
+// O servidor recebe yaw/pitch no input e aplica o cone a essa direção.
+// O getter do punch também integra a recuperação horizontal em p.yaw.
+export function anguloDeDisparo(p, camView) {
+  const punch = p.recoilP || 0;
+  return { yaw: p.yaw, pitch: p.pitch + (camView === 'first' ? punch : 0) };
+}
+export function coneDoDisparo(estado, W, rnd) {
+  const sp = aberturaCone(estado, W);
   const saida = [];
   for (let i = 0, n = W.pellets || 1; i < n; i++) {
     if (GUNFEEL) {
@@ -3388,10 +3397,8 @@ export class Game {
   // Target FOV while aiming: strong for scoped snipers, light ADS for the rest.
   _zoomFov(w) {
     // BUG-181: lunetas mantêm zoom óptico; alça/massa preservam campo de visão útil.
-    const Z = { awp: 22, mosin: 20, rem700: 20, m400: 34, svd: 30, g3sg1: 30, sks: 32, md97: 56, carbine: 56, shotgun: 58,
-      ak: 56, akm: 56, m92: 56, m4: 56, g3: 56, scar: 56, tavor: 56, famas: 56,
-      mp5: 58, uzi: 58, p90: 58, lmg: 38, deagle: 59, pistol: 59, revolver38: 59 };
-    return Z[w] || 46;
+    const Z = { awp: 22, mosin: 20, rem700: 20, m400: 34, svd: 30, g3sg1: 30, sks: 32, lmg: 38 };
+    return Z[w] || 66;
   }
   _reloading() { return this.time < this.player.reloadUntil; }
   _startReload() {
@@ -3518,6 +3525,10 @@ export class Game {
       ? (w.spreadHip + (spScoped - w.spreadHip) * adsF)
       : (p.weapon === 'awp' ? (p.scoped ? w.spreadScope : w.spreadHip) : w.spreadHip)) * crouchMul * moveMul;
     const from = this._aimOrigin(new THREE.Vector3());
+    // Em 3ª pessoa o servidor atira pelo yaw/pitch do jogador, a partir do olho.
+    // A câmera está deslocada; sua quaternion criaria um tiro local divergente.
+    const shotAim = anguloDeDisparo(p, this.camView);
+    const aimQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(shotAim.pitch, shotAim.yaw, 0, 'YXZ'));
     const pellets = w.pellets || 1;
     // Pedido do dono (17/08), "todos os tiros traçados": o rastro é segmento curto
     // viajante (~50 ms), não laser contínuo — por isso o antigo 1-em-3 saiu.
@@ -3531,8 +3542,8 @@ export class Game {
     for (let i = 0; i < cone.length; i++) {
       const o = cone[i];
       const dir = GUNFEEL
-        ? new THREE.Vector3(o.x, o.y, -1).applyQuaternion(this.camera.quaternion).normalize()
-        : new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+        ? new THREE.Vector3(o.x, o.y, -1).applyQuaternion(aimQ).normalize()
+        : new THREE.Vector3(0, 0, -1).applyQuaternion(aimQ);
       if (!GUNFEEL) { dir.x += o.x; dir.y += o.y; dir.z += o.z; dir.normalize(); }
       this._fireHitscan(this.player, from, dir, w.dmg, true, w.short, p.weapon, wantTracer && i < 2);
     }
@@ -5740,7 +5751,49 @@ export class Game {
     cam.position.y += TP_UP;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
     if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
-    cam.rotation.set(p.pitch, p.yaw, 0);
+    // Cruz no alvo do raio autoritativo a distância de combate; o tiro continua
+    // saindo do olho com yaw/pitch, igual ao servidor multiplayer.
+    const aimPoint = this._tpAimPoint || (this._tpAimPoint = new THREE.Vector3());
+    cam.lookAt(aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12));
+  }
+
+  // BUG-181: em câmera deslocada, a cruz projeta o primeiro impacto do raio do olho.
+  _updateCrosshairParallax() {
+    const el = this.el.crosshair;
+    if (this.camView === 'first') {
+      el.style.left = '50%'; el.style.top = '50%';
+      return;
+    }
+    const dir = this._tpReticleDir || (this._tpReticleDir = new THREE.Vector3());
+    dir.set(0, 0, -1).applyEuler(this._tpEul);
+    const cameraDir = this._tpReticleCameraDir || (this._tpReticleCameraDir = new THREE.Vector3());
+    cameraDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.playerTeam).map(b => b.mesh.group);
+    // A profundidade vista pela câmera evita cruz falsa atrás da cobertura.
+    this.ray.set(this.camera.position, cameraDir);
+    this.ray.far = 200;
+    const cChar = enemyGroups.length ? this.ray.intersectObjects(enemyGroups, true)[0] : null;
+    const cWorld = this.ray.intersectObjects(this.world.occluders, false)[0];
+    const cHit = cChar && (!cWorld || cChar.distance < cWorld.distance) ? cChar : cWorld;
+    const point = this._tpReticlePoint || (this._tpReticlePoint = new THREE.Vector3());
+    const depth = cHit ? Math.max(0.1, point.copy(cHit.point).sub(this._eyeWorld).dot(dir)) : 200;
+    point.copy(this._eyeWorld).addScaledVector(dir, depth);
+    // Cobertura entre olho e plano de mira bloqueia o tiro antes do alvo.
+    this.ray.set(this._eyeWorld, dir);
+    const eChar = enemyGroups.length ? this.ray.intersectObjects(enemyGroups, true)[0] : null;
+    const eWorld = this.ray.intersectObjects(this.world.occluders, false)[0];
+    const eHit = eChar && (!eWorld || eChar.distance < eWorld.distance) ? eChar : eWorld;
+    if (eHit && eHit.distance < depth - 0.02) point.copy(eHit.point);
+    // A pose da câmera acabou de mudar neste tick; project() não atualiza a
+    // matrixWorldInverse por conta própria. Sem isso a cruz usa o quadro anterior.
+    this.camera.updateMatrixWorld(true);
+    point.project(this.camera);
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || point.z < -1 || point.z > 1) {
+      el.style.left = '50%'; el.style.top = '50%';
+      return;
+    }
+    el.style.left = `${((point.x + 1) * 50).toFixed(3)}%`;
+    el.style.top = `${((1 - point.y) * 50).toFixed(3)}%`;
   }
 
   // Morte em 3ª pessoa (e também visível na 1ª, na câmera de morte): toca a animação de
@@ -5962,9 +6015,7 @@ export class Game {
       const prev = Math.sin(p.stepPhase - dt * sp * 1.6), now = Math.sin(p.stepPhase);
       if (prev >= 0 && now < 0) this.sfx.step(this._footstepSurface(p.pos));
     }
-    // Aim: real scopes (AWP / Mosin / Rem700) hide the gun and show the scope overlay.
-    // Every other weapon does light iron-sight ADS — the gun stays on screen and the
-    // crosshair stays visible so you can see exactly where you're aiming.
+    // Lunetas ocultam a arma; ADS sem luneta usa foco com a cruz como referência do tiro.
     const realScope = p.scoped && !!WEAPONS[p.weapon].scope;
     const tFov = p.scoped ? this._zoomFov(p.weapon) : (sprint && moving ? 76 : 70);
     // ZOOM EM <=120 ms (G3-R1): era um lerp exponencial dt*16 (~63% em 62 ms, mas ~250 ms pra
@@ -6011,9 +6062,17 @@ export class Game {
     // próprio progresso do ADS (a mira afina junto com a arma subindo).
     const precAds = (this.vm.adsF || 0) > 0.6;
     this.el.crosshair.classList.toggle('prec', precAds);
-    // dynamic crosshair gap (movement/spray opens it, crouch + ADS tighten it)
-    const gap = precAds ? 3 : Math.max(3, Math.min(26, 5 + sp * 1.15 + this.vm.kick * 20 - p.crouchF * 2.5 - (p.scoped ? 4 : 0)));
+    // BUG-181: a cruz de ADS mostra o cone real, inclusive movimento e rajada.
+    let gap = Math.max(3, Math.min(26, 5 + sp * 1.15 + this.vm.kick * 20 - p.crouchF * 2.5 - (p.scoped ? 4 : 0)));
+    if (precAds) {
+      const spread = aberturaCone({ crouchF: p.crouchF, sp, grounded: p.grounded,
+        adsF: this._aimF, bloom: this.bloom, scoped: p.scoped }, WEAPONS[p.weapon]);
+      // Piso menor no ADS: a AK agachada já tem cone estreito; com 3 px a
+      // primeira rajada ficava quase indistinguível do repouso (3 → 3,3 px).
+      gap = Math.max(2, Math.min(26, Math.tan(spread * 0.5) / Math.tan(this.camera.fov * Math.PI / 360) * innerHeight / 2));
+    }
     this.el.crosshair.style.setProperty('--ch', gap.toFixed(1) + 'px');
+    this._updateCrosshairParallax();
     // 3ª pessoa esconde FP; melee idem; luneta cobre por último.
     this._syncVmPresentation(realScope, mask);
     // reload completion — RELÓGIO DE JOGO (devolve a munição). A ANIMAÇÃO é do rig e usa a
@@ -6041,7 +6100,7 @@ export class Game {
     // Enquadramento derivado: só recalcula quando o ASPECTO da tela muda (redimensionar a
     // janela / entrar em fullscreen). Custo zero no frame comum — sai no 1º `if`.
     if (this._vmFrame) this._vmFrame(false);
-    // iron-sight ADS: ease the gun toward screen center so you sight down it.
+    // ADS sem luneta: a arma entra na pose de foco junto com o FOV.
     // G3-R1: mesma rampa de duração fixa do FOV (ADS_T=0.11 s) — arma e zoom chegam JUNTOS.
     // O lerp dt*12 antigo levava ~250 ms e deixava a arma atrasada em relação ao zoom.
     const adsWant = p.scoped && !realScope ? 1 : 0;
@@ -6069,9 +6128,8 @@ export class Game {
       speed: sp, grounded: p.grounded !== false, crouch: p.crouchF > 0.5,
       lookDX: dYaw, lookDY: -dPit,
     });
-    // POSE DE ADS (G3-R1). O delta vem MEDIDO por arma (vm.ads[id], calculado no
-    // _vmFrame a partir da alça de mira do GLB) e leva a alça ao centro EXATO da tela — é
-    // literalmente sight picture, não "arma deslizando pro canto".
+    // POSE DE ADS (G3-R1). O autorado alinha o pacote e o offset de foco da config
+    // libera a cruz; o tiro segue o eixo da câmera, não a malha da arma.
     // ADS CONSISTENTE (dono: "simplicidade > realismo, o jogo tem que casar"): a detecção de
     // alça de mira por-arma (vm.ads[weapon]) era FRÁGIL — em várias GLBs a alça caía errada e a
     // pose virava -s.y grande, DERRUBANDO a arma pra baixo/fora ("miro e a arma aponta pra baixo,

@@ -1,25 +1,25 @@
 # PLACAR das réguas de imagem do viewmodel
 
 Gerado por `node tools/eval/vm-reguas-check.mjs --regua=todas --placar` em 2026-09-28, quadro 3x2
-(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `5256b75a320122ed`.
+(1440 px de largura), produtos do catálogo privado servidos pelo `vmbytes.js` deste branch. Entradas: `d22b323d7b2a6963`.
 Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula logo abaixo.
 
 | arma | mira | cobertura | pistola-ref | maos | carregador |
 |---|---|---|---|---|---|
 | awp | n/a | verde 1.11× AK | n/a | verde 0.10 | verde ok |
-| ak | verde 5 px | verde 1.00× AK | n/a | verde 0.19 | verde ok |
-| m4 | verde 14 px | verde 0.89× AK | n/a | verde 0.08 | verde ok |
-| mp5 | verde 2 px | verde 0.93× AK | n/a | verde 0.10 | verde ok |
-| shotgun | verde 2 px | verde 0.96× AK | n/a | verde 0.04 | verde ok |
+| ak | verde 0 px | verde 1.00× AK | n/a | verde 0.19 | verde ok |
+| m4 | verde 0 px | verde 0.89× AK | n/a | verde 0.08 | verde ok |
+| mp5 | verde 0 px | verde 0.93× AK | n/a | verde 0.10 | verde ok |
+| shotgun | verde 0 px | verde 0.96× AK | n/a | verde 0.04 | verde ok |
 | deagle | verde 0 px | verde 1.19× PT-38 | verde 1.19× pistola aprovada | n/a | verde ok |
 | pistol | verde 0 px | verde 0.99× PT-38 | verde 0.99× pistola aprovada | n/a | verde ok |
 | knife | n/a | n/a | n/a | n/a | n/a |
-| m92 | verde 9 px | verde 0.95× AK | n/a | verde 0.10 | verde ok |
-| akm | verde 1 px | verde 0.96× AK | n/a | verde 0.10 | verde ok |
-| g3 | verde 1 px | verde 0.91× AK | n/a | verde 0.09 | verde ok |
-| revolver38 | verde 0 px | verde 1.17× PT-38 | verde 1.17× pistola aprovada | n/a | verde ok |
-| md97 | verde 14 px | verde 0.89× AK | n/a | verde 0.08 | verde ok |
-| carbine | verde 8 px | verde 0.94× AK | n/a | verde 0.06 | verde ok |
+| m92 | verde 0 px | verde 0.95× AK | n/a | verde 0.10 | verde ok |
+| akm | verde 0 px | verde 0.96× AK | n/a | verde 0.10 | verde ok |
+| g3 | verde 0 px | verde 0.91× AK | n/a | verde 0.09 | verde ok |
+| revolver38 | verde 0 px | verde 1.03× PT-38 | verde 1.03× pistola aprovada | n/a | verde ok |
+| md97 | verde 0 px | verde 0.89× AK | n/a | verde 0.08 | verde ok |
+| carbine | verde 0 px | verde 0.94× AK | n/a | verde 0.06 | verde ok |
 | m400 | n/a | verde 0.89× AK | n/a | verde 0.08 | verde ok |
 | mosin | n/a | verde 0.87× AK | n/a | verde 0.16 | verde ok |
 | rem700 | n/a | verde 0.89× AK | n/a | verde 0.16 | verde ok |
@@ -27,30 +27,30 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 | g3sg1 | n/a | verde 1.00× AK | n/a | verde 0.09 | verde ok |
 | sks | n/a | verde 0.85× AK | n/a | verde 0.16 | verde ok |
 | lmg | n/a | verde 0.89× AK | n/a | verde 0.13 | n/a |
-| scar | verde 2 px | verde 0.86× AK | n/a | verde 0.01 | verde ok |
-| tavor | verde 4 px | verde 0.93× AK | n/a | verde 0.08 | verde ok |
-| famas | verde 12 px | verde 0.94× AK | n/a | verde 0.09 | verde ok |
-| uzi | verde 10 px | verde 0.68× AK | n/a | n/a | verde ok |
-| p90 | verde 14 px | verde 0.95× AK | n/a | verde 0.08 | verde ok |
+| scar | verde 0 px | verde 0.86× AK | n/a | verde 0.01 | verde ok |
+| tavor | verde 0 px | verde 0.93× AK | n/a | verde 0.08 | verde ok |
+| famas | verde 0 px | verde 0.94× AK | n/a | verde 0.09 | verde ok |
+| uzi | verde 0 px | verde 0.68× AK | n/a | n/a | verde ok |
+| p90 | verde 0 px | verde 0.95× AK | n/a | verde 0.08 | verde ok |
 
 **Vermelhas na máquina:** 0 de 26 — .
 
 ## mira
 
 - **awp** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
-- **ak** VERDE — massa a 5 px da cruz (+4, -3); teto 30 px; eixo no ADS -4° da vertical (teto ±12°)
-- **m4** VERDE — massa a 14 px da cruz (+11, -8); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **mp5** VERDE — aro a 2 px da cruz (-1, -2); teto 30 px; eixo no ADS +0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **shotgun** VERDE — aro a 2 px da cruz (-1, -2); teto 30 px; eixo no ADS -2° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **deagle** VERDE — foco com retículo livre; tiro e cruz usam a câmera
-- **pistol** VERDE — foco com retículo livre; tiro e cruz usam a câmera
+- **ak** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **m4** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **mp5** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **shotgun** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **deagle** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **pistol** VERDE — foco com retículo livre; cruz indica o eixo de disparo
 - **knife** N/A — faca: sem ADS
-- **m92** VERDE — massa a 9 px da cruz (+4, -8); teto 30 px; eixo no ADS -0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **akm** VERDE — massa a 1 px da cruz (+1, +0); teto 30 px; eixo no ADS -0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **g3** VERDE — aro a 1 px da cruz (+0, -1); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **revolver38** VERDE — foco com retículo livre; tiro e cruz usam a câmera
-- **md97** VERDE — massa a 14 px da cruz (+11, -8); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **carbine** VERDE — massa a 8 px da cruz (+8, +1); teto 30 px; eixo no ADS +6° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
+- **m92** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **akm** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **g3** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **revolver38** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **md97** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **carbine** VERDE — foco com retículo livre; cruz indica o eixo de disparo
 - **m400** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
 - **mosin** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
 - **rem700** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
@@ -58,28 +58,28 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **g3sg1** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
 - **sks** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
 - **lmg** N/A — luneta: no ADS o viewmodel some e entra o overlay 2D
-- **scar** VERDE — aro a 2 px da cruz (-2, -1); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **tavor** VERDE — aro a 4 px da cruz (+0, -4); teto 30 px; eixo no ADS -0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **famas** VERDE — aro a 12 px da cruz (-1, +12); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **uzi** VERDE — aro a 10 px da cruz (+1, -10); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
-- **p90** VERDE — massa a 14 px da cruz (+0, -14); teto 30 px; eixo no ADS -0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC
+- **scar** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **tavor** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **famas** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **uzi** VERDE — foco com retículo livre; cruz indica o eixo de disparo
+- **p90** VERDE — foco com retículo livre; cruz indica o eixo de disparo
 
 ## cobertura
 
 - **awp** VERDE — tamanho 1.11× AK, rolagem -6° da AK (informativa), eixo +5° da AK, braço 0.78×, cruz 0 px, olho 3.15 palma, ADS: viewmodel some (luneta)
-- **ak** VERDE — tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo +0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 14.7% (teto 18.5%)
-- **m4** VERDE — tamanho 0.89× AK, rolagem -23° da AK (informativa), eixo -0° da AK, braço 1.03×, cruz 0 px, olho 2.53 palma, ADS cobre 12.7% (teto 18.5%)
-- **mp5** VERDE — tamanho 0.93× AK, rolagem -15° da AK (informativa), eixo +3° da AK, braço 0.92×, cruz 0 px, olho 1.97 palma, ADS cobre 14.4% (teto 18.5%)
-- **shotgun** VERDE — tamanho 0.96× AK, rolagem +7° da AK (informativa), eixo -3° da AK, braço 1.06×, cruz 0 px, olho 2.08 palma, ADS cobre 6.1% (teto 18.5%)
+- **ak** VERDE — tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo 0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 8.0% (teto 18.5%)
+- **m4** VERDE — tamanho 0.89× AK, rolagem -23° da AK (informativa), eixo -0° da AK, braço 1.03×, cruz 0 px, olho 2.53 palma, ADS cobre 6.6% (teto 18.5%)
+- **mp5** VERDE — tamanho 0.93× AK, rolagem -15° da AK (informativa), eixo +3° da AK, braço 0.92×, cruz 0 px, olho 1.97 palma, ADS cobre 6.7% (teto 18.5%)
+- **shotgun** VERDE — tamanho 0.96× AK, rolagem +7° da AK (informativa), eixo -3° da AK, braço 1.06×, cruz 0 px, olho 2.08 palma, ADS cobre 2.9% (teto 18.5%)
 - **deagle** VERDE — curta: tamanho 1.19× PT-38 aprovada por metro (faixa 0.8–1.45), cruz 0 px, olho 3.11 palma
 - **pistol** VERDE — curta: tamanho 0.99× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.31 palma
 - **knife** N/A — faca: meleevm, régua própria (melee-framing)
-- **m92** VERDE — tamanho 0.95× AK, rolagem -20° da AK (informativa), eixo +0° da AK, braço 1.05×, cruz 0 px, olho 2.17 palma, ADS cobre 13.6% (teto 18.5%)
-- **akm** VERDE — tamanho 0.96× AK, rolagem -21° da AK (informativa), eixo -0° da AK, braço 1.05×, cruz 0 px, olho 2.17 palma, ADS cobre 13.6% (teto 18.5%)
-- **g3** VERDE — tamanho 0.91× AK, rolagem +2° da AK (informativa), eixo +2° da AK, braço 1.17×, cruz 0 px, olho 2.14 palma, ADS cobre 14.3% (teto 18.5%)
-- **revolver38** VERDE — curta: tamanho 1.17× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.17 palma
-- **md97** VERDE — tamanho 0.89× AK, rolagem -23° da AK (informativa), eixo -0° da AK, braço 1.03×, cruz 0 px, olho 2.53 palma, ADS cobre 12.7% (teto 18.5%)
-- **carbine** VERDE — tamanho 0.94× AK, rolagem +34° da AK (informativa), eixo -3° da AK, braço 1.15×, cruz 0 px, olho 1.80 palma, ADS cobre 17.7% (teto 18.5%)
+- **m92** VERDE — tamanho 0.95× AK, rolagem -20° da AK (informativa), eixo +0° da AK, braço 1.05×, cruz 0 px, olho 2.17 palma, ADS cobre 6.0% (teto 18.5%)
+- **akm** VERDE — tamanho 0.96× AK, rolagem -21° da AK (informativa), eixo -0° da AK, braço 1.05×, cruz 0 px, olho 2.17 palma, ADS cobre 6.0% (teto 18.5%)
+- **g3** VERDE — tamanho 0.91× AK, rolagem +2° da AK (informativa), eixo +2° da AK, braço 1.17×, cruz 0 px, olho 2.14 palma, ADS cobre 6.9% (teto 18.5%)
+- **revolver38** VERDE — curta: tamanho 1.03× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.16 palma
+- **md97** VERDE — tamanho 0.89× AK, rolagem -23° da AK (informativa), eixo -0° da AK, braço 1.03×, cruz 0 px, olho 2.53 palma, ADS cobre 6.6% (teto 18.5%)
+- **carbine** VERDE — tamanho 0.94× AK, rolagem +34° da AK (informativa), eixo -3° da AK, braço 1.15×, cruz 0 px, olho 1.80 palma, ADS cobre 6.6% (teto 18.5%)
 - **m400** VERDE — tamanho 0.89× AK, rolagem -0° da AK (informativa), eixo -4° da AK, braço 1.16×, cruz 0 px, olho 2.70 palma, ADS: viewmodel some (luneta)
 - **mosin** VERDE — tamanho 0.87× AK, rolagem -3° da AK (informativa), eixo -3° da AK, braço 0.62×, cruz 0 px, olho 1.99 palma, ADS: viewmodel some (luneta)
 - **rem700** VERDE — tamanho 0.89× AK, rolagem -3° da AK (informativa), eixo -5° da AK, braço 0.62×, cruz 0 px, olho 1.99 palma, ADS: viewmodel some (luneta)
@@ -87,11 +87,11 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **g3sg1** VERDE — tamanho 1.00× AK, rolagem +14° da AK (informativa), eixo -3° da AK, braço 1.07×, cruz 0 px, olho 2.01 palma, ADS: viewmodel some (luneta)
 - **sks** VERDE — tamanho 0.85× AK, rolagem -3° da AK (informativa), eixo -2° da AK, braço 0.93×, cruz 0 px, olho 1.73 palma, ADS: viewmodel some (luneta)
 - **lmg** VERDE — tamanho 0.89× AK, rolagem -7° da AK (informativa), eixo -5° da AK, braço 0.60×, cruz 0 px, olho 3.24 palma, ADS: viewmodel some (luneta)
-- **scar** VERDE — tamanho 0.86× AK, rolagem +8° da AK (informativa), eixo -2° da AK, braço 0.90×, cruz 0 px, olho 2.33 palma, ADS cobre 13.2% (teto 18.5%)
-- **tavor** VERDE — tamanho 0.93× AK, rolagem +11° da AK (informativa), eixo +3° da AK, braço 1.29×, cruz 0 px, olho 2.35 palma, ADS cobre 9.9% (teto 18.5%)
-- **famas** VERDE — tamanho 0.94× AK, rolagem -22° da AK (informativa), eixo -0° da AK, braço 1.01×, cruz 0 px, olho 2.49 palma, ADS cobre 8.4% (teto 18.5%)
-- **uzi** VERDE — tamanho 0.68× AK, rolagem -6° da AK (informativa), eixo +5° da AK, braço 0.64×, cruz 0 px, olho 4.54 palma, ADS cobre 5.8% (teto 18.5%)
-- **p90** VERDE — tamanho 0.95× AK, rolagem -5° da AK (informativa), eixo -2° da AK, braço 1.03×, cruz 0 px, olho 2.63 palma, ADS cobre 7.1% (teto 18.5%)
+- **scar** VERDE — tamanho 0.86× AK, rolagem +8° da AK (informativa), eixo -2° da AK, braço 0.90×, cruz 0 px, olho 2.33 palma, ADS cobre 7.1% (teto 18.5%)
+- **tavor** VERDE — tamanho 0.93× AK, rolagem +11° da AK (informativa), eixo +3° da AK, braço 1.29×, cruz 0 px, olho 2.35 palma, ADS cobre 5.0% (teto 18.5%)
+- **famas** VERDE — tamanho 0.94× AK, rolagem -22° da AK (informativa), eixo -0° da AK, braço 1.01×, cruz 0 px, olho 2.49 palma, ADS cobre 4.9% (teto 18.5%)
+- **uzi** VERDE — tamanho 0.68× AK, rolagem -6° da AK (informativa), eixo +5° da AK, braço 0.64×, cruz 0 px, olho 4.54 palma, ADS cobre 3.8% (teto 18.5%)
+- **p90** VERDE — tamanho 0.95× AK, rolagem -5° da AK (informativa), eixo -2° da AK, braço 1.03×, cruz 0 px, olho 2.63 palma, ADS cobre 3.9% (teto 18.5%)
 
 ## pistola-ref
 
@@ -106,7 +106,7 @@ Célula = estado e valor. `NÃO MEDE` conta como vermelho. Detalhe por célula l
 - **m92** N/A — só armas curtas
 - **akm** N/A — só armas curtas
 - **g3** N/A — só armas curtas
-- **revolver38** VERDE — tamanho 1.17× pistola aprovada, desvio 73 px, ADS 92%
+- **revolver38** VERDE — tamanho 1.03× pistola aprovada, desvio 72 px, ADS 78%
 - **md97** N/A — só armas curtas
 - **carbine** N/A — só armas curtas
 - **m400** N/A — só armas curtas
