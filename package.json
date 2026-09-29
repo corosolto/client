@@ -266,7 +266,7 @@
     "eval:dautelemetria": "node tools/eval/dau-telemetria-check.mjs",
     "eval:mpRoomOptions": "node tools/eval/mp-room-options-check.mjs",
     "eval:fxFlash": "node tools/eval/fx-flash-check.mjs",
-    "//eval:smoke": "BUG-185+186 (29/09): o tiro não solta fumaça (só clarão+faísca+tracer) e a granada FAZ smoke — domo cinza acima do chão, opaco, que bloqueia visão, FOG1 ≤ céu. Mutantes: fumaca, sem-fx, sem-tracer, sem-nuvem, transparente, acima-do-ceu, enterrada",
+    "//eval:smoke": "BUG-185+186+187 (29/09): o tiro não solta fumaça (só clarão+faísca+tracer legível, nascendo à frente da câmera), impacto de bala sem poeira e a granada FAZ smoke — domo cinza acima do chão, opaco, que bloqueia visão, FOG1 ≤ céu. Mutantes: fumaca, sem-fx, sem-tracer, sem-nuvem, transparente, acima-do-ceu, enterrada, tracer-fantasma, fumaca-no-impacto",
     "eval:smoke": "node tools/eval/smoke-check.mjs",
     "eval:campinho-integration": "node tools/eval/campinho-integration-foundation-check.mjs",
     "eval:campinho-browser": "node tools/eval/campinho-browser-check.mjs",

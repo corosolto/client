@@ -662,7 +662,7 @@ class Netcode {
       if (sup[i] && sup[i] !== '-') {
         const nv = Array.isArray(e.n) && Array.isArray(e.n[i]) ? e.n[i] : null;
         const n = nv ? new THREE.Vector3(+nv[0] || 0, +nv[1] || 0, +nv[2] || 0) : olho.clone().sub(alvo).normalize();
-        try { game._puff(alvo, n, surf); } catch { /* sem fx */ }
+        try { game._puff(alvo, n, surf, false); } catch { /* sem fx */ }
         if (ent === p && i === 0) { try { game._impactSfx(surf, alvo, olho.distanceTo(alvo)); } catch { /* ctx mudo */ } }
       }
     }

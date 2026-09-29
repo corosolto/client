@@ -42,6 +42,9 @@
      --mutante=sem-nuvem    _popSmoke vira no-op (a SMK4 denuncia)
      --mutante=transparente a nuvem nunca fica _opaque (a SMK5 denuncia)
      --mutante=acima-do-ceu dobra a radiância da fumaça (a SMK6 denuncia)
+     --mutante=tracer-fantasma  volta o traçado de 1,15 cm / 58 ms (SMK3b denuncia;
+                                o dono não enxergava — BUG-187)
+     --mutante=fumaca-no-impacto  impacto de bala volta a soltar poeira (SMK7)
      --mutante=enterrada    volta os sprites para 0-2,6 m (a SMK4e denuncia; a
                             forma antiga enterrava metade da nuvem no piso)
 
@@ -51,7 +54,7 @@
 import { bootGame, initTextures, THREE } from './harness.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['fumaca', 'sem-fx', 'sem-tracer', 'sem-nuvem', 'transparente', 'acima-do-ceu', 'enterrada'];
+const MUTANTES = ['fumaca', 'sem-fx', 'sem-tracer', 'sem-nuvem', 'transparente', 'acima-do-ceu', 'enterrada', 'tracer-fantasma', 'fumaca-no-impacto'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT} (válidos: ${MUTANTES.join(', ')})`);
   process.exit(2);
@@ -87,6 +90,12 @@ if (MUT === 'enterrada') {
   const orig = g._popSmoke.bind(g);
   g._popSmoke = (...a) => { orig(...a); const s = g._smokes[g._smokes.length - 1]; s.group.position.y = Math.max(0.5, s.group.position.y); s.sprites.forEach((sp) => { sp.position.y = (Math.random() - 0.2) * 2.6; }); };
 }
+if (MUT === 'tracer-fantasma') {
+  g._tracerGeo = new THREE.CylinderGeometry(.0115, .0115, 1, 5, 1, true); g._tracerPool.length = 0;
+  const orig = g._tracer.bind(g);
+  g._tracer = (...a) => { orig(...a); const t = g.tracers.at(-1); if (t) { t.life = t.ttl = 0.058; t.seg = 1.45; } };
+}
+if (MUT === 'fumaca-no-impacto') { const orig = g._puff.bind(g); g._puff = (p, n, s) => orig(p, n, s, true); }
 
 /* ---- SMK1/SMK2: o tiro não solta fumaça (e continua com faísca) ---- */
 {
@@ -109,6 +118,46 @@ if (MUT === 'enterrada') {
   const antes = g.tracers.length;
   g._tryShoot();
   cobra(g.tracers.length > antes, `SMK3 · _tryShoot real tem que produzir tracer (${antes} → ${g.tracers.length})`);
+  /* BUG-187: o dono não via o traçado com 1,15 cm e 58 ms (~0,8 px por 3 quadros a 15 m).
+     Piso: ≥2 px de espessura a 15 m numa tela de 1080 px, ≥6 quadros de 60 Hz, ≥3 m de rastro. */
+  const t = g.tracers.at(-1);
+  const r = t?.m.geometry.parameters.radiusTop || 0;
+  const focal = 1080 / (2 * Math.tan(THREE.MathUtils.degToRad(g.camera.fov) / 2));
+  const px = 2 * r * focal / 15;
+  cobra(!!t && px >= 2 && t.life >= 0.1 && t.seg >= 3,
+    `SMK3b · traçado legível: ${px.toFixed(2)} px a 15 m (≥2), vida ${((t?.life || 0) * 1000).toFixed(0)} ms (≥100), rastro ${(t?.seg || 0).toFixed(2)} m (≥3)`);
+}
+
+/* ---- SMK3c: com a boca autorada 10,9 m atrás da câmera (medido em produção, AK,
+   29/09) o traçado ainda nasce À FRENTE do olho, no raio da arma na tela ---- */
+{
+  const cam = g.camera.getWorldPosition(new THREE.Vector3());
+  const fwd = g.camera.getWorldDirection(new THREE.Vector3());
+  const bocaReal = g._muzzleWorld;
+  g._muzzleWorld = () => cam.clone().addScaledVector(fwd, -9.6).add(new THREE.Vector3(1.6, -4.8, 0));
+  const p = g.player; p.nextShotAt = 0; p.ammo[p.weapon] = { mag: 30, res: 90 };
+  const antes = g.tracers.length;
+  g._tryShoot();
+  g._muzzleWorld = bocaReal;
+  const t = g.tracers.length > antes ? g.tracers.at(-1) : null;
+  const frente = t ? t.a.clone().sub(cam).dot(fwd) : -99;
+  cobra(frente > 1 && frente < 3.5, `SMK3c · traçado nasce à frente da câmera mesmo com a boca autorada quebrada (${frente.toFixed(2)} m, esperado 1-3,5)`);
+}
+
+/* ---- SMK7: impacto de bala no mundo não solta fumaça ---- */
+{
+  const todos = () => [g.puffFx, ...Object.keys(g).filter((k) => k.startsWith('_fx_')).map((k) => g[k])];
+  const conta = () => todos().reduce((n, fx) => n + vivas(fx), 0);
+  let impactos = 0; const puffReal = g._puff; const puffBind = puffReal.bind(g); g._puff = (...a) => { impactos++; return puffBind(...a); };
+  const antes = conta();
+  const from = g.player.pos.clone(); from.y += 1.6;
+  g.scene.updateMatrixWorld(true);
+  const alvos = g.world.occluders.slice(0, 3).map((o) => new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3()));
+  for (const alvo of alvos) g._fireHitscan(g.player, from, alvo.sub(from).normalize(), 30, true, 'AK', 'ak', false);
+  const depois = conta();
+  g._puff = puffReal;
+  cobra(impactos >= 3, `SMK7a · os 3 tiros têm que acertar o mundo (${impactos}), senão a SMK7 não mede nada`);
+  cobra(depois === antes, `SMK7 · tiro na parede não pode soltar poeira/fumaça: ${antes} → ${depois} partículas`);
 }
 
 /* ---- SMK4/SMK5: a granada FAZ smoke, e a smoke BLOQUEIA ---- */
@@ -146,4 +195,4 @@ if (falhas.length) {
   for (const f of falhas) console.error('  ✗ ' + f);
   process.exit(1);
 }
-console.log('✓ SMOKE: tiro sem fumaça (clarão+faísca+tracer), granada faz smoke opaco que bloqueia visão, FOG1 ≤ céu');
+console.log('✓ SMOKE: tiro sem fumaça (clarão+faísca+tracer legível), impacto sem fumaça, granada faz smoke opaco que bloqueia visão, FOG1 ≤ céu');

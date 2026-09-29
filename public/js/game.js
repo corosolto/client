@@ -334,7 +334,8 @@ const GUNFEEL = new URLSearchParams(location.search).get('gunfeel') !== '0';
    ~80 ms), flash/luz de boca ~30% maiores e duck do mix no tiro synth. ?punch=0 desliga. */
 const PUNCH = new URLSearchParams(location.search).get('punch') !== '0';
 const PUNCH_ZOOM = 0.014, PUNCH_DECAY = 13;
-const TRACER_STYLE = Object.freeze({ radius: .0115, travel: .044, fade: .014, segment: 1.45 });
+// BUG-187: .0115 m / 58 ms era ~1 px por 3 quadros — o dono não via o traçado. Ver eval:smoke SMK3b.
+const TRACER_STYLE = Object.freeze({ radius: .03, speed: 180, minTravel: .06, fade: .07, segment: 5 });
 
 /* CONE DO DISPARO — a MESMA conta no cliente (que desenha) e no servidor (que decide o dano).
    Duas implementações separadas foi o que deixou a arma laser no multiplayer: docs/MULTIPLAYER.md. */
@@ -1182,8 +1183,8 @@ export class Game {
     // tracer mesh pool (shared unit geometry + material; reused, never disposed per shot).
     // Estilo Claude-of-Duty (fx/tracers.js): rastro FINO branco-quente que VIAJA da boca ao
     // alvo e some em ~50-60ms — projétil passando, não "raio laser" amarelo persistente.
-    this._tracerGeo = new THREE.CylinderGeometry(TRACER_STYLE.radius, TRACER_STYLE.radius, 1, 5, 1, true);
-    this._tracerMat = new THREE.MeshBasicMaterial({ color: 0xfff3d6, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+    this._tracerGeo = new THREE.CylinderGeometry(TRACER_STYLE.radius, TRACER_STYLE.radius * 0.3, 1, 6, 1, true);   // cabeça grossa, cauda fina
+    this._tracerMat = new THREE.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
     this._tracerPool = [];
     // Pose de ADS (iron-sight) POR CLASSE (R7.5): delta aplicado ao vm.root conforme adsF
     // 0→1 — x/y/z deslocam, s = scale-down, rx/ry nivelam a pose baked. LIMITAÇÃO MEDIDA
@@ -3670,7 +3671,7 @@ export class Game {
       end = hW.point;
       const n = hW.face ? hW.face.normal : null;
       const surf = this._surfaceOf(hW.object);
-      this._puff(hW.point, n, surf);
+      this._puff(hW.point, n, surf, false);   // BUG-187: impacto de bala sem fumaça (furo, faísca e som ficam)
       // som de impacto em 100% dos tiros do jogador (era `ricochet()` — um BIP de sine — em
       // 30%: 70% dos tiros na parede eram literalmente mudos).
       if (GUNFEEL) { if (byPlayer || Math.random() < 0.35) this._impactSfx(surf, hW.point, from.distanceTo(hW.point)); }
@@ -3695,8 +3696,14 @@ export class Game {
     }
     this.world.ambience?.onShot(from, end);
     if (byPlayer && tracer) {
-      const muzzle = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle');
-      this._tracer(muzzle, end);
+      // BUG-187: nasce no raio câmera→boca (onde o cano aparece na tela). A boca autorada
+      // (bbox de malha skinned) caía 10,9 m atrás da câmera em produção: aí vale a da pose.
+      const cam = this.camera.getWorldPosition(new THREE.Vector3());
+      const rel = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle').clone().sub(cam);
+      if (rel.length() > 2 || rel.dot(this.camera.getWorldDirection(new THREE.Vector3())) < 0.2) {
+        rel.copy(this.camera.localToWorld(new THREE.Vector3(0.1, -0.06, -0.75))).sub(cam);
+      }
+      this._tracer(cam.addScaledVector(rel.normalize(), 1.5), end);
     }
     return end;
   }
@@ -4239,15 +4246,16 @@ export class Game {
     // ao longo do trajeto (era fade só no fim — lia como "lightsaber" em cena clara).
     const t = this._tracerPool.pop() || { m: new THREE.Mesh(this._tracerGeo, this._tracerMat.clone()), ttl: 0 };
     const m = t.m;
-    t.a = (t.a || new THREE.Vector3()).copy(a);
     t.dir = (t.dir || new THREE.Vector3()).copy(b).sub(a).normalize();
+    t.a = (t.a || new THREE.Vector3()).copy(a);
     t.dist = len;
     // Segmento curto e viajante: cobre pixels suficientes para ler como bala, sem
     // permanecer no quadro como um laser contínuo.
-    t.v = len / (GUNFEEL ? TRACER_STYLE.travel : 0.05);
+    const travel = Math.max(TRACER_STYLE.minTravel, len / TRACER_STYLE.speed);
+    t.v = len / (GUNFEEL ? travel : 0.05);
     t.seg = Math.min(len, GUNFEEL ? TRACER_STYLE.segment : 2.0);
     t.t = 0;
-    t.life = (GUNFEEL ? TRACER_STYLE.travel + TRACER_STYLE.fade : 0.062);
+    t.life = (GUNFEEL ? travel + TRACER_STYLE.fade : 0.062);
     t.ttl = t.life;
     m.material.opacity = GUNFEEL ? 0.92 : 0.9;
     m.position.copy(a);
@@ -4256,7 +4264,7 @@ export class Game {
     this.scene.add(m);
     this.tracers.push(t);
   }
-  _puff(pos, normal, surf = null) {
+  _puff(pos, normal, surf = null, fumaca = true) {
     // impact smoke: one GPU particle (batched, no allocation)
     const p = pos.clone();
     if (normal) p.add(normal.clone().multiplyScalar(0.12));
@@ -4273,14 +4281,14 @@ export class Game {
       if (S) {
         const key = '_fx_' + surf;
         const fx = this[key] || (this[key] = this._tintFx(S.c, surf === 'metal' || surf === 'vidro'));
-        fx.spawn(p, { life: S.life, size: S.size, grow: S.grow });
+        if (fumaca) fx.spawn(p, { life: S.life, size: S.size, grow: S.grow });
         for (let i = 0; i < S.spark; i++) {
           const v = (normal ? normal.clone() : new THREE.Vector3(0, 1, 0)).multiplyScalar(1.5 + Math.random() * 3)
             .add(new THREE.Vector3((Math.random() - .5) * 4, (Math.random() - .5) * 4, (Math.random() - .5) * 4));
           this.flashFx.spawn(pos, { vel: v, life: 0.09 + Math.random() * 0.09, size: 0.045, grow: -0.2 });
         }
       }
-    } else this.puffFx.spawn(p, { life: 0.4, size: 0.4, grow: 2.2 });
+    } else if (fumaca) this.puffFx.spawn(p, { life: 0.4, size: 0.4, grow: 2.2 });
     // persistent bullet hole on the surface (capped ring buffer)
     if (normal && surf !== 'agua') {
       const m = new THREE.Mesh(this._holeGeo, this._holeDecalMat(surf));
@@ -7220,7 +7228,7 @@ export class Game {
           // tiro = só decals (chão/parede), sem o spray gordo estourando na câmera.
           if (BLOOD) { if (e.isPlayer) this._bloodSpatter(teye, dir, head, e.pos ? e.pos.y : null); else this._fleshImpact(teye, dir, head, e.pos ? e.pos.y : null, false); }
           if (e.isPlayer) this._noteHit(b, Wb.short || 'ARMA', dmg, head, tdist);
-        } else if (hitsW && Math.random() < 0.5) this._puff(hitsW.point, hitsW.face ? hitsW.face.normal : null);
+        } else if (hitsW && Math.random() < 0.5) this._puff(hitsW.point, hitsW.face ? hitsW.face.normal : null, null, false);
         /* COICE PROPORCIONAL AO ALVO (ver BOT_SPRAY_K). Somado DEPOIS de resolver o tiro: o
            1º tiro da rajada continua encostando (o jogador precisa sentir "levei tiro"), o 2º
            e o 3º abrem. Em múltiplos do tamanho angular do alvo pra degradar igual a 6 m e a
