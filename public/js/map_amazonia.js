@@ -370,6 +370,7 @@ export function buildAmazonia(scene, T) {
     { x0: 3.8, x1: 7.8, z0: -16, z1: -11 },
   ];
   const PONTAO_Y = 0.28;
+  const acessosPontao = pontoes.slice(1).map(p => ({ x0:p.x0, z:p.z1-.7, run:2, meiaL:.7 }));
 
 /* ── ESTAÇÕES DE PALAFITA (molde palafita_pro.glb; bucha procedural sem GLB): patamar
      andável no groundHeightAt (idioma das pontes) + corrimão `passarela` nas bordas livres. */
@@ -594,6 +595,13 @@ export function buildAmazonia(scene, T) {
   });
   pontao(pontoes[1], () => { barraca(5.4, 9.2, -0.26, matLona[3]); barraca(7.8, 11.6, 0.2, matLona[0]); });
   pontao(pontoes[2], () => { barraca(5.2, -14.8, 0.15, matLona[2]); barraca(6.6, -12.4, -0.29, matLona[1]); });
+  for (const a of acessosPontao) {
+    const rise = PONTAO_Y - RIO_FUNDO;
+    const rampa = addBox(Math.hypot(a.run,rise), .1, a.meiaL*2, matDeck,
+      a.x0-a.run/2, (RIO_FUNDO+PONTAO_Y)/2-.05, a.z,
+      { rz:Math.atan2(rise,a.run), collide:false });
+    rampa.name = 'acesso-pontao';
+  }
   const canoasAmarradas = [];
   const canoa = (x, z, ry) => {
     const model=placeProp('canoa_rabeta_amazonia',{x,z,ry:ry+1.04,y:RIO_AGUA-.025,targetH:.62});
@@ -1029,6 +1037,8 @@ export function buildAmazonia(scene, T) {
     // A malha agrupada usa Float32; a borda pode passar o bound duplo por ~2e-7m.
     const edgeEpsilon = 1e-6;
     for (const p of pontoes) if (x >= p.x0-edgeEpsilon && x <= p.x1+edgeEpsilon && z >= p.z0-edgeEpsilon && z <= p.z1+edgeEpsilon) return PONTAO_Y;
+    for (const a of acessosPontao) if (x >= a.x0-a.run && x < a.x0 && Math.abs(z-a.z) <= a.meiaL)
+      return RIO_FUNDO+(x-(a.x0-a.run))*(PONTAO_Y-RIO_FUNDO)/a.run;
     for (const pz of [0, -24, 24]) if (Math.abs(z - pz) < (pz === 0 ? PONTE_W : 2.6) / 2 && Math.abs(x) <= RIO_MEIA_LARGURA + 1.75) return PONTE_Y;
     const ax = Math.abs(x);
     if (ax > RIO_MEIA_LARGURA) return 0;
