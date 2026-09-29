@@ -1985,8 +1985,9 @@ export class Game {
       // Firefox Quick Find: qualquer letra abre a barra de busca se não cancelar o evento.
       // Em pointer lock o jogo é dono do teclado — engole tudo.
       if (document.pointerLockElement) e.preventDefault();
-      // Y/U abrem o chat antes do portão _acceptInput (o espectador não tem pointer lock), nunca pausado
-      if ((e.code === 'KeyY' || e.code === 'KeyU') && this.onAbrirChat && !this.paused && (this.state === 'live' || this.state === 'countdown')) {
+      // Y/U abrem o chat antes do portão _acceptInput (o espectador não tem pointer lock), nunca pausado;
+      // valem em roundEnd e matchEnd também: o §5 do contrato libera o fim de partida para todos
+      if ((e.code === 'KeyY' || e.code === 'KeyU') && this.onAbrirChat && !this.paused && this.state !== 'boot') {
         e.preventDefault();
         this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time');
         return;
@@ -2188,8 +2189,11 @@ export class Game {
         move(t); e.preventDefault();
       }, { passive: false });
       el.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) move(t); e.preventDefault(); }, { passive: false });
-      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); } };
+      const soltar = () => { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); };
+      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) soltar(); };
       el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
+      // o chat aberto (travarEntrada) solta o dedo em curso: o toque fica preso ao alvo do touchstart
+      (this._sticksSoltar || (this._sticksSoltar = [])).push(soltar);
     };
     // TIRO PELO MIOLO DOS DOIS STICKS: cada stick tem seu flag; o gatilho real (mouseDown0) é
     // o OU dos dois. Assim dá pra ANDAR (stick esq. p/ fora) + ATIRAR (miolo do dir.), e vice-versa.
@@ -2319,6 +2323,7 @@ export class Game {
     this._entradaTravada = v;
     if (v) {
       this.keys = {}; this.mouseDown0 = false;
+      for (const soltar of this._sticksSoltar || []) soltar();
       if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
       if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
       if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; }
@@ -5941,7 +5946,8 @@ export class Game {
     // e que o servidor aplica ao slot remoto (ver _moveEntity).
     let _ax = (this.keys.KeyD ? 1 : 0) - (this.keys.KeyA ? 1 : 0);
     let _az = (this.keys.KeyS ? 1 : 0) - (this.keys.KeyW ? 1 : 0);
-    if (this.touchMove && (this.touchMove.x || this.touchMove.z)) { _ax = this.touchMove.x; _az = this.touchMove.z; }
+    // com o chat aberto o stick não anda: o dedo que já estava nele segue mandando touchmove
+    if (this.touchMove && (this.touchMove.x || this.touchMove.z) && !this._entradaTravada) { _ax = this.touchMove.x; _az = this.touchMove.z; }
     // mobile: stick direito olha por TAXA (velocidade angular × dt), não por delta.
     // Mora aqui e não no _moveEntity: mira é do jogador local, o remoto vem pela rede.
     if (this.touchLook && (this.touchLook.x || this.touchLook.y) && this._acceptInput()) {
