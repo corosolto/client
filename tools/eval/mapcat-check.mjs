@@ -23,6 +23,9 @@
           dois, e autor vazio muda o mapa de aba (OFICIAIS × COMUNIDADE) sem aviso.
      C4 · eixo TEMA é mutuamente exclusivo (FAVELA × AMAZONIA × CIDADES): mapa com dois
           temas é classificação mentirosa — o bug que o dono apontou, generalizado.
+     C5 · a 1ª categoria de cada mapa (o `data-cat` do cartão) tem cor própria em
+          `.ms-thumb-cat` no style.css — sem ela o rótulo herda preto sobre o fundo
+          escuro e some (AMAZONIA na captura 3:2 de 29/09).
 
    ONDE ELA NÃO OLHA, E POR QUÊ
      O registro MAPS é lido do FONTE de maps.js (mesma decisão do mapa-id-check):
@@ -34,12 +37,13 @@
      --mutante=cat-fantasma   injeta categoria sem CAT_DESC
      --mutante=sem-autoria    apaga MAP_AUTOR de um mapa
      --mutante=dois-temas     põe FAVELA+AMAZONIA no mesmo mapa
+     --mutante=sem-cor        apaga a cor de FAVELA do CSS lido
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import { readFileSync } from 'node:fs';
 import { MAP_CATS, MAP_AUTOR, MAP_DATA, CAT_DESC } from '../../public/js/mapcat.js';
 
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10);
-const MUTANTES = ['sem-cats', 'cat-fantasma', 'sem-autoria', 'dois-temas'];
+const MUTANTES = ['sem-cats', 'cat-fantasma', 'sem-autoria', 'dois-temas', 'sem-cor'];
 if (mutante && !MUTANTES.includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante} (use ${MUTANTES.join(' · ')})`);
   process.exit(2);
@@ -64,6 +68,10 @@ if (mutante === 'cat-fantasma') cats[IDS_REGISTRO[0]] = [...cats[IDS_REGISTRO[0]
 if (mutante === 'sem-autoria') delete autor[IDS_REGISTRO.find((id) => autor[id])];
 if (mutante === 'dois-temas') cats.quebrada = ['FAVELA', 'AMAZONIA'];
 
+let css = readFileSync('public/style.css', 'utf8');
+if (mutante === 'sem-cor') css = css.replace(/\.ms-thumb-cat\[data-cat="FAVELA"\]\{[^}]*\}/, '');
+const COR_CARTAO = new Set([...css.matchAll(/\.ms-thumb-cat\[data-cat="([A-Z]+)"\]\{[^}]*color:/g)].map((m) => m[1]));
+
 const TEMAS = ['FAVELA', 'AMAZONIA', 'CIDADES'];
 const falhas = [];
 
@@ -86,6 +94,12 @@ for (const id of IDS_REGISTRO) {
 for (const [id, lista] of Object.entries(cats)) {
   const temas = lista.filter((c) => TEMAS.includes(c));
   if (temas.length > 1) falhas.push(`C4 ${id}: dois temas (${temas.join(' + ')}) — classificação mentirosa, o mapa não é os dois.`);
+}
+
+/* C5 — o rótulo do cartão tem cor (a 1ª categoria é o data-cat renderizado). */
+for (const id of IDS_REGISTRO) {
+  const c = cats[id]?.[0];
+  if (c && !COR_CARTAO.has(c)) falhas.push(`C5 ${id}: '${c}' sem cor em .ms-thumb-cat — o rótulo do cartão sai preto no fundo escuro.`);
 }
 
 if (falhas.length) {
