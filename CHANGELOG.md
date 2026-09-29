@@ -136,6 +136,7 @@
 - Move docs internas para o repo privado progress (#698)
 - Limpa docs internas e cliente Godot da árvore pública
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.8).
 ## [2.1.0-alpha.7] — 2026-09-28
 
 ### Mudado
