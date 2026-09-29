@@ -5,8 +5,9 @@ import { test, expect } from '@playwright/test';
    single player e um `net` falso montado dentro da página: o que se mede é o painel
    (ARIA, Y/Enter/Esc, prisão e devolução de foco, IME, XSS e RTL como texto) e a
    geometria contra a ZONA_MIRA de tools/eval/ui-check.mjs e o #crosshair em cinco
-   viewports. Mutantes por page.route: painel-largo (a largura do CSS estoura a zona) e
-   innerhtml (o texto da linha vai por innerHTML); os dois DEVEM reprovar.
+   viewports. Mutantes por page.route (SMOKE_MUTANTE=<nome>): painel-largo, innerhtml,
+   foco-preso, so-mousedown, reduzido-eterno, redesenho-novo, redesenho-falante e
+   esc-so-keydown; cada um DEVE reprovar.
    Uso local: CHROME_BIN=/caminho/do/chrome npx playwright test -c playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js
    Figuras: CHAT_FIGURAS=/pasta guarda os PNG abertos e fechados de cada viewport. */
 
@@ -106,6 +107,15 @@ async function aplicarMutante(page, testInfo) {
       const corpo = await r.text();
       const mutado = corpo.replace("el.log.setAttribute('aria-live', 'off');\n    const ids", '\n    const ids');
       if (mutado === corpo) throw new Error('mutante redesenho-falante não aplicou: redesenhar mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
+  } else if (MUTANTE === 'esc-so-keydown') {
+    testInfo.annotations.push({ type: 'mutação', description: 'esc-so-keydown: o painel volta a ouvir só o keydown do Esc; o keyup órfão do toque em tela cheia DEVE reprovar' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace("document.addEventListener('keyup', onDocKeyUp);", '');
+      if (mutado === corpo) throw new Error('mutante esc-so-keydown não aplicou: o listener de keyup mudou de forma');
       await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
     });
   } else if (MUTANTE) {
@@ -375,9 +385,10 @@ test.describe('chat de sala', () => {
         alvo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true, isComposing: true }));
         alvo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true, keyCode: 229 }));
         alvo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true, isComposing: true }));
+        alvo.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }));
       });
       expect(await page.evaluate(() => window.__chatNet.enviados.length)).toBe(1);
-      expect(await chatAberto(page)).toBe(true);
+      expect(await chatAberto(page), 'o Esc que cancela a composição (keydown com isComposing e o keyup dele) não fecha').toBe(true);
       await page.keyboard.press('Enter');
       expect(await page.evaluate(() => window.__chatNet.enviados.length)).toBe(2);
       expect(await chatAberto(page)).toBe(false);
@@ -628,6 +639,28 @@ test.describe('chat de sala', () => {
         expect(s.tiros).toBe(0);
         expect(s.travada).toBe(false);
         expect(await page.evaluate(() => window.__chatNet.enviados.length)).toBe(0);
+        await page.locator('#chat-toque').tap();
+        expect(await chatAberto(page)).toBe(true);
+      });
+      /* Tablet com teclado físico: o Esc fecha no toque como no desktop. Em tela cheia sem
+         Keyboard Lock (o toque não prende as teclas) o Chromium engole o keydown do primeiro
+         Esc e só entrega o keyup: o compositor fecha do mesmo jeito (mutante esc-so-keydown). */
+      await test.step('Esc fecha o compositor no toque, inclusive quando só o keyup chega', async () => {
+        await expect(page.locator('#chat-entrada')).toBeFocused();
+        await page.keyboard.press('Escape');
+        let s = await estadoJogo(page);
+        expect(await chatAberto(page), `um Esc fecha o compositor (foco em ${s.ativo})`).toBe(false);
+        expect(s.travada).toBe(false);
+        expect(s.paused).toBe(false);
+        await expect(page.locator('#touch-ui')).toBeVisible();
+        await page.locator('#chat-toque').tap();
+        expect(await chatAberto(page)).toBe(true);
+        await page.evaluate(() => document.getElementById('chat-entrada').dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true })));
+        s = await estadoJogo(page);
+        expect(await chatAberto(page), 'o keyup de Esc sem keydown (engolido pelo navegador) fecha o compositor').toBe(false);
+        expect(s.travada).toBe(false);
+        expect(s.tiros).toBe(0);
+        await expect(page.locator('#touch-ui')).toBeVisible();
         await page.locator('#chat-toque').tap();
         expect(await chatAberto(page)).toBe(true);
       });

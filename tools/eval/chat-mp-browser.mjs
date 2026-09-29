@@ -22,7 +22,9 @@
      CE8  · digitar www, espaço e clicar com o chat aberto não mexe nem atira (espiando
             sendInput e _tryShoot), e não aparece pausa
      CE9  · figuras em 5 viewports, fechado e aberto, com a geometria medida no DOM contra a
-            ZONA_MIRA e o #crosshair (as figuras abertas são para olhar, lei 4)
+            ZONA_MIRA e o #crosshair (as figuras abertas são para olhar, lei 4); cada cena
+            fecha pelo que o jogador tem: Esc no desktop e no toque com teclado (o Chromium
+            sem Keyboard Lock engole o keydown do primeiro Esc, só o keyup chega), FECHAR no retrato
      CE10 · zero pageerror nos três navegadores
 
    MODO --tickets: o nó sobe com MP_TICKET_REQUIRED=1 e um segredo aleatório; a régua emite
@@ -643,37 +645,64 @@ try {
 
   if (roda('CE9')) {
     const figuras = [];
-    const cena = async (pg, nome, abrirCom) => {
+    // o painel fechado sem linha não tem caixa: sozinha (--so=CE9) a cena precisa de uma mensagem
+    if (!(await linhas(pgA)).length) await digitar(pgA, regs.A, 'y', 'linha para a geometria');
+    const esc = (pg) => () => pg.keyboard.press('Escape');
+    const partidas = (reg) => reg.recebidos.filter((m) => m.type === 'partida').length;
+    const diagnostico = (pg) => pg.evaluate(() => ({
+      estado: window.__game?.state, travada: !!window.__game?._entradaTravada, ativo: document.activeElement?.id || document.activeElement?.tagName,
+      secOculta: document.getElementById('chat-sala').hidden, toqueOculto: document.getElementById('chat-toque')?.hidden, eventos: (window.__ev || []).slice(-12),
+    }));
+    const cena = async (pg, reg, nome, abrirCom, fecharCom, comoFecha) => {
       await sleep(400);
       await esperarLive(pg);
       let g = await geometria(pg);
       cobrarGeometria(g, `${nome} fechado`);
       figuras.push(await foto(pg, `${nome}-fechado`));
+      let antes = partidas(reg);
       await abrirCom();
       await sleep(250);
+      // a troca de mapa no meio da cena fecha o compositor (aoTrocarJogo): isso não é o que a cena mede
+      if (!(await aberto(pg)) && partidas(reg) > antes) {
+        console.log(`         ${nome}: chegou partida nova durante a abertura; a cena tenta de novo`);
+        await esperarLive(pg); antes = partidas(reg); await abrirCom(); await sleep(250);
+      }
       g = await geometria(pg);
-      cobra(await aberto(pg), `CE9 · ${nome}: o painel abriu`);
+      const abriu = await aberto(pg);
+      cobra(abriu, `CE9 · ${nome}: o painel abriu${abriu ? '' : ` (${JSON.stringify(await diagnostico(pg))})`}`);
       cobrarGeometria(g, `${nome} aberto`);
       figuras.push(await foto(pg, `${nome}-aberto`));
-      await pg.keyboard.press('Escape');
+      await fecharCom();
       await sleep(150);
+      const fechou = !(await aberto(pg));
+      cobra(fechou, `CE9 · ${nome}: ${comoFecha} fechou o compositor${fechou ? '' : ` (${JSON.stringify(await diagnostico(pg))})`}`);
       return g;
     };
     for (const [w, hgt] of [[1600, 900], [1500, 1000], [1008, 655]]) {
       await pgA.setViewportSize({ width: w, height: hgt });
-      await cena(pgA, `${w}x${hgt}`, () => abrirChat(pgA, 'y'));
+      await cena(pgA, regs.A, `${w}x${hgt}`, () => abrirChat(pgA, 'y'), esc(pgA), 'Esc');
     }
     await pgA.setViewportSize({ width: 1600, height: 900 });
+    await pgB.evaluate(() => {
+      window.__ev = [];
+      const reg = (e) => { window.__ev.push({ t: Math.round(performance.now()), tipo: e.type, alvo: e.target?.id || e.target?.tagName, tecla: e.key }); if (window.__ev.length > 40) window.__ev.shift(); };
+      for (const t of ['pointerdown', 'touchend', 'click', 'keydown', 'keyup', 'focusin']) document.addEventListener(t, reg, true);
+      const sec = document.getElementById('chat-sala');
+      new MutationObserver(() => window.__ev.push({ t: Math.round(performance.now()), tipo: 'classe', v: sec.className })).observe(sec, { attributes: true, attributeFilter: ['class'] });
+    });
+    // #chat-toque alterna: só toca se o painel estiver fechado
     const toque = async () => {
       await esperarLive(pgB);
+      if (await aberto(pgB)) return;
       try { await pgB.tap('#chat-toque', { timeout: 5000 }); }
       catch { await pgB.evaluate(() => document.getElementById('chat-toque').click()); }
-      await pgB.waitForFunction(() => document.getElementById('chat-sala').classList.contains('aberto'), null, { timeout: 5000 });
+      await pgB.waitForFunction(() => document.getElementById('chat-sala').classList.contains('aberto'), null, { timeout: 5000 }).catch(() => {});
     };
-    const g1 = await cena(pgB, '844x390-toque', toque);
+    const g1 = await cena(pgB, regs.B, '844x390-toque', toque, esc(pgB), 'um Esc no teclado físico');
     cobra(g1.touchUi && !g1.touchUi.visivel && /\bchat\b/.test(g1.touchUi.classe), `CE9 · 844x390 aberto: #touch-ui some com a classe chat (${g1.touchUi?.classe})`);
     await pgB.setViewportSize({ width: 390, height: 844 });
-    await cena(pgB, '390x844-retrato', toque);
+    // no retrato o #rotate-prompt cobre a tela e intercepta todo toque: o FECHAR só chega por click()
+    await cena(pgB, regs.B, '390x844-retrato', toque, () => pgB.evaluate(() => document.getElementById('chat-fechar').click()), 'o FECHAR do cabeçalho (click(), sob o #rotate-prompt)');
     await pgB.setViewportSize({ width: 844, height: 390 });
     console.log(`\n  figuras (${figuras.length}):\n${figuras.map((f) => `    ${f}`).join('\n')}`);
   }

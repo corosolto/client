@@ -329,7 +329,11 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
   }
 
   /* ---------- eventos ---------- */
+  /* Em tela cheia sem Keyboard Lock (o toque não prende as teclas) o Chromium engole o keydown
+     do primeiro Esc e só entrega o keyup: o keyup órfão fecha; o que veio com keydown (IME) não. */
+  let escDesceu = false;
   const onKey = (e) => {
+    if (e.key === 'Escape' && e.type === 'keydown') escDesceu = true;
     if (e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Escape') {
       e.preventDefault(); e.stopPropagation();
@@ -347,6 +351,13 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
       return;
     }
     if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); abrirAcoes(li); }
+  };
+  // no documento: o keyup do Esc que fechou cai fora da seção, porque o foco já voltou ao jogo
+  const onDocKeyUp = (e) => {
+    if (e.key !== 'Escape') return;
+    const viu = escDesceu;
+    escDesceu = false;
+    if (!viu && aberto && sec.contains(e.target)) onKey(e);
   };
   const onLogClick = (e) => {
     if (!aberto) return;
@@ -412,6 +423,7 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
   if (el.toque) el.toque.addEventListener('click', onToque);
   if (el.fechar) el.fechar.addEventListener('click', onFechar);
   document.addEventListener('pointerdown', onDocPointerDown);
+  document.addEventListener('keyup', onDocKeyUp);
   if (vv) { vv.addEventListener('resize', ajustarViewport); vv.addEventListener('scroll', ajustarViewport); }
 
   net.onChat = receber;
@@ -454,6 +466,7 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     if (el.toque) el.toque.removeEventListener('click', onToque);
     if (el.fechar) el.fechar.removeEventListener('click', onFechar);
     document.removeEventListener('pointerdown', onDocPointerDown);
+    document.removeEventListener('keyup', onDocKeyUp);
     if (vv) { vv.removeEventListener('resize', ajustarViewport); vv.removeEventListener('scroll', ajustarViewport); }
   }
 
