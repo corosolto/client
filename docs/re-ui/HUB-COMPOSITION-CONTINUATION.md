@@ -44,8 +44,13 @@ precisam de prova própria antes de declarar release concluído.
   worktree novo; `eval:audiovoicemix` acusa ausência de fala MP; `eval:mansao`
   não encontra `docs/maps/MANSAO-RECOVERY-ASSETS.json`. O arquivo gerado pelo
   teste de pickups foi restaurado sem entrar no PR.
+- O hook de pre-push passou `eval:mapcontrato` e `check:deploy` em 228 s no SHA
+  `28e48e848`. PR aberto: <https://github.com/corosolto/client/pull/713>,
+  base `main`, branch `v2/hub-composition-review`; mergeável na criação, CI em
+  andamento. O PR permanece aberto para revisão, sem merge.
 
 ## Próximo passo
 
-Rodar o portão de pre-push, fazer push e abrir PR para `main` com escopo e
-limites claros. Não fazer merge nem deploy nesta lane.
+Acompanhar CI e preview do PR #713, obter revisão visual do jogador e resolver
+eventual sobreposição com o PR #689 antes do merge. Uma partida e sala real
+continuam sem prova nesta lane. Não fazer merge nem deploy aqui.
