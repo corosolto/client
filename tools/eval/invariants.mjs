@@ -2085,6 +2085,15 @@ function runNode(script, env = {}, args = []) {
   }
 }
 
+// MAP6: o acesso água→madeira precisa funcionar com a física real, não apenas
+// coincidir no groundHeightAt. Os quatro trajetos cobrem os dois pontões do mercado.
+{
+  const out = runNode('amazonia-water-movement-check.mjs');
+  put('MAP6', 'jogador alcança os dois pontões baixos da Amazônia com e sem salto',
+    out.includes('PASS AMW4') && !out.includes('__ERRO__'),
+    (out.match(/(?:PASS|FAIL) AMW4[^\n]*/) || ['AMW4 sem resultado'])[0]);
+}
+
 /* ── 8d. MATERIAL, LUZ E SUPERFÍCIE (mat-check.mjs) ──────────────────────────
    Quatro invariantes nascidas de três frases do dono sobre a MESMA coisa: o jogo não
    tem um padrão visual só.

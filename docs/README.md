@@ -39,6 +39,7 @@ docs/
   onboarding.md           setup mínimo pra contribuir
   quality-gates.md        labels, merge policy e crash triage (o processo do PR)
   csbrasil-bot.md         o bot de issues/PRs do repositório
+  adr/                    decisões congeladas: contexto, decisão, consequências (índice no README)
   audio/proveniencia.json ledger de procedência dos assets de áudio (lido pelo gate)
   runbooks/operacao-autonoma.md  diagnóstico e rollback de produção (npm run ops:diag)
 ```
