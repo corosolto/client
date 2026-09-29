@@ -3,7 +3,7 @@ import { THREE, MAPS, bootGame, initTextures } from './harness.mjs';
 import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.slice(10) || '';
-if (mutant && !['virar-b', 'bloquear-lance', 'fechar-janela', 'fechar-janela-e'].includes(mutant)) throw Error('Mutante desconhecido');
+if (mutant && !['virar-b', 'bloquear-lance', 'fechar-janela', 'fechar-janela-e', 'bloquear-agua'].includes(mutant)) throw Error('Mutante desconhecido');
 if (mutant === 'virar-b') {
   const source = new URL('../../public/js/map_amazonia.js', import.meta.url), target = new URL(`../../public/js/.amz-stairs-${process.pid}.mjs`, import.meta.url);
   const before = '{ x: 17, z: 29, d: [-1, 0], e: 1 }', text = readFileSync(source, 'utf8');
@@ -17,6 +17,7 @@ if (mutant === 'bloquear-lance') {
   const f = stationB.peEscada, z = f.z + Math.sign(stationB.patamar.z-f.z);
   world.colliders.push({ minX:f.x-1, maxX:f.x+1, minZ:z-.2, maxZ:z+.2, minY:0, maxY:8 });
 }
+if (mutant === 'bloquear-agua') world.colliders.push({ minX:-6.5, maxX:-5.5, minZ:-23.5, maxZ:-21.5, minY:0, maxY:8 });
 const spawnCabins = [[14,-27,'E'],[17,29,'B']].map(([x,z,team]) => {
   const cabin = world.cabins.find(c => c.x === x && c.z === z);
   return { team, cabin, window:cabin.windows.find(w => w.wall === 'left') };
@@ -41,6 +42,21 @@ const records = stations.map(station => {
   return { station:[station.x,station.z], foot, top, spawn, facing, ticks, end:p.pos.toArray(),
     facingRespawn:facing>0, climbed:ticks<600 && Math.abs(p.pos.y-world.amazonia.deckY)<.05 };
 });
+const aguaStation = world.amazonia.estacoes.find(s => s.x === -14 && s.z === -19);
+const pw = game.player; pw.pos.set(-2, world.groundHeightAt(-2,-20,0), -20);
+pw.vel.set(0,0,0); pw.yaw = 0; pw.crouchF = 0; pw.grounded = true; pw.jumpBufUntil = -1; pw.mantle = null; pw.alive = true; pw.hp = 100; pw.weapon = 'knife';
+const aguaStart = pw.pos.toArray();
+const aguaSegments = [aguaStation.peEscada, aguaStation.patamar].map(waypoint => {
+  let ticks = 0;
+  for (; ticks < 300; ticks++) {
+    const dx = waypoint.x-pw.pos.x, dz = waypoint.z-pw.pos.z, d = Math.hypot(dx,dz);
+    if (d < .15) break;
+    game.time += 1/60; game._moveEntity(pw,{ax:dx/d,az:dz/d,shift:false,jump:false},1/60);
+  }
+  return { waypoint:[waypoint.x,waypoint.z], ticks, reached:ticks<300 && Math.hypot(waypoint.x-pw.pos.x,waypoint.z-pw.pos.z)<.15, end:pw.pos.toArray() };
+});
+const aguaResult = { start:aguaStart, segments:aguaSegments,
+  onDeck:aguaSegments.every(s=>s.reached) && Math.abs(pw.pos.y-world.amazonia.deckY)<.05 };
 const riverViews = spawnCabins.map(({team,cabin,window}) => {
   const origin = new THREE.Vector3(window.center[0]+.6, cabin.floorY+1.6, window.center[2]);
   const views = [-.4,0,.4].map(dz => {
@@ -50,7 +66,7 @@ const riverViews = spawnCabins.map(({team,cabin,window}) => {
   });
   return {team,station:[cabin.x,cabin.z],windowOrigin:origin.toArray(),views,clear:views.every(v=>v.hits===0)};
 });
-const valid = records.length === world.cabins.length-1 && records.every(r => r.facingRespawn && r.climbed) && riverViews.every(v=>v.clear);
-const report = { valid, mutant, scope:'Geometria procedural e física reais no arnês Node; GLBs e imagem WebGL não medidos.', records, riverViews };
+const valid = records.length === world.cabins.length-1 && records.every(r => r.facingRespawn && r.climbed) && riverViews.every(v=>v.clear) && aguaResult.onDeck;
+const report = { valid, mutant, scope:'Geometria procedural e física reais no arnês Node; GLBs e imagem WebGL não medidos.', agua:aguaResult, records, riverViews };
 const out = process.argv.find(a=>a.startsWith('--out='))?.slice(6); if(out)writeFileSync(out,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report,null,2)); game.dispose(); process.exit(valid ? 0 : 1);
