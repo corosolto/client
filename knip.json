@@ -12,7 +12,12 @@
     ".opencode/**",
     "tools/**",
     "scripts/**",
-    "worktrees/**"
+    "worktrees/**",
+    "public/js/map_piscinao_ramos.js"
   ],
-  "ignoreDependencies": ["meshoptimizer", "dejavu-fonts-ttf", "ndarray-pixels"]
+  "ignoreDependencies": [
+    "meshoptimizer",
+    "dejavu-fonts-ttf",
+    "ndarray-pixels"
+  ]
 }

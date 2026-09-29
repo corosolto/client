@@ -48,7 +48,7 @@ com código 1 em falha crítica.
 | `pickup-check.mjs` | Itens coletáveis: posição e alcance. |
 | `ui-check.mjs` | Elementos de HUD presentes e legíveis. |
 | `mat-check.mjs` | Materiais: nada preto chapado, nada estourado. `npm run eval:mat` |
-| `bot-routes.mjs`, `botdiag.mjs` | Diagnóstico de rota e de estado dos bots (complementam o `botsim`). |
+| `bot-routes.mjs`, `botdiag.mjs`, `bot-moving-loops.mjs` | Diagnóstico de rota e de estado dos bots. `npm run eval:bot-moving-loops` prova o detector; `SIM_MOVING_LOOPS=1 SIM_SEEDS=12345 node tools/eval/botsim.mjs 60 praca_poderes` imprime candidatos e contexto do alvo em stderr. `target.sampleShare` mede cobertura, `switches` conta trocas, e `travel`/`centerOffset` só aparecem com o mesmo alvo em toda a janela; isto não serve como aceite visual/MP. |
 | `stance-speed.mjs` | Velocidade por postura (andar/correr/agachar). |
 | `loadout-test.mjs` | Loadout por personagem/facção. |
 | `abateshud-check.mjs` | O contador de abates do JOGADOR existe no HUD, é legível por medida (piso de 24px fora de `@media`), imprime `player.kills` — não o placar do time — e sobrevive à virada de rodada. `npm run eval:abateshud` |
