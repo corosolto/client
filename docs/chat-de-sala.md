@@ -107,6 +107,9 @@ A mesma função nos dois repositórios (`normalizarTexto`), na mesma ordem:
 8. Colapsa espaços repetidos e apara as pontas.
 9. Resultado vazio vira `vazia`; mais de `maxChars` (160) code points vira `longa`.
 
+Os passos 4 a 7 rodam numa passagem única sobre os code points do texto que saiu do passo 3,
+decidindo por code point original: nunca se re-escaneia a string já filtrada. Um replace
+encadeado juntaria dois surrogates soltos ao tirar o Cf entre eles, e o passo 5 já não os veria.
 Nunca usar `\p{Cn}`: depende da versão do ICU do runtime e faria navegador e nó discordarem
 sobre o mesmo texto. A chave de repetição é `chaveTexto(s) = s.toLowerCase().replace(/[\s\p{P}]/gu, '')`
 sobre o texto já normalizado.
@@ -121,6 +124,7 @@ sobre o texto já normalizado.
 | `"ㅤ"` (preenchimento Hangul) | recusado como `vazia` |
 | `"\u{1F468}‍\u{1F469}‍\u{1F467}"` (família com ZWJ) | mantida igual |
 | `"a‍b"` | `ab` |
+| `"a\u{D83D}\u{AD}\u{DE00}b"` (par substituto partido por um Cf) | `ab` |
 | `"z"` seguido de 30 × U+0301 | `z` com 2 marcas |
 | `"tag\u{E0041}"` | `tag` |
 | `"a".repeat(161)` | recusado como `longa` |

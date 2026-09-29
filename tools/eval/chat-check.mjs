@@ -51,6 +51,7 @@
      innerhtml      chat-painel.js: o primeiro `.textContent =` vira
                     `.innerHTML =`                                       -> CC5 vermelha
      sem-nfkc       chat.js: normalizarTexto pula o NFKC                 -> CC1 vermelha
+     cf-por-replace chat.js: o passo 4 volta a ser um replace encadeado  -> CC1 vermelha
      bloqueio-proprio chat.js: bloquear aceita o próprio handle           -> CC4 vermelha
      tabela-torta   chat.js: maxChars 160 vira 161                       -> CC7 vermelha
 
@@ -156,6 +157,10 @@ const VETORES = [
   ['160 emojis (320 UTF-16, 160 code points) passam (passos 1 e 9)', '\u{1F600}'.repeat(160), '\u{1F600}'.repeat(160)],
   ['U+00A0, U+2028 e U+2029 viram espaço (passo 3)', 'a\u{A0}b\u{2028}c\u{2029}d', 'a b c d'],
   ['surrogate solto sai (passo 5)', 'a\uD83Db', 'ab'],
+  /* Passos 4 a 7 numa passagem só, por code point ORIGINAL: tirar o Cf entre os dois
+     surrogates soltos não pode juntá-los num emoji válido (o nó apaga os dois). */
+  ['"a\\u{D83D}\\u{AD}\\u{DE00}b" (par substituto partido por Cf)', 'a\u{D83D}\u{AD}\u{DE00}b', 'ab'],
+  ['"oi\\u{D83D}\\u{200B}\\u{DE00}" (par partido por ZWSP)', 'oi\u{D83D}\u{200B}\u{DE00}', 'oi'],
   ['U+034F e U+2800 saem (passo 5)', 'a\u{34F}b\u{2800}c', 'abc'],
   ['U+FE0F depois de pictograma fica (passo 6)', '❤\u{FE0F}', '❤\u{FE0F}'],
   ['U+FE0F depois de letra sai (passo 6)', 'a\u{FE0F}b', 'ab'],
@@ -585,7 +590,8 @@ const MUTANTES = [
   ['chat-sem-meta', 'CC2', cc2, async () => ({ ...ctx, net: { mod: await importarMutado('public/js/net.js', (s) => s.replace(/return this\.chatLigado\(\) && !!this\.tp\?\.pronto;/, 'return !!this.tp?.pronto;'), 'chat-sem-meta'), motivo: '' } })],
   ['sem-bidi', 'CC5', cc5, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace(/'bdi'/g, "'span'"), 'sem-bidi'), motivo: '' } })],
   ['innerhtml', 'CC5', cc5, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace(/\.textContent = /, '.innerHTML = '), 'innerhtml'), motivo: '' } })],
-  ['sem-nfkc', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace("let s = txt.normalize('NFKC');", 'let s = txt;'), 'sem-nfkc'), motivo: '' } })],
+  ['sem-nfkc', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace("Array.from(txt.normalize('NFKC').replace(BRANCOS_RE", 'Array.from(txt.replace(BRANCOS_RE'), 'sem-nfkc'), motivo: '' } })],
+  ['cf-por-replace', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace("Array.from(txt.normalize('NFKC').replace(BRANCOS_RE, ' '))", "Array.from(txt.normalize('NFKC').replace(BRANCOS_RE, ' ').replace(/[\\p{Cc}\\p{Cf}]/gu, (ch) => (ch === ZWJ ? ch : '')))"), 'cf-por-replace'), motivo: '' } })],
   ['bloqueio-proprio', 'CC4', cc4, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('h === this.eu?.h', 'false'), 'bloqueio-proprio'), motivo: '' } })],
   ['tabela-torta', 'CC7', cc7, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('maxChars: 160,', 'maxChars: 161,'), 'tabela-torta'), motivo: '' } })],
 ];

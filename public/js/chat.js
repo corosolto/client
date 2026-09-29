@@ -46,12 +46,12 @@ export const MARCA_VERIFICADO = '✓';
 export const PREFIXO_ARMAZENAMENTO = 'cs_chat_bloq';
 
 const PICTO = /^\p{Extended_Pictographic}$/u;
-const codePointAntes = (s, i) => {
-  if (i <= 0) return '';
-  const baixo = s.charCodeAt(i - 1);
-  return baixo >= 0xDC00 && baixo <= 0xDFFF && i >= 2 ? s.slice(i - 2, i) : s[i - 1];
-};
-const codePointDepois = (s, i) => (i < s.length ? String.fromCodePoint(s.codePointAt(i)) : '');
+const BRANCOS_RE = /[\t\n\r\f\v\u{85}\u{A0}\u{2028}\u{2029}\p{Zs}]/gu;
+const CONTROLE_RE = /^[\p{Cc}\p{Cf}]$/u;
+const INVISIVEIS_RE = /^[\p{Co}\p{Cs}\u{34F}\u{115F}\u{1160}\u{3164}\u{FFA0}\u{2800}]$/u;
+const MARCA_RE = /^\p{M}$/u;
+const ZWJ = '\u{200D}';
+const ehSeletorVariante = (c) => c === '\u{FE0E}' || c === '\u{FE0F}';
 
 export const contarChars = (s) => Array.from(s).length;
 export const chaveTexto = (s) => s.toLowerCase().replace(/[\s\p{P}]/gu, '');
@@ -61,14 +61,22 @@ export const chaveTexto = (s) => s.toLowerCase().replace(/[\s\p{P}]/gu, '');
 export function normalizarTexto(txt) {
   if (typeof txt !== 'string') return { ok: false, motivo: 'invalida' };
   if (txt.length > CHAT_LIMITES.maxUtf16) return { ok: false, motivo: 'longa' };
-  let s = txt.normalize('NFKC');
-  s = s.replace(/[\t\n\r\f\v\u0085\u{A0}\u{2028}\u{2029}\p{Zs}]/gu, ' ');
-  s = s.replace(/[\p{Cc}\p{Cf}]/gu, (ch, i, str) =>
-    (ch === '\u{200D}' && PICTO.test(codePointAntes(str, i)) && PICTO.test(codePointDepois(str, i + 1)) ? ch : ''));
-  s = s.replace(/[\p{Co}\p{Cs}\u{34F}\u{115F}\u{1160}\u{3164}\u{FFA0}\u{2800}]/gu, '');
-  s = s.replace(/[\u{FE0E}\u{FE0F}]/gu, (ch, i, str) => (PICTO.test(codePointAntes(str, i)) ? ch : ''));
-  s = s.replace(/\p{M}+/gu, (m) => Array.from(m).slice(0, CHAT_LIMITES.maxMarcas).join(''));
-  s = s.replace(/ +/g, ' ').trim();
+  /* Passos 4 a 7 numa passagem só, decidindo por code point ORIGINAL (igual ao nó): um replace
+     encadeado juntava dois surrogates soltos ao tirar o Cf entre eles e o passo 5 já não os via. */
+  const cps = Array.from(txt.normalize('NFKC').replace(BRANCOS_RE, ' '));
+  const saida = [];
+  let marcas = 0;
+  for (let i = 0; i < cps.length; i++) {
+    const c = cps[i];
+    if (c === ZWJ) {
+      if (!(i > 0 && i + 1 < cps.length && PICTO.test(cps[i - 1]) && PICTO.test(cps[i + 1]))) continue;
+    } else if (CONTROLE_RE.test(c) || INVISIVEIS_RE.test(c)) continue;
+    if (ehSeletorVariante(c) && !PICTO.test(saida.length ? saida[saida.length - 1] : '')) continue;
+    if (MARCA_RE.test(c)) { if (++marcas > CHAT_LIMITES.maxMarcas) continue; }
+    else marcas = 0;
+    saida.push(c);
+  }
+  const s = saida.join('').replace(/ {2,}/g, ' ').trim();
   if (!s) return { ok: false, motivo: 'vazia' };
   if (contarChars(s) > CHAT_LIMITES.maxChars) return { ok: false, motivo: 'longa' };
   return { ok: true, txt: s };
