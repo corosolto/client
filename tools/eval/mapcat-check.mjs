@@ -33,11 +33,11 @@
      regex cobre só a chave de topo do registro, que é contrato estável.
 
    AS MUTAÇÕES QUE PROVAM
-     --mutante=sem-cats       remove a entrada de um mapa em memória (o bug do córrego)
+     --mutante=sem-cats       remove a entrada do córrego em memória (o bug original)
      --mutante=cat-fantasma   injeta categoria sem CAT_DESC
      --mutante=sem-autoria    apaga MAP_AUTOR de um mapa
      --mutante=dois-temas     põe FAVELA+AMAZONIA no mesmo mapa
-     --mutante=sem-cor        apaga a cor de FAVELA do CSS lido
+     --mutante=sem-cor        apaga a cor de AMAZONIA do CSS lido
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import { readFileSync } from 'node:fs';
 import { MAP_CATS, MAP_AUTOR, MAP_DATA, CAT_DESC } from '../../public/js/mapcat.js';
@@ -53,8 +53,9 @@ if (mutante && !MUTANTES.includes(mutante)) {
 const fonte = readFileSync('public/js/maps.js', 'utf8');
 const corpo = fonte.slice(fonte.indexOf('export const MAPS = {'));
 const registro = corpo.slice(0, corpo.indexOf('\n};'));
-const IDS_REGISTRO = [...registro.matchAll(/^  ([a-z_0-9]+): \{/gm)].map((m) => m[1]);
-if (!IDS_REGISTRO.length) {
+const IDS_REGISTRO = [...registro.matchAll(/^  ([a-z_0-9]+)\s*:\s*\{/gm)].map((m) => m[1]);
+const CHAVES_TOPO = [...registro.matchAll(/^  ([a-z_0-9]+)\s*:/gm)].length;
+if (!IDS_REGISTRO.length || IDS_REGISTRO.length !== CHAVES_TOPO) {
   console.error('✗ leitura do registro MAPS não achou nenhum id — a regex do check envelheceu');
   process.exit(2);
 }
@@ -63,14 +64,14 @@ const cats = structuredClone(MAP_CATS);
 const autor = { ...MAP_AUTOR };
 const desc = { ...CAT_DESC };
 
-if (mutante === 'sem-cats') delete cats[IDS_REGISTRO.find((id) => cats[id])];
+if (mutante === 'sem-cats') delete cats.corrego;
 if (mutante === 'cat-fantasma') cats[IDS_REGISTRO[0]] = [...cats[IDS_REGISTRO[0]], 'INEXISTENTE'];
 if (mutante === 'sem-autoria') delete autor[IDS_REGISTRO.find((id) => autor[id])];
 if (mutante === 'dois-temas') cats.quebrada = ['FAVELA', 'AMAZONIA'];
 
-let css = readFileSync('public/style.css', 'utf8');
-if (mutante === 'sem-cor') css = css.replace(/\.ms-thumb-cat\[data-cat="FAVELA"\]\{[^}]*\}/, '');
-const COR_CARTAO = new Set([...css.matchAll(/\.ms-thumb-cat\[data-cat="([A-Z]+)"\]\{[^}]*color:/g)].map((m) => m[1]));
+let css = readFileSync('public/style.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+if (mutante === 'sem-cor') css = css.replace(/\.ms-thumb-cat\[data-cat="AMAZONIA"\]\s*\{[^}]*\}/, '');
+const COR_CARTAO = new Set([...css.matchAll(/\.ms-thumb-cat\[data-cat="([A-Z]+)"\]\s*\{[^}]*(?<![-\w])color\s*:/g)].map((m) => m[1]));
 
 const TEMAS = ['FAVELA', 'AMAZONIA', 'CIDADES'];
 const falhas = [];
