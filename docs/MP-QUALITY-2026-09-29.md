@@ -45,8 +45,15 @@ produção precisam ser medidos novamente após o rollout; portões locais não 
 
 - Cliente: branch `codex/mp-quality-20260929`, base `0860b5c295d741b3ad8c6fdd3135f742fe7fe5ca`.
 - Backend: branch `codex/mp-quality-20260929`, base `dbcc333ff3f76767bc1794f66057dd1529865fc9`.
-- Gravar commits recuperáveis e usar o SHA do cliente corrigido como
-  `CLIENT_REF` no Dockerfile do backend. Abrir PRs sem
-  mesclar ou publicar. Depois do merge coordenado, canário US → EU → BR somente
+- Código do cliente: `6a79d90d5977197aca9361b899fd578323d8caa8`, em
+  [cliente #714](https://github.com/corosolto/client/pull/714) (draft). Código
+  do backend: `9261a59abb9fcaaa2c5c4568103142aee430ac15`, em
+  [backend #45](https://github.com/corosolto/backend/pull/45) (draft). O backend
+  fixa o commit do cliente no `Dockerfile`.
+- O push normal do cliente foi bloqueado pelo hook que executou `check:deploy`
+  com Node 16 do PATH local; a execução anterior com Node 23 passou 46/46.
+  O mesmo commit foi publicado com `PREPUSH=0`, conforme a opção do hook.
+- Próximo passo: revisar os PRs e construir/validar a imagem do nó. Depois do
+  merge coordenado, canário US → EU → BR somente
   com nó vazio, confirmar `/health`, versão, snapshots e uma partida real por
   região; medir novamente os percentis e sessões fora da meta no admin.
