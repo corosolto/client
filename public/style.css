@@ -156,7 +156,7 @@
   --mono:'ST Mono',Consolas,monospace;
 }
 
-/* Home v2 em prévia (?home=hub). O setup e o renderer continuam sendo os do jogo. */
+/* Home v2. O setup e o renderer continuam sendo os do jogo. */
 html[data-home-ui="hub"] #main-menu{
   --font:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
   --hub-left-gutter:max(24px,calc((100vw - 1320px)/2));
@@ -358,13 +358,7 @@ html[data-home-ui="hub"] #hub-mp-host #mp-criar{background:linear-gradient(180de
 }
 @media(max-width:760px) and (max-height:600px){html[data-home-ui="hub"] #menu-setup .map-picker{max-height:clamp(130px,34dvh,200px)}}
 
-/* O wallpaper continua full bleed; os controles ficam numa largura legível. */
-html[data-home-ui="hub"] #main-menu{--hub-edge:max(34px,calc((100vw - 1600px)/2))}
-.hub-header,.hub-footer{left:var(--hub-edge,34px);right:var(--hub-edge,34px)}
-.hub-pane{left:var(--hub-edge,34px);right:var(--hub-edge,34px)}
-.hub-character{right:var(--hub-edge,34px);width:min(34vw,544px)}
-.hub-character-card{right:var(--hub-edge,34px)}
-html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:var(--hub-edge);right:auto;width:min(960px,calc(60vw - var(--hub-edge) - 7px))}
+/* O wallpaper continua full bleed; os controles seguem o eixo do cartaz. */
 .hub-header-action .hub-profile-edit{display:inline;place-items:initial;width:auto;height:auto;padding:0 0 0 8px;border:0;border-left:1px solid #504c44;color:#b4d92e;font:700 10px/1 var(--font);letter-spacing:.5px;white-space:nowrap}
 .hub-character-card .hub-character-change{display:inline-block;margin-top:3px;color:#b4d92e;font:700 12px/1 var(--font);letter-spacing:1px}
 .hub-character-card:hover .hub-character-change,.hub-character-card:focus-visible .hub-character-change{text-decoration:underline;text-underline-offset:3px}
@@ -378,8 +372,7 @@ html[data-home-ui="hub"] #menu-setup .hub-match-chips>button:hover,html[data-hom
 .hub-footer-social .mf-social svg{width:15px;height:15px;fill:currentColor}
 .hub-rank-profile{margin:8px 0 0;padding:11px 14px;border:1px solid #b4d92e;background:#b4d92e;color:#131313;font:700 12px/1 var(--font);letter-spacing:1px;cursor:pointer}
 .hub-rank-profile:hover,.hub-rank-profile:focus-visible{filter:brightness(1.12);outline:2px solid #f3b958;outline-offset:2px}
-@media(max-width:1100px){html[data-home-ui="hub"] #main-menu{--hub-edge:14px}.hub-header,.hub-footer,.hub-pane{left:14px;right:14px}.hub-character{right:14px}.hub-character-card{right:14px}html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:14px;width:calc(60vw - 28px)}}
-@media(max-width:760px){html[data-home-ui="hub"] #main-menu[data-hub-tab="jogar"][data-hub-net="sp"] #menu-setup:not([data-step="profile"]){left:14px;right:14px;width:auto}.hub-header-action .hub-profile-edit{display:none}.hub-footer{gap:8px}.hub-footer-social{margin-left:auto}.hub-tip{flex:1}.hub-footer a{display:none}}
+@media(max-width:760px){.hub-header-action .hub-profile-edit{display:none}.hub-footer{gap:8px}.hub-footer-social{margin-left:auto}.hub-tip{flex:1}.hub-footer a{display:none}}
 
 /* =========================================================================
    REDESIGN AAA — tokens novos, adicionados sem tocar nos de cima.
