@@ -72,6 +72,42 @@ async function aplicarMutante(page, testInfo) {
       if (mutado === corpo) throw new Error('mutante foco-preso não aplicou: devolverFoco mudou de forma');
       await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
     });
+  } else if (MUTANTE === 'so-mousedown') {
+    testInfo.annotations.push({ type: 'mutação', description: 'so-mousedown: o fechamento por toque fora volta a ouvir só mousedown; o pointerdown de toque DEVE reprovar' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace("document.addEventListener('pointerdown', onDocPointerDown)", "document.addEventListener('mousedown', onDocPointerDown)");
+      if (mutado === corpo) throw new Error('mutante so-mousedown não aplicou: o listener de fechamento mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
+  } else if (MUTANTE === 'reduzido-eterno') {
+    testInfo.annotations.push({ type: 'mutação', description: 'reduzido-eterno: com reduzir movimento a linha volta a nunca sumir; o corte aos 12,6 s DEVE reprovar' });
+    await page.route('**/style.css*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace('.chat-linha,.chat-divisor{animation:chat-some 12.6s step-end forwards;animation-duration:12.6s!important}', '.chat-linha,.chat-divisor{animation:none;opacity:1}');
+      if (mutado === corpo) throw new Error('mutante reduzido-eterno não aplicou: o bloco de reduced-motion mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'text/css', body: mutado });
+    });
+  } else if (MUTANTE === 'redesenho-novo') {
+    testInfo.annotations.push({ type: 'mutação', description: 'redesenho-novo: a linha redesenhada volta a nascer com a animação do zero; a idade retomada DEVE reprovar' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace('if (idade > 0) li.style.animationDelay', 'if (false) li.style.animationDelay');
+      if (mutado === corpo) throw new Error('mutante redesenho-novo não aplicou: desenhar mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
+  } else if (MUTANTE === 'redesenho-falante') {
+    testInfo.annotations.push({ type: 'mutação', description: 'redesenho-falante: o log continua aria-live=polite durante o redesenho; a cláusula do leitor de tela DEVE reprovar' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace("el.log.setAttribute('aria-live', 'off');\n    const ids", '\n    const ids');
+      if (mutado === corpo) throw new Error('mutante redesenho-falante não aplicou: redesenhar mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
   } else if (MUTANTE) {
     throw new Error(`mutante desconhecido: ${MUTANTE}`);
   }
@@ -353,6 +389,7 @@ test.describe('chat de sala', () => {
       await page.locator('#chat-entrada').fill('recusada');
       await page.keyboard.press('Enter');
       await expect(page.locator('#chat-aviso')).toContainText('2 s');
+      await figura(page, 'aviso-nack');
       expect(await chatAberto(page)).toBe(false);
       await teclaChat(page, 'y');
       await expect(page.locator('#chat-entrada')).toHaveValue('recusada');
@@ -479,6 +516,53 @@ test.describe('chat de sala', () => {
       await page.evaluate(() => { window.__chatNet.espectador = false; window.__chat.aoMudarSlot({ espectador: false }); });
     });
 
+    /* A linha vive 12,6 s (style.css, chat-some). O relógio é o da animação: currentTime avança
+       a CSSAnimation e getComputedStyle lê o que a tela mostraria naquele instante. */
+    const opacidadeEm = (id, t) => page.evaluate(([id, t]) => {
+      const li = document.querySelector(`#chat-log .chat-linha[data-id="${id}"]`);
+      const anims = li.getAnimations();
+      for (const a of anims) a.currentTime = t;
+      const cs = getComputedStyle(li);
+      return { animacoes: anims.length, opacity: cs.opacity, animacao: `${cs.animationName} ${cs.animationTimingFunction} atraso ${cs.animationDelay}` };
+    }, [id, t]);
+    await test.step('reduzir movimento: a linha some por corte aos 12,6 s em vez de ficar para sempre', async () => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await entregar(page, { type: 'chat', id: 90, t: 90, ch: 'sala', aud: 'todos', h: 'STU', esp: 0, time: 'E', txt: 'sem movimento' });
+      const antes = await opacidadeEm(90, 12000);
+      expect(antes.opacity, `aos 12 s a linha ainda está inteira (${antes.animacao})`).toBe('1');
+      const fim = await opacidadeEm(90, 12650);
+      expect(fim.animacoes, 'com reduzir movimento a linha ainda tem uma animação (o corte)').toBeGreaterThan(0);
+      expect(fim.opacity, 'aos 12,65 s a linha sumiu').toBe('0');
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await entregar(page, { type: 'chat', id: 91, t: 91, ch: 'sala', aud: 'todos', h: 'STU', esp: 0, time: 'E', txt: 'com movimento' });
+      const meio = await opacidadeEm(91, 12300);
+      expect(parseFloat(meio.opacity), 'sem a preferência, aos 12,3 s a linha está no meio do fade').toBeGreaterThan(0);
+      expect(parseFloat(meio.opacity)).toBeLessThan(1);
+      expect((await opacidadeEm(91, 12650)).opacity).toBe('0');
+    });
+
+    await test.step('redesenhar não ressuscita linha: o fade continua de onde estava e o log fica mudo no redesenho', async () => {
+      await entregar(page, { type: 'chat', id: 92, t: 92, ch: 'sala', aud: 'todos', h: 'VWX', esp: 0, time: 'E', txt: 'antiga' });
+      await page.waitForTimeout(1500);
+      const r = await page.evaluate((meta) => {
+        const log = document.getElementById('chat-log');
+        const vivo = [];
+        const mo = new MutationObserver(() => vivo.push(log.getAttribute('aria-live')));
+        mo.observe(log, { attributes: true, attributeFilter: ['aria-live'] });
+        window.__chat.aoMudarMeta({ chat: meta });
+        // a idade da animação é o tempo local menos o atraso (negativo); currentTime ignora o atraso
+        return new Promise((res) => setTimeout(() => {
+          mo.disconnect();
+          const li = document.querySelector('#chat-log .chat-linha[data-id="92"]');
+          const ct = li && li.getAnimations()[0] ? li.getAnimations()[0].effect.getComputedTiming() : null;
+          res({ t: ct ? ct.localTime - ct.delay : null, vivo, fim: log.getAttribute('aria-live') });
+        }, 60));
+      }, META);
+      expect(r.t, 'a linha redesenhada retoma a animação com a idade que já tinha').toBeGreaterThanOrEqual(1400);
+      expect(r.vivo[0], 'o log fica aria-live=off enquanto é redesenhado').toBe('off');
+      expect(r.fim).toBe('polite');
+    });
+
     await test.step('destruir apaga log, rascunho e fila', async () => {
       await teclaChat(page, 'y');
       await page.locator('#chat-entrada').fill('rascunho');
@@ -521,6 +605,32 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-entrada')).toBeFocused();
       await cobrarGeometria(page, '844x390 toque', true);
       await figura(page, '844x390-toque-aberto');
+      /* Sem teclado não há Esc: o segundo toque em #chat-toque, um toque fora do painel e o
+         FECHAR do cabeçalho fecham o compositor sem enviar e sem atirar. */
+      await test.step('fechar sem teclado: #chat-toque alterna, toque fora fecha, FECHAR fecha', async () => {
+        await page.locator('#chat-toque').tap();
+        expect(await chatAberto(page), 'o segundo toque em #chat-toque fecha o compositor').toBe(false);
+        await expect(page.locator('#touch-ui')).toBeVisible();
+        await page.locator('#chat-toque').tap();
+        expect(await chatAberto(page)).toBe(true);
+        await page.touchscreen.tap(700, 300);
+        expect(await chatAberto(page), 'um toque no jogo, fora do painel, fecha o compositor').toBe(false);
+        await page.locator('#chat-toque').tap();
+        expect(await chatAberto(page)).toBe(true);
+        // o Safari do iOS não sintetiza mousedown para um toque no canvas: só o pointerdown chega ao documento
+        await page.evaluate(() => document.elementFromPoint(700, 300).dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true, cancelable: true, clientX: 700, clientY: 300 })));
+        expect(await chatAberto(page), 'pointerdown de toque fora do painel fecha (iOS sem mousedown de compatibilidade)').toBe(false);
+        await page.locator('#chat-toque').tap();
+        await expect(page.locator('#chat-fechar')).toBeVisible();
+        await page.locator('#chat-fechar').tap();
+        expect(await chatAberto(page), 'FECHAR no cabeçalho fecha o compositor').toBe(false);
+        const s = await estadoJogo(page);
+        expect(s.tiros).toBe(0);
+        expect(s.travada).toBe(false);
+        expect(await page.evaluate(() => window.__chatNet.enviados.length)).toBe(0);
+        await page.locator('#chat-toque').tap();
+        expect(await chatAberto(page)).toBe(true);
+      });
       await page.locator('#chat-entrada').fill('do toque');
       await page.locator('#chat-enviar').tap();
       expect(await page.evaluate(() => window.__chatNet.enviados.map((e) => e.txt))).toEqual(['do toque']);

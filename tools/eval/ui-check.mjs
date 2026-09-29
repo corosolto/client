@@ -375,6 +375,23 @@ function alfaScrim(_fx, _fy) {
   return 0;
 }
 
+/* CHAT DE SALA (#686): irmão do #hud, fora do recorte acima. Medido ABERTO (classe `aberto`),
+   com uma linha, o divisor e um aviso preenchido: é o estado em que todo texto dele existe ao
+   mesmo tempo; o que nasce `hidden` (ações, motivos, lista) sai do recorte. */
+function recortaChat(astroBruto) {
+  const astro = astroBruto.replace(/<!--[\s\S]*?-->/g, m => m.replace(/[^\n]/g, ' '));
+  const ini = astro.indexOf('<section id="chat-sala"');
+  if (ini < 0) return null;
+  const fim = astro.indexOf('</section>', ini) + '</section>'.length;
+  const html = astro.slice(ini, fim)
+    .replace(/^<section([^>]*)\shidden\b([^>]*)>/, '<section$1 class="aberto"$2>')
+    .replace(/<(\w+)[^>]*\shidden\b[^>]*>[\s\S]*?<\/\1>/g, '')
+    .replace(/(<ol id="chat-log"[^>]*>)/, '$1<li class="chat-divisor">Mensagens anteriores</li>'
+      + '<li class="chat-linha"><span class="chat-tag">TIME</span><bdi class="chat-quem">Anônimo #ABC</bdi><bdi class="chat-txt">oi galera</bdi></li>')
+    .replace(/(<div id="chat-aviso"[^>]*>)/, '$1Silenciado por um minuto');
+  return { html, linha0: astro.slice(0, ini).split('\n').length };
+}
+
 /** Fundo EFETIVO atrás do texto de um nó: cena pior caso -> scrim de canto -> fundos
     dos ancestrais -> fundo do próprio elemento. `contorno` some o halo do --sh-hud. */
 function fundoEfetivo(no, comp, ctx, { contorno = true } = {}) {
@@ -540,6 +557,27 @@ function ui1(ctxCss) {
       amostra: `${f.__comp['background']} sobre ${t.__comp['background']}`, razao: +r.toFixed(2), min: AA_GRAFICO, ok: r >= AA_GRAFICO - 1e-9 });
   };
   parNo('hp-fill', 'hp-bar', 'barra de vida: preenchimento × trilho');
+
+  /* ---- (e) CHAT DE SALA (#686): sem scrim nem caixa do #hud, só o fundo das próprias linhas ---- */
+  const nosChat = ctxCss.arvoreChat ? achata(ctxCss.arvoreChat) : [];
+  for (const n of nosChat) {
+    n.__comp = computa(n, regras, vars);
+    for (const p of HERDA) {
+      if (n.__comp[p] !== undefined) continue;
+      for (let a = n.pai; a; a = a.pai) if (a.__comp && a.__comp[p] !== undefined) { n.__comp[p] = a.__comp[p]; break; }
+    }
+  }
+  for (const n of nosChat) {
+    const c = n.__comp;
+    if (!n.texto || !n.texto.trim()) continue;
+    if ((c['display'] || '').includes('none')) continue;
+    const cor = parseCor(c['color']); if (!cor) continue;
+    const bg = fundoEfetivo(n, c, { caixa: null, scrim: false });
+    const r = contraste(cor, bg);
+    const min = textoGrande(c) ? AA_GRANDE : AA_TEXTO;
+    add({ tipo: 'texto', chat: true, alvo: `#chat-sala > ${n.id ? '#' + n.id : '.' + (n.cls[0] || n.tag)}`, fonte: `src/pages/index.astro:${n.linha}`,
+      amostra: `"${n.texto.slice(0, 22)}" ${c['color']}`, razao: +r.toFixed(2), min, ok: r >= min - 1e-9 });
+  }
 
   const falhas = achados.filter(a => !a.ok);
   return { nome: 'UI1', titulo: 'CONTRASTE — texto do HUD >= 4,5:1 (3:1 se grande) e objeto gráfico essencial >= 3:1',
@@ -1173,6 +1211,10 @@ const MUTACOES = {
     css: (c) => c.replace('--bg-900-rgb:9,7,4;      --bg-800-rgb:20,16,8;    --bg-700-rgb:28,24,18;',
       '--bg-900-rgb:5,8,11;     --bg-800-rgb:10,17,22;   --bg-700-rgb:16,26,33;'),
   },
+  ui1_chat_aviso_sem_fundo: {
+    portao: 'UI1', o_que: 'tira o fundo do #chat-aviso do chat de sala (#686): o aviso de nack volta a 1,03:1 sobre a areia',
+    css: (c) => c.replace(/(#chat-aviso\{[^}]*)background:rgba\(10,10,12,\.72\);padding:4px 8px;/, '$1'),
+  },
   ui1_ctf_scrim_fraco: {
     portao: 'UI1', o_que: 'volta o fundo da faixa de CTF pro .55 de antes (defeito 2 do dono)',
     css: (c) => c.replace(/(#ctf-hud\{[^}]*background:)rgba\(var\(--bg-900-rgb\),\.92\)/, '$1rgba(var(--bg-900-rgb),.55)'),
@@ -1305,6 +1347,10 @@ const arvore = parseArvore(html, linha0);
 for (const n of achata(arvore)) n.__comp = computa(n, regras, vars);
 const caixas = caixasAproximadas(regras, vars, arvore);
 const ctxCss = { regras, vars, arvore, caixas };
+{
+  const rc = recortaChat(readFileSync(ASTRO_PATH, 'utf8'));
+  if (rc) { ctxCss.arvoreChat = parseArvore(rc.html, rc.linha0); ctxCss.arvoreChat.__comp = arvore.__comp; }
+}
 ARVORE_HUD = arvore;
 
 const res = [];
@@ -1329,6 +1375,9 @@ for (const r of res) {
     for (const a of ord.slice(0, 14))
       console.log(`   ${a.ok ? '·' : '✗'} ${String(a.razao).padStart(6)}:1 (min ${a.min})  ${a.alvo}  [${a.tipo}]  ${a.fonte}`);
     console.log(`   ${r.achados.length} itens medidos, ${r.falhas.length} abaixo do mínimo`);
+    const chat = r.achados.filter(a => a.chat);
+    if (chat.length) console.log(`   chat de sala (#686), ${chat.length} textos, ${chat.filter(a => !a.ok).length} abaixo do mínimo:`);
+    for (const a of chat) console.log(`   ${a.ok ? '·' : '✗'} ${String(a.razao).padStart(6)}:1 (min ${a.min})  ${a.alvo}  ${a.amostra}`);
   } else if (r.nome === 'UI3') {
     for (const a of r.achados) {
       if (a.probe) { console.log(`   ${a.ok ? '·' : '✗'} PROBE ${a.alvo.slice(6).padEnd(24)} = ${a.medido === null ? 'NÃO RESOLVE' : a.medido + 'px'} (esperado ${a.esperado}px)`); continue; }

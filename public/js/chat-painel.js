@@ -46,13 +46,16 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     acoesCancelar: $('chat-acoes-cancelar'), motivos: $('chat-motivos'), motivosLista: $('chat-motivos-lista'),
     motivosCancelar: $('chat-motivos-cancelar'), lista: $('chat-lista-bloqueados'), listaUl: $('chat-lista-bloqueados-ul'),
     listaFechar: $('chat-lista-fechar'), aviso: $('chat-aviso'), bloquearTambem: $('chat-bloquear-tambem'),
-    toque: $('chat-toque'), atalho: $('hud-atalho-chat'),
+    toque: $('chat-toque'), atalho: $('hud-atalho-chat'), fechar: $('chat-fechar'),
   };
   let st = storage;
   if (st === undefined) { try { st = window.sessionStorage; } catch { st = null; } }
   const estado = new ChatEstado({ convite, meta: net.meta, storage: st });
   let aberto = false, oculto = false, naoLidas = 0, canal = 'sala', focoAntes = null, linhaAcoes = null, ultimaDenuncia = null, avisoT = null;
   const pendentes = new Map();
+  // quando cada linha foi desenhada pela primeira vez: o redesenho retoma o fade de onde estava
+  const vistas = new Map();
+  const agora = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
   const jogo = () => { try { return obterJogo(); } catch { return null; } };
   const espectador = () => !!(net.espectador || net.yourEnt == null);
   const eu = () => estado.eu?.h || '';
@@ -66,14 +69,20 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
       marcaTime: msg.ch === 'time' ? frase('chatCanal', 'time') : '',
     });
     li.setAttribute('aria-label', `${rotuloDe(msg, frase('chatAnonimo'))}: ${msg.txt}`);
+    retomarIdade(li, String(msg.id));
     if (antesDe) el.log.insertBefore(li, antesDe);
     else if (noInicio) el.log.insertBefore(li, el.log.firstChild);
     else el.log.appendChild(li);
     return li;
   }
+  function retomarIdade(li, chave) {
+    if (!vistas.has(chave)) vistas.set(chave, agora());
+    const idade = agora() - vistas.get(chave);
+    if (idade > 0) li.style.animationDelay = `-${Math.round(idade)}ms`;
+  }
   function podar() {
     const todas = linhas();
-    for (let i = 0; i < todas.length - CHAT_LIMITES.logClienteMaxLinhas; i++) todas[i].remove();
+    for (let i = 0; i < todas.length - CHAT_LIMITES.logClienteMaxLinhas; i++) { vistas.delete(todas[i].dataset.id); todas[i].remove(); }
   }
   function divisor() {
     let d = el.log.querySelector('.chat-divisor');
@@ -82,6 +91,7 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     d.className = 'chat-divisor';
     d.setAttribute('role', 'separator');
     d.textContent = tr('Mensagens anteriores');
+    retomarIdade(d, 'divisor');
     el.log.insertBefore(d, el.log.firstChild);
     return d;
   }
@@ -89,13 +99,19 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     if (typeof el.log.scrollTo === 'function') el.log.scrollTo({ top: el.log.scrollHeight });
     else el.log.scrollTop = el.log.scrollHeight;
   }
+  /* Troca de partida e bloqueio reconstroem o log: nada aqui é novidade para o leitor de tela
+     (aria-live off até o próximo tique) e cada linha volta com a idade que já tinha. */
   function redesenhar() {
+    el.log.setAttribute('aria-live', 'off');
+    const ids = new Set(estado.linhas.map((l) => String(l.id)));
+    for (const chave of [...vistas.keys()]) if (chave !== 'divisor' && !ids.has(chave)) vistas.delete(chave);
     esvaziar(el.log);
     const visiveis = estado.linhasVisiveis();
     const hist = visiveis.filter((l) => l.hist), vivas = visiveis.filter((l) => !l.hist);
     if (hist.length) { divisor(); for (const m of hist) desenhar(m); }
     for (const m of vivas) desenhar(m);
     rolar();
+    setTimeout(() => el.log.setAttribute('aria-live', oculto ? 'off' : 'polite'), 0);
   }
   function receberHist(list) {
     el.log.setAttribute('aria-busy', 'true');
@@ -339,12 +355,15 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
   };
   const onSubmit = (e) => { e.preventDefault(); enviar(); };
   const onMotivos = (e) => { e.preventDefault(); denunciar(); };
-  const onDocMouseDown = (e) => {
+  // pointerdown e não mousedown: o Safari do iOS não sintetiza mousedown para um toque no canvas
+  const onDocPointerDown = (e) => {
     if (!aberto) return;
     const t = e.target;
     if (sec.contains(t) || (el.toque && (t === el.toque || el.toque.contains(t)))) return;
     fechar();
   };
+  const onToque = () => { if (aberto) fechar(); else abrir('sala'); };
+  const onFechar = () => fechar();
   const onOcultar = () => {
     oculto = !oculto;
     el.ocultar.setAttribute('aria-pressed', String(oculto));
@@ -390,8 +409,9 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
   el.acoesCancelar.addEventListener('click', () => fecharAcoes());
   el.motivosCancelar.addEventListener('click', () => fecharAcoes());
   el.canal.addEventListener('click', onCanal);
-  if (el.toque) el.toque.addEventListener('click', () => abrir('sala'));
-  document.addEventListener('mousedown', onDocMouseDown);
+  if (el.toque) el.toque.addEventListener('click', onToque);
+  if (el.fechar) el.fechar.addEventListener('click', onFechar);
+  document.addEventListener('pointerdown', onDocPointerDown);
   if (vv) { vv.addEventListener('resize', ajustarViewport); vv.addEventListener('scroll', ajustarViewport); }
 
   net.onChat = receber;
@@ -408,6 +428,7 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     estado.aoMudarMeta(null);
     pendentes.clear();
     esvaziar(el.log);
+    vistas.clear();
     el.entrada.value = '';
     aviso('');
     oculto = false; naoLidas = 0; ultimaDenuncia = null;
@@ -430,7 +451,9 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     el.bloquear.removeEventListener('click', onBloquear);
     el.denunciar.removeEventListener('click', onDenunciar);
     el.canal.removeEventListener('click', onCanal);
-    document.removeEventListener('mousedown', onDocMouseDown);
+    if (el.toque) el.toque.removeEventListener('click', onToque);
+    if (el.fechar) el.fechar.removeEventListener('click', onFechar);
+    document.removeEventListener('pointerdown', onDocPointerDown);
     if (vv) { vv.removeEventListener('resize', ajustarViewport); vv.removeEventListener('scroll', ajustarViewport); }
   }
 

@@ -308,6 +308,15 @@ Procedência dos valores:
 - **Outra sala:** o cliente cria um `NetClient` novo, um controlador novo e o log vazio. O
   buffer e o segredo são por sala, então **nada atravessa de uma sala para outra**, nem
   texto nem handle.
+- **Fechar o compositor sem enviar:** Esc, o botão FECHAR do cabeçalho, um clique ou toque
+  fora do painel (`pointerdown` no documento, porque o Safari do iOS não sintetiza
+  `mousedown` para um toque no canvas) e, no toque, o segundo toque em `#chat-toque`.
+  Nenhum desses caminhos envia nem atira (`_chatSeguraPausa`, 400 ms).
+- **Idade das linhas:** com o painel fechado a linha vive 12,6 s e some (fade linear; com
+  `prefers-reduced-motion` o mesmo tempo, mas por corte, sem transição). Um redesenho do log
+  (troca de partida, bloqueio, desbloqueio) recria as linhas com a idade que já tinham
+  (`animation-delay` negativo) e com `aria-live` desligado até o próximo tique, para nada
+  antigo voltar como novidade na tela nem no leitor de tela.
 
 ## 8. Bloqueio e denúncia
 
@@ -396,7 +405,8 @@ vermelha (lei 3). A saída vermelha vai para o corpo do PR.
 | Régua | O que tranca | Mutantes |
 |---|---|---|
 | `tools/eval/chat-check.mjs` (`eval:chat`, no `check:fast`) | vetores do §3; `NetClient` inerte sem meta e depois de `partida` sem meta, e só `tp.enviar`; guardas do jogo (tecla em input não vira tecla, `_md` não atira, `_plc` não pausa, Y/U abrem, `_acceptInput` falso, sticks zerados, e o clique nos 400 ms depois de fechar o compositor não atira: com pointer lock ele tem o canvas como alvo); `ChatEstado`; `montarLinha` com setter de `innerHTML` que lança; `sala/[codigo].astro` e sitemap sem chat; `chat-painel.js` sem `innerHTML`; `game.js` não importa chat; a tabela do §6 igual a `CHAT_LIMITES` | `trava-inerte`, `plc-antigo`, `clique-pos-chat`, `chat-inseguro`, `chat-sem-meta`, `sem-bidi`, `innerhtml`, `sem-nfkc`, `bloqueio-proprio`, `tabela-torta` |
-| `tests/smoke/chat-sala.spec.js` (Playwright, `smoke-web.yml`) | ARIA, Y/Enter/Esc, prisão de foco (e devolução do foco ao jogo depois de denunciar e fechar), IME, XSS e RTL, geometria contra `ZONA_MIRA` e `#crosshair` em 1600×900, 1500×1000, 1008×655, 844×390 (toque) e 390×844 (retrato) | `painel-largo`, `innerhtml`, `foco-preso` (via `page.route`) |
+| `tests/smoke/chat-sala.spec.js` (Playwright, `smoke-web.yml`) | ARIA, Y/Enter/Esc, prisão de foco (e devolução do foco ao jogo depois de denunciar e fechar), IME, XSS e RTL, geometria contra `ZONA_MIRA` e `#crosshair` em 1600×900, 1500×1000, 1008×655, 844×390 (toque) e 390×844 (retrato); com `prefers-reduced-motion` a linha some por corte aos 12,6 s; o redesenho retoma a idade da linha e cala o `aria-live`; no toque o compositor fecha sem teclado (segundo toque em `#chat-toque`, toque fora por `pointerdown`, FECHAR) sem enviar nem atirar | `painel-largo`, `innerhtml`, `foco-preso`, `so-mousedown`, `reduzido-eterno`, `redesenho-novo`, `redesenho-falante` (via `page.route`) |
+| `tools/eval/ui-check.mjs` (`eval:ui`, UI1) | contraste dos textos do `#chat-sala` aberto, com linha, divisor e aviso de nack preenchido, sobre a areia do Piscinão: tudo >= 4,5:1 | `ui1_chat_aviso_sem_fundo` |
 | `tools/eval/chat-mp-browser.mjs` (`eval:chat-mp`, manual) | nó local com `MP_CHAT=1` (`--backend=<clone>`) e três navegadores separados (A no time E, B no time B em toque, S espectador): CE0 a CE10 do plano, frames gravados por `page.on('websocket')`, figuras JPEG em 5 viewports abertas e descritas (lei 4); `--tickets` sobe o nó com ticket obrigatório e prova o `nk` verificado e o `chat_hist` na reconexão | nenhum; é integração (foi ela que achou o foco preso e o clique que atirava ao fechar) |
 
 **Backend** (`corosolto/backend`):
