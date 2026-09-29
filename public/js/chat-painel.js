@@ -203,7 +203,10 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
   function devolverFoco() {
     const f = focoAntes;
     focoAntes = null;
-    if (f && f !== document.body && f.isConnected && typeof f.focus === 'function') f.focus();
+    const ativo = document.activeElement;
+    if (f && f !== document.body && f.isConnected && !sec.contains(f) && typeof f.focus === 'function') f.focus();
+    // foco preso numa linha do painel fechado faz entradaPropria() engolir toda tecla do jogo
+    else if (ativo && sec.contains(ativo) && typeof ativo.blur === 'function') ativo.blur();
     else if (typeof el.entrada.blur === 'function') el.entrada.blur();
   }
   function prender(e) {

@@ -63,6 +63,15 @@ async function aplicarMutante(page, testInfo) {
       if (mutado === corpo) throw new Error('mutante innerhtml não aplicou: montarLinha mudou de forma');
       await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
     });
+  } else if (MUTANTE === 'foco-preso') {
+    testInfo.annotations.push({ type: 'mutação', description: 'foco-preso: devolverFoco não tira o foco de uma linha do painel; depois de denunciar e fechar, Y e W DEVEM reprovar' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace('else if (ativo && sec.contains(ativo)', 'else if (false && sec.contains(ativo)');
+      if (mutado === corpo) throw new Error('mutante foco-preso não aplicou: devolverFoco mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
   } else if (MUTANTE) {
     throw new Error(`mutante desconhecido: ${MUTANTE}`);
   }
@@ -416,6 +425,28 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-bloquear-tambem')).toBeVisible();
       await page.locator('#chat-bloquear-tambem').click();
       await expect(page.locator('#chat-log .chat-linha[data-id="3"]')).toHaveCount(0);
+      await page.keyboard.press('Escape');
+    });
+
+    /* Depois da denúncia o foco volta para a linha denunciada (fecharAcoes). Fechar com Esc
+       nesse estado deixava o foco preso numa linha do painel, e entradaPropria() em game.js
+       engolia toda tecla: nem Y reabria, nem W andava (achado pelo eval:chat-mp, CE5). */
+    await test.step('depois de denunciar, Esc devolve o foco ao jogo: W anda e Y reabre', async () => {
+      await teclaChat(page, 'y');
+      await page.locator('#chat-log .chat-linha[data-id="4"]').click();
+      await page.locator('#chat-denunciar').click();
+      await page.locator('#chat-motivos input[value="ofensa"]').check();
+      await page.locator('#chat-motivos-enviar').click();
+      await expect(page.locator('#chat-aviso')).toHaveText(/recebida/i);
+      expect(await page.evaluate(() => document.activeElement?.classList.contains('chat-linha'))).toBe(true);
+      await page.keyboard.press('Escape');
+      expect(await chatAberto(page)).toBe(false);
+      expect(await page.evaluate(() => document.getElementById('chat-sala').contains(document.activeElement)), 'o foco não pode ficar preso numa linha do painel fechado').toBe(false);
+      await page.keyboard.down('w');
+      expect((await estadoJogo(page)).keys.KeyW, 'W precisa chegar ao jogo com o chat fechado').toBeTruthy();
+      await page.keyboard.up('w');
+      await teclaChat(page, 'y');
+      expect(await chatAberto(page)).toBe(true);
       await page.keyboard.press('Escape');
     });
 
