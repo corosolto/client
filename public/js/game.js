@@ -4346,9 +4346,8 @@ export class Game {
     if (l) { l.position.copy(pos).addScaledVector(d, 0.12); l.intensity = 18 * ((this._fxTune && this._fxTune.light) ?? 1) * (PUNCH ? 1.35 : 1); this._mzLightActive.push({ l, t: 0, life: 0.05 }); }
     // BUG-84: tiros alheios não acionam a luz exclusiva da arma em primeira pessoa.
     if (fpCls && this._vmFlash) { this._vmFlash.t = 0; if (this._vmFlashLight) this._vmFlashLight.intensity = this._vmFlash.peak * ((this._fxTune && this._fxTune.light) ?? 1); }
-    // faíscas 3D (partículas com velocidade, encolhendo). No tiro do PRÓPRIO jogador a
-    // boca fica a ~0.35m da lente — velocidade/tamanho reduzidos pra não virar um blob
-    // flutuante deslocado do cano (crítico R7.6).
+    // faíscas 3D; no tiro do PRÓPRIO jogador a boca fica a ~0.35m da lente, então
+    // velocidade/tamanho reduzidos pra não virar blob deslocado do cano (crítico R7.6).
     const sparkMul = fpCls ? 0.35 : 1;
     for (let i = 0; i < Math.round(5 * ((this._fxTune && this._fxTune.spark) ?? 1)); i++) {
       const v = d.clone().multiplyScalar((6 + Math.random() * 7) * sparkMul).add(new THREE.Vector3((Math.random() - 0.5) * 4.5 * sparkMul, (Math.random() - 0.5) * 4.5 * sparkMul, (Math.random() - 0.5) * 4.5 * sparkMul));
