@@ -400,8 +400,9 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
 
   function destruir() {
     if (net.onChat === receber) net.onChat = null;
-    fechar({ semJogo: true });
+    fechar();
     estado.limpar();
+    estado.aoMudarMeta(null);
     pendentes.clear();
     esvaziar(el.log);
     el.entrada.value = '';
