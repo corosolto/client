@@ -1081,10 +1081,10 @@ export class Game {
       this._vmFlashLight.position.set(0.1, -0.06, -0.75);   // boca do cano em view space (pose GAUNTLET 2.0)
       this.vmScene.add(this._vmFlashLight);
       this._vmFlash = { t: 1, life: 0.045, peak: 1.6 };
-      // Clarão dos tiros por opção do jogador; faíscas e fumaça ficam de fora (BUG-174).
-      // Fatores medidos no dev.html. Régua: eval:fxFlash.
+      // Clarão dos tiros por opção do jogador; faíscas ficam de fora (BUG-174; a
+      // fumaça do cano saiu de vez no BUG-185). Fatores medidos no dev.html. Régua: eval:fxFlash.
       const _fx = FX_CLARAO[this.settings.fxFlash] ?? 1;
-      this._fxTune = { light: _fx, flash: _fx, spark: 1, smoke: 1 };   // multiplicadores de FX (dev.html game-backed)
+      this._fxTune = { light: _fx, flash: _fx, spark: 1 };   // multiplicadores de FX (dev.html game-backed); BUG-185: fumaça do cano removida
     }
     this.scene.userData.vmPass = { scene: this.vmScene, camera: this.vmCamera };
     // Faca melee autossuficiente (piloto knife-hires, BUG-75 M8): o módulo já
@@ -1144,13 +1144,8 @@ export class Game {
     // share another (soft smoke) — 1 draw call each, zero per-shot allocation (ring buffer).
     this.flashFx = new GPUParticles(this.scene, this.camera, { tex: this.flashTex, additive: true });
     this.puffFx = new GPUParticles(this.scene, this.camera, { tex: this.puffTex, additive: false });
-    // Fumaça do cano: sistema CINZA dedicado, que em quality:'low' NÃO pode cair no puffFx
-    // bege - é justamente na máquina fraca que ela precisa aparecer. Ver docs/RIG-PEGA-ARMA.md.
-    this._muzzleSmokeFx = new GPUParticles(this.scene, this.camera, { tex: this._makeSmokeTex(), additive: false, max: 64 });
-    if (this.puffFx && this.puffFx.uniforms) {
-      this._muzzleSmokeFx.uniforms.uTime = this.puffFx.uniforms.uTime;
-      this._muzzleSmokeFx.uniforms.uScale = this.puffFx.uniforms.uScale;
-    }
+    // BUG-185 (29/09, decisão do dono): tiro não solta fumaça — só clarão, faíscas e
+    // tracer, como Valorant/CS. A fumaça de granada (_popSmoke) continua existindo.
     // Muzzle flash (R7.5): 2 SPRITES additivos por tiro — estrela irregular com ruído +
     // núcleo branco-quente — compactos (0.35-0.5m), na boca do VM (baixo-direita), vida
     // ≤3 frames (~50ms). Era um cone de 8 segmentos + icosaedro escalado até 1.4 spawnado
@@ -4351,26 +4346,13 @@ export class Game {
     if (l) { l.position.copy(pos).addScaledVector(d, 0.12); l.intensity = 18 * ((this._fxTune && this._fxTune.light) ?? 1) * (PUNCH ? 1.35 : 1); this._mzLightActive.push({ l, t: 0, life: 0.05 }); }
     // BUG-84: tiros alheios não acionam a luz exclusiva da arma em primeira pessoa.
     if (fpCls && this._vmFlash) { this._vmFlash.t = 0; if (this._vmFlashLight) this._vmFlashLight.intensity = this._vmFlash.peak * ((this._fxTune && this._fxTune.light) ?? 1); }
-    // faíscas 3D (partículas com velocidade, encolhendo) + fumacinha. No tiro do PRÓPRIO
-    // jogador a boca fica a ~0.35m da lente — velocidade/tamanho reduzidos pra não virar um
-    // blob flutuante deslocado do cano (crítico R7.6).
+    // faíscas 3D (partículas com velocidade, encolhendo). No tiro do PRÓPRIO jogador a
+    // boca fica a ~0.35m da lente — velocidade/tamanho reduzidos pra não virar um blob
+    // flutuante deslocado do cano (crítico R7.6).
     const sparkMul = fpCls ? 0.35 : 1;
     for (let i = 0; i < Math.round(5 * ((this._fxTune && this._fxTune.spark) ?? 1)); i++) {
       const v = d.clone().multiplyScalar((6 + Math.random() * 7) * sparkMul).add(new THREE.Vector3((Math.random() - 0.5) * 4.5 * sparkMul, (Math.random() - 0.5) * 4.5 * sparkMul, (Math.random() - 0.5) * 4.5 * sparkMul));
       this.flashFx.spawn(pos, { vel: v, life: 0.06 + Math.random() * 0.05, size: fpCls ? 0.07 : 0.11, grow: -0.4 });
-    }
-    this.puffFx.spawn(pos.clone().addScaledVector(d, 0.18), { vel: d.clone().multiplyScalar(1.2), life: 0.3, size: fpCls ? 0.16 : 0.28, grow: 0.9 });
-    // fumaça do cano: 2-3 baforadas lentas subindo/à frente, vida longa, crescendo. Menor e mais
-    // perto na 1ª pessoa (fpCls) pra não virar blob colado na lente (mesmo cuidado das faíscas, R7.6).
-    const smokeN = fpCls ? 3 : 4;
-    const smokeSize = fpCls ? 0.2 : 0.32;
-    const smU = new THREE.Vector3(0, 1, 0);
-    for (let i = 0; i < Math.round(smokeN * ((this._fxTune && this._fxTune.smoke) ?? 1)); i++) {
-      const sv = d.clone().multiplyScalar(0.6 + Math.random() * 0.5)
-        .addScaledVector(smU, 0.5 + Math.random() * 0.4)
-        .add(new THREE.Vector3((Math.random() - 0.5) * 0.5, 0, (Math.random() - 0.5) * 0.5));
-      this._muzzleSmokeFx.spawn(pos.clone().addScaledVector(d, 0.10 + Math.random() * 0.1),
-        { vel: sv, life: 0.45 + Math.random() * 0.35, size: smokeSize, grow: 1.6 });
     }
   }
   // Boca do cano em WORLD SPACE no instante do tiro: offset local da classe transformada
@@ -4608,8 +4590,10 @@ export class Game {
 
   _makeSmokeTex() {
     const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+    // núcleo denso até 0,8 do raio (BUG-186): a granada tem que LER como corpo de fumaça
+    // (CS/Valorant), não como véu que dissolve no fundo claro.
     const g = x.createRadialGradient(64, 64, 4, 64, 64, 64);
-    g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(0.5, 'rgba(220,222,226,0.6)'); g.addColorStop(1, 'rgba(210,212,216,0)');
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.8, 'rgba(232,234,238,0.85)'); g.addColorStop(1, 'rgba(210,212,216,0)');
     x.fillStyle = g; x.beginPath(); x.arc(64, 64, 64, 0, 6.29); x.fill();
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
@@ -4717,10 +4701,11 @@ export class Game {
     // medido igual — a régua tem que valer nos 5, inclusive no que não tem névoa.
     const ceu = skyRadiance(this._mapId);
     const ov = parseFloat(QS.get('smokealb'));
-    // 0,75: albedo de plumas de fumaça branca em espalhamento múltiplo. Abaixo de 1 por
-    // construção — é o que garante FOG1 sem depender da exposição de cada mapa.
     const alb = isFinite(ov) ? ov : 0.75;
-    this._smokeCol = ceu.multiplyScalar(alb);
+    // BUG-186: cinza neutro com a MESMA luminância (FOG1 intacta) — tingida de céu, a
+    // nuvem lia como névoa do horizonte e sumia no fundo.
+    const l = (0.2126 * ceu.r + 0.7152 * ceu.g + 0.0722 * ceu.b) * alb;
+    this._smokeCol = ceu.setRGB(l, l, l);
     return this._smokeCol;
   }
 
@@ -4729,20 +4714,22 @@ export class Game {
     this.sfx.smokePop(spatial.vol, spatial.pan, spatial.delay);
     const R = 2.6;
     const group = new THREE.Group();
-    group.position.set(pos.x, Math.max(0.5, pos.y), pos.z);
+    group.position.set(pos.x, Math.max(0.1, pos.y), pos.z);
     const sprites = [];
     const cor = this._corDaFumaca();
-    for (let i = 0; i < 18; i++) {
+    // BUG-186: domo ACIMA do chão. Com centros em 0-2,6 m metade de cada sprite ficava
+    // enterrada e a nuvem virava uma faixa rente ao piso.
+    for (let i = 0; i < 24; i++) {
       const mat = new THREE.SpriteMaterial({ map: this._smokeTex, color: cor, transparent: true, opacity: 0, depthWrite: false });
       const sp = new THREE.Sprite(mat);
-      const a = Math.random() * 6.28, r = Math.random() * R, h = (Math.random() - 0.2) * R;
+      const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * R, h = 1.4 + Math.random() * 1.6 - r * 0.3;
       sp.position.set(Math.cos(a) * r, h, Math.sin(a) * r);
       sp.scale.setScalar(3 + Math.random() * 2.2);
-      sp.userData = { baseOp: 0.7 + Math.random() * 0.3 };
+      sp.userData = { baseOp: 0.85 + Math.random() * 0.15 };
       group.add(sp); sprites.push(sp);
     }
     this.scene.add(group);
-    this._smokes.push({ center: group.position.clone(), radius: R + 1.4, born: this.time, dur: 13, group, sprites, _opaque: false });
+    this._smokes.push({ center: group.position.clone().setY(group.position.y + 1.5), radius: R + 1.4, born: this.time, dur: 13, group, sprites, _opaque: false });
   }
 
   _updateGrenades(dt) {
