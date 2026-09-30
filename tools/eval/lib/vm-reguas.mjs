@@ -148,7 +148,8 @@ export async function coletar(page, arma, { reguas, mut = null, fotos = '', vari
     await aplicar('ads');
     const m = await P.mascara(page, arma, { profundidade: quer('mira') });
     c.ads = { ...A.silhueta(m), scoped: est.scoped, adsF: est.ads,
-      estilo: (variante?.[arma]?.ads?.estilo || (FABRICA_NA_REGUA && soFabrica(arma) ? VM_FABRICA[arma] : VM_WEAPON[arma])?.ads?.estilo) || 'alca',
+      // A AK golden continua na rota autorada mesmo com vmfabrica=1.
+      estilo: (variante?.[arma]?.ads?.estilo || (FABRICA_NA_REGUA && soFabrica(arma) && !VM_WEAPON[arma]?.golden ? VM_FABRICA[arma] : VM_WEAPON[arma])?.ads?.estilo) || 'alca',
       cruz: pixelsNaCruz(m),
       janelaAlta: A.ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.45, y1: 0.55 }),
       janelaBaixa: A.ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.50, y1: 0.65 }),
@@ -307,7 +308,7 @@ export const JUIZ = {
     if (c.ads?.estilo === 'foco') {
       if (!c.ads.areaArma) return NM('foco sem arma visível');
       return c.ads.cruz ? R(`${c.ads.cruz} px`, `retículo encoberto por ${c.ads.cruz} px no foco`)
-        : V('0 px', 'foco com retículo livre; tiro e cruz usam a câmera');
+        : V('0 px', 'foco com retículo livre; cruz indica o eixo de disparo');
     }
     const m = c.mira;
     if (!m) return NM('não coletado');

@@ -230,6 +230,22 @@ console.log('\n· casamento de ids (quem é amigo, quem é inimigo)');
   const env = net.enviados[0];
   cobra(!!env && env.az === -1, 'o input do jogador é enviado ao servidor');
   cobra(Number.isFinite(env.px) && Number.isFinite(env.rt), 'vai junto a posição PREDITA e o tempo renderizado (origem do tiro + lag comp)');
+  // A câmera FP usa pitch+punch; o nó precisa receber o mesmo eixo do tiro.
+  const recDesc = Object.getOwnPropertyDescriptor(g.player, 'recoilP');
+  const [pitch0, yaw0, cam0, down0] = [g.player.pitch, g.player.yaw, g.camView, g.mouseDown0];
+  Object.defineProperty(g.player, 'recoilP', { configurable: true, get: () => 0.07 });
+  g.player.pitch = 0.21; g.player.yaw = 0.31; g.mouseDown0 = true;
+  g.camView = 'first'; net.enviados.length = 0;
+  g._mp.stepPlayer(g.player, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
+  cobra(Math.abs(net.enviados[0].pitch - 0.28) < 1e-9 && Math.abs(net.enviados[0].yaw - 0.31) < 1e-9,
+    'tiro FP envia ao nó o pitch visível com punch');
+  g.camView = 'shoulder'; net.enviados.length = 0;
+  g._mp.stepPlayer(g.player, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
+  cobra(Math.abs(net.enviados[0].pitch - 0.21) < 1e-9,
+    'tiro de ombro envia o eixo do olho sem punch de câmera FP');
+  if (recDesc) Object.defineProperty(g.player, 'recoilP', recDesc);
+  else delete g.player.recoilP;
+  g.player.pitch = pitch0; g.player.yaw = yaw0; g.camView = cam0; g.mouseDown0 = down0;
   // adiantamento NORMAL da predição (< 2,5 m) não pode teleportar: seria rubber-band
   g.player.pos.set(0, 0, 0);
   g._mp._srvHas = 1; g._mp._srvX = 1.5; g._mp._srvY = 0; g._mp._srvZ = 0;
@@ -1240,6 +1256,42 @@ console.log('\n· faca no online: quem aplica o dano é o servidor');
   g2._meleeHit();
   cobra(chamou2 === 1, `offline: a faca continua aplicando dano no cliente (${chamou2} chamada)`);
   g.dispose(); g2.dispose();
+}
+
+console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
+{
+  const net = fakeNet(1, 5, false, 30);
+  const samples = [];
+  net.sendClientStats = (sample) => samples.push(sample);
+  const g = montaJogo(net);
+  const mp = g._mp;
+  const hiddenBefore = Object.getOwnPropertyDescriptor(document, 'hidden');
+  Object.defineProperty(document, 'hidden', { configurable: true, writable: true, value: true });
+  g._rafFrames = 100;
+  mp._reconcileWindow.push(0.7);
+  mp._nsT0 = performance.now() - 1000;
+  mp._nsF0 = 40;
+  mp._nextClientStats = 0;
+  mp.updateStats();
+  cobra(samples.length === 0, 'aba oculta não envia FPS, RTT e gap como se houvesse jogo visível');
+  cobra(mp._reconcileWindow.length === 0, 'correção da aba oculta não contamina a próxima janela');
+  document.hidden = false;
+  g.paused = true;
+  mp._nextClientStats = 0;
+  mp.updateStats();
+  cobra(samples.length === 0, 'menu de pausa não entra na qualidade de jogabilidade');
+  g.paused = false;
+  mp.updateStats();
+  cobra(samples.length === 0, 'retorno ao jogo aguarda janela nova antes de medir');
+  g._rafFrames += 60;
+  mp._nsT0 = performance.now() - 1000;
+  mp._nsF0 = g._rafFrames - 60;
+  mp._nextClientStats = 0;
+  mp.updateStats();
+  cobra(samples.length === 1 && samples[0].fps > 0, 'jogo visível volta a enviar telemetria após aquecer');
+  if (hiddenBefore) Object.defineProperty(document, 'hidden', hiddenBefore);
+  else delete document.hidden;
+  g.dispose();
 }
 
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
