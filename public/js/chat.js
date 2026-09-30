@@ -52,7 +52,10 @@ const CONTROLE_RE = /^[\p{Cc}\p{Cf}]$/u;
 const INVISIVEIS_RE = /^[\p{Co}\p{Cs}\u{34F}\u{115F}\u{1160}\u{3164}\u{FFA0}\u{2800}]$/u;
 const MARCA_RE = /^\p{M}$/u;
 const ZWJ = '\u{200D}';
+const TOM_DE_PELE_RE = /^[\u{1F3FB}-\u{1F3FF}]$/u;
 const ehSeletorVariante = (c) => c === '\u{FE0E}' || c === '\u{FE0F}';
+// o ZWJ de emoji composto vem depois do seletor (❤️‍🔥) ou do tom de pele (👨🏽‍💻), não só do pictograma
+const seguraZwj = (c) => PICTO.test(c) || ehSeletorVariante(c) || TOM_DE_PELE_RE.test(c);
 
 export const contarChars = (s) => Array.from(s).length;
 export const chaveTexto = (s) => s.toLowerCase().replace(/[\s\p{P}]/gu, '');
@@ -69,10 +72,11 @@ export function normalizarTexto(txt) {
   let marcas = 0;
   for (let i = 0; i < cps.length; i++) {
     const c = cps[i];
+    const anterior = saida.length ? saida[saida.length - 1] : '';
     if (c === ZWJ) {
-      if (!(i > 0 && i + 1 < cps.length && PICTO.test(cps[i - 1]) && PICTO.test(cps[i + 1]))) continue;
+      if (!(i + 1 < cps.length && seguraZwj(anterior) && PICTO.test(cps[i + 1]))) continue;
     } else if (CONTROLE_RE.test(c) || INVISIVEIS_RE.test(c)) continue;
-    if (ehSeletorVariante(c) && !PICTO.test(saida.length ? saida[saida.length - 1] : '')) continue;
+    if (ehSeletorVariante(c) && !PICTO.test(anterior)) continue;
     if (MARCA_RE.test(c)) { if (++marcas > CHAT_LIMITES.maxMarcas) continue; }
     else marcas = 0;
     saida.push(c);

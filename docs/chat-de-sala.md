@@ -98,8 +98,11 @@ A mesma função nos dois repositórios (`normalizarTexto`), na mesma ordem:
 1. Recusa o que não for string (`invalida`) e texto cru acima de 640 unidades UTF-16 (`longa`).
 2. Aplica `NFKC`.
 3. Troca `[\t\n\r\f\v\u0085   ]` e `\p{Zs}` por espaço.
-4. Remove `\p{Cc}` e `\p{Cf}`. A única exceção é U+200D (ZWJ) entre dois
-   `\p{Extended_Pictographic}`, para não quebrar emoji composto.
+4. Remove `\p{Cc}` e `\p{Cf}`. A única exceção é U+200D (ZWJ) quando o último code point
+   MANTIDO é `\p{Extended_Pictographic}`, seletor de variante (U+FE0E, U+FE0F) ou modificador
+   de tom de pele (U+1F3FB a U+1F3FF) e o próximo code point original é
+   `\p{Extended_Pictographic}`, para não quebrar emoji composto: o ZWJ de ❤️‍🔥, 🏳️‍🌈 e
+   👨🏽‍💻 vem depois do seletor ou do tom de pele, não do pictograma.
 5. Remove `\p{Co}`, `\p{Cs}`, U+034F, os preenchimentos Hangul (U+115F, U+1160, U+3164,
    U+FFA0) e U+2800.
 6. Mantém U+FE0E e U+FE0F só quando vêm logo depois de pictograma.
@@ -110,6 +113,8 @@ A mesma função nos dois repositórios (`normalizarTexto`), na mesma ordem:
 Os passos 4 a 7 rodam numa passagem única sobre os code points do texto que saiu do passo 3,
 decidindo por code point original: nunca se re-escaneia a string já filtrada. Um replace
 encadeado juntaria dois surrogates soltos ao tirar o Cf entre eles, e o passo 5 já não os veria.
+Só o ZWJ (passo 4) e o seletor de variante (passo 6) olham para trás no que já foi MANTIDO,
+porque o que os precede pode ter caído no passo 5; para a frente o ZWJ olha o code point original.
 Nunca usar `\p{Cn}`: depende da versão do ICU do runtime e faria navegador e nó discordarem
 sobre o mesmo texto. A chave de repetição é `chaveTexto(s) = s.toLowerCase().replace(/[\s\p{P}]/gu, '')`
 sobre o texto já normalizado.
@@ -124,6 +129,11 @@ sobre o texto já normalizado.
 | `"ㅤ"` (preenchimento Hangul) | recusado como `vazia` |
 | `"\u{1F468}‍\u{1F469}‍\u{1F467}"` (família com ZWJ) | mantida igual |
 | `"a‍b"` | `ab` |
+| `"\u{2764}\u{FE0F}\u{200D}\u{1F525}"` (coração em chamas, ZWJ depois de U+FE0F) | mantido igual |
+| `"\u{1F3F3}\u{FE0F}\u{200D}\u{1F308}"` (bandeira do arco-íris) | mantida igual |
+| `"\u{1F468}\u{1F3FD}\u{200D}\u{1F4BB}"` (tecnólogo com tom de pele, ZWJ depois de U+1F3FD) | mantido igual |
+| `"\u{1F469}\u{200D}\u{2764}\u{FE0F}\u{200D}\u{1F468}"` (casal com coração, dois ZWJ) | mantido igual |
+| `"a\u{FE0F}\u{200D}\u{1F525}"` (o seletor depois de letra cai no passo 6, e o ZWJ com ele) | `a\u{1F525}` |
 | `"a\u{D83D}\u{AD}\u{DE00}b"` (par substituto partido por um Cf) | `ab` |
 | `"z"` seguido de 30 × U+0301 | `z` com 2 marcas |
 | `"tag\u{E0041}"` | `tag` |
@@ -439,7 +449,7 @@ vermelha (lei 3). A saída vermelha vai para o corpo do PR.
 
 | Régua | O que tranca | Mutantes |
 |---|---|---|
-| `tools/eval/chat-check.mjs` (`eval:chat`, no `check:fast`) | vetores do §3; `NetClient` inerte sem meta e depois de `partida` sem meta, e só `tp.enviar`; guardas do jogo (tecla em input não vira tecla, `_md` não atira, `_plc` não pausa, Y/U abrem, `_acceptInput` falso, sticks zerados, e o clique nos 400 ms depois de fechar o compositor não atira: com pointer lock ele tem o canvas como alvo); `ChatEstado`; `montarLinha` com setter de `innerHTML` que lança; `sala/[codigo].astro` e sitemap sem chat; `chat-painel.js` sem `innerHTML`; `game.js` não importa chat; a tabela do §6 igual a `CHAT_LIMITES` | `trava-inerte`, `plc-antigo`, `clique-pos-chat`, `yu-so-live`, `stick-sem-portao`, `chat-inseguro`, `chat-sem-meta`, `sem-bidi`, `innerhtml`, `sem-nfkc`, `cf-por-replace`, `bloqueio-proprio`, `tabela-torta` |
+| `tools/eval/chat-check.mjs` (`eval:chat`, no `check:fast`) | vetores do §3; `NetClient` inerte sem meta e depois de `partida` sem meta, e só `tp.enviar`; guardas do jogo (tecla em input não vira tecla, `_md` não atira, `_plc` não pausa, Y/U abrem, `_acceptInput` falso, sticks zerados, e o clique nos 400 ms depois de fechar o compositor não atira: com pointer lock ele tem o canvas como alvo); `ChatEstado`; `montarLinha` com setter de `innerHTML` que lança; `sala/[codigo].astro` e sitemap sem chat; `chat-painel.js` sem `innerHTML`; `game.js` não importa chat; a tabela do §6 igual a `CHAT_LIMITES` | `trava-inerte`, `plc-antigo`, `clique-pos-chat`, `yu-so-live`, `stick-sem-portao`, `chat-inseguro`, `chat-sem-meta`, `sem-bidi`, `innerhtml`, `sem-nfkc`, `zwj-so-picto`, `cf-por-replace`, `bloqueio-proprio`, `tabela-torta`, `espera-crua`, `mapa-parado-vaza` |
 | `tests/smoke/chat-sala.spec.js` (Playwright, `smoke-web.yml`) | ARIA, Y/Enter/Esc, prisão de foco (e devolução do foco ao jogo depois de denunciar e fechar), IME, XSS e RTL, geometria contra `ZONA_MIRA` e `#crosshair` em 1600×900, 1500×1000, 1008×655, 844×390 (toque) e 390×844 (retrato); com `prefers-reduced-motion` a linha some por corte aos 12,6 s; o redesenho retoma a idade da linha e cala o `aria-live`; no toque o compositor fecha sem teclado (segundo toque em `#chat-toque`, toque fora por `pointerdown`, FECHAR) sem enviar nem atirar, e com teclado físico um Esc fecha mesmo quando só o keyup chega (em tela cheia sem Keyboard Lock o Chromium engole o keydown do primeiro Esc), sem fechar no Esc que cancela uma composição de IME | `painel-largo`, `innerhtml`, `foco-preso`, `so-mousedown`, `reduzido-eterno`, `redesenho-novo`, `redesenho-falante`, `esc-so-keydown` (via `page.route`) |
 | `tools/eval/ui-check.mjs` (`eval:ui`, UI1) | contraste dos textos do `#chat-sala` aberto, com linha, divisor e aviso de nack preenchido, sobre a areia do Piscinão: tudo >= 4,5:1 | `ui1_chat_aviso_sem_fundo` |
 | `tools/eval/chat-mp-browser.mjs` (`eval:chat-mp`, manual) | nó local com `MP_CHAT=1` (`--backend=<clone>`) e três navegadores separados (A no time E, B no time B em toque, S espectador): CE0 a CE10 do plano, frames gravados por `page.on('websocket')`, figuras JPEG em 5 viewports abertas e descritas (lei 4), cada cena fechando pelo que o jogador tem (Esc no desktop e no toque com teclado, FECHAR no retrato, onde o `#rotate-prompt` cobre a tela) e `#chat-toque` tocado só com o painel fechado, porque ele alterna; `--tickets` sobe o nó com ticket obrigatório e prova o `nk` verificado e o `chat_hist` na reconexão | nenhum; é integração (foi ela que achou o foco preso, o clique que atirava ao fechar e o keydown do Esc engolido no toque) |

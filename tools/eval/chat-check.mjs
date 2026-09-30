@@ -50,7 +50,12 @@
      sem-bidi       chat-painel.js: 'bdi' vira 'span'                   -> CC5 vermelha
      innerhtml      chat-painel.js: o primeiro `.textContent =` vira
                     `.innerHTML =`                                       -> CC5 vermelha
+     espera-crua    net.js: chat_nack repassa `espera` sem conferir      -> CC2 vermelha
+     mapa-parado-vaza main.js: noServeMapaParado zera mpSessao sem
+                    chat?.destruir() (fonte reescrita em memória)        -> CC6 vermelha
      sem-nfkc       chat.js: normalizarTexto pula o NFKC                 -> CC1 vermelha
+     zwj-so-picto   chat.js: o ZWJ volta a exigir pictograma IMEDIATO
+                    antes (U+FE0F e tom de pele partem o emoji)          -> CC1 vermelha
      cf-por-replace chat.js: o passo 4 volta a ser um replace encadeado  -> CC1 vermelha
      bloqueio-proprio chat.js: bloquear aceita o próprio handle           -> CC4 vermelha
      tabela-torta   chat.js: maxChars 160 vira 161                       -> CC7 vermelha
@@ -146,6 +151,11 @@ const VETORES = [
   ['"\\u3164" (preenchimento Hangul)', '\u{3164}', { motivo: 'vazia' }],
   ['família com ZWJ fica inteira', '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}', '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}'],
   ['"a\\u200Db" (ZWJ fora de emoji)', 'a\u{200D}b', 'ab'],
+  ['coração em chamas: ZWJ depois de U+FE0F fica', '\u{2764}\u{FE0F}\u{200D}\u{1F525}', '\u{2764}\u{FE0F}\u{200D}\u{1F525}'],
+  ['bandeira do arco-íris: ZWJ depois de U+FE0F fica', '\u{1F3F3}\u{FE0F}\u{200D}\u{1F308}', '\u{1F3F3}\u{FE0F}\u{200D}\u{1F308}'],
+  ['tecnólogo com tom de pele: ZWJ depois de U+1F3FD fica', '\u{1F468}\u{1F3FD}\u{200D}\u{1F4BB}', '\u{1F468}\u{1F3FD}\u{200D}\u{1F4BB}'],
+  ['casal com coração: os dois ZWJ ficam', '\u{1F469}\u{200D}\u{2764}\u{FE0F}\u{200D}\u{1F468}', '\u{1F469}\u{200D}\u{2764}\u{FE0F}\u{200D}\u{1F468}'],
+  ['ZWJ depois de U+FE0F que veio de letra sai (o seletor caiu no passo 6)', 'a\u{FE0F}\u{200D}\u{1F525}', 'a\u{1F525}'],
   /* NFKC compõe z + U+0301 em ź (U+017A) antes do corte; sobram 2 das 29 marcas restantes. */
   ['"z" + 30 × U+0301 -> z com 2 marcas', 'z' + '\u{301}'.repeat(30), 'ź\u{301}\u{301}'],
   ['"tag\\u{E0041}" (tag invisível)', 'tag\u{E0041}', 'tag'],
@@ -278,6 +288,12 @@ async function cc2(cobra, { net }) {
     chega({ type: 'chat_denuncia', estado: 'recebida' });
     cobra(recebidos.filter((m) => m.type === 'chat_nack').length === 1 && recebidos.filter((m) => m.type === 'chat_denuncia').length === 1,
       'CC2d `chat_nack` precisa de cid e motivo, `chat_denuncia` precisa de id inteiro e estado');
+    chega({ type: 'chat_nack', cid: 'c2', motivo: 'rapido', espera: 'abc' });
+    chega({ type: 'chat_nack', cid: 'c3', motivo: 'rapido', espera: -5 });
+    chega({ type: 'chat_nack', cid: 'c4', motivo: 'silenciado', espera: 60000 });
+    const nacks = recebidos.filter((m) => m.type === 'chat_nack');
+    cobra(nacks.length === 4 && nacks[0].espera === 1200 && nacks[1].espera === undefined && nacks[2].espera === undefined && nacks[3].espera === 60000,
+      `CC2d \`chat_nack\` só repassa espera finita e positiva: 1200 fica, 'abc' e -5 caem, 60000 fica (veio ${JSON.stringify(nacks.map((m) => m.espera))})`);
     // 2e · fila para frames que chegam antes de existir painel
     cli.onChat = null;
     for (let i = 100; i < 170; i++) chega(msgChat(i));
@@ -513,7 +529,8 @@ async function cc5(cobra, { chat, painel }) {
 
 /* ============================== CC6 · fonte ============================== */
 const ler = (rel) => (existsSync(path.join(RAIZ, rel)) ? readFileSync(path.join(RAIZ, rel), 'utf8') : null);
-async function cc6(cobra) {
+async function cc6(cobra, { fontes = {} } = {}) {
+  const lerFonte = (rel) => (fontes[rel] !== undefined ? fontes[rel] : ler(rel));
   const semChat = (rel) => { const s = ler(rel); cobra(s !== null && !/chat/i.test(s), `CC6 ${rel} ${s === null ? 'não existe' : /chat/i.test(s) ? 'cita chat (SEO)' : 'não cita chat'}`); };
   semChat('src/pages/sala/[codigo].astro');
   semChat('src/pages/sitemap.xml.ts');
@@ -527,6 +544,13 @@ async function cc6(cobra) {
   const chat = ler('public/js/chat.js');
   cobra(chat !== null && !/^\s*import\s/m.test(chat) && !/\bdocument\b|\bwindow\b|\bnavigator\b/.test(chat),
     `CC6 public/js/chat.js ${chat === null ? 'ausente (commit 4 do plano)' : 'é puro: sem import, sem document/window'}`);
+  /* Toda queda de mpSessao (desconexão, saída e recusa de mapa parado) destrói o chat: sem isso
+     os listeners no document e no #chat-sala vazam e a próxima sala monta um segundo controlador. */
+  const main = lerFonte('public/js/main.js');
+  const quedas = main === null ? [] : [...main.matchAll(/(?<!let )mpSessao = null;/g)];
+  const semDestruir = quedas.filter((q) => !/chat\?\.destruir\(\)/.test(main.slice(Math.max(0, q.index - 320), q.index + 160)));
+  cobra(main !== null && quedas.length >= 3 && semDestruir.length === 0,
+    `CC6 main.js: toda queda de mpSessao vem com chat?.destruir() (${quedas.length} quedas, ${semDestruir.length} sem destruir)`);
 }
 
 /* ============================== CC7 · tabela da doc ============================== */
@@ -590,7 +614,15 @@ const MUTANTES = [
   ['chat-sem-meta', 'CC2', cc2, async () => ({ ...ctx, net: { mod: await importarMutado('public/js/net.js', (s) => s.replace(/return this\.chatLigado\(\) && !!this\.tp\?\.pronto;/, 'return !!this.tp?.pronto;'), 'chat-sem-meta'), motivo: '' } })],
   ['sem-bidi', 'CC5', cc5, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace(/'bdi'/g, "'span'"), 'sem-bidi'), motivo: '' } })],
   ['innerhtml', 'CC5', cc5, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace(/\.textContent = /, '.innerHTML = '), 'innerhtml'), motivo: '' } })],
+  ['espera-crua', 'CC2', cc2, async () => ({ ...ctx, net: { mod: await importarMutado('public/js/net.js', (s) => s.replace('this._entregaChat(nackLimpo(m))', 'this._entregaChat(m)'), 'espera-crua'), motivo: '' } })],
+  ['mapa-parado-vaza', 'CC6', cc6, async () => {
+    const rel = 'public/js/main.js', s = ler(rel) || '';
+    const m = s.replace('  mpSessao?.chat?.destruir();\n  mpSessao = null;', '  mpSessao = null;');
+    if (m === s) throw new Error('mutante mapa-parado-vaza não aplicou: noServeMapaParado mudou de forma');
+    return { ...ctx, fontes: { [rel]: m } };
+  }],
   ['sem-nfkc', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace("Array.from(txt.normalize('NFKC').replace(BRANCOS_RE", 'Array.from(txt.replace(BRANCOS_RE'), 'sem-nfkc'), motivo: '' } })],
+  ['zwj-so-picto', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('seguraZwj(anterior)', 'PICTO.test(cps[i - 1])'), 'zwj-so-picto'), motivo: '' } })],
   ['cf-por-replace', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace("Array.from(txt.normalize('NFKC').replace(BRANCOS_RE, ' '))", "Array.from(txt.normalize('NFKC').replace(BRANCOS_RE, ' ').replace(/[\\p{Cc}\\p{Cf}]/gu, (ch) => (ch === ZWJ ? ch : '')))"), 'cf-por-replace'), motivo: '' } })],
   ['bloqueio-proprio', 'CC4', cc4, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('h === this.eu?.h', 'false'), 'bloqueio-proprio'), motivo: '' } })],
   ['tabela-torta', 'CC7', cc7, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('maxChars: 160,', 'maxChars: 161,'), 'tabela-torta'), motivo: '' } })],

@@ -20,6 +20,8 @@ export const CHAT_FILA_MAX = 64;
 const CHAT_CID_RE = /^[A-Za-z0-9_-]{1,12}$/;
 const CHAT_CANAIS = ['sala', 'time'];
 const formaChat = (m) => Number.isInteger(m.id) && typeof m.txt === 'string' && typeof m.h === 'string' && CHAT_CANAIS.includes(m.ch);
+// `espera` fora de número finito e positivo vira '(NaN s)' no aviso: cai antes do painel
+const nackLimpo = (m) => (Number.isFinite(m.espera) && m.espera > 0 ? m : { type: m.type, cid: m.cid, motivo: m.motivo });
 
 export const resolvePlayerSide = (team, faction, online) =>
   online ? (team === 'B' ? 'B' : 'E') : (faction === 'B' ? 'B' : 'E');
@@ -240,7 +242,7 @@ export class NetClient {
         } else if (m.type === 'chat_hist') {
           if (this.chatLigado() && Array.isArray(m.list)) this._entregaChat({ type: 'chat_hist', list: m.list.filter((x) => x && formaChat(x)) });
         } else if (m.type === 'chat_nack') {
-          if (this.chatLigado() && typeof m.cid === 'string' && typeof m.motivo === 'string') this._entregaChat(m);
+          if (this.chatLigado() && typeof m.cid === 'string' && typeof m.motivo === 'string') this._entregaChat(nackLimpo(m));
         } else if (m.type === 'chat_denuncia') {
           if (this.chatLigado() && Number.isInteger(m.id) && typeof m.estado === 'string') this._entregaChat(m);
         }

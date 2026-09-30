@@ -3653,6 +3653,7 @@ function mpErro(msg, comRetry = false) {
 function noServeMapaParado(id, net) {
   if (oficina || !MAPAS_PARADOS.has(resolveMapId(id))) return false;
   try { net?.close?.(); } catch { /* fechar é cortesia; a recusa vale de qualquer jeito */ }
+  mpSessao?.chat?.destruir();
   mpSessao = null;
   mpErro(`Este servidor sorteou "${MAPS[resolveMapId(id)]?.name || id}", que saiu do jogo para retrabalho. `
     + 'O nó ainda não foi atualizado — escolha outra sala ou outra região.', true);
