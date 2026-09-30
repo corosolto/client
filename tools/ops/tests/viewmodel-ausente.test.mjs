@@ -1,4 +1,4 @@
-/* VIEWMODEL PAGO AUSENTE DO DEPLOY NÃO É CRASH DE CÓDIGO (BUG-181, #656 #657 #658).
+/* VIEWMODEL PAGO AUSENTE DO DEPLOY NÃO É CRASH DE CÓDIGO (BUG-190, #656 #657 #658).
    ═══════════════════════════════════════════════════════════════════════════════════
    O catálogo privado do viewmodel ainda não foi publicado no Blob (`blobBase: null` em
    `tools/viewmodels/vm-assets.manifest.json`), então todo `/private-assets/viewmodels/*`

@@ -91,7 +91,7 @@ dono reportou.
 
 Duas saídas, e a escolha é do dono:
 - **Doar de outro modelo**: `~/Downloads` tem 42 GLB de arma inventariados em
-  `docs/reports/VM-DOADORES-ANIMACAO.md`. Um pente reto de SMG serve a MP5.
+  `docs/reports/VM-DOADORES-ANIMACAO.md` (em `../progress`). Um pente reto de SMG serve a MP5.
 - **Modelar**: caixa simples com chanfro, 100 a 250 triângulos. O pente da AK
   aprovada tem 379 e o da M4 226 — fique nessa ordem de grandeza, não faça uma
   peça de 2000 triângulos.
@@ -116,7 +116,7 @@ Em qualquer caso a peça precisa:
 4. **Não mexa no `rot`, no `len` nem no `vm`** do `weapons.js` para consertar
    aparência. Esses números têm dono e outras frentes leem.
 5. **Comentário em português, no máximo 2 linhas**, apontando para
-   `KNOWN-BUGS.md`. História e número vão para lá, não para o código.
+   `KNOWN-BUGS.md` (em `../progress`). História e número vão para lá, não para o código.
 6. **Não commite sem autorização do dono.**
 
 ## Como saber que terminou

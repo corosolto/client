@@ -51,6 +51,8 @@ if (!(await vivo())) { console.log(`  \x1b[31m✗\x1b[0m ENTRADA1 servidor não 
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+const pageErrors = [];
+page.on('pageerror', (error) => { if (pageErrors.length < 3) pageErrors.push(String(error.message || error)); });
 
 if (MUT === 'sem-guarda') {
   // desfaz o conserto NO ARQUIVO SERVIDO: a guarda de entrada some, o resto fica igual
@@ -68,27 +70,47 @@ const falhas = [];
 try {
   await page.goto(`${BASE}/?debug=1&assetcheck=1`, { waitUntil: 'load', timeout: 180000 });
   await page.locator('#splash-enter').waitFor({ state: 'visible', timeout: 90000 });
+  await page.waitForFunction(() => window.__CS_MAIN_READY__ === true, null, { timeout: 90000 });
   // a ordem hostil do runner lento, forçada: o foco já está no menu quando a tecla chega
-  // MULTIPLAYER é o primeiro item do menu (primeira instância, 30/08) — é nele que o
-  // gesto de entrada cairia se o guarda de ENTRADA_MS não existisse
-  await page.evaluate(() => document.querySelector('.cs-item[data-act="mp"]')?.focus());
+  // O hub usa abas; o menu legado usa .cs-item. Escolher um botão realmente visível
+  // evita que o mutante passe por focar um item oculto que nunca receberia Enter.
+  const foco = await page.evaluate(() => {
+    const hub = document.querySelector('.hub-tabs [data-hub-tab="ranking"]');
+    const legado = document.querySelector('.cs-item[data-act="mp"]');
+    const alvo = hub && hub.getClientRects().length ? hub : legado;
+    alvo?.focus();
+    return { id: alvo?.id || alvo?.dataset.hubTab || alvo?.dataset.act, ativo: document.activeElement === alvo };
+  });
+  if (!foco.ativo) throw new Error(`menu não recebeu foco antes do gesto (alvo=${foco.id || '?'})`);
   await page.keyboard.press('Enter');
   await page.waitForTimeout(1500);
 
   const estado = await page.evaluate(() => ({
-    splash: !!document.getElementById('boot-splash'),
+    // .gone já está invisível e sem pointer-events; a remoção do DOM ocorre por
+    // timer de 480 ms, que o SwiftShader do CI pode atrasar sem prender ninguém.
+    splash: !!document.getElementById('boot-splash') && !document.getElementById('boot-splash').classList.contains('gone'),
+    mainReady: !!window.__CS_MAIN_READY__,
+    mainLoaded: !!window.__CS_MAIN_LOADED,
+    hubRanking: document.querySelector('.hub-tabs [data-hub-tab="ranking"]')?.getAttribute('aria-selected') === 'true',
     ativados: [...document.querySelectorAll('.cs-item[aria-current="true"], .cs-item.is-open')].map((b) => b.dataset.act),
     paineis: [...document.querySelectorAll('#settings-panel,#howto-panel,#feedback-panel,#ranking-panel,#mp-panel')]
       .filter((p) => !p.classList.contains('hidden')).map((p) => p.id),
   }));
 
-  if (estado.splash) falhas.push('ENTRADA1a a splash NÃO saiu com o gesto de entrada (jogador preso na porta)');
+  if (estado.splash) falhas.push(`ENTRADA1a a splash NÃO saiu com o gesto de entrada (jogador preso na porta; mainReady=${estado.mainReady}, mainLoaded=${estado.mainLoaded})`);
   if (estado.ativados.length)
     falhas.push(`ENTRADA1b o gesto de entrada APERTOU o menu por baixo (ativados: ${estado.ativados.join(',')})`);
+  if (estado.hubRanking)
+    falhas.push('ENTRADA1b o gesto de entrada APERTOU a aba RANKING do hub por baixo');
   if (estado.paineis.length)
     falhas.push(`ENTRADA1b o gesto de entrada ABRIU painel sozinho (${estado.paineis.join(',')})`);
 } catch (e) {
-  falhas.push(`ENTRADA1 não deu para medir: ${String(e).split('\n')[0]}`);
+  const diagnostico = await page.evaluate(() => ({
+    mainReady: !!window.__CS_MAIN_READY__, mainLoaded: !!window.__CS_MAIN_LOADED,
+    mainFailed: !!window.__CS_MAIN_FAILED,
+    splashGone: !!document.getElementById('boot-splash')?.classList.contains('gone'),
+  })).catch(() => null);
+  falhas.push(`ENTRADA1 não deu para medir: ${String(e).split('\n')[0]}; estado=${JSON.stringify(diagnostico)}; pageErrors=${JSON.stringify(pageErrors)}`);
 }
 
 await browser.close();

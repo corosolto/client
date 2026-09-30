@@ -33,7 +33,7 @@ Isso é relevante pra você de duas formas opostas. A ruim: se o seu PR travar, 
 demorar. A boa: **quase toda a régua é máquina.** `npm run check:fast` te dá o mesmo veredito
 que o mantenedor daria, antes de você abrir o PR, sem esperar ninguém. A barreira é baixa
 **de propósito** — é um dos princípios que não mudam do
-[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md).
+[`ROADMAP.md`](https://github.com/corosolto/client/blob/main/ROADMAP.md).
 Mas a régua não é.
 
 Resumo em uma frase: **traga o número.** Um PR que muda comportamento visível e não traz
@@ -42,7 +42,7 @@ nem uma invariante nova nem a razão de não precisar de uma vai voltar com uma 
 ## Setup
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git && cd csbrasil
+git clone https://github.com/corosolto/client.git && cd client
 npm install
 npm run dev          # http://localhost:4321 — a rota raiz JÁ É o jogo
 ```
@@ -80,7 +80,7 @@ A VM1 caiu de 26/26 para 2/26 e a VM9 ficou verde.
 
 A ordem do `npm run check` já foi corrigida (`package.json`) — o cuidado é para quando
 você chamar `node tools/eval/invariants.mjs` na mão. Detalhe: BUG-02 do
-[`KNOWN-BUGS.md`](https://github.com/rubenmarcus/csbrasil/blob/main/KNOWN-BUGS.md).
+as issues do repositório.
 :::
 
 Custo real: numa máquina de 2 CPUs, **cerca de 10 minutos**. Ele sobe o jogo real cinco
@@ -239,7 +239,7 @@ O pipeline é data-driven a partir do GLB. Os GLBs de arma vivem em `public/mode
 Hoje mapas são **código**, não dado: cada `map_*.js` é geometria declarada à mão, e os
 maiores rivalizam em tamanho com os módulos de sistema. Migrar isso para JSON é a Fase 2
 conteúdo como dado do
-[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md), e é a
+[`ROADMAP.md`](https://github.com/corosolto/client/blob/main/ROADMAP.md), e é a
 contribuição de maior alavancagem do projeto.
 
 O registro, gerado do `MAPS` de `public/js/maps.js`:
@@ -250,7 +250,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 |---|---|---|---|---:|
 | `campomorro` | Campinho do Morro | **captura** | `map_campomorro.js` | 815 |
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
-| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.192 |
+| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.202 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.409 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.097 |
@@ -267,7 +267,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
 | `penitenciaria` | CARANDIRU | **captura** | `map_penitenciaria.js` | 1.009 |
 
-**18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 24 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
@@ -318,7 +318,7 @@ exige entender o jogo inteiro.
 
 ### Muito boas para o primeiro PR
 
-As tarefas de entrada moram em **[`docs/issues/`](https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues)**,
+As tarefas de entrada moram em **[`docs/issues/`](https://github.com/corosolto/client/tree/main/docs/issues)**,
 uma por arquivo, cada uma com contexto, o que fazer, critério de aceite e quais arquivos
 tocar. O `README.md` de lá indexa por tempo disponível (30 min / 1 h / 2-3 h) e por área
 (SEO, UI, backend, CI). **Nenhuma delas exige tocar em `public/js/*.js`**, de propósito:
@@ -400,7 +400,7 @@ arnês de viewmodel dedicado continua sendo trabalho aberto.
 
 ## Processo
 
-1. Feature grande? **Abra uma issue antes** (veja `IDEAS.md`).
+1. Feature grande? **Abra uma issue antes** (brainstorm com o mantenedor).
 2. Fork + branch **`v2/<assunto>`** — `v2/multiplayer`, `v2/audio`, `v2/ui-hud`. O prefixo
    é o ciclo de release (topo do `CHANGELOG.md`), e a convenção nasceu de um problema
    concreto: em 04/08 a branch de trabalho ainda se chamava `feat/evio-feel` — nome de uma

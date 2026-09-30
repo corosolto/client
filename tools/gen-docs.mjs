@@ -440,13 +440,6 @@ const BLOCOS = {
     '(`alpha` < `beta` < release), e o fluxo automático cuida do bump.',
     rodape(f.versao.cmd),
   ].join('\n'),
-  status_atual: (f) => [
-    `- **Versão:** \`${f.versao.jogo}\``,
-    `- **Conteúdo jogável:** ${f.elenco.faccoes} facções, ${f.elenco.total} personagens, ${f.mapas.total} mapas e ${f.assets.armas} armas com GLB`,
-    `- **Código do jogo:** ${num(f.jogo.linhas)} linhas em ${f.jogo.arquivos} módulos JavaScript`,
-    `- **Automação:** ${f.scripts.total} comandos npm, ${f.portao.scriptsEval} scripts de avaliação e ${f.portao.scriptsTools} scripts de pipeline`,
-    rodape('package.json · CHARACTERS · MAPS · public/models/weapons · public/js · tools/'),
-  ].join('\n'),
   /* Os números do projeto, com o comando que reproduz cada um. */
   numeros: (f) => [
     '| O que | Quanto | Onde confere |',
@@ -640,7 +633,7 @@ const BLOCOS = {
   invariantes: (f) => [
     `- \`tools/eval/invariants.mjs\`: **${num(f.portao.linhas)} linhas**, **${f.portao.ids} identificadores de invariante declarados** (\`put()\`), dos quais **${f.portao.comSkip}** têm caminho de \`skip()\` declarado.`,
     `- O arnês inteiro são **${f.portao.scriptsEval} scripts** em \`tools/eval/\` (\`.mjs\` + \`.py\`), mais **${f.portao.scriptsTools} scripts** de pipeline em \`tools/\`.`,
-    `- Quantas invariantes rodam como **críticas** numa execução **não é derivável do fonte**: depende de qual insumo existe na máquina (o JSON do auditor de viewmodel, um GLB, uma pasta de anims). Esse número só sai rodando o quality gate — e o lugar dele é o cabeçalho do \`KNOWN-BUGS.md\`, atualizado com saída real.`,
+    `- Quantas invariantes rodam como **críticas** numa execução **não é derivável do fonte**: depende de qual insumo existe na máquina (o JSON do auditor de viewmodel, um GLB, uma pasta de anims). Esse número só sai rodando o quality gate — e o lugar dele é o cabeçalho do \`KNOWN-BUGS.md\`, com saída real.`,
     '',
     'Reproduza:',
     '',
@@ -699,7 +692,7 @@ const BLOCOS = {
   /* Validação dos ponteiros arquivo:linha escritos à mão na prosa. Um ponteiro que aponta
      para além do fim do arquivo é a versão barata do mesmo defeito que este script combate. */
   ponteiros: () => {
-    const alvos = ['README.md', 'STATUS.md', 'HANDOFF.md', 'KNOWN-BUGS.md', 'AGENTS.md',
+    const alvos = ['README.md', 'AGENTS.md',
       ...glob('docs/docs', (x) => x.endsWith('.md')).map((x) => `docs/docs/${x}`),
       ...(existe('.claude/skills/gauntlet-fps') ? ['.claude/skills/gauntlet-fps/SKILL.md'] : [])];
     const quebrados = [];
@@ -749,7 +742,7 @@ const BLOCOS = {
       '> Isto confere só o **limite** do arquivo: um ponteiro que ainda cabe mas mudou de assunto ' +
       'passa aqui. É a razão de a doutrina da casa ser declarar o SÍMBOLO e deixar a linha para o ' +
       'gerador — ver `tools/gen-arch.mjs`.',
-      rodape('varredura de `arquivo:linha` em README/STATUS/HANDOFF/KNOWN-BUGS/docs/docs/SKILL'),
+      rodape('varredura de `arquivo:linha` em README/AGENTS/docs/docs/SKILL'),
     ].join('\n');
   },
 };
@@ -834,12 +827,11 @@ const BLOCOS_EN = {
    O contrato agora é dos dois lados — o conteúdo é gerado E o lugar é declarado. */
 const COLOCACAO = {
   versao_atual: ['CHANGELOG.md'],
-  status_atual: ['STATUS.md'],
   numeros: ['README.md', 'docs/docs/comecando.md'],
   regras: ['README.md', 'docs/docs/comecando.md'],
   mapas: ['README.md', 'docs/docs/comecando.md', 'docs/docs/colaborar.md'],
-  scripts: ['ARCH.generated.md', 'docs/docs/comecando.md'],
-  zonas: ['ARCH.generated.md'],
+  scripts: ['docs/docs/comecando.md'],
+  zonas: ['AGENTS.md'],
   stack: ['README.md', 'docs/docs/stack.md'],
   assets: ['docs/docs/stack.md'],
   skills: ['docs/docs/stack.md'],

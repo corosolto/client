@@ -1,7 +1,7 @@
 {
  "gerado": "2026-09-28",
  "aspecto": "16x9",
- "entradas": "5256b75a320122ed",
+ "entradas": "d22b323d7b2a6963",
  "resultados": {
   "awp": {
    "mira": {
@@ -33,13 +33,13 @@
   "ak": {
    "mira": {
     "estado": "VERDE",
-    "valor": "5 px",
-    "msg": "massa a 5 px da cruz (+4, -3); teto 30 px; eixo no ADS -9° da vertical (teto ±12°)"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "1.00× AK",
-    "msg": "tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo 0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 12.1% (teto 18.2%)"
+    "msg": "tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo 0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 6.6% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -60,13 +60,13 @@
   "m4": {
    "mira": {
     "estado": "VERDE",
-    "valor": "14 px",
-    "msg": "massa a 14 px da cruz (+11, -8); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.89× AK",
-    "msg": "tamanho 0.89× AK, rolagem -22° da AK (informativa), eixo -3° da AK, braço 0.90×, cruz 0 px, olho 2.53 palma, ADS cobre 9.7% (teto 18.2%)"
+    "msg": "tamanho 0.89× AK, rolagem -22° da AK (informativa), eixo -3° da AK, braço 0.90×, cruz 0 px, olho 2.53 palma, ADS cobre 5.4% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -87,13 +87,13 @@
   "mp5": {
    "mira": {
     "estado": "VERDE",
-    "valor": "2 px",
-    "msg": "aro a 2 px da cruz (-1, -2); teto 30 px; eixo no ADS +0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.89× AK",
-    "msg": "tamanho 0.89× AK, rolagem -15° da AK (informativa), eixo +3° da AK, braço 0.78×, cruz 0 px, olho 2.10 palma, ADS cobre 10.9% (teto 18.2%)"
+    "msg": "tamanho 0.89× AK, rolagem -15° da AK (informativa), eixo +3° da AK, braço 0.78×, cruz 0 px, olho 2.10 palma, ADS cobre 5.5% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -114,13 +114,13 @@
   "shotgun": {
    "mira": {
     "estado": "VERDE",
-    "valor": "2 px",
-    "msg": "aro a 2 px da cruz (-1, -2); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.95× AK",
-    "msg": "tamanho 0.95× AK, rolagem +7° da AK (informativa), eixo -1° da AK, braço 1.03×, cruz 0 px, olho 2.10 palma, ADS cobre 5.5% (teto 18.2%)"
+    "msg": "tamanho 0.95× AK, rolagem +7° da AK (informativa), eixo -1° da AK, braço 1.03×, cruz 0 px, olho 2.10 palma, ADS cobre 2.2% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -142,7 +142,7 @@
    "mira": {
     "estado": "VERDE",
     "valor": "0 px",
-    "msg": "foco com retículo livre; tiro e cruz usam a câmera"
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
@@ -169,7 +169,7 @@
    "mira": {
     "estado": "VERDE",
     "valor": "0 px",
-    "msg": "foco com retículo livre; tiro e cruz usam a câmera"
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
@@ -222,13 +222,13 @@
   "m92": {
    "mira": {
     "estado": "VERDE",
-    "valor": "9 px",
-    "msg": "massa a 9 px da cruz (+4, -8); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.95× AK",
-    "msg": "tamanho 0.95× AK, rolagem -20° da AK (informativa), eixo -2° da AK, braço 0.90×, cruz 0 px, olho 2.21 palma, ADS cobre 11.6% (teto 18.2%)"
+    "msg": "tamanho 0.95× AK, rolagem -20° da AK (informativa), eixo -2° da AK, braço 0.90×, cruz 0 px, olho 2.21 palma, ADS cobre 4.8% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -249,13 +249,13 @@
   "akm": {
    "mira": {
     "estado": "VERDE",
-    "valor": "1 px",
-    "msg": "massa a 1 px da cruz (+1, +0); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.96× AK",
-    "msg": "tamanho 0.96× AK, rolagem -21° da AK (informativa), eixo -3° da AK, braço 0.90×, cruz 0 px, olho 2.21 palma, ADS cobre 11.6% (teto 18.2%)"
+    "msg": "tamanho 0.96× AK, rolagem -21° da AK (informativa), eixo -3° da AK, braço 0.90×, cruz 0 px, olho 2.21 palma, ADS cobre 4.8% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -276,13 +276,13 @@
   "g3": {
    "mira": {
     "estado": "VERDE",
-    "valor": "1 px",
-    "msg": "aro a 1 px da cruz (+0, -1); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.88× AK",
-    "msg": "tamanho 0.88× AK, rolagem +2° da AK (informativa), eixo +3° da AK, braço 1.18×, cruz 0 px, olho 2.20 palma, ADS cobre 11.4% (teto 18.2%)"
+    "msg": "tamanho 0.88× AK, rolagem +2° da AK (informativa), eixo +3° da AK, braço 1.18×, cruz 0 px, olho 2.20 palma, ADS cobre 5.6% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -304,17 +304,17 @@
    "mira": {
     "estado": "VERDE",
     "valor": "0 px",
-    "msg": "foco com retículo livre; tiro e cruz usam a câmera"
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "1.17× PT-38",
-    "msg": "curta: tamanho 1.17× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.17 palma"
+    "valor": "1.03× PT-38",
+    "msg": "curta: tamanho 1.03× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.16 palma"
    },
    "pistola-ref": {
     "estado": "VERDE",
-    "valor": "1.17× pistola aprovada",
-    "msg": "tamanho 1.17× pistola aprovada, desvio 59 px, ADS 92%"
+    "valor": "1.03× pistola aprovada",
+    "msg": "tamanho 1.03× pistola aprovada, desvio 72 px, ADS 78%"
    },
    "maos": {
     "estado": "N/A",
@@ -330,13 +330,13 @@
   "md97": {
    "mira": {
     "estado": "VERDE",
-    "valor": "14 px",
-    "msg": "massa a 14 px da cruz (+11, -8); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.89× AK",
-    "msg": "tamanho 0.89× AK, rolagem -22° da AK (informativa), eixo -3° da AK, braço 0.90×, cruz 0 px, olho 2.53 palma, ADS cobre 9.7% (teto 18.2%)"
+    "msg": "tamanho 0.89× AK, rolagem -22° da AK (informativa), eixo -3° da AK, braço 0.90×, cruz 0 px, olho 2.53 palma, ADS cobre 5.4% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -357,13 +357,13 @@
   "carbine": {
    "mira": {
     "estado": "VERDE",
-    "valor": "8 px",
-    "msg": "massa a 8 px da cruz (+8, +1); teto 30 px; eixo no ADS +6° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.94× AK",
-    "msg": "tamanho 0.94× AK, rolagem +34° da AK (informativa), eixo -3° da AK, braço 1.00×, cruz 0 px, olho 1.83 palma, ADS cobre 14.4% (teto 18.2%)"
+    "msg": "tamanho 0.94× AK, rolagem +34° da AK (informativa), eixo -3° da AK, braço 1.00×, cruz 0 px, olho 1.83 palma, ADS cobre 5.1% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -573,13 +573,13 @@
   "scar": {
    "mira": {
     "estado": "VERDE",
-    "valor": "2 px",
-    "msg": "aro a 2 px da cruz (-2, -1); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.84× AK",
-    "msg": "tamanho 0.84× AK, rolagem +9° da AK (informativa), eixo -2° da AK, braço 0.76×, cruz 0 px, olho 2.38 palma, ADS cobre 11.1% (teto 18.2%)"
+    "msg": "tamanho 0.84× AK, rolagem +9° da AK (informativa), eixo -2° da AK, braço 0.76×, cruz 0 px, olho 2.38 palma, ADS cobre 5.8% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -600,13 +600,13 @@
   "tavor": {
    "mira": {
     "estado": "VERDE",
-    "valor": "4 px",
-    "msg": "aro a 4 px da cruz (+0, -4); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.96× AK",
-    "msg": "tamanho 0.96× AK, rolagem +11° da AK (informativa), eixo +2° da AK, braço 1.21×, cruz 0 px, olho 2.35 palma, ADS cobre 8.0% (teto 18.2%)"
+    "msg": "tamanho 0.96× AK, rolagem +11° da AK (informativa), eixo +2° da AK, braço 1.21×, cruz 0 px, olho 2.35 palma, ADS cobre 3.8% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -627,13 +627,13 @@
   "famas": {
    "mira": {
     "estado": "VERDE",
-    "valor": "12 px",
-    "msg": "aro a 12 px da cruz (-1, +12); teto 30 px; eixo no ADS -1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.96× AK",
-    "msg": "tamanho 0.96× AK, rolagem -21° da AK (informativa), eixo +1° da AK, braço 0.87×, cruz 0 px, olho 2.51 palma, ADS cobre 6.5% (teto 18.2%)"
+    "msg": "tamanho 0.96× AK, rolagem -21° da AK (informativa), eixo +1° da AK, braço 0.87×, cruz 0 px, olho 2.51 palma, ADS cobre 3.8% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -654,13 +654,13 @@
   "uzi": {
    "mira": {
     "estado": "VERDE",
-    "valor": "10 px",
-    "msg": "aro a 10 px da cruz (+1, -10); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.70× AK",
-    "msg": "tamanho 0.70× AK, rolagem -6° da AK (informativa), eixo +3° da AK, braço 0.52×, cruz 0 px, olho 4.54 palma, ADS cobre 4.3% (teto 18.2%)"
+    "msg": "tamanho 0.70× AK, rolagem -6° da AK (informativa), eixo +3° da AK, braço 0.52×, cruz 0 px, olho 4.54 palma, ADS cobre 3.0% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -681,13 +681,13 @@
   "p90": {
    "mira": {
     "estado": "VERDE",
-    "valor": "14 px",
-    "msg": "massa a 14 px da cruz (+0, -14); teto 30 px; eixo no ADS -0° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC"
+    "valor": "0 px",
+    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "0.98× AK",
-    "msg": "tamanho 0.98× AK, rolagem -5° da AK (informativa), eixo -3° da AK, braço 1.09×, cruz 0 px, olho 2.62 palma, ADS cobre 5.4% (teto 18.2%)"
+    "msg": "tamanho 0.98× AK, rolagem -5° da AK (informativa), eixo -3° da AK, braço 1.09×, cruz 0 px, olho 2.62 palma, ADS cobre 2.9% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -708,9 +708,15 @@
  },
  "parcial": {
   "reguas": [
+   "mira",
+   "cobertura",
+   "pistola-ref",
+   "maos",
    "carregador"
   ],
-  "armas": "todas",
+  "armas": [
+   "revolver38"
+  ],
   "base": "2026-09-28"
  }
 }

@@ -15,7 +15,7 @@ lote so comeca depois que uma fatia vertical prova o pipeline inteiro no jogo re
    `gauntlet-fps` para UI/gameplay; `asset-review` depois de integrar cada asset.
 3. Antes de tocar `game.js`, leia `tools/eval/ARCH.md` e respeite a tabela de conflito.
 4. Para esta frente, a fonte dos nomes, rosters e falas e
-   `specs/0002-novas-faccoes/spec.md`. Nao copie essas listas para esta skill.
+   `../progress` → `archive/specs/0002-novas-faccoes/spec.md`. Nao copie essas listas para esta skill.
 
 ## Fluxo
 
