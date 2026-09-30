@@ -45,6 +45,8 @@
      --mutante=tracer-fantasma  volta o traçado de 1,15 cm / 58 ms (SMK3b denuncia;
                                 o dono não enxergava — BUG-187)
      --mutante=fumaca-no-impacto  impacto de bala volta a soltar poeira (SMK7)
+     --mutante=clarao-grande   dobra o clarão da 1ª pessoa (SMK2b denuncia; o do
+                               CS 1.6 é bem mais sutil — dono, 30/09)
      --mutante=enterrada    volta os sprites para 0-2,6 m (a SMK4e denuncia; a
                             forma antiga enterrava metade da nuvem no piso)
 
@@ -54,7 +56,7 @@
 import { bootGame, initTextures, THREE } from './harness.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['fumaca', 'sem-fx', 'sem-tracer', 'sem-nuvem', 'transparente', 'acima-do-ceu', 'enterrada', 'tracer-fantasma', 'fumaca-no-impacto'];
+const MUTANTES = ['fumaca', 'sem-fx', 'sem-tracer', 'sem-nuvem', 'transparente', 'acima-do-ceu', 'enterrada', 'tracer-fantasma', 'fumaca-no-impacto', 'clarao-grande'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT} (válidos: ${MUTANTES.join(', ')})`);
   process.exit(2);
@@ -95,6 +97,7 @@ if (MUT === 'tracer-fantasma') {
   const orig = g._tracer.bind(g);
   g._tracer = (...a) => { orig(...a); const t = g.tracers.at(-1); if (t) { t.life = t.ttl = 0.058; t.seg = 1.45; } };
 }
+if (MUT === 'clarao-grande') { const orig = g._flash.bind(g); g._flash = (...a) => { orig(...a); const m = g._vmMzActive.at(-1); if (m) m.jetS *= 2; }; }
 if (MUT === 'fumaca-no-impacto') { const orig = g._puff.bind(g); g._puff = (p, n, s) => orig(p, n, s, true); }
 
 /* ---- SMK1/SMK2: o tiro não solta fumaça (e continua com faísca) ---- */
@@ -110,6 +113,15 @@ if (MUT === 'fumaca-no-impacto') { const orig = g._puff.bind(g); g._puff = (p, n
   cobra(g._muzzleSmokeFx === undefined, `SMK1a · o sistema _muzzleSmokeFx não pode existir (achou ${typeof g._muzzleSmokeFx})`);
   cobra(puffsAntes === puffsDepois, `SMK1b · _flash não pode soltar puff: ${puffsAntes} → ${puffsDepois} partículas`);
   cobra(flashDepois > flashAntes, `SMK2 · faíscas do tiro têm que nascer: ${flashAntes} → ${flashDepois}`);
+  /* SMK2b — clarão da 1ª pessoa ≤ 15% da altura da tela (alvo 12%, ref. CS 1.6 enviada
+     pelo dono em 30/09; antes: estrela de ~25% com raios, flutuando acima do cano). */
+  const m = g._vmMzActive.at(-1);
+  if (m) {
+    const w = new THREE.Vector3(); m.grp.getWorldPosition(w);
+    const altura = 2 * Math.max(0.2, -w.z) * Math.tan(THREE.MathUtils.degToRad(g.vmCamera.fov) / 2);
+    const frac = m.jetS / altura;
+    cobra(frac <= 0.15, `SMK2b · clarão da 1ª pessoa ocupa ${(frac * 100).toFixed(0)}% da altura da tela (teto 15%)`);
+  } else cobra(false, 'SMK2b · o tiro do jogador não acendeu o clarão da 1ª pessoa');
 }
 
 /* ---- SMK3: e o traçado continua ---- */

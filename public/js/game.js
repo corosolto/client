@@ -503,6 +503,9 @@ const VM_KNOB = (() => {
    verde. Declarar sem chamar tem que ser vermelho. */
 const vmAdsRot = (ang, adsF) => ang * (1 - adsF);
 
+/* Teto de tamanho da arma em tela (dono, 30/09: "em monitores grandes a arma cresce
+   muito"). Acima de VM_TETO_PX de largura CSS a arma para de crescer em pixels. */
+const VM_TETO_PX = (() => { const v = +new URLSearchParams(location.search).get('vmteto'); return v > 0 ? v : 1920; })();
 function vmFovForAspect(aspect) {
   const _q = new URLSearchParams(location.search);
   // FOV base do viewmodel (V0 vale em 16:9; a função mantém a meia-tangente HORIZONTAL
@@ -1081,7 +1084,7 @@ export class Game {
       this._vmFlashLight = new THREE.PointLight(0xffd9a0, 0, 3, 2);
       this._vmFlashLight.position.set(0.1, -0.06, -0.75);   // boca do cano em view space (pose GAUNTLET 2.0)
       this.vmScene.add(this._vmFlashLight);
-      this._vmFlash = { t: 1, life: 0.045, peak: 1.6 };
+      this._vmFlash = { t: 1, life: 0.045, peak: 1.0 };
       // Clarão dos tiros por opção do jogador; faíscas ficam de fora (BUG-174; a
       // fumaça do cano saiu de vez no BUG-185). Fatores medidos no dev.html. Régua: eval:fxFlash.
       const _fx = FX_CLARAO[this.settings.fxFlash] ?? 1;
@@ -1171,8 +1174,9 @@ export class Game {
     // no mundo spawnado de ponto fixo camera-local: 89-226px de distância no kick — crítico).
     // Menor que o do mundo: a boca fica a ~0.35m da lente.
     this._vmMzPool = []; this._vmMzActive = [];
+    this._mzSoftTex = this._makeFlashSoftTex();   // 1ª pessoa: brilho redondo, sem raios (CS 1.6)
     for (let i = 0; i < 3; i++) {
-      const jetMat = new THREE.SpriteMaterial({ map: this._mzFlashTex, color: 0xffc26a, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+      const jetMat = new THREE.SpriteMaterial({ map: this._mzSoftTex, color: 0xffd27a, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       const coreMat = new THREE.SpriteMaterial({ map: this._mzCoreTex, color: 0xfff6dc, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       const grp = new THREE.Group();
       const jet = new THREE.Sprite(jetMat), core = new THREE.Sprite(coreMat);
@@ -1954,6 +1958,13 @@ export class Game {
       x.beginPath(); x.moveTo(0, -w / 2); x.lineTo(len, 0); x.lineTo(0, w / 2); x.closePath(); x.fill();
       x.restore();
     }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }
+  _makeFlashSoftTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+    const g = x.createRadialGradient(32, 32, 1, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,236,190,0.9)'); g.addColorStop(0.35, 'rgba(255,196,96,0.5)'); g.addColorStop(1, 'rgba(255,150,50,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Núcleo branco-quente do flash (centro quase branco, borda quente suave).
@@ -4322,15 +4333,20 @@ export class Game {
     if (fpCls) {
       const m = this._vmMzPool.pop();
       if (m) {
-        const off = this._vmMuzzle[this.player?.weapon] || this._vmMuzzle[fpCls] || this._vmMuzzle.rifle;   // arma (supressor) → classe → fallback
+        let off = this._vmMuzzle[this.player?.weapon] || this._vmMuzzle[fpCls] || this._vmMuzzle.rifle;   // arma (supressor) → classe → fallback
+        const bocaVm = this.vm.authored?.muzzleVm?.(this.player?.weapon);   // arma autorada visível: boca real
+        if (bocaVm) { this.vm.root.updateWorldMatrix(true, false); off = this.vm.root.worldToLocal(bocaVm.clone()); }
         m.grp.position.copy(off);
         // a point light do flash também vai pra BOCA MEDIDA (era um ponto fixo em view space:
         // com 26 armas de comprimentos diferentes ela iluminava o vazio ao lado do cano).
-        if (this._vmFlashLight) this._vmFlashLight.position.copy(off);
-        const s = 0.85 + Math.random() * 0.45;
+        if (this._vmFlashLight) this._vmFlashLight.position.copy(bocaVm || off);
+        const s = 0.9 + Math.random() * 0.2;
         const fxf = (this._fxTune && this._fxTune.flash) ?? 1;
         const pf = PUNCH ? 1.3 : 1;
-        m.jetS = 0.22 * s * fxf * pf; m.coreS = 0.08 * s * fxf * pf;   // boca a ~0.35m da lente: menor que o do mundo
+        // dono 30/09: o do CS 1.6 é sutil — ~13% da altura da tela com PUNCH, qualquer que seja a distância
+        const prof = Math.max(0.2, -(bocaVm ? bocaVm.z : this.vm.root.localToWorld(off.clone()).z));
+        const alturaVm = 2 * prof * Math.tan(THREE.MathUtils.degToRad(this.vmCamera.fov) / 2);
+        m.jetS = 0.10 * alturaVm * s * fxf * pf; m.coreS = m.jetS * 0.35;
         m.jet.scale.setScalar(m.jetS); m.core.scale.setScalar(m.coreS);
         m.jetMat.rotation = Math.random() * Math.PI * 2;
         m.jetMat.opacity = 1; m.coreMat.opacity = 1; m.grp.visible = true; m.t = 0;
@@ -4365,9 +4381,29 @@ export class Game {
   // Boca do cano em WORLD SPACE no instante do tiro: offset local da classe transformada
   // pelo matrixWorld ATUAL do vm.root (com o kick acumulado) e depois pela câmera — usado
   // pelo tracer e pela luz/faísca do mundo no tiro do jogador (R7.6).
+  // Amplia só o enquadramento do viewmodel, ancorado no canto inferior-direito: a arma
+  // encolhe no canto em vez de ir pro centro. No ADS volta a 1 (mira no centro da tela).
+  _vmTetoTela(ads = 0) {
+    const cam = this.vmCamera;
+    const w = typeof innerWidth === 'number' ? innerWidth : 0;
+    const h = typeof innerHeight === 'number' ? innerHeight : 0;
+    if (!cam || !w || !h) return;
+    const k = 1 + (Math.max(1, w / VM_TETO_PX) - 1) * (1 - Math.min(1, Math.max(0, ads)));
+    this._vmTetoK = k;
+    if (k <= 1.0001) { if (cam.view?.enabled) cam.clearViewOffset(); return; }
+    cam.setViewOffset(w, h, w - w * k, h - h * k, w * k, h * k);
+  }
   _muzzleWorld(cls) {
     // Caminho autorado: a boca vem da arma VISÍVEL (a legada fica oculta e o
     // _vmMuzzle dela apontaria flash/tracer para um cano que não está na tela).
+    const vmPt = this.vm.authored?.muzzleVm?.(this.player?.weapon);
+    if (vmPt) {
+      // mesmo PIXEL da boca na tela: a vmCamera tem FOV próprio, localToWorld direto desalinhava
+      const cam = this.camera.getWorldPosition(new THREE.Vector3());
+      const ndc = vmPt.clone().project(this.vmCamera);
+      const ray = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(this.camera).sub(cam).normalize();
+      return cam.addScaledVector(ray, vmPt.length());
+    }
     const authored = this.vm.authored?.muzzleWorld?.(this.player?.weapon, this.camera);
     if (authored) return authored;
     if (this.camView !== 'first') {
@@ -6199,6 +6235,7 @@ export class Game {
       this.vm.root.rotation.z = ks * k * 0.022 + swRz + rg.rot.z;
       this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);
     }
+    this._vmTetoTela(a);
     /* ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA (RODADA DO GRIP + PITCH).
        O `_adsPose` acima gira o vm.root INTEIRO (rx/ry por classe) e não enxerga a
        inclinação que o `_vmFrame` deu ao GRUPO da arma. Com pitch de ~12° e o ADS entrando,
