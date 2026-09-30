@@ -204,6 +204,10 @@ estado é lido de `room.slots` na hora da entrega, nunca guardado no remetente.
   remetente é tratado como espectador nas linhas da tabela, mesmo com slot: o canal time é
   recusado com `sem_time` e o canal sala vai só aos espectadores durante a partida (com eco
   para quem escreveu). O cliente só mostra o motivo; não conta os 30 s.
+- **Segunda conexão da mesma identidade:** enquanto a mesma chave tiver OUTRA conexão sem slot
+  na sala (uma aba assistindo e outra jogando), a conexão com slot também é tratada como
+  espectadora (`naArquibancada` em `rotearChat`). Quando a aba da arquibancada cai ou pega
+  slot, o `close` ou o `time` dela marca a carência da chave, que vale para as duas.
 - O chat de time nunca chega ao espectador nem ao time adversário, em nenhuma janela.
 - Não há linhas de sistema de entrada e saída. O chat não anuncia quem entrou, saiu, trocou
   de time ou reconectou.
@@ -395,7 +399,10 @@ Procedência dos valores:
 5. A API (`api/mp-chat-report.ts`) exige o bearer (401 sem ele), aplica rateLimit de 30 a
    cada 10 min, sanitiza o lote e devolve 503 sem banco, para falhar fechado. Chama o RPC
    `track_mp_chat_reports(jsonb)`, idempotente pelo `id` do registro e executável só por
-   `service_role`.
+   `service_role`. O RPC devolve `{recebidas, inseridas, conhecidas, descartadas}`, e a rota
+   só responde 200 quando `inseridas + conhecidas` cobre o lote. Linha descartada pelo banco
+   vira 500 `descartadas`, e RPC sem as contagens vira 503 `rpc_invalido`. Nos dois casos o
+   nó devolve o lote à fila e registra só o status e o tamanho, nunca o texto nem a identidade.
 6. **Nada é moderado automaticamente.** O RPC não toca em `players.hidden` nem em
    `flagged_count`. O `_flag` antigo virou vetor de griefing por fazer isso
    (`seguranca.md` §1b), e o chat não repete o erro. O que existe é um registro para uma
@@ -458,8 +465,8 @@ vermelha (lei 3). A saída vermelha vai para o corpo do PR.
 
 | Régua | O que tranca | Mutantes |
 |---|---|---|
-| `game/chat-check.mjs` (`eval:chat`) | `ChatSala` puro nas 8 células do §5, baldes por chave, repetição, escalada (a recusa `sala_rapida` não conta), carência de 30 s de quem sai da arquibancada (G0..G4), varredura de handles, dedup e janelas de denúncia de quem saiu, forma do handle (nunca acima de 5, dígitos baixos), silêncio, buffer, histórico só do entregue, denúncia, meta sem `uid`/`pid`; `Room` real com socket falso; L4 compara a tabela do §6 com `CHAT_LIMITES` quando `CLIENT_DIR` tem este doc | `espectador-vaza`, `time-vaza`, `balde-por-conexao`, `hist-alheio`, `sem-bidi`, `denuncia-sem-recebimento`, `sala-rapida-escala`, `carencia-zero`, `handles-sem-varredura`, `vazia-guarda-handles`, `handle-longo`, `handle-enviesado` |
+| `game/chat-check.mjs` (`eval:chat`) | `ChatSala` puro nas 8 células do §5, baldes por chave, repetição, escalada (a recusa `sala_rapida` não conta), carência de 30 s de quem sai da arquibancada e segunda conexão da mesma identidade (G0..G7), ZWJ depois de seletor e tom de pele, varredura de handles, dedup e janelas de denúncia de quem saiu, forma do handle (nunca acima de 5, dígitos baixos), silêncio, buffer, histórico só do entregue, denúncia, meta sem `uid`/`pid`; `Room` real com socket falso; L4 compara a tabela do §6 com `CHAT_LIMITES` quando `CLIENT_DIR` tem este doc | `espectador-vaza`, `time-vaza`, `balde-por-conexao`, `hist-alheio`, `sem-bidi`, `denuncia-sem-recebimento`, `sala-rapida-escala`, `carencia-zero`, `handles-sem-varredura`, `vazia-guarda-handles`, `handle-longo`, `handle-enviesado`, `arquibancada-paralela`, `zwj-so-picto` |
 | `game/protocol-check.mjs` (estendido, CH1..CH13) | `maxPayload`, `metaChat` duas vezes, `.concat(FEATURES_CHAT)` duas vezes, chat nunca por `broadcast(`, `nk` revalidado, varredura no heartbeat, flush periódico e no shutdown, carência marcada antes do `claimSlot` (CH12), shutdown que espera o POST em voo (CH13) | `chat-sem-partida`, `sem-maxpayload`, `chat-sempre-ligado`, `sem-carencia`, `shutdown-sem-espera` |
-| `game/chat-smoke.mjs` (`eval:chat-smoke`) | nó real ligado e desligado, tickets reais, API falsa: `nk` só com pid, `nome=IMPOSTOR` nunca aparece, matriz A/B/S, balde e handle sobrevivem à reconexão, histórico não vai à sala 2, denúncia com bearer, canário fora de `/health`, `/metrics`, `/rooms` e `/sala/:codigo`, frame de 20 KiB fecha com 1009, carência de quem pega slot vindo da arquibancada (G1..G4), shutdown que entrega a denúncia pendente e reentrega o lote que voltou com 503 (D9..D12), desligado não muda nada | `espectador-vaza`, `nome-do-navegador`, `carencia-zero`, `shutdown-sem-espera`, injetados no processo filho por `node --import ./game/mutar-chat.mjs` (ganchos em `game/mutar-chat-ganchos.mjs`) |
+| `game/chat-smoke.mjs` (`eval:chat-smoke`) | nó real ligado e desligado, tickets reais, API falsa: `nk` só com pid, `nome=IMPOSTOR` nunca aparece, matriz A/B/S, balde e handle sobrevivem à reconexão, histórico não vai à sala 2, denúncia com bearer, canário fora de `/health`, `/metrics`, `/rooms` e `/sala/:codigo`, frame de 20 KiB fecha com 1009, carência de quem pega slot vindo da arquibancada e segunda aba da mesma identidade (G1..G6), shutdown que entrega a denúncia pendente e reentrega o lote que voltou com 503 (D9..D12), recusa da API registrada no console só com status e tamanho (D13), desligado não muda nada | `espectador-vaza`, `nome-do-navegador`, `carencia-zero`, `shutdown-sem-espera`, `arquibancada-paralela`, injetados no processo filho por `node --import ./game/mutar-chat.mjs` (ganchos em `game/mutar-chat-ganchos.mjs`) |
 | `api/reguas/mp-ticket-check.mjs` (estendido) | `nk` com e sem pid; `NICK_TICKET_RE` igual a `NICK_RE` | os existentes |
-| `api/reguas/chat-report-check.mjs` | 401 sem bearer, 503 sem banco; na migration 039: RLS, grant só a `service_role`, purge, e nenhum update em `hidden` ou flag | `sem-auth`, `auto-oculta`, `sem-purge` |
+| `api/reguas/chat-report-check.mjs` | 401 sem bearer, 503 sem banco; rota com banco falso: 200 só com o lote coberto, 500 `descartadas`, 503 `rpc_invalido` (E0..E7); na migration 039: RLS, grant só a `service_role`, purge, retorno jsonb do RPC (M14) e nenhum update em `hidden` ou flag; a lista de motivos igual no `check` e no `where` do SQL, na rota, em `public/js/chat.js` e no §2 deste doc (R1..R5, as duas últimas com `CLIENT_DIR`) | `sem-auth`, `auto-oculta`, `sem-purge`, `motivo-a-menos`, `descarte-calado` |
