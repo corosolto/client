@@ -2,7 +2,7 @@
    arquivo; quem injeta é o main.js. Desenho e decisões: docs/MULTIPLAYER.md. */
 import * as THREE from 'three';
 import { poseCharacter } from './characters.js';
-import { WEAPONS, supDeCod } from './game.js';
+import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
@@ -53,6 +53,7 @@ class Netcode {
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
+    this._statsInactive = false;
     this._nextClientStats = this._now() + 2000;
     // trocar de time / virar espectador remonta o casamento de ids na próxima nevada
     this._prevOnSlot = net.onSlot;
@@ -124,9 +125,11 @@ class Netcode {
     // dentro de 3 m); sem isso o raio sai da posição dele — atrasada pelo RTT — e passa ao lado.
     const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente
       || this._pickupWeaponPendente || this._reloadPendente;
+    const shotAim = anguloDeDisparo(p, this.game.camView);
     const seq = this.net.sendInput({
       ax: input.ax, az: input.az, crouch: input.crouch, shift: input.shift, jump: input.jump,
-      yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
+      yaw: shotAim.yaw, pitch: shotAim.pitch,
+      shoot: !!this.game.mouseDown0, weapon: p.weapon,
       // INTENÇÃO de mirar (1 bit). Quem integra o `adsF` — e portanto a precisão — é o servidor.
       ads: !!p.scoped,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
@@ -660,7 +663,7 @@ class Netcode {
       if (sup[i] && sup[i] !== '-') {
         const nv = Array.isArray(e.n) && Array.isArray(e.n[i]) ? e.n[i] : null;
         const n = nv ? new THREE.Vector3(+nv[0] || 0, +nv[1] || 0, +nv[2] || 0) : olho.clone().sub(alvo).normalize();
-        try { game._puff(alvo, n, surf); } catch { /* sem fx */ }
+        try { game._puff(alvo, n, surf, false); } catch { /* sem fx */ }
         if (ent === p && i === 0) { try { game._impactSfx(surf, alvo, olho.distanceTo(alvo)); } catch { /* ctx mudo */ } }
       }
     }
@@ -789,6 +792,15 @@ class Netcode {
     }
     // fps = frames REAIS de render na janela, e não as chamadas deste interval
     const now = performance.now();
+    const inactive = !!game.paused || (typeof document !== 'undefined' && !!document.hidden);
+    if (inactive !== this._statsInactive) {
+      this._statsInactive = inactive;
+      this._nsT0 = now;
+      this._nsF0 = game._rafFrames || 0;
+      this._nsFps = null;
+      this._reconcileWindow.length = 0;
+      this._nextClientStats = now + 10000;
+    }
     if (this._nsT0 == null) { this._nsT0 = now; this._nsF0 = game._rafFrames || 0; }
     const dframes = (game._rafFrames || 0) - this._nsF0, dtime = now - this._nsT0;
     if (dtime >= 400) {
@@ -796,7 +808,7 @@ class Netcode {
       this._nsT0 = now; this._nsF0 = game._rafFrames || 0;
     }
     const s = this.net.computeStats();
-    if (now >= this._nextClientStats && this._nsFps > 0) {
+    if (!inactive && now >= this._nextClientStats && this._nsFps > 0) {
       this._nextClientStats = now + 10000;
       const correcoes = this._reconcileWindow;
       this.net.sendClientStats?.({

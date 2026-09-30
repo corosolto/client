@@ -76,7 +76,7 @@ for (const kind of ['draw', 'quick', 'heavy']) {
   const makeFlash = () => ({
     _vmFlash: { t: 0.032, life: 0.045, peak: 1.6 }, _vmFlashLight: { intensity: 0.7 },
     _vmMzPool: [], _mzPool: [], _mzLights: [new THREE.PointLight()], _mzLightActive: [],
-    _fxTune: { spark: 0, smoke: 0 }, flashFx: { spawn() {} }, puffFx: { spawn() {} },
+    _fxTune: { spark: 0 }, flashFx: { spawn() {} }, puffFx: { spawn() {} },
   });
   for (const own of [false, true]) {
     const game = makeFlash();

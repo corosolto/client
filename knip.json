@@ -1,0 +1,23 @@
+{
+  "$schema": "https://unpkg.com/knip@6.38.0/schema.json",
+  "entry": [
+    "public/js/main.js",
+    "public/js/{fpsrig,site-bg,horizon,shell,ops,sertao_map_preview,mapprops,map_brasilia,map_ferrovelho,ambientlife,audio,authoredvm,bloom,characters,glbchars,handik,maps,recoil,textures,vmweapon,weapons,vmattach}.js",
+    "public/js/data/vmconfig.js",
+    "public/vendor/leaflet/leaflet.js"
+  ],
+  "ignore": [
+    "public/docs/**",
+    "docs/**",
+    ".opencode/**",
+    "tools/**",
+    "scripts/**",
+    "worktrees/**",
+    "public/js/map_piscinao_ramos.js"
+  ],
+  "ignoreDependencies": [
+    "meshoptimizer",
+    "dejavu-fonts-ttf",
+    "ndarray-pixels"
+  ]
+}

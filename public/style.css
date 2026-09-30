@@ -181,7 +181,7 @@ html[data-home-ui="hub"] #main-menu .cs-vignette{background:linear-gradient(90de
 .hub-tabs button{flex:0 0 auto;padding:11px 5px;border:0;background:none;box-shadow:inset 0 -2px 0 transparent;color:#bcbab6;font:700 15px/1 var(--font);letter-spacing:.8px;white-space:nowrap;cursor:pointer;transition:color .16s,box-shadow .16s}
 .hub-tabs button:hover,.hub-tabs button:focus-visible{color:#fff;outline:none;box-shadow:inset 0 -2px 0 #f3b958}
 .hub-tabs button[aria-selected="true"]{color:#b4d92e;box-shadow:inset 0 -2px 0 #b4d92e}
-.hub-online{display:flex;gap:8px;align-items:center;align-self:center;margin-left:auto;white-space:nowrap;color:#a5a5a3;font:700 10px/1 var(--mono)}
+.hub-online{display:flex;gap:8px;align-items:center;align-self:center;margin-left:auto;white-space:nowrap;color:#a5a5a3;font:400 11px/1 var(--mono);letter-spacing:.5px}
 .hub-online i{width:7px;height:7px;background:#46e08a;border-radius:50%;box-shadow:0 0 0 3px #46e08a33}
 .hub-header-action{display:flex;align-self:center;align-items:center;gap:8px;min-height:36px;padding:4px 10px 4px 4px;border:1px solid #34302b;background:#0d0e11d9;color:#f0f0ed;cursor:pointer;transition:border-color .16s}
 .hub-header-action:hover,.hub-header-action:focus-visible{border-color:#b4d92e;outline:none}
@@ -260,14 +260,14 @@ html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="public"] #mp-convite-form,h
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="public"] .mp-criar{display:none}
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] #mp-quick,html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-titulo,html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] #mp-salas{display:none}
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-criar{display:block;overflow-y:auto;padding:22px;border:1px solid #34302b;border-top:3px solid #b4d92e;background:#0d0e11e6}
-.hub-info{max-width:1040px;padding:8px 4px 28px;scrollbar-width:thin;scrollbar-color:#34302b transparent}
-.hub-info>p{max-width:700px;color:#d3d3d1;font-size:17px;line-height:1.45}.hub-info>a{color:#39d6e0}
+.hub-info{max-width:1040px;padding:28px 4px 40px;scrollbar-width:thin;scrollbar-color:#34302b transparent}
+.hub-info>p{max-width:68ch;color:#d3d3d1;font:400 16px/1.6 system-ui,-apple-system,'Segoe UI',Arial,sans-serif}.hub-info>a{color:#39d6e0}
 .hub-rank-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:24px 0}.hub-rank-stats>div{padding:15px;border-top:3px solid #f3b958;background:#0d0e11df;color:#a5a5a3}.hub-rank-stats b{display:block;color:#f3b958;font-size:28px}
 .hub-rank-global{padding:18px;background:#0d0e11df;border:1px solid #34302b}.hub-rank-global a{color:#39d6e0}.hub-rank-global table{width:100%;border-collapse:collapse;text-align:left}.hub-rank-global th,.hub-rank-global td{padding:7px;border-bottom:1px solid #26272d}.hub-rank-global th{color:#a5a5a3}
 .hub-factions,.hub-link-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:24px 0}.hub-factions>div{display:flex;align-items:center;gap:12px;min-height:70px;padding:10px;border-top:3px solid var(--hub-faction,#b4d92e);background:#0d0e11df;font-size:17px}.hub-factions img{width:40px;height:40px;object-fit:contain}
 .hub-link-grid a{padding:13px;border:1px solid #34302b;background:#0d0e11df;color:#39d6e0;text-decoration:none;font:700 12px/1 var(--mono)}.hub-link-grid a:hover{border-color:#b4d92e;color:#b4d92e}
-#hub-feedback{max-width:1120px}#hub-feedback label:not(.hub-fb-consent){display:block;margin:15px 0 6px;color:#a5a5a3;font:700 10px/1 var(--mono)}
-#hub-feedback textarea,#hub-feedback input[type="email"]{display:block;width:100%;padding:12px;border:1px solid #34302b;background:#0d0e11ed;color:#f0f0ed;font:500 15px/1.4 var(--font)}
+#hub-feedback{max-width:1120px}#hub-feedback label:not(.hub-fb-consent){display:block;margin:15px 0 6px;color:#a5a5a3;font:400 11px/1.3 var(--mono)}
+#hub-feedback textarea,#hub-feedback input[type="email"]{display:block;width:100%;padding:12px;border:1px solid #34302b;background:#0d0e11ed;color:#f0f0ed;font:400 15px/1.5 system-ui,-apple-system,'Segoe UI',Arial,sans-serif}
 #hub-feedback textarea:focus,#hub-feedback input:focus{outline:none;border-color:#b4d92e}.hub-fb-consent{display:flex;gap:8px;align-items:center;margin:15px 0;color:#d3d3d1}.hub-fb-consent input{accent-color:#b4d92e}
 #hub-fb-status{min-height:22px;color:#b4d92e}#hub-fb-status.erro{color:#e2402c}#hub-fb-send{max-width:320px}
 .hub-changelog{display:flex;align-items:center;gap:12px;margin:20px 0;padding:14px 16px;border-left:3px solid #e2402c;background:#0d0e11df;color:#f0f0ed;text-decoration:none}
