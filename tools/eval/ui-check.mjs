@@ -22,6 +22,9 @@
                     OBJETO GRÁFICO essencial >= 3:1, contra o fundo declarado do
                     próprio elemento composto sobre o pior fundo de cena medido.
                     PEGA O DEFEITO 2 (barra de captura).
+   UI1C CHAT      — o mesmo contraste só para o #chat-sala aberto (#686), portão
+                    próprio (eval:ui-chat, no check:fast) porque a UI1 já nasce
+                    vermelha na base e não distinguiria um mutante do chat.
    UI2 POLUIÇÃO   — fração do tempo em que cada elemento NÃO-PERMANENTE do HUD fica
                     na tela numa partida simulada. PEGA O DEFEITO 1 (prompt do [E]).
    UI3 ÁREA MORTA — nenhum elemento do HUD por cima da ZONA DA MIRA nem da ZONA DO
@@ -29,7 +32,7 @@
    UI4 RITMO      — a partida FECHA no tempo/alvo declarado. PEGA O DEFEITO 3
                     (placar 65 × 53 num modo CAPTURA).
 
-   Uso:  node tools/eval/ui-check.mjs [ui1|ui2|ui3|ui4|all] [--json] [--mutante=<nome>]
+   Uso:  node tools/eval/ui-check.mjs [ui1|ui1c|ui2|ui3|ui4|all] [--json] [--mutante=<nome>]
          MUT=<nome> node tools/eval/ui-check.mjs   (mutação: ver MUTACOES lá embaixo)
    ============================================================================ */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -558,8 +561,26 @@ function ui1(ctxCss) {
   };
   parNo('hp-fill', 'hp-bar', 'barra de vida: preenchimento × trilho');
 
-  /* ---- (e) CHAT DE SALA (#686): sem scrim nem caixa do #hud, só o fundo das próprias linhas ---- */
-  const nosChat = ctxCss.arvoreChat ? achata(ctxCss.arvoreChat) : [];
+  const falhas = achados.filter(a => !a.ok);
+  return { nome: 'UI1', titulo: 'CONTRASTE — texto do HUD >= 4,5:1 (3:1 se grande) e objeto gráfico essencial >= 3:1',
+    ok: falhas.length === 0, achados, falhas };
+}
+
+/* UI1C — CHAT DE SALA (#686): sem scrim nem caixa do #hud, só o fundo das próprias linhas.
+   Portão PRÓPRIO, e não uma fatia da UI1: a UI1 já está vermelha na base (os spans de
+   #hud-shortcuts a 1,96:1), então um mutante do chat não mudaria o veredito dela e o
+   portão não distinguiria aviso com fundo de aviso sem fundo. O #hud-atalho-chat fica na
+   UI1 com os irmãos: tem a cor deles de propósito, e clareá-lo sozinho é outra decisão. */
+function ui1c(ctxCss) {
+  const { regras, vars } = ctxCss;
+  const titulo = 'CONTRASTE DO CHAT DE SALA — texto do #chat-sala aberto >= 4,5:1 (3:1 se grande) sobre a areia';
+  const achados = [];
+  const add = (o) => achados.push(o);
+  if (!ctxCss.arvoreChat) {
+    add({ tipo: 'texto', chat: true, alvo: '#chat-sala', fonte: 'src/pages/index.astro', amostra: 'seção ausente (#686)', razao: 0, min: AA_TEXTO, ok: false });
+    return { nome: 'UI1C', titulo, ok: false, achados, falhas: achados.slice() };
+  }
+  const nosChat = achata(ctxCss.arvoreChat);
   for (const n of nosChat) {
     n.__comp = computa(n, regras, vars);
     for (const p of HERDA) {
@@ -578,10 +599,10 @@ function ui1(ctxCss) {
     add({ tipo: 'texto', chat: true, alvo: `#chat-sala > ${n.id ? '#' + n.id : '.' + (n.cls[0] || n.tag)}`, fonte: `src/pages/index.astro:${n.linha}`,
       amostra: `"${n.texto.slice(0, 22)}" ${c['color']}`, razao: +r.toFixed(2), min, ok: r >= min - 1e-9 });
   }
-
+  // a linha, o divisor e o aviso preenchidos pelo recorte têm de aparecer; medir zero textos é cegueira
+  if (achados.length < 3) add({ tipo: 'texto', chat: true, alvo: '#chat-sala', fonte: 'src/pages/index.astro', amostra: `só ${achados.length} textos medidos`, razao: 0, min: AA_TEXTO, ok: false });
   const falhas = achados.filter(a => !a.ok);
-  return { nome: 'UI1', titulo: 'CONTRASTE — texto do HUD >= 4,5:1 (3:1 se grande) e objeto gráfico essencial >= 3:1',
-    ok: falhas.length === 0, achados, falhas };
+  return { nome: 'UI1C', titulo, ok: falhas.length === 0, achados, falhas };
 }
 
 /* ==========================================================================
@@ -1212,7 +1233,7 @@ const MUTACOES = {
       '--bg-900-rgb:5,8,11;     --bg-800-rgb:10,17,22;   --bg-700-rgb:16,26,33;'),
   },
   ui1_chat_aviso_sem_fundo: {
-    portao: 'UI1', o_que: 'tira o fundo do #chat-aviso do chat de sala (#686): o aviso de nack volta a 1,03:1 sobre a areia',
+    portao: 'UI1C', o_que: 'tira o fundo do #chat-aviso do chat de sala (#686): o aviso de nack volta a 1,03:1 sobre a areia',
     css: (c) => c.replace(/(#chat-aviso\{[^}]*)background:rgba\(10,10,12,\.72\);padding:4px 8px;/, '$1'),
   },
   ui1_ctf_scrim_fraco: {
@@ -1361,6 +1382,7 @@ const sonda = await fragmentosDoHud(H);
 ctxCss.fragmentos = sonda.fragmentos;
 ctxCss.textos = sonda.textos;
 if (ALVO === 'all' || ALVO === 'ui1') res.push(ui1(ctxCss));
+if (ALVO === 'all' || ALVO === 'ui1c') res.push(ui1c(ctxCss));
 if (ALVO === 'all' || ALVO === 'ui3') res.push(ui3(ctxCss));
 if (ALVO === 'all' || ALVO === 'ui5') res.push(ui5(ctxCss));
 if (ALVO === 'all' || ALVO === 'ui2') res.push(await ui2(H));
@@ -1375,9 +1397,9 @@ for (const r of res) {
     for (const a of ord.slice(0, 14))
       console.log(`   ${a.ok ? '·' : '✗'} ${String(a.razao).padStart(6)}:1 (min ${a.min})  ${a.alvo}  [${a.tipo}]  ${a.fonte}`);
     console.log(`   ${r.achados.length} itens medidos, ${r.falhas.length} abaixo do mínimo`);
-    const chat = r.achados.filter(a => a.chat);
-    if (chat.length) console.log(`   chat de sala (#686), ${chat.length} textos, ${chat.filter(a => !a.ok).length} abaixo do mínimo:`);
-    for (const a of chat) console.log(`   ${a.ok ? '·' : '✗'} ${String(a.razao).padStart(6)}:1 (min ${a.min})  ${a.alvo}  ${a.amostra}`);
+  } else if (r.nome === 'UI1C') {
+    for (const a of r.achados) console.log(`   ${a.ok ? '·' : '✗'} ${String(a.razao).padStart(6)}:1 (min ${a.min})  ${a.alvo}  ${a.amostra}  ${a.fonte}`);
+    console.log(`   ${r.achados.length} textos do chat medidos, ${r.falhas.length} abaixo do mínimo`);
   } else if (r.nome === 'UI3') {
     for (const a of r.achados) {
       if (a.probe) { console.log(`   ${a.ok ? '·' : '✗'} PROBE ${a.alvo.slice(6).padEnd(24)} = ${a.medido === null ? 'NÃO RESOLVE' : a.medido + 'px'} (esperado ${a.esperado}px)`); continue; }
