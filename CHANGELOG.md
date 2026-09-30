@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.17`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.19`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,27 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.19] — 2026-09-30
+
+### Mudado
+- fix(fx): tiro sem fumaça + smoke de granada visível (BUG-185/186) + PR #704 (#716)
+- fix(vm): clarão sutil na boca real e teto de tamanho da arma (BUG-188, BUG-189)
+- fix(fx): traçado visível e impacto de bala sem fumaça (BUG-187)
+- chore(docs): blocos gerados com a régua eval:smoke e comentário das faíscas em 2 linhas
+- fix(fx): tiro sem fumaça e granada de smoke volta a fazer smoke (BUG-185, BUG-186)
+- Align revolver ADS with its sight
+- Stabilize ADS review target rendering
+- Fit ADS comments within project budget
+- Refresh generated docs for ADS checks
+- Keep scoped weapons distinct from focus ADS
+- Fix ADS target tracking and weapon recoil
+
+## [2.1.0-alpha.18] — 2026-09-30
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-09-29) (#719)
+- docs(changelog): rodada do cronista — 21 commits
 
 ## [2.1.0-alpha.17] — 2026-09-29
 
@@ -136,6 +157,7 @@
 - Move docs internas para o repo privado progress (#698)
 - Limpa docs internas e cliente Godot da árvore pública
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.8).
 ## [2.1.0-alpha.7] — 2026-09-28
 
 ### Mudado

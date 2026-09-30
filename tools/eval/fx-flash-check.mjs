@@ -10,8 +10,9 @@
    e a _vmFlashLight por _fxTune.light), já na partida e AO VIVO (applySettings).
 
    FATORES (medidos no dev.html, não palpite): normal 1,0; reduzido 0,45 (~metade do
-   pico percebido); mínimo 0,15 (rastro, sem estourar). Faíscas/fumaça não mudam — o
-   relato é do CLARÃO, não do resto do efeito.
+   pico percebido); mínimo 0,15 (rastro, sem estourar). Faíscas não mudam — o relato é
+   do CLARÃO. Fumaça do cano: REMOVIDA do tiro (BUG-185, 29/09) — FXF1c exige que nem
+   exista mais o multiplicador `smoke`.
 
    A PROVA DE QUE ELA MORDE: esta régua REPROVOU 13 cláusulas no estado anterior ao
    conserto (sem setting, _fxTune sempre 1 — ver o PR). Mutante de fonte:
@@ -42,7 +43,7 @@ for (const [opcao, f] of Object.entries(FATORES)) {
   const g = bootGame('praca_poderes', { textures, settings: { fxFlash: opcao } });
   cobra(perto(g._fxTune.flash, f), `FXF1 · ${opcao}: _fxTune.flash=${g._fxTune.flash} (esperado ${f})`);
   cobra(perto(g._fxTune.light, f), `FXF1b · ${opcao}: _fxTune.light=${g._fxTune.light} (esperado ${f})`);
-  cobra(perto(g._fxTune.spark, 1) && perto(g._fxTune.smoke, 1), `FXF1c · ${opcao}: faíscas e fumaça intactas`);
+  cobra(perto(g._fxTune.spark, 1) && !('smoke' in g._fxTune), `FXF1c · ${opcao}: faíscas intactas e sem multiplicador de fumaça (BUG-185 removeu a fumaça do cano)`);
   g.dispose();
 }
 

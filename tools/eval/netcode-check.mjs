@@ -222,6 +222,22 @@ console.log('\n· casamento de ids (quem é amigo, quem é inimigo)');
   const env = net.enviados[0];
   cobra(!!env && env.az === -1, 'o input do jogador é enviado ao servidor');
   cobra(Number.isFinite(env.px) && Number.isFinite(env.rt), 'vai junto a posição PREDITA e o tempo renderizado (origem do tiro + lag comp)');
+  // A câmera FP usa pitch+punch; o nó precisa receber o mesmo eixo do tiro.
+  const recDesc = Object.getOwnPropertyDescriptor(g.player, 'recoilP');
+  const [pitch0, yaw0, cam0, down0] = [g.player.pitch, g.player.yaw, g.camView, g.mouseDown0];
+  Object.defineProperty(g.player, 'recoilP', { configurable: true, get: () => 0.07 });
+  g.player.pitch = 0.21; g.player.yaw = 0.31; g.mouseDown0 = true;
+  g.camView = 'first'; net.enviados.length = 0;
+  g._mp.stepPlayer(g.player, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
+  cobra(Math.abs(net.enviados[0].pitch - 0.28) < 1e-9 && Math.abs(net.enviados[0].yaw - 0.31) < 1e-9,
+    'tiro FP envia ao nó o pitch visível com punch');
+  g.camView = 'shoulder'; net.enviados.length = 0;
+  g._mp.stepPlayer(g.player, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
+  cobra(Math.abs(net.enviados[0].pitch - 0.21) < 1e-9,
+    'tiro de ombro envia o eixo do olho sem punch de câmera FP');
+  if (recDesc) Object.defineProperty(g.player, 'recoilP', recDesc);
+  else delete g.player.recoilP;
+  g.player.pitch = pitch0; g.player.yaw = yaw0; g.camView = cam0; g.mouseDown0 = down0;
   // adiantamento NORMAL da predição (< 2,5 m) não pode teleportar: seria rubber-band
   g.player.pos.set(0, 0, 0);
   g._mp._srvHas = 1; g._mp._srvX = 1.5; g._mp._srvY = 0; g._mp._srvZ = 0;
