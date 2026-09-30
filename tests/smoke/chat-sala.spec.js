@@ -6,8 +6,8 @@ import { test, expect } from '@playwright/test';
    (ARIA, Y/Enter/Esc, prisão e devolução de foco, IME, XSS e RTL como texto) e a
    geometria contra a ZONA_MIRA de tools/eval/ui-check.mjs e o #crosshair em cinco
    viewports. Mutantes por page.route (SMOKE_MUTANTE=<nome>): painel-largo, innerhtml,
-   foco-preso, so-mousedown, reduzido-eterno, redesenho-novo, redesenho-falante e
-   esc-so-keydown; cada um DEVE reprovar.
+   foco-preso, so-mousedown, reduzido-eterno, redesenho-novo, redesenho-falante,
+   esc-so-keydown e foco-no-toque; cada um DEVE reprovar.
    Uso local: CHROME_BIN=/caminho/do/chrome npx playwright test -c playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js
    Figuras: CHAT_FIGURAS=/pasta guarda os PNG abertos e fechados de cada viewport. */
 
@@ -109,6 +109,15 @@ async function aplicarMutante(page, testInfo) {
       if (mutado === corpo) throw new Error('mutante redesenho-falante não aplicou: redesenhar mudou de forma');
       await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
     });
+  } else if (MUTANTE === 'foco-no-toque') {
+    testInfo.annotations.push({ type: 'mutação', description: 'foco-no-toque: devolverFoco volta a devolver o foco ao #chat-toque; W depois de fechar pelo botão DEVE reprovar' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace('!entradaPropria(f) && ', '');
+      if (mutado === corpo) throw new Error('mutante foco-no-toque não aplicou: devolverFoco mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
   } else if (MUTANTE === 'esc-so-keydown') {
     testInfo.annotations.push({ type: 'mutação', description: 'esc-so-keydown: o painel volta a ouvir só o keydown do Esc; o keyup órfão do toque em tela cheia DEVE reprovar' });
     await page.route('**/js/chat-painel.js*', async (rota) => {
@@ -191,6 +200,14 @@ const entregar = (page, m) => page.evaluate((f) => window.__chatNet.entregar(f),
 async function teclaChat(page, tecla) {
   await page.waitForFunction(() => { const g = window.__game; return !!g && g.state === 'live' && !g.paused; }, null, { timeout: 30_000 });
   await page.keyboard.press(tecla);
+}
+/* Teclado físico num aparelho de toque: o foco não pode voltar ao #chat-toque, que tem
+   data-entrada-propria e faria entradaPropria() engolir W/A/S/D até o próximo toque no canvas. */
+async function cobrarTeclaDoJogo(page, quando) {
+  await page.keyboard.down('w');
+  const s = await estadoJogo(page);
+  await page.keyboard.up('w');
+  expect(s.keys.KeyW, `W precisa chegar ao jogo ${quando} (foco em ${s.ativo})`).toBeTruthy();
 }
 const linhas = (page) => page.locator('#chat-log .chat-linha');
 const chatAberto = (page) => page.evaluate(() => window.__chat.aberto());
@@ -621,6 +638,7 @@ test.describe('chat de sala', () => {
       await test.step('fechar sem teclado: #chat-toque alterna, toque fora fecha, FECHAR fecha', async () => {
         await page.locator('#chat-toque').tap();
         expect(await chatAberto(page), 'o segundo toque em #chat-toque fecha o compositor').toBe(false);
+        await cobrarTeclaDoJogo(page, 'depois do segundo toque em #chat-toque');
         await expect(page.locator('#touch-ui')).toBeVisible();
         await page.locator('#chat-toque').tap();
         expect(await chatAberto(page)).toBe(true);
@@ -635,6 +653,7 @@ test.describe('chat de sala', () => {
         await expect(page.locator('#chat-fechar')).toBeVisible();
         await page.locator('#chat-fechar').tap();
         expect(await chatAberto(page), 'FECHAR no cabeçalho fecha o compositor').toBe(false);
+        await cobrarTeclaDoJogo(page, 'depois de FECHAR');
         const s = await estadoJogo(page);
         expect(s.tiros).toBe(0);
         expect(s.travada).toBe(false);

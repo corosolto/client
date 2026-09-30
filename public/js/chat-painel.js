@@ -34,6 +34,9 @@ const FOCAVEIS = 'button:not([disabled]),input:not([disabled]),[tabindex]:not([t
 
 const visivel = (el) => !!el && typeof el.getClientRects === 'function' && el.getClientRects().length > 0;
 const esvaziar = (el) => { while (el.firstChild) el.removeChild(el.firstChild); };
+// mesma regra do game.js: devolver o foco a um alvo destes faria entradaPropria() engolir W/A/S/D
+const entradaPropria = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable === true
+  || !!(typeof t.closest === 'function' && t.closest('[data-entrada-propria]')));
 
 export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, frase = (id) => id, convite = '', toque = false, storage } = {}) {
   const $ = (id) => document.getElementById(id);
@@ -220,9 +223,9 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     const f = focoAntes;
     focoAntes = null;
     const ativo = document.activeElement;
-    if (f && f !== document.body && f.isConnected && !sec.contains(f) && typeof f.focus === 'function') f.focus();
-    // foco preso numa linha do painel fechado faz entradaPropria() engolir toda tecla do jogo
-    else if (ativo && sec.contains(ativo) && typeof ativo.blur === 'function') ativo.blur();
+    if (f && f !== document.body && f.isConnected && !sec.contains(f) && !entradaPropria(f) && typeof f.focus === 'function') f.focus();
+    // foco preso numa linha do painel fechado, ou no #chat-toque, faz entradaPropria() engolir toda tecla do jogo
+    else if (ativo && (sec.contains(ativo) || entradaPropria(ativo)) && typeof ativo.blur === 'function') ativo.blur();
     else if (typeof el.entrada.blur === 'function') el.entrada.blur();
   }
   function prender(e) {
