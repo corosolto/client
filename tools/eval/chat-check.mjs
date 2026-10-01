@@ -35,6 +35,11 @@
      CC7 · a tabela de limites do §6 da doc é IGUAL a CHAT_LIMITES (mesmas chaves,
            mesmos valores), MOTIVOS_DENUNCIA é a lista do §2, e o teto da fila do
            net.js é o `filaClienteMax` da tabela.
+     CC8 · botões da HUD (#hud-chat-sala/#hud-chat-time em #hud-atalho-chat): o clique
+           abre o compositor no canal do rótulo, trava o jogo e foca o campo; Esc fecha e
+           destrava; o outro botão troca de canal; sem meta.chat o wrapper fica hidden e o
+           clique não faz nada. No index.astro cada botão carrega type=button e
+           data-entrada-propria no próprio tag (sem isso o clique vira tiro no game.js).
 
    MUTANTES (em memória: o fonte é reescrito e importado por data: URL; nada toca o
    disco). Mutante que não morde, ou que não aplica, REPROVA a régua.
@@ -54,6 +59,9 @@
      mapa-parado-vaza main.js: noServeMapaParado zera mpSessao sem
                     chat?.destruir() (fonte reescrita em memória)        -> CC6 vermelha
      sem-nfkc       chat.js: normalizarTexto pula o NFKC                 -> CC1 vermelha
+     sem-handler    chat-painel.js: o clique de #hud-chat-sala perde o listener -> CC8 vermelha
+     vaza-clique    index.astro: #hud-chat-sala perde o data-entrada-propria -> CC8 vermelha
+     canal-trocado  chat-painel.js: #hud-chat-time abre 'sala'               -> CC8 vermelha
      zwj-so-picto   chat.js: o ZWJ volta a exigir pictograma IMEDIATO
                     antes (U+FE0F e tom de pele partem o emoji)          -> CC1 vermelha
      cf-por-replace chat.js: o passo 4 volta a ser um replace encadeado  -> CC1 vermelha
@@ -579,6 +587,79 @@ async function cc7(cobra, { chat, net }) {
   cobra(net.mod.CHAT_FILA_MAX === limites.filaClienteMax, `CC7 net.js CHAT_FILA_MAX (${net.mod.CHAT_FILA_MAX}) == filaClienteMax da doc (${limites.filaClienteMax})`);
 }
 
+/* ============================== CC8 · botões da HUD ============================== */
+/* O jogador sem teclado (toque, mouse sem pointer lock) precisa de botão: #hud-chat-sala e
+   #hud-chat-time dentro de #hud-atalho-chat abrem o compositor no canal do rótulo, como Y/U.
+   `data-entrada-propria` no PRÓPRIO botão é o que faz o clique não virar tiro (game.js _md);
+   sem meta.chat o wrapper nasce hidden e o clique não faz nada. */
+function elDoPainel(tag) {
+  const el = elFalso(tag);
+  el.hidden = false; el.value = ''; el.disabled = false; el.focado = false; el.scrollHeight = 0;
+  el.ouvintes = {};
+  el.addEventListener = (t, f) => { (el.ouvintes[t] || (el.ouvintes[t] = [])).push(f); };
+  el.removeEventListener = (t, f) => { el.ouvintes[t] = (el.ouvintes[t] || []).filter((x) => x !== f); };
+  el.clicar = () => { for (const f of el.ouvintes.click || []) f({ type: 'click', target: el }); };
+  el.teclar = (key) => { for (const f of el.ouvintes.keydown || []) f({ type: 'keydown', key, isComposing: false, target: el, preventDefault() {}, stopPropagation() {} }); };
+  el.contains = () => false;
+  el.focus = () => { el.focado = true; };
+  el.style = { setProperty() {}, removeProperty() {}, getPropertyValue() { return ''; } };
+  el.scrollTo = () => {};
+  Object.defineProperty(el, 'firstChild', { get() { return el.children[0] || null; } });
+  el.removeChild = (c) => { const i = el.children.indexOf(c); if (i >= 0) el.children.splice(i, 1); return c; };
+  return el;
+}
+async function cc8(cobra, { painel, fontes = {} }) {
+  if (!painel.mod) return cobra(false, painel.motivo);
+  const { montarChatSala } = painel.mod;
+  if (typeof montarChatSala !== 'function') return cobra(false, 'CC8 chat-painel.js não exporta montarChatSala');
+  const lerFonte = (rel) => (fontes[rel] !== undefined ? fontes[rel] : ler(rel));
+  const astro = lerFonte('src/pages/index.astro');
+  for (const [id, rotulo] of [['hud-chat-sala', 'Y SALA'], ['hud-chat-time', 'U TIME']]) {
+    const tag = (new RegExp(`<button[^>]*id="${id}"[^>]*>`)).exec(astro || '')?.[0] || '';
+    cobra(!!tag && tag.includes('data-entrada-propria') && tag.includes('type="button"'),
+      `CC8 <button id="${id}"> nasce com type=button e data-entrada-propria no mesmo tag (o clique não vaza pro jogo) [${tag || 'tag ausente'}]`);
+    cobra((new RegExp(`id="${id}"[^>]*>${rotulo}</button>`)).test(astro || ''),
+      `CC8 o botão ${id} leva o rótulo "${rotulo}" (tecla + canal)`);
+  }
+  cobra((/id="hud-atalho-chat"[^>]*\bhidden\b/.test(astro || '')) && !(/id="hud-chat-(sala|time)"[^>]*\bhidden\b/.test(astro || '')),
+    'CC8 os botões vivem no wrapper #hud-atalho-chat, que nasce hidden: sem welcome.chat nada aparece');
+  /* comportamento: monta o painel de verdade num DOM falso que grava listeners */
+  const ids = ['chat-sala', 'chat-log', 'chat-form', 'chat-entrada', 'chat-contador', 'chat-canal', 'chat-ocultar', 'chat-nao-lidas',
+    'chat-bloqueados', 'chat-acoes', 'chat-acoes-quem', 'chat-bloquear', 'chat-denunciar', 'chat-acoes-cancelar', 'chat-motivos',
+    'chat-motivos-lista', 'chat-motivos-cancelar', 'chat-lista-bloqueados', 'chat-lista-bloqueados-ul', 'chat-lista-fechar',
+    'chat-aviso', 'chat-bloquear-tambem', 'chat-toque', 'hud-atalho-chat', 'hud-chat-sala', 'hud-chat-time', 'chat-fechar'];
+  const els = Object.fromEntries(ids.map((id) => [id, elDoPainel('div')]));
+  for (const id of ['chat-acoes', 'chat-motivos', 'chat-lista-bloqueados', 'chat-nao-lidas', 'chat-bloquear-tambem']) els[id].hidden = true;
+  const porId0 = globalThis.document.getElementById;
+  globalThis.document.getElementById = (id) => els[id] || elDoPainel('div');
+  try {
+    let travado = null;
+    const jogo = { travarEntrada: (v) => { travado = v; } };
+    const netComMeta = { meta: { chat: META_CHAT }, espectador: false, yourEnt: 7, enviarChat: () => true, denunciarChat: () => true, drenarChat: () => [], onChat: null };
+    const ctr = montarChatSala({ net: netComMeta, obterJogo: () => jogo, convite: 'ABCD' });
+    cobra(els['hud-atalho-chat'].hidden === false && els['chat-sala'].hidden === false,
+      `CC8 com meta.chat o atalho da HUD aparece (hidden=${els['hud-atalho-chat'].hidden})`);
+    els['hud-chat-sala'].clicar();
+    cobra(ctr.aberto() === true && ctr.canal() === 'sala' && travado === true && els['chat-entrada'].focado === true,
+      `CC8 clicar em #hud-chat-sala abre o compositor no canal sala, trava o jogo e foca o campo (aberto=${ctr.aberto()}, canal=${ctr.canal()}, travado=${travado})`);
+    els['hud-chat-time'].clicar();
+    cobra(ctr.aberto() === true && ctr.canal() === 'time', `CC8 clicar em #hud-chat-time com o painel aberto troca para o canal time (canal=${ctr.canal()})`);
+    els['chat-sala'].teclar('Escape');
+    cobra(ctr.aberto() === false && travado === false, `CC8 Esc fecha o que o botão abriu e destrava o jogo (aberto=${ctr.aberto()}, travado=${travado})`);
+    ctr.destruir();
+    els['hud-atalho-chat'].hidden = true;
+    els['chat-entrada'].focado = false;
+    let travado2 = null;
+    const netSemMeta = { meta: null, espectador: false, yourEnt: 7, enviarChat: () => true, denunciarChat: () => true, drenarChat: () => [], onChat: null };
+    const inerte = montarChatSala({ net: netSemMeta, obterJogo: () => ({ travarEntrada: (v) => { travado2 = v; } }), convite: 'ABCD' });
+    cobra(els['hud-atalho-chat'].hidden === true, 'CC8 sem meta.chat o atalho (e os botões dentro dele) ficam escondidos');
+    els['hud-chat-sala'].clicar(); els['hud-chat-time'].clicar();
+    cobra(inerte.aberto() === false && travado2 === null && els['chat-entrada'].focado === false,
+      'CC8 sem meta.chat clicar nos botões não abre nada nem trava o jogo');
+    inerte.destruir();
+  } finally { globalThis.document.getElementById = porId0; }
+}
+
 /* ============================== execução ============================== */
 const ctx = {
   chat: await carregar('public/js/chat.js', 'commit 4 do plano'),
@@ -594,6 +675,7 @@ const GRUPOS = [
   ['CC5', 'montarLinha sem innerHTML, com bdi', cc5],
   ['CC6', 'fonte: SEO, innerHTML, imports', cc6],
   ['CC7', 'tabela da doc == constantes', cc7],
+  ['CC8', 'botões da HUD: clique abre o canal certo, não vaza pro jogo, some sem meta', cc8],
 ];
 const soma = (c) => { ok += c.ok; falhas += c.falhas; };
 for (const [id, titulo, fn] of GRUPOS) {
@@ -624,7 +706,14 @@ const MUTANTES = [
   ['sem-nfkc', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace("Array.from(txt.normalize('NFKC').replace(BRANCOS_RE", 'Array.from(txt.replace(BRANCOS_RE'), 'sem-nfkc'), motivo: '' } })],
   ['zwj-so-picto', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('seguraZwj(anterior)', 'PICTO.test(cps[i - 1])'), 'zwj-so-picto'), motivo: '' } })],
   ['cf-por-replace', 'CC1', cc1, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace("Array.from(txt.normalize('NFKC').replace(BRANCOS_RE, ' '))", "Array.from(txt.normalize('NFKC').replace(BRANCOS_RE, ' ').replace(/[\\p{Cc}\\p{Cf}]/gu, (ch) => (ch === ZWJ ? ch : '')))"), 'cf-por-replace'), motivo: '' } })],
-  ['bloqueio-proprio', 'CC4', cc4, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('h === this.eu?.h', 'false'), 'bloqueio-proprio'), motivo: '' } })],
+  ['sem-handler', 'CC8', cc8, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace("el.botaoSala.addEventListener('click', onBotaoSala)", '0'), 'sem-handler'), motivo: '' } })],
+  ['vaza-clique', 'CC8', cc8, async () => {
+    const rel = 'src/pages/index.astro', s = ler(rel) || '';
+    const m = s.replace('<button type="button" id="hud-chat-sala" data-entrada-propria>', '<button type="button" id="hud-chat-sala">');
+    if (m === s) throw new Error('mutante vaza-clique não aplicou: o botão da HUD mudou de forma');
+    return { ...ctx, fontes: { [rel]: m } };
+  }],
+  ['canal-trocado', 'CC8', cc8, async () => ({ ...ctx, painel: { mod: await importarMutado('public/js/chat-painel.js', (s) => s.replace("() => abrir('time')", "() => abrir('sala')"), 'canal-trocado'), motivo: '' } })],
   ['tabela-torta', 'CC7', cc7, async () => ({ ...ctx, chat: { mod: await importarMutado('public/js/chat.js', (s) => s.replace('maxChars: 160,', 'maxChars: 161,'), 'tabela-torta'), motivo: '' } })],
 ];
 if (!SEM_MUTANTES) {

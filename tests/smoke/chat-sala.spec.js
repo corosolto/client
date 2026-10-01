@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
    geometria contra a ZONA_MIRA de tools/eval/ui-check.mjs e o #crosshair em cinco
    viewports. Mutantes por page.route (SMOKE_MUTANTE=<nome>): painel-largo, innerhtml,
    foco-preso, so-mousedown, reduzido-eterno, redesenho-novo, redesenho-falante,
-   esc-so-keydown e foco-no-toque; cada um DEVE reprovar.
+   esc-so-keydown, foco-no-toque e hud-sem-handler; cada um DEVE reprovar.
    Uso local: CHROME_BIN=/caminho/do/chrome npx playwright test -c playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js
    Figuras: CHAT_FIGURAS=/pasta guarda os PNG abertos e fechados de cada viewport. */
 
@@ -125,6 +125,15 @@ async function aplicarMutante(page, testInfo) {
       const corpo = await r.text();
       const mutado = corpo.replace("document.addEventListener('keyup', onDocKeyUp);", '');
       if (mutado === corpo) throw new Error('mutante esc-so-keydown não aplicou: o listener de keyup mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
+  } else if (MUTANTE === 'hud-sem-handler') {
+    testInfo.annotations.push({ type: 'mutação', description: 'hud-sem-handler: o clique em #hud-chat-sala perde o listener; o passo dos botões da HUD DEVE reprovar' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace("el.botaoSala.addEventListener('click', onBotaoSala)", '0');
+      if (mutado === corpo) throw new Error('mutante hud-sem-handler não aplicou: o listener do botão da HUD mudou de forma');
       await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
     });
   } else if (MUTANTE) {
@@ -270,9 +279,36 @@ test.describe('chat de sala', () => {
       await page.evaluate((meta) => { window.__chatNet.meta = { chat: meta }; window.__chat.aoMudarMeta(window.__chatNet.meta); }, META);
       expect(await page.evaluate(() => document.getElementById('chat-sala').hidden)).toBe(false);
       expect(await chatAberto(page)).toBe(false);
-      await expect(page.locator('#hud-atalho-chat')).toHaveText('Y/U CHAT');
+      await expect(page.locator('#hud-atalho-chat')).toBeVisible();
+      await expect(page.locator('#hud-chat-sala')).toHaveText('Y SALA');
+      await expect(page.locator('#hud-chat-time')).toHaveText('U TIME');
     });
 
+    await test.step('botões da HUD: clique abre o canal do rótulo, digitar não vaza pro jogo', async () => {
+      await teclaChat(page, 'y');   // espera o jogo estar em live, como o jogador
+      await page.locator('#chat-entrada').fill('');
+      // no dev local um console.error de asset que falta (ex.: viewmodel de granada) abre o
+      // #crash-overlay do ?debug=1 e ele cobre a faixa do HUD; no CI (build completo) não existe
+      const overlay = page.locator('#crash-overlay');
+      if (await overlay.count()) await overlay.click();
+      await page.keyboard.press('Escape');
+      await page.locator('#hud-chat-sala').click();
+      expect(await chatAberto(page)).toBe(true);
+      expect(await page.evaluate(() => window.__chat.canal())).toBe('sala');
+      expect(await page.evaluate(() => document.activeElement?.id)).toBe('chat-entrada');
+      await page.keyboard.type('www ');
+      let s = await estadoJogo(page);
+      expect(s.keys.KeyW, 'W digitado no compositor aberto pelo botão não vira tecla do jogo').toBeFalsy();
+      expect(s.tiros, 'clicar no botão da HUD não atira').toBe(0);
+      await page.keyboard.press('Escape');
+      expect(await chatAberto(page)).toBe(false);
+      if (await overlay.count()) await overlay.click();
+      await page.locator('#hud-chat-time').click();
+      expect(await chatAberto(page)).toBe(true);
+      await page.keyboard.type('pro time');
+      await page.locator('#chat-entrada').fill('');   // o rascunho sobrevive ao fechar: não polui os passos seguintes
+      await page.keyboard.press('Escape');
+    });
     await test.step('ARIA: log vivo, campo com rótulo, seção nomeada', async () => {
       const log = page.locator('#chat-log');
       await expect(log).toHaveAttribute('role', 'log');

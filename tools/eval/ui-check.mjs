@@ -573,7 +573,7 @@ function ui1(ctxCss) {
    UI1 com os irmãos: tem a cor deles de propósito, e clareá-lo sozinho é outra decisão. */
 function ui1c(ctxCss) {
   const { regras, vars } = ctxCss;
-  const titulo = 'CONTRASTE DO CHAT DE SALA — texto do #chat-sala aberto >= 4,5:1 (3:1 se grande) sobre a areia';
+  const titulo = 'CONTRASTE DO CHAT DE SALA — texto do #chat-sala aberto e dos botões Y SALA/U TIME da HUD >= 4,5:1 (3:1 se grande) sobre a areia';
   const achados = [];
   const add = (o) => achados.push(o);
   if (!ctxCss.arvoreChat) {
@@ -598,6 +598,32 @@ function ui1c(ctxCss) {
     const min = textoGrande(c) ? AA_GRANDE : AA_TEXTO;
     add({ tipo: 'texto', chat: true, alvo: `#chat-sala > ${n.id ? '#' + n.id : '.' + (n.cls[0] || n.tag)}`, fonte: `src/pages/index.astro:${n.linha}`,
       amostra: `"${n.texto.slice(0, 22)}" ${c['color']}`, razao: +r.toFixed(2), min, ok: r >= min - 1e-9 });
+  }
+  /* Os botões da HUD que abrem o chat (#hud-chat-sala/#hud-chat-time) são chat, não
+     decoração da faixa: medidos AQUI porque a UI1 já nasce vermelha na base (spans de
+     #hud-shortcuts a 1,96:1) e um mutante de contraste do botão não mudaria o veredito
+     dela. `hidden` não isenta: o botão aparece quando chega o welcome com chat. */
+  const botões = { 'hud-chat-sala': null, 'hud-chat-time': null };
+  for (const n of achata(ctxCss.arvore)) {
+    if (!(n.id in botões)) continue;
+    botões[n.id] = n;
+    for (let a = n; a; a = a.pai) if (!a.__comp) a.__comp = computa(a, regras, vars);
+    for (const p of HERDA) {
+      if (n.__comp[p] !== undefined) continue;
+      for (let a = n.pai; a; a = a.pai) if (a.__comp && a.__comp[p] !== undefined) { n.__comp[p] = a.__comp[p]; break; }
+    }
+    const cor = parseCor(n.__comp['color']);
+    if (!cor) {
+      add({ tipo: 'texto', chat: true, alvo: `#${n.id}`, fonte: `src/pages/index.astro:${n.linha}`, amostra: 'sem cor resolvida', razao: 0, min: AA_TEXTO, ok: false });
+      continue;
+    }
+    const bg = fundoEfetivo(n, n.__comp, { caixa: null, scrim: false });
+    const r = contraste(cor, bg);
+    add({ tipo: 'texto', chat: true, alvo: `#${n.id}`, fonte: `src/pages/index.astro:${n.linha}`,
+      amostra: `"${n.texto.slice(0, 22)}" ${n.__comp['color']}`, razao: +r.toFixed(2), min: AA_TEXTO, ok: r >= AA_TEXTO - 1e-9 });
+  }
+  for (const id of Object.keys(botões)) {
+    if (!botões[id]) add({ tipo: 'texto', chat: true, alvo: `#${id}`, fonte: 'src/pages/index.astro', amostra: 'botão ausente (#686, botões de HUD)', razao: 0, min: AA_TEXTO, ok: false });
   }
   // a linha, o divisor e o aviso preenchidos pelo recorte têm de aparecer; medir zero textos é cegueira
   if (achados.length < 3) add({ tipo: 'texto', chat: true, alvo: '#chat-sala', fonte: 'src/pages/index.astro', amostra: `só ${achados.length} textos medidos`, razao: 0, min: AA_TEXTO, ok: false });

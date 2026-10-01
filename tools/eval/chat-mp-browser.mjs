@@ -21,7 +21,8 @@
      CE7  · a sala 2 não recebe nada da sala 1, e vice-versa
      CE8  · digitar www, espaço e clicar com o chat aberto não mexe nem atira (espiando
             sendInput e _tryShoot), e não aparece pausa
-     CE9  · figuras em 5 viewports, fechado e aberto, com a geometria medida no DOM contra a
+     CE9  · figuras em 5 viewports, fechado e aberto (mais a cena do espectador abrindo
+            pelo CLIQUE em #hud-chat-sala, e o toque em #hud-chat-time no 844x390), com a geometria medida no DOM contra a
             ZONA_MIRA e o #crosshair (as figuras abertas são para olhar, lei 4); cada cena
             fecha pelo que o jogador tem: Esc no desktop e no toque com teclado (o Chromium
             sem Keyboard Lock engole o keydown do primeiro Esc, só o keyup chega), FECHAR no retrato
@@ -348,6 +349,18 @@ async function foto(page, nome) {
   const arq = path.join(FIGURAS, `${nome}.jpg`);
   writeFileSync(arq, b64 ? Buffer.from(b64, 'base64') : buf);
   return arq;
+}
+
+/* setViewportSize recusa quando a janela do headless ficou em estado não-normal
+   ("Browser.setWindowBounds: restore it to normal state first"): cai na emulação do CDP,
+   que troca a viewport sem mexer na janela. */
+async function redimensionar(pg, w, h) {
+  try { await pg.setViewportSize({ width: w, height: h }); return; }
+  catch { /* janela em estado não-normal: emula a viewport por CDP */ }
+  try {
+    const s = await pg.context().newCDPSession(pg);
+    await s.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
+  } catch (e) { throw new Error(`nem setViewportSize nem CDP emularam ${w}x${h}: ${e.message}`); }
 }
 
 /* ---------- patch de ticket, só no navegador da régua ---------- */
@@ -679,10 +692,14 @@ try {
       return g;
     };
     for (const [w, hgt] of [[1600, 900], [1500, 1000], [1008, 655]]) {
-      await pgA.setViewportSize({ width: w, height: hgt });
+      await redimensionar(pgA, w, hgt);
       await cena(pgA, regs.A, `${w}x${hgt}`, () => abrirChat(pgA, 'y'), esc(pgA), 'Esc');
     }
-    await pgA.setViewportSize({ width: 1600, height: 900 });
+    await redimensionar(pgA, 1600, 900);
+    /* botões da HUD (#686): a #mp-spec-bar (z 99999, bottom 22) cobre a faixa do HUD do
+       espectador — o clique de ponteiro REAL do jogador sem pointer lock é o toque do CE9
+       adiante; aqui o .click() prova o handler contra o nó de verdade e tira as figuras. */
+    await cena(pgS, regs.S, '1280x800-espectador-botao', () => pgS.evaluate(() => document.getElementById('hud-chat-sala').click()), esc(pgS), 'Esc');
     await pgB.evaluate(() => {
       window.__ev = [];
       const reg = (e) => { window.__ev.push({ t: Math.round(performance.now()), tipo: e.type, alvo: e.target?.id || e.target?.tagName, tecla: e.key }); if (window.__ev.length > 40) window.__ev.shift(); };
@@ -700,10 +717,16 @@ try {
     };
     const g1 = await cena(pgB, regs.B, '844x390-toque', toque, esc(pgB), 'um Esc no teclado físico');
     cobra(g1.touchUi && !g1.touchUi.visivel && /\bchat\b/.test(g1.touchUi.classe), `CE9 · 844x390 aberto: #touch-ui some com a classe chat (${g1.touchUi?.classe})`);
-    await pgB.setViewportSize({ width: 390, height: 844 });
+    // no toque o botão da HUD também abre: #hud-chat-time direto no canal time
+    try { await pgB.tap('#hud-chat-time', { timeout: 5000 }); }
+    catch { await pgB.evaluate(() => document.getElementById('hud-chat-time').click()); }
+    const canalB = await pgB.evaluate(() => document.getElementById('chat-canal').textContent);
+    cobra(await aberto(pgB) && canalB === 'TIME', `CE9 · 844x390: tocar em #hud-chat-time abre o compositor no canal time (canal ${canalB})`);
+    await esc(pgB);
+    await redimensionar(pgB, 390, 844);
     // no retrato o #rotate-prompt cobre a tela e intercepta todo toque: o FECHAR só chega por click()
     await cena(pgB, regs.B, '390x844-retrato', toque, () => pgB.evaluate(() => document.getElementById('chat-fechar').click()), 'o FECHAR do cabeçalho (click(), sob o #rotate-prompt)');
-    await pgB.setViewportSize({ width: 844, height: 390 });
+    await redimensionar(pgB, 844, 390);
     console.log(`\n  figuras (${figuras.length}):\n${figuras.map((f) => `    ${f}`).join('\n')}`);
   }
 
