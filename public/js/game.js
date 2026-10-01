@@ -2335,6 +2335,7 @@ export class Game {
     const cat = RADIO[this.radioOpen];
     const item = cat.items[n - 1];
     if (!item) return;
+    const routeSecs = this._routePing();
     this.sfx.characterVoice(this.playerCharId, 'radio', {
       fallbackFaction: this._voiceKey(this.playerTeam), interrupt: true,
     });
