@@ -2521,6 +2521,12 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 #smoke-count{display:none}
 #hud-shortcuts{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:16px;
   font:600 11px/1 var(--font);letter-spacing:2px;color:rgba(139,140,146,.6)}
+/* botões de chat da HUD (#686): a mesma receita dos botões do painel (fundo próprio, --ink-200),
+   que passa 4,5:1 na areia — os spans da faixa são 1,96:1 de propósito (UI1 vermelha na base) */
+#hud-atalho-chat{display:inline-flex;gap:6px;align-items:center}
+#hud-atalho-chat button{pointer-events:auto;font:700 10px/1 var(--aaa-font-body);letter-spacing:1.5px;color:var(--ink-200);
+  background:rgba(var(--bg-700-rgb),.9);border:1px solid var(--line);padding:5px 8px;cursor:pointer}
+#hud-atalho-chat button:hover,#hud-atalho-chat button:focus-visible{border-color:var(--sys);color:var(--ink-100);outline:none}
 #weapon-hud{right:20px;bottom:122px;width:150px}
 .weapon-slot{grid-template-columns:minmax(0,1fr) 18px;min-height:36px;width:100%;padding:0;gap:6px;color:rgba(236,235,230,.76);opacity:.76}
 .weapon-slot.on{color:#b4d92e;opacity:1}

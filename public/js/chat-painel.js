@@ -49,7 +49,7 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     acoesCancelar: $('chat-acoes-cancelar'), motivos: $('chat-motivos'), motivosLista: $('chat-motivos-lista'),
     motivosCancelar: $('chat-motivos-cancelar'), lista: $('chat-lista-bloqueados'), listaUl: $('chat-lista-bloqueados-ul'),
     listaFechar: $('chat-lista-fechar'), aviso: $('chat-aviso'), bloquearTambem: $('chat-bloquear-tambem'),
-    toque: $('chat-toque'), atalho: $('hud-atalho-chat'), fechar: $('chat-fechar'),
+    toque: $('chat-toque'), atalho: $('hud-atalho-chat'), botaoSala: $('hud-chat-sala'), botaoTime: $('hud-chat-time'), fechar: $('chat-fechar'),
   };
   let st = storage;
   if (st === undefined) { try { st = window.sessionStorage; } catch { st = null; } }
@@ -373,9 +373,13 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
   const onDocPointerDown = (e) => {
     if (!aberto) return;
     const t = e.target;
-    if (sec.contains(t) || (el.toque && (t === el.toque || el.toque.contains(t)))) return;
+    if (sec.contains(t) || (el.toque && (t === el.toque || el.toque.contains(t)))
+      || (el.atalho && (t === el.atalho || el.atalho.contains(t)))) return;
     fechar();
   };
+  // os botões da HUD (Y SALA/U TIME) abrem o compositor no canal do rótulo, como as teclas
+  const onBotaoSala = () => abrir('sala');
+  const onBotaoTime = () => abrir('time');
   const onToque = () => { if (aberto) fechar(); else abrir('sala'); };
   const onFechar = () => fechar();
   const onOcultar = () => {
@@ -425,6 +429,8 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
   el.canal.addEventListener('click', onCanal);
   if (el.toque) el.toque.addEventListener('click', onToque);
   if (el.fechar) el.fechar.addEventListener('click', onFechar);
+  if (el.botaoSala) el.botaoSala.addEventListener('click', onBotaoSala);
+  if (el.botaoTime) el.botaoTime.addEventListener('click', onBotaoTime);
   document.addEventListener('pointerdown', onDocPointerDown);
   document.addEventListener('keyup', onDocKeyUp);
   if (vv) { vv.addEventListener('resize', ajustarViewport); vv.addEventListener('scroll', ajustarViewport); }
@@ -467,6 +473,8 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     el.denunciar.removeEventListener('click', onDenunciar);
     el.canal.removeEventListener('click', onCanal);
     if (el.toque) el.toque.removeEventListener('click', onToque);
+    if (el.botaoSala) el.botaoSala.removeEventListener('click', onBotaoSala);
+    if (el.botaoTime) el.botaoTime.removeEventListener('click', onBotaoTime);
     if (el.fechar) el.fechar.removeEventListener('click', onFechar);
     document.removeEventListener('pointerdown', onDocPointerDown);
     document.removeEventListener('keyup', onDocKeyUp);

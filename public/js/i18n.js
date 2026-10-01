@@ -426,7 +426,7 @@ const DICT = {
   'Armas e utilitários': 'Weapons and utilities',
   'Fumaça (tecla 4)  ·  Frag (tecla 5)': 'Smoke (key 4)  ·  Frag (key 5)',
   // chat de sala (#686). ENVIAR, FECHAR, TODOS e VOLTAR já existem acima: a UIR5 reprova duplicata.
-  'CHAT': 'CHAT', 'Y/U CHAT': 'Y/U CHAT', 'Chat da sala': 'Room chat', 'OCULTAR': 'HIDE', 'BLOQUEADOS': 'BLOCKED',
+  'CHAT': 'CHAT', 'Y SALA': 'Y ROOM', 'U TIME': 'U TEAM', 'Chat da sala': 'Room chat', 'OCULTAR': 'HIDE', 'BLOQUEADOS': 'BLOCKED',
   'BLOQUEAR': 'BLOCK', 'DENUNCIAR': 'REPORT', 'CANCELAR': 'CANCEL', 'DESBLOQUEAR': 'UNBLOCK', 'Bloqueados': 'Blocked',
   'Ações da mensagem': 'Message actions', 'MOTIVO DA DENÚNCIA': 'REPORT REASON', 'Mensagem': 'Message', 'Canal': 'Channel',
   'Mensagens anteriores': 'Earlier messages', 'Bloquear também?': 'Block too?', 'Ninguém bloqueado': 'Nobody blocked',
