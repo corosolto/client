@@ -2093,7 +2093,7 @@ if (HUB_ENABLED) {
   restoreHubRoute = () => {
     const query = new URLSearchParams(location.search);
     const section = query.get('secao');
-    const tab = Object.hasOwn(panes, section) ? section : 'jogar';
+    const tab = Object.prototype.hasOwnProperty.call(panes, section) ? section : 'jogar';
     const net = query.get('partida') === 'multiplayer' ? 'mp' : 'sp';
     const server = query.get('servidor') === 'privado' ? 'private' : 'public';
     const modal = query.get('janela');
@@ -3475,25 +3475,6 @@ function loop() {
 }
 loop();
 
-/* ---------------- boot ---------------- */
-/* Guarda igual à da linha de baixo, e não é zelo: esta escrita roda em escopo de
-   módulo DUAS linhas antes do `show()`. Se o redesign mexer na única `.footnote`
-   do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
-   de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
-   com "alguém renomeou uma classe no pause". */
-{
-  const fn = document.querySelector('.footnote');
-  if (fn) fn.textContent =
-    `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
-}
-{ const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
-show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
-if (HUB_ENABLED) {
-  hubNavigate({ map: currentMap, personagem: currentChar }, true);
-  restoreHubRoute();
-}
-window.__CS_MAIN_READY__ = true;
-window.__gameLaunch?.ready('boot');
 function showInspectionResult(won, character) {
   const end = $('match-end');
   end.classList.toggle('win', won);
@@ -3566,18 +3547,6 @@ async function openInspectionScreen(target) {
     game.paused = true; game.keys = {}; game.el.pause.classList.add('hidden'); game._showScoreboard(true); return;
   }
   if (target.screen === 'pause') game?.setPaused(true);
-}
-if (inspectionScreen) {
-  openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
-} else if (testMode && params.get('auto')) {
-  const [team, char] = params.get('auto').split(',');
-  startGame(team || 'E', char || CHARACTERS[0].id);
-} else if (params.get('sala')) {
-  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
-     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
-  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
-  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
-  else entrarQuandoPuder();
 }
 
 /* MULTIPLAYER — navegador de servidores, salas e sessão de rede. Aqui só se escolhe ONDE e
@@ -4203,4 +4172,37 @@ function mpSair() {
   soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('main-menu');
+}
+
+/* ---------------- boot ---------------- */
+/* Guarda igual à da linha de baixo, e não é zelo: esta escrita roda em escopo de
+   módulo DUAS linhas antes do `show()`. Se o redesign mexer na única `.footnote`
+   do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
+   de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
+   com "alguém renomeou uma classe no pause". */
+{
+  const fn = document.querySelector('.footnote');
+  if (fn) fn.textContent =
+    `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
+}
+{ const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
+// Boot no fim do módulo: `restoreHubRoute()` pode abrir o multiplayer, que lê `mpEl`/`mpNos` (#707).
+show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
+if (HUB_ENABLED) {
+  hubNavigate({ map: currentMap, personagem: currentChar }, true);
+  restoreHubRoute();
+}
+window.__CS_MAIN_READY__ = true;
+window.__gameLaunch?.ready('boot');
+if (inspectionScreen) {
+  openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
+} else if (testMode && params.get('auto')) {
+  const [team, char] = params.get('auto').split(',');
+  startGame(team || 'E', char || CHARACTERS[0].id);
+} else if (params.get('sala')) {
+  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
+     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
+  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
+  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
+  else entrarQuandoPuder();
 }
