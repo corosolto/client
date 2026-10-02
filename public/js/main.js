@@ -32,6 +32,7 @@ import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
 import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { montarChatSala } from './chat-painel.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -1547,6 +1548,8 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   /* `applyCinematicScreen` morreu no 495a6d889 e a chamada ficou: o `ReferenceError` dentro
      de `setPaused(true)` matava o M em partida (pilha no BUG-179, item 7). */
   game.onPauseChange = () => resetConfirms();
+  // chat de sala (#686): Y/U do game.js abrem o compositor; a troca de cena fecha e guarda o rascunho
+  if (sessao?.chat) { game.onAbrirChat = (ch) => sessao.chat.abrir(ch); sessao.chat.aoTrocarJogo(game); }
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -3619,6 +3622,7 @@ function mpErro(msg, comRetry = false) {
 function noServeMapaParado(id, net) {
   if (oficina || !MAPAS_PARADOS.has(resolveMapId(id))) return false;
   try { net?.close?.(); } catch { /* fechar é cortesia; a recusa vale de qualquer jeito */ }
+  mpSessao?.chat?.destruir();
   mpSessao = null;
   mpErro(`Este servidor sorteou "${MAPS[resolveMapId(id)]?.name || id}", que saiu do jogo para retrabalho. `
     + 'O nó ainda não foi atualizado — escolha outra sala ou outra região.', true);
@@ -4053,6 +4057,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   mpEstado('on', `NA SALA · ${sala.name || sala.convite || ''}`);
   clearInterval(mpTimerLista);
   mpSessao = { net, sala, no: mpNoAtual };
+  // chat de sala (#686): inerte sem welcome.chat; vive na sessão, não no Game, então sobrevive à troca de mapa
+  mpSessao.chat = montarChatSala({ net, obterJogo: () => game, tr, frase, convite: sala.convite || sala.id || '', toque: TOUCH });
   /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê.
      Nó desatualizado ainda sorteia mapa PARADO: recusar é a única saída honesta — trocar o
      mapa por conta própria dessincroniza do servidor. Contrato: docs/maps/MAPAS-PARADOS.md. */
@@ -4062,6 +4068,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   modoEscolhido = true;
   net.onClose = () => mpDesconectou();
   net.onSlot = async (m) => {
+    if (mpSessao?.net === net) mpSessao.chat?.aoMudarSlot(m);
     await transitionSlot(m, net.meta, {
       team: currentTeam, faction: currentFaction, enemyFaction: currentEnemyFaction, char: currentChar,
     }, (id) => CHARACTERS.some((c) => c.id === id), async (next) => {
@@ -4075,6 +4082,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
   net.onPartida = async (m) => {
     if (mpSessao?.net !== net) return;
+    mpSessao.chat?.aoMudarMeta(net.meta);
     if (noServeMapaParado(m.map, net)) return;
     if (MAPS[m.map]) currentMap = m.map;
     matchMode = m.ctf ? 'ctf' : 'rounds';
@@ -4102,6 +4110,7 @@ async function mpMontarPartida(net, m) {
 function mpDesconectou() {
   if (!mpSessao) return;
   try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
+  mpSessao.chat?.destruir();
   mpSessao = null;
   clearTelemetryGameContext();
   mpFecharBarraSpec();
@@ -4159,6 +4168,7 @@ function mpFecharBarraSpec() {
 }
 function mpEncerrarSessao() {
   const s = mpSessao; mpSessao = null;
+  s?.chat?.destruir();
   mpFecharBarraSpec();
   try { s?.net.close(); } catch { /* já fechado */ }
 }
