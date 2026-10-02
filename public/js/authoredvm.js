@@ -31,6 +31,45 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
     .map((family) => [family, `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${FAMILY_VER[family] || CATALOG_VERSION}`]),
 ));
 
+
+/* RÉGUA:asset-pago-resiliência início — `tools/eval/asset-pago-resiliencia-check.mjs`
+   EXTRAI daqui até o marcador de fim e roda estas funções num vm com `fetch` e relógio
+   falsos. Mexeu no retry sem mexer aqui? A régua lê o código novo, não uma cópia. */
+/* Resiliência dos assets pagos (#720/#736): o edge responde 522 quando a origem
+   demora e a conexão do jogador morre em "Failed to fetch". Falha de DISPONIBILIDADE
+   não é crash de launch: retry curto com teto por tentativa (conexão morta não segura
+   o boot) e degrade para o legado com telemetria de evento — nunca console.error,
+   que vira linha no js_error e issue automática (crash-fix.yml). */
+const REDE_TRANSITORIA = /failed to fetch|networkerror|load failed|signal timed out|aborted|\bstall\b|responded with (?:5\d\d|429)/i;
+const atrasoRede = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+function degradouAssetPago(asset, motivo) {
+  const texto = String(motivo?.message || motivo || '?');
+  console.warn(`[vm-pago] ${asset} indisponível — degrade para o viewmodel legado (${texto})`);
+  // Mesmo contrato do `webgl_degradado` (glcontext.js): sinal de disponibilidade no
+  // analytics, fora da cota de exceção do js_error.
+  try {
+    if (typeof window !== 'undefined' && window.va) window.va('event', { name: 'vm_degradado', data: { asset, motivo: texto.slice(0, 140) } });
+  } catch { /* analytics nunca derruba o jogo */ }
+}
+function comTetoTentativa(promessa, ms) {
+  let timer;
+  const teto = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`stall: sem resposta em ${ms}ms`)), ms);
+  });
+  return Promise.race([promessa, teto]).finally(() => clearTimeout(timer));
+}
+async function pagoComRetry(asset, baixa, { tentativas = 3, tetoMs = 45000 } = {}) {
+  for (let tentativa = 1; ; tentativa += 1) {
+    try {
+      return await comTetoTentativa(baixa(), tetoMs);
+    } catch (error) {
+      if (tentativa >= tentativas || !REDE_TRANSITORIA.test(String(error?.message || error))) throw error;
+      await atrasoRede(400 * 2 ** (tentativa - 1));
+    }
+  }
+}
+/* RÉGUA:asset-pago-resiliência fim */
+
 // ?vmfonte=goldsrc: viewmodel dos moldes CS 1.6 (CC0, FONTE.md) com a arma
 // Mint; ?cs16=1 é o atalho que liga todas as famílias + a fonte de uma vez.
 const _QS = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -59,7 +98,7 @@ export function acceptsAuthoredLoad({ request, activeRequest, key, activeKey, ut
 }
 function loadFamilyGltf(key) {
   if (!GLTF_CACHE.has(key)) {
-    GLTF_CACHE.set(key, new GLTFLoader().loadAsync(urlForKey(key)).catch((error) => {
+    GLTF_CACHE.set(key, pagoComRetry(key, () => new GLTFLoader().loadAsync(urlForKey(key))).catch((error) => {
       GLTF_CACHE.delete(key);
       throw error;
     }));
@@ -85,8 +124,8 @@ function sharedArmTextures() {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
   if (!sharedArmPromise) {
     const loader = new THREE.TextureLoader();
-    sharedArmPromise = Promise.all(SHARED_ARM_TEXTURES.map((name) => loader
-      .loadAsync(sharedUrl(`shared/${name}.webp`))
+    sharedArmPromise = Promise.all(SHARED_ARM_TEXTURES.map((name) => pagoComRetry(`shared/${name}.webp`,
+      () => loader.loadAsync(sharedUrl(`shared/${name}.webp`)), { tetoMs: 15000 })
       .then((texture) => {
         texture.name = name;
         texture.flipY = false;
@@ -97,7 +136,7 @@ function sharedArmTextures() {
       })))
       .then((pairs) => new Map(pairs))
       .catch((error) => {
-        console.error('[paid-viewmodel] shared arm textures', error);
+        degradouAssetPago('texturas de braço (shared/)', error);
         return null;
       });
   }
@@ -129,11 +168,11 @@ let generalMotionsPromise = null;
 function generalMotions() {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
   if (!generalMotionsPromise) {
-    generalMotionsPromise = new GLTFLoader()
-      .loadAsync(sharedUrl('shared/general-runtime.glb'))
+    generalMotionsPromise = pagoComRetry('shared/general-runtime.glb',
+      () => new GLTFLoader().loadAsync(sharedUrl('shared/general-runtime.glb')))
       .then((gltf) => new Map(gltf.animations.map((clip) => [clip.name, clip])))
       .catch((error) => {
-        console.error('[paid-viewmodel] general-runtime', error);
+        degradouAssetPago('general-runtime.glb', error);
         return null;
       });
   }
@@ -145,11 +184,14 @@ let recoilParamsPromise = null;
 function recoilParams() {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
   if (!recoilParamsPromise) {
-    recoilParamsPromise = fetch(sharedUrl('recoil.json'))
-      .then((response) => (response.ok ? response.json() : null))
+    recoilParamsPromise = pagoComRetry('recoil.json', () => fetch(sharedUrl('recoil.json'))
+      .then((response) => {
+        if (response.ok) return response.json();
+        throw new Error(`fetch for ${sharedUrl('recoil.json')} responded with ${response.status}`);
+      }), { tetoMs: 10000 })
       .then((data) => data?.families || null)
       .catch((error) => {
-        console.error('[paid-viewmodel] recoil.json', error);
+        degradouAssetPago('recoil.json', error);
         return null;
       });
   }
@@ -601,7 +643,9 @@ export class AuthoredViewModels {
       return entry;
     }).catch((error) => {
       this.pending.delete(key);
-      console.error(`[paid-viewmodel] ${key}`, error);
+      // #720: 522 do edge aqui virava `console.error` -> linha no js_error -> issue
+      // automática. Falha de disponibilidade degrada para o viewmodel legado e avisa.
+      degradouAssetPago(`família ${key}`, error);
       return null;
     });
     this.pending.set(key, pending);
