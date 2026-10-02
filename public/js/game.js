@@ -54,6 +54,9 @@ const VMLAB = QS.get('vmlab') === '1';
 const VM_QA_WEAPON = QS.get('debug') === '1' && WEAPON_IDS.includes(QS.get('vmweapon')) ? QS.get('vmweapon') : null;
 // `?debug=1` libera `[` e `]` para percorrer o arsenal sem recarregar (BUG-156).
 const VM_QA_CICLO = QS.get('debug') === '1';
+// Rodinha (invnext/invprev do CS): clique (≥50 px ou em linhas) troca por evento; gesto fino
+// de trackpad troca uma vez por gesto, que termina após 150 ms sem evento (scroll-arma-check).
+const WHEEL_NOTCH_PX = 50, WHEEL_IDLE_MS = 150;
 const VM_QA_ADS = QS.get('debug') === '1' && QS.get('vmads') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
    `min(metalness, 0.55)` do viewmodel E o orçamento fixo de 7,60 unidades de luz da vmScene.
@@ -2105,6 +2108,23 @@ export class Game {
       // partir do Δyaw/Δpitch REAL do quadro — que já embute a sensibilidade e não depende
       // do DPI do mouse nem do framerate, como estes dois acumuladores dependiam.
     };
+    this._wh = e => {
+      if (!this._acceptInput() || this.radioOpen) return;
+      if (document.pointerLockElement) e.preventDefault();
+      if (!e.deltaY) return;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      if (e.timeStamp - (this._wheelLast ?? -Infinity) >= WHEEL_IDLE_MS) { this._wheelAcc = 0; this._wheelGesto = null; }
+      this._wheelLast = e.timeStamp;
+      if (e.deltaMode || (Math.abs(e.deltaY) >= WHEEL_NOTCH_PX && this._wheelGesto !== 'fino' && this._wheelGesto !== 'feito')) {
+        this._wheelGesto = 'clique'; this._cycleWeapon(dir); return;
+      }
+      if (this._wheelGesto === 'feito') return;
+      this._wheelGesto = 'fino';
+      if (Math.sign(this._wheelAcc) !== dir) this._wheelAcc = 0;
+      this._wheelAcc += e.deltaY;
+      if (Math.abs(this._wheelAcc) < WHEEL_NOTCH_PX) return;
+      this._wheelGesto = 'feito'; this._wheelAcc = 0; this._cycleWeapon(dir);
+    };
     this._cc = e => e.preventDefault();
     this._blur = () => { this.keys = {}; };   // alt-tab com tecla pressionada não deixa tecla presa
     this._plc = () => {
@@ -2117,6 +2137,7 @@ export class Game {
     document.addEventListener('mousedown', this._md);
     document.addEventListener('mouseup', this._mu);
     document.addEventListener('mousemove', this._mm);
+    document.addEventListener('wheel', this._wh, { passive: false });
     document.addEventListener('contextmenu', this._cc);
     document.addEventListener('pointerlockchange', this._plc);
     window.addEventListener('blur', this._blur);
@@ -2380,6 +2401,7 @@ export class Game {
     const cat = RADIO[this.radioOpen];
     const item = cat.items[n - 1];
     if (!item) return;
+    const routeSecs = this._routePing();
     this.sfx.characterVoice(this.playerCharId, 'radio', {
       fallbackFaction: this._voiceKey(this.playerTeam), interrupt: true,
     });
@@ -3382,6 +3404,15 @@ export class Game {
     const alvo = WEAPON_IDS[(atual + passo + WEAPON_IDS.length) % WEAPON_IDS.length];
     this._switchWeapon(alvo);
     console.log(`[vmqa] arma: ${alvo}`);   // o HUD já mostra o nome; o log é da régua
+  }
+
+  /* Scroll: mesmos slots das teclas 1/2/3, na mesma ordem. */
+  _cycleWeapon(dir) {
+    const p = this.player;
+    const slots = [p.primary || 'awp', p.secondary || 'pistol', 'knife'].filter(w => WEAPONS[w] && this._pickupAllowed(w));
+    if (slots.length < 2) return;
+    const i = slots.indexOf(p.weapon);
+    this._switchWeapon(slots[((i < 0 ? (dir > 0 ? -1 : 0) : i) + dir + slots.length) % slots.length]);
   }
 
   _switchWeapon(w, { pickup = false } = {}) {
@@ -8247,6 +8278,7 @@ export class Game {
     document.removeEventListener('mousedown', this._md);
     document.removeEventListener('mouseup', this._mu);
     document.removeEventListener('mousemove', this._mm);
+    document.removeEventListener('wheel', this._wh);
     document.removeEventListener('contextmenu', this._cc);
     document.removeEventListener('pointerlockchange', this._plc);
     window.removeEventListener('blur', this._blur);
