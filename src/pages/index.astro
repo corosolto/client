@@ -329,7 +329,7 @@ window.__GEO_LANG__ = (function () {
   /* #671: prova de vivacidade por INPUT. A rota do hub é mais UI, não espera: abrir
      JOGAR é síncrono (`openHubQuick`) e navegar (MULTIPLAYER, mapa, personagem) mantém
      o menu aberto de propósito. Antes, quem só navegava por mais de 3 s era acusado de
-     "tempo limite ao abrir menu" — 107指纹 em 5 h na alpha.22. Input recente = UI viva
+     "tempo limite ao abrir menu" - 107 ocorrências em 5 h na alpha.22. Input recente = UI viva
      = renova; UI sem input por 3 s = travamento de verdade, e aí o fail vem igual. */
   ['pointerdown', 'keydown', 'click'].forEach(function (tipo) {
     document.addEventListener(tipo, function () { lancamento.ultimaInteracao = Date.now(); }, true);
@@ -427,10 +427,10 @@ window.__GEO_LANG__ = (function () {
           });
         }
       } else {
-        /* RÉGUA:launch-watchdog menu início — `tools/eval/launch-watchdog-check.mjs` EXTRAI daqui
+        /* RÉGUA:launch-watchdog menu início: `tools/eval/launch-watchdog-check.mjs` EXTRAI daqui
            até o marcador de fim e roda o predicado real num vm com relógio e DOM falsos.
            O watchdog do menu mede "a UI aceitou o clique"; no hub (#671) NAVEGAR é a
-           resposta certa — abrir JOGAR é síncrono e `#hub-mp`/mapa/personagem mantêm o
+           resposta certa: abrir JOGAR é síncrono e `#hub-mp`/mapa/personagem mantêm o
            menu aberto de propósito. Quem mexeu nos últimos 3 s tem UI viva: renova. */
         lancamento.begin('menu', 3000, function(){
           var menu = document.getElementById('main-menu');
