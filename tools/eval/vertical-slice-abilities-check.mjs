@@ -10,6 +10,8 @@
    VS3 Doidinho: uma vez por round, a próxima interação própria com objetivo usa fator
        1/0,8 = 1,25 durante a interação inteira; sair consome a peça e o round repõe uma.
    VS4 Integração: dano, movimento, rádio, CTF e reset chamam os helpers no jogo real.
+   VS5 Rádio em runtime: escolher um comando não lança (#715/#706/#692: `routeSecs` sem
+       declaração derrubava o jogo em qualquer Z/X/V + número) e o log mostra a rota.
 
    Mutantes: --mutante=stack-wallhack|stack-exato|motoca-cedo|motoca-sem-bonus|peca-errada
    ═══════════════════════════════════════════════════════════════════════════════════ */
@@ -113,6 +115,18 @@ try {
   const q = comum.ctfPts[0]; comum.player.pos.set(q.x, 0, q.z);
   if (!perto(comum._objectiveInteractionMultiplier(q, 'E'), 1)) falhas.push('VS3 bônus vazou para outro personagem');
 } catch (e) { falhas.push(`VS3 não executa: ${e.message}`); }
+
+// VS5 — o caminho do crash de produção: `_kd` com o rádio aberto chama `_radioPick`.
+try {
+  const g = live('motoca-cachorro-loko');
+  g.el.radioLog = g.el.radioLog || { children: [], appendChild() {} };
+  let linhaRadio = '';
+  const append = g.el.radioLog.appendChild;
+  g.el.radioLog.appendChild = (n) => { linhaRadio = n.textContent; return append.call(g.el.radioLog, n); };
+  g.radioOpen = 'z';
+  g._radioPick(1);
+  if (!/ROTA \d+s/.test(linhaRadio)) falhas.push(`VS5 log do rádio sem a rota: ${JSON.stringify(linhaRadio)}`);
+} catch (e) { falhas.push(`VS5 rádio lança: ${e.message}`); }
 
 if (falhas.length) {
   for (const f of falhas) console.error('  ✗', f);

@@ -33,6 +33,10 @@
           acionável, sem stack nem overlay técnico no modo normal.
      B4 · o relatório automático chega e o botão de confirmação consegue reenviá-lo.
      B5 · `?debug=1` continua mostrando o diagnóstico técnico para quem está depurando.
+     B8 · boot direto na rota do multiplayer (`/?partida=multiplayer`) não lança. O
+          `restoreHubRoute()` do fim do boot chamava `abrirMultiplayer()` antes do
+          `const mpEl` existir: "Cannot access 'mpEl' before initialization" (#707/#708/#723).
+     B9 · boot sem `Object.hasOwn` (Chromium 89–92: tem import map, não tem hasOwn) não lança (#718).
 
    A MUTAÇÃO QUE A DEIXA VERMELHA (executada)
      --mutante=tdz   injeta, no topo do main.js servido, uma leitura de `testMode` antes
@@ -41,6 +45,8 @@
      --mutante=sem-amigavel  tira a chamada de recuperação do catch de `startGame`.
      --mutante=vaza-detalhe  remove a guarda que restringe o overlay técnico a `?debug=1`.
      --mutante=sem-console-watchdog  volta a esconder do console o timeout do watchdog.
+     --mutante=mp-cedo       devolve o boot para antes das declarações do multiplayer -> B8.
+     --mutante=hasown        devolve o `Object.hasOwn` ao `restoreHubRoute`            -> B9.
 
    USO
      node tools/eval/boot-check.mjs                 # sobe o astro dev sozinho
@@ -59,7 +65,7 @@ const FOTO = val('foto', '');
 const EXTERNO = !!process.env.BASE;
 const BASE = process.env.BASE || `http://localhost:${PORTA}`;
 const MAIN_LOCAL = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
-const MUTANTES = new Set(['', 'tdz', 'sem-amigavel', 'vaza-detalhe', 'sem-console-watchdog']);
+const MUTANTES = new Set(['', 'tdz', 'sem-amigavel', 'vaza-detalhe', 'sem-console-watchdog', 'mp-cedo', 'hasown']);
 if (!MUTANTES.has(MUTANTE)) {
   console.error(`✗ BOOT0  mutante desconhecido: ${MUTANTE}`);
   process.exit(1);
@@ -131,6 +137,19 @@ try {
       novo = novo.replace("if (testMode && params.get('auto'))", "if (params.get('auto'))");
       if (!novo.includes("throw new Error('SEGREDO_BOOT_CHECK')") || novo === corpo)
         throw new Error('fixture de falha não aplicou em main.js');
+      if (MUTANTE === 'mp-cedo') {
+        const boot = novo.match(/\nshow\('main-menu'\);[^\n]*\nif \(HUB_ENABLED\) \{[\s\S]*?restoreHubRoute\(\);\n\}\n/);
+        const ancora = '\nfunction showInspectionResult(';
+        if (!boot || !novo.includes(ancora)) throw new Error('mutante mp-cedo não casou');
+        novo = novo.replace(boot[0], '\n').replace(ancora, `${boot[0]}${ancora}`);
+        mutacaoAplicou = true;
+      }
+      if (MUTANTE === 'hasown') {
+        const guarda = 'Object.prototype.hasOwnProperty.call(panes, section)';
+        if (!novo.includes(guarda)) throw new Error('mutante hasown não casou');
+        novo = novo.replace(guarda, 'Object.hasOwn(panes, section)');
+        mutacaoAplicou = true;
+      }
       if (MUTANTE === 'sem-amigavel') {
         const chamada = "window.__gameLaunch?.fail(e, 'main.js:startGame');";
         if (!novo.includes(chamada)) throw new Error('mutante sem-amigavel não casou');
@@ -306,7 +325,32 @@ try {
     console.log('B3–B7 · não medidos porque o boot não concluiu\n');
   }
 
-  const passou = b1 && b2 && b3 && b4 && b5 && b6 && b7 && mutacaoAplicou;
+  const bootLimpo = async (url, antes) => {
+    const pg = await context.newPage();
+    const errosPg = [];
+    pg.on('pageerror', (e) => errosPg.push(e.message));
+    if (antes) await pg.addInitScript(antes);
+    await pg.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await pg.waitForTimeout(3500);
+    const ligado = await pg.evaluate(() => !!document.getElementById('btn-jogar')?.onclick);
+    await pg.close();
+    return { errosPg, ligado };
+  };
+  const mp = await bootLimpo(`${BASE}/?partida=multiplayer`);
+  const b8 = mp.errosPg.length === 0 && mp.ligado;
+  console.log('B8 · boot direto na rota do multiplayer não lança');
+  for (const e of mp.errosPg) console.log(`   ${e}`);
+  console.log(`   pageerror ${mp.errosPg.length}   JOGAR ligado ${mp.ligado}`);
+  console.log(`   ${b8 ? 'PASSA' : 'FALHA'}\n`);
+
+  const velho = await bootLimpo(`${BASE}/`, () => { delete Object.hasOwn; });
+  const b9 = velho.errosPg.length === 0 && velho.ligado;
+  console.log('B9 · boot sem Object.hasOwn (Chromium 89–92) não lança');
+  for (const e of velho.errosPg) console.log(`   ${e}`);
+  console.log(`   pageerror ${velho.errosPg.length}   JOGAR ligado ${velho.ligado}`);
+  console.log(`   ${b9 ? 'PASSA' : 'FALHA'}\n`);
+
+  const passou = b1 && b2 && b3 && b4 && b5 && b6 && b7 && b8 && b9 && mutacaoAplicou;
   console.log(passou
     ? '✓ BOOT1  o jogo abre e falhas de entrada têm recuperação amigável, reportável e depurável'
     : '✗ BOOT1  boot ou recuperação de falha não cumpriu o contrato');
