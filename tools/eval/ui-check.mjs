@@ -22,6 +22,9 @@
                     OBJETO GRÁFICO essencial >= 3:1, contra o fundo declarado do
                     próprio elemento composto sobre o pior fundo de cena medido.
                     PEGA O DEFEITO 2 (barra de captura).
+   UI1C CHAT      — o mesmo contraste só para o #chat-sala aberto (#686), portão
+                    próprio (eval:ui-chat, no check:fast) porque a UI1 já nasce
+                    vermelha na base e não distinguiria um mutante do chat.
    UI2 POLUIÇÃO   — fração do tempo em que cada elemento NÃO-PERMANENTE do HUD fica
                     na tela numa partida simulada. PEGA O DEFEITO 1 (prompt do [E]).
    UI3 ÁREA MORTA — nenhum elemento do HUD por cima da ZONA DA MIRA nem da ZONA DO
@@ -29,7 +32,7 @@
    UI4 RITMO      — a partida FECHA no tempo/alvo declarado. PEGA O DEFEITO 3
                     (placar 65 × 53 num modo CAPTURA).
 
-   Uso:  node tools/eval/ui-check.mjs [ui1|ui2|ui3|ui4|all] [--json] [--mutante=<nome>]
+   Uso:  node tools/eval/ui-check.mjs [ui1|ui1c|ui2|ui3|ui4|all] [--json] [--mutante=<nome>]
          MUT=<nome> node tools/eval/ui-check.mjs   (mutação: ver MUTACOES lá embaixo)
    ============================================================================ */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -375,6 +378,23 @@ function alfaScrim(_fx, _fy) {
   return 0;
 }
 
+/* CHAT DE SALA (#686): irmão do #hud, fora do recorte acima. Medido ABERTO (classe `aberto`),
+   com uma linha, o divisor e um aviso preenchido: é o estado em que todo texto dele existe ao
+   mesmo tempo; o que nasce `hidden` (ações, motivos, lista) sai do recorte. */
+function recortaChat(astroBruto) {
+  const astro = astroBruto.replace(/<!--[\s\S]*?-->/g, m => m.replace(/[^\n]/g, ' '));
+  const ini = astro.indexOf('<section id="chat-sala"');
+  if (ini < 0) return null;
+  const fim = astro.indexOf('</section>', ini) + '</section>'.length;
+  const html = astro.slice(ini, fim)
+    .replace(/^<section([^>]*)\shidden\b([^>]*)>/, '<section$1 class="aberto"$2>')
+    .replace(/<(\w+)[^>]*\shidden\b[^>]*>[\s\S]*?<\/\1>/g, '')
+    .replace(/(<ol id="chat-log"[^>]*>)/, '$1<li class="chat-divisor">Mensagens anteriores</li>'
+      + '<li class="chat-linha"><span class="chat-tag">TIME</span><bdi class="chat-quem">Anônimo #ABC</bdi><bdi class="chat-txt">oi galera</bdi></li>')
+    .replace(/(<div id="chat-aviso"[^>]*>)/, '$1Silenciado por um minuto');
+  return { html, linha0: astro.slice(0, ini).split('\n').length };
+}
+
 /** Fundo EFETIVO atrás do texto de um nó: cena pior caso -> scrim de canto -> fundos
     dos ancestrais -> fundo do próprio elemento. `contorno` some o halo do --sh-hud. */
 function fundoEfetivo(no, comp, ctx, { contorno = true } = {}) {
@@ -544,6 +564,71 @@ function ui1(ctxCss) {
   const falhas = achados.filter(a => !a.ok);
   return { nome: 'UI1', titulo: 'CONTRASTE — texto do HUD >= 4,5:1 (3:1 se grande) e objeto gráfico essencial >= 3:1',
     ok: falhas.length === 0, achados, falhas };
+}
+
+/* UI1C — CHAT DE SALA (#686): sem scrim nem caixa do #hud, só o fundo das próprias linhas.
+   Portão PRÓPRIO, e não uma fatia da UI1: a UI1 já está vermelha na base (os spans de
+   #hud-shortcuts a 1,96:1), então um mutante do chat não mudaria o veredito dela e o
+   portão não distinguiria aviso com fundo de aviso sem fundo. O #hud-atalho-chat fica na
+   UI1 com os irmãos: tem a cor deles de propósito, e clareá-lo sozinho é outra decisão. */
+function ui1c(ctxCss) {
+  const { regras, vars } = ctxCss;
+  const titulo = 'CONTRASTE DO CHAT DE SALA — texto do #chat-sala aberto e dos botões Y SALA/U TIME da HUD >= 4,5:1 (3:1 se grande) sobre a areia';
+  const achados = [];
+  const add = (o) => achados.push(o);
+  if (!ctxCss.arvoreChat) {
+    add({ tipo: 'texto', chat: true, alvo: '#chat-sala', fonte: 'src/pages/index.astro', amostra: 'seção ausente (#686)', razao: 0, min: AA_TEXTO, ok: false });
+    return { nome: 'UI1C', titulo, ok: false, achados, falhas: achados.slice() };
+  }
+  const nosChat = achata(ctxCss.arvoreChat);
+  for (const n of nosChat) {
+    n.__comp = computa(n, regras, vars);
+    for (const p of HERDA) {
+      if (n.__comp[p] !== undefined) continue;
+      for (let a = n.pai; a; a = a.pai) if (a.__comp && a.__comp[p] !== undefined) { n.__comp[p] = a.__comp[p]; break; }
+    }
+  }
+  for (const n of nosChat) {
+    const c = n.__comp;
+    if (!n.texto || !n.texto.trim()) continue;
+    if ((c['display'] || '').includes('none')) continue;
+    const cor = parseCor(c['color']); if (!cor) continue;
+    const bg = fundoEfetivo(n, c, { caixa: null, scrim: false });
+    const r = contraste(cor, bg);
+    const min = textoGrande(c) ? AA_GRANDE : AA_TEXTO;
+    add({ tipo: 'texto', chat: true, alvo: `#chat-sala > ${n.id ? '#' + n.id : '.' + (n.cls[0] || n.tag)}`, fonte: `src/pages/index.astro:${n.linha}`,
+      amostra: `"${n.texto.slice(0, 22)}" ${c['color']}`, razao: +r.toFixed(2), min, ok: r >= min - 1e-9 });
+  }
+  /* Os botões da HUD que abrem o chat (#hud-chat-sala/#hud-chat-time) são chat, não
+     decoração da faixa: medidos AQUI porque a UI1 já nasce vermelha na base (spans de
+     #hud-shortcuts a 1,96:1) e um mutante de contraste do botão não mudaria o veredito
+     dela. `hidden` não isenta: o botão aparece quando chega o welcome com chat. */
+  const botões = { 'hud-chat-sala': null, 'hud-chat-time': null };
+  for (const n of achata(ctxCss.arvore)) {
+    if (!(n.id in botões)) continue;
+    botões[n.id] = n;
+    for (let a = n; a; a = a.pai) if (!a.__comp) a.__comp = computa(a, regras, vars);
+    for (const p of HERDA) {
+      if (n.__comp[p] !== undefined) continue;
+      for (let a = n.pai; a; a = a.pai) if (a.__comp && a.__comp[p] !== undefined) { n.__comp[p] = a.__comp[p]; break; }
+    }
+    const cor = parseCor(n.__comp['color']);
+    if (!cor) {
+      add({ tipo: 'texto', chat: true, alvo: `#${n.id}`, fonte: `src/pages/index.astro:${n.linha}`, amostra: 'sem cor resolvida', razao: 0, min: AA_TEXTO, ok: false });
+      continue;
+    }
+    const bg = fundoEfetivo(n, n.__comp, { caixa: null, scrim: false });
+    const r = contraste(cor, bg);
+    add({ tipo: 'texto', chat: true, alvo: `#${n.id}`, fonte: `src/pages/index.astro:${n.linha}`,
+      amostra: `"${n.texto.slice(0, 22)}" ${n.__comp['color']}`, razao: +r.toFixed(2), min: AA_TEXTO, ok: r >= AA_TEXTO - 1e-9 });
+  }
+  for (const id of Object.keys(botões)) {
+    if (!botões[id]) add({ tipo: 'texto', chat: true, alvo: `#${id}`, fonte: 'src/pages/index.astro', amostra: 'botão ausente (#686, botões de HUD)', razao: 0, min: AA_TEXTO, ok: false });
+  }
+  // a linha, o divisor e o aviso preenchidos pelo recorte têm de aparecer; medir zero textos é cegueira
+  if (achados.length < 3) add({ tipo: 'texto', chat: true, alvo: '#chat-sala', fonte: 'src/pages/index.astro', amostra: `só ${achados.length} textos medidos`, razao: 0, min: AA_TEXTO, ok: false });
+  const falhas = achados.filter(a => !a.ok);
+  return { nome: 'UI1C', titulo, ok: falhas.length === 0, achados, falhas };
 }
 
 /* ==========================================================================
@@ -1173,6 +1258,10 @@ const MUTACOES = {
     css: (c) => c.replace('--bg-900-rgb:9,7,4;      --bg-800-rgb:20,16,8;    --bg-700-rgb:28,24,18;',
       '--bg-900-rgb:5,8,11;     --bg-800-rgb:10,17,22;   --bg-700-rgb:16,26,33;'),
   },
+  ui1_chat_aviso_sem_fundo: {
+    portao: 'UI1C', o_que: 'tira o fundo do #chat-aviso do chat de sala (#686): o aviso de nack volta a 1,03:1 sobre a areia',
+    css: (c) => c.replace(/(#chat-aviso\{[^}]*)background:rgba\(10,10,12,\.72\);padding:4px 8px;/, '$1'),
+  },
   ui1_ctf_scrim_fraco: {
     portao: 'UI1', o_que: 'volta o fundo da faixa de CTF pro .55 de antes (defeito 2 do dono)',
     css: (c) => c.replace(/(#ctf-hud\{[^}]*background:)rgba\(var\(--bg-900-rgb\),\.92\)/, '$1rgba(var(--bg-900-rgb),.55)'),
@@ -1305,6 +1394,10 @@ const arvore = parseArvore(html, linha0);
 for (const n of achata(arvore)) n.__comp = computa(n, regras, vars);
 const caixas = caixasAproximadas(regras, vars, arvore);
 const ctxCss = { regras, vars, arvore, caixas };
+{
+  const rc = recortaChat(readFileSync(ASTRO_PATH, 'utf8'));
+  if (rc) { ctxCss.arvoreChat = parseArvore(rc.html, rc.linha0); ctxCss.arvoreChat.__comp = arvore.__comp; }
+}
 ARVORE_HUD = arvore;
 
 const res = [];
@@ -1315,6 +1408,7 @@ const sonda = await fragmentosDoHud(H);
 ctxCss.fragmentos = sonda.fragmentos;
 ctxCss.textos = sonda.textos;
 if (ALVO === 'all' || ALVO === 'ui1') res.push(ui1(ctxCss));
+if (ALVO === 'all' || ALVO === 'ui1c') res.push(ui1c(ctxCss));
 if (ALVO === 'all' || ALVO === 'ui3') res.push(ui3(ctxCss));
 if (ALVO === 'all' || ALVO === 'ui5') res.push(ui5(ctxCss));
 if (ALVO === 'all' || ALVO === 'ui2') res.push(await ui2(H));
@@ -1329,6 +1423,9 @@ for (const r of res) {
     for (const a of ord.slice(0, 14))
       console.log(`   ${a.ok ? '·' : '✗'} ${String(a.razao).padStart(6)}:1 (min ${a.min})  ${a.alvo}  [${a.tipo}]  ${a.fonte}`);
     console.log(`   ${r.achados.length} itens medidos, ${r.falhas.length} abaixo do mínimo`);
+  } else if (r.nome === 'UI1C') {
+    for (const a of r.achados) console.log(`   ${a.ok ? '·' : '✗'} ${String(a.razao).padStart(6)}:1 (min ${a.min})  ${a.alvo}  ${a.amostra}  ${a.fonte}`);
+    console.log(`   ${r.achados.length} textos do chat medidos, ${r.falhas.length} abaixo do mínimo`);
   } else if (r.nome === 'UI3') {
     for (const a of r.achados) {
       if (a.probe) { console.log(`   ${a.ok ? '·' : '✗'} PROBE ${a.alvo.slice(6).padEnd(24)} = ${a.medido === null ? 'NÃO RESOLVE' : a.medido + 'px'} (esperado ${a.esperado}px)`); continue; }
