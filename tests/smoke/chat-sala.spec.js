@@ -17,6 +17,14 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
 
 // no CI o Chromium é o do Playwright; local, CHROME_BIN aponta para o navegador instalado
 test.use({ launchOptions: { executablePath: process.env.CHROME_BIN || undefined }, actionTimeout: 20_000, navigationTimeout: 60_000 });
+/* SMOKE_THROTTLE=4 simula o CI lento: CPU 4× mais devagar via CDP, a mesma régua. */
+test.beforeEach(async ({ page }) => {
+  const f = Number(process.env.SMOKE_THROTTLE || 0);
+  if (f > 0) {
+    const s = await page.context().newCDPSession(page);
+    await s.send('Emulation.setCPUThrottlingRate', { rate: f });
+  }
+});
 
 const META = {
   v: 1, eu: { h: 'K3F' }, pode: 1, canais: ['sala', 'time'], max: 160, epoca: 'QX9W2A7B',

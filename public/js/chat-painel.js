@@ -155,7 +155,9 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
   function aviso(txt) {
     el.aviso.textContent = txt || '';
     clearTimeout(avisoT);
-    if (txt) avisoT = setTimeout(() => { el.aviso.textContent = ''; el.bloquearTambem.hidden = true; }, AVISO_MS);
+    /* O botão "Bloquear também?" é ação, não aviso: não morre com o timer (a corrida do
+       CI lento: visível no assert, hidden no clique). Some no clique, ao fechar ou destruir. */
+    if (txt) avisoT = setTimeout(() => { el.aviso.textContent = ''; }, AVISO_MS);
   }
   function oferecerBloqueio(h) {
     if (!h || h === eu() || estado.estaBloqueado(h)) return;
@@ -213,7 +215,7 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     aberto = false;
     sec.classList.remove('aberto');
     fecharAcoes({ semFoco: true });
-    el.lista.hidden = true;
+    el.bloquearTambem.hidden = true;
     sec.style.removeProperty('top');
     sec.style.removeProperty('--chat-vv');
     if (!semJogo) jogo()?.travarEntrada?.(false);

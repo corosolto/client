@@ -379,7 +379,8 @@ Procedência dos valores:
   não estiver disponível, fica em memória e some com a página.
 - Esconde as linhas antigas e as futuras, inclusive as do histórico.
 - Há uma lista "BLOQUEADOS" para desbloquear, e ninguém consegue bloquear a si mesmo.
-- Depois de denunciar, o painel oferece "Bloquear também?".
+- Depois de denunciar, o painel oferece "Bloquear também?" — sem auto-dismiss: o botão
+  é ação, não aviso, e só some no clique, ao fechar o compositor ou destruir o painel.
 
 **Denúncia** é do nó para a API, sem texto livre.
 
