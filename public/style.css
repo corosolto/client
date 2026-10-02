@@ -2522,6 +2522,12 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 #smoke-count{display:none}
 #hud-shortcuts{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:16px;
   font:600 11px/1 var(--font);letter-spacing:2px;color:rgba(139,140,146,.6)}
+/* botões de chat da HUD (#686): a mesma receita dos botões do painel (fundo próprio, --ink-200),
+   que passa 4,5:1 na areia — os spans da faixa são 1,96:1 de propósito (UI1 vermelha na base) */
+#hud-atalho-chat{display:inline-flex;gap:6px;align-items:center}
+#hud-atalho-chat button{pointer-events:auto;font:700 10px/1 var(--aaa-font-body);letter-spacing:1.5px;color:var(--ink-200);
+  background:rgba(var(--bg-700-rgb),.9);border:1px solid var(--line);padding:5px 8px;cursor:pointer}
+#hud-atalho-chat button:hover,#hud-atalho-chat button:focus-visible{border-color:var(--sys);color:var(--ink-100);outline:none}
 #weapon-hud{right:20px;bottom:122px;width:150px}
 .weapon-slot{grid-template-columns:minmax(0,1fr) 18px;min-height:36px;width:100%;padding:0;gap:6px;color:rgba(236,235,230,.76);opacity:.76}
 .weapon-slot.on{color:#b4d92e;opacity:1}
@@ -3040,4 +3046,91 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
     padding-top: 8px;
     background: #1c1812;
   }
+}
+
+/* ---------- CHAT DE SALA (#686, docs/chat-de-sala.md) ----------
+   Camada própria (z 31) acima do #touch-ui (z 30) e abaixo das telas (z 40): o menu de
+   pausa cobre o chat. Geometria (procedência: tools/eval/ui-check.mjs, ZONA_MIRA):
+     desktop  left 20px + width 34vw <= 0,36vw < 0,47vw, a borda esquerda da zona da mira;
+     toque    left 12px + width 44vw <= 0,45vw < 0,465vw (a zona alarga em 844x390);
+     retrato  largura total, mas o painel fica abaixo de 0,55vh (fechado) ou acima de 0,45vh (aberto).
+   Fundo rgba(10,10,12,.72): o mesmo do .kf-row, que passa 4,5:1 contra a areia do Piscinão
+   (RGB 214,196,164, ui-check.mjs); vale para linha, divisor, cabeçalho, formulário e aviso, e os
+   rótulos de 10 e 11 px usam --ink-200 (o --ink-300 dá 4,29:1 sobre esse fundo). Input com
+   16px para o iOS não dar zoom ao focar.
+   Fade em 12,6 s (some entre 12 e 12,6 s): 160 caracteres lidos a 250 ppm levam ~10 s. */
+#chat-sala{position:fixed;z-index:31;left:20px;bottom:200px;width:min(34vw,420px);display:flex;flex-direction:column;gap:6px;
+  pointer-events:none;font-family:var(--aaa-font-body);font-weight:600;color:var(--ink-100)}
+#chat-sala[hidden],#chat-cabecalho[hidden],#chat-acoes[hidden],#chat-motivos[hidden],#chat-lista-bloqueados[hidden],
+#chat-nao-lidas[hidden],#chat-toque[hidden],#chat-bloquear-tambem[hidden],#hud-atalho-chat[hidden]{display:none}
+#chat-sala.aberto{pointer-events:auto}
+#chat-cabecalho{display:none;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:4px 8px;background:rgba(10,10,12,.72);
+  font-size:11px;letter-spacing:2px;color:var(--ink-200)}
+#chat-sala.aberto #chat-cabecalho{display:flex}
+#chat-titulo{margin-right:auto}
+#chat-sala button{font-family:var(--aaa-font-body);font-weight:700;font-size:11px;letter-spacing:1.5px;color:var(--ink-200);
+  background:rgba(var(--bg-700-rgb),.9);border:1px solid var(--line);padding:5px 9px;cursor:pointer;pointer-events:auto}
+#chat-sala button:hover,#chat-sala button:focus-visible{border-color:var(--sys);color:var(--ink-100);outline:none}
+#chat-sala button[disabled]{opacity:.5;cursor:default}
+#chat-nao-lidas{color:var(--am)}
+#chat-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;overflow-y:auto;overscroll-behavior:contain;
+  max-height:clamp(72px,calc(100vh - 540px),30vh);scrollbar-width:thin;outline:none}
+.chat-linha{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;padding:5px 10px;background:rgba(10,10,12,.72);
+  font-size:14px;line-height:1.3;animation:chat-some 12.6s linear forwards}
+.chat-linha .chat-quem{color:var(--sys);flex:0 0 auto}
+.chat-linha .chat-txt{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;color:var(--ink-100)}
+.chat-linha .chat-tag{flex:0 0 auto;font-size:10px;letter-spacing:1.5px;color:var(--am)}
+.chat-linha.propria .chat-quem{color:var(--ink-200)}
+.chat-linha.hist{opacity:.8}
+.chat-linha:focus-visible{outline:none;box-shadow:inset 0 0 0 1px var(--sys)}
+#chat-sala.aberto .chat-linha{animation:none;opacity:1;cursor:pointer}
+#chat-sala.aberto .chat-linha.hist{opacity:.8}
+#chat-sala.oculto .chat-linha,#chat-sala.oculto .chat-divisor{display:none}
+.chat-divisor{padding:2px 10px;font-size:10px;letter-spacing:2px;color:var(--ink-200);text-transform:uppercase;
+  background:rgba(10,10,12,.72);animation:chat-some 12.6s linear forwards}
+#chat-sala.aberto .chat-divisor{animation:none;opacity:1}
+@keyframes chat-some{0%,95%{opacity:1}100%{opacity:0}}
+#chat-acoes,#chat-motivos,#chat-lista-bloqueados{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;
+  background:rgba(10,10,12,.86);font-size:12px}
+#chat-acoes-quem{margin-right:auto;color:var(--sys)}
+#chat-motivos-lista{display:flex;flex-wrap:wrap;gap:4px 10px;margin:0;padding:0;border:0;min-width:0;flex:1 1 100%}
+#chat-motivos-lista legend{padding:0 0 4px;font-size:10px;letter-spacing:2px;color:var(--ink-200)}
+.chat-motivo{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.chat-motivo input{accent-color:var(--sys);margin:0}
+#chat-lista-bloqueados-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1 1 100%}
+#chat-lista-bloqueados-ul li{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#chat-form{display:none;align-items:center;gap:6px;padding:6px;background:rgba(10,10,12,.72)}
+#chat-sala.aberto #chat-form{display:flex}
+#chat-entrada{flex:1 1 auto;min-width:0;font:600 16px/1.2 var(--aaa-font-body);color:var(--ink-100);
+  background:var(--bg-800);border:1px solid var(--line);padding:7px 9px;outline:none}
+#chat-entrada:focus-visible{border-color:var(--sys)}
+#chat-contador{font:600 11px/1 var(--mono);color:var(--ink-200)}
+#chat-contador.estourou{color:var(--crit)}
+#chat-canal{min-width:52px}
+#chat-sala.canal-time #chat-canal{color:var(--am);border-color:var(--am)}
+#chat-aviso{min-height:1.2em;background:rgba(10,10,12,.72);padding:4px 8px;font-size:12px;letter-spacing:.5px;color:var(--am)}
+#chat-aviso:empty{display:none}
+#chat-bloquear-tambem{align-self:flex-start}
+#chat-toque{display:none}
+@media (pointer:coarse){
+  #chat-sala{left:12px;bottom:150px;width:min(44vw,360px)}
+  #chat-log{max-height:clamp(60px,calc(100vh - 300px),26vh)}
+  #chat-sala.aberto{top:8px;bottom:auto;max-height:calc(var(--chat-vv,100vh) - 16px)}
+  #chat-sala.aberto #chat-log{max-height:min(26vh,calc(var(--chat-vv,100vh) - 130px))}
+  #chat-toque{display:block;position:fixed;z-index:31;right:calc(64px + env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));
+    width:40px;height:40px;padding:0;border-radius:50%;background:rgba(16,16,20,.4);border:1px solid rgba(255,255,255,.28);color:#ecebe6;
+    font:700 10px/1 var(--aaa-font-body);letter-spacing:1px;pointer-events:auto}
+  #chat-toque[hidden]{display:none}
+  #touch-ui.chat{display:none}
+}
+@media (orientation:portrait){
+  #chat-sala{left:12px;right:12px;width:auto;bottom:170px}
+  #chat-log{max-height:160px}
+  #chat-sala.aberto{top:8px;bottom:auto}
+  #chat-sala.aberto #chat-log{max-height:150px}
+}
+/* reduzir movimento não é "nunca some": a linha vive os mesmos 12,6 s e sai por corte, sem fade;
+   o !important vence o animation-duration:.01ms!important global (regra de *) deste mesmo media. */
+@media(prefers-reduced-motion:reduce){
+  .chat-linha,.chat-divisor{animation:chat-some 12.6s step-end forwards;animation-duration:12.6s!important}
 }

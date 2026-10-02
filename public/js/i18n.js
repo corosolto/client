@@ -407,6 +407,8 @@ const DICT = {
   '🌐 FORA DO BRASIL': '🌐 OUTSIDE BRAZIL',
   'ABRIR PÁGINA DE APOIO': 'OPEN THE SUPPORT PAGE',
   'AWP / Pistola / Faca': 'AWP / Pistol / Knife',
+  'RODINHA': 'MOUSE WHEEL',
+  'Próxima / anterior arma': 'Next / previous weapon',
   'CTRL ou C': 'CTRL or C',
   'Gire o celular na horizontal pra jogar': 'Turn your phone sideways to play',
   'com respawn: cada round dura 1:39 ou fecha quando um time chega no alvo de abates; o time com mais kills leva o round. Por padrão, vence quem ganhar 3 rounds (melhor de 5); o teto pode ser escolhido na tela de mapas.':
@@ -425,6 +427,11 @@ const DICT = {
   'SEGURAR PARA VER': 'HOLD TO VIEW', 'ATIVAR CURSOR': 'ENABLE CURSOR',
   'Armas e utilitários': 'Weapons and utilities',
   'Fumaça (tecla 4)  ·  Frag (tecla 5)': 'Smoke (key 4)  ·  Frag (key 5)',
+  // chat de sala (#686). ENVIAR, FECHAR, TODOS e VOLTAR já existem acima: a UIR5 reprova duplicata.
+  'CHAT': 'CHAT', 'Y SALA': 'Y ROOM', 'U TIME': 'U TEAM', 'Chat da sala': 'Room chat', 'OCULTAR': 'HIDE', 'BLOQUEADOS': 'BLOCKED',
+  'BLOQUEAR': 'BLOCK', 'DENUNCIAR': 'REPORT', 'CANCELAR': 'CANCEL', 'DESBLOQUEAR': 'UNBLOCK', 'Bloqueados': 'Blocked',
+  'Ações da mensagem': 'Message actions', 'MOTIVO DA DENÚNCIA': 'REPORT REASON', 'Mensagem': 'Message', 'Canal': 'Channel',
+  'Mensagens anteriores': 'Earlier messages', 'Bloquear também?': 'Block too?', 'Ninguém bloqueado': 'Nobody blocked',
   // rodapé / links
   'Links do jogo': 'Game links', 'Menu principal': 'Main menu', 'Abrir seu perfil': 'Open your profile',
   'Discord do CORO SOLTO': 'CORO SOLTO Discord', 'Telegram do CORO SOLTO': 'CORO SOLTO Telegram',
@@ -489,6 +496,38 @@ const FRASES = {
     pt: (r1, r2, k, nome, d) => `<div><b>${r1} × ${r2}</b>rounds</div><div><b>${k}</b>kills de ${nome}</div><div><b>${d}</b>suas mortes</div>`,
     en: (r1, r2, k, nome, d) => `<div><b>${r1} × ${r2}</b>rounds</div><div><b>${k}</b>kills by ${nome}</div><div><b>${d}</b>your deaths</div>`,
   },
+  // chat de sala (#686): os motivos de nack e de denúncia são os do contrato, docs/chat-de-sala.md §2
+  chatAnonimo: { pt: () => 'Anônimo', en: () => 'Anonymous' },
+  chatCanal: { pt: (c) => (c === 'time' ? 'TIME' : 'SALA'), en: (c) => (c === 'time' ? 'TEAM' : 'ROOM') },
+  chatContador: { pt: (n, max) => `${n}/${max}`, en: (n, max) => `${n}/${max}` },
+  chatNaoLidas: { pt: (n) => `${n} nova${n === 1 ? '' : 's'}`, en: (n) => `${n} new` },
+  chatNack: {
+    pt: (m, espera) => ({
+      vazia: 'Mensagem vazia', longa: 'Mensagem longa demais', rapido: 'Devagar: espere um pouco',
+      repetida: 'Você acabou de dizer isso', sem_time: 'Espectador só fala com a sala', silenciado: 'Silenciado por um minuto',
+      sala_rapida: 'A sala está falando rápido demais', invalida: 'Mensagem inválida',
+    }[m] || 'Mensagem não enviada') + (espera ? ` (${Math.ceil(espera / 1000)} s)` : ''),
+    en: (m, espera) => ({
+      vazia: 'Empty message', longa: 'Message too long', rapido: 'Slow down a bit',
+      repetida: 'You just said that', sem_time: 'Spectators can only talk to the room', silenciado: 'Muted for a minute',
+      sala_rapida: 'The room is talking too fast', invalida: 'Invalid message',
+    }[m] || 'Message not sent') + (espera ? ` (${Math.ceil(espera / 1000)} s)` : ''),
+  },
+  chatDenuncia: {
+    pt: (estado, motivo) => (estado === 'recebida' ? 'Denúncia recebida' : estado === 'repetida' ? 'Você já denunciou essa mensagem'
+      : ({ limite: 'Limite de denúncias atingido', propria: 'Não dá pra denunciar a própria mensagem', desconhecida: 'Mensagem não encontrada' }[motivo] || 'Denúncia recusada')),
+    en: (estado, motivo) => (estado === 'recebida' ? 'Report received' : estado === 'repetida' ? 'You already reported this message'
+      : ({ limite: 'Report limit reached', propria: 'You cannot report your own message', desconhecida: 'Message not found' }[motivo] || 'Report refused')),
+  },
+  chatMotivo: {
+    pt: (m) => ({ ofensa: 'Ofensa', odio: 'Ódio', assedio: 'Assédio', spam: 'Spam', outro: 'Outro' }[m] || m),
+    en: (m) => ({ ofensa: 'Insult', odio: 'Hate', assedio: 'Harassment', spam: 'Spam', outro: 'Other' }[m] || m),
+  },
+  chatBloqueado: { pt: (h) => `#${h} bloqueado`, en: (h) => `#${h} blocked` },
+  chatBloqueioFalhou: { pt: () => 'Não deu pra bloquear', en: () => 'Could not block' },
+  chatIndisponivel: { pt: () => 'Chat indisponível agora', en: () => 'Chat unavailable right now' },
+  chatPropria: { pt: () => 'Essa mensagem é sua', en: () => 'That is your own message' },
+  chatDenunciaEnviada: { pt: () => 'Denúncia enviada', en: () => 'Report sent' },
 };
 export const frase = (id, ...args) => {
   const f = FRASES[id];

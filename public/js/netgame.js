@@ -2,7 +2,7 @@
    arquivo; quem injeta é o main.js. Desenho e decisões: docs/MULTIPLAYER.md. */
 import * as THREE from 'three';
 import { poseCharacter } from './characters.js';
-import { WEAPONS, supDeCod } from './game.js';
+import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
@@ -125,9 +125,11 @@ class Netcode {
     // dentro de 3 m); sem isso o raio sai da posição dele — atrasada pelo RTT — e passa ao lado.
     const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente
       || this._pickupWeaponPendente || this._reloadPendente;
+    const shotAim = anguloDeDisparo(p, this.game.camView);
     const seq = this.net.sendInput({
       ax: input.ax, az: input.az, crouch: input.crouch, shift: input.shift, jump: input.jump,
-      yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
+      yaw: shotAim.yaw, pitch: shotAim.pitch,
+      shoot: !!this.game.mouseDown0, weapon: p.weapon,
       // INTENÇÃO de mirar (1 bit). Quem integra o `adsF` — e portanto a precisão — é o servidor.
       ads: !!p.scoped,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
@@ -661,7 +663,7 @@ class Netcode {
       if (sup[i] && sup[i] !== '-') {
         const nv = Array.isArray(e.n) && Array.isArray(e.n[i]) ? e.n[i] : null;
         const n = nv ? new THREE.Vector3(+nv[0] || 0, +nv[1] || 0, +nv[2] || 0) : olho.clone().sub(alvo).normalize();
-        try { game._puff(alvo, n, surf); } catch { /* sem fx */ }
+        try { game._puff(alvo, n, surf, false); } catch { /* sem fx */ }
         if (ent === p && i === 0) { try { game._impactSfx(surf, alvo, olho.distanceTo(alvo)); } catch { /* ctx mudo */ } }
       }
     }
