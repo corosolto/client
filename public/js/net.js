@@ -8,11 +8,22 @@ export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PI
 import { NOS } from './nos.js';
 import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
 import { TransporteWS, TransporteWT } from './transporte.js';
-import { VERSION } from './version.js';
+import * as versao from './version.js';
+const { VERSION } = versao;
+// ausente em árvore anterior ao fingerprint: degrada para comparar VERSION
+const SIM_HASH = versao.SIM_HASH || null;
 
 /* PARIDADE DE SIMULAÇÃO (incidente da frota, KNOWN-BUGS): protocolo igual não é jogo
-   igual. O nó diz no `welcome` que versão simula; `?mpversao=0` libera no local. */
-export const versaoCompativel = (doNo, nossa = VERSION) => !doNo || doNo === nossa;
+   igual. O nó diz no `welcome` que versão simula; `?mpversao=0` libera no local.
+
+   Quando os DOIS lados trazem `SIM_HASH` (scripts/sim-hash.mjs), compara-se o código que o
+   nó simula, não o rótulo: release de menu ou chat muda VERSION e não muda a física, e não
+   pode deixar todo mundo fora do multiplayer até o nó ser reimplantado. Sem hash de um dos
+   lados, vale a regra antiga de versão idêntica. */
+export const versaoCompativel = (doNo, nossa = VERSION, simNo = null, nossoSim = SIM_HASH) => {
+  if (simNo && nossoSim) return simNo === nossoSim;
+  return !doNo || doNo === nossa;
+};
 
 /* CHAT DE SALA (docs/chat-de-sala.md §6): frames que chegam antes de existir painel ficam
    em `_chatFila`; o teto é o `filaClienteMax` da tabela, cobrado por eval:chat (CC7). */
@@ -195,7 +206,7 @@ export class NetClient {
         try { m = binary ? decodeSnapshot(dados) : JSON.parse(dados); }
         catch { if (binary) this.tp.fechar(1002, 'snapshot_invalid'); return; }
         if (m.type === 'welcome') {
-          if (!versaoCompativel(m.clientVersion)
+          if (!versaoCompativel(m.clientVersion, VERSION, m.simHash)
             && new URLSearchParams(location.search).get('mpversao') !== '0') {
             const e = new Error('versao_incompativel');
             e.detalhe = { no: m.clientVersion, jogo: VERSION };
