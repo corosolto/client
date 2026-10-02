@@ -80,6 +80,10 @@ jobs:
             const p = 'public/js/version.js';
             fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/VERSION = '[^']*'/, \"VERSION = '$V'\"));
           "
+          # SIM_HASH: impressão digital do código que o nó de multiplayer simula. O nó
+          # anuncia o do ref que ele vendoriza e o navegador compara com este; release
+          # que não toca a simulação mantém o hash e não tira ninguém do MP.
+          node scripts/sim-hash.mjs --write
           node scripts/sync-changelog.mjs
           node tools/gen-docs.mjs
           (cd docs && npm ci && npm run build:site)

@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.18`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.23`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -64,6 +64,79 @@
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
 
+## [2.1.0-alpha.23] — 2026-10-02
+
+### Mudado
+- Accept MP nodes by simulation fingerprint, not release version (#739)
+- docs(changelog): rodada do cronista (2026-09-30) (#725)
+- docs(changelog): rodada do cronista (2026-10-01) (#731)
+- Regenerate derived docs blocks
+- Write SIM_HASH on every release
+- Accept nodes by simulation fingerprint, not release
+- Add simulation fingerprint of the node's module graph
+- docs(changelog): rodada do cronista — 10 commits
+- docs(changelog): rodada do cronista — 21 commits
+
+## [2.1.0-alpha.22] — 2026-10-02
+
+### Mudado
+- docs(chat): contrato v1 do chat de sala (#686)
+- test(chat): régua eval:chat vermelha para o chat de sala (#686)
+- feat(net): ramos e envio do chat de sala no NetClient (#686)
+- feat(chat): módulo puro do chat de sala com limites, normalização e estado (#686)
+- test(chat): mutantes do módulo puro (sem-nfkc, bloqueio-proprio, tabela-torta) (#686)
+- feat(chat): painel do chat de sala (view, marcação, CSS e i18n) (#686)
+- feat(game): guardas de entrada para o chat de sala (Y/U, trava, pausa) (#686)
+- feat(main): liga o chat de sala à sessão multiplayer (#686)
+- fix(chat): destruir() destrava o jogo e desliga a meta (#686)
+- test(chat): smoke Playwright do painel e eval:chat no check:fast (#686)
+- fix(chat): fechar o compositor devolve o foco ao jogo, mesmo vindo de uma linha (#686)
+- fix(game): o clique que fecha o compositor do chat não atira (#686)
+- test(chat): eval:chat-mp, o chat de sala de ponta a ponta com nó e três navegadores (#686)
+- fix(chat): Y/U abrem o chat no fim de partida e o stick não anda com o compositor aberto (#686)
+- fix(chat): normalizarTexto numa passagem só, igual ao nó (#686)
+- fix(chat): fechar sem teclado, aviso com fundo, corte com reduzir movimento e redesenho sem ressuscitar linha (#686)
+- fix(chat): carenciaEspectadorMs no contrato e em CHAT_LIMITES, e doc alinhado às correções do nó (#686)
+- fix(chat): Esc fecha o compositor no toque mesmo com o keydown engolido pelo navegador (#686)
+- fix(chat): ZWJ depois de seletor e tom de pele, espera do nack conferida e chat destruído na recusa de mapa parado (#686)
+- fix(chat): fechar o compositor não devolve o foco ao #chat-toque (#686)
+- test(chat): contraste do chat vira portão próprio UI1C (eval:ui-chat) no check:fast (#686)
+- docs(chat): contrato cobre a segunda aba na arquibancada e as contagens da rota de denúncia (#686)
+- feat(chat): botões Y SALA/U TIME na HUD abrem o compositor por clique ou toque (#686)
+- test(chat): CC8 tranca os botões da HUD, UI1C mede o contraste e o smoke clica (#686)
+- fix(chat): 'Bloquear também?' não morre com o timer do aviso (#686)
+- feat(mp): chat de texto da sala com identidade do servidor e controles de abuso (#686) (#726)
+- chore(docs): regenera bloco derivado (autofix)
+
+## [2.1.0-alpha.21] — 2026-10-02
+
+### Mudado
+- feat: trocar de arma pela rodinha do mouse + 3 crashes de produção (rádio, TDZ do MP, Object.hasOwn) (#732)
+- feat(jogo): trocar de arma pela rodinha do mouse, como no CS
+- fix(menu): boot no fim do main.js e sem Object.hasOwn
+- fix(rádio): religa o ping de rota que derrubava todo comando de rádio
+
+## [2.1.0-alpha.20] — 2026-10-02
+
+### Mudado
+- fix(deps): devalue high do npm audit — bump no lockfile, DEP1 volta ao verde (#735)
+
+## [2.1.0-alpha.19] — 2026-09-30
+
+### Mudado
+- fix(fx): tiro sem fumaça + smoke de granada visível (BUG-185/186) + PR #704 (#716)
+- fix(vm): clarão sutil na boca real e teto de tamanho da arma (BUG-188, BUG-189)
+- fix(fx): traçado visível e impacto de bala sem fumaça (BUG-187)
+- chore(docs): blocos gerados com a régua eval:smoke e comentário das faíscas em 2 linhas
+- fix(fx): tiro sem fumaça e granada de smoke volta a fazer smoke (BUG-185, BUG-186)
+- Align revolver ADS with its sight
+- Stabilize ADS review target rendering
+- Fit ADS comments within project budget
+- Refresh generated docs for ADS checks
+- Keep scoped weapons distinct from focus ADS
+- Fix ADS target tracking and weapon recoil
+
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.19).
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado
@@ -77,6 +150,7 @@
 - docs(mp): record quality fix PRs and rollout gates
 - fix(mp): exclude inactive sessions from quality telemetry
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.17).
 ## [2.1.0-alpha.16] — 2026-09-29
 
 ### Mudado

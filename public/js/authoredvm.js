@@ -783,18 +783,44 @@ export class AuthoredViewModels {
   // Boca do cano da arma VISÍVEL em world space (tracer/flash nascem nela, não na
   // arma legada oculta). Cache do ponto local; M3 troca a fonte pela malha Mint.
   muzzleWorld(id = this.weapon, camera = null) {
+    if (!camera) return null;
+    const v = this.muzzleVm(id);
+    return v ? camera.localToWorld(v) : null;
+  }
+
+  // Boca no espaço da vmScene (== espaço da vmCamera).
+  muzzleVm(id = this.weapon) {
     const entry = this.entry(id);
-    if (!entry?.mount.visible || !camera) return null;
-    if (entry.sockets?.boca) return camera.localToWorld(entry.sockets.boca.getWorldPosition(new THREE.Vector3()));
-    // Arma Mint montada tem boca MEDIDA (weaponMetrics); o bbox é só fallback.
-    const mint = mintPointWorld(entry, 'muzzle', camera);
+    if (!entry?.mount.visible) return null;
+    if (entry.sockets?.boca) return entry.sockets.boca.getWorldPosition(new THREE.Vector3());
+    // Arma Mint montada tem boca MEDIDA (weaponMetrics); os vértices são o fallback.
+    const mint = mintPointScene(entry, 'muzzle');
     if (mint) return mint;
-    if (!entry.muzzleLocal) entry.muzzleLocal = this._gunPoint(entry, 'muzzle');
-    if (!entry.muzzleLocal) return null;
-    entry.scene.updateWorldMatrix(true, false);
-    const v = entry.muzzleLocal.clone();
-    entry.scene.localToWorld(v);
-    return camera.localToWorld(v);
+    return this._frontMuzzle(entry);
+  }
+
+  // BUG-187: a bbox da geometria é da pose de REPOUSO e a malha é skinned — a boca caía
+  // 10,9 m atrás da câmera. Média dos vértices deformados mais à frente (−Z), índices em cache.
+  _frontMuzzle(entry) {
+    const v = new THREE.Vector3();
+    entry.scene.updateWorldMatrix(true, true);
+    if (!entry.muzzleIdx) {
+      const all = [];
+      let minZ = Infinity;
+      for (const mesh of entry.weaponMeshes) {
+        const pos = mesh.geometry?.attributes?.position;
+        if (!pos) continue;
+        for (let i = 0; i < pos.count; i++) {
+          mesh.getVertexPosition(i, v).applyMatrix4(mesh.matrixWorld);
+          all.push([mesh, i, v.z]); if (v.z < minZ) minZ = v.z;
+        }
+      }
+      entry.muzzleIdx = all.filter((a) => a[2] < minZ + 0.03).map((a) => [a[0], a[1]]);
+    }
+    if (!entry.muzzleIdx.length) return null;
+    const c = new THREE.Vector3();
+    for (const [mesh, i] of entry.muzzleIdx) c.add(mesh.getVertexPosition(i, v).applyMatrix4(mesh.matrixWorld));
+    return c.multiplyScalar(1 / entry.muzzleIdx.length);
   }
 
   sightWorld(id = this.weapon, camera = null) {
