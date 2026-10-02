@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.22`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.23`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,19 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.23] — 2026-10-02
+
+### Mudado
+- Accept MP nodes by simulation fingerprint, not release version (#739)
+- docs(changelog): rodada do cronista (2026-09-30) (#725)
+- docs(changelog): rodada do cronista (2026-10-01) (#731)
+- Regenerate derived docs blocks
+- Write SIM_HASH on every release
+- Accept nodes by simulation fingerprint, not release
+- Add simulation fingerprint of the node's module graph
+- docs(changelog): rodada do cronista — 10 commits
+- docs(changelog): rodada do cronista — 21 commits
 
 ## [2.1.0-alpha.22] — 2026-10-02
 
@@ -123,6 +136,7 @@
 - Keep scoped weapons distinct from focus ADS
 - Fix ADS target tracking and weapon recoil
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.19).
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado
@@ -136,6 +150,7 @@
 - docs(mp): record quality fix PRs and rollout gates
 - fix(mp): exclude inactive sessions from quality telemetry
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.17).
 ## [2.1.0-alpha.16] — 2026-09-29
 
 ### Mudado
