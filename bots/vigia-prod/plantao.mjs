@@ -52,12 +52,15 @@ const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 /* O ar publica a MAIN — comparar contra o worktree corrente do dono (branch de
  * feature, árvore suja) acusaria falso vermelho todo dia. Worktree efêmero
  * travado em origin/main, como o modo fix do canarinho. */
-export function worktreeDe(branch, wt) {
-  const fetch = spawnSync('git', ['fetch', '-q', 'origin', branch], { cwd: REPO_DIR, encoding: 'utf8' });
+export function worktreeDe(branch, wt, repoDir = REPO_DIR) {
+  const fetch = spawnSync('git', ['fetch', '-q', 'origin', branch], { cwd: repoDir, encoding: 'utf8' });
   if (fetch.status !== 0) throw new Error(`git fetch origin ${branch}: ${(fetch.stderr || '').slice(0, 120)}`);
   const ref = `origin/${branch}`;
   if (!existsSync(wt)) {
-    const add = spawnSync('git', ['worktree', 'add', '-q', '--detach', wt, ref], { cwd: REPO_DIR, encoding: 'utf8' });
+    /* O macOS apaga /tmp parado (3 dias) mas o REGISTRO do worktree sobrevive no
+     * repo: sem prune, todo add explode com "missing but already registered" (#729). */
+    spawnSync('git', ['worktree', 'prune'], { cwd: repoDir, encoding: 'utf8' });
+    const add = spawnSync('git', ['worktree', 'add', '-q', '--detach', wt, ref], { cwd: repoDir, encoding: 'utf8' });
     if (add.status !== 0) throw new Error(`worktree add: ${(add.stderr || '').slice(0, 120)}`);
   } else {
     spawnSync('git', ['-C', wt, 'checkout', '-q', '--detach', ref], { encoding: 'utf8' });
@@ -122,7 +125,7 @@ export const CHECAGENS = {
 
   async 'decals-pack'() {
     const tex = readFileSync(join(worktreeMain(), 'public', 'js', 'textures.js'), 'utf8');
-    const pedidos = [...tex.matchAll(/\['([^']+)',\s*[\d.]+,/g)].map((m) => m[1]);
+    const pedidos = nomesDecais(tex);
     if (!pedidos.length) return { ok: false, evid: 'DECAL_FILES não encontrado no textures.js — checagem cega', detalhe: 'formato do textures.js mudou; ação precisa de manutenção' };
     const n = Math.min(CFG.amostra_decals || 12, pedidos.length);
     const amostra = [...pedidos].sort(() => Math.random() - 0.5).slice(0, n);
@@ -141,7 +144,7 @@ export const CHECAGENS = {
     let dados;
     try { dados = JSON.parse(r.corpo); } catch { return { ok: false, evid: 'leaderboard não devolve JSON', detalhe: r.corpo.slice(0, 200) }; }
     if (dados && dados.disabled === true) return { ok: true, evid: 'ranking desligado POR ESCOLHA (estado válido, main.js reage)' };
-    const lista = Array.isArray(dados) ? dados : dados.rows || dados.entries || dados.top || dados.ranking;
+    const lista = listaDoRanking(dados);
     if (Array.isArray(lista)) return { ok: true, evid: `leaderboard ligado com ${lista.length} entrada(s) no shape esperado` };
     return { ok: false, evid: 'leaderboard ligado sem lista de entradas em campo conhecido', detalhe: JSON.stringify(dados).slice(0, 200) };
   },
@@ -239,8 +242,29 @@ export const CHECAGENS = {
   },
 };
 
+/* ── helpers puros do decals-pack e ranking-shape (testáveis offline) ───────── */
+/* A amostra tem que ser do DECAL_FILES — o regex solto casava os POSTER_FILES
+ * (cartazes servidos de /posters/, não /img/decals/) e o HEAD dava 404 falso
+ * na amostra: "despisque-leao.jpg → 404" era poster, não decal (#717). */
+export function nomesDecais(tex) {
+  const inicio = tex.indexOf('const DECAL_FILES = [');
+  if (inicio < 0) return [];
+  const ultimoPush = tex.lastIndexOf('DECAL_FILES.push(');
+  const corpo = ultimoPush > inicio
+    ? tex.slice(inicio, tex.indexOf(');', ultimoPush) + 2)
+    : tex.slice(inicio, tex.indexOf('];', inicio) + 2);
+  return [...corpo.matchAll(/\['([^']+)',\s*[\d.]+,/g)].map((m) => m[1]);
+}
+
+/* O /api/leaderboard já respondeu rows, entries, top, ranking e players (este
+ * último desde o backend próprio) — a checagem só via os quatro primeiros e
+ * acusava "sem lista" num ranking saudável (#712). */
+export function listaDoRanking(dados) {
+  if (Array.isArray(dados)) return dados;
+  return dados?.rows ?? dados?.entries ?? dados?.top ?? dados?.ranking ?? dados?.players;
+}
+
 /* ── helpers puros do build-em-dia (testáveis offline) ──────────────────────── */
-/* Só run de PUSH na main conta: falha de PR tem dono (o autor) e porta própria. */
 export function falhasNovas(runs, jaVistos) {
   return (runs || []).filter((r) => r.event === 'push' && !(jaVistos || []).includes(r.databaseId));
 }

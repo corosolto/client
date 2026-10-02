@@ -1,10 +1,13 @@
 /* Teste offline do vigia-prod: corpo de issue com dedupe/persona/tabela, a
    contagem de folhas do manifest (a métrica do BUG-19) e os helpers de build. */
 import { corpoIssue, corpoComentario, CHECAGENS, falhasNovas, ehDriftDeGerados,
-  prsVermelhos, checksFalhos, runIdDaUrl, limparLog, classeDaFalha, corpoPrVermelho } from '../plantao.mjs';
+  prsVermelhos, checksFalhos, runIdDaUrl, limparLog, classeDaFalha, corpoPrVermelho,
+  nomesDecais, listaDoRanking, worktreeDe } from '../plantao.mjs';
 import { carregarPersona } from '../../lib/persona.mjs';
 import { carregarAcoes } from '../../lib/acoes.mjs';
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 export async function testar(t, { dir }) {
@@ -81,13 +84,52 @@ export async function testar(t, { dir }) {
   })(manifestExemplo);
   t.ok(folhas > 50 && folhas < 80, `manifest.example.json tem ${folhas} folhas (a casa dos 62 do BUG-19 — abaixo do piso 300)`);
 
-  /* checagem de ranking: shape declarativo sem rede */
+  /* ── ranking-shape: o shape que a API realmente fala (#712) ── */
   const valida = (dados) => {
     if (dados && dados.disabled === true) return 'ok-desligado';
-    const lista = Array.isArray(dados) ? dados : dados.rows || dados.entries || dados.top || dados.ranking;
+    const lista = listaDoRanking(dados);
     return Array.isArray(lista) ? 'ok-ligado' : 'vermelho';
   };
   t.igual(valida({ disabled: true }), 'ok-desligado', 'ranking desligado é estado válido');
   t.igual(valida({ rows: [{ nick: 'x' }] }), 'ok-ligado', 'shape rows aceito');
+  t.igual(valida({ players: [{ nick: 'HiT;*' }] }), 'ok-ligado', 'shape players aceito — é o que a API fala hoje (#712)');
   t.igual(valida({ erro: 'x' }), 'vermelho', 'sem lista conhecida é vermelho');
+
+  /* ── decals-pack: amostra só do DECAL_FILES, nunca do POSTER_FILES (#717) ── */
+  const texFixture = [
+    "  const POSTER_FILES = [",
+    "    ['ashtar-meme.jpg', 0.98, 1.2],",
+    "    ['despisque-leao.jpg', 0.86, 1.2],",
+    "  ];",
+    "  const DECAL_FILES = [",
+    "    ['alfabeto-bolha.png', 0.598, 'alfabeto', 1],",
+    "  ];",
+    "  DECAL_FILES.push(",
+    "    ['or-pixo-rj-alto.png', 3.346, 'tag', 0, 'RJ'],",
+    "  );",
+  ].join('\n');
+  const nomes = nomesDecais(texFixture);
+  t.igual(nomes.length, 2, 'amostra lê o DECAL_FILES e os push dele');
+  t.ok(nomes.includes('or-pixo-rj-alto.png'), 'push do pixo-pack entra na amostra');
+  t.ok(!nomes.some((n) => n.endsWith('.jpg')), 'POSTER_FILES não vira decal 404 falso (#717)');
+  t.igual(nomesDecais('export default {}').length, 0, 'textures.js sem DECAL_FILES deixa a checagem cega explícita');
+
+  /* ── worktree fantasma: o macOS limpa /tmp, o registro fica órfão (#729) ── */
+  const raiz = mkdtempSync(join(tmpdir(), 'vigia-wt-'));
+  try {
+    const espelho = join(raiz, 'origem.git');
+    const fonte = join(raiz, 'fonte');
+    execFileSync('git', ['init', '-q', '--bare', '-b', 'main', espelho]);
+    execFileSync('git', ['clone', '-q', espelho, fonte]);
+    for (const cfg of [['user.name', 't'], ['user.email', 't@t']]) execFileSync('git', ['-C', fonte, 'config', cfg[0], cfg[1]]);
+    execFileSync('git', ['-C', fonte, 'commit', '-q', '--allow-empty', '-m', 'raiz']);
+    execFileSync('git', ['-C', fonte, 'push', '-q', 'origin', 'main']);
+    const wt = join(raiz, 'wt');
+    worktreeDe('main', wt, fonte);
+    rmSync(wt, { recursive: true, force: true }); // o "/tmp" some, o registro fica
+    worktreeDe('main', wt, fonte);
+    t.ok(existsSync(wt), 'worktree fantasma é podado e recriado em vez de explodir (#729)');
+  } finally {
+    rmSync(raiz, { recursive: true, force: true });
+  }
 }
