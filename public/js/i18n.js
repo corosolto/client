@@ -407,6 +407,8 @@ const DICT = {
   '🌐 FORA DO BRASIL': '🌐 OUTSIDE BRAZIL',
   'ABRIR PÁGINA DE APOIO': 'OPEN THE SUPPORT PAGE',
   'AWP / Pistola / Faca': 'AWP / Pistol / Knife',
+  'RODINHA': 'MOUSE WHEEL',
+  'Próxima / anterior arma': 'Next / previous weapon',
   'CTRL ou C': 'CTRL or C',
   'Gire o celular na horizontal pra jogar': 'Turn your phone sideways to play',
   'com respawn: cada round dura 1:39 ou fecha quando um time chega no alvo de abates; o time com mais kills leva o round. Por padrão, vence quem ganhar 3 rounds (melhor de 5); o teto pode ser escolhido na tela de mapas.':
