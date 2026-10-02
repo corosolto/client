@@ -136,6 +136,7 @@
 - docs(mp): record quality fix PRs and rollout gates
 - fix(mp): exclude inactive sessions from quality telemetry
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.17).
 ## [2.1.0-alpha.16] — 2026-09-29
 
 ### Mudado
