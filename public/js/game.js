@@ -54,6 +54,9 @@ const VMLAB = QS.get('vmlab') === '1';
 const VM_QA_WEAPON = QS.get('debug') === '1' && WEAPON_IDS.includes(QS.get('vmweapon')) ? QS.get('vmweapon') : null;
 // `?debug=1` libera `[` e `]` para percorrer o arsenal sem recarregar (BUG-156).
 const VM_QA_CICLO = QS.get('debug') === '1';
+// Rodinha (invnext/invprev do CS): clique (≥50 px ou em linhas) troca por evento; gesto fino
+// de trackpad troca uma vez por gesto, que termina após 150 ms sem evento (scroll-arma-check).
+const WHEEL_NOTCH_PX = 50, WHEEL_IDLE_MS = 150;
 const VM_QA_ADS = QS.get('debug') === '1' && QS.get('vmads') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
    `min(metalness, 0.55)` do viewmodel E o orçamento fixo de 7,60 unidades de luz da vmScene.
@@ -151,6 +154,9 @@ const PACE = QS.get('pace') === '1';
    partida. Depois da janela o painel volta a aceitar clique (senão a regressão do G2-R2
    volta) e as duas ações destrutivas ainda exigem confirmação de dois toques (main.js). */
 const PAUSE_ARM_MS = 600;
+/* Chat de sala (#686): o pointerlockchange do Esc chega no mesmo tick do keydown no Chromium;
+   400 ms cobre um quadro atrasado e fica abaixo da guarda PAUSE_ARM_MS (eval:chat CC3e mede 450 ms). */
+const CHAT_PAUSA_GUARDA_MS = 400;
 /* Segunda trava, do mesmo defeito: NENHUM clique único pode destruir a partida em
    andamento (SAIR PRO MENU / REINICIAR). Dois toques — mas com uma pausa MEDIDA entre
    eles, e a regra mora aqui, exportada, porque "clique de novo" ingênuo NÃO resolve:
@@ -1292,6 +1298,8 @@ export class Game {
     /* O netcode nasce por ÚLTIMO: ele lê `player`, `bots` e `el`, que só existem agora.
        Construí-lo junto com o resto era pegar metade do jogo montada. */
     if (this._mpPend) { this._mp = this._mpPend.mpFactory(this, this._mpPend.net); this._mpPend = null; }
+    // chat de sala (#686): quem abre é o main.js; travarEntrada(v) liga e desliga a trava
+    this.onAbrirChat = null; this._entradaTravada = false; this._chatDestravadoAte = 0;
   }
 
   /* ================= setup ================= */
@@ -1984,7 +1992,12 @@ export class Game {
   /* ================= input ================= */
   _input() {
     this.keys = {};
+    /* Chat de sala (#686): tecla e clique num campo de texto são do campo, não do jogo.
+       Null-safe: o arnês e o nó headless entregam alvos sem closest. */
+    const entradaPropria = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable === true
+      || !!(typeof t.closest === 'function' && t.closest('[data-entrada-propria]')));
     this._kd = e => {
+      if (this._entradaTravada || entradaPropria(e.target)) return;
       if (e.code === 'Tab') { e.preventDefault(); this._showScoreboard(true); }
       /* Em pointer lock, engole os atalhos do navegador que a página PODE cancelar
          (Ctrl+S/D/A/R…). Os que ela NÃO pode — Ctrl+W à frente de todos — não passam por
@@ -1995,6 +2008,13 @@ export class Game {
       // Firefox Quick Find: qualquer letra abre a barra de busca se não cancelar o evento.
       // Em pointer lock o jogo é dono do teclado — engole tudo.
       if (document.pointerLockElement) e.preventDefault();
+      // Y/U abrem o chat antes do portão _acceptInput (o espectador não tem pointer lock), nunca pausado;
+      // valem em roundEnd e matchEnd também: o §5 do contrato libera o fim de partida para todos
+      if ((e.code === 'KeyY' || e.code === 'KeyU') && this.onAbrirChat && !this.paused && this.state !== 'boot') {
+        e.preventDefault();
+        this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time');
+        return;
+      }
       this.keys[e.code] = true;
       if (this.radioOpen) {
         const n = { Digit1: 1, Digit2: 2, Digit3: 3 }[e.code];
@@ -2026,10 +2046,13 @@ export class Game {
       if (e.code === 'Space') e.preventDefault();
     };
     this._ku = e => {
+      if (this._entradaTravada || entradaPropria(e.target)) return;
       if (e.code === 'Tab') this._showScoreboard(false);
       this.keys[e.code] = false;
     };
     this._md = e => {
+      // com pointer lock o clique que fecha o compositor tem o canvas como alvo e chega já destravado
+      if (this._entradaTravada || entradaPropria(e.target) || this._chatSeguraPausa()) return;
       if (this.radioOpen) { this.radioOpen = null; this._radioUi(); }
       if (!this._acceptInput()) {
         // pointer lock não engatou (ou caiu)? qualquer clique NO CANVAS retoma e tenta de novo.
@@ -2089,9 +2112,27 @@ export class Game {
       // partir do Δyaw/Δpitch REAL do quadro — que já embute a sensibilidade e não depende
       // do DPI do mouse nem do framerate, como estes dois acumuladores dependiam.
     };
+    this._wh = e => {
+      if (!this._acceptInput() || this.radioOpen) return;
+      if (document.pointerLockElement) e.preventDefault();
+      if (!e.deltaY) return;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      if (e.timeStamp - (this._wheelLast ?? -Infinity) >= WHEEL_IDLE_MS) { this._wheelAcc = 0; this._wheelGesto = null; }
+      this._wheelLast = e.timeStamp;
+      if (e.deltaMode || (Math.abs(e.deltaY) >= WHEEL_NOTCH_PX && this._wheelGesto !== 'fino' && this._wheelGesto !== 'feito')) {
+        this._wheelGesto = 'clique'; this._cycleWeapon(dir); return;
+      }
+      if (this._wheelGesto === 'feito') return;
+      this._wheelGesto = 'fino';
+      if (Math.sign(this._wheelAcc) !== dir) this._wheelAcc = 0;
+      this._wheelAcc += e.deltaY;
+      if (Math.abs(this._wheelAcc) < WHEEL_NOTCH_PX) return;
+      this._wheelGesto = 'feito'; this._wheelAcc = 0; this._cycleWeapon(dir);
+    };
     this._cc = e => e.preventDefault();
     this._blur = () => { this.keys = {}; };   // alt-tab com tecla pressionada não deixa tecla presa
     this._plc = () => {
+      if (this._chatSeguraPausa()) return;
       if (!document.pointerLockElement && !this.testMode && (this.state === 'live' || this.state === 'countdown') && !this.paused)
         this.setPaused(true);
     };
@@ -2100,6 +2141,7 @@ export class Game {
     document.addEventListener('mousedown', this._md);
     document.addEventListener('mouseup', this._mu);
     document.addEventListener('mousemove', this._mm);
+    document.addEventListener('wheel', this._wh, { passive: false });
     document.addEventListener('contextmenu', this._cc);
     document.addEventListener('pointerlockchange', this._plc);
     window.addEventListener('blur', this._blur);
@@ -2188,8 +2230,11 @@ export class Game {
         move(t); e.preventDefault();
       }, { passive: false });
       el.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) move(t); e.preventDefault(); }, { passive: false });
-      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); } };
+      const soltar = () => { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); };
+      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) soltar(); };
       el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
+      // o chat aberto (travarEntrada) solta o dedo em curso: o toque fica preso ao alvo do touchstart
+      (this._sticksSoltar || (this._sticksSoltar = [])).push(soltar);
     };
     // TIRO PELO MIOLO DOS DOIS STICKS: cada stick tem seu flag; o gatilho real (mouseDown0) é
     // o OU dos dois. Assim dá pra ANDAR (stick esq. p/ fora) + ATIRAR (miolo do dir.), e vice-versa.
@@ -2307,9 +2352,30 @@ export class Game {
   espectando() { return !!(this.online && this._mp && this._mp.espectador); }
 
   _acceptInput() {
+    if (this._entradaTravada) return false;
     if (this.paused || this.state !== 'live' && this.state !== 'countdown') return false;
     return this.testMode || this.mobile || !!document.pointerLockElement;   // mobile: toque, sem pointer lock
   }
+  /* Chat de sala aberto (#686): o pointer lock fica ligado e a cena continua, mas nenhuma
+     tecla, clique ou stick chega ao jogador. Zera como o setPaused, sem o menu de pausa. */
+  travarEntrada(v) {
+    v = !!v;
+    if (this._entradaTravada === v) return;
+    this._entradaTravada = v;
+    if (v) {
+      this.keys = {}; this.mouseDown0 = false;
+      for (const soltar of this._sticksSoltar || []) soltar();
+      if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
+      if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
+      if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; }
+    } else {
+      this._chatDestravadoAte = this._now() + CHAT_PAUSA_GUARDA_MS;
+    }
+    const touchUi = this._touchUi || document.getElementById('touch-ui');
+    if (touchUi && touchUi.classList) touchUi.classList.toggle('chat', v);
+  }
+  // o Esc que fecha o compositor também derruba o pointer lock: essa perda não é pedido de pausa
+  _chatSeguraPausa() { return !!this._entradaTravada || this._now() < (this._chatDestravadoAte || 0); }
   /* O clique caiu no FUNDO do menu de pausa (e não num botão dele)? Durante a janela de
      guarda o painel está com `pointer-events:none`, então até o clique MIRADO num botão
      chega aqui como fundo — que é o ponto: o tiro que já estava saindo volta pro jogo em
@@ -2339,6 +2405,7 @@ export class Game {
     const cat = RADIO[this.radioOpen];
     const item = cat.items[n - 1];
     if (!item) return;
+    const routeSecs = this._routePing();
     this.sfx.characterVoice(this.playerCharId, 'radio', {
       fallbackFaction: this._voiceKey(this.playerTeam), interrupt: true,
     });
@@ -3341,6 +3408,15 @@ export class Game {
     const alvo = WEAPON_IDS[(atual + passo + WEAPON_IDS.length) % WEAPON_IDS.length];
     this._switchWeapon(alvo);
     console.log(`[vmqa] arma: ${alvo}`);   // o HUD já mostra o nome; o log é da régua
+  }
+
+  /* Scroll: mesmos slots das teclas 1/2/3, na mesma ordem. */
+  _cycleWeapon(dir) {
+    const p = this.player;
+    const slots = [p.primary || 'awp', p.secondary || 'pistol', 'knife'].filter(w => WEAPONS[w] && this._pickupAllowed(w));
+    if (slots.length < 2) return;
+    const i = slots.indexOf(p.weapon);
+    this._switchWeapon(slots[((i < 0 ? (dir > 0 ? -1 : 0) : i) + dir + slots.length) % slots.length]);
   }
 
   _switchWeapon(w, { pickup = false } = {}) {
@@ -5983,7 +6059,8 @@ export class Game {
     // e que o servidor aplica ao slot remoto (ver _moveEntity).
     let _ax = (this.keys.KeyD ? 1 : 0) - (this.keys.KeyA ? 1 : 0);
     let _az = (this.keys.KeyS ? 1 : 0) - (this.keys.KeyW ? 1 : 0);
-    if (this.touchMove && (this.touchMove.x || this.touchMove.z)) { _ax = this.touchMove.x; _az = this.touchMove.z; }
+    // com o chat aberto o stick não anda: o dedo que já estava nele segue mandando touchmove
+    if (this.touchMove && (this.touchMove.x || this.touchMove.z) && !this._entradaTravada) { _ax = this.touchMove.x; _az = this.touchMove.z; }
     // mobile: stick direito olha por TAXA (velocidade angular × dt), não por delta.
     // Mora aqui e não no _moveEntity: mira é do jogador local, o remoto vem pela rede.
     if (this.touchLook && (this.touchLook.x || this.touchLook.y) && this._acceptInput()) {
@@ -8200,6 +8277,7 @@ export class Game {
     document.removeEventListener('mousedown', this._md);
     document.removeEventListener('mouseup', this._mu);
     document.removeEventListener('mousemove', this._mm);
+    document.removeEventListener('wheel', this._wh);
     document.removeEventListener('contextmenu', this._cc);
     document.removeEventListener('pointerlockchange', this._plc);
     window.removeEventListener('blur', this._blur);
