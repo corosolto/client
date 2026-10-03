@@ -37,9 +37,10 @@
 
    Uso:
      npm run eval:serve &                       # precisa do servidor no ar
-     node tools/eval/graffiti-census.mjs        # os 5 mapas
+     node tools/eval/graffiti-census.mjs        # os 11 mapas abertos (MA1, 27/09)
      node tools/eval/graffiti-census.mjs quebrada
      JSON=1 node ...                            # despeja o JSON cru
+     --mutante=sem-layout-piscina | --mutante=peca-no-ar | --mutante=demais
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -49,7 +50,8 @@ const BASE = process.env.BASE || 'http://localhost:8123';
 const ARGS = process.argv.slice(2);
 const ONLY = ARGS.find((arg) => !arg.startsWith('--'));
 const MUTANTE = ARGS.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada'];
+const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada',
+  'amazonia', 'escadao', 'corrego', 'lajes', 'posto_treta', 'velho_oeste'];
 /* As metas do dono (07/08), em cobertura de placa de parede. Quebrada e Piscina são
    "os mapas mais degradados" e vão a 90%; Brasília é cidade oficial e vai a 60%;
    Loja H e Ferro Velho são pátio murado — a meta vale pro muro, que é quase tudo
@@ -63,7 +65,29 @@ const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebra
 // loja_h 43→49 em 13/08: medido 49,4% (1,6 m 62,7 · 3,2 m 28 · 5,0 m 54,4) depois da
 // fachada greco-romana virar pintável, já com o filtro de âncora baixa do #260 (que
 // tirou da conta a tinta em caixa procedural — o 1,6 m era 87,8% antes dele).
-const META = { praca_poderes: 35, piscina_treta: 76, loja_h: 49, ferro_velho: 46, quebrada: 67 };
+const META = { praca_poderes: 35, piscina_treta: 76, loja_h: 49, ferro_velho: 46, quebrada: 67,
+  /* MA1 27/09: os 6 novos entram com piso ANTI-REGRESSÃO (medido menos folga) —
+     meta de verdade se define no MA2 junto com o regen da passada. Amazonia, lajes
+     e velho_oeste estão com cobertura 0: sem passada (amazonia/velho_oeste) e
+     layout órfão do rename fy_lajes→lajes (a chave do GRAFITE não acompanhou). */
+  escadao: 18, corrego: 25, posto_treta: 26, amazonia: 0, lajes: 0, velho_oeste: 0 };
+
+/* TETO DE DENSIDADE (peças por placa de parede) — MA1, 27/09, medido ×1,35:
+   praca 0,35→0,5 · piscina 0,63→0,85 · loja_h 0,51→0,7 · ferro 0,36→0,5 ·
+   quebrada 0,59→0,8 · escadao 0,22→0,3 · corrego 0,16→0,25 · posto 0,18→0,25.
+   Hoje morde regressão (levar peça nova sem tirar velha); reduzir de verdade é o
+   regen do MA2 com a triagem que este censo cospe. */
+const TETO = { praca_poderes: 0.5, piscina_treta: 0.85, loja_h: 0.7, ferro_velho: 0.5, quebrada: 0.8,
+  escadao: 0.3, corrego: 0.25, posto_treta: 0.25, amazonia: 0.5, lajes: 0.5, velho_oeste: 0.5 };
+
+/* ÓRFÃS TOLERADAS (medido em 27/09, censo v2): a reclamação do dono virou número —
+   45 peças com NADA atrás (no ar ou em chão) em 7 mapas. Tolerância = dívida
+   declarada no mesmo espírito do GRAF1 do KNOWN-RED ("272 com vão atrás" na régua
+   vizinha): o gate morde ACIMA disso, o MA2 quita zerando cada mapa (quando zerar,
+   apague a linha). Açoites com coordenada estão no graffiti_census.json → orfas.
+   .amostra e no docs/maps/GRAFITE-CENSO-11.md. */
+const ORFAS_TOLERADO = { piscina_treta: 13, escadao: 11, corrego: 6, posto_treta: 5,
+  loja_h: 4, ferro_velho: 3, quebrada: 3 };
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -237,6 +261,43 @@ const CENSO = async () => {
     porBanda.set(pl.banda, b);
   }
 
+  // --- 4b. peça órfã e densidade (MA1: "no ar, em grama, demais") -------------
+  /* Cada quad de arte precisa de PAREDE ATRÁS. 5 raios (centro + 4 cantos a 70%)
+     saem de 0,4 m à frente do quad na direção da normal invertida, alcance 1 m:
+     sem acerto em nada opaco = NO AR (layout velho sobre geometria que mudou);
+     maioria acertando quase-horizontal-deitada (|ny|>0,45) = EM CHÃO/GRAMA;
+     parte sem acerto = BEIRANDO (meia peça pendurada — só report, é ajuste fino).
+     O filtro `graffitiPecas` no hit tira a própria malha junta de decalque da
+     conta, senão toda peça "ancoraria" nela mesma. */
+  const rcO = new THREE.Raycaster(); rcO.far = 1.0;
+  const orfas = { ar: 0, chao: 0, beirando: 0, amostra: [] };
+  const reg = (A, tipo) => orfas.amostra.push({ tipo, file: String(A.file).slice(0, 40),
+    x: +A.p.x.toFixed(1), y: +A.p.y.toFixed(1), z: +A.p.z.toFixed(1) });
+  for (const A of arte) {
+    if (A.file.startsWith('mural:')) continue;   // mural é vagas escolhidas a dedo, com moldura própria
+    const origem = A.p.clone().addScaledVector(A.nor, 0.4);
+    let sem = 0, noChao = 0;
+    for (const [du, dv] of [[0, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      const o = origem.clone().addScaledVector(A.eu, du * A.hw * 0.7).addScaledVector(A.ev, dv * A.hh * 0.7);
+      rcO.set(o, A.nor.clone().negate());
+      const hits = rcO.intersectObjects(alvos, false)
+        .filter((x) => x.distance > 0.05 && !(x.object.userData && x.object.userData.graffitiPecas));
+      if (!hits.length) { sem++; continue; }
+      if (Math.abs(normalMundo(hits[0]).y) > 0.45) noChao++;
+    }
+    if (sem === 5) { orfas.ar++; if (orfas.amostra.length < 12) reg(A, 'ar'); }
+    else if (noChao >= 3) { orfas.chao++; if (orfas.amostra.length < 12) reg(A, 'chao'); }
+    else if (sem >= 3) { orfas.beirando++; }
+  }
+  /* Densidade = peças por placa de parede. Cobertura diz se falta tinta; densidade
+     diz se tem DEMASIADA — a outra metade da reclamação do dono. Peça conta na
+     banda da sua altura central (mais próxima das faixas do censo). */
+  const pecasPorBanda = new Map();
+  for (const A of arte) {
+    const banda = ALTURAS.slice().sort((a, b) => Math.abs(A.p.y - a) - Math.abs(A.p.y - b))[0];
+    pecasPorBanda.set(banda, (pecasPorBanda.get(banda) || 0) + 1);
+  }
+
   const peladas = [...celulas.entries()]
     .filter(([, c]) => c.t >= 3 && c.p / c.t < 0.6)
     .sort((a, b) => (a[1].p / a[1].t) - (b[1].p / b[1].t))
@@ -262,6 +323,13 @@ const CENSO = async () => {
     cobertura: placas.size ? Math.round(1000 * pintadas / placas.size) / 10 : 0,
     peladas,
     usados: [...arqs.keys()].sort(),
+    orfas,
+    densidade: {
+      total: placas.size ? Math.round(100 * arte.length / placas.size) / 100 : 0,
+      porBanda: [...porBanda.entries()].map(([alt, c]) => ({
+        alt, pecas: pecasPorBanda.get(alt) || 0, placas: c.t, dens: c.t ? Math.round(100 * (pecasPorBanda.get(alt) || 0) / c.t) / 100 : 0,
+      })).sort((a, b) => a.alt - b.alt),
+    },
     waypoints: nodes.length,
   };
 };
@@ -274,14 +342,31 @@ const reprovados = [];
 for (const id of MAPS) {
   if (ONLY && id !== ONLY) continue;
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
-  if (MUTANTE === 'sem-layout-piscina' && id === 'piscina_treta') {
+  /* Mutantes: todos adulteram o LAYOUT assado em memória (rota), nunca o arquivo —
+     o vermelho tem que vir do dado que a régua lê, não de edição de fonte. */
+  const mutaLayout = (layout) => {
+    if (MUTANTE === 'sem-layout-piscina') {
+      layout.piscina_treta = { ...layout.piscina_treta, pecas: [], murais: [] };
+      return true;
+    }
+    if (MUTANTE === 'peca-no-ar' && id === 'ferro_velho' && layout.ferro_velho?.pecas?.length) {
+      layout.ferro_velho.pecas[0][2] += 2.5;   // empurra a peça 2,5 m pra cima: nada de parede atrás
+      return true;
+    }
+    if (MUTANTE === 'demais' && id === 'ferro_velho' && layout.ferro_velho?.pecas?.length) {
+      layout.ferro_velho.pecas = [...layout.ferro_velho.pecas, ...layout.ferro_velho.pecas.map((p) => [...p])];
+      return true;                              // dobra a densidade do mapa: o teto tem que morder
+    }
+    return false;
+  };
+  if (MUTANTE) {
     await page.route('**/js/graffiti_layout.js*', async (route) => {
       const response = await route.fetch();
       const source = await response.text();
       const encoded = source.match(/^export const GRAFITE = (.+);$/m)?.[1];
       if (!encoded) throw new Error('layout de grafite não reconhecido pelo mutante');
       const layout = JSON.parse(encoded);
-      layout.piscina_treta = { ...layout.piscina_treta, pecas: [], murais: [] };
+      if (!mutaLayout(layout)) { await route.fallback(); return; }
       await route.fulfill({ response, body: source.replace(
         /^export const GRAFITE = .+;$/m,
         `export const GRAFITE = ${JSON.stringify(layout)};`,
@@ -298,10 +383,20 @@ for (const id of MAPS) {
   out[id] = r;
   const meta = META[id] || 0;
   if (r.cobertura < meta) reprovados.push({ id, cobertura: r.cobertura, meta });
+  const orfasTotal = (r.orfas?.ar || 0) + (r.orfas?.chao || 0);
+  const teto = TETO[id] || 0;
+  if (orfasTotal > (ORFAS_TOLERADO[id] || 0)) reprovados.push({ id, orfas: orfasTotal, tolerado: ORFAS_TOLERADO[id] || 0 });
+  if (teto && r.densidade?.total > teto) reprovados.push({ id, densidade: r.densidade.total, teto });
   const sinal = r.cobertura >= meta ? 'OK  ' : 'BAIXO';
   console.log(`${sinal} ${id.padEnd(14)} cobertura ${String(r.cobertura).padStart(5)}%  (meta ${meta}%)  `
     + `${r.pintadas}/${r.placas} placas | ${r.pecas} peças (${r.murais} murais) | ${r.arquivos} arquivos | `
     + `altura ${r.hMin.toFixed(2)}–${r.hMax.toFixed(2)} m (mediana ${r.hMed.toFixed(2)})`);
+  if (r.orfas && (r.orfas.ar || r.orfas.chao || r.orfas.beirando)) {
+    console.log(`      órfãs: ${r.orfas.ar} no ar · ${r.orfas.chao} em chão · ${r.orfas.beirando} beirando`
+      + (r.orfas.amostra.length ? '  (ex.: ' + r.orfas.amostra.slice(0, 3).map((o) => `${o.tipo} ${o.file} @${o.x},${o.y},${o.z}`).join(' | ') + ')' : ''));
+  }
+  if (r.densidade) console.log(`      densidade: ${r.densidade.total} peças/placa (teto ${teto}) · por faixa: `
+    + r.densidade.porBanda.map((b) => `${b.alt.toFixed(1)}m ${b.pecas}/${b.placas}=${b.dens}`).join('   '));
   if (r.bandas && r.bandas.length) {
     console.log('      por faixa (altura · pintadas/placas · %):  '
       + r.bandas.map((b) => `${b.alt.toFixed(1)}m ${b.p}/${b.t} ${b.pct}%`).join('   '));
@@ -320,7 +415,12 @@ if (process.env.JSON === '1') {
   console.log('-> tools/eval/graffiti_census.json');
 }
 if (reprovados.length) {
-  console.log(`\nPORTÃO VERMELHO — ${reprovados.length} mapa(s) com parede pintada abaixo da meta:`);
-  for (const f of reprovados) console.log(`  ${f.id}: cobertura ${f.cobertura}% < meta ${f.meta}%`);
+  console.log(`\nPORTÃO VERMELHO — ${reprovados.length} mapa(s) reprovado(s):`);
+  for (const f of reprovados) {
+    const motivo = f.cobertura !== undefined ? `cobertura ${f.cobertura}% < meta ${f.meta}%`
+      : f.orfas !== undefined ? `${f.orfas} peça(s) órfã(s) (toleradas ${f.tolerado}) — no ar ou em chão`
+      : `densidade ${f.densidade} peças/placa > teto ${f.teto}`;
+    console.log(`  ${f.id}: ${motivo}`);
+  }
   process.exit(1);
 }
