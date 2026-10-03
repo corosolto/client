@@ -256,6 +256,47 @@
 - feat(net): ramos e envio do chat de sala no NetClient (#686)
 - test(chat): régua eval:chat vermelha para o chat de sala (#686)
 - docs(chat): contrato v1 do chat de sala (#686)
+- fix(mapa): Lajes volta a ter grafite — o grafitar morreu no rewrite authored (#722)
+- fix(mapcat): régua lê os 18 mapas do registro e a cor com CSS real
+- fix(telemetria): build fora dos domínios próprios marca versão@host; mapa com Esri
+- docs(plan): frente MA5 — fim do low-poly herança nos mapas abertos
+- docs(plan): frentes MA1-MA4 dos mapas abertos — graffiti, ferro velho, padrão tupi e classificação
+- fix(ui): preservar proporção do personagem no hub
+- fix(pkg): tira marcador de conflito do package.json (npm ci quebrava em 30s)
+- chore: reavalia contra a main atual
+- chore: reavalia o build contra a main com a isencao da CVE (#743)
+- chore: reavalia o build contra a main com a isencao da CVE (#743)
+- fix(deps): isenta a cadeia do GHSA-ch52-4w7c-c8xp — sem versao corrigida
+- docs: regenera blocos derivados
+- fix(pkg): union da lista do check:fast com a regua de versao com origem
+- merge(main): base atual e blocos gerados
+- merge(main): base atual e blocos gerados
+- merge(main): base atual e blocos gerados
+- merge(main): base atual e blocos gerados
+- merge(main): base atual e blocos gerados
+- fix(astro): devolve o catch do listener do watchdog (build quebrou na.alpha.23)
+- fix(vm): indisponibilidade de asset pago não vira crash de launch (#720/#736)
+- docs(boot): sem travessão no comentário do watchdog (travessao:check)
+- Regenerate derived docs blocks
+- Write SIM_HASH on every release
+- Accept nodes by simulation fingerprint, not release
+- Add simulation fingerprint of the node's module graph
+- fix(boot): watchdog do menu para de acusar quem navega no hub (#671)
+- docs(changelog): rodada do cronista — 40 commits
+- fix(gameplay): tiro no pulo espalha, pulo agachado sem boost e reload que não zera mais
+- docs(changelog): rodada do cronista — 10 commits
+- fix(mapcat): cor do rótulo AMAZONIA no cartão + régua C5
+- chore: devolve pickup_check.json (artefato do check:fast entrou por engano)
+- docs(ui): registrar PR e portão de push
+- docs(ui): registrar evidência e limites do PR do hub
+- fix(ui): conciliar composição do hub com a home atual
+- feat(ui): refinar composição e páginas do hub
+- fix(ui): estabilizar escala do hub em telas diferentes
+- docs: atualizar contagem da nova regua de recarga
+- fix(game): recarregar ao consumir ultima bala
+- feat(grafite): censo dos 11 abertos + cláusulas de órfã e densidade — a triagem do MA1 (plans/26)
+- docs: regen de docs/arch depois das evidências MA4 (capturar.mjs e HTML entraram depois do regen anterior)
+- fix(mapcat): amazonia deixa de ser FAVELA, corrego sai do fallback ARENA — com régua eval:mapcat (MA4 do plans/26)
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado
