@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.25`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.27`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,31 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.27] — 2026-10-03
+
+### Mudado
+- feat(grafite): censo dos 11 abertos + órfã e densidade — triagem MA1 (45 órfãs, classe @0,0,0, lajes 0%) (#665)
+- merge(main): base atual e blocos gerados
+- fix(mapcat): régua lê os 18 mapas do registro e a cor com CSS real
+- fix(mapcat): cor do rótulo AMAZONIA no cartão + régua C5
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(grafite): censo dos 11 abertos + cláusulas de órfã e densidade — a triagem do MA1 (plans/26)
+- docs: regen de docs/arch depois das evidências MA4 (capturar.mjs e HTML entraram depois do regen anterior)
+- fix(mapcat): amazonia deixa de ser FAVELA, corrego sai do fallback ARENA — com régua eval:mapcat (MA4 do plans/26)
+- docs(plan): frente MA5 — fim do low-poly herança nos mapas abertos
+- docs(plan): frentes MA1-MA4 dos mapas abertos — graffiti, ferro velho, padrão tupi e classificação
+
+## [2.1.0-alpha.26] — 2026-10-03
+
+### Mudado
+- fix(deps): isenta a cadeia do GHSA-ch52-4w7c-c8xp — sem versão corrigida (#743)
+- fix(deps): isenta a cadeia do GHSA-ch52-4w7c-c8xp — sem versao corrigida
 
 ## [2.1.0-alpha.25] — 2026-10-03
 

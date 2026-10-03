@@ -38,7 +38,23 @@ if (mutante && !['sem-isencao', 'isencao-vazia', 'advisory-nova'].includes(mutan
 /* Vazia de propósito desde 21/08/2026: as três isenções que moravam aqui (@astrojs/vercel,
    @vercel/routing-utils, path-to-regexp) cobriam a MESMA cadeia de ReDoS, fechada pelo #363
    com override para path-to-regexp ^6.3.0 — e o DEP2 acusou que elas viraram letra morta. */
-const ISENTAS = new Map([]);
+/* GHSA-ch52-4w7c-c8xp (03/10): `http-cache-semantics` — `max-stale` servindo resposta de
+   cache para outro usuário. Letal de CWE-524, CVSS 7.5, e **SEM VERSÃO CORRIGIDA**: a faixa
+   é `<=4.2.0` e o 4.2.0 é o latest publicado — é o que está instalado. O `npm audit` sugere
+   `astro@2.10.9`, que é um DOWNGRADE de duas majors (estamos na 7.1.1), porque o caminho
+   inteiro `astro >=2.10.10` está marcado; ou seja, nenhuma versão de astro escapa, e o
+   "conserto" sugerido quebraria o site.
+   Por que o risco não se realiza NESTE projeto: o caminho afetado é o cache HTTP com
+   `max-stale` servindo de um PROXY. O site é saída estática servida por Vercel + Cloudflare,
+   não há proxy com cache no astro.config, e as rotas /api/* não passam por cache do Astro.
+   Os dois diretos (`astro` e `@astrojs/vercel`) entram como ELO DESSA CADEIA: o relatório
+   chega neles como string, sem advisory própria — por isso a lista de assinaturas deles é
+   vazia, e é a DEP3 que impede um perdão por nome cego. Reavaliar quando sair 4.2.1+. */
+const ISENTAS = new Map([
+  ['http-cache-semantics', { adv: ['max-stale', 'GHSA-ch52-4w7c-c8xp'], motivo: 'sem versão corrigida (<=4.2.0); o caminho de cache de proxy com max-stale não existe neste site estático' }],
+  ['astro', { adv: [], motivo: 'ELO da cadeia do http-cache-semantics (GHSA-ch52-4w7c-c8xp); o downgrade sugerido quebraria o site' }],
+  ['@astrojs/vercel', { adv: [], motivo: 'ELO da cadeia do http-cache-semantics (GHSA-ch52-4w7c-c8xp)' }],
+]);
 
 const GRAVES = new Set(['high', 'critical']);
 
