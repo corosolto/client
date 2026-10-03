@@ -11,6 +11,8 @@ import { lajesArchitecture } from './lajes_houses.js';
 import { lajesOcclusionQuery } from './lajes_raycast_index.js';
 import { buildLajesNavigation } from './lajes_navigation.js';
 import { LAJES_SKY_PROPS, LAJES_KITE_CONFIGS, attachLajesSky, addLajesBackdrop, addLajesSkyDome, attachLajesKitePresentation } from './lajes_sky.js';
+import { grafitar } from './graffiti_pass.js';
+import { decalIds } from './map_decals.js';
 
 const ARCHITECTURE_ON = true;
 export const LAJES_AUTHORED_ASSETS = Object.freeze([
@@ -357,6 +359,31 @@ export function buildLajes(scene, T) {
   }
   flush(); root.updateMatrixWorld(true);
   const nav = buildLajesNavigation({ colliders, groundHeightAt, bounds, platforms: PLATFORMS, bridges: BRIDGES, stairs: STAIRS, spawns, groundRoutes: [...routes, { points: [[-18, 0], [18, 0]] }] });
+  /* ===================== GRAFFITI =====================
+     #722: o `grafitar` de Lajes morreu com o rewrite authored — o #701 removeu o
+     `map_lajes.js` que o carregava, e o `map_lajes_authored.js` nasceu sem ele. O mapa
+     continuou no pool (`maps.js`), o layout assado `fy_lajes` continued órfão
+     (`GRAFITE_FP.fy_lajes`), e `MAP_SOURCES.fy_lajes` continuou apontando para um arquivo
+     inexistente: `eval:grafitelayout` reprovava com ENOENT e o jogo ficou com Lajes
+     SEM NENHUM GRAFITE — a regalia que a regiao mede era verde porque media um arquivo morto.
+     Parâmetros portados do arquivo morto; o `limpo` das escadas é derivado do STAIRS do
+     authored (as stairZones do antigo não sobreviveram ao rewrite). */
+  const D_LAJES = decalIds(T, ['pixo-lajes-01.png']);
+  const D_TAG = decalIds(T, ['tag-fina.png', 'tag-flop.png', 'tag-larga.png', 'tag-money.png']);
+  grafitar({
+    // a nav de Lajes entrega `waypoints` como {nodes, adj}; o `grafitar` quer a lista
+    id: 'fy_lajes', root, T, waypoints: nav.waypoints.nodes, seed: 6088, passo: 1.2, alcance: 9, cobre: 0.025, minLarg: 0.3,
+    limpo: [...STAIRS.map((s) => ({ x0: s.x - s.width / 2, x1: s.x + s.width / 2, z0: s.z, z1: s.z + s.dirZ * s.run })),
+      { x0: 7.7, x1: 9.1, z0: -36.5, z1: -32.4 }],
+    murais: {
+      texturas: [T.decals[D_LAJES[0]]],
+      nomes: ['pixo-lajes-01.png'], seed: 71, separacao: 20,
+      larg: 4.2, alt: 2.2, minLarg: 3.2,
+    },
+    bandas: [
+      { y0: 0.4, y1: 2.5, larg: 1.55, alturas: [0.9, 0.65, 0.45], chance: 9, pool: D_TAG },
+    ],
+  });
   const ambience = createFavelaAmbience(root, { map: 'lajes', low,
     rats: [{ pos: [-13.9, 0, 8], to: [-13.9, 0, 12], phase: 1 }, { pos: [13.9, 0, -8], to: [13.9, 0, -12], phase: 2 },
       { pos: [-.35, 0, -19], to: [-.35, 0, -15], phase: .2 }, { pos: [.35, 0, 13], to: [.35, 0, 17], phase: 2.4 }],
