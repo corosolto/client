@@ -2171,6 +2171,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-thumb-cat[data-cat="FAVELA"]{color:#e0762a}
 .ms-thumb-cat[data-cat="ARENA"]{color:#8b8c92}
 .ms-thumb-cat[data-cat="CIDADES"]{color:#8258d8}
+.ms-thumb-cat[data-cat="AMAZONIA"]{color:#3fae7a}
 /* partidas jogadas no card: número seco, sem rótulo — a coluna inteira é a mesma unidade */
 .ms-thumb-plays{font-family:var(--font);font-weight:700;font-size:10px;letter-spacing:1.5px;color:#7d8a52}
 .ms-thumb.on .ms-thumb-plays{color:#b4d92e}
