@@ -6,7 +6,7 @@ import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
-import { apiUrl, fetchComRetry } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
+import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
@@ -1239,7 +1239,7 @@ function _perfFinish(bootMs, frames) {
   } catch { /* GPU info é melhor-esforço */ }
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
-    anonId: getAnonId(), version: VERSION,
+    anonId: getAnonId(), version: versaoComOrigem(VERSION),
     sessionId: getSessionId(), ...telemetryGameContext,
     fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
@@ -1270,7 +1270,7 @@ function sendMatchEvent(result) {
   const top = Object.entries(wk).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
   const payload = {
     anonId: getAnonId(),
-    sessionId: getSessionId(), eventId: _matchEventId, version: VERSION,
+    sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext,
     map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
     character: currentChar, team: g.playerTeam,
