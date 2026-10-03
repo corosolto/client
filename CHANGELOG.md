@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.30`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.31`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,17 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.31] — 2026-10-03
+
+### Mudado
+- Telemetria marca versão@host fora dos nossos domínios; /mapa com Esri (#721)
+- docs: regenera blocos derivados
+- fix(pkg): union da lista do check:fast com a regua de versao com origem
+- merge(main): base atual e blocos gerados
+- merge(main): base atual e blocos gerados
+- chore: devolve pickup_check.json (artefato do check:fast entrou por engano)
+- fix(telemetria): build fora dos domínios próprios marca versão@host; mapa com Esri
 
 ## [2.1.0-alpha.30] — 2026-10-03
 
