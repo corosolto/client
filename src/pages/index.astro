@@ -401,6 +401,7 @@ window.__GEO_LANG__ = (function () {
     try{
       var alvo = e.target && e.target.closest ? e.target.closest('#boot-splash,#btn-jogar') : null;
       if (!alvo) return;
+      if (alvo.id === 'btn-jogar' && document.documentElement.dataset.homeUi === 'hub') return;
       if (alvo.id === 'boot-splash') {
         var prompt = document.getElementById('splash-enter');
         var pronto = prompt && !prompt.classList.contains('hidden');
