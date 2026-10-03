@@ -282,7 +282,7 @@ window.__GEO_LANG__ = (function () {
      até o marcador de fim e roda este mesmo código num `vm` com relógio falso. Mexeu no
      laço? rode `npm run eval:launchwatchdog`: a régua lê o código novo, não uma cópia. */
   var lancamento = {
-    ativo: false, etapa: null, timer: null, ocultou: false,
+    ativo: false, etapa: null, timer: null, ocultou: false, ultimaInteracao: 0,
     begin: function(etapa, timeout, concluiu){
       if (this.timer) clearTimeout(this.timer);
       this.ativo = true; this.etapa = etapa;
@@ -326,6 +326,14 @@ window.__GEO_LANG__ = (function () {
   /* A aba pode ocultar e VOLTAR antes do tique: sem este latch o tempo gasto no fundo (em
      que o rAF não andou) ainda contaria como teto esgotado. */
   document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') lancamento.ocultou = true; });
+  /* #671: prova de vivacidade por INPUT. A rota do hub é mais UI, não espera: abrir
+     JOGAR é síncrono (`openHubQuick`) e navegar (MULTIPLAYER, mapa, personagem) mantém
+     o menu aberto de propósito. Antes, quem só navegava por mais de 3 s era acusado de
+     "tempo limite ao abrir menu" - 107 ocorrências em 5 h na alpha.22. Input recente = UI viva
+     = renova; UI sem input por 3 s = travamento de verdade, e aí o fail vem igual. */
+  ['pointerdown', 'keydown', 'click'].forEach(function (tipo) {
+    document.addEventListener(tipo, function () { lancamento.ultimaInteracao = Date.now(); }, true);
+  });
   /* RÉGUA:launch-watchdog fim */
   window.__gameLaunch = lancamento;
 
@@ -419,13 +427,22 @@ window.__GEO_LANG__ = (function () {
           });
         }
       } else {
+        /* RÉGUA:launch-watchdog menu início: `tools/eval/launch-watchdog-check.mjs` EXTRAI daqui
+           até o marcador de fim e roda o predicado real num vm com relógio e DOM falsos.
+           O watchdog do menu mede "a UI aceitou o clique"; no hub (#671) NAVEGAR é a
+           resposta certa: abrir JOGAR é síncrono e `#hub-mp`/mapa/personagem mantêm o
+           menu aberto de propósito. Quem mexeu nos últimos 3 s tem UI viva: renova. */
         lancamento.begin('menu', 3000, function(){
           var menu = document.getElementById('main-menu');
           var setup = document.getElementById('menu-setup');
           var confirmacao = document.getElementById('hub-quick');
-          return !!(menu && menu.classList.contains('hidden')) || !!(setup && setup.dataset.step === 'profile') ||
-            !!(document.documentElement.dataset.homeUi === 'hub' && confirmacao && !confirmacao.hidden);
+          if (menu && menu.classList.contains('hidden')) return true;
+          if (setup && setup.dataset.step === 'profile') return true;
+          if (document.documentElement.dataset.homeUi === 'hub' && confirmacao && !confirmacao.hidden) return true;
+          if (lancamento.ultimaInteracao && Date.now() - lancamento.ultimaInteracao < 3000) return 'rede-lenta';
+          return false;
         });
+        /* RÉGUA:launch-watchdog menu fim */
       }
     }catch(_){}
   }, true);
