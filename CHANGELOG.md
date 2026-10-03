@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.28`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.29`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -63,6 +63,19 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.29] — 2026-10-03
+
+### Mudado
+- fix(ui): corrigir proporção, carrossel e tipografia do hub (#713)
+- merge(main): base atual e blocos gerados
+- chore(docs): regenera bloco derivado (autofix)
+- docs(ui): registrar PR e portão de push
+- docs(ui): registrar evidência e limites do PR do hub
+- fix(ui): conciliar composição do hub com a home atual
+- feat(ui): refinar composição e páginas do hub
+- fix(ui): preservar proporção do personagem no hub
+- fix(ui): estabilizar escala do hub em telas diferentes
 
 ## [2.1.0-alpha.28] — 2026-10-03
 
