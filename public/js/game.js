@@ -352,6 +352,9 @@ const SUP_REV = Object.freeze(Object.fromEntries(Object.entries(SUP_COD).map(([k
 export const supDeCod = (c) => SUP_REV[c] || null;
 
 export const ADS_RAMPA_S = 0.11;   // contrato do ADS: entrar e sair custam 110 ms (ver _updatePlayer)
+/* Piso ADITIVO do cone no ar (relato 01/10: o bônus multiplicativo não abria o cone
+   pequeno da luneta e a AWP no pulo era laser — modelo CS inaccuracy_jump). Régua: pulo-tiro-recarga A1-A3. */
+const SPREAD_AR = 0.09;   // rad de cone somados ao spreadHip de qualquer arma fora do chão
 export function aberturaCone(estado, W) {
   const crouchMul = 1 - 0.5 * (estado.crouchF || 0);
   const moveMul = GUNFEEL ? (1 + 1.8 * Math.min(1, (estado.sp || 0) / 6.6) + (estado.grounded ? 0 : 2.5)) : 1;
@@ -360,7 +363,8 @@ export function aberturaCone(estado, W) {
   const base = (GUNFEEL
     ? (W.spreadHip + (spScoped - W.spreadHip) * adsF)
     : (estado.scoped && W.spreadScope !== undefined ? W.spreadScope : W.spreadHip)) * crouchMul * moveMul;
-  return base * (1 + (estado.bloom || 0));
+  const comBloom = base * (1 + (estado.bloom || 0));
+  return GUNFEEL && !estado.grounded ? Math.max(comBloom, W.spreadHip + SPREAD_AR) : comBloom;
 }
 // O servidor recebe yaw/pitch no input e aplica o cone a essa direção.
 // O getter do punch também integra a recuperação horizontal em p.yaw.
@@ -3486,7 +3490,9 @@ export class Game {
   _reloading() { return this.time < this.player.reloadUntil; }
   _startReload() {
     const p = this.player, w = p.weapon;
-    if (w === 'knife' || !p.alive || this._reloading()) return;
+    /* reloadUntil > 0 com prazo vencido = recarga que COMPLETA neste quadro; rearmar por
+       cima dela era o reload infinito do gatilho preso. Régua: pulo-tiro-recarga C1-C3. */
+    if (w === 'knife' || !p.alive || p.reloadUntil > 0) return;
     const a = p.ammo[w];
     if (a.mag >= WEAPONS[w].mag || a.res <= 0) return;
     this._scope(false, true);
@@ -3593,20 +3599,11 @@ export class Game {
     // (b) correr/pular abre — antes só o agachar entrava na conta; (c) a distribuição virou
     // POLAR (disco), o `x/y/z += rand-0.5` antigo era uma CAIXA (furos formavam quadrado na
     // parede) e o termo em z ainda mexia no spread efetivo sem significado nenhum.
-    const crouchMul = 1 - 0.5 * p.crouchF;
     const sp0 = Math.hypot(p.vel.x, p.vel.z);
-    const moveMul = GUNFEEL ? (1 + 1.8 * Math.min(1, sp0 / 6.6) + (p.grounded ? 0 : 2.5)) : 1;
     this.bloom = Math.min(1.6, (this.bloom || 0) + (w.auto ? 0.22 : 0));
-    // G3-R1: o spread de ADS agora INTERPOLA pelo progresso real da mirada (vm.adsF) em vez
-    // de trocar de degrau no clique. Mirar passa a PAGAR de forma visível e progressiva — e
-    // atirar no meio da transição não dá mais a precisão cheia de graça.
-    // _aimF = progresso REAL da mirada (0-1), medido pelo FOV: vale tanto pro iron-sight
-    // (vm.adsF) quanto pra luneta (onde vm.adsF fica 0 de propósito — a arma sai de cena).
+    // G3-R1: o spread de ADS interpola pelo _aimF; quem FAZ a conta é o aberturaCone,
+    // a mesma função do servidor (o spreadBase local morreu no GUNFEEL sem leitores).
     const adsF = Math.min(1, Math.max(0, this._aimF || 0));
-    const spScoped = w.spreadScope ?? w.spreadHip * 0.35;
-    const spreadBase = (GUNFEEL
-      ? (w.spreadHip + (spScoped - w.spreadHip) * adsF)
-      : (p.weapon === 'awp' ? (p.scoped ? w.spreadScope : w.spreadHip) : w.spreadHip)) * crouchMul * moveMul;
     const from = this._aimOrigin(new THREE.Vector3());
     // Em 3ª pessoa o servidor atira pelo yaw/pitch do jogador, a partir do olho.
     // A câmera está deslocada; sua quaternion criaria um tiro local divergente.
@@ -5946,9 +5943,11 @@ export class Game {
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
     const wpnMul = MOVE2 ? (MOVE_MUL[p.weapon] !== undefined ? MOVE_MUL[p.weapon] : 0.9) : 1;
+    /* Crouch freia NO AR também (relato 01/10): o carve-out antigo devolvia corrida cheia a
+       um corpo agachado no ar — pulo agachado agora anda igual/menos que em pé. Gancho __mutCrouchAr da régua pulo-tiro-recarga B. */
+    const crouchNoAr = this.__mutCrouchAr ? (p.grounded ? 1 : 0) : 1;
     const maxSp = MOVE2
-      // crouch só freia NO CHÃO: crouch-jump não deve perder velocidade no ar (CS)
-      ? PLAYER_SPEED * wpnMul * (walking ? WALK_MUL : 1) * (p.scoped ? 0.55 : 1) * (1 - 0.48 * p.crouchF * (p.grounded ? 1 : 0)) * slowMul
+      ? PLAYER_SPEED * wpnMul * (walking ? WALK_MUL : 1) * (p.scoped ? 0.55 : 1) * (1 - 0.48 * p.crouchF * crouchNoAr) * slowMul
       : (sprint && slowMul === 1 ? 6.6 : 4.7) * (p.scoped ? 0.5 : 1) * (1 - 0.5 * p.crouchF) * slowMul;
     this._maxSp = maxSp;   // lido em `running` (outra função depois do merge com a main)
     let ix = inp.ax, iz = inp.az;
