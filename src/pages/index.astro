@@ -282,7 +282,7 @@ window.__GEO_LANG__ = (function () {
      até o marcador de fim e roda este mesmo código num `vm` com relógio falso. Mexeu no
      laço? rode `npm run eval:launchwatchdog`: a régua lê o código novo, não uma cópia. */
   var lancamento = {
-    ativo: false, etapa: null, timer: null, ocultou: false,
+    ativo: false, etapa: null, timer: null, ocultou: false, ultimaInteracao: 0,
     begin: function(etapa, timeout, concluiu){
       if (this.timer) clearTimeout(this.timer);
       this.ativo = true; this.etapa = etapa;
@@ -326,6 +326,14 @@ window.__GEO_LANG__ = (function () {
   /* A aba pode ocultar e VOLTAR antes do tique: sem este latch o tempo gasto no fundo (em
      que o rAF não andou) ainda contaria como teto esgotado. */
   document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') lancamento.ocultou = true; });
+  /* #671: prova de vivacidade por INPUT. A rota do hub é mais UI, não espera: abrir
+     JOGAR é síncrono (`openHubQuick`) e navegar (MULTIPLAYER, mapa, personagem) mantém
+     o menu aberto de propósito. Antes, quem só navegava por mais de 3 s era acusado de
+     "tempo limite ao abrir menu" - 107 ocorrências em 5 h na alpha.22. Input recente = UI viva
+     = renova; UI sem input por 3 s = travamento de verdade, e aí o fail vem igual. */
+  ['pointerdown', 'keydown', 'click'].forEach(function (tipo) {
+    document.addEventListener(tipo, function () { lancamento.ultimaInteracao = Date.now(); }, true);
+  });
   /* RÉGUA:launch-watchdog fim */
   window.__gameLaunch = lancamento;
 
@@ -393,6 +401,7 @@ window.__GEO_LANG__ = (function () {
     try{
       var alvo = e.target && e.target.closest ? e.target.closest('#boot-splash,#btn-jogar') : null;
       if (!alvo) return;
+      if (alvo.id === 'btn-jogar' && document.documentElement.dataset.homeUi === 'hub') return;
       if (alvo.id === 'boot-splash') {
         var prompt = document.getElementById('splash-enter');
         var pronto = prompt && !prompt.classList.contains('hidden');
@@ -419,13 +428,22 @@ window.__GEO_LANG__ = (function () {
           });
         }
       } else {
+        /* RÉGUA:launch-watchdog menu início: `tools/eval/launch-watchdog-check.mjs` EXTRAI daqui
+           até o marcador de fim e roda o predicado real num vm com relógio e DOM falsos.
+           O watchdog do menu mede "a UI aceitou o clique"; no hub (#671) NAVEGAR é a
+           resposta certa: abrir JOGAR é síncrono e `#hub-mp`/mapa/personagem mantêm o
+           menu aberto de propósito. Quem mexeu nos últimos 3 s tem UI viva: renova. */
         lancamento.begin('menu', 3000, function(){
           var menu = document.getElementById('main-menu');
           var setup = document.getElementById('menu-setup');
           var confirmacao = document.getElementById('hub-quick');
-          return !!(menu && menu.classList.contains('hidden')) || !!(setup && setup.dataset.step === 'profile') ||
-            !!(document.documentElement.dataset.homeUi === 'hub' && confirmacao && !confirmacao.hidden);
+          if (menu && menu.classList.contains('hidden')) return true;
+          if (setup && setup.dataset.step === 'profile') return true;
+          if (document.documentElement.dataset.homeUi === 'hub' && confirmacao && !confirmacao.hidden) return true;
+          if (lancamento.ultimaInteracao && Date.now() - lancamento.ultimaInteracao < 3000) return 'rede-lenta';
+          return false;
         });
+        /* RÉGUA:launch-watchdog menu fim */
       }
     }catch(_){}
   }, true);
@@ -565,7 +583,7 @@ window.__GEO_LANG__ = (function () {
     { "@type": "Question", "name": "Preciso instalar ou pagar algo?",
       "acceptedAnswer": { "@type": "Answer", "text": "Não. O jogo é 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem download, sem instalação e sem cadastro." } },
     { "@type": "Question", "name": "Quais são os controles?",
-      "acceptedAnswer": { "@type": "Answer", "text": "WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, as teclas 1/2/3 trocam entre primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, as teclas 1/2/3 (ou a rodinha do mouse) trocam entre primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar." } },
     { "@type": "Question", "name": "Quais são as facções e os personagens?",
       "acceptedAnswer": { "@type": "Answer", "text": "Cinco facções fictícias e satíricas, com 44 personagens no total: Time E (8), Time B (9), Tribos Urbanas (9), Palhaços (9) e Funkeiros (9). Tribos Urbanas e Funkeiros não têm nada de política. Todos são arquétipos originais, sem pessoas reais, e todos jogam exatamente igual." } },
     { "@type": "Question", "name": "Quais mapas o jogo tem?",
@@ -1439,6 +1457,7 @@ window.__GEO_LANG__ = (function () {
       <span>CLIQUE DIR.</span><span>Mira telescópica (AWP)</span>
       <span>R</span><span>Recarregar</span>
       <span>1 / 2 / 3</span><span>AWP / Pistola / Faca</span>
+      <span>RODINHA</span><span>Próxima / anterior arma</span>
       <span>Z / X / V</span><span>Comandos de voz (rádio)</span>
       <span>M</span><span>Trocar de time</span>
       <span>TAB</span><span>Placar</span>
@@ -1531,7 +1550,7 @@ window.__GEO_LANG__ = (function () {
     <div id="smoke-count" title="Fumaça (tecla 4)  ·  Frag (tecla 5)">💨 5   🧨 1</div>
     <div id="reload-note" class="hidden">RECARREGANDO…</div>
   </div>
-  <div id="hud-shortcuts"><span>Z/X/V RÁDIO</span><span>TAB PLACAR</span><span>M TROCAR DE TIME</span><span>B CÂMERA</span></div>
+  <div id="hud-shortcuts"><span>Z/X/V RÁDIO</span><span>TAB PLACAR</span><span>M TROCAR DE TIME</span><span>B CÂMERA</span><span id="hud-atalho-chat" hidden><button type="button" id="hud-chat-sala" data-entrada-propria>Y SALA</button><button type="button" id="hud-chat-time" data-entrada-propria>U TIME</button></span></div>
   <div id="round-banner" class="hidden"><div id="banner-title"></div><div class="banner-rule"></div><div id="banner-sub"></div></div>
   <div id="lock-hint" class="hidden">
     <div class="lh-title"><svg viewBox="0 0 12 17" width="13" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M6 0a6 6 0 0 1 6 6v5a6 6 0 0 1-12 0V6a6 6 0 0 1 6-6zm.9 3.2h-1.8v3.1h1.8z"/></svg> CLIQUE PARA ATIVAR A MIRA</div>
@@ -1555,6 +1574,45 @@ window.__GEO_LANG__ = (function () {
     <div class="sb-foot"><span><b>TAB</b> SEGURAR PARA VER</span><span><b>MOUSE 2</b> ATIVAR CURSOR</span></div>
   </div>
 </div>
+
+<!-- CHAT DE SALA (#686, docs/chat-de-sala.md). Irmã do #hud, em camada própria (z 31, acima
+     do #touch-ui). `data-entrada-propria` é o que faz o game.js ignorar tecla e clique aqui.
+     HTML puro: nada de expressão Astro, o serve.mjs lê este arquivo com regex. -->
+<section id="chat-sala" data-entrada-propria hidden aria-label="Chat da sala">
+  <div id="chat-cabecalho">
+    <span id="chat-titulo">CHAT</span>
+    <span id="chat-nao-lidas" hidden>0</span>
+    <button type="button" id="chat-ocultar" aria-pressed="false">OCULTAR</button>
+    <button type="button" id="chat-bloqueados">BLOQUEADOS</button>
+    <button type="button" id="chat-fechar">FECHAR</button>
+  </div>
+  <ol id="chat-log" role="log" aria-live="polite" aria-relevant="additions" aria-busy="false" aria-hidden="false" tabindex="-1"></ol>
+  <div id="chat-acoes" role="group" aria-label="Ações da mensagem" hidden>
+    <bdi id="chat-acoes-quem" dir="auto"></bdi>
+    <button type="button" id="chat-bloquear">BLOQUEAR</button>
+    <button type="button" id="chat-denunciar">DENUNCIAR</button>
+    <button type="button" id="chat-acoes-cancelar">CANCELAR</button>
+  </div>
+  <form id="chat-motivos" hidden>
+    <fieldset id="chat-motivos-lista"><legend>MOTIVO DA DENÚNCIA</legend></fieldset>
+    <button type="submit" id="chat-motivos-enviar">ENVIAR</button>
+    <button type="button" id="chat-motivos-cancelar">CANCELAR</button>
+  </form>
+  <div id="chat-lista-bloqueados" role="group" aria-label="Bloqueados" hidden>
+    <ul id="chat-lista-bloqueados-ul"></ul>
+    <button type="button" id="chat-lista-fechar">FECHAR</button>
+  </div>
+  <form id="chat-form" autocomplete="off">
+    <button type="button" id="chat-canal" aria-label="Canal">SALA</button>
+    <label class="so-leitor" for="chat-entrada">Mensagem</label>
+    <input id="chat-entrada" type="text" maxlength="640" enterkeyhint="send" autocomplete="off" autocapitalize="sentences" spellcheck="false">
+    <span id="chat-contador" aria-hidden="true">0/160</span>
+    <button type="submit" id="chat-enviar">ENVIAR</button>
+  </form>
+  <div id="chat-aviso" role="status" aria-live="polite"></div>
+  <button type="button" id="chat-bloquear-tambem" hidden>Bloquear também?</button>
+</section>
+<button type="button" id="chat-toque" data-entrada-propria hidden aria-label="Chat da sala">CHAT</button>
 
 <!-- Pause - mesma linguagem das telas de fluxo (régua de tinta + chanfro) e fundo
      translúcido: a partida continua visível atrás (o canvas pausado segue renderizando). -->
