@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "b460df9c5e994254881989438c538540603c5d4c6ca29cce18bbeead85221e3d",
-  "weaponMapSha256": "83b41a1fedd3d69d1bfba2c95456eff27764db51b513d7966b4d434799a30600",
+  "mediaSha256": "10711ea6cef07e1c1220a8e6481a2ba36875705e42fc85f7bf4c418c00f5a361",
+  "weaponMapSha256": "5b77cbe2385fee5ac2fdad26f432dea690261de23edef0ad6f8394e92d1535cd",
   "review": "Quadros centrais de seleção, vitória e derrota dos 62 personagens comparados em pranchas (asset-evidence/bug59/); pistola, escopeta, submetralhadora, fuzil, metralhadora e rifles de precisão permanecem distinguíveis, os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
   "regenerate": "BASE=http://127.0.0.1:8124 node tools/eval/char-native-vids.mjs"
 }

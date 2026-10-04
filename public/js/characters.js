@@ -658,7 +658,7 @@ export const CHAR_WEAPON = {
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   lobisomem: 'shotgun',
   mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', caipora: 'scar', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
-  barbudo: 'ak', capitao: 'md97', dama: 'pistol', professor: 'mp5', senador: 'deagle',
+  barbudo: 'ak', capitao: 'md97', dama: 'm4', professor: 'mp5', senador: 'famas',
   ministro: 'shotgun', deputado: 'uzi', agitador: 'p90', juiz: 'scar',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
