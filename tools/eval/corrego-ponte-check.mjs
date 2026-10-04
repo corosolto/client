@@ -293,7 +293,7 @@ for (const [time, spawns] of Object.entries(W.spawns || {})) {
     if (qtd < 2) falhas.push(`PON5 ${time}→${p.id}: ${qtd} rota(s) separada(s) no grafo CTF; exige 2`);
   }
 }
-infos.push(`CTF: 8 relações spawn→bandeira com pelo menos 2 rotas separadas`);
+if (!falhas.some((f) => f.startsWith('PON5'))) infos.push('CTF: 8 relações spawn→bandeira com pelo menos 2 rotas separadas');
 if (JSON_OUT) {
   console.log(JSON.stringify({ ok: falhas.length === 0, falhas, infos, medir }, null, 1));
 } else {
