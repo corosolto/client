@@ -869,7 +869,8 @@ export class Game {
       // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
       // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
       const wpn = this._matchWeapons?.[this._armaN++] || this._botWeapon();
-      const c = buildCharacterModel(def, { weaponId: wpn }) || buildCharacter(def);
+      const veste = this._defNoLado(def, team);
+      const c = buildCharacterModel(veste, { weaponId: wpn }) || buildCharacter(veste);
       c.group.traverse(o => { o.userData.botOwner = null; });
       const bot = {
         isPlayer: false, name: (this.online || this.dedicated) ? def.name : `[BOT] ${def.name}`, def, team,   // SP rotula aqui; online o snapshot rotula (BUG-124)
@@ -3173,7 +3174,8 @@ export class Game {
       this.scene.remove(swapBot.mesh.group);
       // GLB clones share geometry with the cached template — never dispose it here.
       if (!swapBot.mesh.isGLB) swapBot.mesh.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
-      swapBot.mesh = buildCharacterModel(newDef) || buildCharacter(newDef);
+      const veste = this._defNoLado(newDef, oldTeam);
+      swapBot.mesh = buildCharacterModel(veste) || buildCharacter(veste);
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
@@ -4937,7 +4939,9 @@ export class Game {
     const sig = this.el['sigla' + slot], tag = this._teamTag(side);
     if (sig && sig.textContent !== tag) sig.textContent = tag;
   }
-  _mirror(side) { return side === this.enemyTeam && this.enemyFaction === this.playerFaction; }   // inimigo = mesma facção
+  _mirror(side) { return side === this.enemyTeam && this.enemyFaction === this.playerFaction; }
+  /* Rim e braçadeira saem de `def.team`; com pool misturado eles precisam da cor do LADO. */
+  _defNoLado(def, side) { const f = this._factionOf(side); return !def || def.team === f ? def : { ...def, team: f }; }   // inimigo = mesma facção
   // Separação (boids): empurra o bot pra longe de colegas do mesmo time num raio curto, pra eles
   // NÃO andarem colados em fila indiana sobre o mesmo path. Peso ~inverso à distância.
   _botSeparation(b, dt) {
@@ -5808,7 +5812,7 @@ export class Game {
   // (Re)constrói o corpo TP com a arma ATUAL na mão, pelo mesmo caminho dos bots. Sem GLB
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
-    const w = this.player.weapon, def = this.playerDef;
+    const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
     const weaponChanged = this.playerTP && this._tpWeapon !== w;
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
     if (this.playerTP && !weaponChanged && !wantUpgrade) return;
@@ -6846,7 +6850,8 @@ export class Game {
     bot.weapon = weapon;
     if (bot._meshWeapon === weapon) return false;
     const old = bot.mesh, oldGroup = old?.group;
-    const next = buildCharacterModel(bot.def, { weaponId: weapon }) || buildCharacter(bot.def);
+    const veste = this._defNoLado(bot.def, bot.team);
+    const next = buildCharacterModel(veste, { weaponId: weapon }) || buildCharacter(veste);
     if (!next?.group) return false;
     if (oldGroup) {
       next.group.position.copy(oldGroup.position);
