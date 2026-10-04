@@ -864,7 +864,7 @@ class Netcode {
     const gapc = s.gapMax <= 70 ? '#7fe17f' : s.gapMax <= 130 ? '#f2d06b' : '#f27b7b';
     const pingc = s.ping <= 0 ? '#f27b7b' : s.ping <= 40 ? '#7fe17f' : s.ping <= 120 ? '#f2d06b' : '#f27b7b';
     const row = (rot, val, cor) => `<span style="color:#7a8794">${rot}</span> <b style="color:${cor || '#e6eef6'}">${val}</b>`;
-    el.innerHTML = [
+    const full = [
       `<span style="color:#61afef;font-weight:700">NET · ${this.net.meta?.room || '?'}${this.espectador ? ' · ASSISTINDO' : ''}</span>`,
       row('fps ', `${this._nsFps ?? '--'}`, c(this._nsFps || 0, 45, 55)),
       row('snap', `${s.hz} Hz`, hzc) + ` <span style="color:#5f6f7e">/${this.snapshotHz}</span>`,
@@ -874,6 +874,11 @@ class Netcode {
       row('ping', s.ping <= 0 ? '—' : `${Math.round(s.ping)} ms`, pingc),
       row('corr', this._reconcileCount ? `${this._reconcileMax.toFixed(2)} m máx` : '—'),
     ].join('\n');
+    const compacto = `<span style="color:#61afef;font-weight:700">NET</span> · `
+      + row('fps', `${this._nsFps ?? '--'}`, c(this._nsFps || 0, 45, 55)) + ' · '
+      + row('ping', s.ping <= 0 ? '—' : `${Math.round(s.ping)} ms`, pingc) + ' · '
+      + row('gap', `${Math.round(s.gapMax)} ms`, gapc);
+    el.innerHTML = `<div class="net-full">${full}</div><div class="net-compact">${compacto}</div>`;
     el.style.borderColor = (s.hz < 15 || s.gapMax > 130) ? '#7a2b2b' : '#2a3340';
   }
 
