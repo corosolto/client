@@ -21,10 +21,11 @@ Avaliar todos os alertas abertos em `corosolto/client/security`, corrigir os ach
 ## Marcos validados
 
 - Inventário dos três tipos de alerta e da configuração de permissões do Actions concluído.
-- Atualização isolada de `http-cache-semantics` para 4.3.0 no lockfile principal; `npm audit --omit=dev` passou a reportar zero vulnerabilidades. Falta executar os demais portões e abrir o primeiro PR.
+- Atualização isolada de `http-cache-semantics` para 4.3.0 no lockfile principal; `npm audit --omit=dev` passou a reportar zero vulnerabilidades.
+- Primeiro checkpoint `e79f8a169` publicado no [PR #749](https://github.com/corosolto/client/pull/749). O CI apontou a isenção antiga em `eval:deps` (`DEP2`); ela foi removida nesta revisão. CI e `check:deploy` ainda precisam terminar antes do merge.
 
 ## Estado, artefatos e próximo passo
 
 - O checkout `client` existente está sujo e não foi alterado. Esta worktree nova é a única lane de implementação deste trabalho.
 - Baseline e resultado do audit local: `/tmp/csbrasil-security-root-before-20261004.json` e `/tmp/csbrasil-security-root-after-20261004.json` (artefatos temporários; a evidência durável será o PR e este ledger).
-- Próximo: instalar dependências, executar os portões do cliente e abrir o PR do lockfile principal. Após o merge, atualizar a branch a partir da `main` antes do próximo grupo.
+- Próximo: validar `eval:deps`, receber o resultado de `check:deploy` e CI, fazer merge do PR #749 e conferir o fechamento do alerta 52. Depois atualizar a branch a partir da `main` antes do próximo grupo.
