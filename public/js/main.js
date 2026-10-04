@@ -919,7 +919,9 @@ function pvThumb(def) {
 const routeChar = HUB_ENABLED ? new URLSearchParams(location.search).get('personagem') : null;
 const rememberedChar = (routeChar && CHARACTERS.some((c) => c.id === routeChar) ? routeChar : null) || localStorage.getItem('csbr-home-character');
 const initialChar = CHARACTERS.find((c) => c.id === rememberedChar) || CHARACTERS[0];
-let game = null, currentTeam = initialChar.team === 'B' ? 'B' : 'E', currentFaction = initialChar.team, currentChar = initialChar.id, selChar = null;
+const ladoValido = (def, lado) => (podeNoLado(def, lado) ? lado : ladosDe(def)[0]);
+const initialSide = ladoValido(initialChar, localStorage.getItem('csbr-home-side') === 'B' ? 'B' : 'E');
+let game = null, currentTeam = initialSide, currentFaction = initialSide, currentChar = initialChar.id, selChar = null;
 function returnPreviewToSelection() {
   const box = document.querySelector('.char-preview-box');
   const marker = $('char-preview-return');
@@ -931,13 +933,14 @@ function syncHomeCharacter() {
   const host = $('hub-character');
   if (box && host && box.parentElement !== host) host.appendChild(box);
   const def = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
-  $('hub-character-name').textContent = `${tr(FACTION_NAME[def.team] || def.team)} · ${def.name}`;
-  $('hub-character-crest').src = `/img/brasoes/${def.team.toLowerCase()}.png`;
-  $('hub-change-character').style.setProperty('--hub-faction', PALETA[def.team]?.base || '#b4d92e');
+  const lado = ladoValido(def, currentTeam);
+  $('hub-character-name').textContent = `${tr(FACTION_NAME[lado])} · ${def.name}`;
+  $('hub-character-crest').src = `/img/brasoes/${lado.toLowerCase()}.png`;
+  $('hub-change-character').style.setProperty('--hub-faction', PALETA[lado]?.base || '#b4d92e');
   pvSetChar(def);
 }
 let hubMapReturnQuick = false;
-let hubRosterFaction = null;
+let hubRosterLado = 'E', hubRosterCat = null;
 function closeHubMap(updateRoute = true) {
   $('hub-map-modal').hidden = true;
   if (hubMapReturnQuick) { hubMapReturnQuick = false; openHubQuick(updateRoute); }
@@ -980,18 +983,30 @@ function closeHubRoster(updateRoute = true) {
   if (updateRoute) hubNavigate({ janela: null });
 }
 function openHubRoster(updateRoute = true) {
-  hubRosterFaction = (CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0]).team;
-  const filters = $('hub-roster-factions'), grid = $('hub-roster-grid');
+  hubRosterLado = ladoValido(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
+  hubRosterCat = null;
+  const lados = $('hub-roster-lados'), filters = $('hub-roster-factions'), grid = $('hub-roster-grid');
   const render = () => {
-    filters.replaceChildren(); grid.replaceChildren();
-    for (const faction of ['E', 'B', 'U', 'C', 'F', 'M']) {
+    lados.replaceChildren(); filters.replaceChildren(); grid.replaceChildren();
+    for (const lado of ['E', 'B']) {
+      const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'tab');
+      const crest = document.createElement('img'); crest.src = `/img/brasoes/${lado.toLowerCase()}.png`; crest.alt = '';
+      button.append(crest, tr(FACTION_NAME[lado]));
+      button.style.setProperty('--lado', PALETA[lado].base);
+      button.setAttribute('aria-selected', String(lado === hubRosterLado));
+      button.onclick = () => { hubRosterLado = lado; hubRosterCat = null; render(); };
+      lados.appendChild(button);
+    }
+    const doLado = CHARACTERS.filter((c) => podeNoLado(c, hubRosterLado));
+    const cats = [...new Set(doLado.map((c) => c.team))];
+    for (const cat of [null, ...cats]) {
       const button = document.createElement('button'); button.type = 'button';
-      button.textContent = tr(FACTION_NAME[faction] || faction);
-      button.setAttribute('aria-pressed', String(faction === hubRosterFaction));
-      button.onclick = () => { hubRosterFaction = faction; render(); };
+      button.textContent = cat ? tr(FACTION_NAME[cat] || cat) : tr('TODOS');
+      button.setAttribute('aria-pressed', String(cat === hubRosterCat));
+      button.onclick = () => { hubRosterCat = cat; render(); };
       filters.appendChild(button);
     }
-    for (const def of CHARACTERS.filter((c) => c.team === hubRosterFaction)) {
+    for (const def of doLado.filter((c) => !hubRosterCat || c.team === hubRosterCat)) {
       const button = document.createElement('button'); button.type = 'button';
       button.setAttribute('aria-pressed', String(def.id === currentChar));
       const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
@@ -999,16 +1014,17 @@ function openHubRoster(updateRoute = true) {
       const name = document.createElement('span'); name.textContent = def.name;
       button.append(avatar, name);
       button.onclick = () => {
-        ui.click(); currentChar = def.id; currentFaction = def.team;
-        currentTeam = def.team === 'B' ? 'B' : 'E'; currentEnemyFaction = null;
+        ui.click(); currentChar = def.id; currentTeam = hubRosterLado; currentFaction = hubRosterLado;
+        currentEnemyFaction = null;
         localStorage.setItem('csbr-home-character', currentChar);
+        localStorage.setItem('csbr-home-side', currentTeam);
         syncHomeCharacter(); closeHubRoster(false);
         hubNavigate({ personagem: currentChar, janela: null });
       };
       grid.appendChild(button);
     }
     const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
-    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[selected.team] || selected.team)} · ${selected.name}`;
+    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}`;
   };
   render(); $('hub-roster-modal').hidden = false; $('hub-roster-close').focus();
   if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'personagens' });
@@ -2135,7 +2151,7 @@ if (HUB_ENABLED) {
     const map = query.get('map');
     if (map && MAPAS_MENU.includes(map) && map !== currentMap) gotoMap(MAPAS_MENU.indexOf(map), false);
     const char = CHARACTERS.find((c) => c.id === query.get('personagem'));
-    if (char && char.id !== currentChar) { currentChar = char.id; currentFaction = char.team; currentTeam = char.team === 'B' ? 'B' : 'E'; currentEnemyFaction = null; }
+    if (char && char.id !== currentChar) { currentChar = char.id; currentTeam = ladoValido(char, currentTeam); currentFaction = currentTeam; currentEnemyFaction = null; }
     setHubNet(net, false);
     setHubMpTab(server, false);
     setHubTab(tab, false);
