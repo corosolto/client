@@ -257,6 +257,24 @@ const DICT = {
     'Seventh son, crossroads curse. The black wolf wakes strong, fanged and unchained.',
   'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.':
     'Cangaço markswoman. Stop, aim, hit — the queen of the first shot.',
+  'Discurso de três horas e o microfone nunca cansa. Faixa no peito, churrasco no domingo.':
+    'Three-hour speeches and the mic never gets tired. Sash on the chest, barbecue on Sunday.',
+  'Camisa amarela, cercadinho lotado e live toda quinta. Não leva desaforo pra casa.':
+    'Yellow jersey, packed fan pen and a live stream every Thursday. Never lets an insult slide.',
+  'Estoca vento e saúda a mandioca. Ninguém entende a frase, todo mundo lembra.':
+    'Stocks up on wind and salutes the cassava. Nobody gets the sentence, everybody remembers it.',
+  'Calcula o arcabouço de cabeça e ainda acha tempo de explicar a conta pro time.':
+    'Runs the fiscal framework in his head and still finds time to explain the math to the team.',
+  'O 01 da família. Sorriso de campanha e broche sempre no lugar.':
+    'The family\'s number 01. Campaign smile and lapel pin always in place.',
+  'A toga é capa e o despacho sai antes do café. Joga pelos dois lados e ninguém discute.':
+    'The robe is a cape and the ruling is out before coffee. Plays for both sides and nobody argues.',
+  'Sobe na tribuna de peruca loira e vira meme antes de terminar a frase.':
+    'Takes the podium in a blond wig and becomes a meme before finishing the sentence.',
+  'Carro de som, cabelo ao vento e uma convocação por minuto. Briga com os dois lados.':
+    'Sound truck, hair in the wind and a rally call every minute. Fights with both sides.',
+  'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.':
+    'Former judge with a thick accent. The missus confirms: he never misses a deadline.',
   'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.':
     'One-legged trickster boy. A whirl of smoke and he is gone — the red cap is the hitbox.',
   'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!':
@@ -273,7 +291,7 @@ const DICT = {
     'Fire-haired boy with backwards feet. The footprints point the wrong way.',
   'Guardiã da mata, cabelo de fogo e pintura de guerra. Quem caça demais vira caça.':
     'Guardian of the forest, fire hair and war paint. Hunt too much and you become the hunt.',
-  'TIME E': 'TEAM E', 'TIME B': 'TEAM B',
+  'TIME E': 'TEAM E', 'TIME B': 'TEAM B', 'POLÍTICOS': 'POLITICIANS',
   'os seus': 'your crew',
   'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS', 'MÍTICO': 'MYTHIC',
   '"A treta se faz na praça!"': '"The fight is at the square!"',
