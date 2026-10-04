@@ -4,6 +4,7 @@
      PL1  em 60 sorteios E×B, todo aliado pode jogar na Esquerda e todo inimigo na Direita
      PL2  ANTIVACUIDADE: personagem dos dois lados (fora das categorias E/B) entra no sorteio
      PL3  o mesmo personagem não aparece nos dois times da mesma partida
+     PL5  o time sorteado mistura categorias (o pool não sai em fatia contígua de uma só)
      PL4  numa partida E×B cada bot veste a cor do LADO (braçadeira/rim), não a da categoria
    Mutantes: `categoria` volta ao filtro antigo por facção (`c.team === lado`); `veste` desliga
    o `_defNoLado` (bot volta a vestir a cor da categoria). */
@@ -17,12 +18,15 @@ const falhas = [];
 const cobra = (cond, cod, txt, det) => { console.log(`${cod} · ${txt}\n   ${det}\n   ${cond ? 'PASSA' : 'FALHA'}`); if (!cond) falhas.push(cod); };
 
 const SORTEIOS = 60, TIME = 5;
-let foraDoLado = [], neutros = new Set(), repetidos = [];
+/* Piso PL5: fatia contígua (código anterior) mediu 1,43; embaralhado, 3,18-3,28 em 3 rodadas. */
+const PISO_CATS = 2.5;
+let foraDoLado = [], neutros = new Set(), repetidos = [], catsPorTime = [];
 for (let i = 0; i < SORTEIOS; i++) {
   const r = pickMatchRoster('E', 'B', TIME, null);
   for (const d of r.allyDefs) if (!pode(d, 'E')) foraDoLado.push(`${d.id}@E`);
   for (const d of r.enemyDefs) if (!pode(d, 'B')) foraDoLado.push(`${d.id}@B`);
   for (const d of [...r.allyDefs, ...r.enemyDefs]) if (ladosDe(d).length === 2) neutros.add(d.id);
+  for (const t of [r.allyDefs, r.enemyDefs]) catsPorTime.push(new Set(t.map((d) => d.team)).size);
   const aliados = new Set(r.allyDefs.map((d) => d.id));
   for (const d of r.enemyDefs) if (aliados.has(d.id)) repetidos.push(d.id);
 }
@@ -31,6 +35,9 @@ cobra(foraDoLado.length === 0, 'PL1', 'cada lado só escala quem pode jogar nele
 const totalNeutros = CHARACTERS.filter((c) => ladosDe(c).length === 2).length;
 cobra(neutros.size >= Math.min(8, totalNeutros), 'PL2', 'personagens dos dois lados entram no sorteio',
   `${neutros.size} de ${totalNeutros} neutros apareceram`);
+const mediaCats = catsPorTime.reduce((a, b) => a + b, 0) / catsPorTime.length;
+cobra(mediaCats >= PISO_CATS, 'PL5', 'o time sorteado mistura categorias',
+  `média de ${mediaCats.toFixed(2)} categorias distintas por time (piso ${PISO_CATS})`);
 cobra(repetidos.length === 0, 'PL3', 'nenhum personagem nos dois times da mesma partida',
   `${repetidos.length} repetições ${[...new Set(repetidos)].slice(0, 6).join(' ')}`);
 

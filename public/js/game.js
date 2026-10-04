@@ -632,8 +632,9 @@ function botTier(skill) { return skill < 0.75 ? 'ruim' : skill < 1.05 ? 'medio' 
 /* Roster da partida, uma fonte só: main.js sorteia ANTES do preload e o Game consome o mesmo
    sorteio. SEMPRE `want` por lado — facção sem elenco repete e avisa; time menor nunca. */
 const _cyclePool = (pool, n) => {
-  const r = pool.length ? (Math.random() * pool.length) | 0 : 0;
-  return Array.from({ length: Math.max(0, n) }, (_, i) => pool[(i + r) % pool.length]).filter(Boolean);
+  const emb = pool.slice();
+  for (let i = emb.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [emb[i], emb[j]] = [emb[j], emb[i]]; }
+  return Array.from({ length: Math.max(0, n) }, (_, i) => emb[i % emb.length]).filter(Boolean);
 };
 const _rosterPool = (pool, want, quem, fallback) => {
   let src = pool;
