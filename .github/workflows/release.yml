@@ -29,9 +29,10 @@ on:
 # fast-forward-only (ruleset), a head nova sempre contém a velha — o run velho
 # empurrando depois de a main andar é exatamente o "atomic push failed" da .152
 # (03:21 de 18/08): rebase cobre a janela evento→execução, não a janela execução→push.
+# O push do bump pelo bot não pode cancelar o run que ainda cria o Release e avisa o backend.
 concurrency:
   group: release-main
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
 
 permissions:
   contents: write
