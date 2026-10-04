@@ -34,8 +34,8 @@ const formaChat = (m) => Number.isInteger(m.id) && typeof m.txt === 'string' && 
 // `espera` fora de número finito e positivo vira '(NaN s)' no aviso: cai antes do painel
 const nackLimpo = (m) => (Number.isFinite(m.espera) && m.espera > 0 ? m : { type: m.type, cid: m.cid, motivo: m.motivo });
 
-export const resolvePlayerSide = (team, faction, online) =>
-  online ? (team === 'B' ? 'B' : 'E') : (faction === 'B' ? 'B' : 'E');
+// Online o lado vem do servidor; offline, da aba escolhida. A facção nunca decide o lado.
+export const resolvePlayerSide = (team) => (team === 'B' ? 'B' : 'E');
 
 export async function transitionSlot(m, meta, current, validChar, remount) {
   const next = { ...current, spectator: !!m.espectador };

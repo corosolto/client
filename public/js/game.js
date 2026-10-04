@@ -3141,7 +3141,7 @@ export class Game {
     if (charId) {
       const def = byId(charId);
       if (!def) console.warn(`[elenco] troca de lado pediu '${charId}', fora do elenco — usando a reserva da facção`);
-      this.playerDef = def || CHARACTERS.find(c => c.team === this.enemyFaction) || this.playerDef;
+      this.playerDef = def || CHARACTERS.find(_doLado(this.enemyFaction)) || this.playerDef;
       this.playerCharId = this.playerDef.id;
       p.def = this.playerDef;
     }
@@ -3161,7 +3161,10 @@ export class Game {
     const swapBot = candidates[(Math.random() * candidates.length) | 0];
     if (swapBot) {
       swapBot.team = oldTeam;
-      const defs = CHARACTERS.filter(c => c.team === oldFaction && c.id !== p.def.id);
+      const emCampo = new Set(this.bots.map(b => b.def?.id));
+      const doLadoVelho = CHARACTERS.filter(c => _doLado(oldFaction)(c) && c.id !== p.def.id);
+      const livres = doLadoVelho.filter(c => !emCampo.has(c.id));
+      const defs = livres.length ? livres : doLadoVelho;
       // prefere GLB já carregado no preload da partida; fora dele o bot cairia no procedural
       const carregados = defs.filter(c => hasModel(c.id));
       const pool = carregados.length ? carregados : defs;

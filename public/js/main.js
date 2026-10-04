@@ -1,7 +1,7 @@
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
 import { initTextures } from './textures.js';
-import { CHARACTERS, buildCharacter, charWeapon } from './characters.js';
+import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
@@ -1429,11 +1429,14 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   _matchEventId = clientUuid();
   // MOBILE: não bloqueia mais — entra com controles de toque. No retrato o overlay
   // "gire o celular" (CSS) cobre a tela até deitar.
-  // facção = time do personagem ('E'/'B'/'U'). O jogador ESCOLHE o adversário (enemyFaction);
-  // default = oposto político. Mesma facção dos dois lados = mirror (inimigo roxo no HUD).
-  const faction = (CHARACTERS.find(c => c.id === charId) || {}).team || team || 'E';
+  // Offline a identidade visual é o próprio lado (E Esquerda, B Direita) e o adversário é o
+  // lado oposto; online a facção ainda vem da sala do servidor.
+  const charDef = CHARACTERS.find(c => c.id === charId) || {};
+  if (!online && !podeNoLado(charDef, team)) team = ladosDe(charDef)[0];
+  let faction = charDef.team || team || 'E';
   const side = resolvePlayerSide(team, faction, online);
-  const enemyFac = enemyFaction || currentEnemyFaction || (side === 'B' ? 'E' : 'B');
+  if (!online) faction = side;
+  const enemyFac = online ? (enemyFaction || currentEnemyFaction || (side === 'B' ? 'E' : 'B')) : (side === 'B' ? 'E' : 'B');
   currentFaction = faction; currentTeam = side; currentChar = charId; currentEnemyFaction = enemyFac;
   // o lote de escolha da partida — 5 contadores numa chamada (ver /api/pick)
   _picks([

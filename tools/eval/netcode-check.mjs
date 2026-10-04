@@ -662,7 +662,8 @@ console.log('\n· lado físico do multiplayer vem do servidor, não da facção 
     'o handler real liga a transição executável ao remount do Game');
   cobra(resolvePlayerSide('B', 'C', true) === 'B', 'lado B continua B mesmo quando a facção é Palhaços');
   cobra(resolvePlayerSide('E', 'F', true) === 'E', 'lado E continua E mesmo quando a facção é Funkeiros');
-  cobra(resolvePlayerSide('B', 'C', false) === 'E', 'single-player preserva a regra visual anterior da facção');
+  cobra(resolvePlayerSide('B', 'C', false) === 'B' && resolvePlayerSide('E', 'B', false) === 'E',
+    'single-player usa o lado escolhido, nunca a facção do personagem');
   const mutante = main.replace(
     'const side = resolvePlayerSide(team, faction, online);',
     "const side = faction === 'B' ? 'B' : 'E';",
