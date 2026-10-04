@@ -32,12 +32,16 @@ relatório antigo seguido de auditor interrompido como mutação; também confir
 que relatório novo é aceito mesmo quando `map-check` sai 1 por dívida que o
 agregador classifica separadamente.
 Os três testes focados, `actionlint`, `docs:check` e o pre-push completo
-`check:deploy` passaram; CI remoto do #766 ainda pendente.
+`check:deploy` passaram. O CI do #766, run `37212269486`, confirmou 3/3 testes
+da proteção e gerou 18 mapas frescos; reprovou CTF2 nos quatro pares de Córrego
+da base alpha.47, como esperado. O relatório versionado antigo tinha 17 mapas.
 
 ## Pendências e próximo passo
 
-Confirmar CI da branch. O draft client #764 está em outra lane e corrige as
-quatro rotas de Córrego; não editar sua branch. Sem #764 e `CTF2` fresco verde,
-o PR #765 de concorrência do release não está pronto para merge. Após integrar
-a correção das rotas, atualizar #765, exigir `build` verde com JSON fresco e
-verificar um release real, incluindo `repository_dispatch` no backend.
+O client #764 está em outra lane e corrige as quatro rotas de Córrego;
+verificação independente no HEAD `d9632f179` confirmou 8/8 pares com pelo menos
+duas rotas. Seu CI está tecnicamente verde, mas os marcadores
+`needs-human-gameplay` e `needs-staging` continuam sem evidência de revisão.
+Não editar sua branch nem integrar antes desses gates. Depois, atualizar #766
+e #765 sobre a main, exigir `build` verde com JSON fresco e verificar um
+release real, incluindo `repository_dispatch` no backend.
