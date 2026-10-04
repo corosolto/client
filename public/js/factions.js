@@ -3,10 +3,10 @@
 export const FACTION_PAGE_SIZE = 10;
 
 export const FACTIONS = Object.freeze([
-  { id:'E', slug:'time-e', name:'TIME E', tag:'TME', slogan:'A treta se faz na praca!',
+  { id:'E', slug:'time-e', name:'ESQUERDA', tag:'ESQ', slogan:'A treta se faz na praca!',
     description:'Esquerdomacho · Lider do Sindicato · Lider do MST · Doutora do SUS · Jovem Mistico',
     color:'#ff5555', dark:'#e03232', ink:'#ff9a9a', rgb:'255,107,107', bg:'linear-gradient(165deg,#b52e2e 0%,#7a1a1a 52%,#3d0d0d 100%)', crest:'e', art:'time-e', ready:true },
-  { id:'B', slug:'time-b', name:'TIME B', tag:'TMB', slogan:'A treta se faz na rodovia!',
+  { id:'B', slug:'time-b', name:'DIREITA', tag:'DIR', slogan:'A treta se faz na rodovia!',
     description:'Caminhoneiro · Influencer de Dubai · Cantor Sertanejo · Tia Zila · Coach Quantico',
     color:'#4d8dff', dark:'#2a5fd6', ink:'#aecbff', rgb:'77,141,255', bg:'linear-gradient(165deg,#2a5fd6 0%,#1d3f8f 52%,#7a6412 100%)', crest:'b', art:'time-b', ready:true },
   { id:'U', slug:'tribos', name:'TRIBOS URBANAS', tag:'TRB', slogan:'A treta se faz na quebrada!',

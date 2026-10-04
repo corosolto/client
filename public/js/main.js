@@ -24,7 +24,7 @@ import { enableStylize } from './stylize.js';
 import { FACTIONS } from './factions.js';
 /* Literal exigido pela régua UIR1 (redesign-check lê a declaração, não o uso);
    a fonte dos nomes é factions.js — mantenha os dois em sincronia. */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV' };
+const FACTION_NAME = { E: 'ESQUERDA', B: 'DIREITA', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
@@ -4161,8 +4161,8 @@ function mpAtualizarBarraSpec(estado) {
     bar.innerHTML = '<span>ASSISTINDO <b id="mp-spec-quem">—</b></span>'
       + '<button id="mp-spec-prev" type="button">◂ ANTERIOR</button>'
       + '<button id="mp-spec-next" type="button">PRÓXIMO ▸</button>'
-      + '<button id="mp-spec-e" type="button">ENTRAR NO TIME E</button>'
-      + '<button id="mp-spec-b" type="button">ENTRAR NO TIME B</button>'
+      + '<button id="mp-spec-e" type="button">ENTRAR NA ESQUERDA</button>'
+      + '<button id="mp-spec-b" type="button">ENTRAR NA DIREITA</button>'
       + '<button id="mp-spec-sair" type="button">SAIR</button>';
     document.body.appendChild(bar);
     bar.querySelector('#mp-spec-prev').onclick = () => window.__game?._mp?.trocarAlvo(-1);
@@ -4180,7 +4180,7 @@ function mpAtualizarBarraSpec(estado) {
       const be = document.getElementById('mp-spec-e'), bb = document.getElementById('mp-spec-b');
       // nome da FACÇÃO, não a letra do lado (BUG-110)
       const meta = mpSessao?.net?.meta || {};
-      const nomeE = meta.nomeE || 'TIME E', nomeB = meta.nomeB || 'TIME B';
+      const nomeE = meta.nomeE || 'ESQUERDA', nomeB = meta.nomeB || 'DIREITA';
       if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR: ${nomeE}${vagas ? ` (${vagas.E})` : ''}`; }
       if (bb) { bb.disabled = !(vagas && vagas.B > 0); bb.textContent = `ENTRAR: ${nomeB}${vagas ? ` (${vagas.B})` : ''}`; }
     }, 400);

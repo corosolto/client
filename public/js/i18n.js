@@ -273,7 +273,7 @@ const DICT = {
     'Fire-haired boy with backwards feet. The footprints point the wrong way.',
   'Guardiã da mata, cabelo de fogo e pintura de guerra. Quem caça demais vira caça.':
     'Guardian of the forest, fire hair and war paint. Hunt too much and you become the hunt.',
-  'TIME E': 'TEAM E', 'TIME B': 'TEAM B',
+  'ESQUERDA': 'LEFT', 'DIREITA': 'RIGHT', 'ESQ': 'LFT', 'DIR': 'RGT',
   'os seus': 'your crew',
   'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS', 'MÍTICO': 'MYTHIC',
   '"A treta se faz na praça!"': '"The fight is at the square!"',
