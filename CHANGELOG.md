@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.43`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.44`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -68,6 +68,12 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.44] — 2026-10-04
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-10-04) (#762)
+- docs(changelog): rodada do cronista — 21 commits
 
 ## [2.1.0-alpha.43] — 2026-10-04
 
@@ -372,6 +378,17 @@
 - feat(grafite): censo dos 11 abertos + cláusulas de órfã e densidade — a triagem do MA1 (plans/26)
 - docs: regen de docs/arch depois das evidências MA4 (capturar.mjs e HTML entraram depois do regen anterior)
 - fix(mapcat): amazonia deixa de ser FAVELA, corrego sai do fallback ARENA — com régua eval:mapcat (MA4 do plans/26)
+- fix(amazonia): abrir acesso da água às escadas que nasciam dentro do igarapé
+- fix(crash): viewmodel pago ausente do deploy não é crash de código (#658 #656 #657)
+- docs(security): registrar fechamento dos alertas (#760)
+- fix(security): limitar profundidade do braces na documentação (#758)
+- fix(security): atualizar dependências do exemplo Vite (#757)
+- docs: regenera blocos derivados (regua AME entra no check:fast)
+- fix(security): limitar token dos workflows a leitura (#754)
+- fix(security): atualizar árvore de dependências de docs (#751)
+- fix(security): atualizar http-cache-semantics para 4.3.0 (#749)
+- fix(deps): tira da lista as isencoes que viraram letra morta
+- docs(changelog): rodada do cronista — 50 commits
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado
