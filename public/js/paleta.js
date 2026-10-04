@@ -52,7 +52,7 @@ export const FACCOES = ['E', 'B', 'U', 'C', 'F', 'M'];
    Os valores são exatamente os que já estavam espalhados: nenhum pixel muda ao unificar. */
 export const PALETA = {
   E: { base: '#ff5555', escura: '#e03232', palida: '#ff9a9a' },   // Esquerda vermelho
-  B: { base: '#4d8dff', escura: '#2a5fd6', palida: '#aecbff' },   // Direita azul
+  B: { base: '#3355ff', escura: '#1f3fc8', palida: '#a8b8ff' },   // Direita azul
   U: { base: '#4aa3ff', escura: '#2f7fe0', palida: '#a8cdff' },   // Tribos azul
   C: { base: '#ff6ec7', escura: '#c23a86', palida: '#ffb3e0' },   // Palhaços rosa-circo
   F: { base: '#ffc233', escura: '#c79a12', palida: '#ffd98a' },   // Funkeiros ouro

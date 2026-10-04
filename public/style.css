@@ -110,7 +110,7 @@
   --lambe:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,0) 1px 3px);
 
   /* ---- times ---- */
-  --team-e:#e03232; --team-b:#2a5fd6; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f; --team-m:#9d4edd;
+  --team-e:#e03232; --team-b:#1f3fc8; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f; --team-m:#9d4edd;
 
   /* ---- espaçamento (escala de 4) ---- */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px;
@@ -1243,7 +1243,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .team-score{font-size:var(--fs-300);font-weight:700;letter-spacing:var(--tr-2);line-height:var(--lh-snug);
   padding:var(--s-1) var(--s-3);text-shadow:var(--sh-hud)}
 .ts-p{color:#ff9a9a;border-left:3px solid var(--team-e)}
-.ts-b{color:#aecbff;border-right:3px solid var(--team-b)}
+.ts-b{color:#a8b8ff;border-right:3px solid var(--team-b)}
 
 /* Topo sem placa: o contorno dos glifos preserva a leitura sobre o cenário. */
 #hud-top .team-score{

@@ -8,7 +8,7 @@ export const FACTIONS = Object.freeze([
     color:'#ff5555', dark:'#e03232', ink:'#ff9a9a', rgb:'255,107,107', bg:'linear-gradient(165deg,#b52e2e 0%,#7a1a1a 52%,#3d0d0d 100%)', crest:'e', art:'time-e', ready:true },
   { id:'B', slug:'time-b', name:'DIREITA', tag:'DIR', slogan:'A treta se faz na rodovia!',
     description:'Caminhoneiro · Influencer de Dubai · Cantor Sertanejo · Tia Zila · Coach Quantico',
-    color:'#4d8dff', dark:'#2a5fd6', ink:'#aecbff', rgb:'77,141,255', bg:'linear-gradient(165deg,#2a5fd6 0%,#1d3f8f 52%,#7a6412 100%)', crest:'b', art:'time-b', ready:true },
+    color:'#3355ff', dark:'#1f3fc8', ink:'#a8b8ff', rgb:'51,85,255', bg:'linear-gradient(165deg,#1f3fc8 0%,#1d3f8f 52%,#7a6412 100%)', crest:'b', art:'time-b', ready:true },
   { id:'U', slug:'tribos', name:'TRIBOS URBANAS', tag:'TRB', slogan:'A treta se faz na quebrada!',
     description:'Emo · Black Metal · Metaleiro · Punk · Skatista · Clubber · Rapper · Rasta · Pagodeiro',
     color:'#4aa3ff', dark:'#2f7fe0', ink:'#a8cdff', rgb:'199,155,255', bg:'linear-gradient(165deg,#5f22c2 0%,#8a1f9c 55%,#3d0f52 100%)', crest:'u', art:'tribos', ready:true },
