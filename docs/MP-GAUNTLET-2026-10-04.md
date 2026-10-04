@@ -175,3 +175,8 @@ Revisar a captura real em build com assets privados e o caminho de saída E com 
 
 - O merge da auditoria foi enviado em `43699ee3cfa07b8d7b16447a5b0fe52aacbe2dc1`, com pre-push completo verde em 165 s. O backend #56 fixou esse SHA no checkpoint `399e47ad40e725cc295121e890348a3ac945b4c8`; Cloud Build `514bc719-1c7f-4c2f-9342-107e02475e6b` foi iniciado, sem implantação.
 - `origin/main` avançou de novo para release alpha.49 e merge #765 de concorrência do bot de release (`4c5842e1e6aa08da608b448cb331a9d133e9fe38`). Esta lane incorporou a main; o único conflito foi `public/js/version.js`, resolvido com VERSION alpha.49 e o hash candidato `5d207dfd3f940c4e`. `sim-hash --check`, `docs:check` 25 blocos e `git diff --check` passaram. Ainda faltam checkpoint, pre-push/CI do HEAD final e novo pin/imagem backend.
+
+## Base alpha.50 e CI do PR · 04/10
+
+- O candidato alpha.49 `83897408c452901eef642449243af6204cc8c7e5` passou pre-push completo em 133 s. O backend #56 fixou esse SHA em `2d0981918f9b28657e49daf03e58ffdb258a38a7` e iniciou Cloud Build `bc76926d-1940-4c5d-a4a0-3d895d6fdd1f`, não implantado.
+- A main avançou para alpha.50 (`03c08063295a9c1e1e595f527717d9d9d48e3625`) durante o push. O PR ficou novamente em conflito e os workflows `pull_request` de build, smoke e portão não iniciaram nesse HEAD; só bots ficaram na fila. Esta lane incorporou alpha.50 com VERSION nova e o mesmo SIM_HASH candidato. O próximo checkpoint precisa estar mesclável para disparar o CI; adiar nova imagem/pin até estabilizar a base e concluir gates humanos.
