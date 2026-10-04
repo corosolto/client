@@ -28,6 +28,19 @@
    "walk1h",
    "walkfire"
   ],
+  "agitador": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "ancap": [
    "idle",
    "walk",
@@ -42,6 +55,19 @@
    "walkfire"
   ],
   "bandeirante": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "barbudo": [
    "idle",
    "walk",
    "run",
@@ -171,6 +197,19 @@
    "walk1h",
    "walkfire"
   ],
+  "capitao": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "chave": [
    "idle",
    "walk",
@@ -224,6 +263,32 @@
    "walkfire"
   ],
   "curupira": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "dama": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "deputado": [
    "idle",
    "walk",
    "run",
@@ -431,6 +496,19 @@
    "walk1h",
    "walkfire"
   ],
+  "juiz": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "lampiao": [
    "idle",
    "walk",
@@ -510,6 +588,19 @@
    "walkfire"
   ],
   "microfonildo": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "ministro": [
    "idle",
    "walk",
    "run",
@@ -665,6 +756,19 @@
    "walk1h",
    "walkfire"
   ],
+  "professor": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "profeta-calcada": [
    "idle",
    "walk",
@@ -744,6 +848,19 @@
    "walkfire"
   ],
   "saci": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "senador": [
    "idle",
    "walk",
    "run",
