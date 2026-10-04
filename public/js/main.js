@@ -3601,11 +3601,10 @@ let mpTimerLista = null;
 let mpTicketIdentityUid = null;
 
 async function obterMpTicket(action) {
-  /* Um ?mp= explícito aponta a um nó escolhido pelo jogador (local ou staging). A sonda
-     devolve a região desse nó em ticketNode, mas a API pública não emite tickets para ele.
-     Nós oficiais sem ?mp= continuam exigindo o ticket validado pelo servidor. */
+  /* Um ?mp= pode apontar a staging ou a um nó oficial. Só o nó de teste selecionado
+     dispensa ticket público; trocar para BR/US/EU na lista exige ticket normalmente. */
   const localMp = new URLSearchParams(location.search).get('mp') || '';
-  if (localMp) return '';
+  if (localMp && mpNoAtual?.id === 'url' && !NOS.some((no) => no.url === mpNoAtual.url)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
   if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
   const uid = getAnonId();
