@@ -700,8 +700,8 @@ console.log('\n· multiplayer→sair→single player não reaproveita a sessão 
   const quitLimpa = /function quitToMenu\(\)\s*{[\s\S]{0,3200}mpEncerrarSessao\(\);/;
   cobra(encerraAntes.test(main) && quitLimpa.test(main),
     'SAIR PRO MENU zera a sessão e fecha o WebSocket antes de permitir uma partida offline');
-  cobra(/localMp === '1'[\s\S]{0,120}return ''/.test(main),
-    '?mp=1 não tenta emitir ticket público para o nó local de desenvolvimento');
+  cobra(/const localMp = new URLSearchParams\(location\.search\)\.get\('mp'\)[\s\S]{0,80}if \(localMp\) return ''/.test(main),
+    '?mp= explícito não tenta emitir ticket público para o nó de desenvolvimento ou staging');
 
   const mutSemFronteira = main.replace('const sessao = online ? mpSessao : null;', 'const sessao = mpSessao;');
   cobra(!guard.test(mutSemFronteira),
