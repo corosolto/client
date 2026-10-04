@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 57.939 linhas em 113 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 57.941 linhas em 113 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **8.314** linhas | `wc -l public/js/game.js` |
 | `main.js` | 4.242 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -52,7 +52,7 @@ esta página envelhecia no primeiro commit — ver
 | Scripts do arnês | 635 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.47` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.48` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -230,7 +230,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.064 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.026 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.709 |
-| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.794 |
+| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.796 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 419 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 757 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 338 |

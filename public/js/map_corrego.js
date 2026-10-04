@@ -1510,6 +1510,8 @@ export function buildCorrego(scene, T) {
      eixos da planta (bloco A FAVELA). Beco sem waypoint é beco em que bot não entra. */
   // adensamento nas 3 pontes (passo apertado — corredor estreito)
   for (const bz of [-22, 0, 22]) linha(0, bz - 2, 0, bz + 2, 1.0);
+  // Nós transversais internos restauram CTF2; linha/segClear preservam bloqueios e a escala da ponte.
+  for (const bz of [-22, 0, 22]) linha(-PONTE_MEIA_L + 0.5, bz, PONTE_MEIA_L - 0.5, bz, 1.4, 0.25);
   /* FUNDO DO CANAL — a rota baixa nova. Passo curto porque é um corredor de 6 m com
      parede dos dois lados; e ela precisa EXISTIR no grafo, senão o bot cai lá e não
      sabe sair (o `stuck%` do botsim é justamente isso). */
