@@ -2718,10 +2718,18 @@ $('btn-menu').onclick = () => { sfx.uiClick(); quitToMenu(); };
 let switchMode = false;
 function armSwitchHook() {
   game.onRequestSwitch = () => {
+    if (mpSessao) return abrirTrocaOnline();
     game.setPaused(true);
     switchMode = true;
     pickTeam(game.enemyFaction);
   };
+}
+// Online o lado é do servidor: M só troca o personagem, e só se o servidor aceitar.
+function abrirTrocaOnline() {
+  if (!mpSessao.net?.aceitaPersonagem?.() || mpSessao.net.espectador) return;
+  game.setPaused(true);
+  switchMode = 'mp';
+  pickTeam(currentTeam);
 }
 $('char-confirm').onclick = () => {
   sfx.uiClick();
@@ -2729,6 +2737,13 @@ $('char-confirm').onclick = () => {
   // Only take the in-match "switch team" path when there's a live game to switch;
   // a stale switchMode flag (e.g. backed out of M) must NOT hit game._switchTeam on a
   // disposed game — that used to throw and leave the next match unable to load.
+  if (switchMode === 'mp' && game && mpSessao) {
+    switchMode = false;
+    localStorage.setItem('csbr-home-character', selChar.id);
+    mpSessao.net.pedirPersonagem(selChar.id);
+    show(null); game.resume();
+    return;
+  }
   if (switchMode && game) {
     switchMode = false;
     currentChar = selChar.id;
@@ -4109,8 +4124,10 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
       currentEnemyFaction = next.enemyFaction; currentChar = next.char;
       mpAtualizarBarraSpec(m);
       if (mpSessao?.net === net) await startGame(currentTeam, currentChar, currentEnemyFaction, true);
+      if (mpSessao?.net === net) mpPedirPersonagemPreferido(net);
     });
   };
+  net.onPersonagem = (m) => { if (m.ent === net.yourEnt) currentChar = m.char; };
   // Nova partida no servidor (mapa girou): mesmo conteúdo do welcome, remonta por cima.
   // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
   net.onPartida = async (m) => {
@@ -4135,7 +4152,16 @@ async function mpMontarPartida(net, m) {
   const personagem = (meuNoRoster && CHARACTERS.some((c) => c.id === meuNoRoster.char) ? meuNoRoster.char : null)
     || (CHARACTERS.find((c) => c.team === faccaoMinha) || CHARACTERS[0]).id;
   await startGame(lado, personagem, faccaoDele, true);
-  if (mpSessao?.net === net) mpAtualizarBarraSpec(m);
+  if (mpSessao?.net === net) { mpAtualizarBarraSpec(m); mpPedirPersonagemPreferido(net); }
+}
+
+/* O personagem escolhido no hub vale no multiplayer: o servidor troca o corpo herdado do bot. */
+function mpPedirPersonagemPreferido(net) {
+  const lado = net.yourTeam;
+  if (!net.aceitaPersonagem() || net.espectador || (lado !== 'E' && lado !== 'B')) return;
+  const pref = CHARACTERS.find((c) => c.id === localStorage.getItem('csbr-home-character'));
+  if (!pref || pref.id === currentChar || !podeNoLado(pref, lado)) return;
+  net.pedirPersonagem(pref.id);
 }
 
 /* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
