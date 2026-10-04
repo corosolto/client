@@ -70,6 +70,7 @@ const JSON_OUT = process.argv.includes('--json');
    2. MUNDO CONSTRUÍDO DE VERDADE
    --------------------------------------------------------------------------- */
 const { THREE, initTextures, bootGame } = await import('./harness.mjs');
+const { rotasSeparadas } = await import('./rotas-separadas.mjs');
 const game = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 13007 });
 const W = game.world;
 W.root.updateMatrixWorld(true);
@@ -279,6 +280,20 @@ for (const p of PONTES_BAIXAS) {
 /* ---------------------------------------------------------------------------
    4. SAÍDA
    --------------------------------------------------------------------------- */
+/* A escala nova estreitou a faixa z das pontes em 0,1 m por borda. Na grade de
+   waypoints, isso eliminou uma alternativa real de CTF apesar de a travessia
+   direta continuar passando em PON1. Cobra o grafo do jogo, não a presença de
+   uma linha de código: todas as 8 relações spawn→bandeira precisam de 2 rotas. */
+const nos = W.waypoints?.nodes || [], adj = W.waypoints?.adj || [];
+for (const [time, spawns] of Object.entries(W.spawns || {})) {
+  for (const p of game.ctfPts || []) {
+    const de = W.nearestWaypoint?.(spawns[0].x, spawns[0].z);
+    const ate = W.nearestWaypoint?.(p.x, p.z);
+    const qtd = Number.isInteger(de) && Number.isInteger(ate) ? rotasSeparadas(nos, adj, de, ate).length : 0;
+    if (qtd < 2) falhas.push(`PON5 ${time}→${p.id}: ${qtd} rota(s) separada(s) no grafo CTF; exige 2`);
+  }
+}
+infos.push(`CTF: 8 relações spawn→bandeira com pelo menos 2 rotas separadas`);
 if (JSON_OUT) {
   console.log(JSON.stringify({ ok: falhas.length === 0, falhas, infos, medir }, null, 1));
 } else {
