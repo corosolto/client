@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { MAPS, resolveMapId } from './maps.js';
 import { atualizaCortes } from './mapprops.js';
-import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon } from './characters.js';
+import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
@@ -650,13 +650,19 @@ const _rosterPool = (pool, want, quem, fallback) => {
 /* `dedicado` = servidor autoritativo de multiplayer: não há jogador local ocupando vaga no
    time aliado, então o lado aliado leva teamSize corpos inteiros (e não teamSize-1). É o que
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
+/* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
+const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
 export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId, dedicado = false) {
-  const allies = CHARACTERS.filter(c => c.team === playerFaction);
+  const allies = CHARACTERS.filter(_doLado(playerFaction));
   const others = allies.filter(c => c.id !== playerCharId);
+  const allyDefs = _rosterPool(others.length ? others : allies,
+    dedicado ? teamSize : teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId));
+  const usados = new Set([playerCharId, ...allyDefs.map(d => d.id)]);
+  const enemies = CHARACTERS.filter(_doLado(enemyFaction));
+  const enemiesLivres = enemies.filter(c => !usados.has(c.id));
   return {
-    allyDefs: _rosterPool(others.length ? others : allies,
-      dedicado ? teamSize : teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId)),
-    enemyDefs: _rosterPool(CHARACTERS.filter(c => c.team === enemyFaction), teamSize, `inimigos (${enemyFaction})`, CHARACTERS),
+    allyDefs,
+    enemyDefs: _rosterPool(enemiesLivres.length >= teamSize ? enemiesLivres : enemies, teamSize, `inimigos (${enemyFaction})`, CHARACTERS),
   };
 }
 

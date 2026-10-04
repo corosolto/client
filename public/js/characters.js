@@ -612,6 +612,10 @@ export const CHARACTERS = [
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
+// Lados em que o personagem joga (E = Esquerda, B = Direita); `lados` explícito vence a categoria.
+export const ladosDe = (def) => def?.lados || (def?.team === 'E' ? ['E'] : def?.team === 'B' ? ['B'] : ['E', 'B']);
+export const podeNoLado = (def, lado) => ladosDe(def).includes(lado);
+
 // Which weapon each character is shown holding (character-select) AND spawns with.
 // Shared by main.js (select screen) and game.js (initial loadout) so they never disagree.
 export const CHAR_WEAPON = {
