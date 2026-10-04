@@ -580,10 +580,12 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-canal')).toHaveText('TIME');
       await page.keyboard.press('Escape');
       await page.evaluate(() => { window.__chatNet.espectador = true; window.__chat.aoMudarSlot({ espectador: true }); });
-      await teclaChat(page, 'u');
+      // O atalho U já foi cobrado acima. A regra de espectador é verificada pelo painel
+      // para evitar a virada de round entre esperar live e enviar a tecla em CI lento.
+      expect(await page.evaluate(() => window.__chat.abrir('time'))).toBe(true);
+      await expect(page.locator('#chat-aviso')).toHaveText(/sala/i);
       expect(await page.evaluate(() => window.__chat.canal())).toBe('sala');
       await expect(page.locator('#chat-canal')).toBeDisabled();
-      await expect(page.locator('#chat-aviso')).toHaveText(/sala/i);
       await page.keyboard.press('Escape');
       await page.evaluate(() => { window.__chatNet.espectador = false; window.__chat.aoMudarSlot({ espectador: false }); });
     });
