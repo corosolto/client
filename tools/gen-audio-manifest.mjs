@@ -31,6 +31,7 @@
  *   node tools/gen-audio-manifest.mjs --check   não escreve; sai 1 se estiver defasado
  */
 import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { carregarPolitica, motivoDeRecusa } from './audio/politica.mjs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -111,13 +112,20 @@ if (prev?._privateBuild?.format === 'content-addressed-v1') {
   const missingMenuMirror = menuExpected.filter((ref) => !existsSync(join(PUBLICO, ref)));
   const extraMenuMirror = listAudio(join(AUDIO, 'menu-music')).map(toUrl).filter((ref) => !menuExpected.includes(ref));
   const staleMenuCount = (prev.menuMusic || []).length !== menuExpected.length;
+  const staleMenuRefs = MENU_MUSIC_ACTIVE_IDS.some((id, index) => {
+    const mirror = join(AUDIO, 'menu-music', `${id}.mp3`);
+    if (!existsSync(mirror)) return false;
+    const hash = createHash('sha1').update(readFileSync(mirror)).digest('hex').slice(0, 16);
+    return prev.menuMusic?.[index] !== `audio/a/${hash}.mp3`;
+  });
   console.log(`AUDIO PRIVATE  ${refs.length} referências · ${unique.size} únicas · ${opaque.length} opacas`);
-  if (missing.length || orphanOpaque.length || missingMenuMirror.length || extraMenuMirror.length || staleMenuCount) {
+  if (missing.length || orphanOpaque.length || missingMenuMirror.length || extraMenuMirror.length || staleMenuCount || staleMenuRefs) {
     if (missing.length) console.error(`✗ ${missing.length} referência(s) ausente(s): ${missing.slice(0, 8).join(', ')}`);
     if (orphanOpaque.length) console.error(`✗ ${orphanOpaque.length} arquivo(s) opaco(s) órfão(s): ${orphanOpaque.slice(0, 8).join(', ')}`);
     if (missingMenuMirror.length) console.error(`✗ espelho das músicas instrumentais incompleto: ${missingMenuMirror.join(', ')}`);
     if (extraMenuMirror.length) console.error(`✗ espelho contém músicas fora da seleção instrumental: ${extraMenuMirror.join(', ')}`);
     if (staleMenuCount) console.error(`✗ manifesto privado contém ${(prev.menuMusic || []).length} músicas; seleção atual exige ${menuExpected.length}`);
+    if (staleMenuRefs) console.error('✗ manifesto privado não corresponde ao espelho instrumental');
     process.exit(1);
   }
   console.log(`✓ pacote privado íntegro; menu espelhado: ${MENU_MUSIC_ACTIVE_IDS.join(', ')}`);

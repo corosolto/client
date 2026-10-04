@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /* Gate do laboratório de curadoria. Não toca áudio: prova que a tela normal continua
    aleatória, o laboratório fixa a faixa e os vereditos não saem do navegador. */
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const MAIN = readFileSync('public/js/main.js', 'utf8');
 const HTML = readFileSync('src/pages/index.astro', 'utf8');
@@ -11,6 +15,7 @@ const BUILDER = readFileSync('scripts/build-audio-pack.mjs', 'utf8');
 const { MENU_MUSIC_ACTIVE_IDS } = await import('../../public/js/menu-music-selection.js');
 const erros = [];
 const expected = ['m11', 'm14', 'm16', 'm17', 'm22'];
+const opaqueRef = (id) => `audio/a/${createHash('sha1').update(`fixture-${id}`).digest('hex').slice(0, 16)}.mp3`;
 
 if (JSON.stringify(MENU_MUSIC_ACTIVE_IDS) !== JSON.stringify(expected)) {
   erros.push(`MMR0 curadoria ativa divergiu: ${MENU_MUSIC_ACTIVE_IDS.join(', ')}.`);
@@ -62,6 +67,67 @@ if (!BUILDER.includes('const menuFiles = new Set((manifesto.menuMusic || [])')
 }
 if (!HTML.includes('id="hub-music-toggle"') || !MAIN.includes('settings.menuMusic !== false')) {
   erros.push('MMR10 controle persistente da música não aparece no topo ou não governa o player.');
+}
+
+const temp = mkdtempSync(join(tmpdir(), 'csbr-menu-pack-'));
+try {
+  const audio = join(temp, 'public', 'audio');
+  const menu = join(audio, 'menu-music');
+  const opaque = join(audio, 'a');
+  mkdirSync(menu, { recursive: true });
+  mkdirSync(opaque, { recursive: true });
+  const probe = (ids) => {
+    rmSync(menu, { recursive: true, force: true });
+    rmSync(opaque, { recursive: true, force: true });
+    mkdirSync(menu);
+    mkdirSync(opaque);
+    for (const id of ids) {
+      writeFileSync(join(menu, `${id}.mp3`), `fixture-${id}`);
+      writeFileSync(join(opaque, opaqueRef(id).slice('audio/a/'.length)), `fixture-${id}`);
+    }
+    writeFileSync(join(audio, 'manifest.json'), JSON.stringify({
+      _privateBuild: { format: 'content-addressed-v1' },
+      menuMusic: ids.map(opaqueRef),
+    }));
+    return spawnSync(process.execPath, ['tools/gen-audio-manifest.mjs', '--check', `--raiz=${audio}`], { encoding: 'utf8' });
+  };
+  const antigo = probe(['m03', 'm05', 'm10', ...expected]);
+  if (antigo.status === 0 || !antigo.stderr.includes('manifesto privado contém 8 músicas')) {
+    erros.push('MMR11 pacote privado antigo de oito faixas não foi recusado.');
+  }
+  const atual = probe(expected);
+  if (atual.status !== 0) erros.push(`MMR12 pacote privado de cinco faixas foi recusado: ${atual.stderr.trim()}`);
+  writeFileSync(join(opaque, opaqueRef('m03').slice('audio/a/'.length)), 'fixture-m03');
+  writeFileSync(join(audio, 'manifest.json'), JSON.stringify({
+    _privateBuild: { format: 'content-addressed-v1' },
+    menuMusic: [opaqueRef('m03'), ...expected.slice(1).map(opaqueRef)],
+  }));
+  const faixaTrocada = spawnSync(process.execPath,
+    ['tools/gen-audio-manifest.mjs', '--check', `--raiz=${audio}`], { encoding: 'utf8' });
+  if (faixaTrocada.status === 0 || !faixaTrocada.stderr.includes('não corresponde ao espelho instrumental')) {
+    erros.push('MMR12c referência opaca trocada não foi recusada.');
+  }
+  rmSync(join(opaque, opaqueRef('m03').slice('audio/a/'.length)));
+  writeFileSync(join(audio, 'manifest.json'), JSON.stringify({
+    _privateBuild: { format: 'content-addressed-v1' },
+    menuMusic: expected.map(opaqueRef),
+  }));
+  writeFileSync(join(menu, 'm03.mp3'), 'fixture');
+  const espelhoAntigo = spawnSync(process.execPath,
+    ['tools/gen-audio-manifest.mjs', '--check', `--raiz=${audio}`], { encoding: 'utf8' });
+  if (espelhoAntigo.status === 0 || !espelhoAntigo.stderr.includes('espelho contém músicas fora da seleção')) {
+    erros.push('MMR12b espelho privado com música removida não foi recusado.');
+  }
+} finally {
+  rmSync(temp, { recursive: true, force: true });
+}
+
+const buildSteps = JSON.parse(readFileSync('vercel.json', 'utf8')).buildCommand.split(' && ');
+const fetchStep = buildSteps.indexOf('bash scripts/fetch-audio.sh');
+const audioCheckStep = buildSteps.indexOf('npm run audio:check');
+const buildStep = buildSteps.indexOf('npm run build');
+if (!(fetchStep >= 0 && audioCheckStep > fetchStep && buildStep > audioCheckStep)) {
+  erros.push('MMR13 build de produção não confere o pacote privado instalado antes de compilar.');
 }
 
 if (erros.length) {
