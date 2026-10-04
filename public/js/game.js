@@ -54,6 +54,9 @@ const VMLAB = QS.get('vmlab') === '1';
 const VM_QA_WEAPON = QS.get('debug') === '1' && WEAPON_IDS.includes(QS.get('vmweapon')) ? QS.get('vmweapon') : null;
 // `?debug=1` libera `[` e `]` para percorrer o arsenal sem recarregar (BUG-156).
 const VM_QA_CICLO = QS.get('debug') === '1';
+// Rodinha (invnext/invprev do CS): clique (≥50 px ou em linhas) troca por evento; gesto fino
+// de trackpad troca uma vez por gesto, que termina após 150 ms sem evento (scroll-arma-check).
+const WHEEL_NOTCH_PX = 50, WHEEL_IDLE_MS = 150;
 const VM_QA_ADS = QS.get('debug') === '1' && QS.get('vmads') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
    `min(metalness, 0.55)` do viewmodel E o orçamento fixo de 7,60 unidades de luz da vmScene.
@@ -151,6 +154,9 @@ const PACE = QS.get('pace') === '1';
    partida. Depois da janela o painel volta a aceitar clique (senão a regressão do G2-R2
    volta) e as duas ações destrutivas ainda exigem confirmação de dois toques (main.js). */
 const PAUSE_ARM_MS = 600;
+/* Chat de sala (#686): o pointerlockchange do Esc chega no mesmo tick do keydown no Chromium;
+   400 ms cobre um quadro atrasado e fica abaixo da guarda PAUSE_ARM_MS (eval:chat CC3e mede 450 ms). */
+const CHAT_PAUSA_GUARDA_MS = 400;
 /* Segunda trava, do mesmo defeito: NENHUM clique único pode destruir a partida em
    andamento (SAIR PRO MENU / REINICIAR). Dois toques — mas com uma pausa MEDIDA entre
    eles, e a regra mora aqui, exportada, porque "clique de novo" ingênuo NÃO resolve:
@@ -346,6 +352,9 @@ const SUP_REV = Object.freeze(Object.fromEntries(Object.entries(SUP_COD).map(([k
 export const supDeCod = (c) => SUP_REV[c] || null;
 
 export const ADS_RAMPA_S = 0.11;   // contrato do ADS: entrar e sair custam 110 ms (ver _updatePlayer)
+/* Piso ADITIVO do cone no ar (relato 01/10: o bônus multiplicativo não abria o cone
+   pequeno da luneta e a AWP no pulo era laser — modelo CS inaccuracy_jump). Régua: pulo-tiro-recarga A1-A3. */
+const SPREAD_AR = 0.09;   // rad de cone somados ao spreadHip de qualquer arma fora do chão
 export function aberturaCone(estado, W) {
   const crouchMul = 1 - 0.5 * (estado.crouchF || 0);
   const moveMul = GUNFEEL ? (1 + 1.8 * Math.min(1, (estado.sp || 0) / 6.6) + (estado.grounded ? 0 : 2.5)) : 1;
@@ -354,7 +363,8 @@ export function aberturaCone(estado, W) {
   const base = (GUNFEEL
     ? (W.spreadHip + (spScoped - W.spreadHip) * adsF)
     : (estado.scoped && W.spreadScope !== undefined ? W.spreadScope : W.spreadHip)) * crouchMul * moveMul;
-  return base * (1 + (estado.bloom || 0));
+  const comBloom = base * (1 + (estado.bloom || 0));
+  return GUNFEEL && !estado.grounded ? Math.max(comBloom, W.spreadHip + SPREAD_AR) : comBloom;
 }
 // O servidor recebe yaw/pitch no input e aplica o cone a essa direção.
 // O getter do punch também integra a recuperação horizontal em p.yaw.
@@ -1288,6 +1298,8 @@ export class Game {
     /* O netcode nasce por ÚLTIMO: ele lê `player`, `bots` e `el`, que só existem agora.
        Construí-lo junto com o resto era pegar metade do jogo montada. */
     if (this._mpPend) { this._mp = this._mpPend.mpFactory(this, this._mpPend.net); this._mpPend = null; }
+    // chat de sala (#686): quem abre é o main.js; travarEntrada(v) liga e desliga a trava
+    this.onAbrirChat = null; this._entradaTravada = false; this._chatDestravadoAte = 0;
   }
 
   /* ================= setup ================= */
@@ -1980,7 +1992,12 @@ export class Game {
   /* ================= input ================= */
   _input() {
     this.keys = {};
+    /* Chat de sala (#686): tecla e clique num campo de texto são do campo, não do jogo.
+       Null-safe: o arnês e o nó headless entregam alvos sem closest. */
+    const entradaPropria = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable === true
+      || !!(typeof t.closest === 'function' && t.closest('[data-entrada-propria]')));
     this._kd = e => {
+      if (this._entradaTravada || entradaPropria(e.target)) return;
       if (e.code === 'Tab') { e.preventDefault(); this._showScoreboard(true); }
       /* Em pointer lock, engole os atalhos do navegador que a página PODE cancelar
          (Ctrl+S/D/A/R…). Os que ela NÃO pode — Ctrl+W à frente de todos — não passam por
@@ -1991,6 +2008,13 @@ export class Game {
       // Firefox Quick Find: qualquer letra abre a barra de busca se não cancelar o evento.
       // Em pointer lock o jogo é dono do teclado — engole tudo.
       if (document.pointerLockElement) e.preventDefault();
+      // Y/U abrem o chat antes do portão _acceptInput (o espectador não tem pointer lock), nunca pausado;
+      // valem em roundEnd e matchEnd também: o §5 do contrato libera o fim de partida para todos
+      if ((e.code === 'KeyY' || e.code === 'KeyU') && this.onAbrirChat && !this.paused && this.state !== 'boot') {
+        e.preventDefault();
+        this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time');
+        return;
+      }
       this.keys[e.code] = true;
       if (this.radioOpen) {
         const n = { Digit1: 1, Digit2: 2, Digit3: 3 }[e.code];
@@ -2022,10 +2046,13 @@ export class Game {
       if (e.code === 'Space') e.preventDefault();
     };
     this._ku = e => {
+      if (this._entradaTravada || entradaPropria(e.target)) return;
       if (e.code === 'Tab') this._showScoreboard(false);
       this.keys[e.code] = false;
     };
     this._md = e => {
+      // com pointer lock o clique que fecha o compositor tem o canvas como alvo e chega já destravado
+      if (this._entradaTravada || entradaPropria(e.target) || this._chatSeguraPausa()) return;
       if (this.radioOpen) { this.radioOpen = null; this._radioUi(); }
       if (!this._acceptInput()) {
         // pointer lock não engatou (ou caiu)? qualquer clique NO CANVAS retoma e tenta de novo.
@@ -2085,9 +2112,27 @@ export class Game {
       // partir do Δyaw/Δpitch REAL do quadro — que já embute a sensibilidade e não depende
       // do DPI do mouse nem do framerate, como estes dois acumuladores dependiam.
     };
+    this._wh = e => {
+      if (!this._acceptInput() || this.radioOpen) return;
+      if (document.pointerLockElement) e.preventDefault();
+      if (!e.deltaY) return;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      if (e.timeStamp - (this._wheelLast ?? -Infinity) >= WHEEL_IDLE_MS) { this._wheelAcc = 0; this._wheelGesto = null; }
+      this._wheelLast = e.timeStamp;
+      if (e.deltaMode || (Math.abs(e.deltaY) >= WHEEL_NOTCH_PX && this._wheelGesto !== 'fino' && this._wheelGesto !== 'feito')) {
+        this._wheelGesto = 'clique'; this._cycleWeapon(dir); return;
+      }
+      if (this._wheelGesto === 'feito') return;
+      this._wheelGesto = 'fino';
+      if (Math.sign(this._wheelAcc) !== dir) this._wheelAcc = 0;
+      this._wheelAcc += e.deltaY;
+      if (Math.abs(this._wheelAcc) < WHEEL_NOTCH_PX) return;
+      this._wheelGesto = 'feito'; this._wheelAcc = 0; this._cycleWeapon(dir);
+    };
     this._cc = e => e.preventDefault();
     this._blur = () => { this.keys = {}; };   // alt-tab com tecla pressionada não deixa tecla presa
     this._plc = () => {
+      if (this._chatSeguraPausa()) return;
       if (!document.pointerLockElement && !this.testMode && (this.state === 'live' || this.state === 'countdown') && !this.paused)
         this.setPaused(true);
     };
@@ -2096,6 +2141,7 @@ export class Game {
     document.addEventListener('mousedown', this._md);
     document.addEventListener('mouseup', this._mu);
     document.addEventListener('mousemove', this._mm);
+    document.addEventListener('wheel', this._wh, { passive: false });
     document.addEventListener('contextmenu', this._cc);
     document.addEventListener('pointerlockchange', this._plc);
     window.addEventListener('blur', this._blur);
@@ -2184,8 +2230,11 @@ export class Game {
         move(t); e.preventDefault();
       }, { passive: false });
       el.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) move(t); e.preventDefault(); }, { passive: false });
-      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); } };
+      const soltar = () => { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); };
+      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) soltar(); };
       el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
+      // o chat aberto (travarEntrada) solta o dedo em curso: o toque fica preso ao alvo do touchstart
+      (this._sticksSoltar || (this._sticksSoltar = [])).push(soltar);
     };
     // TIRO PELO MIOLO DOS DOIS STICKS: cada stick tem seu flag; o gatilho real (mouseDown0) é
     // o OU dos dois. Assim dá pra ANDAR (stick esq. p/ fora) + ATIRAR (miolo do dir.), e vice-versa.
@@ -2303,9 +2352,30 @@ export class Game {
   espectando() { return !!(this.online && this._mp && this._mp.espectador); }
 
   _acceptInput() {
+    if (this._entradaTravada) return false;
     if (this.paused || this.state !== 'live' && this.state !== 'countdown') return false;
     return this.testMode || this.mobile || !!document.pointerLockElement;   // mobile: toque, sem pointer lock
   }
+  /* Chat de sala aberto (#686): o pointer lock fica ligado e a cena continua, mas nenhuma
+     tecla, clique ou stick chega ao jogador. Zera como o setPaused, sem o menu de pausa. */
+  travarEntrada(v) {
+    v = !!v;
+    if (this._entradaTravada === v) return;
+    this._entradaTravada = v;
+    if (v) {
+      this.keys = {}; this.mouseDown0 = false;
+      for (const soltar of this._sticksSoltar || []) soltar();
+      if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
+      if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
+      if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; }
+    } else {
+      this._chatDestravadoAte = this._now() + CHAT_PAUSA_GUARDA_MS;
+    }
+    const touchUi = this._touchUi || document.getElementById('touch-ui');
+    if (touchUi && touchUi.classList) touchUi.classList.toggle('chat', v);
+  }
+  // o Esc que fecha o compositor também derruba o pointer lock: essa perda não é pedido de pausa
+  _chatSeguraPausa() { return !!this._entradaTravada || this._now() < (this._chatDestravadoAte || 0); }
   /* O clique caiu no FUNDO do menu de pausa (e não num botão dele)? Durante a janela de
      guarda o painel está com `pointer-events:none`, então até o clique MIRADO num botão
      chega aqui como fundo — que é o ponto: o tiro que já estava saindo volta pro jogo em
@@ -2335,6 +2405,7 @@ export class Game {
     const cat = RADIO[this.radioOpen];
     const item = cat.items[n - 1];
     if (!item) return;
+    const routeSecs = this._routePing();
     this.sfx.characterVoice(this.playerCharId, 'radio', {
       fallbackFaction: this._voiceKey(this.playerTeam), interrupt: true,
     });
@@ -3339,6 +3410,15 @@ export class Game {
     console.log(`[vmqa] arma: ${alvo}`);   // o HUD já mostra o nome; o log é da régua
   }
 
+  /* Scroll: mesmos slots das teclas 1/2/3, na mesma ordem. */
+  _cycleWeapon(dir) {
+    const p = this.player;
+    const slots = [p.primary || 'awp', p.secondary || 'pistol', 'knife'].filter(w => WEAPONS[w] && this._pickupAllowed(w));
+    if (slots.length < 2) return;
+    const i = slots.indexOf(p.weapon);
+    this._switchWeapon(slots[((i < 0 ? (dir > 0 ? -1 : 0) : i) + dir + slots.length) % slots.length]);
+  }
+
   _switchWeapon(w, { pickup = false } = {}) {
     const p = this.player;
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;
@@ -3410,7 +3490,9 @@ export class Game {
   _reloading() { return this.time < this.player.reloadUntil; }
   _startReload() {
     const p = this.player, w = p.weapon;
-    if (w === 'knife' || !p.alive || this._reloading()) return;
+    /* reloadUntil > 0 com prazo vencido = recarga que COMPLETA neste quadro; rearmar por
+       cima dela era o reload infinito do gatilho preso. Régua: pulo-tiro-recarga C1-C3. */
+    if (w === 'knife' || !p.alive || p.reloadUntil > 0) return;
     const a = p.ammo[w];
     if (a.mag >= WEAPONS[w].mag || a.res <= 0) return;
     this._scope(false, true);
@@ -3517,20 +3599,11 @@ export class Game {
     // (b) correr/pular abre — antes só o agachar entrava na conta; (c) a distribuição virou
     // POLAR (disco), o `x/y/z += rand-0.5` antigo era uma CAIXA (furos formavam quadrado na
     // parede) e o termo em z ainda mexia no spread efetivo sem significado nenhum.
-    const crouchMul = 1 - 0.5 * p.crouchF;
     const sp0 = Math.hypot(p.vel.x, p.vel.z);
-    const moveMul = GUNFEEL ? (1 + 1.8 * Math.min(1, sp0 / 6.6) + (p.grounded ? 0 : 2.5)) : 1;
     this.bloom = Math.min(1.6, (this.bloom || 0) + (w.auto ? 0.22 : 0));
-    // G3-R1: o spread de ADS agora INTERPOLA pelo progresso real da mirada (vm.adsF) em vez
-    // de trocar de degrau no clique. Mirar passa a PAGAR de forma visível e progressiva — e
-    // atirar no meio da transição não dá mais a precisão cheia de graça.
-    // _aimF = progresso REAL da mirada (0-1), medido pelo FOV: vale tanto pro iron-sight
-    // (vm.adsF) quanto pra luneta (onde vm.adsF fica 0 de propósito — a arma sai de cena).
+    // G3-R1: o spread de ADS interpola pelo _aimF; quem FAZ a conta é o aberturaCone,
+    // a mesma função do servidor (o spreadBase local morreu no GUNFEEL sem leitores).
     const adsF = Math.min(1, Math.max(0, this._aimF || 0));
-    const spScoped = w.spreadScope ?? w.spreadHip * 0.35;
-    const spreadBase = (GUNFEEL
-      ? (w.spreadHip + (spScoped - w.spreadHip) * adsF)
-      : (p.weapon === 'awp' ? (p.scoped ? w.spreadScope : w.spreadHip) : w.spreadHip)) * crouchMul * moveMul;
     const from = this._aimOrigin(new THREE.Vector3());
     // Em 3ª pessoa o servidor atira pelo yaw/pitch do jogador, a partir do olho.
     // A câmera está deslocada; sua quaternion criaria um tiro local divergente.
@@ -3583,6 +3656,7 @@ export class Game {
     this._ejectCasing();
     // bolt-action snipers drop the scope after each shot (CS-style); autos stay aimed
     if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin')) this._scope(false, true);
+    if (!this.online && a.mag === 0 && a.res > 0) this._startReload();
   }
   _tryKnifeAttack(kind = 'quick') {
     const p = this.player, w = WEAPONS.knife;
@@ -5869,9 +5943,11 @@ export class Game {
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
     const wpnMul = MOVE2 ? (MOVE_MUL[p.weapon] !== undefined ? MOVE_MUL[p.weapon] : 0.9) : 1;
+    /* Crouch freia NO AR também (relato 01/10): o carve-out antigo devolvia corrida cheia a
+       um corpo agachado no ar — pulo agachado agora anda igual/menos que em pé. Gancho __mutCrouchAr da régua pulo-tiro-recarga B. */
+    const crouchNoAr = this.__mutCrouchAr ? (p.grounded ? 1 : 0) : 1;
     const maxSp = MOVE2
-      // crouch só freia NO CHÃO: crouch-jump não deve perder velocidade no ar (CS)
-      ? PLAYER_SPEED * wpnMul * (walking ? WALK_MUL : 1) * (p.scoped ? 0.55 : 1) * (1 - 0.48 * p.crouchF * (p.grounded ? 1 : 0)) * slowMul
+      ? PLAYER_SPEED * wpnMul * (walking ? WALK_MUL : 1) * (p.scoped ? 0.55 : 1) * (1 - 0.48 * p.crouchF * crouchNoAr) * slowMul
       : (sprint && slowMul === 1 ? 6.6 : 4.7) * (p.scoped ? 0.5 : 1) * (1 - 0.5 * p.crouchF) * slowMul;
     this._maxSp = maxSp;   // lido em `running` (outra função depois do merge com a main)
     let ix = inp.ax, iz = inp.az;
@@ -5984,7 +6060,8 @@ export class Game {
     // e que o servidor aplica ao slot remoto (ver _moveEntity).
     let _ax = (this.keys.KeyD ? 1 : 0) - (this.keys.KeyA ? 1 : 0);
     let _az = (this.keys.KeyS ? 1 : 0) - (this.keys.KeyW ? 1 : 0);
-    if (this.touchMove && (this.touchMove.x || this.touchMove.z)) { _ax = this.touchMove.x; _az = this.touchMove.z; }
+    // com o chat aberto o stick não anda: o dedo que já estava nele segue mandando touchmove
+    if (this.touchMove && (this.touchMove.x || this.touchMove.z) && !this._entradaTravada) { _ax = this.touchMove.x; _az = this.touchMove.z; }
     // mobile: stick direito olha por TAXA (velocidade angular × dt), não por delta.
     // Mora aqui e não no _moveEntity: mira é do jogador local, o remoto vem pela rede.
     if (this.touchLook && (this.touchLook.x || this.touchLook.y) && this._acceptInput()) {
@@ -8201,6 +8278,7 @@ export class Game {
     document.removeEventListener('mousedown', this._md);
     document.removeEventListener('mouseup', this._mu);
     document.removeEventListener('mousemove', this._mm);
+    document.removeEventListener('wheel', this._wh);
     document.removeEventListener('contextmenu', this._cc);
     document.removeEventListener('pointerlockchange', this._plc);
     window.removeEventListener('blur', this._blur);

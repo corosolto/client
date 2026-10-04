@@ -6,7 +6,7 @@ import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
-import { apiUrl, fetchComRetry } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
+import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
@@ -32,6 +32,7 @@ import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
 import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { montarChatSala } from './chat-painel.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -1238,7 +1239,7 @@ function _perfFinish(bootMs, frames) {
   } catch { /* GPU info é melhor-esforço */ }
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
-    anonId: getAnonId(), version: VERSION,
+    anonId: getAnonId(), version: versaoComOrigem(VERSION),
     sessionId: getSessionId(), ...telemetryGameContext,
     fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
@@ -1269,7 +1270,7 @@ function sendMatchEvent(result) {
   const top = Object.entries(wk).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
   const payload = {
     anonId: getAnonId(),
-    sessionId: getSessionId(), eventId: _matchEventId, version: VERSION,
+    sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext,
     map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
     character: currentChar, team: g.playerTeam,
@@ -1547,6 +1548,8 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   /* `applyCinematicScreen` morreu no 495a6d889 e a chamada ficou: o `ReferenceError` dentro
      de `setPaused(true)` matava o M em partida (pilha no BUG-179, item 7). */
   game.onPauseChange = () => resetConfirms();
+  // chat de sala (#686): Y/U do game.js abrem o compositor; a troca de cena fecha e guarda o rascunho
+  if (sessao?.chat) { game.onAbrirChat = (ch) => sessao.chat.abrir(ch); sessao.chat.aoTrocarJogo(game); }
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -2093,7 +2096,7 @@ if (HUB_ENABLED) {
   restoreHubRoute = () => {
     const query = new URLSearchParams(location.search);
     const section = query.get('secao');
-    const tab = Object.hasOwn(panes, section) ? section : 'jogar';
+    const tab = Object.prototype.hasOwnProperty.call(panes, section) ? section : 'jogar';
     const net = query.get('partida') === 'multiplayer' ? 'mp' : 'sp';
     const server = query.get('servidor') === 'privado' ? 'private' : 'public';
     const modal = query.get('janela');
@@ -3475,25 +3478,6 @@ function loop() {
 }
 loop();
 
-/* ---------------- boot ---------------- */
-/* Guarda igual à da linha de baixo, e não é zelo: esta escrita roda em escopo de
-   módulo DUAS linhas antes do `show()`. Se o redesign mexer na única `.footnote`
-   do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
-   de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
-   com "alguém renomeou uma classe no pause". */
-{
-  const fn = document.querySelector('.footnote');
-  if (fn) fn.textContent =
-    `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
-}
-{ const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
-show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
-if (HUB_ENABLED) {
-  hubNavigate({ map: currentMap, personagem: currentChar }, true);
-  restoreHubRoute();
-}
-window.__CS_MAIN_READY__ = true;
-window.__gameLaunch?.ready('boot');
 function showInspectionResult(won, character) {
   const end = $('match-end');
   end.classList.toggle('win', won);
@@ -3567,18 +3551,6 @@ async function openInspectionScreen(target) {
   }
   if (target.screen === 'pause') game?.setPaused(true);
 }
-if (inspectionScreen) {
-  openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
-} else if (testMode && params.get('auto')) {
-  const [team, char] = params.get('auto').split(',');
-  startGame(team || 'E', char || CHARACTERS[0].id);
-} else if (params.get('sala')) {
-  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
-     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
-  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
-  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
-  else entrarQuandoPuder();
-}
 
 /* MULTIPLAYER — navegador de servidores, salas e sessão de rede. Aqui só se escolhe ONDE e
    EM QUE sala; a autoridade é do servidor. Desenho e decisões: docs/MULTIPLAYER.md. */
@@ -3650,6 +3622,7 @@ function mpErro(msg, comRetry = false) {
 function noServeMapaParado(id, net) {
   if (oficina || !MAPAS_PARADOS.has(resolveMapId(id))) return false;
   try { net?.close?.(); } catch { /* fechar é cortesia; a recusa vale de qualquer jeito */ }
+  mpSessao?.chat?.destruir();
   mpSessao = null;
   mpErro(`Este servidor sorteou "${MAPS[resolveMapId(id)]?.name || id}", que saiu do jogo para retrabalho. `
     + 'O nó ainda não foi atualizado — escolha outra sala ou outra região.', true);
@@ -4084,6 +4057,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   mpEstado('on', `NA SALA · ${sala.name || sala.convite || ''}`);
   clearInterval(mpTimerLista);
   mpSessao = { net, sala, no: mpNoAtual };
+  // chat de sala (#686): inerte sem welcome.chat; vive na sessão, não no Game, então sobrevive à troca de mapa
+  mpSessao.chat = montarChatSala({ net, obterJogo: () => game, tr, frase, convite: sala.convite || sala.id || '', toque: TOUCH });
   /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê.
      Nó desatualizado ainda sorteia mapa PARADO: recusar é a única saída honesta — trocar o
      mapa por conta própria dessincroniza do servidor. Contrato: docs/maps/MAPAS-PARADOS.md. */
@@ -4093,6 +4068,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   modoEscolhido = true;
   net.onClose = () => mpDesconectou();
   net.onSlot = async (m) => {
+    if (mpSessao?.net === net) mpSessao.chat?.aoMudarSlot(m);
     await transitionSlot(m, net.meta, {
       team: currentTeam, faction: currentFaction, enemyFaction: currentEnemyFaction, char: currentChar,
     }, (id) => CHARACTERS.some((c) => c.id === id), async (next) => {
@@ -4106,6 +4082,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
   net.onPartida = async (m) => {
     if (mpSessao?.net !== net) return;
+    mpSessao.chat?.aoMudarMeta(net.meta);
     if (noServeMapaParado(m.map, net)) return;
     if (MAPS[m.map]) currentMap = m.map;
     matchMode = m.ctf ? 'ctf' : 'rounds';
@@ -4133,6 +4110,7 @@ async function mpMontarPartida(net, m) {
 function mpDesconectou() {
   if (!mpSessao) return;
   try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
+  mpSessao.chat?.destruir();
   mpSessao = null;
   clearTelemetryGameContext();
   mpFecharBarraSpec();
@@ -4190,6 +4168,7 @@ function mpFecharBarraSpec() {
 }
 function mpEncerrarSessao() {
   const s = mpSessao; mpSessao = null;
+  s?.chat?.destruir();
   mpFecharBarraSpec();
   try { s?.net.close(); } catch { /* já fechado */ }
 }
@@ -4203,4 +4182,37 @@ function mpSair() {
   soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('main-menu');
+}
+
+/* ---------------- boot ---------------- */
+/* Guarda igual à da linha de baixo, e não é zelo: esta escrita roda em escopo de
+   módulo DUAS linhas antes do `show()`. Se o redesign mexer na única `.footnote`
+   do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
+   de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
+   com "alguém renomeou uma classe no pause". */
+{
+  const fn = document.querySelector('.footnote');
+  if (fn) fn.textContent =
+    `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
+}
+{ const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
+// Boot no fim do módulo: `restoreHubRoute()` pode abrir o multiplayer, que lê `mpEl`/`mpNos` (#707).
+show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
+if (HUB_ENABLED) {
+  hubNavigate({ map: currentMap, personagem: currentChar }, true);
+  restoreHubRoute();
+}
+window.__CS_MAIN_READY__ = true;
+window.__gameLaunch?.ready('boot');
+if (inspectionScreen) {
+  openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
+} else if (testMode && params.get('auto')) {
+  const [team, char] = params.get('auto').split(',');
+  startGame(team || 'E', char || CHARACTERS[0].id);
+} else if (params.get('sala')) {
+  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
+     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
+  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
+  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
+  else entrarQuandoPuder();
 }

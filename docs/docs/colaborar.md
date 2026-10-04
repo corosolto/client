@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**14 identidades de autoria humana** assinam commit no histórico **desta branch**: `rubenmarcus`, `ruben-cytonic`, `Ruben`, `Emerson Garrido`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `nunreasonable`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**14 identidades de autoria humana** assinam commit no histórico **desta branch**: `rubenmarcus`, `ruben-cytonic`, `Ruben`, `Emerson Garrido`, `nunreasonable`, `Ruben Marcus`, `Juan Versolato Lopes`, `William Oliveira`, `daeeseD`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -250,7 +250,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 |---|---|---|---|---:|
 | `campomorro` | Campinho do Morro | **captura** | `map_campomorro.js` | 815 |
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
-| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.202 |
+| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.265 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.409 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.097 |
@@ -258,7 +258,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.026 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.709 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.772 |
-| `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 392 |
+| `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 419 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 757 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 338 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 485 |

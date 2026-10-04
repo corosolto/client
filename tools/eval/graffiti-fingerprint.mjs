@@ -40,8 +40,9 @@ export const MAP_SOURCES = {
   quebrada: 'public/js/map_quebrada.js',
   fy_escadao: 'public/js/map_escadao.js',
   fy_campomorro: 'public/js/map_campomorro.js',
-  // quem chama `grafitar` é o map_lajes.js; o _authored e a geometria, sem pixo.
-  fy_lajes: 'public/js/map_lajes.js',
+  // #722: o `grafitar` de Lajes foi recuperado no `map_lajes_authored.js` (o #701 removeu o
+  // `map_lajes.js` que o carregava). A fonte é o arquivo VIVO, senão a régua mede um morto.
+  fy_lajes: 'public/js/map_lajes_authored.js',
   corrego: 'public/js/map_corrego.js',
   fy_mansao: 'public/js/map_mansao.js',
 };
