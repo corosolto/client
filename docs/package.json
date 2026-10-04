@@ -9,12 +9,14 @@
     "build": "docusaurus build",
     "serve": "docusaurus serve",
     "clear": "docusaurus clear",
-    "build:site": "docusaurus build --out-dir ../public/docs"
+    "build:site": "docusaurus build --out-dir ../public/docs",
+    "check:braces-patch": "node scripts/check-braces-patch.cjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
     "@docusaurus/preset-classic": "3.10.2",
     "@mdx-js/react": "^3.0.0",
+    "braces": "file:vendor/braces-3.0.4-csbrasil.0.tgz",
     "clsx": "^2.0.0",
     "prism-react-renderer": "^2.3.0",
     "react": "^18.3.1",
@@ -41,6 +43,7 @@
   "overrides": {
     "webpackbar": "^7.0.0",
     "serialize-javascript": "^7.1.2",
-    "uuid": "^11.1.1"
+    "uuid": "^11.1.1",
+    "braces": "$braces"
   }
 }
