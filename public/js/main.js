@@ -40,7 +40,7 @@ import { FACCAO_NOME_UI } from './mapcat.js';
 const SETTINGS_KEY = 'awpbr_settings';
 const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 if (savedSettings.invertY == null && savedSettings.invY != null) savedSettings.invertY = savedSettings.invY;
-const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
+const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, menuMusic: true, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
 if (!['first', 'third', 'shoulder'].includes(settings.camView)) settings.camView = 'first';
 let preferredQuality = null;
 const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify({
@@ -507,6 +507,15 @@ fetch(`/audio/manifest.json?v=${VERSION}`)
   })
   .catch(() => {});
 let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
+function syncMenuMusicToggle() {
+  const button = $('hub-music-toggle');
+  if (!button) return;
+  const enabled = settings.menuMusic !== false;
+  button.setAttribute('aria-pressed', String(enabled));
+  button.setAttribute('aria-label', tr(enabled ? 'Desligar música do menu' : 'Ligar música do menu'));
+  button.title = button.getAttribute('aria-label');
+  button.querySelector('b').textContent = tr(enabled ? 'MÚSICA LIGADA' : 'MÚSICA DESLIGADA');
+}
 const _menuTrackId = (url) => url.match(/([^/]+)\.\w+$/)?.[1] || 'desconhecida';
 function _ensureMusic() {
   if (menuMusic && !tracksTrocadas) return menuMusic;
@@ -527,6 +536,7 @@ function _ensureMusic() {
   return menuMusic;
 }
 function startMenuMusic() {
+  if (settings.menuMusic === false) return;
   const m = _ensureMusic();
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
   if (!musicArmed) {
@@ -535,12 +545,12 @@ function startMenuMusic() {
     // fluxo atual: mudo no load + desmute com fade no 1º gesto. Sem promise não tratada.
     m.muted = false; m.volume = MENU_MUSIC_VOL;
     const p = m.play();
-    if (p && p.then) p.then(() => { musicArmed = true; }, () => {
-      if (m.paused) { m.muted = true; m.play().catch(() => {}); }   // fallback gracioso
+    if (p && p.then) p.then(() => { musicArmed = true; if (settings.menuMusic === false) m.pause(); }, () => {
+      if (settings.menuMusic !== false && m.paused) { m.muted = true; m.play().catch(() => {}); }   // fallback gracioso
     });
     // o play() do boot nem sempre "gruda" (rede/dev server lento, readyState 0) —
     // re-tenta quando houver dados, enquanto a intenção for tocar no menu
-    if (!m._cpHook) { m._cpHook = 1; m.addEventListener('canplay', () => { if (!menuMusic || menuMusic.paused) m.play().catch(() => {}); }); }
+    if (!m._cpHook) { m._cpHook = 1; m.addEventListener('canplay', () => { if (settings.menuMusic !== false && menuMusic === m && m.paused) m.play().catch(() => {}); }); }
     return;
   }
   m.muted = false; m.volume = MENU_MUSIC_VOL;
@@ -558,6 +568,7 @@ function stopMenuMusic() {   // fade rápido pra não cortar seco ao entrar na p
 // então o som "entra" instantâneo, como se fosse autoplay de verdade
 const _armMusic = () => {
   if (musicArmed) return; musicArmed = true;
+  if (settings.menuMusic === false) return;
   const m = _ensureMusic();
   m.muted = false;
   let v = 0.02; m.volume = v;
@@ -579,8 +590,7 @@ function dismissSplash(e) {
   setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
   musicArmed = true;
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
-  const m = _ensureMusic();
-  m.muted = false; m.volume = MENU_MUSIC_VOL; m.play().catch(() => {});
+  startMenuMusic();
 }
 /* Foco no 1º item visível do menu CS: o handler de setas vive no #cs-menu e só dispara com
    o foco lá dentro. Guardas: não rouba foco de campo de texto nem do painel de setup. */
@@ -599,6 +609,18 @@ window.addEventListener('pointerdown', dismissSplash, true);
 window.addEventListener('keydown', dismissSplash, true);
 window.addEventListener('pointerdown', _armMusic);
 window.addEventListener('keydown', _armMusic);
+const menuMusicToggle = $('hub-music-toggle');
+if (menuMusicToggle) menuMusicToggle.onclick = () => {
+  settings.menuMusic = settings.menuMusic === false;
+  saveSettings();
+  syncMenuMusicToggle();
+  if (settings.menuMusic) startMenuMusic();
+  else {
+    if (musicFade) { clearInterval(musicFade); musicFade = null; }
+    if (menuMusic) { menuMusic.pause(); menuMusic.muted = true; }
+  }
+};
+syncMenuMusicToggle();
 startMenuMusic();   // boot: começa MUDA imediatamente (loop rolando antes do 1º clique)
 
 /* Laboratório local de curadoria (?menumusiclab=1). O jogo normal continua escolhendo uma
@@ -1097,6 +1119,7 @@ let heartbeatOff = false;
 await resolveGeoLang();
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
+syncMenuMusicToggle();
 // links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
 // weapons, maps, about, whats-new, docs/en); /mapa continua só PT (issue #54)
 if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) {
@@ -2540,11 +2563,12 @@ $('settings-close').onclick = closeSettings;
 $('settings-apply').onclick = () => { ui.click(); saveSettings(); if (game) game.applySettings(); };
 $('settings-restore').onclick = () => {
   ui.click();
-  settings.quality = 'med'; settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
+  settings.quality = 'med'; settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.menuMusic = true; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
   $('set-quality').value = settings.quality; $('set-sens').value = settings.sens; $('set-vol').value = settings.vol;
   $('set-speech').checked = true; $('set-invert-y').checked = false; $('set-xhair').value = settings.xhair; $('set-camera').value = 'first';
   if (game) game.setCamView('first');
-  sfx.speechEnabled = true; sfx.setVolume(settings.vol); applyXhair(); updLabels(); saveSettings();
+  sfx.speechEnabled = true; sfx.setVolume(settings.vol); applyXhair(); updLabels(); saveSettings(); syncMenuMusicToggle();
+  if (settingsReturn === 'main-menu') startMenuMusic();
   if (game) game.applySettings();
 };
 // Abas das configurações: troca o pane visível; os inputs nunca são re-criados,
