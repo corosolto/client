@@ -6,7 +6,7 @@ Pedido do dono em 04/10/2026: produzir (1) relatório com capturas reais e compa
 
 ## Checkout e proveniência
 
-- Branch de trabalho: `codex/ui-roadmap-regression-20261004`, worktree isolado `client/worktrees/ui-roadmap-regression`. HEAD antes do checkpoint: `12510a25a`.
+- Branch de trabalho: `codex/ui-roadmap-regression-20261004`, worktree isolado `client/worktrees/ui-roadmap-regression`. Base da branch: `12510a25a`; checkpoint de relatório e bot: `79aaecd92`.
 - Base: `origin/main@8e4a64ab0` (`v2.1.0-alpha.34`). Não usar o checkout `client` existente, que tinha mudanças de viewmodel em andamento.
 - Em 04/10, `origin/main` avançou para `12510a25a` (`alpha.35`); o diff de UI auditada é vazio. A branch isolada foi atualizada para essa base após as capturas, preservando a proveniência das imagens em `alpha.34`.
 - Servidor local de auditoria: Astro em `127.0.0.1:4321`; Chrome nativo em modo headless; Node 23.6.0 local.
@@ -32,4 +32,4 @@ Pedido do dono em 04/10/2026: produzir (1) relatório com capturas reais e compa
 
 ## Próximo passo concreto
 
-Revisar o diff e criar um commit recuperável com o relatório, esta continuidade e o bot. Em uma PR futura, observar a primeira execução do workflow no GitHub e ajustar diferenças específicas de Chromium/Linux se surgirem.
+Publicar a branch em PR rascunho, observar a primeira execução do workflow no GitHub e ajustar diferenças específicas de Chromium/Linux se surgirem. A revisão humana das capturas 3:2 e a aprovação artística seguem pendentes; não iniciar fases de redesign sem esse aceite.
