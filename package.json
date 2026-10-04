@@ -207,6 +207,7 @@
     "eval:corrego-contract": "node tools/eval/corrego-contract-check.mjs",
     "eval:corrego-water": "node tools/eval/corrego-water-check.mjs",
     "eval:corrego-superficie": "node tools/eval/corrego-superficie-check.mjs",
+    "eval:corrego-ponte": "node tools/eval/corrego-ponte-check.mjs",
     "eval:skylife": "node tools/eval/skylife-check.mjs",
     "eval:texel": "node tools/eval/texel-check.mjs",
     "eval:nosgemeos": "node tools/eval/nos-gemeos-check.mjs",
