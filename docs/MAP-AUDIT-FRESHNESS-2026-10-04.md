@@ -48,3 +48,13 @@ continua sem evidência e não deve ser registrada como concluída.
 Reexecutar o CI de #766 nesta base e exigir `build` verde com JSON fresco.
 Depois atualizar #765, exigir CI verde e verificar a correção da concorrência
 em um release real.
+
+## CI na base alpha.48
+
+O run `37215001453` terminou em 04/10/2026 com `MAPAUD` vermelho: o
+`map-check.mjs` excedeu os 10 min fixos de `runNode` e retornou `ETIMEDOUT`.
+O portão reprovou como planejado, sem aceitar o JSON antigo. No run anterior
+`37212269486`, a mesma etapa havia terminado em 9m48s, no limite. O auditor
+agora recebe 15 min e o job 25 min para acomodar a variação do runner. A
+exigência de relatório fresco e o veredito de CTF2 continuam os mesmos. Ainda
+é necessário observar um novo run verde antes de marcar o PR pronto.

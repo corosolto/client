@@ -84,10 +84,10 @@ const skip = (id, desc, why) => results.push({ id, desc, ok: null, evid: why, se
 
 const num = (v, d = 3) => (typeof v === 'number' && isFinite(v) ? +v.toFixed(d) : String(v));
 
-function runNode(script, env = {}, args = []) {
+function runNode(script, env = {}, args = [], timeout = 600000) {
   try {
     return execFileSync(process.execPath, [join(HERE, script), ...args], {
-      cwd: ROOT, encoding: 'utf8', timeout: 600000, maxBuffer: 64 * 1024 * 1024,
+      cwd: ROOT, encoding: 'utf8', timeout, maxBuffer: 64 * 1024 * 1024,
       env: { ...process.env, ...env },
     });
   } catch (e) {
@@ -1866,7 +1866,9 @@ function runNode(script, env = {}, args = []) {
     put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
       respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
     const pj = join(ROOT, 'tools', 'eval', 'map_check.json');
-    const { data: j, error } = freshReport(pj, () => runNode('map-check.mjs'));
+    // A medição completa de 18 mapas levou quase 10 min no runner do CI; mantenha
+    // a falha explícita, mas dê tempo para o relatório fresco terminar.
+    const { data: j, error } = freshReport(pj, () => runNode('map-check.mjs', {}, [], 900000));
     if (error || !Array.isArray(j?.mapas) || j.mapas.length === 0) {
       put('MAPAUD', 'map-check.mjs gera relatório fresco e válido de geometria',
         false, error || 'map-check.mjs gerou JSON sem mapas');
