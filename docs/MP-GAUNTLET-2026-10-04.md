@@ -20,3 +20,10 @@ Melhorar a experiência real do multiplayer até pelo menos 90% de sessões boas
 ## Próxima ação
 
 Revisar a captura real em build com assets privados e o caminho de saída E com pessoa no navegador. Preparar release pareado client/backend sem deixar o site novo apontar para a física antiga. Depois medir sessões reais por nó por sete dias e priorizar a causa dominante; dois humanos e aprovação visual ainda pendentes.
+
+## Continuação 04/10 ~10:15 UTC
+
+- Preview autenticado do PR #755: Escadão carregou assets, arma e HUD reais em Chrome 1536×1024; sem erro de console. A inspeção visual é parcial e não equivale a aceite humano. Sonda da rota mostrou que os quatro spawns E cruzam a parede inicial z=25; varredura de 11 mapas não encontrou outro spawn com deslocamento abaixo de 2 m em 1,5 s.
+- Admin autenticado: 209 sessões no recorte 28/09–04/10, 167 medidas e 37 boas (22%); 42 sem amostra. Esse agregado mistura SHAs antigos e não mede o patch. O rótulo do seletor estava um dia adiantado; PR admin #16 foi integrado e a produção passou a mostrar 28/09 até hoje. A régua permanece igual.
+- CI do primeiro envio: `pr-fast` passou; `smoke-web` falhou porque um teste lia o aviso de espectador (vida 4,6 s) só depois de duas asserções mais lentas. Commit `8bf2e3b28` passou `check:deploy` no pre-push com Node 23 e moveu a leitura do aviso imediatamente após a tecla, sem mudar o jogo. O smoke novo ainda precisa terminar.
+- `origin/main` avançou para alpha.37 (`71c0a9702`) e causou conflito de merge. Branch rebaseada; o cálculo do SIM_HASH continua `8f7816379baade92`, idêntico ao da imagem backend pareada construída. VERSION do client agora alpha.37; `npm run docs` não mudou arquivos. Validar portões e enviar o rebase antes de avaliar promoção.
