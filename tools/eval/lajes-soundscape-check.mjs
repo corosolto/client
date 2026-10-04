@@ -45,10 +45,17 @@ console.log('PASS LSA1–LSA6 helper puro: Lajes, isolamento, escopo, autorado, 
 
 const temp = mkdtempSync(join(tmpdir(), 'lajes-audio-fetch-'));
 try {
-  for (const dir of ['scripts', 'tools/audio', 'public/audio', 'bin', 'pack']) mkdirSync(join(temp, dir), { recursive: true });
+  for (const dir of ['scripts', 'tools/audio', 'public/audio', 'public/js', 'bin', 'pack']) mkdirSync(join(temp, dir), { recursive: true });
+  // `fetch-audio.sh` termina em `ensure-map-soundscapes.mjs` (issue #696), que lê os ids
+  // do registro de mapas: a árvore de teste precisa dele e do `maps.js` para não cair em ERR_MODULE_NOT_FOUND.
+  copyFileSync(join(root, 'tools/audio/map-ids.mjs'), join(temp, 'tools/audio/map-ids.mjs'));
+  copyFileSync(join(root, 'public/js/maps.js'), join(temp, 'public/js/maps.js'));
+  copyFileSync(join(root, 'tools/audio/ensure-map-soundscapes.mjs'), join(temp, 'tools/audio/ensure-map-soundscapes.mjs'));
   copyFileSync(join(root, 'tools/audio/lajes-soundscape.mjs'), join(temp, 'tools/audio/lajes-soundscape.mjs'));
   copyFileSync(join(root, 'tools/audio/complete-amazonia-soundscape.mjs'), join(temp, 'tools/audio/complete-amazonia-soundscape.mjs'));
-  const fetchFixture = { ...baseline, mapSoundscapes: { ...baseline.mapSoundscapes, corrego: donor, parque_treta: donor } };
+  // Cobertura COMPLETA de propósito: é o estado do pack privado, e o `ensure` do fetch
+  // não pode mascará-lo. A adaptação de Lajes continua sendo a única mudança esperada.
+  const fetchFixture = { ...baseline, mapSoundscapes: Object.fromEntries(carregarMapIds().map((id) => [id, structuredClone(donor)])) };
   copyFileSync(join(root, 'tools/audio/extend-map-soundscapes.mjs'), join(temp, 'tools/audio/extend-map-soundscapes.mjs'));
   const fetch = readFileSync(join(root, 'scripts/fetch-audio.sh'), 'utf8').replaceAll('/tmp/csbrasil-audio.zip', join(temp, 'download.zip'));
   writeFileSync(join(temp, 'scripts/fetch-audio.sh'), fetch);

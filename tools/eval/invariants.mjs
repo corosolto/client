@@ -2094,6 +2094,18 @@ function runNode(script, env = {}, args = []) {
     (out.match(/(?:PASS|FAIL) AMW4[^\n]*/) || ['AMW4 sem resultado'])[0]);
 }
 
+// AME (#680): as 11 estações têm de ser alcançáveis A PARTIR DA ÁGUA. Três delas
+// (A 14,−27 · D 14,6 · F −14,6) mediam o chão-base na rampa da margem (h −0,03) e o
+// primeiro degrau nascia a menos de 0,30 m do chão de quem chega da água: o corpo entra
+// na sombra do colisor e trava antes do primeiro degrau. Conserto: tabuleiro de acesso
+// no idioma dos `pontoes`. O mutante `pe-na-agua` volta ao estado de antes.
+{
+  const out = runNode('amazonia-agua-estacoes-check.mjs');
+  put('AME', 'as 11 estações da Amazônia são alcançáveis a partir da água',
+    out.includes('PASS AME3') && !out.includes('__ERRO__'),
+    (out.match(/(?:PASS|FAIL) AME3[^\n]*/) || ['AME3 sem resultado'])[0]);
+}
+
 /* ── 8d. MATERIAL, LUZ E SUPERFÍCIE (mat-check.mjs) ──────────────────────────
    Quatro invariantes nascidas de três frases do dono sobre a MESMA coisa: o jogo não
    tem um padrão visual só.

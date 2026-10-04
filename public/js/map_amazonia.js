@@ -372,6 +372,41 @@ export function buildAmazonia(scene, T) {
   const PONTAO_Y = 0.28;
   const acessosPontao = pontoes.slice(1).map(p => ({ x0:p.x0, z:p.z1-.7, run:2, meiaL:.7 }));
 
+  /* ── PÉ DE ESCADA QUE NASCE DENTRO D'ÁGUA (#680): A(14,-27), D(14,6) e F(-14,6)
+     medem o chão-base na RAMPA da margem (h −0,03) e o degrau seguinte (topo 0,26)
+     fica a menos de 0,30 m do pé — o jogador que chega pela água entra na sombra do
+     colisor e trava antes do primeiro degrau. A rampa da margem é o defeito: g0 sai
+     de baixo do próprio degrau, então o primeiro espelho nasce sem folga.
+     here: tabuleiro plano a ACESSO_ESTACAO_Y encostado no pé + rampa do fundo do rio
+     até ele, no MESMO idioma dos `pontoes` do mercado. Assim g0 passa a medir o
+     tabuleiro (não a rampa da margem), os degraus nascem com folga, e quem chega
+     nadando sobe em madeira visível. Medido em tools/eval/amazonia-agua-estacoes-check.mjs. */
+  const ACESSO_ESTACAO_Y = PONTE_Y;              // 0,18 — a mesma altura da ponte
+  const ESCADA_U = 4.4;                          // u do eixo da escada (W(u,v) abaixo)
+  // Só entra a estação cujo pé nasce DENTRO da faixa do igarapé e ainda não pisa em
+  // ponte: quem já mede 0,18 na ponte (F) ou 0 no chão seco não precisa de acesso novo.
+  // Tabuleiro e rampa são dimensionados em v (a coordenada da escada): de v 1,0 (borda
+  // da escada) até v 6,3 (depois do pé, run ≈ 3,9 + folga) — cobre a amostra do g0
+  // (v = e·4,0) e o pé, para o g0 nascer no tabuleiro e não na rampa da margem.
+  const emPonte = (z) => [0, -24, 24].some(pz => Math.abs(z - pz) < (pz === 0 ? PONTE_W : 2.6) / 2);
+  const acessosEstacao = ESTACOES.filter(st => st.e && Math.abs(st.x + st.d[0] * ESCADA_U) < RIO_MEIA_LARGURA)
+    .map(st => {
+      const [dx] = st.d, [, pz] = st.p, e = st.e;   // p = [lateral, longitudinal]: o pé corre em Z
+      const xe = st.x + dx * ESCADA_U;             // eixo da escada (u = ESCADA_U)
+      const zEm = (v) => st.z + pz * v;             // coordenada da escada -> z do mundo
+      const zA = zEm(e * 1.0), zB = zEm(e * 6.3);
+      return { xe, z0: Math.min(zA, zB), z1: Math.max(zA, zB), zPe: zEm(e * 5.8) };
+    })
+    .filter(a => !emPonte(a.zPe))
+    .map(({ xe, z0, z1, zPe }) => {
+      const paraRio = -Math.sign(xe);               // −1 quando a escada está na margem leste
+      return {
+        x0: Math.min(xe + paraRio * 1.3, xe - paraRio * .8),   // borda rio / borda terra
+        x1: Math.max(xe + paraRio * 1.3, xe - paraRio * .8),
+        z0, z1, xRio: xe + paraRio * 1.3, paraRio, zRampa: zPe, meia: .7,
+      };
+    });
+
 /* ── ESTAÇÕES DE PALAFITA (molde palafita_pro.glb; bucha procedural sem GLB): patamar
      andável no groundHeightAt (idioma das pontes) + corrimão `passarela` nas bordas livres. */
   const PB = new PropBatch({ bucket: 16, shadowMin: 0.02 });
@@ -601,6 +636,26 @@ export function buildAmazonia(scene, T) {
       a.x0-a.run/2, (RIO_FUNDO+PONTAO_Y)/2-.05, a.z,
       { rz:Math.atan2(rise,a.run), collide:false });
     rampa.name = 'acesso-pontao';
+  }
+  /* #680: tabuleiro + rampa do pé de escada que nascia dentro d'água. Mesma peça do
+     pontão do mercado — prancha a ACESSO_ESTACAO_Y, estacas de amarração e rampa
+     inclinada do fundo do rio — então quem chega nadando sobe em madeira visível. */
+  for (const a of acessosEstacao) {
+    const cx = (a.x0 + a.x1) / 2, cz = (a.z0 + a.z1) / 2;
+    const w = a.x1 - a.x0, d = a.z1 - a.z0;
+    const tab = addBox(w, .14, d, matDeck, cx, ACESSO_ESTACAO_Y - .14, cz, { collide: false });
+    tab.name = 'acesso-estacao';
+    for (const sx of [a.x0 + .25, a.x1 - .25]) for (const sz of [a.z0 + .25, a.z1 - .25]) {
+      const amarra = addCyl(.18, .9, matPoste, sx, -0.5, sz, { seg: 6, collide: false });
+      amarra.userData.nonSolidSurface = true;   // não é degrau nem cover (idioma do pontão)
+    }
+    // Rampa do fundo do rio (xRio + paraRio·run) até o pé do tabuleiro (xRio): sobe do
+    // RIO_FUNDO a ACESSO_ESTACAO_Y, e o rz segue o lado (leste sobe para +x, oeste para −x).
+    const rise = ACESSO_ESTACAO_Y - RIO_FUNDO, run = 2;
+    const rampa = addBox(Math.hypot(run, rise), .1, a.meia * 2, matDeck,
+      a.xRio + a.paraRio * run / 2, (RIO_FUNDO + ACESSO_ESTACAO_Y) / 2 - .05, a.zRampa,
+      { rz: -a.paraRio * Math.atan2(rise, run), collide: false });
+    rampa.name = 'rampa-estacao';
   }
   const canoasAmarradas = [];
   const canoa = (x, z, ry) => {
@@ -1039,6 +1094,14 @@ export function buildAmazonia(scene, T) {
     for (const p of pontoes) if (x >= p.x0-edgeEpsilon && x <= p.x1+edgeEpsilon && z >= p.z0-edgeEpsilon && z <= p.z1+edgeEpsilon) return PONTAO_Y;
     for (const a of acessosPontao) if (x >= a.x0-a.run && x < a.x0 && Math.abs(z-a.z) <= a.meiaL)
       return RIO_FUNDO+(x-(a.x0-a.run))*(PONTAO_Y-RIO_FUNDO)/a.run;
+    for (const a of acessosEstacao) {
+      if (x >= a.x0-edgeEpsilon && x <= a.x1+edgeEpsilon && z >= a.z0-edgeEpsilon && z <= a.z1+edgeEpsilon) return ACESSO_ESTACAO_Y;
+      const r = a.xRio + a.paraRio * 2, dz = Math.abs(z - a.zRampa);
+      if (dz <= a.meia && x >= Math.min(r, a.xRio)-edgeEpsilon && x <= Math.max(r, a.xRio)+edgeEpsilon) {
+        const t = (x - r) / (a.xRio - r);          // 0 no fundo do rio, 1 no pé do tabuleiro
+        return RIO_FUNDO + t * (ACESSO_ESTACAO_Y - RIO_FUNDO);
+      }
+    }
     for (const pz of [0, -24, 24]) if (Math.abs(z - pz) < (pz === 0 ? PONTE_W : 2.6) / 2 && Math.abs(x) <= RIO_MEIA_LARGURA + 1.75) return PONTE_Y;
     const ax = Math.abs(x);
     if (ax > RIO_MEIA_LARGURA) return 0;

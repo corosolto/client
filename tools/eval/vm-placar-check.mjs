@@ -13,7 +13,8 @@
         valor e mensagem idênticos ao placar aprovado; novas/pioradas reprovam.
    Mutantes: --mutante=placar-velho (troca o hash), --mutante=sem-dono (tira uma
    dívida), --mutante=chave-ligada (altera um vermelho),
-   --mutante=celula-nova (vermelho novo) — todos reprovam.
+   --mutante=celula-nova (vermelho novo), --mutante=pose-defeituosa (devolve a
+   receita de foco do ADS sem o off[1] = -0,08 — o defeito do #679) — todos reprovam.
    Conserto quando P1 reprova: `npm run eval:vm-reguas -- --placar` (local).
    ============================================================================ */
 import crypto from 'node:crypto';
@@ -27,17 +28,29 @@ const ENTRADAS = [
   'tools/eval/lib/vm-palco.mjs', 'tools/eval/lib/vm-analise.mjs', 'tools/eval/lib/vm-limiares.mjs', 'tools/eval/lib/vm-reguas.mjs',
 ];
 
-export function entradasDoPlacar(raiz = process.cwd()) {
+// `sobrepor` injeta um arquivo por cima do disco antes do hash: é como o mutante
+// `pose-defeituosa` devolve a receita de ADS quebrada sem tocar o repositório.
+export function entradasDoPlacar(raiz = process.cwd(), sobrepor = {}) {
   const h = crypto.createHash('sha256');
   for (const f of ENTRADAS) {
     // VM_LAUNCH não muda imagem: fora do hash, senão virar a chave "envelhece" o placar.
-    const txt = fs.readFileSync(path.join(raiz, f), 'utf8').replace(/export const VM_LAUNCH = (true|false);/, '');
+    const txt = (sobrepor[f] ?? fs.readFileSync(path.join(raiz, f), 'utf8')).replace(/export const VM_LAUNCH = (true|false);/, '');
     h.update(`${f}\n${txt}`);
   }
-  const av = fs.readFileSync(path.join(raiz, 'public/js/authoredvm.js'), 'utf8');
+  const av = sobrepor['public/js/authoredvm.js'] ?? fs.readFileSync(path.join(raiz, 'public/js/authoredvm.js'), 'utf8');
   const i = av.indexOf('const FAMILY_FRAME = Object.freeze({');
   h.update(av.slice(i, av.indexOf('});', i)));
   return { hash: h.digest('hex').slice(0, 16), arquivos: ENTRADAS };
+}
+
+// A POSE DEFECTUOSA que o #679 manda reconstituir: a receita `A()` de foco
+// (vmconfig.js) que baixa a arma 8 cm para liberar a cruz. Sem esse `off[1] = -0.08`
+// a arma volta ao eixo e a alça senta sobre a janela do alvo — o defeito do dono.
+export const RECEITA_FOCO = "const A = (alivio) => ({ auto: true, off: [0, -0.08, 0],";
+export function quebrandoReceitaFoco(txt) {
+  const quebrada = txt.replace(RECEITA_FOCO, "const A = (alivio) => ({ auto: true, off: [0, 0, 0],");
+  if (quebrada === txt) throw new Error('mutante não aplicou: a receita de foco do ADS mudou em vmconfig.js');
+  return quebrada;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
@@ -55,7 +68,14 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const divida = fs.existsSync(DIV) ? JSON.parse(fs.readFileSync(DIV, 'utf8')).dividas || {} : {};
   const aceites = lerAceites();
   let { VM_LAUNCH } = await import(pathToFileURL(path.resolve('public/js/data/vmconfig.js')).href);
-  let atual = entradasDoPlacar().hash;
+  // `pose-defeituosa` (#679): devolve a receita de foco do ADS sem o `off[1] = -0.08`
+  // que baixa a arma para liberar a cruz. É a pose que o dono viu em quase todas as
+  // armas. O hash muda e a P1 reprova: conserto de pose sem remedir = vermelho.
+  let atual = mut === 'pose-defeituosa'
+    ? entradasDoPlacar(process.cwd(), {
+      'public/js/data/vmconfig.js': quebrandoReceitaFoco(fs.readFileSync('public/js/data/vmconfig.js', 'utf8')),
+    }).hash
+    : entradasDoPlacar().hash;
   if (mut === 'placar-velho') atual = `${atual.slice(0, -1)}x`;
   if (mut === 'chave-ligada' || mut === 'valor-pior') {
     VM_LAUNCH = true;
