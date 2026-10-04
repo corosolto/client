@@ -805,6 +805,7 @@ class Netcode {
       this._nsF0 = game._rafFrames || 0;
       this._nsFps = null;
       this._reconcileWindow.length = 0;
+      this.net.drainRttSamples?.();
       this._nextClientStats = now + 10000;
     }
     if (this._nsT0 == null) { this._nsT0 = now; this._nsF0 = game._rafFrames || 0; }
@@ -818,7 +819,7 @@ class Netcode {
       this._nextClientStats = now + 10000;
       const correcoes = this._reconcileWindow;
       this.net.sendClientStats?.({
-        fps: this._nsFps, rtt: s.ping, snap: s.hz, gap: s.gapMax,
+        fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: s.gapMax,
         reconcileP95: this._percentil(correcoes, 0.95),
         reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
         reconcileCount: correcoes.length,
