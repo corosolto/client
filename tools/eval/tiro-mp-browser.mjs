@@ -57,6 +57,11 @@ const MUTANTE = val('mutante', '');
 const PORTA = Number(val('porta', 8202));
 const FOTO = val('foto', '/tmp/tiro-mp.png');
 const MAPA = val('mapa', 'atacadao_treta');
+const LARGURA = Number(val('largura', 1280));
+const ALTURA = Number(val('altura', 800));
+if (!Number.isInteger(LARGURA) || !Number.isInteger(ALTURA) || LARGURA < 640 || ALTURA < 480) {
+  throw new Error('viewport inválido: use --largura/--altura em pixels inteiros');
+}
 const NO = process.env.NO || 'localhost:8787';
 const BASE = `http://localhost:${PORTA}`;
 const MAIN_LOCAL = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
@@ -119,7 +124,7 @@ try {
      contexto novo nunca chega nesta página (90 s sem evento, com o título já carregado).
      Página direta carrega em ~1 s — e o que a régua mede não muda. */
   const page = await browser.newPage();
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.setViewportSize({ width: LARGURA, height: ALTURA });
   const ctx = page;
 
   let mutou = !MUTANTE;
