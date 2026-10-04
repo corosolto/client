@@ -1,7 +1,7 @@
 {
- "gerado": "2026-09-28",
+ "gerado": "2026-10-04",
  "aspecto": "16x9",
- "entradas": "d22b323d7b2a6963",
+ "entradas": "6bee5baab837914b",
  "resultados": {
   "awp": {
    "mira": {
@@ -705,18 +705,5 @@
     "msg": "vazia0.08:mao vazia0.15:mao vazia0.23:mao vazia0.31:fora vazia0.38:fora vazia0.46:arma vazia0.54:arma vazia0.62:arma vazia0.69:arma vazia0.77:arma vazia0.85:arma vazia0.92:arma tatica0.14:arma tatica0.29:arma tatica0.43:fora tatica0.57:arma tatica0.71:arma tatica0.86:arma"
    }
   }
- },
- "parcial": {
-  "reguas": [
-   "mira",
-   "cobertura",
-   "pistola-ref",
-   "maos",
-   "carregador"
-  ],
-  "armas": [
-   "revolver38"
-  ],
-  "base": "2026-09-28"
  }
 }

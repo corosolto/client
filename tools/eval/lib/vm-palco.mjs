@@ -13,8 +13,9 @@
    ?vmauthored=1&vmqa=precision, relógio do controlador segurado e avançado em
    passos de 1/60 s — quadro determinístico sem pular a lógica real.
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execFileSync, execSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { pathToFileURL } from 'node:url';
@@ -42,6 +43,37 @@ export async function subirServidor(porta) {
   throw new Error(`servidor de eval não subiu na porta ${porta}`);
 }
 
+/* O catálogo pago (KINEMATION) vive em /private-assets e NÃO é versionado: sem ele
+   o jogo degrada para o viewmodel legado e as réguas medem a peça errada. `--asset-base=<deployment>`
+   busca o binário no edge e o serve do disco; `--asset-root=<dir>` serve de uma cópia local.
+   Sem nenhum dos dois o comportamento é o de sempre: o servidor local tem o que tiver. */
+export const ASSET_BASE = (process.argv.find((a) => a.startsWith('--asset-base=')) || '').split('=')[1]?.replace(/\/$/, '') || '';
+export const ASSET_ROOT = (process.argv.find((a) => a.startsWith('--asset-root=')) || '').split('=')[1] || '';
+const CACHE_PAGO = ASSET_ROOT || (ASSET_BASE ? fs.mkdtempSync(path.join(os.tmpdir(), 'csbr-vm-assets-')) : '');
+export function limparAssetsPagos() { if (ASSET_BASE && CACHE_PAGO) fs.rmSync(CACHE_PAGO, { recursive: true, force: true }); }
+// O `vercel` CLI resolve a sessão por invocação: chamadas concorrentes caem em
+// `action_required` e derrubam a régua inteira. Fila de 1.
+let filaPaga = Promise.resolve();
+export async function servirAssetsPagos(page) {
+  if (!ASSET_BASE && !ASSET_ROOT) return;
+  await page.route('**/private-assets/**', (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    filaPaga = filaPaga.then(async () => {
+      if (!pathname.startsWith('/private-assets/viewmodels/')) throw new Error(`asset inesperado: ${pathname}`);
+      const file = path.join(CACHE_PAGO, pathname.slice('/private-assets/viewmodels/'.length));
+      if (!fs.existsSync(file)) {
+        if (!ASSET_BASE) throw new Error(`asset local ausente: ${file}`);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        const http = execFileSync('vercel', ['curl', pathname, '--deployment', ASSET_BASE, '--',
+          '--silent', '--show-error', '--output', file, '--write-out', '%{http_code}'], { encoding: 'utf8' }).trim();
+        if (!http.endsWith('200')) throw new Error(`asset ${pathname}: HTTP ${http.slice(-3)}`);
+      }
+      await route.fulfill({ path: file, contentType: pathname.endsWith('.glb') ? 'model/gltf-binary' : 'application/octet-stream' });
+    }).catch((e) => route.fulfill({ status: 504, body: String(e.message || e) }));
+    return filaPaga;
+  });
+}
+
 // Abre o jogo com TODAS as armas autoradas liberadas (como a revisão L1).
 export async function abrirJogo(browser, base, aspecto = '3x2') {
   const ROOT = process.cwd();
@@ -55,6 +87,7 @@ export async function abrirJogo(browser, base, aspecto = '3x2') {
   const page = await browser.newPage({ viewport: { width, height } });
   const erros = [];
   page.on('pageerror', (e) => erros.push(String(e.message).slice(0, 300)));
+  const assets = await servirAssetsPagos(page);
   await page.goto(`${base}/?${query}`, { waitUntil: 'domcontentloaded', timeout: 240000 });
   await page.addStyleTag({ content: 'astro-dev-toolbar,#vm-precision-qa,#crash-overlay,#aviso-software,.tutorial-overlay,[data-vmqa]{display:none!important}' });
   await page.waitForFunction(() => window.__game?.state === 'live' && window.__vmPrecisionQa && window.__authoredVm, null, { timeout: 240000 });
