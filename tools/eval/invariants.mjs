@@ -71,6 +71,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { freshReport } from './fresh-report.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -1864,12 +1865,12 @@ function runNode(script, env = {}, args = []) {
     const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
     put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
       respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
-    const out = runNode('map-check.mjs');
     const pj = join(ROOT, 'tools', 'eval', 'map_check.json');
-    if (!existsSync(pj)) {
-      skip('MAP*', 'geometria de mapa', 'map-check.mjs não gerou o JSON: ' + (out.split('__ERRO__')[1] || '').slice(0, 160));
+    const { data: j, error } = freshReport(pj, () => runNode('map-check.mjs'));
+    if (error || !Array.isArray(j?.mapas) || j.mapas.length === 0) {
+      put('MAPAUD', 'map-check.mjs gera relatório fresco e válido de geometria',
+        false, error || 'map-check.mjs gerou JSON sem mapas');
     } else {
-      const j = JSON.parse(readFileSync(pj, 'utf8'));
       const M = Object.fromEntries((j.mapas || []).map((m) => [m.map, m]));
       const erros = (j.mapas || []).filter((m) => m.err);
 

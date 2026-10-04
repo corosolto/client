@@ -106,7 +106,9 @@ jobs:
       - name: Enquadramento do viewmodel por arma (26 armas, GLB real)
         run: node tools/eval/vm-mint-audit.mjs
       - name: Invariantes (portão — falha crítica reprova o PR)
-        run: node tools/eval/invariants.mjs
+        run: |
+          node --test tests/fresh-report.test.mjs
+          node tools/eval/invariants.mjs
       - name: Coice do viewmodel (near plane + pitch em rajada)
         run: node tools/eval/vm-kick-sim.mjs
       - name: Faca construída e transições sem bind pose
