@@ -1004,6 +1004,11 @@ console.log('\n· NetClient: `ev` entra no buffer, `partida` zera, lote grande �
   ws.onopen && ws.onopen();
   ws.onmessage({ data: JSON.stringify({ type: 'welcome', yourEnt: 1, yourTeam: 'E', espectador: false, events: 1, snapshotHz: 30 }) });
   await conectando;
+  cli._lastSnapT = performance.now() - 33;
+  ws.onmessage({ data: JSON.stringify({ type: 'snapshot', tick: 1, ents: [] }) });
+  const gapsRecebidos = cli.drainGapSamples();
+  cobra(gapsRecebidos.length === 1 && gapsRecebidos[0] >= 30 && gapsRecebidos[0] < 100 && cli.drainGapSamples().length === 0,
+    'NetClient coleta intervalos reais de snapshots e drena cada janela uma vez');
   ws.onmessage({ data: JSON.stringify({ type: 'ev', tick: 5, t: 1, list: Array.from({ length: 40 }, () => ({ k: 'hit', a: 1, v: 2, d: 1, h: 0, w: 'AK' })) }) });
   cobra(cli.events.length === 1 && cli.events[0].list.length === 32, `lote de 40 vira 32 no cliente (${cli.events[0] && cli.events[0].list.length})`);
   ws.onmessage({ data: JSON.stringify({ type: 'ev', tick: 'x', list: [] }) });
@@ -1263,7 +1268,9 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
   const net = fakeNet(1, 5, false, 30);
   const samples = [];
   const pings = [1200];
+  const gaps = [1400];
   net.drainRttSamples = () => pings.splice(0);
+  net.drainGapSamples = () => gaps.splice(0);
   net.sendClientStats = (sample) => samples.push(sample);
   const g = montaJogo(net);
   const mp = g._mp;
@@ -1278,6 +1285,7 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
   cobra(samples.length === 0, 'aba oculta não envia FPS, RTT e gap como se houvesse jogo visível');
   cobra(mp._reconcileWindow.length === 0, 'correção da aba oculta não contamina a próxima janela');
   cobra(pings.length === 0, 'ping anterior à pausa não contamina a janela ativa');
+  cobra(gaps.length === 0, 'gap anterior à pausa não contamina a janela ativa');
   document.hidden = false;
   g.paused = true;
   mp._nextClientStats = 0;
@@ -1287,6 +1295,7 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
   mp.updateStats();
   cobra(samples.length === 0, 'retorno ao jogo aguarda janela nova antes de medir');
   pings.push(34, 36, 39);
+  gaps.push(...Array(19).fill(33), 450);
   g._rafFrames += 60;
   mp._nsT0 = performance.now() - 1000;
   mp._nsF0 = g._rafFrames - 60;
@@ -1295,6 +1304,8 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
   cobra(samples.length === 1 && samples[0].fps > 0, 'jogo visível volta a enviar telemetria após aquecer');
   cobra(samples[0]?.rttSamples?.join(',') === '34,36,39' && pings.length === 0,
     'janela ativa envia todos os pings uma vez, sem repetir os da pausa');
+  cobra(samples[0]?.gap === 33 && gaps.length === 0,
+    'gap p95 da janela ignora pico isolado; máximo do HUD não vira qualidade da sessão');
   if (hiddenBefore) Object.defineProperty(document, 'hidden', hiddenBefore);
   else delete document.hidden;
   g.dispose();

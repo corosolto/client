@@ -143,7 +143,7 @@ export class NetClient {
     // ── diagnóstico de rede (overlay do jogo) ──
     this.stats = { hz: 0, kbps: 0, gapMax: 0, sinceLast: 0, ents: 0, tick: 0, ping: 0, snaps: 0, bytes: 0 };
     this._snapT = []; this._byteT = []; this._lastSnapT = 0;
-    this._rttSamples = [];
+    this._rttSamples = []; this._gapSamples = [];
     this._pingTimer = null;
   }
 
@@ -168,6 +168,7 @@ export class NetClient {
   }
   stopPing() { if (this._pingTimer) { clearInterval(this._pingTimer); this._pingTimer = null; } }
   drainRttSamples() { return this._rttSamples.splice(0); }
+  drainGapSamples() { return this._gapSamples.splice(0); }
 
   /* NEGOCIAÇÃO DE TRANSPORTE. WebSocket continua o PADRÃO: o datagrama só vira padrão
      depois que o canário provar, e até lá quem pede é `?wt=`. Prazo curto e queda em
@@ -249,7 +250,12 @@ export class NetClient {
           this.prev = this.snap; this.snap = m;
           const now = performance.now();
           this.stats.tick = m.tick | 0; this.stats.ents = (m.ents && m.ents.length) || 0;
-          if (this._lastSnapT) { const gap = now - this._lastSnapT; this.stats.gapMax = Math.max(gap, this.stats.gapMax * 0.92); }
+          if (this._lastSnapT) {
+            const gap = now - this._lastSnapT;
+            this.stats.gapMax = Math.max(gap, this.stats.gapMax * 0.92);
+            this._gapSamples.push(+gap.toFixed(1));
+            if (this._gapSamples.length > 512) this._gapSamples.shift();
+          }
           this._lastSnapT = now;
           this._snapT.push(now); this._byteT.push({ t: now, b: bytes });
           this.stats.snaps++; this.stats.bytes += bytes;

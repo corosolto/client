@@ -806,6 +806,7 @@ class Netcode {
       this._nsFps = null;
       this._reconcileWindow.length = 0;
       this.net.drainRttSamples?.();
+      this.net.drainGapSamples?.();
       this._nextClientStats = now + 10000;
     }
     if (this._nsT0 == null) { this._nsT0 = now; this._nsF0 = game._rafFrames || 0; }
@@ -818,8 +819,11 @@ class Netcode {
     if (!inactive && now >= this._nextClientStats && this._nsFps > 0) {
       this._nextClientStats = now + 10000;
       const correcoes = this._reconcileWindow;
+      // O HUD conserva o pior gap recente; a telemetria usa p95 dos intervalos
+      // desta janela para que um pico isolado não defina a qualidade inteira.
+      const gaps = this.net.drainGapSamples?.();
       this.net.sendClientStats?.({
-        fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: s.gapMax,
+        fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
         reconcileP95: this._percentil(correcoes, 0.95),
         reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
         reconcileCount: correcoes.length,
