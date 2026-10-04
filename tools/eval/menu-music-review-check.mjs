@@ -4,12 +4,13 @@
 import { readFileSync } from 'node:fs';
 
 const MAIN = readFileSync('public/js/main.js', 'utf8');
+const HTML = readFileSync('src/pages/index.astro', 'utf8');
 const CSS = readFileSync('public/style.css', 'utf8');
 const GENERATOR = readFileSync('tools/gen-audio-manifest.mjs', 'utf8');
 const BUILDER = readFileSync('scripts/build-audio-pack.mjs', 'utf8');
 const { MENU_MUSIC_ACTIVE_IDS } = await import('../../public/js/menu-music-selection.js');
 const erros = [];
-const expected = ['m03', 'm05', 'm10', 'm11', 'm14', 'm16', 'm17', 'm22'];
+const expected = ['m11', 'm14', 'm16', 'm17', 'm22'];
 
 if (JSON.stringify(MENU_MUSIC_ACTIVE_IDS) !== JSON.stringify(expected)) {
   erros.push(`MMR0 curadoria ativa divergiu: ${MENU_MUSIC_ACTIVE_IDS.join(', ')}.`);
@@ -59,10 +60,13 @@ if (!BUILDER.includes('const menuFiles = new Set((manifesto.menuMusic || [])')
   || !BUILDER.includes('if (!menuFiles.has(f)')) {
   erros.push('MMR9 empacotador ainda pode copiar faixas removidas da curadoria.');
 }
+if (!HTML.includes('id="hub-music-toggle"') || !MAIN.includes('settings.menuMusic !== false')) {
+  erros.push('MMR10 controle persistente da música não aparece no topo ou não governa o player.');
+}
 
 if (erros.length) {
   console.error(`MENU MUSIC REVIEW: ${erros.length} falha(s)`);
   for (const erro of erros) console.error(`  x ${erro}`);
   process.exit(1);
 }
-console.log('MENU MUSIC REVIEW: verde - catálogo reversível e 8 faixas aprovadas na rotação/pack.');
+console.log('MENU MUSIC REVIEW: verde - catálogo reversível e 5 faixas instrumentais na rotação/pack.');

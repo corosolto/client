@@ -109,11 +109,15 @@ if (prev?._privateBuild?.format === 'content-addressed-v1') {
   const orphanOpaque = opaque.filter((ref) => !unique.has(ref));
   const menuExpected = MENU_MUSIC_ACTIVE_IDS.map((id) => `audio/menu-music/${id}.mp3`);
   const missingMenuMirror = menuExpected.filter((ref) => !existsSync(join(PUBLICO, ref)));
+  const extraMenuMirror = listAudio(join(AUDIO, 'menu-music')).map(toUrl).filter((ref) => !menuExpected.includes(ref));
+  const staleMenuCount = (prev.menuMusic || []).length !== menuExpected.length;
   console.log(`AUDIO PRIVATE  ${refs.length} referências · ${unique.size} únicas · ${opaque.length} opacas`);
-  if (missing.length || orphanOpaque.length || missingMenuMirror.length) {
+  if (missing.length || orphanOpaque.length || missingMenuMirror.length || extraMenuMirror.length || staleMenuCount) {
     if (missing.length) console.error(`✗ ${missing.length} referência(s) ausente(s): ${missing.slice(0, 8).join(', ')}`);
     if (orphanOpaque.length) console.error(`✗ ${orphanOpaque.length} arquivo(s) opaco(s) órfão(s): ${orphanOpaque.slice(0, 8).join(', ')}`);
-    if (missingMenuMirror.length) console.error(`✗ espelho das oito músicas incompleto: ${missingMenuMirror.join(', ')}`);
+    if (missingMenuMirror.length) console.error(`✗ espelho das músicas instrumentais incompleto: ${missingMenuMirror.join(', ')}`);
+    if (extraMenuMirror.length) console.error(`✗ espelho contém músicas fora da seleção instrumental: ${extraMenuMirror.join(', ')}`);
+    if (staleMenuCount) console.error(`✗ manifesto privado contém ${(prev.menuMusic || []).length} músicas; seleção atual exige ${menuExpected.length}`);
     process.exit(1);
   }
   console.log(`✓ pacote privado íntegro; menu espelhado: ${MENU_MUSIC_ACTIVE_IDS.join(', ')}`);
