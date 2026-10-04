@@ -2856,6 +2856,7 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-criar summary::before{content:'▸ ';color:var(--cs)}
 .mp-criar[open] summary::before{content:'▾ '}
 .mp-form{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-3);margin-top:var(--s-3)}
+.mp-lados-fixos{grid-column:1/-1}
 /* `min-width:0`: sem isto a coluna da grid nasce do min-content do <select>, e a opção mais
    longa ("TODOS (sorteia a cada partida)") empurrava o formulário 61 px para fora do painel —
    barra de rolagem horizontal no menu, visível só com a seção CRIAR MINHA SALA aberta. */
