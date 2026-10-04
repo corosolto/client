@@ -36,11 +36,12 @@ class Netcode {
     this._alvoSpec = null;      // quem o espectador está seguindo
     this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
     this._evOn = !!(net.meta && net.meta.events);   // servidor manda `ev`; sem a flag, heurística velha (BUG-90)
-    /* BUFFER DE INTERPOLAÇÃO (~2,4 snapshots). Renderizar o remoto algumas amostras no
-       passado é o que absorve o jitter: um pacote atrasado ainda tem estrada bufferizada
-       pela frente, em vez de clampar no último ponto e CONGELAR o boneco (BUG-87). */
+    /* Buffer base ~2,4 snapshots; gaps repetidos ampliam até 140 ms para o remoto
+       não congelar, e a rede estável volta ao atraso mínimo (BUG-87). */
     this.snapshotHz = Math.max(1, Number(net.meta?.snapshotHz) || 20);
-    this.interpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
+    this._baseInterpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
+    this.interpAtrasoMs = this._baseInterpAtrasoMs;
+    this._arrivalGaps = [];
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
     this._offMs = null;               // chegada − t·1000 (mínimo da janela, deslizado) — BUG-118
     // Predições indexadas pelo seq que o snapshot v4 reconhece. Arrays planos evitam objeto
@@ -98,6 +99,26 @@ class Netcode {
   // Costura da régua: o mutante troca os dois pelo relógio de chegada.
   _relogioSnap(snap, nowMs) { return Number.isFinite(snap.t) ? snap.t * 1000 : nowMs; }
   _relogioAgora() { return this._offMs == null ? this._now() : this._now() - this._offMs; }
+
+  _atualizarAtrasoInterpolacao(gapMs) {
+    if (!(gapMs > 0)) return;
+    if (gapMs >= 1000) {
+      this._arrivalGaps.length = 0;
+      this.interpAtrasoMs = this._baseInterpAtrasoMs;
+      return;
+    }
+    this._arrivalGaps.push(gapMs);
+    if (this._arrivalGaps.length > 30) this._arrivalGaps.shift();
+    if (this._arrivalGaps.length < 12) return;
+    const gaps = [...this._arrivalGaps].sort((a, b) => a - b);
+    const p90 = gaps[Math.floor((gaps.length - 1) * 0.9)];
+    // O servidor só rebobina 250 ms; 20 ms de margem cobrem fila e assimetria do RTT.
+    const rtt = Number(this.net.stats?.ping);
+    const teto = Number.isFinite(rtt) && rtt > 0 ? Math.max(this._baseInterpAtrasoMs, Math.min(140, 230 - rtt / 2)) : 140;
+    const alvo = Math.max(this._baseInterpAtrasoMs, Math.min(teto, p90 + 20));
+    const mudanca = alvo - this.interpAtrasoMs;
+    this.interpAtrasoMs += Math.max(-2, Math.min(5, mudanca));
+  }
 
   /* Chamado pelo game._updatePlayer logo DEPOIS do _moveEntity (a predição já aconteceu na
      tela). Reconcilia com a pose autoritativa e manda o input pro servidor. */
@@ -322,6 +343,7 @@ class Netcode {
        que o renderTime() deriva o instante do servidor que a tela está mostrando. */
     this._snapPrevT = this._snapCurT; this._snapArrPrev = this._snapArrCur;
     this._snapCurT = snap.t; this._snapArrCur = nowMs;
+    if (this._snapArrPrev != null) this._atualizarAtrasoInterpolacao(nowMs - this._snapArrPrev);
     this._tAt.push(nowMs); this._tT.push(snap.t);
     if (this._tAt.length > 10) { this._tAt.shift(); this._tT.shift(); }
     // Offset local↔servidor = MÍNIMO da janela (atraso só aumenta chegada−t); desliza ≤ 4 ms
