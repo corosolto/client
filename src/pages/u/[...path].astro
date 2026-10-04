@@ -156,7 +156,7 @@ const jsonld = p ? [
         <div>
           <h1 style="margin-bottom:6px">{nick}</h1>
           <span class="chip" style={`color:${ladoCor};border-color:${ladoCor}`}>{ladoLabel}</span>
-          <span class="chip" style="margin-left:6px">{p.matches_p}P × {p.matches_b}B</span>
+          <span class="chip" style="margin-left:6px">{p.matches_p}E × {p.matches_b}D</span>
           {socials.map(s => {
             const net = s.net || socialNet(s.url), info = NET_INFO[net] || NET_INFO.site;
             return (
