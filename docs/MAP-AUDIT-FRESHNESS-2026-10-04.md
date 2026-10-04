@@ -23,8 +23,9 @@ atual das rotas CTF passa.
 
 ## Estado da branch
 
-Branch `codex/map-audit-freshness-20261004`, base alpha.47
-`b94dc5bb82aeb61728344a7e9a6b28626b07f9fc`, commit `4df220d8c`,
+Branch `codex/map-audit-freshness-20261004`, atualizada sobre alpha.48
+`7613710044c3f276b6b74d738bfe1590e518a215` após o merge de #764;
+commit de código `4b20f284d` (rebase de `4df220d8c`),
 PR draft `client#766`. `freshReport` remove o
 arquivo antigo antes de rodar o auditor e só entrega dados de um relatório
 novo e parseável. `MAPAUD` é crítica se não houver dados. O teste usa um
@@ -38,10 +39,12 @@ da base alpha.47, como esperado. O relatório versionado antigo tinha 17 mapas.
 
 ## Pendências e próximo passo
 
-O client #764 está em outra lane e corrige as quatro rotas de Córrego;
-verificação independente no HEAD `d9632f179` confirmou 8/8 pares com pelo menos
-duas rotas. Seu CI está tecnicamente verde, mas os marcadores
-`needs-human-gameplay` e `needs-staging` continuam sem evidência de revisão.
-Não editar sua branch nem integrar antes desses gates. Depois, atualizar #766
-e #765 sobre a main, exigir `build` verde com JSON fresco e verificar um
-release real, incluindo `repository_dispatch` no backend.
+O client #764 foi merged externamente em `038d3021b` apesar dos marcadores
+`needs-human-gameplay` e `needs-staging`; a verificação independente de
+`d9632f179` confirmou 8/8 pares com pelo menos duas rotas. O release alpha.48
+e o `repository_dispatch` passaram; site e nós US/EU/BR anunciaram
+`SIM_HASH=414e5ed74af13502` na leitura de 15:49 UTC. A revisão humana de jogo
+continua sem evidência e não deve ser registrada como concluída.
+Reexecutar o CI de #766 nesta base e exigir `build` verde com JSON fresco.
+Depois atualizar #765, exigir CI verde e verificar a correção da concorrência
+em um release real.
