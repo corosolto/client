@@ -1105,10 +1105,11 @@ export function buildEscadao(scene, T) {
   }
 
   /* ===================== SPAWNS ===================== */
-  // Preserva o abrigo baixo e recua o spawn alto 1,5 m para liberar a primeira curva.
-  // O A/B de 60 s × 9 sementes fica abaixo do teto nos quatro cenários.
+  // A parede em z=25 protege o nascimento, mas W com yaw=0 batia nela após
+  // 0,45 m nos quatro slots E. Nascer olhando para o vão central permite sair
+  // do abrigo imediatamente sem remover a cobertura nem mudar os pontos.
   const spawns = {
-    E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: 0 })),
+    E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: x < 0 ? -Math.PI / 4 : Math.PI / 4 })),
     B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -35.5, yaw: Math.PI })),
   };
 
