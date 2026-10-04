@@ -609,6 +609,35 @@ export const CHARACTERS = [
   { id: 'caipora', team: 'M', tribe: 'mitico', name: 'Caipora',
     blurb: 'Guardiã da mata, cabelo de fogo e pintura de guerra. Quem caça demais vira caça.',
     pal: { skin: 0xa0704a, shirt: 0xd8a03a, pants: 0xc08830, hair: 0xd11a1a, boots: 0x6a4a2a } },
+  // Políticos: caricaturas satíricas de figuras públicas (exceção do CONTRIBUTING.md). Nomes
+  // caricatos; `lados` diz em que lado cada um pode jogar.
+  { id: 'barbudo', team: 'P', lados: ['E'], name: 'Barbudo do Planalto',
+    blurb: 'Discurso de três horas e o microfone nunca cansa. Faixa no peito, churrasco no domingo.',
+    pal: { skin: 0xe0b090, shirt: 0x22305a, pants: 0x22305a, hair: 0xeeeeee, boots: 0x111111 } },
+  { id: 'capitao', team: 'P', lados: ['B'], name: 'Capitão do Cercadinho',
+    blurb: 'Camisa amarela, cercadinho lotado e live toda quinta. Não leva desaforo pra casa.',
+    pal: { skin: 0xd9a888, shirt: 0xf2d22e, pants: 0x2a2a2e, hair: 0x4a4a4a, boots: 0x111111 } },
+  { id: 'dama', team: 'P', lados: ['E'], name: 'Dama da Mandioca',
+    blurb: 'Estoca vento e saúda a mandioca. Ninguém entende a frase, todo mundo lembra.',
+    pal: { skin: 0xe6b8a0, shirt: 0xb81c22, pants: 0xb81c22, hair: 0x6a4020, boots: 0x111111 } },
+  { id: 'professor', team: 'P', lados: ['E'], name: 'Professor do Arcabouço',
+    blurb: 'Calcula o arcabouço de cabeça e ainda acha tempo de explicar a conta pro time.',
+    pal: { skin: 0xd8a888, shirt: 0x2e5aa8, pants: 0x2e5aa8, hair: 0x5a5a5a, boots: 0x111111 } },
+  { id: 'senador', team: 'P', lados: ['B'], name: 'Senador Zero Um',
+    blurb: 'O 01 da família. Sorriso de campanha e broche sempre no lugar.',
+    pal: { skin: 0xdcb08c, shirt: 0x3a3a40, pants: 0x3a3a40, hair: 0x1a1a1a, boots: 0x111111 } },
+  { id: 'ministro', team: 'P', lados: ['E', 'B'], name: 'Xandão da Toga',
+    blurb: 'A toga é capa e o despacho sai antes do café. Joga pelos dois lados e ninguém discute.',
+    pal: { skin: 0xe2b494, shirt: 0x141418, pants: 0x141418, hair: 0xe2b494, boots: 0x111111 } },
+  { id: 'deputado', team: 'P', lados: ['B'], name: 'Deputado da Peruca',
+    blurb: 'Sobe na tribuna de peruca loira e vira meme antes de terminar a frase.',
+    pal: { skin: 0xd2a07c, shirt: 0x1e2c5a, pants: 0x1e2c5a, hair: 0xf2d040, boots: 0x111111 } },
+  { id: 'agitador', team: 'P', lados: ['E', 'B'], name: 'Agitador do Carro de Som',
+    blurb: 'Carro de som, cabelo ao vento e uma convocação por minuto. Briga com os dois lados.',
+    pal: { skin: 0xd8a888, shirt: 0x2a8a8a, pants: 0x3a5a8a, hair: 0x3a2418, boots: 0x222222 } },
+  { id: 'juiz', team: 'P', lados: ['B'], name: 'Juiz do Conje',
+    blurb: 'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.',
+    pal: { skin: 0xe0b090, shirt: 0x1e2a48, pants: 0x1e2a48, hair: 0x1a1a1a, boots: 0x111111 } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -629,6 +658,8 @@ export const CHAR_WEAPON = {
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   lobisomem: 'shotgun',
   mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', caipora: 'scar', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
+  barbudo: 'ak', capitao: 'md97', dama: 'pistol', professor: 'mp5', senador: 'deagle',
+  ministro: 'shotgun', deputado: 'uzi', agitador: 'p90', juiz: 'scar',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

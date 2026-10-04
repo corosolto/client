@@ -53,7 +53,8 @@ cobra(repetidos.length === 0, 'PL3', 'nenhum personagem nos dois times da mesma 
     if (b.def.team === lado) continue;
     neutrosEmCampo++;
     const c = cores(b.mesh);
-    if (!c.has(tomBraco(lado)) || c.has(tomBraco(b.def.team))) errados.push(`${b.def.id}(${b.def.team})@${b.team}`);
+    const daCategoria = PALETA[b.def.team] ? tomBraco(b.def.team) : null;   // categoria sem cor (P) não tem o que vazar
+    if (!c.has(tomBraco(lado)) || (daCategoria !== null && c.has(daCategoria))) errados.push(`${b.def.id}(${b.def.team})@${b.team}`);
   }
   cobra(neutrosEmCampo > 0 && errados.length === 0, 'PL4', 'cada bot veste a cor do lado, não a da categoria',
     `${neutrosEmCampo} bots de outra categoria em campo; ${errados.length} com a cor errada ${errados.slice(0, 5).join(' ')}`);

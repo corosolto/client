@@ -24,7 +24,7 @@ import { enableStylize } from './stylize.js';
 import { FACTIONS } from './factions.js';
 /* Literal exigido pela régua UIR1 (redesign-check lê a declaração, não o uso);
    a fonte dos nomes é factions.js — mantenha os dois em sincronia. */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV' };
+const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV', P: 'POLÍTICOS' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
