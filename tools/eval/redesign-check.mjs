@@ -830,7 +830,7 @@ const placarReferencia = /class="sb-clock"/.test(game)
   && /#scoreboard h3\{[^}]*top:44px/.test(css)
   && /#scoreboard \.sb-cols\{[^}]*left:64px[^}]*right:64px[^}]*top:190px[^}]*column-gap:32px/.test(css)
   && /#scoreboard \.sb-col\.tp\{[^}]*border-top:2px solid #e0762a/.test(css)
-  && /#scoreboard \.sb-col\.tb\{[^}]*border-top:2px solid #8258d8/.test(css)
+  && /#scoreboard \.sb-col\.tb\{[^}]*border-top:2px solid #5a7bff/.test(css)
   && /const totalRounds = this\._inspectionTotalRounds \|\|/.test(game)
   && /game\.ctf = false; game\._inspectionTotalRounds = 5;/.test(main)
   && /game\.paused = true; game\.keys = \{\}; game\.el\.pause\.classList\.add\('hidden'\); game\._showScoreboard\(true\)/.test(main);

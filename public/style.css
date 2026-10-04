@@ -1494,7 +1494,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard h3 .sb-score i{font-style:normal;color:var(--ink-200);font-size:clamp(20px,3.6vh,40px);
   letter-spacing:var(--tr-3);align-self:center;font-weight:700}
 #scoreboard h3 .sb-score b.tp{color:#ff8a8a}
-#scoreboard h3 .sb-score b.tb{color:#b79bff}   /* violeta do time B na referência (134,94,178) */
+#scoreboard h3 .sb-score b.tb{color:#a8b8ff}
 
 #scoreboard{--sb-gap:clamp(var(--s-5),3.4vw,64px);
   --sb-rh:clamp(32px,5.2vh,54px);--sb-rg:5px}
@@ -1539,7 +1539,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-team b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #scoreboard .sb-chead img{height:36px;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 #scoreboard .sb-col.tp .sb-chead{color:#ff8a8a}
-#scoreboard .sb-col.tb .sb-chead{color:#b79bff}
+#scoreboard .sb-col.tb .sb-chead{color:#a8b8ff}
 #scoreboard .sb-col table{display:block;width:100%;flex:0 1 auto;min-height:0;overflow:auto;margin-top:0}
 #scoreboard .sb-col thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 #scoreboard .sb-col tbody{display:grid;grid-template-columns:1fr;grid-auto-rows:var(--sb-rh);
@@ -1548,7 +1548,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
   grid-template-columns:var(--sb-grid);align-items:center;gap:0 var(--s-4);
   padding:0 var(--s-4);border-left:3px solid transparent}
 #scoreboard .sb-col.tp tbody tr{background:rgba(224,50,50,.22);border-left-color:rgba(224,50,50,.6)}
-#scoreboard .sb-col.tb tbody tr{background:rgba(123,47,247,.24);border-left-color:rgba(123,47,247,.65)}
+#scoreboard .sb-col.tb tbody tr{background:rgba(51,85,255,.24);border-left-color:rgba(51,85,255,.65)}
 /* flex:0 0 auto porque o #scoreboard virou coluna flex: sem isso o canvas do mascote
    (kill-switch ?dolly=1) seria espremido pelo `flex-shrink` padrão. */
 #dollynho-dance{display:block;flex:0 0 auto;margin:12px auto 0;width:240px;height:190px}
@@ -1562,16 +1562,16 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard h3 .sb-score b{display:flex;align-items:center;gap:14px;font:400 40px/1 var(--aaa-font-display);color:#ecebe6}
 #scoreboard .sb-score .sb-crest{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.65))}
 #scoreboard h3 .sb-score-num{font:700 44px/1 var(--font)}
-#scoreboard h3 .tp .sb-score-num{color:#e0762a}#scoreboard h3 .tb .sb-score-num{color:#8258d8}
+#scoreboard h3 .tp .sb-score-num{color:#e0762a}#scoreboard h3 .tb .sb-score-num{color:#5a7bff}
 #scoreboard h3 .sb-vs{font:400 20px/1 var(--aaa-font-display);color:#5c5d63}
 #scoreboard h3 .sb-diamond{display:block;width:14px;height:14px;flex:0 0 14px;transform:rotate(45deg);font-size:0;background:#e0762a}
-#scoreboard h3 .tb .sb-diamond{background:#8258d8}
+#scoreboard h3 .tb .sb-diamond{background:#5a7bff}
 #scoreboard h3 .sb-result,#scoreboard h3 .sb-result-sub{display:none}
 #scoreboard .sb-cols{position:absolute;left:64px;right:64px;top:190px;width:auto;display:grid;grid-template-columns:1fr 1fr;column-gap:32px;min-height:0}
 #scoreboard .sb-col{--sb-grid:minmax(0,1fr) 46px 46px 72px 52px;display:flex;flex-direction:column;
   min-height:0;padding:6px 0;background:rgba(13,14,17,.88);border:1px solid #26272d}
 #scoreboard .sb-col.ctf{--sb-grid:minmax(0,1fr) 42px 42px 66px 48px 46px}
-#scoreboard .sb-col.tp{border-top:2px solid #e0762a}#scoreboard .sb-col.tb{border-top:2px solid #8258d8}
+#scoreboard .sb-col.tp{border-top:2px solid #e0762a}#scoreboard .sb-col.tb{border-top:2px solid #5a7bff}
 #scoreboard .sb-chead{display:grid;grid-template-columns:var(--sb-grid);align-items:center;gap:0;padding:8px 0;
   border-bottom:1px solid #26272d;font:700 11px/1 var(--aaa-font-body);letter-spacing:3px;color:#5c5d63}
 #scoreboard .sb-chead>span{padding:0 10px;text-align:right;color:#5c5d63}
