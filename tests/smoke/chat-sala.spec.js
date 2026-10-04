@@ -167,8 +167,6 @@ async function bootarPartida(page) {
   await page.locator('#btn-team-e').click();
   await expect(page.locator('#char-select')).toBeVisible();
   await page.locator('#char-confirm').click();
-  await expect(page.locator('#team-select')).toHaveAttribute('data-step', 'enemy');
-  await page.locator('#btn-team-f').click();
   await expect(page.locator('#hud')).toBeVisible({ timeout: 60_000 });
   await expect(page.locator('#chat-sala')).toBeHidden();
 }

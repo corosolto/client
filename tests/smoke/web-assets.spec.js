@@ -56,7 +56,5 @@ test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ pa
 
   // partida também abre com o caminho real (já com elenco/modelos batidos em cache)
   await page.locator('#char-confirm').click();
-  await expect(page.locator('#team-select')).toHaveAttribute('data-step', 'enemy');
-  await page.locator('#btn-team-b').click();
   await expect(page.locator('#hud')).toBeVisible({ timeout: 180_000 });
 });

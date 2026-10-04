@@ -1029,7 +1029,7 @@ function openHubRoster(updateRoute = true) {
   render(); $('hub-roster-modal').hidden = false; $('hub-roster-close').focus();
   if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'personagens' });
 }
-let pickingEnemy = false, currentEnemyFaction = null;   // 2º passo do team-select: escolher o adversário
+let currentEnemyFaction = null;
 let submitted = true;   // stats da partida atual já enviados?
 
 /* RÉGUA:launch-race início — extraído por `tools/eval/launch-race-check.mjs` */
@@ -2604,7 +2604,7 @@ document.querySelectorAll('.set-tab').forEach(tab => {
   };
 });
 $('mobile-ok').onclick = () => { sfx.uiClick(); show('main-menu'); };
-$('team-back').onclick = () => { ui.back(); pickingEnemy = false; setEnemyPickMode(false); setTeamStep('side'); show('main-menu'); };
+$('team-back').onclick = () => { ui.back(); setEnemyPickMode(false); setTeamStep('side'); show('main-menu'); };
 $('char-back').onclick = () => {
   ui.back();
   if (switchMode && game) {
@@ -2743,21 +2743,19 @@ $('char-confirm').onclick = () => {
   } else if (HUB_ENABLED) {
     switchMode = false;
     currentChar = selChar.id;
-    currentFaction = selChar.team;
-    currentTeam = currentFaction === 'B' ? 'B' : 'E';
+    currentTeam = ladoValido(selChar, currentTeam);
+    currentFaction = currentTeam;
     currentEnemyFaction = null;
     localStorage.setItem('csbr-home-character', currentChar);
+    localStorage.setItem('csbr-home-side', currentTeam);
     show('main-menu');
   } else {
     switchMode = false;
-    // 2º passo: escolher o ADVERSÁRIO (reusa o team-select com título trocado).
-    // O card da SUA facção é escondido — adversário só entre os outros 2 (sem mirror).
+    // O adversário é sempre o outro lado: o personagem confirmado já começa a partida.
     currentChar = selChar.id;
-    pickingEnemy = true;
-    setEnemyPickMode(true, currentFaction);
-    setTeamStep('enemy', currentFaction);
-    show('team-select');
-    ensureTeamPreviews();   // no-op se já rodou (previews ficam cacheados nos cards)
+    currentTeam = ladoValido(selChar, currentTeam);
+    currentFaction = currentTeam;
+    startGame(currentTeam, currentChar, null);
   }
 };
 
@@ -3163,24 +3161,16 @@ function pickTeam(faction) {
   /* Facção sem elenco não abre lista vazia: guarda única, cobre clique e teclado
      (o card já nasce `aria-disabled` no laço do contador). */
   if (!CHARACTERS.some(c => c.team === faction)) { ui.back(); return; }
-  // 2º passo: se está escolhendo o ADVERSÁRIO, grava e começa a partida.
-  // (o card da sua facção fica escondido nessa tela — adversário é sempre um dos outros 2)
-  if (pickingEnemy) {
-    pickingEnemy = false; currentEnemyFaction = faction;
-    setEnemyPickMode(false);
-    setTeamStep('side');
-    startGame(currentTeam, currentChar, faction);
-    return;
-  }
-  // faction = FACÇÃO escolhida (P/B/U). O LADO físico é P (petista/tribos) ou B (bolsonarista).
-  currentFaction = faction;
-  currentTeam = faction === 'B' ? 'B' : 'E';
+  // Card E/B escolhe o LADO e lista quem pode jogar nele; os outros cards são categorias do elenco.
+  const lado = faction === 'E' || faction === 'B' ? faction : null;
+  if (lado) currentTeam = lado;
+  currentFaction = currentTeam;
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
   for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
     const b = $('btn-team-' + f);
     if (b) b.setAttribute('aria-pressed', String(f.toUpperCase() === faction));
   }
-  const chars = CHARACTERS.filter(c => c.team === faction);   // roster da facção escolhida
+  const chars = CHARACTERS.filter(c => (lado ? podeNoLado(c, lado) : c.team === faction));
   // ?nav=1 pula o preload 3D do roster (lento) — thumbnails caem no fallback pvThumb, que
   // nunca dispara GLB. A transição #char-select é o que o smoke de navegação quer provar.
   const mountCharList = () => {
