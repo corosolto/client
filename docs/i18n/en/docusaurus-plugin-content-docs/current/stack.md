@@ -28,7 +28,7 @@ from `package.json`, `docs/package.json` and the vendored Three.js itself.
 | GLB pipeline | **gltf-transform** | `^4.4.1` |
 | Mesh compression | **meshoptimizer** | `^1.2.0` |
 | Images | **sharp** · **resvg** | `^0.35.3` · `^2.6.2` |
-| This documentation | **Docusaurus** | `3.6.3` |
+| This documentation | **Docusaurus** | `3.10.2` |
 | CI runtime | **Node** | `22` |
 
 Three.js comes from `public/vendor/three.module.js`. Of the scripts in `tools/`, **232** import Playwright, **113** import gltf-transform, and **10** import meshoptimizer.
