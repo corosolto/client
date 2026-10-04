@@ -25,6 +25,10 @@
 
 ## Não lançado — 2026-09-06
 
+### Corrigido
+- **#696 — `assert:assets` reprovava com o pacote público mesmo depois do fetch.** O `audio-pack-v8` (445 entradas, medido em 04/10/2026 no diretório central do zip) não tem pasta `ambiente/` nem a chave `mapSoundscapes`, e o conserto — `prepare-public-preview.mjs` — era chamado SÓ pelo workflow de preview. `scripts/fetch-audio.sh` agora termina a preparação em todo caminho público (`ensure-map-soundscapes.mjs`, que instala `mapSoundscapes` nos 18 mapas com o hum que o jogo sintetiza; o pack privado não passa por ele, porque ambiência real que falta tem de reprovar o build). `eval:audioruntimeassets` passa a provar os TRÊS estados do contrato — cru = vermelho, preparado = verde, parcial = vermelho — chamando o `assert:assets` real.
+- **#741 — a `graffiti-editorial-check` media layouts que ninguém vê.** O `TypeError` de `fy_corrego` (id que virou `corrego`) era a ponta visível: as cláusulas `religioso-vulgar`, `putin` e `rostos-carecas` comparavam com `fy_corrego` e passavam verdes sem medir nada — os três mutantes eram cegos. `NOVOS` passou a listar os ids que o jogo pede no `grafitar({id})` (`escadao`, `campomorro`), e a exigência de tabela nominal em Lajes saiu: o layout assado tem 4 tags e nenhum decal vetado. Sobraram 4 vermelhos, todos de conteúdo — ver a issue.
+
 ### Adicionado
 - O topo da home agora permite desligar e religar a música do menu; a escolha fica salva no navegador. A rotação da intro usa apenas `m11`, `m14`, `m16`, `m17` e `m22`, retirando as três faixas com voz da seleção anterior.
 - Contador central de SEQUÊNCIA mostra os abates da vida atual confirmados pelo jogo/servidor, com identidade visual do CSBrasil; morte, round e reconexão o zeram sem apagar o total da partida. Régua `eval:killstreak` cobre SP e MP com seis mutantes.
