@@ -197,8 +197,8 @@ export interface Personagem { faccao: string; nome: string; blurb: string; }
    bailão!"), e o /personagens publicava a versão que ninguém vê na tela. Regra da casa:
    se divergir, o JOGO está certo e este arquivo está velho. */
 export const FACCOES: { id: string; nome: string; lema: string; cor: string; nota: string }[] = [
-  { id: 'E', nome: 'Time E', lema: 'A treta se faz na praça!', cor: '#ff6b6b', nota: 'O time vermelho da arena. Oito arquétipos de esquerda caricata - nenhum deles é uma pessoa real.' },
-  { id: 'B', nome: 'Time B', lema: 'A treta se faz na rodovia!', cor: '#7de08f', nota: 'O time verde. Nove arquétipos de direita caricata, com a mesma dose de zoeira dos adversários.' },
+  { id: 'E', nome: 'Esquerda', lema: 'A treta se faz na praça!', cor: '#ff5555', nota: 'O lado vermelho da arena. Oito arquétipos de esquerda caricata - nenhum deles é uma pessoa real.' },
+  { id: 'B', nome: 'Direita', lema: 'A treta se faz na rodovia!', cor: '#3355ff', nota: 'O lado azul. Nove arquétipos de direita caricata, com a mesma dose de zoeira dos adversários.' },
   { id: 'urbanas', nome: 'Tribos Urbanas', lema: 'A treta se faz na quebrada!', cor: '#c79bff', nota: 'Facção sem lado político: emo, punk, metaleiro, skatista, rapper e companhia. Entra na treta pelo estilo.' },
   { id: 'palhacos', nome: 'Palhaços', lema: 'A treta se faz no picadeiro!', cor: '#ff8ad1', nota: 'O picadeiro invadiu a arena. Nove palhaços, do clássico de cartola ao que dá medo de verdade.' },
   { id: 'funkeiros', nome: 'Funkeiros', lema: 'A treta se faz no bailão!', cor: '#ffd23f', nota: 'A facção mais nova: mandrake, cria, trap, tamborzão. Ostenta antes, atira depois.' },

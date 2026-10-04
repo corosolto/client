@@ -34,7 +34,6 @@ import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { montarChatSala } from './chat-painel.js';
 import { makeNetcode } from './netgame.js';
-import { FACCAO_NOME_UI } from './mapcat.js';
 
 /* ---------------- settings & nickname ---------------- */
 const SETTINGS_KEY = 'awpbr_settings';
@@ -3924,15 +3923,6 @@ async function mpEntrarPorConvite(txt) {
 window.__mpConvite = mpEntrarPorConvite;
 
 function mpMontarFormulario() {
-  const e = mpEl('mp-fac-e'), b = mpEl('mp-fac-b');
-  if (e && !e.options.length) {
-    for (const [id, nome] of Object.entries(FACCAO_NOME_UI)) {
-      e.add(new Option(nome, id)); b.add(new Option(nome, id));
-    }
-    e.add(new Option('SORTEAR A CADA PARTIDA', 'random'));
-    b.add(new Option('SORTEAR A CADA PARTIDA', 'random'));
-    e.value = 'E'; b.value = 'B';
-  }
   const priv = mpEl('mp-privada'), wrap = mpEl('mp-senha-wrap');
   if (priv && wrap) priv.onchange = () => { wrap.hidden = !priv.checked; };
   const rot = mpEl('mp-rotacao');
@@ -3961,7 +3951,6 @@ function mpMontarFormulario() {
         // com a lista a dedo a rotação vira só o plano B do servidor (lista inválida = recorte)
         rotacao: aDedo ? 'todos' : mpEl('mp-rotacao').value,
         ...(aDedo ? { mapas: escolhidos, mapId: escolhidos[0] } : {}),
-        faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
         teamSize: +mpEl('mp-teamsize').value || 5,   // teamSize do criador: 1 = X1 sem bots (backend #29, relato 21/09)
         creatorNick: ($('nick-input').value || '').trim() || null,
@@ -4007,7 +3996,7 @@ function mpMontarFormulario() {
     try {
       const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
-        name: 'TRETA RÁPIDA', rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
+        name: 'TRETA RÁPIDA', rotacao: 'todos',
         ctf: false, private: false, password: '', maxPlayers: 10,
         creatorNick: ($('nick-input').value || '').trim() || null,
       }, ticket);
