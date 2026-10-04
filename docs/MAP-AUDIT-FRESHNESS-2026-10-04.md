@@ -24,12 +24,15 @@ atual das rotas CTF passa.
 ## Estado da branch
 
 Branch `codex/map-audit-freshness-20261004`, base alpha.47
-`b94dc5bb82aeb61728344a7e9a6b28626b07f9fc`. `freshReport` remove o
+`b94dc5bb82aeb61728344a7e9a6b28626b07f9fc`, commit `4df220d8c`,
+PR draft `client#766`. `freshReport` remove o
 arquivo antigo antes de rodar o auditor e só entrega dados de um relatório
 novo e parseável. `MAPAUD` é crítica se não houver dados. O teste usa um
 relatório antigo seguido de auditor interrompido como mutação; também confirma
 que relatório novo é aceito mesmo quando `map-check` sai 1 por dívida que o
 agregador classifica separadamente.
+Os três testes focados, `actionlint`, `docs:check` e o pre-push completo
+`check:deploy` passaram; CI remoto do #766 ainda pendente.
 
 ## Pendências e próximo passo
 
