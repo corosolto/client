@@ -6,6 +6,9 @@ on:
     tags: ['v*']
   pull_request:
 
+permissions:
+  contents: read
+
 # A chave precisa ser POR COMMIT na main e POR PR no pull_request. Com
 # `github.ref` ela virava `refs/heads/main` em TODO push da main — um grupo só
 # para a branch inteira — e, como cada merge é seguido do commit de release ~90 s
