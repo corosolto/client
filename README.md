@@ -47,7 +47,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Scripts do arnês | 631 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.35` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.36` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -97,7 +97,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Pipeline de GLB | **gltf-transform** | `^4.4.1` |
 | Compressão de malha | **meshoptimizer** | `^1.2.0` |
 | Imagem (build e API) | **sharp** · **resvg** | `^0.35.3` · `^2.6.2` |
-| Esta documentação | **Docusaurus** | `3.6.3` |
+| Esta documentação | **Docusaurus** | `3.10.2` |
 | Runtime de CI | **Node** | `22` |
 
 Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **231** importam Playwright, **113** importam gltf-transform e **10** importam meshoptimizer.

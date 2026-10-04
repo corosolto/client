@@ -25,7 +25,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Pipeline de GLB | **gltf-transform** | `^4.4.1` |
 | Compressão de malha | **meshoptimizer** | `^1.2.0` |
 | Imagem (build e API) | **sharp** · **resvg** | `^0.35.3` · `^2.6.2` |
-| Esta documentação | **Docusaurus** | `3.6.3` |
+| Esta documentação | **Docusaurus** | `3.10.2` |
 | Runtime de CI | **Node** | `22` |
 
 Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **231** importam Playwright, **113** importam gltf-transform e **10** importam meshoptimizer.
