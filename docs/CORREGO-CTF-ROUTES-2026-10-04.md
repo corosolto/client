@@ -19,6 +19,10 @@ Restaurar pelo menos duas rotas separadas de cada spawn até cada bandeira em C�
 
 - Pre-push repetido e verde em 103 s; código no commit `b6c76731401c099469145fb7c242794b7624953f`, draft PR #764, mergeable, CI em andamento. A régua PON5 agora só imprime o resumo de oito relações quando todas passam; validação local verde. Próximo: enviar esse ajuste de mensagem, aguardar CI do HEAD final e atualizar o texto da PR. Se os portões ficarem verdes, coordenar release com zero jogadores e sincronização BR/US/EU, então rebasear #755 e repinar #56.
 
+## CI do HEAD a9251de8f · 04/10 ~14:31 UTC
+
+- Pre-push final passou em 108 s com Node 23 e HEAD `a9251de8fc2b13c05c5d58f3f2cfaede3653eab7` foi enviado. `pr-fast` build verde (17m56s); preview Vercel verde; `portao-browser` ainda em execução. O smoke falhou após 15m7s no teste de chat do espectador: aviso temporário vazio após `teclaChat('u')`. O teste do cliente MP #755 já havia tido uma corrida semelhante, mas a ordem antecipada do aviso não bastou neste run. A transição de round pode ocorrer entre o wait de live e o envio da tecla; o atalho U já é verificado no mesmo passo antes da troca para espectador. Ajuste local usa `window.__chat.abrir('time')` para testar a regra do painel diretamente e lê o aviso antes das demais asserções. O caso desktop direcionado passou no Chromium em 2,0 min no checkout #755 e 2,3 min nesta worktree. Aguardar o portão de navegador ainda em curso, fazer checkpoint e reenviar sem pular gates.
+
 ## Relação com o gauntlet multiplayer
 
 Esta hotfix é independente da correção de Escadão, RTT e chat do draft #755. O objetivo maior continua ≥90% de sessões medidas como boas/ótimas por sete dias comparáveis, com partida de dois humanos/aparelhos e revisão visual 3:2. O CTF2 vermelho é um bloqueio de CI e um risco real de navegação de bots, não uma explicação suficiente para o RTT/FPS/gap históricos.
