@@ -8,6 +8,7 @@ Verificar a combinação do candidato de qualidade MP [#755](https://github.com/
 
 - Checkout isolado `client/worktrees/mp-combined-identity-check-20261004`; branch `codex/mp-combined-identity-check-20261004` sobre `origin/codex/mp-quality-rootcause-20261004@0bf7c12fe`.
 - Cherry-pick de #774: `44a7327ea` (código) e `9d85d46cd` (ledger). Conflitos de contagem em documentação foram resolvidos por regeneração; a régua preserva a entrada pelo hub de #755 e acrescenta as provas de identidade. Nenhuma edição foi feita no checkout ocupado de #755.
+- Checkpoint desta integração: `610f92a3d`, publicado como [PR #775 em rascunho](https://github.com/corosolto/client/pull/775), empilhado sobre #755. O pre-push `check:deploy` passou em 104 s.
 - Hash de simulação combinado: `5d207dfd3f940c4e`, igual ao candidato #755. A imagem backend existente foi construída com o SHA `0bf7c12fe`; se esta integração for escolhida para release, ela precisa ser reconstruída com o SHA exato desta branch. A imagem existente não cobre este commit.
 
 ## Evidência validada
@@ -19,4 +20,4 @@ Verificar a combinação do candidato de qualidade MP [#755](https://github.com/
 
 ## Próximo passo
 
-Publicar esta integração como PR empilhado para revisão e CI; revalidar rotação de mapa e troca de slot com dois jogadores reais. Só depois decidir a promoção e reconstruir backend com o SHA integrado. Medir coorte de sete dias após release coordenado; a meta de 90% ainda não está demonstrada.
+Conferir o CI do PR empilhado; revalidar rotação de mapa e troca de slot com dois jogadores reais. Só depois decidir a promoção e reconstruir backend com o SHA integrado. Medir coorte de sete dias após release coordenado; a meta de 90% ainda não está demonstrada.
