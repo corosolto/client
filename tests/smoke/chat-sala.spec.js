@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
    geometria contra a ZONA_MIRA de tools/eval/ui-check.mjs e o #crosshair em cinco
    viewports. Mutantes por page.route (SMOKE_MUTANTE=<nome>): painel-largo, innerhtml,
    foco-preso, so-mousedown, reduzido-eterno, redesenho-novo, redesenho-falante,
-   esc-so-keydown, foco-no-toque e hud-sem-handler; cada um DEVE reprovar.
+   esc-so-keydown, foco-no-toque, fecha-atira e hud-sem-handler; cada um DEVE reprovar.
    Uso local: CHROME_BIN=/caminho/do/chrome npx playwright test -c playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js
    Figuras: CHAT_FIGURAS=/pasta guarda os PNG abertos e fechados de cada viewport. */
 
@@ -124,6 +124,15 @@ async function aplicarMutante(page, testInfo) {
       const corpo = await r.text();
       const mutado = corpo.replace('!entradaPropria(f) && ', '');
       if (mutado === corpo) throw new Error('mutante foco-no-toque não aplicou: devolverFoco mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
+  } else if (MUTANTE === 'fecha-atira') {
+    testInfo.annotations.push({ type: 'mutação', description: 'fecha-atira: o controle de tiro reaparece antes de terminar o toque que fecha o chat' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace('fechar({ semJogo: true });', 'fechar();');
+      if (mutado === corpo) throw new Error('mutante fecha-atira não aplicou: trava até fim do toque mudou de forma');
       await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
     });
   } else if (MUTANTE === 'esc-so-keydown') {
@@ -690,11 +699,36 @@ test.describe('chat de sala', () => {
         expect(await chatAberto(page)).toBe(true);
         await page.touchscreen.tap(700, 300);
         expect(await chatAberto(page), 'um toque no jogo, fora do painel, fecha o compositor').toBe(false);
+        await page.waitForTimeout(150);
+        expect((await estadoJogo(page)).tiros, 'o toque que fecha o chat não dispara a arma').toBe(0);
+        await page.locator('#chat-toque').tap();
+        const gesto = await page.evaluate(() => {
+          const alvo = window.__game.renderer.domElement;
+          const stick = document.querySelector('.touch-joy-r');
+          const r = stick.getBoundingClientRect();
+          const dedo = new Touch({ identifier: 9, target: stick, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 });
+          alvo.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', pointerId: 41, bubbles: true, cancelable: true, clientX: 700, clientY: 300 }));
+          // Em Chromium lento, o touchstart pode atingir o stick que reapareceu após pointerdown.
+          stick.dispatchEvent(new TouchEvent('touchstart', { changedTouches: [dedo], touches: [dedo], targetTouches: [dedo], bubbles: true, cancelable: true }));
+          const estado = { travada: window.__game._entradaTravada, tiros: window.__tiros };
+          stick.dispatchEvent(new TouchEvent('touchend', { changedTouches: [dedo], touches: [], targetTouches: [], bubbles: true, cancelable: true }));
+          alvo.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch', pointerId: 41, bubbles: true }));
+          return estado;
+        });
+        expect(await chatAberto(page), 'o pointerdown fecha o compositor').toBe(false);
+        expect(gesto.travada, 'o jogo fica travado até o dedo sair da tela').toBe(true);
+        expect(gesto.tiros, 'o touchstart no stick revelado não dispara a arma').toBe(0);
+        await expect.poll(async () => (await estadoJogo(page)).travada).toBe(false);
         await page.locator('#chat-toque').tap();
         expect(await chatAberto(page)).toBe(true);
         // o Safari do iOS não sintetiza mousedown para um toque no canvas: só o pointerdown chega ao documento
-        await page.evaluate(() => document.elementFromPoint(700, 300).dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true, cancelable: true, clientX: 700, clientY: 300 })));
+        await page.evaluate(() => {
+          const alvo = document.elementFromPoint(700, 300);
+          alvo.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', pointerId: 42, bubbles: true, cancelable: true, clientX: 700, clientY: 300 }));
+          alvo.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch', pointerId: 42, bubbles: true }));
+        });
         expect(await chatAberto(page), 'pointerdown de toque fora do painel fecha (iOS sem mousedown de compatibilidade)').toBe(false);
+        await expect.poll(async () => (await estadoJogo(page)).travada).toBe(false);
         await page.locator('#chat-toque').tap();
         await expect(page.locator('#chat-fechar')).toBeVisible();
         await page.locator('#chat-fechar').tap();
