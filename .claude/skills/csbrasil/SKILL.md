@@ -24,7 +24,8 @@ Pesquisa e **escreve a ficha**. Saída: um MD em `plans/` com o marcador
 
 1. Pesquise o tema: história, visual, cultura. Anote a **procedência** de cada fato
    (fonte real, não memória). Referência sem procedência é palpite — lei 2.
-2. Verifique os vetos do dono ANTES de escrever: nada de pessoa real contemporânea,
+2. Verifique os vetos do dono ANTES de escrever: nada de pessoa real contemporânea
+   (exceto caricatura satírica de figura política, regras no `CONTRIBUTING.md`),
    nada com copyright, nada de gore. Domínio público (autor † há 70+ anos) é livre;
    registre a data de morte na ficha quando for o caso.
 3. Cada personagem precisa de **uma mecânica própria** — ninguém é só skin.
@@ -62,7 +63,7 @@ skill `threejs-3d-generator` (Tripo) ou o Mint MCP. **Não reinvente geração.*
 |---|---|---|
 | 1 | Ficha válida | `node tools/spec.mjs check <arquivo>` verde |
 | 2 | Referência com procedência | `FONTE.md` em cada pasta de `references/` |
-| 3 | Vetos respeitados | checklist na própria ficha (pessoa real? copyright? gore?) |
+| 3 | Vetos respeitados | checklist na própria ficha (pessoa real fora da exceção de sátira política? copyright? gore?) |
 | 4 | **Gere a figura e OLHE** | screenshot do asset + descrição do que você VÊ, não do que esperava |
 | 5 | **Quem constrói não dá a nota** | skill `asset-review` com contexto limpo aprova |
 | 6 | Entrou no jogo, virou régua | invariante/eval novo ou extensão de existente, **com a mutação que a faz ficar vermelha** |
