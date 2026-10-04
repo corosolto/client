@@ -117,7 +117,7 @@ writeFileSync(join(characterVoices, 'manifest.json'), JSON.stringify({
   noVoiceCloning: true, approval: 'owner-approved-private-build',
   characters: characterFixture, characterVoiceText,
 }));
-const menuIds = ['m03', 'm05', 'm10', 'm11', 'm14', 'm16', 'm17', 'm22'];
+const menuIds = ['m11', 'm14', 'm16', 'm17', 'm22'];
 for (const id of menuIds) writeFileSync(join(menuMusic, `${id}.mp3`), 'fixture-menu-sem-audio');
 
 const tactileFixture = [
@@ -259,7 +259,7 @@ if (manifest) {
     erros.push('LAB5di as 36 vozes finais dos nove Funkeiros não entraram estruturadas no manifest.');
   }
   if (JSON.stringify(manifest.menuMusic) !== JSON.stringify(menuIds.map((id) => `audio/menu-music/${id}.mp3`))) {
-    erros.push(`LAB5dj menu não ficou preso às oito faixas mantidas (${JSON.stringify(manifest.menuMusic)}).`);
+    erros.push(`LAB5dj menu não ficou preso às cinco faixas instrumentais (${JSON.stringify(manifest.menuMusic)}).`);
   }
   const cc0Mapped = FIREARM_IDS.filter((id) => id !== 'ak' && manifest.weapons?.[id]?.[0]?.startsWith('audio/firearms-cc0-dev/'));
   if (cc0Mapped.length !== FIREARM_IDS.length - 1) {
@@ -479,4 +479,4 @@ if (erros.length) {
   for (const e of erros) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log(`AUDIO FAB LOCAL: verde — arsenal, granadas, ${MAP_IDS.length} mapas, 16 Fish, 36 vozes próprias e 8 músicas; staging privado e veto preservados.`);
+console.log(`AUDIO FAB LOCAL: verde — arsenal, granadas, ${MAP_IDS.length} mapas, 16 Fish, 36 vozes próprias e ${menuIds.length} músicas; staging privado e veto preservados.`);

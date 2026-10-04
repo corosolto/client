@@ -188,6 +188,8 @@ html[data-home-ui="hub"] #main-menu .cs-vignette{background:linear-gradient(90de
 .hub-header-action>span{display:grid;place-items:center;width:28px;height:28px;border:1px solid #b4d92e;font:700 11px/1 var(--font)}
 .hub-header-action>span[style*="background-image"]{background-size:cover;background-position:center}
 .hub-header-action>b{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 13px/1 var(--font)}
+.hub-music-toggle{padding-right:9px;white-space:nowrap}.hub-music-toggle>span{font-size:19px}.hub-music-toggle>b{font-size:11px;letter-spacing:.3px}
+.hub-music-toggle[aria-pressed="false"]{color:#999995}.hub-music-toggle[aria-pressed="false"]>span{border-color:#555;color:#999995}
 .hub-settings{width:36px;justify-content:center;padding:0;font-size:23px}.hub-settings:hover{border-color:#39d6e0}
 .hub-pane{position:absolute;z-index:4;top:122px;bottom:62px;left:var(--hub-left-gutter);right:var(--hub-right-gutter);overflow:auto;pointer-events:auto;animation:hub-in .35s cubic-bezier(.2,.8,.2,1)}
 @keyframes hub-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}

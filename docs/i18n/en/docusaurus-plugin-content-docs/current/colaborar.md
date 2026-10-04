@@ -253,14 +253,14 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 |---|---|---|---|---:|
 | `campomorro` | Campinho do Morro | **capture** | `map_campomorro.js` | 815 |
 | `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,395 |
-| `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,202 |
+| `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,265 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,409 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,978 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 1,097 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,064 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 2,026 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,709 |
-| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,772 |
+| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,794 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 419 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 757 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 338 |

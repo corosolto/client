@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.37`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.46`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -25,7 +25,12 @@
 
 ## Não lançado — 2026-09-06
 
+### Corrigido
+- **#696 — `assert:assets` reprovava com o pacote público mesmo depois do fetch.** O `audio-pack-v8` (445 entradas, medido em 04/10/2026 no diretório central do zip) não tem pasta `ambiente/` nem a chave `mapSoundscapes`, e o conserto — `prepare-public-preview.mjs` — era chamado SÓ pelo workflow de preview. `scripts/fetch-audio.sh` agora termina a preparação em todo caminho público (`ensure-map-soundscapes.mjs`, que instala `mapSoundscapes` nos 18 mapas com o hum que o jogo sintetiza; o pack privado não passa por ele, porque ambiência real que falta tem de reprovar o build). `eval:audioruntimeassets` passa a provar os TRÊS estados do contrato — cru = vermelho, preparado = verde, parcial = vermelho — chamando o `assert:assets` real.
+- **#741 — a `graffiti-editorial-check` media layouts que ninguém vê.** O `TypeError` de `fy_corrego` (id que virou `corrego`) era a ponta visível: as cláusulas `religioso-vulgar`, `putin` e `rostos-carecas` comparavam com `fy_corrego` e passavam verdes sem medir nada — os três mutantes eram cegos. `NOVOS` passou a listar os ids que o jogo pede no `grafitar({id})` (`escadao`, `campomorro`), e a exigência de tabela nominal em Lajes saiu: o layout assado tem 4 tags e nenhum decal vetado. Sobraram 4 vermelhos, todos de conteúdo — ver a issue.
+
 ### Adicionado
+- O topo da home agora permite desligar e religar a música do menu; a escolha fica salva no navegador. A rotação da intro usa apenas `m11`, `m14`, `m16`, `m17` e `m22`, retirando as três faixas com voz da seleção anterior.
 - Contador central de SEQUÊNCIA mostra os abates da vida atual confirmados pelo jogo/servidor, com identidade visual do CSBrasil; morte, round e reconexão o zeram sem apagar o total da partida. Régua `eval:killstreak` cobre SP e MP com seis mutantes.
 - Contador de ABATES do jogador no HUD, na coluna de estado dele: algarismo grande com rótulo miúdo, conta a PARTIDA (não o abate do time nem o da rodada) e não zera na virada de round — antes o número pessoal só existia atrás do TAB. Régua `eval:abateshud` com quatro mutantes, no `check:fast`.
 - Sertão da Treta substitui o Velho Oeste: casario de taipa, Caatinga, Canudos, calango quadrúpede, aves, cabras e galinha com pintinhos. Preview real com vídeo silencioso ao passar o mouse; criação com caminhada e pausas. O memorial de Padre Cícero permanece fora desta entrega.
@@ -63,6 +68,66 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.46] — 2026-10-04
+
+### Mudado
+- fix(corrego): as 3 pontes baixas em escala — malha, colisor e navegação na mesma medida (#681)
+- fix(corrego): as 3 pontes baixas em escala — malha, colisor e navegação na mesma medida (#681) (#761)
+- chore: reavalia contra a main atual
+- docs: regenera blocos derivados (regua eval:corrego-ponte entra no check:fast)
+
+## [2.1.0-alpha.45] — 2026-10-04
+
+### Mudado
+- fix(679): porta a visibilidade de alvo do catálogo para o check:fast (#750)
+- docs: regenera blocos derivados (novo gate eval:vm-placar no check:altera a contagem)
+- fix(679): porta a visibilidade de alvo do catálogo para o check:fast
+
+## [2.1.0-alpha.44] — 2026-10-04
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-10-04) (#762)
+- docs(changelog): rodada do cronista — 21 commits
+
+## [2.1.0-alpha.43] — 2026-10-04
+
+### Mudado
+- fix(assets): contrato de ambiência do áudio é do jogo, não do pacote (#696) + régua de grafite medindo o que se vê (#741) (#747)
+- fix(assets): o contrato de ambiência do áudio é do jogo, não do pacote (#696, #741)
+
+## [2.1.0-alpha.42] — 2026-10-04
+
+### Mudado
+- feat(audio): menu instrumental com botão de música (#759)
+- docs(audio): fechar preflight do pacote instrumental
+- docs(audio): registrar revisão visual e condição de merge
+- docs(audio): registrar pacote instrumental e limites da revisão
+- fix(audio): validar pacote privado instrumental no build
+- docs(audio): registrar checkpoint da intro instrumental
+- feat(audio): manter instrumentais e alternar música do menu
+
+## [2.1.0-alpha.41] — 2026-10-04
+
+### Mudado
+- docs(security): registrar fechamento dos alertas (#760)
+
+## [2.1.0-alpha.40] — 2026-10-04
+
+### Mudado
+- fix(security): limitar profundidade do braces na documentação (#758)
+
+## [2.1.0-alpha.39] — 2026-10-04
+
+### Mudado
+- fix(amazonia): acesso da água às escadas que nasciam dentro do igarapé (#680) (#753)
+- docs: regenera blocos derivados (regua AME entra no check:fast)
+- fix(amazonia): abrir acesso da água às escadas que nasciam dentro do igarapé
+
+## [2.1.0-alpha.38] — 2026-10-04
+
+### Mudado
+- fix(security): atualizar dependências do exemplo Vite (#757)
 
 ## [2.1.0-alpha.37] — 2026-10-04
 
@@ -328,6 +393,17 @@
 - feat(grafite): censo dos 11 abertos + cláusulas de órfã e densidade — a triagem do MA1 (plans/26)
 - docs: regen de docs/arch depois das evidências MA4 (capturar.mjs e HTML entraram depois do regen anterior)
 - fix(mapcat): amazonia deixa de ser FAVELA, corrego sai do fallback ARENA — com régua eval:mapcat (MA4 do plans/26)
+- fix(amazonia): abrir acesso da água às escadas que nasciam dentro do igarapé
+- fix(crash): viewmodel pago ausente do deploy não é crash de código (#658 #656 #657)
+- docs(security): registrar fechamento dos alertas (#760)
+- fix(security): limitar profundidade do braces na documentação (#758)
+- fix(security): atualizar dependências do exemplo Vite (#757)
+- docs: regenera blocos derivados (regua AME entra no check:fast)
+- fix(security): limitar token dos workflows a leitura (#754)
+- fix(security): atualizar árvore de dependências de docs (#751)
+- fix(security): atualizar http-cache-semantics para 4.3.0 (#749)
+- fix(deps): tira da lista as isencoes que viraram letra morta
+- docs(changelog): rodada do cronista — 50 commits
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado

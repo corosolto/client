@@ -5,6 +5,9 @@ import { spawn, execFileSync } from 'node:child_process';
 import net from 'node:net';
 import os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { ASPECTOS, mascara, salvarMascaraPng } from './lib/vm-palco.mjs';
+import { ocupacao } from './lib/vm-analise.mjs';
+import * as L from './lib/vm-limiares.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = process.argv.includes('--mutante=ads-antigo');
@@ -14,6 +17,15 @@ const assetOverlay = process.argv.find((value) => value.startsWith('--asset-over
 const assetRoot = process.argv.find((value) => value.startsWith('--asset-root='))?.slice('--asset-root='.length);
 const auto = process.argv.find((value) => value.startsWith('--auto='))?.slice('--auto='.length) || 'E';
 const catalog = process.argv.includes('--catalogo');
+const ASPECTO = process.argv.find((v) => v.startsWith('--aspecto='))?.slice('--aspecto='.length) || '3x2';
+if (!ASPECTOS[ASPECTO]) throw new Error(`--aspecto fora da régua: ${ASPECTO} (há: ${Object.keys(ASPECTOS).join(', ')})`);
+// Geometria e tetos NÃO são novos: vêm de tools/eval/lib/vm-limiares.mjs, o mesmo
+// lugar que o vm-reguas lê. A sliver da alça logo abaixo da cruz é o ADS correto e
+// ocupa ~1,5% do disco; o que reprova é a arma SENTADA na cruz, não a alça sob ela.
+const RAIO_CRUZ = L.COBERTURA_CRUZ_RAIO;
+const CRUZ_PCT_MAX = 0.05;
+const TETO_JANELA_ALTA = L.ADS_JANELA_ALTA_MAX;
+const TETO_JANELA_BAIXA = L.ADS_JANELA_BAIXA_MAX;
 const out = path.join(root, 'artifacts/vm-ads-visibility', auto === 'E' ? '' : auto.replace(/[^a-z0-9_-]+/gi, '-'));
 fs.mkdirSync(out, { recursive: true });
 const assetDir = assetBase ? fs.mkdtempSync(path.join(os.tmpdir(), 'csbr-ads-assets-')) : null;
@@ -45,7 +57,7 @@ try {
   if (!ready) throw new Error('servidor local não subiu');
   console.log(`jogo: ${base}`);
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
-  const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+  const page = await browser.newPage({ viewport: { width: ASPECTOS[ASPECTO][0], height: ASPECTOS[ASPECTO][1] } });
   page.on('pageerror', (error) => console.log(`pageerror: ${error.message.slice(0, 180)}`));
   if (assetBase || assetRoot) await page.route('**/private-assets/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
@@ -63,13 +75,20 @@ try {
     }
     await route.fulfill({ path: file, contentType: pathname.endsWith('.glb') ? 'model/gltf-binary' : 'application/octet-stream' });
   });
+  /* ads-antigo: o FOV do vmCamera NO ADS é o que encolhe a arma e a tira do centro —
+     `game.js:6300`. Sem a abertura (×1,50 rifles / ×1,35 curtas) a arma fica do
+     tamanho do quadril e a alça invade a janela do alvo. As âncoras são lidas do
+     arquivo CURRENT: mutante com âncora morta é pior que nenhum. */
   if (mutant) {
     const source = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
-    const broken = source.replace('m4: 56,', 'm4: 42,').replace('(shortGun ? 0.75 : 0.50) * a', '0 * a');
-    if (source === broken || !broken.includes('m4: 42,') || !broken.includes('1 + 0 * a')) throw new Error('mutante não aplicou');
+    const broken = source.replace('(shortGun ? 0.35 : 0.50) * a', '0 * a');
+    if (source === broken || !broken.includes('(1 + 0 * a)')) throw new Error('mutante não aplicou: âncora do FOV de ADS mudou em game.js');
     await page.route('**/js/game.js*', (route) => route.fulfill({ contentType: 'application/javascript', body: broken }));
   }
-  await page.goto(`${base}/?debug=1&auto=${encodeURIComponent(auto)}&vmauthored=1&vmfabrica=1&vmweapon=m4&map=brasilia&armaslazy=1&vmqa=precision&bloom=0`, { waitUntil: 'load', timeout: 180000 });
+  // 10 min: o jogo sobe swiftshader (sem GPU) e o `load` espera TODOS os GLBs do
+  // catálogo. Em máquina disputada com outras réguas o boot leva minutos, e um
+  // timeout curto reprova por contenção, não por defeito.
+  await page.goto(`${base}/?debug=1&auto=${encodeURIComponent(auto)}&vmauthored=1&vmfabrica=1&vmweapon=m4&map=brasilia&armaslazy=1&vmqa=precision&bloom=0`, { waitUntil: 'load', timeout: 600000 });
   console.log('página carregada');
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 90000 });
   console.log('partida live');
@@ -174,24 +193,77 @@ try {
   await page.screenshot({ path: path.join(out, 'awp-reload-mid.png') });
   const awp = await read();
   check('AWP: recarga autorada em partida', awp.weapon === 'awp' && awp.authored && awp.vmVisible, awp);
+  /* #679: a varredura que faltava. Mede o CATÁLOGO INTEIRO (as 25 armas de tiro;
+     a faca não tem ADS) e a OBSTRUÇÃO REAL EM PIXELS da arma/mão sobre a cruz e a
+     janela do alvo, nos DOIS aspectos. As janelas e os tetos NÃO são novos: são os
+     de tools/eval/lib/vm-limiares.mjs (COBERTURA_CRUZ_RAIO, ADS_JANELA_ALTA_MAX,
+     ADS_JANELA_BAIXA_MAX) — os mesmos que o vm-reguas usa no ADS. Um gate de FOV
+     isolado passa com a arma em cima do alvo; esta régua conta os pixels que o
+     jogador deixa de enxergar. */
   if (catalog) {
     const ids = await page.evaluate(async () => (await import('/js/weapons.js')).WEAPON_IDS);
-    const dir = path.join(out, 'catalogo');
+    const dir = path.join(out, 'catalogo', ASPECTO);
     fs.mkdirSync(dir, { recursive: true });
+    const tabela = [];
     for (const id of ids) {
       if (id === 'knife' || id === 'grenade') continue;
+      // Sai do ADS ANTES de trocar: uma luneta da arma anterior fica engatada e o
+      // `aim` da próxima arma espera um FOV que não vem (escopeta da fábrica, 24/09).
+      await aim(false).catch(() => {});
       await equip(id);
+      await page.evaluate(() => window.__game.setCamView('first'));
       await aim(false);
       await aim(true);
+      await settle();
       const data = await read();
       await page.screenshot({ path: path.join(dir, `${id}.png`) });
       const scale = Math.tan(data.vmFov * Math.PI / 360) / Math.tan(data.vmHipFov * Math.PI / 360);
       const scoped = await page.evaluate(() => Boolean(window.__game.player.scoped && window.__game._scopeMask > 0.85));
-      check(`catálogo ${id}`, data.authored && (scoped ? !data.vmVisible && data.fov <= 40
-        : data.vmVisible && data.authoredMountVisible && data.fov >= 54 && scale >= 1.3),
-      { fov: data.fov, vmScale: +scale.toFixed(2), scoped, authored: data.authored,
-        root: data.vmVisible, mount: data.authoredMountVisible, fallback: !data.authored });
+      // Máscara rotulada da MESMA cena que o jogador viu: arma vermelha, braço verde.
+      const m = await mascara(page, id);
+      await salvarMascaraPng(m, path.join(dir, `${id}-mascara.png`), [{ x: m.w / 2, y: m.h / 2, r: 12 }]);
+      const r = Math.round(RAIO_CRUZ * m.w);
+      const cx = m.w / 2;
+      const cy = m.h / 2;
+      const areaCruz = Math.PI * r * r;
+      let pxCruz = 0;
+      for (let y = Math.max(0, Math.floor(cy - r)); y < Math.min(m.h, cy + r); y++) {
+        for (let x = Math.max(0, Math.floor(cx - r)); x < Math.min(m.w, cx + r); x++) {
+          if (m.px[y * m.w + x] && Math.hypot(x - cx, y - cy) <= r) pxCruz++;
+        }
+      }
+      const janelaAlta = ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.45, y1: 0.55 });
+      const janelaBaixa = ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.50, y1: 0.65 });
+      const pxAlta = Math.round(janelaAlta * m.w * 0.14 * m.h * 0.10);
+      const pxBaixa = Math.round(janelaBaixa * m.w * 0.14 * m.h * 0.15);
+      const linha = {
+        id,
+        aspecto: ASPECTO,
+        pxCruz,
+        pctCruz: +((100 * pxCruz) / areaCruz).toFixed(2),
+        janelaAlta: +janelaAlta.toFixed(3),
+        janelaBaixa: +janelaBaixa.toFixed(3),
+        pxAlta,
+        pxBaixa,
+        fov: +data.fov.toFixed(1),
+        vmScale: +scale.toFixed(2),
+        scoped,
+        autorada: data.authored,
+      };
+      tabela.push(linha);
+      console.log(`catálogo ${ASPECTO} ${id}: ${pxCruz} px na cruz (${linha.pctCruz}%), janela alta ${(janelaAlta * 100).toFixed(1)}% (${pxAlta} px), baixa ${(janelaBaixa * 100).toFixed(1)}% (${pxBaixa} px), escopada ${scoped}`);
+      /* Luneta real: o viewmodel some e entra o overlay 2D — 0 px é o resultado CERTO.
+         Sem luneta a arma tem de ficar visível, com a janela do alvo no teto e a cruz
+         só com a sliver da alça (COBERTURA_CRUZ_PCT_MAX), nunca tapada. */
+      check(`catálogo ${ASPECTO} ${id}`, data.authored && (scoped
+        ? !data.vmVisible && data.fov <= 40 && pxCruz === 0 && janelaAlta === 0 && janelaBaixa === 0
+        : data.vmVisible && data.authoredMountVisible && data.fov >= 54 && scale >= 1.3
+          && pxCruz <= areaCruz * CRUZ_PCT_MAX
+          && janelaAlta <= TETO_JANELA_ALTA && janelaBaixa <= TETO_JANELA_BAIXA),
+      { pxCruz, pctCruz: linha.pctCruz, janelaAlta: linha.janelaAlta, janelaBaixa: linha.janelaBaixa,
+        fov: data.fov, vmScale: linha.vmScale, scoped, autorada: data.authored });
     }
+    fs.writeFileSync(path.join(out, `catalogo-${ASPECTO}.json`), `${JSON.stringify(tabela, null, 2)}\n`);
   }
 } catch (error) {
   check('execução', false, error.stack || String(error));
@@ -201,9 +273,13 @@ try {
   if (assetDir) fs.rmSync(assetDir, { recursive: true, force: true });
 }
 if (mutant) {
-  const bit = failures.includes('m4 primeira pessoa: janela do alvo');
-  console.log(`MUTANTE ads-antigo ${bit ? 'MORDEU' : 'CEGO'}`);
-  process.exitCode = bit ? 0 : 1;
+  // Morde = a janela do alvo do m4 foi para binnen do ADS. Vale tanto na varredura
+  // de FOV quanto na varredura de pixels do catálogo (`--catalogo`).
+  const mordeu = failures.includes('m4 primeira pessoa: janela do alvo')
+    || failures.some((f) => f.startsWith(`catálogo ${ASPECTO} m4`));
+  const aberta = failures.includes('execução') ? ' (erro de execução)' : '';
+  console.log(`MUTANTE ads-antigo ${mordeu ? 'MORDEU' : 'CEGO'}${aberta}: ${failures.length} falha(s)`);
+  process.exitCode = mordeu ? 0 : 1;
 } else {
   console.log(`ads-visibility: ${failures.length} falha(s)`);
   process.exitCode = failures.length ? 1 : 0;

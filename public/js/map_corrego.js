@@ -30,6 +30,16 @@ const CANAL_X0 = -CANAL_ABERTURA / 2, CANAL_X1 = CANAL_ABERTURA / 2;
 /* −1,75 e não −1,85: a ponte fica a y = 0,15, e −1,85 dava queda de exatamente 2,00 m
    (QUEDA_ANDAR do MAP6, medido). O teto mede da superfície MAIS ALTA que dá no vão. */
 const CANAL_FUNDO = -1.75;
+/* PONTES BAIXAS (z = -22, 0, 22) — uma cota só, lida pela MALHA, pelo COLISOR e
+   pela navegação. Antes cada um tinha a sua: a malha ia a 6,00 m de meia-largura,
+   o `groundHeightAt` só reconhecia 5,20 m (0,80 m de madeira que o corpo via e
+   não alcançava), e o topo desenhado ficava 0,07–0,09 m acima do chão de
+   navegação. Régua: tools/eval/corrego-ponte-check.mjs (PON1).
+   O intradorso a 0,28 m é o que abre o vão de 2,00 m sobre o leito do canal
+   (PON2) — o corpo mede 1,72 m e a rota baixa de 80 m passa por baixo. */
+const PONTE_BASE = 0.28, PONTE_ESP = 0.12;
+const PONTE_PISO = PONTE_BASE + PONTE_ESP;        // 0,40 m — o que o pé pisa
+const PONTE_MEIA_L = (CORREGO_W + 2) / 2;         // 6,00 m — meia-largura da malha
 const CANAL_AGUA = CANAL_FUNDO + 0.14;          // lâmina rasa: anda-se DENTRO dela
 /* Rampas de contenção, paralelas ao canal (é assim que córrego canalizado de verdade dá
    acesso — ver foto_001: a parede é vertical, quem desce desce pela ponta). Cada rampa
@@ -636,31 +646,39 @@ export function buildCorrego(scene, T) {
     root.add(contexto);
   }
   /* ===================== PONTES DE MADEIRA =====================
-     3 pontes cruzando o córrego. Cada uma é um tablado de madeira a y=0.1. */
+     3 pontes cruzando o córrego. Malha, colisor e navegação leem PONTE_BASE/
+     PONTE_PISO/PONTE_MEIA_L (regra PON1 do corrego-ponte-check): o tabuleiro
+     desenhado, o chão que o pé pisa e a faixa por onde o corpo anda são a
+     MESMA medida. Antes o pé pisava a 0,15 m numa madeira de topo 0,24 m e a
+     faixa navegável morria 0,80 m antes da borda. */
   function ponte(z, largura = 3, comGuarda = false) {
     // Colisão contínua invisível mantém a rota justa sob as tábuas com lacunas; o tablado
     // é colisor de CORPO apenas — occluder são as tábuas (a bala enxerga as lacunas).
     const matMadeira = TEX.wall || lam({ color: 0x8a6a4a, roughness: 0.9 });
-    const tablado = addBox(CORREGO_W + 2, .18, largura, new THREE.MeshBasicMaterial({visible:false}), 0, 0, z,{skirt:false,collide:false});
-    colRot(0, z, (CORREGO_W + 2) / 2, largura / 2, 0, .18, 0);
+    const tablado = addBox(PONTE_MEIA_L * 2, PONTE_ESP, largura, new THREE.MeshBasicMaterial({visible:false}), 0, PONTE_BASE, z,{skirt:false,collide:false});
+    colRot(0, z, PONTE_MEIA_L, largura / 2, PONTE_BASE, PONTE_PISO, 0);
     tablado.userData.bridgeReadable = `ponte-${z}`; tablado.userData.grounded = true;
     tablado.userData.corregoBridgeCollider=z===-22?'norte':`ponte-${z}`;
     let i=0;
-    for(let bx=-5.55;bx<=5.55;bx+=.74,i++) {
+    for(let bx=-PONTE_MEIA_L+.45;bx<=PONTE_MEIA_L-.45;bx+=.74,i++) {
       if(z===-22&&(i===4||i===11)) continue;
-      const y=.035+(i%3)*.022, dz=((i%4)-1.5)*.065, d=largura-.16-(i%3)*.09;
+      /* O topo da tábua É o piso: a ondulação desce a partir dele, nunca
+         sobe — senão a madeira atravessa a canela de quem anda em cima. */
+      const y=PONTE_PISO-.16-(i%3)*.02, dz=((i%4)-1.5)*.065, d=largura-.16-(i%3)*.09;
       const board=addBox(.64,.16,d,matMadeira,bx,y,z+dz,{collide:false,skirt:false,ry:(i%2?1:-1)*.012});
       board.userData.corregoBridgeBoard=z===-22?'norte':`ponte-${z}`;
       occluders.push(board);
     }
     // Estaca e guarda-corpo são madeira bruta como o tablado; antes eram cor pura,
     // e `lam()` dentro do laço criava um material novo por peça (6 e 2 materiais).
-    for (const x of [-CORREGO_W/2-.65,CORREGO_W/2+.65])
-      addBox(.18,.42,largura-.18,matMadeiraBruta,x,-.2,z,{ collide:false,cast:false });
-    // guarda-corpo opcional
+    for (const x of [-PONTE_MEIA_L+.09,PONTE_MEIA_L-.09])
+      addBox(.18,PONTE_PISO+.2,largura-.18,matMadeiraBruta,x,CANAL_FUNDO,z,{ collide:false,cast:false });
+    /* Guarda-corpo: NA BORDA do tabuleiro (PON3). Antes ficava 0,15 m FORA
+       dela (x=±6,15 num tablado que termina em ±6,00) — uma peça no ar, de
+       onde não protegia a travessia, e 0,87 m de altura útil. */
     if (comGuarda) {
-      for (const gx of [CORREGO_X0 - 1.15, CORREGO_X1 + 1.15]) {
-        addBox(0.08, 0.9, largura, matMadeiraBruta, gx, 0.15, z);
+      for (const gx of [-PONTE_MEIA_L+.06, PONTE_MEIA_L-.06]) {
+        addBox(0.08, 1.0, largura, matMadeiraBruta, gx, PONTE_PISO, z);
       }
     }
   }
@@ -669,8 +687,8 @@ export function buildCorrego(scene, T) {
   ponte(-22, 3.0, true);
   ponte(0, 1.8, false);
   ponte(22, 3.0, false);
-  addBox(CORREGO_W + 2.8, 0.12, 3.8, TEX.zinco || lam({ color: 0x77746d }), 0, 2.5, 22);
-  for (const px of [-3.6, 3.6]) addBox(0.16, 2.5, 0.16, TEX.concrete, px, 0, 22);
+  addBox(CORREGO_W + 2.8, 0.12, 3.8, TEX.zinco || lam({ color: 0x77746d }), 0, PONTE_PISO + 2.35, 22);
+  for (const px of [-3.6, 3.6]) addBox(0.16, 2.35, 0.16, TEX.concrete, px, PONTE_PISO, 22);
 
   /* ═══════════════════ A FAVELA ═══════════════════════════════════════════════
      Planta nova medida contra `references/favela/fotos-reais/` (caso e números no relatório). Ângulos em TABELA, não sorteio: fileira gira pouco (AABB comeria o beco), anexo gira muito. */
@@ -950,7 +968,7 @@ export function buildCorrego(scene, T) {
   /* Pilares das três pontes descendo até o fundo — em foto_001 a passarela se apoia
      no leito. Cover no meio do canal e a coisa que dá ESCALA à profundidade nova. */
   for (const bz of [-22, 0, 22]) for (const px of [-1.5, 1.5])
-    addBoxSB(0.5, -CANAL_FUNDO + 0.1, 0.5, matParedeCanal, px, CANAL_FUNDO, bz, { skirt: false });
+    addBoxSB(0.5, PONTE_BASE - CANAL_FUNDO + 0.1, 0.5, matParedeCanal, px, CANAL_FUNDO, bz, { skirt: false });
   /* NOS BECOS E NO PASSEIO DA BEIRA. Encostado nas paredes; o vão livre do beco
      (1,9 m) não pode cair abaixo do corpo + folga. */
   for (const lado of [-1, 1]) {
@@ -1427,10 +1445,14 @@ export function buildCorrego(scene, T) {
     const ax = Math.abs(x);
     /* ORDEM IMPORTA, e é a ordem física: o tablado da ponte está POR CIMA do vão, o
        assoreamento das pontas está por cima do fundo, a rampa está no lugar da parede. */
-    const ponte = ax <= CORREGO_W / 2 + 0.2 && (Math.abs(z + 22) <= 1.6 || Math.abs(z) <= 1.0 || Math.abs(z - 22) <= 1.6);
+    /* A faixa reconhece a largura que a MALHA tem (PONTE_MEIA_L), não
+       CORREGO_W/2 + 0,2: com os 5,2 m de antes sobrava 0,80 m de tabuleiro
+       só-colisor em cada ponta — o corpo via a madeira e batia numa parede
+       invisível a meio metro da borda (PON1). */
+    const ponte = ax <= PONTE_MEIA_L && (Math.abs(z + 22) <= 1.5 || Math.abs(z) <= 0.9 || Math.abs(z - 22) <= 1.5);
     /* CHAO MULTINIVEL (convencao do map_havan.js): quem pergunta de DENTRO do canal
        recebe o fundo. Sem yRef devolve a camada de cima, como antes. BUG-80. */
-    if (ponte && !(yRef !== undefined && yRef < CANAL_FUNDO + 0.9)) return 0.15;
+    if (ponte && !(yRef !== undefined && yRef < CANAL_FUNDO + 0.9)) return PONTE_PISO;
     /* PASSARELA: so e chao para quem ja esta LA EM CIMA. Mesmo regime da ponte, e por isso
        ela precisa vir antes de tudo que devolve altura de rua. BUG-82. */
     if (Math.abs(z - PASS.z) <= PASS.meiaL && ax <= RAMPA_X1 && yRef !== undefined && yRef > PASS.y - 1.6) return PASS.y;
