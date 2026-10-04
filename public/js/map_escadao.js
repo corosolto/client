@@ -1105,9 +1105,7 @@ export function buildEscadao(scene, T) {
   }
 
   /* ===================== SPAWNS ===================== */
-  // A parede em z=25 protege o nascimento, mas W com yaw=0 batia nela após
-  // 0,45 m nos quatro slots E. Nascer olhando para o vão central permite sair
-  // do abrigo imediatamente sem remover a cobertura nem mudar os pontos.
+  // Orienta os spawns E para o vão central: W sai do abrigo sem bater na parede.
   const spawns = {
     E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: x < 0 ? -Math.PI / 4 : Math.PI / 4 })),
     B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -35.5, yaw: Math.PI })),
