@@ -52,8 +52,9 @@ if (mutante && !['sem-isencao', 'isencao-vazia', 'advisory-nova'].includes(mutan
    vazia, e é a DEP3 que impede um perdão por nome cego. Reavaliar quando sair 4.2.1+. */
 const ISENTAS = new Map([
   ['http-cache-semantics', { adv: ['max-stale', 'GHSA-ch52-4w7c-c8xp'], motivo: 'sem versão corrigida (<=4.2.0); o caminho de cache de proxy com max-stale não existe neste site estático' }],
-  ['astro', { adv: [], motivo: 'ELO da cadeia do http-cache-semantics (GHSA-ch52-4w7c-c8xp); o downgrade sugerido quebraria o site' }],
-  ['@astrojs/vercel', { adv: [], motivo: 'ELO da cadeia do http-cache-semantics (GHSA-ch52-4w7c-c8xp)' }],
+  /* `astro` e `@astrojs/vercel` saíram da lista em 04/10: o audit já não os traz, e a DEP2
+     pegou as duas entradas virando letra morta — que é exatamente o que ela existe pra
+     pegar (isenção que não corresponde a nada some da revisão sozinha). */
 ]);
 
 const GRAVES = new Set(['high', 'critical']);
