@@ -21,6 +21,13 @@ Melhorar a experiência real do multiplayer até pelo menos 90% de sessões boas
 
 Revisar a captura real em build com assets privados e o caminho de saída E com pessoa no navegador. Preparar release pareado client/backend sem deixar o site novo apontar para a física antiga. Depois medir sessões reais por nó por sete dias e priorizar a causa dominante; dois humanos e aprovação visual ainda pendentes.
 
+## Continuação 04/10 ~10:50 UTC
+
+- PR #755 passou build, smoke-web, portão e gates no HEAD alpha.37 `8b13962e6`. Duas abas Chrome locais ingressaram na mesma partida oficial de captura em Escadão, uma em cada time, com `/rooms` mostrando dois jogadores, 60 FPS e snapshots em 30 Hz. São dois clientes no mesmo computador, não dois humanos nem um teste de rede real.
+- `origin/main` avançou a alpha.39 `152e802d0`, incluindo mudança em Amazônia. Rebase da branch de Escadão concluído; conflitos em documentação gerada foram resolvidos com `npm run docs`. O novo SIM_HASH calculado é `10912fbf23dffc6c`; spawn egress 8/8, paridade e netcode 190/190 passaram após o rebase. `check:deploy` e CI ainda precisam ser repetidos.
+- Incidente de compatibilidade atual: site público alpha.39 usa `eb4398ed9304145a`, mas US/EU/BR ainda estão em alpha.35 `6c7a6d76929eeef5`, todos sem jogadores no momento da leitura. Acionado `sync-nodes.yml` run `37196616698` para promover o release público alpha.39 com portão e canários. Acompanhar até os três `/health` coincidirem; não publicar o patch Escadão com a imagem anterior.
+- O PR backend #56 e sua imagem pré-construída apontam para cliente alpha.36/hash `8f7816379baade92` e ficaram obsoletos após alpha.39. Atualizar o pin para o SHA final do PR #755, reconstruir a imagem e coordenar release, sem reutilizar o digest antigo.
+
 ## Continuação 04/10 ~10:15 UTC
 
 - Preview autenticado do PR #755: Escadão carregou assets, arma e HUD reais em Chrome 1536×1024; sem erro de console. A inspeção visual é parcial e não equivale a aceite humano. Sonda da rota mostrou que os quatro spawns E cruzam a parede inicial z=25; varredura de 11 mapas não encontrou outro spawn com deslocamento abaixo de 2 m em 1,5 s.
