@@ -780,8 +780,8 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
    e a dos funkeiros nem existia). */
 .team-e{--tc:#ff6b6b;--tc-rgb:255,107,107;--art:url('/img/faccoes/time-e.webp');
   --tc-bg:linear-gradient(165deg,#b52e2e 0%,#7a1a1a 52%,#3d0d0d 100%)}
-.team-b{--tc:#7de08f;--tc-rgb:125,224,143;--art:url('/img/faccoes/time-b.webp');
-  --tc-bg:linear-gradient(165deg,#1d8f45 0%,#2f7a2a 46%,#7a6412 100%)}
+.team-b{--tc:#3355ff;--tc-rgb:51,85,255;--art:url('/img/faccoes/time-b.webp');
+  --tc-bg:linear-gradient(165deg,#1f3fc8 0%,#1d3f8f 52%,#7a6412 100%)}
 .team-u{--tc:#c79bff;--tc-rgb:199,155,255;--art:url('/img/faccoes/tribos.webp');
   --tc-bg:linear-gradient(165deg,#5f22c2 0%,#8a1f9c 55%,#3d0f52 100%)}
 .team-c{--tc:#ff8ad1;--tc-rgb:255,138,209;--art:url('/img/faccoes/palhacos.webp');
