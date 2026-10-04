@@ -26,7 +26,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -106,7 +106,9 @@ jobs:
       - name: Enquadramento do viewmodel por arma (26 armas, GLB real)
         run: node tools/eval/vm-mint-audit.mjs
       - name: Invariantes (portão — falha crítica reprova o PR)
-        run: node tools/eval/invariants.mjs
+        run: |
+          node --test tests/fresh-report.test.mjs
+          node tools/eval/invariants.mjs
       - name: Coice do viewmodel (near plane + pitch em rajada)
         run: node tools/eval/vm-kick-sim.mjs
       - name: Faca construída e transições sem bind pose
