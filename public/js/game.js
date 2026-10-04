@@ -5814,7 +5814,7 @@ export class Game {
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
     const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
-    const weaponChanged = this.playerTP && this._tpWeapon !== w;
+    const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id);
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
     if (this.playerTP && !weaponChanged && !wantUpgrade) return;
     // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
@@ -5833,6 +5833,7 @@ export class Game {
     this.scene.add(tp.group);
     this.playerTP = tp;
     this._tpWeapon = w;
+    this._tpDefId = def.id;
   }
 
   // Anima o corpo TP a partir do estado do jogador e põe a câmera atrás dele.
@@ -6843,6 +6844,24 @@ export class Game {
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
     bot._mark = { halo, ally };   // SEM chevron/seta na cabeça (pedido do dono) — só o halo no chão
+  }
+  /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
+     então def, nome e malha ficam iguais nos dois lados do fio. */
+  _trocarPersonagem(c, def) {
+    if (!c || !def || c.def?.id === def.id) return false;
+    if (c === this.player) {
+      this.playerDef = def; this.playerCharId = def.id; c.def = def;
+      const perfil = { id: def.id, faction: this.playerFaction, skin: def.pal?.skin, sleeve: def.pal?.shirt, accent: def.pal?.pants };
+      this.vm?.authored?.setProfile(perfil);
+      this.vm?.melee?.setProfile(perfil);
+      return true;
+    }
+    if (c.name === c.def?.name) c.name = def.name;
+    else if (c.name === `[BOT] ${c.def?.name}`) c.name = `[BOT] ${def.name}`;
+    c.def = def;
+    c._meshWeapon = null;
+    if (c.mesh) this._syncRemoteWeapon(c, c.weapon);
+    return true;
   }
   /* A arma de 3ª pessoa pertence à malha do personagem; remonte-a quando o snapshot trocar
      a arma, preservando transform/visibilidade/raycast e o fallback procedural visível. */
