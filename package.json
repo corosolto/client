@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.1.0-alpha.36",
+  "version": "2.1.0-alpha.39",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -248,7 +248,7 @@
     "eval:lajes-soundscape": "node tools/eval/lajes-soundscape-check.mjs",
     "eval:lajes-spawn-space": "node tools/eval/lajes-spawn-space-check.mjs",
     "eval:escadao-preview": "node tools/eval/escadao-preview-check.mjs",
-    "eval:amazonia": "node tools/eval/amazonia-check.mjs && node tools/eval/amazonia-surface-check.mjs && node tools/eval/amazonia-water-movement-check.mjs && node tools/eval/ambience-registry-check.mjs --map=amazonia && node tools/eval/amazonia-bots-check.mjs && node tools/eval/amazonia-audio-pack-check.mjs && node tools/eval/amazonia-raycast-check.mjs && node tools/eval/amazonia-spawn-stairs-check.mjs",
+    "eval:amazonia": "node tools/eval/amazonia-check.mjs && node tools/eval/amazonia-surface-check.mjs && node tools/eval/amazonia-water-movement-check.mjs && node tools/eval/amazonia-agua-estacoes-check.mjs && node tools/eval/ambience-registry-check.mjs --map=amazonia && node tools/eval/amazonia-bots-check.mjs && node tools/eval/amazonia-audio-pack-check.mjs && node tools/eval/amazonia-raycast-check.mjs && node tools/eval/amazonia-spawn-stairs-check.mjs",
     "eval:amazonia-8x8": "node tools/eval/amazonia-8x8-sim-check.mjs",
     "eval:amazonia-rota": "node tools/eval/amazonia-8x8-perf-check.mjs",
     "eval:lajes-raycast": "node tools/eval/lajes-raycast-check.mjs",

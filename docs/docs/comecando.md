@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 57.826 linhas em 113 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 57.889 linhas em 113 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **8.314** linhas | `wc -l public/js/game.js` |
 | `main.js` | 4.218 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -49,10 +49,10 @@ esta página envelhecia no primeiro commit — ver
 | Personagens jogáveis | 53, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 18 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 22 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 631 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 634 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.36` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.39` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -223,7 +223,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 |---|---|---|---|---:|
 | `campomorro` | Campinho do Morro | **captura** | `map_campomorro.js` | 815 |
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.395 |
-| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.202 |
+| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.265 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.409 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.097 |
