@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.48`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.49`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -68,6 +68,16 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.49] — 2026-10-04
+
+### Mudado
+- fix(gate): exigir relatório fresco da auditoria de mapas (#766)
+- fix(gate): allow full map audit to finish on CI runners
+- docs: record alpha.48 map audit rebase
+- docs: record fresh CI failure and promotion gates
+- docs: checkpoint map audit PR and validation
+- fix(gate): require fresh map audit report
 
 ## [2.1.0-alpha.48] — 2026-10-04
 
