@@ -825,6 +825,10 @@ class Netcode {
       this.net.sendClientStats?.({
         fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
         reconcileP95: this._percentil(correcoes, 0.95),
+        // O p95 da sessão precisa dos eventos, não do p95 de cada janela. Em uma
+        // janela anormalmente cheia, distribuir as 512 amostras por toda ela.
+        reconcileSamples: correcoes.length <= 512 ? correcoes.slice() : Array.from({ length: 512 }, (_, i) =>
+          correcoes[Math.floor((i + 0.5) * correcoes.length / 512)]),
         reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
         reconcileCount: correcoes.length,
         quality: game.settings?.quality || null,

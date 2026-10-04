@@ -1296,6 +1296,7 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
   cobra(samples.length === 0, 'retorno ao jogo aguarda janela nova antes de medir');
   pings.push(34, 36, 39);
   gaps.push(...Array(19).fill(33), 450);
+  mp._reconcileWindow.push(0.02, 0.8);
   g._rafFrames += 60;
   mp._nsT0 = performance.now() - 1000;
   mp._nsF0 = g._rafFrames - 60;
@@ -1306,6 +1307,8 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
     'janela ativa envia todos os pings uma vez, sem repetir os da pausa');
   cobra(samples[0]?.gap === 33 && gaps.length === 0,
     'gap p95 da janela ignora pico isolado; máximo do HUD não vira qualidade da sessão');
+  cobra(samples[0]?.reconcileSamples?.join(',') === '0.02,0.8' && mp._reconcileWindow.length === 0,
+    'correções da janela ativa chegam como eventos sem repetir no próximo envio');
   if (hiddenBefore) Object.defineProperty(document, 'hidden', hiddenBefore);
   else delete document.hidden;
   g.dispose();
