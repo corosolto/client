@@ -161,6 +161,28 @@
 - fix(security): atualizar http-cache-semantics para 4.3.0 (#749)
 - fix(deps): tira da lista as isencoes que viraram letra morta
 - docs(changelog): rodada do cronista — 50 commits
+- fix(gate): allow full map audit to finish on CI runners
+- docs: record alpha.48 map audit rebase
+- docs: record fresh CI failure and promotion gates
+- docs: checkpoint map audit PR and validation
+- fix(gate): require fresh map audit report
+- fix(corrego): restore separate CTF routes on narrow bridges
+- fix(assets): o contrato de ambiência do áudio é do jogo, não do pacote (#696, #741)
+- fix(corrego): as 3 pontes baixas em escala — malha, colisor e navegação na mesma medida (#681)
+- fix(release): keep bot push from canceling dispatch
+- docs(corrego): record alpha.47 rebase and CI gate
+- test(chat): make spectator smoke independent of round transition
+- test(corrego): report CTF route summary only on pass
+- Dispatch backend node sync after client release (#752)
+- docs: regenera blocos derivados (regua eval:corrego-ponte entra no check:fast)
+- docs(audio): fechar preflight do pacote instrumental
+- docs(audio): registrar revisão visual e condição de merge
+- docs(audio): registrar pacote instrumental e limites da revisão
+- fix(audio): validar pacote privado instrumental no build
+- docs(audio): registrar checkpoint da intro instrumental
+- feat(audio): manter instrumentais e alternar música do menu
+- docs: regenera blocos derivados (novo gate eval:vm-placar no check:altera a contagem)
+- fix(679): porta a visibilidade de alvo do catálogo para o check:fast
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado
