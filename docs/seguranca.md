@@ -498,3 +498,16 @@ idempotente e pode entrar antes ou depois do deploy.
 **Régua:** `npm run eval:identity`. Os mutantes `semuid-client`, `nick-auth` e
 `semcanonical` provam, respectivamente, transporte, autenticação UID-first e uso
 do nick canônico.
+
+---
+
+## 10. Chat de sala
+
+O chat textual do multiplayer (issue #686) tem contrato próprio em
+[`chat-de-sala.md`](chat-de-sala.md): autoria vem do ticket (handle por HMAC e nick
+verificado), nunca do `nome` do navegador; `uid` e `pid` não entram em frame nem em log;
+nenhum texto chega a `/health`, `/metrics`, `/rooms`, `/sala/:codigo` ou ao SEO; a denúncia
+é registrada e nunca modera sozinha. O nó só liga com `MP_CHAT=1`, e o rollback é `MP_CHAT=0`.
+
+**Régua:** `npm run eval:chat` no client e `eval:chat`, `eval:chat-smoke` e
+`eval:chat-report` no backend.

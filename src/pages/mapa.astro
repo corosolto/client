@@ -129,8 +129,12 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const map = L.map('map', { scrollWheelZoom: true }).setView([-14.5, -52.5], 4);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-      maxZoom: 12, attribution: '&copy; OpenStreetMap &copy; CARTO',
+    // CARTO sem chave devolve tile "API KEY REQUIRED" e o OSM público bloqueia (403); Esri não exige chave.
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 16, attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin',
+    }).addTo(map);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 16,
     }).addTo(map);
     const maxM = Math.max(1, ...mapData.cities.map(c => c.matches));
     for (const c of mapData.cities) {

@@ -17,9 +17,13 @@
  *        `versao_incompativel` e fecha o socket, sem virar sessão.
  *   P4 · a UI tem mensagem própria para esse erro (não cai no genérico).
  *   P5 · o nó anuncia `clientVersion` no welcome e no /health.
+ *   P6 · com `simHash` dos dois lados vale o código simulado, não o rótulo: versão diferente
+ *        com o mesmo hash entra (release de menu não tira ninguém do MP), hash diferente é
+ *        recusado mesmo com a versão igual, e nó sem hash cai na regra de versão.
  *
  * Mutação (no FONTE, não no teste): --mutante=aceita-tudo faz `versaoCompativel` devolver
- * sempre true → P1 e P3b têm de ficar vermelhas.
+ * sempre true → P1 e P3b têm de ficar vermelhas. --mutante=ignora-hash faz a regra
+ * ignorar o `simHash` → P6 tem de ficar vermelha.
  *
  *   node tools/eval/mp-paridade-check.mjs [--mutante=aceita-tudo]
  */
@@ -44,10 +48,15 @@ let fonte = fs.readFileSync(NET_SRC, 'utf8');
 if (MUT === 'aceita-tudo') {
   const antes = fonte;
   fonte = fonte.replace(
-    /export const versaoCompativel = [^;]+;/,
+    /export const versaoCompativel = \([^)]*\) => \{[\s\S]*?\n\};/,
     'export const versaoCompativel = () => true;',
   );
   if (fonte === antes) { console.error('mutante não encontrou versaoCompativel em net.js'); process.exit(1); }
+}
+if (MUT === 'ignora-hash') {
+  const antes = fonte;
+  fonte = fonte.replace('if (simNo && nossoSim) return simNo === nossoSim;', '');
+  if (fonte === antes) { console.error('mutante não encontrou a comparação de simHash em net.js'); process.exit(1); }
 }
 /* O módulo mutado vive ao LADO do original para que os imports relativos (./nos.js,
    ./netcodec.js, ./version.js) resolvam na árvore de verdade. */
@@ -66,14 +75,20 @@ cobra(compativel(undefined) === true && compativel('') === true,
 
 /* P3 roda o `_conectar` de PRODUÇÃO com um transporte falso: sem browser e sem rede, mas
    é o código do jogo que decide entrar ou recusar. */
-const transporteFalso = (versao) => {
+cobra(compativel('2.0.0-alpha.1', VERSION, 'aaaa', 'aaaa') === true
+    && compativel(VERSION, VERSION, 'aaaa', 'bbbb') === false
+    && compativel(VERSION, VERSION, null, 'aaaa') === true
+    && compativel('2.0.0-alpha.1', VERSION, null, 'aaaa') === false,
+  'P6 · simHash decide quando os dois lados têm; sem hash do nó vale a versão');
+
+const transporteFalso = (versao, simHash) => {
   const tp = {
     fechado: false,
     abrir({ aberto, mensagem }) {
       aberto?.();
       setTimeout(() => mensagem(JSON.stringify({
         type: 'welcome', yourEnt: 1, yourTeam: 'E', map: 'praca_poderes',
-        roster: [], clientVersion: versao,
+        roster: [], clientVersion: versao, ...(simHash ? { simHash } : {}),
       }), false, 0), 0);
     },
     fechar() { tp.fechado = true; },
@@ -83,9 +98,9 @@ const transporteFalso = (versao) => {
 };
 
 const NetClient = mod.NetClient || mod.default;
-async function tentar(versao) {
+async function tentar(versao, simHash) {
   const cli = new NetClient('ws://x/ws', { nome: 'r', room: 'r' });
-  const tp = transporteFalso(versao);
+  const tp = transporteFalso(versao, simHash);
   try {
     await cli._conectar(2000, () => tp);
     return { entrou: true, fechou: tp.fechado };
@@ -101,6 +116,17 @@ if (typeof NetClient === 'function') {
   cobra(outra.entrou === false && /versao_incompativel/.test(outra.erro || '') && outra.fechou,
     'P3b · versão diferente é recusada e o socket fecha',
     `entrou=${outra.entrou} erro=${outra.erro || '-'} fechou=${outra.fechou}`);
+  /* P6 no caminho real: só mede quando esta árvore já tem SIM_HASH (o release grava). */
+  const { SIM_HASH } = await import(pathToFileURL(path.join(ROOT, 'public/js/version.js')).href);
+  if (SIM_HASH) {
+    const mesmoSim = await tentar('2.0.0-alpha.1', SIM_HASH);
+    const outroSim = await tentar(VERSION, '0000000000000000');
+    cobra(mesmoSim.entrou === true && outroSim.entrou === false && /versao_incompativel/.test(outroSim.erro || ''),
+      'P6b · welcome com o mesmo simHash entra mesmo com outra versão; simHash diferente é recusado',
+      `mesmo=${mesmoSim.entrou} outro=${outroSim.entrou}`);
+  } else {
+    console.log('  NOTA P6b · version.js sem SIM_HASH; caminho real não medido');
+  }
 } else {
   cobra(false, 'P3 · net.js exporta NetClient', 'export não encontrado');
 }

@@ -21,11 +21,15 @@
      --faixa-pistola=0.8,1.25  faixa das curtas contra a pistola (decisão pendente do dono)
      --variante='{"arma":{"frame":{...},"ads":{...}}}'  experimento de config ao vivo, sem tocar arquivo
      --assar-pistola          regrava tools/eval/vm-pistola-aprovada.json (só com decisão do dono)
-     --ref-ak=viva / --assar-ak  idem para a AK (padrão: retrato da golden APROVADA, pré-#631)
-   Saída ≠ 0: vermelho fora da dívida declarada (vm-reguas-divida.json) ou
-   "não sei medir". Com VM_LAUNCH=true só o aceite exato do dono vale.
-   Requer private-assets e navegador — régua LOCAL (check:vm), fora do check:fast;
-   o CI confere o placar assado com eval:vm-placar.
+    --ref-ak=viva / --assar-ak  idem para a AK (padrão: retrato da golden APROVADA, pré-#631)
+    --asset-base=<deployment>  busca o catálogo pago em /private-assets no edge e o
+                               serve do disco (o `vercel curl` é enfileirado: chamadas
+                               concorrentes caem em action_required)
+    --asset-root=<dir>         mesma função com uma cópia local já baixada
+  Saída ≠ 0: vermelho fora da dívida declarada (vm-reguas-divida.json) ou
+  "não sei medir". Com VM_LAUNCH=true só o aceite exato do dono vale.
+  Requer private-assets e navegador — régua LOCAL (check:vm); o PORTÃO da #679 no
+  check:fast é o `eval:vm-placar`, que confere este placar assado nos dois aspectos.
    ============================================================================ */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -103,6 +107,7 @@ try {
 } finally {
   await browser.close();
   srv.kill();
+  P.limparAssetsPagos();
 }
 
 // ---- veredito ---------------------------------------------------------------

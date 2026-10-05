@@ -6,7 +6,7 @@ import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
-import { apiUrl, fetchComRetry } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
+import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
@@ -32,6 +32,7 @@ import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
 import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { montarChatSala } from './chat-painel.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -39,7 +40,7 @@ import { FACCAO_NOME_UI } from './mapcat.js';
 const SETTINGS_KEY = 'awpbr_settings';
 const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 if (savedSettings.invertY == null && savedSettings.invY != null) savedSettings.invertY = savedSettings.invY;
-const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
+const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, menuMusic: true, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
 if (!['first', 'third', 'shoulder'].includes(settings.camView)) settings.camView = 'first';
 let preferredQuality = null;
 const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify({
@@ -506,6 +507,15 @@ fetch(`/audio/manifest.json?v=${VERSION}`)
   })
   .catch(() => {});
 let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
+function syncMenuMusicToggle() {
+  const button = $('hub-music-toggle');
+  if (!button) return;
+  const enabled = settings.menuMusic !== false;
+  button.setAttribute('aria-pressed', String(enabled));
+  button.setAttribute('aria-label', tr(enabled ? 'Desligar música do menu' : 'Ligar música do menu'));
+  button.title = button.getAttribute('aria-label');
+  button.querySelector('b').textContent = tr(enabled ? 'MÚSICA LIGADA' : 'MÚSICA DESLIGADA');
+}
 const _menuTrackId = (url) => url.match(/([^/]+)\.\w+$/)?.[1] || 'desconhecida';
 function _ensureMusic() {
   if (menuMusic && !tracksTrocadas) return menuMusic;
@@ -526,6 +536,7 @@ function _ensureMusic() {
   return menuMusic;
 }
 function startMenuMusic() {
+  if (settings.menuMusic === false) return;
   const m = _ensureMusic();
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
   if (!musicArmed) {
@@ -534,12 +545,12 @@ function startMenuMusic() {
     // fluxo atual: mudo no load + desmute com fade no 1º gesto. Sem promise não tratada.
     m.muted = false; m.volume = MENU_MUSIC_VOL;
     const p = m.play();
-    if (p && p.then) p.then(() => { musicArmed = true; }, () => {
-      if (m.paused) { m.muted = true; m.play().catch(() => {}); }   // fallback gracioso
+    if (p && p.then) p.then(() => { musicArmed = true; if (settings.menuMusic === false) m.pause(); }, () => {
+      if (settings.menuMusic !== false && m.paused) { m.muted = true; m.play().catch(() => {}); }   // fallback gracioso
     });
     // o play() do boot nem sempre "gruda" (rede/dev server lento, readyState 0) —
     // re-tenta quando houver dados, enquanto a intenção for tocar no menu
-    if (!m._cpHook) { m._cpHook = 1; m.addEventListener('canplay', () => { if (!menuMusic || menuMusic.paused) m.play().catch(() => {}); }); }
+    if (!m._cpHook) { m._cpHook = 1; m.addEventListener('canplay', () => { if (settings.menuMusic !== false && menuMusic === m && m.paused) m.play().catch(() => {}); }); }
     return;
   }
   m.muted = false; m.volume = MENU_MUSIC_VOL;
@@ -557,6 +568,7 @@ function stopMenuMusic() {   // fade rápido pra não cortar seco ao entrar na p
 // então o som "entra" instantâneo, como se fosse autoplay de verdade
 const _armMusic = () => {
   if (musicArmed) return; musicArmed = true;
+  if (settings.menuMusic === false) return;
   const m = _ensureMusic();
   m.muted = false;
   let v = 0.02; m.volume = v;
@@ -578,8 +590,7 @@ function dismissSplash(e) {
   setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
   musicArmed = true;
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
-  const m = _ensureMusic();
-  m.muted = false; m.volume = MENU_MUSIC_VOL; m.play().catch(() => {});
+  startMenuMusic();
 }
 /* Foco no 1º item visível do menu CS: o handler de setas vive no #cs-menu e só dispara com
    o foco lá dentro. Guardas: não rouba foco de campo de texto nem do painel de setup. */
@@ -598,6 +609,18 @@ window.addEventListener('pointerdown', dismissSplash, true);
 window.addEventListener('keydown', dismissSplash, true);
 window.addEventListener('pointerdown', _armMusic);
 window.addEventListener('keydown', _armMusic);
+const menuMusicToggle = $('hub-music-toggle');
+if (menuMusicToggle) menuMusicToggle.onclick = () => {
+  settings.menuMusic = settings.menuMusic === false;
+  saveSettings();
+  syncMenuMusicToggle();
+  if (settings.menuMusic) startMenuMusic();
+  else {
+    if (musicFade) { clearInterval(musicFade); musicFade = null; }
+    if (menuMusic) { menuMusic.pause(); menuMusic.muted = true; }
+  }
+};
+syncMenuMusicToggle();
 startMenuMusic();   // boot: começa MUDA imediatamente (loop rolando antes do 1º clique)
 
 /* Laboratório local de curadoria (?menumusiclab=1). O jogo normal continua escolhendo uma
@@ -1096,6 +1119,7 @@ let heartbeatOff = false;
 await resolveGeoLang();
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
+syncMenuMusicToggle();
 // links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
 // weapons, maps, about, whats-new, docs/en); /mapa continua só PT (issue #54)
 if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) {
@@ -1238,7 +1262,7 @@ function _perfFinish(bootMs, frames) {
   } catch { /* GPU info é melhor-esforço */ }
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
-    anonId: getAnonId(), version: VERSION,
+    anonId: getAnonId(), version: versaoComOrigem(VERSION),
     sessionId: getSessionId(), ...telemetryGameContext,
     fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
@@ -1269,7 +1293,7 @@ function sendMatchEvent(result) {
   const top = Object.entries(wk).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
   const payload = {
     anonId: getAnonId(),
-    sessionId: getSessionId(), eventId: _matchEventId, version: VERSION,
+    sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext,
     map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
     character: currentChar, team: g.playerTeam,
@@ -1547,6 +1571,8 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   /* `applyCinematicScreen` morreu no 495a6d889 e a chamada ficou: o `ReferenceError` dentro
      de `setPaused(true)` matava o M em partida (pilha no BUG-179, item 7). */
   game.onPauseChange = () => resetConfirms();
+  // chat de sala (#686): Y/U do game.js abrem o compositor; a troca de cena fecha e guarda o rascunho
+  if (sessao?.chat) { game.onAbrirChat = (ch) => sessao.chat.abrir(ch); sessao.chat.aoTrocarJogo(game); }
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -2093,7 +2119,7 @@ if (HUB_ENABLED) {
   restoreHubRoute = () => {
     const query = new URLSearchParams(location.search);
     const section = query.get('secao');
-    const tab = Object.hasOwn(panes, section) ? section : 'jogar';
+    const tab = Object.prototype.hasOwnProperty.call(panes, section) ? section : 'jogar';
     const net = query.get('partida') === 'multiplayer' ? 'mp' : 'sp';
     const server = query.get('servidor') === 'privado' ? 'private' : 'public';
     const modal = query.get('janela');
@@ -2537,11 +2563,12 @@ $('settings-close').onclick = closeSettings;
 $('settings-apply').onclick = () => { ui.click(); saveSettings(); if (game) game.applySettings(); };
 $('settings-restore').onclick = () => {
   ui.click();
-  settings.quality = 'med'; settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
+  settings.quality = 'med'; settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.menuMusic = true; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
   $('set-quality').value = settings.quality; $('set-sens').value = settings.sens; $('set-vol').value = settings.vol;
   $('set-speech').checked = true; $('set-invert-y').checked = false; $('set-xhair').value = settings.xhair; $('set-camera').value = 'first';
   if (game) game.setCamView('first');
-  sfx.speechEnabled = true; sfx.setVolume(settings.vol); applyXhair(); updLabels(); saveSettings();
+  sfx.speechEnabled = true; sfx.setVolume(settings.vol); applyXhair(); updLabels(); saveSettings(); syncMenuMusicToggle();
+  if (settingsReturn === 'main-menu') startMenuMusic();
   if (game) game.applySettings();
 };
 // Abas das configurações: troca o pane visível; os inputs nunca são re-criados,
@@ -3475,25 +3502,6 @@ function loop() {
 }
 loop();
 
-/* ---------------- boot ---------------- */
-/* Guarda igual à da linha de baixo, e não é zelo: esta escrita roda em escopo de
-   módulo DUAS linhas antes do `show()`. Se o redesign mexer na única `.footnote`
-   do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
-   de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
-   com "alguém renomeou uma classe no pause". */
-{
-  const fn = document.querySelector('.footnote');
-  if (fn) fn.textContent =
-    `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
-}
-{ const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
-show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
-if (HUB_ENABLED) {
-  hubNavigate({ map: currentMap, personagem: currentChar }, true);
-  restoreHubRoute();
-}
-window.__CS_MAIN_READY__ = true;
-window.__gameLaunch?.ready('boot');
 function showInspectionResult(won, character) {
   const end = $('match-end');
   end.classList.toggle('win', won);
@@ -3567,18 +3575,6 @@ async function openInspectionScreen(target) {
   }
   if (target.screen === 'pause') game?.setPaused(true);
 }
-if (inspectionScreen) {
-  openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
-} else if (testMode && params.get('auto')) {
-  const [team, char] = params.get('auto').split(',');
-  startGame(team || 'E', char || CHARACTERS[0].id);
-} else if (params.get('sala')) {
-  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
-     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
-  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
-  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
-  else entrarQuandoPuder();
-}
 
 /* MULTIPLAYER — navegador de servidores, salas e sessão de rede. Aqui só se escolhe ONDE e
    EM QUE sala; a autoridade é do servidor. Desenho e decisões: docs/MULTIPLAYER.md. */
@@ -3650,6 +3646,7 @@ function mpErro(msg, comRetry = false) {
 function noServeMapaParado(id, net) {
   if (oficina || !MAPAS_PARADOS.has(resolveMapId(id))) return false;
   try { net?.close?.(); } catch { /* fechar é cortesia; a recusa vale de qualquer jeito */ }
+  mpSessao?.chat?.destruir();
   mpSessao = null;
   mpErro(`Este servidor sorteou "${MAPS[resolveMapId(id)]?.name || id}", que saiu do jogo para retrabalho. `
     + 'O nó ainda não foi atualizado — escolha outra sala ou outra região.', true);
@@ -4084,6 +4081,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   mpEstado('on', `NA SALA · ${sala.name || sala.convite || ''}`);
   clearInterval(mpTimerLista);
   mpSessao = { net, sala, no: mpNoAtual };
+  // chat de sala (#686): inerte sem welcome.chat; vive na sessão, não no Game, então sobrevive à troca de mapa
+  mpSessao.chat = montarChatSala({ net, obterJogo: () => game, tr, frase, convite: sala.convite || sala.id || '', toque: TOUCH });
   /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê.
      Nó desatualizado ainda sorteia mapa PARADO: recusar é a única saída honesta — trocar o
      mapa por conta própria dessincroniza do servidor. Contrato: docs/maps/MAPAS-PARADOS.md. */
@@ -4093,6 +4092,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   modoEscolhido = true;
   net.onClose = () => mpDesconectou();
   net.onSlot = async (m) => {
+    if (mpSessao?.net === net) mpSessao.chat?.aoMudarSlot(m);
     await transitionSlot(m, net.meta, {
       team: currentTeam, faction: currentFaction, enemyFaction: currentEnemyFaction, char: currentChar,
     }, (id) => CHARACTERS.some((c) => c.id === id), async (next) => {
@@ -4106,6 +4106,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
   net.onPartida = async (m) => {
     if (mpSessao?.net !== net) return;
+    mpSessao.chat?.aoMudarMeta(net.meta);
     if (noServeMapaParado(m.map, net)) return;
     if (MAPS[m.map]) currentMap = m.map;
     matchMode = m.ctf ? 'ctf' : 'rounds';
@@ -4133,6 +4134,7 @@ async function mpMontarPartida(net, m) {
 function mpDesconectou() {
   if (!mpSessao) return;
   try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
+  mpSessao.chat?.destruir();
   mpSessao = null;
   clearTelemetryGameContext();
   mpFecharBarraSpec();
@@ -4190,6 +4192,7 @@ function mpFecharBarraSpec() {
 }
 function mpEncerrarSessao() {
   const s = mpSessao; mpSessao = null;
+  s?.chat?.destruir();
   mpFecharBarraSpec();
   try { s?.net.close(); } catch { /* já fechado */ }
 }
@@ -4203,4 +4206,37 @@ function mpSair() {
   soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('main-menu');
+}
+
+/* ---------------- boot ---------------- */
+/* Guarda igual à da linha de baixo, e não é zelo: esta escrita roda em escopo de
+   módulo DUAS linhas antes do `show()`. Se o redesign mexer na única `.footnote`
+   do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
+   de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
+   com "alguém renomeou uma classe no pause". */
+{
+  const fn = document.querySelector('.footnote');
+  if (fn) fn.textContent =
+    `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
+}
+{ const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
+// Boot no fim do módulo: `restoreHubRoute()` pode abrir o multiplayer, que lê `mpEl`/`mpNos` (#707).
+show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
+if (HUB_ENABLED) {
+  hubNavigate({ map: currentMap, personagem: currentChar }, true);
+  restoreHubRoute();
+}
+window.__CS_MAIN_READY__ = true;
+window.__gameLaunch?.ready('boot');
+if (inspectionScreen) {
+  openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
+} else if (testMode && params.get('auto')) {
+  const [team, char] = params.get('auto').split(',');
+  startGame(team || 'E', char || CHARACTERS[0].id);
+} else if (params.get('sala')) {
+  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
+     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
+  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
+  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
+  else entrarQuandoPuder();
 }

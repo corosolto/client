@@ -12,19 +12,32 @@ cd "$(dirname "$0")/.."
 URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v8/audio-pack.zip}"
 DEST="public/audio"
 AUTH_ARGS=()
+PACOTE_PRIVADO=0
 
 case "$URL" in
   https://*.private.blob.vercel-storage.com/*)
     : "${BLOB_READ_WRITE_TOKEN:?BLOB_READ_WRITE_TOKEN ausente para o pacote privado de audio}"
     : "${AUDIO_PACK_SHA256:?AUDIO_PACK_SHA256 ausente para verificar o pacote privado de audio}"
     AUTH_ARGS=(-H "Authorization: Bearer ${BLOB_READ_WRITE_TOKEN}")
+    PACOTE_PRIVADO=1
     ;;
 esac
 
-if [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
+# O manifest que o jogo consome precisa de `mapSoundscapes` para todo mapa do
+# `maps.js`; sem isso o `world.sound` de cada mapa aponta pros `audio/ambiente/*`
+# que NENHUM pacote atual traz (medido em audio-pack-v8, 04/10/2026) e o mapa
+# sobe mudo. O pack público recebe o hum sintetizado — que não é asset e não
+# precisa de credencial; o privado NÃO recebe, porque ambiência real que falta
+# tem de reprovar o build, não ser trocada por silêncio.
+prepara_ambiencia() {
   node tools/audio/complete-amazonia-soundscape.mjs
   node tools/audio/extend-map-soundscapes.mjs "$DEST/manifest.json"
   node tools/audio/lajes-soundscape.mjs "$DEST/manifest.json"
+  [ "$PACOTE_PRIVADO" = 1 ] || node tools/audio/ensure-map-soundscapes.mjs
+}
+
+if [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
+  prepara_ambiencia
   echo "audio/ já configurado — nada a fazer."
   exit 0
 fi
@@ -37,7 +50,5 @@ if [ -n "${AUDIO_PACK_SHA256:-}" ]; then
 fi
 unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
 [ -f "$DEST/manifest.json" ] || cp "$DEST/manifest.example.json" "$DEST/manifest.json"
-node tools/audio/complete-amazonia-soundscape.mjs
-node tools/audio/extend-map-soundscapes.mjs "$DEST/manifest.json"
-node tools/audio/lajes-soundscape.mjs "$DEST/manifest.json"
+prepara_ambiencia
 echo "Pronto. Áudio instalado em $DEST/."

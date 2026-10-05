@@ -755,7 +755,7 @@ const charStage = (css.match(/\.char-stage\{([^}]*)\}/) || [])[1] || '';
 const charFilmstrip = (css.match(/\.char-filmstrip\{([^}]*)\}/) || [])[1] || '';
 const charList = (css.match(/\.char-list\{([^}]*)\}/) || [])[1] || '';
 const charRow = (css.match(/\.char-row\{([^}]*)\}/) || [])[1] || '';
-const charPreview = (css.match(/#char-preview\{([^}]*)\}/) || [])[1] || '';
+const charPreview = (css.match(/(?:^|\n)#char-preview\{([^}]*)\}/) || [])[1] || '';
 const selecaoDuasColunas = /grid-template-columns:minmax\(280px,360px\) minmax\(0,1fr\)/.test(charStage)
   && /grid-template-areas:"sheet preview" "rail rail"/.test(charStage)
   && /--char-thumb:114px/.test(charStage)
