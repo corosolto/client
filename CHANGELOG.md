@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.52`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.53`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -68,6 +68,18 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.53] — 2026-10-06
+
+### Mudado
+- docs(ui): roadmap visual e bot de regressão (#756)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(ui): fechar continuidade apos CI hospedada
+- docs(ui): registrar primeiro run hospedado
+- docs(ui): registrar runtime do portao local
+- docs(ui): atualizar blocos gerados para capturador
+- docs(ui): registrar checkpoint e proxima validacao
+- docs(ui): auditar interface e adicionar portao de regressao
 
 ## [2.1.0-alpha.52] — 2026-10-06
 
