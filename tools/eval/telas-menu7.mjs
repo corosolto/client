@@ -69,17 +69,22 @@ if (MOBILE) {
     const manifest = document.querySelector('link[rel="manifest"]')?.href;
     const data = manifest ? await fetch(manifest).then((r) => r.ok ? r.json() : null) : null;
     const rotate = document.querySelector('#rotate-prompt');
+    const installer = document.querySelector('#pwa-install');
     return {
       menuVisible: !document.querySelector('#main-menu')?.classList.contains('hidden'),
       legacyDesktopWarning: !!document.querySelector('#mobile-warning'),
       rotatePromptVisible: rotate && getComputedStyle(rotate).display !== 'none',
+      installGuideVisible: !!installer && !installer.hidden && getComputedStyle(installer).display !== 'none',
       manifestName: data?.name || null,
       standalone: data?.display === 'standalone',
+      manifestIcons: data?.icons?.map((icon) => icon.sizes) || [],
       touch: matchMedia('(pointer: coarse)').matches,
     };
   });
   if (!mobileState.menuVisible || mobileState.legacyDesktopWarning || mobileState.rotatePromptVisible
-      || !mobileState.standalone || !mobileState.touch) {
+      || !mobileState.installGuideVisible || mobileState.manifestName !== 'CORO SOLTO: Treta Suprema' || !mobileState.standalone
+      || !mobileState.manifestIcons.includes('192x192') || !mobileState.manifestIcons.includes('512x512')
+      || !mobileState.touch) {
     throw new Error(`mobile beta bootstrap failed: ${JSON.stringify(mobileState)}`);
   }
   console.log('mobile beta bootstrap', JSON.stringify(mobileState));
