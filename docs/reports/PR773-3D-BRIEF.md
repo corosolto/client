@@ -1,6 +1,6 @@
 # PR #773 — brief para refazer os modelos políticos
 
-Este brief prepara a etapa visual pendente de [PR #773](https://github.com/corosolto/client/pull/773). O dono autorizou o uso de créditos Mint e escolheu a conta; o envio da primeira geração aguarda o limite de créditos solicitado pela revisão automática. Os modelos originais continuam no jogo. Estado operacional e testes: [PR773-CONTINUATION.md](PR773-CONTINUATION.md).
+Este brief prepara a etapa visual pendente de [PR #773](https://github.com/corosolto/client/pull/773). O dono autorizou o uso de créditos Mint, escolheu a conta e definiu teto de 10.000 créditos para a primeira Dama. A geração de prévias começou; os GLB originais continuam no jogo. Estado operacional, saldo e testes: [PR773-CONTINUATION.md](PR773-CONTINUATION.md).
 
 ## Fontes e problema medido
 
@@ -26,6 +26,8 @@ Prompt em inglês preparado para a nova conversa do projeto Mint (enviar em **re
 > Create a NEW full-body riggable 3D game character for CS BRASIL: an adult Brazilian woman inspired by Dilma Rousseff, recognizable as the satirical Dama da Mandioca. Red fitted blazer and trousers, light blouse, small pearl earrings and necklace, low black shoes. Short layered auburn-brown hair that frames the face and ears, close to the scalp in side view. NO tall quiff, swept-up rolls, bulbous hair, oversized head, giant eyes, or inflated torso. Match the human-stylized proportions of a regular third-person shooter cast: head around one fifth of total height, in line with the existing regular cast, natural shoulders, torso, arms, legs, hands and feet. Distinctive warm face, not photorealistic. Symmetric full-body T-pose, arms straight and horizontal, fingers separated, EMPTY HANDS, both feet on one ground plane. One character only, centered, clean UV-textured PBR game mesh, no floating pieces, props, weapon, pedestal or background. Preserve readable front, profile and back silhouettes and avoid blown-out white glossy seams. Create a preview for review and STOP before final 3D model generation or rigging.
 
 O valor aproximado de 1/5 vem da mediana C1 do elenco regular (0,210), não é um teto automático para aceitar a arte. O rascunho anterior dizia 1/7 e foi corrigido antes do envio; nenhuma geração ocorreu com ele.
+
+Primeira prévia: corpo proporcional melhor, mas cabelo ainda elevado e penteado para trás. Reprovada. Feedback enviado na [conversa Mint da Dama](https://mint.gg/project/zd7f578pwd63mf09t53thdze798fh0wk?chat=ph7b8ya9dpzzmdcj2w4zeqx36s8fr000) para **nova prévia apenas**, com bob lateral curto até as orelhas, coroa baixa e franja lateral. A segunda prévia mostra frente e perfil sem o topete da V1, mas a crítica independente reprovou seu corpo excessivamente esguio/realista, rosto genérico e mãos pequenas. A terceira prévia conservou o cabelo da V2 e amadureceu o rosto; o crítico aprovou gerar GLB exploratório contra o elenco regular, com ressalvas em mãos, material e legibilidade no jogo. Evidências: `tools/eval/asset-evidence/pr773/dama-mint-preview-v{1-rejected,2,3}.jpg`. O modelo Tripo P1 da V3 está em geração; rig e substituição no jogo continuam pendentes. Gasto medido até iniciar o modelo: 1.144 créditos.
 
 ## Ordem de produção
 
