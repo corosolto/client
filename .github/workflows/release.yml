@@ -29,9 +29,10 @@ on:
 # fast-forward-only (ruleset), a head nova sempre contém a velha — o run velho
 # empurrando depois de a main andar é exatamente o "atomic push failed" da .152
 # (03:21 de 18/08): rebase cobre a janela evento→execução, não a janela execução→push.
+# O push do bump pelo bot não pode cancelar o run que ainda cria o Release e avisa o backend.
 concurrency:
   group: release-main
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
 
 permissions:
   contents: write
@@ -157,3 +158,14 @@ jobs:
             exit 0
           fi
           gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
+
+      - name: Avisa o backend do release para reconciliar os nós MP
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.BACKEND_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          [ -n "$GH_TOKEN" ] || { echo "::error::BACKEND_DISPATCH_TOKEN não configurado"; exit 1; }
+          SHA="$(git rev-parse HEAD)"
+          gh api -X POST repos/corosolto/backend/dispatches \
+            -f event_type=client-release -f "client_payload[sha]=$SHA"
