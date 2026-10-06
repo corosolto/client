@@ -35,10 +35,10 @@ async function avatarDataUri(url?: string | null): Promise<string | null> {
   } catch { return null; }
 }
 
-// lado do jogador: P > B = PETISTA, B > P = BOLSONARISTA, empate = NEUTRO
+// lado do jogador: matches_p conta a Esquerda e matches_b a Direita (colunas legadas)
 export function sideOf(mp: number, mb: number): [string, string] {
-  if (mp > mb) return ['PETISTA', '#e03232'];
-  if (mb > mp) return ['BOLSONARISTA', '#1faa4d'];
+  if (mp > mb) return ['ESQUERDA', '#e03232'];
+  if (mb > mp) return ['DIREITA', '#3355ff'];
   return ['NEUTRO', '#ffd23f'];
 }
 
@@ -73,7 +73,7 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
   <circle cx="748" cy="96" r="200" fill="${sideColor}" opacity="0.07"/>
   <rect width="840" height="6" fill="#e03232"/><rect y="434" width="840" height="6" fill="#1faa4d"/>
   <text x="56" y="60" font-size="22" font-weight="bold" fill="#ffd23f" font-family="DejaVu Sans" letter-spacing="5">CORO SOLTO</text>
-  <text x="660" y="60" font-size="16" fill="${sideColor}" font-family="DejaVu Sans" text-anchor="end" font-weight="bold">${sideLabel} · ${p.matches_p}P × ${p.matches_b}B</text>
+  <text x="660" y="60" font-size="16" fill="${sideColor}" font-family="DejaVu Sans" text-anchor="end" font-weight="bold">${sideLabel} · ${p.matches_p}E × ${p.matches_b}D</text>
   <text x="56" y="132" font-size="54" font-weight="bold" fill="#f2ead8" font-family="DejaVu Sans">${esc(p.nick)}</text>
   ${p.social ? `<text x="56" y="166" font-size="18" fill="#b8d94a" font-family="DejaVu Sans">${esc(p.social)}</text>` : ''}
   ${cName ? `<text x="56" y="194" font-size="16" fill="#8a8064" font-family="DejaVu Sans">joga de ${esc(cName)}</text>` : ''}

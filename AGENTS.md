@@ -223,7 +223,8 @@ contorne.
   desenha. Foi ela que pegou o quality gate mentindo. Se você mexer no caminho do viewmodel,
   **estenda a `AUD1` junto e prove com mutação**.
 - **Nada de asset com copyright, nada de pessoa real, nada de gore.** É linha editorial e é
-  proteção contra takedown — ver [`CONTRIBUTING.md`](CONTRIBUTING.md).
+  proteção contra takedown — ver [`CONTRIBUTING.md`](CONTRIBUTING.md). A única exceção a
+  pessoa real é a caricatura satírica de figura política pública, com as regras de lá.
 - **Segredo nunca no git.** `service_role` e `.env` só na Vercel.
 
 ---
