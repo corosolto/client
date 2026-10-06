@@ -7,7 +7,9 @@ const source = await readFile(new URL('../../public/js/pwa-install.js', import.m
 class Element {
   hidden = true;
   textContent = '';
+  attributes = new Map();
   listeners = new Map();
+  setAttribute(name, value) { this.attributes.set(name, value); }
   addEventListener(type, listener) {
     const list = this.listeners.get(type) || [];
     list.push(listener);
@@ -18,7 +20,7 @@ class Element {
   }
 }
 
-function start({ userAgent = 'Android', platform = 'Linux', touch = true, standalone = false } = {}) {
+function start({ userAgent = 'Android', platform = 'Linux', touch = true, standalone = false, lang = 'pt-BR' } = {}) {
   const nodes = new Map(['pwa-install', 'pwa-install-action', 'pwa-install-help'].map((id) => [id, new Element()]));
   const windowListeners = new Map();
   const window = {
@@ -30,7 +32,7 @@ function start({ userAgent = 'Android', platform = 'Linux', touch = true, standa
       windowListeners.set(type, list);
     },
   };
-  const document = { getElementById: (id) => nodes.get(id) || null };
+  const document = { documentElement: { lang }, getElementById: (id) => nodes.get(id) || null };
   vm.runInNewContext(source, { window, document });
   return {
     panel: nodes.get('pwa-install'),
@@ -45,6 +47,7 @@ function start({ userAgent = 'Android', platform = 'Linux', touch = true, standa
 const android = start();
 assert.equal(android.panel.hidden, false, 'touch device gets install help');
 assert.equal(android.action.textContent, 'COMO ADICIONAR');
+assert.equal(android.panel.attributes.get('aria-label'), 'Instalação do beta web');
 let prevented = false;
 let prompted = false;
 await android.dispatchWindow('beforeinstallprompt', {
@@ -80,4 +83,11 @@ assert.equal(installed.panel.hidden, true, 'installed app does not see install p
 const desktop = start({ touch: false });
 assert.equal(desktop.panel.hidden, true, 'desktop does not see mobile install promotion');
 
-console.log('PWA install contract: PASS (Android prompt, iPhone guidance, standalone and desktop)');
+const english = start({ lang: 'en' });
+assert.equal(english.action.textContent, 'HOW TO INSTALL', 'English install CTA is localized');
+assert.match(english.help.textContent, /browser menu/);
+await english.action.dispatch('click');
+assert.equal(english.help.textContent, 'Open your browser menu and choose “Install app” or “Add to Home Screen”.');
+assert.equal(english.panel.attributes.get('aria-label'), 'Install the web beta');
+
+console.log('PWA install contract: PASS (Android, iPhone, EN, standalone and desktop)');

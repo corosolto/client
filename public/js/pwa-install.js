@@ -1,6 +1,22 @@
 const panel = document.getElementById('pwa-install');
 const action = document.getElementById('pwa-install-action');
 const help = document.getElementById('pwa-install-help');
+const english = document.documentElement.lang === 'en';
+const copy = english ? {
+  label: 'Install the web beta',
+  add: 'HOW TO INSTALL',
+  install: 'INSTALL GAME',
+  ios: 'In Safari, tap Share and choose “Add to Home Screen”. If offered, turn on “Open as Web App”.',
+  generic: 'Open your browser menu and choose “Install app” or “Add to Home Screen”.',
+  failed: 'Installation did not finish. To try again, open your browser menu and choose “Install app”.',
+} : {
+  label: 'Instalação do beta web',
+  add: 'COMO ADICIONAR',
+  install: 'INSTALAR JOGO',
+  ios: 'No Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”. Se aparecer, ative “Abrir como App”.',
+  generic: 'Use o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.',
+  failed: 'A instalação não foi concluída. Para tentar de novo, use o menu do navegador e escolha “Instalar app”.',
+};
 
 if (panel && action && help) {
   const touch = window.matchMedia('(pointer: coarse)').matches;
@@ -12,18 +28,19 @@ if (panel && action && help) {
 
   if (touch && !installed) {
     panel.hidden = false;
+    panel.setAttribute('aria-label', copy.label);
     if (appleMobile) {
-      action.textContent = 'COMO ADICIONAR';
-      help.textContent = 'No Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”. Se aparecer, ative “Abrir como App”.';
+      action.textContent = copy.add;
+      help.textContent = copy.ios;
     } else {
-      action.textContent = 'COMO ADICIONAR';
-      help.textContent = 'Use o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.';
+      action.textContent = copy.add;
+      help.textContent = copy.generic;
     }
 
     window.addEventListener('beforeinstallprompt', (event) => {
       event.preventDefault();
       installPrompt = event;
-      action.textContent = 'INSTALAR JOGO';
+      action.textContent = copy.install;
       help.hidden = true;
     });
 
@@ -50,11 +67,9 @@ if (panel && action && help) {
       } catch {
         // A instalação ainda pode ser iniciada pelo menu do navegador.
       }
-      help.textContent = appleMobile
-        ? 'No Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”.'
-        : 'A instalação não foi concluída. Para tentar de novo, use o menu do navegador e escolha “Instalar app”.';
-        help.hidden = false;
-        action.textContent = 'COMO ADICIONAR';
+      help.textContent = appleMobile ? copy.ios : copy.failed;
+      help.hidden = false;
+      action.textContent = copy.add;
     });
   }
 }

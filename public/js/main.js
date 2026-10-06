@@ -1117,6 +1117,7 @@ let heartbeatOff = false;
    zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
 // o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
 await resolveGeoLang();
+document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
 syncMenuMusicToggle();
