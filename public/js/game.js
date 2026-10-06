@@ -802,6 +802,9 @@ export class Game {
     this._tpFwd = new THREE.Vector3();
     this._tpRight = new THREE.Vector3();
     this._tpEul = new THREE.Euler();
+    this._tpAimEul = new THREE.Euler();
+    this._tpOrbitYaw = 0;
+    this._tpOrbitPitch = 0;
     this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
     /* Só o CORPO do jogador (tecla B) — sem `weapons` o glbchars pré-carrega as 26 armas
        BLOQUEANDO e desfaz o lazy da partida (ARM1/ARM3). BUG-85. */
@@ -2113,6 +2116,11 @@ export class Game {
       // parecer luneta: você acompanha o alvo em vez de varrer o mapa com meio centímetro.
       const s = this.settings.sens * 0.0021 * (this.player.scoped ? Math.max(0.28, this.camera.fov / 70) : 1);
       const invertY = this.settings.invertY ? -1 : 1;
+      if (this.camView !== 'first' && (e.altKey || this.keys.AltLeft || this.keys.AltRight)) {
+        this._tpOrbitYaw -= e.movementX * s;
+        this._tpOrbitPitch = Math.max(-0.8, Math.min(0.8, this._tpOrbitPitch - e.movementY * s * invertY));
+        return;
+      }
       this.player.yaw -= e.movementX * s;
       this.player.pitch -= e.movementY * s * invertY;
       this.player.pitch = Math.max(-1.45, Math.min(1.45, this.player.pitch));
@@ -5793,6 +5801,8 @@ export class Game {
   setCamView(mode) {
     if (!['first', 'third', 'shoulder'].includes(mode)) return false;
     this.camView = mode;
+    this._tpOrbitYaw = 0;
+    this._tpOrbitPitch = 0;
     this.settings.camView = mode;
     if (mode !== 'first') this._ensurePlayerTP();
     this._syncCamViewVis();
@@ -5853,7 +5863,7 @@ export class Game {
     } else if (tp.mixer) {
       tp.mixer.update(dt);
     }
-    this._tpEul.set(p.pitch, p.yaw, 0, 'YXZ');
+    this._tpEul.set(Math.max(-1.45, Math.min(1.45, p.pitch + this._tpOrbitPitch)), p.yaw + this._tpOrbitYaw, 0, 'YXZ');
     const fwd = this._tpFwd.set(0, 0, -1).applyEuler(this._tpEul);
     const right = this._tpRight.set(1, 0, 0).applyEuler(this._tpEul);
     const cam = this.camera;
@@ -5862,7 +5872,8 @@ export class Game {
     const shoulder = this.camView === 'shoulder';
     const ads = p.scoped ? Math.min(1, (this._tpAdsF || 0) + dt / 0.11) : Math.max(0, (this._tpAdsF || 0) - dt / 0.11);
     this._tpAdsF = ads;
-    const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads;
+    const orbitBlend = Math.min(1, Math.abs(this._tpOrbitYaw) / 0.45);
+    const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend;
     const TP_UP = shoulder ? 0.10 : 0.18;
     const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
     cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
@@ -5872,20 +5883,28 @@ export class Game {
     // Cruz no alvo do raio autoritativo a distância de combate; o tiro continua
     // saindo do olho com yaw/pitch, igual ao servidor multiplayer.
     const aimPoint = this._tpAimPoint || (this._tpAimPoint = new THREE.Vector3());
-    cam.lookAt(aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12));
+    aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12 * (1 - orbitBlend));
+    aimPoint.y -= 0.7 * orbitBlend;
+    cam.lookAt(aimPoint);
   }
 
   // BUG-181: em câmera deslocada, a cruz projeta o primeiro impacto do raio do olho.
   _updateCrosshairParallax() {
     const el = this.el.crosshair;
     if (this.camView === 'first') {
+      el.style.visibility = 'visible';
       el.style.left = '50%'; el.style.top = '50%';
       return;
     }
     const dir = this._tpReticleDir || (this._tpReticleDir = new THREE.Vector3());
-    dir.set(0, 0, -1).applyEuler(this._tpEul);
+    this._tpAimEul.set(this.player.pitch, this.player.yaw, 0, 'YXZ');
+    dir.set(0, 0, -1).applyEuler(this._tpAimEul);
     const cameraDir = this._tpReticleCameraDir || (this._tpReticleCameraDir = new THREE.Vector3());
     cameraDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    if (dir.dot(cameraDir) <= 0) {
+      el.style.visibility = 'hidden';
+      return;
+    }
     const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.playerTeam).map(b => b.mesh.group);
     // A profundidade vista pela câmera evita cruz falsa atrás da cobertura.
     this.ray.set(this.camera.position, cameraDir);
@@ -5906,10 +5925,11 @@ export class Game {
     // matrixWorldInverse por conta própria. Sem isso a cruz usa o quadro anterior.
     this.camera.updateMatrixWorld(true);
     point.project(this.camera);
-    if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || point.z < -1 || point.z > 1) {
-      el.style.left = '50%'; el.style.top = '50%';
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || point.z < -1 || point.z > 1 || Math.abs(point.x) > 1 || Math.abs(point.y) > 1) {
+      el.style.visibility = 'hidden';
       return;
     }
+    el.style.visibility = 'visible';
     el.style.left = `${((point.x + 1) * 50).toFixed(3)}%`;
     el.style.top = `${((1 - point.y) * 50).toFixed(3)}%`;
   }
