@@ -44,9 +44,9 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 
 ## Próximo passo
 
-1. Publicar/mesclar a correção comum de `source-map-js` depois dos gates remotos; então integrar a main atualizada em `feat/elenco-politicos` e publicar esta continuação com Node 23 e os hooks ativos.
-2. Capturar o jogo real em 1200×800 e revisar Julia/Marina frente/lado, movimento e tiro; conferir roster 5–5, Julia só no B, Marina só no E e Xandão só no E. Caminhada/corrida ainda são verificações abertas, e a pose de seleção da Julia requer avaliação visual.
-3. Aguardar CI do PR #773 e revisar conflito/resultado. Não marcar aceite visual do elenco antes de fechar as verificações acima; depois retomar os gates antigos de Dama e dos outros sete modelos, sem alterar outros checkouts.
+1. Atualizar a descrição antiga do PR para refletir os 10 políticos, a regra 5–5, Julia no B, Marina no E, Xandão somente no E e “Zero Um”; publicar pelo hook normal com Node 23.
+2. Aguardar CI remoto para o novo head. O teste local `check:deploy` passou 46/46 em 98,5 s no commit com alpha.53 integrado; gates específicos de Julia/Marina e os quatro captures 1200×800 também passaram.
+3. Manter #773 em draft até a revisão visual humana do elenco completo; as ressalvas antigas de Dama/Ministro continuam abertas. O bloqueio técnico original da pose inclinada de Julia foi corrigido por retarget próprio e compensação de chão, mas revisão humana não é inferida do verde numérico.
 
 ## Continuação 06/10 — retarget Julia/Marina
 
@@ -58,4 +58,4 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 - Depois de atualizar `char_probe.json`, offsets, manifesto, imagens e vídeos, passaram `anims:check`, `anims:merge:check`, `feet:check`, `eval:pool-lado`, `eval:chao` (63 personagens), `eval:character-game-evidence` (7/7) e `eval:redesign` (UIA1–6/UIR1–43). `tools/eval/bug59-audits.mjs` regenerou os recibos SHA para as 126 artes e 189 vídeos. `eval:char-thumbnail` continua falhando somente nos seis personagens legados já documentados (camera-roxa, programador-virado, motoca-cachorro-loko, doidinho-bairro, designer-ux, lenda-lanhouse); nenhum dos dois novos aparece na falha.
 - O resumo global de `feet:check` ainda registra cinco clipes não compensáveis: Ministro walk/run, Esbirro run e Ancap walk/run. Não declarei essa dívida antiga resolvida por ter consertado Julia/Marina.
 - O worktree segue local à frente do head remoto do PR e ainda não foi publicado. Antes de fechar #773, falta atualizar os gates remotos e o texto antigo do PR (que ainda diz 9 personagens, Xandão em B/E e não cita Julia/Marina). Também seguem abertas as ressalvas visuais anteriores, em especial Ministro e Dama; não marcar a revisão visual geral como aprovada por causa deste conserto.
-- Checkpoint da correção retarget/mídia: `ccf5f8a9c` (`fix(personagens): retarget clipes da Julia e Marina`). O próximo passo é integrar `origin/main` atual (`15a9ef3fd`, alpha.53) e publicar o head atualizado para CI.
+- Checkpoints: `ccf5f8a9c` (`fix(personagens): retarget clipes da Julia e Marina`) e merge de `origin/main` alpha.53 em `1bae2c8b6`. `npm run check:deploy` passou 46/46 em 98,5 s depois dessa integração. A branch ainda precisa ser publicada; o PR remoto não contém esses checkpoints.
