@@ -267,14 +267,18 @@ const DICT = {
     'Runs the fiscal framework in his head and still finds time to explain the math to the team.',
   'O 01 da família. Sorriso de campanha e broche sempre no lugar.':
     'The family\'s number 01. Campaign smile and lapel pin always in place.',
-  'A toga é capa e o despacho sai antes do café. Joga pelos dois lados e ninguém discute.':
-    'The robe is a cape and the ruling is out before coffee. Plays for both sides and nobody argues.',
+  'A toga é capa e o despacho sai antes do café. Joga pelo Time E e ninguém discute.':
+    'The robe is a cape and the ruling is out before coffee. Plays for Team E and nobody argues.',
   'Sobe na tribuna de peruca loira e vira meme antes de terminar a frase.':
     'Takes the podium in a blond wig and becomes a meme before finishing the sentence.',
   'Carro de som, cabelo ao vento e uma convocação por minuto. Briga com os dois lados.':
     'Sound truck, hair in the wind and a rally call every minute. Fights with both sides.',
   'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.':
     'Former judge with a thick accent. The missus confirms: he never misses a deadline.',
+  'Coroa de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.':
+    'Flower crown, fuchsia blazer and a commanding floor presence. The drama starts with a pose and ends on the scoreboard.',
+  'Óculos vinho, coque preso e blazer azul-marinho. A conversa é calma; a mira, firme.':
+    'Burgundy glasses, a tied-up bun and a navy blazer. Calm words; steady aim.',
   'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.':
     'One-legged trickster boy. A whirl of smoke and he is gone — the red cap is the hitbox.',
   'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!':

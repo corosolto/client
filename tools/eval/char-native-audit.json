@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "10711ea6cef07e1c1220a8e6481a2ba36875705e42fc85f7bf4c418c00f5a361",
-  "weaponMapSha256": "5b77cbe2385fee5ac2fdad26f432dea690261de23edef0ad6f8394e92d1535cd",
-  "review": "Quadros centrais de seleção, vitória e derrota dos 62 personagens comparados em pranchas (asset-evidence/bug59/); pistola, escopeta, submetralhadora, fuzil, metralhadora e rifles de precisão permanecem distinguíveis, os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
-  "regenerate": "BASE=http://127.0.0.1:8124 node tools/eval/char-native-vids.mjs"
+  "mediaSha256": "012cfe9b75eaba2f1408c3a83e3322db2cb41b3488f15157173fa7508de38fa8",
+  "weaponMapSha256": "e650f1e2eca7141476d2feed64b8a11a38ac76753b3aab49cd824b8fca9573af",
+  "review": "Recibo de geração dos 63 vídeos e mapa CHAR_WEAPON correspondente. A revisão em pranchas de asset-evidence/bug59/ cobre o lote anterior. Os quadros novos de Julia Zanatta e Marina Silva foram inspecionados; a pose de seleção da Julia ainda precisa de revisão visual humana antes da aprovação do elenco.",
+  "regenerate": "BASE=http://127.0.0.1:8142 node tools/eval/char-native-vids.mjs"
 }
