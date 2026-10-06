@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-06T02:05:03.298Z",
+ "gerado": "2026-10-06T09:59:39.829Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -296,6 +296,17 @@
    "run": 0.0155,
    "shoot": -0.019,
    "crouch": -0.0153
+  },
+  "julia-zanatta": {
+   "idle": 0.1074,
+   "shoot": 0.1142,
+   "crouch": 0.0609
+  },
+  "marina-silva": {
+   "idle": 0.065,
+   "run": 0.0625,
+   "shoot": 0.084,
+   "crouch": 0.0163
   }
  },
  "suspeitos": [
@@ -324,10 +335,28 @@
    "amplitude": 0.0791
   },
   {
+   "id": "julia-zanatta",
+   "pose": "walk",
+   "desvio": -0.1153,
+   "amplitude": 0.0718
+  },
+  {
    "id": "ancap",
    "pose": "run",
    "desvio": -0.1086,
    "amplitude": 0.0863
+  },
+  {
+   "id": "julia-zanatta",
+   "pose": "run",
+   "desvio": -0.1042,
+   "amplitude": 0.073
+  },
+  {
+   "id": "marina-silva",
+   "pose": "walk",
+   "desvio": -0.0922,
+   "amplitude": 0.0745
   }
  ]
 }
