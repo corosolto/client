@@ -35,8 +35,13 @@ const browser = await chromium.launch({
     ...(process.env.GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : []),
   ],
 });
-const W = +(process.env.W || 1536), H = +(process.env.H || 1024);
-const page = await browser.newPage({ viewport: { width: W, height: H } });
+const W = +(process.env.W || (MOBILE ? 844 : 1536)), H = +(process.env.H || (MOBILE ? 390 : 1024));
+const page = await browser.newPage({
+  viewport: { width: W, height: H },
+  isMobile: MOBILE,
+  hasTouch: MOBILE,
+  deviceScaleFactor: MOBILE ? 2 : 1,
+});
 const pageErrors = [];
 page.on('pageerror', (e) => { pageErrors.push(e.message); console.error('[pageerror]', e.message.slice(0, 200)); });
 await page.addInitScript((lang) => {
@@ -59,9 +64,27 @@ await page.waitForSelector('#splash-enter:not(.hidden)', { timeout: 120000 });
    teclado do próprio runner também a libera). Nesse caso, a próxima espera é a prova. */
 await page.click('#boot-splash', { timeout: 5000 }).catch(() => {});
 if (MOBILE) {
-  await page.waitForSelector('#mobile-warning:not(.hidden)', { timeout: 60000 });
+  await page.waitForSelector('#main-menu:not(.hidden)', { timeout: 60000 });
+  const mobileState = await page.evaluate(async () => {
+    const manifest = document.querySelector('link[rel="manifest"]')?.href;
+    const data = manifest ? await fetch(manifest).then((r) => r.ok ? r.json() : null) : null;
+    const rotate = document.querySelector('#rotate-prompt');
+    return {
+      menuVisible: !document.querySelector('#main-menu')?.classList.contains('hidden'),
+      legacyDesktopWarning: !!document.querySelector('#mobile-warning'),
+      rotatePromptVisible: rotate && getComputedStyle(rotate).display !== 'none',
+      manifestName: data?.name || null,
+      standalone: data?.display === 'standalone',
+      touch: matchMedia('(pointer: coarse)').matches,
+    };
+  });
+  if (!mobileState.menuVisible || mobileState.legacyDesktopWarning || mobileState.rotatePromptVisible
+      || !mobileState.standalone || !mobileState.touch) {
+    throw new Error(`mobile beta bootstrap failed: ${JSON.stringify(mobileState)}`);
+  }
+  console.log('mobile beta bootstrap', JSON.stringify(mobileState));
   await page.waitForTimeout(400);
-  await shot('00_mobile');
+  await shot('00_mobile_beta');
   await browser.close();
   process.exit(0);
 }

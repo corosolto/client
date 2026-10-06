@@ -134,7 +134,7 @@ const FREEZE = `(() => {
   //    quatro arquivos do MESMO tamanho, todos o cartaz borrado. O jogo estava
   //    vivo (state 'live'); quem mentia era o DOM.
   const st = document.createElement('style');
-  st.textContent = '#hud, #launch-error, #boot-splash, #load-overlay, #mobile-warning,'
+  st.textContent = '#hud, #launch-error, #boot-splash, #load-overlay,'
     + ' #pause-menu, #match-end, .screen { display: none !important; }';
   document.head.appendChild(st);
   // 2. VIEWMODEL fora. Não basta vm.root.visible=false: game.js:4769 reescreve

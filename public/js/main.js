@@ -351,7 +351,7 @@ function loadMenuBackdrop() {
 loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 
 /* ---------------- screens ---------------- */
-const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
+const screens = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
   const hubMpRoute = HUB_ENABLED && id === 'mp-panel';
   if (hubMpRoute) {
@@ -2584,7 +2584,6 @@ document.querySelectorAll('.set-tab').forEach(tab => {
     });
   };
 });
-$('mobile-ok').onclick = () => { sfx.uiClick(); show('main-menu'); };
 $('team-back').onclick = () => { ui.back(); pickingEnemy = false; setEnemyPickMode(false); setTeamStep('side'); show('main-menu'); };
 $('char-back').onclick = () => {
   ui.back();
