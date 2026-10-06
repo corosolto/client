@@ -78,7 +78,7 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 ## Continuação 06/10 — silhueta da Julia e roupa da Marina
 
 - Branch/worktree confirmados: `feat/elenco-politicos`, `worktrees/politicos`, base `0638f5303d4f3bbc20d45fd6021dcb1837e05243`; estava limpo antes destas alterações. Não editei o checkout principal `client/`.
-- Checkpoint local Julia: `cb2e7a28e` (`fix(personagens): refina silhueta da Julia`), ainda não publicado.
+- Checkpoint local Julia: `5eb1c755b` (`fix(personagens): refina silhueta da Julia`), ainda não publicado.
 - Julia: nova prévia Mint ajustou a cintura/quadris e a linha das pernas mantendo coroa rosa/branca, blazer fúcsia e altura. O GLB final precisou passar pelo batch de rigging (`w57c3p68dqpnyngvvg1x5b2v1n8fsjrx`); a versão original de 3 MB não tinha skin e não foi usada. O resultado rigado de 3,37 MB foi otimizado com `tools/optimize-tribos.mjs` sem simplificar a malha; o GLB final em `public/models/characters/julia-zanatta.glb` tem SHA-256 `3f3a1a0fb6e8c6d121ebb52f4758a1e11fe9274922a674ddafc70ede156f9da6`, textura WebP 1024 e 24 juntas.
 - Os 11 estados de Julia foram retargetados para o rig atualizado e aterrados; o mesclado foi regenerado. A sonda de 63 modelos mede altura 1,72 m, perna/altura `0,424` (era `0,473`) e contatos idle/walk/run/shoot/crouch dentro de 1 cm. `mint-asset-integrity-check.mjs` passou 72/72.
 - Captura real em 1200×800 no B passou movimento e um tiro; alinhamento tiro/mira `0,999967`, disparo independente da câmera orbitada `-0,9553`. Evidência do GLB já integrado: `tools/eval/asset-evidence/pr773/julia-legs/{game-front.png,game-side.png,before-after.jpg}`; prancha comparativa SHA-256 `3f2014ce42ffc200db7e67f530aaa3b8407488f1fce3a16a99584867906b813d`.
