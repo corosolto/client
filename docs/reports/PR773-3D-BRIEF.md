@@ -63,7 +63,7 @@ Essas duas personagens foram geradas pelo Mint em conversas próprias e recebera
 
 Os GLBs finais foram rigados no Mint e otimizados com o pipeline do projeto. As prévias frontais foram usadas para os avatares quadrados; as capturas da seleção de personagem foram renderizadas pelo jogo com a arma inicial. A inclusão no elenco mantém o contrato dos 11 clipes de animação do PR e ainda requer revisão independente em movimento no jogo real.
 
-O dono também pediu Xandão exclusivo da categoria política, acessível somente nos lados B/E, e o rótulo “Zero Um” para `senador`. O registro existente já representa Xandão com `team: 'P'` e `lados: ['E', 'B']`; o filtro da tela de roster foi ordenado para abrir em Políticos. A contagem da branch antes das novas inclusões era E=4 e B=5 (Xandão contado em ambos); Julia B + Marina E resulta E=5 e B=6. É preciso uma decisão do dono sobre qual opção política exclusiva do B deve sair da categoria para fechar 5–5.
+O dono pediu Xandão exclusivo da categoria política e esclareceu que ele deve jogar somente no Time E; o rótulo de `senador` é “Zero Um”. O registro mantém Xandão com `team: 'P'` e `lados: ['E']`; o seletor abre em Políticos. Com Julia no Time B e Marina no Time E, cada lado tem cinco opções políticas.
 
 ## Contrato de geração e aceite
 

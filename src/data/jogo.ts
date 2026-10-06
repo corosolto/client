@@ -231,7 +231,7 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'dama', faccao: 'P', nome: 'Dama da Mandioca', blurb: 'Estoca vento e saúda a mandioca. Ninguém entende a frase, todo mundo lembra.' },
   { id: 'professor', faccao: 'P', nome: 'Professor do Arcabouço', blurb: 'Calcula o arcabouço de cabeça e ainda acha tempo de explicar a conta pro time.' },
   { id: 'senador', faccao: 'P', nome: 'Zero Um', blurb: 'O 01 da família. Sorriso de campanha e broche sempre no lugar.' },
-  { id: 'ministro', faccao: 'P', nome: 'Xandão da Toga', blurb: 'A toga é capa e o despacho sai antes do café. Joga pelos dois lados e ninguém discute.' },
+  { id: 'ministro', faccao: 'P', nome: 'Xandão da Toga', blurb: 'A toga é capa e o despacho sai antes do café. Joga pelo Time E e ninguém discute.' },
   { id: 'deputado', faccao: 'P', nome: 'Deputado da Peruca', blurb: 'Sobe na tribuna de peruca loira e vira meme antes de terminar a frase.' },
   { id: 'juiz', faccao: 'P', nome: 'Juiz do Conje', blurb: 'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.' },
   { id: 'julia-zanatta', faccao: 'P', nome: 'Julia Zanatta', blurb: 'Coroa de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.' },
