@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 
 const base = process.env.BASE || 'http://127.0.0.1:8124';
 const character = process.env.CHAR || 'dama';
+const side = process.env.SIDE || 'E';
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   args: ['--headless=new', '--mute-audio', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
@@ -12,7 +13,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(`${base}/?debug=1&auto=E,${character}&map=brasilia&bots=0&bloom=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.goto(`${base}/?debug=1&auto=${side},${character}&map=brasilia&bots=0&bloom=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live' && window.__game?.player?.alive, null, { timeout: 120000 });
   const result = await page.evaluate(async () => {
     const g = window.__game, p = g.player;
@@ -55,7 +56,7 @@ try {
     };
   });
   if (errors.length) throw new Error(`pageerror: ${errors.join('; ')}`);
-  if (result.character !== character || !result.modelLoaded) throw new Error(`personagem 3D não carregou: ${JSON.stringify(result)}`);
+    if (result.character !== character || !result.modelLoaded) throw new Error(`personagem 3D não carregou: ${JSON.stringify(result)}`);
   if (Math.abs(result.side.orbit - Math.PI / 2) > .03 || Math.abs(result.front.orbit - Math.PI) > .03)
     throw new Error(`órbita não chegou em lado/frente: ${JSON.stringify(result)}`);
   if (Math.abs(result.side.yaw - result.before.yaw) > .001 || Math.abs(result.side.pitch - result.before.pitch) > .001)

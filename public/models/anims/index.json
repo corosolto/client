@@ -496,6 +496,19 @@
    "walk1h",
    "walkfire"
   ],
+  "julia-zanatta": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "lampiao": [
    "idle",
    "walk",
@@ -549,6 +562,19 @@
    "walkfire"
   ],
   "mariabonita": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "marina-silva": [
    "idle",
    "walk",
    "run",

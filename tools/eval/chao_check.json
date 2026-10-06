@@ -1,5 +1,5 @@
 {
-  "gerado": "2026-10-06T10:00:01.815Z",
+  "gerado": "2026-10-06T20:12:45.558Z",
   "instrumento": "buildCharacterModel + skinning em node, 60 Hz, quadro 200-260, 1 vértice em 3",
   "bandaIdle": 0.015,
   "folga": 0.01,
@@ -270,14 +270,14 @@
       "death": -0.0706
     },
     "julia-zanatta": {
-      "idle": -0.0052,
-      "crouch": -0.0087,
-      "death": -0.0622
+      "idle": -0.0008,
+      "crouch": -0.0023,
+      "death": -0.0155
     },
     "marina-silva": {
-      "idle": -0.0043,
-      "crouch": -0.0083,
-      "death": -0.0468
+      "idle": 0.0001,
+      "crouch": 0.0014,
+      "death": -0.033
     }
   }
 }

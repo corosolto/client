@@ -1,5 +1,5 @@
 {
-  "mediaSha256": "012cfe9b75eaba2f1408c3a83e3322db2cb41b3488f15157173fa7508de38fa8",
+  "mediaSha256": "2886e700df4abd9d2a204d328978746d2c45cc84d6c9d2a9983d4909df73e42c",
   "weaponMapSha256": "e650f1e2eca7141476d2feed64b8a11a38ac76753b3aab49cd824b8fca9573af",
   "review": "Recibo de geração dos 63 vídeos e mapa CHAR_WEAPON correspondente. A revisão em pranchas de asset-evidence/bug59/ cobre o lote anterior. Os quadros novos de Julia Zanatta e Marina Silva foram inspecionados; a pose de seleção da Julia ainda precisa de revisão visual humana antes da aprovação do elenco.",
   "regenerate": "BASE=http://127.0.0.1:8142 node tools/eval/char-native-vids.mjs"
