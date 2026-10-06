@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-04T17:19:13.420Z",
+ "gerado": "2026-10-06T02:05:03.298Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -289,13 +289,6 @@
    "run": -0.0372,
    "shoot": -0.0252,
    "crouch": -0.04
-  },
-  "agitador": {
-   "idle": -0.0257,
-   "walk": -0.0559,
-   "run": -0.0457,
-   "shoot": -0.0231,
-   "crouch": -0.0403
   },
   "juiz": {
    "idle": -0.016,

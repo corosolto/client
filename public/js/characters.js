@@ -632,9 +632,6 @@ export const CHARACTERS = [
   { id: 'deputado', team: 'P', lados: ['B'], name: 'Deputado da Peruca',
     blurb: 'Sobe na tribuna de peruca loira e vira meme antes de terminar a frase.',
     pal: { skin: 0xd2a07c, shirt: 0x1e2c5a, pants: 0x1e2c5a, hair: 0xf2d040, boots: 0x111111 } },
-  { id: 'agitador', team: 'P', lados: ['E', 'B'], name: 'Agitador do Carro de Som',
-    blurb: 'Carro de som, cabelo ao vento e uma convocação por minuto. Briga com os dois lados.',
-    pal: { skin: 0xd8a888, shirt: 0x2a8a8a, pants: 0x3a5a8a, hair: 0x3a2418, boots: 0x222222 } },
   { id: 'juiz', team: 'P', lados: ['B'], name: 'Juiz do Conje',
     blurb: 'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.',
     pal: { skin: 0xe0b090, shirt: 0x1e2a48, pants: 0x1e2a48, hair: 0x1a1a1a, boots: 0x111111 } },
@@ -659,7 +656,7 @@ export const CHAR_WEAPON = {
   lobisomem: 'shotgun',
   mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', caipora: 'scar', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
   barbudo: 'ak', capitao: 'md97', dama: 'm4', professor: 'mp5', senador: 'famas',
-  ministro: 'shotgun', deputado: 'uzi', agitador: 'p90', juiz: 'scar',
+  ministro: 'shotgun', deputado: 'uzi', juiz: 'scar',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 
