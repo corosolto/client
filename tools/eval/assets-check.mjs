@@ -45,6 +45,16 @@
    a cláusula do ambiente é NOMINAL e a lista vem de `soundscape.js` — a mesma fonte
    que a `eval:audioalcance` usa na fixture (lição 2: mesmo conceito, mesma fonte).
 
+   O contrato que ela mede é o do JOGO, não o do pacote (`game.js`:
+   `pack.mapSoundscapes[mapId] || world.sound`): ou o manifest cobre todo mapa do
+   `maps.js` com `mapSoundscapes`, ou os 18 caminhos `audio/ambiente/*` que o
+   `world.sound` de cada mapa nomeia precisam existir. NENHUM pacote atual traz
+   `ambiente/` — medido no `audio-pack-v8` (445 entradas, zero em `ambiente/`,
+   manifest sem `mapSoundscapes`), e é por isso que `fetch-audio.sh` instala o
+   fallback sintético no ramo público em vez de deixar o build depender disso.
+   `eval:audioruntimeassets` prova os três estados (cru = vermelho, preparado =
+   verde, parcial = vermelho) chamando ESTE script.
+
    DECALQUES. A lista NÃO é lida do texto do textures.js: ela vem do módulo importado
    em node (`initTextures().decalFiles`), porque `DECAL_FILES` são 196 entradas
    estáticas + os `or-*` empurrados em runtime, e vai crescer. Parse de linha ficaria
@@ -156,7 +166,9 @@ if (!existsSync(MANIFEST)) {
     } else if (semAmbiente.length) {
       erros.push(`áudio ambiente: ${semAmbiente.length} de ${doCodigo.size} caminhos que \`soundscape.js\` nomeia`
         + ` não estão no manifest OU não estão no disco (ex.: ${semAmbiente.slice(0, 3).join(', ')}).`
-        + ' Sem mapSoundscapes completo, o fallback legado precisa chegar inteiro.');
+        + ' Sem mapSoundscapes completo, o fallback legado precisa chegar inteiro — e nenhum'
+        + ' pacote atual traz `audio/ambiente/`. Rode `bash scripts/fetch-audio.sh`: ele instala'
+        + ` \`mapSoundscapes\` nos ${MAP_IDS.length} mapas com o hum que o jogo sintetiza.`);
     }
     /* PRV5 — a cláusula de BUILD do contrato de procedência (docs/audio/PROVENIENCIA.md).
        `.gitignore` protege o git e só ele: o pacote é montado à parte e servido em

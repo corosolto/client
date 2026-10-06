@@ -71,6 +71,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { freshReport } from './fresh-report.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -83,10 +84,10 @@ const skip = (id, desc, why) => results.push({ id, desc, ok: null, evid: why, se
 
 const num = (v, d = 3) => (typeof v === 'number' && isFinite(v) ? +v.toFixed(d) : String(v));
 
-function runNode(script, env = {}, args = []) {
+function runNode(script, env = {}, args = [], timeout = 600000) {
   try {
     return execFileSync(process.execPath, [join(HERE, script), ...args], {
-      cwd: ROOT, encoding: 'utf8', timeout: 600000, maxBuffer: 64 * 1024 * 1024,
+      cwd: ROOT, encoding: 'utf8', timeout, maxBuffer: 64 * 1024 * 1024,
       env: { ...process.env, ...env },
     });
   } catch (e) {
@@ -1864,12 +1865,14 @@ function runNode(script, env = {}, args = []) {
     const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
     put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
       respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
-    const out = runNode('map-check.mjs');
     const pj = join(ROOT, 'tools', 'eval', 'map_check.json');
-    if (!existsSync(pj)) {
-      skip('MAP*', 'geometria de mapa', 'map-check.mjs não gerou o JSON: ' + (out.split('__ERRO__')[1] || '').slice(0, 160));
+    // A medição completa de 18 mapas levou quase 10 min no runner do CI; mantenha
+    // a falha explícita, mas dê tempo para o relatório fresco terminar.
+    const { data: j, error } = freshReport(pj, () => runNode('map-check.mjs', {}, [], 900000));
+    if (error || !Array.isArray(j?.mapas) || j.mapas.length === 0) {
+      put('MAPAUD', 'map-check.mjs gera relatório fresco e válido de geometria',
+        false, error || 'map-check.mjs gerou JSON sem mapas');
     } else {
-      const j = JSON.parse(readFileSync(pj, 'utf8'));
       const M = Object.fromEntries((j.mapas || []).map((m) => [m.map, m]));
       const erros = (j.mapas || []).filter((m) => m.err);
 
@@ -2092,6 +2095,18 @@ function runNode(script, env = {}, args = []) {
   put('MAP6', 'jogador alcança os dois pontões baixos da Amazônia com e sem salto',
     out.includes('PASS AMW4') && !out.includes('__ERRO__'),
     (out.match(/(?:PASS|FAIL) AMW4[^\n]*/) || ['AMW4 sem resultado'])[0]);
+}
+
+// AME (#680): as 11 estações têm de ser alcançáveis A PARTIR DA ÁGUA. Três delas
+// (A 14,−27 · D 14,6 · F −14,6) mediam o chão-base na rampa da margem (h −0,03) e o
+// primeiro degrau nascia a menos de 0,30 m do chão de quem chega da água: o corpo entra
+// na sombra do colisor e trava antes do primeiro degrau. Conserto: tabuleiro de acesso
+// no idioma dos `pontoes`. O mutante `pe-na-agua` volta ao estado de antes.
+{
+  const out = runNode('amazonia-agua-estacoes-check.mjs');
+  put('AME', 'as 11 estações da Amazônia são alcançáveis a partir da água',
+    out.includes('PASS AME3') && !out.includes('__ERRO__'),
+    (out.match(/(?:PASS|FAIL) AME3[^\n]*/) || ['AME3 sem resultado'])[0]);
 }
 
 /* ── 8d. MATERIAL, LUZ E SUPERFÍCIE (mat-check.mjs) ──────────────────────────
