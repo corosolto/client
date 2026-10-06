@@ -179,6 +179,12 @@ E teste à mão: o jogo abre, o console fica limpo, uma partida completa roda
   ou fotos. Só material original ou com licença compatível.
 - Personagem novo segue o padrão: arquétipo fictício, nome fictício, humor sem
   crueldade, sem mirar grupos protegidos.
+- Exceção decidida pelo dono em 04/10/2026: **figura política pública** pode entrar
+  como caricatura satírica, e só assim. Nome caricato, nunca o nome real. Modelo 3D
+  gerado a partir de concept 2D caricato; foto real só serve de referência para o
+  concept e precisa ser conferida a olho (`docs/LICOES.md`, lição 9). O mesmo
+  tratamento vale para todos os campos políticos. Sem gore e sem humilhação física.
+  Quando um personagem desses vai ao ar é decisão do dono.
 
 ## Processo
 
