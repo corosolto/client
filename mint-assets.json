@@ -1756,20 +1756,22 @@
       "files": ["public/models/characters/julia-zanatta.glb"],
       "source": {
         "kind": "mint-humanoid-model",
-        "assetId": "ks72208x6mk6vq6fvdd5p11tqh8frx22",
-        "chatUrl": "https://mint.gg/chat/ph7dak38r7j68n9qbt73mh47ys8frmvg",
+        "assetId": "ks75vsej74a4yr8x5w5mg29eqs8fsq9t",
+        "chatUrl": "https://mint.gg/chat/ph75dx2dgqsmxy59k8mqv70cy98fr9k3",
+        "animationBatchId": "w57c3p68dqpnyngvvg1x5b2v1n8fsjrx",
+        "previousAssetId": "ks72208x6mk6vq6fvdd5p11tqh8frx22",
         "displayName": "Fuchsia Flower Crown Politician",
-        "sha256": "ad2caab0fbbb4a4c5a65e8c1237c92c9be83288bc01694e9d542eb6cd4dfd4fd",
+        "sha256": "972bee4af70dca7cbb43898f48c3f8b22019ced903d9c467c5f77dd935af6697",
         "prompt": "docs/reports/PR773-3D-BRIEF.md",
-        "notes": "Solicitada pelo dono em 06/10/2026. Prévia Mint conferida contra as referências: coroa de flores rosa/brancas, blazer fúcsia, gola alta rosa e cruz. GLB rigado, otimizado para WebP sem Draco; runtime usa clipes compartilhados por nome de osso."
+        "notes": "Revisão solicitada em 06/10/2026 para dar forma feminina natural às pernas. Prévia conferida: coroa de flores rosa/brancas, blazer fúcsia, gola alta rosa e cruz preservados; corpo em 1,72 m. GLB Mint rigado com 24 juntas, 11 clipes retargetados para este rig e texturas WebP 1024 sem Draco."
       },
       "processing": {
         "provider": "mint",
         "tools": ["mint.gg (MCP)", "tools/optimize-tribos.mjs"],
-        "finalSha256": "815062d7a479026fa49bdd241a0857b26ee1980f624740f1aa70250e20923e18",
+        "finalSha256": "3f3a1a0fb6e8c6d121ebb52f4758a1e11fe9274922a674ddafc70ede156f9da6",
         "derivedFiles": ["public/img/chars/julia-zanatta.webp", "public/img/chars/avatars/julia-zanatta.webp"],
-        "thumbnailSha256": "4dbff7cd06a5ff565d00ca9ce255dcdf137475bbb2795010f2590e267b62cff7",
-        "avatarSha256": "7472955f2d209b1dc953059c16ccc8f0fd243f5b3e0334c4bbd5363ddcd01da6"
+        "thumbnailSha256": "852ad3e96e51b0d962d8e4ae1b0e7953b29fe2c7ea8c85003a664248c4799c28",
+        "avatarSha256": "fca7ca0116c623160a2b31aac2bd4dab15ffa0025e9b4ec300772eb143c7649c"
       }
     },
     "marina-silva": {

@@ -4,7 +4,11 @@ import { writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { chromium } from 'playwright';
 
-const IDS = ['barbudo', 'capitao', 'dama', 'professor', 'senador', 'ministro', 'deputado', 'juiz'];
+const POLITICOS = [
+  'barbudo', 'capitao', 'dama', 'professor', 'senador', 'ministro', 'deputado', 'juiz',
+  'julia-zanatta', 'marina-silva',
+];
+const IDS = process.argv.slice(2).length ? process.argv.slice(2) : POLITICOS;
 const base = process.env.BASE || 'http://127.0.0.1:8123';
 const background = Buffer.from(`<svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
   <defs><radialGradient id="g"><stop stop-color="#344250"/><stop offset="1" stop-color="#111922"/></radialGradient></defs>

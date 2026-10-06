@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-06T20:12:32.577Z",
+ "gerado": "2026-10-06T22:10:45.111Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -296,13 +296,6 @@
    "run": 0.0155,
    "shoot": -0.019,
    "crouch": -0.0153
-  },
-  "julia-zanatta": {
-   "idle": 0.0273,
-   "walk": 0.044,
-   "run": 0.0665,
-   "shoot": 0.0224,
-   "crouch": 0.0948
   },
   "marina-silva": {
    "idle": -0.0245,
