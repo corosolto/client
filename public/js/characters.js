@@ -69,9 +69,9 @@ export const CHAR_FX = {
   floorIrr: _cnum('charfloor', 1.15),                  // piso de irradiância indireta (perto)
   floorFar: _cnum('charfloorfar', 1.55),               // piso a 45 m+ (era 3.0 = fantasma branco distante)
   ceilIrr:  _cnum('charceil', 4.5),                    // teto: céu HDR não pode estourar o personagem
-  albMin:   _cnum('charalbmin', 0.09),                 // valor mínimo do albedo, por ESCALA (matiz/S intactos)
+  albMin:   _cnum('charalbmin', 0.093),                // valor mínimo do albedo, por ESCALA (matiz/S intactos)
   /* PISO DE ALBEDO NA BANDA BAIXA, não no texel (C10 / char-floor.mjs).
-     `albMin` é 0,09 LINEAR — que é sRGB 0,332 = byte 85 = L* 36, um CINZA MÉDIO, não
+     `albMin` é 0,093 LINEAR — que é sRGB 0,336 = byte 86 = L* 36, um CINZA MÉDIO, não
      um "preto levantado". Aplicado por texel (`max(V, albMin)`) ele é um DEGRAU: todo
      texel abaixo do ponto sai com o MESMO valor. Medido nas texturas reais dos 45 GLB:
      94,1 % do albedo do trapfunk está abaixo do piso, 90,4 % do palhaço mal, 86,6 % do
@@ -84,10 +84,12 @@ export const CHAR_FX = {
      multiplica o texel por esse ganho. Como o ganho é o MESMO para toda a região, TODA
      razão entre texels sobrevive por construção — o piso levanta o NÍVEL sem tocar no
      contraste. Acima do piso o ganho é 1,0 exato: personagem claro/saturado não muda um
-     pixel. Kill-switch `?charalbreg=0` volta ao degrau (o A/B é bloco × bloco). */
+     pixel. LOD 7 / piso 0,093 foi medido em 72 texturas: C10a ≤ 10% de perda e C10b
+     verde, incluindo Capitão, Ministro e Professor. Kill-switch `?charalbreg=0` volta ao
+     degrau (o A/B é bloco × bloco). */
   albReg:   _cqp.get('charalbreg') !== '0',            // piso do albedo regional (0 = degrau por texel)
   ambChroma: _cqp.get('charambchroma') !== '0',        // fill do piso herda a crominância do ambiente (0 = branco)
-  albLod:   _cnum('charalblod', 6),                    // mip do nível regional (6 = bloco de 64 texels)
+  albLod:   _cnum('charalblod', 7),                    // mip do nível regional (7 = bloco de 128 texels)
   sat:      _cnum('charsat', 1.32),                    // ganho de croma do albedo (+cor original dos moldes)
   rimNear: _cnum('rimnear', 0.18),                     // rim a queima-roupa: discreto, não vira fantasma
   // Mantém o contorno explícito a 40 m no corredor quente medido por C18.

@@ -6,10 +6,10 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 
 ## Estado recuperável
 
-- Branch: `feat/elenco-politicos`; `main` integrado em `a04b0ea29`; checkpoint de docs/ARCH `721d97c81`. O PR remoto ainda está em `b2375303e`; a branch local chegou a `726283289`, 52 commits à frente, com novos arquivos de mídia e auditorias por commitar.
+- Branch: `feat/elenco-politicos`; o head publicado atual é `afc13d8d7525011e9220a5843f763207c9b09592` (PR #773). A integração alpha.53 está no histórico; confira os checkpoints abaixo para a sequência exata. O worktree principal `client/` não foi editado.
 - Checkpoint funcional anterior: `0130457a6` (`docs(pr773): registra roster politico 5-5`), com Xandão exclusivo de E, roster 5–5 e os registros de continuidade atualizados. O conteúdo do PR local inclui esse checkpoint.
 - Checkpoints principais: `a708f2557` (órbita e teste de navegador), `2749a86fa` (remoção de Agitador), `1574fed2f` (avatares 3D), `ddb1f657d` (câmera mais baixa), `bc0feb37c` (brief de regeneração), `ee13465b0` (prompts dos sete seguintes) e `c44bfb8e5` (prévias Mint da Dama). O estado de 3D e rig está neste relatório e nas capturas anexadas ao commit que o contém. `client/` principal não foi editado. A branch local está à frente do PR remoto, que ainda apontava para `b2375303e` antes do push desta continuação.
-- O pedido original e o PR permanecem o objetivo inteiro. A etapa atual é publicar a integração com main após os portões, depois fechar a revisão visual de Julia/Marina e retomar as pendências de modelos já registradas abaixo.
+- O objetivo original permanece inteiro. Os personagens e ajustes de elenco estão publicados; restam estabilizar/acompanhar os gates remotos, resolver as pendências de modelo registradas abaixo e obter a revisão visual humana do roster antes de tirar o draft.
 
 ## Feito e verificado localmente
 
@@ -44,8 +44,8 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 
 ## Próximo passo
 
-1. Publicar `sharp@0.35.5` pelo hook normal com Node 23 e acompanhar o novo CI remoto.
-2. Manter #773 em draft até a revisão visual humana do elenco completo; as ressalvas antigas de Dama/Ministro continuam abertas. O bloqueio técnico original da pose inclinada de Julia foi corrigido por retarget próprio e compensação de chão, mas revisão humana não é inferida do verde numérico.
+1. Corrigir BOT4 reiniciando a semente de gameplay depois da criação da cena; registrar o resultado determinístico e publicar com os hooks normais.
+2. Manter #773 em draft até resolver as falhas bloqueadoras de CI e obter revisão visual humana do elenco completo. As ressalvas antigas de Dama/Ministro continuam abertas; verde numérico não substitui a revisão da arte.
 
 ## Continuação 06/10 — retarget Julia/Marina
 
@@ -64,3 +64,13 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 - A branch `feat/elenco-politicos` foi publicada em `a1e9c1bdfc0638841a30b0388661592ede08fada`; o pre-push local passou 46/46 em 107 s. O título e a descrição de #773 foram atualizados para o roster 5–5, Julia no B, Marina e Xandão no E, Zero Um e remoção de Agitador.
 - Os checks remotos de deploy/preview, CodeQL, ratchet, DCO e classificação passaram. O primeiro build falhou no `eval:deps` por advisory alta `GHSA-wq5f-xc86-pv6w` em `sharp@0.35.4` (CVE-2026-96889, faixa vulnerável `<0.35.5`). Atualizei o lockfile para `sharp@0.35.5` e dependências de plataforma compatíveis; `npm audit` reporta zero vulnerabilidades e `npm run eval:deps` está verde localmente. O primeiro lock gerado pelo npm removeu dois registros opcionais de `@emnapi`, que o smoke detectou no Linux via `npm ci`; restaurei os registros exatos do lock anterior mantendo o `sharp@0.35.5`. A correção do lock e a CI renovada ainda precisam ser publicadas/verificadas.
 - Estado de aceite não mudou: PR deve continuar draft até revisão visual humana do elenco completo; ressalvas antigas de Dama e Ministro seguem documentadas. A prancha de rostos em `/private/tmp/pr773-elenco-politico-10-review.jpg` é apoio de inspeção, não aceite do modelo ou dos clipes.
+
+## Continuação — estabilização dos gates, 06/10
+
+- Head remoto observado antes desta atualização: `afc13d8d7525011e9220a5843f763207c9b09592`. O PR segue aberto, draft e bloqueado. DCO, ratchet, versão, CodeQL, smoke e Vercel passam; `build` falhou em BOT4 e `portao` falhou em `eval:select` (22/63, acima do teto 12).
+- BOT4 mediu 2,84 s no runner remoto. A construção da cena consome `Math.random()` ao alocar UUIDs; reiniciar `seedRandom(seed)` imediatamente antes da simulação separa o fluxo do jogo do número de assets. Com o patch local, `SIM_DUEL=1 node tools/eval/botsim.mjs 60 all` mediu 5,61 s (limite 3 s). Falta a CI do novo head.
+- `eval:select` foi repetido no commit limpo da `main` `15a9ef3fd` e reprovou nos mesmos 22/63. É dívida anterior ao PR, não autoriza reduzir o teto nem mascarar as reprovações.
+- A checagem de materiais no commit limpo da `main` terminou `MATCHECK_OK 18 mapas + shade`; MAT1 também passou no CI do head `afc13d8d7`.
+- Os novos GLBs políticos fizeram o piso de albedo reprovar a medição local de contraste. Ajustei o nível regional para LOD 7 e piso 0,093; a varredura em 72 texturas passou C10a (perda máxima ≤10%) e C10b (clareza). Revisão humana de tela cheia continua necessária.
+- `SIM_DUEL=1 node tools/eval/botsim.mjs 60 all` repetido neste worktree terminou em 5,611 s; `node tools/eval/char-floor.mjs` passou C10a/C10b em 72 texturas; `git diff --check` passou. O commit local `6d853b29d` contém o ajuste e este ledger, com trailers `Signed-off-by` e `Agent: Codex`.
+- O primeiro push parou no hook normal: `ARCH1` detectou o índice defasado. `npm run docs` e `node tools/gen-arch.mjs` atualizaram seis docs derivadas e `tools/eval/ARCH.md`; revisar essas alterações geradas, incorporar ao checkpoint, repetir `check:deploy` pelo push normal com Node 23 e acompanhar a nova CI. Sem merge enquanto existirem bloqueios ou faltar aceite visual.
