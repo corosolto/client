@@ -1751,6 +1751,48 @@
         "textures": 3
       }
     },
+    "julia-zanatta": {
+      "artifactType": "model/gltf-binary",
+      "files": ["public/models/characters/julia-zanatta.glb"],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks72208x6mk6vq6fvdd5p11tqh8frx22",
+        "chatUrl": "https://mint.gg/chat/ph7dak38r7j68n9qbt73mh47ys8frmvg",
+        "displayName": "Fuchsia Flower Crown Politician",
+        "sha256": "ad2caab0fbbb4a4c5a65e8c1237c92c9be83288bc01694e9d542eb6cd4dfd4fd",
+        "prompt": "docs/reports/PR773-3D-BRIEF.md",
+        "notes": "Solicitada pelo dono em 06/10/2026. Prévia Mint conferida contra as referências: coroa de flores rosa/brancas, blazer fúcsia, gola alta rosa e cruz. GLB rigado, otimizado para WebP sem Draco; runtime usa clipes compartilhados por nome de osso."
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": ["mint.gg (MCP)", "tools/optimize-tribos.mjs"],
+        "finalSha256": "815062d7a479026fa49bdd241a0857b26ee1980f624740f1aa70250e20923e18",
+        "derivedFiles": ["public/img/chars/julia-zanatta.webp", "public/img/chars/avatars/julia-zanatta.webp"],
+        "thumbnailSha256": "4dbff7cd06a5ff565d00ca9ce255dcdf137475bbb2795010f2590e267b62cff7",
+        "avatarSha256": "7472955f2d209b1dc953059c16ccc8f0fd243f5b3e0334c4bbd5363ddcd01da6"
+      }
+    },
+    "marina-silva": {
+      "artifactType": "model/gltf-binary",
+      "files": ["public/models/characters/marina-silva.glb"],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks723dbj62cjcwvjt0723xh4z98frsvz",
+        "chatUrl": "https://mint.gg/chat/ph71tx4e4x4btn6dbjt801wrdh8frnaw",
+        "displayName": "Burgundy Glasses Blazer Matriarch",
+        "sha256": "f275963f0826dbda84d222398f74bd29dcda65ca1248e0e81ef8c23792b07293",
+        "prompt": "docs/reports/PR773-3D-BRIEF.md",
+        "notes": "Solicitada pelo dono em 06/10/2026. Prévia Mint conferida contra a referência: coque escuro, óculos vinho, blazer azul-marinho, blusa terracota e colar geométrico. GLB rigado, otimizado para WebP sem Draco; runtime usa clipes compartilhados por nome de osso."
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": ["mint.gg (MCP)", "tools/optimize-tribos.mjs"],
+        "finalSha256": "7decdfc343966bde0e573c12252832f3d1a572ff636e1d3ba13e6f3cd0d1b5e2",
+        "derivedFiles": ["public/img/chars/marina-silva.webp", "public/img/chars/avatars/marina-silva.webp"],
+        "thumbnailSha256": "bd0217f84c5f22ffff2de90212956ebc07583e59394e9643d6c813d4560f9544",
+        "avatarSha256": "20ef99e5671157a66bde7ac77eccbeb6e98f698e142c691297ae80f9a9361b62"
+      }
+    },
     "andaime-obras": {
       "artifactType": "model/gltf-binary",
       "files": [

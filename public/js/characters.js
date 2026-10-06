@@ -623,7 +623,7 @@ export const CHARACTERS = [
   { id: 'professor', team: 'P', lados: ['E'], name: 'Professor do Arcabouço',
     blurb: 'Calcula o arcabouço de cabeça e ainda acha tempo de explicar a conta pro time.',
     pal: { skin: 0xd8a888, shirt: 0x2e5aa8, pants: 0x2e5aa8, hair: 0x5a5a5a, boots: 0x111111 } },
-  { id: 'senador', team: 'P', lados: ['B'], name: 'Senador Zero Um',
+  { id: 'senador', team: 'P', lados: ['B'], name: 'Zero Um',
     blurb: 'O 01 da família. Sorriso de campanha e broche sempre no lugar.',
     pal: { skin: 0xdcb08c, shirt: 0x3a3a40, pants: 0x3a3a40, hair: 0x1a1a1a, boots: 0x111111 } },
   { id: 'ministro', team: 'P', lados: ['E', 'B'], name: 'Xandão da Toga',
@@ -635,6 +635,12 @@ export const CHARACTERS = [
   { id: 'juiz', team: 'P', lados: ['B'], name: 'Juiz do Conje',
     blurb: 'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.',
     pal: { skin: 0xe0b090, shirt: 0x1e2a48, pants: 0x1e2a48, hair: 0x1a1a1a, boots: 0x111111 } },
+  { id: 'julia-zanatta', team: 'P', lados: ['B'], name: 'Julia Zanatta',
+    blurb: 'Coroa de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.',
+    pal: { skin: 0xf2c9a4, shirt: 0xd82b78, pants: 0x242532, hair: 0xc2aa83, boots: 0x222222 } },
+  { id: 'marina-silva', team: 'P', lados: ['E'], name: 'Marina Silva',
+    blurb: 'Óculos vinho, coque preso e blazer azul-marinho. A conversa é calma; a mira, firme.',
+    pal: { skin: 0x9a684f, shirt: 0x243654, pants: 0x22242b, hair: 0x292522, boots: 0x222222 } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -656,7 +662,7 @@ export const CHAR_WEAPON = {
   lobisomem: 'shotgun',
   mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', caipora: 'scar', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
   barbudo: 'ak', capitao: 'md97', dama: 'm4', professor: 'mp5', senador: 'famas',
-  ministro: 'shotgun', deputado: 'uzi', juiz: 'scar',
+  ministro: 'shotgun', deputado: 'uzi', juiz: 'scar', 'julia-zanatta': 'ak', 'marina-silva': 'm4',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

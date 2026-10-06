@@ -43,6 +43,7 @@ export const GLB_CHARS = new Set([
   'mariabonita', 'lampiao', 'bandeirante', 'boto', 'zumbi', 'curupira', 'saci', 'caipora',
   // Políticos: GLB Mint de concept caricato, rigados offline (rig-from-donor, esqueleto do mst).
   'barbudo', 'capitao', 'dama', 'professor', 'senador', 'ministro', 'deputado', 'juiz',
+  'julia-zanatta', 'marina-silva',
 ]);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando

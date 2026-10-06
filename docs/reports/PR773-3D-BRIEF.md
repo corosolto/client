@@ -52,6 +52,19 @@ Cada linha abaixo é a abertura específica de um novo pedido Mint, baseada no G
 
 Complemento comum para cada abertura: **Match the human-stylized proportions of the regular CS BRASIL third-person cast, with a head around one fifth of total height and natural torso, arms, legs, hands and feet. Preserve the named character's recognizable face and clothing, but use the existing model only for identity, never for its swollen proportions or shiny material. Full body, symmetric T-pose with straight horizontal arms, separated fingers, empty hands and both feet on one plane. One centered character, clean UV-textured PBR game mesh, no weapon, prop, pedestal, background or floating part. Readable front, profile and back silhouettes. Create a preview for review and STOP before final 3D model generation or rigging.**
 
+## Complemento solicitado em 06/10 — Julia Zanatta e Marina Silva
+
+Essas duas personagens foram geradas pelo Mint em conversas próprias e receberam modelos rigados. Os retratos enviados pelo dono serviram como referência visual e não foram copiados para o repositório. Os identificadores de geração, URLs das conversas, arquivos finais e hashes estão em `mint-assets.json`.
+
+| Personagem | Lado | Leitura visual aprovada na prévia Mint |
+|---|---|---|
+| Julia Zanatta | B | Coroa de flores rosa e branca, cabelo loiro, blazer fúcsia, gola alta rosa e cruz. |
+| Marina Silva | E | Coque escuro, óculos vinho, blazer azul-marinho, blusa terracota e colar geométrico. |
+
+Os GLBs finais foram rigados no Mint e otimizados com o pipeline do projeto. As prévias frontais foram usadas para os avatares quadrados; as capturas da seleção de personagem foram renderizadas pelo jogo com a arma inicial. A inclusão no elenco mantém o contrato dos 11 clipes de animação do PR e ainda requer revisão independente em movimento no jogo real.
+
+O dono também pediu Xandão exclusivo da categoria política, acessível somente nos lados B/E, e o rótulo “Zero Um” para `senador`. O registro existente já representa Xandão com `team: 'P'` e `lados: ['E', 'B']`; o filtro da tela de roster foi ordenado para abrir em Políticos. A contagem da branch antes das novas inclusões era E=4 e B=5 (Xandão contado em ambos); Julia B + Marina E resulta E=5 e B=6. É preciso uma decisão do dono sobre qual opção política exclusiva do B deve sair da categoria para fechar 5–5.
+
 ## Contrato de geração e aceite
 
 - Mint 3D, quando habilitado: gerar `riggable_character` em T-pose de mãos vazias; rigar com um clipe do serviço; usar o `rigged_character_glb` e os 11 clipes retargetados no esqueleto Meshy do elenco. Confirmar nomes de juntas, orientações, escala em metros e material PBR. É o pipeline documentado em `docs/docs/stack.md` e usado pelo PR, sujeito ao custo e à revisão de cada tentativa.

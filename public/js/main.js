@@ -984,7 +984,8 @@ function closeHubRoster(updateRoute = true) {
 }
 function openHubRoster(updateRoute = true) {
   hubRosterLado = ladoValido(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
-  hubRosterCat = null;
+  const temPoliticos = (lado) => CHARACTERS.some((c) => c.team === 'P' && podeNoLado(c, lado));
+  hubRosterCat = temPoliticos(hubRosterLado) ? 'P' : null;
   const lados = $('hub-roster-lados'), filters = $('hub-roster-factions'), grid = $('hub-roster-grid');
   const render = () => {
     lados.replaceChildren(); filters.replaceChildren(); grid.replaceChildren();
@@ -994,12 +995,16 @@ function openHubRoster(updateRoute = true) {
       button.append(crest, tr(FACTION_NAME[lado]));
       button.style.setProperty('--lado', PALETA[lado].base);
       button.setAttribute('aria-selected', String(lado === hubRosterLado));
-      button.onclick = () => { hubRosterLado = lado; hubRosterCat = null; render(); };
+      button.onclick = () => { hubRosterLado = lado; hubRosterCat = temPoliticos(lado) ? 'P' : null; render(); };
       lados.appendChild(button);
     }
     const doLado = CHARACTERS.filter((c) => podeNoLado(c, hubRosterLado));
     const cats = [...new Set(doLado.map((c) => c.team))];
-    for (const cat of [null, ...cats]) {
+    // Políticos abre primeiro e já vem filtrado quando há elenco político para este lado.
+    const orderedCats = cats.includes('P')
+      ? ['P', ...cats.filter((cat) => cat !== 'P'), null]
+      : [null, ...cats];
+    for (const cat of orderedCats) {
       const button = document.createElement('button'); button.type = 'button';
       button.textContent = cat ? tr(FACTION_NAME[cat] || cat) : tr('TODOS');
       button.setAttribute('aria-pressed', String(cat === hubRosterCat));
