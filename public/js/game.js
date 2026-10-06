@@ -5877,7 +5877,7 @@ export class Game {
     const TP_UP = shoulder ? 0.10 : 0.18;
     const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
     cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
-    cam.position.y += TP_UP;
+    cam.position.y += TP_UP - 0.45 * orbitBlend;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
     if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
     // Cruz no alvo do raio autoritativo a distância de combate; o tiro continua
