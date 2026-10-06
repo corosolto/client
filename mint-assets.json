@@ -1756,22 +1756,22 @@
       "files": ["public/models/characters/julia-zanatta.glb"],
       "source": {
         "kind": "mint-humanoid-model",
-        "assetId": "ks75vsej74a4yr8x5w5mg29eqs8fsq9t",
-        "chatUrl": "https://mint.gg/chat/ph75dx2dgqsmxy59k8mqv70cy98fr9k3",
-        "animationBatchId": "w57c3p68dqpnyngvvg1x5b2v1n8fsjrx",
-        "previousAssetId": "ks72208x6mk6vq6fvdd5p11tqh8frx22",
-        "displayName": "Fuchsia Flower Crown Politician",
-        "sha256": "972bee4af70dca7cbb43898f48c3f8b22019ced903d9c467c5f77dd935af6697",
+        "assetId": "ks79rnb2jen887aj5kpetenfsd8frx5x",
+        "chatUrl": "https://mint.gg/chat/ph71f31x52n1g800azcsngcybh8fsfa8",
+        "animationBatchId": "w572j3r60r3m81ff1f8ayt798d8fr70z",
+        "previousAssetId": "ks75vsej74a4yr8x5w5mg29eqs8fsq9t",
+        "displayName": "Fuchsia Flower Crown Executive",
+        "sha256": "91d1d63bfc25063d61cb562bee66eccb3558ac3588ed0256f4b9952a0c29c8cd",
         "prompt": "docs/reports/PR773-3D-BRIEF.md",
-        "notes": "Revisão solicitada em 06/10/2026 para dar forma feminina natural às pernas. Prévia conferida: coroa de flores rosa/brancas, blazer fúcsia, gola alta rosa e cruz preservados; corpo em 1,72 m. GLB Mint rigado com 24 juntas, 11 clipes retargetados para este rig e texturas WebP 1024 sem Draco."
+        "notes": "Segunda revisão solicitada em 06/10/2026 após o contorno das pernas ainda parecer masculino. Prévia frontal e gameplay conferidos: coroa de flores rosa/brancas, blazer fúcsia, gola alta rosa, cruz e calça preservados; quadris arredondados e coxas com volume natural, altura 1,72 m. Rig Mint com 24 juntas; batch básico 6/6; 11 estados do jogo retargetados para este rig; texturas WebP 1024 sem Draco. Capturas v2 em tools/eval/asset-evidence/pr773/julia-legs/."
       },
       "processing": {
         "provider": "mint",
         "tools": ["mint.gg (MCP)", "tools/optimize-tribos.mjs"],
-        "finalSha256": "3f3a1a0fb6e8c6d121ebb52f4758a1e11fe9274922a674ddafc70ede156f9da6",
+        "finalSha256": "89e9ce4ad3244fc337ab939a09565caff4e14c5006b96cb0b80619e65cf3bd8a",
         "derivedFiles": ["public/img/chars/julia-zanatta.webp", "public/img/chars/avatars/julia-zanatta.webp"],
-        "thumbnailSha256": "852ad3e96e51b0d962d8e4ae1b0e7953b29fe2c7ea8c85003a664248c4799c28",
-        "avatarSha256": "fca7ca0116c623160a2b31aac2bd4dab15ffa0025e9b4ec300772eb143c7649c"
+        "thumbnailSha256": "ef044a61d6611792e2afef19ddd2fae3e5cf8540c250df03caf7989059e8fec6",
+        "avatarSha256": "606f80a1cc42736fc817496f9b994784a4fef1a3c13a1abfa84226d6158c26ac"
       }
     },
     "marina-silva": {
@@ -1779,20 +1779,23 @@
       "files": ["public/models/characters/marina-silva.glb"],
       "source": {
         "kind": "mint-humanoid-model",
-        "assetId": "ks723dbj62cjcwvjt0723xh4z98frsvz",
-        "chatUrl": "https://mint.gg/chat/ph71tx4e4x4btn6dbjt801wrdh8frnaw",
-        "displayName": "Burgundy Glasses Blazer Matriarch",
-        "sha256": "f275963f0826dbda84d222398f74bd29dcda65ca1248e0e81ef8c23792b07293",
+        "assetId": "ks7fq3mpng2qyf5rv3grjm5pz58fsf69",
+        "chatUrl": "https://mint.gg/chat/ph791v8kv8bh0zr8gb3qsmvnzn8frw66",
+        "animationBatchId": "w572zg7xxa1yhj0r61tdpf5f6d8frecq",
+        "previousAssetId": "ks723dbj62cjcwvjt0723xh4z98frsvz",
+        "displayName": "Teal Bun Portrait Model",
+        "sha256": "3c831396c66fcbd51b6bc9ee56de3f326c511d80deed957c353ad7e2cfaf11e4",
         "prompt": "docs/reports/PR773-3D-BRIEF.md",
-        "notes": "Solicitada pelo dono em 06/10/2026. Prévia Mint conferida contra a referência: coque escuro, óculos vinho, blazer azul-marinho, blusa terracota e colar geométrico. GLB rigado, otimizado para WebP sem Draco; runtime usa clipes compartilhados por nome de osso."
+        "notes": "Revisão solicitada pelo dono em 06/10/2026: trocar o visual social por vestido midi azul-petróleo discreto, com mangas curtas e barra abaixo do joelho; manter coque escuro e óculos vinho. As vistas frontal/lateral e a prancha de seleção confirmam o vestido e as proporções; jogo real confirmou movimento e tiro. A pose segurando a arma continua pendente da revisão geral de poses. Evidências em tools/eval/asset-evidence/pr773/marina-dress/."
       },
       "processing": {
         "provider": "mint",
         "tools": ["mint.gg (MCP)", "tools/optimize-tribos.mjs"],
-        "finalSha256": "7decdfc343966bde0e573c12252832f3d1a572ff636e1d3ba13e6f3cd0d1b5e2",
+        "finalSha256": "4fb8291b344198442842988ee94bedff9635e18fc1a67443ddb8af69dd895933",
         "derivedFiles": ["public/img/chars/marina-silva.webp", "public/img/chars/avatars/marina-silva.webp"],
-        "thumbnailSha256": "bd0217f84c5f22ffff2de90212956ebc07583e59394e9643d6c813d4560f9544",
-        "avatarSha256": "20ef99e5671157a66bde7ac77eccbeb6e98f698e142c691297ae80f9a9361b62"
+        "thumbnailSha256": "2c3895bb1db8d5ebb41226d7bfc45ae556cc290e10b3308932519024bb29fff8",
+        "avatarSha256": "b3281047993d749d2efea28594b55593c114735a2217228abcca7afdcff57adf",
+        "selectionVideoSha256": "39bf437b2592645d4f83374e2af28d6ec777807c3ffb9f65106910ddf7b83393"
       }
     },
     "andaime-obras": {
