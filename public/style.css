@@ -1324,17 +1324,6 @@ body:has(#pause-menu:not(.hidden)) #mp-identity-toast{display:none}
    engrossa o poço da barra — não devolve o painel. */
 /* irmão POSTERIOR no DOM: quando a faixa de CTF existe, o killfeed desce. */
 #ctf-hud:not(.hidden) ~ #killfeed{top:136px}
-body.net-overlay #killfeed{right:270px}   /* o painel NET (netgame.js) mora no canto; o feed sai de baixo dele */
-#netstats .net-compact{display:none}
-body:has(#pause-menu:not(.hidden)) #netstats{display:none}
-@media(max-width:900px) and (max-height:500px){
-  #netstats{right:calc(96px + env(safe-area-inset-right,0px))!important;top:calc(8px + env(safe-area-inset-top,0px))!important;
-    min-width:0!important;padding:4px 6px!important;font-size:10px!important;line-height:1.25!important}
-  #netstats .net-full{display:none}
-  #netstats .net-compact{display:block}
-}
-@media(max-width:699px) and (max-height:500px){#netstats{display:none}}
-@media(max-width:500px) and (orientation:portrait){#netstats{display:none}}
 #match-next{margin:14px 0 0;font-weight:700;letter-spacing:.08em;opacity:.85;animation:match-next-pulse 1.2s ease-in-out infinite}
 @keyframes match-next-pulse{0%,100%{opacity:.85}50%{opacity:.35}}
 #killfeed{position:absolute;top:98px;right:48px;display:flex;flex-direction:column;gap:var(--s-1);

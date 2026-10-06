@@ -1,13 +1,13 @@
-# Gauntlet MP: painel de rede no celular — 04/10/2026
+# Multiplayer: remoção do painel de diagnóstico — 06/10/2026
 
 ## Objetivo e aceite
 
-Liberar os controles de chat e pausa que o painel NET cobria visualmente na viewport móvel 844×390, preservando diagnóstico de FPS/ping/gap e a telemetria de qualidade. Aceite técnico: captura 844×390 sem sobreposição, desktop com painel completo, netcode e portão verdes, `SIM_HASH` igual. O objetivo maior permanece partida de dois humanos em redes distintas e pelo menos 90% de sessões boas/ótimas por sete dias comparáveis após release.
+Remover do jogo a caixa fixa de diagnóstico que mostrava FPS, snapshots, jitter, banda e ping no canto superior direito. Preservar a coleta e o envio de métricas de qualidade por sessão; não exibir esses dados durante a partida. A alteração também libera o espaço dos controles móveis de chat e pausa. Aceite: sem `#netstats` no DOM em desktop e mobile, chat/pausa sem sobreposição, métricas de sessão ainda enviadas, netcode e build verdes e `SIM_HASH` inalterado. O objetivo maior permanece partida de dois humanos em redes distintas e pelo menos 90% de sessões boas/ótimas por sete dias comparáveis após release.
 
 ## Estado
 
 - Checkout isolado `client/worktrees/mp-mobile-net-overlay-20261004`, branch `codex/mp-mobile-net-overlay-20261004`, base `03d9bb01aaa7e8f5c8f659d7c2c65745cd98418b` do PR #776. A lane de #776 ficou limpa e intocada.
-- O cliente passa a renderizar a versão completa do painel e uma faixa compacta de FPS, ping e gap. CSS mostra a faixa no formato horizontal estreito, deslocada à esquerda dos botões de chat/pausa; viewport menor e retrato ocultam o painel para liberar a tela. A coleta e o envio de métricas continuam no mesmo `updateStats`.
+- **Evidência histórica, supersedida em 06/10:** as capturas e revisões abaixo registram a versão que reposicionava o painel; não representam o aceite visual final depois do pedido para remover a caixa.
 - Captura móvel local com nó pareado: `artifacts/mp-mobile-overlay-20261004/mp-mobile-overlay-after-20261004-identidade-entrada.png` (SHA-256 `bd677278d153b2377081b614afedc3f55c1b96c282b8478d72896c6ae077365e`). A faixa fica acima e à esquerda dos botões; o painel anterior na captura `client/worktrees/mp-bot-orbit-20261004/artifacts/mp-gauntlet-20261004/two-browser/praca-mobile.png` cobria visualmente o canto. Artefatos ignorados pelo Git.
 - Browser MP Praça 844×390: 17 verificações passaram, uma falhou por falta de qualquer impacto com material em tiros SCAR (TB8 0/0, inconclusiva para este layout). Identidade, pausa, espectador, protocolo v5, dez entidades e zero exceções passaram. Log `artifacts/mp-mobile-overlay-20261004/mp-mobile-overlay-browser-20261004.log`.
 - `npm run eval:netcode`: 201/201; `node scripts/sim-hash.mjs --check`: `825872778636506f`, igual à base e à imagem backend candidata. `npm run docs` atualizou seis blocos gerados de contagem; são derivados do código desta lane.
@@ -17,4 +17,4 @@ Liberar os controles de chat e pausa que o painel NET cobria visualmente na view
 
 ## Próximo passo
 
-Fazer checkpoint e PR empilhado sobre #776. Se aprovado para release, parear o backend ao SHA final de cliente e reconstruir a imagem antes do canário. Teste automatizado local não substitui humanos nem coorte de sete dias.
+Validar no browser desktop e mobile que o overlay não é criado e que chat/pausa continuam acessíveis; conferir que `updateStats` ainda envia métricas. Fazer checkpoint, atualizar a descrição do PR #777 e seguir a pilha #755 → #775 → #776 → #777. O merge do cliente não substitui a validação de sessão real e a coorte de sete dias.
