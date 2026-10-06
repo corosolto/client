@@ -44,9 +44,8 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 
 ## Próximo passo
 
-1. Atualizar a descrição antiga do PR para refletir os 10 políticos, a regra 5–5, Julia no B, Marina no E, Xandão somente no E e “Zero Um”; publicar pelo hook normal com Node 23.
-2. Aguardar CI remoto para o novo head. O teste local `check:deploy` passou 46/46 em 98,5 s no commit com alpha.53 integrado; gates específicos de Julia/Marina e os quatro captures 1200×800 também passaram.
-3. Manter #773 em draft até a revisão visual humana do elenco completo; as ressalvas antigas de Dama/Ministro continuam abertas. O bloqueio técnico original da pose inclinada de Julia foi corrigido por retarget próprio e compensação de chão, mas revisão humana não é inferida do verde numérico.
+1. Publicar `sharp@0.35.5` pelo hook normal com Node 23 e acompanhar o novo CI remoto.
+2. Manter #773 em draft até a revisão visual humana do elenco completo; as ressalvas antigas de Dama/Ministro continuam abertas. O bloqueio técnico original da pose inclinada de Julia foi corrigido por retarget próprio e compensação de chão, mas revisão humana não é inferida do verde numérico.
 
 ## Continuação 06/10 — retarget Julia/Marina
 
@@ -57,5 +56,11 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 - Regerei thumbnails, vídeos nativos de seleção/vitória/derrota e stills de resultado para Julia e Marina com os clips próprios. As thumbnails agora mostram ambas em pé, com arma apoiada; a coroa floral da Julia permanece visível. Fontes: `public/img/chars/{julia-zanatta,marina-silva}.webp`, `public/video/chars/`, `public/video/resultado/`.
 - Depois de atualizar `char_probe.json`, offsets, manifesto, imagens e vídeos, passaram `anims:check`, `anims:merge:check`, `feet:check`, `eval:pool-lado`, `eval:chao` (63 personagens), `eval:character-game-evidence` (7/7) e `eval:redesign` (UIA1–6/UIR1–43). `tools/eval/bug59-audits.mjs` regenerou os recibos SHA para as 126 artes e 189 vídeos. `eval:char-thumbnail` continua falhando somente nos seis personagens legados já documentados (camera-roxa, programador-virado, motoca-cachorro-loko, doidinho-bairro, designer-ux, lenda-lanhouse); nenhum dos dois novos aparece na falha.
 - O resumo global de `feet:check` ainda registra cinco clipes não compensáveis: Ministro walk/run, Esbirro run e Ancap walk/run. Não declarei essa dívida antiga resolvida por ter consertado Julia/Marina.
-- O worktree segue local à frente do head remoto do PR e ainda não foi publicado. Antes de fechar #773, falta atualizar os gates remotos e o texto antigo do PR (que ainda diz 9 personagens, Xandão em B/E e não cita Julia/Marina). Também seguem abertas as ressalvas visuais anteriores, em especial Ministro e Dama; não marcar a revisão visual geral como aprovada por causa deste conserto.
-- Checkpoints: `ccf5f8a9c` (`fix(personagens): retarget clipes da Julia e Marina`) e merge de `origin/main` alpha.53 em `1bae2c8b6`. `npm run check:deploy` passou 46/46 em 98,5 s depois dessa integração. A branch ainda precisa ser publicada; o PR remoto não contém esses checkpoints.
+- A revisão visual humana segue pendente, em especial para Ministro e Dama; não marcar o elenco como aprovado por causa de gates verdes.
+- Checkpoints: `ccf5f8a9c` (`fix(personagens): retarget clipes da Julia e Marina`) e merge de `origin/main` alpha.53 em `1bae2c8b6`. `npm run check:deploy` passou 46/46 em 98,5 s depois dessa integração; head publicado em `a1e9c1bdf`.
+
+## Publicação e bloqueio remoto — 06/10
+
+- A branch `feat/elenco-politicos` foi publicada em `a1e9c1bdfc0638841a30b0388661592ede08fada`; o pre-push local passou 46/46 em 107 s. O título e a descrição de #773 foram atualizados para o roster 5–5, Julia no B, Marina e Xandão no E, Zero Um e remoção de Agitador.
+- Os checks remotos de deploy/preview, CodeQL, ratchet, DCO e classificação passaram. O primeiro build falhou no `eval:deps` por advisory alta `GHSA-wq5f-xc86-pv6w` em `sharp@0.35.4` (CVE-2026-96889, faixa vulnerável `<0.35.5`). Atualizei o lockfile para `sharp@0.35.5` e dependências de plataforma compatíveis; `npm audit` reporta zero vulnerabilidades e `npm run eval:deps` está verde localmente. O commit corretivo e os checks remotos ainda precisam ser publicados/verificados.
+- Estado de aceite não mudou: PR deve continuar draft até revisão visual humana do elenco completo; ressalvas antigas de Dama e Ministro seguem documentadas. A prancha de rostos em `/private/tmp/pr773-elenco-politico-10-review.jpg` é apoio de inspeção, não aceite do modelo ou dos clipes.
