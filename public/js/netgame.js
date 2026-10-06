@@ -226,7 +226,13 @@ class Netcode {
     this._authReloading = reloadIn > 0;
     if (reloadIn > 0) {
       if (!estava) {
-        try { this.game.vm?.rig?.startReload(reloadIn); } catch { /* viewmodel ainda não montado */ }
+        if (p.reloadUntil <= this.game.time) {
+          const w = e.weapon;
+          const a = p.ammo[w];
+          const faltam = Math.max(1, Math.min((WEAPONS[w]?.mag || 0) - (a?.mag || 0), a?.res || 0));
+          if (this.game.vm?.authored?.active(w)) this.game.vm.authored.reload(w, reloadIn, a?.mag === 0, faltam);
+          else this.game.vm?.rig?.startReload(reloadIn);
+        }
         this.game.el?.reloadNote?.classList.remove('hidden');
       }
       p.reloadUntil = this.game.time + reloadIn;

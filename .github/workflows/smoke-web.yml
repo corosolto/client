@@ -13,6 +13,9 @@ on:
       - '.github/workflows/smoke-web.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -40,7 +43,7 @@ jobs:
           cat /tmp/csbrasil-dev.log
           exit 1
       - name: Run smoke test
-        run: npx playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js tests/smoke/web-assets.spec.js --reporter=list --trace=on --output=test-results
+        run: npx playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js tests/smoke/web-assets.spec.js tests/smoke/chat-sala.spec.js --reporter=list --trace=on --output=test-results
       - name: Upload smoke artifacts
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

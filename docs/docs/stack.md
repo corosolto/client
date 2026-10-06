@@ -17,7 +17,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 111 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 113 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -25,10 +25,10 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Pipeline de GLB | **gltf-transform** | `^4.4.1` |
 | Compressão de malha | **meshoptimizer** | `^1.2.0` |
 | Imagem (build e API) | **sharp** · **resvg** | `^0.35.3` · `^2.6.2` |
-| Esta documentação | **Docusaurus** | `3.6.3` |
+| Esta documentação | **Docusaurus** | `3.10.2` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **225** importam Playwright, **113** importam gltf-transform e **10** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **233** importam Playwright, **113** importam gltf-transform e **10** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 

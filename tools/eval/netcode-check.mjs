@@ -91,6 +91,11 @@ console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
 {
   const net = fakeNet(1, 5, false, 30);
   const g = montaJogo(net);
+  const authored = g.vm.authored;
+  const active0 = authored.active, reload0 = authored.reload;
+  const reloads = [];
+  authored.active = () => true;
+  authored.reload = (...args) => reloads.push(args);
   net.snap = snapshot(50, 1, {
     ackSeq: 0, weapon: 'm4', mag: 11, res: 47, reloadIn: 1.2,
     primary: 'm4', secondary: 'pistol', jogadorX: 0, jogadorY: 0, jogadorZ: 0,
@@ -102,6 +107,9 @@ console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
     'HUD usa pente e reserva autoritativos, não uma segunda munição independente');
   cobra(g.player.reloadUntil > g.time + 1,
     'recarga autoritativa chega à máquina visual do cliente');
+  cobra(reloads.length === 1 && reloads[0][0] === 'm4' && reloads[0][1] === 1.2,
+    'recarga iniciada pelo nó anima o viewmodel autorado');
+  authored.active = active0; authored.reload = reload0;
 
   // O input 1 foi previsto em x=0. Depois dele o jogador avançou localmente até x=1.
   // O servidor confirma o input 1 em x=0,2: a correção correta preserva o metro ainda não

@@ -7,7 +7,8 @@
   Córrego e `homenagem-*` de artistas reais no Córrego.
 
   Mede os dois lados do contrato:
-    1. `graffiti_layout.js`, que é o que o jogo realmente desenha;
+    1. `graffiti_layout.js`, nos ids que o JOGO pede no `grafitar({id})` — layout
+       fossil reprova por arte que ninguém vê e mascara a que está na parede;
     2. `textures.js`, pool-fonte que recriaria o defeito na próxima assada.
 
   Mutantes (provam que a régua morde sem editar o repositório):
@@ -20,6 +21,11 @@
     --mutante=cidadefora injeta decal do pack com cidade fora de SP|RJ
     --mutante=writer     injeta decal cujo nome é assinatura de writer real
 
+  O QUE ESTA REGUA NÃO DECIDE (issue #741): os 4 vermelhos que sobram são conteúdo.
+  `poster:DOLLYNHO.png` e os retratos de `ashtar*` estão no acervo com comentário do
+  dono em `textures.js` ("mandou voltar"), e o veto do Córrego é nominal, por mapa.
+  Tirar a arte do acervo ou do pool é decisão do dono — a régua nomeia, não apaga.
+
   Cláusulas da frente F (v2.1, plans/13): todo decal do pack novo (`or-pixo-*`)
   declara `cidade` ('SP'|'RJ') como 5º campo do DECAL_FILES — a distinção de
   estilo vem da pesquisa em references/graffiti/PIXACAO-SP-RJ.md. E nenhum decal
@@ -28,15 +34,30 @@
 import { readFileSync } from 'node:fs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
 
-const NOVOS = ['fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao'];
+// `corrego`, nunca `fy_corrego`: o id no estilo CS foi barrado pelo M1 do mapa-id-check e
+// o layout foi regerado com o nome novo — a régua ainda pedia o antigo e quebrava com TypeError.
+// Os ids que o JOGO pede no `grafitar({id})`, não os fossils: `map_escadao.js` e
+// `map_campomorro.js` pedem `escadao`/`campomorro`. `fy_escadao` nem é id de mapa
+// (não está em MAPS nem em ALIAS_MAPA) e `fy_campomorro` é a duplicata do id
+// anterior do mesmo mapa — mesma impressão digital (`f58d49c10e717e30`) nos dois.
+// Medir os fossils reprovava por arte que ninguém vê e deixava de ver a que está na
+// parede. `fy_mansao` fica: o mapa `mansao` não tem layout assado (grafita ao vivo
+// pelo pool `D_PIXO_M`), e é o único onde os mutantes `pessoa`/`morte` podem morder.
+const NOVOS = ['escadao', 'campomorro', 'fy_lajes', 'corrego', 'fy_mansao'];
 const MUT = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1];
 const layouts = JSON.parse(JSON.stringify(GRAFITE));
-let lajesFonte = readFileSync('public/js/map_lajes.js', 'utf8');
+// #722: o veto editorial de Lajes era conferido no `map_lajes.js` — arquivo que o #701
+// removeu e que NUNCA mais roda. O mapa é o `map_lajes_authored.js` (maps.js:76), e é nele
+// que o `grafitar` foi recuperado: sem esta correção a régua lia um morto e dava verde de graça.
+let lajesFonte = readFileSync('public/js/map_lajes_authored.js', 'utf8');
 const corregoFonte = readFileSync('public/js/map_corrego.js', 'utf8');
-const substituicoesLajes = ['folha-person-01.png','personagens-graffiti-01.png','folha-person-02.png'];
-const substituiRick = substituicoesLajes.every((id) => lajesFonte.includes(`'${id}': 'or-mitico-mural.png'`));
-if (substituiRick) layouts.fy_lajes.arquivos = layouts.fy_lajes.arquivos
-  .map((nome) => substituicoesLajes.includes(nome) ? 'or-mitico-mural.png' : nome);
+/* Lajes NÃO tem tabela de substituição, e não deve ter: o layout assado `fy_lajes`
+  tem 4 arquivos (`tag-larga/fina/money/flop.png`) e 1 mural — nenhum dos decals
+  vetados. A exigência da tabela era herança do `map_lajes.js` morto. Aplicá-la
+  hoje seria código morto que ainda obriga `npm run grafite fy_lajes` no browser
+  (mexer no fonte quebra o F2 do `graffiti-layout-check`). A cobertura real dos
+  três nomes é a cláusula `personagensProtegidos` mais os mutantes `rick`/`popeye`,
+  que leem o layout como o jogo lê. */
 const substituicoesCorrego = new Map([
   ['folha-person-02.png','or-mitico-mural.png'],
   ['personagens-graffiti-01.png','or-mitico-mural.png'],
@@ -47,21 +68,20 @@ const substituicoesCorrego = new Map([
   ['personagens-graffiti-03.png','or-graf-treta.png'],
 ]);
 const substituiCorrego = [...substituicoesCorrego].every(([a,b]) => corregoFonte.includes(`'${a}': '${b}'`));
-if (substituiCorrego) layouts.fy_corrego.arquivos = layouts.fy_corrego.arquivos
+if (substituiCorrego) layouts.corrego.arquivos = layouts.corrego.arquivos
   .map((nome) => substituicoesCorrego.get(nome) || nome);
 
-if (MUT === 'dollynho') layouts.fy_campomorro.arquivos.push('poster:DOLLYNHO.png');
+if (MUT === 'dollynho') layouts.campomorro.arquivos.push('poster:DOLLYNHO.png');
 if (MUT === 'pessoa') layouts.fy_mansao.murais.push(['homenagem-pessoa-real', 0, 2, 0, 0, 5.4, 2.8]);
 if (MUT === 'morte') layouts.fy_mansao.arquivos.push('folha-pixaca-01.png');
 if (MUT === 'rick') layouts.fy_lajes.arquivos.push('folha-person-01.png');
 if (MUT === 'popeye') layouts.fy_lajes.arquivos.push('personagens-graffiti-01.png');
-if (MUT === 'religioso-vulgar') layouts.fy_corrego.arquivos.push('poster:despisque-leao.jpg');
-if (MUT === 'putin') layouts.fy_corrego.arquivos.push('poster:ashtar-meme.jpg');
-if (MUT === 'rostos-carecas') layouts.fy_corrego.arquivos.push('personagens-graffiti-02.png');
+if (MUT === 'religioso-vulgar') layouts.corrego.arquivos.push('poster:despisque-leao.jpg');
+if (MUT === 'putin') layouts.corrego.arquivos.push('poster:ashtar-meme.jpg');
+if (MUT === 'rostos-carecas') layouts.corrego.arquivos.push('personagens-graffiti-02.png');
 
 const falhas = [];
-if (!substituiRick) falhas.push('map_lajes.js: substituição nominal do decal protegido ausente');
-if (!substituiCorrego) falhas.push('map_corrego.js: substituições nominais dos decals vetados ausentes');
+if (!substituiCorrego) falhas.push('corrego (map_corrego.js): substituições nominais dos decals vetados ausentes');
 if (/const D_PERSO\s*=\s*decalIds\([^;]*folha-person-01\.png/s.test(lajesFonte))
   falhas.push('map_lajes.js: decal protegido permanece no pool vivo D_PERSO');
 for (const id of ['personagens-graffiti-01.png', 'folha-person-02.png']) {
@@ -70,7 +90,7 @@ for (const id of ['personagens-graffiti-01.png', 'folha-person-02.png']) {
 }
 for (const id of ['folha-person-02.png', 'poster:despisque-leao.jpg', 'poster:ashtar-meme.jpg'])
   if (corregoFonte.includes(`'${id}'`) && !corregoFonte.includes(`'${id}': 'or-mitico-mural.png'`) && !corregoFonte.includes(`'${id}': 'poster:or-quebrada-vive.jpg'`))
-    falhas.push(`map_corrego.js: decal editorial vetado ${id}`);
+    falhas.push(`corrego (map_corrego.js): decal editorial vetado ${id}`);
 for (const id of NOVOS) {
   const layout = layouts[id];
   if (!layout) { falhas.push(`${id}: layout ausente`); continue; }
@@ -83,11 +103,16 @@ for (const id of NOVOS) {
     ? (layout.arquivos || []).filter((nome) => nome === 'folha-pixaca-01.png') : [];
   const personagensProtegidos = id === 'fy_lajes'
     ? (layout.arquivos || []).filter((nome) => ['folha-person-01.png','personagens-graffiti-01.png','folha-person-02.png'].includes(nome)) : [];
-  const religiososVulgares = id === 'fy_corrego'
+  /* `corrego`, nunca `fy_corrego`: o id no estilo CS foi barrado pelo M1 do
+     mapa-id-check, o layout foi regerado com o nome novo e a comparação ficou
+     sempre falsa. Três cláusulas e três mutantes (`religioso-vulgar`, `putin`,
+     `rostos-carecas`) passavam verdes medindo um id que não existe — a mesma
+     classe do TypeError da linha 53, um passo atrás. */
+  const religiososVulgares = id === 'corrego'
     ? (layout.arquivos || []).filter((nome) => nome === 'poster:despisque-leao.jpg') : [];
-  const pessoasReais = id === 'fy_corrego'
+  const pessoasReais = id === 'corrego'
     ? (layout.arquivos || []).filter((nome) => ['poster:ashtar-meme.jpg','poster:ashtar.png'].includes(nome)) : [];
-  const rostosHumanos = id === 'fy_corrego'
+  const rostosHumanos = id === 'corrego'
     ? (layout.arquivos || []).filter((nome) => ['personagens-graffiti-02.png','personagens-graffiti-03.png'].includes(nome)) : [];
   if (protegidos.length) falhas.push(`${id}: ${protegidos.join(', ')}`);
   if (pessoas.length) falhas.push(`${id}: ${pessoas.map((m) => m[0]).join(', ')}`);
@@ -127,7 +152,7 @@ if (MUT === 'vw') {
 if (/\['DOLLYNHO\.png'\s*,/.test(fonte)) falhas.push('textures.js: DOLLYNHO permanece no POSTER_FILES');
 for (const id of ['ashtar-meme.jpg','ashtar.png']) if (fonte.includes(`['${id}',`)) falhas.push(`textures.js: ${id} com pessoa real permanece no POSTER_FILES`);
 if (/const D_MURAL\s*=\s*decalIds\([^;]*personagens-graffiti-0[23]\.png/s.test(corregoFonte))
-  falhas.push('map_corrego.js: rostos humanos permanecem no pool vivo D_MURAL');
+  falhas.push('corrego (map_corrego.js): rostos humanos permanecem no pool vivo D_MURAL');
 const pessoasFonte = fonte.match(/const MURAIS_HOM\s*=\s*\[([^\]]*[a-z][^\]]*)\]/s);
 if (pessoasFonte) falhas.push('textures.js: MURAIS_HOM ainda contém pessoas reais');
 for (const id of ['2020_bmw_m8_coupe', '1965_ford_mustang_coupe_289', '1981_dmc_delorean'])
@@ -135,8 +160,8 @@ for (const id of ['2020_bmw_m8_coupe', '1965_ford_mustang_coupe_289', '1981_dmc_
 for (const id of ['fusca', 'saveiro']) if (lajesFonte.includes(`'${id}'`)) falhas.push(`map_lajes.js: veículo reconhecível ${id}`);
 if (/folha-pixaca-01\.png/.test(mansaoFonte)) falhas.push('map_mansao.js: pixo MORTE permanece no pool vivo');
 
-console.log('┌─ GRAFFITI-EDITORIAL — cinco mapas novos');
-console.log(`├─ layout: ${NOVOS.length} mapas · pool-fonte: textures.js · pack pixo: ${pixoNovos.length} com metadado cidade`);
+console.log(`┌─ GRAFFITI-EDITORIAL — ${NOVOS.length} layouts assados (${NOVOS.join(', ')})`);
+console.log(`├─ pool-fonte: textures.js · pack pixo: ${pixoNovos.length} com metadado cidade`);
 if (falhas.length) {
   for (const falha of falhas) console.error(`├─ ✗ ${falha}`);
   console.error(`└─ REPROVADO (${falhas.length})`);

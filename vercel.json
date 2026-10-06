@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "bash scripts/fetch-audio.sh && bash scripts/fetch-decals.sh && bash scripts/fetch-viewmodels.sh && npm run strip:decalbg && npm run assert:assets && npm run check:vercel && npm run build",
+  "buildCommand": "bash scripts/fetch-audio.sh && bash scripts/fetch-decals.sh && bash scripts/fetch-viewmodels.sh && npm run strip:decalbg && npm run assert:assets && npm run audio:check && npm run check:vercel && npm run build",
   "redirects": [
     {
       "source": "/discord",

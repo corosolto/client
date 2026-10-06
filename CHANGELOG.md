@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.19`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.53`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -25,7 +25,12 @@
 
 ## Não lançado — 2026-09-06
 
+### Corrigido
+- **#696 — `assert:assets` reprovava com o pacote público mesmo depois do fetch.** O `audio-pack-v8` (445 entradas, medido em 04/10/2026 no diretório central do zip) não tem pasta `ambiente/` nem a chave `mapSoundscapes`, e o conserto — `prepare-public-preview.mjs` — era chamado SÓ pelo workflow de preview. `scripts/fetch-audio.sh` agora termina a preparação em todo caminho público (`ensure-map-soundscapes.mjs`, que instala `mapSoundscapes` nos 18 mapas com o hum que o jogo sintetiza; o pack privado não passa por ele, porque ambiência real que falta tem de reprovar o build). `eval:audioruntimeassets` passa a provar os TRÊS estados do contrato — cru = vermelho, preparado = verde, parcial = vermelho — chamando o `assert:assets` real.
+- **#741 — a `graffiti-editorial-check` media layouts que ninguém vê.** O `TypeError` de `fy_corrego` (id que virou `corrego`) era a ponta visível: as cláusulas `religioso-vulgar`, `putin` e `rostos-carecas` comparavam com `fy_corrego` e passavam verdes sem medir nada — os três mutantes eram cegos. `NOVOS` passou a listar os ids que o jogo pede no `grafitar({id})` (`escadao`, `campomorro`), e a exigência de tabela nominal em Lajes saiu: o layout assado tem 4 tags e nenhum decal vetado. Sobraram 4 vermelhos, todos de conteúdo — ver a issue.
+
 ### Adicionado
+- O topo da home agora permite desligar e religar a música do menu; a escolha fica salva no navegador. A rotação da intro usa apenas `m11`, `m14`, `m16`, `m17` e `m22`, retirando as três faixas com voz da seleção anterior.
 - Contador central de SEQUÊNCIA mostra os abates da vida atual confirmados pelo jogo/servidor, com identidade visual do CSBrasil; morte, round e reconexão o zeram sem apagar o total da partida. Régua `eval:killstreak` cobre SP e MP com seis mutantes.
 - Contador de ABATES do jogador no HUD, na coluna de estado dele: algarismo grande com rótulo miúdo, conta a PARTIDA (não o abate do time nem o da rodada) e não zera na virada de round — antes o número pessoal só existia atrás do TAB. Régua `eval:abateshud` com quatro mutantes, no `check:fast`.
 - Sertão da Treta substitui o Velho Oeste: casario de taipa, Caatinga, Canudos, calango quadrúpede, aves, cabras e galinha com pintinhos. Preview real com vídeo silencioso ao passar o mouse; criação com caminhada e pausas. O memorial de Padre Cícero permanece fora desta entrega.
@@ -63,6 +68,303 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.53] — 2026-10-06
+
+### Mudado
+- docs(ui): roadmap visual e bot de regressão (#756)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(ui): fechar continuidade apos CI hospedada
+- docs(ui): registrar primeiro run hospedado
+- docs(ui): registrar runtime do portao local
+- docs(ui): atualizar blocos gerados para capturador
+- docs(ui): registrar checkpoint e proxima validacao
+- docs(ui): auditar interface e adicionar portao de regressao
+
+## [2.1.0-alpha.52] — 2026-10-06
+
+### Mudado
+- fix(deps): corrigir CVE alta em source-map-js (#780)
+- fix(deps): preservar opcionais do lockfile
+- fix(deps): corrigir CVE de source-map-js
+
+## [2.1.0-alpha.51] — 2026-10-06
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-10-05) (#779)
+- docs(veto): exceção de sátira política para pessoa real (#769)
+- feat(ranking): Esquerda e Direita no lugar de Petista e Bolsonarista (#768)
+- docs(changelog): rodada do cronista — 24 commits
+- Abre a exceção de sátira política no veto de pessoa real
+- Renomeia os lados do ranking para Esquerda e Direita
+
+## [2.1.0-alpha.50] — 2026-10-04
+
+### Mudado
+- fix(release): bot não cancela dispatch em andamento (#765)
+- fix(release): keep bot push from canceling dispatch
+
+## [2.1.0-alpha.49] — 2026-10-04
+
+### Mudado
+- fix(gate): exigir relatório fresco da auditoria de mapas (#766)
+- fix(gate): allow full map audit to finish on CI runners
+- docs: record alpha.48 map audit rebase
+- docs: record fresh CI failure and promotion gates
+- docs: checkpoint map audit PR and validation
+- fix(gate): require fresh map audit report
+
+## [2.1.0-alpha.48] — 2026-10-04
+
+### Mudado
+- fix(corrego): restaurar rotas CTF nas pontes estreitas (#764)
+- docs(corrego): record alpha.47 rebase and CI gate
+- test(chat): make spectator smoke independent of round transition
+- test(corrego): report CTF route summary only on pass
+- fix(corrego): restore separate CTF routes on narrow bridges
+
+## [2.1.0-alpha.47] — 2026-10-04
+
+### Mudado
+- Dispatch backend node sync after client release (#752)
+
+## [2.1.0-alpha.46] — 2026-10-04
+
+### Mudado
+- fix(corrego): as 3 pontes baixas em escala — malha, colisor e navegação na mesma medida (#681)
+- fix(corrego): as 3 pontes baixas em escala — malha, colisor e navegação na mesma medida (#681) (#761)
+- chore: reavalia contra a main atual
+- docs: regenera blocos derivados (regua eval:corrego-ponte entra no check:fast)
+
+## [2.1.0-alpha.45] — 2026-10-04
+
+### Mudado
+- fix(679): porta a visibilidade de alvo do catálogo para o check:fast (#750)
+- docs: regenera blocos derivados (novo gate eval:vm-placar no check:altera a contagem)
+- fix(679): porta a visibilidade de alvo do catálogo para o check:fast
+
+## [2.1.0-alpha.44] — 2026-10-04
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-10-04) (#762)
+- docs(changelog): rodada do cronista — 21 commits
+
+## [2.1.0-alpha.43] — 2026-10-04
+
+### Mudado
+- fix(assets): contrato de ambiência do áudio é do jogo, não do pacote (#696) + régua de grafite medindo o que se vê (#741) (#747)
+- fix(assets): o contrato de ambiência do áudio é do jogo, não do pacote (#696, #741)
+
+## [2.1.0-alpha.42] — 2026-10-04
+
+### Mudado
+- feat(audio): menu instrumental com botão de música (#759)
+- docs(audio): fechar preflight do pacote instrumental
+- docs(audio): registrar revisão visual e condição de merge
+- docs(audio): registrar pacote instrumental e limites da revisão
+- fix(audio): validar pacote privado instrumental no build
+- docs(audio): registrar checkpoint da intro instrumental
+- feat(audio): manter instrumentais e alternar música do menu
+
+## [2.1.0-alpha.41] — 2026-10-04
+
+### Mudado
+- docs(security): registrar fechamento dos alertas (#760)
+
+## [2.1.0-alpha.40] — 2026-10-04
+
+### Mudado
+- fix(security): limitar profundidade do braces na documentação (#758)
+
+## [2.1.0-alpha.39] — 2026-10-04
+
+### Mudado
+- fix(amazonia): acesso da água às escadas que nasciam dentro do igarapé (#680) (#753)
+- docs: regenera blocos derivados (regua AME entra no check:fast)
+- fix(amazonia): abrir acesso da água às escadas que nasciam dentro do igarapé
+
+## [2.1.0-alpha.38] — 2026-10-04
+
+### Mudado
+- fix(security): atualizar dependências do exemplo Vite (#757)
+
+## [2.1.0-alpha.37] — 2026-10-04
+
+### Mudado
+- fix(security): limitar token dos workflows a leitura (#754)
+
+## [2.1.0-alpha.36] — 2026-10-04
+
+### Mudado
+- fix(security): atualizar árvore de dependências de docs (#751)
+
+## [2.1.0-alpha.35] — 2026-10-04
+
+### Mudado
+- fix(security): atualizar http-cache-semantics para 4.3.0 (#749)
+
+## [2.1.0-alpha.34] — 2026-10-04
+
+### Mudado
+- fix(deps): tira da lista as isenções que viraram letra morta (#746)
+- fix(deps): tira da lista as isencoes que viraram letra morta
+
+## [2.1.0-alpha.33] — 2026-10-04
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-10-03) (#745)
+- fix(crash): viewmodel pago ausente do deploy não é crash de código (#658 #656 #657) (#660)
+- docs(changelog): rodada do cronista — 50 commits
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(crash): viewmodel pago ausente do deploy não é crash de código (#658 #656 #657)
+
+## [2.1.0-alpha.32] — 2026-10-03
+
+### Mudado
+- chore: reavalia o build contra a main com a isencao da CVE (#743)
+- chore: reavalia o build contra a main com a isencao da CVE (#743)
+- fix(game): recarga automática ao consumir a última bala (#678)
+- fix(pkg): tira marcador de conflito do package.json (npm ci quebrava em 30s)
+- chore: reavalia contra a main atual
+- merge(main): base atual e blocos gerados
+- docs: atualizar contagem da nova regua de recarga
+- fix(game): recarregar ao consumir ultima bala
+
+## [2.1.0-alpha.31] — 2026-10-03
+
+### Mudado
+- Telemetria marca versão@host fora dos nossos domínios; /mapa com Esri (#721)
+- docs: regenera blocos derivados
+- fix(pkg): union da lista do check:fast com a regua de versao com origem
+- merge(main): base atual e blocos gerados
+- merge(main): base atual e blocos gerados
+- chore: devolve pickup_check.json (artefato do check:fast entrou por engano)
+- fix(telemetria): build fora dos domínios próprios marca versão@host; mapa com Esri
+
+## [2.1.0-alpha.30] — 2026-10-03
+
+### Mudado
+- fix(gameplay): tiro no pulo espalha, pulo agachado sem boost e reload que não reseta (#733)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(gameplay): tiro no pulo espalha, pulo agachado sem boost e reload que não zera mais
+
+## [2.1.0-alpha.29] — 2026-10-03
+
+### Mudado
+- fix(ui): corrigir proporção, carrossel e tipografia do hub (#713)
+- merge(main): base atual e blocos gerados
+- chore(docs): regenera bloco derivado (autofix)
+- docs(ui): registrar PR e portão de push
+- docs(ui): registrar evidência e limites do PR do hub
+- fix(ui): conciliar composição do hub com a home atual
+- feat(ui): refinar composição e páginas do hub
+- fix(ui): preservar proporção do personagem no hub
+- fix(ui): estabilizar escala do hub em telas diferentes
+
+## [2.1.0-alpha.28] — 2026-10-03
+
+### Mudado
+- fix(mapa): Lajes volta a ter grafite — o grafitar morreu no rewrite authored (#722)
+- fix(mapa): Lajes volta a ter grafite — o grafitar morreu no rewrite authored (#722) (#740)
+
+## [2.1.0-alpha.27] — 2026-10-03
+
+### Mudado
+- feat(grafite): censo dos 11 abertos + órfã e densidade — triagem MA1 (45 órfãs, classe @0,0,0, lajes 0%) (#665)
+- merge(main): base atual e blocos gerados
+- fix(mapcat): régua lê os 18 mapas do registro e a cor com CSS real
+- fix(mapcat): cor do rótulo AMAZONIA no cartão + régua C5
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- feat(grafite): censo dos 11 abertos + cláusulas de órfã e densidade — a triagem do MA1 (plans/26)
+- docs: regen de docs/arch depois das evidências MA4 (capturar.mjs e HTML entraram depois do regen anterior)
+- fix(mapcat): amazonia deixa de ser FAVELA, corrego sai do fallback ARENA — com régua eval:mapcat (MA4 do plans/26)
+- docs(plan): frente MA5 — fim do low-poly herança nos mapas abertos
+- docs(plan): frentes MA1-MA4 dos mapas abertos — graffiti, ferro velho, padrão tupi e classificação
+
+## [2.1.0-alpha.26] — 2026-10-03
+
+### Mudado
+- fix(deps): isenta a cadeia do GHSA-ch52-4w7c-c8xp — sem versão corrigida (#743)
+- fix(deps): isenta a cadeia do GHSA-ch52-4w7c-c8xp — sem versao corrigida
+
+## [2.1.0-alpha.25] — 2026-10-03
+
+### Mudado
+- fix(boot): watchdog do menu para de acusar quem navega no hub (#671)
+- fix(boot): watchdog do menu para de acusar quem navega no hub (#671) (#738)
+- fix(astro): devolve o catch do listener do watchdog (build quebrou na.alpha.23)
+- docs(boot): sem travessão no comentário do watchdog (travessao:check)
+
+## [2.1.0-alpha.24] — 2026-10-02
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-10-02) (#737)
+- fix(vm): indisponibilidade de asset pago não vira crash de launch (#720/#736) (#742)
+- fix(vm): indisponibilidade de asset pago não vira crash de launch (#720/#736)
+- docs(changelog): rodada do cronista — 40 commits
+
+## [2.1.0-alpha.23] — 2026-10-02
+
+### Mudado
+- Accept MP nodes by simulation fingerprint, not release version (#739)
+- docs(changelog): rodada do cronista (2026-09-30) (#725)
+- docs(changelog): rodada do cronista (2026-10-01) (#731)
+- Regenerate derived docs blocks
+- Write SIM_HASH on every release
+- Accept nodes by simulation fingerprint, not release
+- Add simulation fingerprint of the node's module graph
+- docs(changelog): rodada do cronista — 10 commits
+- docs(changelog): rodada do cronista — 21 commits
+
+## [2.1.0-alpha.22] — 2026-10-02
+
+### Mudado
+- docs(chat): contrato v1 do chat de sala (#686)
+- test(chat): régua eval:chat vermelha para o chat de sala (#686)
+- feat(net): ramos e envio do chat de sala no NetClient (#686)
+- feat(chat): módulo puro do chat de sala com limites, normalização e estado (#686)
+- test(chat): mutantes do módulo puro (sem-nfkc, bloqueio-proprio, tabela-torta) (#686)
+- feat(chat): painel do chat de sala (view, marcação, CSS e i18n) (#686)
+- feat(game): guardas de entrada para o chat de sala (Y/U, trava, pausa) (#686)
+- feat(main): liga o chat de sala à sessão multiplayer (#686)
+- fix(chat): destruir() destrava o jogo e desliga a meta (#686)
+- test(chat): smoke Playwright do painel e eval:chat no check:fast (#686)
+- fix(chat): fechar o compositor devolve o foco ao jogo, mesmo vindo de uma linha (#686)
+- fix(game): o clique que fecha o compositor do chat não atira (#686)
+- test(chat): eval:chat-mp, o chat de sala de ponta a ponta com nó e três navegadores (#686)
+- fix(chat): Y/U abrem o chat no fim de partida e o stick não anda com o compositor aberto (#686)
+- fix(chat): normalizarTexto numa passagem só, igual ao nó (#686)
+- fix(chat): fechar sem teclado, aviso com fundo, corte com reduzir movimento e redesenho sem ressuscitar linha (#686)
+- fix(chat): carenciaEspectadorMs no contrato e em CHAT_LIMITES, e doc alinhado às correções do nó (#686)
+- fix(chat): Esc fecha o compositor no toque mesmo com o keydown engolido pelo navegador (#686)
+- fix(chat): ZWJ depois de seletor e tom de pele, espera do nack conferida e chat destruído na recusa de mapa parado (#686)
+- fix(chat): fechar o compositor não devolve o foco ao #chat-toque (#686)
+- test(chat): contraste do chat vira portão próprio UI1C (eval:ui-chat) no check:fast (#686)
+- docs(chat): contrato cobre a segunda aba na arquibancada e as contagens da rota de denúncia (#686)
+- feat(chat): botões Y SALA/U TIME na HUD abrem o compositor por clique ou toque (#686)
+- test(chat): CC8 tranca os botões da HUD, UI1C mede o contraste e o smoke clica (#686)
+- fix(chat): 'Bloquear também?' não morre com o timer do aviso (#686)
+- feat(mp): chat de texto da sala com identidade do servidor e controles de abuso (#686) (#726)
+- chore(docs): regenera bloco derivado (autofix)
+
+## [2.1.0-alpha.21] — 2026-10-02
+
+### Mudado
+- feat: trocar de arma pela rodinha do mouse + 3 crashes de produção (rádio, TDZ do MP, Object.hasOwn) (#732)
+- feat(jogo): trocar de arma pela rodinha do mouse, como no CS
+- fix(menu): boot no fim do main.js e sem Object.hasOwn
+- fix(rádio): religa o ping de rota que derrubava todo comando de rádio
+
+## [2.1.0-alpha.20] — 2026-10-02
+
+### Mudado
+- fix(deps): devalue high do npm audit — bump no lockfile, DEP1 volta ao verde (#735)
 
 ## [2.1.0-alpha.19] — 2026-09-30
 
@@ -207,6 +509,7 @@
 - docs(mp): record quality fix PRs and rollout gates
 - fix(mp): exclude inactive sessions from quality telemetry
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.1.0-alpha.17).
 ## [2.1.0-alpha.16] — 2026-09-29
 
 ### Mudado

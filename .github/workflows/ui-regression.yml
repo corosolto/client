@@ -1,0 +1,63 @@
+name: ui-regression
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-regression-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências e navegador
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+          git worktree add --detach "$RUNNER_TEMP/ui-base" "${{ github.event.pull_request.base.sha }}"
+          npm ci --ignore-scripts --prefix "$RUNNER_TEMP/ui-base"
+      - name: Subir base e proposta
+        run: |
+          mkdir -p artifacts/ui-regression
+          (cd "$RUNNER_TEMP/ui-base" && npm run dev -- --host 127.0.0.1 --port 4321 > "$GITHUB_WORKSPACE/artifacts/ui-regression/base-server.log" 2>&1) &
+          (npm run dev -- --host 127.0.0.1 --port 4322 > artifacts/ui-regression/head-server.log 2>&1) &
+          for port in 4321 4322; do
+            ready=0
+            for i in $(seq 1 90); do
+              if curl -fsS "http://127.0.0.1:$port/" >/dev/null; then ready=1; break; fi
+              sleep 2
+            done
+            if [ "$ready" != 1 ]; then
+              echo "Porta $port não respondeu após $i tentativas"
+              tail -n 30 artifacts/ui-regression/*-server.log
+              exit 1
+            fi
+          done
+      - name: Validar mutações do classificador
+        run: node tools/ui-regression/selftest.mjs
+      - name: Capturar as duas revisões
+        run: |
+          node tools/ui-regression/capture.mjs --url http://127.0.0.1:4321 --out artifacts/ui-regression/base
+          node tools/ui-regression/capture.mjs --url http://127.0.0.1:4322 --out artifacts/ui-regression/head
+      - name: Classificar regressões
+        run: node tools/ui-regression/classify.mjs --base artifacts/ui-regression/base --head artifacts/ui-regression/head --out artifacts/ui-regression/classification
+      - name: Guardar capturas e diagnóstico
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ui-regression-${{ github.event.pull_request.number }}
+          path: artifacts/ui-regression
+          if-no-files-found: ignore

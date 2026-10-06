@@ -4,8 +4,8 @@
    POR QUE EXISTE
    Em 12/08/2026 o `npm audit --omit=dev` devolvia 8 vulnerabilidades, 6 altas, e
    NENHUM portão olhava para isso - a primeira vez que alguém rodou foi numa
-   auditoria manual. Cinco saíram com `npm audit fix` (só o lock mudou). As três
-   que sobraram são a mesma raiz e estão ISENTAS aqui, com a análise embaixo.
+   auditoria manual. A régua acompanha o audit e exige a remoção de isenções
+   quando a vulnerabilidade correspondente desaparece.
 
    O QUE ELA MEDE: `npm audit --omit=dev`, alta ou crítica, fora da lista de
    isenção. A lista é nominal e datada; vulnerabilidade nova reprova mesmo que
@@ -15,7 +15,7 @@
    roda dentro do build da Vercel, onde o contrato é "sem browser e sem rede".
    Este portão é passo de CI, junto do build.
 
-   Mutantes: sem-isencao (ignora a lista e as 3 conhecidas devem acender),
+   Mutantes: sem-isencao (vulnerabilidade sintética deve acender),
    isencao-vazia (prova que a lista é o que segura, não um `exit 0` escondido) e
    advisory-nova (advisory desconhecida em pacote isento tem que reprovar - isenção
    por nome esconderia exatamente esse caso).
@@ -35,10 +35,7 @@ if (mutante && !['sem-isencao', 'isencao-vazia', 'advisory-nova'].includes(mutan
    assinaturas (trecho de URL/título) que cobrem a isenção; entrada de cadeia
    (via só com nomes de pacote) não carrega advisory própria - a raiz carrega.
    Cada linha diz por que o risco não se realiza aqui - "é transitiva" não é motivo. */
-/* Vazia de propósito desde 21/08/2026: as três isenções que moravam aqui (@astrojs/vercel,
-   @vercel/routing-utils, path-to-regexp) cobriam a MESMA cadeia de ReDoS, fechada pelo #363
-   com override para path-to-regexp ^6.3.0 — e o DEP2 acusou que elas viraram letra morta. */
-const ISENTAS = new Map([]);
+const ISENTAS = new Map();
 
 const GRAVES = new Set(['high', 'critical']);
 
