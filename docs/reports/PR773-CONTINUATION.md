@@ -7,7 +7,7 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 ## Estado recuperável
 
 - Branch: `feat/elenco-politicos`; base de trabalho `b2375303e0a88cecaffbbc92e01b9351d0190567` (PR draft aberto, conflito com `main` visto em 2026-10-06).
-- Checkpoint mais recente: `978a44bea` (`docs(pr773): anota checkpoint de Julia e Marina`), com os novos GLBs, avatares, roster, categoria inicial e procedência. A correção de Xandão para somente E fecha 5–5 e aguarda checkpoint.
+- Checkpoint mais recente: `0130457a6` (`docs(pr773): registra roster politico 5-5`), com Xandão exclusivo de E, roster 5–5 e os registros de continuidade atualizados.
 - Checkpoints principais: `a708f2557` (órbita e teste de navegador), `2749a86fa` (remoção de Agitador), `1574fed2f` (avatares 3D), `ddb1f657d` (câmera mais baixa), `bc0feb37c` (brief de regeneração), `ee13465b0` (prompts dos sete seguintes) e `c44bfb8e5` (prévias Mint da Dama). O estado de 3D e rig está neste relatório e nas capturas anexadas ao commit que o contém. `client/` principal não foi editado. A branch local está à frente do PR remoto, que ainda apontava para `b2375303e` na última consulta.
 - O pedido original e o PR permanecem o objetivo inteiro. A etapa atual é levar o candidato rigado da Dama ao jogo real, depois completar os sete modelos restantes e resolver a integração do PR.
 
