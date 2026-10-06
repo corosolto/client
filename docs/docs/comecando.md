@@ -39,20 +39,20 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 58.018 linhas em 113 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **8.329** linhas | `wc -l public/js/game.js` |
-| `main.js` | 4.251 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 58.049 linhas em 113 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **8.349** linhas | `wc -l public/js/game.js` |
+| `main.js` | 4.256 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
-| GLBs de personagem | 73 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
+| GLBs de personagem | 74 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 204 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
-| Clipes de animação versionados | 885 | `git ls-files public/models/anims \| wc -l` |
-| Personagens jogáveis | 62, em 7 facções | array `CHARACTERS` de `characters.js` |
+| Clipes de animação versionados | 873 | `git ls-files public/models/anims \| wc -l` |
+| Personagens jogáveis | 63, em 7 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 18 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 22 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 636 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Scripts do arnês | 639 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 101 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.46` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.50` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -65,7 +65,7 @@ E as regras de partida que mais mudam de lugar, todas lidas das constantes de
 
 | Regra | Valor | Constante |
 |---|---|---|
-| Facções · personagens | 7 · 62 (B 9 · C 9 · E 8 · F 9 · M 9 · P 9 · U 9) | `CHARACTERS` |
+| Facções · personagens | 7 · 63 (B 9 · C 9 · E 8 · F 9 · M 9 · P 10 · U 9) | `CHARACTERS` |
 | Mapas no menu | 18 — 2 abrem em rodadas, **16 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
@@ -230,7 +230,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.064 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.026 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.709 |
-| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.794 |
+| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.796 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 419 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 757 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 338 |
