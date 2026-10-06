@@ -13,4 +13,4 @@ Atualizar o lock isolado de `docs/` para eliminar os três alertas Dependabot do
 
 ## Estado e próximo passo
 
-Branch `codex/docs-deps-security-20261006`, baseada na main `1c91b599aa28e1440e689e52b30474bf5af747c8`. As alterações ainda não foram commitadas nem enviadas. Próximo passo: executar os hooks exigidos, abrir PR e aguardar CI. Não declarar os alertas resolvidos até o merge e a atualização do Dependabot.
+Branch `codex/docs-deps-security-20261006`, PR #781. Commit da correção `afb490fe555f733e8e91732afedb7d2ef4900f50`; o bot integrou a main com `fdc6da8bb673141df284fca2dc03eb9d9939d76e`. A main estava em `548d0421da4dbb689e256267c6076757501a89e` após #756. Push concluído e pre-push aprovado. CI do PR está em andamento; a correção local passou audit, instalação reproduzível e build pt/en, mas não declarar os alertas resolvidos até o merge e a atualização do Dependabot. Próximo passo: aguardar os checks exigidos e mesclar se estiverem verdes.
