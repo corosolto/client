@@ -1843,6 +1843,38 @@
         ],
         "finalSha256": "537ff936b913b1c2efdd9b6cb836949353408824574059f4c216331460b79fb5"
       }
+    },
+    "dama": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/dama.glb"
+      ],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks7fyet9jwbbz8jn720f5n7t8x8fvqjg",
+        "chatUrl": "https://mint.gg/chat/ph7ecdqg84v3xzzsbp2nze0wyx8ft505",
+        "animationBatchId": "w578dhg0dtaqq8xnqge0162yjx8ft0r6",
+        "displayName": "Crimson Chain Executive",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/dama/concept.jpg",
+        "prompt": "tools/eval/asset-evidence/pr773/concepts/dama/concept-prompt.txt",
+        "rawSha256": "7f7fda62b9bf1cb5f311c74edb4a91d6b2f5caedda9906e60cdceda9c11e884a",
+        "costCredits": {
+          "previews": 300,
+          "final": 3398,
+          "rig": 247,
+          "retopologyPilotDiscarded": 1313
+        },
+        "notes": "Refeita em 07/10/2026 a partir de concept 2D (OpenRouter) com proporções pesquisadas: cabeça 0,295 → 0,233 da altura, sem o topete. Prévia revisada uma vez para baixar o cabelo. Rig Mint com um clipe (613), 11 estados retargetados de models/anims/mixamo. Crítico cego reprovou o decote preto (lia como rasgo) e a mancha no pescoço: corrigidos por tools/personagens/retoque-textura.mjs. Ombro largo do blazer segue como dívida. Retopologia high testada (+32% de densidade por 1.313 créditos) e descartada."
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/retoque-textura.mjs --faixa 0.52,0.77,0.16,1 --limiar 60 --cor #5a5560 --faixa 0.77,0.81,0.08,0 --limiar 60 --cor #c5927e"
+        ],
+        "finalSha256": "9c0ecffc093436ae0bebcfa8b1715d4833a2df63b6316045d88e1372f72b5082"
+      }
     }
   }
 }

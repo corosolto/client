@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-06T22:36:39.354Z",
+ "gerado": "2026-10-07T04:09:09.667Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 63,
@@ -22,38 +22,38 @@
  "coorteC1": {
   "cabecaSobreAltura": {
    "mediana": 0.2101112392741611,
-   "mad": 0.03078895717569674,
-   "sigma": 0.04564770790868798,
+   "mad": 0.02861198568914794,
+   "sigma": 0.04242012998273073,
    "n": 63
   },
   "ombroSobreAltura": {
-   "mediana": 0.2020173374193577,
-   "mad": 0.018034048740037056,
-   "sigma": 0.02673728066197894,
+   "mediana": 0.20279254161917892,
+   "mad": 0.01725884454021584,
+   "sigma": 0.025587962915324003,
    "n": 63
   },
   "cinturaSobreOmbro": {
    "mediana": 1.063437889590863,
-   "mad": 0.09528269600196426,
-   "sigma": 0.1412661250925122,
+   "mad": 0.095179656543942,
+   "sigma": 0.1411133587920484,
    "n": 63
   },
   "larguraTorsoSobreAltura": {
    "mediana": 0.2133072992504222,
-   "mad": 0.02116155050727478,
-   "sigma": 0.031374114782085585,
+   "mad": 0.02273754404090081,
+   "sigma": 0.03371068279503954,
    "n": 63
   },
   "bracoSobreAltura": {
    "mediana": 0.2762229766078362,
-   "mad": 0.015070995707398616,
-   "sigma": 0.022344258235789186,
+   "mad": 0.014748154907219702,
+   "sigma": 0.02186561446544393,
    "n": 63
   },
   "pernaSobreAltura": {
-   "mediana": 0.3967083482006767,
-   "mad": 0.02022199727592322,
-   "sigma": 0.029981133161283764,
+   "mediana": 0.3968656763318823,
+   "mad": 0.018956617426317712,
+   "sigma": 0.02810508099625864,
    "n": 63
   }
  },
@@ -64,7 +64,65 @@
   "teto": 0.15
  },
  "C4": {
-  "estado": "pulado (--sem-c4)"
+  "estado": "ok",
+  "semModelo": 0,
+  "enterrados": [
+   {
+    "id": "adjim",
+    "raioPalma": 0.207,
+    "raioCorpo": 0.187,
+    "folga": 0.02
+   },
+   {
+    "id": "barbudo",
+    "raioPalma": 0.176,
+    "raioCorpo": 0,
+    "folga": 0.176
+   },
+   {
+    "id": "cadequinha",
+    "raioPalma": 0.179,
+    "raioCorpo": 0.178,
+    "folga": 0.001
+   },
+   {
+    "id": "caminhoneiro",
+    "raioPalma": 0.22,
+    "raioCorpo": 0.213,
+    "folga": 0.007
+   },
+   {
+    "id": "farialimer",
+    "raioPalma": 0.21,
+    "raioCorpo": 0.192,
+    "folga": 0.018
+   },
+   {
+    "id": "fluxo",
+    "raioPalma": 0.183,
+    "raioCorpo": 0.2,
+    "folga": -0.017
+   },
+   {
+    "id": "gotinha",
+    "raioPalma": 0.193,
+    "raioCorpo": 0.208,
+    "folga": -0.015
+   },
+   {
+    "id": "mariabonita",
+    "raioPalma": 0.192,
+    "raioCorpo": 0.186,
+    "folga": 0.006
+   },
+   {
+    "id": "trapfunk",
+    "raioPalma": 0.199,
+    "raioCorpo": 0.218,
+    "folga": -0.02
+   }
+  ],
+  "nota": "medido por tools/eval/tp-mount-probe.mjs (seção 3: palma dentro da silhueta do corpo)"
  },
  "escalaDoMundoC5": {
   "medidoEm": "runtime (MAPS[id].build)",
@@ -317,21 +375,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.026749746323416142,
-     "ombroSobreAltura": -0.09897106663238996,
+     "ombroSobreAltura": -0.10241538173259059,
      "cinturaSobreOmbro": 0.1523978198687072,
      "larguraTorsoSobreAltura": -0.08191942667500277,
      "bracoSobreAltura": 0.09388768587397031,
-     "pernaSobreAltura": 0.006516107987261262
+     "pernaSobreAltura": 0.006117098176784329
     },
     "piorPct": 0.1523978198687072,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": 0.1231260584107594,
-     "ombroSobreAltura": -0.7477900095899066,
-     "cinturaSobreOmbro": 1.1472362240649916,
-     "larguraTorsoSobreAltura": -0.5569563247140722,
-     "bracoSobreAltura": 1.1606532553132929,
-     "pernaSobreAltura": 0.08622070494859721
+     "cabecaSobreAltura": 0.13249422744745193,
+     "ombroSobreAltura": -0.8116736619941083,
+     "cinturaSobreOmbro": 1.1484781974345488,
+     "larguraTorsoSobreAltura": -0.5183523503937778,
+     "bracoSobreAltura": 1.1860602454102152,
+     "pernaSobreAltura": 0.08637819992197172
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.6594743201880268,
@@ -342,7 +400,7 @@
      "pernaSobreAltura": -0.2466163346471692
     },
     "elencoDegenerado": false,
-    "piorZ": 1.1606532553132929,
+    "piorZ": 1.1860602454102152,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.6594743201880268,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -465,21 +523,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.007629686488346323,
-     "ombroSobreAltura": 0.17984316817143195,
+     "ombroSobreAltura": 0.17533304481189335,
      "cinturaSobreOmbro": 0.354764370957392,
      "larguraTorsoSobreAltura": 0.2686536623856716,
      "bracoSobreAltura": 0.11062226576349912,
-     "pernaSobreAltura": -0.061824824145163736
+     "pernaSobreAltura": -0.062196741788747775
     },
     "piorPct": 0.354764370957392,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": 0.03511858441055829,
-     "ombroSobreAltura": 1.358830707070321,
-     "cinturaSobreOmbro": 2.670632281489231,
-     "larguraTorsoSobreAltura": 1.8265308058968273,
-     "bracoSobreAltura": 1.3675285706890965,
-     "pernaSobreAltura": -0.8180619369016211
+     "cabecaSobreAltura": 0.03779061695455399,
+     "ombroSobreAltura": 1.3895687556253056,
+     "cinturaSobreOmbro": 2.673523450808952,
+     "larguraTorsoSobreAltura": 1.699929589253374,
+     "bracoSobreAltura": 1.3974641131895802,
+     "pernaSobreAltura": -0.878266531198282
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.6285717089038527,
@@ -490,7 +548,7 @@
      "pernaSobreAltura": -0.2977699540825444
     },
     "elencoDegenerado": false,
-    "piorZ": 2.670632281489231,
+    "piorZ": 2.673523450808952,
     "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": 0.9469023831673269,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -613,21 +671,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.05978519733939431,
-     "ombroSobreAltura": -0.037296193055749216,
+     "ombroSobreAltura": -0.04097626939567945,
      "cinturaSobreOmbro": -0.04083281884040716,
      "larguraTorsoSobreAltura": 0.14420155641942708,
      "bracoSobreAltura": 0.005886519992802888,
-     "pernaSobreAltura": -0.046493410565468664
+     "pernaSobreAltura": -0.04687140599000249
     },
     "piorPct": 0.14420155641942708,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.2751845049560444,
-     "ombroSobreAltura": -0.2817967059647545,
-     "cinturaSobreOmbro": -0.30738555803984646,
-     "larguraTorsoSobreAltura": 0.9804019893845323,
-     "bracoSobreAltura": 0.07277001801157008,
-     "pernaSobreAltura": -0.615197698113062
+     "cabecaSobreAltura": 0.29612219265580353,
+     "ombroSobreAltura": -0.3247496428035523,
+     "cinturaSobreOmbro": -0.30771832706270663,
+     "larguraTorsoSobreAltura": 0.912447983760849,
+     "bracoSobreAltura": 0.0743629719093074,
+     "pernaSobreAltura": -0.6618608301226684
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.7128675475183961,
@@ -638,7 +696,7 @@
      "pernaSobreAltura": -0.28629429416408736
     },
     "elencoDegenerado": false,
-    "piorZ": 0.9804019893845323,
+    "piorZ": 0.912447983760849,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.7128675475183961,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -761,21 +819,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.06321618447364882,
-     "ombroSobreAltura": -0.02484105738585804,
+     "ombroSobreAltura": -0.02856874530658681,
      "cinturaSobreOmbro": 0.05206547235403177,
      "larguraTorsoSobreAltura": -0.07339440943911822,
      "bracoSobreAltura": -0.0679141486008917,
-     "pernaSobreAltura": 0
+     "pernaSobreAltura": -0.0003964266516060388
     },
     "piorPct": -0.07339440943911822,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.2909769508802507,
-     "ombroSobreAltura": -0.18769015200968775,
-     "cinturaSobreOmbro": 0.39194390024121756,
-     "larguraTorsoSobreAltura": -0.49899617459413476,
-     "bracoSobreAltura": -0.839564602340564,
-     "pernaSobreAltura": 0
+     "cabecaSobreAltura": -0.31311622258936084,
+     "ombroSobreAltura": -0.226416166490695,
+     "cinturaSobreOmbro": 0.3923682103146348,
+     "larguraTorsoSobreAltura": -0.4644095568376232,
+     "bracoSobreAltura": -0.8579428815033923,
+     "pernaSobreAltura": -0.005597853684412354
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.5140677570170673,
@@ -786,7 +844,7 @@
      "pernaSobreAltura": -0.2514936826402327
     },
     "elencoDegenerado": false,
-    "piorZ": -0.839564602340564,
+    "piorZ": -0.8579428815033923,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.5140677570170673,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -909,21 +967,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.06702193794911979,
-     "ombroSobreAltura": -0.05716951798649612,
+     "ombroSobreAltura": -0.06077362563039976,
      "cinturaSobreOmbro": -0.02418910908644796,
      "larguraTorsoSobreAltura": -0.1100926629298797,
      "bracoSobreAltura": -0.02336258291237985,
-     "pernaSobreAltura": -0.051497862058055816
+     "pernaSobreAltura": -0.051873873584641315
     },
     "piorPct": -0.1100926629298797,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.3084944039077434,
-     "ombroSobreAltura": -0.43195244689200263,
-     "cinturaSobreOmbro": -0.18209330156914497,
-     "larguraTorsoSobreAltura": -0.7485013923091999,
-     "bracoSobreAltura": -0.28881165466341585,
-     "pernaSobreAltura": -0.6814162654565538
+     "cabecaSobreAltura": -0.3319665085132531,
+     "ombroSobreAltura": -0.481649830656134,
+     "cinturaSobreOmbro": -0.18229043187812555,
+     "larguraTorsoSobreAltura": -0.6966209714481153,
+     "bracoSobreAltura": -0.2951338140304082,
+     "pernaSobreAltura": -0.7324995763884752
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.50791674487012,
@@ -934,8 +992,8 @@
      "pernaSobreAltura": -0.29004015772120934
     },
     "elencoDegenerado": false,
-    "piorZ": -0.7485013923091999,
-    "piorZRazao": "larguraTorsoSobreAltura",
+    "piorZ": -0.7324995763884752,
+    "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.50791674487012,
     "piorDesvioRefRazao": "cabecaSobreAltura",
     "indiceBalao": 1.0909409807676005
@@ -1057,21 +1115,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.09601063678535242,
-     "ombroSobreAltura": 0.1809674512649223,
+     "ombroSobreAltura": 0.17645303016854927,
      "cinturaSobreOmbro": 0.11282541164408597,
      "larguraTorsoSobreAltura": 0.28559497483386526,
      "bracoSobreAltura": 0.06510723287701825,
-     "pernaSobreAltura": -0.12912020473673166
+     "pernaSobreAltura": -0.12946544469791924
     },
     "piorPct": 0.28559497483386526,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.44192610763337603,
-     "ombroSobreAltura": 1.3673253883329333,
-     "cinturaSobreOmbro": 0.8493389166895668,
-     "larguraTorsoSobreAltura": 1.9417119234895108,
-     "bracoSobreAltura": 0.8048651011016372,
-     "pernaSobreAltura": -1.7085099107124169
+     "cabecaSobreAltura": 0.4755504965846206,
+     "ombroSobreAltura": 1.398444986914374,
+     "cinturaSobreOmbro": 0.8502583928132542,
+     "larguraTorsoSobreAltura": 1.8071272282348514,
+     "bracoSobreAltura": 0.8224837995022442,
+     "pernaSobreAltura": -1.828153111477864
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.7714165627125603,
@@ -1082,8 +1140,8 @@
      "pernaSobreAltura": -0.3481409715844629
     },
     "elencoDegenerado": false,
-    "piorZ": 1.9417119234895108,
-    "piorZRazao": "larguraTorsoSobreAltura",
+    "piorZ": -1.828153111477864,
+    "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.7714165627125603,
     "piorDesvioRefRazao": "cabecaSobreAltura",
     "indiceBalao": 1.576016046044404
@@ -1205,21 +1263,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.2999906812644389,
-     "ombroSobreAltura": -0.010704955373715654,
+     "ombroSobreAltura": -0.014486680615350892,
      "cinturaSobreOmbro": -0.15880426374148993,
      "larguraTorsoSobreAltura": -0.10659524601737606,
      "bracoSobreAltura": 0.061721669166061525,
-     "pernaSobreAltura": -0.09117387941816663
+     "pernaSobreAltura": -0.09153416231404099
     },
     "piorPct": 0.2999906812644389,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 1.380823193516241,
-     "ombroSobreAltura": -0.08088281710960726,
-     "cinturaSobreOmbro": -1.1954633213071137,
-     "larguraTorsoSobreAltura": -0.7247230463338459,
-     "bracoSobreAltura": 0.7630122691182485,
-     "pernaSobreAltura": -1.2064066727716642
+     "cabecaSobreAltura": 1.4858845042867914,
+     "ombroSobreAltura": -0.11481143658579118,
+     "cinturaSobreOmbro": -1.1967575042994227,
+     "larguraTorsoSobreAltura": -0.6744907594765952,
+     "bracoSobreAltura": 0.7797147985572277,
+     "pernaSobreAltura": -1.2925338033742015
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.1010973314256323,
@@ -1230,7 +1288,7 @@
      "pernaSobreAltura": -0.31973790736292806
     },
     "elencoDegenerado": false,
-    "piorZ": 1.380823193516241,
+    "piorZ": 1.4858845042867914,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 1.1010973314256323,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -1353,21 +1411,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.02978975179498053,
-     "ombroSobreAltura": -0.07310685986649713,
+     "ombroSobreAltura": -0.07665004468621445,
      "cinturaSobreOmbro": -0.052845955670978814,
      "larguraTorsoSobreAltura": -0.1467892607665845,
      "bracoSobreAltura": 0.054560977846515125,
-     "pernaSobreAltura": 0.047515908815182625
+     "pernaSobreAltura": 0.04710064559094696
     },
     "piorPct": -0.1467892607665845,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.13711885993999137,
-     "ombroSobreAltura": -0.5523693065137143,
-     "cinturaSobreOmbro": -0.3978193040642607,
-     "larguraTorsoSobreAltura": -0.9979953535123993,
-     "bracoSobreAltura": 0.6744907594765952,
-     "pernaSobreAltura": 0.6287273265463837
+     "cabecaSobreAltura": -0.1475516852461587,
+     "ombroSobreAltura": -0.6074753753778545,
+     "cinturaSobreOmbro": -0.39824997472404244,
+     "larguraTorsoSobreAltura": -0.9288219097624887,
+     "bracoSobreAltura": 0.6892555309258095,
+     "pernaSobreAltura": 0.6650978721821804
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.568092904668062,
@@ -1378,7 +1436,7 @@
      "pernaSobreAltura": -0.21592772471697785
     },
     "elencoDegenerado": false,
-    "piorZ": -0.9979953535123993,
+    "piorZ": -0.9288219097624887,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.568092904668062,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -1439,8 +1497,8 @@
     "mapasDeSuperficie": 2
    },
    "C6": {
-    "piorIoU": 0.6572555205047319,
-    "contra": "raul"
+    "piorIoU": 0.6856348002023268,
+    "contra": "dama"
    }
   },
   {
@@ -1501,21 +1559,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 1.1561551222903415,
-     "ombroSobreAltura": -0.16349027541421673,
+     "ombroSobreAltura": -0.1666879563866656,
      "cinturaSobreOmbro": 0.4483014287101139,
      "larguraTorsoSobreAltura": 0.1721769904395985,
      "bracoSobreAltura": -0.10358390617901922,
-     "pernaSobreAltura": -0.364900562354978
+     "pernaSobreAltura": -0.36515233269848046
     },
     "piorPct": 1.1561551222903415,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 5.32165133074203,
-     "ombroSobreAltura": -1.235274093528291,
-     "cinturaSobreOmbro": 3.3747703133772853,
-     "larguraTorsoSobreAltura": 1.1706022330455415,
-     "bracoSobreAltura": -1.2805193437841127,
-     "pernaSobreAltura": -4.82833982860516
+     "cabecaSobreAltura": 5.726554483366418,
+     "ombroSobreAltura": -1.3210537487810305,
+     "cinturaSobreOmbro": 3.378423767452101,
+     "larguraTorsoSobreAltura": 1.0894649938428647,
+     "bracoSobreAltura": -1.3085502325422356,
+     "pernaSobreAltura": -5.156235895560603
     },
     "desvioRef": {
      "cabecaSobreAltura": 2.4848648062442615,
@@ -1526,7 +1584,7 @@
      "pernaSobreAltura": -0.5246240587710654
     },
     "elencoDegenerado": false,
-    "piorZ": 5.32165133074203,
+    "piorZ": 5.726554483366418,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 2.4848648062442615,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -1649,21 +1707,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.18481185632955258,
-     "ombroSobreAltura": 0.029334728221954952,
+     "ombroSobreAltura": 0.02539994542388766,
      "cinturaSobreOmbro": 0,
      "larguraTorsoSobreAltura": 0.018348246079015185,
      "bracoSobreAltura": 0.009905473410599153,
-     "pernaSobreAltura": 0.027115110637744116
+     "pernaSobreAltura": 0.026707934833620026
     },
     "piorPct": -0.18481185632955258,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.8506680826918347,
-     "ombroSobreAltura": 0.22164272291710355,
+     "cabecaSobreAltura": -0.9153920127488684,
+     "ombroSobreAltura": 0.20130244469026695,
      "cinturaSobreOmbro": 0,
-     "larguraTorsoSobreAltura": 0.12474662135588413,
-     "bracoSobreAltura": 0.12245290585672623,
-     "pernaSobreAltura": 0.3587853299110416
+     "larguraTorsoSobreAltura": 0.1161001348116505,
+     "bracoSobreAltura": 0.12513343059759846,
+     "pernaSobreAltura": 0.3771368822094288
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.3175399316015429,
@@ -1674,7 +1732,7 @@
      "pernaSobreAltura": -0.2311978510319722
     },
     "elencoDegenerado": false,
-    "piorZ": -0.8506680826918347,
+    "piorZ": -0.9153920127488684,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 0.4370782291768418,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -1797,21 +1855,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.29250236383420253,
-     "ombroSobreAltura": 0.24717592401395305,
+     "ombroSobreAltura": 0.2424084113308333,
      "cinturaSobreOmbro": -0.3374199369619088,
      "larguraTorsoSobreAltura": 0.21152411856040096,
      "bracoSobreAltura": 0.2128274948998454,
-     "pernaSobreAltura": 0.027911869422938666
+     "pernaSobreAltura": 0.027504377762397225
     },
     "piorPct": -0.3374199369619088,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": -1.346355314899146,
-     "ombroSobreAltura": 1.8675729471051026,
-     "cinturaSobreOmbro": -2.5400650398930904,
-     "larguraTorsoSobreAltura": 1.4381167012944138,
-     "bracoSobreAltura": 2.631004507952869,
-     "pernaSobreAltura": 0.3693279888522013
+     "cabecaSobreAltura": -1.448794102725415,
+     "ombroSobreAltura": 1.9211618371623935,
+     "cinturaSobreOmbro": -2.542814859912992,
+     "larguraTorsoSobreAltura": 1.338437394779927,
+     "bracoSobreAltura": 2.688597854779327,
+     "pernaSobreAltura": 0.38838327789250776
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.14348619321796335,
@@ -1822,7 +1880,7 @@
      "pernaSobreAltura": -0.2306014720478422
     },
     "elencoDegenerado": false,
-    "piorZ": 2.631004507952869,
+    "piorZ": 2.688597854779327,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.4852122856716519,
     "piorDesvioRefRazao": "larguraTorsoSobreAltura",
@@ -1945,21 +2003,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.10415520561332632,
-     "ombroSobreAltura": -0.17412999154700357,
+     "ombroSobreAltura": -0.17728700064579675,
      "cinturaSobreOmbro": -0.10658831017861597,
      "larguraTorsoSobreAltura": -0.23853221242084754,
      "bracoSobreAltura": 0.00606386583914767,
-     "pernaSobreAltura": -0.01468073826486421
+     "pernaSobreAltura": -0.015071345080556804
     },
     "piorPct": -0.23853221242084754,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.47941463724854205,
-     "ombroSobreAltura": -1.3156639862483794,
-     "cinturaSobreOmbro": -0.8023866129064777,
-     "larguraTorsoSobreAltura": -1.6217401628418702,
-     "bracoSobreAltura": 0.07496239320923623,
-     "pernaSobreAltura": -0.19425454655401597
+     "cabecaSobreAltura": 0.5158913783899324,
+     "ombroSobreAltura": -1.4050544615832268,
+     "cinturaSobreOmbro": -0.8032552594715139,
+     "larguraTorsoSobreAltura": -1.5093334752390715,
+     "bracoSobreAltura": 0.07660333874847443,
+     "pernaSobreAltura": -0.21281915392532033
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.7845801430956318,
@@ -1970,7 +2028,7 @@
      "pernaSobreAltura": -0.26248230797498884
     },
     "elencoDegenerado": false,
-    "piorZ": -1.6217401628418702,
+    "piorZ": -1.5093334752390715,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.7845801430956318,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -2093,21 +2151,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.14805147404432809,
-     "ombroSobreAltura": -0.32506401586154626,
+     "ombroSobreAltura": -0.3276440575402838,
      "cinturaSobreOmbro": 0.35849907975603723,
      "larguraTorsoSobreAltura": -0.013572676221330293,
      "bracoSobreAltura": 0.1971775898064393,
-     "pernaSobreAltura": 0.023683670954695216
+     "pernaSobreAltura": 0.023277855464714867
     },
     "piorPct": 0.35849907975603723,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": -0.6814641985977903,
-     "ombroSobreAltura": -2.456067533770393,
-     "cinturaSobreOmbro": 2.698746812417766,
-     "larguraTorsoSobreAltura": -0.09227832971483557,
-     "bracoSobreAltura": 2.437538100479706,
-     "pernaSobreAltura": 0.3133807495941616
+     "cabecaSobreAltura": -0.7333140822643369,
+     "ombroSobreAltura": -2.596680767237751,
+     "cinturaSobreOmbro": 2.701668417926633,
+     "larguraTorsoSobreAltura": -0.0858822980826246,
+     "bracoSobreAltura": 2.4908964192508374,
+     "pernaSobreAltura": 0.3287014847525136
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.37695354297185396,
@@ -2118,7 +2176,7 @@
      "pernaSobreAltura": -0.2337663053123733
     },
     "elencoDegenerado": false,
-    "piorZ": 2.698746812417766,
+    "piorZ": 2.701668417926633,
     "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": 0.9522694518741752,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -2241,21 +2299,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.7084583359128869,
-     "ombroSobreAltura": -0.38502566447517933,
+     "ombroSobreAltura": -0.387376493967599,
      "cinturaSobreOmbro": 0.07296346374807604,
      "larguraTorsoSobreAltura": -0.35212891723333695,
      "bracoSobreAltura": 0.10664969168041148,
-     "pernaSobreAltura": -0.06206492713322152
+     "pernaSobreAltura": -0.06243674959358197
     },
     "piorPct": 0.7084583359128869,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 3.2609536327767175,
-     "ombroSobreAltura": -2.909116321840553,
-     "cinturaSobreOmbro": 0.5492619823378038,
-     "larguraTorsoSobreAltura": -2.3940649431775145,
-     "bracoSobreAltura": 1.3184190309386103,
-     "pernaSobreAltura": -0.8212389635762984
+     "cabecaSobreAltura": 3.5090665444298637,
+     "ombroSobreAltura": -3.0700788505586756,
+     "cinturaSobreOmbro": 0.5498566015981307,
+     "larguraTorsoSobreAltura": -2.2281265787375593,
+     "bracoSobreAltura": 1.347279553329175,
+     "pernaSobreAltura": -0.881655628700016
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.7612792169763665,
@@ -2266,7 +2324,7 @@
      "pernaSobreAltura": -0.29794967268592265
     },
     "elencoDegenerado": false,
-    "piorZ": 3.2609536327767175,
+    "piorZ": 3.5090665444298637,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 1.7612792169763665,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -2389,21 +2447,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.14656919798644205,
-     "ombroSobreAltura": 0.17085773116405234,
+     "ombroSobreAltura": 0.16638195595385755,
      "cinturaSobreOmbro": 0.4949779159824851,
      "larguraTorsoSobreAltura": 0.5715299338238861,
      "bracoSobreAltura": 0.023987354689667992,
-     "pernaSobreAltura": -0.05137388818742416
+     "pernaSobreAltura": -0.051749948860556075
     },
     "piorPct": 0.5715299338238861,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.6746414494667309,
-     "ombroSobreAltura": 1.290939956222144,
-     "cinturaSobreOmbro": 3.7261464489224387,
-     "larguraTorsoSobreAltura": 3.8857353417460025,
-     "bracoSobreAltura": 0.29653517442415156,
-     "pernaSobreAltura": -0.679775851494421
+     "cabecaSobreAltura": -0.7259722174563874,
+     "ombroSobreAltura": 1.318628600452066,
+     "cinturaSobreOmbro": 3.7301802952773198,
+     "larguraTorsoSobreAltura": 3.6164057360085473,
+     "bracoSobreAltura": 0.30302640357074956,
+     "pernaSobreAltura": -0.7307496625759202
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.37934925727546054,
@@ -2414,8 +2472,8 @@
      "pernaSobreAltura": -0.289947362495854
     },
     "elencoDegenerado": false,
-    "piorZ": 3.8857353417460025,
-    "piorZRazao": "larguraTorsoSobreAltura",
+    "piorZ": 3.7301802952773198,
+    "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": 1.148400216158595,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
     "indiceBalao": 1.9265448613515395
@@ -2537,21 +2595,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.6587563973804726,
-     "ombroSobreAltura": 0.20264707504844082,
+     "ombroSobreAltura": 0.19804978041405036,
      "cinturaSobreOmbro": -0.1194566098004554,
      "larguraTorsoSobreAltura": 0.28196763327088703,
      "bracoSobreAltura": -0.015225064105682268,
-     "pernaSobreAltura": -0.24154987104370781
+     "pernaSobreAltura": -0.2418505408887401
     },
     "piorPct": 0.6587563973804726,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 3.032181228250659,
-     "ombroSobreAltura": 1.5311288778638554,
-     "cinturaSobreOmbro": -0.8992579426998734,
-     "larguraTorsoSobreAltura": 1.9170502417932516,
-     "bracoSobreAltura": -0.18821446126954605,
-     "pernaSobreAltura": -3.1961717335480677
+     "cabecaSobreAltura": 3.2628877631855566,
+     "ombroSobreAltura": 1.5696059303428531,
+     "cinturaSobreOmbro": -0.9002314600921666,
+     "larguraTorsoSobreAltura": 1.7841749066529358,
+     "bracoSobreAltura": -0.1923345229086978,
+     "pernaSobreAltura": -3.4151183728600034
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.680948940827338,
@@ -2562,7 +2620,7 @@
      "pernaSobreAltura": -0.43229528707388515
     },
     "elencoDegenerado": false,
-    "piorZ": -3.1961717335480677,
+    "piorZ": -3.4151183728600034,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 1.680948940827338,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -2626,8 +2684,8 @@
     "mapasDeSuperficie": 2
    },
    "C6": {
-    "piorIoU": 0.6656950264164693,
-    "contra": "dama"
+    "piorIoU": 0.6559455982356185,
+    "contra": "jozo"
    }
   },
   {
@@ -2688,21 +2746,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.1570990705575375,
-     "ombroSobreAltura": 0.12083901896567345,
+     "ombroSobreAltura": 0.11655444761069068,
      "cinturaSobreOmbro": -0.012016068401619888,
      "larguraTorsoSobreAltura": 0.21100904442329826,
      "bracoSobreAltura": 0.053392209034653165,
-     "pernaSobreAltura": -0.1364491836271967
+     "pernaSobreAltura": -0.13679151818582305
     },
     "piorPct": 0.21100904442329826,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.7231092625656395,
-     "ombroSobreAltura": 0.913016442338748,
-     "cinturaSobreOmbro": -0.09045581461110963,
-     "larguraTorsoSobreAltura": 1.4346147993646787,
-     "bracoSobreAltura": 0.6600422690961084,
-     "pernaSobreAltura": -1.8054864690697436
+     "cabecaSobreAltura": 0.7781277524868683,
+     "ombroSobreAltura": 0.9237301439825113,
+     "cinturaSobreOmbro": -0.09055374013901053,
+     "larguraTorsoSobreAltura": 1.3351782180445544,
+     "bracoSobreAltura": 0.6744907594765952,
+     "pernaSobreAltura": -1.9316029862539255
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.8701501513678781,
@@ -2713,7 +2771,7 @@
      "pernaSobreAltura": -0.35362675858377235
     },
     "elencoDegenerado": false,
-    "piorZ": -1.8054864690697436,
+    "piorZ": -1.9316029862539255,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.8701501513678781,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -2839,21 +2897,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.08155131637847354,
-     "ombroSobreAltura": 0.18665692600018138,
+     "ombroSobreAltura": 0.18212075605311429,
      "cinturaSobreOmbro": -0.16518348966788055,
      "larguraTorsoSobreAltura": 0.39984525858819664,
      "bracoSobreAltura": 0.002874596119283544,
-     "pernaSobreAltura": 0.07486109151991852
+     "pernaSobreAltura": 0.07443498793646566
     },
     "piorPct": 0.39984525858819664,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.37537149034944306,
-     "ombroSobreAltura": 1.410313026150798,
-     "cinturaSobreOmbro": -1.2434855244498808,
-     "larguraTorsoSobreAltura": 2.7184802764932474,
-     "bracoSobreAltura": 0.03553617615025699,
-     "pernaSobreAltura": 0.9905569546556432
+     "cabecaSobreAltura": -0.4039320048216702,
+     "ombroSobreAltura": 1.443363472263726,
+     "cinturaSobreOmbro": -1.2448316952509773,
+     "larguraTorsoSobreAltura": 2.5300559097570443,
+     "bracoSobreAltura": 0.03631407193558209,
+     "pernaSobreAltura": 1.0510801172959943
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.4844337778880063,
@@ -2864,7 +2922,7 @@
      "pernaSobreAltura": -0.195459682713126
     },
     "elencoDegenerado": false,
-    "piorZ": 2.7184802764932474,
+    "piorZ": 2.5300559097570443,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.7160759280342363,
     "piorDesvioRefRazao": "larguraTorsoSobreAltura",
@@ -2987,21 +3045,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.14653645983936225,
-     "ombroSobreAltura": 0.06596395689164336,
+     "ombroSobreAltura": 0.06188915350073653,
      "cinturaSobreOmbro": 0.007401669082046591,
      "larguraTorsoSobreAltura": 0.09920687469035543,
      "bracoSobreAltura": 0.025160607119150635,
-     "pernaSobreAltura": 0.07551433527009008
+     "pernaSobreAltura": 0.07508797272340467
     },
     "piorPct": -0.14653645983936225,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.6744907594765953,
-     "ombroSobreAltura": 0.49840008433785055,
-     "cinturaSobreOmbro": 0.05571905750870475,
-     "larguraTorsoSobreAltura": 0.6744907594765952,
-     "bracoSobreAltura": 0.3110390919390766,
-     "pernaSobreAltura": 0.9992006322547816
+     "cabecaSobreAltura": -0.7258100620679604,
+     "ombroSobreAltura": 0.49049073498373663,
+     "cinturaSobreOmbro": 0.055779377767210384,
+     "larguraTorsoSobreAltura": 0.627740192506236,
+     "bracoSobreAltura": 0.31784781546824004,
+     "pernaSobreAltura": 1.0603007720643427
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.37940216998818727,
@@ -3012,7 +3070,7 @@
      "pernaSobreAltura": -0.19497072563934678
     },
     "elencoDegenerado": false,
-    "piorZ": 0.9992006322547816,
+    "piorZ": 1.0603007720643427,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.4477150066742223,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -3138,21 +3196,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.024585206511826715,
-     "ombroSobreAltura": -0.011055964869984693,
+     "ombroSobreAltura": -0.014836348326396905,
      "cinturaSobreOmbro": 0.04553997246575836,
      "larguraTorsoSobreAltura": 0.03623373300760054,
      "bracoSobreAltura": -0.070311182076175,
-     "pernaSobreAltura": -0.036831631773219235
+     "pernaSobreAltura": -0.03721345738436823
     },
     "piorPct": -0.070311182076175,
     "piorPctRazao": "bracoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.11316292634767601,
-     "ombroSobreAltura": -0.08353491942104455,
-     "cinturaSobreOmbro": 0.34282056069207667,
-     "larguraTorsoSobreAltura": 0.24634702152697266,
-     "bracoSobreAltura": -0.8691970794890269,
-     "pernaSobreAltura": -0.4873536875236545
+     "cabecaSobreAltura": 0.12177304053792427,
+     "ombroSobreAltura": -0.1175826616371889,
+     "cinturaSobreOmbro": 0.34319169089001234,
+     "larguraTorsoSobreAltura": 0.22927212055014928,
+     "bracoSobreAltura": -0.888224020989217,
+     "pernaSobreAltura": -0.5254830589337565
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.6559759037090167,
@@ -3163,7 +3221,7 @@
      "pernaSobreAltura": -0.27906239170115604
     },
     "elencoDegenerado": false,
-    "piorZ": -0.8691970794890269,
+    "piorZ": -0.888224020989217,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.6559759037090167,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -3286,21 +3344,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.055520128341683614,
-     "ombroSobreAltura": 0,
+     "ombroSobreAltura": -0.003822646501847001,
      "cinturaSobreOmbro": 0.26487491680626774,
      "larguraTorsoSobreAltura": 0.07708082331127704,
      "bracoSobreAltura": -0.11977893675549632,
-     "pernaSobreAltura": 0.0003965838680209193
+     "pernaSobreAltura": 0
     },
     "piorPct": 0.26487491680626774,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": 0.25555287450284836,
-     "ombroSobreAltura": 0,
-     "cinturaSobreOmbro": 1.9939530609305502,
-     "larguraTorsoSobreAltura": 0.5240594789280145,
-     "bracoSobreAltura": -1.4807246719218012,
-     "pernaSobreAltura": 0.005247571209509194
+     "cabecaSobreAltura": 0.27499687000677775,
+     "ombroSobreAltura": -0.03029565903259012,
+     "cinturaSobreOmbro": 1.9961116718163259,
+     "larguraTorsoSobreAltura": 0.4877356636320307,
+     "bracoSobreAltura": -1.5131381053943422,
+     "pernaSobreAltura": 0
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.7059741711130207,
@@ -3311,7 +3369,7 @@
      "pernaSobreAltura": -0.25119683710965607
     },
     "elencoDegenerado": false,
-    "piorZ": 1.9939530609305502,
+    "piorZ": 1.9961116718163259,
     "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": 0.8177242055741564,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -3434,21 +3492,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.31840639580036784,
-     "ombroSobreAltura": 0.10585255709973838,
+     "ombroSobreAltura": 0.1016252736907825,
      "cinturaSobreOmbro": 0.09833745654241123,
      "larguraTorsoSobreAltura": 0.11902816344682537,
      "bracoSobreAltura": -0.11713109271329095,
-     "pernaSobreAltura": 0.030181530448603007
+     "pernaSobreAltura": 0.029773139033940882
     },
     "piorPct": 0.31840639580036784,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 1.4655886457269702,
-     "ombroSobreAltura": 0.7997840922816177,
-     "cinturaSobreOmbro": 0.7402749752264425,
-     "larguraTorsoSobreAltura": 0.8092523488209276,
-     "bracoSobreAltura": -1.4479916379936577,
-     "pernaSobreAltura": 0.3993599916995613
+     "cabecaSobreAltura": 1.5770994205267563,
+     "ombroSobreAltura": 0.8054118107290333,
+     "cinturaSobreOmbro": 0.7410763810625685,
+     "larguraTorsoSobreAltura": 0.7531611339333706,
+     "bracoSobreAltura": -1.4796885371653232,
+     "pernaSobreAltura": 0.4204199575443691
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.1308615514507339,
@@ -3459,7 +3517,7 @@
      "pernaSobreAltura": -0.22890261643186718
     },
     "elencoDegenerado": false,
-    "piorZ": 1.4655886457269702,
+    "piorZ": 1.5770994205267563,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 1.1308615514507339,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -3582,21 +3640,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.05213916974238756,
-     "ombroSobreAltura": 0.07570969693800929,
+     "ombroSobreAltura": 0.07159763902800631,
      "cinturaSobreOmbro": 0.09237798956697582,
      "larguraTorsoSobreAltura": 0.18348609649064984,
      "bracoSobreAltura": -0.04753646972552808,
-     "pernaSobreAltura": -0.07177761897162417
+     "pernaSobreAltura": -0.07214559106208103
     },
     "piorPct": 0.18348609649064984,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.23999070426959726,
-     "ombroSobreAltura": 0.5720354132345452,
-     "cinturaSobreOmbro": 0.6954126773521774,
-     "larguraTorsoSobreAltura": 1.2474909320715228,
-     "bracoSobreAltura": -0.5876527663819263,
-     "pernaSobreAltura": -0.949756652186235
+     "cabecaSobreAltura": 0.2582506365199421,
+     "ombroSobreAltura": 0.5674334936497257,
+     "cinturaSobreOmbro": 0.6961655162252942,
+     "larguraTorsoSobreAltura": 1.1610243533299807,
+     "bracoSobreAltura": -0.6005166324397218,
+     "pernaSobreAltura": -1.0187520468283906
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.7005097295650767,
@@ -3607,7 +3665,7 @@
      "pernaSobreAltura": -0.30521968388553566
     },
     "elencoDegenerado": false,
-    "piorZ": 1.2474909320715228,
+    "piorZ": 1.1610243533299807,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.7005097295650767,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -3730,21 +3788,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.2244997511206001,
-     "ombroSobreAltura": -0.12845888233937913,
+     "ombroSobreAltura": -0.13179047594402032,
      "cinturaSobreOmbro": 0.12290560445013554,
      "larguraTorsoSobreAltura": -0.08256907693926514,
      "bracoSobreAltura": -0.1194811098500231,
-     "pernaSobreAltura": -0.02414406048454448
+     "pernaSobreAltura": -0.024530915787096458
     },
     "piorPct": 0.2244997511206001,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 1.0333469759105325,
-     "ombroSobreAltura": -0.970589406834135,
-     "cinturaSobreOmbro": 0.9252216448192885,
-     "larguraTorsoSobreAltura": -0.5613731869678642,
-     "bracoSobreAltura": -1.4770428923131167,
-     "pernaSobreAltura": -0.3194725930522748
+     "cabecaSobreAltura": 1.1119702118756576,
+     "ombroSobreAltura": -1.0444803936261577,
+     "cinturaSobreOmbro": 0.9262232699595162,
+     "larguraTorsoSobreAltura": -0.5224630693658516,
+     "bracoSobreAltura": -1.509375730709024,
+     "pernaSobreAltura": -0.34639567436871915
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.9790858476834701,
@@ -3755,7 +3813,7 @@
      "pernaSobreAltura": -0.2695656644396306
     },
     "elencoDegenerado": false,
-    "piorZ": -1.4770428923131167,
+    "piorZ": -1.509375730709024,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.9790858476834701,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -3878,21 +3936,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.12225814989408477,
-     "ombroSobreAltura": -0.1407400478939476,
+     "ombroSobreAltura": -0.14402469494404302,
      "cinturaSobreOmbro": 0.15006713047891232,
      "larguraTorsoSobreAltura": -4.002907788334362e-7,
      "bracoSobreAltura": -0.07370225561164681,
-     "pernaSobreAltura": 0.017154435584478732
+     "pernaSobreAltura": 0.016751208457413746
     },
     "piorPct": 0.15006713047891232,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": 0.5627404433317279,
-     "ombroSobreAltura": -1.0633815047705681,
-     "cinturaSobreOmbro": 1.1296910170710845,
-     "larguraTorsoSobreAltura": -0.0000027215092932777373,
-     "bracoSobreAltura": -0.9111180247260349,
-     "pernaSobreAltura": 0.22698634399254541
+     "cabecaSobreAltura": 0.6055571115899415,
+     "ombroSobreAltura": -1.1414403733615683,
+     "cinturaSobreOmbro": 1.1309139963752586,
+     "larguraTorsoSobreAltura": -0.000002532874978147063,
+     "bracoSobreAltura": -0.9310626262040129,
+     "pernaSobreAltura": 0.2365401357396136
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.813838851229026,
@@ -3903,8 +3961,8 @@
      "pernaSobreAltura": -0.2386534792345092
     },
     "elencoDegenerado": false,
-    "piorZ": 1.1296910170710845,
-    "piorZRazao": "cinturaSobreOmbro",
+    "piorZ": -1.1414403733615683,
+    "piorZRazao": "ombroSobreAltura",
     "piorDesvioRef": 0.813838851229026,
     "piorDesvioRefRazao": "cabecaSobreAltura",
     "indiceBalao": 1.225903527962513
@@ -4026,21 +4084,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.039657871600654836,
-     "ombroSobreAltura": -0.0179705354511013,
+     "ombroSobreAltura": -0.02172448694846983,
      "cinturaSobreOmbro": 0.06541877313150087,
      "larguraTorsoSobreAltura": -2.815730314195591e-7,
      "bracoSobreAltura": -0.08447343520992392,
-     "pernaSobreAltura": 0.0038407611474213753
+     "pernaSobreAltura": 0.0034428119157340455
     },
     "piorPct": -0.08447343520992392,
     "piorPctRazao": "bracoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.18254069986728153,
-     "ombroSobreAltura": -0.1357789436303491,
-     "cinturaSobreOmbro": 0.4924662723850292,
-     "larguraTorsoSobreAltura": -0.0000019143674105557616,
-     "bracoSobreAltura": -1.0442729166368434,
-     "pernaSobreAltura": 0.05082069454914584
+     "cabecaSobreAltura": 0.19642949119631034,
+     "ombroSobreAltura": -0.17217329641409218,
+     "cinturaSobreOmbro": 0.4929994058259697,
+     "larguraTorsoSobreAltura": -0.0000017816780288620667,
+     "bracoSobreAltura": -1.0671323120075258,
+     "pernaSobreAltura": 0.04861519095437378
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.680336952485771,
@@ -4051,7 +4109,7 @@
      "pernaSobreAltura": -0.24861884865791786
     },
     "elencoDegenerado": false,
-    "piorZ": -1.0442729166368434,
+    "piorZ": -1.0671323120075258,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.680336952485771,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -4174,21 +4232,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.03101804737575035,
-     "ombroSobreAltura": -0.16884433844232866,
+     "ombroSobreAltura": -0.17202155272447242,
      "cinturaSobreOmbro": -0.1561086594976904,
      "larguraTorsoSobreAltura": -0.2477068786500853,
      "bracoSobreAltura": 0.02095007723150727,
-     "pernaSobreAltura": 0.09707629822391298
+     "pernaSobreAltura": 0.09664138794045173
     },
     "piorPct": -0.2477068786500853,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.14277256564602098,
-     "ombroSobreAltura": -1.2757274803550478,
-     "cinturaSobreOmbro": -1.1751710701653693,
-     "larguraTorsoSobreAltura": -1.684117166574903,
-     "bracoSobreAltura": 0.25898790785464637,
-     "pernaSobreAltura": 1.2845070835273191
+     "cabecaSobreAltura": -0.153635558793354,
+     "ombroSobreAltura": -1.3633241538497685,
+     "cinturaSobreOmbro": -1.1764432852011253,
+     "larguraTorsoSobreAltura": -1.5673869797255107,
+     "bracoSobreAltura": 0.26465721794356645,
+     "pernaSobreAltura": 1.364651814799781
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.5661076838475195,
@@ -4199,7 +4257,7 @@
      "pernaSobreAltura": -0.17883146015373308
     },
     "elencoDegenerado": false,
-    "piorZ": -1.684117166574903,
+    "piorZ": -1.5673869797255107,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.5661076838475195,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -4322,21 +4380,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.1706754685372615,
-     "ombroSobreAltura": -0.027211267357515286,
+     "ombroSobreAltura": -0.030929894803387255,
      "cinturaSobreOmbro": -0.009057465128919898,
      "larguraTorsoSobreAltura": -0.04759096418809547,
      "bracoSobreAltura": -0.07272686095160544,
-     "pernaSobreAltura": 0.11487857704569263
+     "pernaSobreAltura": 0.11443660946444709
     },
     "piorPct": -0.1706754685372615,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.7855998877270424,
-     "ombroSobreAltura": -0.20559861149935854,
-     "cinturaSobreOmbro": -0.06818373191332021,
-     "larguraTorsoSobreAltura": -0.32356291516733554,
-     "bracoSobreAltura": -0.89906005379136,
-     "pernaSobreAltura": 1.520065645894002
+     "cabecaSobreAltura": -0.8453730392306925,
+     "ombroSobreAltura": -0.24512900850877734,
+     "cinturaSobreOmbro": -0.06825754616142102,
+     "larguraTorsoSobreAltura": -0.30113599601073576,
+     "bracoSobreAltura": -0.9187407032692694,
+     "pernaSobreAltura": 1.6159342297672463
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.34038773127768446,
@@ -4347,7 +4405,7 @@
      "pernaSobreAltura": -0.16550634199223102
     },
     "elencoDegenerado": false,
-    "piorZ": 1.520065645894002,
+    "piorZ": 1.6159342297672463,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.4240619432285426,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -4470,21 +4528,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.08846873999710202,
-     "ombroSobreAltura": 0.0375755084186978,
+     "ombroSobreAltura": 0.03360922403103894,
      "cinturaSobreOmbro": -0.06061827570187406,
      "larguraTorsoSobreAltura": 0.09174225282874152,
      "bracoSobreAltura": 0.02524452550455033,
-     "pernaSobreAltura": 0.04673530985962257
+     "pernaSobreAltura": 0.04632035608561711
     },
     "piorPct": 0.09174225282874152,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.4072116092882026,
-     "ombroSobreAltura": 0.28390711302658533,
-     "cinturaSobreOmbro": -0.4563285864946183,
-     "larguraTorsoSobreAltura": 0.6237400581329612,
-     "bracoSobreAltura": 0.3120765032490703,
-     "pernaSobreAltura": 0.6183984933898272
+     "cabecaSobreAltura": -0.4381947109870231,
+     "ombroSobreAltura": 0.2663635235699446,
+     "cinturaSobreOmbro": -0.4568225980506567,
+     "larguraTorsoSobreAltura": 0.5805071435968613,
+     "bracoSobreAltura": 0.31890793597131856,
+     "pernaSobreAltura": 0.654079575443999
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.4732535590488187,
@@ -4495,8 +4553,8 @@
      "pernaSobreAltura": -0.216512007966539
     },
     "elencoDegenerado": false,
-    "piorZ": 0.6237400581329612,
-    "piorZRazao": "larguraTorsoSobreAltura",
+    "piorZ": 0.654079575443999,
+    "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.4732535590488187,
     "piorDesvioRefRazao": "cabecaSobreAltura",
     "indiceBalao": 1.338371215106152
@@ -4618,21 +4676,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.19023258512591973,
-     "ombroSobreAltura": -0.10406143836887366,
+     "ombroSobreAltura": -0.10748629477736271,
      "cinturaSobreOmbro": -0.011661850060015602,
      "larguraTorsoSobreAltura": -0.12844031352599622,
      "bracoSobreAltura": -0.02977890482785441,
-     "pernaSobreAltura": -0.03937006969322757
+     "pernaSobreAltura": -0.03975088899993163
     },
     "piorPct": 0.19023258512591973,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.8756190845570797,
-     "ombroSobreAltura": -0.7862510392540608,
-     "cinturaSobreOmbro": -0.08778929278640925,
-     "larguraTorsoSobreAltura": -0.8732439650775861,
-     "bracoSobreAltura": -0.3681311612527058,
-     "pernaSobreAltura": -0.5209421282553373
+     "cabecaSobreAltura": 0.9422414364926783,
+     "ombroSobreAltura": -0.8518622205003948,
+     "cinturaSobreOmbro": -0.08788433159488293,
+     "larguraTorsoSobreAltura": -0.8127173382895458,
+     "bracoSobreAltura": -0.3761896444607603,
+     "pernaSobreAltura": -0.5613135735083461
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.9237018729638109,
@@ -4643,7 +4701,7 @@
      "pernaSobreAltura": -0.28096242852050785
     },
     "elencoDegenerado": false,
-    "piorZ": 0.8756190845570797,
+    "piorZ": 0.9422414364926783,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 0.9237018729638109,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -4766,21 +4824,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.149037161308014,
-     "ombroSobreAltura": 0.09487774333451197,
+     "ombroSobreAltura": 0.09069241275900415,
      "cinturaSobreOmbro": 0.015015173311410501,
      "larguraTorsoSobreAltura": 0.16513746108503957,
      "bracoSobreAltura": 0.012166598747463881,
-     "pernaSobreAltura": 0.056940219734258286
+     "pernaSobreAltura": 0.05652122046200128
     },
     "piorPct": 0.16513746108503957,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.686001205645857,
-     "ombroSobreAltura": 0.7168623216066691,
-     "cinturaSobreOmbro": 0.11303278976237593,
-     "larguraTorsoSobreAltura": 1.122741663749976,
-     "bracoSobreAltura": 0.15040526679175067,
-     "pernaSobreAltura": 0.7534291781249656
+     "cabecaSobreAltura": -0.7381962920216885,
+     "ombroSobreAltura": 0.7187654972705834,
+     "cinturaSobreOmbro": 0.11315515664011816,
+     "larguraTorsoSobreAltura": 1.0449217550201855,
+     "bracoSobreAltura": 0.15369767570579057,
+     "pernaSobreAltura": 0.7981237409969263
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.3753604354910093,
@@ -4791,7 +4849,7 @@
      "pernaSobreAltura": -0.20887356845728708
     },
     "elencoDegenerado": false,
-    "piorZ": 1.122741663749976,
+    "piorZ": 1.0449217550201855,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.458656207849987,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -4914,21 +4972,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.20582795691418204,
-     "ombroSobreAltura": -0.11078543348525907,
+     "ombroSobreAltura": -0.11418458643733805,
      "cinturaSobreOmbro": -0.08471743546202813,
      "larguraTorsoSobreAltura": -0.11926627466564466,
      "bracoSobreAltura": 0.0025537184030516753,
-     "pernaSobreAltura": 0.039206525717395344
+     "pernaSobreAltura": 0.03879455655407805
     },
     "piorPct": -0.20582795691418204,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.9474028179249807,
-     "ombroSobreAltura": -0.8370551433589548,
-     "cinturaSobreOmbro": -0.6377447581314357,
-     "larguraTorsoSobreAltura": -0.8108712267194864,
-     "bracoSobreAltura": 0.03156943905970882,
-     "pernaSobreAltura": 0.5187781253084988
+     "cabecaSobreAltura": -1.0194869068556183,
+     "ombroSobreAltura": -0.9049482592260277,
+     "cinturaSobreOmbro": -0.6384351669500898,
+     "larguraTorsoSobreAltura": -0.7546678035347065,
+     "bracoSobreAltura": 0.03226050197784013,
+     "pernaSobreAltura": 0.5478094130694444
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.2835728628434897,
@@ -4939,7 +4997,7 @@
      "pernaSobreAltura": -0.2221473504590341
     },
     "elencoDegenerado": false,
-    "piorZ": -0.9474028179249807,
+    "piorZ": -1.0194869068556183,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": -0.37061733566694244,
     "piorDesvioRefRazao": "bracoSobreAltura",
@@ -5062,21 +5120,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.18475303258937614,
-     "ombroSobreAltura": 0.172448407504041,
+     "ombroSobreAltura": 0.1679665517004996,
      "cinturaSobreOmbro": 0.04007264659753336,
      "larguraTorsoSobreAltura": 0.3119259109086754,
      "bracoSobreAltura": -0.027690800261006395,
-     "pernaSobreAltura": -0.13941047302109436
+     "pernaSobreAltura": -0.13975163364568183
     },
     "piorPct": 0.3119259109086754,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.8503973236655121,
-     "ombroSobreAltura": 1.3029585381775424,
-     "cinturaSobreOmbro": 0.30166305404139765,
-     "larguraTorsoSobreAltura": 2.120731503798444,
-     "bracoSobreAltura": -0.34231770829147334,
-     "pernaSobreAltura": -1.844670052214438
+     "cabecaSobreAltura": -0.9151006527518047,
+     "ombroSobreAltura": 1.3311870131699473,
+     "cinturaSobreOmbro": 0.30198962800396933,
+     "larguraTorsoSobreAltura": 1.9737385334701083,
+     "bracoSobreAltura": -0.34981112855695556,
+     "pernaSobreAltura": -1.9734021265643091
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.31763500490113683,
@@ -5087,7 +5145,7 @@
      "pernaSobreAltura": -0.35584330240263523
     },
     "elencoDegenerado": false,
-    "piorZ": 2.120731503798444,
+    "piorZ": 1.9737385334701083,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.6082952463941355,
     "piorDesvioRefRazao": "larguraTorsoSobreAltura",
@@ -5212,21 +5270,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.04165818473717573,
-     "ombroSobreAltura": -0.015478635920502744,
+     "ombroSobreAltura": -0.01924211306889487,
      "cinturaSobreOmbro": -0.03775293874067412,
      "larguraTorsoSobreAltura": -1.8335777210563778e-7,
      "bracoSobreAltura": -0.04571539380528968,
-     "pernaSobreAltura": -0.0742845475668591
+     "pernaSobreAltura": -0.07465152584400714
     },
-    "piorPct": -0.0742845475668591,
+    "piorPct": -0.07465152584400714,
     "piorPctRazao": "pernaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.19174791510997277,
-     "ombroSobreAltura": -0.11695104132224621,
-     "cinturaSobreOmbro": -0.2842005149779793,
-     "larguraTorsoSobreAltura": -0.0000012466184762848012,
-     "bracoSobreAltura": -0.5651403604649823,
-     "pernaSobreAltura": -0.982928163640544
+     "cabecaSobreAltura": -0.20633724659974473,
+     "ombroSobreAltura": -0.15249971356758157,
+     "cinturaSobreOmbro": -0.28450818436969916,
+     "larguraTorsoSobreAltura": -0.0000011602123695395212,
+     "bracoSobreAltura": -0.5775114243257639,
+     "pernaSobreAltura": -1.0541378015324985
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.5489106650240088,
@@ -5237,7 +5295,7 @@
      "pernaSobreAltura": -0.30709613577623884
     },
     "elencoDegenerado": false,
-    "piorZ": -0.982928163640544,
+    "piorZ": -1.0541378015324985,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.5489106650240088,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -5360,21 +5418,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.15239316938651437,
-     "ombroSobreAltura": 0.08646809707394096,
+     "ombroSobreAltura": 0.08231491360329289,
      "cinturaSobreOmbro": 0.013266332319836318,
      "larguraTorsoSobreAltura": 0.21194622220706327,
      "bracoSobreAltura": 0.060733520268132404,
-     "pernaSobreAltura": -0.020470298563259545
+     "pernaSobreAltura": -0.020858610242948775
     },
     "piorPct": 0.21194622220706327,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.7014485314524085,
-     "ombroSobreAltura": 0.653322039867581,
-     "cinturaSobreOmbro": 0.09986768190589788,
-     "larguraTorsoSobreAltura": 1.4409865125862595,
-     "bracoSobreAltura": 0.7507966284360912,
-     "pernaSobreAltura": -0.2708616210908306
+     "cabecaSobreAltura": -0.7548189430290018,
+     "ombroSobreAltura": 0.6523712183738531,
+     "cinturaSobreOmbro": 0.09997579651978887,
+     "larguraTorsoSobreAltura": 1.341108292590592,
+     "bracoSobreAltura": 0.7672317544447881,
+     "pernaSobreAltura": -0.2945398542887307
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.3699363199803339,
@@ -5385,7 +5443,7 @@
      "pernaSobreAltura": -0.26681583043307305
     },
     "elencoDegenerado": false,
-    "piorZ": 1.4409865125862595,
+    "piorZ": 1.341108292590592,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.485729744228395,
     "piorDesvioRefRazao": "larguraTorsoSobreAltura",
@@ -5508,21 +5566,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0,
-     "ombroSobreAltura": -0.039289378926347665,
+     "ombroSobreAltura": -0.04296183602128212,
      "cinturaSobreOmbro": -0.03286781811759073,
      "larguraTorsoSobreAltura": -0.03669758454550473,
      "bracoSobreAltura": 0.014046844499132731,
-     "pernaSobreAltura": -0.050974468693796765
+     "pernaSobreAltura": -0.05135068770746112
     },
-    "piorPct": -0.050974468693796765,
+    "piorPct": -0.05135068770746112,
     "piorPctRazao": "pernaSobreAltura",
     "zElenco": {
      "cabecaSobreAltura": 0,
-     "ombroSobreAltura": -0.29685650608619213,
-     "cinturaSobreOmbro": -0.24742579377424778,
-     "larguraTorsoSobreAltura": -0.24950066966942136,
-     "bracoSobreAltura": 0.1736491387878382,
-     "pernaSobreAltura": -0.6744907594765952
+     "ombroSobreAltura": -0.3404858740890463,
+     "cinturaSobreOmbro": -0.24769365164027674,
+     "larguraTorsoSobreAltura": -0.23220718180076436,
+     "bracoSobreAltura": 0.17745036187434113,
+     "pernaSobreAltura": -0.725111783518494
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.6162403021089314,
@@ -5533,7 +5591,7 @@
      "pernaSobreAltura": -0.2896483944815973
     },
     "elencoDegenerado": false,
-    "piorZ": -0.6744907594765952,
+    "piorZ": -0.725111783518494,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.6162403021089314,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -5656,21 +5714,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.07987749558145413,
-     "ombroSobreAltura": 0.024016711878700407,
+     "ombroSobreAltura": 0.020102257977204427,
      "cinturaSobreOmbro": -0.0980223341540993,
      "larguraTorsoSobreAltura": -0.014491569787285562,
      "bracoSobreAltura": 0.0637376538286424,
-     "pernaSobreAltura": -0.05481634364902052
+     "pernaSobreAltura": -0.055191039641060494
     },
     "piorPct": -0.0980223341540993,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": 0.36766708243726226,
-     "ombroSobreAltura": 0.18146169195890902,
-     "cinturaSobreOmbro": -0.7379027640019199,
-     "larguraTorsoSobreAltura": -0.09852573163243253,
-     "bracoSobreAltura": 0.7879341653126765,
-     "pernaSobreAltura": -0.7253261918560665
+     "cabecaSobreAltura": 0.39564139934432285,
+     "ombroSobreAltura": 0.159316628719996,
+     "cinturaSobreOmbro": -0.7387016017329722,
+     "larguraTorsoSobreAltura": -0.09169667763833476,
+     "bracoSobreAltura": 0.8051822412935792,
+     "pernaSobreAltura": -0.7793405497577108
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.7453415296992056,
@@ -5681,7 +5739,7 @@
      "pernaSobreAltura": -0.2925240621560885
     },
     "elencoDegenerado": false,
-    "piorZ": 0.7879341653126765,
+    "piorZ": 0.8051822412935792,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.7453415296992056,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -5804,21 +5862,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.00016547662894918585,
-     "ombroSobreAltura": -0.024233556519415785,
+     "ombroSobreAltura": -0.027963566701206533,
      "cinturaSobreOmbro": 0.02339765900272637,
      "larguraTorsoSobreAltura": -3.7320622175153527e-7,
      "bracoSobreAltura": 0.058768615229624246,
-     "pernaSobreAltura": -0.05187203745983995
+     "pernaSobreAltura": -0.0522479006533238
     },
     "piorPct": 0.058768615229624246,
     "piorPctRazao": "bracoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.0007616702168041736,
-     "ombroSobreAltura": -0.18310009256908294,
-     "cinturaSobreOmbro": 0.17613534097386271,
-     "larguraTorsoSobreAltura": -0.000002537365971221906,
-     "bracoSobreAltura": 0.7265061859984395,
-     "pernaSobreAltura": -0.6863673293399828
+     "cabecaSobreAltura": 0.0008196226554133202,
+     "ombroSobreAltura": -0.2216199383609004,
+     "cinturaSobreOmbro": 0.17632602132228503,
+     "larguraTorsoSobreAltura": -0.000002361495069954153,
+     "bracoSobreAltura": 0.7424095881459074,
+     "pernaSobreAltura": -0.7377811304818033
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.6165077521056962,
@@ -5829,7 +5887,7 @@
      "pernaSobreAltura": -0.2903202303732454
     },
     "elencoDegenerado": false,
-    "piorZ": 0.7265061859984395,
+    "piorZ": 0.7424095881459074,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.6165077521056962,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -5952,21 +6010,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.08000752019026433,
-     "ombroSobreAltura": -0.029272541486280418,
+     "ombroSobreAltura": -0.032983289409814716,
      "cinturaSobreOmbro": -0.08950184818086605,
      "larguraTorsoSobreAltura": -0.15596368045139206,
      "bracoSobreAltura": 0,
-     "pernaSobreAltura": 0.04818135449938767
+     "pernaSobreAltura": 0.0477658274747476
     },
     "piorPct": -0.15596368045139206,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.3682655710130282,
-     "ombroSobreAltura": -0.22117286216639392,
-     "cinturaSobreOmbro": -0.673761359856164,
-     "larguraTorsoSobreAltura": -1.0603706810315563,
+     "cabecaSobreAltura": -0.3962854245206807,
+     "ombroSobreAltura": -0.2614027975775882,
+     "cinturaSobreOmbro": -0.6744907594765953,
+     "larguraTorsoSobreAltura": -0.9868738542174428,
      "bracoSobreAltura": 0,
-     "pernaSobreAltura": 0.637532459320323
+     "pernaSobreAltura": 0.6744907594765952
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.48692892350563216,
@@ -5977,7 +6035,7 @@
      "pernaSobreAltura": -0.21542963441849058
     },
     "elencoDegenerado": false,
-    "piorZ": -1.0603706810315563,
+    "piorZ": -0.9868738542174428,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.48692892350563216,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -6100,21 +6158,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.13617541730746702,
-     "ombroSobreAltura": -0.06192444238238339,
+     "ombroSobreAltura": -0.06551037363117855,
      "cinturaSobreOmbro": -0.02475478810957019,
      "larguraTorsoSobreAltura": -0.09174342887279753,
      "bracoSobreAltura": 0.047325271827548525,
-     "pernaSobreAltura": 0.029073697395021792
+     "pernaSobreAltura": 0.028665745154907638
     },
     "piorPct": -0.13617541730746702,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.6268000519627912,
-     "ombroSobreAltura": -0.46787895633144083,
-     "cinturaSobreOmbro": -0.18635167919605994,
-     "larguraTorsoSobreAltura": -0.6237480538575618,
-     "bracoSobreAltura": 0.5850419071885883,
-     "pernaSobreAltura": 0.38470121885051345
+     "cabecaSobreAltura": -0.6744907594765952,
+     "ombroSobreAltura": -0.5191900275552092,
+     "cinturaSobreOmbro": -0.1865534195334716,
+     "larguraTorsoSobreAltura": -0.5805145851186754,
+     "bracoSobreAltura": 0.5978486208855336,
+     "pernaSobreAltura": 0.40478269178353327
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.3961481045001011,
@@ -6125,7 +6183,7 @@
      "pernaSobreAltura": -0.2297318364710527
     },
     "elencoDegenerado": false,
-    "piorZ": -0.6268000519627912,
+    "piorZ": -0.6744907594765952,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 0.40150366211669275,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -6248,21 +6306,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.21738334303236106,
-     "ombroSobreAltura": 0.0641277718255576,
+     "ombroSobreAltura": 0.06005998752107038,
      "cinturaSobreOmbro": 0.0524312888012805,
      "larguraTorsoSobreAltura": 0.11926581146626355,
      "bracoSobreAltura": 0.018445807051768317,
-     "pernaSobreAltura": -0.04591400545545873
+     "pernaSobreAltura": -0.04629223057162024
     },
     "piorPct": -0.21738334303236106,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -1.0005909539522868,
-     "ombroSobreAltura": 0.4845265261869904,
-     "cinturaSobreOmbro": 0.3946977314968356,
-     "larguraTorsoSobreAltura": 0.8108680775052478,
-     "bracoSobreAltura": 0.2280297549377701,
-     "pernaSobreAltura": -0.60753104846061
+     "cabecaSobreAltura": -1.0767219152954897,
+     "ombroSobreAltura": 0.4759940273213347,
+     "cinturaSobreOmbro": 0.3951250228090004,
+     "larguraTorsoSobreAltura": 0.7546648726000352,
+     "bracoSobreAltura": 0.23302138331513908,
+     "pernaSobreAltura": -0.6536824212377529
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.26489658209285866,
@@ -6273,7 +6331,7 @@
      "pernaSobreAltura": -0.2858606057789344
     },
     "elencoDegenerado": false,
-    "piorZ": -1.0005909539522868,
+    "piorZ": -1.0767219152954897,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 0.5124260928408456,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -6396,21 +6454,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.34289373130025963,
-     "ombroSobreAltura": -0.014078956214814767,
+     "ombroSobreAltura": -0.01784778384393755,
      "cinturaSobreOmbro": 0.24729736314025114,
      "larguraTorsoSobreAltura": 0.018169096831817836,
      "bracoSobreAltura": 0.057889132595414096,
-     "pernaSobreAltura": 0.012791176219090618
+     "pernaSobreAltura": 0.012389678804325942
     },
     "piorPct": -0.34289373130025963,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -1.5783010828705049,
-     "ombroSobreAltura": -0.10637556167800975,
-     "cinturaSobreOmbro": 1.8616309167327292,
-     "larguraTorsoSobreAltura": 0.1235286159285491,
-     "bracoSobreAltura": 0.7156338935046428,
-     "pernaSobreAltura": 0.1692519879792941
+     "cabecaSobreAltura": -1.6983876959398443,
+     "ombroSobreAltura": -0.1414492220408154,
+     "cinturaSobreOmbro": 1.863646278498708,
+     "larguraTorsoSobreAltura": 0.11496655225223595,
+     "bracoSobreAltura": 0.7312992984497109,
+     "pernaSobreAltura": 0.17495193338415072
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.062041634240941036,
@@ -6421,7 +6479,7 @@
      "pernaSobreAltura": -0.24191940643378135
     },
     "elencoDegenerado": false,
-    "piorZ": 1.8616309167327292,
+    "piorZ": 1.863646278498708,
     "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": 0.7924638858785363,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -6544,21 +6602,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.1738458580561455,
-     "ombroSobreAltura": -0.0493433715501923,
+     "ombroSobreAltura": -0.05297739578539362,
      "cinturaSobreOmbro": 0.1123603624027053,
      "larguraTorsoSobreAltura": 0,
      "bracoSobreAltura": 0.015167138241682435,
-     "pernaSobreAltura": 0.008606355119576066
+     "pernaSobreAltura": 0.00820651667942744
     },
     "piorPct": -0.1738458580561455,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.8001928322868664,
-     "ombroSobreAltura": -0.37282088129624114,
-     "cinturaSobreOmbro": 0.8458380704429114,
+     "cabecaSobreAltura": -0.86107630254143,
+     "ombroSobreAltura": -0.4198622913139826,
+     "cinturaSobreOmbro": 0.8467537566254183,
      "larguraTorsoSobreAltura": 0,
-     "bracoSobreAltura": 0.187498373297067,
-     "pernaSobreAltura": 0.11387871516225456
+     "bracoSobreAltura": 0.19160275959137135,
+     "pernaSobreAltura": 0.11588241972130954
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.3352636199638804,
@@ -6569,8 +6627,8 @@
      "pernaSobreAltura": -0.24505177146378845
     },
     "elencoDegenerado": false,
-    "piorZ": 0.8458380704429114,
-    "piorZRazao": "cinturaSobreOmbro",
+    "piorZ": -0.86107630254143,
+    "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 0.5985488598081897,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
     "indiceBalao": 1.2259040186805874
@@ -6692,21 +6750,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.2941318661089816,
-     "ombroSobreAltura": 0.059681560073712954,
+     "ombroSobreAltura": 0.055630772065025404,
      "cinturaSobreOmbro": -0.13304897068208296,
      "larguraTorsoSobreAltura": 0.07339411344968276,
      "bracoSobreAltura": -0.027408849655152008,
-     "pernaSobreAltura": 0.01760461050797727
+     "pernaSobreAltura": 0.017201204919574727
     },
     "piorPct": -0.2941318661089816,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -1.353855729663427,
-     "ombroSobreAltura": 0.45093253915944675,
-     "cinturaSobreOmbro": -1.001579936461997,
-     "larguraTorsoSobreAltura": 0.49899416221203174,
-     "bracoSobreAltura": -0.33883219381237834,
-     "pernaSobreAltura": 0.2329430284628006
+     "cabecaSobreAltura": -1.456865194032615,
+     "ombroSobreAltura": 0.4408911212133852,
+     "cinturaSobreOmbro": -1.0026642254536406,
+     "larguraTorsoSobreAltura": 0.46440768393853454,
+     "bracoSobreAltura": -0.3462493152940096,
+     "pernaSobreAltura": 0.24289443695391166
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.14085252596908715,
@@ -6717,7 +6775,7 @@
      "pernaSobreAltura": -0.23831652046035356
     },
     "elencoDegenerado": false,
-    "piorZ": -1.353855729663427,
+    "piorZ": -1.456865194032615,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": -0.3894272214302422,
     "piorDesvioRefRazao": "bracoSobreAltura",
@@ -6840,21 +6898,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.010456580252518418,
-     "ombroSobreAltura": 0.33913068097227017,
+     "ombroSobreAltura": 0.33401165775913555,
      "cinturaSobreOmbro": -0.2183496997771061,
      "larguraTorsoSobreAltura": 0.22935762692902614,
      "bracoSobreAltura": 0.273653442200358,
-     "pernaSobreAltura": -0.03800099101646163
+     "pernaSobreAltura": -0.0383823530624413
     },
-    "piorPct": 0.33913068097227017,
+    "piorPct": 0.33401165775913555,
     "piorPctRazao": "ombroSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.04813045684180362,
-     "ombroSobreAltura": 2.5623502282584383,
-     "cinturaSobreOmbro": -1.6437156733201286,
-     "larguraTorsoSobreAltura": 1.5593637080288736,
-     "bracoSobreAltura": 3.382943732832918,
-     "pernaSobreAltura": -0.5028265707980911
+     "cabecaSobreAltura": 0.05179251068586503,
+     "ombroSobreAltura": 2.647145973736173,
+     "cinturaSobreOmbro": -1.6454951247099687,
+     "larguraTorsoSobreAltura": 1.4512804816257086,
+     "bracoSobreAltura": 3.4569972173900525,
+     "pernaSobreAltura": -0.541988778091856
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.6331406485352881,
@@ -6865,7 +6923,7 @@
      "pernaSobreAltura": -0.279937664481986
     },
     "elencoDegenerado": false,
-    "piorZ": 3.382943732832918,
+    "piorZ": 3.4569972173900525,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.6331406485352881,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -6991,21 +7049,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.039078767584338245,
-     "ombroSobreAltura": -0.21388982610896776,
+     "ombroSobreAltura": -0.21689484741525866,
      "cinturaSobreOmbro": 0.3353807827404571,
      "larguraTorsoSobreAltura": -0.20183544781055907,
      "bracoSobreAltura": -0.04297329009382873,
-     "pernaSobreAltura": 0.0681099198584228
+     "pernaSobreAltura": 0.06768649261934613
     },
     "piorPct": 0.3353807827404571,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": -0.17987514954479172,
-     "ombroSobreAltura": -1.6160750869877345,
-     "cinturaSobreOmbro": 2.524714481785895,
-     "larguraTorsoSobreAltura": -1.372245067773286,
-     "bracoSobreAltura": -0.5312420747687515,
-     "pernaSobreAltura": 0.9012259028957401
+     "cabecaSobreAltura": -0.19356112981725615,
+     "ombroSobreAltura": -1.7189589306893582,
+     "cinturaSobreOmbro": 2.5274476836203026,
+     "larguraTorsoSobreAltura": -1.2771314816502337,
+     "bracoSobreAltura": -0.5428710966759659,
+     "pernaSobreAltura": 0.9557860970223037
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.5530796229823758,
@@ -7016,7 +7074,7 @@
      "pernaSobreAltura": -0.20051297735133577
     },
     "elencoDegenerado": false,
-    "piorZ": 2.524714481785895,
+    "piorZ": 2.5274476836203026,
     "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": 0.919046650537441,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -7139,21 +7197,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.034982292637343274,
-     "ombroSobreAltura": 0.02034426683287213,
+     "ombroSobreAltura": 0.016443851390583807,
      "cinturaSobreOmbro": 0.02023105790999198,
      "larguraTorsoSobreAltura": 0.03669682979048952,
      "bracoSobreAltura": -0.007779874058679077,
-     "pernaSobreAltura": 0.01027600000423926
+     "pernaSobreAltura": 0.009875499672359636
     },
     "piorPct": 0.03669682979048952,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.16101953844838335,
-     "ombroSobreAltura": 0.15371400963637064,
-     "cinturaSobreOmbro": 0.15229747056417828,
-     "larguraTorsoSobreAltura": 0.24949553821774512,
-     "bracoSobreAltura": -0.09617593689820339,
-     "pernaSobreAltura": 0.13597134457400037
+     "cabecaSobreAltura": -0.17327087073226363,
+     "ombroSobreAltura": 0.13032262195078825,
+     "cinturaSobreOmbro": 0.15246234454455299,
+     "larguraTorsoSobreAltura": 0.232202406022271,
+     "bracoSobreAltura": -0.09828125221537387,
+     "pernaSobreAltura": 0.139449762023743
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.5597005108882886,
@@ -7164,7 +7222,7 @@
      "pernaSobreAltura": -0.24380203171987064
     },
     "elencoDegenerado": false,
-    "piorZ": 0.24949553821774512,
+    "piorZ": 0.232202406022271,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 0.5597005108882886,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -7285,21 +7343,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.1790060965764475,
-     "ombroSobreAltura": 0.05539921053713776,
+     "ombroSobreAltura": 0.051364792436925884,
      "cinturaSobreOmbro": 0.5048007280141352,
      "larguraTorsoSobreAltura": 0.06421986711392196,
      "bracoSobreAltura": -0.0075742893766658805,
-     "pernaSobreAltura": -0.0021621949901778413
+     "pernaSobreAltura": -0.0025577644900638048
     },
     "piorPct": 0.5048007280141352,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": -0.8239448268584179,
-     "ombroSobreAltura": 0.4185766364700552,
-     "cinturaSobreOmbro": 3.8000916391790907,
-     "larguraTorsoSobreAltura": 0.43662001326372046,
-     "bracoSobreAltura": -0.09363446909867253,
-     "pernaSobreAltura": -0.02861001945546548
+     "cabecaSobreAltura": -0.88663549132497,
+     "ombroSobreAltura": 0.4070819096657224,
+     "cinturaSobreOmbro": 3.8042055370135004,
+     "larguraTorsoSobreAltura": 0.40635683636486336,
+     "bracoSobreAltura": -0.09568415104996157,
+     "pernaSobreAltura": -0.036117630629919656
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.3269234344988733,
@@ -7310,7 +7368,7 @@
      "pernaSobreAltura": -0.2531120992497445
     },
     "elencoDegenerado": false,
-    "piorZ": 3.8000916391790907,
+    "piorZ": 3.8042055370135004,
     "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": 1.162516365478576,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -7433,21 +7491,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.18837253395091025,
-     "ombroSobreAltura": 0.00609290463514369,
+     "ombroSobreAltura": 0.0022469671127070693,
      "cinturaSobreOmbro": -0.01755342356224919,
      "larguraTorsoSobreAltura": 0.03669704631709982,
      "bracoSobreAltura": 0.03032376599114324,
-     "pernaSobreAltura": 0.07387291295378404
+     "pernaSobreAltura": 0.07344720111065134
     },
     "piorPct": -0.18837253395091025,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.86705747926736,
-     "ombroSobreAltura": 0.04603580996522663,
-     "cinturaSobreOmbro": -0.13214049508265477,
-     "larguraTorsoSobreAltura": 0.24949701034554156,
-     "bracoSobreAltura": 0.3748668143575641,
-     "pernaSobreAltura": 0.9774814419793992
+     "cabecaSobreAltura": -0.9330284129198202,
+     "ombroSobreAltura": 0.017807911213115216,
+     "cinturaSobreOmbro": -0.13228354755300936,
+     "larguraTorsoSobreAltura": 0.2322037761133706,
+     "bracoSobreAltura": 0.38307274269701164,
+     "pernaSobreAltura": 1.0371317964656535
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.3117850209270873,
@@ -7458,7 +7516,7 @@
      "pernaSobreAltura": -0.19619934061255717
     },
     "elencoDegenerado": false,
-    "piorZ": 0.9774814419793992,
+    "piorZ": 1.0371317964656535,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.4118525863280137,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -7581,21 +7639,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.3142592075809546,
-     "ombroSobreAltura": -0.021844823115079164,
+     "ombroSobreAltura": -0.025583964580261843,
      "cinturaSobreOmbro": -0.08524796955282632,
      "larguraTorsoSobreAltura": -0.042123060390192237,
      "bracoSobreAltura": 0.066781400667361,
-     "pernaSobreAltura": 0.14540184271084663
+     "pernaSobreAltura": 0.1449477748935974
     },
     "piorPct": -0.3142592075809546,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -1.4464996071704852,
-     "ombroSobreAltura": -0.16505167664191714,
-     "cinturaSobreOmbro": -0.6417385680664427,
-     "larguraTorsoSobreAltura": -0.2863875621799155,
-     "bracoSobreAltura": 0.8255614073074408,
-     "pernaSobreAltura": 1.923947455116292
+     "cabecaSobreAltura": -1.5565579734204216,
+     "ombroSobreAltura": -0.2027608535738201,
+     "cinturaSobreOmbro": -0.6424333004982101,
+     "larguraTorsoSobreAltura": -0.2665373556099104,
+     "bracoSobreAltura": 0.8436331530280863,
+     "pernaSobreAltura": 2.046775695953578
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.10832190550777591,
@@ -7606,7 +7664,7 @@
      "pernaSobreAltura": -0.14265948481541277
     },
     "elencoDegenerado": false,
-    "piorZ": 1.923947455116292,
+    "piorZ": 2.046775695953578,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": -0.33029651390405645,
     "piorDesvioRefRazao": "bracoSobreAltura",
@@ -7727,21 +7785,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.7753765040534484,
-     "ombroSobreAltura": -0.31274340671821727,
+     "ombroSobreAltura": -0.3153705457303972,
      "cinturaSobreOmbro": 0.1541896361973607,
      "larguraTorsoSobreAltura": -0.293578228100727,
      "bracoSobreAltura": -0.11906682606985335,
-     "pernaSobreAltura": -0.1807677206770478
+     "pernaSobreAltura": -0.18109248618642737
     },
     "piorPct": 0.7753765040534484,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 3.5689703959862893,
-     "ombroSobreAltura": -2.3629774141734776,
-     "cinturaSobreOmbro": 1.1607248461520623,
-     "larguraTorsoSobreAltura": -1.9959887120272617,
-     "bracoSobreAltura": -1.4719214558478173,
-     "pernaSobreAltura": -2.3919063863269368
+     "cabecaSobreAltura": 3.840519070475729,
+     "ombroSobreAltura": -2.4994093797984123,
+     "cinturaSobreOmbro": 1.161981422015049,
+     "larguraTorsoSobreAltura": -1.857641962805489,
+     "bracoSobreAltura": -1.504142184718369,
+     "pernaSobreAltura": -2.557167226045918
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.8694350572684437,
@@ -7752,7 +7810,7 @@
      "pernaSobreAltura": -0.38679946354172884
     },
     "elencoDegenerado": false,
-    "piorZ": 3.5689703959862893,
+    "piorZ": 3.840519070475729,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 1.8694350572684437,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -7875,21 +7933,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.4217638650940473,
-     "ombroSobreAltura": -0.181282698396397,
+     "ombroSobreAltura": -0.18441236522537363,
      "cinturaSobreOmbro": -0.08765702486241005,
      "larguraTorsoSobreAltura": 0.0486793759075739,
      "bracoSobreAltura": -0.06006269586110768,
-     "pernaSobreAltura": -0.07157259959043612
+     "pernaSobreAltura": -0.07194065295603978
     },
     "piorPct": 0.4217638650940473,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 1.941331392876007,
-     "ombroSobreAltura": -1.3697072829965955,
-     "cinturaSobreOmbro": -0.6598737062154765,
-     "larguraTorsoSobreAltura": 0.33096284233554424,
-     "bracoSobreAltura": -0.7425037993551613,
-     "pernaSobreAltura": -0.9470438494505042
+     "cabecaSobreAltura": 2.089039529394336,
+     "ombroSobreAltura": -1.461525185643496,
+     "cinturaSobreOmbro": -0.6605880713594628,
+     "larguraTorsoSobreAltura": 0.30802301653672215,
+     "bracoSobreAltura": -0.7587573932608205,
+     "pernaSobreAltura": -1.0158581608413313
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.2979120588471649,
@@ -7900,7 +7958,7 @@
      "pernaSobreAltura": -0.30506622558353524
     },
     "elencoDegenerado": false,
-    "piorZ": 1.941331392876007,
+    "piorZ": 2.089039529394336,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 1.2979120588471649,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -7959,8 +8017,8 @@
     "mapasDeSuperficie": 0
    },
    "C6": {
-    "piorIoU": 0.5148749154834348,
-    "contra": "dama"
+    "piorIoU": 0.5144984326018809,
+    "contra": "padati"
    }
   },
   {
@@ -8023,21 +8081,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.12572944010047726,
-     "ombroSobreAltura": -0.10257437117305221,
+     "ombroSobreAltura": -0.10600491211375539,
      "cinturaSobreOmbro": 0.41494450271380556,
      "larguraTorsoSobreAltura": -0.19266113759879047,
      "bracoSobreAltura": -0.04335473241186312,
-     "pernaSobreAltura": 0.0851482528211416
+     "pernaSobreAltura": 0.08471807113277958
     },
     "piorPct": 0.41494450271380556,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": -0.5787183997409384,
-     "ombroSobreAltura": -0.775015290964568,
-     "cinturaSobreOmbro": 3.1236625622336747,
-     "larguraTorsoSobreAltura": -1.309870484542803,
-     "bracoSobreAltura": -0.535957520293047,
-     "pernaSobreAltura": 1.1266759847646235
+     "cabecaSobreAltura": -0.6227507667588981,
+     "ombroSobreAltura": -0.8401218034747157,
+     "cinturaSobreOmbro": 3.1270441724342577,
+     "larguraTorsoSobreAltura": -1.2190802298955263,
+     "bracoSobreAltura": -0.5476897644823597,
+     "pernaSobreAltura": 1.1962852767483152
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.4130313138569492,
@@ -8048,7 +8106,7 @@
      "pernaSobreAltura": -0.18775967749146158
     },
     "elencoDegenerado": false,
-    "piorZ": 3.1236625622336747,
+    "piorZ": 3.1270441724342577,
     "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": 1.0333859403434627,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -8169,21 +8227,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.354263494194439,
-     "ombroSobreAltura": 0.31643863721387344,
+     "ombroSobreAltura": 0.31140635766243163,
      "cinturaSobreOmbro": 0.27583600513728573,
      "larguraTorsoSobreAltura": 0.6335754110204408,
      "bracoSobreAltura": -0.06874183587100031,
-     "pernaSobreAltura": -0.22488699898772294
+     "pernaSobreAltura": -0.22519427443933054
     },
     "piorPct": 0.6335754110204408,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 1.6306348161814543,
-     "ombroSobreAltura": 2.3908972552119425,
-     "cinturaSobreOmbro": 2.0764670863894015,
-     "larguraTorsoSobreAltura": 4.307572045774946,
-     "bracoSobreAltura": -0.849796592995041,
-     "pernaSobreAltura": -2.9756897252781065
+     "cabecaSobreAltura": 1.7547032935799725,
+     "ombroSobreAltura": 2.4679919599584874,
+     "cinturaSobreOmbro": 2.078715025192205,
+     "larguraTorsoSobreAltura": 4.009003929642532,
+     "bracoSobreAltura": -0.8683988529928344,
+     "pernaSobreAltura": -3.179918892364326
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.188815238991917,
@@ -8194,7 +8252,7 @@
      "pernaSobreAltura": -0.4198230220746229
     },
     "elencoDegenerado": false,
-    "piorZ": 4.307572045774946,
+    "piorZ": 4.009003929642532,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 1.188815238991917,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -8317,21 +8375,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.02075923463181021,
-     "ombroSobreAltura": 0.014515708355111717,
+     "ombroSobreAltura": 0.010637573431499217,
      "cinturaSobreOmbro": -0.006735916273467698,
      "larguraTorsoSobreAltura": -0.1100920568974661,
      "bracoSobreAltura": -0.06512461954182719,
-     "pernaSobreAltura": 0.02172392375058523
+     "pernaSobreAltura": 0.021318885156627002
     },
     "piorPct": -0.1100920568974661,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.0955524102896428,
-     "ombroSobreAltura": 0.1096755047653583,
-     "cinturaSobreOmbro": -0.05070733398842922,
-     "larguraTorsoSobreAltura": -0.7484972719973344,
-     "bracoSobreAltura": -0.8050800375858171,
-     "pernaSobreAltura": 0.2874495056998405
+     "cabecaSobreAltura": 0.10282261078993388,
+     "ombroSobreAltura": 0.08430606844214514,
+     "cinturaSobreOmbro": -0.050762228662371546,
+     "larguraTorsoSobreAltura": -0.6966171367249152,
+     "bracoSobreAltura": -0.8227034409998293,
+     "pernaSobreAltura": 0.30103929525955814
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.6497922137617985,
@@ -8342,7 +8400,7 @@
      "pernaSobreAltura": -0.23523318847507776
     },
     "elencoDegenerado": false,
-    "piorZ": -0.8050800375858171,
+    "piorZ": -0.8227034409998293,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.6497922137617985,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -8415,14 +8473,14 @@
    "fonte": "glb",
    "marcos": {
     "alturaTotal": 1.72,
-    "cabeca": 0.5071535601000183,
-    "ombroLargura": 0.34509270917483303,
-    "cinturaLargura": 0.418062533271441,
-    "torsoLargura": 0.36688838188088546,
-    "torsoProfundidade": 0.3296339524645129,
-    "braco": 0.4188347125038729,
-    "perna": 0.5932609133074593,
-    "larguraMax": 1.522456366533115
+    "cabeca": 0.4004338467251978,
+    "ombroLargura": 0.352513709308606,
+    "cinturaLargura": 0.3867566321157432,
+    "torsoLargura": 0.31976513325007117,
+    "torsoProfundidade": 0.3130332761097658,
+    "braco": 0.4498705116531851,
+    "perna": 0.7097769240338598,
+    "larguraMax": 1.167983955289347
    },
    "marcosUsados": {
     "cabeca": "Head",
@@ -8435,66 +8493,66 @@
     "peE": "LeftFoot"
    },
    "C7": {
-    "familia": "28n/26j",
-    "juntas": 26,
-    "nos": 28,
-    "clipesNoGLB": 1,
-    "impressaoEsqueleto": 482.77,
-    "curlDuplicado": 2,
+    "familia": "26n/24j",
+    "juntas": 24,
+    "nos": 26,
+    "clipesNoGLB": 0,
+    "impressaoEsqueleto": 496.22,
+    "curlDuplicado": 0,
     "convencaoSkinPai": 0,
-    "convencaoSkinFilho": 15,
+    "convencaoSkinFilho": 14,
     "ossosInvertidos": [],
-    "raioSkinP50": 0.122,
-    "raioSkinP95": 0.199,
-    "desalinhamentoRMS": 0.1443,
+    "raioSkinP50": 0.091,
+    "raioSkinP95": 0.173,
+    "desalinhamentoRMS": 0.1489,
     "piorJunta": "LeftLeg",
-    "piorDesalinhamento": 0.289,
-    "antebraco": 0.219,
-    "dPalmaOsso": 0.119,
-    "alavancaPalma": 0.54,
-    "abducaoBraco": 82.6
+    "piorDesalinhamento": 0.315,
+    "antebraco": 0.227,
+    "dPalmaOsso": 0.131,
+    "alavancaPalma": 0.58,
+    "abducaoBraco": 43.4
    },
    "C1": {
     "razoes": {
-     "cabecaSobreAltura": 0.2948567209883828,
-     "ombroSobreAltura": 0.20063529603187968,
-     "cinturaSobreOmbro": 1.2114499152157965,
-     "larguraTorsoSobreAltura": 0.21330719876795667,
-     "bracoSobreAltura": 0.24350855378132144,
-     "pernaSobreAltura": 0.3449191356438717
+     "cabecaSobreAltura": 0.23281037600302196,
+     "ombroSobreAltura": 0.20494983099337558,
+     "cinturaSobreOmbro": 1.097139265517641,
+     "larguraTorsoSobreAltura": 0.18590996119190184,
+     "bracoSobreAltura": 0.26155262305417737,
+     "pernaSobreAltura": 0.41266100234526737
     },
     "pctElenco": {
-     "cabecaSobreAltura": 0.40333626133936884,
-     "ombroSobreAltura": -0.00684120187471391,
-     "cinturaSobreOmbro": 0.13918257669178807,
-     "larguraTorsoSobreAltura": -4.7106904390034765e-7,
-     "bracoSobreAltura": -0.11843483561094412,
-     "pernaSobreAltura": -0.1305473222121536
+     "cabecaSobreAltura": 0.10803390055323113,
+     "ombroSobreAltura": 0.010637912799809936,
+     "cinturaSobreOmbro": 0.031690967809830516,
+     "larguraTorsoSobreAltura": -0.1284406963793393,
+     "bracoSobreAltura": -0.05311054762286066,
+     "pernaSobreAltura": 0.039800181661908435
     },
-    "piorPct": 0.40333626133936884,
-    "piorPctRazao": "cabecaSobreAltura",
+    "piorPct": -0.1284406963793393,
+    "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 1.8565112159353867,
-     "ombroSobreAltura": -0.05168967648394097,
-     "cinturaSobreOmbro": 1.0477531363446373,
-     "larguraTorsoSobreAltura": -0.0000032027187448245252,
-     "bracoSobreAltura": -1.4641086976928812,
-     "pernaSobreAltura": -1.7273934336705838
+     "cabecaSobreAltura": 0.5351029508420108,
+     "ombroSobreAltura": 0.08430875804125482,
+     "cinturaSobreOmbro": 0.23882484419098934,
+     "larguraTorsoSobreAltura": -0.8127197608276214,
+     "bracoSobreAltura": -0.6709325995317262,
+     "pernaSobreAltura": 0.562009624362504
     },
     "desvioRef": {
-     "cabecaSobreAltura": 1.2681286229875597,
-     "ombroSobreAltura": -0.22534634736725992,
-     "cinturaSobreOmbro": 0.6370944800213466,
-     "larguraTorsoSobreAltura": 0.22590344119515338,
-     "bracoSobreAltura": -0.4465714686788149,
-     "pernaSobreAltura": -0.3492091780304307
+     "cabecaSobreAltura": 0.790849046177092,
+     "ombroSobreAltura": -0.20868791122248814,
+     "cinturaSobreOmbro": 0.4826206290778934,
+     "larguraTorsoSobreAltura": 0.06844805282702214,
+     "bracoSobreAltura": -0.4055622203314151,
+     "pernaSobreAltura": -0.2213943351976088
     },
     "elencoDegenerado": false,
-    "piorZ": 1.8565112159353867,
-    "piorZRazao": "cabecaSobreAltura",
-    "piorDesvioRef": 1.2681286229875597,
+    "piorZ": -0.8127197608276214,
+    "piorZRazao": "larguraTorsoSobreAltura",
+    "piorDesvioRef": 0.790849046177092,
     "piorDesvioRefRazao": "cabecaSobreAltura",
-    "indiceBalao": 1.2259034411951535
+    "indiceBalao": 1.0684480528270222
    },
    "C2": {
     "alturaM": 1.72,
@@ -8504,55 +8562,55 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.032991941574975175,
-     "walk": 0.07243332713488483,
-     "run": 0.06692731337590306,
-     "shoot": 0.034036647727488996,
-     "crouch": 0.06091246377468755
+     "idle": 0.006018998164553223,
+     "walk": -0.03448791736695226,
+     "run": 0.020759159424110232,
+     "shoot": 0.008947391002451257,
+     "crouch": -0.011888159939423926
     },
     "faixaPorPose": {
      "idle": [
-      0.0325269448779908,
-      0.032991941574975175
+      0.0058729890808967185,
+      0.006018998164553223
      ],
      "walk": [
-      -0.039040524226602244,
-      0.07243332713488483
+      -0.03448791736695226,
+      0.02472955127752138
      ],
      "run": [
-      0.02512295940639557,
-      0.06692731337590306
+      -0.011348467488815822,
+      0.020759159424110232
      ],
      "shoot": [
-      0.03218795957993893,
-      0.034036647727488996
+      0.007542875067840841,
+      0.008947391002451257
      ],
      "crouch": [
-      0.060499736408469014,
-      0.06091246377468755
+      -0.011888159939423926,
+      -0.011713595755628147
      ]
     },
-    "afunda": 0,
-    "flutua": 0.07243332713488483,
-    "piorDesvio": 0.07243332713488483
+    "afunda": -0.03448791736695226,
+    "flutua": 0.020759159424110232,
+    "piorDesvio": -0.03448791736695226
    },
    "C5": {
     "materiais": 1,
-    "triangulos": 4960,
+    "triangulos": 4930,
     "map": 1,
     "normalMap": 1,
     "roughnessMap": 1,
     "aoMap": 0,
     "texturas": [
-     "base 2048x2048",
-     "normal 2048x2048",
-     "rough 2048x2048"
+     "base 1024x1024",
+     "normal 1024x1024",
+     "rough 1024x1024"
     ],
     "mapasDeSuperficie": 2
    },
    "C6": {
-    "piorIoU": 0.6963993453355155,
-    "contra": "deputado"
+    "piorIoU": 0.7065265981224854,
+    "contra": "jozo"
    }
   },
   {
@@ -8613,21 +8671,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.33484780119949115,
-     "ombroSobreAltura": 0.08926980708888899,
+     "ombroSobreAltura": 0.08510591367125309,
      "cinturaSobreOmbro": -0.15537326090791972,
      "larguraTorsoSobreAltura": -0.05504621806025701,
      "bracoSobreAltura": -0.06470510860952502,
-     "pernaSobreAltura": -0.05332385424329824
+     "pernaSobreAltura": -0.05369914189791588
     },
     "piorPct": 0.33484780119949115,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 1.5412665761660842,
+     "cabecaSobreAltura": 1.658535381831567,
      "ombroSobreAltura": 0.6744907594765952,
-     "cinturaSobreOmbro": -1.1696350598599852,
-     "larguraTorsoSobreAltura": -0.37424992513534455,
-     "bracoSobreAltura": -0.7998939823040881,
-     "pernaSobreAltura": -0.7055776718896603
+     "cinturaSobreOmbro": -1.1709012817295312,
+     "larguraTorsoSobreAltura": -0.34830976814599,
+     "bracoSobreAltura": -0.8174038616706883,
+     "pernaSobreAltura": -0.7582737893762014
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.1574348134801085,
@@ -8638,7 +8696,7 @@
      "pernaSobreAltura": -0.29140692440731286
     },
     "elencoDegenerado": false,
-    "piorZ": 1.5412665761660842,
+    "piorZ": 1.658535381831567,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 1.1574348134801085,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -8761,21 +8819,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.09581482132823621,
-     "ombroSobreAltura": 0.15334625725886622,
+     "ombroSobreAltura": 0.1489374222231373,
      "cinturaSobreOmbro": -0.11226212772995611,
      "larguraTorsoSobreAltura": 0.04587132623126928,
      "bracoSobreAltura": -0.043546812541959364,
-     "pernaSobreAltura": 0.002620694331025567
+     "pernaSobreAltura": 0.0022232287663409966
     },
-    "piorPct": 0.15334625725886622,
+    "piorPct": 0.1489374222231373,
     "piorPctRazao": "ombroSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.4410247912201615,
-     "ombroSobreAltura": 1.1586295175751486,
-     "cinturaSobreOmbro": -0.8450985692142577,
-     "larguraTorsoSobreAltura": 0.31187138758777316,
-     "bracoSobreAltura": -0.5383320428537208,
-     "pernaSobreAltura": 0.034676852059167235
+     "cabecaSobreAltura": 0.4745806026125732,
+     "ombroSobreAltura": 1.180375260617199,
+     "cinturaSobreOmbro": -0.84601345482857,
+     "larguraTorsoSobreAltura": 0.2902548361573648,
+     "bracoSobreAltura": -0.550116265935875,
+     "pernaSobreAltura": 0.031393725145708394
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.7711000778789932,
@@ -8786,7 +8844,7 @@
      "pernaSobreAltura": -0.24953207637759114
     },
     "elencoDegenerado": false,
-    "piorZ": 1.1586295175751486,
+    "piorZ": 1.180375260617199,
     "piorZRazao": "ombroSobreAltura",
     "piorDesvioRef": 0.7711000778789932,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -8909,21 +8967,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.4225360598847569,
-     "ombroSobreAltura": 0.38410839222145565,
+     "ombroSobreAltura": 0.3788174351177532,
      "cinturaSobreOmbro": -0.01860540046368565,
      "larguraTorsoSobreAltura": 0.4522299961596353,
      "bracoSobreAltura": 0.00026067343064754996,
-     "pernaSobreAltura": -0.288925502988542
+     "pernaSobreAltura": -0.2892073918704347
     },
     "piorPct": 0.4522299961596353,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 1.9448857182051473,
-     "ombroSobreAltura": 2.90218574050251,
-     "cinturaSobreOmbro": -0.1400596766644339,
-     "larguraTorsoSobreAltura": 3.0746352459933273,
-     "bracoSobreAltura": 0.0032224829384003696,
-     "pernaSobreAltura": -3.8230429259307654
+     "cabecaSobreAltura": 2.0928642891134386,
+     "ombroSobreAltura": 3.002245654779387,
+     "cinturaSobreOmbro": -0.14021130227118964,
+     "larguraTorsoSobreAltura": 2.8615249269004743,
+     "bracoSobreAltura": 0.003293023896028011,
+     "pernaSobreAltura": -4.0838340650973
     },
     "desvioRef": {
      "cabecaSobreAltura": 1.2991601111889883,
@@ -8934,7 +8992,7 @@
      "pernaSobreAltura": -0.46775624687350476
     },
     "elencoDegenerado": false,
-    "piorZ": -3.8230429259307654,
+    "piorZ": -4.0838340650973,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 1.2991601111889883,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -9060,21 +9118,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.08328981976685801,
-     "ombroSobreAltura": 0.08927029133503002,
+     "ombroSobreAltura": 0.0851063960662923,
      "cinturaSobreOmbro": -0.07174965440711828,
      "larguraTorsoSobreAltura": -2.5120163674167717e-7,
      "bracoSobreAltura": -0.09941657672641134,
-     "pernaSobreAltura": 0.02933705157870288
+     "pernaSobreAltura": 0.028928994937971502
     },
     "piorPct": -0.09941657672641134,
     "piorPctRazao": "bracoSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.38337362491765575,
-     "ombroSobreAltura": 0.674494418267379,
-     "cinturaSobreOmbro": -0.5401245416168349,
-     "larguraTorsoSobreAltura": -0.0000017078774356766366,
-     "bracoSobreAltura": -1.2290022097733224,
-     "pernaSobreAltura": 0.38818590379013324
+     "cabecaSobreAltura": 0.4125429897848114,
+     "ombroSobreAltura": 0.6744945826068848,
+     "cinturaSobreOmbro": -0.540709268879504,
+     "larguraTorsoSobreAltura": -0.0000015895003677747352,
+     "bracoSobreAltura": -1.255905375580907,
+     "pernaSobreAltura": 0.408499984155463
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.7508566655715164,
@@ -9085,7 +9143,7 @@
      "pernaSobreAltura": -0.22953471420086427
     },
     "elencoDegenerado": false,
-    "piorZ": -1.2290022097733224,
+    "piorZ": -1.255905375580907,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.7508566655715164,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -9208,21 +9266,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": 0.19869650460579685,
-     "ombroSobreAltura": 0.11062724975243496,
+     "ombroSobreAltura": 0.10638171438131286,
      "cinturaSobreOmbro": -0.08959874096513754,
      "larguraTorsoSobreAltura": 0.018348559202179593,
      "bracoSobreAltura": -0.023268327686964192,
-     "pernaSobreAltura": -0.027251418982243012
+     "pernaSobreAltura": -0.027637042445070408
     },
     "piorPct": 0.19869650460579685,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": 0.9145775491220711,
-     "ombroSobreAltura": 0.8358599636048064,
-     "cinturaSobreOmbro": -0.6744907594765952,
-     "larguraTorsoSobreAltura": 0.12474875022731194,
-     "bracoSobreAltura": -0.28764645783072557,
-     "pernaSobreAltura": -0.3605889528061881
+     "cabecaSobreAltura": 0.9841640947155001,
+     "ombroSobreAltura": 0.8431080783016222,
+     "cinturaSobreOmbro": -0.6752209487294364,
+     "larguraTorsoSobreAltura": 0.11610211612591038,
+     "bracoSobreAltura": -0.2939431107475757,
+     "pernaSobreAltura": -0.3902566067408202
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.9373816007409932,
@@ -9233,7 +9291,7 @@
      "pernaSobreAltura": -0.2718915419054595
     },
     "elencoDegenerado": false,
-    "piorZ": 0.9145775491220711,
+    "piorZ": 0.9841640947155001,
     "piorZRazao": "cabecaSobreAltura",
     "piorDesvioRef": 0.9373816007409932,
     "piorDesvioRefRazao": "cabecaSobreAltura",
@@ -9356,21 +9414,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.06858833684659849,
-     "ombroSobreAltura": 0.003837315201378033,
+     "ombroSobreAltura": 0,
      "cinturaSobreOmbro": 0.052498877092637196,
      "larguraTorsoSobreAltura": -0.01834889259834493,
      "bracoSobreAltura": -0.05939209320820131,
-     "pernaSobreAltura": 0.06849079956788366
+     "pernaSobreAltura": 0.06806722133793912
     },
     "piorPct": -0.06858833684659849,
     "piorPctRazao": "cabecaSobreAltura",
     "zElenco": {
-     "cabecaSobreAltura": -0.31570436095981025,
-     "ombroSobreAltura": 0.02899338229723473,
-     "cinturaSobreOmbro": 0.39520652969508985,
-     "larguraTorsoSobreAltura": -0.12475101693144378,
-     "bracoSobreAltura": -0.7342137116309597,
-     "pernaSobreAltura": 0.9062656777298179
+     "cabecaSobreAltura": -0.33972504234332185,
+     "ombroSobreAltura": 0,
+     "cinturaSobreOmbro": 0.39563437182128874,
+     "larguraTorsoSobreAltura": -0.11610422571936009,
+     "bracoSobreAltura": -0.7502858334425656,
+     "pernaSobreAltura": 0.9611622836422066
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.5053850678428359,
@@ -9381,7 +9439,7 @@
      "pernaSobreAltura": -0.20022788648265016
     },
     "elencoDegenerado": false,
-    "piorZ": 0.9062656777298179,
+    "piorZ": 0.9611622836422066,
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.5125232225029016,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
@@ -9506,21 +9564,21 @@
     },
     "pctElenco": {
      "cabecaSobreAltura": -0.09034289281714718,
-     "ombroSobreAltura": 0.3583213948554582,
+     "ombroSobreAltura": 0.3531290123270301,
      "cinturaSobreOmbro": -0.35922709527750357,
      "larguraTorsoSobreAltura": -1.295307901123469e-7,
      "bracoSobreAltura": -0.2656993829980365,
-     "pernaSobreAltura": 0.19889753822329295
+     "pernaSobreAltura": 0.19842226328659637
     },
     "piorPct": -0.35922709527750357,
     "piorPctRazao": "cinturaSobreOmbro",
     "zElenco": {
-     "cabecaSobreAltura": -0.4158381228559059,
-     "ombroSobreAltura": 2.707348404059141,
-     "cinturaSobreOmbro": -2.704227243690518,
-     "larguraTorsoSobreAltura": -8.806579309263726e-7,
-     "bracoSobreAltura": -3.2846144938044746,
-     "pernaSobreAltura": 2.631798919182843
+     "cabecaSobreAltura": -0.44747758144897504,
+     "ombroSobreAltura": 2.7986569374923613,
+     "cinturaSobreOmbro": -2.7071547821969246,
+     "larguraTorsoSobreAltura": -8.196174244415985e-7,
+     "bracoSobreAltura": -3.356515526722158,
+     "pernaSobreAltura": 2.8018772025250778
     },
     "desvioRef": {
      "cabecaSobreAltura": 0.47022447772875064,
@@ -9531,7 +9589,7 @@
      "pernaSobreAltura": -0.10261761877279214
     },
     "elencoDegenerado": false,
-    "piorZ": -3.2846144938044746,
+    "piorZ": -3.356515526722158,
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": -0.5390211314698795,
     "piorDesvioRefRazao": "bracoSobreAltura",
