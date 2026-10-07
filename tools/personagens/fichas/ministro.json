@@ -1,0 +1,19 @@
+{
+  "id": "ministro",
+  "nome": "Xandão da Toga",
+  "lado": "E",
+  "genero": "m",
+  "refs": [
+    "02-moraes-toga-tres-quartos-stf-2026-02.jpg",
+    "01-moraes-corpo-inteiro-toga-2024-06.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian supreme court justice shown in the photos, recognizable at a glance: fully shaved bald head, thick straight dark eyebrows, heavy eyelids, stern downturned mouth.",
+  "roupa": "black judicial robe open at the front over a dark suit and white shirt with tie, wide cuffed sleeves, braided black cord at the chest; the robe ends just below the knee and is split in front so the legs move freely.",
+  "corpo": "about 1.78 m, athletic and broad, thick neck, rigid upright posture; the widest shoulders of the political cast.",
+  "naoExagerar": "no demonic or villain look, no bodybuilder arms, no giant head",
+  "alvo": {
+    "cabeca": 0.205,
+    "ombros": 0.235,
+    "perna": 0.425
+  }
+}

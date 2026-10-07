@@ -1,0 +1,19 @@
+{
+  "id": "dama",
+  "nome": "Dama da Mandioca",
+  "lado": "E",
+  "genero": "f",
+  "refs": [
+    "01-dilma-corpo-inteiro-cop30-2025-11.jpg",
+    "03-dilma-retrato-stf-2026-01.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian former president shown in the photos, recognizable at a glance: round-oval face with full cheeks, small rounded chin, thin highly arched eyebrows, wide smile with upper teeth showing and red lipstick, small square gold earrings, gold oval-link chain necklace. HAIR exactly like the photos: short layered dark honey/caramel blonde hair with lighter tips, wavy and slightly tousled, brushed up and back from the forehead with one wave falling to the side, ears fully visible, short tapered nape, only a modest rounded volume on the crown (about 4 cm). NO tall quiff, NO vertical crest, NO bouffant.",
+  "roupa": "tailored red blazer, black high-neck blouse, straight dark trousers, low black patent shoes.",
+  "corpo": "about 1.66 m, average build with a straight torso and little waist definition, rounded slightly sloping shoulders about as wide as the hips, short neck of average thickness.",
+  "naoExagerar": "weight, age or frailty, or the height of the hair",
+  "alvo": {
+    "cabeca": 0.215,
+    "ombros": 0.205,
+    "perna": 0.41
+  }
+}

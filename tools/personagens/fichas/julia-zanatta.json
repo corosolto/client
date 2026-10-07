@@ -1,0 +1,20 @@
+{
+  "id": "julia-zanatta",
+  "nome": "Julia Zanatta (apelido pendente)",
+  "lado": "B",
+  "genero": "f",
+  "refs": [
+    "01-tribuna-tiara-blazer-rosa.jpg",
+    "03-em-pe-ccj-2023.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian congresswoman shown in the photos, recognizable at a glance: oval face narrowing to a fine chin, high cheekbones, well-drawn arched eyebrows darker than her hair, light eyes slightly downturned at the outer corners, closed-lip wide smile. HAIR: honey-blonde balayage (golden-brown roots, light blonde ends), straight to slightly wavy, worn loose, just past the shoulders, medium volume. SIGNATURE ACCESSORY, the caricature lives here: a big cheerful flower crown of small pink, peach and cream roses with tiny white flowers, on top of the head from ear to ear, a bit larger and more colourful than in the photos.",
+  "roupa": "fitted hot-pink tweed double-breasted blazer with gold buttons, pink turtleneck, thin gold necklace with a small cross, slim straight black trousers, black low boots.",
+  "corpo": "SLIM slender build, about 1.66 m. Narrow shoulders; hips EQUAL TO OR NARROWER than the shoulders; slim waist; THIN straight legs, each thigh clearly narrower than the head; thin arms; long slender neck; upright posture.",
+  "naoExagerar": "hips, bottom, thighs or bust (no wide hips, no curvy bottom, no thick thighs)",
+  "alvo": {
+    "cabeca": 0.21,
+    "ombros": 0.205,
+    "quadril_max": 0.195,
+    "perna": 0.47
+  }
+}

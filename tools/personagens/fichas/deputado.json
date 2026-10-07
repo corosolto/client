@@ -1,0 +1,19 @@
+{
+  "id": "deputado",
+  "nome": "Deputado da Peruca",
+  "lado": "B",
+  "genero": "m",
+  "refs": [
+    "02-tribuna-2026.jpg",
+    "03-peruca-tribuna-2023.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the young Brazilian congressman shown in the photos, recognizable at a glance: wide eyes, thick straight eyebrows, youthful narrow face. He wears a visibly CHEAP, slightly crooked long blond synthetic wig over his own dark wavy hair (a few dark strands show at the temples). The joke is on him: the body stays clearly male.",
+  "roupa": "slim royal-blue suit, white shirt, dark tie, dark shoes.",
+  "corpo": "about 1.67 m, slim, the smallest and narrowest body of his team, narrow shoulders; head slightly large for the body but still adult proportions.",
+  "naoExagerar": "do not make him look like a child; no feminine body",
+  "alvo": {
+    "cabeca": 0.225,
+    "ombros": 0.2,
+    "perna": 0.45
+  }
+}
