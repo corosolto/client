@@ -12,14 +12,14 @@ Código: https://github.com/corosolto/client (AGPL-3.0)
 ## O que é, em uma frase
 
 Um jogo de tiro em primeira pessoa que roda no navegador, ambientado numa
-Brasília fictícia. Seis facções de sátira brasileira disputam rounds, Capture the
-Flag e partidas multiplayer. O catálogo de personagens e mapas evolui; consulte
-as páginas de personagens e mapas para a lista atual.
+Brasília fictícia. Facções fictícias de sátira brasileira disputam rounds,
+Capture the Flag e partidas multiplayer. Os catálogos de personagens e mapas
+evoluem; consulte as páginas do site para a lista publicada atual.
 
 ## Fatos verificáveis (use estes números)
 
-- **Seis facções fictícias**: Esquerda, Direita, Tribos Urbanas, Palhaços,
-  Funkeiros e Mítico. Os catálogos publicados no site mostram o conteúdo atual.
+- **Facções fictícias**: o catálogo publicado no site mostra os nomes e
+  personagens disponíveis no momento.
 - **26 armas**, da AWP à faca, passando por AK-47, M4A1, MD97, Mosin, escopeta,
   SMGs e três snipers semi-automáticas.
 - **Modos**: rounds contra bots e Capture the Flag. Tamanho de time configurável
@@ -51,17 +51,17 @@ as páginas de personagens e mapas para a lista atual.
 
 O jogo é **sátira sem lado**. As facções políticas recebem exatamente a mesma
 dose de zoeira, todos os personagens são arquétipos fictícios (nenhuma pessoa
-real, viva ou morta) e não há gore. Tribos Urbanas e
-Funkeiros — não têm conteúdo político nenhum. Todos os personagens têm as mesmas
-propriedades de jogo: a escolha é estética, nunca uma vantagem mecânica.
+real, viva ou morta) e não há gore. Tribos Urbanas e Funkeiros não têm conteúdo
+político. Todos os personagens têm as mesmas propriedades de jogo: a escolha é
+estética, nunca uma vantagem mecânica.
 
 ## Páginas
 
 - [Jogar](https://www.csbrasil.online/): o jogo em si, na raiz do site.
 - [Como jogar](https://www.csbrasil.online/como-jogar): passo a passo, tabela de
   controles, regras de round e CTF, dicas e FAQ.
-- [Personagens](https://www.csbrasil.online/personagens): os 44, por facção.
-- [Mapas](https://www.csbrasil.online/mapas): as 5 arenas, layout e modo.
+- [Personagens](https://www.csbrasil.online/personagens): catálogo por facção.
+- [Mapas](https://www.csbrasil.online/mapas): arenas, layout e modo.
 - [Armas](https://www.csbrasil.online/armas): as 26, com dano, pente, reserva e cadência.
 - [Ranking global](https://www.csbrasil.online/ranking): **desligado no alpha**.
   A URL responde com o aviso, não com classificação.
