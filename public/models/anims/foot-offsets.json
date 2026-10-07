@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-07T05:08:43.907Z",
+ "gerado": "2026-10-07T05:41:43.728Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -263,10 +263,11 @@
    "crouch": 0.0119
   },
   "professor": {
-   "idle": -0.0103,
-   "walk": 0.0579,
-   "run": -0.0193,
-   "shoot": -0.012
+   "idle": -0.021,
+   "walk": -0.0448,
+   "run": -0.0353,
+   "shoot": -0.0187,
+   "crouch": -0.0319
   },
   "senador": {
    "idle": -0.0192,
@@ -276,9 +277,10 @@
    "crouch": -0.0294
   },
   "ministro": {
-   "idle": -0.0646,
-   "shoot": -0.0582,
-   "crouch": -0.1588
+   "idle": -0.0136,
+   "walk": 0.0486,
+   "run": -0.0457,
+   "shoot": -0.0142
   },
   "deputado": {
    "idle": -0.0174,
@@ -288,11 +290,11 @@
    "crouch": -0.0239
   },
   "juiz": {
-   "idle": -0.0172,
-   "walk": -0.0446,
-   "run": -0.036,
-   "shoot": -0.018,
-   "crouch": -0.0334
+   "idle": -0.0247,
+   "walk": 0.0472,
+   "run": -0.0323,
+   "shoot": -0.0252,
+   "crouch": -0.0226
   },
   "julia-zanatta": {
    "walk": -0.0216,
@@ -304,18 +306,6 @@
   }
  },
  "suspeitos": [
-  {
-   "id": "ministro",
-   "pose": "run",
-   "desvio": 0.1646,
-   "amplitude": 0.1087
-  },
-  {
-   "id": "ministro",
-   "pose": "walk",
-   "desvio": 0.1434,
-   "amplitude": 0.1493
-  },
   {
    "id": "esbirro",
    "pose": "run",

@@ -1,5 +1,5 @@
 {
-  "gerado": "2026-10-07T05:09:18.031Z",
+  "gerado": "2026-10-07T05:42:03.349Z",
   "instrumento": "buildCharacterModel + skinning em node, 60 Hz, quadro 200-260, 1 vértice em 3",
   "bandaIdle": 0.015,
   "folga": 0.01,
@@ -295,9 +295,9 @@
       "death": 0
     },
     "professor": {
-      "idle": -0.0003,
-      "crouch": 0.0063,
-      "death": 0.0002
+      "idle": -0.0006,
+      "crouch": -0.005,
+      "death": 0
     },
     "senador": {
       "idle": -0.0009,
@@ -305,9 +305,9 @@
       "death": 0
     },
     "ministro": {
-      "idle": -0.0024,
-      "crouch": -0.0357,
-      "death": 0.0139
+      "idle": -0.0017,
+      "crouch": -0.0012,
+      "death": 0.0044
     },
     "deputado": {
       "idle": -0.0008,
@@ -315,7 +315,7 @@
       "death": 0
     },
     "juiz": {
-      "idle": -0.001,
+      "idle": -0.0015,
       "crouch": -0.0002,
       "death": 0
     }

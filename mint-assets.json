@@ -1753,49 +1753,70 @@
     },
     "julia-zanatta": {
       "artifactType": "model/gltf-binary",
-      "files": ["public/models/characters/julia-zanatta.glb"],
+      "files": [
+        "public/models/characters/julia-zanatta.glb"
+      ],
       "source": {
         "kind": "mint-humanoid-model",
-        "assetId": "ks79rnb2jen887aj5kpetenfsd8frx5x",
-        "chatUrl": "https://mint.gg/chat/ph71f31x52n1g800azcsngcybh8fsfa8",
-        "animationBatchId": "w572j3r60r3m81ff1f8ayt798d8fr70z",
-        "previousAssetId": "ks75vsej74a4yr8x5w5mg29eqs8fsq9t",
-        "displayName": "Fuchsia Flower Crown Executive",
-        "sha256": "91d1d63bfc25063d61cb562bee66eccb3558ac3588ed0256f4b9952a0c29c8cd",
-        "prompt": "docs/reports/PR773-3D-BRIEF.md",
-        "notes": "Segunda revisão solicitada em 06/10/2026 após o contorno das pernas ainda parecer masculino. Prévia frontal e gameplay conferidos: coroa de flores rosa/brancas, blazer fúcsia, gola alta rosa, cruz e calça preservados; quadris arredondados e coxas com volume natural, altura 1,72 m. Rig Mint com 24 juntas; batch básico 6/6; 11 estados do jogo retargetados para este rig; texturas WebP 1024 sem Draco. Capturas v2 em tools/eval/asset-evidence/pr773/julia-legs/."
+        "assetId": "ks7b6pywbwj0yyqg61pfy0w8mh8fvtas",
+        "chatUrl": "https://mint.gg/chat/ph74rx7w581tvfqftjrnjxyp3d8fvp6r",
+        "animationBatchId": "w57fs68epdenvq23mj3tscakmn8ftar6",
+        "displayName": "Rosecrown Pink Blazer",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/julia-zanatta/concept.jpg",
+        "ficha": "tools/personagens/fichas/julia-zanatta.json",
+        "rawSha256": "5767454b9308c935710060a006be03400fffd59012778aa92e16e98959822814",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte.",
+        "previousAssetId": "ks79rnb2jen887aj5kpetenfsd8frx5x"
       },
       "processing": {
         "provider": "mint",
-        "tools": ["mint.gg (MCP)", "tools/optimize-tribos.mjs"],
-        "finalSha256": "89e9ce4ad3244fc337ab939a09565caff4e14c5006b96cb0b80619e65cf3bd8a",
-        "derivedFiles": ["public/img/chars/julia-zanatta.webp", "public/img/chars/avatars/julia-zanatta.webp"],
-        "thumbnailSha256": "ef044a61d6611792e2afef19ddd2fae3e5cf8540c250df03caf7989059e8fec6",
-        "avatarSha256": "606f80a1cc42736fc817496f9b994784a4fef1a3c13a1abfa84226d6158c26ac"
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte"
+        ],
+        "finalSha256": "961ff061920733e7f9e6acad46fb96379529ee2078e93f3a9eb2b33aff8f7769"
       }
     },
     "marina-silva": {
       "artifactType": "model/gltf-binary",
-      "files": ["public/models/characters/marina-silva.glb"],
+      "files": [
+        "public/models/characters/marina-silva.glb"
+      ],
       "source": {
         "kind": "mint-humanoid-model",
-        "assetId": "ks7fq3mpng2qyf5rv3grjm5pz58fsf69",
-        "chatUrl": "https://mint.gg/chat/ph791v8kv8bh0zr8gb3qsmvnzn8frw66",
-        "animationBatchId": "w572zg7xxa1yhj0r61tdpf5f6d8frecq",
-        "previousAssetId": "ks723dbj62cjcwvjt0723xh4z98frsvz",
-        "displayName": "Teal Bun Portrait Model",
-        "sha256": "3c831396c66fcbd51b6bc9ee56de3f326c511d80deed957c353ad7e2cfaf11e4",
-        "prompt": "docs/reports/PR773-3D-BRIEF.md",
-        "notes": "Revisão solicitada pelo dono em 06/10/2026: trocar o visual social por vestido midi azul-petróleo discreto, com mangas curtas e barra abaixo do joelho; manter coque escuro e óculos vinho. As vistas frontal/lateral e a prancha de seleção confirmam o vestido e as proporções; jogo real confirmou movimento e tiro. A pose segurando a arma continua pendente da revisão geral de poses. Evidências em tools/eval/asset-evidence/pr773/marina-dress/."
+        "assetId": "ks74nthd755qtfxhhf2f5mn2w58ft8ef",
+        "chatUrl": "https://mint.gg/chat/ph7bzyvqwc0sd0zmhfwrq23kzd8ftxgz",
+        "animationBatchId": "w576jhsawbprr8kb95kb48rww98fvg2p",
+        "displayName": "Teal Bun Scholar",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/marina-silva/concept.jpg",
+        "ficha": "tools/personagens/fichas/marina-silva.json",
+        "rawSha256": "c583b9b8dac1480848faea24029b5e681c1998a2a5f8d757b418d72a96cbdfd9",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte.",
+        "previousAssetId": "ks7fq3mpng2qyf5rv3grjm5pz58fsf69"
       },
       "processing": {
         "provider": "mint",
-        "tools": ["mint.gg (MCP)", "tools/optimize-tribos.mjs"],
-        "finalSha256": "4fb8291b344198442842988ee94bedff9635e18fc1a67443ddb8af69dd895933",
-        "derivedFiles": ["public/img/chars/marina-silva.webp", "public/img/chars/avatars/marina-silva.webp"],
-        "thumbnailSha256": "2c3895bb1db8d5ebb41226d7bfc45ae556cc290e10b3308932519024bb29fff8",
-        "avatarSha256": "b3281047993d749d2efea28594b55593c114735a2217228abcca7afdcff57adf",
-        "selectionVideoSha256": "39bf437b2592645d4f83374e2af28d6ec777807c3ffb9f65106910ddf7b83393"
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte"
+        ],
+        "finalSha256": "42dc11431db1633625d37f64fcff3ff53fb51deb6bf43eeec86c353026b15e56"
       }
     },
     "andaime-obras": {
@@ -1871,9 +1892,245 @@
         "tools": [
           "mint.gg (MCP)",
           "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
           "tools/personagens/retoque-textura.mjs --faixa 0.52,0.77,0.16,1 --limiar 60 --cor #5a5560 --faixa 0.77,0.81,0.08,0 --limiar 60 --cor #c5927e"
         ],
-        "finalSha256": "9c0ecffc093436ae0bebcfa8b1715d4833a2df63b6316045d88e1372f72b5082"
+        "finalSha256": "34a33e1f0f0a6c3d74721452efe88aeae7888813d61f0b0e737491e4553b47ec"
+      }
+    },
+    "capitao": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/capitao.glb"
+      ],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks74pzkx6c3re3m5ahaj4k0rm18fv8hv",
+        "chatUrl": "https://mint.gg/chat/ph7egj4xh2fyqdskgg9qef1n418fvdzp",
+        "animationBatchId": "w5703metqzzws20nzgtct0vxzn8fvjb4",
+        "displayName": "Yellow Collar Gentleman",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/capitao/concept.jpg",
+        "ficha": "tools/personagens/fichas/capitao.json",
+        "rawSha256": "8f20587d0bf42e609e647da1c5a5e93c183a3d59d3287bbcfe03f611f0bd0a6a",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte."
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte"
+        ],
+        "finalSha256": "433fc02554e818a7607caa3df8b1e859e086fe61965a1950b8a391cfdab8ba1d"
+      }
+    },
+    "senador": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/senador.glb"
+      ],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks76vg1tqxve3024bzka6cxtw98ftc8e",
+        "chatUrl": "https://mint.gg/chat/ph75gcwnk7ek5g5rct3b1y6h7n8ftc92",
+        "animationBatchId": "w573gkjf5qpt5v81vvy17pdh158ftyr9",
+        "displayName": "Blue Suit Executive",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/senador/concept.jpg",
+        "ficha": "tools/personagens/fichas/senador.json",
+        "rawSha256": "547b19bb6dc3c60844ea90c2dde93a7f891d5d50b98ed754e2fed5500cc8f063",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte."
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte"
+        ],
+        "finalSha256": "73fdf646d7c1f3b4b2719dd96094761cb3e396fd3a638c26ee48a3043b8b6de8"
+      }
+    },
+    "deputado": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/deputado.glb"
+      ],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks7bn9tvkztrgw4ec6nnd1c0hd8ft082",
+        "chatUrl": "https://mint.gg/chat/ph75766v8r8wyar4jwn0j4wvfs8ftr7f",
+        "animationBatchId": "w572ey59pj3kgnae1kv44wat3s8ft1z0",
+        "displayName": "Blond Wig Blue Suitman",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/deputado/concept.jpg",
+        "ficha": "tools/personagens/fichas/deputado.json",
+        "rawSha256": "0fb45368e954ad3bbfab8fe15ac7165f839709340b28117f631e2aae046b6037",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte."
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte"
+        ],
+        "finalSha256": "8b8915819fc086bcfc2c1e1a66d52a8d938594799707415fbf1516dfbf70d95a"
+      }
+    },
+    "juiz": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/juiz.glb"
+      ],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks76wer7n28jrqvw2jjwth7nsd8fvcv2",
+        "chatUrl": "https://mint.gg/chat/ph70tknetjrwmwjc9tzzsxk7th8fv7xe",
+        "animationBatchId": "w579f3wp1sb36sdtcqwqchfv5s8ftc4q",
+        "displayName": "Navy Broadshoulder Executive",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/juiz/concept.jpg",
+        "ficha": "tools/personagens/fichas/juiz.json",
+        "rawSha256": "34d2436f199e79af35a94bde8813ca497f98500bc0ee314661291dc5a96a60cd",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte. Primeira geração do dia reprovada pelo crítico cego por lascas claras no rosto (geometria do final, não textura); regerada com boca fechada e rosto liso.",
+        "rejectedAssetId": "ks7bzjpd53mt7mj0z90fhfcqds8ftj83"
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte"
+        ],
+        "finalSha256": "e4ea8299c825b2feab78eb79bff5f721deec5367c5f56c12a94df578b02f1264"
+      }
+    },
+    "barbudo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/barbudo.glb"
+      ],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks75fm69c1rts2xjayv1vnp5m58ftjaa",
+        "chatUrl": "https://mint.gg/chat/ph7752nffs461pmz45b0nwbjxs8ftts1",
+        "animationBatchId": "w57czpe29xynz1ar0w5xmt32xd8fv3rg",
+        "displayName": "White Bearded Sash President",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/barbudo/concept.jpg",
+        "ficha": "tools/personagens/fichas/barbudo.json",
+        "rawSha256": "b33f83f34d5ac6b7cefe7ede50b5b5b43c918e5d5da7f4ba2ff72eefa259c06e",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte."
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte",
+          "tools/personagens/retoque-textura.mjs --faixa 0.86,0.91,0.045,1 --sel vermelho --limiar 80 --cor #cd967e"
+        ],
+        "finalSha256": "2aaace3d7d18147693da0002f2f1e3477263cfd4eb8b74d2056869c3ae0f45f2"
+      }
+    },
+    "professor": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/professor.glb"
+      ],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks738p98er09cw2avc0edypks98ft360",
+        "chatUrl": "https://mint.gg/chat/ph7ebyw5n5ggf4ak4pvzvszrks8fvzrn",
+        "animationBatchId": "w57c0q56cgn41g6ywyrxqddz4s8fvdtq",
+        "displayName": "Saltpepper Blue Suit Gentleman",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/professor/concept.jpg",
+        "ficha": "tools/personagens/fichas/professor.json",
+        "rawSha256": "656236aec90ed77f88d50259922cb642d37bf3345b593f5c1563e9cef1d379be",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte. Primeira geração do dia reprovada pelo crítico cego por lascas claras no rosto (geometria do final, não textura); regerada com boca fechada e rosto liso.",
+        "rejectedAssetId": "ks72bpxjetrp680y9r0p6nj89n8ftm0z"
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte"
+        ],
+        "finalSha256": "ab008ee5a573f7279227cd71ccb36e6b5dd3a193246fbe4fa169ff42daf9a3fb"
+      }
+    },
+    "ministro": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/ministro.glb"
+      ],
+      "source": {
+        "kind": "mint-humanoid-model",
+        "assetId": "ks773p13cwsnzrtp1ng50byvzx8fv7ax",
+        "chatUrl": "https://mint.gg/chat/ph736amvxtfxknd91ztg2fveps8fv4zs",
+        "animationBatchId": "w571bst2qn3mf3zwtgzbc3xh5d8ftgx4",
+        "displayName": "Bald Blue Tie Magistrate",
+        "concept": "tools/eval/asset-evidence/pr773/concepts/ministro/concept.jpg",
+        "ficha": "tools/personagens/fichas/ministro.json",
+        "rawSha256": "17c1c335fe424cb48cd9c059fc33f46f0d4a94c967b5161e61f38d516bba0e73",
+        "costCredits": {
+          "preview": 150,
+          "final": 3400,
+          "rig": 250
+        },
+        "notes": "Refeito em 07/10/2026 pela fábrica de personagens: concept 2D (OpenRouter) com proporção pesquisada → Mint review → final → rig com um clipe (613) → 11 estados retargetados de models/anims/mixamo; morte assentada com ground-anims --morte. Primeira geração do dia reprovada pelo crítico cego por lascas claras no rosto (geometria do final, não textura); regerada com boca fechada e rosto liso.",
+        "rejectedAssetId": "ks72jzfyaamr3dqxpkcba5m43n8ft17b"
+      },
+      "processing": {
+        "provider": "mint",
+        "tools": [
+          "mint.gg (MCP)",
+          "tools/optimize-tribos.mjs",
+          "tools/personagens/desvira-triangulos.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/ground-anims.mjs --morte"
+        ],
+        "finalSha256": "129121e14a0f78ed89dd677e881280462cc3de468ad7edfa17937350098b2759"
       }
     }
   }
