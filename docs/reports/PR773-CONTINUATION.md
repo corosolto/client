@@ -87,3 +87,16 @@ No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/coro
 - Julia v2 e a mídia revisada da Marina estão no worktree; integridade, manifesto, merges de animação, offsets de pé e capturas foram conferidos. As poses de resultado e a revisão visual completa continuam pendentes.
 - Ao preparar o push (07/10), `check:deploy` encontrou o recibo de mídia `tools/eval/char-native-audit.json` defasado após a regeneração dos vídeos de Julia/Marina. `tools/eval/bug59-audits.mjs` atualizou o SHA de 189 vídeos e 55 armas; `eval:redesign` passou UIA1–6 e UIR1–43. Push normal ainda precisa repetir `check:deploy` e `eval:mapcontrato` pelo hook.
 - Próximo passo: gerar poses de vitória/derrota realmente distintas para os políticos (sem arma no resultado do Xandão/Ministro), tratar a correção visual do Capitão e inspecionar os stills de todos os 10 antes de checkpointar e retestar o PR. PR permanece draft; não fazer merge enquanto CI ou revisão visual do elenco estiver pendente.
+
+## Continuação 07/10 — fábrica de personagens e os dez refeitos
+
+O dono reprovou os dez: rostos que não lembram as pessoas, polígonos e ombros deformados, Julia com quadril e glúteo que a pessoa real não tem, glow branco, avatares e artes de vitória fora do padrão do elenco. Esta rodada criou a fábrica (`.claude/skills/fabrica-personagens/SKILL.md`) e passou os dez por ela.
+
+- **Glow branco:** `team: 'P'` não existe em `PALETA`; `charRimColor` caía no branco. O contorno agora vem do `lados` único. `FAC1` estava vermelha nesta branch; F1 lê a facção de cor e `--mutar=sem-lados` reproduz o defeito.
+- **Arte de resultado pixelada:** a ortográfica de `char-result-stills.mjs` recebia limites absolutos; a figura saía com 79×199 px e era ampliada 6,7×. Corrigido para todo o elenco, e o script reprova figura ampliada.
+- **Pesquisa e concept:** dossiês com fonte por número (fotos de referência fora do repo), fichas em `tools/personagens/fichas/`, concepts por `tools/personagens/gen-concept.mjs` em `tools/eval/asset-evidence/pr773/concepts/`.
+- **3D:** Mint review → final → rig com um clipe, projeto `CSB Politicos v2 (out/26)`. Custo total medido: 11.756 créditos para os dez, retopologia piloto incluída (descartada: +32% de densidade por 1.313). Xandão, Professor e Juiz foram regerados uma vez por lascas no rosto que vinham da geometria do final.
+- **Ombro "cachecol":** `retarget-glb.mjs` copiava a rotação absoluta da clavícula; nos rigs Mint novos ela girava ~179°. Clavícula agora em delta. Régua nova OMB1 (`eval:ombro`, no `check:fast`): reprova o clipe antigo, 72/72 passam.
+- **Malha e clipes:** `desvira-triangulos.mjs` (8 a 66 triângulos invertidos por modelo), `ground-anims --morte` (Marina afundava 10,7 cm na morte), nariz do Barbudo retocado por `retoque-textura.mjs`. CHR7, feet e anims verdes.
+- **Mídia:** avatar 256 e retrato pintados por `gen-char-realista.mjs`, com o concept da ficha como trava de rosto. A arte de vitória pintada (`tools/personagens/arte-resultado.mjs`) parou no piloto: o OpenRouter ficou sem saldo (402). Enquanto isso, vitória/derrota usam o render novo com o enquadramento corrigido.
+- **Pendências do dono:** apelidos para Julia e Marina (regra de 04/10: nome caricato, nunca o real); os retratos pintados ficaram mais realistas que caricatos; recarregar o OpenRouter para a arte de vitória.
