@@ -4,15 +4,18 @@
    Era `ground-lobisomem-anims.mjs`, com o caminho do lobo escrito na mão; virou genérico
    quando o time Mítico inteiro precisou do mesmo passo. O pack compartilhado deixa oito
    dos nove fora do chão (cinco afundam, três flutuam) — é a CHR7 que mede.
-   Uso: node tools/ground-anims.mjs <id> [pasta-dos-clipes] */
+   `--morte` trata só a morte, e só para cima: sobe a raiz nos quadros em que alguma parte
+   do corpo atravessa o chão, e deixa a queda no ar como está.
+   Uso: node tools/ground-anims.mjs <id> [pasta-dos-clipes] [--morte] */
 import fs from 'node:fs';
 import path from 'node:path';
 import { NodeIO } from '@gltf-transform/core';
 import { readGLB, buildScene, worldMats, poseWith, skinVerts, bboxOf } from './eval/tp-mount-probe.mjs';
 
-const id = process.argv[2];
+const MORTE = process.argv.includes('--morte');
+const [id, pasta] = process.argv.slice(2).filter((a) => a !== '--morte');
 if (!id) throw new Error('Uso: node tools/ground-anims.mjs <id> [pasta-dos-clipes]');
-const folder = process.argv[3] || `public/models/anims/${id}`;
+const folder = pasta || `public/models/anims/${id}`;
 const modelo = `public/models/characters/${id}.glb`;
 if (!fs.existsSync(modelo)) throw new Error(`sem GLB do personagem: ${modelo}`);
 if (!fs.existsSync(folder)) throw new Error(`sem pasta de clipes: ${folder} (rode o retarget-glb.mjs antes)`);
@@ -26,7 +29,7 @@ const parent = scene.nodes.find(n => n.children.includes(hips.i));
 const rootYScale = rest[parent.i][5];
 if (!Number.isFinite(rootYScale) || Math.abs(rootYScale) < 1e-6) throw new Error('Raiz sem eixo vertical');
 const io = new NodeIO();
-for (const state of ['idle', 'walk', 'run', 'shoot', 'crouch', 'crouchwalk', 'idle1h', 'walk1h', 'walkfire']) {
+for (const state of MORTE ? ['death'] : ['idle', 'walk', 'run', 'shoot', 'crouch', 'crouchwalk', 'idle1h', 'walk1h', 'walkfire']) {
   const file = path.join(folder, `${state}.glb`);
   const doc = await io.read(file);
   const channel = doc.getRoot().listAnimations()[0].listChannels().find(c => c.getTargetNode().getName() === 'Hips' && c.getTargetPath() === 'translation');
@@ -51,10 +54,10 @@ for (const state of ['idle', 'walk', 'run', 'shoot', 'crouch', 'crouchwalk', 'id
     for (const v of verts) {
       let dominant = 0;
       for (let k = 1; k < 4; k++) if (v.w[k] > v.w[dominant]) dominant = k;
-      if (/foot|toe|ankle|heel|shin|calf|knee|(?<!up)leg/i.test(joints[v.j[dominant]])) min = Math.min(min, v.p[1]);
+      if (MORTE || /foot|toe|ankle|heel|shin|calf|knee|(?<!up)leg/i.test(joints[v.j[dominant]])) min = Math.min(min, v.p[1]);
     }
     if (!Number.isFinite(min)) throw new Error(`${state}: sem vértices de pata`);
-    const delta = (min - floor) / rootYScale;
+    const delta = (MORTE ? Math.min(0, min - floor) : min - floor) / rootYScale;
     values[frame * 3 + 1] -= delta;
     corrections.push(delta * rootYScale);
   }
