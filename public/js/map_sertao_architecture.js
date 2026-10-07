@@ -140,3 +140,30 @@ export function untileSertaoSoil(material) {
   };
   material.customProgramCacheKey = () => 'sertao-soil-offset-v1';
 }
+
+/* Reboco e pedra reais tilam em METROS do mundo: as caixas são unitárias escaladas
+   (InstancedMesh), e UV 0→1 por face esmagaria a textura em rodapé de 15 cm. */
+export function projetaSertaoNoMundo(material, metros = 3, bumpMetros = metros) {
+  material.onBeforeCompile = shader => {
+    shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
+      {
+        vec4 sertaoMundo = vec4(position, 1.0);
+        vec3 sertaoN = normal;
+        #ifdef USE_INSTANCING
+          sertaoMundo = instanceMatrix * sertaoMundo;
+          sertaoN = mat3(instanceMatrix) * sertaoN;
+        #endif
+        sertaoMundo = modelMatrix * sertaoMundo;
+        sertaoN = abs(normalize(mat3(modelMatrix) * sertaoN));
+        vec2 sertaoUv = sertaoN.y > max(sertaoN.x, sertaoN.z) ? sertaoMundo.xz
+          : (sertaoN.x > sertaoN.z ? sertaoMundo.zy : sertaoMundo.xy);
+        #ifdef USE_MAP
+          vMapUv = sertaoUv / ${metros.toFixed(3)};
+        #endif
+        #ifdef USE_BUMPMAP
+          vBumpMapUv = sertaoUv / ${bumpMetros.toFixed(3)};
+        #endif
+      }`);
+  };
+  material.customProgramCacheKey = () => `sertao-mundo-${metros}-${bumpMetros}`;
+}
