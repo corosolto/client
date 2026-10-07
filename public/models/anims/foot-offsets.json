@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-07T04:09:09.667Z",
+ "gerado": "2026-10-07T05:08:43.907Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -244,18 +244,18 @@
    "walk": -0.0104
   },
   "barbudo": {
-   "idle": -0.0323,
-   "walk": 0.0614,
-   "run": 0.0537,
-   "shoot": -0.0351,
-   "crouch": -0.0367
+   "idle": -0.0292,
+   "walk": 0.068,
+   "run": 0.052,
+   "shoot": -0.0316,
+   "crouch": -0.0191
   },
   "capitao": {
-   "idle": -0.0295,
-   "walk": -0.0604,
-   "run": -0.0531,
-   "shoot": -0.0298,
-   "crouch": -0.0403
+   "idle": -0.018,
+   "walk": -0.0484,
+   "run": -0.0412,
+   "shoot": -0.0169,
+   "crouch": -0.0269
   },
   "dama": {
    "walk": 0.0345,
@@ -263,54 +263,58 @@
    "crouch": 0.0119
   },
   "professor": {
-   "idle": -0.029,
-   "walk": -0.0721,
-   "run": -0.0446,
-   "shoot": -0.0279,
-   "crouch": -0.0554
+   "idle": -0.0103,
+   "walk": 0.0579,
+   "run": -0.0193,
+   "shoot": -0.012
   },
   "senador": {
-   "idle": -0.0264,
-   "walk": -0.0552,
-   "run": -0.02,
-   "shoot": -0.0271,
-   "crouch": -0.0433
+   "idle": -0.0192,
+   "walk": -0.0463,
+   "run": -0.0386,
+   "shoot": -0.0185,
+   "crouch": -0.0294
   },
   "ministro": {
-   "idle": -0.0871,
-   "shoot": -0.0791,
-   "crouch": -0.2376
+   "idle": -0.0646,
+   "shoot": -0.0582,
+   "crouch": -0.1588
   },
   "deputado": {
-   "idle": -0.0255,
-   "walk": -0.0512,
-   "run": -0.0372,
-   "shoot": -0.0252,
-   "crouch": -0.04
+   "idle": -0.0174,
+   "walk": -0.0414,
+   "run": -0.0379,
+   "shoot": -0.0152,
+   "crouch": -0.0239
   },
   "juiz": {
-   "idle": -0.016,
-   "walk": 0.07,
-   "run": 0.0155,
-   "shoot": -0.019,
-   "crouch": -0.0153
+   "idle": -0.0172,
+   "walk": -0.0446,
+   "run": -0.036,
+   "shoot": -0.018,
+   "crouch": -0.0334
   },
   "julia-zanatta": {
-   "run": -0.0134
+   "walk": -0.0216,
+   "run": -0.0171
+  },
+  "marina-silva": {
+   "walk": 0.0263,
+   "run": -0.0253
   }
  },
  "suspeitos": [
   {
    "id": "ministro",
-   "pose": "walk",
-   "desvio": 0.1981,
-   "amplitude": 0.201
+   "pose": "run",
+   "desvio": 0.1646,
+   "amplitude": 0.1087
   },
   {
    "id": "ministro",
-   "pose": "run",
-   "desvio": 0.1953,
-   "amplitude": 0.1248
+   "pose": "walk",
+   "desvio": 0.1434,
+   "amplitude": 0.1493
   },
   {
    "id": "esbirro",
