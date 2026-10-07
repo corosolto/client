@@ -19,3 +19,9 @@ Remover do jogo a caixa fixa de diagnóstico que mostrava FPS, snapshots, jitter
 ## Próximo passo
 
 Confirmar no PR #777 os checks do commit `41d5cc5f7`, atualizar a descrição para refletir a remoção total do painel e integrar a pilha #755 → #775 → #776 → #777 em ordem. A coleta das métricas foi preservada no código; o merge do cliente não substitui validação de sessão real nem a coorte de sete dias.
+
+## Continuação — sincronização de dependências, 07/10
+
+- O CI do head antigo `7c1df0f07` falhou em `eval:deps` por `source-map-js`, corrigido na main pelo PR #780. Depois de integrar a main `15a9ef3fd`, a auditoria atual revelou ainda `sharp@0.35.4` vulnerável; cherry-pick do ajuste de lockfile `fd4d3a233` fixou `sharp@0.35.5` sem mudar o manifesto.
+- Novo checkpoint local em branch isolada `codex/ci-pr777-sync-20261007`: merge da main `093a296e3` e lock corrigido `624422d99`. `npm run eval:deps` passou; `npm ci` instalou/auditou 402 pacotes com zero vulnerabilidades; `npm run build`, `eval:netcode` (201/201), `docs:check` e `git diff --check` passaram. O build em Node 23 emitiu apenas o aviso esperado de runtime Serverless Node 24 no Vercel.
+- Próximo passo imediato: publicar fast-forward no branch do PR #777 e acompanhar CI. A integração de #776 e o gate de partida humana continuam na ordem registrada acima.
