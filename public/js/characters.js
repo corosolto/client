@@ -124,7 +124,9 @@ function bracadeiraDaFaccao(team) {
 // cinza do NEUTRO de paleta.js. Unificar origem não é hora de mudar pixel — se o branco
 // for defeito, é conserto com régua própria. Por isso lê `PALETA` direto, e não `tons()`.
 export function charRimColor(def) {
-  const p = PALETA[(def && def.team) || 'E'];
+  // Políticos são categoria, não lado: o contorno é o do lado em que jogam (`lados`).
+  const fac = def?.lados?.length === 1 ? def.lados[0] : def?.team;
+  const p = PALETA[fac || 'E'];
   const c = new THREE.Color(p ? num(p.base) : 0xffffff);
   return c.lerp(new THREE.Color(0xffffff), 0.35);
 }

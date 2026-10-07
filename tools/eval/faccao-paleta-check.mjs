@@ -83,7 +83,7 @@
    lista é decisão de quem escreve, e é o pedágio certo: obriga a dizer em voz alta que
    aquilo é outro fato, e não mais uma cópia do mesmo.
 
-   AS MUTAÇÕES QUE A DEIXAM VERMELHA (as quatro foram executadas)
+   AS MUTAÇÕES QUE A DEIXAM VERMELHA (as cinco foram executadas)
      --mutar=sem-e     remove `E` de PALETA          -> F1 acusa a facção sem cor
      --mutar=espelho   injeta uma tabela de cor por facção em brasoes.js -> F2 acusa o
                        espelho novo. É a regressão que esta régua existe para impedir:
@@ -94,6 +94,8 @@
                        F1 verde, e o nome no killfeed ilegível.
      --mutar=cor-divergente  muda o `base` do Time E só em PALETA -> F4 acusa a cópia
                        fora de sincronia com `factions.js`. É o rename Time E de novo.
+     --mutar=sem-lados  ignora o `lados` dos Políticos -> F1 acusa `P` sem cor. Foi o
+                       contorno BRANCO dos dez políticos no PR #773 (07/10).
 
    USO
      node tools/eval/faccao-paleta-check.mjs
@@ -119,8 +121,10 @@ const ler = (p) => fs.readFileSync(p, 'utf8');
 /* ── A FONTE: quais facções o jogo REALMENTE tem ──────────────────────────────────
    Não é lista escrita aqui — é o elenco. Facção nova entra sozinha nesta régua no
    commit que declara o primeiro personagem dela, que é o momento em que a paleta
-   precisa saber dela. */
-const elenco = [...ler(`${DIR}/characters.js`).matchAll(/team\s*:\s*'([A-Z])'/g)].map((m) => m[1]);
+   precisa saber dela. A facção que conta é a de COR: categoria sem lado próprio
+   (Políticos, `team: 'P'`) pinta com o `lados` único, como `charRimColor` faz. */
+const elenco = [...ler(`${DIR}/characters.js`).matchAll(/team\s*:\s*'([A-Z])'(?:\s*,\s*lados\s*:\s*\[\s*'([A-Z])'\s*\])?/g)]
+  .map((m) => (MUTAR === 'sem-lados' ? m[1] : m[2] || m[1]));
 const FACCOES = [...new Set(elenco)].sort();
 
 /* ── A ORIGEM: o conteúdo de PALETA, lido do texto ────────────────────────────────
