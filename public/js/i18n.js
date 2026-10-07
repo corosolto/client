@@ -275,10 +275,10 @@ const DICT = {
     'Sound truck, hair in the wind and a rally call every minute. Fights with both sides.',
   'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.':
     'Former judge with a thick accent. The missus confirms: he never misses a deadline.',
-  'Coroa de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.':
-    'Flower crown, fuchsia blazer and a commanding floor presence. The drama starts with a pose and ends on the scoreboard.',
-  'Óculos vinho, coque preso e blazer azul-marinho. A conversa é calma; a mira, firme.':
-    'Burgundy glasses, a tied-up bun and a navy blazer. Calm words; steady aim.',
+  'Tiara de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.':
+    'Flower tiara, fuchsia blazer and a commanding floor presence. The drama starts with a pose and ends on the scoreboard.',
+  'Óculos vinho, coque grisalho e vestido verde-petróleo. A conversa é calma; a mira, firme.':
+    'Burgundy glasses, a grey bun and a petrol-green dress. Calm words; steady aim.',
   'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.':
     'One-legged trickster boy. A whirl of smoke and he is gone — the red cap is the hitbox.',
   'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!':

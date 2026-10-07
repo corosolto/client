@@ -234,8 +234,8 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'ministro', faccao: 'P', nome: 'Xandão da Toga', blurb: 'A toga é capa e o despacho sai antes do café. Joga pelo Time E e ninguém discute.' },
   { id: 'deputado', faccao: 'P', nome: 'Deputado da Peruca', blurb: 'Sobe na tribuna de peruca loira e vira meme antes de terminar a frase.' },
   { id: 'juiz', faccao: 'P', nome: 'Juiz do Conje', blurb: 'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.' },
-  { id: 'julia-zanatta', faccao: 'P', nome: 'Julia Zanatta', blurb: 'Coroa de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.' },
-  { id: 'marina-silva', faccao: 'P', nome: 'Marina Silva', blurb: 'Óculos vinho, coque preso e blazer azul-marinho. A conversa é calma; a mira, firme.' },
+  { id: 'julia-zanatta', faccao: 'P', nome: 'Deputada da Tiara', blurb: 'Tiara de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.' },
+  { id: 'marina-silva', faccao: 'P', nome: 'Dona Floresta', blurb: 'Óculos vinho, coque grisalho e vestido verde-petróleo. A conversa é calma; a mira, firme.' },
 
   { id: 'emo', faccao: 'urbanas', nome: 'Emo', blurb: 'Franja na cara e playlist de sofrência. Mira embaçada por um olho só.' },
   { id: 'blackmetal', faccao: 'urbanas', nome: 'Black Metal', blurb: 'Corpse paint, cabelão e blast beat. Congela a treta num inverno norueguês.' },

@@ -639,11 +639,11 @@ export const CHARACTERS = [
   { id: 'juiz', team: 'P', lados: ['B'], name: 'Juiz do Conje',
     blurb: 'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.',
     pal: { skin: 0xe0b090, shirt: 0x1e2a48, pants: 0x1e2a48, hair: 0x1a1a1a, boots: 0x111111 } },
-  { id: 'julia-zanatta', team: 'P', lados: ['B'], name: 'Julia Zanatta',
-    blurb: 'Coroa de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.',
+  { id: 'julia-zanatta', team: 'P', lados: ['B'], name: 'Deputada da Tiara',
+    blurb: 'Tiara de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.',
     pal: { skin: 0xf2c9a4, shirt: 0xd82b78, pants: 0x242532, hair: 0xc2aa83, boots: 0x222222 } },
-  { id: 'marina-silva', team: 'P', lados: ['E'], name: 'Marina Silva',
-    blurb: 'Óculos vinho, coque preso e blazer azul-marinho. A conversa é calma; a mira, firme.',
+  { id: 'marina-silva', team: 'P', lados: ['E'], name: 'Dona Floresta',
+    blurb: 'Óculos vinho, coque grisalho e vestido verde-petróleo. A conversa é calma; a mira, firme.',
     pal: { skin: 0x9a684f, shirt: 0x243654, pants: 0x22242b, hair: 0x292522, boots: 0x222222 } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
