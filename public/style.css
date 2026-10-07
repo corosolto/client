@@ -3179,6 +3179,7 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 #chat-acoes-quem{margin-right:auto;color:var(--sys)}
 #chat-motivos-lista{display:flex;flex-wrap:wrap;gap:4px 10px;margin:0;padding:0;border:0;min-width:0;flex:1 1 100%}
 #chat-motivos-lista legend{padding:0 0 4px;font-size:10px;letter-spacing:2px;color:var(--ink-200)}
+#chat-motivos-aviso{flex:1 1 100%;margin:0;line-height:1.35;color:var(--ink-200)}
 .chat-motivo{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
 .chat-motivo input{accent-color:var(--sys);margin:0}
 #chat-lista-bloqueados-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1 1 100%}

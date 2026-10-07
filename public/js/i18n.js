@@ -436,6 +436,8 @@ const DICT = {
   'BLOQUEAR': 'BLOCK', 'DENUNCIAR': 'REPORT', 'CANCELAR': 'CANCEL', 'DESBLOQUEAR': 'UNBLOCK', 'Bloqueados': 'Blocked',
   'Ações da mensagem': 'Message actions', 'MOTIVO DA DENÚNCIA': 'REPORT REASON', 'Mensagem': 'Message', 'Canal': 'Channel',
   'Mensagens anteriores': 'Earlier messages', 'Bloquear também?': 'Block too?', 'Ninguém bloqueado': 'Nobody blocked',
+  'Ao denunciar, a mensagem e um identificador anônimo ficam guardados por 90 dias para moderação.':
+    'When you report, the message and an anonymous identifier are kept for 90 days for moderation.',
   // rodapé / links
   'Links do jogo': 'Game links', 'Menu principal': 'Main menu', 'Abrir seu perfil': 'Open your profile',
   'Discord do CORO SOLTO': 'CORO SOLTO Discord', 'Telegram do CORO SOLTO': 'CORO SOLTO Telegram',
