@@ -20,4 +20,8 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tag-selvagem.png","persona
 
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
-export const GRAFITE_FP = {"pass":"101826ab448fb518","maps":{"campomorro":"f58d49c10e717e30","escadao":"e7fcedea031200f1","praca_poderes":"2ce0609dca07b170","piscina_treta":"5c59ddc4c10f042d","loja_h":"3f50aaa3ee8b94d5","ferro_velho":"13f93d41538c1c14","quebrada":"1d164de47f476e19","fy_escadao":"5c6b949b2ca9058b","fy_campomorro":"f58d49c10e717e30","fy_lajes":"9fab9fec2a931a7c","corrego":"16cb4db4a953aac1","fy_mansao":"bd56ca038eb1d4db"}};
+
+/* REASSINADO SEM REASSAR em 2026-10-07 — a passada ganhou só o desvio do servidor dedicado (grafiteNoDedicado); a colocação no navegador não muda
+   A colocação não foi tocada: assar de novo não é operação fiel (duas rodadas idênticas
+   dão contagens diferentes, e árvore sem o acervo completo de decalques apaga peças). */
+export const GRAFITE_FP = {"pass":"12beb5526fbb5dc6","maps":{"campomorro":"f58d49c10e717e30","escadao":"e7fcedea031200f1","praca_poderes":"2ce0609dca07b170","piscina_treta":"5c59ddc4c10f042d","loja_h":"3f50aaa3ee8b94d5","ferro_velho":"13f93d41538c1c14","quebrada":"1d164de47f476e19","fy_escadao":"5c6b949b2ca9058b","fy_campomorro":"f58d49c10e717e30","fy_lajes":"9fab9fec2a931a7c","corrego":"16cb4db4a953aac1","fy_mansao":"bd56ca038eb1d4db"}};
