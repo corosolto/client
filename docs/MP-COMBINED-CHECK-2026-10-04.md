@@ -21,3 +21,9 @@ Verificar a combinação do candidato de qualidade MP [#755](https://github.com/
 ## Próximo passo
 
 Conferir o CI do PR empilhado; revalidar rotação de mapa e troca de slot com dois jogadores reais. Só depois decidir a promoção e reconstruir backend com o SHA integrado. Medir coorte de sete dias após release coordenado; a meta de 90% ainda não está demonstrada.
+
+## Continuação — CI e dependências, 07/10
+
+- O `pr-fast` do head antigo `d042a6ef6` parou em `eval:deps` por `source-map-js`; a correção foi integrada na main pelo #780. A auditoria atualizada encontrou também `sharp@0.35.4`, que o commit `fd4d3a233` atualiza para `0.35.5` no lockfile.
+- Checkpoint de reparo em worktree isolado `worktrees/ci-pr-775`: merge da main `5409cbd91`, correção de lock `61bd605d6`. `npm run eval:deps` passou, `npm ci` auditou 403 pacotes sem vulnerabilidades e `npm run build` passou. O build informa runtime Vercel Node 24 ao executar localmente com Node 23.
+- Próximo passo: publicar fast-forward no branch de #775, acompanhar CI e manter a promoção bloqueada até a validação de duas pessoas/dispositivos e o backend com SHA correspondente.
