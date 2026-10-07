@@ -1995,6 +1995,7 @@ if (HUB_ENABLED) {
   const mpPanel = $('mp-panel');
   $('hub-mp-host').appendChild(mpPanel);
   $('mp-panel').querySelector('.mp-corpo').prepend($('mp-quick'));
+  $('mp-quick').after($('mp-amigos'));   // nas duas abas (pública e privada), logo no topo
   $('mp-panel').querySelector('.mp-corpo').appendChild($('mp-panel').querySelector('.mp-criar'));
   const tabs = [...document.querySelectorAll('.hub-tabs [data-hub-tab]')];
   const panes = { jogar: $('hub-play'), ranking: $('hub-ranking'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
@@ -3873,6 +3874,11 @@ function mpModalSalaCriada(sala, senha = '') {
   const m = mpEl('mp-modal');
   if (!m || !sala.convite) return mpEntrar(sala, 'auto', senha);   // sem modal ou sem código, o fluxo antigo vale
   mpEl('mp-modal-convite').textContent = sala.convite;
+  /* a sala só por convite NÃO está na lista (o nó a esconde): a nota não pode prometer "na lista" */
+  const nota = m.querySelector('.mp-modal-nota');
+  if (nota) nota.textContent = tr(sala.private && sala.senha === false
+    ? 'ESC ou clique fora só fecham este aviso - a sala continua criada. Ela não aparece na lista: só entra quem tem o código.'
+    : 'ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.');
   const lot = mpEl('mp-modal-lot');
   if (lot) lot.textContent = `${sala.players | 0}/${sala.max || 10} na sala · ${sala.name || 'SALA'}`;
   const fecha = () => {
@@ -3987,6 +3993,42 @@ function mpMontarFormulario() {
       mpErro(err && err.message === 'http_429'
         ? 'Esse servidor está no limite de salas. Tente outra região.'
         : 'Não deu pra criar a sala. Tente de novo.');
+    }
+  };
+  /* JOGAR COM AMIGOS: sala privada SEM senha (o código é a chave, backend#62) com o padrão de
+     quem não quer configurar nada, direto no modal do convite. Escolher fica no MAIS OPÇÕES. */
+  const amigos = mpEl('mp-amigos');
+  if (amigos) amigos.onclick = async () => {
+    ui.click(); mpErro('');
+    if (amigos.disabled) return;
+    if (!mpNoAtual) return mpErro(tr('Escolha um servidor primeiro.'));
+    /* nó sem `salaConvite` listaria a sala com o código e abriria pelo id: só nó que anuncia;
+       nenhum = o formulário, que exige senha */
+    const no = mpNoAtual.salaConvite ? mpNoAtual : mpNos.find((n) => n.online && n.salaConvite);
+    if (!no) {
+      const criar = mpEl('mp-panel').querySelector('.mp-criar');
+      if (criar) criar.open = true;
+      return mpErro(tr('Este servidor ainda não cria sala só com convite. Use MAIS OPÇÕES e crie com senha.'));
+    }
+    if (no !== mpNoAtual) mpSelecionarNo(no);
+    const nick = ($('nick-input').value || '').trim();
+    amigos.disabled = true;   // dois cliques não criam duas salas
+    try {
+      const ticket = await obterMpTicket('create');
+      const sala = await createRoom(mpNoAtual.http, {
+        // vazio = o nó dá nome ("SALA R7"); o tamanho de time fica no padrão do servidor
+        name: nick ? `SALA DE ${nick}`.toUpperCase().slice(0, 24) : '',
+        rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
+        ctf: false, private: true, password: '', maxPlayers: 10,
+        creatorNick: nick || null,
+      }, ticket);
+      mpModalSalaCriada({ ...sala, id: sala.room || sala.id });
+    } catch (err) {
+      mpErro(err && err.message === 'http_429'
+        ? tr('Esse servidor está no limite de salas. Tente outra região.')
+        : tr('Não deu pra criar a sala. Tente de novo.'));
+    } finally {
+      amigos.disabled = false;
     }
   };
   const at = mpEl('mp-atualizar'); if (at) at.onclick = () => { ui.click(); mpAtualizarSalas(); };
