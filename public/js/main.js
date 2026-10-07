@@ -4037,7 +4037,10 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   if (mpConectando) return;   // dois cliques em ENTRAR não podem abrir dois sockets
   mpErro('');
   const nick = ($('nick-input').value || '').trim();
-  if (sala.private && !senha) {
+  /* sala só por convite (`senha: false`, backend#62): entra pelo CÓDIGO, sem senha; pelo id o
+     nó responde que ela não existe. Nó antigo não manda `senha` e a privada segue pedindo. */
+  const soConvite = sala.private && sala.senha === false && !!sala.codigo;
+  if (sala.private && !soConvite && !senha) {
     senha = (prompt('Essa sala é privada. Senha:') || '').trim();
     if (!senha) return;
   }
@@ -4050,7 +4053,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     return mpErro('Não deu para autorizar a conexão. Tente novamente.');
   }
   const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
-    nome: nick || null, room: sala.id, pw: senha, team, ticket,
+    nome: nick || null, room: sala.id, codigo: soConvite ? sala.codigo : null, pw: senha, team, ticket,
     csha: String(window.__CS_BUILD?.sha || ''),   // mp_session grava o build do navegador (backend#22)
   });
   /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
