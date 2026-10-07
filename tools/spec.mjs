@@ -112,7 +112,7 @@ const MOLDE_TIME = (slug) => `<!-- spec:time -->
 # ${proximoNumero()} — ${slug}
 
 > Preencher pela skill csbrasil: pesquisa com procedência ANTES de escrever.
-> Vetos: sem pessoa real contemporânea, sem copyright, sem gore.
+> Vetos: sem pessoa real contemporânea (exceto sátira política, ver CONTRIBUTING.md), sem copyright, sem gore.
 > Cada personagem tem UMA mecânica própria — ninguém é só skin.
 
 ## 1. Nome — papel

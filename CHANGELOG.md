@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.50`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.53`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -68,6 +68,35 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.53] — 2026-10-06
+
+### Mudado
+- docs(ui): roadmap visual e bot de regressão (#756)
+- chore(docs): regenera bloco derivado (autofix)
+- docs(ui): fechar continuidade apos CI hospedada
+- docs(ui): registrar primeiro run hospedado
+- docs(ui): registrar runtime do portao local
+- docs(ui): atualizar blocos gerados para capturador
+- docs(ui): registrar checkpoint e proxima validacao
+- docs(ui): auditar interface e adicionar portao de regressao
+
+## [2.1.0-alpha.52] — 2026-10-06
+
+### Mudado
+- fix(deps): corrigir CVE alta em source-map-js (#780)
+- fix(deps): preservar opcionais do lockfile
+- fix(deps): corrigir CVE de source-map-js
+
+## [2.1.0-alpha.51] — 2026-10-06
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-10-05) (#779)
+- docs(veto): exceção de sátira política para pessoa real (#769)
+- feat(ranking): Esquerda e Direita no lugar de Petista e Bolsonarista (#768)
+- docs(changelog): rodada do cronista — 24 commits
+- Abre a exceção de sátira política no veto de pessoa real
+- Renomeia os lados do ranking para Esquerda e Direita
 
 ## [2.1.0-alpha.50] — 2026-10-04
 
@@ -434,6 +463,28 @@
 - fix(security): atualizar http-cache-semantics para 4.3.0 (#749)
 - fix(deps): tira da lista as isencoes que viraram letra morta
 - docs(changelog): rodada do cronista — 50 commits
+- fix(gate): allow full map audit to finish on CI runners
+- docs: record alpha.48 map audit rebase
+- docs: record fresh CI failure and promotion gates
+- docs: checkpoint map audit PR and validation
+- fix(gate): require fresh map audit report
+- fix(corrego): restore separate CTF routes on narrow bridges
+- fix(assets): o contrato de ambiência do áudio é do jogo, não do pacote (#696, #741)
+- fix(corrego): as 3 pontes baixas em escala — malha, colisor e navegação na mesma medida (#681)
+- fix(release): keep bot push from canceling dispatch
+- docs(corrego): record alpha.47 rebase and CI gate
+- test(chat): make spectator smoke independent of round transition
+- test(corrego): report CTF route summary only on pass
+- Dispatch backend node sync after client release (#752)
+- docs: regenera blocos derivados (regua eval:corrego-ponte entra no check:fast)
+- docs(audio): fechar preflight do pacote instrumental
+- docs(audio): registrar revisão visual e condição de merge
+- docs(audio): registrar pacote instrumental e limites da revisão
+- fix(audio): validar pacote privado instrumental no build
+- docs(audio): registrar checkpoint da intro instrumental
+- feat(audio): manter instrumentais e alternar música do menu
+- docs: regenera blocos derivados (novo gate eval:vm-placar no check:altera a contagem)
+- fix(679): porta a visibilidade de alvo do catálogo para o check:fast
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado
