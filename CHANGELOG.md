@@ -194,6 +194,12 @@
 - docs(changelog): rodada do cronista — 24 commits
 - Abre a exceção de sátira política no veto de pessoa real
 - Renomeia os lados do ranking para Esquerda e Direita
+- chore(docs): regenerate derived line-count blocks
+- chore(grafite): re-sign layout fingerprint for pass
+- perf(mp): skip graffiti pass on dedicated server
+- fix(deps): update sharp and lockfile peers (#784)
+- docs(changelog): rodada do cronista — 12 commits (#782)
+- fix(docs): corrigir dependencias vulneraveis (#781)
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado
