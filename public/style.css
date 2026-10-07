@@ -2924,6 +2924,10 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-modal-lot{margin:0;font-family:var(--mono);font-size:var(--fs-100);color:var(--ink-300);letter-spacing:var(--tr-1)}
 .mp-modal-copy{display:flex;gap:var(--s-3);flex-wrap:wrap;justify-content:center}
 .mp-modal-copy .btn{min-width:170px}
+/* o <a> do WhatsApp herda .btn, mas âncora não centraliza nem tira o sublinhado sozinha;
+   o verde é o do próprio WhatsApp, pra ser reconhecido sem ler */
+.mp-modal-zap{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-color:#25d366;color:#25d366}
+.mp-modal-zap:hover,.mp-modal-zap:focus-visible{background:#25d366;color:#0b2414}
 .mp-modal-card .btn-big{min-width:280px;margin-top:var(--s-2)}
 .mp-modal-nota{margin:0;max-width:44ch;font:600 var(--fs-50)/var(--lh-base) var(--font);color:var(--ink-300)}
 @media(max-width:560px){.mp-modal-copy{flex-direction:column;width:100%}.mp-modal-copy .btn,.mp-modal-card .btn-big{width:100%;min-width:0}}

@@ -100,6 +100,7 @@ const DICT = {
   'SALA CRIADA': 'ROOM CREATED',
   'COPIAR CÓDIGO': 'COPY CODE',
   'COPIAR LINK': 'COPY LINK',
+  'MANDAR NO WHATSAPP': 'SEND ON WHATSAPP',
   '▶ ENTRAR NA SALA': '▶ JOIN THE ROOM',
   'ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.':
     'ESC or clicking outside only closes this notice - the room stays created, in the list.',
@@ -501,6 +502,11 @@ const FRASES = {
     en: (r1, r2, k, nome, d) => `<div><b>${r1} × ${r2}</b>rounds</div><div><b>${k}</b>kills by ${nome}</div><div><b>${d}</b>your deaths</div>`,
   },
   // chat de sala (#686): os motivos de nack e de denúncia são os do contrato, docs/chat-de-sala.md §2
+  // mensagem que o botão MANDAR NO WHATSAPP do modal de sala deixa pronta
+  conviteZap: {
+    pt: (link) => `Bora uma treta no CORO SOLTO? Entra na minha sala: ${link}`,
+    en: (link) => `Up for a fight in CORO SOLTO? Join my room: ${link}`,
+  },
   chatAnonimo: { pt: () => 'Anônimo', en: () => 'Anonymous' },
   chatCanal: { pt: (c) => (c === 'time' ? 'TIME' : 'SALA'), en: (c) => (c === 'time' ? 'TEAM' : 'ROOM') },
   chatContador: { pt: (n, max) => `${n}/${max}`, en: (n, max) => `${n}/${max}` },

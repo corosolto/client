@@ -3900,6 +3900,13 @@ function mpModalSalaCriada(sala, senha = '') {
     try { await navigator.clipboard.writeText(linkDeConvite(sala.convite)); rotula(link, 'COPIADO!'); }
     catch { mpErro(`Copie à mão: ${linkDeConvite(sala.convite)}`); fecha(); }
   };
+  /* WhatsApp: `wa.me/?text=` abre o app no celular e o WhatsApp Web no computador, com a
+     mensagem pronta e o link dentro — sem pedir número, a pessoa escolhe o grupo lá. */
+  const zap = mpEl('mp-modal-zap');
+  if (zap) {
+    zap.href = `https://wa.me/?text=${encodeURIComponent(frase('conviteZap', linkDeConvite(sala.convite)))}`;
+    zap.onclick = () => ui.click();
+  }
   const entrar = mpEl('mp-modal-entrar');
   if (entrar) entrar.onclick = () => { ui.click(); fecha(); mpEntrar(sala, 'auto', senha); };
   m.classList.remove('hidden');
