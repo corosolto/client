@@ -131,8 +131,23 @@ export function esconderSeFaltar(mesh, tex) {
    Assado é o padrão (10 ms). Vivo só quando `window.__grafiteLive` (o
    `?grafite=vivo` do mapview, que é como o gerador colhe) ou quando o mapa ainda
    não tem layout assado — dev roda e vê arte, não parede pelada.
+
+   ── SERVIDOR DEDICADO NÃO PINTA ─────────────────────────────────────────────
+   O nó de multiplayer monta o mapa pra simular, não pra desenhar: ninguém vê a
+   cena dele. E a tinta não é sólido de nada — a peça não entra em `occluders`
+   (bala e LOS de bot) nem em `colliders`, só pendura malha `decal:`/`mural:` no
+   `root`. Mesmo assim os 5 mapas sem layout assado rodavam a passada VIVA lá
+   (obras_prefeitura: 3,3 s de raycast) DENTRO do passo do agendador, e toda sala
+   do nó congelava junto a cada troca de mapa. Sem GLB no Node, a arte que ele
+   pintava nem era a do navegador.
+   Quem decide é o `Game` (flag `dedicated`, a mesma que tira o jogador do elenco),
+   antes do `build` do mapa — e não um `typeof window`, que o harness do nó falsifica.
    ============================================================================ */
+let _semTinta = false;
+export function grafiteNoDedicado(dedicado) { _semTinta = !!dedicado; }
+
 export function grafitar(cfg) {
+  if (_semTinta) return { pass: { ancoras: 0, pecas: 0, pulado: true }, hom: { murais: 0, pulado: true } };
   const { id, root, T, waypoints, bandas, murais } = cfg;
   const _t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   const assado = GRAFITE && GRAFITE[id];
