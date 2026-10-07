@@ -12,8 +12,9 @@
  * RLS5: uma falha do release local restaura os arquivos antes de sair.
  *
  * RLS6: release não dispara um segundo deploy; o fallback fica manual.
+ * RLS8: o push do bot não cancela o run que ainda publica o Release e avisa o backend.
  *
- * Mutações: --mutante=nome-antigo | semcreditos | semdco | semdocs | semrollback | deploy-duplo | deploy-yaml | sem-anims-deploy.
+ * Mutações: --mutante=nome-antigo | semcreditos | semdco | semdocs | semrollback | deploy-duplo | deploy-yaml | sem-anims-deploy | cancelar-bot.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 
@@ -77,9 +78,11 @@ const validaCaminhoProd = () => {
 let caminhoProdUnico = validaCaminhoProd();
 let animacoesNoDeploy = /(?:^|\s)anims:check(?:\s|$)/.test(packageJson.scripts['check:deploy'] || '')
   && /(?:^|\s)anims:merge:check(?:\s|$)/.test(packageJson.scripts['check:deploy'] || '');
+const validaConcorrenciaRelease = () => /^concurrency:\n  group: release-main\n  cancel-in-progress: \$\{\{ !startsWith\(github\.event\.head_commit\.message, 'chore\(release\):'\) \}\}$/m.test(workflowRelease);
+let concorrenciaRelease = validaConcorrenciaRelease();
 
 if (mutante) {
-  const antes = JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy]);
+  const antes = JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy, concorrenciaRelease]);
   if (mutante === 'nome-antigo') comandos[0].linha = comandos[0].linha.replace('"CSBR ', '"CORO SOLTO ');
   else if (mutante === 'semcreditos') comandos[0].linha = comandos[0].linha.replace(' --generate-notes', '');
   else if (mutante === 'semdco') {
@@ -99,8 +102,12 @@ if (mutante) {
     caminhoProdUnico = validaCaminhoProd();
   }
   else if (mutante === 'sem-anims-deploy') animacoesNoDeploy = false;
+  else if (mutante === 'cancelar-bot') {
+    workflowRelease = workflowRelease.replace(/^  cancel-in-progress: .*$/m, '  cancel-in-progress: true');
+    concorrenciaRelease = validaConcorrenciaRelease();
+  }
   else throw new Error(`mutante desconhecido: ${mutante}`);
-  if (JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy]) === antes) throw new Error(`MUTANTE NAO APLICOU: ${mutante}`);
+  if (JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy, concorrenciaRelease]) === antes) throw new Error(`MUTANTE NAO APLICOU: ${mutante}`);
 }
 
 const nomes = comandos.filter(({ linha }) => /--title "CSBR \$/.test(linha)).length;
@@ -109,7 +116,7 @@ const total = comandos.length;
 const dco = commitsRelease.filter(temDco).length;
 const totalCommits = commitsRelease.length;
 const docsOk = docsRelease.filter(Boolean).length;
-const ok = total > 0 && nomes === total && creditos === total && totalCommits > 0 && dco === totalCommits && docsOk === docsRelease.length && rollbackRelease && caminhoProdUnico && animacoesNoDeploy;
+const ok = total > 0 && nomes === total && creditos === total && totalCommits > 0 && dco === totalCommits && docsOk === docsRelease.length && rollbackRelease && caminhoProdUnico && animacoesNoDeploy && concorrenciaRelease;
 
 console.log(`${nomes === total && total ? '✓' : '✗'} RLS1 título CSBR: ${nomes}/${total} caminhos`);
 console.log(`${creditos === total && total ? '✓' : '✗'} RLS2 notas com contribuidores: ${creditos}/${total} caminhos`);
@@ -118,7 +125,8 @@ console.log(`${docsOk === docsRelease.length ? '✓' : '✗'} RLS4 site de docs 
 console.log(`${rollbackRelease ? '✓' : '✗'} RLS5 falha local restaura a árvore de trabalho`);
 console.log(`${caminhoProdUnico ? '✓' : '✗'} RLS6 produção tem um caminho automático e fallback manual`);
 console.log(`${animacoesNoDeploy ? '✓' : '✗'} RLS7 deploy valida manifesto e GLBs mesclados de animação`);
+console.log(`${concorrenciaRelease ? '✓' : '✗'} RLS8 push do bot não cancela publicação e dispatch`);
 if (!ok) {
-  console.error('Release inválido: preserve créditos, DCO, docs e um único caminho automático de produção.');
+  console.error('Release inválido: preserve créditos, DCO, docs, concorrência segura e um único caminho automático de produção.');
   process.exit(1);
 }
