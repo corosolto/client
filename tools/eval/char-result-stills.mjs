@@ -121,12 +121,14 @@ await page.evaluate(() => {
        (bandeirante/cuca/lobisomem/microfonildo saíam cortados na borda): primeira
        passada com 1,6× de folga; se o conteúdo ainda toca borda, 2,4× e de novo.
        O trim exato vem depois, no Node, pelo alpha renderizado. */
-    const renderCom = (escala) => {
-      const halfH = (bb.max.y - bb.min.y) * 0.56 * escala;
-      const halfW = Math.max((bb.max.x - bb.min.x) * 0.56, halfH * 0.8) * escala;
-      const cam = new THREE.OrthographicCamera(cx - halfW, cx + halfW, cy + halfH, cy - halfH, 0.01, 100);
-      cam.position.set(cx, cy, 6); cam.lookAt(cx, cy, 0);
-      const W = 1000, H = Math.round((1000 * (halfH * 2)) / (halfW * 2));
+    const renderCom = (escala, janela = null, W = 1000) => {
+      const halfH = janela ? janela.halfH : (bb.max.y - bb.min.y) * 0.56 * escala;
+      const halfW = janela ? janela.halfW : Math.max((bb.max.x - bb.min.x) * 0.56, halfH * 0.8) * escala;
+      const ox = janela ? janela.cx : cx, oy = janela ? janela.cy : cy;
+      // Limites da ortográfica são relativos à câmera; absolutos enquadravam o centro em 2·cy.
+      const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.01, 100);
+      cam.position.set(ox, oy, 6); cam.lookAt(ox, oy, 0);
+      const H = Math.round((W * (halfH * 2)) / (halfW * 2));
       P.canvas.width = W; P.canvas.height = H;
       P.rend.setSize(W, H, false);
       P.rend.setClearColor(0x000000, 0);
@@ -146,11 +148,28 @@ await page.evaluate(() => {
         }
         return false;
       };
-      return { url: P.canvas.toDataURL('image/png'), tocaBorda: toca(4) };
+      let x0 = W, x1 = -1, y0 = H, y1 = -1;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        if (img[(y * W + x) * 4 + 3] <= 8) continue;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      /* Caixa do alpha em coordenadas de mundo: a 2ª passada enquadra por ela. */
+      const mundo = x1 < 0 ? null : {
+        x0: ox - halfW + (x0 / W) * 2 * halfW, x1: ox - halfW + ((x1 + 1) / W) * 2 * halfW,
+        y1: oy + halfH - (y0 / H) * 2 * halfH, y0: oy + halfH - ((y1 + 1) / H) * 2 * halfH,
+      };
+      return { url: P.canvas.toDataURL('image/png'), tocaBorda: toca(4), mundo };
     };
     let r = renderCom(1.6);
     if (r.tocaBorda) r = renderCom(2.4);
     if (r.tocaBorda) r = renderCom(3.5);
+    /* Segunda passada justa pela caixa do alpha, ~2× a altura final: a figura só é
+       reduzida na arte (antes saía com 79×199 px e era ampliada 6,7×). */
+    if (r.mundo && !r.tocaBorda) {
+      const m = r.mundo, pad = 1.04;
+      const janela = { cx: (m.x0 + m.x1) / 2, cy: (m.y0 + m.y1) / 2, halfW: (m.x1 - m.x0) / 2 * pad, halfH: (m.y1 - m.y0) / 2 * pad };
+      r = renderCom(1, janela, Math.min(2400, Math.round(2800 * janela.halfW / janela.halfH)));
+    }
     const url = r.url;
     P.scene.remove(built.group);
     return url;
@@ -213,8 +232,12 @@ let ruins = 0;
 for (const id of IDS) {
   const url = await page.evaluate((x) => window.__stills.quadro(x), id);
   const buf = Buffer.from(url.split(',')[1], 'base64');
-  const fig = await sharp(await trimAlpha(buf)).resize({ height: FIG_H, width: 963, fit: 'inside', kernel: 'lanczos3' }).png().toBuffer();
+  const recorte = await trimAlpha(buf);
+  const nativo = await sharp(recorte).metadata();
+  const fig = await sharp(recorte).resize({ height: FIG_H, width: 963, fit: 'inside', kernel: 'lanczos3' }).png().toBuffer();
   const meta = await sharp(fig).metadata();
+  // Figura ampliada sai borrada/pixelada no resultado: o render tem de chegar maior que a arte.
+  const ampliou = meta.height > nativo.height;
   const left = Math.max(15, CANVAS_W - MARGIN_RIGHT - meta.width);
   const top = MARGIN_TOP + Math.max(0, FIG_H - meta.height) / 2;
   const vitoria = join(ROOT, `public/img/resultado/${id}-vitoria.webp`);
@@ -228,10 +251,10 @@ for (const id of IDS) {
     || b.bottom < LIMITES.bottom[0] || b.bottom > LIMITES.bottom[1]
     || b.left < LIMITES.left[0] || b.left > LIMITES.left[1]
     || b.right < LIMITES.right[0] || b.right > LIMITES.right[1]
-    || uso < LIMITES.uso;
+    || uso < LIMITES.uso || ampliou;
   if (fora) ruins++;
-  console.log(`${fora ? '✗' : '✓'} ${id} ${meta.width}×${meta.height}@fig margens t/b/l/r=${[b.top, b.bottom, b.left, b.right].map((v) => v.toFixed(3)).join('/')} uso=${uso.toFixed(3)} ${Math.round(statSync(vitoria).size / 1024)}KB`);
+  console.log(`${fora ? '✗' : '✓'} ${id} render ${nativo.width}×${nativo.height} → ${meta.width}×${meta.height}@fig${ampliou ? ' AMPLIADA' : ''} margens t/b/l/r=${[b.top, b.bottom, b.left, b.right].map((v) => v.toFixed(3)).join('/')} uso=${uso.toFixed(3)} ${Math.round(statSync(vitoria).size / 1024)}KB`);
 }
 await browser.close();
-if (ruins) { console.error(`${ruins} artes fora dos limites UIA19`); process.exit(1); }
+if (ruins) { console.error(`${ruins} artes fora dos limites UIA19 ou ampliadas`); process.exit(1); }
 console.log('FIM');
