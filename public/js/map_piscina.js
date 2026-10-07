@@ -29,6 +29,7 @@ import * as THREE from 'three';
 import { decalIds, paredeAtras } from './map_decals.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
+import { createWater } from './water.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { aplicaSombraSol } from './mapquality.js';
@@ -158,23 +159,6 @@ function utilityTex(base, seam, accent) {
     x.fillStyle = `rgba(20,30,34,${0.025 + (i % 5) * 0.012})`; x.fillRect(px, py, 10 + i % 18, 2);
   }
   return mkTex(c, 1.25, 1.25);
-}
-function waterTex() {
-  const c = document.createElement('canvas'); c.width = c.height = 256;
-  const x = c.getContext('2d');
-  const g = x.createLinearGradient(0, 0, 256, 256);
-  g.addColorStop(0, '#177fba'); g.addColorStop(0.48, '#39d0e2'); g.addColorStop(1, '#0b6fa8');
-  x.fillStyle = g; x.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 18; i++) {
-    x.strokeStyle = `rgba(220,252,255,${0.08 + (i % 4) * 0.035})`; x.lineWidth = 2 + i % 2;
-    x.beginPath();
-    for (let px = -20; px <= 276; px += 8) {
-      const py = 10 + i * 14 + Math.sin((px + i * 17) * 0.055) * 5;
-      if (px === -20) x.moveTo(px, py); else x.lineTo(px, py);
-    }
-    x.stroke();
-  }
-  return mkTex(c, 4, 6);
 }
 function signTexture(bg, fg, title, sub) {
   const c = document.createElement('canvas'); c.width = 512; c.height = 128;
@@ -378,11 +362,12 @@ export function buildPoolDay(scene, T) {
     addBox(POOL.hx * 2, 0.1, L, MAT.pool, POOL.cx, -POOL.depth / 2, POOL.cz - POOL.hz - POOL.m / 2, { collide: false, rx: ang, cast: false });
     addBox(L, 0.1, POOL.hz * 2, MAT.pool, POOL.cx + POOL.hx + POOL.m / 2, -POOL.depth / 2, POOL.cz, { collide: false, rz: ang, cast: false });
     addBox(L, 0.1, POOL.hz * 2, MAT.pool, POOL.cx - POOL.hx - POOL.m / 2, -POOL.depth / 2, POOL.cz, { collide: false, rz: -ang, cast: false });
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(OUTX * 2 - 0.3, OUTZ * 2 - 0.3),
-      new THREE.MeshLambertMaterial({ map: waterTex(), color: 0xd7fbff, transparent: true,
-        opacity: 0.76 }));
-    water.rotation.x = -Math.PI / 2; water.position.set(POOL.cx, -0.4, POOL.cz);
-    water.userData.nonSolidSurface = true; root.add(water);
+    const agua = createWater(scene, T, 'piscina_treta', { nivel: -0.4, centro: [POOL.cx, POOL.cz],
+      tamanho: [OUTX * 2 - 0.3, OUTZ * 2 - 0.3], segmentos: 8, raso: 0x5ad8ea, fundo: 0x168fc4,
+      profEscala: 3.5, espumaFaixa: 0.04, espumaMiolo: 0.01, profFallback: 0.6, ampEscala: 0.05, parent: root });
+    agua.mesh.userData.nonSolidSurface = true;
+    agua.material.uniforms.uCeuCor.value.set(0xdff3fb);   // salão coberto: reflete forro/claraboia, não o horizonte do LOOK
+    agua.material.side = THREE.DoubleSide;   // piscina é entrável: de dentro o fundo lê a película
     // navy tile border
     addBox(OUTX * 2 + 0.7, 0.16, 0.5, MAT.navy, POOL.cx, 0, nZ + 0.15, { collide: false });
     addBox(OUTX * 2 + 0.7, 0.16, 0.5, MAT.navy, POOL.cx, 0, sZ - 0.15, { collide: false });
@@ -1069,6 +1054,7 @@ export function buildPoolDay(scene, T) {
   return {
     ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt,
+    update(dt) { for (const w of scene.userData.waters || []) w.update(dt); },
     spawns, sun, hemi, pickups,
     /* BANDEIRAS DO CTF — DECLARADAS (06/08, defeito do dono: "bandeiras com nome do pátio
        brasília" jogando aqui). O fallback do game.js punha as 3 bandeiras de spawn×0,42 —
