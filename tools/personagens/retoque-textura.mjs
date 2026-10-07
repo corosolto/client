@@ -4,21 +4,30 @@
 //
 // Uso:
 //   node tools/personagens/retoque-textura.mjs <in.glb> <out.glb> \
-//     --faixa y0,y1,xmax[,frente] --limiar 40 (--cor '#3c3c42' | --cor media)
+//     --faixa y0,y1,xmax[,frente] [--sel escuro|vermelho|claro] --limiar 40 (--cor '#3c3c42' | --cor media)
 //
 //   y0,y1   altura em fração da altura do modelo; xmax em metros a partir do centro
 //   frente  1 = só o lado do rosto, 0 = volta inteira
-//   limiar  canal mais claro (0-255) abaixo do qual o pixel é repintado
+//   sel     escuro: canal mais claro < limiar · vermelho: R − média(G,B) > limiar
+//           claro: canal mais claro > mediana da faixa + limiar (lascas de bake)
+//   sel     tudo: a faixa inteira (com `--mapa normal --cor '#8080ff'` zera o relevo)
+//   cor     `media` = mediana dos pixels NÃO selecionados da faixa
+//   --mapa normal  edita o normal map em vez da cor base (lascas claras de bake no rosto
+//                  moram nele, não na cor)
 // Repetível: cada `--faixa` usa o `--limiar` e a `--cor` que vierem depois dela.
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import sharp from 'sharp';
 
-const [, , IN, OUT, ...rest] = process.argv;
+const [, , IN, OUT, ...args] = process.argv;
+const iMapa = args.indexOf('--mapa');
+const MAPA = iMapa >= 0 ? args[iMapa + 1] : 'cor';
+const rest = iMapa >= 0 ? args.filter((_, i) => i !== iMapa && i !== iMapa + 1) : args;
 if (!IN || !OUT) { console.error('uso: retoque-textura.mjs <in.glb> <out.glb> --faixa ... --limiar N --cor X'); process.exit(1); }
 const faixas = [];
 for (let i = 0; i < rest.length; i += 2) {
-  if (rest[i] === '--faixa') faixas.push({ f: rest[i + 1].split(',').map(Number), limiar: 40, cor: 'media' });
+  if (rest[i] === '--faixa') faixas.push({ f: rest[i + 1].split(',').map(Number), limiar: 40, cor: 'media', sel: 'escuro' });
+  else if (rest[i] === '--sel') faixas.at(-1).sel = rest[i + 1];
   else if (rest[i] === '--limiar') faixas.at(-1).limiar = Number(rest[i + 1]);
   else if (rest[i] === '--cor') faixas.at(-1).cor = rest[i + 1];
 }
@@ -29,7 +38,9 @@ const prim = doc.getRoot().listMeshes()[0].listPrimitives()[0];
 const pos = prim.getAttribute('POSITION').getArray();
 const uv = prim.getAttribute('TEXCOORD_0').getArray();
 const idx = prim.getIndices().getArray();
-const tex = prim.getMaterial().getBaseColorTexture();
+const mat = prim.getMaterial();
+const tex = MAPA === 'normal' ? mat.getNormalTexture() : MAPA === 'mr' ? mat.getMetallicRoughnessTexture() : mat.getBaseColorTexture();
+if (!tex) { console.error(`sem textura de ${MAPA}`); process.exit(1); }
 const { data, info } = await sharp(Buffer.from(tex.getImage())).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 const W = info.width, H = info.height;
 
@@ -70,19 +81,18 @@ function pixelsDe(tris) {
   return set;
 }
 
+const mediana = (xs) => { const a = [...xs].sort((p, q) => p - q); return a.length ? a[a.length >> 1] : 128; };
 for (const fx of faixas) {
-  const px = pixelsDe(triangulosDa(fx.f));
+  const px = [...pixelsDe(triangulosDa(fx.f))];
+  const corte = fx.sel === 'claro' ? mediana(px.map(lum)) + fx.limiar : fx.limiar;
+  const pega = (p) => fx.sel === 'tudo' ? true : fx.sel === 'vermelho' ? data[p] - (data[p + 1] + data[p + 2]) / 2 > fx.limiar
+    : fx.sel === 'claro' ? lum(p) > corte : lum(p) < fx.limiar;
+  const alvo = px.filter(pega), resto = px.filter((p) => !pega(p));
   let cor;
-  if (fx.cor === 'media') {
-    let r = 0, g = 0, b = 0, n = 0;
-    for (const p of px) if (lum(p) > fx.limiar * 2) { r += data[p]; g += data[p + 1]; b += data[p + 2]; n++; }
-    cor = n ? [r / n, g / n, b / n] : [128, 128, 128];
-  } else {
-    const h = parseInt(fx.cor.slice(1), 16); cor = [h >> 16, (h >> 8) & 255, h & 255];
-  }
-  let pintados = 0;
-  for (const p of px) if (lum(p) < fx.limiar) { data[p] = cor[0]; data[p + 1] = cor[1]; data[p + 2] = cor[2]; pintados++; }
-  console.log(`faixa ${fx.f.join(',')}: ${px.size} px na região, ${pintados} repintados com rgb(${cor.map(Math.round).join(',')})`);
+  if (fx.cor === 'media') cor = [0, 1, 2].map((c) => mediana(resto.map((p) => data[p + c])));
+  else { const h = parseInt(fx.cor.slice(1), 16); cor = [h >> 16, (h >> 8) & 255, h & 255]; }
+  for (const p of alvo) { data[p] = cor[0]; data[p + 1] = cor[1]; data[p + 2] = cor[2]; }
+  console.log(`faixa ${fx.f.join(',')} (${fx.sel}): ${px.length} px na região, ${alvo.length} repintados com rgb(${cor.map(Math.round).join(',')})`);
 }
 
 const img = await sharp(data, { raw: { width: W, height: H, channels: 4 } }).webp({ quality: 90 }).toBuffer();
