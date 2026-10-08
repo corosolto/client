@@ -1,0 +1,24 @@
+{
+  "id": "/",
+  "name": "CORO SOLTO: Treta Suprema",
+  "short_name": "CORO SOLTO",
+  "description": "FPS satírico brasileiro. Jogue no navegador ou instale o beta no celular.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090704",
+  "theme_color": "#090704",
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

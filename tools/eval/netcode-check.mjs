@@ -792,7 +792,7 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   cobra(/meuJogo\._applyVmVisibility\?\.\(\)/.test(main), 'o preload ocioso das 26 armas também tenta montar a arma na mão');
   cobra(/else if \(this\.vm && this\.vm\.root\) this\.vm\.root\.visible = false;/.test(game),
     'espectador (dedicated) não vê viewmodel parado na pose de construção');
-  cobra(/nomeE = meta\.nomeE \|\| 'TIME E'/.test(main), 'botão do espectador diz o nome da FACÇÃO, não a letra do lado');
+  cobra(/nomeE = meta\.nomeE \|\| 'ESQUERDA'/.test(main), 'botão do espectador diz o nome da FACÇÃO, não a letra do lado');
   const mutSemPartida = net.replace("m.type === 'partida'", "m.type === '__nunca__'");
   cobra(!/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;/.test(mutSemPartida), 'MUTANTE sem o ramo `partida` acende a régua');
 }

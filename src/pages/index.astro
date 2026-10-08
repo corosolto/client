@@ -481,11 +481,15 @@ window.__GEO_LANG__ = (function () {
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)</title>
-<meta name="description" content="Jogo FPS gratuito de navegador: 5 facções brasileiras caricatas, 44 personagens originais, 5 mapas satíricos e 26 armas - bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
+<meta name="description" content="FPS satírico gratuito no navegador, com Esquerda, Direita e outras facções fictícias, mapas, armas, bots, rounds e CTF. Jogue no desktop ou teste o beta web no celular.">
 <meta name="keywords" content="coro solto, cs brasil, jogo de tiro navegador, fps browser grátis, awp, cs 1.6 brasileiro, jogo satira politica, treta suprema, jogo web three.js">
 <meta name="author" content="CORO SOLTO contributors">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#090704">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CORO SOLTO">
+<link rel="manifest" href="/site.webmanifest">
 <!-- CANONICAL COM www: a produção responde em www.csbrasil.online. Este link
      estava no host sem www e brigava com o canonical das outras páginas
      (que sai de astro.config.mjs) - dois hosts, sinal diluído. -->
@@ -502,7 +506,7 @@ window.__GEO_LANG__ = (function () {
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CORO SOLTO: Treta Suprema">
 <meta property="og:title" content="CORO SOLTO: Treta Suprema - FPS grátis de navegador">
-<meta property="og:description" content="FPS satírico de navegador com 5 facções brasileiras: 44 personagens, 5 mapas, 26 armas, bots, rounds e muita treta. Jogue grátis no navegador.">
+<meta property="og:description" content="FPS satírico de navegador com Esquerda, Direita e outras facções fictícias, 26 armas, bots, rounds e muita treta. Jogue grátis no navegador.">
 <meta property="og:url" content="https://www.csbrasil.online/">
 <meta property="og:image" content="https://www.csbrasil.online/og-image.jpg">
 <meta property="og:image:width" content="1200">
@@ -512,7 +516,7 @@ window.__GEO_LANG__ = (function () {
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CORO SOLTO: Treta Suprema - FPS grátis de navegador">
-<meta name="twitter:description" content="FPS satírico de navegador com 5 facções brasileiras: 44 personagens, 5 mapas, 26 armas. Jogue grátis no navegador.">
+<meta name="twitter:description" content="FPS satírico de navegador com Esquerda, Direita e outras facções fictícias, 26 armas e muitos mapas. Jogue grátis no navegador.">
 <meta name="twitter:image" content="https://www.csbrasil.online/og-image.jpg">
 <meta name="twitter:image:alt" content="CORO SOLTO: Treta Suprema - FPS satírico de navegador com facções brasileiras">
 <!-- JSON-LD: UM nó VideoGame no site inteiro, e ele mora AQUI.
@@ -547,11 +551,11 @@ window.__GEO_LANG__ = (function () {
       "alternateName": ["CORO SOLTO", "CS BRASIL", "CS BRASIL: Treta Suprema"],
       "url": "https://www.csbrasil.online/",
       "image": "https://www.csbrasil.online/og-image.jpg",
-      "description": "FPS de navegador gratuito e satírico: 5 facções brasileiras caricatas, 44 personagens originais, 5 mapas, 26 armas, bots, rounds e Capture the Flag - de uma Brasília fictícia ao ferro velho.",
+      "description": "FPS de navegador gratuito e satírico com Esquerda, Direita e outras facções fictícias, 26 armas, bots, rounds e Capture the Flag - de uma Brasília fictícia ao ferro velho.",
       "genre": ["Shooter", "FPS", "Comédia", "Sátira"],
-      "gamePlatform": ["Web Browser", "Desktop"],
+      "gamePlatform": ["Web Browser", "Desktop", "Mobile"],
       "applicationCategory": "GameApplication",
-      "operatingSystem": "Qualquer navegador de desktop",
+      "operatingSystem": "Qualquer sistema com navegador moderno compatível",
       "playMode": "SinglePlayer",
       "inLanguage": "pt-BR",
       "isAccessibleForFree": true,
@@ -564,7 +568,6 @@ window.__GEO_LANG__ = (function () {
       "publisher": { "@id": "https://www.csbrasil.online/#org" },
       "gameLocation": [
         { "@type": "Place", "name": "Praça dos Três Poderes" },
-        { "@type": "Place", "name": "Praça (clássico)" },
         { "@type": "Place", "name": "Piscina da Treta" },
         { "@type": "Place", "name": "Loja H (Estacionamento)" },
         { "@type": "Place", "name": "Ferro Velho do Zé" }
@@ -579,21 +582,21 @@ window.__GEO_LANG__ = (function () {
   "@id": "https://www.csbrasil.online/#faq",
   "mainEntity": [
     { "@type": "Question", "name": "O que é CORO SOLTO: Treta Suprema?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Um jogo FPS gratuito que roda no navegador: 5 facções (Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros), 44 personagens originais, 5 mapas satíricos, 26 armas, bots, sistema de rounds e Capture the Flag. O jogo já se chamou CS BRASIL." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "Um jogo FPS gratuito que roda no navegador: seis facções jogáveis (Esquerda, Direita, Tribos Urbanas, Palhaços, Funkeiros e Mítico), 53 personagens, mapas satíricos, 26 armas, bots, rounds e Capture the Flag. O jogo já se chamou CS BRASIL." } },
     { "@type": "Question", "name": "Preciso instalar ou pagar algo?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Não. O jogo é 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem download, sem instalação e sem cadastro." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "Não. O jogo é gratuito e roda no navegador, sem download nem cadastro. No celular, você também pode adicionar o beta web à tela inicial pelo menu do navegador quando essa opção estiver disponível." } },
     { "@type": "Question", "name": "Quais são os controles?",
       "acceptedAnswer": { "@type": "Answer", "text": "WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, as teclas 1/2/3 (ou a rodinha do mouse) trocam entre primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar." } },
     { "@type": "Question", "name": "Quais são as facções e os personagens?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Cinco facções fictícias e satíricas, com 44 personagens no total: Time E (8), Time B (9), Tribos Urbanas (9), Palhaços (9) e Funkeiros (9). Tribos Urbanas e Funkeiros não têm nada de política. Todos são arquétipos originais, sem pessoas reais, e todos jogam exatamente igual." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "São seis facções fictícias e satíricas: Esquerda (8), Direita (9), Tribos Urbanas (9), Palhaços (9), Funkeiros (9) e Mítico (9). Todos são arquétipos originais, sem pessoas reais, e jogam exatamente igual." } },
     { "@type": "Question", "name": "Quais mapas o jogo tem?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Cinco arenas: Praça dos Três Poderes (a Brasília fictícia, com a urna gigante quebrada no mid), Praça clássica, Piscina da Treta, Loja H (estacionamento) e Ferro Velho do Zé. As duas últimas abrem em Capture the Flag, mas qualquer mapa aceita qualquer modo." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "Entre as arenas estão Praça dos Três Poderes, Piscina da Treta, Loja H e Ferro Velho do Zé. O menu mostra os mapas disponíveis e permite escolher rounds ou Capture the Flag." } },
     { "@type": "Question", "name": "Como funciona o ranking global?",
       "acceptedAnswer": { "@type": "Answer", "text": "O ranking soma a pontuação das partidas. Cada abate multiplayer confirmado recebe um ponto extra. Consulte a página /ranking para a disponibilidade atual." } },
     { "@type": "Question", "name": "É um jogo oficial da Valve ou do Counter-Strike?",
       "acceptedAnswer": { "@type": "Answer", "text": "Não. É uma paródia independente feita por fãs, sem qualquer afiliação com a Valve. Counter-Strike é marca da Valve Corporation." } },
     { "@type": "Question", "name": "Funciona no celular?",
-      "acceptedAnswer": { "@type": "Answer", "text": "O jogo foi feito para desktop com mouse e teclado. Em telas de toque um aviso recomenda jogar no computador." } }
+      "acceptedAnswer": { "@type": "Answer", "text": "Sim. O beta web tem controles de toque; use o celular na horizontal para jogar. O desempenho varia conforme o aparelho e o navegador." } }
   ]
 }
 </script>
@@ -607,7 +610,7 @@ window.__GEO_LANG__ = (function () {
 <link rel="stylesheet" href={`/map-preview.css?v=${V}-${JS_REV}`} />
 </head>
 <body>
-<h1 class="sr-only">CORO SOLTO: Treta Suprema (ex-CS BRASIL) - jogo FPS gratuito de navegador, Time E × Time B</h1>
+<h1 class="sr-only">CORO SOLTO: Treta Suprema (ex-CS BRASIL) - jogo FPS gratuito de navegador, Esquerda × Direita</h1>
 
 <!-- SPLASH DE BOOT: cobre o load inicial (nada de cena parcial/"minecraft" visível) e
      destrava o áudio COM SOM no 1º gesto (política de autoplay do browser exige gesto;
@@ -616,7 +619,7 @@ window.__GEO_LANG__ = (function () {
 <div id="boot-splash" style="position:fixed;inset:0;z-index:200;background-color:#141216">
   <div class="splash-frame">
     <canvas id="splash-logo" width="900" height="360"></canvas>
-    <div class="splash-sub">ARENA DE SNIPER · PET × BOL × TRIBOS</div>
+    <div class="splash-sub">ARENA DE SNIPER · ESQUERDA × DIREITA</div>
     <div id="splash-character-stage" aria-hidden="true">
       <canvas id="load-character-3d"></canvas>
     </div>
@@ -660,16 +663,6 @@ window.__GEO_LANG__ = (function () {
       <button id="launch-error-report" class="btn" type="button">REPORTAR ERRO</button>
     </div>
     <p id="launch-error-status" class="launch-error-status" aria-live="polite">Se quiser, confirme o envio pelo botão acima.</p>
-  </div>
-</div>
-
-<!-- Mobile fallback -->
-<div id="mobile-warning" class="screen hidden">
-  <div class="panel center-panel">
-    <h1>CORO SOLTO: TRETA SUPREMA</h1>
-    <p class="big">Este jogo foi feito para <b>desktop</b> (mouse + teclado).</p>
-    <p>Jogar num PC ou notebook é <b>recomendado</b>. No celular a treta não flui.</p>
-    <button id="mobile-ok" class="btn">ENTENDI</button>
   </div>
 </div>
 
@@ -997,6 +990,10 @@ window.__GEO_LANG__ = (function () {
     <button id="btn-howto" class="btn btn-side">COMO JOGAR</button>
     <button id="btn-settings" class="btn btn-side">CONFIG.</button>
   </div>
+  <aside id="pwa-install" class="pwa-install" hidden aria-label="Instalação do beta web">
+    <button id="pwa-install-action" type="button">COMO ADICIONAR</button>
+    <p id="pwa-install-help" role="status" aria-live="polite" hidden></p>
+  </aside>
 </div>
 
 <!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
@@ -1089,7 +1086,7 @@ window.__GEO_LANG__ = (function () {
       <img class="team-crest" src="/img/brasoes/e.png" alt="">
       <span class="team-art" aria-hidden="true"></span>
       <span class="team-plate">
-        <span class="team-name">TIME E</span>
+        <span class="team-name">ESQUERDA</span>
         <span class="team-slogan">"A treta se faz na praça!"</span>
       </span>
       <span class="team-chars" aria-hidden="true"></span>
@@ -1100,7 +1097,7 @@ window.__GEO_LANG__ = (function () {
       <img class="team-crest" src="/img/brasoes/b.png" alt="">
       <span class="team-art" aria-hidden="true"></span>
       <span class="team-plate">
-        <span class="team-name">TIME B</span>
+        <span class="team-name">DIREITA</span>
         <span class="team-slogan">"A treta se faz na rodovia!"</span>
       </span>
       <span class="team-chars" aria-hidden="true"></span>
@@ -1313,6 +1310,9 @@ window.__GEO_LANG__ = (function () {
         <section class="mp-bloco">
           <div class="mp-titulo">ENTRAR NA TRETA</div>
           <button id="mp-quick" class="btn btn-big mp-quick" type="button">▶ JOGO RÁPIDO</button>
+          <!-- JOGAR COM AMIGOS: um clique cria sala privada SEM senha (o código do convite é a
+               chave) e abre o modal de convite -->
+          <button id="mp-amigos" class="btn btn-big mp-amigos" type="button">JOGAR COM AMIGOS</button>
           <!-- form de verdade: Enter no campo entra, como todo campo de código que se cola -->
           <form id="mp-convite-form" class="mp-convite">
             <input id="mp-convite-in" type="text" maxlength="11" placeholder="BR-7K3M"
@@ -1323,7 +1323,7 @@ window.__GEO_LANG__ = (function () {
         </section>
 
         <details class="mp-bloco mp-criar">
-          <summary class="mp-titulo">CRIAR MINHA SALA</summary>
+          <summary class="mp-titulo">MAIS OPÇÕES · CRIAR MINHA SALA</summary>
           <div class="mp-form">
             <label>NOME <input id="mp-nome" type="text" maxlength="24" placeholder="SALA DO ZÉ" /></label>
             <label>MAPAS
@@ -1344,8 +1344,7 @@ window.__GEO_LANG__ = (function () {
               </div>
               <div id="mp-mapas-grade" class="mp-mapas-grade" role="group" aria-label="Mapas que a sala vai girar"></div>
             </div>
-            <label>TIME E <select id="mp-fac-e"></select></label>
-            <label>TIME B <select id="mp-fac-b"></select></label>
+            <p class="mp-dica2 mp-lados-fixos">Toda sala é ESQUERDA × DIREITA. Escolha o lado ao entrar.</p>
             <label>MODO
               <select id="mp-modo"><option value="rounds">MATA-MATA</option><option value="ctf">CAPTURE A BANDEIRA</option></select>
             </label>
@@ -1394,6 +1393,8 @@ window.__GEO_LANG__ = (function () {
     <div class="mp-modal-copy">
       <button id="mp-modal-copiar-codigo" class="btn" type="button">COPIAR CÓDIGO</button>
       <button id="mp-modal-copiar-link" class="btn" type="button">COPIAR LINK</button>
+      <!-- o link vai pro zap sem passar pela área de transferência: é por lá que a galera chama -->
+      <a id="mp-modal-zap" class="btn mp-modal-zap" href="https://wa.me/" target="_blank" rel="noopener">MANDAR NO WHATSAPP</a>
     </div>
     <button id="mp-modal-entrar" class="btn btn-big" type="button">▶ ENTRAR NA SALA</button>
     <p class="mp-modal-nota">ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.</p>
@@ -1467,6 +1468,7 @@ window.__GEO_LANG__ = (function () {
     </div>
     <!-- Versão TOQUE (só no mobile via CSS): o celular não tem teclado, então os controles
          são os dois sticks + botões da tela. Mantém o mesmo grid pra herdar o estilo. -->
+    <p class="howto-touch-note">Beta web para celular: use na horizontal. O aparelho e o navegador influenciam o desempenho.</p>
     <div class="howto-grid howto-touch">
       <span>Stick esq.</span><span>Mover</span>
       <span>Stick dir.</span><span>Olhar / mirar</span>
@@ -1522,16 +1524,16 @@ window.__GEO_LANG__ = (function () {
          game.js só quando a facção MUDA - a arte vem do CSS, então o laço de
          quadro não toca em imagem nenhuma. -->
     <div id="score-e" class="team-score ts-p">
-      <i class="ts-crest" id="crest-e" aria-hidden="true"></i><span class="so-leitor" id="sigla-e">PET</span><b>0</b>
+      <i class="ts-crest" id="crest-e" aria-hidden="true"></i><span class="so-leitor" id="sigla-e">ESQ</span><b>0</b>
     </div>
     <div id="hud-mid">
       <div id="round-time">1:39</div>
       <!-- rounds VENCIDOS - dado diferente do kills das plaquetas ao lado, por isso
            esta linha não é redundante e não sai. -->
-      <div id="rounds-row">RODADA 1 · PET 0 × 0 BOL</div>
+      <div id="rounds-row">RODADA 1 · ESQ 0 × 0 DIR</div>
     </div>
     <div id="score-b" class="team-score ts-b">
-      <i class="ts-crest" id="crest-b" aria-hidden="true"></i><span class="so-leitor" id="sigla-b">BOL</span><b>0</b>
+      <i class="ts-crest" id="crest-b" aria-hidden="true"></i><span class="so-leitor" id="sigla-b">DIR</span><b>0</b>
     </div>
   </div>
   <div id="ctf-hud" class="hidden"></div>
@@ -1597,6 +1599,8 @@ window.__GEO_LANG__ = (function () {
   </div>
   <form id="chat-motivos" hidden>
     <fieldset id="chat-motivos-lista"><legend>MOTIVO DA DENÚNCIA</legend></fieldset>
+    <!-- aviso de retenção do §9 de docs/chat-de-sala.md: tem de estar aqui antes de MP_CHAT=1 na frota -->
+    <p id="chat-motivos-aviso">Ao denunciar, a mensagem e um identificador anônimo ficam guardados por 90 dias para moderação.</p>
     <button type="submit" id="chat-motivos-enviar">ENVIAR</button>
     <button type="button" id="chat-motivos-cancelar">CANCELAR</button>
   </form>
@@ -1673,5 +1677,6 @@ window.__GEO_LANG__ = (function () {
 <!-- Sinais operacionais da sessão (FPS, falhas de carga, abandono); só coleta - docs/runbooks/operacao-autonoma.md -->
 <script type="module" src={`/js/ops.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
+<script type="module" src={`/js/pwa-install.js?v=${V}-${JS_REV}`} is:inline></script>
 </body>
 </html>

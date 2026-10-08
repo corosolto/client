@@ -3,12 +3,12 @@
 export const FACTION_PAGE_SIZE = 10;
 
 export const FACTIONS = Object.freeze([
-  { id:'E', slug:'time-e', name:'TIME E', tag:'TME', slogan:'A treta se faz na praca!',
+  { id:'E', slug:'time-e', name:'ESQUERDA', tag:'ESQ', slogan:'A treta se faz na praca!',
     description:'Esquerdomacho · Lider do Sindicato · Lider do MST · Doutora do SUS · Jovem Mistico',
     color:'#ff5555', dark:'#e03232', ink:'#ff9a9a', rgb:'255,107,107', bg:'linear-gradient(165deg,#b52e2e 0%,#7a1a1a 52%,#3d0d0d 100%)', crest:'e', art:'time-e', ready:true },
-  { id:'B', slug:'time-b', name:'TIME B', tag:'TMB', slogan:'A treta se faz na rodovia!',
+  { id:'B', slug:'time-b', name:'DIREITA', tag:'DIR', slogan:'A treta se faz na rodovia!',
     description:'Caminhoneiro · Influencer de Dubai · Cantor Sertanejo · Tia Zila · Coach Quantico',
-    color:'#55dd66', dark:'#1faa4d', ink:'#a9f0b6', rgb:'125,224,143', bg:'linear-gradient(165deg,#1d8f45 0%,#2f7a2a 46%,#7a6412 100%)', crest:'b', art:'time-b', ready:true },
+    color:'#3355ff', dark:'#1f3fc8', ink:'#a8b8ff', rgb:'51,85,255', bg:'linear-gradient(165deg,#1f3fc8 0%,#1d3f8f 52%,#7a6412 100%)', crest:'b', art:'time-b', ready:true },
   { id:'U', slug:'tribos', name:'TRIBOS URBANAS', tag:'TRB', slogan:'A treta se faz na quebrada!',
     description:'Emo · Black Metal · Metaleiro · Punk · Skatista · Clubber · Rapper · Rasta · Pagodeiro',
     color:'#4aa3ff', dark:'#2f7fe0', ink:'#a8cdff', rgb:'199,155,255', bg:'linear-gradient(165deg,#5f22c2 0%,#8a1f9c 55%,#3d0f52 100%)', crest:'u', art:'tribos', ready:true },

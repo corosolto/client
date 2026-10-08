@@ -525,6 +525,10 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-motivos')).toBeVisible();
       await expect(page.locator('#chat-motivos input[type="radio"]')).toHaveCount(5);
       await expect(page.locator('#chat-motivos textarea, #chat-motivos input[type="text"]')).toHaveCount(0);
+      // o aviso de retenção (§9) aparece junto dos motivos, antes de enviar
+      await expect(page.locator('#chat-motivos-aviso')).toBeVisible();
+      await expect(page.locator('#chat-motivos-aviso')).toHaveText(/90 dias/);
+      await figura(page, 'denuncia-aviso');
       await page.locator('#chat-motivos input[value="spam"]').check();
       await page.locator('#chat-motivos-enviar').click();
       expect(await page.evaluate(() => window.__chatNet.denuncias)).toEqual([{ id: 3, motivo: 'spam' }]);
