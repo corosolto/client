@@ -42,6 +42,21 @@ const SIDE_PORTALS = [-11, 0, 11];
 const SPAWN_WALL_Z = 15;
 const SPAWN_PORTALS = [-12, 0, 12];
 
+export function piscinaTrimLayout({ coplanar = false } = {}) {
+  return {
+    minimumGap: 0.04,
+    portal: {
+      halfWidth: 1.5,
+      height: 3.1,
+      wallDepth: 0.6,
+      jamb: { width: 0.12, height: 3.1, depth: coplanar ? 0.68 : 0.8, offset: coplanar ? 1.56 : 1.52, bottom: 0 },
+      header: { width: 3.24, height: 0.12, depth: coplanar ? 0.68 : 0.8, bottom: coplanar ? 3.1 : 3.06 },
+    },
+    band: { thickness: coplanar ? 0.12 : 0.06, height: 0.6, decalOffset: 0.08 },
+    render: { collide: false, castShadow: false },
+  };
+}
+
 /* A antiga pilha importava `map_uv.js`, que não existe na main. Mantemos a régua
    métrica somente neste mapa para o PR continuar isolado, sem reintroduzir helper
    ou material compartilhado. */
@@ -192,6 +207,8 @@ export function buildPoolDay(scene, T) {
   const occluders = [];
   const pickups = [];
   const root = new THREE.Group();
+  const trimLayout = piscinaTrimLayout();
+  const trimEvidence = [];
   scene.add(root);
 
   const lam = (opts) => new THREE.MeshLambertMaterial(opts);
@@ -213,6 +230,14 @@ export function buildPoolDay(scene, T) {
       colliders.push({ minX: x - ex - pad, maxX: x + ex + pad, minY: y, maxY: y + h, minZ: z - ez - pad, maxZ: z + ez + pad });
       occluders.push(m);
     } else if (opts.bala || opts.occlude === true) occluders.push(m);   // visível dentro de colisor alheio: a bala para nele (BUG-54)
+    return m;
+  }
+
+  function addTrimBox(id, w, h, d, x, y, z) {
+    const before = colliders.length;
+    const m = addBox(w, h, d, MAT.navy, x, y, z,
+      { collide: trimLayout.render.collide, cast: trimLayout.render.castShadow });
+    trimEvidence.push({ id, colliderDelta: colliders.length - before, castShadow: m.castShadow });
     return m;
   }
 
@@ -462,16 +487,18 @@ export function buildPoolDay(scene, T) {
     for (const x of SPAWN_PORTALS) {
       addBox(3, WALL_H - 3.1, 0.6, MAT.wall, x, 3.1, z);
       // Moldura naval de alto contraste: o vão continua 3 m e a colisão continua na parede.
-      for (const dx of [-1.52, 1.52])
-        addBox(0.12, 3.1, 0.8, MAT.navy, x + dx, 0, z, { collide: false, cast: false });
-      addBox(3.24, 0.12, 0.8, MAT.navy, x, 3.06, z, { collide: false, cast: false });
+      const jamb = trimLayout.portal.jamb, header = trimLayout.portal.header;
+      for (const dx of [-jamb.offset, jamb.offset])
+        addTrimBox('portal-jamb', jamb.width, jamb.height, jamb.depth, x + dx, jamb.bottom, z);
+      addTrimBox('portal-header', header.width, header.height, header.depth, x, header.bottom, z);
       const route = x < 0 ? 'OESTE' : x > 0 ? 'LESTE' : 'PISCINA';
       const routeMat = lam({ map: signTexture('#1b3566', '#e8f6ff', route, 'ACESSO'), side: THREE.DoubleSide });
       addPlane(2.35, 0.72, routeMat, x, 3.72, z - side * 0.32, 0);
     }
   }
-  for (const [w, h, d, x, z] of [[HALF_X * 2 + 2, 0.6, 0.06, 0, -HALF_Z], [HALF_X * 2 + 2, 0.6, 0.06, 0, HALF_Z], [0.06, 0.6, HALF_Z * 2 + 2, -HALF_X, 0], [0.06, 0.6, HALF_Z * 2 + 2, HALF_X, 0]])
-    addBox(w, h, d, MAT.navy, x, 2.0, z, { collide: false, cast: false });
+  const band = trimLayout.band;
+  for (const [w, d, x, z] of [[HALF_X * 2 + 2, band.thickness, 0, -HALF_Z], [HALF_X * 2 + 2, band.thickness, 0, HALF_Z], [band.thickness, HALF_Z * 2 + 2, -HALF_X, 0], [band.thickness, HALF_Z * 2 + 2, HALF_X, 0]])
+    addTrimBox('wall-band', w, band.height, d, x, 2.0, z);
   for (const corridor of SIDE_CORRIDORS)
     addBox(0.12, 0.6, corridor.maxZ - corridor.minZ, MAT.warning,
       corridor.axisX < 0 ? corridor.minX + 0.06 : corridor.maxX - 0.06,
@@ -1064,6 +1091,7 @@ export function buildPoolDay(scene, T) {
 
   /* A passada viva precisa enxergar cada parede/armário como malha separada. O lote entra
      somente depois dela: preserva o bake e troca N caixas repetidas por uma chamada. */
+  root.userData.piscinaTrimContract = { layout: trimLayout, evidence: trimEvidence };
   batchStaticBoxes();
 
   return {

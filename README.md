@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 58.107 linhas em 114 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 58.135 linhas em 114 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **8.316** linhas | `wc -l public/js/game.js` |
 | `main.js` | 4.294 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -44,7 +44,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Personagens jogáveis | 53, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 18 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 22 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 637 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 638 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.1.0-alpha.60` | `public/js/version.js` e `package.json` (batem) |
@@ -311,7 +311,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.265 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.409 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.097 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.125 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.064 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.026 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.709 |
