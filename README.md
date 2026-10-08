@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 58.083 linhas em 114 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 58.069 linhas em 114 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **8.316** linhas | `wc -l public/js/game.js` |
 | `main.js` | 4.242 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -311,7 +311,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 1.265 |
 | `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 1.409 |
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.978 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.144 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 1.130 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.064 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 2.026 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.709 |
