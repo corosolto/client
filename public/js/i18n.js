@@ -92,6 +92,15 @@ const DICT = {
   'ENTRAR': 'JOIN',
   'Recebeu um convite? Cola o código aqui.': 'Got an invite? Paste the code here.',
   'CRIAR MINHA SALA': 'CREATE MY ROOM',
+  'JOGAR COM AMIGOS': 'PLAY WITH FRIENDS',
+  'MAIS OPÇÕES · CRIAR MINHA SALA': 'MORE OPTIONS · CREATE MY ROOM',
+  'Escolha um servidor primeiro.': 'Pick a server first.',
+  'Este servidor ainda não cria sala só com convite. Use MAIS OPÇÕES e crie com senha.':
+    'This server cannot make invite-only rooms yet. Use MORE OPTIONS and set a password.',
+  'Esse servidor está no limite de salas. Tente outra região.': 'This server is at its room limit. Try another region.',
+  'Não deu pra criar a sala. Tente de novo.': 'Could not create the room. Try again.',
+  'ESC ou clique fora só fecham este aviso - a sala continua criada. Ela não aparece na lista: só entra quem tem o código.':
+    'ESC or clicking outside only closes this notice - the room stays created. It is not in the list: only people with the code can join.',
   'SALAS ABERTAS': 'OPEN ROOMS',
   'ATUALIZAR': 'REFRESH',
   'NOME': 'NAME', 'MAPAS': 'MAPS', 'MODO': 'MODE', 'SENHA': 'PASSWORD',
@@ -100,6 +109,7 @@ const DICT = {
   'SALA CRIADA': 'ROOM CREATED',
   'COPIAR CÓDIGO': 'COPY CODE',
   'COPIAR LINK': 'COPY LINK',
+  'MANDAR NO WHATSAPP': 'SEND ON WHATSAPP',
   '▶ ENTRAR NA SALA': '▶ JOIN THE ROOM',
   'ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.':
     'ESC or clicking outside only closes this notice - the room stays created, in the list.',
@@ -436,6 +446,8 @@ const DICT = {
   'BLOQUEAR': 'BLOCK', 'DENUNCIAR': 'REPORT', 'CANCELAR': 'CANCEL', 'DESBLOQUEAR': 'UNBLOCK', 'Bloqueados': 'Blocked',
   'Ações da mensagem': 'Message actions', 'MOTIVO DA DENÚNCIA': 'REPORT REASON', 'Mensagem': 'Message', 'Canal': 'Channel',
   'Mensagens anteriores': 'Earlier messages', 'Bloquear também?': 'Block too?', 'Ninguém bloqueado': 'Nobody blocked',
+  'Ao denunciar, a mensagem e um identificador anônimo ficam guardados por 90 dias para moderação.':
+    'When you report, the message and an anonymous identifier are kept for 90 days for moderation.',
   // rodapé / links
   'Links do jogo': 'Game links', 'Menu principal': 'Main menu', 'Abrir seu perfil': 'Open your profile',
   'Discord do CORO SOLTO': 'CORO SOLTO Discord', 'Telegram do CORO SOLTO': 'CORO SOLTO Telegram',
@@ -501,6 +513,11 @@ const FRASES = {
     en: (r1, r2, k, nome, d) => `<div><b>${r1} × ${r2}</b>rounds</div><div><b>${k}</b>kills by ${nome}</div><div><b>${d}</b>your deaths</div>`,
   },
   // chat de sala (#686): os motivos de nack e de denúncia são os do contrato, docs/chat-de-sala.md §2
+  // mensagem que o botão MANDAR NO WHATSAPP do modal de sala deixa pronta
+  conviteZap: {
+    pt: (link) => `Bora uma treta no CORO SOLTO? Entra na minha sala: ${link}`,
+    en: (link) => `Up for a fight in CORO SOLTO? Join my room: ${link}`,
+  },
   chatAnonimo: { pt: () => 'Anônimo', en: () => 'Anonymous' },
   chatCanal: { pt: (c) => (c === 'time' ? 'TIME' : 'SALA'), en: (c) => (c === 'time' ? 'TEAM' : 'ROOM') },
   chatContador: { pt: (n, max) => `${n}/${max}`, en: (n, max) => `${n}/${max}` },

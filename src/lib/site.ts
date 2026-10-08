@@ -30,7 +30,7 @@ export const DESC_SHORT =
 export const DESC_LONG =
   'Jogo FPS gratuito de navegador: arena de sniper estilo praca_poderes do CS 1.6 numa Brasília ' +
   'fictícia e satírica. Esquerda, Direita, Tribos Urbanas, Palhaços, Funkeiros e Mítico, ' +
-  `26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação, sem cadastro.`;
+  `${MAPAS.length} mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Beta web com controles de toque no celular; sem cadastro.`;
 
 // @id estável do nó VideoGame. É o que evita que o mesmo jogo apareça como
 // DUAS entidades quando index.astro e sobre.astro emitem JSON-LD cada um: com

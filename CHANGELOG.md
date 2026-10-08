@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.54`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.60`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -68,6 +68,53 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.60] — 2026-10-08
+
+### Mudado
+- feat(chat): aviso de retenção na tela de denúncia (#789)
+- Mark the report retention notice as done
+- Show retention notice on the chat report screen
+
+## [2.1.0-alpha.59] — 2026-10-08
+
+### Mudado
+- feat(mp): JOGAR COM AMIGOS cria sala de convite num clique (#788)
+- chore(docs): regenerate derived line-count blocks
+- feat(mp): add one-click JOGAR COM AMIGOS room
+- feat(mp): share the room link on WhatsApp from the modal
+- feat(mp): record whether a node gates invite-only rooms
+- feat(mp): join invite-only rooms by code, no password
+
+## [2.1.0-alpha.58] — 2026-10-08
+
+### Mudado
+- feat(mobile): prepare installable PWA beta (#786)
+- docs: align mobile PWA branch with current main
+- feat: localize mobile PWA install guidance
+- feat: prepare mobile PWA install beta
+- feat(mobile): present touch controls as web beta
+- feat(pwa): add mobile install manifest
+
+## [2.1.0-alpha.57] — 2026-10-08
+
+### Mudado
+- fix(piscina): cartaz da coleção longe dos batentes (#793)
+- fix(piscina): cartaz da coleção longe dos batentes
+- feat(grafite): margem opcional de parede inteira por banda
+
+## [2.1.0-alpha.56] — 2026-10-07
+
+### Mudado
+- perf(mp): skip graffiti pass on dedicated server (#787)
+- chore(docs): regenerate derived line-count blocks
+- chore(grafite): re-sign layout fingerprint for pass
+- perf(mp): skip graffiti pass on dedicated server
+
+## [2.1.0-alpha.55] — 2026-10-07
+
+### Mudado
+- fix(deps): update sharp and lockfile peers (#784)
 
 ## [2.1.0-alpha.54] — 2026-10-07
 

@@ -511,8 +511,8 @@ export function buildPoolDay(scene, T) {
       const vagas = [
         [-13, HALF_Z - OFF, Math.PI], [-3, HALF_Z - OFF, Math.PI], [11, HALF_Z - OFF, Math.PI],
         [-11, -HALF_Z + OFF, 0], [0, -HALF_Z + OFF, 0], [12, -HALF_Z + OFF, 0],
-        [-HALF_X + OFF, -14, Math.PI / 2], [-HALF_X + OFF, 2, Math.PI / 2], [-HALF_X + OFF, 16, Math.PI / 2],
-        [HALF_X - OFF, -16, -Math.PI / 2], [HALF_X - OFF, -2, -Math.PI / 2], [HALF_X - OFF, 14, -Math.PI / 2],
+        [-HALF_X + OFF, -14, Math.PI / 2], [-HALF_X + OFF, 2.6, Math.PI / 2], [-HALF_X + OFF, 16, Math.PI / 2],
+        [HALF_X - OFF, -16, -Math.PI / 2], [HALF_X - OFF, -2.8, -Math.PI / 2], [HALF_X - OFF, 14, -Math.PI / 2],
       ];
       vagas.forEach(([px, pz, ry], i) => {
         const ti = i % imgs.length, A = asp[ti] || 0.72, escP = (T.posterEscala || [])[ti] || 1;
@@ -1032,7 +1032,7 @@ export function buildPoolDay(scene, T) {
          2 dos 5 mapas, e mesmo nesses só ~6 entravam por rodada (a vaga era fixa).
          Aqui eles entram como lambe-lambe: banda do olho, tamanho de papel colado, e
          `chance` baixa de propósito — cartaz é tempero, parede de cartaz vira outdoor. */
-      { y0: 0.4, y1: 2.6, larg: 1.9, alturas: [1.5, 1.15, 0.85], chance: 28, fonte: 'poster',
+      { y0: 0.4, y1: 2.6, larg: 1.9, alturas: [1.5, 1.15, 0.85], chance: 28, fonte: 'poster', margem: 1.0,
         pool: (T.posterFiles || []).map((_, i) => i) },
       // banda do olho: azulejo e concreto do deck — tag, cartaz e letra
       { y0: 0.3, y1: 2.5, larg: 3.4, alturas: [2.0, 1.5, 1.1, 0.8, 0.6],

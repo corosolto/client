@@ -29,6 +29,7 @@ import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o 
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 import { createSoundscape } from './soundscape.js';        // vida 1: áudio ambiente por mapa (world.sound)
+import { grafiteNoDedicado } from './graffiti_pass.js';    // nó de MP não roda a passada de grafite (ver o cabeçalho de grafitar)
 import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS, vmFonteDe } from './authoredvm.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { viewmodelVisibility } from './vmvisibility.js';
@@ -715,6 +716,7 @@ export class Game {
     this.camera.rotation.order = 'YXZ';
     this.scene.add(this.camera);
     this._mapId = resolveMapId(mapId);
+    grafiteNoDedicado(dedicated);   // antes do build: a passada roda dentro dele
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;

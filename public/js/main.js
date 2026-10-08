@@ -350,7 +350,7 @@ function loadMenuBackdrop() {
 loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 
 /* ---------------- screens ---------------- */
-const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
+const screens = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
   const hubMpRoute = HUB_ENABLED && id === 'mp-panel';
   if (hubMpRoute) {
@@ -1116,6 +1116,7 @@ let heartbeatOff = false;
    zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
 // o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
 await resolveGeoLang();
+document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
 syncMenuMusicToggle();
@@ -1994,6 +1995,7 @@ if (HUB_ENABLED) {
   const mpPanel = $('mp-panel');
   $('hub-mp-host').appendChild(mpPanel);
   $('mp-panel').querySelector('.mp-corpo').prepend($('mp-quick'));
+  $('mp-quick').after($('mp-amigos'));   // nas duas abas (pública e privada), logo no topo
   $('mp-panel').querySelector('.mp-corpo').appendChild($('mp-panel').querySelector('.mp-criar'));
   const tabs = [...document.querySelectorAll('.hub-tabs [data-hub-tab]')];
   const panes = { jogar: $('hub-play'), ranking: $('hub-ranking'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
@@ -2583,7 +2585,6 @@ document.querySelectorAll('.set-tab').forEach(tab => {
     });
   };
 });
-$('mobile-ok').onclick = () => { sfx.uiClick(); show('main-menu'); };
 $('team-back').onclick = () => { ui.back(); pickingEnemy = false; setEnemyPickMode(false); setTeamStep('side'); show('main-menu'); };
 $('char-back').onclick = () => {
   ui.back();
@@ -3872,6 +3873,11 @@ function mpModalSalaCriada(sala, senha = '') {
   const m = mpEl('mp-modal');
   if (!m || !sala.convite) return mpEntrar(sala, 'auto', senha);   // sem modal ou sem código, o fluxo antigo vale
   mpEl('mp-modal-convite').textContent = sala.convite;
+  /* a sala só por convite NÃO está na lista (o nó a esconde): a nota não pode prometer "na lista" */
+  const nota = m.querySelector('.mp-modal-nota');
+  if (nota) nota.textContent = tr(sala.private && sala.senha === false
+    ? 'ESC ou clique fora só fecham este aviso - a sala continua criada. Ela não aparece na lista: só entra quem tem o código.'
+    : 'ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.');
   const lot = mpEl('mp-modal-lot');
   if (lot) lot.textContent = `${sala.players | 0}/${sala.max || 10} na sala · ${sala.name || 'SALA'}`;
   const fecha = () => {
@@ -3899,6 +3905,13 @@ function mpModalSalaCriada(sala, senha = '') {
     try { await navigator.clipboard.writeText(linkDeConvite(sala.convite)); rotula(link, 'COPIADO!'); }
     catch { mpErro(`Copie à mão: ${linkDeConvite(sala.convite)}`); fecha(); }
   };
+  /* WhatsApp: `wa.me/?text=` abre o app no celular e o WhatsApp Web no computador, com a
+     mensagem pronta e o link dentro — sem pedir número, a pessoa escolhe o grupo lá. */
+  const zap = mpEl('mp-modal-zap');
+  if (zap) {
+    zap.href = `https://wa.me/?text=${encodeURIComponent(frase('conviteZap', linkDeConvite(sala.convite)))}`;
+    zap.onclick = () => ui.click();
+  }
   const entrar = mpEl('mp-modal-entrar');
   if (entrar) entrar.onclick = () => { ui.click(); fecha(); mpEntrar(sala, 'auto', senha); };
   m.classList.remove('hidden');
@@ -3971,6 +3984,42 @@ function mpMontarFormulario() {
         : 'Não deu pra criar a sala. Tente de novo.');
     }
   };
+  /* JOGAR COM AMIGOS: sala privada SEM senha (o código é a chave, backend#62) com o padrão de
+     quem não quer configurar nada, direto no modal do convite. Escolher fica no MAIS OPÇÕES. */
+  const amigos = mpEl('mp-amigos');
+  if (amigos) amigos.onclick = async () => {
+    ui.click(); mpErro('');
+    if (amigos.disabled) return;
+    if (!mpNoAtual) return mpErro(tr('Escolha um servidor primeiro.'));
+    /* nó sem `salaConvite` listaria a sala com o código e abriria pelo id: só nó que anuncia;
+       nenhum = o formulário, que exige senha */
+    const no = mpNoAtual.salaConvite ? mpNoAtual : mpNos.find((n) => n.online && n.salaConvite);
+    if (!no) {
+      const criar = mpEl('mp-panel').querySelector('.mp-criar');
+      if (criar) criar.open = true;
+      return mpErro(tr('Este servidor ainda não cria sala só com convite. Use MAIS OPÇÕES e crie com senha.'));
+    }
+    if (no !== mpNoAtual) mpSelecionarNo(no);
+    const nick = ($('nick-input').value || '').trim();
+    amigos.disabled = true;   // dois cliques não criam duas salas
+    try {
+      const ticket = await obterMpTicket('create');
+      const sala = await createRoom(mpNoAtual.http, {
+        // vazio = o nó dá nome ("SALA R7"); o tamanho de time fica no padrão do servidor
+        name: nick ? `SALA DE ${nick}`.toUpperCase().slice(0, 24) : '',
+        rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
+        ctf: false, private: true, password: '', maxPlayers: 10,
+        creatorNick: nick || null,
+      }, ticket);
+      mpModalSalaCriada({ ...sala, id: sala.room || sala.id });
+    } catch (err) {
+      mpErro(err && err.message === 'http_429'
+        ? tr('Esse servidor está no limite de salas. Tente outra região.')
+        : tr('Não deu pra criar a sala. Tente de novo.'));
+    } finally {
+      amigos.disabled = false;
+    }
+  };
   const at = mpEl('mp-atualizar'); if (at) at.onclick = () => { ui.click(); mpAtualizarSalas(); };
   const back = mpEl('mp-back'); if (back) back.onclick = () => { ui.click(); clearInterval(mpTimerLista); show('main-menu'); };
   /* JOGO RÁPIDO: a melhor sala aberta do nó de menor ping — oficiais primeiro, depois as
@@ -4026,7 +4075,10 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   if (mpConectando) return;   // dois cliques em ENTRAR não podem abrir dois sockets
   mpErro('');
   const nick = ($('nick-input').value || '').trim();
-  if (sala.private && !senha) {
+  /* sala só por convite (`senha: false`, backend#62): entra pelo CÓDIGO, sem senha; pelo id o
+     nó responde que ela não existe. Nó antigo não manda `senha` e a privada segue pedindo. */
+  const soConvite = sala.private && sala.senha === false && !!sala.codigo;
+  if (sala.private && !soConvite && !senha) {
     senha = (prompt('Essa sala é privada. Senha:') || '').trim();
     if (!senha) return;
   }
@@ -4039,7 +4091,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     return mpErro('Não deu para autorizar a conexão. Tente novamente.');
   }
   const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
-    nome: nick || null, room: sala.id, pw: senha, team, ticket,
+    nome: nick || null, room: sala.id, codigo: soConvite ? sala.codigo : null, pw: senha, team, ticket,
     csha: String(window.__CS_BUILD?.sha || ''),   // mp_session grava o build do navegador (backend#22)
   });
   /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
