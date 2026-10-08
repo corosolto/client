@@ -71,8 +71,10 @@ PASSA PZT3
 ```
 
 Medidas: batente/vão 0,04 m; travessão/vão 0,04 m; moldura/parede 0,10 m;
-faixa/parede 0,03 m; faixa/decalque 0,05 m. As 22 peças registraram zero colisores
-adicionados e `castShadow=false`.
+faixa/parede 0,03 m; faixa/decalque 0,05 m. PZT1 deriva essas cinco medidas das
+dimensões e posições das malhas efetivamente criadas: as 22 caixas de acabamento,
+6 caixas sobre os vãos, 10 caixas das paredes externas e 171 planos de decalque.
+As 22 peças registraram zero colisores adicionados e `castShadow=false`.
 
 Contraprova:
 
@@ -83,8 +85,11 @@ PASSA PZT2
 PASSA PZT3
 ```
 
-O mutante restaura as posições e espessuras antigas: batente/vão 0 m,
-travessão/vão 0 m e faixa/decalque 0,02 m. Só a cláusula geométrica fica vermelha.
+O mutante conserva a declaração corrigida (`declarationUnchanged=true`) e restaura as
+posições e espessuras antigas apenas no caminho que constrói as caixas: batente/vão
+0 m, travessão/vão 0 m e faixa/decalque 0,02 m. A evidência vem dos parâmetros da
+geometria e da posição de cada malha depois de `addBox`; só PZT1 fica vermelho. Isso
+prova que uma regressão na construção reprova mesmo se a declaração do layout continuar nova.
 
 ## Estado de integração
 

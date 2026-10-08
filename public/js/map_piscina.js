@@ -208,7 +208,13 @@ export function buildPoolDay(scene, T) {
   const pickups = [];
   const root = new THREE.Group();
   const trimLayout = piscinaTrimLayout();
+  /* O mutante existe só para a régua Node: mantém a declaração boa acima, mas devolve
+     a geometria antiga ao MESMO caminho que chama addBox. Assim a contraprova pega uma
+     regressão de construção mesmo quando alguém deixa piscinaTrimLayout() intacto. */
+  const trimConstructionMutant = globalThis.process?.env?.PISCINA_TRIM_MUTANT || null;
+  const trimConstructionLayout = piscinaTrimLayout({ coplanar: trimConstructionMutant === 'coplanar' });
   const trimEvidence = [];
+  const trimReferenceEvidence = [];
   scene.add(root);
 
   const lam = (opts) => new THREE.MeshLambertMaterial(opts);
@@ -233,11 +239,33 @@ export function buildPoolDay(scene, T) {
     return m;
   }
 
+  function actualBox(id, m) {
+    const p = m.geometry.parameters;
+    return {
+      id, w: p.width, h: p.height, d: p.depth,
+      x: m.position.x, y: m.position.y - p.height / 2, z: m.position.z,
+    };
+  }
+
   function addTrimBox(id, w, h, d, x, y, z) {
     const before = colliders.length;
     const m = addBox(w, h, d, MAT.navy, x, y, z,
-      { collide: trimLayout.render.collide, cast: trimLayout.render.castShadow });
-    trimEvidence.push({ id, colliderDelta: colliders.length - before, castShadow: m.castShadow });
+      { collide: trimConstructionLayout.render.collide, cast: trimConstructionLayout.render.castShadow });
+    trimEvidence.push({ ...actualBox(id, m), colliderDelta: colliders.length - before, castShadow: m.castShadow });
+    return m;
+  }
+
+  function recordTrimReference(id, m) {
+    trimReferenceEvidence.push(actualBox(id, m));
+    return m;
+  }
+
+  function recordTrimPlaneReference(id, m) {
+    const p = m.geometry.parameters;
+    trimReferenceEvidence.push({
+      id, w: p.width, h: p.height,
+      x: m.position.x, y: m.position.y, z: m.position.z, ry: m.rotation.y,
+    });
     return m;
   }
 
@@ -454,14 +482,15 @@ export function buildPoolDay(scene, T) {
 
   /* ---------------- walls: white tile + navy accent band ---------------- */
   const wX = HALF_X + 0.5, wZ = HALF_Z + 0.5;
-  addBox(HALF_X * 2 + 2, WALL_H, 1, MAT.wall, 0, 0, -wZ);
-  addBox(HALF_X * 2 + 2, WALL_H, 1, MAT.wall, 0, 0, wZ);
+  recordTrimReference('boundary-wall', addBox(HALF_X * 2 + 2, WALL_H, 1, MAT.wall, 0, 0, -wZ));
+  recordTrimReference('boundary-wall', addBox(HALF_X * 2 + 2, WALL_H, 1, MAT.wall, 0, 0, wZ));
   // As antigas laterais abertas viram fachadas simétricas com três portais de 2,8 m.
   // A parede ainda fecha o salão até as pontas; os portais apenas recortam z=-11/0/+11.
   const sideSpans = [[-25.5, -12.4], [-9.6, -1.4], [1.4, 9.6], [12.4, 25.5]];
   for (const side of [-1, 1]) {
     const x = side * wX;
-    for (const [a, b] of sideSpans) addBox(1, WALL_H, b - a, MAT.wall, x, 0, (a + b) / 2);
+    for (const [a, b] of sideSpans)
+      recordTrimReference('boundary-wall', addBox(1, WALL_H, b - a, MAT.wall, x, 0, (a + b) / 2));
     for (const z of SIDE_PORTALS) addBox(1, WALL_H - 3.0, 2.8, MAT.wall, x, 3.0, z);
   }
   // Envelope completo dos dois corredores: parede exterior, tampas e teto opaco.
@@ -485,9 +514,9 @@ export function buildPoolDay(scene, T) {
     for (const [a, b] of spawnSpans)
       addBox(b - a, WALL_H, 0.6, MAT.wall, (a + b) / 2, 0, z);
     for (const x of SPAWN_PORTALS) {
-      addBox(3, WALL_H - 3.1, 0.6, MAT.wall, x, 3.1, z);
+      recordTrimReference('portal-opening-top', addBox(3, WALL_H - 3.1, 0.6, MAT.wall, x, 3.1, z));
       // Moldura naval de alto contraste: o vão continua 3 m e a colisão continua na parede.
-      const jamb = trimLayout.portal.jamb, header = trimLayout.portal.header;
+      const jamb = trimConstructionLayout.portal.jamb, header = trimConstructionLayout.portal.header;
       for (const dx of [-jamb.offset, jamb.offset])
         addTrimBox('portal-jamb', jamb.width, jamb.height, jamb.depth, x + dx, jamb.bottom, z);
       addTrimBox('portal-header', header.width, header.height, header.depth, x, header.bottom, z);
@@ -496,7 +525,7 @@ export function buildPoolDay(scene, T) {
       addPlane(2.35, 0.72, routeMat, x, 3.72, z - side * 0.32, 0);
     }
   }
-  const band = trimLayout.band;
+  const band = trimConstructionLayout.band;
   for (const [w, d, x, z] of [[HALF_X * 2 + 2, band.thickness, 0, -HALF_Z], [HALF_X * 2 + 2, band.thickness, 0, HALF_Z], [band.thickness, HALF_Z * 2 + 2, -HALF_X, 0], [band.thickness, HALF_Z * 2 + 2, HALF_X, 0]])
     addTrimBox('wall-band', w, band.height, d, x, 2.0, z);
   for (const corridor of SIDE_CORRIDORS)
@@ -686,6 +715,7 @@ export function buildPoolDay(scene, T) {
         _dmat.set(i, m);
       }
       const q = addPlane(w, h, m, x, y0 + h / 2, z, ry);
+      recordTrimPlaneReference('wall-decal-plane', q);
       q.renderOrder = 2;
       q.name = 'decal:' + (T.decalFiles ? T.decalFiles[i] : i);
       esconderSeFaltar(q, T.decals[i]);   // PNG 404 em prod vira BRANCO CHAPADO se não sumir (ver graffiti_pass.esconderSeFaltar)
@@ -1091,7 +1121,12 @@ export function buildPoolDay(scene, T) {
 
   /* A passada viva precisa enxergar cada parede/armário como malha separada. O lote entra
      somente depois dela: preserva o bake e troca N caixas repetidas por uma chamada. */
-  root.userData.piscinaTrimContract = { layout: trimLayout, evidence: trimEvidence };
+  root.userData.piscinaTrimContract = {
+    layout: trimLayout,
+    constructionMutant: trimConstructionMutant,
+    evidence: trimEvidence,
+    references: trimReferenceEvidence,
+  };
   batchStaticBoxes();
 
   return {
