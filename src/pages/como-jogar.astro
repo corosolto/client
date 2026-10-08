@@ -34,8 +34,8 @@ const porExtenso = ['zero', 'uma', 'duas', 'três', 'quatro', 'cinco', 'seis', '
 const faccoesProntas = FACTIONS.filter((f) => f.ready);
 
 const PASSOS = [
-  { nome: 'Abra o jogo no navegador de desktop',
-    texto: 'Entre em www.csbrasil.online no Chrome, Edge ou Firefox. Não tem download, instalação nem cadastro - a arena carrega na própria aba.' },
+  { nome: 'Abra o jogo no navegador',
+    texto: 'Entre em www.csbrasil.online no Chrome, Edge, Firefox ou Safari. No computador, use mouse e teclado; no celular, jogue na horizontal com os controles de toque. O desempenho depende do aparelho e do navegador.' },
   { nome: 'Escolha um nick',
     texto: 'O nick tem de 2 a 14 caracteres e fica salvo no navegador: é o nome que aparece no placar da partida e nos anúncios de abate. Não é obrigatório para jogar.' },
   { nome: 'Escolha a facção e o personagem',
@@ -57,7 +57,7 @@ const MP_PASSOS = [
 
 const FAQ: [string, string][] = [
   ['Preciso instalar ou pagar alguma coisa?',
-   'Não. O jogo é 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem download, sem instalação e sem cadastro.'],
+   'Não. O jogo é gratuito e roda no navegador, sem download nem cadastro. No celular, o beta web pode ser adicionado à tela inicial pelo menu do navegador quando essa opção estiver disponível.'],
   ['Quais são os controles?',
    'WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, 1/2/3 trocam primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar.'],
   ['Como funciona um round?',
@@ -65,7 +65,7 @@ const FAQ: [string, string][] = [
   ['Tem ranking global?',
    'Ainda não. O jogo está em alpha e o ranking global está desligado até o placar ser confiável - publicar classificação que dá pra forjar seria publicar número errado. Os seus stats de partida ficam salvos no seu navegador e aparecem no menu RANKING do jogo.'],
   ['Funciona no celular?',
-   'O jogo foi feito para desktop, com mouse e teclado. Em tela de toque aparece um aviso recomendando jogar no computador.'],
+   'Sim. O beta web tem controles de toque; use o celular na horizontal. O desempenho varia conforme o aparelho e o navegador.'],
   ['Dá pra jogar com amigos?',
    'Sim. Abra MULTIPLAYER e entre por JOGO RÁPIDO, pela lista de salas ou por código/link de convite. Você também pode criar uma sala pública ou privada e convidar amigos.'],
   ['O jogo tem lado político?',
@@ -80,7 +80,7 @@ const jsonld = [
     description: 'Do primeiro clique ao primeiro round ganho, em 6 passos.',
     totalTime: 'PT5M',
     estimatedCost: { '@type': 'MonetaryAmount', currency: 'BRL', value: '0' },
-    tool: [{ '@type': 'HowToTool', name: 'Navegador de desktop (Chrome, Edge ou Firefox)' }],
+    tool: [{ '@type': 'HowToTool', name: 'Navegador moderno em desktop ou celular' }],
     step: PASSOS.map((p, i) => ({
       '@type': 'HowToStep', position: i + 1, name: p.nome, text: p.texto,
       url: abs('/como-jogar') + '#passo-' + (i + 1),
@@ -117,8 +117,9 @@ const jsonld = [
       vem antes de qualquer navegação, responde a pergunta sozinho e usa os
       mesmos números do JSON-LD logo abaixo. */}
   <Fragment slot="sub">
-    <strong>Resposta curta:</strong> abra <strong>www.csbrasil.online</strong> num navegador de
-    desktop, clique para travar o mouse e jogue - não tem download, instalação nem cadastro.{' '}
+    <strong>Resposta curta:</strong> abra <strong>www.csbrasil.online</strong> num navegador.
+    No computador, clique para travar o mouse; no celular, vire a tela na horizontal e use os
+    controles de toque. O jogo é gratuito, sem download ou cadastro.{' '}
     <strong>WASD</strong> move, o <strong>mouse</strong> mira, o <strong>clique esquerdo</strong>{' '}
     atira e o <strong>direito</strong> abre a luneta. Cada round dura <strong>1:39</strong>, o
     padrão é <strong>4 contra 4</strong> contra bots e <strong>3 rounds vencem</strong> a partida.
@@ -135,7 +136,7 @@ const jsonld = [
   </ol>
 
   <h2 id="multiplayer">Tutorial de multiplayer</h2>
-  <p>Para jogar com outras pessoas, use um navegador de desktop com mouse e teclado. O multiplayer está em beta.</p>
+  <p>Para jogar com outras pessoas, use o navegador em um computador ou teste o beta web para celular na horizontal. O multiplayer também está em beta.</p>
   <ol>
     {MP_PASSOS.map(([nome, texto]) => (
       <li><strong>{nome}.</strong> {texto}</li>

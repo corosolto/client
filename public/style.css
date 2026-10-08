@@ -1078,7 +1078,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .howto-grid{display:grid;grid-template-columns:auto auto;gap:var(--s-2) var(--s-5);font-size:var(--fs-200);
   font-weight:600;letter-spacing:var(--tr-1);text-align:left;color:var(--ink-200)}
 .howto-grid span:nth-child(odd){color:var(--br-faixa);font-family:var(--mono);font-size:var(--fs-100)}
-.howto-touch{display:none}   /* versão toque: só aparece no mobile (media coarse abaixo) */
+.howto-touch,.howto-touch-note{display:none}   /* versões de toque só aparecem em aparelhos touch */
 .support-panel{max-width:560px}
 .support-choice{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
 .support-region{font-size:12px!important;padding:10px 14px!important}
@@ -2928,6 +2928,16 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-modal-nota{margin:0;max-width:44ch;font:600 var(--fs-50)/var(--lh-base) var(--font);color:var(--ink-300)}
 @media(max-width:560px){.mp-modal-copy{flex-direction:column;width:100%}.mp-modal-copy .btn,.mp-modal-card .btn-big{width:100%;min-width:0}}
 
+/* PWA: a instalação é opcional; o botão só aparece em aparelhos de toque. */
+.pwa-install{display:none}
+.pwa-install[hidden]{display:none!important}
+@media(pointer:coarse){
+  .pwa-install{position:fixed;z-index:100001;right:calc(12px + env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:min(310px,calc(100vw - 24px));pointer-events:auto}
+  .pwa-install button{min-height:44px;padding:10px 15px;border:1px solid #b4d92e;background:#10120bdc;color:#d6f275;font:700 12px/1 var(--font);letter-spacing:.8px;cursor:pointer;box-shadow:0 3px 16px #0009;touch-action:manipulation}
+  .pwa-install button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .pwa-install p{margin:0;padding:10px 12px;background:#10120bf2;border:1px solid #b4d92e;color:#f0f0ed;font:600 12px/1.45 var(--font);box-shadow:0 3px 16px #0009}
+}
+
 /* Faixa do ESPECTADOR: quem está assistindo precisa saber que está assistindo, de quem é a
    visão, e como entrar em campo. Sem isso o modo espectador é indistinguível de um bug. */
 #mp-spec-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;
@@ -3028,6 +3038,7 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   /* COMO JOGAR: troca a lista de TECLADO pela lista de TOQUE (não existe W/A/S/D no celular) */
   #howto-panel .howto-keys { display: none; }
   #howto-panel .howto-touch { display: grid; }
+  #howto-panel .howto-touch-note { display: block; }
   .howto-grid { font-size: var(--fs-50); gap: 4px var(--s-3); }
 
   /* RANKING: números 26px + grade folgada + parágrafo estático que REPETE o #rank-global.

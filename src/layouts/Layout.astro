@@ -627,7 +627,7 @@ body>footer a:hover{color:var(--amber)}
   <a href="/" aria-label={`${BRAND_FULL} - página inicial`}>
     <img class="foot-logo" src="/logo.png" width="651" height="526" alt="" loading="lazy">
   </a>
-  <div><strong style="color:var(--bone)">{BRAND_FULL}</strong> · FPS de navegador, grátis e sem instalação</div>
+  <div><strong style="color:var(--bone)">{BRAND_FULL}</strong> · FPS de navegador grátis, jogável sem baixar</div>
   <div>
     {/* separadores com `{' · '}` explícito: o espaço literal entre `·` e a
         próxima tag some na compilação e sai "Como jogar ·Changelog". */}
@@ -679,8 +679,8 @@ body>footer a:hover{color:var(--amber)}
       // as 3 linhas de prosa do rodapé: troca o texto inteiro quando acha o marcador PT
       document.querySelectorAll('footer div').forEach((d) => {
         const t = d.textContent;
-        if (t.includes('FPS de navegador, grátis e sem instalação'))
-          d.textContent = t.replace('FPS de navegador, grátis e sem instalação', 'Browser FPS, free, no install');
+        if (t.includes('FPS de navegador grátis, jogável sem baixar'))
+          d.textContent = t.replace('FPS de navegador grátis, jogável sem baixar', 'Free browser FPS, playable without a download');
         else if (t.includes('Paródia independente'))
           d.textContent = 'Independent parody, not affiliated with Valve. Counter-Strike is a Valve Corporation trademark.';
       });
