@@ -15,6 +15,8 @@
 // nome certo. O domínio segue csbrasil.online: trocar domínio no dia do
 // release custa todo o histórico de indexação por zero ganho.
 
+import { MAPAS } from '../data/jogo';
+
 export const SITE = 'https://www.csbrasil.online';
 
 export const BRAND = 'CORO SOLTO';
