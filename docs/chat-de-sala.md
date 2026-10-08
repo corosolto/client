@@ -434,9 +434,11 @@ O que chega como `chat_denuncia` ao cliente: `recebida`, `repetida`, ou `recusad
 | Texto do chat em log do nó | nunca. `console` não é chamado pelo `game/chat.js` |
 | Texto do chat em `/metrics` | nunca. Só contadores agregados, se algum dia entrarem |
 
-Aviso pendente antes da ativação: a denúncia guarda o texto e o anonId da evidência por 90
-dias. Um aviso curto ao jogador (na tela de denúncia ou na política do site) precisa existir
-antes de `MP_CHAT=1` na frota. Fica no checklist do PR.
+Aviso de retenção (feito): a denúncia guarda o texto e o anonId da evidência por 90 dias, e
+a tela de denúncia diz isso ao jogador junto dos motivos, em `#chat-motivos-aviso`: "Ao
+denunciar, a mensagem e um identificador anônimo ficam guardados por 90 dias para
+moderação." O texto passa pelo `i18n.js` e o smoke `tests/smoke/chat-sala.spec.js` cobra
+que ele apareça antes de enviar. Era pré-requisito de `MP_CHAT=1` na frota.
 
 ## 10. SEO e moderação
 
