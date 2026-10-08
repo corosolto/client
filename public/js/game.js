@@ -7520,6 +7520,22 @@ export class Game {
         }
         if (!pocket) {
           b.path = this._findPathLocal(W, from, b.roamIdx, b._banNodes); b.pathIdx = 1;
+          // Bans 286/334/236 isolavam [287,262,312]; [287] fazia o bot orbitar.
+          // Reabra só uma saída agora caminhável, mantendo os demais bans.
+          if (!this.__mutBotExit && b.path.length <= 1 && from !== b.roamIdx && b._banNodes?.size) {
+            const exits = (W.waypoints.adj[from] || []).filter((i) => b._banNodes.has(i))
+              .sort((a, c) => Math.hypot(W.waypoints.nodes[a].x - W.waypoints.nodes[b.roamIdx].x,
+                W.waypoints.nodes[a].z - W.waypoints.nodes[b.roamIdx].z)
+                - Math.hypot(W.waypoints.nodes[c].x - W.waypoints.nodes[b.roamIdx].x,
+                  W.waypoints.nodes[c].z - W.waypoints.nodes[b.roamIdx].z));
+            for (const i of exits) {
+              if (!this._walkReach(b, W.waypoints.nodes[i], 0.8)) continue;
+              b._banNodes.delete(i);
+              const recovered = this._findPathLocal(W, from, b.roamIdx, b._banNodes);
+              if (recovered.length > 1) { b.path = recovered; break; }
+              b._banNodes.add(i);
+            }
+          }
           if (BOT_MOVE2) b.path = this._pullString(b, b.path);
           // Alvo INALCANÇÁVEL (findPath devolve [from] — ilhas do grafo desconexo, ex.: as
           // ilhotas do piscinão): antes o bot "seguia" o próprio nó mais próximo e ficava
