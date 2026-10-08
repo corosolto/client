@@ -1058,6 +1058,21 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #pause-menu .screen-title::after{display:none}   /* a referência não tem régua aqui */
 #pause-menu .panel::before{display:none}         /* nem a barra de risco no canto */
 #pause-menu .panel{padding:var(--s-4)}
+.mp-identity-card{display:flex;align-items:center;gap:12px;max-width:min(420px,86vw);padding:9px 13px;
+  border:1px solid rgba(180,217,46,.48);background:rgba(13,14,17,.92);color:#ecebe6;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);font-family:var(--aaa-font-body)}
+.mp-identity-card[hidden]{display:none}
+.mp-identity-portrait{width:64px;height:64px;flex:0 0 64px;object-fit:cover;background:#24262b}
+.mp-identity-copy{display:flex;flex-direction:column;gap:3px;min-width:0;text-align:left}
+.mp-identity-copy small{color:#b4d92e;font:700 10px/1.2 var(--aaa-font-body);letter-spacing:1.5px}
+.mp-identity-copy strong{font-size:18px;line-height:1.15;overflow-wrap:anywhere}
+.mp-identity-copy span{font-size:12px;color:#bcbeb9;line-height:1.2}
+#mp-identity-toast{position:fixed;z-index:29;left:50%;top:max(76px,calc(env(safe-area-inset-top) + 68px));
+  transform:translateX(-50%);pointer-events:none}
+body:has(#pause-menu:not(.hidden)) #mp-identity-toast{display:none}
+@media(max-width:600px){#mp-identity-toast{top:max(64px,calc(env(safe-area-inset-top) + 56px))}
+  .mp-identity-portrait{width:52px;height:52px;flex-basis:52px}
+  .mp-identity-copy strong{font-size:16px}}
 .pause-actions{display:flex;flex-direction:column;gap:4px;min-width:min(420px,86vw);text-align:center}
 /* FILAS, não pílulas: sem contorno, chapadas, coladas uma na outra. O CONTINUAR fica
    sólido (vem do `.btn-big`) e é o único com peso — é a leitura da referência.
@@ -1076,6 +1091,17 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #pause-menu .footnote kbd{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
   color:var(--ink-200);background:rgba(var(--bg-700-rgb),.9);border:1px solid var(--line-2);
   padding:3px 8px;clip-path:var(--cut-sm)}
+@media(max-height:500px){
+  #pause-menu{justify-content:flex-start;gap:6px;overflow-y:auto;padding:8px 0 12px;box-sizing:border-box}
+  #pause-menu .screen-title{font-size:24px;line-height:1.1;margin:0}
+  #pause-menu .mp-identity-card{padding:4px 8px;gap:8px}
+  #pause-menu .mp-identity-portrait{width:42px;height:42px;flex-basis:42px}
+  #pause-menu .pause-actions{gap:2px}
+  #pause-menu .panel{padding:8px}
+  #pause-menu .pause-actions .btn{min-height:36px;padding:6px 10px;font-size:12px}
+  #pause-menu .pause-actions .btn-big{font-size:18px}
+  #pause-menu .footnote{position:static;margin:0;font-size:10px}
+}
 .howto-grid{display:grid;grid-template-columns:auto auto;gap:var(--s-2) var(--s-5);font-size:var(--fs-200);
   font-weight:600;letter-spacing:var(--tr-1);text-align:left;color:var(--ink-200)}
 .howto-grid span:nth-child(odd){color:var(--br-faixa);font-family:var(--mono);font-size:var(--fs-100)}

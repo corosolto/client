@@ -3600,6 +3600,47 @@ let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
 let mpNos = [];
 let mpTimerLista = null;
 let mpTicketIdentityUid = null;
+let mpIdentityTimer = null;
+
+function mpLimparIdentidade() {
+  clearTimeout(mpIdentityTimer);
+  mpIdentityTimer = null;
+  for (const id of ['mp-identity-toast', 'mp-identity-pause']) {
+    const card = document.getElementById(id);
+    if (card) card.hidden = true;
+  }
+}
+
+function mpMostrarIdentidade(estado) {
+  mpLimparIdentidade();
+  const espectador = !!estado.espectador || estado.yourEnt == null;
+  const roster = Array.isArray(estado.roster) ? estado.roster : [];
+  const corpo = espectador ? null : roster.find((r) => r && r.id === estado.yourEnt && r.team === estado.yourTeam);
+  const def = corpo ? CHARACTERS.find((c) => c.id === corpo.char) : null;
+  // O personagem usado para preload é um fallback técnico; não anunciá-lo como atribuição.
+  const nome = espectador ? 'Espectador' : def?.name || 'Personagem não identificado';
+  const detalhe = espectador ? 'Aguardando vaga em um time'
+    : def ? tr(FACTION_NAME[def.team] || def.team) : 'O servidor ainda não informou seu personagem';
+  for (const id of ['mp-identity-toast', 'mp-identity-pause']) {
+    const card = document.getElementById(id);
+    if (!card) continue;
+    const img = card.querySelector('.mp-identity-portrait');
+    card.querySelector('small').textContent = espectador ? 'SUA POSIÇÃO NA PARTIDA' : 'SEU PERSONAGEM NO MULTIPLAYER';
+    card.querySelector('strong').textContent = nome;
+    card.querySelector('.mp-identity-copy > span').textContent = detalhe;
+    img.hidden = !def;
+    img.removeAttribute('src');
+    if (def) {
+      img.onerror = () => {
+        if (img.src.includes('/chars-hero/')) img.src = portraitFallbackUrl(def);
+        else { img.onerror = null; img.hidden = true; }
+      };
+      img.src = portraitUrl(def);
+    }
+    card.hidden = false;
+  }
+  mpIdentityTimer = setTimeout(() => { const toast = document.getElementById('mp-identity-toast'); if (toast) toast.hidden = true; }, 5000);
+}
 
 async function obterMpTicket(action) {
   /* Um ?mp= pode apontar a staging ou a um nó oficial. Só o nó de teste selecionado
@@ -4152,6 +4193,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
       currentEnemyFaction = next.enemyFaction; currentChar = next.char;
       mpAtualizarBarraSpec(m);
       if (mpSessao?.net === net) await startGame(currentTeam, currentChar, currentEnemyFaction, true);
+      if (mpSessao?.net === net && net.yourEnt === m.yourEnt && game?.online) mpMostrarIdentidade({ ...net.meta, ...m });
     });
   };
   // Nova partida no servidor (mapa girou): mesmo conteúdo do welcome, remonta por cima.
@@ -4178,13 +4220,17 @@ async function mpMontarPartida(net, m) {
   const personagem = (meuNoRoster && CHARACTERS.some((c) => c.id === meuNoRoster.char) ? meuNoRoster.char : null)
     || (CHARACTERS.find((c) => c.team === faccaoMinha) || CHARACTERS[0]).id;
   await startGame(lado, personagem, faccaoDele, true);
-  if (mpSessao?.net === net) mpAtualizarBarraSpec(m);
+  if (mpSessao?.net === net && net.yourEnt === m.yourEnt && game?.online) {
+    mpAtualizarBarraSpec(m);
+    mpMostrarIdentidade(m);
+  }
 }
 
 /* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
    o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
 function mpDesconectou() {
   if (!mpSessao) return;
+  mpLimparIdentidade();
   try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
   mpSessao.chat?.destruir();
   mpSessao = null;
@@ -4244,6 +4290,7 @@ function mpFecharBarraSpec() {
 }
 function mpEncerrarSessao() {
   const s = mpSessao; mpSessao = null;
+  mpLimparIdentidade();
   s?.chat?.destruir();
   mpFecharBarraSpec();
   try { s?.net.close(); } catch { /* já fechado */ }
