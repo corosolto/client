@@ -40,14 +40,14 @@ const jsonld = [
     tamanho não é problema e detalhe é bem-vindo. */}
 <Layout
   title={`Sobre - FPS grátis de navegador estilo CS 1.6 | ${BRAND_FULL}`}
-  description={`O que é o ${BRAND_FULL}: FPS gratuito de navegador estilo CS 1.6, satírico e brasileiro, com ${PERSONAGENS.length} personagens, ${MAPAS.length} mapas e ${ARMAS.length} armas. Sem instalação.`}
+  description={`O que é o ${BRAND_FULL}: FPS gratuito de navegador estilo CS 1.6, satírico e brasileiro, com ${PERSONAGENS.length} personagens, ${MAPAS.length} mapas e ${ARMAS.length} armas. Beta web com controles de toque.`}
   jsonld={jsonld}
   h1="Arena sniper estilo CS 1.6, versão Brasil"
   kicker="Sobre o jogo"
   heroImg="/img/map-previews/praca_poderes.jpg"
   heroPos="52%">
   <Fragment slot="sub">
-    Time E × Time B numa Brasília fictícia e satírica: urna gigante quebrada no meio da
+    Esquerda × Direita numa Brasília fictícia e satírica: urna gigante quebrada no meio da
     arena, boteco, pastel, acampamento e o Congresso no horizonte. {PERSONAGENS.length} personagens
     originais em {FACCOES.length} facções, {MAPAS.length} mapas, {ARMAS.length} armas, bots,
     rounds, CTF, headshots e multikills estilo Unreal Tournament.
@@ -74,7 +74,7 @@ const jsonld = [
     <a class="btn-cta" href="/">▶ Jogar agora - grátis</a>
     <a class="btn-cta btn-2" href="/como-jogar">Como jogar</a>
   </div>
-  <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Roda no navegador de desktop. Sem instalação, sem cadastro.</p>
+  <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Roda no navegador de desktop e celular. No celular, use a tela na horizontal; o beta web tem controles de toque. Sem cadastro.</p>
   <p style="font-size:12px;color:var(--bone-dim);margin-top:4px">Versão atual: {pkg.version}</p>
 
   <div class="tstat" style="margin-top:26px">
@@ -99,8 +99,11 @@ const jsonld = [
       {PERSONAGENS.length} personagens originais, {MAPAS.length} mapas, {ARMAS.length} armas, bots,
       sistema de rounds e Capture the Flag.</p></details>
   <details><summary><strong>Preciso instalar ou pagar algo?</strong></summary>
-    <p>Não. É 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem
-      download, sem instalação e sem cadastro.</p></details>
+    <p>Não. É gratuito e roda no navegador, sem download nem cadastro. No celular, o beta web pode
+      ser adicionado à tela inicial pelo menu do navegador quando essa opção estiver disponível.</p></details>
+  <details><summary><strong>Funciona no celular?</strong></summary>
+    <p>Sim. O beta web tem controles de toque; jogue na horizontal. O desempenho varia conforme o
+      aparelho e o navegador.</p></details>
   <details><summary><strong>Quais são as facções?</strong></summary>
     <p>{FACCOES.map(f => f.nome).join(', ')}. Duas delas não têm nada de política. Todos os
       personagens são arquétipos fictícios e originais, sem pessoas reais.</p></details>

@@ -29,6 +29,7 @@ import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o 
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 import { createSoundscape } from './soundscape.js';        // vida 1: áudio ambiente por mapa (world.sound)
+import { grafiteNoDedicado } from './graffiti_pass.js';    // nó de MP não roda a passada de grafite (ver o cabeçalho de grafitar)
 import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS, vmFonteDe } from './authoredvm.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { viewmodelVisibility } from './vmvisibility.js';
@@ -322,7 +323,7 @@ const RACK_RETA = QS.get('rackreta') === '1';
    A simetria é parte do desenho: vale pra jogador E bots — meia regeneração faria o bot
    virar esponja. Régua: invariante REGEN de `tools/eval/regen-check.mjs`. */
 const REGEN = QS.get('regen') === '1', REGEN_DELAY = 6, REGEN_RATE = 22;
-const TEAM_LABEL = { E: 'TIME E', B: 'TIME B' };
+const TEAM_LABEL = { E: 'ESQUERDA', B: 'DIREITA' };
 const RADIO = {
   z: { title: 'COMANDOS', items: ['Bora, bora, bora!', 'Cobre eu!', 'Recua, recua!'] },
   x: { title: 'RESPOSTAS', items: ['Recebido!', 'Negativo!', 'Bonito tiro!'] },
@@ -722,6 +723,7 @@ export class Game {
     this.camera.rotation.order = 'YXZ';
     this.scene.add(this.camera);
     this._mapId = resolveMapId(mapId);
+    grafiteNoDedicado(dedicated);   // antes do build: a passada roda dentro dele
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
@@ -4929,7 +4931,7 @@ export class Game {
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
   _teamName(side) { const f = this._factionOf(side); return f === 'U' ? 'TRIBOS URBANAS' : f === 'C' ? 'PALHAÇOS' : f === 'F' ? 'FUNKEIROS' : f === 'M' ? 'MÍTICO' : (TEAM_LABEL[f] || f); }
-  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'TME' : 'TMB'; }
+  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'ESQ' : 'DIR'; }
 
   /* Uma plaqueta do HUD. Chamada por QUADRO, então tudo aqui é comparação barata:
      o número só é escrito se mudou, e o brasão (data-f, arte no CSS) só quando a
@@ -5824,7 +5826,7 @@ export class Game {
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
     const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
-    const weaponChanged = this.playerTP && this._tpWeapon !== w;
+    const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id);
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
     if (this.playerTP && !weaponChanged && !wantUpgrade) return;
     // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
@@ -5843,6 +5845,7 @@ export class Game {
     this.scene.add(tp.group);
     this.playerTP = tp;
     this._tpWeapon = w;
+    this._tpDefId = def.id;
   }
 
   // Anima o corpo TP a partir do estado do jogador e põe a câmera atrás dele.
@@ -6863,6 +6866,24 @@ export class Game {
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
     bot._mark = { halo, ally };   // SEM chevron/seta na cabeça (pedido do dono) — só o halo no chão
+  }
+  /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
+     então def, nome e malha ficam iguais nos dois lados do fio. */
+  _trocarPersonagem(c, def) {
+    if (!c || !def || c.def?.id === def.id) return false;
+    if (c === this.player) {
+      this.playerDef = def; this.playerCharId = def.id; c.def = def;
+      const perfil = { id: def.id, faction: this.playerFaction, skin: def.pal?.skin, sleeve: def.pal?.shirt, accent: def.pal?.pants };
+      this.vm?.authored?.setProfile(perfil);
+      this.vm?.melee?.setProfile(perfil);
+      return true;
+    }
+    if (c.name === c.def?.name) c.name = def.name;
+    else if (c.name === `[BOT] ${c.def?.name}`) c.name = `[BOT] ${def.name}`;
+    c.def = def;
+    c._meshWeapon = null;
+    if (c.mesh) this._syncRemoteWeapon(c, c.weapon);
+    return true;
   }
   /* A arma de 3ª pessoa pertence à malha do personagem; remonte-a quando o snapshot trocar
      a arma, preservando transform/visibilidade/raycast e o fallback procedural visível. */

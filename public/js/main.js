@@ -24,7 +24,7 @@ import { enableStylize } from './stylize.js';
 import { FACTIONS } from './factions.js';
 /* Literal exigido pela régua UIR1 (redesign-check lê a declaração, não o uso);
    a fonte dos nomes é factions.js — mantenha os dois em sincronia. */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV', P: 'POLÍTICOS' };
+const FACTION_NAME = { E: 'ESQUERDA', B: 'DIREITA', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV', P: 'POLÍTICOS' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
@@ -34,7 +34,6 @@ import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { montarChatSala } from './chat-painel.js';
 import { makeNetcode } from './netgame.js';
-import { FACCAO_NOME_UI } from './mapcat.js';
 
 /* ---------------- settings & nickname ---------------- */
 const SETTINGS_KEY = 'awpbr_settings';
@@ -351,7 +350,7 @@ function loadMenuBackdrop() {
 loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 
 /* ---------------- screens ---------------- */
-const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
+const screens = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
   const hubMpRoute = HUB_ENABLED && id === 'mp-panel';
   if (hubMpRoute) {
@@ -1138,6 +1137,7 @@ let heartbeatOff = false;
    zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
 // o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
 await resolveGeoLang();
+document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
 syncMenuMusicToggle();
@@ -2019,6 +2019,7 @@ if (HUB_ENABLED) {
   const mpPanel = $('mp-panel');
   $('hub-mp-host').appendChild(mpPanel);
   $('mp-panel').querySelector('.mp-corpo').prepend($('mp-quick'));
+  $('mp-quick').after($('mp-amigos'));   // nas duas abas (pública e privada), logo no topo
   $('mp-panel').querySelector('.mp-corpo').appendChild($('mp-panel').querySelector('.mp-criar'));
   const tabs = [...document.querySelectorAll('.hub-tabs [data-hub-tab]')];
   const panes = { jogar: $('hub-play'), ranking: $('hub-ranking'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
@@ -2723,10 +2724,18 @@ $('btn-menu').onclick = () => { sfx.uiClick(); quitToMenu(); };
 let switchMode = false;
 function armSwitchHook() {
   game.onRequestSwitch = () => {
+    if (mpSessao) return abrirTrocaOnline();
     game.setPaused(true);
     switchMode = true;
     pickTeam(game.enemyFaction);
   };
+}
+// Online o lado é do servidor: M só troca o personagem, e só se o servidor aceitar.
+function abrirTrocaOnline() {
+  if (!mpSessao.net?.aceitaPersonagem?.() || mpSessao.net.espectador) return;
+  game.setPaused(true);
+  switchMode = 'mp';
+  pickTeam(currentTeam);
 }
 $('char-confirm').onclick = () => {
   sfx.uiClick();
@@ -2734,6 +2743,13 @@ $('char-confirm').onclick = () => {
   // Only take the in-match "switch team" path when there's a live game to switch;
   // a stale switchMode flag (e.g. backed out of M) must NOT hit game._switchTeam on a
   // disposed game — that used to throw and leave the next match unable to load.
+  if (switchMode === 'mp' && game && mpSessao) {
+    switchMode = false;
+    localStorage.setItem('csbr-home-character', selChar.id);
+    mpSessao.net.pedirPersonagem(selChar.id);
+    show(null); game.resume();
+    return;
+  }
   if (switchMode && game) {
     switchMode = false;
     currentChar = selChar.id;
@@ -3887,6 +3903,11 @@ function mpModalSalaCriada(sala, senha = '') {
   const m = mpEl('mp-modal');
   if (!m || !sala.convite) return mpEntrar(sala, 'auto', senha);   // sem modal ou sem código, o fluxo antigo vale
   mpEl('mp-modal-convite').textContent = sala.convite;
+  /* a sala só por convite NÃO está na lista (o nó a esconde): a nota não pode prometer "na lista" */
+  const nota = m.querySelector('.mp-modal-nota');
+  if (nota) nota.textContent = tr(sala.private && sala.senha === false
+    ? 'ESC ou clique fora só fecham este aviso - a sala continua criada. Ela não aparece na lista: só entra quem tem o código.'
+    : 'ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.');
   const lot = mpEl('mp-modal-lot');
   if (lot) lot.textContent = `${sala.players | 0}/${sala.max || 10} na sala · ${sala.name || 'SALA'}`;
   const fecha = () => {
@@ -3914,6 +3935,13 @@ function mpModalSalaCriada(sala, senha = '') {
     try { await navigator.clipboard.writeText(linkDeConvite(sala.convite)); rotula(link, 'COPIADO!'); }
     catch { mpErro(`Copie à mão: ${linkDeConvite(sala.convite)}`); fecha(); }
   };
+  /* WhatsApp: `wa.me/?text=` abre o app no celular e o WhatsApp Web no computador, com a
+     mensagem pronta e o link dentro — sem pedir número, a pessoa escolhe o grupo lá. */
+  const zap = mpEl('mp-modal-zap');
+  if (zap) {
+    zap.href = `https://wa.me/?text=${encodeURIComponent(frase('conviteZap', linkDeConvite(sala.convite)))}`;
+    zap.onclick = () => ui.click();
+  }
   const entrar = mpEl('mp-modal-entrar');
   if (entrar) entrar.onclick = () => { ui.click(); fecha(); mpEntrar(sala, 'auto', senha); };
   m.classList.remove('hidden');
@@ -3938,15 +3966,6 @@ async function mpEntrarPorConvite(txt) {
 window.__mpConvite = mpEntrarPorConvite;
 
 function mpMontarFormulario() {
-  const e = mpEl('mp-fac-e'), b = mpEl('mp-fac-b');
-  if (e && !e.options.length) {
-    for (const [id, nome] of Object.entries(FACCAO_NOME_UI)) {
-      e.add(new Option(nome, id)); b.add(new Option(nome, id));
-    }
-    e.add(new Option('SORTEAR A CADA PARTIDA', 'random'));
-    b.add(new Option('SORTEAR A CADA PARTIDA', 'random'));
-    e.value = 'E'; b.value = 'B';
-  }
   const priv = mpEl('mp-privada'), wrap = mpEl('mp-senha-wrap');
   if (priv && wrap) priv.onchange = () => { wrap.hidden = !priv.checked; };
   const rot = mpEl('mp-rotacao');
@@ -3975,7 +3994,6 @@ function mpMontarFormulario() {
         // com a lista a dedo a rotação vira só o plano B do servidor (lista inválida = recorte)
         rotacao: aDedo ? 'todos' : mpEl('mp-rotacao').value,
         ...(aDedo ? { mapas: escolhidos, mapId: escolhidos[0] } : {}),
-        faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
         teamSize: +mpEl('mp-teamsize').value || 5,   // teamSize do criador: 1 = X1 sem bots (backend #29, relato 21/09)
         creatorNick: ($('nick-input').value || '').trim() || null,
@@ -3994,6 +4012,42 @@ function mpMontarFormulario() {
       mpErro(err && err.message === 'http_429'
         ? 'Esse servidor está no limite de salas. Tente outra região.'
         : 'Não deu pra criar a sala. Tente de novo.');
+    }
+  };
+  /* JOGAR COM AMIGOS: sala privada SEM senha (o código é a chave, backend#62) com o padrão de
+     quem não quer configurar nada, direto no modal do convite. Escolher fica no MAIS OPÇÕES. */
+  const amigos = mpEl('mp-amigos');
+  if (amigos) amigos.onclick = async () => {
+    ui.click(); mpErro('');
+    if (amigos.disabled) return;
+    if (!mpNoAtual) return mpErro(tr('Escolha um servidor primeiro.'));
+    /* nó sem `salaConvite` listaria a sala com o código e abriria pelo id: só nó que anuncia;
+       nenhum = o formulário, que exige senha */
+    const no = mpNoAtual.salaConvite ? mpNoAtual : mpNos.find((n) => n.online && n.salaConvite);
+    if (!no) {
+      const criar = mpEl('mp-panel').querySelector('.mp-criar');
+      if (criar) criar.open = true;
+      return mpErro(tr('Este servidor ainda não cria sala só com convite. Use MAIS OPÇÕES e crie com senha.'));
+    }
+    if (no !== mpNoAtual) mpSelecionarNo(no);
+    const nick = ($('nick-input').value || '').trim();
+    amigos.disabled = true;   // dois cliques não criam duas salas
+    try {
+      const ticket = await obterMpTicket('create');
+      const sala = await createRoom(mpNoAtual.http, {
+        // vazio = o nó dá nome ("SALA R7"); o tamanho de time fica no padrão do servidor
+        name: nick ? `SALA DE ${nick}`.toUpperCase().slice(0, 24) : '',
+        rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
+        ctf: false, private: true, password: '', maxPlayers: 10,
+        creatorNick: nick || null,
+      }, ticket);
+      mpModalSalaCriada({ ...sala, id: sala.room || sala.id });
+    } catch (err) {
+      mpErro(err && err.message === 'http_429'
+        ? tr('Esse servidor está no limite de salas. Tente outra região.')
+        : tr('Não deu pra criar a sala. Tente de novo.'));
+    } finally {
+      amigos.disabled = false;
     }
   };
   const at = mpEl('mp-atualizar'); if (at) at.onclick = () => { ui.click(); mpAtualizarSalas(); };
@@ -4021,7 +4075,7 @@ function mpMontarFormulario() {
     try {
       const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
-        name: 'TRETA RÁPIDA', rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
+        name: 'TRETA RÁPIDA', rotacao: 'todos',
         ctf: false, private: false, password: '', maxPlayers: 10,
         creatorNick: ($('nick-input').value || '').trim() || null,
       }, ticket);
@@ -4051,7 +4105,10 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   if (mpConectando) return;   // dois cliques em ENTRAR não podem abrir dois sockets
   mpErro('');
   const nick = ($('nick-input').value || '').trim();
-  if (sala.private && !senha) {
+  /* sala só por convite (`senha: false`, backend#62): entra pelo CÓDIGO, sem senha; pelo id o
+     nó responde que ela não existe. Nó antigo não manda `senha` e a privada segue pedindo. */
+  const soConvite = sala.private && sala.senha === false && !!sala.codigo;
+  if (sala.private && !soConvite && !senha) {
     senha = (prompt('Essa sala é privada. Senha:') || '').trim();
     if (!senha) return;
   }
@@ -4064,7 +4121,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     return mpErro('Não deu para autorizar a conexão. Tente novamente.');
   }
   const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
-    nome: nick || null, room: sala.id, pw: senha, team, ticket,
+    nome: nick || null, room: sala.id, codigo: soConvite ? sala.codigo : null, pw: senha, team, ticket,
     csha: String(window.__CS_BUILD?.sha || ''),   // mp_session grava o build do navegador (backend#22)
   });
   /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
@@ -4114,8 +4171,10 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
       currentEnemyFaction = next.enemyFaction; currentChar = next.char;
       mpAtualizarBarraSpec(m);
       if (mpSessao?.net === net) await startGame(currentTeam, currentChar, currentEnemyFaction, true);
+      if (mpSessao?.net === net) mpPedirPersonagemPreferido(net);
     });
   };
+  net.onPersonagem = (m) => { if (m.ent === net.yourEnt) currentChar = m.char; };
   // Nova partida no servidor (mapa girou): mesmo conteúdo do welcome, remonta por cima.
   // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
   net.onPartida = async (m) => {
@@ -4140,7 +4199,16 @@ async function mpMontarPartida(net, m) {
   const personagem = (meuNoRoster && CHARACTERS.some((c) => c.id === meuNoRoster.char) ? meuNoRoster.char : null)
     || (CHARACTERS.find((c) => c.team === faccaoMinha) || CHARACTERS[0]).id;
   await startGame(lado, personagem, faccaoDele, true);
-  if (mpSessao?.net === net) mpAtualizarBarraSpec(m);
+  if (mpSessao?.net === net) { mpAtualizarBarraSpec(m); mpPedirPersonagemPreferido(net); }
+}
+
+/* O personagem escolhido no hub vale no multiplayer: o servidor troca o corpo herdado do bot. */
+function mpPedirPersonagemPreferido(net) {
+  const lado = net.yourTeam;
+  if (!net.aceitaPersonagem() || net.espectador || (lado !== 'E' && lado !== 'B')) return;
+  const pref = CHARACTERS.find((c) => c.id === localStorage.getItem('csbr-home-character'));
+  if (!pref || pref.id === currentChar || !podeNoLado(pref, lado)) return;
+  net.pedirPersonagem(pref.id);
 }
 
 /* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
@@ -4175,8 +4243,8 @@ function mpAtualizarBarraSpec(estado) {
     bar.innerHTML = '<span>ASSISTINDO <b id="mp-spec-quem">—</b></span>'
       + '<button id="mp-spec-prev" type="button">◂ ANTERIOR</button>'
       + '<button id="mp-spec-next" type="button">PRÓXIMO ▸</button>'
-      + '<button id="mp-spec-e" type="button">ENTRAR NO TIME E</button>'
-      + '<button id="mp-spec-b" type="button">ENTRAR NO TIME B</button>'
+      + '<button id="mp-spec-e" type="button">ENTRAR NA ESQUERDA</button>'
+      + '<button id="mp-spec-b" type="button">ENTRAR NA DIREITA</button>'
       + '<button id="mp-spec-sair" type="button">SAIR</button>';
     document.body.appendChild(bar);
     bar.querySelector('#mp-spec-prev').onclick = () => window.__game?._mp?.trocarAlvo(-1);
@@ -4194,7 +4262,7 @@ function mpAtualizarBarraSpec(estado) {
       const be = document.getElementById('mp-spec-e'), bb = document.getElementById('mp-spec-b');
       // nome da FACÇÃO, não a letra do lado (BUG-110)
       const meta = mpSessao?.net?.meta || {};
-      const nomeE = meta.nomeE || 'TIME E', nomeB = meta.nomeB || 'TIME B';
+      const nomeE = meta.nomeE || 'ESQUERDA', nomeB = meta.nomeB || 'DIREITA';
       if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR: ${nomeE}${vagas ? ` (${vagas.E})` : ''}`; }
       if (bb) { bb.disabled = !(vagas && vagas.B > 0); bb.textContent = `ENTRAR: ${nomeB}${vagas ? ` (${vagas.B})` : ''}`; }
     }, 400);

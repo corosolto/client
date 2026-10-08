@@ -9,7 +9,7 @@
    acenda a tela de morte.
 
    Roda o Game de verdade (harness) com `mpFactory`, como o main.js faz. */
-import { Game, MAPS, initTextures, renderer, sfx, PCHAR, seedRandom, mkEl } from './harness.mjs';
+import { Game, MAPS, initTextures, renderer, sfx, PCHAR, seedRandom, mkEl, CHARACTERS } from './harness.mjs';
 import { makeNetcode } from '../../public/js/netgame.js';
 import { WEAPONS } from '../../public/js/game.js';
 import { unloadWeaponModel, setWeaponModel, hasWeapon } from '../../public/js/weapons.js';
@@ -509,6 +509,25 @@ console.log('\n· troca de vaga preserva UI e remonta o casamento de corpos');
   cobra(net.onSlot === uiHandler, 'dispose restaura o handler e não acumula wrappers a cada restart');
 }
 
+console.log('\n· escolha de personagem no meio da partida remonta o corpo certo');
+{
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  const bot = g.bots.find((b) => b.team === 'B');
+  g._mp._netMap.set(7, bot);
+  const alvo = CHARACTERS.find((c) => c.team === 'F' && c.id !== bot.def.id);
+  net.onPersonagem?.({ type: 'personagem', ent: 7, char: alvo.id });
+  cobra(bot.def.id === alvo.id, `troca recebida remonta o corpo da entidade (${bot.def.id})`);
+  const meu = CHARACTERS.find((c) => c.team === 'M' && c.id !== g.playerDef.id);
+  net.onPersonagem?.({ type: 'personagem', ent: net.yourEnt, char: meu.id });
+  cobra(g.playerDef.id === meu.id, `troca da própria entidade muda o personagem do jogador (${g.playerDef.id})`);
+  const antes = bot.def.id;
+  net.onPersonagem?.({ type: 'personagem', ent: 7, char: 'personagem-que-nao-existe' });
+  cobra(bot.def.id === antes, 'personagem fora do elenco é ignorado, o corpo não quebra');
+  g.dispose();
+  cobra(net.onPersonagem == null, 'dispose devolve o handler de personagem');
+}
+
 /* BUG-88 — "Problemas na hora de jogar". Um nó que aceita o TCP e nunca manda o `welcome`
    deixava o connect() PENDENTE pra sempre: sem erro, sem mensagem, o jogador clicava em
    ENTRAR e nada acontecia. O welcome tem prazo. */
@@ -792,7 +811,7 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   cobra(/meuJogo\._applyVmVisibility\?\.\(\)/.test(main), 'o preload ocioso das 26 armas também tenta montar a arma na mão');
   cobra(/else if \(this\.vm && this\.vm\.root\) this\.vm\.root\.visible = false;/.test(game),
     'espectador (dedicated) não vê viewmodel parado na pose de construção');
-  cobra(/nomeE = meta\.nomeE \|\| 'TIME E'/.test(main), 'botão do espectador diz o nome da FACÇÃO, não a letra do lado');
+  cobra(/nomeE = meta\.nomeE \|\| 'ESQUERDA'/.test(main), 'botão do espectador diz o nome da FACÇÃO, não a letra do lado');
   const mutSemPartida = net.replace("m.type === 'partida'", "m.type === '__nunca__'");
   cobra(!/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;/.test(mutSemPartida), 'MUTANTE sem o ramo `partida` acende a régua');
 }

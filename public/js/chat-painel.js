@@ -27,8 +27,8 @@ export function montarLinha(msg, { rotulo = '', propria = false, marcaTime = '' 
   return li;
 }
 
-// o mesmo tempo de vida de uma linha do killfeed (game.js, _feed: 4600 ms)
-const AVISO_MS = 4600;
+// Avisos de status ficam visíveis o bastante para serem lidos em uma sessão lenta.
+const AVISO_MS = 10_000;
 const PENDENTES_MAX = 8;
 const FOCAVEIS = 'button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])';
 

@@ -620,7 +620,7 @@ const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main
   && /ms-desc'\)\.textContent = tr\(MAP_DESC\[currentMap\] \|\| ''\)/.test(main)
   && /frase\('escolhaAdversario', tr\(FACTION_NAME\[myFaction\]/.test(main)
   && /continuar\.textContent = frase\('continuarSetup'\)/.test(main)
-  && /const FACTION_NAME = \{ E: 'TIME E'/.test(main)
+  && /const FACTION_NAME = \{ E: 'ESQUERDA'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
 const previewUso = /if \(\(csOpen \|\| hubPreviewOpen\) && pv && pv\.model && !previewVideoVisible\(\)\)/.test(funcLoop)
@@ -831,7 +831,7 @@ const placarReferencia = /class="sb-clock"/.test(game)
   && /#scoreboard h3\{[^}]*top:44px/.test(css)
   && /#scoreboard \.sb-cols\{[^}]*left:64px[^}]*right:64px[^}]*top:190px[^}]*column-gap:32px/.test(css)
   && /#scoreboard \.sb-col\.tp\{[^}]*border-top:2px solid #e0762a/.test(css)
-  && /#scoreboard \.sb-col\.tb\{[^}]*border-top:2px solid #8258d8/.test(css)
+  && /#scoreboard \.sb-col\.tb\{[^}]*border-top:2px solid #5a7bff/.test(css)
   && /const totalRounds = this\._inspectionTotalRounds \|\|/.test(game)
   && /game\.ctf = false; game\._inspectionTotalRounds = 5;/.test(main)
   && /game\.paused = true; game\.keys = \{\}; game\.el\.pause\.classList\.add\('hidden'\); game\._showScoreboard\(true\)/.test(main);

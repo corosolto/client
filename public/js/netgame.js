@@ -1,7 +1,7 @@
 /* NETCODE DO CLIENTE. O game.js só chama ganchos `this._mp?.xxx()` e nunca importa este
    arquivo; quem injeta é o main.js. Desenho e decisões: docs/MULTIPLAYER.md. */
 import * as THREE from 'three';
-import { poseCharacter } from './characters.js';
+import { poseCharacter, byId } from './characters.js';
 import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 
@@ -67,6 +67,14 @@ class Netcode {
       this._prevOnSlot?.(m);
     };
     net.onSlot = this._onSlot;
+    this._prevOnPersonagem = net.onPersonagem;
+    this._onPersonagem = (m) => {
+      const def = byId(m.char);
+      const alvo = m.ent === net.yourEnt && !this.espectador ? this.game.player : this._netMap.get(m.ent);
+      if (def && alvo) this.game._trocarPersonagem(alvo, def);
+      this._prevOnPersonagem?.(m);
+    };
+    net.onPersonagem = this._onPersonagem;
   }
 
   dispose() {
@@ -74,6 +82,7 @@ class Netcode {
     try { this.net.stopPing(); } catch { /* já fechada */ }
     if (this._nsEl) { this._nsEl.remove(); this._nsEl = null; try { document.body.classList.remove('net-overlay'); } catch { /* sem DOM */ } }
     if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
+    if (this.net.onPersonagem === this._onPersonagem) this.net.onPersonagem = this._prevOnPersonagem;
   }
 
   get espectador() { return this.net.espectador || this.net.yourEnt == null; }
