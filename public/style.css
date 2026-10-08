@@ -258,6 +258,7 @@ html[data-home-ui="hub"] #hub-mp-host .mp-no,html[data-home-ui="hub"] #hub-mp-ho
 html[data-home-ui="hub"] #hub-mp-host .mp-no[aria-checked="true"]{border-color:#39d6e0;box-shadow:inset 3px 0 0 #39d6e0;background:#39d6e012}
 html[data-home-ui="hub"] #hub-mp-host #mp-quick{width:calc(100% - 12px);margin:0 6px;background:linear-gradient(180deg,#cfe84a,#b4d92e);color:#131313;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
 html[data-home-ui="hub"] #hub-mp-host .mp-sala{border-left:3px solid #39d6e0}
+html[data-home-ui="hub"] #hub-mp-host #mp-amigos{width:calc(100% - 12px);margin:0 6px;background:linear-gradient(180deg,#ffc94a,#f0a92b);color:#131313;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="public"] #mp-convite-form,html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="public"] .mp-lado>.mp-bloco:nth-child(2){display:none}
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="public"] .mp-criar{display:none}
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] #mp-quick,html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-titulo,html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] #mp-salas{display:none}
@@ -2806,6 +2807,10 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 
 /* ---- entrada: jogo rápido + código de convite ---- */
 .mp-quick{width:100%}
+/* JOGAR COM AMIGOS: âmbar, a cor do convite (mesma do modal SALA CRIADA e do chip de código) */
+.mp-amigos{width:100%;background:var(--am);border-color:var(--am);color:var(--dark)}
+.mp-amigos:hover,.mp-amigos:focus-visible{background:var(--am);border-color:var(--am);color:var(--dark);filter:brightness(1.08)}
+.mp-amigos[disabled]{opacity:var(--op-disabled);cursor:progress}
 .mp-convite{display:flex;gap:var(--s-2)}
 .mp-convite input{flex:1;min-width:0;font-family:var(--mono);font-size:var(--fs-300);
   letter-spacing:var(--tr-2);text-transform:uppercase;color:var(--ink-100);
@@ -2924,6 +2929,10 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-modal-lot{margin:0;font-family:var(--mono);font-size:var(--fs-100);color:var(--ink-300);letter-spacing:var(--tr-1)}
 .mp-modal-copy{display:flex;gap:var(--s-3);flex-wrap:wrap;justify-content:center}
 .mp-modal-copy .btn{min-width:170px}
+/* o <a> do WhatsApp herda .btn, mas âncora não centraliza nem tira o sublinhado sozinha;
+   o verde é o do próprio WhatsApp, pra ser reconhecido sem ler */
+.mp-modal-zap{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-color:#25d366;color:#25d366}
+.mp-modal-zap:hover,.mp-modal-zap:focus-visible{background:#25d366;color:#0b2414}
 .mp-modal-card .btn-big{min-width:280px;margin-top:var(--s-2)}
 .mp-modal-nota{margin:0;max-width:44ch;font:600 var(--fs-50)/var(--lh-base) var(--font);color:var(--ink-300)}
 @media(max-width:560px){.mp-modal-copy{flex-direction:column;width:100%}.mp-modal-copy .btn,.mp-modal-card .btn-big{width:100%;min-width:0}}
@@ -3179,6 +3188,7 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 #chat-acoes-quem{margin-right:auto;color:var(--sys)}
 #chat-motivos-lista{display:flex;flex-wrap:wrap;gap:4px 10px;margin:0;padding:0;border:0;min-width:0;flex:1 1 100%}
 #chat-motivos-lista legend{padding:0 0 4px;font-size:10px;letter-spacing:2px;color:var(--ink-200)}
+#chat-motivos-aviso{flex:1 1 100%;margin:0;line-height:1.35;color:var(--ink-200)}
 .chat-motivo{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
 .chat-motivo input{accent-color:var(--sys);margin:0}
 #chat-lista-bloqueados-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1 1 100%}
