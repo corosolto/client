@@ -481,11 +481,15 @@ window.__GEO_LANG__ = (function () {
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)</title>
-<meta name="description" content="Jogo FPS gratuito de navegador: 5 facções brasileiras caricatas, 44 personagens originais, 5 mapas satíricos e 26 armas - bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
+<meta name="description" content="FPS satírico gratuito no navegador, com facções fictícias, mapas, armas, bots, rounds e CTF. Jogue no desktop ou teste o beta web no celular.">
 <meta name="keywords" content="coro solto, cs brasil, jogo de tiro navegador, fps browser grátis, awp, cs 1.6 brasileiro, jogo satira politica, treta suprema, jogo web three.js">
 <meta name="author" content="CORO SOLTO contributors">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#090704">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CORO SOLTO">
+<link rel="manifest" href="/site.webmanifest">
 <!-- CANONICAL COM www: a produção responde em www.csbrasil.online. Este link
      estava no host sem www e brigava com o canonical das outras páginas
      (que sai de astro.config.mjs) - dois hosts, sinal diluído. -->
@@ -549,9 +553,9 @@ window.__GEO_LANG__ = (function () {
       "image": "https://www.csbrasil.online/og-image.jpg",
       "description": "FPS de navegador gratuito e satírico: 5 facções brasileiras caricatas, 44 personagens originais, 5 mapas, 26 armas, bots, rounds e Capture the Flag - de uma Brasília fictícia ao ferro velho.",
       "genre": ["Shooter", "FPS", "Comédia", "Sátira"],
-      "gamePlatform": ["Web Browser", "Desktop"],
+      "gamePlatform": ["Web Browser", "Desktop", "Mobile"],
       "applicationCategory": "GameApplication",
-      "operatingSystem": "Qualquer navegador de desktop",
+      "operatingSystem": "Qualquer sistema com navegador moderno compatível",
       "playMode": "SinglePlayer",
       "inLanguage": "pt-BR",
       "isAccessibleForFree": true,
@@ -581,7 +585,7 @@ window.__GEO_LANG__ = (function () {
     { "@type": "Question", "name": "O que é CORO SOLTO: Treta Suprema?",
       "acceptedAnswer": { "@type": "Answer", "text": "Um jogo FPS gratuito que roda no navegador: 5 facções (Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros), 44 personagens originais, 5 mapas satíricos, 26 armas, bots, sistema de rounds e Capture the Flag. O jogo já se chamou CS BRASIL." } },
     { "@type": "Question", "name": "Preciso instalar ou pagar algo?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Não. O jogo é 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem download, sem instalação e sem cadastro." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "Não. O jogo é gratuito e roda no navegador, sem download nem cadastro. No celular, você também pode adicionar o beta web à tela inicial pelo menu do navegador quando essa opção estiver disponível." } },
     { "@type": "Question", "name": "Quais são os controles?",
       "acceptedAnswer": { "@type": "Answer", "text": "WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, as teclas 1/2/3 (ou a rodinha do mouse) trocam entre primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar." } },
     { "@type": "Question", "name": "Quais são as facções e os personagens?",
@@ -593,7 +597,7 @@ window.__GEO_LANG__ = (function () {
     { "@type": "Question", "name": "É um jogo oficial da Valve ou do Counter-Strike?",
       "acceptedAnswer": { "@type": "Answer", "text": "Não. É uma paródia independente feita por fãs, sem qualquer afiliação com a Valve. Counter-Strike é marca da Valve Corporation." } },
     { "@type": "Question", "name": "Funciona no celular?",
-      "acceptedAnswer": { "@type": "Answer", "text": "O jogo foi feito para desktop com mouse e teclado. Em telas de toque um aviso recomenda jogar no computador." } }
+      "acceptedAnswer": { "@type": "Answer", "text": "Sim. O beta web tem controles de toque; use o celular na horizontal para jogar. O desempenho varia conforme o aparelho e o navegador." } }
   ]
 }
 </script>
@@ -660,16 +664,6 @@ window.__GEO_LANG__ = (function () {
       <button id="launch-error-report" class="btn" type="button">REPORTAR ERRO</button>
     </div>
     <p id="launch-error-status" class="launch-error-status" aria-live="polite">Se quiser, confirme o envio pelo botão acima.</p>
-  </div>
-</div>
-
-<!-- Mobile fallback -->
-<div id="mobile-warning" class="screen hidden">
-  <div class="panel center-panel">
-    <h1>CORO SOLTO: TRETA SUPREMA</h1>
-    <p class="big">Este jogo foi feito para <b>desktop</b> (mouse + teclado).</p>
-    <p>Jogar num PC ou notebook é <b>recomendado</b>. No celular a treta não flui.</p>
-    <button id="mobile-ok" class="btn">ENTENDI</button>
   </div>
 </div>
 
@@ -996,6 +990,10 @@ window.__GEO_LANG__ = (function () {
     <button id="btn-howto" class="btn btn-side">COMO JOGAR</button>
     <button id="btn-settings" class="btn btn-side">CONFIG.</button>
   </div>
+  <aside id="pwa-install" class="pwa-install" hidden aria-label="Instalação do beta web">
+    <button id="pwa-install-action" type="button">COMO ADICIONAR</button>
+    <p id="pwa-install-help" role="status" aria-live="polite" hidden></p>
+  </aside>
 </div>
 
 <!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
@@ -1471,6 +1469,7 @@ window.__GEO_LANG__ = (function () {
     </div>
     <!-- Versão TOQUE (só no mobile via CSS): o celular não tem teclado, então os controles
          são os dois sticks + botões da tela. Mantém o mesmo grid pra herdar o estilo. -->
+    <p class="howto-touch-note">Beta web para celular: use na horizontal. O aparelho e o navegador influenciam o desempenho.</p>
     <div class="howto-grid howto-touch">
       <span>Stick esq.</span><span>Mover</span>
       <span>Stick dir.</span><span>Olhar / mirar</span>
@@ -1677,5 +1676,6 @@ window.__GEO_LANG__ = (function () {
 <!-- Sinais operacionais da sessão (FPS, falhas de carga, abandono); só coleta - docs/runbooks/operacao-autonoma.md -->
 <script type="module" src={`/js/ops.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
+<script type="module" src={`/js/pwa-install.js?v=${V}-${JS_REV}`} is:inline></script>
 </body>
 </html>

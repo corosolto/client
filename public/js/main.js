@@ -351,7 +351,7 @@ function loadMenuBackdrop() {
 loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 
 /* ---------------- screens ---------------- */
-const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
+const screens = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
   const hubMpRoute = HUB_ENABLED && id === 'mp-panel';
   if (hubMpRoute) {
@@ -1117,6 +1117,7 @@ let heartbeatOff = false;
    zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
 // o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
 await resolveGeoLang();
+document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
 syncMenuMusicToggle();
@@ -2585,7 +2586,6 @@ document.querySelectorAll('.set-tab').forEach(tab => {
     });
   };
 });
-$('mobile-ok').onclick = () => { sfx.uiClick(); show('main-menu'); };
 $('team-back').onclick = () => { ui.back(); pickingEnemy = false; setEnemyPickMode(false); setTeamStep('side'); show('main-menu'); };
 $('char-back').onclick = () => {
   ui.back();
