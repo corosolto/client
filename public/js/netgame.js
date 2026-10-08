@@ -73,7 +73,6 @@ class Netcode {
   dispose() {
     if (this._nsTimer) { clearInterval(this._nsTimer); this._nsTimer = null; }
     try { this.net.stopPing(); } catch { /* já fechada */ }
-    if (this._nsEl) { this._nsEl.remove(); this._nsEl = null; try { document.body.classList.remove('net-overlay'); } catch { /* sem DOM */ } }
     if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
   }
 
@@ -804,20 +803,10 @@ class Netcode {
     try { game._updateTeamMark(b); } catch { /* marca opcional */ }
   }
 
-  // ── OVERLAY DE REDE: fps · snap Hz · gap/jitter · banda · ents · ping ──
+  // Recolhe métricas para telemetria sem desenhar diagnóstico durante a partida.
   updateStats() {
     const game = this.game;
     if (game._disposed || !game.online || !this.net) return;
-    let el = this._nsEl;
-    if (!el) {
-      el = this._nsEl = document.createElement('div');
-      try { document.body.classList.add('net-overlay'); } catch { /* sem DOM */ }   // o killfeed se afasta (style.css)
-      el.id = 'netstats';
-      el.style.cssText = 'position:fixed;top:10px;right:10px;z-index:100000;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;'
-        + 'color:#cfe;background:rgba(8,10,14,.86);border:1px solid #2a3340;border-radius:7px;padding:7px 11px;'
-        + 'pointer-events:none;white-space:pre;min-width:172px;letter-spacing:.2px;text-shadow:0 1px 2px #000';
-      document.body.appendChild(el);
-    }
     // fps = frames REAIS de render na janela, e não as chamadas deste interval
     const now = performance.now();
     const inactive = !!game.paused || (typeof document !== 'undefined' && !!document.hidden);
@@ -856,25 +845,9 @@ class Netcode {
         quality: game.settings?.quality || null,
       });
       // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
-      // para o overlay da sessão; o servidor soma somente os eventos novos de cada 10 s.
+      // para o registro da sessão; o servidor soma somente os eventos novos de cada 10 s.
       correcoes.length = 0;
     }
-    const c = (v, aviso, bom) => (v >= bom ? '#7fe17f' : v >= aviso ? '#f2d06b' : '#f27b7b');
-    const hzc = s.hz >= this.snapshotHz - 1 ? '#7fe17f' : s.hz >= this.snapshotHz * 0.75 ? '#f2d06b' : '#f27b7b';
-    const gapc = s.gapMax <= 70 ? '#7fe17f' : s.gapMax <= 130 ? '#f2d06b' : '#f27b7b';
-    const pingc = s.ping <= 0 ? '#f27b7b' : s.ping <= 40 ? '#7fe17f' : s.ping <= 120 ? '#f2d06b' : '#f27b7b';
-    const row = (rot, val, cor) => `<span style="color:#7a8794">${rot}</span> <b style="color:${cor || '#e6eef6'}">${val}</b>`;
-    el.innerHTML = [
-      `<span style="color:#61afef;font-weight:700">NET · ${this.net.meta?.room || '?'}${this.espectador ? ' · ASSISTINDO' : ''}</span>`,
-      row('fps ', `${this._nsFps ?? '--'}`, c(this._nsFps || 0, 45, 55)),
-      row('snap', `${s.hz} Hz`, hzc) + ` <span style="color:#5f6f7e">/${this.snapshotHz}</span>`,
-      row('gap ', `${Math.round(s.gapMax)} ms`, gapc) + ` <span style="color:#5f6f7e">últ ${Math.round(s.sinceLast)}</span>`,
-      row('band', `${s.kbps.toFixed(1)} KB/s`) + (this._evOn ? ` <span style="color:#5f6f7e">ev ${this.net.stats.evs | 0}</span>` : ''),
-      row('ents', `${s.ents}`) + `  ` + row('tick', `${s.tick}`),
-      row('ping', s.ping <= 0 ? '—' : `${Math.round(s.ping)} ms`, pingc),
-      row('corr', this._reconcileCount ? `${this._reconcileMax.toFixed(2)} m máx` : '—'),
-    ].join('\n');
-    el.style.borderColor = (s.hz < 15 || s.gapMax > 130) ? '#7a2b2b' : '#2a3340';
   }
 
   _percentil(values, q) {

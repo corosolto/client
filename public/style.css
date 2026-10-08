@@ -1325,7 +1325,6 @@ body:has(#pause-menu:not(.hidden)) #mp-identity-toast{display:none}
    engrossa o poço da barra — não devolve o painel. */
 /* irmão POSTERIOR no DOM: quando a faixa de CTF existe, o killfeed desce. */
 #ctf-hud:not(.hidden) ~ #killfeed{top:136px}
-body.net-overlay #killfeed{right:270px}   /* o painel NET (netgame.js) mora no canto; o feed sai de baixo dele */
 #match-next{margin:14px 0 0;font-weight:700;letter-spacing:.08em;opacity:.85;animation:match-next-pulse 1.2s ease-in-out infinite}
 @keyframes match-next-pulse{0%,100%{opacity:.85}50%{opacity:.35}}
 #killfeed{position:absolute;top:98px;right:48px;display:flex;flex-direction:column;gap:var(--s-1);
