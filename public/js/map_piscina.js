@@ -462,16 +462,16 @@ export function buildPoolDay(scene, T) {
     for (const x of SPAWN_PORTALS) {
       addBox(3, WALL_H - 3.1, 0.6, MAT.wall, x, 3.1, z);
       // Moldura naval de alto contraste: o vão continua 3 m e a colisão continua na parede.
-      for (const dx of [-1.56, 1.56])
-        addBox(0.12, 3.1, 0.68, MAT.navy, x + dx, 0, z, { collide: false });
-      addBox(3.24, 0.12, 0.68, MAT.navy, x, 3.1, z, { collide: false });
+      for (const dx of [-1.52, 1.52])
+        addBox(0.12, 3.1, 0.8, MAT.navy, x + dx, 0, z, { collide: false, cast: false });
+      addBox(3.24, 0.12, 0.8, MAT.navy, x, 3.06, z, { collide: false, cast: false });
       const route = x < 0 ? 'OESTE' : x > 0 ? 'LESTE' : 'PISCINA';
       const routeMat = lam({ map: signTexture('#1b3566', '#e8f6ff', route, 'ACESSO'), side: THREE.DoubleSide });
       addPlane(2.35, 0.72, routeMat, x, 3.72, z - side * 0.32, 0);
     }
   }
-  for (const [w, h, d, x, z] of [[HALF_X * 2 + 2, 0.6, 0.12, 0, -HALF_Z], [HALF_X * 2 + 2, 0.6, 0.12, 0, HALF_Z], [0.12, 0.6, HALF_Z * 2 + 2, -HALF_X, 0], [0.12, 0.6, HALF_Z * 2 + 2, HALF_X, 0]])
-    addBox(w, h, d, MAT.navy, x, 2.0, z, { collide: false });
+  for (const [w, h, d, x, z] of [[HALF_X * 2 + 2, 0.6, 0.06, 0, -HALF_Z], [HALF_X * 2 + 2, 0.6, 0.06, 0, HALF_Z], [0.06, 0.6, HALF_Z * 2 + 2, -HALF_X, 0], [0.06, 0.6, HALF_Z * 2 + 2, HALF_X, 0]])
+    addBox(w, h, d, MAT.navy, x, 2.0, z, { collide: false, cast: false });
   for (const corridor of SIDE_CORRIDORS)
     addBox(0.12, 0.6, corridor.maxZ - corridor.minZ, MAT.warning,
       corridor.axisX < 0 ? corridor.minX + 0.06 : corridor.maxX - 0.06,
