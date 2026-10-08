@@ -34,8 +34,8 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 57.927 linhas em 113 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **8.314** linhas | `wc -l public/js/game.js` |
+| Código do jogo | 58.022 linhas em 114 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **8.316** linhas | `wc -l public/js/game.js` |
 | `main.js` | 4.242 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 64 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
@@ -44,10 +44,10 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Personagens jogáveis | 53, em 6 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 18 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 22 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 636 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 637 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.55` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.58` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 113 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 114 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
