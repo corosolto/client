@@ -426,8 +426,11 @@ export function pintarParedes(opts) {
            mesmo tamanho meio metro pra cada lado; o cache de amostra faz isso custar
            quase nada. */
         let recuo = null, du = 0;
+        /* `margem` (opcional): papel colado não encosta em batente; a parede tem de
+           continuar inteira, sem vão, `margem` metros para cada lado da peça. */
+        const wTeste = w + 2 * (B.margem || 0), minAchou = B.margem ? AMOSTRAS_15.length : 13;
         for (const d of [0, -0.5, 0.5, -1.0, 1.0]) {
-          recuo = _encaixar(null, rc, A, yc, w, h, amostra, d, B.planura);
+          recuo = _encaixar(null, rc, A, yc, wTeste, h, amostra, d, B.planura, minAchou);
           if (recuo !== null) { du = d; break; }
         }
         if (recuo === null) { rec.semParede++; continue; }
@@ -809,7 +812,7 @@ function _amostrador(alvos, rc, A, frente) {
   return amostra;
 }
 
-function _encaixar(alvos, rc, A, yc, w, h, amostra, du = 0, planura = 0.28) {
+function _encaixar(alvos, rc, A, yc, w, h, amostra, du = 0, planura = 0.28, minAchou = 13) {
   const nx = Math.sin(A.ry), nz = Math.cos(A.ry);
   const ux = Math.cos(A.ry), uz = -Math.sin(A.ry);
   const FRENTE = 0.30;
@@ -824,7 +827,7 @@ function _encaixar(alvos, rc, A, yc, w, h, amostra, du = 0, planura = 0.28) {
     }
     /* 2 vazias de 15: a folga exata da régua, pro vão de porta e pro caixilho de
        janela — buraco legítimo em muro pichado. */
-    if (achou < 13) return null;
+    if (achou < minAchou) return null;
     if (dmax - dmin > planura) return null;
     const recuo = dmin - 0.03;
     /* TAPADA: qualquer oclusor opaco nos 0,25 m à frente da peça — a mesma pergunta
