@@ -247,7 +247,7 @@ if (GEO) {
   await page.goto('http://localhost:8123/', { waitUntil: 'load' });
   await page.waitForTimeout(1500);
   const geo = await page.evaluate(({ w, h }) => {
-    const SCR = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'pause-menu', 'match-end', 'mobile-warning'];
+    const SCR = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'pause-menu', 'match-end'];
     const bs = document.getElementById('boot-splash'); if (bs) bs.remove();
     document.getElementById('load-overlay').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden');
