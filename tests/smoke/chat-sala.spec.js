@@ -279,27 +279,28 @@ async function figura(page, nome) {
   await page.screenshot({ path: `${FIGURAS}/${nome}.png` });
 }
 
-async function clicarEVerAviso(alvo, esperado) {
-  const visto = await alvo.evaluate((node, { source, flags }) => new Promise((resolve, reject) => {
+async function agirEVerAviso(page, esperado, agir) {
+  await page.evaluate(({ source, flags }) => {
     const aviso = document.getElementById('chat-aviso');
     const padrao = new RegExp(source, flags);
-    const confere = () => {
-      const texto = aviso?.textContent || '';
-      if (!padrao.test(texto)) return false;
-      observador.disconnect();
-      clearTimeout(prazo);
-      resolve(texto);
-      return true;
-    };
-    const observador = new MutationObserver(confere);
-    observador.observe(aviso, { childList: true, characterData: true, subtree: true });
-    const prazo = setTimeout(() => {
-      observador.disconnect();
-      reject(new Error(`aviso transitório não observado: ${source}`));
-    }, 15_000);
-    node.click();
-    confere();
-  }), { source: esperado.source, flags: esperado.flags });
+    window.__chatAvisoVigiado = new Promise((resolve, reject) => {
+      const confere = () => {
+        const texto = aviso?.textContent || '';
+        if (!padrao.test(texto)) return;
+        observador.disconnect();
+        clearTimeout(prazo);
+        resolve(texto);
+      };
+      const observador = new MutationObserver(confere);
+      observador.observe(aviso, { childList: true, characterData: true, subtree: true });
+      const prazo = setTimeout(() => {
+        observador.disconnect();
+        reject(new Error(`aviso transitório não observado: ${source}`));
+      }, 25_000);
+    });
+  }, { source: esperado.source, flags: esperado.flags });
+  await agir();
+  const visto = await page.evaluate(() => window.__chatAvisoVigiado);
   expect(visto).toMatch(esperado);
 }
 
@@ -552,7 +553,7 @@ test.describe('chat de sala', () => {
 
     await test.step('a própria linha não abre ações; denúncia sai sem texto livre e oferece bloquear', async () => {
       await teclaChat(page, 'y');
-      await clicarEVerAviso(page.locator('#chat-log .chat-linha.propria').first(), /sua/i);
+      await agirEVerAviso(page, /sua/i, () => page.locator('#chat-log .chat-linha.propria').first().click());
       await expect(page.locator('#chat-acoes')).toBeHidden();
       await page.locator('#chat-log .chat-linha[data-id="3"]').click();
       await page.locator('#chat-denunciar').click();
@@ -564,7 +565,7 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-motivos-aviso')).toHaveText(/90 dias/);
       await figura(page, 'denuncia-aviso');
       await page.locator('#chat-motivos input[value="spam"]').check();
-      await clicarEVerAviso(page.locator('#chat-motivos-enviar'), /recebida/i);
+      await agirEVerAviso(page, /recebida/i, () => page.locator('#chat-motivos-enviar').click());
       expect(await page.evaluate(() => window.__chatNet.denuncias)).toEqual([{ id: 3, motivo: 'spam' }]);
       await expect(page.locator('#chat-bloquear-tambem')).toBeVisible();
       await page.locator('#chat-bloquear-tambem').click();
@@ -580,7 +581,7 @@ test.describe('chat de sala', () => {
       await page.locator('#chat-log .chat-linha[data-id="4"]').click();
       await page.locator('#chat-denunciar').click();
       await page.locator('#chat-motivos input[value="ofensa"]').check();
-      await clicarEVerAviso(page.locator('#chat-motivos-enviar'), /recebida/i);
+      await agirEVerAviso(page, /recebida/i, () => page.locator('#chat-motivos-enviar').click());
       expect(await page.evaluate(() => document.activeElement?.classList.contains('chat-linha'))).toBe(true);
       await page.keyboard.press('Escape');
       expect(await chatAberto(page)).toBe(false);
