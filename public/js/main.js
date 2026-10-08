@@ -3602,10 +3602,10 @@ let mpTimerLista = null;
 let mpTicketIdentityUid = null;
 
 async function obterMpTicket(action) {
-  /* Nó local explícito (?mp=1/localhost) roda com MP_TICKET_REQUIRED=0. Pedir o ticket à API
-     pública com node=xx fazia o fluxo de desenvolvimento morrer ANTES do WebSocket. */
+  /* Um ?mp= pode apontar a staging ou a um nó oficial. Só o nó de teste selecionado
+     dispensa ticket público; trocar para BR/US/EU na lista exige ticket normalmente. */
   const localMp = new URLSearchParams(location.search).get('mp') || '';
-  if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
+  if (localMp && mpNoAtual?.id === 'url' && !NOS.some((no) => no.url === mpNoAtual.url)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
   if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
   const uid = getAnonId();
