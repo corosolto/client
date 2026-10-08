@@ -62,15 +62,15 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 
 | Arquivo | Linhas |
 |---|---:|
-| `public/js/game.js` | 8.348 |
-| `public/js/main.js` | 4.277 |
+| `public/js/game.js` | 8.350 |
+| `public/js/main.js` | 4.319 |
 | `public/js/characters.js` | 1.103 |
 | `public/js/glbchars.js` | 851 |
 | `public/js/vmattach.js` | 632 |
 | `public/js/weapons.js` | 353 |
 | `public/js/springs.js` | 259 |
 
-Total de `public/js/`: **58.034 linhas em 113 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
+Total de `public/js/`: **58.190 linhas em 114 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: ``git ls-files public/js/*.js | xargs wc -l``
 

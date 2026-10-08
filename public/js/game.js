@@ -29,6 +29,7 @@ import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o 
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 import { createSoundscape } from './soundscape.js';        // vida 1: áudio ambiente por mapa (world.sound)
+import { grafiteNoDedicado } from './graffiti_pass.js';    // nó de MP não roda a passada de grafite (ver o cabeçalho de grafitar)
 import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS, vmFonteDe } from './authoredvm.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { viewmodelVisibility } from './vmvisibility.js';
@@ -322,7 +323,7 @@ const RACK_RETA = QS.get('rackreta') === '1';
    A simetria é parte do desenho: vale pra jogador E bots — meia regeneração faria o bot
    virar esponja. Régua: invariante REGEN de `tools/eval/regen-check.mjs`. */
 const REGEN = QS.get('regen') === '1', REGEN_DELAY = 6, REGEN_RATE = 22;
-const TEAM_LABEL = { E: 'TIME E', B: 'TIME B' };
+const TEAM_LABEL = { E: 'ESQUERDA', B: 'DIREITA' };
 const RADIO = {
   z: { title: 'COMANDOS', items: ['Bora, bora, bora!', 'Cobre eu!', 'Recua, recua!'] },
   x: { title: 'RESPOSTAS', items: ['Recebido!', 'Negativo!', 'Bonito tiro!'] },
@@ -722,6 +723,7 @@ export class Game {
     this.camera.rotation.order = 'YXZ';
     this.scene.add(this.camera);
     this._mapId = resolveMapId(mapId);
+    grafiteNoDedicado(dedicated);   // antes do build: a passada roda dentro dele
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
@@ -4921,7 +4923,7 @@ export class Game {
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
   _teamName(side) { const f = this._factionOf(side); return f === 'U' ? 'TRIBOS URBANAS' : f === 'C' ? 'PALHAÇOS' : f === 'F' ? 'FUNKEIROS' : f === 'M' ? 'MÍTICO' : (TEAM_LABEL[f] || f); }
-  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'TME' : 'TMB'; }
+  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'ESQ' : 'DIR'; }
 
   /* Uma plaqueta do HUD. Chamada por QUADRO, então tudo aqui é comparação barata:
      o número só é escrito se mudou, e o brasão (data-f, arte no CSS) só quando a

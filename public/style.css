@@ -110,7 +110,7 @@
   --lambe:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,0) 1px 3px);
 
   /* ---- times ---- */
-  --team-e:#e03232; --team-b:#1faa4d; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f; --team-m:#9d4edd;
+  --team-e:#e03232; --team-b:#1f3fc8; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f; --team-m:#9d4edd;
 
   /* ---- espaçamento (escala de 4) ---- */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px;
@@ -147,7 +147,7 @@
 
   /* ---- aliases legados (regras antigas e estilos inline do JS ainda consomem) ---- */
   --vitoria:#49a846;   /* VITÓRIA — pixel medido em references/telas/09_resultado_partida.png */
-  --red:var(--team-e); --red-dark:#8f1d1d; --green:var(--team-b); --yellow:var(--br-faixa);
+  --red:var(--team-e); --red-dark:#8f1d1d; --green:#1faa4d; --yellow:var(--br-faixa);
   --purple:var(--team-u); --dark:var(--bg-900); --panel:rgba(var(--bg-800-rgb),.94);
   --hud:var(--ink-100); --cs:var(--sys);
   --ink1:var(--ink-100); --ink2:var(--ink-200); --ink3:var(--ink-300);
@@ -258,6 +258,7 @@ html[data-home-ui="hub"] #hub-mp-host .mp-no,html[data-home-ui="hub"] #hub-mp-ho
 html[data-home-ui="hub"] #hub-mp-host .mp-no[aria-checked="true"]{border-color:#39d6e0;box-shadow:inset 3px 0 0 #39d6e0;background:#39d6e012}
 html[data-home-ui="hub"] #hub-mp-host #mp-quick{width:calc(100% - 12px);margin:0 6px;background:linear-gradient(180deg,#cfe84a,#b4d92e);color:#131313;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
 html[data-home-ui="hub"] #hub-mp-host .mp-sala{border-left:3px solid #39d6e0}
+html[data-home-ui="hub"] #hub-mp-host #mp-amigos{width:calc(100% - 12px);margin:0 6px;background:linear-gradient(180deg,#ffc94a,#f0a92b);color:#131313;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="public"] #mp-convite-form,html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="public"] .mp-lado>.mp-bloco:nth-child(2){display:none}
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="public"] .mp-criar{display:none}
 html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] #mp-quick,html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-titulo,html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] #mp-salas{display:none}
@@ -785,8 +786,8 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
    e a dos funkeiros nem existia). */
 .team-e{--tc:#ff6b6b;--tc-rgb:255,107,107;--art:url('/img/faccoes/time-e.webp');
   --tc-bg:linear-gradient(165deg,#b52e2e 0%,#7a1a1a 52%,#3d0d0d 100%)}
-.team-b{--tc:#7de08f;--tc-rgb:125,224,143;--art:url('/img/faccoes/time-b.webp');
-  --tc-bg:linear-gradient(165deg,#1d8f45 0%,#2f7a2a 46%,#7a6412 100%)}
+.team-b{--tc:#3355ff;--tc-rgb:51,85,255;--art:url('/img/faccoes/time-b.webp');
+  --tc-bg:linear-gradient(165deg,#1f3fc8 0%,#1d3f8f 52%,#7a6412 100%)}
 .team-u{--tc:#c79bff;--tc-rgb:199,155,255;--art:url('/img/faccoes/tribos.webp');
   --tc-bg:linear-gradient(165deg,#5f22c2 0%,#8a1f9c 55%,#3d0f52 100%)}
 .team-c{--tc:#ff8ad1;--tc-rgb:255,138,209;--art:url('/img/faccoes/palhacos.webp');
@@ -1083,7 +1084,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .howto-grid{display:grid;grid-template-columns:auto auto;gap:var(--s-2) var(--s-5);font-size:var(--fs-200);
   font-weight:600;letter-spacing:var(--tr-1);text-align:left;color:var(--ink-200)}
 .howto-grid span:nth-child(odd){color:var(--br-faixa);font-family:var(--mono);font-size:var(--fs-100)}
-.howto-touch{display:none}   /* versão toque: só aparece no mobile (media coarse abaixo) */
+.howto-touch,.howto-touch-note{display:none}   /* versões de toque só aparecem em aparelhos touch */
 .support-panel{max-width:560px}
 .support-choice{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
 .support-region{font-size:12px!important;padding:10px 14px!important}
@@ -1248,7 +1249,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .team-score{font-size:var(--fs-300);font-weight:700;letter-spacing:var(--tr-2);line-height:var(--lh-snug);
   padding:var(--s-1) var(--s-3);text-shadow:var(--sh-hud)}
 .ts-p{color:#ff9a9a;border-left:3px solid var(--team-e)}
-.ts-b{color:#a9f0b6;border-right:3px solid var(--team-b)}
+.ts-b{color:#a8b8ff;border-right:3px solid var(--team-b)}
 
 /* Topo sem placa: o contorno dos glifos preserva a leitura sobre o cenário. */
 #hud-top .team-score{
@@ -1499,7 +1500,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard h3 .sb-score i{font-style:normal;color:var(--ink-200);font-size:clamp(20px,3.6vh,40px);
   letter-spacing:var(--tr-3);align-self:center;font-weight:700}
 #scoreboard h3 .sb-score b.tp{color:#ff8a8a}
-#scoreboard h3 .sb-score b.tb{color:#b79bff}   /* violeta do time B na referência (134,94,178) */
+#scoreboard h3 .sb-score b.tb{color:#a8b8ff}
 
 #scoreboard{--sb-gap:clamp(var(--s-5),3.4vw,64px);
   --sb-rh:clamp(32px,5.2vh,54px);--sb-rg:5px}
@@ -1544,7 +1545,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-team b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #scoreboard .sb-chead img{height:36px;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 #scoreboard .sb-col.tp .sb-chead{color:#ff8a8a}
-#scoreboard .sb-col.tb .sb-chead{color:#b79bff}
+#scoreboard .sb-col.tb .sb-chead{color:#a8b8ff}
 #scoreboard .sb-col table{display:block;width:100%;flex:0 1 auto;min-height:0;overflow:auto;margin-top:0}
 #scoreboard .sb-col thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 #scoreboard .sb-col tbody{display:grid;grid-template-columns:1fr;grid-auto-rows:var(--sb-rh);
@@ -1553,7 +1554,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
   grid-template-columns:var(--sb-grid);align-items:center;gap:0 var(--s-4);
   padding:0 var(--s-4);border-left:3px solid transparent}
 #scoreboard .sb-col.tp tbody tr{background:rgba(224,50,50,.22);border-left-color:rgba(224,50,50,.6)}
-#scoreboard .sb-col.tb tbody tr{background:rgba(123,47,247,.24);border-left-color:rgba(123,47,247,.65)}
+#scoreboard .sb-col.tb tbody tr{background:rgba(51,85,255,.24);border-left-color:rgba(51,85,255,.65)}
 /* flex:0 0 auto porque o #scoreboard virou coluna flex: sem isso o canvas do mascote
    (kill-switch ?dolly=1) seria espremido pelo `flex-shrink` padrão. */
 #dollynho-dance{display:block;flex:0 0 auto;margin:12px auto 0;width:240px;height:190px}
@@ -1567,16 +1568,16 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard h3 .sb-score b{display:flex;align-items:center;gap:14px;font:400 40px/1 var(--aaa-font-display);color:#ecebe6}
 #scoreboard .sb-score .sb-crest{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.65))}
 #scoreboard h3 .sb-score-num{font:700 44px/1 var(--font)}
-#scoreboard h3 .tp .sb-score-num{color:#e0762a}#scoreboard h3 .tb .sb-score-num{color:#8258d8}
+#scoreboard h3 .tp .sb-score-num{color:#e0762a}#scoreboard h3 .tb .sb-score-num{color:#5a7bff}
 #scoreboard h3 .sb-vs{font:400 20px/1 var(--aaa-font-display);color:#5c5d63}
 #scoreboard h3 .sb-diamond{display:block;width:14px;height:14px;flex:0 0 14px;transform:rotate(45deg);font-size:0;background:#e0762a}
-#scoreboard h3 .tb .sb-diamond{background:#8258d8}
+#scoreboard h3 .tb .sb-diamond{background:#5a7bff}
 #scoreboard h3 .sb-result,#scoreboard h3 .sb-result-sub{display:none}
 #scoreboard .sb-cols{position:absolute;left:64px;right:64px;top:190px;width:auto;display:grid;grid-template-columns:1fr 1fr;column-gap:32px;min-height:0}
 #scoreboard .sb-col{--sb-grid:minmax(0,1fr) 46px 46px 72px 52px;display:flex;flex-direction:column;
   min-height:0;padding:6px 0;background:rgba(13,14,17,.88);border:1px solid #26272d}
 #scoreboard .sb-col.ctf{--sb-grid:minmax(0,1fr) 42px 42px 66px 48px 46px}
-#scoreboard .sb-col.tp{border-top:2px solid #e0762a}#scoreboard .sb-col.tb{border-top:2px solid #8258d8}
+#scoreboard .sb-col.tp{border-top:2px solid #e0762a}#scoreboard .sb-col.tb{border-top:2px solid #5a7bff}
 #scoreboard .sb-chead{display:grid;grid-template-columns:var(--sb-grid);align-items:center;gap:0;padding:8px 0;
   border-bottom:1px solid #26272d;font:700 11px/1 var(--aaa-font-body);letter-spacing:3px;color:#5c5d63}
 #scoreboard .sb-chead>span{padding:0 10px;text-align:right;color:#5c5d63}
@@ -2811,6 +2812,10 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 
 /* ---- entrada: jogo rápido + código de convite ---- */
 .mp-quick{width:100%}
+/* JOGAR COM AMIGOS: âmbar, a cor do convite (mesma do modal SALA CRIADA e do chip de código) */
+.mp-amigos{width:100%;background:var(--am);border-color:var(--am);color:var(--dark)}
+.mp-amigos:hover,.mp-amigos:focus-visible{background:var(--am);border-color:var(--am);color:var(--dark);filter:brightness(1.08)}
+.mp-amigos[disabled]{opacity:var(--op-disabled);cursor:progress}
 .mp-convite{display:flex;gap:var(--s-2)}
 .mp-convite input{flex:1;min-width:0;font-family:var(--mono);font-size:var(--fs-300);
   letter-spacing:var(--tr-2);text-transform:uppercase;color:var(--ink-100);
@@ -2861,6 +2866,7 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-criar summary::before{content:'▸ ';color:var(--cs)}
 .mp-criar[open] summary::before{content:'▾ '}
 .mp-form{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-3);margin-top:var(--s-3)}
+.mp-lados-fixos{grid-column:1/-1}
 /* `min-width:0`: sem isto a coluna da grid nasce do min-content do <select>, e a opção mais
    longa ("TODOS (sorteia a cada partida)") empurrava o formulário 61 px para fora do painel —
    barra de rolagem horizontal no menu, visível só com a seção CRIAR MINHA SALA aberta. */
@@ -2929,9 +2935,23 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-modal-lot{margin:0;font-family:var(--mono);font-size:var(--fs-100);color:var(--ink-300);letter-spacing:var(--tr-1)}
 .mp-modal-copy{display:flex;gap:var(--s-3);flex-wrap:wrap;justify-content:center}
 .mp-modal-copy .btn{min-width:170px}
+/* o <a> do WhatsApp herda .btn, mas âncora não centraliza nem tira o sublinhado sozinha;
+   o verde é o do próprio WhatsApp, pra ser reconhecido sem ler */
+.mp-modal-zap{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-color:#25d366;color:#25d366}
+.mp-modal-zap:hover,.mp-modal-zap:focus-visible{background:#25d366;color:#0b2414}
 .mp-modal-card .btn-big{min-width:280px;margin-top:var(--s-2)}
 .mp-modal-nota{margin:0;max-width:44ch;font:600 var(--fs-50)/var(--lh-base) var(--font);color:var(--ink-300)}
 @media(max-width:560px){.mp-modal-copy{flex-direction:column;width:100%}.mp-modal-copy .btn,.mp-modal-card .btn-big{width:100%;min-width:0}}
+
+/* PWA: a instalação é opcional; o botão só aparece em aparelhos de toque. */
+.pwa-install{display:none}
+.pwa-install[hidden]{display:none!important}
+@media(pointer:coarse){
+  .pwa-install{position:fixed;z-index:100001;right:calc(12px + env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:min(310px,calc(100vw - 24px));pointer-events:auto}
+  .pwa-install button{min-height:44px;padding:10px 15px;border:1px solid #b4d92e;background:#10120bdc;color:#d6f275;font:700 12px/1 var(--font);letter-spacing:.8px;cursor:pointer;box-shadow:0 3px 16px #0009;touch-action:manipulation}
+  .pwa-install button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .pwa-install p{margin:0;padding:10px 12px;background:#10120bf2;border:1px solid #b4d92e;color:#f0f0ed;font:600 12px/1.45 var(--font);box-shadow:0 3px 16px #0009}
+}
 
 /* Faixa do ESPECTADOR: quem está assistindo precisa saber que está assistindo, de quem é a
    visão, e como entrar em campo. Sem isso o modo espectador é indistinguível de um bug. */
@@ -3033,6 +3053,7 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   /* COMO JOGAR: troca a lista de TECLADO pela lista de TOQUE (não existe W/A/S/D no celular) */
   #howto-panel .howto-keys { display: none; }
   #howto-panel .howto-touch { display: grid; }
+  #howto-panel .howto-touch-note { display: block; }
   .howto-grid { font-size: var(--fs-50); gap: 4px var(--s-3); }
 
   /* RANKING: números 26px + grade folgada + parágrafo estático que REPETE o #rank-global.
@@ -3173,6 +3194,7 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 #chat-acoes-quem{margin-right:auto;color:var(--sys)}
 #chat-motivos-lista{display:flex;flex-wrap:wrap;gap:4px 10px;margin:0;padding:0;border:0;min-width:0;flex:1 1 100%}
 #chat-motivos-lista legend{padding:0 0 4px;font-size:10px;letter-spacing:2px;color:var(--ink-200)}
+#chat-motivos-aviso{flex:1 1 100%;margin:0;line-height:1.35;color:var(--ink-200)}
 .chat-motivo{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
 .chat-motivo input{accent-color:var(--sys);margin:0}
 #chat-lista-bloqueados-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1 1 100%}

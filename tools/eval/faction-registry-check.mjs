@@ -16,7 +16,7 @@ import { pathToFileURL } from 'node:url';
 
 const MUTAR = (process.argv.find((x) => x.startsWith('--mutar=')) || '').split('=')[1] || '';
 const EXPECTED = new Map([
-  ['E', 'TIME E'], ['B', 'TIME B'], ['U', 'TRIBOS URBANAS'], ['C', 'PALHACOS'],
+  ['E', 'ESQUERDA'], ['B', 'DIREITA'], ['U', 'TRIBOS URBANAS'], ['C', 'PALHACOS'],
   ['F', 'FUNKEIROS'], ['M', 'MITICOS'], ['N', 'NERDOLAS'],
   ['R', 'PROFISSIONAIS DO CORRE'], ['O', 'NOIAS'], ['T', 'TV'],
 ]);
