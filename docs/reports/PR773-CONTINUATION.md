@@ -9,6 +9,8 @@
 - Aceite deste marco: smoke do jogo real sem `pageerror`, build, `check:deploy`, hooks de pre-push e confirmação de que `b1a42bdc5` é ancestral do novo head publicado. O merge do PR `#773` permanece sob coordenação da lane raiz.
 - Marco local validado em `7b1c5dd0d`: reconciliado com `origin/main` `f3576db59` (`v2.1.0-alpha.61`), preservando a correção e a linhagem do `#799`. Em Chrome real, o boot explícito em 1200×800 abriu o menu com `mobileOkCount=0` e `pageErrors=[]`; `web-smoke.spec.js` passou 2/2 e `chat-sala.spec.js` passou 2/2. `npm run build` gerou 21 rotas e `npm run check:deploy` passou 46/46 em 313 s.
 - Próximo passo: incorporar o head visual consolidado de Piscina preparado em lane separada, repetir os gates afetados e somente então publicar o novo head de `feat/elenco-politicos`. Nenhum merge de PR deve ocorrer nesta lane.
+- Candidato integrado de 09/10: `e3fa8f809` contém por ancestralidade exata o head visual `cf1000947` (`#790/#791/#800`), a otimização de CI `766cfcef7` e o head atual de `#799`, `80f0b3d6d`. O manifesto Mint ficou aditivo, com os dez políticos e os quatro props de Piscina, e `eval:piscina-trim` entrou uma vez em `check:deploy` e `check:fast`.
+- Validação final local: `docs:check` verde; PZT1/PZT2/PZT3 verdes e mutante `coplanar` vermelho; pre-push completo verde em 36 s; smoke combinado real em Chrome passou 5/5 em 1,5 min (`chat-sala` desktop e toque, GLB real do elenco, home e fluxo menu→HUD). Próximo passo concreto: publicar o checkpoint desta atualização em `feat/elenco-politicos`, atualizar o corpo do PR com a linhagem e acompanhar o único CI remoto do candidato. O merge final continua reservado à lane raiz.
 
 ## Objetivo e aceite
 
