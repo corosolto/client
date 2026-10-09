@@ -7,6 +7,8 @@
 - O smoke remoto desse head encontrou um crash no boot: `public/js/main.js` ainda atribuía `onclick` a `#mobile-ok`, embora o botão e a tela de aviso mobile tenham sido removidos juntos em `c857a4be3`. A correção desta continuação remove apenas o handler órfão, restaurando o contrato atual do DOM.
 - A branch verde do PR `#799`, `origin/codex/ci-chat-aviso-20261009` em `b1a42bdc5bff706029dc48da3b3664eeb8c62f4c`, foi incorporada por merge limpo. Seus dois commits estabilizam o smoke de chat sem substituir cliques reais.
 - Aceite deste marco: smoke do jogo real sem `pageerror`, build, `check:deploy`, hooks de pre-push e confirmação de que `b1a42bdc5` é ancestral do novo head publicado. O merge do PR `#773` permanece sob coordenação da lane raiz.
+- Marco local validado em `7b1c5dd0d`: reconciliado com `origin/main` `f3576db59` (`v2.1.0-alpha.61`), preservando a correção e a linhagem do `#799`. Em Chrome real, o boot explícito em 1200×800 abriu o menu com `mobileOkCount=0` e `pageErrors=[]`; `web-smoke.spec.js` passou 2/2 e `chat-sala.spec.js` passou 2/2. `npm run build` gerou 21 rotas e `npm run check:deploy` passou 46/46 em 313 s.
+- Próximo passo: incorporar o head visual consolidado de Piscina preparado em lane separada, repetir os gates afetados e somente então publicar o novo head de `feat/elenco-politicos`. Nenhum merge de PR deve ocorrer nesta lane.
 
 ## Objetivo e aceite
 
