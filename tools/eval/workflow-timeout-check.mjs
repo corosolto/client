@@ -16,10 +16,11 @@
    fica dentro de um teto sensato (nenhum job deste repositório precisa de mais
    de 30 min; o mais lento, o smoke, roda em ~6).
 
-   Mutantes: sem-timeout (apaga um) e timeout-absurdo (põe 300).
+   Mutantes: sem-timeout (apaga um), timeout-absurdo (põe 300) e isencao-estourada
+   (passa um job isento do teto medido dele).
 
    Uso: node tools/eval/workflow-timeout-check.mjs
-        [--mutante=sem-timeout|timeout-absurdo]
+        [--mutante=sem-timeout|timeout-absurdo|isencao-estourada]
    ============================================================================ */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -27,13 +28,16 @@ import { fileURLToPath } from 'node:url';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');
-if (mutante && !['sem-timeout', 'timeout-absurdo'].includes(mutante)) {
+if (mutante && !['sem-timeout', 'timeout-absurdo', 'isencao-estourada'].includes(mutante)) {
   throw new Error(`mutante desconhecido: ${mutante}`);
 }
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DIR = path.join(ROOT, '.github/workflows');
 const TETO_MAX = 30;
+/* Isenção NOMINAL, com o pior caso medido (gh api .../actions/runs/<id>/jobs, 15 runs de 09/10/2026):
+   portao 16-34 min (2 de 15 acima de 30), classify 3-28 min. Medir de novo antes de mexer (#497). */
+const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35 };
 
 /* Parser de indentação, não de YAML: a régua roda no `check:deploy`, que é node
    puro e sem dependência. `jobs:` na coluna 0, nome do job com 2 espaços, chaves
@@ -60,11 +64,12 @@ for (const arquivo of readdirSync(DIR).filter((f) => f.endsWith('.yml')).sort())
   let fonte = readFileSync(path.join(DIR, arquivo), 'utf8');
   if (mutante === 'sem-timeout' && arquivo === 'ci.yml') fonte = fonte.replace(/^ {4}timeout-minutes:.*$/m, '');
   if (mutante === 'timeout-absurdo' && arquivo === 'ci.yml') fonte = fonte.replace(/^ {4}timeout-minutes:.*$/m, '    timeout-minutes: 300');
+  if (mutante === 'isencao-estourada' && arquivo === 'portao-browser.yml') fonte = fonte.replace(/^ {4}timeout-minutes:.*$/m, '    timeout-minutes: 60');
   const lista = jobs(fonte);
   if (!lista.length) falhas.push(`WT0 ${arquivo}: nenhum job encontrado — o parser não entendeu o arquivo`);
   for (const job of lista) {
     if (job.timeout === null) falhas.push(`WT1 ${arquivo} · job \`${job.nome}\` sem timeout-minutes (default do GitHub: 360)`);
-    else if (job.timeout > TETO_MAX) falhas.push(`WT2 ${arquivo} · job \`${job.nome}\` com timeout de ${job.timeout} min (teto ${TETO_MAX})`);
+    else if (job.timeout > (TETO_ISENTO[`${arquivo}:${job.nome}`] ?? TETO_MAX)) falhas.push(`WT2 ${arquivo} · job \`${job.nome}\` com timeout de ${job.timeout} min (teto ${TETO_ISENTO[`${arquivo}:${job.nome}`] ?? TETO_MAX})`);
   }
 }
 
