@@ -15,3 +15,10 @@ Crítico independente de fonte revisou isolamento do painel, troca de instância
 Estado: piloto salvo, gravação parada; jogo voltou ao menu local no IAB2tab3. Última chamada markHandoff precisa renovar ao terminar turno. Próximo passo: outras capturas em mapas diferentes com nomes únicos, movimentos/tiros guiados por screenshot, tomadas curtas. Não declarar trailer pronto.
 
 Servidores: `/opt/homebrew/bin/node node_modules/astro/bin/astro.mjs dev --host127.0.0.1 --port8779` (usar espaços nas flags); `python3 tools/capture-codex/server.py --output <campaign>/00-inbox/gameplay --audio-root <aggregate>/client/public/audio` (8778). Sem credenciais/config de produção. Não publicar este instrumento nem mexer nos outros checkouts.
+
+## Segundo marco validado — Piscina/Lula
+- `codex-lula-piscina-v5.webm`: 35.505.104 bytes, 1920×1080, VP9 + Opus. Travessia de porta, deslocamento atirando, recarga, dano e respawn normais.
+- Prévia revisada: `01-selects/codex-lula-piscina-movimento-4s.mp4`, 4s, H.264 + AAC. Contato: `02-project/review/v3/codex-lula-v5-contact.jpg`. Trecho aproximadamente 12–16s aproveitável; vestiário e intervalos parado excluídos.
+- Controle agora oferece 0.25/0.5s e pitch para ajustar navegação e compensar recuo. JS syntax check passou.
+- Tentativa Deputada/Sertão não gerou take aproveitável: percurso pelos corredores externos, bloqueios em fachadas. Partida encerrada normalmente; browser local no menu. Não contabilizar como captura.
+- O objetivo completo do trailer permanece no ledger da campanha. Capturas dos demais personagens e master 45–60s ainda pendentes.
