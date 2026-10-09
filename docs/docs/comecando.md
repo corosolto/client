@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 58.107 linhas em 114 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 58.144 linhas em 114 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **8.316** linhas | `wc -l public/js/game.js` |
 | `main.js` | 4.294 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -52,7 +52,7 @@ esta página envelhecia no primeiro commit — ver
 | Scripts do arnês | 637 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 100 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.60` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.61` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -237,7 +237,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 485 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 792 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 981 |
-| `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.061 |
+| `velho_oeste` | Sertão da Treta | **captura** | `map_velho_oeste.js` | 1.071 |
 | `penitenciaria` | CARANDIRU | **captura** | `map_penitenciaria.js` | 1.009 |
 
 **18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 24 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
