@@ -228,15 +228,18 @@ function medir() {
     cmd: 'dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js',
   };
 
-  /* ---- pipeline de asset: quem consome cada SDK, medido por grep ---- */
-  const consomem = (padrao, dir) => {
-    const out = sh('grep', ['-rl', padrao, dir]).trim().split('\n').filter(Boolean);
-    return out.filter((x) => x.endsWith('.mjs') && entraNaMedicao(x)).length;
-  };
+  /* ---- pipeline de asset: quem consome cada SDK, medido só nos scripts .mjs ----
+     A lista versionada já veio de `git ls-files`: não atravesse de novo centenas de MB
+     de imagens/GLB para cada SDK. O mutante continua incluindo scripts locais. */
+  const scriptsPipeline = incluiLocais
+    ? globR('tools', (x) => x.endsWith('.mjs'))
+    : [...versionados].filter((p) => p.startsWith('tools/') && p.endsWith('.mjs')).sort();
+  const fontesPipeline = scriptsPipeline.map((p) => ler(p));
+  const consomem = (padrao) => fontesPipeline.filter((src) => src.includes(padrao)).length;
   f.pipeline = {
-    playwright: consomem('playwright', 'tools'),
-    gltf: consomem('@gltf-transform', 'tools'),
-    meshopt: consomem('meshoptimizer', 'tools'),
+    playwright: consomem('playwright'),
+    gltf: consomem('@gltf-transform'),
+    meshopt: consomem('meshoptimizer'),
     mint: (() => {
       if (!existe('mint-assets.json')) return null;
       const j = JSON.parse(ler('mint-assets.json'));
