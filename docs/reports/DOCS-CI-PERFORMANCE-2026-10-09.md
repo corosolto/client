@@ -4,6 +4,8 @@ Data: 2026-10-09
 Base: `origin/main` em `f3576db59884e4b6b702a09fd45ef625f9a8ca93`  
 Branch: `codex/optimize-docs-ci-20261009`
 
+Commit de implementação: `de32afe29` (`perf(ci): evita varrer assets no gerador de docs`).
+
 ## Objetivo e definição de pronto
 
 Eliminar a leitura repetida dos 533 MB de `tools/` em `tools/gen-docs.mjs`, mantendo os fatos, os blocos gerados e o comportamento do mutante `--mutante=inclui-locais` exatamente iguais. A frente fica pronta quando `docs:check`, `eval:docsautoria` e seus mutantes relevantes preservarem o contrato.
@@ -41,9 +43,11 @@ Prova do mutante local:
 Validações concluídas:
 
 - `npm run docs:check`: verde, 25 blocos em 32 marcadores; `real 0.51 s`.
-- `git diff --check`: pendente até o checkpoint final.
-- `npm run eval:docsautoria` e mutantes: pendentes após o primeiro commit, pois a própria régua recusa medir um gerador com mudança não commitada.
+- `node tools/eval/docs-autoria-check.mjs`: verde; `real 2.18 s`.
+- Mutante `sem-tolerancia`: vermelho em `DOCSAUT1`, como esperado; `real 2.31 s`.
+- Mutante `tolerancia-demais`: vermelho em `DOCSAUT2`, como esperado; `real 2.69 s`.
+- `git diff --check`: verde.
 
 ## Próximo passo
 
-Criar o checkpoint, rodar `eval:docsautoria` normal e os mutantes `sem-tolerancia` e `tolerancia-demais`, registrar os tempos e então entregar o SHA para integração no candidato cumulativo.
+Integrar os dois commits desta branch no candidato cumulativo e deixar o CI repetir `docs:check` e `eval:docsautoria` no mesmo ambiente da PR. Não há bloqueio local conhecido.
