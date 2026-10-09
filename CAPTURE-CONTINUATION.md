@@ -28,3 +28,12 @@ Servidores: `/opt/homebrew/bin/node node_modules/astro/bin/astro.mjs dev --host1
 - codex-peruca-orbita-v6.webm salvo automaticamente: 5127647 bytes, VP9 1920x1080 + Opus48k estéreo, aproximadamente5s. Contato codex-peruca-orbita-v6-contact.jpg confirma movimento lateral, rajadas, órbita completa e rosto. Pausa final confirmada no menu.
 - Crítico independente confirmou correção de soltura no start, deadline persistente após morte/blur e guard de terceira pessoa, sem nova regressão material. Áudio bruto acusa pacote Opus no EOF; revisar/remux selecionados antes do master.
 - Próximo: novas tomadas do elenco/mapas e montagem integral45–60s. Não considerar trailer pronto.
+
+## Elenco completo e montagem horizontal — 2026-10-09
+- Capturas curtas salvas para Peruca/Posto, Capitão/Praça, Deputada/Ferro, Zero Um/Loja, Dona Floresta/Amazônia, Dama/Quebrada e Barbudo/Posto/Piscina. Movimento e rajadas pelos inputs originais; dano adversário observado no Posto/Piscina/Loja. Não afirmar que todas as arenas tinham combate intenso: Praça está esparsa.
+- Dama: tentativas frontal e lateral em 44.6m ficaram bloqueadas pela colisão; rejeitadas. `codex-dama-quebrada-recuo-v6.webm`5380035 bytes percorre44.6→25.5m, mostra rosto e disparos. Excluir passagem da câmera pela lixeira.
+- Master em `../../launch-media/2026-10-09-eleicao/03-exports/coro-solto-trailer-horizontal-50s-v6.mp4`; montagem cerca49s com menu, Reframe, hino, narrador Andre/Seed Audio, logo e URL. EDL/script/proveniência e evidências na campanha. Aprovação criativa/escuta humana pendentes; vozes próprias de memes ainda não verificadas.
+- AAC concatenado gerava DTS regressivo. Corrigido com timeline PCM de duração explícita e master CFR30; manter esse método ao remontar. DRS exige `-reinit_filter 0` nos brutos antes de normalizar a resolução.
+- Três extras horizontais de gameplay exportados,9.4s/9.2s/7.5s, decodificação integral sem erros; nada publicado.
+- Último estado observado IAB2/tab5, Dama/Quebrada: gravação inativa, jogo pausado, fullscreen=false. Sem inputs nativos ou navegador externo. Restrição de tela vale para futuras capturas.
+- Próximo passo: concluir QA da última correção de corte, mostrar master/extras ao usuário e resolver fontes dos memes preservando as identidades de áudio aprovadas. Roadmap social e conteúdo90dias permanecem no ledger da campanha, não implementados/publicados por este instrumento.
