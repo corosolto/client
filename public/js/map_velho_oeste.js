@@ -8,7 +8,7 @@ import { applyLook } from './map_sky.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { sertaoLandscape, batchSertaoDecor } from './map_sertao_landscape.js';
 import { copaJuazeiro as addCopaJuazeiro, mandacaruSertao } from './map_sertao_flora.js';
-import { finishTaipa, finishVenda, crateBattens, settlementGround, untileSertaoSoil } from './map_sertao_architecture.js';
+import { finishTaipa, finishVenda, crateBattens, settlementGround, untileSertaoSoil, projetaSertaoNoMundo } from './map_sertao_architecture.js';
 import { createSertaoFauna } from './map_sertao_fauna.js';
 import { createSertaoHorizon } from './map_sertao_horizon.js';
 import { createSertaoDistantBirds } from './map_sertao_distant_birds.js';
@@ -30,6 +30,7 @@ export function buildVelhoOeste(scene, T) {
   root.name = 'velho-oeste-da-treta';   // id do mapa: 'sertao-*' é prefixo da régua ST1
   scene.add(root);
   const GLB_ON = typeof window !== 'undefined';
+  const REBOCO_REAL = GLB_ON && new URLSearchParams(location.search).get('reboco') !== 'legacy';
   let low = false;
   try { low = JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch {}
 
@@ -193,6 +194,10 @@ export function buildVelhoOeste(scene, T) {
     TX.adobe.colorSpace = THREE.SRGBColorSpace; TX.adobe.wrapS = TX.adobe.wrapT = THREE.RepeatWrapping;
     TX.adobe.repeat.set(3, 2); TX.adobe.anisotropy = 8; TX.adobe.name = 'oeste-adobe-real';
   }
+  if (REBOCO_REAL) {
+    TX.paupique = realTexture('paupique-real-v1.webp', 'oeste-adobe-paupique', 1);
+    TX.pedra = realTexture('pedra-real-v1.webp', 'oeste-pedra-real', 1);
+  }
   const mat = (color, map = TX.wood, roughness = .9, metalness = 0, bumpScale = .045) => new THREE.MeshStandardMaterial({ color, map, bumpMap: map, bumpScale, roughness, metalness });
   const adobeDe = (color) => mat(color, TX.adobe || (TX.adobe = texturaAdobe()), .96, 0, .05);
   const paupiqueDe = (color) => { const m = mat(color, TX.paupique || (TX.paupique = texturaPaupique()), .97, 0, .035); if (TX.adobe) m.bumpMap = TX.adobe; return m; };
@@ -215,11 +220,16 @@ export function buildVelhoOeste(scene, T) {
     windowVoid: new THREE.MeshBasicMaterial({ color: 0x1b110b }),
     adobe: adobeDe(0xffffff), adobeCaiado: adobeDe(0xf3ecdc), adobeOcre: adobeDe(0xd8b98c),
     paupiqueCru: paupiqueDe(0xffffff), paupiqueCaiado: paupiqueDe(0xf6efdd), paupiqueOcre: paupiqueDe(0xd8b98c),
-    pedra: mat(0xffffff, mineral, 1, 0, .025),
+    pedra: mat(0xffffff, TX.pedra || mineral, 1, 0, .025),
   };
 
   // Corrige a dominante amarela do albedo legado sem modificar a imagem de origem.
   if (GLB_ON) { MAT.sand.color.setRGB(.85, 1.15, 2.2); untileSertaoSoil(MAT.sand); }
+  // 512 px em 3 m = 171 px/m, a mesma densidade que o texel-check mede no mapa.
+  if (REBOCO_REAL) {
+    for (const m of [MAT.paupiqueCru, MAT.paupiqueCaiado, MAT.paupiqueOcre]) projetaSertaoNoMundo(m, 3, 1.5);
+    projetaSertaoNoMundo(MAT.pedra, 3);
+  }
 
   function addBox(w, h, d, material, x, y, z, opts = {}) {
     const mesh = new THREE.Mesh(boxGeo(w, h, d), material); mesh.position.set(x, y + h / 2, z);
