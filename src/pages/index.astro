@@ -1579,6 +1579,11 @@ window.__GEO_LANG__ = (function () {
   </div>
 </div>
 
+<div id="mp-identity-toast" class="mp-identity-card" role="status" aria-live="polite" hidden>
+  <img class="mp-identity-portrait" alt="" width="64" height="64" hidden>
+  <span class="mp-identity-copy"><small>SEU PERSONAGEM NO MULTIPLAYER</small><strong></strong><span></span></span>
+</div>
+
 <!-- CHAT DE SALA (#686, docs/chat-de-sala.md). Irmã do #hud, em camada própria (z 31, acima
      do #touch-ui). `data-entrada-propria` é o que faz o game.js ignorar tecla e clique aqui.
      HTML puro: nada de expressão Astro, o serve.mjs lê este arquivo com regex. -->
@@ -1624,6 +1629,10 @@ window.__GEO_LANG__ = (function () {
      translúcido: a partida continua visível atrás (o canvas pausado segue renderizando). -->
 <div id="pause-menu" class="screen hidden">
   <h2 class="screen-title">PAUSA NA TRETA</h2>
+  <div id="mp-identity-pause" class="mp-identity-card" aria-label="Personagem atribuído pelo servidor" hidden>
+    <img class="mp-identity-portrait" alt="" width="64" height="64" hidden>
+    <span class="mp-identity-copy"><small>SEU PERSONAGEM NO MULTIPLAYER</small><strong></strong><span></span></span>
+  </div>
   <div class="pause-actions panel">
     <button id="btn-resume" class="btn btn-big">CONTINUAR</button>
     <button id="btn-pause-settings" class="btn">CONFIGURAÇÕES</button>

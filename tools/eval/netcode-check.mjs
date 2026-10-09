@@ -720,8 +720,8 @@ console.log('\n· multiplayer→sair→single player não reaproveita a sessão 
   const quitLimpa = /function quitToMenu\(\)\s*{[\s\S]{0,3200}mpEncerrarSessao\(\);/;
   cobra(encerraAntes.test(main) && quitLimpa.test(main),
     'SAIR PRO MENU zera a sessão e fecha o WebSocket antes de permitir uma partida offline');
-  cobra(/localMp === '1'[\s\S]{0,120}return ''/.test(main),
-    '?mp=1 não tenta emitir ticket público para o nó local de desenvolvimento');
+  cobra(/localMp && mpNoAtual\?\.id === 'url' && !NOS\.some\(\(no\) => no\.url === mpNoAtual\.url\)/.test(main),
+    '?mp= dispensa ticket só para nó de teste; trocar para nó oficial continua autenticado');
 
   const mutSemFronteira = main.replace('const sessao = online ? mpSessao : null;', 'const sessao = mpSessao;');
   cobra(!guard.test(mutSemFronteira),
@@ -1024,6 +1024,11 @@ console.log('\n· NetClient: `ev` entra no buffer, `partida` zera, lote grande �
   ws.onopen && ws.onopen();
   ws.onmessage({ data: JSON.stringify({ type: 'welcome', yourEnt: 1, yourTeam: 'E', espectador: false, events: 1, snapshotHz: 30 }) });
   await conectando;
+  cli._lastSnapT = performance.now() - 33;
+  ws.onmessage({ data: JSON.stringify({ type: 'snapshot', tick: 1, ents: [] }) });
+  const gapsRecebidos = cli.drainGapSamples();
+  cobra(gapsRecebidos.length === 1 && gapsRecebidos[0] >= 30 && gapsRecebidos[0] < 100 && cli.drainGapSamples().length === 0,
+    'NetClient coleta intervalos reais de snapshots e drena cada janela uma vez');
   ws.onmessage({ data: JSON.stringify({ type: 'ev', tick: 5, t: 1, list: Array.from({ length: 40 }, () => ({ k: 'hit', a: 1, v: 2, d: 1, h: 0, w: 'AK' })) }) });
   cobra(cli.events.length === 1 && cli.events[0].list.length === 32, `lote de 40 vira 32 no cliente (${cli.events[0] && cli.events[0].list.length})`);
   ws.onmessage({ data: JSON.stringify({ type: 'ev', tick: 'x', list: [] }) });
@@ -1246,6 +1251,55 @@ function medeRajada(g, net) {
   g2.dispose();
 }
 
+console.log('\n· buffer dos remotos cresce sob gaps repetidos sem atrasar rede estável');
+function medeJitterRepetido(jitter, fixo = false, ping = 0) {
+  const net = fakeNet(1, 5, false, 30), g = montaJogo(net);
+  if (ping) net.stats = { ping };
+  if (fixo) g._mp._atualizarAtrasoInterpolacao = () => {};
+  const tickMs = 1000 / 30, eventos = [];
+  let chegadaAnterior = 0;
+  for (let k = 0; k < 120; k++) {
+    const bruta = 1025 + k * tickMs + jitter(k);
+    const chegada = Math.max(bruta, chegadaAnterior + 0.01);
+    eventos.push({ chegada, snap: snapshot(500 + k * tickMs / 1000, k + 1, { mover: k * tickMs * 0.003 }) });
+    chegadaAnterior = chegada;
+  }
+  let agora = 1000, i = 0, anterior = null, parados = 0, quadros = 0;
+  g._mp._now = () => agora;
+  for (agora = 1000; agora < 4750; agora += 1000 / 60) {
+    while (i < eventos.length && eventos[i].chegada <= agora) {
+      net.snap = eventos[i].snap; g._mp.applySnapshot(); i++;
+    }
+    const b = g._mp._netMap.get(6);
+    if (!b) continue;
+    g._mp.updateRemoteBot(b, 1 / 60);
+    if (agora >= 2000 && anterior != null) {
+      quadros++;
+      if (b.pos.x <= anterior + 1e-6) parados++;
+    }
+    anterior = b.pos.x;
+  }
+  const atraso = g._mp.interpAtrasoMs;
+  g.dispose();
+  return { parados, quadros, atraso };
+}
+{
+  const estavel = medeJitterRepetido(() => 0);
+  const umPico = medeJitterRepetido((k) => k === 40 ? 90 : 0);
+  const antigo = medeJitterRepetido((k) => k % 5 === 0 ? 90 : 0, true);
+  const adaptado = medeJitterRepetido((k) => k % 5 === 0 ? 90 : 0);
+  const rttAlto = medeJitterRepetido((k) => k % 5 === 0 ? 90 : 0, false, 220);
+  const recuperado = medeJitterRepetido((k) => k < 50 && k % 5 === 0 ? 90 : 0);
+  cobra(estavel.parados === 0 && estavel.atraso === 80,
+    `rede estável fica em 80 ms e sem quadro parado (${estavel.parados}/${estavel.quadros})`);
+  cobra(umPico.atraso === 80, `um pico isolado não aumenta a latência visual (${umPico.atraso} ms)`);
+  cobra(adaptado.atraso > 100 && adaptado.atraso <= 140 && adaptado.parados < antigo.parados * 0.5,
+    `gaps repetidos: ${antigo.parados}/${antigo.quadros} quadros parados no fixo, ${adaptado.parados}/${adaptado.quadros} com ${adaptado.atraso.toFixed(1)} ms`);
+  cobra(rttAlto.atraso <= 120 && rttAlto.atraso >= 80,
+    `RTT de 220 ms limita buffer à janela de rewind com margem (${rttAlto.atraso.toFixed(1)} ms)`);
+  cobra(recuperado.atraso === 80, `rede estável após a rajada volta ao buffer de 80 ms (${recuperado.atraso.toFixed(1)} ms)`);
+}
+
 /* AUTORIDADE DA FACA no online. O hitscan já tinha a guarda (`if (!this.online)`); o golpe de
    faca não tinha, e aplicava dano no cliente enquanto o servidor aplicava o dele — o snapshot
    desfazia, mas no meio disso a vida do alvo piscava e o killfeed podia mentir. */
@@ -1282,6 +1336,10 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
 {
   const net = fakeNet(1, 5, false, 30);
   const samples = [];
+  const pings = [1200];
+  const gaps = [1400];
+  net.drainRttSamples = () => pings.splice(0);
+  net.drainGapSamples = () => gaps.splice(0);
   net.sendClientStats = (sample) => samples.push(sample);
   const g = montaJogo(net);
   const mp = g._mp;
@@ -1295,6 +1353,8 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
   mp.updateStats();
   cobra(samples.length === 0, 'aba oculta não envia FPS, RTT e gap como se houvesse jogo visível');
   cobra(mp._reconcileWindow.length === 0, 'correção da aba oculta não contamina a próxima janela');
+  cobra(pings.length === 0, 'ping anterior à pausa não contamina a janela ativa');
+  cobra(gaps.length === 0, 'gap anterior à pausa não contamina a janela ativa');
   document.hidden = false;
   g.paused = true;
   mp._nextClientStats = 0;
@@ -1303,12 +1363,21 @@ console.log('\n· telemetria mede somente jogabilidade em primeiro plano');
   g.paused = false;
   mp.updateStats();
   cobra(samples.length === 0, 'retorno ao jogo aguarda janela nova antes de medir');
+  pings.push(34, 36, 39);
+  gaps.push(...Array(19).fill(33), 450);
+  mp._reconcileWindow.push(0.02, 0.8);
   g._rafFrames += 60;
   mp._nsT0 = performance.now() - 1000;
   mp._nsF0 = g._rafFrames - 60;
   mp._nextClientStats = 0;
   mp.updateStats();
   cobra(samples.length === 1 && samples[0].fps > 0, 'jogo visível volta a enviar telemetria após aquecer');
+  cobra(samples[0]?.rttSamples?.join(',') === '34,36,39' && pings.length === 0,
+    'janela ativa envia todos os pings uma vez, sem repetir os da pausa');
+  cobra(samples[0]?.gap === 33 && gaps.length === 0,
+    'gap p95 da janela ignora pico isolado; máximo do HUD não vira qualidade da sessão');
+  cobra(samples[0]?.reconcileSamples?.join(',') === '0.02,0.8' && mp._reconcileWindow.length === 0,
+    'correções da janela ativa chegam como eventos sem repetir no próximo envio');
   if (hiddenBefore) Object.defineProperty(document, 'hidden', hiddenBefore);
   else delete document.hidden;
   g.dispose();

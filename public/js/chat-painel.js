@@ -199,6 +199,7 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     else if (ch === 'time') aviso(frase('chatNack', 'sem_time'));
     atualizarCanal();
     if (!aberto) {
+      cancelarDestravaPendente();
       aberto = true;
       focoAntes = document.activeElement;
       sec.classList.add('aberto');
@@ -220,6 +221,42 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     sec.style.removeProperty('--chat-vv');
     if (!semJogo) jogo()?.travarEntrada?.(false);
     devolverFoco();
+  }
+  let destravaPendente = null;
+  function cancelarDestravaPendente() {
+    if (!destravaPendente) return;
+    destravaPendente();
+    destravaPendente = null;
+  }
+  function fecharPorPonteiro(e) {
+    const g = jogo();
+    fechar({ semJogo: true });
+    if (!g?.travarEntrada) return;
+    const id = e.pointerId;
+    let timerFim = null;
+    const limpar = () => {
+      document.removeEventListener('pointerup', terminar, true);
+      document.removeEventListener('pointercancel', terminar, true);
+      window.removeEventListener('blur', terminar);
+      clearTimeout(timerFim);
+    };
+    const destravar = () => {
+      limpar();
+      if (destravaPendente === cancelar) destravaPendente = null;
+      if (!aberto) g.travarEntrada(false);
+    };
+    const cancelar = () => { limpar(); };
+    const terminar = (fim) => {
+      if (fim.pointerId != null && fim.pointerId !== id) return;
+      limpar();
+      // O touchend e o mousedown de compatibilidade ainda podem chegar após pointerup.
+      timerFim = setTimeout(destravar, e.pointerType === 'touch' ? 100 : 0);
+    };
+    destravaPendente = cancelar;
+    document.addEventListener('pointerup', terminar, true);
+    document.addEventListener('pointercancel', terminar, true);
+    window.addEventListener('blur', terminar);
+    timerFim = setTimeout(destravar, 3000);
   }
   function devolverFoco() {
     const f = focoAntes;
@@ -377,7 +414,8 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
     const t = e.target;
     if (sec.contains(t) || (el.toque && (t === el.toque || el.toque.contains(t)))
       || (el.atalho && (t === el.atalho || el.atalho.contains(t)))) return;
-    fechar();
+    if (e.cancelable) e.preventDefault();
+    fecharPorPonteiro(e);
   };
   // os botões da HUD (Y SALA/U TIME) abrem o compositor no canal do rótulo, como as teclas
   const onBotaoSala = () => abrir('sala');
@@ -446,7 +484,10 @@ export function montarChatSala({ net, obterJogo = () => null, tr = (s) => s, fra
 
   function destruir() {
     if (net.onChat === receber) net.onChat = null;
+    const destravaAoDestruir = !!destravaPendente;
+    cancelarDestravaPendente();
     fechar();
+    if (destravaAoDestruir) jogo()?.travarEntrada?.(false);
     estado.limpar();
     estado.aoMudarMeta(null);
     pendentes.clear();

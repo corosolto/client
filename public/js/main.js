@@ -3628,12 +3628,53 @@ let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
 let mpNos = [];
 let mpTimerLista = null;
 let mpTicketIdentityUid = null;
+let mpIdentityTimer = null;
+
+function mpLimparIdentidade() {
+  clearTimeout(mpIdentityTimer);
+  mpIdentityTimer = null;
+  for (const id of ['mp-identity-toast', 'mp-identity-pause']) {
+    const card = document.getElementById(id);
+    if (card) card.hidden = true;
+  }
+}
+
+function mpMostrarIdentidade(estado) {
+  mpLimparIdentidade();
+  const espectador = !!estado.espectador || estado.yourEnt == null;
+  const roster = Array.isArray(estado.roster) ? estado.roster : [];
+  const corpo = espectador ? null : roster.find((r) => r && r.id === estado.yourEnt && r.team === estado.yourTeam);
+  const def = corpo ? CHARACTERS.find((c) => c.id === corpo.char) : null;
+  // O personagem usado para preload é um fallback técnico; não anunciá-lo como atribuição.
+  const nome = espectador ? 'Espectador' : def?.name || 'Personagem não identificado';
+  const detalhe = espectador ? 'Aguardando vaga em um time'
+    : def ? tr(FACTION_NAME[def.team] || def.team) : 'O servidor ainda não informou seu personagem';
+  for (const id of ['mp-identity-toast', 'mp-identity-pause']) {
+    const card = document.getElementById(id);
+    if (!card) continue;
+    const img = card.querySelector('.mp-identity-portrait');
+    card.querySelector('small').textContent = espectador ? 'SUA POSIÇÃO NA PARTIDA' : 'SEU PERSONAGEM NO MULTIPLAYER';
+    card.querySelector('strong').textContent = nome;
+    card.querySelector('.mp-identity-copy > span').textContent = detalhe;
+    img.hidden = !def;
+    img.removeAttribute('src');
+    if (def) {
+      img.onerror = () => {
+        if (img.src.includes('/chars-hero/')) img.src = portraitFallbackUrl(def);
+        else { img.onerror = null; img.hidden = true; }
+      };
+      img.src = portraitUrl(def);
+    }
+    card.hidden = false;
+  }
+  mpIdentityTimer = setTimeout(() => { const toast = document.getElementById('mp-identity-toast'); if (toast) toast.hidden = true; }, 5000);
+}
 
 async function obterMpTicket(action) {
-  /* Nó local explícito (?mp=1/localhost) roda com MP_TICKET_REQUIRED=0. Pedir o ticket à API
-     pública com node=xx fazia o fluxo de desenvolvimento morrer ANTES do WebSocket. */
+  /* Um ?mp= pode apontar a staging ou a um nó oficial. Só o nó de teste selecionado
+     dispensa ticket público; trocar para BR/US/EU na lista exige ticket normalmente. */
   const localMp = new URLSearchParams(location.search).get('mp') || '';
-  if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
+  if (localMp && mpNoAtual?.id === 'url' && !NOS.some((no) => no.url === mpNoAtual.url)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
   if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
   const uid = getAnonId();
@@ -4170,10 +4211,19 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
       currentEnemyFaction = next.enemyFaction; currentChar = next.char;
       mpAtualizarBarraSpec(m);
       if (mpSessao?.net === net) await startGame(currentTeam, currentChar, currentEnemyFaction, true);
-      if (mpSessao?.net === net) mpPedirPersonagemPreferido(net);
+      if (mpSessao?.net === net && net.yourEnt === m.yourEnt && game?.online) {
+        mpMostrarIdentidade({ ...net.meta, ...m });
+        mpPedirPersonagemPreferido(net);
+      }
     });
   };
-  net.onPersonagem = (m) => { if (m.ent === net.yourEnt) currentChar = m.char; };
+  net.onPersonagem = (m) => {
+    if (m.ent !== net.yourEnt) return;
+    currentChar = m.char;
+    if (mpSessao?.net === net && game?.online) mpMostrarIdentidade({
+      ...net.meta, yourEnt: net.yourEnt, yourTeam: net.yourTeam, espectador: net.espectador,
+    });
+  };
   // Nova partida no servidor (mapa girou): mesmo conteúdo do welcome, remonta por cima.
   // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
   net.onPartida = async (m) => {
@@ -4198,7 +4248,11 @@ async function mpMontarPartida(net, m) {
   const personagem = (meuNoRoster && CHARACTERS.some((c) => c.id === meuNoRoster.char) ? meuNoRoster.char : null)
     || (CHARACTERS.find((c) => c.team === faccaoMinha) || CHARACTERS[0]).id;
   await startGame(lado, personagem, faccaoDele, true);
-  if (mpSessao?.net === net) { mpAtualizarBarraSpec(m); mpPedirPersonagemPreferido(net); }
+  if (mpSessao?.net === net && net.yourEnt === m.yourEnt && game?.online) {
+    mpAtualizarBarraSpec(m);
+    mpMostrarIdentidade(m);
+    mpPedirPersonagemPreferido(net);
+  }
 }
 
 /* O personagem escolhido no hub vale no multiplayer: o servidor troca o corpo herdado do bot. */
@@ -4214,6 +4268,7 @@ function mpPedirPersonagemPreferido(net) {
    o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
 function mpDesconectou() {
   if (!mpSessao) return;
+  mpLimparIdentidade();
   try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
   mpSessao.chat?.destruir();
   mpSessao = null;
@@ -4273,6 +4328,7 @@ function mpFecharBarraSpec() {
 }
 function mpEncerrarSessao() {
   const s = mpSessao; mpSessao = null;
+  mpLimparIdentidade();
   s?.chat?.destruir();
   mpFecharBarraSpec();
   try { s?.net.close(); } catch { /* já fechado */ }

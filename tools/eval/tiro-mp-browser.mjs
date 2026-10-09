@@ -57,6 +57,12 @@ const MUTANTE = val('mutante', '');
 const PORTA = Number(val('porta', 8202));
 const FOTO = val('foto', '/tmp/tiro-mp.png');
 const MAPA = val('mapa', 'atacadao_treta');
+const IDENTIDADE = args.includes('--identidade');
+const LARGURA = Number(val('largura', 1280));
+const ALTURA = Number(val('altura', 800));
+if (!Number.isInteger(LARGURA) || !Number.isInteger(ALTURA) || LARGURA < 640 || ALTURA < 320) {
+  throw new Error('viewport inválido: use --largura/--altura em pixels inteiros');
+}
 const NO = process.env.NO || 'localhost:8787';
 const BASE = `http://localhost:${PORTA}`;
 const MAIN_LOCAL = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
@@ -119,7 +125,7 @@ try {
      contexto novo nunca chega nesta página (90 s sem evento, com o título já carregado).
      Página direta carrega em ~1 s — e o que a régua mede não muda. */
   const page = await browser.newPage();
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.setViewportSize({ width: LARGURA, height: ALTURA });
   const ctx = page;
 
   let mutou = !MUTANTE;
@@ -204,12 +210,20 @@ try {
     const b = document.getElementById('btn-jogar');
     return b && b.onclick && b.getAttribute('aria-disabled') !== 'true';
   }, null, { timeout: 90_000, polling: 250 });
-  await clicaAte('#btn-jogar', () => !document.getElementById('main-menu')?.classList.contains('hidden')
-    || !!document.querySelector('[data-act="mp"]'));
-  await clicaAte('[data-act="mp"]', () => document.querySelectorAll('#mp-nos .mp-no, #mp-nos button').length > 0, 90_000);
+  const hub = await page.evaluate(() => document.documentElement.dataset.homeUi === 'hub');
+  if (hub) {
+    await clicaAte('#hub-mp', () => !document.getElementById('mp-panel')?.classList.contains('hidden'), 90_000);
+    await clica('#hub-mp-private');
+  } else {
+    await clicaAte('#btn-jogar', () => !document.getElementById('main-menu')?.classList.contains('hidden')
+      || !!document.querySelector('[data-act="mp"]'));
+    await clicaAte('[data-act="mp"]', () => document.querySelectorAll('#mp-nos .mp-no, #mp-nos button').length > 0, 90_000);
+  }
+  await page.waitForFunction(() => !!document.getElementById('mp-rotacao')?._ok, null, { polling: 200 });
   await page.evaluate(() => { document.querySelector('details.mp-criar')?.setAttribute('open', ''); });
   await page.evaluate(() => {
     document.getElementById('mp-nome').value = 'REGUA DO TIRO';
+    if (document.getElementById('mp-privada').checked) document.getElementById('mp-senha').value = 'regua-local';
     const r = document.getElementById('mp-rotacao');
     r.value = 'escolher'; r.dispatchEvent(new Event('change', { bubbles: true }));
   });
@@ -233,6 +247,19 @@ try {
   });
   cobra(entrada.mapa === MAPA, `TB1 · a sala nasceu no mapa que a tela escolheu (${entrada.mapa})`);
   cobra(entrada.ent != null, `TB2 · o jogador recebeu corpo no servidor (ent ${entrada.ent}) e a partida está viva`);
+  if (IDENTIDADE) {
+    const entradaIdentidade = await page.evaluate(async () => {
+      const net = window.__game._mp.net;
+      const { CHARACTERS } = await import('/js/characters.js');
+      const corpo = net.meta.roster.find((r) => r.id === net.yourEnt);
+      const card = document.getElementById('mp-identity-toast');
+      return { esperado: CHARACTERS.find((c) => c.id === corpo?.char)?.name,
+        exibido: card.querySelector('strong').textContent, oculto: card.hidden };
+    });
+    cobra(!!entradaIdentidade.esperado && entradaIdentidade.exibido === entradaIdentidade.esperado && !entradaIdentidade.oculto,
+      `ID0 · entrada anuncia o corpo que o servidor atribuiu (${entradaIdentidade.exibido})`);
+    await page.screenshot({ path: FOTO.replace(/\.png$/, '-identidade-entrada.png') });
+  }
 
   // ── conta os eventos `tiro` do servidor e os traçantes que eles produzem
   const medindo = page.evaluate(async () => {
@@ -313,6 +340,58 @@ try {
   cobra(erros.length === 0, `TB7 · nenhuma exceção no console durante a partida${erros.length ? `: ${erros[0]}` : ''}`);
 
   await page.screenshot({ path: FOTO });
+  if (IDENTIDADE) {
+    const inicial = await page.evaluate(async () => {
+      const net = window.__game._mp.net;
+      const { CHARACTERS } = await import('/js/characters.js');
+      const corpo = net.meta.roster.find((r) => r.id === net.yourEnt);
+      const def = CHARACTERS.find((c) => c.id === corpo?.char);
+      const card = document.getElementById('mp-identity-pause');
+      const img = card.querySelector('img');
+      return { esperado: def?.name, exibido: card.querySelector('strong').textContent,
+        faccao: card.querySelector('.mp-identity-copy > span').textContent,
+        cardOculto: card.hidden, foto: img.complete && img.naturalWidth > 0 };
+    });
+    cobra(!!inicial.esperado && inicial.exibido === inicial.esperado && !inicial.cardOculto && !!inicial.faccao,
+      `ID1 · pausa guarda personagem e facção do roster autoritativo (${inicial.exibido})`);
+    cobra(inicial.foto, 'ID2 · retrato do personagem atribuído carregou');
+    await page.evaluate(() => window.__game.setPaused(true));
+    const visivel = await page.evaluate(() => {
+      const card = document.getElementById('mp-identity-pause'), r = card.getBoundingClientRect();
+      return !document.getElementById('pause-menu').classList.contains('hidden')
+        && r.width > 0 && r.height > 0 && r.left >= 0 && r.right <= innerWidth;
+    });
+    cobra(visivel, 'ID3 · identidade fica visível dentro da pausa');
+    if (ALTURA <= 500) {
+      const cabe = await page.evaluate(() => ({
+        topo: document.querySelector('#pause-menu .screen-title').getBoundingClientRect().top,
+        ultimo: document.querySelector('#pause-menu #btn-quit').getBoundingClientRect().bottom,
+        altura: innerHeight,
+      }));
+      cobra(cabe.topo >= 0 && cabe.ultimo <= cabe.altura,
+        `ID3b · pausa cabe na viewport horizontal (${Math.round(cabe.topo)}–${Math.round(cabe.ultimo)} de ${cabe.altura}px)`);
+    }
+    await page.screenshot({ path: FOTO.replace(/\.png$/, '-identidade-pausa.png') });
+    await page.evaluate(() => window.__game.setPaused(false));
+    await page.evaluate(() => window.__game._mp.net.espectar());
+    await page.waitForFunction(() => window.__game?._mp?.net.yourEnt == null
+      && document.querySelector('#mp-identity-pause strong')?.textContent === 'Espectador',
+    null, { timeout: 60_000, polling: 200 });
+    cobra(true, 'ID4 · ao virar espectador, a identidade deixa de anunciar um personagem');
+    await page.evaluate(() => window.__game._mp.net.pedirTime('E'));
+    await page.waitForFunction(() => window.__game?._mp?.net.yourEnt != null
+      && document.querySelector('#mp-identity-pause strong')?.textContent !== 'Espectador',
+    null, { timeout: 60_000, polling: 200 });
+    const retorno = await page.evaluate(async () => {
+      const net = window.__game._mp.net;
+      const { CHARACTERS } = await import('/js/characters.js');
+      const corpo = net.meta.roster.find((r) => r.id === net.yourEnt);
+      return { esperado: CHARACTERS.find((c) => c.id === corpo?.char)?.name,
+        exibido: document.querySelector('#mp-identity-pause strong').textContent };
+    });
+    cobra(!!retorno.esperado && retorno.exibido === retorno.esperado,
+      `ID5 · ao voltar ao time, a identidade segue o novo corpo do servidor (${retorno.exibido})`);
+  }
   console.log(`\n  figura: ${FOTO}`);
   if (MUTANTE && !mutou) { console.error(`✗ TB0  o mutante ${MUTANTE} não casou com o código`); falhas++; }
   console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);

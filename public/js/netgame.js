@@ -36,11 +36,12 @@ class Netcode {
     this._alvoSpec = null;      // quem o espectador está seguindo
     this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
     this._evOn = !!(net.meta && net.meta.events);   // servidor manda `ev`; sem a flag, heurística velha (BUG-90)
-    /* BUFFER DE INTERPOLAÇÃO (~2,4 snapshots). Renderizar o remoto algumas amostras no
-       passado é o que absorve o jitter: um pacote atrasado ainda tem estrada bufferizada
-       pela frente, em vez de clampar no último ponto e CONGELAR o boneco (BUG-87). */
+    /* Buffer base ~2,4 snapshots; gaps repetidos ampliam até 140 ms para o remoto
+       não congelar, e a rede estável volta ao atraso mínimo (BUG-87). */
     this.snapshotHz = Math.max(1, Number(net.meta?.snapshotHz) || 20);
-    this.interpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
+    this._baseInterpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
+    this.interpAtrasoMs = this._baseInterpAtrasoMs;
+    this._arrivalGaps = [];
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
     this._offMs = null;               // chegada − t·1000 (mínimo da janela, deslizado) — BUG-118
     // Predições indexadas pelo seq que o snapshot v4 reconhece. Arrays planos evitam objeto
@@ -80,7 +81,6 @@ class Netcode {
   dispose() {
     if (this._nsTimer) { clearInterval(this._nsTimer); this._nsTimer = null; }
     try { this.net.stopPing(); } catch { /* já fechada */ }
-    if (this._nsEl) { this._nsEl.remove(); this._nsEl = null; try { document.body.classList.remove('net-overlay'); } catch { /* sem DOM */ } }
     if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
     if (this.net.onPersonagem === this._onPersonagem) this.net.onPersonagem = this._prevOnPersonagem;
   }
@@ -107,6 +107,26 @@ class Netcode {
   // Costura da régua: o mutante troca os dois pelo relógio de chegada.
   _relogioSnap(snap, nowMs) { return Number.isFinite(snap.t) ? snap.t * 1000 : nowMs; }
   _relogioAgora() { return this._offMs == null ? this._now() : this._now() - this._offMs; }
+
+  _atualizarAtrasoInterpolacao(gapMs) {
+    if (!(gapMs > 0)) return;
+    if (gapMs >= 1000) {
+      this._arrivalGaps.length = 0;
+      this.interpAtrasoMs = this._baseInterpAtrasoMs;
+      return;
+    }
+    this._arrivalGaps.push(gapMs);
+    if (this._arrivalGaps.length > 30) this._arrivalGaps.shift();
+    if (this._arrivalGaps.length < 12) return;
+    const gaps = [...this._arrivalGaps].sort((a, b) => a - b);
+    const p90 = gaps[Math.floor((gaps.length - 1) * 0.9)];
+    // O servidor só rebobina 250 ms; 20 ms de margem cobrem fila e assimetria do RTT.
+    const rtt = Number(this.net.stats?.ping);
+    const teto = Number.isFinite(rtt) && rtt > 0 ? Math.max(this._baseInterpAtrasoMs, Math.min(140, 230 - rtt / 2)) : 140;
+    const alvo = Math.max(this._baseInterpAtrasoMs, Math.min(teto, p90 + 20));
+    const mudanca = alvo - this.interpAtrasoMs;
+    this.interpAtrasoMs += Math.max(-2, Math.min(5, mudanca));
+  }
 
   /* Chamado pelo game._updatePlayer logo DEPOIS do _moveEntity (a predição já aconteceu na
      tela). Reconcilia com a pose autoritativa e manda o input pro servidor. */
@@ -331,6 +351,7 @@ class Netcode {
        que o renderTime() deriva o instante do servidor que a tela está mostrando. */
     this._snapPrevT = this._snapCurT; this._snapArrPrev = this._snapArrCur;
     this._snapCurT = snap.t; this._snapArrCur = nowMs;
+    if (this._snapArrPrev != null) this._atualizarAtrasoInterpolacao(nowMs - this._snapArrPrev);
     this._tAt.push(nowMs); this._tT.push(snap.t);
     if (this._tAt.length > 10) { this._tAt.shift(); this._tT.shift(); }
     // Offset local↔servidor = MÍNIMO da janela (atraso só aumenta chegada−t); desliza ≤ 4 ms
@@ -791,20 +812,10 @@ class Netcode {
     try { game._updateTeamMark(b); } catch { /* marca opcional */ }
   }
 
-  // ── OVERLAY DE REDE: fps · snap Hz · gap/jitter · banda · ents · ping ──
+  // Recolhe métricas para telemetria sem desenhar diagnóstico durante a partida.
   updateStats() {
     const game = this.game;
     if (game._disposed || !game.online || !this.net) return;
-    let el = this._nsEl;
-    if (!el) {
-      el = this._nsEl = document.createElement('div');
-      try { document.body.classList.add('net-overlay'); } catch { /* sem DOM */ }   // o killfeed se afasta (style.css)
-      el.id = 'netstats';
-      el.style.cssText = 'position:fixed;top:10px;right:10px;z-index:100000;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;'
-        + 'color:#cfe;background:rgba(8,10,14,.86);border:1px solid #2a3340;border-radius:7px;padding:7px 11px;'
-        + 'pointer-events:none;white-space:pre;min-width:172px;letter-spacing:.2px;text-shadow:0 1px 2px #000';
-      document.body.appendChild(el);
-    }
     // fps = frames REAIS de render na janela, e não as chamadas deste interval
     const now = performance.now();
     const inactive = !!game.paused || (typeof document !== 'undefined' && !!document.hidden);
@@ -814,6 +825,8 @@ class Netcode {
       this._nsF0 = game._rafFrames || 0;
       this._nsFps = null;
       this._reconcileWindow.length = 0;
+      this.net.drainRttSamples?.();
+      this.net.drainGapSamples?.();
       this._nextClientStats = now + 10000;
     }
     if (this._nsT0 == null) { this._nsT0 = now; this._nsF0 = game._rafFrames || 0; }
@@ -826,33 +839,24 @@ class Netcode {
     if (!inactive && now >= this._nextClientStats && this._nsFps > 0) {
       this._nextClientStats = now + 10000;
       const correcoes = this._reconcileWindow;
+      // O HUD conserva o pior gap recente; a telemetria usa p95 dos intervalos
+      // desta janela para que um pico isolado não defina a qualidade inteira.
+      const gaps = this.net.drainGapSamples?.();
       this.net.sendClientStats?.({
-        fps: this._nsFps, rtt: s.ping, snap: s.hz, gap: s.gapMax,
+        fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
         reconcileP95: this._percentil(correcoes, 0.95),
+        // O p95 da sessão precisa dos eventos, não do p95 de cada janela. Em uma
+        // janela anormalmente cheia, distribuir as 512 amostras por toda ela.
+        reconcileSamples: correcoes.length <= 512 ? correcoes.slice() : Array.from({ length: 512 }, (_, i) =>
+          correcoes[Math.floor((i + 0.5) * correcoes.length / 512)]),
         reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
         reconcileCount: correcoes.length,
         quality: game.settings?.quality || null,
       });
       // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
-      // para o overlay da sessão; o servidor soma somente os eventos novos de cada 10 s.
+      // para o registro da sessão; o servidor soma somente os eventos novos de cada 10 s.
       correcoes.length = 0;
     }
-    const c = (v, aviso, bom) => (v >= bom ? '#7fe17f' : v >= aviso ? '#f2d06b' : '#f27b7b');
-    const hzc = s.hz >= this.snapshotHz - 1 ? '#7fe17f' : s.hz >= this.snapshotHz * 0.75 ? '#f2d06b' : '#f27b7b';
-    const gapc = s.gapMax <= 70 ? '#7fe17f' : s.gapMax <= 130 ? '#f2d06b' : '#f27b7b';
-    const pingc = s.ping <= 0 ? '#f27b7b' : s.ping <= 40 ? '#7fe17f' : s.ping <= 120 ? '#f2d06b' : '#f27b7b';
-    const row = (rot, val, cor) => `<span style="color:#7a8794">${rot}</span> <b style="color:${cor || '#e6eef6'}">${val}</b>`;
-    el.innerHTML = [
-      `<span style="color:#61afef;font-weight:700">NET · ${this.net.meta?.room || '?'}${this.espectador ? ' · ASSISTINDO' : ''}</span>`,
-      row('fps ', `${this._nsFps ?? '--'}`, c(this._nsFps || 0, 45, 55)),
-      row('snap', `${s.hz} Hz`, hzc) + ` <span style="color:#5f6f7e">/${this.snapshotHz}</span>`,
-      row('gap ', `${Math.round(s.gapMax)} ms`, gapc) + ` <span style="color:#5f6f7e">últ ${Math.round(s.sinceLast)}</span>`,
-      row('band', `${s.kbps.toFixed(1)} KB/s`) + (this._evOn ? ` <span style="color:#5f6f7e">ev ${this.net.stats.evs | 0}</span>` : ''),
-      row('ents', `${s.ents}`) + `  ` + row('tick', `${s.tick}`),
-      row('ping', s.ping <= 0 ? '—' : `${Math.round(s.ping)} ms`, pingc),
-      row('corr', this._reconcileCount ? `${this._reconcileMax.toFixed(2)} m máx` : '—'),
-    ].join('\n');
-    el.style.borderColor = (s.hz < 15 || s.gapMax > 130) ? '#7a2b2b' : '#2a3340';
   }
 
   _percentil(values, q) {
