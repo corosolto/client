@@ -269,3 +269,21 @@ IDs, chat, hashes e processamento, está em `mint-assets.json`.
 
 Licença de uso da conta Mint; não declarar CC0. Os arquivos continuam sujeitos aos
 termos e direitos de terceiros registrados no manifesto.
+
+## Piscina da Treta: mobiliário Mint (07/10/2026)
+
+Mint text-to-3D, projeto "CS BRASIL — Piscina props", prompts próprios derivados dos
+contratos de módulo do plano 25 (`plans/25-PISCINA-DA-TRETA-REWORK.md`), sem copyright de
+terceiro. Brutos em `references/glb/piscina_*_mint.glb` (gitignored); derivados por
+`tools/optimize-piscina-props.mjs`: material canônico fosco (sem normal/MR; só a escada
+mantém metal), albedo WebP 512/256 e simplificação meshopt. Registro: `mint-assets.json`.
+
+| Arquivo | Mint | Tris (bruto) | KB | SHA-256 bruto | SHA-256 derivado |
+|---|---|---|---|---|---|
+| `piscina_espreguicadeira.glb` | <https://mint.gg/chat/ph7f5h69frj9w3bsytxer0arf58ft0pe> | 2.724 (4.860) | 167 | `fe035add14616cf63fd4a1dc089161064350796f0e592301e7bba8213ed83cea` | `09ad4599070ba169a5ef83ed484d686419483cb2a2df1bc8545dd8dafdc13fa7` |
+| `piscina_armarios.glb` | <https://mint.gg/chat/ph70saqc8tc23f03cad1tqdpex8ftmmz> | 2.519 (4.330) | 168 | `92ecebbebc50049466729f1b2c265d172ec20daadaf0902a882e6093098475fd` | `9d03911f980b3a8e60f339f92b06e0fe082e5edb90f49febf580ac52d8f6c1e9` |
+| `piscina_banco.glb` | <https://mint.gg/chat/ph71f31nch3gyjqtj9d0vpjg3h8fts72> | 2.670 (4.348) | 169 | `92a0288f1f45842e323ebd89dbebcb3270927658e373d35a46e115b94cc92265` | `94f63dbbdf6ddd4bf33108f2e522c650aab5de0355ac8677f902eaa24335b6e7` |
+| `piscina_escada.glb` | <https://mint.gg/chat/ph78byp06py2f4239bqvq8me118fv9e7> | 1.499 (4.694) | 61 | `fd8792d9d01a4f70eeeeb3f11abe5daf3d273c5b4c9bcf64be1963de6493fcfd` | `9d64cfe54ac551e47f8aea1c8a18a9a2f8e2934934cf56b73ae6fe8d7c7c1293` |
+
+Os colisores continuam sendo as caixas de sempre (`map_piscina.js`, material `OCULTO`);
+o GLB só substitui a imagem e é esticado para caber exatamente na caixa.

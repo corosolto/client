@@ -2132,6 +2132,54 @@
         ],
         "finalSha256": "129121e14a0f78ed89dd677e881280462cc3de468ad7edfa17937350098b2759"
       }
+    },
+    "piscina_espreguicadeira": {
+      "files": [
+        "public/models/props/piscina_espreguicadeira.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks79zz49an3fzy1d2d7ke6m6298ftsy7",
+        "chatUrl": "https://mint.gg/chat/ph7f5h69frj9w3bsytxer0arf58ft0pe",
+        "displayName": "Navy Slatted Sun Lounger",
+        "notes": "Espreguiçadeira do passeio (8×, sem colisão). Bruto em references/glb/piscina_espreguicadeira_mint.glb; derivado por tools/optimize-piscina-props.mjs."
+      }
+    },
+    "piscina_armarios": {
+      "files": [
+        "public/models/props/piscina_armarios.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks744rwsndt7hayn12ydx0rja98ft5r9",
+        "chatUrl": "https://mint.gg/chat/ph70saqc8tc23f03cad1tqdpex8ftmmz",
+        "displayName": "Six Door Steel Locker",
+        "notes": "Módulo de armários 2,7 m do contrato do plano 25; esticado em largura para os bancos de 4 e 5 vãos. Bruto em references/glb/piscina_armarios_mint.glb; derivado por tools/optimize-piscina-props.mjs."
+      }
+    },
+    "piscina_banco": {
+      "files": [
+        "public/models/props/piscina_banco.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks74e8bbyhsvf66vze1tnjdzhs8fvpv4",
+        "chatUrl": "https://mint.gg/chat/ph71f31nch3gyjqtj9d0vpjg3h8fts72",
+        "displayName": "Navy Mosaic Poolside Bench",
+        "notes": "Banco azulejado 2,4 m do contrato do plano 25; esticado no comprimento de cada caixa. Bruto em references/glb/piscina_banco_mint.glb; derivado por tools/optimize-piscina-props.mjs."
+      }
+    },
+    "piscina_escada": {
+      "files": [
+        "public/models/props/piscina_escada.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7d1x9ftgn1fgr84n6tfsp0tx8fv8x3",
+        "chatUrl": "https://mint.gg/chat/ph78byp06py2f4239bqvq8me118fv9e7",
+        "displayName": "Brushed Steel Pool Ladder",
+        "notes": "Escada de inox do contrato do plano 25. Bruto em references/glb/piscina_escada_mint.glb; derivado por tools/optimize-piscina-props.mjs."
+      }
     }
   }
 }
