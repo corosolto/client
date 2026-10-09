@@ -1,5 +1,13 @@
 # PR #773 — continuação do elenco político
 
+## Integração cumulativa de 09/10/2026
+
+- Worktree de integração: `worktrees/integrate-pr773-20261009`; branch local `codex/integrate-pr773-20261009`, publicada em `feat/elenco-politicos`.
+- O head cumulativo anterior era `97fd7358acae194474cc29f0629af193a3063005`, com a cadeia exata `#767 → #771 → #772 → #773`, build local verde e os 162 assets criativos do head aprovado preservados byte a byte.
+- O smoke remoto desse head encontrou um crash no boot: `public/js/main.js` ainda atribuía `onclick` a `#mobile-ok`, embora o botão e a tela de aviso mobile tenham sido removidos juntos em `c857a4be3`. A correção desta continuação remove apenas o handler órfão, restaurando o contrato atual do DOM.
+- A branch verde do PR `#799`, `origin/codex/ci-chat-aviso-20261009` em `b1a42bdc5bff706029dc48da3b3664eeb8c62f4c`, foi incorporada por merge limpo. Seus dois commits estabilizam o smoke de chat sem substituir cliques reais.
+- Aceite deste marco: smoke do jogo real sem `pageerror`, build, `check:deploy`, hooks de pre-push e confirmação de que `b1a42bdc5` é ancestral do novo head publicado. O merge do PR `#773` permanece sob coordenação da lane raiz.
+
 ## Objetivo e aceite
 
 No worktree `worktrees/politicos`, continuar o PR [#773](https://github.com/corosolto/client/pull/773): substituir avatares 2D por retratos do modelo 3D, reduzir proporções de balão nos políticos, corrigir o cabelo de Dama, remover Agitador do Carro de Som (Renan Santos), e permitir orbitar a câmera durante movimento e tiro para ver o corpo de lado e de frente. Complemento solicitado em 06/10: adicionar Julia Zanatta ao lado B e Marina Silva ao lado E, deixar Xandão exclusivo do lado E, chamar Senador Zero Um de “Zero Um”, e deixar a categoria Políticos em primeiro lugar e selecionada por padrão na escolha de personagem. Aceite exige captura do jogo real em 1200×800 (3:2), teste de controle/tiro e revisão visual humana dos modelos, retratos e clipes. Régua numérica verde, sozinha, não aprova a arte.

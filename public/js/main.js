@@ -2609,7 +2609,6 @@ document.querySelectorAll('.set-tab').forEach(tab => {
     });
   };
 });
-$('mobile-ok').onclick = () => { sfx.uiClick(); show('main-menu'); };
 $('team-back').onclick = () => { ui.back(); setEnemyPickMode(false); setTeamStep('side'); show('main-menu'); };
 $('char-back').onclick = () => {
   ui.back();
