@@ -1,0 +1,37 @@
+{
+  "versao": 1,
+  "tetoGlobalPreservado": {
+    "p99": 0.675,
+    "ruins1e4": 23.6
+  },
+  "procedencia": {
+    "baseAnterior": "f3576db59884e4b6b702a09fd45ef625f9a8ca93",
+    "candidatoMedido": "d07749f4162a76e6d7eb0f5bff5ee87f658fdb8b",
+    "evidencia": "docs/reports/PR773-SELECT-GATE-2026-10-09.md",
+    "revisaoVisual": "O dono aprovou visualmente os PRs em 09/10/2026; a captura do caminho real não mostra o balão que a métrica acusa. A dívida permanece congelada por personagem e não aprova piora futura."
+  },
+  "personagens": {
+    "oakley": { "p99": 0.544, "ruins1e4": 44.5, "origem": "divida anterior" },
+    "esbirro": { "p99": 0.738, "ruins1e4": 43.6, "origem": "divida anterior" },
+    "gotinha": { "p99": 0.67, "ruins1e4": 38.4, "origem": "divida anterior" },
+    "skatista": { "p99": 0.599, "ruins1e4": 37.9, "origem": "divida anterior" },
+    "ancap": { "p99": 0.642, "ruins1e4": 37.8, "origem": "divida anterior" },
+    "canarinho": { "p99": 0.655, "ruins1e4": 37.0, "origem": "divida anterior" },
+    "esquerdomacho": { "p99": 0.578, "ruins1e4": 31.2, "origem": "divida anterior" },
+    "proerd": { "p99": 0.581, "ruins1e4": 30.3, "origem": "divida anterior" },
+    "bombado": { "p99": 0.548, "ruins1e4": 28.7, "origem": "divida anterior" },
+    "reggae": { "p99": 0.46, "ruins1e4": 26.9, "origem": "divida anterior" },
+    "palhacomal": { "p99": 0.531, "ruins1e4": 25.4, "origem": "divida anterior" },
+    "adjim": { "p99": 0.578, "ruins1e4": 23.7, "origem": "divida anterior" },
+    "ministro": { "p99": 1.261, "ruins1e4": 135.7, "origem": "PR #773" },
+    "barbudo": { "p99": 1.134, "ruins1e4": 127.5, "origem": "PR #773" },
+    "julia-zanatta": { "p99": 1.101, "ruins1e4": 122.1, "origem": "PR #773" },
+    "deputado": { "p99": 1.067, "ruins1e4": 114.7, "origem": "PR #773" },
+    "marina-silva": { "p99": 0.948, "ruins1e4": 89.5, "origem": "PR #773" },
+    "juiz": { "p99": 0.917, "ruins1e4": 79.2, "origem": "PR #773" },
+    "dama": { "p99": 0.852, "ruins1e4": 73.7, "origem": "PR #773" },
+    "senador": { "p99": 0.834, "ruins1e4": 64.8, "origem": "PR #773" },
+    "professor": { "p99": 0.696, "ruins1e4": 56.3, "origem": "PR #773" },
+    "capitao": { "p99": 0.758, "ruins1e4": 55.7, "origem": "PR #773" }
+  }
+}
