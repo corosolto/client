@@ -22,3 +22,9 @@ Servidores: `/opt/homebrew/bin/node node_modules/astro/bin/astro.mjs dev --host1
 - Controle agora oferece 0.25/0.5s e pitch para ajustar navegação e compensar recuo. JS syntax check passou.
 - Tentativa Deputada/Sertão não gerou take aproveitável: percurso pelos corredores externos, bloqueios em fachadas. Partida encerrada normalmente; browser local no menu. Não contabilizar como captura.
 - O objetivo completo do trailer permanece no ledger da campanha. Capturas dos demais personagens e master 45–60s ainda pendentes.
+
+## Órbita e janela — marco validado
+- Runtime impede fullscreen na página local antes do boot; IAB5 permaneceu fullscreen=false após início. Captura direta do canvas, sem desktop/Chrome externo.
+- codex-peruca-orbita-v6.webm salvo automaticamente: 5127647 bytes, VP9 1920x1080 + Opus48k estéreo, aproximadamente5s. Contato codex-peruca-orbita-v6-contact.jpg confirma movimento lateral, rajadas, órbita completa e rosto. Pausa final confirmada no menu.
+- Crítico independente confirmou correção de soltura no start, deadline persistente após morte/blur e guard de terceira pessoa, sem nova regressão material. Áudio bruto acusa pacote Opus no EOF; revisar/remux selecionados antes do master.
+- Próximo: novas tomadas do elenco/mapas e montagem integral45–60s. Não considerar trailer pronto.
