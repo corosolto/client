@@ -4077,7 +4077,7 @@ function mpMontarFormulario() {
       const sala = await createRoom(mpNoAtual.http, {
         // vazio = o nó dá nome ("SALA R7"); o tamanho de time fica no padrão do servidor
         name: nick ? `SALA DE ${nick}`.toUpperCase().slice(0, 24) : '',
-        rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
+        rotacao: 'todos',
         ctf: false, private: true, password: '', maxPlayers: 10,
         creatorNick: nick || null,
       }, ticket);
