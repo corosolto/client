@@ -1,5 +1,14 @@
 # PR #773 — continuação do elenco político
 
+## Candidato final com multiplayer: 09/10/2026
+
+- O candidato cumulativo parte do head remoto anterior deste PR, `c4bd6ef0c477d1d19cd8fcd5056d20d1595b99c5`. O merge local `16d950ebce291826ae8e6127f461b82717fca123` tem exatamente dois pais: esse head e o topo preparado da cadeia multiplayer, `597df2af032b20b006265de71bd1e95f1e51353d`.
+- A árvore contém por ancestralidade exata os heads remotos atuais de `#755` (`493d7ceca09c01f5b2f004357f330785a828f3d9`), `#775` (`65d381e09b587f313d99a1851adbd41e21172802`), `#776` (`58281e87aaec45aa2008f56f58b3190901e369c0`) e `#777` (`1cce2ab2e41cd408cba1af99df51e27a8c90e1b4`). Assim, `#773` passa a ser o único candidato final do cliente, sem uma segunda janela de release.
+- O checkpoint `e426c3c6516ead108f57b7cc249e444360011958` corrige MRO6: “JOGAR COM AMIGOS” deixou de enviar as opções antigas `faccaoE` e `faccaoB`, que o servidor já ignora.
+- Validação focada: netcode 205/205; chat 151/151; saída do Escadão 8/8; `eval:pool-lado`, troca de personagem, `eval:mpRoomOptions`, paridade multiplayer, contratos dos 18 mapas e opções de partida verdes.
+- Validação completa: `npm run check:deploy` passou 47/47 com Node 23.6.0 no topo cumulativo. O push normal ainda executará o pre-push obrigatório antes de atualizar `feat/elenco-politicos` por fast-forward.
+- Integração, resolução de conflitos e este registro foram preparados com apoio de Codex (GPT-6). Os resultados informados vêm dos comandos locais e dos gates versionados do repositório.
+
 ## Integração cumulativa de 09/10/2026
 
 - Worktree de integração: `worktrees/integrate-pr773-20261009`; branch local `codex/integrate-pr773-20261009`, publicada em `feat/elenco-politicos`.
