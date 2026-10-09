@@ -51,12 +51,21 @@ entrar no checkpoint.
   `0,10 m`; faixa/parede `0,03 m`; faixa/decalque `0,05 m`.
 - Evidência visual preservada em
   `docs/reports/evidence/piscina-trim-2026-10-09/`.
-- Pre-push completo após regeneração: pendente neste checkpoint intermediário.
-- Smoke real no navegador: pendente; será tentado após o pre-push, sem substituir
-  a aprovação visual já dada pelo dono.
+- Pre-push completo com Node 23: verde em `2.026 s`; `check:deploy` incluiu o
+  PZT. O gate `eval:docsautoria` respondeu por `1.813,9 s` porque cada contraprova
+  varreu cerca de 533 MB em `tools/` no volume externo.
+- Simulação `git merge-tree --write-tree` contra o topo do elenco `bd1b3040f`:
+  runtime e GLBs sem conflito. Conflitos limitados a 10 páginas geradas,
+  `mint-assets.json` e `package.json`. As chaves de assets têm sobreposição zero;
+  o package precisa unir os gates do elenco com `eval:piscina-trim` e então rodar
+  `npm run docs`.
+- Smoke real no navegador não foi iniciado: já existia uma instância headless de
+  Chrome ativa na máquina e a regra do repositório permite um único agente no
+  browser. A aprovação visual do dono e as capturas do `#800` permanecem a
+  evidência humana; o candidato combinado deve executar o smoke uma vez.
 
 ## Próximo passo
 
-Repetir o pre-push com Node 23, simular a combinação com o topo atual de `#773` e,
-se não houver conflito material, entregar o SHA final desta branch para a integração
-única e o CI remoto.
+Mesclar este topo no candidato do elenco, resolver os dois manifests de forma
+aditiva, regenerar a documentação e executar uma única rodada de CI e smoke no
+candidato combinado.
