@@ -1,0 +1,20 @@
+{
+  "id": "capitao",
+  "nome": "Capitão do Cercadinho",
+  "lado": "B",
+  "genero": "m",
+  "refs": [
+    "01-corpo-inteiro-senado-2025.jpg",
+    "03-retrato-3x4-2025.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian former president shown in the photos, recognizable at a glance: long face, grey-brown hair swept back, thick grey eyebrows, thin crooked half-smile, slightly squinting eyes.",
+  "roupa": "yellow football-style shirt with green collar and cuffs, dark straight trousers, black shoes.",
+  "corpo": "TALL, about 1.85 m, long-limbed, the tallest and longest-legged of his team; average build with a slight belly; broad but sloping shoulders; long thin neck.",
+  "naoExagerar": "the belly, the neck or anything medical",
+  "alvo": {
+    "cabeca": 0.195,
+    "ombros": 0.22,
+    "perna": 0.48
+  },
+  "concept": "tools/eval/asset-evidence/pr773/concepts/capitao/concept.jpg"
+}

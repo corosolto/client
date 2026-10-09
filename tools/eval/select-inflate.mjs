@@ -99,6 +99,8 @@ if (FOTO_DIR) fs.mkdirSync(FOTO_DIR, { recursive: true });
    elogia". Os tetos saem daqui e de mais lugar nenhum. */
 const REFS = ['mandrake', 'pagodeiro'];
 const FOLGA = 1.25;   // 25% acima do pior elogiado: acusa o que é PIOR que o bom, não o que é diferente
+const DIVIDA = JSON.parse(fs.readFileSync('tools/eval/select_inflate_debt.json', 'utf8'));
+const DIVIDA_POR_ID = new Map(Object.entries(DIVIDA.personagens));
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -412,6 +414,11 @@ let teto = {
   p99: refs.length ? +(Math.max(...refs.map((r) => r.p99)) * FOLGA).toFixed(3) : null,
   ruins1e4: refs.length ? +(Math.max(...refs.map((r) => r.ruins1e4)) * FOLGA).toFixed(1) : null,
 };
+if (!MUT && (teto.p99 !== DIVIDA.tetoGlobalPreservado.p99
+  || teto.ruins1e4 !== DIVIDA.tetoGlobalPreservado.ruins1e4)) {
+  console.error(`ERRO: teto global mudou de ${DIVIDA.tetoGlobalPreservado.p99}/${DIVIDA.tetoGlobalPreservado.ruins1e4} para ${teto.p99}/${teto.ruins1e4}; revise referências e dívida juntas.`);
+  process.exit(2);
+}
 /* TETO CONGELADO NA MUTAÇÃO. Sem isto o teste de mutação é teatro: o mutante piora
    TAMBÉM as referências, o teto sobe junto e a régua continua verde enquanto o jogo
    inteiro derrete. Com `--mutate` o teto vem da última execução limpa (o JSON), então
@@ -440,20 +447,29 @@ console.log('\n=== BALÃO NO CAMINHO DA TELA DE SELEÇÃO' + (MUT ? '  [MUTANTE:
 console.log('id'.padEnd(15), 'arma'.padEnd(10), 'IK', 'P95'.padStart(7), 'P99'.padStart(7), 'P99.9'.padStart(7), 'máx'.padStart(8), '%>25'.padStart(6), 'ruins/1e4'.padStart(10));
 out.sort((a, b) => (b.ruins1e4 ?? -Infinity) - (a.ruins1e4 ?? -Infinity));
 let reprovados = 0;
+let dividas = 0;
+const dividaPiorou = [];
 for (const r of out) {
   if (r.erro) {
     reprovados++;
     console.log('✗ ' + r.id.padEnd(13) + ' ERRO: ' + r.erro);
     continue;
   }
-  const ruim = teto.p99 != null && (r.p99 > teto.p99 || r.ruins1e4 > teto.ruins1e4);
+  const foraDoTeto = teto.p99 != null && (r.p99 > teto.p99 || r.ruins1e4 > teto.ruins1e4);
+  const baseline = DIVIDA_POR_ID.get(r.id);
+  const piorou = foraDoTeto && baseline
+    && (r.p99 > baseline.p99 || r.ruins1e4 > baseline.ruins1e4);
+  const ruim = foraDoTeto && (!baseline || piorou);
+  if (foraDoTeto && baseline && !piorou) dividas++;
+  if (piorou) dividaPiorou.push(`${r.id} (p99 ${baseline.p99}->${r.p99}; ruins/1e4 ${baseline.ruins1e4}->${r.ruins1e4})`);
   if (ruim) reprovados++;
   console.log(
-    (ruim ? '✗ ' : '  ') + r.id.padEnd(13), r.arma.padEnd(10), r.ik ? 'ik' : '  ',
+    (ruim ? '✗ ' : foraDoTeto ? '~ ' : '  ') + r.id.padEnd(13), r.arma.padEnd(10), r.ik ? 'ik' : '  ',
     String(r.p95).padStart(7), String(r.p99).padStart(7), String(r.p999).padStart(7),
     String(r.max).padStart(8), String(r.pct25).padStart(6), String(r.ruins1e4).padStart(10));
 }
-console.log(`\nREPROVADOS: ${reprovados}/${out.length}`);
+console.log(`\nREPROVADOS: ${reprovados}/${out.length} · DÍVIDA CONGELADA: ${dividas}/${out.length}`);
+if (dividaPiorou.length) console.log('DÍVIDA PIOROU: ' + dividaPiorou.join(' · '));
 if (out.some((r) => r.semcurlDesfez)) {
   console.log('ablação semcurl (ossos revertidos, maior giro desfeito):');
   for (const r of out) if (r.semcurlDesfez) console.log('   ' + r.id.padEnd(14) + r.semcurlDesfez[0] + ' ossos, máx ' + r.semcurlDesfez[1] + '°');
@@ -463,17 +479,9 @@ if (!MUT) {
   fs.writeFileSync('tools/eval/select_inflate.json', JSON.stringify({ gerado: new Date().toISOString(), mutante: null, refs: REFS, folga: FOLGA, teto, personagens: out }, null, 1));
   console.log('-> tools/eval/select_inflate.json');
 }
-/* DÍVIDA DECLARADA, medida na main em 13/08: 12 dos 44 personagens já reprovavam antes
-   de esta régua virar portão. O número é teto, não meta — passa de 12 e reprova. Baixar
-   quando um personagem for consertado; a lista só encolhe. Zero é o alvo. */
-const REPROVADOS_MAX = 12;
-if (reprovados > 0 && reprovados <= REPROVADOS_MAX) {
-  console.log(`DÍVIDA: ${reprovados} de ${out.length} dentro do teto declarado (${REPROVADOS_MAX}).`);
-  if (reprovados < REPROVADOS_MAX) {
-    console.log(`         Melhorou — BAIXE REPROVADOS_MAX para ${reprovados} neste arquivo.`);
-  }
-}
-if (reprovados > REPROVADOS_MAX) {
-  console.log(`\nPORTÃO VERMELHO — ${reprovados} reprovados, acima do teto declarado de ${REPROVADOS_MAX}.`);
-}
-process.exit(reprovados > REPROVADOS_MAX ? 1 : 0);
+/* A dívida antiga era apenas uma contagem máxima: um personagem podia piorar ou trocar
+   de lugar com outro sem o portão notar. Agora cada exceção visualmente revisada tem os
+   dois números congelados no arquivo ao lado. O teto global não mudou; personagem novo
+   fora dele, ou dívida que piore em qualquer métrica, deixa o portão vermelho. */
+if (reprovados) console.log(`\nPORTÃO VERMELHO — ${reprovados} personagem(ns) novo(s) fora do teto ou dívida piorada.`);
+process.exit(reprovados ? 1 : 0);

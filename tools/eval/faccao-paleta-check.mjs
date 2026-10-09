@@ -83,7 +83,7 @@
    lista é decisão de quem escreve, e é o pedágio certo: obriga a dizer em voz alta que
    aquilo é outro fato, e não mais uma cópia do mesmo.
 
-   AS MUTAÇÕES QUE A DEIXAM VERMELHA (as quatro foram executadas)
+   AS MUTAÇÕES QUE A DEIXAM VERMELHA (as cinco foram executadas)
      --mutar=sem-e     remove `E` de PALETA          -> F1 acusa a facção sem cor
      --mutar=espelho   injeta uma tabela de cor por facção em brasoes.js -> F2 acusa o
                        espelho novo. É a regressão que esta régua existe para impedir:
@@ -93,7 +93,10 @@
                        facção nova copiando a linha de cima: hex válido, chave presente,
                        F1 verde, e o nome no killfeed ilegível.
      --mutar=cor-divergente  muda o `base` do Time E só em PALETA -> F4 acusa a cópia
+     --mutar=card-verde     volta a carta da Direita ao verde -> F5 acusa o CSS
                        fora de sincronia com `factions.js`. É o rename Time E de novo.
+     --mutar=sem-lados  ignora o `lados` dos Políticos -> F1 acusa `P` sem cor. Foi o
+                       contorno BRANCO dos dez políticos no PR #773 (07/10).
 
    USO
      node tools/eval/faccao-paleta-check.mjs
@@ -106,6 +109,7 @@
    onde ela precisa estar. Régua cara demais para o gatilho errado é régua que não roda.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
+import { FACTIONS as REGISTRO_VISUAL } from '../../public/js/factions.js';
 import path from 'node:path';
 
 const args = process.argv.slice(2);
@@ -119,8 +123,10 @@ const ler = (p) => fs.readFileSync(p, 'utf8');
 /* ── A FONTE: quais facções o jogo REALMENTE tem ──────────────────────────────────
    Não é lista escrita aqui — é o elenco. Facção nova entra sozinha nesta régua no
    commit que declara o primeiro personagem dela, que é o momento em que a paleta
-   precisa saber dela. */
-const elenco = [...ler(`${DIR}/characters.js`).matchAll(/team\s*:\s*'([A-Z])'/g)].map((m) => m[1]);
+   precisa saber dela. A facção que conta é a de COR: categoria sem lado próprio
+   (Políticos, `team: 'P'`) pinta com o `lados` único, como `charRimColor` faz. */
+const elenco = [...ler(`${DIR}/characters.js`).matchAll(/team\s*:\s*'([A-Z])'(?:\s*,\s*lados\s*:\s*\[\s*'([A-Z])'\s*\])?/g)]
+  .map((m) => (MUTAR === 'sem-lados' ? m[1] : m[2] || m[1]));
 const FACCOES = [...new Set(elenco)].sort();
 
 /* ── A ORIGEM: o conteúdo de PALETA, lido do texto ────────────────────────────────
@@ -320,6 +326,20 @@ for (const f of FACCOES) {
 }
 console.log(`   ${f4 ? 'PASSA' : 'FALHA'}\n`);
 
+/* ── F5 · a carta do seletor pinta a cor do registro editorial ────────────────────
+   O rename para Direita mudou factions.js e paleta.js, mas deixou `.team-b`
+   verde em style.css. A captura 3:2 mostrou a carta verde com brasão azul. */
+console.log('F5 · a carta da Direita usa cor, RGB e degradê do registro visual');
+let cssCard = ler('public/style.css');
+if (MUTAR === 'card-verde') cssCard = cssCard.replace('.team-b{--tc:#3355ff;--tc-rgb:51,85,255;', '.team-b{--tc:#7de08f;--tc-rgb:125,224,143;');
+const cardB = cssCard.match(/\.team-b\{([^}]+)\}/)?.[1] || '';
+const visualB = REGISTRO_VISUAL.find((f) => f.id === 'B');
+const f5 = !!visualB && cardB.includes(`--tc:${visualB.color};`)
+  && cardB.includes(`--tc-rgb:${rgb(visualB.color).join(',')};`)
+  && cardB.includes(`--tc-bg:${visualB.bg}`);
+console.log(`   ${f5 ? 'PASSA' : 'FALHA'}  carta=${cardB ? 'presente' : 'ausente'} registro=${visualB?.color || '-'}`);
+console.log('');
+
 /* ── AVISO (não reprova): quem CONSOME esta paleta ────────────────────────────────
    Descoberto em 12/08 ao completar as dez: `game.js`, `brasoes.js` e `characters.js`
    deixaram de ler `PALETA` e passaram a ler `factions.js` — os comentários deles dizem o
@@ -337,7 +357,7 @@ for (const [a, nomes] of importadores) console.log(`   ${a}  ${nomes.join(', ')}
 if (!usam.length) console.log(`   ⚠ nenhum módulo lê PALETA/FACCOES/BASE_POR_FACCAO/tons — a tabela está CORRETA e OCIOSA.\n     A cor que o jogo pinta hoje vem de factions.js. F4 garante que as duas dizem a mesma coisa.`);
 console.log('');
 
-const passou = f1 && f2 && f3 && f4;
+const passou = f1 && f2 && f3 && f4 && f5;
 console.log(passou
   ? '✓ FAC1  cor de facção com origem única e elenco coberto'
   : '✗ FAC1  paleta de facção furada — bandeira/contorno/faixa saem errados SEM erro no console');

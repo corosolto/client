@@ -61,9 +61,11 @@ let game = read('public/js/game.js');
    : allies`). Com 9 candidatos esse ramo é inalcançável e a mutação virava no-op — régua
    cega. Agora ele quebra o que importa hoje: a POOL deixa de filtrar por facção, e o
    invariante `every(c => c.team === 'M')` tem de pegar aliado de outro time. */
-if (mutant === 'roster') game = change(game, 'const allies = CHARACTERS.filter(c => c.team === playerFaction);', 'const allies = CHARACTERS.slice();');
+if (mutant === 'roster') game = change(game, 'const allies = CHARACTERS.filter(_doLado(playerFaction));', 'const allies = CHARACTERS.slice();');
 const rosterSource = game.slice(game.indexOf('const _cyclePool ='), game.indexOf('/* Pool dos bots'));
-const pickRoster = new Function('CHARACTERS', `${rosterSource.replace('export function', 'function')}return pickMatchRoster;`)(defs);
+const linhaDe = (nome) => characters.split('\n').find((l) => l.startsWith(`export const ${nome} =`)).replace('export ', '');
+const podeNoLado = new Function(`${linhaDe('ladosDe')}\n${linhaDe('podeNoLado')}\nreturn podeNoLado;`)();
+const pickRoster = new Function('CHARACTERS', 'podeNoLado', `${rosterSource.replace('export function', 'function')}return pickMatchRoster;`)(defs, podeNoLado);
 for (const dedicated of [false, true]) for (const size of [1, 5, 8]) {
   const result = pickRoster('M', 'B', size, 'lobisomem', dedicated);
   /* Com 7 candidatos o roster deixa de repetir o mesmo corpo: o que se cobra agora é que

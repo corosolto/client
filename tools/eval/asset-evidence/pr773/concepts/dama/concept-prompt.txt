@@ -1,0 +1,11 @@
+Character concept sheet for a stylized 3D third-person shooter. ONE adult woman, full body, front view, symmetric T-pose (arms straight out horizontally, palms down, fingers slightly apart, hands EMPTY), feet shoulder-width apart flat on the ground, plain flat light-grey background, no text, no props, no weapon, no shadow on the background.
+
+IDENTITY (from the photo references, images 1 and 2): a gentle satirical caricature of the Brazilian former president shown in the photos. She must be recognizable at a glance: round-oval face with full cheeks, small rounded chin, thin highly arched eyebrows, wide smile with upper teeth showing and red lipstick, small square gold earrings, gold oval-link chain necklace. HAIR exactly like the photos: short layered dark honey/caramel blonde hair with lighter tips, wavy and slightly tousled, brushed up and back from the forehead with one wave falling to the side, ears fully visible, short tapered nape. Only a modest rounded volume on the crown (about 4 cm above the scalp). NO tall quiff, NO vertical crest, NO big rolled hair, NO bouffant.
+
+OUTFIT: tailored red blazer, black high-neck blouse, straight dark trousers, low black patent shoes.
+
+STYLE (image 3 is the existing game cast — match it exactly): the same stylized-realistic 3D game look as the four characters in image 3: clean readable shapes, smooth PBR materials, soft matte fabric, natural adult anatomy. Same head-to-body ratio as those characters (head about 1/7 of total height, NOT a bobblehead, NOT chibi, NOT Pixar), natural neck length, natural shoulders, arms and hands in proportion, real feet.
+
+BODY (measured from the photos): height about 1.66 m, average build with a straight torso and little waist definition, rounded slightly sloping shoulders about as wide as the hips, short neck of average thickness. Do NOT exaggerate weight, age or frailty; respectful caricature only in the face.
+
+Matte materials, no glossy white highlights, no rim glow, no outline.

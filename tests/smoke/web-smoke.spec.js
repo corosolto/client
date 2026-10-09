@@ -90,8 +90,6 @@ test('menu, ranking, setup, teams, character and initial hud boot', async ({ pag
   marcar('char-select');
 
   await page.locator('#char-confirm').click();
-  await expect(page.locator('#team-select')).toHaveAttribute('data-step', 'enemy');
-  await page.locator('#btn-team-f').click();
   marcar('partida');
 
   await expect(page.locator('#hud')).toBeVisible({ timeout: 60_000 });
@@ -109,7 +107,8 @@ test('menu, ranking, setup, teams, character and initial hud boot', async ({ pag
   });
   await expect(page.locator('#char-select')).toBeVisible();
   await expect(page.locator('#pause-menu')).toBeHidden();
-  await expect(page.locator('#char-faction-tag')).toContainText('FUNKEIROS');
+  // M abre a seleção do OUTRO lado (Direita); o nome é TIME B até o rename de #767 entrar.
+  await expect(page.locator('#char-faction-tag')).toContainText(/DIREITA|TIME B/);
   expect(await page.locator('.screen:not(.hidden)').evaluateAll((els) => els.map((el) => el.id))).toEqual(['char-select']);
 
   await page.locator('#char-back').click();

@@ -52,7 +52,7 @@ const OUT = val('out', 'tools/eval/out');
 const FACS = ['E', 'B', 'U', 'C', 'F'];
 /* `E` e não `P`: terceira ocorrência do mesmo rename esquecido no mesmo arquivo — aqui ele
    não dava número errado, dava CRASH (`NOME[it.f].padEnd` de undefined) depois do C3. */
-const NOME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS' };
+const NOME = { E: 'ESQUERDA', B: 'DIREITA', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS' };
 const WEBER_MIN = 0.25;      // mesmo teto do canarinho
 const DIST_MIN = 14;         // distância média por pixel entre duas bandeiras a 64 px
 

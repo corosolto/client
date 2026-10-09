@@ -1,0 +1,20 @@
+{
+  "id": "marina-silva",
+  "nome": "Marina Silva (apelido pendente)",
+  "lado": "E",
+  "genero": "f",
+  "refs": [
+    "02-marina-tres-quartos-2025-11.jpg",
+    "01-marina-corpo-inteiro-palco-2026-09.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian politician shown in the photos, recognizable at a glance: small narrow face, high cheekbones, thin wine-coloured round glasses, grey-and-black hair pulled tight into a bun, a seed/bead necklace.",
+  "roupa": "discreet petrol-teal midi dress with short sleeves, hem below the knee, low brown shoes.",
+  "corpo": "about 1.63 m, the thinnest of the cast: narrow shoulders, long thin neck.",
+  "naoExagerar": "frailty or ethnic features",
+  "alvo": {
+    "cabeca": 0.21,
+    "ombros": 0.19,
+    "perna": 0.43
+  },
+  "concept": "tools/eval/asset-evidence/pr773/concepts/marina-silva/concept.jpg"
+}

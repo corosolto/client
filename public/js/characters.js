@@ -69,9 +69,9 @@ export const CHAR_FX = {
   floorIrr: _cnum('charfloor', 1.15),                  // piso de irradiância indireta (perto)
   floorFar: _cnum('charfloorfar', 1.55),               // piso a 45 m+ (era 3.0 = fantasma branco distante)
   ceilIrr:  _cnum('charceil', 4.5),                    // teto: céu HDR não pode estourar o personagem
-  albMin:   _cnum('charalbmin', 0.09),                 // valor mínimo do albedo, por ESCALA (matiz/S intactos)
+  albMin:   _cnum('charalbmin', 0.093),                // valor mínimo do albedo, por ESCALA (matiz/S intactos)
   /* PISO DE ALBEDO NA BANDA BAIXA, não no texel (C10 / char-floor.mjs).
-     `albMin` é 0,09 LINEAR — que é sRGB 0,332 = byte 85 = L* 36, um CINZA MÉDIO, não
+     `albMin` é 0,093 LINEAR — que é sRGB 0,336 = byte 86 = L* 36, um CINZA MÉDIO, não
      um "preto levantado". Aplicado por texel (`max(V, albMin)`) ele é um DEGRAU: todo
      texel abaixo do ponto sai com o MESMO valor. Medido nas texturas reais dos 45 GLB:
      94,1 % do albedo do trapfunk está abaixo do piso, 90,4 % do palhaço mal, 86,6 % do
@@ -84,10 +84,12 @@ export const CHAR_FX = {
      multiplica o texel por esse ganho. Como o ganho é o MESMO para toda a região, TODA
      razão entre texels sobrevive por construção — o piso levanta o NÍVEL sem tocar no
      contraste. Acima do piso o ganho é 1,0 exato: personagem claro/saturado não muda um
-     pixel. Kill-switch `?charalbreg=0` volta ao degrau (o A/B é bloco × bloco). */
+     pixel. LOD 7 / piso 0,093 foi medido em 72 texturas: C10a ≤ 10% de perda e C10b
+     verde, incluindo Capitão, Ministro e Professor. Kill-switch `?charalbreg=0` volta ao
+     degrau (o A/B é bloco × bloco). */
   albReg:   _cqp.get('charalbreg') !== '0',            // piso do albedo regional (0 = degrau por texel)
   ambChroma: _cqp.get('charambchroma') !== '0',        // fill do piso herda a crominância do ambiente (0 = branco)
-  albLod:   _cnum('charalblod', 6),                    // mip do nível regional (6 = bloco de 64 texels)
+  albLod:   _cnum('charalblod', 7),                    // mip do nível regional (7 = bloco de 128 texels)
   sat:      _cnum('charsat', 1.32),                    // ganho de croma do albedo (+cor original dos moldes)
   rimNear: _cnum('rimnear', 0.18),                     // rim a queima-roupa: discreto, não vira fantasma
   // Mantém o contorno explícito a 40 m no corredor quente medido por C18.
@@ -122,7 +124,9 @@ function bracadeiraDaFaccao(team) {
 // cinza do NEUTRO de paleta.js. Unificar origem não é hora de mudar pixel — se o branco
 // for defeito, é conserto com régua própria. Por isso lê `PALETA` direto, e não `tons()`.
 export function charRimColor(def) {
-  const p = PALETA[(def && def.team) || 'E'];
+  // Políticos são categoria, não lado: o contorno é o do lado em que jogam (`lados`).
+  const fac = def?.lados?.length === 1 ? def.lados[0] : def?.team;
+  const p = PALETA[fac || 'E'];
   const c = new THREE.Color(p ? num(p.base) : 0xffffff);
   return c.lerp(new THREE.Color(0xffffff), 0.35);
 }
@@ -609,8 +613,44 @@ export const CHARACTERS = [
   { id: 'caipora', team: 'M', tribe: 'mitico', name: 'Caipora',
     blurb: 'Guardiã da mata, cabelo de fogo e pintura de guerra. Quem caça demais vira caça.',
     pal: { skin: 0xa0704a, shirt: 0xd8a03a, pants: 0xc08830, hair: 0xd11a1a, boots: 0x6a4a2a } },
+  // Políticos: caricaturas satíricas de figuras públicas (exceção do CONTRIBUTING.md). Nomes
+  // caricatos; `lados` diz em que lado cada um pode jogar.
+  { id: 'barbudo', team: 'P', lados: ['E'], name: 'Barbudo do Planalto',
+    blurb: 'Discurso de três horas e o microfone nunca cansa. Faixa no peito, churrasco no domingo.',
+    pal: { skin: 0xe0b090, shirt: 0x22305a, pants: 0x22305a, hair: 0xeeeeee, boots: 0x111111 } },
+  { id: 'capitao', team: 'P', lados: ['B'], name: 'Capitão do Cercadinho',
+    blurb: 'Camisa amarela, cercadinho lotado e live toda quinta. Não leva desaforo pra casa.',
+    pal: { skin: 0xd9a888, shirt: 0xf2d22e, pants: 0x2a2a2e, hair: 0x4a4a4a, boots: 0x111111 } },
+  { id: 'dama', team: 'P', lados: ['E'], name: 'Dama da Mandioca',
+    blurb: 'Estoca vento e saúda a mandioca. Ninguém entende a frase, todo mundo lembra.',
+    pal: { skin: 0xe6b8a0, shirt: 0xb81c22, pants: 0xb81c22, hair: 0x6a4020, boots: 0x111111 } },
+  { id: 'professor', team: 'P', lados: ['E'], name: 'Professor do Arcabouço',
+    blurb: 'Calcula o arcabouço de cabeça e ainda acha tempo de explicar a conta pro time.',
+    pal: { skin: 0xd8a888, shirt: 0x2e5aa8, pants: 0x2e5aa8, hair: 0x5a5a5a, boots: 0x111111 } },
+  { id: 'senador', team: 'P', lados: ['B'], name: 'Zero Um',
+    blurb: 'O 01 da família. Sorriso de campanha e broche sempre no lugar.',
+    pal: { skin: 0xdcb08c, shirt: 0x3a3a40, pants: 0x3a3a40, hair: 0x1a1a1a, boots: 0x111111 } },
+  { id: 'ministro', team: 'P', lados: ['E'], name: 'Xandão da Toga',
+    blurb: 'A toga é capa e o despacho sai antes do café. Joga pelo Time E e ninguém discute.',
+    pal: { skin: 0xe2b494, shirt: 0x141418, pants: 0x141418, hair: 0xe2b494, boots: 0x111111 } },
+  { id: 'deputado', team: 'P', lados: ['B'], name: 'Deputado da Peruca',
+    blurb: 'Sobe na tribuna de peruca loira e vira meme antes de terminar a frase.',
+    pal: { skin: 0xd2a07c, shirt: 0x1e2c5a, pants: 0x1e2c5a, hair: 0xf2d040, boots: 0x111111 } },
+  { id: 'juiz', team: 'P', lados: ['B'], name: 'Juiz do Conje',
+    blurb: 'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.',
+    pal: { skin: 0xe0b090, shirt: 0x1e2a48, pants: 0x1e2a48, hair: 0x1a1a1a, boots: 0x111111 } },
+  { id: 'julia-zanatta', team: 'P', lados: ['B'], name: 'Deputada da Tiara',
+    blurb: 'Tiara de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.',
+    pal: { skin: 0xf2c9a4, shirt: 0xd82b78, pants: 0x242532, hair: 0xc2aa83, boots: 0x222222 } },
+  { id: 'marina-silva', team: 'P', lados: ['E'], name: 'Dona Floresta',
+    blurb: 'Óculos vinho, coque grisalho e vestido verde-petróleo. A conversa é calma; a mira, firme.',
+    pal: { skin: 0x9a684f, shirt: 0x243654, pants: 0x22242b, hair: 0x292522, boots: 0x222222 } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
+
+// Lados em que o personagem joga (E = Esquerda, B = Direita); `lados` explícito vence a categoria.
+export const ladosDe = (def) => def?.lados || (def?.team === 'E' ? ['E'] : def?.team === 'B' ? ['B'] : ['E', 'B']);
+export const podeNoLado = (def, lado) => ladosDe(def).includes(lado);
 
 // Which weapon each character is shown holding (character-select) AND spawns with.
 // Shared by main.js (select screen) and game.js (initial loadout) so they never disagree.
@@ -625,6 +665,8 @@ export const CHAR_WEAPON = {
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   lobisomem: 'shotgun',
   mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', caipora: 'scar', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
+  barbudo: 'ak', capitao: 'md97', dama: 'm4', professor: 'mp5', senador: 'famas',
+  ministro: 'shotgun', deputado: 'uzi', juiz: 'scar', 'julia-zanatta': 'ak', 'marina-silva': 'm4',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

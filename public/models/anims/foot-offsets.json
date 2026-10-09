@@ -1,5 +1,5 @@
 {
- "gerado": "2026-09-06T23:27:15.404Z",
+ "gerado": "2026-10-07T05:41:43.728Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -229,6 +229,80 @@
    "walk": 0.034,
    "run": 0.0179,
    "crouch": 0.021
+  },
+  "lobisomem": {
+   "walk": -0.0336,
+   "run": -0.0361
+  },
+  "lampiao": {
+   "run": -0.0118
+  },
+  "bandeirante": {
+   "run": -0.0161
+  },
+  "saci": {
+   "walk": -0.0104
+  },
+  "barbudo": {
+   "idle": -0.0292,
+   "walk": 0.068,
+   "run": 0.052,
+   "shoot": -0.0316,
+   "crouch": -0.0191
+  },
+  "capitao": {
+   "idle": -0.018,
+   "walk": -0.0484,
+   "run": -0.0412,
+   "shoot": -0.0169,
+   "crouch": -0.0269
+  },
+  "dama": {
+   "walk": 0.0345,
+   "run": -0.0208,
+   "crouch": 0.0119
+  },
+  "professor": {
+   "idle": -0.021,
+   "walk": -0.0448,
+   "run": -0.0353,
+   "shoot": -0.0187,
+   "crouch": -0.0319
+  },
+  "senador": {
+   "idle": -0.0192,
+   "walk": -0.0463,
+   "run": -0.0386,
+   "shoot": -0.0185,
+   "crouch": -0.0294
+  },
+  "ministro": {
+   "idle": -0.0136,
+   "walk": 0.0486,
+   "run": -0.0457,
+   "shoot": -0.0142
+  },
+  "deputado": {
+   "idle": -0.0174,
+   "walk": -0.0414,
+   "run": -0.0379,
+   "shoot": -0.0152,
+   "crouch": -0.0239
+  },
+  "juiz": {
+   "idle": -0.0247,
+   "walk": 0.0472,
+   "run": -0.0323,
+   "shoot": -0.0252,
+   "crouch": -0.0226
+  },
+  "julia-zanatta": {
+   "walk": -0.0216,
+   "run": -0.0171
+  },
+  "marina-silva": {
+   "walk": 0.0263,
+   "run": -0.0253
   }
  },
  "suspeitos": [

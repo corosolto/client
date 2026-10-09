@@ -195,6 +195,9 @@ function runMap(mapId, textures, seed) {
   const mapWidth = Math.max(0.001, g.world.bounds.maxX - g.world.bounds.minX);
   const mapDepth = Math.max(0.001, g.world.bounds.maxZ - g.world.bounds.minZ);
   let laneSpreadSum = 0, laneSpreadN = 0;
+  // Scene setup allocates Three objects whose UUIDs consume Math.random. Restart
+  // the seeded stream after setup so asset/material counts cannot shift gameplay RNG.
+  seedRandom(seed);
   const steps = Math.round(SECS / DT);
   for (let i = 0; i < steps; i++) {
     // DUELO: o jogador fica GRUDADO no meio do mapa. Parado no spawn ele às vezes passava a

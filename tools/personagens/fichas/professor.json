@@ -1,0 +1,20 @@
+{
+  "id": "professor",
+  "nome": "Professor do Arcabouço",
+  "lado": "E",
+  "genero": "m",
+  "refs": [
+    "03-haddad-tres-quartos-terno-2025-04.jpg",
+    "01-haddad-corpo-inteiro-convencao-2026-08.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian politician shown in the photos, recognizable at a glance: long oval face, wavy salt-and-pepper hair with a loose forelock, clean-shaven, calm professorial half-smile.",
+  "roupa": "blue suit, white shirt, blue tie, dark shoes.",
+  "corpo": "about 1.80 m, slim and long-limbed, long thin neck: the longest legs and the smallest head relative to height in the political cast.",
+  "naoExagerar": "his thinness, or any ethnic feature",
+  "alvo": {
+    "cabeca": 0.2,
+    "ombros": 0.205,
+    "perna": 0.445
+  },
+  "concept": "tools/eval/asset-evidence/pr773/concepts/professor/concept.jpg"
+}

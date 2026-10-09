@@ -110,7 +110,7 @@
   --lambe:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,0) 1px 3px);
 
   /* ---- times ---- */
-  --team-e:#e03232; --team-b:#1faa4d; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f; --team-m:#9d4edd;
+  --team-e:#e03232; --team-b:#1f3fc8; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f; --team-m:#9d4edd;
 
   /* ---- espaçamento (escala de 4) ---- */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px;
@@ -147,7 +147,7 @@
 
   /* ---- aliases legados (regras antigas e estilos inline do JS ainda consomem) ---- */
   --vitoria:#49a846;   /* VITÓRIA — pixel medido em references/telas/09_resultado_partida.png */
-  --red:var(--team-e); --red-dark:#8f1d1d; --green:var(--team-b); --yellow:var(--br-faixa);
+  --red:var(--team-e); --red-dark:#8f1d1d; --green:#1faa4d; --yellow:var(--br-faixa);
   --purple:var(--team-u); --dark:var(--bg-900); --panel:rgba(var(--bg-800-rgb),.94);
   --hud:var(--ink-100); --cs:var(--sys);
   --ink1:var(--ink-100); --ink2:var(--ink-200); --ink3:var(--ink-300);
@@ -306,6 +306,11 @@ html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-cri
 .hub-roster-grid button[aria-pressed="true"],.hub-roster-grid button:hover,.hub-roster-grid button:focus-visible{border-color:#b4d92e;outline:none}
 .hub-roster-grid img{display:block;width:100%;max-height:none;aspect-ratio:1;object-fit:cover}
 .hub-roster-grid span{display:block;padding:6px 4px;font:700 11px/1 var(--font);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hub-roster-lados{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+.hub-roster-lados button{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 12px;border:1px solid #34302b;background:#0d0e11e0;color:#a5a5a3;font:700 15px/1 var(--font);letter-spacing:2px;cursor:pointer}
+.hub-roster-lados button img{width:28px;height:28px}
+.hub-roster-lados button[aria-selected="true"]{border-color:var(--lado);color:#fff;background:color-mix(in srgb,var(--lado) 22%,#0d0e11)}
+.hub-roster-lados button:focus-visible{outline:2px solid var(--lado);outline-offset:2px}
 .hub-roster-selected{margin:16px 0 0;color:#a5a5a3;font:600 14px/1.3 var(--font)}
 html[data-home-ui="hub"] #main-menu:has(#menu-setup[data-step="profile"]) .hub-character,
 html[data-home-ui="hub"] #main-menu:has(#menu-setup[data-step="profile"]) .hub-character-card{display:none}
@@ -781,8 +786,8 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
    e a dos funkeiros nem existia). */
 .team-e{--tc:#ff6b6b;--tc-rgb:255,107,107;--art:url('/img/faccoes/time-e.webp');
   --tc-bg:linear-gradient(165deg,#b52e2e 0%,#7a1a1a 52%,#3d0d0d 100%)}
-.team-b{--tc:#7de08f;--tc-rgb:125,224,143;--art:url('/img/faccoes/time-b.webp');
-  --tc-bg:linear-gradient(165deg,#1d8f45 0%,#2f7a2a 46%,#7a6412 100%)}
+.team-b{--tc:#3355ff;--tc-rgb:51,85,255;--art:url('/img/faccoes/time-b.webp');
+  --tc-bg:linear-gradient(165deg,#1f3fc8 0%,#1d3f8f 52%,#7a6412 100%)}
 .team-u{--tc:#c79bff;--tc-rgb:199,155,255;--art:url('/img/faccoes/tribos.webp');
   --tc-bg:linear-gradient(165deg,#5f22c2 0%,#8a1f9c 55%,#3d0f52 100%)}
 .team-c{--tc:#ff8ad1;--tc-rgb:255,138,209;--art:url('/img/faccoes/palhacos.webp');
@@ -1058,6 +1063,21 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #pause-menu .screen-title::after{display:none}   /* a referência não tem régua aqui */
 #pause-menu .panel::before{display:none}         /* nem a barra de risco no canto */
 #pause-menu .panel{padding:var(--s-4)}
+.mp-identity-card{display:flex;align-items:center;gap:12px;max-width:min(420px,86vw);padding:9px 13px;
+  border:1px solid rgba(180,217,46,.48);background:rgba(13,14,17,.92);color:#ecebe6;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);font-family:var(--aaa-font-body)}
+.mp-identity-card[hidden]{display:none}
+.mp-identity-portrait{width:64px;height:64px;flex:0 0 64px;object-fit:cover;background:#24262b}
+.mp-identity-copy{display:flex;flex-direction:column;gap:3px;min-width:0;text-align:left}
+.mp-identity-copy small{color:#b4d92e;font:700 10px/1.2 var(--aaa-font-body);letter-spacing:1.5px}
+.mp-identity-copy strong{font-size:18px;line-height:1.15;overflow-wrap:anywhere}
+.mp-identity-copy span{font-size:12px;color:#bcbeb9;line-height:1.2}
+#mp-identity-toast{position:fixed;z-index:29;left:50%;top:max(76px,calc(env(safe-area-inset-top) + 68px));
+  transform:translateX(-50%);pointer-events:none}
+body:has(#pause-menu:not(.hidden)) #mp-identity-toast{display:none}
+@media(max-width:600px){#mp-identity-toast{top:max(64px,calc(env(safe-area-inset-top) + 56px))}
+  .mp-identity-portrait{width:52px;height:52px;flex-basis:52px}
+  .mp-identity-copy strong{font-size:16px}}
 .pause-actions{display:flex;flex-direction:column;gap:4px;min-width:min(420px,86vw);text-align:center}
 /* FILAS, não pílulas: sem contorno, chapadas, coladas uma na outra. O CONTINUAR fica
    sólido (vem do `.btn-big`) e é o único com peso — é a leitura da referência.
@@ -1076,6 +1096,17 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #pause-menu .footnote kbd{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
   color:var(--ink-200);background:rgba(var(--bg-700-rgb),.9);border:1px solid var(--line-2);
   padding:3px 8px;clip-path:var(--cut-sm)}
+@media(max-height:500px){
+  #pause-menu{justify-content:flex-start;gap:6px;overflow-y:auto;padding:8px 0 12px;box-sizing:border-box}
+  #pause-menu .screen-title{font-size:24px;line-height:1.1;margin:0}
+  #pause-menu .mp-identity-card{padding:4px 8px;gap:8px}
+  #pause-menu .mp-identity-portrait{width:42px;height:42px;flex-basis:42px}
+  #pause-menu .pause-actions{gap:2px}
+  #pause-menu .panel{padding:8px}
+  #pause-menu .pause-actions .btn{min-height:36px;padding:6px 10px;font-size:12px}
+  #pause-menu .pause-actions .btn-big{font-size:18px}
+  #pause-menu .footnote{position:static;margin:0;font-size:10px}
+}
 .howto-grid{display:grid;grid-template-columns:auto auto;gap:var(--s-2) var(--s-5);font-size:var(--fs-200);
   font-weight:600;letter-spacing:var(--tr-1);text-align:left;color:var(--ink-200)}
 .howto-grid span:nth-child(odd){color:var(--br-faixa);font-family:var(--mono);font-size:var(--fs-100)}
@@ -1244,7 +1275,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .team-score{font-size:var(--fs-300);font-weight:700;letter-spacing:var(--tr-2);line-height:var(--lh-snug);
   padding:var(--s-1) var(--s-3);text-shadow:var(--sh-hud)}
 .ts-p{color:#ff9a9a;border-left:3px solid var(--team-e)}
-.ts-b{color:#a9f0b6;border-right:3px solid var(--team-b)}
+.ts-b{color:#a8b8ff;border-right:3px solid var(--team-b)}
 
 /* Topo sem placa: o contorno dos glifos preserva a leitura sobre o cenário. */
 #hud-top .team-score{
@@ -1299,7 +1330,6 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    engrossa o poço da barra — não devolve o painel. */
 /* irmão POSTERIOR no DOM: quando a faixa de CTF existe, o killfeed desce. */
 #ctf-hud:not(.hidden) ~ #killfeed{top:136px}
-body.net-overlay #killfeed{right:270px}   /* o painel NET (netgame.js) mora no canto; o feed sai de baixo dele */
 #match-next{margin:14px 0 0;font-weight:700;letter-spacing:.08em;opacity:.85;animation:match-next-pulse 1.2s ease-in-out infinite}
 @keyframes match-next-pulse{0%,100%{opacity:.85}50%{opacity:.35}}
 #killfeed{position:absolute;top:98px;right:48px;display:flex;flex-direction:column;gap:var(--s-1);
@@ -1495,7 +1525,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard h3 .sb-score i{font-style:normal;color:var(--ink-200);font-size:clamp(20px,3.6vh,40px);
   letter-spacing:var(--tr-3);align-self:center;font-weight:700}
 #scoreboard h3 .sb-score b.tp{color:#ff8a8a}
-#scoreboard h3 .sb-score b.tb{color:#b79bff}   /* violeta do time B na referência (134,94,178) */
+#scoreboard h3 .sb-score b.tb{color:#a8b8ff}
 
 #scoreboard{--sb-gap:clamp(var(--s-5),3.4vw,64px);
   --sb-rh:clamp(32px,5.2vh,54px);--sb-rg:5px}
@@ -1540,7 +1570,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-team b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #scoreboard .sb-chead img{height:36px;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 #scoreboard .sb-col.tp .sb-chead{color:#ff8a8a}
-#scoreboard .sb-col.tb .sb-chead{color:#b79bff}
+#scoreboard .sb-col.tb .sb-chead{color:#a8b8ff}
 #scoreboard .sb-col table{display:block;width:100%;flex:0 1 auto;min-height:0;overflow:auto;margin-top:0}
 #scoreboard .sb-col thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 #scoreboard .sb-col tbody{display:grid;grid-template-columns:1fr;grid-auto-rows:var(--sb-rh);
@@ -1549,7 +1579,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
   grid-template-columns:var(--sb-grid);align-items:center;gap:0 var(--s-4);
   padding:0 var(--s-4);border-left:3px solid transparent}
 #scoreboard .sb-col.tp tbody tr{background:rgba(224,50,50,.22);border-left-color:rgba(224,50,50,.6)}
-#scoreboard .sb-col.tb tbody tr{background:rgba(123,47,247,.24);border-left-color:rgba(123,47,247,.65)}
+#scoreboard .sb-col.tb tbody tr{background:rgba(51,85,255,.24);border-left-color:rgba(51,85,255,.65)}
 /* flex:0 0 auto porque o #scoreboard virou coluna flex: sem isso o canvas do mascote
    (kill-switch ?dolly=1) seria espremido pelo `flex-shrink` padrão. */
 #dollynho-dance{display:block;flex:0 0 auto;margin:12px auto 0;width:240px;height:190px}
@@ -1563,16 +1593,16 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard h3 .sb-score b{display:flex;align-items:center;gap:14px;font:400 40px/1 var(--aaa-font-display);color:#ecebe6}
 #scoreboard .sb-score .sb-crest{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.65))}
 #scoreboard h3 .sb-score-num{font:700 44px/1 var(--font)}
-#scoreboard h3 .tp .sb-score-num{color:#e0762a}#scoreboard h3 .tb .sb-score-num{color:#8258d8}
+#scoreboard h3 .tp .sb-score-num{color:#e0762a}#scoreboard h3 .tb .sb-score-num{color:#5a7bff}
 #scoreboard h3 .sb-vs{font:400 20px/1 var(--aaa-font-display);color:#5c5d63}
 #scoreboard h3 .sb-diamond{display:block;width:14px;height:14px;flex:0 0 14px;transform:rotate(45deg);font-size:0;background:#e0762a}
-#scoreboard h3 .tb .sb-diamond{background:#8258d8}
+#scoreboard h3 .tb .sb-diamond{background:#5a7bff}
 #scoreboard h3 .sb-result,#scoreboard h3 .sb-result-sub{display:none}
 #scoreboard .sb-cols{position:absolute;left:64px;right:64px;top:190px;width:auto;display:grid;grid-template-columns:1fr 1fr;column-gap:32px;min-height:0}
 #scoreboard .sb-col{--sb-grid:minmax(0,1fr) 46px 46px 72px 52px;display:flex;flex-direction:column;
   min-height:0;padding:6px 0;background:rgba(13,14,17,.88);border:1px solid #26272d}
 #scoreboard .sb-col.ctf{--sb-grid:minmax(0,1fr) 42px 42px 66px 48px 46px}
-#scoreboard .sb-col.tp{border-top:2px solid #e0762a}#scoreboard .sb-col.tb{border-top:2px solid #8258d8}
+#scoreboard .sb-col.tp{border-top:2px solid #e0762a}#scoreboard .sb-col.tb{border-top:2px solid #5a7bff}
 #scoreboard .sb-chead{display:grid;grid-template-columns:var(--sb-grid);align-items:center;gap:0;padding:8px 0;
   border-bottom:1px solid #26272d;font:700 11px/1 var(--aaa-font-body);letter-spacing:3px;color:#5c5d63}
 #scoreboard .sb-chead>span{padding:0 10px;text-align:right;color:#5c5d63}
@@ -2861,6 +2891,7 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-criar summary::before{content:'▸ ';color:var(--cs)}
 .mp-criar[open] summary::before{content:'▾ '}
 .mp-form{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-3);margin-top:var(--s-3)}
+.mp-lados-fixos{grid-column:1/-1}
 /* `min-width:0`: sem isto a coluna da grid nasce do min-content do <select>, e a opção mais
    longa ("TODOS (sorteia a cada partida)") empurrava o formulário 61 px para fora do painel —
    barra de rolagem horizontal no menu, visível só com a seção CRIAR MINHA SALA aberta. */

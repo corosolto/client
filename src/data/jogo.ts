@@ -197,8 +197,9 @@ export interface Personagem { faccao: string; nome: string; blurb: string; }
    bailão!"), e o /personagens publicava a versão que ninguém vê na tela. Regra da casa:
    se divergir, o JOGO está certo e este arquivo está velho. */
 export const FACCOES: { id: string; nome: string; lema: string; cor: string; nota: string }[] = [
-  { id: 'E', nome: 'Time E', lema: 'A treta se faz na praça!', cor: '#ff6b6b', nota: 'O time vermelho da arena. Oito arquétipos de esquerda caricata - nenhum deles é uma pessoa real.' },
-  { id: 'B', nome: 'Time B', lema: 'A treta se faz na rodovia!', cor: '#7de08f', nota: 'O time verde. Nove arquétipos de direita caricata, com a mesma dose de zoeira dos adversários.' },
+  { id: 'E', nome: 'Esquerda', lema: 'A treta se faz na praça!', cor: '#ff5555', nota: 'O lado vermelho da arena. Oito arquétipos de esquerda caricata - nenhum deles é uma pessoa real.' },
+  { id: 'B', nome: 'Direita', lema: 'A treta se faz na rodovia!', cor: '#3355ff', nota: 'O lado azul. Nove arquétipos de direita caricata, com a mesma dose de zoeira dos adversários.' },
+  { id: 'P', nome: 'Políticos', lema: 'A treta atravessa os dois lados!', cor: '#d6b55a', nota: 'Elenco satírico de figuras públicas. Cada personagem indica em quais lados pode jogar.' },
   { id: 'urbanas', nome: 'Tribos Urbanas', lema: 'A treta se faz na quebrada!', cor: '#c79bff', nota: 'Facção sem lado político: emo, punk, metaleiro, skatista, rapper e companhia. Entra na treta pelo estilo.' },
   { id: 'palhacos', nome: 'Palhaços', lema: 'A treta se faz no picadeiro!', cor: '#ff8ad1', nota: 'O picadeiro invadiu a arena. Nove palhaços, do clássico de cartola ao que dá medo de verdade.' },
   { id: 'funkeiros', nome: 'Funkeiros', lema: 'A treta se faz no bailão!', cor: '#ffd23f', nota: 'A facção mais nova: mandrake, cria, trap, tamborzão. Ostenta antes, atira depois.' },
@@ -224,6 +225,17 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'ancap', faccao: 'B', nome: 'Ancap Medieval', blurb: 'Cota de malha, cruz templária e capa verde-amarela. Privatiza a treta e xinga o Banco Central.' },
   { id: 'canarinho', faccao: 'B', nome: 'Canarinho Pistola', blurb: 'Pistola desde 2016. Bico torto, peito estufado e camisa 24: ele NÃO amarela.' },
   { id: 'proerd', faccao: 'B', nome: 'Leão do Proerd', blurb: 'Camisa preta colada, rugido de mascote de formatura e garra afiada na defesa da treta.' },
+
+  { id: 'barbudo', faccao: 'P', nome: 'Barbudo do Planalto', blurb: 'Discurso de três horas e o microfone nunca cansa. Faixa no peito, churrasco no domingo.' },
+  { id: 'capitao', faccao: 'P', nome: 'Capitão do Cercadinho', blurb: 'Camisa amarela, cercadinho lotado e live toda quinta. Não leva desaforo pra casa.' },
+  { id: 'dama', faccao: 'P', nome: 'Dama da Mandioca', blurb: 'Estoca vento e saúda a mandioca. Ninguém entende a frase, todo mundo lembra.' },
+  { id: 'professor', faccao: 'P', nome: 'Professor do Arcabouço', blurb: 'Calcula o arcabouço de cabeça e ainda acha tempo de explicar a conta pro time.' },
+  { id: 'senador', faccao: 'P', nome: 'Zero Um', blurb: 'O 01 da família. Sorriso de campanha e broche sempre no lugar.' },
+  { id: 'ministro', faccao: 'P', nome: 'Xandão da Toga', blurb: 'A toga é capa e o despacho sai antes do café. Joga pelo Time E e ninguém discute.' },
+  { id: 'deputado', faccao: 'P', nome: 'Deputado da Peruca', blurb: 'Sobe na tribuna de peruca loira e vira meme antes de terminar a frase.' },
+  { id: 'juiz', faccao: 'P', nome: 'Juiz do Conje', blurb: 'Ex-juiz de sotaque marcado. O conje confirma: ele não perde um prazo.' },
+  { id: 'julia-zanatta', faccao: 'P', nome: 'Deputada da Tiara', blurb: 'Tiara de flores, blazer fúcsia e presença de plenário. A treta começa com pose e termina no placar.' },
+  { id: 'marina-silva', faccao: 'P', nome: 'Dona Floresta', blurb: 'Óculos vinho, coque grisalho e vestido verde-petróleo. A conversa é calma; a mira, firme.' },
 
   { id: 'emo', faccao: 'urbanas', nome: 'Emo', blurb: 'Franja na cara e playlist de sofrência. Mira embaçada por um olho só.' },
   { id: 'blackmetal', faccao: 'urbanas', nome: 'Black Metal', blurb: 'Corpse paint, cabelão e blast beat. Congela a treta num inverno norueguês.' },

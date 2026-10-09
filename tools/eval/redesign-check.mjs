@@ -573,8 +573,8 @@ for (const arquivo of caminhosMidia) {
 }
 const weaponBlock = characters.match(/export const CHAR_WEAPON = \{([\s\S]*?)\n\};/);
 const weaponMap = Object.fromEntries(
-  [...(weaponBlock?.[1] || '').matchAll(/(\w+):\s*'([^']+)'/g)]
-    .map((m) => [m[1], m[2]]).sort(([a], [b]) => a.localeCompare(b)),
+  [...(weaponBlock?.[1] || '').matchAll(/(?:'([^']+)'|([\w-]+)):\s*'([^']+)'/g)]
+    .map((m) => [m[1] || m[2], m[3]]).sort(([a], [b]) => a.localeCompare(b)),
 );
 let audit = {};
 try { audit = JSON.parse(mediaAudit); } catch { /* ausência ou JSON inválido reprova UIA4 */ }
@@ -620,7 +620,7 @@ const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main
   && /ms-desc'\)\.textContent = tr\(MAP_DESC\[currentMap\] \|\| ''\)/.test(main)
   && /frase\('escolhaAdversario', tr\(FACTION_NAME\[myFaction\]/.test(main)
   && /continuar\.textContent = frase\('continuarSetup'\)/.test(main)
-  && /const FACTION_NAME = \{ E: 'TIME E'/.test(main)
+  && /const FACTION_NAME = \{ E: 'ESQUERDA'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
 const previewUso = /if \(\(csOpen \|\| hubPreviewOpen\) && pv && pv\.model && !previewVideoVisible\(\)\)/.test(funcLoop)
@@ -725,6 +725,7 @@ const blurbs = [...characters.matchAll(/blurb:\s*'((?:\\.|[^'\\])*)'/g)].map((m)
 const blurbsSemIngles = blurbs.filter((blurb) => !chaves.includes(blurb));
 const geradorArma = /CHAR_WEAPON/.test(videoGenerator)
   && /const weaponById = Object\.fromEntries/.test(videoGenerator)
+  && videoGenerator.includes("(?:'([^']+)'|([\\w-]+))")
   && /const weapon = weaponById\[id\] \|\| 'ak'/.test(videoGenerator)
   && /w=\$\{encodeURIComponent\(weapon\)\}/.test(videoGenerator);
 const placarCap = /class="sb-chead"[\s\S]{0,500}class="sb-cap">CAP\.<\/span>/.test(game)
@@ -830,7 +831,7 @@ const placarReferencia = /class="sb-clock"/.test(game)
   && /#scoreboard h3\{[^}]*top:44px/.test(css)
   && /#scoreboard \.sb-cols\{[^}]*left:64px[^}]*right:64px[^}]*top:190px[^}]*column-gap:32px/.test(css)
   && /#scoreboard \.sb-col\.tp\{[^}]*border-top:2px solid #e0762a/.test(css)
-  && /#scoreboard \.sb-col\.tb\{[^}]*border-top:2px solid #8258d8/.test(css)
+  && /#scoreboard \.sb-col\.tb\{[^}]*border-top:2px solid #5a7bff/.test(css)
   && /const totalRounds = this\._inspectionTotalRounds \|\|/.test(game)
   && /game\.ctf = false; game\._inspectionTotalRounds = 5;/.test(main)
   && /game\.paused = true; game\.keys = \{\}; game\.el\.pause\.classList\.add\('hidden'\); game\._showScoreboard\(true\)/.test(main);
@@ -873,7 +874,7 @@ const mouseVerticalConfiguravel = /invertY: false/.test(main)
   && /id="set-invert-y" type="checkbox"/.test(astro)
   && /invertEl = \$\('set-invert-y'\)/.test(main)
   && /settings\.invertY = invertEl\.checked/.test(main)
-  && /const invertY = this\.settings\.invertY \? -1 : 1;[\s\S]{0,100}this\.player\.pitch -= e\.movementY \* s \* invertY;/.test(game);
+  && /const invertY = this\.settings\.invertY \? -1 : 1;[\s\S]{0,400}this\.player\.pitch -= e\.movementY \* s \* invertY;/.test(game);
 const menuWallSources = readdirSync(join(ROOT, 'public', 'img')).filter((file) => /^wall-\d+\.webp$/.test(file));
 const menuWall3x2AssetsOk = menuWallSources.length > 0 && (await Promise.all(menuWallSources.map(async (name) => {
   const file = join(ROOT, 'public', 'img', 'walls-3x2', name);

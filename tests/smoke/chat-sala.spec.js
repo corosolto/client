@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
    geometria contra a ZONA_MIRA de tools/eval/ui-check.mjs e o #crosshair em cinco
    viewports. Mutantes por page.route (SMOKE_MUTANTE=<nome>): painel-largo, innerhtml,
    foco-preso, so-mousedown, reduzido-eterno, redesenho-novo, redesenho-falante,
-   esc-so-keydown, foco-no-toque e hud-sem-handler; cada um DEVE reprovar.
+   esc-so-keydown, foco-no-toque, fecha-atira, hud-sem-handler e aviso-sumido; cada um DEVE reprovar.
    Uso local: CHROME_BIN=/caminho/do/chrome npx playwright test -c playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js
    Figuras: CHAT_FIGURAS=/pasta guarda os PNG abertos e fechados de cada viewport. */
 
@@ -126,6 +126,15 @@ async function aplicarMutante(page, testInfo) {
       if (mutado === corpo) throw new Error('mutante foco-no-toque não aplicou: devolverFoco mudou de forma');
       await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
     });
+  } else if (MUTANTE === 'fecha-atira') {
+    testInfo.annotations.push({ type: 'mutação', description: 'fecha-atira: o controle de tiro reaparece antes de terminar o toque que fecha o chat' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace('fechar({ semJogo: true });', 'fechar();');
+      if (mutado === corpo) throw new Error('mutante fecha-atira não aplicou: trava até fim do toque mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
   } else if (MUTANTE === 'esc-so-keydown') {
     testInfo.annotations.push({ type: 'mutação', description: 'esc-so-keydown: o painel volta a ouvir só o keydown do Esc; o keyup órfão do toque em tela cheia DEVE reprovar' });
     await page.route('**/js/chat-painel.js*', async (rota) => {
@@ -142,6 +151,15 @@ async function aplicarMutante(page, testInfo) {
       const corpo = await r.text();
       const mutado = corpo.replace("el.botaoSala.addEventListener('click', onBotaoSala)", '0');
       if (mutado === corpo) throw new Error('mutante hud-sem-handler não aplicou: o listener do botão da HUD mudou de forma');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
+  } else if (MUTANTE === 'aviso-sumido') {
+    testInfo.annotations.push({ type: 'mutação', description: 'aviso-sumido: o painel deixa de publicar avisos transitórios; a observação do clique DEVE reprovar' });
+    await page.route('**/js/chat-painel.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace("el.aviso.textContent = txt || '';", "el.aviso.textContent = '';");
+      if (mutado === corpo) throw new Error('mutante aviso-sumido não aplicou: aviso mudou de forma');
       await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
     });
   } else if (MUTANTE) {
@@ -167,8 +185,6 @@ async function bootarPartida(page) {
   await page.locator('#btn-team-e').click();
   await expect(page.locator('#char-select')).toBeVisible();
   await page.locator('#char-confirm').click();
-  await expect(page.locator('#team-select')).toHaveAttribute('data-step', 'enemy');
-  await page.locator('#btn-team-f').click();
   await expect(page.locator('#hud')).toBeVisible({ timeout: 60_000 });
   await expect(page.locator('#chat-sala')).toBeHidden();
 }
@@ -268,6 +284,31 @@ async function cobrarGeometria(page, nome, aberto) {
 async function figura(page, nome) {
   mkdirSync(FIGURAS, { recursive: true });
   await page.screenshot({ path: `${FIGURAS}/${nome}.png` });
+}
+
+async function agirEVerAviso(page, esperado, agir) {
+  await page.evaluate(({ source, flags }) => {
+    const aviso = document.getElementById('chat-aviso');
+    const padrao = new RegExp(source, flags);
+    window.__chatAvisoVigiado = new Promise((resolve, reject) => {
+      const confere = () => {
+        const texto = aviso?.textContent || '';
+        if (!padrao.test(texto)) return;
+        observador.disconnect();
+        clearTimeout(prazo);
+        resolve(texto);
+      };
+      const observador = new MutationObserver(confere);
+      observador.observe(aviso, { childList: true, characterData: true, subtree: true });
+      const prazo = setTimeout(() => {
+        observador.disconnect();
+        reject(new Error(`aviso transitório não observado: ${source}`));
+      }, 25_000);
+    });
+  }, { source: esperado.source, flags: esperado.flags });
+  await agir();
+  const visto = await page.evaluate(() => window.__chatAvisoVigiado);
+  expect(visto).toMatch(esperado);
 }
 
 test.describe('chat de sala', () => {
@@ -519,9 +560,8 @@ test.describe('chat de sala', () => {
 
     await test.step('a própria linha não abre ações; denúncia sai sem texto livre e oferece bloquear', async () => {
       await teclaChat(page, 'y');
-      await page.locator('#chat-log .chat-linha.propria').first().click();
+      await agirEVerAviso(page, /sua/i, () => page.locator('#chat-log .chat-linha.propria').first().click());
       await expect(page.locator('#chat-acoes')).toBeHidden();
-      await expect(page.locator('#chat-aviso')).toHaveText(/sua/i);
       await page.locator('#chat-log .chat-linha[data-id="3"]').click();
       await page.locator('#chat-denunciar').click();
       await expect(page.locator('#chat-motivos')).toBeVisible();
@@ -532,9 +572,8 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-motivos-aviso')).toHaveText(/90 dias/);
       await figura(page, 'denuncia-aviso');
       await page.locator('#chat-motivos input[value="spam"]').check();
-      await page.locator('#chat-motivos-enviar').click();
+      await agirEVerAviso(page, /recebida/i, () => page.locator('#chat-motivos-enviar').click());
       expect(await page.evaluate(() => window.__chatNet.denuncias)).toEqual([{ id: 3, motivo: 'spam' }]);
-      await expect(page.locator('#chat-aviso')).toHaveText(/recebida/i);
       await expect(page.locator('#chat-bloquear-tambem')).toBeVisible();
       await page.locator('#chat-bloquear-tambem').click();
       await expect(page.locator('#chat-log .chat-linha[data-id="3"]')).toHaveCount(0);
@@ -549,8 +588,7 @@ test.describe('chat de sala', () => {
       await page.locator('#chat-log .chat-linha[data-id="4"]').click();
       await page.locator('#chat-denunciar').click();
       await page.locator('#chat-motivos input[value="ofensa"]').check();
-      await page.locator('#chat-motivos-enviar').click();
-      await expect(page.locator('#chat-aviso')).toHaveText(/recebida/i);
+      await agirEVerAviso(page, /recebida/i, () => page.locator('#chat-motivos-enviar').click());
       expect(await page.evaluate(() => document.activeElement?.classList.contains('chat-linha'))).toBe(true);
       await page.keyboard.press('Escape');
       expect(await chatAberto(page)).toBe(false);
@@ -694,11 +732,36 @@ test.describe('chat de sala', () => {
         expect(await chatAberto(page)).toBe(true);
         await page.touchscreen.tap(700, 300);
         expect(await chatAberto(page), 'um toque no jogo, fora do painel, fecha o compositor').toBe(false);
+        await page.waitForTimeout(150);
+        expect((await estadoJogo(page)).tiros, 'o toque que fecha o chat não dispara a arma').toBe(0);
+        await page.locator('#chat-toque').tap();
+        const gesto = await page.evaluate(() => {
+          const alvo = window.__game.renderer.domElement;
+          const stick = document.querySelector('.touch-joy-r');
+          const r = stick.getBoundingClientRect();
+          const dedo = new Touch({ identifier: 9, target: stick, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 });
+          alvo.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', pointerId: 41, bubbles: true, cancelable: true, clientX: 700, clientY: 300 }));
+          // Em Chromium lento, o touchstart pode atingir o stick que reapareceu após pointerdown.
+          stick.dispatchEvent(new TouchEvent('touchstart', { changedTouches: [dedo], touches: [dedo], targetTouches: [dedo], bubbles: true, cancelable: true }));
+          const estado = { travada: window.__game._entradaTravada, tiros: window.__tiros };
+          stick.dispatchEvent(new TouchEvent('touchend', { changedTouches: [dedo], touches: [], targetTouches: [], bubbles: true, cancelable: true }));
+          alvo.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch', pointerId: 41, bubbles: true }));
+          return estado;
+        });
+        expect(await chatAberto(page), 'o pointerdown fecha o compositor').toBe(false);
+        expect(gesto.travada, 'o jogo fica travado até o dedo sair da tela').toBe(true);
+        expect(gesto.tiros, 'o touchstart no stick revelado não dispara a arma').toBe(0);
+        await expect.poll(async () => (await estadoJogo(page)).travada).toBe(false);
         await page.locator('#chat-toque').tap();
         expect(await chatAberto(page)).toBe(true);
         // o Safari do iOS não sintetiza mousedown para um toque no canvas: só o pointerdown chega ao documento
-        await page.evaluate(() => document.elementFromPoint(700, 300).dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true, cancelable: true, clientX: 700, clientY: 300 })));
+        await page.evaluate(() => {
+          const alvo = document.elementFromPoint(700, 300);
+          alvo.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', pointerId: 42, bubbles: true, cancelable: true, clientX: 700, clientY: 300 }));
+          alvo.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch', pointerId: 42, bubbles: true }));
+        });
         expect(await chatAberto(page), 'pointerdown de toque fora do painel fecha (iOS sem mousedown de compatibilidade)').toBe(false);
+        await expect.poll(async () => (await estadoJogo(page)).travada).toBe(false);
         await page.locator('#chat-toque').tap();
         await expect(page.locator('#chat-fechar')).toBeVisible();
         await page.locator('#chat-fechar').tap();

@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { MAPS, resolveMapId } from './maps.js';
 import { atualizaCortes } from './mapprops.js';
-import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon } from './characters.js';
+import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
@@ -323,7 +323,7 @@ const RACK_RETA = QS.get('rackreta') === '1';
    A simetria é parte do desenho: vale pra jogador E bots — meia regeneração faria o bot
    virar esponja. Régua: invariante REGEN de `tools/eval/regen-check.mjs`. */
 const REGEN = QS.get('regen') === '1', REGEN_DELAY = 6, REGEN_RATE = 22;
-const TEAM_LABEL = { E: 'TIME E', B: 'TIME B' };
+const TEAM_LABEL = { E: 'ESQUERDA', B: 'DIREITA' };
 const RADIO = {
   z: { title: 'COMANDOS', items: ['Bora, bora, bora!', 'Cobre eu!', 'Recua, recua!'] },
   x: { title: 'RESPOSTAS', items: ['Recebido!', 'Negativo!', 'Bonito tiro!'] },
@@ -633,8 +633,9 @@ function botTier(skill) { return skill < 0.75 ? 'ruim' : skill < 1.05 ? 'medio' 
 /* Roster da partida, uma fonte só: main.js sorteia ANTES do preload e o Game consome o mesmo
    sorteio. SEMPRE `want` por lado — facção sem elenco repete e avisa; time menor nunca. */
 const _cyclePool = (pool, n) => {
-  const r = pool.length ? (Math.random() * pool.length) | 0 : 0;
-  return Array.from({ length: Math.max(0, n) }, (_, i) => pool[(i + r) % pool.length]).filter(Boolean);
+  const emb = pool.slice();
+  for (let i = emb.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [emb[i], emb[j]] = [emb[j], emb[i]]; }
+  return Array.from({ length: Math.max(0, n) }, (_, i) => emb[i % emb.length]).filter(Boolean);
 };
 const _rosterPool = (pool, want, quem, fallback) => {
   let src = pool;
@@ -651,13 +652,19 @@ const _rosterPool = (pool, want, quem, fallback) => {
 /* `dedicado` = servidor autoritativo de multiplayer: não há jogador local ocupando vaga no
    time aliado, então o lado aliado leva teamSize corpos inteiros (e não teamSize-1). É o que
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
+/* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
+const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
 export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId, dedicado = false) {
-  const allies = CHARACTERS.filter(c => c.team === playerFaction);
+  const allies = CHARACTERS.filter(_doLado(playerFaction));
   const others = allies.filter(c => c.id !== playerCharId);
+  const allyDefs = _rosterPool(others.length ? others : allies,
+    dedicado ? teamSize : teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId));
+  const usados = new Set([playerCharId, ...allyDefs.map(d => d.id)]);
+  const enemies = CHARACTERS.filter(_doLado(enemyFaction));
+  const enemiesLivres = enemies.filter(c => !usados.has(c.id));
   return {
-    allyDefs: _rosterPool(others.length ? others : allies,
-      dedicado ? teamSize : teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId)),
-    enemyDefs: _rosterPool(CHARACTERS.filter(c => c.team === enemyFaction), teamSize, `inimigos (${enemyFaction})`, CHARACTERS),
+    allyDefs,
+    enemyDefs: _rosterPool(enemiesLivres.length >= teamSize ? enemiesLivres : enemies, teamSize, `inimigos (${enemyFaction})`, CHARACTERS),
   };
 }
 
@@ -797,6 +804,9 @@ export class Game {
     this._tpFwd = new THREE.Vector3();
     this._tpRight = new THREE.Vector3();
     this._tpEul = new THREE.Euler();
+    this._tpAimEul = new THREE.Euler();
+    this._tpOrbitYaw = 0;
+    this._tpOrbitPitch = 0;
     this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
     /* Só o CORPO do jogador (tecla B) — sem `weapons` o glbchars pré-carrega as 26 armas
        BLOQUEANDO e desfaz o lazy da partida (ARM1/ARM3). BUG-85. */
@@ -865,7 +875,8 @@ export class Game {
       // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
       // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
       const wpn = this._matchWeapons?.[this._armaN++] || this._botWeapon();
-      const c = buildCharacterModel(def, { weaponId: wpn }) || buildCharacter(def);
+      const veste = this._defNoLado(def, team);
+      const c = buildCharacterModel(veste, { weaponId: wpn }) || buildCharacter(veste);
       c.group.traverse(o => { o.userData.botOwner = null; });
       const bot = {
         isPlayer: false, name: (this.online || this.dedicated) ? def.name : `[BOT] ${def.name}`, def, team,   // SP rotula aqui; online o snapshot rotula (BUG-124)
@@ -2107,6 +2118,11 @@ export class Game {
       // parecer luneta: você acompanha o alvo em vez de varrer o mapa com meio centímetro.
       const s = this.settings.sens * 0.0021 * (this.player.scoped ? Math.max(0.28, this.camera.fov / 70) : 1);
       const invertY = this.settings.invertY ? -1 : 1;
+      if (this.camView !== 'first' && (e.altKey || this.keys.AltLeft || this.keys.AltRight)) {
+        this._tpOrbitYaw -= e.movementX * s;
+        this._tpOrbitPitch = Math.max(-0.8, Math.min(0.8, this._tpOrbitPitch - e.movementY * s * invertY));
+        return;
+      }
       this.player.yaw -= e.movementX * s;
       this.player.pitch -= e.movementY * s * invertY;
       this.player.pitch = Math.max(-1.45, Math.min(1.45, this.player.pitch));
@@ -3137,7 +3153,7 @@ export class Game {
     if (charId) {
       const def = byId(charId);
       if (!def) console.warn(`[elenco] troca de lado pediu '${charId}', fora do elenco — usando a reserva da facção`);
-      this.playerDef = def || CHARACTERS.find(c => c.team === this.enemyFaction) || this.playerDef;
+      this.playerDef = def || CHARACTERS.find(_doLado(this.enemyFaction)) || this.playerDef;
       this.playerCharId = this.playerDef.id;
       p.def = this.playerDef;
     }
@@ -3157,7 +3173,10 @@ export class Game {
     const swapBot = candidates[(Math.random() * candidates.length) | 0];
     if (swapBot) {
       swapBot.team = oldTeam;
-      const defs = CHARACTERS.filter(c => c.team === oldFaction && c.id !== p.def.id);
+      const emCampo = new Set(this.bots.map(b => b.def?.id));
+      const doLadoVelho = CHARACTERS.filter(c => _doLado(oldFaction)(c) && c.id !== p.def.id);
+      const livres = doLadoVelho.filter(c => !emCampo.has(c.id));
+      const defs = livres.length ? livres : doLadoVelho;
       // prefere GLB já carregado no preload da partida; fora dele o bot cairia no procedural
       const carregados = defs.filter(c => hasModel(c.id));
       const pool = carregados.length ? carregados : defs;
@@ -3166,7 +3185,8 @@ export class Game {
       this.scene.remove(swapBot.mesh.group);
       // GLB clones share geometry with the cached template — never dispose it here.
       if (!swapBot.mesh.isGLB) swapBot.mesh.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
-      swapBot.mesh = buildCharacterModel(newDef) || buildCharacter(newDef);
+      const veste = this._defNoLado(newDef, oldTeam);
+      swapBot.mesh = buildCharacterModel(veste) || buildCharacter(veste);
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
@@ -4911,7 +4931,7 @@ export class Game {
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
   _teamName(side) { const f = this._factionOf(side); return f === 'U' ? 'TRIBOS URBANAS' : f === 'C' ? 'PALHAÇOS' : f === 'F' ? 'FUNKEIROS' : f === 'M' ? 'MÍTICO' : (TEAM_LABEL[f] || f); }
-  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'TME' : 'TMB'; }
+  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'ESQ' : 'DIR'; }
 
   /* Uma plaqueta do HUD. Chamada por QUADRO, então tudo aqui é comparação barata:
      o número só é escrito se mudou, e o brasão (data-f, arte no CSS) só quando a
@@ -4930,7 +4950,9 @@ export class Game {
     const sig = this.el['sigla' + slot], tag = this._teamTag(side);
     if (sig && sig.textContent !== tag) sig.textContent = tag;
   }
-  _mirror(side) { return side === this.enemyTeam && this.enemyFaction === this.playerFaction; }   // inimigo = mesma facção
+  _mirror(side) { return side === this.enemyTeam && this.enemyFaction === this.playerFaction; }
+  /* Rim e braçadeira saem de `def.team`; com pool misturado eles precisam da cor do LADO. */
+  _defNoLado(def, side) { const f = this._factionOf(side); return !def || def.team === f ? def : { ...def, team: f }; }   // inimigo = mesma facção
   // Separação (boids): empurra o bot pra longe de colegas do mesmo time num raio curto, pra eles
   // NÃO andarem colados em fila indiana sobre o mesmo path. Peso ~inverso à distância.
   _botSeparation(b, dt) {
@@ -5781,6 +5803,8 @@ export class Game {
   setCamView(mode) {
     if (!['first', 'third', 'shoulder'].includes(mode)) return false;
     this.camView = mode;
+    this._tpOrbitYaw = 0;
+    this._tpOrbitPitch = 0;
     this.settings.camView = mode;
     if (mode !== 'first') this._ensurePlayerTP();
     this._syncCamViewVis();
@@ -5801,8 +5825,8 @@ export class Game {
   // (Re)constrói o corpo TP com a arma ATUAL na mão, pelo mesmo caminho dos bots. Sem GLB
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
-    const w = this.player.weapon, def = this.playerDef;
-    const weaponChanged = this.playerTP && this._tpWeapon !== w;
+    const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
+    const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id);
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
     if (this.playerTP && !weaponChanged && !wantUpgrade) return;
     // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
@@ -5821,6 +5845,7 @@ export class Game {
     this.scene.add(tp.group);
     this.playerTP = tp;
     this._tpWeapon = w;
+    this._tpDefId = def.id;
   }
 
   // Anima o corpo TP a partir do estado do jogador e põe a câmera atrás dele.
@@ -5841,7 +5866,7 @@ export class Game {
     } else if (tp.mixer) {
       tp.mixer.update(dt);
     }
-    this._tpEul.set(p.pitch, p.yaw, 0, 'YXZ');
+    this._tpEul.set(Math.max(-1.45, Math.min(1.45, p.pitch + this._tpOrbitPitch)), p.yaw + this._tpOrbitYaw, 0, 'YXZ');
     const fwd = this._tpFwd.set(0, 0, -1).applyEuler(this._tpEul);
     const right = this._tpRight.set(1, 0, 0).applyEuler(this._tpEul);
     const cam = this.camera;
@@ -5850,30 +5875,39 @@ export class Game {
     const shoulder = this.camView === 'shoulder';
     const ads = p.scoped ? Math.min(1, (this._tpAdsF || 0) + dt / 0.11) : Math.max(0, (this._tpAdsF || 0) - dt / 0.11);
     this._tpAdsF = ads;
-    const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads;
+    const orbitBlend = Math.min(1, Math.abs(this._tpOrbitYaw) / 0.45);
+    const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend;
     const TP_UP = shoulder ? 0.10 : 0.18;
     const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
     cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
-    cam.position.y += TP_UP;
+    cam.position.y += TP_UP - 0.45 * orbitBlend;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
     if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
     // Cruz no alvo do raio autoritativo a distância de combate; o tiro continua
     // saindo do olho com yaw/pitch, igual ao servidor multiplayer.
     const aimPoint = this._tpAimPoint || (this._tpAimPoint = new THREE.Vector3());
-    cam.lookAt(aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12));
+    aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12 * (1 - orbitBlend));
+    aimPoint.y -= 0.7 * orbitBlend;
+    cam.lookAt(aimPoint);
   }
 
   // BUG-181: em câmera deslocada, a cruz projeta o primeiro impacto do raio do olho.
   _updateCrosshairParallax() {
     const el = this.el.crosshair;
     if (this.camView === 'first') {
+      el.style.visibility = 'visible';
       el.style.left = '50%'; el.style.top = '50%';
       return;
     }
     const dir = this._tpReticleDir || (this._tpReticleDir = new THREE.Vector3());
-    dir.set(0, 0, -1).applyEuler(this._tpEul);
+    this._tpAimEul.set(this.player.pitch, this.player.yaw, 0, 'YXZ');
+    dir.set(0, 0, -1).applyEuler(this._tpAimEul);
     const cameraDir = this._tpReticleCameraDir || (this._tpReticleCameraDir = new THREE.Vector3());
     cameraDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    if (dir.dot(cameraDir) <= 0) {
+      el.style.visibility = 'hidden';
+      return;
+    }
     const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.playerTeam).map(b => b.mesh.group);
     // A profundidade vista pela câmera evita cruz falsa atrás da cobertura.
     this.ray.set(this.camera.position, cameraDir);
@@ -5894,10 +5928,11 @@ export class Game {
     // matrixWorldInverse por conta própria. Sem isso a cruz usa o quadro anterior.
     this.camera.updateMatrixWorld(true);
     point.project(this.camera);
-    if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || point.z < -1 || point.z > 1) {
-      el.style.left = '50%'; el.style.top = '50%';
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || point.z < -1 || point.z > 1 || Math.abs(point.x) > 1 || Math.abs(point.y) > 1) {
+      el.style.visibility = 'hidden';
       return;
     }
+    el.style.visibility = 'visible';
     el.style.left = `${((point.x + 1) * 50).toFixed(3)}%`;
     el.style.top = `${((1 - point.y) * 50).toFixed(3)}%`;
   }
@@ -6832,6 +6867,24 @@ export class Game {
     this.scene.add(halo);
     bot._mark = { halo, ally };   // SEM chevron/seta na cabeça (pedido do dono) — só o halo no chão
   }
+  /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
+     então def, nome e malha ficam iguais nos dois lados do fio. */
+  _trocarPersonagem(c, def) {
+    if (!c || !def || c.def?.id === def.id) return false;
+    if (c === this.player) {
+      this.playerDef = def; this.playerCharId = def.id; c.def = def;
+      const perfil = { id: def.id, faction: this.playerFaction, skin: def.pal?.skin, sleeve: def.pal?.shirt, accent: def.pal?.pants };
+      this.vm?.authored?.setProfile(perfil);
+      this.vm?.melee?.setProfile(perfil);
+      return true;
+    }
+    if (c.name === c.def?.name) c.name = def.name;
+    else if (c.name === `[BOT] ${c.def?.name}`) c.name = `[BOT] ${def.name}`;
+    c.def = def;
+    c._meshWeapon = null;
+    if (c.mesh) this._syncRemoteWeapon(c, c.weapon);
+    return true;
+  }
   /* A arma de 3ª pessoa pertence à malha do personagem; remonte-a quando o snapshot trocar
      a arma, preservando transform/visibilidade/raycast e o fallback procedural visível. */
   _syncRemoteWeapon(bot, weapon) {
@@ -6839,7 +6892,8 @@ export class Game {
     bot.weapon = weapon;
     if (bot._meshWeapon === weapon) return false;
     const old = bot.mesh, oldGroup = old?.group;
-    const next = buildCharacterModel(bot.def, { weaponId: weapon }) || buildCharacter(bot.def);
+    const veste = this._defNoLado(bot.def, bot.team);
+    const next = buildCharacterModel(veste, { weaponId: weapon }) || buildCharacter(veste);
     if (!next?.group) return false;
     if (oldGroup) {
       next.group.position.copy(oldGroup.position);
@@ -7520,6 +7574,22 @@ export class Game {
         }
         if (!pocket) {
           b.path = this._findPathLocal(W, from, b.roamIdx, b._banNodes); b.pathIdx = 1;
+          // Bans 286/334/236 isolavam [287,262,312]; [287] fazia o bot orbitar.
+          // Reabra só uma saída agora caminhável, mantendo os demais bans.
+          if (!this.__mutBotExit && b.path.length <= 1 && from !== b.roamIdx && b._banNodes?.size) {
+            const exits = (W.waypoints.adj[from] || []).filter((i) => b._banNodes.has(i))
+              .sort((a, c) => Math.hypot(W.waypoints.nodes[a].x - W.waypoints.nodes[b.roamIdx].x,
+                W.waypoints.nodes[a].z - W.waypoints.nodes[b.roamIdx].z)
+                - Math.hypot(W.waypoints.nodes[c].x - W.waypoints.nodes[b.roamIdx].x,
+                  W.waypoints.nodes[c].z - W.waypoints.nodes[b.roamIdx].z));
+            for (const i of exits) {
+              if (!this._walkReach(b, W.waypoints.nodes[i], 0.8)) continue;
+              b._banNodes.delete(i);
+              const recovered = this._findPathLocal(W, from, b.roamIdx, b._banNodes);
+              if (recovered.length > 1) { b.path = recovered; break; }
+              b._banNodes.add(i);
+            }
+          }
           if (BOT_MOVE2) b.path = this._pullString(b, b.path);
           // Alvo INALCANÇÁVEL (findPath devolve [from] — ilhas do grafo desconexo, ex.: as
           // ilhotas do piscinão): antes o bot "seguia" o próprio nó mais próximo e ficava

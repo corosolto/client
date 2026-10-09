@@ -54,6 +54,19 @@
    "walk1h",
    "walkfire"
   ],
+  "barbudo": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "blackmetal": [
    "idle",
    "walk",
@@ -171,6 +184,19 @@
    "walk1h",
    "walkfire"
   ],
+  "capitao": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "chave": [
    "idle",
    "walk",
@@ -224,6 +250,32 @@
    "walkfire"
   ],
   "curupira": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "dama": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "deputado": [
    "idle",
    "walk",
    "run",
@@ -431,6 +483,32 @@
    "walk1h",
    "walkfire"
   ],
+  "juiz": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "julia-zanatta": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "lampiao": [
    "idle",
    "walk",
@@ -496,6 +574,19 @@
    "walk1h",
    "walkfire"
   ],
+  "marina-silva": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "metaleiro": [
    "idle",
    "walk",
@@ -510,6 +601,19 @@
    "walkfire"
   ],
   "microfonildo": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "ministro": [
    "idle",
    "walk",
    "run",
@@ -665,6 +769,19 @@
    "walk1h",
    "walkfire"
   ],
+  "professor": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "profeta-calcada": [
    "idle",
    "walk",
@@ -744,6 +861,19 @@
    "walkfire"
   ],
   "saci": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "senador": [
    "idle",
    "walk",
    "run",

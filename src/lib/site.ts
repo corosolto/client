@@ -23,17 +23,15 @@ export const BRAND = 'CORO SOLTO';
 export const BRAND_FULL = 'CORO SOLTO: Treta Suprema';
 export const BRAND_ALT = 'CS BRASIL';
 
-// "40+ personagens" virou "44": o número exato existe e sai de src/data/jogo.ts
-// (PERSONAGENS.length), que é o mesmo que as páginas, o llms.txt e o JSON-LD
-// usam. Aproximação numa descrição que o buscador cita é ruído gratuito - e
-// aqui ela era a ÚNICA fonte que não dizia 44.
+// Descrições genéricas aqui evitam copiar a contagem editorial de src/data/jogo.ts:
+// o elenco e os mapas jogáveis mudam antes de aquela vitrine ser revalidada.
 export const DESC_SHORT =
   'FPS gratuito de navegador estilo CS 1.6: arena de sniper satírica numa Brasília fictícia, ' +
-  'com cinco facções e 44 personagens originais.';
+  'com Esquerda, Direita e outras facções originais.';
 
 export const DESC_LONG =
   'Jogo FPS gratuito de navegador: arena de sniper estilo praca_poderes do CS 1.6 numa Brasília ' +
-  'fictícia e satírica. Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros, ' +
+  'fictícia e satírica. Esquerda, Direita, Tribos Urbanas, Palhaços, Funkeiros e Mítico, ' +
   `${MAPAS.length} mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Beta web com controles de toque no celular; sem cadastro.`;
 
 // @id estável do nó VideoGame. É o que evita que o mesmo jogo apareça como

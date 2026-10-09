@@ -1,0 +1,28 @@
+{
+  "character": "julia-zanatta",
+  "team": "B",
+  "viewport": "1200x800",
+  "map": "brasilia",
+  "modelLoaded": true,
+  "modelSha256": "89e9ce4ad3244fc337ab939a09565caff4e14c5006b96cb0b80619e65cf3bd8a",
+  "mint": {
+    "assetId": "ks79rnb2jen887aj5kpetenfsd8frx5x",
+    "animationBatchId": "w572j3r60r3m81ff1f8ayt798d8fr70z",
+    "animationClipsSucceeded": 6,
+    "chatUrl": "https://mint.gg/chat/ph71f31x52n1g800azcsngcybh8fsfa8"
+  },
+  "gameplay": {
+    "movedMeters": 1.8519,
+    "shots": 1,
+    "shotAimDot": 0.999908,
+    "cameraForwardDotShot": -0.954349,
+    "pageErrors": 0
+  },
+  "captures": {
+    "gameFront": "game-front-v2.png",
+    "gameSide": "game-side-v2.png",
+    "charvideoFront": "charvideo-front-v2.png",
+    "charvideoSide": "charvideo-side-v2.png",
+    "selectionContactSheet": "selection-contact-sheet-v2.png"
+  }
+}

@@ -34,8 +34,8 @@ const formaChat = (m) => Number.isInteger(m.id) && typeof m.txt === 'string' && 
 // `espera` fora de número finito e positivo vira '(NaN s)' no aviso: cai antes do painel
 const nackLimpo = (m) => (Number.isFinite(m.espera) && m.espera > 0 ? m : { type: m.type, cid: m.cid, motivo: m.motivo });
 
-export const resolvePlayerSide = (team, faction, online) =>
-  online ? (team === 'B' ? 'B' : 'E') : (faction === 'B' ? 'B' : 'E');
+// Online o lado vem do servidor; offline, da aba escolhida. A facção nunca decide o lado.
+export const resolvePlayerSide = (team) => (team === 'B' ? 'B' : 'E');
 
 export async function transitionSlot(m, meta, current, validChar, remount) {
   const next = { ...current, spectator: !!m.espectador };
@@ -141,10 +141,12 @@ export class NetClient {
     this.prev = null;
     this.seq = 0;
     this.onWelcome = null; this.onSnapshot = null; this.onSlot = null; this.onPartida = null; this.onClose = null;
+    this.onPersonagem = null;
     this.onChat = null; this._chatFila = [];
     // ── diagnóstico de rede (overlay do jogo) ──
     this.stats = { hz: 0, kbps: 0, gapMax: 0, sinceLast: 0, ents: 0, tick: 0, ping: 0, snaps: 0, bytes: 0 };
     this._snapT = []; this._byteT = []; this._lastSnapT = 0;
+    this._rttSamples = []; this._gapSamples = [];
     this._pingTimer = null;
   }
 
@@ -168,6 +170,8 @@ export class NetClient {
     this._pingTimer = setInterval(bate, intervalMs);
   }
   stopPing() { if (this._pingTimer) { clearInterval(this._pingTimer); this._pingTimer = null; } }
+  drainRttSamples() { return this._rttSamples.splice(0); }
+  drainGapSamples() { return this._gapSamples.splice(0); }
 
   /* NEGOCIAÇÃO DE TRANSPORTE. WebSocket continua o PADRÃO: o datagrama só vira padrão
      depois que o canário provar, e até lá quem pede é `?wt=`. Prazo curto e queda em
@@ -222,7 +226,12 @@ export class NetClient {
         } else if (m.type === 'error') {
           assenta(reject, new Error(m.error || 'erro'));
         } else if (m.type === 'pong') {
-          this.stats.ping = performance.now() - m.t;
+          const rtt = performance.now() - m.t;
+          if (Number.isFinite(rtt) && rtt >= 0 && rtt <= 60000) {
+            this.stats.ping = rtt;
+            this._rttSamples.push(+rtt.toFixed(1));
+            if (this._rttSamples.length > 32) this._rttSamples.shift();
+          }
         } else if (m.type === 'partida') {
           // o servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot (BUG-112)
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
@@ -233,6 +242,13 @@ export class NetClient {
           // entrou em campo / virou espectador (o servidor confirma; a UI nunca decide sozinha)
           this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.onSlot?.(m);
+        } else if (m.type === 'personagem') {
+          // um corpo trocou de personagem: o roster da partida acompanha, o netgame remonta a malha
+          if (Number.isInteger(m.ent) && typeof m.char === 'string') {
+            const r = (this.meta?.roster || []).find((x) => x.id === m.ent);
+            if (r) r.char = m.char;
+            this.onPersonagem?.(m);
+          }
         } else if (m.type === 'ev') {
           // eventos do servidor (acerto/abate com autor): texto, drenados pelo netgame no tick deles
           if (Array.isArray(m.list) && Number.isInteger(m.tick)) {
@@ -244,7 +260,12 @@ export class NetClient {
           this.prev = this.snap; this.snap = m;
           const now = performance.now();
           this.stats.tick = m.tick | 0; this.stats.ents = (m.ents && m.ents.length) || 0;
-          if (this._lastSnapT) { const gap = now - this._lastSnapT; this.stats.gapMax = Math.max(gap, this.stats.gapMax * 0.92); }
+          if (this._lastSnapT) {
+            const gap = now - this._lastSnapT;
+            this.stats.gapMax = Math.max(gap, this.stats.gapMax * 0.92);
+            this._gapSamples.push(+gap.toFixed(1));
+            if (this._gapSamples.length > 512) this._gapSamples.shift();
+          }
           this._lastSnapT = now;
           this._snapT.push(now); this._byteT.push({ t: now, b: bytes });
           this.stats.snaps++; this.stats.bytes += bytes;
@@ -278,6 +299,9 @@ export class NetClient {
   }
   // pedir vaga num time ('E' | 'B' | 'auto'); o servidor responde com `slot`.
   pedirTime(team = 'auto') { this.tp?.enviar(JSON.stringify({ type: 'time', team })); }
+  /* Só servidor que anuncia o recurso troca o corpo; servidor antigo ignora tipo desconhecido. */
+  aceitaPersonagem() { return Array.isArray(this.meta?.recursos) && this.meta.recursos.includes('personagem'); }
+  pedirPersonagem(id) { if (typeof id === 'string') this.tp?.enviar(JSON.stringify({ type: 'personagem', id })); }
   // sair de campo e assistir: o corpo volta a ser bot e a partida segue cheia.
   espectar() { this.tp?.enviar(JSON.stringify({ type: 'espectar' })); }
 

@@ -179,7 +179,9 @@ for (const state of STATES) {
          srcRest ≈ tgtRest e delta ≡ absoluto — mudança é no-op neles (conferido na razão
          mão/cabeça: todos ≥ 0,83). Perna/coluna seguem no delta, que é o que consertou
          "doutora agachada" e "dollynho dobrado". */
-      const desiredW = /Shoulder|Arm|Hand/.test(tg.name)
+      /* Clavícula fica no delta: nos rigs Mint de 10/2026 o repouso dela difere do pack e a
+         rotação absoluta torcia a gola num "cachecol" (PR #773). Onde o repouso bate, é no-op. */
+      const desiredW = /Arm|Hand/.test(tg.name)
         ? srcW.clone()
         : srcW.clone().multiply(srcRestW.get(tg.name).clone().invert()).multiply(restWorldQ(tg));
       const parentW = tg.parent && parentComputed.has(tg.parent.name) ? parentComputed.get(tg.parent.name) : (tg.parent ? restWorldQ(tg.parent) : new THREE.Quaternion());

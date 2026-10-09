@@ -1,5 +1,5 @@
 {
-  "gerado": "2026-09-09T19:30:02.416Z",
+  "gerado": "2026-10-07T05:42:03.349Z",
   "instrumento": "buildCharacterModel + skinning em node, 60 Hz, quadro 200-260, 1 vértice em 3",
   "bandaIdle": 0.015,
   "folga": 0.01,
@@ -237,7 +237,7 @@
     "lampiao": {
       "idle": 0,
       "crouch": 0.0004,
-      "death": -0.0569
+      "death": -0.0565
     },
     "bandeirante": {
       "idle": 0,
@@ -268,6 +268,56 @@
       "idle": 0,
       "crouch": 0,
       "death": -0.0706
+    },
+    "julia-zanatta": {
+      "idle": 0.0086,
+      "crouch": 0.0012,
+      "death": 0
+    },
+    "marina-silva": {
+      "idle": 0.0024,
+      "crouch": 0.0042,
+      "death": 0.0023
+    },
+    "barbudo": {
+      "idle": -0.0012,
+      "crouch": -0.0058,
+      "death": 0
+    },
+    "capitao": {
+      "idle": -0.0006,
+      "crouch": 0.0013,
+      "death": 0.0012
+    },
+    "dama": {
+      "idle": 0.0059,
+      "crouch": -0.0001,
+      "death": 0
+    },
+    "professor": {
+      "idle": -0.0006,
+      "crouch": -0.005,
+      "death": 0
+    },
+    "senador": {
+      "idle": -0.0009,
+      "crouch": -0.0005,
+      "death": 0
+    },
+    "ministro": {
+      "idle": -0.0017,
+      "crouch": -0.0012,
+      "death": 0.0044
+    },
+    "deputado": {
+      "idle": -0.0008,
+      "crouch": -0.005,
+      "death": 0
+    },
+    "juiz": {
+      "idle": -0.0015,
+      "crouch": -0.0002,
+      "death": 0
     }
   }
 }

@@ -1,0 +1,32 @@
+{
+  "character": "marina-silva",
+  "team": "E",
+  "viewport": "1200x800",
+  "modelLoaded": true,
+  "modelSha256": "4fb8291b344198442842988ee94bedff9635e18fc1a67443ddb8af69dd895933",
+  "mint": {
+    "assetId": "ks7fq3mpng2qyf5rv3grjm5pz58fsf69",
+    "animationBatchId": "w572zg7xxa1yhj0r61tdpf5f6d8frecq",
+    "animationClipsSucceeded": 6,
+    "chatUrl": "https://mint.gg/chat/ph791v8kv8bh0zr8gb3qsmvnzn8frw66"
+  },
+  "gameplay": {
+    "moveAndShotPassed": true,
+    "shotAimDot": 0.999951,
+    "cameraForwardDotShot": -0.95448
+  },
+  "visualReview": {
+    "modestTealMidiDress": true,
+    "shortSleeves": true,
+    "belowKneeHem": true,
+    "bunAndBurgundyGlassesPreserved": true,
+    "weaponPoseReviewPending": true
+  },
+  "captures": {
+    "gameFront": "game-front.png",
+    "gameSide": "game-side.png",
+    "charvideoFront": "charvideo-front.png",
+    "charvideoSide": "charvideo-side.png",
+    "selectionContactSheet": "selection-contact-sheet.png"
+  }
+}

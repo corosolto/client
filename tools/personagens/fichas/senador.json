@@ -1,0 +1,20 @@
+{
+  "id": "senador",
+  "nome": "Zero Um",
+  "lado": "B",
+  "genero": "m",
+  "refs": [
+    "03-retrato-2026.jpg",
+    "01-plenario-corpo-2026.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian senator shown in the photos, recognizable at a glance: wide square face and jaw, short dark hair with a small quiff, campaign smile, dark eyebrows.",
+  "roupa": "sky-blue suit, white shirt, navy tie, small lapel pin, dark shoes.",
+  "corpo": "about 1.80 m, average-to-solid build, rounded broad shoulders, short thick neck. The width is in the face and jaw, not the body.",
+  "naoExagerar": "weight; he reads as solid, not fat",
+  "alvo": {
+    "cabeca": 0.21,
+    "ombros": 0.225,
+    "perna": 0.45
+  },
+  "concept": "tools/eval/asset-evidence/pr773/concepts/senador/concept.jpg"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "barbudo",
+  "nome": "Barbudo do Planalto",
+  "lado": "E",
+  "genero": "m",
+  "refs": [
+    "02-lula-tres-quartos-sorocaba-2025-03.jpg",
+    "03-lula-corpo-inteiro-palco-2026-09.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian president shown in the photos, recognizable at a glance: short neat white beard, white hair, warm broad smile, bushy eyebrows, round nose.",
+  "roupa": "navy suit, white shirt, burgundy tie, green-and-yellow presidential sash across the chest, dark shoes.",
+  "corpo": "about 1.68 m, stocky, barrel chest, short thick neck, head slightly large, shorter legs.",
+  "naoExagerar": "his left hand (keep five normal fingers) or his short stature",
+  "alvo": {
+    "cabeca": 0.23,
+    "ombros": 0.235,
+    "perna": 0.39
+  },
+  "concept": "tools/eval/asset-evidence/pr773/concepts/barbudo/concept.jpg"
+}

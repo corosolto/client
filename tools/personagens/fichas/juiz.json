@@ -1,0 +1,20 @@
+{
+  "id": "juiz",
+  "nome": "Juiz do Conje",
+  "lado": "B",
+  "genero": "m",
+  "refs": [
+    "03-retrato-oficial-3x4.jpg",
+    "01-corpo-inteiro-plenario-2024.jpg"
+  ],
+  "identidade": "a gentle satirical caricature of the Brazilian senator and former judge shown in the photos, recognizable at a glance: square wide face, low short eyebrows, thin lips, short textured dark hair, serious expression.",
+  "roupa": "dark navy suit, white shirt, dark tie, dark shoes.",
+  "corpo": "about 1.76 m, stocky: broad chest, short thick neck, long torso; a square block of head, neck and shoulders, the widest shoulders of his team.",
+  "naoExagerar": "do not make him short",
+  "alvo": {
+    "cabeca": 0.21,
+    "ombros": 0.235,
+    "perna": 0.44
+  },
+  "concept": "tools/eval/asset-evidence/pr773/concepts/juiz/concept.jpg"
+}

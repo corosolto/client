@@ -19,6 +19,7 @@
      --mutante=fixo         crava teamSize: 5 (o defeito original, disfarçado de opção)
      --mutante=sem-x1       remove a opção value="1" do seletor
      --mutante=p incentivada  muda o selected para 1 (muda o padrão sem decisão do dono)
+     --mutante=faccoes-antigas  restaura escolhas que o servidor ignora
 
    USO: npm run eval:mpRoomOptions
         node tools/eval/mp-room-options-check.mjs --mutante=sem-campo
@@ -29,7 +30,7 @@ import { join } from 'node:path';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (MUT && !['sem-campo', 'fixo', 'sem-x1', 'padrao-1'].includes(MUT)) {
+if (MUT && !['sem-campo', 'fixo', 'sem-x1', 'padrao-1', 'faccoes-antigas'].includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}`); process.exit(2);
 }
 
@@ -38,6 +39,10 @@ let main = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
 
 if (MUT === 'sem-x1') astro = astro.replace(/<option value="1">[^<]*<\/option>\n/, '');
 if (MUT === 'padrao-1') astro = astro.replace('value="5" selected', 'value="1" selected');
+if (MUT === 'faccoes-antigas') {
+  astro = astro.replace('<label>MODO', '<label>ESQUERDA <select id="mp-fac-e"></select></label><label>MODO');
+  main = main.replace("name: 'TRETA RÁPIDA', rotacao: 'todos',", "name: 'TRETA RÁPIDA', rotacao: 'todos', faccaoE: 'random',");
+}
 
 const falhas = [];
 const cobra = (ok, msg) => { if (!ok) falhas.push(msg); };
@@ -67,9 +72,15 @@ cobra(/createRoom\(/.test(main) && /teamSize:\s*\+mpEl\('mp-teamsize'\)\.value/.
 const quick = main.slice(main.indexOf("mp-quick'"), main.indexOf("mp-quick'") + 2200);
 cobra(!/teamSize/.test(quick), 'MRO5 · o JOGO RÁPIDO segue sem teamSize (padrão do servidor)');
 
+/* 6 · o servidor fixa E×B e ignora facção pedida; a UI não promete opção falsa. */
+cobra(/Toda sala é ESQUERDA × DIREITA\. Escolha o lado ao entrar\./.test(formCriar)
+    && !/id="mp-fac-[eb]"/.test(formCriar)
+    && !/\b(?:faccaoE|faccaoB):/.test(main),
+  'MRO6 · criar sala e Jogo Rápido não pedem facções que o servidor ignora');
+
 if (falhas.length) {
   console.error(`✗ MP-ROOM-OPTIONS — ${falhas.length} cláusula(s):`);
   for (const f of falhas) console.error('  ✗ ' + f);
   process.exit(1);
 }
-console.log('✓ MP-ROOM-OPTIONS: seletor de tamanho de time no criar-sala, X1 legível, padrão 5, cfg com teamSize, quick sem teamSize');
+console.log('✓ MP-ROOM-OPTIONS: tamanho de time configurável, lados fixos E×B sem escolha ignorada pelo servidor');

@@ -262,6 +262,20 @@ const ARTE_OFICIAL = {
   chave: { arquivo: 'public/img/wall-9.webp', caixa: { left: 820, top: 100, width: 300, height: 420 } },
 };
 
+/* Personagem da fábrica (`tools/personagens/fichas/<id>.json`) com `concept`: o concept
+   2D vira a arte oficial. Sem ele o modelo genericiza o rosto de caricatura de pessoa
+   real (medido na Dama em 07/10: retrato bonito, mas outra pessoa). */
+for (const id of IDS) {
+  const ficha = `tools/personagens/fichas/${id}.json`;
+  if (ARTE_OFICIAL[id] || !existsSync(ficha)) continue;
+  const { concept } = JSON.parse(readFileSync(ficha, 'utf8'));
+  if (!concept || !existsSync(concept)) continue;
+  const { width, height } = await sharp(concept).metadata();
+  ARTE_OFICIAL[id] = { arquivo: concept, caixa: SHOT === 'corpo'
+    ? { left: 0, top: 0, width, height }
+    : { left: Math.round(width * 0.2), top: 0, width: Math.round(width * 0.6), height: Math.round(height * 0.42) } };
+}
+
 const ESTILO = arg('estilo', 'gamer');
 if (!PROMPTS[ESTILO]) die(`--estilo desconhecido: ${ESTILO} (use gamer ou foto)`);
 const PROMPT_BASE = PROMPTS[ESTILO];

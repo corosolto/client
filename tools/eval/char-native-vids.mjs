@@ -30,7 +30,8 @@ const weaponBlock = characters.match(/export const CHAR_WEAPON = \{([\s\S]*?)\n\
 if (!roster || !weaponBlock) throw new Error('Não foi possível ler CHARACTERS/CHAR_WEAPON');
 const ALL = [...roster[1].matchAll(/\{\s*id:\s*'([^']+)'/g)].map((m) => m[1]);
 const weaponById = Object.fromEntries(
-  [...weaponBlock[1].matchAll(/(\w+):\s*'([^']+)'/g)].map((m) => [m[1], m[2]]),
+  [...weaponBlock[1].matchAll(/(?:'([^']+)'|([\w-]+)):\s*'([^']+)'/g)]
+    .map((m) => [m[1] || m[2], m[3]]),
 );
 const lista = SO.length ? SO : ALL;
 const desconhecidos = lista.filter((id) => !ALL.includes(id));

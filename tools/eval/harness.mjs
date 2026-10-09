@@ -132,7 +132,7 @@ globalThis.Image = class { constructor() { this.onload = null; this.onerror = nu
 export const THREE = await import('three');
 export const { MAPS } = await import(`${JS}/maps.js`);
 export const { initTextures } = await import(`${JS}/textures.js`);
-export const { Game, confirmGate, CONFIRM_MIN_MS, CONFIRM_MAX_MS } = await import(`${JS}/game.js`);
+export const { Game, confirmGate, CONFIRM_MIN_MS, CONFIRM_MAX_MS, pickMatchRoster } = await import(`${JS}/game.js`);
 export const { CHARACTERS } = await import(`${JS}/characters.js`);
 export const PCHAR = (CHARACTERS.find(c => c.team === 'E') || CHARACTERS[0]).id;   // o scoreboard lê player.def.name
 export { mkEl };
