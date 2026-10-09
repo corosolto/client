@@ -25,7 +25,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { classifyCrash } from '../../../src/lib/error-provenance.mjs';
+import { classifyCrash, crashFingerprint } from '../../../src/lib/error-provenance.mjs';
 
 const ORIGEM = 'https://www.csbrasil.online';
 const raiz = (p) => fileURLToPath(new URL(`../../../${p}`, import.meta.url));
@@ -104,4 +104,52 @@ test('o watchdog do cliente consulta erroDeRede antes de derrubar o launch', () 
     /if \(lancamento\.ativo && interna && !erroIgnoravel\(r\) && !erroDeRede\(.+\)\) lancamento\.fail\(/,
     'a guarda de rede saiu do unhandledrejection — a queda de rede volta a virar "Falha ao abrir partida"',
   );
+});
+
+/* ── #798: EvalError DE CSP VINDO DE SCRIPT blob: INJETADO ───────────────────────────
+   O jogo não roda script blob: nem eval (script-src sem blob: e sem 'unsafe-eval'). O
+   source `blob:https://…` não casava /^https?:/ e a URL de dentro do blob dava origem
+   própria: virava `codigo`. Mutantes que esta régua pega: apagar a guarda; mover a guarda
+   para depois do bloco sourceOrigin; exigir só a mensagem (3); exigir só o blob: (4);
+   divergir a redação de um lado (7). */
+
+const EVAL_CSP_798 = "Uncaught EvalError: Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com\".";
+const BLOB_798 = 'blob:https://www.csbrasil.online/a5428b51-d0be-4e18-a6da-fd19c6f8ad38:2:1320381';
+
+test('#798 (1): o payload do teste é o da issue (fingerprint 1cda8537)', () => {
+  assert.equal(crashFingerprint('error', EVAL_CSP_798, BLOB_798), '1cda8537');
+});
+
+test('#798 (2): EvalError de CSP com source blob: é externo', () => {
+  assert.equal(classifyCrash({ message: EVAL_CSP_798, source: BLOB_798 }, ORIGEM), 'externo');
+});
+
+test('#798 (3): o mesmo EvalError vindo de /js/*.js é eval nosso e segue codigo', () => {
+  assert.equal(classifyCrash({ message: EVAL_CSP_798, source: 'https://www.csbrasil.online/js/main.js:10:5' }, ORIGEM), 'codigo');
+});
+
+test('#798 (4): outro erro com source blob: segue codigo', () => {
+  assert.equal(classifyCrash({ message: 'TypeError: x is not a function', source: BLOB_798 }, ORIGEM), 'codigo');
+});
+
+test('#798 (5): textura blob: do GLTFLoader segue recuperavel', () => {
+  assert.equal(classifyCrash({
+    message: "THREE.GLTFLoader: Couldn't load texture blob:https://www.csbrasil.online/0b6f6c3e-1d2a-4c55-9f0e-2a7d1c9b8e11",
+    source: '',
+    stack: '',
+  }, ORIGEM), 'recuperavel');
+});
+
+test('#798 (6): o EvalError sem source nem stack segue codigo', () => {
+  assert.equal(classifyCrash({ message: EVAL_CSP_798, source: '', stack: '' }, ORIGEM), 'codigo');
+});
+
+test('#798 (7): a EVAL_CSP_RE do servidor e a evalCsp do cliente têm a MESMA redação', () => {
+  const servidor = readFileSync(raiz('src/lib/error-provenance.mjs'), 'utf8');
+  const cliente = readFileSync(raiz('src/pages/index.astro'), 'utf8');
+  const literal = /\/\\bEvalError\\b\.\*'unsafe-eval' is not an allowed source of script\//;
+  const guarda = /\/\^blob:\/i\.test\(sourceText\) && evalCsp\.test\(String\(mensagem \|\| ''\)\)\) return false;/;
+  assert.match(servidor, literal, 'EVAL_CSP_RE sumiu ou mudou em src/lib/error-provenance.mjs');
+  assert.match(cliente, literal, 'evalCsp sumiu ou divergiu em src/pages/index.astro');
+  assert.match(cliente, guarda, 'a guarda blob: do espelho sumiu em src/pages/index.astro');
 });
