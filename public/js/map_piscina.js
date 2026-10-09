@@ -29,9 +29,15 @@ import * as THREE from 'three';
 import { decalIds, paredeAtras } from './map_decals.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
+import { createWater } from './water.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { aplicaSombraSol } from './mapquality.js';
+import { hasProp, placeProp } from './mapprops.js';
+
+/* Mobiliário Mint (procedência em public/models/props/FONTE.md). Sem o GLB (node, falha de
+   rede ou ?piscinaProps=0) as caixas de sempre continuam; o colisor nunca muda. */
+export const PISCINA_PROPS = ['piscina_armarios', 'piscina_banco', 'piscina_espreguicadeira', 'piscina_escada'];
 
 const HALF_X = 17, HALF_Z = 25;   // interior half-extents (walls sit just outside)
 const WALL_H = 7, CEIL = 7;
@@ -159,23 +165,6 @@ function utilityTex(base, seam, accent) {
   }
   return mkTex(c, 1.25, 1.25);
 }
-function waterTex() {
-  const c = document.createElement('canvas'); c.width = c.height = 256;
-  const x = c.getContext('2d');
-  const g = x.createLinearGradient(0, 0, 256, 256);
-  g.addColorStop(0, '#177fba'); g.addColorStop(0.48, '#39d0e2'); g.addColorStop(1, '#0b6fa8');
-  x.fillStyle = g; x.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 18; i++) {
-    x.strokeStyle = `rgba(220,252,255,${0.08 + (i % 4) * 0.035})`; x.lineWidth = 2 + i % 2;
-    x.beginPath();
-    for (let px = -20; px <= 276; px += 8) {
-      const py = 10 + i * 14 + Math.sin((px + i * 17) * 0.055) * 5;
-      if (px === -20) x.moveTo(px, py); else x.lineTo(px, py);
-    }
-    x.stroke();
-  }
-  return mkTex(c, 4, 6);
-}
 function signTexture(bg, fg, title, sub) {
   const c = document.createElement('canvas'); c.width = 512; c.height = 128;
   const x = c.getContext('2d');
@@ -299,6 +288,25 @@ export function buildPoolDay(scene, T) {
     ceil: lam({ map: tileTex('#e4ebef', '#c6cfd6', 4, 10, 6) }),
   };
 
+  let propsOn = true;
+  try { propsOn = new URLSearchParams(location.search).get('piscinaProps') !== '0'; } catch { /* node */ }
+  const temProp = (id) => propsOn && hasProp(id);
+  // Caixa que só colide e para bala: o GLB por cima é a imagem, ela é o contrato físico.
+  const OCULTO = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+  // GLB esticado na caixa w×h×d (largura X, frente +Z). Sombra só na escada: em tudo
+  // custava +150 mil tris e estourava PIS5 (números no commit).
+  function encaixa(id, x, y, z, w, h, d, ry = 0) {
+    const o = placeProp(id, { x: 0, y: 0, z: 0, targetH: h });
+    if (!o) return null;
+    if (id !== 'piscina_escada') o.traverse((m) => { if (m.isMesh) m.castShadow = false; });
+    const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
+    o.scale.multiply(new THREE.Vector3(w / (size.x || 1), 1, d / (size.z || 1)));
+    o.position.x = x; o.position.y += y; o.position.z = z; o.rotation.y = ry;
+    o.name = `piscina:${id}`;
+    root.add(o);
+    return o;
+  }
+
   /* ENTORNO DO CLUBE — cenário puro, 18 cm abaixo do salão. Antes as paredes externas
      terminavam diretamente no céu e o mapa aéreo lia como uma caixa branca flutuante.
      Estes dois planos não têm collider nem waypoint; servem apenas de chão para o horizonte. */
@@ -378,11 +386,12 @@ export function buildPoolDay(scene, T) {
     addBox(POOL.hx * 2, 0.1, L, MAT.pool, POOL.cx, -POOL.depth / 2, POOL.cz - POOL.hz - POOL.m / 2, { collide: false, rx: ang, cast: false });
     addBox(L, 0.1, POOL.hz * 2, MAT.pool, POOL.cx + POOL.hx + POOL.m / 2, -POOL.depth / 2, POOL.cz, { collide: false, rz: ang, cast: false });
     addBox(L, 0.1, POOL.hz * 2, MAT.pool, POOL.cx - POOL.hx - POOL.m / 2, -POOL.depth / 2, POOL.cz, { collide: false, rz: -ang, cast: false });
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(OUTX * 2 - 0.3, OUTZ * 2 - 0.3),
-      new THREE.MeshLambertMaterial({ map: waterTex(), color: 0xd7fbff, transparent: true,
-        opacity: 0.76 }));
-    water.rotation.x = -Math.PI / 2; water.position.set(POOL.cx, -0.4, POOL.cz);
-    water.userData.nonSolidSurface = true; root.add(water);
+    const agua = createWater(scene, T, 'piscina_treta', { nivel: -0.4, centro: [POOL.cx, POOL.cz],
+      tamanho: [OUTX * 2 - 0.3, OUTZ * 2 - 0.3], segmentos: 8, raso: 0x5ad8ea, fundo: 0x168fc4,
+      profEscala: 3.5, espumaFaixa: 0.04, espumaMiolo: 0.01, profFallback: 0.6, ampEscala: 0.05, parent: root });
+    agua.mesh.userData.nonSolidSurface = true;
+    agua.material.uniforms.uCeuCor.value.set(0xdff3fb);   // salão coberto: reflete forro/claraboia, não o horizonte do LOOK
+    agua.material.side = THREE.DoubleSide;   // piscina é entrável: de dentro o fundo lê a película
     // navy tile border
     addBox(OUTX * 2 + 0.7, 0.16, 0.5, MAT.navy, POOL.cx, 0, nZ + 0.15, { collide: false });
     addBox(OUTX * 2 + 0.7, 0.16, 0.5, MAT.navy, POOL.cx, 0, sZ - 0.15, { collide: false });
@@ -410,6 +419,7 @@ export function buildPoolDay(scene, T) {
       // z = sx*3: as duas escadas ficam simétricas pela ROTAÇÃO DE 180° em torno do centro,
       // que é a simetria real do mapa (TIME E em -z, BOL em +z). Antes as duas estavam em z=+3,
       // ou seja, o lado do BOL tinha as duas saídas da piscina mais perto.
+      if (temProp('piscina_escada')) { encaixa('piscina_escada', lx, -0.55, POOL.cz + sx * 3, 0.55, 1.34, 0.62, -sx * Math.PI / 2); continue; }
       for (let i = 0; i < 4; i++) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.7, 8), MAT.white); r.rotation.z = Math.PI / 2; r.position.set(lx, -0.15 - i * 0.28, POOL.cz + sx * 3); root.add(r); }
       for (const dz of [-0.35, 0.35]) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.4, 8), MAT.white); r.position.set(lx, -0.05, POOL.cz + sx * 3 + dz); root.add(r); }
     }
@@ -789,7 +799,20 @@ export function buildPoolDay(scene, T) {
   }
 
   /* ---------------- lockers: cover on the decks ---------------- */
-  function lockerBank(x, z, n, along, ry = 0) {
+  function lockerBank(x, z, n, along, ry = 0, frente = 0) {
+    if (temProp('piscina_armarios')) {
+      const L = n * 1.35 - 0.05, modulos = Math.ceil(L / 2.7 - 0.01), w = L / modulos;
+      for (let i = 0; i < n; i++) {
+        const bx = x + (along === 'x' ? (i - (n - 1) / 2) * 1.35 : 0);
+        const bz = z + (along === 'z' ? (i - (n - 1) / 2) * 1.35 : 0);
+        addBox(along === 'x' ? 1.3 : 0.7, 2.1, along === 'z' ? 1.3 : 0.7, OCULTO, bx, 0, bz, { ry, pad: -0.02, cast: false });
+      }
+      for (let k = 0; k < modulos; k++) {
+        const off = (k - (modulos - 1) / 2) * w;
+        encaixa('piscina_armarios', x + (along === 'x' ? off : 0), 0, z + (along === 'z' ? off : 0), w, 2.1, 0.7, frente);
+      }
+      return;
+    }
     for (let i = 0; i < n; i++) {
       const bx = x + (along === 'x' ? (i - (n - 1) / 2) * 1.35 : 0);
       const bz = z + (along === 'z' ? (i - (n - 1) / 2) * 1.35 : 0);
@@ -864,13 +887,18 @@ export function buildPoolDay(scene, T) {
   /* --- ARQUITETURA FY_POOL_DAY: proteção presa ao edifício ---------------------------
      O salão central fica limpo. Os pontos de cobertura são retornos de parede, armários
      e bancos encostados; nenhuma ilha solta decide o fluxo e nada nasce dentro da água. */
+  /* Banco de vestiário: wx×wz é a caixa no mundo; o comprimento do GLB vira o lado maior. */
+  function banco(x, z, wx, wz, frente) {
+    if (!temProp('piscina_banco')) return addBox(wx, 0.58, wz, MAT.chair, x, 0, z);
+    addBox(wx, 0.58, wz, OCULTO, x, 0, z, { cast: false });
+    return encaixa('piscina_banco', x, 0, z, Math.max(wx, wz), 0.58, Math.min(wx, wz), frente);
+  }
   for (const corridor of SIDE_CORRIDORS) {
     const side = corridor.axisX < 0 ? -1 : 1;
     const lockerX = side * 20.6;
-    for (const z of [-7.2, 0, 7.2]) lockerBank(lockerX, z, 4, 'z');
+    for (const z of [-7.2, 0, 7.2]) lockerBank(lockerX, z, 4, 'z', 0, -side * Math.PI / 2);
     // Bancos baixos na parede externa entre os armários: cover de crouch, sem zigue-zague.
-    for (const z of [-11.8, 11.8])
-      addBox(0.65, 0.58, 2.2, MAT.chair, side * 20.35, 0, z);
+    for (const z of [-11.8, 11.8]) banco(side * 20.35, z, 0.65, 2.2, -side * Math.PI / 2);
     addPlane(3.0, 1.0,
       signTexture('#263f52', '#f2c84b', side < 0 ? 'CORREDOR OESTE' : 'CORREDOR LESTE', 'VESTIÁRIOS'),
       side < 0 ? corridor.minX + 0.06 : corridor.maxX - 0.06, 4.2, 0,
@@ -882,10 +910,10 @@ export function buildPoolDay(scene, T) {
 
   // Vestiários de spawn: armários e bancos ficam nas paredes, deixando o centro livre.
   for (const sz of [-1, 1]) {
-    for (const x of [-7.2, 7.2]) lockerBank(x, sz * 24.55, 5, 'x');
+    for (const x of [-7.2, 7.2]) lockerBank(x, sz * 24.55, 5, 'x', 0, sz < 0 ? 0 : Math.PI);
     // Bancos e guias nascem colados ao anteparo: pontos de proteção e direção, não ilhas.
     for (const x of [-6, 6]) {
-      addBox(3.2, 0.58, 0.72, MAT.chair, x, 0, sz * 15.66);
+      banco(x, sz * 15.66, 3.2, 0.72, sz < 0 ? Math.PI : 0);
       for (const hx of [-0.95, 0, 0.95])
         addBox(0.08, 0.28, 0.08, MAT.steel, x + hx, 1.55, sz * 15.38, { collide: false });
     }
@@ -893,7 +921,7 @@ export function buildPoolDay(scene, T) {
       addBox(0.5, 0.025, 5.2, MAT.navy, x, 0.005, sz * 18.2,
         { collide: false, cast: false });
     for (const sx of [-1, 1]) {
-      addBox(0.7, 0.58, 3.0, MAT.chair, sx * 16.45, 0, sz * 19.3);
+      banco(sx * 16.45, sz * 19.3, 0.7, 3.0, -sx * Math.PI / 2);
       // Duas cabines de banho por vestiário, apoiadas na parede do fundo.
       addBox(2.4, 2.6, 0.16, COV.cabine, sx * 13.7, 0, sz * 24.35);
       addBox(0.16, 2.6, 1.8, COV.cabine, sx * 12.5, 0, sz * 23.45);
@@ -904,6 +932,10 @@ export function buildPoolDay(scene, T) {
 
   // Promenade: só mobiliário baixo sem colisão; a borda da piscina permanece legível.
   for (const sx of [-1, 1]) for (const z of [-8, -3, 3, 8]) {
+    if (temProp('piscina_espreguicadeira')) {
+      encaixa('piscina_espreguicadeira', sx * 12.1, 0, z - 0.1, 0.8, 0.85, 1.95, 0);
+      continue;
+    }
     addBox(0.85, 0.25, 1.9, MAT.chair, sx * 12.1, 0.2, z, { collide: false });
     const back = addBox(0.85, 0.85, 0.2, MAT.chair, sx * 12.1, 0.2, z - 0.85,
       { collide: false });
@@ -1069,6 +1101,7 @@ export function buildPoolDay(scene, T) {
   return {
     ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt,
+    update(dt) { for (const w of scene.userData.waters || []) w.update(dt); },
     spawns, sun, hemi, pickups,
     /* BANDEIRAS DO CTF — DECLARADAS (06/08, defeito do dono: "bandeiras com nome do pátio
        brasília" jogando aqui). O fallback do game.js punha as 3 bandeiras de spawn×0,42 —
