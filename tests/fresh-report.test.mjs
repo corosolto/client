@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { freshReport } from '../tools/eval/fresh-report.mjs';
@@ -47,4 +47,20 @@ test('relatório novo inválido não vira dado de geometria', () => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// Todo relatório versionado que as invariantes regeram passa pelo freshReport (#652).
+const REGERADOS = ['map_check', 'pickup_check', 'char_probe', 'mat_check'];
+const semFreshReport = (src) => REGERADOS.filter((nome) => {
+  const decl = new RegExp(`const (\\w+) = join\\([^)]*'${nome}\\.json'\\)`).exec(src);
+  const uso = decl && new RegExp(`(freshReport|existsSync|readFileSync)\\(${decl[1]}\\b`).exec(src.slice(decl.index + decl[0].length));
+  return uso?.[1] !== 'freshReport';
+});
+
+test('invariantes não leem relatório versionado sem regerar do zero', () => {
+  const src = readFileSync(new URL('../tools/eval/invariants.mjs', import.meta.url), 'utf8');
+  assert.deepEqual(semFreshReport(src), []);
+  const mutante = src.replace(/freshReport\((\w+), \(\) => runNode\('pickup-check\.mjs'\)\)/, 'runNode(\'pickup-check.mjs\')');
+  assert.notEqual(mutante, src, 'mutante não aplicou: o VM14 mudou de forma');
+  assert.deepEqual(semFreshReport(mutante), ['pickup_check']);
 });
