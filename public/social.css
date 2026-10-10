@@ -1,4 +1,5 @@
 .community{max-width:1180px;color:#f0f0ed;font-family:var(--font)}
+body:has(#main-menu:not(.hidden)[data-hub-tab=comunidade]) #rotate-prompt{display:none}
 .social-heading{display:flex;justify-content:space-between;gap:16px;margin-bottom:16px}.social-heading h2{margin:8px 0;font:400 clamp(32px,4vw,58px)/.95 'Bebas Neue',Impact,sans-serif;letter-spacing:1px}
 .social-status{min-height:22px;margin:8px 0;color:#b4d92e;font:14px/1.4 system-ui,sans-serif}
 .social-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 24px;border-bottom:1px solid #555746;padding-bottom:10px}

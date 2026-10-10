@@ -21,7 +21,7 @@ let helperSource=existsSync(helperPath)?read(helperPath):'';
 const mutant=process.argv.find(s=>s.startsWith('--mutant='))?.split('=')[1];
 const only=process.argv.find(s=>s.startsWith('--only='))?.split('=')[1];
 if(mutant) {
-  assert(['advertise-disabled','stale-auth-dialog','quit-social-resume'].includes(mutant),'unknown mutation');
+  assert(['advertise-disabled','stale-auth-dialog','quit-social-resume','portrait-no-guard','portrait-broad-guard'].includes(mutant),'unknown mutation');
   if(mutant==='stale-auth-dialog') {
     const changed=entrySource.replace('loading=false;if(dialog.open)draw();maybePrompt();','loading=false;maybePrompt();');
     assert.notEqual(changed,entrySource,'mutation did not apply');entrySource=changed;
@@ -213,6 +213,25 @@ await check('N01','account newsletter consent is separate and initially unchecke
 });
 await check('R01','missing avatar/socials reminder is collapsible',async()=> {
   assert(entrySource,'shared account entry is absent');const markup=menuMarkup(path.join(root,'src/pages/index.astro'));assert.match(markup,/<details\b[^>]*id=["']account-completion["']/,'game has no collapsible completion reminder');const u=await ui(true,{runCommunity:false});await u.entry.initAccountEntry();const reminder=u.ids['account-completion'];assert.equal(reminder.hidden,false,'missing profile has no reminder');assert.equal(reminder.open,false,'reminder forced open');assert(/foto|avatar/i.test(u.ids['account-completion-copy'].textContent) && /redes|links/i.test(u.ids['account-completion-copy'].textContent),'reminder does not name missing photo and socials');
+});
+await check('C02','portrait rotate guard exempts only visible community menu',()=> {
+  assert.match(index,/\/social\.css/,'social stylesheet not linked from game');
+  let css=['style.css','social.css'].map(file=>read(path.join(root,'public',file))).join('\n').replace(/\/\*[\s\S]*?\*\//g,'');
+  assert.match(css,/@media\s*\(orientation\s*:\s*portrait\)\s*and\s*\(pointer\s*:\s*coarse\)\s*\{\s*#rotate-prompt\s*\{[^}]*display\s*:\s*flex/,'portrait gameplay overlay baseline missing');
+  const guard=/body:has\(#main-menu:not\(\.hidden\)\[data-hub-tab=(?:['"])?comunidade(?:['"])?\]\)\s+#rotate-prompt\s*\{[^}]*display\s*:\s*none[^}]*\}/g;
+  if(mutant==='portrait-no-guard'){const changed=css.replace(guard,'');assert.notEqual(changed,css,'mutation did not apply');css=changed;}
+  if(mutant==='portrait-broad-guard'){assert(guard.test(css),'mutation did not apply');css=css.replaceAll('#main-menu:not(.hidden)[data-hub-tab=','#main-menu[data-hub-tab=');}
+  const rules=[...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].flatMap(m=>m[1].split(',').map(selector=>({selector:selector.trim(),declarations:m[2]}))).filter(rule=>rule.selector.includes('#rotate-prompt') && rule.selector!=='#rotate-prompt' && /(?:^|;)\s*display\s*:\s*none(?:\s*!important)?\s*(?:;|$)/.test(rule.declarations));
+  const matches=(selector,state)=>{
+    const m=/^body:has\(#main-menu(:not\(\.hidden\))?\[data-hub-tab=['"]?(\w+)['"]?\]\)\s+#rotate-prompt$/.exec(selector);
+    assert(m,`unmodeled rotate exemption selector: ${selector}`);
+    return state.exists && (!m[1] || !state.hidden) && state.tab===m[2];
+  };
+  const exempt=state=>rules.some(rule=>matches(rule.selector,state));
+  assert.equal(exempt({exists:true,hidden:false,tab:'comunidade'}),true,'visible community remains blocked by portrait rotate overlay');
+  assert.equal(exempt({exists:true,hidden:true,tab:'comunidade'}),false,'hidden community menu suppresses active-game orientation overlay');
+  assert.equal(exempt({exists:true,hidden:false,tab:'jogar'}),false,'play tab suppresses gameplay orientation overlay');
+  assert.equal(exempt({exists:false,hidden:false,tab:'comunidade'}),false,'missing menu suppresses orientation overlay');
 });
 if(process.env.SOCIAL_ENTRY_API && !only) {
   await check('L01','real local Auth advertises required enabled providers',async()=> {
