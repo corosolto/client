@@ -6,17 +6,14 @@ import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../../lib/supabase';
 import { rateLimit } from '../../../lib/ratelimit';
-import { FONT_BOLD_B64 } from '../../../lib/font-data';
-import { displayTime } from '../../../lib/fmt';
+import fontSource from '../../../lib/font-data.ts?raw';
+import { fmtTime } from '../../../lib/fmt';
 import { CHARS, charSvg, charName } from '../../../lib/charsvg';
-import { socialAvatar } from '../../../lib/social';
 import { fetchAvatar } from '../../../lib/safe-url';
-import { RANKING_ON } from '../../../lib/site';
-import { emptyPlayerScore } from '../../../lib/empty-player-score';
 
 export const prerender = false;
 
-const fontBuffers = [Buffer.from(FONT_BOLD_B64, 'base64')];
+const fontBuffers = [Buffer.from([...fontSource.matchAll(/'([A-Za-z0-9+/=]+)'/g)].map(m=>m[1]).join(''), 'base64')];
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -26,8 +23,12 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 // usar a badge pública como sonda da rede interna. `fetchAvatar` só sai pra
 // https em host de avatar conhecido, revalida cada redirect e limita bytes.
 // Ver src/lib/safe-url.ts.
-async function avatarDataUri(url?: string | null): Promise<string | null> {
-  const buf = await fetchAvatar(url);
+async function avatarDataUri(url?: string | null, id?: string): Promise<string | null> {
+  let buf:Buffer|null=null;
+  if(id && url===`/api/social-avatar?id=${id}`){
+    const {data}=await supabaseAdmin!.storage.from('avatars').download(`${id}.png`);
+    if(data)buf=Buffer.from(await data.arrayBuffer());
+  }else buf=await fetchAvatar(url);
   if (!buf) return null;
   try {
     const png = await sharp(buf).resize(120, 120, { fit: 'cover' }).png().toBuffer();
@@ -44,13 +45,13 @@ export function sideOf(mp: number, mb: number): [string, string] {
 
 function badgeSvg(p: any, avatarUri: string | null, charId: string | null): string {
   const kd = p.deaths ? (p.kills / p.deaths).toFixed(2) : String(p.kills);
-  const [sideLabel, sideColor] = sideOf(p.matches_p, p.matches_b);
+  const sideColor = '#ffd23f';
   const cName = charName(charId);
 
   const cells: [string, string][] = [
     ['PONTOS', String(p.points)], ['KILLS', String(p.kills)], ['K/D', kd],
-    ['PARTIDAS', String(p.matches)], ['VITÓRIAS', p.wins > 0 ? String(p.wins) : ' - '], ['HEADSHOTS', String(p.headshots)],
-    ['MORTES', String(p.deaths)], ['SEQUÊNCIA', `${p.best_streak}×`], ['TEMPO', displayTime(p)],
+    ['PARTIDAS', String(p.matches)], ['RODADAS GANHAS', String(p.wins)], ['HEADSHOTS', String(p.headshots)],
+    ['MORTES', String(p.deaths)], ['RODADAS', String(p.rounds)], ['TEMPO', fmtTime(p.play_seconds)],
   ];
   const grid = cells.map(([label, v], i) => {
     const x = 46 + (i % 3) * 260, y = 228 + Math.floor(i / 3) * 70;
@@ -73,7 +74,7 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
   <circle cx="748" cy="96" r="200" fill="${sideColor}" opacity="0.07"/>
   <rect width="840" height="6" fill="#e03232"/><rect y="434" width="840" height="6" fill="#1faa4d"/>
   <text x="56" y="60" font-size="22" font-weight="bold" fill="#ffd23f" font-family="DejaVu Sans" letter-spacing="5">CORO SOLTO</text>
-  <text x="660" y="60" font-size="16" fill="${sideColor}" font-family="DejaVu Sans" text-anchor="end" font-weight="bold">${sideLabel} · ${p.matches_p}E × ${p.matches_b}D</text>
+  <text x="660" y="60" font-size="16" fill="${sideColor}" font-family="DejaVu Sans" text-anchor="end" font-weight="bold">DADOS VERIFICADOS</text>
   <text x="56" y="132" font-size="54" font-weight="bold" fill="#f2ead8" font-family="DejaVu Sans">${esc(p.nick)}</text>
   ${p.social ? `<text x="56" y="166" font-size="18" fill="#b8d94a" font-family="DejaVu Sans">${esc(p.social)}</text>` : ''}
   ${cName ? `<text x="56" y="194" font-size="16" fill="#8a8064" font-family="DejaVu Sans">joga de ${esc(cName)}</text>` : ''}
@@ -116,34 +117,18 @@ const handle: APIRoute = async ({ params }) => {
   const key = first.replace(/\.png$/, '');
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(key);
   const nick = key.slice(0, 14);
-  // A badge antiga continua operando antes da migration; a flag só liga junto
-  // da view nova, após o rollout coordenado.
-  const query = RANKING_ON
-    ? supabaseAdmin.from('player_points').select('*')
-    : supabaseAdmin.from('stats').select('*, players!inner(id, nick, social_link, avatar_url)');
-  const { data } = await (isUuid
-    ? query.eq(RANKING_ON ? 'id' : 'players.id', key).maybeSingle()
-    : query.eq('nick', nick).maybeSingle());
-  let score: any = data;
-  if (RANKING_ON && !score) {
-    const players = supabaseAdmin.from('players').select('id,nick,social_link,socials,avatar_url');
-    const { data: player } = await (isUuid
-      ? players.eq('id', key).maybeSingle()
-      : players.eq('nick', nick).maybeSingle());
-    if (player) score = emptyPlayerScore(player);
-  }
-  if (!score) return new Response('not found', { status: 404 });
-  const p = RANKING_ON
-    ? { ...score, social: score.social_link }
-    : { ...score, points: score.kills, social: score.players?.social_link };
-  const avatarUrl = RANKING_ON ? score.avatar_url : score.players?.avatar_url;
-  const avatarUri = await avatarDataUri(avatarUrl || socialAvatar(p.social));
+  const query=supabaseAdmin.from('player_points').select('*');
+  const {data:score,error}=await (isUuid?query.eq('id',key):query.eq('nick',nick)).maybeSingle();
+  if(error) return new Response('unavailable',{status:503,headers:{'cache-control':'no-store'}});
+  if(!score) return new Response('not found',{status:404,headers:{'cache-control':'no-store'}});
+  const p={...score,social:score.social_link};
+  const avatarUri=await avatarDataUri(score.avatar_url,score.id);
   const resvg = new Resvg(badgeSvg(p, avatarUri, score.last_character), {
     font: { fontBuffers, loadSystemFonts: false, defaultFontFamily: 'DejaVu Sans' },
     background: '#0c0e11',
   });
   return new Response(new Uint8Array(resvg.render().asPng()), {
     // `s-maxage` faltava: sem ele a CDN não guarda e todo hit paga o WASM de novo.
-    headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=3600' },
+    headers: { 'content-type': 'image/png', 'cache-control': 'no-store' },
   });
 };

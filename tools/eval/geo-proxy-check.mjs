@@ -122,7 +122,7 @@ const CF = { 'cf-connecting-ip': '201.17.0.9', 'cf-ipcountry': 'BR', 'cf-ipcity'
   cobra(!sem.has('x-csb-proxy-auth'), 'GP6 x-csb-proxy-auth do NAVEGADOR atravessou o proxy');
 }
 cobra(sinal instanceof AbortSignal, 'GP8 fetch do proxy sem prazo — Cloud Run pendurado segura cada chamada de telemetria até o teto da função da Vercel');
-cobra(/const SEGREDO = import\.meta\.env\.API_PROXY_SECRET \|\| '';/.test(rota) && /\{ segredo: SEGREDO \}/.test(rota),
+cobra(/const SEGREDO = import\.meta\.env\.API_PROXY_SECRET \|\| '';/.test(rota) && /\{ segredo: SEGREDO(?:, session: [^}]+)? \}/.test(rota),
   'GP6 [rota].ts não repassa API_PROXY_SECRET ao proxy');
 
 cobra(/void fetch\(apiUrl\(path\), \{/.test(main) && /fetch\(apiUrl\('\/api\/presence'\)/.test(main)

@@ -9,7 +9,7 @@ const BACKEND = import.meta.env.PUBLIC_API_BASE || 'https://csbrasil-backend-hup
 const SEGREDO = import.meta.env.API_PROXY_SECRET || '';
 
 const MIGRADAS = new Set([
-  'acquisition', 'avatar', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
+  'social','social-auth','social-avatar','acquisition', 'avatar', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames',
 ]);
@@ -26,7 +26,7 @@ const handler: APIRoute = async ({ params, url, request, clientAddress }) => {
     `${BACKEND.replace(/\/$/, '')}/api/${rota}${url.search}`,
     clientAddress,
     fetch,
-    { segredo: SEGREDO },
+    { segredo: SEGREDO, session: ['social','social-auth','social-avatar','register','avatar','mp-ticket'].includes(rota) },
   );
 };
 

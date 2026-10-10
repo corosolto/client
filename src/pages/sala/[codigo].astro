@@ -24,7 +24,7 @@ let erro = '';
 if (!no || !casado) {
   erro = 'Esse convite não tem um formato que eu reconheça. Ele parece com BR-7K3M.';
 } else {
-  const http = no.url.replace(/^ws/, 'http').replace(/\/ws.*$/, '');
+  const http = import.meta.env.DEV && no.id==='br' && import.meta.env.SOCIAL_LOCAL_GAME_URL ? import.meta.env.SOCIAL_LOCAL_GAME_URL : no.url.replace(/^ws/, 'http').replace(/\/ws.*$/, '');
   try {
     // Timeout curto: convite que fica girando é pior que convite que diz "não deu".
     const ctrl = new AbortController();
@@ -45,7 +45,7 @@ if (!sala) Astro.response.status = 404;
 
 const usadoE = sala ? Math.max(0, (sala.max / 2) - (sala.livre?.E ?? 0)) : 0;
 const usadoB = sala ? Math.max(0, (sala.max / 2) - (sala.livre?.B ?? 0)) : 0;
-const porLado = sala ? sala.max / 2 : 5;
+const porLado = sala ? Math.floor(sala.max / 2) : 5;
 const pinos = (usado: number) => Array.from({ length: porLado }, (_, i) => i < usado);
 
 const titulo = sala ? `${sala.name} - sala ${convite}` : `Sala ${convite}`;
@@ -62,7 +62,7 @@ const desc = sala
         <p class="cv-ctx">{sala.mapNome || sala.map} · {sala.ctf ? 'CAPTURA' : 'MATA-MATA'} · {sala.players}/{sala.max} jogando</p>
 
         {/* A disputa, no mesmo vocabulario da lista de salas do jogo: pino cheio = pessoa dentro. */}
-        <div class="cv-disputa">
+        {sala.solo ? <p class="cv-aviso">SOLO VERIFICADO · Um jogador contra bots. Abates valem pontos-base; sem bônus multiplayer.</p> : <div class="cv-disputa">
           <div class="cv-lado">
             <span class="cv-time" data-f={sala.faccaoE}>{sala.nomeE}</span>
             <div class="cv-pinos">{pinos(usadoE).map((cheio) => <i class:list={[{ on: cheio }]} data-f={sala.faccaoE}></i>)}</div>
@@ -72,14 +72,14 @@ const desc = sala
             <span class="cv-time" data-f={sala.faccaoB}>{sala.nomeB}</span>
             <div class="cv-pinos">{pinos(usadoB).map((cheio) => <i class:list={[{ on: cheio }]} data-f={sala.faccaoB}></i>)}</div>
           </div>
-        </div>
+        </div>}
 
         <dl class="cv-dados">
           <div><dt>SALA</dt><dd class="cv-cod">{convite}</dd></div>
           <div><dt>SERVIDOR</dt><dd>{no!.nome}</dd></div>
         </dl>
 
-        {sala.private && <p class="cv-aviso">Sala trancada - vao te pedir a senha ao entrar.</p>}
+        {sala.senha && <p class="cv-aviso">Sala trancada - vao te pedir a senha ao entrar.</p>}
 
         <a class="btn cv-cta" href={`/?sala=${encodeURIComponent(convite)}`}>ENTRAR NA SALA</a>
         <p class="cv-nota">Sem download, sem cadastro. Abre direto no navegador.</p>

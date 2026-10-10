@@ -18,15 +18,10 @@ let totals = { players: 0, matches: 0, kills: 0, mp: 0, mb: 0 };
 let factionSource: 'telemetry' | 'legacy' = 'telemetry';
 let factionCounts = FACCOES.map(f => ({ ...f, code: factionCode[f.id], matches: 0, pct: 0 }));
 if (supabaseAdmin) {
-  const { data: on } = await supabaseAdmin.from('online_now').select('*');
-  online = on ?? [];
-  const { count } = await supabaseAdmin.from('players').select('*', { count: 'exact', head: true });
+  const { count } = await supabaseAdmin.from('player_points').select('id', { count: 'exact', head: true });
   totals.players = count ?? 0;
-  const { data: st } = await supabaseAdmin.from('stats').select('matches,kills,matches_p,matches_b');
-  for (const r of st ?? []) {
-    totals.matches += r.matches; totals.kills += r.kills;
-    totals.mp += r.matches_p; totals.mb += r.matches_b;
-  }
+  const { data: st } = await supabaseAdmin.from('player_points').select('matches,kills,matches_p,matches_b');
+  for(const r of st ?? []) {totals.matches+=r.matches;totals.kills+=r.kills;totals.mp+=r.matches_p;totals.mb+=r.matches_b;}
   const fq = await Promise.all(factionCounts.map(f =>
     supabaseAdmin!.from('match_event').select('*', { count: 'exact', head: true }).eq('faction', f.code),
   ));
@@ -43,16 +38,10 @@ if (supabaseAdmin) {
     const cur = agg.get(r.city) || { city: r.city, country: r.country, matches: 0, rounds: 0, players: new Set<string>(), lat: null, lon: null };
     cur.matches += r.matches; cur.rounds += r.rounds ?? 0; agg.set(r.city, cur);
   }
-  const { data: pres } = await supabaseAdmin.from('presence').select('nick,city,country,lat,lon').not('city', 'is', null);
-  for (const p of pres ?? []) {
-    const cur = agg.get(p.city) || { city: p.city, country: p.country, matches: 0, rounds: 0, players: new Set<string>(), lat: null, lon: null };
-    cur.players.add(p.nick);
-    if (!cur.lat && p.lat) { cur.lat = p.lat; cur.lon = p.lon; }
-    agg.set(p.city, cur);
-  }
   cities = [...agg.values()].sort((a, b) => b.matches - a.matches)
     .map(c => ({ ...c, players: [...c.players].sort() }));
 }
+Astro.response.headers.set('cache-control','no-store');
 const factionTotal = factionCounts.reduce((sum, f) => sum + f.matches, 0);
 factionCounts = factionCounts.map(f => ({ ...f, pct: factionTotal ? Math.round((f.matches / factionTotal) * 100) : 0 }));
 const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.filter(c => c.lat && c.lon) };
@@ -115,10 +104,10 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
         : 'O histórico por facção ainda está indisponível no banco; os números E/B acima são o legado do ranking.'}</p>
     </section>
   )}
-  <p><strong style="color:#7de08f">{online.length}</strong> jogadores online agora · em amarelo, o histórico total de partidas por cidade (localização aproximada, nível cidade - sem IP).</p>
+  <p>A presença pessoal fica na lista de amigos. Em amarelo, o histórico total de partidas por cidade (localização aproximada, nível cidade - sem IP).</p>
   {/* Presença nominal cobre somente jogadores registrados. */}
   <p style="font-size:12px;color:var(--bone-dim);margin-top:-6px">
-    Conta só quem escolheu um nick - jogar sem nick não registra presença.
+    Localização agregada por cidade. A presença de jogadores fica visível somente aos amigos autorizados.
   </p>
   {!configured && <p>Mapa ainda não configurado.</p>}
   <div id="map" style="height:520px;border-radius:10px;border:1px solid #3a3325;background:#10130c"></div>

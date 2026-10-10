@@ -9,6 +9,10 @@ export const NOS = [
   { id: 'eu', nome: 'Europa · Madri', url: 'wss://eu.corosolto.com.br/ws' },
 ];
 
+// Fixture local explícita vem do SSR de desenvolvimento, nunca de query enviada ao nó.
+const localGame=typeof document!=='undefined'?document.querySelector('meta[name="cs-local-game"]')?.content:'';
+if(localGame && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(localGame)) NOS[0]={...NOS[0],url:localGame.replace(/^http/,'ws')+'/ws'};
+
 /* Um convite é `<REGIAO>-<CODIGO>` (ex.: BR-7K3M). A região não é enfeite: ela diz em
    qual nó a sala vive, e sem ela o cliente sondaria todas as regiões para achar a sala. */
 export const NO_RE = /^[a-z]{2}[0-9]?$/;   // igual a api/_lib/no.mjs do backend
