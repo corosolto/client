@@ -36,6 +36,8 @@ const nackLimpo = (m) => (Number.isFinite(m.espera) && m.espera > 0 ? m : { type
 
 // Online o lado vem do servidor; offline, da aba escolhida. A facção nunca decide o lado.
 export const resolvePlayerSide = (team) => (team === 'B' ? 'B' : 'E');
+// Lado local velho (REINICIAR/REVANCHE) monta o elenco do servidor do avesso: 6×5 (#785).
+export const ladoOnline = (team, net) => (net && (net.yourTeam === 'E' || net.yourTeam === 'B') ? net.yourTeam : team);
 
 export async function transitionSlot(m, meta, current, validChar, remount) {
   const next = { ...current, spectator: !!m.espectador };
