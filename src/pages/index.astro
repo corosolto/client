@@ -220,6 +220,10 @@ window.__GEO_LANG__ = (function () {
     // discordarem, o arnês come cota aqui ou volta a abrir issue lá (BUG-151).
     var automacao = /\bUtilityScript\b|\b__puppeteer_evaluation_script__\b|\bpptr:[/][/]/;
     if (automacao.test(String(stack || ''))) return false;
+    // MESMA redação da `EVAL_CSP_RE` de `src/lib/error-provenance.mjs`: se os dois lados
+    // discordarem, o blob: injetado come cota aqui ou volta a abrir issue lá (#798).
+    var evalCsp = /\bEvalError\b.*'unsafe-eval' is not an allowed source of script/;
+    if (/^blob:/i.test(sourceText) && evalCsp.test(String(mensagem || ''))) return false;
     var propria = location.origin;
     if (sourceText && /^https?:\/\//i.test(sourceText)) {
       try {
