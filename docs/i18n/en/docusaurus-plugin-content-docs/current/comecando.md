@@ -41,9 +41,9 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 58,539 lines in 114 files | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **8,386** lines | `wc -l public/js/game.js` |
-| `main.js` | 4,379 lines | `wc -l public/js/main.js` |
+| Game code | 58,679 lines in 114 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **8,419** lines | `wc -l public/js/game.js` |
+| `main.js` | 4,480 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 74 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props in GLB | 208 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -225,7 +225,7 @@ The maps registered today, and which mode each one opens in:
 |---|---|---|---|---:|
 | `campomorro` | Campinho do Morro | **capture** | `map_campomorro.js` | 815 |
 | `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,395 |
-| `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,265 |
+| `amazonia` | Treta na Amazônia | **capture** | `map_amazonia.js` | 1,271 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 1,408 |
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,978 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 1,193 |

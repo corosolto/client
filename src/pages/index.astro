@@ -794,6 +794,12 @@ window.__GEO_LANG__ = (function () {
       <div id="hub-roster-factions" class="hub-modal-filters" role="group" aria-label="Categorias"></div>
       <div id="hub-roster-grid" class="hub-roster-grid"></div>
       <p id="hub-roster-selected" class="hub-roster-selected" aria-live="polite"></p>
+      <!-- ESCALAÇÃO DA PARTIDA: o ＋ de cada card trava quem entra; esta linha conta as
+           vagas já tomadas contra o formato escolhido (SEU TIME / INIMIGOS). -->
+      <div class="hub-roster-escalacao-row">
+        <p id="hub-roster-escalacao" aria-live="polite"></p>
+        <button id="hub-roster-clear" type="button" hidden>LIMPAR ESCALAÇÃO</button>
+      </div>
     </div>
   </div>
 
@@ -937,10 +943,16 @@ window.__GEO_LANG__ = (function () {
             <div class="dd-list hidden" id="wpn-dd-list"></div>
           </div>
         </label>
-        <label class="map-label">BOTS / LADO
-          <div class="dd" id="bots-dd">
-            <button class="dd-btn" id="bots-dd-btn" type="button"><span id="bots-dd-label"></span><span class="dd-arrow">▾</span></button>
-            <div class="dd-list hidden" id="bots-dd-list"></div>
+        <label class="map-label">SEU TIME
+          <div class="dd" id="ally-dd">
+            <button class="dd-btn" id="ally-dd-btn" type="button"><span id="ally-dd-label"></span><span class="dd-arrow">▾</span></button>
+            <div class="dd-list hidden" id="ally-dd-list"></div>
+          </div>
+        </label>
+        <label class="map-label">INIMIGOS
+          <div class="dd" id="enemy-dd">
+            <button class="dd-btn" id="enemy-dd-btn" type="button"><span id="enemy-dd-label"></span><span class="dd-arrow">▾</span></button>
+            <div class="dd-list hidden" id="enemy-dd-list"></div>
           </div>
         </label>
         <!-- Dificuldade agora é RANDÔMICA por bot (50% ruins / 20% médios / 20% bons /
@@ -1032,19 +1044,17 @@ window.__GEO_LANG__ = (function () {
             <option value="knife">SÓ FACA</option><option value="awp">SÓ AWP</option>
           </select>
         </label>
-        <label><span>JOGADORES</span>
-          <select id="ms-players">
-            <option value="2">2 × 2</option><option value="3">3 × 3</option>
-            <option value="4">4 × 4</option><option value="5">5 × 5</option>
-            <option value="6">6 × 6</option><option value="7">7 × 7</option>
-            <option value="8">8 × 8</option>
-          </select>
+        <label><span>SEU TIME</span>
+          <!-- vazio de propósito: quem preenche é o main.js (0-7 bots; 0 = SOLO) -->
+          <select id="ms-ally-bots"></select>
+        </label>
+        <label><span>INIMIGOS</span>
+          <!-- vazio de propósito: quem preenche é o main.js (1-8 bots) -->
+          <select id="ms-enemy-bots"></select>
         </label>
         <label><span>Nº DE ROUNDS</span>
-          <select id="ms-rounds">
-            <option value="1">1</option><option value="3">3</option>
-            <option value="5">5</option><option value="7">7</option>
-          </select>
+          <!-- vazio de propósito: quem preenche é o main.js (1-15, número custom do jogador) -->
+          <select id="ms-rounds"></select>
         </label>
         <!-- vazio de propósito: quem preenche e ordena é o main.js, dono da lista e do salvo -->
         <label><span>DIFICULDADE</span><select id="diff-select"></select></label>

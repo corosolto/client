@@ -897,16 +897,21 @@ const wallpaperLoadingResponsivo = /setProperty\('--loading-wall', loadingWallUr
   && /#boot-splash::before,#load-overlay::before\{[^}]*background-image:var\(--loading-wall\);background-size:cover;[^}]*filter:blur\(18px\)/.test(css)
   && /#boot-splash::after\{[^}]*background-image:[^}]*var\(--loading-wall\);[^}]*background-size:cover,contain;/.test(css)
   && /#load-overlay::after\{[^}]*background-image:[^}]*var\(--loading-wall\);[^}]*background-size:cover,contain;/.test(css);
+/* Opções da partida na tela de mapa: formato LIVRE (ally/enemy bots separados — 1v4,
+   solo vs 8) e rounds CUSTOMIZADOS (1–15, sanitizeRounds do game.js como régua única). */
 const opcoesPartidaNoMapa = /id="ms-wpn-mode"/.test(astro)
-  && /id="ms-players"/.test(astro)
+  && /id="ms-ally-bots"/.test(astro)
+  && /id="ms-enemy-bots"/.test(astro)
   && /id="ms-rounds"/.test(astro)
   && /settings\.wpnMode = msWpnMode\.value/.test(main)
-  && /settings\.bots = \+msPlayers\.value/.test(main)
-  && /settings\[matchMode === 'ctf' \? 'ctfRounds' : 'rounds'\] = \+msRounds\.value/.test(main)
-  && /function matchRounds\(\)[\s\S]{0,260}settings\.ctfRounds[\s\S]{0,260}settings\.rounds/.test(main)
+  && /settings\.allyBots = Math\.max\(0, Math\.min\(7, msAlly\.value \| 0\)\)/.test(main)
+  && /settings\.enemyBots = Math\.max\(1, Math\.min\(8, msEnemy\.value \| 0\)\)/.test(main)
+  && /settings\[matchMode === 'ctf' \? 'ctfRounds' : 'rounds'\] = sanitizeRounds\(msRounds\.value\)/.test(main)
+  && /function matchRounds\(\)[\s\S]{0,400}settings\.ctfRounds[\s\S]{0,400}settings\.rounds/.test(main)
   && /roundsMax: matchRounds\(\),/.test(main)
   && /constructor\(\{[^}]*roundsMax/.test(game)
-  && /this\._roundsMax = \[1, 3, 5, 7\]\.includes\(requestedRounds\)/.test(game)
+  && /export const sanitizeRounds[\s\S]{0,200}ROUNDS_CUSTOM_MAX \? n : 0;/.test(game)
+  && /const requestedRounds = sanitizeRounds\(roundsMax\);/.test(game)
   && /if \(this\.ctf\) return this\.roundNum >= this\.roundsMax \|\| this\.ctfMatchLeft <= 0;[\s\S]{0,80}return this\.roundNum >= this\.roundsMax;/.test(game)
   && /get roundsMax\(\) \{ return this\._roundsMax; \}/.test(game);
 const semBordaTracejada = !/(?:--hazard|var\(--hazard\)|border(?:-(?:bottom|top|left|right|style))?[^;}{]*(?:dashed|dotted))/i.test(css)

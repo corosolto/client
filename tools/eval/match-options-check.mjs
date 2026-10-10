@@ -25,7 +25,7 @@ function expect(ok, message) {
 }
 
 for (const ctf of [false, true]) {
-  for (const selected of [1, 3, 5, 7]) {
+  for (const selected of [1, 2, 3, 5, 7, 9, 15]) {
     const g = bootGame('praca_poderes', {
       textures,
       ctf,
@@ -79,4 +79,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`  ✗ ${failure}`);
   process.exit(1);
 }
-console.log('\nVERDE — 1/3/5/7 são rounds disputados nos dois modos; padrões 5/3 preservados.');
+console.log('\nVERDE — 1–15 (incluindo pares) são rounds disputados nos dois modos; padrões 5/3 preservados.');

@@ -111,7 +111,7 @@ try {
     const frameTimes = sample.frames.slice(1).sort((a, b) => a - b);
     const gpuTimes = sample.gpu.samples.sort((a, b) => a - b);
     const result = {
-      map: game._mapId, teamSize: game.settings.bots, actualBots: game.bots.length,
+      map: game._mapId, teamSize: Math.max(game.teamCount?.E ?? 0, game.teamCount?.B ?? 0) || game.settings.bots, actualBots: game.bots.length,
       quality: game.settings.quality, pixelRatio: game.renderer.getPixelRatio(),
       viewport: [innerWidth, innerHeight], drawingBuffer: [sample.gl.drawingBufferWidth, sample.gl.drawingBufferHeight],
       elapsedMs: performance.now() - sample.start, frames: frameTimes.length,

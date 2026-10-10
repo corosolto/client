@@ -13,7 +13,7 @@ import { setHavanCarSeed } from './map_havan.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
-import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
+import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX } from './game.js';
 import { VERSION } from './version.js';
 import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
 import { mapPreviewPoster as escadaoMapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
@@ -39,8 +39,22 @@ import { makeNetcode } from './netgame.js';
 const SETTINGS_KEY = 'awpbr_settings';
 const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 if (savedSettings.invertY == null && savedSettings.invY != null) savedSettings.invertY = savedSettings.invY;
-const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, menuMusic: true, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
+/* FORMATO LIVRE DA PARTIDA: `bots` (N×N simétrico) virou `allyBots` (bots ao SEU lado,
+   sem contar você) + `enemyBots` — 1v4, solo vs 8, 5v5, o que o jogador montar.
+   Migração: quem tinha `bots` salvo começa no N×N equivalente. */
+if (savedSettings.allyBots == null && savedSettings.enemyBots == null) {
+  const n = Math.max(1, Math.min(8, Math.round(+savedSettings.bots) || 4));
+  savedSettings.allyBots = n - 1; savedSettings.enemyBots = n;
+}
+const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, menuMusic: true, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, allyBots: 3, enemyBots: 4, pinnedChars: [], rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
 if (!['first', 'third', 'shoulder'].includes(settings.camView)) settings.camView = 'first';
+/* Clamps defensivos: save antigo/corrompido não pode quebrar a composição da partida.
+   allyBots 0 = SOLO (você sozinho); enemyBots 1 = 1 adversário. */
+settings.allyBots = Math.max(0, Math.min(7, settings.allyBots | 0));
+settings.enemyBots = Math.max(1, Math.min(8, settings.enemyBots | 0));
+settings.pinnedChars = Array.isArray(settings.pinnedChars) ? settings.pinnedChars.filter((id) => typeof id === 'string') : [];
+/* Formato escolhido, UMA fonte para todos os rótulos (cartaz, resumo, chips). */
+const formatoPartida = () => `${1 + settings.allyBots} vs ${settings.enemyBots}`;
 let preferredQuality = null;
 const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify({
   ...settings,
@@ -1011,6 +1025,9 @@ function openHubRoster(updateRoute = true) {
       filters.appendChild(button);
     }
     for (const def of doLado.filter((c) => !hubRosterCat || c.team === hubRosterCat)) {
+      /* Célula = card (escolhe SEU personagem, como sempre) + chip ＋ (trava quem entra).
+         Papel do escalado: pode no seu lado = aliado, senão inimigo; montagem re-filtra. */
+      const cell = document.createElement('div'); cell.className = 'hub-roster-cell';
       const button = document.createElement('button'); button.type = 'button';
       button.setAttribute('aria-pressed', String(def.id === currentChar));
       const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
@@ -1025,10 +1042,44 @@ function openHubRoster(updateRoute = true) {
         syncHomeCharacter(); closeHubRoster(false);
         hubNavigate({ personagem: currentChar, janela: null });
       };
-      grid.appendChild(button);
+      cell.appendChild(button);
+      if (def.id !== currentChar) {
+        const pin = document.createElement('button'); pin.type = 'button';
+        const ehPin = settings.pinnedChars.includes(def.id);
+        const papel = podeNoLado(def, currentTeam) ? 'ALIADO' : 'INIMIGO';
+        pin.className = 'hub-roster-pin';
+        pin.setAttribute('aria-pressed', String(ehPin));
+        pin.title = ehPin ? `Escalado como ${papel} — clique para tirar` : `Escalar como ${papel} na próxima partida`;
+        pin.textContent = ehPin ? papel : '＋';
+        pin.onclick = (ev) => {
+          ev.stopPropagation();
+          settings.pinnedChars = ehPin
+            ? settings.pinnedChars.filter((id) => id !== def.id)
+            : [...settings.pinnedChars, def.id];
+          saveSettings(); ui.click(); render();
+        };
+        cell.appendChild(pin);
+      }
+      grid.appendChild(cell);
     }
     const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
     $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}`;
+    /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
+       passar do limite não quebra nada (pickMatchRoster corta), mas o jogador vê. */
+    const papelDe = (id) => { const c = CHARACTERS.find((x) => x.id === id); return c && podeNoLado(c, currentTeam) ? 'ally' : 'enemy'; };
+    const nAlly = settings.pinnedChars.filter((id) => papelDe(id) === 'ally').length;
+    const nEnemy = settings.pinnedChars.filter((id) => papelDe(id) === 'enemy').length;
+    const linha = $('hub-roster-escalacao');
+    if (linha) {
+      linha.textContent = nAlly || nEnemy
+        ? `ESCALAÇÃO: ${Math.min(nAlly, settings.allyBots)} de ${settings.allyBots} aliados · ${Math.min(nEnemy, settings.enemyBots)} de ${settings.enemyBots} inimigos` + ((nAlly > settings.allyBots || nEnemy > settings.enemyBots) ? ' — escalados além das vagas são descartados' : ' — resto sorteado')
+        : 'ESCALAÇÃO: automática (clique no ＋ de um personagem pra travá-lo)';
+    }
+    const limpar = $('hub-roster-clear');
+    if (limpar) {
+      limpar.hidden = !(nAlly || nEnemy);
+      limpar.onclick = () => { settings.pinnedChars = []; saveSettings(); ui.click(); render(); };
+    }
   };
   render(); $('hub-roster-modal').hidden = false; $('hub-roster-close').focus();
   if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'personagens' });
@@ -1499,14 +1550,25 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // sorteia os carros da Havan desta partida ANTES do preload (seleção = props do mapa)
   setHavanCarSeed((Math.random() * 1e9) | 0);
   /* SÓ OS PERSONAGENS DA PARTIDA: o roster é sorteado ANTES do preload e só esses GLBs sobem
-     (jogador + ~teamSize×2). Filtro vazio = rede de segurança: elenco inteiro. Régua: PL1. */
-  /* Tamanho do time é do SERVIDOR, nunca do ajuste local de bots (senão sobram corpos e o
-     casamento de ids fica adivinhando). */
-  const tamanhoTime = sessao ? sessao.net.meta.teamSize : Math.max(1, Math.min(8, settings.bots || 4));
+     (jogador + times montados). Filtro vazio = rede de segurança: elenco inteiro. Régua: PL1. */
+  /* FORMATO: no multiplayer o tamanho vem do SERVIDOR, nunca do ajuste local (senão sobram
+     corpos e o casamento de ids fica adivinhando). No single player é LIVRE: bots do seu
+     lado + bots inimigos (1v4, solo vs 8, 5v5…). */
+  const tamanhoTime = sessao ? sessao.net.meta.teamSize : 0;
   /* ELENCO: no multiplayer ele vem PRONTO do servidor (welcome.roster). Sortear o próprio faria
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
-     rosto que apareceu na tela. Fora do multiplayer, sorteio normal. */
-  const matchRoster = sessao ? rosterDoServidor(side, charId) : pickMatchRoster(faction, enemyFac, tamanhoTime, charId);
+     rosto que apareceu na tela. Fora do multiplayer, sorteio normal — com a ESCALAÇÃO do
+     jogador (pinnedChars da tela de escalação) entrando primeiro. Papel do escalado: do lado
+     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). */
+  const _podeNoLadoSp = (id) => { const c = CHARACTERS.find((x) => x.id === id); return !!(c && podeNoLado(c, side)); };
+  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId);
+  const _pinned = sessao ? null : {
+    ally: _escalados.filter(_podeNoLadoSp),
+    enemy: _escalados.filter((id) => !_podeNoLadoSp(id)),
+  };
+  const matchRoster = sessao
+    ? rosterDoServidor(side, charId)
+    : pickMatchRoster(faction, enemyFac, { allies: settings.allyBots, enemies: settings.enemyBots }, charId, false, _pinned);
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
@@ -1514,10 +1576,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
   /* Armas: no multiplayer também são do servidor (ele é dono do estado de arma de cada corpo).
-     Pré-carregar as erradas faria a arma certa chegar como caixa procedural no meio do tiroteio. */
+     Pré-carregar as erradas faria a arma certa chegar como caixa procedural no meio do tiroteio.
+     No SP o sorteio cobre TODOS os corpos da partida (jogador + aliados + inimigos). */
   const matchWeapons = sessao
     ? sessao.net.meta.roster.map((r) => r.weapon).filter(Boolean)
-    : pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: tamanhoTime });
+    : pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: Math.max(1, Math.ceil((1 + settings.allyBots + settings.enemyBots) / 2)) });
   // A sonda de QA do viewmodel inclui a arma pedida no preload; sem isso a HUD podia
   // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
   const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
@@ -1546,8 +1609,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   if (lancamentoPerdeu(meuLancamento)) return;
   if (_lstat.phase) _lstat.phase.set(1);
   game = new Game({
+    /* MP: o servidor manda no tamanho — sobrescreve AMBOS os campos do formato local
+       (o allyBots/enemyBots do save não pode vencer o teamSize da sala). */
+    settings: sessao ? { ...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: tamanhoTime } : settings,
     renderer, textures, sfx,
-    settings: sessao ? { ...settings, bots: tamanhoTime } : settings,
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
@@ -2180,7 +2245,7 @@ function openHubQuick(updateRoute = true) {
     ['MAPA', MAPS[currentMap].name],
     ['MODO', matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA'],
     ['ARMAS', tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS')],
-    ['BOTS', `${settings.bots} POR LADO`],
+    ['FORMATO', formatoPartida()],
     ['ROUNDS', String(matchRounds())],
     ['VOCÊ', `${tr(FACTION_NAME[def.team] || def.team)} · ${def.name}`],
   ];
@@ -2274,18 +2339,18 @@ function setMapThumb() {
 // ficha do cartaz e o dropdown têm que dizer a mesma coisa com as mesmas palavras.
 const WPN_MODE_LABEL = { all: 'TODAS', pistols: 'SÓ PISTOLAS', knife: 'SÓ FACA', awp: 'SÓ AWP' };
 function matchRounds() {
+  /* 1–15 (ROUNDS_CUSTOM_MAX do game.js — uma régua só). Salvo fora do intervalo cai no
+     padrão do modo; par é permitido: empate no teto vai pro desempate por abates. */
   const fallback = matchMode === 'ctf' ? 3 : 5;
-  const requested = +(matchMode === 'ctf' ? settings.ctfRounds : settings.rounds);
-  return [1, 3, 5, 7].includes(requested) ? requested : fallback;
+  return sanitizeRounds(matchMode === 'ctf' ? settings.ctfRounds : settings.rounds) || fallback;
 }
-// Ficha da partida IMPRESSA NO CARTAZ (modo · bots · armas). O dono pediu "maior dimensão
+// Ficha da partida IMPRESSA NO CARTAZ (modo · formato · armas). O dono pediu "maior dimensão
 // pro mapa" com "nome, modo, bots" — então o resumo mora sobre a arte, e não numa coluna
 // de formulário ao lado dela.
 function setMapMeta() {
   const el = $('map-meta'); if (!el) return;
-  const n = settings.bots || 4;
   const modo = frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
-  el.textContent = frase('resumoPartida', modo, n, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
+  el.textContent = frase('resumoPartida', modo, 1 + settings.allyBots, settings.enemyBots, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
 }
 function setMapMode() {
   const m = $('map-mode');
@@ -2325,8 +2390,11 @@ if (HUB_ENABLED) {
   $('hub-mode-rounds').onclick = () => { if (matchMode !== 'rounds') $('map-mode').click(); };
   $('hub-mode-ctf').onclick = () => { if (matchMode !== 'ctf') $('map-mode').click(); };
   $('hub-rounds').onclick = () => {
-    const options = [1, 3, 5, 7];
-    const next = options[(options.indexOf(matchRounds()) + 1) % options.length];
+    /* ciclo pelos ÍMPARES de 1–15 (o "melhor de N" usual); os pares ficam pro select da
+       tela de mapa. Do valor atual, salta pro próximo ímpar MAIOR (valor par vindo do
+       select não volta pro 1 à toa) e fecha a volta em 1. */
+    const atual = matchRounds();
+    const next = [1, 3, 5, 7, 9, 11, 13, 15].find((n) => n > atual) ?? 1;
     settings[matchMode === 'ctf' ? 'ctfRounds' : 'rounds'] = next;
     saveSettings(); ui.click(); setMapMode(); renderMapScreen();
   };
@@ -2530,44 +2598,77 @@ function wpnLabel(id) {
 wpnDdList.innerHTML = WPN_MODES.map(m =>
   `<button class="dd-item" data-id="${m.id}" type="button">${WPN_ICONS[m.id]}<span>${tr(m.label)}</span></button>`).join('');
 wpnLabel(wpnSel.value);
-wpnDdBtn.onclick = e => { e.stopPropagation(); botsDdList?.classList.add('hidden'); botsDdBtn?.classList.remove('open'); wpnDdList.classList.toggle('hidden'); wpnDdBtn.classList.toggle('open'); };
-document.addEventListener('click', () => { wpnDdList.classList.add('hidden'); wpnDdBtn.classList.remove('open'); });
+/* Dropdowns custom (mesma cara do de armas — o <select> nativo abria o menu default do
+   navegador, fora do estilo do resto do setup). Cada botão fecha os IRMÃOS antes de
+   abrir o seu: são três listas soltas na mesma faixa. */
+const FECHAR_DDS = (menosBtn) => {
+  for (const [b, l] of [[wpnDdBtn, wpnDdList], [allyDdBtn, allyDdList], [enemyDdBtn, enemyDdList]]) {
+    if (b !== menosBtn) { l?.classList.add('hidden'); b?.classList.remove('open'); }
+  }
+};
+wpnDdBtn.onclick = e => { e.stopPropagation(); FECHAR_DDS(wpnDdBtn); wpnDdList.classList.toggle('hidden'); wpnDdBtn.classList.toggle('open'); };
+document.addEventListener('click', () => { for (const [b, l] of [[wpnDdBtn, wpnDdList], [allyDdBtn, allyDdList], [enemyDdBtn, enemyDdList]]) { l?.classList.add('hidden'); b?.classList.remove('open'); } });
 wpnDdList.querySelectorAll('.dd-item').forEach(b => b.onclick = () => {
   settings.wpnMode = b.dataset.id; saveSettings();
   wpnLabel(settings.wpnMode); setMapMeta(); sfx.uiClick();
 });
-// bots-per-side: dropdown custom (mesma cara do de armas — o <select> nativo abria o
-// menu default do navegador, fora do estilo do resto do setup)
-const botsDdBtn = $('bots-dd-btn'), botsDdList = $('bots-dd-list'), botsDdLabel = $('bots-dd-label');
-const botsLabel = n => { if (botsDdLabel) botsDdLabel.innerHTML = `<span class="dd-cur"><span>${n} vs ${n}</span></span>`; };
-if (botsDdBtn && botsDdList && botsDdLabel) {
-  botsDdList.innerHTML = [2, 3, 4, 5, 6, 7, 8].map(n =>
-    `<button class="dd-item" data-n="${n}" type="button"><span>${n} vs ${n}</span></button>`).join('');
-  botsLabel(settings.bots || 4);
-  botsDdBtn.onclick = e => { e.stopPropagation(); wpnDdList.classList.add('hidden'); wpnDdBtn.classList.remove('open'); botsDdList.classList.toggle('hidden'); botsDdBtn.classList.toggle('open'); };
-  document.addEventListener('click', () => { botsDdList.classList.add('hidden'); botsDdBtn.classList.remove('open'); });
-  botsDdList.querySelectorAll('.dd-item').forEach(b => b.onclick = () => {
-    settings.bots = +b.dataset.n; saveSettings();
-    botsLabel(settings.bots); setMapMeta(); sfx.uiClick();
+/* FORMATO DA PARTIDA: dois dropdowns no lugar do "N vs N" único — bots do SEU lado
+   (0 = SOLO) e bots INIMIGOS. 1v4, solo vs 8, 5v5… o jogador monta. */
+const allyDdBtn = $('ally-dd-btn'), allyDdList = $('ally-dd-list'), allyDdLabel = $('ally-dd-label');
+const enemyDdBtn = $('enemy-dd-btn'), enemyDdList = $('enemy-dd-list'), enemyDdLabel = $('enemy-dd-label');
+const botsLabel = (n) => (n === 0 ? tr('SOLO') : `${n} BOT${n > 1 ? 'S' : ''}`);
+const ddFormato = (btn, list, labelEl, aplicar) => {
+  if (!(btn && list && labelEl)) return;
+  labelEl.innerHTML = `<span class="dd-cur"><span>${botsLabel(aplicar.get())}</span></span>`;
+  list.innerHTML = aplicar.range.map(n =>
+    `<button class="dd-item" data-n="${n}" type="button"><span>${botsLabel(n)}</span></button>`).join('');
+  btn.onclick = e => { e.stopPropagation(); FECHAR_DDS(btn); list.classList.toggle('hidden'); btn.classList.toggle('open'); };
+  document.addEventListener('click', () => { list.classList.add('hidden'); btn.classList.remove('open'); });
+  list.querySelectorAll('.dd-item').forEach(b => b.onclick = () => {
+    aplicar.set(+b.dataset.n); saveSettings();
+    labelEl.innerHTML = `<span class="dd-cur"><span>${botsLabel(aplicar.get())}</span></span>`;
+    setMapMeta(); syncMapOptions(); sfx.uiClick();
   });
-}
-const msWpnMode = $('ms-wpn-mode'), msPlayers = $('ms-players'), msRounds = $('ms-rounds');
+};
+ddFormato(allyDdBtn, allyDdList, allyDdLabel, {
+  range: [0, 1, 2, 3, 4, 5, 6, 7],
+  get: () => settings.allyBots, set: (n) => { settings.allyBots = n; },
+});
+ddFormato(enemyDdBtn, enemyDdList, enemyDdLabel, {
+  range: [1, 2, 3, 4, 5, 6, 7, 8],
+  get: () => settings.enemyBots, set: (n) => { settings.enemyBots = n; },
+});
+const msWpnMode = $('ms-wpn-mode'), msAlly = $('ms-ally-bots'), msEnemy = $('ms-enemy-bots'), msRounds = $('ms-rounds');
+/* ROUNDS 1–15 e FORMATO (bots por lado): options nascem AQUI, não no astro — o diff-select
+   já usa o mesmo padrão. O valor salvo manda; se veio de save antigo, o clamp do boot garante. */
+if (msRounds) for (let n = 1; n <= ROUNDS_CUSTOM_MAX; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = String(n); msRounds.appendChild(o); }
+if (msAlly) for (let n = 0; n <= 7; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msAlly.appendChild(o); }
+if (msEnemy) for (let n = 1; n <= 8; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msEnemy.appendChild(o); }
 function syncMapOptions() {
   if (msWpnMode) msWpnMode.value = settings.wpnMode || 'all';
-  if (msPlayers) msPlayers.value = String(settings.bots || 4);
+  if (msAlly) msAlly.value = String(settings.allyBots);
+  if (msEnemy) msEnemy.value = String(settings.enemyBots);
   if (msRounds) msRounds.value = String(matchRounds());
 }
 if (msWpnMode) msWpnMode.onchange = () => {
   settings.wpnMode = msWpnMode.value; saveSettings(); wpnLabel(settings.wpnMode); setMapMeta(); renderMapScreen(); sfx.uiClick();
 };
-if (msPlayers) msPlayers.onchange = () => {
-  settings.bots = +msPlayers.value; saveSettings(); botsLabel(settings.bots); setMapMeta(); renderMapScreen(); sfx.uiClick();
+if (msAlly) msAlly.onchange = () => {
+  settings.allyBots = Math.max(0, Math.min(7, msAlly.value | 0)); saveSettings();
+  allyDdLabel.innerHTML = `<span class="dd-cur"><span>${botsLabel(settings.allyBots)}</span></span>`;
+  setMapMeta(); renderMapScreen(); sfx.uiClick();
+};
+if (msEnemy) msEnemy.onchange = () => {
+  settings.enemyBots = Math.max(1, Math.min(8, msEnemy.value | 0)); saveSettings();
+  enemyDdLabel.innerHTML = `<span class="dd-cur"><span>${botsLabel(settings.enemyBots)}</span></span>`;
+  setMapMeta(); renderMapScreen(); sfx.uiClick();
 };
 if (msRounds) msRounds.onchange = () => {
-  settings[matchMode === 'ctf' ? 'ctfRounds' : 'rounds'] = +msRounds.value;
-  saveSettings(); setMapMeta(); renderMapScreen(); sfx.uiClick();
+  settings[matchMode === 'ctf' ? 'ctfRounds' : 'rounds'] = sanitizeRounds(msRounds.value) || (matchMode === 'ctf' ? 3 : 5);
+  saveSettings(); setMapMeta(); setMapMode(); renderMapScreen(); sfx.uiClick();   // setMapMode: o chip de ROUNDS do setup acompanha o select
 };
 const diffSel = $('diff-select');
+syncMapOptions();
 if (diffSel) {
   [['easy', 'FÁCIL'], ['normal', 'NORMAL'], ['hard', 'DIFÍCIL'], ['insane', 'INSANO']].forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; diffSel.appendChild(o); });
   diffSel.value = settings.difficulty || 'normal';

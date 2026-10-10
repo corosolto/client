@@ -16,8 +16,8 @@ const replaceOnce = (from, to) => {
   if (source.split(from).length !== 2) throw Error(`Alvo não único: ${from}`);
   source = source.replace(from, to);
 };
-if (mutant === 'sem-8x8') replaceOnce("quality === 'med' && Number(settings.bots || 4) >= 8", "quality === 'never' && Number(settings.bots || 4) >= 8");
-if (mutant === 'vaza-5x5') replaceOnce("Number(settings.bots || 4) >= 8", "Number(settings.bots || 4) >= 5");
+if (mutant === 'sem-8x8') replaceOnce("quality === 'med' && teamSize >= 8", "quality === 'never' && teamSize >= 8");
+if (mutant === 'vaza-5x5') replaceOnce("teamSize >= 8", "teamSize >= 5");
 if (mutant === 'desliga-integracao') replaceOnce("cast: renderProfile.foliageShadows", 'cast: true');
 
 try {

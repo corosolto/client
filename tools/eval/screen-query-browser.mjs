@@ -147,19 +147,21 @@ try {
   }));
   if (modeMap.mode !== 'MATA-MATA' || modeMap.cards !== registeredMaps || !modeMap.full || modeMap.rounds !== '5') throw new Error(`Mata-mata não entrou pelo catálogo: ${JSON.stringify({ registeredMaps, ...modeMap })}`);
   await page.selectOption('#ms-wpn-mode', 'awp');
-  await page.selectOption('#ms-players', '6');
+  await page.selectOption('#ms-ally-bots', '5');
+  await page.selectOption('#ms-enemy-bots', '6');
   await page.selectOption('#ms-rounds', '7');
   const dmOptions = await page.evaluate(() => ({
     stored: JSON.parse(localStorage.getItem('awpbr_settings') || '{}'),
     meta: document.getElementById('ms-meta')?.textContent,
     selected: [
       document.getElementById('ms-wpn-mode')?.value,
-      document.getElementById('ms-players')?.value,
+      document.getElementById('ms-ally-bots')?.value,
+      document.getElementById('ms-enemy-bots')?.value,
       document.getElementById('ms-rounds')?.value,
     ],
   }));
-  if (dmOptions.selected.join('/') !== 'awp/6/7' || dmOptions.stored.wpnMode !== 'awp'
-    || dmOptions.stored.bots !== 6 || dmOptions.stored.rounds !== 7 || !dmOptions.meta?.includes('7 ROUNDS')) {
+  if (dmOptions.selected.join('/') !== 'awp/5/6/7' || dmOptions.stored.wpnMode !== 'awp'
+    || dmOptions.stored.allyBots !== 5 || dmOptions.stored.enemyBots !== 6 || dmOptions.stored.rounds !== 7 || !dmOptions.meta?.includes('7 ROUNDS')) {
     throw new Error(`opções Mata-mata não persistiram: ${JSON.stringify(dmOptions)}`);
   }
   await page.screenshot({ path: `${OUT}/01_mata-mata-abre-mapas.png` });
@@ -226,7 +228,7 @@ try {
          que conferir que o elemento existe. */
       navigation: !!document.getElementById('ms-prev') && !!document.getElementById('ms-next')
         && document.querySelectorAll('#ms-dashes i').length === 0,
-      options: ['ms-wpn-mode', 'ms-players', 'ms-rounds'].every((id) => {
+      options: ['ms-wpn-mode', 'ms-ally-bots', 'ms-enemy-bots', 'ms-rounds'].every((id) => {
         const rect = document.getElementById(id)?.getBoundingClientRect();
         return rect && rect.width > 0 && rect.height > 0;
       }),
