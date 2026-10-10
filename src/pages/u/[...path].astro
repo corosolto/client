@@ -1,21 +1,8 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Community from '../../components/Community.astro';
 export const prerender=false;
-Astro.response.headers.set('cache-control','no-store');
-const parts=(Astro.params.path || '').split('/').filter(Boolean);
-const base=import.meta.env.PUBLIC_API_BASE || 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
-let profile:any=null,unavailable=false;
-if(/^[0-9a-f-]{36}$/i.test(parts[0] || '')) {
-  try {
-    const response=await fetch(`${base}/api/social?action=profile&id=${encodeURIComponent(parts[0])}`,{headers:{cookie:Astro.request.headers.get('cookie') || ''},signal:AbortSignal.timeout(8000)});
-    if(response.ok) profile=(await response.json()).profile;
-    else if(response.status!==404) unavailable=true;
-  }catch{unavailable=true;}
-}
-if(!profile) Astro.response.status=unavailable?503:404;
-const title=profile ? `${profile.nick} | CORO SOLTO` : 'Perfil indisponível | CORO SOLTO';
+Astro.response.headers.set("cache-control","no-store");
+const id=(Astro.params.path || "").split("/")[0];
+if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return Astro.redirect(`/?secao=comunidade&social=profile&perfil=${encodeURIComponent(id)}`,302);
+Astro.response.status=404;
 ---
-<Layout title={title} description={profile ? `${profile.nick} na turma da treta.` : 'Esse perfil está privado ou indisponível.'} noindex={!profile || profile.visibility!=='public'}>
-{profile ? <Community profileId={profile.id} /> : <section class="panel"><h1>{unavailable ? 'A resenha está fora do ar' : 'Perfil indisponível'}</h1><p>{unavailable ? 'Tente de novo em instantes.' : 'Esse perfil está privado ou não existe.'}</p><a href="/comunidade">VOLTAR À COMUNIDADE</a></section>}
-</Layout>
+<p>Perfil indisponível. <a href="/?secao=comunidade">Voltar ao jogo</a></p>

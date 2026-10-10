@@ -1,5 +1,6 @@
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
+import {initAccountEntry} from './account-entry.js';
 import { initTextures } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
@@ -357,7 +358,7 @@ function show(id) {
     const menu = document.getElementById('main-menu');
     menu.dataset.hubTab = 'jogar'; menu.dataset.hubNet = 'mp';
     document.getElementById('hub-play').hidden = false;
-    for (const pane of ['hub-ranking', 'hub-about', 'hub-feedback', 'hub-support']) document.getElementById(pane).hidden = true;
+    for (const pane of ['hub-ranking', 'hub-community', 'hub-about', 'hub-feedback', 'hub-support']) document.getElementById(pane).hidden = true;
     for (const tab of document.querySelectorAll('.hub-tabs [data-hub-tab]')) {
       const active = tab.dataset.hubTab === 'jogar';
       tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1;
@@ -381,7 +382,7 @@ function show(id) {
   if (id === 'main-menu') {
     if (HUB_ENABLED) { $('menu-setup').classList.add('open'); syncHomeCharacter(); }
     setTimeout(focusMenu, 40);   // teclado: ↑/↓ navegam assim que a home aparece
-    if (HUB_ENABLED && $('main-menu').dataset.hubNet === 'mp') {
+    if (HUB_ENABLED && $('main-menu').dataset.hubNet === 'mp' && $('main-menu').dataset.hubTab === 'jogar') {
       $('mp-panel').classList.remove('hidden');
       if (!hubMpRoute) void abrirMultiplayer();
     }
@@ -1594,7 +1595,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // até a pausa seguinte e o primeiro clique já confirmaria)
   /* `applyCinematicScreen` morreu no 495a6d889 e a chamada ficou: o `ReferenceError` dentro
      de `setPaused(true)` matava o M em partida (pilha no BUG-179, item 7). */
-  game.onPauseChange = () => resetConfirms();
+  game.onPauseChange = () => { resetConfirms(); if (!game.paused && $('main-menu').dataset.socialPaused === 'true') { delete $('main-menu').dataset.socialPaused; $('hub-social-resume').hidden = true; show(null); } };
   // chat de sala (#686): Y/U do game.js abrem o compositor; a troca de cena fecha e guarda o rascunho
   if (sessao?.chat) { game.onAbrirChat = (ch) => sessao.chat.abrir(ch); sessao.chat.aoTrocarJogo(game); }
   game.onToggleSpeech = () => {
@@ -2022,10 +2023,11 @@ if (HUB_ENABLED) {
   $('mp-quick').after($('mp-amigos'));   // nas duas abas (pública e privada), logo no topo
   $('mp-panel').querySelector('.mp-corpo').appendChild($('mp-panel').querySelector('.mp-criar'));
   const tabs = [...document.querySelectorAll('.hub-tabs [data-hub-tab]')];
-  const panes = { jogar: $('hub-play'), ranking: $('hub-ranking'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
+  const panes = { jogar: $('hub-play'), ranking: $('hub-ranking'), comunidade: $('hub-community'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
   const updateHubTip = () => {
     const tab = $('main-menu').dataset.hubTab;
     const tips = {
+      comunidade: 'Encontre sua turma, compare o placar e combine a próxima treta.',
       ranking: 'Acompanhe suas partidas e consulte a disponibilidade do placar global.',
       sobre: 'Conheça as facções, os mapas e as últimas novidades do jogo.',
       feedback: 'Descreva o bug ou a ideia; a mensagem chega à equipe do jogo.',
@@ -2036,6 +2038,7 @@ if (HUB_ENABLED) {
       : 'Clique nos cartões para ajustar modo, armas, bots e rounds antes de jogar.');
   };
   const setHubTab = (tab, updateRoute = true) => {
+    if ($('main-menu').dataset.socialPaused === 'true' && tab !== 'comunidade') return;
     $('main-menu').dataset.hubTab = tab;
     updateHubTip();
     if (tab !== 'jogar' && menuSetup.dataset.step === 'profile') setSetupStep('match');
@@ -2047,6 +2050,7 @@ if (HUB_ENABLED) {
     for (const [name, pane] of Object.entries(panes)) pane.hidden = name !== tab;
     mpPanel.classList.toggle('hidden', tab !== 'jogar' || $('main-menu').dataset.hubNet !== 'mp');
     if (tab === 'ranking') void renderHubRanking();
+    if (tab === 'comunidade') document.dispatchEvent(new CustomEvent('cs-community-open'));
     if (tab === 'jogar') {
       syncHomeCharacter();
       if ($('main-menu').dataset.hubNet === 'mp') void abrirMultiplayer();
@@ -2062,6 +2066,25 @@ if (HUB_ENABLED) {
       const next = tabs[(index + step + tabs.length) % tabs.length];
       next.focus(); next.click();
     };
+  });
+  $('btn-pause-community').onclick = () => {
+    if (!game?.paused) return;
+    sfx.uiClick();
+    $('main-menu').dataset.socialPaused = 'true';
+    $('hub-social-resume').hidden = false;
+    setHubTab('comunidade', false);
+    show('main-menu');
+    document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab: 'friends' } }));
+  };
+  $('hub-social-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
+  document.addEventListener('click', event => {
+    const anchor = event.target.closest('a[href]');
+    if (!anchor || anchor.target === '_blank' || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const url = new URL(anchor.href, location.href);
+    if (url.origin !== location.origin || url.pathname !== '/' || url.searchParams.get('secao') !== 'comunidade') return;
+    event.preventDefault();
+    setHubTab('comunidade', $('main-menu').dataset.socialPaused !== 'true');
+    document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab: url.searchParams.get('social') || 'profile' } }));
   });
   const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
@@ -4365,6 +4388,7 @@ if (HUB_ENABLED) {
 }
 window.__CS_MAIN_READY__ = true;
 window.__gameLaunch?.ready('boot');
+void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala')),onSession:auth=>{if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}renderPlayerPlate();}});
 if (inspectionScreen) {
   openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
 } else if (testMode && params.get('auto')) {

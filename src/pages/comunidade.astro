@@ -1,7 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Community from '../components/Community.astro';
 export const prerender=false;
-Astro.response.headers.set('cache-control','no-store');
+Astro.response.headers.set("cache-control","no-store");
+return Astro.redirect("/?secao=comunidade",302);
 ---
-<Layout title="Comunidade | CORO SOLTO" description="Encontre a turma, faça amigos e marque a próxima treta." noindex={true}><Community /></Layout>

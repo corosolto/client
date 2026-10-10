@@ -1,8 +1,9 @@
+import {mountAccountEntry,mountNewsletter,loadAccount,loadAuthOptions,acceptAccount,logoutAccount} from './account-entry.js';
 const root=document.getElementById('community');
 if(root) {
   const status=document.getElementById('social-status'),account=document.getElementById('social-account'),content=document.getElementById('social-content');
-  let loginProviders=[],passwordAvailable=false;
-  let auth=null,state=null,tab=root.dataset.tab || 'profile',profileId=root.dataset.profile || '',rankingScope='global',rankingQuery='',rankingOffset=0,rankingPeriod='all',rankingMode='all',loadVersion=0;
+  let loginConfig={providers:[]};
+  let auth=null,state=null,tab=root.dataset.tab || 'profile',profileId=root.dataset.profile || new URLSearchParams(location.search).get('perfil') || '',rankingScope='global',rankingQuery='',rankingOffset=0,rankingPeriod='all',rankingMode='all',loadVersion=0;
   const errors={account_hidden:'Esta conta está indisponível pela moderação.',session_expired:'Sua sessão expirou. Entre de novo para continuar.',social_unavailable:'A resenha está fora do ar. Tente de novo.',social_not_configured:'A comunidade aguarda configuração do servidor.',rate_limited:'Calma, fiscal da resenha. Tente de novo em um minuto.',blocked:'Esse jogador não pode interagir com você.',room_solo:'Essa sala é solo. Entre no multiplayer para chamar amigos.',room_full:'A sala lotou. Peça outro convite.',room_closed:'Essa sala já encerrou.',room_unavailable:'O servidor da sala não respondeu.',invite_expired:'O convite venceu. Peça outro.',invite_closed:'Esse convite já foi respondido.',join_room_first:'Entre numa sala do jogo antes de convidar.',provider_unavailable:'Esse login ainda não está habilitado.',account_conflict:'Esse nick ou progresso já pertence a outra conta.',guest_invalid:'Não foi possível comprovar o convidado. Seu progresso local continua salvo.',links_invalid:'Use links HTTPS das redes indicadas.',settings_invalid:'Revise a bio e as opções de privacidade.'};
   const el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n;};
   const message=(text)=>{status.textContent=text;};
@@ -23,39 +24,23 @@ if(root) {
   const date=(value)=>value?new Date(value).toLocaleString('pt-BR'):'Ainda sem atividade';
   function presenceText(p) {if(!p)return 'Presença privada';if(p.game)return `Jogando ${p.game.mode==='ctf'?'CAPTURA':'ABATE'} · ${p.game.map}`;return p.online?'Online na resenha':`Offline · ${date(p.last_active_at)}`;}
   const names={first_kill:'Primeiro abate confirmado',ten_kills:'Dez abates na conta',first_win:'Primeira vitória',one_hour:'Uma hora de arena ativa'};
-  async function refresh(){state=auth?.profile?await api('/api/social'):null;document.getElementById('social-unread').textContent=state?.notifications.filter(n=>!n.read_at).length || '';}
+  async function refresh(){state=auth?.profile?await api('/api/social'):null;const count=state?.notifications.filter(n=>!n.read_at).length || '';for(const id of ['social-unread','hub-social-unread'])document.getElementById(id).textContent=count;}
   async function action(name,target,data={}) {const out=await api('/api/social',{action:name,...(target?{target}:{}),...data});await refresh();await render();return out;}
-  function renderAccount(providers=loginProviders,passwordEnabled=passwordAvailable) {
+  function renderAccount() {
     account.replaceChildren();
     if(auth?.authenticated) {
       account.append(el('h2',auth.profile?`Salve, ${auth.profile.nick}.`:'Sua conta entrou. Falta o nome na camisa.'));
       if(!auth.profile) {
-        const f=el('form'),nick=input('',14);nick.required=true;nick.pattern='[A-Za-z0-9_.\\-]{2,14}';nick.autocomplete='nickname';
-        const submit=button('CRIAR PERFIL',async()=>{if(!f.reportValidity())return;const out=await api('/api/social-auth',{action:'onboard',nick:nick.value});auth.profile=out.profile;await refresh();renderAccount();await render();});
-        f.append(field('Nickname (2 a 14 letras, números, ponto, hífen ou _)',nick),submit);f.onsubmit=e=>{e.preventDefault();submit.click();};account.append(f);
+        mountAccountEntry(account,{auth,config:loginConfig,returnTo:'community',onAuthenticated:boot,message});
       } else {
         account.append(empty('Sua conta e seu progresso ficam salvos no servidor. O modo offline continua disponível.'));
         const buttons=el('div','','social-actions');buttons.append(button('SOLO VERIFICADO',async()=>{const out=await api('/api/social',{action:'solo',node:'br'});location.assign(out.join);}));
         buttons.append(link('SEU PERFIL',`/u/${auth.profile.id}/${encodeURIComponent(auth.profile.nick)}`));
-        buttons.append(button('SAIR DA CONTA',async()=>{await api('/api/social-auth',{action:'logout'});auth=null;state=null;localStorage.removeItem('awpbr_nick');localStorage.removeItem('cs_anon');localStorage.removeItem('awpbr_token');profileId='';await boot();}));account.append(buttons);
+        buttons.append(button('SAIR DA CONTA',async()=>{await logoutAccount(auth);auth=null;state=null;profileId='';await boot();}));account.append(buttons);
       }
       return;
     }
-    account.append(el('h2','A porta está aberta. Pode jogar como convidado.'));
-    account.append(empty('Entre para guardar o perfil, fazer amigos e receber convites. Links de redes são só links; login é outra conversa.'));
-    const buttons=el('div','','social-actions');
-    for(const provider of providers) buttons.append(button(`ENTRAR COM ${provider.toUpperCase()}`,async()=> {
-      let guest;const uid=localStorage.getItem('cs_anon'),token=localStorage.getItem('awpbr_token'),nick=localStorage.getItem('awpbr_nick');
-      if(uid && token && nick) guest={uid,token};
-      try{const out=await api('/api/social-auth',{action:'start',provider,...(guest?{guest}:{})});location.assign(out.url);}catch(e){if(e.message!=='guest_invalid')throw e;account.append(empty('A prova deste convidado venceu. O progresso local continua salvo. Você pode entrar na conta existente.'),button('ENTRAR SEM VINCULAR O CONVIDADO',async()=>{const out=await api('/api/social-auth',{action:'start',provider});location.assign(out.url);}));throw e;}
-    }));
-    if(passwordEnabled) {
-      const form=el('form'),email=input('',254,'email'),password=input('',256,'password');email.autocomplete='username';password.autocomplete='current-password';email.required=true;password.required=true;
-      const login=button('ENTRAR NA CONTA',async()=>{if(!form.reportValidity())return;await api('/api/social-auth',{action:'password',email:email.value,password:password.value});password.value='';await boot();});
-      form.append(field('E-mail',email),field('Senha',password),login);form.onsubmit=e=>{e.preventDefault();login.click();};account.append(form);
-    }
-    account.append(buttons,link('JOGAR COMO CONVIDADO','/'));
-    if(!providers.length && !passwordEnabled)account.append(empty('Login social ainda não habilitado neste ambiente. O jogo como convidado continua disponível.'));
+    mountAccountEntry(account,{auth,config:loginConfig,returnTo:'community',onGuest:()=>document.querySelector('[data-hub-tab=jogar]')?.click(),onAuthenticated:boot,message});
   }
   async function showProfile(id,version) {
     const {profile:p}=await api('/api/social?action=profile'+(id?`&id=${encodeURIComponent(id)}`:''));
@@ -109,7 +94,7 @@ if(root) {
     for(const inv of state.invites){const c=card(inv.nick);c.append(empty(`${inv.node.toUpperCase()}-${inv.code} · vence ${date(inv.expires_at)}`));
       if(inv.direction==='incoming')c.append(button('ACEITAR E ENTRAR',async()=>{const result=await action('invite_accept',null,{id:inv.id});if(result.join)location.assign(result.join);}),button('RECUSAR',()=>action('invite_decline',null,{id:inv.id})));
       else c.append(empty('Aguardando resposta.'),button('CANCELAR CONVITE',()=>action('invite_cancel',null,{id:inv.id})));content.append(c);}
-    if(!state.invites.length)content.append(empty('Nenhum convite pendente. Para chamar alguém, entre numa sala e abra a comunidade em outra aba.'));
+    if(!state.invites.length)content.append(empty('Nenhum convite pendente. Entre numa sala para chamar a turma; os convites usam essa mesma sala.'));
   }
   async function showRanking(version) {
     const controls=el('div','','social-actions');for(const [scope,label] of [['global','GLOBAL'],['friends','ENTRE AMIGOS']])controls.append(button(label,async()=>{rankingScope=scope;rankingOffset=0;await render();}));content.append(controls,searchForm(async q=>{rankingQuery=q;rankingOffset=0;await render();},rankingQuery));
@@ -129,11 +114,16 @@ if(root) {
     const urls=el('textarea');urls.value=(p.socials || []).map(s=>s.url).join('\n');urls.maxLength=1100;form.append(field('Links opcionais, um por linha: Instagram, TikTok, X, GitHub, YouTube ou Twitch',urls));
     const save=button('SALVAR PERFIL',async()=>{const list=urls.value.split('\n').map(s=>s.trim()).filter(Boolean).map(url=>({url}));await action('settings',null,{bio:bio.value,profile:selections.profile.value,presence:selections.presence.value,activity:selections.activity.value,links:list});});form.append(save);form.onsubmit=e=>{e.preventDefault();save.click();};c.append(form);
     const avatar=input('',undefined,'file');avatar.accept='image/png,image/jpeg,image/webp';c.append(field('Avatar (PNG, JPEG ou WebP, até 3 MB)',avatar),button('ENVIAR FOTO',async()=>{const file=avatar.files[0];if(!file || !['image/png','image/jpeg','image/webp'].includes(file.type) || file.size>3000000)throw new Error('avatar_invalid');const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});await api('/api/avatar',{image});await refresh();await render();}));
+    const newsletter=el('section','','social-newsletter');newsletter.append(el('h3','Novidades por e-mail'));const control=el('div');mountNewsletter(control,auth,message);newsletter.append(control);c.append(newsletter);
     c.append(el('h3','Jogadores bloqueados'));for(const b of state.blocks)c.append(empty(b.nick),button('DESBLOQUEAR',()=>action('unblock',b.id)));if(!state.blocks.length)c.append(empty('Nenhum jogador bloqueado.'));content.append(c);
   }
   async function render(){const version=++loadVersion;content.replaceChildren();content.setAttribute('aria-busy','true');for(const b of document.querySelectorAll('.social-tabs button'))b.setAttribute('aria-current',String(b.dataset.tab===tab));try{if(tab==='profile'){if(profileId || auth?.profile)await showProfile(profileId || auth.profile.id,version);else content.append(empty('Entre na conta para criar seu perfil.'));}else if(tab==='friends')showFriends();else if(tab==='ranking')await showRanking(version);else if(tab==='notifications')showNotifications();else if(tab==='feed')showFeed();else if(tab==='settings')showSettings();}catch(e){message(errors[e.message] || 'Perfil privado ou indisponível.');content.append(empty('Não foi possível carregar esta tela.'),button('TENTAR DE NOVO',render));}finally{if(version===loadVersion)content.setAttribute('aria-busy','false');}}
-  async function boot(){message('Carregando a turma…');try{auth=await api('/api/social-auth');const config=await api('/api/social-auth?action=providers');loginProviders=config.providers;passwordAvailable=config.password;if(auth?.profile){localStorage.setItem('awpbr_nick',auth.profile.nick);localStorage.removeItem('awpbr_token');await api('/api/social',{action:'presence'});}await refresh();renderAccount(config.providers,config.password);await render();message('');}catch(e){message(errors[e.message] || 'A comunidade não respondeu.');renderAccount();content.replaceChildren(button('TENTAR DE NOVO',boot));}}
+  async function boot(){message('Carregando a turma…');try{[auth,loginConfig]=await Promise.all([loadAccount(),loadAuthOptions()]);if(auth?.profile){acceptAccount(auth);await api('/api/social',{action:'presence'});}await refresh();renderAccount();await render();message('');}catch(e){message(errors[e.message] || 'A comunidade não respondeu.');renderAccount();content.replaceChildren(button('TENTAR DE NOVO',boot));}}
   for(const b of document.querySelectorAll('.social-tabs button'))b.onclick=()=>{tab=b.dataset.tab;if(tab==='profile')profileId=root.dataset.profile || '';message('');void render();};
   setInterval(async()=>{if(document.hidden || !auth?.profile)return;try{await api('/api/social',{action:'presence'});await refresh();if(['notifications','feed'].includes(tab) && !document.activeElement?.closest('form'))await render();}catch(e){message(errors[e.message] || 'A atualização da comunidade falhou.');}},30000);
+  const query=new URLSearchParams(location.search);if(['profile','friends','ranking','notifications','feed','settings'].includes(query.get('social')))tab=query.get('social');
+  root.addEventListener('click',event=>{const a=event.target.closest('a');if(!a)return;const url=new URL(a.href,location.href),match=url.pathname.match(/^\/u\/([0-9a-f-]{36})(?:\/|$)/i);if(url.origin!==location.origin || !match)return;event.preventDefault();profileId=match[1];tab='profile';void render();});
+  document.addEventListener('cs-account-change',event=>{auth=event.detail;void refresh().then(()=>{renderAccount();return render();}).catch(e=>message(errors[e.message] || 'Sua sessão está indisponível.'));});
+  document.addEventListener('cs-community-open',event=>{if(event.detail?.tab)tab=event.detail.tab;void boot();});
   void boot();
 }

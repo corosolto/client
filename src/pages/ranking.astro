@@ -1,10 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Community from '../components/Community.astro';
-import {RANKING_ON} from '../lib/site';
 export const prerender=false;
-Astro.response.headers.set('cache-control','no-store');
+Astro.response.headers.set("cache-control","no-store");
+return Astro.redirect("/?secao=comunidade&social=ranking",302);
 ---
-<Layout title="Ranking | CORO SOLTO" description="Compare pontos verificados e veja a disputa entre amigos." noindex={!RANKING_ON}>
-{RANKING_ON ? <Community tab="ranking" /> : <section class="panel"><h1>Ranking indisponível por enquanto</h1><p>Seus resultados locais continuam neste navegador. A comunidade já tem espaço para reunir a turma.</p><a href="/comunidade">ABRIR COMUNIDADE</a></section>}
-</Layout>
