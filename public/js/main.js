@@ -31,7 +31,7 @@ import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
+import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, ladoOnline, transitionSlot } from './net.js';
 import { montarChatSala } from './chat-painel.js';
 import { makeNetcode } from './netgame.js';
 
@@ -1452,6 +1452,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // "gire o celular" (CSS) cobre a tela até deitar.
   // Offline a identidade visual é o próprio lado (E Esquerda, B Direita) e o adversário é o
   // lado oposto; online a facção ainda vem da sala do servidor.
+  if (sessao) team = ladoOnline(team, sessao.net);
   const charDef = CHARACTERS.find(c => c.id === charId) || {};
   if (!online && !podeNoLado(charDef, team)) team = ladosDe(charDef)[0];
   let faction = charDef.team || team || 'E';
