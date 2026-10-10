@@ -17,6 +17,7 @@ permissions:
 jobs:
   limpar:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: cache da PR que fechou
         if: github.event_name == 'pull_request'
