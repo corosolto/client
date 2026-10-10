@@ -1025,10 +1025,8 @@ function openHubRoster(updateRoute = true) {
       filters.appendChild(button);
     }
     for (const def of doLado.filter((c) => !hubRosterCat || c.team === hubRosterCat)) {
-      /* CÉLULA = card do personagem + chip de ESCALAÇÃO. O card escolhe SEU personagem
-         (como sempre); o chip ＋ trava quem entra na partida. PAPEL do escalado: se o
-         personagem pode jogar no SEU lado atual → aliado; senão → inimigo. Decisão final
-         é na montagem (pickMatchRoster re-filtra por lado). */
+      /* Célula = card (escolhe SEU personagem, como sempre) + chip ＋ (trava quem entra).
+         Papel do escalado: pode no seu lado = aliado, senão inimigo; montagem re-filtra. */
       const cell = document.createElement('div'); cell.className = 'hub-roster-cell';
       const button = document.createElement('button'); button.type = 'button';
       button.setAttribute('aria-pressed', String(def.id === currentChar));

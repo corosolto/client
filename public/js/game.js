@@ -668,16 +668,12 @@ const _rosterPool = (pool, want, quem, fallback, pinned = []) => {
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
 /* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
 const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
-/* Pin escalado pelo jogador: só vale se o personagem PODE jogar no lado pedido e não está
-   em uso (o próprio jogador conta como usado). Pin de facção trocada é descartado em
-   silêncio — escalação velha de outro lado não vira corpo no time errado. */
+/* Pin escalado pelo jogador: só vale se pode jogar no lado pedido e não está em uso. */
 const _pinnedDefs = (ids, doLado, usados) => (ids || [])
   .map((id) => CHARACTERS.find((c) => c.id === id))
   .filter((c) => c && doLado(c) && !usados.has(c.id));
-/* `teamSize` NÚMERO = times iguais, N por lado (o contrato de sempre, usado pelo arnês e
-   pelas réguas). Objeto = FORMATO LIVRE: `allies` bots ao lado do jogador (SEM contar ele)
-   e `enemies` bots adversários — 1v4 é { allies: 0, enemies: 4 }, 3v5 é { allies: 2,
-   enemies: 5 }. `pinned` = { ally: [ids], enemy: [ids] } da tela de escalação. */
+/* teamSize número = N por lado (contrato do arnês); objeto {allies, enemies} = formato
+   livre SEM contar o jogador (1v4 = {allies:0, enemies:4}). `pinned` = escalação. */
 export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId, dedicado = false, pinned = null) {
   const want = typeof teamSize === 'number'
     ? { ally: Math.max(0, teamSize - (dedicado ? 0 : 1)), enemy: teamSize }
@@ -875,9 +871,8 @@ export class Game {
 
     // ---- bots ----
     this.bots = [];
-    // Custom match: tamanho do time vem do FORMATO escolhido (allyBots/enemyBots do menu,
-    // podendo ser assimétrico — 1v4). Número único (settings.bots legado / arnês) = N×N.
-    // Dificuldade = sorteio por bot (variedade) × settings.difficulty do menu.
+    // Formato do menu (allyBots/enemyBots, pode ser 1v4); settings.bots legado/arnês = N×N.
+    // Dificuldade: sorteio por bot (variedade) × settings.difficulty do menu.
     const teamSize = Math.max(1, Math.min(8,
       Math.max(1 + (this.settings.allyBots ?? (this.settings.bots || 4) - 1), this.settings.enemyBots ?? (this.settings.bots || 4))));
     // Alvo de abates do round, escalado pelo tamanho do time (4v4 -> 12). MATCH POINT a 2 do fim.
