@@ -53,10 +53,13 @@ export function origemDoJogador(request, clientAddress) {
   return { ip: clientAddress || '', geo, borda: 'vercel' };
 }
 
-export async function proxyApiRequest(request, target, clientAddress, fetchFn = fetch, { segredo = '' } = {}) {
+export async function proxyApiRequest(request, target, clientAddress, fetchFn = fetch, { segredo = '', session = false } = {}) {
   const upstreamHeaders = new Headers();
   const contentType = request.headers.get('content-type');
   if (contentType) upstreamHeaders.set('content-type', contentType);
+  if (session) for (const name of ['cookie','origin']) {
+    const value=request.headers.get(name); if(value) upstreamHeaders.set(name,value);
+  }
   // Geo e IP do jogador: o backend só confia neles com o segredo (api/_lib/borda.mjs, backend#22).
   // Só estes; cookie/authorization e o resto do navegador continuam de fora.
   const origem = origemDoJogador(request, clientAddress);
@@ -68,18 +71,24 @@ export async function proxyApiRequest(request, target, clientAddress, fetchFn = 
   if (segredo) upstreamHeaders.set('x-csb-proxy-auth', segredo);
 
   const temCorpo = request.method !== 'GET' && request.method !== 'HEAD';
-  const upstream = await fetchFn(target, {
+  let upstream;
+  try {upstream = await fetchFn(target, {
     method: request.method,
     headers: upstreamHeaders,
     body: temCorpo ? await request.arrayBuffer() : undefined,
     redirect: 'manual',
     signal: AbortSignal.timeout(TEMPO_MAXIMO_MS),
-  });
+  });} catch {return new Response(JSON.stringify({error:'upstream_unavailable'}),{status:503,headers:{'content-type':'application/json','cache-control':'no-store'}});}
 
   const responseHeaders = new Headers();
   for (const nome of ['content-type', 'cache-control', 'etag', 'last-modified']) {
     const valor = upstream.headers.get(nome);
     if (valor) responseHeaders.set(nome, valor);
+  }
+  if (session) {
+    for (const value of upstream.headers.getSetCookie()) responseHeaders.append('set-cookie',value);
+    const redirect=upstream.headers.get('location');
+    if(redirect && redirect.startsWith('/') && !redirect.startsWith('//')) responseHeaders.set('location',redirect);
   }
   return new Response(upstream.body, {
     status: upstream.status,

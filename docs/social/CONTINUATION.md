@@ -21,10 +21,20 @@ Preparação: AGENTS, handoffs, segurança, main e mudanças alheias inspecionad
 Sem credenciais inventadas. Mostrar provedores apenas se habilitados realmente. Sem social modal no combate. Sem estatísticas fictícias, ranking flag novo, botões de roadmap ou dados privados em respostas públicas.
 
 ## Validações / artefatos / commits
-Ainda sem implementação ou testes de aceitação. Régua independente: `/tmp/corosolto-social-acceptance.md` (será consolidada). Este documento é o ledger designado.
+Implementação em andamento nas duas worktrees exclusivas; não entregue nem aprovada visualmente. Régua independente: `/tmp/corosolto-social-acceptance.md` (será consolidada). Este documento é o ledger designado.
 
 ## Pendências
 Auditar main backend, schema privado e infraestrutura local disponível; implementar vínculo seguro e migration incremental antes da UI; testar baseline RED; validar toda fatia vertical.
 
 ## Próximo passo
 Inspecionar main do backend na worktree exclusiva e contratos de sessão, sala, persistência e ranking. Preparar banco local isolado, sem tocar Supabase produção.
+
+## Milestone: base local e integração em andamento
+Backend base d52ff5f; commits d2d904b, 326f5b8 (migrations 040-042), 67f3c3e (sessão/API e teste real). Supabase local isolado em /tmp/corosolto-social-supabase: API 54321, DB 54322; API backend 8091, Astro localhost:4391, nó game 8791. Arquivos .env.social-local ignorados, chmod 600; logs só /tmp. Nenhuma infraestrutura pública alterada.
+13 testes reais de Auth/API/Postgres passaram: três sessões, amizade cruzada concorrente, IDOR settings, privacidade, expiração de presença, bloqueio, denúncia, CSRF e logout. Régua independente em ACCEPTANCE.md com baseline RED de OAuth/privacidade. UI real em /comunidade e /u/UUID/nick; rankings e cookie/tickets reaproveitam APIs existentes. Código ainda sem aceite visual final.
+Auditoria encontrou bypass em badge/sitemap e URL incorreta de sala; correções em andamento com falha fechada e sem cache de dados revogáveis. Migrations sociais ainda inéditas permitem ajustes antes do rollout. Ranking usa somente rounds verificados do nó, não stats enviados pelo navegador. Offline legado fica preservado e não promovido; entrega SP verificável segue pendente.
+Próximo passo concreto: validar convite com dois sockets reais no mesmo nó, fechar deduplicação de horas em múltiplas abas, sessões e uploads, capturar desktop/mobile e executar checks/revisão independente. Ainda pendentes configuração OAuth real, rollout coordenado, moderação operacional, PRs. Sem merge/deploy autorizados.
+
+## Milestone: UI com duas sessões e gates
+Chrome localhost e 127.0.0.1 usam cookies independentes: DonaResenha e ReiDaTreta entraram em Auth local, criaram perfis, A buscou/visitou B, pedido/aceite de amizade real e ranking de amigos mostra ambos. Refresh preservou sessão. Capturas artifacts/social/friends-desktop.jpg e ranking-friends.jpg (não versionadas, sem segredos). Browser indisponível após timeout ao abrir jogo; nenhum aceite visual de gameplay/mobile ainda.
+Build completo e syntax passaram. check:deploy inicialmente identificou docs gerados, novas rotas e regex de proxy; docs regenerados, listas sincronizadas e segredo de proxy revalidado. Segunda execução em andamento. API27 e vertical sockets verdes; review independente de privacidade corrigida. Próximo passo: concluir provas gameplay/solo/horas, mobile e review, consolidar configuração e roadmap antes de PRs. Não há merge/deploy.
