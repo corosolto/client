@@ -58,7 +58,7 @@ node --env-file=/caminho/privado/moderacao.env scripts/moderate-social.mjs hide 
 node --env-file=/caminho/privado/moderacao.env scripts/moderate-social.mjs restore --target=UUID --operator=LABEL --note="Motivo da decisão"
 ```
 
-`dismissed` arquiva denúncia sem ocultar perfil. `hide` revoga sessões/presença e cancela convites; restore é reversível. Decisões são auditadas. O CLI recusa arquivo de saída existente/symlink e cria arquivo 0600; não versionar a fila. Não há endpoint de moderação público. Atribuir operador e prazo de triagem é pendência operacional.
+`dismissed` arquiva denúncia sem ocultar perfil. `hide` revoga sessões/presença e cancela convites; restore é reversível. Nova sessão e cada leitura de sessão também recusam conta oculta pelo auth_user canônico, inclusive após re-login. Decisões são auditadas. O CLI recusa arquivo de saída existente/symlink e cria arquivo 0600; não versionar a fila. Não há endpoint de moderação público. Atribuir operador e prazo de triagem é pendência operacional.
 
 ## Roadmap
 
