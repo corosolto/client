@@ -1414,20 +1414,18 @@ function runNode(script, env = {}, args = [], timeout = 600000) {
 // então dava VERDE em arma dentro de bolsão fechado. Hoje (a) é CONECTIVIDADE REAL:
 // flood-fill de andabilidade (0,25 m, corpo 0,38, degrau ≤ 0,30) a partir dos spawns dos
 // dois times, e a arma passa com célula alcançada a ≤ 1,0 m. Estritamente mais forte.
-// O arnês é REGERADO aqui (custa ~4 s, sem browser): pickup_check.json não é versionado,
+// O arnês é REGERADO aqui (custa ~4 s, sem browser); o pickup_check.json versionado sai antes (#652),
 // e num checkout limpo a alternativa seria `skip` — portão verde por AUSÊNCIA de dado,
 // que é o mesmo modo de falha que deixou VM1-VM6 puladas por rodadas inteiras.
 {
   if (!existsSync(join(HERE, 'pickup-check.mjs'))) {
     skip('VM14', 'todo pickup é alcançável', 'pickup-check.mjs ausente');
   } else {
-    const out = runNode('pickup-check.mjs');
     const p = join(ROOT, 'tools', 'eval', 'pickup_check.json');
-    if (!existsSync(p)) {
-      skip('VM14', 'todo pickup é alcançável',
-        'pickup-check.mjs não gerou o JSON: ' + (out.split('__ERRO__')[1] || '').slice(0, 120));
+    const { data: j, error } = freshReport(p, () => runNode('pickup-check.mjs'));
+    if (error) {
+      skip('VM14', 'todo pickup é alcançável', 'pickup-check.mjs: ' + error);
     } else {
-      const j = JSON.parse(readFileSync(p, 'utf8'));
       const mapas = j.mapas || [];
       const erros = mapas.filter((m) => m.err);
       const ruim = (k) => mapas.filter((m) => (m[k] || 0) > 0).map((m) => `${m.map} ${m[k]}`);
@@ -1540,14 +1538,13 @@ function runNode(script, env = {}, args = [], timeout = 600000) {
    (glbchars.js:296, BoxGeometry(0.26, 0.30, 0.26)) e 0,98 de IoU é o mesmo patamar que a
    PX2 já usa para silhueta de arma. Nenhum deles é palpite novo. */
 {
-  const saida = runNode('char-probe.mjs', {}, ['--sem-c4']);
   const arq = join(ROOT, 'tools', 'eval', 'char_probe.json');
-  if (!existsSync(arq)) {
+  const { data: j, error } = freshReport(arq, () => runNode('char-probe.mjs', {}, ['--sem-c4']));
+  if (error) {
     for (const id of ['CHR1', 'CHR2', 'CHR3', 'CHR5', 'CHR6']) {
-      skip(id, 'régua de personagem', 'char-probe.mjs não gerou o JSON: ' + (saida.split('__ERRO__')[1] || '').slice(0, 120));
+      skip(id, 'régua de personagem', 'char-probe.mjs: ' + error);
     }
   } else {
-    const j = JSON.parse(readFileSync(arq, 'utf8'));
     const P = j.personagens || [];
     const ref = j.refHumano || {};
     const fonteGLB = P.filter((c) => c.fonte === 'glb').length;
@@ -2143,12 +2140,11 @@ function runNode(script, env = {}, args = [], timeout = 600000) {
   if (!existsSync(join(HERE, 'mat-check.mjs'))) {
     skip('MAT*', 'material/luz/superfície', 'mat-check.mjs ausente');
   } else {
-    const out = runNode('mat-check.mjs');
     const pj = join(ROOT, 'tools', 'eval', 'mat_check.json');
-    if (!existsSync(pj)) {
-      skip('MAT*', 'material/luz/superfície', 'mat-check.mjs não gerou o JSON: ' + (out.split('__ERRO__')[1] || out).slice(0, 160));
+    const { data: j, error } = freshReport(pj, () => runNode('mat-check.mjs'));
+    if (error) {
+      skip('MAT*', 'material/luz/superfície', 'mat-check.mjs: ' + error);
     } else {
-      const j = JSON.parse(readFileSync(pj, 'utf8'));
       const C = j.caminhos || {};
       const mapas = (j.maps || []).filter((m) => !m.err);
 
