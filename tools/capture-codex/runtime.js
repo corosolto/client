@@ -65,6 +65,7 @@
     document.body.append(panel);
     for (const type of ['mousedown','mouseup','mousemove']) panel.addEventListener(type, event => event.stopPropagation());
     const status = panel.querySelector('#capture-status'), duration = panel.querySelector('#capture-duration');
+    panel.insertAdjacentHTML('beforeend', '<label>Movimento da tomada <select id="capture-take-move"><option value="w">Avançar W</option><option value="w,c">Avançar agachado W+C</option><option value="a">Esquerda A</option><option value="d">Direita D</option><option value="s">Recuar S</option></select></label><button id="capture-take-action">Gravar e mover juntos</button>');
     const report = (message) => { status.dataset.message = message; status.textContent = message; };
     panel.querySelector('#capture-arm').onclick = async () => {
       const current = window.__game;
@@ -163,6 +164,35 @@
       } catch (error) { saving = false; report('Captura falhou: ' + error.message); }
     };
     panel.querySelector('#capture-stop').onclick = () => { if (recorder?.state === 'recording') recorder.stop(); };
+    const takeAction = panel.querySelector('#capture-take-action');
+    takeAction.onclick = async () => {
+      if (saving || recorder?.state === 'recording') return;
+      takeAction.disabled = true;
+      try {
+        await panel.querySelector('#capture-arm').onclick();
+        if (!valid() || !game.player.alive || !game._acceptInput()) {
+          game?.setPaused(true);
+          report('Tomada cancelada: partida ou jogador indisponível.');
+          return;
+        }
+        await panel.querySelector('#capture-start').onclick();
+        if (recorder?.state !== 'recording') {
+          release();
+          if (valid()) game.setPaused(true);
+          return;
+        }
+        const movement = panel.querySelector('#capture-take-move').value;
+        panel.querySelector(`button[data-keys="${movement}"]`).click();
+        if (!busy) recorder.stop();
+      } catch (error) {
+        release();
+        if (valid()) game.setPaused(true);
+        if (recorder?.state === 'recording') recorder.stop();
+        report('Tomada cancelada: ' + error.message);
+      } finally {
+        takeAction.disabled = false;
+      }
+    };
     setInterval(() => {
       if (!game || !origin) return;
       if (busy && (!valid() || !game.player.alive || !game._acceptInput())) release();
