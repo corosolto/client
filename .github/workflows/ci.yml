@@ -125,6 +125,11 @@ jobs:
       - name: Astro build
         run: npm run build
 
+      - name: SEO e links publicados (com mutações)
+        run: |
+          node tools/eval/seo-check.mjs
+          node tools/eval/seo-check.mjs --mutate
+
       # PORTÃO DO SITE. `astro build` verde não prova nada sobre as rotas:
       # /ranking pode dar 500, /sitemap.xml pode sair vazio e o build passa em
       # todos os casos. Roda DEPOIS do build porque o arnês sobe o `astro dev`,
