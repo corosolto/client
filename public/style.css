@@ -227,7 +227,7 @@ html[data-home-ui="hub"] #menu-setup .map-arrows{left:12px;right:12px}
 html[data-home-ui="hub"] #menu-setup .map-arrows .map-arrow{width:48px;height:64px;font:400 42px/1 'Bebas Neue',Impact,sans-serif;background:#090704eb;border-color:#b4d92e;color:#d9ef68}
 html[data-home-ui="hub"] #menu-setup #map-preview,html[data-home-ui="hub"] #menu-setup #map-thumb{width:100%;height:100%;aspect-ratio:auto;object-fit:cover}
 html[data-home-ui="hub"] #menu-setup .match-opts{display:contents}
-html[data-home-ui="hub"] #menu-setup .hub-match-chips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+html[data-home-ui="hub"] #menu-setup .hub-match-chips{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 html[data-home-ui="hub"] #menu-setup .hub-match-chips>button{min-width:0;min-height:55px;padding:8px 9px;text-align:left;border:1px solid #34302b;background:#0d0e11e0;color:#d3d3d1;cursor:pointer;overflow:hidden}
 html[data-home-ui="hub"] #menu-setup .hub-match-chips button[aria-pressed="true"]{border-color:#f3b958;background:linear-gradient(135deg,#ffd95e,#f3b958);color:#131313}
 html[data-home-ui="hub"] #menu-setup .hub-match-chips small{display:block;margin-top:5px;font:700 9px/1 var(--font);letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -312,6 +312,19 @@ html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-cri
 .hub-roster-lados button[aria-selected="true"]{border-color:var(--lado);color:#fff;background:color-mix(in srgb,var(--lado) 22%,#0d0e11)}
 .hub-roster-lados button:focus-visible{outline:2px solid var(--lado);outline-offset:2px}
 .hub-roster-selected{margin:16px 0 0;color:#a5a5a3;font:600 14px/1.3 var(--font)}
+/* ESCALAÇÃO: célula = card do personagem + chip ＋ no canto. O chip é o MESMO botão do
+   card em base (borda/fundo), só que absoluto, pequeno e com a cor do estado. */
+.hub-roster-cell{position:relative}
+.hub-roster-pin{position:absolute;right:6px;bottom:32px;z-index:2;padding:4px 7px !important;
+  font:700 10px/1 var(--font);letter-spacing:.5px;color:#131313;background:#b4d92e;border:0;cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.hub-roster-pin[aria-pressed="false"]{background:#101014;color:#b4d92e;border:1px solid #4b5531}
+.hub-roster-pin:hover{filter:brightness(1.15)}
+.hub-roster-escalacao-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hub-roster-escalacao-row p{margin:8px 0 0;color:#a5a5a3;font:600 13px/1.4 var(--font);flex:1;min-width:0}
+.hub-roster-escalacao-row button{flex:none;padding:8px 12px;border:1px solid #504c44;background:#0d0e11e0;
+  color:#d3d3d1;font:700 11px/1 var(--font);letter-spacing:1px;cursor:pointer}
+.hub-roster-escalacao-row button:hover{border-color:#b4d92e;color:#fff}
 html[data-home-ui="hub"] #main-menu:has(#menu-setup[data-step="profile"]) .hub-character,
 html[data-home-ui="hub"] #main-menu:has(#menu-setup[data-step="profile"]) .hub-character-card{display:none}
 
@@ -644,7 +657,7 @@ html[data-ui="legacy"] .btn-cta:hover,html[data-ui="legacy"] .btn-cta:focus-visi
 .dd-arrow{font-size:var(--fs-100);color:var(--ink-300)}
 .dd-list{position:absolute;left:0;right:0;z-index:30;background:var(--bg-700);border:1px solid var(--line-2);
   overflow:hidden;top:calc(100% + 4px);box-shadow:var(--sh-1)}
-#wpn-dd .dd-list,#bots-dd .dd-list{top:auto;bottom:calc(100% + 4px)}   /* baixo na tela: abre pra cima */
+#wpn-dd .dd-list,#ally-dd .dd-list,#enemy-dd .dd-list{top:auto;bottom:calc(100% + 4px)}   /* baixo na tela: abre pra cima */
 .dd-item{display:flex;align-items:center;gap:10px;width:100%;cursor:pointer;text-align:left;
   font-family:var(--mono);font-size:var(--fs-200);letter-spacing:var(--tr-1);color:var(--ink-200);
   background:transparent;border:0;padding:10px 12px;transition:background var(--t) var(--ease),color var(--t) var(--ease)}

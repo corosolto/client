@@ -20,11 +20,17 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 // `?amzfoliageshadow=1` restaura o controle completo no avaliador por processo.
 export function resolveAmazoniaRenderProfile(settings = {}, query = QP) {
   const quality = settings.quality || 'med';
-  const crowdedMedium = quality === 'med' && Number(settings.bots || 4) >= 8;
+  /* Formato da partida pode ser assimétrico (allyBots/enemyBots): o que dimensiona a
+     mata é o MAIOR time em campo. `bots` continua como fallback do arnês/testes. */
+  const teamSize = Math.max(1, Math.min(8, Math.max(
+    1 + (settings.allyBots ?? (settings.bots || 4) - 1),
+    settings.enemyBots ?? (settings.bots || 4),
+  )));
+  const crowdedMedium = quality === 'med' && teamSize >= 8;
   const forceFoliageShadows = query?.get?.('amzfoliageshadow') === '1';
   return Object.freeze({
     quality,
-    teamSize: Number(settings.bots || 4),
+    teamSize,
     crowdedMedium,
     foliageShadows: quality !== 'low' && (!crowdedMedium || forceFoliageShadows),
     foliageCutMeters: crowdedMedium && !forceFoliageShadows ? { trees:16, palms:12, grass:8 } : null,

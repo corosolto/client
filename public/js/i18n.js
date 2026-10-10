@@ -354,7 +354,7 @@ const DICT = {
   'ENTRAR NESSE CORO': 'GET THIS BOOT ON',
   'SÓ PISTOLAS': 'PISTOLS ONLY', 'SÓ FACA': 'KNIFE ONLY', 'SÓ AWP': 'AWP ONLY',
   'VOCÊ': 'YOU', 'RÁDIO': 'RADIO', 'Respawn em': 'Respawn in',   // tradução DO DONO (06/08) — não 'join this crew'
-  'KILLS': 'KILLS', 'MORTES': 'DEATHS', 'JOGADOR': 'PLAYER', 'CAP.': 'CAP.',
+  'KILLS': 'KILLS', 'MORTES': 'DEATHS', 'JOGADOR': 'PLAYER', 'CAP.': 'CAP.', 'SOLO': 'SOLO',
   'CORO SOLTO — PLACAR': 'CORO SOLTO — SCOREBOARD',
   'A treta continua sem você. Por enquanto.': 'The fight goes on without you. For now.',
   /* --- varredura de 21/08: as sobras PT que apareciam no meio do EN (tela 04 e vizinhas).
@@ -512,8 +512,8 @@ const FRASES = {
   melhorDeN: { pt: (n) => `MATA-MATA · ${n} ROUNDS`, en: (n) => `DEATHMATCH · ${n} ROUNDS` },
   ctfMelhorDeN: { pt: (n) => `CAPTURE A BANDEIRA · ${n} ROUNDS`, en: (n) => `CAPTURE THE FLAG · ${n} ROUNDS` },
   resumoPartida: {
-    pt: (modo, n, armas) => `${modo}  ·  ${n} VS ${n}  ·  ARMAS: ${armas}`,
-    en: (modo, n, armas) => `${modo}  ·  ${n} VS ${n}  ·  WEAPONS: ${armas}`,
+    pt: (modo, eu, foe, armas) => `${modo}  ·  ${eu} VS ${foe}  ·  ARMAS: ${armas}`,
+    en: (modo, eu, foe, armas) => `${modo}  ·  ${eu} VS ${foe}  ·  WEAPONS: ${armas}`,
   },
   carregando: { pt: (o) => `CARREGANDO — ${o}`, en: (o) => `LOADING — ${o}` },
   continuarSetup: { pt: () => 'CONTINUAR ▶', en: () => 'CONTINUE ▶' },

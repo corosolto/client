@@ -109,6 +109,14 @@ const ROUNDS_MAX = ROUNDS_TO_WIN * 2 - 1;
    Loja H a rodada fechava na 3ª captura. Régua: `tools/eval/ctf-win-check.mjs`. */
 const CTF_CAPS_TO_WIN = 3;
 const CTF_ROUNDS_TO_WIN = 2, CTF_ROUNDS_MAX = CTF_ROUNDS_TO_WIN * 2 - 1;
+/* TETO DE RODADAS LIVRE: o menu (e o Game) aceitam 1–15 rounds, número escolhido pelo
+   jogador — era whitelist [1,3,5,7]. Uma fonte só: main.js importa isto pra validar o
+   que salva; o Game re-valida o que recebe. 15 × ~106 s ≈ 26 min de partida no teto. */
+export const ROUNDS_CUSTOM_MAX = 15;
+export const sanitizeRounds = (v) => {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 1 && n <= ROUNDS_CUSTOM_MAX ? n : 0;
+};
 const CTF_MATCH_TIME = 480;
 const CTF_CLOCK_SHOW = 60;
 // O round SEMPRE queimava os 99s e ganhava quem tivesse mais kills — sem virada, sem clímax.
@@ -637,7 +645,7 @@ const _cyclePool = (pool, n) => {
   for (let i = emb.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [emb[i], emb[j]] = [emb[j], emb[i]]; }
   return Array.from({ length: Math.max(0, n) }, (_, i) => emb[i % emb.length]).filter(Boolean);
 };
-const _rosterPool = (pool, want, quem, fallback) => {
+const _rosterPool = (pool, want, quem, fallback, pinned = []) => {
   let src = pool;
   if (!src.length) {
     src = fallback.filter(Boolean);
@@ -645,7 +653,13 @@ const _rosterPool = (pool, want, quem, fallback) => {
   }
   if (!src.length) return [];
   if (src.length < want) console.warn(`[times] ${quem}: ${src.length} personagem(ns) para ${want} vaga(s) — vai REPETIR personagem para os dois lados ficarem iguais`);
-  const out = _cyclePool(src, want);
+  /* ESCALAÇÃO DO JOGADOR: os pinados ocupam as vagas DELES primeiro (o jogador escolheu
+     quem entra); o resto das vagas sai do sorteio. O sorteio evita repetir um pinado
+     enquanto o pool tem gente nova — repetição continua sendo a rede de segurança. */
+  const head = pinned.slice(0, Math.max(0, want));
+  let draw = head.length ? src.filter((c) => !head.includes(c)) : src;
+  if (!draw.length) draw = src;
+  const out = [...head, ..._cyclePool(draw, want - head.length)];
   while (out.length < want) out.push(src[out.length % src.length]);   // rede de segurança
   return out.slice(0, want);
 };
@@ -654,17 +668,32 @@ const _rosterPool = (pool, want, quem, fallback) => {
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
 /* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
 const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
-export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId, dedicado = false) {
+/* Pin escalado pelo jogador: só vale se o personagem PODE jogar no lado pedido e não está
+   em uso (o próprio jogador conta como usado). Pin de facção trocada é descartado em
+   silêncio — escalação velha de outro lado não vira corpo no time errado. */
+const _pinnedDefs = (ids, doLado, usados) => (ids || [])
+  .map((id) => CHARACTERS.find((c) => c.id === id))
+  .filter((c) => c && doLado(c) && !usados.has(c.id));
+/* `teamSize` NÚMERO = times iguais, N por lado (o contrato de sempre, usado pelo arnês e
+   pelas réguas). Objeto = FORMATO LIVRE: `allies` bots ao lado do jogador (SEM contar ele)
+   e `enemies` bots adversários — 1v4 é { allies: 0, enemies: 4 }, 3v5 é { allies: 2,
+   enemies: 5 }. `pinned` = { ally: [ids], enemy: [ids] } da tela de escalação. */
+export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId, dedicado = false, pinned = null) {
+  const want = typeof teamSize === 'number'
+    ? { ally: Math.max(0, teamSize - (dedicado ? 0 : 1)), enemy: teamSize }
+    : { ally: Math.max(0, teamSize.allies | 0), enemy: Math.max(0, teamSize.enemies | 0) };
   const allies = CHARACTERS.filter(_doLado(playerFaction));
   const others = allies.filter(c => c.id !== playerCharId);
+  const pinAlly = _pinnedDefs(pinned && pinned.ally, _doLado(playerFaction), new Set([playerCharId]));
   const allyDefs = _rosterPool(others.length ? others : allies,
-    dedicado ? teamSize : teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId));
+    want.ally, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId), pinAlly);
   const usados = new Set([playerCharId, ...allyDefs.map(d => d.id)]);
   const enemies = CHARACTERS.filter(_doLado(enemyFaction));
+  const pinEnemy = _pinnedDefs(pinned && pinned.enemy, _doLado(enemyFaction), usados);
   const enemiesLivres = enemies.filter(c => !usados.has(c.id));
   return {
     allyDefs,
-    enemyDefs: _rosterPool(enemiesLivres.length >= teamSize ? enemiesLivres : enemies, teamSize, `inimigos (${enemyFaction})`, CHARACTERS),
+    enemyDefs: _rosterPool(enemiesLivres.length >= want.enemy ? enemiesLivres : enemies, want.enemy, `inimigos (${enemyFaction})`, CHARACTERS, pinEnemy),
   };
 }
 
@@ -846,9 +875,11 @@ export class Game {
 
     // ---- bots ----
     this.bots = [];
-    // Custom match: team size (total per side, player fills one ally slot). Dificuldade =
-    // sorteio por bot (variedade) × settings.difficulty do menu (média sob controle do jogador).
-    const teamSize = Math.max(1, Math.min(8, this.settings.bots || 4));
+    // Custom match: tamanho do time vem do FORMATO escolhido (allyBots/enemyBots do menu,
+    // podendo ser assimétrico — 1v4). Número único (settings.bots legado / arnês) = N×N.
+    // Dificuldade = sorteio por bot (variedade) × settings.difficulty do menu.
+    const teamSize = Math.max(1, Math.min(8,
+      Math.max(1 + (this.settings.allyBots ?? (this.settings.bots || 4) - 1), this.settings.enemyBots ?? (this.settings.bots || 4))));
     // Alvo de abates do round, escalado pelo tamanho do time (4v4 -> 12). MATCH POINT a 2 do fim.
     /* SEM TETO DE ABATES NO SINGLE PLAYER (decisão do dono, 04/08: "os rounds não podem ter
        limite de kills no single player").
@@ -899,13 +930,17 @@ export class Game {
     allyDefs.forEach((d, i) => mkBot(d, playerTeam, i));
     enemyDefs.forEach((d, i) => mkBot(d, this.enemyTeam, i));
     /* CONFERÊNCIA DO PLACAR DE GENTE (o dono conta os bonecos na tela — o código também tem
-       que contar). jogador + aliados de um lado, inimigos do outro; qualquer diferença é bug
-       e vai pro console como ERRO, não como silêncio. */
+       que contar). O que se confere é a composição PEDIDA, não a simetria: o formato agora
+       pode ser 1v4 (assimétrico de propósito). Diferença entre pedido e real = bug de
+       composição e vai pro console como ERRO, não como silêncio. */
     {
       const nMine = this.bots.filter(b => b.team === playerTeam).length + (this.dedicated ? 0 : 1);   // +1 = o jogador (no dedicado ele não joga)
       const nFoe = this.bots.filter(b => b.team === this.enemyTeam).length;
-      const msg = `[times] ${this._teamTag(playerTeam)} ${nMine} × ${nFoe} ${this._teamTag(this.enemyTeam)} (teamSize ${teamSize})`;
-      if (nMine !== nFoe) console.error(new Error(msg + ' — TIMES DESIGUAIS (bug de composição)'));
+      const want = matchRoster
+        ? { mine: allyDefs.length + (this.dedicated ? 0 : 1), foe: enemyDefs.length }   // formato escolhido no menu
+        : { mine: teamSize, foe: teamSize };                                           // sorteio interno (arnês): N×N
+      const msg = `[times] ${this._teamTag(playerTeam)} ${nMine} × ${nFoe} ${this._teamTag(this.enemyTeam)} (pedido ${want.mine} × ${want.foe})`;
+      if (nMine !== want.mine || nFoe !== want.foe) console.error(new Error(msg + ' — COMPOSIÇÃO ERRADA (bug)'));
       else console.info(msg);
       this.teamCount = { [playerTeam]: nMine, [this.enemyTeam]: nFoe };   // exposto p/ debug/harness
     }
@@ -1263,8 +1298,11 @@ export class Game {
     // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
     // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
     this.ctf = !!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1');   // menu (Capture the Flag) ou ?ctf=1
-    const requestedRounds = Number(roundsMax);
-    this._roundsMax = [1, 3, 5, 7].includes(requestedRounds) ? requestedRounds : (this.ctf ? CTF_ROUNDS_MAX : ROUNDS_MAX);
+    /* TETO DE RODADAS LIVRE (1–15, ROUNDS_CUSTOM_MAX): era whitelist [1,3,5,7] — o dono
+       pediu número customizado. Fora do intervalo cai no padrão do modo. Empate em teto
+       PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch). */
+    const requestedRounds = sanitizeRounds(roundsMax);
+    this._roundsMax = requestedRounds || (this.ctf ? CTF_ROUNDS_MAX : ROUNDS_MAX);
     this.roundsToWin = Math.floor(this._roundsMax / 2) + 1;
     this.ctfPts = [];
     this.ctfCaps = { E: 0, B: 0 };   // total de capturas de bandeira por time (cumulativo na partida)
