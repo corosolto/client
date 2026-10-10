@@ -6,14 +6,14 @@ import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../../lib/supabase';
 import { rateLimit } from '../../../lib/ratelimit';
-import { FONT_BOLD_B64 } from '../../../lib/font-data';
+import fontSource from '../../../lib/font-data.ts?raw';
 import { fmtTime } from '../../../lib/fmt';
 import { CHARS, charSvg, charName } from '../../../lib/charsvg';
 import { fetchAvatar } from '../../../lib/safe-url';
 
 export const prerender = false;
 
-const fontBuffers = [Buffer.from(FONT_BOLD_B64, 'base64')];
+const fontBuffers = [Buffer.from([...fontSource.matchAll(/'([A-Za-z0-9+/=]+)'/g)].map(m=>m[1]).join(''), 'base64')];
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 

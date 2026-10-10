@@ -24,7 +24,7 @@ let erro = '';
 if (!no || !casado) {
   erro = 'Esse convite não tem um formato que eu reconheça. Ele parece com BR-7K3M.';
 } else {
-  const http = no.url.replace(/^ws/, 'http').replace(/\/ws.*$/, '');
+  const http = import.meta.env.DEV && no.id==='br' && import.meta.env.SOCIAL_LOCAL_GAME_URL ? import.meta.env.SOCIAL_LOCAL_GAME_URL : no.url.replace(/^ws/, 'http').replace(/\/ws.*$/, '');
   try {
     // Timeout curto: convite que fica girando é pior que convite que diz "não deu".
     const ctrl = new AbortController();
