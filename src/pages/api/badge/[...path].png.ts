@@ -45,13 +45,13 @@ export function sideOf(mp: number, mb: number): [string, string] {
 
 function badgeSvg(p: any, avatarUri: string | null, charId: string | null): string {
   const kd = p.deaths ? (p.kills / p.deaths).toFixed(2) : String(p.kills);
-  const [sideLabel, sideColor] = sideOf(p.matches_p, p.matches_b);
+  const sideColor = '#ffd23f';
   const cName = charName(charId);
 
   const cells: [string, string][] = [
     ['PONTOS', String(p.points)], ['KILLS', String(p.kills)], ['K/D', kd],
-    ['PARTIDAS', String(p.matches)], ['VITÓRIAS', p.wins > 0 ? String(p.wins) : ' - '], ['HEADSHOTS', String(p.headshots)],
-    ['MORTES', String(p.deaths)], ['SEQUÊNCIA', `${p.best_streak}×`], ['TEMPO', fmtTime(p.play_seconds)],
+    ['PARTIDAS', String(p.matches)], ['RODADAS GANHAS', String(p.wins)], ['HEADSHOTS', String(p.headshots)],
+    ['MORTES', String(p.deaths)], ['RODADAS', String(p.rounds)], ['TEMPO', fmtTime(p.play_seconds)],
   ];
   const grid = cells.map(([label, v], i) => {
     const x = 46 + (i % 3) * 260, y = 228 + Math.floor(i / 3) * 70;
@@ -74,7 +74,7 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
   <circle cx="748" cy="96" r="200" fill="${sideColor}" opacity="0.07"/>
   <rect width="840" height="6" fill="#e03232"/><rect y="434" width="840" height="6" fill="#1faa4d"/>
   <text x="56" y="60" font-size="22" font-weight="bold" fill="#ffd23f" font-family="DejaVu Sans" letter-spacing="5">CORO SOLTO</text>
-  <text x="660" y="60" font-size="16" fill="${sideColor}" font-family="DejaVu Sans" text-anchor="end" font-weight="bold">${sideLabel} · ${p.matches_p}E × ${p.matches_b}D</text>
+  <text x="660" y="60" font-size="16" fill="${sideColor}" font-family="DejaVu Sans" text-anchor="end" font-weight="bold">DADOS VERIFICADOS</text>
   <text x="56" y="132" font-size="54" font-weight="bold" fill="#f2ead8" font-family="DejaVu Sans">${esc(p.nick)}</text>
   ${p.social ? `<text x="56" y="166" font-size="18" fill="#b8d94a" font-family="DejaVu Sans">${esc(p.social)}</text>` : ''}
   ${cName ? `<text x="56" y="194" font-size="16" fill="#8a8064" font-family="DejaVu Sans">joga de ${esc(cName)}</text>` : ''}

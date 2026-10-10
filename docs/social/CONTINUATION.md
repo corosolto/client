@@ -1,46 +1,23 @@
-# Camada social: continuidade
+# Continuação — comunidade CORO SOLTO
 
-## Objetivo e definição de pronto
-Entregar a camada social integrada do CORO SOLTO: conta OAuth com convidado preservado, perfis confiáveis e privados, amizade e presença, convite para a mesma sala, ranking consistente global/amigos, notificações/feed verificados, bloqueio/denúncia. Fluxo mínimo real: duas sessões autenticadas visitam perfis, tornam-se amigas, comparam ranking e entram na mesma sala. Validar banco/API/game reais, terceira conta, refresh, concorrência, expiração e impossibilidade de forjar estatísticas/tempo/bônus. Capturar desktop/mobile, revisão independente e PR coeso. Sem merge ou deploy público.
+Implementar a primeira entrega social utilizável do CORO SOLTO: conta segura preservando convidados, perfis/estatísticas confiáveis, amizade/presença, convites para sala real, ranking consistente, notificações/feed, privacidade/bloqueio/denúncia. DoD: interface/backend/banco integrados, provas com contas independentes, revisão independente, configuração/roadmap/capturas e PRs revisáveis; sem merge/deploy público sem autorização.
 
-## Isolamento
-Client: branch `feat/social-community`, worktree `csbrasil/worktrees/social-community`, base `62776184e00bd4484940cfe8d26b917a03083e3a` (origin/main alpha.62). Primary, trailer e outras lanes somente leitura. Backend separado exige worktree própria porque a main do client proxy encaminha APIs ao backend; nunca implementar banco em uma API paralela no client.
+## Isolamento e checkpoints
+Client worktree social-community, branch feat/social-community, base6277618. Commits26680a9b6 (ledger), b5c6b777b (proxy/projeções), 057ae8cb6 (UI). Backend worktree exclusiva em csbrasil-backend/worktrees/social-community, base d52ff5f; commits d2d904b/326f5b8/67f3c3e/376f956/64e56f3. Primary e produção do trailer não alterados. PRs ainda a registrar abaixo.
 
-## Auditoria em andamento
-- A main é mais recente que a lane primary: rotas de register/identity/leaderboard/submit-match residem no backend privado.
-- Perfil SSR e badge ainda consultam Supabase no site; privacidade deve cobrir essas superfícies também.
-- Existe multiplayer por códigos regionais `/sala/<código>` e lobby real. Reutilizar `nos.js`, `net.js` e tickets.
-- Identidade de convidado UID/token é credencial privada; nick e ID público não autenticam.
-- OAuth legado no register associa `auth_user` por update; precisa vínculo atômico seguro e conta única.
-- `submit-match` legado aceita stats do browser. Auditar main do backend antes de promover qualquer dado como verificado.
+## Validação atual (2026-10-10)
+- Supabase Auth/Postgres/Storage reais locais isolados (API54321/DB54322), API8091, nó8791, Astro4391. Segredos somente env ignorado0600; nenhum banco público alterado.
+- 30 checks reais API/DB: três contas, sessão/expiração/logout, onboarding/vínculo guest concorrente, amizade cruzada, IDOR, bloqueio, privacidade, presença, convite real para mesma sala, replay/expiração, upload privado, filtros e moderação auditável/reversível.
+- Gameplay socket real: duas contas + segunda aba de A, sala H6UEAMVM/piscina_treta. A: +1 match, +2 kills, +3 deaths, +4 pontos, +72s ativos; B: +1 match/+72s. 45s input +45s AFK; dados declarados pelo navegador ignorados; ranking/perfil concordam. Snapshot completo não versionado artifacts/social-gameplay.json no backend. Contagem de rounds foi depois corrigida por SQL independente para uma rodada/conta, inclusive aliases.
+- Contrato RoundTracker e três mutantes (AFK, conta duplicada, solo) verdes. SQL transacional social-aggregation.sql prova aliases+abas/histórico/feed, 5400s union e outcome único, sem scalar9999; rollback.
+- Backend npm run portao e npm run test:api completos passaram. Smoke API real10 checks; signaling6 checks em /ws. Client build e check:deploy47/47 passaram. As réguas antigas foram atualizadas ao RPC/projeções verificados mantendo mutantes RED.
+- Revisão independente clean-context: SECURITY-REVIEW.md, sem P0/P1/P2 aberto no snapshot final; bugs de projeção, avatar, guest stale, arquivo0644, participante apagado e outcomes duplicados corrigidos/retestados.
+- Browser duas sessões (localhost/127) com Auth real: perfil/busca/amizade/aceite/ranking e refresh persistente. Capturas desktop reais em client/artifacts/social, fora do Git. Controle Chrome passou a falhar com timeout; mobile e entrada pelo botão até combate NÃO certificados. Possível override temporário de viewport não pôde ser resetado pela capability indisponível.
 
-## Milestones
-Preparação: AGENTS, handoffs, segurança, main e mudanças alheias inspecionados. Worktree client limpa criada. Régua/crítico independente despachado conforme AGENTS; nenhum agente implementa em paralelo.
+## Limites e pendências de release
+OAuth Google/Discord/GitHub externos ainda depende de aplicações/segredos e configuração real do Supabase; local não habilita provedor fictício. Password somente desenvolvimento, bloqueado em production. Nenhum OAuth externo, deploy, merge ou migration remota autorizado/executado. Operação/rollout e roadmap em client/docs/social/OPERACAO.md.
+Bootstrap local carece da relação legada presence_anon não versionada; ingestão salva rounds verificados antes do enriquecimento e preserva erro/retry, mas schema operacional de produção exige reconciliação. Ranking público permanece gate default off; ativação exige rollout coordenado e prova de humanos autenticados/solo no ambiente alvo. Vitórias/derrotas são rodadas; match final/streak máximo não instrumentados. Offline legado preservado, sem promover kills/horas não confiáveis. Não há lobby ready-check/reserva; entrada real usa salas atuais e room_full.
+Posts/comentários/reactions/clãs/chat social não implementados: roadmap sem botões vazios. Triagem de denúncias funciona via CLI confiável; falta designar operador/prazo.
 
-## Decisões
-Sem credenciais inventadas. Mostrar provedores apenas se habilitados realmente. Sem social modal no combate. Sem estatísticas fictícias, ranking flag novo, botões de roadmap ou dados privados em respostas públicas.
-
-## Validações / artefatos / commits
-Implementação em andamento nas duas worktrees exclusivas; não entregue nem aprovada visualmente. Régua independente: `/tmp/corosolto-social-acceptance.md` (será consolidada). Este documento é o ledger designado.
-
-## Pendências
-Auditar main backend, schema privado e infraestrutura local disponível; implementar vínculo seguro e migration incremental antes da UI; testar baseline RED; validar toda fatia vertical.
-
-## Próximo passo
-Inspecionar main do backend na worktree exclusiva e contratos de sessão, sala, persistência e ranking. Preparar banco local isolado, sem tocar Supabase produção.
-
-## Milestone: base local e integração em andamento
-Backend base d52ff5f; commits d2d904b, 326f5b8 (migrations 040-042), 67f3c3e (sessão/API e teste real). Supabase local isolado em /tmp/corosolto-social-supabase: API 54321, DB 54322; API backend 8091, Astro localhost:4391, nó game 8791. Arquivos .env.social-local ignorados, chmod 600; logs só /tmp. Nenhuma infraestrutura pública alterada.
-13 testes reais de Auth/API/Postgres passaram: três sessões, amizade cruzada concorrente, IDOR settings, privacidade, expiração de presença, bloqueio, denúncia, CSRF e logout. Régua independente em ACCEPTANCE.md com baseline RED de OAuth/privacidade. UI real em /comunidade e /u/UUID/nick; rankings e cookie/tickets reaproveitam APIs existentes. Código ainda sem aceite visual final.
-Auditoria encontrou bypass em badge/sitemap e URL incorreta de sala; correções em andamento com falha fechada e sem cache de dados revogáveis. Migrations sociais ainda inéditas permitem ajustes antes do rollout. Ranking usa somente rounds verificados do nó, não stats enviados pelo navegador. Offline legado fica preservado e não promovido; entrega SP verificável segue pendente.
-Próximo passo concreto: validar convite com dois sockets reais no mesmo nó, fechar deduplicação de horas em múltiplas abas, sessões e uploads, capturar desktop/mobile e executar checks/revisão independente. Ainda pendentes configuração OAuth real, rollout coordenado, moderação operacional, PRs. Sem merge/deploy autorizados.
-
-## Milestone: UI com duas sessões e gates
-Chrome localhost e 127.0.0.1 usam cookies independentes: DonaResenha e ReiDaTreta entraram em Auth local, criaram perfis, A buscou/visitou B, pedido/aceite de amizade real e ranking de amigos mostra ambos. Refresh preservou sessão. Capturas artifacts/social/friends-desktop.jpg e ranking-friends.jpg (não versionadas, sem segredos). Browser indisponível após timeout ao abrir jogo; nenhum aceite visual de gameplay/mobile ainda.
-Build completo e syntax passaram. check:deploy inicialmente identificou docs gerados, novas rotas e regex de proxy; docs regenerados, listas sincronizadas e segredo de proxy revalidado. Segunda execução em andamento. API27 e vertical sockets verdes; review independente de privacidade corrigida. Próximo passo: concluir provas gameplay/solo/horas, mobile e review, consolidar configuração e roadmap antes de PRs. Não há merge/deploy.
-
-## Milestone: configuração, filtros e revisão
-check:deploy completo47/47 passou; build e syntax verdes. API30 real passou com solo um humano, filtros por período/modo, moderação service-only auditável/reversível, avatar privado, expiração e concorrência. Backend checkpoint64e56f3. Regressões adicionadas ao backend rejeitam três mutantes de AFK/solo/identidade repetida.
-Login após credencial antiga de convidado tem recuperação explícita sem vincular perfil não comprovado; sessão expirada limpa conteúdo social e mantém os provedores habilitados. Botões, filtros e estados responsivos foram integrados à identidade existente. Fonte do badge é importada raw para evitar overflow AST do devserver mantendo bytes. SSR local agora tem credenciais do Supabase local em env ignorado0600.
-Review independente está revalidando runtime; banco/API/nó reais verdes para fatia vertical e solo. Gameplay completo ainda repetindo após identificar flush com IDs de fixture já removidos; ignorar identidade apagada não pode abortar lote inteiro. BrowserChrome voltou para inspeção desktop de dados reais, mas capability viewport voltou a indisponibilidade; captura/mobile e convite no browser ainda pendentes. Capturas anteriores em artifacts/social, sem aceitar visualmente estado final.
-Próximo passo: provas finais gameplay e browser, validar build/checks após últimos edits, documentação de operação/OAuth e PRs draft ligados. Workflow preview-build ignora PR draft; sem merge/publicdeploy.
+## Próximo passo concreto
+Abrir PRs draft pareados client/backend e registrar URLs/SHAs. Após autorização específica, configurar OAuth/infra e validar browser mobile + convite/combate humano no alvo; não confundir checks locais com aprovação visual/produção. Manter estas worktrees exclusivas e os serviços locais para continuação; não tocar primary/trailer/outras lanes.
