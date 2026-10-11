@@ -1,14 +1,41 @@
 <section id="hub-shop" class="hub-pane treta-store" role="tabpanel" aria-label="Loja de skins" hidden>
-  <header class="treta-heading"><div><small>VISTA SUA PRÓXIMA TRETA</small><h2>LOJA <em>DE SKINS</em></h2><p>Só estilo. A habilidade é sua.</p></div><button id="treta-balance" class="treta-wallet" type="button" aria-label="Ver carteira TRETA$"><span class="treta-coin-mark" aria-hidden="true">T$</span><span><small>TRETA$</small><b id="treta-balance-value">ENTRE NA CONTA</b></span></button></header>
-  <div class="treta-toolbar"><div role="group" aria-label="Filtrar skins"><button type="button" data-treta-filter="all" aria-pressed="true">TODAS</button><button type="button" data-treta-filter="drip" aria-pressed="false">COLEÇÃO DRIP</button><button type="button" data-treta-filter="owned" aria-pressed="false">MEU ARMÁRIO</button></div><button id="treta-how" type="button">COMO GANHAR T$ ↗</button></div>
-  <div id="treta-grid" class="treta-grid"></div>
-  <p id="treta-status" class="treta-status" role="status" aria-live="polite"></p>
-  <section class="treta-promo"><div><small>PRIMEIRO MÊS</small><h3>ENTRE. JOGUE.<br>CHAME SUA TURMA.</h3><p id="treta-promo-copy">Ganhe TRETA$ pela conta confirmada, por amigos e pelas partidas.</p></div><div id="treta-rewards" class="treta-rewards"></div><button id="treta-solo" type="button">JOGAR SOLO POR T$ ▸</button><button id="treta-invite" type="button">COPIAR MEU CONVITE ↗</button></section>
-  <section class="treta-mint"><header><small>CUNHADAS NA TRETA</small><h3>OURO COM HISTÓRIA</h3><p>Sete valores. Sete personagens. Uma moeda.</p></header><div id="treta-coins" class="treta-coins"></div></section>
-  <p class="treta-next">NA FILA DE NOVAS SKINS <span>Daniel Vorcaro · Donald Trump</span></p>
+  <header class="treta-heading">
+    <div><small>VISTA SUA PRÓXIMA TRETA</small><h2 id="treta-view-title">LOJA <em>DE SKINS</em></h2><p id="treta-view-description">Seu estilo entra em jogo.</p></div>
+    <button id="treta-balance" class="treta-wallet" type="button" aria-label="Ver carteira TRETA$"><span class="treta-coin-mark" aria-hidden="true">T$</span><span><small>SEU SALDO</small><b id="treta-balance-value">ENTRE NA CONTA</b></span></button>
+  </header>
+  <nav class="treta-views" role="tablist" aria-label="Seções da loja">
+    <button type="button" role="tab" data-treta-view="skins" aria-controls="treta-skins-view" aria-selected="true">SKINS E ARMÁRIO</button>
+    <button type="button" role="tab" data-treta-view="packs" aria-controls="treta-packs-view" aria-selected="false">PACKS T$</button>
+    <button type="button" role="tab" data-treta-view="accessories" aria-controls="treta-accessories-view" aria-selected="false">ACESSÓRIOS</button>
+  </nav>
+  <section id="treta-skins-view" role="tabpanel" aria-label="Skins e armário">
+    <div class="treta-toolbar"><div role="group" aria-label="Filtrar skins"><button type="button" data-treta-filter="all" aria-pressed="true">TODAS</button><button type="button" data-treta-filter="drip" aria-pressed="false">COLEÇÃO DRIP</button><button type="button" data-treta-filter="owned" aria-pressed="false">MEU ARMÁRIO</button></div><button id="treta-how" type="button">COMO GANHAR T$ ↗</button></div>
+    <div id="treta-grid" class="treta-grid" aria-busy="true"></div>
+    <section class="treta-promo">
+      <div><small>CAMPANHA DE LANÇAMENTO</small><h3>ENTRE. JOGUE.<br>CHAME SUA TURMA.</h3><p id="treta-promo-copy">Os valores previstos serão liberados na campanha de lançamento.</p></div><div id="treta-rewards" class="treta-rewards"></div>
+      <div class="treta-promo-actions"><button id="treta-solo" class="treta-primary" type="button">SOLO POR T$ · EM BREVE</button><button id="treta-invite" class="treta-secondary" type="button">COPIAR MEU CONVITE ↗</button></div>
+    </section>
+    <section class="treta-mint"><header><small>CUNHADAS NA TRETA</small><h3>OURO COM HISTÓRIA</h3><p>Sete valores. Sete personagens. Uma moeda.</p></header><div id="treta-coins" class="treta-coins"></div></section>
+    <p class="treta-next">NA FILA DE NOVAS SKINS <span>Daniel Vorcaro · Donald Trump</span></p>
+  </section>
+  <section id="treta-packs-view" role="tabpanel" aria-label="Proposta de packs TRETA$" hidden>
+    <header class="treta-section-heading"><small>PROPOSTA PARA A LOJA</small><h3>MAIS T$ NO SEU ARMÁRIO</h3><p>Escolha o saldo que combina com seu coro. Os packs estão em preparação; a compra em reais ainda não está disponível.</p></header>
+    <div id="treta-packs" class="treta-packs"></div><p id="treta-future-pack" class="treta-future"></p>
+  </section>
+  <section id="treta-accessories-view" role="tabpanel" aria-label="Proposta de acessórios" hidden>
+    <header class="treta-section-heading"><small>PRÓXIMOS VISUAIS · PROPOSTA</small><h3>O DRIP VAI ALÉM DA SKIN</h3><p>Acessórios em estudo, com compatibilidade indicada antes da compra. Cada item muda o visual e mantém as habilidades do personagem.</p></header>
+    <div id="treta-accessories" class="treta-accessories"></div>
+  </section>
+  <p id="treta-status" class="treta-status" role="status" aria-live="polite"></p><button id="treta-retry" class="treta-secondary" type="button" hidden>TENTAR DE NOVO</button>
 </section>
-<dialog id="treta-detail" class="treta-dialog" aria-labelledby="treta-detail-name"><button class="treta-close" type="button" data-treta-close aria-label="Fechar skin">ESC ✕</button><div id="treta-stage" class="treta-stage"></div><div class="treta-detail-copy"><small id="treta-detail-series"></small><h2 id="treta-detail-name"></h2><p id="treta-detail-description"></p><p id="treta-detail-production"></p><strong id="treta-detail-price"></strong><button id="treta-buy" class="treta-primary" type="button">COMPRAR SKIN</button><p id="treta-buy-status" role="status" aria-live="polite"></p><p class="treta-cosmetic-note">Skin cosmética: mesmo dano, velocidade e habilidades.</p></div></dialog>
-<dialog id="treta-info" class="treta-dialog treta-info" aria-labelledby="treta-info-title"><button class="treta-close" type="button" data-treta-close aria-label="Fechar explicação de TRETA$">ESC ✕</button><div id="treta-info-coin" class="treta-info-coin"></div><small>A MOEDA DO CORO</small><h2 id="treta-info-title">ISSO É <em>TRETA$.</em></h2><p>Você joga, junta T$ e escolhe seu próximo visual. Cada skin desta coleção custa <strong>T$ 800</strong>.</p><div id="treta-info-rewards" class="treta-rewards"></div><p id="treta-campaign-status"></p><p>O amigo precisa confirmar a conta e concluir uma partida válida. Partidas premiadas são confirmadas pelo servidor. Recompensas de partidas têm limite diário.</p><button id="treta-info-login" class="treta-primary" type="button">ENTRAR E GUARDAR MEUS T$</button><button type="button" data-treta-close>ENTENDI. BORA JOGAR.</button></dialog>
-<dialog id="treta-purchase" class="treta-dialog treta-purchase" aria-labelledby="treta-purchase-title"><button class="treta-close" type="button" data-treta-close aria-label="Fechar compra">ESC ✕</button><div id="treta-purchase-stage" class="treta-purchase-stage"></div><small>AGORA É SUA</small><h2 id="treta-purchase-title">SKIN DESBLOQUEADA</h2><p id="treta-purchase-copy"></p><button id="treta-purchase-equip" class="treta-primary" type="button">EQUIPAR AGORA</button><button type="button" data-treta-close>VOLTAR À LOJA</button></dialog>
-
+<dialog id="treta-detail" class="treta-dialog" aria-labelledby="treta-detail-name">
+  <button class="treta-close" type="button" data-treta-close aria-label="Fechar skin">ESC ✕</button><div id="treta-stage" class="treta-stage"></div>
+  <div class="treta-detail-copy"><small id="treta-detail-series"></small><h2 id="treta-detail-name"></h2><p id="treta-detail-description"></p><p id="treta-detail-production"></p><strong id="treta-detail-price"></strong><button id="treta-buy" class="treta-primary" type="button">COMPRAR SKIN</button><p id="treta-buy-status" role="status" aria-live="polite"></p><p class="treta-cosmetic-note">Skin cosmética: mesmo dano, velocidade e habilidades.</p></div>
+</dialog>
+<dialog id="treta-info" class="treta-dialog treta-info" aria-labelledby="treta-info-title">
+  <button class="treta-close" type="button" data-treta-close aria-label="Fechar explicação de TRETA$">ESC ✕</button><div id="treta-info-coin" class="treta-info-coin"></div><small>A MOEDA DO CORO</small><h2 id="treta-info-title">ISSO É <em>TRETA$.</em></h2><p>Você joga, junta T$ e escolhe seu próximo visual. Cada skin desta coleção custa <strong>T$ 800</strong>.</p><div id="treta-info-rewards" class="treta-rewards"></div><p id="treta-campaign-status"></p><p>O amigo precisa confirmar a conta e concluir uma partida válida. Partidas premiadas são confirmadas pelo servidor. Recompensas de partidas têm limite diário.</p><button id="treta-info-login" class="treta-primary" type="button">ENTRAR E GUARDAR MEUS T$</button><button type="button" data-treta-close>ENTENDI. BORA JOGAR.</button>
+</dialog>
+<dialog id="treta-purchase" class="treta-dialog treta-purchase" aria-labelledby="treta-purchase-title">
+  <button class="treta-close" type="button" data-treta-close aria-label="Fechar compra">ESC ✕</button><div id="treta-purchase-stage" class="treta-purchase-stage"></div><img id="treta-purchase-item" class="treta-purchase-item" alt="" hidden><small>NO SEU ARMÁRIO</small><h2 id="treta-purchase-title">SKIN DESBLOQUEADA</h2><p id="treta-purchase-copy"></p><button id="treta-purchase-equip" class="treta-primary" type="button">EQUIPAR AGORA</button><button type="button" data-treta-close>VOLTAR À LOJA</button>
+</dialog>
 <aside id="treta-earned" class="treta-earned" hidden aria-label="Recompensa TRETA$" role="status" aria-live="polite"><div id="treta-earned-coin" class="treta-earned-coin"></div><div><small id="treta-earned-reason"></small><strong id="treta-earned-value"></strong><span>ADICIONADOS À CARTEIRA</span></div><button id="treta-earned-close" type="button" aria-label="Fechar aviso de recompensa">✕</button></aside>

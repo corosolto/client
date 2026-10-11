@@ -3,7 +3,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 export class TretaStage {
   constructor(host,{coin=false,celebrate=false,count=1}={}) {
-    this.host=host;this.coin=coin;this.celebrate=celebrate;this.count=Math.max(1,Math.min(5,count));this.disposed=false;
+    this.host=host;this.coin=coin;this.celebrate=celebrate;this.count=Math.max(1,Math.min(matchMedia('(pointer: coarse), (max-width: 680px)').matches?1:5,count));this.disposed=false;
     this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.scene=new THREE.Scene();this.camera=new THREE.PerspectiveCamera(34,1,.01,100);
     this.renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
@@ -30,25 +30,37 @@ export class TretaStage {
     this.renderer.setAnimationLoop(()=>{if(this.disposed)return;const delta=Math.min(this.clock.getDelta(),.05);if(document.hidden)return;if(this.model && !this.reduced){if(!this.coin)this.model.rotation.y+=delta*.25;if(this.spinHold>0)this.spinHold=Math.max(0,this.spinHold-delta);else for(const mixer of this.mixers)mixer.update(delta);}this.renderer.render(this.scene,this.camera);});
   }
   async load(path) {
+    const started=performance.now();
     const gltf=await new GLTFLoader().loadAsync(path);
     if(this.disposed){this.disposeModel(gltf.scene);return;}
     this.model=new THREE.Group();this.scene.add(this.model);
-    const bounds=new THREE.Box3().setFromObject(gltf.scene),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
     for(let i=0;i<(this.coin?this.count:1);i++){
       const asset=i===0?gltf.scene:gltf.scene.clone(true),holder=new THREE.Group();
-      asset.position.copy(center).multiplyScalar(-1);holder.add(asset);this.model.add(holder);
-      holder.position.x=(i-(this.count-1)/2)*size.x*.68;
-      if(this.coin && this.count>1)holder.position.z=-Math.abs(i-(this.count-1)/2)*.12;
+      holder.add(asset);this.model.add(holder);
+      asset.updateMatrixWorld(true);
       if(gltf.animations.length && !this.reduced){
         const mixer=new THREE.AnimationMixer(asset);this.mixers.push(mixer);
         const spin=gltf.animations.find(c=>/idle|spin/i.test(c.name)) || gltf.animations[0];
         const reveal=this.celebrate && gltf.animations.find(c=>c.name==='PurchaseReveal');
         if(reveal){const action=mixer.clipAction(reveal);action.setLoop(THREE.LoopOnce,1);action.clampWhenFinished=true;action.play();mixer.addEventListener('finished',()=>{if(!this.disposed){action.stop();mixer.clipAction(spin).play();}});}else mixer.clipAction(spin).play();
+        if(!this.coin)mixer.update(0);
       }
+      asset.updateMatrixWorld(true);
+      asset.traverse(o=>{if(o.isSkinnedMesh){o.skeleton.update();o.computeBoundingBox();}});
+      const bounds=new THREE.Box3().setFromObject(asset),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+      asset.position.sub(center);
+      holder.position.x=(i-(this.count-1)/2)*size.x*.68;
+      if(this.coin && this.count>1)holder.position.z=-Math.abs(i-(this.count-1)/2)*.12;
     }
     this.spinHold=this.coin && !this.celebrate ? .7 : 0;
     this.size=new THREE.Box3().setFromObject(this.model).getSize(new THREE.Vector3());this.resize();
+    this.camera.updateMatrixWorld(true);
+    const box=new THREE.Box3().setFromObject(this.model),corners=[];
+    for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z])corners.push(new THREE.Vector3(x,y,z).project(this.camera));
+    const fitsViewport=corners.every(p=>Math.abs(p.x)<=1 && Math.abs(p.y)<=1);
+    this.host.dispatchEvent(new CustomEvent('cs-treta-stage-ready',{bubbles:true,detail:{loadMs:Math.round(performance.now()-started),triangles:this.renderer.info.render.triangles,calls:this.renderer.info.render.calls,count:this.count,fitsViewport}}));
   }
+  snapshot() {this.renderer.render(this.scene,this.camera);return this.renderer.domElement.toDataURL('image/png');}
   disposeModel(model) {const geometries=new Set(),materials=new Set(),textures=new Set();model.traverse(o=>{if(!o.isMesh)return;geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const v of Object.values(m))if(v?.isTexture)textures.add(v);}});for(const x of [...textures,...materials,...geometries])x.dispose();}
   dispose() {if(this.disposed)return;this.disposed=true;this.observer.disconnect();this.renderer.setAnimationLoop(null);for(const mixer of this.mixers)mixer.stopAllAction();if(this.model)this.disposeModel(this.model);this.environment.dispose();this.renderer.dispose();this.renderer.forceContextLoss();this.renderer.domElement.remove();}
 }
