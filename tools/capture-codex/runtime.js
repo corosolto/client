@@ -66,6 +66,7 @@
     for (const type of ['mousedown','mouseup','mousemove']) panel.addEventListener(type, event => event.stopPropagation());
     const status = panel.querySelector('#capture-status'), duration = panel.querySelector('#capture-duration');
     panel.insertAdjacentHTML('beforeend', '<label>Movimento da tomada <select id="capture-take-move"><option value="w">Avançar W</option><option value="w,c">Avançar agachado W+C</option><option value="a">Esquerda A</option><option value="d">Direita D</option><option value="s">Recuar S</option></select></label><button id="capture-take-action">Gravar e mover juntos</button>');
+    panel.insertAdjacentHTML('beforeend', '<button data-turn="-45">Girar esquerda 45°</button><button data-turn="45">Girar direita 45°</button><button data-turn="-90">Girar esquerda 90°</button><button data-turn="90">Girar direita 90°</button>');
     const report = (message) => { status.dataset.message = message; status.textContent = message; };
     panel.querySelector('#capture-arm').onclick = async () => {
       const current = window.__game;
@@ -123,18 +124,27 @@
         if (panel.querySelector('#capture-auto-save').checked && recorder?.state === 'recording') recorder.stop();
       }, seconds * 1000);
     });
-    panel.querySelectorAll('[data-look]').forEach(button => button.onclick = () => {
-      if (!valid() || !game._acceptInput() || !game.player.alive) return;
-      const move = new MouseEvent('mousemove', {bubbles:true});
-      Object.defineProperties(move, {movementX:{value:Number(button.dataset.look)},movementY:{value:0}});
-      game.renderer.domElement.dispatchEvent(move);
-    });
-    panel.querySelectorAll('[data-pitch]').forEach(button => button.onclick = () => {
-      if (!valid() || !game._acceptInput() || !game.player.alive) return;
-      const move = new MouseEvent('mousemove', {bubbles:true});
-      Object.defineProperties(move, {movementX:{value:0},movementY:{value:Number(button.dataset.pitch)}});
-      game.renderer.domElement.dispatchEvent(move);
-    });
+    function lookBy(x, y, degrees = false) {
+      if (!valid() || !game.player.alive || !Number.isFinite(x) || !Number.isFinite(y)) return;
+      const current = game, paused = current.paused;
+      try {
+        // Synchronous mouse input only: setPaused() would reset held keys and the pause UI.
+        current.paused = false;
+        if (!current._acceptInput()) return;
+        if (degrees) {
+          const sensitivity = current.settings.sens * 0.0021 * (current.player.scoped ? Math.max(0.28, current.camera.fov / 70) : 1);
+          if (!Number.isFinite(sensitivity) || sensitivity <= 0) return;
+          x = x * Math.PI / 180 / sensitivity;
+        }
+        const move = new MouseEvent('mousemove', {bubbles:true});
+        Object.defineProperties(move, {movementX:{value:x},movementY:{value:y}});
+        current.renderer.domElement.dispatchEvent(move);
+      } catch (error) { report('Ajuste de mira falhou: ' + error.message); }
+      finally { current.paused = paused; }
+    }
+    panel.querySelectorAll('[data-look]').forEach(button => button.onclick = () => lookBy(Number(button.dataset.look), 0));
+    panel.querySelectorAll('[data-pitch]').forEach(button => button.onclick = () => lookBy(0, Number(button.dataset.pitch)));
+    panel.querySelectorAll('[data-turn]').forEach(button => button.onclick = () => lookBy(Number(button.dataset.turn), 0, true));
     panel.querySelector('#capture-release').onclick = () => { release(); game?.setPaused(true); report('Controles soltos; partida pausada.'); };
     panel.querySelector('#capture-start').onclick = async () => {
       if (!valid() || saving || recorder?.state === 'recording') return;
