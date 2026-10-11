@@ -32,6 +32,8 @@
 .treta-card-copy strong{display:block;font:700 25px/1.1 'Barlow Condensed',sans-serif;min-height:56px}
 .treta-card-copy b{display:flex;justify-content:space-between;align-items:center;color:var(--treta-gold);font:700 21px/1.2 'Barlow Condensed',sans-serif;margin-top:16px}
 .treta-card-copy b span{color:#c4cbb9;font-size:12px;letter-spacing:.6px}
+.treta-status-line{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}.treta-status-line .treta-status{margin:0;flex:1;min-width:180px}
+.treta-dialog [hidden]{display:none!important}
 .treta-status{font:400 13px/1.6 system-ui,sans-serif;color:var(--treta-muted);min-height:22px;margin:16px 0}
 .treta-empty{grid-column:1/-1;min-height:220px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:var(--treta-panel);padding:24px;border-radius:4px}
 .treta-empty strong{font:400 34px/1.2 'Bebas Neue',sans-serif}.treta-empty p{font:400 14px/1.6 system-ui,sans-serif;max-width:420px;color:var(--treta-muted)}

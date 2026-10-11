@@ -35,3 +35,23 @@ Inspeção própria rejeitou o enquadramento do GLB rigado: close de pés em vez
 Rodada 2 em `/tmp/treta-ui-r2`: fluxo aprovado novamente com 26 capturas e zero pageerrors. GLB Idle privado mostra corpo inteiro desktop/mobile, caixa projetada dentro do viewport em todos os estágios. Moedas preservam os clipes originais. `npm run build`, `npm run syntax`, `npm run eval:modgraph` (inclui mutante), `treta-rewards-check` e suas 3 mutações, `treta-coins-check` passaram. O teste passou a exigir o enquadramento projetado e uma única moeda no mobile.
 
 Cards com poster ausente agora dizem PERSONAGEM BASE / PRÉVIA 3D NO DETALHE. O recibo usa snapshot do modelo carregado antes da compra para animar o item correto sem segundo renderer WebGL. Próximo: rodada final com novos casos de contrato/teclado e crítica independente.
+
+## Defeitos reproduzidos na crítica independente
+
+“Recuperação da carteira fica escondida” e “O fallback do detalhe pode anunciar o personagem base como modelo final” (ui_critic). Régua nova `/tmp/treta-ui-preview-red.log` reprovou antes do ajuste: preview falhou por HTTP503, mas texto de indisponibilidade não apareceu. Retry movido perto do saldo; falha de consulta agora tem label próprio; preview anuncia carregamento/falha, oferece retry e bloqueia compra quando só há imagem base. Versão de detalhe descarta carga antiga após close/reabertura. Próximo: validar fluxo e mutações, recapturar, reavaliar crítico. Checkpoint anterior `1901898ed`.
+
+## Marco: contratos e crítica aprovados com fixtures
+
+Rodada `/tmp/treta-ui-delivery-final/report.json` passou 34 capturas, zero pageerrors, teclado nas tabs, compra duplicada (1 pedido/800 T$), equip, visitante e manifesto fechado. Espera explícita por conclusão das cargas evita confundir renderer cancelado ao fechar dialog com falha de enquadramento; aguardadas prévias de armário, carteira e prêmio. Label de fixture visível inclusive no top layer dos dialogs.
+
+Crítico independente reavaliou R4: sem regressão material de layout, retry/preview e snapshot do recibo corrigidos. Residual de texto do detalhe durante erro foi ajustado. Falha/transição da carteira não reinicia fila/dedup de recompensas; logout continua descartando o owner anterior. Cabeçalho usa estados curtos para preservar espaço mobile.
+
+`treta-ui-mutations.mjs` detectou 3/3: preview sem gate, framing com câmera próxima e disponibilidade ignorando manifesto. Logs `/tmp/treta-ui-mutations/{preview,framing,manifest}.log`. Build/syntax/modgraph/shaderbudget e moedas/recompensas passaram; rodada final após ajuste de cabeçalho em andamento. Artefatos duráveis serão `csbrasil/private-assets/treta-store/ui-clean-20261011/`, fora do Git. Próximo: inspeção final de capturas, copiar evidência, checkpoint DCO e abrir galeria para revisão do dono.
+
+## Entrega local concluída — 11/10/2026
+
+Galeria e evidências duráveis: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/private-assets/treta-store/ui-clean-20261011/` (`index.html`, `report.json`, 34 PNG finais, 2 baselines de menu, logs, crítica e SHA256). Servidor de revisão em `http://127.0.0.1:4348/`; dev Astro em 4347. Final `/tmp/treta-ui-release-review.log`: PASS, 34 capturas, 0 pageerrors. Inspeção final confirma corpo inteiro, erro/retry sem sobreposição do logo e snapshot do item no recibo. Build/syntax/modgraph após último ajuste passaram.
+
+Carga observada mobile emulado: skin 215–397ms/4.812 triângulos/1 draw; confirmação 53ms/52.754 triângulos/3 draws/1 moeda. Desktop confirmação 48ms/211.016/12/4 moedas. Não são medição em celular físico ou aprovação de gameplay. Referência base dos cards explicitada; catálogo público permanece fechado, sem GLBs privados publicados. Comparação anterior só usa menu: baseline de loja foi descartado por captura antes das imagens carregarem.
+
+Implementação local e revisão automatizada/independente concluídas nesta autorização. Checkpoint anterior `1901898ed`; o commit que contém este marco registra as correções e réguas finais (consulte `git log -1` nesta branch). Próximo passo concreto: dono revisar a galeria desktop/mobile e decidir ajustes visuais. Integração/retarget/combate das skins e exportações lote2 seguem na lane de assets original. Celular físico, campanha, provedor/checkout e publicação exigem etapas próprias; sem merge, deploy, backend ou migration nesta lane.

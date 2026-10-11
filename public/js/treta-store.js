@@ -10,7 +10,7 @@ const money=value=>`T$ ${new Intl.NumberFormat('pt-BR').format(value)}`;
 const stored=(key,value)=>{try{if(value===undefined)return localStorage.getItem(key);localStorage.setItem(key,value);}catch{return null;}};
 let state=null,manifest={skins:{}},selected=null,filter='all',stage=null,purchaseStage=null,refreshPromise=null,account=null;
 let onEquip=()=>{},infoStage=null,infoVersion=0;
-let accountEpoch=0,refreshEpoch=-1,loading=false,refreshFailed=false,purchasePending=false,view='skins';
+let accountEpoch=0,refreshEpoch=-1,loading=false,refreshFailed=false,purchasePending=false,view='skins',detailVersion=0,previewReady=false,previewLoading=false;
 const $=id=>document.getElementById(id);
 const owned=id=>state?.inventory?.some(s=>s.skin_id===id);
 const equipped=id=>state?.inventory?.some(s=>s.skin_id===id && s.equipped);
@@ -29,7 +29,11 @@ function rewards(container) {
   }));
 }
 function draw() {
-  updateTretaRewards(state);
+  if(!loading && !refreshFailed)updateTretaRewards(state);
+  else{
+    $('hub-treta-total').textContent=refreshFailed?'T$ · ERRO':'T$ · …';
+    $('hub-treta-wallet').setAttribute('aria-label',refreshFailed?'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.':'Consultando carteira TRETA$');
+  }
   $('treta-balance-value').textContent=state?.wallet?money(state.wallet.balance):loading?'CARREGANDO…':refreshFailed?'INDISPONÍVEL':'ENTRE NA CONTA';
   $('treta-grid').setAttribute('aria-busy',String(loading));
   $('treta-retry').hidden=!refreshFailed;
@@ -38,7 +42,7 @@ function draw() {
   const skins=TRETA_SKINS.filter(s=>filter==='owned'?owned(s.id):filter==='drip'?s.id.endsWith('-drip'):true);
   $('treta-grid').replaceChildren(...skins.map(s=>{
     const button=node('button','','treta-card');button.type='button';button.style.setProperty('--skin-color',s.color);
-    const label=node('span',equipped(s.id)?'EQUIPADA':owned(s.id)?'NO SEU ARMÁRIO':available(s.id)?manifest.skins[s.id]?.poster?'NOVA SKIN':'PRÉVIA 3D NO DETALHE':'EM PRODUÇÃO','treta-label');
+    const label=node('span',refreshFailed?'CONSULTA INDISPONÍVEL':loading?'CONSULTANDO…':equipped(s.id)?'EQUIPADA':owned(s.id)?'NO SEU ARMÁRIO':available(s.id)?manifest.skins[s.id]?.poster?'NOVA SKIN':'PRÉVIA 3D NO DETALHE':'EM PRODUÇÃO','treta-label');
     const image=node('img');image.src=portrait(s);image.alt=manifest.skins[s.id]?.poster?`Skin ${s.name}`:'Personagem base usado como referência de produção';image.loading='lazy';
     const copy=node('div','','treta-card-copy');const price=node('b',money(item(s.id)?.price ?? s.price));price.append(node('span',owned(s.id)?'VER SKIN':'VER DETALHE'));
     copy.append(node('small',manifest.skins[s.id]?.poster?s.series:`${s.series} · PERSONAGEM BASE`),node('strong',s.name),price);
@@ -57,8 +61,9 @@ function draw() {
   $('treta-info-login').hidden=!!account?.authenticated;
 }
 function openDialog(dialog) {
+  if(dialog.open)return;
   const focus=document.activeElement;
-  if(!dialog.open)dialog.showModal();
+  dialog.showModal();
   dialog.addEventListener('close',()=>focus?.focus(),{once:true});
 }
 function login() { $('hub-account-login')?.click(); }
@@ -89,29 +94,38 @@ async function refresh() {
 async function visual(host,{model,poster,coin=false,celebrate=false,count=1}) {
   host.replaceChildren();
   const fallback=node('img');fallback.src=poster;fallback.alt=coin?'Moeda dourada TRETA$':'Prévia visual da skin';host.append(fallback);
-  if(!model)return {dispose(){}};
+  if(!model)return {loaded:false,dispose(){}};
   let display;
-  try{const {TretaStage}=await import('./treta-stage.js');display=new TretaStage(host,{coin,celebrate,count});await display.load(model);fallback.remove();return display;}catch{display?.dispose();return {dispose(){}};}
+  try{const {TretaStage}=await import('./treta-stage.js');display=new TretaStage(host,{coin,celebrate,count});await display.load(model);fallback.remove();display.loaded=true;return display;}catch{display?.dispose();return {loaded:false,dispose(){}};}
 }
 async function detail(skin) {
-  selected=skin;stage?.dispose();stage=null;
+  const version=++detailVersion;
+  selected=skin;stage?.dispose();stage=null;previewReady=false;previewLoading=available(skin.id);
+  $('treta-preview-retry').hidden=true;
   $('treta-detail-name').textContent=skin.name;$('treta-detail-series').textContent=skin.series;
   $('treta-detail-description').textContent=skin.description;$('treta-detail-price').textContent=money(item(skin.id)?.price ?? skin.price);
-  $('treta-detail-production').textContent=available(skin.id)?'Modelo final da skin.':'Em produção. A imagem abaixo é a referência do personagem base; o visual final terá roupas e acessórios novos.';
+  $('treta-detail-production').textContent=previewLoading?'Carregando prévia 3D da skin…':refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':'Em produção. A imagem abaixo é a referência do personagem base; o visual final terá roupas e acessórios novos.';
   $('treta-buy-status').textContent='';updateBuy();openDialog($('treta-detail'));
-  const visualRequest=skin;
   const loaded=await visual($('treta-stage'),{model:available(skin.id)?manifest.skins[skin.id].model:null,poster:portrait(skin)});
-  if(selected!==visualRequest || !$('treta-detail').open)loaded.dispose();else stage=loaded;
+  if(version!==detailVersion || !$('treta-detail').open){loaded.dispose();return;}
+  stage=loaded;previewLoading=false;previewReady=loaded.loaded || !!manifest.skins[skin.id]?.poster;
+  if(available(skin.id)){
+    $('treta-detail-production').textContent=loaded.loaded?'Prévia 3D da skin.':previewReady?'Prévia 3D indisponível. Veja a imagem da skin.':'Prévia 3D indisponível. Esta imagem é do personagem base. Tente novamente para ver a skin antes de comprar.';
+    $('treta-preview-retry').hidden=loaded.loaded;
+  }
+  updateBuy();
 }
 function updateBuy() {
   if(!selected)return;
   const button=$('treta-buy'),price=item(selected.id)?.price ?? selected.price;
   const shortfall=state?.wallet && !owned(selected.id)?Math.max(0,price-state.wallet.balance):0;
-  button.disabled=purchasePending || loading || !available(selected.id) || shortfall>0;
+  button.disabled=purchasePending || loading || refreshFailed || !available(selected.id) || shortfall>0 || (!owned(selected.id) && !previewReady);
   $('treta-detail').dataset.busy=String(purchasePending);
   if(shortfall>0)$('treta-buy-status').textContent=`Faltam ${money(shortfall)} para este visual.`;
+  if(refreshFailed){button.textContent='CONSULTA INDISPONÍVEL';return;}
   if(shortfall>0 && !purchasePending){button.textContent='SALDO INSUFICIENTE';return;}
   if(purchasePending){button.textContent='CONFIRMANDO…';return;}
+  if(available(selected.id) && !owned(selected.id) && !previewReady){button.textContent=previewLoading?'CARREGANDO PRÉVIA…':'PRÉVIA INDISPONÍVEL';return;}
   button.textContent=!available(selected.id)?'EM PRODUÇÃO':equipped(selected.id)?'JÁ EQUIPADA':owned(selected.id)?'EQUIPAR SKIN':state?.wallet?`COMPRAR POR ${money(item(selected.id).price)}`:'ENTRAR PARA COMPRAR';
   if(equipped(selected.id))button.disabled=true;
 }
@@ -126,7 +140,7 @@ async function equip(skin) {
   return true;
 }
 async function buy() {
-  if(purchasePending || !selected || !available(selected.id))return;
+  if(purchasePending || loading || refreshFailed || !selected || !available(selected.id) || (!owned(selected.id) && !previewReady))return;
   if(!state?.authenticated){$('treta-detail').close();login();return;}
   const skin=selected,epoch=accountEpoch,owner=state.accountId;
   let revealPoster=portrait(skin);try{if(stage)revealPoster=stage.snapshot();}catch{}
@@ -178,8 +192,9 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   const code=new URLSearchParams(location.search).get('treta');
   if(code && /^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(code))stored('cs_treta_referral',code);
   $('treta-buy').onclick=()=>void buy();
+  $('treta-preview-retry').onclick=()=>{if(selected)void detail(selected);};
   for(const button of document.querySelectorAll('[data-treta-close]'))button.onclick=()=>button.closest('dialog').close();
-  for(const dialog of [$('treta-detail'),$('treta-purchase')])dialog.addEventListener('close',()=>{if(dialog.id==='treta-detail'){stage?.dispose();stage=null;}else{purchaseStage?.dispose();purchaseStage=null;}});
+  for(const dialog of [$('treta-detail'),$('treta-purchase')])dialog.addEventListener('close',()=>{if(dialog.id==='treta-detail'){detailVersion++;stage?.dispose();stage=null;}else{purchaseStage?.dispose();purchaseStage=null;}});
   $('treta-info').addEventListener('close',()=>{infoVersion++;infoStage?.dispose();infoStage=null;});
   const explain=async(value=200)=>{
     const version=++infoVersion;infoStage?.dispose();infoStage=null;
@@ -198,7 +213,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   document.addEventListener('visibilitychange',()=>{if(!document.hidden && account?.authenticated)void refresh();});
   document.addEventListener('cs-match-end',()=>{for(const delay of [2000,12000,30000])setTimeout(()=>{if(account?.authenticated)void refresh();},delay);});
   document.addEventListener('cs-shop-open',()=>void refresh());
-  document.addEventListener('cs-account-change',event=>{accountEpoch++;account=event.detail;state=null;selected=null;for(const id of ['treta-detail','treta-purchase'])if($(id).open)$(id).close();draw();updateBuy();void refresh();});
+  document.addEventListener('cs-account-change',event=>{accountEpoch++;account=event.detail;state=null;selected=null;updateTretaRewards(null);for(const id of ['treta-detail','treta-purchase'])if($(id).open)$(id).close();draw();updateBuy();void refresh();});
   $('account-entry-dialog')?.addEventListener('close',()=>{if(!skipPrompt && !stored('cs_treta_intro'))explain();});
   let accountReady=false;
   const introObserver=new MutationObserver(()=>{
