@@ -15,13 +15,46 @@
 
    Uso: node tools/eval/passo-sim-check.mjs
         node tools/eval/passo-sim-check.mjs --mutar=antes-do-portao   # devolve o estado anterior
+        node tools/eval/passo-sim-check.mjs --mutar=sem-render-teto
 */
+import { readFileSync } from 'node:fs';
 import { Game, initTextures, renderer, sfx, PCHAR, seedRandom } from './harness.mjs';
 
 const MUTAR = (process.argv.slice(2).find((a) => a.startsWith('--mutar=')) || '').split('=')[1] || '';
 
 let ok = 0, falhas = 0;
 const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { falhas++; console.log(`  FALHA ${m}`); } };
+
+const mainSrc = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
+const teto = Number(mainSrc.match(/const PASSO_TETO = (\d+);/)?.[1]);
+const inicio = mainSrc.indexOf('    let resto = dtReal;');
+const fim = mainSrc.indexOf('\n  } else if (!game)', inicio);
+if (inicio < 0 || fim < 0 || !Number.isFinite(teto)) throw new Error('Laço de produção não encontrado');
+let loopSrc = mainSrc.slice(inicio, fim);
+if (MUTAR === 'sem-render-teto') {
+  loopSrc = loopSrc.replace('resto <= 1e-6 || n === PASSO_TETO - 1', 'resto <= 1e-6');
+  console.log('\n  [MUTANTE: sem-render-teto] — a régua TEM que reprovar');
+}
+const quadro = new Function('game', 'dtReal', 'PASSO_TETO', loopSrc);
+const casos = [
+  [0, []], [1e-7, []], [0.016, [0.016]], [0.05, [0.05]],
+  [0.1, [0.05, 0.05]], [0.12, [0.05, 0.05, 0.02]],
+  [0.2, [0.05, 0.05, 0.05, 0.05]],
+  [0.201, [0.05, 0.05, 0.05, 0.05]],
+  [0.3, [0.05, 0.05, 0.05, 0.05]],
+  [0.8, [0.05, 0.05, 0.05, 0.05]],
+];
+console.log('\n· laço de produção: desenho no último passo, inclusive ao esgotar o teto');
+cobra(teto === 4, `PASSO5 · orçamento físico original de quatro passos (${teto})`);
+for (const [dt, esperado] of casos) {
+  const chamadas = [];
+  quadro({ update: (passo, render) => chamadas.push({ passo, render }) }, dt, teto);
+  const renders = chamadas.filter((c) => c.render).length;
+  cobra(chamadas.length === esperado.length && chamadas.every((c, i) => Math.abs(c.passo - esperado[i]) < 1e-12),
+    `PASSO6 · dt=${dt}s mantém os passos físicos [${chamadas.map((c) => c.passo.toFixed(3)).join(', ')}]`);
+  cobra(renders === (esperado.length ? 1 : 0) && (!esperado.length || chamadas.at(-1).render === true),
+    `PASSO7 · dt=${dt}s desenha só no último passo (${renders} render)`);
+}
 
 const TEX = initTextures();
 seedRandom(4242);
@@ -80,8 +113,7 @@ const DT = 0.05;   // o passo máximo do laço do navegador
 game.update(DT, true);
 zera();
 
-/* O PADRÃO EXATO DO NAVEGADOR a 5 FPS: quatro passos, só o último desenha
-   (public/js/main.js — `game.update(passo, resto <= 1e-6)`). */
+// A fronteira dentro do Game também precisa preservar três passos sem desenho e um com desenho.
 game.update(DT, false);
 game.update(DT, false);
 game.update(DT, false);
@@ -104,6 +136,14 @@ cobra(semDesenho.hud === 0,
    "não faça" é satisfeita apagando a função. */
 cobra(total.radar >= 1 && total.desenho > 0,
   `PASSO4 · o quadro que desenha continua desenhando (${total.radar} radar, ${total.desenho} ops)`);
+
+zera();
+const tempo0 = game.time, frames0 = game._rafFrames || 0;
+quadro(game, 0.3, teto);
+cobra(Math.abs(game.time - tempo0 - 0.2) < 1e-12,
+  `PASSO8 · frame de 300ms simula só os 200ms originais (${(game.time - tempo0).toFixed(3)}s)`);
+cobra(game._rafFrames - frames0 === 1 && conta.hud === 1 && conta.radar === 1 && conta.desenho > 0,
+  `PASSO9 · laço real desenha um quadro/HUD/radar em 300ms (${game._rafFrames - frames0} quadro, ${conta.hud} HUD, ${conta.radar} radar)`);
 
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

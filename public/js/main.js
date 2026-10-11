@@ -3510,7 +3510,7 @@ function loop() {
     for (let n = 0; n < PASSO_TETO && resto > 1e-6; n++) {
       const passo = Math.min(0.05, resto);
       resto -= passo;
-      game.update(passo, resto <= 1e-6);   // só o último passo desenha (multi-render em FPS baixo seria espiral)
+      game.update(passo, resto <= 1e-6 || n === PASSO_TETO - 1);   // só o último passo desenha, inclusive ao esgotar o teto
     }
   } else if (!game) {
     menuAngle += Math.min(0.05, dtReal) * 0.07;
