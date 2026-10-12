@@ -75,3 +75,11 @@ Servidores: `/opt/homebrew/bin/node node_modules/astro/bin/astro.mjs dev --host1
 - Reload: somente recarregar o jogo local via8778, pois o proxy injeta `runtime.js` diretamente. Sem restart do Astro, Chrome externo ou publicação. Pausado, a orientação muda no estado do jogador; câmera renderizada acompanha no próximo frame normal, após iniciar a tomada atômica.
 - Root reportou probes após o conserto de render: tomadas03/04/05 têm89/96/88 frames nativos,29.9/29.8/29.5fps.03 aponta parede e fica fora;04 tem recarga/órbita;05 tem passagem livre e tiros perto da igreja/oponente distante. Rendimento recuperado nestes probes não aprova todas as cenas. Root segue Professor/Zero Um em mapas diferentes.
 - Próximo: root validar ajuste pausado seguido de tomada atômica curta com player ativo, acompanhando o percurso inteiro e frames nativos. O checkpoint inclui runtime, régua e este ledger; SHA via `git log -1`. Objetivo completo e pendências V9 permanecem na campanha.
+
+## PR das ferramentas autorizado, 12/10/2026
+
+Dono pediu abrir PRs de todos os chats ativos. Checkpoint `de9810472` publicado com push normal e hook check:deploy aprovado em 52s. Draft https://github.com/corosolto/client/pull/821, base main, branch feat/trailer-codex-input. A orientação anterior de manter o instrumento local continua valendo para execução/distribuição no site; a nova autorização permite publicar o código para revisão. Nenhum merge, deploy, playback, servidor ou captura foi iniciado pela coordenação.
+
+Revalidação: controls-check 12/12, mutante sem-finally 9 falhas; passo-sim 27/27, mutante sem-render-teto 4 falhas. Sintaxe JS/Python passou. Logs /tmp/csbr-trailer-pr-{controls,controls-mut,sim,sim-mut,push}.log. Revisões independentes anteriores preservadas. PR marcado para staging e gameplay humano por tocar render. Filmes, arquivos brutos e o HTML ad hoc public/trailer-map-capture.html permanecem fora do checkpoint.
+
+Objetivo completo da campanha e produção corrente continuam no ledger privado referenciado acima. Próximo da integração: reconciliar a base alpha.62 com main, CI e revisão de render em staging. Próximo da produção: seguir o ledger da campanha e revisão criativa humana; PR aberto não constitui aprovação final dos filmes.
