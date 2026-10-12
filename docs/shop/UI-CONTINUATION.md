@@ -63,3 +63,32 @@ Galeria verificada em Chrome: seleção desktop/mobile, telas, comparação de m
 Dono pediu abrir PRs em todos os chats em andamento. Push e draft PR desta UI autorizados; restrições de merge/deploy/cobrança/migration mantidas. Instrução encaminhada a 12 chats do projeto; Páginas e Clãs recusaram envio por active writer, então seus checkpoints limpos foram inspecionados diretamente para publicar drafts.
 
 SEO/AEO publicado passou 6/6 em `check:seo`. `check:deploy` ficou 47/48: CM2 em comentário inglês de treta-rewards herdado da base; traduzido sem alterar runtime. Docs geradas sincronizadas pelo comando oficial. ARCH não mudou. `check:fast` completo em andamento, com falhas em mapa/áudio/grafite preexistentes à UI; detalhes serão registrados após conclusão. Base desejada do draft: branch da loja de skins para isolar o delta desta lane. Logs `/tmp/treta-ui-pr-{fast,deploy,seo,docs,arch}.log`. Próximo: gate final, push e criar/anexar draft; registrar URLs das frentes.
+
+## PRs coordenados e UI incorporada, 12/10/2026
+
+Objetivo adicional concluído: os 14 chats CSBrasil identificados têm sua frente versionável coberta por draft novo ou atualizado. Nenhum merge, deploy, migration remota, cobrança ou publicação de mídia foi realizado pela coordenação. Chats Páginas/Clãs recusaram mensagem por active writer; seus checkpoints foram publicados diretamente após inspeção. Trailer recebeu a coordenação do checkpoint local de ferramentas sem interromper produção/captura.
+
+Decisão final desta UI: acompanhar https://github.com/corosolto/client/pull/819. A branch da loja já incorporou 1901898ed, c4e3ae5d9 e 3386f4ee6 como d55f97c21, 85171db98 e 5a6a20fdb, e avançou com modelos/equipamento. PR separado de UI foi rejeitado por duplicar os commits e poder desfazer o progresso. Branch própria publicada para recuperação, head dbac3f91d antes deste marco. O draft 819 está anexado neste chat; backend pareado 73. Fonte da implementação ativa agora é a lane treta-skin-store, não este checkpoint histórico da UI.
+
+Validação final de publicação nesta lane: check:deploy 48/48, SEO 6/6, ARCH sem mudança, push normal aprovado. check:fast completo teve 172/186 antes de sincronizar docs e traduzir o comentário; docs:check e eval:comentario resolvidos. Restam 12 falhas fora da UI: eval:mapid, audio:check, grafite, eval:grafite, eval:grafite:ar, eval:grafite-editorial, eval:audiofablocal, eval:audiovoicemix, eval:grafitelayout, changelog:check, eval:lajes-identidade e eval:mansao. Logs /tmp/treta-ui-pr-fast.log e /tmp/treta-ui-pr-deploy-committed.log. Evidências de browser, 34 capturas e limitações de fixtures/mobile permanecem nos marcos anteriores.
+
+| Chat | PRs confirmados |
+|---|---|
+| Adicionar loja de skins TRETA$ e UI deste chat | https://github.com/corosolto/client/pull/819 e https://github.com/corosolto/backend/pull/73 |
+| Integrar páginas ao visual do jogo | https://github.com/corosolto/client/pull/818 |
+| Adicionar suporte a clans | https://github.com/corosolto/client/pull/817 e https://github.com/corosolto/backend/pull/72 |
+| Padronizar wallpapers e sprites | https://github.com/corosolto/client/pull/820 |
+| Trailer eleitoral, Higgsfield e gameplay | https://github.com/corosolto/client/pull/821 (ferramentas/render; filmes privados) |
+| Corrigir problemas do admin | https://github.com/corosolto/client/pull/815 e https://github.com/corosolto/backend/pull/71 |
+| Corrigir mapas UPA e grafites | https://github.com/corosolto/client/pull/816 e https://github.com/corosolto/backend/pull/74 |
+| Coro Solto, audiência, Supabase e retenção | https://github.com/corosolto/client/pull/812 |
+| Coro Solto, crescimento e comunidade em outubro | https://github.com/corosolto/client/pull/810 e https://github.com/corosolto/progress/pull/1 |
+| Implemente camada social do jogo | https://github.com/corosolto/client/pull/807 e https://github.com/corosolto/backend/pull/70 |
+| Coro Solto, comunidade devs e contribuição | https://github.com/corosolto/client/pull/810 e https://github.com/corosolto/progress/pull/1 |
+| Coro Solto, conteúdo e identidade visual | https://github.com/corosolto/client/pull/811 |
+| Planejar campanha de lançamento | https://github.com/corosolto/progress/pull/2 |
+| Verificar pendências do release | https://github.com/corosolto/mobile/pull/2 e https://github.com/corosolto/client/pull/813 |
+
+Dependências de integração: loja client 819 contém a camada social 807 e precisa ser reconciliada após esse PR; backend 73 depende de 70. Clãs backend 72 tem migration 040 com número também usado por social 70: reconciliar sequência/schema antes de release. Páginas 818 publicou ajustes estritos nas réguas SL4/SB7, com mutantes e crítico independente, sem alterar runtime adicional. Trailer 821 nasceu de alpha.62 e precisa reconciliar main. Os drafts conservam os gates humanos/staging e falhas gerais informados por cada dono.
+
+Próximo concreto: revisar CI e dependências dos drafts, consolidar integração apenas após autorização correspondente. Não reabrir PR duplicado de UI. Galeria local 4348 e assets privados permanecem disponíveis para revisão visual do dono.
