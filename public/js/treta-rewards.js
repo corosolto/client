@@ -32,7 +32,7 @@ export function updateTretaRewards(state){
 }
 export function initTretaRewards(){
   if(pump)return;
-  // The menu is hidden during combat; rewards belong to the page overlay.
+  // O menu fica oculto no combate; recompensas pertencem ao overlay da página.
   document.body.append(document.getElementById('treta-earned'));
   document.getElementById('treta-earned-close').onclick=()=>{hide();next();};
   document.getElementById('hub-treta-wallet').onclick=()=>document.querySelector('[data-hub-tab="loja"]')?.click();
