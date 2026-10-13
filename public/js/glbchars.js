@@ -20,6 +20,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
 import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.js';
+import { mountEyewear } from './eyewear.js';
 import { solveCCDIK } from './handik.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
@@ -446,6 +447,8 @@ export function buildCharacterModel(def, opts = {}) {
   // de graça; o "sumir no ar" vem do estado de pulo, tratado no CharController.
   const shadow = CHAR_FX.shadow ? makeContactShadow() : null;
   if (shadow) group.add(shadow);
+
+  mountEyewear(model,def);
 
   // Head hitbox: an invisible (unrendered) but raycastable box tracked to the head bone
   // each frame, so headshots stay accurate through the animation.

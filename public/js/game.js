@@ -687,7 +687,7 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
     this._ctfOpt = ctf;
     this._matchWeapons = matchWeapons;
     this._armaN = 0;
@@ -783,7 +783,7 @@ export class Game {
     // id de personagem que não existe (URL velha, elenco renomeado) NÃO pode virar crash na
     // morte, quadro a quadro, meia hora depois do boot: cai no primeiro válido e avisa.
     this.playerDef = byId(playerCharId) || CHARACTERS[0];
-    if (playerSkinId) this.playerDef = {...this.playerDef, skinId:playerSkinId};
+    if (playerSkinId || playerEyewearId) this.playerDef = {...this.playerDef, skinId:playerSkinId,eyewearId:playerEyewearId};
     if (!byId(playerCharId)) console.warn(`[elenco] personagem '${playerCharId}' não existe — usando '${this.playerDef.id}'`);
     this.playerCharId = this.playerDef.id;   // usado por _buildViewModels (paleta/braços FP) e _resetPositions (loadout)
     this.combatants = [];   // scoreboard entries
@@ -5827,7 +5827,7 @@ export class Game {
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
     const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
-    const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id || this._tpSkinId !== (def.skinId || null));
+    const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id || this._tpSkinId !== (def.skinId || null) || this._tpEyewearId !== (def.eyewearId || null));
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
     if (this.playerTP && !weaponChanged && !wantUpgrade) return;
     // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
@@ -5846,7 +5846,7 @@ export class Game {
     this.scene.add(tp.group);
     this.playerTP = tp;
     this._tpWeapon = w;
-    this._tpDefId = def.id; this._tpSkinId = def.skinId || null;
+    this._tpDefId = def.id; this._tpSkinId = def.skinId || null; this._tpEyewearId = def.eyewearId || null;
   }
 
   // Anima o corpo TP a partir do estado do jogador e põe a câmera atrás dele.
@@ -6870,10 +6870,11 @@ export class Game {
   }
   /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
      então def, nome e malha ficam iguais nos dois lados do fio. */
-  _trocarPersonagem(c, def) {
-    if (!c || !def || (c.def?.id === def.id && c.def?.skinId === def.skinId)) return false;
+  _trocarPersonagem(c, def, reload = false) {
+    if (!c || !def || (!reload && c.def?.id === def.id && c.def?.skinId === def.skinId && c.def?.eyewearId === def.eyewearId)) return false;
     if (c === this.player) {
       this.playerDef = def; this.playerCharId = def.id; c.def = def;
+      if (reload) this._tpDefId = null;
       const perfil = { id: def.id, faction: this.playerFaction, skin: def.pal?.skin, sleeve: def.pal?.shirt, accent: def.pal?.pants };
       this.vm?.authored?.setProfile(perfil);
       this.vm?.melee?.setProfile(perfil);

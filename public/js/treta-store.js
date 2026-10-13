@@ -1,14 +1,16 @@
 import {initTretaRewards,updateTretaRewards} from './treta-rewards.js';
-import {TRETA_SKINS,TRETA_COINS,TRETA_DEFAULT_REWARDS,TRETA_COIN_ART} from './treta-catalog.js';
+import {TRETA_SKINS,TRETA_COINS,TRETA_DEFAULT_REWARDS,TRETA_COIN_ART,TRETA_EYEWEAR} from './treta-catalog.js';
 import {TRETA_ACCESSORY_PROPOSALS} from './treta-proposals.js';
 import {loadAccount,socialApi} from './account-entry.js';
+import {byId} from './characters.js';
+import {eyewearProfile} from './eyewear.js';
 
 const node=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=text;e.className=cls;return e;};
-const errors={account_required:'Entre e escolha seu nick para guardar seus T$.',insufficient_balance:'Ainda faltam T$ para esta skin. Ganhe mais jogando e convidando amigos.',skin_unavailable:'Esta skin está sendo produzida. A compra abre quando o modelo estiver pronto.',request_reused:'Este pedido já foi usado. Atualize a carteira.',skin_not_owned:'Esta skin ainda não está no seu armário.',referral_ineligible:'Este convite não é elegível para a recompensa.',rate_limited:'Espere um momento antes de tentar novamente.'};
+const errors={account_required:'Entre e escolha seu nick para guardar seus T$.',insufficient_balance:'Ainda faltam T$ para esta skin. Ganhe mais jogando e convidando amigos.',skin_unavailable:'Este visual ainda está em produção ou revisão.',request_reused:'Este pedido já foi usado. Atualize a carteira.',skin_not_owned:'Este visual ainda não está no seu armário.',referral_ineligible:'Este convite não é elegível para a recompensa.',rate_limited:'Espere um momento antes de tentar novamente.'};
 const errorText=e=>errors[e.message] || 'A carteira está indisponível agora. Tente novamente em instantes.';
 const money=value=>`T$ ${new Intl.NumberFormat('pt-BR').format(value)}`;
 const stored=(key,value)=>{try{if(value===undefined)return localStorage.getItem(key);localStorage.setItem(key,value);}catch{return null;}};
-let state=null,manifest={skins:{}},selected=null,filter='all',stage=null,purchaseStage=null,refreshPromise=null,account=null;
+let state=null,manifest={skins:{}},eyeManifest={eyewear:{}},selected=null,filter='all',stage=null,purchaseStage=null,refreshPromise=null,account=null;
 let onEquip=()=>{},infoStage=null,infoVersion=0;
 let equipmentRevision='';
 let accountEpoch=0,refreshEpoch=-1,loading=false,refreshFailed=false,purchasePending=false,view='skins',detailVersion=0,previewReady=false,previewLoading=false;
@@ -17,15 +19,16 @@ const owned=id=>state?.inventory?.some(s=>s.skin_id===id);
 const equipped=id=>state?.inventory?.some(s=>s.skin_id===id && s.equipped);
 const item=id=>state?.catalog?.find(s=>s.id===id);
 const campaignActive=()=>Boolean(state?.campaign?.starts_at && Date.now()>=Date.parse(state.campaign.starts_at) && Date.now()<Date.parse(state.campaign.ends_at));
-const available=id=>item(id)?.available===true && manifest.skins[id]?.approved===true && manifest.skins[id]?.character===item(id).character_id && item(id).model_path===manifest.skins[id].model;
+const asset=id=>eyeManifest.eyewear[id] || manifest.skins[id];
+const available=id=>item(id)?.available===true && asset(id)?.approved===true && item(id).model_path===asset(id).model && (item(id).slot==='eyewear'?Object.keys(asset(id).profiles || {}).some(key=>eyewearProfile(asset(id),{id:key})):asset(id).character===item(id).character_id);
 // A vitrine pode mostrar um modelo real ainda em revisão; venda/equipamento
 // continuam dependendo do catálogo do servidor e da aprovação no manifesto.
-const previewable=id=>Boolean((manifest.skins[id]?.preview || manifest.skins[id]?.approved) && /^\/models\/skins\/[a-z0-9-]+\.glb$/.test(manifest.skins[id].model));
+const previewable=id=>Boolean((asset(id)?.preview || asset(id)?.approved) && /^\/models\/(skins|items)\/[a-z0-9-]+\.glb$/.test(asset(id).model));
 export function equippedTretaSkin(characterId) {
-  const skin=state?.inventory?.find(s=>s.equipped && available(s.skin_id));
+  const skin=state?.inventory?.find(s=>s.equipped && item(s.skin_id)?.slot!=='eyewear' && available(s.skin_id));
   return skin && item(skin.skin_id)?.character_id===characterId?skin.skin_id:null;
 }
-const portrait=skin=>manifest.skins[skin.id]?.poster || `/img/chars/${skin.character}.webp`;
+const portrait=skin=>asset(skin.id)?.poster || (skin.slot==='eyewear'?`/img/items/${skin.id}.webp`:`/img/chars/${skin.character}.webp`);
 function notifyEquipment() {
   const revision=`${state?.accountId || ''}:${state?.inventory?.filter(s=>s.equipped && available(s.skin_id)).map(s=>s.skin_id).join(',') || ''}`;
   if(revision===equipmentRevision)return;
@@ -90,7 +93,19 @@ function draw() {
   $('treta-solo').disabled=!active;
   $('treta-solo').textContent=active?'JOGAR SOLO POR T$ ▸':'SOLO POR T$ · EM BREVE';
   $('treta-info-login').hidden=!!account?.authenticated;
-  drawQuests();
+  drawQuests();drawEyewear();
+}
+function drawEyewear() {
+  $('treta-eyewear-grid').replaceChildren(...TRETA_EYEWEAR.map(s=>{
+    const button=node('button','','treta-card');button.type='button';button.style.setProperty('--skin-color',s.color);
+    const label=node('span',equipped(s.id)?'EQUIPADO':owned(s.id)?'NO ARMÁRIO':available(s.id)?'NOVO VISUAL':'ENCAIXE EM REVISÃO','treta-label');
+    const image=node('img');image.src=portrait(s);image.alt=s.name;image.loading='lazy';
+    const copy=node('div','','treta-card-copy'),price=node('b',money(item(s.id)?.price ?? s.price));price.append(node('span','VER DETALHE'));
+    copy.append(node('small',s.series),node('strong',s.name),price);button.append(label,image,copy);button.onclick=()=>void detail(s);return button;
+  }));
+}
+export function equippedTretaEyewear() {
+  return state?.inventory?.find(s=>s.equipped && item(s.skin_id)?.slot==='eyewear' && available(s.skin_id))?.skin_id || null;
 }
 function openDialog(dialog) {
   if(dialog.open)return;
@@ -125,7 +140,7 @@ async function refresh() {
 }
 async function visual(host,{model,poster,coin=false,celebrate=false,count=1}) {
   host.replaceChildren();
-  const fallback=node('img');fallback.src=poster;fallback.alt=coin?'Moeda dourada TRETA$':'Prévia visual da skin';host.append(fallback);
+  const fallback=node('img');fallback.src=poster || '/img/treta/coin-classic-saci.webp';fallback.alt=coin?'Moeda dourada TRETA$':'Prévia visual da skin';host.append(fallback);
   if(!model)return {loaded:false,dispose(){}};
   let display;
   try{const {TretaStage}=await import('./treta-stage.js');display=new TretaStage(host,{coin,celebrate,count});await display.load(model);fallback.remove();display.loaded=true;return display;}catch{display?.dispose();return {loaded:false,dispose(){}};}
@@ -136,13 +151,15 @@ async function detail(skin) {
   $('treta-preview-retry').hidden=true;
   $('treta-detail-name').textContent=skin.name;$('treta-detail-series').textContent=skin.series;
   $('treta-detail-description').textContent=skin.description;$('treta-detail-price').textContent=money(item(skin.id)?.price ?? skin.price);
-  $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':previewLoading?'Carregando prévia 3D da skin…':'Em produção. A imagem abaixo é a referência do personagem base; o visual final terá roupas e acessórios novos.';
+  const fits=skin.slot==='eyewear'?Object.keys(asset(skin.id)?.profiles || {}).filter(key=>eyewearProfile(asset(skin.id),{id:key})).map(key=>TRETA_SKINS.find(s=>s.id===key)?.name || byId(key)?.name || key):[];
+  $('treta-detail-fit').hidden=skin.slot!=='eyewear';$('treta-detail-fit').textContent=fits.length?`Personagens compatíveis: ${fits.join(', ')}.`:'O encaixe nos personagens ainda está em revisão.';
+  $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':previewLoading?'Carregando prévia 3D do visual…':'Em produção. A imagem abaixo é a referência do personagem base; o visual final terá roupas e acessórios novos.';
   $('treta-buy-status').textContent='';updateBuy();openDialog($('treta-detail'));
-  const loaded=await visual($('treta-stage'),{model:previewable(skin.id)?manifest.skins[skin.id].model:null,poster:portrait(skin)});
+  const loaded=await visual($('treta-stage'),{model:previewable(skin.id)?asset(skin.id).model:null,poster:portrait(skin)});
   if(version!==detailVersion || !$('treta-detail').open){loaded.dispose();return;}
-  stage=loaded;previewLoading=false;previewReady=loaded.loaded || !!manifest.skins[skin.id]?.poster;
+  stage=loaded;previewLoading=false;previewReady=loaded.loaded || !!asset(skin.id)?.poster;
   if(previewable(skin.id)){
-    $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':loaded.loaded?(available(skin.id)?'Prévia 3D da skin.':'Modelo 3D da skin. Venda em preparação.') :previewReady?'Prévia 3D indisponível. Veja a imagem da skin.':'Prévia 3D indisponível. Esta imagem é do personagem base. Tente novamente para ver a skin antes de comprar.';
+    $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':loaded.loaded?(available(skin.id)?(skin.slot==='eyewear'?'Prévia 3D dos óculos.':'Prévia 3D da skin.'):(skin.slot==='eyewear'?'Modelo 3D dos óculos. Venda em preparação.':'Modelo 3D da skin. Venda em preparação.')) :previewReady?'Prévia 3D indisponível. Veja a imagem da skin.':'Prévia 3D indisponível. Esta imagem é do personagem base. Tente novamente para ver a skin antes de comprar.';
     $('treta-preview-retry').hidden=loaded.loaded;
   }
   updateBuy();
@@ -158,7 +175,7 @@ function updateBuy() {
   if(shortfall>0 && !purchasePending){button.textContent='SALDO INSUFICIENTE';return;}
   if(purchasePending){button.textContent='CONFIRMANDO…';return;}
   if(available(selected.id) && !owned(selected.id) && !previewReady){button.textContent=previewLoading?'CARREGANDO PRÉVIA…':'PRÉVIA INDISPONÍVEL';return;}
-  button.textContent=!available(selected.id)?'EM PRODUÇÃO':equipped(selected.id)?'JÁ EQUIPADA':owned(selected.id)?'EQUIPAR SKIN':state?.wallet?`COMPRAR POR ${money(item(selected.id).price)}`:'ENTRAR PARA COMPRAR';
+  button.textContent=!available(selected.id)?(selected.slot==='eyewear'?'ENCAIXE EM REVISÃO':'EM PRODUÇÃO'):equipped(selected.id)?'JÁ EQUIPADA':owned(selected.id)?(selected.slot==='eyewear'?'EQUIPAR ÓCULOS':'EQUIPAR SKIN'):state?.wallet?`COMPRAR POR ${money(item(selected.id).price)}`:'ENTRAR PARA COMPRAR';
   if(equipped(selected.id))button.disabled=true;
 }
 async function equip(skin) {
@@ -167,8 +184,8 @@ async function equip(skin) {
   if(epoch!==accountEpoch || result.accountId!==owner)return false;
   state=result;
   draw();updateBuy();notifyEquipment();
-  onEquip({...skin,model:manifest.skins[skin.id].model});
-  document.dispatchEvent(new CustomEvent('cs-skin-equipped',{detail:{skinId:skin.id,characterId:skin.character,model:manifest.skins[skin.id].model}}));
+  if(skin.slot==='eyewear')document.dispatchEvent(new CustomEvent('cs-eyewear-equipped',{detail:{eyewearId:skin.id}}));
+  else {onEquip({...skin,model:asset(skin.id).model});document.dispatchEvent(new CustomEvent('cs-skin-equipped',{detail:{skinId:skin.id,characterId:skin.character,model:asset(skin.id).model}}));}
   return true;
 }
 async function buy() {
@@ -178,17 +195,17 @@ async function buy() {
   const revealPoster=portrait(skin);
   purchasePending=true;updateBuy();
   try {
-    if(owned(skin.id)){if(!await equip(skin))return;$('treta-buy-status').textContent='Skin equipada para a próxima partida.';return;}
+    if(owned(skin.id)){if(!await equip(skin))return;$('treta-buy-status').textContent='Visual equipado para a próxima partida.';return;}
     const result=await socialApi('/api/treta',{action:'purchase',skinId:skin.id,requestId:crypto.randomUUID()});
     if(epoch!==accountEpoch || result.accountId!==owner)return;
     state=result;draw();$('treta-detail').close();
     const reveal=$('treta-purchase-item');reveal.src=revealPoster;reveal.alt=`${skin.name} adicionada ao armário`;reveal.hidden=false;
     $('treta-purchase-title').textContent=result.purchase.owned?'JÁ É SUA':`${skin.name.toUpperCase()}`;
     $('treta-purchase-copy').textContent=result.purchase.owned?'A skin já estava no seu armário.':`${money(result.purchase.spent)} investidos no drip. Saldo: ${money(result.wallet.balance)}.`;
-    $('treta-purchase-equip').onclick=async()=>{const b=$('treta-purchase-equip');b.disabled=true;try{if(!await equip(skin))return;$('treta-purchase-copy').textContent='Skin equipada para a próxima partida.';$('treta-purchase').close();}catch(e){$('treta-purchase-copy').textContent=errorText(e);}finally{b.disabled=false;}};
+    $('treta-purchase-equip').onclick=async()=>{const b=$('treta-purchase-equip');b.disabled=true;try{if(!await equip(skin))return;$('treta-purchase-copy').textContent='Visual equipado para a próxima partida.';$('treta-purchase').close();}catch(e){$('treta-purchase-copy').textContent=errorText(e);}finally{b.disabled=false;}};
     openDialog($('treta-purchase'));purchaseStage?.dispose();
     const display=result.purchase.owned
-      ? {model:manifest.skins[skin.id].model,poster:portrait(skin)}
+      ? {model:asset(skin.id).model,poster:portrait(skin)}
       : {...TRETA_COIN_ART,coin:true,celebrate:true};
     const loaded=await visual($('treta-purchase-stage'),display);
     if(epoch!==accountEpoch || !$('treta-purchase').open)loaded.dispose();else purchaseStage=loaded;
@@ -246,7 +263,9 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   });
   introObserver.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
   draw();
-  void fetch('/models/skins/manifest.json').then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{manifest=data;draw();notifyEquipment();}).catch(()=>{});
+  const manifestsReady=()=>{draw();notifyEquipment();if(selected && $('treta-detail').open)void detail(selected);};
+  void fetch('/models/skins/manifest.json').then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{manifest=data;manifestsReady();}).catch(()=>{});
+  void fetch('/models/items/eyewear-manifest.json').then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{eyeManifest=data;manifestsReady();}).catch(()=>{});
   void loadAccount().then(auth=>{account=auth;}).catch(()=>{}).finally(()=>{accountReady=true;});
   void refresh();
 }

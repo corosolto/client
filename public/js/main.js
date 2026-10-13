@@ -1,9 +1,10 @@
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
 import {initAccountEntry} from './account-entry.js';
-import {initTretaStore,equippedTretaSkin} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear} from './treta-store.js';
 import { initTextures } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
+import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCharacterAssets, preloadCosmeticAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
@@ -870,7 +871,7 @@ function snapThumb(obj, fallbackUrl) {
 // CHAR_WEAPON/charWeapon live in characters.js, shared with game.js (initial loadout).
 let pvToken = 0;
 function pvSetChar(def) {
-  def = {...def, skinId:equippedTretaSkin(def.id)};
+  def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
   if (staticPreviews) { showStaticPreview(def); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
@@ -888,7 +889,7 @@ function pvSetChar(def) {
   if (GLB_CHARS.has(def.id)) {
     // Keep the PREVIOUS model visible while the real GLB streams in — never flash the
     // blocky placeholder for a character that has a real model (the pop-in bug).
-    Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId])]).then(() => {
+    Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId])]).then(() => {
       if (my !== pvToken) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma
@@ -1514,6 +1515,8 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const playerSkinId = sessao
     ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.skinId || null
     : equippedTretaSkin(charId);
+  const playerEyewearId = sessao ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.eyewearId || null : equippedTretaEyewear();
+  const matchEyewear = [playerEyewearId,...matchRoster.allyDefs.map(d=>d.eyewearId),...matchRoster.enemyDefs.map(d=>d.eyewearId)];
   const matchSkins = [playerSkinId, ...matchRoster.allyDefs.map(d=>d.skinId), ...matchRoster.enemyDefs.map(d=>d.skinId)];
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
@@ -1535,6 +1538,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
       await Promise.all([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
+        preloadEyewearAssets(matchEyewear),
         sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
         /* fauna: sem esta linha o mapa constrói, o `ambience` existe e TODO bicho cai
@@ -1557,7 +1561,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game = new Game({
     renderer, textures, sfx,
     settings: sessao ? { ...settings, bots: tamanhoTime } : settings,
-    playerCharId: charId, playerSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
+    playerCharId: charId, playerSkinId, playerEyewearId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
@@ -3647,7 +3651,7 @@ async function openInspectionScreen(target) {
 function rosterDoServidor(lado, charId) {
   const roster = mpSessao.net.meta.roster || [];
   const meu = mpSessao.net.yourEnt;
-  const def = (r) => ({...(CHARACTERS.find((c) => c.id === r.char) || CHARACTERS[0]), skinId:r.skinId || null});
+  const def = (r) => ({...(CHARACTERS.find((c) => c.id === r.char) || CHARACTERS[0]), skinId:r.skinId || null,eyewearId:r.eyewearId || null});
   return {
     allyDefs: roster.filter((r) => r.team === lado && r.id !== meu).map(def),
     enemyDefs: roster.filter((r) => r.team !== lado).map(def),
