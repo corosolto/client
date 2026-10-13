@@ -2,13 +2,14 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.parse import urlparse, parse_qs, unquote
-import argparse, re
+import argparse, os, re
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', required=True)
 parser.add_argument('--audio-root', required=True)
 args = parser.parse_args()
 output = Path(args.output).resolve()
+base_saida = os.path.realpath(output)
 runtime = Path(__file__).with_name('runtime.js')
 audio_root = Path(args.audio_root).resolve()
 
@@ -55,11 +56,16 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(400)
             return
         name = re.sub(r'[^a-zA-Z0-9_-]', '_', parse_qs(parsed.query).get('name', ['take'])[0])[:100]
-        target = output / (name + '.webm')
-        if target.exists():
+        # o nome vira arquivo: caminho absoluto tem de continuar dentro do diretório de saída
+        target = os.path.realpath(output / (name + '.webm'))
+        if not target.startswith(base_saida + os.sep):
+            self.send_error(400, 'invalid take name')
+            return
+
+        if os.path.exists(target):
             self.send_error(409, 'Take already exists')
             return
-        with target.open('xb') as file:
+        with open(target, 'xb') as file:
             remaining = size
             while remaining:
                 chunk = self.rfile.read(min(remaining, 1048576))
@@ -68,11 +74,11 @@ class Handler(BaseHTTPRequestHandler):
                 file.write(chunk)
                 remaining -= len(chunk)
         if remaining:
-            target.unlink()
+            os.unlink(target)
             self.send_error(400, 'Incomplete recording')
             return
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(('SALVO: ' + str(target) + ' (' + str(target.stat().st_size) + ' bytes)').encode())
+        self.wfile.write(('SALVO: ' + target + ' (' + str(os.path.getsize(target)) + ' bytes)').encode())
 
 ThreadingHTTPServer(('127.0.0.1', 8778), Handler).serve_forever()
