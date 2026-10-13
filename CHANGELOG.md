@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.87`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.88`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -71,6 +71,32 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.88] — 2026-10-13
+
+### Mudado
+- Comprimir pôsteres, logo e decal da capivara (#866)
+- Levar a origem do convite de sala até a aquisição (#839)
+- Torna www.corosolto.com.br o host canônico (#845)
+- Faz o hreflang dos docs apontar para página real (#843)
+- Ícones oficiais nos botões de login (#857)
+- Regenerate docs
+- Show official brand icons on login buttons
+- Compress heavy PNG posters, logo and capivara decal
+- Cover an existing public profile in the host check
+- Keep builder paths out of the docs bundle
+- Regenerate docs blocks and public/docs
+- Point the dev docs at the canonical host
+- Declare hreflang on public profiles
+- Derive profile links from SITE
+- Move the canonical host to www.corosolto.com.br
+- Add canonical host check for the built site
+- Declara o sitemap EN dos docs no robots.txt
+- Regenera o build versionado dos docs
+- Redireciona as URLs EN antigas dos docs
+- Usa o mesmo slug dos docs em pt e en
+- Mede se o hreflang dos docs aponta para página real
+- Levar a origem do convite de sala até a aquisição
 
 ## [2.1.0-alpha.87] — 2026-10-13
 
