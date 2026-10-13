@@ -116,7 +116,11 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
     if (!h) return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
     /* `salaConvite`: o nó guarda sala privada SEM senha só para quem tem o código (backend#62).
        Nó sem o campo listaria essa sala aberta, então o JOGAR COM AMIGOS não a cria nele. */
-    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true };
+    /* Versão/simulação que o nó anuncia (incidente 13/10): a sonda diz ANTES de conectar
+       se esta região serve o jogo do navegador — o welcome recusa divergente. */
+    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true,
+      versaoNo: h.clientVersion || null, simNo: h.simHash || null,
+      compativel: versaoCompativel(h.clientVersion, VERSION, h.simHash) };
   }));
 }
 

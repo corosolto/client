@@ -40,7 +40,11 @@ export const httpDoNo = (no) => String(no.url).replace(/^ws/, 'http').replace(/\
 export const FAIXA_PING_MS = 15;
 export function ordenarNos(lista) {
   const faixa = (n) => Math.floor((n.ping == null ? 1e9 : n.ping) / FAIXA_PING_MS);
-  return [...lista].sort((a, b) => faixa(a) - faixa(b)
+  /* Nó em versão que este navegador não joga (`compativel: false`) desce pro fim: sugerir
+     o nó que vai recusar o welcome é beco sem saída (incidente da frota, 13/10). */
+  const inutil = (n) => (n.compativel === false ? 1 : 0);
+  return [...lista].sort((a, b) => inutil(a) - inutil(b)
+    || faixa(a) - faixa(b)
     || (b.jogadores | 0) - (a.jogadores | 0)
     || (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
 }
@@ -51,7 +55,8 @@ export const TETO_COMPANHIA_MS = 150;
 // Para onde o QUICK PLAY manda. Separado de `ordenarNos` de propósito: a lista é de quem
 // escolhe (e quer ping); isto decide por quem não quer escolher (e quer gente). Ver ROADMAP.
 export function melhorNoParaJogar(lista, teto = TETO_COMPANHIA_MS) {
-  const vivos = lista.filter((n) => n.online);
+  // Nó de versão outra não é destino: o welcome recusaria. Some do quick play como os offline.
+  const vivos = lista.filter((n) => n.online && n.compativel !== false);
   if (!vivos.length) return null;
   const ping = (n) => (n.ping == null ? 1e9 : n.ping);
   const comGente = vivos.filter((n) => (n.jogadores | 0) > 0 && ping(n) <= teto);

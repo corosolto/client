@@ -3882,7 +3882,10 @@ async function abrirMultiplayer() {
     mpNos.unshift(sonda[0]);
   }
   mpDesenharNos();
-  const primeiro = mpNos.find((n) => n.online) || mpNos[0];
+  /* O primeiro também tem que JOGÁVEL: nó online em versão outra não é escolha padrão, é
+     armadilha (o welcome recusaria). Só vira padrão se não existir região utilizável. */
+  const primeiro = mpNos.find((n) => n.online && n.compativel !== false)
+    || mpNos.find((n) => n.online) || mpNos[0];
   if (primeiro && primeiro.online) mpSelecionarNo(primeiro);
   else {
     mpEstado('erro', 'SERVIDORES FORA DO AR');
@@ -3899,8 +3902,9 @@ const MP_BANDEIRAS = {
   eu: { img: 'es', pais: 'Espanha' },   // o nó "Europa" vive em Madri; nó novo = linha nova
 };
 function mpCartaoNoHTML(n) {
-  const q = n.online ? mpQualidade(n.ping) : 'ruim';
-  const ping = n.online ? `${n.ping} ms` : 'fora do ar';
+  const atualizando = n.online && n.compativel === false;   // frota atrás do release do site
+  const q = !n.online || atualizando ? 'ruim' : mpQualidade(n.ping);
+  const ping = !n.online ? 'fora do ar' : atualizando ? 'atualizando' : `${n.ping} ms`;
   /* medidor de sinal: 3 barras (bom) / 2 (médio) / 1 (ruim) — o número em ms é exato,
      as barras são a leitura de longe, mesma faixa do limiar do mpQualidade */
   const acesas = q === 'bom' ? 3 : q === 'medio' ? 2 : 1;
@@ -4232,6 +4236,12 @@ function mpMontarFormulario() {
     mpEstado('conectando', 'PROCURANDO GENTE…');
     try { mpNos = ordenarNos(await sondarNos(NOS)); mpDesenharNos(); } catch { /* segue com a lista que tem */ }
     const alvo = melhorNoParaJogar(mpNos);
+    /* Toda região online em versão outra (frota atrás do release): a regra do produto manda
+       não deixar ninguém sem jogar — Quick Play abre local com bots em vez de devolver erro. */
+    if (!alvo && mpNos.some((n) => n.online)) {
+      const no = mpNos.find((n) => n.online);
+      return mpFallbackVersao({ no: no.versaoNo, jogo: VERSION });
+    }
     if (alvo && alvo.id !== mpNoAtual.id) mpSelecionarNo(alvo);
     mpEstado('conectando', 'PROCURANDO SALA…');
     let salas = [];
@@ -4264,6 +4274,14 @@ function mpMontarFormulario() {
       mpEntrarPorConvite(txt);
     };
   }
+}
+
+/* REGRA DO PRODUTO (incidente da frota, 13/10): versão incompatível NUNCA deixa o jogador
+   sem partida — sem região utilizável, abre LOCAL com bots até a frota alcançar o site. */
+function mpFallbackVersao(d = {}) {
+  mpErro(`Os servidores estão atualizando para a sua versão do jogo (nó ${d.no || '?'} · você ${d.jogo || '?'}). `
+    + 'Abrimos uma partida local com bots — o multiplayer volta em alguns minutos.', true);
+  return startGame(currentTeam, currentChar, currentEnemyFaction);
 }
 
 /* Abre o socket e SÓ ENTÃO começa a partida. A ordem importa: o welcome traz o mapa, as
@@ -4303,11 +4321,17 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     if (mpNoAtual.online) mpEstado('on', `ONLINE · ${mpNoAtual.nome.split('·')[0].trim()} · ${mpNoAtual.ping} ms`);
     else mpEstado('erro', 'SERVIDORES FORA DO AR');
     if (m.includes('versao_incompativel')) {
-      // Nó simulando outra versão do jogo (incidente da frota, 11/09). Recarregar resolve
-      // quando é cache do jogador; quando é o nó, a mensagem diz as duas versões.
+      // Outra versão do jogo no nó (frota atrás do site, 11/09 e 13/10): nunca beco sem saída.
       const d = err?.detalhe || {};
-      return mpErro(`Este servidor roda outra versão do jogo (nó ${d.no || '?'} · você ${d.jogo || '?'}). `
-        + 'Recarregue a página; se continuar, escolha outra região.', true);
+      if (mpNoAtual) mpNoAtual.compativel = false;   // a lista reflete na próxima sonda
+      const util = mpNos.find((n) => n.online && n.compativel !== false);
+      /* Convite aponta para a sala DESTE nó: outra região não tem a sala, não adianta mandar
+         trocar. Nos demais caminhos, região utilizável é a melhor próxima jogada. */
+      if (util && !soConvite && util.id !== mpNoAtual?.id) {
+        return mpErro(`Este servidor roda outra versão do jogo (nó ${d.no || '?'} · você ${d.jogo || '?'}) e está atualizando. `
+          + `Toque em ${util.nome} na lista de servidores e entre por lá.`, true);
+      }
+      return mpFallbackVersao(d);
     }
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
