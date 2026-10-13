@@ -1652,8 +1652,10 @@ export class Game {
        caía na janela bloqueante da eval:armas (ARM1/ARM3 — ver BUG-179 em KNOWN-BUGS). */
     if (semMalha.size && !NODE_RUNTIME) {
       const pendentes = [...semMalha];
+      /* Teto de 5 s: o rIC puro nunca dispara quando todo frame renderiza devagar. */
       const ocioso = (typeof requestIdleCallback === 'function')
-        ? requestIdleCallback : ((f) => setTimeout(f, 1200));
+        ? (f) => requestIdleCallback(f, { timeout: 5000 })
+        : ((f) => setTimeout(f, 1200));
       ocioso(() => {
         preloadWeapons(pendentes).then(() => {
           for (const id of pendentes) {

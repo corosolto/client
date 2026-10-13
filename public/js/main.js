@@ -1572,7 +1572,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
       if (window.__game !== meuJogo || ++tentativas > 240) { clearInterval(espera); return; }
       if (meuJogo.state !== 'live') return;
       clearInterval(espera);
-      const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
+      /* rIC sem teto morre de fome quando todo frame renderiza em máquina lenta: o teto
+         de 5 s garante o preload das armas restantes mesmo sem folga de idle (ARM5). */
+      const ocioso = window.requestIdleCallback
+        ? (f) => window.requestIdleCallback(f, { timeout: 5000 })
+        : (f) => setTimeout(f, 1200);
       ocioso(async () => {
         try {
           await preloadWeapons();
