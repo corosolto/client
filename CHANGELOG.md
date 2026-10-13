@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.72`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.74`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -70,6 +70,64 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.74] — 2026-10-13
+
+### Mudado
+- docs(changelog): rodada do cronista (2026-10-11) (#814)
+- docs(changelog): rodada do cronista — 187 commits
+- docs(changelog): rodada do cronista — 13 commits
+- docs(changelog): rodada do cronista — 12 commits
+
+## [2.1.0-alpha.73] — 2026-10-13
+
+### Mudado
+- feat: integrar comunidade e conta Supabase ao jogo (#807)
+- Navegador do portão de boot consente com a medição
+- Contrato do /ranking aceita o redirect para o hub da comunidade
+- Sincroniza o lockfile com o package.json da composição
+- Fecha os gates sociais demonstrados no check:fast do candidato
+- Protege os estados da home do ranking no portão
+- Alinha estado do ranking à resposta da API
+- Atualiza a arte dos emails com personagens armados
+- Add GPT character artwork for email templates
+- Add career badges to rankings and profiles
+- docs: refresh inventories after profile hierarchy adjustment
+- fix(social): prioritize ranking and simplify profile metrics
+- docs: atualizar catalogo de modulos do perfil publico
+- feat(social): mostrar perfil publico com ultimo personagem confirmado
+- docs: atualizar inventario de modulos apos selo de conta
+- feat(social): exibir selo de conta confirmada no perfil e ranking
+- docs: refresh module inventory for community inbox
+- feat: add community missions and private messages
+- docs: refresh module inventory and privacy gate
+- feat(auth): link social identities and separate optional choices
+- fix: use verified official contact and simplify legal heading
+- feat: align legal pages with the current hub design
+- feat: add privacy and terms pages for launch review
+- feat(ranking): adiciona aba semanal com calendário do servidor
+- docs(ranking): refresh generated module and test inventories
+- fix(ranking): preserve player links and present current team scores
+- fix(social): 404 upstream das rotas sociais vira 503 no proxy
+- docs(social): registra checkpoint e repetição do gate
+- feat(social): amplia personagem no cartão público
+- fix(social): refresh eval URLs after module edits
+- fix(social): render the CI entry and enter as guest
+- test(social): declare profile card route and verify preview isolation
+- docs(social): record profile share validation and regenerate counts
+- feat(social): share public handles and verified profile cards
+- feat(social): reuse game portraits for public profile cards
+- docs: consolidar aceite local do candidato social reconciliado
+- fix: preservar fronteira pública da conta e revisar reconciliação
+- docs: registrar retomada da reconciliação social
+- fix: liberar comunidade em retrato no celular
+- test: medir entrada social e documentar configuração real
+- feat: trazer comunidade e entrada de conta para a UI do jogo
+- Explain moderated sessions and record paired social reviews
+- Document social rollout and verify private community flows
+- feat(social): abra a comunidade integrada ao jogo
+- feat(social): integre sessão e feche leituras privadas no site
+- docs(social): registre objetivo e isolamento
 
 ## [2.1.0-alpha.72] — 2026-10-13
 
@@ -819,6 +877,197 @@
 - docs(changelog): rodada do cronista — 24 commits
 - Abre a exceção de sátira política no veto de pessoa real
 - Renomeia os lados do ranking para Esquerda e Direita
+- chore(docs): regenerate derived line-count blocks
+- chore(grafite): re-sign layout fingerprint for pass
+- perf(mp): skip graffiti pass on dedicated server
+- fix(deps): update sharp and lockfile peers (#784)
+- docs(changelog): rodada do cronista — 12 commits (#782)
+- fix(docs): corrigir dependencias vulneraveis (#781)
+- test(piscina): mede geometria construída
+- test(piscina): trava separação dos acabamentos
+- fix(piscina): elimina cintilação das faixas azuis
+- fix(piscina): cartaz da coleção longe dos batentes
+- Seleciona vermelho, claro e mapa no retoque de textura
+- feat(sertao): reboco e pedra reais projetados em metros
+- feat(piscina): usa a água viva no lugar da lâmina fosca
+- feat(piscina): mobiliário Mint sobre os colisores de sempre
+- tools: emenda textura gerada no tom do mapa
+- fix: satisfy map review and generated documentation gates
+- fix: orient Escadao team E spawns toward center exit
+- assets(piscina): mobiliário Mint dos contratos do plano 25
+- Troca os nomes reais de Julia e Marina por apelidos
+- Registra a skill da fábrica de personagens e skins
+- Adiciona as thumbnails de seleção que faltavam
+- Regera a mídia dos dez políticos dos modelos novos
+- Troca Xandão, Professor e Juiz pela segunda geração
+- Troca sete políticos pelos modelos da fábrica
+- Troca o modelo da Dama pelo gerado do concept novo
+- Pinta o contorno dos políticos com a cor do lado
+- chore(personagens): atualiza mídia da Marina
+- fix(personagens): troca Marina para vestido midi
+- chore(personagens): atualiza mídia da Julia
+- fix(personagens): remodela as pernas da Julia
+- fix(personagens): refina silhueta da Julia
+- fix(eval): estabiliza semente da simulacao
+- fix(personagens): retarget clipes da Julia e Marina
+- feat(personagens): publicar midia de Julia e Marina
+- fix(personagens): restringe Xandao ao Time E
+- feat(personagens): adiciona Julia e Marina ao elenco político
+- Prepare reviewed Mint prompts for PR773 characters
+- Renderiza avatares politicos a partir dos GLB do jogo
+- Remove Agitador do elenco e dos assets
+- feat(mp): show server-assigned character identity
+- Dá fuzil à Dama e ao Senador
+- Adiciona artes e vídeos de seleção e resultado dos 9 políticos
+- Adiciona os avatares dos 9 personagens políticos
+- Põe os 9 políticos no elenco com lados travados
+- Adiciona os modelos e clipes dos 9 personagens políticos
+- Escala o elenco de cada lado pelo pool único
+- fix(eval): congela dívida por personagem
+- docs(pr773): registrar candidato final com multiplayer
+- docs(mp): registrar candidatos pareados finais
+- fix(mp): remover facções ignoradas da sala por convite
+- docs(pr773): fecha candidato integrado
+- docs(ci): registra prova de desempenho do portão
+- perf(ci): evita varrer assets no gerador de docs
+- docs(piscina): fecha validação da pilha visual
+- docs(pr773): registra smoke e gates alpha.61
+- docs(piscina): registra integração visual
+- Corrige import dos metadados do site
+- test(chat): preservar cliques reais no smoke
+- test(chat): observar avisos transitorios sem corrida
+- Mark the report retention notice as done
+- Show retention notice on the chat report screen
+- Regenera as contagens geradas de docs
+- Registra a rodada da fábrica no ledger do PR #773
+- feat(grafite): margem opcional de parede inteira por banda
+- Adiciona desvirador de triângulos invertidos
+- Regenera as contagens geradas de docs
+- Retargeta a clavícula em delta, não em absoluto
+- Adiciona OMB1: clavícula do idle perto do repouso
+- Assenta a morte só onde o corpo atravessa o chão
+- Adiciona retoque de textura por faixa do corpo
+- Trava o rosto do retrato pelo concept da ficha
+- Adiciona os concepts 2D dos outros nove políticos
+- Adiciona as fichas de concept dos dez políticos
+- Adiciona gerador de concept de personagem por ficha
+- Regenera as contagens geradas de docs e ARCH
+- Adiciona o concept 2D da Dama para o modelo 3D
+- feat(mp): add one-click JOGAR COM AMIGOS room
+- feat(mp): share the room link on WhatsApp from the modal
+- feat(mp): record whether a node gates invite-only rooms
+- feat(mp): join invite-only rooms by code, no password
+- Corrige o enquadramento das artes de resultado
+- docs: align mobile PWA branch with current main
+- feat: localize mobile PWA install guidance
+- feat: prepare mobile PWA install beta
+- feat(mobile): present touch controls as web beta
+- feat(pwa): add mobile install manifest
+- fix(chat): keep status notices visible longer
+- fix(chat): keep status notices visible longer
+- fix(deps): update sharp lock for CI
+- fix(deps): update sharp lock for CI
+- fix(deps): update sharp lock for CI
+- fix(deps): preserve Linux optional npm peers
+- fix(deps): preserve Linux optional npm peers
+- fix(deps): preserve Linux optional npm peers
+- docs: regenerate after main sync
+- fix(deps): atualiza sharp para versao corrigida
+- docs(mp): registra reparo do gate de dependencias
+- fix(deps): atualiza sharp para versao corrigida
+- docs(mp): registra correcao de dependencias
+- fix(deps): atualiza sharp para versao corrigida
+- chore(pr773): atualiza recibo de midia
+- chore(pr773): atualiza snapshot de escala
+- docs(pr773): atualiza recibos de Julia e Marina
+- docs(pr773): registra checkpoint da Julia
+- fix(deps): preserva entradas opcionais do lockfile
+- fix(deps): atualiza sharp para versao corrigida
+- docs(pr773): registra merge da main e gates verdes
+- docs(pr773): registra retarget das novas politicas
+- docs: atualizar checkpoint da fila de prs
+- docs(prs): atualizar merge da fila
+- docs(prs): registrar estado da fila de merge
+- docs(pr773): atualizar próximo passo e checkpoint
+- test(personagens): atualizar sonda com Julia e Marina
+- docs: regenerar índices do elenco com main
+- docs: regenerar autoria da branch MP
+- docs(mp): atualizar handoff do painel NET
+- fix(mp): remove o overlay de diagnóstico
+- docs(pr773): registra roster politico 5-5
+- docs(pr773): anota checkpoint de Julia e Marina
+- Record Mint MCP enablement for PR 773 continuation
+- Record Mint Dama rig review and credit observations
+- Record Mint Dama previews and guarded 3D candidate
+- Save review-mode Mint prompt for PR773 Dama
+- Record PR773 full body style baseline and Mint regeneration brief
+- Document PR773 local hair rejection and 3D gate
+- Prepara brief verificavel para refazer modelos politicos
+- Baixa a camera orbitada e atualiza capturas da Dama
+- Registra estado e evidencia visual do PR 773
+- Permite orbitar a camera sem desviar a mira em terceira pessoa
+- fix(mp): manter painel de rede fora dos controles moveis
+- fix(mp): reopen reachable exit from isolated bot route
+- docs(mp): record stacked integration PR
+- docs(mp): record combined browser gauntlet
+- docs(mp): record identity PR checkpoint
+- fix(mp): adapt remote interpolation to repeated snapshot jitter
+- docs(mp): record browser FPS gauntlet and rejected optimizations
+- docs(mp): clarify legacy embedded client SHA in baseline
+- fix(mp): aggregate reconciliation quality from correction events
+- docs(mp): record seven-day quality baseline and cohort limits
+- Assenta os políticos no chão com offset de pé por clipe
+- Regenera os blocos de docs e o índice do game.js
+- docs(mp): sync architecture index after ticket fix
+- fix(mp): keep tickets for official node selection
+- Regenera os blocos de docs e o índice do game.js
+- Leva a escolha de personagem para o multiplayer
+- fix(mp): measure snapshot gap p95 per active window
+- Traduz os blurbs e a categoria dos políticos para inglês
+- fix(mp): honor explicit node without public ticket
+- Pede e recebe troca de personagem no protocolo multiplayer
+- Adiciona Game._trocarPersonagem para a escolha no meio da partida
+- Atualiza a régua dos Míticos para o roster por lado
+- fix(site): reflect Esquerda and Direita in public metadata
+- fix(mp): match room creator with fixed sides contract
+- fix(ui): align Direita selector card with blue palette
+- Regenera os blocos de docs e o índice do game.js
+- docs(mp): record alpha.48 browser and paired image
+- chore(mp): pair gauntlet with alpha.48 and Córrego routes
+- docs(mp): record paired browser gate and hotfix release
+- docs(mp): record alpha.47 base and hotfix gate
+- test(chat): stabilize spectator smoke across round transition
+- docs(mp): track Córrego CTF regression and isolated hotfix
+- docs(mp): record alpha.46 browser gate and parity incident
+- chore(mp): pair candidate with alpha.46 simulation
+- docs(mp): record three-client candidate gate
+- test(mp): capture candidate gameplay at 3:2
+- test(mp): restore browser shot gate for hub navigation
+- docs(mp): record alpha.45 deploy gate
+- docs(mp): refresh alpha.45 generated blocks
+- docs(mp): record restored parity and green smoke
+- docs(mp): record alpha.43 gates and parity recovery
+- chore(mp): refresh paired hash on alpha.43
+- fix(chat): hold mobile input through dismiss gesture
+- docs(mp): registrar gauntlet de telemetria no navegador
+- docs(mp): checkpoint RTT sampling and alpha.41 pair
+- fix(mp): aggregate websocket RTT across active windows
+- docs(mp): checkpoint RTT gauntlet evidence
+- chore(mp): retain sim hash on alpha.40
+- fix(mp): dispatch release to node sync
+- chore(mp): rebase Escadao gauntlet onto alpha.39
+- chore(mp): preserve sim hash on alpha.37 and checkpoint gauntlet
+- docs: record alpha.36 parity and review gates
+- docs: record alpha.35 rebase and validation
+- Tira a etapa de escolher o adversário do fluxo legado
+- Pinta a coluna da Direita de azul no placar
+- Troca o filtro de facção do hub por abas de lado
+- Embaralha o pool do elenco antes de sortear o time
+- Veste cada personagem com a cor do lado
+- Usa o lado escolhido no single-player
+- Troca o brasão da Direita pela estrela azul e amarela
+- Renomeia os lados para Esquerda e Direita
+- Pinta o lado B de azul (Direita)
 ## [2.1.0-alpha.18] — 2026-09-30
 
 ### Mudado
