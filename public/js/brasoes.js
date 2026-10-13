@@ -49,6 +49,7 @@ import * as THREE from 'three';
    a cor DE uma facção não é estado de partida. Agora vem de `paleta.js`, junto com o rim
    de `characters.js` e o `_teamColor` do próprio `game.js`. */
 import { BASE_POR_FACCAO } from './paleta.js';
+import { urlDoBrasao } from './brasoes_versao.js';
 
 const COR_TIME = BASE_POR_FACCAO;
 
@@ -75,7 +76,7 @@ function imagemDoBrasao(fac, aoCarregar) {
     _img.set(fac, e);
     img.onload = () => { e.pronta = true; for (const fn of e.espera) fn(); e.espera.length = 0; };
     img.onerror = () => { e.espera.length = 0; };   // sem brasão o pano fica só na cor do time
-    img.src = `img/brasoes/${BRASAO[fac]}.png`;
+    img.src = urlDoBrasao(BRASAO[fac]);
   }
   if (e.pronta) aoCarregar();
   else e.espera.push(aoCarregar);

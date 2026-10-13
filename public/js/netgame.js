@@ -767,6 +767,7 @@ class Netcode {
     const g = b.mesh && b.mesh.group;
     if (!g) return;
     if (b._remote === 'ghost') { g.visible = false; return; }
+    let vx = 0, vz = 0, segYaw = null;
     if (b._bufAt && b._bufAt.length) {
       /* Renderiza o remoto `interpAtrasoMs` no PASSADO, interpolando no buffer: absorve o
          jitter que congelava o boneco a cada pacote atrasado (BUG-87). NUNCA extrapola. */
@@ -787,16 +788,27 @@ class Netcode {
       let dy = b._bufYaw[k] - b._bufYaw[j]; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
       b.yaw = b._bufYaw[j] + dy * a;
       if (b._bufPitch) b._netPitch = b._bufPitch[j] + (b._bufPitch[k] - b._bufPitch[j]) * a;   // cabeça também sem degrau de 30 Hz
+      const s = Math.min(j, n - 2);
+      if (s >= 0) {
+        const segS = Math.max(1, at[s + 1] - at[s]) / 1000;
+        vx = (b._bufX[s + 1] - b._bufX[s]) / segS; vz = (b._bufZ[s + 1] - b._bufZ[s]) / segS;
+        let ds = b._bufYaw[s + 1] - b._bufYaw[s]; while (ds > Math.PI) ds -= Math.PI * 2; while (ds < -Math.PI) ds += Math.PI * 2;
+        // yaw do meio do segmento, não o do instante: girando, o erro inverte o sinal do strafe. `__mutYawInstante` é gancho de mp-recuo-check.mjs
+        segYaw = this.__mutYawInstante ? null : b._bufYaw[s] + ds / 2;
+      }
     }
     if (b.alive) {
       if (b._deadShown) { if (b.mesh.isGLB) b.mesh.ctrl.revive && b.mesh.ctrl.revive(); b._deadShown = false; b.deadT = 0; }
-      g.position.copy(b.pos); g.rotation.set(0, b._netBot === false ? b.yaw + Math.PI : b.yaw, 0); g.visible = true;   // humano remoto olhava pra trás
+      const corpoYaw = b._netBot === false ? b.yaw + Math.PI : b.yaw;   // humano remoto olhava pra trás
+      g.position.copy(b.pos); g.rotation.set(0, corpoYaw, 0); g.visible = true;
       const spd = Math.min(6, b._netSpd || 0);
+      const fwdYaw = segYaw == null ? corpoYaw : (b._netBot === false ? segYaw + Math.PI : segYaw);
+      const fwd = vx * Math.sin(fwdYaw) + vz * Math.cos(fwdYaw);
       if (b.mesh.isGLB) {
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
         // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
         b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));
-        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, false);
+        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25);
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
       b.deadT = (b.deadT || 0) + dt; b._deadShown = true;

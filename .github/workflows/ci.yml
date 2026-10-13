@@ -103,6 +103,8 @@ jobs:
         run: npm run eval:deps
       - name: Manifesto de wallpapers está em dia
         run: npm run media:check
+      - name: Brasão servido com ?v= do conteúdo atual
+        run: npm run eval:brasao-versao
       - name: Texto público sem travessão
         run: npm run travessao:check
       # Hash das skills de terceiros confere com o skills-lock.json (issue #42):
