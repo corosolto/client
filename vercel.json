@@ -11,6 +11,24 @@
       "source": "/telegram",
       "destination": "https://t.me/corosolto",
       "permanent": false
+    },
+    {
+      "source": "/:path((?!api/|auth/)[^.]*)",
+      "has": [{ "type": "host", "value": "www.csbrasil.online" }],
+      "destination": "https://www.corosolto.com.br/:path",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!api/|auth/)[^.]*)",
+      "has": [{ "type": "host", "value": "csbrasil.online" }],
+      "destination": "https://www.corosolto.com.br/:path",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!api/|auth/)[^.]*)",
+      "has": [{ "type": "host", "value": "csbrasil.vercel.app" }],
+      "destination": "https://www.corosolto.com.br/:path",
+      "permanent": true
     }
   ],
   "headers": [
