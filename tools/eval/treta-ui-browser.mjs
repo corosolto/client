@@ -72,9 +72,9 @@ try {
   if(baseline) {await page.close();continue;}
   assert.equal(await page.locator('[data-treta-view="packs"]').count(),0,'No currency packs at launch');
   assert.equal(report.requests.filter(r=>r.name===name && r.model).length,0,'Skin GLBs are lazy until detail opens');
-  if(mutant==='manifest'){manifestOpen=false;await page.reload({waitUntil:'commit'});await page.locator('#splash-enter:not(.hidden)').waitFor({timeout:90000});await page.locator('#boot-splash').click();await page.locator('button[data-hub-tab="loja"]').click();await page.locator('.treta-card').first().click();await page.waitForFunction(()=>!document.getElementById('treta-detail-production').textContent.includes('Carregando'));assert.match(await page.locator('#treta-detail-production').textContent(),/Venda em preparação/,'Unapproved manifest must keep the skin in production');assert.equal(await page.locator('#treta-buy').isEnabled(),false,'Unapproved manifest must block purchase');await page.close();continue;}
+  if(mutant==='manifest'){manifestOpen=false;await page.reload({waitUntil:'commit'});await page.locator('#splash-enter:not(.hidden)').waitFor({timeout:90000});await page.locator('#boot-splash').click();await page.locator('button[data-hub-tab="loja"]').click();await page.locator('#treta-grid .treta-card').first().click();await page.waitForFunction(()=>!document.getElementById('treta-detail-production').textContent.includes('Carregando'));assert.match(await page.locator('#treta-detail-production').textContent(),/Venda em preparação/,'Unapproved manifest must keep the skin in production');assert.equal(await page.locator('#treta-buy').isEnabled(),false,'Unapproved manifest must block purchase');await page.close();continue;}
   modelFailure=true;
-  await page.locator('.treta-card').first().click();
+  await page.locator('#treta-grid .treta-card').first().click();
   await page.locator('#treta-detail-production').filter({hasText:'indisponível'}).waitFor({timeout:5000});
   assert.equal(await page.locator('#treta-buy').isEnabled(),false,'Failed base-only preview must block purchase');
   await shot('preview-error');
@@ -90,8 +90,8 @@ try {
   assert.equal(purchases,1);assert.equal(balance,800);
   await page.locator('#treta-purchase [data-treta-close]').last().click();
   await page.locator('[data-treta-filter="owned"]').click();await shot('wardrobe');
-  assert.equal(await page.locator('.treta-card').count(),1);
-  await page.locator('.treta-card').click();await page.locator('#treta-detail-production').filter({hasText:'Prévia 3D da skin.'}).waitFor();await page.locator('#treta-buy').click();
+  assert.equal(await page.locator('#treta-grid .treta-card').count(),1);
+  await page.locator('#treta-grid .treta-card').click();await page.locator('#treta-detail-production').filter({hasText:'Prévia 3D da skin.'}).waitFor();await page.locator('#treta-buy').click();
   await page.locator('#treta-buy').filter({hasText:'JÁ EQUIPADA'}).waitFor();
   assert.equal(inventory[0].equipped,true);await shot('equipped');
   await page.locator('#treta-detail [data-treta-close]').click();
@@ -114,7 +114,7 @@ try {
   await page.locator('#treta-balance-value').filter({hasText:'100'}).waitFor();
   await shot('empty');
   await page.locator('[data-treta-filter="all"]').click();
-  await page.locator('.treta-card').first().click();await page.locator('#treta-detail-production').filter({hasText:'Prévia 3D da skin.'}).waitFor();await shot('insufficient');
+  await page.locator('#treta-grid .treta-card').first().click();await page.locator('#treta-detail-production').filter({hasText:'Prévia 3D da skin.'}).waitFor();await shot('insufficient');
   assert.equal(await page.locator('#treta-buy').isEnabled(),false);
   assert.match(await page.locator('#treta-buy-status').textContent(),/700/);
   await page.locator('#treta-detail [data-treta-close]').click();
@@ -125,7 +125,7 @@ try {
   assert(await page.locator('#treta-retry').isVisible(),'Wallet retry must be visible without scrolling');
   const retryBox=await page.locator('#treta-retry').boundingBox();assert(retryBox.y+retryBox.height<viewport.height,'Wallet retry must be above the fold');
   assert.match(await page.locator('.treta-label').first().textContent(),/CONSULTA INDISPONÍVEL/);
-  await page.locator('.treta-card').first().click();await page.locator('#treta-detail-production').filter({hasText:'Consulta indisponível'}).waitFor();assert.match(await page.locator('#treta-buy').textContent(),/CONSULTA INDISPONÍVEL/);assert.equal(await page.locator('#treta-buy').isEnabled(),false);await page.locator('#treta-detail [data-treta-close]').click();
+  await page.locator('#treta-grid .treta-card').first().click();await page.locator('#treta-detail-production').filter({hasText:'Consulta indisponível'}).waitFor();assert.match(await page.locator('#treta-buy').textContent(),/CONSULTA INDISPONÍVEL/);assert.equal(await page.locator('#treta-buy').isEnabled(),false);await page.locator('#treta-detail [data-treta-close]').click();
   mode='loading';await page.locator('#treta-retry').click();await shot('loading');
   await page.locator('#treta-status').filter({hasText:'sincronizados'}).waitFor();mode='normal';
   ledger=[{id:`fixture-reward-${name}`,kind:'email',amount:200}];balance=300;
@@ -142,7 +142,7 @@ try {
   authenticated=false;ledger=[];inventory=[];
   await page.evaluate(()=>document.dispatchEvent(new CustomEvent('cs-account-change',{detail:{authenticated:false}})));
   await page.locator('#treta-balance-value').filter({hasText:'ENTRE NA CONTA'}).waitFor();
-  await page.locator('.treta-card').first().click();await page.locator('#treta-buy').click();
+  await page.locator('#treta-grid .treta-card').first().click();await page.locator('#treta-buy').click();
   await page.locator('#account-entry-dialog[open]').waitFor();await shot('guest-login');
   assert.equal(purchases,1,'Guest login does not create another purchase');
   await page.locator('#account-entry-close').click();
@@ -150,7 +150,7 @@ try {
   await page.reload({waitUntil:'commit'});
   await page.locator('#splash-enter:not(.hidden)').waitFor({timeout:90000});await page.locator('#boot-splash').click();
   await page.locator('button[data-hub-tab="loja"]').click();
-  await page.locator('.treta-card').first().click();
+  await page.locator('#treta-grid .treta-card').first().click();
   await page.locator('#treta-detail-production').filter({hasText:'Venda em preparação'}).waitFor();
   assert.equal(await page.locator('#treta-buy').isEnabled(),false,'Unapproved manifest must block purchase even when API advertises availability');
   await shot('catalog-closed');
