@@ -107,7 +107,7 @@ const config = {
         items: [
           { type: 'docSidebar', sidebarId: 'dev', position: 'left', label: 'Documentação' },
           { type: 'localeDropdown', position: 'right' },
-          { href: 'https://csbrasil.online/', label: 'Jogar', position: 'right' },
+          { href: 'https://www.csbrasil.online/', label: 'Jogar', position: 'right' },
           { href: 'https://github.com/corosolto/client', label: 'GitHub', position: 'right' },
         ],
       },
@@ -120,7 +120,7 @@ const config = {
         logo: {
           alt: 'CORO SOLTO: Treta Suprema',
           src: 'img/logo-coro-solto.png',
-          href: 'https://csbrasil.online/',
+          href: 'https://www.csbrasil.online/',
           width: 200,
           height: 162,
         },

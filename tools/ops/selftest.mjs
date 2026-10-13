@@ -59,6 +59,8 @@ function fixture(cenario) {
     : "import { foo } from './dep.js';\nimport { VERSION } from './version.js';\nfoo(VERSION);\nwindow.__CS_MAIN_READY__ = true;\nconst b = document.getElementById('btn-jogar'); if (b) b.onclick = () => {};\ntry { fetch('/api/pick', { method: 'POST', body: '{}' }); navigator.sendBeacon('/api/jserror', 'x'); const c = new AbortController(); fetch('/js/dep.js?abortado=1', { signal: c.signal }).catch(() => {}); c.abort(); } catch {}\n");
   w('public/js/dep.js', cenario === 'grafo-local-incoerente' ? 'export const bar = 1;\n' : 'export function foo() {}\n');
   w('public/js/ops.js', readFileSync(join(RAIZ_PADRAO, 'public/js/ops.js')));
+  w('public/js/privacy-preferences.js', readFileSync(join(RAIZ_PADRAO, 'public/js/privacy-preferences.js')));
+  w('public/js/privacy-runtime.js', readFileSync(join(RAIZ_PADRAO, 'public/js/privacy-runtime.js')));
   w('src/lib/site.ts', cenario === 'ranking-flag-ilegivel' ? 'export const RANKING_ON = flag();\n' : `export const RANKING_ON = ${cenario === 'ranking-desligado-com-flag' ? 'true' : 'false'};\n`);
   w('src/pages/index.astro', cenario === 'index-astro-sem-boot' ? '<html></html>' : `<link rel="stylesheet" href="/style.css?v=${V}"><script type="importmap"></script><script src="/js/ops.js?v=${V}-x" type="module"></script><script src="/js/main.js?v=${V}-x" type="module"></script>navigator.sendBeacon('/api/jserror')`);
   if (cenario !== 'asset-local-faltando') w('public/models/weapons/awp.glb', glb(300));
@@ -98,6 +100,7 @@ function servidor(cenario, raiz) {
     if (caminho === '/js/dep.js') return cenario === 'modulo-404' ? envia(404, '') : envia(200, cenario === 'export-sumido' ? 'export const bar = 1;\n' : readFileSync(join(raiz, 'public/js/dep.js')), { 'content-type': 'text/javascript' });
     if (caminho === '/js/version.js') return envia(200, `export const VERSION = '${cenario === 'versao-divergente' ? '9.9.9-teste.0' : V}';\n`, { 'content-type': 'text/javascript' });
     if (caminho === '/js/ops.js') return envia(200, readFileSync(join(raiz, 'public/js/ops.js')), { 'content-type': 'text/javascript' });
+    if (caminho === '/js/privacy-preferences.js' || caminho === '/js/privacy-runtime.js') return envia(200, readFileSync(join(raiz, 'public', caminho)), { 'content-type': 'text/javascript' });
     // registro servido: a produção pode pedir arma que a árvore não conhece ('novo') ou servir HTML no lugar do módulo
     if (caminho === '/js/weapons.js') return cenario === 'registro-armas-ilegivel' ? envia(200, '<!doctype html><html>404</html>', { 'content-type': 'text/html' }) : envia(200, cenario === 'asset-404-registro-servido' ? "export const WEAPON_IDS = ['ak', 'awp', 'novo'];\n" : readFileSync(join(raiz, 'public/js/weapons.js')), { 'content-type': 'text/javascript' });
     if (caminho === '/js/glbchars.js') return cenario === 'registro-elenco-ilegivel' ? envia(404, '') : envia(200, cenario === 'asset-404-elenco-servido' ? "export const GLB_CHARS = new Set(['heroi', 'novato']);\n" : readFileSync(join(raiz, 'public/js/glbchars.js')), { 'content-type': 'text/javascript' });

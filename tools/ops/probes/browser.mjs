@@ -85,6 +85,8 @@ export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000
     await page.addInitScript(() => {
       window.__opsEscritas = [];
       navigator.sendBeacon = (u) => { window.__opsEscritas.push(`BEACON ${String(u).split('?')[0]}`); return true; };
+      // navegador de diagnóstico consente com a medição (privacy-runtime.js); escritas seguem stubadas acima
+      try { localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: true, updatedAt: new Date(0).toISOString() })); } catch {}
     });
     await page.route('**/*', (rota) => {
       const m = rota.request().method();

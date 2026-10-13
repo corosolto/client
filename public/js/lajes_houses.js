@@ -5,7 +5,7 @@ import { indexLajesRaycast } from './lajes_raycast_index.js';
 // Dimensões e materiais: docs/maps/LAJES-V4-ESCALA.md; cada porta mantém sua escala.
 export function lajesArchitecture(root, colliders, occluders, T) {
   const batch = PROP_BATCH ? new StaticBatch({ name: 'lajes-alvenaria' }) : null;
-  const backgroundBatches = new Map(); let activeBatch = batch;
+  const backgroundBatches = new Map(), backgroundGeometry = new Map(); let activeBatch = batch;
   const disposeRaycasts = [];
   const textures = new Map(), materials = new Map(), doors = [], signMaterials = new Set();
   const texture = (path, color = true) => {
@@ -46,12 +46,22 @@ export function lajesArchitecture(root, colliders, occluders, T) {
     sage: material('sage', 0xaca288, 'pbr_paintedplaster017_color.webp'),
   };
   function box(w, h, d, x, y, z, mat, options = {}) {
-    const g = new THREE.BoxGeometry(w, h, d), p = g.attributes.position, n = g.attributes.normal;
-    const uv = g.attributes.uv, tile = mat.userData.tile || [1, 1];
-    for (let i = 0; i < p.count; i++) {
-      const u = Math.abs(n.getX(i)) > .5 ? p.getZ(i) : p.getX(i);
-      const v = Math.abs(n.getY(i)) > .5 ? p.getZ(i) : p.getY(i);
-      uv.setXY(i, u / tile[0], v / tile[1]);
+    const background = activeBatch && activeBatch !== batch && !options.keep;
+    const tile = mat.userData.tile || [1, 1];
+    const key = background ? `${w}|${h}|${d}|${tile[0]}|${tile[1]}` : null;
+    let g = key && backgroundGeometry.get(key);
+    if (g) {
+      // BoxGeometry teria consumido quatro sorteios ao gerar seu UUID.
+      Math.random(); Math.random(); Math.random(); Math.random();
+    } else {
+      g = new THREE.BoxGeometry(w, h, d);
+      const p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
+      for (let i = 0; i < p.count; i++) {
+        const u = Math.abs(n.getX(i)) > .5 ? p.getZ(i) : p.getX(i);
+        const v = Math.abs(n.getY(i)) > .5 ? p.getZ(i) : p.getY(i);
+        uv.setXY(i, u / tile[0], v / tile[1]);
+      }
+      if (key) backgroundGeometry.set(key, g);
     }
     const mesh = new THREE.Mesh(g, mat); mesh.position.set(x, y + h / 2, z);
     mesh.castShadow = options.cast !== false; mesh.receiveShadow = true;
@@ -59,7 +69,8 @@ export function lajesArchitecture(root, colliders, occluders, T) {
     if (options.solid) colliders.push({ minX: x - w / 2, maxX: x + w / 2,
       minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2, ...options.collider });
     if (activeBatch && !options.keep) {
-      mesh.updateMatrix(); activeBatch.add(g, mesh.matrix, mat, { cast: mesh.castShadow }); g.dispose();
+      mesh.updateMatrix(); activeBatch.add(g, mesh.matrix, mat, { cast: mesh.castShadow });
+      if (!background) g.dispose();
     } else { root.add(mesh); if (options.bullet !== false) occluders.push(mesh); }
     return mesh;
   }
@@ -210,6 +221,8 @@ export function lajesArchitecture(root, colliders, occluders, T) {
       occluders.push(mesh); disposeRaycasts.push(indexLajesRaycast(mesh));
     }
     for (const background of backgroundBatches.values()) occluders.push(...background.build(root));
+    for (const geometry of backgroundGeometry.values()) geometry.dispose();
+    backgroundGeometry.clear();
     // Os lotes imóveis usam também AABB antes da interseção dos triângulos.
     for (const mesh of occluders) mesh.geometry?.computeBoundingBox();
   }

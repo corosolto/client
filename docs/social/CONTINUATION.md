@@ -140,9 +140,375 @@ Consulta de créditos OpenRouter retornou saldo~US$0,239; tentativa Barbudo pelo
 
 Normal final PASS63/63 e mutante other-character-small RED365!==614 (og-stylized-contract-final.log/og-stylized-other-small.log). Adendo crítico og-review-frame-coverage próprio confirma guardado contrato/63 SVGs; coberturaP3 fechada paraframe, raster59+4sem relaxar. Plano executado/verificado63jobs62candidates; docs derivadas6arquivos e docs:check PASS; syntax/diff e gitleaks staged PASS. Checkpoint seguinte inclui14arquivos próprios, sem assets bulk/segredos/trailer; envio deve executar hook completo.
 
+## Páginas legais candidatas — 2026-10-12
+
+Lane isolada codex/ranking-launch-20261012, base2f13a18. /privacidade revisada e
+/termos criada, layout compartilhado e links no rodapé. HTTP Astro real200 para
+ambas, navegação entre documentos e visual mobile sem overflow; build/SEO PASS.
+Revisão adversarial editorial fechou bases, telemetria pseudônima, destinatários,
+DPAs, expiração distinta de exclusão e caricaturas. Não é liberação jurídica ou
+operacional: identidade/contato do titular, escolha ou exceção de analítica,
+retenção/exclusão executáveis, proteção de menores e contratos/regiões efetivos
+continuam gates. Sem deploy/merge nem aceite obrigatório inserido no login.
+Continuação integral e evidências no ledger privado growth-readiness; próximo:
+confirmar responsável e fechar gates antes de publicar URLs e testar OAuth real.
+
 
 ### Checkpoint e envio recusado pelo gate real
 
 Checkpoint assinado83937415acf9162fd521c1813a083d8bb9fe5e15,14arquivos próprios/271adições/23remoções, árvore limpa. Primeiro envio foi recusado pelo hook: mapcontrato passa; check:deploy48/49 em257s, SB7 RED social-serve servidor não respondeu exitnull durante inicialização. Log completo preservado og-stylized-deploy-first.log e og-stylized-push.log. Nenhum objeto/head remoto atualizado e nenhum bypass.
 
 A mesma prova social-serve standalone, mesmoHEAD e mesmos60s, passou integralmente depois: og-stylized-serve-baseline.log. Não há causa de lentidão certificada; não alterar timeout/compressão/produto a partir dessa hipótese. Build/SEO/10testes/63fontes/revisão não foram invalidados por código novo. Próximo: repetir hook completo em checkpoint suplementar de continuidade, registrar resultado, atualizar PRdraft807 e fechamento persistente em artifacts/social/PROFILE-SHARE-DELIVERY.md. Uniformização62artes continua bloqueada porHTTP402; backendf49/PR70 e gates deinfra permanecem intactos.
+
+### Documentos legais no novo design — 2026-10-12
+
+Pedido posterior corrige o marco anterior: LegalPage agora usa identidade/CSS real
+do hub, sem Layout antigo; ambas as rotas mantidas. Links no footer desktop e aba
+Sobre (também mobile). Browser8137: páginas200, nav e leitura ao fim, texto
+selecionável;390px sem overflow. Revisão independente fechou P2 de foco do CTA
+com borda interna3px e Tab real confirmado. Capturas/review no ledger privado.
+Contato Gmail mantido até encaminhamento desejado ser ativado e verificado.
+Alias preparado no Cloudflare, sem ativação ou envio; confirmação de acesso
+pendente. Gates legais e de publicação anteriores continuam; nenhum deploy/merge.
+
+### Contato oficial recebido e ajuste editorial — 2026-10-12
+
+Titular confirmou ativação Cloudflare. Alias fale@corosolto.com.br -> Gmail do
+projeto salvo Active, destino verificado por email, catch-all Disabled. DNS
+apex3MX+SPF conferidos, MX Resend send.auth preservado. Teste único chegou ao
+Gmail: inicialmente Spam, marcado legítimo e movido para Inbox. Prova de entrega
+não garante classificação de todos os remetentes futuros. Contact legal.ts agora
+fale@corosolto.com.br. Tag CORO SOLTO / DOCUMENTOS removida por pedido do titular,
+inclusive CSS sem uso. Ambas rotas locais conferidas; sem publicação/deploy.
+Evidências e continuidade integral no ledger privado growth-readiness.
+
+### Entrada, vínculo de contas e escolhas opcionais — 2026-10-13
+
+Candidato em codex/ranking-launch-20261012, base15d269851; preserva corte integral
+ranking + Email/Google/Discord/X/LinkedIn + newsletter antes da campanha. Modal
+antigo alto/estreito rejeitado pelo titular. Novo modal920px com login e escolhas
+em2colunas; Google, Discord, X e LinkedIn sempre visíveis, disabled com EM
+CONFIGURAÇÃO quando Auth não anuncia disponibilidade. Mobile390×844:352px, uma
+coluna, scroll acessível e nenhum overflow horizontal. Capturas examinadas em
+private-assets/growth-readiness/ranking-20261012/account-entry-{two-columns,mobile,mobile-choices}-20261013.jpg
+na raiz agregada; é revisão local, não aceite visual do titular nem publicação.
+
+Conta existente usa ação link, não substitui sessão por ação start. Backend
+pareado prende PKCE a conta, sessão e provider; migration051 aplicada somente no
+Docker local. Newsletter opt-in separado, desmarcado, confirmação posterior;
+cookies opcionais separados, default deny. Escolha local guarda só permissão
+daquele navegador; retirada limpa diagnósticos/atribuição e memória, cessa FPS
+pendente e sincroniza entre abas. Identidade/progresso essenciais preservados.
+Runtime no manifesto recursivo de módulos; sem trackers Vercel incondicionais.
+Preferências disponíveis também no perfil/wizard/configurações.
+
+Validação: entrada25PASS/0RED/1UNKNOWN, email real local17/17, ops77/77, privacy
+ops5/5 + escolhaPASS; quatro mutantes de coleta/retirada RED, vínculo backend
+PASS e dois mutantes RED. Build, SEO6/6 e grafo módulos PASS. Revisão independente
+auth-preferences-review-20261013.md fecha doisP2 e adendo comprova cache e storage
+event; nenhum novoP0/P1/P2 confirmado. Não certifica efeito externo GoTrue antes
+do callback, SMTP de produção, apps OAuth reais, migrations remotas ou deploy.
+docs:check e gitleaks staged PASS. Nova régua eval:privacy incluída no check:fast, sem rerodar suite ampla já RED
+por baseline independente preservada neste ledger de lançamento.
+
+Titular autorizou ativação nesta sessão: Allow manual linking salvoON e relido
+no Supabase. Quatro providers aindaDISABLED; EmailENABLED. Discord clientID do
+formulário sofreu preenchimento inválido; nada disso salvo. Titular não possui
+Client Secret: painel OAuth2/Reset Secret e Supabase deixados abertos para
+geração, entrada e salvamento pelo titular, conforme política do navegador.
+Google também sem configuração válida certificada; autofill não é credencial
+OAuth verificada. Não copiar secretos no chat/repos nem habilitar com autofill.
+
+Próximo: titular salva credenciais OAuth; testar login e vínculo com contas
+reais, inclusive identidade já pertencente a outra conta, logout/troca de sessão
+e efeito em Auth.identities. Conferir SMTP, migrations049/050/051 e envs em
+ambiente autorizado antes de publicação. Ranking semanal Brasília, histórico
+preservado e MP2× humano continuam requisitos; campanha/loja/mapas permanecem
+abertos no ledger growth-readiness. Nenhum merge, push, deploy ou envio externo.
+
+
+## Marco 13/10 — provedores habilitados e central local
+
+Titular concluiu as credenciais: leitura real de Authentication → Providers
+confirmou Email, Google, Discord, X OAuth2 e LinkedIn OIDC Enabled. Facebook e
+GitHub ficam adiados para esta entrega. Enabled certifica configuração, não
+login/vínculo no jogo. Google Externo/Testando, branding/publicação e URLs legais
+públicas seguem gates até prova atual no alvo; não transportar segredos.
+
+Central dentro do hub: Missões, Avisos e Mensagens. Missões usam handle da conta,
+amizade aceita, Auth.identities e conquistas persistidas; pedidos pendentes,
+links de perfis e contadores históricos não comprovam conclusão. Nenhuma
+recompensa TRETa$, verificação de follow ou moeda foi ligada. Central é base
+para futuras quests; regras/pagamentos são outra entrega.
+
+DM inicial somente entre amigos (preferência opcional ainda sem resposta), botão
+no perfil/lista de amigos apenas quando feature ativa, texto até1000 caracteres,
+conversas persistentes/paginadas, inbox/unread, IDs exatos de leitura, bloqueio e
+denúncia pela moderação existente. Migration052 privada com RLS/ACL service_role,
+ator derivado da sessão, locks compartilhados com amizade/bloqueio, retry
+idempotente por sender/client_id; SOCIAL_MESSAGES defaultOFF. Aplicada apenas no
+Docker local54322 e API8197 com flagON; nenhuma migration remota/deploy.
+
+Botões do hub/conta/comunidade ganharam relevo de borda/sombra e estado pressionado;
+hover preserva relevo. Privacidade explica dados das DMs, duas contas participantes,
+moderação, leitura explícita e que bloquear não apaga histórico. Não há E2EE.
+
+Régua independente: quests baseline0/12 RED e schema sem tabelas/RPC; candidato
+client23/23 PASS,19 mutantes RED; backend Auth/API/Postgres reais21/21 PASS,
+2 mutantes SQL RED e restauração com hashes idênticos. Critic clean-context
+reproduziu e fechou3 falhas: DOM privado na troca de conta, rascunho durante envio
+com rerender e401 antigo invalidando nova conta. Probe independentePASS +3mutantes
+RED; nenhum P0/P1/P2 confirmado aberto no recorte. Build final PASS, grafo módulos,
+docs/ARCH em dia, SEO/AEO6/6. Não reabrir suite ampla jáRED por baseline registrada.
+
+Evidências privadas na raiz agregada private-assets/growth-readiness/ranking-20261012:
+community-inbox-race-final.log, community-inbox-mutant-*.log,
+social-messages-contract-restored.log, social-messages-mutant-*.log,
+community-inbox-independent-review-20261013.md e critic-repro/logs adjacentes.
+Browser local DonaResenha→ReiDaTreta (fixtures existentes): enviou uma mensagem de
+ensaio e viu texto/preview após reload. Capturas desktop examinadas:
+community-quests-desktop-20261013.jpg e community-messages-desktop-20261013.jpg.
+Isso não prova OAuth externo nem combate humano. Segunda aba não autenticada,
+sem prova visual de receptor. Emulação390×844 não aplicada (DOM1466×690), override
+resetado; viewport-unverified é desktop, NÃO prova mobile. Controle do navegador
+retornou Not allowed na última tentativa. Mobile/teclado real continuamUNKNOWN.
+
+Lanes exclusivas codex/ranking-launch-20261012, bases clientc1b83e046/backendd21ed09;
+progress codex/growth-readiness-20261012 base782fdc1. Primary/outras lanes preservadas.
+Nenhum push, merge, publicação, email, post ou pagamento externo neste marco.
+
+Próximo: prova mobile/teclado; login/vínculo externo com contas independentes,
+identidade já pertencente a outra conta, SMTP próprio e confirmação/retirada real;
+reconciliar schema/migrations040–045/047/049/050/051/052 conforme preflight antes
+de qualquer rollout autorizado. Decidir operador/retenção das DMs (incluindo
+pedido de eliminação) sem inventar prazo, auditar acesso service_role, canário no
+alvo antes de flagON. Ranking geral+semanal Brasília/segunda00, preservar histórico,
+remover fraude comprovada somente, MP2× humano confirmado continuam requisitos.
+Campanha, shop/TRETa$/Pix/Portugal, mapas/chat e automação de distribuição permanecem
+no roadmap integral; configuração verde não encerra a liberação da campanha.
+
+
+### Marco 13/10 — Selo de conta verificada (somente local)
+
+Objetivo aceito: selo quando e-mail confirmado + pelo menos uma identidade
+OAuth da mesma conta. Banco Auth calcula em cada consulta, sem flag editável,
+sem confiar em links/bio/browser/metadados. Público recebe só booleano; perfil,
+ranking/home e conta usam a mesma projeção. Remoção/retirada de confirmação
+retira selo na próxima consulta. Conta nova já recebe o selo no onboarding.
+Consentimentos opcionais não são requisito e não há recompensa TRETa$.
+
+053 cria helper+RPC em lotes100, somente service_role, sem alterar SQL/pontos
+do ranking. Aplicada somente ao Docker isolado; nenhuma migração remota.
+Descoberta:049 NÃO estava persistida no local. Fonte de player_points é
+autoritativa040/048; tentativa de049 foi recusada pela guarda de congelamento/
+provenance e fez ROLLBACK. Não falsificar legacy037 nem desativar guarda.
+O contrato atual de8 argumentos da comunidade continua503 por essa pendência;
+não chamar o runtime inteiro verde. Projeção do ranking SQL de7 argumentos
+atual + decorador novo e homeleaderboard reais passaram sem mudar métricas.
+
+Régua independente: client baseline6PASS/3RED; final10/10 e3 mutantes RED.
+SQL27 casos + lotes/ACL PASS;4 mutantes SQL clonados pg_temp RED/rollback.
+Auth/API/DB final10PASS/1RED (somente ranking8arg herdado); email-only, conta
+diferente, revogação e conta escondida PASS. Primeiro onboarding PASS.
+Regressões: inbox23/23; entrada25PASS/0RED/1UNKNOWN login externo.
+Crítica clean-context fechou P2 do selo ausente após onboarding; probePASS e
+mutanteRED. Build final, módulos/imports e test:api PASS. Docs/ARCH atualizados.
+
+Artefatos privados em csbrasil/private-assets/growth-readiness/ranking-20261012:
+account-verified-{client,backend}-final-20261013.log, SQL/mutantes e
+account-verified-independent-review-20261013.md. Capturas reais examinadas:
+account-verified-profile-desktop-20261013.png (selo azul junto ao nick) e
+account-verified-revoked-desktop-20261013.png (mesmo perfil sem último vínculo,
+selo ausente). Fixture isolada ContaSeloTest removida com IDs exatos após prova;
+fixtures existentes preservadas. Isso não prova OAuth externo ou mobile.
+
+Bases deste marco: client9f9628220/backendc79aa53/progressaa13005 nas mesmas
+lanes codex/ranking-launch-20261012 e codex/growth-readiness-20261012. Primary e
+outras lanes preservadas. Sem push, merge, deploy, post/newsletter/pagamento.
+
+Próximo: resolver cutover049 respeitando fonte autoritativa atual; manter
+Confirm Email ligado e validar SMTP/entrega/confirmar/remover com usuário real.
+Validar OAuth/vínculo externo (inclusive identidade de outra conta), mobile/
+teclado e reconciliar migrations alvo antes de publicar API/client/053.
+Central/DM requer052, flagOFF até rollout e operador/retenção definidos.
+Objetivo completo permanece ranking geral/semanal Brasília, histórico preservado/
+só fraude comprovada removida, MP2× humanos distintos confirmados, cinco logins
+escolhidos e newsletter pronta antes da campanha. Loja/skins/TRETa$/Pix com
+atividade Portugal, futuro Brasil2027, mapas/chat e divulgação/automação seguem
+no roadmap integral. Selo verifica acesso à conta, não identidade civil, apoio
+oficial nem integridade das partidas.
+
+
+### Marco 13/10 — Perfil público e último personagem (candidato local)
+
+Pedido implementado: /u/<handle> público agora permanece página legível sem
+carregar arena; preserva nick/selo/bio/avatar/redes/estatísticas e CTA ao jogo.
+Último personagem tem retrato vertical/nome no perfil público e na comunidade.
+Botão ABRIR PERFIL PÚBLICO navega realmente para página externa à arena; demais
+links /u internos mantêm a navegação antiga da comunidade.
+
+Nenhuma visibilidade/opt-in de conta existente alterada. Perfil já defaultpublic
+na040; share_character continua opcional/desligado por padrão. Label e política
+agora dizem perfil público + cartão. Fonte048 last_played_at de rodada
+verificada/não espectador permanece soberana; menu/localStorage/replay antigo
+não escolhem personagem. Sem personagem conhecido/autorização, mantém perfil
+sem retrato inventado. Privado/friends: SSR404/noindex e PNG404/no-store, sem
+vazamento de nick/stats/OG/personagem; entrada autenticada no jogo preservada.
+
+Catálogo leve63/63 derivado do roster real por scripts/profile-character-catalog.mjs
+e --check, sem importar Three.js/personagens pesados. CardPNG legado recebeu
+guarda hasOwn para unknown constructor/__proto__ não inventar nome.
+
+Régua prévia: HTTP real2RED; independente baseline2PASS/5RED. Final9/9 incluindo
+SQL localrollback e HTTP/PNG reais, sharingoff/unknown/null/private/friends.
+3 mutantes RED (invent-character/arbitrary-asset/share-omitted); último em
+clonepg_temp e rollback, nenhuma função viva alterada. Regressões inbox23/23,
+selo10/10, entrada25PASS/0RED/1UNKNOWN OAuth local; card63/63 e fonte/PNG PASS.
+Crítico independente fechou P2 link interceptado e P3 propriedade herdada do
+card; probe4PASS e3mutantesRED. Build final/grafo/docscheck/SEO6/6 PASS.
+
+Capturas reais examinadas na raiz private-assets/growth-readiness/ranking-20261012:
+public-profile-character-desktop-20261013.png,
+community-profile-character-desktop-20261013.png e
+public-profile-character-optout-desktop-20261013.png. Retrato inteiro/nome do
+Canarinho legíveis; após opt-out mesmo nick/stats, sem personagem. Browser
+confirmou CTA jogo→/u e página permanece SSR. Fixture PersonagemTest exclusiva
+foi removida após prova com IDs exatos; não é evidência de partida humana.
+Logs profile-character-* e public-profile-character-*; parecer
+public-profile-character-independent-review-20261013.md. Mobile aindaUNKNOWN.
+
+Bases: clientc5cb99089/backend9943835/progress9556cf8; mesmas lanes isoladas
+codex/ranking-launch-20261012 e codex/growth-readiness-20261012. Sem mudança de
+backend/nó/migração neste marco;048/053 local não implicam rollout no alvo.
+Sem push/merge/deploy/posts/email/pagamento; primary/outras lanes preservadas.
+
+Próximo continua resolver cutover049/provenance autoritativa, SMTP/Confirm EmailON
+e OAuth/vínculo reais, mobile/teclado, migrations040–053 no alvo e publicação
+legal/ranking antes da campanha. Central/DM precisa operador/retenção/flag/052.
+Ranking geral+semanal Brasília/segunda00, só fraude comprovada removida, MP2×
+humanos distintos confirmados, cinco logins+newsletter; shop/TRETa$/Pix/Portugal,
+mapas/chat e redes/automação permanecem no objetivo completo.
+
+
+### Marco 13/10 — Hierarquia do perfil e pacote de e-mails
+
+Label A TURMA DA TRETA removida da comunidade e do perfil público. Ranking geral
+agora tem destaque próprio; demais métricas em faixa sem cartões, tanto SSR
+quanto perfil interno. Valores/provenance/privacidade/personagem preservados.
+Baseline privado3RED antes do produto; crítico independente runtime/privacidade
+PASS e mutantesRED. Regressões profile-character9/9, inbox23/23; build e grafo
+com mutantePASS. Inventários regenerados por npm run docs.
+Capturas examinadas: public-profile-hierarchy-20261013.png,
+community-profile-hierarchy-20261013.png e community-profile-metrics-20261013.png.
+SSR computed rank88px/statsflex, interno72px/flex; nenhuma régua de gameplay
+alterada. Astro servido com CSS antigo após HMR foi reiniciado na mesma lane,
+PID75655→38418/8137/.env.local; API8197 mantida. Mobile do perfil segueUNKNOWN.
+Templates e instruções de ativação vivem no backend emails/README.md.
+Checagem HTTP pública atual em social-public-readiness-20261013.json: domínio
+oficial /api/social-auth?action=providers, /privacidade e /termos ainda404.
+Isso não é prontidão de produção. Providers5Enabled são evidência no ledger,
+OAuth externo/vínculo real não comprovados. SMTP real/entrega segue pendente.
+049 continua ausente e ranking8arg503: resolver fonte040/048 autoritativa sem
+fingir legacy037 ou desativar freeze guard; depois rollout coordenado e provas.
+
+Artefatos privados: csbrasil/private-assets/growth-readiness/ranking-20261012.
+Parecer social-launch-current-review-20261013.md e probe independente associado.
+Bases antes deste marco: clientba7aac3ad/backend9943835/progress794db07;
+lane client/backend codex/ranking-launch-20261012, progress growth-readiness.
+Nenhum push/merge/deploy/envio/post/pagamento ou alteração em primary/outras lanes.
+Objetivo integral preservado: ranking geral/semanal Brasília/segunda00, histórico
+mantido e só fraude comprovada removida, MP2× com humanos distintos confirmados;
+Email/Google/Discord/X/LinkedIn, newsletter, social persistente, chat, loja/
+TRETa$/Pix/Portugal→Brasil2027, mapas e campanha/automação de redes.
+
+
+### Marco 13/10 — patentes de carreira e arte dos e-mails
+
+Pedido aceito: distintivos Soldado→General e logo oficial + personagens gerados
+com GPT nos templates. Patentes derivam de pontos acumulados, independentes da
+posição e do filtro semanal: Soldado0/Cabo100/Sargento200/Tenente400/Capitão700/
+Major1100/Tenente-coronel1700/Coronel2400/General3900; correspondem aos níveis
+existentes (1+floor(pontos/100)), sem alterar pontuação nem conceder moedas.
+Ranking filtrado recebe career_points server-side da fonte compatível com o
+contrato ativo. Só IDs já autorizados, lotes100; falha/ausência fica null, sem
+usar pontos da semana nem inventar Soldado. Public/private/friends preservados.
+No perfil: badge e pontos até próxima patente; Verificado continua separado.
+
+Arte: Canarinho + Esquerdomacho por Codex image_gen/GPT com retratos existentes
+como referência. Logo oficial preservado. Assets em client public/img/email/
+(coro-logo-v1.png 29KB, coro-personagens-v1.jpg 87KB, FONTE.md); original privado
+email-characters-gpt-original-20261013.png. Backend emails/templates.mjs gera
+HTML com imagens HTTPS do domínio próprio, alt e CTA/textos fora das imagens;
+plaintext/ConfirmationURL/opt-in/unsubscribe preservados. Preview usa assets
+locais só em --preview-dir. Publicar assets antes de instalar templates/SMTP.
+Esta direção substitui a decisão anterior de templates sem imagens.
+
+Validação: baseline independente RED; patentes14/14 +13mutantes capturados;
+images4/4 +5mutantes; hashes SQL037/045/049 intactos. Ranking-presentationPASS,
+account-verified10/10, profile-character9/9 (SQL+SSR+PNG), inbox23/23;
+build/grafo+mutante/docs:check/backend test:api PASS. Harness existentes agora
+carregam módulo career-rank real; resolver de dataURL corrigido em apresentação.
+Parecer rank-badges-20261013-independent-review.md sem P0/P1/P2 confirmado.
+Capturas privadas examinadas: profile-career-public/community, career-ranks-
+gallery, career-ranking-home-rows, email-art-magic-link-desktop/mobile e
+email-art-weekly-desktop (todas -20261013.png). Mobile magiclink390px semoverflow;
+weeklymobilefinal UNKNOWN (viewport aplicado a outra aba; não contar captura
+como mobile). Gallery é demonstração, home é GET real/71rows: DonaResenha#2/
+4pts/Soldado igual aos perfis. URL local exige ?api=http://localhost:8137 para
+apibase não chamar API pública. Texto estático da home 'global indisponível'
+contradiz tabela carregada: pendência anterior a corrigir no fechamento ranking.
+
+Limites preservados: 049 ausente, ranking social8arg503; sem prova semanal real.
+Não falsificar origem atual040/048 nem desligar freeze/provenance guard.
+Assets ainda não hospedados, SMTP/remetente/endereço postal/instalação/caixas reais
+GmailOutlook/segmento confirmado/webhook-worker/calendário pendentes. OAuth real
+5providers/linking permaneceUNKNOWN; domínio legal/AuthAPI404 no último recheck.
+Nenhum envio/publicação/push/merge/deploy, SQL novo ou alteração fora das lanes.
+Próximo concreto: reconciliar cutover049 com fonte autoritativa; corrigir texto
+home; validar semanal real, OAuth e entrega; publicar assets+API+client/legal e
+instalar templates no fluxo coordenado autorizado para campanha.
+Objetivo integral continua: ranking geral/semanal Brasília segunda00, manter
+histórico/remover só fraude comprovada, MP2× humanos distintos confirmados,
+Email/Google/Discord/X/LinkedIn, newsletter, social/chat, loja TRETa$/Pix e
+Portugal→Brasil2027, mapas e campanha de redes. Bases deste marco clientf52de72a3,
+backendf90da0e/progressf819696; branches codex/ranking-launch-20261012 e growth-
+readiness. Artefatos: csbrasil/private-assets/growth-readiness/ranking-20261012.
+
+
+## Arte de email armada e testes preparados — 13/10/2026
+
+Direção do dono substitui o banner sem armas: Canarinho Pistola + Zé da
+Gotinha (lado Esquerda), ambos segurando armas. Asset ativo v2 1200×400,
+84.054 bytes, SHA256 0fb827f2611d8ed520b35209d75dd4cb63b6eb87e52ac7bbe2679e86fdcbb881.
+Original GPT e capturas ficam em private-assets/growth-readiness/ranking-20261012;
+proveniência/prompt completos em public/img/email/FONTE.md. V1 preservado e
+rejeitado como banner ativo. Logo oficial e textos/CTA continuam separados.
+
+Template generator --check PASS e probe independente 4/4 PASS. Crítica visual
+independente aprovou desktop/mobile; dono aprovou a arte. Captura mobile tem
+375×1003 pixels; viewport declarado390, DOM sem overflow observado pelo autor.
+Parecer privado email-armed-v2-review-20261013.md; screenshots
+email-armed-v2-desktop-20261013.png e email-armed-v2-mobile-20261013.png.
+
+Pedido explícito autoriza quatro testes na caixa indicada pelo dono. Payloads
+privados em email-tests-20261013 (magic-link/signup/newsletter-confirmation/weekly),
+com imagens CID, texto alternativo, plaintext, aviso TESTE VISUAL, links
+demonstrativos e chaves idempotentes; não autenticam nem inscrevem destinatário.
+Status: PREPARADOS, NÃO ENVIADOS. Remetente escolhido fale@corosolto.com.br:
+Resend recusou novo domínio com403, limite do plano. Subdomínio
+auth.corosolto.com.br verificado, envio ativo eu-west-1; escolha de
+fale@auth.corosolto.com.br para os testes aguarda resposta no formulário.
+Alias de recebimento não autentica SMTP. Não remover domínio alheio nem
+contratar upgrade automaticamente. Sem alteração DNS, SMTP, SQL ou produção.
+
+Bases deste marco: cliente e7ef54793/backend02148c8/progress93fe9cb; mesmas
+branches e lanes. Próximo: concluir escolha do remetente, enviar quatro testes
+com idempotência e conferir status real; depois instalar transporte/templates
+no rollout autorizado. Revisão de PRs continua no ledger privado de progress.
+Objetivo integral e gates049/semanal/OAuth/news/chat/loja/campanha preservados.
+
+## Estado do ranking13/10
+
+Root corrigiu a copy SSR contraditória em index/main; API real é a fonte do estado. Crítico independente:38/38 sem controle e oito mutantes RED; fotos, perfis e semanal preservados. Check:fast desta lane169/188, com19 falhas preservadas em cutover-closure-20261013/client-check-fast.log; não é liberação geral. Backend pareado82d0c3d capture/fence31/31,7mutantes,history13/13, corte local048 aplicado com72 placares/counters idênticos e423 watermarks. SMTP preparado no Supabase com único remetente fale@corosolto.com.br; titular ainda precisa inserir e salvar credencial. Sem merge/push/deploy público neste marco; sequência autorizada continua após fechamento de gates, loja personagensporúltimo/itensOFF.
+
+Marco13/10: home corrigida em f28bc59d8, mainalpha68 integrada em6f4764b37. Régua permanente tools/eval/ranking-home-status.mjs38/38 e oito mutantes aplicados/rejeitados, linkedom0.18.12 somente desenvolvimento, matriculada check:fast/check:deploy; catálogo e derivados regenerados. Falha original preservada no parecer independente privado, sem controles para passar. Referência docs/LICOES.md ausente nesta árvore e busca por nome sem resultado; skillregua/bug-hunt e catálogo foram lidos. Gate amplo anterior169/188RED, em diagnóstico independente; não é autorização para esconder falhas. PR810 MERGED4239cea59;812 ready CI novoheadc0c5498 e revisão delta pendente. SMTP público salvo/reload pelo dono; OAuthenabled não prova fluxo. Backend82d0c3d+captura049 local preservou72placares/423baselines; publicrelease pendente. Próximos passos concretos: terminar prova Auth+nó+API, gates atualizados, PR70/807/812/815 e templates reais. Objetivo/filaintegral em progress/docs/growth/BLOCKER-CLOSURE-20261013.md; personagens824/75porúltimo e acessóriosOFF.

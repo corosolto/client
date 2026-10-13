@@ -17,7 +17,7 @@ export const GET:APIRoute=async({params,request,clientAddress})=>{
  try{
   const {profile,status}=await publicProfile(params.key || '',request,clientAddress);
   if(!profile)return new Response('Perfil indisponível',{status,headers});
-  const character=__SOCIAL_CHARACTERS__[profile.last_character] || null;
+  const character=typeof profile.last_character==='string' && Object.hasOwn(__SOCIAL_CHARACTERS__,profile.last_character)?__SOCIAL_CHARACTERS__[profile.last_character]:null;
   const portrait=character?__SOCIAL_PORTRAITS__[character.id]:null;
   const svg=profileCardSvg(profile,character,portrait);
   const render=new Resvg(svg,{font:{fontFiles:[await embeddedFont()],loadSystemFonts:false,defaultFontFamily:'DejaVu Sans'},background:'#0c0e11'});

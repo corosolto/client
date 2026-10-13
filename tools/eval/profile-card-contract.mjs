@@ -10,7 +10,7 @@ import {Resvg} from '@resvg/resvg-js';
 let source=readFileSync('src/lib/profile-card.mjs','utf8');
 const mutant=process.argv.find(s=>s.startsWith('--mutant='))?.split('=')[1];
 if(mutant){
- const patches={'unsafe-source':["p?.source!=='server_verified' || p.visibility!=='public'","false"],'no-portrait':["const image=character&&portrait&&",'const image=false&&character&&portrait&&'],'small-portrait':['x="650" y="8" width="550" height="614"','x="840" y="140" width="300" height="365"'],'other-character-small':['height="614"','height="${character.id===\'canarinho\'?614:365}"']};
+ const patches={'unsafe-source':["!['server_verified','historical_plus_server_verified'].includes(p?.source) || p.visibility!=='public'","false"],'no-portrait':["const image=character&&portrait&&",'const image=false&&character&&portrait&&'],'small-portrait':['x="650" y="8" width="550" height="614"','x="840" y="140" width="300" height="365"'],'other-character-small':['height="614"','height="${character.id===\'canarinho\'?614:365}"']};
  if(!['no-font','square-source'].includes(mutant)){assert(patches[mutant],'Unknown mutant');const [from,to]=patches[mutant];assert(source.includes(from),'Mutation must apply');source=source.replace(from,to);}
 }
 const {profileCardSvg}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
@@ -30,6 +30,11 @@ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 const {characters,portraits}=await new AsyncFunction('readFileSync','existsSync','sharp',prepare+';return {characters:SOCIAL_CHARACTERS,portraits:SOCIAL_PORTRAITS}')(readFileSync,(await import('node:fs')).existsSync,sharp);
 assert.deepEqual(Object.keys(characters).sort(),Array.from(roster,c=>c.id).sort(),'share roster differs from game');
 const p={source:'server_verified',visibility:'public',nick:'OG Fixture',handle:'treta_fixture',level:3,points:248,position:17,kills:180,deaths:92,kd:1.96,play_seconds:7380};
+const historical={...p,source:'historical_plus_server_verified',legacy_points:200,verified_points:48,verified_play_seconds:0};
+const historicalCard=profileCardSvg(historical);
+assert(historicalCard.includes('HISTÓRICO + PARTIDAS CONFIRMADAS'),'mixed history needs a truthful source label');
+assert(!historicalCard.includes('>2,05<'),'legacy time must not be certified as active time');
+assert.throws(()=>profileCardSvg({...historical,visibility:'private'}));
 for(const c of roster){
  assert.equal(characters[c.id].nome,c.name);assert(portraits[c.id]?.startsWith('data:image/png;base64,'),'missing encoded PNG: '+c.id);
  const actual=await sharp(Buffer.from(portraits[c.id].split(',')[1],'base64')).ensureAlpha().raw().toBuffer();

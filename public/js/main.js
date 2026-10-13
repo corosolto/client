@@ -1,7 +1,8 @@
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
-import {initAccountEntry} from './account-entry.js';
+import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {initTretaStore,equippedTretaSkin} from './treta-store.js';
+import {analyticsAllowed} from './privacy-preferences.js';
 import { initTextures } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { preloadCharacterAssets, preloadCosmeticAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
@@ -338,17 +339,21 @@ function menuProps(id) {
 let _menuLoadSeq = 0;
 function loadMenuBackdrop() {
   const id = currentMap, seq = ++_menuLoadSeq;
-  return Promise.all([
-    preloadMapProps(menuProps(id)),
-    preloadAmbientLife((MAPS[id] && MAPS[id].ambience) || []),
-  ]).then(() => {
-    // O jogador pode trocar de mapa enquanto o GLB baixa. Resultado velho não reconstrói
-    // a cena nova; a próxima chamada tem seu próprio preload e sequência.
+  const propsReady = preloadMapProps(menuProps(id));
+  let propsLoaded = false;
+  const rebuildCurrent = () => {
     if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop();
+  };
+  // Fauna decorativa pode chegar depois; não segura a entrada com o cenário pronto.
+  const ambienceReady = preloadAmbientLife((MAPS[id] && MAPS[id].ambience) || [])
+    .then(() => { if (propsLoaded) rebuildCurrent(); }).catch(() => {});
+  return propsReady.then(() => {
+    propsLoaded = true;
+    rebuildCurrent();
   });
 }
 // The first backdrop is built before props load; rebuild once they're ready so the
-// menu shows the real Brasília landmarks too. Só então a splash libera a entrada.
+// menu shows the real Brasília landmarks too. A fauna continua carregando em paralelo.
 loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 
 /* ---------------- screens ---------------- */
@@ -1108,6 +1113,7 @@ function sendJsonKeepalive(path, payload) {
 }
 let telemetrySent = true;
 function sendTelemetry() {
+  if (!analyticsAllowed()) return;
   if (telemetrySent || testMode || !game) return;
   telemetrySent = true;   // uma partida = uma linha, mesmo com quit + beforeunload juntos
   const g = game;
@@ -1124,6 +1130,7 @@ function sendTelemetry() {
 }
 /* Início no NOSSO banco (antes só na Vercel Analytics): DAU conta quem começou e fechou a aba. */
 function sendGameStarted() {
+  if (!analyticsAllowed()) return;
   if (testMode || !game) return;
   sendJsonKeepalive('/api/telemetry', {
     anonId: getAnonId(), map: game._mapId || currentMap, mode: game.ctf ? 'ctf' : 'rounds',
@@ -1164,6 +1171,7 @@ if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) 
 /* PICKS — "o que as pessoas escolhem" (dono, 06/08). keepalive: nunca atrasa nem
    quebra o jogo; o servidor conta por (kind, key) na picks_daily (migration 013). */
 function _pick(kind, key) {
+  if (!analyticsAllowed()) return;
   try {
     sendJsonKeepalive('/api/pick', {
       kind, key, eventId: clientUuid(), anonId: getAnonId(), sessionId: getSessionId(),
@@ -1173,6 +1181,7 @@ function _pick(kind, key) {
   } catch { /* pode rodar antes do bootstrap da telemetria; nunca quebra o menu */ }
 }
 function _picks(lote) {
+  if (!analyticsAllowed()) return;
   try {
     sendJsonKeepalive('/api/pick', {
       anonId: getAnonId(), sessionId: getSessionId(),
@@ -1195,6 +1204,7 @@ function _picks(lote) {
    45 s contra a janela de 2 min da view (migration 014): perder um pacote não
    apaga ninguém da conta. */
 async function _pingPresenca(aguardar = false) {
+  if (!analyticsAllowed()) return;
   if (testMode) return false;
   if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
   const payload = JSON.stringify({ anonId: getAnonId() });
@@ -1218,6 +1228,7 @@ async function _pingPresenca(aguardar = false) {
  * Contrato: /api/{match,funnel,perf,acquisition} e tools/eval/telemetry-check.mjs. */
 // FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
 function _funnel(step) {
+  if (!analyticsAllowed()) return;
   if (testMode) return;
   sendJsonKeepalive('/api/funnel', { step, sessionId: getSessionId() });
 }
@@ -1225,6 +1236,7 @@ function _funnel(step) {
 // sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
 let _acqSent = false;
 async function _sendAcquisition() {
+  if (!analyticsAllowed()) return;
   if (testMode || _acqSent) return;
   try { if (localStorage.getItem('cs_acq')) { _acqSent = true; return; } } catch {}
   const u = new URLSearchParams(location.search);
@@ -1245,7 +1257,7 @@ async function _sendAcquisition() {
       body: JSON.stringify(payload),
     });
     const dados = await resp.json().catch(() => null);
-    if (!resp.ok || !dados || dados.stored !== true) return; // próxima visita retenta
+    if (!analyticsAllowed() || !resp.ok || !dados || dados.stored !== true) return; // próxima visita retenta
     try { localStorage.setItem('cs_acq', '1'); } catch {}
     _acqSent = true;
   } catch { /* fail-silent */ }
@@ -1259,6 +1271,7 @@ async function _sendAcquisition() {
 let _perfSent = false;
 const _perfLoadMs = Math.round(performance.now());
 function _sendPerf() {
+  if (!analyticsAllowed()) return;
   if (testMode || _perfSent) return;
   _perfSent = true;
   const aguardaLive = () => {
@@ -1273,11 +1286,13 @@ function _sendPerf() {
   aguardaLive();
 }
 function _perfMedeFps(bootMs) {
+  if (!analyticsAllowed()) return;
   let frames = 0; const t0 = performance.now();
-  const tick = () => { frames++; if (performance.now() - t0 < 1000) requestAnimationFrame(tick); else _perfFinish(bootMs, frames); };
+  const tick = () => { if (!analyticsAllowed()) return; frames++; if (performance.now() - t0 < 1000) requestAnimationFrame(tick); else _perfFinish(bootMs, frames); };
   requestAnimationFrame(tick);
 }
 function _perfFinish(bootMs, frames) {
+  if (!analyticsAllowed()) return;
   let rendererStr = null;
   try {
     const gl = renderer.getContext();
@@ -1310,6 +1325,7 @@ function _perfFinish(bootMs, frames) {
 // _wperf vem do game.js (abates por arma, zerado por partida no construtor).
 let _matchEventSent = false;
 function sendMatchEvent(result) {
+  if (!analyticsAllowed()) return;
   if (_matchEventSent || testMode || !game) return;
   _matchEventSent = true;
   game._flushTraining?.();   // BOTBRAIN: envia o resto dos frames ao sair/abandonar (idempotente)
@@ -1333,6 +1349,7 @@ function sendMatchEvent(result) {
   sendJsonKeepalive('/api/match', payload);
 }
 function sendTrainingFrames(blob) {
+  if (!analyticsAllowed()) return;
   if (testMode || !blob || !registeredNick || !trainingEnabled()) return;
   try {
     api('/api/train-frames', {
@@ -1880,6 +1897,7 @@ function openProfileStep(focusNick) {
   ui.click();
   setSetupStep('profile');
   if (HUB_ENABLED) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'perfil', origem: null });
+  void mountProfilePreferences($('profile-preferences'));
   if (focusNick) setTimeout(() => nickEl.focus(), 60);
 }
 $('btn-profile').onclick = () => openProfileStep(true);
@@ -3129,20 +3147,7 @@ async function renderHubRanking() {
   }
   if (!Array.isArray(data?.players)) { global.textContent = 'Ranking global indisponível no momento.'; return; }
   if (!data.players.length) { global.textContent = 'Ainda não há jogadores no ranking.'; return; }
-  const table = document.createElement('table');
-  const head = document.createElement('tr');
-  for (const label of ['#', 'JOGADOR', 'PONTOS', 'K/D', 'KILLS']) {
-    const cell = document.createElement('th'); cell.textContent = label; head.appendChild(cell);
-  }
-  table.appendChild(head);
-  for (const [index, player] of data.players.slice(0, 10).entries()) {
-    const row = document.createElement('tr');
-    for (const value of [index + 1, player.nick, player.points, player.kd, player.kills]) {
-      const cell = document.createElement('td'); cell.textContent = String(value ?? '—'); row.appendChild(cell);
-    }
-    table.appendChild(row);
-  }
-  global.replaceChildren(table);
+  global.replaceChildren(rankingTable(data.players.slice(0,10)));
 }
 async function renderGlobal(nick) {
   const box = $('rank-global');
@@ -3157,25 +3162,17 @@ async function renderGlobal(nick) {
       '<div class="rg-links"><a href="/mapa" target="_blank" style="color:var(--cs)">MAPA AO VIVO ↗</a></div>';
     return;
   }
-  if (!data || !data.players) {
+  if (!Array.isArray(data?.players)) {
     box.innerHTML = '<h3>RANKING GLOBAL</h3><div class="rg-off">indisponível no momento</div>';
     return;
   }
-  const rankText = (value) => String(value ?? '—').replace(/[&<>"']/g, (ch) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
-  const rows = data.players.slice(0, 10).map((p, i) =>
-    `<tr class="${p.nick === nick ? 'me' : ''}"><td>${i + 1}</td><td>${rankText(p.nick)}</td><td>${rankText(p.points)}</td><td>${rankText(p.kd)}</td><td>${rankText(p.kills)}</td></tr>`).join('');
-  const meuPerfil = data.players.find((p) => p.nick === nick);
-  const meuPerfilUrl = meuPerfil?.id
-    ? `/u/${encodeURIComponent(meuPerfil.id)}/${encodeURIComponent(meuPerfil.nick)}`
-    : `/u/${encodeURIComponent(nick)}`;
-  box.innerHTML = '<h3>RANKING GLOBAL (top 10)</h3>' +
-    (rows
-      ? `<table><tr><th>#</th><th>JOGADOR</th><th>PONTOS</th><th>K/D</th><th>KILLS</th></tr>${rows}</table>`
-      : '<div class="rg-off">ainda vazio — seja o primeiro!</div>') +
-    `<div class="rg-links"><a href="/ranking" target="_blank" style="color:var(--cs)">RANKING COMPLETO ↗</a>` +
-    (nick ? `<a href="${meuPerfilUrl}" target="_blank" style="color:var(--cs)">MEU PERFIL ↗</a>` : '') +
-    `<a href="/mapa" target="_blank" style="color:var(--cs)">MAPA AO VIVO ↗</a></div>`;
+  box.innerHTML = '<h3>RANKING GLOBAL (top 10)</h3>';
+  if(data.players.length){const wrap=document.createElement('div');wrap.className='social-table-wrap';wrap.appendChild(rankingTable(data.players.slice(0,10),{nick}));box.appendChild(wrap);}
+  else {const empty=document.createElement('p');empty.textContent='Ainda vazio — seja o primeiro!';box.appendChild(empty);}
+  const links=document.createElement('div');links.className='rg-links';
+  const own=data.players.find(p=>p.nick===nick);
+  for(const [label,href] of [['RANKING COMPLETO ↗','/ranking'],...(nick?[['MEU PERFIL ↗',playerProfilePath(own || {}) || `/u/${encodeURIComponent(nick)}`]]:[]),['MAPA AO VIVO ↗','/mapa']]){const a=document.createElement('a');a.textContent=label;a.href=href;a.target='_blank';a.rel='noopener noreferrer';links.appendChild(a);}
+  box.appendChild(links);
 }
 
 // GLB idle thumbnail (no weapon), rendered off the shared preview renderer.
@@ -4443,3 +4440,4 @@ if (inspectionScreen) {
   if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
   else entrarQuandoPuder();
 }
+import {rankingTable,playerProfilePath} from './ranking-player.js';

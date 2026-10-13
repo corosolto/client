@@ -68,7 +68,7 @@ jobs:
       - name: Escadão — compatibilidade com pacote de áudio publicado
         run: node tools/eval/escadao-audio-pack-check.mjs
       - name: Lajes — geometria, ambiência, integração e preview
-        run: node tools/eval/runner.mjs eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:lajes-raycast eval:mappreview
+        run: node tools/eval/runner.mjs eval:lajes-cache eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:lajes-raycast eval:mappreview
       - name: Sertão (tema, rotas, criação e integração)
         run: |
           npm run eval:sertao
@@ -124,6 +124,11 @@ jobs:
 
       - name: Astro build
         run: npm run build
+
+      - name: SEO e links publicados (com mutações)
+        run: |
+          node tools/eval/seo-check.mjs
+          node tools/eval/seo-check.mjs --mutate
 
       # PORTÃO DO SITE. `astro build` verde não prova nada sobre as rotas:
       # /ranking pode dar 500, /sitemap.xml pode sair vazio e o build passa em

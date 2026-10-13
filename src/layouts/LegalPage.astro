@@ -1,0 +1,102 @@
+---
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { SITE, BRAND_FULL, abs } from '../lib/site';
+import { LEGAL_CONTACT, LEGAL_OPERATOR, LEGAL_UPDATED } from '../lib/legal';
+interface Props { title: string; description: string; }
+const { title, description } = Astro.props;
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const canonical = new URL(path, Astro.site ?? SITE).toString();
+const cssRevision = createHash('sha1').update(readFileSync('public/style.css')).digest('hex').slice(0, 8);
+---
+<!DOCTYPE html>
+<html lang="pt-BR" data-home-ui="hub" class="legal-document">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} | CORO SOLTO</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={`${title} | CORO SOLTO`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={BRAND_FULL} />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:image" content={abs('/og-image.jpg')} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={BRAND_FULL} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href={`/style.css?v=${cssRevision}`} />
+  </head>
+  <body>
+    <a class="skip-link" href="#documento">Ir para o documento</a>
+    <header class="legal-header">
+      <a href="/" aria-label="CORO SOLTO - voltar ao jogo"><img class="hub-logo" src="/logo.png" alt="CORO SOLTO: Treta Suprema" width="160" height="96" /></a>
+      <nav aria-label="Documentos do jogo">
+        <a href="/privacidade" aria-current={path === '/privacidade' ? 'page' : undefined}>Privacidade</a>
+        <a href="/termos" aria-current={path === '/termos' ? 'page' : undefined}>Termos de uso</a>
+      </nav>
+      <a class="legal-play hub-cta" href="/">VOLTAR AO JOGO ↗</a>
+    </header>
+    <main id="documento" tabindex="-1">
+      <div class="legal-heading">
+        <h1>{title}</h1>
+        <p class="updated">Atualizado em {LEGAL_UPDATED}</p>
+      </div>
+      <article class="legal-content">
+        <aside class="legal-contact">
+          <h2>Responsável e contato</h2>
+          <p>{LEGAL_OPERATOR}.</p>
+          <p>Suporte, privacidade e revisão de decisões:</p>
+          <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a>
+        </aside>
+        <div class="legal-text"><slot /></div>
+      </article>
+    </main>
+    <footer class="legal-footer"><span>CORO SOLTO: TRETA SUPREMA</span><a href="/">VOLTAR AO JOGO ↗</a></footer>
+  </body>
+</html>
+<style>
+  :global(html.legal-document), :global(.legal-document body) { height: auto; min-height: 100%; overflow: auto; background: var(--bg-900); }
+  :global(.legal-document *) { user-select: text; }
+  :global(.legal-document body) { --legal-accent: #b4d92e; --font: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; font-family: var(--font); font-weight: 400; color: var(--ink-200); }
+  a { color: var(--sys); text-underline-offset: 4px; }
+  a:focus-visible { outline: var(--focus-ring); outline-offset: 4px; }
+  .skip-link { position: absolute; left: 16px; top: -80px; z-index: 10; padding: 12px; background: var(--bg-600); }
+  .skip-link:focus { top: 12px; }
+  .legal-header { display: flex; align-items: center; gap: 32px; padding: 12px max(24px, calc((100vw - 1200px) / 2)); border-bottom: 1px solid var(--line); background: var(--bg-800); }
+  .hub-logo { display: block; height: 84px; }
+  nav { display: flex; flex-wrap: wrap; gap: 24px; }
+  nav a { padding: 12px 0; color: var(--ink-200); font-weight: 700; font-size: 17px; text-decoration: none; text-transform: uppercase; letter-spacing: .8px; border-bottom: 2px solid transparent; }
+  nav a[aria-current="page"] { color: var(--legal-accent); border-color: var(--legal-accent); }
+  .legal-play { display: grid; place-items: center; width: auto; min-width: 190px; padding: 12px 20px; margin-left: auto; color: #131313; text-decoration: none; font-size: 24px; }
+  .legal-play:focus-visible { outline: 0; box-shadow: inset 0 0 0 3px #131313; }
+  main { max-width: 1200px; margin: 0 auto; padding: 48px 24px 64px; }
+  .legal-heading { margin-bottom: 32px; }
+  h1 { margin: 12px 0; color: var(--ink-100); font: 400 clamp(44px, 6vw, 76px)/1 'Bebas Neue', Impact, sans-serif; text-transform: uppercase; }
+  .updated { color: var(--ink-300); font-size: 17px; }
+  .legal-content { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; align-items: start; }
+  .legal-contact { border-top: 3px solid var(--legal-accent); padding: 20px; background: var(--bg-700); font-size: 17px; line-height: 1.6; overflow-wrap: anywhere; }
+  .legal-contact h2 { color: var(--ink-100); font-size: 22px; line-height: 1.2; margin-bottom: 16px; }
+  .legal-contact p { margin-bottom: 16px; }
+  .legal-text { border-top: 1px solid var(--line-2); padding-top: 20px; font-size: 20px; line-height: 1.65; overflow-wrap: anywhere; }
+  .legal-text :global(h2) { margin: 36px 0 12px; color: var(--ink-100); font-weight: 700; font-size: 28px; line-height: 1.2; }
+  .legal-text :global(p) { margin-bottom: 16px; }
+  .legal-text :global(ul) { padding-left: 24px; margin-bottom: 20px; }
+  .legal-text :global(li) { margin-bottom: 10px; }
+  .legal-text :global(a) { color: var(--sys); text-decoration: underline; text-underline-offset: 4px; }
+  .legal-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); padding: 24px max(24px, calc((100vw - 1152px) / 2)); color: var(--ink-300); font: 12px/1.5 var(--mono); }
+  @media (max-width: 760px) {
+    .legal-header { flex-wrap: wrap; gap: 16px; padding: 12px 20px; }
+    .hub-logo { height: 64px; max-width: 100px; }
+    nav { order: 3; width: 100%; gap: 24px; }
+    .legal-play { min-width: 0; font-size: 20px; padding: 10px 14px; }
+    main { padding: 32px 20px 48px; }
+    .legal-content { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    .legal-contact { padding: 16px; }
+    .legal-text { font-size: 19px; }
+  }
+</style>

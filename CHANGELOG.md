@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.67`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.72`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -26,6 +26,7 @@
 ## Não lançado — 2026-10-06
 
 ### Corrigido
+- A documentação deixou de apontar para o guia interno BotBrain removido e usa o domínio com `www` para abrir o jogo. A imagem de fallback do personagem recebe `src` somente quando há uma URL válida; o CI verifica links e URLs vazias no HTML publicado.
 - **Multiplayer:** removida a caixa fixa de diagnóstico com FPS, snapshots, jitter, banda e ping. A coleta continua alimentando a telemetria de qualidade por sessão.
 - **#696 — `assert:assets` reprovava com o pacote público mesmo depois do fetch.** O `audio-pack-v8` (445 entradas, medido em 04/10/2026 no diretório central do zip) não tem pasta `ambiente/` nem a chave `mapSoundscapes`, e o conserto — `prepare-public-preview.mjs` — era chamado SÓ pelo workflow de preview. `scripts/fetch-audio.sh` agora termina a preparação em todo caminho público (`ensure-map-soundscapes.mjs`, que instala `mapSoundscapes` nos 18 mapas com o hum que o jogo sintetiza; o pack privado não passa por ele, porque ambiência real que falta tem de reprovar o build). `eval:audioruntimeassets` passa a provar os TRÊS estados do contrato — cru = vermelho, preparado = verde, parcial = vermelho — chamando o `assert:assets` real.
 - **#741 — a `graffiti-editorial-check` media layouts que ninguém vê.** O `TypeError` de `fy_corrego` (id que virou `corrego`) era a ponta visível: as cláusulas `religioso-vulgar`, `putin` e `rostos-carecas` comparavam com `fy_corrego` e passavam verdes sem medir nada — os três mutantes eram cegos. `NOVOS` passou a listar os ids que o jogo pede no `grafitar({id})` (`escadao`, `campomorro`), e a exigência de tabela nominal em Lajes saiu: o layout assado tem 4 tags e nenhum decal vetado. Sobraram 4 vermelhos, todos de conteúdo — ver a issue.
@@ -69,6 +70,56 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.72] — 2026-10-13
+
+### Mudado
+- Reusar geometria do entorno de Lajes na virada (#815)
+- Matricula a régua de cache das Lajes no portão
+- docs: refresh generated map build counts
+- fix: reuse Lajes background geometry during map build
+
+## [2.1.0-alpha.71] — 2026-10-13
+
+### Mudado
+- feat(marketing): kit social com personagens estilizados e fade para preto (#811)
+- docs(marketing): confirmar envio do checkpoint do PR
+- docs(marketing): registrar dependências e estado do PR
+- chore(marketing): redisparar deploy do preview
+- docs(marketing): registrar entrega do layout de altura inteira
+- docs(marketing): registrar revisão do fade e altura inteira
+- feat(marketing): usar personagens de altura inteira e fade para preto
+- docs(marketing): registrar revisão dos personagens e variantes
+- feat(marketing): ampliar personagens e adicionar caricaturas políticas
+- Record failed remote marketing preview
+- Record draft marketing delivery and next step
+- Record marketing review and delivery checks
+- Invalidate stale marketing approvals on edits
+- Prepare reviewable October channel queue
+- Prepare October copy and community calendar
+- Add editable October cards and approval queue tool
+- Add sourced assets for October marketing kit
+
+## [2.1.0-alpha.70] — 2026-10-13
+
+### Mudado
+- fix: libere a entrada sem esperar fauna decorativa (#812)
+- fix: libere a entrada sem esperar fauna decorativa
+
+## [2.1.0-alpha.69] — 2026-10-13
+
+### Mudado
+- Corrige quickstart e contexto para novos devs (#810)
+- Aponta convite de devs ao domínio aprovado
+- Ancora runtime na instalação conferida
+- Corrige entrada de devs no clone público
+
+## [2.1.0-alpha.68] — 2026-10-13
+
+### Mudado
+- Corrige links públicos nas docs e na home (#808)
+- docs(site): rebuild das docs publicadas com os links corrigidos
+- Corrige links públicos nas docs e na home
 
 ## [2.1.0-alpha.67] — 2026-10-10
 

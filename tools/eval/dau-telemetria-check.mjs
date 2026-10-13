@@ -26,7 +26,7 @@
 import { readFileSync } from 'node:fs';
 
 const mut = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['mp-sem-telemetria', 'sem-trava', 'sem-inicio', 'inicio-na-troca', 'contexto-novo', 'csha-livre'];
+const MUTANTES = ['mp-sem-telemetria', 'sem-trava', 'sem-inicio', 'inicio-na-troca', 'contexto-novo', 'csha-livre', 'consent-guard-removed'];
 if (mut && !MUTANTES.includes(mut)) throw new Error(`mutante desconhecido: ${mut}`);
 const muta = (fonte, de, para) => {
   const novo = fonte.replace(de, para);
@@ -43,6 +43,12 @@ if (mut === 'sem-inicio') main = muta(main, '  if (!continuaPartida) sendGameSta
 if (mut === 'inicio-na-troca') main = muta(main, '  if (!continuaPartida) sendGameStarted();', '  sendGameStarted();');
 if (mut === 'contexto-novo') main = muta(main, '  if (!continuaPartida) sendTelemetry();   // revanche', '  // revanche');
 if (mut === 'csha-livre') net = muta(net, '...(/^[a-f0-9]{7,40}$/.test(csha) ? { csha } : {})', '...(csha ? { csha } : {})');
+if (mut === 'consent-guard-removed') {
+  const guarded = main.replaceAll('  if (!analyticsAllowed()) return;\n', '');
+  if (guarded === main) throw new Error('MUTANTE NAO APLICOU: consent-guard-removed');
+  main = guarded;
+}
+
 
 const falhas = [];
 const cobra = (ok, msg) => { if (!ok) falhas.push(msg); };
@@ -76,19 +82,25 @@ else {
   const mundo = new Function('mundo', `
     let { testMode, game, telemetrySent, currentMap, matchMode, registeredNick, telemetryGameContext, _matchEventId } = mundo;
     const getAnonId = () => '11111111-1111-4111-8111-111111111111';
+    const analyticsAllowed = () => mundo.analyticsConsent;
     const sendJsonKeepalive = (rota, payload) => mundo.envios.push({ rota, payload });
     ${fnEnvia}
     ${fnInicio || 'function sendGameStarted() {}'}
     return { sendTelemetry, sendGameStarted, novaPartida() { telemetrySent = false; } };
   `);
   const m = {
-    testMode: false, telemetrySent: true, currentMap: 'mapa_seguinte', matchMode: 'rounds', registeredNick: '',
+    analyticsConsent: false, testMode: false, telemetrySent: true, currentMap: 'mapa_seguinte', matchMode: 'rounds', registeredNick: '',
     game: { _mapId: 'ferro_velho', ctf: true, time: 312.4, roundsWon: { E: 2, B: 1 } },
     telemetryGameContext: { gameType: 'multiplayer', roomId: 'funk-x-palhaco' },
     _matchEventId: '22222222-2222-4222-8222-222222222222', envios: [],
   };
   const api = mundo(m);
   api.novaPartida();
+  api.sendTelemetry();
+  api.sendGameStarted();
+  cobra(m.envios.length === 0, 'DT7 opt-out enviou telemetria ou início de partida');
+  m.envios.length = 0;
+  m.analyticsConsent = true;
   api.sendTelemetry();   // mpSair
   api.sendTelemetry();   // beforeunload logo depois
   api.sendTelemetry();   // fim normal que chegou atrasado

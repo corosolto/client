@@ -23,6 +23,7 @@ async function sobe({ comObserver = true, storageInicial = {} } = {}) {
   const storage = { ...storageInicial };
   Object.assign(doc, { hidden: false, getElementById: () => null, querySelector: () => null });
   globalThis.window = globalThis;
+  globalThis.__csPrivacy = { allowed: () => true };
   globalThis.document = doc;
   globalThis.location = { href: 'http://jogo/', search: '', origin: 'http://jogo' };
   globalThis.performance = { now: () => agora };
@@ -151,7 +152,7 @@ test('sem PerformanceObserver o módulo sobe e ainda vê falha por evento', asyn
 /* A chave do abandono é do ops.js e de mais ninguém: varre TODO o JS servido e todo o
    src/ (não uma lista de arquivos) — um `localStorage.clear()` novo em qualquer módulo
    apagaria a última sessão sem erro nenhum (LICOES §5). */
-test('storage: cs_ops_last só existe no ops.js e nenhum módulo limpa o localStorage inteiro', () => {
+test('storage: somente ops e retirada de consentimento acessam cs_ops_last, sem limpar storage inteiro', () => {
   const raiz = fileURLToPath(new URL('../../../', import.meta.url));
   const arquivos = [];
   for (const dir of ['public/js', 'src']) {
@@ -161,7 +162,7 @@ test('storage: cs_ops_last só existe no ops.js e nenhum módulo limpa o localSt
   }
   assert.ok(arquivos.includes('public/js/ops.js') && arquivos.includes('public/js/main.js'), 'a varredura não achou ops.js/main.js');
   const usam = arquivos.filter((a) => readFileSync(`${raiz}${a}`, 'utf8').includes('cs_ops_last'));
-  assert.deepEqual(usam, ['public/js/ops.js'], `cs_ops_last aparece fora do ops.js: ${usam.join(', ')}`);
+  assert.deepEqual(usam, ['public/js/ops.js','public/js/privacy-runtime.js'], `cs_ops_last aparece fora do ops.js: ${usam.join(', ')}`);
   const limpam = arquivos.filter((a) => /localStorage\.clear\s*\(/.test(readFileSync(`${raiz}${a}`, 'utf8')));
   assert.deepEqual(limpam, [], `localStorage.clear() em: ${limpam.join(', ')}`);
 });

@@ -81,11 +81,12 @@ class Element {
   addEventListener(){}
   showModal(){this.open=true;}
   close(){this.open=false;}
+  querySelector(selector){return all(this).find(node=>node.tagName.toLowerCase()===selector.toLowerCase())||null;}
   get childElementCount(){return this.children.filter(c=>typeof c==='object').length;}
 }
 const all=n=>[n,...n.children.filter(c=>typeof c==='object').flatMap(all)];
 const words=n=>[n.textContent,...n.children.map(c=>typeof c==='string'?c:words(c))].join(' ');
-async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunity=true,authGate=null,tab='profile',profileValues={}}={}) {
+async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunity=true,authGate=null,tab='profile',profileValues={},providers=required}={}) {
   const ids=Object.fromEntries(['community','social-status','social-account','social-content','social-unread','hub-social-unread','account-entry-dialog','account-entry-body','account-entry-close','hub-account-login','account-completion','account-completion-copy','main-menu'].map(id=>[id,new Element(id==='account-completion'?'details':'div')]));
   ids['main-menu'].classList={contains:()=>false};
   if(bootSplash)ids['boot-splash']=new Element('div');
@@ -99,14 +100,24 @@ async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunit
     const body=opts.body?JSON.parse(opts.body):null;calls.push({path:p,action:body?.action,body});if(body?.action==='handle'){profile.handle=body.handle;profile.url='/u/'+body.handle;}
     if(authGate && p.startsWith('/api/social-auth'))await authGate;
     if(body?.action==='logout')loggedIn=false;
-    const out=p.includes('action=providers')?{providers:required,email:true,password:true}:p==='/api/social-auth'?{authenticated:loggedIn,profile:loggedIn?profile:null}:p.includes('action=profile')?{profile}:{profile,friends:[],notifications:[],invites:[],feed:[],blocks:[]};
+    const out=p.includes('action=providers')?{providers,email:true,password:true}:p==='/api/social-auth'?{authenticated:loggedIn,profile:loggedIn?profile:null}:p.includes('action=profile')?{profile}:{profile,friends:[],notifications:[],invites:[],feed:[],blocks:[]};
     return new Response(JSON.stringify(out),{status:200});
   };
   const observers=[];
   const context=vm.createContext({document:{body:new Element('body'),getElementById:id=>ids[id] || null,createElement:tag=>new Element(tag),createTextNode:text=>text,querySelectorAll:()=>[],addEventListener:()=>{},dispatchEvent:()=>{},hidden:false,activeElement:null},CustomEvent:class {constructor(type,{detail}){this.type=type;this.detail=detail}},MutationObserver:class {constructor(fn){observers.push(fn)}observe(){}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)},location:{origin:'http://localhost:4323',search:'',assign:p=>navigation.push(p)},navigator:{clipboard:{writeText:async text=>copied.push(text)}},URL,URLSearchParams,fetch,AbortSignal,setInterval:()=>1,setTimeout,clearTimeout,console});
   let entry=null;
-  if(entrySource){const names=[...entrySource.matchAll(/export\s+(?:async\s+)?(?:function|const)\s+(\w+)/g)].map(m=>m[1]);entry=vm.runInContext('(function(){'+entrySource.replace(/export\s+/g,'')+`;return {${names.join(',')}}})()`,context,{timeout:vmTimeout});context.__entry=entry;}
-  if(runCommunity)vm.runInContext(community.replace(/import\s+\{([^}]+)\}\s+from\s+['"]\.\/account-entry\.js['"];?/g,'const {$1}=__entry;'),context,{timeout:vmTimeout});
+  context.window=context;context.dispatchEvent=()=>{};context.addEventListener=()=>{};context.sessionStorage={removeItem:()=>{}};
+  vm.runInContext(read(path.join(root,'public/js/profile-character-catalog.js')).replace(/export\s+/g,''),context,{timeout:vmTimeout});
+  vm.runInContext(read(path.join(root,'public/js/profile-character.js')).replace(/^import .*\n/gm,'').replace(/export\s+/g,''),context,{timeout:vmTimeout});
+  vm.runInContext(read(path.join(root,'public/js/community-inbox.js')).replace(/export\s+/g,''),context,{timeout:vmTimeout});
+  vm.runInContext(read(path.join(root,'public/js/account-verified.js')).replace(/export\s+/g,''),context,{timeout:vmTimeout});
+  vm.runInContext(read(path.join(root,'public/js/privacy-runtime.js')),context,{timeout:vmTimeout});
+  const privacySource=read(path.join(root,'public/js/privacy-preferences.js')).replace(/^import .*;\n/gm,'').replace(/export\s+/g,'');
+  vm.runInContext(privacySource,context,{timeout:vmTimeout});
+  if(entrySource){const names=[...entrySource.matchAll(/export\s+(?:async\s+)?(?:function|const)\s+(\w+)/g)].map(m=>m[1]);entry=vm.runInContext('(function(){'+entrySource.replace(/^import .*;\n/gm,'').replace(/export\s+/g,'')+`;return {${names.join(',')}}})()`,context,{timeout:vmTimeout});context.__entry=entry;}
+  const rankingSource=read(path.join(root,'public/js/ranking-player.js')).replace(/^import .*;\n/gm,'').replace(/export\s+/g,'');
+  context.__ranking=vm.runInContext('(function(){'+rankingSource+';return {rankingTable};})()',context,{timeout:vmTimeout});
+  if(runCommunity)vm.runInContext(community.replace(/^import .*(?:account-verified|community-inbox|profile-character)\.js.*\n/gm,'').replace(/import\s+\{rankingTable\}\s+from\s+['"]\.\/ranking-player\.js['"];?/g,'const {rankingTable}=__ranking;').replace(/import\s+\{([^}]+)\}\s+from\s+['"]\.\/account-entry\.js['"];?/g,'const {$1}=__entry;'),context,{timeout:vmTimeout});
   for(let n=0;n<8;n++)await new Promise(resolve=>setImmediate(resolve));
   return {ids,storage,before,navigation,calls,copied,profile,entry,observers};
 }
@@ -212,6 +223,24 @@ await check('G02','logout preserves anonymous progress and ownership',async()=> 
 });
 await check('N01','account newsletter consent is separate and initially unchecked',async()=> {
   const u=await ui();const account=all(u.ids['social-account']);const label=account.find(n=>n.tagName==='LABEL' && /novidades|newsletter/i.test(words(n)));assert(label,'no independent account newsletter consent');const checkbox=all(label).find(n=>n.tagName==='INPUT' && n.type==='checkbox');assert(checkbox,'newsletter consent has no checkbox');assert.equal(checkbox.checked,false,'newsletter preselected');assert.equal(checkbox.required,false,'newsletter required to create/login account');
+});
+await check('A06','existing accounts link identities without signing in again',async()=> {
+  const u=await ui(true,{runCommunity:false});const c=new Element('div');
+  u.entry.mountAccountIntegrations(c,{authenticated:true,identities:['google']},{providers:['google','discord','x','linkedin_oidc'],linking:true});
+  const linked=all(c).find(n=>n.tagName==='BUTTON' && /Google VINCULADO/.test(n.textContent));assert(linked?.disabled);
+  const b=all(c).find(n=>n.tagName==='BUTTON' && n.textContent==='VINCULAR Discord');assert(b && !b.disabled);await b.onclick();
+  const call=u.calls.find(c=>c.action==='link');assert.equal(call.body.provider,'discord');assert(!('authUser' in call.body));assert(!u.calls.some(c=>c.action==='start'));
+});
+await check('C03','new users have independent optional cookies and newsletter choices',async()=> {
+  const u=await ui(false,{runCommunity:false});const c=new Element('div');u.entry.mountAccountEntry(c,{config:{providers:['google'],email:true},onGuest:()=>{}});
+  const inputs=all(c).filter(n=>n.tagName==='INPUT' && n.type==='checkbox');assert.equal(inputs.length,2);assert(inputs.every(i=>!i.checked && !i.required));
+  const cookie=inputs.find(i=>i.name==='analytics');cookie.checked=true;const guest=all(c).find(n=>n.tagName==='BUTTON' && /CONVIDADO/.test(n.textContent));await guest.onclick();
+  assert.equal(JSON.parse(u.storage.get('cs_privacy')).analytics,true);assert(!u.calls.some(c=>c.action==='newsletter_start'));
+});
+await check('C04','disabled providers remain visible without a login action',async()=> {
+  const u=await ui(false,{providers:[]});await u.entry.initAccountEntry();u.ids['hub-account-login'].onclick();const buttons=all(u.ids['account-entry-body']).filter(n=>n.tagName==='BUTTON' && /EM CONFIGURAÇÃO/.test(n.textContent));
+  assert.equal(buttons.length,4);for(const provider of ['Google','Discord','X / Twitter','LinkedIn'])assert(buttons.some(b=>b.textContent.includes(provider) && b.disabled));
+  assert(!u.calls.some(c=>c.action==='start'),'Unavailable providers started OAuth');
 });
 await check('R01','missing avatar/socials reminder is collapsible',async()=> {
   assert(entrySource,'shared account entry is absent');const markup=menuMarkup(path.join(root,'src/pages/index.astro'));assert.match(markup,/<details\b[^>]*id=["']account-completion["']/,'game has no collapsible completion reminder');const u=await ui(true,{runCommunity:false});await u.entry.initAccountEntry();const reminder=u.ids['account-completion'];assert.equal(reminder.hidden,false,'missing profile has no reminder');assert.equal(reminder.open,false,'reminder forced open');assert(/foto|avatar/i.test(u.ids['account-completion-copy'].textContent) && /redes|links/i.test(u.ids['account-completion-copy'].textContent),'reminder does not name missing photo and socials');
