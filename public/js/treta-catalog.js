@@ -37,3 +37,12 @@ export function tretaChange(amount) {
   }
   return coins;
 }
+
+export const TRETA_EYEWEAR = [
+  {id:'metal-de-rua',name:'Metal de Rua',description:'Armação de metal prata com lentes espelhadas verdes.',color:'#6cad94'},
+  {id:'ouro-de-quebrada',name:'Ouro de Quebrada',description:'Armação dourada larga e lentes em tons de ouro.',color:'#d5ae50'},
+  {id:'oval-90',name:'Oval 90',description:'Armação preta com lentes ovais vermelhas.',color:'#e27964'},
+  {id:'visor-de-pista',name:'Visor de Pista',description:'Visor azul contínuo, armação branca e detalhes verdes.',color:'#58becb'},
+  {id:'rebite-roxo',name:'Rebite Roxo',description:'Aros redondos com rebites e lentes roxas.',color:'#aa79d5'},
+  {id:'arco-orbital',name:'Arco Orbital',description:'Arco sobre a cabeça, aros redondos e lentes escuras.',color:'#a2b2c8'},
+].map(item=>({...item,slot:'eyewear',series:'ÓCULOS DA TRETA',price:200}));

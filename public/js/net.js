@@ -248,7 +248,7 @@ export class NetClient {
           // um corpo trocou de personagem: o roster da partida acompanha, o netgame remonta a malha
           if (Number.isInteger(m.ent) && typeof m.char === 'string') {
             const r = (this.meta?.roster || []).find((x) => x.id === m.ent);
-            if (r) { r.char = m.char; r.skinId = m.skinId || null; }
+            if (r) { r.char = m.char; r.skinId = m.skinId || null; r.eyewearId = m.eyewearId || null; }
             this.onPersonagem?.(m);
           }
         } else if (m.type === 'ev') {
