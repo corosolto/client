@@ -73,17 +73,22 @@ const CONTRATO = [
       return null;
     } },
 
-  // O contrato da issue #45 pedia o texto "não configurado". Hoje RANKING_ON
-  // (src/lib/site.ts) é false, então a página responde com o aviso de
-  // "desligado durante o alpha" — outro texto, MESMA propriedade: degrada com
-  // recado em vez de estourar. Aceita os dois; o que não passa é 500.
-  { rota: '/ranking', esperado: '200 + aviso de degradação (nunca 500)',
-    checa: ({ status, corpo }) => {
+  // O contrato da issue #45 pedia o texto "não configurado". Depois ele virou o
+  // aviso de "desligado durante o alpha" — outro texto, MESMA propriedade: degrada
+  // com recado em vez de estourar. Com a comunidade (807), /ranking é um redirect
+  // 302 para o hub (/?secao=comunidade&social=ranking) e o recado de degradação
+  // passou a viver nos estados da home (tools/eval/ranking-home-status.mjs, 38
+  // casos + mutantes). Aqui ficam as duas formas válidas — redirect para o hub ou
+  // aviso no corpo; 5xx continua reprovando.
+  { rota: '/ranking', redirect: 'manual', esperado: 'redirect para o hub ou aviso de degradação (nunca 500)',
+    checa: ({ status, corpo, headers }) => {
       if (status >= 500) return `status ${status} — é exatamente o que este portão existe pra pegar`;
+      const loc = headers?.get?.('location') || '';
+      if (status >= 301 && status <= 308 && /secao=comunidade/.test(loc)) return null;
       if (status !== 200) return `status ${status}`;
       const avisos = ['não configurado', 'desligado', 'Ainda ninguém na arena'];
       if (!avisos.some((a) => corpo.includes(a)))
-        return `200 mas sem nenhum aviso de degradação (${avisos.map((a) => JSON.stringify(a)).join(' | ')})`;
+        return `200 sem redirect do hub nem aviso de degradação (${avisos.map((a) => JSON.stringify(a)).join(' | ')})`;
       return null;
     } },
 

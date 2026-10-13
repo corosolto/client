@@ -117,6 +117,11 @@ try {
     args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
   });
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
+  // navegador de diagnóstico consente com a medição (privacy-runtime.js): desde a
+  // frente social o relatório de erros é opt-in e o portão mede o caminho completo
+  await context.addInitScript(() => {
+    try { localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: true, updatedAt: new Date(0).toISOString() })); } catch {}
+  });
   const relatorios = [];
   let mutacaoAplicou = !MUTANTE;
 
@@ -302,6 +307,12 @@ try {
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
     await jornada.waitForTimeout(3100);
     const entradaOk = await jornada.locator('#launch-error').evaluate((el) => el.classList.contains('hidden'));
+    if (await jornada.locator('#account-entry-dialog').count()) {
+      await jornada.waitForFunction(() => !!document.getElementById('hub-account-login')?.onclick);
+      await jornada.locator('#hub-account-login').dispatchEvent('click');
+      await jornada.locator('#account-entry-dialog .account-guest').click();
+      await jornada.locator('#account-entry-dialog').waitFor({ state: 'hidden' });
+    }
     // SINGLE PLAYER abre os modos contra bots; Mata-mata inicia a jornada padrão.
     await jornada.locator('.cs-item[data-act="single-player"]').click();
     await jornada.locator('.cs-item[data-act="sp"]:visible').click();

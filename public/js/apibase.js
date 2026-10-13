@@ -3,7 +3,7 @@
 
 /* Migradas. O portão `eval:apis` cobra que esta lista não divirja da rede de segurança 307. */
 const NO_BACKEND = new Set([
-  'acquisition', 'avatar', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
+  'social','social-auth','social-avatar','acquisition', 'avatar', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames',
 ]);
@@ -27,6 +27,7 @@ const BASE = (() => {
 
 export function apiUrl(caminho) {
   const nome = String(caminho).replace(/^\/api\//, '').split(/[/?]/)[0];
+  if (['social','social-auth','social-avatar','register','avatar','mp-ticket'].includes(nome)) return caminho;
   if (!NO_BACKEND.has(nome)) return caminho;
   if (VIA_SITE.has(nome) && !forcado) return caminho;
   return `${BASE}${caminho}`;

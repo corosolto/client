@@ -689,6 +689,20 @@ console.log('\n· lado físico do multiplayer vem do servidor, não da facção 
   );
   cobra(!/const side = resolvePlayerSide\(team, faction, online\);/.test(mutante),
     'MUTANTE que volta a inferir lado pela facção acende a cláusula de integração');
+  /* #785: M no MP (alpha.53) virava o `currentTeam` só no cliente; o REINICIAR seguinte
+     passava esse lado ao `rosterDoServidor` e o próprio corpo do jogador nascia inimigo. */
+  const { ladoOnline } = await import('../../public/js/net.js');
+  const roster = [0, 1, 2, 3, 4].map((id) => ({ id, team: 'E' })).concat([5, 6, 7, 8, 9].map((id) => ({ id, team: 'B' })));
+  const placar = (lado, meu) => [roster.filter((r) => r.team === lado && r.id !== meu).length + 1, roster.filter((r) => r.team !== lado).length];
+  cobra(placar('B', 2).join('×') === '6×5', 'o cenário do #785 reproduz: lado B local com o corpo em E dá 6×5');
+  cobra(typeof ladoOnline === 'function' && placar(ladoOnline('B', { yourTeam: 'E' }), 2).join('×') === '5×5',
+    'lado local velho perde para o yourTeam do servidor: 5×5');
+  cobra(ladoOnline('B', { yourTeam: null }) === 'B' && ladoOnline('E', null) === 'E',
+    'espectador ou sessão sem yourTeam mantém o lado pedido');
+  const ladoNoStart = /const sessao = online \? mpSessao : null;[\s\S]{0,2400}if \(sessao\) team = ladoOnline\(team, sessao\.net\);[\s\S]{0,400}const side = resolvePlayerSide\(team, faction, online\);/;
+  cobra(ladoNoStart.test(main), 'o start online troca o lado pedido pelo do servidor antes de resolver o side');
+  const mutLado = main.replace('if (sessao) team = ladoOnline(team, sessao.net);', '');
+  cobra(!ladoNoStart.test(mutLado), 'MUTANTE sem o lado do servidor no start deixa a cláusula do #785 vermelha');
   const mutSlot = main.replace('await startGame(currentTeam, currentChar, currentEnemyFaction, true);', '');
   cobra(!/net\.onSlot = async \(m\) =>[\s\S]*await transitionSlot\([\s\S]*await startGame\(currentTeam, currentChar, currentEnemyFaction, true\)/.test(mutSlot),
     'MUTANTE sem remount deixa a cláusula espectador→vaga vermelha');

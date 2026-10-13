@@ -1,3 +1,4 @@
+import {analyticsAllowed} from './privacy-preferences.js';
 /* Sinais operacionais da sessão (boot, FPS, falhas de carga, WebGL, partida, abandono).
    Só coleta e expõe `window.__csbOps`; nada é desenhado — ver docs/runbooks/operacao-autonoma.md. */
 const OPS_VERSAO = 1;
@@ -7,7 +8,7 @@ const TETO_FALHAS = 50;
 const TETO_MIGALHAS = 5;
 const CHAVE_ULTIMA = 'cs_ops_last';
 
-const estado = {
+function freshState() { return {
   inicio: Date.now(),
   fase: 'land',
   marcos: {},
@@ -17,12 +18,14 @@ const estado = {
   erros: { total: 0, promessas: 0, ultimos: [] },
   partida: { mapa: null, modo: null, estado: null, inicios: 0, fins: 0, erros: 0, transicoes: [] },
   abandono: null,
-};
+}; }
+const estado=freshState();
 let migalhasEnviadas = 0;
 let gravouUltima = false;
 
 const agora = () => Math.round(performance.now());
 function migalha(txt) {
+  if (!analyticsAllowed()) return;
   if (migalhasEnviadas >= TETO_MIGALHAS) return;
   migalhasEnviadas++;
   try { window.__migalha?.('ops ' + txt); } catch { /* coletor ausente */ }
@@ -51,6 +54,7 @@ function percentil(v, p) {
 function vigiaBoot() {
   const fim = Date.now() + 120000;
   const tick = () => {
+    if (!analyticsAllowed()) return;
     if (window.__CS_MAIN_LOADED && marco('main_loaded')) { /* módulo chegou */ }
     if (window.__CS_MAIN_FAILED && marco('main_falhou')) migalha('main.js não carregou');
     if (window.__CS_MAIN_READY__ && marco('main_ready')) { estado.fase = 'menu'; migalha(`main pronto em ${estado.marcos.main_ready}ms`); }
@@ -64,6 +68,7 @@ let rafAtivo = false;
 function vigiaPartida() {
   let anterior = null;
   setInterval(() => {
+    if (!analyticsAllowed()) return;
     try {
       const g = window.__game;
       const p = estado.partida;
@@ -100,7 +105,7 @@ function vigiaPartida() {
 /* ---- FPS: contagem de frames por segundo só enquanto há partida ---- */
 let ultimoFrame = 0, framesNoSegundo = 0, inicioSegundo = 0;
 function passoFps(t) {
-  if (!rafAtivo) return;
+  if (!analyticsAllowed() || !rafAtivo) return;
   if (ultimoFrame) {
     const dt = t - ultimoFrame;
     if (dt > 100 && dt < 5000 && !document.hidden) {
@@ -131,15 +136,17 @@ function resumoFps() {
 function vigiaRecursos() {
   try {
     const po = new PerformanceObserver((lista) => {
+      if (!analyticsAllowed()) return;
       for (const e of lista.getEntries()) {
         estado.recursos.total++;
         const st = e.responseStatus;
         if (st >= 400) registraFalha(caminhoDe(e.name), st, e.initiatorType || '?');
       }
     });
-    po.observe({ type: 'resource', buffered: true });
+    po.observe({ type: 'resource', buffered: false });
   } catch { /* sem PerformanceObserver */ }
   window.addEventListener('error', (e) => {
+    if (!analyticsAllowed()) return;
     const alvo = e.target;
     if (!alvo || alvo === window || !(alvo.src || alvo.href)) return;
     registraFalha(caminhoDe(alvo.src || alvo.href), 'erro', String(alvo.tagName || '?').toLowerCase());
@@ -148,15 +155,17 @@ function vigiaRecursos() {
 
 /* ---- WebGL e exceções: contagem, nunca o conteúdo digitado ---- */
 function vigiaErros() {
-  window.addEventListener('webglcontextlost', () => { estado.webgl.perdidos++; migalha('contexto WebGL perdido'); }, true);
-  window.addEventListener('webglcontextrestored', () => { estado.webgl.restaurados++; }, true);
+  window.addEventListener('webglcontextlost', () => { if (!analyticsAllowed()) return; estado.webgl.perdidos++; migalha('contexto WebGL perdido'); }, true);
+  window.addEventListener('webglcontextrestored', () => { if (!analyticsAllowed()) return; estado.webgl.restaurados++; }, true);
   window.addEventListener('error', (e) => {
+    if (!analyticsAllowed()) return;
     if (!e || typeof e.message !== 'string') return;
     estado.erros.total++;
     if (estado.fase === 'partida') estado.partida.erros++;
     estado.erros.ultimos.length < 5 && estado.erros.ultimos.push(String(e.message || '').slice(0, 120));
   });
   window.addEventListener('unhandledrejection', () => {
+    if (!analyticsAllowed()) return;
     estado.erros.promessas++;
     if (estado.fase === 'partida') estado.partida.erros++;
   });
@@ -165,6 +174,7 @@ function vigiaErros() {
 /* ---- abandono: em que fase a aba fechou/escondeu; fica no storage da próxima visita ---- */
 function vigiaSaida() {
   const grava = (motivo) => {
+    if (!analyticsAllowed()) return;
     if (gravouUltima && motivo === 'hidden') return;
     estado.abandono = { fase: estado.fase, motivo, t: agora() };
     try { localStorage.setItem(CHAVE_ULTIMA, JSON.stringify(resumo())); gravouUltima = true; } catch { /* storage bloqueado */ }
@@ -186,12 +196,14 @@ function resumo() {
   };
 }
 function ultimaSessao() {
+  if (!analyticsAllowed()) return null;
   try { const s = localStorage.getItem(CHAVE_ULTIMA); return s ? JSON.parse(s) : null; } catch { return null; }
 }
 function snapshot() { return { ...resumo(), ultimaSessao: ultimaSessao() }; }
 /* Para o beacon de perf (main.js, 1× por sessão em partida): só números e strings curtas,
    com teto, para caber num payload que o backend lê campo a campo e descarta o que não conhece. */
 function resumoBeacon() {
+  if (!analyticsAllowed()) return null;
   const r = resumo(); const u = ultimaSessao();
   const n = (x, max) => (Number.isFinite(x) ? Math.max(0, Math.min(max, Math.round(x))) : null);
   return {
@@ -212,13 +224,20 @@ function brief() {
   return `fase=${r.fase} ready=${r.marcos.main_ready ?? '-'}ms live=${r.marcos.primeiro_live ?? '-'}ms fps50=${r.fps.p50 ?? '-'} falhas=${r.recursos.falhas.length} gl=${r.webgl.perdidos} err=${r.erros.total}`;
 }
 
-try {
-  vigiaBoot(); vigiaPartida(); vigiaRecursos(); vigiaErros(); vigiaSaida();
-  // a sessão anterior entra no relatório de crash desta: onde ela parou e como saiu
-  const u = ultimaSessao();
-  if (u?.abandono) migalha(`última sessão: fase=${u.fase} saída=${u.abandono.motivo} live=${u.marcos?.primeiro_live ?? '-'}ms fps50=${u.fps?.p50 ?? '-'}`);
-  if (new URLSearchParams(location.search).get('ops') === '1') setInterval(() => console.info('[ops]', brief()), 30000);
-} catch { /* diagnóstico nunca derruba o jogo */ }
+let watching=false;
+function startMonitoring() {
+  if(!analyticsAllowed())return;
+  Object.assign(estado,freshState());migalhasEnviadas=0;gravouUltima=false;
+  const u=ultimaSessao();
+  if(u?.abandono)migalha(`última sessão: fase=${u.fase} saída=${u.abandono.motivo} live=${u.marcos?.primeiro_live ?? '-'}ms fps50=${u.fps?.p50 ?? '-'}`);
+  vigiaBoot();
+  if(!watching){watching=true;vigiaPartida();vigiaRecursos();vigiaErros();vigiaSaida();}
+}
+window.addEventListener('cs-privacy-change',()=>{
+  desligaFps();zeraFrame();Object.assign(estado,freshState());
+  if(analyticsAllowed())startMonitoring();
+});
+try { startMonitoring(); } catch {}
 
 window.__csbOps = { versao: OPS_VERSAO, snapshot, brief, resumo, resumoBeacon, _estado: estado, _percentil: percentil };
 export { snapshot, brief, percentil, resumoBeacon };

@@ -4,9 +4,10 @@ Valeu por querer contribuir. Este é um projeto de fãs, open source, feito pra
 celebrar a **cultura brasileira** com humor — a zoeira é universal e distribuída
 igualmente para todos os lados.
 
-**Se você tem 20 minutos e quer só começar:** pegue uma tarefa de
-[`docs/issues/`](docs/issues/). Cada uma diz quais arquivos tocar e qual é o
-critério de aceite.
+**Para começar:** escolha uma [issue aberta](https://github.com/corosolto/client/issues)
+e confira os comentários recentes e PRs associados. Combine um recorte pequeno
+com o mantenedor. [`docs/issues/`](docs/issues/) guarda propostas com arquivos e
+critério de aceite; compare com as issues existentes antes de abrir outra.
 
 ---
 
@@ -47,12 +48,14 @@ critério de aceite.
 
 ```bash
 git clone https://github.com/corosolto/client.git
-cd csbrasil
-npm install
-cp .env.example .env      # opcional — sem envs, o ranking responde 503 e o resto roda
+cd client
+npm ci
 npm run fetch-audio       # opcional — sem o pacote, o jogo usa sons sintetizados
 npm run dev               # http://localhost:4321 · o JOGO está na rota /
 ```
+
+Confira o requisito de Node no [quickstart do README](README.md#rodar-localmente)
+e rode `node --version` e `npm --version` no terminal que vai instalar as dependências.
 
 **O jogo é a rota `/`, e o HTML dele é `src/pages/index.astro`.** Não existe
 `public/index.html` — servir `public/` com um servidor estático te dá os assets,

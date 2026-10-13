@@ -2,6 +2,20 @@ import { defineConfig } from 'astro/config';
 import vercel from '@astrojs/vercel';
 import { aeoCurado } from './scripts/aeo.mjs';
 import { moduleCacheManifest } from './scripts/module-cache.mjs';
+import {readFileSync,existsSync} from 'node:fs';
+import sharp from 'sharp';
+
+const roster=readFileSync('public/js/characters.js','utf8').match(/export const CHARACTERS = ([\s\S]*?\n\]);/);
+if(!roster)throw Error('Catálogo de personagens indisponível');
+const SOCIAL_CHARACTERS=Object.fromEntries([...roster[1].matchAll(/\{\s*id:\s*'([^']+)'[\s\S]*?name:\s*'([^']+)'/g)].map(m=>[m[1],{id:m[1],nome:m[2]}]));
+const SOCIAL_PORTRAITS={};
+for(const id of Object.keys(SOCIAL_CHARACTERS)){
+ if(!/^[a-z0-9_-]+$/.test(id))throw Error('ID de personagem inválido');
+ const file=`public/img/resultado/${id}-vitoria.webp`;
+ if(!existsSync(file))throw Error(`Arte vertical de personagem indisponível: ${id}`);
+ SOCIAL_PORTRAITS[id]='data:image/png;base64,'+(await sharp(readFileSync(file)).trim({threshold:1}).resize({height:630}).png().toBuffer()).toString('base64');
+}
+
 
 /* MANIFESTO DE CACHE CALCULADO NO BUILD, E ESSE É O PONTO.
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -40,6 +54,8 @@ export default defineConfig({
   vite: {
     define: {
       __MANIFESTO_JS__: JSON.stringify(MANIFESTO_JS),
+      __SOCIAL_PORTRAITS__: JSON.stringify(SOCIAL_PORTRAITS),
+      __SOCIAL_CHARACTERS__: JSON.stringify(SOCIAL_CHARACTERS),
     },
     // BUG-75 (achado do dono, 29/08): public/private-assets/viewmodels é symlink
     // para fora da raiz; sem fs.allow explícito um restart do dev server pode

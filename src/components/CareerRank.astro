@@ -1,0 +1,7 @@
+---
+import {careerRank,careerRankTitle} from '../../public/js/career-rank.js';
+import '../styles/career-rank.css';
+const {points}=Astro.props;
+const rank=careerRank(points);
+---
+{rank && <span class="career-rank" data-tier={rank.tier} title={careerRankTitle(points)}><span class="career-rank-icon" data-symbol={rank.symbol} aria-hidden="true">{Array.from({length:rank.marks},()=> <i>{rank.symbol==='star'?'★':''}</i>)}</span><span>{rank.label}</span></span>}

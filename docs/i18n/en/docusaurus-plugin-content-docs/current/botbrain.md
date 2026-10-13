@@ -46,8 +46,6 @@ npm run bot:train -- --epochs=40
 npm run bot:brain:check
 ```
 
-The full operational guide, including Docker and the local sink, is in
-[`docs/BOTBRAIN-LOCAL.md`](https://github.com/corosolto/client/blob/main/docs/BOTBRAIN-LOCAL.md).
 Docker exposes the game on loopback only; the local sink rejects external origins, caps
 rate, body size, and metadata, and stops collecting once it reaches 50 MiB.
 

@@ -1,0 +1,5 @@
+---
+export const prerender=false;
+Astro.response.headers.set("cache-control","no-store");
+return Astro.redirect("/?secao=comunidade",302);
+---

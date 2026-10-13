@@ -1,0 +1,18 @@
+---
+import pkg from '../../package.json';
+declare const __MANIFESTO_JS__: {revision:string};
+const socialSrc=`/js/community.js?v=${pkg.version}-${__MANIFESTO_JS__.revision}`;
+const {profileId='',tab='profile'}=Astro.props;
+---
+<section id="community" class="community" data-profile={profileId} data-tab={tab}>
+  <header class="social-heading"><div><h2>SEU CORO, SUA TURMA.</h2></div></header>
+  <p id="social-status" class="social-status" role="status" aria-live="polite">Carregando a comunidade…</p>
+  <nav class="social-tabs" aria-label="Comunidade">
+    <button type="button" data-tab="profile">PERFIL</button><button type="button" data-tab="friends">AMIGOS</button><button type="button" data-tab="ranking">RANKING</button><button type="button" data-tab="notifications">CENTRAL <span id="social-unread"></span></button><button type="button" data-tab="feed">RESENHA</button><button type="button" data-tab="settings">PRIVACIDADE</button>
+  </nav>
+  <div class="social-workspace">
+    <details class="social-account-panel" open><summary>SUA CONTA ▾</summary><section id="social-account" aria-label="Sua conta"></section></details>
+    <div id="social-content" class="social-content" aria-busy="true"></div>
+  </div>
+</section>
+<script is:inline type="module" src={socialSrc}></script>

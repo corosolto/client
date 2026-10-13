@@ -31,6 +31,7 @@ jobs:
       contents: read
       issues: write
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
@@ -125,6 +126,7 @@ jobs:
       issues: write
       pull-requests: read
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
     steps:
@@ -171,6 +173,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       available: ${{ steps.check.outputs.available }}
     steps:
@@ -198,6 +201,7 @@ jobs:
       pull-requests: write
       issues: write
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       ISSUE_NUMBER: ${{ github.event.issue.number }}

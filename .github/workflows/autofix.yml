@@ -223,9 +223,15 @@ jobs:
       # O manifesto do fork volta antes de gerar: o que a doc afirma é o que a ÁRVORE tem.
       # Seguro porque a instalação já aconteceu (com o lock da base) e os dois geradores
       # importam só builtin de node — nada de package.json do fork chega a ser executado.
-      - name: Devolve o manifesto do PR antes de gerar (somente fork)
+      # O MESMO VALE para o insumo que o gen-docs LÊ dentro de tools/ (10/10, #805): o
+      # passo acima traz o `tools/eval/invariants.mjs` da base junto com os geradores, mas
+      # é dele que sai a contagem de linhas e de ids do bloco `invariantes` — o bot media
+      # o da BASE (2.405 linhas), commitava por cima do número do PR (2.401) e o DOCS1
+      # reprovava o próprio conserto, em loop. O arquivo não é executado, só lido:
+      # devolvê-lo ao estado do PR não abre porta de fork nenhuma.
+      - name: Devolve o manifesto e o insumo medido do PR antes de gerar (somente fork)
         if: env.pular != '1' && env.HEAD_REPO != env.REPO && steps.merge.outputs.humano != '1'
-        run: git checkout HEAD -- package.json package-lock.json
+        run: git checkout HEAD -- package.json package-lock.json tools/eval/invariants.mjs
 
       - name: Conserta o mecânico
         if: env.pular != '1' && steps.merge.outputs.humano != '1'

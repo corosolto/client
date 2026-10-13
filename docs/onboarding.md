@@ -4,10 +4,15 @@
 
 ```bash
 git clone https://github.com/corosolto/client.git
-cd csbrasil
-npm install
+cd client
+npm ci
 npm run dev
 ```
+
+Confira o requisito de Node no [quickstart do README](../README.md#rodar-localmente).
+O jogo abre em `http://localhost:4321/`; comece pelo singleplayer para testar sem
+configurar um servidor multiplayer. Credenciais de serviços são opcionais para
+esse teste local.
 
 Áudio é opcional:
 
@@ -19,7 +24,7 @@ npm run fetch-audio
 
 - `public/`: jogo vanilla JS + Three.js, zero build
 - `src/`: site Astro + APIs SSR
-- `supabase/`: schema e migrations do ranking
+- `public/js/apibase.js`: destino das APIs do backend; o schema privado não vem no clone
 - `.github/workflows/`: CI, smoke, bots e automações
 
 ## Before opening a PR

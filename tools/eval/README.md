@@ -16,6 +16,7 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede | Artefato |
 |---|---|---|
+| `ranking-home-status.mjs` | Estado real dos renderers da home: 38 casos entre loading/OFF/rede/vazio/sucesso e oito mutantes; DOM em Node, sem aceite visual. | `npm run eval:ranking-home-status` |
 | `invariants.mjs` | **O portão principal.** As invariantes permanentes: toda vez que o dono reporta um bug, ele vira uma invariante aqui e nunca mais volta. Regenera `vm_kick_sim.json` sozinho e LÊ `vm_mint_audit.json`. | `npm run eval:invariants` |
 | `vm-mint-audit.mjs` | Enquadramento do viewmodel arma por arma, nos 26 GLBs reais. Mede a seção transversal perto de cada ponta em Z pra descobrir se a arma está de ré. | `vm_mint_audit.json` (**versionado — sem ele as invariantes VM1–VM6/VM9/VM10 viram PULADAS, que é portão verde por ausência de dado**) |
 | `vm-kick-sim.mjs` | Coice do viewmodel: near plane + pitch em rajada. Prova que a coronha não atravessa a lente no pico. | `vm_kick_sim.json` |
@@ -23,6 +24,7 @@ com código 1 em falha crítica.
 | `release-check.mjs` | Release usa o nome CSBR e as notas nativas do GitHub, que preservam PRs e contribuidores. | `npm run eval:release` |
 | `error-provenance-check.mjs` | Preserva erro externo no console/banco sem atribuí-lo ao jogo ou abrir issue automática. | `npm run eval:error-origin` |
 | `shader-budget-check.mjs` | Deriva do GLB real o orçamento de varyings da urna e protege fog/triplanar no piso WebGL1. | `npm run eval:shaderbudget` |
+| `lajes-cache-check.mjs` | Duas builds reais de Lajes: paridade dos buffers e da sequência RNG, colisores, navegação e oclusores; 49 geometrias compartilhadas nas 9162 caixas, descarte único e isolamento entre builds. | `npm run eval:lajes-cache` |
 | `map-rotation-check.mjs` | Sugestão inicial de mapa: link manda, escolha do carrossel fica, e quem não escolhe roda pelos 5 mapas. | `npm run eval:maprotate` |
 | `../gen-arch.mjs` | (fora deste diretório) Gera e valida o `ARCH.md`. `--check` reprova se estiver desatualizado. | `npm run arch` |
 

@@ -1,11 +1,15 @@
 ---
 import pkg from '../../package.json';
+import Community from '../components/Community.astro';
+import AccountEntry from '../components/AccountEntry.astro';
+import '../styles/career-rank.css';
 import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL, RANKING_ON } from '../lib/site';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 /* Revisão do CSS pelo CONTEÚDO: a versão do pacote não muda quando só o CSS muda, e o
    WebView servia CSS velho. Hash do arquivo na URL derruba o cache sozinho. */
+const SOCIAL_CSS_REV=createHash('sha1').update(readFileSync('public/social.css')).digest('hex').slice(0,8);
 const CSS_REV = createHash('sha1').update(readFileSync('public/style.css')).digest('hex').slice(0, 8);
 
 /* ESTÁTICA de propósito: o Stateloop não publica SSR e `prerender = false` aqui
@@ -26,7 +30,10 @@ const IMPORTMAP = JSON.stringify({
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+{import.meta.env.DEV && import.meta.env.SOCIAL_LOCAL_GAME_URL && <meta name="cs-local-game" content={import.meta.env.SOCIAL_LOCAL_GAME_URL} />}
 <meta charset="UTF-8">
+<script src={`/js/privacy-runtime.js?v=${JS_REV}`} is:inline></script>
+<link rel="stylesheet" href={`/social.css?v=${SOCIAL_CSS_REV}`} />
 <!-- Precisa rodar antes dos módulos para capturar falhas de boot; detalhes só com ?debug=1. -->
 <script is:inline define:vars={{ SUPPORT_URL_BR, SUPPORT_URL_INTL }}>
 /* URLs de apoio já RESOLVIDAS pelo servidor (env da Vercel pode sobrescrever).
@@ -137,6 +144,7 @@ window.__GEO_LANG__ = (function () {
   }
 
   function reporta(kind, msg, source, stack, externa){
+    if (!window.__csPrivacy?.allowed()) return null;
     if (reportando) return null;                           // guarda de laço
     try{
       var mFinal = corta(msg, 500) || '?', sFinal = corta(source, 300) || null;
@@ -220,6 +228,10 @@ window.__GEO_LANG__ = (function () {
     // discordarem, o arnês come cota aqui ou volta a abrir issue lá (BUG-151).
     var automacao = /\bUtilityScript\b|\b__puppeteer_evaluation_script__\b|\bpptr:[/][/]/;
     if (automacao.test(String(stack || ''))) return false;
+    // MESMA redação da `EVAL_CSP_RE` de `src/lib/error-provenance.mjs`: se os dois lados
+    // discordarem, o blob: injetado come cota aqui ou volta a abrir issue lá (#798).
+    var evalCsp = /\bEvalError\b.*'unsafe-eval' is not an allowed source of script/;
+    if (/^blob:/i.test(sourceText) && evalCsp.test(String(mensagem || ''))) return false;
     var propria = location.origin;
     if (sourceText && /^https?:\/\//i.test(sourceText)) {
       try {
@@ -678,12 +690,15 @@ window.__GEO_LANG__ = (function () {
       <nav class="hub-tabs" role="tablist" aria-label="Seções da home">
         <button type="button" role="tab" aria-selected="true" aria-controls="hub-play" data-hub-tab="jogar">JOGAR</button>
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-ranking" data-hub-tab="ranking">RANKING</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="hub-community" data-hub-tab="comunidade">COMUNIDADE <span id="hub-social-unread"></span></button>
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-about" data-hub-tab="sobre">SOBRE O JOGO</button>
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-feedback" data-hub-tab="feedback">FEEDBACK</button>
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-support" data-hub-tab="apoie">APOIE O JOGO</button>
       </nav>
       <div class="hub-online" aria-live="polite"><i aria-hidden="true"></i><span id="hub-online-n">-</span> ONLINE</div>
       <button id="hub-music-toggle" class="hub-header-action hub-music-toggle" type="button" aria-pressed="true" aria-label="Desligar música do menu" title="Desligar música do menu"><span aria-hidden="true">♫</span><b>MÚSICA LIGADA</b></button>
+      <button id="hub-account-login" class="hub-header-action" type="button">ENTRAR</button>
+      <button id="hub-social-resume" class="hub-header-action" type="button" hidden>VOLTAR À PARTIDA ▶</button>
       <button id="hub-profile" class="hub-header-action" type="button" aria-label="Criar ou editar perfil" title="Criar ou editar perfil"><span id="hub-avatar">CS</span><b id="hub-nick">SEM NICK</b><span class="hub-profile-edit" aria-hidden="true">EDITAR ▸</span></button>
       <button id="hub-settings" class="hub-header-action hub-settings" type="button" aria-label="Configurações">⚙</button>
     </header>
@@ -707,15 +722,16 @@ window.__GEO_LANG__ = (function () {
       </div>
     </section>
 
+    <section id="hub-community" class="hub-pane hub-info" role="tabpanel" aria-label="Comunidade" hidden><Community /></section>
+    <details id="account-completion" class="hub-account-nudge" hidden><summary>COMPLETE SEU PERFIL ▾</summary><p id="account-completion-copy"></p><a href="/?secao=comunidade&amp;social=settings">ADICIONAR FOTO E REDES ▸</a></details>
+
     <section id="hub-ranking" class="hub-pane hub-info" role="tabpanel" aria-label="Ranking" hidden>
       <div class="hub-kicker">02 · ARQUIVO</div><h2>PLACAR DA RUA</h2>
-      <p>{RANKING_ON
-        ? 'Um placar para todas as partidas: cada abate soma um ponto. Abates multiplayer confirmados entre perfis distintos recebem um ponto extra.'
-        : 'Seus números ficam neste navegador. O ranking global está indisponível por enquanto.'}</p>
+      <p>Um placar para todas as partidas: cada abate soma um ponto. Abates multiplayer confirmados entre perfis distintos recebem um ponto extra.</p>
       <button id="hub-rank-profile" class="hub-rank-profile" type="button" hidden>{RANKING_ON ? 'CRIAR NICK PARA PARTICIPAR ▸' : 'CONFIGURAR SEU NICK ▸'}</button>
       <div id="hub-rank-local" class="hub-rank-stats"></div>
       <div id="hub-rank-global" class="hub-rank-global"></div>
-      <a href="/ranking">ABRIR PÁGINA DO RANKING ↗</a>
+      <a href="/?secao=comunidade&amp;social=ranking">RANKING COMPLETO E ENTRE AMIGOS ▸</a>
     </section>
 
     <section id="hub-about" class="hub-pane hub-info" role="tabpanel" aria-label="Sobre o jogo" hidden>
@@ -727,6 +743,7 @@ window.__GEO_LANG__ = (function () {
         <a href="/sobre">SOBRE ↗</a><a href="/como-jogar">COMO JOGAR ↗</a>
         <a href="/armas">ARMAS ↗</a><a href="/mapas">MAPAS ↗</a>
         <a href="/changelog">NOVIDADES ↗</a><a href="https://github.com/corosolto/client" target="_blank" rel="noopener">CÓDIGO ↗</a>
+        <a href="/privacidade">PRIVACIDADE ↗</a><a href="/termos">TERMOS DE USO ↗</a>
       </nav>
     </section>
 
@@ -766,9 +783,10 @@ window.__GEO_LANG__ = (function () {
       <a class="hub-support-source" href={GITHUB_URL} target="_blank" rel="noopener">VER O CÓDIGO DO JOGO NO GITHUB ↗</a>
     </section>
 
-    <footer class="hub-footer"><span class="hub-tip"><b>DICA</b><span id="hub-tip-text">Clique nas opções da partida para ajustá-las antes de jogar.</span></span><div id="hub-footer-social" class="hub-footer-social" aria-label="Redes do jogo"></div><a href="/docs/">DOCS ↗</a><a href="/mapa">MAPA AO VIVO ↗</a></footer>
+    <footer class="hub-footer"><span class="hub-tip"><b>DICA</b><span id="hub-tip-text">Clique nas opções da partida para ajustá-las antes de jogar.</span></span><div id="hub-footer-social" class="hub-footer-social" aria-label="Redes do jogo"></div><a href="/privacidade">PRIVACIDADE ↗</a><a href="/termos">TERMOS ↗</a><a href="/docs/">DOCS ↗</a><a href="/mapa">MAPA AO VIVO ↗</a></footer>
   </div>
 
+  <AccountEntry />
   <div id="hub-quick" class="hub-modal" hidden>
     <div class="hub-modal-card" role="dialog" aria-modal="true" aria-labelledby="hub-quick-title">
       <header><small>ÚLTIMO CORTE</small><h2 id="hub-quick-title">PRONTO PRA TRETA?</h2><button id="hub-quick-close" type="button" aria-label="Fechar">ESC ✕</button></header>
@@ -803,6 +821,7 @@ window.__GEO_LANG__ = (function () {
        inteiro - nenhuma informação saiu de lugar, uma ganhou destaque.
        A seta é U+2197, glifo geométrico: o redesign proíbe emoji. -->
   <nav class="aaa-links" aria-label="Links do jogo">
+    <a href="/?secao=comunidade&amp;social=friends">AMIGOS E CONVITES ▸</a>
     <a href="/ranking" target="_blank" rel="noopener">RANKING GLOBAL <span aria-hidden="true">↗</span></a>
     <a href="/mapa" target="_blank" rel="noopener">MAPA DA TRETA <span aria-hidden="true">↗</span></a>
     <a href="/sobre" target="_blank" rel="noopener">SOBRE <span aria-hidden="true">↗</span></a>
@@ -867,6 +886,7 @@ window.__GEO_LANG__ = (function () {
     </button>
   </div>
     <div class="menu-footer">
+      <a href="/?secao=comunidade">AMIGOS E PERFIL</a> ·
         <span class="mf-online" id="mf-online" hidden><span id="mf-online-n">0</span> online</span>
         <a href="https://github.com/corosolto/client" target="_blank" rel="noopener">GitHub</a>
         <a href="/docs/" target="_blank">Docs</a>
@@ -975,6 +995,7 @@ window.__GEO_LANG__ = (function () {
           <input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp" class="hidden">
           <span id="avatar-note"></span>
         </div>
+        <div id="profile-preferences" class="profile-preferences"></div>
         <p class="pc-note">É esse nome que aparece no killfeed. Escolha com carinho - a treta é pública.</p>
       </div>
       <div class="cs-setup-actions">
@@ -1186,7 +1207,7 @@ window.__GEO_LANG__ = (function () {
     <span id="char-preview-return" hidden></span>
     <div class="char-preview-box">
       <canvas id="char-preview" width="640" height="640"></canvas>
-      <img id="char-preview-static" class="hidden" src="" alt="">
+      <img id="char-preview-static" class="hidden" alt="">
       <video id="char-preview-video" class="hidden" muted loop playsinline></video>
       <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
     </div>
@@ -1407,9 +1428,7 @@ window.__GEO_LANG__ = (function () {
     <div id="rank-local" class="rank-stats"></div>
     <div id="rank-global"></div>
     <p class="rank-note">Seus stats locais ficam <strong>neste navegador</strong>.
-      {RANKING_ON
-        ? 'No ranking global, abates multiplayer confirmados recebem um ponto extra.'
-        : 'O ranking global está desligado por enquanto.'}</p>
+      No ranking global, abates multiplayer confirmados entre perfis distintos recebem um ponto extra.</p>
     <button id="ranking-back" class="btn">VOLTAR</button>
   </div>
 </div>
@@ -1637,6 +1656,7 @@ window.__GEO_LANG__ = (function () {
     <button id="btn-resume" class="btn btn-big">CONTINUAR</button>
     <button id="btn-pause-settings" class="btn">CONFIGURAÇÕES</button>
     <button id="btn-pause-controls" class="btn">CONTROLES</button>
+    <button id="btn-pause-community" class="btn">AMIGOS E CONVITES</button>
     <button id="btn-restart" class="btn">REINICIAR PARTIDA</button>
     <button id="btn-quit" class="btn">SAIR PRO MENU</button>
   </div>
@@ -1670,18 +1690,6 @@ window.__GEO_LANG__ = (function () {
 
 <div id="game-container"></div>
 <div id="rotate-prompt" aria-hidden="true"><span class="rot-ico">📱</span><span>Gire o celular na horizontal pra jogar</span></div>
-
-<!-- Vercel Web Analytics + Speed Insights (static HTML - sem pacote npm).
-     Só carrega fora de localhost. Ative no dashboard: Analytics → Enable. -->
-<script is:inline>
-  if (!/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname)) {
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-    var _s1 = document.createElement('script'); _s1.defer = true;
-    _s1.src = '/_vercel/insights/script.js'; document.head.appendChild(_s1);
-    var _s2 = document.createElement('script'); _s2.defer = true;
-    _s2.src = '/_vercel/speed-insights/script.js'; document.head.appendChild(_s2);
-  }
-</script>
 
 <!-- Sinais operacionais da sessão (FPS, falhas de carga, abandono); só coleta - docs/runbooks/operacao-autonoma.md -->
 <script type="module" src={`/js/ops.js?v=${V}-${JS_REV}`} is:inline></script>

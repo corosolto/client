@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kit CORO SOLTO: revisão de conteúdo</title>
+<style>
+@font-face{font-family:Barlow;src:url(assets/barlow.woff2)}@font-face{font-family:Bebas;src:url(assets/bebas.woff2)}
+*{box-sizing:border-box}body{margin:0;background:#090704;color:#f0f0ed;font:20px/1.4 Barlow,Arial,sans-serif}header{padding:24px 5vw;border-bottom:1px solid #34302b;display:flex;align-items:center;gap:24px}header img{width:110px}h1,h2{font-family:Bebas;font-weight:400;margin:0}h1{font-size:42px}p{margin:4px 0;color:#d3d3d1}main{max-width:1400px;margin:auto;padding:24px}nav{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}select,button,a.button{background:#141008;border:1px solid #504c44;color:#f0f0ed;padding:12px;font:inherit;cursor:pointer}button.primary{background:#b4d92e;color:#090704}.grid{display:grid;grid-template-columns:minmax(260px,440px) 1fr;gap:32px}#preview{width:100%;max-height:740px;object-fit:contain;background:#141008}textarea{width:100%;min-height:230px;background:#141008;border:1px solid #504c44;color:#f0f0ed;padding:16px;font:20px Barlow,Arial,sans-serif}dl{display:grid;grid-template-columns:110px 1fr;gap:8px;margin:24px 0}dt{color:#a5a5a3}dd{margin:0;overflow-wrap:anywhere}a{color:#b4d92e}.actions{display:flex;gap:12px;flex-wrap:wrap}.note{font-size:18px;color:#a5a5a3;margin:14px 0}#message{color:#b4d92e}footer{margin:32px 0;border-top:1px solid #34302b;padding-top:20px}@media(max-width:780px){.grid{grid-template-columns:1fr}header{align-items:flex-start}h1{font-size:32px}}
+</style>
+<header><img src="assets/logo.png" alt="CORO SOLTO: Treta Suprema"><div><h1>Conteúdo pronto para revisão</h1><p>11 a 25 outubro · jogadores, devs e comunidade</p><p class="note">Selecione a peça, revise texto/link e exporte suas decisões para a equipe.</p></div></header>
+<main>
+<nav><label>Data <select id="date"></select></label><label>Canal <select id="channel"><option value="all">Todos</option><option>x</option><option>instagram</option><option>tiktok</option><option>youtube</option><option>linkedin</option></select></label><label>Rascunho <select id="entry"></select></label></nav>
+<div class="grid"><div><img id="preview" alt=""><p id="source" class="note"></p><a id="download" download>Baixar PNG</a> · <a id="editable">Abrir SVG editável</a></div><section><h2 id="question"></h2><p id="account"></p><textarea id="caption" aria-label="Legenda editável"></textarea><dl><dt>Destino</dt><dd><a id="url" target="_blank" rel="noreferrer"></a></dd><dt>Uso</dt><dd id="placement"></dd><dt>Medição</dt><dd id="attribution"></dd><dt>Alt</dt><dd id="alt"></dd><dt>SHA-256</dt><dd id="hash"></dd></dl><div class="actions"><button id="copy">Copiar legenda</button><button id="approve" class="primary">Marcar aprovado para revisão da equipe</button><button id="changes">Pedir ajuste</button><button id="export">Exportar decisões</button></div><p class="note">As decisões ficam neste navegador até exportar o arquivo. A fila continua aguardando autorização de publicação.</p><p id="message" role="status"></p></section></div>
+<footer><a href="CALENDAR.md">Calendário e comunidade</a> · <a href="SUPPORTS.md">Roteiros dos três apoios</a> · <a href="BRAND.md">Identidade e procedência</a> · <a href="WELCOME.html">Welcome revisável</a></footer>
+</main>
+<script type="module">
+const $=id=>document.getElementById(id);
+const queue=await fetch('QUEUE.json').then(r=>{if(!r.ok)throw new Error('Fila indisponível');return r.json()});
+let decisions={};try{decisions=JSON.parse(localStorage.getItem('coro-marketing-decisions-v1')||'{}')}catch{}
+let current;
+const save=()=>localStorage.setItem('coro-marketing-decisions-v1',JSON.stringify(decisions));
+function validDecision(row){const d=decisions[row.id];return d&&d.assetSha256===row.assetSha256&&d.url===row.url&&d.baseCaption===row.caption?d:null}
+const statusLabel=status=>({owner_review_approved:'Esta versão foi aprovada na revisão local.',changes_requested:'Ajustes solicitados.',draft_edited:'Legenda alterada. Revise esta versão novamente.'}[status]||'Aguardando revisão do dono');
+for(const date of [...new Set(queue.rows.map(r=>r.date))]){$('date').add(new Option(date,date))}
+function display(){current=queue.rows.find(r=>r.id===$('entry').value);for(const id of ['copy','approve','changes'])$(id).disabled=!current;if(!current){$('preview').removeAttribute('src');$('preview').alt='Sem rascunho para este filtro';$('caption').value='';$('question').textContent='Sem rascunho nesta data/canal';$('account').textContent='';$('source').textContent='';for(const id of ['url','placement','attribution','alt','hash','message'])$(id).textContent='';$('download').removeAttribute('href');$('editable').removeAttribute('href');return;}
+ $('preview').src=current.asset;$('preview').alt=current.alt;$('download').href=current.asset;$('editable').href=current.asset.replace('.png','.svg');
+ $('source').textContent=current.sourceNote;$('question').textContent=current.question;$('account').textContent=current.account;
+ const d=validDecision(current);$('caption').value=d?.caption??current.caption;$('url').textContent=current.url;$('url').href=current.url;
+ for(const name of ['placement','attribution','alt'])$(name).textContent=current[name];$('hash').textContent=current.assetSha256;$('message').textContent=d?statusLabel(d.status):(decisions[current.id]?'Peça, link ou copy mudaram. Revise esta versão novamente.':'Aguardando revisão do dono');}
+function filter(){const selected=$('entry').value;$('entry').replaceChildren();for(const row of queue.rows.filter(r=>r.date===$('date').value&&($('channel').value==='all'||r.channel===$('channel').value)))$('entry').add(new Option(row.channel+' · '+row.cardId,row.id));if([...$('entry').options].some(o=>o.value===selected))$('entry').value=selected;display()}
+$('date').onchange=filter;$('channel').onchange=filter;$('entry').onchange=display;
+$('caption').oninput=()=>{if(current){decisions[current.id]={...decisions[current.id],caption:$('caption').value,assetSha256:current.assetSha256,url:current.url,baseCaption:current.caption,status:'draft_edited'};save();$('message').textContent=statusLabel('draft_edited')}};
+function decide(status){decisions[current.id]={status,caption:$('caption').value,assetSha256:current.assetSha256,url:current.url,baseCaption:current.caption,reviewedAt:new Date().toISOString()};save();$('message').textContent=statusLabel(status)}
+$('approve').onclick=()=>decide('owner_review_approved');$('changes').onclick=()=>decide('changes_requested');
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('caption').value);$('message').textContent='Legenda copiada.'}catch{$('caption').select();$('message').textContent='Selecione e copie o texto.'}};
+$('export').onclick=()=>{const checked={};for(const row of queue.rows){if(decisions[row.id])checked[row.id]=validDecision(row)||{status:'needs_re_review',assetSha256:row.assetSha256,url:row.url,baseCaption:row.caption}}
+ const url=URL.createObjectURL(new Blob([JSON.stringify({queue:'QUEUE.json',decisions:checked},null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='coro-aprovacoes.json';a.click();URL.revokeObjectURL(url)};
+filter();
+</script>
+</html>

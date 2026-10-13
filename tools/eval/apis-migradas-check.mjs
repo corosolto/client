@@ -27,7 +27,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 const mut = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (mut && ![
   'lista-divergente', 'rota-ressuscitada', 'supabase-de-volta', 'destinos-divergentes',
-  'preview-direto', 'proxy-vaza-cookie',
+  'preview-direto', 'proxy-vaza-cookie', 'perfil-card-supabase',
 ].includes(mut)) {
   throw new Error(`mutante desconhecido: ${mut}`);
 }
@@ -43,12 +43,13 @@ if (mut === 'proxy-vaza-cookie') proxy = proxy.replace(
   'const upstreamHeaders = new Headers(request.headers);',
 );
 
-/* As TRÊS que ficam, e o motivo de cada uma. Esta lista é a documentação executável do
+/* As rotas que ficam, e o motivo de cada uma. Esta lista é a documentação executável do
    recorte: acrescentar rota aqui é uma decisão, não um esquecimento. */
 const FICAM = {
   'geo-lang.ts': 'lê o país no header da borda da Vercel; fora de lá não há o que ler',
   og: 'cartão social DO SITE; servi-lo de outro domínio faria o compartilhamento depender de uma VM',
   badge: 'crachá DO SITE, mesma razão do og',
+  'profile-card': 'OG DO PERFIL no domínio do site; consulta somente projeção anônima pela API existente, sem credencial de banco',
 };
 
 const lista = (texto, marcador) => {
@@ -77,8 +78,10 @@ const locationOriginal = globalThis.location;
 try {
   globalThis.location = { search: '', hostname: 'coro-solto-git-fix.vercel.app' };
   const apiPreview = await importaFonte(jogo);
-  if (apiPreview.apiUrl('/api/telemetry') !== '/api/telemetry')
-    falhas.push('preview da Vercel chama Cloud Run direto — a origem dinâmica fica bloqueada pelo CORS');
+  for(const endpoint of ['/api/telemetry','/api/map-plays']) {
+    if (apiPreview.apiUrl(endpoint) !== endpoint)
+      falhas.push(`preview da Vercel chama Cloud Run direto em ${endpoint} — a origem dinâmica fica bloqueada pelo CORS`);
+  }
 } finally {
   if (locationOriginal === undefined) delete globalThis.location;
   else globalThis.location = locationOriginal;
@@ -132,6 +135,7 @@ for (const r of doJogo) {
 
 /* O que sobrou é só o recorte declarado, e só o `badge` pode tocar o banco. */
 const sobrou = readdirSync('src/pages/api').filter((f) => f !== '[rota].ts');
+let profileMutated=false;
 for (const f of sobrou) {
   if (!(f in FICAM)) falhas.push(`src/pages/api/${f} não está no recorte declarado — decida se ele fica (e diga por quê) ou se migra`);
 }
@@ -141,11 +145,13 @@ for (const f of sobrou) {
   for (const a of arquivos) {
     let src = readFileSync(a, 'utf8');
     if (mut === 'supabase-de-volta' && a.includes('geo-lang')) src += "\nimport { supabaseAdmin } from '../../lib/supabase';\n";
+    if (mut === 'perfil-card-supabase' && a.includes('/profile-card/')) {src += "\nimport { supabaseAdmin } from '../../lib/supabase';\n";profileMutated=true;}
     if (/lib\/supabase/.test(src) && !a.includes('badge')) {
       falhas.push(`${a} importa o supabase — só o badge tem essa exceção declarada`);
     }
   }
 }
+if(mut==='perfil-card-supabase' && !profileMutated)throw Error('mutante perfil-card-supabase não aplicado');
 
 if (falhas.length) {
   console.error('✗ API1 as rotas migradas e o recorte que ficou não fecham:');

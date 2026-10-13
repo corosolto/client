@@ -1,0 +1,144 @@
+{
+  "sourceCommit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+  "assets": [
+    {
+      "file": "assets/logo.png",
+      "source": "public/logo.png",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 528175,
+      "sha256": "7e801db775e173f9a19d9d09dd451ec06f5e0ce93df6985935fce810f613c244"
+    },
+    {
+      "file": "assets/canarinho.webp",
+      "source": "public/img/chars-hero/canarinho.webp",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 14304,
+      "sha256": "09f5dcc3f08eaf73a7809235b0c95c1126631be57233f288185c4a0498bc6afe"
+    },
+    {
+      "file": "assets/canarinho-entrada.webp",
+      "source": "public/img/entrada/canarinho.webp",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 90174,
+      "sha256": "1e01ab4be63e140985c14009e95ff23628e2c41b3db5c7b79a4615706fb72a60"
+    },
+    {
+      "file": "assets/velho-oeste.jpg",
+      "source": "public/img/map-previews/velho_oeste.jpg",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 93573,
+      "sha256": "4f27487808ce4f45c21262452d5123493bb7c83f2553d611810083ef3dafa616",
+      "kind": "captura WebGL real",
+      "capturedAt": "2026-09-06T05:48:21.964Z",
+      "receipt": "public/img/map-previews/velho_oeste.capture.json"
+    },
+    {
+      "file": "assets/amazonia.jpg",
+      "source": "public/img/map-previews/amazonia.jpg",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 88812,
+      "sha256": "a9ad821b6fb10c4f5ff05827424d699af12001273f4398bda690940304f1a832",
+      "kind": "captura WebGL real",
+      "capturedAt": "2026-09-06T05:40:56.885Z",
+      "receipt": "public/img/map-previews/amazonia.capture.json"
+    },
+    {
+      "file": "assets/bebas.woff2",
+      "source": "public/fonts/bebasneue-400.woff2",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 8596,
+      "sha256": "441b026df205d28954f61b6989c7bbd228c0adff42f746a266c6a5d89134bc34"
+    },
+    {
+      "file": "assets/bebas.ttf",
+      "source": "public/fonts/bebasneue-400.woff2",
+      "derivation": "fontTools WOFF2 to TTF, glyphs unchanged",
+      "bytes": 21588,
+      "sha256": "14f621c1e04854b467b1a2d2744d21b10aee631420dd5a70966aa061d87616fd"
+    },
+    {
+      "file": "assets/barlow.woff2",
+      "source": "public/fonts/barlowcondensed-500.woff2",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 14680,
+      "sha256": "31ff5e6e96a096fde4d78bc838719e69b093db2d0b062b96e423c065a6d1b2b1"
+    },
+    {
+      "file": "assets/barlow.ttf",
+      "source": "public/fonts/barlowcondensed-500.woff2",
+      "derivation": "fontTools WOFF2 to TTF, glyphs unchanged",
+      "bytes": 33952,
+      "sha256": "5fe22196f98de291e8198671007a406142ee5b6826c5e2e4bb5fae78991a4569"
+    },
+    {
+      "file": "assets/barlow-bold.woff2",
+      "source": "public/fonts/barlowcondensed-700.woff2",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 14888,
+      "sha256": "e3e520cb7468f2efd60bc2ce96694567c3312f4ef414fffbe605e3ad146b24e6"
+    },
+    {
+      "file": "assets/barlow-bold.ttf",
+      "source": "public/fonts/barlowcondensed-700.woff2",
+      "derivation": "fontTools WOFF2 to TTF, glyphs unchanged",
+      "bytes": 35620,
+      "sha256": "46de4a425249a49a0522bdfbf678a60cf312433d891e02586d4c9fe1790d2c1e"
+    },
+    {
+      "file": "assets/mono.woff2",
+      "source": "public/fonts/share-tech-mono.woff2",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 7408,
+      "sha256": "73b87eb7b02dfec4cb1ddfabad6e625d9c77b3c81015064420de88d8dd04816c"
+    },
+    {
+      "file": "assets/mono.ttf",
+      "source": "public/fonts/share-tech-mono.woff2",
+      "derivation": "fontTools WOFF2 to TTF, glyphs unchanged",
+      "bytes": 19540,
+      "sha256": "a761be41345abd8aeb37f744e6d731ab0249b5e611286d5c66cdcbe6e9f2b3ec"
+    },
+    {
+      "file": "assets/barbudo-vitoria.webp",
+      "source": "public/img/resultado/barbudo-vitoria.webp",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 73786,
+      "sha256": "c1bff14a43ae6d517f38143e2e388cd52ad6896fc573cac1c82fa11b80bc2f12",
+      "kind": "arte caricatura 3D existente, tela de resultado"
+    },
+    {
+      "file": "assets/capitao-vitoria.webp",
+      "source": "public/img/resultado/capitao-vitoria.webp",
+      "commit": "261cf59a7bbc0a7e50352a84d6ba5cb8313eec95",
+      "bytes": 61866,
+      "sha256": "69ba39076fdeeabec46ab7ef37353baa1915f4fde35f3cc91c40322bcd705ea3",
+      "kind": "arte caricatura 3D existente, tela de resultado"
+    },
+    {
+      "file": "assets/barbudo-estilizado.webp",
+      "source": "image_gen built-in style-transfer, 2026-10-11",
+      "inputs": [
+        "assets/barbudo-vitoria.webp",
+        "assets/canarinho-entrada.webp"
+      ],
+      "prompt": "GENERATION-PROMPTS.md#barbudo",
+      "derivation": "PNG generated with alpha, encoded WebP lossless; alpha preserved",
+      "kind": "variante promocional estilizada, não asset de gameplay",
+      "bytes": 921050,
+      "sha256": "2e323902befeded43aeb0b73288bb84a15d23449d886d6e4e562b00714e9aaf8"
+    },
+    {
+      "file": "assets/capitao-estilizado.webp",
+      "source": "image_gen built-in style-transfer, 2026-10-11",
+      "inputs": [
+        "assets/capitao-vitoria.webp",
+        "assets/canarinho-entrada.webp"
+      ],
+      "prompt": "GENERATION-PROMPTS.md#capitao",
+      "derivation": "PNG generated with alpha, encoded WebP lossless; alpha preserved",
+      "kind": "variante promocional estilizada, não asset de gameplay",
+      "bytes": 733058,
+      "sha256": "3b505171ea367705fcf7e23b074fb63c0103a62a7acb9bd192f94f8aa17facab"
+    }
+  ]
+}

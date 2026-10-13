@@ -77,8 +77,19 @@ function lerBuild() {
     const f = p === '/' ? path.join(DIST, 'index.html') : path.join(DIST, p.slice(1), 'index.html');
     if (existsSync(f)) files[p] = readFileSync(f, 'utf-8');
   }
+  const docs = {};
+  function lerDocs(dir) {
+    if (!existsSync(dir)) return;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const file = path.join(dir, entry.name);
+      if (entry.isDirectory()) lerDocs(file);
+      else if (entry.name.endsWith('.html')) docs[path.relative(DIST, file)] = readFileSync(file, 'utf-8');
+    }
+  }
+  lerDocs(path.join(DIST, 'docs'));
   return {
     html: files,
+    docs,
     raiz: readdirSync(DIST),
     robots: existsSync(path.join(DIST, 'robots.txt')) ? readFileSync(path.join(DIST, 'robots.txt'), 'utf-8') : '',
     llms: existsSync(path.join(DIST, 'llms.txt')) ? readFileSync(path.join(DIST, 'llms.txt'), 'utf-8') : '',
@@ -99,6 +110,43 @@ function jsonLdDe(html) {
 }
 
 const CASOS = [
+  {
+    nome: 'LINK1 · HTML publicado não contém href ou src vazios',
+    run: (b) => {
+      if (!b.html['/']) return 'a home não foi emitida no build';
+      for (const [page, html] of Object.entries({ ...b.html, ...b.docs })) {
+        const markup = html.replace(/(<(script|style)\b[^>]*>)[\s\S]*?(<\/\2>)/gi, '$1$3').replace(/<!--[\s\S]*?-->/g, '');
+        if (/<[a-z][^>]*\b(?:href|src)\s*=\s*(?:"\s*"|'\s*')/i.test(markup))
+          return `${page} contém href ou src vazio`;
+      }
+      return null;
+    },
+  },
+  {
+    nome: 'LINK2 · docs publicadas só apontam para arquivos existentes do repo',
+    run: (b) => {
+      for (const page of ['docs/botbrain/index.html', 'docs/en/botbrain/index.html'])
+        if (!b.docs[page]) return `${page} não foi emitida no build`;
+      for (const [page, html] of Object.entries(b.docs)) {
+        for (const link of html.matchAll(/href="https:\/\/github\.com\/corosolto\/client\/blob\/main\/([^"?#]+)[^"]*"/g)) {
+          const file = decodeURIComponent(link[1]);
+          if (!existsSync(path.join(ROOT, file))) return `${page} aponta para arquivo removido: ${file}`;
+        }
+      }
+      return null;
+    },
+  },
+  {
+    nome: 'LINK3 · links das docs para o jogo usam o domínio com www',
+    run: (b) => {
+      if (!Object.keys(b.docs).length) return 'o build não contém docs';
+      for (const [page, html] of Object.entries(b.docs)) {
+        if (/href="https:\/\/csbrasil\.online(?:[/?#"])/.test(html)) return `${page} aponta para o host sem www`;
+        if (!html.includes(`href="${SITE}/"`)) return `${page} sem link para o jogo`;
+      }
+      return null;
+    },
+  },
   {
     nome: 'SEO1 · nenhum sitemap.xml ESTÁTICO sombreando a rota dinâmica',
     run: (b) => {
@@ -190,6 +238,16 @@ const CASOS = [
 
 /* ---- MUTANTES: cada um reintroduz um defeito real e tem que ficar VERMELHO -- */
 const MUTANTES = [
+  { alvo: 'LINK1', nome: 'volta o src vazio na home',
+    aplica: (b) => ({ ...b, html: { ...b.html, '/': b.html['/'] + '<img src="">' } }) },
+  { alvo: 'LINK1', nome: 'script publicado tem src vazio',
+    aplica: (b) => ({ ...b, html: { ...b.html, '/': b.html['/'] + '<script src=""></script>' } }) },
+  { alvo: 'LINK2', nome: 'volta o link para o guia removido',
+    aplica: (b) => ({ ...b, docs: { ...b.docs, 'docs/botbrain/index.html':
+      b.docs['docs/botbrain/index.html'] + '<a href="https://github.com/corosolto/client/blob/main/docs/BOTBRAIN-LOCAL.md">Guia</a>' } }) },
+  { alvo: 'LINK3', nome: 'link Jogar volta para o host sem www',
+    aplica: (b) => ({ ...b, docs: { ...b.docs, 'docs/botbrain/index.html':
+      b.docs['docs/botbrain/index.html'].replaceAll(`${SITE}/`, 'https://csbrasil.online/') } }) },
   { alvo: 'SEO1', nome: 'devolve o sitemap.xml estático',
     aplica: (b) => ({ ...b, raiz: [...b.raiz, 'sitemap.xml'] }) },
   { alvo: 'SEO2', nome: 'canonical volta pro host sem www',
@@ -236,7 +294,12 @@ if (MUTATE) {
       const mordeu = urls.has(`${SITE}/eval`);
       res = [{ nome: 'AEO2', ok: !mordeu }];
     } else {
-      res = rodar(m.aplica(build), m.alvo);
+      const mutated = m.aplica(build);
+      if (JSON.stringify(mutated) === JSON.stringify(build)) {
+        console.error(`✗ mutação não aplicada: ${m.nome}`);
+        process.exit(1);
+      }
+      res = rodar(mutated, m.alvo);
     }
     const mordeu = res.some(r => !r.ok);
     if (!mordeu) cegas++;

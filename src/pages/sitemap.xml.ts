@@ -77,9 +77,8 @@ export const GET: APIRoute = async () => {
   let totalPerfis = 0;
   if (RANKING_ON && supabaseAdmin) {
     const { count } = await supabaseAdmin
-      .from('stats')
-      .select('updated_at, players!inner(id, nick, hidden)', { count: 'exact', head: true })
-      .eq('players.hidden', false);
+      .from('player_points')
+      .select('id', { count: 'exact', head: true });
     totalPerfis = count ?? 0;
   }
 
@@ -102,22 +101,18 @@ export const GET: APIRoute = async () => {
 /** Uma fatia dos perfis, já como entradas de sitemap. Usada pelas duas rotas. */
 export async function perfis(offset: number, limite: number, today: string): Promise<Entrada[]> {
   if (!RANKING_ON || !supabaseAdmin || limite <= 0) return [];
-  // Vai em `stats` e não na view `leaderboard` por dois motivos: a view tem
-  // `limit 500` cravado (o sitemap tem que cobrir TODO mundo, não o top 500) e
-  // não expõe `updated_at`, que é o `lastmod` honesto de um perfil.
   const { data } = await supabaseAdmin
-    .from('stats')
-    .select('updated_at, players!inner(id, nick, hidden)')
-    .eq('players.hidden', false)
-    .order('updated_at', { ascending: false })
+    .from('player_points')
+    .select('id,nick')
+    .order('id', { ascending: true })
     .range(offset, offset + limite - 1);
   const out: Entrada[] = [];
   for (const row of (data ?? []) as any[]) {
-    const p = row.players;
+    const p = row;
     if (!p?.id || !p?.nick) continue;
     out.push({
       loc: `${SITE}/u/${p.id}/${encodeURIComponent(p.nick)}`,
-      lastmod: row.updated_at ? String(row.updated_at).slice(0, 10) : today,
+      lastmod: today,
       changefreq: 'weekly',
       priority: '0.6',
     });
@@ -131,7 +126,7 @@ export function xmlResposta(xml: string): Response {
       'content-type': 'application/xml; charset=utf-8',
       // 1h no CDN: crawler não precisa de sitemap fresco ao segundo, e sem
       // isso cada rastreio vira um SELECT de 5000 linhas no Supabase.
-      'cache-control': 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400',
+      'cache-control': 'no-store',
     },
   });
 }

@@ -31,6 +31,9 @@ const VM_PRIVADO_AUSENTE_RE = /^\[paid-viewmodel\] [\w#-]+ fetch for "https?:\/\
 // Arnês de automação: o predicado do `waitForFunction` roda DENTRO da página e a exceção dele
 // chega como se fosse do jogo. O nome do injetor é a proveniência (KNOWN-BUGS.md, BUG-151).
 const AUTOMACAO_RE = /\bUtilityScript\b|\b__puppeteer_evaluation_script__\b|\bpptr:[/][/]/;
+// EvalError de CSP lançado por script blob: injetado: o jogo não roda script blob: nem eval
+// (script-src sem blob: e sem 'unsafe-eval'). ESTREITA, exige source blob: — #798.
+const EVAL_CSP_RE = /\bEvalError\b.*'unsafe-eval' is not an allowed source of script/;
 const HTTP_URL_RE = /https?:\/\/[^\s)'"<>]+/gi;
 /* Assinaturas opacas de terceiro/extensão/resposta corrompida: mensagens sem
    pilha e sem nome de arquivo do próprio jogo que o navegador entrega já
@@ -72,6 +75,7 @@ export function isExternalCrash({ message = '', source = '', stack = '' } = {}, 
   // Mesmo motivo e mesmo lugar da PONTE_INJETADA_RE: própria origem, código de terceiro. Só na
   // STACK - na mensagem o nome é carga nossa, e o corte por evidência mordia texto do jogo.
   if (AUTOMACAO_RE.test(String(stack || ''))) return true;
+  if (/^blob:/i.test(sourceText) && EVAL_CSP_RE.test(String(message || ''))) return true;
 
   const sourceOrigin = /^https?:\/\//i.test(sourceText)
     ? normalizedOrigin(sourceText, ownOrigin)
