@@ -1285,18 +1285,23 @@ function _funnel(step) {
 }
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
 // sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
+// A origem fica só em memória até o consentimento: o menu reescreve a URL antes dele.
+const _landingOrigem = (() => {
+  const u = new URLSearchParams(location.search);
+  let referrer = null;
+  try { referrer = document.referrer ? new URL(document.referrer).host || null : null; } catch {}
+  return Object.freeze({
+    referrer,
+    utmSource: u.get('utm_source'), utmMedium: u.get('utm_medium'), utmCampaign: u.get('utm_campaign'),
+    ref: u.get('ref'), landing: location.pathname,
+  });
+})();
 let _acqSent = false;
 async function _sendAcquisition() {
   if (!analyticsAllowed()) return;
   if (testMode || _acqSent) return;
   try { if (localStorage.getItem('cs_acq')) { _acqSent = true; return; } } catch {}
-  const u = new URLSearchParams(location.search);
-  const payload = {
-    anonId: getAnonId(),
-    referrer: document.referrer || null,
-    utmSource: u.get('utm_source'), utmMedium: u.get('utm_medium'), utmCampaign: u.get('utm_campaign'),
-    ref: u.get('ref'), landing: location.pathname,
-  };
+  const payload = { anonId: getAnonId(), ..._landingOrigem };
   try {
     /* fetch + keepalive, e NÃO sendBeacon: aqui a RESPOSTA importa. sendBeacon
        não devolve resposta — marcar cs_acq sem saber se o servidor gravou
@@ -1448,14 +1453,21 @@ void _iniciaPresencaOnline();
 setInterval(_pingPresenca, 45_000);
 setInterval(_refreshOnline, 60_000);
 
-/* Telemetria nova (feat/telemetria) — dispara UMA vez na carga, depois de `testMode`
-   existir (mesma lição do BUG-34: estas leem testMode na 1ª linha). */
-_sendAcquisition();   // aquisição 1x por navegador (019)
-_funnel('land');      // funil: chegou (017)
+/* Telemetria nova (feat/telemetria) — depois de `testMode` existir (mesma lição do BUG-34).
+   Aquisição e 'land' saem na carga ou no consentimento tardio; régua: consent-funnel-check. */
+let _landFuneled = false;
+function _funnelLand() {
+  if (_landFuneled || !analyticsAllowed()) return;
+  _landFuneled = true;
+  _sendAcquisition();   // aquisição 1x por navegador (019)
+  _funnel('land');      // funil: chegou (017)
+}
+addEventListener('cs-privacy-change', _funnelLand);
+_funnelLand();
 _sendPerf();          // perf de cliente 1x por sessão (018)
-// funil 'menu': 1ª interação real (teclado ou mouse) — separa "olhou e foi" de "usou".
+// funil 'menu': 1ª interação real COM consentimento — o clique que consente não conta como uso.
 let _menuFuneled = false;
-const _menuOnce = () => { if (_menuFuneled) return; _menuFuneled = true; _funnel('menu'); removeEventListener('pointerdown', _menuOnce); removeEventListener('keydown', _menuOnce); };
+const _menuOnce = () => { if (_menuFuneled || !_landFuneled || !analyticsAllowed()) return; _menuFuneled = true; _funnel('menu'); removeEventListener('pointerdown', _menuOnce); removeEventListener('keydown', _menuOnce); };
 addEventListener('pointerdown', _menuOnce);
 addEventListener('keydown', _menuOnce);
 

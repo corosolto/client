@@ -34,6 +34,7 @@ import { grafiteNoDedicado } from './graffiti_pass.js';    // nó de MP não rod
 import { createAuthoredViewModels, AUTHORED_VM_ENABLED, AUTHORED_VM_MODELS, vmFonteDe } from './authoredvm.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { viewmodelVisibility } from './vmvisibility.js';
+import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
@@ -8128,8 +8129,8 @@ export class Game {
       document.querySelector('#scoreboard h3').innerHTML =
         (r ? `<span class="sb-result">${r.titulo}</span><span class="sb-result-sub">${r.sub}</span>` : '') +
         `<span class="sb-clock">RODADA ${this.roundNum}/${totalRounds} · <em>${clockText}</em></span>` +
-        `<span class="sb-score"><b class="tp"><img class="sb-crest" src="/img/brasoes/${crest('E')}.png" alt=""><span class="sb-team-name">${this._teamName('E')}</span><strong class="sb-score-num">${this.roundsWon.E}</strong></b>` +
-        `<span class="sb-vs">VS</span><b class="tb"><strong class="sb-score-num">${this.roundsWon.B}</strong><span class="sb-team-name">${this._teamName('B')}</span><img class="sb-crest" src="/img/brasoes/${crest('B')}.png" alt=""></b></span>`;
+        `<span class="sb-score"><b class="tp"><img class="sb-crest" src="/${urlDoBrasao(crest('E'))}" alt=""><span class="sb-team-name">${this._teamName('E')}</span><strong class="sb-score-num">${this.roundsWon.E}</strong></b>` +
+        `<span class="sb-vs">VS</span><b class="tb"><strong class="sb-score-num">${this.roundsWon.B}</strong><span class="sb-team-name">${this._teamName('B')}</span><img class="sb-crest" src="/${urlDoBrasao(crest('B'))}" alt=""></b></span>`;
       // no CTF ordena por capturas (depois kills); senão por kills
       const rank = this.ctf ? (a, b) => (b.captures || 0) - (a.captures || 0) || b.kills - a.kills : (a, b) => b.kills - a.kills;
       /* DUAS COLUNAS COM BRASÃO (referência 08_placar, pedido do dono 07/08: "na tela de
@@ -8148,7 +8149,7 @@ export class Game {
           );
         }).join('');
         return `<div class="sb-col ${side === 'E' ? 'tp' : 'tb'}${this.ctf ? ' ctf' : ''}">
-          <div class="sb-chead"><span class="sb-team"><img class="sb-crest" src="/img/brasoes/${crest(side)}.png" alt=""><b>${tr('JOGADOR')}</b></span><span>K</span><span>D</span><span>SCORE</span><span>PING</span>${this.ctf ? '<span class="sb-cap">CAP.</span>' : ''}</div>
+          <div class="sb-chead"><span class="sb-team"><img class="sb-crest" src="/${urlDoBrasao(crest(side))}" alt=""><b>${tr('JOGADOR')}</b></span><span>K</span><span>D</span><span>SCORE</span><span>PING</span>${this.ctf ? '<span class="sb-cap">CAP.</span>' : ''}</div>
           <table><thead><tr><th>${tr('JOGADOR')}</th><th>K</th><th>D</th><th>SCORE</th><th>PING</th>${this.ctf ? '<th>CAP.</th>' : ''}</tr></thead>
           <tbody>${linhas}</tbody></table></div>`;
       };

@@ -493,8 +493,8 @@ try {
   }));
   if (scoreboard.clock !== 'RODADA 4/5 · 1:32' || scoreboard.cols !== 2 || !scoreboard.pauseHidden
     || scoreboard.heads.some((head) => head !== 'JOGADOR\nK\nD\nSCORE\nPING')
-    || scoreboard.scoreCrests.map((crest) => crest.src).join(',') !== '/img/brasoes/e.png,/img/brasoes/b.png'
-    || scoreboard.columnCrests.map((crest) => crest.src).join(',') !== '/img/brasoes/e.png,/img/brasoes/b.png'
+    || !/^\/img\/brasoes\/e\.png\?v=[0-9a-f]{12},\/img\/brasoes\/b\.png\?v=[0-9a-f]{12}$/.test(scoreboard.scoreCrests.map((crest) => crest.src).join(','))
+    || !/^\/img\/brasoes\/e\.png\?v=[0-9a-f]{12},\/img\/brasoes\/b\.png\?v=[0-9a-f]{12}$/.test(scoreboard.columnCrests.map((crest) => crest.src).join(','))
     || [...scoreboard.scoreCrests, ...scoreboard.columnCrests].some((crest) => crest.size.some((value) => value <= 0))
     || scoreboard.verticalDelta > 2) {
     throw new Error(`placar direto inválido: ${JSON.stringify(scoreboard)}`);

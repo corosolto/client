@@ -6,7 +6,8 @@ import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const OUT = process.argv[2] || '/root/shots/r2/_metrics-draw.json';
-const BASE = process.env.BASE || 'http://127.0.0.1:8123';
+const BASE = process.env.BASE;
+if (!BASE) { console.error('BASE ausente: aponte para o SEU servidor (ex.: node tools/eval/serve.mjs 4510 & BASE=http://127.0.0.1:4510 node tools/eval/gl-metrics.mjs <out.json>). Sem padrão de propósito: localhost:8123 costuma ser o servidor de outra sessão, com outra árvore.'); process.exit(2); }
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;

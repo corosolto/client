@@ -180,6 +180,8 @@ jobs:
       # Número diz que caiu; imagem diz por quê. Só quando algum passo acima reprova.
       - name: Fotos das piores células (só em falha)
         if: failure()
+        env:
+          JSON: '1'
         run: npm run eval:grafite:ar -- --fotos 6 || true
 
       - name: Anexa capturas e números da falha

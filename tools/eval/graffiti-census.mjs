@@ -36,7 +36,7 @@
    coordenada) — porque "cobertura 41%" não diz onde pintar, e a lista diz.
 
    Uso:
-     npm run eval:serve &                       # precisa do servidor no ar
+     node tools/eval/serve.mjs 4510 &          # e BASE=http://127.0.0.1:4510 em cada comando
      node tools/eval/graffiti-census.mjs        # os 11 mapas abertos (MA1, 27/09)
      node tools/eval/graffiti-census.mjs quebrada
      JSON=1 node ...                            # despeja o JSON cru
@@ -46,7 +46,8 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { writeFileSync } from 'node:fs';
 
-const BASE = process.env.BASE || 'http://localhost:8123';
+const BASE = process.env.BASE;
+if (!BASE) { console.error('BASE ausente: aponte para o SEU servidor (ex.: node tools/eval/serve.mjs 4510 & BASE=http://127.0.0.1:4510 npm run eval:grafite). Sem padrão de propósito: localhost:8123 costuma ser o servidor de outra sessão, com outra árvore.'); process.exit(2); }
 const ARGS = process.argv.slice(2);
 const ONLY = ARGS.find((arg) => !arg.startsWith('--'));
 const MUTANTE = ARGS.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';

@@ -182,7 +182,7 @@ game = muta('placar-labels-curtos', game,
   '<span>K</span><span>D</span><span>SCORE</span><span>PING</span>',
   '<span>K</span><span>D</span>');
 game = muta('placar-sem-brasoes', game,
-  '<img class="sb-crest" src="/img/brasoes/${crest(side)}.png" alt="">',
+  '<img class="sb-crest" src="/${urlDoBrasao(crest(side))}" alt="">',
   '');
 css = muta('loading-wall-cover-unico', css,
   'background-size:cover,contain;background-position:center;background-repeat:no-repeat}',
@@ -928,9 +928,9 @@ const personagemNoSplash = /id="splash-character-stage"[^>]*>[\s\S]{0,100}<canva
   && /#boot-splash \.splash-frame\{position:relative;z-index:2\}/.test(css)
   && /#splash-enter\{[^}]*font-family:var\(--aaa-font-display\)/.test(css);
 const brasoesNoPlacar = /const crest = \(side\) => String\(this\._factionOf\(side\)/.test(game)
-  && /<img class="sb-crest" src="\/img\/brasoes\/\$\{crest\('E'\)\}\.png" alt="">/.test(game)
-  && /<img class="sb-crest" src="\/img\/brasoes\/\$\{crest\('B'\)\}\.png" alt="">/.test(game)
-  && /<img class="sb-crest" src="\/img\/brasoes\/\$\{crest\(side\)\}\.png" alt="">/.test(game)
+  && /<img class="sb-crest" src="\/\$\{urlDoBrasao\(crest\('E'\)\)\}" alt="">/.test(game)
+  && /<img class="sb-crest" src="\/\$\{urlDoBrasao\(crest\('B'\)\)\}" alt="">/.test(game)
+  && /<img class="sb-crest" src="\/\$\{urlDoBrasao\(crest\(side\)\)\}" alt="">/.test(game)
   && /#scoreboard \.sb-score \.sb-crest\{[^}]*width:48px[^}]*height:48px[^}]*object-fit:contain/.test(css)
   && /#scoreboard \.sb-chead \.sb-crest\{[^}]*width:24px[^}]*height:24px[^}]*object-fit:contain/.test(css);
 const placarCentralizado = /<div class="sb-center">[\s\S]{0,180}<h3>CORO SOLTO - PLACAR<\/h3>[\s\S]{0,220}<div class="sb-cols" id="sb-cols"><\/div>[\s\S]{0,40}<\/div>/.test(astro)

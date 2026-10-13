@@ -697,6 +697,7 @@ class CharController {
     if (this.dead || this.crouch || !this.actions.shoot) return; // crouch pose already aims
     this.shooting = true;
     this._shootUntil = this.mixer.time + this.actions.shoot.getClip().duration;
+    if (this.cur === this.actions.shoot) { this.cur.time = 0; this.cur.paused = false; return; }
     this.actions.shoot.reset();
     this.actions.shoot.setLoop(THREE.LoopOnce, 1);
     this.actions.shoot.clampWhenFinished = true;

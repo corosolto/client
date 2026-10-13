@@ -38,7 +38,7 @@
    respawn era a faixa passando por cima da grade — nenhuma contagem diria isso.
 
    Uso:
-     npm run eval:serve &
+     node tools/eval/serve.mjs 4510 &    # e BASE=http://127.0.0.1:4510 em cada comando
      node tools/eval/graffiti-audit.mjs                 # todos os mapas
      node tools/eval/graffiti-audit.mjs quebrada
      node tools/eval/graffiti-audit.mjs quebrada --fotos 12
@@ -47,7 +47,8 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const BASE = process.env.BASE || 'http://localhost:8123';
+const BASE = process.env.BASE;
+if (!BASE) { console.error('BASE ausente: aponte para o SEU servidor (ex.: node tools/eval/serve.mjs 4510 & BASE=http://127.0.0.1:4510 npm run eval:grafite:ar). Sem padrão de propósito: localhost:8123 costuma ser o servidor de outra sessão, com outra árvore.'); process.exit(2); }
 const MAPAS = [
   'praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada',
   'fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao',
@@ -273,8 +274,8 @@ if (ONLY) {
     saida = Object.assign(ant, relatorio);
   } catch { /* primeira execução */ }
 }
-writeFileSync('tools/eval/graffiti_audit.json', JSON.stringify(saida, null, 1));
-console.log(`GRAFFITI-AUDIT no ar ${totalNoAr} | sobrepostas ${totalSobre} -> tools/eval/graffiti_audit.json`);
+if (process.env.JSON === '1') writeFileSync('tools/eval/graffiti_audit.json', JSON.stringify(saida, null, 1));
+console.log(`GRAFFITI-AUDIT no ar ${totalNoAr} | sobrepostas ${totalSobre}${process.env.JSON === '1' ? ' -> tools/eval/graffiti_audit.json' : ''}`);
 
 /* Placar contra o teto declarado: piora reprova, melhoria manda baixar o teto. */
 let estourou = 0;
