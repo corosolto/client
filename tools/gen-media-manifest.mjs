@@ -47,6 +47,18 @@ if (CHECK) {
     process.exit(1);
   }
   console.log('manifesto em dia com o disco');
+  // Fallback de main.js com outro tamanho muda o índice quando o manifesto chega: 2 downloads no boot.
+  const main = readFileSync(join(ROOT, 'public', 'js', 'main.js'), 'utf8');
+  for (const [name, list] of [['WALLS', fresh.walls], ['LOADING_WALLS', fresh.loading]]) {
+    const literal = main.match(new RegExp(`const ${name} = \\[([^\\]]*)\\]`))?.[1] || '';
+    const fallback = [...literal.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    if (MUTANT === 'fallback-curto' && name === 'WALLS') fallback.pop();
+    if (JSON.stringify(fallback) !== JSON.stringify(list)) {
+      console.error(`main.js ${name} (${fallback.length}) difere de walls.json (${list.length}); copie a lista do manifesto`);
+      process.exit(1);
+    }
+  }
+  console.log('fallback de main.js igual ao manifesto');
 } else {
   writeFileSync(OUT, `${JSON.stringify(fresh, null, 2)}\n`);
   console.log(`escrito ${OUT}: ${fresh.walls.length} walls + ${fresh.loading.length} loading`);

@@ -50,6 +50,7 @@ class Netcode {
     this._corrX = 0; this._corrY = 0; this._corrZ = 0;
     this._ackSeq = 0; this._ackOn = false; this._authWeapon = null;
     this._loadoutSeq = 0;
+    this._armaEnviada = null;   // arma do último input enviado: separa tecla nova de pedido recusado
     this._reconcileSamples = []; this._reconcileWindow = []; this._reconcileCount = 0; this._reconcileMax = 0;
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
@@ -174,6 +175,7 @@ class Netcode {
       this._predSeq.push(seq); this._predX.push(p.pos.x); this._predY.push(p.pos.y); this._predZ.push(p.pos.z);
       if (this._predSeq.length > 180) { this._predSeq.shift(); this._predX.shift(); this._predY.shift(); this._predZ.shift(); }
       if (tinhaIntent) this._loadoutSeq = seq;
+      this._armaEnviada = p.weapon;
       this._pickPendente = 0;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga
       this._pickupWeaponPendente = '';
       this._reloadPendente = '';
@@ -207,7 +209,7 @@ class Netcode {
   _clearPrediction() {
     this._predSeq.length = 0; this._predX.length = 0; this._predY.length = 0; this._predZ.length = 0;
     this._corrX = 0; this._corrY = 0; this._corrZ = 0; this._ackOn = false; this._ackSeq = 0;
-    this._loadoutSeq = 0;
+    this._loadoutSeq = 0; this._armaEnviada = null;
   }
 
   _ackPlayer(e, p, imediato = false) {
@@ -237,7 +239,10 @@ class Netcode {
 
   _syncPlayerLoadout(e, p) {
     if (!Number.isInteger(e.ackSeq) || e.ackSeq < this._loadoutSeq) return;
-    if (e.weapon && WEAPONS[e.weapon] && p.weapon !== e.weapon) {
+    // Tecla entre este snapshot e o próximo input ainda não saiu: o servidor não a recusou.
+    // Sem a guarda a troca morria antes de ser pedida (MP, 13/10). Régua: troca-arma-mp-check.
+    const teclaNaoEnviada = !this.__mutSemGuardaTroca && this._armaEnviada != null && p.weapon !== this._armaEnviada;
+    if (e.weapon && WEAPONS[e.weapon] && p.weapon !== e.weapon && !teclaNaoEnviada) {
       this.game._switchWeapon(e.weapon);
       // Morto/estado transitório pode bloquear o helper visual; a autoridade ainda precisa
       // assentar o dado para o próximo respawn/snapshot.

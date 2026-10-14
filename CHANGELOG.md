@@ -23,7 +23,16 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
-## Não lançado — 2026-10-06
+## Não lançado — 2026-10-12
+
+### Alterado
+- Os 19 wallpapers de Políticos e Míticos recebem o acabamento ilustrado das artes antigas, com pele, pelagem, tecidos e luz mais detalhados. Identidade, figurino e armas permanecem reconhecíveis; o enquadramento conserva o personagem inteiro em 3:2 e 16:9.
+
+## Não lançado — 2026-10-11
+
+### Adicionado
+- Políticos e Míticos ganham 19 wallpapers na rotação dos menus. As artes mantêm 3:2; os seis loadings usam 16:9 exato, e o palhaço vermelho recebe uma composição mais larga para preencher a tela 5K sem faixas laterais.
+- Políticos e Míticos ganham 19 sprites animados no cabeçalho, com transparência, proporção quadrada e versão estática para movimento reduzido. Os fundos dos menus e os sprites alternam a cada 20 segundos enquanto a tela está visível.
 
 ### Corrigido
 - Acabamento dos mapas: materiais minerais menos brilhantes, paletas mais coerentes e terreno das Obras com escala de textura uniforme. As texturas compartilhadas recebem manchas amplas sem alterar a resolução ou o sorteio dos mapas. Três pixações pretas descartam o quadriculado claro no shader, preservando os arquivos originais. Comparação visual local e regressões ainda em validação.

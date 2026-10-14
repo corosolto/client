@@ -322,6 +322,8 @@ body>header:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height
           mask-image:radial-gradient(ellipse 78% 86% at 52% 50%,#000 62%,transparent 100%)}
 .brand-bird img{position:absolute;top:0;left:calc(var(--bh) * -288 / 236);max-width:none;
   width:calc(var(--bh) * 604 / 236);height:calc(var(--bh) * 240 / 236)}
+.brand-bird.is-roster{mask-image:none;-webkit-mask-image:none}
+.brand-bird.is-roster img{position:static;width:100%;height:100%;object-fit:contain}
 nav{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 nav a{color:var(--bone-dim);text-decoration:none;font-size:11px;letter-spacing:2px;
   padding:6px 2px;border-bottom:2px solid transparent;transition:color .12s;white-space:nowrap}
@@ -585,12 +587,13 @@ body>footer a:hover{color:var(--amber)}
         3. <img> GIF, 368 KB: só para quem não decodifica WebP animado. */}
   <a class="brand" href="/" aria-label={`${BRAND_FULL} - página inicial`}>
     <img class="brand-logo" src="/logo.png" width="651" height="526" alt={BRAND_FULL}>
-    <picture class="brand-bird" aria-hidden="true">
+    <picture class="brand-bird" aria-hidden="true" data-roster-sprite={`${V}-${JS_REV}`}>
       <source media="(prefers-reduced-motion: reduce)" srcset="/img/canarinho-pistola.png">
       <source type="image/webp" srcset="/img/canarinho-header.webp">
       <img src="/img/canarinho-header.gif" width="604" height="240" alt="" loading="eager" decoding="async">
     </picture>
   </a>
+  <script type="module" src={`/js/roster-sprite.js?v=${V}-${JS_REV}`} is:inline></script>
   <nav aria-label="Navegação principal">
     {NAV.map(([href, label]) => (
       <a href={href} aria-current={path === href ? 'page' : undefined}>{label}</a>

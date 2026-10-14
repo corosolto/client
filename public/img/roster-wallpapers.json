@@ -1,0 +1,97 @@
+[
+  {
+    "id": "lobisomem",
+    "name": "Lobisomem",
+    "wall": "/img/wall-29.webp"
+  },
+  {
+    "id": "mariabonita",
+    "name": "Maria Bonita",
+    "wall": "/img/wall-30.webp"
+  },
+  {
+    "id": "lampiao",
+    "name": "Lampião",
+    "wall": "/img/wall-31.webp"
+  },
+  {
+    "id": "bandeirante",
+    "name": "Bandeirante",
+    "wall": "/img/wall-32.webp"
+  },
+  {
+    "id": "boto",
+    "name": "Boto Cor de Rosa",
+    "wall": "/img/wall-33.webp"
+  },
+  {
+    "id": "zumbi",
+    "name": "Zumbi dos Palmares",
+    "wall": "/img/wall-34.webp"
+  },
+  {
+    "id": "curupira",
+    "name": "Curupira",
+    "wall": "/img/wall-35.webp"
+  },
+  {
+    "id": "saci",
+    "name": "Saci-Pererê",
+    "wall": "/img/wall-36.webp"
+  },
+  {
+    "id": "caipora",
+    "name": "Caipora",
+    "wall": "/img/wall-37.webp"
+  },
+  {
+    "id": "barbudo",
+    "name": "Barbudo do Planalto",
+    "wall": "/img/wall-38.webp"
+  },
+  {
+    "id": "capitao",
+    "name": "Capitão do Cercadinho",
+    "wall": "/img/wall-39.webp"
+  },
+  {
+    "id": "dama",
+    "name": "Dama da Mandioca",
+    "wall": "/img/wall-40.webp"
+  },
+  {
+    "id": "professor",
+    "name": "Professor do Arcabouço",
+    "wall": "/img/wall-41.webp"
+  },
+  {
+    "id": "senador",
+    "name": "Zero Um",
+    "wall": "/img/wall-42.webp"
+  },
+  {
+    "id": "ministro",
+    "name": "Xandão da Toga",
+    "wall": "/img/wall-43.webp"
+  },
+  {
+    "id": "deputado",
+    "name": "Deputado da Peruca",
+    "wall": "/img/wall-44.webp"
+  },
+  {
+    "id": "juiz",
+    "name": "Juiz do Conje",
+    "wall": "/img/wall-45.webp"
+  },
+  {
+    "id": "julia-zanatta",
+    "name": "Deputada da Tiara",
+    "wall": "/img/wall-46.webp"
+  },
+  {
+    "id": "marina-silva",
+    "name": "Dona Floresta",
+    "wall": "/img/wall-47.webp"
+  }
+]
